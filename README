@@ -1,0 +1,8 @@
+# Routine
+
+Just write some codes to learn C++
+
+csc.hpp : basic [macro ; traits type ; universal wrapper ; smart pointer ; array class ; function class]
+csc_ext.hpp : extenal [variant ; tuple ; more smart pointer ; memory pool]
+csc_array.hpp : container [array ; string ; stack ; queue ; list ; deque ; set ; hashset ; softset]
+......
