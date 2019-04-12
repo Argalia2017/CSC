@@ -1,0 +1,44 @@
+#pragma inject_default_hints
+
+#define self
+#define implicit
+#define export
+#define import
+#define popping
+
+#define M_DATE
+#define M_TIME
+#define M_FILE
+#define M_LINE
+#define M_FUNC
+
+#define _UNW_
+#define _STR_
+#define _CAT_
+
+#define _STATIC_ASSERT_
+#define _STATIC_WARNING_
+#define _DEBUG_ASSERT_
+#define _DYNAMIC_ASSERT_
+#define _UNITTEST_WATCH_
+
+#define ANONYMOUS
+
+#define FOR_ONCE_DO_WHILE_FALSE
+
+#define FALSE
+#define TRUE
+
+#define _SIZEOF_
+#define _ALIGNOF_
+#define _CAPACITYOF_
+#define _COUNTOF_
+
+#define NULL
+
+#define _PCSTRU8_
+#define _PCSTRU16_
+#define _PCSTRU32_
+#define _PCSTRA_
+#define _PCSTRW_
+#define _PCSTR_
