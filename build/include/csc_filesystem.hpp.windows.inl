@@ -8,13 +8,13 @@
 #undef self
 #undef implicit
 #undef popping
-#undef import
-#undef export
+#undef imports
+#undef exports
 #pragma pop_macro ("self")
 #pragma pop_macro ("implicit")
 #pragma pop_macro ("popping")
-#pragma pop_macro ("import")
-#pragma pop_macro ("export")
+#pragma pop_macro ("imports")
+#pragma pop_macro ("exports")
 #endif
 
 #ifndef _INC_WINDOWS
@@ -25,18 +25,18 @@
 #pragma push_macro ("self")
 #pragma push_macro ("implicit")
 #pragma push_macro ("popping")
-#pragma push_macro ("import")
-#pragma push_macro ("export")
+#pragma push_macro ("imports")
+#pragma push_macro ("exports")
 #define self to ()
 #define implicit
 #define popping
-#define import extern
-#define export
+#define imports extern
+#define exports
 #endif
 
 namespace CSC {
 inline namespace S {
-inline export AutoBuffer<BYTE> _LOADFILE_ (const String<STR> &file) popping {
+inline exports AutoBuffer<BYTE> _LOADFILE_ (const String<STR> &file) popping {
 	const auto r1x = UniqueRef<HANDLE> ([&] (HANDLE &me) {
 		me = CreateFile (file.raw ().self ,GENERIC_READ ,FILE_SHARE_READ ,NULL ,OPEN_EXISTING ,FILE_ATTRIBUTE_NORMAL ,NULL) ;
 		if (me == INVALID_HANDLE_VALUE)
@@ -55,7 +55,7 @@ inline export AutoBuffer<BYTE> _LOADFILE_ (const String<STR> &file) popping {
 	return std::move (ret) ;
 }
 
-inline export void _LOADFILE_ (const String<STR> &file ,const PhanBuffer<BYTE> &data) popping {
+inline exports void _LOADFILE_ (const String<STR> &file ,const PhanBuffer<BYTE> &data) popping {
 	const auto r1x = UniqueRef<HANDLE> ([&] (HANDLE &me) {
 		me = CreateFile (file.raw ().self ,GENERIC_READ ,FILE_SHARE_READ ,NULL ,OPEN_EXISTING ,FILE_ATTRIBUTE_NORMAL ,NULL) ;
 		if (me == INVALID_HANDLE_VALUE)
@@ -72,7 +72,7 @@ inline export void _LOADFILE_ (const String<STR> &file ,const PhanBuffer<BYTE> &
 	_DYNAMIC_ASSERT_ (r3x) ;
 }
 
-inline export void _SAVEFILE_ (const String<STR> &file ,const PhanBuffer<const BYTE> &data) {
+inline exports void _SAVEFILE_ (const String<STR> &file ,const PhanBuffer<const BYTE> &data) {
 	_DEBUG_ASSERT_ (data.size () >= 0 && data.size () < VAR32_MAX) ;
 	const auto r1x = UniqueRef<HANDLE> ([&] (HANDLE &me) {
 		me = CreateFile (file.raw ().self ,GENERIC_WRITE ,0 ,NULL ,CREATE_ALWAYS ,FILE_ATTRIBUTE_NORMAL ,NULL) ;
@@ -88,7 +88,7 @@ inline export void _SAVEFILE_ (const String<STR> &file ,const PhanBuffer<const B
 	_DYNAMIC_ASSERT_ (r2x) ;
 }
 
-inline export PhanBuffer<const BYTE> _LOADASSETFILE_ (FLAG resource) popping {
+inline exports PhanBuffer<const BYTE> _LOADASSETFILE_ (FLAG resource) popping {
 	const auto r1x = FindResource (NULL ,MAKEINTRESOURCE (resource) ,_PCSTR_ ("BIN")) ;
 	_DYNAMIC_ASSERT_ (r1x != NULL) ;
 	const auto r2x = LoadResource (NULL ,r1x) ;
@@ -100,28 +100,32 @@ inline export PhanBuffer<const BYTE> _LOADASSETFILE_ (FLAG resource) popping {
 	return PhanBuffer<const BYTE>::make (_LOAD_<ARR<BYTE>> (r3x) ,r4x) ;
 }
 
-inline export BOOL _FINDFILE_ (const String<STR> &file) popping {
+inline exports BOOL _FINDFILE_ (const String<STR> &file) popping {
 	const auto r1x = GetFileAttributes (file.raw ().self) ;
-	return r1x != INVALID_FILE_ATTRIBUTES && (r1x & FILE_ATTRIBUTE_DIRECTORY) == 0 ;
+	if (r1x == INVALID_FILE_ATTRIBUTES)
+		return FALSE ;
+	if ((r1x & FILE_ATTRIBUTE_DIRECTORY) != 0)
+		return FALSE ;
+	return TRUE ;
 }
 
-inline export void _ERASEFILE_ (const String<STR> &file) {
+inline exports void _ERASEFILE_ (const String<STR> &file) {
 	DeleteFile (file.raw ().self) ;
 }
 
-inline export void _COPYFILE_ (const String<STR> &dst_file ,const String<STR> &src_file) {
+inline exports void _COPYFILE_ (const String<STR> &dst_file ,const String<STR> &src_file) {
 	CopyFile (src_file.raw ().self ,dst_file.raw ().self ,TRUE) ;
 }
 
-inline export void _MOVEFILE_ (const String<STR> &dst_file ,const String<STR> &src_file) {
+inline exports void _MOVEFILE_ (const String<STR> &dst_file ,const String<STR> &src_file) {
 	MoveFile (src_file.raw ().self ,dst_file.raw ().self) ;
 }
 
-inline export void _LINKFILE_ (const String<STR> &dst_file ,const String<STR> &src_file) {
+inline exports void _LINKFILE_ (const String<STR> &dst_file ,const String<STR> &src_file) {
 	CreateHardLink (dst_file.raw ().self ,src_file.raw ().self ,NULL) ;
 }
 
-inline export BOOL _IDENTICALFILE_ (const String<STR> &file1 ,const String<STR> &file2) popping {
+inline exports BOOL _IDENTICALFILE_ (const String<STR> &file1 ,const String<STR> &file2) popping {
 	auto rax = ARRAY2<BY_HANDLE_FILE_INFORMATION> () ;
 	const auto r1x = UniqueRef<HANDLE> ([&] (HANDLE &me) {
 		me = CreateFile (file1.raw ().self ,GENERIC_READ ,FILE_SHARE_READ ,NULL ,OPEN_EXISTING ,FILE_ATTRIBUTE_NORMAL ,NULL) ;
@@ -134,7 +138,9 @@ inline export BOOL _IDENTICALFILE_ (const String<STR> &file1 ,const String<STR> 
 		CloseHandle (me) ;
 	}) ;
 	const auto r2x = GetFileInformationByHandle (r1x ,&_ZERO_ (rax[0])) ;
-	if (r2x == 0 || rax[0].nNumberOfLinks == 0)
+	if (r2x == 0)
+		return FALSE ;
+	if (rax[0].nNumberOfLinks == 0)
 		return FALSE ;
 	const auto r3x = UniqueRef<HANDLE> ([&] (HANDLE &me) {
 		me = CreateFile (file2.raw ().self ,GENERIC_READ ,FILE_SHARE_READ ,NULL ,OPEN_EXISTING ,FILE_ATTRIBUTE_NORMAL ,NULL) ;
@@ -147,7 +153,9 @@ inline export BOOL _IDENTICALFILE_ (const String<STR> &file1 ,const String<STR> 
 		CloseHandle (me) ;
 	}) ;
 	const auto r4x = GetFileInformationByHandle (r3x ,&_ZERO_ (rax[1])) ;
-	if (r4x == 0 || rax[1].nNumberOfLinks == 0)
+	if (r4x == 0)
+		return FALSE ;
+	if (rax[1].nNumberOfLinks == 0)
 		return FALSE ;
 	if (rax[0].dwVolumeSerialNumber != rax[1].dwVolumeSerialNumber)
 		return FALSE ;
@@ -158,25 +166,28 @@ inline export BOOL _IDENTICALFILE_ (const String<STR> &file1 ,const String<STR> 
 	return TRUE ;
 }
 
-inline export String<STR> _PARSEFILEPATH_ (const String<STR> &file) {
+inline exports String<STR> _PARSEFILEPATH_ (const String<STR> &file) {
 	String<STR> ret = String<STR> (DEFAULT_SHORTSTRING_SIZE::value) ;
 	const auto r1x = file.length () ;
 	const auto r2x = file.raw () ;
-	const auto r3x = _MAX_ (_MEMRCHR_ (r2x.self ,r1x ,STR ('\\')) ,_MEMRCHR_ (r2x.self ,r1x ,STR ('/'))) + 1 ;
-	_MEMCOPY_ (ret.raw ().self ,r2x.self ,r3x) ;
+	const auto r3x = _MAX_ (_MEMRCHR_ (r2x.self ,r1x ,STR ('\\')) ,VAR_ZERO) ;
+	const auto r4x = _MAX_ (_MEMRCHR_ (r2x.self ,r1x ,STR ('/')) ,r3x) ;
+	_MEMCOPY_ (ret.raw ().self ,r2x.self ,r4x) ;
 	return std::move (ret) ;
 }
 
-inline export String<STR> _PARSEFILENAME_ (const String<STR> &file) {
+inline exports String<STR> _PARSEFILENAME_ (const String<STR> &file) {
 	String<STR> ret = String<STR> (DEFAULT_SHORTSTRING_SIZE::value) ;
 	const auto r1x = file.length () ;
 	const auto r2x = file.raw () ;
-	const auto r3x = _MAX_ (_MEMRCHR_ (r2x.self ,r1x ,STR ('\\')) ,_MEMRCHR_ (r2x.self ,r1x ,STR ('/'))) + 1 ;
-	_MEMCOPY_ (ret.raw ().self ,PTRTOARR[&r2x.self[r3x]] ,(r1x - r3x)) ;
+	const auto r3x = _MEMRCHR_ (r2x.self ,r1x ,STR ('\\')) ;
+	const auto r4x = _MEMRCHR_ (r2x.self ,r1x ,STR ('/')) ;
+	const auto r5x = _MAX_ (r3x ,r4x) + 1 ;
+	_MEMCOPY_ (ret.raw ().self ,PTRTOARR[&r2x.self[r5x]] ,(r1x - r5x)) ;
 	return std::move (ret) ;
 }
 
-inline export Queue<String<STR>> _DECOUPLEPATHNAME_ (const String<STR> &file) {
+inline exports Queue<String<STR>> _DECOUPLEPATHNAME_ (const String<STR> &file) {
 	const auto r1x = (file.empty ()) ? (PhanBuffer<const STR> ()) : (file.raw ()) ;
 	auto ris = TextReader<STR> (r1x) ;
 	ris.attr ().modify_space (STR ('\\')) ;
@@ -202,43 +213,44 @@ inline export Queue<String<STR>> _DECOUPLEPATHNAME_ (const String<STR> &file) {
 	return std::move (ret) ;
 }
 
-inline export String<STR> _WORKINGPATH_ () {
+inline exports String<STR> _WORKINGPATH_ () {
 	String<STR> ret = String<STR> (DEFAULT_SHORTSTRING_SIZE::value) ;
 	GetCurrentDirectory (VARY (ret.size ()) ,ret.raw ().self) ;
 	ret += _PCSTR_ ("\\") ;
 	return std::move (ret) ;
 }
 
-inline export String<STR> _ABSOLUTEPATH_ (const String<STR> &path) {
+inline exports String<STR> _ABSOLUTEPATH_ (const String<STR> &path) {
 	String<STR> ret = String<STR> (DEFAULT_SHORTSTRING_SIZE::value) ;
 	const auto r1x = _DECOUPLEPATHNAME_ (path) ;
 	const auto r2x = _CALL_ ([&] () {
 		Stack<INDEX> ret = Stack<INDEX> (r1x.length ()) ;
 		for (INDEX i = 0 ; i < r1x.length () ; i++) {
 			INDEX ix = r1x.access (i) ;
-			if (_MEMEQUAL_ (r1x[ix].raw ().self ,_PCSTR_ (".")))
+			if (r1x[ix] == _PCSTR_ ("."))
 				continue ;
-			const auto r3x = !ret.empty () && _MEMEQUAL_ (r1x[ix].raw ().self ,_PCSTR_ ("..")) ;
-			for (FOR_ONCE_DO_WHILE_FALSE) {
-				if (!r3x)
-					continue ;
-				if (_MEMEQUAL_ (r1x[ret[ret.peek ()]].raw ().self ,_PCSTR_ ("..")))
-					continue ;
+			_CALL_IF_ ([&] (BOOL &if_cond) {
+				if (ret.empty ())
+					return (void) (if_cond = FALSE) ;
+				if (r1x[ix] != _PCSTR_ (".."))
+					return (void) (if_cond = FALSE) ;
+				if (r1x[ret[ret.peek ()]] == _PCSTR_ (".."))
+					return ;
 				ret.take () ;
-			}
-			if (r3x)
-				continue ;
-			ret.add (ix) ;
+			} ,[&] (BOOL &if_cond) {
+				ret.add (ix) ;
+			}) ;
 		}
 		return std::move (ret) ;
 	}) ;
-	const auto r4x = path.length () >= 1 && (path[0] == STR ('\\') || path[0] == STR ('/')) ;
-	if (r4x)
-		ret += _PCSTR_ ("\\") ;
-	const auto r5x = r1x.length () >= 1 && _MEMEQUAL_ (r1x[r1x.access (0)].raw ().self ,_PCSTR_ (".")) ;
-	const auto r6x = r1x.length () >= 1 && _MEMEQUAL_ (r1x[r1x.access (0)].raw ().self ,_PCSTR_ ("..")) ;
-	const auto r7x = !r4x && (r5x || r6x) ;
-	if (r7x)
+	const auto r4x = BOOL (path.size () >= 1 && path[0] == STR ('\\')) ;
+	const auto r5x = BOOL (path.size () >= 1 && path[0] == STR ('/')) ;
+	if (r4x || r5x)
+		ret += _PCSTR_ ("/") ;
+	const auto r6x = BOOL (r1x.length () >= 1 && r1x[r1x.access (0)] == _PCSTR_ (".")) ;
+	const auto r7x = BOOL (r1x.length () >= 1 && r1x[r1x.access (0)] == _PCSTR_ ("..")) ;
+	const auto r8x = BOOL (!r4x && !r5x && (r6x || r7x)) ;
+	if (r8x)
 		ret += _WORKINGPATH_ () ;
 	for (INDEX i = 0 ; i < r2x.length () ; i++) {
 		if (i != 0)
@@ -246,36 +258,64 @@ inline export String<STR> _ABSOLUTEPATH_ (const String<STR> &path) {
 		INDEX ix = r2x[r2x.access (i)] ;
 		ret += r1x[ix] ;
 	}
-	const auto r8x = ret.length () ;
-	if (r8x >= 1 && ret[r8x - 1] != STR ('\\') && ret[r8x - 1] != STR ('/'))
+	const auto r10x = BOOL (ret.size () >= 1 && ret[0] == STR ('\\')) ;
+	const auto r11x = BOOL (ret.size () >= 1 && ret[0] == STR ('/')) ;
+	if (!r10x && !r11x)
 		ret += _PCSTR_ ("\\") ;
 	return std::move (ret) ;
 }
 
-inline export String<STR> _MODULEFILEPATH_ () {
+inline exports String<STR> _MODULEFILEPATH_ () {
 	String<STR> ret = String<STR> (DEFAULT_SHORTSTRING_SIZE::value) ;
 	GetModuleFileName (NULL ,ret.raw ().self ,VARY (ret.size ())) ;
 	ret = _PARSEFILEPATH_ (ret) ;
+	ret += _PCSTR_ ("\\") ;
 	return std::move (ret) ;
 }
 
-inline export String<STR> _MODULEFILENAME_ () {
+inline exports String<STR> _MODULEFILENAME_ () {
 	String<STR> ret = String<STR> (DEFAULT_SHORTSTRING_SIZE::value) ;
 	GetModuleFileName (NULL ,ret.raw ().self ,VARY (ret.size ())) ;
 	ret = _PARSEFILENAME_ (ret) ;
 	return std::move (ret) ;
 }
 
-inline export BOOL _FINDDIRECTORY_ (const String<STR> &dire) popping {
+inline exports BOOL _FINDDIRECTORY_ (const String<STR> &dire) popping {
 	const auto r1x = GetFileAttributes (dire.raw ().self) ;
-	return r1x != INVALID_FILE_ATTRIBUTES && (r1x & FILE_ATTRIBUTE_DIRECTORY) != 0 ;
+	if (r1x == INVALID_FILE_ATTRIBUTES)
+		return FALSE ;
+	if ((r1x & FILE_ATTRIBUTE_DIRECTORY) == 0)
+		return FALSE ;
+	return TRUE ;
 }
 
-inline export void _ERASEDIRECTORY_ (const String<STR> &dire) {
+inline exports void _BUILDDIRECTORY_ (const String<STR> &dire) {
+	if (_FINDDIRECTORY_ (dire))
+		return ;
+	auto rax = String<STR> (DEFAULT_SHORTSTRING_SIZE::value) ;
+	const auto r1x = _DECOUPLEPATHNAME_ (_ABSOLUTEPATH_ (dire)) ;
+	_DEBUG_ASSERT_ (r1x.length () >= 1) ;
+	const auto r2x = BOOL (dire.size () >= 1 && dire[0] == STR ('\\')) ;
+	const auto r3x = BOOL (dire.size () >= 1 && dire[0] == STR ('/')) ;
+	if (r2x || r3x)
+		rax += _PCSTR_ ("\\") ;
+	for (INDEX i = 0 ; i < r1x.length () ; i++) {
+		if (i != 0)
+			rax += _PCSTR_ ("\\") ;
+		INDEX ix = r1x.access (i) ;
+		rax += r1x[ix] ;
+		const auto r4x = r1x[ix].length () ;
+		if (r4x > 1 && r1x[ix][r4x - 1] == STR (':'))
+			continue ;
+		CreateDirectory (rax.raw ().self ,NULL) ;
+	}
+}
+
+inline exports void _ERASEDIRECTORY_ (const String<STR> &dire) {
 	RemoveDirectory (dire.raw ().self) ;
 }
 
-inline export void _CLEARDIRECTORY_ (const String<STR> &dire) {
+inline exports void _CLEARDIRECTORY_ (const String<STR> &dire) {
 	auto rax = Stack<PACK<String<STR> ,BOOL>> () ;
 	const auto r1x = Function<void (const String<STR> &)> ([&] (const String<STR> &_file) {
 		_ERASEFILE_ (_file) ;
@@ -287,36 +327,19 @@ inline export void _CLEARDIRECTORY_ (const String<STR> &dire) {
 	_ENUMDIRECTORY_ (dire ,r1x ,r2x) ;
 	while (!rax.empty ()) {
 		INDEX ix = rax.peek () ;
-		if (rax[ix].P2) {
+		_CALL_IF_ ([&] (BOOL &if_cond) {
+			if (!rax[ix].P2)
+				return (void) (if_cond = FALSE) ;
 			_ERASEDIRECTORY_ (rax[ix].P1) ;
 			rax.take () ;
-		} else {
+		} ,[&] (BOOL &if_cond) {
 			_ENUMDIRECTORY_ (rax[ix].P1 ,r1x ,r2x) ;
 			rax[ix].P2 = TRUE ;
-		}
+		}) ;
 	}
 }
 
-inline export void _BUILDDIRECTORY_ (const String<STR> &dire) {
-	auto rax = String<STR> (DEFAULT_SHORTSTRING_SIZE::value) ;
-	const auto r1x = _DECOUPLEPATHNAME_ (_ABSOLUTEPATH_ (dire)) ;
-	_DEBUG_ASSERT_ (r1x.length () >= 1) ;
-	const auto r2x = dire.length () >= 1 && (dire[0] == STR ('\\') || dire[0] == STR ('/')) ;
-	if (r2x)
-		rax += _PCSTR_ ("\\") ;
-	for (INDEX i = 0 ; i < r1x.length () ; i++) {
-		if (i != 0)
-			rax += _PCSTR_ ("\\") ;
-		INDEX ix = r1x.access (i) ;
-		rax += r1x[ix] ;
-		const auto r3x = r1x[ix].length () ;
-		if (r3x > 1 && r1x[ix][r3x - 1] == STR (':'))
-			continue ;
-		CreateDirectory (rax.raw ().self ,NULL) ;
-	}
-}
-
-inline export void _ENUMDIRECTORY_ (const String<STR> &dire ,const Function<void (const String<STR> &)> &file_proc ,const Function<void (const String<STR> &)> &dire_proc) popping {
+inline exports void _ENUMDIRECTORY_ (const String<STR> &dire ,const Function<void (const String<STR> &)> &file_proc ,const Function<void (const String<STR> &)> &dire_proc) popping {
 	auto rax = String<STR> (DEFAULT_SHORTSTRING_SIZE::value) ;
 	rax += dire ;
 	rax += _PCSTR_ ("\\") ;
@@ -338,12 +361,12 @@ inline export void _ENUMDIRECTORY_ (const String<STR> &dire ,const Function<void
 	while (rbx.cFileName[0] != 0) {
 		for (FOR_ONCE_DO_WHILE_FALSE) {
 			if (_MEMEQUAL_ (PTRTOARR[&rbx.cFileName[0]] ,_PCSTR_ (".")))
-				continue ;
+				break ;
 			if (_MEMEQUAL_ (PTRTOARR[&rbx.cFileName[0]] ,_PCSTR_ ("..")))
-				continue ;
+				break ;
 			auto &r1 = ((rbx.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) == 0) ? file_proc : dire_proc ;
 			if (!r1.exist ())
-				continue ;
+				break ;
 			rax += String<STR> (rbx.cFileName) ;
 			r1 (rax) ;
 			rax[r1x] = 0 ;
@@ -399,25 +422,25 @@ public:
 	}
 } ;
 
-inline export StreamLoader::StreamLoader (const String<STR> &file) {
+inline exports StreamLoader::StreamLoader (const String<STR> &file) {
 	mThis = AnyRef<Implement>::make (file) ;
 }
 
-inline export void StreamLoader::read (const PhanBuffer<BYTE> &data) popping {
+inline exports void StreamLoader::read (const PhanBuffer<BYTE> &data) popping {
 	mThis.rebind<Implement> ()->read (data) ;
 }
 
-inline export void StreamLoader::write (const PhanBuffer<const BYTE> &data) {
+inline exports void StreamLoader::write (const PhanBuffer<const BYTE> &data) {
 	mThis.rebind<Implement> ()->write (data) ;
 }
 
-inline export void StreamLoader::flush () {
+inline exports void StreamLoader::flush () {
 	mThis.rebind<Implement> ()->flush () ;
 }
 
 class BufferLoader::Implement final :private Interface {
 private:
-	class Pack {
+	class Holder {
 	private:
 		friend Implement ;
 		Monostate<UniqueRef<HANDLE>> mFile ;
@@ -426,15 +449,15 @@ private:
 	} ;
 
 private:
-	UniqueRef<Pack> mHolder ;
+	UniqueRef<Holder> mThis ;
 
 public:
 	Implement () = delete ;
 
 	explicit Implement (const String<STR> &file) :Implement (ARGVP0) {
-		auto &r1 = mHolder->mFile.self ;
-		auto &r2 = mHolder->mMapping.self ;
-		auto &r3 = mHolder->mBuffer.self ;
+		auto &r1 = mThis->mFile.self ;
+		auto &r2 = mThis->mMapping.self ;
+		auto &r3 = mThis->mBuffer.self ;
 		r1 = UniqueRef<HANDLE> ([&] (HANDLE &me) {
 			me = CreateFile (file.raw ().self ,GENERIC_READ ,FILE_SHARE_READ ,NULL ,OPEN_EXISTING ,FILE_ATTRIBUTE_NORMAL ,NULL) ;
 			if (me == INVALID_HANDLE_VALUE)
@@ -465,9 +488,9 @@ public:
 
 	explicit Implement (const String<STR> &file ,LENGTH file_len) :Implement (ARGVP0) {
 		_DEBUG_ASSERT_ (file_len >= 0 && file_len < VAR32_MAX) ;
-		auto &r1 = mHolder->mFile.self ;
-		auto &r2 = mHolder->mMapping.self ;
-		auto &r3 = mHolder->mBuffer.self ;
+		auto &r1 = mThis->mFile.self ;
+		auto &r2 = mThis->mMapping.self ;
+		auto &r3 = mThis->mBuffer.self ;
 		r1 = UniqueRef<HANDLE> ([&] (HANDLE &me) {
 			me = CreateFile (file.raw ().self ,(GENERIC_READ | GENERIC_WRITE) ,0 ,NULL ,CREATE_ALWAYS ,FILE_ATTRIBUTE_NORMAL ,NULL) ;
 			if (me == INVALID_HANDLE_VALUE)
@@ -497,8 +520,8 @@ public:
 
 	explicit Implement (const String<STR> &file ,BOOL cache) :Implement (ARGVP0) {
 		_DEBUG_ASSERT_ (cache) ;
-		auto &r2 = mHolder->mMapping.self ;
-		auto &r3 = mHolder->mBuffer.self ;
+		auto &r2 = mThis->mMapping.self ;
+		auto &r3 = mThis->mBuffer.self ;
 		r2 = UniqueRef<HANDLE> ([&] (HANDLE &me) {
 			me = OpenFileMapping (FILE_MAP_READ ,FALSE ,file.raw ().self) ;
 			_DYNAMIC_ASSERT_ (me != NULL) ;
@@ -530,8 +553,8 @@ public:
 	explicit Implement (const String<STR> &file ,LENGTH file_len ,BOOL cache) :Implement (ARGVP0) {
 		_DEBUG_ASSERT_ (file_len >= 0 && file_len < VAR32_MAX) ;
 		_DEBUG_ASSERT_ (cache) ;
-		auto &r2 = mHolder->mMapping.self ;
-		auto &r3 = mHolder->mBuffer.self ;
+		auto &r2 = mThis->mMapping.self ;
+		auto &r3 = mThis->mBuffer.self ;
 		r2 = UniqueRef<HANDLE> ([&] (HANDLE &me) {
 			me = CreateFileMapping (INVALID_HANDLE_VALUE ,NULL ,PAGE_READWRITE ,0 ,VARY (file_len) ,file.raw ().self) ;
 			_DYNAMIC_ASSERT_ (me != NULL) ;
@@ -550,27 +573,27 @@ public:
 	}
 
 	PhanBuffer<BYTE> watch () {
-		_DEBUG_ASSERT_ (mHolder.exist ()) ;
-		return PhanBuffer<BYTE>::make (mHolder->mBuffer.self.self) ;
+		_DEBUG_ASSERT_ (mThis.exist ()) ;
+		return PhanBuffer<BYTE>::make (mThis->mBuffer.self.self) ;
 	}
 
 	PhanBuffer<const BYTE> watch () const {
-		_DEBUG_ASSERT_ (mHolder.exist ()) ;
-		return PhanBuffer<const BYTE>::make (mHolder->mBuffer.self.self) ;
+		_DEBUG_ASSERT_ (mThis.exist ()) ;
+		return PhanBuffer<const BYTE>::make (mThis->mBuffer.self.self) ;
 	}
 
 	void flush () {
-		_DEBUG_ASSERT_ (mHolder.exist ()) ;
-		FlushViewOfFile (mHolder->mBuffer.self->self ,mHolder->mBuffer.self->size ()) ;
+		_DEBUG_ASSERT_ (mThis.exist ()) ;
+		FlushViewOfFile (mThis->mBuffer.self->self ,mThis->mBuffer.self->size ()) ;
 	}
 
 private:
 	explicit Implement (const decltype (ARGVP0) &) {
-		mHolder = UniqueRef<Pack> ([] (Pack &me) {
+		mThis = UniqueRef<Holder> ([] (Holder &me) {
 			me.mFile.self = UniqueRef<HANDLE> () ;
 			me.mMapping.self = UniqueRef<HANDLE> () ;
 			me.mBuffer.self = UniqueRef<PhanBuffer<BYTE>> () ;
-		} ,[] (Pack &me) {
+		} ,[] (Holder &me) {
 			me.mBuffer.self = UniqueRef<PhanBuffer<BYTE>> () ;
 			me.mMapping.self = UniqueRef<HANDLE> () ;
 			me.mFile.self = UniqueRef<HANDLE> () ;
@@ -578,38 +601,38 @@ private:
 	}
 } ;
 
-inline export BufferLoader::BufferLoader (const String<STR> &file) {
+inline exports BufferLoader::BufferLoader (const String<STR> &file) {
 	mThis = AnyRef<Implement>::make (file) ;
 }
 
-inline export BufferLoader::BufferLoader (const String<STR> &file ,LENGTH file_len) {
+inline exports BufferLoader::BufferLoader (const String<STR> &file ,LENGTH file_len) {
 	mThis = AnyRef<Implement>::make (file ,file_len) ;
 }
 
-inline export BufferLoader::BufferLoader (const String<STR> &file ,BOOL cache) {
+inline exports BufferLoader::BufferLoader (const String<STR> &file ,BOOL cache) {
 	mThis = AnyRef<Implement>::make (file ,cache) ;
 }
 
-inline export BufferLoader::BufferLoader (const String<STR> &file ,LENGTH file_len ,BOOL cache) {
+inline exports BufferLoader::BufferLoader (const String<STR> &file ,LENGTH file_len ,BOOL cache) {
 	mThis = AnyRef<Implement>::make (file ,file_len ,cache) ;
 }
 
-inline export PhanBuffer<BYTE> BufferLoader::watch () {
+inline exports PhanBuffer<BYTE> BufferLoader::watch () {
 	return mThis.rebind<Implement> ()->watch () ;
 }
 
-inline export PhanBuffer<const BYTE> BufferLoader::watch () const {
+inline exports PhanBuffer<const BYTE> BufferLoader::watch () const {
 	return mThis.rebind<Implement> ()->watch () ;
 }
 
-inline export void BufferLoader::flush () {
+inline exports void BufferLoader::flush () {
 	mThis.rebind<Implement> ()->flush () ;
 }
 
 class FileSystemService::Implement final :private FileSystemService::Abstract {
 private:
 	friend FileSystemService ;
-	friend HolderRef<Abstract> ;
+	friend StrongRef<Implement> ;
 
 public:
 	AutoBuffer<BYTE> load_file (const String<STR> &file) popping override {
@@ -684,6 +707,10 @@ public:
 		return _FINDDIRECTORY_ (dire) ;
 	}
 
+	void build_directory (const String<STR> &dire) override {
+		_BUILDDIRECTORY_ (dire) ;
+	}
+
 	void erase_directory (const String<STR> &dire) override {
 		_ERASEDIRECTORY_ (dire) ;
 	}
@@ -692,16 +719,12 @@ public:
 		_CLEARDIRECTORY_ (dire) ;
 	}
 
-	void build_directory (const String<STR> &dire) override {
-		_BUILDDIRECTORY_ (dire) ;
-	}
-
 	void enum_directory (const String<STR> &dire ,const Function<void (const String<STR> &)> &file_proc ,const Function<void (const String<STR> &)> &dire_proc) popping override {
 		_ENUMDIRECTORY_ (dire ,file_proc ,dire_proc) ;
 	}
 } ;
 
-inline export FileSystemService::FileSystemService () {
-	mThis = HolderRef<Abstract> (_NULL_<const ARGV<Implement>> ()) ;
+inline exports FileSystemService::FileSystemService () {
+	mThis = StrongRef<Implement>::make () ;
 }
 } ;

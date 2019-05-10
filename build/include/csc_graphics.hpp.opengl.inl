@@ -8,13 +8,13 @@
 #undef self
 #undef implicit
 #undef popping
-#undef import
-#undef export
+#undef imports
+#undef exports
 #pragma pop_macro ("self")
 #pragma pop_macro ("implicit")
 #pragma pop_macro ("popping")
-#pragma pop_macro ("import")
-#pragma pop_macro ("export")
+#pragma pop_macro ("imports")
+#pragma pop_macro ("exports")
 #endif
 
 #ifdef __CSC_DEPRECATED__
@@ -74,13 +74,13 @@
 #pragma push_macro ("self")
 #pragma push_macro ("implicit")
 #pragma push_macro ("popping")
-#pragma push_macro ("import")
-#pragma push_macro ("export")
+#pragma push_macro ("imports")
+#pragma push_macro ("exports")
 #define self to ()
 #define implicit
 #define popping
-#define import extern
-#define export
+#define imports extern
+#define exports
 #endif
 
 namespace CSC {
@@ -119,10 +119,13 @@ struct OPENGL_TRAITS<VAL64> {
 } ;
 } ;
 
-template <class _ARG>
-using OPENGL_TRAITS_TYPE = typename U::OPENGL_TRAITS<_ARG>::TYPE ;
+template <class _ARG1>
+using OPENGL_TRAITS_TYPE = typename U::OPENGL_TRAITS<_ARG1>::TYPE ;
 
 class AbstractShader_Engine_OPENGL :public AbstractShader::Abstract {
+public:
+	using NATIVE_TYPE = UniqueRef<CHAR> ;
+
 public:
 	AbstractShader_Engine_OPENGL () {
 		_STATIC_ASSERT_ (_SIZEOF_ (REMOVE_CVR_TYPE<decltype (*this)>) == _SIZEOF_ (Interface)) ;
@@ -153,16 +156,16 @@ public:
 			_DEBUG_ASSERT_ (me != 0) ;
 			glDeleteProgram (me) ;
 		}) ;
-		_this = AnyRef<UniqueRef<CHAR>>::make (std::move (rax)) ;
+		_this = AnyRef<NATIVE_TYPE>::make (std::move (rax)) ;
 	}
 
-	void active (AnyRef<void> &_this) const override {
-		auto &r1 = _this.rebind<UniqueRef<CHAR>> ().self ;
+	void active_pipeline (AnyRef<void> &_this) const override {
+		auto &r1 = _this.rebind<NATIVE_TYPE> ().self ;
 		glUseProgram (r1) ;
 	}
 
 	INDEX uniform_find (const AnyRef<void> &_this ,const String<STR> &name) const override {
-		auto &r1 = _this.rebind<UniqueRef<CHAR>> ().self ;
+		auto &r1 = _this.rebind<NATIVE_TYPE> ().self ;
 		const auto r1x = _CALL_ ([&] () {
 			String<STRA> ret = String<STRA> (name.length ()) ;
 			for (INDEX i = 0 ; i < ret.size () ; i++) {
@@ -210,31 +213,41 @@ public:
 
 private:
 	void attach_shaderiv (CHAR shader) const {
-		auto rax = VAR32 () ;
-		glGetShaderiv (shader ,GL_COMPILE_STATUS ,&(rax = GL_FALSE)) ;
-		if (rax == GL_FALSE) {
-			glGetShaderiv (shader ,GL_INFO_LOG_LENGTH ,&(rax = 0)) ;
-		} else {
-			rax = 0 ;
-		}
-		auto rbx = String<STRA> (rax) ;
-		if (rbx.size () > 0)
-			glGetShaderInfoLog (shader ,VAR32 (rbx.size ()) ,NULL ,rbx.raw ().self) ;
-		_DEBUG_ASSERT_ (rbx.empty ()) ;
+		const auto r1x = _CALL_ ([&] () {
+			VAR32 ret ;
+			glGetShaderiv (shader ,GL_COMPILE_STATUS ,&(ret = GL_FALSE)) ;
+			_CALL_IF_ ([&] (BOOL &if_cond) {
+				if (ret != GL_FALSE)
+					return (void) (if_cond = FALSE) ;
+				glGetShaderiv (shader ,GL_INFO_LOG_LENGTH ,&(ret = 0)) ;
+			} ,[&] (BOOL &if_cond) {
+				ret = 0 ;
+			}) ;
+			return std::move (ret) ;
+		}) ;
+		auto rax = String<STRA> (r1x) ;
+		if (rax.size () > 0)
+			glGetShaderInfoLog (shader ,VAR32 (rax.size ()) ,NULL ,rax.raw ().self) ;
+		_DYNAMIC_ASSERT_ (rax.empty ()) ;
 	}
 
 	void attach_programiv (CHAR shader) const {
-		auto rax = VAR32 () ;
-		glGetProgramiv (shader ,GL_LINK_STATUS ,&(rax = GL_FALSE)) ;
-		if (rax == GL_FALSE) {
-			glGetProgramiv (shader ,GL_INFO_LOG_LENGTH ,&(rax = 0)) ;
-		} else {
-			rax = 0 ;
-		}
-		auto rbx = String<STRA> (rax) ;
-		if (rbx.size () > 0)
-			glGetProgramInfoLog (shader ,VAR32 (rbx.size ()) ,NULL ,rbx.raw ().self) ;
-		_DEBUG_ASSERT_ (rbx.empty ()) ;
+		const auto r1x = _CALL_ ([&] () {
+			VAR32 ret ;
+			glGetProgramiv (shader ,GL_LINK_STATUS ,&(ret = GL_FALSE)) ;
+			_CALL_IF_ ([&] (BOOL &if_cond) {
+				if (ret != GL_FALSE)
+					return (void) (if_cond = FALSE) ;
+				glGetProgramiv (shader ,GL_INFO_LOG_LENGTH ,&(ret = 0)) ;
+			} ,[&] (BOOL &if_cond) {
+				ret = 0 ;
+			}) ;
+			return std::move (ret) ;
+		}) ;
+		auto rax = String<STRA> (r1x) ;
+		if (rax.size () > 0)
+			glGetProgramInfoLog (shader ,VAR32 (rax.size ()) ,NULL ,rax.raw ().self) ;
+		_DYNAMIC_ASSERT_ (rax.empty ()) ;
 	}
 
 private:
@@ -266,6 +279,9 @@ private:
 	} ;
 
 public:
+	using NATIVE_TYPE = Pack ;
+
+public:
 	AbstractShader_Sprite_Engine_OPENGL () {
 		_STATIC_ASSERT_ (_SIZEOF_ (REMOVE_CVR_TYPE<decltype (*this)>) == _SIZEOF_ (Interface)) ;
 		_STATIC_ASSERT_ (_ALIGNOF_ (REMOVE_CVR_TYPE<decltype (*this)>) == _ALIGNOF_ (Interface)) ;
@@ -295,19 +311,19 @@ public:
 			_DEBUG_ASSERT_ (me.self != NULL) ;
 			glDeleteTextures (VAR32 (me.size ()) ,me.self) ;
 		}) ;
-		attach_transfer (rax ,bind_vertex (mesh.vertex () ,mesh.element ())) ;
-		attach_transfer (rax ,mesh.texture ()[0]) ;
-		_this = AnyRef<Pack>::make (std::move (rax)) ;
+		transfer_data (rax ,bind_vertex (mesh.vertex () ,mesh.element ())) ;
+		transfer_data (rax ,mesh.texture ()[0]) ;
+		_this = AnyRef<NATIVE_TYPE>::make (std::move (rax)) ;
 	}
 
-	void use_texture (AnyRef<void> &_this ,INDEX texture) const override {
-		auto &r1 = _this.rebind<Pack> ().self ;
+	void active_texture (AnyRef<void> &_this ,INDEX texture) const override {
+		auto &r1 = _this.rebind<NATIVE_TYPE> ().self ;
 		_DYNAMIC_ASSERT_ (texture >= 0 && texture < r1.mVTO->size ()) ;
 		r1.mTexture = texture ;
 	}
 
 	void draw (const AnyRef<void> &_this) const override {
-		auto &r1 = _this.rebind<Pack> ().self ;
+		auto &r1 = _this.rebind<NATIVE_TYPE> ().self ;
 		glBindVertexArray (r1.mVAO) ;
 		if (r1.mTexture != VAR_NONE) {
 			glActiveTexture (GL_TEXTURE_2D) ;
@@ -363,7 +379,7 @@ private:
 		return std::move (ret) ;
 	}
 
-	void attach_transfer (Pack &_self ,const Array<ARRAY1<ARRAY3<VAL32>>> &vbo) const {
+	void transfer_data (Pack &_self ,const Array<ARRAY1<ARRAY3<VAL32>>> &vbo) const {
 		using VERTEX = ARRAY3<VAL32> ;
 		_self.mSize = vbo.length () * vbo[0].length () ;
 		_self.mMode = GL_POINTS ;
@@ -375,7 +391,7 @@ private:
 		glBindVertexArray (0) ;
 	}
 
-	void attach_transfer (Pack &_self ,const Array<ARRAY2<ARRAY3<VAL32>>> &vbo) const {
+	void transfer_data (Pack &_self ,const Array<ARRAY2<ARRAY3<VAL32>>> &vbo) const {
 		using VERTEX = ARRAY3<VAL32> ;
 		_self.mSize = vbo.length () * vbo[0].length () ;
 		_self.mMode = GL_LINES ;
@@ -387,7 +403,7 @@ private:
 		glBindVertexArray (0) ;
 	}
 
-	void attach_transfer (Pack &_self ,const Array<ARRAY2<ARRAY5<VAL32>>> &vbo) const {
+	void transfer_data (Pack &_self ,const Array<ARRAY2<ARRAY5<VAL32>>> &vbo) const {
 		using VERTEX = ARRAY5<VAL32> ;
 		_self.mSize = vbo.length () * vbo[0].length () ;
 		_self.mMode = GL_LINES ;
@@ -401,7 +417,7 @@ private:
 		glBindVertexArray (0) ;
 	}
 
-	void attach_transfer (Pack &_self ,const Array<ARRAY3<ARRAY3<VAL32>>> &vbo) const {
+	void transfer_data (Pack &_self ,const Array<ARRAY3<ARRAY3<VAL32>>> &vbo) const {
 		using VERTEX = ARRAY3<VAL32> ;
 		_self.mSize = vbo.length () * vbo[0].length () ;
 		_self.mMode = GL_TRIANGLES ;
@@ -413,7 +429,7 @@ private:
 		glBindVertexArray (0) ;
 	}
 
-	void attach_transfer (Pack &_self ,const Array<ARRAY3<ARRAY5<VAL32>>> &vbo) const {
+	void transfer_data (Pack &_self ,const Array<ARRAY3<ARRAY5<VAL32>>> &vbo) const {
 		using VERTEX = ARRAY5<VAL32> ;
 		_self.mSize = vbo.length () * vbo[0].length () ;
 		_self.mMode = GL_TRIANGLES ;
@@ -427,7 +443,7 @@ private:
 		glBindVertexArray (0) ;
 	}
 
-	void attach_transfer (Pack &_self ,const Array<ARRAY3<ARRAY8<VAL32>>> &vbo) const {
+	void transfer_data (Pack &_self ,const Array<ARRAY3<ARRAY8<VAL32>>> &vbo) const {
 		using VERTEX = ARRAY8<VAL32> ;
 		_self.mSize = vbo.length () * vbo[0].length () ;
 		_self.mMode = GL_TRIANGLES ;
@@ -443,7 +459,7 @@ private:
 		glBindVertexArray (0) ;
 	}
 
-	void attach_transfer (Pack &_self ,const Array<ARRAY4<ARRAY3<VAL32>>> &vbo) const {
+	void transfer_data (Pack &_self ,const Array<ARRAY4<ARRAY3<VAL32>>> &vbo) const {
 		using VERTEX = ARRAY3<VAL32> ;
 		_self.mSize = vbo.length () * vbo[0].length () ;
 		_self.mMode = GL_QUADS ;
@@ -455,7 +471,7 @@ private:
 		glBindVertexArray (0) ;
 	}
 
-	void attach_transfer (Pack &_self ,const Array<ARRAY4<ARRAY5<VAL32>>> &vbo) const {
+	void transfer_data (Pack &_self ,const Array<ARRAY4<ARRAY5<VAL32>>> &vbo) const {
 		using VERTEX = ARRAY5<VAL32> ;
 		_self.mSize = vbo.length () * vbo[0].length () ;
 		_self.mMode = GL_QUADS ;
@@ -469,7 +485,7 @@ private:
 		glBindVertexArray (0) ;
 	}
 
-	void attach_transfer (Pack &_self ,const Array<ARRAY4<ARRAY8<VAL32>>> &vbo) const {
+	void transfer_data (Pack &_self ,const Array<ARRAY4<ARRAY8<VAL32>>> &vbo) const {
 		using VERTEX = ARRAY8<VAL32> ;
 		_self.mSize = vbo.length () * vbo[0].length () ;
 		_self.mMode = GL_QUADS ;
@@ -485,7 +501,7 @@ private:
 		glBindVertexArray (0) ;
 	}
 
-	void attach_transfer (Pack &_self ,const SoftImage<COLOR_BGR> &image) const {
+	void transfer_data (Pack &_self ,const SoftImage<COLOR_BGR> &image) const {
 		_self.mTexture = 0 ;
 		glBindVertexArray (_self.mVAO) ;
 		glBindTexture (GL_TEXTURE_2D ,_self.mVTO.self[0]) ;

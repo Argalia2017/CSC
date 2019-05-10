@@ -16,59 +16,57 @@
 namespace CSC {
 #ifdef __CSC_DEPRECATED__
 inline namespace S {
-inline import DEF<AutoBuffer<BYTE> (const String<STR> &file) popping> _LOADFILE_ ;
+inline imports DEF<AutoBuffer<BYTE> (const String<STR> &file) popping> _LOADFILE_ ;
 
-inline import DEF<void (const String<STR> &file ,const PhanBuffer<BYTE> &data) popping> _LOADFILE_ ;
+inline imports DEF<void (const String<STR> &file ,const PhanBuffer<BYTE> &data) popping> _LOADFILE_ ;
 
-inline import DEF<void (const String<STR> &file ,const PhanBuffer<const BYTE> &data)> _SAVEFILE_ ;
+inline imports DEF<void (const String<STR> &file ,const PhanBuffer<const BYTE> &data)> _SAVEFILE_ ;
 
-inline import DEF<PhanBuffer<const BYTE> (FLAG resource) popping> _LOADASSETFILE_ ;
+inline imports DEF<PhanBuffer<const BYTE> (FLAG resource) popping> _LOADASSETFILE_ ;
 
-inline import DEF<BOOL (const String<STR> &file) popping> _FINDFILE_ ;
+inline imports DEF<BOOL (const String<STR> &file) popping> _FINDFILE_ ;
 
-inline import DEF<void (const String<STR> &file)> _ERASEFILE_ ;
+inline imports DEF<void (const String<STR> &file)> _ERASEFILE_ ;
 
-inline import DEF<void (const String<STR> &dst_file ,const String<STR> &src_file)> _COPYFILE_ ;
+inline imports DEF<void (const String<STR> &dst_file ,const String<STR> &src_file)> _COPYFILE_ ;
 
-inline import DEF<void (const String<STR> &dst_file ,const String<STR> &src_file)> _MOVEFILE_ ;
+inline imports DEF<void (const String<STR> &dst_file ,const String<STR> &src_file)> _MOVEFILE_ ;
 
-inline import DEF<void (const String<STR> &dst_file ,const String<STR> &src_file)> _LINKFILE_ ;
+inline imports DEF<void (const String<STR> &dst_file ,const String<STR> &src_file)> _LINKFILE_ ;
 
-inline import DEF<BOOL (const String<STR> &file1 ,const String<STR> &file2) popping> _IDENTICALFILE_ ;
+inline imports DEF<BOOL (const String<STR> &file1 ,const String<STR> &file2) popping> _IDENTICALFILE_ ;
 
-inline import DEF<String<STR> (const String<STR> &file)> _PARSEFILEPATH_ ;
+inline imports DEF<String<STR> (const String<STR> &file)> _PARSEFILEPATH_ ;
 
-inline import DEF<String<STR> (const String<STR> &file)> _PARSEFILENAME_ ;
+inline imports DEF<String<STR> (const String<STR> &file)> _PARSEFILENAME_ ;
 
-inline import DEF<Queue<String<STR>> (const String<STR> &file)> _DECOUPLEPATHNAME_ ;
+inline imports DEF<Queue<String<STR>> (const String<STR> &file)> _DECOUPLEPATHNAME_ ;
 
-inline import DEF<String<STR> ()> _WORKINGPATH_ ;
+inline imports DEF<String<STR> ()> _WORKINGPATH_ ;
 
-inline import DEF<String<STR> (const String<STR> &path)> _ABSOLUTEPATH_ ;
+inline imports DEF<String<STR> (const String<STR> &path)> _ABSOLUTEPATH_ ;
 
-inline import DEF<String<STR> (const String<STR> &path ,const String<STR> &file)> _RELATIVEPATHNAME_ ;
+inline imports DEF<String<STR> (const String<STR> &path ,const String<STR> &file)> _RELATIVEPATHNAME_ ;
 
-inline import DEF<String<STR> ()> _MODULEFILEPATH_ ;
+inline imports DEF<String<STR> ()> _MODULEFILEPATH_ ;
 
-inline import DEF<String<STR> ()> _MODULEFILENAME_ ;
+inline imports DEF<String<STR> ()> _MODULEFILENAME_ ;
 
-inline import DEF<BOOL (const String<STR> &dire) popping> _FINDDIRECTORY_ ;
+inline imports DEF<BOOL (const String<STR> &dire) popping> _FINDDIRECTORY_ ;
 
-inline import DEF<void (const String<STR> &dire)> _ERASEDIRECTORY_ ;
+inline imports DEF<void (const String<STR> &dire)> _BUILDDIRECTORY_ ;
 
-inline import DEF<void (const String<STR> &dire)> _CLEARDIRECTORY_ ;
+inline imports DEF<void (const String<STR> &dire)> _ERASEDIRECTORY_ ;
 
-inline import DEF<void (const String<STR> &dire)> _BUILDDIRECTORY_ ;
+inline imports DEF<void (const String<STR> &dire)> _CLEARDIRECTORY_ ;
 
-inline import DEF<void (const String<STR> &dire ,const Function<void (const String<STR> &)> &file_proc ,const Function<void (const String<STR> &)> &dire_proc) popping> _ENUMDIRECTORY_ ;
+inline imports DEF<void (const String<STR> &dire ,const Function<void (const String<STR> &)> &file_proc ,const Function<void (const String<STR> &)> &dire_proc) popping> _ENUMDIRECTORY_ ;
 } ;
 #endif
 
 class StreamLoader {
 private:
 	class Implement ;
-
-private:
 	AnyRef<void> mThis ;
 
 public:
@@ -78,15 +76,15 @@ public:
 
 	void read (const PhanBuffer<BYTE> &data) popping ;
 
-	template <class _ARG>
-	void read (Buffer<BYTE ,_ARG> &data) popping {
+	template <class _ARG1>
+	void read (Buffer<BYTE ,_ARG1> &data) popping {
 		read (PhanBuffer<BYTE>::make (data)) ;
 	}
 
 	void write (const PhanBuffer<const BYTE> &data) ;
 
-	template <class _ARG>
-	void write (const Buffer<BYTE ,_ARG> &data) {
+	template <class _ARG1>
+	void write (const Buffer<BYTE ,_ARG1> &data) {
 		write (PhanBuffer<const BYTE>::make (data)) ;
 	}
 
@@ -96,8 +94,6 @@ public:
 class BufferLoader {
 private:
 	class Implement ;
-
-private:
 	AnyRef<void> mThis ;
 
 public:
@@ -120,9 +116,7 @@ public:
 
 class FileSystemService final :private Interface {
 private:
-	class Implement ;
-
-	export struct Abstract :public Interface {
+	exports struct Abstract :public Interface {
 		virtual AutoBuffer<BYTE> load_file (const String<STR> &file) popping = 0 ;
 		virtual void load_file (const String<STR> &file ,const PhanBuffer<BYTE> &data) popping = 0 ;
 		virtual void save_file (const String<STR> &file ,const PhanBuffer<const BYTE> &data) = 0 ;
@@ -141,16 +135,17 @@ private:
 		virtual String<STR> module_file_path () const = 0 ;
 		virtual String<STR> module_file_name () const = 0 ;
 		virtual BOOL find_directory (const String<STR> &dire) popping = 0 ;
+		virtual void build_directory (const String<STR> &dire) = 0 ;
 		virtual void erase_directory (const String<STR> &dire) = 0 ;
 		virtual void clear_directory (const String<STR> &dire) = 0 ;
-		virtual void build_directory (const String<STR> &dire) = 0 ;
 		virtual void enum_directory (const String<STR> &dire ,const Function<void (const String<STR> &)> &file_proc ,const Function<void (const String<STR> &)> &dire_proc) popping = 0 ;
 	} ;
 
 private:
+	class Implement ;
 	friend Singleton<FileSystemService> ;
 	Monostate<std::recursive_mutex> mMutex ;
-	HolderRef<Abstract> mThis ;
+	StrongRef<Abstract> mThis ;
 
 public:
 	AutoBuffer<BYTE> load_file (const String<STR> &file) popping {
@@ -163,8 +158,8 @@ public:
 		mThis->load_file (file ,data) ;
 	}
 
-	template <class _ARG>
-	void load_file (const String<STR> &file ,Buffer<BYTE ,_ARG> &data) {
+	template <class _ARG1>
+	void load_file (const String<STR> &file ,Buffer<BYTE ,_ARG1> &data) {
 		load_file (file ,PhanBuffer<BYTE>::make (data)) ;
 	}
 
@@ -173,8 +168,8 @@ public:
 		mThis->save_file (file ,data) ;
 	}
 
-	template <class _ARG>
-	void save_file (const String<STR> &file ,const Buffer<BYTE ,_ARG> &data) {
+	template <class _ARG1>
+	void save_file (const String<STR> &file ,const Buffer<BYTE ,_ARG1> &data) {
 		save_file (file ,PhanBuffer<const BYTE>::make (data)) ;
 	}
 
@@ -253,6 +248,11 @@ public:
 		return mThis->find_directory (dire) ;
 	}
 
+	void build_directory (const String<STR> &dire) {
+		ScopedGuard<std::recursive_mutex> ANONYMOUS (mMutex) ;
+		mThis->build_directory (dire) ;
+	}
+
 	void erase_directory (const String<STR> &dire) {
 		ScopedGuard<std::recursive_mutex> ANONYMOUS (mMutex) ;
 		mThis->erase_directory (dire) ;
@@ -261,11 +261,6 @@ public:
 	void clear_directory (const String<STR> &dire) {
 		ScopedGuard<std::recursive_mutex> ANONYMOUS (mMutex) ;
 		mThis->clear_directory (dire) ;
-	}
-
-	void build_directory (const String<STR> &dire) {
-		ScopedGuard<std::recursive_mutex> ANONYMOUS (mMutex) ;
-		mThis->build_directory (dire) ;
 	}
 
 	void enum_directory (const String<STR> &dire ,const Function<void (const String<STR> &)> &file_proc ,const Function<void (const String<STR> &)> &dire_proc) popping {

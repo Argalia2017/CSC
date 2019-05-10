@@ -8,13 +8,13 @@
 #undef self
 #undef implicit
 #undef popping
-#undef import
-#undef export
+#undef imports
+#undef exports
 #pragma pop_macro ("self")
 #pragma pop_macro ("implicit")
 #pragma pop_macro ("popping")
-#pragma pop_macro ("import")
-#pragma pop_macro ("export")
+#pragma pop_macro ("imports")
+#pragma pop_macro ("exports")
 #endif
 
 #ifdef __CSC_DEPRECATED__
@@ -43,18 +43,21 @@
 #pragma push_macro ("self")
 #pragma push_macro ("implicit")
 #pragma push_macro ("popping")
-#pragma push_macro ("import")
-#pragma push_macro ("export")
+#pragma push_macro ("imports")
+#pragma push_macro ("exports")
 #define self to ()
 #define implicit
 #define popping
-#define import extern
-#define export
+#define imports extern
+#define exports
 #endif
 
 namespace CSC {
 template <class>
 class AbstractDatabase_Engine_MYSQL :public AbstractDatabase::Abstract {
+public:
+	using NATIVE_TYPE = UniqueRef<MYSQL> ;
+
 public:
 	AbstractDatabase_Engine_MYSQL () {
 		_STATIC_ASSERT_ (_SIZEOF_ (REMOVE_CVR_TYPE<decltype (*this)>) == _SIZEOF_ (Interface)) ;
@@ -67,7 +70,7 @@ public:
 		} ,[] (MYSQL &me) {
 			mysql_close (&me) ;
 		}) ;
-		_this = AnyRef<UniqueRef<MYSQL>>::make (std::move (rax)) ;
+		_this = AnyRef<NATIVE_TYPE>::make (std::move (rax)) ;
 	}
 
 private:

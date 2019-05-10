@@ -61,41 +61,43 @@ using namespace Microsoft::VisualStudio::CppUnitTestFramework ;
 #endif
 
 #ifndef TEST_CLASS
-#define TEST_CLASS(arg) class arg
+#define TEST_CLASS(arg1) class arg1
 #endif
 
 #ifndef TEST_METHOD
-#define TEST_METHOD(arg) void arg () const
+#define TEST_METHOD(arg1) void arg1 () const
 #endif
 
 #if defined (__CSC_TARGET_EXE__) || defined (__CSC_TARGET_DLL__)
 namespace CSC {
-inline export PTR<NONE> GlobalStatic<void>::unique_atomic_address (PTR<NONE> expect ,PTR<NONE> data) popping {
-	static Monostate<std::atomic<PTR<NONE>> ,void> mInstance (&_NULL_<NONE> ()) ;
-	mInstance.self.compare_exchange_strong (expect ,data) ;
-	return mInstance.self.load () ;
+inline exports PTR<NONE> GlobalStatic<void>::unique_atomic_address (PTR<NONE> expect ,PTR<NONE> data) popping {
+	auto &r1 = _CACHE_ ([] () {
+		return SharedRef<std::atomic<PTR<NONE>>>::make (&_NULL_<NONE> ()) ;
+	}) ;
+	r1->compare_exchange_strong (expect ,data) ;
+	return r1->load () ;
 }
 } ;
 
 namespace CSC {
 template <>
-inline export ConsoleService &Singleton<ConsoleService>::instance () {
-	return GlobalStatic<ARGV<Singleton<ConsoleService>>>::echo (NULL) ;
+inline exports ConsoleService &Singleton<ConsoleService>::instance () {
+	return GlobalStatic<ARGV<Singleton<ConsoleService>>>::unique () ;
 }
 } ;
 
 #ifdef __CSC_SYSTEM_WINDOWS__
 namespace CSC {
 template <>
-inline export NetworkService &Singleton<NetworkService>::instance () {
-	return GlobalStatic<ARGV<Singleton<NetworkService>>>::echo (NULL) ;
+inline exports NetworkService &Singleton<NetworkService>::instance () {
+	return GlobalStatic<ARGV<Singleton<NetworkService>>>::unique () ;
 }
 } ;
 
 namespace CSC {
 template <>
-inline export DebuggerService &Singleton<DebuggerService>::instance () {
-	return GlobalStatic<ARGV<Singleton<DebuggerService>>>::echo (NULL) ;
+inline exports DebuggerService &Singleton<DebuggerService>::instance () {
+	return GlobalStatic<ARGV<Singleton<DebuggerService>>>::unique () ;
 }
 } ;
 #endif
@@ -107,7 +109,7 @@ using namespace CSC ;
 
 namespace UNITTEST {
 #ifdef __CSC_UNITTEST__
-inline export void _UNITTEST_ASSERT_HANDLER_ (const ARR<STR> &what) {
+inline exports void _UNITTEST_ASSERT_HANDLER_ (const ARR<STR> &what) {
 #ifdef MS_CPP_UNITTESTFRAMEWORK
 #ifdef __CSC_STRING__
 	Assert::Fail (_BUILDSTRS_<STRW> (what).raw ().self) ;

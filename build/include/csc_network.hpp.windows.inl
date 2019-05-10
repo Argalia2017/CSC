@@ -8,13 +8,13 @@
 #undef self
 #undef implicit
 #undef popping
-#undef import
-#undef export
+#undef imports
+#undef exports
 #pragma pop_macro ("self")
 #pragma pop_macro ("implicit")
 #pragma pop_macro ("popping")
-#pragma pop_macro ("import")
-#pragma pop_macro ("export")
+#pragma pop_macro ("imports")
+#pragma pop_macro ("exports")
 #endif
 
 #ifndef _INC_WINDOWS
@@ -49,27 +49,27 @@
 #pragma push_macro ("self")
 #pragma push_macro ("implicit")
 #pragma push_macro ("popping")
-#pragma push_macro ("import")
-#pragma push_macro ("export")
+#pragma push_macro ("imports")
+#pragma push_macro ("exports")
 #define self to ()
 #define implicit
 #define popping
-#define import extern
-#define export
+#define imports extern
+#define exports
 #endif
 
 namespace CSC {
 inline namespace NETWORK {
-inline TIMEVAL _inline_SOCKET_CVTTO_TIMEVAL_ (LENGTH arg) {
-	_DEBUG_ASSERT_ (arg >= 0) ;
-	return TIMEVAL {VAR32 (arg / 1000) ,VAR32 ((arg % 1000) * 1000)} ;
+inline TIMEVAL _inline_SOCKET_CVTTO_TIMEVAL_ (LENGTH src) {
+	_DEBUG_ASSERT_ (src >= 0) ;
+	return TIMEVAL {VAR32 (src / 1000) ,VAR32 ((src % 1000) * 1000)} ;
 }
 
-inline String<STRU8> _inline_SOCKET_CVTTO_IPV4S_ (const SOCKADDR &arg) {
+inline String<STRU8> _inline_SOCKET_CVTTO_IPV4S_ (const SOCKADDR &src) {
 	_STATIC_ASSERT_ (_SIZEOF_ (SOCKADDR) == _SIZEOF_ (SOCKADDR_IN)) ;
 	const auto r1x = _CALL_ ([&] () {
 		TEMP<SOCKADDR_IN> ret ;
-		_MEMCOPY_ (PTRTOARR[&_ZERO_ (ret).unused[0]] ,_CAST_<BYTE[_SIZEOF_ (SOCKADDR)]> (arg)) ;
+		_MEMCOPY_ (PTRTOARR[&_ZERO_ (ret).unused[0]] ,_CAST_<BYTE[_SIZEOF_ (SOCKADDR)]> (src)) ;
 		return std::move (_CAST_<SOCKADDR_IN> (ret)) ;
 	}) ;
 	const auto r2x = _CALL_ ([&] () {
@@ -81,14 +81,14 @@ inline String<STRU8> _inline_SOCKET_CVTTO_IPV4S_ (const SOCKADDR &arg) {
 	return _BUILDIPV4S_<STRU8> (r2x) ;
 }
 
-inline SOCKADDR _inline_SOCKET_CVTTO_SOCKETADDR_ (const String<STRU8> &arg) {
+inline SOCKADDR _inline_SOCKET_CVTTO_SOCKETADDR_ (const String<STRU8> &src) {
 	_STATIC_ASSERT_ (_SIZEOF_ (SOCKADDR) == _SIZEOF_ (SOCKADDR_IN)) ;
 	TEMP<SOCKADDR> ret ;
 	const auto r1x = _CALL_ ([&] () {
 		SOCKADDR_IN ret ;
 		_ZERO_ (ret) ;
 		ret.sin_family = AF_INET ;
-		const auto r2x = _PARSEIPV4S_ (arg) ;
+		const auto r2x = _PARSEIPV4S_ (src) ;
 		ret.sin_port = _CAST_<EndianBytes<WORD>> (r2x.P1).merge () ;
 		ret.sin_addr.S_un.S_addr = _CAST_<EndianBytes<CHAR>> (r2x.P2).merge () ;
 		return std::move (ret) ;
@@ -166,18 +166,7 @@ public:
 			return ;
 		//@info: state of 'this' has been changed
 		_DYNAMIC_ASSERT_ (r1x >= 0 || errno == 0 || errno == EINPROGRESS || errno == EWOULDBLOCK) ;
-		const auto r2x = _inline_SOCKET_SELECT_ (mSocket ,DEFAULT_TIMEOUT_SIZE::value) ;
-		//@info: state of 'this' has been changed
-		_DYNAMIC_ASSERT_ (FD_ISSET (mSocket ,&r2x[1]) != 0) ;
-		auto rbx = PACK<STRA[_SIZEOF_ (VAR32)] ,VAR32> () ;
-		::getsockopt (mSocket ,SOL_SOCKET ,SO_ERROR ,rbx.P1 ,&(rbx.P2 = VAR32 (_SIZEOF_ (VAR32)))) ;
-		const auto r4x = _CALL_ ([&] () {
-			TEMP<VAR32> ret ;
-			_MEMCOPY_ (PTRTOARR[&_ZERO_ (ret).unused[0]] ,_CAST_<BYTE[_SIZEOF_ (VAR32)]> (rbx.P1)) ;
-			return std::move (_CAST_<VAR32> (ret)) ;
-		}) ;
-		//@info: state of 'this' has been changed
-		_DYNAMIC_ASSERT_ (r4x == 0) ;
+		link_confirm () ;
 	}
 
 	void modify_buffer (LENGTH rcv_len ,LENGTH snd_len) {
@@ -193,8 +182,8 @@ public:
 		const auto r1x = _inline_SOCKET_CVTTO_TIMEVAL_ (DEFAULT_TIMEOUT_SIZE::value) ;
 		::setsockopt (mSocket ,SOL_SOCKET ,SO_RCVTIMEO ,_CAST_<STRA[_SIZEOF_ (TIMEVAL)]> (r1x) ,VAR32 (_SIZEOF_ (TIMEVAL))) ;
 		const auto r2x = ::recv (mSocket ,_LOAD_<ARR<STRA>> (data.self) ,VAR32 (data.size ()) ,0) ;
-		const auto r3x = _XVALUE_<const PACK<STRA[_SIZEOF_ (TIMEVAL)]> &> ({0}) ;
-		::setsockopt (mSocket ,SOL_SOCKET ,SO_RCVTIMEO ,r3x.P1 ,VAR32 (_SIZEOF_ (TIMEVAL))) ;
+		const auto r3x = _inline_SOCKET_CVTTO_TIMEVAL_ (0) ;
+		::setsockopt (mSocket ,SOL_SOCKET ,SO_RCVTIMEO ,_CAST_<STRA[_SIZEOF_ (TIMEVAL)]> (r3x) ,VAR32 (_SIZEOF_ (TIMEVAL))) ;
 		//@info: state of 'this' has been changed
 		_DYNAMIC_ASSERT_ (r2x >= 0 || errno == 0 || errno == EINPROGRESS || errno == EWOULDBLOCK) ;
 		_DYNAMIC_ASSERT_ (r2x == data.size ()) ;
@@ -204,8 +193,8 @@ public:
 		const auto r1x = _inline_SOCKET_CVTTO_TIMEVAL_ (timeout) ;
 		::setsockopt (mSocket ,SOL_SOCKET ,SO_RCVTIMEO ,_CAST_<STRA[_SIZEOF_ (TIMEVAL)]> (r1x) ,VAR32 (_SIZEOF_ (TIMEVAL))) ;
 		it = ::recv (mSocket ,_LOAD_<ARR<STRA>> (data.self) ,VAR32 (data.size ()) ,0) ;
-		const auto r2x = _XVALUE_<const PACK<STRA[_SIZEOF_ (TIMEVAL)]> &> ({0}) ;
-		::setsockopt (mSocket ,SOL_SOCKET ,SO_RCVTIMEO ,r2x.P1 ,VAR32 (_SIZEOF_ (TIMEVAL))) ;
+		const auto r2x = _inline_SOCKET_CVTTO_TIMEVAL_ (0) ;
+		::setsockopt (mSocket ,SOL_SOCKET ,SO_RCVTIMEO ,_CAST_<STRA[_SIZEOF_ (TIMEVAL)]> (r2x) ,VAR32 (_SIZEOF_ (TIMEVAL))) ;
 		//@info: state of 'this' has been changed
 		_DYNAMIC_ASSERT_ (it >= 0 || errno == 0 || errno == EINPROGRESS || errno == EWOULDBLOCK) ;
 	}
@@ -214,14 +203,29 @@ public:
 		const auto r1x = _inline_SOCKET_CVTTO_TIMEVAL_ (DEFAULT_TIMEOUT_SIZE::value) ;
 		::setsockopt (mSocket ,SOL_SOCKET ,SO_SNDTIMEO ,_CAST_<STRA[_SIZEOF_ (TIMEVAL)]> (r1x) ,VAR32 (_SIZEOF_ (TIMEVAL))) ;
 		const auto r2x = ::send (mSocket ,_LOAD_<ARR<STRA>> (data.self) ,VAR32 (data.size ()) ,0) ;
-		const auto r3x = _XVALUE_<const PACK<STRA[_SIZEOF_ (TIMEVAL)]> &> ({0}) ;
-		::setsockopt (mSocket ,SOL_SOCKET ,SO_SNDTIMEO ,r3x.P1 ,VAR32 (_SIZEOF_ (TIMEVAL))) ;
+		const auto r3x = _inline_SOCKET_CVTTO_TIMEVAL_ (0) ;
+		::setsockopt (mSocket ,SOL_SOCKET ,SO_SNDTIMEO ,_CAST_<STRA[_SIZEOF_ (TIMEVAL)]> (r3x) ,VAR32 (_SIZEOF_ (TIMEVAL))) ;
 		//@info: state of 'this' has been changed
 		_DYNAMIC_ASSERT_ (r2x >= 0 || errno == 0 || errno == EINPROGRESS || errno == EWOULDBLOCK) ;
 		_DYNAMIC_ASSERT_ (r2x == data.size ()) ;
 	}
 
 private:
+	void link_confirm () {
+		const auto r1x = _inline_SOCKET_SELECT_ (mSocket ,DEFAULT_TIMEOUT_SIZE::value) ;
+		//@info: state of 'this' has been changed
+		_DYNAMIC_ASSERT_ (FD_ISSET (mSocket ,&r1x[1]) != 0) ;
+		auto rax = PACK<STRA[_SIZEOF_ (VAR32)] ,VAR32> () ;
+		::getsockopt (mSocket ,SOL_SOCKET ,SO_ERROR ,_ZERO_ (rax.P1) ,&(rax.P2 = VAR32 (_SIZEOF_ (VAR32)))) ;
+		const auto r2x = _CALL_ ([&] () {
+			TEMP<VAR32> ret ;
+			_MEMCOPY_ (PTRTOARR[&_ZERO_ (ret).unused[0]] ,_CAST_<BYTE[_SIZEOF_ (VAR32)]> (rax.P1)) ;
+			return std::move (_CAST_<VAR32> (ret)) ;
+		}) ;
+		//@info: state of 'this' has been changed
+		_DYNAMIC_ASSERT_ (r2x == 0) ;
+	}
+
 	void friend_accept (UniqueRef<SOCKET> &&socket) popping {
 		mSocket = std::move (socket) ;
 		auto rax = PACK<SOCKADDR ,VAR32> () ;
@@ -231,35 +235,35 @@ private:
 	}
 } ;
 
-inline export TCPSocket::TCPSocket (const String<STRU8> &addr) {
+inline exports TCPSocket::TCPSocket (const String<STRU8> &addr) {
 	mThis = AnyRef<Implement>::make (addr) ;
 }
 
-inline export String<STRU8> TCPSocket::sock_name () const {
+inline exports String<STRU8> TCPSocket::sock_name () const {
 	return mThis.rebind<Implement> ()->sock_name () ;
 }
 
-inline export String<STRU8> TCPSocket::peer_sock_name () const {
+inline exports String<STRU8> TCPSocket::peer_sock_name () const {
 	return mThis.rebind<Implement> ()->peer_sock_name () ;
 }
 
-inline export void TCPSocket::link (const String<STRU8> &addr) {
+inline exports void TCPSocket::link (const String<STRU8> &addr) {
 	mThis.rebind<Implement> ()->link (addr) ;
 }
 
-inline export void TCPSocket::modify_buffer (LENGTH rcv_len ,LENGTH snd_len) {
+inline exports void TCPSocket::modify_buffer (LENGTH rcv_len ,LENGTH snd_len) {
 	mThis.rebind<Implement> ()->modify_buffer (rcv_len ,snd_len) ;
 }
 
-inline export void TCPSocket::read (const PhanBuffer<BYTE> &data) popping {
+inline exports void TCPSocket::read (const PhanBuffer<BYTE> &data) popping {
 	mThis.rebind<Implement> ()->read (data) ;
 }
 
-inline export void TCPSocket::read (const PhanBuffer<BYTE> &data ,INDEX &it ,LENGTH timeout) popping {
+inline exports void TCPSocket::read (const PhanBuffer<BYTE> &data ,INDEX &it ,LENGTH timeout) popping {
 	mThis.rebind<Implement> ()->read (data ,it ,timeout) ;
 }
 
-inline export void TCPSocket::write (const PhanBuffer<const BYTE> &data) {
+inline exports void TCPSocket::write (const PhanBuffer<const BYTE> &data) {
 	mThis.rebind<Implement> ()->write (data) ;
 }
 
@@ -303,15 +307,15 @@ public:
 	}
 } ;
 
-inline export TCPSocket::Listener::Listener (const String<STRU8> &addr) {
+inline exports TCPSocket::Listener::Listener (const String<STRU8> &addr) {
 	mThis = AnyRef<Implement>::make (addr) ;
 }
 
-inline export void TCPSocket::Listener::listen () {
+inline exports void TCPSocket::Listener::listen () {
 	mThis.rebind<Implement> ()->listen () ;
 }
 
-inline export void TCPSocket::Listener::accept (TCPSocket &linker) {
+inline exports void TCPSocket::Listener::accept (TCPSocket &linker) {
 	mThis.rebind<Implement> ()->accept (linker) ;
 }
 
@@ -389,38 +393,38 @@ public:
 	}
 } ;
 
-inline export UDPSocket::UDPSocket (const String<STRU8> &addr) {
+inline exports UDPSocket::UDPSocket (const String<STRU8> &addr) {
 	mThis = AnyRef<Implement>::make (addr) ;
 }
 
-inline export String<STRU8> UDPSocket::sock_name () const {
+inline exports String<STRU8> UDPSocket::sock_name () const {
 	return mThis.rebind<Implement> ()->sock_name () ;
 }
 
-inline export String<STRU8> UDPSocket::peer_sock_name () const {
+inline exports String<STRU8> UDPSocket::peer_sock_name () const {
 	return mThis.rebind<Implement> ()->peer_sock_name () ;
 }
 
-inline export void UDPSocket::link (const String<STRU8> &addr) {
+inline exports void UDPSocket::link (const String<STRU8> &addr) {
 	mThis.rebind<Implement> ()->link (addr) ;
 }
 
-inline export void UDPSocket::read (const PhanBuffer<BYTE> &data) popping {
+inline exports void UDPSocket::read (const PhanBuffer<BYTE> &data) popping {
 	mThis.rebind<Implement> ()->read (data) ;
 }
 
-inline export void UDPSocket::read (const PhanBuffer<BYTE> &data ,INDEX &it ,LENGTH timeout) popping {
+inline exports void UDPSocket::read (const PhanBuffer<BYTE> &data ,INDEX &it ,LENGTH timeout) popping {
 	mThis.rebind<Implement> ()->read (data ,it ,timeout) ;
 }
 
-inline export void UDPSocket::write (const PhanBuffer<const BYTE> &data) {
+inline exports void UDPSocket::write (const PhanBuffer<const BYTE> &data) {
 	mThis.rebind<Implement> ()->write (data) ;
 }
 
 class NetworkService::Implement final :private NetworkService::Abstract {
 private:
 	friend NetworkService ;
-	friend HolderRef<Abstract> ;
+	friend StrongRef<Implement> ;
 	UniqueRef<void> mService ;
 
 public:
@@ -452,7 +456,7 @@ public:
 	}
 } ;
 
-inline export NetworkService::NetworkService () {
-	mThis = HolderRef<Abstract> (_NULL_<const ARGV<Implement>> ()) ;
+inline exports NetworkService::NetworkService () {
+	mThis = StrongRef<Implement>::make () ;
 }
 } ;

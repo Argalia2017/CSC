@@ -26,7 +26,7 @@ public:
 } ;
 
 #ifdef __CSC_TARGET_EXE__
-export int main () {
+exports int main () noexcept popping {
 	UNITTEST_MAIN ().TEST_MAIN () ;
 	return 0 ;
 }

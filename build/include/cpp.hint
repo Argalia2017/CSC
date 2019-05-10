@@ -2,9 +2,9 @@
 
 #define self
 #define implicit
-#define export
-#define import
 #define popping
+#define imports
+#define exports
 
 #define M_DATE
 #define M_TIME

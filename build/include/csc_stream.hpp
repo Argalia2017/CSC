@@ -52,11 +52,11 @@ struct TEXT_TRAITS<ARGC<_SIZEOF_ (STRU32)>> {
 } ;
 } ;
 
-template <class _ARG>
-using BYTE_TRAITS_TYPE = typename U::BYTE_TRAITS<ARGC<_SIZEOF_ (_ARG)>>::TYPE ;
+template <class _ARG1>
+using BYTE_TRAITS_TYPE = typename U::BYTE_TRAITS<ARGC<_SIZEOF_ (_ARG1)>>::TYPE ;
 
-template <class _ARG>
-using TEXT_TRAITS_TYPE = typename U::TEXT_TRAITS<ARGC<_SIZEOF_ (_ARG)>>::TYPE ;
+template <class _ARG1>
+using TEXT_TRAITS_TYPE = typename U::TEXT_TRAITS<ARGC<_SIZEOF_ (_ARG1)>>::TYPE ;
 
 using STRUA = TEXT_TRAITS_TYPE<STRA> ;
 using STRUW = TEXT_TRAITS_TYPE<STRW> ;
@@ -160,13 +160,16 @@ public:
 	}
 
 	void reset () {
+		_DEBUG_ASSERT_ (mHolder.exist ()) ;
 		mRead = 0 ;
 		mWrite = mStream.size () ;
 	}
 
 	void reset (INDEX ib ,INDEX ie) {
-		_DEBUG_ASSERT_ (ib >= 0 && ie >= 0) ;
+		_DEBUG_ASSERT_ (ib >= 0 && ib <= mStream.size ()) ;
+		_DEBUG_ASSERT_ (ie >= 0 && ie <= mStream.size ()) ;
 		_DEBUG_ASSERT_ (ib <= ie) ;
+		_DEBUG_ASSERT_ (mHolder.exist ()) ;
 		mRead = ib ;
 		mWrite = ie ;
 	}
@@ -189,12 +192,14 @@ public:
 	}
 
 	void read (BYTE &data) popping {
-		if (mRead >= mWrite) {
-			data = mHolder->varify_ending_item () ;
-		} else {
+		_CALL_IF_ ([&] (BOOL &if_cond) {
+			if (mRead >= mWrite)
+				return (void) (if_cond = FALSE) ;
 			data = mStream[mRead] ;
 			mRead++ ;
-		}
+		} ,[&] (BOOL &if_cond) {
+			data = mHolder->varify_ending_item () ;
+		}) ;
 	}
 
 	inline ByteReader &operator>> (BYTE &data) popping {
@@ -299,21 +304,21 @@ public:
 		return *this ;
 	}
 
-	template <class _ARG ,LENGTH _VAL>
-	void read (const DEF<_ARG[_VAL]> &data) {
-		_STATIC_ASSERT_ (stl::is_literals<_ARG>::value) ;
-		_STATIC_ASSERT_ (_VAL <= VAR32_MAX) ;
+	template <class _ARG1 ,LENGTH _VAL1>
+	void read (const DEF<_ARG1[_VAL1]> &data) {
+		_STATIC_ASSERT_ (stl::is_literals<_ARG1>::value) ;
+		_STATIC_ASSERT_ (_VAL1 <= VAR32_MAX) ;
 		auto ris = copy () ;
-		auto rax = _ARG () ;
-		for (INDEX i = 0 ; i < _VAL - 1 ; i++) {
+		auto rax = _ARG1 () ;
+		for (INDEX i = 0 ; i < _VAL1 - 1 ; i++) {
 			ris.read (rax) ;
 			_DYNAMIC_ASSERT_ (rax == data[i]) ;
 		}
 		*this = std::move (ris) ;
 	}
 
-	template <class _ARG ,LENGTH _VAL>
-	inline ByteReader &operator>> (const DEF<_ARG[_VAL]> &data) {
+	template <class _ARG1 ,LENGTH _VAL1>
+	inline ByteReader &operator>> (const DEF<_ARG1[_VAL1]> &data) {
 		read (data) ;
 		return *this ;
 	}
@@ -347,13 +352,13 @@ public:
 		return *this ;
 	}
 
-	template <class _ARG ,class = ENABLE_TYPE<std::is_same<decltype (_NULL_<_ARG> ().friend_read (_NULL_<ByteReader> ())) ,void>::value>>
-	void read (_ARG &data) popping {
+	template <class _ARG1 ,class = ENABLE_TYPE<std::is_same<decltype (_NULL_<_ARG1> ().friend_read (_NULL_<ByteReader> ())) ,void>::value>>
+	void read (_ARG1 &data) popping {
 		data.friend_read (*this) ;
 	}
 
-	template <class _ARG ,class = ENABLE_TYPE<std::is_same<decltype (_NULL_<_ARG> ().friend_read (_NULL_<ByteReader> ())) ,void>::value>>
-	inline ByteReader &operator>> (_ARG &data) popping {
+	template <class _ARG1 ,class = ENABLE_TYPE<std::is_same<decltype (_NULL_<_ARG1> ().friend_read (_NULL_<ByteReader> ())) ,void>::value>>
+	inline ByteReader &operator>> (_ARG1 &data) popping {
 		read (data) ;
 		return *this ;
 	}
@@ -431,13 +436,16 @@ public:
 	}
 
 	void reset () {
+		_DEBUG_ASSERT_ (mHolder.exist ()) ;
 		mRead = 0 ;
 		mWrite = 0 ;
 	}
 
 	void reset (INDEX ib ,INDEX ie) {
-		_DEBUG_ASSERT_ (ib >= 0 && ie >= 0) ;
+		_DEBUG_ASSERT_ (ib >= 0 && ib <= mStream.size ()) ;
+		_DEBUG_ASSERT_ (ie >= 0 && ie <= mStream.size ()) ;
 		_DEBUG_ASSERT_ (ib <= ie) ;
+		_DEBUG_ASSERT_ (mHolder.exist ()) ;
 		mRead = ib ;
 		mWrite = ie ;
 	}
@@ -559,16 +567,16 @@ public:
 		return *this ;
 	}
 
-	template <class _ARG ,LENGTH _VAL>
-	void write (const DEF<_ARG[_VAL]> &data) {
-		_STATIC_ASSERT_ (stl::is_literals<_ARG>::value) ;
-		_STATIC_ASSERT_ (_VAL <= VAR32_MAX) ;
-		for (INDEX i = 0 ; i < _VAL - 1 ; i++)
+	template <class _ARG1 ,LENGTH _VAL1>
+	void write (const DEF<_ARG1[_VAL1]> &data) {
+		_STATIC_ASSERT_ (stl::is_literals<_ARG1>::value) ;
+		_STATIC_ASSERT_ (_VAL1 <= VAR32_MAX) ;
+		for (INDEX i = 0 ; i < _VAL1 - 1 ; i++)
 			write (data[i]) ;
 	}
 
-	template <class _ARG ,LENGTH _VAL>
-	inline ByteWriter &operator<< (const DEF<_ARG[_VAL]> &data) {
+	template <class _ARG1 ,LENGTH _VAL1>
+	inline ByteWriter &operator<< (const DEF<_ARG1[_VAL1]> &data) {
 		write (data) ;
 		return *this ;
 	}
@@ -601,13 +609,13 @@ public:
 		return *this ;
 	}
 
-	template <class _ARG ,class = ENABLE_TYPE<std::is_same<decltype (_NULL_<const _ARG> ().friend_write (_NULL_<ByteWriter> ())) ,void>::value>>
-	void write (const _ARG &data) {
+	template <class _ARG1 ,class = ENABLE_TYPE<std::is_same<decltype (_NULL_<const _ARG1> ().friend_write (_NULL_<ByteWriter> ())) ,void>::value>>
+	void write (const _ARG1 &data) {
 		data.friend_write (*this) ;
 	}
 
-	template <class _ARG ,class = ENABLE_TYPE<std::is_same<decltype (_NULL_<const _ARG> ().friend_write (_NULL_<ByteWriter> ())) ,void>::value>>
-	inline ByteWriter &operator<< (const _ARG &data) {
+	template <class _ARG1 ,class = ENABLE_TYPE<std::is_same<decltype (_NULL_<const _ARG1> ().friend_write (_NULL_<ByteWriter> ())) ,void>::value>>
+	inline ByteWriter &operator<< (const _ARG1 &data) {
 		write (data) ;
 		return *this ;
 	}
@@ -644,10 +652,10 @@ private:
 			mEndianFlag = flag ;
 		}
 
-		UNIT convert_endian (const UNIT &arg) const {
+		UNIT convert_endian (const UNIT &item) const {
 			TEMP<UNIT> ret ;
 			const auto r1x = mEndianFlag ? (_XVALUE_<const PTR<void (ARR<BYTE> & ,const DEF<BYTE[_SIZEOF_ (UNIT)]> &)> &> (&_MEMRCOPY_<BYTE ,_SIZEOF_ (UNIT)>)) : (_XVALUE_<const PTR<void (ARR<BYTE> & ,const DEF<BYTE[_SIZEOF_ (UNIT)]> &)> &> (&_MEMCOPY_<BYTE ,_SIZEOF_ (UNIT)>)) ;
-			r1x (PTRTOARR[&_ZERO_ (ret).unused[0]] ,_CAST_<BYTE[_SIZEOF_ (UNIT)]> (arg)) ;
+			r1x (PTRTOARR[&_ZERO_ (ret).unused[0]] ,_CAST_<BYTE[_SIZEOF_ (UNIT)]> (item)) ;
 			return std::move (_CAST_<UNIT> (ret)) ;
 		}
 
@@ -676,7 +684,11 @@ private:
 		}
 
 		BOOL varify_escape_r (const UNIT &item) const {
-			return mEscapeFlag && item == varify_escape_item () ;
+			if (!mEscapeFlag)
+				return FALSE ;
+			if (item != varify_escape_item ())
+				return FALSE ;
+			return TRUE ;
 		}
 
 		void modify_escape (const UNIT &key ,const UNIT &item) {
@@ -696,7 +708,11 @@ private:
 
 		BOOL varify_space (const UNIT &item ,VAR32 group) const {
 			INDEX ix = mSpaceSet.find (item) ;
-			return ix != VAR_NONE && mSpaceSet[ix].item == group ;
+			if (ix == VAR_NONE)
+				return FALSE ;
+			if (mSpaceSet[ix].item != group)
+				return FALSE ;
+			return TRUE ;
 		}
 
 		void modify_space (const UNIT &item) {
@@ -712,9 +728,13 @@ private:
 		}
 
 		BOOL varify_control (const UNIT &item) const {
-			const auto r1x = (item >= UNIT (0) && item <= UNIT (32)) || item == UNIT (127) ;
-			const auto r2x = varify_space (item) ;
-			return r1x && !r2x ;
+			const auto r1x = BOOL (item >= UNIT (0) && item <= UNIT (32)) ;
+			const auto r2x = BOOL (item == UNIT (127)) ;
+			if (!r1x && !r2x)
+				return FALSE ;
+			if (varify_space (item))
+				return FALSE ;
+			return TRUE ;
 		}
 	} ;
 
@@ -757,13 +777,16 @@ public:
 	}
 
 	void reset () {
+		_DEBUG_ASSERT_ (mHolder.exist ()) ;
 		mRead = 0 ;
 		mWrite = mStream.size () ;
 	}
 
 	void reset (INDEX ib ,INDEX ie) {
-		_DEBUG_ASSERT_ (ib >= 0 && ie >= 0) ;
+		_DEBUG_ASSERT_ (ib >= 0 && ib <= mStream.size ()) ;
+		_DEBUG_ASSERT_ (ie >= 0 && ie <= mStream.size ()) ;
 		_DEBUG_ASSERT_ (ib <= ie) ;
+		_DEBUG_ASSERT_ (mHolder.exist ()) ;
 		mRead = ib ;
 		mWrite = ie ;
 	}
@@ -786,23 +809,21 @@ public:
 	}
 
 	void read (UNIT &data) popping {
-		const auto r1x = mRead < mWrite ;
-		for (FOR_ONCE_DO_WHILE_FALSE) {
-			if (!r1x)
-				continue ;
+		_CALL_IF_ ([&] (BOOL &if_cond) {
+			if (mRead >= mWrite)
+				return (void) (if_cond = FALSE) ;
 			data = mHolder->convert_endian (mStream[mRead]) ;
 			const auto r2x = mHolder->varify_escape_r (data) ;
 			mRead++ ;
 			if (!r2x)
-				continue ;
+				return ;
 			_DYNAMIC_ASSERT_ (mRead < mWrite) ;
 			data = mHolder->convert_endian (mStream[mRead]) ;
 			data = mHolder->convert_escape (data) ;
 			mRead++ ;
-		}
-		if (r1x)
-			return ;
-		data = mHolder->varify_ending_item () ;
+		} ,[&] (BOOL &if_cond) {
+			data = mHolder->varify_ending_item () ;
+		}) ;
 	}
 
 	inline TextReader &operator>> (UNIT &data) popping {
@@ -814,8 +835,9 @@ public:
 		auto ris = copy () ;
 		auto rax = UNIT () ;
 		ris.read (rax) ;
-		_DYNAMIC_ASSERT_ (rax == UNIT ('t') || rax == UNIT ('T') || rax == UNIT ('f') || rax == UNIT ('F')) ;
-		if (rax == UNIT ('t')) {
+		_CALL_IF_ ([&] (BOOL &if_cond) {
+			if (rax != UNIT ('t'))
+				return (void) (if_cond = FALSE) ;
 			ris.read (rax) ;
 			_DYNAMIC_ASSERT_ (rax == UNIT ('r')) ;
 			ris.read (rax) ;
@@ -823,7 +845,9 @@ public:
 			ris.read (rax) ;
 			_DYNAMIC_ASSERT_ (rax == UNIT ('e')) ;
 			data = TRUE ;
-		} else if (rax == UNIT ('T')) {
+		} ,[&] (BOOL &if_cond) {
+			if (rax != UNIT ('T'))
+				return (void) (if_cond = FALSE) ;
 			ris.read (rax) ;
 			_DYNAMIC_ASSERT_ (rax == UNIT ('R')) ;
 			ris.read (rax) ;
@@ -831,7 +855,9 @@ public:
 			ris.read (rax) ;
 			_DYNAMIC_ASSERT_ (rax == UNIT ('E')) ;
 			data = TRUE ;
-		} else if (rax == UNIT ('f')) {
+		} ,[&] (BOOL &if_cond) {
+			if (rax != UNIT ('f'))
+				return (void) (if_cond = FALSE) ;
 			ris.read (rax) ;
 			_DYNAMIC_ASSERT_ (rax == UNIT ('a')) ;
 			ris.read (rax) ;
@@ -841,7 +867,9 @@ public:
 			ris.read (rax) ;
 			_DYNAMIC_ASSERT_ (rax == UNIT ('e')) ;
 			data = FALSE ;
-		} else if (rax == UNIT ('F')) {
+		} ,[&] (BOOL &if_cond) {
+			if (rax != UNIT ('F'))
+				return (void) (if_cond = FALSE) ;
 			ris.read (rax) ;
 			_DYNAMIC_ASSERT_ (rax == UNIT ('A')) ;
 			ris.read (rax) ;
@@ -851,7 +879,9 @@ public:
 			ris.read (rax) ;
 			_DYNAMIC_ASSERT_ (rax == UNIT ('E')) ;
 			data = FALSE ;
-		}
+		} ,[&] (BOOL &if_cond) {
+			_DYNAMIC_ASSERT_ (FALSE) ;
+		}) ;
 		*this = std::move (ris) ;
 	}
 
@@ -875,7 +905,7 @@ public:
 		auto ris = copy () ;
 		auto rax = UNIT () ;
 		ris.read (rax) ;
-		const auto r1x = rax == UNIT ('-') ;
+		const auto r1x = BOOL (rax == UNIT ('-')) ;
 		if (rax == UNIT ('+') || rax == UNIT ('-'))
 			ris.read (rax) ;
 		ris.try_read_number (data ,rax) ;
@@ -902,38 +932,49 @@ public:
 		auto ris = copy () ;
 		auto rax = UNIT () ;
 		ris.read (rax) ;
-		const auto r1x = rax == UNIT ('-') ;
+		const auto r1x = BOOL (rax == UNIT ('-')) ;
 		if (rax == UNIT ('+') || rax == UNIT ('-'))
 			ris.read (rax) ;
-		const auto r2x = mHolder->varify_number_item (rax) ;
-		_DYNAMIC_ASSERT_ (rax == UNIT ('i') || rax == UNIT ('I') || rax == UNIT ('n') || rax == UNIT ('N') || r2x) ;
-		if (rax == UNIT ('i')) {
+		_CALL_IF_ ([&] (BOOL &if_cond) {
+			if (rax != UNIT ('i'))
+				return (void) (if_cond = FALSE) ;
 			ris.read (rax) ;
 			_DYNAMIC_ASSERT_ (rax == UNIT ('n')) ;
 			ris.read (rax) ;
 			_DYNAMIC_ASSERT_ (rax == UNIT ('f')) ;
 			data = VAL64_INF ;
-		} else if (rax == UNIT ('I')) {
+		} ,[&] (BOOL &if_cond) {
+			if (rax != UNIT ('I'))
+				return (void) (if_cond = FALSE) ;
 			ris.read (rax) ;
 			_DYNAMIC_ASSERT_ (rax == UNIT ('N')) ;
 			ris.read (rax) ;
 			_DYNAMIC_ASSERT_ (rax == UNIT ('F')) ;
 			data = VAL64_INF ;
-		} else if (rax == UNIT ('n')) {
+		} ,[&] (BOOL &if_cond) {
+			if (rax != UNIT ('n'))
+				return (void) (if_cond = FALSE) ;
 			ris.read (rax) ;
 			_DYNAMIC_ASSERT_ (rax == UNIT ('a')) ;
 			ris.read (rax) ;
 			_DYNAMIC_ASSERT_ (rax == UNIT ('n')) ;
 			data = VAL64_NAN ;
-		} else if (rax == UNIT ('N')) {
+		} ,[&] (BOOL &if_cond) {
+			if (rax != UNIT ('N'))
+				return (void) (if_cond = FALSE) ;
 			ris.read (rax) ;
 			_DYNAMIC_ASSERT_ (rax == UNIT ('A')) ;
 			ris.read (rax) ;
 			_DYNAMIC_ASSERT_ (rax == UNIT ('N')) ;
 			data = VAL64_NAN ;
-		} else if (r2x) {
+		} ,[&] (BOOL &if_cond) {
+			const auto r2x = mHolder->varify_number_item (rax) ;
+			if (!r2x)
+				return (void) (if_cond = FALSE) ;
 			ris.try_read_number (data ,rax) ;
-		}
+		} ,[&] (BOOL &if_cond) {
+			_DYNAMIC_ASSERT_ (FALSE) ;
+		}) ;
 		if (r1x)
 			data = -data ;
 		*this = std::move (ris) ;
@@ -955,36 +996,36 @@ public:
 		return *this ;
 	}
 
-	template <LENGTH _VAL>
-	void read (const DEF<UNIT[_VAL]> &data) {
-		_STATIC_ASSERT_ (_VAL <= VAR32_MAX) ;
+	template <LENGTH _VAL1>
+	void read (const DEF<UNIT[_VAL1]> &data) {
+		_STATIC_ASSERT_ (_VAL1 <= VAR32_MAX) ;
 		auto ris = copy () ;
 		auto rax = UNIT () ;
-		for (INDEX i = 0 ; i < _VAL - 1 ; i++) {
+		for (INDEX i = 0 ; i < _VAL1 - 1 ; i++) {
 			ris.read (rax) ;
 			_DYNAMIC_ASSERT_ (rax == data[i]) ;
 		}
 		*this = std::move (ris) ;
 	}
 
-	template <LENGTH _VAL>
-	inline TextReader &operator>> (const DEF<UNIT[_VAL]> &data) {
+	template <LENGTH _VAL1>
+	inline TextReader &operator>> (const DEF<UNIT[_VAL1]> &data) {
 		read (data) ;
 		return *this ;
 	}
 
-	template <class _ARG>
-	void read (String<UNIT ,_ARG> &data) popping {
+	template <class _ARG1>
+	void read (String<UNIT ,_ARG1> &data) popping {
 		const auto r1x = next_string_size () ;
 		_DYNAMIC_ASSERT_ (r1x >= 0 && r1x < VAR32_MAX) ;
 		if (data.size () < r1x)
-			data = String<UNIT ,_ARG> (r1x) ;
+			data = String<UNIT ,_ARG1> (r1x) ;
 		for (INDEX i = 0 ; i < data.size () ; i++)
 			read (data[i]) ;
 	}
 
-	template <class _ARG>
-	inline TextReader &operator>> (String<UNIT ,_ARG> &data) popping {
+	template <class _ARG1>
+	inline TextReader &operator>> (String<UNIT ,_ARG1> &data) popping {
 		read (data) ;
 		return *this ;
 	}
@@ -1001,13 +1042,13 @@ public:
 		return *this ;
 	}
 
-	template <class _ARG ,class = ENABLE_TYPE<std::is_same<decltype (_NULL_<_ARG> ().friend_read (_NULL_<TextReader> ())) ,void>::value>>
-	void read (_ARG &data) popping {
+	template <class _ARG1 ,class = ENABLE_TYPE<std::is_same<decltype (_NULL_<_ARG1> ().friend_read (_NULL_<TextReader> ())) ,void>::value>>
+	void read (_ARG1 &data) popping {
 		data.friend_read (*this) ;
 	}
 
-	template <class _ARG ,class = ENABLE_TYPE<std::is_same<decltype (_NULL_<_ARG> ().friend_read (_NULL_<TextReader> ())) ,void>::value>>
-	inline TextReader &operator>> (_ARG &data) popping {
+	template <class _ARG1 ,class = ENABLE_TYPE<std::is_same<decltype (_NULL_<_ARG1> ().friend_read (_NULL_<TextReader> ())) ,void>::value>>
+	inline TextReader &operator>> (_ARG1 &data) popping {
 		read (data) ;
 		return *this ;
 	}
@@ -1067,8 +1108,8 @@ private:
 			rbx[1] += ris.template read<VAR32> () ;
 			*this = ris.copy () ;
 		}
-		const auto r3x = _IEEE754E10TOE2_ (rbx) ;
-		data = _IEEE754ENCODE_ (r3x) ;
+		const auto r3x = _IEEE754_E10TOE2_ (rbx) ;
+		data = _IEEE754_ENCODE_ (r3x) ;
 	}
 
 	void try_read_number_digital (ARRAY2<VAR64> &data ,TextReader &reader ,UNIT &top) popping {
@@ -1079,11 +1120,13 @@ private:
 		reader.read (top) ;
 		while (mHolder->varify_number_item (top)) {
 			const auto r1x = data[0] * mHolder->varify_radix () + mHolder->convert_number_r (top) ;
-			if (data[0] <= r1x) {
+			_CALL_IF_ ([&] (BOOL &if_cond) {
+				if (data[0] > r1x)
+					return (void) (if_cond = FALSE) ;
 				data[0] = r1x ;
-			} else {
+			} ,[&] (BOOL &if_cond) {
 				data[1]++ ;
-			}
+			}) ;
 			*this = reader.copy () ;
 			reader.read (top) ;
 		}
@@ -1147,7 +1190,11 @@ private:
 		}
 
 		BOOL varify_escape_w (const UNIT &key) const {
-			return mEscapeFlag && mEscapeSet.find (key) != VAR_NONE ;
+			if (!mEscapeFlag)
+				return FALSE ;
+			if (mEscapeSet.find (key) == VAR_NONE)
+				return FALSE ;
+			return TRUE ;
 		}
 
 		void modify_escape (const UNIT &key ,const UNIT &item) {
@@ -1167,9 +1214,13 @@ private:
 		}
 
 		BOOL varify_control (const UNIT &item) const {
-			const auto r1x = (item >= UNIT (0) && item <= UNIT (32)) || item == UNIT (127) ;
-			const auto r2x = varify_space (item) ;
-			return r1x && !r2x ;
+			const auto r1x = BOOL (item >= UNIT (0) && item <= UNIT (32)) ;
+			const auto r2x = BOOL (item == UNIT (127)) ;
+			if (!r1x && !r2x)
+				return FALSE ;
+			if (varify_space (item))
+				return FALSE ;
+			return TRUE ;
 		}
 	} ;
 
@@ -1219,13 +1270,16 @@ public:
 	}
 
 	void reset () {
+		_DEBUG_ASSERT_ (mHolder.exist ()) ;
 		mRead = 0 ;
 		mWrite = 0 ;
 	}
 
 	void reset (INDEX ib ,INDEX ie) {
-		_DEBUG_ASSERT_ (ib >= 0 && ie >= 0) ;
+		_DEBUG_ASSERT_ (ib >= 0 && ib <= mStream.size ()) ;
+		_DEBUG_ASSERT_ (ie >= 0 && ie <= mStream.size ()) ;
 		_DEBUG_ASSERT_ (ib <= ie) ;
+		_DEBUG_ASSERT_ (mHolder.exist ()) ;
 		mRead = ib ;
 		mWrite = ie ;
 	}
@@ -1240,18 +1294,20 @@ public:
 	}
 
 	void write (const UNIT &data) {
-		if (mHolder->varify_escape_w (data)) {
+		_CALL_IF_ ([&] (BOOL &if_cond) {
+			if (!mHolder->varify_escape_w (data))
+				return (void) (if_cond = FALSE) ;
 			_DYNAMIC_ASSERT_ (mWrite + 1 < mStream.size ()) ;
 			mStream[mWrite] = mHolder->varify_escape_item () ;
 			mWrite++ ;
 			const auto r1x = mHolder->convert_escape (data) ;
 			mStream[mWrite] = r1x ;
 			mWrite++ ;
-		} else {
+		} ,[&] (BOOL &if_cond) {
 			_DYNAMIC_ASSERT_ (mWrite < mStream.size ()) ;
 			mStream[mWrite] = data ;
 			mWrite++ ;
-		}
+		}) ;
 	}
 
 	inline TextWriter &operator<< (const UNIT &data) {
@@ -1314,18 +1370,28 @@ public:
 			UNIT ('+') ,UNIT ('i') ,UNIT ('n') ,UNIT ('f')}) ;
 		static constexpr auto M_SINF = PACK<UNIT[4]> ({
 			UNIT ('-') ,UNIT ('i') ,UNIT ('n') ,UNIT ('f')}) ;
-		if (_ISNAN_ (data)) {
+		_CALL_IF_ ([&] (BOOL &if_cond) {
+			if (!_ISNAN_ (data))
+				return (void) (if_cond = FALSE) ;
 			write (PhanBuffer<const UNIT>::make (M_NAN.P1)) ;
-		} else if (data > 0 && _ISINF_ (data)) {
+		} ,[&] (BOOL &if_cond) {
+			if (data <= 0)
+				return (void) (if_cond = FALSE) ;
+			if (!_ISINF_ (data))
+				return (void) (if_cond = FALSE) ;
 			write (PhanBuffer<const UNIT>::make (M_INF.P1)) ;
-		} else if (data < 0 && _ISINF_ (data)) {
+		} ,[&] (BOOL &if_cond) {
+			if (data <= 0)
+				return (void) (if_cond = FALSE) ;
+			if (!_ISINF_ (data))
+				return (void) (if_cond = FALSE) ;
 			write (PhanBuffer<const UNIT>::make (M_SINF.P1)) ;
-		} else {
+		} ,[&] (BOOL &if_cond) {
 			auto rax = Buffer<UNIT ,ARGC<256>> () ;
 			INDEX iw = rax.size () ;
 			try_write_number (data ,PhanBuffer<UNIT>::make (rax) ,iw) ;
 			write (PhanBuffer<const UNIT>::make (PTRTOARR[&rax.self[iw]] ,(rax.size () - iw))) ;
-		}
+		}) ;
 	}
 
 	inline TextWriter &operator<< (const VAL64 &data) {
@@ -1344,29 +1410,29 @@ public:
 		return *this ;
 	}
 
-	template <LENGTH _VAL>
-	void write (const DEF<UNIT[_VAL]> &data) {
-		_STATIC_ASSERT_ (_VAL <= VAR32_MAX) ;
-		for (INDEX i = 0 ; i < _VAL - 1 ; i++)
+	template <LENGTH _VAL1>
+	void write (const DEF<UNIT[_VAL1]> &data) {
+		_STATIC_ASSERT_ (_VAL1 <= VAR32_MAX) ;
+		for (INDEX i = 0 ; i < _VAL1 - 1 ; i++)
 			write (data[i]) ;
 	}
 
-	template <LENGTH _VAL>
-	inline TextWriter &operator<< (const DEF<UNIT[_VAL]> &data) {
+	template <LENGTH _VAL1>
+	inline TextWriter &operator<< (const DEF<UNIT[_VAL1]> &data) {
 		write (data) ;
 		return *this ;
 	}
 
-	template <class _ARG>
-	void write (const String<UNIT ,_ARG> &data) {
+	template <class _ARG1>
+	void write (const String<UNIT ,_ARG1> &data) {
 		const auto r1x = data.length () ;
 		_DYNAMIC_ASSERT_ (r1x >= 0 && r1x < VAR32_MAX) ;
 		for (auto &&i : data)
 			write (i) ;
 	}
 
-	template <class _ARG>
-	inline TextWriter &operator<< (const String<UNIT ,_ARG> &data) {
+	template <class _ARG1>
+	inline TextWriter &operator<< (const String<UNIT ,_ARG1> &data) {
 		write (data) ;
 		return *this ;
 	}
@@ -1383,13 +1449,13 @@ public:
 		return *this ;
 	}
 
-	template <class _ARG ,class = ENABLE_TYPE<std::is_same<decltype (_NULL_<const _ARG> ().friend_write (_NULL_<TextWriter> ())) ,void>::value>>
-	void write (const _ARG &data) {
+	template <class _ARG1 ,class = ENABLE_TYPE<std::is_same<decltype (_NULL_<const _ARG1> ().friend_write (_NULL_<TextWriter> ())) ,void>::value>>
+	void write (const _ARG1 &data) {
 		data.friend_write (*this) ;
 	}
 
-	template <class _ARG ,class = ENABLE_TYPE<std::is_same<decltype (_NULL_<const _ARG> ().friend_write (_NULL_<TextWriter> ())) ,void>::value>>
-	inline TextWriter &operator<< (const _ARG &data) {
+	template <class _ARG1 ,class = ENABLE_TYPE<std::is_same<decltype (_NULL_<const _ARG1> ().friend_write (_NULL_<TextWriter> ())) ,void>::value>>
+	inline TextWriter &operator<< (const _ARG1 &data) {
 		write (data) ;
 		return *this ;
 	}
@@ -1408,73 +1474,81 @@ private:
 	void try_write_number (const VAR64 &data ,const PhanBuffer<UNIT> &out ,INDEX &it) const {
 		_DEBUG_ASSERT_ (mHolder->varify_radix () == 10) ;
 		INDEX iw = it ;
-		if (data > 0) {
+		_CALL_IF_ ([&] (BOOL &if_cond) {
+			if (data <= 0)
+				return (void) (if_cond = FALSE) ;
 			auto rax = data ;
 			while (rax != 0) {
 				out[--iw] = mHolder->convert_number_w (rax % mHolder->varify_radix ()) ;
 				rax /= mHolder->varify_radix () ;
 			}
-		} else if (data < 0) {
+		} ,[&] (BOOL &if_cond) {
+			if (data >= 0)
+				return (void) (if_cond = FALSE) ;
 			auto rax = data ;
 			while (rax != 0) {
 				out[--iw] = mHolder->convert_number_w (-rax % mHolder->varify_radix ()) ;
 				rax /= mHolder->varify_radix () ;
 			}
 			out[--iw] = UNIT ('-') ;
-		} else {
+		} ,[&] (BOOL &if_cond) {
 			out[--iw] = mHolder->convert_number_w (0) ;
-		}
+		}) ;
 		it = iw ;
 	}
 
 	void try_write_number (const VAL64 &data ,const PhanBuffer<UNIT> &out ,INDEX &it) const {
 		_DEBUG_ASSERT_ (mHolder->varify_radix () == 10) ;
 		INDEX iw = it ;
-		const auto r1x = _IEEE754DECODE_ (data) ;
-		auto rax = _IEEE754E2TOE10_ (r1x) ;
-		const auto r2x = rax[0] < 0 ;
+		const auto r1x = _IEEE754_DECODE_ (data) ;
+		auto rax = _IEEE754_E2TOE10_ (r1x) ;
+		const auto r2x = BOOL (rax[0] < 0) ;
 		rax[0] = r2x ? (-rax[0]) : (rax[0]) ;
 		const auto r3x = log_of_number (rax[0]) ;
-		if (_ABS_ (r3x - 1 + rax[1]) >= 6) {
+		_CALL_IF_ ([&] (BOOL &if_cond) {
+			if (_ABS_ (r3x - 1 + rax[1]) < 6)
+				return (void) (if_cond = FALSE) ;
 			const auto r4x = _MAX_ ((r3x - 7) ,VAR_ZERO) ;
-			for (INDEX i = 0 ; i < r4x - 1 ; i++) {
+			for (INDEX i = 0 ,ie = r4x - 1 ; i < ie ; i++) {
 				rax[0] /= mHolder->varify_radix () ;
 				rax[1]++ ;
 			}
-			_STATIC_WARNING_ ("unqualified") ;
-			if (r4x > 0) {
-				rax[0] = (rax[0] + mHolder->varify_radix () / 2) / mHolder->varify_radix () ;
-				rax[1]++ ;
-			}
-			_STATIC_WARNING_ ("unqualified") ;
-		} else if (rax[1] >= 1 - r3x && rax[1] < 0) {
+			if (r4x <= 0)
+				return ;
+			rax[0] = (rax[0] + mHolder->varify_radix () / 2) / mHolder->varify_radix () ;
+			rax[1]++ ;
+		} ,[&] (BOOL &if_cond) {
+			if (rax[1] < 1 - r3x)
+				return (void) (if_cond = FALSE) ;
+			if (rax[1] >= 0)
+				return (void) (if_cond = FALSE) ;
 			const auto r4x = _MAX_ (LENGTH (-rax[1] - 6) ,VAR_ZERO) ;
-			for (INDEX i = 0 ; i < r4x - 1 ; i++) {
+			for (INDEX i = 0 ,ie = r4x - 1 ; i < ie ; i++) {
 				rax[0] /= mHolder->varify_radix () ;
 				rax[1]++ ;
 			}
-			_STATIC_WARNING_ ("unqualified") ;
-			if (r4x > 0) {
-				rax[0] = (rax[0] + mHolder->varify_radix () / 2) / mHolder->varify_radix () ;
-				rax[1]++ ;
-			}
-			_STATIC_WARNING_ ("unqualified") ;
-		} else if (rax[1] < 1 - r3x) {
+			if (r4x <= 0)
+				return ;
+			rax[0] = (rax[0] + mHolder->varify_radix () / 2) / mHolder->varify_radix () ;
+			rax[1]++ ;
+		} ,[&] (BOOL &if_cond) {
+			if (rax[1] >= 1 - r3x)
+				return (void) (if_cond = FALSE) ;
 			const auto r4x = _MAX_ (LENGTH (-rax[1] - 6) ,VAR_ZERO) ;
-			for (INDEX i = 0 ; i < r4x - 1 ; i++) {
+			for (INDEX i = 0 ,ie = r4x - 1 ; i < ie ; i++) {
 				rax[0] /= mHolder->varify_radix () ;
 				rax[1]++ ;
 			}
-			_STATIC_WARNING_ ("unqualified") ;
-			if (r4x > 0) {
-				rax[0] = (rax[0] + mHolder->varify_radix () / 2) / mHolder->varify_radix () ;
-				rax[1]++ ;
-			}
-			_STATIC_WARNING_ ("unqualified") ;
-		}
+			if (r4x <= 0)
+				return ;
+			rax[0] = (rax[0] + mHolder->varify_radix () / 2) / mHolder->varify_radix () ;
+			rax[1]++ ;
+		}) ;
 		const auto r4x = log_of_number (rax[0]) ;
-		if (_ABS_ (r4x - 1 + rax[1]) >= 6) {
+		_CALL_IF_ ([&] (BOOL &if_cond) {
 			//@info: case 'x.xxxExxx'
+			if (_ABS_ (r4x - 1 + rax[1]) < 6)
+				return (void) (if_cond = FALSE) ;
 			try_write_number ((r4x - 1 + rax[1]) ,out ,iw) ;
 			_STATIC_WARNING_ ("unqualified") ;
 			if (out[iw] != UNIT ('-'))
@@ -1484,7 +1558,7 @@ private:
 			for (INDEX i = 0 ; i < r5x ; i++)
 				rax[0] /= mHolder->varify_radix () ;
 			INDEX ix = iw - 1 ;
-			for (INDEX i = r5x ; i < r4x - 1 ; i++) {
+			for (INDEX i = r5x ,ie = r4x - 1 ; i < ie ; i++) {
 				out[--iw] = mHolder->convert_number_w (rax[0] % mHolder->varify_radix ()) ;
 				iw += EFLAG (out[ix] == mHolder->convert_number_w (0)) ;
 				rax[0] /= mHolder->varify_radix () ;
@@ -1493,16 +1567,22 @@ private:
 			iw += EFLAG (out[ix] == UNIT ('.')) ;
 			out[--iw] = mHolder->convert_number_w (rax[0] % mHolder->varify_radix ()) ;
 			rax[0] /= mHolder->varify_radix () ;
-		} else if (rax[1] > 0) {
+		} ,[&] (BOOL &if_cond) {
 			//@info: case 'xxx000'
+			if (rax[1] <= 0)
+				return (void) (if_cond = FALSE) ;
 			for (INDEX i = 0 ,ie = LENGTH (rax[1]) ; i < ie ; i++)
 				out[--iw] = mHolder->convert_number_w (0) ;
 			for (INDEX i = 0 ; i < r4x ; i++) {
 				out[--iw] = mHolder->convert_number_w (rax[0] % mHolder->varify_radix ()) ;
 				rax[0] /= mHolder->varify_radix () ;
 			}
-		} else if (rax[1] >= 1 - r4x && rax[1] < 0) {
+		} ,[&] (BOOL &if_cond) {
 			//@info: case 'xxx.xxx'
+			if (rax[1] < 1 - r4x)
+				return (void) (if_cond = FALSE) ;
+			if (rax[1] >= 0)
+				return (void) (if_cond = FALSE) ;
 			const auto r5x = _MAX_ (LENGTH (-rax[1] - 6) ,VAR_ZERO) ;
 			for (INDEX i = 0 ; i < r5x ; i++)
 				rax[0] /= mHolder->varify_radix () ;
@@ -1518,8 +1598,12 @@ private:
 				out[--iw] = mHolder->convert_number_w (rax[0] % mHolder->varify_radix ()) ;
 				rax[0] /= mHolder->varify_radix () ;
 			}
-		} else if (rax[1] < 1 - r4x && rax[1] < 0) {
+		} ,[&] (BOOL &if_cond) {
 			//@info: case '0.000xxx'
+			if (rax[1] >= 1 - r4x)
+				return (void) (if_cond = FALSE) ;
+			if (rax[1] >= 0)
+				return (void) (if_cond = FALSE) ;
 			const auto r5x = _MAX_ (LENGTH (-rax[1] - 6) ,VAR_ZERO) ;
 			for (INDEX i = 0 ; i < r5x ; i++)
 				rax[0] /= mHolder->varify_radix () ;
@@ -1536,18 +1620,20 @@ private:
 			out[--iw] = UNIT ('.') ;
 			iw += EFLAG (out[ix] == UNIT ('.')) ;
 			out[--iw] = mHolder->convert_number_w (0) ;
-		} else if (rax[1] == 0) {
+		} ,[&] (BOOL &if_cond) {
 			//@info: case '0'
+			if (rax[1] != 0)
+				return (void) (if_cond = FALSE) ;
 			out[--iw] = mHolder->convert_number_w (0) ;
-		}
+		}) ;
 		if (r2x)
 			out[--iw] = UNIT ('-') ;
 		it = iw ;
 	}
 
-	LENGTH log_of_number (VAR64 arg) const {
+	LENGTH log_of_number (VAR64 arg1) const {
 		LENGTH ret = 0 ;
-		for (VAR64 i = 1 ; i <= arg ; i *= mHolder->varify_radix ())
+		for (VAR64 i = 1 ; i <= arg1 ; i *= mHolder->varify_radix ())
 			ret++ ;
 		return std::move (ret) ;
 	}
@@ -1562,18 +1648,18 @@ inline void _CLS_ (ByteWriter &writer) {
 	writer.reset () ;
 }
 
-template <class _ARG>
-inline void _CLS_ (TextReader<_ARG> &reader) {
+template <class _ARG1>
+inline void _CLS_ (TextReader<_ARG1> &reader) {
 	reader.reset () ;
 }
 
-template <class _ARG>
-inline void _CLS_ (TextWriter<_ARG> &writer) {
+template <class _ARG1>
+inline void _CLS_ (TextWriter<_ARG1> &writer) {
 	writer.reset () ;
 }
 
-template <class _ARG>
-inline void _BOM_ (TextReader<_ARG> &reader) {
+template <class _ARG1>
+inline void _BOM_ (TextReader<_ARG1> &reader) {
 	_STATIC_WARNING_ ("noop") ;
 }
 
@@ -1599,7 +1685,8 @@ inline void _BOM_ (TextReader<STRU16> &reader) {
 	ris >> rax ;
 	if (rax != STRU16 (0XFEFF) && rax != STRU16 (0XFFFE))
 		return ;
-	ris.attr ().enable_endian (rax != 0XFEFF) ;
+	const auto r1x = BOOL (rax != 0XFEFF) ;
+	ris.attr ().enable_endian (r1x) ;
 	reader = std::move (ris) ;
 }
 
@@ -1609,7 +1696,8 @@ inline void _BOM_ (TextReader<STRU32> &reader) {
 	ris >> rax ;
 	if (rax != STRU32 (0X0000FEFF) && rax != STRU32 (0XFFFE0000))
 		return ;
-	ris.attr ().enable_endian (rax != 0X0000FEFF) ;
+	const auto r1x = BOOL (rax != 0X0000FEFF) ;
+	ris.attr ().enable_endian (r1x) ;
 	reader = std::move (ris) ;
 }
 
@@ -1617,8 +1705,8 @@ inline void _BOM_ (TextReader<STRW> &reader) {
 	_BOM_ (_CAST_<TextReader<STRUW>> (reader)) ;
 }
 
-template <class _ARG>
-inline void _BOM_ (TextWriter<_ARG> &writer) {
+template <class _ARG1>
+inline void _BOM_ (TextWriter<_ARG1> &writer) {
 	_STATIC_WARNING_ ("noop") ;
 }
 
@@ -1660,10 +1748,10 @@ inline void _GAP_ (ByteWriter &writer) {
 	writer << DATA (0) ;
 }
 
-template <class _ARG>
-inline void _GAP_ (TextReader<_ARG> &reader) {
+template <class _ARG1>
+inline void _GAP_ (TextReader<_ARG1> &reader) {
 	auto ris = reader.copy () ;
-	auto rax = _ARG () ;
+	auto rax = _ARG1 () ;
 	ris >> rax ;
 	while (ris.attr ().varify_space (rax)) {
 		reader = ris.copy () ;
@@ -1671,11 +1759,11 @@ inline void _GAP_ (TextReader<_ARG> &reader) {
 	}
 }
 
-template <class _ARG>
-inline void _GAP_ (TextWriter<_ARG> &writer) {
+template <class _ARG1>
+inline void _GAP_ (TextWriter<_ARG1> &writer) {
 	_DYNAMIC_ASSERT_ (writer.length () + 2 < writer.size ()) ;
-	writer.write (_ARG ('\r')) ;
-	writer.write (_ARG ('\n')) ;
+	writer.write (_ARG1 ('\r')) ;
+	writer.write (_ARG1 ('\n')) ;
 }
 
 inline void _EOS_ (ByteReader &reader) {
@@ -1693,16 +1781,16 @@ inline void _EOS_ (ByteWriter &writer) {
 		writer.write (BYTE (0XFF)) ;
 }
 
-template <class _ARG>
-inline void _EOS_ (TextReader<_ARG> &reader) {
+template <class _ARG1>
+inline void _EOS_ (TextReader<_ARG1> &reader) {
 	auto ris = reader.copy () ;
-	const auto r1x = ris.template read<_ARG> () ;
+	const auto r1x = ris.template read<_ARG1> () ;
 	_DYNAMIC_ASSERT_ (r1x == reader.attr ().varify_ending_item ()) ;
 	reader = std::move (ris) ;
 }
 
-template <class _ARG>
-inline void _EOS_ (TextWriter<_ARG> &writer) {
+template <class _ARG1>
+inline void _EOS_ (TextWriter<_ARG1> &writer) {
 	writer.write (writer.attr ().varify_ending_item ()) ;
 }
 } ;
@@ -1712,27 +1800,30 @@ class StreamBinder ;
 
 template <>
 class StreamBinder<> {
-private:
-	FixedBuffer<BYTE> mUseless ;
-
 public:
 	inline StreamBinder () = default ;
 
-	inline void friend_read (ByteReader &reader) const popping {
+	inline StreamBinder (const StreamBinder &) = delete ;
+	inline StreamBinder &operator= (const StreamBinder &) = delete ;
+
+	inline StreamBinder (StreamBinder &&) noexcept = default ;
+	inline StreamBinder &operator= (StreamBinder &&) = delete ;
+
+	inline void friend_read (ByteReader &reader) const {
 		_STATIC_WARNING_ ("noop") ;
 	}
 
-	inline void friend_write (ByteWriter &writer) const popping {
+	inline void friend_write (ByteWriter &writer) const {
 		_STATIC_WARNING_ ("noop") ;
 	}
 
-	template <class _ARG>
-	inline void friend_read (TextReader<_ARG> &reader) const popping {
+	template <class _ARG1>
+	inline void friend_read (TextReader<_ARG1> &reader) const {
 		_STATIC_WARNING_ ("noop") ;
 	}
 
-	template <class _ARG>
-	inline void friend_write (TextWriter<_ARG> &writer) const popping {
+	template <class _ARG1>
+	inline void friend_write (TextWriter<_ARG1> &writer) const {
 		_STATIC_WARNING_ ("noop") ;
 	}
 } ;
@@ -1741,32 +1832,32 @@ template <class TYPE1 ,class... TYPES>
 class StreamBinder<TYPE1 ,TYPES...> :private StreamBinder<TYPES...> {
 private:
 	_STATIC_ASSERT_ (!std::is_reference<TYPE1>::value) ;
-	TYPE1 &mData ;
+	TYPE1 &mBase ;
 
 public:
 	inline StreamBinder () = delete ;
 
-	inline explicit StreamBinder (TYPE1 &arg1 ,TYPES &...args) popping :StreamBinder<TYPES...> (args...) ,mData (arg1) {}
+	inline explicit StreamBinder (TYPE1 &arg1 ,TYPES &...args) popping :StreamBinder<TYPES...> (args...) ,mBase (arg1) {}
 
-	inline void friend_read (ByteReader &reader) const popping {
-		reader >> mData ;
+	inline void friend_read (ByteReader &reader) const {
+		reader >> mBase ;
 		StreamBinder<TYPES...>::friend_read (reader) ;
 	}
 
-	inline void friend_write (ByteWriter &writer) const popping {
-		writer << mData ;
+	inline void friend_write (ByteWriter &writer) const {
+		writer << mBase ;
 		StreamBinder<TYPES...>::friend_write (writer) ;
 	}
 
-	template <class _ARG>
-	inline void friend_read (TextReader<_ARG> &reader) const popping {
-		reader >> mData ;
+	template <class _ARG1>
+	inline void friend_read (TextReader<_ARG1> &reader) const {
+		reader >> mBase ;
 		StreamBinder<TYPES...>::friend_read (reader) ;
 	}
 
-	template <class _ARG>
-	inline void friend_write (TextWriter<_ARG> &writer) const popping {
-		writer << mData ;
+	template <class _ARG1>
+	inline void friend_write (TextWriter<_ARG1> &writer) const {
+		writer << mBase ;
 		StreamBinder<TYPES...>::friend_write (writer) ;
 	}
 } ;
@@ -1899,16 +1990,16 @@ public:
 		read () ;
 	}
 
-	template <LENGTH _VAL>
-	void read (const DEF<STRU8[_VAL]> &data) {
-		for (INDEX i = 0 ; i < _VAL - 1 ; i++) {
+	template <LENGTH _VAL1>
+	void read (const DEF<STRU8[_VAL1]> &data) {
+		for (INDEX i = 0 ; i < _VAL1 - 1 ; i++) {
 			_DYNAMIC_ASSERT_ (get (0) == data[i]) ;
 			read () ;
 		}
 	}
 
-	template <LENGTH _VAL>
-	inline LLTextReader &operator>> (const DEF<STRU8[_VAL]> &data) {
+	template <LENGTH _VAL1>
+	inline LLTextReader &operator>> (const DEF<STRU8[_VAL1]> &data) {
 		read (data) ;
 		return *this ;
 	}
@@ -1974,8 +2065,8 @@ public:
 		read () ;
 	}
 
-	template <class _ARG>
-	inline LLTextReader &operator>> (ARGV<_ARG> data) {
+	template <class _ARG1>
+	inline LLTextReader &operator>> (ARGV<_ARG1> data) {
 		read (data) ;
 		return *this ;
 	}
@@ -1995,13 +2086,16 @@ public:
 			read () ;
 			if (!r1x)
 				continue ;
-			const auto r4x = data[i] == mReader->attr ().varify_escape_item () ;
-			_DYNAMIC_ASSERT_ (r4x || !mReader->attr ().varify_control (data[i])) ;
-			if (!r4x)
-				continue ;
-			data[i] = get (0) ;
-			read () ;
-			data[i] = mReader->attr ().convert_escape (data[i]) ;
+			_CALL_IF_ ([&] (BOOL &if_cond) {
+				const auto r4x = BOOL (data[i] == mReader->attr ().varify_escape_item ()) ;
+				if (!r4x)
+					return (void) (if_cond = FALSE) ;
+				data[i] = get (0) ;
+				read () ;
+				data[i] = mReader->attr ().convert_escape (data[i]) ;
+			} ,[&] (BOOL &if_cond) {
+				_DYNAMIC_ASSERT_ (!mReader->attr ().varify_control (data[i])) ;
+			}) ;
 		}
 		if (r2x) {
 			_DYNAMIC_ASSERT_ (get (0) == STRU8 ('\"')) ;
@@ -2019,12 +2113,12 @@ public:
 		LENGTH ret = 0 ;
 		auto ris = shadow () ;
 		while (TRUE) {
-			const auto r2x = ris[0] >= STRU8 ('A') && ris[0] <= STRU8 ('Z') ;
-			const auto r3x = ris[0] >= STRU8 ('a') && ris[0] <= STRU8 ('z') ;
-			const auto r4x = ris[0] == STRU8 ('_') ;
+			const auto r2x = BOOL (ris[0] >= STRU8 ('A') && ris[0] <= STRU8 ('Z')) ;
+			const auto r3x = BOOL (ris[0] >= STRU8 ('a') && ris[0] <= STRU8 ('z')) ;
+			const auto r4x = BOOL (ris[0] == STRU8 ('_')) ;
 			_DYNAMIC_ASSERT_ (ret != 0 || r2x || r3x || r4x) ;
-			const auto r5x = ris[0] >= STRU8 ('0') && ris[0] <= STRU8 ('9') ;
-			const auto r6x = ris[0] == STRU8 ('-') || ris[0] == STRU8 ('.') || ris[0] == STRU8 (':') ;
+			const auto r5x = BOOL (ris[0] >= STRU8 ('0') && ris[0] <= STRU8 ('9')) ;
+			const auto r6x = BOOL (ris[0] == STRU8 ('-') || ris[0] == STRU8 ('.') || ris[0] == STRU8 (':')) ;
 			if (!r2x && !r3x && !r4x && !r5x && !r6x)
 				break ;
 			ris++ ;
@@ -2056,18 +2150,15 @@ public:
 				ret++ ;
 			}
 		}
-		const auto r2x = ris[0] == STRU8 ('e') || ris[0] == STRU8 ('E') ;
 		for (FOR_ONCE_DO_WHILE_FALSE) {
-			if (!r2x)
-				continue ;
+			if (ris[0] != STRU8 ('e') && ris[0] != STRU8 ('E'))
+				break ;
 			ris++ ;
 			ret++ ;
-			if (ris[0] != STRU8 ('+') && ris[0] != STRU8 ('-'))
-				continue ;
-			ris++ ;
-			ret++ ;
-		}
-		if (r2x) {
+			if (ris[0] == STRU8 ('+') || ris[0] == STRU8 ('-')) {
+				ris++ ;
+				ret++ ;
+			}
 			_DYNAMIC_ASSERT_ (ris[0] >= STRU8 ('0') && ris[0] <= STRU8 ('9')) ;
 			ris++ ;
 			ret++ ;
@@ -2088,13 +2179,16 @@ public:
 		while (ris[0] != STRU8 ('\0') && ris[0] != STRU8 ('\"')) {
 			rax = ris[0] ;
 			ris++ ;
-			const auto r1x = rax == mReader->attr ().varify_escape_item () ;
-			_DYNAMIC_ASSERT_ (r1x || !mReader->attr ().varify_control (rax)) ;
-			if (r1x) {
+			_CALL_IF_ ([&] (BOOL &if_cond) {
+				const auto r1x = BOOL (rax == mReader->attr ().varify_escape_item ()) ;
+				if (!r1x)
+					return (void) (if_cond = FALSE) ;
 				rax = ris[0] ;
 				ris++ ;
 				rax = mReader->attr ().convert_escape (rax) ;
-			}
+			} ,[&] (BOOL &if_cond) {
+				_DYNAMIC_ASSERT_ (!mReader->attr ().varify_control (rax)) ;
+			}) ;
 			ret++ ;
 		}
 		_DYNAMIC_ASSERT_ (ris[0] == STRU8 ('\"')) ;

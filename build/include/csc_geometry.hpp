@@ -246,7 +246,7 @@ public:
 
 	Vector normalize () const {
 		Vector ret ;
-		const auto r1x = mVector[3] == UNIT (0) ;
+		const auto r1x = BOOL (mVector[3] == UNIT (0)) ;
 		const auto r2x = r1x ? (magnitude ()) : (mVector[3]) ;
 		const auto r3x = _PINV_ (r2x) ;
 		ret.mVector[0] = mVector[0] * r3x ;
@@ -300,7 +300,7 @@ private:
 		}
 
 	private:
-		inline explicit Row (BASE &base ,INDEX y) :mBase (base) ,mY (y) {}
+		inline explicit Row (BASE &base ,INDEX y) popping :mBase (base) ,mY (y) {}
 	} ;
 
 private:
@@ -319,8 +319,8 @@ public:
 		}
 	}
 
-	template <class _ARG ,class = ENABLE_TYPE<std::is_same<_ARG ,UNIT>::value>>
-	implicit Matrix (const Vector<_ARG> &hx ,const Vector<_ARG> &hy ,const Vector<_ARG> &hz ,const Vector<_ARG> &hw) {
+	template <class _ARG1 ,class = ENABLE_TYPE<std::is_same<_ARG1 ,UNIT>::value>>
+	implicit Matrix (const Vector<_ARG1> &hx ,const Vector<_ARG1> &hy ,const Vector<_ARG1> &hz ,const Vector<_ARG1> &hw) {
 		for (INDEX i = 0 ; i < 4 ; i++) {
 			get (i ,0) = hx[i] ;
 			get (i ,1) = hy[i] ;
@@ -605,11 +605,11 @@ public:
 		ret *= _PINV_ (r1x) ;
 		for (FOR_ONCE_DO_WHILE_FALSE) {
 			if (get (3 ,3) != UNIT (1))
-				continue ;
+				break ;
 			if (!affine_matrix_like ())
-				continue ;
+				break ;
 			if (!ret.affine_matrix_like ())
-				continue ;
+				break ;
 			const auto r6x = _PINV_ (ret.get (3 ,3)) ;
 			ret *= r6x ;
 			ret.get (3 ,3) = UNIT (1) ;
@@ -646,7 +646,15 @@ public:
 
 private:
 	BOOL affine_matrix_like () const {
-		return get (3 ,0) == UNIT (0) && get (3 ,1) == UNIT (0) && get (3 ,2) == UNIT (0) && get (3 ,3) != UNIT (0) ;
+		if (get (3 ,0) != UNIT (0))
+			return FALSE ;
+		if (get (3 ,1) != UNIT (0))
+			return FALSE ;
+		if (get (3 ,2) != UNIT (0))
+			return FALSE ;
+		if (get (3 ,3) == UNIT (0))
+			return FALSE ;
+		return TRUE ;
 	}
 
 	INDEX max_row_one (INDEX yx) const {
@@ -713,9 +721,9 @@ public:
 		const auto r3x = r1x * _SIN_ (angle) ;
 		const auto r4x = r1x * (UNIT (1) - r2x) ;
 		return Matrix ({
-			{r1x[0] * r4x[0] + r2x ,r1x[0] * r4x[1] - r3x[2] ,r1x[0] * r4x[2] + r3x[1] ,UNIT (0)} ,
-			{r1x[1] * r4x[0] + r3x[2] ,r1x[1] * r4x[1] + r2x ,r1x[1] * r4x[2] - r3x[0] ,UNIT (0)} ,
-			{r1x[2] * r4x[0] - r3x[1] ,r1x[2] * r4x[1] + r3x[0] ,r1x[2] * r4x[2] + r2x ,UNIT (0)} ,
+			{(r1x[0] * r4x[0] + r2x) ,(r1x[0] * r4x[1] - r3x[2]) ,(r1x[0] * r4x[2] + r3x[1]) ,UNIT (0)} ,
+			{(r1x[1] * r4x[0] + r3x[2]) ,(r1x[1] * r4x[1] + r2x) ,(r1x[1] * r4x[2] - r3x[0]) ,UNIT (0)} ,
+			{(r1x[2] * r4x[0] - r3x[1]) ,(r1x[2] * r4x[1] + r3x[0]) ,(r1x[2] * r4x[2] + r2x) ,UNIT (0)} ,
 			{UNIT (0) ,UNIT (0) ,UNIT (0) ,UNIT (1)}}) ;
 	}
 
@@ -727,9 +735,9 @@ public:
 		const auto r5x = qz * r2x ;
 		const auto r6x = qw * r2x ;
 		return Matrix ({
-			{UNIT (1) - qy * r4x - qz * r5x ,qx * r4x - qz * r6x ,qx * r5x + qy * r6x ,UNIT (0)} ,
-			{qx * r4x + qz * r6x ,UNIT (1) - qx * r3x - qz * r5x ,qy * r5x - qx * r6x ,UNIT (0)} ,
-			{qx * r5x - qy * r6x ,qy * r5x + qx * r6x ,UNIT (1) - qx * r3x - qy * r4x ,UNIT (0)} ,
+			{(UNIT (1) - qy * r4x - qz * r5x) ,(qx * r4x - qz * r6x) ,(qx * r5x + qy * r6x) ,UNIT (0)} ,
+			{(qx * r4x + qz * r6x) ,(UNIT (1) - qx * r3x - qz * r5x) ,(qy * r5x - qx * r6x) ,UNIT (0)} ,
+			{(qx * r5x - qy * r6x) ,(qy * r5x + qx * r6x) ,(UNIT (1) - qx * r3x - qy * r4x) ,UNIT (0)} ,
 			{UNIT (0) ,UNIT (0) ,UNIT (0) ,UNIT (1)}}) ;
 	}
 
@@ -798,9 +806,9 @@ public:
 		const auto r5x = (r2x[3] != UNIT (0)) ? r3x : (UNIT (0)) ;
 		const auto r6x = (r2x[3] != UNIT (0)) ? (r1x.xyz ()) : (ARRAY3<UNIT> {UNIT (0) ,UNIT (0) ,UNIT (0)}) ;
 		return Matrix ({
-			{r1x[0] * r2x[0] - r4x + r5x ,r1x[1] * r2x[0] ,r1x[2] * r2x[0] ,-r3x * r2x[0]} ,
-			{r1x[0] * r2x[1] ,r1x[1] * r2x[1] - r4x + r5x ,r1x[2] * r2x[1] ,-r3x * r2x[1]} ,
-			{r1x[0] * r2x[2] ,r1x[1] * r2x[2] ,r1x[2] * r2x[2] - r4x + r5x ,-r3x * r2x[2]} ,
+			{(r1x[0] * r2x[0] - r4x + r5x) ,(r1x[1] * r2x[0]) ,(r1x[2] * r2x[0]) ,(-r3x * r2x[0])} ,
+			{(r1x[0] * r2x[1]) ,(r1x[1] * r2x[1] - r4x + r5x) ,(r1x[2] * r2x[1]) ,(-r3x * r2x[1])} ,
+			{(r1x[0] * r2x[2]) ,(r1x[1] * r2x[2]) ,(r1x[2] * r2x[2] - r4x + r5x) ,(-r3x * r2x[2])} ,
 			{r6x[0] ,r6x[1] ,r6x[2] ,-r4x}}) ;
 	}
 
@@ -815,10 +823,10 @@ public:
 
 	static Matrix make_symmetry (const Vector<UNIT> &first ,const Vector<UNIT> &second) {
 		return Matrix ({
-			{first[0] * second[0] ,first[0] * second[1] ,first[0] * second[2] ,first[0] * second[3]} ,
-			{first[1] * second[0] ,first[1] * second[1] ,first[1] * second[2] ,first[1] * second[3]} ,
-			{first[2] * second[0] ,first[2] * second[1] ,first[2] * second[2] ,first[2] * second[3]} ,
-			{first[3] * second[0] ,first[3] * second[1] ,first[3] * second[2] ,first[3] * second[3]}}) ;
+			{(first[0] * second[0]) ,(first[0] * second[1]) ,(first[0] * second[2]) ,(first[0] * second[3])} ,
+			{(first[1] * second[0]) ,(first[1] * second[1]) ,(first[1] * second[2]) ,(first[1] * second[3])} ,
+			{(first[2] * second[0]) ,(first[2] * second[1]) ,(first[2] * second[2]) ,(first[2] * second[3])} ,
+			{(first[3] * second[0]) ,(first[3] * second[1]) ,(first[3] * second[2]) ,(first[3] * second[3])}}) ;
 	}
 } ;
 

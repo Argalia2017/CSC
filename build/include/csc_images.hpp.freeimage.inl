@@ -8,13 +8,13 @@
 #undef self
 #undef implicit
 #undef popping
-#undef import
-#undef export
+#undef imports
+#undef exports
 #pragma pop_macro ("self")
 #pragma pop_macro ("implicit")
 #pragma pop_macro ("popping")
-#pragma pop_macro ("import")
-#pragma pop_macro ("export")
+#pragma pop_macro ("imports")
+#pragma pop_macro ("exports")
 #endif
 
 #ifdef __CSC_DEPRECATED__
@@ -46,13 +46,13 @@
 #pragma push_macro ("self")
 #pragma push_macro ("implicit")
 #pragma push_macro ("popping")
-#pragma push_macro ("import")
-#pragma push_macro ("export")
+#pragma push_macro ("imports")
+#pragma push_macro ("exports")
 #define self to ()
 #define implicit
 #define popping
-#define import extern
-#define export
+#define imports extern
+#define exports
 #endif
 
 namespace CSC {
@@ -70,7 +70,7 @@ public:
 		_STATIC_ASSERT_ (_ALIGNOF_ (REMOVE_CVR_TYPE<decltype (*this)>) == _ALIGNOF_ (Interface)) ;
 	}
 
-	PACK<PTR<ARR<COLOR_BGR>> ,LENGTH[4]> watch (AnyRef<void> &_this) const override {
+	PACK<PTR<ARR<COLOR_BGR>> ,LENGTH[4]> layout (AnyRef<void> &_this) const override {
 		PACK<PTR<ARR<COLOR_BGR>> ,LENGTH[4]> ret ;
 		auto &r1 = _this.rebind<NATIVE_TYPE> ().self ;
 		ret.P1 = &_LOAD_<ARR<COLOR_BGR>> (FreeImage_GetBits (r1)) ;
@@ -82,20 +82,20 @@ public:
 	}
 
 	void load_data (AnyRef<void> &_this ,LENGTH cx ,LENGTH cy) const override {
-		auto rax = NATIVE_TYPE ([&] (PTR<FIBITMAP> &me) {
+		auto rax = UniqueRef<PTR<FIBITMAP>> ([&] (PTR<FIBITMAP> &me) {
 			me = FreeImage_Allocate (VAR32 (cx) ,VAR32 (cy) ,24) ;
 			_DYNAMIC_ASSERT_ (me != NULL) ;
 		} ,[] (PTR<FIBITMAP> &me) {
 			_DEBUG_ASSERT_ (me != NULL) ;
 			FreeImage_Unload (me) ;
 		}) ;
-		const auto r1x = _XVALUE_<const PACK<STRA[_SIZEOF_ (COLOR_BGR)]> &> ({0}) ;
-		FreeImage_FillBackground (rax ,r1x.P1 ,0) ;
+		const auto r1x = COLOR_BGR ({0 ,0 ,0}) ;
+		FreeImage_FillBackground (rax ,&r1x ,0) ;
 		_this = AnyRef<NATIVE_TYPE>::make (std::move (rax)) ;
 	}
 
 	void load_data (AnyRef<void> &_this ,const AutoBuffer<BYTE> &data) const override {
-		auto rax = NATIVE_TYPE ([&] (PTR<FIBITMAP> &me) {
+		auto rax = UniqueRef<PTR<FIBITMAP>> ([&] (PTR<FIBITMAP> &me) {
 			const auto r1x = UniqueRef<PACK<PTR<FIMEMORY> ,AutoBuffer<BYTE>>> ([&] (PACK<PTR<FIMEMORY> ,AutoBuffer<BYTE>> &me) {
 				me.P2 = data ;
 				me.P1 = FreeImage_OpenMemory (me.P2.self ,VARY (me.P2.size ())) ;
@@ -138,7 +138,7 @@ public:
 	}
 
 	void load_file (AnyRef<void> &_this ,const String<STR> &file) const override {
-		auto rax = NATIVE_TYPE ([&] (PTR<FIBITMAP> &me) {
+		auto rax = UniqueRef<PTR<FIBITMAP>> ([&] (PTR<FIBITMAP> &me) {
 			const auto r1x = FreeImage_GetFileType (_BUILDSTRS_<STRA> (file).raw ().self) ;
 			_DYNAMIC_ASSERT_ (r1x != FIF_UNKNOWN) ;
 			me = FreeImage_Load (r1x ,_BUILDSTRS_<STRA> (file).raw ().self) ;
@@ -149,7 +149,7 @@ public:
 		}) ;
 		if (FreeImage_GetBPP (rax.self) == 24)
 			return ;
-		rax = NATIVE_TYPE ([&] (PTR<FIBITMAP> &me) {
+		rax = UniqueRef<PTR<FIBITMAP>> ([&] (PTR<FIBITMAP> &me) {
 			me = FreeImage_ConvertTo24Bits (rax.self) ;
 			_DYNAMIC_ASSERT_ (me != NULL) ;
 		} ,[] (PTR<FIBITMAP> &me) {
@@ -178,7 +178,7 @@ public:
 		_STATIC_ASSERT_ (_ALIGNOF_ (REMOVE_CVR_TYPE<decltype (*this)>) == _ALIGNOF_ (Interface)) ;
 	}
 
-	PACK<PTR<ARR<COLOR_BGRA>> ,LENGTH[4]> watch (AnyRef<void> &_this) const override {
+	PACK<PTR<ARR<COLOR_BGRA>> ,LENGTH[4]> layout (AnyRef<void> &_this) const override {
 		PACK<PTR<ARR<COLOR_BGRA>> ,LENGTH[4]> ret ;
 		auto &r1 = _this.rebind<NATIVE_TYPE> ().self ;
 		ret.P1 = &_LOAD_<ARR<COLOR_BGRA>> (FreeImage_GetBits (r1)) ;
@@ -190,20 +190,20 @@ public:
 	}
 
 	void load_data (AnyRef<void> &_this ,LENGTH cx ,LENGTH cy) const override {
-		auto rax = NATIVE_TYPE ([&] (PTR<FIBITMAP> &me) {
+		auto rax = UniqueRef<PTR<FIBITMAP>> ([&] (PTR<FIBITMAP> &me) {
 			me = FreeImage_Allocate (VAR32 (cx) ,VAR32 (cy) ,32) ;
 			_DYNAMIC_ASSERT_ (me != NULL) ;
 		} ,[] (PTR<FIBITMAP> &me) {
 			_DEBUG_ASSERT_ (me != NULL) ;
 			FreeImage_Unload (me) ;
 		}) ;
-		const auto r1x = _XVALUE_<const PACK<STRA[_SIZEOF_ (COLOR_BGRA)]> &> ({0}) ;
-		FreeImage_FillBackground (rax ,r1x.P1 ,0) ;
+		const auto r1x = COLOR_BGRA ({0 ,0 ,0 ,0}) ;
+		FreeImage_FillBackground (rax ,&r1x ,0) ;
 		_this = AnyRef<NATIVE_TYPE>::make (std::move (rax)) ;
 	}
 
 	void load_data (AnyRef<void> &_this ,const AutoBuffer<BYTE> &data) const override {
-		auto rax = NATIVE_TYPE ([&] (PTR<FIBITMAP> &me) {
+		auto rax = UniqueRef<PTR<FIBITMAP>> ([&] (PTR<FIBITMAP> &me) {
 			const auto r1x = UniqueRef<PACK<PTR<FIMEMORY> ,AutoBuffer<BYTE>>> ([&] (PACK<PTR<FIMEMORY> ,AutoBuffer<BYTE>> &me) {
 				me.P2 = data ;
 				me.P1 = FreeImage_OpenMemory (me.P2.self ,VARY (me.P2.size ())) ;
@@ -246,7 +246,7 @@ public:
 	}
 
 	void load_file (AnyRef<void> &_this ,const String<STR> &file) const override {
-		auto rax = NATIVE_TYPE ([&] (PTR<FIBITMAP> &me) {
+		auto rax = UniqueRef<PTR<FIBITMAP>> ([&] (PTR<FIBITMAP> &me) {
 			const auto r1x = FreeImage_GetFileType (_BUILDSTRS_<STRA> (file).raw ().self) ;
 			_DYNAMIC_ASSERT_ (r1x != FIF_UNKNOWN) ;
 			me = FreeImage_Load (r1x ,_BUILDSTRS_<STRA> (file).raw ().self) ;
@@ -257,7 +257,7 @@ public:
 		}) ;
 		if (FreeImage_GetBPP (rax.self) == 32)
 			return ;
-		rax = NATIVE_TYPE ([&] (PTR<FIBITMAP> &me) {
+		rax = UniqueRef<PTR<FIBITMAP>> ([&] (PTR<FIBITMAP> &me) {
 			me = FreeImage_ConvertTo32Bits (rax.self) ;
 			_DYNAMIC_ASSERT_ (me != NULL) ;
 		} ,[] (PTR<FIBITMAP> &me) {

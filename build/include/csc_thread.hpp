@@ -36,7 +36,9 @@ private:
 	IntrusiveRef<Pack> mThis ;
 
 public:
-	CalcThread () :mThis (IntrusiveRef<Pack>::make ()) {}
+	CalcThread () {
+		mThis = IntrusiveRef<Pack>::make () ;
+	}
 
 	LENGTH size () popping {
 		const auto r1x = mThis.watch () ;
@@ -287,7 +289,9 @@ private:
 	IntrusiveRef<Pack> mThis ;
 
 public:
-	WorkThread () :mThis (IntrusiveRef<Pack>::make ()) {}
+	WorkThread () {
+		mThis = IntrusiveRef<Pack>::make () ;
+	}
 
 	LENGTH size () popping {
 		const auto r1x = mThis.watch () ;
@@ -550,7 +554,9 @@ private:
 	IntrusiveRef<Pack> mThis ;
 
 public:
-	Promise () :mThis (IntrusiveRef<Pack>::make ()) {}
+	Promise () {
+		mThis = IntrusiveRef<Pack>::make () ;
+	}
 
 	Future future () popping ;
 
@@ -619,7 +625,7 @@ public:
 	}
 
 private:
-	explicit Promise (IntrusiveRef<Pack> &_this) popping :mThis (_this.copy ()) {}
+	explicit Promise (IntrusiveRef<Pack> &_this) popping : mThis (_this.copy ()) {}
 
 private:
 	static void static_execute (Pack &_self) {
@@ -741,7 +747,9 @@ public:
 		const auto r1x = mThis.watch () ;
 		auto &r1 = _XVALUE_<Pack &> (r1x) ;
 		ScopedGuard<std::mutex> ANONYMOUS (r1.mThreadMutex) ;
-		return !r1.mThreadFlag.exist () || !r1.mThreadFlag.self ;
+		if (!r1.mThreadFlag.exist ())
+			return TRUE ;
+		return !r1.mThreadFlag.self ;
 	}
 
 	ITEM poll () popping {
@@ -811,9 +819,9 @@ public:
 			_DYNAMIC_ASSERT_ (r1.mThreadFlag.exist ()) ;
 			for (FOR_ONCE_DO_WHILE_FALSE) {
 				if (r1.mThreadFlag.self)
-					continue ;
+					break ;
 				if (r1.mItem.exist ())
-					continue ;
+					break ;
 				rax = std::move (r1.mThreadProc) ;
 			}
 		}
@@ -825,7 +833,7 @@ public:
 	}
 
 private:
-	explicit Future (IntrusiveRef<Pack> &_this) popping :mThis (_this.copy ()) {}
+	explicit Future (IntrusiveRef<Pack> &_this) popping : mThis (_this.copy ()) {}
 } ;
 
 template <class ITEM>

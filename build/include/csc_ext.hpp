@@ -92,33 +92,49 @@ public:
 	inline BOOL operator< (const VAR128 &right) const {
 		const auto r1x = _CAST_<VAR64> (v2i0) ;
 		const auto r2x = _CAST_<VAR64> (right.v2i0) ;
-		if (r1x != r2x)
-			return r1x < r2x ;
-		return v2i1 < right.v2i1 ;
+		if (r1x < r2x)
+			return TRUE ;
+		if (r1x > r2x)
+			return FALSE ;
+		if (v2i1 >= right.v2i1)
+			return FALSE ;
+		return TRUE ;
 	}
 
 	inline BOOL operator>= (const VAR128 &right) const {
 		const auto r1x = _CAST_<VAR64> (v2i0) ;
 		const auto r2x = _CAST_<VAR64> (right.v2i0) ;
-		if (r1x != r2x)
-			return r1x >= r2x ;
-		return v2i1 >= right.v2i1 ;
+		if (r1x < r2x)
+			return FALSE ;
+		if (r1x > r2x)
+			return TRUE ;
+		if (v2i1 < right.v2i1)
+			return FALSE ;
+		return TRUE ;
 	}
 
 	inline BOOL operator> (const VAR128 &right) const {
 		const auto r1x = _CAST_<VAR64> (right.v2i0) ;
 		const auto r2x = _CAST_<VAR64> (v2i0) ;
-		if (r1x != r2x)
-			return r1x > r2x ;
-		return v2i1 > right.v2i1 ;
+		if (r1x < r2x)
+			return FALSE ;
+		if (r1x > r2x)
+			return TRUE ;
+		if (v2i1 <= right.v2i1)
+			return FALSE ;
+		return TRUE ;
 	}
 
 	inline BOOL operator<= (const VAR128 &right) const {
 		const auto r1x = _CAST_<VAR64> (right.v2i0) ;
 		const auto r2x = _CAST_<VAR64> (v2i0) ;
-		if (r1x != r2x)
-			return r1x <= r2x ;
-		return v2i1 <= right.v2i1 ;
+		if (r1x < r2x)
+			return TRUE ;
+		if (r1x > r2x)
+			return FALSE ;
+		if (v2i1 > right.v2i1)
+			return TRUE ;
+		return FALSE ;
 	}
 
 	inline VAR128 operator& (const VAR128 &right) const {
@@ -255,9 +271,17 @@ public:
 	inline VAR128 operator/ (const VAR128 &right) const {
 		_DEBUG_ASSERT_ (right.v2i1 != 0 || right.v2i0 != 0) ;
 		VAR128 ret = 0 ;
-		const auto r1x = _CAST_<VAR64> (v2i0) >= 0 ;
-		const auto r2x = _CAST_<VAR64> (right.v2i0) >= 0 ;
-		if (r1x && right.v4i0 == 0 && right.v4i1 == 0 && right.v4i2 == 0) {
+		const auto r1x = BOOL (_CAST_<VAR64> (v2i0) >= 0) ;
+		const auto r2x = BOOL (_CAST_<VAR64> (right.v2i0) >= 0) ;
+		_CALL_IF_ ([&] (BOOL &if_cond) {
+			if (!r1x)
+				return (void) (if_cond = FALSE) ;
+			if (right.v4i0 != 0)
+				return (void) (if_cond = FALSE) ;
+			if (right.v4i1 != 0)
+				return (void) (if_cond = FALSE) ;
+			if (right.v4i2 != 0)
+				return (void) (if_cond = FALSE) ;
 			auto rax = DATA () ;
 			const auto r3x = DATA (right.v4i3) ;
 			_DEBUG_ASSERT_ (r3x != 0) ;
@@ -269,15 +293,19 @@ public:
 			ret.v4i2 = CHAR (rax / r3x) ;
 			rax = (DATA (rax % r3x) << (_SIZEOF_ (CHAR) * 8)) | DATA (v4i3) ;
 			ret.v4i3 = CHAR (rax / r3x) ;
-		} else if (!r1x) {
-			const auto r3x = v2i0 == DATA (VAR64_MIN) && v2i1 == 0 ;
+		} ,[&] (BOOL &if_cond) {
+			if (r1x)
+				return (void) (if_cond = FALSE) ;
+			const auto r3x = BOOL (v2i0 == DATA (VAR64_MIN) && v2i1 == 0) ;
 			ret = r3x ? (-(-(*this + right) / right + 1)) : (-(-*this / right)) ;
-		} else if (!r2x) {
-			const auto r3x = right.v2i0 == DATA (VAR64_MIN) && right.v2i1 == 0 ;
+		} ,[&] (BOOL &if_cond) {
+			if (r2x)
+				return (void) (if_cond = FALSE) ;
+			const auto r3x = BOOL (right.v2i0 == DATA (VAR64_MIN) && right.v2i1 == 0) ;
 			ret = r3x ? (VAR128 (0)) : (*this / -right) ;
-		} else {
+		} ,[&] (BOOL &if_cond) {
 			ret = slow_divide (*this ,right) ;
-		}
+		}) ;
 		return std::move (ret) ;
 	}
 
@@ -289,9 +317,17 @@ public:
 	inline VAR128 operator% (const VAR128 &right) const {
 		_DEBUG_ASSERT_ (right.v2i1 != 0 || right.v2i0 != 0) ;
 		VAR128 ret = 0 ;
-		const auto r1x = _CAST_<VAR64> (v2i0) >= 0 ;
-		const auto r2x = _CAST_<VAR64> (right.v2i0) >= 0 ;
-		if (r1x && right.v4i0 == 0 && right.v4i1 == 0 && right.v4i2 == 0) {
+		const auto r1x = BOOL (_CAST_<VAR64> (v2i0) >= 0) ;
+		const auto r2x = BOOL (_CAST_<VAR64> (right.v2i0) >= 0) ;
+		_CALL_IF_ ([&] (BOOL &if_cond) {
+			if (!r1x)
+				return (void) (if_cond = FALSE) ;
+			if (right.v4i0 != 0)
+				return (void) (if_cond = FALSE) ;
+			if (right.v4i1 != 0)
+				return (void) (if_cond = FALSE) ;
+			if (right.v4i2 != 0)
+				return (void) (if_cond = FALSE) ;
 			auto rax = DATA () ;
 			const auto r3x = DATA (right.v4i3) ;
 			_DEBUG_ASSERT_ (r3x != 0) ;
@@ -303,15 +339,19 @@ public:
 			ret.v4i2 = 0 ;
 			rax = (DATA (rax % r3x) << (_SIZEOF_ (CHAR) * 8)) | DATA (v4i3) ;
 			ret.v4i3 = CHAR (rax % r3x) ;
-		} else if (!r1x) {
-			const auto r3x = v2i0 == DATA (VAR64_MIN) && v2i1 == 0 ;
+		} ,[&] (BOOL &if_cond) {
+			if (r1x)
+				return (void) (if_cond = FALSE) ;
+			const auto r3x = BOOL (v2i0 == DATA (VAR64_MIN) && v2i1 == 0) ;
 			ret = r3x ? (-(-(*this + right) % right)) : (-(-*this % right)) ;
-		} else if (!r2x) {
-			const auto r3x = right.v2i0 == DATA (VAR64_MIN) && right.v2i1 == 0 ;
+		} ,[&] (BOOL &if_cond) {
+			if (r2x)
+				return (void) (if_cond = FALSE) ;
+			const auto r3x = BOOL (right.v2i0 == DATA (VAR64_MIN) && right.v2i1 == 0) ;
 			ret = r3x ? (*this) : (*this % -right) ;
-		} else {
+		} ,[&] (BOOL &if_cond) {
 			ret = right - slow_divide (*this ,right) * right ;
-		}
+		}) ;
 		return std::move (ret) ;
 	}
 
@@ -352,6 +392,27 @@ public:
 	inline VAR128 operator-- (int) popping {
 		VAR128 ret = *this ;
 		--*this ;
+		return std::move (ret) ;
+	}
+
+private:
+	inline static VAR128 slow_divide (const VAR128 &y ,const VAR128 &x) {
+		_DEBUG_ASSERT_ (y >= 0) ;
+		_DEBUG_ASSERT_ (x > 0) ;
+		VAR128 ret = 0 ;
+		auto rax = Buffer<VAR128 ,ARGC<2>> ({0 ,y}) ;
+		while (TRUE) {
+			if (rax[0] > rax[1])
+				break ;
+			ret = rax[0] + (rax[1] - rax[0]) / 2 ;
+			const auto r2x = x * ret ;
+			if (r2x == y)
+				break ;
+			const auto r3x = (r2x < y) ? (ret + 1) : (ret - 1) ;
+			INDEX ix = EFLAG (r2x >= y) ;
+			rax[ix] = r3x ;
+		}
+		ret -= EFLAG (ret * x > y) ;
 		return std::move (ret) ;
 	}
 
@@ -416,27 +477,6 @@ private:
 		return _CAST_<CHAR[4]> (mData)[_CAST_<BYTE[4]> (r1x)[3]] ;
 	}
 
-private:
-	inline static VAR128 slow_divide (const VAR128 &y ,const VAR128 &x) {
-		_DEBUG_ASSERT_ (y >= 0) ;
-		_DEBUG_ASSERT_ (x > 0) ;
-		VAR128 ret = 0 ;
-		auto rax = Buffer<VAR128 ,ARGC<2>> ({0 ,y}) ;
-		while (TRUE) {
-			if (rax[0] > rax[1])
-				break ;
-			ret = rax[0] + (rax[1] - rax[0]) / 2 ;
-			const auto r2x = x * ret ;
-			if (r2x == y)
-				break ;
-			const auto r3x = (r2x < y) ? (ret + 1) : (ret - 1) ;
-			INDEX ix = EFLAG (r2x >= y) ;
-			rax[ix] = r3x ;
-		}
-		ret -= EFLAG (ret * x > y) ;
-		return std::move (ret) ;
-	}
-
 #undef v2i0
 #undef v2i1
 #undef v4i0
@@ -458,32 +498,32 @@ struct OPERATOR_CRC32 {
 		return index >= ib && index < ie ;
 	}
 
-	inline static constexpr CHAR expr_crc32_table (CHAR arg ,const ARGC<8> &) {
-		return arg ;
+	inline static constexpr CHAR expr_crc32_table (CHAR each ,const ARGC<8> &) {
+		return each ;
 	}
 
-	template <INDEX _VAL ,class = ENABLE_TYPE<ensure_index (_VAL ,0 ,8)>>
-	inline static constexpr CHAR expr_crc32_table (CHAR arg ,const ARGC<_VAL> &) {
-		return expr_crc32_table (((((arg & CHAR (0X00000001)) != 0) ? (CHAR (0)) : (CHAR (0XEDB88320)) ^ (arg >> 1))) ,_NULL_<const ARGC<_VAL + 1>> ()) ;
+	template <INDEX _VAL1 ,class = ENABLE_TYPE<ensure_index (_VAL1 ,0 ,8)>>
+	inline static constexpr CHAR expr_crc32_table (CHAR each ,const ARGC<_VAL1> &) {
+		return expr_crc32_table (((((each & CHAR (0X00000001)) != 0) ? (CHAR (0)) : (CHAR (0XEDB88320)) ^ (each >> 1))) ,_NULL_<const ARGC<_VAL1 + 1>> ()) ;
 	}
 
-	inline static constexpr CHAR expr_crc32_table (INDEX arg) {
-		return expr_crc32_table (CHAR (arg) ,_NULL_<const ARGC<0>> ()) ;
+	inline static constexpr CHAR expr_crc32_table (INDEX each) {
+		return expr_crc32_table (CHAR (each) ,_NULL_<const ARGC<0>> ()) ;
 	}
 
-	template <LENGTH _VAL>
-	inline static constexpr CHAR expr_crc32_hash (const DEF<STR[_VAL]> &arg1 ,CHAR arg2 ,const ARGC<_VAL - 1> &) {
-		return arg2 ;
+	template <LENGTH _VAL1>
+	inline static constexpr CHAR expr_crc32_hash (const DEF<STR[_VAL1]> &stri ,CHAR each ,const ARGC<_VAL1 - 1> &) {
+		return each ;
 	}
 
 	template <LENGTH _VAL1 ,INDEX _VAL2 ,class = ENABLE_TYPE<ensure_index (_VAL2 ,0 ,_VAL1 - 1)>>
-	inline static constexpr CHAR expr_crc32_hash (const DEF<STR[_VAL1]> &arg1 ,CHAR arg2 ,const ARGC<_VAL2> &) {
-		return expr_crc32_hash (arg1 ,(expr_crc32_table (INDEX ((CHAR (arg2) ^ CHAR (arg1[_VAL2])) & CHAR (0X000000FF))) ^ (arg2 >> 8)) ,_NULL_<const ARGC<_VAL2 + 1>> ()) ;
+	inline static constexpr CHAR expr_crc32_hash (const DEF<STR[_VAL1]> &stri ,CHAR each ,const ARGC<_VAL2> &) {
+		return expr_crc32_hash (stri ,(expr_crc32_table (INDEX ((CHAR (each) ^ CHAR (stri[_VAL2])) & CHAR (0X000000FF))) ^ (each >> 8)) ,_NULL_<const ARGC<_VAL2 + 1>> ()) ;
 	}
 
-	template <LENGTH _VAL>
-	inline static constexpr FLAG invoke (const DEF<STR[_VAL]> &arg) {
-		return FLAG (VAR32 (expr_crc32_hash (arg ,CHAR (0XFFFFFFFF) ,_NULL_<const ARGC<0>> ())) & VAR32_MAX) ;
+	template <LENGTH _VAL1>
+	inline static constexpr FLAG invoke (const DEF<STR[_VAL1]> &stri) {
+		return FLAG (VAR32 (expr_crc32_hash (stri ,CHAR (0XFFFFFFFF) ,_NULL_<const ARGC<0>> ())) & VAR32_MAX) ;
 	}
 } ;
 } ;
@@ -514,11 +554,15 @@ private:
 	mutable FLAG mStatus ;
 
 public:
-	inline Mutable () :mStatus (STATUS_SIGNALED) {}
+	inline Mutable () :Mutable (ARGVP0) {}
 
-	inline implicit Mutable (const TYPE &right) : mData (std::move (right)) ,mStatus (STATUS_CACHED) {}
+	inline implicit Mutable (const TYPE &right) : Mutable (ARGVP0 ,std::move (right)) {
+		mStatus = STATUS_CACHED ;
+	}
 
-	inline implicit Mutable (TYPE &&right) : mData (std::move (right)) ,mStatus (STATUS_CACHED) {}
+	inline implicit Mutable (TYPE &&right) : Mutable (ARGVP0 ,std::move (right)) {
+		mStatus = STATUS_CACHED ;
+	}
 
 	inline const TYPE &to () const {
 		return mData ;
@@ -557,9 +601,9 @@ public:
 	}
 
 #ifdef __CSC_DEPRECATED__
-	template <class _ARG ,class = ENABLE_TYPE<std::is_same<RESULTOF_TYPE<_ARG (TYPE &)> ,void>::value>>
-	inline void apply_proc (const _ARG &proc) const {
-		apply (Function<DEF<void (TYPE &)> NONE::*> (PhanRef<const _ARG>::make (proc) ,&_ARG::operator())) ;
+	template <class _ARG1 ,class = ENABLE_TYPE<std::is_same<RESULTOF_TYPE<_ARG1 (TYPE &)> ,void>::value>>
+	inline void apply_lambda (const _ARG1 &proc) const {
+		apply (Function<DEF<void (TYPE &)> NONE::*> (PhanRef<const _ARG1>::make (proc) ,&_ARG1::operator())) ;
 	}
 #endif
 
@@ -572,6 +616,10 @@ public:
 	inline void finish () const {
 		mStatus = STATUS_FINISHED ;
 	}
+
+private:
+	template <class... _ARGS>
+	inline explicit Mutable (const decltype (ARGVP0) & ,_ARGS &&...args) : mData (std::forward<_ARGS> (args)...) ,mStatus (STATUS_SIGNALED) {}
 } ;
 
 namespace U {
@@ -610,8 +658,8 @@ struct VISITOF_TRATIS<_ARG1 ,_ARG2 ,_ARGS...> {
 } ;
 } ;
 
-template <INDEX _VAL ,class... _ARGS>
-using VISITOF_TRATIS_TYPE = typename U::VISITOF_TRATIS<ARGC<_VAL> ,_ARGS...>::TYPE ;
+template <INDEX _VAL1 ,class... _ARGS>
+using VISITOF_TRATIS_TYPE = typename U::VISITOF_TRATIS<ARGC<_VAL1> ,_ARGS...>::TYPE ;
 
 template <class... TYPES>
 class Variant {
@@ -656,10 +704,10 @@ public:
 		mIndex = template_construct (&mVariant ,_NULL_<const ARGVS<TYPES...>> ()) ;
 	}
 
-	template <class _ARG ,class = ENABLE_TYPE<!std::is_same<REMOVE_CVR_TYPE<_ARG> ,Variant>::value>>
-	inline implicit Variant (_ARG &&right) {
-		_STATIC_ASSERT_ (INDEXOF_TRAITS_TYPE<REMOVE_CVR_TYPE<_ARG> ,TYPES...>::value != VAR_NONE) ;
-		mIndex = template_init_construct (&mVariant ,std::forward<_ARG> (right)) ;
+	template <class _ARG1 ,class = ENABLE_TYPE<!std::is_same<REMOVE_CVR_TYPE<_ARG1> ,Variant>::value>>
+	inline implicit Variant (_ARG1 &&right) {
+		_STATIC_ASSERT_ (INDEXOF_TRAITS_TYPE<REMOVE_CVR_TYPE<_ARG1> ,TYPES...>::value != VAR_NONE) ;
+		mIndex = template_init_construct (&mVariant ,std::forward<_ARG1> (right)) ;
 		_DYNAMIC_ASSERT_ (mIndex != VAR_NONE) ;
 	}
 
@@ -731,47 +779,54 @@ public:
 		return to () ;
 	}
 
-	template <class _ARG>
-	inline _ARG &value (_ARG &def) {
-		if (!available<_ARG> ())
+	template <class _ARG1>
+	inline _ARG1 &value (_ARG1 &def) {
+		if (!available<_ARG1> ())
 			return def ;
-		return _LOAD_<_ARG> (mVariant.unused) ;
+		return _LOAD_<_ARG1> (mVariant.unused) ;
 	}
 
-	template <class _ARG>
-	inline const _ARG &value (const _ARG &def) const {
-		if (!available<_ARG> ())
+	template <class _ARG1>
+	inline const _ARG1 &value (const _ARG1 &def) const {
+		if (!available<_ARG1> ())
 			return def ;
-		return _LOAD_<_ARG> (mVariant.unused) ;
+		return _LOAD_<_ARG1> (mVariant.unused) ;
 	}
 
-	template <class _ARG>
-	inline void apply (const Function<void (_ARG &)> &proc) {
-		if (!available<_ARG> ())
+	template <class _ARG1>
+	inline void apply (const Function<void (_ARG1 &)> &proc) {
+		if (!available<_ARG1> ())
 			return ;
-		proc (_LOAD_<_ARG> (mVariant.unused)) ;
+		proc (_LOAD_<_ARG1> (mVariant.unused)) ;
 	}
 
-	template <class _ARG>
-	inline void apply (const Function<void (const _ARG &)> &proc) const {
-		if (!available<_ARG> ())
+	template <class _ARG1>
+	inline void apply (const Function<void (const _ARG1 &)> &proc) const {
+		if (!available<_ARG1> ())
 			return ;
-		proc (_LOAD_<_ARG> (mVariant.unused)) ;
+		proc (_LOAD_<_ARG1> (mVariant.unused)) ;
 	}
 
-	template <class _ARG>
-	inline void apply (const Function<DEF<void (_ARG &)> NONE::*> &proc) {
-		if (!available<_ARG> ())
+	template <class _ARG1>
+	inline void apply (const Function<DEF<void (_ARG1 &)> NONE::*> &proc) {
+		if (!available<_ARG1> ())
 			return ;
-		proc (_LOAD_<_ARG> (mVariant.unused)) ;
+		proc (_LOAD_<_ARG1> (mVariant.unused)) ;
 	}
 
-	template <class _ARG>
-	inline void apply (const Function<DEF<void (const _ARG &)> NONE::*> &proc) const {
-		if (!available<_ARG> ())
+	template <class _ARG1>
+	inline void apply (const Function<DEF<void (const _ARG1 &)> NONE::*> &proc) const {
+		if (!available<_ARG1> ())
 			return ;
-		proc (_LOAD_<_ARG> (mVariant.unused)) ;
+		proc (_LOAD_<_ARG1> (mVariant.unused)) ;
 	}
+
+#ifdef __CSC_DEPRECATED__
+	template <class _RET ,class _ARG1 ,class = ENABLE_TYPE<std::is_same<RESULTOF_TYPE<_ARG1 (_RET &)> ,void>::value>>
+	inline void apply_lambda (const _ARG1 &proc) const {
+		apply (Function<DEF<void (_RET &)> NONE::*> (PhanRef<const _ARG1>::make (proc) ,&_ARG1::operator())) ;
+	}
+#endif
 
 	template <class _RET ,class... _ARGS>
 	inline void recreate (_ARGS &&...args) {
@@ -803,10 +858,10 @@ private:
 		return std::move (ret) ;
 	}
 
-	template <class _ARG>
-	inline static INDEX template_init_construct (PTR<TEMP<VARIANT>> address ,_ARG &&arg) popping {
-		const auto r1x = &_LOAD_<TEMP<REMOVE_CVR_TYPE<_ARG>>> (address->unused) ;
-		return template_create (_NULL_<const ARGC<std::is_constructible<REMOVE_CVR_TYPE<_ARG> ,_ARG &&>::value>> () ,r1x ,std::forward<_ARG> (arg)) ;
+	template <class _ARG1>
+	inline static INDEX template_init_construct (PTR<TEMP<VARIANT>> address ,_ARG1 &&arg1) popping {
+		const auto r1x = &_LOAD_<TEMP<REMOVE_CVR_TYPE<_ARG1>>> (address->unused) ;
+		return template_create (_NULL_<const ARGC<std::is_constructible<REMOVE_CVR_TYPE<_ARG1> ,_ARG1 &&>::value>> () ,r1x ,std::forward<_ARG1> (arg1)) ;
 	}
 
 	inline static void template_destruct (PTR<TEMP<VARIANT>> address ,INDEX index ,const ARGVS<> &) noexcept {
@@ -817,6 +872,7 @@ private:
 	inline static void template_destruct (PTR<TEMP<VARIANT>> address ,INDEX index ,const ARGVS<_ARG1 ,_ARGS...> &) noexcept {
 		_STATIC_ASSERT_ (INDEXOF_TRAITS_TYPE<_ARG1 ,_ARGS...>::value == VAR_NONE) ;
 		_STATIC_ASSERT_ (std::is_nothrow_destructible<_ARG1>::value) ;
+		_STATIC_WARNING_ ("unqualified") ;
 		if (index == 0) {
 			_DESTROY_ (&_LOAD_<TEMP<_ARG1>> (address->unused)) ;
 		} else {
@@ -831,6 +887,7 @@ private:
 	template <class _ARG1 ,class... _ARGS>
 	inline static void template_copy_construct (PTR<TEMP<VARIANT>> address ,PTR<const TEMP<VARIANT>> src ,INDEX index ,const ARGVS<_ARG1 ,_ARGS...> &) {
 		_STATIC_ASSERT_ (INDEXOF_TRAITS_TYPE<_ARG1 ,_ARGS...>::value == VAR_NONE) ;
+		_STATIC_WARNING_ ("unqualified") ;
 		if (index == 0) {
 			const auto r1x = &_LOAD_<TEMP<_ARG1>> (address->unused) ;
 			const auto r2x = template_create (_NULL_<const ARGC<std::is_copy_constructible<_ARG1>::value && std::is_nothrow_move_constructible<_ARG1>::value>> () ,r1x ,_LOAD_<_ARG1> (src->unused)) ;
@@ -848,6 +905,7 @@ private:
 	inline static void template_move_construct (PTR<TEMP<VARIANT>> address ,PTR<TEMP<VARIANT>> src ,INDEX index ,const ARGVS<_ARG1 ,_ARGS...> &) noexcept {
 		_STATIC_ASSERT_ (INDEXOF_TRAITS_TYPE<_ARG1 ,_ARGS...>::value == VAR_NONE) ;
 		_STATIC_ASSERT_ (std::is_nothrow_move_constructible<_ARG1>::value && std::is_nothrow_move_assignable<_ARG1>::value) ;
+		_STATIC_WARNING_ ("unqualified") ;
 		if (index == 0) {
 			_CREATE_ (&_LOAD_<TEMP<_ARG1>> (address->unused) ,std::move (_LOAD_<_ARG1> (src->unused))) ;
 		} else {
@@ -960,47 +1018,55 @@ public:
 		return *this ;
 	}
 
-	template <INDEX _VAL>
-	inline VISITOF_TRATIS_TYPE<_VAL ,TYPE1 ,TYPES...> &visit () {
-		return template_visit (*this ,_NULL_<const ARGC<_VAL>> ()) ;
+	template <INDEX _VAL1>
+	inline VISITOF_TRATIS_TYPE<_VAL1 ,TYPE1 ,TYPES...> &visit () {
+		return template_visit (*this ,_NULL_<const ARGC<_VAL1>> ()) ;
 	}
 
-	template <INDEX _VAL>
-	inline constexpr const VISITOF_TRATIS_TYPE<_VAL ,TYPE1 ,TYPES...> &visit () const {
-		return template_visit (*this ,_NULL_<const ARGC<_VAL>> ()) ;
+	template <INDEX _VAL1>
+	inline constexpr const VISITOF_TRATIS_TYPE<_VAL1 ,TYPE1 ,TYPES...> &visit () const {
+		return template_visit (*this ,_NULL_<const ARGC<_VAL1>> ()) ;
 	}
 
-	inline constexpr BOOL equal (const Tuple &right) const {
-		return one () == right.one () && rest () == right.rest () ;
+	inline BOOL equal (const Tuple &right) const {
+		if (one () != right.one ())
+			return FALSE ;
+		if (rest () != right.rest ())
+			return FALSE ;
+		return TRUE ;
 	}
 
-	inline constexpr BOOL operator== (const Tuple &right) const {
+	inline BOOL operator== (const Tuple &right) const {
 		return equal (right) ;
 	}
 
-	inline constexpr BOOL operator!= (const Tuple &right) const {
+	inline BOOL operator!= (const Tuple &right) const {
 		return !equal (right) ;
 	}
 
-	inline constexpr BOOL less (const Tuple &right) const {
-		if (one () != right.one ())
-			return one () < right.one () ;
-		return rest () < right.rest () ;
+	inline BOOL less (const Tuple &right) const {
+		if (one () < right.one ())
+			return TRUE ;
+		if (one () > right.one ())
+			return FALSE ;
+		if (rest () >= right.rest ())
+			return FALSE ;
+		return TRUE ;
 	}
 
-	inline constexpr BOOL operator< (const Tuple &right) const {
+	inline BOOL operator< (const Tuple &right) const {
 		return less (right) ;
 	}
 
-	inline constexpr BOOL operator>= (const Tuple &right) const {
+	inline BOOL operator>= (const Tuple &right) const {
 		return !less (right) ;
 	}
 
-	inline constexpr BOOL operator> (const Tuple &right) const {
+	inline BOOL operator> (const Tuple &right) const {
 		return right.less (*this) ;
 	}
 
-	inline constexpr BOOL operator<= (const Tuple &right) const {
+	inline BOOL operator<= (const Tuple &right) const {
 		return !right.less (*this) ;
 	}
 
@@ -1009,20 +1075,20 @@ private:
 		return _self.one () ;
 	}
 
-	template <INDEX _VAL>
-	inline static VISITOF_TRATIS_TYPE<_VAL ,TYPE1 ,TYPES...> &template_visit (Tuple &_self ,const ARGC<_VAL> &) {
-		_STATIC_ASSERT_ (_VAL > 0 && _VAL < 1 + _CAPACITYOF_ (TYPES)) ;
-		return Tuple<TYPES...>::template_visit (_self.rest () ,_NULL_<const ARGC<_VAL - 1>> ()) ;
+	template <INDEX _VAL1>
+	inline static VISITOF_TRATIS_TYPE<_VAL1 ,TYPE1 ,TYPES...> &template_visit (Tuple &_self ,const ARGC<_VAL1> &) {
+		_STATIC_ASSERT_ (_VAL1 > 0 && _VAL1 < 1 + _CAPACITYOF_ (TYPES)) ;
+		return Tuple<TYPES...>::template_visit (_self.rest () ,_NULL_<const ARGC<_VAL1 - 1>> ()) ;
 	}
 
 	inline static constexpr const VISITOF_TRATIS_TYPE<0 ,TYPE1 ,TYPES...> &template_visit (const Tuple &_self ,const ARGC<0> &) {
 		return _self.one () ;
 	}
 
-	template <INDEX _VAL>
-	inline static constexpr const VISITOF_TRATIS_TYPE<_VAL ,TYPE1 ,TYPES...> &template_visit (const Tuple &_self ,const ARGC<_VAL> &) {
-		_STATIC_ASSERT_ (_VAL > 0 && _VAL < 1 + _CAPACITYOF_ (TYPES)) ;
-		return Tuple<TYPES...>::template_visit (_self.rest () ,_NULL_<const ARGC<_VAL - 1>> ()) ;
+	template <INDEX _VAL1>
+	inline static constexpr const VISITOF_TRATIS_TYPE<_VAL1 ,TYPE1 ,TYPES...> &template_visit (const Tuple &_self ,const ARGC<_VAL1> &) {
+		_STATIC_ASSERT_ (_VAL1 > 0 && _VAL1 < 1 + _CAPACITYOF_ (TYPES)) ;
+		return Tuple<TYPES...>::template_visit (_self.rest () ,_NULL_<const ARGC<_VAL1 - 1>> ()) ;
 	}
 } ;
 
@@ -1071,41 +1137,61 @@ class AllOfTuple ;
 template <class...>
 class AnyOfTuple ;
 
+namespace stl {
+template <class...>
+struct is_all_same :public false_type {} ;
+
+template <class _ARG1>
+struct is_all_same<_ARG1> :public true_type {} ;
+
+template <class _ARG1>
+struct is_all_same<_ARG1 ,_ARG1> :public true_type {} ;
+
+template <class _ARG1 ,class... _ARGS>
+struct is_all_same<_ARG1 ,_ARG1 ,_ARGS...> :public is_all_same<_ARG1 ,_ARGS...> {} ;
+} ;
+
 template <class... TYPES>
 class AllOfTuple :private Tuple<const TYPES &...> {
 private:
 	_STATIC_ASSERT_ (_CAPACITYOF_ (TYPES) > 0) ;
+	_STATIC_ASSERT_ (stl::is_all_same<TYPES...>::value) ;
 
 public:
 	inline AllOfTuple () = delete ;
 
-	template <class _ARG>
-	inline BOOL operator== (const _ARG &right) const {
+	template <class _ARG1>
+	inline implicit operator BOOL () const {
+		return template_cast (_XVALUE_<const Tuple<const TYPES &...> &> (*this)) ;
+	}
+
+	template <class _ARG1>
+	inline BOOL operator== (const _ARG1 &right) const {
 		return template_equal (_XVALUE_<const Tuple<const TYPES &...> &> (*this) ,right) ;
 	}
 
-	template <class _ARG>
-	inline BOOL operator!= (const _ARG &right) const {
+	template <class _ARG1>
+	inline BOOL operator!= (const _ARG1 &right) const {
 		return template_not_equal (_XVALUE_<const Tuple<const TYPES &...> &> (*this) ,right) ;
 	}
 
-	template <class _ARG>
-	inline BOOL operator< (const _ARG &right) const {
+	template <class _ARG1>
+	inline BOOL operator< (const _ARG1 &right) const {
 		return template_less (_XVALUE_<const Tuple<const TYPES &...> &> (*this) ,right) ;
 	}
 
-	template <class _ARG>
-	inline BOOL operator>= (const _ARG &right) const {
+	template <class _ARG1>
+	inline BOOL operator>= (const _ARG1 &right) const {
 		return template_not_less (_XVALUE_<const Tuple<const TYPES &...> &> (*this) ,right) ;
 	}
 
-	template <class _ARG>
-	inline BOOL operator> (const _ARG &right) const {
+	template <class _ARG1>
+	inline BOOL operator> (const _ARG1 &right) const {
 		return template_bigger (_XVALUE_<const Tuple<const TYPES &...> &> (*this) ,right) ;
 	}
 
-	template <class _ARG>
-	inline BOOL operator<= (const _ARG &right) const {
+	template <class _ARG1>
+	inline BOOL operator<= (const _ARG1 &right) const {
 		return template_not_bigger (_XVALUE_<const Tuple<const TYPES &...> &> (*this) ,right) ;
 	}
 
@@ -1140,15 +1226,30 @@ private:
 		return arg2 > arg1 ;
 	}
 
+	template <class _ARG1>
+	inline static BOOL template_cast (const Tuple<_ARG1> &left) {
+		_STATIC_ASSERT_ (std::is_same<_ARG1 ,BOOL>::value) ;
+		return BOOL (left.one ()) ;
+	}
+
+	template <class _ARG1 ,class... _ARGS>
+	inline static BOOL template_cast (const Tuple<_ARG1 ,_ARGS...> &left) {
+		_STATIC_ASSERT_ (std::is_same<_ARG1 ,BOOL>::value) ;
+		if (!BOOL (left.one ()))
+			return FALSE ;
+		return template_cast (left.rest ()) ;
+	}
+
 	template <class _ARG1 ,class _ARG2>
 	inline static BOOL template_equal (const Tuple<_ARG1> &left ,const _ARG2 &right) {
 		return operator_equal (left.one () ,right) ;
 	}
 
-	template <class _ARG1 ,class _ARG2 ,class _ARG3 ,class... _ARGS>
-	inline static BOOL template_equal (const Tuple<_ARG1 ,_ARG2 ,_ARGS...> &left ,const _ARG3 &right) {
-		_STATIC_ASSERT_ (std::is_same<_ARG1 ,_ARG2>::value) ;
-		return operator_equal (left.one () ,right) && template_equal (left.rest () ,right) ;
+	template <class _ARG1 ,class _ARG2 ,class... _ARGS>
+	inline static BOOL template_equal (const Tuple<_ARG1 ,_ARG1 ,_ARGS...> &left ,const _ARG2 &right) {
+		if (!operator_equal (left.one () ,right))
+			return FALSE ;
+		return template_equal (left.rest () ,right) ;
 	}
 
 	template <class _ARG1 ,class _ARG2>
@@ -1156,10 +1257,11 @@ private:
 		return !operator_equal (left.one () ,right) ;
 	}
 
-	template <class _ARG1 ,class _ARG2 ,class _ARG3 ,class... _ARGS>
-	inline static BOOL template_not_equal (const Tuple<_ARG1 ,_ARG2 ,_ARGS...> &left ,const _ARG3 &right) {
-		_STATIC_ASSERT_ (std::is_same<_ARG1 ,_ARG2>::value) ;
-		return !operator_equal (left.one () ,right) && template_not_equal (left.rest () ,right) ;
+	template <class _ARG1 ,class _ARG2 ,class... _ARGS>
+	inline static BOOL template_not_equal (const Tuple<_ARG1 ,_ARG1 ,_ARGS...> &left ,const _ARG2 &right) {
+		if (operator_equal (left.one () ,right))
+			return FALSE ;
+		return template_not_equal (left.rest () ,right) ;
 	}
 
 	template <class _ARG1 ,class _ARG2>
@@ -1167,10 +1269,11 @@ private:
 		return operator_less (left.one () ,right) ;
 	}
 
-	template <class _ARG1 ,class _ARG2 ,class _ARG3 ,class... _ARGS>
-	inline static BOOL template_less (const Tuple<_ARG1 ,_ARG2 ,_ARGS...> &left ,const _ARG3 &right) {
-		_STATIC_ASSERT_ (std::is_same<_ARG1 ,_ARG2>::value) ;
-		return operator_less (left.one () ,right) && template_less (left.rest () ,right) ;
+	template <class _ARG1 ,class _ARG2 ,class... _ARGS>
+	inline static BOOL template_less (const Tuple<_ARG1 ,_ARG1 ,_ARGS...> &left ,const _ARG2 &right) {
+		if (!operator_less (left.one () ,right))
+			return FALSE ;
+		return template_less (left.rest () ,right) ;
 	}
 
 	template <class _ARG1 ,class _ARG2>
@@ -1178,10 +1281,11 @@ private:
 		return !operator_less (left.one () ,right) ;
 	}
 
-	template <class _ARG1 ,class _ARG2 ,class _ARG3 ,class... _ARGS>
-	inline static BOOL template_not_less (const Tuple<_ARG1 ,_ARG2 ,_ARGS...> &left ,const _ARG3 &right) {
-		_STATIC_ASSERT_ (std::is_same<_ARG1 ,_ARG2>::value) ;
-		return !operator_less (left.one () ,right) && template_not_less (left.rest () ,right) ;
+	template <class _ARG1 ,class _ARG2 ,class... _ARGS>
+	inline static BOOL template_not_less (const Tuple<_ARG1 ,_ARG1 ,_ARGS...> &left ,const _ARG2 &right) {
+		if (operator_less (left.one () ,right))
+			return FALSE ;
+		return template_not_less (left.rest () ,right) ;
 	}
 
 	template <class _ARG1 ,class _ARG2>
@@ -1189,10 +1293,11 @@ private:
 		return operator_less (right ,left.one ()) ;
 	}
 
-	template <class _ARG1 ,class _ARG2 ,class _ARG3 ,class... _ARGS>
-	inline static BOOL template_bigger (const Tuple<_ARG1 ,_ARG2 ,_ARGS...> &left ,const _ARG3 &right) {
-		_STATIC_ASSERT_ (std::is_same<_ARG1 ,_ARG2>::value) ;
-		return operator_less (right ,left.one ()) && template_bigger (left.rest () ,right) ;
+	template <class _ARG1 ,class _ARG2 ,class... _ARGS>
+	inline static BOOL template_bigger (const Tuple<_ARG1 ,_ARG1 ,_ARGS...> &left ,const _ARG2 &right) {
+		if (!operator_less (right ,left.one ()))
+			return FALSE ;
+		return template_bigger (left.rest () ,right) ;
 	}
 
 	template <class _ARG1 ,class _ARG2>
@@ -1200,10 +1305,11 @@ private:
 		return !operator_less (right ,left.one ()) ;
 	}
 
-	template <class _ARG1 ,class _ARG2 ,class _ARG3 ,class... _ARGS>
-	inline static BOOL template_not_bigger (const Tuple<_ARG1 ,_ARG2 ,_ARGS...> &left ,const _ARG3 &right) {
-		_STATIC_ASSERT_ (std::is_same<_ARG1 ,_ARG2>::value) ;
-		return !operator_less (right ,left.one ()) && template_not_bigger (left.rest () ,right) ;
+	template <class _ARG1 ,class _ARG2 ,class... _ARGS>
+	inline static BOOL template_not_bigger (const Tuple<_ARG1 ,_ARG1 ,_ARGS...> &left ,const _ARG2 &right) {
+		if (operator_less (right ,left.one ()))
+			return FALSE ;
+		return template_not_bigger (left.rest () ,right) ;
 	}
 } ;
 
@@ -1211,37 +1317,43 @@ template <class... TYPES>
 class AnyOfTuple :private Tuple<const TYPES &...> {
 private:
 	_STATIC_ASSERT_ (_CAPACITYOF_ (TYPES) > 0) ;
+	_STATIC_ASSERT_ (stl::is_all_same<TYPES...>::value) ;
 
 public:
 	inline AnyOfTuple () = delete ;
 
-	template <class _ARG>
-	inline BOOL operator== (const _ARG &right) const {
+	template <class _ARG1>
+	inline implicit operator BOOL () const {
+		return template_cast (_XVALUE_<const Tuple<const TYPES &...> &> (*this)) ;
+	}
+
+	template <class _ARG1>
+	inline BOOL operator== (const _ARG1 &right) const {
 		return template_equal (_XVALUE_<const Tuple<const TYPES &...> &> (*this) ,right) ;
 	}
 
-	template <class _ARG>
-	inline BOOL operator!= (const _ARG &right) const {
+	template <class _ARG1>
+	inline BOOL operator!= (const _ARG1 &right) const {
 		return template_not_equal (_XVALUE_<const Tuple<const TYPES &...> &> (*this) ,right) ;
 	}
 
-	template <class _ARG>
-	inline BOOL operator< (const _ARG &right) const {
+	template <class _ARG1>
+	inline BOOL operator< (const _ARG1 &right) const {
 		return template_less (_XVALUE_<const Tuple<const TYPES &...> &> (*this) ,right) ;
 	}
 
-	template <class _ARG>
-	inline BOOL operator>= (const _ARG &right) const {
+	template <class _ARG1>
+	inline BOOL operator>= (const _ARG1 &right) const {
 		return template_not_less (_XVALUE_<const Tuple<const TYPES &...> &> (*this) ,right) ;
 	}
 
-	template <class _ARG>
-	inline BOOL operator> (const _ARG &right) const {
+	template <class _ARG1>
+	inline BOOL operator> (const _ARG1 &right) const {
 		return template_bigger (_XVALUE_<const Tuple<const TYPES &...> &> (*this) ,right) ;
 	}
 
-	template <class _ARG>
-	inline BOOL operator<= (const _ARG &right) const {
+	template <class _ARG1>
+	inline BOOL operator<= (const _ARG1 &right) const {
 		return template_not_bigger (_XVALUE_<const Tuple<const TYPES &...> &> (*this) ,right) ;
 	}
 
@@ -1276,15 +1388,30 @@ private:
 		return arg2 > arg1 ;
 	}
 
+	template <class _ARG1>
+	inline static BOOL template_cast (const Tuple<_ARG1> &left) {
+		_STATIC_ASSERT_ (std::is_same<_ARG1 ,BOOL>::value) ;
+		return BOOL (left.one ()) ;
+	}
+
+	template <class _ARG1 ,class... _ARGS>
+	inline static BOOL template_cast (const Tuple<_ARG1 ,_ARGS...> &left) {
+		_STATIC_ASSERT_ (std::is_same<_ARG1 ,BOOL>::value) ;
+		if (BOOL (left.one ()))
+			return TRUE ;
+		return template_cast (left.rest ()) ;
+	}
+
 	template <class _ARG1 ,class _ARG2>
 	inline static BOOL template_equal (const Tuple<_ARG1> &left ,const _ARG2 &right) {
 		return operator_equal (left.one () ,right) ;
 	}
 
-	template <class _ARG1 ,class _ARG2 ,class _ARG3 ,class... _ARGS>
-	inline static BOOL template_equal (const Tuple<_ARG1 ,_ARG2 ,_ARGS...> &left ,const _ARG3 &right) {
-		_STATIC_ASSERT_ (std::is_same<_ARG1 ,_ARG2>::value) ;
-		return operator_equal (left.one () ,right) || template_equal (left.rest () ,right) ;
+	template <class _ARG1 ,class _ARG2 ,class... _ARGS>
+	inline static BOOL template_equal (const Tuple<_ARG1 ,_ARG1 ,_ARGS...> &left ,const _ARG2 &right) {
+		if (operator_equal (left.one () ,right))
+			return TRUE ;
+		return template_equal (left.rest () ,right) ;
 	}
 
 	template <class _ARG1 ,class _ARG2>
@@ -1292,10 +1419,11 @@ private:
 		return !operator_equal (left.one () ,right) ;
 	}
 
-	template <class _ARG1 ,class _ARG2 ,class _ARG3 ,class... _ARGS>
-	inline static BOOL template_not_equal (const Tuple<_ARG1 ,_ARG2 ,_ARGS...> &left ,const _ARG3 &right) {
-		_STATIC_ASSERT_ (std::is_same<_ARG1 ,_ARG2>::value) ;
-		return !operator_equal (left.one () ,right) || template_not_equal (left.rest () ,right) ;
+	template <class _ARG1 ,class _ARG2 ,class... _ARGS>
+	inline static BOOL template_not_equal (const Tuple<_ARG1 ,_ARG1 ,_ARGS...> &left ,const _ARG2 &right) {
+		if (!operator_equal (left.one () ,right))
+			return TRUE ;
+		return template_not_equal (left.rest () ,right) ;
 	}
 
 	template <class _ARG1 ,class _ARG2>
@@ -1303,10 +1431,11 @@ private:
 		return operator_less (left.one () ,right) ;
 	}
 
-	template <class _ARG1 ,class _ARG2 ,class _ARG3 ,class... _ARGS>
-	inline static BOOL template_less (const Tuple<_ARG1 ,_ARG2 ,_ARGS...> &left ,const _ARG3 &right) {
-		_STATIC_ASSERT_ (std::is_same<_ARG1 ,_ARG2>::value) ;
-		return operator_less (left.one () ,right) || template_less (left.rest () ,right) ;
+	template <class _ARG1 ,class _ARG2 ,class... _ARGS>
+	inline static BOOL template_less (const Tuple<_ARG1 ,_ARG1 ,_ARGS...> &left ,const _ARG2 &right) {
+		if (operator_less (left.one () ,right))
+			return TRUE ;
+		return template_less (left.rest () ,right) ;
 	}
 
 	template <class _ARG1 ,class _ARG2>
@@ -1314,10 +1443,11 @@ private:
 		return !operator_less (left.one () ,right) ;
 	}
 
-	template <class _ARG1 ,class _ARG2 ,class _ARG3 ,class... _ARGS>
-	inline static BOOL template_not_less (const Tuple<_ARG1 ,_ARG2 ,_ARGS...> &left ,const _ARG3 &right) {
-		_STATIC_ASSERT_ (std::is_same<_ARG1 ,_ARG2>::value) ;
-		return !operator_less (left.one () ,right) || template_not_less (left.rest () ,right) ;
+	template <class _ARG1 ,class _ARG2 ,class... _ARGS>
+	inline static BOOL template_not_less (const Tuple<_ARG1 ,_ARG1 ,_ARGS...> &left ,const _ARG2 &right) {
+		if (!operator_less (left.one () ,right))
+			return TRUE ;
+		return template_not_less (left.rest () ,right) ;
 	}
 
 	template <class _ARG1 ,class _ARG2>
@@ -1325,10 +1455,11 @@ private:
 		return operator_less (right ,left.one ()) ;
 	}
 
-	template <class _ARG1 ,class _ARG2 ,class _ARG3 ,class... _ARGS>
-	inline static BOOL template_bigger (const Tuple<_ARG1 ,_ARG2 ,_ARGS...> &left ,const _ARG3 &right) {
-		_STATIC_ASSERT_ (std::is_same<_ARG1 ,_ARG2>::value) ;
-		return operator_less (right ,left.one ()) || template_bigger (left.rest () ,right) ;
+	template <class _ARG1 ,class _ARG2 ,class... _ARGS>
+	inline static BOOL template_bigger (const Tuple<_ARG1 ,_ARG1 ,_ARGS...> &left ,const _ARG2 &right) {
+		if (operator_less (right ,left.one ()))
+			return TRUE ;
+		return template_bigger (left.rest () ,right) ;
 	}
 
 	template <class _ARG1 ,class _ARG2>
@@ -1336,10 +1467,11 @@ private:
 		return !operator_less (right ,left.one ()) ;
 	}
 
-	template <class _ARG1 ,class _ARG2 ,class _ARG3 ,class... _ARGS>
-	inline static BOOL template_not_bigger (const Tuple<_ARG1 ,_ARG2 ,_ARGS...> &left ,const _ARG3 &right) {
-		_STATIC_ASSERT_ (std::is_same<_ARG1 ,_ARG2>::value) ;
-		return !operator_less (right ,left.one ()) || template_not_bigger (left.rest () ,right) ;
+	template <class _ARG1 ,class _ARG2 ,class... _ARGS>
+	inline static BOOL template_not_bigger (const Tuple<_ARG1 ,_ARG1 ,_ARGS...> &left ,const _ARG2 &right) {
+		if (!operator_less (right ,left.one ()))
+			return TRUE ;
+		return template_not_bigger (left.rest () ,right) ;
 	}
 } ;
 
@@ -1367,11 +1499,31 @@ template <class>
 class SoftRef ;
 
 namespace stl {
+template <class TYPE ,class = VOID>
+struct is_complete_type :public false_type {} ;
+
+template <class TYPE>
+struct is_complete_type<TYPE ,ENABLE_TYPE<(_SIZEOF_ (TYPE) > 0)>> :public true_type {} ;
+
+template <class TYPE ,class = VOID>
+struct is_interface_type :public false_type {} ;
+
+template <class TYPE>
+struct is_interface_type<TYPE ,ENABLE_TYPE<_SIZEOF_ (TYPE) == _SIZEOF_ (Interface) && _ALIGNOF_ (TYPE) == _ALIGNOF_ (Interface)>> :public is_base_of<Interface ,TYPE> {} ;
+} ;
+
+namespace stl {
+template <class _ARG1 ,class _ARG2 ,class = VOID>
+struct is_always_base_of :public false_type {} ;
+
+template <class _ARG1 ,class _ARG2>
+struct is_always_base_of<_ARG1 ,_ARG2 ,ENABLE_TYPE<(_SIZEOF_ (_ARG1) > 0 && _SIZEOF_ (_ARG2) > 0)>> :public is_base_of<_ARG1 ,_ARG2> {} ;
+
 template <class ,class ,class = VOID>
 struct is_virtual_base_of :public false_type {} ;
 
-template <class _ARG>
-struct is_virtual_base_of_helper1 :public virtual _ARG {} ;
+template <class _ARG1>
+struct is_virtual_base_of_helper1 :public virtual _ARG1 {} ;
 
 template <class _ARG1 ,class _ARG2>
 struct is_virtual_base_of_helper2 :public _ARG2 ,public is_virtual_base_of_helper1<_ARG1> {} ;
@@ -1401,8 +1553,8 @@ private:
 	SharedRef<Holder> mHolder ;
 
 public:
-	template <class _ARG>
-	inline static StrongRef<_ARG> strong_from_this (PTR<_ARG> _this) ;
+	template <class _ARG1>
+	inline static StrongRef<_ARG1> strong_from_this (PTR<_ARG1> _this) ;
 } ;
 
 template <class TYPE>
@@ -1425,8 +1577,8 @@ public:
 	}
 
 	//@warn: circular reference ruins StrongRef
-	template <class _ARG ,class = ENABLE_TYPE<std::is_base_of<TYPE ,_ARG>::value>>
-	inline implicit StrongRef (const StrongRef<_ARG> &right) :StrongRef (right.template recast<TYPE> ()) {}
+	template <class _ARG1 ,class = ENABLE_TYPE<stl::is_always_base_of<TYPE ,_ARG1>::value>>
+	inline implicit StrongRef (const StrongRef<_ARG1> &right) :StrongRef (right.template recast<TYPE> ()) {}
 
 	inline implicit StrongRef (const WeakRef<TYPE> &right) ;
 
@@ -1439,7 +1591,7 @@ public:
 			return ;
 		if (!mHolder->mData.exist ())
 			return ;
-		const auto r1x = --mHolder->mCounter == 0 ;
+		const auto r1x = BOOL (--mHolder->mCounter == 0) ;
 		if (r1x)
 			mHolder->mData = AnyRef<void> () ;
 		mPointer = NULL ;
@@ -1469,7 +1621,11 @@ public:
 	}
 
 	inline BOOL exist () const {
-		return mPointer != NULL && mHolder.exist () && mHolder->mData.exist () ;
+		if (mPointer == NULL)
+			return FALSE ;
+		if (!mHolder.exist ())
+			return FALSE ;
+		return mHolder->mData.exist () ;
 	}
 
 	template <class _RET>
@@ -1494,9 +1650,13 @@ public:
 	}
 
 	inline BOOL equal (const StrongRef &right) const {
+		if (!mHolder.exist () && !right.mHolder.exist ())
+			return TRUE ;
 		if (!mHolder.exist () || !right.mHolder.exist ())
-			return !mHolder.exist () && !right.mHolder.exist () ;
-		return &mHolder.self == &right.mHolder.self ;
+			return FALSE ;
+		if (&mHolder.self != &right.mHolder.self)
+			return FALSE ;
+		return TRUE ;
 	}
 
 	inline BOOL operator== (const StrongRef &right) const {
@@ -1547,15 +1707,20 @@ private:
 		_STATIC_WARNING_ ("noop") ;
 	}
 
-	template <class _ARG>
-	inline static PTR<_ARG> template_recast (PTR<TYPE> pointer ,const ARGV<_ARG> & ,const ARGV<ENABLE_TYPE<std::is_base_of<_ARG ,TYPE>::value>> & ,const decltype (ARGVP2) &) {
-		return _XVALUE_<const PTR<_ARG> &> (pointer) ;
+	template <class _ARG1>
+	inline static PTR<_ARG1> template_recast (PTR<TYPE> pointer ,const ARGV<_ARG1> & ,const ARGV<ENABLE_TYPE<stl::is_always_base_of<_ARG1 ,TYPE>::value>> & ,const decltype (ARGVP3) &) {
+		return _XVALUE_<const PTR<_ARG1> &> (pointer) ;
 	}
 
-	template <class _ARG>
-	inline static PTR<_ARG> template_recast (PTR<TYPE> pointer ,const ARGV<_ARG> & ,const ARGV<ENABLE_TYPE<std::is_base_of<Interface ,TYPE>::value && std::is_base_of<Interface ,_ARG>::value>> & ,const decltype (ARGVP1) &) {
+	template <class _ARG1>
+	inline static PTR<_ARG1> template_recast (PTR<TYPE> pointer ,const ARGV<_ARG1> & ,const ARGV<ENABLE_TYPE<stl::is_always_base_of<Interface ,TYPE>::value && stl::is_always_base_of<Interface ,_ARG1>::value>> & ,const decltype (ARGVP2) &) {
 		//@warn: RTTI might be different across DLL
-		return dynamic_cast<PTR<_ARG>> (pointer) ;
+		return dynamic_cast<PTR<_ARG1>> (pointer) ;
+	}
+
+	template <class _ARG1>
+	inline static PTR<_ARG1> template_recast (PTR<TYPE> pointer ,const ARGV<_ARG1> & ,const ARGV<VOID> & ,const decltype (ARGVP1) &) {
+		return NULL ;
 	}
 
 public:
@@ -1570,12 +1735,12 @@ public:
 	}
 } ;
 
-template <class _ARG>
-inline StrongRef<_ARG> WeakRef<void>::strong_from_this (PTR<_ARG> _this) {
-	_STATIC_ASSERT_ (stl::is_virtual_base_of<WeakRef<void> ,_ARG>::value) ;
+template <class _ARG1>
+inline StrongRef<_ARG1> WeakRef<void>::strong_from_this (PTR<_ARG1> _this) {
+	_STATIC_ASSERT_ (stl::is_virtual_base_of<WeakRef<void> ,_ARG1>::value) ;
 	_DEBUG_ASSERT_ (_this != NULL) ;
-	const auto r1x = _XVALUE_<const PTR<CAST_TRAITS_TYPE<WeakRef<void> ,_ARG>> &> (_this) ;
-	return StrongRef<_ARG> (r1x->mHolder ,_this) ;
+	const auto r1x = _XVALUE_<const PTR<CAST_TRAITS_TYPE<WeakRef<void> ,_ARG1>> &> (_this) ;
+	return StrongRef<_ARG1> (r1x->mHolder ,_this) ;
 }
 
 template <class TYPE>
@@ -1593,13 +1758,23 @@ public:
 	}
 
 	inline BOOL exist () const {
-		return mPointer != NULL && mHolder.exist () && mHolder->mData.exist () ;
+		if (!mHolder.exist ())
+			return FALSE ;
+		if (!mHolder->mData.exist ())
+			return FALSE ;
+		if (mPointer == NULL)
+			return FALSE ;
+		return TRUE ;
 	}
 
 	inline BOOL equal (const WeakRef &right) const {
+		if (!mHolder.exist () && !right.mHolder.exist ())
+			return TRUE ;
 		if (!mHolder.exist () || !right.mHolder.exist ())
-			return !mHolder.exist () && !right.mHolder.exist () ;
-		return &mHolder.self == &right.mHolder.self ;
+			return FALSE ;
+		if (&mHolder.self != &right.mHolder.self)
+			return FALSE ;
+		return TRUE ;
 	}
 
 	inline BOOL operator== (const WeakRef &right) const {
@@ -1611,9 +1786,13 @@ public:
 	}
 
 	inline BOOL equal (const StrongRef<TYPE> &right) const {
+		if (!mHolder.exist () && !right.mHolder.exist ())
+			return TRUE ;
 		if (!mHolder.exist () || !right.mHolder.exist ())
-			return !mHolder.exist () && !right.mHolder.exist () ;
-		return &mHolder.self == &right.mHolder.self ;
+			return FALSE ;
+		if (&mHolder.self != &right.mHolder.self)
+			return FALSE ;
+		return TRUE ;
 	}
 
 	inline BOOL operator== (const StrongRef<TYPE> &right) const {
@@ -1647,7 +1826,12 @@ inline BOOL StrongRef<TYPE>::equal (const WeakRef<TYPE> &right) const {
 }
 
 template <class TYPE>
-class SoftRef {
+class SoftRef :public WeakRef<TYPE> {
+#pragma region
+#pragma push_macro ("super")
+#undef super
+#define super m_super ()
+
 private:
 	class Pack {
 	private:
@@ -1656,12 +1840,11 @@ private:
 		LENGTH mWeight ;
 	} ;
 
-	inline static constexpr VAR expr_log2 (VAR arg) {
-		return (arg <= 0) ? VAR_NONE : (arg == 1) ? 0 : (1 + expr_log2 (arg >> 1)) ;
+	inline static constexpr VAR expr_log2 (VAR arg1) {
+		return (arg1 <= 0) ? VAR_NONE : (arg1 == 1) ? 0 : (1 + expr_log2 (arg1 >> 1)) ;
 	}
 
 private:
-	WeakRef<TYPE> mWeakRef ;
 	SharedRef<Allocator<Pack ,SFIXED>> mHeap ;
 	INDEX mIndex ;
 
@@ -1673,18 +1856,25 @@ public:
 	}
 
 	inline ~SoftRef () noexcept {
-		if (!linked ())
-			return ;
-		_DEBUG_ASSERT_ (mHeap.self[mIndex].mWeight >= 0) ;
-		mHeap->free (mIndex) ;
+#ifdef __CSC_DEBUG__
+		_CALL_TRY_ ([&] () {
+			detach () ;
+		} ,std::nothrow) ;
+#else
+		_CALL_TRY_ ([&] () {
+			detach () ;
+		} ,[&] () {
+			(void) this ;
+		}) ;
+#endif
 	}
 
 	inline SoftRef (const SoftRef &) = delete ;
 	inline SoftRef &operator= (const SoftRef &) = delete ;
 
 	inline SoftRef (SoftRef &&right) noexcept {
+		super = std::move (right.super) ;
 		mHeap = std::move (right.mHeap) ;
-		mWeakRef = std::move (right.mWeakRef) ;
 		mIndex = right.mIndex ;
 	}
 
@@ -1703,19 +1893,19 @@ public:
 	}
 
 	inline BOOL exist () const {
-		return mWeakRef.exist () ;
+		return super.exist () ;
 	}
 
 	inline SoftRef copy () popping {
 		SoftRef ret ;
+		ret.super = super ;
 		ret.mHeap = mHeap ;
-		ret.mWeakRef = mWeakRef ;
 		ret.mIndex = mIndex ;
 		return std::move (ret) ;
 	}
 
 	inline BOOL equal (const SoftRef &right) const {
-		return mWeakRef == right.mWeakRef ;
+		return super == right.super ;
 	}
 
 	inline BOOL operator== (const SoftRef &right) const {
@@ -1727,7 +1917,7 @@ public:
 	}
 
 	inline BOOL equal (const StrongRef<TYPE> &right) const {
-		return mWeakRef == right ;
+		return super == right ;
 	}
 
 	inline BOOL operator== (const StrongRef<TYPE> &right) const {
@@ -1739,21 +1929,13 @@ public:
 	}
 
 	inline StrongRef<TYPE> strong () const {
-		return mWeakRef.strong () ;
+		return super.strong () ;
 	}
 
 	inline void assign (const StrongRef<TYPE> &right) {
-		for (FOR_ONCE_DO_WHILE_FALSE) {
-			if (!linked ())
-				continue ;
-			_DEBUG_ASSERT_ (mHeap.self[mIndex].mWeight >= 0) ;
-			mHeap->free (mIndex) ;
-			mIndex = VAR_NONE ;
-			if (!right.exist ())
-				continue ;
-			mIndex = alloc (right) ;
-		}
-		mWeakRef = mHeap.self[mIndex].mData ;
+		detach () ;
+		super = _COPY_ (right) ;
+		attach () ;
 	}
 
 	inline void operator= (const StrongRef<TYPE> &right) {
@@ -1795,28 +1977,29 @@ private:
 			return FALSE ;
 		if (!mHeap->used (mIndex))
 			return FALSE ;
-		if (mWeakRef != mHeap.self[mIndex].mData)
+		if (super != mHeap.self[mIndex].mData)
 			return FALSE ;
 		return TRUE ;
 	}
 
-	inline INDEX alloc (const StrongRef<TYPE> &data) const popping {
-		INDEX ret = VAR_NONE ;
+	inline void attach () {
+		if (linked ())
+			return ;
 		for (FOR_ONCE_DO_WHILE_FALSE) {
 			if (mHeap->length () < mHeap->size ())
-				continue ;
-			_DYNAMIC_ASSERT_ (ret != VAR_NONE) ;
-			const auto r1x = expr_log2 (mHeap.self[ret].mWeight) ;
+				break ;
+			mIndex = min_weight_one () ;
+			_DYNAMIC_ASSERT_ (mIndex != VAR_NONE) ;
+			const auto r1x = expr_log2 (mHeap.self[mIndex].mWeight) ;
 			if (r1x <= 0)
-				continue ;
+				break ;
 			for (INDEX i = 0 ; i < mHeap->size () ; i++)
 				mHeap.self[i].mWeight >>= r1x ;
 		}
-		if (ret == VAR_NONE)
-			ret = mHeap->alloc () ;
-		mHeap.self[ret].mData = data ;
-		mHeap.self[ret].mWeight = 3 ;
-		return std::move (ret) ;
+		if (mIndex == VAR_NONE)
+			mIndex = mHeap->alloc () ;
+		mHeap.self[mIndex].mData = super ;
+		mHeap.self[mIndex].mWeight = 3 ;
 	}
 
 	inline INDEX min_weight_one () const {
@@ -1833,6 +2016,27 @@ private:
 		}
 		return std::move (ret) ;
 	}
+
+	inline void detach () {
+		if (!linked ())
+			return ;
+		_DEBUG_ASSERT_ (mHeap.self[mIndex].mWeight >= 0) ;
+		mHeap->free (mIndex) ;
+		mIndex = VAR_NONE ;
+	}
+
+private:
+	inline WeakRef<TYPE> &m_super () {
+		return *this ;
+	}
+
+	inline const WeakRef<TYPE> &m_super () const {
+		return *this ;
+	}
+
+#undef super
+#pragma pop_macro ("super")
+#pragma endregion
 } ;
 
 template <class TYPE>
@@ -1880,11 +2084,14 @@ private:
 
 		inline implicit operator TYPE & () && = delete ;
 
-		inline implicit operator PTR<TYPE> () const & noexcept {
-			return mPointer ;
+		template <class _RET ,class = ENABLE_TYPE<std::is_convertible<TYPE & ,_RET>::value>>
+		inline implicit operator _RET () const & {
+			_DEBUG_ASSERT_ (mPointer != NULL) ;
+			return _RET (*mPointer) ;
 		}
 
-		inline implicit operator PTR<TYPE> () && = delete ;
+		template <class _RET>
+		inline implicit operator _RET () && = delete ;
 
 	private:
 		inline explicit WatcherProxy (PTR<TYPE> pointer) noexcept :mPointer (pointer) {}
@@ -1897,11 +2104,11 @@ private:
 	std::atomic<BOOL> mSemaphore ;
 
 public:
-	inline IntrusiveRef () = delete ;
+	inline IntrusiveRef () :IntrusiveRef (ARGVP0) {}
 
-	template <class _ARG ,class = ENABLE_TYPE<std::is_same<_ARG ,PTR<TYPE>>::value>>
-	inline explicit IntrusiveRef (const _ARG &address) popping :IntrusiveRef (ARGVP0) {
-		//@warn: object must be from 'IntrusiveRef::make'
+	template <class _ARG1 ,class = ENABLE_TYPE<std::is_same<_ARG1 ,PTR<TYPE>>::value>>
+	inline explicit IntrusiveRef (const _ARG1 &address) popping : IntrusiveRef (ARGVP0) {
+		//@warn: address must be from 'IntrusiveRef::make'
 		acquire (address ,FALSE) ;
 		update_pointer (address) ;
 	}
@@ -1931,7 +2138,13 @@ public:
 		update_pointer (r1x) ;
 	}
 
-	inline IntrusiveRef &operator= (IntrusiveRef &&) = delete ;
+	inline IntrusiveRef &operator= (IntrusiveRef &&right) noexcept {
+		if (this != &right) {
+			this->~IntrusiveRef () ;
+			new (this) IntrusiveRef (std::move (right)) ;
+		}
+		return _XVALUE_<IntrusiveRef &> (*this) ;
+	}
 
 	inline BOOL exist () const {
 		const auto r1x = mPointer.load () ;
@@ -2018,124 +2231,23 @@ public:
 	}
 } ;
 
-namespace stl {
-template <class TYPE ,class = VOID>
-struct is_complete_type :public false_type {} ;
-
 template <class TYPE>
-struct is_complete_type<TYPE ,ENABLE_TYPE<(_SIZEOF_ (TYPE) > 0)>> :public true_type {} ;
-
-template <class TYPE ,class = VOID>
-struct is_interface_type :public false_type {} ;
-
-template <class TYPE>
-struct is_interface_type<TYPE ,ENABLE_TYPE<_SIZEOF_ (TYPE) == _SIZEOF_ (Interface) && _ALIGNOF_ (TYPE) == _ALIGNOF_ (Interface)>> :public is_base_of<Interface ,TYPE> {} ;
-} ;
-
-template <class>
-class HolderRef ;
-
-template <class TYPE>
-class HolderRef<SPECIALIZATION<TYPE ,TRUE ,FALSE>> {
+class Monostate {
 private:
-	_STATIC_ASSERT_ (!stl::is_complete_type<TYPE>::value) ;
-	friend HolderRef<TYPE> ;
-	AnyRef<void> mHolder ;
-	PTR<TYPE> mPointer ;
-
-public:
-	inline HolderRef () {
-		mHolder = AnyRef<TYPE>::make () ;
-		mPointer = &mHolder.rebind<TYPE> ().self ;
-	}
-} ;
-
-template <class TYPE>
-class HolderRef<SPECIALIZATION<TYPE ,FALSE ,TRUE>> {
-private:
-	using SPECIALIZATION_TYPE = HolderRef<TYPE> ;
-
-private:
-	_STATIC_ASSERT_ (stl::is_interface_type<TYPE>::value) ;
-	friend SPECIALIZATION_TYPE ;
-	AnyRef<void> mHolder ;
-	PTR<TYPE> mPointer ;
-
-public:
-	inline HolderRef () = default ;
-
-	template <class _ARG>
-	inline explicit HolderRef (const ARGV<_ARG> &) {
-		mHolder = AnyRef<_ARG>::make () ;
-		mPointer = SPECIALIZATION_TYPE::template_recast (&mHolder.rebind<_ARG> ().self) ;
-	}
-} ;
-
-template <class TYPE>
-class HolderRef :private HolderRef<SPECIALIZATION<TYPE ,!stl::is_complete_type<TYPE>::value ,stl::is_interface_type<TYPE>::value>> {
-private:
-	using SPECIALIZATION_BASE = HolderRef<SPECIALIZATION<TYPE ,!stl::is_complete_type<TYPE>::value ,stl::is_interface_type<TYPE>::value>> ;
-
-private:
-	friend SPECIALIZATION_BASE ;
-	using SPECIALIZATION_BASE::mHolder ;
-	using SPECIALIZATION_BASE::mPointer ;
-
-public:
-	inline HolderRef () = default ;
-
-	template <class _ARG ,class = ENABLE_TYPE<std::is_base_of<TYPE ,_ARG>::value>>
-	inline explicit HolderRef (const ARGV<_ARG> &) :SPECIALIZATION_BASE (_NULL_<const ARGV<_ARG>> ()) {}
-
-	inline TYPE &to () {
-		_DEBUG_ASSERT_ (mHolder.exist ()) ;
-		return *mPointer ;
-	}
-
-	inline implicit operator TYPE & () {
-		return to () ;
-	}
-
-	inline PTR<TYPE> operator-> () {
-		return &to () ;
-	}
-
-	inline const TYPE &to () const {
-		_DEBUG_ASSERT_ (mHolder.exist ()) ;
-		return *mPointer ;
-	}
-
-	inline implicit operator const TYPE & () const {
-		return to () ;
-	}
-
-	inline PTR<const TYPE> operator-> () const {
-		return &to () ;
-	}
-
-private:
-	template <class _ARG ,class = ENABLE_TYPE<std::is_base_of<TYPE ,_ARG>::value>>
-	inline static PTR<TYPE> template_recast (PTR<_ARG> arg) {
-		return arg ;
-	}
-} ;
-
-template <class TYPE ,class SUBJECT = TYPE>
-class Monostate ;
-
-template <class TYPE>
-class Monostate<TYPE ,TYPE> {
-private:
-	template <class ,class>
-	friend class Monostate ;
 	SharedRef<TYPE> mThis ;
 
 public:
-	inline Monostate () :mThis (SharedRef<TYPE>::make ()) {}
+	inline Monostate () {
+		mThis = SharedRef<TYPE>::make () ;
+	}
 
-	inline implicit Monostate (const TYPE &right) : mThis (SharedRef<TYPE>::make (std::move (right))) {}
+	inline implicit Monostate (const TYPE &right) {
+		mThis = SharedRef<TYPE>::make (std::move (right)) ;
+	}
 
-	inline implicit Monostate (TYPE &&right) : mThis (SharedRef<TYPE>::make (std::move (right))) {}
+	inline implicit Monostate (TYPE &&right) {
+		mThis = SharedRef<TYPE>::make (std::move (right)) ;
+	}
 
 	inline Monostate (const Monostate &) = delete ;
 	inline Monostate &operator= (const Monostate &) = delete ;
@@ -2150,40 +2262,7 @@ public:
 		return to () ;
 	}
 
-	template <class _ARG>
-	inline void swap (Monostate<TYPE ,_ARG> &right) popping {
-		_SWAP_ (mThis ,right.mThis) ;
-	}
-} ;
-
-template <class TYPE>
-class Monostate<TYPE ,void> {
-private:
-	template <class ,class>
-	friend class Monostate ;
-	SharedRef<TYPE> mThis ;
-
-public:
-	inline Monostate () = default ;
-
-	template <class... _ARGS>
-	inline explicit Monostate (_ARGS &&...args) :mThis (SharedRef<TYPE>::make (std::forward<_ARGS> (args)...)) {}
-
-	inline Monostate (const Monostate &) = delete ;
-	inline Monostate &operator= (const Monostate &) = delete ;
-	inline Monostate (Monostate &&) = delete ;
-	inline Monostate &operator= (Monostate &&) = delete ;
-
-	inline TYPE &to () const {
-		return mThis.self ;
-	}
-
-	inline implicit operator TYPE & () const {
-		return to () ;
-	}
-
-	template <class _ARG>
-	inline void swap (Monostate<TYPE ,_ARG> &right) popping {
+	inline void swap (Monostate &right) popping {
 		_SWAP_ (mThis ,right.mThis) ;
 	}
 } ;
@@ -2209,6 +2288,10 @@ private:
 		return (base / align + EFLAG (base % align != 0)) * align ;
 	}
 
+	inline static constexpr VAL64 expr_pow (VAL64 base ,LENGTH power) {
+		return (power % 2 != 0) ? (base * expr_pow (base ,(power - 1))) : (power != 0) ? (_SQE_ (expr_pow (base ,(power / 2)))) : 1 ;
+	}
+
 	template <class SIZE>
 	class ImplPool :public Pool {
 	private:
@@ -2216,10 +2299,6 @@ private:
 			PTR<struct BLOCK> next ;
 			HEADER flex_data ;
 		} ;
-
-		inline static constexpr VAL64 expr_pow (VAL64 base ,LENGTH power) {
-			return (power % 2 != 0) ? (base * expr_pow (base ,(power - 1))) : (power != 0) ? (_SQE_ (expr_pow (base ,(power / 2)))) : 1 ;
-		}
 
 		struct CHUNK {
 			PTR<ARR<BYTE>> origin ;
@@ -2287,7 +2366,7 @@ private:
 			mFirst = r4x ;
 			mSize += r1x * SIZE::value ;
 			const auto r5x = &_NULL_<BYTE> () + expr_ceil (_ADDRESS_ (r3x) + _SIZEOF_ (CHUNK) ,_ALIGNOF_ (BLOCK)) ;
-			for (INDEX i = 0 ; i < mFirst->count ; i++) {
+			for (INDEX i = 0 ,ie = mFirst->count ; i < ie ; i++) {
 				const auto r6x = &_LOAD_<BLOCK> (r5x + i * (_SIZEOF_ (BLOCK) + SIZE::value)) ;
 				r6x->next = mFree ;
 				mFree = r6x ;
@@ -2327,14 +2406,14 @@ private:
 				if (i->next != NULL)
 					i->next->prev = i->prev ;
 				mSize -= i->count * SIZE::value ;
-				GlobalHeap::free (i) ;
+				GlobalHeap::free (i->origin) ;
 			}
 		}
 
 	private:
 		inline BOOL empty_node (PTR<const CHUNK> node) const {
 			const auto r1x = &_NULL_<BYTE> () + expr_ceil (_ADDRESS_ (node) + _SIZEOF_ (CHUNK) ,_ALIGNOF_ (BLOCK)) ;
-			for (INDEX i = 0 ; i < node->count ; i++)
+			for (INDEX i = 0 ,ie = node->count ; i < ie ; i++)
 				if (_ADDRESS_ (_LOAD_<BLOCK> (r1x + i * (_SIZEOF_ (BLOCK) + SIZE::value)).next) == VAR_USED)
 					return FALSE ;
 			return TRUE ;
@@ -2462,8 +2541,8 @@ public:
 	inline PTR<_RET> alloc () popping {
 		_STATIC_ASSERT_ (!std::is_reference<_RET>::value) ;
 		_STATIC_ASSERT_ (std::is_pod<_RET>::value) ;
-		const auto r1x = _SIZEOF_ (_RET) + _MAX_ (_ALIGNOF_ (_RET) - 8 ,VAR_ZERO) ;
-		INDEX ix = _MIN_ ((r1x - 1) / 8 ,_SIZEOF_ (HEADER)) ;
+		const auto r1x = _SIZEOF_ (_RET) + _MAX_ ((_ALIGNOF_ (_RET) - 8) ,VAR_ZERO) ;
+		INDEX ix = _MIN_ (((r1x - 1) / 8) ,_SIZEOF_ (HEADER)) ;
 		const auto r2x = mPool[ix]->alloc (r1x) ;
 		const auto r3x = &_NULL_<BYTE> () + expr_ceil (_ADDRESS_ (r2x) + _SIZEOF_ (HEADER) ,_ALIGNOF_ (_RET)) - _SIZEOF_ (HEADER) ;
 		const auto r4x = &_LOAD_<HEADER> (r3x) ;
@@ -2477,9 +2556,9 @@ public:
 	inline PTR<ARR<_RET>> alloc (LENGTH len) popping {
 		_STATIC_ASSERT_ (!std::is_reference<_RET>::value) ;
 		_STATIC_ASSERT_ (std::is_pod<_RET>::value) ;
-		const auto r1x = len * _SIZEOF_ (_RET) + _MAX_ (_ALIGNOF_ (_RET) - 8 ,VAR_ZERO) ;
+		const auto r1x = len * _SIZEOF_ (_RET) + _MAX_ ((_ALIGNOF_ (_RET) - 8) ,VAR_ZERO) ;
 		_DEBUG_ASSERT_ (r1x > 0) ;
-		INDEX ix = _MIN_ ((r1x - 1) / 8 ,_SIZEOF_ (HEADER)) ;
+		INDEX ix = _MIN_ (((r1x - 1) / 8) ,_SIZEOF_ (HEADER)) ;
 		const auto r2x = mPool[ix]->alloc (r1x) ;
 		const auto r3x = &_NULL_<BYTE> () + expr_ceil (_ADDRESS_ (r2x) + _SIZEOF_ (HEADER) ,_ALIGNOF_ (_RET)) - _SIZEOF_ (HEADER) ;
 		const auto r4x = &_LOAD_<HEADER> (r3x) ;
@@ -2488,9 +2567,9 @@ public:
 		return &_LOAD_<ARR<_RET>> (r3x + _SIZEOF_ (HEADER)) ;
 	}
 
-	template <class _ARG>
-	inline void free (const PTR<_ARG> &address) noexcept {
-		_STATIC_ASSERT_ (std::is_pod<REMOVE_ARRAY_TYPE<_ARG>>::value) ;
+	template <class _ARG1>
+	inline void free (const PTR<_ARG1> &address) noexcept {
+		_STATIC_ASSERT_ (std::is_pod<REMOVE_ARRAY_TYPE<_ARG1>>::value) ;
 		const auto r1x = &_NULL_<BYTE> () + _ADDRESS_ (address) - _SIZEOF_ (HEADER) ;
 		const auto r2x = &_LOAD_<HEADER> (r1x) ;
 		INDEX ix = _MEMCHR_ (mPool.self ,mPool.size () ,r2x->P1) ;
@@ -2566,21 +2645,21 @@ private:
 private:
 	inline static DEF<PTR<NONE> (PTR<NONE> ,PTR<NONE>) popping> unique_atomic_address ;
 
-	template <class _ARG>
-	inline static Pack &unique_heap (const ARGV<_ARG> &) popping {
+	inline static Pack &unique_root () popping {
 		return _CACHE_ ([] () {
 			auto rax = unique_atomic_address (NULL ,NULL) ;
-			auto rbx = AutoRef<IntrusiveRef<Pack>> () ;
+			auto rbx = IntrusiveRef<Pack> () ;
 			if (rax == NULL) {
 				//@warn: sure 'GlobalHeap' can be used across DLL
-				rbx = AutoRef<IntrusiveRef<Pack>>::make (IntrusiveRef<Pack>::make ()) ;
-				const auto r1x = rbx->watch () ;
-				const auto r2x = &_LOAD_<NONE> (_XVALUE_<const PTR<Pack> &> (r1x)) ;
-				rax = unique_atomic_address (NULL ,r2x) ;
+				rbx = IntrusiveRef<Pack>::make () ;
+				const auto r2x = rbx.watch () ;
+				const auto r3x = &_XVALUE_<Pack &> (r2x) ;
+				const auto r4x = &_LOAD_<NONE> (r3x) ;
+				rax = unique_atomic_address (NULL ,r4x) ;
 			}
 			_DYNAMIC_ASSERT_ (rax != NULL) ;
-			const auto r3x = &_LOAD_<Pack> (rax) ;
-			return IntrusiveRef<Pack> (r3x).watch () ;
+			const auto r5x = &_LOAD_<Pack> (rax) ;
+			return IntrusiveRef<Pack> (r5x).watch () ;
 		}) ;
 	}
 
@@ -2664,7 +2743,7 @@ template <FLAG UUID>
 class GlobalStatic<ARGC<UUID>> final :private Wrapped<void> {
 public:
 	inline static void init (VAR data ,BOOL read_only) {
-		auto &r1 = GlobalStatic<void>::unique_heap (ARGVP0) ;
+		auto &r1 = GlobalStatic<void>::unique_root () ;
 		ScopedGuard<std::mutex> ANONYMOUS (r1.mNodeMutex) ;
 		const auto r1x = GlobalStatic<void>::static_find_node (r1 ,UUID) ;
 		if (r1x != NULL)
@@ -2676,7 +2755,7 @@ public:
 	}
 
 	inline static VAR load () popping {
-		auto &r1 = GlobalStatic<void>::unique_heap (ARGVP0) ;
+		auto &r1 = GlobalStatic<void>::unique_root () ;
 		ScopedGuard<std::mutex> ANONYMOUS (r1.mNodeMutex) ;
 		const auto r1x = GlobalStatic<void>::static_find_node (r1 ,UUID) ;
 		_DYNAMIC_ASSERT_ (r1x != NULL) ;
@@ -2684,7 +2763,7 @@ public:
 	}
 
 	inline static VAR compare_and_swap (VAR expect ,VAR data) popping {
-		auto &r1 = GlobalStatic<void>::unique_heap (ARGVP0) ;
+		auto &r1 = GlobalStatic<void>::unique_root () ;
 		ScopedGuard<std::mutex> ANONYMOUS (r1.mNodeMutex) ;
 		const auto r1x = GlobalStatic<void>::static_find_node (r1 ,UUID) ;
 		_DYNAMIC_ASSERT_ (r1x != NULL) ;
@@ -2695,7 +2774,7 @@ public:
 	}
 
 	inline static void save (VAR data) {
-		auto &r1 = GlobalStatic<void>::unique_heap (ARGVP0) ;
+		auto &r1 = GlobalStatic<void>::unique_root () ;
 		ScopedGuard<std::mutex> ANONYMOUS (r1.mNodeMutex) ;
 		auto rax = GlobalStatic<void>::static_find_node (r1 ,UUID) ;
 		if (rax == NULL) {
@@ -2718,7 +2797,7 @@ private:
 	public:
 		friend IntrusiveRef<Pack> ;
 		Monostate<std::atomic<LENGTH>> mCounter ;
-		TYPE mHolder ;
+		TYPE mData ;
 	} ;
 
 	using GUID_TYPE = typename GlobalStatic<void>::GUID_TYPE ;
@@ -2755,32 +2834,27 @@ private:
 	}
 
 public:
-	inline static TYPE &echo (const PTR<void (TYPE &)> &init_proc) popping {
-		auto &r1 = _CACHE_ ([&] () {
-			auto &r2 = GlobalStatic<void>::unique_heap (ARGVP0) ;
+	inline static TYPE &unique () popping {
+		auto &r1 = _CACHE_ ([] () {
+			auto &r2 = GlobalStatic<void>::unique_root () ;
 			ScopedGuard<std::mutex> ANONYMOUS (r2.mNodeMutex) ;
-			const auto r1x = guid_from_typeid_name () ;
-			auto rax = GlobalStatic<void>::static_find_node (r2 ,r1x) ;
-			auto rbx = AutoRef<IntrusiveRef<Pack>> () ;
-			for (FOR_ONCE_DO_WHILE_FALSE) {
-				if (rax != NULL)
-					continue ;
-				rax = GlobalStatic<void>::static_new_node (r2 ,r1x) ;
+			const auto r2x = guid_from_typeid_name () ;
+			auto rax = GlobalStatic<void>::static_find_node (r2 ,r2x) ;
+			auto rbx = IntrusiveRef<Pack> () ;
+			if (rax == NULL) {
+				rax = GlobalStatic<void>::static_new_node (r2 ,r2x) ;
 				_DYNAMIC_ASSERT_ (rax != NULL) ;
 				//@warn: sure 'GlobalHeap' can be used across DLL
-				rbx = AutoRef<IntrusiveRef<Pack>>::make (IntrusiveRef<Pack>::make ()) ;
-				const auto r2x = rbx->watch () ;
-				const auto r3x = _XVALUE_<const PTR<Pack> &> (r2x) ;
-				rax->mData = &_LOAD_<NONE> (r3x) ;
-				if (init_proc == NULL)
-					continue ;
-				init_proc (r3x->mHolder) ;
+				rbx = IntrusiveRef<Pack>::make () ;
+				const auto r3x = rbx.watch () ;
+				const auto r4x = &_XVALUE_<Pack &> (r3x) ;
+				rax->mData = &_LOAD_<NONE> (r4x) ;
 			}
-			_DYNAMIC_ASSERT_ (rax != NULL) ;
-			const auto r4x = &_LOAD_<Pack> (rax->mData) ;
-			return IntrusiveRef<Pack> (r4x).watch () ;
+			const auto r5x = &_LOAD_<Pack> (rax->mData) ;
+			return IntrusiveRef<Pack> (r5x).watch () ;
 		}) ;
-		return _XVALUE_<Pack &> (r1).mHolder ;
+		auto &r3 = _XVALUE_<Pack &> (r1) ;
+		return r3.mData ;
 	}
 } ;
 
@@ -2804,17 +2878,17 @@ private:
 	private:
 		inline Metadata () = delete ;
 
-		template <class _ARG>
-		inline explicit Metadata (const ARGV<_ARG> &) {
-			_STATIC_ASSERT_ (std::is_same<REMOVE_CVR_TYPE<_ARG> ,_ARG>::value) ;
-			mObjectSize = _SIZEOF_ (_ARG) ;
-			mObjectAlign = _ALIGNOF_ (_ARG) ;
-			mTypeID = _TYPEID_<_ARG> () ;
+		template <class _ARG1>
+		inline explicit Metadata (const ARGV<_ARG1> &) {
+			_STATIC_ASSERT_ (std::is_same<REMOVE_CVR_TYPE<_ARG1> ,_ARG1>::value) ;
+			mObjectSize = _SIZEOF_ (_ARG1) ;
+			mObjectAlign = _ALIGNOF_ (_ARG1) ;
+			mTypeID = _TYPEID_<_ARG1> () ;
 			mConstrutor = _XVALUE_<const PTR<void (PTR<NONE>)> &> ([] (PTR<NONE> address) {
-				_CREATE_ (&_LOAD_<TEMP<_ARG>> (address)) ;
+				_CREATE_ (&_LOAD_<TEMP<_ARG1>> (address)) ;
 			}) ;
 			mDestructor = _XVALUE_<const PTR<void (PTR<NONE>)> &> ([] (PTR<NONE> address) {
-				_DESTROY_ (&_LOAD_<TEMP<_ARG>> (address)) ;
+				_DESTROY_ (&_LOAD_<TEMP<_ARG1>> (address)) ;
 			}) ;
 		}
 	} ;
@@ -2822,10 +2896,10 @@ private:
 public:
 	inline Object () = delete ;
 
-	template <class _ARG>
-	inline explicit Object (PTR<_ARG> deriver) {
-		_STATIC_ASSERT_ (std::is_base_of<Object ,_ARG>::value) ;
-		_STATIC_ASSERT_ (!std::is_same<REMOVE_CVR_TYPE<_ARG> ,Object>::value) ;
+	template <class _ARG1>
+	inline explicit Object (PTR<_ARG1> deriver) {
+		_STATIC_ASSERT_ (stl::is_always_base_of<Object ,_ARG1>::value) ;
+		_STATIC_ASSERT_ (!std::is_same<REMOVE_CVR_TYPE<_ARG1> ,Object>::value) ;
 		_DEBUG_ASSERT_ (_ADDRESS_ (this) == _ADDRESS_ (deriver)) ;
 	}
 
@@ -2864,7 +2938,7 @@ private:
 		}
 
 	private:
-		inline explicit Member (const Serializer &base ,TYPE2 &context) :mBase (base) ,mContext (context) {}
+		inline explicit Member (const Serializer &base ,TYPE2 &context) popping : mBase (base) ,mContext (context) {}
 	} ;
 
 private:

@@ -18,7 +18,7 @@
 namespace CSC {
 class AbstractDatabase {
 public:
-	export struct Abstract :public Interface {
+	exports struct Abstract :public Interface {
 		virtual void load_data (AnyRef<void> &_this) = 0 ;
 	} ;
 
@@ -32,7 +32,9 @@ public:
 	explicit AbstractDatabase (const PhanRef<const Abstract> &engine) :mAbstract (PhanRef<const Abstract>::make (engine)) {}
 
 	BOOL exist () const {
-		return mAbstract.exist () && mHolder.exist () ;
+		if (!mAbstract.exist ())
+			return FALSE ;
+		return mHolder.exist () ;
 	}
 } ;
 } ;
