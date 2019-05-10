@@ -8,13 +8,13 @@
 #undef self
 #undef implicit
 #undef popping
-#undef import
-#undef export
+#undef imports
+#undef exports
 #pragma pop_macro ("self")
 #pragma pop_macro ("implicit")
 #pragma pop_macro ("popping")
-#pragma pop_macro ("import")
-#pragma pop_macro ("export")
+#pragma pop_macro ("imports")
+#pragma pop_macro ("exports")
 #endif
 
 #ifdef __CSC_DEPRECATED__
@@ -29,20 +29,20 @@
 #pragma push_macro ("self")
 #pragma push_macro ("implicit")
 #pragma push_macro ("popping")
-#pragma push_macro ("import")
-#pragma push_macro ("export")
+#pragma push_macro ("imports")
+#pragma push_macro ("exports")
 #define self to ()
 #define implicit
 #define popping
-#define import extern
-#define export
+#define imports extern
+#define exports
 #endif
 
 namespace CSC {
 class ConsoleService::Implement final :private ConsoleService::Abstract {
 private:
 	friend ConsoleService ;
-	friend HolderRef<Abstract> ;
+	friend StrongRef<Implement> ;
 	TextWriter<STR> mConWriter ;
 	TextWriter<STR> mLogWriter ;
 	FLAG mOptionFlag ;
@@ -61,7 +61,7 @@ public:
 	}
 
 	void modify_option (FLAG option) override {
-		mOptionFlag = option ;
+		mOptionFlag = (option == OPTION_DEFAULT) ? option : (mOptionFlag | option) ;
 	}
 
 	void print (const Binder &msg) override {
@@ -167,22 +167,22 @@ public:
 		log (_PCSTR_ ("VERBOSE") ,ImplBinder<StreamBinder<const PhanBuffer<const STR>>> (r1x)) ;
 	}
 
-	void enable_log (const String<STR> &path) override {
+	void attach_log (const String<STR> &path) override {
 		const auto r1x = _ABSOLUTEPATH_ (path) ;
 		for (FOR_ONCE_DO_WHILE_FALSE) {
 			if (mLogPath == r1x)
-				continue ;
+				break ;
 			if (!mLogFileStream.exist ())
-				continue ;
+				break ;
 			mLogFileStream->flush () ;
 			mLogFileStream = AutoRef<StreamLoader> () ;
 		}
 		mLogPath = r1x ;
 	}
 
-	template <LENGTH _VAL>
-	void log (const DEF<STR[_VAL]> &tag ,const Binder &msg) {
-		log (PhanBuffer<const STR>::make (PTRTOARR[&tag[0]] ,(_VAL - 1)) ,msg) ;
+	template <LENGTH _VAL1>
+	void log (const DEF<STR[_VAL1]> &tag ,const Binder &msg) {
+		log (PhanBuffer<const STR>::make (PTRTOARR[&tag[0]] ,(_VAL1 - 1)) ,msg) ;
 	}
 
 	void log (const PhanBuffer<const STR> &tag ,const Binder &msg) override {
@@ -238,9 +238,7 @@ private:
 	}
 
 	void write_debugger () {
-		if (mLogPath.empty ())
-			return ;
-		std::fprintf (stderr ,_PCSTRA_ ("%s") ,&_BUILDSTRS_<STRA> (String<STR> (mLogWriter.raw ())).raw ().self) ;
+		_STATIC_WARNING_ ("noop") ;
 	}
 
 	void write_log_file () {
@@ -270,6 +268,9 @@ private:
 			(void) mLogFileStream ;
 			mTempState = FALSE ;
 		}) ;
+		if ((mOptionFlag & OPTION_ALWAYS_FLUSH) == 0)
+			return ;
+		mLogFileStream->flush () ;
 	}
 
 	void attach_log_file () {
@@ -282,14 +283,14 @@ private:
 	}
 } ;
 
-inline export ConsoleService::ConsoleService () {
-	mThis = HolderRef<Abstract> (_NULL_<const ARGV<Implement>> ()) ;
+inline exports ConsoleService::ConsoleService () {
+	mThis = StrongRef<Implement>::make () ;
 }
 
 class DebuggerService::Implement final :private DebuggerService::Abstract {
 private:
 	friend DebuggerService ;
-	friend HolderRef<Abstract> ;
+	friend StrongRef<Implement> ;
 
 public:
 	void abort_once_invoked_exit (BOOL flag) override {
@@ -325,7 +326,7 @@ public:
 	}
 } ;
 
-inline export DebuggerService::DebuggerService () {
-	mThis = HolderRef<Abstract> (_NULL_<const ARGV<Implement>> ()) ;
+inline exports DebuggerService::DebuggerService () {
+	mThis = StrongRef<Implement>::make () ;
 }
 } ;

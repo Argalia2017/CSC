@@ -19,6 +19,12 @@ private:
 public:
 	inline ForwardIterator () = delete ;
 
+	inline ForwardIterator (const ForwardIterator &) = delete ;
+	inline ForwardIterator &operator= (const ForwardIterator &) = delete ;
+
+	inline ForwardIterator (ForwardIterator &&) noexcept = default ;
+	inline ForwardIterator &operator= (ForwardIterator &&) = delete ;
+
 	inline BOOL operator!= (const ForwardIterator &right) const {
 		return mIndex != right.mIndex ;
 	}
@@ -32,7 +38,7 @@ public:
 	}
 
 private:
-	inline explicit ForwardIterator (BASE &base ,ITERATOR &&index) :mBase (base) ,mIndex (std::move (index)) {}
+	inline explicit ForwardIterator (BASE &base ,ITERATOR &&index) popping : mBase (base) ,mIndex (std::move (index)) {}
 
 public:
 	inline static ForwardIterator friend_begin (BASE &base) {
@@ -45,16 +51,16 @@ public:
 } ;
 
 inline namespace S {
-template <class _ARG ,class = ENABLE_TYPE<!std::is_reference<decltype (_NULL_<const _ARG> ().ibegin ())>::value>>
-inline ForwardIterator<REMOVE_REFERENCE_TYPE<_ARG>> begin (_ARG &&arg) {
-	_STATIC_ASSERT_ (std::is_lvalue_reference<_ARG &&>::value) ;
-	return ForwardIterator<REMOVE_REFERENCE_TYPE<_ARG>>::friend_begin (arg) ;
+template <class _ARG1 ,class = ENABLE_TYPE<!std::is_reference<decltype (_NULL_<const _ARG1> ().ibegin ())>::value>>
+inline ForwardIterator<REMOVE_REFERENCE_TYPE<_ARG1>> begin (_ARG1 &&arg1) popping {
+	_STATIC_ASSERT_ (std::is_lvalue_reference<_ARG1 &&>::value) ;
+	return ForwardIterator<REMOVE_REFERENCE_TYPE<_ARG1>>::friend_begin (arg1) ;
 }
 
-template <class _ARG ,class = ENABLE_TYPE<!std::is_reference<decltype (_NULL_<const _ARG> ().iend ())>::value>>
-inline ForwardIterator<REMOVE_REFERENCE_TYPE<_ARG>> end (_ARG &&arg) {
-	_STATIC_ASSERT_ (std::is_lvalue_reference<_ARG &&>::value) ;
-	return ForwardIterator<REMOVE_REFERENCE_TYPE<_ARG>>::friend_end (arg) ;
+template <class _ARG1 ,class = ENABLE_TYPE<!std::is_reference<decltype (_NULL_<const _ARG1> ().iend ())>::value>>
+inline ForwardIterator<REMOVE_REFERENCE_TYPE<_ARG1>> end (_ARG1 &&arg1) popping {
+	_STATIC_ASSERT_ (std::is_lvalue_reference<_ARG1 &&>::value) ;
+	return ForwardIterator<REMOVE_REFERENCE_TYPE<_ARG1>>::friend_end (arg1) ;
 }
 } ;
 
@@ -71,15 +77,15 @@ struct OPERATOR_SORT<void ,void> {
 
 	class ForwardArray :private Wrapped<ARGV<NONE>> {
 	public:
-		template <class _ARG>
-		inline _ARG &operator[] (_ARG &arg) const {
-			return arg ;
+		template <class _ARG1>
+		inline _ARG1 &operator[] (_ARG1 &arg1) const {
+			return arg1 ;
 		}
 	} ;
 
-	template <class _ARG>
-	inline static void invoke (_ARG &out ,INDEX ib ,INDEX ie) {
-		OPERATOR_SORT<ForwardArray ,_ARG>::invoke (_CAST_<ForwardArray> (ARGV_NONE) ,out ,ib ,ie) ;
+	template <class _ARG1>
+	inline static void invoke (_ARG1 &out ,INDEX ib ,INDEX ie) {
+		OPERATOR_SORT<ForwardArray ,_ARG1>::invoke (_CAST_<ForwardArray> (ARGV_NONE) ,out ,ib ,ie) ;
 	}
 } ;
 
@@ -143,14 +149,14 @@ struct OPERATOR_SORT {
 namespace U {
 template <class TYPE>
 struct OPERATOR_HASH {
-	template <class _ARG>
-	inline static FLAG template_hash (const _ARG &left ,const ARGV<ENABLE_TYPE<std::is_same<decltype (_NULL_<const _ARG> ().hash ()) ,FLAG>::value>> & ,const decltype (ARGVP2) &) {
+	template <class _ARG1>
+	inline static FLAG template_hash (const _ARG1 &left ,const ARGV<ENABLE_TYPE<std::is_same<decltype (_NULL_<const _ARG1> ().hash ()) ,FLAG>::value>> & ,const decltype (ARGVP2) &) {
 		return left.hash () ;
 	}
 
-	template <class _ARG>
-	inline static FLAG template_hash (const _ARG &left ,const ARGV<ENABLE_TYPE<std::is_pod<_ARG>::value>> & ,const decltype (ARGVP1) &) {
-		return _MEMHASH_ (_CAST_<BYTE[_SIZEOF_ (_ARG)]> (left)) ;
+	template <class _ARG1>
+	inline static FLAG template_hash (const _ARG1 &left ,const ARGV<ENABLE_TYPE<std::is_pod<_ARG1>::value>> & ,const decltype (ARGVP1) &) {
+		return _MEMHASH_ (_CAST_<BYTE[_SIZEOF_ (_ARG1)]> (left)) ;
 	}
 
 	inline static FLAG invoke (const TYPE &left) {
@@ -274,17 +280,17 @@ public:
 		U::OPERATOR_SORT<void ,void>::invoke (mArray ,0 ,mArray.size ()) ;
 	}
 
-	void fill (const ITEM &val) {
+	void fill (const ITEM &each) {
 		for (INDEX i = 0 ; i < mArray.size () ; i++)
-			mArray[i] = val ;
+			mArray[i] = each ;
 	}
 
-	template <class _ARG>
-	void fill (const Array<ITEM ,_ARG> &val) {
+	template <class _ARG1>
+	void fill (const Array<ITEM ,_ARG1> &each) {
 		INDEX ir = 0 ;
 		for (INDEX i = 0 ; i < mArray.size () ; i++) {
-			mArray[i] = val[ir] ;
-			ir = (ir + 1) % val.size () ;
+			mArray[i] = each[ir] ;
+			ir = (ir + 1) % each.size () ;
 		}
 	}
 } ;
@@ -340,7 +346,7 @@ public:
 		clear () ;
 	}
 
-	explicit String (LENGTH len) :String (expr_size (len) ,ARGVP0) {
+	explicit String (LENGTH len) :String (ARGVP0 ,expr_size (len)) {
 		clear () ;
 	}
 
@@ -351,12 +357,12 @@ public:
 		mString[iw] = ITEM (0) ;
 	}
 
-	implicit String (const ARR<ITEM> &right) :String (_MEMCHR_ (right ,DEFAULT_HUGEBUFFER_SIZE::value ,ITEM (0))) {
+	implicit String (const ARR<ITEM> &right) :String (raw_string_length (right)) {
 		_MEMCOPY_ (mString.self ,right ,size ()) ;
 	}
 
-	template <LENGTH _VAL>
-	implicit String (const DEF<ITEM[_VAL]> &right) : String (_VAL - 1) {
+	template <LENGTH _VAL1>
+	implicit String (const DEF<ITEM[_VAL1]> &right) : String (_VAL1 - 1) {
 		_MEMCOPY_ (mString.self ,PTRTOARR[&right[0]] ,size ()) ;
 	}
 
@@ -426,13 +432,36 @@ public:
 		return index + 1 ;
 	}
 
+	template <LENGTH _VAL1>
+	BOOL equal (const DEF<ITEM[_VAL1]> &right) const {
+		if (mString.size () < _VAL1)
+			return FALSE ;
+		if (!_MEMEQUAL_ (mString.self ,right))
+			return FALSE ;
+		return TRUE ;
+	}
+
+	template <LENGTH _VAL1>
+	inline BOOL operator== (const DEF<ITEM[_VAL1]> &right) const {
+		return equal (right) ;
+	}
+
+	template <LENGTH _VAL1>
+	inline BOOL operator!= (const DEF<ITEM[_VAL1]> &right) const {
+		return !equal (right) ;
+	}
+
 	BOOL equal (const String &right) const {
+		if (size () == 0 && right.size () == 0)
+			return TRUE ;
 		if (size () == 0 || right.size () == 0)
-			return size () == 0 && right.size () == 0 ;
+			return FALSE ;
 		INDEX ir = 0 ;
 		while (mString[ir] != ITEM (0) && mString[ir] == right.mString[ir])
 			ir++ ;
-		return mString[ir] == right.mString[ir] ;
+		if (mString[ir] != right.mString[ir])
+			return FALSE ;
+		return TRUE ;
 	}
 
 	inline BOOL operator== (const String &right) const {
@@ -444,12 +473,18 @@ public:
 	}
 
 	BOOL less (const String &right) const {
-		if (size () == 0 || right.size () == 0)
-			return right.size () != 0 ;
+		if (size () == 0 && right.size () == 0)
+			return FALSE ;
+		if (size () == 0)
+			return TRUE ;
+		if (right.size () == 0)
+			return FALSE ;
 		INDEX ir = 0 ;
 		while (mString[ir] != ITEM (0) && mString[ir] == right.mString[ir])
 			ir++ ;
-		return mString[ir] < right.mString[ir] ;
+		if (mString[ir] >= right.mString[ir])
+			return FALSE ;
+		return TRUE ;
 	}
 
 	inline BOOL operator< (const String &right) const {
@@ -469,7 +504,11 @@ public:
 	}
 
 	BOOL empty () const {
-		return mString.size () == 0 || mString[0] == ITEM (0) ;
+		if (mString.size () == 0)
+			return TRUE ;
+		if (mString[0] != ITEM (0))
+			return FALSE ;
+		return TRUE ;
 	}
 
 	String add (const String &right) const {
@@ -485,33 +524,41 @@ public:
 		return add (right) ;
 	}
 
-	template <LENGTH _VAL>
-	void addto (const DEF<ITEM[_VAL]> &right) {
-		const auto r1x = length () ;
-		const auto r2x = _VAL - 1 ;
-		if (r1x + r2x <= size ()) {
+	template <LENGTH _VAL1>
+	void addto (const DEF<ITEM[_VAL1]> &right) {
+		_CALL_IF_ ([&] (BOOL &if_cond) {
+			if (mString.size () == 0)
+				return (void) (if_cond = FALSE) ;
+			const auto r1x = length () ;
+			const auto r2x = _VAL1 - 1 ;
+			if (r1x + r2x > size ())
+				return (void) (if_cond = FALSE) ;
 			_MEMCOPY_ (PTRTOARR[&mString.self[r1x]] ,PTRTOARR[&right[0]] ,r2x) ;
 			mString[r1x + r2x] = ITEM (0) ;
-		} else {
+		} ,[&] (BOOL &if_cond) {
 			*this = add (right) ;
-		}
+		}) ;
 	}
 
-	template <LENGTH _VAL>
-	inline String &operator+= (const DEF<ITEM[_VAL]> &right) {
+	template <LENGTH _VAL1>
+	inline String &operator+= (const DEF<ITEM[_VAL1]> &right) {
 		addto (right) ;
 		return *this ;
 	}
 
 	void addto (const String &right) {
-		const auto r1x = length () ;
-		const auto r2x = right.length () ;
-		if (r1x + r2x <= size () && mString.size () > 0) {
+		_CALL_IF_ ([&] (BOOL &if_cond) {
+			if (mString.size () == 0)
+				return (void) (if_cond = FALSE) ;
+			const auto r1x = length () ;
+			const auto r2x = right.length () ;
+			if (r1x + r2x > size ())
+				return (void) (if_cond = FALSE) ;
 			_MEMCOPY_ (PTRTOARR[&mString.self[r1x]] ,right.mString.self ,r2x) ;
 			mString[r1x + r2x] = ITEM (0) ;
-		} else {
+		} ,[&] (BOOL &if_cond) {
 			*this = add (right) ;
-		}
+		}) ;
 	}
 
 	inline String &operator+= (const String &right) {
@@ -528,7 +575,14 @@ public:
 	}
 
 private:
-	explicit String (LENGTH len ,const decltype (ARGVP0) &) :mString (len) {}
+	explicit String (const decltype (ARGVP0) & ,LENGTH len) :mString (len) {}
+
+private:
+	inline static LENGTH raw_string_length (const ARR<ITEM> &src) {
+		LENGTH ret = _MEMCHR_ (src ,DEFAULT_HUGEBUFFER_SIZE::value ,ITEM (0)) ;
+		_DYNAMIC_ASSERT_ (ret >= 0 && ret < DEFAULT_HUGEBUFFER_SIZE::value) ;
+		return std::move (ret) ;
+	}
 
 public:
 	//@info: the function is incompleted without 'csc_string.hpp'
@@ -566,7 +620,7 @@ public:
 		clear () ;
 	}
 
-	explicit Stack (LENGTH len) :Stack (expr_size (len) ,ARGVP0) {
+	explicit Stack (LENGTH len) :Stack (ARGVP0 ,expr_size (len)) {
 		clear () ;
 	}
 
@@ -634,7 +688,11 @@ public:
 	}
 
 	BOOL equal (const Stack &right) const {
-		return length () == right.length () && _MEMEQUAL_ (mStack ,right.mStack ,length ()) ;
+		if (length () != right.length ())
+			return FALSE ;
+		if (!_MEMEQUAL_ (mStack ,right.mStack ,length ()))
+			return FALSE ;
+		return TRUE ;
 	}
 
 	inline BOOL operator== (const Stack &right) const {
@@ -675,40 +733,18 @@ public:
 		return *this ;
 	}
 
-	template <class _ARG>
-	void appand (const _ARG &src) {
+	template <class _ARG1>
+	void appand (const _ARG1 &src) {
 		reserve (src.length ()) ;
 		for (auto &&i : src)
 			add (std::move (i)) ;
 	}
 
-	template <class _ARG>
-	void appand (_ARG &&src) {
+	template <class _ARG1>
+	void appand (_ARG1 &&src) {
 		reserve (src.length ()) ;
 		for (auto &&i : src)
 			add (std::move (i)) ;
-	}
-
-	void add_sort (const ITEM &item) {
-		reserve (1) ;
-		INDEX iw = mWrite ;
-		while (iw - 1 >= 0 && mStack[iw - 1] < item) {
-			mStack[iw] = std::move (mStack[iw - 1]) ;
-			iw-- ;
-		}
-		mStack[iw] = std::move (item) ;
-		update_resize () ;
-	}
-
-	void add_sort (ITEM &&item) {
-		reserve (1) ;
-		INDEX iw = mWrite ;
-		while (iw - 1 >= 0 && mStack[iw - 1] < item) {
-			mStack[iw] = std::move (mStack[iw - 1]) ;
-			iw-- ;
-		}
-		mStack[iw] = std::move (item) ;
-		update_resize () ;
 	}
 
 	void take () {
@@ -739,6 +775,30 @@ public:
 		return std::move (ret) ;
 	}
 
+	INDEX insert_sort (const ITEM &item) popping {
+		reserve (1) ;
+		INDEX ret = mWrite ;
+		while (ret - 1 >= 0 && mStack[ret - 1] < item) {
+			mStack[ret] = std::move (mStack[ret - 1]) ;
+			ret-- ;
+		}
+		mStack[ret] = std::move (item) ;
+		update_resize () ;
+		return std::move (ret) ;
+	}
+
+	INDEX insert_sort (ITEM &&item) popping {
+		reserve (1) ;
+		INDEX ret = mWrite ;
+		while (ret - 1 >= 0 && mStack[ret - 1] < item) {
+			mStack[ret] = std::move (mStack[ret - 1]) ;
+			ret-- ;
+		}
+		mStack[ret] = std::move (item) ;
+		update_resize () ;
+		return std::move (ret) ;
+	}
+
 	void pop () {
 		_DEBUG_ASSERT_ (!empty ()) ;
 		mWrite-- ;
@@ -758,7 +818,7 @@ public:
 	}
 
 private:
-	explicit Stack (LENGTH len ,const decltype (ARGVP0) &) :mStack (len) {}
+	explicit Stack (const decltype (ARGVP0) & ,LENGTH len) :mStack (len) {}
 
 private:
 	void reserve (LENGTH len) {
@@ -767,7 +827,7 @@ private:
 			return ;
 		auto rax = mStack.expand (mStack.size () + r1x) ;
 		_MEMMOVE_ (rax.self ,mStack.self ,mStack.size ()) ;
-		mStack.expand (std::move (rax)) ;
+		mStack.swap (rax) ;
 	}
 
 	void update_resize () {
@@ -777,7 +837,7 @@ private:
 			return ;
 		auto rax = mStack.expand () ;
 		_MEMMOVE_ (rax.self ,mStack.self ,mStack.size ()) ;
-		mStack.expand (std::move (rax)) ;
+		mStack.swap (rax) ;
 	}
 } ;
 
@@ -812,7 +872,7 @@ public:
 		clear () ;
 	}
 
-	explicit Queue (LENGTH len) :Queue (expr_size (len) ,ARGVP0) {
+	explicit Queue (LENGTH len) :Queue (ARGVP0 ,expr_size (len)) {
 		clear () ;
 	}
 
@@ -897,7 +957,11 @@ public:
 			ir = inext (ir) ;
 			jr = right.inext (jr) ;
 		}
-		return ir == ie && jr == je ;
+		if (ir != ie)
+			return FALSE ;
+		if (jr != je)
+			return FALSE ;
+		return TRUE ;
 	}
 
 	inline BOOL operator== (const Queue &right) const {
@@ -913,7 +977,11 @@ public:
 	}
 
 	BOOL full () const {
-		return mQueue.size () == 0 || mRead == (mWrite + 1) % mQueue.size () ;
+		if (mQueue.size () == 0)
+			return TRUE ;
+		if (mRead != (mWrite + 1) % mQueue.size ())
+			return FALSE ;
+		return TRUE ;
 	}
 
 	void add (const ITEM &item) {
@@ -938,15 +1006,15 @@ public:
 		return *this ;
 	}
 
-	template <class _ARG>
-	void appand (const _ARG &src) {
+	template <class _ARG1>
+	void appand (const _ARG1 &src) {
 		reserve (src.length ()) ;
 		for (auto &&i : src)
 			add (std::move (i)) ;
 	}
 
-	template <class _ARG>
-	void appand (_ARG &&src) {
+	template <class _ARG1>
+	void appand (_ARG1 &&src) {
 		reserve (src.length ()) ;
 		for (auto &&i : src)
 			add (std::move (i)) ;
@@ -999,13 +1067,16 @@ public:
 	}
 
 private:
-	explicit Queue (LENGTH len ,const decltype (ARGVP0) &) :mQueue (len) {}
+	explicit Queue (const decltype (ARGVP0) & ,LENGTH len) :mQueue (len) {}
 
 private:
 	BOOL ensure_index (INDEX index) const {
-		if (mRead <= mWrite && !(index >= mRead && index < mWrite))
+		const auto r1x = BOOL (index >= mRead && index < mWrite) ;
+		if (mRead <= mWrite && !r1x)
 			return FALSE ;
-		if (mRead > mWrite && !(index >= 0 && index < mWrite) && !(index >= mRead && index < mQueue.size ()))
+		const auto r2x = BOOL (index >= 0 && index < mWrite) ;
+		const auto r3x = BOOL (index >= mRead && index < mQueue.size ()) ;
+		if (mRead > mWrite && !r2x && !r3x)
 			return FALSE ;
 		return TRUE ;
 	}
@@ -1014,18 +1085,20 @@ private:
 		const auto r1x = _MAX_ (len - (mQueue.size () - length ()) ,VAR_ZERO) ;
 		if (r1x == 0)
 			return ;
-		if (mRead <= mWrite) {
+		_CALL_IF_ ([&] (BOOL &if_cond) {
+			if (mRead > mWrite)
+				return (void) (if_cond = FALSE) ;
 			auto rax = mQueue.expand (mQueue.size () + r1x) ;
 			_MEMMOVE_ (PTRTOARR[&rax.self[mRead]] ,PTRTOARR[&mQueue.self[mRead]] ,(mWrite - mRead)) ;
-			mQueue.expand (std::move (rax)) ;
-		} else {
+			mQueue.swap (rax) ;
+		} ,[&] (BOOL &if_cond) {
 			auto rax = mQueue.expand (mQueue.size () + r1x) ;
 			_MEMMOVE_ (rax.self ,mQueue.self ,mWrite) ;
 			INDEX ix = mRead + rax.size () - mQueue.size () ;
 			_MEMMOVE_ (PTRTOARR[&rax.self[ix]] ,PTRTOARR[&mQueue.self[mRead]] ,(mQueue.size () - mRead)) ;
-			mQueue.expand (std::move (rax)) ;
+			mQueue.swap (rax) ;
 			mRead = ix ;
-		}
+		}) ;
 	}
 
 	void update_resize () {
@@ -1038,7 +1111,7 @@ private:
 		INDEX ix = (mRead > 0) ? (mRead + rax.size () - mQueue.size ()) : 0 ;
 		INDEX iy = (mRead > 0) ? mWrite : (mQueue.size ()) ;
 		_MEMMOVE_ (PTRTOARR[&rax.self[ix]] ,PTRTOARR[&mQueue.self[mRead]] ,(mQueue.size () - mRead)) ;
-		mQueue.expand (std::move (rax)) ;
+		mQueue.swap (rax) ;
 		mRead = ix ;
 		mWrite = iy ;
 	}
@@ -1060,7 +1133,7 @@ private:
 		ITEM mItem ;
 	} ;
 
-	using NodePair = PACK<KEY ,ITEM> ;
+	using ITEM_TYPE = PACK<KEY ,ITEM> ;
 
 	template <class BASE>
 	class Pair {
@@ -1094,13 +1167,14 @@ private:
 	friend SPECIALIZATION_TYPE ;
 	Buffer<Node ,ARGC<expr_size (SIZE::value)>> mPriority ;
 	INDEX mWrite ;
+	INDEX mTop ;
 
 public:
 	Priority () {
 		static_cast<PTR<SPECIALIZATION_TYPE>> (this)->clear () ;
 	}
 
-	explicit Priority (LENGTH len) :Priority (expr_size (len) ,ARGVP0) {
+	explicit Priority (LENGTH len) :Priority (ARGVP0 ,expr_size (len)) {
 		static_cast<PTR<SPECIALIZATION_TYPE>> (this)->clear () ;
 	}
 
@@ -1117,7 +1191,7 @@ public:
 		static_cast<PTR<SPECIALIZATION_TYPE>> (this)->update_insert (ix) ;
 	}
 
-	void add (const NodePair &item) {
+	void add (const ITEM_TYPE &item) {
 		add (item.key ,std::move (item)) ;
 	}
 
@@ -1134,26 +1208,26 @@ public:
 		static_cast<PTR<SPECIALIZATION_TYPE>> (this)->update_insert (ix) ;
 	}
 
-	void add (NodePair &&item) {
+	void add (ITEM_TYPE &&item) {
 		add (std::move (item.P1) ,std::move (item.P2)) ;
 	}
 
-	template <class _ARG>
-	void appand (const _ARG &src) {
+	template <class _ARG1>
+	void appand (const _ARG1 &src) {
 		static_cast<PTR<SPECIALIZATION_TYPE>> (this)->reserve (src.length ()) ;
 		for (auto &&i : src)
 			add (i.key ,std::move (i.item)) ;
 	}
 
-	template <class _ARG>
-	void appand (_ARG &&src) {
+	template <class _ARG1>
+	void appand (_ARG1 &&src) {
 		static_cast<PTR<SPECIALIZATION_TYPE>> (this)->reserve (src.length ()) ;
 		for (auto &&i : src)
 			add (i.key ,std::move (i.item)) ;
 	}
 
 private:
-	explicit Priority (LENGTH len ,const decltype (ARGVP0) &) :mPriority (len) {}
+	explicit Priority (const decltype (ARGVP0) & ,LENGTH len) :mPriority (len) {}
 } ;
 
 template <class KEY ,class SIZE>
@@ -1168,7 +1242,7 @@ private:
 		KEY mKey ;
 	} ;
 
-	using NodePair = PACK<KEY> ;
+	using ITEM_TYPE = PACK<KEY> ;
 
 	template <class BASE>
 	class Pair {
@@ -1201,13 +1275,14 @@ private:
 	friend SPECIALIZATION_TYPE ;
 	Buffer<Node ,ARGC<expr_size (SIZE::value)>> mPriority ;
 	INDEX mWrite ;
+	INDEX mTop ;
 
 public:
 	Priority () {
 		static_cast<PTR<SPECIALIZATION_TYPE>> (this)->clear () ;
 	}
 
-	explicit Priority (LENGTH len) :Priority (expr_size (len) ,ARGVP0) {
+	explicit Priority (LENGTH len) :Priority (ARGVP0 ,expr_size (len)) {
 		static_cast<PTR<SPECIALIZATION_TYPE>> (this)->clear () ;
 	}
 
@@ -1219,7 +1294,7 @@ public:
 		static_cast<PTR<SPECIALIZATION_TYPE>> (this)->update_insert (ix) ;
 	}
 
-	void add (const NodePair &item) {
+	void add (const ITEM_TYPE &item) {
 		add (std::move (item.P1)) ;
 	}
 
@@ -1231,26 +1306,26 @@ public:
 		static_cast<PTR<SPECIALIZATION_TYPE>> (this)->update_insert (ix) ;
 	}
 
-	void add (NodePair &&item) {
+	void add (ITEM_TYPE &&item) {
 		add (std::move (item.P1)) ;
 	}
 
-	template <class _ARG>
-	void appand (const _ARG &src) {
+	template <class _ARG1>
+	void appand (const _ARG1 &src) {
 		static_cast<PTR<SPECIALIZATION_TYPE>> (this)->reserve (src.length ()) ;
 		for (auto &&i : src)
 			add (i.key) ;
 	}
 
-	template <class _ARG>
-	void appand (_ARG &&src) {
+	template <class _ARG1>
+	void appand (_ARG1 &&src) {
 		static_cast<PTR<SPECIALIZATION_TYPE>> (this)->reserve (src.length ()) ;
 		for (auto &&i : src)
 			add (i.key) ;
 	}
 
 private:
-	explicit Priority (LENGTH len ,const decltype (ARGVP0) &) :mPriority (len) {}
+	explicit Priority (const decltype (ARGVP0) & ,LENGTH len) :mPriority (len) {}
 } ;
 
 template <class KEY ,class ITEM ,class SIZE>
@@ -1258,21 +1333,22 @@ class Priority :private Priority<KEY ,SPECIALIZATION<ITEM> ,SIZE> {
 private:
 	using SPECIALIZATION_BASE = Priority<KEY ,SPECIALIZATION<ITEM> ,SIZE> ;
 	using Node = typename SPECIALIZATION_BASE::Node ;
-	using NodePair = typename SPECIALIZATION_BASE::NodePair ;
-	template <class _ARG>
-	using Pair = typename SPECIALIZATION_BASE::template Pair<_ARG> ;
+	using ITEM_TYPE = typename SPECIALIZATION_BASE::ITEM_TYPE ;
+	template <class _ARG1>
+	using Pair = typename SPECIALIZATION_BASE::template Pair<_ARG1> ;
 
 private:
 	friend SPECIALIZATION_BASE ;
 	using SPECIALIZATION_BASE::mPriority ;
 	using SPECIALIZATION_BASE::mWrite ;
+	using SPECIALIZATION_BASE::mTop ;
 
 public:
 	Priority () = default ;
 
 	explicit Priority (LENGTH len) :SPECIALIZATION_BASE (len) {}
 
-	implicit Priority (const std::initializer_list<NodePair> &right) : Priority (right.size ()) {
+	implicit Priority (const std::initializer_list<ITEM_TYPE> &right) : Priority (right.size ()) {
 		for (auto &&i : right)
 			add (i) ;
 	}
@@ -1313,15 +1389,6 @@ public:
 		return get (index) ;
 	}
 
-#ifdef __CSC_COMPILER_MSVC__
-	template <class _ARG ,class = ENABLE_TYPE<std::is_same<REMOVE_CONST_TYPE<_ARG> ,Priority>::value>>
-	INDEX at (const Pair<_ARG> &item) const {
-		INDEX ret = mPriority.at (_OFFSET_ (&Node::mKey ,item.key)) ;
-		if (ret < 0 || ret >= length ())
-			ret = VAR_NONE ;
-		return std::move (ret) ;
-	}
-#else
 	INDEX at (const Pair<Priority> &item) const {
 		INDEX ret = mPriority.at (_OFFSET_ (&Node::mKey ,item.key)) ;
 		if (ret < 0 || ret >= length ())
@@ -1335,7 +1402,6 @@ public:
 			ret = VAR_NONE ;
 		return std::move (ret) ;
 	}
-#endif
 
 	INDEX ibegin () const {
 		return 0 ;
@@ -1350,7 +1416,9 @@ public:
 	}
 
 	BOOL equal (const Priority &right) const {
-		return length () == right.length () && _MEMEQUAL_ (mPriority ,right.mPriority ,length ()) ;
+		if (length () != right.length ())
+			return FALSE ;
+		return _MEMEQUAL_ (mPriority ,right.mPriority ,length ()) ;
 	}
 
 	inline BOOL operator== (const Priority &right) const {
@@ -1371,12 +1439,12 @@ public:
 
 	using SPECIALIZATION_BASE::add ;
 
-	inline Priority &operator<< (const NodePair &item) {
+	inline Priority &operator<< (const ITEM_TYPE &item) {
 		add (std::move (item)) ;
 		return *this ;
 	}
 
-	inline Priority &operator<< (NodePair &&item) {
+	inline Priority &operator<< (ITEM_TYPE &&item) {
 		add (std::move (item)) ;
 		return *this ;
 	}
@@ -1390,7 +1458,7 @@ public:
 		update_insert (0) ;
 	}
 
-	void take (NodePair &item) popping {
+	void take (ITEM_TYPE &item) popping {
 		_DEBUG_ASSERT_ (!empty ()) ;
 		item = std::move (mPriority[0]) ;
 		mPriority[0] = std::move (mPriority[mWrite - 1]) ;
@@ -1398,7 +1466,7 @@ public:
 		update_insert (0) ;
 	}
 
-	inline Priority &operator>> (NodePair &item) popping {
+	inline Priority &operator>> (ITEM_TYPE &item) popping {
 		take (item) ;
 		return *this ;
 	}
@@ -1411,16 +1479,20 @@ public:
 	INDEX insert (const KEY &key) popping {
 		reserve (1) ;
 		INDEX ret = mWrite ;
+		mPriority[ret].mKey = std::move (key) ;
 		update_resize () ;
 		update_insert (ret) ;
+		ret = mTop ;
 		return std::move (ret) ;
 	}
 
 	INDEX insert (KEY &&key) popping {
 		reserve (1) ;
 		INDEX ret = mWrite ;
+		mPriority[ret].mKey = std::move (key) ;
 		update_resize () ;
 		update_insert (ret) ;
+		ret = mTop ;
 		return std::move (ret) ;
 	}
 
@@ -1453,7 +1525,7 @@ private:
 			return ;
 		auto rax = mPriority.expand (mPriority.size () + r1x) ;
 		_MEMMOVE_ (rax.self ,mPriority.self ,mPriority.size ()) ;
-		mPriority.expand (std::move (rax)) ;
+		mPriority.swap (rax) ;
 	}
 
 	void update_resize () {
@@ -1463,7 +1535,7 @@ private:
 			return ;
 		auto rax = mPriority.expand () ;
 		_MEMMOVE_ (rax.self ,mPriority.self ,mPriority.size ()) ;
-		mPriority.expand (std::move (rax)) ;
+		mPriority.swap (rax) ;
 	}
 
 	void update_insert (INDEX it) {
@@ -1496,6 +1568,7 @@ private:
 			iw = iy ;
 		}
 		mPriority[iw] = std::move (rax) ;
+		mTop = iw ;
 	}
 
 	void compute_esort (Array<INDEX> &out ,LENGTH len) const {
@@ -1554,7 +1627,7 @@ public:
 		clear () ;
 	}
 
-	explicit Deque (LENGTH len) :Deque (len ,ARGVP0) {
+	explicit Deque (LENGTH len) :Deque (ARGVP0 ,len) {
 		clear () ;
 	}
 
@@ -1638,7 +1711,11 @@ public:
 			ir = inext (ir) ;
 			jr = right.inext (jr) ;
 		}
-		return ir == ie && jr == je ;
+		if (ir != ie)
+			return FALSE ;
+		if (jr != je)
+			return FALSE ;
+		return TRUE ;
 	}
 
 	inline BOOL operator== (const Deque &right) const {
@@ -1679,15 +1756,15 @@ public:
 		return *this ;
 	}
 
-	template <class _ARG>
-	void appand (const _ARG &src) {
+	template <class _ARG1>
+	void appand (const _ARG1 &src) {
 		mList.reserve (src.length ()) ;
 		for (auto &&i : src)
 			add (std::move (i)) ;
 	}
 
-	template <class _ARG>
-	void appand (_ARG &&src) {
+	template <class _ARG1>
+	void appand (_ARG1 &&src) {
 		mList.reserve (src.length ()) ;
 		for (auto &&i : src)
 			add (std::move (i)) ;
@@ -1724,12 +1801,21 @@ public:
 		return std::move (ret) ;
 	}
 
-	INDEX insert (INDEX index) popping {
+	INDEX insert_before (INDEX index) popping {
 		INDEX ret = mList.alloc (VAR_NONE) ;
 		update_resize (ret) ;
 		const auto r1x = (index != VAR_NONE) ? (mList[index].mHead) : mWrite ;
 		update_compress_left (r1x ,ret) ;
 		return std::move (ret) ;
+	}
+
+	void pop () {
+		_DEBUG_ASSERT_ (!empty ()) ;
+		while (mDeque[mWrite][0] == VAR_NONE)
+			mWrite-- ;
+		INDEX ix = mDeque[mWrite][0] ;
+		update_remove (mWrite) ;
+		mList.free (ix) ;
 	}
 
 	void swap (INDEX index1 ,INDEX index2) {
@@ -1784,7 +1870,7 @@ public:
 	}
 
 private:
-	explicit Deque (LENGTH len ,const decltype (ARGVP0) &) :mList (len) ,mDeque (len) {}
+	explicit Deque (const decltype (ARGVP0) & ,LENGTH len) :mList (len) ,mDeque (len) {}
 
 private:
 	INDEX access (INDEX pos ,INDEX ib ,INDEX jb) const {
@@ -1828,19 +1914,26 @@ private:
 				continue ;
 			update_rewrite (mList[i].mHead ,i) ;
 		}
-		mDeque.expand (std::move (rax)) ;
+		mDeque.swap (rax) ;
 	}
 
 	void update_compress_left (INDEX it ,INDEX jt) {
-		if (mDeque[it][0] == VAR_NONE) {
+		_CALL_IF_ ([&] (BOOL &if_cond) {
+			if (mDeque[it][0] != VAR_NONE)
+				return (void) (if_cond = FALSE) ;
 			update_rewrite (it ,jt) ;
 			mWrite = _MIN_ ((it + 1) ,(mDeque.size () - 1)) ;
-		} else if (it + 1 < mDeque.size () && mDeque[it + 1][0] == VAR_NONE) {
-			update_rewrite ((it + 1) ,jt) ;
-			mWrite = _MIN_ ((it + 2) ,(mDeque.size () - 1)) ;
-		} else {
+		} ,[&] (BOOL &if_cond) {
+			INDEX ix = it + 1 ;
+			if (ix >= mDeque.size ())
+				return (void) (if_cond = FALSE) ;
+			if (mDeque[ix][0] != VAR_NONE)
+				return (void) (if_cond = FALSE) ;
+			update_rewrite (ix ,jt) ;
+			mWrite = _MIN_ ((ix + 1) ,(mDeque.size () - 1)) ;
+		} ,[&] (BOOL &if_cond) {
 			update_compress_left_force (it ,jt) ;
-		}
+		}) ;
 	}
 
 	void update_compress_left_force (INDEX it ,INDEX jt) {
@@ -1850,18 +1943,28 @@ private:
 			while (mRead != iw && mDeque[mRead][0] == VAR_NONE)
 				mRead++ ;
 			const auto r1x = mDeque[i][0] ;
-			if (mRead == iw && r1x == VAR_NONE) {
+			_CALL_IF_ ([&] (BOOL &if_cond) {
+				if (mRead != iw)
+					return (void) (if_cond = FALSE) ;
+				if (r1x != VAR_NONE)
+					return (void) (if_cond = FALSE) ;
 				update_rewrite (i ,jw) ;
 				jw = r1x ;
 				iw = VAR_NONE ;
-			} else if (mRead == iw && r1x != VAR_NONE) {
+			} ,[&] (BOOL &if_cond) {
+				if (mRead != iw)
+					return (void) (if_cond = FALSE) ;
+				if (r1x == VAR_NONE)
+					return (void) (if_cond = FALSE) ;
 				update_rewrite (i ,jw) ;
 				jw = r1x ;
 				iw++ ;
-			} else if (mRead != i) {
+			} ,[&] (BOOL &if_cond) {
+				if (mRead == i)
+					return (void) (if_cond = FALSE) ;
 				update_rewrite (i ,mDeque[mRead][0]) ;
 				update_remove (mRead) ;
-			}
+			}) ;
 			mRead++ ;
 		}
 		mRead = 0 ;
@@ -1869,36 +1972,53 @@ private:
 	}
 
 	void update_compress_right (INDEX it ,INDEX jt) {
-		if (mDeque[it][0] == VAR_NONE) {
+		_CALL_IF_ ([&] (BOOL &if_cond) {
+			if (mDeque[it][0] != VAR_NONE)
+				return (void) (if_cond = FALSE) ;
 			update_rewrite (it ,jt) ;
 			mRead = _MAX_ ((it - 1) ,VAR_ZERO) ;
-		} else if (it - 1 >= 0 && mDeque[it - 1][0] == VAR_NONE) {
-			update_rewrite ((it - 1) ,jt) ;
-			mRead = _MAX_ ((it - 2) ,VAR_ZERO) ;
-		} else {
+		} ,[&] (BOOL &if_cond) {
+			INDEX ix = it - 1 ;
+			if (ix < 0)
+				return (void) (if_cond = FALSE) ;
+			if (mDeque[ix][0] != VAR_NONE)
+				return (void) (if_cond = FALSE) ;
+			update_rewrite (ix ,jt) ;
+			mRead = _MAX_ ((ix - 1) ,VAR_ZERO) ;
+		} ,[&] (BOOL &if_cond) {
 			update_compress_right_force (it ,jt) ;
-		}
+		}) ;
 	}
 
 	void update_compress_right_force (INDEX it ,INDEX jt) {
 		INDEX iw = it ;
 		INDEX jw = jt ;
-		for (INDEX i = (mDeque.size () - 1) ,je = mDeque.size () - mList.length () ; i >= je ; i--) {
+		for (INDEX i = (mDeque.size () - 1) ,ie = mDeque.size () - mList.length () ; i >= ie ; i--) {
 			while (mWrite != iw && mDeque[mWrite][0] == VAR_NONE)
 				mWrite-- ;
 			const auto r1x = mDeque[i][0] ;
-			if (mWrite == iw && r1x == VAR_NONE) {
+			_CALL_IF_ ([&] (BOOL &if_cond) {
+				if (mWrite != iw)
+					return (void) (if_cond = FALSE) ;
+				if (r1x != VAR_NONE)
+					return (void) (if_cond = FALSE) ;
 				update_rewrite (i ,jw) ;
 				jw = r1x ;
 				iw = VAR_NONE ;
-			} else if (mWrite == iw && r1x != VAR_NONE) {
+			} ,[&] (BOOL &if_cond) {
+				if (mWrite != iw)
+					return (void) (if_cond = FALSE) ;
+				if (r1x == VAR_NONE)
+					return (void) (if_cond = FALSE) ;
 				update_rewrite (i ,jw) ;
 				jw = r1x ;
 				iw-- ;
-			} else if (mWrite != i) {
+			} ,[&] (BOOL &if_cond) {
+				if (mWrite == i)
+					return (void) (if_cond = FALSE) ;
 				update_rewrite (i ,mDeque[mWrite][0]) ;
 				update_remove (mWrite) ;
-			}
+			}) ;
 			mWrite-- ;
 		}
 		mRead = _MAX_ (mDeque.size () - 1 - mList.length () ,VAR_ZERO) ;
@@ -1918,26 +2038,52 @@ private:
 			while (mRead != iw && mDeque[mRead][0] == VAR_NONE)
 				mRead++ ;
 			const auto r1x = mDeque[i][0] ;
-			if (mRead == iw && rax.empty () && r1x == VAR_NONE) {
+			_CALL_IF_ ([&] (BOOL &if_cond) {
+				if (mRead != iw)
+					return (void) (if_cond = FALSE) ;
+				if (!rax.empty ())
+					return (void) (if_cond = FALSE) ;
+				if (r1x != VAR_NONE)
+					return (void) (if_cond = FALSE) ;
 				update_rewrite (i ,jw) ;
 				iw = VAR_NONE ;
-			} else if (mRead == iw && rax.empty () && r1x != VAR_NONE) {
+			} ,[&] (BOOL &if_cond) {
+				if (mRead != iw)
+					return (void) (if_cond = FALSE) ;
+				if (!rax.empty ())
+					return (void) (if_cond = FALSE) ;
+				if (r1x == VAR_NONE)
+					return (void) (if_cond = FALSE) ;
 				update_rewrite (i ,jw) ;
 				iw = VAR_NONE ;
 				rax.add (r1x) ;
-			} else if (mRead == iw && !rax.empty () && r1x == VAR_NONE) {
+			} ,[&] (BOOL &if_cond) {
+				if (mRead != iw)
+					return (void) (if_cond = FALSE) ;
+				if (rax.empty ())
+					return (void) (if_cond = FALSE) ;
+				if (r1x != VAR_NONE)
+					return (void) (if_cond = FALSE) ;
 				update_rewrite (i ,jw) ;
 				rax.take (jw) ;
 				iw++ ;
-			} else if (mRead == iw && !rax.empty () && r1x != VAR_NONE) {
+			} ,[&] (BOOL &if_cond) {
+				if (mRead != iw)
+					return (void) (if_cond = FALSE) ;
+				if (rax.empty ())
+					return (void) (if_cond = FALSE) ;
+				if (r1x == VAR_NONE)
+					return (void) (if_cond = FALSE) ;
 				update_rewrite (i ,jw) ;
 				rax.take (jw) ;
 				iw++ ;
 				rax.add (r1x) ;
-			} else if (mRead != i) {
+			} ,[&] (BOOL &if_cond) {
+				if (mRead == i)
+					return (void) (if_cond = FALSE) ;
 				update_rewrite (i ,mDeque[mRead][0]) ;
 				update_remove (mRead) ;
-			}
+			}) ;
 			mRead++ ;
 		}
 		mRead = 0 ;
@@ -2001,7 +2147,7 @@ public:
 		clear () ;
 	}
 
-	explicit QList (LENGTH len) :QList (len ,ARGVP0) {
+	explicit QList (LENGTH len) :QList (ARGVP0 ,len) {
 		clear () ;
 	}
 
@@ -2067,7 +2213,11 @@ public:
 			ir = inext (ir) ;
 			jr = right.inext (jr) ;
 		}
-		return ir == ie && jr == je ;
+		if (ir != ie)
+			return FALSE ;
+		if (jr != je)
+			return FALSE ;
+		return TRUE ;
 	}
 
 	inline BOOL operator== (const QList &right) const {
@@ -2110,15 +2260,15 @@ public:
 		return *this ;
 	}
 
-	template <class _ARG>
-	void appand (const _ARG &src) {
+	template <class _ARG1>
+	void appand (const _ARG1 &src) {
 		mList.reserve (src.length ()) ;
 		for (auto &&i : src)
 			add (std::move (i)) ;
 	}
 
-	template <class _ARG>
-	void appand (_ARG &&src) {
+	template <class _ARG1>
+	void appand (_ARG1 &&src) {
 		mList.reserve (src.length ()) ;
 		for (auto &&i : src)
 			add (std::move (i)) ;
@@ -2161,7 +2311,7 @@ public:
 		return std::move (ret) ;
 	}
 
-	INDEX insert (INDEX index) popping {
+	INDEX insert_before (INDEX index) popping {
 		INDEX ret = mList.alloc (VAR_NONE ,index) ;
 		auto &r1 = (index != VAR_NONE) ? (mList[index].mLeft) : mLast ;
 		mList[ret].mLeft = r1 ;
@@ -2252,7 +2402,7 @@ public:
 	}
 
 private:
-	explicit QList (LENGTH len ,const decltype (ARGVP0) &) :mList (len) {}
+	explicit QList (const decltype (ARGVP0) & ,LENGTH len) :mList (len) {}
 
 private:
 	INDEX &prev_next (INDEX it) {
@@ -2339,7 +2489,7 @@ private:
 		}
 
 	private:
-		inline explicit Bit (BASE &base ,INDEX index) :mBase (base) ,mIndex (index) {}
+		inline explicit Bit (BASE &base ,INDEX index) popping : mBase (base) ,mIndex (index) {}
 	} ;
 
 private:
@@ -2347,11 +2497,11 @@ private:
 	LENGTH mWidth ;
 
 public:
-	BitSet () :BitSet (0 ,0 ,ARGVP0) {
+	BitSet () :BitSet (ARGVP0) {
 		clear () ;
 	}
 
-	explicit BitSet (LENGTH len) :BitSet (expr_size (len) ,expr_width (len) ,ARGVP0) {
+	explicit BitSet (LENGTH len) :BitSet (ARGVP0 ,expr_size (len) ,expr_width (len)) {
 		clear () ;
 	}
 
@@ -2456,7 +2606,9 @@ public:
 				return FALSE ;
 		const auto r1x = mSet[ix] & (mWidth % 8 - 1) ;
 		const auto r2x = right.mSet[ix] & (mWidth % 8 - 1) ;
-		return r1x == r2x ;
+		if (r1x != r2x)
+			return FALSE ;
+		return TRUE ;
 	}
 
 	inline BOOL operator== (const BitSet &right) const {
@@ -2472,12 +2624,16 @@ public:
 		INDEX ix = mSet.size () - 1 ;
 		if (ix < 0)
 			return FALSE ;
-		for (INDEX i = 0 ; i < ix ; i++)
-			if (mSet[i] != right.mSet[i])
-				return mSet[i] < right.mSet[i] ;
-		const auto r1x = mSet[ix] & (mWidth % 8 - 1) ;
-		const auto r2x = right.mSet[ix] & (mWidth % 8 - 1) ;
-		return r1x < r2x ;
+		const auto r1x = _MEMLESS_ (mSet ,right.mSet ,ix) ;
+		if (r1x < 0)
+			return TRUE ;
+		if (r1x > 0)
+			return FALSE ;
+		const auto r2x = mSet[ix] & (mWidth % 8 - 1) ;
+		const auto r3x = right.mSet[ix] & (mWidth % 8 - 1) ;
+		if (r2x >= r3x)
+			return FALSE ;
+		return TRUE ;
 	}
 
 	inline BOOL operator< (const BitSet &right) const {
@@ -2506,8 +2662,8 @@ public:
 		return *this ;
 	}
 
-	template <class _ARG>
-	void appand (const _ARG &src) {
+	template <class _ARG1>
+	void appand (const _ARG1 &src) {
 		for (auto &&i : src)
 			add (i) ;
 	}
@@ -2627,22 +2783,24 @@ public:
 		return std::move (ret) ;
 	}
 
-	void fill (const BYTE &val) {
+	void fill (const BYTE &each) {
 		for (INDEX i = 0 ; i < mSet.size () ; i++)
-			mSet[i] = val ;
+			mSet[i] = each ;
 	}
 
-	template <class _ARG>
-	void fill (const Array<BYTE ,_ARG> &val) {
+	template <class _ARG1>
+	void fill (const Array<BYTE ,_ARG1> &each) {
 		INDEX ir = 0 ;
 		for (INDEX i = 0 ; i < mSet.size () ; i++) {
-			mSet[i] = val[ir] ;
-			ir = (ir + 1) % val.size () ;
+			mSet[i] = each[ir] ;
+			ir = (ir + 1) % each.size () ;
 		}
 	}
 
 private:
-	explicit BitSet (LENGTH len ,LENGTH width ,const decltype (ARGVP0) &) :mSet (len) ,mWidth (width) {}
+	explicit BitSet (const decltype (ARGVP0) &) :mWidth (0) {}
+
+	explicit BitSet (const decltype (ARGVP0) & ,LENGTH len ,LENGTH width) :mSet (len) ,mWidth (width) {}
 
 private:
 	inline static LENGTH expr_size (const std::initializer_list<INDEX> &right) {
@@ -2691,7 +2849,7 @@ private:
 		inline explicit Node (KEY &&key ,ITEM &&item ,BOOL red ,INDEX up ,INDEX left ,INDEX right) : mKey (std::move (key)) ,mItem (std::move (item)) ,mRed (red) ,mUp (up) ,mLeft (left) ,mRight (right) {}
 	} ;
 
-	using NodePair = PACK<KEY ,ITEM> ;
+	using ITEM_TYPE = PACK<KEY ,ITEM> ;
 
 	template <class BASE>
 	class Pair {
@@ -2728,7 +2886,7 @@ public:
 		static_cast<PTR<SPECIALIZATION_TYPE>> (this)->clear () ;
 	}
 
-	explicit Set (LENGTH len) :Set (len ,ARGVP0) {
+	explicit Set (LENGTH len) :Set (ARGVP0 ,len) {
 		static_cast<PTR<SPECIALIZATION_TYPE>> (this)->clear () ;
 	}
 
@@ -2747,7 +2905,7 @@ public:
 		mTop = ix ;
 	}
 
-	void add (const NodePair &item) {
+	void add (const ITEM_TYPE &item) {
 		add (std::move (item.P1) ,std::move (item.P2)) ;
 	}
 
@@ -2766,26 +2924,26 @@ public:
 		mTop = ix ;
 	}
 
-	void add (NodePair &&item) {
+	void add (ITEM_TYPE &&item) {
 		add (std::move (item.P1) ,std::move (item.P2)) ;
 	}
 
-	template <class _ARG>
-	void appand (const _ARG &src) {
+	template <class _ARG1>
+	void appand (const _ARG1 &src) {
 		mSet.reserve (src.length ()) ;
 		for (auto &&i : src)
 			add (i.key ,std::move (i.item)) ;
 	}
 
-	template <class _ARG>
-	void appand (_ARG &&src) {
+	template <class _ARG1>
+	void appand (_ARG1 &&src) {
 		mSet.reserve (src.length ()) ;
 		for (auto &&i : src)
 			add (i.key ,std::move (i.item)) ;
 	}
 
 private:
-	explicit Set (LENGTH len ,const decltype (ARGVP0) &) :mSet (len) {}
+	explicit Set (const decltype (ARGVP0) & ,LENGTH len) :mSet (len) {}
 } ;
 
 template <class KEY ,class SIZE>
@@ -2811,7 +2969,7 @@ private:
 		inline explicit Node (KEY &&key ,BOOL red ,INDEX up ,INDEX left ,INDEX right) : mKey (std::move (key)) ,mRed (red) ,mUp (up) ,mLeft (left) ,mRight (right) {}
 	} ;
 
-	using NodePair = PACK<KEY> ;
+	using ITEM_TYPE = PACK<KEY> ;
 
 	template <class BASE>
 	class Pair {
@@ -2847,7 +3005,7 @@ public:
 		static_cast<PTR<SPECIALIZATION_TYPE>> (this)->clear () ;
 	}
 
-	explicit Set (LENGTH len) :Set (len ,ARGVP0) {
+	explicit Set (LENGTH len) :Set (ARGVP0 ,len) {
 		static_cast<PTR<SPECIALIZATION_TYPE>> (this)->clear () ;
 	}
 
@@ -2862,7 +3020,7 @@ public:
 		mTop = ix ;
 	}
 
-	void add (const NodePair &item) {
+	void add (const ITEM_TYPE &item) {
 		add (std::move (item.P1)) ;
 	}
 
@@ -2877,26 +3035,26 @@ public:
 		mTop = ix ;
 	}
 
-	void add (NodePair &&item) {
+	void add (ITEM_TYPE &&item) {
 		add (std::move (item.P1)) ;
 	}
 
-	template <class _ARG>
-	void appand (const _ARG &src) {
+	template <class _ARG1>
+	void appand (const _ARG1 &src) {
 		mSet.reserve (src.length ()) ;
 		for (auto &&i : src)
 			add (i.key) ;
 	}
 
-	template <class _ARG>
-	void appand (_ARG &&src) {
+	template <class _ARG1>
+	void appand (_ARG1 &&src) {
 		mSet.reserve (src.length ()) ;
 		for (auto &&i : src)
 			add (i.key) ;
 	}
 
 private:
-	explicit Set (LENGTH len ,const decltype (ARGVP0) &) :mSet (len) {}
+	explicit Set (const decltype (ARGVP0) & ,LENGTH len) :mSet (len) {}
 } ;
 
 template <class KEY ,class ITEM ,class SIZE>
@@ -2904,9 +3062,9 @@ class Set :private Set<KEY ,SPECIALIZATION<ITEM> ,SIZE> {
 private:
 	using SPECIALIZATION_BASE = Set<KEY ,SPECIALIZATION<ITEM> ,SIZE> ;
 	using Node = typename SPECIALIZATION_BASE::Node ;
-	using NodePair = typename SPECIALIZATION_BASE::NodePair ;
-	template <class _ARG>
-	using Pair = typename SPECIALIZATION_BASE::template Pair<_ARG> ;
+	using ITEM_TYPE = typename SPECIALIZATION_BASE::ITEM_TYPE ;
+	template <class _ARG1>
+	using Pair = typename SPECIALIZATION_BASE::template Pair<_ARG1> ;
 
 private:
 	friend SPECIALIZATION_BASE ;
@@ -2919,7 +3077,7 @@ public:
 
 	explicit Set (LENGTH len) :SPECIALIZATION_BASE (len) {}
 
-	implicit Set (const std::initializer_list<NodePair> &right) : Set (right.size ()) {
+	implicit Set (const std::initializer_list<ITEM_TYPE> &right) : Set (right.size ()) {
 		for (auto &&i : right)
 			add (i) ;
 	}
@@ -2953,12 +3111,6 @@ public:
 		return get (index) ;
 	}
 
-#ifdef __CSC_COMPILER_MSVC__
-	template <class _ARG ,class = ENABLE_TYPE<std::is_same<REMOVE_CONST_TYPE<_ARG> ,Set>::value>>
-	INDEX at (const Pair<_ARG> &item) const {
-		return mSet.at (_OFFSET_ (&Node::mKey ,item.key)) ;
-	}
-#else
 	INDEX at (const Pair<Set> &item) const {
 		return mSet.at (_OFFSET_ (&Node::mKey ,item.key)) ;
 	}
@@ -2966,7 +3118,6 @@ public:
 	INDEX at (const Pair<const Set> &item) const {
 		return mSet.at (_OFFSET_ (&Node::mKey ,item.key)) ;
 	}
-#endif
 
 	INDEX ibegin () const {
 		for (INDEX i = 0 ; i < size () ; i++)
@@ -3000,12 +3151,12 @@ public:
 
 	using SPECIALIZATION_BASE::add ;
 
-	inline Set &operator<< (const NodePair &item) {
+	inline Set &operator<< (const ITEM_TYPE &item) {
 		add (std::move (item)) ;
 		return *this ;
 	}
 
-	inline Set &operator<< (NodePair &&item) {
+	inline Set &operator<< (ITEM_TYPE &&item) {
 		add (std::move (item)) ;
 		return *this ;
 	}
@@ -3067,7 +3218,7 @@ public:
 		while (TRUE) {
 			if (ret == VAR_NONE)
 				break ;
-			const auto r1x = key < mSet[ret].mKey ;
+			const auto r1x = BOOL (key < mSet[ret].mKey) ;
 			if (!r1x && !(mSet[ret].mKey < key))
 				break ;
 			ret = r1x ? (mSet[ret].mLeft) : (mSet[ret].mRight) ;
@@ -3091,8 +3242,10 @@ public:
 
 private:
 	BOOL equal_each (const Set &right ,INDEX it ,INDEX jt) const {
+		if (it == VAR_NONE && jt == VAR_NONE)
+			return TRUE ;
 		if (it == VAR_NONE || jt == VAR_NONE)
-			return it == VAR_NONE && jt == VAR_NONE ;
+			return FALSE ;
 		if (!equal_each (right ,mSet[it].mLeft ,right.mSet[jt].mLeft))
 			return FALSE ;
 		if (mSet[it].mKey != right.mSet[jt].mKey)
@@ -3103,15 +3256,17 @@ private:
 	}
 
 	void update_emplace (INDEX it ,INDEX jt) {
-		if (it == VAR_NONE) {
+		_CALL_IF_ ([&] (BOOL &if_cond) {
+			if (it != VAR_NONE)
+				return (void) (if_cond = FALSE) ;
 			mTop = jt ;
-		} else {
+		} ,[&] (BOOL &if_cond) {
 			mSet[jt].mUp = it ;
 			auto &r1 = (mSet[jt].mKey < mSet[it].mKey) ? (mSet[it].mLeft) : (mSet[it].mRight) ;
 			update_emplace (r1 ,jt) ;
 			r1 = mTop ;
 			mTop = it ;
-		}
+		}) ;
 	}
 
 	void update_insert (INDEX it) {
@@ -3132,12 +3287,18 @@ private:
 	void update_insert_left (INDEX it) {
 		INDEX ix = mSet[it].mUp ;
 		INDEX iy = mSet[ix].mUp ;
-		if (mSet[iy].mRight != VAR_NONE && mSet[mSet[iy].mRight].mRed) {
+		_CALL_IF_ ([&] (BOOL &if_cond) {
+			if (mSet[iy].mRight == VAR_NONE)
+				return (void) (if_cond = FALSE) ;
+			if (!mSet[mSet[iy].mRight].mRed)
+				return (void) (if_cond = FALSE) ;
 			mSet[mSet[iy].mRight].mRed = FALSE ;
 			mSet[ix].mRed = FALSE ;
 			mSet[iy].mRed = TRUE ;
 			mTop = iy ;
-		} else if (it == mSet[ix].mRight) {
+		} ,[&] (BOOL &if_cond) {
+			if (it != mSet[ix].mRight)
+				return (void) (if_cond = FALSE) ;
 			auto &r1 = mSet[iy].mLeft ;
 			rotate_left (r1) ;
 			r1 = mTop ;
@@ -3147,25 +3308,33 @@ private:
 			rotate_right (r2) ;
 			r2 = mTop ;
 			mTop = ix ;
-		} else if (it == mSet[ix].mLeft) {
+		} ,[&] (BOOL &if_cond) {
+			if (it != mSet[ix].mLeft)
+				return (void) (if_cond = FALSE) ;
 			mSet[ix].mRed = FALSE ;
 			mSet[iy].mRed = TRUE ;
 			auto &r2 = prev_next (iy) ;
 			rotate_right (r2) ;
 			r2 = mTop ;
 			mTop = it ;
-		}
+		}) ;
 	}
 
 	void update_insert_right (INDEX it) {
 		INDEX ix = mSet[it].mUp ;
 		INDEX iy = mSet[ix].mUp ;
-		if (mSet[iy].mLeft != VAR_NONE && mSet[mSet[iy].mLeft].mRed) {
+		_CALL_IF_ ([&] (BOOL &if_cond) {
+			if (mSet[iy].mLeft == VAR_NONE)
+				return (void) (if_cond = FALSE) ;
+			if (!mSet[mSet[iy].mLeft].mRed)
+				return (void) (if_cond = FALSE) ;
 			mSet[mSet[iy].mLeft].mRed = FALSE ;
 			mSet[ix].mRed = FALSE ;
 			mSet[iy].mRed = TRUE ;
 			mTop = iy ;
-		} else if (it == mSet[ix].mLeft) {
+		} ,[&] (BOOL &if_cond) {
+			if (it != mSet[ix].mLeft)
+				return (void) (if_cond = FALSE) ;
 			auto &r1 = mSet[iy].mRight ;
 			rotate_right (r1) ;
 			r1 = mTop ;
@@ -3175,14 +3344,16 @@ private:
 			rotate_left (r2) ;
 			r2 = mTop ;
 			mTop = ix ;
-		} else if (it == mSet[ix].mRight) {
+		} ,[&] (BOOL &if_cond) {
+			if (it != mSet[ix].mRight)
+				return (void) (if_cond = FALSE) ;
 			mSet[ix].mRed = FALSE ;
 			mSet[iy].mRed = TRUE ;
 			auto &r2 = prev_next (iy) ;
 			rotate_left (r2) ;
 			r2 = mTop ;
 			mTop = it ;
-		}
+		}) ;
 	}
 
 	void update_remove (INDEX it ,INDEX jt) {
@@ -3212,12 +3383,18 @@ private:
 			rotate_left (r2) ;
 			r2 = mTop ;
 		}
-		const auto r1x = mSet[r1].mLeft == VAR_NONE || !mSet[mSet[r1].mLeft].mRed ;
-		const auto r2x = mSet[r1].mRight == VAR_NONE || !mSet[mSet[r1].mRight].mRed ;
-		if (r1x && r2x) {
+		const auto r1x = BOOL (mSet[r1].mLeft == VAR_NONE || !mSet[mSet[r1].mLeft].mRed) ;
+		const auto r2x = BOOL (mSet[r1].mRight == VAR_NONE || !mSet[mSet[r1].mRight].mRed) ;
+		_CALL_IF_ ([&] (BOOL &if_cond) {
+			if (!r1x)
+				return (void) (if_cond = FALSE) ;
+			if (!r2x)
+				return (void) (if_cond = FALSE) ;
 			mSet[r1].mRed = TRUE ;
 			mTop = jt ;
-		} else if (r2x) {
+		} ,[&] (BOOL &if_cond) {
+			if (!r2x)
+				return (void) (if_cond = FALSE) ;
 			mSet[mSet[r1].mLeft].mRed = FALSE ;
 			mSet[r1].mRed = TRUE ;
 			rotate_right (r1) ;
@@ -3229,7 +3406,7 @@ private:
 			rotate_left (r3) ;
 			r3 = mTop ;
 			mTop = mRoot ;
-		} else {
+		} ,[&] (BOOL &if_cond) {
 			mSet[r1].mRed = mSet[jt].mRed ;
 			mSet[jt].mRed = FALSE ;
 			mSet[mSet[r1].mRight].mRed = FALSE ;
@@ -3237,7 +3414,7 @@ private:
 			rotate_left (r3) ;
 			r3 = mTop ;
 			mTop = mRoot ;
-		}
+		}) ;
 	}
 
 	void update_remove_right (INDEX it ,INDEX jt) {
@@ -3249,12 +3426,18 @@ private:
 			rotate_right (r2) ;
 			r2 = mTop ;
 		}
-		const auto r1x = mSet[r1].mRight == VAR_NONE || !mSet[mSet[r1].mRight].mRed ;
-		const auto r2x = mSet[r1].mLeft == VAR_NONE || !mSet[mSet[r1].mLeft].mRed ;
-		if (r1x && r2x) {
+		const auto r1x = BOOL (mSet[r1].mRight == VAR_NONE || !mSet[mSet[r1].mRight].mRed) ;
+		const auto r2x = BOOL (mSet[r1].mLeft == VAR_NONE || !mSet[mSet[r1].mLeft].mRed) ;
+		_CALL_IF_ ([&] (BOOL &if_cond) {
+			if (!r1x)
+				return (void) (if_cond = FALSE) ;
+			if (!r2x)
+				return (void) (if_cond = FALSE) ;
 			mSet[r1].mRed = TRUE ;
 			mTop = jt ;
-		} else if (r2x) {
+		} ,[&] (BOOL &if_cond) {
+			if (!r2x)
+				return (void) (if_cond = FALSE) ;
 			mSet[mSet[r1].mRight].mRed = FALSE ;
 			mSet[r1].mRed = TRUE ;
 			rotate_left (r1) ;
@@ -3266,7 +3449,7 @@ private:
 			rotate_right (r3) ;
 			r3 = mTop ;
 			mTop = mRoot ;
-		} else {
+		} ,[&] (BOOL &if_cond) {
 			mSet[r1].mRed = mSet[jt].mRed ;
 			mSet[jt].mRed = FALSE ;
 			mSet[mSet[r1].mLeft].mRed = FALSE ;
@@ -3274,7 +3457,7 @@ private:
 			rotate_right (r3) ;
 			r3 = mTop ;
 			mTop = mRoot ;
-		}
+		}) ;
 	}
 
 	void rotate_left (INDEX it) {
@@ -3375,7 +3558,7 @@ private:
 		inline explicit Node (KEY &&key ,ITEM &&item ,FLAG hash ,INDEX next) : mKey (std::move (key)) ,mItem (std::move (item)) ,mHash (hash) ,mNext (next) {}
 	} ;
 
-	using NodePair = PACK<KEY ,ITEM> ;
+	using ITEM_TYPE = PACK<KEY ,ITEM> ;
 
 	template <class BASE>
 	class Pair {
@@ -3412,7 +3595,7 @@ public:
 		static_cast<PTR<SPECIALIZATION_TYPE>> (this)->clear () ;
 	}
 
-	explicit HashSet (LENGTH len) :HashSet (len ,ARGVP0) {
+	explicit HashSet (LENGTH len) :HashSet (ARGVP0 ,len) {
 		static_cast<PTR<SPECIALIZATION_TYPE>> (this)->clear () ;
 	}
 
@@ -3431,7 +3614,7 @@ public:
 		mTop = ix ;
 	}
 
-	void add (const NodePair &item) {
+	void add (const ITEM_TYPE &item) {
 		add (std::move (item.P1) ,std::move (item.P2)) ;
 	}
 
@@ -3450,26 +3633,36 @@ public:
 		mTop = ix ;
 	}
 
-	void add (NodePair &&item) {
+	void add (ITEM_TYPE &&item) {
 		add (std::move (item.P1) ,std::move (item.P2)) ;
 	}
 
-	template <class _ARG>
-	void appand (const _ARG &src) {
+	template <class _ARG1>
+	void appand (const _ARG1 &src) {
 		mSet.reserve (src.length ()) ;
 		for (auto &&i : src)
 			add (i.key ,std::move (i.item)) ;
 	}
 
-	template <class _ARG>
-	void appand (_ARG &&src) {
+	template <class _ARG1>
+	void appand (_ARG1 &&src) {
 		mSet.reserve (src.length ()) ;
 		for (auto &&i : src)
 			add (i.key ,std::move (i.item)) ;
 	}
 
 private:
-	explicit HashSet (LENGTH len ,const decltype (ARGVP0) &) :mSet (len) ,mHead (len) {}
+	explicit HashSet (const decltype (ARGVP0) & ,LENGTH len) :mSet (len) ,mHead (len) {}
+
+private:
+	BOOL equal_each (const HashSet &right ,INDEX it) const {
+		INDEX ix = right.find (mSet[it].mKey) ;
+		if (ix == VAR_NONE)
+			return FALSE ;
+		if (mSet[it].mItem != right.mSet[ix].mItem)
+			return FALSE ;
+		return TRUE ;
+	}
 } ;
 
 template <class KEY ,class SIZE>
@@ -3493,7 +3686,7 @@ private:
 		inline explicit Node (KEY &&key ,FLAG hash ,INDEX next) : mKey (std::move (key)) ,mHash (hash) ,mNext (next) {}
 	} ;
 
-	using NodePair = PACK<KEY> ;
+	using ITEM_TYPE = PACK<KEY> ;
 
 	template <class BASE>
 	class Pair {
@@ -3529,7 +3722,7 @@ public:
 		static_cast<PTR<SPECIALIZATION_TYPE>> (this)->clear () ;
 	}
 
-	explicit HashSet (LENGTH len) :HashSet (len ,ARGVP0) {
+	explicit HashSet (LENGTH len) :HashSet (ARGVP0 ,len) {
 		static_cast<PTR<SPECIALIZATION_TYPE>> (this)->clear () ;
 	}
 
@@ -3544,7 +3737,7 @@ public:
 		mTop = ix ;
 	}
 
-	void add (const NodePair &item) {
+	void add (const ITEM_TYPE &item) {
 		add (std::move (item.P1)) ;
 	}
 
@@ -3559,26 +3752,34 @@ public:
 		mTop = ix ;
 	}
 
-	void add (NodePair &&item) {
+	void add (ITEM_TYPE &&item) {
 		add (std::move (item.P1) ,std::move (item.P2)) ;
 	}
 
-	template <class _ARG>
-	void appand (const _ARG &src) {
+	template <class _ARG1>
+	void appand (const _ARG1 &src) {
 		mSet.reserve (src.length ()) ;
 		for (auto &&i : src)
 			add (i.key) ;
 	}
 
-	template <class _ARG>
-	void appand (_ARG &&src) {
+	template <class _ARG1>
+	void appand (_ARG1 &&src) {
 		mSet.reserve (src.length ()) ;
 		for (auto &&i : src)
 			add (i.key) ;
 	}
 
 private:
-	explicit HashSet (LENGTH len ,const decltype (ARGVP0) &) :mSet (len) ,mHead (len) {}
+	explicit HashSet (const decltype (ARGVP0) & ,LENGTH len) :mSet (len) ,mHead (len) {}
+
+private:
+	BOOL equal_each (const HashSet &right ,INDEX it) const {
+		INDEX ix = right.find (mSet[it].mKey) ;
+		if (ix == VAR_NONE)
+			return FALSE ;
+		return TRUE ;
+	}
 } ;
 
 template <class KEY ,class ITEM ,class SIZE>
@@ -3586,9 +3787,9 @@ class HashSet :private HashSet<KEY ,SPECIALIZATION<ITEM> ,SIZE> {
 private:
 	using SPECIALIZATION_BASE = HashSet<KEY ,SPECIALIZATION<ITEM> ,SIZE> ;
 	using Node = typename SPECIALIZATION_BASE::Node ;
-	using NodePair = typename SPECIALIZATION_BASE::NodePair ;
-	template <class _ARG>
-	using Pair = typename SPECIALIZATION_BASE::template Pair<_ARG> ;
+	using ITEM_TYPE = typename SPECIALIZATION_BASE::ITEM_TYPE ;
+	template <class _ARG1>
+	using Pair = typename SPECIALIZATION_BASE::template Pair<_ARG1> ;
 
 private:
 	friend SPECIALIZATION_BASE ;
@@ -3601,7 +3802,7 @@ public:
 
 	explicit HashSet (LENGTH len) :SPECIALIZATION_BASE (len) {}
 
-	implicit HashSet (const std::initializer_list<NodePair> &right) : HashSet (right.size ()) {
+	implicit HashSet (const std::initializer_list<ITEM_TYPE> &right) : HashSet (right.size ()) {
 		for (auto &&i : right)
 			add (i) ;
 	}
@@ -3635,12 +3836,6 @@ public:
 		return get (index) ;
 	}
 
-#ifdef __CSC_COMPILER_MSVC__
-	template <class _ARG ,class = ENABLE_TYPE<std::is_same<REMOVE_CONST_TYPE<_ARG> ,HashSet>::value>>
-	INDEX at (const Pair<_ARG> &item) const {
-		return mSet.at (_OFFSET_ (&Node::mKey ,item.key)) ;
-	}
-#else
 	INDEX at (const Pair<HashSet> &item) const {
 		return mSet.at (_OFFSET_ (&Node::mKey ,item.key)) ;
 	}
@@ -3648,7 +3843,6 @@ public:
 	INDEX at (const Pair<const HashSet> &item) const {
 		return mSet.at (_OFFSET_ (&Node::mKey ,item.key)) ;
 	}
-#endif
 
 	INDEX ibegin () const {
 		for (INDEX i = 0 ; i < size () ; i++)
@@ -3687,12 +3881,12 @@ public:
 
 	using SPECIALIZATION_BASE::add ;
 
-	inline HashSet &operator<< (const NodePair &item) {
+	inline HashSet &operator<< (const ITEM_TYPE &item) {
 		add (std::move (item)) ;
 		return *this ;
 	}
 
-	inline HashSet &operator<< (NodePair &&item) {
+	inline HashSet &operator<< (ITEM_TYPE &&item) {
 		add (std::move (item)) ;
 		return *this ;
 	}
@@ -3730,7 +3924,9 @@ public:
 
 	INDEX find (const KEY &key) const {
 		INDEX ret = VAR_NONE ;
-		if (size () > 0) {
+		for (FOR_ONCE_DO_WHILE_FALSE) {
+			if (size () == 0)
+				break ;
 			const auto r1x = U::OPERATOR_HASH<KEY>::invoke (key) ;
 			_DEBUG_ASSERT_ (r1x >= 0) ;
 			ret = mHead[r1x % mHead.size ()] ;
@@ -3753,10 +3949,7 @@ public:
 	}
 
 private:
-	BOOL equal_each (const HashSet &right ,INDEX it) const {
-		INDEX ix = right.find (mSet[it].mKey) ;
-		return ix != VAR_NONE && mSet[it].mItem == right.mSet[ix].mItem ;
-	}
+	using SPECIALIZATION_BASE::equal_each ;
 
 	void update_resize (INDEX it) {
 		if (mHead.size () == mSet.size ())
@@ -3772,7 +3965,7 @@ private:
 			mSet[i].mNext = rax[ix] ;
 			rax[ix] = i ;
 		}
-		mHead.expand (std::move (rax)) ;
+		mHead.swap (rax) ;
 	}
 
 	void update_insert (INDEX it) {
@@ -3789,7 +3982,7 @@ private:
 			if (mSet[i].mNext == it)
 				return mSet[i].mNext ;
 		_DEBUG_ASSERT_ (FALSE) ;
-		return VAR_NONE ;
+		return _NULL_<INDEX> () ;
 	}
 } ;
 
@@ -3824,7 +4017,7 @@ private:
 		inline explicit Node (KEY &&key ,ITEM &&item ,LENGTH weight ,INDEX left ,INDEX right ,INDEX next) : mKey (std::move (key)) ,mItem (std::move (item)) ,mWeight (weight) ,mLeft (left) ,mRight (right) ,mNext (next) {}
 	} ;
 
-	using NodePair = PACK<KEY ,ITEM> ;
+	using ITEM_TYPE = PACK<KEY ,ITEM> ;
 
 	template <class BASE>
 	class Pair {
@@ -3859,13 +4052,13 @@ private:
 		INDEX mFirst ;
 		INDEX mLast ;
 		INDEX mRoot ;
+		INDEX mTop ;
 	} ;
 
 private:
 	friend SPECIALIZATION_TYPE ;
 	SharedRef<Attribute> mHolder ;
 	PhanRef<Allocator<Node ,SIZE>> mSet ;
-	INDEX mTop ;
 
 public:
 	SoftSet () = default ;
@@ -3894,12 +4087,12 @@ public:
 			mHolder->mLast = ix ;
 			mHolder->mLength++ ;
 			static_cast<PTR<SPECIALIZATION_TYPE>> (this)->update_insert (mHolder->mRoot) ;
-			mHolder->mRoot = mTop ;
+			mHolder->mRoot = mHolder->mTop ;
 		}
-		mTop = ix ;
+		mHolder->mTop = ix ;
 	}
 
-	void add (const NodePair &item) {
+	void add (const ITEM_TYPE &item) {
 		add (std::move (item.P1) ,std::move (item.P2)) ;
 	}
 
@@ -3917,25 +4110,25 @@ public:
 			mHolder->mLast = ix ;
 			mHolder->mLength++ ;
 			static_cast<PTR<SPECIALIZATION_TYPE>> (this)->update_insert (mHolder->mRoot) ;
-			mHolder->mRoot = mTop ;
+			mHolder->mRoot = mHolder->mTop ;
 		}
-		mTop = ix ;
+		mHolder->mTop = ix ;
 	}
 
-	void add (NodePair &&item) {
+	void add (ITEM_TYPE &&item) {
 		add (std::move (item.P1) ,std::move (item.P2)) ;
 	}
 
-	template <class _ARG>
-	void appand (const _ARG &src) {
+	template <class _ARG1>
+	void appand (const _ARG1 &src) {
 		_DEBUG_ASSERT_ (mHolder.exist ()) ;
 		mSet->reserve (src.length ()) ;
 		for (auto &&i : src)
 			add (i.key ,std::move (i.item)) ;
 	}
 
-	template <class _ARG>
-	void appand (_ARG &&src) {
+	template <class _ARG1>
+	void appand (_ARG1 &&src) {
 		_DEBUG_ASSERT_ (mHolder.exist ()) ;
 		mSet->reserve (src.length ()) ;
 		for (auto &&i : src)
@@ -3966,7 +4159,7 @@ private:
 		inline explicit Node (KEY &&key ,LENGTH weight ,INDEX left ,INDEX right ,INDEX next) : mKey (std::move (key)) ,mWeight (weight) ,mLeft (left) ,mRight (right) ,mNext (next) {}
 	} ;
 
-	using NodePair = PACK<KEY> ;
+	using ITEM_TYPE = PACK<KEY> ;
 
 	template <class BASE>
 	class Pair {
@@ -4000,13 +4193,13 @@ private:
 		INDEX mFirst ;
 		INDEX mLast ;
 		INDEX mRoot ;
+		INDEX mTop ;
 	} ;
 
 private:
 	friend SPECIALIZATION_TYPE ;
 	SharedRef<Attribute> mHolder ;
 	PhanRef<Allocator<Node ,SIZE>> mSet ;
-	INDEX mTop ;
 
 public:
 	SoftSet () = default ;
@@ -4031,12 +4224,12 @@ public:
 			mHolder->mLast = ix ;
 			mHolder->mLength++ ;
 			static_cast<PTR<SPECIALIZATION_TYPE>> (this)->update_insert (mHolder->mRoot) ;
-			mHolder->mRoot = mTop ;
+			mHolder->mRoot = mHolder->mTop ;
 		}
-		mTop = ix ;
+		mHolder->mTop = ix ;
 	}
 
-	void add (const NodePair &item) {
+	void add (const ITEM_TYPE &item) {
 		add (std::move (item.P1)) ;
 	}
 
@@ -4050,25 +4243,25 @@ public:
 			mHolder->mLast = ix ;
 			mHolder->mLength++ ;
 			static_cast<PTR<SPECIALIZATION_TYPE>> (this)->update_insert (mHolder->mRoot) ;
-			mHolder->mRoot = mTop ;
+			mHolder->mRoot = mHolder->mTop ;
 		}
-		mTop = ix ;
+		mHolder->mTop = ix ;
 	}
 
-	void add (NodePair &&item) {
+	void add (ITEM_TYPE &&item) {
 		add (std::move (item.P1)) ;
 	}
 
-	template <class _ARG>
-	void appand (const _ARG &src) {
+	template <class _ARG1>
+	void appand (const _ARG1 &src) {
 		_DEBUG_ASSERT_ (mHolder.exist ()) ;
 		mSet->reserve (src.length ()) ;
 		for (auto &&i : src)
 			add (i.key) ;
 	}
 
-	template <class _ARG>
-	void appand (_ARG &&src) {
+	template <class _ARG1>
+	void appand (_ARG1 &&src) {
 		_DEBUG_ASSERT_ (mHolder.exist ()) ;
 		mSet->reserve (src.length ()) ;
 		for (auto &&i : src)
@@ -4081,16 +4274,15 @@ class SoftSet :private SoftSet<KEY ,SPECIALIZATION<ITEM> ,SIZE> {
 private:
 	using SPECIALIZATION_BASE = SoftSet<KEY ,SPECIALIZATION<ITEM> ,SIZE> ;
 	using Node = typename SPECIALIZATION_BASE::Node ;
-	using NodePair = typename SPECIALIZATION_BASE::NodePair ;
-	template <class _ARG>
-	using Pair = typename SPECIALIZATION_BASE::template Pair<_ARG> ;
+	using ITEM_TYPE = typename SPECIALIZATION_BASE::ITEM_TYPE ;
+	template <class _ARG1>
+	using Pair = typename SPECIALIZATION_BASE::template Pair<_ARG1> ;
 	using Attribute = typename SPECIALIZATION_BASE::Attribute ;
 
 private:
 	friend SPECIALIZATION_BASE ;
 	using SPECIALIZATION_BASE::mHolder ;
 	using SPECIALIZATION_BASE::mSet ;
-	using SPECIALIZATION_BASE::mTop ;
 
 public:
 	SoftSet () = default ;
@@ -4132,7 +4324,6 @@ public:
 		SoftSet ret ;
 		ret.mHolder = mHolder ;
 		ret.mSet = PhanRef<Allocator<Node ,SIZE>>::make (mSet) ;
-		ret.mTop = mTop ;
 		return std::move (ret) ;
 	}
 
@@ -4154,12 +4345,6 @@ public:
 		return get (index) ;
 	}
 
-#ifdef __CSC_COMPILER_MSVC__
-	template <class _ARG ,class = ENABLE_TYPE<std::is_same<REMOVE_CONST_TYPE<_ARG> ,SoftSet>::value>>
-	INDEX at (const Pair<_ARG> &item) const {
-		return mSet->at (_OFFSET_ (&Node::mKey ,item.key)) ;
-	}
-#else
 	INDEX at (const Pair<SoftSet> &item) const {
 		return mSet->at (_OFFSET_ (&Node::mKey ,item.key)) ;
 	}
@@ -4167,7 +4352,6 @@ public:
 	INDEX at (const Pair<const SoftSet> &item) const {
 		return mSet->at (_OFFSET_ (&Node::mKey ,item.key)) ;
 	}
-#endif
 
 	INDEX ibegin () const {
 		if (!mHolder.exist ())
@@ -4199,12 +4383,12 @@ public:
 
 	using SPECIALIZATION_BASE::add ;
 
-	inline SoftSet &operator<< (const NodePair &item) {
+	inline SoftSet &operator<< (const ITEM_TYPE &item) {
 		add (std::move (item)) ;
 		return *this ;
 	}
 
-	inline SoftSet &operator<< (NodePair &&item) {
+	inline SoftSet &operator<< (ITEM_TYPE &&item) {
 		add (std::move (item)) ;
 		return *this ;
 	}
@@ -4221,9 +4405,9 @@ public:
 			mHolder->mLast = ret ;
 			mHolder->mLength++ ;
 			update_insert (mHolder->mRoot) ;
-			mHolder->mRoot = mTop ;
+			mHolder->mRoot = mHolder->mTop ;
 		}
-		mTop = ret ;
+		mHolder->mTop = ret ;
 		return std::move (ret) ;
 	}
 
@@ -4237,9 +4421,9 @@ public:
 			mHolder->mLast = ret ;
 			mHolder->mLength++ ;
 			update_insert (mHolder->mRoot) ;
-			mHolder->mRoot = mTop ;
+			mHolder->mRoot = mHolder->mTop ;
 		}
-		mTop = ret ;
+		mHolder->mTop = ret ;
 		return std::move (ret) ;
 	}
 
@@ -4264,7 +4448,7 @@ public:
 		while (TRUE) {
 			if (ret == VAR_NONE)
 				break ;
-			const auto r1x = key < mSet.self[ret].mKey ;
+			const auto r1x = BOOL (key < mSet.self[ret].mKey) ;
 			if (!r1x && !(mSet.self[ret].mKey < key))
 				break ;
 			ret = r1x ? (mSet.self[ret].mLeft) : (mSet.self[ret].mRight) ;
@@ -4280,8 +4464,10 @@ public:
 
 private:
 	BOOL equal_each (const SoftSet &right ,INDEX it ,INDEX jt) const {
+		if (it == VAR_NONE && jt == VAR_NONE)
+			return TRUE ;
 		if (it == VAR_NONE || jt == VAR_NONE)
-			return it == VAR_NONE && jt == VAR_NONE ;
+			return FALSE ;
 		if (!equal_each (right ,mSet.self[it].mLeft ,right.mSet.self[jt].mLeft))
 			return FALSE ;
 		if (mSet.self[it].mKey != right.mSet.self[jt].mKey)
@@ -4293,19 +4479,21 @@ private:
 
 	void update_insert (INDEX it) {
 		INDEX ix = it ;
-		if (ix == VAR_NONE) {
-			mTop = mHolder->mLast ;
-		} else {
+		_CALL_IF_ ([&] (BOOL &if_cond) {
+			if (ix != VAR_NONE)
+				return (void) (if_cond = FALSE) ;
+			mHolder->mTop = mHolder->mLast ;
+		} ,[&] (BOOL &if_cond) {
 			mSet.self[ix].mWeight++ ;
-			const auto r1x = mSet.self[mHolder->mLast].mKey < mSet.self[ix].mKey ;
+			const auto r1x = BOOL (mSet.self[mHolder->mLast].mKey < mSet.self[ix].mKey) ;
 			auto &r2 = r1x ? (mSet.self[ix].mLeft) : (mSet.self[ix].mRight) ;
 			update_insert (r2) ;
-			r2 = mTop ;
+			r2 = mHolder->mTop ;
 			const auto r2x = r1x ? (&SoftSet::update_insert_left) : (&SoftSet::update_insert_right) ;
 			(this->*r2x) (ix) ;
-			ix = mTop ;
-			mTop = ix ;
-		}
+			ix = mHolder->mTop ;
+			mHolder->mTop = ix ;
+		}) ;
 	}
 
 	void update_insert_left (INDEX it) {
@@ -4313,27 +4501,27 @@ private:
 		const auto r1x = (mSet.self[ir].mRight != VAR_NONE) ? (mSet.self[mSet.self[ir].mRight].mWeight) : 0 ;
 		const auto r2x = (mSet.self[ir].mLeft != VAR_NONE && mSet.self[mSet.self[ir].mLeft].mLeft != VAR_NONE) ? (mSet.self[mSet.self[mSet.self[ir].mLeft].mLeft].mWeight) : 0 ;
 		const auto r3x = (mSet.self[ir].mLeft != VAR_NONE && mSet.self[mSet.self[ir].mLeft].mRight != VAR_NONE) ? (mSet.self[mSet.self[mSet.self[ir].mLeft].mRight].mWeight) : 0 ;
-		mTop = ir ;
+		mHolder->mTop = ir ;
 		if (r1x >= r2x && r1x >= r3x)
 			return ;
 		if (r1x >= r2x) {
 			auto &r1 = mSet.self[ir].mLeft ;
 			rotate_left (r1) ;
-			r1 = mTop ;
+			r1 = mHolder->mTop ;
 		}
 		rotate_right (ir) ;
-		ir = mTop ;
+		ir = mHolder->mTop ;
 		auto &r2 = mSet.self[ir].mLeft ;
 		update_insert_left (r2) ;
-		r2 = mTop ;
+		r2 = mHolder->mTop ;
 		auto &r3 = mSet.self[ir].mRight ;
 		update_insert_right (r3) ;
-		r3 = mTop ;
+		r3 = mHolder->mTop ;
 		update_insert_left (ir) ;
-		ir = mTop ;
+		ir = mHolder->mTop ;
 		update_insert_right (ir) ;
-		ir = mTop ;
-		mTop = ir ;
+		ir = mHolder->mTop ;
+		mHolder->mTop = ir ;
 	}
 
 	void update_insert_right (INDEX it) {
@@ -4341,27 +4529,27 @@ private:
 		const auto r1x = (mSet.self[ir].mLeft != VAR_NONE) ? (mSet.self[mSet.self[ir].mLeft].mWeight) : 0 ;
 		const auto r2x = (mSet.self[ir].mRight != VAR_NONE && mSet.self[mSet.self[ir].mRight].mRight != VAR_NONE) ? (mSet.self[mSet.self[mSet.self[ir].mRight].mRight].mWeight) : 0 ;
 		const auto r3x = (mSet.self[ir].mRight != VAR_NONE && mSet.self[mSet.self[ir].mRight].mLeft != VAR_NONE) ? (mSet.self[mSet.self[mSet.self[ir].mRight].mLeft].mWeight) : 0 ;
-		mTop = ir ;
+		mHolder->mTop = ir ;
 		if (r1x >= r2x && r1x >= r3x)
 			return ;
 		if (r1x >= r2x) {
 			auto &r1 = mSet.self[ir].mRight ;
 			rotate_right (r1) ;
-			r1 = mTop ;
+			r1 = mHolder->mTop ;
 		}
 		rotate_left (ir) ;
-		ir = mTop ;
+		ir = mHolder->mTop ;
 		auto &r2 = mSet.self[ir].mLeft ;
 		update_insert_left (r2) ;
-		r2 = mTop ;
+		r2 = mHolder->mTop ;
 		auto &r3 = mSet.self[ir].mRight ;
 		update_insert_right (r3) ;
-		r3 = mTop ;
+		r3 = mHolder->mTop ;
 		update_insert_left (ir) ;
-		ir = mTop ;
+		ir = mHolder->mTop ;
 		update_insert_right (ir) ;
-		ir = mTop ;
-		mTop = ir ;
+		ir = mHolder->mTop ;
+		mHolder->mTop = ir ;
 	}
 
 	void rotate_left (INDEX it) {
@@ -4372,7 +4560,7 @@ private:
 		const auto r1x = (mSet.self[it].mLeft != VAR_NONE) ? (mSet.self[mSet.self[it].mLeft].mWeight) : 0 ;
 		const auto r2x = (mSet.self[it].mRight != VAR_NONE) ? (mSet.self[mSet.self[it].mRight].mWeight) : 0 ;
 		mSet.self[it].mWeight = r1x + r2x + 1 ;
-		mTop = ix ;
+		mHolder->mTop = ix ;
 	}
 
 	void rotate_right (INDEX it) {
@@ -4383,7 +4571,7 @@ private:
 		const auto r1x = (mSet.self[it].mLeft != VAR_NONE) ? (mSet.self[mSet.self[it].mLeft].mWeight) : 0 ;
 		const auto r2x = (mSet.self[it].mRight != VAR_NONE) ? (mSet.self[mSet.self[it].mRight].mWeight) : 0 ;
 		mSet.self[it].mWeight = r1x + r2x + 1 ;
-		mTop = ix ;
+		mHolder->mTop = ix ;
 	}
 } ;
 } ;

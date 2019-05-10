@@ -46,7 +46,7 @@ private:
 public:
 	inline RangeFolder () = delete ;
 
-	inline implicit RangeFolder (const std::initializer_list<LENGTH> &right) :mRange (right) {}
+	inline explicit RangeFolder (const std::initializer_list<LENGTH> &range) :mRange (range) {}
 
 	inline Iterator begin () const {
 		return Iterator (*this ,first_item () ,0) ;
@@ -80,25 +80,25 @@ private:
 		index[0]++ ;
 	}
 
-	template <INDEX _VAL>
-	inline void template_incrase (Array<LENGTH ,SIZE> &index ,const ARGC<_VAL> &) const {
-		_STATIC_ASSERT_ (_VAL > 0 && _VAL < SIZE::value) ;
-		index[_VAL]++ ;
-		if (index[_VAL] < mRange[_VAL])
+	template <INDEX _VAL1>
+	inline void template_incrase (Array<LENGTH ,SIZE> &index ,const ARGC<_VAL1> &) const {
+		_STATIC_ASSERT_ (_VAL1 > 0 && _VAL1 < SIZE::value) ;
+		index[_VAL1]++ ;
+		if (index[_VAL1] < mRange[_VAL1])
 			return ;
-		index[_VAL] = 0 ;
-		template_incrase (index ,_NULL_<const ARGC<_VAL - 1>> ()) ;
+		index[_VAL1] = 0 ;
+		template_incrase (index ,_NULL_<const ARGC<_VAL1 - 1>> ()) ;
 	}
 } ;
 
 template <class TYPE>
 class SoftImage {
 private:
-	class Attribute {
+	class Attribute final :private Interface {
 	private:
 		friend SoftImage ;
 		SharedRef<FixedBuffer<TYPE>> mBuffer ;
-		ARRAY4<LENGTH> mWidth ;
+		ARRAY5<LENGTH> mWidth ;
 	} ;
 
 	template <class BASE>
@@ -120,7 +120,7 @@ private:
 		}
 
 	private:
-		inline explicit Row (BASE &base ,INDEX y) :mBase (base) ,mY (y) {}
+		inline explicit Row (BASE &base ,INDEX y) popping : mBase (base) ,mY (y) {}
 	} ;
 
 private:
@@ -153,6 +153,7 @@ public:
 		mHolder->mWidth[1] = cy ;
 		mHolder->mWidth[2] = cw ;
 		mHolder->mWidth[3] = ck ;
+		mHolder->mWidth[4] = r1x ;
 		reset () ;
 	}
 
@@ -163,6 +164,7 @@ public:
 		mHolder->mWidth[1] = 1 ;
 		mHolder->mWidth[2] = mImage.size () ;
 		mHolder->mWidth[3] = 0 ;
+		mHolder->mWidth[4] = mImage.size () ;
 		mImage = PhanBuffer<TYPE>::make (image) ;
 		reset () ;
 	}
@@ -208,7 +210,7 @@ public:
 	void reset (LENGTH cx ,LENGTH cy ,LENGTH cw ,LENGTH ck) {
 		_DEBUG_ASSERT_ (cx >= 0 && cy >= 0 && cx <= cw && ck >= 0) ;
 		_DEBUG_ASSERT_ (mHolder.exist ()) ;
-		_DEBUG_ASSERT_ (cy * cw + ck < mHolder->mWidth[1] * mHolder->mWidth[0] + mHolder->mWidth[3]) ;
+		_DEBUG_ASSERT_ (cy * cw + ck < mHolder->mWidth[4]) ;
 		mCX = cx ;
 		mCY = cy ;
 		mCW = cw ;
@@ -460,8 +462,8 @@ using COLOR_OPP = ARRAY3<VAL64> ;
 template <class TYPE>
 class AbstractImage {
 public:
-	export struct Abstract :public Interface {
-		virtual PACK<PTR<ARR<TYPE>> ,LENGTH[4]> watch (AnyRef<void> &_this) const = 0 ;
+	exports struct Abstract :public Interface {
+		virtual PACK<PTR<ARR<TYPE>> ,LENGTH[4]> layout (AnyRef<void> &_this) const = 0 ;
 		virtual void load_data (AnyRef<void> &_this ,LENGTH cx ,LENGTH cy) const = 0 ;
 		virtual void load_data (AnyRef<void> &_this ,const AutoBuffer<BYTE> &data) const = 0 ;
 		virtual void save_data (const AnyRef<void> &_this ,AutoBuffer<BYTE> &data ,const AnyRef<void> &param) const = 0 ;
@@ -489,7 +491,7 @@ private:
 		}
 
 	private:
-		inline explicit Row (BASE &base ,INDEX y) :mBase (base) ,mY (y) {}
+		inline explicit Row (BASE &base ,INDEX y) popping : mBase (base) ,mY (y) {}
 	} ;
 
 	template <class BASE ,class _TYPE>
@@ -503,7 +505,7 @@ private:
 
 		inline ~NativeProxy () noexcept {
 			_CALL_TRY_ ([&] () {
-				mBase.update_native () ;
+				mBase.update_layout () ;
 			} ,std::nothrow) ;
 		}
 
@@ -520,8 +522,17 @@ private:
 
 		inline implicit operator CAST_TRAITS_TYPE<_TYPE ,BASE> & () && = delete ;
 
+		template <class _RET ,class = ENABLE_TYPE<std::is_convertible<CAST_TRAITS_TYPE<_TYPE ,BASE> & ,_RET>::value>>
+		inline implicit operator _RET () const & {
+			_DEBUG_ASSERT_ (mBase.exist ()) ;
+			return _RET (mBase.mHolder.template rebind<_TYPE> ().self) ;
+		}
+
+		template <class _RET>
+		inline implicit operator _RET () && = delete ;
+
 	private:
-		inline explicit NativeProxy (BASE &base) :mBase (base) {}
+		inline explicit NativeProxy (BASE &base) popping : mBase (base) {}
 	} ;
 
 private:
@@ -539,7 +550,9 @@ public:
 	explicit AbstractImage (const PhanRef<const Abstract> &engine) :mAbstract (PhanRef<const Abstract>::make (engine)) {}
 
 	BOOL exist () const {
-		return mAbstract.exist () && mHolder.exist () ;
+		if (!mAbstract.exist ())
+			return FALSE ;
+		return mHolder.exist () ;
 	}
 
 	LENGTH cx () const {
@@ -565,11 +578,6 @@ public:
 	RangeFolder<ARGC<2>> range () const {
 		_DEBUG_ASSERT_ (exist ()) ;
 		return RangeFolder<ARGC<2>> ({mCY ,mCX}) ;
-	}
-
-	void reset () {
-		_DEBUG_ASSERT_ (exist ()) ;
-		update_native () ;
 	}
 
 	TYPE &get (INDEX y ,INDEX x) {
@@ -625,13 +633,6 @@ public:
 		return NativeProxy<AbstractImage ,_RET> (*this) ;
 	}
 
-	template <class _RET>
-	NativeProxy<const AbstractImage ,_RET> native () const {
-		_STATIC_ASSERT_ (!std::is_reference<_RET>::value) ;
-		_DYNAMIC_ASSERT_ (exist ()) ;
-		return NativeProxy<const AbstractImage ,_RET> (*this) ;
-	}
-
 	SoftImage<TYPE> standardize () const {
 		_DEBUG_ASSERT_ (exist ()) ;
 		SoftImage<TYPE> ret = SoftImage<TYPE> (mCX ,mCY) ;
@@ -645,44 +646,40 @@ public:
 		_DEBUG_ASSERT_ (cy >= 0 && cy < VAR32_MAX) ;
 		_DEBUG_ASSERT_ (cx * cy > 0) ;
 		mAbstract->load_data (mHolder ,cx ,cy) ;
-		update_native () ;
+		update_layout () ;
 	}
 
 	void load_data (const AutoBuffer<BYTE> &data) {
 		mAbstract->load_data (mHolder ,data) ;
-		update_native () ;
+		update_layout () ;
 	}
 
 	void save_data (AutoBuffer<BYTE> &data ,const AnyRef<void> &param) popping {
 		_DEBUG_ASSERT_ (exist ()) ;
 		mAbstract->load_data (mHolder ,data ,param) ;
-		update_native () ;
+		update_layout () ;
 	}
 
 	void load_file (const String<STR> &file) {
 		mAbstract->load_file (mHolder ,file) ;
-		update_native () ;
+		update_layout () ;
 	}
 
 	void save_file (const String<STR> &file ,const AnyRef<void> &param) {
 		_DEBUG_ASSERT_ (exist ()) ;
 		mAbstract->save_file (mHolder ,file ,param) ;
-		update_native () ;
+		update_layout () ;
 	}
 
 private:
-	void update_native () {
+	void update_layout () {
 		_DEBUG_ASSERT_ (exist ()) ;
-		const auto r1x = mAbstract->watch (mHolder) ;
+		const auto r1x = mAbstract->layout (mHolder) ;
 		mImage = PhanBuffer<TYPE>::make (*r1x.P1 ,(r1x.P2[1] * r1x.P2[2] + r1x.P2[3])) ;
 		mCX = r1x.P2[0] ;
 		mCY = r1x.P2[1] ;
 		mCW = r1x.P2[2] ;
 		mCK = r1x.P2[3] ;
-	}
-
-	void update_native () const {
-		_DEBUG_ASSERT_ (exist ()) ;
 	}
 } ;
 } ;
