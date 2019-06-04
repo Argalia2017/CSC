@@ -148,7 +148,7 @@ inline _ARG1 _SIGN_ (const _ARG1 &x) {
 
 template <class _ARG1>
 inline _ARG1 _PINV_ (const _ARG1 &x) {
-	_STATIC_ASSERT_ (stl::is_arithmetic<_ARG1>::value) ;
+	_STATIC_ASSERT_ (stl::is_same<_ARG1 ,VAL32>::value || stl::is_same<_ARG1 ,VAL64>::value || stl::is_same<_ARG1 ,VALX>::value) ;
 	if (x == _ARG1 (0))
 		return _ARG1 (0) ;
 	return _ARG1 (1) / x ;
@@ -156,7 +156,7 @@ inline _ARG1 _PINV_ (const _ARG1 &x) {
 
 template <class _ARG1>
 inline _ARG1 _PINV_ (const _ARG1 &x ,const _ARG1 &y) {
-	_STATIC_ASSERT_ (stl::is_arithmetic<_ARG1>::value) ;
+	_STATIC_ASSERT_ (stl::is_same<_ARG1 ,VAL32>::value || stl::is_same<_ARG1 ,VAL64>::value || stl::is_same<_ARG1 ,VALX>::value) ;
 	_DEBUG_ASSERT_ (y > VALX (0)) ;
 	if (_ABS_ (x) < y)
 		return _ARG1 (0) ;
@@ -165,7 +165,7 @@ inline _ARG1 _PINV_ (const _ARG1 &x ,const _ARG1 &y) {
 
 inline VALX _FLOOR_ (const VALX &x ,const VALX &y) {
 	_DEBUG_ASSERT_ (y > VALX (0)) ;
-	const auto r1x = VAR64 (x / y) ;
+	const auto r1x = VAR64 (x * _PINV_ (y)) ;
 	VALX ret = y * VALX (r1x) ;
 	if (x < 0 && x < ret)
 		ret = y * VALX (r1x - 1) ;
@@ -180,7 +180,7 @@ inline _ARG1 _FLOOR_ (const _ARG1 &x ,const _ARG1 &y) {
 
 inline VALX _CEIL_ (const VALX &x ,const VALX &y) {
 	_DEBUG_ASSERT_ (y > VALX (0)) ;
-	const auto r1x = VAR64 (x / y) ;
+	const auto r1x = VAR64 (x * _PINV_ (y)) ;
 	VALX ret = y * VALX (r1x) ;
 	if (0 < x && ret < x)
 		ret = y * VALX (r1x + 1) ;
@@ -230,7 +230,6 @@ inline const _ARG1 &_MAXOF_ (const _ARG1 &arg1 ,const _ARG1 &arg2 ,const _ARGS &
 }
 
 inline VAL64 _IEEE754_ENCODE_ (const ARRAY2<VAR64> &sne2) {
-	DATA ret = 0 ;
 	const auto r1x = _CALL_ ([&] () {
 		ARRAY3<DATA> ret ;
 		ret[0] = DATA (sne2[0]) ;
@@ -238,23 +237,30 @@ inline VAL64 _IEEE754_ENCODE_ (const ARRAY2<VAR64> &sne2) {
 		ret[2] = ret[0] ;
 		if ((ret[0] & DATA (0X8000000000000000)) != 0)
 			ret[0] = ~ret[0] + 1 ;
-		while (ret[0] != 0 && (ret[0] & ~0X000FFFFFFFFFFFFF) != 0X0010000000000000) {
-			ret[0] <<= 1 ;
+		while (TRUE) {
+			if (ret[0] == 0)
+				break ;
+			if ((ret[0] & ~0X000FFFFFFFFFFFFF) == 0X0010000000000000)
+				break ;
+			ret[0] = ret[0] << 1 ;
 			ret[1]-- ;
 		}
 		const auto r3x = VAR64 (ret[1]) ;
-		while (VAR64 (ret[1]) <= -1075) {
-			ret[0] >>= 1 ;
+		while (TRUE) {
+			if (VAR64 (ret[1]) > -1075)
+				break ;
+			ret[0] = ret[0] >> 1 ;
 			ret[1]++ ;
 		}
 		ret[1] = ret[1] + 1075 - EFLAG (r3x <= -1075) ;
-		ret[1] <<= 52 ;
+		ret[1] = ret[1] << 52 ;
 		if (ret[0] == 0)
 			ret[1] = 0 ;
 		return std::move (ret) ;
 	}) ;
 	_DYNAMIC_ASSERT_ ((r1x[0] & ~0X001FFFFFFFFFFFFF) == 0) ;
 	_DYNAMIC_ASSERT_ ((r1x[1] & ~0X7FF0000000000000) == 0) ;
+	DATA ret = 0 ;
 	ret |= r1x[0] & DATA (0X000FFFFFFFFFFFFF) ;
 	ret |= r1x[1] & DATA (0X7FF0000000000000) ;
 	ret |= r1x[2] & DATA (0X8000000000000000) ;
@@ -270,16 +276,18 @@ inline ARRAY2<VAR64> _IEEE754_DECODE_ (const VAL64 &ieee754) {
 		ret[0] |= DATA (0X0010000000000000) ;
 	ret[1] = r2x >> 52 ;
 	ret[1] -= DATA (1074 + EFLAG (r2x != 0)) ;
-	while (ret[0] != 0 && (ret[0] & DATA (0X0000000000000001)) == 0) {
-		ret[0] >>= 1 ;
+	while (TRUE) {
+		if (ret[0] == 0)
+			break ;
+		if ((ret[0] & DATA (0X0000000000000001)) != 0)
+			break ;
+		ret[0] = ret[0] >> 1 ;
 		ret[1]++ ;
 	}
 	if ((r1x & DATA (0X8000000000000000)) != 0)
 		ret[0] = ~ret[0] + 1 ;
-	if (r1x == 0) {
-		ret[0] = 0 ;
+	if (r1x == 0)
 		ret[1] = 0 ;
-	}
 	return std::move (_CAST_<ARRAY2<VAR64>> (ret)) ;
 }
 
@@ -294,8 +302,12 @@ inline ARRAY2<VAR64> _IEEE754_E2TOE10_ (const ARRAY2<VAR64> &sne2) {
 		if (sne2[0] < 0)
 			ret[0] = ~ret[0] + 1 ;
 		_DEBUG_ASSERT_ ((ret[0] & DATA (0X8000000000000000)) == 0) ;
-		while (ret[0] != 0 && (ret[0] & ~0X000FFFFFFFFFFFFF) != 0X0010000000000000) {
-			ret[0] <<= 1 ;
+		while (TRUE) {
+			if (ret[0] == 0)
+				break ;
+			if ((ret[0] & ~0X000FFFFFFFFFFFFF) == 0X0010000000000000)
+				break ;
+			ret[0] = ret[0] << 1 ;
 			ret[1]-- ;
 		}
 		return std::move (_CAST_<ARRAY2<VAR64>> (ret)) ;
@@ -304,7 +316,11 @@ inline ARRAY2<VAR64> _IEEE754_E2TOE10_ (const ARRAY2<VAR64> &sne2) {
 	ARRAY2<DATA> ret ;
 	ret[0] = DATA (VAR64 (r1x[0] * _POW_ (10 ,(r2x - VAR64 (r2x))) + VAL64 (0.5))) ;
 	ret[1] = DATA (VAR64 (r2x)) ;
-	while (ret[0] != 0 && ret[0] % 10 == 0) {
+	while (TRUE) {
+		if (ret[0] == 0)
+			break ;
+		if (ret[0] % 10 != 0)
+			break ;
 		ret[0] /= 10 ;
 		ret[1]++ ;
 	}
@@ -324,7 +340,11 @@ inline ARRAY2<VAR64> _IEEE754_E10TOE2_ (const ARRAY2<VAR64> &sne10) {
 		if (sne10[0] < 0)
 			ret[0] = ~ret[0] + 1 ;
 		_DEBUG_ASSERT_ ((ret[0] & DATA (0X8000000000000000)) == 0) ;
-		while (ret[0] != 0 && (ret[0] & ~0X000FFFFFFFFFFFFF) == 0) {
+		while (TRUE) {
+			if (ret[0] == 0)
+				break ;
+			if ((ret[0] & ~0X000FFFFFFFFFFFFF) != 0)
+				break ;
 			ret[0] = (ret[0] << 3) + (ret[0] << 1) ;
 			ret[1]-- ;
 		}
@@ -334,12 +354,20 @@ inline ARRAY2<VAR64> _IEEE754_E10TOE2_ (const ARRAY2<VAR64> &sne10) {
 	ARRAY2<DATA> ret ;
 	ret[0] = DATA (VAR64 (r1x[0] * _POW_ (2 ,(r2x - VAR64 (r2x))) + VAL64 (0.5))) ;
 	ret[1] = DATA (VAR64 (r2x)) ;
-	while (ret[0] != 0 && (ret[0] & DATA (~0X001FFFFFFFFFFFFF)) != 0) {
-		ret[0] >>= 1 ;
+	while (TRUE) {
+		if (ret[0] == 0)
+			break ;
+		if ((ret[0] & DATA (~0X001FFFFFFFFFFFFF)) == 0)
+			break ;
+		ret[0] = ret[0] >> 1 ;
 		ret[1]++ ;
 	}
-	while (ret[0] != 0 && (ret[0] & DATA (0X0000000000000001)) == 0) {
-		ret[0] >>= 1 ;
+	while (TRUE) {
+		if (ret[0] == 0)
+			break ;
+		if ((ret[0] & DATA (0X0000000000000001)) != 0)
+			break ;
+		ret[0] = ret[0] >> 1 ;
 		ret[1]++ ;
 	}
 	if (sne10[0] < 0)
@@ -350,13 +378,13 @@ inline ARRAY2<VAR64> _IEEE754_E10TOE2_ (const ARRAY2<VAR64> &sne10) {
 
 template <class TYPE ,class SUBJECT = VAR>
 struct Classified {
-	TYPE mData ;
+	TYPE mValue ;
 	SUBJECT mClassi ;
 } ;
 
 template <class TYPE ,class SUBJECT = VAL>
 struct Weighted {
-	TYPE mData ;
+	TYPE mValue ;
 	SUBJECT mWeight ;
 } ;
 
@@ -379,12 +407,23 @@ inline Array<_ARG3> _MAP_ (const Array<_ARG1> &array1 ,const Array<_ARG2> &array
 	return std::move (ret) ;
 }
 
+template <class _ARG1 ,class _ARG2 ,class _ARG3 ,class _ARG4>
+inline Array<_ARG4> _MAP_ (const Array<_ARG1> &array1 ,const Array<_ARG2> &array2 ,const Array<_ARG3> &array3 ,const Function<_ARG4 (const _ARG1 & ,const _ARG2 &)> &func) {
+	_DEBUG_ASSERT_ (array1.size () == array2.size ()) ;
+	_DEBUG_ASSERT_ (array1.size () == array3.size ()) ;
+	Array<_ARG4> ret = Array<_ARG4> (array1.size ()) ;
+	for (INDEX i = 0 ; i < array1.length () ; i++)
+		ret[i] = func (array1[i] ,array2[i] ,array3[i]) ;
+	return std::move (ret) ;
+}
+
 template <class _ARG1>
 inline Array<_ARG1> _FILTER_ (const Array<_ARG1> &array1 ,const Array<INDEX> &elem) {
 	Array<_ARG1> ret = Array<_ARG1> (elem.length ()) ;
 	INDEX iw = 0 ;
 	for (auto &&i : elem)
 		ret[iw++] = array1[i] ;
+	_DEBUG_ASSERT_ (iw == ret.length ()) ;
 	return std::move (ret) ;
 }
 
@@ -402,6 +441,7 @@ inline Array<INDEX> _ELEMENT_ (const Array<BOOL> &elem) {
 			continue ;
 		ret[iw++] = i ;
 	}
+	_DEBUG_ASSERT_ (iw == ret.length ()) ;
 	return std::move (ret) ;
 }
 
@@ -430,49 +470,36 @@ inline _ARG1 _REDUCE_ (const _ARG1 &first ,const Array<_ARG2> &array1 ,const Fun
 }
 
 template <class _ARG1>
-inline Array<_ARG1> _CONCAT_ (const Array<_ARG1> &array1 ,const _ARG1 &array2) {
+inline Array<_ARG1> _CONCAT_ (const _ARG1 &item ,const Array<_ARG1> &array1) {
 	Array<_ARG1> ret = Array<_ARG1> (array1.length () + 1) ;
+	INDEX iw = 0 ;
+	ret[iw++] = item ;
 	for (INDEX i = 0 ; i < array1.length () ; i++)
-		ret[i] = array1[i] ;
-	INDEX ix = array1.length () ;
-	ret[ix] = array2 ;
+		ret[iw++] = array1[i] ;
+	_DEBUG_ASSERT_ (iw == ret.length ()) ;
+	return std::move (ret) ;
+}
+
+template <class _ARG1>
+inline Array<_ARG1> _CONCAT_ (const Array<_ARG1> &array1 ,const _ARG1 &item) {
+	Array<_ARG1> ret = Array<_ARG1> (array1.length () + 1) ;
+	INDEX iw = 0 ;
+	for (INDEX i = 0 ; i < array1.length () ; i++)
+		ret[iw++] = array1[i] ;
+	ret[iw++] = item ;
+	_DEBUG_ASSERT_ (iw == ret.length ()) ;
 	return std::move (ret) ;
 }
 
 template <class _ARG1>
 inline Array<_ARG1> _CONCAT_ (const Array<_ARG1> &array1 ,const Array<_ARG1> &array2) {
 	Array<_ARG1> ret = Array<_ARG1> (array1.length () + array2.length ()) ;
+	INDEX iw = 0 ;
 	for (INDEX i = 0 ; i < array1.length () ; i++)
-		ret[i] = array1[i] ;
-	INDEX ix = array1.length () ;
+		ret[iw++] = array1[i] ;
 	for (INDEX i = 0 ; i < array2.length () ; i++)
-		ret[ix + i] = array2[i] ;
-	return std::move (ret) ;
-}
-
-template <class _ARG1 ,class... _ARGS>
-inline Function<_ARG1 (const _ARGS &...)> _BIND_ (const PTR<_ARG1 (const _ARGS &...)> &func) {
-	return Function<_ARG1 (const _ARGS &...)> (func) ;
-}
-
-template <class _ARG1 ,class _ARG2 ,class _ARG3 ,class _ARG4>
-inline Function<_ARG1 (const _ARG2 & ,const _ARG3 &)> _BIND_ (const decltype (ARGVP1) & ,const decltype (ARGVP1) & ,const decltype (ARGVP2) & ,const Function<_ARG4 (const _ARG2 & ,const _ARG3 &)> &func1 ,const Function<_ARG1 (const _ARG2 & ,const _ARG4 &)> &func2) {
-	return Function<_ARG1 (const _ARG2 & ,const _ARG3 &)> ([&] (const _ARG2 &op1 ,const _ARG3 &op2) {
-		return func2 (op1 ,func1 (op1 ,op2)) ;
-	}) ;
-}
-
-template <class _ARG1>
-inline Array<Array<_ARG1>> _GROUP_ (const Array<_ARG1> &array1 ,const Array<Function<BOOL (const _ARG1 &)>> &func) {
-	Array<Array<_ARG1>> ret ;
-	const auto r1x = _BIND_<Array<_ARG1> ,Array<_ARG1>> (&_COPY_<Array<_ARG1>>) ;
-	const auto r2x = _REDUCE_ (array1 ,func.length () ,r1x) ;
-	const auto r3x = _BIND_<Array<BOOL> ,Array<_ARG1> ,Function<BOOL (const _ARG1 &)>> (&_MAP_<_ARG1 ,BOOL>) ;
-	const auto r4x = _BIND_<Array<_ARG1> ,Array<_ARG1> ,Array<BOOL>> (&_FILTER_< _ARG1>) ;
-	const auto r5x = _BIND_<Array<_ARG1> ,Array<_ARG1> ,Function<BOOL (const _ARG1 &)>> (ARGVP1 ,ARGVP1 ,ARGVP2 ,r3x ,r4x) ;
-	const auto r6x = _MAP_ (r2x ,func ,r5x) ;
-	const auto r7x = _BIND_<Array<Array<_ARG1>> ,Array<Array<_ARG1>> ,Array<_ARG1>> (&_CONCAT_<Array<_ARG1>>) ;
-	ret = _REDUCE_ (ret ,r6x ,r7x) ;
+		ret[iw++] = array2[i] ;
+	_DEBUG_ASSERT_ (iw == ret.length ()) ;
 	return std::move (ret) ;
 }
 
@@ -486,11 +513,36 @@ inline Array<_ARG1> _FLATTEN_ (const Array<Array<_ARG1>> &array1) {
 	}) ;
 	Array<_ARG1> ret = Array<_ARG1> (r1x) ;
 	INDEX iw = 0 ;
-	for (auto &&i : array1) {
+	for (auto &&i : array1)
 		for (auto &&j : i)
 			ret[iw++] = j ;
-	}
+	_DEBUG_ASSERT_ (iw == ret.length ()) ;
 	return std::move (ret) ;
+}
+
+template <class _ARG1 ,class... _ARGS>
+inline Function<_ARG1 (const _ARGS &...)> _BIND_ (const PTR<_ARG1 (const _ARGS &...)> &func) {
+	return Function<_ARG1 (const _ARGS &...)> (func) ;
+}
+
+template <class _ARG1 ,class _ARG2 ,class _ARG3 ,class _ARG4>
+inline Function<_ARG1 (const _ARG2 & ,const _ARG3 &)> _BIND_ (const DEF<decltype (ARGVP1)> & ,const DEF<decltype (ARGVP1)> & ,const DEF<decltype (ARGVP2)> & ,const Function<_ARG4 (const _ARG2 & ,const _ARG3 &)> &func1 ,const Function<_ARG1 (const _ARG2 & ,const _ARG4 &)> &func2) {
+	return Function<_ARG1 (const _ARG2 & ,const _ARG3 &)> ([&] (const _ARG2 &op1 ,const _ARG3 &op2) {
+		return func2 (op1 ,func1 (op1 ,op2)) ;
+	}) ;
+}
+
+template <class _ARG1>
+inline Array<Array<_ARG1>> _GROUP_ (const Array<_ARG1> &array1 ,const Array<Function<BOOL (const _ARG1 &)>> &func) {
+	const auto r1x = _BIND_<Array<_ARG1> ,Array<_ARG1>> (&_COPY_<Array<_ARG1>>) ;
+	const auto r2x = _REDUCE_ (array1 ,func.length () ,r1x) ;
+	const auto r3x = _BIND_<Array<BOOL> ,Array<_ARG1> ,Function<BOOL (const _ARG1 &)>> (&_MAP_<_ARG1 ,BOOL>) ;
+	const auto r4x = _BIND_<Array<_ARG1> ,Array<_ARG1> ,Array<BOOL>> (&_FILTER_< _ARG1>) ;
+	const auto r5x = _BIND_ (ARGVP1 ,ARGVP1 ,ARGVP2 ,r3x ,r4x) ;
+	const auto r6x = _MAP_ (r2x ,func ,r5x) ;
+	const auto r7x = _BIND_<Array<Array<_ARG1>> ,Array<Array<_ARG1>> ,Array<_ARG1>> (&_CONCAT_<Array<_ARG1>>) ;
+	const auto r8x = Array<Array<_ARG1>> () ;
+	return _REDUCE_ (r8x ,r6x ,r7x) ;
 }
 } ;
 #endif

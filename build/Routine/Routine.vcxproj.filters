@@ -84,9 +84,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <Natvis Include="..\..\..\..\..\Depends\__CSC__\cpp.natvis" />
-  </ItemGroup>
-  <ItemGroup>
     <None Include="..\..\..\..\..\Depends\__CSC__\csc_database.hpp.mysql.inl">
       <Filter>csc</Filter>
     </None>
@@ -121,5 +118,9 @@
       <Filter>csc</Filter>
     </None>
     <None Include="..\..\..\..\..\Depends\__CSC__\cpp.hint" />
+    <None Include="..\..\..\..\..\Depends\__CSC__\csc.rule" />
+  </ItemGroup>
+  <ItemGroup>
+    <Natvis Include="..\..\..\..\..\Depends\__CSC__\cpp.natvis" />
   </ItemGroup>
 </Project>

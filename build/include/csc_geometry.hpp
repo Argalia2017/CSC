@@ -21,7 +21,7 @@ private:
 public:
 	Vector () = default ;
 
-	implicit Vector (const ARRAY3<UNIT> &xyz ,const UNIT &w) : Vector (xyz[0] ,xyz[1] ,xyz[2] ,w) {}
+	implicit Vector (const ARRAY3<UNIT> &xyz ,const UNIT &w) :Vector (xyz[0] ,xyz[1] ,xyz[2] ,w) {}
 
 	implicit Vector (const UNIT &x ,const UNIT &y ,const UNIT &z ,const UNIT &w) {
 		mVector[0] = x ;
@@ -30,36 +30,34 @@ public:
 		mVector[3] = w ;
 	}
 
-	PhanBuffer<UNIT> raw () {
-		return PhanBuffer<UNIT>::make (mVector) ;
+	ARRAY3<UNIT> xyz () const {
+		return ARRAY3<UNIT> {mVector[0] ,mVector[1] ,mVector[2]} ;
 	}
 
-	PhanBuffer<const UNIT> raw () const {
-		return PhanBuffer<const UNIT>::make (mVector) ;
+	UNIT &get (INDEX y) & {
+		return mVector[y] ;
 	}
 
-	const ARRAY3<UNIT> &xyz () const {
-		return _CAST_<const PACK<ARRAY3<UNIT> ,UNIT>> (mVector).P1 ;
+	inline UNIT &operator[] (INDEX y) & {
+		return get (y) ;
 	}
 
-	UNIT &get (INDEX x) {
-		return mVector[x] ;
+	const UNIT &get (INDEX y) const & {
+		return mVector[y] ;
 	}
 
-	inline UNIT &operator[] (INDEX x) {
-		return get (x) ;
+	inline const UNIT &operator[] (INDEX y) const & {
+		return get (y) ;
 	}
 
-	const UNIT &get (INDEX x) const {
-		return mVector[x] ;
-	}
+	UNIT &get (INDEX) && = delete ;
 
-	inline const UNIT &operator[] (INDEX x) const {
-		return get (x) ;
-	}
+	inline UNIT &operator[] (INDEX) && = delete ;
 
 	BOOL equal (const Vector &right) const {
-		return mVector == right.mVector ;
+		if (mVector != right.mVector)
+			return FALSE ;
+		return TRUE ;
 	}
 
 	inline BOOL operator== (const Vector &right) const {
@@ -71,7 +69,9 @@ public:
 	}
 
 	BOOL less (const Vector &right) const {
-		return mVector < right.mVector ;
+		if (mVector >= right.mVector)
+			return FALSE ;
+		return TRUE ;
 	}
 
 	inline BOOL operator< (const Vector &right) const {
@@ -245,18 +245,28 @@ public:
 	}
 
 	Vector normalize () const {
+		_DEBUG_ASSERT_ (mVector[3] == UNIT (0)) ;
 		Vector ret ;
-		const auto r1x = BOOL (mVector[3] == UNIT (0)) ;
-		const auto r2x = r1x ? (magnitude ()) : (mVector[3]) ;
-		const auto r3x = _PINV_ (r2x) ;
-		ret.mVector[0] = mVector[0] * r3x ;
-		ret.mVector[1] = mVector[1] * r3x ;
-		ret.mVector[2] = mVector[2] * r3x ;
-		ret.mVector[3] = r1x ? (UNIT (0)) : (UNIT (1)) ;
+		const auto r1x = _PINV_ (magnitude ()) ;
+		ret.mVector[0] = mVector[0] * r1x ;
+		ret.mVector[1] = mVector[1] * r1x ;
+		ret.mVector[2] = mVector[2] * r1x ;
+		ret.mVector[3] = UNIT (0) ;
 		return std::move (ret) ;
 	}
 
 	Vector projection () const {
+		_DEBUG_ASSERT_ (mVector[3] != UNIT (0)) ;
+		Vector ret ;
+		const auto r1x = _PINV_ (mVector[3]) ;
+		ret.mVector[0] = mVector[0] * r1x ;
+		ret.mVector[1] = mVector[1] * r1x ;
+		ret.mVector[2] = mVector[2] * r1x ;
+		ret.mVector[3] = UNIT (1) ;
+		return std::move (ret) ;
+	}
+
+	Vector projection_z () const {
 		_DEBUG_ASSERT_ (mVector[3] != UNIT (0)) ;
 		Vector ret ;
 		const auto r1x = _PINV_ (mVector[3]) ;
@@ -267,9 +277,43 @@ public:
 		return std::move (ret) ;
 	}
 
+	Vector homogenize () const {
+		Vector ret ;
+		ret.mVector[0] = mVector[0] ;
+		ret.mVector[1] = mVector[1] ;
+		ret.mVector[2] = mVector[2] ;
+		ret.mVector[3] = UNIT (1) - mVector[3] ;
+		return std::move (ret) ;
+	}
+
 	Vector reflect (const Vector<UNIT> &normal) const {
 		const auto r1x = normal * (2 * mul (normal)) ;
 		return sub (r1x) ;
+	}
+
+public:
+	static const Vector &axis_x () {
+		return _CACHE_ ([] () {
+			return Vector {UNIT (1) ,UNIT (0) ,UNIT (0) ,UNIT (0)} ;
+		}) ;
+	}
+
+	static const Vector &axis_y () {
+		return _CACHE_ ([] () {
+			return Vector {UNIT (0) ,UNIT (1) ,UNIT (0) ,UNIT (0)} ;
+		}) ;
+	}
+
+	static const Vector &axis_z () {
+		return _CACHE_ ([] () {
+			return Vector {UNIT (0) ,UNIT (0) ,UNIT (1) ,UNIT (0)} ;
+		}) ;
+	}
+
+	static const Vector &axis_w () {
+		return _CACHE_ ([] () {
+			return Vector {UNIT (0) ,UNIT (0) ,UNIT (0) ,UNIT (1)} ;
+		}) ;
 	}
 } ;
 
@@ -300,7 +344,7 @@ private:
 		}
 
 	private:
-		inline explicit Row (BASE &base ,INDEX y) popping :mBase (base) ,mY (y) {}
+		inline explicit Row (BASE &base ,INDEX y) popping : mBase (base) ,mY (y) {}
 	} ;
 
 private:
@@ -329,44 +373,44 @@ public:
 		}
 	}
 
-	PhanBuffer<UNIT> raw () {
-		return PhanBuffer<UNIT>::make (mMatrix) ;
-	}
-
-	PhanBuffer<const UNIT> raw () const {
-		return PhanBuffer<const UNIT>::make (mMatrix) ;
-	}
-
-	UNIT &get (INDEX y ,INDEX x) {
+	UNIT &get (INDEX y ,INDEX x) & {
 		_DEBUG_ASSERT_ (x >= 0 && x < 4) ;
 		_DEBUG_ASSERT_ (y >= 0 && y < 4) ;
 		return mMatrix[y * 4 + x] ;
 	}
 
-	const UNIT &get (INDEX y ,INDEX x) const {
+	const UNIT &get (INDEX y ,INDEX x) const & {
 		_DEBUG_ASSERT_ (x >= 0 && x < 4) ;
 		_DEBUG_ASSERT_ (y >= 0 && y < 4) ;
 		return mMatrix[y * 4 + x] ;
 	}
 
-	Row<Matrix> get (INDEX y) {
+	UNIT &get (INDEX ,INDEX) && = delete ;
+
+	Row<Matrix> get (INDEX y) & {
 		return Row<Matrix> (*this ,y) ;
 	}
 
-	inline Row<Matrix> operator[] (INDEX y) {
+	inline Row<Matrix> operator[] (INDEX y) & {
 		return get (y) ;
 	}
 
-	Row<const Matrix> get (INDEX y) const {
+	Row<const Matrix> get (INDEX y) const & {
 		return Row<const Matrix> (*this ,y) ;
 	}
 
-	inline Row<const Matrix> operator[] (INDEX y) const {
+	inline Row<const Matrix> operator[] (INDEX y) const & {
 		return get (y) ;
 	}
 
+	Row<Matrix> get (INDEX) && = delete ;
+
+	inline Row<Matrix> operator[] (INDEX) && = delete ;
+
 	BOOL equal (const Matrix &right) const {
-		return mMatrix == right.mMatrix ;
+		if (mMatrix != right.mMatrix)
+			return FALSE ;
+		return TRUE ;
 	}
 
 	inline BOOL operator== (const Matrix &right) const {
@@ -378,7 +422,9 @@ public:
 	}
 
 	BOOL less (const Matrix &right) const {
-		return mMatrix < right.mMatrix ;
+		if (mMatrix >= right.mMatrix)
+			return FALSE ;
+		return TRUE ;
 	}
 
 	inline BOOL operator< (const Matrix &right) const {
@@ -501,7 +547,7 @@ public:
 
 	Matrix mul (const Matrix &right) const {
 		Matrix ret ;
-		for (auto &&i : RangeFolder<ARGC<2>> {4 ,4}) {
+		for (auto &&i : RangeFolder<ARGC<2>> ({4 ,4})) {
 			const auto r1x = get (i[0] ,0) * right.get (0 ,i[1]) ;
 			const auto r2x = get (i[0] ,1) * right.get (1 ,i[1]) ;
 			const auto r3x = get (i[0] ,2) * right.get (2 ,i[1]) ;
@@ -532,7 +578,7 @@ public:
 
 	Matrix transpose () const {
 		Matrix ret ;
-		for (auto &&i : RangeFolder<ARGC<2>> {4 ,4})
+		for (auto &&i : RangeFolder<ARGC<2>> ({4 ,4}))
 			ret.get (i[1] ,i[0]) = get (i[0] ,i[1]) ;
 		return std::move (ret) ;
 	}
@@ -540,20 +586,23 @@ public:
 	Matrix triangular () const {
 		Matrix ret = *this ;
 		for (INDEX i = 0 ; i < 4 ; i++) {
-			INDEX ix = ret.max_row_one (i) ;
-			if (ix != i) {
+			for (FOR_ONCE_DO_WHILE_FALSE) {
+				INDEX ix = ret.max_row_one (i) ;
+				if (ix == i)
+					continue ;
 				for (INDEX j = i ; j < 4 ; j++) {
 					const auto r1x = -ret.get (i ,j) ;
 					ret.get (i ,j) = ret.get (ix ,j) ;
 					ret.get (ix ,j) = r1x ;
 				}
 			}
-			if (ret.get (i ,i) == 0)
+			const auto r2x = _PINV_ (ret.get (i ,i)) ;
+			if (r2x == UNIT (0))
 				continue ;
 			for (INDEX j = i + 1 ; j < 4 ; j++) {
-				const auto r2x = ret.get (j ,i) / ret.get (i ,i) ;
+				const auto r3x = ret.get (j ,i) * r2x ;
 				for (INDEX k = i + 1 ; k < 4 ; k++)
-					ret.get (j ,k) -= r2x * ret.get (i ,k) ;
+					ret.get (j ,k) -= r3x * ret.get (i ,k) ;
 				ret.get (j ,i) = UNIT (0) ;
 			}
 		}
@@ -599,19 +648,20 @@ public:
 				const auto r3x = get (iy ,jx) * (get (ix ,jy) * get (iz ,jz) - get (iz ,jy) * get (ix ,jz)) ;
 				const auto r4x = get (iz ,jx) * (get (ix ,jy) * get (iy ,jz) - get (iy ,jy) * get (ix ,jz)) ;
 				const auto r5x = r2x - r3x + r4x ;
-				ret.get (j ,i) = ((i + j) % 2 != 0) ? (-r5x) : r5x ;
+				const auto r6x = ((i + j) % 2 != 0) ? (-r5x) : r5x ;
+				ret.get (j ,i) = r6x ;
 			}
 		}
 		ret *= _PINV_ (r1x) ;
 		for (FOR_ONCE_DO_WHILE_FALSE) {
 			if (get (3 ,3) != UNIT (1))
-				break ;
+				continue ;
 			if (!affine_matrix_like ())
-				break ;
+				continue ;
 			if (!ret.affine_matrix_like ())
-				break ;
-			const auto r6x = _PINV_ (ret.get (3 ,3)) ;
-			ret *= r6x ;
+				continue ;
+			const auto r7x = _PINV_ (ret.get (3 ,3)) ;
+			ret *= r7x ;
 			ret.get (3 ,3) = UNIT (1) ;
 		}
 		return std::move (ret) ;
@@ -628,18 +678,18 @@ public:
 	ARRAY5<Matrix> decompose () const {
 		_DEBUG_ASSERT_ (affine_matrix_like ()) ;
 		ARRAY5<Matrix> ret ;
-		const auto r1x = mul ({UNIT (1) ,UNIT (0) ,UNIT (0) ,UNIT (0)}) ;
-		const auto r2x = mul ({UNIT (0) ,UNIT (1) ,UNIT (0) ,UNIT (0)}) ;
-		const auto r3x = mul ({UNIT (0) ,UNIT (0) ,UNIT (1) ,UNIT (0)}) ;
+		const auto r1x = mul (Vector<UNIT>::axis_x ()) ;
+		const auto r2x = mul (Vector<UNIT>::axis_y ()) ;
+		const auto r3x = mul (Vector<UNIT>::axis_z ()) ;
 		ret[0] = Matrix::make_diag (r1x.magnitude () ,r2x.magnitude () ,r3x.magnitude () ,UNIT (1)) ;
 		const auto r4x = r1x.normalize () ;
 		const auto r5x = r2x.normalize () ;
 		const auto r6x = r3x.normalize () ;
 		ret[1] = Matrix::make_shear (r4x ,r5x ,r6x) ;
-		const auto r7x = Matrix {r4x ,r5x ,r6x ,Vector<UNIT> {UNIT (0) ,UNIT (0) ,UNIT (0) ,UNIT (1)}} ;
+		const auto r7x = Matrix {r4x ,r5x ,r6x ,Vector<UNIT>::axis_w ()} ;
 		ret[2] = r7x * ret[1].inverse () ;
-		const auto r8x = mul ({UNIT (0) ,UNIT (0) ,UNIT (0) ,UNIT (1)}) ;
-		ret[3] = Matrix::make_translation ({r8x[0] ,r8x[1] ,r8x[2] ,UNIT (0)}) ;
+		const auto r8x = mul (Vector<UNIT>::axis_w ()) ;
+		ret[3] = Matrix::make_translation (r8x.homogenize ()) ;
 		ret[4] = Matrix::make_diag (UNIT (1) ,UNIT (1) ,UNIT (1) ,r8x[3]) ;
 		return std::move (ret) ;
 	}
@@ -672,30 +722,33 @@ private:
 
 public:
 	static Matrix make_identity () {
-		return Matrix ({
+		Matrix ret = Matrix ({
 			{UNIT (1) ,UNIT (0) ,UNIT (0) ,UNIT (0)} ,
 			{UNIT (0) ,UNIT (1) ,UNIT (0) ,UNIT (0)} ,
 			{UNIT (0) ,UNIT (0) ,UNIT (1) ,UNIT (0)} ,
 			{UNIT (0) ,UNIT (0) ,UNIT (0) ,UNIT (1)}}) ;
+		return std::move (ret) ;
 	}
 
 	static Matrix make_diag (const UNIT &x ,const UNIT &y ,const UNIT &z ,const UNIT &w) {
-		return Matrix ({
+		Matrix ret = Matrix ({
 			{x ,UNIT (0) ,UNIT (0) ,UNIT (0)} ,
 			{UNIT (0) ,y ,UNIT (0) ,UNIT (0)} ,
 			{UNIT (0) ,UNIT (0) ,z ,UNIT (0)} ,
 			{UNIT (0) ,UNIT (0) ,UNIT (0) ,w}}) ;
+		return std::move (ret) ;
 	}
 
 	static Matrix make_shear (const UNIT &angle_xy ,const UNIT &angle_xz ,const UNIT &angle_yz) {
 		const auto r1x = _PINV_ (_SIN_ (angle_xy)) ;
 		const auto r2x = (_COS_ (angle_yz) - _COS_ (angle_xy) * _COS_ (angle_xz)) * r1x ;
 		const auto r3x = _SQRT_ (_SQE_ (_SIN_ (angle_xz)) - _SQE_ (r2x)) ;
-		return Matrix ({
+		Matrix ret = Matrix ({
 			{UNIT (1) ,_COS_ (angle_xy) ,_COS_ (angle_xz) ,UNIT (0)} ,
 			{UNIT (0) ,_SIN_ (angle_xy) ,r2x ,UNIT (0)} ,
 			{UNIT (0) ,UNIT (0) ,r3x ,UNIT (0)} ,
 			{UNIT (0) ,UNIT (0) ,UNIT (0) ,UNIT (1)}}) ;
+		return std::move (ret) ;
 	}
 
 	static Matrix make_shear (const Vector<UNIT> &x ,const Vector<UNIT> &y ,const Vector<UNIT> &z) {
@@ -707,11 +760,12 @@ public:
 		const auto r6x = _SQRT_ (1 - _SQE_ (r4x)) ;
 		const auto r7x = (r2x * r3x - r4x * r5x) * _PINV_ (r6x) ;
 		const auto r8x = _SQRT_ (1 - _SQE_ (r5x) - _SQE_ (r7x)) ;
-		return Matrix ({
+		Matrix ret = Matrix ({
 			{UNIT (1) ,r4x ,r5x ,UNIT (0)} ,
 			{UNIT (0) ,r6x ,r7x ,UNIT (0)} ,
 			{UNIT (0) ,UNIT (0) ,r8x ,UNIT (0)} ,
 			{UNIT (0) ,UNIT (0) ,UNIT (0) ,UNIT (1)}}) ;
+		return std::move (ret) ;
 	}
 
 	static Matrix make_rotation (const Vector<UNIT> &normal ,const UNIT &angle) {
@@ -720,11 +774,12 @@ public:
 		const auto r2x = _COS_ (angle) ;
 		const auto r3x = r1x * _SIN_ (angle) ;
 		const auto r4x = r1x * (UNIT (1) - r2x) ;
-		return Matrix ({
+		Matrix ret = Matrix ({
 			{(r1x[0] * r4x[0] + r2x) ,(r1x[0] * r4x[1] - r3x[2]) ,(r1x[0] * r4x[2] + r3x[1]) ,UNIT (0)} ,
 			{(r1x[1] * r4x[0] + r3x[2]) ,(r1x[1] * r4x[1] + r2x) ,(r1x[1] * r4x[2] - r3x[0]) ,UNIT (0)} ,
 			{(r1x[2] * r4x[0] - r3x[1]) ,(r1x[2] * r4x[1] + r3x[0]) ,(r1x[2] * r4x[2] + r2x) ,UNIT (0)} ,
 			{UNIT (0) ,UNIT (0) ,UNIT (0) ,UNIT (1)}}) ;
+		return std::move (ret) ;
 	}
 
 	static Matrix make_rotation (const UNIT &qx ,const UNIT &qy ,const UNIT &qz ,const UNIT &qw) {
@@ -734,23 +789,26 @@ public:
 		const auto r4x = qy * r2x ;
 		const auto r5x = qz * r2x ;
 		const auto r6x = qw * r2x ;
-		return Matrix ({
+		Matrix ret = Matrix ({
 			{(UNIT (1) - qy * r4x - qz * r5x) ,(qx * r4x - qz * r6x) ,(qx * r5x + qy * r6x) ,UNIT (0)} ,
 			{(qx * r4x + qz * r6x) ,(UNIT (1) - qx * r3x - qz * r5x) ,(qy * r5x - qx * r6x) ,UNIT (0)} ,
 			{(qx * r5x - qy * r6x) ,(qy * r5x + qx * r6x) ,(UNIT (1) - qx * r3x - qy * r4x) ,UNIT (0)} ,
 			{UNIT (0) ,UNIT (0) ,UNIT (0) ,UNIT (1)}}) ;
+		return std::move (ret) ;
 	}
 
 	static ARRAY4<UNIT> make_rotation_quat (const Matrix &rotation) {
 		ARRAY4<UNIT> ret ;
-		const auto r1x = rotation.decompose ()[2] ;
-		_DEBUG_ASSERT_ (UNIT (1) + r1x[0][0] + r1x[1][1] + r1x[2][2] >= UNIT (0)) ;
-		const auto r2x = UNIT (2) * _SQRT_ (UNIT (1) + r1x[0][0] + r1x[1][1] + r1x[2][2]) ;
-		const auto r3x = _PINV_ (r2x) ;
-		ret[0] = (r1x[2][1] - r1x[1][2]) * r3x ;
-		ret[1] = (r1x[0][2] - r1x[2][0]) * r3x ;
-		ret[2] = (r1x[1][0] - r1x[0][1]) * r3x ;
-		ret[3] = r2x / UNIT (4) ;
+		const auto r1x = rotation.decompose () ;
+		const auto r2x = r1x[2] ;
+		const auto r5x = UNIT (1) + r2x[0][0] + r2x[1][1] + r2x[2][2] ;
+		_DEBUG_ASSERT_ (r5x >= UNIT (0)) ;
+		const auto r3x = UNIT (2) * _SQRT_ (r5x) ;
+		const auto r4x = _PINV_ (r3x) ;
+		ret[0] = (r2x[2][1] - r2x[1][2]) * r4x ;
+		ret[1] = (r2x[0][2] - r2x[2][0]) * r4x ;
+		ret[2] = (r2x[1][0] - r2x[0][1]) * r4x ;
+		ret[3] = r3x / UNIT (4) ;
 		return std::move (ret) ;
 	}
 
@@ -765,13 +823,14 @@ public:
 		return std::move (ret) ;
 	}
 
-	static Matrix make_translation (const Vector<UNIT> &direction) {
-		const auto r1x = (direction[3] != UNIT (0)) ? (Vector<UNIT> {UNIT (0) ,UNIT (0) ,UNIT (0) ,UNIT (1)} -direction.normalize ()) : direction ;
-		return Matrix ({
+	static Matrix make_translation (const Vector<UNIT> &position) {
+		const auto r1x = (position[3] != UNIT (0)) ? (-position.projection ().homogenize ()) : position ;
+		Matrix ret = Matrix ({
 			{UNIT (1) ,UNIT (0) ,UNIT (0) ,r1x[0]} ,
 			{UNIT (0) ,UNIT (1) ,UNIT (0) ,r1x[1]} ,
 			{UNIT (0) ,UNIT (0) ,UNIT (1) ,r1x[2]} ,
 			{UNIT (0) ,UNIT (0) ,UNIT (0) ,UNIT (1)}}) ;
+		return std::move (ret) ;
 	}
 
 	static Matrix make_view (const Vector<UNIT> &normal ,const Vector<UNIT> &center) {
@@ -779,8 +838,8 @@ public:
 		const auto r1x = normal.normalize () ;
 		_DEBUG_ASSERT_ (r1x[0] != UNIT (0) || r1x[1] != UNIT (0) || r1x[2] != UNIT (0)) ;
 		const auto r2x = Vector<UNIT> {_ABS_ (normal[0]) ,_ABS_ (normal[1]) ,_ABS_ (normal[2]) ,UNIT (0)} ;
-		const auto r3x = (r2x[0] < r2x[2]) ? (Vector<UNIT> {UNIT (1) ,UNIT (0) ,UNIT (0) ,UNIT (0)}) : (Vector<UNIT> {UNIT (0) ,UNIT (0) ,UNIT (1) ,UNIT (0)}) ;
-		const auto r4x = (r2x[1] < r2x[2]) ? (Vector<UNIT> {UNIT (0) ,UNIT (1) ,UNIT (0) ,UNIT (0)}) : (Vector<UNIT> {UNIT (0) ,UNIT (0) ,UNIT (1) ,UNIT (0)}) ;
+		const auto r3x = (r2x[0] < r2x[2]) ? (Vector<UNIT>::axis_x ()) : (Vector<UNIT>::axis_z ()) ;
+		const auto r4x = (r2x[1] < r2x[2]) ? (Vector<UNIT>::axis_y ()) : (Vector<UNIT>::axis_z ()) ;
 		const auto r5x = (r2x[0] < r2x[1]) ? r3x : r4x ;
 		const auto r6x = (r1x ^ r5x).normalize () ;
 		const auto r7x = (r1x ^ r6x).normalize () ;
@@ -789,44 +848,48 @@ public:
 
 	static Matrix make_perspective (const UNIT &fx ,const UNIT &fy ,const UNIT &wx ,const UNIT &wy) {
 		_DEBUG_ASSERT_ (fx > UNIT (0) && fy > UNIT (0)) ;
-		return Matrix ({
+		Matrix ret = Matrix ({
 			{fx ,UNIT (0) ,wx ,UNIT (0)} ,
 			{UNIT (0) ,fy ,wy ,UNIT (0)} ,
 			{UNIT (0) ,UNIT (0) ,UNIT (0) ,UNIT (1)} ,
 			{UNIT (0) ,UNIT (0) ,UNIT (1) ,UNIT (0)}}) ;
+		return std::move (ret) ;
 	}
 
 	static Matrix make_projection (const Vector<UNIT> &normal ,const Vector<UNIT> &center ,const Vector<UNIT> &light) {
 		_DEBUG_ASSERT_ (normal[3] == UNIT (0) && center[3] == UNIT (1)) ;
 		const auto r1x = normal.normalize () ;
 		_DEBUG_ASSERT_ (r1x[0] != UNIT (0) || r1x[1] != UNIT (0) || r1x[2] != UNIT (0)) ;
-		const auto r2x = light.normalize () ;
-		const auto r3x = Vector<UNIT> {center[0] ,center[1] ,center[2] ,UNIT (0)} *r1x ;
+		const auto r2x = (r2x[3] != UNIT (0)) ? (light.projection ()) : (light.normalize ()) ;
+		const auto r3x = center.homogenize () * r1x ;
 		const auto r4x = Vector<UNIT> {r2x[0] ,r2x[1] ,r2x[2] ,UNIT (0)} *r1x ;
-		const auto r5x = (r2x[3] != UNIT (0)) ? r3x : (UNIT (0)) ;
-		const auto r6x = (r2x[3] != UNIT (0)) ? (r1x.xyz ()) : (ARRAY3<UNIT> {UNIT (0) ,UNIT (0) ,UNIT (0)}) ;
-		return Matrix ({
+		const auto r7x = Vector<UNIT> {UNIT (0) ,UNIT (0) ,UNIT (0) ,UNIT (0)} ;
+		const auto r5x = (r2x[3] != UNIT (0)) ? r3x : r7x ;
+		const auto r6x = (r2x[3] != UNIT (0)) ? r1x : r7x ;
+		Matrix ret = Matrix ({
 			{(r1x[0] * r2x[0] - r4x + r5x) ,(r1x[1] * r2x[0]) ,(r1x[2] * r2x[0]) ,(-r3x * r2x[0])} ,
 			{(r1x[0] * r2x[1]) ,(r1x[1] * r2x[1] - r4x + r5x) ,(r1x[2] * r2x[1]) ,(-r3x * r2x[1])} ,
 			{(r1x[0] * r2x[2]) ,(r1x[1] * r2x[2]) ,(r1x[2] * r2x[2] - r4x + r5x) ,(-r3x * r2x[2])} ,
 			{r6x[0] ,r6x[1] ,r6x[2] ,-r4x}}) ;
+		return std::move (ret) ;
 	}
 
 	static Matrix make_cross_product (const Vector<UNIT> &first) {
 		_DEBUG_ASSERT_ (first[3] == UNIT (0)) ;
-		return Matrix ({
+		Matrix ret = Matrix ({
 			{UNIT (0) ,-first[2] ,first[1] ,UNIT (0)} ,
 			{first[2] ,UNIT (0) ,-first[0] ,UNIT (0)} ,
 			{-first[1] ,first[0] ,UNIT (0) ,UNIT (0)} ,
 			{UNIT (0) ,UNIT (0) ,UNIT (0) ,UNIT (0)}}) ;
+		return std::move (ret) ;
 	}
 
 	static Matrix make_symmetry (const Vector<UNIT> &first ,const Vector<UNIT> &second) {
-		return Matrix ({
-			{(first[0] * second[0]) ,(first[0] * second[1]) ,(first[0] * second[2]) ,(first[0] * second[3])} ,
-			{(first[1] * second[0]) ,(first[1] * second[1]) ,(first[1] * second[2]) ,(first[1] * second[3])} ,
-			{(first[2] * second[0]) ,(first[2] * second[1]) ,(first[2] * second[2]) ,(first[2] * second[3])} ,
-			{(first[3] * second[0]) ,(first[3] * second[1]) ,(first[3] * second[2]) ,(first[3] * second[3])}}) ;
+		Matrix ret ;
+		for (INDEX i = 0 ; i < 4 ; i++)
+			for (INDEX j = 0 ; j < 4 ; j++)
+				ret[i][j] = first[i] * second[j] ;
+		return std::move (ret) ;
 	}
 } ;
 

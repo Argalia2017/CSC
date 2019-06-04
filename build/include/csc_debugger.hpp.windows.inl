@@ -5,16 +5,18 @@
 #endif
 
 #ifdef __CSC__
+#pragma push_macro ("self")
+#pragma push_macro ("implicit")
+#pragma push_macro ("popping")
+#pragma push_macro ("imports")
+#pragma push_macro ("exports")
+#pragma push_macro ("discard")
 #undef self
 #undef implicit
 #undef popping
 #undef imports
 #undef exports
-#pragma pop_macro ("self")
-#pragma pop_macro ("implicit")
-#pragma pop_macro ("popping")
-#pragma pop_macro ("imports")
-#pragma pop_macro ("exports")
+#undef discard
 #endif
 
 #ifndef _INC_WINDOWS
@@ -45,16 +47,12 @@
 #endif
 
 #ifdef __CSC__
-#pragma push_macro ("self")
-#pragma push_macro ("implicit")
-#pragma push_macro ("popping")
-#pragma push_macro ("imports")
-#pragma push_macro ("exports")
-#define self to ()
-#define implicit
-#define popping
-#define imports extern
-#define exports
+#pragma pop_macro ("self")
+#pragma pop_macro ("implicit")
+#pragma pop_macro ("popping")
+#pragma pop_macro ("imports")
+#pragma pop_macro ("exports")
+#pragma pop_macro ("discard")
 #endif
 
 namespace CSC {
@@ -82,7 +80,8 @@ public:
 	}
 
 	void modify_option (FLAG option) override {
-		mOptionFlag = (option == OPTION_DEFAULT) ? option : (mOptionFlag | option) ;
+		const auto r1x = (option == OPTION_DEFAULT) ? option : (mOptionFlag | option) ;
+		mOptionFlag = r1x ;
 	}
 
 	void print (const Binder &msg) override {
@@ -185,9 +184,9 @@ public:
 		const auto r1x = _ABSOLUTEPATH_ (path) ;
 		for (FOR_ONCE_DO_WHILE_FALSE) {
 			if (mLogPath == r1x)
-				break ;
+				continue ;
 			if (!mLogFileStream.exist ())
-				break ;
+				continue ;
 			mLogFileStream->flush () ;
 			mLogFileStream = AutoRef<StreamLoader> () ;
 		}
@@ -259,7 +258,7 @@ private:
 		mConsole = UniqueRef<HANDLE> ([&] (HANDLE &me) {
 			me = GetStdHandle (STD_OUTPUT_HANDLE) ;
 		} ,[] (HANDLE &me) {
-			(void) me ;
+			_STATIC_WARNING_ ("noop") ;
 		}) ;
 	}
 
@@ -293,7 +292,6 @@ private:
 			mLogFileStream->write (r2x) ;
 			mTempState = TRUE ;
 		} ,[&] () {
-			(void) mLogFileStream ;
 			mTempState = FALSE ;
 		}) ;
 		_CALL_TRY_ ([&] () {
@@ -303,7 +301,6 @@ private:
 			mLogFileStream->write (r2x) ;
 			mTempState = TRUE ;
 		} ,[&] () {
-			(void) mLogFileStream ;
 			mTempState = FALSE ;
 		}) ;
 		if ((mOptionFlag & OPTION_ALWAYS_FLUSH) == 0)
@@ -312,12 +309,13 @@ private:
 	}
 
 	void attach_log_file () {
-		const auto r1x = mLogPath + _PCSTR_ ("logger.log") ;
-		const auto r2x = mLogPath + _PCSTR_ ("logger.old.log") ;
+		mLogFileStream = AutoRef<StreamLoader> () ;
+		const auto r1x = mLogPath + _PCSTR_ ("console.log") ;
+		const auto r2x = mLogPath + _PCSTR_ ("console.old.log") ;
 		_ERASEFILE_ (r2x) ;
 		_MOVEFILE_ (r2x ,r1x) ;
 		mLogFileStream = AutoRef<StreamLoader>::make (r1x) ;
-		const auto r3x = _PRINTS_<STR> (_XVALUE_<const PTR<void (TextWriter<STR> &)> &> (&_BOM_)) ;
+		const auto r3x = _PRINTS_<STR> (_XVALUE_<PTR<void (TextWriter<STR> &)>> (_BOM_)) ;
 		mLogFileStream->write (PhanBuffer<const BYTE>::make (r3x.raw ())) ;
 	}
 } ;
@@ -362,10 +360,11 @@ public:
 		attach_symbol_info () ;
 		Array<String<STR>> ret = Array<String<STR>> (address.length ()) ;
 		INDEX iw = 0 ;
-		_CALL_IF_ ([&] (BOOL &if_cond) {
+		_CALL_IF_ ([&] (BOOL &if_flag) {
 			if (!mSymbolFromAddress.exist ())
-				return (void) (if_cond = FALSE) ;
-			auto rax = AutoBuffer<BYTE> (_SIZEOF_ (SYMBOL_INFO) + address.length () * (DEFAULT_SHORTSTRING_SIZE::value)) ;
+				discard ;
+			const auto r1x = _SIZEOF_ (SYMBOL_INFO) + address.length () * (DEFAULT_SHORTSTRING_SIZE::value) ;
+			auto rax = AutoBuffer<BYTE> (r1x) ;
 			auto &r1 = _LOAD_<SYMBOL_INFO> (rax.self) ;
 			r1.SizeOfStruct = _SIZEOF_ (SYMBOL_INFO) ;
 			r1.MaxNameLen = DEFAULT_SHORTSTRING_SIZE::value ;
@@ -375,10 +374,11 @@ public:
 				const auto r3x = _PARSESTRS_ (String<STRA> (PTRTOARR[&r1.Name[0]])) ;
 				ret[iw++] = _PRINTS_<STR> (_PCSTR_ ("[") ,r2x ,_PCSTR_ ("] : ") ,r3x) ;
 			}
-		} ,[&] (BOOL &if_cond) {
+		} ,[&] (BOOL &if_flag) {
 			for (auto &&i : address)
 				ret[iw++] = _PRINTS_<STR> (_PCSTR_ ("[") ,_BUILDHEX16S_<STR> (i) ,_PCSTR_ ("] : null")) ;
 		}) ;
+		_DEBUG_ASSERT_ (iw == ret.length ()) ;
 		return std::move (ret) ;
 	}
 

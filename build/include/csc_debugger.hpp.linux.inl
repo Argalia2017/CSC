@@ -5,16 +5,18 @@
 #endif
 
 #ifdef __CSC__
+#pragma push_macro ("self")
+#pragma push_macro ("implicit")
+#pragma push_macro ("popping")
+#pragma push_macro ("imports")
+#pragma push_macro ("exports")
+#pragma push_macro ("discard")
 #undef self
 #undef implicit
 #undef popping
 #undef imports
 #undef exports
-#pragma pop_macro ("self")
-#pragma pop_macro ("implicit")
-#pragma pop_macro ("popping")
-#pragma pop_macro ("imports")
-#pragma pop_macro ("exports")
+#undef discard
 #endif
 
 #ifdef __CSC_DEPRECATED__
@@ -26,16 +28,12 @@
 #endif
 
 #ifdef __CSC__
-#pragma push_macro ("self")
-#pragma push_macro ("implicit")
-#pragma push_macro ("popping")
-#pragma push_macro ("imports")
-#pragma push_macro ("exports")
-#define self to ()
-#define implicit
-#define popping
-#define imports extern
-#define exports
+#pragma pop_macro ("self")
+#pragma pop_macro ("implicit")
+#pragma pop_macro ("popping")
+#pragma pop_macro ("imports")
+#pragma pop_macro ("exports")
+#pragma pop_macro ("discard")
 #endif
 
 namespace CSC {
@@ -61,7 +59,8 @@ public:
 	}
 
 	void modify_option (FLAG option) override {
-		mOptionFlag = (option == OPTION_DEFAULT) ? option : (mOptionFlag | option) ;
+		const auto r1x = (option == OPTION_DEFAULT) ? option : (mOptionFlag | option) ;
+		mOptionFlag = r1x ;
 	}
 
 	void print (const Binder &msg) override {
@@ -171,9 +170,9 @@ public:
 		const auto r1x = _ABSOLUTEPATH_ (path) ;
 		for (FOR_ONCE_DO_WHILE_FALSE) {
 			if (mLogPath == r1x)
-				break ;
+				continue ;
 			if (!mLogFileStream.exist ())
-				break ;
+				continue ;
 			mLogFileStream->flush () ;
 			mLogFileStream = AutoRef<StreamLoader> () ;
 		}
@@ -255,7 +254,6 @@ private:
 			mLogFileStream->write (r2x) ;
 			mTempState = TRUE ;
 		} ,[&] () {
-			(void) mLogFileStream ;
 			mTempState = FALSE ;
 		}) ;
 		_CALL_TRY_ ([&] () {
@@ -265,7 +263,6 @@ private:
 			mLogFileStream->write (r2x) ;
 			mTempState = TRUE ;
 		} ,[&] () {
-			(void) mLogFileStream ;
 			mTempState = FALSE ;
 		}) ;
 		if ((mOptionFlag & OPTION_ALWAYS_FLUSH) == 0)
@@ -274,11 +271,13 @@ private:
 	}
 
 	void attach_log_file () {
-		const auto r1x = mLogPath + _PCSTR_ ("logger.log") ;
-		const auto r2x = mLogPath + _PCSTR_ ("logger.old.log") ;
+		mLogFileStream = AutoRef<StreamLoader> () ;
+		const auto r1x = mLogPath + _PCSTR_ ("console.log") ;
+		const auto r2x = mLogPath + _PCSTR_ ("console.old.log") ;
+		_ERASEFILE_ (r2x) ;
 		_MOVEFILE_ (r2x ,r1x) ;
 		mLogFileStream = AutoRef<StreamLoader>::make (r1x) ;
-		const auto r3x = _PRINTS_<STR> (_XVALUE_<const PTR<void (TextWriter<STR> &)> &> (&_BOM_)) ;
+		const auto r3x = _PRINTS_<STR> (_XVALUE_<PTR<void (TextWriter<STR> &)>> (_BOM_)) ;
 		mLogFileStream->write (PhanBuffer<const BYTE>::make (r3x.raw ())) ;
 	}
 } ;
@@ -322,6 +321,7 @@ public:
 			const auto r4x = _PARSESTRS_ (String<STRA> (PTRTOARR[&r2x[0][0]])) ;
 			ret[iw++] = _PRINTS_<STR> (_PCSTR_ ("[") ,r3x ,_PCSTR_ ("] : ") ,r4x) ;
 		}
+		_DEBUG_ASSERT_ (iw == ret.length ()) ;
 		return std::move (ret) ;
 	}
 } ;

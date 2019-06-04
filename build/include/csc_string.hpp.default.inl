@@ -5,16 +5,18 @@
 #endif
 
 #ifdef __CSC__
+#pragma push_macro ("self")
+#pragma push_macro ("implicit")
+#pragma push_macro ("popping")
+#pragma push_macro ("imports")
+#pragma push_macro ("exports")
+#pragma push_macro ("discard")
 #undef self
 #undef implicit
 #undef popping
 #undef imports
 #undef exports
-#pragma pop_macro ("self")
-#pragma pop_macro ("implicit")
-#pragma pop_macro ("popping")
-#pragma pop_macro ("imports")
-#pragma pop_macro ("exports")
+#undef discard
 #endif
 
 #ifdef __CSC_DEPRECATED__
@@ -27,16 +29,12 @@
 #endif
 
 #ifdef __CSC__
-#pragma push_macro ("self")
-#pragma push_macro ("implicit")
-#pragma push_macro ("popping")
-#pragma push_macro ("imports")
-#pragma push_macro ("exports")
-#define self to ()
-#define implicit
-#define popping
-#define imports extern
-#define exports
+#pragma pop_macro ("self")
+#pragma pop_macro ("implicit")
+#pragma pop_macro ("popping")
+#pragma pop_macro ("imports")
+#pragma pop_macro ("exports")
+#pragma pop_macro ("discard")
 #endif
 
 namespace CSC {
@@ -46,7 +44,7 @@ inline namespace S {
 inline String<STRW> _inline_LOCALE_LASTOWS_ (const String<STRA> &src) {
 #ifdef _CLOCALE_
 	auto &r1 = _CACHE_ ([] () {
-		return UniqueRef<_locale_t> ([] (_locale_t &me) {
+		return UniqueRef<_locale_t> ([&] (_locale_t &me) {
 			me = _create_locale (LC_CTYPE ,_PCSTRA_ ("")) ;
 			_DYNAMIC_ASSERT_ (me != NULL) ;
 		} ,[] (_locale_t &me) {
@@ -56,17 +54,17 @@ inline String<STRW> _inline_LOCALE_LASTOWS_ (const String<STRA> &src) {
 	}) ;
 	String<STRW> ret = String<STRW> (src.length () + 1) ;
 	const auto r1x = _mbstowcs_s_l (NULL ,ret.raw ().self ,ret.size () ,src.raw ().self ,_TRUNCATE ,r1) ;
-	if (r1x != 0)
+	if (ret.size () > 0 && r1x != 0)
 		ret = String<STRW> () ;
 	return std::move (ret) ;
 #elif defined _GLIBCXX_CLOCALE
 	//@warn: not thread-safe due to internel storage
-	const auto r1x = std::setlocale (LC_CTYPE ,NULL) ;
-	_DEBUG_ASSERT_ (r1x != NULL) ;
-	_DYNAMIC_ASSERT_ (!_MEMEQUAL_ (PTRTOARR[&r1x[0]] ,_PCSTRA_ ("C"))) ;
+	const auto r2x = std::setlocale (LC_CTYPE ,NULL) ;
+	_DEBUG_ASSERT_ (r2x != NULL) ;
+	_DYNAMIC_ASSERT_ (!_MEMEQUAL_ (PTRTOARR[&r2x[0]] ,_PCSTRA_ ("C"))) ;
 	String<STRW> ret = String<STRW> (src.length () + 1) ;
-	const auto r2x = std::mbstowcs (ret.raw ().self ,src.raw ().self ,ret.size () * _SIZEOF_ (STRW)) ;
-	if (r2x != 0)
+	const auto r3x = std::mbstowcs (ret.raw ().self ,src.raw ().self ,ret.size () * _SIZEOF_ (STRW)) ;
+	if (ret.size () > 0 && r3x != 0)
 		ret = String<STRW> () ;
 	return std::move (ret) ;
 #endif
@@ -75,7 +73,7 @@ inline String<STRW> _inline_LOCALE_LASTOWS_ (const String<STRA> &src) {
 inline String<STRA> _inline_LOCALE_WSTOLAS_ (const String<STRW> &src) {
 #ifdef _CLOCALE_
 	auto &r1 = _CACHE_ ([] () {
-		return UniqueRef<_locale_t> ([] (_locale_t &me) {
+		return UniqueRef<_locale_t> ([&] (_locale_t &me) {
 			me = _create_locale (LC_CTYPE ,_PCSTRA_ ("")) ;
 			_DYNAMIC_ASSERT_ (me != NULL) ;
 		} ,[] (_locale_t &me) {
@@ -85,17 +83,17 @@ inline String<STRA> _inline_LOCALE_WSTOLAS_ (const String<STRW> &src) {
 	}) ;
 	String<STRA> ret = String<STRA> ((src.length () + 1) * _SIZEOF_ (STRW)) ;
 	const auto r1x = _wcstombs_s_l (NULL ,ret.raw ().self ,ret.size () ,src.raw ().self ,_TRUNCATE ,r1) ;
-	if (r1x != 0)
+	if (ret.size () > 0 && r1x != 0)
 		ret = String<STRA> () ;
 	return std::move (ret) ;
 #elif defined _GLIBCXX_CLOCALE
 	//@warn: not thread-safe due to internel storage
-	const auto r1x = std::setlocale (LC_CTYPE ,NULL) ;
-	_DEBUG_ASSERT_ (r1x != NULL) ;
-	_DYNAMIC_ASSERT_ (!_MEMEQUAL_ (PTRTOARR[&r1x[0]] ,_PCSTRA_ ("C"))) ;
+	const auto r2x = std::setlocale (LC_CTYPE ,NULL) ;
+	_DEBUG_ASSERT_ (r2x != NULL) ;
+	_DYNAMIC_ASSERT_ (!_MEMEQUAL_ (PTRTOARR[&r2x[0]] ,_PCSTRA_ ("C"))) ;
 	String<STRA> ret = String<STRA> ((src.length () + 1) * _SIZEOF_ (STRW)) ;
-	const auto r2x = std::wcstombs (ret.raw ().self ,src.raw ().self ,ret.size ()) ;
-	if (r2x != 0)
+	const auto r3x = std::wcstombs (ret.raw ().self ,src.raw ().self ,ret.size ()) ;
+	if (ret.size () > 0 && r3x != 0)
 		ret = String<STRA> () ;
 	return std::move (ret) ;
 #endif
@@ -160,16 +158,20 @@ inline exports ARRAY8<VAR32> _LOCALE_CVTTO_TIMEMETRIC_ (const std::chrono::syste
 inline exports std::chrono::system_clock::time_point _LOCALE_CVTTO_TIMEPOINT_ (const ARRAY8<VAR32> &src) {
 	auto rax = std::tm () ;
 	_ZERO_ (rax) ;
-	rax.tm_year = (src[0] > 0) ? (src[0] - 1900) : 0 ;
-	rax.tm_mon = (src[1] > 0) ? (src[1] - 1) : 0 ;
+	const auto r1x = (src[0] > 0) ? (src[0] - 1900) : 0 ;
+	rax.tm_year = r1x ;
+	const auto r2x = (src[1] > 0) ? (src[1] - 1) : 0 ;
+	rax.tm_mon = r2x ;
 	rax.tm_mday = src[2] ;
-	rax.tm_wday = (src[3] > 0) ? (src[3] - 1) : 0 ;
-	rax.tm_yday = (src[4] > 0) ? (src[4] - 1) : 0 ;
+	const auto r3x = (src[3] > 0) ? (src[3] - 1) : 0 ;
+	rax.tm_wday = r3x ;
+	const auto r4x = (src[4] > 0) ? (src[4] - 1) : 0 ;
+	rax.tm_yday = r4x ;
 	rax.tm_hour = src[5] ;
 	rax.tm_min = src[6] ;
 	rax.tm_sec = src[7] ;
-	const auto r1x = std::mktime (&rax) ;
-	return std::chrono::system_clock::from_time_t (r1x) ;
+	const auto r5x = std::mktime (&rax) ;
+	return std::chrono::system_clock::from_time_t (r5x) ;
 }
 } ;
 #endif
@@ -185,22 +187,27 @@ public:
 	Implement () = delete ;
 
 	explicit Implement (const String<STRU8> &reg) {
-		mRegex = AutoRef<std::regex>::make (_U8STOUAS_ (reg).raw ().self) ;
+		const auto r1x = _U8STOUAS_ (reg) ;
+		mRegex = AutoRef<std::regex>::make (r1x.raw ().self) ;
 	}
 
 	BOOL match (const String<STRU8> &expr) const {
 		if (expr.empty ())
 			return FALSE ;
-		return std::regex_match (_U8STOUAS_ (expr).raw ().self ,mRegex.self) ;
+		const auto r1x = _U8STOUAS_ (expr) ;
+		if (!std::regex_match (r1x.raw ().self ,mRegex.self))
+			return FALSE ;
+		return TRUE ;
 	}
 
 	Queue<ARRAY2<INDEX>> search (const String<STRU8> &expr) const {
 		Queue<ARRAY2<INDEX>> ret = Queue<ARRAY2<INDEX>> (expr.length ()) ;
 		for (FOR_ONCE_DO_WHILE_FALSE) {
 			if (expr.empty ())
-				break ;
+				continue ;
 			auto rax = AutoRef<std::smatch>::make () ;
-			const auto r1x = std::string (_U8STOUAS_ (expr).raw ().self) ;
+			const auto r5x = _U8STOUAS_ (expr) ;
+			const auto r1x = std::string (r5x.raw ().self) ;
 			auto rbx = r1x.begin () ;
 			const auto r2x = r1x.end () ;
 			while (TRUE) {
@@ -217,19 +224,16 @@ public:
 	}
 
 	String<STRU8> replace (const String<STRU8> &expr ,const String<STRU8> &rep) const {
-		String<STRU8> ret ;
-		for (FOR_ONCE_DO_WHILE_FALSE) {
-			if (expr.empty ())
-				break ;
-			const auto r1x = std::string (_U8STOUAS_ (expr).raw ().self) ;
-			const auto r2x = std::string (_U8STOUAS_ (rep).raw ().self) ;
-			const auto r3x = std::regex_replace (r1x ,mRegex.self ,r2x) ;
-			if (r3x.empty ())
-				break ;
-			ret = _UASTOU8S_ (PTRTOARR[&r3x[0]]) ;
-			_DEBUG_ASSERT_ (ret.size () > 0) ;
-		}
-		return std::move (ret) ;
+		if (expr.empty ())
+			return String<STRU8> () ;
+		const auto r5x = _U8STOUAS_ (expr) ;
+		const auto r6x = _U8STOUAS_ (rep) ;
+		const auto r1x = std::string (r5x.raw ().self) ;
+		const auto r2x = std::string (r6x.raw ().self) ;
+		const auto r3x = std::regex_replace (r1x ,mRegex.self ,r2x) ;
+		if (r3x.empty ())
+			return String<STRU8> () ;
+		return _UASTOU8S_ (PTRTOARR[&r3x[0]]) ;
 	}
 } ;
 

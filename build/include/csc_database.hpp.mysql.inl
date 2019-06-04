@@ -5,16 +5,18 @@
 #endif
 
 #ifdef __CSC__
+#pragma push_macro ("self")
+#pragma push_macro ("implicit")
+#pragma push_macro ("popping")
+#pragma push_macro ("imports")
+#pragma push_macro ("exports")
+#pragma push_macro ("discard")
 #undef self
 #undef implicit
 #undef popping
 #undef imports
 #undef exports
-#pragma pop_macro ("self")
-#pragma pop_macro ("implicit")
-#pragma pop_macro ("popping")
-#pragma pop_macro ("imports")
-#pragma pop_macro ("exports")
+#undef discard
 #endif
 
 #ifdef __CSC_DEPRECATED__
@@ -40,16 +42,12 @@
 #endif
 
 #ifdef __CSC__
-#pragma push_macro ("self")
-#pragma push_macro ("implicit")
-#pragma push_macro ("popping")
-#pragma push_macro ("imports")
-#pragma push_macro ("exports")
-#define self to ()
-#define implicit
-#define popping
-#define imports extern
-#define exports
+#pragma pop_macro ("self")
+#pragma pop_macro ("implicit")
+#pragma pop_macro ("popping")
+#pragma pop_macro ("imports")
+#pragma pop_macro ("exports")
+#pragma pop_macro ("discard")
 #endif
 
 namespace CSC {
@@ -64,8 +62,8 @@ public:
 		_STATIC_ASSERT_ (_ALIGNOF_ (REMOVE_CVR_TYPE<decltype (*this)>) == _ALIGNOF_ (Interface)) ;
 	}
 
-	void load_data (AnyRef<void> &_this) override {
-		auto rax = UniqueRef<MYSQL> ([] (MYSQL &me) {
+	void compute_load_data (AnyRef<void> &_this) override {
+		auto rax = UniqueRef<MYSQL> ([&] (MYSQL &me) {
 			mysql_init (&me) ;
 		} ,[] (MYSQL &me) {
 			mysql_close (&me) ;
@@ -74,10 +72,9 @@ public:
 	}
 
 private:
-	static void debug_check_error (MYSQL &_self) {
-		const auto r1x = _LOAD_<ARR<STRA>> (mysql_error (&_self)) ;
+	static void compute_check_error (MYSQL &_self) {
+		const auto r1x = &_LOAD_<ARR<STRA>> (mysql_error (&_self)) ;
 		_DYNAMIC_ASSERT_ (r1x == NULL) ;
-		(void) r1x ;
 	}
 } ;
 } ;
