@@ -71,11 +71,15 @@ using namespace Microsoft::VisualStudio::CppUnitTestFramework ;
 #if defined (__CSC_TARGET_EXE__) || defined (__CSC_TARGET_DLL__)
 namespace CSC {
 inline exports PTR<NONE> GlobalStatic<void>::unique_atomic_address (PTR<NONE> expect ,PTR<NONE> data) popping {
-	auto &r1 = _CACHE_ ([] () {
-		return SharedRef<std::atomic<PTR<NONE>>>::make (&_NULL_<NONE> ()) ;
+	PTR<NONE> ret = NULL ;
+	_CALL_EH_ ([&] () {
+		const auto r1x = _CACHE_ ([] () {
+			return SharedRef<std::atomic<PTR<NONE>>>::make (&_NULL_<NONE> ()) ;
+		}) ;
+		r1x->compare_exchange_strong (expect ,data) ;
+		ret = r1x->load () ;
 	}) ;
-	r1->compare_exchange_strong (expect ,data) ;
-	return r1->load () ;
+	return std::move (ret) ;
 }
 } ;
 
@@ -112,7 +116,8 @@ namespace UNITTEST {
 inline exports void _UNITTEST_ASSERT_HANDLER_ (const ARR<STR> &what) {
 #ifdef MS_CPP_UNITTESTFRAMEWORK
 #ifdef __CSC_STRING__
-	Assert::Fail (_BUILDSTRS_<STRW> (what).raw ().self) ;
+	const auto r1x = _BUILDSTRS_<STRW> (what) ;
+	Assert::Fail (r1x.raw ().self) ;
 #else
 	Assert::Fail () ;
 #endif

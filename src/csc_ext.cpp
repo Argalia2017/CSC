@@ -16,37 +16,41 @@ public:
 		_UNITTEST_ASSERT_ (r1x == VAR64_MAX) ;
 		const auto r2x = VAR128 (VAR64_MAX) / (VAR64_MAX / 2 - 1) ;
 		_UNITTEST_ASSERT_ (r2x == 2) ;
+		_UNITTEST_ASSERT_ (VAR128 (22) < VAR128 (33)) ;
+		_UNITTEST_ASSERT_ (VAR128 (-22) >= VAR128 (-33)) ;
 	}
 
 	TEST_METHOD (TEST_CSC_EXT_VARIANT) {
-		auto rax = Optional<FixedBuffer<int>> () ;
-		rax.recreate<FixedBuffer<int>> (LENGTH (8)) ;
+		auto rax = Optional<AutoBuffer<int>> () ;
+		rax.recreate<AutoBuffer<int>> (LENGTH (8)) ;
 		const auto r1x = rax.self.size () ;
 		_UNITTEST_ASSERT_ (r1x == 8) ;
-		auto rbx = Optional<FixedBuffer<int>> () ;
-		rbx.recreate<FixedBuffer<int>> (LENGTH (4)) ;
+		auto rbx = Optional<AutoBuffer<int>> () ;
+		rbx.recreate<AutoBuffer<int>> (LENGTH (4)) ;
 		const auto r2x = rbx.self.size () ;
 		_UNITTEST_ASSERT_ (r2x == 4) ;
 	}
 
 	TEST_METHOD (TEST_CSC_EXT_FUNCTION) {
-		struct A {
+		struct A :public Interface {
 			void test1 () {}
 			void test2 () const {}
+			virtual void test3 () const {}
 			static void test4 () {}
 		} ;
-		auto rax = A () ;
+		auto rax = AutoRef<A>::make () ;
 		_CALL_ (Function<DEF<void ()> NONE::*> (PhanRef<A>::make (rax) ,&A::test1)) ;
 		_CALL_ (Function<DEF<void ()> NONE::*> (PhanRef<const A>::make (rax) ,&A::test2)) ;
+		_CALL_ (Function<DEF<void ()> NONE::*> (PhanRef<const A>::make (rax) ,&A::test3)) ;
 		_CALL_ (Function<void ()> (&A::test4)) ;
-		const auto r1x = _XVALUE_<const PTR<int (const int & ,const int &)> &> ([] (const int &arg1 ,const int &arg2) {
+		const auto r1x = _XVALUE_<PTR<int (const int & ,const int &)>> ([] (const int &arg1 ,const int &arg2) {
 			if (arg2 == 1)
 				return arg1 ;
 			if (arg2 == 2)
 				return _SQE_ (arg1) ;
 			return 0 ;
 		}) ;
-		const auto r2x = Function<int (const int &)>::make (r1x ,_XVALUE_<const int &> (2)) ;
+		const auto r2x = Function<int (const int &)>::make (r1x ,_XVALUE_<int> (2)) ;
 		_UNITTEST_ASSERT_ (r2x (2) == 4) ;
 		_UNITTEST_ASSERT_ (r2x (3) == 9) ;
 		const auto r3x = Function<int (const int & ,const int &)>::make (r1x) ;
@@ -93,11 +97,11 @@ public:
 	TEST_METHOD (TEST_CSC_EXT_MEMORYPOOL) {
 		auto rax = AutoRef<MemoryPool>::make () ;
 		const auto r2x = rax->alloc<int> () ;
-		const auto r10x = _XVALUE_<const PTR<VAR (const VAR & ,const VAR &)> &> ([] (const VAR &arg1 ,const VAR &arg2) {
+		const auto r10x = _XVALUE_<PTR<VAR (const VAR & ,const VAR &)>> ([] (const VAR &arg1 ,const VAR &arg2) {
 			_DEBUG_ASSERT_ (arg2 != VAR_ZERO) ;
 			const auto r4x = (arg2 < VAR_ZERO) ? (-arg1) : arg1 ;
 			const auto r5x = _ABS_ (arg2) ;
-			VAR ret = VAR (r5x * VAR64 (r4x / r5x)) ;
+			VAR ret = VAR (r5x * VAR (r4x / r5x)) ;
 			if (r4x < 0 && ret > r4x)
 				ret -= r5x ;
 			if (arg2 < 0)
@@ -155,7 +159,7 @@ public:
 				wrapped_string::mData += _BUILDVAL32S_<STRU8> (stru) ;
 			}
 		} ;
-		const auto r1x = PACK<int ,float> ({1 ,2.1f}) ;
+		const auto r1x = PACK<int ,float> {1 ,2.1f} ;
 		const auto r2x = Serializer<wrapped_string ,const PACK<int ,float>> (&PACK<int ,float>::P1 ,&PACK<int ,float>::P2) ;
 		auto rax = String<STRU8> () ;
 		auto &r1 = _CAST_<wrapped_string> (rax) ;

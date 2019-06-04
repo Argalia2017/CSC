@@ -58,9 +58,9 @@ inline imports DEF<void (const String<STR> &dire)> _BUILDDIRECTORY_ ;
 
 inline imports DEF<void (const String<STR> &dire)> _ERASEDIRECTORY_ ;
 
-inline imports DEF<void (const String<STR> &dire)> _CLEARDIRECTORY_ ;
-
 inline imports DEF<void (const String<STR> &dire ,const Function<void (const String<STR> &)> &file_proc ,const Function<void (const String<STR> &)> &dire_proc) popping> _ENUMDIRECTORY_ ;
+
+inline imports DEF<void (const String<STR> &dire)> _CLEARDIRECTORY_ ;
 } ;
 #endif
 
@@ -107,9 +107,11 @@ public:
 
 	explicit BufferLoader (const String<STR> &file ,LENGTH file_len ,BOOL cache) ;
 
-	PhanBuffer<BYTE> watch () ;
+	PhanBuffer<BYTE> watch () & ;
 
-	PhanBuffer<const BYTE> watch () const ;
+	PhanBuffer<const BYTE> watch () const & ;
+
+	PhanBuffer<BYTE> watch () && = delete ;
 
 	void flush () ;
 } ;
@@ -137,8 +139,8 @@ private:
 		virtual BOOL find_directory (const String<STR> &dire) popping = 0 ;
 		virtual void build_directory (const String<STR> &dire) = 0 ;
 		virtual void erase_directory (const String<STR> &dire) = 0 ;
-		virtual void clear_directory (const String<STR> &dire) = 0 ;
 		virtual void enum_directory (const String<STR> &dire ,const Function<void (const String<STR> &)> &file_proc ,const Function<void (const String<STR> &)> &dire_proc) popping = 0 ;
+		virtual void clear_directory (const String<STR> &dire) = 0 ;
 	} ;
 
 private:
@@ -158,19 +160,9 @@ public:
 		mThis->load_file (file ,data) ;
 	}
 
-	template <class _ARG1>
-	void load_file (const String<STR> &file ,Buffer<BYTE ,_ARG1> &data) {
-		load_file (file ,PhanBuffer<BYTE>::make (data)) ;
-	}
-
 	void save_file (const String<STR> &file ,const PhanBuffer<const BYTE> &data) {
 		ScopedGuard<std::recursive_mutex> ANONYMOUS (mMutex) ;
 		mThis->save_file (file ,data) ;
-	}
-
-	template <class _ARG1>
-	void save_file (const String<STR> &file ,const Buffer<BYTE ,_ARG1> &data) {
-		save_file (file ,PhanBuffer<const BYTE>::make (data)) ;
 	}
 
 	PhanBuffer<const BYTE> load_asset_file (FLAG resource) popping {
@@ -258,14 +250,14 @@ public:
 		mThis->erase_directory (dire) ;
 	}
 
-	void clear_directory (const String<STR> &dire) {
-		ScopedGuard<std::recursive_mutex> ANONYMOUS (mMutex) ;
-		mThis->clear_directory (dire) ;
-	}
-
 	void enum_directory (const String<STR> &dire ,const Function<void (const String<STR> &)> &file_proc ,const Function<void (const String<STR> &)> &dire_proc) popping {
 		ScopedGuard<std::recursive_mutex> ANONYMOUS (mMutex) ;
 		mThis->enum_directory (dire ,file_proc ,dire_proc) ;
+	}
+
+	void clear_directory (const String<STR> &dire) {
+		ScopedGuard<std::recursive_mutex> ANONYMOUS (mMutex) ;
+		mThis->clear_directory (dire) ;
 	}
 
 private:

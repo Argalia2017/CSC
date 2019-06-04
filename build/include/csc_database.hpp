@@ -19,22 +19,35 @@ namespace CSC {
 class AbstractDatabase {
 public:
 	exports struct Abstract :public Interface {
-		virtual void load_data (AnyRef<void> &_this) = 0 ;
+		virtual void compute_load_data (AnyRef<void> &_this) = 0 ;
+	} ;
+
+	class Pack {
+	private:
+		friend AbstractDatabase ;
+		AnyRef<void> mHolder ;
 	} ;
 
 private:
 	PhanRef<const Abstract> mAbstract ;
-	AnyRef<void> mHolder ;
+	SharedRef<Pack> mThis ;
 
 public:
 	AbstractDatabase () = default ;
 
-	explicit AbstractDatabase (const PhanRef<const Abstract> &engine) :mAbstract (PhanRef<const Abstract>::make (engine)) {}
+	explicit AbstractDatabase (const PhanRef<const Abstract> &_abstract) :AbstractDatabase (PhanRef<const Abstract>::make (_abstract) ,SharedRef<Pack>::make ()) {}
 
 	BOOL exist () const {
 		if (!mAbstract.exist ())
 			return FALSE ;
-		return mHolder.exist () ;
+		if (!mThis.exist ())
+			return FALSE ;
+		if (!mThis->mHolder.exist ())
+			return FALSE ;
+		return TRUE ;
 	}
+
+private:
+	explicit AbstractDatabase (PhanRef<const Abstract> &&_abstract ,SharedRef<Pack> &&_this) :mAbstract (std::move (_abstract)) ,mThis (std::move (_this)) {}
 } ;
 } ;

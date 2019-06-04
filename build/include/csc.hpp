@@ -139,6 +139,53 @@
 #endif
 #endif
 
+#ifdef __CSC__
+#ifdef self
+#error "∑(っ°Д° ;)っ : defined 'self'"
+#endif
+#define self to ()
+
+#ifdef implicit
+#error "∑(っ°Д° ;)っ : defined 'implicit'"
+#endif
+#define implicit
+
+#ifdef popping
+#error "∑(っ°Д° ;)っ : defined 'popping'"
+#endif
+#define popping
+
+#ifdef imports
+#error "∑(っ°Д° ;)っ : defined 'imports'"
+#endif
+#define imports extern
+
+#ifdef exports
+#error "∑(っ°Д° ;)っ : defined 'exports'"
+#endif
+#define exports
+
+#ifdef discard
+#error "∑(っ°Д° ;)っ : defined 'discard'"
+#endif
+#define discard return (void) (if_flag = FALSE)
+#endif
+
+#ifdef __CSC__
+#pragma push_macro ("self")
+#pragma push_macro ("implicit")
+#pragma push_macro ("popping")
+#pragma push_macro ("imports")
+#pragma push_macro ("exports")
+#pragma push_macro ("discard")
+#undef self
+#undef implicit
+#undef popping
+#undef imports
+#undef exports
+#undef discard
+#endif
+
 #include <cstddef>
 #include <cstdint>
 #include <cassert>
@@ -151,16 +198,12 @@
 #include <utility>
 
 #ifdef __CSC__
-#pragma push_macro ("self")
-#pragma push_macro ("implicit")
-#pragma push_macro ("popping")
-#pragma push_macro ("imports")
-#pragma push_macro ("exports")
-#define self to ()
-#define implicit
-#define popping
-#define imports extern
-#define exports
+#pragma pop_macro ("self")
+#pragma pop_macro ("implicit")
+#pragma pop_macro ("popping")
+#pragma pop_macro ("imports")
+#pragma pop_macro ("exports")
+#pragma pop_macro ("discard")
 #endif
 
 namespace CSC {
@@ -297,6 +340,7 @@ using BOOL = bool ;
 #undef FALSE
 #endif
 #define FALSE false
+
 #ifdef TRUE
 #undef TRUE
 #endif
@@ -346,11 +390,13 @@ using VAL64 = double ;
 static constexpr auto VAL32_MAX = VAL32 (3.402823466E+38) ;
 static constexpr auto VAL32_MIN = VAL32 (1.175494351E-38) ;
 static constexpr auto VAL32_EPS = VAL32 (1.192092896E-07) ;
+static constexpr auto VAL32_PCS = LENGTH (6) ;
+static constexpr auto VAL32_INF = std::numeric_limits<VAL32>::infinity () ;
+static constexpr auto VAL32_NAN = std::numeric_limits<VAL32>::quiet_NaN () ;
 static constexpr auto VAL64_MAX = VAL64 (1.7976931348623158E+308) ;
 static constexpr auto VAL64_MIN = VAL64 (2.2250738585072014E-308) ;
 static constexpr auto VAL64_EPS = VAL64 (2.2204460492503131E-016) ;
-static constexpr auto VAL32_INF = std::numeric_limits<VAL32>::infinity () ;
-static constexpr auto VAL32_NAN = std::numeric_limits<VAL32>::quiet_NaN () ;
+static constexpr auto VAL64_PCS = LENGTH (15) ;
 static constexpr auto VAL64_INF = std::numeric_limits<VAL64>::infinity () ;
 static constexpr auto VAL64_NAN = std::numeric_limits<VAL64>::quiet_NaN () ;
 
@@ -360,6 +406,7 @@ using VAL = VAL32 ;
 static constexpr auto VAL_MAX = VAL32_MAX ;
 static constexpr auto VAL_MIN = VAL32_MIN ;
 static constexpr auto VAL_EPS = VAL32_EPS ;
+static constexpr auto VAL_PCS = VAL32_PCS ;
 static constexpr auto VAL_INF = VAL32_INF ;
 static constexpr auto VAL_NAN = VAL32_NAN ;
 #elif defined __CSC_CONFIG_VAL64__
@@ -368,6 +415,7 @@ using VAL = VAL64 ;
 static constexpr auto VAL_MAX = VAL64_MAX ;
 static constexpr auto VAL_MIN = VAL64_MIN ;
 static constexpr auto VAL_EPS = VAL64_EPS ;
+static constexpr auto VAL_PCS = VAL64_PCS ;
 static constexpr auto VAL_INF = VAL64_INF ;
 static constexpr auto VAL_NAN = VAL64_NAN ;
 #endif
@@ -891,7 +939,7 @@ inline CAST_TRAITS_TYPE<_RET ,_ARG1> &_LOAD_ (PTR<_ARG1> address) noexcept {
 }
 
 template <class _ARG1 ,class _ARG2 ,class _ARG3>
-inline CAST_TRAITS_TYPE<_ARG2 ,_ARG3> &_OFFSET_ (DEF<_ARG1 _ARG2::*> arg1 ,_ARG3 &arg2) noexcept {
+inline CAST_TRAITS_TYPE<_ARG2 ,_ARG3> &_OFFSET_ (const DEF<_ARG1 _ARG2::*> &arg1 ,_ARG3 &arg2) noexcept {
 	_STATIC_ASSERT_ (std::is_same<REMOVE_CVR_TYPE<_ARG3> ,_ARG1>::value) ;
 	_DEBUG_ASSERT_ (arg1 != NULL) ;
 	const auto r1x = &_NULL_<BYTE> () + _ADDRESS_ (&arg2) - _ADDRESS_ (&(_NULL_<_ARG2> ().*arg1)) ;
@@ -899,8 +947,22 @@ inline CAST_TRAITS_TYPE<_ARG2 ,_ARG3> &_OFFSET_ (DEF<_ARG1 _ARG2::*> arg1 ,_ARG3
 }
 
 template <class _RET>
-inline REMOVE_REFERENCE_TYPE<_RET> &_XVALUE_ (REMOVE_REFERENCE_TYPE<_RET> &arg1) noexcept {
-	_STATIC_ASSERT_ (std::is_lvalue_reference<_RET>::value) ;
+inline REMOVE_REFERENCE_TYPE<_RET> &_XVALUE_ (REMOVE_CVR_TYPE<_RET> &arg1) noexcept {
+	_STATIC_ASSERT_ (!std::is_reference<_RET>::value) ;
+	//@warn: required 'std::launder'
+	return arg1 ;
+}
+
+template <class _RET>
+inline REMOVE_REFERENCE_TYPE<_RET> &_XVALUE_ (REMOVE_CVR_TYPE<_RET> &&arg1) noexcept {
+	_STATIC_ASSERT_ (!std::is_reference<_RET>::value) ;
+	//@warn: required 'std::launder'
+	return arg1 ;
+}
+
+template <class _RET>
+inline const REMOVE_REFERENCE_TYPE<_RET> &_XVALUE_ (const REMOVE_CVR_TYPE<_RET> &arg1) noexcept {
+	_STATIC_ASSERT_ (!std::is_reference<_RET>::value) ;
 	//@warn: required 'std::launder'
 	return arg1 ;
 }
@@ -962,7 +1024,9 @@ inline void _DESTROY_ (PTR<TEMP<_ARG1>> address) noexcept {
 	_STATIC_ASSERT_ (std::is_nothrow_destructible<_ARG1>::value) ;
 	_STATIC_ASSERT_ (!std::is_array<_ARG1>::value) ;
 	_DEBUG_ASSERT_ (address != NULL) ;
-	_LOAD_<_ARG1> (address).~_ARG1 () ;
+	const auto r1x = &_LOAD_<_ARG1> (address) ;
+	r1x->~_ARG1 () ;
+	(void) r1x ;
 }
 
 template <class _ARG1>
@@ -976,34 +1040,51 @@ inline FLAG _TYPEID_ () noexcept {
 
 template <class _ARG1>
 inline RESULTOF_TYPE<_ARG1 ()> _CALL_ (_ARG1 &&arg1) popping {
+	_STATIC_ASSERT_ (!std::is_reference<_ARG1>::value) ;
+	_STATIC_ASSERT_ (!std::is_reference<RESULTOF_TYPE<_ARG1 ()>>::value) ;
 	return arg1 () ;
 }
 
-//@warn: assure ruined object when an exception was thrown
-template <class _ARG1 ,class _ARG2>
-inline void _CALL_TRY_ (const _ARG1 &arg1 ,const _ARG2 &arg2) ;
-
 template <class _ARG1>
-inline void _CALL_TRY_ (const _ARG1 &arg1 ,const decltype (std::nothrow) &) noexcept {
-	arg1 () ;
-}
-
-template <class _ARG1>
-inline void _CALL_IF_ (const _ARG1 &arg1) {
+inline void _CALL_IF_ (_ARG1 &&arg1) {
+	_STATIC_ASSERT_ (!std::is_reference<_ARG1>::value) ;
 	_STATIC_ASSERT_ (std::is_same<RESULTOF_TYPE<_ARG1 (BOOL &)> ,void>::value) ;
 	auto rax = TRUE ;
 	arg1 (rax) ;
 }
 
 template <class _ARG1 ,class... _ARGS>
-inline void _CALL_IF_ (const _ARG1 &arg1 ,const _ARGS &...args) {
+inline void _CALL_IF_ (_ARG1 &&arg1 ,_ARGS &&...args) {
+	_STATIC_ASSERT_ (!std::is_reference<_ARG1>::value) ;
 	_STATIC_ASSERT_ (std::is_same<RESULTOF_TYPE<_ARG1 (BOOL &)> ,void>::value) ;
 	auto rax = TRUE ;
 	arg1 (rax) ;
 	if (rax)
 		return ;
-	_CALL_IF_ (args...) ;
+	_CALL_IF_ (std::forward<_ARGS> (args)...) ;
 }
+
+//@warn: assure ruined object when an exception was thrown
+template <class _ARG1>
+inline void _CALL_TRY_ (_ARG1 &&arg1) {
+	_STATIC_ASSERT_ (!std::is_reference<_ARG1>::value) ;
+	_STATIC_ASSERT_ (std::is_same<RESULTOF_TYPE<_ARG1 ()> ,void>::value) ;
+	arg1 () ;
+}
+
+//@warn: assure ruined object when an exception was thrown
+template <class _ARG1 ,class... _ARGS>
+inline void _CALL_TRY_ (_ARG1 &&arg1 ,_ARGS &&...args) ;
+
+template <class _ARG1>
+inline void _CALL_EH_ (_ARG1 &&arg1) noexcept {
+	_STATIC_ASSERT_ (!std::is_reference<_ARG1>::value) ;
+	_STATIC_ASSERT_ (std::is_same<RESULTOF_TYPE<_ARG1 ()> ,void>::value) ;
+	arg1 () ;
+}
+
+template <class _ARG1 ,class _ARG2>
+inline void _CALL_EH_ (_ARG1 &&arg1 ,_ARG2 &&arg2) noexcept ;
 
 template <class _ARG1>
 inline const RESULTOF_TYPE<_ARG1 ()> &_CACHE_ (_ARG1 &&arg1) popping {
@@ -1058,7 +1139,7 @@ inline FLAG _MEMCOMP_ (const ARR<_ARG1> &src1 ,const ARR<_ARG1> &src2 ,LENGTH le
 		ir++ ;
 	if (ir < len && src1[ir] < src2[ir])
 		return -1 ;
-	if (ir < len && src1[ir] > src2[ir])
+	if (ir < len && src2[ir] < src1[ir])
 		return +1 ;
 	return 0 ;
 #pragma GCC diagnostic pop
@@ -1084,15 +1165,16 @@ inline FLAG _MEMHASH_ (const ARR<_ARG1> &src ,LENGTH len) {
 	_DEBUG_ASSERT_ (src != NULL || len == 0) ;
 	_DEBUG_ASSERT_ (len >= 0) ;
 #ifdef __CSC_CONFIG_VAR32__
-	FLAG ret = -2128831035 ;
-	const auto r1x = VAR (16777619) ;
+	static constexpr auto M_MAGIC_N1 = VAR (-2128831035) ;
+	static constexpr auto M_MAGIC_N2 = VAR (16777619) ;
 #elif defined __CSC_CONFIG_VAR64__
-	FLAG ret = -3750763034362895579 ;
-	const auto r1x = VAR (1099511628211) ;
+	static constexpr auto M_MAGIC_N1 = VAR (-3750763034362895579) ;
+	static constexpr auto M_MAGIC_N2 = VAR (1099511628211) ;
 #endif
+	FLAG ret = M_MAGIC_N1 ;
 	for (INDEX i = 0 ; i < len ; i++) {
 		ret ^= FLAG (src[i]) ;
-		ret *= r1x ;
+		ret *= M_MAGIC_N2 ;
 	}
 	ret &= VAR_MAX ;
 	return std::move (ret) ;
@@ -1185,12 +1267,12 @@ inline void _MEMRCOPY_ (ARR<_ARG1> &dst ,const ARR<_ARG1> &src ,LENGTH len) {
 		return ;
 	if (src == NULL)
 		return ;
-	_CALL_IF_ ([&] (BOOL &if_cond) {
+	_CALL_IF_ ([&] (BOOL &if_flag) {
 		if (dst == src)
-			return (void) (if_cond = FALSE) ;
+			discard ;
 		for (INDEX i = 0 ; i < len ; i++)
 			dst[i] = src[len + ~i] ;
-	} ,[&] (BOOL &if_cond) {
+	} ,[&] (BOOL &if_flag) {
 		for (INDEX i = 0 ,ie = len / 2 ; i < ie ; i++) {
 			const auto r1x = dst[i] ;
 			dst[i] = dst[len + ~i] ;
@@ -1221,12 +1303,12 @@ inline void _MEMMOVE_ (ARR<_ARG1> &dst1 ,ARR<_ARG1> &dst2 ,LENGTH len) {
 	_DEBUG_ASSERT_ (len >= 0) ;
 	if (dst1 == dst2)
 		return ;
-	_CALL_IF_ ([&] (BOOL &if_cond) {
+	_CALL_IF_ ([&] (BOOL &if_flag) {
 		if (dst1 > dst2)
-			return (void) (if_cond = FALSE) ;
+			discard ;
 		for (INDEX i = 0 ; i < len ; i++)
 			dst1[i] = std::move (dst2[i]) ;
-	} ,[&] (BOOL &if_cond) {
+	} ,[&] (BOOL &if_flag) {
 		for (INDEX i = len - 1 ; i >= 0 ; i--)
 			dst1[i] = std::move (dst2[i]) ;
 	}) ;
@@ -1389,10 +1471,11 @@ private:
 	}
 } ;
 
-template <class _ARG1 ,class _ARG2>
-inline void _CALL_TRY_ (const _ARG1 &arg1 ,const _ARG2 &arg2) {
+//@warn: assure ruined object when an exception was thrown
+template <class _ARG1 ,class... _ARGS>
+inline void _CALL_TRY_ (_ARG1 &&arg1 ,_ARGS &&...args) {
+	_STATIC_ASSERT_ (!std::is_reference<_ARG1>::value) ;
 	_STATIC_ASSERT_ (std::is_same<RESULTOF_TYPE<_ARG1 ()> ,void>::value) ;
-	_STATIC_ASSERT_ (std::is_same<RESULTOF_TYPE<_ARG2 ()> ,void>::value) ;
 	try {
 		arg1 () ;
 		return ;
@@ -1400,18 +1483,17 @@ inline void _CALL_TRY_ (const _ARG1 &arg1 ,const _ARG2 &arg2) {
 		const auto r1x = e.what () ;
 		(void) r1x ;
 	}
-	arg2 () ;
+	_CALL_TRY_ (std::forward<_ARGS> (args)...) ;
 }
 
 template <class _ARG1 ,class _ARG2>
-inline void _CALL_TRY_ (const _ARG1 &arg1 ,const _ARG2 &arg2 ,const decltype (std::nothrow) &) noexcept {
+inline void _CALL_EH_ (_ARG1 &&arg1 ,_ARG2 &&arg2) noexcept {
+	_STATIC_ASSERT_ (!std::is_reference<_ARG1>::value) ;
 	_STATIC_ASSERT_ (std::is_same<RESULTOF_TYPE<_ARG1 ()> ,void>::value) ;
-#ifndef __CSC_COMPILER_CLANG__
-	_STATIC_ASSERT_ (noexcept (_NULL_<const _ARG2> () (_NULL_<const Exception> ()))) ;
-#endif
+	_STATIC_ASSERT_ (!std::is_reference<_ARG2>::value) ;
+	_STATIC_ASSERT_ (std::is_same<RESULTOF_TYPE<_ARG2 (const Exception &)> ,void>::value) ;
 	try {
 		arg1 () ;
-		return ;
 	} catch (const Exception &e) {
 		arg2 (e) ;
 	}
@@ -1494,7 +1576,7 @@ public:
 		mInstance.self.P1[1] = _ADDRESS_ (&data) ;
 		mInstance.self.P1[2] = _ADDRESS_ (&watch<_ARG1 ,_ARG2 ,_VAL1>) ;
 		mInstance.self.P1[3] = 0 ;
-		const auto r2x = _XVALUE_<const volatile PTR<void (_ARG2 &)> &> (mInstance.self.P2) ;
+		const auto r2x = _COPY_ (mInstance.self.P2) ;
 		if (r2x == NULL)
 			return ;
 		r2x (data) ;
@@ -1537,7 +1619,7 @@ private:
 		template <class _RET ,class = ENABLE_TYPE<std::is_convertible<const PTR<TYPE> & ,_RET>::value>>
 		inline implicit operator _RET () const & {
 			_DEBUG_ASSERT_ (mPointer != NULL) ;
-			return _RET (_XVALUE_<const PTR<TYPE> &> (mPointer)) ;
+			return _RET (_XVALUE_<PTR<TYPE>> (mPointer)) ;
 		}
 
 		template <class _RET>
@@ -1599,17 +1681,9 @@ public:
 	}
 
 	inline ~ScopedGuard () noexcept {
-#ifdef __CSC_DEBUG__
-		_CALL_TRY_ ([&] () {
+		_CALL_EH_ ([&] () {
 			mLock.unlock () ;
-		} ,std::nothrow) ;
-#else
-		_CALL_TRY_ ([&] () {
-			mLock.unlock () ;
-		} ,[&] () {
-			(void) mLock ;
 		}) ;
-#endif
 	}
 
 	inline ScopedGuard (const ScopedGuard &) = delete ;
@@ -1627,13 +1701,13 @@ public:
 	inline ScopedHolder () = delete ;
 
 	template <class... _ARGS>
-	inline explicit ScopedHolder (const volatile PTR<TEMP<TYPE>> &address ,_ARGS &&...args) popping :mAddress (address) {
-		const auto r1x = _XVALUE_<const volatile PTR<TEMP<TYPE>> &> (mAddress) ;
+	inline explicit ScopedHolder (const volatile PTR<TEMP<TYPE>> &address ,_ARGS &&...args) :mAddress (address) {
+		const auto r1x = _COPY_ (mAddress) ;
 		_CREATE_ (r1x ,std::forward<_ARGS> (args)...) ;
 	}
 
 	inline ~ScopedHolder () noexcept {
-		const auto r1x = _XVALUE_<const volatile PTR<TEMP<TYPE>> &> (mAddress) ;
+		const auto r1x = _COPY_ (mAddress) ;
 		if (r1x == NULL)
 			return ;
 		_DESTROY_ (r1x) ;
@@ -1654,32 +1728,38 @@ private:
 public:
 	inline ScopedHolder () = delete ;
 
-	inline explicit ScopedHolder (const volatile PTR<ARR<TEMP<TYPE>>> &address ,LENGTH len) popping :mAddress (address) ,mWrite (0) {
-		const auto r1x = _XVALUE_<const volatile PTR<ARR<TEMP<TYPE>>> &> (mAddress) ;
+	inline explicit ScopedHolder (const volatile PTR<ARR<TEMP<TYPE>>> &address ,LENGTH len) :mAddress (address) ,mWrite (0) {
+		const auto r1x = _COPY_ (mAddress) ;
 		if (r1x == NULL)
 			return ;
-		while (mWrite < len) {
+		while (TRUE) {
+			if (mWrite >= len)
+				break ;
 			_CREATE_ (&(*r1x)[mWrite]) ;
 			mWrite++ ;
 		}
 	}
 
-	inline explicit ScopedHolder (const volatile PTR<ARR<TEMP<TYPE>>> &address ,const ARR<TYPE> &src ,LENGTH len) popping :mAddress (address) ,mWrite (0) {
+	inline explicit ScopedHolder (const volatile PTR<ARR<TEMP<TYPE>>> &address ,const ARR<TYPE> &src ,LENGTH len) :mAddress (address) ,mWrite (0) {
 		_DEBUG_ASSERT_ (src != NULL) ;
-		const auto r1x = _XVALUE_<const volatile PTR<ARR<TEMP<TYPE>>> &> (mAddress) ;
+		const auto r1x = _COPY_ (mAddress) ;
 		if (r1x == NULL)
 			return ;
-		while (mWrite < len) {
+		while (TRUE) {
+			if (mWrite >= len)
+				break ;
 			_CREATE_ (&(*r1x)[mWrite] ,src[mWrite]) ;
 			mWrite++ ;
 		}
 	}
 
 	inline ~ScopedHolder () noexcept {
-		const auto r1x = _XVALUE_<const volatile PTR<ARR<TEMP<TYPE>>> &> (mAddress) ;
+		const auto r1x = _COPY_ (mAddress) ;
 		if (r1x == NULL)
 			return ;
-		while (mWrite >= 0) {
+		while (TRUE) {
+			if (mWrite <= 0)
+				break ;
 			_DESTROY_ (&(*r1x)[mWrite]) ;
 			mWrite-- ;
 		}
@@ -1713,7 +1793,7 @@ private:
 	inline Singleton () {
 		auto sgd = GlobalHeap::alloc<TEMP<Pack>> () ;
 		ScopedHolder<Pack> ANONYMOUS (sgd) ;
-		mPointer = &_LOAD_<Pack> (_XVALUE_<const PTR<TEMP<Pack>> &> (sgd)) ;
+		mPointer = &_LOAD_<Pack> (_XVALUE_<PTR<TEMP<Pack>>> (sgd)) ;
 		sgd = NULL ;
 	}
 
@@ -1788,11 +1868,13 @@ public:
 	}
 
 	inline AutoRef &operator= (AutoRef &&right) noexcept {
-		if (this != &right) {
+		for (FOR_ONCE_DO_WHILE_FALSE) {
+			if (this == &right)
+				continue ;
 			this->~AutoRef () ;
 			new (this) AutoRef (std::move (right)) ;
 		}
-		return _XVALUE_<AutoRef &> (*this) ;
+		return _XVALUE_<AutoRef> (*this) ;
 	}
 
 private:
@@ -1835,17 +1917,19 @@ public:
 
 	inline AutoRef (const AutoRef &right) {
 		auto sgd = GlobalHeap::alloc<TEMP<Holder>> () ;
-		ScopedHolder<Holder> ANONYMOUS (sgd ,_XVALUE_<const TYPE &> (right.mPointer->mData)) ;
-		mPointer = &_LOAD_<Holder> (_XVALUE_<const PTR<TEMP<Holder>> &> (sgd)) ;
+		ScopedHolder<Holder> ANONYMOUS (sgd ,_XVALUE_<const TYPE> (right.mPointer->mData)) ;
+		mPointer = &_LOAD_<Holder> (_XVALUE_<PTR<TEMP<Holder>>> (sgd)) ;
 		sgd = NULL ;
 	}
 
 	inline AutoRef &operator= (const AutoRef &right) {
-		if (this != &right) {
+		for (FOR_ONCE_DO_WHILE_FALSE) {
+			if (this == &right)
+				continue ;
 			this->~AutoRef () ;
 			new (this) AutoRef (std::move (right)) ;
 		}
-		return _XVALUE_<AutoRef &> (*this) ;
+		return _XVALUE_<AutoRef> (*this) ;
 	}
 
 	inline AutoRef (AutoRef &&right) noexcept {
@@ -1853,11 +1937,13 @@ public:
 	}
 
 	inline AutoRef &operator= (AutoRef &&right) noexcept {
-		if (this != &right) {
+		for (FOR_ONCE_DO_WHILE_FALSE) {
+			if (this == &right)
+				continue ;
 			this->~AutoRef () ;
 			new (this) AutoRef (std::move (right)) ;
 		}
-		return _XVALUE_<AutoRef &> (*this) ;
+		return _XVALUE_<AutoRef> (*this) ;
 	}
 
 private:
@@ -1878,7 +1964,9 @@ public:
 	inline AutoRef () = default ;
 
 	inline BOOL exist () const {
-		return mPointer != NULL ;
+		if (mPointer == NULL)
+			return FALSE ;
+		return TRUE ;
 	}
 
 	inline TYPE &to () {
@@ -1915,7 +2003,7 @@ public:
 	inline static AutoRef make (_ARGS &&...args) {
 		auto sgd = GlobalHeap::alloc<TEMP<Holder>> () ;
 		ScopedHolder<Holder> ANONYMOUS (sgd ,std::forward<_ARGS> (args)...) ;
-		AutoRef ret = AutoRef (&_LOAD_<Holder> (_XVALUE_<const PTR<TEMP<Holder>> &> (sgd))) ;
+		AutoRef ret = AutoRef (&_LOAD_<Holder> (_XVALUE_<PTR<TEMP<Holder>>> (sgd))) ;
 		sgd = NULL ;
 		return std::move (ret) ;
 	}
@@ -1947,8 +2035,10 @@ public:
 	inline ~SharedRef () noexcept {
 		if (mPointer == NULL)
 			return ;
-		const auto r1x = --mPointer->mCounter == 0 ;
-		if (r1x) {
+		for (FOR_ONCE_DO_WHILE_FALSE) {
+			const auto r1x = --mPointer->mCounter == 0 ;
+			if (!r1x)
+				continue ;
 			mPointer->~Holder () ;
 			GlobalHeap::free (mPointer) ;
 		}
@@ -1958,11 +2048,13 @@ public:
 	inline SharedRef (const SharedRef &right) :SharedRef (right.mPointer) {}
 
 	inline SharedRef &operator= (const SharedRef &right) {
-		if (this != &right) {
+		for (FOR_ONCE_DO_WHILE_FALSE) {
+			if (this == &right)
+				continue ;
 			this->~SharedRef () ;
 			new (this) SharedRef (std::move (right)) ;
 		}
-		return _XVALUE_<SharedRef &> (*this) ;
+		return _XVALUE_<SharedRef> (*this) ;
 	}
 
 	inline SharedRef (SharedRef &&right) noexcept {
@@ -1970,15 +2062,19 @@ public:
 	}
 
 	inline SharedRef &operator= (SharedRef &&right) noexcept {
-		if (this != &right) {
+		for (FOR_ONCE_DO_WHILE_FALSE) {
+			if (this == &right)
+				continue ;
 			this->~SharedRef () ;
 			new (this) SharedRef (std::move (right)) ;
 		}
-		return _XVALUE_<SharedRef &> (*this) ;
+		return _XVALUE_<SharedRef> (*this) ;
 	}
 
 	inline BOOL exist () const {
-		return mPointer != NULL ;
+		if (mPointer == NULL)
+			return FALSE ;
+		return TRUE ;
 	}
 
 	inline TYPE &to () const {
@@ -1995,7 +2091,7 @@ public:
 	}
 
 private:
-	inline explicit SharedRef (PTR<Holder> pointer) popping {
+	inline explicit SharedRef (PTR<Holder> pointer) {
 		mPointer = _COPY_ (pointer) ;
 		if (mPointer == NULL)
 			return ;
@@ -2009,7 +2105,7 @@ public:
 	inline static SharedRef make (_ARGS &&...args) {
 		auto sgd = GlobalHeap::alloc<TEMP<Holder>> () ;
 		ScopedHolder<Holder> ANONYMOUS (sgd ,std::forward<_ARGS> (args)...) ;
-		SharedRef ret = SharedRef (&_LOAD_<Holder> (_XVALUE_<const PTR<TEMP<Holder>> &> (sgd))) ;
+		SharedRef ret = SharedRef (&_LOAD_<Holder> (_XVALUE_<PTR<TEMP<Holder>>> (sgd))) ;
 		sgd = NULL ;
 		return std::move (ret) ;
 	}
@@ -2065,27 +2161,34 @@ public:
 	}
 
 	inline AnyRef &operator= (AnyRef &&right) noexcept {
-		if (this != &right) {
+		for (FOR_ONCE_DO_WHILE_FALSE) {
+			if (this == &right)
+				continue ;
 			this->~AnyRef () ;
 			new (this) AnyRef (std::move (right)) ;
 		}
-		return _XVALUE_<AnyRef &> (*this) ;
+		return _XVALUE_<AnyRef> (*this) ;
 	}
 
 	template <class _RET>
-	inline AnyRef<_RET> &rebind () {
+	inline AnyRef<_RET> &rebind () & {
 		_STATIC_ASSERT_ (!std::is_reference<_RET>::value) ;
 		return _CAST_<AnyRef<_RET>> (*this) ;
 	}
 
 	template <class _RET>
-	inline const AnyRef<_RET> &rebind () const {
+	inline const AnyRef<_RET> &rebind () const & {
 		_STATIC_ASSERT_ (!std::is_reference<_RET>::value) ;
 		return _CAST_<AnyRef<_RET>> (*this) ;
 	}
+
+	template <class _RET>
+	inline AnyRef<_RET> &rebind () && = delete ;
 
 	inline BOOL exist () const {
-		return mPointer != NULL ;
+		if (mPointer == NULL)
+			return FALSE ;
+		return TRUE ;
 	}
 
 	inline FLAG type () const {
@@ -2127,7 +2230,7 @@ public:
 	inline static AnyRef make (_ARGS &&...args) {
 		auto sgd = GlobalHeap::alloc<TEMP<ImplHolder<TYPE>>> () ;
 		ScopedHolder<ImplHolder<TYPE>> ANONYMOUS (sgd ,std::forward<_ARGS> (args)...) ;
-		AnyRef ret = AnyRef (&_LOAD_<ImplHolder<TYPE>> (_XVALUE_<const PTR<TEMP<ImplHolder<TYPE>>> &> (sgd))) ;
+		AnyRef ret = AnyRef (&_LOAD_<ImplHolder<TYPE>> (_XVALUE_<PTR<TEMP<ImplHolder<TYPE>>>> (sgd))) ;
 		sgd = NULL ;
 		return std::move (ret) ;
 	}
@@ -2167,27 +2270,34 @@ public:
 	}
 
 	inline AnyRef &operator= (AnyRef &&right) noexcept {
-		if (this != &right) {
+		for (FOR_ONCE_DO_WHILE_FALSE) {
+			if (this == &right)
+				continue ;
 			this->~AnyRef () ;
 			new (this) AnyRef (std::move (right)) ;
 		}
-		return _XVALUE_<AnyRef &> (*this) ;
+		return _XVALUE_<AnyRef> (*this) ;
 	}
 
 	template <class _RET>
-	inline AnyRef<_RET> &rebind () {
+	inline AnyRef<_RET> &rebind () & {
 		_STATIC_ASSERT_ (!std::is_reference<_RET>::value) ;
 		return _CAST_<AnyRef<_RET>> (*this) ;
 	}
 
 	template <class _RET>
-	inline const AnyRef<_RET> &rebind () const {
+	inline const AnyRef<_RET> &rebind () const & {
 		_STATIC_ASSERT_ (!std::is_reference<_RET>::value) ;
 		return _CAST_<AnyRef<_RET>> (*this) ;
 	}
+
+	template <class _RET>
+	inline AnyRef<_RET> &rebind () && = delete ;
 
 	inline BOOL exist () const {
-		return mPointer != NULL ;
+		if (mPointer == NULL)
+			return FALSE ;
+		return TRUE ;
 	}
 
 	inline FLAG type () const {
@@ -2230,12 +2340,14 @@ public:
 	}
 
 	template <class _ARG1 ,class _ARG2>
-	inline explicit UniqueRef (const _ARG1 &constructor ,_ARG2 &&destructor) popping {
-		_STATIC_ASSERT_ (std::is_same<RESULTOF_TYPE<_ARG1 (TYPE &)> ,void>::value && std::is_same<RESULTOF_TYPE<_ARG2 (TYPE &)> ,void>::value) ;
-		_STATIC_ASSERT_ (std::is_convertible<_ARG2 ,PTR<void (TYPE &)>>::value) ;
-		auto sgd = GlobalHeap::alloc<TEMP<ImplHolder<_ARG2>>> () ;
-		ScopedHolder<ImplHolder<_ARG2>> ANONYMOUS (sgd ,std::forward<_ARG2> (destructor)) ;
-		const auto r1x = &_LOAD_<ImplHolder<_ARG2>> (_XVALUE_<const PTR<TEMP<ImplHolder<_ARG2>>> &> (sgd)) ;
+	inline explicit UniqueRef (_ARG1 &&constructor ,_ARG2 &&destructor) popping {
+		_STATIC_ASSERT_ (!std::is_reference<_ARG1>::value) ;
+		_STATIC_ASSERT_ (std::is_same<RESULTOF_TYPE<_ARG1 (TYPE &)> ,void>::value) ;
+		_STATIC_ASSERT_ (std::is_same<RESULTOF_TYPE<REMOVE_REFERENCE_TYPE<_ARG2> (TYPE &)> ,void>::value) ;
+		_STATIC_ASSERT_ (std::is_convertible<REMOVE_REFERENCE_TYPE<_ARG2> ,PTR<void (TYPE &)>>::value) ;
+		auto sgd = GlobalHeap::alloc<TEMP<ImplHolder<REMOVE_REFERENCE_TYPE<_ARG2>>>> () ;
+		ScopedHolder<ImplHolder<REMOVE_REFERENCE_TYPE<_ARG2>>> ANONYMOUS (sgd ,std::forward<_ARG2> (destructor)) ;
+		const auto r1x = &_LOAD_<ImplHolder<REMOVE_REFERENCE_TYPE<_ARG2>>> (_XVALUE_<PTR<TEMP<ImplHolder<REMOVE_REFERENCE_TYPE<_ARG2>>>>> (sgd)) ;
 		constructor (r1x->mData) ;
 		mPointer = r1x ;
 		sgd = NULL ;
@@ -2244,17 +2356,9 @@ public:
 	inline ~UniqueRef () noexcept {
 		if (mPointer == NULL)
 			return ;
-#ifdef __CSC_DEBUG__
-		_CALL_TRY_ ([&] () {
+		_CALL_EH_ ([&] () {
 			mPointer->release () ;
-		} ,std::nothrow) ;
-#else
-		_CALL_TRY_ ([&] () {
-			mPointer->release () ;
-		} ,[&] () {
-			(void) mPointer ;
 		}) ;
-#endif
 		mPointer->~Holder () ;
 		GlobalHeap::free (mPointer) ;
 		mPointer = NULL ;
@@ -2268,15 +2372,19 @@ public:
 	}
 
 	inline UniqueRef &operator= (UniqueRef &&right) noexcept {
-		if (this != &right) {
+		for (FOR_ONCE_DO_WHILE_FALSE) {
+			if (this == &right)
+				continue ;
 			this->~UniqueRef () ;
 			new (this) UniqueRef (std::move (right)) ;
 		}
-		return _XVALUE_<UniqueRef &> (*this) ;
+		return _XVALUE_<UniqueRef> (*this) ;
 	}
 
 	inline BOOL exist () const {
-		return mPointer != NULL ;
+		if (mPointer == NULL)
+			return FALSE ;
+		return TRUE ;
 	}
 
 	inline const TYPE &to () const {
@@ -2299,11 +2407,11 @@ public:
 	template <class... _ARGS>
 	inline static UniqueRef make (_ARGS &&...args) {
 		auto sgd = GlobalHeap::alloc<TEMP<ImplHolder<PTR<void (TYPE &)>>>> () ;
-		const auto r1x = _XVALUE_<const PTR<void (TYPE &)> &> ([] (TYPE &) {}) ;
+		const auto r1x = _XVALUE_<PTR<void (TYPE &)>> ([] (TYPE &) {}) ;
 		ScopedHolder<ImplHolder<PTR<void (TYPE &)>>> ANONYMOUS (sgd ,r1x) ;
-		const auto r2x = &_LOAD_<ImplHolder<PTR<void (TYPE &)>>> (_XVALUE_<const PTR<TEMP<ImplHolder<PTR<void (TYPE &)>>>> &> (sgd)) ;
+		const auto r2x = &_LOAD_<ImplHolder<PTR<void (TYPE &)>>> (_XVALUE_<PTR<TEMP<ImplHolder<PTR<void (TYPE &)>>>>> (sgd)) ;
 		r2x->mData = TYPE (std::forward<_ARGS> (args)...) ;
-		UniqueRef ret = UniqueRef (_XVALUE_<const PTR<Holder> &> (r2x)) ;
+		UniqueRef ret = UniqueRef (_XVALUE_<PTR<Holder>> (r2x)) ;
 		sgd = NULL ;
 		return std::move (ret) ;
 	}
@@ -2340,12 +2448,14 @@ public:
 	}
 
 	template <class _ARG1 ,class _ARG2>
-	inline explicit UniqueRef (const _ARG1 &constructor ,_ARG2 &&destructor) popping {
-		_STATIC_ASSERT_ (std::is_same<RESULTOF_TYPE<_ARG1 ()> ,void>::value && std::is_same<RESULTOF_TYPE<_ARG2 ()> ,void>::value) ;
-		_STATIC_ASSERT_ (std::is_convertible<_ARG2 ,PTR<void ()>>::value) ;
-		auto sgd = GlobalHeap::alloc<TEMP<ImplHolder<_ARG2>>> () ;
-		ScopedHolder<ImplHolder<_ARG2>> ANONYMOUS (sgd ,std::forward<_ARG2> (destructor)) ;
-		const auto r1x = &_LOAD_<ImplHolder<_ARG2>> (_XVALUE_<const PTR<TEMP<ImplHolder<_ARG2>>> &> (sgd)) ;
+	inline explicit UniqueRef (_ARG1 &&constructor ,_ARG2 &&destructor) popping {
+		_STATIC_ASSERT_ (!std::is_reference<_ARG1>::value) ;
+		_STATIC_ASSERT_ (std::is_same<RESULTOF_TYPE<_ARG1 ()> ,void>::value) ;
+		_STATIC_ASSERT_ (std::is_same<RESULTOF_TYPE<REMOVE_REFERENCE_TYPE<_ARG2> ()> ,void>::value) ;
+		_STATIC_ASSERT_ (std::is_convertible<REMOVE_REFERENCE_TYPE<_ARG2> ,PTR<void ()>>::value) ;
+		auto sgd = GlobalHeap::alloc<TEMP<ImplHolder<REMOVE_REFERENCE_TYPE<_ARG2>>>> () ;
+		ScopedHolder<ImplHolder<REMOVE_REFERENCE_TYPE<_ARG2>>> ANONYMOUS (sgd ,std::forward<_ARG2> (destructor)) ;
+		const auto r1x = &_LOAD_<ImplHolder<REMOVE_REFERENCE_TYPE<_ARG2>>> (_XVALUE_<PTR<TEMP<ImplHolder<REMOVE_REFERENCE_TYPE<_ARG2>>>>> (sgd)) ;
 		constructor () ;
 		mPointer = r1x ;
 		sgd = NULL ;
@@ -2354,17 +2464,9 @@ public:
 	inline ~UniqueRef () noexcept {
 		if (mPointer == NULL)
 			return ;
-#ifdef __CSC_DEBUG__
-		_CALL_TRY_ ([&] () {
+		_CALL_EH_ ([&] () {
 			mPointer->release () ;
-		} ,std::nothrow) ;
-#else
-		_CALL_TRY_ ([&] () {
-			mPointer->release () ;
-		} ,[&] () {
-			(void) mPointer ;
 		}) ;
-#endif
 		mPointer->~Holder () ;
 		GlobalHeap::free (mPointer) ;
 		mPointer = NULL ;
@@ -2378,15 +2480,19 @@ public:
 	}
 
 	inline UniqueRef &operator= (UniqueRef &&right) noexcept {
-		if (this != &right) {
+		for (FOR_ONCE_DO_WHILE_FALSE) {
+			if (this == &right)
+				continue ;
 			this->~UniqueRef () ;
 			new (this) UniqueRef (std::move (right)) ;
 		}
-		return _XVALUE_<UniqueRef &> (*this) ;
+		return _XVALUE_<UniqueRef> (*this) ;
 	}
 
 	inline BOOL exist () const {
-		return mPointer != NULL ;
+		if (mPointer == NULL)
+			return FALSE ;
+		return TRUE ;
 	}
 } ;
 
@@ -2412,15 +2518,19 @@ public:
 	}
 
 	inline PhanRef &operator= (PhanRef &&right) noexcept {
-		if (this != &right) {
+		for (FOR_ONCE_DO_WHILE_FALSE) {
+			if (this == &right)
+				continue ;
 			this->~PhanRef () ;
 			new (this) PhanRef (std::move (right)) ;
 		}
-		return _XVALUE_<PhanRef &> (*this) ;
+		return _XVALUE_<PhanRef> (*this) ;
 	}
 
 	inline BOOL exist () const {
-		return mPointer != NULL ;
+		if (mPointer == NULL)
+			return FALSE ;
+		return TRUE ;
 	}
 
 	inline TYPE &to () const {
@@ -2462,74 +2572,91 @@ private:
 		virtual TYPE1 invoke (FORWARD_TRAITS_TYPE<TYPES> &&...args) const popping = 0 ;
 	} ;
 
-	template <class>
-	class ImplHolder ;
+	template <class _TYPE>
+	class ImplHolder :public Function<TYPE1 (TYPES...)>::Holder {
+	private:
+		_TYPE mFunctor ;
+
+	public:
+		inline ImplHolder () = delete ;
+
+		inline explicit ImplHolder (const _TYPE &functor) :mFunctor (std::move (functor)) {}
+
+		inline explicit ImplHolder (_TYPE &&functor) :mFunctor (std::move (functor)) {}
+
+		inline TYPE1 invoke (FORWARD_TRAITS_TYPE<TYPES> &&...args) const popping override {
+			return mFunctor (std::forward<FORWARD_TRAITS_TYPE<TYPES>> (args)...) ;
+		}
+	} ;
 
 private:
-	PTR<Holder> mFunction1 ;
-	PTR<TYPE1 (TYPES...)> mFunction2 ;
+	PTR<Holder> mFunction_a ;
+	PTR<TYPE1 (TYPES...)> mFunction_b ;
 
 public:
 	inline Function () noexcept {
-		mFunction1 = NULL ;
-		mFunction2 = NULL ;
+		mFunction_a = NULL ;
+		mFunction_b = NULL ;
 	}
 
-	inline implicit Function (PTR<TYPE1 (TYPES...)> right) {
-		mFunction1 = NULL ;
-		mFunction2 = right ;
+	inline implicit Function (const PTR<TYPE1 (TYPES...)> &right) {
+		mFunction_a = NULL ;
+		mFunction_b = right ;
 	}
 
-	template <class _ARG1 ,class = ENABLE_TYPE<!std::is_same<REMOVE_CVR_TYPE<_ARG1> ,Function>::value>>
+	template <class _ARG1 ,class = ENABLE_TYPE<!std::is_same<REMOVE_CVR_TYPE<_ARG1> ,Function>::value && std::is_same<RESULTOF_TYPE<REMOVE_REFERENCE_TYPE<_ARG1> (TYPES...)> ,TYPE1>::value>>
 	inline implicit Function (_ARG1 &&right) {
-		_STATIC_ASSERT_ (std::is_same<RESULTOF_TYPE<REMOVE_CVR_TYPE<_ARG1> (TYPES...)> ,TYPE1>::value) ;
-		auto sgd = GlobalHeap::alloc<TEMP<ImplHolder<REMOVE_CVR_TYPE<_ARG1>>>> () ;
-		ScopedHolder<ImplHolder<REMOVE_CVR_TYPE<_ARG1>>> ANONYMOUS (sgd ,std::forward<_ARG1> (right)) ;
-		mFunction1 = &_LOAD_<ImplHolder<REMOVE_CVR_TYPE<_ARG1>>> (_XVALUE_<const PTR<TEMP<ImplHolder<REMOVE_CVR_TYPE<_ARG1>>>> &> (sgd)) ;
-		mFunction2 = NULL ;
+		auto sgd = GlobalHeap::alloc<TEMP<ImplHolder<REMOVE_REFERENCE_TYPE<_ARG1>>>> () ;
+		ScopedHolder<ImplHolder<REMOVE_REFERENCE_TYPE<_ARG1>>> ANONYMOUS (sgd ,std::forward<_ARG1> (right)) ;
+		mFunction_a = &_LOAD_<ImplHolder<REMOVE_REFERENCE_TYPE<_ARG1>>> (_XVALUE_<PTR<TEMP<ImplHolder<REMOVE_REFERENCE_TYPE<_ARG1>>>>> (sgd)) ;
+		mFunction_b = NULL ;
 		sgd = NULL ;
 	}
 
 	inline ~Function () noexcept {
-		if (mFunction1 == NULL && mFunction2 == NULL)
+		if (mFunction_a == NULL && mFunction_b == NULL)
 			return ;
-		if (mFunction1 != NULL) {
-			mFunction1->~Holder () ;
-			GlobalHeap::free (mFunction1) ;
+		for (FOR_ONCE_DO_WHILE_FALSE) {
+			if (mFunction_a == NULL)
+				continue ;
+			mFunction_a->~Holder () ;
+			GlobalHeap::free (mFunction_a) ;
 		}
-		mFunction1 = NULL ;
-		mFunction2 = NULL ;
+		mFunction_a = NULL ;
+		mFunction_b = NULL ;
 	}
 
 	inline Function (const Function &) = delete ;
 	inline Function &operator= (const Function &) = delete ;
 
 	inline Function (Function &&right) noexcept {
-		mFunction1 = _EXCHANGE_ (right.mFunction1) ;
-		mFunction2 = _EXCHANGE_ (right.mFunction2) ;
+		mFunction_a = _EXCHANGE_ (right.mFunction_a) ;
+		mFunction_b = _EXCHANGE_ (right.mFunction_b) ;
 	}
 
 	inline Function &operator= (Function &&right) noexcept {
-		if (this != &right) {
+		for (FOR_ONCE_DO_WHILE_FALSE) {
+			if (this == &right)
+				continue ;
 			this->~Function () ;
 			new (this) Function (std::move (right)) ;
 		}
-		return _XVALUE_<Function &> (*this) ;
+		return _XVALUE_<Function> (*this) ;
 	}
 
 	inline BOOL exist () const {
-		if (mFunction1 != NULL)
+		if (mFunction_a != NULL)
 			return TRUE ;
-		if (mFunction2 != NULL)
+		if (mFunction_b != NULL)
 			return TRUE ;
 		return FALSE ;
 	}
 
 	inline TYPE1 invoke (FORWARD_TRAITS_TYPE<TYPES> &&...args) const popping {
 		_DEBUG_ASSERT_ (exist ()) ;
-		if (mFunction2 != NULL)
-			return mFunction2 (std::forward<FORWARD_TRAITS_TYPE<TYPES>> (args)...) ;
-		return mFunction1->invoke (std::forward<FORWARD_TRAITS_TYPE<TYPES>> (args)...) ;
+		if (mFunction_b != NULL)
+			return mFunction_b (std::forward<FORWARD_TRAITS_TYPE<TYPES>> (args)...) ;
+		return mFunction_a->invoke (std::forward<FORWARD_TRAITS_TYPE<TYPES>> (args)...) ;
 	}
 
 	inline TYPE1 operator() (FORWARD_TRAITS_TYPE<TYPES> &&...args) const popping {
@@ -2537,30 +2664,12 @@ public:
 	}
 
 private:
-	inline explicit Function (PTR<Holder> pointer) :mFunction1 (pointer) ,mFunction2 (NULL) {}
+	inline explicit Function (PTR<Holder> pointer) :mFunction_a (pointer) ,mFunction_b (NULL) {}
 
 public:
 	//@info: the function is incompleted without 'csc_ext.hpp'
 	template <class... _ARGS>
-	inline static Function make (PTR<TYPE1 (TYPES... ,_ARGS...)> functor ,const REMOVE_CVR_TYPE<_ARGS> &...args) ;
-} ;
-
-template <class TYPE1 ,class... TYPES>
-template <class _TYPE>
-class Function<TYPE1 (TYPES...)>::ImplHolder :public Function<TYPE1 (TYPES...)>::Holder {
-private:
-	_TYPE mFunctor ;
-
-public:
-	inline ImplHolder () = delete ;
-
-	inline explicit ImplHolder (const _TYPE &functor) :mFunctor (std::move (functor)) {}
-
-	inline explicit ImplHolder (_TYPE &&functor) :mFunctor (std::move (functor)) {}
-
-	inline TYPE1 invoke (FORWARD_TRAITS_TYPE<TYPES> &&...args) const popping override {
-		return mFunctor (std::forward<FORWARD_TRAITS_TYPE<TYPES>> (args)...) ;
-	}
+	inline static Function make (const PTR<TYPE1 (TYPES... ,_ARGS...)> &function ,const REMOVE_CVR_TYPE<_ARGS> &...args) ;
 } ;
 
 template <class TYPE1 ,class... TYPES>
@@ -2576,9 +2685,6 @@ private:
 		virtual TYPE1 invoke (FORWARD_TRAITS_TYPE<TYPES> &&...args) const popping = 0 ;
 	} ;
 
-	template <class>
-	class ImplHolder ;
-
 	class FakeHolder :public Holder {
 	private:
 		PTR<NONE> mContext ;
@@ -2591,28 +2697,68 @@ private:
 		inline TYPE1 invoke (FORWARD_TRAITS_TYPE<TYPES> &&...args) const popping override ;
 	} ;
 
+	template <class>
+	class ImplHolder ;
+
+	class PureHolder :public Holder {
+	private:
+		PTR<TYPE1 (TYPES...)> mFunction ;
+
+	public:
+		inline PureHolder () = delete ;
+
+		inline explicit PureHolder (const PTR<TYPE1 (TYPES...)> &function) noexcept :mFunction (function) {}
+
+		inline void address_copy (PTR<TEMP<FakeHolder>> address) const noexcept override {
+			address_create<PureHolder> (address ,mFunction) ;
+		}
+
+		inline TYPE1 invoke (FORWARD_TRAITS_TYPE<TYPES> &&...args) const popping override {
+			return mFunction (std::forward<FORWARD_TRAITS_TYPE<TYPES>> (args)...) ;
+		}
+	} ;
+
 private:
 	TEMP<FakeHolder> mVariant ;
 
 public:
-	inline Function () = delete ;
+	inline Function () noexcept {
+		_ZERO_ (mVariant) ;
+	}
 
-	template <class _ARG1>
-	inline explicit Function (const PhanRef<_ARG1> &context ,DEF<DEF<TYPE1 (TYPES...)> _ARG1::*> function) noexcept {
-		_DEBUG_ASSERT_ (function != NULL) ;
-		ImplHolder<_ARG1>::address_create (&mVariant ,&context.self ,function) ;
+	inline implicit Function (const PTR<TYPE1 (TYPES...)> &right) noexcept {
+		_DEBUG_ASSERT_ (right != NULL) ;
+		address_create<PureHolder> (&mVariant ,right) ;
 	}
 
 	template <class _ARG1>
-	inline explicit Function (const PhanRef<const _ARG1> &context ,DEF<DEF<TYPE1 (TYPES...) const> _ARG1::*> function) noexcept {
+	inline explicit Function (const PhanRef<_ARG1> &context ,const DEF<DEF<TYPE1 (TYPES...)> _ARG1::*> &function) noexcept {
 		_DEBUG_ASSERT_ (function != NULL) ;
-		ImplHolder<const _ARG1>::address_create (&mVariant ,&context.self ,function) ;
+		address_create<ImplHolder<_ARG1>> (&mVariant ,&context.self ,function) ;
+	}
+
+	template <class _ARG1>
+	inline explicit Function (const PhanRef<_ARG1> &context ,const DEF<DEF<TYPE1 (TYPES...) const> _ARG1::*> &function) noexcept {
+		_DEBUG_ASSERT_ (function != NULL) ;
+		address_create<ImplHolder<const _ARG1>> (&mVariant ,&context.self ,function) ;
+	}
+
+	template <class _ARG1>
+	inline explicit Function (const PhanRef<const _ARG1> &context ,const DEF<DEF<TYPE1 (TYPES...) const> _ARG1::*> &function) noexcept {
+		_DEBUG_ASSERT_ (function != NULL) ;
+		address_create<ImplHolder<const _ARG1>> (&mVariant ,&context.self ,function) ;
+	}
+
+	template <class _ARG1>
+	inline explicit Function (const PhanRef<_ARG1> &context ,const PTR<TYPE1 (_ARG1 & ,TYPES...)> &function) noexcept {
+		_DEBUG_ASSERT_ (function != NULL) ;
+		address_create<ImplHolder<PTR<_ARG1>>> (&mVariant ,&context.self ,function) ;
 	}
 
 	inline ~Function () noexcept {
 		if (!exist ())
 			return ;
-		_XVALUE_<const Holder &> (_CAST_<FakeHolder> (mVariant)).~Holder () ;
+		_XVALUE_<Holder> (_CAST_<FakeHolder> (mVariant)).~Holder () ;
 		_ZERO_ (mVariant) ;
 	}
 
@@ -2623,30 +2769,47 @@ public:
 		_ZERO_ (mVariant) ;
 		if (!right.exist ())
 			return ;
-		_XVALUE_<const Holder &> (_CAST_<FakeHolder> (right.mVariant)).address_copy (&mVariant) ;
+		_XVALUE_<Holder> (_CAST_<FakeHolder> (right.mVariant)).address_copy (&mVariant) ;
 	}
 
 	inline Function &operator= (Function &&right) noexcept {
-		if (this != &right) {
+		for (FOR_ONCE_DO_WHILE_FALSE) {
+			if (this == &right)
+				continue ;
 			this->~Function () ;
 			new (this) Function (std::move (right)) ;
 		}
-		return _XVALUE_<Function &> (*this) ;
+		return _XVALUE_<Function> (*this) ;
 	}
 
 	inline BOOL exist () const {
-		auto rax = PACK<BYTE[_SIZEOF_ (TEMP<FakeHolder>)]> () ;
-		_ZERO_ (rax) ;
-		return !_MEMEQUAL_ (_CAST_<BYTE[_SIZEOF_ (TEMP<FakeHolder>)]> (mVariant) ,PTRTOARR[&rax.P1[0]]) ;
+		auto &r1 = _CACHE_ ([] () {
+			PACK<BYTE[_SIZEOF_ (TEMP<FakeHolder>)]> ret ;
+			_ZERO_ (ret) ;
+			return std::move (ret) ;
+		}) ;
+		return !_MEMEQUAL_ (_CAST_<BYTE[_SIZEOF_ (TEMP<FakeHolder>)]> (mVariant) ,PTRTOARR[&r1.P1[0]]) ;
 	}
 
 	inline TYPE1 invoke (FORWARD_TRAITS_TYPE<TYPES> &&...args) const popping {
 		_DEBUG_ASSERT_ (exist ()) ;
-		return _XVALUE_<const Holder &> (_CAST_<FakeHolder> (mVariant)).invoke (std::forward<FORWARD_TRAITS_TYPE<TYPES>> (args)...) ;
+		return _XVALUE_<Holder> (_CAST_<FakeHolder> (mVariant)).invoke (std::forward<FORWARD_TRAITS_TYPE<TYPES>> (args)...) ;
 	}
 
 	inline TYPE1 operator() (FORWARD_TRAITS_TYPE<TYPES> &&...args) const popping {
 		return invoke (std::forward<FORWARD_TRAITS_TYPE<TYPES>> (args)...) ;
+	}
+
+private:
+	template <class _RET ,class... _ARGS>
+	inline static void address_create (PTR<TEMP<FakeHolder>> address ,_ARGS &&...args) noexcept {
+		_STATIC_ASSERT_ (_ALIGNOF_ (TEMP<FakeHolder>) >= _ALIGNOF_ (TEMP<_RET>)) ;
+		_STATIC_ASSERT_ (_SIZEOF_ (TEMP<FakeHolder>) >= _SIZEOF_ (TEMP<_RET>)) ;
+		_DEBUG_ASSERT_ (address != NULL) ;
+		const auto r1x = &_LOAD_<TEMP<_RET>> (address->unused) ;
+		_DEBUG_ASSERT_ (_ADDRESS_ (&_XVALUE_<Holder> (_CAST_<FakeHolder> (*address))) == _ADDRESS_ (address)) ;
+		_DEBUG_ASSERT_ (_ADDRESS_ (&_XVALUE_<Holder> (_CAST_<_RET> (*r1x))) == _ADDRESS_ (r1x)) ;
+		_CREATE_ (r1x ,std::forward<_ARGS> (args)...) ;
 	}
 } ;
 
@@ -2660,25 +2823,14 @@ private:
 public:
 	inline ImplHolder () = delete ;
 
-	inline explicit ImplHolder (PTR<_TYPE> context ,DEF<DEF<TYPE1 (TYPES...)> _TYPE::*> function) noexcept :mContext (context) ,mFunction (function) {}
+	inline explicit ImplHolder (PTR<_TYPE> context ,const DEF<DEF<TYPE1 (TYPES...)> _TYPE::*> &function) noexcept :mContext (context) ,mFunction (function) {}
 
 	inline void address_copy (PTR<TEMP<FakeHolder>> address) const noexcept override {
-		address_create (address ,mContext ,mFunction) ;
+		address_create<ImplHolder> (address ,mContext ,mFunction) ;
 	}
 
 	inline TYPE1 invoke (FORWARD_TRAITS_TYPE<TYPES> &&...args) const popping override {
 		return (mContext->*mFunction) (std::forward<FORWARD_TRAITS_TYPE<TYPES>> (args)...) ;
-	}
-
-public:
-	inline static void address_create (PTR<TEMP<FakeHolder>> address ,PTR<_TYPE> context ,DEF<DEF<TYPE1 (TYPES...)> _TYPE::*> function) noexcept {
-		_STATIC_ASSERT_ (_ALIGNOF_ (TEMP<FakeHolder>) == _ALIGNOF_ (TEMP<ImplHolder>)) ;
-		_STATIC_ASSERT_ (_SIZEOF_ (TEMP<FakeHolder>) >= _SIZEOF_ (TEMP<ImplHolder>)) ;
-		_DEBUG_ASSERT_ (address != NULL) ;
-		const auto r1x = &_LOAD_<TEMP<ImplHolder>> (address->unused) ;
-		_DEBUG_ASSERT_ (_ADDRESS_ (&_XVALUE_<const Holder &> (_CAST_<FakeHolder> (*address))) == _ADDRESS_ (address)) ;
-		_DEBUG_ASSERT_ (_ADDRESS_ (&_XVALUE_<const Holder &> (_CAST_<ImplHolder> (*r1x))) == _ADDRESS_ (r1x)) ;
-		_CREATE_ (r1x ,context ,function) ;
 	}
 } ;
 
@@ -2692,25 +2844,35 @@ private:
 public:
 	inline ImplHolder () = delete ;
 
-	inline explicit ImplHolder (PTR<const _TYPE> context ,DEF<DEF<TYPE1 (TYPES...) const> _TYPE::*> function) noexcept :mContext (context) ,mFunction (function) {}
+	inline explicit ImplHolder (PTR<const _TYPE> context ,const DEF<DEF<TYPE1 (TYPES...) const> _TYPE::*> &function) noexcept :mContext (context) ,mFunction (function) {}
 
 	inline void address_copy (PTR<TEMP<FakeHolder>> address) const noexcept override {
-		address_create (address ,mContext ,mFunction) ;
+		address_create<ImplHolder> (address ,mContext ,mFunction) ;
 	}
 
 	inline TYPE1 invoke (FORWARD_TRAITS_TYPE<TYPES> &&...args) const popping override {
 		return (mContext->*mFunction) (std::forward<FORWARD_TRAITS_TYPE<TYPES>> (args)...) ;
 	}
+} ;
+
+template <class TYPE1 ,class... TYPES>
+template <class _TYPE>
+class Function<FIX_MSVC_DEDUCTION_2<TYPE1 ,TYPES...>>::ImplHolder<PTR<_TYPE>> :public Holder {
+private:
+	PTR<_TYPE> mContext ;
+	PTR<TYPE1 (_TYPE & ,TYPES...)> mFunction ;
 
 public:
-	inline static void address_create (PTR<TEMP<FakeHolder>> address ,PTR<const _TYPE> context ,DEF<DEF<TYPE1 (TYPES...) const> _TYPE::*> function) noexcept {
-		_STATIC_ASSERT_ (_ALIGNOF_ (TEMP<FakeHolder>) == _ALIGNOF_ (TEMP<ImplHolder>)) ;
-		_STATIC_ASSERT_ (_SIZEOF_ (TEMP<FakeHolder>) >= _SIZEOF_ (TEMP<ImplHolder>)) ;
-		_DEBUG_ASSERT_ (address != NULL) ;
-		const auto r1x = &_LOAD_<TEMP<ImplHolder>> (address->unused) ;
-		_DEBUG_ASSERT_ (_ADDRESS_ (&_XVALUE_<const Holder &> (_CAST_<FakeHolder> (*address))) == _ADDRESS_ (address)) ;
-		_DEBUG_ASSERT_ (_ADDRESS_ (&_XVALUE_<const Holder &> (_CAST_<ImplHolder> (*r1x))) == _ADDRESS_ (r1x)) ;
-		_CREATE_ (r1x ,context ,function) ;
+	inline ImplHolder () = delete ;
+
+	inline explicit ImplHolder (PTR<_TYPE> context ,const PTR<TYPE1 (_TYPE & ,TYPES...)> &function) noexcept :mContext (context) ,mFunction (function) {}
+
+	inline void address_copy (PTR<TEMP<FakeHolder>> address) const noexcept override {
+		address_create<ImplHolder> (address ,mContext ,mFunction) ;
+	}
+
+	inline TYPE1 invoke (FORWARD_TRAITS_TYPE<TYPES> &&...args) const popping override {
+		return mFunction (*mContext ,std::forward<FORWARD_TRAITS_TYPE<TYPES>> (args)...) ;
 	}
 } ;
 
@@ -2766,27 +2928,31 @@ public:
 		return SIZE ;
 	}
 
-	inline TYPE &get (INDEX index) {
+	inline TYPE &get (INDEX index) & {
 		_DEBUG_ASSERT_ (index >= 0 && index < size ()) ;
 		return mBuffer[index] ;
 	}
 
-	inline TYPE &operator[] (INDEX index) {
+	inline TYPE &operator[] (INDEX index) & {
 		return get (index) ;
 	}
 
-	inline const TYPE &get (INDEX index) const {
+	inline const TYPE &get (INDEX index) const & {
 		_DEBUG_ASSERT_ (index >= 0 && index < size ()) ;
 		return mBuffer[index] ;
 	}
 
-	inline const TYPE &operator[] (INDEX index) const {
+	inline const TYPE &operator[] (INDEX index) const & {
 		return get (index) ;
 	}
+
+	inline TYPE &get (INDEX) && = delete ;
+
+	inline TYPE &operator[] (INDEX) && = delete ;
 
 	inline INDEX at (const TYPE &item) const {
 		INDEX ret = &item - mBuffer ;
-		if (ret < 0 || ret >= size ())
+		if (!(ret >= 0 && ret < size ()))
 			ret = VAR_NONE ;
 		return std::move (ret) ;
 	}
@@ -2805,7 +2971,9 @@ public:
 
 	inline BOOL less (const Buffer &right) const {
 		const auto r1x = _MEMCOMP_ (mBuffer ,PTRTOARR[&right.mBuffer[0]]) ;
-		return r1x < 0 ;
+		if (r1x >= 0)
+			return FALSE ;
+		return TRUE ;
 	}
 
 	inline BOOL operator< (const Buffer &right) const {
@@ -2867,8 +3035,8 @@ public:
 		if (len == 0)
 			return ;
 		auto sgd = GlobalHeap::alloc<TEMP<TYPE>> (len) ;
-		ScopedHolder<ARR<TYPE>> ANONYMOUS (_XVALUE_<const PTR<ARR<TEMP<TYPE>>> &> (sgd) ,len) ;
-		mBuffer = &_LOAD_<ARR<TYPE>> (_XVALUE_<const PTR<ARR<TEMP<TYPE>>> &> (sgd)) ;
+		ScopedHolder<ARR<TYPE>> ANONYMOUS (_XVALUE_<PTR<ARR<TEMP<TYPE>>>> (sgd) ,len) ;
+		mBuffer = &_LOAD_<ARR<TYPE>> (_XVALUE_<PTR<ARR<TEMP<TYPE>>>> (sgd)) ;
 		mSize = len ;
 		sgd = NULL ;
 	}
@@ -2912,27 +3080,31 @@ public:
 		return mSize ;
 	}
 
-	inline TYPE &get (INDEX index) {
+	inline TYPE &get (INDEX index) & {
 		_DEBUG_ASSERT_ (index >= 0 && index < size ()) ;
 		return (*mBuffer)[index] ;
 	}
 
-	inline TYPE &operator[] (INDEX index) {
+	inline TYPE &operator[] (INDEX index) & {
 		return get (index) ;
 	}
 
-	inline const TYPE &get (INDEX index) const {
+	inline const TYPE &get (INDEX index) const & {
 		_DEBUG_ASSERT_ (index >= 0 && index < size ()) ;
 		return (*mBuffer)[index] ;
 	}
 
-	inline const TYPE &operator[] (INDEX index) const {
+	inline const TYPE &operator[] (INDEX index) const & {
 		return get (index) ;
 	}
+
+	inline TYPE &get (INDEX) && = delete ;
+
+	inline TYPE &operator[] (INDEX) && = delete ;
 
 	inline INDEX at (const TYPE &item) const {
 		INDEX ret = &item - *mBuffer ;
-		if (ret < 0 || ret >= size ())
+		if (!(ret >= 0 && ret < size ()))
 			ret = VAR_NONE ;
 		return std::move (ret) ;
 	}
@@ -3027,8 +3199,8 @@ public:
 		if (len == 0)
 			return ;
 		auto sgd = GlobalHeap::alloc<TEMP<TYPE>> (len) ;
-		ScopedHolder<ARR<TYPE>> ANONYMOUS (_XVALUE_<const PTR<ARR<TEMP<TYPE>>> &> (sgd) ,len) ;
-		mBuffer = &_LOAD_<ARR<TYPE>> (_XVALUE_<const PTR<ARR<TEMP<TYPE>>> &> (sgd)) ;
+		ScopedHolder<ARR<TYPE>> ANONYMOUS (_XVALUE_<PTR<ARR<TEMP<TYPE>>>> (sgd) ,len) ;
+		mBuffer = &_LOAD_<ARR<TYPE>> (_XVALUE_<PTR<ARR<TEMP<TYPE>>>> (sgd)) ;
 		mSize = len ;
 		sgd = NULL ;
 	}
@@ -3052,11 +3224,13 @@ public:
 	}
 
 	inline Buffer &operator= (Buffer &&right) noexcept {
-		if (this != &right) {
+		for (FOR_ONCE_DO_WHILE_FALSE) {
+			if (this == &right)
+				continue ;
 			this->~Buffer () ;
 			new (this) Buffer (std::move (right)) ;
 		}
-		return _XVALUE_<Buffer &> (*this) ;
+		return _XVALUE_<Buffer> (*this) ;
 	}
 } ;
 
@@ -3081,8 +3255,8 @@ public:
 		if (len == 0)
 			return ;
 		auto sgd = GlobalHeap::alloc<TEMP<TYPE>> (len) ;
-		ScopedHolder<ARR<TYPE>> ANONYMOUS (_XVALUE_<const PTR<ARR<TEMP<TYPE>>> &> (sgd) ,len) ;
-		mBuffer = &_LOAD_<ARR<TYPE>> (_XVALUE_<const PTR<ARR<TEMP<TYPE>>> &> (sgd)) ;
+		ScopedHolder<ARR<TYPE>> ANONYMOUS (_XVALUE_<PTR<ARR<TEMP<TYPE>>>> (sgd) ,len) ;
+		mBuffer = &_LOAD_<ARR<TYPE>> (_XVALUE_<PTR<ARR<TEMP<TYPE>>>> (sgd)) ;
 		mSize = len ;
 		sgd = NULL ;
 	}
@@ -3103,18 +3277,20 @@ public:
 		if (right.mSize == 0)
 			return ;
 		auto sgd = GlobalHeap::alloc<TEMP<TYPE>> (right.mSize) ;
-		ScopedHolder<ARR<TYPE>> ANONYMOUS (_XVALUE_<const PTR<ARR<TEMP<TYPE>>> &> (sgd) ,*right.mBuffer ,right.mSize) ;
-		mBuffer = &_LOAD_<ARR<TYPE>> (_XVALUE_<const PTR<ARR<TEMP<TYPE>>> &> (sgd)) ;
+		ScopedHolder<ARR<TYPE>> ANONYMOUS (_XVALUE_<PTR<ARR<TEMP<TYPE>>>> (sgd) ,*right.mBuffer ,right.mSize) ;
+		mBuffer = &_LOAD_<ARR<TYPE>> (_XVALUE_<PTR<ARR<TEMP<TYPE>>>> (sgd)) ;
 		mSize = right.mSize ;
 		sgd = NULL ;
 	}
 
 	inline Buffer &operator= (const Buffer &right) {
-		if (this != &right) {
+		for (FOR_ONCE_DO_WHILE_FALSE) {
+			if (this == &right)
+				continue ;
 			this->~Buffer () ;
 			new (this) Buffer (std::move (right)) ;
 		}
-		return _XVALUE_<Buffer &> (*this) ;
+		return _XVALUE_<Buffer> (*this) ;
 	}
 
 	inline Buffer (Buffer &&right) noexcept {
@@ -3123,11 +3299,13 @@ public:
 	}
 
 	inline Buffer &operator= (Buffer &&right) noexcept {
-		if (this != &right) {
+		for (FOR_ONCE_DO_WHILE_FALSE) {
+			if (this == &right)
+				continue ;
 			this->~Buffer () ;
 			new (this) Buffer (std::move (right)) ;
 		}
-		return _XVALUE_<Buffer &> (*this) ;
+		return _XVALUE_<Buffer> (*this) ;
 	}
 } ;
 
@@ -3170,27 +3348,31 @@ public:
 		return mSize ;
 	}
 
-	inline TYPE &get (INDEX index) {
+	inline TYPE &get (INDEX index) & {
 		_DEBUG_ASSERT_ (index >= 0 && index < size ()) ;
 		return (*mBuffer)[index] ;
 	}
 
-	inline TYPE &operator[] (INDEX index) {
+	inline TYPE &operator[] (INDEX index) & {
 		return get (index) ;
 	}
 
-	inline const TYPE &get (INDEX index) const {
+	inline const TYPE &get (INDEX index) const & {
 		_DEBUG_ASSERT_ (index >= 0 && index < size ()) ;
 		return (*mBuffer)[index] ;
 	}
 
-	inline const TYPE &operator[] (INDEX index) const {
+	inline const TYPE &operator[] (INDEX index) const & {
 		return get (index) ;
 	}
+
+	inline TYPE &get (INDEX) && = delete ;
+
+	inline TYPE &operator[] (INDEX) && = delete ;
 
 	inline INDEX at (const TYPE &item) const {
 		INDEX ret = &item - *mBuffer ;
-		if (ret < 0 || ret >= size ())
+		if (!(ret >= 0 && ret < size ()))
 			ret = VAR_NONE ;
 		return std::move (ret) ;
 	}
@@ -3293,11 +3475,13 @@ public:
 	}
 
 	inline Buffer &operator= (Buffer &&right) noexcept {
-		if (this != &right) {
+		for (FOR_ONCE_DO_WHILE_FALSE) {
+			if (this == &right)
+				continue ;
 			this->~Buffer () ;
 			new (this) Buffer (std::move (right)) ;
 		}
-		return _XVALUE_<Buffer &> (*this) ;
+		return _XVALUE_<Buffer> (*this) ;
 	}
 
 	inline const ARR<TYPE> &to () const {
@@ -3314,7 +3498,7 @@ public:
 		return mSize ;
 	}
 
-	inline const TYPE &get (INDEX index) const {
+	inline const TYPE &get (INDEX index) const & {
 #pragma GCC diagnostic push
 #ifdef __CSC_COMPILER_GNUC__
 #pragma GCC diagnostic ignored "-Warray-bounds"
@@ -3324,13 +3508,17 @@ public:
 #pragma GCC diagnostic pop
 	}
 
-	inline const TYPE &operator[] (INDEX index) const {
+	inline const TYPE &operator[] (INDEX index) const & {
 		return get (index) ;
 	}
 
+	inline const TYPE &get (INDEX) && = delete ;
+
+	inline const TYPE &operator[] (INDEX) && = delete ;
+
 	inline INDEX at (const TYPE &item) const {
 		INDEX ret = &item - *mBuffer ;
-		if (ret < 0 || ret >= size ())
+		if (!(ret >= 0 && ret < size ()))
 			ret = VAR_NONE ;
 		return std::move (ret) ;
 	}
@@ -3401,8 +3589,9 @@ public:
 	inline static Buffer make (const ARR<TYPE> &src ,LENGTH len) {
 		_DEBUG_ASSERT_ (src != NULL || len == 0) ;
 		_DEBUG_ASSERT_ (len >= 0) ;
-		const auto r1x = (len > 0) ? (&src) : NULL ;
-		return Buffer (r1x ,len) ;
+		if (len == 0)
+			return Buffer (NULL ,0) ;
+		return Buffer (&src ,len) ;
 	}
 
 	template <LENGTH _VAL1>
@@ -3458,11 +3647,13 @@ public:
 	}
 
 	inline Buffer &operator= (Buffer &&right) noexcept {
-		if (this != &right) {
+		for (FOR_ONCE_DO_WHILE_FALSE) {
+			if (this == &right)
+				continue ;
 			this->~Buffer () ;
 			new (this) Buffer (std::move (right)) ;
 		}
-		return _XVALUE_<Buffer &> (*this) ;
+		return _XVALUE_<Buffer> (*this) ;
 	}
 
 	inline ARR<TYPE> &to () const {
@@ -3479,7 +3670,7 @@ public:
 		return mSize ;
 	}
 
-	inline TYPE &get (INDEX index) const {
+	inline TYPE &get (INDEX index) const & {
 #pragma GCC diagnostic push
 #ifdef __CSC_COMPILER_GNUC__
 #pragma GCC diagnostic ignored "-Warray-bounds"
@@ -3489,13 +3680,17 @@ public:
 #pragma GCC diagnostic pop
 	}
 
-	inline TYPE &operator[] (INDEX index) const {
+	inline TYPE &operator[] (INDEX index) const & {
 		return get (index) ;
 	}
 
+	inline TYPE &get (INDEX) && = delete ;
+
+	inline TYPE &operator[] (INDEX) && = delete ;
+
 	inline INDEX at (const TYPE &item) const {
 		INDEX ret = &item - *mBuffer ;
-		if (ret < 0 || ret >= size ())
+		if (!(ret >= 0 && ret < size ()))
 			ret = VAR_NONE ;
 		return std::move (ret) ;
 	}
@@ -3566,8 +3761,9 @@ public:
 	inline static Buffer make (ARR<TYPE> &src ,LENGTH len) {
 		_DEBUG_ASSERT_ (src != NULL || len == 0) ;
 		_DEBUG_ASSERT_ (len >= 0) ;
-		const auto r1x = (len > 0) ? (&src) : NULL ;
-		return Buffer (r1x ,len) ;
+		if (len == 0)
+			return Buffer (NULL ,0) ;
+		return Buffer (&src ,len) ;
 	}
 
 	template <LENGTH _VAL1>
@@ -3694,11 +3890,13 @@ public:
 	}
 
 	inline Allocator &operator= (Allocator &&right) noexcept {
-		if (this != &right) {
+		for (FOR_ONCE_DO_WHILE_FALSE) {
+			if (this == &right)
+				continue ;
 			this->~Allocator () ;
 			new (this) Allocator (std::move (right)) ;
 		}
-		return _XVALUE_<Allocator &> (*this) ;
+		return _XVALUE_<Allocator> (*this) ;
 	}
 } ;
 
@@ -3757,8 +3955,8 @@ public:
 			}
 		} ;
 		ScopedGuard<Finally> ANONYMOUS (_CAST_<Finally> (*this)) ;
-		const auto r1x = (std::is_pod<TYPE>::value) ? (mAllocator.size ()) : 0 ;
-		for (INDEX i = r1x ; i < mAllocator.size () ; i++) {
+		const auto r2x = (std::is_pod<TYPE>::value) ? (mAllocator.size ()) : 0 ;
+		for (INDEX i = r2x ; i < mAllocator.size () ; i++) {
 			if (mAllocator[i].mNext != VAR_USED)
 				continue ;
 			_CREATE_ (&mAllocator[i].mData ,std::move (_CAST_<TYPE> (right.mAllocator[i].mData))) ;
@@ -3768,11 +3966,13 @@ public:
 	}
 
 	inline Allocator &operator= (const Allocator &right) {
-		if (this != &right) {
+		for (FOR_ONCE_DO_WHILE_FALSE) {
+			if (this == &right)
+				continue ;
 			this->~Allocator () ;
 			new (this) Allocator (std::move (right)) ;
 		}
-		return _XVALUE_<Allocator &> (*this) ;
+		return _XVALUE_<Allocator> (*this) ;
 	}
 
 	inline Allocator (Allocator &&right) noexcept :mAllocator (std::move (right.mAllocator)) {
@@ -3789,11 +3989,13 @@ public:
 	}
 
 	inline Allocator &operator= (Allocator &&right) noexcept {
-		if (this != &right) {
+		for (FOR_ONCE_DO_WHILE_FALSE) {
+			if (this == &right)
+				continue ;
 			this->~Allocator () ;
 			new (this) Allocator (std::move (right)) ;
 		}
-		return _XVALUE_<Allocator &> (*this) ;
+		return _XVALUE_<Allocator> (*this) ;
 	}
 } ;
 
@@ -3836,26 +4038,32 @@ public:
 	}
 
 	inline BOOL used (INDEX index) const {
-		return mAllocator[index].mNext == VAR_USED ;
+		if (mAllocator[index].mNext != VAR_USED)
+			return FALSE ;
+		return TRUE ;
 	}
 
-	inline TYPE &get (INDEX index) {
+	inline TYPE &get (INDEX index) & {
 		_DEBUG_ASSERT_ (used (index)) ;
 		return _CAST_<TYPE> (mAllocator[index].mData) ;
 	}
 
-	inline TYPE &operator[] (INDEX index) {
+	inline TYPE &operator[] (INDEX index) & {
 		return get (index) ;
 	}
 
-	inline const TYPE &get (INDEX index) const {
+	inline const TYPE &get (INDEX index) const & {
 		_DEBUG_ASSERT_ (used (index)) ;
 		return _CAST_<TYPE> (mAllocator[index].mData) ;
 	}
 
-	inline const TYPE &operator[] (INDEX index) const {
+	inline const TYPE &operator[] (INDEX index) const & {
 		return get (index) ;
 	}
+
+	inline TYPE &get (INDEX) && = delete ;
+
+	inline TYPE &operator[] (INDEX) && = delete ;
 
 	inline INDEX at (const TYPE &item) const {
 		INDEX ret = mAllocator.at (_OFFSET_ (&Pack::mData ,_CAST_<TEMP<TYPE>> (item))) ;
@@ -3873,8 +4081,12 @@ public:
 	template <class... _ARGS>
 	inline INDEX alloc (_ARGS &&...args) popping {
 		_STATIC_ASSERT_ (std::is_nothrow_move_constructible<TYPE>::value && std::is_nothrow_move_assignable<TYPE>::value) ;
-		_STATIC_WARNING_ ("unqualified") ;
-		if (mFree == VAR_NONE) {
+		INDEX ret = VAR_NONE ;
+		for (FOR_ONCE_DO_WHILE_FALSE) {
+			if (ret != VAR_NONE)
+				continue ;
+			if (mFree != VAR_NONE)
+				continue ;
 			auto rax = mAllocator.expand () ;
 			_CREATE_ (&rax[mLength].mData ,std::forward<_ARGS> (args)...) ;
 			for (INDEX i = 0 ; i < mAllocator.size () ; i++) {
@@ -3883,10 +4095,16 @@ public:
 			}
 			mAllocator.swap (rax) ;
 			update_free (mLength ,mFree) ;
-		} else {
-			_CREATE_ (&mAllocator[mFree].mData ,std::forward<_ARGS> (args)...) ;
+			ret = mFree ;
 		}
-		INDEX ret = mFree ;
+		for (FOR_ONCE_DO_WHILE_FALSE) {
+			if (ret != VAR_NONE)
+				continue ;
+			if (mFree == VAR_NONE)
+				continue ;
+			_CREATE_ (&mAllocator[mFree].mData ,std::forward<_ARGS> (args)...) ;
+			ret = mFree ;
+		}
 		mFree = mAllocator[mFree].mNext ;
 		mAllocator[ret].mNext = VAR_USED ;
 		mLength++ ;

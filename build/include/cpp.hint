@@ -5,6 +5,7 @@
 #define popping
 #define imports
 #define exports
+#define discard
 
 #define M_DATE
 #define M_TIME

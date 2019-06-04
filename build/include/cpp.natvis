@@ -69,10 +69,10 @@
 
 
   <Type Name="CSC::Function&lt;*&gt;">
-    <DisplayString Condition="mFunction1==0&amp;&amp;mFunction2==0">{{ NULL }}</DisplayString>
+    <DisplayString Condition="mFunction_a==0&amp;&amp;mFunction_b==0">{{ NULL }}</DisplayString>
     <Expand>
-      <Item Name="[function]" Condition="mFunction1!=0">mFunction1</Item>
-      <Item Name="[function]" Condition="mFunction1!=0">mFunction2</Item>
+      <Item Name="[function]" Condition="mFunction_a!=0">mFunction_a</Item>
+      <Item Name="[function]" Condition="mFunction_b!=0">mFunction_b</Item>
     </Expand>
   </Type>
 

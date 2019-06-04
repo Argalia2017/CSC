@@ -17,6 +17,8 @@ namespace UNITTEST {
 
 } ;
 
+#include <filesystem>
+
 TEST_CLASS (UNITTEST_MAIN) {
 public:
 	TEST_METHOD (TEST_MAIN) {
