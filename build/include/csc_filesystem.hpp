@@ -48,9 +48,9 @@ inline imports DEF<String<STR> (const String<STR> &path)> _ABSOLUTEPATH_ ;
 
 inline imports DEF<String<STR> (const String<STR> &path ,const String<STR> &file)> _RELATIVEPATHNAME_ ;
 
-inline imports DEF<String<STR> ()> _MODULEFILEPATH_ ;
+inline imports DEF<const String<STR> & () popping> _MODULEFILEPATH_ ;
 
-inline imports DEF<String<STR> ()> _MODULEFILENAME_ ;
+inline imports DEF<const String<STR> & () popping> _MODULEFILENAME_ ;
 
 inline imports DEF<BOOL (const String<STR> &dire) popping> _FINDDIRECTORY_ ;
 

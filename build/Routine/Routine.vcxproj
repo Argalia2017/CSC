@@ -57,6 +57,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\..\..\..\Depends\__CSC__\cpp.hint" />
+    <None Include="..\..\..\..\..\Depends\__CSC__\csc.hpp.traits.inl" />
     <None Include="..\..\..\..\..\Depends\__CSC__\csc.rule" />
     <None Include="..\..\..\..\..\Depends\__CSC__\csc_database.hpp.mysql.inl" />
     <None Include="..\..\..\..\..\Depends\__CSC__\csc_debugger.hpp.linux.inl" />
@@ -68,6 +69,7 @@
     <None Include="..\..\..\..\..\Depends\__CSC__\csc_images.hpp.opencv.inl" />
     <None Include="..\..\..\..\..\Depends\__CSC__\csc_math.hpp.default.inl" />
     <None Include="..\..\..\..\..\Depends\__CSC__\csc_network.hpp.windows.inl" />
+    <None Include="..\..\..\..\..\Depends\__CSC__\csc_runtime.hpp.default.inl" />
     <None Include="..\..\..\..\..\Depends\__CSC__\csc_string.hpp.default.inl" />
   </ItemGroup>
   <ItemGroup>

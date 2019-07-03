@@ -26,7 +26,6 @@
 
 #if defined (linux) || defined (__linux) || defined (__linux__)
 #define __CSC_SYSTEM_LINUX__
-#elif defined SAG_COM
 #elif defined (WIN32) || defined (_WIN32) || defined (__WIN32__)
 #define __CSC_SYSTEM_WINDOWS__
 #endif
@@ -164,11 +163,6 @@
 #error "∑(っ°Д° ;)っ : defined 'exports'"
 #endif
 #define exports
-
-#ifdef discard
-#error "∑(っ°Д° ;)っ : defined 'discard'"
-#endif
-#define discard return (void) (if_flag = FALSE)
 #endif
 
 #ifdef __CSC__
@@ -177,13 +171,11 @@
 #pragma push_macro ("popping")
 #pragma push_macro ("imports")
 #pragma push_macro ("exports")
-#pragma push_macro ("discard")
 #undef self
 #undef implicit
 #undef popping
 #undef imports
 #undef exports
-#undef discard
 #endif
 
 #include <cstddef>
@@ -193,7 +185,6 @@
 #include <type_traits>
 #include <initializer_list>
 #include <new>
-#include <exception>
 #include <typeinfo>
 #include <utility>
 
@@ -203,7 +194,6 @@
 #pragma pop_macro ("popping")
 #pragma pop_macro ("imports")
 #pragma pop_macro ("exports")
-#pragma pop_macro ("discard")
 #endif
 
 namespace CSC {
@@ -242,6 +232,12 @@ using std::is_member_pointer ;
 using std::is_array ;
 using std::is_function ;
 using std::is_pod ;
+
+#ifndef __CSC_COMPILER_GNUC__
+//@error: 'std::is_trivial' is not avaliable in g++4.8
+using std::is_trivial ;
+#endif
+
 using std::is_same ;
 using std::is_base_of ;
 using std::is_abstract ;
@@ -272,10 +268,17 @@ using std::remove_pointer ;
 using std::remove_extent ;
 } ;
 
+#define _UNWIND_X_(...) __VA_ARGS__
+#define _UNW_(...) _UNWIND_X_(__VA_ARGS__)
+#define _STRINGIZE_X_(...) #__VA_ARGS__
+#define _STR_(...) _STRINGIZE_X_(__VA_ARGS__)
+#define _CONCAT_X_(arg1 ,arg2) arg1 ## arg2
+#define _CAT_(arg1 ,arg2) _CONCAT_X_(arg1 ,arg2)
+
 #define M_DATE __DATE__
-#define M_TIME __TIME__
+#define M_HOUR __TIME__
 #define M_FILE __FILE__
-#define M_LINE __LINE__
+#define M_LINE _STR_ (__LINE__)
 
 #ifdef __CSC_COMPILER_MSVC__
 #define M_FUNC __FUNCSIG__
@@ -284,15 +287,8 @@ using std::remove_extent ;
 #elif defined __CSC_COMPILER_CLANG__
 #define M_FUNC __PRETTY_FUNCTION__
 #else
-#define M_FUNC __FUNCTION__
+#define M_FUNC __func__
 #endif
-
-#define _UNW_X_(...) __VA_ARGS__
-#define _UNW_(...) _UNW_X_(__VA_ARGS__)
-#define _STR_X_(...) #__VA_ARGS__
-#define _STR_(...) _STR_X_(__VA_ARGS__)
-#define _CAT_X_(arg1 ,arg2) arg1 ## arg2
-#define _CAT_(arg1 ,arg2) _CAT_X_(arg1 ,arg2)
 
 #define _STATIC_ASSERT_(...) static_assert ((_UNW_ (__VA_ARGS__)) ,"static_assert failed : " _STR_ (__VA_ARGS__))
 
@@ -310,12 +306,10 @@ using std::remove_extent ;
 #define _DEBUG_ASSERT_(...) do {} while (FALSE)
 #endif
 
-#ifdef __CSC_COMPILER_CLANG__
-#define _DYNAMIC_ASSERT_(...) do { struct ARGVPL ; if (!(_UNW_ (__VA_ARGS__))) throw CSC::Exception (CSC::_NULL_<CSC::ARGV<ARGVPL>> () ,"dynamic_assert failed : " _STR_ (__VA_ARGS__) " : at " ,M_FUNC ," in " M_FILE " ," _STR_ (M_LINE)) ; } while (FALSE)
-#elif defined __CSC_COMPILER_GNUC__
-#define _DYNAMIC_ASSERT_(...) do { struct ARGVPL ; if (!(_UNW_ (__VA_ARGS__))) throw CSC::Exception (CSC::_NULL_<CSC::ARGV<ARGVPL>> () ,"dynamic_assert failed : " _STR_ (__VA_ARGS__) " : at " ,M_FUNC ," in " M_FILE " ," _STR_ (M_LINE)) ; } while (FALSE)
-#elif defined __CSC_COMPILER_MSVC__
-#define _DYNAMIC_ASSERT_(...) do { if (!(_UNW_ (__VA_ARGS__))) throw CSC::Exception (_PCSTR_ ("dynamic_assert failed : " _STR_ (__VA_ARGS__) " : at " M_FUNC " in " M_FILE " ," _STR_ (M_LINE))) ; } while (FALSE)
+#ifdef __CSC_COMPILER_MSVC__
+#define _DYNAMIC_ASSERT_(...) do { if (!(_UNW_ (__VA_ARGS__))) CSC::Exception (_PCSTR_ ("dynamic_assert failed : " _STR_ (__VA_ARGS__) " : at " M_FUNC " in " M_FILE " ," M_LINE)).raise () ; } while (FALSE)
+#else
+#define _DYNAMIC_ASSERT_(...) do { struct ARGVPL ; if (!(_UNW_ (__VA_ARGS__))) CSC::Exception (CSC::_NULL_<CSC::ARGV<ARGVPL>> () ,"dynamic_assert failed : " _STR_ (__VA_ARGS__) " : at " ,M_FUNC ," in " ,M_FILE ," ," ,M_LINE).raise () ; } while (FALSE)
 #endif
 
 #ifdef __CSC_UNITTEST__
@@ -324,15 +318,17 @@ using std::remove_extent ;
 #define _UNITTEST_WATCH_(...) do {} while (FALSE)
 #endif
 
-#define ANONYMOUS _CAT_ (_anonymous_ ,M_LINE)
+#define ANONYMOUS _CAT_ (_anonymous_ ,__LINE__)
 
 #ifdef __CSC_COMPILER_MSVC__
-#define FOR_ONCE_DO_WHILE_FALSE auto ANONYMOUS : CSC::DEF<ARGVS<>[1]> {}
+#define FOR_ONCE_DO_WHILE auto ANONYMOUS : CSC::DEF<CSC::ARGVS<>[1]> {}
 #elif defined __CSC_COMPILER_GNUC__
-#define FOR_ONCE_DO_WHILE_FALSE __attribute__ ((unused)) auto &ANONYMOUS : CSC::_NULL_<CSC::DEF<int[1]>> ()
+#define FOR_ONCE_DO_WHILE __attribute__ ((unused)) auto &ANONYMOUS : CSC::_NULL_<CSC::DEF<int[1]>> ()
 #else
-#define FOR_ONCE_DO_WHILE_FALSE auto &ANONYMOUS : CSC::_NULL_<CSC::DEF<int[1]>> ()
+#define FOR_ONCE_DO_WHILE auto &ANONYMOUS : CSC::_NULL_<CSC::DEF<int[1]>> ()
 #endif
+
+#define _CASE_REQUIRE_(...) do {if (!(_UNW_ (__VA_ARGS__))) return (void) (_case_req = FALSE) ; } while (FALSE)
 
 using BOOL = bool ;
 
@@ -379,10 +375,10 @@ using FLAG = VAR ;
 
 enum EFLAG :VAR ;
 
-#define _SIZEOF_(...) (CSC::LENGTH (sizeof (CSC::REMOVE_CVR_TYPE<_UNW_ (__VA_ARGS__)>)))
-#define _ALIGNOF_(...) (CSC::LENGTH (alignof (CSC::REMOVE_CVR_TYPE<_UNW_ (__VA_ARGS__)>)))
+#define _SIZEOF_(...) (CSC::LENGTH (sizeof (CSC::U::REMOVE_CVR_TYPE<_UNW_ (__VA_ARGS__)>)))
+#define _ALIGNOF_(...) (CSC::LENGTH (alignof (CSC::U::REMOVE_CVR_TYPE<_UNW_ (__VA_ARGS__)>)))
 #define _CAPACITYOF_(...) (CSC::LENGTH (sizeof... (_UNW_ (__VA_ARGS__))))
-#define _COUNTOF_(...) (CSC::U::COUNTOF_TRAITS<CSC::REMOVE_CVR_TYPE<_UNW_ (__VA_ARGS__)>>::TYPE::value)
+#define _COUNTOF_(...) (CSC::U::COUNTOF_TRAITS_TYPE<CSC::U::REMOVE_CVR_TYPE<_UNW_ (__VA_ARGS__)>>::value)
 
 using VAL32 = float ;
 using VAL64 = double ;
@@ -390,13 +386,11 @@ using VAL64 = double ;
 static constexpr auto VAL32_MAX = VAL32 (3.402823466E+38) ;
 static constexpr auto VAL32_MIN = VAL32 (1.175494351E-38) ;
 static constexpr auto VAL32_EPS = VAL32 (1.192092896E-07) ;
-static constexpr auto VAL32_PCS = LENGTH (6) ;
 static constexpr auto VAL32_INF = std::numeric_limits<VAL32>::infinity () ;
 static constexpr auto VAL32_NAN = std::numeric_limits<VAL32>::quiet_NaN () ;
 static constexpr auto VAL64_MAX = VAL64 (1.7976931348623158E+308) ;
 static constexpr auto VAL64_MIN = VAL64 (2.2250738585072014E-308) ;
 static constexpr auto VAL64_EPS = VAL64 (2.2204460492503131E-016) ;
-static constexpr auto VAL64_PCS = LENGTH (15) ;
 static constexpr auto VAL64_INF = std::numeric_limits<VAL64>::infinity () ;
 static constexpr auto VAL64_NAN = std::numeric_limits<VAL64>::quiet_NaN () ;
 
@@ -406,7 +400,6 @@ using VAL = VAL32 ;
 static constexpr auto VAL_MAX = VAL32_MAX ;
 static constexpr auto VAL_MIN = VAL32_MIN ;
 static constexpr auto VAL_EPS = VAL32_EPS ;
-static constexpr auto VAL_PCS = VAL32_PCS ;
 static constexpr auto VAL_INF = VAL32_INF ;
 static constexpr auto VAL_NAN = VAL32_NAN ;
 #elif defined __CSC_CONFIG_VAL64__
@@ -415,20 +408,18 @@ using VAL = VAL64 ;
 static constexpr auto VAL_MAX = VAL64_MAX ;
 static constexpr auto VAL_MIN = VAL64_MIN ;
 static constexpr auto VAL_EPS = VAL64_EPS ;
-static constexpr auto VAL_PCS = VAL64_PCS ;
 static constexpr auto VAL_INF = VAL64_INF ;
 static constexpr auto VAL_NAN = VAL64_NAN ;
 #endif
 
 using VALX = long double ;
 
-static constexpr auto VALX_E = VALX (2.71828182845904523536) ;
-static constexpr auto VALX_PI = VALX (3.14159265358979323846) ;
-static constexpr auto VALX_SQRT2 = VALX (1.41421356237309504880) ;
-static constexpr auto VALX_LOG2E = VALX (1.44269504088896340736) ;
-static constexpr auto VALX_LOG10E = VALX (0.434294481903251827651) ;
-static constexpr auto VALX_LOGE2 = VALX (0.693147180559945309417) ;
-static constexpr auto VALX_LOGE10 = VALX (2.30258509299404568402) ;
+static constexpr auto MATH_E = VALX (2.71828182845904523536) ;
+static constexpr auto MATH_PI = VALX (3.14159265358979323846) ;
+static constexpr auto MATH_SQRT2 = VALX (1.41421356237309504880) ;
+static constexpr auto MATH_LN2 = VALX (0.693147180559945309417) ;
+static constexpr auto MATH_LN10 = VALX (2.30258509299404568402) ;
+static constexpr auto MATH_GR = VALX (1.61803398874989484820) ;
 
 inline namespace S {
 template <class _ARG1>
@@ -473,6 +464,11 @@ struct OPERATOR_PTRTOARR {
 	inline ARR<_ARG1> &operator[] (const PTR<_ARG1> &src) const noexcept {
 		return *PTR<ARR<_ARG1>> (src) ;
 	}
+
+	template <class _ARG1 ,LENGTH _VAL1>
+	inline ARR<_ARG1> &operator[] (const DEF<_ARG1[_VAL1]> &src) const noexcept {
+		return *PTR<ARR<_ARG1>> (src) ;
+	}
 } ;
 } ;
 
@@ -505,15 +501,15 @@ using STRU8 = BYTE ;
 using STRU16 = char16_t ;
 using STRU32 = char32_t ;
 
-#define _PCSTRU8_(arg1) CSC::_CAST_<const CSC::STRU8[_COUNTOF_ (decltype (_CAT_ (u8 ,arg1)))]> (_CAT_ (u8 ,arg1))
-#define _PCSTRU16_(arg1) CSC::_CAST_<const CSC::STRU16[_COUNTOF_ (decltype (_CAT_ (u ,arg1)))]> (_CAT_ (u ,arg1))
-#define _PCSTRU32_(arg1) CSC::_CAST_<const CSC::STRU32[_COUNTOF_ (decltype (_CAT_ (U ,arg1)))]> (_CAT_ (U ,arg1))
+#define _PCSTRU8_(arg1) CSC::Plain<CSC::STRU8> (_CAT_ (u8 ,arg1))
+#define _PCSTRU16_(arg1) CSC::Plain<CSC::STRU16> (_CAT_ (u ,arg1))
+#define _PCSTRU32_(arg1) CSC::Plain<CSC::STRU32> (_CAT_ (U ,arg1))
 
 using STRA = char ;
 using STRW = wchar_t ;
 
-#define _PCSTRA_(arg1) CSC::_CAST_<const CSC::STRA[_COUNTOF_ (decltype (_UNW_ (arg1)))]> (_UNW_ (arg1))
-#define _PCSTRW_(arg1) CSC::_CAST_<const CSC::STRW[_COUNTOF_ (decltype (_CAT_ (L ,arg1)))]> (_CAT_ (L ,arg1))
+#define _PCSTRA_(arg1) CSC::Plain<CSC::STRA> (_UNW_ (arg1))
+#define _PCSTRW_(arg1) CSC::Plain<CSC::STRW> (_CAT_ (L ,arg1))
 
 #ifdef __CSC_CONFIG_STRA__
 using STR = STRA ;
@@ -524,54 +520,6 @@ using STR = STRW ;
 
 #define _PCSTR_ _PCSTRW_
 #endif
-
-namespace stl {
-template <class>
-struct is_arithmetic :public false_type {} ;
-
-template <>
-struct is_arithmetic<VAR32> :public true_type {} ;
-
-template <>
-struct is_arithmetic<VAR64> :public true_type {} ;
-
-#ifdef __CSC_COMPILER_MSVC__
-template <>
-struct is_arithmetic<VARX> :public true_type {} ;
-
-template <>
-struct is_arithmetic<VARY> :public true_type {} ;
-#endif
-
-template <>
-struct is_arithmetic<VAL32> :public true_type {} ;
-
-template <>
-struct is_arithmetic<VAL64> :public true_type {} ;
-
-template <>
-struct is_arithmetic<VALX> :public true_type {} ;
-} ;
-
-namespace stl {
-template <class>
-struct is_literals :public false_type {} ;
-
-template <>
-struct is_literals<STRU8> :public true_type {} ;
-
-template <>
-struct is_literals<STRU16> :public true_type {} ;
-
-template <>
-struct is_literals<STRU32> :public true_type {} ;
-
-template <>
-struct is_literals<STRA> :public true_type {} ;
-
-template <>
-struct is_literals<STRW> :public true_type {} ;
-} ;
 
 template <VAR _VAL1>
 struct ARGC {
@@ -625,6 +573,7 @@ using DEFAULT_SHORTSTRING_SIZE = ARGC<1023> ;
 using DEFAULT_LONGSTRING_SIZE = ARGC<8195> ;
 using DEFAULT_HUGEBUFFER_SIZE = ARGC<8388608> ;
 using DEFAULT_TIMEOUT_SIZE = ARGC<30000> ;
+using DEFAULT_RETRYTIMES_SIZE = ARGC<64> ;
 using DEFAULT_EXPANDFIRST_SIZE = ARGC<256> ;
 using DEFAULT_EXPANDGUARD_SIZE = ARGC<65536> ;
 
@@ -658,100 +607,61 @@ struct PACK<TYPE1 ,TYPE2 ,TYPE3> {
 	TYPE3 P3 ;
 } ;
 
-namespace U {
+#pragma region
+#define __CSC_USE_TRAITS__
+#include "csc.hpp.traits.inl"
+#undef __CSC_USE_TRAITS__
+#pragma endregion
+
+namespace stl {
 template <class _ARG1>
-struct REMOVE_TEMP {
-	using TYPE = _ARG1 ;
-} ;
-
-template <class _ARG1>
-struct REMOVE_TEMP<TEMP<_ARG1>> {
-	using TYPE = _ARG1 ;
-} ;
-
-template <class>
-struct REMOVE_MEMBER_POINTER ;
-
-template <class _ARG1 ,class _ARG2>
-struct REMOVE_MEMBER_POINTER<_ARG1 _ARG2::*> {
-	using TYPE = _ARG1 ;
-} ;
-
-template <class>
-struct MEMBEROF_TRAITS ;
-
-template <class _ARG1 ,class _ARG2>
-struct MEMBEROF_TRAITS<_ARG1 _ARG2::*> {
-	using TYPE = _ARG2 ;
-} ;
-
-template <class>
-struct COUNTOF_TRAITS ;
+using is_arithmetic = U::is_arithmetic<_ARG1> ;
 
 template <class _ARG1>
-struct COUNTOF_TRAITS<ARR<_ARG1>> {
-	using TYPE = ARGC<0> ;
-} ;
-
-template <class _ARG1 ,LENGTH _VAL1>
-struct COUNTOF_TRAITS<_ARG1[_VAL1]> {
-	using TYPE = ARGC<_VAL1> ;
-} ;
-
-template <class _ARG1>
-struct FORWARD_TRAITS {
-	using TYPE = const _ARG1 & ;
-} ;
-
-template <class _ARG1>
-struct FORWARD_TRAITS<_ARG1 &> {
-	using TYPE = _ARG1 & ;
-} ;
-
-template <class _ARG1>
-struct FORWARD_TRAITS<_ARG1 &&> {
-	using TYPE = _ARG1 ;
-} ;
+using is_literals = U::is_literals<_ARG1> ;
 } ;
 
 template <BOOL _VAL1>
-using ENABLE_TYPE = typename stl::enable_if<_VAL1 ,VOID>::type ;
+using ENABLE_TYPE = U::ENABLE_TYPE<_VAL1> ;
 
 template <BOOL _VAL1 ,class _ARG1 ,class _ARG2>
-using CONDITIONAL_TYPE = typename stl::conditional<_VAL1 ,_ARG1 ,_ARG2>::type ;
+using CONDITIONAL_TYPE = U::CONDITIONAL_TYPE<_VAL1 ,_ARG1 ,_ARG2> ;
 
 template <class _ARG1>
-using REMOVE_REFERENCE_TYPE = typename stl::remove_reference<_ARG1>::type ;
+using REMOVE_REFERENCE_TYPE = U::REMOVE_REFERENCE_TYPE<_ARG1> ;
 
 template <class _ARG1>
-using REMOVE_CONST_TYPE = typename stl::remove_const<_ARG1>::type ;
+using REMOVE_CONST_TYPE = U::REMOVE_CONST_TYPE<_ARG1> ;
 
 template <class _ARG1>
-using REMOVE_VOLATILE_TYPE = typename stl::remove_volatile<_ARG1>::type ;
+using REMOVE_VOLATILE_TYPE = U::REMOVE_VOLATILE_TYPE<_ARG1> ;
 
 template <class _ARG1>
-using REMOVE_POINTER_TYPE = typename stl::remove_pointer<_ARG1>::type ;
+using REMOVE_CVR_TYPE = U::REMOVE_CVR_TYPE<_ARG1> ;
 
 template <class _ARG1>
-using REMOVE_ARRAY_TYPE = typename stl::remove_extent<_ARG1>::type ;
+using REMOVE_POINTER_TYPE = U::REMOVE_POINTER_TYPE<_ARG1> ;
 
 template <class _ARG1>
-using REMOVE_TEMP_TYPE = typename U::REMOVE_TEMP<_ARG1>::TYPE ;
+using REMOVE_ARRAY_TYPE = U::REMOVE_ARRAY_TYPE<_ARG1> ;
 
 template <class _ARG1>
-using REMOVE_CVR_TYPE = REMOVE_CONST_TYPE<REMOVE_VOLATILE_TYPE<REMOVE_REFERENCE_TYPE<_ARG1>>> ;
+using REMOVE_MEMBER_POINTER_TYPE = U::REMOVE_MEMBER_POINTER_TYPE<_ARG1> ;
 
 template <class _ARG1>
-using REMOVE_MEMBER_POINTER_TYPE = typename U::REMOVE_MEMBER_POINTER<_ARG1>::TYPE ;
+using MEMBEROF_TRAITS_TYPE = U::MEMBEROF_TRAITS_TYPE<_ARG1> ;
 
 template <class _ARG1>
-using MEMBEROF_TRAITS_TYPE = typename U::MEMBEROF_TRAITS<_ARG1>::TYPE ;
+using FORWARD_TRAITS_TYPE = U::FORWARD_TRAITS_TYPE<_ARG1> ;
 
 template <class _ARG1>
-using FORWARD_TRAITS_TYPE = typename U::FORWARD_TRAITS<_ARG1>::TYPE ;
+using RESULTOF_TYPE = U::RESULTOF_TYPE<_ARG1> ;
 
-template <class _ARG1>
-using RESULTOF_TYPE = typename stl::result_of<_ARG1>::type ;
+template <class _ARG1 ,class _ARG2>
+using CAST_TRAITS_TYPE = U::CAST_TRAITS_TYPE<_ARG1 ,_ARG2> ;
+
+template <class _ARG1 ,class _ARG2>
+using LOAD_TRATIS_TYPE = U::LOAD_TRATIS_TYPE<_ARG1 ,_ARG2> ;
 
 template <class TYPE>
 struct TEMP {
@@ -769,71 +679,6 @@ inline constexpr LENGTH _ADDRESS_ (const PTR<_ARG1> &address) {
 	return LENGTH (address) ;
 }
 
-namespace U {
-template <class _ARG1 ,class _ARG2>
-struct CAST_TRAITS {
-	using TYPE = REMOVE_REFERENCE_TYPE<_ARG1> ;
-} ;
-
-template <class _ARG1 ,class _ARG2>
-struct CAST_TRAITS<_ARG1 ,const _ARG2> {
-	using TYPE = const REMOVE_REFERENCE_TYPE<_ARG1> ;
-} ;
-
-template <class _ARG1 ,class _ARG2>
-struct CAST_TRAITS<_ARG1 ,volatile _ARG2> {
-	using TYPE = volatile REMOVE_REFERENCE_TYPE<_ARG1> ;
-} ;
-
-template <class _ARG1 ,class _ARG2>
-struct CAST_TRAITS<_ARG1 ,const volatile _ARG2> {
-	using TYPE = const volatile REMOVE_REFERENCE_TYPE<_ARG1> ;
-} ;
-
-template <class _ARG1 ,class _ARG2>
-struct CAST_TRAITS<_ARG1 ,_ARG2 &> {
-	using TYPE = REMOVE_REFERENCE_TYPE<_ARG1> & ;
-} ;
-
-template <class _ARG1 ,class _ARG2>
-struct CAST_TRAITS<_ARG1 ,const _ARG2 &> {
-	using TYPE = const REMOVE_REFERENCE_TYPE<_ARG1> & ;
-} ;
-
-template <class _ARG1 ,class _ARG2>
-struct CAST_TRAITS<_ARG1 ,volatile _ARG2 &> {
-	using TYPE = volatile REMOVE_REFERENCE_TYPE<_ARG1> & ;
-} ;
-
-template <class _ARG1 ,class _ARG2>
-struct CAST_TRAITS<_ARG1 ,const volatile _ARG2 &> {
-	using TYPE = const volatile REMOVE_REFERENCE_TYPE<_ARG1> & ;
-} ;
-
-template <class _ARG1 ,class _ARG2>
-struct CAST_TRAITS<_ARG1 ,_ARG2 &&> {
-	using TYPE = REMOVE_REFERENCE_TYPE<_ARG1> && ;
-} ;
-
-template <class _ARG1 ,class _ARG2>
-struct CAST_TRAITS<_ARG1 ,const _ARG2 &&> {
-	using TYPE = const REMOVE_REFERENCE_TYPE<_ARG1> && ;
-} ;
-
-template <class _ARG1 ,class _ARG2>
-struct CAST_TRAITS<_ARG1 ,volatile _ARG2 &&> {
-	using TYPE = volatile REMOVE_REFERENCE_TYPE<_ARG1> && ;
-} ;
-
-template <class _ARG1 ,class _ARG2>
-struct CAST_TRAITS<_ARG1 ,const volatile _ARG2 &&> {
-	using TYPE = const volatile REMOVE_REFERENCE_TYPE<_ARG1> && ;
-} ;
-} ;
-
-template <class _ARG1 ,class _ARG2>
-using CAST_TRAITS_TYPE = typename U::CAST_TRAITS<_ARG1 ,_ARG2>::TYPE ;
-
 //@warn: not type-safe ,be careful about strict-aliasing
 template <class _RET ,class _ARG1>
 inline CAST_TRAITS_TYPE<_RET ,_ARG1> &_CAST_ (_ARG1 &arg1) noexcept {
@@ -844,87 +689,6 @@ inline CAST_TRAITS_TYPE<_RET ,_ARG1> &_CAST_ (_ARG1 &arg1) noexcept {
 	_STATIC_ASSERT_ (_ALIGNOF_ (_ARG1) % _ALIGNOF_ (_RET) == 0) ;
 	return *reinterpret_cast<PTR<CAST_TRAITS_TYPE<_RET ,_ARG1>>> (_ADDRESS_ (&arg1)) ;
 }
-
-namespace U {
-template <class ,class ,class>
-struct LOAD_TRAITS {
-	using TYPE = ARGC<FALSE> ;
-} ;
-
-template <class _ARG1 ,class _ARG2>
-struct LOAD_TRAITS<_ARG1 ,_ARG2 ,ARGC<1>> {
-	using TYPE = typename LOAD_TRAITS<_ARG1 ,_ARG2 ,ARGC<2>>::TYPE ;
-} ;
-
-template <class _ARG1>
-struct LOAD_TRAITS<_ARG1 ,TEMP<_ARG1> ,ARGC<1>> {
-	using TYPE = ARGC<TRUE> ;
-} ;
-
-template <class _ARG1>
-struct LOAD_TRAITS<TEMP<_ARG1> ,_ARG1 ,ARGC<1>> {
-	using TYPE = ARGC<TRUE> ;
-} ;
-
-template <class _ARG1>
-struct LOAD_TRAITS<ARR<_ARG1> ,ARR<TEMP<_ARG1>> ,ARGC<1>> {
-	using TYPE = ARGC<TRUE> ;
-} ;
-
-template <class _ARG1>
-struct LOAD_TRAITS<ARR<TEMP<_ARG1>> ,ARR<_ARG1> ,ARGC<1>> {
-	using TYPE = ARGC<TRUE> ;
-} ;
-
-template <class _ARG1>
-struct LOAD_TRAITS<_ARG1 ,NONE ,ARGC<1>> {
-	using TYPE = ARGC<std::is_class<_ARG1>::value> ;
-} ;
-
-template <class _ARG1>
-struct LOAD_TRAITS<NONE ,_ARG1 ,ARGC<1>> {
-	using TYPE = ARGC<std::is_class<_ARG1>::value> ;
-} ;
-
-template <>
-struct LOAD_TRAITS<ARR<BYTE> ,VOID ,ARGC<2>> {
-	using TYPE = ARGC<TRUE> ;
-} ;
-
-template <>
-struct LOAD_TRAITS<ARR<BYTE> ,ARR<STRU8> ,ARGC<2>> {
-	using TYPE = ARGC<TRUE> ;
-} ;
-
-template <>
-struct LOAD_TRAITS<ARR<BYTE> ,ARR<STRU16> ,ARGC<2>> {
-	using TYPE = ARGC<TRUE> ;
-} ;
-
-template <>
-struct LOAD_TRAITS<ARR<BYTE> ,ARR<STRU32> ,ARGC<2>> {
-	using TYPE = ARGC<TRUE> ;
-} ;
-
-template <>
-struct LOAD_TRAITS<ARR<BYTE> ,ARR<STRA> ,ARGC<2>> {
-	using TYPE = ARGC<TRUE> ;
-} ;
-
-template <>
-struct LOAD_TRAITS<ARR<BYTE> ,ARR<STRW> ,ARGC<2>> {
-	using TYPE = ARGC<TRUE> ;
-} ;
-
-template <class _ARG1>
-struct LOAD_TRAITS<_ARG1 ,BYTE ,ARGC<2>> {
-	//@info: not recommend
-	using TYPE = ARGC<TRUE> ;
-} ;
-} ;
-
-template <class _ARG1 ,class _ARG2>
-using LOAD_TRATIS_TYPE = typename U::LOAD_TRAITS<_ARG1 ,_ARG2 ,ARGC<1>>::TYPE ;
 
 //@warn: not type-safe ,be careful about strict-aliasing
 template <class _RET ,class _ARG1>
@@ -948,13 +712,6 @@ inline CAST_TRAITS_TYPE<_ARG2 ,_ARG3> &_OFFSET_ (const DEF<_ARG1 _ARG2::*> &arg1
 
 template <class _RET>
 inline REMOVE_REFERENCE_TYPE<_RET> &_XVALUE_ (REMOVE_CVR_TYPE<_RET> &arg1) noexcept {
-	_STATIC_ASSERT_ (!std::is_reference<_RET>::value) ;
-	//@warn: required 'std::launder'
-	return arg1 ;
-}
-
-template <class _RET>
-inline REMOVE_REFERENCE_TYPE<_RET> &_XVALUE_ (REMOVE_CVR_TYPE<_RET> &&arg1) noexcept {
 	_STATIC_ASSERT_ (!std::is_reference<_RET>::value) ;
 	//@warn: required 'std::launder'
 	return arg1 ;
@@ -1083,6 +840,7 @@ inline void _CALL_EH_ (_ARG1 &&arg1) noexcept {
 	arg1 () ;
 }
 
+//@info: the function is incompleted without 'csc_ext.hpp'
 template <class _ARG1 ,class _ARG2>
 inline void _CALL_EH_ (_ARG1 &&arg1 ,_ARG2 &&arg2) noexcept ;
 
@@ -1115,12 +873,12 @@ inline BOOL _MEMEQUAL_ (const ARR<_ARG1> &src1 ,const ARR<_ARG1> &src2 ,LENGTH l
 
 template <class _ARG1 ,LENGTH _VAL1>
 inline BOOL _MEMEQUAL_ (const ARR<_ARG1> &src1 ,const DEF<_ARG1[_VAL1]> &src2) {
-	return _MEMEQUAL_ (src1 ,PTRTOARR[&src2[0]] ,_VAL1) ;
+	return _MEMEQUAL_ (src1 ,PTRTOARR[src2] ,_VAL1) ;
 }
 
 template <class _ARG1 ,LENGTH _VAL1>
 inline BOOL _MEMEQUAL_ (const DEF<_ARG1[_VAL1]> &src1 ,const ARR<_ARG1> &src2) {
-	return _MEMEQUAL_ (PTRTOARR[&src1[0]] ,src2 ,_VAL1) ;
+	return _MEMEQUAL_ (PTRTOARR[src1] ,src2 ,_VAL1) ;
 }
 
 template <class _ARG1>
@@ -1134,12 +892,12 @@ inline FLAG _MEMCOMP_ (const ARR<_ARG1> &src1 ,const ARR<_ARG1> &src2 ,LENGTH le
 	_DEBUG_ASSERT_ (len >= 0) ;
 	if (src1 == src2)
 		return 0 ;
-	INDEX ir = 0 ;
-	while (ir < len && src1[ir] == src2[ir])
-		ir++ ;
-	if (ir < len && src1[ir] < src2[ir])
+	INDEX ix = 0 ;
+	while (ix < len && src1[ix] == src2[ix])
+		ix++ ;
+	if (ix < len && src1[ix] < src2[ix])
 		return -1 ;
-	if (ir < len && src2[ir] < src1[ir])
+	if (ix < len && src2[ix] < src1[ix])
 		return +1 ;
 	return 0 ;
 #pragma GCC diagnostic pop
@@ -1147,12 +905,12 @@ inline FLAG _MEMCOMP_ (const ARR<_ARG1> &src1 ,const ARR<_ARG1> &src2 ,LENGTH le
 
 template <class _ARG1 ,LENGTH _VAL1>
 inline FLAG _MEMCOMP_ (const ARR<_ARG1> &src1 ,const DEF<_ARG1[_VAL1]> &src2) {
-	return _MEMCOMP_ (src1 ,PTRTOARR[&src2[0]] ,_VAL1) ;
+	return _MEMCOMP_ (src1 ,PTRTOARR[src2] ,_VAL1) ;
 }
 
 template <class _ARG1 ,LENGTH _VAL1>
 inline FLAG _MEMCOMP_ (const DEF<_ARG1[_VAL1]> &src1 ,const ARR<_ARG1> &src2) {
-	return _MEMCOMP_ (PTRTOARR[&src1[0]] ,src2 ,_VAL1) ;
+	return _MEMCOMP_ (PTRTOARR[src1] ,src2 ,_VAL1) ;
 }
 
 template <class _ARG1>
@@ -1183,7 +941,7 @@ inline FLAG _MEMHASH_ (const ARR<_ARG1> &src ,LENGTH len) {
 
 template <class _ARG1 ,LENGTH _VAL1>
 inline FLAG _MEMHASH_ (const DEF<_ARG1[_VAL1]> &src) {
-	return _MEMHASH_ (PTRTOARR[&src[0]] ,_VAL1) ;
+	return _MEMHASH_ (PTRTOARR[src] ,_VAL1) ;
 }
 
 template <class _ARG1>
@@ -1203,7 +961,7 @@ inline INDEX _MEMCHR_ (const ARR<_ARG1> &src ,LENGTH len ,const _ARG1 &val) {
 
 template <class _ARG1 ,LENGTH _VAL1>
 inline INDEX _MEMCHR_ (const DEF<_ARG1[_VAL1]> &src ,const _ARG1 &val) {
-	return _MEMCHR_ (PTRTOARR[&src[0]] ,_VAL1 ,val) ;
+	return _MEMCHR_ (PTRTOARR[src] ,_VAL1 ,val) ;
 }
 
 template <class _ARG1>
@@ -1214,16 +972,16 @@ inline INDEX _MEMRCHR_ (const ARR<_ARG1> &src ,LENGTH len ,const _ARG1 &val) {
 #endif
 	_DEBUG_ASSERT_ (src != NULL || len == 0) ;
 	_DEBUG_ASSERT_ (len >= 0) ;
-	for (INDEX i = len - 1 ; i >= 0 ; i--)
-		if (src[i] == val)
-			return i ;
+	for (INDEX i = 0 ; i < len ; i++)
+		if (src[len + ~i] == val)
+			return (len + ~i) ;
 	return VAR_NONE ;
 #pragma GCC diagnostic pop
 }
 
 template <class _ARG1 ,LENGTH _VAL1>
 inline INDEX _MEMRCHR_ (const DEF<_ARG1[_VAL1]> &src ,const _ARG1 &val) {
-	return _MEMRCHR_ (PTRTOARR[&src[0]] ,_VAL1 ,val) ;
+	return _MEMRCHR_ (PTRTOARR[src] ,_VAL1 ,val) ;
 }
 
 template <class _ARG1>
@@ -1245,12 +1003,12 @@ inline void _MEMCOPY_ (ARR<_ARG1> &dst ,const ARR<_ARG1> &src ,LENGTH len) {
 
 template <class _ARG1 ,LENGTH _VAL1>
 inline void _MEMCOPY_ (ARR<_ARG1> &dst ,const DEF<_ARG1[_VAL1]> &src) {
-	_MEMCOPY_ (dst ,PTRTOARR[&src[0]] ,_VAL1) ;
+	_MEMCOPY_ (dst ,PTRTOARR[src] ,_VAL1) ;
 }
 
 template <class _ARG1 ,LENGTH _VAL1>
 inline void _MEMCOPY_ (DEF<_ARG1[_VAL1]> &dst ,const ARR<_ARG1> &src) {
-	_MEMCOPY_ (PTRTOARR[&dst[0]] ,src ,_VAL1) ;
+	_MEMCOPY_ (PTRTOARR[dst] ,src ,_VAL1) ;
 }
 
 template <class _ARG1>
@@ -1267,12 +1025,12 @@ inline void _MEMRCOPY_ (ARR<_ARG1> &dst ,const ARR<_ARG1> &src ,LENGTH len) {
 		return ;
 	if (src == NULL)
 		return ;
-	_CALL_IF_ ([&] (BOOL &if_flag) {
-		if (dst == src)
-			discard ;
+	_CALL_IF_ ([&] (BOOL &_case_req) {
+		_CASE_REQUIRE_ (dst != src) ;
 		for (INDEX i = 0 ; i < len ; i++)
 			dst[i] = src[len + ~i] ;
-	} ,[&] (BOOL &if_flag) {
+	} ,[&] (BOOL &_case_req) {
+		_CASE_REQUIRE_ (dst == src) ;
 		for (INDEX i = 0 ,ie = len / 2 ; i < ie ; i++) {
 			const auto r1x = dst[i] ;
 			dst[i] = dst[len + ~i] ;
@@ -1284,12 +1042,12 @@ inline void _MEMRCOPY_ (ARR<_ARG1> &dst ,const ARR<_ARG1> &src ,LENGTH len) {
 
 template <class _ARG1 ,LENGTH _VAL1>
 inline void _MEMRCOPY_ (ARR<_ARG1> &dst ,const DEF<_ARG1[_VAL1]> &src) {
-	_MEMRCOPY_ (dst ,PTRTOARR[&src[0]] ,_VAL1) ;
+	_MEMRCOPY_ (dst ,PTRTOARR[src] ,_VAL1) ;
 }
 
 template <class _ARG1 ,LENGTH _VAL1>
 inline void _MEMRCOPY_ (DEF<_ARG1[_VAL1]> &dst ,const ARR<_ARG1> &src) {
-	_MEMRCOPY_ (PTRTOARR[&dst[0]] ,src ,_VAL1) ;
+	_MEMRCOPY_ (PTRTOARR[dst] ,src ,_VAL1) ;
 }
 
 template <class _ARG1>
@@ -1303,26 +1061,26 @@ inline void _MEMMOVE_ (ARR<_ARG1> &dst1 ,ARR<_ARG1> &dst2 ,LENGTH len) {
 	_DEBUG_ASSERT_ (len >= 0) ;
 	if (dst1 == dst2)
 		return ;
-	_CALL_IF_ ([&] (BOOL &if_flag) {
-		if (dst1 > dst2)
-			discard ;
+	_CALL_IF_ ([&] (BOOL &_case_req) {
+		_CASE_REQUIRE_ (dst1 < dst2) ;
 		for (INDEX i = 0 ; i < len ; i++)
 			dst1[i] = std::move (dst2[i]) ;
-	} ,[&] (BOOL &if_flag) {
-		for (INDEX i = len - 1 ; i >= 0 ; i--)
-			dst1[i] = std::move (dst2[i]) ;
+	} ,[&] (BOOL &_case_req) {
+		_CASE_REQUIRE_ (dst1 > dst2) ;
+		for (INDEX i = 0 ; i < len ; i++)
+			dst1[len + ~i] = std::move (dst2[len + ~i]) ;
 	}) ;
 #pragma GCC diagnostic pop
 }
 
 template <class _ARG1 ,LENGTH _VAL1>
 inline void _MEMMOVE_ (ARR<_ARG1> &dst1 ,DEF<_ARG1[_VAL1]> &dst2) {
-	_MEMMOVE_ (dst1 ,PTRTOARR[&dst2[0]] ,_VAL1) ;
+	_MEMMOVE_ (dst1 ,PTRTOARR[dst2] ,_VAL1) ;
 }
 
 template <class _ARG1 ,LENGTH _VAL1>
 inline void _MEMMOVE_ (DEF<_ARG1[_VAL1]> &dst1 ,ARR<_ARG1> &dst2) {
-	_MEMMOVE_ (PTRTOARR[&dst1[0]] ,dst2 ,_VAL1) ;
+	_MEMMOVE_ (PTRTOARR[dst1] ,dst2 ,_VAL1) ;
 }
 
 template <class _ARG1>
@@ -1344,12 +1102,12 @@ inline void _MEMSWAP_ (ARR<_ARG1> &dst1 ,ARR<_ARG1> &dst2 ,LENGTH len) {
 
 template <class _ARG1 ,LENGTH _VAL1>
 inline void _MEMSWAP_ (ARR<_ARG1> &dst1 ,DEF<_ARG1[_VAL1]> &dst2) {
-	_MEMSWAP_ (dst1 ,PTRTOARR[&dst2[0]] ,_VAL1) ;
+	_MEMSWAP_ (dst1 ,PTRTOARR[dst2] ,_VAL1) ;
 }
 
 template <class _ARG1 ,LENGTH _VAL1>
 inline void _MEMSWAP_ (DEF<_ARG1[_VAL1]> &dst1 ,ARR<_ARG1> &dst2) {
-	_MEMSWAP_ (PTRTOARR[&dst1[0]] ,dst2 ,_VAL1) ;
+	_MEMSWAP_ (PTRTOARR[dst1] ,dst2 ,_VAL1) ;
 }
 
 template <class _ARG1>
@@ -1367,137 +1125,9 @@ inline void _MEMFILL_ (ARR<_ARG1> &dst ,LENGTH len ,const _ARG1 &val) {
 
 template <class _ARG1 ,LENGTH _VAL1>
 inline void _MEMFILL_ (DEF<_ARG1[_VAL1]> &dst ,const _ARG1 &val) {
-	_MEMFILL_ (PTRTOARR[&dst[0]] ,_VAL1 ,val) ;
+	_MEMFILL_ (PTRTOARR[dst] ,_VAL1 ,val) ;
 }
 } ;
-
-class Exception final {
-private:
-	inline static constexpr LENGTH expr_sub (LENGTH arg1) {
-		return arg1 - 1 ;
-	}
-
-	template <class SIZE>
-	class Holder {
-	private:
-		DEF<STR[SIZE::value]> mString ;
-
-	public:
-		inline Holder () = delete ;
-
-		template <LENGTH... _VALS>
-		inline explicit Holder (const DEF<STRA[_VALS]> &...args) noexcept {
-			_STATIC_ASSERT_ (ARGCS<1 ,expr_sub (_VALS)...>::value == SIZE::value) ;
-			template_write (mString ,_NULL_<const ARGC<0>> () ,args...) ;
-		}
-
-		template <LENGTH... _VALS>
-		inline explicit Holder (const DEF<STRW[_VALS]> &...args) noexcept {
-			_STATIC_ASSERT_ (ARGCS<1 ,expr_sub (_VALS)...>::value == SIZE::value) ;
-			template_write (mString ,_NULL_<const ARGC<0>> () ,args...) ;
-		}
-
-		inline const ARR<STR> &to () const noexcept {
-			return PTRTOARR[&mString[0]] ;
-		}
-
-		inline implicit operator const ARR<STR> & () const noexcept {
-			return to () ;
-		}
-	} ;
-
-private:
-	const ARR<STR> &mWhat ;
-
-public:
-	inline Exception () = delete ;
-
-	template <LENGTH _VAL1>
-	inline explicit Exception (const DEF<STR[_VAL1]> &what) noexcept :mWhat (PTRTOARR[&what[0]]) {}
-
-	template <LENGTH _VAL1>
-	inline explicit Exception (DEF<STR[_VAL1]> &) = delete ;
-
-	template <class _ARG1 ,LENGTH... _VALS>
-	inline explicit Exception (const ARGV<_ARG1> & ,const DEF<STRA[_VALS]> &...args) noexcept :mWhat (expr_what (_NULL_<const ARGV<_ARG1>> () ,args...)) {}
-
-	template <class _ARG1 ,LENGTH... _VALS>
-	inline explicit Exception (const ARGV<_ARG1> & ,const DEF<STRW[_VALS]> &...args) noexcept :mWhat (expr_what (_NULL_<const ARGV<_ARG1>> () ,args...)) {}
-
-	inline const ARR<STR> &what () const {
-		return mWhat ;
-	}
-
-private:
-	template <class _ARG1 ,LENGTH... _VALS>
-	inline static const ARR<STR> &expr_what (const ARGV<_ARG1> & ,const DEF<STRA[_VALS]> &...args) noexcept {
-		const auto r1x = Holder<ARGCS<1 ,expr_sub (_VALS)...>> (args...) ;
-		return _CACHE_ ([r1x] () noexcept {
-			return r1x ;
-		}) ;
-	}
-
-	template <class _ARG1 ,LENGTH... _VALS>
-	inline static const ARR<STR> &expr_what (const ARGV<_ARG1> & ,const DEF<STRW[_VALS]> &...args) noexcept {
-		const auto r1x = Holder<ARGCS<1 ,expr_sub (_VALS)...>> (args...) ;
-		return _CACHE_ ([r1x] () noexcept {
-			return r1x ;
-		}) ;
-	}
-
-	template <LENGTH _VAL1>
-	inline static void template_write (DEF<STR[_VAL1]> &array ,const ARGC<_VAL1 - 1> &) noexcept {
-		array[_VAL1 - 1] = 0 ;
-	}
-
-	template <LENGTH _VAL1 ,INDEX _VAL2 ,LENGTH _VAL3 ,LENGTH... _VALS>
-	inline static void template_write (DEF<STR[_VAL1]> &array ,const ARGC<_VAL2> & ,const DEF<STRA[_VAL3]> &arg1 ,const DEF<STRA[_VALS]> &...args) noexcept {
-		_STATIC_ASSERT_ (_VAL2 >= 0 && _VAL2 < _VAL1) ;
-		for (INDEX i = 0 ; i < _VAL3 - 1 ; i++) {
-			_DEBUG_ASSERT_ (VAR32 (arg1[i]) > 0 && VAR32 (arg1[i]) <= 127) ;
-			array[i + _VAL2] = STR (arg1[i]) ;
-		}
-		template_write (array ,_NULL_<const ARGC<_VAL2 + _VAL3 - 1>> () ,args...) ;
-	}
-
-	template <LENGTH _VAL1 ,INDEX _VAL2 ,LENGTH _VAL3 ,LENGTH... _VALS>
-	inline static void template_write (DEF<STR[_VAL1]> &array ,const ARGC<_VAL2> & ,const DEF<STRW[_VAL3]> &arg1 ,const DEF<STRW[_VALS]> &...args) noexcept {
-		_STATIC_ASSERT_ (_VAL2 >= 0 && _VAL2 < _VAL1) ;
-		for (INDEX i = 0 ; i < _VAL3 - 1 ; i++) {
-			_DEBUG_ASSERT_ (VAR32 (arg1[i]) > 0 && VAR32 (arg1[i]) <= 127) ;
-			array[i + _VAL2] = STR (arg1[i]) ;
-		}
-		template_write (_NULL_<const ARGC<_VAL2 + _VAL3 - 1>> () ,args...) ;
-	}
-} ;
-
-//@warn: assure ruined object when an exception was thrown
-template <class _ARG1 ,class... _ARGS>
-inline void _CALL_TRY_ (_ARG1 &&arg1 ,_ARGS &&...args) {
-	_STATIC_ASSERT_ (!std::is_reference<_ARG1>::value) ;
-	_STATIC_ASSERT_ (std::is_same<RESULTOF_TYPE<_ARG1 ()> ,void>::value) ;
-	try {
-		arg1 () ;
-		return ;
-	} catch (const Exception &e) {
-		const auto r1x = e.what () ;
-		(void) r1x ;
-	}
-	_CALL_TRY_ (std::forward<_ARGS> (args)...) ;
-}
-
-template <class _ARG1 ,class _ARG2>
-inline void _CALL_EH_ (_ARG1 &&arg1 ,_ARG2 &&arg2) noexcept {
-	_STATIC_ASSERT_ (!std::is_reference<_ARG1>::value) ;
-	_STATIC_ASSERT_ (std::is_same<RESULTOF_TYPE<_ARG1 ()> ,void>::value) ;
-	_STATIC_ASSERT_ (!std::is_reference<_ARG2>::value) ;
-	_STATIC_ASSERT_ (std::is_same<RESULTOF_TYPE<_ARG2 (const Exception &)> ,void>::value) ;
-	try {
-		arg1 () ;
-	} catch (const Exception &e) {
-		arg2 (e) ;
-	}
-}
 
 class Interface {
 public:
@@ -1520,7 +1150,7 @@ inline FLAG _TYPEID_ (const ARGV<_ARG1> &) noexcept {
 template <class TYPE>
 class Wrapped {
 protected:
-	TYPE mData ;
+	TYPE mSelf ;
 
 public:
 	inline Wrapped () = delete ;
@@ -1542,48 +1172,148 @@ public:
 	inline Wrapped &operator= (Wrapped &&) = delete ;
 } ;
 
-#ifdef __CSC_UNITTEST__
-class GlobalWatch final :private Wrapped<void> {
+template <class TYPE>
+class Plain final {
 private:
-	template <class _ARG1 ,class _ARG2>
-	class Storage final :private Interface {
+	_STATIC_ASSERT_ (stl::is_literals<TYPE>::value) ;
+	const ARR<TYPE> &mPlain ;
+	LENGTH mSize ;
+
+public:
+	inline Plain () = delete ;
+
+	template <class _ARG1 ,LENGTH _VAL1>
+	inline constexpr implicit Plain (const DEF<_ARG1[_VAL1]> &right) :mPlain (PTRTOARR[_CAST_<TYPE[_VAL1]> (right)]) ,mSize (_VAL1 - 1) {}
+
+	template <class _ARG1 ,LENGTH _VAL1>
+	inline constexpr implicit Plain (DEF<_ARG1[_VAL1]> &) = delete ;
+
+	inline constexpr LENGTH size () const {
+		return mSize ;
+	}
+
+	inline const ARR<TYPE> &to () const noexcept {
+		return mPlain ;
+	}
+
+	inline implicit operator const ARR<TYPE> & () const noexcept {
+		return to () ;
+	}
+} ;
+
+template <>
+class Plain<void> :private Wrapped<void> {
+private:
+	template <class SIZE>
+	class Holder {
 	private:
-		PACK<FLAG[4] ,PTR<void (_ARG2 &)>> mData ;
+		friend Plain ;
+		DEF<STR[SIZE::value]> mString ;
 
 	public:
-		inline Storage () {
-			mData.P1[0] = 0 ;
-			mData.P1[1] = 0 ;
-			mData.P1[2] = 0 ;
-			mData.P1[3] = 0 ;
-			mData.P2 = NULL ;
-		} ;
+		inline Holder () = delete ;
 
-		inline volatile PACK<FLAG[4] ,PTR<void (_ARG2 &)>> &to () volatile {
-			return mData ;
+		template <LENGTH... _VALS>
+		inline explicit Holder (const DEF<STRA[_VALS]> &...args) noexcept {
+			_STATIC_ASSERT_ (ARGCS<1 ,expr_sub (_VALS)...>::value == SIZE::value) ;
+			template_write (mString ,_NULL_<const ARGC<0>> () ,args...) ;
 		}
 
-		inline implicit operator volatile PACK<FLAG[4] ,PTR<void (_ARG2 &)>> & () volatile {
-			return to () ;
+		template <LENGTH... _VALS>
+		inline explicit Holder (const DEF<STRW[_VALS]> &...args) noexcept {
+			_STATIC_ASSERT_ (ARGCS<1 ,expr_sub (_VALS)...>::value == SIZE::value) ;
+			template_write (mString ,_NULL_<const ARGC<0>> () ,args...) ;
 		}
 	} ;
 
 public:
-	template <class _ARG1 ,class _ARG2 ,LENGTH _VAL1>
-	inline static void watch (const ARGV<_ARG1> & ,const DEF<STR[_VAL1]> &name ,_ARG2 &data) noexcept {
-		static volatile Storage<_ARG1 ,_ARG2> mInstance ;
-		mInstance.self.P1[0] = _ADDRESS_ (&name) ;
-		mInstance.self.P1[1] = _ADDRESS_ (&data) ;
-		mInstance.self.P1[2] = _ADDRESS_ (&watch<_ARG1 ,_ARG2 ,_VAL1>) ;
-		mInstance.self.P1[3] = 0 ;
-		const auto r2x = _COPY_ (mInstance.self.P2) ;
-		if (r2x == NULL)
-			return ;
-		r2x (data) ;
-		r2x (data) ;
+	template <class _ARG1 ,LENGTH... _VALS>
+	inline static const ARR<STR> &expr_what (const ARGV<_ARG1> & ,const DEF<STRA[_VALS]> &...args) noexcept {
+		const auto r1x = Holder<ARGCS<1 ,expr_sub (_VALS)...>> (args...) ;
+		auto &r1 = _CACHE_ ([r1x] () noexcept {
+			return r1x ;
+		}) ;
+		return PTRTOARR[r1.mString] ;
+	}
+
+	template <class _ARG1 ,LENGTH... _VALS>
+	inline static const ARR<STR> &expr_what (const ARGV<_ARG1> & ,const DEF<STRW[_VALS]> &...args) noexcept {
+		const auto r1x = Holder<ARGCS<1 ,expr_sub (_VALS)...>> (args...) ;
+		auto &r1 = _CACHE_ ([r1x] () noexcept {
+			return r1x ;
+		}) ;
+		return PTRTOARR[r1.mString] ;
+	}
+
+private:
+	template <LENGTH _VAL1>
+	inline static void template_write (DEF<STR[_VAL1]> &array ,const ARGC<_VAL1 - 1> &) noexcept {
+		array[_VAL1 - 1] = 0 ;
+	}
+
+	template <LENGTH _VAL1 ,INDEX _VAL2 ,LENGTH _VAL3 ,LENGTH... _VALS>
+	inline static void template_write (DEF<STR[_VAL1]> &array ,const ARGC<_VAL2> & ,const DEF<STRA[_VAL3]> &arg1 ,const DEF<STRA[_VALS]> &...args) noexcept {
+		_STATIC_ASSERT_ (_VAL2 >= 0 && _VAL2 < _VAL1) ;
+		for (INDEX i = 0 ; i < _VAL3 - 1 ; i++) {
+			const auto r1x = (VAR32 (arg1[i]) > 0 && VAR32 (arg1[i]) <= 127) ? (STR (arg1[i])) : (STR ('?')) ;
+			array[i + _VAL2] = r1x ;
+		}
+		template_write (array ,_NULL_<const ARGC<_VAL2 + _VAL3 - 1>> () ,args...) ;
+	}
+
+	template <LENGTH _VAL1 ,INDEX _VAL2 ,LENGTH _VAL3 ,LENGTH... _VALS>
+	inline static void template_write (DEF<STR[_VAL1]> &array ,const ARGC<_VAL2> & ,const DEF<STRW[_VAL3]> &arg1 ,const DEF<STRW[_VALS]> &...args) noexcept {
+		_STATIC_ASSERT_ (_VAL2 >= 0 && _VAL2 < _VAL1) ;
+		for (INDEX i = 0 ; i < _VAL3 - 1 ; i++) {
+			const auto r1x = (VAR32 (arg1[i]) > 0 && VAR32 (arg1[i]) <= 127) ? (STR (arg1[i])) : (STR ('?')) ;
+			array[i + _VAL2] = r1x ;
+		}
+		template_write (_NULL_<const ARGC<_VAL2 + _VAL3 - 1>> () ,args...) ;
 	}
 } ;
-#endif
+
+class Exception final {
+private:
+	inline static constexpr LENGTH expr_sub (LENGTH arg1) {
+		return arg1 - 1 ;
+	}
+
+private:
+	const ARR<STR> &mWhat ;
+
+public:
+	inline Exception () = delete ;
+
+	inline explicit Exception (const Plain<STR> &_what) noexcept :mWhat (_what.self) {}
+
+	template <class _ARG1 ,LENGTH... _VALS>
+	inline explicit Exception (const ARGV<_ARG1> & ,const DEF<STRA[_VALS]> &...args) noexcept :mWhat (Plain<void>::expr_what (_NULL_<const ARGV<_ARG1>> () ,args...)) {}
+
+	template <class _ARG1 ,LENGTH... _VALS>
+	inline explicit Exception (const ARGV<_ARG1> & ,const DEF<STRW[_VALS]> &...args) noexcept :mWhat (Plain<void>::expr_what (_NULL_<const ARGV<_ARG1>> () ,args...)) {}
+
+	inline const ARR<STR> &what () const noexcept {
+		return mWhat ;
+	}
+
+	inline void raise () const {
+		throw *this ;
+	}
+} ;
+
+//@warn: assure ruined object when an exception was thrown
+template <class _ARG1 ,class... _ARGS>
+inline void _CALL_TRY_ (_ARG1 &&arg1 ,_ARGS &&...args) {
+	_STATIC_ASSERT_ (!std::is_reference<_ARG1>::value) ;
+	_STATIC_ASSERT_ (std::is_same<RESULTOF_TYPE<_ARG1 ()> ,void>::value) ;
+	try {
+		arg1 () ;
+		return ;
+	} catch (const Exception &) {
+		_STATIC_WARNING_ ("noop") ;
+	}
+	_CALL_TRY_ (std::forward<_ARGS> (args)...) ;
+}
 
 class GlobalHeap final :private Wrapped<void> {
 private:
@@ -1625,11 +1355,11 @@ private:
 		template <class _RET>
 		inline implicit operator _RET () && = delete ;
 
-		inline void operator= (decltype (NULL)) & noexcept {
+		inline void operator= (DEF<decltype (NULL)>) & noexcept {
 			mPointer = NULL ;
 		}
 
-		inline void operator= (decltype (NULL)) && = delete ;
+		inline void operator= (DEF<decltype (NULL)>) && = delete ;
 
 	private:
 		inline explicit OwnerProxy (PTR<TYPE> &&pointer) noexcept :mPointer (pointer) {}
@@ -1701,7 +1431,7 @@ public:
 	inline ScopedHolder () = delete ;
 
 	template <class... _ARGS>
-	inline explicit ScopedHolder (const volatile PTR<TEMP<TYPE>> &address ,_ARGS &&...args) :mAddress (address) {
+	inline explicit ScopedHolder (const volatile PTR<TEMP<TYPE>> &address ,_ARGS &&...args) popping :mAddress (address) {
 		const auto r1x = _COPY_ (mAddress) ;
 		_CREATE_ (r1x ,std::forward<_ARGS> (args)...) ;
 	}
@@ -1728,7 +1458,7 @@ private:
 public:
 	inline ScopedHolder () = delete ;
 
-	inline explicit ScopedHolder (const volatile PTR<ARR<TEMP<TYPE>>> &address ,LENGTH len) :mAddress (address) ,mWrite (0) {
+	inline explicit ScopedHolder (const volatile PTR<ARR<TEMP<TYPE>>> &address ,LENGTH len) popping :mAddress (address) ,mWrite (0) {
 		const auto r1x = _COPY_ (mAddress) ;
 		if (r1x == NULL)
 			return ;
@@ -1740,7 +1470,7 @@ public:
 		}
 	}
 
-	inline explicit ScopedHolder (const volatile PTR<ARR<TEMP<TYPE>>> &address ,const ARR<TYPE> &src ,LENGTH len) :mAddress (address) ,mWrite (0) {
+	inline explicit ScopedHolder (const volatile PTR<ARR<TEMP<TYPE>>> &address ,const ARR<TYPE> &src ,LENGTH len) popping :mAddress (address) ,mWrite (0) {
 		_DEBUG_ASSERT_ (src != NULL) ;
 		const auto r1x = _COPY_ (mAddress) ;
 		if (r1x == NULL)
@@ -1774,7 +1504,7 @@ public:
 template <class TYPE>
 class Singleton final {
 private:
-	class Pack {
+	class Holder {
 	private:
 		friend Singleton ;
 		TYPE mData ;
@@ -1787,19 +1517,19 @@ private:
 	friend TYPE ;
 	template <class>
 	friend class GlobalStatic ;
-	PTR<Pack> mPointer ;
+	PTR<Holder> mPointer ;
 
 private:
 	inline Singleton () {
-		auto sgd = GlobalHeap::alloc<TEMP<Pack>> () ;
-		ScopedHolder<Pack> ANONYMOUS (sgd) ;
-		mPointer = &_LOAD_<Pack> (_XVALUE_<PTR<TEMP<Pack>>> (sgd)) ;
+		auto sgd = GlobalHeap::alloc<TEMP<Holder>> () ;
+		ScopedHolder<Holder> ANONYMOUS (sgd) ;
+		mPointer = &_LOAD_<Holder> (_XVALUE_<PTR<TEMP<Holder>>> (sgd)) ;
 		sgd = NULL ;
 	}
 
 	inline ~Singleton () noexcept {
 		_DEBUG_ASSERT_ (mPointer != NULL) ;
-		mPointer->~Pack () ;
+		mPointer->~Holder () ;
 		GlobalHeap::free (mPointer) ;
 		mPointer = NULL ;
 	}
@@ -1868,7 +1598,7 @@ public:
 	}
 
 	inline AutoRef &operator= (AutoRef &&right) noexcept {
-		for (FOR_ONCE_DO_WHILE_FALSE) {
+		for (FOR_ONCE_DO_WHILE) {
 			if (this == &right)
 				continue ;
 			this->~AutoRef () ;
@@ -1923,7 +1653,7 @@ public:
 	}
 
 	inline AutoRef &operator= (const AutoRef &right) {
-		for (FOR_ONCE_DO_WHILE_FALSE) {
+		for (FOR_ONCE_DO_WHILE) {
 			if (this == &right)
 				continue ;
 			this->~AutoRef () ;
@@ -1937,7 +1667,7 @@ public:
 	}
 
 	inline AutoRef &operator= (AutoRef &&right) noexcept {
-		for (FOR_ONCE_DO_WHILE_FALSE) {
+		for (FOR_ONCE_DO_WHILE) {
 			if (this == &right)
 				continue ;
 			this->~AutoRef () ;
@@ -2035,9 +1765,9 @@ public:
 	inline ~SharedRef () noexcept {
 		if (mPointer == NULL)
 			return ;
-		for (FOR_ONCE_DO_WHILE_FALSE) {
-			const auto r1x = --mPointer->mCounter == 0 ;
-			if (!r1x)
+		for (FOR_ONCE_DO_WHILE) {
+			const auto r1x = --mPointer->mCounter ;
+			if (r1x != 0)
 				continue ;
 			mPointer->~Holder () ;
 			GlobalHeap::free (mPointer) ;
@@ -2048,7 +1778,7 @@ public:
 	inline SharedRef (const SharedRef &right) :SharedRef (right.mPointer) {}
 
 	inline SharedRef &operator= (const SharedRef &right) {
-		for (FOR_ONCE_DO_WHILE_FALSE) {
+		for (FOR_ONCE_DO_WHILE) {
 			if (this == &right)
 				continue ;
 			this->~SharedRef () ;
@@ -2062,7 +1792,7 @@ public:
 	}
 
 	inline SharedRef &operator= (SharedRef &&right) noexcept {
-		for (FOR_ONCE_DO_WHILE_FALSE) {
+		for (FOR_ONCE_DO_WHILE) {
 			if (this == &right)
 				continue ;
 			this->~SharedRef () ;
@@ -2161,7 +1891,7 @@ public:
 	}
 
 	inline AnyRef &operator= (AnyRef &&right) noexcept {
-		for (FOR_ONCE_DO_WHILE_FALSE) {
+		for (FOR_ONCE_DO_WHILE) {
 			if (this == &right)
 				continue ;
 			this->~AnyRef () ;
@@ -2270,7 +2000,7 @@ public:
 	}
 
 	inline AnyRef &operator= (AnyRef &&right) noexcept {
-		for (FOR_ONCE_DO_WHILE_FALSE) {
+		for (FOR_ONCE_DO_WHILE) {
 			if (this == &right)
 				continue ;
 			this->~AnyRef () ;
@@ -2372,7 +2102,7 @@ public:
 	}
 
 	inline UniqueRef &operator= (UniqueRef &&right) noexcept {
-		for (FOR_ONCE_DO_WHILE_FALSE) {
+		for (FOR_ONCE_DO_WHILE) {
 			if (this == &right)
 				continue ;
 			this->~UniqueRef () ;
@@ -2480,7 +2210,7 @@ public:
 	}
 
 	inline UniqueRef &operator= (UniqueRef &&right) noexcept {
-		for (FOR_ONCE_DO_WHILE_FALSE) {
+		for (FOR_ONCE_DO_WHILE) {
 			if (this == &right)
 				continue ;
 			this->~UniqueRef () ;
@@ -2518,7 +2248,7 @@ public:
 	}
 
 	inline PhanRef &operator= (PhanRef &&right) noexcept {
-		for (FOR_ONCE_DO_WHILE_FALSE) {
+		for (FOR_ONCE_DO_WHILE) {
 			if (this == &right)
 				continue ;
 			this->~PhanRef () ;
@@ -2616,7 +2346,7 @@ public:
 	inline ~Function () noexcept {
 		if (mFunction_a == NULL && mFunction_b == NULL)
 			return ;
-		for (FOR_ONCE_DO_WHILE_FALSE) {
+		for (FOR_ONCE_DO_WHILE) {
 			if (mFunction_a == NULL)
 				continue ;
 			mFunction_a->~Holder () ;
@@ -2635,7 +2365,7 @@ public:
 	}
 
 	inline Function &operator= (Function &&right) noexcept {
-		for (FOR_ONCE_DO_WHILE_FALSE) {
+		for (FOR_ONCE_DO_WHILE) {
 			if (this == &right)
 				continue ;
 			this->~Function () ;
@@ -2738,21 +2468,21 @@ public:
 	}
 
 	template <class _ARG1>
-	inline explicit Function (const PhanRef<_ARG1> &context ,const DEF<DEF<TYPE1 (TYPES...) const> _ARG1::*> &function) noexcept {
-		_DEBUG_ASSERT_ (function != NULL) ;
-		address_create<ImplHolder<const _ARG1>> (&mVariant ,&context.self ,function) ;
-	}
-
-	template <class _ARG1>
 	inline explicit Function (const PhanRef<const _ARG1> &context ,const DEF<DEF<TYPE1 (TYPES...) const> _ARG1::*> &function) noexcept {
 		_DEBUG_ASSERT_ (function != NULL) ;
 		address_create<ImplHolder<const _ARG1>> (&mVariant ,&context.self ,function) ;
 	}
 
 	template <class _ARG1>
-	inline explicit Function (const PhanRef<_ARG1> &context ,const PTR<TYPE1 (_ARG1 & ,TYPES...)> &function) noexcept {
+	inline explicit Function (const PhanRef<_ARG1> &context ,const PTR<TYPE1 (PTR<_ARG1> ,TYPES...)> &function) noexcept {
 		_DEBUG_ASSERT_ (function != NULL) ;
 		address_create<ImplHolder<PTR<_ARG1>>> (&mVariant ,&context.self ,function) ;
+	}
+
+	template <class _ARG1>
+	inline explicit Function (const PhanRef<_ARG1> &context ,const PTR<TYPE1 (PTR<const _ARG1> ,TYPES...)> &function) noexcept {
+		_DEBUG_ASSERT_ (function != NULL) ;
+		address_create<ImplHolder<PTR<const _ARG1>>> (&mVariant ,&context.self ,function) ;
 	}
 
 	inline ~Function () noexcept {
@@ -2773,7 +2503,7 @@ public:
 	}
 
 	inline Function &operator= (Function &&right) noexcept {
-		for (FOR_ONCE_DO_WHILE_FALSE) {
+		for (FOR_ONCE_DO_WHILE) {
 			if (this == &right)
 				continue ;
 			this->~Function () ;
@@ -2788,7 +2518,7 @@ public:
 			_ZERO_ (ret) ;
 			return std::move (ret) ;
 		}) ;
-		return !_MEMEQUAL_ (_CAST_<BYTE[_SIZEOF_ (TEMP<FakeHolder>)]> (mVariant) ,PTRTOARR[&r1.P1[0]]) ;
+		return !_MEMEQUAL_ (_CAST_<BYTE[_SIZEOF_ (TEMP<FakeHolder>)]> (mVariant) ,PTRTOARR[r1.P1]) ;
 	}
 
 	inline TYPE1 invoke (FORWARD_TRAITS_TYPE<TYPES> &&...args) const popping {
@@ -2860,19 +2590,19 @@ template <class _TYPE>
 class Function<FIX_MSVC_DEDUCTION_2<TYPE1 ,TYPES...>>::ImplHolder<PTR<_TYPE>> :public Holder {
 private:
 	PTR<_TYPE> mContext ;
-	PTR<TYPE1 (_TYPE & ,TYPES...)> mFunction ;
+	PTR<TYPE1 (PTR<_TYPE> ,TYPES...)> mFunction ;
 
 public:
 	inline ImplHolder () = delete ;
 
-	inline explicit ImplHolder (PTR<_TYPE> context ,const PTR<TYPE1 (_TYPE & ,TYPES...)> &function) noexcept :mContext (context) ,mFunction (function) {}
+	inline explicit ImplHolder (PTR<_TYPE> context ,const PTR<TYPE1 (PTR<_TYPE> ,TYPES...)> &function) noexcept :mContext (context) ,mFunction (function) {}
 
 	inline void address_copy (PTR<TEMP<FakeHolder>> address) const noexcept override {
 		address_create<ImplHolder> (address ,mContext ,mFunction) ;
 	}
 
 	inline TYPE1 invoke (FORWARD_TRAITS_TYPE<TYPES> &&...args) const popping override {
-		return mFunction (*mContext ,std::forward<FORWARD_TRAITS_TYPE<TYPES>> (args)...) ;
+		return mFunction (mContext ,std::forward<FORWARD_TRAITS_TYPE<TYPES>> (args)...) ;
 	}
 } ;
 
@@ -2882,7 +2612,6 @@ class Buffer ;
 using SFLEX = ARGC<0> ;
 using SFIXED = ARGC<-1> ;
 using SAUTO = ARGC<-2> ;
-using SPHAN = ARGC<-3> ;
 using SCPHAN = ARGC<-4> ;
 using SMPHAN = ARGC<-5> ;
 
@@ -2905,7 +2634,7 @@ public:
 	inline implicit Buffer (DEF<TYPE[SIZE]> &&right) : Buffer (std::move (Buffer::from (right))) {}
 
 	inline ARR<TYPE> &to () {
-		return PTRTOARR[&mBuffer[0]] ;
+		return PTRTOARR[mBuffer] ;
 	}
 
 	inline implicit operator ARR<TYPE> & () {
@@ -2915,7 +2644,7 @@ public:
 	inline implicit operator PTR<TYPE> () = delete ;
 
 	inline const ARR<TYPE> &to () const {
-		return PTRTOARR[&mBuffer[0]] ;
+		return PTRTOARR[mBuffer] ;
 	}
 
 	inline implicit operator const ARR<TYPE> & () const {
@@ -2958,7 +2687,7 @@ public:
 	}
 
 	inline BOOL equal (const Buffer &right) const {
-		return _MEMEQUAL_ (mBuffer ,PTRTOARR[&right.mBuffer[0]]) ;
+		return _MEMEQUAL_ (mBuffer ,PTRTOARR[right.mBuffer]) ;
 	}
 
 	inline BOOL operator== (const Buffer &right) const {
@@ -2970,7 +2699,7 @@ public:
 	}
 
 	inline BOOL less (const Buffer &right) const {
-		const auto r1x = _MEMCOMP_ (mBuffer ,PTRTOARR[&right.mBuffer[0]]) ;
+		const auto r1x = _MEMCOMP_ (mBuffer ,PTRTOARR[right.mBuffer]) ;
 		if (r1x >= 0)
 			return FALSE ;
 		return TRUE ;
@@ -3165,11 +2894,6 @@ public:
 	inline void swap (Buffer<TYPE ,SAUTO> &right) popping {
 		_DYNAMIC_ASSERT_ (FALSE) ;
 	}
-
-	inline void swap (Buffer &right) popping {
-		_SWAP_ (mBuffer ,right.mBuffer) ;
-		_SWAP_ (mSize ,right.mSize) ;
-	}
 } ;
 
 template <class TYPE>
@@ -3224,7 +2948,7 @@ public:
 	}
 
 	inline Buffer &operator= (Buffer &&right) noexcept {
-		for (FOR_ONCE_DO_WHILE_FALSE) {
+		for (FOR_ONCE_DO_WHILE) {
 			if (this == &right)
 				continue ;
 			this->~Buffer () ;
@@ -3284,7 +3008,7 @@ public:
 	}
 
 	inline Buffer &operator= (const Buffer &right) {
-		for (FOR_ONCE_DO_WHILE_FALSE) {
+		for (FOR_ONCE_DO_WHILE) {
 			if (this == &right)
 				continue ;
 			this->~Buffer () ;
@@ -3299,7 +3023,7 @@ public:
 	}
 
 	inline Buffer &operator= (Buffer &&right) noexcept {
-		for (FOR_ONCE_DO_WHILE_FALSE) {
+		for (FOR_ONCE_DO_WHILE) {
 			if (this == &right)
 				continue ;
 			this->~Buffer () ;
@@ -3422,7 +3146,7 @@ public:
 	}
 
 	inline Buffer expand () const {
-		const auto r1x = _MAX_ (LENGTH (VALX_SQRT2 * mSize) ,(mSize + DEFAULT_EXPANDFIRST_SIZE::value)) ;
+		const auto r1x = _MAX_ (LENGTH (mSize * MATH_SQRT2) ,(mSize + DEFAULT_EXPANDFIRST_SIZE::value)) ;
 		return expand (r1x) ;
 	}
 
@@ -3475,7 +3199,7 @@ public:
 	}
 
 	inline Buffer &operator= (Buffer &&right) noexcept {
-		for (FOR_ONCE_DO_WHILE_FALSE) {
+		for (FOR_ONCE_DO_WHILE) {
 			if (this == &right)
 				continue ;
 			this->~Buffer () ;
@@ -3596,7 +3320,7 @@ public:
 
 	template <LENGTH _VAL1>
 	inline static Buffer make (const DEF<TYPE[_VAL1]> &src) {
-		return make (PTRTOARR[&src[0]] ,_VAL1) ;
+		return make (PTRTOARR[src] ,_VAL1) ;
 	}
 
 	template <class _ARG1>
@@ -3647,7 +3371,7 @@ public:
 	}
 
 	inline Buffer &operator= (Buffer &&right) noexcept {
-		for (FOR_ONCE_DO_WHILE_FALSE) {
+		for (FOR_ONCE_DO_WHILE) {
 			if (this == &right)
 				continue ;
 			this->~Buffer () ;
@@ -3768,7 +3492,7 @@ public:
 
 	template <LENGTH _VAL1>
 	inline static Buffer make (DEF<TYPE[_VAL1]> &src) {
-		return make (PTRTOARR[&src[0]] ,_VAL1) ;
+		return make (PTRTOARR[src] ,_VAL1) ;
 	}
 
 	template <class _ARG1>
@@ -3807,27 +3531,30 @@ private:
 	using SPECIALIZATION_TYPE = Allocator<TYPE ,SIZE> ;
 
 	//@warn: memory alignment reduce utilization ratio of memory
-	class Pack {
+	class Node {
 	private:
 		friend Allocator ;
 		friend SPECIALIZATION_TYPE ;
 		TEMP<TYPE> mData ;
 		INDEX mNext ;
+
+	public:
+		inline Node () = default ;
 	} ;
 
 private:
 	friend SPECIALIZATION_TYPE ;
-	Buffer<Pack ,SIZE> mAllocator ;
+	Buffer<Node ,SIZE> mAllocator ;
 	LENGTH mLength ;
 	INDEX mFree ;
 
 public:
 	inline Allocator () {
-		static_cast<PTR<SPECIALIZATION_TYPE>> (this)->update_free (0 ,VAR_NONE) ;
+		static_cast<PTR<SPECIALIZATION_TYPE>> (this)->update_reset (0 ,VAR_NONE) ;
 	}
 
 	inline explicit Allocator (LENGTH len) :mAllocator (len) {
-		static_cast<PTR<SPECIALIZATION_TYPE>> (this)->update_free (0 ,VAR_NONE) ;
+		static_cast<PTR<SPECIALIZATION_TYPE>> (this)->update_reset (0 ,VAR_NONE) ;
 	}
 
 	inline ~Allocator () noexcept {
@@ -3846,27 +3573,30 @@ private:
 	using SPECIALIZATION_TYPE = Allocator<TYPE ,SIZE> ;
 
 	//@warn: memory alignment reduce utilization ratio of memory
-	class Pack {
+	class Node {
 	private:
 		friend Allocator ;
 		friend SPECIALIZATION_TYPE ;
 		TEMP<TYPE> mData ;
 		INDEX mNext ;
+
+	public:
+		inline Node () = default ;
 	} ;
 
 private:
 	friend SPECIALIZATION_TYPE ;
-	Buffer<Pack ,SIZE> mAllocator ;
+	Buffer<Node ,SIZE> mAllocator ;
 	LENGTH mLength ;
 	INDEX mFree ;
 
 public:
 	inline Allocator () {
-		static_cast<PTR<SPECIALIZATION_TYPE>> (this)->update_free (0 ,VAR_NONE) ;
+		static_cast<PTR<SPECIALIZATION_TYPE>> (this)->update_reset (0 ,VAR_NONE) ;
 	}
 
 	inline explicit Allocator (LENGTH len) :mAllocator (len) {
-		static_cast<PTR<SPECIALIZATION_TYPE>> (this)->update_free (0 ,VAR_NONE) ;
+		static_cast<PTR<SPECIALIZATION_TYPE>> (this)->update_reset (0 ,VAR_NONE) ;
 	}
 
 	inline ~Allocator () noexcept {
@@ -3890,7 +3620,7 @@ public:
 	}
 
 	inline Allocator &operator= (Allocator &&right) noexcept {
-		for (FOR_ONCE_DO_WHILE_FALSE) {
+		for (FOR_ONCE_DO_WHILE) {
 			if (this == &right)
 				continue ;
 			this->~Allocator () ;
@@ -3906,27 +3636,30 @@ private:
 	using SPECIALIZATION_TYPE = Allocator<TYPE ,SIZE> ;
 
 	//@warn: memory alignment reduce utilization ratio of memory
-	class Pack {
+	class Node {
 	private:
 		friend Allocator ;
 		friend SPECIALIZATION_TYPE ;
 		TEMP<TYPE> mData ;
 		INDEX mNext ;
+
+	public:
+		inline Node () = default ;
 	} ;
 
 private:
 	friend SPECIALIZATION_TYPE ;
-	Buffer<Pack ,SIZE> mAllocator ;
+	Buffer<Node ,SIZE> mAllocator ;
 	LENGTH mLength ;
 	INDEX mFree ;
 
 public:
 	inline Allocator () {
-		static_cast<PTR<SPECIALIZATION_TYPE>> (this)->update_free (0 ,VAR_NONE) ;
+		static_cast<PTR<SPECIALIZATION_TYPE>> (this)->update_reset (0 ,VAR_NONE) ;
 	}
 
 	inline explicit Allocator (LENGTH len) :mAllocator (len) {
-		static_cast<PTR<SPECIALIZATION_TYPE>> (this)->update_free (0 ,VAR_NONE) ;
+		static_cast<PTR<SPECIALIZATION_TYPE>> (this)->update_reset (0 ,VAR_NONE) ;
 	}
 
 	inline ~Allocator () noexcept {
@@ -3937,21 +3670,21 @@ public:
 		class Finally :private Wrapped<Allocator> {
 		public:
 			inline void lock () noexcept {
-				Finally::mData.mLength = 0 ;
-				Finally::mData.mFree = VAR_NONE ;
+				Finally::mSelf.mLength = 0 ;
+				Finally::mSelf.mFree = VAR_NONE ;
 			}
 
 			inline void unlock () noexcept {
-				if (Finally::mData.mLength > 0)
+				if (Finally::mSelf.mLength > 0)
 					return ;
-				const auto r1x = (std::is_pod<TYPE>::value) ? (Finally::mData.mAllocator.size ()) : 0 ;
-				for (INDEX i = r1x ; i < Finally::mData.mAllocator.size () ; i++) {
-					if (Finally::mData.mAllocator[i].mNext != VAR_USED)
+				const auto r1x = (std::is_pod<TYPE>::value) ? (Finally::mSelf.mAllocator.size ()) : 0 ;
+				for (INDEX i = r1x ; i < Finally::mSelf.mAllocator.size () ; i++) {
+					if (Finally::mSelf.mAllocator[i].mNext != VAR_USED)
 						continue ;
-					_DESTROY_ (&Finally::mData.mAllocator[i].mData) ;
+					_DESTROY_ (&Finally::mSelf.mAllocator[i].mData) ;
 				}
-				Finally::mData.mLength = 0 ;
-				Finally::mData.mFree = VAR_NONE ;
+				Finally::mSelf.mLength = 0 ;
+				Finally::mSelf.mFree = VAR_NONE ;
 			}
 		} ;
 		ScopedGuard<Finally> ANONYMOUS (_CAST_<Finally> (*this)) ;
@@ -3966,7 +3699,7 @@ public:
 	}
 
 	inline Allocator &operator= (const Allocator &right) {
-		for (FOR_ONCE_DO_WHILE_FALSE) {
+		for (FOR_ONCE_DO_WHILE) {
 			if (this == &right)
 				continue ;
 			this->~Allocator () ;
@@ -3989,7 +3722,7 @@ public:
 	}
 
 	inline Allocator &operator= (Allocator &&right) noexcept {
-		for (FOR_ONCE_DO_WHILE_FALSE) {
+		for (FOR_ONCE_DO_WHILE) {
 			if (this == &right)
 				continue ;
 			this->~Allocator () ;
@@ -4003,7 +3736,7 @@ template <class TYPE ,class SIZE>
 class Allocator :private Allocator<SPECIALIZATION<TYPE ,(std::is_copy_constructible<Buffer<TYPE ,SIZE>>::value && std::is_nothrow_move_constructible<Buffer<TYPE ,SIZE>>::value) ,std::is_nothrow_move_constructible<Buffer<TYPE ,SIZE>>::value> ,SIZE> {
 private:
 	using SPECIALIZATION_BASE = Allocator<SPECIALIZATION<TYPE ,(std::is_copy_constructible<Buffer<TYPE ,SIZE>>::value && std::is_nothrow_move_constructible<Buffer<TYPE ,SIZE>>::value) ,std::is_nothrow_move_constructible<Buffer<TYPE ,SIZE>>::value> ,SIZE> ;
-	using Pack = typename SPECIALIZATION_BASE::Pack ;
+	using Node = typename SPECIALIZATION_BASE::Node ;
 
 private:
 	friend SPECIALIZATION_BASE ;
@@ -4027,14 +3760,17 @@ public:
 	}
 
 	inline void clear () noexcept {
-		mLength = 0 ;
-		mFree = VAR_NONE ;
-		for (INDEX i = mAllocator.size () - 1 ; i >= 0 ; i--) {
-			if (mAllocator[i].mNext == VAR_USED)
-				_DESTROY_ (&mAllocator[i].mData) ;
-			mAllocator[i].mNext = mFree ;
-			mFree = i ;
+		INDEX ix = VAR_NONE ;
+		INDEX iy = VAR_NONE ;
+		for (INDEX i = 0 ; i < mAllocator.size () ; i++) {
+			iy = ix ;
+			ix = mAllocator.size () + ~i ;
+			if (mAllocator[ix].mNext == VAR_USED)
+				_DESTROY_ (&mAllocator[ix].mData) ;
+			mAllocator[ix].mNext = iy ;
 		}
+		mLength = 0 ;
+		mFree = ix ;
 	}
 
 	inline BOOL used (INDEX index) const {
@@ -4066,7 +3802,7 @@ public:
 	inline TYPE &operator[] (INDEX) && = delete ;
 
 	inline INDEX at (const TYPE &item) const {
-		INDEX ret = mAllocator.at (_OFFSET_ (&Pack::mData ,_CAST_<TEMP<TYPE>> (item))) ;
+		INDEX ret = mAllocator.at (_OFFSET_ (&Node::mData ,_CAST_<TEMP<TYPE>> (item))) ;
 		if (!used (ret))
 			ret = VAR_NONE ;
 		return std::move (ret) ;
@@ -4082,7 +3818,7 @@ public:
 	inline INDEX alloc (_ARGS &&...args) popping {
 		_STATIC_ASSERT_ (std::is_nothrow_move_constructible<TYPE>::value && std::is_nothrow_move_assignable<TYPE>::value) ;
 		INDEX ret = VAR_NONE ;
-		for (FOR_ONCE_DO_WHILE_FALSE) {
+		for (FOR_ONCE_DO_WHILE) {
 			if (ret != VAR_NONE)
 				continue ;
 			if (mFree != VAR_NONE)
@@ -4094,10 +3830,10 @@ public:
 				rax[i].mNext = VAR_USED ;
 			}
 			mAllocator.swap (rax) ;
-			update_free (mLength ,mFree) ;
+			update_reset (mLength ,mFree) ;
 			ret = mFree ;
 		}
-		for (FOR_ONCE_DO_WHILE_FALSE) {
+		for (FOR_ONCE_DO_WHILE) {
 			if (ret != VAR_NONE)
 				continue ;
 			if (mFree == VAR_NONE)
@@ -4105,7 +3841,7 @@ public:
 			_CREATE_ (&mAllocator[mFree].mData ,std::forward<_ARGS> (args)...) ;
 			ret = mFree ;
 		}
-		mFree = mAllocator[mFree].mNext ;
+		mFree = mAllocator[ret].mNext ;
 		mAllocator[ret].mNext = VAR_USED ;
 		mLength++ ;
 		return std::move (ret) ;
@@ -4123,18 +3859,18 @@ public:
 		_STATIC_ASSERT_ (std::is_nothrow_move_constructible<TYPE>::value && std::is_nothrow_move_assignable<TYPE>::value) ;
 		const auto r1x = mAllocator.size () ;
 		_DEBUG_ASSERT_ (len >= 0) ;
-		len = _MAX_ (len - (r1x - mLength) ,VAR_ZERO) ;
-		if (len == 0)
+		const auto r2x = _MAX_ (len - (r1x - mLength) ,VAR_ZERO) ;
+		if (r2x == 0)
 			return ;
-		_DEBUG_ASSERT_ (r1x + len > r1x) ;
-		auto rax = mAllocator.expand (r1x + len) ;
+		_DEBUG_ASSERT_ (r1x + r2x > r1x) ;
+		auto rax = mAllocator.expand (r1x + r2x) ;
 		for (INDEX i = 0 ; i < r1x ; i++) {
 			if (mAllocator[i].mNext == VAR_USED)
 				_CREATE_ (&rax[i].mData ,std::move (_CAST_<TYPE> (mAllocator[i].mData))) ;
 			rax[i].mNext = mAllocator[i].mNext ;
 		}
 		mAllocator.swap (rax) ;
-		update_free (r1x ,mFree) ;
+		update_reset (r1x ,mFree) ;
 	}
 
 	inline void clean () {
@@ -4142,28 +3878,28 @@ public:
 		const auto r1x = shrink_size () ;
 		if (r1x == mAllocator.size ())
 			return ;
+		_DYNAMIC_ASSERT_ (r1x == mLength) ;
 		auto rax = mAllocator.expand (r1x) ;
-		mFree = VAR_NONE ;
-		for (INDEX i = r1x - 1 ; i >= 0 ; i--) {
-			if (mAllocator[i].mNext == VAR_USED)
-				_CREATE_ (&rax[i].mData ,std::move (_CAST_<TYPE> (mAllocator[i].mData))) ;
-			rax[i].mNext = mAllocator[i].mNext ;
-			if (rax[i].mNext == VAR_USED)
-				continue ;
-			rax[i].mNext = mFree ;
-			mFree = i ;
+		for (INDEX i = 0 ; i < rax.size () ; i++) {
+			_DEBUG_ASSERT_ (mAllocator[i].mNext == VAR_USED) ;
+			_CREATE_ (&rax[i].mData ,std::move (_CAST_<TYPE> (mAllocator[i].mData))) ;
+			rax[i].mNext = VAR_USED ;
 		}
 		mAllocator.swap (rax) ;
+		update_reset (mLength ,VAR_NONE) ;
 	}
 
 private:
-	inline void update_free (INDEX _length ,INDEX _free) {
-		mLength = _length ;
-		mFree = _free ;
-		for (INDEX i = mAllocator.size () - 1 ; i >= _length ; i--) {
-			mAllocator[i].mNext = mFree ;
-			mFree = i ;
+	inline void update_reset (INDEX _length ,INDEX _free) {
+		INDEX ix = _free ;
+		INDEX iy = VAR_NONE ;
+		for (INDEX i = 0 ,ie = mAllocator.size () - _length ; i < ie ; i++) {
+			iy = ix ;
+			ix = mAllocator.size () + ~i ;
+			mAllocator[ix].mNext = iy ;
 		}
+		mLength = _length ;
+		mFree = ix ;
 	}
 
 	inline LENGTH shrink_size () const {

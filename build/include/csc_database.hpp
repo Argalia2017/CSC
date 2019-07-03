@@ -22,7 +22,7 @@ public:
 		virtual void compute_load_data (AnyRef<void> &_this) = 0 ;
 	} ;
 
-	class Pack {
+	class Holder {
 	private:
 		friend AbstractDatabase ;
 		AnyRef<void> mHolder ;
@@ -30,12 +30,12 @@ public:
 
 private:
 	PhanRef<const Abstract> mAbstract ;
-	SharedRef<Pack> mThis ;
+	SharedRef<Holder> mThis ;
 
 public:
 	AbstractDatabase () = default ;
 
-	explicit AbstractDatabase (const PhanRef<const Abstract> &_abstract) :AbstractDatabase (PhanRef<const Abstract>::make (_abstract) ,SharedRef<Pack>::make ()) {}
+	explicit AbstractDatabase (const PhanRef<const Abstract> &_abstract) :AbstractDatabase (PhanRef<const Abstract>::make (_abstract) ,SharedRef<Holder>::make ()) {}
 
 	BOOL exist () const {
 		if (!mAbstract.exist ())
@@ -48,6 +48,6 @@ public:
 	}
 
 private:
-	explicit AbstractDatabase (PhanRef<const Abstract> &&_abstract ,SharedRef<Pack> &&_this) :mAbstract (std::move (_abstract)) ,mThis (std::move (_this)) {}
+	explicit AbstractDatabase (PhanRef<const Abstract> &&_abstract ,SharedRef<Holder> &&_this) :mAbstract (std::move (_abstract)) ,mThis (std::move (_this)) {}
 } ;
 } ;

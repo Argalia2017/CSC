@@ -5,10 +5,9 @@
 #define popping
 #define imports
 #define exports
-#define discard
 
 #define M_DATE
-#define M_TIME
+#define M_HOUR
 #define M_FILE
 #define M_LINE
 #define M_FUNC
@@ -25,7 +24,9 @@
 
 #define ANONYMOUS
 
-#define FOR_ONCE_DO_WHILE_FALSE
+#define FOR_ONCE_DO_WHILE
+
+#define _CASE_REQUIRE_
 
 #define FALSE
 #define TRUE
@@ -43,3 +44,8 @@
 #define _PCSTRA_
 #define _PCSTRW_
 #define _PCSTR_
+
+#define DLLABI_IMPORT
+#define DLLABI_EXPORT
+#define DLLABI_API
+#define DLLABI_NATIVE

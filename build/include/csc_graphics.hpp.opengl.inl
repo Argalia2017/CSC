@@ -10,13 +10,11 @@
 #pragma push_macro ("popping")
 #pragma push_macro ("imports")
 #pragma push_macro ("exports")
-#pragma push_macro ("discard")
 #undef self
 #undef implicit
 #undef popping
 #undef imports
 #undef exports
-#undef discard
 #endif
 
 #ifdef __CSC_DEPRECATED__
@@ -78,7 +76,6 @@
 #pragma pop_macro ("popping")
 #pragma pop_macro ("imports")
 #pragma pop_macro ("exports")
-#pragma pop_macro ("discard")
 #endif
 
 namespace CSC {
@@ -129,7 +126,7 @@ private:
 	//@warn: bind to (layout == 3) Vec3 in GLSL
 	static constexpr auto LAYOUT_NORMAL = CHAR (3) ;
 
-	class Pack {
+	class Holder {
 	private:
 		friend AbstractShader_Engine_OPENGL ;
 		UniqueRef<CHAR> mVAO ;
@@ -142,7 +139,7 @@ private:
 
 public:
 	using NATIVE_TYPE = UniqueRef<CHAR> ;
-	using SPRITE_NATIVE_TYPE = Pack ;
+	using SPRITE_NATIVE_TYPE = Holder ;
 
 public:
 	AbstractShader_Engine_OPENGL () {
@@ -159,17 +156,17 @@ public:
 			const auto r3x = VAR32 (vs.size ()) ;
 			glShaderSource (r1x ,1 ,&r2x ,&r3x) ;
 			glCompileShader (r1x) ;
-			attach_shaderiv (r1x) ;
+			check_shaderiv (r1x) ;
 			glAttachShader (me ,r1x) ;
 			const auto r4x = glCreateShader (GL_FRAGMENT_SHADER) ;
 			const auto r5x = _LOAD_<ARR<STRA>> (fs.self) ;
 			const auto r6x = VAR32 (fs.size ()) ;
 			glShaderSource (r4x ,1 ,&r5x ,&r6x) ;
 			glCompileShader (r4x) ;
-			attach_shaderiv (r4x) ;
+			check_shaderiv (r4x) ;
 			glAttachShader (me ,r4x) ;
 			glLinkProgram (me) ;
-			attach_programiv (me) ;
+			check_programiv (me) ;
 		} ,[] (CHAR &me) {
 			_DEBUG_ASSERT_ (me != 0) ;
 			glDeleteProgram (me) ;
@@ -234,7 +231,7 @@ public:
 	}
 
 	void compute_sprite_load_data (AnyRef<void> &_this ,const Mesh &mesh) const override {
-		auto rax = Pack () ;
+		auto rax = Holder () ;
 		rax.mVAO = UniqueRef<CHAR> ([&] (CHAR &me) {
 			glGenVertexArrays (1 ,&me) ;
 			_DYNAMIC_ASSERT_ (me != GL_INVALID_VALUE) ;
@@ -271,7 +268,7 @@ public:
 	void compute_sprite_draw (AnyRef<void> &_this) const override {
 		auto &r1 = _this.rebind<SPRITE_NATIVE_TYPE> ().self ;
 		glBindVertexArray (r1.mVAO) ;
-		for (FOR_ONCE_DO_WHILE_FALSE) {
+		for (FOR_ONCE_DO_WHILE) {
 			if (r1.mTexture == VAR_NONE)
 				continue ;
 			glActiveTexture (GL_TEXTURE_2D) ;
@@ -294,7 +291,7 @@ private:
 		return std::move (ret) ;
 	}
 
-	void attach_shaderiv (CHAR shader) const {
+	void check_shaderiv (CHAR shader) const {
 		auto rax = ARRAY2<VAR32> () ;
 		glGetShaderiv (shader ,GL_COMPILE_STATUS ,&(rax[0] = GL_FALSE)) ;
 		if (rax[0] == GL_TRUE)
@@ -307,7 +304,7 @@ private:
 		_DYNAMIC_ASSERT_ (rbx.empty ()) ;
 	}
 
-	void attach_programiv (CHAR shader) const {
+	void check_programiv (CHAR shader) const {
 		auto rax = ARRAY2<VAR32> () ;
 		glGetProgramiv (shader ,GL_LINK_STATUS ,&(rax[0] = GL_FALSE)) ;
 		if (rax[0] == GL_TRUE)
@@ -370,7 +367,7 @@ private:
 		return std::move (ret) ;
 	}
 
-	void compute_transfer_data (Pack &_self ,const Array<ARRAY1<ARRAY3<VAL32>>> &vbo) const {
+	void compute_transfer_data (Holder &_self ,const Array<ARRAY1<ARRAY3<VAL32>>> &vbo) const {
 		using VERTEX = ARRAY3<VAL32> ;
 		_self.mSize = vbo.length () * vbo[0].length () ;
 		_self.mMode = GL_POINTS ;
@@ -382,7 +379,7 @@ private:
 		glBindVertexArray (0) ;
 	}
 
-	void compute_transfer_data (Pack &_self ,const Array<ARRAY2<ARRAY3<VAL32>>> &vbo) const {
+	void compute_transfer_data (Holder &_self ,const Array<ARRAY2<ARRAY3<VAL32>>> &vbo) const {
 		using VERTEX = ARRAY3<VAL32> ;
 		_self.mSize = vbo.length () * vbo[0].length () ;
 		_self.mMode = GL_LINES ;
@@ -394,7 +391,7 @@ private:
 		glBindVertexArray (0) ;
 	}
 
-	void compute_transfer_data (Pack &_self ,const Array<ARRAY2<ARRAY5<VAL32>>> &vbo) const {
+	void compute_transfer_data (Holder &_self ,const Array<ARRAY2<ARRAY5<VAL32>>> &vbo) const {
 		using VERTEX = ARRAY5<VAL32> ;
 		_self.mSize = vbo.length () * vbo[0].length () ;
 		_self.mMode = GL_LINES ;
@@ -408,7 +405,7 @@ private:
 		glBindVertexArray (0) ;
 	}
 
-	void compute_transfer_data (Pack &_self ,const Array<ARRAY3<ARRAY3<VAL32>>> &vbo) const {
+	void compute_transfer_data (Holder &_self ,const Array<ARRAY3<ARRAY3<VAL32>>> &vbo) const {
 		using VERTEX = ARRAY3<VAL32> ;
 		_self.mSize = vbo.length () * vbo[0].length () ;
 		_self.mMode = GL_TRIANGLES ;
@@ -420,7 +417,7 @@ private:
 		glBindVertexArray (0) ;
 	}
 
-	void compute_transfer_data (Pack &_self ,const Array<ARRAY3<ARRAY5<VAL32>>> &vbo) const {
+	void compute_transfer_data (Holder &_self ,const Array<ARRAY3<ARRAY5<VAL32>>> &vbo) const {
 		using VERTEX = ARRAY5<VAL32> ;
 		_self.mSize = vbo.length () * vbo[0].length () ;
 		_self.mMode = GL_TRIANGLES ;
@@ -434,7 +431,7 @@ private:
 		glBindVertexArray (0) ;
 	}
 
-	void compute_transfer_data (Pack &_self ,const Array<ARRAY3<ARRAY8<VAL32>>> &vbo) const {
+	void compute_transfer_data (Holder &_self ,const Array<ARRAY3<ARRAY8<VAL32>>> &vbo) const {
 		using VERTEX = ARRAY8<VAL32> ;
 		_self.mSize = vbo.length () * vbo[0].length () ;
 		_self.mMode = GL_TRIANGLES ;
@@ -450,7 +447,7 @@ private:
 		glBindVertexArray (0) ;
 	}
 
-	void compute_transfer_data (Pack &_self ,const Array<ARRAY4<ARRAY3<VAL32>>> &vbo) const {
+	void compute_transfer_data (Holder &_self ,const Array<ARRAY4<ARRAY3<VAL32>>> &vbo) const {
 		using VERTEX = ARRAY3<VAL32> ;
 		_self.mSize = vbo.length () * vbo[0].length () ;
 		_self.mMode = GL_QUADS ;
@@ -462,7 +459,7 @@ private:
 		glBindVertexArray (0) ;
 	}
 
-	void compute_transfer_data (Pack &_self ,const Array<ARRAY4<ARRAY5<VAL32>>> &vbo) const {
+	void compute_transfer_data (Holder &_self ,const Array<ARRAY4<ARRAY5<VAL32>>> &vbo) const {
 		using VERTEX = ARRAY5<VAL32> ;
 		_self.mSize = vbo.length () * vbo[0].length () ;
 		_self.mMode = GL_QUADS ;
@@ -476,7 +473,7 @@ private:
 		glBindVertexArray (0) ;
 	}
 
-	void compute_transfer_data (Pack &_self ,const Array<ARRAY4<ARRAY8<VAL32>>> &vbo) const {
+	void compute_transfer_data (Holder &_self ,const Array<ARRAY4<ARRAY8<VAL32>>> &vbo) const {
 		using VERTEX = ARRAY8<VAL32> ;
 		_self.mSize = vbo.length () * vbo[0].length () ;
 		_self.mMode = GL_QUADS ;
@@ -492,7 +489,7 @@ private:
 		glBindVertexArray (0) ;
 	}
 
-	void compute_transfer_data (Pack &_self ,const SoftImage<COLOR_BGR> &image) const {
+	void compute_transfer_data (Holder &_self ,const Bitmap<COLOR_BGR> &image) const {
 		_self.mTexture = 0 ;
 		glBindVertexArray (_self.mVAO) ;
 		glBindTexture (GL_TEXTURE_2D ,_self.mVTO.self[0]) ;

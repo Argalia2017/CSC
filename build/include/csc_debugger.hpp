@@ -19,8 +19,45 @@
 namespace CSC {
 #ifdef __CSC_DEPRECATED__
 namespace U {
-template <class TYPE>
 struct OPERATOR_TYPENAME {
+	struct TYPESTRING {
+		String<STR> mSelf ;
+	} ;
+
+	template <class _RET>
+	inline static TYPESTRING type_name_from_func () {
+		TYPESTRING ret ;
+		ret.mSelf = _PARSESTRS_ (String<STRA> (M_FUNC)) ;
+#ifdef __CSC_COMPILER_MSVC__
+		static constexpr auto M_PREFIX = _PCSTR_ ("struct CSC::U::OPERATOR_TYPENAME::TYPESTRING __cdecl CSC::U::OPERATOR_TYPENAME::type_name_from_func<") ;
+		static constexpr auto M_SUFFIX = _PCSTR_ (">(void)") ;
+		const auto r1x = M_PREFIX.size () ;
+		const auto r2x = M_SUFFIX.size () ;
+		const auto r7x = ret.mSelf.length () - r1x - r2x ;
+		_DYNAMIC_ASSERT_ (r7x > 0) ;
+		ret.mSelf = ret.mSelf.segment (r1x ,r7x) ;
+#elif defined __CSC_COMPILER_GNUC__
+		static constexpr auto M_PREFIX = _PCSTR_ ("static CSC::U::OPERATOR_TYPENAME::TYPESTRING CSC::U::OPERATOR_TYPENAME::type_name_from_func() [with _RET = ") ;
+		static constexpr auto M_SUFFIX = _PCSTR_ ("]") ;
+		const auto r3x = M_PREFIX.size () ;
+		const auto r4x = M_SUFFIX.size () ;
+		const auto r8x = ret.mSelf.length () - r3x - r4x ;
+		_DYNAMIC_ASSERT_ (r8x > 0) ;
+		ret.mSelf = ret.mSelf.segment (r3x ,r8x) ;
+#elif defined __CSC_COMPILER_CLANG__
+		static constexpr auto M_PREFIX = _PCSTR_ ("static CSC::U::OPERATOR_TYPENAME::TYPESTRING CSC::U::OPERATOR_TYPENAME::type_name_from_func() [_RET = ") ;
+		static constexpr auto M_SUFFIX = _PCSTR_ ("]") ;
+		const auto r5x = M_PREFIX.size () ;
+		const auto r6x = M_SUFFIX.size () ;
+		const auto r9x = ret.mSelf.length () - r5x - r6x ;
+		_DYNAMIC_ASSERT_ (r9x > 0) ;
+		ret.mSelf = ret.mSelf.segment (r5x ,r9x) ;
+#else
+		ret.mSelf = _BUILDVAR64S_<STR> (_TYPEID_<_RET> ()) ;
+#endif
+		return std::move (ret) ;
+	}
+
 	template <class _ARG1>
 	inline static void compute_write_typename_cvs (TextWriter<STR> &writer ,const ARGV<_ARG1> &) {
 		_STATIC_WARNING_ ("noop") ;
@@ -130,14 +167,14 @@ struct OPERATOR_TYPENAME {
 	template <class _ARG1>
 	inline static void compute_write_typename_clazzs (TextWriter<STR> &writer ,const ARGV<_ARG1> &) {
 		writer << _PCSTR_ ("class '") ;
-		writer << _TYPEID_<_ARG1> () ;
+		writer << type_name_from_func<_ARG1> ().mSelf ;
 		writer << _PCSTR_ ("'") ;
 	}
 
 	template <template <class...> class _ARGT ,class..._ARGS>
 	inline static void compute_write_typename_clazzs (TextWriter<STR> &writer ,const ARGV<_ARGT<_ARGS...>> &) {
 		writer << _PCSTR_ ("class '") ;
-		writer << _TYPEID_<_ARGT<_ARGS...>> () ;
+		writer << type_name_from_func<_ARGT<_ARGS...>> ().mSelf ;
 		writer << _PCSTR_ ("'<") ;
 		compute_write_typename_params (writer ,_NULL_<const ARGVS<_ARGS...>> ()) ;
 		writer << _PCSTR_ (">") ;
@@ -252,12 +289,14 @@ struct OPERATOR_TYPENAME {
 		compute_write_typename_refs (writer ,_NULL_<const ARGV<REMOVE_CONST_TYPE<REMOVE_VOLATILE_TYPE<_ARG1>>>> ()) ;
 	}
 
+	template <class _RET>
 	inline static void serialize (TextWriter<STR> &writer) {
-		compute_write_typename_xs (writer ,_NULL_<const ARGV<TYPE>> ()) ;
+		compute_write_typename_xs (writer ,_NULL_<const ARGV<_RET>> ()) ;
 	}
 
+	template <class _RET>
 	inline static String<STR> invoke () {
-		return _PRINTS_<STR> (_XVALUE_<PTR<void (TextWriter<STR> &)>> (OPERATOR_TYPENAME::serialize)) ;
+		return String<STR>::make (_XVALUE_<PTR<void (TextWriter<STR> &)>> (OPERATOR_TYPENAME::serialize<_RET>)) ;
 	}
 } ;
 } ;
@@ -280,17 +319,27 @@ private:
 		virtual void friend_write (TextWriter<STR> &writer) const = 0 ;
 	} ;
 
-	template <class TYPE>
+	template <class... TYPES>
 	class ImplBinder :public Binder {
 	private:
-		TYPE mBinder ;
+		TupleBinder<const TYPES...> mBinder ;
 
 	public:
-		template <class... _ARGS>
-		inline explicit ImplBinder (_ARGS &&...args) :mBinder (std::forward<_ARGS> (args)...) {}
+		inline explicit ImplBinder (const TYPES &...args) :mBinder (args...) {}
 
 		inline void friend_write (TextWriter<STR> &writer) const popping override {
-			mBinder.friend_write (writer) ;
+			template_write (writer ,mBinder) ;
+		}
+
+	public:
+		inline static void template_write (TextWriter<STR> &writer ,const Tuple<> &binder) {
+			_STATIC_WARNING_ ("noop") ;
+		}
+
+		template <class... _ARGS>
+		inline static void template_write (TextWriter<STR> &writer ,const Tuple<_ARGS...> &binder) {
+			writer << binder.one () ;
+			template_write (writer ,binder.rest ()) ;
 		}
 	} ;
 
@@ -327,43 +376,43 @@ public:
 	template <class... _ARGS>
 	void print (const _ARGS &...args) {
 		ScopedGuard<std::recursive_mutex> ANONYMOUS (mMutex) ;
-		mThis->print (ImplBinder<StreamBinder<const _ARGS...>> (args...)) ;
+		mThis->print (ImplBinder<_ARGS...> (args...)) ;
 	}
 
 	template <class... _ARGS>
 	void fatal (const _ARGS &...args) {
 		ScopedGuard<std::recursive_mutex> ANONYMOUS (mMutex) ;
-		mThis->fatal (ImplBinder<StreamBinder<const _ARGS...>> (args...)) ;
+		mThis->fatal (ImplBinder<_ARGS...> (args...)) ;
 	}
 
 	template <class... _ARGS>
 	void error (const _ARGS &...args) {
 		ScopedGuard<std::recursive_mutex> ANONYMOUS (mMutex) ;
-		mThis->error (ImplBinder<StreamBinder<const _ARGS...>> (args...)) ;
+		mThis->error (ImplBinder<_ARGS...> (args...)) ;
 	}
 
 	template <class... _ARGS>
 	void warn (const _ARGS &...args) {
 		ScopedGuard<std::recursive_mutex> ANONYMOUS (mMutex) ;
-		mThis->warn (ImplBinder<StreamBinder<const _ARGS...>> (args...)) ;
+		mThis->warn (ImplBinder<_ARGS...> (args...)) ;
 	}
 
 	template <class... _ARGS>
 	void info (const _ARGS &...args) {
 		ScopedGuard<std::recursive_mutex> ANONYMOUS (mMutex) ;
-		mThis->info (ImplBinder<StreamBinder<const _ARGS...>> (args...)) ;
+		mThis->info (ImplBinder<_ARGS...> (args...)) ;
 	}
 
 	template <class... _ARGS>
 	void debug (const _ARGS &...args) {
 		ScopedGuard<std::recursive_mutex> ANONYMOUS (mMutex) ;
-		mThis->debug (ImplBinder<StreamBinder<const _ARGS...>> (args...)) ;
+		mThis->debug (ImplBinder<_ARGS...> (args...)) ;
 	}
 
 	template <class... _ARGS>
 	void verbose (const _ARGS &...args) {
 		ScopedGuard<std::recursive_mutex> ANONYMOUS (mMutex) ;
-		mThis->verbose (ImplBinder<StreamBinder<const _ARGS...>> (args...)) ;
+		mThis->verbose (ImplBinder<_ARGS...> (args...)) ;
 	}
 
 	void attach_log (const String<STR> &path) {
@@ -374,7 +423,7 @@ public:
 	template <class... _ARGS>
 	void log (const String<STR> &tag ,const _ARGS &...args) {
 		ScopedGuard<std::recursive_mutex> ANONYMOUS (mMutex) ;
-		mThis->log (tag.raw () ,ImplBinder<StreamBinder<const _ARGS...>> (args...)) ;
+		mThis->log (tag.raw () ,ImplBinder<_ARGS...> (args...)) ;
 	}
 
 	void show () {

@@ -15,11 +15,11 @@
 #include <csc_serialization.hpp>
 #include <csc_runtime.hpp>
 #include <csc_thread.hpp>
+#include <csc_graphics.hpp>
 #include <csc_filesystem.hpp>
 #include <csc_network.hpp>
 #include <csc_database.hpp>
 #include <csc_debugger.hpp>
-#include <csc_graphics.hpp>
 
 #ifdef __CSC_SYSTEM_WINDOWS__
 #pragma region
@@ -86,22 +86,22 @@ inline exports PTR<NONE> GlobalStatic<void>::unique_atomic_address (PTR<NONE> ex
 namespace CSC {
 template <>
 inline exports ConsoleService &Singleton<ConsoleService>::instance () {
-	return GlobalStatic<ARGV<Singleton<ConsoleService>>>::unique () ;
+	return GlobalStatic<Singleton<ConsoleService>>::unique () ;
 }
 } ;
 
-#ifdef __CSC_SYSTEM_WINDOWS__
+#ifdef __CSC_COMPILER_MSVC__
 namespace CSC {
 template <>
 inline exports NetworkService &Singleton<NetworkService>::instance () {
-	return GlobalStatic<ARGV<Singleton<NetworkService>>>::unique () ;
+	return GlobalStatic<Singleton<NetworkService>>::unique () ;
 }
 } ;
 
 namespace CSC {
 template <>
 inline exports DebuggerService &Singleton<DebuggerService>::instance () {
-	return GlobalStatic<ARGV<Singleton<DebuggerService>>>::unique () ;
+	return GlobalStatic<Singleton<DebuggerService>>::unique () ;
 }
 } ;
 #endif
@@ -122,7 +122,7 @@ inline exports void _UNITTEST_ASSERT_HANDLER_ (const ARR<STR> &what) {
 	Assert::Fail () ;
 #endif
 #else
-	(void) what ;
+	Singleton<ConsoleService>::instance ().fatal (String<STR> (what)) ;
 #endif
 }
 #endif
@@ -130,9 +130,9 @@ inline exports void _UNITTEST_ASSERT_HANDLER_ (const ARR<STR> &what) {
 
 #ifdef __CSC_UNITTEST__
 #ifdef __CSC_COMPILER_MSVC__
-#define _UNITTEST_ASSERT_(...) do { if (!(_UNW_ (__VA_ARGS__))) UNITTEST::_UNITTEST_ASSERT_HANDLER_ (CSC::Exception (_PCSTR_ ("unittest_assert failed : " _STR_ (__VA_ARGS__) " : at " M_FUNC " in " M_FILE " ," _STR_ (M_LINE))).what ()) ; } while (FALSE)
+#define _UNITTEST_ASSERT_(...) do { if (!(_UNW_ (__VA_ARGS__))) UNITTEST::_UNITTEST_ASSERT_HANDLER_ (CSC::Exception (_PCSTR_ ("unittest_assert failed : " _STR_ (__VA_ARGS__) " : at " M_FUNC " in " M_FILE " ," M_LINE)).what ()) ; } while (FALSE)
 #else
-#define _UNITTEST_ASSERT_(...) do { (void) (_UNW_ (__VA_ARGS__)) ; } while (FALSE)
+#define _UNITTEST_ASSERT_(...) do { struct ARGVPL ; if (!(_UNW_ (__VA_ARGS__))) UNITTEST::_UNITTEST_ASSERT_HANDLER_ (CSC::Exception (CSC::_NULL_<CSC::ARGV<ARGVPL>> () ,"unittest_assert failed : " _STR_ (__VA_ARGS__) " : at " ,M_FUNC ," in " ,M_FILE ," ," ,M_LINE).what ()) ; } while (FALSE)
 #endif
 #else
 #define _UNITTEST_ASSERT_(...) do {} while (FALSE)
@@ -146,6 +146,10 @@ inline exports void _UNITTEST_ASSERT_HANDLER_ (const ARR<STR> &what) {
 
 #ifdef __CSC_STRING__
 #include "csc_string.hpp.default.inl"
+#endif
+
+#ifdef __CSC_RUNTIME__
+#include <csc_runtime.hpp.default.inl>
 #endif
 
 #ifdef __CSC_FILESYSTEM__

@@ -229,131 +229,8 @@ inline const _ARG1 &_MAXOF_ (const _ARG1 &arg1 ,const _ARG1 &arg2 ,const _ARGS &
 	return _MAX_ (arg1 ,_MAXOF_ (arg2 ,args...)) ;
 }
 
-inline VAL64 _IEEE754_ENCODE_ (const ARRAY2<VAR64> &sne2) {
-	const auto r1x = _CALL_ ([&] () {
-		ARRAY3<DATA> ret ;
-		ret[0] = DATA (sne2[0]) ;
-		ret[1] = DATA (sne2[1]) ;
-		ret[2] = ret[0] ;
-		if ((ret[0] & DATA (0X8000000000000000)) != 0)
-			ret[0] = ~ret[0] + 1 ;
-		while (TRUE) {
-			if (ret[0] == 0)
-				break ;
-			if ((ret[0] & ~0X000FFFFFFFFFFFFF) == 0X0010000000000000)
-				break ;
-			ret[0] = ret[0] << 1 ;
-			ret[1]-- ;
-		}
-		const auto r3x = VAR64 (ret[1]) ;
-		while (TRUE) {
-			if (VAR64 (ret[1]) > -1075)
-				break ;
-			ret[0] = ret[0] >> 1 ;
-			ret[1]++ ;
-		}
-		ret[1] = ret[1] + 1075 - EFLAG (r3x <= -1075) ;
-		ret[1] = ret[1] << 52 ;
-		if (ret[0] == 0)
-			ret[1] = 0 ;
-		return std::move (ret) ;
-	}) ;
-	_DYNAMIC_ASSERT_ ((r1x[0] & ~0X001FFFFFFFFFFFFF) == 0) ;
-	_DYNAMIC_ASSERT_ ((r1x[1] & ~0X7FF0000000000000) == 0) ;
-	DATA ret = 0 ;
-	ret |= r1x[0] & DATA (0X000FFFFFFFFFFFFF) ;
-	ret |= r1x[1] & DATA (0X7FF0000000000000) ;
-	ret |= r1x[2] & DATA (0X8000000000000000) ;
-	return std::move (_CAST_<VAL64> (ret)) ;
-}
-
-inline ARRAY2<VAR64> _IEEE754_DECODE_ (const VAL64 &ieee754) {
-	ARRAY2<DATA> ret ;
-	const auto r1x = _CAST_<DATA> (ieee754) ;
-	ret[0] = r1x & DATA (0X000FFFFFFFFFFFFF) ;
-	const auto r2x = r1x & DATA (0X7FF0000000000000) ;
-	if (r2x != 0)
-		ret[0] |= DATA (0X0010000000000000) ;
-	ret[1] = r2x >> 52 ;
-	ret[1] -= DATA (1074 + EFLAG (r2x != 0)) ;
-	while (TRUE) {
-		if (ret[0] == 0)
-			break ;
-		if ((ret[0] & DATA (0X0000000000000001)) != 0)
-			break ;
-		ret[0] = ret[0] >> 1 ;
-		ret[1]++ ;
-	}
-	if ((r1x & DATA (0X8000000000000000)) != 0)
-		ret[0] = ~ret[0] + 1 ;
-	if (r1x == 0)
-		ret[1] = 0 ;
-	return std::move (_CAST_<ARRAY2<VAR64>> (ret)) ;
-}
-
-inline ARRAY2<VAR64> _IEEE754_E2TOE10_ (const ARRAY2<VAR64> &sne2) {
-	_STATIC_WARNING_ ("note") ;
-	/*
-	X^(b/a) => { Y[0]=X^b ; Y[K+1]=Y[k]+((X^b)/(Y[k]^(a-1))-Y[k])/a ; }
-	X^(b/a) = Y[inf]
-	*/
-	const auto r1x = _CALL_ ([&] () {
-		ARRAY2<DATA> ret = _CAST_<ARRAY2<DATA>> (sne2) ;
-		if (sne2[0] < 0)
-			ret[0] = ~ret[0] + 1 ;
-		_DEBUG_ASSERT_ ((ret[0] & DATA (0X8000000000000000)) == 0) ;
-		while (TRUE) {
-			if (ret[0] == 0)
-				break ;
-			if ((ret[0] & ~0X000FFFFFFFFFFFFF) == 0X0010000000000000)
-				break ;
-			ret[0] = ret[0] << 1 ;
-			ret[1]-- ;
-		}
-		return std::move (_CAST_<ARRAY2<VAR64>> (ret)) ;
-	}) ;
-	const auto r2x = (VALX_LOGE2 / VALX_LOGE10) * r1x[1] ;
-	ARRAY2<DATA> ret ;
-	ret[0] = DATA (VAR64 (r1x[0] * _POW_ (10 ,(r2x - VAR64 (r2x))) + VAL64 (0.5))) ;
-	ret[1] = DATA (VAR64 (r2x)) ;
-	while (TRUE) {
-		if (ret[0] == 0)
-			break ;
-		if (ret[0] % 10 != 0)
-			break ;
-		ret[0] /= 10 ;
-		ret[1]++ ;
-	}
-	if (sne2[0] < 0)
-		ret[0] = ~ret[0] + 1 ;
-	return std::move (_CAST_<ARRAY2<VAR64>> (ret)) ;
-}
-
-inline ARRAY2<VAR64> _IEEE754_E10TOE2_ (const ARRAY2<VAR64> &sne10) {
-	_STATIC_WARNING_ ("note") ;
-	/*
-	X^(b/a) => { Y[0]=X^b ; Y[K+1]=Y[k]+((X^b)/(Y[k]^(a-1))-Y[k])/a ; }
-	X^(b/a) = Y[inf]
-	*/
-	const auto r1x = _CALL_ ([&] () {
-		ARRAY2<DATA> ret = _CAST_<ARRAY2<DATA>> (sne10) ;
-		if (sne10[0] < 0)
-			ret[0] = ~ret[0] + 1 ;
-		_DEBUG_ASSERT_ ((ret[0] & DATA (0X8000000000000000)) == 0) ;
-		while (TRUE) {
-			if (ret[0] == 0)
-				break ;
-			if ((ret[0] & ~0X000FFFFFFFFFFFFF) != 0)
-				break ;
-			ret[0] = (ret[0] << 3) + (ret[0] << 1) ;
-			ret[1]-- ;
-		}
-		return std::move (_CAST_<ARRAY2<VAR64>> (ret)) ;
-	}) ;
-	const auto r2x = (VALX_LOGE10 / VALX_LOGE2) * r1x[1] ;
-	ARRAY2<DATA> ret ;
-	ret[0] = DATA (VAR64 (r1x[0] * _POW_ (2 ,(r2x - VAR64 (r2x))) + VAL64 (0.5))) ;
-	ret[1] = DATA (VAR64 (r2x)) ;
+inline ARRAY3<DATA> _inline_IEEE754_ENCODE_PART_ (const ARRAY3<VAR64> &sne2) {
+	ARRAY3<DATA> ret = _CAST_<ARRAY3<DATA>> (sne2) ;
 	while (TRUE) {
 		if (ret[0] == 0)
 			break ;
@@ -365,193 +242,148 @@ inline ARRAY2<VAR64> _IEEE754_E10TOE2_ (const ARRAY2<VAR64> &sne10) {
 	while (TRUE) {
 		if (ret[0] == 0)
 			break ;
+		if ((ret[0] & ~0X000FFFFFFFFFFFFF) == 0X0010000000000000)
+			break ;
+		ret[0] = ret[0] << 1 ;
+		ret[1]-- ;
+	}
+	for (FOR_ONCE_DO_WHILE) {
+		const auto r1x = -1074 - VAR64 (ret[1]) ;
+		if (r1x <= 0)
+			break ;
+		ret[0] = ret[0] >> r1x ;
+		ret[1] = DATA (-1075) ;
+	}
+	ret[1] += 1075 ;
+	ret[1] = ret[1] << 52 ;
+	if (ret[0] == 0)
+		ret[1] = 0 ;
+	return std::move (ret) ;
+}
+
+inline VAL64 _IEEE754_ENCODE_ (const ARRAY3<VAR64> &sne2) {
+	const auto r1x = _inline_IEEE754_ENCODE_PART_ (sne2) ;
+	_DYNAMIC_ASSERT_ ((r1x[0] & ~0X001FFFFFFFFFFFFF) == 0) ;
+	_DYNAMIC_ASSERT_ ((r1x[1] & ~0X7FF0000000000000) == 0) ;
+	DATA ret = 0 ;
+	ret |= r1x[0] & DATA (0X000FFFFFFFFFFFFF) ;
+	ret |= r1x[1] & DATA (0X7FF0000000000000) ;
+	ret |= r1x[2] & DATA (0X8000000000000000) ;
+	return std::move (_CAST_<VAL64> (ret)) ;
+}
+
+inline ARRAY3<VAR64> _IEEE754_DECODE_ (const VAL64 &ieee754) {
+	ARRAY3<DATA> ret ;
+	const auto r1x = _CAST_<DATA> (ieee754) ;
+	ret[0] = r1x & DATA (0X000FFFFFFFFFFFFF) ;
+	const auto r3x = r1x & DATA (0X7FF0000000000000) ;
+	if (r3x != 0)
+		ret[0] |= DATA (0X0010000000000000) ;
+	ret[1] = r3x >> 52 ;
+	ret[1] -= DATA (1075 - EFLAG (r3x == 0)) ;
+	if (ret[0] == 0)
+		ret[1] = 0 ;
+	while (TRUE) {
+		if (ret[0] == 0)
+			break ;
 		if ((ret[0] & DATA (0X0000000000000001)) != 0)
 			break ;
 		ret[0] = ret[0] >> 1 ;
 		ret[1]++ ;
 	}
-	if (sne10[0] < 0)
-		ret[0] = ~ret[0] + 1 ;
-	return std::move (_CAST_<ARRAY2<VAR64>> (ret)) ;
-}
-} ;
-
-template <class TYPE ,class SUBJECT = VAR>
-struct Classified {
-	TYPE mValue ;
-	SUBJECT mClassi ;
-} ;
-
-template <class TYPE ,class SUBJECT = VAL>
-struct Weighted {
-	TYPE mValue ;
-	SUBJECT mWeight ;
-} ;
-
-#ifdef __CSC_DEPRECATED__
-inline namespace S {
-template <class _ARG1 ,class _ARG2>
-inline Array<_ARG2> _MAP_ (const Array<_ARG1> &array1 ,const Function<_ARG2 (const _ARG1 &)> &func) {
-	Array<_ARG2> ret = Array<_ARG2> (array1.size ()) ;
-	for (INDEX i = 0 ; i < array1.length () ; i++)
-		ret[i] = func (array1[i]) ;
-	return std::move (ret) ;
+	const auto r4x = ((r1x & DATA (0X8000000000000000)) == 0) ? DATA (0) : DATA (-1) ;
+	ret[2] = r4x ;
+	return std::move (_CAST_<ARRAY3<VAR64>> (ret)) ;
 }
 
-template <class _ARG1 ,class _ARG2 ,class _ARG3>
-inline Array<_ARG3> _MAP_ (const Array<_ARG1> &array1 ,const Array<_ARG2> &array2 ,const Function<_ARG3 (const _ARG1 & ,const _ARG2 &)> &func) {
-	_DEBUG_ASSERT_ (array1.size () == array2.size ()) ;
-	Array<_ARG3> ret = Array<_ARG3> (array1.size ()) ;
-	for (INDEX i = 0 ; i < array1.length () ; i++)
-		ret[i] = func (array1[i] ,array2[i]) ;
-	return std::move (ret) ;
-}
-
-template <class _ARG1 ,class _ARG2 ,class _ARG3 ,class _ARG4>
-inline Array<_ARG4> _MAP_ (const Array<_ARG1> &array1 ,const Array<_ARG2> &array2 ,const Array<_ARG3> &array3 ,const Function<_ARG4 (const _ARG1 & ,const _ARG2 &)> &func) {
-	_DEBUG_ASSERT_ (array1.size () == array2.size ()) ;
-	_DEBUG_ASSERT_ (array1.size () == array3.size ()) ;
-	Array<_ARG4> ret = Array<_ARG4> (array1.size ()) ;
-	for (INDEX i = 0 ; i < array1.length () ; i++)
-		ret[i] = func (array1[i] ,array2[i] ,array3[i]) ;
-	return std::move (ret) ;
-}
-
-template <class _ARG1>
-inline Array<_ARG1> _FILTER_ (const Array<_ARG1> &array1 ,const Array<INDEX> &elem) {
-	Array<_ARG1> ret = Array<_ARG1> (elem.length ()) ;
-	INDEX iw = 0 ;
-	for (auto &&i : elem)
-		ret[iw++] = array1[i] ;
-	_DEBUG_ASSERT_ (iw == ret.length ()) ;
-	return std::move (ret) ;
-}
-
-inline Array<INDEX> _ELEMENT_ (const Array<BOOL> &elem) {
-	const auto r1x = _CALL_ ([&] () {
-		LENGTH ret = 0 ;
-		for (auto &&i : elem)
-			ret += EFLAG (i) ;
-		return std::move (ret) ;
-	}) ;
-	Array<INDEX> ret = Array<INDEX> (r1x) ;
-	INDEX iw = 0 ;
-	for (INDEX i = 0 ; i < elem.length () ; i++) {
-		if (!elem[i])
-			continue ;
-		ret[iw++] = i ;
+inline VAL64 _inline_TAYLOR_POW_ (VAL64 lnx ,VAL64 y) {
+	VAL64 ret = 1 ;
+	const auto r1x = lnx * y ;
+	auto rax = VAL64 (1) ;
+	auto rbx = VAL64 (1) ;
+	while (TRUE) {
+		rax *= r1x * _PINV_ (rbx) ;
+		if (_ABS_ (rax) < VAL64_EPS)
+			break ;
+		ret += rax ;
+		rbx++ ;
 	}
-	_DEBUG_ASSERT_ (iw == ret.length ()) ;
 	return std::move (ret) ;
 }
 
-template <class _ARG1>
-inline Array<_ARG1> _FILTER_ (const Array<_ARG1> &array1 ,const Array<BOOL> &elem) {
-	_DEBUG_ASSERT_ (array1.size () == elem.size ()) ;
-	return _FILTER_ (array1 ,_ELEMENT_ (elem)) ;
+inline ARRAY3<VAR64> _inline_IEEE754_E2TOE10_PART_ (const ARRAY3<VAR64> &sne2) {
+	ARRAY3<DATA> ret = _CAST_<ARRAY3<DATA>> (sne2) ;
+	while (TRUE) {
+		if (ret[0] == 0)
+			break ;
+		if ((ret[0] & ~0X000FFFFFFFFFFFFF) == 0X0010000000000000)
+			break ;
+		ret[0] = ret[0] << 1 ;
+		ret[1]-- ;
+	}
+	return std::move (_CAST_<ARRAY3<VAR64>> (ret)) ;
 }
 
-template <class _ARG1>
-inline Array<_ARG1> _REDUCE_ (const _ARG1 &first ,LENGTH count ,const Function<_ARG1 (const _ARG1 &)> &func) {
-	Array<_ARG1> ret = Array<_ARG1> (count) ;
-	for (INDEX i = 0 ,ie = _MIN_ (LENGTH (1) ,ret.length ()) ; i < ie ; i++)
-		ret[i] = first ;
-	for (INDEX i = 1 ; i < ret.length () ; i++)
-		ret[i] = func (ret[i - 1]) ;
-	return std::move (ret) ;
+inline ARRAY3<VAR64> _IEEE754_E2TOE10_ (const ARRAY3<VAR64> &sne2) {
+	const auto r1x = _inline_IEEE754_E2TOE10_PART_ (sne2) ;
+	ARRAY3<DATA> ret ;
+	const auto r2x = VAL64 (MATH_LN2 / MATH_LN10) * VAL64 (r1x[1]) ;
+	_STATIC_WARNING_ ("mark") ;
+	const auto r3x = _inline_TAYLOR_POW_ (VAL64 (MATH_LN10) ,(r2x - VAR64 (r2x))) ;
+	ret[0] = DATA (VAR64 (VAL64 (r1x[0]) * r3x)) ;
+	ret[1] = DATA (VAR64 (r2x)) ;
+	while (TRUE) {
+		if (ret[0] == 0)
+			break ;
+		if (ret[0] % 10 != 0)
+			break ;
+		ret[0] /= 10 ;
+		ret[1]++ ;
+	}
+	ret[2] = r1x[2] ;
+	return std::move (_CAST_<ARRAY3<VAR64>> (ret)) ;
 }
 
-template <class _ARG1 ,class _ARG2>
-inline _ARG1 _REDUCE_ (const _ARG1 &first ,const Array<_ARG2> &array1 ,const Function<_ARG1 (const _ARG1 & ,const _ARG2 &)> &func) {
-	_ARG1 ret = first ;
-	for (auto &&i : array1)
-		ret = func (ret ,i) ;
-	return std::move (ret) ;
+inline ARRAY3<VAR64> _inline_IEEE754_E10TOE2_PART_ (const ARRAY3<VAR64> &sne10) {
+	ARRAY3<DATA> ret = _CAST_<ARRAY3<DATA>> (sne10) ;
+	while (TRUE) {
+		if (ret[0] == 0)
+			break ;
+		if ((ret[0] & ~0X000FFFFFFFFFFFFF) != 0)
+			break ;
+		ret[0] = (ret[0] << 3) + (ret[0] << 1) ;
+		ret[1]-- ;
+	}
+	return std::move (_CAST_<ARRAY3<VAR64>> (ret)) ;
 }
 
-template <class _ARG1>
-inline Array<_ARG1> _CONCAT_ (const _ARG1 &item ,const Array<_ARG1> &array1) {
-	Array<_ARG1> ret = Array<_ARG1> (array1.length () + 1) ;
-	INDEX iw = 0 ;
-	ret[iw++] = item ;
-	for (INDEX i = 0 ; i < array1.length () ; i++)
-		ret[iw++] = array1[i] ;
-	_DEBUG_ASSERT_ (iw == ret.length ()) ;
-	return std::move (ret) ;
-}
-
-template <class _ARG1>
-inline Array<_ARG1> _CONCAT_ (const Array<_ARG1> &array1 ,const _ARG1 &item) {
-	Array<_ARG1> ret = Array<_ARG1> (array1.length () + 1) ;
-	INDEX iw = 0 ;
-	for (INDEX i = 0 ; i < array1.length () ; i++)
-		ret[iw++] = array1[i] ;
-	ret[iw++] = item ;
-	_DEBUG_ASSERT_ (iw == ret.length ()) ;
-	return std::move (ret) ;
-}
-
-template <class _ARG1>
-inline Array<_ARG1> _CONCAT_ (const Array<_ARG1> &array1 ,const Array<_ARG1> &array2) {
-	Array<_ARG1> ret = Array<_ARG1> (array1.length () + array2.length ()) ;
-	INDEX iw = 0 ;
-	for (INDEX i = 0 ; i < array1.length () ; i++)
-		ret[iw++] = array1[i] ;
-	for (INDEX i = 0 ; i < array2.length () ; i++)
-		ret[iw++] = array2[i] ;
-	_DEBUG_ASSERT_ (iw == ret.length ()) ;
-	return std::move (ret) ;
-}
-
-template <class _ARG1>
-inline Array<_ARG1> _FLATTEN_ (const Array<Array<_ARG1>> &array1) {
-	const auto r1x = _CALL_ ([&] () {
-		LENGTH ret = 0 ;
-		for (auto &&i : array1)
-			ret += i.length () ;
-		return std::move (ret) ;
-	}) ;
-	Array<_ARG1> ret = Array<_ARG1> (r1x) ;
-	INDEX iw = 0 ;
-	for (auto &&i : array1)
-		for (auto &&j : i)
-			ret[iw++] = j ;
-	_DEBUG_ASSERT_ (iw == ret.length ()) ;
-	return std::move (ret) ;
-}
-
-template <class _ARG1 ,class... _ARGS>
-inline Function<_ARG1 (const _ARGS &...)> _BIND_ (const PTR<_ARG1 (const _ARGS &...)> &func) {
-	return Function<_ARG1 (const _ARGS &...)> (func) ;
-}
-
-template <class _ARG1 ,class _ARG2 ,class _ARG3 ,class _ARG4>
-inline Function<_ARG1 (const _ARG2 & ,const _ARG3 &)> _BIND_ (const DEF<decltype (ARGVP1)> & ,const DEF<decltype (ARGVP1)> & ,const DEF<decltype (ARGVP2)> & ,const Function<_ARG4 (const _ARG2 & ,const _ARG3 &)> &func1 ,const Function<_ARG1 (const _ARG2 & ,const _ARG4 &)> &func2) {
-	return Function<_ARG1 (const _ARG2 & ,const _ARG3 &)> ([&] (const _ARG2 &op1 ,const _ARG3 &op2) {
-		return func2 (op1 ,func1 (op1 ,op2)) ;
-	}) ;
-}
-
-template <class _ARG1>
-inline Array<Array<_ARG1>> _GROUP_ (const Array<_ARG1> &array1 ,const Array<Function<BOOL (const _ARG1 &)>> &func) {
-	const auto r1x = _BIND_<Array<_ARG1> ,Array<_ARG1>> (&_COPY_<Array<_ARG1>>) ;
-	const auto r2x = _REDUCE_ (array1 ,func.length () ,r1x) ;
-	const auto r3x = _BIND_<Array<BOOL> ,Array<_ARG1> ,Function<BOOL (const _ARG1 &)>> (&_MAP_<_ARG1 ,BOOL>) ;
-	const auto r4x = _BIND_<Array<_ARG1> ,Array<_ARG1> ,Array<BOOL>> (&_FILTER_< _ARG1>) ;
-	const auto r5x = _BIND_ (ARGVP1 ,ARGVP1 ,ARGVP2 ,r3x ,r4x) ;
-	const auto r6x = _MAP_ (r2x ,func ,r5x) ;
-	const auto r7x = _BIND_<Array<Array<_ARG1>> ,Array<Array<_ARG1>> ,Array<_ARG1>> (&_CONCAT_<Array<_ARG1>>) ;
-	const auto r8x = Array<Array<_ARG1>> () ;
-	return _REDUCE_ (r8x ,r6x ,r7x) ;
+inline ARRAY3<VAR64> _IEEE754_E10TOE2_ (const ARRAY3<VAR64> &sne10) {
+	const auto r1x = _inline_IEEE754_E10TOE2_PART_ (sne10) ;
+	ARRAY3<DATA> ret ;
+	const auto r2x = VAL64 (MATH_LN10 / MATH_LN2) * VAL64 (r1x[1]) ;
+	_STATIC_WARNING_ ("mark") ;
+	const auto r3x = _inline_TAYLOR_POW_ (VAL64 (MATH_LN2) ,(r2x - VAR64 (r2x))) ;
+	ret[0] = DATA (VAR64 (VAL64 (r1x[0]) * r3x)) ;
+	ret[1] = DATA (VAR64 (r2x)) ;
+	while (TRUE) {
+		if (ret[0] == 0)
+			break ;
+		if ((ret[0] & DATA (0X0000000000000001)) != 0)
+			break ;
+		ret[0] = ret[0] >> 1 ;
+		ret[1]++ ;
+	}
+	ret[2] = r1x[2] ;
+	return std::move (_CAST_<ARRAY3<VAR64>> (ret)) ;
 }
 } ;
-#endif
 
 #ifdef __CSC_DEPRECATED__
-class Number {
+class Operand {
 public:
-	Number () {
+	Operand () {
 		_STATIC_WARNING_ ("unimplemented") ;
+		_DYNAMIC_ASSERT_ (FALSE) ;
 	}
 } ;
 #endif
@@ -561,6 +393,7 @@ class Operator {
 public:
 	Operator () {
 		_STATIC_WARNING_ ("unimplemented") ;
+		_DYNAMIC_ASSERT_ (FALSE) ;
 	}
 } ;
 #endif
@@ -570,6 +403,7 @@ class Expression {
 public:
 	Expression () {
 		_STATIC_WARNING_ ("unimplemented") ;
+		_DYNAMIC_ASSERT_ (FALSE) ;
 	}
 } ;
 #endif

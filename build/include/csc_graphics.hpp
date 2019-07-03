@@ -20,7 +20,7 @@ class Mesh {
 private:
 	Set<ARRAY3<VAL32>> mVertexSet ;
 	Queue<ARRAY3<INDEX>> mElementList ;
-	Array<SoftImage<COLOR_BGR>> mTexture ;
+	Array<Bitmap<COLOR_BGR>> mTexture ;
 
 public:
 	Mesh () = default ;
@@ -37,11 +37,11 @@ public:
 
 	const Queue<ARRAY3<INDEX>> &element () && = delete ;
 
-	const Array<SoftImage<COLOR_BGR>> &texture () const & {
+	const Array<Bitmap<COLOR_BGR>> &texture () const & {
 		return mTexture ;
 	}
 
-	const Array<SoftImage<COLOR_BGR>> &texture () && = delete ;
+	const Array<Bitmap<COLOR_BGR>> &texture () && = delete ;
 
 	void add_vertex (const Set<ARRAY3<VAL32>> &_vertex) {
 		mVertexSet.appand (_vertex) ;
@@ -51,8 +51,8 @@ public:
 		mElementList.appand (_element) ;
 	}
 
-	void add_texture (SoftImage<COLOR_BGR> &&_texture) {
-		mTexture = Array<SoftImage<COLOR_BGR>> (1) ;
+	void add_texture (Bitmap<COLOR_BGR> &&_texture) {
+		mTexture = Array<Bitmap<COLOR_BGR>> (1) ;
 		mTexture[0] = std::move (_texture) ;
 	}
 } ;
@@ -96,7 +96,7 @@ public:
 
 	//@info: 'angle_vn-angle_nu-angle_uv' equals to 'pitch-yaw-roll' (heading-pitch-bank)
 	void rotate (const UNIT &angle_vn ,const UNIT &angle_nu ,const UNIT &angle_uv) {
-		for (FOR_ONCE_DO_WHILE_FALSE) {
+		for (FOR_ONCE_DO_WHILE) {
 			if (angle_vn == UNIT (0))
 				continue ;
 			const auto r1x = mEyeN * _COS_ (angle_vn) - mEyeV * _SIN_ (angle_vn) ;
@@ -104,7 +104,7 @@ public:
 			mEyeN = r1x.normalize () ;
 			mEyeV = r2x.normalize () ;
 		}
-		for (FOR_ONCE_DO_WHILE_FALSE) {
+		for (FOR_ONCE_DO_WHILE) {
 			if (angle_nu == UNIT (0))
 				continue ;
 			const auto r3x = mEyeU * _COS_ (angle_nu) - mEyeN * _SIN_ (angle_nu) ;
@@ -112,7 +112,7 @@ public:
 			mEyeU = r3x.normalize () ;
 			mEyeN = r4x.normalize () ;
 		}
-		for (FOR_ONCE_DO_WHILE_FALSE) {
+		for (FOR_ONCE_DO_WHILE) {
 			if (angle_uv == UNIT (0))
 				continue ;
 			const auto r5x = mEyeV * _COS_ (angle_uv) - mEyeU * _SIN_ (angle_uv) ;
@@ -150,7 +150,7 @@ public:
 	void perspective (const UNIT &fov ,const UNIT &aspect ,const UNIT &_near ,const UNIT &_far) {
 		_DEBUG_ASSERT_ (fov > UNIT (0) && fov < UNIT (180)) ;
 		_DEBUG_ASSERT_ (aspect > UNIT (0)) ;
-		const auto r1x = _near * _TAN_ (fov * UNIT (VALX_PI / 180) * UNIT (0.5)) ;
+		const auto r1x = _near * _TAN_ (fov * UNIT (MATH_PI / 180) * UNIT (0.5)) ;
 		const auto r2x = r1x * aspect ;
 		frustum (-r2x ,r2x ,-r1x ,r1x ,_near ,_far) ;
 	}
@@ -284,7 +284,7 @@ public:
 		_DEBUG_ASSERT_ (exist ()) ;
 		const auto r1x = mUniformSet.length () ;
 		INDEX ix = mUniformSet.insert (name) ;
-		for (FOR_ONCE_DO_WHILE_FALSE) {
+		for (FOR_ONCE_DO_WHILE) {
 			if (mUniformSet.length () == r1x)
 				continue ;
 			mAbstract->compute_uniform_find (mHolder ,name ,mUniformSet[ix].item) ;
@@ -296,7 +296,7 @@ public:
 		_DEBUG_ASSERT_ (exist ()) ;
 		const auto r1x = mUniformSet.length () ;
 		INDEX ix = mUniformSet.insert (name) ;
-		for (FOR_ONCE_DO_WHILE_FALSE) {
+		for (FOR_ONCE_DO_WHILE) {
 			if (mUniformSet.length () == r1x)
 				continue ;
 			mAbstract->compute_uniform_find (mHolder ,name ,mUniformSet[ix].item) ;
@@ -308,7 +308,7 @@ public:
 		_DEBUG_ASSERT_ (exist ()) ;
 		const auto r1x = mUniformSet.length () ;
 		INDEX ix = mUniformSet.insert (name) ;
-		for (FOR_ONCE_DO_WHILE_FALSE) {
+		for (FOR_ONCE_DO_WHILE) {
 			if (mUniformSet.length () == r1x)
 				continue ;
 			mAbstract->compute_uniform_find (mHolder ,name ,mUniformSet[ix].item) ;
@@ -320,7 +320,7 @@ public:
 		_DEBUG_ASSERT_ (exist ()) ;
 		const auto r1x = mUniformSet.length () ;
 		INDEX ix = mUniformSet.insert (name) ;
-		for (FOR_ONCE_DO_WHILE_FALSE) {
+		for (FOR_ONCE_DO_WHILE) {
 			if (mUniformSet.length () == r1x)
 				continue ;
 			mAbstract->compute_uniform_find (mHolder ,name ,mUniformSet[ix].item) ;
@@ -332,7 +332,7 @@ public:
 		_DEBUG_ASSERT_ (exist ()) ;
 		const auto r1x = mUniformSet.length () ;
 		INDEX ix = mUniformSet.insert (name) ;
-		for (FOR_ONCE_DO_WHILE_FALSE) {
+		for (FOR_ONCE_DO_WHILE) {
 			if (mUniformSet.length () == r1x)
 				continue ;
 			mAbstract->compute_uniform_find (mHolder ,name ,mUniformSet[ix].item) ;
@@ -344,7 +344,7 @@ public:
 		_DEBUG_ASSERT_ (exist ()) ;
 		const auto r1x = mUniformSet.length () ;
 		INDEX ix = mUniformSet.insert (name) ;
-		for (FOR_ONCE_DO_WHILE_FALSE) {
+		for (FOR_ONCE_DO_WHILE) {
 			if (mUniformSet.length () == r1x)
 				continue ;
 			mAbstract->compute_uniform_find (mHolder ,name ,mUniformSet[ix].item) ;
@@ -356,7 +356,7 @@ public:
 		_DEBUG_ASSERT_ (exist ()) ;
 		const auto r1x = mUniformSet.length () ;
 		INDEX ix = mUniformSet.insert (name) ;
-		for (FOR_ONCE_DO_WHILE_FALSE) {
+		for (FOR_ONCE_DO_WHILE) {
 			if (mUniformSet.length () == r1x)
 				continue ;
 			mAbstract->compute_uniform_find (mHolder ,name ,mUniformSet[ix].item) ;
@@ -368,7 +368,7 @@ public:
 		_DEBUG_ASSERT_ (exist ()) ;
 		const auto r1x = mUniformSet.length () ;
 		INDEX ix = mUniformSet.insert (name) ;
-		for (FOR_ONCE_DO_WHILE_FALSE) {
+		for (FOR_ONCE_DO_WHILE) {
 			if (mUniformSet.length () == r1x)
 				continue ;
 			mAbstract->compute_uniform_find (mHolder ,name ,mUniformSet[ix].item) ;

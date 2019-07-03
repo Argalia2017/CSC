@@ -10,13 +10,11 @@
 #pragma push_macro ("popping")
 #pragma push_macro ("imports")
 #pragma push_macro ("exports")
-#pragma push_macro ("discard")
 #undef self
 #undef implicit
 #undef popping
 #undef imports
 #undef exports
-#undef discard
 #endif
 
 #ifndef _INC_WINDOWS
@@ -27,6 +25,7 @@
 #pragma region
 #include <cstdlib>
 #include <crtdbg.h>
+#include <signal.h>
 #pragma warning (push)
 #ifdef __CSC_COMPILER_MSVC__
 #pragma warning (disable :4091)
@@ -52,7 +51,6 @@
 #pragma pop_macro ("popping")
 #pragma pop_macro ("imports")
 #pragma pop_macro ("exports")
-#pragma pop_macro ("discard")
 #endif
 
 namespace CSC {
@@ -80,8 +78,9 @@ public:
 	}
 
 	void modify_option (FLAG option) override {
-		const auto r1x = (option == OPTION_DEFAULT) ? option : (mOptionFlag | option) ;
-		mOptionFlag = r1x ;
+		if (option == OPTION_DEFAULT)
+			mOptionFlag = OPTION_DEFAULT ;
+		mOptionFlag |= option ;
 	}
 
 	void print (const Binder &msg) override {
@@ -93,7 +92,7 @@ public:
 		if (mLogPath.empty ())
 			return ;
 		const auto r1x = PhanBuffer<const STR>::make (mConWriter.raw ().self ,(mConWriter.length () - 1)) ;
-		log (_PCSTR_ ("PRINT") ,ImplBinder<StreamBinder<const PhanBuffer<const STR>>> (r1x)) ;
+		log (_PCSTR_ ("PRINT") ,r1x) ;
 	}
 
 	void fatal (const Binder &msg) override {
@@ -107,7 +106,7 @@ public:
 		if (mLogPath.empty ())
 			return ;
 		const auto r1x = PhanBuffer<const STR>::make (mConWriter.raw ().self ,(mConWriter.length () - 1)) ;
-		log (_PCSTR_ ("FATAL") ,ImplBinder<StreamBinder<const PhanBuffer<const STR>>> (r1x)) ;
+		log (_PCSTR_ ("FATAL") ,r1x) ;
 	}
 
 	void error (const Binder &msg) override {
@@ -121,7 +120,7 @@ public:
 		if (mLogPath.empty ())
 			return ;
 		const auto r1x = PhanBuffer<const STR>::make (mConWriter.raw ().self ,(mConWriter.length () - 1)) ;
-		log (_PCSTR_ ("ERROR") ,ImplBinder<StreamBinder<const PhanBuffer<const STR>>> (r1x)) ;
+		log (_PCSTR_ ("ERROR") ,r1x) ;
 	}
 
 	void warn (const Binder &msg) override {
@@ -135,7 +134,7 @@ public:
 		if (mLogPath.empty ())
 			return ;
 		const auto r1x = PhanBuffer<const STR>::make (mConWriter.raw ().self ,(mConWriter.length () - 1)) ;
-		log (_PCSTR_ ("WARN") ,ImplBinder<StreamBinder<const PhanBuffer<const STR>>> (r1x)) ;
+		log (_PCSTR_ ("WARN") ,r1x) ;
 	}
 
 	void info (const Binder &msg) override {
@@ -149,7 +148,7 @@ public:
 		if (mLogPath.empty ())
 			return ;
 		const auto r1x = PhanBuffer<const STR>::make (mConWriter.raw ().self ,(mConWriter.length () - 1)) ;
-		log (_PCSTR_ ("INFO") ,ImplBinder<StreamBinder<const PhanBuffer<const STR>>> (r1x)) ;
+		log (_PCSTR_ ("INFO") ,r1x) ;
 	}
 
 	void debug (const Binder &msg) override {
@@ -163,7 +162,7 @@ public:
 		if (mLogPath.empty ())
 			return ;
 		const auto r1x = PhanBuffer<const STR>::make (mConWriter.raw ().self ,(mConWriter.length () - 1)) ;
-		log (_PCSTR_ ("DEBUG") ,ImplBinder<StreamBinder<const PhanBuffer<const STR>>> (r1x)) ;
+		log (_PCSTR_ ("DEBUG") ,r1x) ;
 	}
 
 	void verbose (const Binder &msg) override {
@@ -177,12 +176,12 @@ public:
 		if (mLogPath.empty ())
 			return ;
 		const auto r1x = PhanBuffer<const STR>::make (mConWriter.raw ().self ,(mConWriter.length () - 1)) ;
-		log (_PCSTR_ ("VERBOSE") ,ImplBinder<StreamBinder<const PhanBuffer<const STR>>> (r1x)) ;
+		log (_PCSTR_ ("VERBOSE") ,r1x) ;
 	}
 
 	void attach_log (const String<STR> &path) override {
 		const auto r1x = _ABSOLUTEPATH_ (path) ;
-		for (FOR_ONCE_DO_WHILE_FALSE) {
+		for (FOR_ONCE_DO_WHILE) {
 			if (mLogPath == r1x)
 				continue ;
 			if (!mLogFileStream.exist ())
@@ -193,9 +192,8 @@ public:
 		mLogPath = r1x ;
 	}
 
-	template <LENGTH _VAL1>
-	void log (const DEF<STR[_VAL1]> &tag ,const Binder &msg) {
-		log (PhanBuffer<const STR>::make (PTRTOARR[&tag[0]] ,(_VAL1 - 1)) ,msg) ;
+	void log (const Plain<STR> &tag ,const PhanBuffer<const STR> &msg) {
+		log (PhanBuffer<const STR>::make (tag.self ,tag.size ()) ,ImplBinder<PhanBuffer<const STR>> (msg)) ;
 	}
 
 	void log (const PhanBuffer<const STR> &tag ,const Binder &msg) override {
@@ -315,7 +313,7 @@ private:
 		_ERASEFILE_ (r2x) ;
 		_MOVEFILE_ (r2x ,r1x) ;
 		mLogFileStream = AutoRef<StreamLoader>::make (r1x) ;
-		const auto r3x = _PRINTS_<STR> (_XVALUE_<PTR<void (TextWriter<STR> &)>> (_BOM_)) ;
+		const auto r3x = String<STR>::make (_XVALUE_<PTR<void (TextWriter<STR> &)>> (_BOM_)) ;
 		mLogFileStream->write (PhanBuffer<const BYTE>::make (r3x.raw ())) ;
 	}
 } ;
@@ -336,7 +334,18 @@ private:
 public:
 	void abort_once_invoked_exit (BOOL flag) override {
 		_DEBUG_ASSERT_ (flag) ;
-		std::atexit (std::abort) ;
+		std::atexit ([] () noexcept {
+			GlobalRuntime::process_abort () ;
+		}) ;
+		signal (SIGFPE ,[] (int err_code) noexcept {
+			GlobalRuntime::process_abort () ;
+		}) ;
+		signal (SIGILL ,[] (int err_code) noexcept {
+			GlobalRuntime::process_abort () ;
+		}) ;
+		signal (SIGSEGV ,[] (int err_code) noexcept {
+			GlobalRuntime::process_abort () ;
+		}) ;
 	}
 
 	void output_memory_leaks_report (BOOL flag) override {
@@ -360,9 +369,8 @@ public:
 		attach_symbol_info () ;
 		Array<String<STR>> ret = Array<String<STR>> (address.length ()) ;
 		INDEX iw = 0 ;
-		_CALL_IF_ ([&] (BOOL &if_flag) {
-			if (!mSymbolFromAddress.exist ())
-				discard ;
+		_CALL_IF_ ([&] (BOOL &_case_req) {
+			_CASE_REQUIRE_ (mSymbolFromAddress.exist ()) ;
 			const auto r1x = _SIZEOF_ (SYMBOL_INFO) + address.length () * (DEFAULT_SHORTSTRING_SIZE::value) ;
 			auto rax = AutoBuffer<BYTE> (r1x) ;
 			auto &r1 = _LOAD_<SYMBOL_INFO> (rax.self) ;
@@ -371,12 +379,12 @@ public:
 			for (auto &&i : address) {
 				SymFromAddr (mSymbolFromAddress ,i ,NULL ,&r1) ;
 				const auto r2x = _BUILDHEX16S_<STR> (DATA (r1.Address)) ;
-				const auto r3x = _PARSESTRS_ (String<STRA> (PTRTOARR[&r1.Name[0]])) ;
-				ret[iw++] = _PRINTS_<STR> (_PCSTR_ ("[") ,r2x ,_PCSTR_ ("] : ") ,r3x) ;
+				const auto r3x = _PARSESTRS_ (String<STRA> (PTRTOARR[r1.Name])) ;
+				ret[iw++] = String<STR>::make (_PCSTR_ ("[") ,r2x ,_PCSTR_ ("] : ") ,r3x) ;
 			}
-		} ,[&] (BOOL &if_flag) {
+		} ,[&] (BOOL &_case_req) {
 			for (auto &&i : address)
-				ret[iw++] = _PRINTS_<STR> (_PCSTR_ ("[") ,_BUILDHEX16S_<STR> (i) ,_PCSTR_ ("] : null")) ;
+				ret[iw++] = String<STR>::make (_PCSTR_ ("[") ,_BUILDHEX16S_<STR> (i) ,_PCSTR_ ("] : null")) ;
 		}) ;
 		_DEBUG_ASSERT_ (iw == ret.length ()) ;
 		return std::move (ret) ;
