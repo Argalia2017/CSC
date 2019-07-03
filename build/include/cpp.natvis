@@ -355,11 +355,11 @@
 
   <Type Name="CSC::SoftSet&lt;*,*,CSC::ARGC&lt;*&gt; &gt;">
     <Expand>
-      <Item Name="[mHeap]">mHolder->mData.mHeap</Item>
-      <Item Name="[mLength]">mHolder->mData.mLength</Item>
-      <Item Name="[mFirst]">mHolder->mData.mFirst</Item>
-      <Item Name="[mLast]">mHolder->mData.mLast</Item>
-      <Item Name="[mRoot]">mHolder->mData.mRoot</Item>
+      <Item Name="[mHeap]">mThis->mData.mHeap</Item>
+      <Item Name="[mLength]">mThis->mData.mLength</Item>
+      <Item Name="[mFirst]">mThis->mData.mFirst</Item>
+      <Item Name="[mLast]">mThis->mData.mLast</Item>
+      <Item Name="[mRoot]">mThis->mData.mRoot</Item>
       <ExpandedItem>mSet->mData</ExpandedItem>
     </Expand>
   </Type>

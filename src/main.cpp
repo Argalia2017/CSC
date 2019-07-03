@@ -6,18 +6,14 @@ using namespace std ;
 //@info: static field of module 'main.cpp'
 static const CSC::UniqueRef<void> ANONYMOUS ([] () {
 	using namespace UNITTEST ;
+#ifdef __CSC_COMPILER_MSVC__
 	Singleton<DebuggerService>::instance ().output_memory_leaks_report (TRUE) ;
+#endif
 	Singleton<ConsoleService>::instance ().log (_PCSTR_ ("UNITTEST") ,_PCSTR_ ("static constructor for main.cpp")) ;
 } ,[] () {
 	using namespace UNITTEST ;
 	Singleton<ConsoleService>::instance ().log (_PCSTR_ ("UNITTEST") ,_PCSTR_ ("static destructor for main.cpp")) ;
 }) ;
-
-namespace UNITTEST {
-
-} ;
-
-#include <filesystem>
 
 TEST_CLASS (UNITTEST_MAIN) {
 public:
@@ -48,16 +44,20 @@ exports int main () noexcept popping {
 #endif
 #endif
 
+#ifdef __CSC_STRING__
+#include "csc_string.hpp.default.inl"
+#endif
+
+#ifdef __CSC_RUNTIME__
+#include <csc_runtime.hpp.default.inl>
+#endif
+
 #ifdef __CSC_GRAPHICS__
 #ifdef __CSC_PLATFORM_X64__
 #ifdef __CSC_COMPILER_MSVC__
 #include "csc_graphics.hpp.opengl.inl"
 #endif
 #endif
-#endif
-
-#ifdef __CSC_STRING__
-#include "csc_string.hpp.default.inl"
 #endif
 
 #ifdef __CSC_FILESYSTEM__

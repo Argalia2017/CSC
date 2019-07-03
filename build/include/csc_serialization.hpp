@@ -13,7 +13,7 @@
 namespace CSC {
 class XmlParser {
 private:
-	class Pack {
+	class Node {
 	private:
 		friend XmlParser ;
 		String<STRU8> mName ;
@@ -23,10 +23,13 @@ private:
 		INDEX mParent ;
 		INDEX mBrother ;
 		INDEX mChild ;
+
+	public:
+		inline Node () = default ;
 	} ;
 
 private:
-	SharedRef<FixedBuffer<Pack>> mHeap ;
+	SharedRef<FixedBuffer<Node>> mHeap ;
 	INDEX mIndex ;
 
 public:
@@ -68,20 +71,20 @@ public:
 
 	XmlParser child (const String<STRU8> &name) const {
 		INDEX ix = VAR_NONE ;
-		for (FOR_ONCE_DO_WHILE_FALSE) {
+		for (FOR_ONCE_DO_WHILE) {
 			if (!exist ())
 				continue ;
-			ix = mHeap.self[mIndex].mObjectSet.find (name) ;
-			if (ix == VAR_NONE)
+			INDEX jx = mHeap.self[mIndex].mObjectSet.find (name) ;
+			if (jx == VAR_NONE)
 				continue ;
-			ix = mHeap.self[mIndex].mObjectSet[ix].item ;
+			ix = mHeap.self[mIndex].mObjectSet[jx].item ;
 		}
 		return XmlParser (mHeap ,ix) ;
 	}
 
 	Array<XmlParser> child_array () const {
 		Array<XmlParser> ret ;
-		for (FOR_ONCE_DO_WHILE_FALSE) {
+		for (FOR_ONCE_DO_WHILE) {
 			if (!exist ())
 				continue ;
 			ret = Array<XmlParser> (mHeap.self[mIndex].mMemberSet.length ()) ;
@@ -96,7 +99,7 @@ public:
 	Array<XmlParser> child_array (LENGTH fixed_len) const {
 		Array<XmlParser> ret = Array<XmlParser> (fixed_len) ;
 		INDEX iw = 0 ;
-		for (FOR_ONCE_DO_WHILE_FALSE) {
+		for (FOR_ONCE_DO_WHILE) {
 			if (!exist ())
 				continue ;
 			for (auto &&i : mHeap.self[mIndex].mMemberSet) {
@@ -269,7 +272,7 @@ public:
 	void serialize (TextWriter<STRU8> &writer) const ;
 
 private:
-	explicit XmlParser (const SharedRef<FixedBuffer<Pack>> &heap ,INDEX index) :mHeap (heap) ,mIndex (index) {}
+	explicit XmlParser (const SharedRef<FixedBuffer<Node>> &heap ,INDEX index) :mHeap (heap) ,mIndex (index) {}
 
 private:
 	void initialize (const PhanBuffer<const STRU8> &data) ;
@@ -299,14 +302,11 @@ inline void XmlParser::serialize (TextWriter<STRU8> &writer) const {
 			break ;
 		const auto r1x = std::move (rax[rax.peek ()]) ;
 		rax.take () ;
-		_CALL_IF_ ([&] (BOOL &if_flag) {
+		_CALL_IF_ ([&] (BOOL &_case_req) {
 			//@info: case '<?xml ...>'
-			if (r1x[0] == VAR_NONE)
-				discard ;
-			if (!mHeap.self[r1x[0]].mName.empty ())
-				discard ;
-			if (r1x[1] != 0)
-				discard ;
+			_CASE_REQUIRE_ (r1x[0] != VAR_NONE) ;
+			_CASE_REQUIRE_ (mHeap.self[r1x[0]].mName.empty ()) ;
+			_CASE_REQUIRE_ (r1x[1] == 0) ;
 			auto &r1 = mHeap.self[r1x[0]] ;
 			writer << _PCSTRU8_ ("<?xml version=\"1.0\" encoding=\"utf-8\" ?>") ;
 			writer << _GAP_ ;
@@ -314,14 +314,11 @@ inline void XmlParser::serialize (TextWriter<STRU8> &writer) const {
 			for (INDEX i = r1.mChild ; i != VAR_NONE ; i = mHeap.self[i].mBrother)
 				rbx.add (ARRAY2<INDEX> {i ,FLAG (0)}) ;
 			rax.appand (rbx) ;
-		} ,[&] (BOOL &if_flag) {
+		} ,[&] (BOOL &_case_req) {
 			//@info: case '<xxx ("xxx"="xxx"( "xxx"="xxx")?)?/>'
-			if (r1x[0] == VAR_NONE)
-				discard ;
-			if (mHeap.self[r1x[0]].mChild != VAR_NONE)
-				discard ;
-			if (r1x[1] != 0)
-				discard ;
+			_CASE_REQUIRE_ (r1x[0] != VAR_NONE) ;
+			_CASE_REQUIRE_ (mHeap.self[r1x[0]].mChild == VAR_NONE) ;
+			_CASE_REQUIRE_ (r1x[1] == 0) ;
 			auto &r2 = mHeap.self[r1x[0]] ;
 			writer << _PCSTRU8_ ("<") << r2.mName << _PCSTRU8_ (" ") ;
 			for (auto &&i : r2.mAttributeSet) {
@@ -330,14 +327,11 @@ inline void XmlParser::serialize (TextWriter<STRU8> &writer) const {
 				writer << i.item << _PCSTRU8_ ("\" ") ;
 			}
 			writer << _PCSTRU8_ ("/>") ;
-		} ,[&] (BOOL &if_flag) {
+		} ,[&] (BOOL &_case_req) {
 			//@info: case '<xxx ("xxx"="xxx"( "xxx"="xxx")?)?>'
-			if (r1x[0] == VAR_NONE)
-				discard ;
-			if (mHeap.self[r1x[0]].mChild == VAR_NONE)
-				discard ;
-			if (r1x[1] != 0)
-				discard ;
+			_CASE_REQUIRE_ (r1x[0] != VAR_NONE) ;
+			_CASE_REQUIRE_ (mHeap.self[r1x[0]].mChild != VAR_NONE) ;
+			_CASE_REQUIRE_ (r1x[1] == 0) ;
 			auto &r3 = mHeap.self[r1x[0]] ;
 			writer << _PCSTRU8_ ("<") << r3.mName << _PCSTRU8_ (" ") ;
 			for (auto &&i : r3.mAttributeSet) {
@@ -351,12 +345,10 @@ inline void XmlParser::serialize (TextWriter<STRU8> &writer) const {
 				rbx.add (ARRAY2<INDEX> {i ,FLAG (0)}) ;
 			rbx.add (ARRAY2<INDEX> {r1x[0] ,FLAG (1)}) ;
 			rax.appand (rbx) ;
-		} ,[&] (BOOL &if_flag) {
+		} ,[&] (BOOL &_case_req) {
 			//@info: case '</xxx>'
-			if (r1x[0] == VAR_NONE)
-				discard ;
-			if (r1x[1] != 1)
-				discard ;
+			_CASE_REQUIRE_ (r1x[0] != VAR_NONE) ;
+			_CASE_REQUIRE_ (r1x[1] == 1) ;
 			writer << _PCSTRU8_ ("</") << mHeap.self[r1x[0]].mName << _PCSTRU8_ (">") ;
 		}) ;
 	}
@@ -369,12 +361,12 @@ inline void XmlParser::initialize (const PhanBuffer<const STRU8> &data) {
 		class Counter :private Wrapped<LENGTH> {
 		public:
 			inline void lock () {
-				_DYNAMIC_ASSERT_ (Counter::mData < DEFAULT_RECURSIVE_SIZE::value) ;
-				Counter::mData++ ;
+				_DYNAMIC_ASSERT_ (Counter::mSelf < DEFAULT_RECURSIVE_SIZE::value) ;
+				Counter::mSelf++ ;
 			}
 
 			inline void unlock () {
-				Counter::mData-- ;
+				Counter::mSelf-- ;
 			}
 		} ;
 
@@ -387,8 +379,8 @@ inline void XmlParser::initialize (const PhanBuffer<const STRU8> &data) {
 		SoftSet<String<STRU8> ,String<STRU8>> mAttributeSoftSet ;
 		SoftSet<INDEX ,INDEX> mMemberSoftSet ;
 		SoftSet<String<STRU8> ,INDEX> mObjectSoftSet ;
-		Allocator<Pack ,SAUTO> mNodeHeap ;
-		SharedRef<FixedBuffer<Pack>> mHeap ;
+		Allocator<Node ,SAUTO> mNodeHeap ;
+		SharedRef<FixedBuffer<Node>> mHeap ;
 		INDEX mRoot ;
 		INDEX mLatestIndex ;
 		String<STRU8> mLatestString ;
@@ -409,8 +401,8 @@ inline void XmlParser::initialize (const PhanBuffer<const STRU8> &data) {
 			mAttributeSoftSet = SoftSet<String<STRU8> ,String<STRU8>> (0) ;
 			mMemberSoftSet = SoftSet<INDEX ,INDEX> (0) ;
 			mObjectSoftSet = SoftSet<String<STRU8> ,INDEX> (0) ;
-			mNodeHeap = Allocator<Pack ,SAUTO> () ;
-			mHeap = SharedRef<FixedBuffer<Pack>> () ;
+			mNodeHeap = Allocator<Node ,SAUTO> () ;
+			mHeap = SharedRef<FixedBuffer<Node>> () ;
 			mRoot = VAR_NONE ;
 		}
 
@@ -439,10 +431,8 @@ inline void XmlParser::initialize (const PhanBuffer<const STRU8> &data) {
 			update_shift_e8 () ;
 			mRis >> LLTextReader<>::SKIP_GAP ;
 			INDEX ix = mNodeHeap.alloc () ;
-			mNodeHeap[ix].mMemberSet = mMemberSoftSet.copy () ;
-			mNodeHeap[ix].mMemberSet.reset () ;
-			mNodeHeap[ix].mObjectSet = mObjectSoftSet.copy () ;
-			mNodeHeap[ix].mObjectSet.reset () ;
+			mNodeHeap[ix].mMemberSet = mMemberSoftSet.share () ;
+			mNodeHeap[ix].mObjectSet = mObjectSoftSet.share () ;
 			mNodeHeap[ix].mParent = VAR_NONE ;
 			update_shift_e7 (ix) ;
 			mNodeHeap[ix].mChild = mLatestIndex ;
@@ -494,23 +484,19 @@ inline void XmlParser::initialize (const PhanBuffer<const STRU8> &data) {
 			INDEX ix = mNodeHeap.alloc () ;
 			update_shift_e1 () ;
 			mNodeHeap[ix].mName = std::move (mLatestString) ;
-			mNodeHeap[ix].mAttributeSet = mAttributeSoftSet.copy () ;
-			mNodeHeap[ix].mAttributeSet.reset () ;
+			mNodeHeap[ix].mAttributeSet = mAttributeSoftSet.share () ;
 			mNodeHeap[ix].mParent = it ;
 			mNodeHeap[ix].mBrother = VAR_NONE ;
 			mNodeHeap[ix].mChild = VAR_NONE ;
 			mRis >> LLTextReader<>::SKIP_GAP ;
 			update_shift_e4 (ix) ;
 			mRis >> LLTextReader<>::SKIP_GAP ;
-			_CALL_IF_ ([&] (BOOL &if_flag) {
-				if (mRis[0] != STRU8 ('>'))
-					discard ;
+			_CALL_IF_ ([&] (BOOL &_case_req) {
+				_CASE_REQUIRE_ (mRis[0] == STRU8 ('>')) ;
 				mRis++ ;
 				mRis >> LLTextReader<>::SKIP_GAP ;
-				mNodeHeap[ix].mMemberSet = mMemberSoftSet.copy () ;
-				mNodeHeap[ix].mMemberSet.reset () ;
-				mNodeHeap[ix].mObjectSet = mObjectSoftSet.copy () ;
-				mNodeHeap[ix].mObjectSet.reset () ;
+				mNodeHeap[ix].mMemberSet = mMemberSoftSet.share () ;
+				mNodeHeap[ix].mObjectSet = mObjectSoftSet.share () ;
 				update_shift_e7 (ix) ;
 				mNodeHeap[ix].mChild = mLatestIndex ;
 				mRis >> LLTextReader<>::SKIP_GAP ;
@@ -519,7 +505,7 @@ inline void XmlParser::initialize (const PhanBuffer<const STRU8> &data) {
 				_DYNAMIC_ASSERT_ (mNodeHeap[ix].mName == mLatestString) ;
 				mRis >> LLTextReader<>::SKIP_GAP ;
 				mRis >> _PCSTRU8_ (">") ;
-			} ,[&] (BOOL &if_flag) {
+			} ,[&] (BOOL &_case_req) {
 				mRis >> _PCSTRU8_ ("/>") ;
 			}) ;
 			mLatestIndex = ix ;
@@ -548,13 +534,11 @@ inline void XmlParser::initialize (const PhanBuffer<const STRU8> &data) {
 				const auto r2x = BOOL (mRis[0] == STRU8 ('<') && mRis[1] != STRU8 ('/')) ;
 				if (!r1x && !r2x)
 					break ;
-				_CALL_IF_ ([&] (BOOL &if_flag) {
-					if (!r1x)
-						discard ;
+				_CALL_IF_ ([&] (BOOL &_case_req) {
+					_CASE_REQUIRE_ (r1x) ;
 					update_shift_e6 () ;
-				} ,[&] (BOOL &if_flag) {
-					if (!r2x)
-						discard ;
+				} ,[&] (BOOL &_case_req) {
+					_CASE_REQUIRE_ (r2x) ;
 					update_shift_e5 (it) ;
 					mNodeHeap[it].mMemberSet.add (mNodeHeap[it].mMemberSet.length () ,mLatestIndex) ;
 					mNodeHeap[it].mObjectSet.add (mNodeHeap[mLatestIndex].mName ,mLatestIndex) ;
@@ -583,7 +567,7 @@ inline void XmlParser::initialize (const PhanBuffer<const STRU8> &data) {
 			mRis >> LLTextReader<>::SKIP_GAP ;
 			mRis >> _PCSTRU8_ ("\"1.0\"") ;
 			mRis >> LLTextReader<>::SKIP_GAP ;
-			for (FOR_ONCE_DO_WHILE_FALSE) {
+			for (FOR_ONCE_DO_WHILE) {
 				if (mRis[0] == STRU8 ('?'))
 					continue ;
 				mRis >> _PCSTRU8_ ("encoding") ;
@@ -604,7 +588,7 @@ inline void XmlParser::initialize (const PhanBuffer<const STRU8> &data) {
 		inline void update_heap () {
 			mAttributeSoftSet.clean () ;
 			mObjectSoftSet.clean () ;
-			mHeap = SharedRef<FixedBuffer<Pack>>::make (mNodeHeap.length ()) ;
+			mHeap = SharedRef<FixedBuffer<Node>>::make (mNodeHeap.length ()) ;
 			INDEX iw = 0 ;
 			for (INDEX i = 0 ; i < mNodeHeap.size () ; i++) {
 				if (!mNodeHeap.used (i))
@@ -634,11 +618,11 @@ inline void XmlParser::initialize (const Array<XmlParser> &sequence) {
 		const String<STRU8> mFinalTypeString = String<STRU8> (_PCSTRU8_ ("final")) ;
 
 		Stack<PACK<Queue<XmlParser> ,INDEX ,ARRAY2<INDEX>>> mNodeStack ;
-		ARRAY4<DEF<DEF<void (const XmlParser &)> Lambda::*>> mFoundNodeType ;
+		ARRAY4<Function<DEF<void (const XmlParser &)> NONE::*>> mFoundNodeProc ;
 		SoftSet<String<STRU8> ,String<STRU8>> mAttributeSoftSet ;
 		SoftSet<INDEX ,INDEX> mMemberSoftSet ;
 		SoftSet<String<STRU8> ,INDEX> mObjectSoftSet ;
-		Allocator<Pack ,SAUTO> mNodeHeap ;
+		Allocator<Node ,SAUTO> mNodeHeap ;
 		String<STRU8> mRootName ;
 		INDEX mRootType ;
 		Queue<ARRAY4<INDEX>> mFoundNodeList ;
@@ -646,7 +630,7 @@ inline void XmlParser::initialize (const Array<XmlParser> &sequence) {
 		Queue<SoftSet<String<STRU8> ,String<STRU8>>> mFoundNodeAttributeSet ;
 		Queue<Queue<XmlParser>> mFoundNodeBase ;
 		Queue<Queue<XmlParser>> mFoundNodeBaseRecycle ;
-		SharedRef<FixedBuffer<Pack>> mHeap ;
+		SharedRef<FixedBuffer<Node>> mHeap ;
 		INDEX mRoot ;
 
 		PACK<Queue<XmlParser> ,INDEX ,ARRAY2<INDEX>> mTempNode ;
@@ -663,15 +647,15 @@ inline void XmlParser::initialize (const Array<XmlParser> &sequence) {
 	private:
 		inline void prepare () {
 			mNodeStack = Stack<PACK<Queue<XmlParser> ,INDEX ,ARRAY2<INDEX>>> () ;
-			mFoundNodeType[0] = &Lambda::update_found_table_node ;
-			mFoundNodeType[1] = &Lambda::update_found_object_node ;
-			mFoundNodeType[2] = &Lambda::update_found_array_node ;
-			mFoundNodeType[3] = &Lambda::update_found_table_node ;
+			mFoundNodeProc[0] = Function<DEF<void (const XmlParser &)> NONE::*> (PhanRef<Lambda>::make (*this) ,&Lambda::update_found_table_node) ;
+			mFoundNodeProc[1] = Function<DEF<void (const XmlParser &)> NONE::*> (PhanRef<Lambda>::make (*this) ,&Lambda::update_found_object_node) ;
+			mFoundNodeProc[2] = Function<DEF<void (const XmlParser &)> NONE::*> (PhanRef<Lambda>::make (*this) ,&Lambda::update_found_array_node) ;
+			mFoundNodeProc[3] = Function<DEF<void (const XmlParser &)> NONE::*> (PhanRef<Lambda>::make (*this) ,&Lambda::update_found_table_node) ;
 			mAttributeSoftSet = SoftSet<String<STRU8> ,String<STRU8>> (0) ;
 			mMemberSoftSet = SoftSet<INDEX ,INDEX> (0) ;
 			mObjectSoftSet = SoftSet<String<STRU8> ,INDEX> (0) ;
-			mNodeHeap = Allocator<Pack ,SAUTO> () ;
-			for (FOR_ONCE_DO_WHILE_FALSE) {
+			mNodeHeap = Allocator<Node ,SAUTO> () ;
+			for (FOR_ONCE_DO_WHILE) {
 				mRootName.clear () ;
 				mRootType = VAR_NONE ;
 				INDEX ix = normal_node_one () ;
@@ -687,10 +671,8 @@ inline void XmlParser::initialize (const Array<XmlParser> &sequence) {
 				_DYNAMIC_ASSERT_ (node_type (i) == mRootType) ;
 			}
 			mRoot = mNodeHeap.alloc () ;
-			mNodeHeap[mRoot].mMemberSet = mMemberSoftSet.copy () ;
-			mNodeHeap[mRoot].mMemberSet.reset () ;
-			mNodeHeap[mRoot].mObjectSet = mObjectSoftSet.copy () ;
-			mNodeHeap[mRoot].mObjectSet.reset () ;
+			mNodeHeap[mRoot].mMemberSet = mMemberSoftSet.share () ;
+			mNodeHeap[mRoot].mObjectSet = mObjectSoftSet.share () ;
 			mNodeHeap[mRoot].mParent = VAR_NONE ;
 			mNodeHeap[mRoot].mChild = VAR_NONE ;
 			mNodeHeap[mRoot].mBrother = VAR_NONE ;
@@ -699,7 +681,7 @@ inline void XmlParser::initialize (const Array<XmlParser> &sequence) {
 			mFoundNodeAttributeSet = Queue<SoftSet<String<STRU8> ,String<STRU8>>> () ;
 			mFoundNodeBase = Queue<Queue<XmlParser>> () ;
 			mFoundNodeBaseRecycle = Queue<Queue<XmlParser>> () ;
-			mHeap = SharedRef<FixedBuffer<Pack>>::make () ;
+			mHeap = SharedRef<FixedBuffer<Node>>::make () ;
 		}
 
 		inline INDEX normal_node_one () const {
@@ -729,12 +711,11 @@ inline void XmlParser::initialize (const Array<XmlParser> &sequence) {
 				if (mNodeStack.empty ())
 					break ;
 				mNodeStack.take (mTempNode) ;
-				for (FOR_ONCE_DO_WHILE_FALSE) {
+				for (FOR_ONCE_DO_WHILE) {
 					if (mTempNode.P2 == VAR_NONE)
 						continue ;
-					const auto r1x = mFoundNodeType[mTempNode.P2] ;
 					for (auto &&i : mTempNode.P1)
-						(this->*r1x) (i) ;
+						mFoundNodeProc[mTempNode.P2] (i) ;
 					update_merge_found_node (mTempNode.P3[0]) ;
 					mTempNode.P1.clear () ;
 					mFoundNodeBaseRecycle.add (std::move (mTempNode.P1)) ;
@@ -750,13 +731,12 @@ inline void XmlParser::initialize (const Array<XmlParser> &sequence) {
 				mNodeStack[ix].P1.add (i.child ()) ;
 			mNodeStack[ix].P2 = mRootType ;
 			INDEX iy = mRoot ;
-			for (FOR_ONCE_DO_WHILE_FALSE) {
+			for (FOR_ONCE_DO_WHILE) {
 				if (mRootName.empty ())
 					continue ;
 				iy = mNodeHeap.alloc () ;
 				mNodeHeap[iy].mName = std::move (mRootName) ;
-				mNodeHeap[iy].mAttributeSet = mAttributeSoftSet.copy () ;
-				mNodeHeap[iy].mAttributeSet.reset () ;
+				mNodeHeap[iy].mAttributeSet = mAttributeSoftSet.share () ;
 				for (auto &&i : mSequence) {
 					if (!i.exist ())
 						continue ;
@@ -779,16 +759,18 @@ inline void XmlParser::initialize (const Array<XmlParser> &sequence) {
 				INDEX iy = mFoundNodeList.insert () ;
 				const auto r1x = mFoundNodeNameSet.length () ;
 				mFoundNodeList[iy][0] = mFoundNodeNameSet.insert (i.name ()) ;
-				if (mFoundNodeNameSet.length () > r1x)
+				for (FOR_ONCE_DO_WHILE) {
+					if (mFoundNodeNameSet.length () == r1x)
+						continue ;
 					mFoundNodeNameSet[mFoundNodeList[iy][0]].item = iy ;
+				}
 				mFoundNodeList[iy][1] = mFoundNodeAttributeSet.insert () ;
 				mFoundNodeList[iy][2] = node_type (i) ;
 				mFoundNodeList[iy][3] = mFoundNodeBase.insert () ;
 				_DYNAMIC_ASSERT_ (ix == VAR_NONE || mFoundNodeList[ix][2] != 3) ;
 				_DYNAMIC_ASSERT_ (ix == VAR_NONE || mFoundNodeList[iy][2] != 3) ;
 				_DYNAMIC_ASSERT_ (mFoundNodeList[iy][2] != 3 || i.mHeap.self[i.mIndex].mAttributeSet.length () == 1) ;
-				mFoundNodeAttributeSet[mFoundNodeList[iy][1]] = mAttributeSoftSet.copy () ;
-				mFoundNodeAttributeSet[mFoundNodeList[iy][1]].reset () ;
+				mFoundNodeAttributeSet[mFoundNodeList[iy][1]] = mAttributeSoftSet.share () ;
 				mFoundNodeAttributeSet[mFoundNodeList[iy][1]].appand (i.mHeap.self[i.mIndex].mAttributeSet) ;
 				if (mFoundNodeBaseRecycle.empty ())
 					mFoundNodeBaseRecycle.add (Queue<XmlParser> ()) ;
@@ -801,19 +783,21 @@ inline void XmlParser::initialize (const Array<XmlParser> &sequence) {
 			for (XmlParser i = it ; i.exist () ; i = i.brother ()) {
 				INDEX ix = find_found_node_name (i.name ()) ;
 				INDEX iy = ix ;
-				for (FOR_ONCE_DO_WHILE_FALSE) {
+				for (FOR_ONCE_DO_WHILE) {
 					if (iy != VAR_NONE)
 						continue ;
 					iy = mFoundNodeList.insert () ;
 					const auto r1x = mFoundNodeNameSet.length () ;
 					mFoundNodeList[iy][0] = mFoundNodeNameSet.insert (i.name ()) ;
-					if (mFoundNodeNameSet.length () > r1x)
+					for (FOR_ONCE_DO_WHILE) {
+						if (mFoundNodeNameSet.length () == r1x)
+							continue ;
 						mFoundNodeNameSet[mFoundNodeList[iy][0]].item = iy ;
+					}
 					mFoundNodeList[iy][1] = mFoundNodeAttributeSet.insert () ;
 					mFoundNodeList[iy][2] = node_type (i) ;
 					mFoundNodeList[iy][3] = mFoundNodeBase.insert () ;
-					mFoundNodeAttributeSet[mFoundNodeList[iy][1]] = mAttributeSoftSet.copy () ;
-					mFoundNodeAttributeSet[mFoundNodeList[iy][1]].reset () ;
+					mFoundNodeAttributeSet[mFoundNodeList[iy][1]] = mAttributeSoftSet.share () ;
 					if (mFoundNodeBaseRecycle.empty ())
 						mFoundNodeBaseRecycle.add (Queue<XmlParser> ()) ;
 					mFoundNodeBaseRecycle.take (mFoundNodeBase[mFoundNodeList[iy][3]]) ;
@@ -835,8 +819,11 @@ inline void XmlParser::initialize (const Array<XmlParser> &sequence) {
 				INDEX iy = mFoundNodeList.insert () ;
 				const auto r1x = mFoundNodeNameSet.length () ;
 				mFoundNodeList[iy][0] = mFoundNodeNameSet.insert (i.name ()) ;
-				if (mFoundNodeNameSet.length () > r1x)
+				for (FOR_ONCE_DO_WHILE) {
+					if (mFoundNodeNameSet.length () == r1x)
+						continue ;
 					mFoundNodeNameSet[mFoundNodeList[iy][0]].item = iy ;
+				}
 				mFoundNodeList[iy][1] = mFoundNodeAttributeSet.insert () ;
 				mFoundNodeList[iy][2] = node_type (i) ;
 				mFoundNodeList[iy][3] = mFoundNodeBase.insert () ;
@@ -844,8 +831,7 @@ inline void XmlParser::initialize (const Array<XmlParser> &sequence) {
 				_DYNAMIC_ASSERT_ (ix == VAR_NONE || mFoundNodeList[ix][2] != 3) ;
 				_DYNAMIC_ASSERT_ (ix == VAR_NONE || mFoundNodeList[iy][2] != 3) ;
 				_DYNAMIC_ASSERT_ (mFoundNodeList[iy][2] != 3 || i.mHeap.self[i.mIndex].mAttributeSet.length () == 1) ;
-				mFoundNodeAttributeSet[mFoundNodeList[iy][1]] = mAttributeSoftSet.copy () ;
-				mFoundNodeAttributeSet[mFoundNodeList[iy][1]].reset () ;
+				mFoundNodeAttributeSet[mFoundNodeList[iy][1]] = mAttributeSoftSet.share () ;
 				mFoundNodeAttributeSet[mFoundNodeList[iy][1]].appand (i.mHeap.self[i.mIndex].mAttributeSet) ;
 				if (mFoundNodeBaseRecycle.empty ())
 					mFoundNodeBaseRecycle.add (Queue<XmlParser> ()) ;
@@ -870,19 +856,17 @@ inline void XmlParser::initialize (const Array<XmlParser> &sequence) {
 				mNodeHeap[ix].mName = std::move (mFoundNodeNameSet[i[0]]) ;
 				mNodeHeap[ix].mAttributeSet = std::move (mFoundNodeAttributeSet[i[1]]) ;
 				mNodeHeap[ix].mParent = it ;
-				for (FOR_ONCE_DO_WHILE_FALSE) {
+				for (FOR_ONCE_DO_WHILE) {
 					INDEX jx = mNodeHeap[ix].mParent ;
 					if (jx == VAR_NONE)
 						continue ;
 					if (mNodeHeap[jx].mChild == VAR_NONE)
 						mNodeHeap[jx].mChild = ix ;
-					for (FOR_ONCE_DO_WHILE_FALSE) {
+					for (FOR_ONCE_DO_WHILE) {
 						if (mNodeHeap[jx].mMemberSet.size () > 0)
 							continue ;
-						mNodeHeap[jx].mMemberSet = mMemberSoftSet.copy () ;
-						mNodeHeap[jx].mMemberSet.reset () ;
-						mNodeHeap[jx].mObjectSet = mObjectSoftSet.copy () ;
-						mNodeHeap[jx].mObjectSet.reset () ;
+						mNodeHeap[jx].mMemberSet = mMemberSoftSet.share () ;
+						mNodeHeap[jx].mObjectSet = mObjectSoftSet.share () ;
 					}
 					mNodeHeap[jx].mMemberSet.add (mNodeHeap[jx].mMemberSet.length () ,ix) ;
 					mNodeHeap[jx].mObjectSet.add (mNodeHeap[ix].mName ,ix) ;
@@ -908,7 +892,7 @@ inline void XmlParser::initialize (const Array<XmlParser> &sequence) {
 		inline void update_heap () {
 			mAttributeSoftSet.clean () ;
 			mObjectSoftSet.clean () ;
-			mHeap = SharedRef<FixedBuffer<Pack>>::make (mNodeHeap.length ()) ;
+			mHeap = SharedRef<FixedBuffer<Node>>::make (mNodeHeap.length ()) ;
 			INDEX iw = 0 ;
 			for (INDEX i = 0 ; i < mNodeHeap.size () ; i++) {
 				if (!mNodeHeap.used (i))
@@ -933,7 +917,7 @@ private:
 	static constexpr auto TYPE_ID_ARRAY = FLAG (3) ;
 	static constexpr auto TYPE_ID_OBJECT = FLAG (4) ;
 
-	class Pack {
+	class Node {
 	private:
 		friend JsonParser ;
 		AnyRef<void> mValue ;
@@ -941,10 +925,13 @@ private:
 		INDEX mParent ;
 		INDEX mBrother ;
 		INDEX mChild ;
+
+	public:
+		inline Node () = default ;
 	} ;
 
 private:
-	SharedRef<FixedBuffer<Pack>> mHeap ;
+	SharedRef<FixedBuffer<Node>> mHeap ;
 	INDEX mIndex ;
 
 public:
@@ -1004,23 +991,23 @@ public:
 
 	JsonParser child (const String<STRU8> &key) const {
 		INDEX ix = VAR_NONE ;
-		for (FOR_ONCE_DO_WHILE_FALSE) {
+		for (FOR_ONCE_DO_WHILE) {
 			if (!exist ())
 				continue ;
 			if (!object_type ())
 				continue ;
 			auto &r1 = mHeap.self[mIndex].mValue.rebind<SoftSet<String<STRU8> ,INDEX>> ().self ;
-			ix = r1.find (key) ;
-			if (ix == VAR_NONE)
+			INDEX jx = r1.find (key) ;
+			if (jx == VAR_NONE)
 				continue ;
-			ix = r1[ix].item ;
+			ix = r1[jx].item ;
 		}
 		return JsonParser (mHeap ,ix) ;
 	}
 
 	Array<JsonParser> child_array () const {
 		Array<JsonParser> ret ;
-		for (FOR_ONCE_DO_WHILE_FALSE) {
+		for (FOR_ONCE_DO_WHILE) {
 			if (!exist ())
 				continue ;
 			if (!array_type ())
@@ -1038,7 +1025,7 @@ public:
 	Array<JsonParser> child_array (LENGTH fixed_len) const {
 		Array<JsonParser> ret = Array<JsonParser> (fixed_len) ;
 		INDEX iw = 0 ;
-		for (FOR_ONCE_DO_WHILE_FALSE) {
+		for (FOR_ONCE_DO_WHILE) {
 			if (!exist ())
 				continue ;
 			if (!array_type ())
@@ -1138,7 +1125,7 @@ public:
 	void serialize (TextWriter<STRU8> &writer) const ;
 
 private:
-	explicit JsonParser (const SharedRef<FixedBuffer<Pack>> &heap ,INDEX index) :mHeap (heap) ,mIndex (index) {}
+	explicit JsonParser (const SharedRef<FixedBuffer<Node>> &heap ,INDEX index) :mHeap (heap) ,mIndex (index) {}
 
 private:
 	void initialize (const PhanBuffer<const STRU8> &data) ;
@@ -1173,35 +1160,26 @@ inline void JsonParser::serialize (TextWriter<STRU8> &writer) const {
 			break ;
 		const auto r2x = std::move (rax[rax.peek ()]) ;
 		rax.take () ;
-		_CALL_IF_ ([&] (BOOL &if_flag) {
+		_CALL_IF_ ([&] (BOOL &_case_req) {
 			//@info: case 'null'
-			if (r2x[0] == VAR_NONE)
-				discard ;
-			if (mHeap.self[r2x[0]].mTypeID != TYPE_ID_NULL)
-				discard ;
-			if (r2x[1] != 0)
-				discard ;
+			_CASE_REQUIRE_ (r2x[0] != VAR_NONE) ;
+			_CASE_REQUIRE_ (mHeap.self[r2x[0]].mTypeID == TYPE_ID_NULL) ;
+			_CASE_REQUIRE_ (r2x[1] == 0) ;
 			writer << _PCSTRU8_ ("null") ;
-		} ,[&] (BOOL &if_flag) {
+		} ,[&] (BOOL &_case_req) {
 			//@info: case '"xxx"'
-			if (r2x[0] == VAR_NONE)
-				discard ;
-			if (mHeap.self[r2x[0]].mTypeID != TYPE_ID_STRING)
-				discard ;
-			if (r2x[1] != 0)
-				discard ;
+			_CASE_REQUIRE_ (r2x[0] != VAR_NONE) ;
+			_CASE_REQUIRE_ (mHeap.self[r2x[0]].mTypeID == TYPE_ID_STRING) ;
+			_CASE_REQUIRE_ (r2x[1] == 0) ;
 			auto &r2 = mHeap.self[r2x[0]].mValue.rebind<String<STRU8>> ().self ;
 			writer << _PCSTRU8_ ("\"") ;
 			writer << r2 ;
 			writer << _PCSTRU8_ ("\"") ;
-		} ,[&] (BOOL &if_flag) {
+		} ,[&] (BOOL &_case_req) {
 			//@info: case '[(yyy(,yyy)*)?]'
-			if (r2x[0] == VAR_NONE)
-				discard ;
-			if (mHeap.self[r2x[0]].mTypeID != TYPE_ID_ARRAY)
-				discard ;
-			if (r2x[1] != 0)
-				discard ;
+			_CASE_REQUIRE_ (r2x[0] != VAR_NONE) ;
+			_CASE_REQUIRE_ (mHeap.self[r2x[0]].mTypeID == TYPE_ID_ARRAY) ;
+			_CASE_REQUIRE_ (r2x[1] == 0) ;
 			auto &r3 = mHeap.self[r2x[0]].mValue.rebind<SoftSet<INDEX ,INDEX>> ().self ;
 			rbx.clear () ;
 			rbx.add (ARRAY2<INDEX> {VAR_NONE ,FLAG (2)}) ;
@@ -1214,14 +1192,11 @@ inline void JsonParser::serialize (TextWriter<STRU8> &writer) const {
 			}
 			rbx.add (ARRAY2<INDEX> {VAR_NONE ,FLAG (4)}) ;
 			rax.appand (rbx) ;
-		} ,[&] (BOOL &if_flag) {
+		} ,[&] (BOOL &_case_req) {
 			//@info: case '{("xxx":yyy(,"xxx":yyy)*)?}'
-			if (r2x[0] == VAR_NONE)
-				discard ;
-			if (mHeap.self[r2x[0]].mTypeID != TYPE_ID_OBJECT)
-				discard ;
-			if (r2x[1] != 0)
-				discard ;
+			_CASE_REQUIRE_ (r2x[0] != VAR_NONE) ;
+			_CASE_REQUIRE_ (mHeap.self[r2x[0]].mTypeID == TYPE_ID_OBJECT) ;
+			_CASE_REQUIRE_ (r2x[1] == 0) ;
 			auto &r4 = mHeap.self[r2x[0]].mValue.rebind<SoftSet<String<STRU8> ,INDEX>> ().self ;
 			rbx.clear () ;
 			rbx.add (ARRAY2<INDEX> {VAR_NONE ,FLAG (5)}) ;
@@ -1238,55 +1213,39 @@ inline void JsonParser::serialize (TextWriter<STRU8> &writer) const {
 			}
 			rbx.add (ARRAY2<INDEX> {VAR_NONE ,FLAG (8)}) ;
 			rax.appand (rbx) ;
-		} ,[&] (BOOL &if_flag) {
-			if (r2x[0] == VAR_NONE)
-				discard ;
-			if (r2x[1] != 1)
-				discard ;
+		} ,[&] (BOOL &_case_req) {
+			_CASE_REQUIRE_ (r2x[0] != VAR_NONE) ;
+			_CASE_REQUIRE_ (r2x[1] == 1) ;
 			writer << _PCSTRU8_ ("\"") ;
 			writer << (*r1x[r2x[0]]) ;
 			writer << _PCSTRU8_ ("\"") ;
-		} ,[&] (BOOL &if_flag) {
-			if (r2x[0] != VAR_NONE)
-				discard ;
-			if (r2x[1] != 2)
-				discard ;
+		} ,[&] (BOOL &_case_req) {
+			_CASE_REQUIRE_ (r2x[0] == VAR_NONE) ;
+			_CASE_REQUIRE_ (r2x[1] == 2) ;
 			writer << _PCSTRU8_ ("[") ;
-		} ,[&] (BOOL &if_flag) {
-			if (r2x[0] != VAR_NONE)
-				discard ;
-			if (r2x[1] != 3)
-				discard ;
+		} ,[&] (BOOL &_case_req) {
+			_CASE_REQUIRE_ (r2x[0] == VAR_NONE) ;
+			_CASE_REQUIRE_ (r2x[1] == 3) ;
 			writer << _PCSTRU8_ (",") ;
-		} ,[&] (BOOL &if_flag) {
-			if (r2x[0] != VAR_NONE)
-				discard ;
-			if (r2x[1] != 4)
-				discard ;
+		} ,[&] (BOOL &_case_req) {
+			_CASE_REQUIRE_ (r2x[0] == VAR_NONE) ;
+			_CASE_REQUIRE_ (r2x[1] == 4) ;
 			writer << _PCSTRU8_ ("]") ;
-		} ,[&] (BOOL &if_flag) {
-			if (r2x[0] != VAR_NONE)
-				discard ;
-			if (r2x[1] != 5)
-				discard ;
+		} ,[&] (BOOL &_case_req) {
+			_CASE_REQUIRE_ (r2x[0] == VAR_NONE) ;
+			_CASE_REQUIRE_ (r2x[1] == 5) ;
 			writer << _PCSTRU8_ ("{") ;
-		} ,[&] (BOOL &if_flag) {
-			if (r2x[0] != VAR_NONE)
-				discard ;
-			if (r2x[1] != 6)
-				discard ;
+		} ,[&] (BOOL &_case_req) {
+			_CASE_REQUIRE_ (r2x[0] == VAR_NONE) ;
+			_CASE_REQUIRE_ (r2x[1] == 6) ;
 			writer << _PCSTRU8_ (",") ;
-		} ,[&] (BOOL &if_flag) {
-			if (r2x[0] != VAR_NONE)
-				discard ;
-			if (r2x[1] != 7)
-				discard ;
+		} ,[&] (BOOL &_case_req) {
+			_CASE_REQUIRE_ (r2x[0] == VAR_NONE) ;
+			_CASE_REQUIRE_ (r2x[1] == 7) ;
 			writer << _PCSTRU8_ (":") ;
-		} ,[&] (BOOL &if_flag) {
-			if (r2x[0] != VAR_NONE)
-				discard ;
-			if (r2x[1] != 8)
-				discard ;
+		} ,[&] (BOOL &_case_req) {
+			_CASE_REQUIRE_ (r2x[0] == VAR_NONE) ;
+			_CASE_REQUIRE_ (r2x[1] == 8) ;
 			writer << _PCSTRU8_ ("}") ;
 		}) ;
 	}
@@ -1299,12 +1258,12 @@ inline void JsonParser::initialize (const PhanBuffer<const STRU8> &data) {
 		class Counter :private Wrapped<LENGTH> {
 		public:
 			inline void lock () {
-				_DYNAMIC_ASSERT_ (Counter::mData < DEFAULT_RECURSIVE_SIZE::value) ;
-				Counter::mData++ ;
+				_DYNAMIC_ASSERT_ (Counter::mSelf < DEFAULT_RECURSIVE_SIZE::value) ;
+				Counter::mSelf++ ;
 			}
 
 			inline void unlock () {
-				Counter::mData-- ;
+				Counter::mSelf-- ;
 			}
 		} ;
 
@@ -1316,8 +1275,8 @@ inline void JsonParser::initialize (const PhanBuffer<const STRU8> &data) {
 		LENGTH mRecursiveCounter ;
 		SoftSet<INDEX ,INDEX> mArraySoftSet ;
 		SoftSet<String<STRU8> ,INDEX> mObjectSoftSet ;
-		Allocator<Pack ,SAUTO> mNodeHeap ;
-		SharedRef<FixedBuffer<Pack>> mHeap ;
+		Allocator<Node ,SAUTO> mNodeHeap ;
+		SharedRef<FixedBuffer<Node>> mHeap ;
 		INDEX mRoot ;
 		INDEX mLatestIndex ;
 		String<STRU8> mLatestString ;
@@ -1337,8 +1296,8 @@ inline void JsonParser::initialize (const PhanBuffer<const STRU8> &data) {
 			mRecursiveCounter = 0 ;
 			mArraySoftSet = SoftSet<INDEX ,INDEX> (0) ;
 			mObjectSoftSet = SoftSet<String<STRU8> ,INDEX> (0) ;
-			mNodeHeap = Allocator<Pack ,SAUTO> () ;
-			mHeap = SharedRef<FixedBuffer<Pack>> () ;
+			mNodeHeap = Allocator<Node ,SAUTO> () ;
+			mHeap = SharedRef<FixedBuffer<Node>> () ;
 			mRoot = VAR_NONE ;
 		}
 
@@ -1384,27 +1343,23 @@ inline void JsonParser::initialize (const PhanBuffer<const STRU8> &data) {
 
 		//@info: $2->true|TRUE|false|FALSE
 		inline void update_shift_e2 () {
-			_CALL_IF_ ([&] (BOOL &if_flag) {
-				if (mRis[0] != STRU8 ('t'))
-					discard ;
+			_CALL_IF_ ([&] (BOOL &_case_req) {
+				_CASE_REQUIRE_ (mRis[0] == STRU8 ('t')) ;
 				mRis >> _PCSTRU8_ ("true") ;
 				mLatestString = _PCSTRU8_ ("true") ;
-			} ,[&] (BOOL &if_flag) {
-				if (mRis[0] != STRU8 ('T'))
-					discard ;
+			} ,[&] (BOOL &_case_req) {
+				_CASE_REQUIRE_ (mRis[0] == STRU8 ('T')) ;
 				mRis >> _PCSTRU8_ ("TRUE") ;
 				mLatestString = _PCSTRU8_ ("TRUE") ;
-			} ,[&] (BOOL &if_flag) {
-				if (mRis[0] != STRU8 ('f'))
-					discard ;
+			} ,[&] (BOOL &_case_req) {
+				_CASE_REQUIRE_ (mRis[0] == STRU8 ('f')) ;
 				mRis >> _PCSTRU8_ ("false") ;
 				mLatestString = _PCSTRU8_ ("false") ;
-			} ,[&] (BOOL &if_flag) {
-				if (mRis[0] != STRU8 ('F'))
-					discard ;
+			} ,[&] (BOOL &_case_req) {
+				_CASE_REQUIRE_ (mRis[0] == STRU8 ('F')) ;
 				mRis >> _PCSTRU8_ ("FALSE") ;
 				mLatestString = _PCSTRU8_ ("FALSE") ;
-			} ,[&] (BOOL &if_flag) {
+			} ,[&] (BOOL &_case_req) {
 				_DEBUG_ASSERT_ (FALSE) ;
 			}) ;
 		}
@@ -1424,11 +1379,10 @@ inline void JsonParser::initialize (const PhanBuffer<const STRU8> &data) {
 		inline void update_shift_e4 (INDEX it) {
 			ScopedGuard<Counter> ANONYMOUS (_CAST_<Counter> (mRecursiveCounter)) ;
 			INDEX ix = VAR_NONE ;
-			_CALL_IF_ ([&] (BOOL &if_flag) {
+			_CALL_IF_ ([&] (BOOL &_case_req) {
 				const auto r1x = BOOL (mRis[0] == STRU8 ('+') || mRis[0] == STRU8 ('-')) ;
 				const auto r2x = BOOL (mRis[0] >= STRU8 ('0') && mRis[0] <= STRU8 ('9')) ;
-				if (!r1x && !r2x)
-					discard ;
+				_CASE_REQUIRE_ (r1x || r2x) ;
 				ix = mNodeHeap.alloc () ;
 				update_shift_e1 () ;
 				mNodeHeap[ix].mValue = AnyRef<String<STRU8>>::make (std::move (mLatestString)) ;
@@ -1436,11 +1390,10 @@ inline void JsonParser::initialize (const PhanBuffer<const STRU8> &data) {
 				mNodeHeap[ix].mParent = it ;
 				mNodeHeap[ix].mBrother = VAR_NONE ;
 				mNodeHeap[ix].mChild = VAR_NONE ;
-			} ,[&] (BOOL &if_flag) {
+			} ,[&] (BOOL &_case_req) {
 				const auto r3x = BOOL (mRis[0] == STRU8 ('t') || mRis[0] == STRU8 ('T')) ;
 				const auto r4x = BOOL (mRis[0] == STRU8 ('f') || mRis[0] == STRU8 ('F')) ;
-				if (!r3x && !r4x)
-					discard ;
+				_CASE_REQUIRE_ (r3x || r4x) ;
 				ix = mNodeHeap.alloc () ;
 				update_shift_e2 () ;
 				mNodeHeap[ix].mValue = AnyRef<String<STRU8>>::make (std::move (mLatestString)) ;
@@ -1448,18 +1401,16 @@ inline void JsonParser::initialize (const PhanBuffer<const STRU8> &data) {
 				mNodeHeap[ix].mParent = it ;
 				mNodeHeap[ix].mBrother = VAR_NONE ;
 				mNodeHeap[ix].mChild = VAR_NONE ;
-			} ,[&] (BOOL &if_flag) {
-				if (mRis[0] != STRU8 ('n'))
-					discard ;
+			} ,[&] (BOOL &_case_req) {
+				_CASE_REQUIRE_ (mRis[0] == STRU8 ('n')) ;
 				ix = mNodeHeap.alloc () ;
 				update_shift_e2x () ;
 				mNodeHeap[ix].mTypeID = TYPE_ID_NULL ;
 				mNodeHeap[ix].mParent = it ;
 				mNodeHeap[ix].mBrother = VAR_NONE ;
 				mNodeHeap[ix].mChild = VAR_NONE ;
-			} ,[&] (BOOL &if_flag) {
-				if (mRis[0] != STRU8 ('\"'))
-					discard ;
+			} ,[&] (BOOL &_case_req) {
+				_CASE_REQUIRE_ (mRis[0] == STRU8 ('\"')) ;
 				ix = mNodeHeap.alloc () ;
 				update_shift_e3 () ;
 				mNodeHeap[ix].mValue = AnyRef<String<STRU8>>::make (std::move (mLatestString)) ;
@@ -1467,17 +1418,15 @@ inline void JsonParser::initialize (const PhanBuffer<const STRU8> &data) {
 				mNodeHeap[ix].mParent = it ;
 				mNodeHeap[ix].mBrother = VAR_NONE ;
 				mNodeHeap[ix].mChild = VAR_NONE ;
-			} ,[&] (BOOL &if_flag) {
-				if (mRis[0] != STRU8 ('['))
-					discard ;
+			} ,[&] (BOOL &_case_req) {
+				_CASE_REQUIRE_ (mRis[0] == STRU8 ('[')) ;
 				update_shift_e6 (it) ;
 				ix = mLatestIndex ;
-			} ,[&] (BOOL &if_flag) {
-				if (mRis[0] != STRU8 ('{'))
-					discard ;
+			} ,[&] (BOOL &_case_req) {
+				_CASE_REQUIRE_ (mRis[0] == STRU8 ('{')) ;
 				update_shift_e9 (it) ;
 				ix = mLatestIndex ;
-			} ,[&] (BOOL &if_flag) {
+			} ,[&] (BOOL &_case_req) {
 				_DYNAMIC_ASSERT_ (FALSE) ;
 			}) ;
 			mLatestIndex = ix ;
@@ -1508,14 +1457,13 @@ inline void JsonParser::initialize (const PhanBuffer<const STRU8> &data) {
 			ScopedGuard<Counter> ANONYMOUS (_CAST_<Counter> (mRecursiveCounter)) ;
 			mRis >> _PCSTRU8_ ("[") ;
 			INDEX ix = mNodeHeap.alloc () ;
-			mNodeHeap[ix].mValue = AnyRef<SoftSet<INDEX ,INDEX>>::make (mArraySoftSet.copy ()) ;
-			mNodeHeap[ix].mValue.rebind<SoftSet<INDEX ,INDEX>> ()->reset () ;
+			mNodeHeap[ix].mValue = AnyRef<SoftSet<INDEX ,INDEX>>::make (mArraySoftSet.share ()) ;
 			mNodeHeap[ix].mTypeID = TYPE_ID_ARRAY ;
 			mNodeHeap[ix].mParent = it ;
 			mNodeHeap[ix].mBrother = VAR_NONE ;
 			mNodeHeap[ix].mChild = VAR_NONE ;
 			mRis >> LLTextReader<>::SKIP_GAP ;
-			for (FOR_ONCE_DO_WHILE_FALSE) {
+			for (FOR_ONCE_DO_WHILE) {
 				if (mRis[0] == STRU8 (']'))
 					continue ;
 				update_shift_e5 (ix) ;
@@ -1561,14 +1509,13 @@ inline void JsonParser::initialize (const PhanBuffer<const STRU8> &data) {
 			ScopedGuard<Counter> ANONYMOUS (_CAST_<Counter> (mRecursiveCounter)) ;
 			mRis >> _PCSTRU8_ ("{") ;
 			INDEX ix = mNodeHeap.alloc () ;
-			mNodeHeap[ix].mValue = AnyRef<SoftSet<String<STRU8> ,INDEX>>::make (mObjectSoftSet.copy ()) ;
-			mNodeHeap[ix].mValue.rebind<SoftSet<String<STRU8> ,INDEX>> ()->reset () ;
+			mNodeHeap[ix].mValue = AnyRef<SoftSet<String<STRU8> ,INDEX>>::make (mObjectSoftSet.share ()) ;
 			mNodeHeap[ix].mTypeID = TYPE_ID_OBJECT ;
 			mNodeHeap[ix].mParent = it ;
 			mNodeHeap[ix].mBrother = VAR_NONE ;
 			mNodeHeap[ix].mChild = VAR_NONE ;
 			mRis >> LLTextReader<>::SKIP_GAP ;
-			for (FOR_ONCE_DO_WHILE_FALSE) {
+			for (FOR_ONCE_DO_WHILE) {
 				if (mRis[0] == STRU8 ('}'))
 					continue ;
 				update_shift_e8 (ix) ;
@@ -1582,7 +1529,7 @@ inline void JsonParser::initialize (const PhanBuffer<const STRU8> &data) {
 		//@info: $10->ε|$4
 		inline void update_shift_e10 () {
 			INDEX ix = VAR_NONE ;
-			for (FOR_ONCE_DO_WHILE_FALSE) {
+			for (FOR_ONCE_DO_WHILE) {
 				if (mRis[0] == STRU8 ('\0'))
 					continue ;
 				update_shift_e4 (VAR_NONE) ;
@@ -1604,7 +1551,7 @@ inline void JsonParser::initialize (const PhanBuffer<const STRU8> &data) {
 		inline void update_heap () {
 			mArraySoftSet.clean () ;
 			mObjectSoftSet.clean () ;
-			mHeap = SharedRef<FixedBuffer<Pack>>::make (mNodeHeap.length ()) ;
+			mHeap = SharedRef<FixedBuffer<Node>>::make (mNodeHeap.length ()) ;
 			INDEX iw = 0 ;
 			for (INDEX i = 0 ; i < mNodeHeap.size () ; i++) {
 				if (!mNodeHeap.used (i))
@@ -1641,7 +1588,7 @@ public:
 			String<STRU8> ret = String<STRU8> (DEFAULT_LONGSTRING_SIZE::value) ;
 			auto wos = TextWriter<STRU8> (ret.raw ()) ;
 			for (INDEX i = 1 ,ie = LENGTH (argc) ; i < ie ; i++) {
-				wos << _ASTOU8S_ (PTRTOARR[&argv[i][0]]) ;
+				wos << _ASTOU8S_ (PTRTOARR[argv[i]]) ;
 				wos << _PCSTRU8_ (" ") ;
 			}
 			wos << _EOS_ ;
@@ -1819,32 +1766,28 @@ inline void CommandParser::initialize (const PhanBuffer<const STRU8> &data) {
 			INDEX ix = mAttributeSet.find (mLatestString) ;
 			_DYNAMIC_ASSERT_ (ix == VAR_NONE) ;
 			ix = mAttributeSet.insert (std::move (mLatestString)) ;
-			_CALL_IF_ ([&] (BOOL &if_flag) {
-				if (mRis[0] != STRU8 ('='))
-					discard ;
-				if (mRis[1] != STRU8 ('\"'))
-					discard ;
+			_CALL_IF_ ([&] (BOOL &_case_req) {
+				_CASE_REQUIRE_ (mRis[0] == STRU8 ('=')) ;
+				_CASE_REQUIRE_ (mRis[1] == STRU8 ('\"')) ;
 				mRis >> _PCSTRU8_ ("=") ;
 				update_shift_e2 () ;
 				mAttributeSet[ix].item = std::move (mLatestString) ;
-			} ,[&] (BOOL &if_flag) {
-				if (mRis[0] != STRU8 ('='))
-					discard ;
+			} ,[&] (BOOL &_case_req) {
+				_CASE_REQUIRE_ (mRis[0] == STRU8 ('=')) ;
 				mRis >> _PCSTRU8_ ("=") ;
 				update_shift_e3 () ;
 				mAttributeSet[ix].item = std::move (mLatestString) ;
-			} ,[&] (BOOL &if_flag) {
+			} ,[&] (BOOL &_case_req) {
 				mAttributeSet[ix].item = _PCSTRU8_ ("TRUE") ;
 			}) ;
 		}
 
 		//@info: $6->$2|$3
 		inline void update_shift_e6 () {
-			_CALL_IF_ ([&] (BOOL &if_flag) {
-				if (mRis[0] != STRU8 ('\"'))
-					discard ;
+			_CALL_IF_ ([&] (BOOL &_case_req) {
+				_CASE_REQUIRE_ (mRis[0] == STRU8 ('\"')) ;
 				update_shift_e2 () ;
-			} ,[&] (BOOL &if_flag) {
+			} ,[&] (BOOL &_case_req) {
 				update_shift_e3 () ;
 			}) ;
 			mCommandList.add (std::move (mLatestString)) ;
@@ -1855,15 +1798,13 @@ inline void CommandParser::initialize (const PhanBuffer<const STRU8> &data) {
 			while (TRUE) {
 				if (mRis[0] == STRU8 ('\0'))
 					break ;
-				_CALL_IF_ ([&] (BOOL &if_flag) {
-					if (mRis[0] != STRU8 ('/'))
-						discard ;
+				_CALL_IF_ ([&] (BOOL &_case_req) {
+					_CASE_REQUIRE_ (mRis[0] == STRU8 ('/')) ;
 					update_shift_e4 () ;
-				} ,[&] (BOOL &if_flag) {
-					if (mRis[0] != STRU8 ('-'))
-						discard ;
+				} ,[&] (BOOL &_case_req) {
+					_CASE_REQUIRE_ (mRis[0] == STRU8 ('-')) ;
 					update_shift_e5 () ;
-				} ,[&] (BOOL &if_flag) {
+				} ,[&] (BOOL &_case_req) {
 					update_shift_e6 () ;
 				}) ;
 				mRis >> LLTextReader<>::SKIP_GAP_SPACE_ONLY ;

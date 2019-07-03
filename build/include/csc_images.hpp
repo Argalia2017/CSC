@@ -10,22 +10,24 @@
 
 namespace CSC {
 template <class SIZE>
-class RangeFolder {
+class ArrayRange {
 private:
 	class Iterator {
 	private:
-		friend RangeFolder ;
-		const RangeFolder &mBase ;
+		friend ArrayRange ;
+		const ArrayRange &mBase ;
 		Array<LENGTH ,SIZE> mItem ;
 		INDEX mIndex ;
 
 	public:
 		inline Iterator () = delete ;
 
+		inline BOOL operator== (const Iterator &right) const {
+			return BOOL (mIndex == right.mIndex) ;
+		}
+
 		inline BOOL operator!= (const Iterator &right) const {
-			if (mIndex == right.mIndex)
-				return FALSE ;
-			return TRUE ;
+			return BOOL (mIndex != right.mIndex) ;
 		}
 
 		inline const Array<LENGTH ,SIZE> &operator* () const {
@@ -38,7 +40,7 @@ private:
 		}
 
 	private:
-		inline explicit Iterator (const RangeFolder &base ,Array<LENGTH ,SIZE> &&item ,INDEX index) :mBase (base) ,mItem (std::move (item)) ,mIndex (index) {}
+		inline explicit Iterator (const ArrayRange &base ,Array<LENGTH ,SIZE> &&item ,INDEX index) :mBase (base) ,mItem (std::move (item)) ,mIndex (index) {}
 	} ;
 
 private:
@@ -46,9 +48,9 @@ private:
 	Array<LENGTH ,SIZE> mRange ;
 
 public:
-	inline RangeFolder () = delete ;
+	inline ArrayRange () = delete ;
 
-	inline explicit RangeFolder (const Array<LENGTH ,SIZE> &range) :mRange (range) {}
+	inline explicit ArrayRange (const Array<LENGTH ,SIZE> &range) :mRange (range) {}
 
 	inline Iterator begin () const {
 		return Iterator (*this ,first_item () ,0) ;
@@ -94,19 +96,12 @@ private:
 } ;
 
 template <class TYPE>
-class SoftImage {
+class Bitmap {
 private:
-	class Attribute final :private Interface {
-	private:
-		friend SoftImage ;
-		SharedRef<FixedBuffer<TYPE>> mBuffer ;
-		ARRAY5<LENGTH> mWidth ;
-	} ;
-
 	template <class BASE>
 	class Row {
 	private:
-		friend SoftImage ;
+		friend Bitmap ;
 		BASE &mBase ;
 		INDEX mY ;
 
@@ -125,8 +120,15 @@ private:
 		inline explicit Row (BASE &base ,INDEX y) popping : mBase (base) ,mY (y) {}
 	} ;
 
+	class Attribute final :private Interface {
+	private:
+		friend Bitmap ;
+		SharedRef<FixedBuffer<TYPE>> mBuffer ;
+		ARRAY5<LENGTH> mWidth ;
+	} ;
+
 private:
-	SharedRef<Attribute> mHolder ;
+	SharedRef<Attribute> mHeap ;
 	PhanBuffer<TYPE> mImage ;
 	LENGTH mCX ;
 	LENGTH mCY ;
@@ -134,43 +136,50 @@ private:
 	LENGTH mCK ;
 
 public:
-	SoftImage () {
-		mCX = 0 ;
-		mCY = 0 ;
-		mCW = 0 ;
-		mCK = 0 ;
+	Bitmap () {
+		reset () ;
 	}
 
-	explicit SoftImage (LENGTH _cx ,LENGTH _cy) :SoftImage (_cx ,_cy ,_cx ,0) {}
+	explicit Bitmap (LENGTH _cx ,LENGTH _cy) :Bitmap (_cx ,_cy ,_cx ,0) {}
 
-	explicit SoftImage (LENGTH _cx ,LENGTH _cy ,LENGTH _cw ,LENGTH _ck) {
+	explicit Bitmap (LENGTH _cx ,LENGTH _cy ,LENGTH _cw ,LENGTH _ck) {
 		_DEBUG_ASSERT_ (_cx >= 0 && _cy >= 0) ;
 		_DEBUG_ASSERT_ (_cx <= _cw) ;
 		_DEBUG_ASSERT_ (_ck >= 0) ;
-		mHolder = SharedRef<Attribute>::make () ;
-		for (FOR_ONCE_DO_WHILE_FALSE) {
-			const auto r1x = _cy * _cw + _ck ;
-			if (r1x == 0)
-				continue ;
-			mHolder->mBuffer = SharedRef<FixedBuffer<TYPE>>::make (r1x) ;
-			mImage = PhanBuffer<TYPE>::make (mHolder->mBuffer.self) ;
-		}
-		mHolder->mWidth[0] = _cx ;
-		mHolder->mWidth[1] = _cy ;
-		mHolder->mWidth[2] = _cw ;
-		mHolder->mWidth[3] = _ck ;
+		mHeap = SharedRef<Attribute>::make () ;
+		const auto r1x = _cy * _cw + _ck ;
+		mHeap->mBuffer = SharedRef<FixedBuffer<TYPE>>::make (r1x) ;
+		mHeap->mWidth[0] = _cx ;
+		mHeap->mWidth[1] = _cy ;
+		mHeap->mWidth[2] = _cw ;
+		mHeap->mWidth[3] = _ck ;
+		mImage = PhanBuffer<TYPE>::make (mHeap->mBuffer.self) ;
 		reset () ;
 	}
 
-	explicit SoftImage (const PhanBuffer<TYPE> &image) {
-		_DEBUG_ASSERT_ (image.size () > 0) ;
-		mHolder = SharedRef<Attribute>::make () ;
-		mHolder->mWidth[0] = mImage.size () ;
-		mHolder->mWidth[1] = 1 ;
-		mHolder->mWidth[2] = mImage.size () ;
-		mHolder->mWidth[3] = 0 ;
+	explicit Bitmap (const PhanBuffer<TYPE> &image) {
+		mHeap = SharedRef<Attribute>::make () ;
+		mHeap->mWidth[0] = mImage.size () ;
+		mHeap->mWidth[1] = 1 ;
+		mHeap->mWidth[2] = mImage.size () ;
+		mHeap->mWidth[3] = 0 ;
 		mImage = PhanBuffer<TYPE>::make (image) ;
 		reset () ;
+	}
+
+	explicit Bitmap (SharedRef<FixedBuffer<TYPE>> &&image) {
+		mHeap = SharedRef<Attribute>::make () ;
+		mHeap->mBuffer = std::move (image) ;
+		mHeap->mWidth[0] = mImage.size () ;
+		mHeap->mWidth[1] = 1 ;
+		mHeap->mWidth[2] = mImage.size () ;
+		mHeap->mWidth[3] = 0 ;
+		mImage = PhanBuffer<TYPE>::make (mHeap->mBuffer.self) ;
+		reset () ;
+	}
+
+	ARRAY2<LENGTH> width () const {
+		return ARRAY2<LENGTH> {mCX ,mCY} ;
 	}
 
 	LENGTH cx () const {
@@ -189,8 +198,8 @@ public:
 		return mCK ;
 	}
 
-	RangeFolder<ARGC<2>> range () const {
-		return RangeFolder<ARGC<2>> ({mCY ,mCX}) ;
+	ArrayRange<ARGC<2>> range () const {
+		return ArrayRange<ARGC<2>> ({mCY ,mCX}) ;
 	}
 
 	PhanBuffer<TYPE> raw () & {
@@ -206,19 +215,20 @@ public:
 	PhanBuffer<TYPE> raw () && = delete ;
 
 	void reset () {
-		_DEBUG_ASSERT_ (mHolder.exist ()) ;
-		mCX = mHolder->mWidth[0] ;
-		mCY = mHolder->mWidth[1] ;
-		mCW = mHolder->mWidth[2] ;
-		mCK = mHolder->mWidth[3] ;
+		const auto r1x = ARRAY5<LENGTH> {0 ,0 ,0 ,0 ,0} ;
+		auto &r1 = (mHeap.exist ()) ? (mHeap->mWidth) : r1x ;
+		mCX = r1[0] ;
+		mCY = r1[1] ;
+		mCW = r1[2] ;
+		mCK = r1[3] ;
 	}
 
 	void reset (LENGTH _cx ,LENGTH _cy ,LENGTH _cw ,LENGTH _ck) {
 		_DEBUG_ASSERT_ (_cx >= 0 && _cy >= 0) ;
 		_DEBUG_ASSERT_ (_cx <= _cw) ;
 		_DEBUG_ASSERT_ (_ck >= 0) ;
-		_DEBUG_ASSERT_ (mHolder.exist ()) ;
-		const auto r1x = mHolder->mWidth[1] * mHolder->mWidth[2] + mHolder->mWidth[3] ;
+		_DEBUG_ASSERT_ (mHeap.exist ()) ;
+		const auto r1x = mHeap->mWidth[1] * mHeap->mWidth[2] + mHeap->mWidth[3] ;
 		_DEBUG_ASSERT_ (_cy * _cw + _ck <= r1x) ;
 		(void) r1x ;
 		mCX = _cx ;
@@ -227,9 +237,9 @@ public:
 		mCK = _ck ;
 	}
 
-	SoftImage copy () popping {
-		SoftImage ret ;
-		ret.mHolder = mHolder ;
+	Bitmap copy () popping {
+		Bitmap ret ;
+		ret.mHeap = mHeap ;
 		ret.mImage = PhanBuffer<TYPE>::make (mImage) ;
 		ret.mCX = mCX ;
 		ret.mCY = mCY ;
@@ -272,27 +282,27 @@ public:
 
 	inline TYPE &operator[] (const ARRAY2<INDEX> &) && = delete ;
 
-	Row<SoftImage> get (INDEX y) & {
-		return Row<SoftImage> (*this ,y) ;
+	Row<Bitmap> get (INDEX y) & {
+		return Row<Bitmap> (*this ,y) ;
 	}
 
-	inline Row<SoftImage> operator[] (INDEX y) & {
+	inline Row<Bitmap> operator[] (INDEX y) & {
 		return get (y) ;
 	}
 
-	Row<const SoftImage> get (INDEX y) const & {
-		return Row<const SoftImage> (*this ,y) ;
+	Row<const Bitmap> get (INDEX y) const & {
+		return Row<const Bitmap> (*this ,y) ;
 	}
 
-	inline Row<const SoftImage> operator[] (INDEX y) const & {
+	inline Row<const Bitmap> operator[] (INDEX y) const & {
 		return get (y) ;
 	}
 
-	Row<SoftImage> get (INDEX) && = delete ;
+	Row<Bitmap> get (INDEX) && = delete ;
 
-	inline Row<SoftImage> operator[] (INDEX) && = delete ;
+	inline Row<Bitmap> operator[] (INDEX) && = delete ;
 
-	BOOL equal (const SoftImage &right) const {
+	BOOL equal (const Bitmap &right) const {
 		if (mCX != right.mCX || mCY != right.mCY)
 			return FALSE ;
 		for (auto &&i : range ())
@@ -301,235 +311,235 @@ public:
 		return TRUE ;
 	}
 
-	inline BOOL operator== (const SoftImage &right) const {
+	inline BOOL operator== (const Bitmap &right) const {
 		return equal (right) ;
 	}
 
-	inline BOOL operator!= (const SoftImage &right) const {
+	inline BOOL operator!= (const Bitmap &right) const {
 		return !equal (right) ;
 	}
 
-	SoftImage add (const SoftImage &right) const {
+	Bitmap add (const Bitmap &right) const {
 		_DEBUG_ASSERT_ (mCX == right.mCX && mCY == right.mCY) ;
-		SoftImage ret = SoftImage (mCX ,mCY) ;
+		Bitmap ret = Bitmap (mCX ,mCY) ;
 		for (auto &&i : range ())
 			ret.get (i) = get (i) + right.get (i) ;
 		return std::move (ret) ;
 	}
 
-	inline SoftImage operator+ (const SoftImage &right) const {
+	inline Bitmap operator+ (const Bitmap &right) const {
 		return add (right) ;
 	}
 
-	void addto (const SoftImage &right) {
+	void addto (const Bitmap &right) {
 		_DEBUG_ASSERT_ (mCX == right.mCX && mCY == right.mCY) ;
 		for (auto &&i : range ())
 			get (i) += right.get (i) ;
 	}
 
-	inline SoftImage &operator+= (const SoftImage &right) {
+	inline Bitmap &operator+= (const Bitmap &right) {
 		addto (right) ;
 		return *this ;
 	}
 
-	SoftImage sub (const SoftImage &right) const {
+	Bitmap sub (const Bitmap &right) const {
 		_DEBUG_ASSERT_ (mCX == right.mCX && mCY == right.mCY) ;
-		SoftImage ret = SoftImage (mCX ,mCY) ;
+		Bitmap ret = Bitmap (mCX ,mCY) ;
 		for (auto &&i : range ())
 			ret.get (i) = get (i) - right.get (i) ;
 		return std::move (ret) ;
 	}
 
-	inline SoftImage operator- (const SoftImage &right) const {
+	inline Bitmap operator- (const Bitmap &right) const {
 		return sub (right) ;
 	}
 
-	void subto (const SoftImage &right) {
+	void subto (const Bitmap &right) {
 		_DEBUG_ASSERT_ (mCX == right.mCX && mCY == right.mCY) ;
 		for (auto &&i : range ())
 			get (i) -= right.get (i) ;
 	}
 
-	inline SoftImage &operator-= (const SoftImage &right) {
+	inline Bitmap &operator-= (const Bitmap &right) {
 		subto (right) ;
 		return *this ;
 	}
 
-	SoftImage mul (const SoftImage &right) const {
+	Bitmap mul (const Bitmap &right) const {
 		_DEBUG_ASSERT_ (mCX == right.mCX && mCY == right.mCY) ;
-		SoftImage ret = SoftImage (mCX ,mCY) ;
+		Bitmap ret = Bitmap (mCX ,mCY) ;
 		for (auto &&i : range ())
 			ret.get (i) = get (i) * right.get (i) ;
 		return std::move (ret) ;
 	}
 
-	inline SoftImage operator* (const SoftImage &right) const {
+	inline Bitmap operator* (const Bitmap &right) const {
 		return mul (right) ;
 	}
 
-	void multo (const SoftImage &right) {
+	void multo (const Bitmap &right) {
 		_DEBUG_ASSERT_ (mCX == right.mCX && mCY == right.mCY) ;
 		for (auto &&i : range ())
 			get (i) *= right.get (i) ;
 	}
 
-	inline SoftImage &operator*= (const SoftImage &right) {
+	inline Bitmap &operator*= (const Bitmap &right) {
 		multo (right) ;
 		return *this ;
 	}
 
-	SoftImage div (const SoftImage &right) const {
+	Bitmap div (const Bitmap &right) const {
 		_DEBUG_ASSERT_ (mCX == right.mCX && mCY == right.mCY) ;
-		SoftImage ret = SoftImage (mCX ,mCY) ;
+		Bitmap ret = Bitmap (mCX ,mCY) ;
 		for (auto &&i : range ())
 			ret.get (i) = get (i) / right.get (i) ;
 		return std::move (ret) ;
 	}
 
-	inline SoftImage operator/ (const SoftImage &right) const {
+	inline Bitmap operator/ (const Bitmap &right) const {
 		return div (right) ;
 	}
 
-	void divto (const SoftImage &right) {
+	void divto (const Bitmap &right) {
 		_DEBUG_ASSERT_ (mCX == right.mCX && mCY == right.mCY) ;
 		for (auto &&i : range ())
 			get (i) /= right.get (i) ;
 	}
 
-	inline SoftImage &operator/= (const SoftImage &right) {
+	inline Bitmap &operator/= (const Bitmap &right) {
 		divto (right) ;
 		return *this ;
 	}
 
-	SoftImage mod (const SoftImage &right) const {
+	Bitmap mod (const Bitmap &right) const {
 		_DEBUG_ASSERT_ (mCX == right.mCX && mCY == right.mCY) ;
-		SoftImage ret = SoftImage (mCX ,mCY) ;
+		Bitmap ret = Bitmap (mCX ,mCY) ;
 		for (auto &&i : range ())
 			ret.get (i) = get (i) % right.get (i) ;
 		return std::move (ret) ;
 	}
 
-	inline SoftImage operator% (const SoftImage &right) const {
+	inline Bitmap operator% (const Bitmap &right) const {
 		return mod (right) ;
 	}
 
-	void modto (const SoftImage &right) {
+	void modto (const Bitmap &right) {
 		_DEBUG_ASSERT_ (mCX == right.mCX && mCY == right.mCY) ;
 		for (auto &&i : range ())
 			get (i) %= right.get (i) ;
 	}
 
-	inline SoftImage &operator%= (const SoftImage &right) {
+	inline Bitmap &operator%= (const Bitmap &right) {
 		modto (right) ;
 		return *this ;
 	}
 
-	SoftImage plus () const {
-		SoftImage ret = SoftImage (mCX ,mCY) ;
+	Bitmap plus () const {
+		Bitmap ret = Bitmap (mCX ,mCY) ;
 		for (auto &&i : range ())
 			ret.get (i) = +get (i) ;
 		return std::move (ret) ;
 	}
 
-	inline SoftImage operator+ () const {
+	inline Bitmap operator+ () const {
 		return plus () ;
 	}
 
-	SoftImage minus () const {
-		SoftImage ret = SoftImage (mCX ,mCY) ;
+	Bitmap minus () const {
+		Bitmap ret = Bitmap (mCX ,mCY) ;
 		for (auto &&i : range ())
 			ret.get (i) = -get (i) ;
 		return std::move (ret) ;
 	}
 
-	inline SoftImage operator- () const {
+	inline Bitmap operator- () const {
 		return minus () ;
 	}
 
-	SoftImage band (const SoftImage &right) const {
+	Bitmap band (const Bitmap &right) const {
 		_DEBUG_ASSERT_ (mCX == right.mCX && mCY == right.mCY) ;
-		SoftImage ret = SoftImage (mCX ,mCY) ;
+		Bitmap ret = Bitmap (mCX ,mCY) ;
 		for (auto &&i : range ())
 			ret.get (i) = get (i) & right.get (i) ;
 		return std::move (ret) ;
 	}
 
-	inline SoftImage operator& (const SoftImage &right) const {
+	inline Bitmap operator& (const Bitmap &right) const {
 		return band (right) ;
 	}
 
-	void bandto (const SoftImage &right) {
+	void bandto (const Bitmap &right) {
 		_DEBUG_ASSERT_ (mCX == right.mCX && mCY == right.mCY) ;
 		for (auto &&i : range ())
 			get (i) &= right.get (i) ;
 	}
 
-	inline SoftImage &operator&= (const SoftImage &right) {
+	inline Bitmap &operator&= (const Bitmap &right) {
 		bandto (right) ;
 		return *this ;
 	}
 
-	SoftImage bor (const SoftImage &right) const {
+	Bitmap bor (const Bitmap &right) const {
 		_DEBUG_ASSERT_ (mCX == right.mCX && mCY == right.mCY) ;
-		SoftImage ret = SoftImage (mCX ,mCY) ;
+		Bitmap ret = Bitmap (mCX ,mCY) ;
 		for (auto &&i : range ())
 			ret.get (i) = get (i) | right.get (i) ;
 		return std::move (ret) ;
 	}
 
-	inline SoftImage operator| (const SoftImage &right) const {
+	inline Bitmap operator| (const Bitmap &right) const {
 		return bor (right) ;
 	}
 
-	void borto (const SoftImage &right) {
+	void borto (const Bitmap &right) {
 		_DEBUG_ASSERT_ (mCX == right.mCX && mCY == right.mCY) ;
 		for (auto &&i : range ())
 			get (i) |= right.get (i) ;
 	}
 
-	inline SoftImage &operator|= (const SoftImage &right) {
+	inline Bitmap &operator|= (const Bitmap &right) {
 		borto (right) ;
 		return *this ;
 	}
 
-	SoftImage bxor (const SoftImage &right) const {
+	Bitmap bxor (const Bitmap &right) const {
 		_DEBUG_ASSERT_ (mCX == right.mCX && mCY == right.mCY) ;
-		SoftImage ret = SoftImage (mCX ,mCY) ;
+		Bitmap ret = Bitmap (mCX ,mCY) ;
 		for (auto &&i : range ())
 			ret.get (i) = get (i) ^ right.get (i) ;
 		return std::move (ret) ;
 	}
 
-	inline SoftImage operator^ (const SoftImage &right) const {
+	inline Bitmap operator^ (const Bitmap &right) const {
 		return bxor (right) ;
 	}
 
-	void bxorto (const SoftImage &right) {
+	void bxorto (const Bitmap &right) {
 		_DEBUG_ASSERT_ (mCX == right.mCX && mCY == right.mCY) ;
 		for (auto &&i : range ())
 			get (i) ^= right.get (i) ;
 	}
 
-	inline SoftImage &operator^= (const SoftImage &right) {
+	inline Bitmap &operator^= (const Bitmap &right) {
 		bxorto (right) ;
 		return *this ;
 	}
 
-	SoftImage bnot () const {
-		SoftImage ret = SoftImage (mCX ,mCY) ;
+	Bitmap bnot () const {
+		Bitmap ret = Bitmap (mCX ,mCY) ;
 		for (auto &&i : range ())
 			ret.get (i) = ~get (i) ;
 		return std::move (ret) ;
 	}
 
-	inline SoftImage operator~ () const {
+	inline Bitmap operator~ () const {
 		return bnot () ;
 	}
 
-	SoftImage matrix_product (const SoftImage &right) const {
+	Bitmap matrix_product (const Bitmap &right) const {
 		_DEBUG_ASSERT_ (mCX == right.mCY) ;
-		SoftImage ret = SoftImage (right.mCX ,mCY) ;
-		for (auto &&i : RangeFolder<ARGC<2>> ({mCY ,right.mCX})) {
+		Bitmap ret = Bitmap (right.mCX ,mCY) ;
+		for (auto &&i : ArrayRange<ARGC<2>> ({mCY ,right.mCX})) {
 			ret.get (i) = TYPE (0) ;
 			for (INDEX j = 0 ; j < mCX ; j++)
 				ret.get (i) += get (i[0] ,j) * right.get (j ,i[1]) ;
@@ -537,22 +547,22 @@ public:
 		return std::move (ret) ;
 	}
 
-	SoftImage transpose () const {
-		SoftImage ret = SoftImage (mCY ,mCX) ;
+	Bitmap transpose () const {
+		Bitmap ret = Bitmap (mCY ,mCX) ;
 		for (auto &&i : range ())
 			ret.get (i[1] ,i[0]) = get (i) ;
 		return std::move (ret) ;
 	}
 
-	SoftImage horizontal_reverse () const {
-		SoftImage ret = SoftImage (mCX ,mCY) ;
+	Bitmap horizontal_reverse () const {
+		Bitmap ret = Bitmap (mCX ,mCY) ;
 		for (auto &&i : range ())
 			ret.get (i) = get (i[0] ,(mCX + ~i[1])) ;
 		return std::move (ret) ;
 	}
 
-	SoftImage vertical_reverse () const {
-		SoftImage ret = SoftImage (mCX ,mCY) ;
+	Bitmap vertical_reverse () const {
+		Bitmap ret = Bitmap (mCX ,mCY) ;
 		for (auto &&i : range ())
 			ret.get (i) = get ((mCY + ~i[0]) ,i[1]) ;
 		return std::move (ret) ;
@@ -569,9 +579,9 @@ using COLOR_GRAY32 = VAL32 ;
 using COLOR_GRAY64 = VAL64 ;
 using COLOR_BGR = ARRAY3<BYTE> ;
 using COLOR_BGRA = ARRAY4<BYTE> ;
-using COLOR_HSV = CHAR ;
-using COLOR_YUV = ARRAY3<VAL32> ;
-using COLOR_OPP = ARRAY3<VAL64> ;
+using COLOR_LAB4 = CHAR ;
+using COLOR_XYZ32 = ARRAY3<VAL32> ;
+using COLOR_XYZ64 = ARRAY3<VAL64> ;
 
 template <class TYPE>
 class AbstractImage {
@@ -608,7 +618,7 @@ private:
 		inline explicit Row (BASE &base ,INDEX y) popping : mBase (base) ,mY (y) {}
 	} ;
 
-	class Pack {
+	class Holder {
 	private:
 		friend AbstractImage ;
 		AnyRef<void> mHolder ;
@@ -624,7 +634,7 @@ private:
 	private:
 		friend AbstractImage ;
 		PhanRef<const Abstract> mAbstract ;
-		SharedRef<Pack> mThis ;
+		SharedRef<Holder> mThis ;
 
 	public:
 		inline NativeProxy () = delete ;
@@ -662,17 +672,17 @@ private:
 		inline implicit operator _RET () && = delete ;
 
 	private:
-		inline explicit NativeProxy (const PhanRef<const Abstract> &_abstract ,const SharedRef<Pack> &_this) :mAbstract (PhanRef<const Abstract>::make (_abstract)) ,mThis (_this) {}
+		inline explicit NativeProxy (const PhanRef<const Abstract> &_abstract ,const SharedRef<Holder> &_this) :mAbstract (PhanRef<const Abstract>::make (_abstract)) ,mThis (_this) {}
 	} ;
 
 private:
 	PhanRef<const Abstract> mAbstract ;
-	SharedRef<Pack> mThis ;
+	SharedRef<Holder> mThis ;
 
 public:
 	AbstractImage () = default ;
 
-	explicit AbstractImage (const PhanRef<const Abstract> &_abstract) :AbstractImage (PhanRef<const Abstract>::make (_abstract) ,SharedRef<Pack>::make ()) {}
+	explicit AbstractImage (const PhanRef<const Abstract> &_abstract) :AbstractImage (PhanRef<const Abstract>::make (_abstract) ,SharedRef<Holder>::make ()) {}
 
 	BOOL exist () const {
 		if (!mAbstract.exist ())
@@ -682,6 +692,11 @@ public:
 		if (!mThis->mHolder.exist ())
 			return FALSE ;
 		return TRUE ;
+	}
+
+	ARRAY2<LENGTH> width () const {
+		_DEBUG_ASSERT_ (exist ()) ;
+		return ARRAY2<LENGTH> {mThis->mCX ,mThis->mCY} ;
 	}
 
 	LENGTH cx () const {
@@ -704,9 +719,9 @@ public:
 		return mThis->mCK ;
 	}
 
-	RangeFolder<ARGC<2>> range () const {
+	ArrayRange<ARGC<2>> range () const {
 		_DEBUG_ASSERT_ (exist ()) ;
-		return RangeFolder<ARGC<2>> ({mThis->mCY ,mThis->mCX}) ;
+		return ArrayRange<ARGC<2>> ({mThis->mCY ,mThis->mCX}) ;
 	}
 
 	TYPE &get (INDEX y ,INDEX x) & {
@@ -776,9 +791,9 @@ public:
 		return NativeProxy<_RET> (mAbstract ,mThis) ;
 	}
 
-	SoftImage<TYPE> standardize () const {
+	Bitmap<TYPE> standardize () const {
 		_DEBUG_ASSERT_ (exist ()) ;
-		SoftImage<TYPE> ret = SoftImage<TYPE> (mThis->mCX ,mThis->mCY) ;
+		Bitmap<TYPE> ret = Bitmap<TYPE> (mThis->mCX ,mThis->mCY) ;
 		for (auto &&i : range ())
 			ret.get (i) = get (i) ;
 		return std::move (ret) ;
@@ -820,10 +835,10 @@ public:
 	}
 
 private:
-	explicit AbstractImage (PhanRef<const Abstract> &&_abstract ,SharedRef<Pack> &&_this) :mAbstract (std::move (_abstract)) ,mThis (std::move (_this)) {}
+	explicit AbstractImage (PhanRef<const Abstract> &&_abstract ,SharedRef<Holder> &&_this) :mAbstract (std::move (_abstract)) ,mThis (std::move (_this)) {}
 
 private:
-	static void compute_update_layout (PhanRef<const Abstract> &_abstract ,SharedRef<Pack> &_this) {
+	static void compute_update_layout (PhanRef<const Abstract> &_abstract ,SharedRef<Holder> &_this) {
 		_DEBUG_ASSERT_ (_abstract.exist ()) ;
 		_DEBUG_ASSERT_ (_this.exist ()) ;
 		_DEBUG_ASSERT_ (_this->mHolder.exist ()) ;

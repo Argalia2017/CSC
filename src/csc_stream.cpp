@@ -29,14 +29,14 @@ public:
 	TEST_METHOD (TEST_CSC_STREAM_TEXTREADER) {
 		struct wrappered_int :private Wrapped<int> {
 			inline void friend_read (TextReader<STRU8> &reader) popping {
-				reader >> wrappered_int::mData >> _GAP_ ;
+				reader >> wrappered_int::mSelf >> _GAP_ ;
 			}
 		} ;
 		auto rax = Buffer<int ,ARGC<4>> () ;
 		auto &r1 = _CAST_<Buffer<wrappered_int ,ARGC<4>>> (rax) ;
 		auto rbx = Buffer<STRU8 ,ARGC<10>> () ;
 		auto ris = TextReader<STRU8> (PhanBuffer<const STRU8>::make (rbx)) ;
-		ris.attr ().modify_space (STRU8 (' ')) ;
+		ris.attr ().modify_space (STRU8 (' ') ,0) ;
 		rbx[0] = STRU8 ('0') ;
 		rbx[1] = STRU8 (' ') ;
 		rbx[2] = STRU8 ('0') ;

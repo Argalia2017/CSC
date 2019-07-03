@@ -39,9 +39,11 @@ inline void PrimeSieveAlgorithm::initialize (LENGTH len) {
 	mPrimeSet.fill (BYTE (0XAA)) ;
 	mPrimeSet[1] = FALSE ;
 	mPrimeSet[2] = TRUE ;
-	for (INDEX i = 3 ,ie = _SQRT_ (mPrimeSet.size ()) + 2 ; i < ie ; i += 2)
-		for (INDEX j = _SQE_ (i) ; j < mPrimeSet.size () ; j += i * 2)
+	for (INDEX i = 3 ,ie = _SQRT_ (mPrimeSet.size ()) + 1 ; i < ie ; i += 2) {
+		const auto r1x = i * 2 ;
+		for (INDEX j = _SQE_ (i) ; j < mPrimeSet.size () ; j += r1x)
 			mPrimeSet[j] = FALSE ;
+	}
 }
 
 template <class UNIT>
@@ -57,11 +59,11 @@ public:
 		initialize (pattern) ;
 	}
 
-	INDEX query (const PhanBuffer<const UNIT> &target ,INDEX ib) const {
-		_DEBUG_ASSERT_ (ib >= 0 && ib < target.size ()) ;
-		INDEX ix = ib ;
+	INDEX query (const PhanBuffer<const UNIT> &target ,INDEX seg) const {
+		_DEBUG_ASSERT_ (seg >= 0 && seg < target.size ()) ;
+		INDEX ix = seg ;
 		INDEX iy = 0 ;
-		if (target.size () - ib < mNext.length ())
+		if (target.size () - seg < mNext.length ())
 			return VAR_NONE ;
 		while (TRUE) {
 			if (ix >= target.size ())
@@ -119,7 +121,7 @@ private:
 public:
 	DijstraAlgorithm () = delete ;
 
-	explicit DijstraAlgorithm (const SoftImage<UNIT> &adjacency ,INDEX root) {
+	explicit DijstraAlgorithm (const Bitmap<UNIT> &adjacency ,INDEX root) {
 		_DEBUG_ASSERT_ (adjacency.cx () == adjacency.cy ()) ;
 		initialize (adjacency ,root) ;
 	}
@@ -133,11 +135,12 @@ public:
 		INDEX iw = ret.length () ;
 		for (INDEX i = index ; i != VAR_NONE ; i = mPrev[i])
 			ret[--iw] = i ;
+		_DEBUG_ASSERT_ (iw == 0) ;
 		return std::move (ret) ;
 	}
 
 private:
-	void initialize (const SoftImage<UNIT> &adjacency ,INDEX root) ;
+	void initialize (const Bitmap<UNIT> &adjacency ,INDEX root) ;
 
 	LENGTH query_path_depth (INDEX index) const {
 		LENGTH ret = 0 ;
@@ -148,11 +151,11 @@ private:
 } ;
 
 template <class UNIT>
-inline void DijstraAlgorithm<UNIT>::initialize (const SoftImage<UNIT> &adjacency ,INDEX root) {
+inline void DijstraAlgorithm<UNIT>::initialize (const Bitmap<UNIT> &adjacency ,INDEX root) {
 	class Lambda {
 	private:
 		DijstraAlgorithm &mContext ;
-		const SoftImage<UNIT> &mAdjacency ;
+		const Bitmap<UNIT> &mAdjacency ;
 
 		INDEX mRoot ;
 		Array<INDEX> mPrev ;
@@ -162,7 +165,7 @@ inline void DijstraAlgorithm<UNIT>::initialize (const SoftImage<UNIT> &adjacency
 		BitSet<> mYVisit ;
 
 	public:
-		inline explicit Lambda (DijstraAlgorithm &context ,const SoftImage<UNIT> &adjancency ,INDEX root) popping : mContext (context) ,mAdjacency (adjancency) ,mRoot (root) {}
+		inline explicit Lambda (DijstraAlgorithm &context ,const Bitmap<UNIT> &adjancency ,INDEX root) popping : mContext (context) ,mAdjacency (adjancency) ,mRoot (root) {}
 
 		inline void operator() () {
 			prepare () ;
@@ -398,7 +401,7 @@ private:
 public:
 	KMHungarianAlgorithm () = delete ;
 
-	explicit KMHungarianAlgorithm (const SoftImage<UNIT> &adjacency) {
+	explicit KMHungarianAlgorithm (const Bitmap<UNIT> &adjacency) {
 		initialize (adjacency) ;
 	}
 
@@ -415,15 +418,15 @@ public:
 	}
 
 private:
-	void initialize (const SoftImage<UNIT> &adjacency) ;
+	void initialize (const Bitmap<UNIT> &adjacency) ;
 } ;
 
 template <class UNIT>
-inline void KMHungarianAlgorithm<UNIT>::initialize (const SoftImage<UNIT> &adjacency) {
+inline void KMHungarianAlgorithm<UNIT>::initialize (const Bitmap<UNIT> &adjacency) {
 	class Lambda {
 	private:
 		KMHungarianAlgorithm &mContext ;
-		const SoftImage<UNIT> &mAdjacency ;
+		const Bitmap<UNIT> &mAdjacency ;
 		const UNIT mTolerance = UNIT (1E-6) ;
 
 		Array<INDEX> mXYLink ;
@@ -438,7 +441,7 @@ inline void KMHungarianAlgorithm<UNIT>::initialize (const SoftImage<UNIT> &adjac
 		FLAG mTempState ;
 
 	public:
-		inline explicit Lambda (KMHungarianAlgorithm &context ,const SoftImage<UNIT> &adjacency) popping : mContext (context) ,mAdjacency (adjacency) {}
+		inline explicit Lambda (KMHungarianAlgorithm &context ,const Bitmap<UNIT> &adjacency) popping : mContext (context) ,mAdjacency (adjacency) {}
 
 		inline void operator() () {
 			prepare () ;
@@ -643,7 +646,7 @@ inline void TriangulateAlgorithm<UNIT>::initialize (const Array<ARRAY2<UNIT>> &v
 			mPloygonVertexList = ploygon_vertex_list () ;
 			const auto r1x = BOOL (ploygon_vertex_clockwise () > UNIT (0)) ;
 			mClockwiseFlag = r1x ;
-			for (FOR_ONCE_DO_WHILE_FALSE) {
+			for (FOR_ONCE_DO_WHILE) {
 				if (!mClockwiseFlag)
 					continue ;
 				for (auto &&i : mPloygonVertexList)
@@ -671,9 +674,8 @@ inline void TriangulateAlgorithm<UNIT>::initialize (const Array<ARRAY2<UNIT>> &v
 				INDEX ix = mPloygonVertexList.access ((i - 1 + mPloygonVertexList.length ()) % mPloygonVertexList.length ()) ;
 				INDEX iy = mPloygonVertexList.access (i) ;
 				INDEX iz = mPloygonVertexList.access ((i + 1) % mPloygonVertexList.length ()) ;
-				const auto r1x = (mVertex[mPloygonVertexList[iy]][0] - mVertex[mPloygonVertexList[ix]][0]) * (mVertex[mPloygonVertexList[iz]][1] - mVertex[mPloygonVertexList[iy]][1]) ;
-				const auto r2x = (mVertex[mPloygonVertexList[iy]][1] - mVertex[mPloygonVertexList[ix]][1]) * (mVertex[mPloygonVertexList[iz]][0] - mVertex[mPloygonVertexList[iy]][0]) ;
-				ret += _SIGN_ (r1x - r2x) ;
+				const auto r1x = math_cross_product_z (mVertex ,mPloygonVertexList[iy] ,mPloygonVertexList[ix] ,mPloygonVertexList[iz]) ;
+				ret -= _SIGN_ (r1x) ;
 			}
 			return std::move (ret) ;
 		}
@@ -806,12 +808,12 @@ inline void BFGSAlgorithm<UNIT>::initialize (const Function<UNIT (const Array<UN
 		const ARRAY2<UNIT> mDXC1C2 = ARRAY2<UNIT> {UNIT (1E-4) ,UNIT (0.9)} ;
 
 		Array<UNIT> mDX ;
-		SoftImage<UNIT> mDM ;
+		Bitmap<UNIT> mDM ;
 		Array<UNIT> mDG ;
 		ARRAY3<UNIT> mDXLoss ;
 		ARRAY3<UNIT> mDXLambda ;
 		Array<UNIT> mIX ;
-		SoftImage<UNIT> mIM ;
+		Bitmap<UNIT> mIM ;
 		Array<UNIT> mIG ;
 		Array<UNIT> mIS ;
 		Array<UNIT> mIY ;
@@ -829,13 +831,13 @@ inline void BFGSAlgorithm<UNIT>::initialize (const Function<UNIT (const Array<UN
 	private:
 		inline void prepare () {
 			mDX = mFDX ;
-			mDM = SoftImage<UNIT> (mDX.size () ,mDX.size ()) ;
+			mDM = Bitmap<UNIT> (mDX.size () ,mDX.size ()) ;
 			mDM.fill (UNIT (0)) ;
 			for (INDEX i = 0 ; i < mDM.cy () ; i++)
 				mDM[i][i] = UNIT (1) ;
 			mDG = Array<UNIT> (mDX.size ()) ;
 			mIX = Array<UNIT> (mDX.size ()) ;
-			mIM = SoftImage<UNIT> (mDX.size () ,mDX.size ()) ;
+			mIM = Bitmap<UNIT> (mDX.size () ,mDX.size ()) ;
 			mIG = Array<UNIT> (mDX.size ()) ;
 			mIS = Array<UNIT> (mDX.size ()) ;
 			mIY = Array<UNIT> (mDX.size ()) ;
@@ -856,6 +858,7 @@ inline void BFGSAlgorithm<UNIT>::initialize (const Function<UNIT (const Array<UN
 		inline void compute_gradient_of_loss (const Array<UNIT> &dx ,Array<UNIT> &dg ,Array<UNIT> &sx) const {
 			for (INDEX i = 0 ; i < dx.length () ; i++)
 				sx[i] = dx[i] ;
+			_STATIC_WARNING_ ("mark") ;
 			const auto r1x = _PINV_ (mTolerance) ;
 			for (INDEX i = 0 ; i < dg.length () ; i++) {
 				const auto r3x = sx[i] ;
@@ -892,7 +895,7 @@ inline void BFGSAlgorithm<UNIT>::initialize (const Function<UNIT (const Array<UN
 				for (INDEX i = 0 ; i < mIX.length () ; i++)
 					mIX[i] = mDX[i] + mIS[i] * mDXLambda[1] ;
 				mDXLoss[1] = mLossFunc (mIX) ;
-				for (FOR_ONCE_DO_WHILE_FALSE) {
+				for (FOR_ONCE_DO_WHILE) {
 					if (mDXLoss[1] - mDXLoss[0] > mDXLambda[1] * mDXC1C2[0] * r1x)
 						continue ;
 					compute_gradient_of_loss (mIX ,mIG ,mSX) ;
@@ -900,7 +903,7 @@ inline void BFGSAlgorithm<UNIT>::initialize (const Function<UNIT (const Array<UN
 						continue ;
 					mDXLoss[2] = UNIT (0) ;
 				}
-				for (FOR_ONCE_DO_WHILE_FALSE) {
+				for (FOR_ONCE_DO_WHILE) {
 					if (mDXLoss[1] >= mDXLoss[2])
 						continue ;
 					mDXLoss[2] = mDXLoss[1] ;
@@ -908,20 +911,18 @@ inline void BFGSAlgorithm<UNIT>::initialize (const Function<UNIT (const Array<UN
 				}
 				mDXLambda[1] *= mDXLambdaPower ;
 			}
-			_CALL_IF_ ([&] (BOOL &if_flag) {
-				if (mDXLoss[0] < mDXLoss[2])
-					discard ;
-				mDXLoss[0] = mDXLoss[1] ;
-				if (mDXLoss[2] > UNIT (0))
-					mDXLoss[0] = mDXLoss[2] ;
+			_CALL_IF_ ([&] (BOOL &_case_req) {
+				_CASE_REQUIRE_ (mDXLoss[0] >= mDXLoss[2]) ;
+				const auto r2x = (mDXLoss[2] > UNIT (0)) ? (mDXLoss[2]) : (mDXLoss[1]) ;
+				mDXLoss[0] = r2x ;
 				_SWAP_ (mDX ,mIX) ;
 				compute_gradient_of_loss (mDX ,mIG ,mSX) ;
-			} ,[&] (BOOL &if_flag) {
+			} ,[&] (BOOL &_case_req) {
 				mIG.fill (UNIT (0)) ;
 			}) ;
 		}
 
-		inline UNIT math_matrix_mul (const SoftImage<UNIT> &mat ,INDEX y ,const Array<UNIT> &v) const {
+		inline UNIT math_matrix_mul (const Bitmap<UNIT> &mat ,INDEX y ,const Array<UNIT> &v) const {
 			UNIT ret = UNIT (0) ;
 			for (INDEX i = 0 ; i < v.length () ; i++)
 				ret += mat[y][i] * v[i] ;
@@ -961,7 +962,7 @@ inline void BFGSAlgorithm<UNIT>::initialize (const Function<UNIT (const Array<UN
 		inline UNIT hessian_matrix_each (INDEX y ,INDEX x ,const UNIT &ys) const {
 			UNIT ret = UNIT (0) ;
 			for (INDEX i = 0 ; i < mDM.cy () ; i++) {
-				const auto r1x = hessian_matrix_each_part (x ,i ,ys) ;
+				const auto r1x = hessian_matrix_each_factor (x ,i ,ys) ;
 				ret += r1x * (-mIS[y] * mIY[i] * ys) ;
 				if (i == y)
 					continue ;
@@ -970,7 +971,7 @@ inline void BFGSAlgorithm<UNIT>::initialize (const Function<UNIT (const Array<UN
 			return std::move (ret) ;
 		}
 
-		inline UNIT hessian_matrix_each_part (INDEX x ,INDEX z ,const UNIT &ys) const {
+		inline UNIT hessian_matrix_each_factor (INDEX x ,INDEX z ,const UNIT &ys) const {
 			UNIT ret = UNIT (0) ;
 			for (INDEX i = 0 ; i < mDM.cx () ; i++) {
 				ret += mDM[z][i] * (-mIY[i] * mIS[x] * ys) ;
@@ -1001,7 +1002,9 @@ private:
 		INDEX mRight ;
 
 	public:
-		inline Node () = default ;
+		inline Node () = delete ;
+
+		inline explicit Node (const UNIT &key ,INDEX leaf ,INDEX left ,INDEX right) :mKey (std::move (key)) ,mLeaf (leaf) ,mLeft (left) ,mRight (right) {}
 	} ;
 
 private:
@@ -1050,19 +1053,19 @@ private:
 	void initialize (const Array<ARRAY3<UNIT>> &vertex) ;
 
 	void compute_search_range (const ARRAY3<UNIT> &point ,const UNIT &sqe_range ,INDEX it ,INDEX rot ,ARRAY3<ARRAY2<UNIT>> &bound ,Queue<INDEX> &out) const {
-		_CALL_IF_ ([&] (BOOL &if_flag) {
-			if (mHeap[it].mLeaf == VAR_NONE)
-				discard ;
-			for (FOR_ONCE_DO_WHILE_FALSE) {
+		_CALL_IF_ ([&] (BOOL &_case_req) {
+			_CASE_REQUIRE_ (mHeap[it].mLeaf != VAR_NONE) ;
+			for (FOR_ONCE_DO_WHILE) {
 				INDEX ix = mHeap[it].mLeaf ;
 				const auto r2x = _SQE_ (mVertex[ix][0] - point[0]) + _SQE_ (mVertex[ix][1] - point[1]) + _SQE_ (mVertex[ix][2] - point[2]) ;
 				if (r2x > sqe_range)
 					continue ;
 				out.add (ix) ;
 			}
-		} ,[&] (BOOL &if_flag) {
+		} ,[&] (BOOL &_case_req) {
+			_CASE_REQUIRE_ (mHeap[it].mLeaf == VAR_NONE) ;
 			const auto r3x = mHeap[it].mKey ;
-			for (FOR_ONCE_DO_WHILE_FALSE) {
+			for (FOR_ONCE_DO_WHILE) {
 				if (r3x < bound[rot][0])
 					continue ;
 				const auto r4x = bound[rot][1] ;
@@ -1070,7 +1073,7 @@ private:
 				compute_search_range (point ,sqe_range ,mHeap[it].mLeft ,mNextRot[rot] ,bound ,out) ;
 				bound[rot][1] = r4x ;
 			}
-			for (FOR_ONCE_DO_WHILE_FALSE) {
+			for (FOR_ONCE_DO_WHILE) {
 				if (r3x > bound[rot][1])
 					continue ;
 				const auto r5x = bound[rot][0] ;
@@ -1092,33 +1095,33 @@ private:
 	}
 
 	void compute_search_range (const ARRAY3<UNIT> &point ,INDEX it ,INDEX rot ,Array<PACK<INDEX ,UNIT>> &out) const {
-		_CALL_IF_ ([&] (BOOL &if_flag) {
-			if (mHeap[it].mLeaf == VAR_NONE)
-				discard ;
-			for (FOR_ONCE_DO_WHILE_FALSE) {
+		_CALL_IF_ ([&] (BOOL &_case_req) {
+			_CASE_REQUIRE_ (mHeap[it].mLeaf != VAR_NONE) ;
+			for (FOR_ONCE_DO_WHILE) {
 				INDEX ix = mHeap[it].mLeaf ;
 				const auto r2x = (Vector<UNIT> {mVertex[ix] ,UNIT (0)} -Vector<UNIT> {point ,UNIT (0)}).magnitude () ;
-				INDEX iw = out.length () ;
+				INDEX jx = out.length () ;
 				while (TRUE) {
-					if (iw - 1 < 0)
+					if (jx - 1 < 0)
 						break ;
-					if (r2x >= out[iw - 1].P2)
+					if (r2x >= out[jx - 1].P2)
 						break ;
-					out[iw] = out[iw - 1] ;
-					iw-- ;
+					if (jx < out.length ())
+						out[jx] = out[jx - 1] ;
+					jx-- ;
 				}
-				if (iw >= out.length ())
+				if (jx >= out.length ())
 					continue ;
-				out[iw].P1 = ix ;
-				out[iw].P2 = r2x ;
+				out[jx].P1 = ix ;
+				out[jx].P2 = r2x ;
 			}
-		} ,[&] (BOOL &if_flag) {
+		} ,[&] (BOOL &_case_req) {
+			_CASE_REQUIRE_ (mHeap[it].mLeaf == VAR_NONE) ;
 			const auto r3x = mHeap[it].mKey ;
 			if (r3x >= point[rot] - out[out.length () - 1].P2)
 				compute_search_range (point ,mHeap[it].mLeft ,mNextRot[rot] ,out) ;
 			if (r3x <= point[rot] + out[out.length () - 1].P2)
 				compute_search_range (point ,mHeap[it].mRight ,mNextRot[rot] ,out) ;
-			_STATIC_WARNING_ ("unqualified") ;
 		}) ;
 	}
 } ;
@@ -1137,7 +1140,6 @@ inline void KDimensionTreeAlgorithm<UNIT>::initialize (const Array<ARRAY3<UNIT>>
 		INDEX mRoot ;
 		INDEX mLatestIndex ;
 
-		BitSet<> mTempMark ;
 		Array<INDEX> mTempOrder ;
 
 	public:
@@ -1167,82 +1169,65 @@ inline void KDimensionTreeAlgorithm<UNIT>::initialize (const Array<ARRAY3<UNIT>>
 
 		inline void generate () {
 			update_bound () ;
-			update_build_tree (mRoot ,0 ,0 ,(mVertex.length () - 1)) ;
+			update_build_tree (mRoot ,0 ,0 ,mVertex.length ()) ;
 			mRoot = mLatestIndex ;
 		}
 
 		inline void update_bound () {
 			_DEBUG_ASSERT_ (mVertex.length () > 0) ;
-			for (INDEX i = 0 ; i < 1 ; i++) {
-				mBound[0][0] = mVertex[i][0] ;
-				mBound[0][1] = mVertex[i][0] ;
-				mBound[1][0] = mVertex[i][1] ;
-				mBound[1][1] = mVertex[i][1] ;
-				mBound[2][0] = mVertex[i][2] ;
-				mBound[2][1] = mVertex[i][2] ;
+			for (FOR_ONCE_DO_WHILE) {
+				mBound[0][0] = mVertex[0][0] ;
+				mBound[0][1] = mVertex[0][0] ;
+				mBound[1][0] = mVertex[0][1] ;
+				mBound[1][1] = mVertex[0][1] ;
+				mBound[2][0] = mVertex[0][2] ;
+				mBound[2][1] = mVertex[0][2] ;
 			}
-			for (INDEX i = 1 ; i < mVertex.length () ; i++) {
-				mBound[0][0] = _MIN_ (mBound[0][0] ,mVertex[i][0]) ;
-				mBound[0][1] = _MAX_ (mBound[0][1] ,mVertex[i][0]) ;
-				mBound[1][0] = _MIN_ (mBound[1][0] ,mVertex[i][1]) ;
-				mBound[1][1] = _MAX_ (mBound[1][1] ,mVertex[i][1]) ;
-				mBound[2][0] = _MIN_ (mBound[2][0] ,mVertex[i][2]) ;
-				mBound[2][1] = _MAX_ (mBound[2][1] ,mVertex[i][2]) ;
+			for (auto &&i : mVertex) {
+				mBound[0][0] = _MIN_ (mBound[0][0] ,i[0]) ;
+				mBound[0][1] = _MAX_ (mBound[0][1] ,i[0]) ;
+				mBound[1][0] = _MIN_ (mBound[1][0] ,i[1]) ;
+				mBound[1][1] = _MAX_ (mBound[1][1] ,i[1]) ;
+				mBound[2][0] = _MIN_ (mBound[2][0] ,i[2]) ;
+				mBound[2][1] = _MAX_ (mBound[2][1] ,i[2]) ;
 			}
 		}
 
-		void update_build_tree (INDEX it ,INDEX rot ,INDEX ib ,INDEX jb) {
-			_DEBUG_ASSERT_ (ib <= jb) ;
-			_CALL_IF_ ([&] (BOOL &if_flag) {
-				if (ib != jb)
-					discard ;
-				INDEX jx = mHeap.alloc () ;
-				mHeap[jx].mKey = UNIT (0) ;
-				mHeap[jx].mLeaf = mOrder[rot][ib] ;
-				mHeap[jx].mLeft = VAR_NONE ;
-				mHeap[jx].mRight = VAR_NONE ;
+		void update_build_tree (INDEX it ,INDEX rot ,INDEX seg ,INDEX seg_len) {
+			_DEBUG_ASSERT_ (seg_len > 0) ;
+			_DEBUG_ASSERT_ (seg >= 0 && seg + seg_len <= mVertex.size ()) ;
+			_CALL_IF_ ([&] (BOOL &_case_req) {
+				_CASE_REQUIRE_ (seg_len == 1) ;
+				INDEX jx = mHeap.alloc (UNIT (0) ,mOrder[rot][seg] ,VAR_NONE ,VAR_NONE) ;
 				mLatestIndex = jx ;
-			} ,[&] (BOOL &if_flag) {
-				INDEX ix = ib + (jb - ib + 1) / 2 ;
-				for (INDEX i = ib ; i + 1 <= jb ; i++)
+			} ,[&] (BOOL &_case_req) {
+				_CASE_REQUIRE_ (seg_len > 1) ;
+				INDEX ix = seg + seg_len / 2 ;
+				for (INDEX i = seg ,ie = seg + seg_len - 1 ; i < ie ; i++)
 					_DEBUG_ASSERT_ (mVertex[mOrder[rot][i]][rot] <= mVertex[mOrder[rot][i + 1]][rot]) ;
-				update_order (rot ,mNextRot[rot] ,ib ,jb ,ix) ;
-				update_order (rot ,mNextRot[mNextRot[rot]] ,ib ,jb ,ix) ;
-				INDEX jx = mHeap.alloc () ;
-				mHeap[jx].mKey = mVertex[mOrder[rot][ix]][rot] ;
-				mHeap[jx].mLeaf = VAR_NONE ;
-				mHeap[jx].mLeft = VAR_NONE ;
-				mHeap[jx].mRight = VAR_NONE ;
-				update_build_tree (mHeap[jx].mLeft ,mNextRot[rot] ,ib ,(ix - 1)) ;
+				compute_order (mTempOrder ,mOrder ,rot ,mNextRot[rot] ,seg ,ix ,seg_len) ;
+				compute_order (mTempOrder ,mOrder ,rot ,mNextRot[mNextRot[rot]] ,seg ,ix ,seg_len) ;
+				INDEX jx = mHeap.alloc (mVertex[mOrder[rot][ix]][rot] ,VAR_NONE ,VAR_NONE ,VAR_NONE) ;
+				update_build_tree (mHeap[jx].mLeft ,mNextRot[rot] ,seg ,(ix - seg)) ;
 				mHeap[jx].mLeft = mLatestIndex ;
-				update_build_tree (mHeap[jx].mRight ,mNextRot[rot] ,ix ,jb) ;
+				update_build_tree (mHeap[jx].mRight ,mNextRot[rot] ,ix ,(seg_len - (ix - seg))) ;
 				mHeap[jx].mRight = mLatestIndex ;
 				mLatestIndex = it ;
 			}) ;
 		}
 
-		void update_order (INDEX rot ,INDEX n_rot ,INDEX ib ,INDEX jb ,INDEX ie) {
-			if (mTempMark.size () != mVertex.size ())
-				mTempMark = BitSet<> (mVertex.size ()) ;
-			if (mTempOrder.size () != mVertex.size ())
-				mTempOrder = Array<INDEX> (mVertex.size ()) ;
-			mTempMark.clear () ;
-			for (INDEX i = ib ; i < ie ; i++)
-				mTempMark[mOrder[rot][i]] = TRUE ;
+		void compute_order (Array<INDEX> &tmp_order ,ARRAY3<Array<INDEX>> &order ,INDEX rot ,INDEX n_rot ,INDEX seg_a ,INDEX seg_b ,LENGTH seg_len) const {
+			if (tmp_order.size () != mVertex.size ())
+				tmp_order = Array<INDEX> (mVertex.size ()) ;
 			INDEX iw = 0 ;
-			for (INDEX i = ib ; i <= jb ; i++) {
-				if (!mTempMark[mOrder[n_rot][i]])
-					continue ;
-				mTempOrder[iw++] = mOrder[n_rot][i] ;
-			}
-			for (INDEX i = ib ; i <= jb ; i++) {
-				if (mTempMark[mOrder[n_rot][i]])
-					continue ;
-				mTempOrder[iw++] = mOrder[n_rot][i] ;
-			}
+			for (INDEX i = seg_a ; i < seg_b ; i++)
+				tmp_order[iw++] = mOrder[n_rot][i] ;
+			for (INDEX i = seg_b ,ie = seg_a + seg_len ; i < ie ; i++)
+				tmp_order[iw++] = mOrder[n_rot][i] ;
 			const auto r1x = ARRAY2<INDEX> {0 ,iw} ;
 			for (INDEX i = r1x[0] ; i < r1x[1] ; i++)
-				mOrder[n_rot][ib + i] = mTempOrder[i] ;
+				order[n_rot][seg_a + i] = tmp_order[i] ;
+			_DEBUG_ASSERT_ (iw == seg_len) ;
 		}
 
 		inline void refresh () {
@@ -1259,13 +1244,13 @@ inline void KDimensionTreeAlgorithm<UNIT>::initialize (const Array<ARRAY3<UNIT>>
 template <class UNIT>
 class MaxFlowAlgorithm {
 private:
-	SoftImage<UNIT> mCurrentFlow ;
+	Bitmap<UNIT> mCurrentFlow ;
 	UNIT mMaxFlow ;
 
 public:
 	MaxFlowAlgorithm () = delete ;
 
-	explicit MaxFlowAlgorithm (const SoftImage<UNIT> &adjacency ,INDEX source ,INDEX sink) {
+	explicit MaxFlowAlgorithm (const Bitmap<UNIT> &adjacency ,INDEX source ,INDEX sink) {
 		_DEBUG_ASSERT_ (adjacency.cx () == adjacency.cy ()) ;
 		_DEBUG_ASSERT_ (source != sink) ;
 		initialize (adjacency ,source ,sink) ;
@@ -1275,35 +1260,35 @@ public:
 		return mMaxFlow ;
 	}
 
-	const SoftImage<UNIT> &query_flow () const & {
+	const Bitmap<UNIT> &query_flow () const & {
 		return mCurrentFlow ;
 	}
 
-	SoftImage<UNIT> query_flow () && {
+	Bitmap<UNIT> query_flow () && {
 		return std::move (mCurrentFlow) ;
 	}
 
 private:
-	void initialize (const SoftImage<UNIT> &adjacency ,INDEX source ,INDEX sink) ;
+	void initialize (const Bitmap<UNIT> &adjacency ,INDEX source ,INDEX sink) ;
 } ;
 
 template <class UNIT>
-inline void MaxFlowAlgorithm<UNIT>::initialize (const SoftImage<UNIT> &adjacency ,INDEX source ,INDEX sink) {
+inline void MaxFlowAlgorithm<UNIT>::initialize (const Bitmap<UNIT> &adjacency ,INDEX source ,INDEX sink) {
 	class Lambda {
 	private:
 		MaxFlowAlgorithm &mContext ;
-		const SoftImage<UNIT> &mAdjacency ;
+		const Bitmap<UNIT> &mAdjacency ;
 
 		INDEX mSource ;
 		INDEX mSink ;
 		UNIT mSingleFlow ;
-		SoftImage<UNIT> mCurrentFlow ;
+		Bitmap<UNIT> mCurrentFlow ;
 		Array<INDEX> mBFSPath ;
 
 		Queue<INDEX> mTempQueue ;
 
 	public:
-		inline explicit Lambda (MaxFlowAlgorithm &context ,const SoftImage<UNIT> &adjacency ,INDEX source ,INDEX sink) popping : mContext (context) ,mAdjacency (adjacency) ,mSource (source) ,mSink (sink) {}
+		inline explicit Lambda (MaxFlowAlgorithm &context ,const Bitmap<UNIT> &adjacency ,INDEX source ,INDEX sink) popping : mContext (context) ,mAdjacency (adjacency) ,mSource (source) ,mSink (sink) {}
 
 		inline void operator() () {
 			prepare () ;
@@ -1314,7 +1299,7 @@ inline void MaxFlowAlgorithm<UNIT>::initialize (const SoftImage<UNIT> &adjacency
 	private:
 		inline void prepare () {
 			mSingleFlow = single_flow () ;
-			mCurrentFlow = SoftImage<UNIT> (mAdjacency.cx () ,mAdjacency.cy ()) ;
+			mCurrentFlow = Bitmap<UNIT> (mAdjacency.cx () ,mAdjacency.cy ()) ;
 			mCurrentFlow.fill (UNIT (0)) ;
 			mBFSPath = Array<INDEX> (mAdjacency.cx ()) ;
 		}

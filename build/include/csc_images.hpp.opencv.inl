@@ -10,13 +10,11 @@
 #pragma push_macro ("popping")
 #pragma push_macro ("imports")
 #pragma push_macro ("exports")
-#pragma push_macro ("discard")
 #undef self
 #undef implicit
 #undef popping
 #undef imports
 #undef exports
-#undef discard
 #endif
 
 #ifdef __CSC_DEPRECATED__
@@ -131,7 +129,6 @@
 #pragma pop_macro ("popping")
 #pragma pop_macro ("imports")
 #pragma pop_macro ("exports")
-#pragma pop_macro ("discard")
 #endif
 
 namespace CSC {
@@ -179,7 +176,7 @@ public:
 		auto rax = AutoRef<std::vector<uchar>>::make () ;
 		const auto r1x = std::vector<VAR32> () ;
 		auto &r2 = (param.exist ()) ? (param.rebind<std::vector<VAR32>> ().self) : r1x ;
-		cv::imencode (_PCSTRA_ ("bmp") ,r1 ,rax.self ,r2) ;
+		cv::imencode (_PCSTRA_ ("bmp").self ,r1 ,rax.self ,r2) ;
 		_DYNAMIC_ASSERT_ (rax->size () < VAR32_MAX) ;
 		data = AutoBuffer<BYTE> (rax->size ()) ;
 		for (INDEX i = 0 ; i < data.size () ; i++)
@@ -245,7 +242,7 @@ public:
 		auto rax = AutoRef<std::vector<uchar>>::make () ;
 		const auto r1x = std::vector<VAR32> () ;
 		auto &r2 = (param.exist ()) ? (param.rebind<std::vector<VAR32>> ().self) : r1x ;
-		cv::imencode (_PCSTRA_ ("bmp") ,r1 ,rax.self ,r2) ;
+		cv::imencode (_PCSTRA_ ("bmp").self ,r1 ,rax.self ,r2) ;
 		_DYNAMIC_ASSERT_ (rax->size () < VAR32_MAX) ;
 		data = AutoBuffer<BYTE> (rax->size ()) ;
 		for (INDEX i = 0 ; i < data.size () ; i++)
@@ -311,7 +308,7 @@ public:
 		auto rax = AutoRef<std::vector<uchar>>::make () ;
 		const auto r1x = std::vector<VAR32> () ;
 		auto &r2 = (param.exist ()) ? (param.rebind<std::vector<VAR32>> ().self) : r1x ;
-		cv::imencode (_PCSTRA_ ("bmp") ,r1 ,rax.self ,r2) ;
+		cv::imencode (_PCSTRA_ ("bmp").self ,r1 ,rax.self ,r2) ;
 		_DYNAMIC_ASSERT_ (rax->size () < VAR32_MAX) ;
 		data = AutoBuffer<BYTE> (rax->size ()) ;
 		for (INDEX i = 0 ; i < data.size () ; i++)
@@ -377,7 +374,7 @@ public:
 		auto rax = AutoRef<std::vector<uchar>>::make () ;
 		const auto r1x = std::vector<VAR32> () ;
 		auto &r2 = (param.exist ()) ? (param.rebind<std::vector<VAR32>> ().self) : r1x ;
-		cv::imencode (_PCSTRA_ ("bmp") ,r1 ,rax.self ,r2) ;
+		cv::imencode (_PCSTRA_ ("bmp").self ,r1 ,rax.self ,r2) ;
 		_DYNAMIC_ASSERT_ (rax->size () < VAR32_MAX) ;
 		data = AutoBuffer<BYTE> (rax->size ()) ;
 		for (INDEX i = 0 ; i < data.size () ; i++)
@@ -443,7 +440,7 @@ public:
 		auto rax = AutoRef<std::vector<uchar>>::make () ;
 		const auto r2x = std::vector<VAR32> () ;
 		auto &r2 = (param.exist ()) ? (param.rebind<std::vector<VAR32>> ().self) : r2x ;
-		cv::imencode (_PCSTRA_ ("bmp") ,r1 ,rax.self ,r2) ;
+		cv::imencode (_PCSTRA_ ("bmp").self ,r1 ,rax.self ,r2) ;
 		_DYNAMIC_ASSERT_ (rax->size () < VAR32_MAX) ;
 		data = AutoBuffer<BYTE> (rax->size ()) ;
 		for (INDEX i = 0 ; i < data.size () ; i++)

@@ -92,6 +92,8 @@ public:
 		_UNITTEST_ASSERT_ (r4x == r5x) ;
 		_UNITTEST_ASSERT_ (r4x->func1 () == 3 && r5x->func1 () == 3) ;
 		_UNITTEST_ASSERT_ (r4x->func2 () == 1 && r5x->func2 () == 2) ;
+		const auto r6x = r2x.recast<C> () ;
+		_UNITTEST_ASSERT_ (_ADDRESS_ (&r3x.self) == _ADDRESS_ (&r6x.self)) ;
 	}
 
 	TEST_METHOD (TEST_CSC_EXT_MEMORYPOOL) {
@@ -153,10 +155,10 @@ public:
 	TEST_METHOD (TEST_CSC_EXT_SERIALIZER) {
 		struct wrapped_string :private Wrapped<String<STRU8>> {
 			inline void visit (const int &stru) {
-				wrapped_string::mData += _BUILDVAR32S_<STRU8> (stru) ;
+				wrapped_string::mSelf += _BUILDVAR32S_<STRU8> (stru) ;
 			}
 			inline void visit (const float &stru) {
-				wrapped_string::mData += _BUILDVAL32S_<STRU8> (stru) ;
+				wrapped_string::mSelf += _BUILDVAL32S_<STRU8> (stru) ;
 			}
 		} ;
 		const auto r1x = PACK<int ,float> {1 ,2.1f} ;

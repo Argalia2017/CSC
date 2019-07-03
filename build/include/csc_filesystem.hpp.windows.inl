@@ -10,13 +10,11 @@
 #pragma push_macro ("popping")
 #pragma push_macro ("imports")
 #pragma push_macro ("exports")
-#pragma push_macro ("discard")
 #undef self
 #undef implicit
 #undef popping
 #undef imports
 #undef exports
-#undef discard
 #endif
 
 #ifndef _INC_WINDOWS
@@ -29,7 +27,6 @@
 #pragma pop_macro ("popping")
 #pragma pop_macro ("imports")
 #pragma pop_macro ("exports")
-#pragma pop_macro ("discard")
 #endif
 
 namespace CSC {
@@ -135,7 +132,6 @@ inline exports BOOL _IDENTICALFILE_ (const String<STR> &file1 ,const String<STR>
 		me = CreateFile (file1.raw ().self ,GENERIC_READ ,FILE_SHARE_READ ,NULL ,OPEN_EXISTING ,FILE_ATTRIBUTE_NORMAL ,NULL) ;
 		if (me == INVALID_HANDLE_VALUE)
 			me = NULL ;
-		_STATIC_WARNING_ ("unqualified") ;
 	} ,[] (HANDLE &me) {
 		if (me == NULL)
 			return ;
@@ -150,7 +146,6 @@ inline exports BOOL _IDENTICALFILE_ (const String<STR> &file1 ,const String<STR>
 		me = CreateFile (file2.raw ().self ,GENERIC_READ ,FILE_SHARE_READ ,NULL ,OPEN_EXISTING ,FILE_ATTRIBUTE_NORMAL ,NULL) ;
 		if (me == INVALID_HANDLE_VALUE)
 			me = NULL ;
-		_STATIC_WARNING_ ("unqualified") ;
 	} ,[] (HANDLE &me) {
 		if (me == NULL)
 			return ;
@@ -195,8 +190,8 @@ inline exports String<STR> _PARSEFILENAME_ (const String<STR> &file) {
 inline exports Queue<String<STR>> _DECOUPLEPATHNAME_ (const String<STR> &file) {
 	const auto r1x = (file.empty ()) ? (PhanBuffer<const STR> ()) : (file.raw ()) ;
 	auto ris = TextReader<STR> (r1x) ;
-	ris.attr ().modify_space (STR ('\\')) ;
-	ris.attr ().modify_space (STR ('/')) ;
+	ris.attr ().modify_space (STR ('\\') ,0) ;
+	ris.attr ().modify_space (STR ('/') ,0) ;
 	auto rax = STR () ;
 	Queue<String<STR>> ret = Queue<String<STR>> (DEFAULT_RECURSIVE_SIZE::value) ;
 	INDEX ix = ret.insert () ;
@@ -204,7 +199,7 @@ inline exports Queue<String<STR>> _DECOUPLEPATHNAME_ (const String<STR> &file) {
 	if (ris.attr ().varify_space (rax))
 		ris >> rax ;
 	while (TRUE) {
-		ret[ix] = ris.template read<String<STR>> () ;
+		ris >> ret[ix] ;
 		if (ret[ix].empty ())
 			break ;
 		ix = ret.insert () ;
@@ -231,15 +226,12 @@ inline Stack<INDEX> _inline_RELATIVEPATHNAME_ (const Queue<String<STR>> &path_na
 		INDEX ix = path_name.access (i) ;
 		if (path_name[ix] == _PCSTR_ ("."))
 			continue ;
-		_CALL_IF_ ([&] (BOOL &if_flag) {
-			if (ret.empty ())
-				discard ;
-			if (path_name[ix] != _PCSTR_ (".."))
-				discard ;
-			if (path_name[ret[ret.peek ()]] == _PCSTR_ (".."))
-				discard ;
+		_CALL_IF_ ([&] (BOOL &_case_req) {
+			_CASE_REQUIRE_ (!ret.empty ()) ;
+			_CASE_REQUIRE_ (path_name[ix] == _PCSTR_ ("..")) ;
+			_CASE_REQUIRE_ (path_name[ret[ret.peek ()]] != _PCSTR_ ("..")) ;
 			ret.take () ;
-		} ,[&] (BOOL &if_flag) {
+		} ,[&] (BOOL &_case_req) {
 			ret.add (ix) ;
 		}) ;
 	}
@@ -250,19 +242,16 @@ inline exports String<STR> _ABSOLUTEPATH_ (const String<STR> &path) {
 	String<STR> ret = String<STR> (DEFAULT_SHORTSTRING_SIZE::value) ;
 	const auto r1x = _DECOUPLEPATHNAME_ (path) ;
 	const auto r2x = _inline_RELATIVEPATHNAME_ (r1x) ;
-	_CALL_IF_ ([&] (BOOL &if_flag) {
+	_CALL_IF_ ([&] (BOOL &_case_req) {
 		const auto r4x = BOOL (path.size () >= 1 && path[0] == STR ('\\')) ;
 		const auto r5x = BOOL (path.size () >= 1 && path[0] == STR ('/')) ;
-		if (!r4x && !r5x)
-			discard ;
+		_CASE_REQUIRE_ (r4x || r5x) ;
 		ret += _PCSTR_ ("\\") ;
-	} ,[&] (BOOL &if_flag) {
+	} ,[&] (BOOL &_case_req) {
 		const auto r6x = BOOL (r1x.length () >= 1 && r1x[r1x.access (0)] == _PCSTR_ (".")) ;
 		const auto r7x = BOOL (r1x.length () >= 1 && r1x[r1x.access (0)] == _PCSTR_ ("..")) ;
-		if (!r6x && !r7x)
-			discard ;
+		_CASE_REQUIRE_ (r6x || r7x) ;
 		//@debug: not absolute path really
-		_STATIC_WARNING_ ("mark") ;
 		ret += _WORKINGPATH_ () ;
 	}) ;
 	for (INDEX i = 0 ; i < r2x.length () ; i++) {
@@ -279,19 +268,23 @@ inline exports String<STR> _ABSOLUTEPATH_ (const String<STR> &path) {
 	return std::move (ret) ;
 }
 
-inline exports String<STR> _MODULEFILEPATH_ () {
-	String<STR> ret = String<STR> (DEFAULT_SHORTSTRING_SIZE::value) ;
-	GetModuleFileName (NULL ,ret.raw ().self ,VARY (ret.size ())) ;
-	ret = _PARSEFILEPATH_ (ret) ;
-	ret += _PCSTR_ ("\\") ;
-	return std::move (ret) ;
+inline exports const String<STR> &_MODULEFILEPATH_ () popping {
+	return _CACHE_ ([] () {
+		String<STR> ret = String<STR> (DEFAULT_SHORTSTRING_SIZE::value) ;
+		GetModuleFileName (NULL ,ret.raw ().self ,VARY (ret.size ())) ;
+		ret = _PARSEFILEPATH_ (ret) ;
+		ret += _PCSTR_ ("\\") ;
+		return std::move (ret) ;
+	}) ;
 }
 
-inline exports String<STR> _MODULEFILENAME_ () {
-	String<STR> ret = String<STR> (DEFAULT_SHORTSTRING_SIZE::value) ;
-	GetModuleFileName (NULL ,ret.raw ().self ,VARY (ret.size ())) ;
-	ret = _PARSEFILENAME_ (ret) ;
-	return std::move (ret) ;
+inline exports const String<STR> &_MODULEFILENAME_ () popping {
+	return _CACHE_ ([] () {
+		String<STR> ret = String<STR> (DEFAULT_SHORTSTRING_SIZE::value) ;
+		GetModuleFileName (NULL ,ret.raw ().self ,VARY (ret.size ())) ;
+		ret = _PARSEFILENAME_ (ret) ;
+		return std::move (ret) ;
+	}) ;
 }
 
 inline exports BOOL _FINDDIRECTORY_ (const String<STR> &dire) popping {
@@ -352,15 +345,15 @@ inline exports void _ENUMDIRECTORY_ (const String<STR> &dire ,const Function<voi
 	while (TRUE) {
 		if (rbx.cFileName[0] == 0)
 			break ;
-		for (FOR_ONCE_DO_WHILE_FALSE) {
-			if (_MEMEQUAL_ (PTRTOARR[&rbx.cFileName[0]] ,_PCSTR_ (".")))
+		for (FOR_ONCE_DO_WHILE) {
+			if (_MEMEQUAL_ (PTRTOARR[rbx.cFileName] ,_PCSTR_ (".").self ,2))
 				continue ;
-			if (_MEMEQUAL_ (PTRTOARR[&rbx.cFileName[0]] ,_PCSTR_ ("..")))
+			if (_MEMEQUAL_ (PTRTOARR[rbx.cFileName] ,_PCSTR_ ("..").self ,3))
 				continue ;
 			auto &r1 = ((rbx.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) == 0) ? file_proc : dire_proc ;
 			if (!r1.exist ())
 				continue ;
-			rax += String<STR> (rbx.cFileName) ;
+			rax += String<STR> (PTRTOARR[rbx.cFileName]) ;
 			r1 (rax) ;
 		}
 		rax[r1x] = 0 ;
@@ -384,11 +377,10 @@ inline exports void _CLEARDIRECTORY_ (const String<STR> &dire) {
 			break ;
 		INDEX ix = rax.peek () ;
 		_ERASEDIRECTORY_ (rax[ix].P1) ;
-		_CALL_IF_ ([&] (BOOL &if_flag) {
-			if (!rax[ix].P2)
-				discard ;
+		_CALL_IF_ ([&] (BOOL &_case_req) {
+			_CASE_REQUIRE_ (rax[ix].P2) ;
 			rax.take () ;
-		} ,[&] (BOOL &if_flag) {
+		} ,[&] (BOOL &_case_req) {
 			_ENUMDIRECTORY_ (rax[ix].P1 ,r1x ,r2x) ;
 			rax[ix].P2 = TRUE ;
 		}) ;
@@ -473,7 +465,8 @@ private:
 public:
 	Implement () = delete ;
 
-	explicit Implement (const String<STR> &file) :Implement (ARGVP0) {
+	explicit Implement (const String<STR> &file) {
+		update_reset () ;
 		auto &r1 = mThis->mFile.self ;
 		auto &r2 = mThis->mMapping.self ;
 		auto &r3 = mThis->mBuffer.self ;
@@ -505,8 +498,9 @@ public:
 		}) ;
 	}
 
-	explicit Implement (const String<STR> &file ,LENGTH file_len) :Implement (ARGVP0) {
+	explicit Implement (const String<STR> &file ,LENGTH file_len) {
 		_DEBUG_ASSERT_ (file_len >= 0 && file_len < VAR32_MAX) ;
+		update_reset () ;
 		auto &r1 = mThis->mFile.self ;
 		auto &r2 = mThis->mMapping.self ;
 		auto &r3 = mThis->mBuffer.self ;
@@ -537,8 +531,9 @@ public:
 		}) ;
 	}
 
-	explicit Implement (const String<STR> &file ,BOOL cache) :Implement (ARGVP0) {
+	explicit Implement (const String<STR> &file ,BOOL cache) {
 		_DEBUG_ASSERT_ (cache) ;
+		update_reset () ;
 		auto &r2 = mThis->mMapping.self ;
 		auto &r3 = mThis->mBuffer.self ;
 		r2 = UniqueRef<HANDLE> ([&] (HANDLE &me) {
@@ -569,9 +564,10 @@ public:
 		}) ;
 	}
 
-	explicit Implement (const String<STR> &file ,LENGTH file_len ,BOOL cache) :Implement (ARGVP0) {
+	explicit Implement (const String<STR> &file ,LENGTH file_len ,BOOL cache) {
 		_DEBUG_ASSERT_ (file_len >= 0 && file_len < VAR32_MAX) ;
 		_DEBUG_ASSERT_ (cache) ;
+		update_reset () ;
 		auto &r2 = mThis->mMapping.self ;
 		auto &r3 = mThis->mBuffer.self ;
 		r2 = UniqueRef<HANDLE> ([&] (HANDLE &me) {
@@ -609,7 +605,7 @@ public:
 	}
 
 private:
-	explicit Implement (const DEF<decltype (ARGVP0)> &) {
+	void update_reset () {
 		mThis = UniqueRef<Holder> ([&] (Holder &me) {
 			me.mFile.self = UniqueRef<HANDLE> () ;
 			me.mMapping.self = UniqueRef<HANDLE> () ;
@@ -618,7 +614,7 @@ private:
 			me.mBuffer.self = UniqueRef<PhanBuffer<BYTE>> () ;
 			me.mMapping.self = UniqueRef<HANDLE> () ;
 			me.mFile.self = UniqueRef<HANDLE> () ;
-		}) ;
+		}) ; ;
 	}
 } ;
 
