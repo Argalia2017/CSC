@@ -1,0 +1,370 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AutoVisualizer xmlns="http://schemas.microsoft.com/vstudio/debugger/natvis/2010">
+
+
+  <!--"https://docs.microsoft.com/en-us/visualstudio/debugger/create-custom-views-of-native-objects?view=vs-2017#BKMK_Why_create_visualizations_"-->
+  <!--"https://docs.microsoft.com/en-us/visualstudio/debugger/format-specifiers-in-cpp?view=vs-2017#BKMK_Visual_Studio_2012_format_specifiers"-->
+  <!--"https://docs.microsoft.com/en-us/visualstudio/debugger/pseudovariables?view=vs-2017"-->
+  <!--"https://docs.microsoft.com/en-us/visualstudio/debugger/context-operator-cpp?view=vs-2017"-->
+  
+  
+  <!--csc.hpp-->
+
+
+  <Type Name="CSC::__uint128_t">
+    <DisplayString>{{ {*(int*)&amp;unused[12],X} {*(int*)&amp;unused[8],X} {*(int*)&amp;unused[4],X} {*(int*)&amp;unused[0],X} }}</DisplayString>
+  </Type>
+
+
+  <Type Name="CSC::TEMP&lt;*&gt;">
+    <Expand>
+      <ExpandedItem>*($T1*)&amp;unused</ExpandedItem>
+    </Expand>
+  </Type>
+  
+
+  <Type Name="CSC::Interface" Inheritable="false" />
+
+  <Type Name="CSC::GlobalWatch::Storage&lt;*,*&gt;">
+    <Expand>
+      <Item Name="[name]">(const char*)mData.P1[0]</Item>
+      <Item Name="[data]">*($T2*)mData.P1[1]</Item>
+    </Expand>
+  </Type>
+  
+
+  <Type Name="CSC::AutoRef&lt;*&gt;">
+    <Expand>
+      <ExpandedItem>mPointer->mData</ExpandedItem>
+    </Expand>
+  </Type>
+
+  
+  <Type Name="CSC::SharedRef&lt;*&gt;">
+    <Expand>
+      <ExpandedItem>mPointer->mData</ExpandedItem>
+    </Expand>
+  </Type>
+
+  
+  <Type Name="CSC::AnyRef&lt;*&gt;">
+    <Expand>
+      <ExpandedItem>((CSC::AnyRef&lt;$T1&gt;::ImplHolder&lt;$T1&gt;*)mPointer)->mData</ExpandedItem>
+    </Expand>
+  </Type>
+
+  
+  <Type Name="CSC::UniqueRef&lt;*&gt;">
+    <Expand>
+      <ExpandedItem>((CSC::UniqueRef&lt;$T1&gt;::ImplHolder&lt;void (*) ($T1 &amp;)&gt;*)mPointer)->mData</ExpandedItem>
+    </Expand>
+  </Type>
+
+
+  <Type Name="CSC::PhanRef&lt;*&gt;">
+    <Expand>
+      <ExpandedItem>mPointer->mData</ExpandedItem>
+    </Expand>
+  </Type>
+
+
+  <Type Name="CSC::Function&lt;*&gt;">
+    <DisplayString Condition="mFunction_a==0&amp;&amp;mFunction_b==0">{{ NULL }}</DisplayString>
+    <Expand>
+      <Item Name="[function]" Condition="mFunction_a!=0">mFunction_a</Item>
+      <Item Name="[function]" Condition="mFunction_b!=0">mFunction_b</Item>
+    </Expand>
+  </Type>
+
+
+  <Type Name="CSC::Buffer&lt;*,CSC::ARGC&lt;*&gt; &gt;">
+    <Expand>
+      <Item Name="[size]">sizeof(mBuffer)/sizeof(mBuffer[0])</Item>
+      <ArrayItems>
+        <Size>sizeof(mBuffer)/sizeof(mBuffer[0])</Size>
+        <ValuePointer>&amp;mBuffer[0]</ValuePointer>
+      </ArrayItems>
+    </Expand>
+  </Type>
+
+
+  <Type Name="CSC::Buffer&lt;*,CSC::ARGC&lt;0&gt; &gt;">
+    <Expand>
+      <Item Name="[size]">mSize</Item>
+      <ArrayItems>
+        <Size>mSize</Size>
+        <ValuePointer>($T1*)(&amp;mSize+1)</ValuePointer>
+      </ArrayItems>
+    </Expand>
+  </Type>
+  
+
+  <Type Name="CSC::Buffer&lt;*,CSC::ARGC&lt;-1&gt; &gt;">
+    <Expand>
+      <Item Name="[size]">mSize</Item>
+      <ArrayItems>
+        <Size>mSize</Size>
+        <ValuePointer>&amp;(*mBuffer)[0]</ValuePointer>
+      </ArrayItems>
+    </Expand>
+  </Type>
+
+
+  <Type Name="CSC::Buffer&lt;*,CSC::ARGC&lt;-2&gt; &gt;">
+    <Expand>
+      <Item Name="[size]">mSize</Item>
+      <ArrayItems>
+        <Size>mSize</Size>
+        <ValuePointer>&amp;(*mBuffer)[0]</ValuePointer>
+      </ArrayItems>
+    </Expand>
+  </Type>
+
+
+  <Type Name="CSC::Buffer&lt;*,CSC::ARGC&lt;-3&gt; &gt;">
+    <Expand>
+      <Item Name="[size]">mSize</Item>
+      <ArrayItems>
+        <Size>mSize</Size>
+        <ValuePointer>&amp;(*mBuffer)[0]</ValuePointer>
+      </ArrayItems>
+    </Expand>
+  </Type>
+
+
+  <Type Name="CSC::Buffer&lt;*,CSC::ARGC&lt;-4&gt; &gt;">
+    <Expand>
+      <Item Name="[size]">mSize</Item>
+      <ArrayItems>
+        <Size>mSize</Size>
+        <ValuePointer>&amp;(*mBuffer)[0]</ValuePointer>
+      </ArrayItems>
+    </Expand>
+  </Type>
+
+
+  <Type Name="CSC::Buffer&lt;*,CSC::ARGC&lt;-5&gt; &gt;">
+    <Expand>
+      <Item Name="[size]">mSize</Item>
+      <ArrayItems>
+        <Size>mSize</Size>
+        <ValuePointer>&amp;(*mBuffer)[0]</ValuePointer>
+      </ArrayItems>
+    </Expand>
+  </Type>
+
+
+  <Type Name="CSC::Allocator&lt;*,CSC::ARGC&lt;*&gt; &gt;">
+    <Expand>
+      <Item Name="[size]">sizeof (mAllocator.mBuffer) / sizeof (mAllocator.mBuffer[0])</Item>
+      <Item Name="[length]">mLength</Item>
+      <ArrayItems>
+        <Size>sizeof (mAllocator.mBuffer) / sizeof (mAllocator.mBuffer[0])</Size>
+        <ValuePointer>&amp;mAllocator.mBuffer[0]</ValuePointer>
+      </ArrayItems>
+    </Expand>
+  </Type>
+
+
+  <Type Name="CSC::Allocator&lt;*,CSC::ARGC&lt;-1&gt; &gt;">
+    <Expand>
+      <Item Name="[size]">mAllocator.mSize</Item>
+      <Item Name="[length]">mLength</Item>
+      <ArrayItems>
+        <Size>mAllocator.mSize</Size>
+        <ValuePointer>&amp;(*mAllocator.mBuffer)[0]</ValuePointer>
+      </ArrayItems>
+    </Expand>
+  </Type>
+
+
+  <Type Name="CSC::Allocator&lt;*,CSC::ARGC&lt;-2&gt; &gt;">
+    <Expand>
+      <Item Name="[size]">mAllocator.mSize</Item>
+      <Item Name="[length]">mLength</Item>
+      <ArrayItems>
+        <Size>mAllocator.mSize</Size>
+        <ValuePointer>&amp;(*mAllocator.mBuffer)[0]</ValuePointer>
+      </ArrayItems>
+    </Expand>
+  </Type>
+  
+  
+  <!--csc_ext.hpp-->
+  
+  
+  <Type Name="CSC::StrongRef&lt;*&gt;">
+    <Expand>
+      <ExpandedItem>*mPointer</ExpandedItem>
+    </Expand>
+  </Type>
+
+  
+  <Type Name="CSC::WeakRef&lt;*&gt;">
+    <Expand>
+      <ExpandedItem>*mPointer</ExpandedItem>
+    </Expand>
+  </Type>
+
+  
+  <Type Name="CSC::SoftRef&lt;*&gt;">
+    <Expand>
+      <ExpandedItem>*mWeakRef.mPointer</ExpandedItem>
+    </Expand>
+  </Type>
+
+
+  <Type Name="CSC::IntrusiveRef&lt;*&gt;">
+    <Expand>
+      <ExpandedItem>*mPointer.load(std::memory_order::memory_order_seq_cst)</ExpandedItem>
+    </Expand>
+  </Type>
+
+
+  <!--csc_array.hpp-->
+
+
+  <Type Name="CSC::Array&lt;*,CSC::ARGC&lt;*&gt; &gt;">
+    <Expand>
+      <ExpandedItem>mArray</ExpandedItem>
+    </Expand>
+  </Type>
+
+
+  <Type Name="CSC::String&lt;*,CSC::ARGC&lt;*&gt; &gt;">
+    <Expand>
+      <ExpandedItem>mString</ExpandedItem>
+    </Expand>
+  </Type>
+
+
+  <Type Name="CSC::String&lt;char,CSC::ARGC&lt;*&gt; &gt;">
+    <DisplayString>{{ {&amp;(*mString.mBuffer)[0],s} }}</DisplayString>
+    <Expand>
+      <ExpandedItem>mString</ExpandedItem>
+    </Expand>
+  </Type>
+
+
+  <Type Name="CSC::String&lt;wchar_t,CSC::ARGC&lt;*&gt; &gt;">
+    <DisplayString>{{ {&amp;(*mString.mBuffer)[0],su} }}</DisplayString>
+    <Expand>
+      <ExpandedItem>mString</ExpandedItem>
+    </Expand>
+  </Type>
+
+
+  <Type Name="CSC::String&lt;unsigned char,CSC::ARGC&lt;*&gt; &gt;">
+    <DisplayString>{{ {&amp;(*mString.mBuffer)[0],s8} }}</DisplayString>
+    <Expand>
+      <ExpandedItem>mString</ExpandedItem>
+    </Expand>
+  </Type>
+  
+  <Type Name="CSC::String&lt;char16_t,CSC::ARGC&lt;*&gt; &gt;">
+    <DisplayString>{{ {&amp;(*mString.mBuffer)[0],su} }}</DisplayString>
+    <Expand>
+      <ExpandedItem>mString</ExpandedItem>
+    </Expand>
+  </Type>
+
+
+  <Type Name="CSC::String&lt;char32_t,CSC::ARGC&lt;*&gt; &gt;">
+    <DisplayString>{{ {&amp;(*mString.mBuffer)[0],s32} }}</DisplayString>
+    <Expand>
+      <ExpandedItem>mString</ExpandedItem>
+    </Expand>
+  </Type>
+
+
+  <Type Name="CSC::Deque&lt;*,CSC::ARGC&lt;*&gt; &gt;">
+    <Expand>
+      <Item Name="[mRead]">mRead</Item>
+      <Item Name="[mWrite]">mWrite</Item>
+      <ExpandedItem>mDeque</ExpandedItem>
+    </Expand>
+  </Type>
+
+
+  <Type Name="CSC::Priority&lt;*,*,CSC::ARGC&lt;*&gt; &gt;">
+    <Expand>
+      <Item Name="[mWrite]">mWrite</Item>
+      <ExpandedItem>mPriority</ExpandedItem>
+    </Expand>
+  </Type>
+
+
+  <Type Name="CSC::QList&lt;*,CSC::ARGC&lt;*&gt; &gt;">
+    <Expand>
+      <Item Name="[mFirst]">mFirst</Item>
+      <Item Name="[mLast]">mLast</Item>
+      <ExpandedItem>mList</ExpandedItem>
+    </Expand>
+  </Type>
+
+
+  <Type Name="CSC::SList&lt;*,CSC::ARGC&lt;*&gt; &gt;">
+    <Expand>
+      <Item Name="[mHead]">mHead</Item>
+      <Item Name="[mRead]">mRead</Item>
+      <Item Name="[mWrite]">mWrite</Item>
+      <ExpandedItem>mList</ExpandedItem>
+    </Expand>
+  </Type>
+
+
+  <Type Name="CSC::BitSet&lt;CSC::ARGC&lt;*&gt; &gt;">
+    <Expand>
+      <Item Name="[mWidth]">mWidth</Item>
+      <ExpandedItem>mSet</ExpandedItem>
+    </Expand>
+  </Type>
+
+
+  <Type Name="CSC::Set&lt;*,*,CSC::ARGC&lt;*&gt; &gt;">
+    <Expand>
+      <Item Name="[mRoot]">mRoot</Item>
+      <ExpandedItem>mSet</ExpandedItem>
+    </Expand>
+  </Type>
+
+
+  <Type Name="CSC::HashSet&lt;*,*,CSC::ARGC&lt;*&gt; &gt;">
+    <Expand>
+      <Item Name="[mHead]">mHead</Item>
+      <ExpandedItem>mSet</ExpandedItem>
+    </Expand>
+  </Type>
+
+
+  <Type Name="CSC::SoftSet&lt;*,*,CSC::ARGC&lt;*&gt; &gt;">
+    <Expand>
+      <Item Name="[mHeap]">mThis->mData.mHeap</Item>
+      <Item Name="[mLength]">mThis->mData.mLength</Item>
+      <Item Name="[mFirst]">mThis->mData.mFirst</Item>
+      <Item Name="[mLast]">mThis->mData.mLast</Item>
+      <Item Name="[mRoot]">mThis->mData.mRoot</Item>
+      <ExpandedItem>mSet->mData</ExpandedItem>
+    </Expand>
+  </Type>
+
+
+  <!--csc_geometry.hpp-->
+
+
+  <Type Name="CSC::Vector&lt;*&gt;">
+    <DisplayString>{{ [{mVector.mBuffer[0]} {mVector.mBuffer[1]} {mVector.mBuffer[2]} {mVector.mBuffer[3]}] }}</DisplayString>
+    <Expand>
+      <Item Name="[data]">($T1(*)[4][1])&amp;mVector.mBuffer</Item>
+    </Expand>
+  </Type>
+  
+
+  <Type Name="CSC::Matrix&lt;*&gt;">
+    <Expand>
+      <Item Name="[data]">($T1(*)[4][4])&amp;mMatrix.mBuffer</Item>
+    </Expand>
+  </Type>
+
+  
+</AutoVisualizer>
