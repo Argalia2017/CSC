@@ -15,22 +15,8 @@ public:
 		_UNITTEST_ASSERT_ (r3x.size () == 0) ;
 	}
 
-	TEST_METHOD (TEST_CSC_ARRAY_STACK) {
-		auto rax = Stack<int> {1 ,2 ,4 ,5} ;
-		rax.insert_sort (3) ;
-		auto rbx = Array<INDEX> (rax.size ()) ;
-		const auto r1x = rax.esort () ;
-		for (INDEX i = 0 ; i < r1x.length () ; i++)
-			rbx[i] = r1x[i] ;
-		_UNITTEST_ASSERT_ (rbx[0] == 0) ;
-		_UNITTEST_ASSERT_ (rbx[1] == 1) ;
-		_UNITTEST_ASSERT_ (rbx[2] == 4) ;
-		_UNITTEST_ASSERT_ (rbx[3] == 2) ;
-		_UNITTEST_ASSERT_ (rbx[4] == 3) ;
-	}
-
-	TEST_METHOD (TEST_CSC_ARRAY_QUEUE) {
-		auto rax = Queue<int> {1 ,2 ,3 ,4} ;
+	TEST_METHOD (TEST_CSC_ARRAY_DEQUE) {
+		auto rax = Deque<int> {1 ,2 ,3 ,4} ;
 		rax.take () ;
 		rax.add (5) ;
 		rax.add (6) ;
@@ -55,7 +41,7 @@ public:
 		while (TRUE) {
 			if (rbx.empty ())
 				break ;
-			const auto r3x = rbx[rbx.peek ()].key ;
+			const auto r3x = rbx[rbx.head ()].key ;
 			rbx.take () ;
 			const auto r4x = ir++ ;
 			_UNITTEST_ASSERT_ (r3x == rax[r4x]) ;
@@ -63,8 +49,8 @@ public:
 		}
 	}
 
-	TEST_METHOD (TEST_CSC_ARRAY_DEQUE) {
-		auto rax = Deque<INDEX> (100000) ;
+	TEST_METHOD (TEST_CSC_ARRAY_SLIST) {
+		auto rax = SList<INDEX> (100000) ;
 		for (INDEX i = 0 ; i < rax.size () ; i++)
 			rax.add (i) ;
 		rax.remove (1) ;

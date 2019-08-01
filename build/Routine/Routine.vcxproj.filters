@@ -118,7 +118,6 @@
       <Filter>csc</Filter>
     </None>
     <None Include="..\..\..\..\..\Depends\__CSC__\cpp.hint" />
-    <None Include="..\..\..\..\..\Depends\__CSC__\csc.rule" />
     <None Include="..\..\..\..\..\Depends\__CSC__\csc.hpp.traits.inl">
       <Filter>csc</Filter>
     </None>

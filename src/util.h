@@ -113,26 +113,29 @@ using namespace CSC ;
 
 namespace UNITTEST {
 #ifdef __CSC_UNITTEST__
-inline exports void _UNITTEST_ASSERT_HANDLER_ (const ARR<STR> &what) {
+class GlobalUnittestAssert final :private Wrapped<void> {
+public:
+	inline static void done (const ARR<STR> &what) {
 #ifdef MS_CPP_UNITTESTFRAMEWORK
 #ifdef __CSC_STRING__
-	const auto r1x = _BUILDSTRS_<STRW> (what) ;
-	Assert::Fail (r1x.raw ().self) ;
+		const auto r1x = _BUILDSTRS_<STRW> (what) ;
+		Assert::Fail (r1x.raw ().self) ;
 #else
-	Assert::Fail () ;
+		Assert::Fail () ;
 #endif
 #else
-	Singleton<ConsoleService>::instance ().fatal (String<STR> (what)) ;
+		Singleton<ConsoleService>::instance ().fatal (String<STR> (what)) ;
 #endif
-}
+	}
+} ;
 #endif
 } ;
 
 #ifdef __CSC_UNITTEST__
 #ifdef __CSC_COMPILER_MSVC__
-#define _UNITTEST_ASSERT_(...) do { if (!(_UNW_ (__VA_ARGS__))) UNITTEST::_UNITTEST_ASSERT_HANDLER_ (CSC::Exception (_PCSTR_ ("unittest_assert failed : " _STR_ (__VA_ARGS__) " : at " M_FUNC " in " M_FILE " ," M_LINE)).what ()) ; } while (FALSE)
+#define _UNITTEST_ASSERT_(...) do { if (!(_UNW_ (__VA_ARGS__))) GlobalUnittestAssert::done (CSC::Plain<CSC::STR> (_PCSTR_ ("unittest_assert failed : " _STR_ (__VA_ARGS__) " : at " M_FUNC " in " M_FILE " ," M_LINE))) ; } while (FALSE)
 #else
-#define _UNITTEST_ASSERT_(...) do { struct ARGVPL ; if (!(_UNW_ (__VA_ARGS__))) UNITTEST::_UNITTEST_ASSERT_HANDLER_ (CSC::Exception (CSC::_NULL_<CSC::ARGV<ARGVPL>> () ,"unittest_assert failed : " _STR_ (__VA_ARGS__) " : at " ,M_FUNC ," in " ,M_FILE ," ," ,M_LINE).what ()) ; } while (FALSE)
+#define _UNITTEST_ASSERT_(...) do { struct ARGVPL ; if (!(_UNW_ (__VA_ARGS__))) GlobalUnittestAssert::done (CSC::Plain<CSC::STR> (CSC::_NULL_<CSC::ARGV<ARGVPL>> () ,"unittest_assert failed : " _STR_ (__VA_ARGS__) " : at " ,M_FUNC ," in " ,M_FILE ," ," ,M_LINE)) ; } while (FALSE)
 #endif
 #else
 #define _UNITTEST_ASSERT_(...) do {} while (FALSE)
