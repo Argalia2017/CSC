@@ -42,6 +42,7 @@ class ConsoleService::Implement :public ConsoleService::Abstract {
 private:
 	TextWriter<STR> mConWriter ;
 	TextWriter<STR> mLogWriter ;
+	LENGTH mBufferSize ;
 	FLAG mOptionFlag ;
 	String<STR> mLogPath ;
 	AutoRef<StreamLoader> mLogFileStream ;
@@ -50,11 +51,18 @@ private:
 
 public:
 	Implement () {
-		const auto r1x = _COPY_ (DEFAULT_HUGEBUFFER_SIZE::value) ;
+		using DEFAULT_HUGESTRING_SIZE = ARGC<8388607> ;
+		using DEFAULT_LONGSTRING_SIZE = ARGC<8195> ;
+		const auto r1x = DEFAULT_HUGESTRING_SIZE::value + 1 ;
 		mConWriter = TextWriter<STR> (SharedRef<FixedBuffer<STR>>::make (r1x)) ;
 		mLogWriter = TextWriter<STR> (SharedRef<FixedBuffer<STR>>::make (r1x)) ;
+		mBufferSize = mLogWriter.size () - DEFAULT_LONGSTRING_SIZE::value ;
 		modify_option (OPTION_DEFAULT) ;
 		mLogPath = String<STR> () ;
+	}
+
+	LENGTH buffer_size () const override {
+		return mBufferSize ;
 	}
 
 	void modify_option (FLAG option) override {
@@ -168,7 +176,7 @@ public:
 
 	void attach_log (const String<STR> &path) override {
 		const auto r1x = _ABSOLUTEPATH_ (path) ;
-		for (FOR_ONCE_DO_WHILE) {
+		for (FOR_ONCE_DO) {
 			if (mLogPath == r1x)
 				discard ;
 			if (!mLogFileStream.exist ())
@@ -195,6 +203,10 @@ public:
 		_STATIC_WARNING_ ("noop") ;
 	}
 
+	void hide () override {
+		_STATIC_WARNING_ ("noop") ;
+	}
+
 	void flash () override {
 		_STATIC_WARNING_ ("noop") ;
 	}
@@ -212,10 +224,6 @@ public:
 		(void) r1x ;
 	}
 
-	void hide () override {
-		_STATIC_WARNING_ ("noop") ;
-	}
-
 private:
 	void write_con_buffer (const Binder &msg) {
 		mConWriter << _CLS_ ;
@@ -226,7 +234,7 @@ private:
 	void write_log_buffer (const PhanBuffer<const STR> &tag ,const Binder &msg) {
 		mLogWriter << _CLS_ ;
 		mLogWriter << _PCSTR_ ("[") ;
-		mLogWriter << _BUILDHOURS_<STR> (std::chrono::system_clock ().now ()) ;
+		mLogWriter << _BUILDHOURS_ (std::chrono::system_clock ().now ()) ;
 		mLogWriter << _PCSTR_ ("][") ;
 		mLogWriter << tag ;
 		mLogWriter << _PCSTR_ ("] : ") ;
@@ -310,10 +318,11 @@ public:
 	}
 
 	Array<DATA> captrue_stack_trace () popping override {
+		using DEFAULT_RECURSIVE_SIZE = ARGC<256> ;
 		auto rax = AutoBuffer<PTR<VOID>> (DEFAULT_RECURSIVE_SIZE::value) ;
 		const auto r1x = backtrace (rax.self ,VAR32 (rax.size ())) ;
 		Array<DATA> ret = Array<DATA> (r1x) ;
-		for (INDEX i = 0 ; i < ret.length () ; i++)
+		for (INDEX i = 0 ,ie = ret.length () ; i < ie ; i++)
 			ret[i] = DATA (_ADDRESS_ (rax[i])) ;
 		return std::move (ret) ;
 	}
@@ -330,7 +339,7 @@ public:
 					return ;
 				free (me) ;
 			}) ;
-			const auto r3x = _BUILDHEX16S_<STR> (i) ;
+			const auto r3x = _BUILDHEX16S_ (i) ;
 			const auto r4x = _PARSESTRS_ (String<STRA> (PTRTOARR[r2x.self[0]])) ;
 			ret[iw++] = String<STR>::make (_PCSTR_ ("[") ,r3x ,_PCSTR_ ("] : ") ,r4x) ;
 		}

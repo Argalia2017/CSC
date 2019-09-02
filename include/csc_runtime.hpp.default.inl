@@ -43,13 +43,13 @@ private:
 		jmp_buf mEbp ;
 	} ;
 
-	static constexpr auto CONTEXT_EBP_SIZE = _SIZEOF_ (CONTEXT_EBP) + _ALIGNOF_ (CONTEXT_EBP) ;
-	static constexpr auto STACK_FRAME_SIZE = 65536 ;
+	using CONTEXT_EBP_SIZE = ARGC<_SIZEOF_ (CONTEXT_EBP) + _ALIGNOF_ (CONTEXT_EBP)> ;
+	using STACK_FRAME_SIZE = ARGC<65536> ;
 
 	struct BREAKPOINT {
-		DEF<BYTE[CONTEXT_EBP_SIZE]> mContextEbp ;
+		DEF<BYTE[CONTEXT_EBP_SIZE::value]> mContextEbp ;
 		ARRAY3<PTR<VOID>> mStackPoint ;
-		DEF<BYTE[STACK_FRAME_SIZE]> mStackFrame ;
+		DEF<BYTE[STACK_FRAME_SIZE::value]> mStackFrame ;
 	} ;
 
 private:
@@ -62,7 +62,7 @@ public:
 		rax.mStackPoint[0] = &bp ;
 		rax.mStackPoint[1] = NULL ;
 		rax.mStackPoint[2] = NULL ;
-		*bp = AnyRef<BREAKPOINT>::make (std::move (rax)) ;
+		(*bp) = AnyRef<BREAKPOINT>::make (std::move (rax)) ;
 	}
 
 	static void store_break_point (PTR<AnyRef<void>> bp) noexcept {
@@ -93,9 +93,11 @@ public:
 		longjmp (r2.mEbp ,1) ;
 	}
 
-	static CONTEXT_EBP &load_context_ebp (PTR<BYTE[CONTEXT_EBP_SIZE]> ebp) noexcept {
+	static CONTEXT_EBP &load_context_ebp (PTR<BYTE[CONTEXT_EBP_SIZE::value]> ebp) noexcept {
 		const auto r1x = _ADDRESS_ (ebp) % _ALIGNOF_ (CONTEXT_EBP) ;
-		const auto r2x = (r1x != 0) ? (_ALIGNOF_ (CONTEXT_EBP) - r1x) : 0 ;
+		const auto r2x = _SWITCH_ (
+			(r1x != 0) ? (_ALIGNOF_ (CONTEXT_EBP) - r1x) :
+			0) ;
 		const auto r3x = _ADDRESS_ (ebp) + r1x ;
 		return _LOAD_<CONTEXT_EBP> (NULL ,r3x) ;
 	}

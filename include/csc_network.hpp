@@ -47,10 +47,10 @@ public:
 	template <class _ARG1>
 	inline TCPSocket &operator>> (Buffer<BYTE ,_ARG1> &data) popping {
 		read (data) ;
-		return *this ;
+		return (*this) ;
 	}
 
-	void read (const PhanBuffer<BYTE> &data ,INDEX &it ,LENGTH timeout) popping ;
+	void read (const PhanBuffer<BYTE> &data ,INDEX &out_i ,LENGTH timeout) popping ;
 
 	void write (const PhanBuffer<const BYTE> &data) ;
 
@@ -62,7 +62,7 @@ public:
 	template <class _ARG1>
 	inline TCPSocket &operator<< (const Buffer<BYTE ,_ARG1> &data) {
 		write (data) ;
-		return *this ;
+		return (*this) ;
 	}
 } ;
 
@@ -114,10 +114,10 @@ public:
 	template <class _ARG1>
 	inline UDPSocket &operator>> (Buffer<BYTE ,_ARG1> &data) popping {
 		read (data) ;
-		return *this ;
+		return (*this) ;
 	}
 
-	void read (const PhanBuffer<BYTE> &data ,INDEX &it ,LENGTH timeout) popping ;
+	void read (const PhanBuffer<BYTE> &data ,INDEX &out_i ,LENGTH timeout) popping ;
 
 	void write (const PhanBuffer<const BYTE> &data) ;
 
@@ -129,23 +129,20 @@ public:
 	template <class _ARG1>
 	inline UDPSocket &operator<< (const Buffer<BYTE ,_ARG1> &data) {
 		write (data) ;
-		return *this ;
+		return (*this) ;
 	}
 } ;
 
 class NetworkService final :private Interface {
-public:
-	static constexpr auto ADDR_NULL = CHAR (0X00000000) ;
-	static constexpr auto ADDR_NONE = CHAR (0XFFFFFFFF) ;
-	static constexpr auto ADDR_LOCALHOST = CHAR (0X7F000001) ;
-	static constexpr auto ADDR_BROADCAST = CHAR (0XFFFFFFFF) ;
-
 private:
 	exports struct Abstract :public Interface {
 		virtual void startup () = 0 ;
 		virtual void shutdown () = 0 ;
-		virtual String<STRU8> host_name () const = 0 ;
-		virtual String<STRU8> host_addr () const = 0 ;
+		virtual String<STRU8> localhost_name () const = 0 ;
+		virtual String<STRU8> localhost_addr () const = 0 ;
+		virtual String<STRU8> broadcast_addr () const = 0 ;
+		virtual LENGTH get_timeout () const = 0 ;
+		virtual void set_timeout (LENGTH timeout) = 0 ;
 	} ;
 
 private:
@@ -165,53 +162,32 @@ public:
 		mThis->shutdown () ;
 	}
 
-	String<STRU8> host_name () const {
+	String<STRU8> localhost_name () const {
 		ScopedGuard<std::recursive_mutex> ANONYMOUS (mMutex) ;
-		return mThis->host_name () ;
+		return mThis->localhost_name () ;
 	}
 
-	String<STRU8> host_addr () const {
+	String<STRU8> localhost_addr () const {
 		ScopedGuard<std::recursive_mutex> ANONYMOUS (mMutex) ;
-		return mThis->host_addr () ;
+		return mThis->localhost_addr () ;
 	}
 
-	String<STRU8> http_get (const String<STRU8> &addr ,const String<STRU8> &site ,const String<STRU8> &msg) popping ;
+	String<STRU8> broadcast_addr () const {
+		ScopedGuard<std::recursive_mutex> ANONYMOUS (mMutex) ;
+		return mThis->broadcast_addr () ;
+	}
 
-	String<STRU8> http_post (const String<STRU8> &addr ,const String<STRU8> &site ,const String<STRU8> &msg) popping ;
+	LENGTH get_timeout () const {
+		ScopedGuard<std::recursive_mutex> ANONYMOUS (mMutex) ;
+		return mThis->get_timeout () ;
+	}
+
+	void set_timeout (LENGTH timeout) {
+		ScopedGuard<std::recursive_mutex> ANONYMOUS (mMutex) ;
+		return mThis->set_timeout (timeout) ;
+	}
 
 private:
 	NetworkService () ;
 } ;
-
-inline String<STRU8> NetworkService::http_get (const String<STRU8> &addr ,const String<STRU8> &site ,const String<STRU8> &msg) popping {
-	startup () ;
-	String<STRU8> ret = String<STRU8> (DEFAULT_HUGEBUFFER_SIZE::value) ;
-	INDEX iw = 0 ;
-	auto rax = TCPSocket (_PCSTRU8_ ("")) ;
-	rax.link (addr) ;
-	const auto r1x = _XVALUE_<PTR<void (TextWriter<STRU8> &)>> (_GAP_) ;
-	const auto r2x = String<STRU8>::make (_PCSTRU8_ ("GET ") ,site ,_PCSTRU8_ ("?") ,msg ,_PCSTRU8_ (" HTTP/1.1") ,r1x ,_PCSTRU8_ ("HOST: ") ,addr ,r1x ,r1x) ;
-	rax.write (PhanBuffer<const BYTE>::make (r2x.raw ())) ;
-	rax.read (PhanBuffer<BYTE>::make (ret.raw ()) ,iw ,DEFAULT_TIMEOUT_SIZE::value) ;
-	_DYNAMIC_ASSERT_ (BOOL (iw >= 0 && iw < ret.size ())) ;
-	if (iw < ret.size ())
-		ret[iw] = 0 ;
-	return std::move (ret) ;
-}
-
-inline String<STRU8> NetworkService::http_post (const String<STRU8> &addr ,const String<STRU8> &site ,const String<STRU8> &msg) popping {
-	startup () ;
-	String<STRU8> ret = String<STRU8> (DEFAULT_HUGEBUFFER_SIZE::value) ;
-	INDEX iw = 0 ;
-	auto rax = TCPSocket (_PCSTRU8_ ("")) ;
-	rax.link (addr) ;
-	const auto r1x = _XVALUE_<PTR<void (TextWriter<STRU8> &)>> (_GAP_) ;
-	const auto r2x = String<STRU8>::make (_PCSTRU8_ ("POST ") ,site ,_PCSTRU8_ (" HTTP/1.1") ,r1x ,_PCSTRU8_ ("HOST: ") ,addr ,r1x ,_PCSTRU8_ ("Content-Length: ") ,msg.length () ,r1x ,r1x ,msg) ;
-	rax.write (PhanBuffer<const BYTE>::make (r2x.raw ())) ;
-	rax.read (PhanBuffer<BYTE>::make (ret.raw ()) ,iw ,DEFAULT_TIMEOUT_SIZE::value) ;
-	_DYNAMIC_ASSERT_ (BOOL (iw >= 0 && iw < ret.size ())) ;
-	if (iw < ret.size ())
-		ret[iw] = 0 ;
-	return std::move (ret) ;
-}
 } ;

@@ -41,7 +41,7 @@ inline void PrimeSieveAlgorithm::initialize (LENGTH len) {
 	mPrimeSet[2] = TRUE ;
 	for (INDEX i = 3 ,ie = _SQRT_ (mPrimeSet.size ()) + 1 ; i < ie ; i += 2) {
 		const auto r1x = i * 2 ;
-		for (INDEX j = _SQE_ (i) ; j < mPrimeSet.size () ; j += r1x)
+		for (INDEX j = _SQE_ (i) ,je = mPrimeSet.size () ; j < je ; j += r1x)
 			mPrimeSet[j] = FALSE ;
 	}
 }
@@ -60,7 +60,7 @@ public:
 	}
 
 	INDEX query (const PhanBuffer<const REAL> &target ,INDEX seg) const {
-		_DEBUG_ASSERT_ (BOOL (seg >= 0 && seg < target.size ())) ;
+		_DEBUG_ASSERT_ (seg >= 0 && seg < target.size ()) ;
 		INDEX ix = seg ;
 		INDEX iy = 0 ;
 		if (target.size () - seg < mNext.length ())
@@ -200,7 +200,7 @@ inline void DijstraAlgorithm<REAL>::initialize (const Bitmap<REAL> &adjacency ,I
 			if (mYVisit[y])
 				return ;
 			mYVisit[y] = TRUE ;
-			for (INDEX i = 0 ; i < mPrev.length () ; i++) {
+			for (INDEX i = 0 ,ie = mPrev.length () ; i < ie ; i++) {
 				if (i == y)
 					continue ;
 				if (mAdjacency[y][i] < REAL (0))
@@ -221,7 +221,7 @@ inline void DijstraAlgorithm<REAL>::initialize (const Bitmap<REAL> &adjacency ,I
 			mContext.mRoot = mRoot ;
 		}
 	} ;
-	_CALL_ (Lambda (*this ,adjacency ,root)) ;
+	_CALL_ (Lambda ((*this) ,adjacency ,root)) ;
 }
 
 template <class REAL>
@@ -309,7 +309,7 @@ inline void KMeansAlgorithm<REAL>::initialize (const Set<REAL> &dataset ,const F
 					mClusterSet[iy].item = BitSet<> (mDataSet.size ()) ;
 				mClusterSet[iy].item[mDataSet.at (i)] = TRUE ;
 			}
-			for (INDEX i = 0 ; i < mCenter.length () ; i++)
+			for (INDEX i = 0 ,ie = mCenter.length () ; i < ie ; i++)
 				mClusterSet.add (i ,BitSet<> ()) ;
 		}
 
@@ -329,7 +329,9 @@ inline void KMeansAlgorithm<REAL>::initialize (const Set<REAL> &dataset ,const F
 		inline void update_next_center_list () {
 			mNextCenterList.clear () ;
 			for (auto &&i : mClusterSet) {
-				const auto r1x = (i.item.length () > 0) ? (average_center (i.item)) : (mCurrCenterList[i.key]) ;
+				const auto r1x = _SWITCH_ (
+					(i.item.length () > 0) ? (average_center (i.item)) :
+					(mCurrCenterList[i.key])) ;
 				mNextCenterList.add (r1x) ;
 			}
 			_DEBUG_ASSERT_ (mCenterIndex.size () == mNextCenterList.length ()) ;
@@ -394,7 +396,7 @@ inline void KMeansAlgorithm<REAL>::initialize (const Set<REAL> &dataset ,const F
 			mContext.mClusterSet.appand (mClusterSet) ;
 		}
 	} ;
-	_CALL_ (Lambda (*this ,dataset ,distance ,center)) ;
+	_CALL_ (Lambda ((*this) ,dataset ,distance ,center)) ;
 }
 
 template <class REAL>
@@ -471,7 +473,7 @@ inline void KMHungarianAlgorithm<REAL>::initialize (const Bitmap<REAL> &adjacenc
 		}
 
 		inline void generate () {
-			for (INDEX i = 0 ; i < mAdjacency.cy () ; i++) {
+			for (INDEX i = 0 ,ie = mAdjacency.cy () ; i < ie ; i++) {
 				while (TRUE) {
 					mXVisit.clear () ;
 					mYVisit.clear () ;
@@ -495,74 +497,152 @@ inline void KMHungarianAlgorithm<REAL>::initialize (const Bitmap<REAL> &adjacenc
 			while (TRUE) {
 				if (mTempState == VAR_NONE)
 					break ;
-				if (mTempState == 0) {
+				auto ifa = FALSE ;
+				if SWITCH_CASE (ifa) {
+					if (!(mTempState == 0))
+						discard ;
 					mLackWeight[0] = 0 ;
 					mLackWeight[1] = 0 ;
 					mTempState = 7 ;
-				} else if (mTempState == 2) {
+				}
+				if SWITCH_CASE (ifa) {
+					if (!(mTempState == 2))
+						discard ;
 					mTempRet = TRUE ;
 					mTempState = 17 ;
-				} else if (mTempState == 3) {
+				}
+				if SWITCH_CASE (ifa) {
+					if (!(mTempState == 3))
+						discard ;
 					mYVisit[mTempStack[ix][1]] = TRUE ;
 					mTempStack[ix][0] = 0 ;
 					mTempState = 4 ;
-				} else if (mTempState == 4) {
-					const auto r1x = (mTempStack[ix][0] < mAdjacency.cx ()) ? 5 : 16 ;
+				}
+				if SWITCH_CASE (ifa) {
+					if (!(mTempState == 4))
+						discard ;
+					const auto r1x = _SWITCH_ (
+						(mTempStack[ix][0] < mAdjacency.cx ()) ? 5 :
+						16) ;
 					mTempState = r1x ;
-				} else if (mTempState == 5) {
-					const auto r2x = (mXVisit[mTempStack[ix][0]]) ? 15 : 6 ;
+				}
+				if SWITCH_CASE (ifa) {
+					if (!(mTempState == 5))
+						discard ;
+					const auto r2x = _SWITCH_ (
+						(mXVisit[mTempStack[ix][0]]) ? 15 :
+						6) ;
 					mTempState = r2x ;
-				} else if (mTempState == 6) {
+				}
+				if SWITCH_CASE (ifa) {
+					if (!(mTempState == 6))
+						discard ;
 					mLackWeight[0] = mYWeight[mTempStack[ix][1]] + mXWeight[mTempStack[ix][0]] - mAdjacency[mTempStack[ix][1]][mTempStack[ix][0]] ;
-					const auto r3x = (mLackWeight[0] < mTolerance) ? 8 : 12 ;
+					const auto r3x = _SWITCH_ (
+						(mLackWeight[0] < mTolerance) ? 8 :
+						12) ;
 					mTempState = r3x ;
-				} else if (mTempState == 7) {
+				}
+				if SWITCH_CASE (ifa) {
+					if (!(mTempState == 7))
+						discard ;
 					ix = mTempStack.tail () ;
-					const auto r4x = (mTempStack[ix][1] == VAR_NONE) ? 2 : 3 ;
+					const auto r4x = _SWITCH_ (
+						(mTempStack[ix][1] == VAR_NONE) ? 2 :
+						3) ;
 					mTempState = r4x ;
-				} else if (mTempState == 8) {
+				}
+				if SWITCH_CASE (ifa) {
+					if (!(mTempState == 8))
+						discard ;
 					mXVisit[mTempStack[ix][0]] = TRUE ;
 					mTempStack.add (ARRAY2<INDEX> {0 ,mXYLink[mTempStack[ix][0]]}) ;
 					mTempState = 7 ;
-				} else if (mTempState == 9) {
+				}
+				if SWITCH_CASE (ifa) {
+					if (!(mTempState == 9))
+						discard ;
 					ix = mTempStack.tail () ;
 					mTempState = 10 ;
-				} else if (mTempState == 10) {
-					const auto r5x = mTempRet ? 11 : 15 ;
+				}
+				if SWITCH_CASE (ifa) {
+					if (!(mTempState == 10))
+						discard ;
+					const auto r5x = _SWITCH_ (
+						mTempRet ? 11 :
+						15) ;
 					mTempState = r5x ;
-				} else if (mTempState == 11) {
+				}
+				if SWITCH_CASE (ifa) {
+					if (!(mTempState == 11))
+						discard ;
 					mXYLink[mTempStack[ix][0]] = mTempStack[ix][1] ;
 					mTempRet = TRUE ;
 					mTempState = 17 ;
-				} else if (mTempState == 12) {
-					const auto r6x = (mLackWeight[1] < mTolerance) ? 13 : 14 ;
+				}
+				if SWITCH_CASE (ifa) {
+					if (!(mTempState == 12))
+						discard ;
+					const auto r6x = _SWITCH_ (
+						(mLackWeight[1] < mTolerance) ? 13 :
+						14) ;
 					mTempState = r6x ;
-				} else if (mTempState == 13) {
+				}
+				if SWITCH_CASE (ifa) {
+					if (!(mTempState == 13))
+						discard ;
 					mLackWeight[1] = mLackWeight[0] ;
 					mTempState = 15 ;
-				} else if (mTempState == 14) {
+				}
+				if SWITCH_CASE (ifa) {
+					if (!(mTempState == 14))
+						discard ;
 					mLackWeight[1] = _MIN_ (mLackWeight[1] ,mLackWeight[0]) ;
 					mTempState = 15 ;
-				} else if (mTempState == 15) {
+				}
+				if SWITCH_CASE (ifa) {
+					if (!(mTempState == 15))
+						discard ;
 					mTempStack[ix][0]++ ;
 					mTempState = 4 ;
-				} else if (mTempState == 16) {
+				}
+				if SWITCH_CASE (ifa) {
+					if (!(mTempState == 16))
+						discard ;
 					mTempRet = FALSE ;
 					mTempState = 17 ;
-				} else if (mTempState == 17) {
+				}
+				if SWITCH_CASE (ifa) {
+					if (!(mTempState == 17))
+						discard ;
 					mTempStack.pop () ;
-					const auto r7x = (mTempStack.length () > 0) ? 9 : 18 ;
+					const auto r7x = _SWITCH_ (
+						(mTempStack.length () > 0) ? 9 :
+						18) ;
 					mTempState = r7x ;
-				} else if (mTempState == 18) {
-					const auto r8x = mTempRet ? 19 : 20 ;
+				}
+				if SWITCH_CASE (ifa) {
+					if (!(mTempState == 18))
+						discard ;
+					const auto r8x = _SWITCH_ (
+						mTempRet ? 19 :
+						20) ;
 					mTempState = r8x ;
-				} else if (mTempState == 19) {
+				}
+				if SWITCH_CASE (ifa) {
+					if (!(mTempState == 19))
+						discard ;
 					mLackWeight[0] = 0 ;
 					mLackWeight[1] = 0 ;
 					mTempState = 20 ;
-				} else if (mTempState == 20) {
+				}
+				if SWITCH_CASE (ifa) {
+					if (!(mTempState == 20))
+						discard ;
 					mTempState = VAR_NONE ;
-				} else {
+				}
+				if SWITCH_CASE (ifa) {
+					_STATIC_WARNING_ ("unexpected") ;
 					_DYNAMIC_ASSERT_ (FALSE) ;
 				}
 			}
@@ -575,7 +655,7 @@ inline void KMHungarianAlgorithm<REAL>::initialize (const Bitmap<REAL> &adjacenc
 
 		inline REAL best_weight () const {
 			REAL ret = REAL (0) ;
-			for (INDEX i = 0 ; i < mXYLink.length () ; i++)
+			for (INDEX i = 0 ,ie = mXYLink.length () ; i < ie ; i++)
 				ret += mAdjacency[mXYLink[i]][i] ;
 			return std::move (ret) ;
 		}
@@ -583,7 +663,7 @@ inline void KMHungarianAlgorithm<REAL>::initialize (const Bitmap<REAL> &adjacenc
 		inline Array<ARRAY2<INDEX>> best_match () const {
 			Array<ARRAY2<INDEX>> ret = Array<ARRAY2<INDEX>> (best_match_depth ()) ;
 			INDEX iw = 0 ;
-			for (INDEX i = 0 ; i < mXYLink.length () ; i++) {
+			for (INDEX i = 0 ,ie = mXYLink.length () ; i < ie ; i++) {
 				if (mXYLink[i] == VAR_NONE)
 					continue ;
 				ret[iw++] = ARRAY2<INDEX> {mXYLink[i] ,i} ;
@@ -599,180 +679,7 @@ inline void KMHungarianAlgorithm<REAL>::initialize (const Bitmap<REAL> &adjacenc
 			return std::move (ret) ;
 		}
 	} ;
-	_CALL_ (Lambda (*this ,adjacency)) ;
-}
-
-template <class REAL>
-class TriangulateAlgorithm {
-private:
-	Array<ARRAY3<INDEX>> mTriangle ;
-
-public:
-	TriangulateAlgorithm () = delete ;
-
-	explicit TriangulateAlgorithm (const Array<ARRAY2<REAL>> &vertex) {
-		initialize (vertex) ;
-	}
-
-	const Array<ARRAY3<INDEX>> &query () const & {
-		return mTriangle ;
-	}
-
-	Array<ARRAY3<INDEX>> query () && {
-		return std::move (mTriangle) ;
-	}
-
-private:
-	void initialize (const Array<ARRAY2<REAL>> &vertex) ;
-} ;
-
-template <class REAL>
-inline void TriangulateAlgorithm<REAL>::initialize (const Array<ARRAY2<REAL>> &vertex) {
-	class Lambda {
-	private:
-		TriangulateAlgorithm &mContext ;
-		const Array<ARRAY2<REAL>> &mVertex ;
-		const REAL mTolerance = REAL (1E-6) ;
-
-		SList<INDEX> mPolygonVertexList ;
-		BOOL mClockwiseFlag ;
-		Deque<ARRAY3<INDEX>> mTriangleList ;
-		Array<ARRAY3<INDEX>> mTriangle ;
-
-	public:
-		inline explicit Lambda (TriangulateAlgorithm &context ,const Array<ARRAY2<REAL>> &vertex) popping : mContext (context) ,mVertex (vertex) {}
-
-		inline void operator() () {
-			prepare () ;
-			generate () ;
-			refresh () ;
-		}
-
-	private:
-		inline void prepare () {
-			mPolygonVertexList = polygon_vertex_list () ;
-			const auto r1x = BOOL (polygon_vertex_clockwise () > REAL (0)) ;
-			mClockwiseFlag = r1x ;
-			for (FOR_ONCE_DO_WHILE) {
-				if (!mClockwiseFlag)
-					discard ;
-				for (auto &&i : mPolygonVertexList)
-					i = mVertex.length () + ~i ;
-			}
-			mTriangleList = Deque<ARRAY3<INDEX>> () ;
-			mTriangle = Array<ARRAY3<INDEX>> () ;
-		}
-
-		inline SList<INDEX> polygon_vertex_list () const {
-			SList<INDEX> ret = SList<INDEX> (mVertex.length ()) ;
-			for (INDEX i = 0 ; i < mVertex.length () ; i++) {
-				INDEX ix = i ;
-				INDEX iy = (i + 1) % mVertex.length () ;
-				const auto r1x = _ABS_ (mVertex[iy][0] - mVertex[ix][0]) ;
-				const auto r2x = _ABS_ (mVertex[iy][1] - mVertex[ix][1]) ;
-				if (r1x < mTolerance && r2x < mTolerance)
-					continue ;
-				ret.add (i) ;
-			}
-			return std::move (ret) ;
-		}
-
-		inline REAL polygon_vertex_clockwise () const {
-			REAL ret = REAL (0) ;
-			for (INDEX i = 0 ; i < mPolygonVertexList.length () ; i++) {
-				INDEX ix = mPolygonVertexList.access ((i - 1 + mPolygonVertexList.length ()) % mPolygonVertexList.length ()) ;
-				INDEX iy = mPolygonVertexList.access (i) ;
-				INDEX iz = mPolygonVertexList.access ((i + 1) % mPolygonVertexList.length ()) ;
-				const auto r1x = math_cross_product_z (mVertex ,mPolygonVertexList[iy] ,mPolygonVertexList[ix] ,mPolygonVertexList[iz]) ;
-				ret -= _SIGN_ (r1x) ;
-			}
-			return std::move (ret) ;
-		}
-
-		inline void generate () {
-			while (TRUE) {
-				if (mPolygonVertexList.length () <= 2)
-					break ;
-				INDEX ix = sharp_vertex_one () ;
-				if (ix == VAR_NONE)
-					break ;
-				INDEX jx = mTriangleList.insert () ;
-				const auto r1x = ARRAY3<INDEX> ({
-					mPolygonVertexList.access ((ix + 1) % mPolygonVertexList.length ()) ,
-					mPolygonVertexList.access (ix) ,
-					mPolygonVertexList.access ((ix - 1 + mPolygonVertexList.length ()) % mPolygonVertexList.length ())}) ;
-				mTriangleList[jx][0] = mPolygonVertexList[r1x[0]] ;
-				mTriangleList[jx][1] = mPolygonVertexList[r1x[1]] ;
-				mTriangleList[jx][2] = mPolygonVertexList[r1x[2]] ;
-				mPolygonVertexList.remove (mPolygonVertexList.access (ix)) ;
-			}
-			update_triangle () ;
-		}
-
-		inline INDEX sharp_vertex_one () const {
-			for (INDEX i = 0 ; i < mPolygonVertexList.length () ; i++)
-				if (sharp_vertex_each (i))
-					return i ;
-			return VAR_NONE ;
-		}
-
-		inline BOOL sharp_vertex_each (INDEX it) const {
-			INDEX ix = mPolygonVertexList.access ((it - 1 + mPolygonVertexList.length ()) % mPolygonVertexList.length ()) ;
-			INDEX iy = mPolygonVertexList.access (it) ;
-			INDEX iz = mPolygonVertexList.access ((it + 1) % mPolygonVertexList.length ()) ;
-			const auto r1x = math_cross_product_z (mVertex ,mPolygonVertexList[ix] ,mPolygonVertexList[iy] ,mPolygonVertexList[iz]) ;
-			if (r1x > REAL (0))
-				return FALSE ;
-			if (r1x == REAL (0))
-				return FALSE ;
-			if (!edge_triangle (mPolygonVertexList[ix] ,mPolygonVertexList[iy] ,mPolygonVertexList[iz]))
-				return FALSE ;
-			return TRUE ;
-		}
-
-		inline BOOL edge_triangle (INDEX v1 ,INDEX v2 ,INDEX v3) const {
-			for (auto &&i : mPolygonVertexList)
-				if (!edge_triangle_each (v1 ,v2 ,v3 ,i))
-					return FALSE ;
-			return TRUE ;
-		}
-
-		inline BOOL edge_triangle_each (INDEX v1 ,INDEX v2 ,INDEX v3 ,INDEX v4) const {
-			if (BOOL (v4 == v1 || v4 == v2 || v4 == v3))
-				return TRUE ;
-			const auto r1x = math_cross_product_z (mVertex ,v1 ,v2 ,v4) ;
-			const auto r2x = math_cross_product_z (mVertex ,v2 ,v3 ,v4) ;
-			const auto r3x = math_cross_product_z (mVertex ,v3 ,v1 ,v4) ;
-			if (r1x < REAL (0) && r2x < REAL (0) && r3x <= REAL (0))
-				return FALSE ;
-			if (r1x < REAL (0) && r2x <= REAL (0) && r3x < REAL (0))
-				return FALSE ;
-			if (r1x <= REAL (0) && r2x < REAL (0) && r3x < REAL (0))
-				return FALSE ;
-			return TRUE ;
-		}
-
-		inline REAL math_cross_product_z (const Array<ARRAY2<REAL>> &vertex ,INDEX v1 ,INDEX v2 ,INDEX v3) const {
-			const auto r1x = (vertex[v2][0] - vertex[v1][0]) * (vertex[v3][1] - vertex[v1][1]) ;
-			const auto r2x = (vertex[v2][1] - vertex[v1][1]) * (vertex[v3][0] - vertex[v1][0]) ;
-			return r1x - r2x ;
-		}
-
-		inline void update_triangle () {
-			mTriangle = Array<ARRAY3<INDEX>> (mTriangleList.length ()) ;
-			for (auto &&i : mTriangle)
-				mTriangleList.take (i) ;
-			if (!mClockwiseFlag)
-				return ;
-			for (auto &&i : mTriangle)
-				_SWAP_ (i[1] ,i[2]) ;
-		}
-
-		inline void refresh () {
-			mContext.mTriangle = std::move (mTriangle) ;
-		}
-	} ;
-	_CALL_ (Lambda (*this ,vertex)) ;
+	_CALL_ (Lambda ((*this) ,adjacency)) ;
 }
 
 template <class REAL>
@@ -842,7 +749,7 @@ inline void BFGSAlgorithm<REAL>::initialize (const Function<REAL (const Array<RE
 			mDX = mFDX ;
 			mDM = Bitmap<REAL> (mDX.size () ,mDX.size ()) ;
 			mDM.fill (REAL (0)) ;
-			for (INDEX i = 0 ; i < mDM.cy () ; i++)
+			for (INDEX i = 0 ,ie = mDM.cy () ; i < ie ; i++)
 				mDM[i][i] = REAL (1) ;
 			mDG = Array<REAL> (mDX.size ()) ;
 			mIX = Array<REAL> (mDX.size ()) ;
@@ -865,11 +772,11 @@ inline void BFGSAlgorithm<REAL>::initialize (const Function<REAL (const Array<RE
 		}
 
 		inline void compute_gradient_of_loss (const Array<REAL> &dx ,Array<REAL> &dg ,Array<REAL> &sx) const {
-			for (INDEX i = 0 ; i < dx.length () ; i++)
+			for (INDEX i = 0 ,ie = dx.length () ; i < ie ; i++)
 				sx[i] = dx[i] ;
 			_STATIC_WARNING_ ("mark") ;
 			const auto r1x = _PINV_ (mTolerance) ;
-			for (INDEX i = 0 ; i < dg.length () ; i++) {
+			for (INDEX i = 0 ,ie = dg.length () ; i < ie ; i++) {
 				const auto r3x = sx[i] ;
 				sx[i] = r3x + mTolerance ;
 				dg[i] = (mLossFunc (sx) - mLossFunc (dx)) * r1x ;
@@ -888,7 +795,7 @@ inline void BFGSAlgorithm<REAL>::initialize (const Function<REAL (const Array<RE
 			E2 := _ABS_ (gradient_of_loss (mDX + _lambda * mIS) * mIS) <= -c2 * (mDG * mIS)
 			(c1 < c2 < 1)
 			*/
-			for (INDEX i = 0 ; i < mDG.length () ; i++)
+			for (INDEX i = 0 ,ie = mDG.length () ; i < ie ; i++)
 				mIS[i] = -math_matrix_mul (mDM ,i ,mDG) ;
 			const auto r1x = math_vector_dot (mDG ,mIS) ;
 			mDXLoss[0] = mLossFunc (mDX) ;
@@ -901,10 +808,10 @@ inline void BFGSAlgorithm<REAL>::initialize (const Function<REAL (const Array<RE
 					break ;
 				if (mDXLoss[2] <= REAL (0))
 					break ;
-				for (INDEX i = 0 ; i < mIX.length () ; i++)
+				for (INDEX i = 0 ,ie = mIX.length () ; i < ie ; i++)
 					mIX[i] = mDX[i] + mIS[i] * mDXLambda[1] ;
 				mDXLoss[1] = mLossFunc (mIX) ;
-				for (FOR_ONCE_DO_WHILE) {
+				for (FOR_ONCE_DO) {
 					if (mDXLoss[1] - mDXLoss[0] > mDXLambda[1] * mDXC1C2[0] * r1x)
 						discard ;
 					compute_gradient_of_loss (mIX ,mIG ,mSX) ;
@@ -912,7 +819,7 @@ inline void BFGSAlgorithm<REAL>::initialize (const Function<REAL (const Array<RE
 						discard ;
 					mDXLoss[2] = REAL (0) ;
 				}
-				for (FOR_ONCE_DO_WHILE) {
+				for (FOR_ONCE_DO) {
 					if (mDXLoss[1] >= mDXLoss[2])
 						discard ;
 					mDXLoss[2] = mDXLoss[1] ;
@@ -920,20 +827,25 @@ inline void BFGSAlgorithm<REAL>::initialize (const Function<REAL (const Array<RE
 				}
 				mDXLambda[1] *= mDXLambdaPower ;
 			}
-			_CALL_IF_ ([&] (BOOL &_case_req) {
-				_CASE_REQUIRE_ (mDXLoss[0] >= mDXLoss[2]) ;
-				const auto r2x = (mDXLoss[2] > REAL (0)) ? (mDXLoss[2]) : (mDXLoss[1]) ;
+			auto ifa = FALSE ;
+			if SWITCH_CASE (ifa) {
+				if (!(mDXLoss[0] >= mDXLoss[2]))
+					discard ;
+				const auto r2x = _SWITCH_ (
+					(mDXLoss[2] > REAL (0)) ? (mDXLoss[2]) :
+					(mDXLoss[1])) ;
 				mDXLoss[0] = r2x ;
 				_SWAP_ (mDX ,mIX) ;
 				compute_gradient_of_loss (mDX ,mIG ,mSX) ;
-			} ,[&] (BOOL &_case_req) {
+			}
+			if SWITCH_CASE (ifa) {
 				mIG.fill (REAL (0)) ;
-			}) ;
+			}
 		}
 
 		inline REAL math_matrix_mul (const Bitmap<REAL> &mat ,INDEX y ,const Array<REAL> &v) const {
 			REAL ret = REAL (0) ;
-			for (INDEX i = 0 ; i < v.length () ; i++)
+			for (INDEX i = 0 ,ie = v.length () ; i < ie ; i++)
 				ret += mat[y][i] * v[i] ;
 			return std::move (ret) ;
 		}
@@ -941,7 +853,7 @@ inline void BFGSAlgorithm<REAL>::initialize (const Function<REAL (const Array<RE
 		inline REAL math_vector_dot (const Array<REAL> &v1 ,const Array<REAL> &v2) const {
 			_DEBUG_ASSERT_ (v1.length () == v2.length ()) ;
 			REAL ret = REAL (0) ;
-			for (INDEX i = 0 ; i < v1.length () ; i++)
+			for (INDEX i = 0 ,ie = v1.length () ; i < ie ; i++)
 				ret += v1[i] * v2[i] ;
 			return std::move (ret) ;
 		}
@@ -955,7 +867,7 @@ inline void BFGSAlgorithm<REAL>::initialize (const Function<REAL (const Array<RE
 		}
 
 		inline void update_iy_and_dg () {
-			for (INDEX i = 0 ; i < mIG.length () ; i++) {
+			for (INDEX i = 0 ,ie = mIG.length () ; i < ie ; i++) {
 				mIY[i] = mIG[i] - mDG[i] ;
 				mDG[i] = mIG[i] ;
 			}
@@ -970,7 +882,7 @@ inline void BFGSAlgorithm<REAL>::initialize (const Function<REAL (const Array<RE
 
 		inline REAL hessian_matrix_each (INDEX y ,INDEX x ,const REAL &ys) const {
 			REAL ret = REAL (0) ;
-			for (INDEX i = 0 ; i < mDM.cy () ; i++) {
+			for (INDEX i = 0 ,ie = mDM.cy () ; i < ie ; i++) {
 				const auto r1x = hessian_matrix_each_factor (x ,i ,ys) ;
 				ret += r1x * (-mIS[y] * mIY[i] * ys) ;
 				if (i == y)
@@ -982,7 +894,7 @@ inline void BFGSAlgorithm<REAL>::initialize (const Function<REAL (const Array<RE
 
 		inline REAL hessian_matrix_each_factor (INDEX x ,INDEX z ,const REAL &ys) const {
 			REAL ret = REAL (0) ;
-			for (INDEX i = 0 ; i < mDM.cx () ; i++) {
+			for (INDEX i = 0 ,ie = mDM.cx () ; i < ie ; i++) {
 				ret += mDM[z][i] * (-mIY[i] * mIS[x] * ys) ;
 				if (i == x)
 					continue ;
@@ -996,7 +908,7 @@ inline void BFGSAlgorithm<REAL>::initialize (const Function<REAL (const Array<RE
 			mContext.mDXLoss = mDXLoss[0] ;
 		}
 	} ;
-	_CALL_ (Lambda (*this ,loss ,fdx)) ;
+	_CALL_ (Lambda ((*this) ,loss ,fdx)) ;
 }
 
 template <class REAL>
@@ -1046,11 +958,11 @@ public:
 	}
 
 	Array<PACK<INDEX ,REAL>> query_nearst (const ARRAY3<REAL> &point ,LENGTH count) const {
-		_DEBUG_ASSERT_ (BOOL (count >= 1 && count <= mVertex.length ())) ;
+		_DEBUG_ASSERT_ (count >= 1 && count <= mVertex.length ()) ;
 		const auto r1x = first_count_vertex (point ,count) ;
 		const auto r2x = r1x.esort () ;
 		Array<PACK<INDEX ,REAL>> ret = Array<PACK<INDEX ,REAL>> (count) ;
-		for (INDEX i = 0 ; i < ret.length () ; i++) {
+		for (INDEX i = 0 ,ie = ret.length () ; i < ie ; i++) {
 			ret[i].P1 = r2x[i] ;
 			ret[i].P2 = r1x[r2x[i]] ;
 		}
@@ -1061,53 +973,59 @@ public:
 private:
 	void initialize (const Array<ARRAY3<REAL>> &vertex) ;
 
-	void compute_search_range (const ARRAY3<REAL> &point ,const REAL &sqe_range ,INDEX it ,INDEX rot ,ARRAY3<ARRAY2<REAL>> &bound ,Deque<INDEX> &out) const {
-		_CALL_IF_ ([&] (BOOL &_case_req) {
-			_CASE_REQUIRE_ (mKDTree[it].mLeaf != VAR_NONE) ;
-			for (FOR_ONCE_DO_WHILE) {
-				INDEX ix = mKDTree[it].mLeaf ;
+	void compute_search_range (const ARRAY3<REAL> &point ,const REAL &sqe_range ,INDEX curr ,INDEX rot ,ARRAY3<ARRAY2<REAL>> &bound ,Deque<INDEX> &out) const {
+		auto ifa = FALSE ;
+		if SWITCH_CASE (ifa) {
+			if (!(mKDTree[curr].mLeaf != VAR_NONE))
+				discard ;
+			for (FOR_ONCE_DO) {
+				INDEX ix = mKDTree[curr].mLeaf ;
 				const auto r2x = _SQE_ (mVertex[ix][0] - point[0]) + _SQE_ (mVertex[ix][1] - point[1]) + _SQE_ (mVertex[ix][2] - point[2]) ;
 				if (r2x > sqe_range)
 					discard ;
 				out.add (ix) ;
 			}
-		} ,[&] (BOOL &_case_req) {
-			_CASE_REQUIRE_ (mKDTree[it].mLeaf == VAR_NONE) ;
-			const auto r3x = mKDTree[it].mKey ;
-			for (FOR_ONCE_DO_WHILE) {
+		}
+		if SWITCH_CASE (ifa) {
+			if (!(mKDTree[curr].mLeaf == VAR_NONE))
+				discard ;
+			const auto r3x = mKDTree[curr].mKey ;
+			for (FOR_ONCE_DO) {
 				if (r3x < bound[rot][0])
 					discard ;
 				const auto r4x = bound[rot][1] ;
 				bound[rot][1] = _MIN_ (bound[rot][1] ,r3x) ;
-				compute_search_range (point ,sqe_range ,mKDTree[it].mLeft ,mNextRot[rot] ,bound ,out) ;
+				compute_search_range (point ,sqe_range ,mKDTree[curr].mLeft ,mNextRot[rot] ,bound ,out) ;
 				bound[rot][1] = r4x ;
 			}
-			for (FOR_ONCE_DO_WHILE) {
+			for (FOR_ONCE_DO) {
 				if (r3x > bound[rot][1])
 					discard ;
 				const auto r5x = bound[rot][0] ;
 				bound[rot][0] = _MAX_ (bound[rot][0] ,r3x) ;
-				compute_search_range (point ,sqe_range ,mKDTree[it].mRight ,mNextRot[rot] ,bound ,out) ;
+				compute_search_range (point ,sqe_range ,mKDTree[curr].mRight ,mNextRot[rot] ,bound ,out) ;
 				bound[rot][0] = r5x ;
 			}
-		}) ;
+		}
 	}
 
 	Deque<REAL> first_count_vertex (const ARRAY3<REAL> &point ,LENGTH count) const {
-		_DEBUG_ASSERT_ (BOOL (count >= 1 && count <= mVertex.length ())) ;
+		_DEBUG_ASSERT_ (count >= 1 && count <= mVertex.length ()) ;
 		Deque<REAL> ret = Deque<REAL> (count) ;
-		for (INDEX i = 0 ; i < count ; i++) {
+		for (INDEX i = 0 ,ie = count ; i < ie ; i++) {
 			const auto r1x = _SQE_ (mVertex[i][0] - point[0]) + _SQE_ (mVertex[i][1] - point[1]) + _SQE_ (mVertex[i][2] - point[2]) ;
 			ret.add (r1x) ;
 		}
 		return std::move (ret) ;
 	}
 
-	void compute_search_range (const ARRAY3<REAL> &point ,INDEX it ,INDEX rot ,Array<PACK<INDEX ,REAL>> &out) const {
-		_CALL_IF_ ([&] (BOOL &_case_req) {
-			_CASE_REQUIRE_ (mKDTree[it].mLeaf != VAR_NONE) ;
-			for (FOR_ONCE_DO_WHILE) {
-				INDEX ix = mKDTree[it].mLeaf ;
+	void compute_search_range (const ARRAY3<REAL> &point ,INDEX curr ,INDEX rot ,Array<PACK<INDEX ,REAL>> &out) const {
+		auto ifa = FALSE ;
+		if SWITCH_CASE (ifa) {
+			if (!(mKDTree[curr].mLeaf != VAR_NONE))
+				discard ;
+			for (FOR_ONCE_DO) {
+				INDEX ix = mKDTree[curr].mLeaf ;
 				const auto r1x = Vector<REAL> {mVertex[ix] ,REAL (0)} ;
 				const auto r2x = Vector<REAL> {point ,REAL (0)} ;
 				const auto r3x = (r1x - r2x).magnitude () ;
@@ -1126,14 +1044,16 @@ private:
 				out[jx].P1 = ix ;
 				out[jx].P2 = r3x ;
 			}
-		} ,[&] (BOOL &_case_req) {
-			_CASE_REQUIRE_ (mKDTree[it].mLeaf == VAR_NONE) ;
-			const auto r4x = mKDTree[it].mKey ;
+		}
+		if SWITCH_CASE (ifa) {
+			if (!(mKDTree[curr].mLeaf == VAR_NONE))
+				discard ;
+			const auto r4x = mKDTree[curr].mKey ;
 			if (r4x >= point[rot] - out[out.length () - 1].P2)
-				compute_search_range (point ,mKDTree[it].mLeft ,mNextRot[rot] ,out) ;
+				compute_search_range (point ,mKDTree[curr].mLeft ,mNextRot[rot] ,out) ;
 			if (r4x <= point[rot] + out[out.length () - 1].P2)
-				compute_search_range (point ,mKDTree[it].mRight ,mNextRot[rot] ,out) ;
-		}) ;
+				compute_search_range (point ,mKDTree[curr].mRight ,mNextRot[rot] ,out) ;
+		}
 	}
 } ;
 
@@ -1165,7 +1085,7 @@ inline void KDTreeAlgorithm<REAL>::initialize (const Array<ARRAY3<REAL>> &vertex
 	private:
 		inline void prepare () {
 			mNextRot = ARRAY3<INDEX> {1 ,2 ,0} ;
-			for (INDEX i = 0 ; i < mOrder.length () ; i++)
+			for (INDEX i = 0 ,ie = mOrder.length () ; i < ie ; i++)
 				mOrder[i] = stack_of_order (i).esort () ;
 			mKDTree = Allocator<Node ,SAUTO> (mVertex.length ()) ;
 			mRoot = VAR_NONE ;
@@ -1186,7 +1106,7 @@ inline void KDTreeAlgorithm<REAL>::initialize (const Array<ARRAY3<REAL>> &vertex
 
 		inline void update_bound () {
 			_DEBUG_ASSERT_ (mVertex.length () > 0) ;
-			for (FOR_ONCE_DO_WHILE) {
+			for (FOR_ONCE_DO) {
 				mBound[0][0] = mVertex[0][0] ;
 				mBound[0][1] = mVertex[0][0] ;
 				mBound[1][0] = mVertex[0][1] ;
@@ -1204,15 +1124,19 @@ inline void KDTreeAlgorithm<REAL>::initialize (const Array<ARRAY3<REAL>> &vertex
 			}
 		}
 
-		void update_build_tree (INDEX it ,INDEX rot ,INDEX seg ,INDEX seg_len) {
+		void update_build_tree (INDEX curr ,INDEX rot ,INDEX seg ,INDEX seg_len) {
 			_DEBUG_ASSERT_ (seg_len > 0) ;
-			_DEBUG_ASSERT_ (BOOL (seg >= 0 && seg <= mVertex.size () - seg_len)) ;
-			_CALL_IF_ ([&] (BOOL &_case_req) {
-				_CASE_REQUIRE_ (seg_len == 1) ;
+			_DEBUG_ASSERT_ (seg >= 0 && seg <= mVertex.size () - seg_len) ;
+			auto ifa = FALSE ;
+			if SWITCH_CASE (ifa) {
+				if (!(seg_len == 1))
+					discard ;
 				INDEX jx = mKDTree.alloc (REAL (0) ,mOrder[rot][seg] ,VAR_NONE ,VAR_NONE) ;
 				mLatestIndex = jx ;
-			} ,[&] (BOOL &_case_req) {
-				_CASE_REQUIRE_ (seg_len > 1) ;
+			}
+			if SWITCH_CASE (ifa) {
+				if (!(seg_len > 1))
+					discard ;
 				INDEX ix = seg + seg_len / 2 ;
 				for (INDEX i = seg ,ie = seg + seg_len - 1 ; i < ie ; i++)
 					_DEBUG_ASSERT_ (mVertex[mOrder[rot][i]][rot] <= mVertex[mOrder[rot][i + 1]][rot]) ;
@@ -1223,20 +1147,20 @@ inline void KDTreeAlgorithm<REAL>::initialize (const Array<ARRAY3<REAL>> &vertex
 				mKDTree[jx].mLeft = mLatestIndex ;
 				update_build_tree (mKDTree[jx].mRight ,mNextRot[rot] ,ix ,(seg_len - (ix - seg))) ;
 				mKDTree[jx].mRight = mLatestIndex ;
-				mLatestIndex = it ;
-			}) ;
+				mLatestIndex = curr ;
+			}
 		}
 
 		void compute_order (Array<INDEX> &tmp_order ,ARRAY3<Array<INDEX>> &order ,INDEX rot ,INDEX n_rot ,INDEX seg_a ,INDEX seg_b ,LENGTH seg_len) const {
 			if (tmp_order.size () != mVertex.size ())
 				tmp_order = Array<INDEX> (mVertex.size ()) ;
 			INDEX iw = 0 ;
-			for (INDEX i = seg_a ; i < seg_b ; i++)
+			for (INDEX i = seg_a ,ie = seg_b ; i < ie ; i++)
 				tmp_order[iw++] = mOrder[n_rot][i] ;
 			for (INDEX i = seg_b ,ie = seg_a + seg_len ; i < ie ; i++)
 				tmp_order[iw++] = mOrder[n_rot][i] ;
 			const auto r1x = ARRAY2<INDEX> {0 ,iw} ;
-			for (INDEX i = r1x[0] ; i < r1x[1] ; i++)
+			for (INDEX i = r1x[0] ,ie = r1x[1] ; i < ie ; i++)
 				order[n_rot][seg_a + i] = tmp_order[i] ;
 			_DEBUG_ASSERT_ (iw == seg_len) ;
 		}
@@ -1249,7 +1173,7 @@ inline void KDTreeAlgorithm<REAL>::initialize (const Array<ARRAY3<REAL>> &vertex
 			mContext.mRoot = mRoot ;
 		}
 	} ;
-	_CALL_ (Lambda (*this ,vertex)) ;
+	_CALL_ (Lambda ((*this) ,vertex)) ;
 }
 
 template <class REAL>
@@ -1351,7 +1275,7 @@ inline void MaxFlowAlgorithm<REAL>::initialize (const Bitmap<REAL> &adjacency ,I
 					break ;
 				INDEX ix = mTempQueue[mTempQueue.head ()] ;
 				mTempQueue.take () ;
-				for (INDEX i = 0 ; i < mAdjacency.cy () ; i++) {
+				for (INDEX i = 0 ,ie = mAdjacency.cy () ; i < ie ; i++) {
 					if (i == ix)
 						continue ;
 					if (mBFSPath[i] != VAR_NONE)
@@ -1382,11 +1306,11 @@ inline void MaxFlowAlgorithm<REAL>::initialize (const Bitmap<REAL> &adjacency ,I
 
 		inline REAL max_flow () const {
 			REAL ret = REAL (0) ;
-			for (INDEX i = 0 ; i < mCurrentFlow.cy () ; i++)
+			for (INDEX i = 0 ,ie = mCurrentFlow.cy () ; i < ie ; i++)
 				ret += mCurrentFlow[i][mSink] ;
 			return std::move (ret) ;
 		}
 	} ;
-	_CALL_ (Lambda (*this ,adjacency ,source ,sink)) ;
+	_CALL_ (Lambda ((*this) ,adjacency ,source ,sink)) ;
 }
 } ;

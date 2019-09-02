@@ -25,11 +25,10 @@
 
 #define ANONYMOUS
 
-#define FOR_ONCE_DO_WHILE
+#define FOR_ONCE_DO
 
-#define NOTEXPR
-
-#define _CASE_REQUIRE_
+#define SWITCH_CASE
+#define SWITCH_ONCE
 
 #define FALSE
 #define TRUE

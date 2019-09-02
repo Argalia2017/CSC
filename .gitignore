@@ -11,10 +11,10 @@
 *.userprefs
 
 # Build results
-/[Dd]ata/
-/[Bb]in/
-/[Oo]bj/
-/[Ll]ib/
+/[Dd]ata
+/[Bb]in
+/[Oo]bj
+/[Ll]ib
 
 # Visual Studio 2015 cache/options directory
 .vs/

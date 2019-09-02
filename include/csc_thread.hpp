@@ -107,7 +107,7 @@ public:
 	void start (const Array<INDEX> &pid ,Array<Function<DEF<ITEM ()> NONE::*>> &&proc) {
 		_DEBUG_ASSERT_ (pid.length () > 0) ;
 		for (auto &&i : pid)
-			_DEBUG_ASSERT_ (BOOL (i >= 0 && i < proc.size ())) ;
+			_DEBUG_ASSERT_ (i >= 0 && i < proc.size ()) ;
 		for (auto &&i : proc)
 			_DEBUG_ASSERT_ (i.exist ()) ;
 		const auto r1x = mThis.watch () ;
@@ -123,12 +123,12 @@ public:
 		r1.mItemQueue->clear () ;
 		r1.mException = AutoRef<Exception> () ;
 		r1.mThreadPool = Array<AutoRef<std::thread>> (pid.size ()) ;
-		for (INDEX i = 0 ; i < r1.mThreadPool.length () ; i++) {
+		for (INDEX i = 0 ,ie = r1.mThreadPool.length () ; i < ie ; i++) {
 			const auto r2x = PACK<PTR<Holder> ,INDEX> {&r1 ,pid[i]} ;
 			//@warn: move object having captured context
 			r1.mThreadPool[i] = AutoRef<std::thread>::make ([r2x] () noexcept {
 				_CALL_TRY_ ([&] () {
-					Detail::static_execute (*r2x.P1 ,r2x.P2) ;
+					Detail::static_execute ((*r2x.P1) ,r2x.P2) ;
 				} ,[&] () {
 					_STATIC_WARNING_ ("noop") ;
 				}) ;
@@ -182,7 +182,7 @@ private:
 			ScopedGuard<Finally> ANONYMOUS (_CAST_<Finally> (_self)) ;
 			auto rax = Optional<ITEM>::nullopt () ;
 			while (TRUE) {
-				_CALL_EH_ ([&] () {
+				_CATCH_ ([&] () {
 					rax.template recreate<ITEM> (_self.mThreadProc[pid] ()) ;
 				} ,[&] (const Exception &e) noexcept {
 					_CALL_TRY_ ([&] () {
@@ -203,7 +203,7 @@ private:
 			if (!item.exist ())
 				return ;
 			_DYNAMIC_ASSERT_ (_self.mItemQueue->size () > 0) ;
-			for (FOR_ONCE_DO_WHILE) {
+			for (FOR_ONCE_DO) {
 				if (!_self.mItemQueue->full ())
 					discard ;
 				_self.mThreadCondition.self.wait_for (sgd ,std::chrono::milliseconds (0)) ;
@@ -420,7 +420,7 @@ public:
 		r1.mItemQueue->clear () ;
 		r1.mException = AutoRef<Exception> () ;
 		r1.mThreadPool = Array<AutoRef<std::thread>> (count) ;
-		for (INDEX i = 0 ; i < r1.mThreadPool.length () ; i++) {
+		for (INDEX i = 0 ,ie = r1.mThreadPool.length () ; i < ie ; i++) {
 			const auto r2x = &r1 ;
 			//@warn: move object having captured context
 			r1.mThreadPool[i] = AutoRef<std::thread>::make ([r2x] () noexcept {
@@ -479,7 +479,7 @@ private:
 			auto rax = Optional<ITEM>::nullopt () ;
 			while (TRUE) {
 				static_poll (_self ,rax) ;
-				_CALL_EH_ ([&] () {
+				_CATCH_ ([&] () {
 					_self.mThreadProc (rax.self) ;
 				} ,[&] (const Exception &e) noexcept {
 					_CALL_TRY_ ([&] () {
@@ -683,7 +683,7 @@ private:
 				}
 			} ;
 			ScopedGuard<Finally> ANONYMOUS (_CAST_<Finally> (_self)) ;
-			_CALL_EH_ ([&] () {
+			_CATCH_ ([&] () {
 				static_push (_self ,_self.mThreadProc ()) ;
 			} ,[&] (const Exception &e) noexcept {
 				_CALL_TRY_ ([&] () {
@@ -724,7 +724,7 @@ private:
 			_DEBUG_ASSERT_ (_self.mThreadFlag.exist ()) ;
 			_self.mThreadFlag.self = FALSE ;
 			_self.mThreadCondition.self.notify_all () ;
-			for (FOR_ONCE_DO_WHILE) {
+			for (FOR_ONCE_DO) {
 				if (!_self.mItem.exist ())
 					discard ;
 				if (!_self.mCallbackProc.exist ())
@@ -806,7 +806,7 @@ public:
 		std::unique_lock<std::mutex> sgd (r1.mThreadMutex) ;
 		while (r1.mThreadFlag.exist () && r1.mThreadFlag.self)
 			r1.mThreadCondition.self.wait (sgd) ;
-		for (FOR_ONCE_DO_WHILE) {
+		for (FOR_ONCE_DO) {
 			if (!r1.mException.exist ())
 				discard ;
 			r1.mException->rethrow () ;
@@ -830,7 +830,7 @@ public:
 			_DYNAMIC_ASSERT_ (r2x) ;
 			r1.mThreadCondition.self.wait_for (sgd ,interval) ;
 		}
-		for (FOR_ONCE_DO_WHILE) {
+		for (FOR_ONCE_DO) {
 			if (!r1.mException.exist ())
 				discard ;
 			r1.mException->raise () ;

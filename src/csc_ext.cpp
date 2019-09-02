@@ -7,8 +7,8 @@ public:
 	TEST_METHOD (TEST_CSC_EXT) {
 		_UNITTEST_ASSERT_ (_ANYOF_ (1 ,2 ,3) == 1) ;
 		_UNITTEST_ASSERT_ (_ANYOF_ (1 ,2 ,3) != 1) ;
-		_UNITTEST_ASSERT_ (!CSC::BOOL (_ALLOF_ (1 ,2 ,3) == 1)) ;
-		_UNITTEST_ASSERT_ (!CSC::BOOL (_ALLOF_ (1 ,2 ,3) != 1)) ;
+		_UNITTEST_ASSERT_ (!(_ALLOF_ (1 ,2 ,3) == 1)) ;
+		_UNITTEST_ASSERT_ (!(_ALLOF_ (1 ,2 ,3) != 1)) ;
 	}
 
 	TEST_METHOD (TEST_CSC_EXT_VAR128) {
@@ -22,13 +22,9 @@ public:
 
 	TEST_METHOD (TEST_CSC_EXT_VARIANT) {
 		auto rax = Optional<AutoBuffer<int>> () ;
-		rax.recreate<AutoBuffer<int>> (LENGTH (8)) ;
+		rax = AutoBuffer<int> (8) ;
 		const auto r1x = rax.self.size () ;
 		_UNITTEST_ASSERT_ (r1x == 8) ;
-		auto rbx = Optional<AutoBuffer<int>> () ;
-		rbx.recreate<AutoBuffer<int>> (LENGTH (4)) ;
-		const auto r2x = rbx.self.size () ;
-		_UNITTEST_ASSERT_ (r2x == 4) ;
 	}
 
 	TEST_METHOD (TEST_CSC_EXT_FUNCTION) {
@@ -110,7 +106,7 @@ public:
 			}) ;
 			const auto r5x = _ABS_ (arg2) ;
 			VAR ret = VAR (r5x * VAR (r4x / r5x)) ;
-			for (FOR_ONCE_DO_WHILE) {
+			for (FOR_ONCE_DO) {
 				if (r4x >= 0)
 					discard ;
 				if (r4x >= ret)
@@ -140,10 +136,10 @@ public:
 
 #ifdef __CSC_TARGET_EXE__
 	TEST_METHOD (TEST_CSC_EXT_GLOBALSTATIC) {
-		using UUID1 = ARGC<1> ;
-		using UUID2 = ARGC<2> ;
-		using UUID3 = ARGC<3> ;
-		using UUID4 = ARGC<4> ;
+		using UUID1 = ARGC<+1> ;
+		using UUID2 = ARGC<+2> ;
+		using UUID3 = ARGC<+3> ;
+		using UUID4 = ARGC<+4> ;
 		GlobalStatic<UUID1>::save (1) ;
 		GlobalStatic<UUID2>::save (2) ;
 		const auto r1x = GlobalStatic<UUID2>::load () ;
@@ -164,22 +160,24 @@ public:
 #endif
 
 	TEST_METHOD (TEST_CSC_EXT_SERIALIZER) {
-		struct wrapped_string :private Wrapped<String<STRU8>> {
+		struct wrapped_String_STRU8 :private Wrapped<String<STRU8>> {
 			inline void visit (const int &stru) {
-				wrapped_string::mSelf += _BUILDVAR32S_<STRU8> (stru) ;
+				wrapped_String_STRU8::mSelf += _BUILDVAR32S_<STRU8> (stru) ;
 			}
 			inline void visit (const float &stru) {
-				wrapped_string::mSelf += _BUILDVAL32S_<STRU8> (stru) ;
+				wrapped_String_STRU8::mSelf += _BUILDVAL32S_<STRU8> (stru) ;
 			}
 		} ;
 		const auto r1x = PACK<int ,float> {1 ,2.1f} ;
-		const auto r2x = Serializer<wrapped_string ,const PACK<int ,float>> (&PACK<int ,float>::P1 ,&PACK<int ,float>::P2) ;
+		const auto r2x = Serializer<wrapped_String_STRU8 ,const PACK<int ,float>> (&PACK<int ,float>::P1 ,&PACK<int ,float>::P2) ;
 		auto rax = String<STRU8> () ;
-		auto &r1 = _CAST_<wrapped_string> (rax) ;
-		r2x (r1x).friend_visit (r1) ;
-		//@info: see also std::launder
-		const auto r3x = _CAST_<String<STRU8>> (r1) ;
-		_UNITTEST_ASSERT_ (r3x == String<STRU8> (_PCSTRU8_ ("12.1"))) ;
+		for (FOR_ONCE_DO) {
+			auto &r1 = _CAST_<wrapped_String_STRU8> (rax) ;
+			r2x (r1x).friend_visit (r1) ;
+			//@info: see also std::launder
+			rax = std::move (_CAST_<String<STRU8>> (r1)) ;
+		}
+		_UNITTEST_ASSERT_ (rax == String<STRU8> (_PCSTRU8_ ("12.1"))) ;
 	}
 } ;
 } ;
