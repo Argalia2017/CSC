@@ -21,7 +21,7 @@ private:
 		VAR mData ;
 	} ;
 
-	using GUID_TYPE = TEMP<BYTE[DEFAULT_RECURSIVE_SIZE::value]> ;
+	using GUID_TYPE = PACK<BYTE[256]> ;
 
 	struct CLASS_NODE {
 		GUID_TYPE mGUID ;
@@ -56,7 +56,7 @@ private:
 			_STATIC_WARNING_ ("mark") ;
 			auto rax = unique_atomic_address (NULL ,NULL) ;
 			auto rbx = IntrusiveRef<Holder> () ;
-			for (FOR_ONCE_DO_WHILE) {
+			for (FOR_ONCE_DO) {
 				if (rax != NULL)
 					discard ;
 				//@warn: sure 'GlobalHeap' can be used across DLL
@@ -86,7 +86,7 @@ private:
 
 	static PTR<VALUE_NODE> static_find_node (Holder &_self ,FLAG guid) {
 		PTR<VALUE_NODE> ret = NULL ;
-		for (FOR_ONCE_DO_WHILE) {
+		for (FOR_ONCE_DO) {
 			if (!_self.mValueNode.exist ())
 				discard ;
 			const auto r1x = &_self.mValueNode.self ;
@@ -105,14 +105,14 @@ private:
 
 	static PTR<CLASS_NODE> static_find_node (Holder &_self ,const GUID_TYPE &guid) {
 		PTR<CLASS_NODE> ret = NULL ;
-		for (FOR_ONCE_DO_WHILE) {
+		for (FOR_ONCE_DO) {
 			if (!_self.mClassNode.exist ())
 				discard ;
 			const auto r1x = &_self.mClassNode.self ;
 			while (TRUE) {
 				if (ret != NULL)
 					break ;
-				if (_MEMEQUAL_ (_self.mClassNode->mGUID.unused ,PTRTOARR[guid.unused]))
+				if (_MEMEQUAL_ (PTRTOARR[_self.mClassNode->mGUID.P1] ,PTRTOARR[guid.P1] ,_COUNTOF_ (decltype (guid.P1))))
 					ret = &_self.mClassNode.self ;
 				if (&_self.mClassNode.self == r1x)
 					break ;
@@ -194,7 +194,7 @@ public:
 		auto &r1 = GlobalStatic<void>::static_unique () ;
 		ScopedGuard<std::mutex> ANONYMOUS (r1.mNodeMutex) ;
 		auto rax = GlobalStatic<void>::static_find_node (r1 ,GUID) ;
-		for (FOR_ONCE_DO_WHILE) {
+		for (FOR_ONCE_DO) {
 			if (rax != NULL)
 				discard ;
 			rax = GlobalStatic<void>::static_new_node (r1 ,GUID) ;
@@ -235,7 +235,7 @@ public:
 			const auto r2x = Detail::guid_from_typeid_name () ;
 			auto rax = GlobalStatic<void>::static_find_node (r2 ,r2x) ;
 			auto rbx = IntrusiveRef<Holder> () ;
-			for (FOR_ONCE_DO_WHILE) {
+			for (FOR_ONCE_DO) {
 				if (rax != NULL)
 					discard ;
 				rax = GlobalStatic<void>::static_new_node (r2 ,r2x) ;
@@ -276,16 +276,15 @@ private:
 		}
 
 		inline static GUID_TYPE guid_from_typeid_name () {
-			GUID_TYPE ret ;
-			_STATIC_WARNING_ ("mark") ;
-			const auto r1x = typeid (UNIT).name () ;
-			auto &r1 = _LOAD_<ARR<BYTE>> (&PTRTOARR[r1x]) ;
-			const auto r2x = _MEMCHR_ (r1 ,DEFAULT_HUGEBUFFER_SIZE::value ,BYTE (0X00)) ;
-			_DEBUG_ASSERT_ (BOOL (r2x > 0 && r2x < _SIZEOF_ (GUID_TYPE))) ;
-			const auto r3x = _MIN_ (r2x ,_SIZEOF_ (GUID_TYPE)) ;
+			DEF<BYTE[_SIZEOF_ (GUID_TYPE)]> ret ;
 			_ZERO_ (ret) ;
-			_MEMCOPY_ (PTRTOARR[ret.unused] ,r1 ,r3x) ;
-			return std::move (ret) ;
+			_STATIC_WARNING_ ("mark") ;
+			const auto r1x = String<STRA> (PTRTOARR[typeid (UNIT).name ()]) ;
+			auto &r1 = _LOAD_<ARR<BYTE>> (&PTRTOARR[&r1x[0]]) ;
+			_DEBUG_ASSERT_ (r1x.size () > 0 && r1x.size () <= _SIZEOF_ (GUID_TYPE)) ;
+			const auto r2x = _MIN_ (r1x.size () ,_SIZEOF_ (GUID_TYPE)) * _SIZEOF_ (STRA) ;
+			_MEMCOPY_ (PTRTOARR[ret] ,r1 ,r2x) ;
+			return _BITWISE_CAST_<GUID_TYPE> (ret) ;
 		}
 	} ;
 } ;
@@ -339,7 +338,7 @@ public:
 		mSubProc = std::move (proc) ;
 		mSubBreakPoint = Array<AnyRef<void>> (mSubProc.size ()) ;
 		mSubQueue = Deque<INDEX> (mSubProc.length ()) ;
-		for (INDEX i = 0 ; i < mSubProc.length () ; i++)
+		for (INDEX i = 0 ,ie = mSubProc.length () ; i < ie ; i++)
 			mSubQueue.add (i) ;
 		mSubAwaitQueue = Priority<VAR ,INDEX> (mSubProc.length ()) ;
 		mSubQueue.take (mSubCurr) ;
@@ -374,7 +373,7 @@ public:
 			if (mCoStatus.self == STATUS_STOPPED)
 				return ;
 			mCoStatus.self = STATUS_RUNNING ;
-			mSubProc[r1x] (_CAST_<SubRef> (*this)) ;
+			mSubProc[r1x] (_CAST_<SubRef> ((*this))) ;
 		} ,[&] () {
 			_STATIC_WARNING_ ("noop") ;
 		}) ;
@@ -451,7 +450,7 @@ public:
 	}
 
 	void sub_resume (LENGTH count) {
-		for (INDEX i = 0 ; i < count ; i++) {
+		for (INDEX i = 0 ,ie = count ; i < ie ; i++) {
 			if (mSelf.mSubAwaitQueue.empty ())
 				continue ;
 			const auto r1x = mSelf.mSubAwaitQueue[mSelf.mSubAwaitQueue.head ()].item ;
@@ -524,7 +523,7 @@ public:
 
 	VAR random_value (VAR _min ,VAR _max) popping {
 		ScopedGuard<std::recursive_mutex> ANONYMOUS (mMutex) ;
-		_DEBUG_ASSERT_ (BOOL (_min >= 0 && _min <= _max)) ;
+		_DEBUG_ASSERT_ (_min >= 0 && _min <= _max) ;
 		const auto r1x = mThis->random_value () ;
 		return r1x % (_max - _min + 1) + _min ;
 	}
@@ -533,7 +532,7 @@ public:
 		ScopedGuard<std::recursive_mutex> ANONYMOUS (mMutex) ;
 		Array<VAR> ret = Array<VAR> (len) ;
 		const auto r1x = _max - _min + 1 ;
-		for (INDEX i = 0 ; i < ret.length () ; i++) {
+		for (INDEX i = 0 ,ie = ret.length () ; i < ie ; i++) {
 			const auto r2x = mThis->random_value () ;
 			ret[i] = r2x % r1x + _min ;
 		}
@@ -545,7 +544,7 @@ public:
 	}
 
 	BitSet<> random_shuffle (LENGTH count ,LENGTH range ,BitSet<> &&res) popping {
-		_DEBUG_ASSERT_ (BOOL (count >= 0 && count < range)) ;
+		_DEBUG_ASSERT_ (count >= 0 && count < range) ;
 		_DEBUG_ASSERT_ (res.size () == range) ;
 		BitSet<> ret = std::move (res) ;
 		ret.clear () ;
@@ -565,7 +564,7 @@ public:
 	}
 
 	void compute_random_shuffle (LENGTH count ,const BitSet<> &range ,BitSet<> &chosen) popping {
-		_DEBUG_ASSERT_ (BOOL (count >= 0 && count < range.size ())) ;
+		_DEBUG_ASSERT_ (count >= 0 && count < range.size ()) ;
 		_DEBUG_ASSERT_ (chosen.size () == range.size ()) ;
 		chosen.clear () ;
 		while (TRUE) {
@@ -581,22 +580,22 @@ public:
 		String<STR> ret = String<STR> (M_UUID.size ()) ;
 		INDEX iw = 0 ;
 		const auto r5x = random_value (0 ,36 ,28) ;
-		for (INDEX i = 0 ; i < 8 ; i++) {
+		for (INDEX i = 0 ,ie = 8 ; i < ie ; i++) {
 			INDEX ix = 0 + i ;
 			ret[iw++] = Detail::index_to_hex_str (r5x[ix]) ;
 		}
 		ret[iw++] = STRU8 ('-') ;
-		for (INDEX i = 0 ; i < 4 ; i++) {
+		for (INDEX i = 0 ,ie = 4 ; i < ie ; i++) {
 			INDEX ix = 8 + i ;
 			ret[iw++] = Detail::index_to_hex_str (r5x[ix]) ;
 		}
 		ret[iw++] = STRU8 ('-') ;
-		for (INDEX i = 0 ; i < 4 ; i++) {
+		for (INDEX i = 0 ,ie = 4 ; i < ie ; i++) {
 			INDEX ix = 12 + i ;
 			ret[iw++] = Detail::index_to_hex_str (r5x[ix]) ;
 		}
 		ret[iw++] = STRU8 ('-') ;
-		for (INDEX i = 0 ; i < 12 ; i++) {
+		for (INDEX i = 0 ,ie = 12 ; i < ie ; i++) {
 			INDEX ix = 16 + i ;
 			ret[iw++] = Detail::index_to_hex_str (r5x[ix]) ;
 		}
@@ -617,7 +616,9 @@ private:
 	class Detail :private Wrapped<void> {
 	public:
 		inline static STRU8 index_to_hex_str (INDEX index) {
-			const auto r1x = (index < 10) ? (STRU8 ('0')) : (STRU8 ('A') - 10) ;
+			const auto r1x = _SWITCH_ (
+				(index < 10) ? (STRU8 ('0')) :
+				(STRU8 ('A') - 10)) ;
 			return STRU8 (r1x + index) ;
 		}
 	} ;

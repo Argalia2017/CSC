@@ -61,6 +61,7 @@ class ConsoleService::Implement :public ConsoleService::Abstract {
 private:
 	TextWriter<STR> mConWriter ;
 	TextWriter<STR> mLogWriter ;
+	LENGTH mBufferSize ;
 	FLAG mOptionFlag ;
 	UniqueRef<HANDLE> mConsole ;
 	String<STR> mLogPath ;
@@ -70,12 +71,19 @@ private:
 
 public:
 	Implement () {
-		const auto r1x = _COPY_ (DEFAULT_HUGEBUFFER_SIZE::value) ;
+		using DEFAULT_HUGESTRING_SIZE = ARGC<8388607> ;
+		using DEFAULT_LONGSTRING_SIZE = ARGC<8195> ;
+		const auto r1x = DEFAULT_HUGESTRING_SIZE::value + 1 ;
 		mConWriter = TextWriter<STR> (SharedRef<FixedBuffer<STR>>::make (r1x)) ;
 		mLogWriter = TextWriter<STR> (SharedRef<FixedBuffer<STR>>::make (r1x)) ;
+		mBufferSize = mLogWriter.size () - DEFAULT_LONGSTRING_SIZE::value ;
 		attach_console () ;
 		modify_option (OPTION_DEFAULT) ;
 		mLogPath = String<STR> () ;
+	}
+
+	LENGTH buffer_size () const override {
+		return mBufferSize ;
 	}
 
 	void modify_option (FLAG option) override {
@@ -196,7 +204,7 @@ public:
 
 	void attach_log (const String<STR> &path) override {
 		const auto r1x = _ABSOLUTEPATH_ (path) ;
-		for (FOR_ONCE_DO_WHILE) {
+		for (FOR_ONCE_DO) {
 			if (mLogPath == r1x)
 				discard ;
 			if (!mLogFileStream.exist ())
@@ -232,6 +240,10 @@ public:
 		}) ;
 	}
 
+	void hide () override {
+		attach_console () ;
+	}
+
 	void flash () override {
 		if (!mConsole.exist ())
 			return ;
@@ -254,10 +266,6 @@ public:
 		(void) r1x ;
 	}
 
-	void hide () override {
-		attach_console () ;
-	}
-
 private:
 	void write_con_buffer (const Binder &msg) {
 		mConWriter << _CLS_ ;
@@ -278,7 +286,7 @@ private:
 	void write_log_buffer (const PhanBuffer<const STR> &tag ,const Binder &msg) {
 		mLogWriter << _CLS_ ;
 		mLogWriter << _PCSTR_ ("[") ;
-		mLogWriter << _BUILDHOURS_<STR> (std::chrono::system_clock ().now ()) ;
+		mLogWriter << _BUILDHOURS_ (std::chrono::system_clock ().now ()) ;
 		mLogWriter << _PCSTR_ ("][") ;
 		mLogWriter << tag ;
 		mLogWriter << _PCSTR_ ("] : ") ;
@@ -377,20 +385,24 @@ public:
 	}
 
 	Array<DATA> captrue_stack_trace () popping override {
+		using DEFAULT_RECURSIVE_SIZE = ARGC<256> ;
 		auto rax = AutoBuffer<PTR<VOID>> (DEFAULT_RECURSIVE_SIZE::value) ;
 		const auto r1x = CaptureStackBackTrace (3 ,VARY (rax.size ()) ,rax.self ,NULL) ;
 		Array<DATA> ret = Array<DATA> (r1x) ;
-		for (INDEX i = 0 ; i < ret.length () ; i++)
+		for (INDEX i = 0 ,ie = ret.length () ; i < ie ; i++)
 			ret[i] = DATA (_ADDRESS_ (rax[i])) ;
 		return std::move (ret) ;
 	}
 
 	Array<String<STR>> symbol_from_address (const Array<DATA> &address) popping override {
+		using DEFAULT_SHORTSTRING_SIZE = ARGC<1023> ;
 		attach_symbol_info () ;
 		Array<String<STR>> ret = Array<String<STR>> (address.length ()) ;
 		INDEX iw = 0 ;
-		_CALL_IF_ ([&] (BOOL &_case_req) {
-			_CASE_REQUIRE_ (mSymbolFromAddress.exist ()) ;
+		auto ifa = FALSE ;
+		if SWITCH_CASE (ifa) {
+			if (!(mSymbolFromAddress.exist ()))
+				discard ;
 			const auto r1x = _SIZEOF_ (SYMBOL_INFO) + address.length () * (DEFAULT_SHORTSTRING_SIZE::value) ;
 			auto rax = AutoBuffer<BYTE> (r1x) ;
 			const auto r4x = &_LOAD_<SYMBOL_INFO> (NULL ,_ADDRESS_ (&rax.self)) ;
@@ -398,14 +410,15 @@ public:
 			r4x->MaxNameLen = DEFAULT_SHORTSTRING_SIZE::value ;
 			for (auto &&i : address) {
 				SymFromAddr (mSymbolFromAddress ,i ,NULL ,r4x) ;
-				const auto r2x = _BUILDHEX16S_<STR> (DATA (r4x->Address)) ;
+				const auto r2x = _BUILDHEX16S_ (DATA (r4x->Address)) ;
 				const auto r3x = _PARSESTRS_ (String<STRA> (PTRTOARR[r4x->Name])) ;
 				ret[iw++] = String<STR>::make (_PCSTR_ ("[") ,r2x ,_PCSTR_ ("] : ") ,r3x) ;
 			}
-		} ,[&] (BOOL &_case_req) {
+		}
+		if SWITCH_CASE (ifa) {
 			for (auto &&i : address)
-				ret[iw++] = String<STR>::make (_PCSTR_ ("[") ,_BUILDHEX16S_<STR> (i) ,_PCSTR_ ("] : null")) ;
-		}) ;
+				ret[iw++] = String<STR>::make (_PCSTR_ ("[") ,_BUILDHEX16S_ (i) ,_PCSTR_ ("] : null")) ;
+		}
 		_DEBUG_ASSERT_ (iw == ret.length ()) ;
 		return std::move (ret) ;
 	}

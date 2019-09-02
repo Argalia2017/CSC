@@ -15,12 +15,15 @@ private:
 	class Iterator {
 	private:
 		friend ArrayRange ;
-		const ArrayRange &mBase ;
-		Array<LENGTH ,SIZE> mItem ;
 		INDEX mIndex ;
+		Array<LENGTH ,SIZE> mItem ;
 
 	public:
 		inline Iterator () = delete ;
+
+		inline Iterator (const Iterator &) = delete ;
+
+		inline Iterator (Iterator &&) noexcept = default ;
 
 		inline BOOL operator== (const Iterator &that) const {
 			return BOOL (mIndex == that.mIndex) ;
@@ -30,35 +33,42 @@ private:
 			return BOOL (mIndex != that.mIndex) ;
 		}
 
-		inline const Array<LENGTH ,SIZE> &operator* () const {
-			return mItem ;
+		inline void operator= (const Iterator &) const noexcept {
+			_STATIC_WARNING_ ("noop") ;
 		}
 
-		inline void operator++ () {
-			mIndex++ ;
-			Detail::template_incrase (mBase.mRange ,mItem ,_NULL_<ARGV<ARGC<SIZE::value - 1>>> ()) ;
-		}
+		inline void operator= (Iterator &&) const = delete ;
 
 	private:
-		inline explicit Iterator (const ArrayRange &base ,Array<LENGTH ,SIZE> &&item ,INDEX index) :mBase (base) ,mItem (std::move (item)) ,mIndex (index) {}
+		inline explicit Iterator (LENGTH index ,const Array<LENGTH ,SIZE> &item) :mIndex (index) ,mItem (item) {}
 	} ;
 
 private:
-	_STATIC_ASSERT_ (SIZE::value > 0) ;
 	class Detail ;
 	Array<LENGTH ,SIZE> mRange ;
 
 public:
 	inline ArrayRange () = delete ;
 
-	inline explicit ArrayRange (const Array<LENGTH ,SIZE> &range) :mRange (range) {}
+	inline explicit ArrayRange (const Array<LENGTH ,SIZE> &_range) :mRange (_range) {}
 
-	inline Iterator begin () const {
-		return Iterator (*this ,Detail::first_item (mRange) ,0) ;
+	inline Iterator ibegin () const {
+		return Iterator (0 ,Detail::first_item (mRange)) ;
 	}
 
-	inline Iterator end () const {
-		return Iterator (*this ,Detail::first_item (mRange) ,Detail::total_length (mRange)) ;
+	inline Iterator iend () const {
+		const auto r1x = Detail::total_length (mRange) ;
+		return Iterator (r1x ,Detail::first_item (mRange)) ;
+	}
+
+	inline Iterator &inext (Iterator &iter) const popping {
+		iter.mIndex++ ;
+		Detail::template_incrase (mRange ,iter.mItem ,_NULL_<ARGV<ARGC<SIZE::value - 1>>> ()) ;
+		return iter ;
+	}
+
+	inline const Array<LENGTH ,SIZE> &get (const Iterator &index) const {
+		return index.mItem ;
 	}
 
 private:
@@ -68,8 +78,8 @@ private:
 			LENGTH ret = 1 ;
 			for (auto &&i : range) {
 				_DEBUG_ASSERT_ (i >= 0) ;
-				_DEBUG_ASSERT_ (ret * i >= 0) ;
 				ret *= i ;
+				_DEBUG_ASSERT_ (ret >= 0) ;
 			}
 			return std::move (ret) ;
 		}
@@ -80,19 +90,19 @@ private:
 			return std::move (ret) ;
 		}
 
-		inline static void template_incrase (const Array<LENGTH ,SIZE> &range ,Array<LENGTH ,SIZE> &index ,const ARGV<ARGC<0>> &) {
-			_DEBUG_ASSERT_ (index[0] < range[0]) ;
-			index[0]++ ;
+		inline static void template_incrase (const Array<LENGTH ,SIZE> &range ,Array<LENGTH ,SIZE> &item ,const ARGV<ARGC<0>> &) {
+			_DEBUG_ASSERT_ (item[0] < range[0]) ;
+			item[0]++ ;
 		}
 
 		template <class _ARG1>
-		inline static void template_incrase (const Array<LENGTH ,SIZE> &range ,Array<LENGTH ,SIZE> &index ,const ARGV<_ARG1> &) {
-			_STATIC_ASSERT_ (BOOL (LENGTH (_ARG1::value) > 0 && LENGTH (_ARG1::value) < LENGTH (SIZE::value))) ;
-			index[_ARG1::value]++ ;
-			if (index[_ARG1::value] < range[_ARG1::value])
+		inline static void template_incrase (const Array<LENGTH ,SIZE> &range ,Array<LENGTH ,SIZE> &item ,const ARGV<_ARG1> &) {
+			_STATIC_ASSERT_ (LENGTH (_ARG1::value) > 0 && LENGTH (_ARG1::value) < LENGTH (SIZE::value)) ;
+			item[_ARG1::value]++ ;
+			if (item[_ARG1::value] < range[_ARG1::value])
 				return ;
-			index[_ARG1::value] = 0 ;
-			template_incrase (range ,index ,_NULL_<ARGV<ARGC<_ARG1::value - 1>>> ()) ;
+			item[_ARG1::value] = 0 ;
+			template_incrase (range ,item ,_NULL_<ARGV<ARGC<_ARG1::value - 1>>> ()) ;
 		}
 	} ;
 } ;
@@ -101,7 +111,7 @@ template <class UNIT>
 class Bitmap {
 private:
 	template <class BASE>
-	class Row {
+	class Row final {
 	private:
 		friend Bitmap ;
 		BASE &mBase ;
@@ -154,6 +164,7 @@ public:
 		mHeap->mWidth[1] = _cy ;
 		mHeap->mWidth[2] = _cw ;
 		mHeap->mWidth[3] = _ck ;
+		mHeap->mWidth[4] = r1x ;
 		mImage = PhanBuffer<UNIT>::make (mHeap->mBuffer.self) ;
 		reset () ;
 	}
@@ -162,8 +173,9 @@ public:
 		mHeap = SharedRef<HEAP>::make () ;
 		mHeap->mWidth[0] = mImage.size () ;
 		mHeap->mWidth[1] = 1 ;
-		mHeap->mWidth[2] = mImage.size () ;
+		mHeap->mWidth[2] = mHeap->mWidth[0] ;
 		mHeap->mWidth[3] = 0 ;
+		mHeap->mWidth[4] = mImage.size () ;
 		mImage = PhanBuffer<UNIT>::make (image) ;
 		reset () ;
 	}
@@ -173,8 +185,9 @@ public:
 		mHeap->mBuffer = std::move (image) ;
 		mHeap->mWidth[0] = mImage.size () ;
 		mHeap->mWidth[1] = 1 ;
-		mHeap->mWidth[2] = mImage.size () ;
+		mHeap->mWidth[2] = mHeap->mWidth[0] ;
 		mHeap->mWidth[3] = 0 ;
+		mHeap->mWidth[4] = mImage.size () ;
 		mImage = PhanBuffer<UNIT>::make (mHeap->mBuffer.self) ;
 		reset () ;
 	}
@@ -199,10 +212,6 @@ public:
 		return mCK ;
 	}
 
-	ArrayRange<ARGC<2>> range () const {
-		return ArrayRange<ARGC<2>> ({mCY ,mCX}) ;
-	}
-
 	PhanBuffer<UNIT> raw () & {
 		_DYNAMIC_ASSERT_ (mImage.size () > 0) ;
 		return PhanBuffer<UNIT>::make (mImage) ;
@@ -217,7 +226,9 @@ public:
 
 	void reset () {
 		const auto r1x = ARRAY5<LENGTH> {0 ,0 ,0 ,0 ,0} ;
-		auto &r1 = (mHeap.exist ()) ? (mHeap->mWidth) : r1x ;
+		auto &r1 = _SWITCH_ (
+			(mHeap.exist ()) ? (mHeap->mWidth) :
+			r1x) ;
 		mCX = r1[0] ;
 		mCY = r1[1] ;
 		mCW = r1[2] ;
@@ -230,9 +241,7 @@ public:
 		_DEBUG_ASSERT_ (_cx <= _cw) ;
 		_DEBUG_ASSERT_ (_ck >= 0) ;
 		_DEBUG_ASSERT_ (mHeap.exist ()) ;
-		const auto r1x = mHeap->mWidth[1] * mHeap->mWidth[2] + mHeap->mWidth[3] ;
-		_DEBUG_ASSERT_ (_cy * _cw + _ck <= r1x) ;
-		(void) r1x ;
+		_DEBUG_ASSERT_ (_cy * _cw + _ck <= mHeap->mWidth[4]) ;
 		mCX = _cx ;
 		mCY = _cy ;
 		mCW = _cw ;
@@ -250,15 +259,19 @@ public:
 		return std::move (ret) ;
 	}
 
+	ArrayRange<ARGC<2>> range () const {
+		return ArrayRange<ARGC<2>> ({mCY ,mCX}) ;
+	}
+
 	UNIT &get (INDEX y ,INDEX x) & {
-		_DEBUG_ASSERT_ (BOOL (x >= 0 && x < mCX)) ;
-		_DEBUG_ASSERT_ (BOOL (y >= 0 && y < mCY)) ;
+		_DEBUG_ASSERT_ (x >= 0 && x < mCX) ;
+		_DEBUG_ASSERT_ (y >= 0 && y < mCY) ;
 		return mImage[y * mCW + x + mCK] ;
 	}
 
 	const UNIT &get (INDEX y ,INDEX x) const & {
-		_DEBUG_ASSERT_ (BOOL (x >= 0 && x < mCX)) ;
-		_DEBUG_ASSERT_ (BOOL (y >= 0 && y < mCY)) ;
+		_DEBUG_ASSERT_ (x >= 0 && x < mCX) ;
+		_DEBUG_ASSERT_ (y >= 0 && y < mCY) ;
 		return mImage[y * mCW + x + mCK] ;
 	}
 
@@ -285,7 +298,7 @@ public:
 	inline UNIT &operator[] (const ARRAY2<INDEX> &) && = delete ;
 
 	Row<Bitmap> get (INDEX y) & {
-		return Row<Bitmap> (*this ,y) ;
+		return Row<Bitmap> ((*this) ,y) ;
 	}
 
 	inline Row<Bitmap> operator[] (INDEX y) & {
@@ -293,7 +306,7 @@ public:
 	}
 
 	Row<const Bitmap> get (INDEX y) const & {
-		return Row<const Bitmap> (*this ,y) ;
+		return Row<const Bitmap> ((*this) ,y) ;
 	}
 
 	inline Row<const Bitmap> operator[] (INDEX y) const & {
@@ -345,7 +358,7 @@ public:
 
 	inline Bitmap &operator+= (const Bitmap &that) {
 		addto (that) ;
-		return *this ;
+		return (*this) ;
 	}
 
 	Bitmap sub (const Bitmap &that) const {
@@ -370,7 +383,7 @@ public:
 
 	inline Bitmap &operator-= (const Bitmap &that) {
 		subto (that) ;
-		return *this ;
+		return (*this) ;
 	}
 
 	Bitmap mul (const Bitmap &that) const {
@@ -395,7 +408,7 @@ public:
 
 	inline Bitmap &operator*= (const Bitmap &that) {
 		multo (that) ;
-		return *this ;
+		return (*this) ;
 	}
 
 	Bitmap div (const Bitmap &that) const {
@@ -420,7 +433,7 @@ public:
 
 	inline Bitmap &operator/= (const Bitmap &that) {
 		divto (that) ;
-		return *this ;
+		return (*this) ;
 	}
 
 	Bitmap mod (const Bitmap &that) const {
@@ -445,7 +458,7 @@ public:
 
 	inline Bitmap &operator%= (const Bitmap &that) {
 		modto (that) ;
-		return *this ;
+		return (*this) ;
 	}
 
 	Bitmap plus () const {
@@ -492,7 +505,7 @@ public:
 
 	inline Bitmap &operator&= (const Bitmap &that) {
 		bandto (that) ;
-		return *this ;
+		return (*this) ;
 	}
 
 	Bitmap bor (const Bitmap &that) const {
@@ -517,7 +530,7 @@ public:
 
 	inline Bitmap &operator|= (const Bitmap &that) {
 		borto (that) ;
-		return *this ;
+		return (*this) ;
 	}
 
 	Bitmap bxor (const Bitmap &that) const {
@@ -542,7 +555,7 @@ public:
 
 	inline Bitmap &operator^= (const Bitmap &that) {
 		bxorto (that) ;
-		return *this ;
+		return (*this) ;
 	}
 
 	Bitmap bnot () const {
@@ -559,9 +572,10 @@ public:
 	Bitmap matrix_product (const Bitmap &that) const {
 		_DEBUG_ASSERT_ (mCX == that.mCY) ;
 		Bitmap ret = Bitmap (that.mCX ,mCY) ;
-		for (auto &&i : ArrayRange<ARGC<2>> ({mCY ,that.mCX})) {
+		const auto r1x = ARRAY2<LENGTH> {mCY ,that.mCX} ;
+		for (auto &&i : ArrayRange<ARGC<2>> (r1x)) {
 			ret.get (i) = UNIT (0) ;
-			for (INDEX j = 0 ; j < mCX ; j++)
+			for (INDEX j = 0 ,je = mCX ; j < je ; j++)
 				ret.get (i) += get (i[0] ,j) * that.get (j ,i[1]) ;
 		}
 		return std::move (ret) ;
@@ -606,18 +620,26 @@ using COLOR_XYZ64 = ARRAY3<VAL64> ;
 template <class UNIT>
 class AbstractImage {
 public:
+	struct LAYOUT {
+		PTR<ARR<UNIT>> mImage ;
+		LENGTH mCX ;
+		LENGTH mCY ;
+		LENGTH mCW ;
+		LENGTH mCK ;
+	} ;
+
 	exports struct Abstract :public Interface {
-		virtual void compute_layout (AnyRef<void> &_this ,PACK<PTR<ARR<UNIT>> ,LENGTH[4]> &layout) const = 0 ;
+		virtual void compute_layout (AnyRef<void> &_this ,LAYOUT &layout) const = 0 ;
 		virtual void compute_load_data (AnyRef<void> &_this ,LENGTH _cx ,LENGTH _cy) const = 0 ;
 		virtual void compute_load_data (AnyRef<void> &_this ,const AutoBuffer<BYTE> &data) const = 0 ;
 		virtual void compute_save_data (const AnyRef<void> &_this ,AutoBuffer<BYTE> &data ,const AnyRef<void> &param) const = 0 ;
-		virtual void compute_load_file (AnyRef<void> &_this ,const String<STR> &file) const = 0 ;
-		virtual void compute_save_file (const AnyRef<void> &_this ,const String<STR> &file ,const AnyRef<void> &param) const = 0 ;
+		virtual void compute_load_data_file (AnyRef<void> &_this ,const String<STR> &file) const = 0 ;
+		virtual void compute_save_data_file (const AnyRef<void> &_this ,const String<STR> &file ,const AnyRef<void> &param) const = 0 ;
 	} ;
 
 private:
 	template <class BASE>
-	class Row {
+	class Row final {
 	private:
 		friend AbstractImage ;
 		BASE &mBase ;
@@ -650,7 +672,7 @@ private:
 	} ;
 
 	template <class _UNIT>
-	class NativeProxy {
+	class NativeProxy final {
 	private:
 		friend AbstractImage ;
 		PhanRef<const Abstract> mAbstract ;
@@ -660,7 +682,7 @@ private:
 		inline NativeProxy () = delete ;
 
 		inline ~NativeProxy () noexcept {
-			_CALL_EH_ ([&] () {
+			_CATCH_ ([&] () {
 				Detail::static_update_layout (mAbstract ,mThis) ;
 			}) ;
 		}
@@ -671,7 +693,7 @@ private:
 		inline NativeProxy (NativeProxy &&) noexcept = default ;
 		inline NativeProxy &operator= (NativeProxy &&) = delete ;
 
-		inline implicit operator _UNIT & () const & {
+		inline implicit operator _UNIT & () const & popping {
 			_DEBUG_ASSERT_ (mAbstract.exist ()) ;
 			_DEBUG_ASSERT_ (mThis.exist ()) ;
 			_DEBUG_ASSERT_ (mThis->mHolder.exist ()) ;
@@ -681,11 +703,11 @@ private:
 		inline implicit operator _UNIT & () && = delete ;
 
 		template <class _RET ,class = ENABLE_TYPE<std::is_convertible<_UNIT & ,_RET>::value>>
-		inline implicit operator _RET () const & {
+		inline implicit operator _RET () const & popping {
 			_DEBUG_ASSERT_ (mAbstract.exist ()) ;
 			_DEBUG_ASSERT_ (mThis.exist ()) ;
 			_DEBUG_ASSERT_ (mThis->mHolder.exist ()) ;
-			return _RET (mThis->mHolder.template rebind<_UNIT> ().self) ;
+			return _RET (_XVALUE_<_UNIT> (mThis->mHolder.template rebind<_UNIT> ().self)) ;
 		}
 
 		template <class _RET>
@@ -747,16 +769,16 @@ public:
 
 	UNIT &get (INDEX y ,INDEX x) & {
 		_DEBUG_ASSERT_ (exist ()) ;
-		_DEBUG_ASSERT_ (BOOL (x >= 0 && x < mThis->mCX)) ;
-		_DEBUG_ASSERT_ (BOOL (y >= 0 && y < mThis->mCY)) ;
+		_DEBUG_ASSERT_ (x >= 0 && x < mThis->mCX) ;
+		_DEBUG_ASSERT_ (y >= 0 && y < mThis->mCY) ;
 		_DEBUG_ASSERT_ (mThis->mImage.size () > 0) ;
 		return mThis->mImage[y * mThis->mCW + x + mThis->mCK] ;
 	}
 
 	const UNIT &get (INDEX y ,INDEX x) const & {
 		_DEBUG_ASSERT_ (exist ()) ;
-		_DEBUG_ASSERT_ (BOOL (x >= 0 && x < mThis->mCX)) ;
-		_DEBUG_ASSERT_ (BOOL (y >= 0 && y < mThis->mCY)) ;
+		_DEBUG_ASSERT_ (x >= 0 && x < mThis->mCX) ;
+		_DEBUG_ASSERT_ (y >= 0 && y < mThis->mCY) ;
 		_DEBUG_ASSERT_ (mThis->mImage.size () > 0) ;
 		return mThis->mImage[y * mThis->mCW + x + mThis->mCK] ;
 	}
@@ -784,7 +806,7 @@ public:
 	inline UNIT &operator[] (const ARRAY2<INDEX> &) && = delete ;
 
 	Row<AbstractImage> get (INDEX y) & {
-		return Row<AbstractImage> (*this ,y) ;
+		return Row<AbstractImage> ((*this) ,y) ;
 	}
 
 	inline Row<AbstractImage> operator[] (INDEX y) & {
@@ -792,7 +814,7 @@ public:
 	}
 
 	Row<const AbstractImage> get (INDEX y) const & {
-		return Row<const AbstractImage> (*this ,y) ;
+		return Row<const AbstractImage> ((*this) ,y) ;
 	}
 
 	inline Row<const AbstractImage> operator[] (INDEX y) const & {
@@ -821,8 +843,8 @@ public:
 	}
 
 	void load_data (LENGTH _cx ,LENGTH _cy) {
-		_DEBUG_ASSERT_ (BOOL (_cx >= 0 && _cx < VAR32_MAX)) ;
-		_DEBUG_ASSERT_ (BOOL (_cy >= 0 && _cy < VAR32_MAX)) ;
+		_DEBUG_ASSERT_ (_cx >= 0 && _cx < VAR32_MAX) ;
+		_DEBUG_ASSERT_ (_cy >= 0 && _cy < VAR32_MAX) ;
 		_DEBUG_ASSERT_ (_cx * _cy > 0) ;
 		_DEBUG_ASSERT_ (mAbstract.exist ()) ;
 		mAbstract->compute_load_data (mThis->mHolder ,_cx ,_cy) ;
@@ -842,16 +864,16 @@ public:
 		Detail::static_update_layout (mAbstract ,mThis) ;
 	}
 
-	void load_file (const String<STR> &file) {
+	void load_data_file (const String<STR> &file) {
 		_DEBUG_ASSERT_ (mAbstract.exist ()) ;
 		_DEBUG_ASSERT_ (mThis.exist ()) ;
-		mAbstract->compute_load_file (mThis->mHolder ,file) ;
+		mAbstract->compute_load_data_file (mThis->mHolder ,file) ;
 		Detail::static_update_layout (mAbstract ,mThis) ;
 	}
 
-	void save_file (const String<STR> &file ,const AnyRef<void> &param) {
+	void save_data_file (const String<STR> &file ,const AnyRef<void> &param) {
 		_DEBUG_ASSERT_ (exist ()) ;
-		mAbstract->compute_save_file (mThis->mHolder ,file ,param) ;
+		mAbstract->compute_save_data_file (mThis->mHolder ,file ,param) ;
 		Detail::static_update_layout (mAbstract ,mThis) ;
 	}
 
@@ -865,14 +887,15 @@ private:
 			_DEBUG_ASSERT_ (_abstract.exist ()) ;
 			_DEBUG_ASSERT_ (_this.exist ()) ;
 			_DEBUG_ASSERT_ (_this->mHolder.exist ()) ;
-			auto rax = PACK<PTR<ARR<UNIT>> ,LENGTH[4]> () ;
+			auto rax = LAYOUT () ;
 			_ZERO_ (rax) ;
 			_abstract->compute_layout (_this->mHolder ,rax) ;
-			_this->mImage = PhanBuffer<UNIT>::make (*rax.P1 ,(rax.P2[1] * rax.P2[2] + rax.P2[3])) ;
-			_this->mCX = rax.P2[0] ;
-			_this->mCY = rax.P2[1] ;
-			_this->mCW = rax.P2[2] ;
-			_this->mCK = rax.P2[3] ;
+			const auto r1x = rax.mCY * rax.mCW + rax.mCK ;
+			_this->mImage = PhanBuffer<UNIT>::make ((*rax.mImage) ,r1x) ;
+			_this->mCX = rax.mCX ;
+			_this->mCY = rax.mCY ;
+			_this->mCW = rax.mCW ;
+			_this->mCK = rax.mCK ;
 		}
 	} ;
 } ;

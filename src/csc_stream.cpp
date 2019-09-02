@@ -22,18 +22,17 @@ public:
 
 	TEST_METHOD (TEST_CSC_STREAM_BYTEWRITER) {
 		auto rax = Buffer<int ,ARGC<4>> () ;
-		auto wos = ByteWriter (SharedRef<FixedBuffer<CSC::BYTE>>::make (DEFAULT_SHORTSTRING_SIZE::value)) ;
+		auto wos = ByteWriter (SharedRef<FixedBuffer<CSC::BYTE>>::make (1024)) ;
 		wos << rax ;
 	}
 
 	TEST_METHOD (TEST_CSC_STREAM_TEXTREADER) {
-		struct wrappered_int :private Wrapped<int> {
+		struct wrapped_int :private Wrapped<int> {
 			inline void friend_read (TextReader<STRU8> &reader) popping {
-				reader >> wrappered_int::mSelf >> _GAP_ ;
+				reader >> wrapped_int::mSelf >> _GAP_ ;
 			}
 		} ;
 		auto rax = Buffer<int ,ARGC<4>> () ;
-		auto &r1 = _CAST_<Buffer<wrappered_int ,ARGC<4>>> (rax) ;
 		auto rbx = Buffer<STRU8 ,ARGC<10>> () ;
 		auto ris = TextReader<STRU8> (PhanBuffer<const STRU8>::make (rbx)) ;
 		ris.attr ().modify_space (STRU8 (' ') ,0) ;
@@ -47,12 +46,17 @@ public:
 		rbx[7] = STRU8 (' ') ;
 		rbx[8] = STRU8 ('0') ;
 		rbx[9] = ris.attr ().varify_ending_item () ;
-		ris >> r1 ;
+		for (FOR_ONCE_DO) {
+			auto &r1 = _CAST_<Buffer<wrapped_int ,ARGC<4>>> (rax) ;
+			ris >> r1 ;
+			//@info: see also std::launder
+			rax = std::move (_CAST_<Buffer<int ,ARGC<4>>> (r1)) ;
+		}
 	}
 
 	TEST_METHOD (TEST_CSC_STREAM_TEXTWRITER) {
 		auto rax = Buffer<int ,ARGC<4>> () ;
-		auto wos = TextWriter<STRU8> (SharedRef<FixedBuffer<STRU8>>::make (DEFAULT_SHORTSTRING_SIZE::value)) ;
+		auto wos = TextWriter<STRU8> (SharedRef<FixedBuffer<STRU8>>::make (1024)) ;
 		wos << rax ;
 	}
 } ;

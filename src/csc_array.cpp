@@ -35,7 +35,7 @@ public:
 			rbx.add (i) ;
 		const auto r2x = rbx.esort () ;
 		rax.sort () ;
-		for (INDEX i = 0 ; i < rax.length () ; i++)
+		for (INDEX i = 0 ,ie = rax.length () ; i < ie ; i++)
 			_UNITTEST_ASSERT_ (rbx[r2x[i]] == rax[i]) ;
 		INDEX ir = 0 ;
 		while (TRUE) {
@@ -51,7 +51,7 @@ public:
 
 	TEST_METHOD (TEST_CSC_ARRAY_SLIST) {
 		auto rax = SList<INDEX> (100000) ;
-		for (INDEX i = 0 ; i < rax.size () ; i++)
+		for (INDEX i = 0 ,ie = rax.size () ; i < ie ; i++)
 			rax.add (i) ;
 		rax.remove (1) ;
 		rax.remove (10) ;
@@ -59,7 +59,7 @@ public:
 		rax.remove (100) ;
 		rax.remove (101) ;
 		rax.remove (1000) ;
-		for (INDEX i = 0 ; i < rax.length () ; i++) {
+		for (INDEX i = 0 ,ie = rax.length () ; i < ie ; i++) {
 			INDEX ix = rax[rax.access (i)] ;
 			ix -= EFLAG (ix > 1000) ;
 			ix -= EFLAG (ix > 101) ;
@@ -84,7 +84,7 @@ public:
 				_UNITTEST_ASSERT_ (ix == rax.at (i)) ;
 			}
 		}
-		for (INDEX i = 0 ; i < rax.size () ; i++) {
+		for (INDEX i = 0 ,ie = rax.size () ; i < ie ; i++) {
 			const auto r2x = rbx.self () ;
 			INDEX ix = rax.find (r2x) ;
 			if (ix == VAR_NONE)

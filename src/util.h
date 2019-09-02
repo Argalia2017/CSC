@@ -72,7 +72,7 @@ using namespace Microsoft::VisualStudio::CppUnitTestFramework ;
 namespace CSC {
 inline exports PTR<NONE> GlobalStatic<void>::unique_atomic_address (PTR<NONE> expect ,PTR<NONE> data) popping {
 	PTR<NONE> ret = NULL ;
-	_CALL_EH_ ([&] () {
+	_CATCH_ ([&] () {
 		const auto r1x = _CACHE_ ([] () {
 			return SharedRef<std::atomic<PTR<NONE>>>::make (&_NULL_<NONE> ()) ;
 		}) ;
@@ -82,6 +82,7 @@ inline exports PTR<NONE> GlobalStatic<void>::unique_atomic_address (PTR<NONE> ex
 	return std::move (ret) ;
 }
 } ;
+#endif
 
 namespace CSC {
 template <>
@@ -104,7 +105,6 @@ inline exports DebuggerService &Singleton<DebuggerService>::instance () {
 	return GlobalStatic<Singleton<DebuggerService>>::unique () ;
 }
 } ;
-#endif
 #endif
 
 namespace UNITTEST {

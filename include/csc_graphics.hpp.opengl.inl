@@ -146,8 +146,8 @@ public:
 
 public:
 	AbstractShader_Engine_OPENGL () {
-		_STATIC_ASSERT_ (_SIZEOF_ (REMOVE_CVR_TYPE<decltype (*this)>) == _SIZEOF_ (Interface)) ;
-		_STATIC_ASSERT_ (_ALIGNOF_ (REMOVE_CVR_TYPE<decltype (*this)>) == _ALIGNOF_ (Interface)) ;
+		_STATIC_ASSERT_ (_SIZEOF_ (REMOVE_CVR_TYPE<decltype ((*this))>) == _SIZEOF_ (Interface)) ;
+		_STATIC_ASSERT_ (_ALIGNOF_ (REMOVE_CVR_TYPE<decltype ((*this))>) == _ALIGNOF_ (Interface)) ;
 	}
 
 	void compute_load_data (AnyRef<void> &_this ,const PhanBuffer<const BYTE> &vs ,const PhanBuffer<const BYTE> &fs) const override {
@@ -162,7 +162,7 @@ public:
 			compute_check_shaderiv (r1x) ;
 			glAttachShader (me ,r1x) ;
 			const auto r4x = glCreateShader (GL_FRAGMENT_SHADER) ;
-			const auto r5x = _LOAD_<ARR<STRA>> (NULL ,_ADDRESS_ (&vs.self)) ;
+			const auto r5x = _LOAD_<ARR<STRA>> (NULL ,_ADDRESS_ (&fs.self)) ;
 			const auto r6x = VAR32 (fs.size ()) ;
 			glShaderSource (r4x ,1 ,&r5x ,&r6x) ;
 			glCompileShader (r4x) ;
@@ -264,14 +264,14 @@ public:
 
 	void compute_sprite_active_texture (AnyRef<void> &_this ,INDEX texture) const override {
 		auto &r1 = _this.rebind<SPRITE_NATIVE_TYPE> ().self ;
-		_DYNAMIC_ASSERT_ (BOOL (texture >= 0 && texture < r1.mVTO->size ())) ;
+		_DYNAMIC_ASSERT_ (texture >= 0 && texture < r1.mVTO->size ()) ;
 		r1.mTexture = texture ;
 	}
 
 	void compute_sprite_draw (AnyRef<void> &_this) const override {
 		auto &r1 = _this.rebind<SPRITE_NATIVE_TYPE> ().self ;
 		glBindVertexArray (r1.mVAO) ;
-		for (FOR_ONCE_DO_WHILE) {
+		for (FOR_ONCE_DO) {
 			if (r1.mTexture == VAR_NONE)
 				discard ;
 			glActiveTexture (GL_TEXTURE_2D) ;
@@ -497,12 +497,12 @@ private:
 
 	inline String<STRA> identity_name (const String<STR> &name) const {
 		String<STRA> ret = String<STRA> (name.length ()) ;
-		for (INDEX i = 0 ; i < ret.size () ; i++) {
+		for (INDEX i = 0 ,ie = ret.size () ; i < ie ; i++) {
 			const auto r2x = BOOL (name[i] >= STR ('a') && name[i] <= STR ('z')) ;
 			const auto r3x = BOOL (name[i] >= STR ('A') && name[i] <= STR ('Z')) ;
 			const auto r4x = BOOL (name[i] >= STR ('0') && name[i] <= STR ('9')) ;
 			const auto r5x = BOOL (name[i] == STR ('_')) ;
-			_DEBUG_ASSERT_ (BOOL (r2x || r3x || r4x || r5x)) ;
+			_DEBUG_ASSERT_ (r2x || r3x || r4x || r5x) ;
 			ret[i] = STRA (name[i]) ;
 		}
 		return std::move (ret) ;

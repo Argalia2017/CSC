@@ -11,11 +11,6 @@
   <!--csc.hpp-->
 
 
-  <Type Name="CSC::__uint128_t">
-    <DisplayString>{{ {*(int*)&amp;unused[12],X} {*(int*)&amp;unused[8],X} {*(int*)&amp;unused[4],X} {*(int*)&amp;unused[0],X} }}</DisplayString>
-  </Type>
-
-
   <Type Name="CSC::TEMP&lt;*&gt;">
     <Expand>
       <ExpandedItem>*($T1*)&amp;unused</ExpandedItem>
@@ -25,6 +20,7 @@
 
   <Type Name="CSC::Interface" Inheritable="false" />
 
+  
   <Type Name="CSC::GlobalWatch::Storage&lt;*,*&gt;">
     <Expand>
       <Item Name="[name]">(const char*)mData.P1[0]</Item>
@@ -156,7 +152,7 @@
 
   <Type Name="CSC::Allocator&lt;*,CSC::ARGC&lt;*&gt; &gt;">
     <Expand>
-      <Item Name="[size]">sizeof (mAllocator.mBuffer) / sizeof (mAllocator.mBuffer[0])</Item>
+      <Item Name="[size]">mSize</Item>
       <Item Name="[length]">mLength</Item>
       <ArrayItems>
         <Size>sizeof (mAllocator.mBuffer) / sizeof (mAllocator.mBuffer[0])</Size>
@@ -168,7 +164,7 @@
 
   <Type Name="CSC::Allocator&lt;*,CSC::ARGC&lt;-1&gt; &gt;">
     <Expand>
-      <Item Name="[size]">mAllocator.mSize</Item>
+      <Item Name="[size]">mSize</Item>
       <Item Name="[length]">mLength</Item>
       <ArrayItems>
         <Size>mAllocator.mSize</Size>
@@ -180,7 +176,7 @@
 
   <Type Name="CSC::Allocator&lt;*,CSC::ARGC&lt;-2&gt; &gt;">
     <Expand>
-      <Item Name="[size]">mAllocator.mSize</Item>
+      <Item Name="[size]">mSize</Item>
       <Item Name="[length]">mLength</Item>
       <ArrayItems>
         <Size>mAllocator.mSize</Size>

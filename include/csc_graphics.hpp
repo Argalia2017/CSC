@@ -98,7 +98,7 @@ public:
 
 	//@info: 'angle_vn-angle_nu-angle_uv' equals to 'pitch-yaw-roll' (heading-pitch-bank)
 	void rotate (const REAL &angle_vn ,const REAL &angle_nu ,const REAL &angle_uv) {
-		for (FOR_ONCE_DO_WHILE) {
+		for (FOR_ONCE_DO) {
 			if (angle_vn == REAL (0))
 				discard ;
 			const auto r1x = mEyeN * _COS_ (angle_vn) - mEyeV * _SIN_ (angle_vn) ;
@@ -106,7 +106,7 @@ public:
 			mEyeN = r1x.normalize () ;
 			mEyeV = r2x.normalize () ;
 		}
-		for (FOR_ONCE_DO_WHILE) {
+		for (FOR_ONCE_DO) {
 			if (angle_nu == REAL (0))
 				discard ;
 			const auto r3x = mEyeU * _COS_ (angle_nu) - mEyeN * _SIN_ (angle_nu) ;
@@ -114,7 +114,7 @@ public:
 			mEyeU = r3x.normalize () ;
 			mEyeN = r4x.normalize () ;
 		}
-		for (FOR_ONCE_DO_WHILE) {
+		for (FOR_ONCE_DO) {
 			if (angle_uv == REAL (0))
 				discard ;
 			const auto r5x = mEyeV * _COS_ (angle_uv) - mEyeU * _SIN_ (angle_uv) ;
@@ -132,7 +132,7 @@ public:
 	}
 
 	Matrix<REAL> view_matrix () const {
-		const auto r1x = Function<DEF<void (Matrix<REAL> &)> NONE::*> (PhanRef<const Camera>::make (*this) ,&Camera::compute_view_matrix) ;
+		const auto r1x = Function<DEF<void (Matrix<REAL> &)> NONE::*> (PhanRef<const Camera>::make ((*this)) ,&Camera::compute_view_matrix) ;
 		mViewMatrix.apply (r1x) ;
 		return mViewMatrix ;
 	}
@@ -150,7 +150,7 @@ public:
 	}
 
 	void perspective (const REAL &fov ,const REAL &aspect ,const REAL &_near ,const REAL &_far) {
-		_DEBUG_ASSERT_ (BOOL (fov > REAL (0) && fov < REAL (180))) ;
+		_DEBUG_ASSERT_ (fov > REAL (0) && fov < REAL (180)) ;
 		_DEBUG_ASSERT_ (aspect > REAL (0)) ;
 		const auto r1x = _near * _TAN_ (fov * REAL (MATH_PI / 180) * REAL (0.5)) ;
 		const auto r2x = r1x * aspect ;
@@ -160,7 +160,7 @@ public:
 	void frustum (const REAL &left ,const REAL &right ,const REAL &bottom ,const REAL &top ,const REAL &_near ,const REAL &_far) {
 		_DEBUG_ASSERT_ (right > left) ;
 		_DEBUG_ASSERT_ (top > bottom) ;
-		_DEBUG_ASSERT_ (BOOL (_near > REAL (0) && _near < _far)) ;
+		_DEBUG_ASSERT_ (_near > REAL (0) && _near < _far) ;
 		mScreenW = right - left ;
 		mScreenH = top - bottom ;
 		mScreenD = _far - _near ;
@@ -185,7 +185,7 @@ public:
 	void ortho (const REAL &left ,const REAL &right ,const REAL &bottom ,const REAL &top ,const REAL &_near ,const REAL &_far) {
 		_DEBUG_ASSERT_ (right > left) ;
 		_DEBUG_ASSERT_ (top > bottom) ;
-		_DEBUG_ASSERT_ (BOOL (_near > REAL (0) && _near < _far)) ;
+		_DEBUG_ASSERT_ (_near > REAL (0) && _near < _far) ;
 		mScreenW = right - left ;
 		mScreenH = top - bottom ;
 		mScreenD = _far - _near ;
@@ -286,7 +286,7 @@ public:
 		_DEBUG_ASSERT_ (exist ()) ;
 		const auto r1x = mUniformSet.length () ;
 		INDEX ix = mUniformSet.insert (name) ;
-		for (FOR_ONCE_DO_WHILE) {
+		for (FOR_ONCE_DO) {
 			if (mUniformSet.length () == r1x)
 				discard ;
 			mAbstract->compute_uniform_find (mHolder ,name ,mUniformSet[ix].item) ;
@@ -298,7 +298,7 @@ public:
 		_DEBUG_ASSERT_ (exist ()) ;
 		const auto r1x = mUniformSet.length () ;
 		INDEX ix = mUniformSet.insert (name) ;
-		for (FOR_ONCE_DO_WHILE) {
+		for (FOR_ONCE_DO) {
 			if (mUniformSet.length () == r1x)
 				discard ;
 			mAbstract->compute_uniform_find (mHolder ,name ,mUniformSet[ix].item) ;
@@ -310,7 +310,7 @@ public:
 		_DEBUG_ASSERT_ (exist ()) ;
 		const auto r1x = mUniformSet.length () ;
 		INDEX ix = mUniformSet.insert (name) ;
-		for (FOR_ONCE_DO_WHILE) {
+		for (FOR_ONCE_DO) {
 			if (mUniformSet.length () == r1x)
 				discard ;
 			mAbstract->compute_uniform_find (mHolder ,name ,mUniformSet[ix].item) ;
@@ -322,7 +322,7 @@ public:
 		_DEBUG_ASSERT_ (exist ()) ;
 		const auto r1x = mUniformSet.length () ;
 		INDEX ix = mUniformSet.insert (name) ;
-		for (FOR_ONCE_DO_WHILE) {
+		for (FOR_ONCE_DO) {
 			if (mUniformSet.length () == r1x)
 				discard ;
 			mAbstract->compute_uniform_find (mHolder ,name ,mUniformSet[ix].item) ;
@@ -334,7 +334,7 @@ public:
 		_DEBUG_ASSERT_ (exist ()) ;
 		const auto r1x = mUniformSet.length () ;
 		INDEX ix = mUniformSet.insert (name) ;
-		for (FOR_ONCE_DO_WHILE) {
+		for (FOR_ONCE_DO) {
 			if (mUniformSet.length () == r1x)
 				discard ;
 			mAbstract->compute_uniform_find (mHolder ,name ,mUniformSet[ix].item) ;
@@ -346,7 +346,7 @@ public:
 		_DEBUG_ASSERT_ (exist ()) ;
 		const auto r1x = mUniformSet.length () ;
 		INDEX ix = mUniformSet.insert (name) ;
-		for (FOR_ONCE_DO_WHILE) {
+		for (FOR_ONCE_DO) {
 			if (mUniformSet.length () == r1x)
 				discard ;
 			mAbstract->compute_uniform_find (mHolder ,name ,mUniformSet[ix].item) ;
@@ -358,7 +358,7 @@ public:
 		_DEBUG_ASSERT_ (exist ()) ;
 		const auto r1x = mUniformSet.length () ;
 		INDEX ix = mUniformSet.insert (name) ;
-		for (FOR_ONCE_DO_WHILE) {
+		for (FOR_ONCE_DO) {
 			if (mUniformSet.length () == r1x)
 				discard ;
 			mAbstract->compute_uniform_find (mHolder ,name ,mUniformSet[ix].item) ;
@@ -370,7 +370,7 @@ public:
 		_DEBUG_ASSERT_ (exist ()) ;
 		const auto r1x = mUniformSet.length () ;
 		INDEX ix = mUniformSet.insert (name) ;
-		for (FOR_ONCE_DO_WHILE) {
+		for (FOR_ONCE_DO) {
 			if (mUniformSet.length () == r1x)
 				discard ;
 			mAbstract->compute_uniform_find (mHolder ,name ,mUniformSet[ix].item) ;

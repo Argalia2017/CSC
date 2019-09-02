@@ -53,7 +53,7 @@ struct OPERATOR_TYPENAME {
 		_DYNAMIC_ASSERT_ (r9x > 0) ;
 		ret.mSelf = ret.mSelf.segment (r5x ,r9x) ;
 #else
-		ret.mSelf = _BUILDVAR64S_<STR> (_TYPEID_<_RET> ()) ;
+		ret.mSelf = _BUILDVAR64S_ (_TYPEUID_<_RET> ()) ;
 #endif
 		return std::move (ret) ;
 	}
@@ -225,7 +225,7 @@ struct OPERATOR_TYPENAME {
 	template <class _ARG1>
 	inline static void static_write_typename_ids (TextWriter<STR> &writer ,const ARGV<_ARG1> & ,const DEF<decltype (ARGVPX)> & ,const DEF<decltype (ARGVP1)> &) {
 		writer << _PCSTR_ ("typename '") ;
-		writer << _TYPEID_<_ARG1> () ;
+		writer << _TYPEUID_<_ARG1> () ;
 		writer << _PCSTR_ ("'") ;
 	}
 
@@ -318,6 +318,7 @@ public:
 	static constexpr auto OPTION_NO_DEBUG = FLAG (0X00000020) ;
 	static constexpr auto OPTION_NO_VERBOSE = FLAG (0X00000040) ;
 	static constexpr auto OPTION_ALWAYS_FLUSH = FLAG (0X00000080) ;
+	static constexpr auto OPTION_TESTING = FLAG (0X00000100) ;
 
 private:
 	struct Binder :public Interface {
@@ -349,6 +350,7 @@ private:
 	} ;
 
 	exports struct Abstract :public Interface {
+		virtual LENGTH buffer_size () const = 0 ;
 		virtual void modify_option (FLAG option) = 0 ;
 		virtual void print (const Binder &msg) = 0 ;
 		virtual void fatal (const Binder &msg) = 0 ;
@@ -360,10 +362,10 @@ private:
 		virtual void attach_log (const String<STR> &path) = 0 ;
 		virtual void log (const PhanBuffer<const STR> &tag ,const Binder &msg) = 0 ;
 		virtual void show () = 0 ;
+		virtual void hide () = 0 ;
 		virtual void flash () = 0 ;
 		virtual void pause () = 0 ;
 		virtual void clear () = 0 ;
-		virtual void hide () = 0 ;
 	} ;
 
 private:
@@ -373,6 +375,11 @@ private:
 	StrongRef<Abstract> mThis ;
 
 public:
+	LENGTH buffer_size () const {
+		ScopedGuard<std::recursive_mutex> ANONYMOUS (mMutex) ;
+		return mThis->buffer_size () ;
+	}
+
 	void modify_option (FLAG option) {
 		ScopedGuard<std::recursive_mutex> ANONYMOUS (mMutex) ;
 		mThis->modify_option (option) ;

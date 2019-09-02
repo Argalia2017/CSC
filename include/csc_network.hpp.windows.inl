@@ -98,7 +98,7 @@ inline void _inline_SOCKET_BIND_ (const SOCKET &_socket ,const String<STRU8> &ad
 inline ARRAY2<fd_set> _inline_SOCKET_SELECT_ (const SOCKET &_socket ,LENGTH timeout) {
 #pragma warning (push)
 #ifdef __CSC_COMPILER_MSVC__
-#pragma warning (disable :4548) //@info: warning C4548: 逗号前的表达式不起任何作用；应输入带副作用的表达式
+#pragma warning (disable :4548)
 #endif
 	ARRAY2<fd_set> ret ;
 	FD_ZERO (&ret[0]) ;
@@ -174,20 +174,20 @@ public:
 		if (r1x == 0)
 			return ;
 		//@info: state of 'this' has been changed
-		for (FOR_ONCE_DO_WHILE) {
+		for (FOR_ONCE_DO) {
 			if (r1x >= 0)
 				discard ;
 			const auto r2x = errno ;
 			if (r2x == 0)
 				discard ;
-			_DYNAMIC_ASSERT_ (BOOL (r2x == EINPROGRESS || r2x == EWOULDBLOCK)) ;
+			_DYNAMIC_ASSERT_ (r2x == EINPROGRESS || r2x == EWOULDBLOCK) ;
 		}
 		link_confirm () ;
 	}
 
 	void modify_buffer (LENGTH rcv_len ,LENGTH snd_len) {
-		_DEBUG_ASSERT_ (BOOL (rcv_len >= 0 && rcv_len < VAR32_MAX)) ;
-		_DEBUG_ASSERT_ (BOOL (snd_len >= 0 && snd_len < VAR32_MAX)) ;
+		_DEBUG_ASSERT_ (rcv_len >= 0 && rcv_len < VAR32_MAX) ;
+		_DEBUG_ASSERT_ (snd_len >= 0 && snd_len < VAR32_MAX) ;
 		const auto r1x = VAR32 (rcv_len) ;
 		::setsockopt (mThis->mSocket ,SOL_SOCKET ,SO_RCVBUF ,_CAST_<STRA[_SIZEOF_ (VAR32)]> (r1x) ,VAR32 (_SIZEOF_ (VAR32))) ;
 		const auto r2x = VAR32 (snd_len) ;
@@ -195,62 +195,65 @@ public:
 	}
 
 	void read (const PhanBuffer<BYTE> &data) popping {
+		using DEFAULT_TIMEOUT_SIZE = ARGC<30000> ;
 		const auto r1x = _inline_SOCKET_MAKE_TIMEVAL_ (DEFAULT_TIMEOUT_SIZE::value) ;
 		::setsockopt (mThis->mSocket ,SOL_SOCKET ,SO_RCVTIMEO ,_CAST_<STRA[_SIZEOF_ (TIMEVAL)]> (r1x) ,VAR32 (_SIZEOF_ (TIMEVAL))) ;
 		const auto r2x = ::recv (mThis->mSocket ,_LOAD_<ARR<STRA>> (NULL ,_ADDRESS_ (&data.self)) ,VAR32 (data.size ()) ,0) ;
 		const auto r3x = _inline_SOCKET_MAKE_TIMEVAL_ (0) ;
 		::setsockopt (mThis->mSocket ,SOL_SOCKET ,SO_RCVTIMEO ,_CAST_<STRA[_SIZEOF_ (TIMEVAL)]> (r3x) ,VAR32 (_SIZEOF_ (TIMEVAL))) ;
 		//@info: state of 'this' has been changed
-		for (FOR_ONCE_DO_WHILE) {
+		for (FOR_ONCE_DO) {
 			if (r2x >= 0)
 				discard ;
 			const auto r4x = errno ;
 			if (r4x == 0)
 				discard ;
-			_DYNAMIC_ASSERT_ (BOOL (r4x == EINPROGRESS || r4x == EWOULDBLOCK)) ;
+			_DYNAMIC_ASSERT_ (r4x == EINPROGRESS || r4x == EWOULDBLOCK) ;
 		}
 		_DYNAMIC_ASSERT_ (r2x == data.size ()) ;
 	}
 
-	void read (const PhanBuffer<BYTE> &data ,INDEX &it ,LENGTH timeout) popping {
-		it = VAR_NONE ;
+	void read (const PhanBuffer<BYTE> &data ,INDEX &out_i ,LENGTH timeout) popping {
+		out_i = VAR_NONE ;
 		const auto r1x = _inline_SOCKET_MAKE_TIMEVAL_ (timeout) ;
 		::setsockopt (mThis->mSocket ,SOL_SOCKET ,SO_RCVTIMEO ,_CAST_<STRA[_SIZEOF_ (TIMEVAL)]> (r1x) ,VAR32 (_SIZEOF_ (TIMEVAL))) ;
 		const auto r2x = ::recv (mThis->mSocket ,_LOAD_<ARR<STRA>> (NULL ,_ADDRESS_ (&data.self)) ,VAR32 (data.size ()) ,0) ;
 		const auto r3x = _inline_SOCKET_MAKE_TIMEVAL_ (0) ;
 		::setsockopt (mThis->mSocket ,SOL_SOCKET ,SO_RCVTIMEO ,_CAST_<STRA[_SIZEOF_ (TIMEVAL)]> (r3x) ,VAR32 (_SIZEOF_ (TIMEVAL))) ;
 		//@info: state of 'this' has been changed
-		for (FOR_ONCE_DO_WHILE) {
+		for (FOR_ONCE_DO) {
 			if (r2x >= 0)
 				discard ;
 			const auto r4x = errno ;
 			if (r4x == 0)
 				discard ;
-			_DYNAMIC_ASSERT_ (BOOL (r4x == EINPROGRESS || r4x == EWOULDBLOCK)) ;
+			_DYNAMIC_ASSERT_ (r4x == EINPROGRESS || r4x == EWOULDBLOCK) ;
 		}
-		it = r2x ;
+		out_i = r2x ;
 	}
 
 	void write (const PhanBuffer<const BYTE> &data) {
+		using DEFAULT_TIMEOUT_SIZE = ARGC<30000> ;
 		const auto r1x = _inline_SOCKET_MAKE_TIMEVAL_ (DEFAULT_TIMEOUT_SIZE::value) ;
 		::setsockopt (mThis->mSocket ,SOL_SOCKET ,SO_SNDTIMEO ,_CAST_<STRA[_SIZEOF_ (TIMEVAL)]> (r1x) ,VAR32 (_SIZEOF_ (TIMEVAL))) ;
 		const auto r2x = ::send (mThis->mSocket ,_LOAD_<ARR<STRA>> (NULL ,_ADDRESS_ (&data.self)) ,VAR32 (data.size ()) ,0) ;
 		const auto r3x = _inline_SOCKET_MAKE_TIMEVAL_ (0) ;
 		::setsockopt (mThis->mSocket ,SOL_SOCKET ,SO_SNDTIMEO ,_CAST_<STRA[_SIZEOF_ (TIMEVAL)]> (r3x) ,VAR32 (_SIZEOF_ (TIMEVAL))) ;
 		//@info: state of 'this' has been changed
-		for (FOR_ONCE_DO_WHILE) {
+		for (FOR_ONCE_DO) {
 			if (r2x >= 0)
 				discard ;
 			const auto r4x = errno ;
 			if (r4x == 0)
 				discard ;
-			_DYNAMIC_ASSERT_ (BOOL (r4x == EINPROGRESS || r4x == EWOULDBLOCK)) ;
+			_DYNAMIC_ASSERT_ (r4x == EINPROGRESS || r4x == EWOULDBLOCK) ;
 		}
 		_DYNAMIC_ASSERT_ (r2x == data.size ()) ;
 	}
 
 private:
 	void link_confirm () {
+		using DEFAULT_TIMEOUT_SIZE = ARGC<30000> ;
 		const auto r1x = _inline_SOCKET_SELECT_ (mThis->mSocket ,DEFAULT_TIMEOUT_SIZE::value) ;
 		//@info: state of 'this' has been changed
 		_DYNAMIC_ASSERT_ (FD_ISSET (mThis->mSocket ,&r1x[1]) != 0) ;
@@ -288,8 +291,8 @@ inline exports void TCPSocket::read (const PhanBuffer<BYTE> &data) popping {
 	mThis.rebind<Implement> ()->read (data) ;
 }
 
-inline exports void TCPSocket::read (const PhanBuffer<BYTE> &data ,INDEX &it ,LENGTH timeout) popping {
-	mThis.rebind<Implement> ()->read (data ,it ,timeout) ;
+inline exports void TCPSocket::read (const PhanBuffer<BYTE> &data ,INDEX &out_i ,LENGTH timeout) popping {
+	mThis.rebind<Implement> ()->read (data ,out_i ,timeout) ;
 }
 
 inline exports void TCPSocket::write (const PhanBuffer<const BYTE> &data) {
@@ -314,6 +317,7 @@ public:
 	}
 
 	void wait_linker () {
+		using DEFAULT_TIMEOUT_SIZE = ARGC<30000> ;
 		const auto r1x = _inline_SOCKET_SELECT_ (mListener ,DEFAULT_TIMEOUT_SIZE::value) ;
 		//@info: state of 'this' has been changed
 		_DYNAMIC_ASSERT_ (FD_ISSET (mListener ,&r1x[0]) != 0) ;
@@ -392,6 +396,7 @@ public:
 	}
 
 	void read (const PhanBuffer<BYTE> &data) popping {
+		using DEFAULT_TIMEOUT_SIZE = ARGC<30000> ;
 		const auto r1x = _inline_SOCKET_SELECT_ (mSocket ,DEFAULT_TIMEOUT_SIZE::value) ;
 		//@info: state of 'this' has been changed
 		_DYNAMIC_ASSERT_ (FD_ISSET (mSocket ,&r1x[0]) != 0) ;
@@ -405,8 +410,8 @@ public:
 		mPeer = rax.P1 ;
 	}
 
-	void read (const PhanBuffer<BYTE> &data ,INDEX &it ,LENGTH timeout) popping {
-		it = VAR_NONE ;
+	void read (const PhanBuffer<BYTE> &data ,INDEX &out_i ,LENGTH timeout) popping {
+		out_i = VAR_NONE ;
 		const auto r1x = _inline_SOCKET_SELECT_ (mSocket ,timeout) ;
 		//@info: state of 'this' has been changed
 		_DYNAMIC_ASSERT_ (FD_ISSET (mSocket ,&r1x[0]) != 0) ;
@@ -417,10 +422,11 @@ public:
 		//@info: state of 'this' has been changed
 		_DYNAMIC_ASSERT_ (rax.P2 == _SIZEOF_ (SOCKADDR)) ;
 		mPeer = rax.P1 ;
-		it = r2x ;
+		out_i = r2x ;
 	}
 
 	void write (const PhanBuffer<const BYTE> &data) {
+		using DEFAULT_TIMEOUT_SIZE = ARGC<30000> ;
 		const auto r1x = _inline_SOCKET_SELECT_ (mSocket ,DEFAULT_TIMEOUT_SIZE::value) ;
 		//@info: state of 'this' has been changed
 		_DYNAMIC_ASSERT_ (FD_ISSET (mSocket ,&r1x[1]) != 0) ;
@@ -450,19 +456,59 @@ inline exports void UDPSocket::read (const PhanBuffer<BYTE> &data) popping {
 	mThis.rebind<Implement> ()->read (data) ;
 }
 
-inline exports void UDPSocket::read (const PhanBuffer<BYTE> &data ,INDEX &it ,LENGTH timeout) popping {
-	mThis.rebind<Implement> ()->read (data ,it ,timeout) ;
+inline exports void UDPSocket::read (const PhanBuffer<BYTE> &data ,INDEX &out_i ,LENGTH timeout) popping {
+	mThis.rebind<Implement> ()->read (data ,out_i ,timeout) ;
 }
 
 inline exports void UDPSocket::write (const PhanBuffer<const BYTE> &data) {
 	mThis.rebind<Implement> ()->write (data) ;
 }
 
+inline namespace S {
+inline String<STRU8> _HTTP_GET_ (const String<STRU8> &addr ,const String<STRU8> &site ,const String<STRU8> &msg ,LENGTH max_len) popping {
+	using DEFAULT_TIMEOUT_SIZE = ARGC<30000> ;
+	String<STRU8> ret = String<STRU8> (max_len) ;
+	INDEX iw = 0 ;
+	auto rax = TCPSocket (_PCSTRU8_ ("")) ;
+	rax.link (addr) ;
+	const auto r1x = _XVALUE_<PTR<void (TextWriter<STRU8> &)>> (_GAP_) ;
+	const auto r2x = String<STRU8>::make (_PCSTRU8_ ("GET ") ,site ,_PCSTRU8_ ("?") ,msg ,_PCSTRU8_ (" HTTP/1.1") ,r1x ,_PCSTRU8_ ("HOST: ") ,addr ,r1x ,r1x) ;
+	rax.write (PhanBuffer<const BYTE>::make (r2x.raw ())) ;
+	rax.read (PhanBuffer<BYTE>::make (ret.raw ()) ,iw ,DEFAULT_TIMEOUT_SIZE::value) ;
+	_DYNAMIC_ASSERT_ (iw >= 0 && iw < ret.size ()) ;
+	if (iw < ret.size ())
+		ret[iw] = 0 ;
+	return std::move (ret) ;
+}
+
+inline String<STRU8> _HTTP_POST_ (const String<STRU8> &addr ,const String<STRU8> &site ,const String<STRU8> &msg ,LENGTH max_len) popping {
+	using DEFAULT_TIMEOUT_SIZE = ARGC<30000> ;
+	String<STRU8> ret = String<STRU8> (max_len) ;
+	INDEX iw = 0 ;
+	auto rax = TCPSocket (_PCSTRU8_ ("")) ;
+	rax.link (addr) ;
+	const auto r1x = _XVALUE_<PTR<void (TextWriter<STRU8> &)>> (_GAP_) ;
+	const auto r2x = String<STRU8>::make (_PCSTRU8_ ("POST ") ,site ,_PCSTRU8_ (" HTTP/1.1") ,r1x ,_PCSTRU8_ ("HOST: ") ,addr ,r1x ,_PCSTRU8_ ("Content-Length: ") ,msg.length () ,r1x ,r1x ,msg) ;
+	rax.write (PhanBuffer<const BYTE>::make (r2x.raw ())) ;
+	rax.read (PhanBuffer<BYTE>::make (ret.raw ()) ,iw ,DEFAULT_TIMEOUT_SIZE::value) ;
+	_DYNAMIC_ASSERT_ (iw >= 0 && iw < ret.size ()) ;
+	if (iw < ret.size ())
+		ret[iw] = 0 ;
+	return std::move (ret) ;
+}
+} ;
+
 class NetworkService::Implement :public NetworkService::Abstract {
 private:
 	UniqueRef<void> mService ;
+	LENGTH mCurrentTimeout ;
 
 public:
+	Implement () {
+		using DEFAULT_TIMEOUT_SIZE = ARGC<30000> ;
+		mCurrentTimeout = DEFAULT_TIMEOUT_SIZE::value ;
+	}
+
 	void startup () override {
 		if (mService.exist ())
 			return ;
@@ -481,14 +527,27 @@ public:
 		mService = UniqueRef<void> () ;
 	}
 
-	String<STRU8> host_name () const override {
+	String<STRU8> localhost_name () const override {
 		auto rax = String<STRA> (127) ;
 		::gethostname (rax.raw ().self ,VAR32 (rax.size ())) ;
 		return _ASTOU8S_ (rax) ;
 	}
 
-	String<STRU8> host_addr () const override {
+	String<STRU8> localhost_addr () const override {
 		return String<STRU8> (_PCSTRU8_ ("127.0.0.1")) ;
+	}
+
+	String<STRU8> broadcast_addr () const override {
+		return String<STRU8> (_PCSTRU8_ ("255.255.255.255")) ;
+	}
+
+	LENGTH get_timeout () const override {
+		return mCurrentTimeout ;
+	}
+
+	void set_timeout (LENGTH timeout) override {
+		_DEBUG_ASSERT_ (timeout > 0) ;
+		mCurrentTimeout = timeout ;
 	}
 } ;
 
