@@ -5,6 +5,7 @@
 #endif
 
 #include "csc.hpp"
+#include "csc_basic.hpp"
 #include "csc_array.hpp"
 
 namespace CSC {
@@ -45,92 +46,103 @@ inline BOOL _ISINF_ (const VAL64 &x) {
 	return TRUE ;
 }
 
-inline imports DEF<VALX (const VALX &x)> _SQRT_ ;
+inline imports DEF<VAL32 (const VAL32 &x)> _SQRT_ ;
+inline imports DEF<VAL64 (const VAL64 &x)> _SQRT_ ;
 
 template <class _ARG1>
 inline _ARG1 _SQRT_ (const _ARG1 &x) {
 	_STATIC_ASSERT_ (stl::is_var_xyz<_ARG1>::value || stl::is_val_xyz<_ARG1>::value) ;
-	return _ARG1 (_SQRT_ (VALX (x))) ;
+	return _ARG1 (_SQRT_ (VAL64 (x))) ;
 }
 
-inline imports DEF<VALX (const VALX &x ,const VALX &y)> _POW_ ;
+inline imports DEF<VAL32 (const VAL32 &x ,const VAL32 &y)> _POW_ ;
+inline imports DEF<VAL64 (const VAL64 &x ,const VAL64 &y)> _POW_ ;
 
 template <class _ARG1>
 inline _ARG1 _POW_ (const _ARG1 &x ,const _ARG1 &y) {
 	_STATIC_ASSERT_ (stl::is_var_xyz<_ARG1>::value || stl::is_val_xyz<_ARG1>::value) ;
-	return _ARG1 (_POW_ (VALX (x) ,VALX (y))) ;
+	return _ARG1 (_POW_ (VAL64 (x) ,VAL64 (y))) ;
 }
 
-inline imports DEF<VALX (const VALX &x)> _EXP_ ;
+inline imports DEF<VAL32 (const VAL32 &x)> _EXP_ ;
+inline imports DEF<VAL64 (const VAL64 &x)> _EXP_ ;
 
 template <class _ARG1>
 inline _ARG1 _EXP_ (const _ARG1 &x) {
 	_STATIC_ASSERT_ (stl::is_val_xyz<_ARG1>::value) ;
-	return _ARG1 (_EXP_ (VALX (x))) ;
+	return _ARG1 (_EXP_ (VAL64 (x))) ;
 }
 
-inline imports DEF<VALX (const VALX &x)> _LOG_ ;
+inline imports DEF<VAL32 (const VAL32 &x)> _LOG_ ;
+inline imports DEF<VAL64 (const VAL64 &x)> _LOG_ ;
 
 template <class _ARG1>
 inline _ARG1 _LOG_ (const _ARG1 &x) {
 	_STATIC_ASSERT_ (stl::is_val_xyz<_ARG1>::value) ;
-	return _ARG1 (_LOG_ (VALX (x))) ;
+	return _ARG1 (_LOG_ (VAL64 (x))) ;
 }
 
-inline imports DEF<VALX (const VALX &x)> _SIN_ ;
+inline imports DEF<VAL32 (const VAL32 &x)> _SIN_ ;
+inline imports DEF<VAL64 (const VAL64 &x)> _SIN_ ;
 
 template <class _ARG1>
 inline _ARG1 _SIN_ (const _ARG1 &x) {
 	_STATIC_ASSERT_ (stl::is_val_xyz<_ARG1>::value) ;
-	return _ARG1 (_SIN_ (VALX (x))) ;
+	return _ARG1 (_SIN_ (VAL64 (x))) ;
 }
 
-inline imports DEF<VALX (const VALX &x)> _COS_ ;
+inline imports DEF<VAL32 (const VAL32 &x)> _COS_ ;
+inline imports DEF<VAL64 (const VAL64 &x)> _COS_ ;
 
 template <class _ARG1>
 inline _ARG1 _COS_ (const _ARG1 &x) {
 	_STATIC_ASSERT_ (stl::is_val_xyz<_ARG1>::value) ;
-	return _ARG1 (_COS_ (VALX (x))) ;
+	return _ARG1 (_COS_ (VAL64 (x))) ;
 }
 
-inline imports DEF<VALX (const VALX &x)> _TAN_ ;
+inline imports DEF<VAL32 (const VAL32 &x)> _TAN_ ;
+inline imports DEF<VAL64 (const VAL64 &x)> _TAN_ ;
 
 template <class _ARG1>
 inline _ARG1 _TAN_ (const _ARG1 &x) {
 	_STATIC_ASSERT_ (stl::is_val_xyz<_ARG1>::value) ;
-	return _ARG1 (_TAN_ (VALX (x))) ;
+	return _ARG1 (_TAN_ (VAL64 (x))) ;
 }
 
-inline imports DEF<VALX (const VALX &y)> _ASIN_ ;
+inline imports DEF<VAL32 (const VAL32 &y)> _ASIN_ ;
+inline imports DEF<VAL64 (const VAL64 &y)> _ASIN_ ;
 
 template <class _ARG1>
 inline _ARG1 _ASIN_ (const _ARG1 &y) {
 	_STATIC_ASSERT_ (stl::is_val_xyz<_ARG1>::value) ;
-	return _ARG1 (_ASIN_ (VALX (y))) ;
+	return _ARG1 (_ASIN_ (VAL64 (y))) ;
 }
 
-inline imports DEF<VALX (const VALX &x)> _ACOS_ ;
+inline imports DEF<VAL32 (const VAL32 &x)> _ACOS_ ;
+inline imports DEF<VAL64 (const VAL64 &x)> _ACOS_ ;
 
 template <class _ARG1>
 inline _ARG1 _ACOS_ (const _ARG1 &x) {
 	_STATIC_ASSERT_ (stl::is_val_xyz<_ARG1>::value) ;
-	return _ARG1 (_ACOS_ (VALX (x))) ;
+	return _ARG1 (_ACOS_ (VAL64 (x))) ;
 }
 
-inline imports DEF<VALX (const VALX &x)> _ATAN_ ;
+inline imports DEF<VAL32 (const VAL32 &x)> _ATAN_ ;
+inline imports DEF<VAL64 (const VAL64 &x)> _ATAN_ ;
 
 template <class _ARG1>
 inline _ARG1 _ATAN_ (const _ARG1 &x) {
 	_STATIC_ASSERT_ (stl::is_val_xyz<_ARG1>::value) ;
-	return _ARG1 (_ATAN_ (VALX (x))) ;
+	return _ARG1 (_ATAN_ (VAL64 (x))) ;
 }
 
-inline imports DEF<VALX (const VALX &y ,const VALX &x)> _ATAN_ ;
+inline imports DEF<VAL32 (const VAL32 &y ,const VAL32 &x)> _ATAN_ ;
+inline imports DEF<VAL64 (const VAL64 &y ,const VAL64 &x)> _ATAN_ ;
 
 template <class _ARG1>
 inline _ARG1 _ATAN_ (const _ARG1 &y ,const _ARG1 &x) {
 	_STATIC_ASSERT_ (stl::is_val_xyz<_ARG1>::value) ;
-	return _ARG1 (_ATAN_ (VALX (y) ,VALX (x))) ;
+	return _ARG1 (_ATAN_ (VAL64 (y) ,VAL64 (x))) ;
 }
 
 template <class _ARG1>
@@ -143,96 +155,112 @@ inline _ARG1 _SIGN_ (const _ARG1 &x) {
 }
 
 template <class _ARG1>
-inline _ARG1 _PINV_ (const _ARG1 &x) {
-	_STATIC_ASSERT_ (stl::is_val_xyz<_ARG1>::value) ;
-	if (x == _ARG1 (0))
-		return _ARG1 (0) ;
-	return _ARG1 (1) / x ;
-}
-
-template <class _ARG1>
 inline _ARG1 _PINV_ (const _ARG1 &x ,const _ARG1 &y) {
 	_STATIC_ASSERT_ (stl::is_val_xyz<_ARG1>::value) ;
-	_DEBUG_ASSERT_ (y > VALX (0)) ;
+	_DEBUG_ASSERT_ (y > _ARG1 (0)) ;
 	if (_ABS_ (x) < y)
 		return _ARG1 (0) ;
 	return _ARG1 (1) / x ;
 }
 
-inline VALX _FLOOR_ (const VALX &x ,const VALX &y) {
-	_DEBUG_ASSERT_ (y > VALX (0)) ;
+inline VAL32 _PINV_ (const VAL32 &x) {
+	return _PINV_ (x ,VAL32_EPS) ;
+}
+
+inline VAL64 _PINV_ (const VAL64 &x) {
+	return _PINV_ (x ,VAL64_EPS) ;
+}
+
+inline VAL32 _FLOOR_ (const VAL32 &x ,const VAL32 &y) {
+	_DEBUG_ASSERT_ (y > 0) ;
 	const auto r1x = VAR64 (x * _PINV_ (y)) ;
-	VALX ret = y * VALX (r1x) ;
-	for (FOR_ONCE_DO) {
-		if (x >= 0)
-			discard ;
-		if (x >= ret)
-			discard ;
-		ret = y * VALX (r1x - 1) ;
-	}
-	return std::move (ret) ;
+	const auto r2x = y * VAL32 (r1x) ;
+	if (x >= 0)
+		return r2x ;
+	if (x >= r2x)
+		return r2x ;
+	return y * VAL32 (r1x - 1) ;
+}
+
+inline VAL64 _FLOOR_ (const VAL64 &x ,const VAL64 &y) {
+	_DEBUG_ASSERT_ (y > 0) ;
+	const auto r1x = VAR64 (x * _PINV_ (y)) ;
+	const auto r2x = y * VAL64 (r1x) ;
+	if (x >= 0)
+		return r2x ;
+	if (x >= r2x)
+		return r2x ;
+	return y * VAL64 (r1x - 1) ;
 }
 
 template <class _ARG1>
 inline _ARG1 _FLOOR_ (const _ARG1 &x ,const _ARG1 &y) {
 	_STATIC_ASSERT_ (stl::is_var_xyz<_ARG1>::value || stl::is_val_xyz<_ARG1>::value) ;
-	return _ARG1 (_FLOOR_ (VALX (x) ,VALX (y))) ;
+	return _ARG1 (_FLOOR_ (VAL64 (x) ,VAL64 (y))) ;
 }
 
-inline VALX _CEIL_ (const VALX &x ,const VALX &y) {
-	_DEBUG_ASSERT_ (y > VALX (0)) ;
+inline VAL32 _CEIL_ (const VAL32 &x ,const VAL32 &y) {
+	_DEBUG_ASSERT_ (y > 0) ;
 	const auto r1x = VAR64 (x * _PINV_ (y)) ;
-	VALX ret = y * VALX (r1x) ;
-	for (FOR_ONCE_DO) {
-		if (x <= 0)
-			discard ;
-		if (x <= ret)
-			discard ;
-		ret = y * VALX (r1x + 1) ;
-	}
-	return std::move (ret) ;
+	const auto r2x = y * VAL32 (r1x) ;
+	if (x <= 0)
+		return r2x ;
+	if (x <= r2x)
+		return r2x ;
+	return y * VAL32 (r1x + 1) ;
+}
+
+inline VAL64 _CEIL_ (const VAL64 &x ,const VAL64 &y) {
+	_DEBUG_ASSERT_ (y > 0) ;
+	const auto r1x = VAR64 (x * _PINV_ (y)) ;
+	const auto r2x = y * VAL64 (r1x) ;
+	if (x <= 0)
+		return r2x ;
+	if (x <= r2x)
+		return r2x ;
+	return y * VAL64 (r1x + 1) ;
 }
 
 template <class _ARG1>
 inline _ARG1 _CEIL_ (const _ARG1 &x ,const _ARG1 &y) {
 	_STATIC_ASSERT_ (stl::is_var_xyz<_ARG1>::value || stl::is_val_xyz<_ARG1>::value) ;
-	return _ARG1 (_CEIL_ (VALX (x) ,VALX (y))) ;
+	return _ARG1 (_CEIL_ (VAL64 (x) ,VAL64 (y))) ;
 }
 
 template <class _ARG1>
 inline _ARG1 _ROUND_ (const _ARG1 &x ,const _ARG1 &y) {
 	_STATIC_ASSERT_ (stl::is_var_xyz<_ARG1>::value || stl::is_val_xyz<_ARG1>::value) ;
 	_DEBUG_ASSERT_ (y > _ARG1 (0)) ;
-	return _ARG1 (_FLOOR_ (VALX (x) + VALX (y) / 2 ,VALX (y))) ;
+	return _ARG1 (_FLOOR_ (VAL64 (x) + VAL64 (y) / 2 ,VAL64 (y))) ;
 }
 
 template <class _ARG1 ,class _ARG2>
-inline _ARG2 _CLAMP_ (const _ARG1 &arg1 ,const _ARG2 &arg2 ,const _ARG2 &arg3) {
-	if (arg1 < _ARG1 (arg2))
-		return arg2 ;
-	if (arg1 > _ARG1 (arg3))
-		return arg3 ;
-	return _ARG2 (arg1) ;
+inline _ARG2 _CLAMP_ (const _ARG1 &val ,const _ARG2 &min_ ,const _ARG2 &max_) {
+	if (val < _ARG1 (min_))
+		return min_ ;
+	if (val > _ARG1 (max_))
+		return max_ ;
+	return _ARG2 (val) ;
 }
 
 template <class _ARG1>
-inline const _ARG1 &_MINOF_ (const _ARG1 &arg1) {
-	return arg1 ;
+inline const _ARG1 &_MINOF_ (const _ARG1 &list_one) {
+	return list_one ;
 }
 
 template <class _ARG1 ,class... _ARGS>
-inline const _ARG1 &_MINOF_ (const _ARG1 &arg1 ,const _ARG1 &arg2 ,const _ARGS &...args) {
-	return _MIN_ (arg1 ,_MINOF_ (arg2 ,args...)) ;
+inline const _ARG1 &_MINOF_ (const _ARG1 &list_one ,const _ARG1 &list_two ,const _ARGS &...list_rest) {
+	return _MIN_ (list_one ,_MINOF_ (list_two ,list_rest...)) ;
 }
 
 template <class _ARG1>
-inline const _ARG1 &_MAXOF_ (const _ARG1 &arg1) {
-	return arg1 ;
+inline const _ARG1 &_MAXOF_ (const _ARG1 &list_one) {
+	return list_one ;
 }
 
 template <class _ARG1 ,class... _ARGS>
-inline const _ARG1 &_MAXOF_ (const _ARG1 &arg1 ,const _ARG1 &arg2 ,const _ARGS &...args) {
-	return _MAX_ (arg1 ,_MAXOF_ (arg2 ,args...)) ;
+inline const _ARG1 &_MAXOF_ (const _ARG1 &list_one ,const _ARG1 &list_two ,const _ARGS &...list_rest) {
+	return _MAX_ (list_one ,_MAXOF_ (list_two ,list_rest...)) ;
 }
 
 inline ARRAY3<DATA> _inline_IEEE754_ENCODE_PART_ (const ARRAY3<VAR64> &sne2) {
@@ -241,7 +269,7 @@ inline ARRAY3<DATA> _inline_IEEE754_ENCODE_PART_ (const ARRAY3<VAR64> &sne2) {
 	while (TRUE) {
 		if (ret[0] == 0)
 			break ;
-		if ((ret[0] & DATA (~0X001FFFFFFFFFFFFF)) == 0)
+		if ((ret[0] & ~DATA (0X001FFFFFFFFFFFFF)) == 0)
 			break ;
 		ret[0] = ret[0] >> 1 ;
 		ret[1]++ ;
@@ -249,12 +277,12 @@ inline ARRAY3<DATA> _inline_IEEE754_ENCODE_PART_ (const ARRAY3<VAR64> &sne2) {
 	while (TRUE) {
 		if (ret[0] == 0)
 			break ;
-		if ((ret[0] & ~0X000FFFFFFFFFFFFF) == 0X0010000000000000)
+		if ((ret[0] & ~DATA (0X000FFFFFFFFFFFFF)) != 0)
 			break ;
 		ret[0] = ret[0] << 1 ;
 		ret[1]-- ;
 	}
-	for (FOR_ONCE_DO) {
+	if SWITCH_ONCE (TRUE) {
 		const auto r2x = VAR64 (DATA (-1074) - ret[1]) ;
 		if (r2x <= 0)
 			discard ;
@@ -270,8 +298,8 @@ inline ARRAY3<DATA> _inline_IEEE754_ENCODE_PART_ (const ARRAY3<VAR64> &sne2) {
 
 inline VAL64 _IEEE754_ENCODE_ (const ARRAY3<VAR64> &sne2) {
 	const auto r1x = _inline_IEEE754_ENCODE_PART_ (sne2) ;
-	_DYNAMIC_ASSERT_ ((r1x[0] & ~0X001FFFFFFFFFFFFF) == 0) ;
-	_DYNAMIC_ASSERT_ ((r1x[1] & ~0X7FF0000000000000) == 0) ;
+	_DYNAMIC_ASSERT_ ((r1x[0] & ~DATA (0X001FFFFFFFFFFFFF)) == 0) ;
+	_DYNAMIC_ASSERT_ ((r1x[1] & ~DATA (0X7FF0000000000000)) == 0) ;
 	DATA ret = 0 ;
 	ret |= r1x[0] & DATA (0X000FFFFFFFFFFFFF) ;
 	ret |= r1x[1] & DATA (0X7FF0000000000000) ;
@@ -283,11 +311,11 @@ inline ARRAY3<VAR64> _IEEE754_DECODE_ (const VAL64 &ieee754) {
 	ARRAY3<DATA> ret ;
 	const auto r1x = _CAST_<DATA> (ieee754) ;
 	ret[0] = r1x & DATA (0X000FFFFFFFFFFFFF) ;
-	const auto r3x = r1x & DATA (0X7FF0000000000000) ;
-	if (r3x != 0)
+	const auto r2x = r1x & DATA (0X7FF0000000000000) ;
+	if (r2x != 0)
 		ret[0] |= DATA (0X0010000000000000) ;
-	ret[1] = r3x >> 52 ;
-	ret[1] -= DATA (1075 - EFLAG (r3x == 0)) ;
+	ret[1] = r2x >> 52 ;
+	ret[1] -= DATA (1075 - EFLAG (r2x == 0)) ;
 	if (ret[0] == 0)
 		ret[1] = 0 ;
 	while (TRUE) {
@@ -298,16 +326,17 @@ inline ARRAY3<VAR64> _IEEE754_DECODE_ (const VAL64 &ieee754) {
 		ret[0] = ret[0] >> 1 ;
 		ret[1]++ ;
 	}
-	const auto r4x = _SWITCH_ (
+	const auto r3x = _SWITCH_ (
 		((r1x & DATA (0X8000000000000000)) == 0) ? (DATA (0)) :
 		(DATA (-1))) ;
-	ret[2] = r4x ;
+	ret[2] = r3x ;
 	return std::move (_CAST_<ARRAY3<VAR64>> (ret)) ;
 }
 
 inline VAL64 _inline_TAYLOR_EXP_ (VAL64 lnx ,VAL64 y) {
 	VAL64 ret = 1 ;
 	const auto r1x = lnx * y ;
+	_DEBUG_ASSERT_ (r1x >= 0) ;
 	auto rax = VAL64 (1) ;
 	auto rbx = VAL64 (1) ;
 	while (TRUE) {
@@ -315,7 +344,7 @@ inline VAL64 _inline_TAYLOR_EXP_ (VAL64 lnx ,VAL64 y) {
 		if (_ABS_ (rax) < VAL64_EPS)
 			break ;
 		ret += rax ;
-		rbx++ ;
+		rbx += VAL64 (1) ;
 	}
 	return std::move (ret) ;
 }
@@ -326,22 +355,32 @@ inline ARRAY3<VAR64> _inline_IEEE754_E2TOE10_PART_ (const ARRAY3<VAR64> &sne2) {
 	while (TRUE) {
 		if (ret[0] == 0)
 			break ;
-		if ((ret[0] & ~0X000FFFFFFFFFFFFF) == 0X0010000000000000)
+		if ((ret[0] & ~DATA (0X000FFFFFFFFFFFFF)) == 0)
 			break ;
-		ret[0] = ret[0] << 1 ;
+		ret[0] = ret[0] >> 1 ;
+		ret[1]++ ;
+	}
+	while (TRUE) {
+		if (ret[0] == 0)
+			break ;
+		const auto r2x = ret[0] << 1 ;
+		if ((r2x & ~DATA (0X000FFFFFFFFFFFFF)) != 0)
+			break ;
+		ret[0] = r2x ;
 		ret[1]-- ;
 	}
 	return std::move (_CAST_<ARRAY3<VAR64>> (ret)) ;
 }
 
 inline ARRAY3<VAR64> _IEEE754_E2TOE10_ (const ARRAY3<VAR64> &sne2) {
-	const auto r1x = _inline_IEEE754_E2TOE10_PART_ (sne2) ;
 	ARRAY3<DATA> ret ;
-	const auto r2x = VAL64 (MATH_LN2 / MATH_LN10) * VAL64 (r1x[1]) ;
+	const auto r1x = _inline_IEEE754_E2TOE10_PART_ (sne2) ;
 	_STATIC_WARNING_ ("mark") ;
-	const auto r3x = _inline_TAYLOR_EXP_ (VAL64 (MATH_LN10) ,(r2x - VAR64 (r2x))) ;
-	ret[0] = DATA (VAR64 (VAL64 (r1x[0]) * r3x)) ;
-	ret[1] = DATA (VAR64 (r2x)) ;
+	const auto r2x = VAL64 (MATH_LN2 / MATH_LN10) * VAL64 (r1x[1]) ;
+	const auto r3x = _FLOOR_ (r2x ,VAL64 (1)) ;
+	const auto r4x = VAL64 (r1x[0]) * _inline_TAYLOR_EXP_ (VAL64 (MATH_LN10) ,(r2x - r3x)) ;
+	ret[0] = DATA (VAR64 (r4x)) ;
+	ret[1] = DATA (VAR64 (r3x)) ;
 	while (TRUE) {
 		if (ret[0] == 0)
 			break ;
@@ -360,22 +399,32 @@ inline ARRAY3<VAR64> _inline_IEEE754_E10TOE2_PART_ (const ARRAY3<VAR64> &sne10) 
 	while (TRUE) {
 		if (ret[0] == 0)
 			break ;
-		if ((ret[0] & ~0X000FFFFFFFFFFFFF) != 0)
+		if ((ret[0] & ~DATA (0X000FFFFFFFFFFFFF)) == 0)
 			break ;
-		ret[0] = (ret[0] << 3) + (ret[0] << 1) ;
+		ret[0] /= 10 ;
+		ret[1]++ ;
+	}
+	while (TRUE) {
+		if (ret[0] == 0)
+			break ;
+		const auto r2x = (ret[0] << 3) + (ret[0] << 1) ;
+		if ((r2x & ~DATA (0X000FFFFFFFFFFFFF)) != 0)
+			break ;
+		ret[0] = r2x ;
 		ret[1]-- ;
 	}
 	return std::move (_CAST_<ARRAY3<VAR64>> (ret)) ;
 }
 
 inline ARRAY3<VAR64> _IEEE754_E10TOE2_ (const ARRAY3<VAR64> &sne10) {
-	const auto r1x = _inline_IEEE754_E10TOE2_PART_ (sne10) ;
 	ARRAY3<DATA> ret ;
-	const auto r2x = VAL64 (MATH_LN10 / MATH_LN2) * VAL64 (r1x[1]) ;
+	const auto r1x = _inline_IEEE754_E10TOE2_PART_ (sne10) ;
 	_STATIC_WARNING_ ("mark") ;
-	const auto r3x = _inline_TAYLOR_EXP_ (VAL64 (MATH_LN2) ,(r2x - VAR64 (r2x))) ;
-	ret[0] = DATA (VAR64 (VAL64 (r1x[0]) * r3x)) ;
-	ret[1] = DATA (VAR64 (r2x)) ;
+	const auto r2x = VAL64 (MATH_LN10 / MATH_LN2) * VAL64 (r1x[1]) ;
+	const auto r3x = _FLOOR_ (r2x ,VAL64 (1)) ;
+	const auto r4x = VAL64 (r1x[0]) * _inline_TAYLOR_EXP_ (VAL64 (MATH_LN2) ,(r2x - r3x)) ;
+	ret[0] = DATA (VAR64 (r4x)) ;
+	ret[1] = DATA (VAR64 (r3x)) ;
 	while (TRUE) {
 		if (ret[0] == 0)
 			break ;

@@ -5,7 +5,8 @@
 #endif
 
 #include "csc.hpp"
-#include "csc_ext.hpp"
+#include "csc_basic.hpp"
+#include "csc_extend.hpp"
 #include "csc_array.hpp"
 #include "csc_math.hpp"
 #include "csc_images.hpp"
@@ -43,17 +44,17 @@ public:
 
 	const Array<Bitmap<COLOR_BGR>> &texture () && = delete ;
 
-	void add_vertex (const Set<ARRAY3<VAL32>> &_vertex) {
-		mVertexSet.appand (_vertex) ;
+	void add_vertex (const Set<ARRAY3<VAL32>> &vertex_) {
+		mVertexSet.appand (vertex_) ;
 	}
 
-	void add_element (const Deque<ARRAY3<INDEX>> &_element) {
-		mElementList.appand (_element) ;
+	void add_element (const Deque<ARRAY3<INDEX>> &element_) {
+		mElementList.appand (element_) ;
 	}
 
-	void add_texture (Bitmap<COLOR_BGR> &&_texture) {
+	void add_texture (Bitmap<COLOR_BGR> &&texture_) {
 		mTexture = Array<Bitmap<COLOR_BGR>> (1) ;
-		mTexture[0] = std::move (_texture) ;
+		mTexture[0] = std::move (texture_) ;
 	}
 } ;
 
@@ -98,7 +99,7 @@ public:
 
 	//@info: 'angle_vn-angle_nu-angle_uv' equals to 'pitch-yaw-roll' (heading-pitch-bank)
 	void rotate (const REAL &angle_vn ,const REAL &angle_nu ,const REAL &angle_uv) {
-		for (FOR_ONCE_DO) {
+		if SWITCH_ONCE (TRUE) {
 			if (angle_vn == REAL (0))
 				discard ;
 			const auto r1x = mEyeN * _COS_ (angle_vn) - mEyeV * _SIN_ (angle_vn) ;
@@ -106,7 +107,7 @@ public:
 			mEyeN = r1x.normalize () ;
 			mEyeV = r2x.normalize () ;
 		}
-		for (FOR_ONCE_DO) {
+		if SWITCH_ONCE (TRUE) {
 			if (angle_nu == REAL (0))
 				discard ;
 			const auto r3x = mEyeU * _COS_ (angle_nu) - mEyeN * _SIN_ (angle_nu) ;
@@ -114,7 +115,7 @@ public:
 			mEyeU = r3x.normalize () ;
 			mEyeN = r4x.normalize () ;
 		}
-		for (FOR_ONCE_DO) {
+		if SWITCH_ONCE (TRUE) {
 			if (angle_uv == REAL (0))
 				discard ;
 			const auto r5x = mEyeV * _COS_ (angle_uv) - mEyeU * _SIN_ (angle_uv) ;
@@ -125,10 +126,10 @@ public:
 		mViewMatrix.signal () ;
 	}
 
-	void circle (const REAL &_near ,const REAL &angle_un ,const REAL &angle_nv) {
-		mEyeP += mEyeN * _near ;
+	void circle (const REAL &near_ ,const REAL &angle_un ,const REAL &angle_nv) {
+		mEyeP += mEyeN * near_ ;
 		rotate (angle_nv ,angle_un ,0) ;
-		mEyeP -= mEyeN * _near ;
+		mEyeP -= mEyeN * near_ ;
 	}
 
 	Matrix<REAL> view_matrix () const {
@@ -149,46 +150,46 @@ public:
 		return mScreenD ;
 	}
 
-	void perspective (const REAL &fov ,const REAL &aspect ,const REAL &_near ,const REAL &_far) {
+	void perspective (const REAL &fov ,const REAL &aspect ,const REAL &near_ ,const REAL &far_) {
 		_DEBUG_ASSERT_ (fov > REAL (0) && fov < REAL (180)) ;
 		_DEBUG_ASSERT_ (aspect > REAL (0)) ;
-		const auto r1x = _near * _TAN_ (fov * REAL (MATH_PI / 180) * REAL (0.5)) ;
+		const auto r1x = near_ * _TAN_ (fov * REAL (MATH_PI / 180) * REAL (0.5)) ;
 		const auto r2x = r1x * aspect ;
-		frustum (-r2x ,r2x ,-r1x ,r1x ,_near ,_far) ;
+		frustum (-r2x ,r2x ,-r1x ,r1x ,near_ ,far_) ;
 	}
 
-	void frustum (const REAL &left ,const REAL &right ,const REAL &bottom ,const REAL &top ,const REAL &_near ,const REAL &_far) {
+	void frustum (const REAL &left ,const REAL &right ,const REAL &bottom ,const REAL &top ,const REAL &near_ ,const REAL &far_) {
 		_DEBUG_ASSERT_ (right > left) ;
 		_DEBUG_ASSERT_ (top > bottom) ;
-		_DEBUG_ASSERT_ (_near > REAL (0) && _near < _far) ;
+		_DEBUG_ASSERT_ (near_ > REAL (0) && near_ < far_) ;
 		mScreenW = right - left ;
 		mScreenH = top - bottom ;
-		mScreenD = _far - _near ;
-		mProjectionMatrix[0][0] = REAL (2) * _near * _PINV_ (mScreenW) ;
+		mScreenD = far_ - near_ ;
+		mProjectionMatrix[0][0] = REAL (2) * near_ * _PINV_ (mScreenW) ;
 		mProjectionMatrix[0][1] = REAL (0) ;
 		mProjectionMatrix[0][2] = (right + left) * _PINV_ (mScreenW) ;
 		mProjectionMatrix[0][3] = REAL (0) ;
 		mProjectionMatrix[1][0] = REAL (0) ;
-		mProjectionMatrix[1][1] = REAL (2) * _near * _PINV_ (mScreenH) ;
+		mProjectionMatrix[1][1] = REAL (2) * near_ * _PINV_ (mScreenH) ;
 		mProjectionMatrix[1][2] = (top + bottom) * _PINV_ (mScreenH) ;
 		mProjectionMatrix[1][3] = REAL (0) ;
 		mProjectionMatrix[2][0] = REAL (0) ;
 		mProjectionMatrix[2][1] = REAL (0) ;
-		mProjectionMatrix[2][2] = -(_far + _near) * _PINV_ (mScreenD) ;
-		mProjectionMatrix[2][3] = -(REAL (2) * _near * _far) * _PINV_ (mScreenD) ;
+		mProjectionMatrix[2][2] = -(far_ + near_) * _PINV_ (mScreenD) ;
+		mProjectionMatrix[2][3] = -(REAL (2) * near_ * far_) * _PINV_ (mScreenD) ;
 		mProjectionMatrix[3][0] = REAL (0) ;
 		mProjectionMatrix[3][1] = REAL (0) ;
 		mProjectionMatrix[3][2] = REAL (-1) ;
 		mProjectionMatrix[3][3] = REAL (0) ;
 	}
 
-	void ortho (const REAL &left ,const REAL &right ,const REAL &bottom ,const REAL &top ,const REAL &_near ,const REAL &_far) {
+	void ortho (const REAL &left ,const REAL &right ,const REAL &bottom ,const REAL &top ,const REAL &near_ ,const REAL &far_) {
 		_DEBUG_ASSERT_ (right > left) ;
 		_DEBUG_ASSERT_ (top > bottom) ;
-		_DEBUG_ASSERT_ (_near > REAL (0) && _near < _far) ;
+		_DEBUG_ASSERT_ (near_ > REAL (0) && near_ < far_) ;
 		mScreenW = right - left ;
 		mScreenH = top - bottom ;
-		mScreenD = _far - _near ;
+		mScreenD = far_ - near_ ;
 		mProjectionMatrix[0][0] = REAL (2) * _PINV_ (mScreenW) ;
 		mProjectionMatrix[0][1] = REAL (0) ;
 		mProjectionMatrix[0][2] = REAL (0) ;
@@ -203,7 +204,7 @@ public:
 		mProjectionMatrix[2][3] = REAL (0) ;
 		mProjectionMatrix[3][0] = -(right + left) * _PINV_ (mScreenW) ;
 		mProjectionMatrix[3][1] = -(top + bottom) * _PINV_ (mScreenH) ;
-		mProjectionMatrix[3][2] = -(_far + _near) * _PINV_ (mScreenD) ;
+		mProjectionMatrix[3][2] = -(far_ + near_) * _PINV_ (mScreenD) ;
 		mProjectionMatrix[3][3] = REAL (1) ;
 	}
 
@@ -236,20 +237,20 @@ private:
 class AbstractShader {
 public:
 	exports struct Abstract :public Interface {
-		virtual void compute_load_data (AnyRef<void> &_this ,const PhanBuffer<const BYTE> &vs ,const PhanBuffer<const BYTE> &fs) const = 0 ;
-		virtual void compute_active_pipeline (AnyRef<void> &_this) const = 0 ;
-		virtual void compute_uniform_find (AnyRef<void> &_this ,const String<STR> &name ,INDEX &index) const = 0 ;
-		virtual void compute_uniform_write (AnyRef<void> &_this ,INDEX index ,const VAR32 &data) const = 0 ;
-		virtual void compute_uniform_write (AnyRef<void> &_this ,INDEX index ,const VAR64 &data) const = 0 ;
-		virtual void compute_uniform_write (AnyRef<void> &_this ,INDEX index ,const VAL32 &data) const = 0 ;
-		virtual void compute_uniform_write (AnyRef<void> &_this ,INDEX index ,const VAL64 &data) const = 0 ;
-		virtual void compute_uniform_write (AnyRef<void> &_this ,INDEX index ,const Vector<VAL32> &data) const = 0 ;
-		virtual void compute_uniform_write (AnyRef<void> &_this ,INDEX index ,const Vector<VAL64> &data) const = 0 ;
-		virtual void compute_uniform_write (AnyRef<void> &_this ,INDEX index ,const Matrix<VAL32> &data) const = 0 ;
-		virtual void compute_uniform_write (AnyRef<void> &_this ,INDEX index ,const Matrix<VAL64> &data) const = 0 ;
-		virtual void compute_sprite_load_data (AnyRef<void> &_this ,const Mesh &mesh) const = 0 ;
-		virtual void compute_sprite_active_texture (AnyRef<void> &_this ,INDEX texture) const = 0 ;
-		virtual void compute_sprite_draw (AnyRef<void> &_this) const = 0 ;
+		virtual void compute_load_data (AnyRef<void> &this_ ,const PhanBuffer<const BYTE> &vs ,const PhanBuffer<const BYTE> &fs) const = 0 ;
+		virtual void compute_active_pipeline (AnyRef<void> &this_) const = 0 ;
+		virtual void compute_uniform_find (AnyRef<void> &this_ ,const String<STR> &name ,INDEX &index) const = 0 ;
+		virtual void compute_uniform_write (AnyRef<void> &this_ ,INDEX index ,const VAR32 &data) const = 0 ;
+		virtual void compute_uniform_write (AnyRef<void> &this_ ,INDEX index ,const VAR64 &data) const = 0 ;
+		virtual void compute_uniform_write (AnyRef<void> &this_ ,INDEX index ,const VAL32 &data) const = 0 ;
+		virtual void compute_uniform_write (AnyRef<void> &this_ ,INDEX index ,const VAL64 &data) const = 0 ;
+		virtual void compute_uniform_write (AnyRef<void> &this_ ,INDEX index ,const Vector<VAL32> &data) const = 0 ;
+		virtual void compute_uniform_write (AnyRef<void> &this_ ,INDEX index ,const Vector<VAL64> &data) const = 0 ;
+		virtual void compute_uniform_write (AnyRef<void> &this_ ,INDEX index ,const Matrix<VAL32> &data) const = 0 ;
+		virtual void compute_uniform_write (AnyRef<void> &this_ ,INDEX index ,const Matrix<VAL64> &data) const = 0 ;
+		virtual void compute_sprite_load_data (AnyRef<void> &this_ ,const Mesh &mesh) const = 0 ;
+		virtual void compute_sprite_active_texture (AnyRef<void> &this_ ,INDEX texture) const = 0 ;
+		virtual void compute_sprite_draw (AnyRef<void> &this_) const = 0 ;
 	} ;
 
 	class Sprite ;
@@ -262,7 +263,7 @@ private:
 public:
 	AbstractShader () = default ;
 
-	explicit AbstractShader (const PhanRef<const Abstract> &_abstract) :mAbstract (PhanRef<const Abstract>::make (_abstract)) {}
+	explicit AbstractShader (const PhanRef<const Abstract> &abstract_) :mAbstract (PhanRef<const Abstract>::make (abstract_)) {}
 
 	BOOL exist () const {
 		if (!mAbstract.exist ())
@@ -284,11 +285,11 @@ public:
 
 	void uniform (const String<STR> &name ,const VAR32 &data) {
 		_DEBUG_ASSERT_ (exist ()) ;
-		const auto r1x = mUniformSet.length () ;
-		INDEX ix = mUniformSet.insert (name) ;
-		for (FOR_ONCE_DO) {
-			if (mUniformSet.length () == r1x)
+		INDEX ix = mUniformSet.find (name) ;
+		if SWITCH_ONCE (TRUE) {
+			if (ix != VAR_NONE)
 				discard ;
+			ix = mUniformSet.find (name) ;
 			mAbstract->compute_uniform_find (mHolder ,name ,mUniformSet[ix].item) ;
 		}
 		mAbstract->compute_uniform_write (mHolder ,mUniformSet[ix].item ,data) ;
@@ -296,11 +297,11 @@ public:
 
 	void uniform (const String<STR> &name ,const VAR64 &data) {
 		_DEBUG_ASSERT_ (exist ()) ;
-		const auto r1x = mUniformSet.length () ;
-		INDEX ix = mUniformSet.insert (name) ;
-		for (FOR_ONCE_DO) {
-			if (mUniformSet.length () == r1x)
+		INDEX ix = mUniformSet.find (name) ;
+		if SWITCH_ONCE (TRUE) {
+			if (ix != VAR_NONE)
 				discard ;
+			ix = mUniformSet.find (name) ;
 			mAbstract->compute_uniform_find (mHolder ,name ,mUniformSet[ix].item) ;
 		}
 		mAbstract->compute_uniform_write (mHolder ,mUniformSet[ix].item ,data) ;
@@ -308,11 +309,11 @@ public:
 
 	void uniform (const String<STR> &name ,const VAL32 &data) {
 		_DEBUG_ASSERT_ (exist ()) ;
-		const auto r1x = mUniformSet.length () ;
-		INDEX ix = mUniformSet.insert (name) ;
-		for (FOR_ONCE_DO) {
-			if (mUniformSet.length () == r1x)
+		INDEX ix = mUniformSet.find (name) ;
+		if SWITCH_ONCE (TRUE) {
+			if (ix != VAR_NONE)
 				discard ;
+			ix = mUniformSet.find (name) ;
 			mAbstract->compute_uniform_find (mHolder ,name ,mUniformSet[ix].item) ;
 		}
 		mAbstract->compute_uniform_write (mHolder ,mUniformSet[ix].item ,data) ;
@@ -320,11 +321,11 @@ public:
 
 	void uniform (const String<STR> &name ,const VAL64 &data) {
 		_DEBUG_ASSERT_ (exist ()) ;
-		const auto r1x = mUniformSet.length () ;
-		INDEX ix = mUniformSet.insert (name) ;
-		for (FOR_ONCE_DO) {
-			if (mUniformSet.length () == r1x)
+		INDEX ix = mUniformSet.find (name) ;
+		if SWITCH_ONCE (TRUE) {
+			if (ix != VAR_NONE)
 				discard ;
+			ix = mUniformSet.find (name) ;
 			mAbstract->compute_uniform_find (mHolder ,name ,mUniformSet[ix].item) ;
 		}
 		mAbstract->compute_uniform_write (mHolder ,mUniformSet[ix].item ,data) ;
@@ -332,11 +333,11 @@ public:
 
 	void uniform (const String<STR> &name ,const Vector<VAL32> &data) {
 		_DEBUG_ASSERT_ (exist ()) ;
-		const auto r1x = mUniformSet.length () ;
-		INDEX ix = mUniformSet.insert (name) ;
-		for (FOR_ONCE_DO) {
-			if (mUniformSet.length () == r1x)
+		INDEX ix = mUniformSet.find (name) ;
+		if SWITCH_ONCE (TRUE) {
+			if (ix != VAR_NONE)
 				discard ;
+			ix = mUniformSet.find (name) ;
 			mAbstract->compute_uniform_find (mHolder ,name ,mUniformSet[ix].item) ;
 		}
 		mAbstract->compute_uniform_write (mHolder ,mUniformSet[ix].item ,data) ;
@@ -344,11 +345,11 @@ public:
 
 	void uniform (const String<STR> &name ,const Vector<VAL64> &data) {
 		_DEBUG_ASSERT_ (exist ()) ;
-		const auto r1x = mUniformSet.length () ;
-		INDEX ix = mUniformSet.insert (name) ;
-		for (FOR_ONCE_DO) {
-			if (mUniformSet.length () == r1x)
+		INDEX ix = mUniformSet.find (name) ;
+		if SWITCH_ONCE (TRUE) {
+			if (ix != VAR_NONE)
 				discard ;
+			ix = mUniformSet.find (name) ;
 			mAbstract->compute_uniform_find (mHolder ,name ,mUniformSet[ix].item) ;
 		}
 		mAbstract->compute_uniform_write (mHolder ,mUniformSet[ix].item ,data) ;
@@ -356,11 +357,11 @@ public:
 
 	void uniform (const String<STR> &name ,const Matrix<VAL32> &data) {
 		_DEBUG_ASSERT_ (exist ()) ;
-		const auto r1x = mUniformSet.length () ;
-		INDEX ix = mUniformSet.insert (name) ;
-		for (FOR_ONCE_DO) {
-			if (mUniformSet.length () == r1x)
+		INDEX ix = mUniformSet.find (name) ;
+		if SWITCH_ONCE (TRUE) {
+			if (ix != VAR_NONE)
 				discard ;
+			ix = mUniformSet.find (name) ;
 			mAbstract->compute_uniform_find (mHolder ,name ,mUniformSet[ix].item) ;
 		}
 		mAbstract->compute_uniform_write (mHolder ,mUniformSet[ix].item ,data) ;
@@ -368,11 +369,11 @@ public:
 
 	void uniform (const String<STR> &name ,const Matrix<VAL64> &data) {
 		_DEBUG_ASSERT_ (exist ()) ;
-		const auto r1x = mUniformSet.length () ;
-		INDEX ix = mUniformSet.insert (name) ;
-		for (FOR_ONCE_DO) {
-			if (mUniformSet.length () == r1x)
+		INDEX ix = mUniformSet.find (name) ;
+		if SWITCH_ONCE (TRUE) {
+			if (ix != VAR_NONE)
 				discard ;
+			ix = mUniformSet.find (name) ;
 			mAbstract->compute_uniform_find (mHolder ,name ,mUniformSet[ix].item) ;
 		}
 		mAbstract->compute_uniform_write (mHolder ,mUniformSet[ix].item ,data) ;
@@ -416,7 +417,7 @@ public:
 	}
 
 private:
-	explicit Sprite (const PhanRef<const Abstract> &_abstract) :mAbstract (PhanRef<const Abstract>::make (_abstract)) {}
+	explicit Sprite (const PhanRef<const Abstract> &abstract_) :mAbstract (PhanRef<const Abstract>::make (abstract_)) {}
 } ;
 
 inline AbstractShader::Sprite AbstractShader::create_sprite () popping {

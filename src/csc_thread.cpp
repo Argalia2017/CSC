@@ -15,8 +15,8 @@ public:
 			return A ().work () ;
 		}) ;
 		auto rax = Promise<int>::async (r1x) ;
-		const auto r4x = rax.value (-1) ;
-		_UNITTEST_ASSERT_ (r4x == -1) ;
+		const auto r2x = rax.value (-1) ;
+		_UNITTEST_ASSERT_ (r2x == -1) ;
 		INDEX ix = 0 ;
 		while (TRUE) {
 			if (rax.ready ())
@@ -25,10 +25,10 @@ public:
 			ix++ ;
 		}
 		_UNITTEST_ASSERT_ (_ABS_ (ix - 10) < 2) ;
-		const auto r5x = rax.value (-1) ;
-		_UNITTEST_ASSERT_ (r5x == 3) ;
-		const auto r6x = rax.poll () ;
-		_UNITTEST_ASSERT_ (r6x == 3) ;
+		const auto r3x = rax.value (-1) ;
+		_UNITTEST_ASSERT_ (r3x == 3) ;
+		const auto r4x = rax.poll () ;
+		_UNITTEST_ASSERT_ (r4x == 3) ;
 	}
 
 	TEST_METHOD (TEST_CSC_THREAD_PROMISE) {

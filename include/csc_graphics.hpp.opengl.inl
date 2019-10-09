@@ -150,19 +150,21 @@ public:
 		_STATIC_ASSERT_ (_ALIGNOF_ (REMOVE_CVR_TYPE<decltype ((*this))>) == _ALIGNOF_ (Interface)) ;
 	}
 
-	void compute_load_data (AnyRef<void> &_this ,const PhanBuffer<const BYTE> &vs ,const PhanBuffer<const BYTE> &fs) const override {
+	void compute_load_data (AnyRef<void> &this_ ,const PhanBuffer<const BYTE> &vs ,const PhanBuffer<const BYTE> &fs) const override {
+		_DEBUG_ASSERT_ (vs.size () < VAR32_MAX) ;
+		_DEBUG_ASSERT_ (fs.size () < VAR32_MAX) ;
 		auto rax = UniqueRef<CHAR> ([&] (CHAR &me) {
 			me = glCreateProgram () ;
 			_DYNAMIC_ASSERT_ (me != 0) ;
 			const auto r1x = glCreateShader (GL_VERTEX_SHADER) ;
-			const auto r2x = _LOAD_<ARR<STRA>> (NULL ,_ADDRESS_ (&vs.self)) ;
+			const auto r2x = _LOAD_<ARR<STRA>> (&vs.self) ;
 			const auto r3x = VAR32 (vs.size ()) ;
 			glShaderSource (r1x ,1 ,&r2x ,&r3x) ;
 			glCompileShader (r1x) ;
 			compute_check_shaderiv (r1x) ;
 			glAttachShader (me ,r1x) ;
 			const auto r4x = glCreateShader (GL_FRAGMENT_SHADER) ;
-			const auto r5x = _LOAD_<ARR<STRA>> (NULL ,_ADDRESS_ (&fs.self)) ;
+			const auto r5x = _LOAD_<ARR<STRA>> (&fs.self) ;
 			const auto r6x = VAR32 (fs.size ()) ;
 			glShaderSource (r4x ,1 ,&r5x ,&r6x) ;
 			glCompileShader (r4x) ;
@@ -171,51 +173,57 @@ public:
 			glLinkProgram (me) ;
 			compute_check_programiv (me) ;
 		} ,[] (CHAR &me) {
-			_DEBUG_ASSERT_ (me != 0) ;
 			glDeleteProgram (me) ;
 		}) ;
-		_this = AnyRef<NATIVE_TYPE>::make (std::move (rax)) ;
+		this_ = AnyRef<NATIVE_TYPE>::make (std::move (rax)) ;
 	}
 
-	void compute_active_pipeline (AnyRef<void> &_this) const override {
-		auto &r1 = _this.rebind<NATIVE_TYPE> ().self ;
-		glUseProgram (r1) ;
+	void compute_active_pipeline (AnyRef<void> &this_) const override {
+		auto &r1y = this_.rebind<NATIVE_TYPE> ().self ;
+		glUseProgram (r1y) ;
 	}
 
-	void compute_uniform_find (AnyRef<void> &_this ,const String<STR> &name ,INDEX &index) const override {
-		auto &r1 = _this.rebind<NATIVE_TYPE> ().self ;
-		const auto r1x = identity_name (name) ;
-		index = INDEX (glGetUniformLocation (r1 ,r1x.raw ().self)) ;
+	void compute_uniform_find (AnyRef<void> &this_ ,const String<STR> &name ,INDEX &index) const override {
+		auto &r1y = this_.rebind<NATIVE_TYPE> ().self ;
+		const auto r2x = identity_name (name) ;
+		index = INDEX (glGetUniformLocation (r1y ,r2x.raw ().self)) ;
 		_DEBUG_ASSERT_ (index != GL_INVALID_VALUE) ;
 	}
 
-	void compute_uniform_write (AnyRef<void> &_this ,INDEX index ,const VAR32 &data) const override {
+	void compute_uniform_write (AnyRef<void> &this_ ,INDEX index ,const VAR32 &data) const override {
+		_DEBUG_ASSERT_ (index != GL_INVALID_VALUE) ;
 		glUniform1i (VAR32 (index) ,data) ;
 	}
 
-	void compute_uniform_write (AnyRef<void> &_this ,INDEX index ,const VAR64 &data) const override {
+	void compute_uniform_write (AnyRef<void> &this_ ,INDEX index ,const VAR64 &data) const override {
+		_DEBUG_ASSERT_ (index != GL_INVALID_VALUE) ;
 		glUniform1i64NV (VAR32 (index) ,data) ;
 	}
 
-	void compute_uniform_write (AnyRef<void> &_this ,INDEX index ,const VAL32 &data) const override {
+	void compute_uniform_write (AnyRef<void> &this_ ,INDEX index ,const VAL32 &data) const override {
+		_DEBUG_ASSERT_ (index != GL_INVALID_VALUE) ;
 		glUniform1f (VAR32 (index) ,data) ;
 	}
 
-	void compute_uniform_write (AnyRef<void> &_this ,INDEX index ,const VAL64 &data) const override {
+	void compute_uniform_write (AnyRef<void> &this_ ,INDEX index ,const VAL64 &data) const override {
+		_DEBUG_ASSERT_ (index != GL_INVALID_VALUE) ;
 		glUniform1d (VAR32 (index) ,data) ;
 	}
 
-	void compute_uniform_write (AnyRef<void> &_this ,INDEX index ,const Vector<VAL32> &data) const override {
+	void compute_uniform_write (AnyRef<void> &this_ ,INDEX index ,const Vector<VAL32> &data) const override {
+		_DEBUG_ASSERT_ (index != GL_INVALID_VALUE) ;
 		const auto r1x = ARRAY4<VAL32> {data[0] ,data[1] ,data[2] ,data[3]} ;
 		glUniform4fv (VAR32 (index) ,1 ,r1x.raw ().self) ;
 	}
 
-	void compute_uniform_write (AnyRef<void> &_this ,INDEX index ,const Vector<VAL64> &data) const override {
+	void compute_uniform_write (AnyRef<void> &this_ ,INDEX index ,const Vector<VAL64> &data) const override {
+		_DEBUG_ASSERT_ (index != GL_INVALID_VALUE) ;
 		const auto r1x = ARRAY4<VAL64> {data[0] ,data[1] ,data[2] ,data[3]} ;
 		glUniform4dv (VAR32 (index) ,1 ,r1x.raw ().self) ;
 	}
 
-	void compute_uniform_write (AnyRef<void> &_this ,INDEX index ,const Matrix<VAL32> &data) const override {
+	void compute_uniform_write (AnyRef<void> &this_ ,INDEX index ,const Matrix<VAL32> &data) const override {
+		_DEBUG_ASSERT_ (index != GL_INVALID_VALUE) ;
 		const auto r1x = ARRAY16<VAL32> ({
 			data[0][0] ,data[0][1] ,data[0][2] ,data[0][3] ,
 			data[1][0] ,data[1][1] ,data[1][2] ,data[1][3] ,
@@ -224,7 +232,8 @@ public:
 		glUniformMatrix4fv (VAR32 (index) ,1 ,GL_TRUE ,r1x.raw ().self) ;
 	}
 
-	void compute_uniform_write (AnyRef<void> &_this ,INDEX index ,const Matrix<VAL64> &data) const override {
+	void compute_uniform_write (AnyRef<void> &this_ ,INDEX index ,const Matrix<VAL64> &data) const override {
+		_DEBUG_ASSERT_ (index != GL_INVALID_VALUE) ;
 		const auto r1x = ARRAY16<VAL64> ({
 			data[0][0] ,data[0][1] ,data[0][2] ,data[0][3] ,
 			data[1][0] ,data[1][1] ,data[1][2] ,data[1][3] ,
@@ -233,13 +242,12 @@ public:
 		glUniformMatrix4dv (VAR32 (index) ,1 ,GL_TRUE ,r1x.raw ().self) ;
 	}
 
-	void compute_sprite_load_data (AnyRef<void> &_this ,const Mesh &mesh) const override {
+	void compute_sprite_load_data (AnyRef<void> &this_ ,const Mesh &mesh) const override {
 		auto rax = Holder () ;
 		rax.mVAO = UniqueRef<CHAR> ([&] (CHAR &me) {
 			glGenVertexArrays (1 ,&me) ;
 			_DYNAMIC_ASSERT_ (me != GL_INVALID_VALUE) ;
 		} ,[] (CHAR &me) {
-			_DEBUG_ASSERT_ (me != GL_INVALID_VALUE) ;
 			glDeleteVertexArrays (1 ,&me) ;
 
 		}) ;
@@ -247,37 +255,35 @@ public:
 			me = AutoBuffer<CHAR> (1) ;
 			glGenBuffers (VAR32 (me.size ()) ,me.self) ;
 		} ,[] (AutoBuffer<CHAR> &me) {
-			_DEBUG_ASSERT_ (me.self != NULL) ;
 			glDeleteBuffers (VAR32 (me.size ()) ,me.self) ;
 		}) ;
 		rax.mVTO = UniqueRef<AutoBuffer<CHAR>> ([&] (AutoBuffer<CHAR> &me) {
 			me = AutoBuffer<CHAR> (1) ;
 			glGenTextures (VAR32 (me.size ()) ,me.self) ;
 		} ,[] (AutoBuffer<CHAR> &me) {
-			_DEBUG_ASSERT_ (me.self != NULL) ;
 			glDeleteTextures (VAR32 (me.size ()) ,me.self) ;
 		}) ;
 		compute_transfer_data (rax ,bind_vertex (mesh.vertex () ,mesh.element ())) ;
 		compute_transfer_data (rax ,mesh.texture ()[0]) ;
-		_this = AnyRef<SPRITE_NATIVE_TYPE>::make (std::move (rax)) ;
+		this_ = AnyRef<SPRITE_NATIVE_TYPE>::make (std::move (rax)) ;
 	}
 
-	void compute_sprite_active_texture (AnyRef<void> &_this ,INDEX texture) const override {
-		auto &r1 = _this.rebind<SPRITE_NATIVE_TYPE> ().self ;
-		_DYNAMIC_ASSERT_ (texture >= 0 && texture < r1.mVTO->size ()) ;
-		r1.mTexture = texture ;
+	void compute_sprite_active_texture (AnyRef<void> &this_ ,INDEX texture) const override {
+		auto &r1y = this_.rebind<SPRITE_NATIVE_TYPE> ().self ;
+		_DYNAMIC_ASSERT_ (texture >= 0 && texture < r1y.mVTO->size ()) ;
+		r1y.mTexture = texture ;
 	}
 
-	void compute_sprite_draw (AnyRef<void> &_this) const override {
-		auto &r1 = _this.rebind<SPRITE_NATIVE_TYPE> ().self ;
-		glBindVertexArray (r1.mVAO) ;
-		for (FOR_ONCE_DO) {
-			if (r1.mTexture == VAR_NONE)
+	void compute_sprite_draw (AnyRef<void> &this_) const override {
+		auto &r1y = this_.rebind<SPRITE_NATIVE_TYPE> ().self ;
+		glBindVertexArray (r1y.mVAO) ;
+		if SWITCH_ONCE (TRUE) {
+			if (r1y.mTexture == VAR_NONE)
 				discard ;
 			glActiveTexture (GL_TEXTURE_2D) ;
-			glBindTexture (GL_TEXTURE_2D ,r1.mVTO.self[r1.mTexture]) ;
+			glBindTexture (GL_TEXTURE_2D ,r1y.mVTO.self[r1y.mTexture]) ;
 		}
-		glDrawArrays (CHAR (r1.mMode) ,0 ,VAR32 (r1.mSize)) ;
+		glDrawArrays (CHAR (r1y.mMode) ,0 ,VAR32 (r1y.mSize)) ;
 	}
 
 private:
@@ -361,37 +367,37 @@ private:
 		return std::move (ret) ;
 	}
 
-	void compute_transfer_data (Holder &_self ,const Array<ARRAY1<ARRAY3<VAL32>>> &vbo) const {
+	void compute_transfer_data (Holder &self_ ,const Array<ARRAY1<ARRAY3<VAL32>>> &vbo) const {
 		using VERTEX = ARRAY3<VAL32> ;
-		_self.mSize = vbo.length () * vbo[0].length () ;
-		_self.mMode = GL_POINTS ;
-		glBindVertexArray (_self.mVAO) ;
-		glBindBuffer (GL_ARRAY_BUFFER ,_self.mVBO.self[0]) ;
-		glBufferData (GL_ARRAY_BUFFER ,_self.mSize * _SIZEOF_ (decltype (vbo[0][0])) ,vbo[0][0].raw ().self ,GL_STATIC_DRAW) ;
+		self_.mSize = vbo.length () * vbo[0].length () ;
+		self_.mMode = GL_POINTS ;
+		glBindVertexArray (self_.mVAO) ;
+		glBindBuffer (GL_ARRAY_BUFFER ,self_.mVBO.self[0]) ;
+		glBufferData (GL_ARRAY_BUFFER ,self_.mSize * _SIZEOF_ (VERTEX) ,vbo[0][0].raw ().self ,GL_STATIC_DRAW) ;
 		glEnableVertexAttribArray (LAYOUT_POSITION) ;
 		glVertexAttribPointer (LAYOUT_POSITION ,3 ,OPENGL_TRAITS_TYPE<VAL32>::value ,GL_FALSE ,_SIZEOF_ (VERTEX) ,NULL) ;
 		glBindVertexArray (0) ;
 	}
 
-	void compute_transfer_data (Holder &_self ,const Array<ARRAY2<ARRAY3<VAL32>>> &vbo) const {
+	void compute_transfer_data (Holder &self_ ,const Array<ARRAY2<ARRAY3<VAL32>>> &vbo) const {
 		using VERTEX = ARRAY3<VAL32> ;
-		_self.mSize = vbo.length () * vbo[0].length () ;
-		_self.mMode = GL_LINES ;
-		glBindVertexArray (_self.mVAO) ;
-		glBindBuffer (GL_ARRAY_BUFFER ,_self.mVBO.self[0]) ;
-		glBufferData (GL_ARRAY_BUFFER ,_self.mSize * _SIZEOF_ (decltype (vbo[0][0])) ,vbo[0][0].raw ().self ,GL_STATIC_DRAW) ;
+		self_.mSize = vbo.length () * vbo[0].length () ;
+		self_.mMode = GL_LINES ;
+		glBindVertexArray (self_.mVAO) ;
+		glBindBuffer (GL_ARRAY_BUFFER ,self_.mVBO.self[0]) ;
+		glBufferData (GL_ARRAY_BUFFER ,self_.mSize * _SIZEOF_ (VERTEX) ,vbo[0][0].raw ().self ,GL_STATIC_DRAW) ;
 		glEnableVertexAttribArray (LAYOUT_POSITION) ;
 		glVertexAttribPointer (LAYOUT_POSITION ,3 ,OPENGL_TRAITS_TYPE<VAL32>::value ,GL_FALSE ,_SIZEOF_ (VERTEX) ,NULL) ;
 		glBindVertexArray (0) ;
 	}
 
-	void compute_transfer_data (Holder &_self ,const Array<ARRAY2<ARRAY5<VAL32>>> &vbo) const {
+	void compute_transfer_data (Holder &self_ ,const Array<ARRAY2<ARRAY5<VAL32>>> &vbo) const {
 		using VERTEX = ARRAY5<VAL32> ;
-		_self.mSize = vbo.length () * vbo[0].length () ;
-		_self.mMode = GL_LINES ;
-		glBindVertexArray (_self.mVAO) ;
-		glBindBuffer (GL_ARRAY_BUFFER ,_self.mVBO.self[0]) ;
-		glBufferData (GL_ARRAY_BUFFER ,_self.mSize * _SIZEOF_ (decltype (vbo[0][0])) ,vbo[0][0].raw ().self ,GL_STATIC_DRAW) ;
+		self_.mSize = vbo.length () * vbo[0].length () ;
+		self_.mMode = GL_LINES ;
+		glBindVertexArray (self_.mVAO) ;
+		glBindBuffer (GL_ARRAY_BUFFER ,self_.mVBO.self[0]) ;
+		glBufferData (GL_ARRAY_BUFFER ,self_.mSize * _SIZEOF_ (VERTEX) ,vbo[0][0].raw ().self ,GL_STATIC_DRAW) ;
 		glEnableVertexAttribArray (LAYOUT_POSITION) ;
 		glVertexAttribPointer (LAYOUT_POSITION ,3 ,OPENGL_TRAITS_TYPE<VAL32>::value ,GL_FALSE ,_SIZEOF_ (VERTEX) ,&_NULL_<VERTEX> ()[0]) ;
 		glEnableVertexAttribArray (LAYOUT_TEXCOORD) ;
@@ -399,25 +405,25 @@ private:
 		glBindVertexArray (0) ;
 	}
 
-	void compute_transfer_data (Holder &_self ,const Array<ARRAY3<ARRAY3<VAL32>>> &vbo) const {
+	void compute_transfer_data (Holder &self_ ,const Array<ARRAY3<ARRAY3<VAL32>>> &vbo) const {
 		using VERTEX = ARRAY3<VAL32> ;
-		_self.mSize = vbo.length () * vbo[0].length () ;
-		_self.mMode = GL_TRIANGLES ;
-		glBindVertexArray (_self.mVAO) ;
-		glBindBuffer (GL_ARRAY_BUFFER ,_self.mVBO.self[0]) ;
-		glBufferData (GL_ARRAY_BUFFER ,_self.mSize * _SIZEOF_ (decltype (vbo[0][0])) ,vbo[0][0].raw ().self ,GL_STATIC_DRAW) ;
+		self_.mSize = vbo.length () * vbo[0].length () ;
+		self_.mMode = GL_TRIANGLES ;
+		glBindVertexArray (self_.mVAO) ;
+		glBindBuffer (GL_ARRAY_BUFFER ,self_.mVBO.self[0]) ;
+		glBufferData (GL_ARRAY_BUFFER ,self_.mSize * _SIZEOF_ (VERTEX) ,vbo[0][0].raw ().self ,GL_STATIC_DRAW) ;
 		glEnableVertexAttribArray (LAYOUT_POSITION) ;
 		glVertexAttribPointer (LAYOUT_POSITION ,3 ,OPENGL_TRAITS_TYPE<VAL32>::value ,GL_FALSE ,_SIZEOF_ (VERTEX) ,NULL) ;
 		glBindVertexArray (0) ;
 	}
 
-	void compute_transfer_data (Holder &_self ,const Array<ARRAY3<ARRAY5<VAL32>>> &vbo) const {
+	void compute_transfer_data (Holder &self_ ,const Array<ARRAY3<ARRAY5<VAL32>>> &vbo) const {
 		using VERTEX = ARRAY5<VAL32> ;
-		_self.mSize = vbo.length () * vbo[0].length () ;
-		_self.mMode = GL_TRIANGLES ;
-		glBindVertexArray (_self.mVAO) ;
-		glBindBuffer (GL_ARRAY_BUFFER ,_self.mVBO.self[0]) ;
-		glBufferData (GL_ARRAY_BUFFER ,_self.mSize * _SIZEOF_ (decltype (vbo[0][0])) ,vbo[0][0].raw ().self ,GL_STATIC_DRAW) ;
+		self_.mSize = vbo.length () * vbo[0].length () ;
+		self_.mMode = GL_TRIANGLES ;
+		glBindVertexArray (self_.mVAO) ;
+		glBindBuffer (GL_ARRAY_BUFFER ,self_.mVBO.self[0]) ;
+		glBufferData (GL_ARRAY_BUFFER ,self_.mSize * _SIZEOF_ (VERTEX) ,vbo[0][0].raw ().self ,GL_STATIC_DRAW) ;
 		glEnableVertexAttribArray (LAYOUT_POSITION) ;
 		glVertexAttribPointer (LAYOUT_POSITION ,3 ,OPENGL_TRAITS_TYPE<VAL32>::value ,GL_FALSE ,_SIZEOF_ (VERTEX) ,&_NULL_<VERTEX> ()[0]) ;
 		glEnableVertexAttribArray (LAYOUT_TEXCOORD) ;
@@ -425,13 +431,13 @@ private:
 		glBindVertexArray (0) ;
 	}
 
-	void compute_transfer_data (Holder &_self ,const Array<ARRAY3<ARRAY8<VAL32>>> &vbo) const {
+	void compute_transfer_data (Holder &self_ ,const Array<ARRAY3<ARRAY8<VAL32>>> &vbo) const {
 		using VERTEX = ARRAY8<VAL32> ;
-		_self.mSize = vbo.length () * vbo[0].length () ;
-		_self.mMode = GL_TRIANGLES ;
-		glBindVertexArray (_self.mVAO) ;
-		glBindBuffer (GL_ARRAY_BUFFER ,_self.mVBO.self[0]) ;
-		glBufferData (GL_ARRAY_BUFFER ,_self.mSize * _SIZEOF_ (decltype (vbo[0][0])) ,vbo[0][0].raw ().self ,GL_STATIC_DRAW) ;
+		self_.mSize = vbo.length () * vbo[0].length () ;
+		self_.mMode = GL_TRIANGLES ;
+		glBindVertexArray (self_.mVAO) ;
+		glBindBuffer (GL_ARRAY_BUFFER ,self_.mVBO.self[0]) ;
+		glBufferData (GL_ARRAY_BUFFER ,self_.mSize * _SIZEOF_ (VERTEX) ,vbo[0][0].raw ().self ,GL_STATIC_DRAW) ;
 		glEnableVertexAttribArray (LAYOUT_POSITION) ;
 		glVertexAttribPointer (LAYOUT_POSITION ,3 ,OPENGL_TRAITS_TYPE<VAL32>::value ,GL_FALSE ,_SIZEOF_ (VERTEX) ,&_NULL_<VERTEX> ()[0]) ;
 		glEnableVertexAttribArray (LAYOUT_TEXCOORD) ;
@@ -441,25 +447,25 @@ private:
 		glBindVertexArray (0) ;
 	}
 
-	void compute_transfer_data (Holder &_self ,const Array<ARRAY4<ARRAY3<VAL32>>> &vbo) const {
+	void compute_transfer_data (Holder &self_ ,const Array<ARRAY4<ARRAY3<VAL32>>> &vbo) const {
 		using VERTEX = ARRAY3<VAL32> ;
-		_self.mSize = vbo.length () * vbo[0].length () ;
-		_self.mMode = GL_QUADS ;
-		glBindVertexArray (_self.mVAO) ;
-		glBindBuffer (GL_ARRAY_BUFFER ,_self.mVBO.self[0]) ;
-		glBufferData (GL_ARRAY_BUFFER ,_self.mSize * _SIZEOF_ (decltype (vbo[0][0])) ,vbo[0][0].raw ().self ,GL_STATIC_DRAW) ;
+		self_.mSize = vbo.length () * vbo[0].length () ;
+		self_.mMode = GL_QUADS ;
+		glBindVertexArray (self_.mVAO) ;
+		glBindBuffer (GL_ARRAY_BUFFER ,self_.mVBO.self[0]) ;
+		glBufferData (GL_ARRAY_BUFFER ,self_.mSize * _SIZEOF_ (VERTEX) ,vbo[0][0].raw ().self ,GL_STATIC_DRAW) ;
 		glEnableVertexAttribArray (LAYOUT_POSITION) ;
 		glVertexAttribPointer (LAYOUT_POSITION ,3 ,OPENGL_TRAITS_TYPE<VAL32>::value ,GL_FALSE ,_SIZEOF_ (VERTEX) ,NULL) ;
 		glBindVertexArray (0) ;
 	}
 
-	void compute_transfer_data (Holder &_self ,const Array<ARRAY4<ARRAY5<VAL32>>> &vbo) const {
+	void compute_transfer_data (Holder &self_ ,const Array<ARRAY4<ARRAY5<VAL32>>> &vbo) const {
 		using VERTEX = ARRAY5<VAL32> ;
-		_self.mSize = vbo.length () * vbo[0].length () ;
-		_self.mMode = GL_QUADS ;
-		glBindVertexArray (_self.mVAO) ;
-		glBindBuffer (GL_ARRAY_BUFFER ,_self.mVBO.self[0]) ;
-		glBufferData (GL_ARRAY_BUFFER ,_self.mSize * _SIZEOF_ (decltype (vbo[0][0])) ,vbo[0][0].raw ().self ,GL_STATIC_DRAW) ;
+		self_.mSize = vbo.length () * vbo[0].length () ;
+		self_.mMode = GL_QUADS ;
+		glBindVertexArray (self_.mVAO) ;
+		glBindBuffer (GL_ARRAY_BUFFER ,self_.mVBO.self[0]) ;
+		glBufferData (GL_ARRAY_BUFFER ,self_.mSize * _SIZEOF_ (VERTEX) ,vbo[0][0].raw ().self ,GL_STATIC_DRAW) ;
 		glEnableVertexAttribArray (LAYOUT_POSITION) ;
 		glVertexAttribPointer (LAYOUT_POSITION ,3 ,OPENGL_TRAITS_TYPE<VAL32>::value ,GL_FALSE ,_SIZEOF_ (VERTEX) ,&_NULL_<VERTEX> ()[0]) ;
 		glEnableVertexAttribArray (LAYOUT_TEXCOORD) ;
@@ -467,13 +473,13 @@ private:
 		glBindVertexArray (0) ;
 	}
 
-	void compute_transfer_data (Holder &_self ,const Array<ARRAY4<ARRAY8<VAL32>>> &vbo) const {
+	void compute_transfer_data (Holder &self_ ,const Array<ARRAY4<ARRAY8<VAL32>>> &vbo) const {
 		using VERTEX = ARRAY8<VAL32> ;
-		_self.mSize = vbo.length () * vbo[0].length () ;
-		_self.mMode = GL_QUADS ;
-		glBindVertexArray (_self.mVAO) ;
-		glBindBuffer (GL_ARRAY_BUFFER ,_self.mVBO.self[0]) ;
-		glBufferData (GL_ARRAY_BUFFER ,_self.mSize * _SIZEOF_ (decltype (vbo[0][0])) ,vbo[0][0].raw ().self ,GL_STATIC_DRAW) ;
+		self_.mSize = vbo.length () * vbo[0].length () ;
+		self_.mMode = GL_QUADS ;
+		glBindVertexArray (self_.mVAO) ;
+		glBindBuffer (GL_ARRAY_BUFFER ,self_.mVBO.self[0]) ;
+		glBufferData (GL_ARRAY_BUFFER ,self_.mSize * _SIZEOF_ (VERTEX) ,vbo[0][0].raw ().self ,GL_STATIC_DRAW) ;
 		glEnableVertexAttribArray (LAYOUT_POSITION) ;
 		glVertexAttribPointer (LAYOUT_POSITION ,3 ,OPENGL_TRAITS_TYPE<VAL32>::value ,GL_FALSE ,_SIZEOF_ (VERTEX) ,&_NULL_<VERTEX> ()[0]) ;
 		glEnableVertexAttribArray (LAYOUT_TEXCOORD) ;
@@ -483,10 +489,10 @@ private:
 		glBindVertexArray (0) ;
 	}
 
-	void compute_transfer_data (Holder &_self ,const Bitmap<COLOR_BGR> &image) const {
-		_self.mTexture = 0 ;
-		glBindVertexArray (_self.mVAO) ;
-		glBindTexture (GL_TEXTURE_2D ,_self.mVTO.self[0]) ;
+	void compute_transfer_data (Holder &self_ ,const Bitmap<COLOR_BGR> &image) const {
+		self_.mTexture = 0 ;
+		glBindVertexArray (self_.mVAO) ;
+		glBindTexture (GL_TEXTURE_2D ,self_.mVTO.self[0]) ;
 		glTexParameteri (GL_TEXTURE_2D ,GL_TEXTURE_WRAP_S ,GL_REPEAT) ;
 		glTexParameteri (GL_TEXTURE_2D ,GL_TEXTURE_WRAP_T ,GL_REPEAT) ;
 		glTexParameteri (GL_TEXTURE_2D ,GL_TEXTURE_MAG_FILTER ,GL_LINEAR) ;
@@ -498,17 +504,17 @@ private:
 	inline String<STRA> identity_name (const String<STR> &name) const {
 		String<STRA> ret = String<STRA> (name.length ()) ;
 		for (INDEX i = 0 ,ie = ret.size () ; i < ie ; i++) {
-			const auto r2x = BOOL (name[i] >= STR ('a') && name[i] <= STR ('z')) ;
-			const auto r3x = BOOL (name[i] >= STR ('A') && name[i] <= STR ('Z')) ;
-			const auto r4x = BOOL (name[i] >= STR ('0') && name[i] <= STR ('9')) ;
-			const auto r5x = BOOL (name[i] == STR ('_')) ;
-			_DEBUG_ASSERT_ (r2x || r3x || r4x || r5x) ;
+			const auto r1x = BOOL (name[i] >= STR ('a') && name[i] <= STR ('z')) ;
+			const auto r2x = BOOL (name[i] >= STR ('A') && name[i] <= STR ('Z')) ;
+			const auto r3x = BOOL (name[i] >= STR ('0') && name[i] <= STR ('9')) ;
+			const auto r4x = BOOL (name[i] == STR ('_')) ;
+			_DEBUG_ASSERT_ (r1x || r2x || r3x || r4x) ;
 			ret[i] = STRA (name[i]) ;
 		}
 		return std::move (ret) ;
 	}
 
-	inline void compute_check_error (UniqueRef<CHAR> &_self) const {
+	inline void compute_check_error (UniqueRef<CHAR> &self_) const {
 		const auto r1x = glGetError () ;
 		_DYNAMIC_ASSERT_ (r1x == GL_NO_ERROR) ;
 	}

@@ -38,9 +38,6 @@
     <ClInclude Include="..\..\..\..\..\Depends\__CSC__\csc_debugger.hpp">
       <Filter>csc</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\..\..\Depends\__CSC__\csc_ext.hpp">
-      <Filter>csc</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\..\..\..\Depends\__CSC__\csc_filesystem.hpp">
       <Filter>csc</Filter>
     </ClInclude>
@@ -72,6 +69,12 @@
       <Filter>csc</Filter>
     </ClInclude>
     <ClInclude Include="..\..\..\..\..\Depends\__CSC__\csc_thread.hpp">
+      <Filter>csc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\..\Depends\__CSC__\csc_basic.hpp">
+      <Filter>csc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\..\Depends\__CSC__\csc_extend.hpp">
       <Filter>csc</Filter>
     </ClInclude>
   </ItemGroup>
@@ -119,9 +122,6 @@
     </None>
     <None Include="..\..\..\..\..\Depends\__CSC__\cpp.hint" />
     <None Include="..\..\..\..\..\Depends\__CSC__\csc_runtime.hpp.default.inl">
-      <Filter>csc</Filter>
-    </None>
-    <None Include="..\..\..\..\..\Depends\__CSC__\csc.hpp.traits.inl">
       <Filter>csc</Filter>
     </None>
   </ItemGroup>

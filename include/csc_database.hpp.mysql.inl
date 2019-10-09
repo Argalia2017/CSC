@@ -61,20 +61,19 @@ public:
 		_STATIC_ASSERT_ (_ALIGNOF_ (REMOVE_CVR_TYPE<decltype ((*this))>) == _ALIGNOF_ (Interface)) ;
 	}
 
-	void compute_load_data (AnyRef<void> &_this) const override {
+	void compute_load_data (AnyRef<void> &this_) const override {
 		auto rax = UniqueRef<MYSQL> ([&] (MYSQL &me) {
-			mysql_init (&me) ;
+			::mysql_init (&me) ;
 		} ,[] (MYSQL &me) {
-			mysql_close (&me) ;
+			::mysql_close (&me) ;
 		}) ;
-		_this = AnyRef<NATIVE_TYPE>::make (std::move (rax)) ;
+		this_ = AnyRef<NATIVE_TYPE>::make (std::move (rax)) ;
 	}
 
 private:
-	inline void compute_check_error (MYSQL &_self) const {
-		const auto r1x = mysql_error (&_self) ;
-		const auto r2x = &_LOAD_<ARR<STRA>> (NULL ,_ADDRESS_ (r1x)) ;
-		_DYNAMIC_ASSERT_ (r2x == NULL) ;
+	inline void compute_check_error (MYSQL &self_) const {
+		const auto r1x = ::mysql_error (&self_) ;
+		_DYNAMIC_ASSERT_ (r1x == NULL) ;
 	}
 } ;
 } ;

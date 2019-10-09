@@ -5,7 +5,8 @@
 #endif
 
 #include "csc.hpp"
-#include "csc_ext.hpp"
+#include "csc_basic.hpp"
+#include "csc_extend.hpp"
 #include "csc_array.hpp"
 #include "csc_math.hpp"
 #include "csc_stream.hpp"
@@ -34,6 +35,8 @@ inline imports DEF<void (const String<STR> &dst_file ,const String<STR> &src_fil
 
 inline imports DEF<void (const String<STR> &dst_file ,const String<STR> &src_file)> _LINKFILE_ ;
 
+inline imports DEF<BOOL (const String<STR> &file) popping> _GUARDFILE_ ;
+
 inline imports DEF<BOOL (const String<STR> &file1 ,const String<STR> &file2) popping> _IDENTICALFILE_ ;
 
 inline imports DEF<String<STR> (const String<STR> &file)> _PARSEFILEPATH_ ;
@@ -58,7 +61,7 @@ inline imports DEF<void (const String<STR> &dire)> _BUILDDIRECTORY_ ;
 
 inline imports DEF<void (const String<STR> &dire)> _ERASEDIRECTORY_ ;
 
-inline imports DEF<void (const String<STR> &dire ,const Function<void (const String<STR> &)> &file_proc ,const Function<void (const String<STR> &)> &dire_proc) popping> _ENUMDIRECTORY_ ;
+inline imports DEF<void (const String<STR> &dire ,Deque<String<STR>> &file_list ,Deque<String<STR>> &dire_list) popping> _ENUMDIRECTORY_ ;
 
 inline imports DEF<void (const String<STR> &dire)> _CLEARDIRECTORY_ ;
 } ;
@@ -119,28 +122,8 @@ public:
 class FileSystemService final :private Interface {
 private:
 	exports struct Abstract :public Interface {
-		virtual AutoBuffer<BYTE> load_file (const String<STR> &file) popping = 0 ;
-		virtual void load_file (const String<STR> &file ,const PhanBuffer<BYTE> &data) popping = 0 ;
-		virtual void save_file (const String<STR> &file ,const PhanBuffer<const BYTE> &data) = 0 ;
-		virtual PhanBuffer<const BYTE> load_asset_file (FLAG resource) popping = 0 ;
-		virtual BOOL find_file (const String<STR> &file) popping = 0 ;
-		virtual void erase_file (const String<STR> &file) = 0 ;
-		virtual void copy_file (const String<STR> &dst_file ,const String<STR> &src_file) = 0 ;
-		virtual void move_file (const String<STR> &dst_file ,const String<STR> &src_file) = 0 ;
-		virtual void link_file (const String<STR> &dst_file ,const String<STR> &src_file) = 0 ;
-		virtual BOOL identical_file (const String<STR> &file1 ,const String<STR> &file2) popping = 0 ;
-		virtual String<STR> parse_file_path (const String<STR> &file) const = 0 ;
-		virtual String<STR> parse_file_name (const String<STR> &file) const = 0 ;
-		virtual Deque<String<STR>> decouple_path_name (const String<STR> &file) const = 0 ;
-		virtual String<STR> working_path () const = 0 ;
-		virtual String<STR> absolute_path (const String<STR> &path) const = 0 ;
-		virtual String<STR> module_file_path () const = 0 ;
-		virtual String<STR> module_file_name () const = 0 ;
-		virtual BOOL find_directory (const String<STR> &dire) popping = 0 ;
-		virtual void build_directory (const String<STR> &dire) = 0 ;
-		virtual void erase_directory (const String<STR> &dire) = 0 ;
-		virtual void enum_directory (const String<STR> &dire ,const Function<void (const String<STR> &)> &file_proc ,const Function<void (const String<STR> &)> &dire_proc) popping = 0 ;
-		virtual void clear_directory (const String<STR> &dire) = 0 ;
+		virtual void startup () = 0 ;
+		virtual void shutdown () = 0 ;
 	} ;
 
 private:
@@ -150,114 +133,14 @@ private:
 	StrongRef<Abstract> mThis ;
 
 public:
-	AutoBuffer<BYTE> load_file (const String<STR> &file) popping {
+	void startup () {
 		ScopedGuard<std::recursive_mutex> ANONYMOUS (mMutex) ;
-		return mThis->load_file (file) ;
+		mThis->startup () ;
 	}
 
-	void load_file (const String<STR> &file ,const PhanBuffer<BYTE> &data) popping {
+	void shutdown () {
 		ScopedGuard<std::recursive_mutex> ANONYMOUS (mMutex) ;
-		mThis->load_file (file ,data) ;
-	}
-
-	void save_file (const String<STR> &file ,const PhanBuffer<const BYTE> &data) {
-		ScopedGuard<std::recursive_mutex> ANONYMOUS (mMutex) ;
-		mThis->save_file (file ,data) ;
-	}
-
-	PhanBuffer<const BYTE> load_asset_file (FLAG resource) popping {
-		ScopedGuard<std::recursive_mutex> ANONYMOUS (mMutex) ;
-		return mThis->load_asset_file (resource) ;
-	}
-
-	BOOL find_file (const String<STR> &file) popping {
-		ScopedGuard<std::recursive_mutex> ANONYMOUS (mMutex) ;
-		return mThis->find_file (file) ;
-	}
-
-	void erase_file (const String<STR> &file) {
-		ScopedGuard<std::recursive_mutex> ANONYMOUS (mMutex) ;
-		mThis->erase_file (file) ;
-	}
-
-	void copy_file (const String<STR> &dst_file ,const String<STR> &src_file) {
-		ScopedGuard<std::recursive_mutex> ANONYMOUS (mMutex) ;
-		mThis->copy_file (dst_file ,src_file) ;
-	}
-
-	void move_file (const String<STR> &dst_file ,const String<STR> &src_file) {
-		ScopedGuard<std::recursive_mutex> ANONYMOUS (mMutex) ;
-		mThis->move_file (dst_file ,src_file) ;
-	}
-
-	void link_file (const String<STR> &dst_file ,const String<STR> &src_file) {
-		ScopedGuard<std::recursive_mutex> ANONYMOUS (mMutex) ;
-		mThis->link_file (dst_file ,src_file) ;
-	}
-
-	BOOL identical_file (const String<STR> &file1 ,const String<STR> &file2) popping {
-		ScopedGuard<std::recursive_mutex> ANONYMOUS (mMutex) ;
-		return mThis->identical_file (file1 ,file2) ;
-	}
-
-	String<STR> parse_file_path (const String<STR> &file) const {
-		ScopedGuard<std::recursive_mutex> ANONYMOUS (mMutex) ;
-		return mThis->parse_file_path (file) ;
-	}
-
-	String<STR> parse_file_name (const String<STR> &file) const {
-		ScopedGuard<std::recursive_mutex> ANONYMOUS (mMutex) ;
-		return mThis->parse_file_name (file) ;
-	}
-
-	Deque<String<STR>> decouple_path_name (const String<STR> &file) const {
-		ScopedGuard<std::recursive_mutex> ANONYMOUS (mMutex) ;
-		return mThis->decouple_path_name (file) ;
-	}
-
-	String<STR> working_path () const {
-		ScopedGuard<std::recursive_mutex> ANONYMOUS (mMutex) ;
-		return mThis->working_path () ;
-	}
-
-	String<STR> absolute_path (const String<STR> &path) const {
-		ScopedGuard<std::recursive_mutex> ANONYMOUS (mMutex) ;
-		return mThis->absolute_path (path) ;
-	}
-
-	String<STR> module_file_path () const {
-		ScopedGuard<std::recursive_mutex> ANONYMOUS (mMutex) ;
-		return mThis->module_file_path () ;
-	}
-
-	String<STR> module_file_name () const {
-		ScopedGuard<std::recursive_mutex> ANONYMOUS (mMutex) ;
-		return mThis->module_file_name () ;
-	}
-	
-	BOOL find_directory (const String<STR> &dire) popping {
-		ScopedGuard<std::recursive_mutex> ANONYMOUS (mMutex) ;
-		return mThis->find_directory (dire) ;
-	}
-
-	void build_directory (const String<STR> &dire) {
-		ScopedGuard<std::recursive_mutex> ANONYMOUS (mMutex) ;
-		mThis->build_directory (dire) ;
-	}
-
-	void erase_directory (const String<STR> &dire) {
-		ScopedGuard<std::recursive_mutex> ANONYMOUS (mMutex) ;
-		mThis->erase_directory (dire) ;
-	}
-
-	void enum_directory (const String<STR> &dire ,const Function<void (const String<STR> &)> &file_proc ,const Function<void (const String<STR> &)> &dire_proc) popping {
-		ScopedGuard<std::recursive_mutex> ANONYMOUS (mMutex) ;
-		mThis->enum_directory (dire ,file_proc ,dire_proc) ;
-	}
-
-	void clear_directory (const String<STR> &dire) {
-		ScopedGuard<std::recursive_mutex> ANONYMOUS (mMutex) ;
-		mThis->clear_directory (dire) ;
+		mThis->shutdown () ;
 	}
 
 private:

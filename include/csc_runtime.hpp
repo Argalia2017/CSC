@@ -5,7 +5,8 @@
 #endif
 
 #include "csc.hpp"
-#include "csc_ext.hpp"
+#include "csc_basic.hpp"
+#include "csc_extend.hpp"
 #include "csc_array.hpp"
 
 namespace CSC {
@@ -56,67 +57,69 @@ private:
 			_STATIC_WARNING_ ("mark") ;
 			auto rax = unique_atomic_address (NULL ,NULL) ;
 			auto rbx = IntrusiveRef<Holder> () ;
-			for (FOR_ONCE_DO) {
+			if SWITCH_ONCE (TRUE) {
 				if (rax != NULL)
 					discard ;
 				//@warn: sure 'GlobalHeap' can be used across DLL
 				rbx = IntrusiveRef<Holder>::make () ;
-				const auto r2x = rbx.watch () ;
-				const auto r3x = &_XVALUE_<Holder> (r2x) ;
-				const auto r4x = &_LOAD_<NONE> (r3x) ;
-				rax = unique_atomic_address (NULL ,r4x) ;
+				const auto r1x = rbx.watch () ;
+				auto &r2y = _XVALUE_<Holder> (r1x) ;
+				auto &r3y = _LOAD_<NONE> (&r2y) ;
+				rax = unique_atomic_address (NULL ,&r3y) ;
 			}
 			_DYNAMIC_ASSERT_ (rax != NULL) ;
-			const auto r5x = &_LOAD_<Holder> (rax) ;
-			return IntrusiveRef<Holder> (r5x).watch () ;
+			auto &r4y = _LOAD_<Holder> (rax) ;
+			return IntrusiveRef<Holder> (&r4y).watch () ;
 		}) ;
 	}
 
-	static PTR<VALUE_NODE> static_new_node (Holder &_self ,FLAG guid) popping {
-		_self.mValueNode.push () ;
-		_self.mValueNode->mGUID = guid ;
-		return &_self.mValueNode.self ;
+	static PTR<VALUE_NODE> static_new_node (Holder &self_ ,FLAG guid) popping {
+		self_.mValueNode.push () ;
+		self_.mValueNode->mGUID = guid ;
+		return &self_.mValueNode.self ;
 	}
 
-	static PTR<CLASS_NODE> static_new_node (Holder &_self ,const GUID_TYPE &guid) popping {
-		_self.mClassNode.push () ;
-		_self.mClassNode->mGUID = guid ;
-		return &_self.mClassNode.self ;
+	static PTR<CLASS_NODE> static_new_node (Holder &self_ ,const GUID_TYPE &guid) popping {
+		self_.mClassNode.push () ;
+		self_.mClassNode->mGUID = guid ;
+		return &self_.mClassNode.self ;
 	}
 
-	static PTR<VALUE_NODE> static_find_node (Holder &_self ,FLAG guid) {
+	static PTR<VALUE_NODE> static_find_node (Holder &self_ ,FLAG guid) popping {
 		PTR<VALUE_NODE> ret = NULL ;
-		for (FOR_ONCE_DO) {
-			if (!_self.mValueNode.exist ())
+		if SWITCH_ONCE (TRUE) {
+			if (!self_.mValueNode.exist ())
 				discard ;
-			const auto r1x = &_self.mValueNode.self ;
+			auto &r1y = self_.mValueNode.self ;
 			while (TRUE) {
 				if (ret != NULL)
 					break ;
-				if (_self.mValueNode->mGUID == guid)
-					ret = &_self.mValueNode.self ;
-				if (&_self.mValueNode.self == r1x)
+				if (self_.mValueNode->mGUID == guid)
+					ret = &self_.mValueNode.self ;
+				self_.mValueNode.cycle () ;
+				if (&self_.mValueNode.self == &r1y)
 					break ;
-				_self.mValueNode.cycle () ;
+				_STATIC_WARNING_ ("noop") ;
 			}
 		}
 		return std::move (ret) ;
 	}
 
-	static PTR<CLASS_NODE> static_find_node (Holder &_self ,const GUID_TYPE &guid) {
+	static PTR<CLASS_NODE> static_find_node (Holder &self_ ,const GUID_TYPE &guid) popping {
 		PTR<CLASS_NODE> ret = NULL ;
-		for (FOR_ONCE_DO) {
-			if (!_self.mClassNode.exist ())
+		if SWITCH_ONCE (TRUE) {
+			if (!self_.mClassNode.exist ())
 				discard ;
-			const auto r1x = &_self.mClassNode.self ;
+			auto &r1y = self_.mClassNode.self ;
 			while (TRUE) {
 				if (ret != NULL)
 					break ;
-				if (_MEMEQUAL_ (PTRTOARR[_self.mClassNode->mGUID.P1] ,PTRTOARR[guid.P1] ,_COUNTOF_ (decltype (guid.P1))))
-					ret = &_self.mClassNode.self ;
-				if (&_self.mClassNode.self == r1x)
+				if (_MEMEQUAL_ (PTRTOARR[self_.mClassNode->mGUID.P1] ,PTRTOARR[guid.P1] ,_COUNTOF_ (decltype (guid.P1))))
+					ret = &self_.mClassNode.self ;
+				self_.mClassNode.cycle () ;
+				if (&self_.mClassNode.self == &r1y)
 					break ;
-				_self.mClassNode.cycle () ;
+				_STATIC_WARNING_ ("noop") ;
 			}
 		}
 		return std::move (ret) ;
@@ -129,28 +132,28 @@ public:
 private:
 	class Detail :private Wrapped<void> {
 	public:
-		inline static void friend_create (Holder &_self) {
-			ScopedGuard<std::mutex> ANONYMOUS (_self.mNodeMutex) ;
-			_self.mCounter.self = 0 ;
-			_self.mValueNode = LinkedRef<VALUE_NODE> () ;
-			_self.mClassNode = LinkedRef<CLASS_NODE> () ;
+		inline static void friend_create (Holder &self_) {
+			ScopedGuard<std::mutex> ANONYMOUS (self_.mNodeMutex) ;
+			self_.mCounter.self = 0 ;
+			self_.mValueNode = LinkedRef<VALUE_NODE> () ;
+			self_.mClassNode = LinkedRef<CLASS_NODE> () ;
 		}
 
-		inline static void friend_destroy (Holder &_self) {
-			ScopedGuard<std::mutex> ANONYMOUS (_self.mNodeMutex) ;
-			_self.mValueNode = LinkedRef<VALUE_NODE> () ;
-			_self.mClassNode = LinkedRef<CLASS_NODE> () ;
+		inline static void friend_destroy (Holder &self_) {
+			ScopedGuard<std::mutex> ANONYMOUS (self_.mNodeMutex) ;
+			self_.mValueNode = LinkedRef<VALUE_NODE> () ;
+			self_.mClassNode = LinkedRef<CLASS_NODE> () ;
 		}
 
-		inline static LENGTH friend_attach (Holder &_self) popping {
-			return ++_self.mCounter.self ;
+		inline static LENGTH friend_attach (Holder &self_) popping {
+			return ++self_.mCounter.self ;
 		}
 
-		inline static LENGTH friend_detach (Holder &_self) popping {
-			return --_self.mCounter.self ;
+		inline static LENGTH friend_detach (Holder &self_) popping {
+			return --self_.mCounter.self ;
 		}
 
-		inline static void friend_latch (Holder &_self) {
+		inline static void friend_latch (Holder &self_) {
 			GlobalRuntime::thread_sleep () ;
 		}
 	} ;
@@ -160,44 +163,44 @@ template <FLAG GUID>
 class GlobalStatic<ARGC<GUID>> final :private Wrapped<void> {
 public:
 	static void init (VAR data ,BOOL read_only) {
-		auto &r1 = GlobalStatic<void>::static_unique () ;
-		ScopedGuard<std::mutex> ANONYMOUS (r1.mNodeMutex) ;
-		const auto r1x = GlobalStatic<void>::static_find_node (r1 ,GUID) ;
-		if (r1x != NULL)
+		auto &r1y = GlobalStatic<void>::static_unique () ;
+		ScopedGuard<std::mutex> ANONYMOUS (r1y.mNodeMutex) ;
+		const auto r2x = GlobalStatic<void>::static_find_node (r1y ,GUID) ;
+		if (r2x != NULL)
 			return ;
-		const auto r2x = GlobalStatic<void>::static_new_node (r1 ,GUID) ;
-		_DYNAMIC_ASSERT_ (r2x != NULL) ;
-		r2x->mReadOnly = read_only ;
-		r2x->mData = data ;
+		const auto r3x = GlobalStatic<void>::static_new_node (r1y ,GUID) ;
+		_DYNAMIC_ASSERT_ (r3x != NULL) ;
+		r3x->mReadOnly = read_only ;
+		r3x->mData = data ;
 	}
 
 	static VAR load () popping {
-		auto &r1 = GlobalStatic<void>::static_unique () ;
-		ScopedGuard<std::mutex> ANONYMOUS (r1.mNodeMutex) ;
-		const auto r1x = GlobalStatic<void>::static_find_node (r1 ,GUID) ;
-		_DYNAMIC_ASSERT_ (r1x != NULL) ;
-		return r1x->mData ;
+		auto &r1y = GlobalStatic<void>::static_unique () ;
+		ScopedGuard<std::mutex> ANONYMOUS (r1y.mNodeMutex) ;
+		const auto r2x = GlobalStatic<void>::static_find_node (r1y ,GUID) ;
+		_DYNAMIC_ASSERT_ (r2x != NULL) ;
+		return r2x->mData ;
 	}
 
 	static VAR compare_and_swap (VAR expect ,VAR data) popping {
-		auto &r1 = GlobalStatic<void>::static_unique () ;
-		ScopedGuard<std::mutex> ANONYMOUS (r1.mNodeMutex) ;
-		const auto r1x = GlobalStatic<void>::static_find_node (r1 ,GUID) ;
-		_DYNAMIC_ASSERT_ (r1x != NULL) ;
-		_DYNAMIC_ASSERT_ (!r1x->mReadOnly) ;
-		if (r1x->mData == expect)
-			r1x->mData = data ;
-		return r1x->mData ;
+		auto &r1y = GlobalStatic<void>::static_unique () ;
+		ScopedGuard<std::mutex> ANONYMOUS (r1y.mNodeMutex) ;
+		const auto r2x = GlobalStatic<void>::static_find_node (r1y ,GUID) ;
+		_DYNAMIC_ASSERT_ (r2x != NULL) ;
+		_DYNAMIC_ASSERT_ (!r2x->mReadOnly) ;
+		if (r2x->mData == expect)
+			r2x->mData = data ;
+		return r2x->mData ;
 	}
 
 	static void save (VAR data) {
-		auto &r1 = GlobalStatic<void>::static_unique () ;
-		ScopedGuard<std::mutex> ANONYMOUS (r1.mNodeMutex) ;
-		auto rax = GlobalStatic<void>::static_find_node (r1 ,GUID) ;
-		for (FOR_ONCE_DO) {
+		auto &r1y = GlobalStatic<void>::static_unique () ;
+		ScopedGuard<std::mutex> ANONYMOUS (r1y.mNodeMutex) ;
+		auto rax = GlobalStatic<void>::static_find_node (r1y ,GUID) ;
+		if SWITCH_ONCE (TRUE) {
 			if (rax != NULL)
 				discard ;
-			rax = GlobalStatic<void>::static_new_node (r1 ,GUID) ;
+			rax = GlobalStatic<void>::static_new_node (r1y ,GUID) ;
 			rax->mReadOnly = FALSE ;
 		}
 		_DYNAMIC_ASSERT_ (rax != NULL) ;
@@ -229,61 +232,62 @@ private:
 
 public:
 	static Singleton<UNIT> &unique () popping {
-		auto &r1 = _CACHE_ ([] () {
-			auto &r2 = GlobalStatic<void>::static_unique () ;
-			ScopedGuard<std::mutex> ANONYMOUS (r2.mNodeMutex) ;
-			const auto r2x = Detail::guid_from_typeid_name () ;
-			auto rax = GlobalStatic<void>::static_find_node (r2 ,r2x) ;
+		auto &r1y = _CACHE_ ([] () {
+			auto &r2y = GlobalStatic<void>::static_unique () ;
+			ScopedGuard<std::mutex> ANONYMOUS (r2y.mNodeMutex) ;
+			const auto r3x = Detail::guid_from_typeid_name () ;
+			auto rax = GlobalStatic<void>::static_find_node (r2y ,r3x) ;
 			auto rbx = IntrusiveRef<Holder> () ;
-			for (FOR_ONCE_DO) {
+			if SWITCH_ONCE (TRUE) {
 				if (rax != NULL)
 					discard ;
-				rax = GlobalStatic<void>::static_new_node (r2 ,r2x) ;
+				rax = GlobalStatic<void>::static_new_node (r2y ,r3x) ;
 				_DYNAMIC_ASSERT_ (rax != NULL) ;
 				//@warn: sure 'GlobalHeap' can be used across DLL
 				rbx = IntrusiveRef<Holder>::make () ;
-				const auto r3x = rbx.watch () ;
-				const auto r4x = &_XVALUE_<Holder> (r3x) ;
-				rax->mData = &_LOAD_<NONE> (r4x) ;
+				const auto r4x = rbx.watch () ;
+				auto &r5y = _XVALUE_<Holder> (r4x) ;
+				auto &r6y = _LOAD_<NONE> (&r5y) ;
+				rax->mData = &r6y ;
 			}
-			const auto r5x = &_LOAD_<Holder> (rax->mData) ;
-			return IntrusiveRef<Holder> (r5x).watch () ;
+			auto &r7y = _LOAD_<Holder> (rax->mData) ;
+			return IntrusiveRef<Holder> (&r7y).watch () ;
 		}) ;
-		return _XVALUE_<Holder> (r1).mData ;
+		return _XVALUE_<Holder> (r1y).mData ;
 	}
 
 private:
 	class Detail :private Wrapped<void> {
 	public:
-		inline static void friend_create (Holder &_self) {
-			_self.mCounter.self = 0 ;
+		inline static void friend_create (Holder &self_) {
+			self_.mCounter.self = 0 ;
 		}
 
-		inline static void friend_destroy (Holder &_self) {
+		inline static void friend_destroy (Holder &self_) {
 			_STATIC_WARNING_ ("noop") ;
 		}
 
-		inline static LENGTH friend_attach (Holder &_self) popping {
-			return ++_self.mCounter.self ;
+		inline static LENGTH friend_attach (Holder &self_) popping {
+			return ++self_.mCounter.self ;
 		}
 
-		inline static LENGTH friend_detach (Holder &_self) popping {
-			return --_self.mCounter.self ;
+		inline static LENGTH friend_detach (Holder &self_) popping {
+			return --self_.mCounter.self ;
 		}
 
-		inline static void friend_latch (Holder &_self) {
+		inline static void friend_latch (Holder &self_) {
 			GlobalRuntime::thread_sleep () ;
 		}
 
 		inline static GUID_TYPE guid_from_typeid_name () {
-			DEF<BYTE[_SIZEOF_ (GUID_TYPE)]> ret ;
+			PACK<BYTE[_SIZEOF_ (GUID_TYPE)]> ret ;
 			_ZERO_ (ret) ;
 			_STATIC_WARNING_ ("mark") ;
 			const auto r1x = String<STRA> (PTRTOARR[typeid (UNIT).name ()]) ;
-			auto &r1 = _LOAD_<ARR<BYTE>> (&PTRTOARR[&r1x[0]]) ;
-			_DEBUG_ASSERT_ (r1x.size () > 0 && r1x.size () <= _SIZEOF_ (GUID_TYPE)) ;
-			const auto r2x = _MIN_ (r1x.size () ,_SIZEOF_ (GUID_TYPE)) * _SIZEOF_ (STRA) ;
-			_MEMCOPY_ (PTRTOARR[ret] ,r1 ,r2x) ;
+			const auto r2x = PhanBuffer<const BYTE>::make (r1x.raw ()) ;
+			_DEBUG_ASSERT_ (r2x.size () <= _SIZEOF_ (GUID_TYPE)) ;
+			const auto r3x = _MIN_ (r2x.size () ,_SIZEOF_ (GUID_TYPE)) ;
+			_MEMCOPY_ (PTRTOARR[ret.P1] ,r2x.self ,r3x) ;
 			return _BITWISE_CAST_<GUID_TYPE> (ret) ;
 		}
 	} ;
@@ -303,9 +307,9 @@ private:
 
 private:
 	class Implement ;
-	Monostate<FLAG> mCoStatus ;
-	AutoRef<UNIT> mCoContext ;
-	AnyRef<void> mCoBreakPoint ;
+	Monostate<FLAG> mStatus ;
+	AutoRef<UNIT> mContext ;
+	AnyRef<void> mBreakPoint ;
 	Array<Function<DEF<void (SubRef &)> NONE::*>> mSubProc ;
 	Array<AnyRef<void>> mSubBreakPoint ;
 	Deque<INDEX> mSubQueue ;
@@ -314,27 +318,27 @@ private:
 
 public:
 	Coroutine () {
-		mCoStatus.self = STATUS_CREATED ;
+		mStatus.self = STATUS_CREATED ;
 		mSubCurr = VAR_NONE ;
 	}
 
 	BOOL ready () const {
-		if (mCoStatus.self != STATUS_STOPPED)
+		if (mStatus.self != STATUS_STOPPED)
 			return FALSE ;
 		return TRUE ;
 	}
 
 	UNIT &context () & {
-		_DEBUG_ASSERT_ (mCoContext.exist ()) ;
-		return mCoContext ;
+		_DEBUG_ASSERT_ (mContext.exist ()) ;
+		return mContext ;
 	}
 
 	UNIT &context () && = delete ;
 
 	void start (Array<Function<DEF<void (SubRef &)> NONE::*>> &&proc) {
 		_DEBUG_ASSERT_ (proc.length () > 0) ;
-		mCoContext = AutoRef<UNIT>::make () ;
-		mCoBreakPoint = AnyRef<void> () ;
+		mContext = AutoRef<UNIT>::make () ;
+		mBreakPoint = AnyRef<void> () ;
 		mSubProc = std::move (proc) ;
 		mSubBreakPoint = Array<AnyRef<void>> (mSubProc.size ()) ;
 		mSubQueue = Deque<INDEX> (mSubProc.length ()) ;
@@ -345,49 +349,49 @@ public:
 	}
 
 	void execute () {
-		_DEBUG_ASSERT_ (!mCoBreakPoint.exist ()) ;
-		init_break_point (mCoBreakPoint) ;
+		_DEBUG_ASSERT_ (!mBreakPoint.exist ()) ;
+		init_break_point (mBreakPoint) ;
 		for (auto &&i : mSubBreakPoint) {
 			_DEBUG_ASSERT_ (!i.exist ()) ;
 			init_break_point (i) ;
 		}
-		mCoStatus.self = STATUS_CREATED ;
-		store_break_point (mCoBreakPoint) ;
+		mStatus.self = STATUS_CREATED ;
+		store_break_point (mBreakPoint) ;
 		for (auto &&i : mSubBreakPoint) {
-			if (mCoStatus.self != STATUS_STOPPED)
+			if (mStatus.self != STATUS_STOPPED)
 				continue ;
 			if (!i.exist ())
 				continue ;
 			goto_break_point (i) ;
 		}
-		if (mCoStatus.self != STATUS_CREATED)
+		if (mStatus.self != STATUS_CREATED)
 			return ;
 		for (auto &&i : mSubBreakPoint) {
-			if (mCoStatus.self != STATUS_CREATED)
+			if (mStatus.self != STATUS_CREATED)
 				continue ;
 			store_break_point (i) ;
 		}
 		_DEBUG_ASSERT_ (mSubCurr != VAR_NONE) ;
 		const auto r1x = mSubCurr ;
 		_CALL_TRY_ ([&] () {
-			if (mCoStatus.self == STATUS_STOPPED)
+			if (mStatus.self == STATUS_STOPPED)
 				return ;
-			mCoStatus.self = STATUS_RUNNING ;
+			mStatus.self = STATUS_RUNNING ;
 			mSubProc[r1x] (_CAST_<SubRef> ((*this))) ;
 		} ,[&] () {
 			_STATIC_WARNING_ ("noop") ;
 		}) ;
 		mSubBreakPoint[r1x] = AnyRef<void> () ;
-		mCoStatus.self = STATUS_STOPPED ;
-		goto_break_point (mCoBreakPoint) ;
+		mStatus.self = STATUS_STOPPED ;
+		goto_break_point (mBreakPoint) ;
 	}
 
 private:
-	void init_break_point (AnyRef<void> &bp) ;
+	void init_break_point (AnyRef<void> &bp) popping ;
 
-	void store_break_point (AnyRef<void> &bp) noexcept ;
+	void store_break_point (AnyRef<void> &bp) noexcept popping ;
 
-	void goto_break_point (AnyRef<void> &bp) noexcept ;
+	void goto_break_point (AnyRef<void> &bp) noexcept popping ;
 
 public:
 	static void csync (Array<Function<DEF<void (SubRef &)> NONE::*>> &&proc) ;
@@ -400,8 +404,8 @@ private:
 
 public:
 	UNIT &to () {
-		_DEBUG_ASSERT_ (mSelf.mCoContext.exist ()) ;
-		return mSelf.mCoContext ;
+		_DEBUG_ASSERT_ (mSelf.mContext.exist ()) ;
+		return mSelf.mContext ;
 	}
 
 	inline implicit operator UNIT & () {
@@ -413,8 +417,8 @@ public:
 	}
 
 	const UNIT &to () const {
-		_DEBUG_ASSERT_ (mSelf.mCoContext.exist ()) ;
-		return mSelf.mCoContext ;
+		_DEBUG_ASSERT_ (mSelf.mContext.exist ()) ;
+		return mSelf.mContext ;
 	}
 
 	inline implicit operator const UNIT & () const {
@@ -432,16 +436,16 @@ public:
 	void sub_await (VAR priority) {
 		_DEBUG_ASSERT_ (priority >= 0) ;
 		_DEBUG_ASSERT_ (mSelf.mSubCurr != VAR_NONE) ;
-		_DYNAMIC_ASSERT_ (mSelf.mCoStatus.self == STATUS_RUNNING) ;
-		mSelf.mCoStatus.self = STATUS_SUSPEND ;
+		_DYNAMIC_ASSERT_ (mSelf.mStatus.self == STATUS_RUNNING) ;
+		mSelf.mStatus.self = STATUS_SUSPEND ;
 		store_break_point (mSelf.mSubBreakPoint[mSelf.mSubCurr]) ;
-		_DYNAMIC_ASSERT_ (mSelf.mCoStatus.self != STATUS_STOPPED) ;
-		if (mSelf.mCoStatus.self != STATUS_SUSPEND)
+		_DYNAMIC_ASSERT_ (mSelf.mStatus.self != STATUS_STOPPED) ;
+		if (mSelf.mStatus.self != STATUS_SUSPEND)
 			return ;
 		mSelf.mSubAwaitQueue.add (priority ,mSelf.mSubCurr) ;
 		_DYNAMIC_ASSERT_ (!mSelf.mSubQueue.empty ()) ;
 		mSelf.mSubQueue.take (mSelf.mSubCurr) ;
-		mSelf.mCoStatus.self = STATUS_RUNNING ;
+		mSelf.mStatus.self = STATUS_RUNNING ;
 		goto_break_point (mSelf.mSubBreakPoint[mSelf.mSubCurr]) ;
 	}
 
@@ -463,42 +467,42 @@ public:
 		_DEBUG_ASSERT_ (mSelf.mSubCurr != VAR_NONE) ;
 		if (mSelf.mSubQueue.empty ())
 			return ;
-		_DYNAMIC_ASSERT_ (mSelf.mCoStatus.self == STATUS_RUNNING) ;
-		mSelf.mCoStatus.self = STATUS_SUSPEND ;
+		_DYNAMIC_ASSERT_ (mSelf.mStatus.self == STATUS_RUNNING) ;
+		mSelf.mStatus.self = STATUS_SUSPEND ;
 		store_break_point (mSelf.mSubBreakPoint[mSelf.mSubCurr]) ;
-		_DYNAMIC_ASSERT_ (mSelf.mCoStatus.self != STATUS_STOPPED) ;
-		if (mSelf.mCoStatus.self != STATUS_SUSPEND)
+		_DYNAMIC_ASSERT_ (mSelf.mStatus.self != STATUS_STOPPED) ;
+		if (mSelf.mStatus.self != STATUS_SUSPEND)
 			return ;
 		mSelf.mSubQueue.add (mSelf.mSubCurr) ;
 		_DYNAMIC_ASSERT_ (!mSelf.mSubQueue.empty ()) ;
 		mSelf.mSubQueue.take (mSelf.mSubCurr) ;
-		mSelf.mCoStatus.self = STATUS_RUNNING ;
+		mSelf.mStatus.self = STATUS_RUNNING ;
 		goto_break_point (mSelf.mSubBreakPoint[mSelf.mSubCurr]) ;
 	}
 
 	void sub_return () {
 		_DEBUG_ASSERT_ (mSubCurr != VAR_NONE) ;
-		_DYNAMIC_ASSERT_ (mSelf.mCoStatus.self == STATUS_RUNNING) ;
+		_DYNAMIC_ASSERT_ (mSelf.mStatus.self == STATUS_RUNNING) ;
 		mSelf.mSubQueue.clear () ;
 		mSelf.mSubAwaitQueue.clear () ;
 		mSelf.mSubCurr = VAR_NONE ;
-		mSelf.mCoStatus.self = STATUS_STOPPED ;
-		goto_break_point (mSelf.mCoBreakPoint) ;
+		mSelf.mStatus.self = STATUS_STOPPED ;
+		goto_break_point (mSelf.mBreakPoint) ;
 	}
 } ;
-#endif
 
 template <class UNIT>
 inline void Coroutine<UNIT>::csync (Array<Function<DEF<void (SubRef &)> NONE::*>> &&proc) {
 	auto rax = Coroutine<UNIT> (std::move (proc)) ;
 	rax.execute () ;
 }
+#endif
 
 class RandomService final :private Interface {
 private:
 	exports struct Abstract :public Interface {
-		virtual VAL entropy () const = 0 ;
-		virtual void reset_seed (VAR _seed) = 0 ;
+		virtual VAR entropy () const = 0 ;
+		virtual void reset_seed (VAR seed_) = 0 ;
 		virtual VAR random_value () popping = 0 ;
 		virtual void random_skip (LENGTH len) = 0 ;
 	} ;
@@ -511,30 +515,30 @@ private:
 	StrongRef<Abstract> mThis ;
 
 public:
-	VAL entropy () const {
+	VAR entropy () const {
 		ScopedGuard<std::recursive_mutex> ANONYMOUS (mMutex) ;
 		return mThis->entropy () ;
 	}
 
-	void reset_seed (VAR _seed) {
+	void reset_seed (VAR seed_) {
 		ScopedGuard<std::recursive_mutex> ANONYMOUS (mMutex) ;
-		mThis->reset_seed (_seed) ;
+		mThis->reset_seed (seed_) ;
 	}
 
-	VAR random_value (VAR _min ,VAR _max) popping {
+	VAR random_value (VAR min_ ,VAR max_) popping {
 		ScopedGuard<std::recursive_mutex> ANONYMOUS (mMutex) ;
-		_DEBUG_ASSERT_ (_min >= 0 && _min <= _max) ;
+		_DEBUG_ASSERT_ (min_ >= 0 && min_ <= max_) ;
 		const auto r1x = mThis->random_value () ;
-		return r1x % (_max - _min + 1) + _min ;
+		return r1x % (max_ - min_ + 1) + min_ ;
 	}
 
-	Array<VAR> random_value (VAR _min ,VAR _max ,LENGTH len) popping {
+	Array<VAR> random_value (VAR min_ ,VAR max_ ,LENGTH len) popping {
 		ScopedGuard<std::recursive_mutex> ANONYMOUS (mMutex) ;
 		Array<VAR> ret = Array<VAR> (len) ;
-		const auto r1x = _max - _min + 1 ;
+		const auto r1x = max_ - min_ + 1 ;
 		for (INDEX i = 0 ,ie = ret.length () ; i < ie ; i++) {
 			const auto r2x = mThis->random_value () ;
-			ret[i] = r2x % r1x + _min ;
+			ret[i] = r2x % r1x + min_ ;
 		}
 		return std::move (ret) ;
 	}
@@ -579,25 +583,25 @@ public:
 		static constexpr auto M_UUID = _PCSTR_ ("00000000-0000-0000-000000000000") ;
 		String<STR> ret = String<STR> (M_UUID.size ()) ;
 		INDEX iw = 0 ;
-		const auto r5x = random_value (0 ,36 ,28) ;
+		const auto r1x = random_value (0 ,36 ,28) ;
 		for (INDEX i = 0 ,ie = 8 ; i < ie ; i++) {
 			INDEX ix = 0 + i ;
-			ret[iw++] = Detail::index_to_hex_str (r5x[ix]) ;
+			ret[iw++] = Detail::index_to_hex_str (r1x[ix]) ;
 		}
 		ret[iw++] = STRU8 ('-') ;
 		for (INDEX i = 0 ,ie = 4 ; i < ie ; i++) {
 			INDEX ix = 8 + i ;
-			ret[iw++] = Detail::index_to_hex_str (r5x[ix]) ;
+			ret[iw++] = Detail::index_to_hex_str (r1x[ix]) ;
 		}
 		ret[iw++] = STRU8 ('-') ;
 		for (INDEX i = 0 ,ie = 4 ; i < ie ; i++) {
 			INDEX ix = 12 + i ;
-			ret[iw++] = Detail::index_to_hex_str (r5x[ix]) ;
+			ret[iw++] = Detail::index_to_hex_str (r1x[ix]) ;
 		}
 		ret[iw++] = STRU8 ('-') ;
 		for (INDEX i = 0 ,ie = 12 ; i < ie ; i++) {
 			INDEX ix = 16 + i ;
-			ret[iw++] = Detail::index_to_hex_str (r5x[ix]) ;
+			ret[iw++] = Detail::index_to_hex_str (r1x[ix]) ;
 		}
 		if (iw < ret.size ())
 			ret[iw] = 0 ;

@@ -5,13 +5,17 @@
 #endif
 
 #include "csc.hpp"
-#include "csc_ext.hpp"
+#include "csc_basic.hpp"
+#include "csc_extend.hpp"
 #include "csc_array.hpp"
 #include "csc_math.hpp"
+#include "csc_images.hpp"
+#include "csc_geometry.hpp"
 #include "csc_stream.hpp"
 #include "csc_string.hpp"
 #include "csc_runtime.hpp"
 #include "csc_thread.hpp"
+#include "csc_graphics.hpp"
 #include "csc_filesystem.hpp"
 #include "csc_network.hpp"
 #include "csc_database.hpp"
@@ -33,25 +37,25 @@ struct OPERATOR_TYPENAME {
 		static constexpr auto M_SUFFIX = _PCSTR_ (">(void)") ;
 		const auto r1x = M_PREFIX.size () ;
 		const auto r2x = M_SUFFIX.size () ;
-		const auto r7x = ret.mSelf.length () - r1x - r2x ;
-		_DYNAMIC_ASSERT_ (r7x > 0) ;
-		ret.mSelf = ret.mSelf.segment (r1x ,r7x) ;
+		const auto r3x = ret.mSelf.length () - r1x - r2x ;
+		_DYNAMIC_ASSERT_ (r3x > 0) ;
+		ret.mSelf = ret.mSelf.segment (r1x ,r3x) ;
 #elif defined __CSC_COMPILER_GNUC__
 		static constexpr auto M_PREFIX = _PCSTR_ ("static CSC::U::OPERATOR_TYPENAME::TYPENAME CSC::U::OPERATOR_TYPENAME::type_name_from_func() [with _RET = ") ;
 		static constexpr auto M_SUFFIX = _PCSTR_ ("]") ;
-		const auto r3x = M_PREFIX.size () ;
-		const auto r4x = M_SUFFIX.size () ;
-		const auto r8x = ret.mSelf.length () - r3x - r4x ;
-		_DYNAMIC_ASSERT_ (r8x > 0) ;
-		ret.mSelf = ret.mSelf.segment (r3x ,r8x) ;
+		const auto r4x = M_PREFIX.size () ;
+		const auto r5x = M_SUFFIX.size () ;
+		const auto r6x = ret.mSelf.length () - r4x - r5x ;
+		_DYNAMIC_ASSERT_ (r6x > 0) ;
+		ret.mSelf = ret.mSelf.segment (r4x ,r6x) ;
 #elif defined __CSC_COMPILER_CLANG__
 		static constexpr auto M_PREFIX = _PCSTR_ ("static CSC::U::OPERATOR_TYPENAME::TYPENAME CSC::U::OPERATOR_TYPENAME::type_name_from_func() [_RET = ") ;
 		static constexpr auto M_SUFFIX = _PCSTR_ ("]") ;
-		const auto r5x = M_PREFIX.size () ;
-		const auto r6x = M_SUFFIX.size () ;
-		const auto r9x = ret.mSelf.length () - r5x - r6x ;
+		const auto r7x = M_PREFIX.size () ;
+		const auto r8x = M_SUFFIX.size () ;
+		const auto r9x = ret.mSelf.length () - r7x - r8x ;
 		_DYNAMIC_ASSERT_ (r9x > 0) ;
-		ret.mSelf = ret.mSelf.segment (r5x ,r9x) ;
+		ret.mSelf = ret.mSelf.segment (r7x ,r9x) ;
 #else
 		ret.mSelf = _BUILDVAR64S_ (_TYPEUID_<_RET> ()) ;
 #endif
@@ -331,9 +335,9 @@ private:
 		TupleBinder<const UNITS...> mBinder ;
 
 	public:
-		inline explicit ImplBinder (const UNITS &...args) :mBinder (args...) {}
+		inline explicit ImplBinder (const UNITS &...initval) :mBinder (initval...) {}
 
-		inline void friend_write (TextWriter<STR> &writer) const popping override {
+		inline void friend_write (TextWriter<STR> &writer) const override {
 			template_write (writer ,mBinder) ;
 		}
 
@@ -386,45 +390,45 @@ public:
 	}
 
 	template <class... _ARGS>
-	void print (const _ARGS &...args) {
+	void print (const _ARGS &...msg) {
 		ScopedGuard<std::recursive_mutex> ANONYMOUS (mMutex) ;
-		mThis->print (ImplBinder<_ARGS...> (args...)) ;
+		mThis->print (ImplBinder<_ARGS...> (msg...)) ;
 	}
 
 	template <class... _ARGS>
-	void fatal (const _ARGS &...args) {
+	void fatal (const _ARGS &...msg) {
 		ScopedGuard<std::recursive_mutex> ANONYMOUS (mMutex) ;
-		mThis->fatal (ImplBinder<_ARGS...> (args...)) ;
+		mThis->fatal (ImplBinder<_ARGS...> (msg...)) ;
 	}
 
 	template <class... _ARGS>
-	void error (const _ARGS &...args) {
+	void error (const _ARGS &...msg) {
 		ScopedGuard<std::recursive_mutex> ANONYMOUS (mMutex) ;
-		mThis->error (ImplBinder<_ARGS...> (args...)) ;
+		mThis->error (ImplBinder<_ARGS...> (msg...)) ;
 	}
 
 	template <class... _ARGS>
-	void warn (const _ARGS &...args) {
+	void warn (const _ARGS &...msg) {
 		ScopedGuard<std::recursive_mutex> ANONYMOUS (mMutex) ;
-		mThis->warn (ImplBinder<_ARGS...> (args...)) ;
+		mThis->warn (ImplBinder<_ARGS...> (msg...)) ;
 	}
 
 	template <class... _ARGS>
-	void info (const _ARGS &...args) {
+	void info (const _ARGS &...msg) {
 		ScopedGuard<std::recursive_mutex> ANONYMOUS (mMutex) ;
-		mThis->info (ImplBinder<_ARGS...> (args...)) ;
+		mThis->info (ImplBinder<_ARGS...> (msg...)) ;
 	}
 
 	template <class... _ARGS>
-	void debug (const _ARGS &...args) {
+	void debug (const _ARGS &...msg) {
 		ScopedGuard<std::recursive_mutex> ANONYMOUS (mMutex) ;
-		mThis->debug (ImplBinder<_ARGS...> (args...)) ;
+		mThis->debug (ImplBinder<_ARGS...> (msg...)) ;
 	}
 
 	template <class... _ARGS>
-	void verbose (const _ARGS &...args) {
+	void verbose (const _ARGS &...msg) {
 		ScopedGuard<std::recursive_mutex> ANONYMOUS (mMutex) ;
-		mThis->verbose (ImplBinder<_ARGS...> (args...)) ;
+		mThis->verbose (ImplBinder<_ARGS...> (msg...)) ;
 	}
 
 	void attach_log (const String<STR> &path) {
@@ -433,9 +437,9 @@ public:
 	}
 
 	template <class... _ARGS>
-	void log (const String<STR> &tag ,const _ARGS &...args) {
+	void log (const String<STR> &tag ,const _ARGS &...msg) {
 		ScopedGuard<std::recursive_mutex> ANONYMOUS (mMutex) ;
-		mThis->log (tag.raw () ,ImplBinder<_ARGS...> (args...)) ;
+		mThis->log (tag.raw () ,ImplBinder<_ARGS...> (msg...)) ;
 	}
 
 	void show () {
@@ -472,8 +476,8 @@ private:
 	exports struct Abstract :public Interface {
 		virtual void abort_once_invoked_exit (BOOL flag) = 0 ;
 		virtual void output_memory_leaks_report (BOOL flag) = 0 ;
-		virtual Array<DATA> captrue_stack_trace () popping = 0 ;
-		virtual Array<String<STR>> symbol_from_address (const Array<DATA> &address) popping = 0 ;
+		virtual Array<LENGTH> captrue_stack_trace () popping = 0 ;
+		virtual Array<String<STR>> symbol_from_address (const Array<LENGTH> &list) popping = 0 ;
 	} ;
 
 private:
@@ -493,14 +497,14 @@ public:
 		mThis->output_memory_leaks_report (flag) ;
 	}
 
-	Array<DATA> captrue_stack_trace () popping {
+	Array<LENGTH> captrue_stack_trace () popping {
 		ScopedGuard<std::recursive_mutex> ANONYMOUS (mMutex) ;
 		return mThis->captrue_stack_trace () ;
 	}
 
-	Array<String<STR>> symbol_from_address (const Array<DATA> &address) popping {
+	Array<String<STR>> symbol_from_address (const Array<LENGTH> &list) popping {
 		ScopedGuard<std::recursive_mutex> ANONYMOUS (mMutex) ;
-		return mThis->symbol_from_address (address) ;
+		return mThis->symbol_from_address (list) ;
 	}
 
 private:
