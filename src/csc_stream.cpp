@@ -6,11 +6,12 @@ TEST_CLASS (UNITTEST_CSC_STREAM) {
 public:
 	TEST_METHOD (TEST_CSC_STREAM) {
 		const auto r1x = CSC::CHAR (0X11223344) ;
-		auto &r1 = _CAST_<EndianBytes<CSC::CHAR>> (r1x) ;
-		_UNITTEST_ASSERT_ (r1[0] == CSC::BYTE (0X11)) ;
-		_UNITTEST_ASSERT_ (r1[1] == CSC::BYTE (0X22)) ;
-		_UNITTEST_ASSERT_ (r1[2] == CSC::BYTE (0X33)) ;
-		_UNITTEST_ASSERT_ (r1[3] == CSC::BYTE (0X44)) ;
+		auto rax = PACK<CSC::BYTE[_SIZEOF_ (CSC::CHAR)]> () ;
+		_CAST_<EndianBytes<CSC::CHAR>> (rax.P1) <<= r1x ;
+		_UNITTEST_ASSERT_ (rax.P1[0] == CSC::BYTE (0X11)) ;
+		_UNITTEST_ASSERT_ (rax.P1[1] == CSC::BYTE (0X22)) ;
+		_UNITTEST_ASSERT_ (rax.P1[2] == CSC::BYTE (0X33)) ;
+		_UNITTEST_ASSERT_ (rax.P1[3] == CSC::BYTE (0X44)) ;
 	}
 
 	TEST_METHOD (TEST_CSC_STREAM_BYTEREADER) {
@@ -27,9 +28,9 @@ public:
 	}
 
 	TEST_METHOD (TEST_CSC_STREAM_TEXTREADER) {
-		struct wrapped_int :private Wrapped<int> {
+		struct WRAPPED_int :private Wrapped<int> {
 			inline void friend_read (TextReader<STRU8> &reader) popping {
-				reader >> wrapped_int::mSelf >> _GAP_ ;
+				reader >> WRAPPED_int::mSelf >> _GAP_ ;
 			}
 		} ;
 		auto rax = Buffer<int ,ARGC<4>> () ;
@@ -38,20 +39,19 @@ public:
 		ris.attr ().modify_space (STRU8 (' ') ,0) ;
 		rbx[0] = STRU8 ('0') ;
 		rbx[1] = STRU8 (' ') ;
-		rbx[2] = STRU8 ('0') ;
+		rbx[2] = STRU8 ('1') ;
 		rbx[3] = STRU8 (' ') ;
-		rbx[4] = STRU8 ('0') ;
+		rbx[4] = STRU8 ('2') ;
 		rbx[5] = STRU8 (' ') ;
-		rbx[6] = STRU8 ('0') ;
+		rbx[6] = STRU8 ('3') ;
 		rbx[7] = STRU8 (' ') ;
-		rbx[8] = STRU8 ('0') ;
+		rbx[8] = STRU8 ('4') ;
 		rbx[9] = ris.attr ().varify_ending_item () ;
-		for (FOR_ONCE_DO) {
-			auto &r1 = _CAST_<Buffer<wrapped_int ,ARGC<4>>> (rax) ;
-			ris >> r1 ;
-			//@info: see also std::launder
-			rax = std::move (_CAST_<Buffer<int ,ARGC<4>>> (r1)) ;
-		}
+		ris >> _CAST_<Buffer<WRAPPED_int ,ARGC<4>>> (rax) ;
+		_UNITTEST_ASSERT_ (rax[0] == 0) ;
+		_UNITTEST_ASSERT_ (rax[1] == 1) ;
+		_UNITTEST_ASSERT_ (rax[2] == 2) ;
+		_UNITTEST_ASSERT_ (rax[3] == 3) ;
 	}
 
 	TEST_METHOD (TEST_CSC_STREAM_TEXTWRITER) {

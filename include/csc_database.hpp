@@ -5,7 +5,7 @@
 #endif
 
 #include "csc.hpp"
-#include "csc_ext.hpp"
+#include "csc_extend.hpp"
 #include "csc_array.hpp"
 #include "csc_math.hpp"
 #include "csc_stream.hpp"
@@ -19,7 +19,7 @@ namespace CSC {
 class AbstractDatabase {
 public:
 	exports struct Abstract :public Interface {
-		virtual void compute_load_data (AnyRef<void> &_this) const = 0 ;
+		virtual void compute_load_data (AnyRef<void> &this_) const = 0 ;
 	} ;
 
 	class Holder {
@@ -35,7 +35,7 @@ private:
 public:
 	AbstractDatabase () = default ;
 
-	explicit AbstractDatabase (const PhanRef<const Abstract> &_abstract) :AbstractDatabase (PhanRef<const Abstract>::make (_abstract) ,SharedRef<Holder>::make ()) {}
+	explicit AbstractDatabase (const PhanRef<const Abstract> &abstract_) :AbstractDatabase (PhanRef<const Abstract>::make (abstract_) ,SharedRef<Holder>::make ()) {}
 
 	BOOL exist () const {
 		if (!mAbstract.exist ())
@@ -48,6 +48,6 @@ public:
 	}
 
 private:
-	explicit AbstractDatabase (PhanRef<const Abstract> &&_abstract ,SharedRef<Holder> &&_this) :mAbstract (std::move (_abstract)) ,mThis (std::move (_this)) {}
+	explicit AbstractDatabase (PhanRef<const Abstract> &&abstract_ ,SharedRef<Holder> &&this_) :mAbstract (std::move (abstract_)) ,mThis (std::move (this_)) {}
 } ;
 } ;

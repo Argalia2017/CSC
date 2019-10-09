@@ -186,7 +186,7 @@
   </Type>
   
   
-  <!--csc_ext.hpp-->
+  <!--csc_extend.hpp-->
   
   
   <Type Name="CSC::StrongRef&lt;*&gt;">

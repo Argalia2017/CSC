@@ -20,9 +20,10 @@
 #endif
 
 #ifdef __CSC_DEPRECATED__
-#include <setjmp.h>
 #include <cmath>
 #include <random>
+
+#include <setjmp.h>
 #endif
 
 #ifdef __CSC__
@@ -43,12 +44,12 @@ private:
 		jmp_buf mEbp ;
 	} ;
 
-	using CONTEXT_EBP_SIZE = ARGC<_SIZEOF_ (CONTEXT_EBP) + _ALIGNOF_ (CONTEXT_EBP)> ;
+	using CONTEXT_EBP_SIZE = ARGC<_ALIGNOF_ (CONTEXT_EBP) - 1 + _SIZEOF_ (CONTEXT_EBP)> ;
 	using STACK_FRAME_SIZE = ARGC<65536> ;
 
 	struct BREAKPOINT {
 		DEF<BYTE[CONTEXT_EBP_SIZE::value]> mContextEbp ;
-		ARRAY3<PTR<VOID>> mStackPoint ;
+		ARRAY3<LENGTH> mStackPoint ;
 		DEF<BYTE[STACK_FRAME_SIZE::value]> mStackFrame ;
 	} ;
 
@@ -59,62 +60,60 @@ public:
 	static void init_break_point (PTR<AnyRef<void>> bp) {
 		auto rax = BREAKPOINT () ;
 		_ZERO_ (rax) ;
-		rax.mStackPoint[0] = &bp ;
-		rax.mStackPoint[1] = NULL ;
-		rax.mStackPoint[2] = NULL ;
+		rax.mStackPoint[0] = _ADDRESS_ (&bp) ;
+		rax.mStackPoint[1] = 0 ;
+		rax.mStackPoint[2] = 0 ;
 		(*bp) = AnyRef<BREAKPOINT>::make (std::move (rax)) ;
 	}
 
 	static void store_break_point (PTR<AnyRef<void>> bp) noexcept {
-		auto &r1 = bp->rebind<BREAKPOINT> ().self ;
-		_DEBUG_ASSERT_ (r1.mStackPoint[0] != NULL) ;
-		r1.mStackPoint[1] = &bp ;
-		const auto r1x = _ADDRESS_ (r1.mStackPoint[1]) - _ADDRESS_ (r1.mStackPoint[0]) ;
-		_DEBUG_ASSERT_ (_ABS_ (r1x) <= _COUNTOF_ (decltype (r1.mStackFrame))) ;
-		const auto r2x = EFLAG (r1x < 0) ;
-		_MEMCOPY_ (PTRTOARR[r1.mStackFrame] ,_LOAD_<ARR<BYTE>> (r1.mStackPoint[r2x]) ,_ABS_ (r1x)) ;
-		auto &r2 = load_context_ebp (&r1.mContextEbp) ;
-		const auto r3x = setjmp (r2.mEbp) ;
-		(void) r3x ;
+		auto &r1y = bp->rebind<BREAKPOINT> ().self ;
+		_DEBUG_ASSERT_ (r1y.mStackPoint[0] != 0) ;
+		r1y.mStackPoint[1] = _ADDRESS_  (&bp) ;
+		const auto r2x = r1y.mStackPoint[1] - r1y.mStackPoint[0] ;
+		_DEBUG_ASSERT_ (_ABS_ (r2x) <= _SIZEOF_ (decltype (r1y.mStackFrame))) ;
+		const auto r3x = EFLAG (r2x < 0) ;
+		auto &r4y = _LOAD_<ARR<BYTE>> (&bp ,r1y.mStackPoint[r3x]) ;
+		_MEMCOPY_ (PTRTOARR[r1y.mStackFrame] ,r4y ,_ABS_ (r2x)) ;
+		auto &r5y = load_context_ebp (r1y.mContextEbp) ;
+		const auto r6x = ::setjmp (r5y.mEbp) ;
+		(void) r6x ;
 	}
 
 	static void goto_break_point (PTR<AnyRef<void>> bp) noexcept {
-		auto &r1 = bp->rebind<BREAKPOINT> ().self ;
-		_DEBUG_ASSERT_ (r1.mStackPoint[0] != NULL) ;
-		_DEBUG_ASSERT_ (r1.mStackPoint[1] != NULL) ;
-		r1.mStackPoint[2] = &bp ;
+		auto &r1y = bp->rebind<BREAKPOINT> ().self ;
+		_DEBUG_ASSERT_ (r1y.mStackPoint[0] != 0) ;
+		_DEBUG_ASSERT_ (r1y.mStackPoint[1] != 0) ;
+		r1y.mStackPoint[2] = _ADDRESS_  (&bp) ;
 		_STATIC_WARNING_ ("mark") ;
-		_DEBUG_ASSERT_ (r1.mStackPoint[2] == r1.mStackPoint[1]) ;
-		const auto r1x = _ADDRESS_ (r1.mStackPoint[1]) - _ADDRESS_ (r1.mStackPoint[0]) ;
-		_DEBUG_ASSERT_ (_ABS_ (r1x) <= _COUNTOF_ (decltype (r1.mStackFrame))) ;
-		const auto r2x = EFLAG (r1x < 0) ;
-		_MEMCOPY_ (_LOAD_<ARR<BYTE>> (r1.mStackPoint[r2x]) ,PTRTOARR[r1.mStackFrame] ,_ABS_ (r1x)) ;
-		auto &r2 = load_context_ebp (&r1.mContextEbp) ;
-		longjmp (r2.mEbp ,1) ;
+		_DEBUG_ASSERT_ (r1y.mStackPoint[2] == r1y.mStackPoint[1]) ;
+		const auto r2x = r1y.mStackPoint[1] - r1y.mStackPoint[0] ;
+		_DEBUG_ASSERT_ (_ABS_ (r2x) <= _SIZEOF_ (decltype (r1y.mStackFrame))) ;
+		const auto r3x = EFLAG (r2x < 0) ;
+		auto &r4y = _LOAD_<ARR<BYTE>> (&bp ,r1y.mStackPoint[r3x]) ;
+		_MEMCOPY_ (r4y ,PTRTOARR[r1y.mStackFrame] ,_ABS_ (r2x)) ;
+		auto &r5y = load_context_ebp (r1y.mContextEbp) ;
+		::longjmp (r5y.mEbp ,1) ;
 	}
 
-	static CONTEXT_EBP &load_context_ebp (PTR<BYTE[CONTEXT_EBP_SIZE::value]> ebp) noexcept {
-		const auto r1x = _ADDRESS_ (ebp) % _ALIGNOF_ (CONTEXT_EBP) ;
-		const auto r2x = _SWITCH_ (
-			(r1x != 0) ? (_ALIGNOF_ (CONTEXT_EBP) - r1x) :
-			0) ;
-		const auto r3x = _ADDRESS_ (ebp) + r1x ;
-		return _LOAD_<CONTEXT_EBP> (NULL ,r3x) ;
+	static CONTEXT_EBP &load_context_ebp (DEF<BYTE[CONTEXT_EBP_SIZE::value]> &ebp) noexcept {
+		const auto r1x = _ALIGNAS_ (_ADDRESS_ (&ebp) ,_ALIGNOF_ (CONTEXT_EBP)) ;
+		return _LOAD_<CONTEXT_EBP> (&ebp ,r1x) ;
 	}
 } ;
 
 template <class UNIT>
-inline exports void Coroutine<UNIT>::init_break_point (AnyRef<void> &bp) {
+inline exports void Coroutine<UNIT>::init_break_point (AnyRef<void> &bp) popping {
 	Implement::init_break_point (&bp) ;
 }
 
 template <class UNIT>
-inline exports void Coroutine<UNIT>::store_break_point (AnyRef<void> &bp) noexcept {
+inline exports void Coroutine<UNIT>::store_break_point (AnyRef<void> &bp) noexcept popping {
 	Implement::store_break_point (&bp) ;
 }
 
 template <class UNIT>
-inline exports void Coroutine<UNIT>::goto_break_point (AnyRef<void> &bp) noexcept {
+inline exports void Coroutine<UNIT>::goto_break_point (AnyRef<void> &bp) noexcept popping {
 	Implement::goto_break_point (&bp) ;
 }
 #endif
@@ -130,12 +129,12 @@ public:
 		mRandomDevice = AutoRef<std::mt19937>::make (CHAR (mRandomSeed.self ())) ;
 	}
 
-	VAL entropy () const override {
-		return VAL (mRandomSeed->entropy ()) ;
+	VAR entropy () const override {
+		return VAR (mRandomSeed->entropy ()) ;
 	}
 
-	void reset_seed (VAR _seed) override {
-		mRandomDevice = AutoRef<std::mt19937>::make (CHAR (_seed)) ;
+	void reset_seed (VAR seed_) override {
+		mRandomDevice = AutoRef<std::mt19937>::make (CHAR (seed_)) ;
 	}
 
 	VAR random_value () popping override {

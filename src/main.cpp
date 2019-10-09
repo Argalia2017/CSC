@@ -1,19 +1,8 @@
 ﻿#include "util.h"
+
 #include <iostream>
 #include <iomanip>
 using namespace std ;
-
-//@info: static field of module 'main.cpp'
-static const CSC::UniqueRef<void> ANONYMOUS ([] () {
-	using namespace UNITTEST ;
-#ifdef __CSC_COMPILER_MSVC__
-	Singleton<DebuggerService>::instance ().output_memory_leaks_report (TRUE) ;
-#endif
-	Singleton<ConsoleService>::instance ().log (_PCSTR_ ("UNITTEST") ,_PCSTR_ ("static constructor for main.cpp")) ;
-} ,[] () {
-	using namespace UNITTEST ;
-	Singleton<ConsoleService>::instance ().log (_PCSTR_ ("UNITTEST") ,_PCSTR_ ("static destructor for main.cpp")) ;
-}) ;
 
 namespace UNITTEST {
 
@@ -23,12 +12,27 @@ TEST_CLASS (UNITTEST_MAIN) {
 public:
 	TEST_METHOD (TEST_MAIN) {
 		using namespace UNITTEST ;
-
+		
 	}
 } ;
 
+inline static void main_startup () {
+	using namespace UNITTEST ;
+#ifdef __CSC_COMPILER_MSVC__
+	Singleton<DebuggerService>::instance ().output_memory_leaks_report (TRUE) ;
+#endif
+	Singleton<ConsoleService>::instance ().log (_PCSTR_ ("UNITTEST") ,_PCSTR_ ("static constructor for main.cpp")) ;
+}
+
+inline static void main_shutdown () {
+	using namespace UNITTEST ;
+	Singleton<ConsoleService>::instance ().log (_PCSTR_ ("UNITTEST") ,_PCSTR_ ("static destructor for main.cpp")) ;
+}
+
 #ifdef __CSC_TARGET_EXE__
 exports int main () noexcept popping {
+	using namespace UNITTEST ;
+	UniqueRef<void> ANONYMOUS (&main_startup ,&main_shutdown) ;
 	UNITTEST_MAIN ().TEST_MAIN () ;
 	return 0 ;
 }

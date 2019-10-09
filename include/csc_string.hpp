@@ -5,6 +5,7 @@
 #endif
 
 #include "csc.hpp"
+#include "csc_basic.hpp"
 #include "csc_array.hpp"
 #include "csc_math.hpp"
 #include "csc_stream.hpp"
@@ -16,226 +17,226 @@ struct OPERATOR_CVT_STRING ;
 } ;
 
 inline namespace S {
-inline String<STRU16> _U8STOU16S_ (const String<STRU8> &src) ;
-inline String<STRU8> _U16STOU8S_ (const String<STRU16> &src) ;
-inline String<STRU32> _U8STOU32S_ (const String<STRU8> &src) ;
-inline String<STRU8> _U32STOU8S_ (const String<STRU32> &src) ;
-inline String<STRU32> _U16STOU32S_ (const String<STRU16> &src) ;
-inline String<STRU16> _U32STOU16S_ (const String<STRU32> &src) ;
-inline String<STRU8> _WSTOU8S_ (const String<STRW> &src) ;
-inline String<STRW> _U8STOWS_ (const String<STRU8> &src) ;
-inline String<STRU16> _WSTOU16S_ (const String<STRW> &src) ;
-inline String<STRW> _U16STOWS_ (const String<STRU16> &src) ;
-inline String<STRU32> _WSTOU32S_ (const String<STRW> &src) ;
-inline String<STRW> _U32STOWS_ (const String<STRU32> &src) ;
-inline String<STRW> _GBKSTOWS_ (const String<STRA> &src) ;
-inline String<STRA> _WSTOGBKS_ (const String<STRW> &src) ;
-inline String<STRU8> _ASTOU8S_ (const String<STRA> &src) ;
-inline String<STRA> _U8STOAS_ (const String<STRU8> &src) ;
-inline String<STRU16> _ASTOU16S_ (const String<STRA> &src) ;
-inline String<STRA> _U16STOAS_ (const String<STRU16> &src) ;
-inline String<STRU32> _ASTOU32S_ (const String<STRA> &src) ;
-inline String<STRA> _U32STOAS_ (const String<STRU32> &src) ;
+inline String<STRU16> _U8STOU16S_ (const String<STRU8> &val) ;
+inline String<STRU8> _U16STOU8S_ (const String<STRU16> &val) ;
+inline String<STRU32> _U8STOU32S_ (const String<STRU8> &val) ;
+inline String<STRU8> _U32STOU8S_ (const String<STRU32> &val) ;
+inline String<STRU32> _U16STOU32S_ (const String<STRU16> &val) ;
+inline String<STRU16> _U32STOU16S_ (const String<STRU32> &val) ;
+inline String<STRU8> _WSTOU8S_ (const String<STRW> &val) ;
+inline String<STRW> _U8STOWS_ (const String<STRU8> &val) ;
+inline String<STRU16> _WSTOU16S_ (const String<STRW> &val) ;
+inline String<STRW> _U16STOWS_ (const String<STRU16> &val) ;
+inline String<STRU32> _WSTOU32S_ (const String<STRW> &val) ;
+inline String<STRW> _U32STOWS_ (const String<STRU32> &val) ;
+inline String<STRW> _GBKSTOWS_ (const String<STRA> &val) ;
+inline String<STRA> _WSTOGBKS_ (const String<STRW> &val) ;
+inline String<STRU8> _ASTOU8S_ (const String<STRA> &val) ;
+inline String<STRA> _U8STOAS_ (const String<STRU8> &val) ;
+inline String<STRU16> _ASTOU16S_ (const String<STRA> &val) ;
+inline String<STRA> _U16STOAS_ (const String<STRU16> &val) ;
+inline String<STRU32> _ASTOU32S_ (const String<STRA> &val) ;
+inline String<STRA> _U32STOAS_ (const String<STRU32> &val) ;
 
-inline imports DEF<String<STRW> (const String<STRA> &src)> _ASTOWS_ ;
-inline imports DEF<String<STRA> (const String<STRW> &src)> _WSTOAS_ ;
+inline imports DEF<String<STRW> (const String<STRA> &val)> _ASTOWS_ ;
+inline imports DEF<String<STRA> (const String<STRW> &val)> _WSTOAS_ ;
 } ;
 
 namespace U {
 template <>
 struct OPERATOR_CVT_STRING<String<STRU8> ,String<STRU8>> {
-	inline static String<STRU8> invoke (const String<STRU8> &src) {
-		return _COPY_ (src) ;
+	inline static String<STRU8> invoke (const String<STRU8> &val) {
+		return _COPY_ (val) ;
 	}
 } ;
 
 template <>
 struct OPERATOR_CVT_STRING<String<STRU16> ,String<STRU16>> {
-	inline static String<STRU16> invoke (const String<STRU16> &src) {
-		return _COPY_ (src) ;
+	inline static String<STRU16> invoke (const String<STRU16> &val) {
+		return _COPY_ (val) ;
 	}
 } ;
 
 template <>
 struct OPERATOR_CVT_STRING<String<STRU32> ,String<STRU32>> {
-	inline static String<STRU32> invoke (const String<STRU32> &src) {
-		return _COPY_ (src) ;
+	inline static String<STRU32> invoke (const String<STRU32> &val) {
+		return _COPY_ (val) ;
 	}
 } ;
 
 template <>
 struct OPERATOR_CVT_STRING<String<STRA> ,String<STRA>> {
-	inline static String<STRA> invoke (const String<STRA> &src) {
-		return _COPY_ (src) ;
+	inline static String<STRA> invoke (const String<STRA> &val) {
+		return _COPY_ (val) ;
 	}
 } ;
 
 template <>
 struct OPERATOR_CVT_STRING<String<STRW> ,String<STRW>> {
-	inline static String<STRW> invoke (const String<STRW> &src) {
-		return _COPY_ (src) ;
+	inline static String<STRW> invoke (const String<STRW> &val) {
+		return _COPY_ (val) ;
 	}
 } ;
 
 template <>
 struct OPERATOR_CVT_STRING<String<STRU8> ,String<STRU16>> {
-	inline static String<STRU8> invoke (const String<STRU16> &src) {
-		return _U16STOU8S_ (src) ;
+	inline static String<STRU8> invoke (const String<STRU16> &val) {
+		return _U16STOU8S_ (val) ;
 	}
 } ;
 
 template <>
 struct OPERATOR_CVT_STRING<String<STRU16> ,String<STRU8>> {
-	inline static String<STRU16> invoke (const String<STRU8> &src) {
-		return _U8STOU16S_ (src) ;
+	inline static String<STRU16> invoke (const String<STRU8> &val) {
+		return _U8STOU16S_ (val) ;
 	}
 } ;
 
 template <>
 struct OPERATOR_CVT_STRING<String<STRU8> ,String<STRU32>> {
-	inline static String<STRU8> invoke (const String<STRU32> &src) {
-		return _U32STOU8S_ (src) ;
+	inline static String<STRU8> invoke (const String<STRU32> &val) {
+		return _U32STOU8S_ (val) ;
 	}
 } ;
 
 template <>
 struct OPERATOR_CVT_STRING<String<STRU32> ,String<STRU8>> {
-	inline static String<STRU32> invoke (const String<STRU8> &src) {
-		return _U8STOU32S_ (src) ;
+	inline static String<STRU32> invoke (const String<STRU8> &val) {
+		return _U8STOU32S_ (val) ;
 	}
 } ;
 
 template <>
 struct OPERATOR_CVT_STRING<String<STRU16> ,String<STRU32>> {
-	inline static String<STRU16> invoke (const String<STRU32> &src) {
-		return _U32STOU16S_ (src) ;
+	inline static String<STRU16> invoke (const String<STRU32> &val) {
+		return _U32STOU16S_ (val) ;
 	}
 } ;
 
 template <>
 struct OPERATOR_CVT_STRING<String<STRU32> ,String<STRU16>> {
-	inline static String<STRU32> invoke (const String<STRU16> &src) {
-		return _U16STOU32S_ (src) ;
+	inline static String<STRU32> invoke (const String<STRU16> &val) {
+		return _U16STOU32S_ (val) ;
 	}
 } ;
 
 template <>
 struct OPERATOR_CVT_STRING<String<STRU8> ,String<STRW>> {
-	inline static String<STRU8> invoke (const String<STRW> &src) {
-		return _WSTOU8S_ (src) ;
+	inline static String<STRU8> invoke (const String<STRW> &val) {
+		return _WSTOU8S_ (val) ;
 	}
 } ;
 
 template <>
 struct OPERATOR_CVT_STRING<String<STRW> ,String<STRU8>> {
-	inline static String<STRW> invoke (const String<STRU8> &src) {
-		return _U8STOWS_ (src) ;
+	inline static String<STRW> invoke (const String<STRU8> &val) {
+		return _U8STOWS_ (val) ;
 	}
 } ;
 
 template <>
 struct OPERATOR_CVT_STRING<String<STRU16> ,String<STRW>> {
-	inline static String<STRU16> invoke (const String<STRW> &src) {
-		return _WSTOU16S_ (src) ;
+	inline static String<STRU16> invoke (const String<STRW> &val) {
+		return _WSTOU16S_ (val) ;
 	}
 } ;
 
 template <>
 struct OPERATOR_CVT_STRING<String<STRW> ,String<STRU16>> {
-	inline static String<STRW> invoke (const String<STRU16> &src) {
-		return _U16STOWS_ (src) ;
+	inline static String<STRW> invoke (const String<STRU16> &val) {
+		return _U16STOWS_ (val) ;
 	}
 } ;
 
 template <>
 struct OPERATOR_CVT_STRING<String<STRU32> ,String<STRW>> {
-	inline static String<STRU32> invoke (const String<STRW> &src) {
-		return _WSTOU32S_ (src) ;
+	inline static String<STRU32> invoke (const String<STRW> &val) {
+		return _WSTOU32S_ (val) ;
 	}
 } ;
 
 template <>
 struct OPERATOR_CVT_STRING<String<STRW> ,String<STRU32>> {
-	inline static String<STRW> invoke (const String<STRU32> &src) {
-		return _U32STOWS_ (src) ;
+	inline static String<STRW> invoke (const String<STRU32> &val) {
+		return _U32STOWS_ (val) ;
 	}
 } ;
 
 template <>
 struct OPERATOR_CVT_STRING<String<STRW> ,String<STRA>> {
-	inline static String<STRW> invoke (const String<STRA> &src) {
-		return _ASTOWS_ (src) ;
+	inline static String<STRW> invoke (const String<STRA> &val) {
+		return _ASTOWS_ (val) ;
 	}
 } ;
 
 template <>
 struct OPERATOR_CVT_STRING<String<STRA> ,String<STRW>> {
-	inline static String<STRA> invoke (const String<STRW> &src) {
-		return _WSTOAS_ (src) ;
+	inline static String<STRA> invoke (const String<STRW> &val) {
+		return _WSTOAS_ (val) ;
 	}
 } ;
 
 template <>
 struct OPERATOR_CVT_STRING<String<STRU8> ,String<STRA>> {
-	inline static String<STRU8> invoke (const String<STRA> &src) {
-		return _ASTOU8S_ (src) ;
+	inline static String<STRU8> invoke (const String<STRA> &val) {
+		return _ASTOU8S_ (val) ;
 	}
 } ;
 
 template <>
 struct OPERATOR_CVT_STRING<String<STRA> ,String<STRU8>> {
-	inline static String<STRA> invoke (const String<STRU8> &src) {
-		return _U8STOAS_ (src) ;
+	inline static String<STRA> invoke (const String<STRU8> &val) {
+		return _U8STOAS_ (val) ;
 	}
 } ;
 
 template <>
 struct OPERATOR_CVT_STRING<String<STRU16> ,String<STRA>> {
-	inline static String<STRU16> invoke (const String<STRA> &src) {
-		return _ASTOU16S_ (src) ;
+	inline static String<STRU16> invoke (const String<STRA> &val) {
+		return _ASTOU16S_ (val) ;
 	}
 } ;
 
 template <>
 struct OPERATOR_CVT_STRING<String<STRA> ,String<STRU16>> {
-	inline static String<STRA> invoke (const String<STRU16> &src) {
-		return _U16STOAS_ (src) ;
+	inline static String<STRA> invoke (const String<STRU16> &val) {
+		return _U16STOAS_ (val) ;
 	}
 } ;
 
 template <>
 struct OPERATOR_CVT_STRING<String<STRU32> ,String<STRA>> {
-	inline static String<STRU32> invoke (const String<STRA> &src) {
-		return _ASTOU32S_ (src) ;
+	inline static String<STRU32> invoke (const String<STRA> &val) {
+		return _ASTOU32S_ (val) ;
 	}
 } ;
 
 template <>
 struct OPERATOR_CVT_STRING<String<STRA> ,String<STRU32>> {
-	inline static String<STRA> invoke (const String<STRU32> &src) {
-		return _U32STOAS_ (src) ;
+	inline static String<STRA> invoke (const String<STRU32> &val) {
+		return _U32STOAS_ (val) ;
 	}
 } ;
 } ;
 
 inline namespace S {
-inline String<STRU16> _U8STOU16S_ (const String<STRU8> &src) {
-	String<STRU16> ret = String<STRU16> (src.length ()) ;
+inline String<STRU16> _U8STOU16S_ (const String<STRU8> &val) {
+	String<STRU16> ret = String<STRU16> (val.length ()) ;
 	INDEX iw = 0 ;
 	auto rax = VAR_ZERO ;
 	auto rbx = STRU32 () ;
-	for (auto &&i : src) {
+	for (auto &&i : val) {
 		if (rax == VAR_NONE)
 			discard ;
-		auto ifa = FALSE ;
-		if SWITCH_CASE (ifa) {
+		auto fax = FALSE ;
+		if SWITCH_CASE (fax) {
 			if (!(rax == 0))
 				discard ;
 			if (!(i <= STRU8 (0X7F)))
 				discard ;
 			ret[iw++] = STRU16 (i) ;
 		}
-		if SWITCH_CASE (ifa) {
+		if SWITCH_CASE (fax) {
 			if (!(rax == 0))
 				discard ;
 			if (!(i <= STRU8 (0XDF)))
@@ -243,7 +244,7 @@ inline String<STRU16> _U8STOU16S_ (const String<STRU8> &src) {
 			rbx = STRU32 (i & STRU8 (0X1F)) ;
 			rax = 1 ;
 		}
-		if SWITCH_CASE (ifa) {
+		if SWITCH_CASE (fax) {
 			if (!(rax == 0))
 				discard ;
 			if (!(i <= STRU8 (0XEF)))
@@ -251,7 +252,7 @@ inline String<STRU16> _U8STOU16S_ (const String<STRU8> &src) {
 			rbx = STRU32 (i & STRU8 (0X0F)) ;
 			rax = 2 ;
 		}
-		if SWITCH_CASE (ifa) {
+		if SWITCH_CASE (fax) {
 			if (!(rax == 0))
 				discard ;
 			if (!(i <= STRU8 (0XF7)))
@@ -259,7 +260,7 @@ inline String<STRU16> _U8STOU16S_ (const String<STRU8> &src) {
 			rbx = STRU32 (i & STRU8 (0X07)) ;
 			rax = 3 ;
 		}
-		if SWITCH_CASE (ifa) {
+		if SWITCH_CASE (fax) {
 			if (!(rax == 0))
 				discard ;
 			if (!(i <= STRU8 (0XFB)))
@@ -267,7 +268,7 @@ inline String<STRU16> _U8STOU16S_ (const String<STRU8> &src) {
 			rbx = STRU32 (i & STRU8 (0X03)) ;
 			rax = 4 ;
 		}
-		if SWITCH_CASE (ifa) {
+		if SWITCH_CASE (fax) {
 			if (!(rax == 0))
 				discard ;
 			if (!(i <= STRU8 (0XFD)))
@@ -275,7 +276,7 @@ inline String<STRU16> _U8STOU16S_ (const String<STRU8> &src) {
 			rbx = STRU32 (i & STRU8 (0X01)) ;
 			rax = 5 ;
 		}
-		if SWITCH_CASE (ifa) {
+		if SWITCH_CASE (fax) {
 			if (!(rax == 1))
 				discard ;
 			if (!(i <= STRU8 (0XBF)))
@@ -283,7 +284,7 @@ inline String<STRU16> _U8STOU16S_ (const String<STRU8> &src) {
 			rbx = STRU32 ((rbx << 6) | (i & STRU8 (0X3F))) ;
 			rax = 10 ;
 		}
-		if SWITCH_CASE (ifa) {
+		if SWITCH_CASE (fax) {
 			if (!(rax >= 2 && rax <= 5))
 				discard ;
 			if (!(i <= STRU8 (0XBF)))
@@ -291,14 +292,14 @@ inline String<STRU16> _U8STOU16S_ (const String<STRU8> &src) {
 			rbx = STRU32 ((rbx << 6) | (i & STRU8 (0X3F))) ;
 			rax-- ;
 		}
-		if SWITCH_CASE (ifa) {
+		if SWITCH_CASE (fax) {
 			ret.clear () ;
 			rax = VAR_NONE ;
 		}
 		if (rax < 10)
 			continue ;
-		auto ifb = FALSE ;
-		if SWITCH_CASE (ifb) {
+		auto fbx = FALSE ;
+		if SWITCH_CASE (fbx) {
 			if (!(rax == 10))
 				discard ;
 			if (!(rbx <= STRU32 (0X0000FFFF)))
@@ -306,7 +307,7 @@ inline String<STRU16> _U8STOU16S_ (const String<STRU8> &src) {
 			ret[iw++] = STRU16 (rbx) ;
 			rax = 0 ;
 		}
-		if SWITCH_CASE (ifb) {
+		if SWITCH_CASE (fbx) {
 			if (!(rax == 10))
 				discard ;
 			if (!(rbx <= STRU32 (0X0010FFFF)))
@@ -316,7 +317,7 @@ inline String<STRU16> _U8STOU16S_ (const String<STRU8> &src) {
 			ret[iw++] = (STRU16 (rbx) & STRU16 (0X03FF)) | STRU16 (0XDC00) ;
 			rax = 0 ;
 		}
-		if SWITCH_CASE (ifb) {
+		if SWITCH_CASE (fbx) {
 			if (!(rax == 10))
 				discard ;
 			if (!(rbx <= STRU32 (0X7FFFFFFF)))
@@ -324,7 +325,7 @@ inline String<STRU16> _U8STOU16S_ (const String<STRU8> &src) {
 			ret[iw++] = STRU16 ('?') ;
 			rax = 0 ;
 		}
-		if SWITCH_CASE (ifb) {
+		if SWITCH_CASE (fbx) {
 			ret.clear () ;
 			rax = VAR_NONE ;
 		}
@@ -336,23 +337,23 @@ inline String<STRU16> _U8STOU16S_ (const String<STRU8> &src) {
 	return std::move (ret) ;
 }
 
-inline String<STRU8> _U16STOU8S_ (const String<STRU16> &src) {
-	String<STRU8> ret = String<STRU8> (src.length () * 3) ;
+inline String<STRU8> _U16STOU8S_ (const String<STRU16> &val) {
+	String<STRU8> ret = String<STRU8> (val.length () * 3) ;
 	INDEX iw = 0 ;
 	auto rax = VAR_ZERO ;
 	auto rbx = STRU32 () ;
-	for (auto &&i : src) {
+	for (auto &&i : val) {
 		if (rax == VAR_NONE)
 			discard ;
-		auto ifa = FALSE ;
-		if SWITCH_CASE (ifa) {
+		auto fax = FALSE ;
+		if SWITCH_CASE (fax) {
 			if (!(rax == 0))
 				discard ;
 			if (!(i <= STRU16 (0X007F)))
 				discard ;
 			ret[iw++] = STRU8 (i) ;
 		}
-		if SWITCH_CASE (ifa) {
+		if SWITCH_CASE (fax) {
 			if (!(rax == 0))
 				discard ;
 			if (!(i <= STRU16 (0X07FF)))
@@ -360,7 +361,7 @@ inline String<STRU8> _U16STOU8S_ (const String<STRU16> &src) {
 			ret[iw++] = (STRU8 (i >> 6) & STRU8 (0X1F)) | STRU8 (0XC0) ;
 			ret[iw++] = (STRU8 (i) & STRU8 (0X3F)) | STRU8 (0X80) ;
 		}
-		if SWITCH_CASE (ifa) {
+		if SWITCH_CASE (fax) {
 			if (!(rax == 0))
 				discard ;
 			if (!(i >= STRU16 (0XD800) && i <= STRU16 (0XDBFF)))
@@ -368,14 +369,14 @@ inline String<STRU8> _U16STOU8S_ (const String<STRU16> &src) {
 			rbx = STRU32 (i & STRU16 (0X03FF)) ;
 			rax = 1 ;
 		}
-		if SWITCH_CASE (ifa) {
+		if SWITCH_CASE (fax) {
 			if (!(rax == 0))
 				discard ;
 			ret[iw++] = (STRU8 (i >> 12) & STRU8 (0X0F)) | STRU8 (0XE0) ;
 			ret[iw++] = (STRU8 (i >> 6) & STRU8 (0X3F)) | STRU8 (0X80) ;
 			ret[iw++] = (STRU8 (i) & STRU8 (0X3F)) | STRU8 (0X80) ;
 		}
-		if SWITCH_CASE (ifa) {
+		if SWITCH_CASE (fax) {
 			if (!(rax == 1))
 				discard ;
 			if (!(i >= STRU16 (0XDC00) && i <= STRU16 (0XDFFF)))
@@ -387,7 +388,7 @@ inline String<STRU8> _U16STOU8S_ (const String<STRU16> &src) {
 			ret[iw++] = (STRU8 (rbx) & STRU8 (0X3F)) | STRU8 (0X80) ;
 			rax = 0 ;
 		}
-		if SWITCH_CASE (ifa) {
+		if SWITCH_CASE (fax) {
 			ret.clear () ;
 			rax = VAR_NONE ;
 		}
@@ -399,7 +400,7 @@ inline String<STRU8> _U16STOU8S_ (const String<STRU16> &src) {
 	return std::move (ret) ;
 }
 
-inline String<STRU32> _U8STOU32S_ (const String<STRU8> &src) {
+inline String<STRU32> _U8STOU32S_ (const String<STRU8> &val) {
 	_STATIC_WARNING_ ("note") ;
 	/*
 	1 bytes [0,0X7F] 0xxxxxxx
@@ -409,22 +410,22 @@ inline String<STRU32> _U8STOU32S_ (const String<STRU8> &src) {
 	5 bytes [0x200000,0X3FFFFFF] 111110xx 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx
 	6 bytes [0x4000000,0X7FFFFFFF] 1111110x 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx
 	*/
-	String<STRU32> ret = String<STRU32> (src.length ()) ;
+	String<STRU32> ret = String<STRU32> (val.length ()) ;
 	INDEX iw = 0 ;
 	auto rax = VAR_ZERO ;
 	auto rbx = STRU32 () ;
-	for (auto &&i : src) {
+	for (auto &&i : val) {
 		if (rax == VAR_NONE)
 			discard ;
-		auto ifa = FALSE ;
-		if SWITCH_CASE (ifa) {
+		auto fax = FALSE ;
+		if SWITCH_CASE (fax) {
 			if (!(rax == 0))
 				discard ;
 			if (!(i <= STRU8 (0X7F)))
 				discard ;
 			ret[iw++] = STRU32 (i) ;
 		}
-		if SWITCH_CASE (ifa) {
+		if SWITCH_CASE (fax) {
 			if (!(rax == 0))
 				discard ;
 			if (!(i <= STRU8 (0XDF)))
@@ -432,7 +433,7 @@ inline String<STRU32> _U8STOU32S_ (const String<STRU8> &src) {
 			rbx = STRU32 (i & STRU8 (0X1F)) ;
 			rax = 1 ;
 		}
-		if SWITCH_CASE (ifa) {
+		if SWITCH_CASE (fax) {
 			if (!(rax == 0))
 				discard ;
 			if (!(i <= STRU8 (0XEF)))
@@ -440,7 +441,7 @@ inline String<STRU32> _U8STOU32S_ (const String<STRU8> &src) {
 			rbx = STRU32 (i & STRU8 (0X0F)) ;
 			rax = 2 ;
 		}
-		if SWITCH_CASE (ifa) {
+		if SWITCH_CASE (fax) {
 			if (!(rax == 0))
 				discard ;
 			if (!(i <= STRU8 (0XF7)))
@@ -448,7 +449,7 @@ inline String<STRU32> _U8STOU32S_ (const String<STRU8> &src) {
 			rbx = STRU32 (i & STRU8 (0X07)) ;
 			rax = 3 ;
 		}
-		if SWITCH_CASE (ifa) {
+		if SWITCH_CASE (fax) {
 			if (!(rax == 0))
 				discard ;
 			if (!(i <= STRU8 (0XFB)))
@@ -456,7 +457,7 @@ inline String<STRU32> _U8STOU32S_ (const String<STRU8> &src) {
 			rbx = STRU32 (i & STRU8 (0X03)) ;
 			rax = 4 ;
 		}
-		if SWITCH_CASE (ifa) {
+		if SWITCH_CASE (fax) {
 			if (!(rax == 0))
 				discard ;
 			if (!(i <= STRU8 (0XFD)))
@@ -464,7 +465,7 @@ inline String<STRU32> _U8STOU32S_ (const String<STRU8> &src) {
 			rbx = STRU32 (i & STRU8 (0X01)) ;
 			rax = 5 ;
 		}
-		if SWITCH_CASE (ifa) {
+		if SWITCH_CASE (fax) {
 			if (!(rax == 0))
 				discard ;
 			if (!(i <= STRU8 (0XBF)))
@@ -473,7 +474,7 @@ inline String<STRU32> _U8STOU32S_ (const String<STRU8> &src) {
 			ret[iw++] = rbx ;
 			rax = 0 ;
 		}
-		if SWITCH_CASE (ifa) {
+		if SWITCH_CASE (fax) {
 			if (!(rax >= 2 && rax <= 5))
 				discard ;
 			if (!(i <= STRU8 (0XBF)))
@@ -481,7 +482,7 @@ inline String<STRU32> _U8STOU32S_ (const String<STRU8> &src) {
 			rbx = STRU32 ((rbx << 6) | (i & STRU8 (0X3F))) ;
 			rax-- ;
 		}
-		if SWITCH_CASE (ifa) {
+		if SWITCH_CASE (fax) {
 			ret.clear () ;
 			rax = VAR_NONE ;
 		}
@@ -493,7 +494,7 @@ inline String<STRU32> _U8STOU32S_ (const String<STRU8> &src) {
 	return std::move (ret) ;
 }
 
-inline String<STRU8> _U32STOU8S_ (const String<STRU32> &src) {
+inline String<STRU8> _U32STOU8S_ (const String<STRU32> &val) {
 	_STATIC_WARNING_ ("note") ;
 	/*
 	1 bytes [0,0X7F] 0xxxxxxx
@@ -503,21 +504,21 @@ inline String<STRU8> _U32STOU8S_ (const String<STRU32> &src) {
 	5 bytes [0x200000,0X3FFFFFF] 111110xx 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx
 	6 bytes [0x4000000,0X7FFFFFFF] 1111110x 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx
 	*/
-	String<STRU8> ret = String<STRU8> (src.length () * 6) ;
+	String<STRU8> ret = String<STRU8> (val.length () * 6) ;
 	INDEX iw = 0 ;
 	auto rax = VAR_ZERO ;
-	for (auto &&i : src) {
+	for (auto &&i : val) {
 		if (rax == VAR_NONE)
 			discard ;
-		auto ifa = FALSE ;
-		if SWITCH_CASE (ifa) {
+		auto fax = FALSE ;
+		if SWITCH_CASE (fax) {
 			if (!(rax == 0))
 				discard ;
 			if (!(i <= STRU32 (0X0000007F)))
 				discard ;
 			ret[iw++] = STRU8 (i) ;
 		}
-		if SWITCH_CASE (ifa) {
+		if SWITCH_CASE (fax) {
 			if (!(rax == 0))
 				discard ;
 			if (!(i <= STRU32 (0X000007FF)))
@@ -525,7 +526,7 @@ inline String<STRU8> _U32STOU8S_ (const String<STRU32> &src) {
 			ret[iw++] = (STRU8 (i >> 6) & STRU8 (0X1F)) | STRU8 (0XC0) ;
 			ret[iw++] = (STRU8 (i) & STRU8 (0X3F)) | STRU8 (0X80) ;
 		}
-		if SWITCH_CASE (ifa) {
+		if SWITCH_CASE (fax) {
 			if (!(rax == 0))
 				discard ;
 			if (!(i <= STRU32 (0X0000FFFF)))
@@ -534,7 +535,7 @@ inline String<STRU8> _U32STOU8S_ (const String<STRU32> &src) {
 			ret[iw++] = (STRU8 (i >> 6) & STRU8 (0X3F)) | STRU8 (0X80) ;
 			ret[iw++] = (STRU8 (i) & STRU8 (0X3F)) | STRU8 (0X80) ;
 		}
-		if SWITCH_CASE (ifa) {
+		if SWITCH_CASE (fax) {
 			if (!(rax == 0))
 				discard ;
 			if (!(i <= STRU32 (0X001FFFFF)))
@@ -544,7 +545,7 @@ inline String<STRU8> _U32STOU8S_ (const String<STRU32> &src) {
 			ret[iw++] = (STRU8 (i >> 6) & STRU8 (0X3F)) | STRU8 (0X80) ;
 			ret[iw++] = (STRU8 (i) & STRU8 (0X3F)) | STRU8 (0X80) ;
 		}
-		if SWITCH_CASE (ifa) {
+		if SWITCH_CASE (fax) {
 			if (!(rax == 0))
 				discard ;
 			if (!(i <= STRU32 (0X03FFFFFF)))
@@ -555,7 +556,7 @@ inline String<STRU8> _U32STOU8S_ (const String<STRU32> &src) {
 			ret[iw++] = (STRU8 (i >> 6) & STRU8 (0X3F)) | STRU8 (0X80) ;
 			ret[iw++] = (STRU8 (i) & STRU8 (0X3F)) | STRU8 (0X80) ;
 		}
-		if SWITCH_CASE (ifa) {
+		if SWITCH_CASE (fax) {
 			if (!(rax == 0))
 				discard ;
 			if (!(i <= STRU32 (0X7FFFFFFF)))
@@ -567,7 +568,7 @@ inline String<STRU8> _U32STOU8S_ (const String<STRU32> &src) {
 			ret[iw++] = (STRU8 (i >> 6) & STRU8 (0X3F)) | STRU8 (0X80) ;
 			ret[iw++] = (STRU8 (i) & STRU8 (0X3F)) | STRU8 (0X80) ;
 		}
-		if SWITCH_CASE (ifa) {
+		if SWITCH_CASE (fax) {
 			ret.clear () ;
 			rax = VAR_NONE ;
 		}
@@ -577,28 +578,28 @@ inline String<STRU8> _U32STOU8S_ (const String<STRU32> &src) {
 	return std::move (ret) ;
 }
 
-inline String<STRU32> _U16STOU32S_ (const String<STRU16> &src) {
+inline String<STRU32> _U16STOU32S_ (const String<STRU16> &val) {
 	_STATIC_WARNING_ ("note") ;
 	/*
 	utf16 surrogate pairs [D800,DBFF] 110110xx xxxxxxxx [DC00,DFFF] 110111xx xxxxxxxx
 	utf16-utf32 surrogate pairs [0X10000,0X10FFFF]-[0,0XFFFFF] 0000xxxx xxxxxxxx xxxxxxxx
 	*/
-	String<STRU32> ret = String<STRU32> (src.length ()) ;
+	String<STRU32> ret = String<STRU32> (val.length ()) ;
 	INDEX iw = 0 ;
 	auto rax = VAR_ZERO ;
 	auto rbx = STRU32 () ;
-	for (auto &&i : src) {
+	for (auto &&i : val) {
 		if (rax == VAR_NONE)
 			discard ;
-		auto ifa = FALSE ;
-		if SWITCH_CASE (ifa) {
+		auto fax = FALSE ;
+		if SWITCH_CASE (fax) {
 			if (!(rax == 0))
 				discard ;
 			if (!(i <= STRU16 (0X07FF)))
 				discard ;
 			ret[iw++] = STRU32 (i) ;
 		}
-		if SWITCH_CASE (ifa) {
+		if SWITCH_CASE (fax) {
 			if (!(rax == 0))
 				discard ;
 			if (!(i >= STRU16 (0XD800) && i <= STRU16 (0XDBFF)))
@@ -606,12 +607,12 @@ inline String<STRU32> _U16STOU32S_ (const String<STRU16> &src) {
 			rbx = STRU32 (i & STRU16 (0X03FF)) ;
 			rax = 1 ;
 		}
-		if SWITCH_CASE (ifa) {
+		if SWITCH_CASE (fax) {
 			if (!(rax == 0))
 				discard ;
 			ret[iw++] = STRU32 (i) ;
 		}
-		if SWITCH_CASE (ifa) {
+		if SWITCH_CASE (fax) {
 			if (!(rax == 1))
 				discard ;
 			if (!(i >= STRU16 (0XDC00) && i <= STRU16 (0XDFFF)))
@@ -620,7 +621,7 @@ inline String<STRU32> _U16STOU32S_ (const String<STRU16> &src) {
 			ret[iw++] = rbx ;
 			rax = 0 ;
 		}
-		if SWITCH_CASE (ifa) {
+		if SWITCH_CASE (fax) {
 			ret.clear () ;
 			rax = VAR_NONE ;
 		}
@@ -632,27 +633,27 @@ inline String<STRU32> _U16STOU32S_ (const String<STRU16> &src) {
 	return std::move (ret) ;
 }
 
-inline String<STRU16> _U32STOU16S_ (const String<STRU32> &src) {
+inline String<STRU16> _U32STOU16S_ (const String<STRU32> &val) {
 	_STATIC_WARNING_ ("note") ;
 	/*
 	utf16 surrogate pairs [D800,DBFF] 110110xx xxxxxxxx [DC00,DFFF] 110111xx xxxxxxxx
 	utf16-utf32 surrogate pairs [0X10000,0X10FFFF]-[0,0XFFFFF] 0000xxxx xxxxxxxx xxxxxxxx
 	*/
-	String<STRU16> ret = String<STRU16> (src.length () * 2) ;
+	String<STRU16> ret = String<STRU16> (val.length () * 2) ;
 	INDEX iw = 0 ;
 	auto rax = VAR_ZERO ;
-	for (auto &&i : src) {
+	for (auto &&i : val) {
 		if (rax == VAR_NONE)
 			discard ;
-		auto ifa = FALSE ;
-		if SWITCH_CASE (ifa) {
+		auto fax = FALSE ;
+		if SWITCH_CASE (fax) {
 			if (!(rax == 0))
 				discard ;
 			if (!(i <= STRU32 (0X0000FFFF)))
 				discard ;
 			ret[iw++] = STRU16 (i) ;
 		}
-		if SWITCH_CASE (ifa) {
+		if SWITCH_CASE (fax) {
 			if (!(rax == 0))
 				discard ;
 			if (!(i <= STRU32 (0X0010FFFF)))
@@ -660,14 +661,14 @@ inline String<STRU16> _U32STOU16S_ (const String<STRU32> &src) {
 			ret[iw++] = (STRU16 ((i - STRU32 (0X00010000)) >> 10) & STRU16 (0X03FF)) | STRU16 (0XD800) ;
 			ret[iw++] = (STRU16 (i - STRU32 (0X00010000)) & STRU16 (0X03FF)) | STRU16 (0XDC00) ;
 		}
-		if SWITCH_CASE (ifa) {
+		if SWITCH_CASE (fax) {
 			if (!(rax == 0))
 				discard ;
 			if (!(i <= STRU32 (0X7FFFFFFF)))
 				discard ;
 			ret[iw++] = STRU16 ('?') ;
 		}
-		if SWITCH_CASE (ifa) {
+		if SWITCH_CASE (fax) {
 			ret.clear () ;
 			rax = VAR_NONE ;
 		}
@@ -677,167 +678,160 @@ inline String<STRU16> _U32STOU16S_ (const String<STRU32> &src) {
 	return std::move (ret) ;
 }
 
-inline String<STRU8> _WSTOU8S_ (const String<STRW> &src) {
-	auto &r1 = _CAST_<String<STRUW>> (src) ;
-	return U::OPERATOR_CVT_STRING<String<STRU8> ,String<STRUW>>::invoke (r1) ;
+inline String<STRU8> _WSTOU8S_ (const String<STRW> &val) {
+	return U::OPERATOR_CVT_STRING<String<STRU8> ,String<STRUW>>::invoke (_CAST_<String<STRUW>> (val)) ;
 }
 
-inline String<STRW> _U8STOWS_ (const String<STRU8> &src) {
-	String<STRUW> ret = U::OPERATOR_CVT_STRING<String<STRUW> ,String<STRU8>>::invoke (src) ;
+inline String<STRW> _U8STOWS_ (const String<STRU8> &val) {
+	String<STRUW> ret = U::OPERATOR_CVT_STRING<String<STRUW> ,String<STRU8>>::invoke (val) ;
 	return std::move (_CAST_<String<STRW>> (ret)) ;
 }
 
-inline String<STRU16> _WSTOU16S_ (const String<STRW> &src) {
-	auto &r1 = _CAST_<String<STRUW>> (src) ;
-	return U::OPERATOR_CVT_STRING<String<STRU16> ,String<STRUW>>::invoke (r1) ;
+inline String<STRU16> _WSTOU16S_ (const String<STRW> &val) {
+	return U::OPERATOR_CVT_STRING<String<STRU16> ,String<STRUW>>::invoke (_CAST_<String<STRUW>> (val)) ;
 }
 
-inline String<STRW> _U16STOWS_ (const String<STRU16> &src) {
-	String<STRUW> ret = U::OPERATOR_CVT_STRING<String<STRUW> ,String<STRU16>>::invoke (src) ;
+inline String<STRW> _U16STOWS_ (const String<STRU16> &val) {
+	String<STRUW> ret = U::OPERATOR_CVT_STRING<String<STRUW> ,String<STRU16>>::invoke (val) ;
 	return std::move (_CAST_<String<STRW>> (ret)) ;
 }
 
-inline String<STRU32> _WSTOU32S_ (const String<STRW> &src) {
-	auto &r1 = _CAST_<String<STRUW>> (src) ;
-	return U::OPERATOR_CVT_STRING<String<STRU32> ,String<STRUW>>::invoke (r1) ;
+inline String<STRU32> _WSTOU32S_ (const String<STRW> &val) {
+	return U::OPERATOR_CVT_STRING<String<STRU32> ,String<STRUW>>::invoke (_CAST_<String<STRUW>> (val)) ;
 }
 
-inline String<STRW> _U32STOWS_ (const String<STRU32> &src) {
-	String<STRUW> ret = U::OPERATOR_CVT_STRING<String<STRUW> ,String<STRU32>>::invoke (src) ;
+inline String<STRW> _U32STOWS_ (const String<STRU32> &val) {
+	String<STRUW> ret = U::OPERATOR_CVT_STRING<String<STRUW> ,String<STRU32>>::invoke (val) ;
 	return std::move (_CAST_<String<STRW>> (ret)) ;
 }
 
-inline String<STRU8> _ASTOU8S_ (const String<STRA> &src) {
-	return _WSTOU8S_ (_ASTOWS_ (src)) ;
+inline String<STRU8> _ASTOU8S_ (const String<STRA> &val) {
+	return _WSTOU8S_ (_ASTOWS_ (val)) ;
 }
 
-inline String<STRA> _U8STOAS_ (const String<STRU8> &src) {
-	return _WSTOAS_ (_U8STOWS_ (src)) ;
+inline String<STRA> _U8STOAS_ (const String<STRU8> &val) {
+	return _WSTOAS_ (_U8STOWS_ (val)) ;
 }
 
-inline String<STRU16> _ASTOU16S_ (const String<STRA> &src) {
-	return _WSTOU16S_ (_ASTOWS_ (src)) ;
+inline String<STRU16> _ASTOU16S_ (const String<STRA> &val) {
+	return _WSTOU16S_ (_ASTOWS_ (val)) ;
 }
 
-inline String<STRA> _U16STOAS_ (const String<STRU16> &src) {
-	return _WSTOAS_ (_U16STOWS_ (src)) ;
+inline String<STRA> _U16STOAS_ (const String<STRU16> &val) {
+	return _WSTOAS_ (_U16STOWS_ (val)) ;
 }
 
-inline String<STRU32> _ASTOU32S_ (const String<STRA> &src) {
-	return _WSTOU32S_ (_ASTOWS_ (src)) ;
+inline String<STRU32> _ASTOU32S_ (const String<STRA> &val) {
+	return _WSTOU32S_ (_ASTOWS_ (val)) ;
 }
 
-inline String<STRA> _U32STOAS_ (const String<STRU32> &src) {
-	return _WSTOAS_ (_U32STOWS_ (src)) ;
+inline String<STRA> _U32STOAS_ (const String<STRU32> &val) {
+	return _WSTOAS_ (_U32STOWS_ (val)) ;
 }
 
-inline String<STRU8> _UASTOU8S_ (const String<STRA> &src) {
+inline String<STRU8> _UASTOU8S_ (const String<STRA> &val) {
 	_STATIC_ASSERT_ (std::is_same<STRUA ,STRU8>::value) ;
-	String<STRU8> ret = std::move (_CAST_<String<STRUA>> (src)) ;
+	String<STRU8> ret = std::move (_CAST_<String<STRUA>> (val)) ;
 	for (auto &&i : ret) {
-		const auto r1x = i ;
-		_DEBUG_ASSERT_ (r1x <= STRUA (0X7F)) ;
-		(void) r1x ;
+		_DEBUG_ASSERT_ (i <= STRUA (0X7F)) ;
+		(void) i ;
 	}
 	return std::move (ret) ;
 }
 
-inline String<STRU8> _UASTOU8S_ (String<STRA> &&src) {
+inline String<STRU8> _UASTOU8S_ (String<STRA> &&val) {
 	_STATIC_ASSERT_ (std::is_same<STRUA ,STRU8>::value) ;
-	String<STRU8> ret = std::move (_CAST_<String<STRUA>> (src)) ;
+	String<STRU8> ret = std::move (_CAST_<String<STRUA>> (val)) ;
 	for (auto &&i : ret) {
-		const auto r1x = i ;
-		_DEBUG_ASSERT_ (r1x <= STRUA (0X7F)) ;
-		(void) r1x ;
+		_DEBUG_ASSERT_ (i <= STRUA (0X7F)) ;
+		(void) i ;
 	}
 	return std::move (ret) ;
 }
 
-inline String<STRA> _U8STOUAS_ (const String<STRU8> &src) {
+inline String<STRA> _U8STOUAS_ (const String<STRU8> &val) {
 	_STATIC_ASSERT_ (std::is_same<STRUA ,STRU8>::value) ;
-	String<STRUA> ret = std::move (src) ;
+	String<STRUA> ret = std::move (val) ;
 	for (auto &&i : ret) {
-		const auto r1x = i ;
-		_DEBUG_ASSERT_ (r1x <= STRUA (0X7F)) ;
-		(void) r1x ;
+		_DEBUG_ASSERT_ (i <= STRUA (0X7F)) ;
+		(void) i ;
 	}
 	return std::move (_CAST_<String<STRA>> (ret)) ;
 }
 
-inline String<STRA> _U8STOUAS_ (String<STRU8> &&src) {
+inline String<STRA> _U8STOUAS_ (String<STRU8> &&val) {
 	_STATIC_ASSERT_ (std::is_same<STRUA ,STRU8>::value) ;
-	String<STRUA> ret = std::move (src) ;
+	String<STRUA> ret = std::move (val) ;
 	for (auto &&i : ret) {
-		const auto r1x = i ;
-		_DEBUG_ASSERT_ (r1x <= STRUA (0X7F)) ;
-		(void) r1x ;
+		_DEBUG_ASSERT_ (i <= STRUA (0X7F)) ;
+		(void) i ;
 	}
 	return std::move (_CAST_<String<STRA>> (ret)) ;
 }
 
 inline imports DEF<PhanBuffer<const DEF<STRUW[2]>> ()> _LOADUWSTOUGBKSTABLE_ ;
 
-inline String<STRW> _GBKSTOWS_ (const String<STRA> &src) {
-	auto &r1 = _CACHE_ ([] () {
-		const auto r1x = _LOADUWSTOUGBKSTABLE_ () ;
-		HashSet<STRUW ,STRUW> ret = HashSet<STRUW ,STRUW> (r1x.size ()) ;
-		for (INDEX i = 0 ,ie = r1x.size () ; i < ie ; i++)
-			ret.add (r1x[i][1] ,r1x[i][0]) ;
+inline String<STRW> _GBKSTOWS_ (const String<STRA> &val) {
+	auto &r1y = _CACHE_ ([] () {
+		const auto r2x = _LOADUWSTOUGBKSTABLE_ () ;
+		HashSet<STRUW ,STRUW> ret = HashSet<STRUW ,STRUW> (r2x.size ()) ;
+		for (INDEX i = 0 ,ie = r2x.size () ; i < ie ; i++)
+			ret.add (r2x[i][1] ,r2x[i][0]) ;
 		return std::move (ret) ;
 	}) ;
-	String<STRW> ret = String<STRW> (src.length ()) ;
+	auto &r3y = _CAST_<String<STRUA>> (val) ;
+	String<STRW> ret = String<STRW> (r3y.length ()) ;
 	INDEX iw = 0 ;
-	auto &r2 = _CAST_<String<STRUA>> (src) ;
 	auto rax = VAR_ZERO ;
 	auto rbx = STRUW () ;
-	for (auto &&i : r2) {
+	for (auto &&i : r3y) {
 		if (rax == VAR_NONE)
 			discard ;
-		auto ifa = FALSE ;
-		if SWITCH_CASE (ifa) {
+		auto fax = FALSE ;
+		if SWITCH_CASE (fax) {
 			if (!(rax == 0))
 				discard ;
 			rbx = STRUW (i) ;
 			rax = 10 ;
 		}
-		if SWITCH_CASE (ifa) {
+		if SWITCH_CASE (fax) {
 			if (!(rax == 1))
 				discard ;
 			rbx = STRUW ((rbx << 8) | STRUW (i)) ;
 			rax = 11 ;
 		}
-		if SWITCH_CASE (ifa) {
+		if SWITCH_CASE (fax) {
 			ret.clear () ;
 			rax = VAR_NONE ;
 		}
 		if (rax < 10)
 			continue ;
-		INDEX ix = r1.find (rbx) ;
-		auto ifb = FALSE ;
-		if SWITCH_CASE (ifb) {
+		INDEX ix = r1y.find (rbx) ;
+		auto fbx = FALSE ;
+		if SWITCH_CASE (fbx) {
 			if (!(rax == 10))
 				discard ;
 			if (!(ix != VAR_NONE))
 				discard ;
-			ret[iw++] = STRW (r1[ix].item) ;
+			ret[iw++] = STRW (r1y[ix].item) ;
 			rax = 0 ;
 		}
-		if SWITCH_CASE (ifb) {
+		if SWITCH_CASE (fbx) {
 			if (!(rax == 10))
 				discard ;
 			if (!(ix == VAR_NONE))
 				discard ;
 			rax = 1 ;
 		}
-		if SWITCH_CASE (ifb) {
+		if SWITCH_CASE (fbx) {
 			if (!(rax == 11))
 				discard ;
 			if (!(ix != VAR_NONE))
 				discard ;
-			ret[iw++] = STRW (r1[ix].item) ;
+			ret[iw++] = STRW (r1y[ix].item) ;
 			rax = 0 ;
 		}
-		if SWITCH_CASE (ifb) {
+		if SWITCH_CASE (fbx) {
 			if (!(rax == 11))
 				discard ;
 			if (!(ix == VAR_NONE))
@@ -845,7 +839,7 @@ inline String<STRW> _GBKSTOWS_ (const String<STRA> &src) {
 			ret[iw++] = STRW ('?') ;
 			rax = 0 ;
 		}
-		if SWITCH_CASE (ifb) {
+		if SWITCH_CASE (fbx) {
 			ret.clear () ;
 			rax = VAR_NONE ;
 		}
@@ -857,45 +851,45 @@ inline String<STRW> _GBKSTOWS_ (const String<STRA> &src) {
 	return std::move (ret) ;
 }
 
-inline String<STRA> _WSTOGBKS_ (const String<STRW> &src) {
-	auto &r1 = _CACHE_ ([] () {
-		const auto r1x = _LOADUWSTOUGBKSTABLE_ () ;
-		HashSet<STRUW ,STRUW> ret = HashSet<STRUW ,STRUW> (r1x.size ()) ;
-		for (INDEX i = 0 ,ie = r1x.size () ; i < ie ; i++)
-			ret.add (r1x[i][0] ,r1x[i][1]) ;
+inline String<STRA> _WSTOGBKS_ (const String<STRW> &val) {
+	auto &r1y = _CACHE_ ([] () {
+		const auto r2x = _LOADUWSTOUGBKSTABLE_ () ;
+		HashSet<STRUW ,STRUW> ret = HashSet<STRUW ,STRUW> (r2x.size ()) ;
+		for (INDEX i = 0 ,ie = r2x.size () ; i < ie ; i++)
+			ret.add (r2x[i][0] ,r2x[i][1]) ;
 		return std::move (ret) ;
 	}) ;
-	String<STRUA> ret = String<STRUA> (src.length () * 2) ;
+	String<STRUA> ret = String<STRUA> (val.length () * 2) ;
 	INDEX iw = 0 ;
 	auto rax = VAR_ZERO ;
-	for (auto &&i : src) {
+	for (auto &&i : val) {
 		if (rax == VAR_NONE)
 			discard ;
-		INDEX ix = r1.find (STRUW (i)) ;
-		auto ifa = FALSE ;
-		if SWITCH_CASE (ifa) {
+		INDEX ix = r1y.find (STRUW (i)) ;
+		auto fax = FALSE ;
+		if SWITCH_CASE (fax) {
 			if (!(rax == 0))
 				discard ;
 			if (!(ix == VAR_NONE))
 				discard ;
 			ret[iw++] = STRUA ('?') ;
 		}
-		if SWITCH_CASE (ifa) {
+		if SWITCH_CASE (fax) {
 			if (!(rax == 0))
 				discard ;
-			if (!(r1[ix].item <= STRUW (0X00FF)))
+			if (!(r1y[ix].item <= STRUW (0X00FF)))
 				discard ;
-			ret[iw++] = STRUA (r1[ix].item) ;
+			ret[iw++] = STRUA (r1y[ix].item) ;
 		}
-		if SWITCH_CASE (ifa) {
+		if SWITCH_CASE (fax) {
 			if (!(rax == 0))
 				discard ;
-			if (!(r1[ix].item <= STRUW (0XFFFF)))
+			if (!(r1y[ix].item <= STRUW (0XFFFF)))
 				discard ;
-			ret[iw++] = STRUA (r1[ix].item >> 8) ;
-			ret[iw++] = STRUA (r1[ix].item) ;
+			ret[iw++] = STRUA (r1y[ix].item >> 8) ;
+			ret[iw++] = STRUA (r1y[ix].item) ;
 		}
-		if SWITCH_CASE (ifa) {
+		if SWITCH_CASE (fax) {
 			ret.clear () ;
 			rax = VAR_NONE ;
 		}
@@ -1026,12 +1020,12 @@ inline String<_RET> _BUILDSTRS_ (const String<STR> &stru) {
 
 template <class ITEM ,class SIZE>
 template <class... _ARGS>
-inline String<ITEM ,SIZE> String<ITEM ,SIZE>::make (const _ARGS &...args) {
+inline String<ITEM ,SIZE> String<ITEM ,SIZE>::make (const _ARGS &...initval) {
 	using DEFAULT_LONGSTRING_SIZE = ARGC<8195> ;
 	_STATIC_ASSERT_ (std::is_same<SIZE ,SAUTO>::value) ;
 	String<ITEM> ret = String<ITEM> (DEFAULT_LONGSTRING_SIZE::value) ;
 	auto wos = TextWriter<ITEM> (ret.raw ()) ;
-	_PRINTS_ (wos ,args...) ;
+	_PRINTS_ (wos ,initval...) ;
 	wos << _EOS_ ;
 	return std::move (ret) ;
 }
@@ -1137,39 +1131,39 @@ inline String<_RET> _BUILDHEX16S_ (const DATA &stru) {
 }
 
 template <class _RET = STR>
-inline String<_RET> _BUILDBASE64U8S_ (const String<STRU8> &src) {
+inline String<_RET> _BUILDBASE64U8S_ (const String<STRU8> &stru) {
 	static constexpr auto M_BASE64 = PACK<STRU8[66]> ({
-		STRU8 ('-') ,STRU8 ('A') ,STRU8 ('B') ,STRU8 ('C') ,STRU8 ('D') ,STRU8 ('E') ,STRU8 ('F') ,STRU8 ('G') ,
-		STRU8 ('H') ,STRU8 ('I') ,STRU8 ('J') ,STRU8 ('K') ,STRU8 ('L') ,STRU8 ('M') ,STRU8 ('N') ,STRU8 ('O') ,
-		STRU8 ('P') ,STRU8 ('Q') ,STRU8 ('R') ,STRU8 ('S') ,STRU8 ('T') ,STRU8 ('U') ,STRU8 ('V') ,STRU8 ('W') ,
-		STRU8 ('X') ,STRU8 ('Y') ,STRU8 ('Z') ,STRU8 ('a') ,STRU8 ('b') ,STRU8 ('c') ,STRU8 ('d') ,STRU8 ('e') ,
-		STRU8 ('f') ,STRU8 ('g') ,STRU8 ('h') ,STRU8 ('i') ,STRU8 ('j') ,STRU8 ('k') ,STRU8 ('l') ,STRU8 ('m') ,
-		STRU8 ('n') ,STRU8 ('o') ,STRU8 ('p') ,STRU8 ('q') ,STRU8 ('r') ,STRU8 ('s') ,STRU8 ('t') ,STRU8 ('u') ,
-		STRU8 ('v') ,STRU8 ('w') ,STRU8 ('x') ,STRU8 ('y') ,STRU8 ('z') ,STRU8 ('_') ,STRU8 ('0') ,STRU8 ('1') ,
-		STRU8 ('2') ,STRU8 ('3') ,STRU8 ('4') ,STRU8 ('5') ,STRU8 ('6') ,STRU8 ('7') ,STRU8 ('8') ,STRU8 ('9') ,
-		STRU8 ('.') ,STRU8 (':')}) ;
-	const auto r1x = (src.length () + 2) / 3 * 4 ;
+		'-' ,'A' ,'B' ,'C' ,'D' ,'E' ,'F' ,'G' ,
+		'H' ,'I' ,'J' ,'K' ,'L' ,'M' ,'N' ,'O' ,
+		'P' ,'Q' ,'R' ,'S' ,'T' ,'U' ,'V' ,'W' ,
+		'X' ,'Y' ,'Z' ,'a' ,'b' ,'c' ,'d' ,'e' ,
+		'f' ,'g' ,'h' ,'i' ,'j' ,'k' ,'l' ,'m' ,
+		'n' ,'o' ,'p' ,'q' ,'r' ,'s' ,'t' ,'u' ,
+		'v' ,'w' ,'x' ,'y' ,'z' ,'_' ,'0' ,'1' ,
+		'2' ,'3' ,'4' ,'5' ,'6' ,'7' ,'8' ,'9' ,
+		'.' ,':'}) ;
+	const auto r1x = (stru.length () + 2) / 3 * 4 ;
 	String<_RET> ret = String<_RET> (r1x) ;
 	INDEX iw = 0 ;
 	auto rax = VAR_ZERO ;
 	auto rbx = CHAR () ;
-	for (auto &&i : src) {
+	for (auto &&i : stru) {
 		if (rax == VAR_NONE)
 			discard ;
-		auto ifa = FALSE ;
-		if SWITCH_CASE (ifa) {
+		auto fax = FALSE ;
+		if SWITCH_CASE (fax) {
 			if (!(rax == 0))
 				discard ;
 			rbx = CHAR (i) ;
 			rax = 1 ;
 		}
-		if SWITCH_CASE (ifa) {
+		if SWITCH_CASE (fax) {
 			if (!(rax == 1))
 				discard ;
 			rbx = CHAR ((rbx << 8) | CHAR (i & STRU8 (0XFF))) ;
 			rax = 2 ;
 		}
-		if SWITCH_CASE (ifa) {
+		if SWITCH_CASE (fax) {
 			if (!(rax == 2))
 				discard ;
 			rbx = CHAR ((rbx << 8) | CHAR (i & STRU8 (0XFF))) ;
@@ -1179,14 +1173,14 @@ inline String<_RET> _BUILDBASE64U8S_ (const String<STRU8> &src) {
 			ret[iw++] = _RET (M_BASE64.P1[INDEX ((rbx >> 6) & CHAR (0X3F))]) ;
 			ret[iw++] = _RET (M_BASE64.P1[INDEX (rbx & CHAR (0X3F))]) ;
 		}
-		if SWITCH_CASE (ifa) {
+		if SWITCH_CASE (fax) {
 			ret.clear () ;
 			rax = VAR_NONE ;
 		}
 	}
-	for (FOR_ONCE_DO) {
-		auto ifa = FALSE ;
-		if SWITCH_CASE (ifa) {
+	if SWITCH_ONCE (TRUE) {
+		auto fax = FALSE ;
+		if SWITCH_CASE (fax) {
 			if (!(rax == 1))
 				discard ;
 			rbx = CHAR (rbx << 16) ;
@@ -1195,7 +1189,7 @@ inline String<_RET> _BUILDBASE64U8S_ (const String<STRU8> &src) {
 			ret[iw++] = _RET (M_BASE64.P1[64]) ;
 			ret[iw++] = _RET (M_BASE64.P1[64]) ;
 		}
-		if SWITCH_CASE (ifa) {
+		if SWITCH_CASE (fax) {
 			if (!(rax == 2))
 				discard ;
 			rbx = CHAR (rbx << 8) ;
@@ -1204,8 +1198,8 @@ inline String<_RET> _BUILDBASE64U8S_ (const String<STRU8> &src) {
 			ret[iw++] = _RET (M_BASE64.P1[INDEX ((rbx >> 6) & CHAR (0X3F))]) ;
 			ret[iw++] = _RET (M_BASE64.P1[64]) ;
 		}
-		if SWITCH_CASE (ifa) {
-			_DEBUG_ASSERT_ (rax == 0) ;
+		if SWITCH_CASE (fax) {
+			_DYNAMIC_ASSERT_ (rax == 0) ;
 		}
 	}
 	if (iw < ret.size ())
@@ -1214,7 +1208,7 @@ inline String<_RET> _BUILDBASE64U8S_ (const String<STRU8> &src) {
 }
 
 template <class _ARG1>
-inline String<STRU8> _PARSEBASE64U8S_ (const String<_ARG1> &src) {
+inline String<STRU8> _PARSEBASE64U8S_ (const String<_ARG1> &stri) {
 	static constexpr auto M_BASE64 = PACK<INDEX[96]> ({
 		-1 ,-1 ,-1 ,-1 ,-1 ,-1 ,-1 ,-1 ,-1 ,-1 ,-1 ,-1 ,-1 ,+0 ,64 ,-1 ,
 		54 ,55 ,56 ,57 ,58 ,59 ,60 ,61 ,62 ,63 ,64 ,-1 ,-1 ,-1 ,-1 ,-1 ,
@@ -1222,19 +1216,19 @@ inline String<STRU8> _PARSEBASE64U8S_ (const String<_ARG1> &src) {
 		16 ,17 ,18 ,19 ,20 ,21 ,22 ,23 ,24 ,25 ,26 ,-1 ,-1 ,-1 ,-1 ,53 ,
 		-1 ,27 ,28 ,29 ,30 ,31 ,32 ,33 ,34 ,35 ,36 ,37 ,38 ,39 ,40 ,41 ,
 		42 ,43 ,44 ,45 ,46 ,47 ,48 ,49 ,50 ,51 ,52 ,-1 ,-1 ,-1 ,-1 ,-1}) ;
-	const auto r1x = (src.length () + 3) / 4 * 3 ;
+	const auto r1x = (stri.length () + 3) / 4 * 3 ;
 	String<STRU8> ret = String<STRU8> (r1x) ;
 	INDEX iw = 0 ;
 	auto rax = VAR_ZERO ;
 	auto rbx = CHAR () ;
-	for (auto &&i : src) {
+	for (auto &&i : stri) {
 		if (rax == VAR_NONE)
 			discard ;
 		const auto r2x = _SWITCH_ (
 			((i & STRU8 (0X80)) == 0) ? (M_BASE64.P1[LENGTH (i) - 32]) :
 			VAR_NONE) ;
-		auto ifa = FALSE ;
-		if SWITCH_CASE (ifa) {
+		auto fax = FALSE ;
+		if SWITCH_CASE (fax) {
 			if (!(rax == 0))
 				discard ;
 			if (!(r2x >= 0))
@@ -1242,7 +1236,7 @@ inline String<STRU8> _PARSEBASE64U8S_ (const String<_ARG1> &src) {
 			rbx = CHAR (r2x & 63) ;
 			rax = 1 ;
 		}
-		if SWITCH_CASE (ifa) {
+		if SWITCH_CASE (fax) {
 			if (!(rax == 1))
 				discard ;
 			if (!(r2x >= 0))
@@ -1250,7 +1244,7 @@ inline String<STRU8> _PARSEBASE64U8S_ (const String<_ARG1> &src) {
 			rbx = CHAR ((rbx << 6) | CHAR (r2x & 63)) ;
 			rax = 2 ;
 		}
-		if SWITCH_CASE (ifa) {
+		if SWITCH_CASE (fax) {
 			if (!(rax == 2))
 				discard ;
 			if (!(r2x >= 0))
@@ -1258,7 +1252,7 @@ inline String<STRU8> _PARSEBASE64U8S_ (const String<_ARG1> &src) {
 			rbx = CHAR ((rbx << 6) | CHAR (r2x & 63)) ;
 			rax = 3 ;
 		}
-		if SWITCH_CASE (ifa) {
+		if SWITCH_CASE (fax) {
 			if (!(rax == 3))
 				discard ;
 			if (!(r2x >= 0))
@@ -1269,27 +1263,27 @@ inline String<STRU8> _PARSEBASE64U8S_ (const String<_ARG1> &src) {
 			ret[iw++] = STRU8 ((rbx >> 8) & CHAR (0XFF)) ;
 			ret[iw++] = STRU8 (rbx & CHAR (0XFF)) ;
 		}
-		if SWITCH_CASE (ifa) {
+		if SWITCH_CASE (fax) {
 			ret.clear () ;
 			rax = VAR_NONE ;
 		}
 	}
-	for (FOR_ONCE_DO) {
-		auto ifa = FALSE ;
-		if SWITCH_CASE (ifa) {
+	if SWITCH_ONCE (TRUE) {
+		auto fax = FALSE ;
+		if SWITCH_CASE (fax) {
 			if (!(rax == 1))
 				discard ;
 			rbx = CHAR (rbx << 18) ;
 			ret[iw++] = STRU8 ((rbx >> 16) & CHAR (0XFF)) ;
 		}
-		if SWITCH_CASE (ifa) {
+		if SWITCH_CASE (fax) {
 			if (!(rax == 2))
 				discard ;
 			rbx = CHAR (rbx << 12) ;
 			ret[iw++] = STRU8 ((rbx >> 16) & CHAR (0XFF)) ;
 			ret[iw++] = STRU8 ((rbx >> 8) & CHAR (0XFF)) ;
 		}
-		if SWITCH_CASE (ifa) {
+		if SWITCH_CASE (fax) {
 			if (!(rax == 3))
 				discard ;
 			rbx = CHAR (rbx << 6) ;
@@ -1297,8 +1291,8 @@ inline String<STRU8> _PARSEBASE64U8S_ (const String<_ARG1> &src) {
 			ret[iw++] = STRU8 ((rbx >> 8) & CHAR (0XFF)) ;
 			ret[iw++] = STRU8 (rbx & CHAR (0XFF)) ;
 		}
-		if SWITCH_CASE (ifa) {
-			_DEBUG_ASSERT_ (rax == 0) ;
+		if SWITCH_CASE (fax) {
+			_DYNAMIC_ASSERT_ (rax == 0) ;
 		}
 	}
 	if (iw < ret.size ())
@@ -1331,10 +1325,10 @@ inline PACK<WORD ,CHAR> _PARSEIPV4S_ (const String<_ARG1> &stri) {
 	_DYNAMIC_ASSERT_ (rbx >= 0 && rbx < 256) ;
 	const auto r4x = BYTE (rbx) ;
 	const auto r5x = PACK<BYTE[4]> {r1x ,r2x ,r3x ,r4x} ;
-	ret.P2 = _CAST_<EndianBytes<CHAR>> (r5x) ;
+	_CAST_<EndianBytes<CHAR>> (r5x.P1) >>= ret.P2 ;
 	ret.P1 = 0 ;
 	ris.copy () >> rax ;
-	for (FOR_ONCE_DO) {
+	if SWITCH_ONCE (TRUE) {
 		if (rax != _ARG1 (':'))
 			discard ;
 		ris >> rax ;
@@ -1350,16 +1344,17 @@ template <class _RET = STR>
 inline String<_RET> _BUILDIPV4S_ (const PACK<WORD ,CHAR> &stru) {
 	_STATIC_ASSERT_ (!std::is_reference<_RET>::value) ;
 	String<_RET> ret = String<_RET> (63) ;
-	auto &r1 = _CAST_<EndianBytes<CHAR>> (stru.P2) ;
+	auto rax = PACK<BYTE[_SIZEOF_ (CHAR)]> () ;
+	_CAST_<EndianBytes<CHAR>> (rax.P1) <<= stru.P2 ;
 	auto wos = TextWriter<_RET> (ret.raw ()) ;
-	wos << VAR (r1[0]) ;
+	wos << VAR (rax.P1[0]) ;
 	wos << _RET ('.') ;
-	wos << VAR (r1[1]) ;
+	wos << VAR (rax.P1[1]) ;
 	wos << _RET ('.') ;
-	wos << VAR (r1[2]) ;
+	wos << VAR (rax.P1[2]) ;
 	wos << _RET ('.') ;
-	wos << VAR (r1[3]) ;
-	for (FOR_ONCE_DO) {
+	wos << VAR (rax.P1[3]) ;
+	if SWITCH_ONCE (TRUE) {
 		if (stru.P1 == 0)
 			discard ;
 		wos << _RET (':') ;
@@ -1369,9 +1364,9 @@ inline String<_RET> _BUILDIPV4S_ (const PACK<WORD ,CHAR> &stru) {
 	return std::move (ret) ;
 }
 
-#ifdef __CSC_EXT__
-inline imports DEF<ARRAY8<VAR32> (const std::chrono::system_clock::time_point &src)> _LOCALE_MAKE_TIMEMETRIC_ ;
-inline imports DEF<std::chrono::system_clock::time_point (const ARRAY8<VAR32> &src)> _LOCALE_MAKE_TIMEPOINT_ ;
+#ifdef __CSC_EXTEND__
+inline imports DEF<ARRAY8<VAR32> (const std::chrono::system_clock::time_point &val)> _LOCALE_MAKE_TIMEMETRIC_ ;
+inline imports DEF<std::chrono::system_clock::time_point (const ARRAY8<VAR32> &val)> _LOCALE_MAKE_TIMEPOINT_ ;
 
 template <class _ARG1>
 inline std::chrono::system_clock::time_point _PARSEDATES_ (const String<_ARG1> &stri) {

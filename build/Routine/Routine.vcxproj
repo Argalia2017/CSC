@@ -39,9 +39,10 @@
     <ClInclude Include="..\..\..\..\..\Depends\__CSC__\csc.hpp" />
     <ClInclude Include="..\..\..\..\..\Depends\__CSC__\csc_algorithm.hpp" />
     <ClInclude Include="..\..\..\..\..\Depends\__CSC__\csc_array.hpp" />
+    <ClInclude Include="..\..\..\..\..\Depends\__CSC__\csc_basic.hpp" />
     <ClInclude Include="..\..\..\..\..\Depends\__CSC__\csc_database.hpp" />
     <ClInclude Include="..\..\..\..\..\Depends\__CSC__\csc_debugger.hpp" />
-    <ClInclude Include="..\..\..\..\..\Depends\__CSC__\csc_ext.hpp" />
+    <ClInclude Include="..\..\..\..\..\Depends\__CSC__\csc_extend.hpp" />
     <ClInclude Include="..\..\..\..\..\Depends\__CSC__\csc_filesystem.hpp" />
     <ClInclude Include="..\..\..\..\..\Depends\__CSC__\csc_geometry.hpp" />
     <ClInclude Include="..\..\..\..\..\Depends\__CSC__\csc_graphics.hpp" />
@@ -57,7 +58,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\..\..\..\Depends\__CSC__\cpp.hint" />
-    <None Include="..\..\..\..\..\Depends\__CSC__\csc.hpp.traits.inl" />
     <None Include="..\..\..\..\..\Depends\__CSC__\csc_database.hpp.mysql.inl" />
     <None Include="..\..\..\..\..\Depends\__CSC__\csc_debugger.hpp.linux.inl" />
     <None Include="..\..\..\..\..\Depends\__CSC__\csc_debugger.hpp.windows.inl" />

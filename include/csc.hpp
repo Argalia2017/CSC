@@ -92,7 +92,7 @@
 #pragma warning (disable :4623) //@info: warning C4623: 'xxx': default constructor was implicitly defined as deleted
 #pragma warning (disable :4624) //@info: warning C4624: 'xxx': destructor was implicitly defined as deleted
 #pragma warning (disable :4625) //@info: warning C4625: 'xxx': copy constructor was implicitly defined as deleted
-#pragma warning (disable :4626) //@info:  warning C4626: 'xxx': assignment operator was implicitly defined as deleted
+#pragma warning (disable :4626) //@info: warning C4626: 'xxx': assignment operator was implicitly defined as deleted
 #pragma warning (disable :5026) //@info: warning C5026: 'xxx': move constructor was implicitly defined as deleted
 #pragma warning (disable :5027) //@info: warning C5027: 'xxx': move assignment operator was implicitly defined as deleted
 #pragma warning (disable :5045) //@info: warning C5045: Compiler will insert Spectre mitigation for memory load if /Qspectre switch specified
@@ -258,22 +258,14 @@ using std::is_copy_assignable ;
 using std::is_nothrow_move_constructible ;
 using std::is_nothrow_move_assignable ;
 using std::is_convertible ;
-
-using std::enable_if ;
-using std::conditional ;
-using std::remove_reference ;
-using std::remove_const ;
-using std::remove_volatile ;
-using std::remove_pointer ;
-using std::remove_extent ;
 } ;
 
 #define _UNWIND_X_(...) __VA_ARGS__
 #define _UNW_(...) _UNWIND_X_(__VA_ARGS__)
 #define _STRINGIZE_X_(...) #__VA_ARGS__
 #define _STR_(...) _STRINGIZE_X_(__VA_ARGS__)
-#define _CONCAT_X_(arg1 ,arg2) arg1 ## arg2
-#define _CAT_(arg1 ,arg2) _CONCAT_X_(arg1 ,arg2)
+#define _CONCAT_X_(lhs ,rhs) lhs ## rhs
+#define _CAT_(lhs ,rhs) _CONCAT_X_(lhs ,rhs)
 
 #define M_DATE __DATE__
 #define M_HOUR __TIME__
@@ -320,10 +312,8 @@ using std::remove_extent ;
 
 #define ANONYMOUS _CAT_ (_anonymous_ ,__LINE__)
 
-#define FOR_ONCE_DO auto ANONYMOUS = FALSE ; !ANONYMOUS ; ANONYMOUS = TRUE
-
-#define SWITCH_CASE(arg1) (TRUE) for ( ; !arg1 ; arg1 = TRUE)
-#define SWITCH_ONCE(arg1) (arg1) for (FOR_ONCE_DO)
+#define SWITCH_CASE(var) (TRUE) for ( ; !var ; var = TRUE)
+#define SWITCH_ONCE(var) (var) for (auto ANONYMOUS = FALSE ; !ANONYMOUS ; ANONYMOUS = TRUE)
 
 using BOOL = bool ;
 
@@ -437,6 +427,7 @@ template <class TYPE>
 using PTR = DEF<TYPE *> ;
 
 #ifdef __CSC_COMPILER_GNUC__
+//@error: g++4.8 is too useless to use references to array of unknown bound as parameters
 template <class TYPE>
 using ARR = DEF<TYPE[0]> ;
 #else
@@ -448,12 +439,12 @@ namespace U {
 struct OPERATOR_PTRTOARR {
 	template <class _ARG1>
 	inline constexpr ARR<_ARG1> &operator[] (const PTR<_ARG1> &that) const {
-		return *PTR<ARR<_ARG1>> (that) ;
+		return (*PTR<ARR<_ARG1>> (that)) ;
 	}
 
 	template <class _ARG1 ,LENGTH _VAL1>
 	inline constexpr ARR<_ARG1> &operator[] (DEF<_ARG1[_VAL1]> &that) const {
-		return *PTR<ARR<_ARG1>> (&that) ;
+		return (*PTR<ARR<_ARG1>> (&that)) ;
 	}
 } ;
 } ;
@@ -475,15 +466,15 @@ using STRU8 = unsigned char ;
 using STRU16 = char16_t ;
 using STRU32 = char32_t ;
 
-#define _PCSTRU8_(arg1) CSC::Plain<CSC::STRU8> (_CAT_ (u8 ,arg1))
-#define _PCSTRU16_(arg1) CSC::Plain<CSC::STRU16> (_CAT_ (u ,arg1))
-#define _PCSTRU32_(arg1) CSC::Plain<CSC::STRU32> (_CAT_ (U ,arg1))
+#define _PCSTRU8_(text) CSC::Plain<CSC::STRU8> (_CAT_ (u8 ,text))
+#define _PCSTRU16_(text) CSC::Plain<CSC::STRU16> (_CAT_ (u ,text))
+#define _PCSTRU32_(text) CSC::Plain<CSC::STRU32> (_CAT_ (U ,text))
 
 using STRA = char ;
 using STRW = wchar_t ;
 
-#define _PCSTRA_(arg1) CSC::Plain<CSC::STRA> (_UNW_ (arg1))
-#define _PCSTRW_(arg1) CSC::Plain<CSC::STRW> (_CAT_ (L ,arg1))
+#define _PCSTRA_(text) CSC::Plain<CSC::STRA> (_UNW_ (text))
+#define _PCSTRW_(text) CSC::Plain<CSC::STRW> (_CAT_ (L ,text))
 
 #ifdef __CSC_CONFIG_STRA__
 using STR = STRA ;
@@ -504,20 +495,11 @@ struct ARGC {
 	} ;
 } ;
 
-template <VAR...>
-struct ARGCS ;
-
-template <>
-struct ARGCS<> :public ARGC<0> {} ;
-
-template <VAR _VAL1 ,VAR..._VALS>
-struct ARGCS<_VAL1 ,_VALS...> :public ARGC<_VAL1 + ARGCS<_VALS...>::value> {} ;
-
 template <class>
 struct ARGV {} ;
 
 template <class...>
-struct ARGVS {} ;
+struct ARGVS ;
 
 template <VAR>
 struct ARGVP ;
@@ -575,9 +557,715 @@ struct PACK<UNIT1 ,UNIT2 ,UNIT3> {
 } ;
 
 #pragma region
-#define __CSC_USE_TRAITS__
-#include "csc.hpp.traits.inl"
-#undef __CSC_USE_TRAITS__
+#ifdef __CSC__
+namespace U {
+template <class>
+struct ENABLE ;
+
+template <>
+struct ENABLE<ARGC<TRUE>> {
+	using TYPE = VOID ;
+} ;
+
+template <BOOL _VAL1>
+using ENABLE_TYPE = typename ENABLE<ARGC<_VAL1>>::TYPE ;
+} ;
+
+namespace U {
+template <class ,class ,class>
+struct CONDITIONAL ;
+
+template <class _ARG1 ,class _ARG2>
+struct CONDITIONAL<ARGC<TRUE> ,_ARG1 ,_ARG2> {
+	using TYPE = _ARG1 ;
+} ;
+
+template <class _ARG1 ,class _ARG2>
+struct CONDITIONAL<ARGC<FALSE> ,_ARG1 ,_ARG2> {
+	using TYPE = _ARG2 ;
+} ;
+
+template <BOOL _VAL1 ,class _ARG1 ,class _ARG2>
+using CONDITIONAL_TYPE = typename CONDITIONAL<ARGC<_VAL1> ,_ARG1 ,_ARG2>::TYPE ;
+} ;
+
+namespace U {
+template <class _ARG1>
+struct REMOVE_REFERENCE {
+	using TYPE = _ARG1 ;
+} ;
+
+template <class _ARG1>
+struct REMOVE_REFERENCE<_ARG1 &> {
+	using TYPE = _ARG1 ;
+} ;
+
+template <class _ARG1>
+struct REMOVE_REFERENCE<_ARG1 &&> {
+	using TYPE = _ARG1 ;
+} ;
+
+template <class _ARG1>
+using REMOVE_REFERENCE_TYPE = typename REMOVE_REFERENCE<_ARG1>::TYPE ;
+} ;
+
+namespace U {
+template <class _ARG1>
+struct REMOVE_CONST {
+	using TYPE = _ARG1 ;
+} ;
+
+template <class _ARG1>
+struct REMOVE_CONST<const _ARG1> {
+	using TYPE = _ARG1 ;
+} ;
+
+template <class _ARG1>
+using REMOVE_CONST_TYPE = typename REMOVE_CONST<_ARG1>::TYPE ;
+} ;
+
+namespace U {
+template <class _ARG1>
+struct REMOVE_VOLATILE {
+	using TYPE = _ARG1 ;
+} ;
+
+template <class _ARG1>
+struct REMOVE_VOLATILE<volatile _ARG1> {
+	using TYPE = _ARG1 ;
+} ;
+
+template <class _ARG1>
+using REMOVE_VOLATILE_TYPE = typename REMOVE_VOLATILE<_ARG1>::TYPE ;
+} ;
+
+namespace U {
+template <class _ARG1>
+using REMOVE_CVR_TYPE = REMOVE_CONST_TYPE<REMOVE_VOLATILE_TYPE<REMOVE_REFERENCE_TYPE<_ARG1>>> ;
+} ;
+
+namespace U {
+template <class _ARG1>
+struct REMOVE_POINTER {
+	using TYPE = _ARG1 ;
+} ;
+
+template <class _ARG1>
+struct REMOVE_POINTER<PTR<_ARG1>> {
+	using TYPE = _ARG1 ;
+} ;
+
+template <class _ARG1>
+using REMOVE_POINTER_TYPE = typename REMOVE_POINTER<_ARG1>::TYPE ;
+} ;
+
+namespace U {
+template <class _ARG1>
+struct REMOVE_ARRAY {
+	using TYPE = _ARG1 ;
+} ;
+
+template <class _ARG1>
+struct REMOVE_ARRAY<ARR<_ARG1>> {
+	using TYPE = _ARG1 ;
+} ;
+
+template <class _ARG1 ,LENGTH _VAL1>
+struct REMOVE_ARRAY<_ARG1[_VAL1]> {
+	using TYPE = _ARG1 ;
+} ;
+
+template <class _ARG1>
+using REMOVE_ARRAY_TYPE = typename REMOVE_ARRAY<_ARG1>::TYPE ;
+} ;
+
+namespace U {
+template <class _ARG1>
+struct REMOVE_TEMP {
+	using TYPE = _ARG1 ;
+} ;
+
+template <class _ARG1>
+struct REMOVE_TEMP<TEMP<_ARG1>> {
+	using TYPE = _ARG1 ;
+} ;
+
+template <class _ARG1>
+using REMOVE_TEMP_TYPE = typename REMOVE_TEMP<REMOVE_CVR_TYPE<_ARG1>>::TYPE ;
+} ;
+
+namespace U {
+template <class>
+struct REMOVE_MEMFUNC ;
+
+template <class _ARG1 ,class... _ARGS>
+struct REMOVE_MEMFUNC<_ARG1 (_ARGS...)> {
+	using TYPE = DEF<_ARG1 (_ARGS...)> ;
+} ;
+
+template <class _ARG1 ,class... _ARGS>
+struct REMOVE_MEMFUNC<_ARG1 (_ARGS...) const> {
+	using TYPE = DEF<_ARG1 (_ARGS...)> ;
+} ;
+
+template <class _ARG1 ,class... _ARGS>
+struct REMOVE_MEMFUNC<_ARG1 (_ARGS...) volatile> {
+	using TYPE = DEF<_ARG1 (_ARGS...)> ;
+} ;
+
+template <class _ARG1 ,class... _ARGS>
+struct REMOVE_MEMFUNC<_ARG1 (_ARGS...) const volatile> {
+	using TYPE = DEF<_ARG1 (_ARGS...)> ;
+} ;
+
+//@warn: behaviors of 'noexcept' changed in C++17
+#if _HAS_CXX17
+template <class _ARG1 ,class... _ARGS>
+struct REMOVE_MEMFUNC<_ARG1 (_ARGS...) noexcept> {
+	using TYPE = DEF<_ARG1 (_ARGS...)> ;
+} ;
+
+template <class _ARG1 ,class... _ARGS>
+struct REMOVE_MEMFUNC<_ARG1 (_ARGS...) const noexcept> {
+	using TYPE = DEF<_ARG1 (_ARGS...)> ;
+} ;
+
+template <class _ARG1 ,class... _ARGS>
+struct REMOVE_MEMFUNC<_ARG1 (_ARGS...) volatile noexcept> {
+	using TYPE = DEF<_ARG1 (_ARGS...)> ;
+} ;
+
+template <class _ARG1 ,class... _ARGS>
+struct REMOVE_MEMFUNC<_ARG1 (_ARGS...) const volatile noexcept> {
+	using TYPE = DEF<_ARG1 (_ARGS...)> ;
+} ;
+#endif
+
+template <class _ARG1>
+using REMOVE_MEMFUNC_TYPE = typename REMOVE_MEMFUNC<_ARG1>::TYPE ;
+} ;
+
+namespace U {
+template <class>
+struct REMOVE_MEMBER ;
+
+template <class _ARG1 ,class _ARG2>
+struct REMOVE_MEMBER<_ARG1 _ARG2::*> {
+	using TYPE = _ARG1 ;
+} ;
+
+template <class _ARG1>
+using REMOVE_MEMBER_TYPE = typename REMOVE_MEMBER<_ARG1>::TYPE ;
+} ;
+
+namespace U {
+template <class>
+struct MEMBER_OF ;
+
+template <class _ARG1 ,class _ARG2>
+struct MEMBER_OF<_ARG1 _ARG2::*> {
+	using TYPE = _ARG2 ;
+} ;
+
+template <class _ARG1>
+using MEMBER_OF_TYPE = typename MEMBER_OF<_ARG1>::TYPE ;
+} ;
+
+namespace U {
+template <class>
+struct INVOKE_RESULT ;
+
+template <class _ARG1 ,class... _ARGS>
+struct INVOKE_RESULT<_ARG1 (_ARGS...)> {
+	using TYPE = _ARG1 ;
+} ;
+
+template <class _ARG1>
+using INVOKE_RESULT_TYPE = typename INVOKE_RESULT<_ARG1>::TYPE ;
+} ;
+
+namespace U {
+template <class>
+struct INVOKE_PARAMS ;
+
+template <class _ARG1 ,class... _ARGS>
+struct INVOKE_PARAMS<_ARG1 (_ARGS...)> {
+	using TYPE = ARGVS<_ARGS...> ;
+} ;
+
+template <class _ARG1>
+using INVOKE_PARAMS_TYPE = typename INVOKE_PARAMS<_ARG1>::TYPE ;
+} ;
+
+namespace U {
+template <class ,class ,class>
+struct RESULT_OF ;
+
+#ifdef __CSC_COMPILER_CLANG__
+template <class _ARG1 ,class _ARG2 ,class _ARG3>
+struct RESULT_OF {
+	using TYPE = NONE ;
+} ;
+#endif
+
+template <class _ARG1 ,class _ARG2 ,class... _ARGS>
+struct RESULT_OF<_ARG1 (_ARGS...) ,ARGVS<_ARGS...> ,_ARG2> {
+	using TYPE = _ARG1 ;
+} ;
+
+template <class _ARG1 ,class _ARG2>
+struct RESULT_OF<_ARG1 ,_ARG2 ,ENABLE_TYPE<(_SIZEOF_ (decltype (&_ARG1::operator())) > 0)>> {
+	using TYPE = typename RESULT_OF<REMOVE_MEMFUNC_TYPE<REMOVE_MEMBER_TYPE<decltype (&_ARG1::operator())>> ,_ARG2 ,VOID>::TYPE ;
+} ;
+
+template <class _ARG1 ,class _ARG2>
+using RESULT_OF_TYPE = typename RESULT_OF<REMOVE_CVR_TYPE<REMOVE_POINTER_TYPE<_ARG1>> ,_ARG2 ,VOID>::TYPE ;
+} ;
+
+namespace U {
+template <class>
+struct COUNTOF_TRAITS ;
+
+template <class _ARG1>
+struct COUNTOF_TRAITS<ARR<_ARG1>> {
+	using TYPE = ARGC<0> ;
+} ;
+
+template <class _ARG1 ,LENGTH _VAL1>
+struct COUNTOF_TRAITS<_ARG1[_VAL1]> {
+	using TYPE = ARGC<_VAL1> ;
+} ;
+
+template <class _ARG1>
+using COUNTOF_TRAITS_TYPE = typename COUNTOF_TRAITS<_ARG1>::TYPE ;
+} ;
+
+namespace U {
+template <class ,class ,class>
+struct is_full_array_of_help :public stl::false_type {} ;
+
+template <class _ARG1 ,LENGTH _VAL1>
+struct is_full_array_of_help<_ARG1 ,DEF<_ARG1[_VAL1]> ,ENABLE_TYPE<(_VAL1 > 0)>> :public stl::true_type {} ;
+
+template <class _ARG1 ,class _ARG2>
+using is_full_array_of = is_full_array_of_help<REMOVE_CVR_TYPE<_ARG1> ,REMOVE_CVR_TYPE<_ARG2> ,VOID> ;
+} ;
+
+namespace U {
+template <class _ARG1>
+struct FORWARD_TRAITS {
+	using TYPE = const _ARG1 & ;
+} ;
+
+template <class _ARG1>
+struct FORWARD_TRAITS<_ARG1 &> {
+	using TYPE = _ARG1 & ;
+} ;
+
+template <class _ARG1>
+struct FORWARD_TRAITS<_ARG1 &&> {
+	using TYPE = _ARG1 ;
+} ;
+
+template <class _ARG1>
+using FORWARD_TRAITS_TYPE = typename FORWARD_TRAITS<_ARG1>::TYPE ;
+} ;
+
+namespace U {
+template <class _ARG1 ,class _ARG2>
+struct CAST_TRAITS {
+	using TYPE = REMOVE_REFERENCE_TYPE<_ARG1> ;
+} ;
+
+template <class _ARG1 ,class _ARG2>
+struct CAST_TRAITS<_ARG1 ,const _ARG2> {
+	using TYPE = const REMOVE_REFERENCE_TYPE<_ARG1> ;
+} ;
+
+template <class _ARG1 ,class _ARG2>
+struct CAST_TRAITS<_ARG1 ,volatile _ARG2> {
+	using TYPE = volatile REMOVE_REFERENCE_TYPE<_ARG1> ;
+} ;
+
+template <class _ARG1 ,class _ARG2>
+struct CAST_TRAITS<_ARG1 ,const volatile _ARG2> {
+	using TYPE = const volatile REMOVE_REFERENCE_TYPE<_ARG1> ;
+} ;
+
+template <class _ARG1 ,class _ARG2>
+struct CAST_TRAITS<_ARG1 ,_ARG2 &> {
+	using TYPE = REMOVE_REFERENCE_TYPE<_ARG1> & ;
+} ;
+
+template <class _ARG1 ,class _ARG2>
+struct CAST_TRAITS<_ARG1 ,const _ARG2 &> {
+	using TYPE = const REMOVE_REFERENCE_TYPE<_ARG1> & ;
+} ;
+
+template <class _ARG1 ,class _ARG2>
+struct CAST_TRAITS<_ARG1 ,volatile _ARG2 &> {
+	using TYPE = volatile REMOVE_REFERENCE_TYPE<_ARG1> & ;
+} ;
+
+template <class _ARG1 ,class _ARG2>
+struct CAST_TRAITS<_ARG1 ,const volatile _ARG2 &> {
+	using TYPE = const volatile REMOVE_REFERENCE_TYPE<_ARG1> & ;
+} ;
+
+template <class _ARG1 ,class _ARG2>
+struct CAST_TRAITS<_ARG1 ,_ARG2 &&> {
+	using TYPE = REMOVE_REFERENCE_TYPE<_ARG1> && ;
+} ;
+
+template <class _ARG1 ,class _ARG2>
+struct CAST_TRAITS<_ARG1 ,const _ARG2 &&> {
+	using TYPE = const REMOVE_REFERENCE_TYPE<_ARG1> && ;
+} ;
+
+template <class _ARG1 ,class _ARG2>
+struct CAST_TRAITS<_ARG1 ,volatile _ARG2 &&> {
+	using TYPE = volatile REMOVE_REFERENCE_TYPE<_ARG1> && ;
+} ;
+
+template <class _ARG1 ,class _ARG2>
+struct CAST_TRAITS<_ARG1 ,const volatile _ARG2 &&> {
+	using TYPE = const volatile REMOVE_REFERENCE_TYPE<_ARG1> && ;
+} ;
+
+template <class _ARG1 ,class _ARG2>
+using CAST_TRAITS_TYPE = typename CAST_TRAITS<_ARG1 ,_ARG2>::TYPE ;
+} ;
+
+namespace U {
+template <class ,class>
+struct is_var_xyz_help :public stl::false_type {} ;
+
+template <>
+struct is_var_xyz_help<VAR32 ,VOID> :public stl::true_type {} ;
+
+template <>
+struct is_var_xyz_help<VAR64 ,VOID> :public stl::true_type {} ;
+
+template <class _ARG1>
+struct is_var_xyz_help<_ARG1 ,ENABLE_TYPE<stl::is_same<_ARG1 ,VARX>::value && !stl::is_same<_ARG1 ,VAR32>::value && !stl::is_same<_ARG1 ,VAR64>::value>> :public stl::true_type {} ;
+
+template <class _ARG1>
+struct is_var_xyz_help<_ARG1 ,ENABLE_TYPE<stl::is_same<_ARG1 ,VARY>::value && !stl::is_same<_ARG1 ,CHAR>::value && !stl::is_same<_ARG1 ,DATA>::value>> :public stl::true_type {} ;
+
+template <class _ARG1>
+using is_var_xyz = is_var_xyz_help<_ARG1 ,VOID> ;
+} ;
+
+namespace U {
+template <class ,class>
+struct is_val_xyz_help :public stl::false_type {} ;
+
+template <>
+struct is_val_xyz_help<VAL32 ,VOID> :public stl::true_type {} ;
+
+template <>
+struct is_val_xyz_help<VAL64 ,VOID> :public stl::true_type {} ;
+
+template <class _ARG1>
+struct is_val_xyz_help<_ARG1 ,ENABLE_TYPE<stl::is_same<_ARG1 ,VALX>::value && !stl::is_same<_ARG1 ,VAL32>::value && !stl::is_same<_ARG1 ,VAL64>::value>> :public stl::true_type {} ;
+
+template <class _ARG1>
+using is_val_xyz = is_val_xyz_help<_ARG1 ,VOID> ;
+} ;
+
+namespace U {
+template <class>
+struct is_byte_xyz_help :public stl::false_type {} ;
+
+template <>
+struct is_byte_xyz_help<BYTE> :public stl::true_type {} ;
+
+template <>
+struct is_byte_xyz_help<WORD> :public stl::true_type {} ;
+
+template <>
+struct is_byte_xyz_help<CHAR> :public stl::true_type {} ;
+
+template <>
+struct is_byte_xyz_help<DATA> :public stl::true_type {} ;
+
+template <>
+struct is_byte_xyz_help<MEGA> :public stl::true_type {} ;
+
+template <class _ARG1>
+using is_byte_xyz = U::is_byte_xyz_help<_ARG1> ;
+} ;
+
+namespace U {
+template <class ,class>
+struct is_str_xyz_help :public stl::false_type {} ;
+
+template <>
+struct is_str_xyz_help<STRU8 ,VOID> :public stl::true_type {} ;
+
+template <>
+struct is_str_xyz_help<STRU16 ,VOID> :public stl::true_type {} ;
+
+template <>
+struct is_str_xyz_help<STRU32 ,VOID> :public stl::true_type {} ;
+
+template <>
+struct is_str_xyz_help<STRA ,VOID> :public stl::true_type {} ;
+
+template <>
+struct is_str_xyz_help<STRW ,VOID> :public stl::true_type {} ;
+
+template <class _ARG1>
+struct is_str_xyz_help<_ARG1 ,ENABLE_TYPE<stl::is_same<_ARG1 ,STRX>::value && !stl::is_same<_ARG1 ,STRA>::value && !stl::is_same<_ARG1 ,STRW>::value>> :public stl::true_type {} ;
+
+template <class _ARG1>
+using is_str_xyz = is_str_xyz_help<_ARG1 ,VOID> ;
+} ;
+
+namespace U {
+template <class ,class ,class ,class>
+struct LOAD_CHECK {
+	using TYPE = ARGC<FALSE> ;
+} ;
+
+template <class _ARG1>
+struct LOAD_CHECK<_ARG1 ,TEMP<_ARG1> ,VOID ,ARGC<1>> {
+	using TYPE = ARGC<TRUE> ;
+} ;
+
+template <class _ARG1>
+struct LOAD_CHECK<TEMP<_ARG1> ,_ARG1 ,VOID ,ARGC<1>> {
+	using TYPE = ARGC<TRUE> ;
+} ;
+
+template <class _ARG1>
+struct LOAD_CHECK<ARR<_ARG1> ,ARR<TEMP<_ARG1>> ,VOID ,ARGC<1>> {
+	using TYPE = ARGC<TRUE> ;
+} ;
+
+template <class _ARG1>
+struct LOAD_CHECK<ARR<TEMP<_ARG1>> ,ARR<_ARG1> ,VOID ,ARGC<1>> {
+	using TYPE = ARGC<TRUE> ;
+} ;
+
+template <class _ARG1 ,class _ARG2 ,class _ARG3>
+struct LOAD_CHECK<_ARG1 ,_ARG2 ,_ARG3 ,ARGC<1>> {
+	using TYPE = typename LOAD_CHECK<_ARG1 ,_ARG2 ,_ARG3 ,ARGC<2>>::TYPE ;
+} ;
+
+template <class _ARG1>
+struct LOAD_CHECK<_ARG1 ,NONE ,ENABLE_TYPE<stl::is_class<_ARG1>::value> ,ARGC<2>> {
+	using TYPE = ARGC<TRUE> ;
+} ;
+
+template <class _ARG1>
+struct LOAD_CHECK<NONE ,_ARG1 ,ENABLE_TYPE<stl::is_class<_ARG1>::value> ,ARGC<2>> {
+	using TYPE = ARGC<TRUE> ;
+} ;
+
+template <class _ARG1 ,class _ARG2 ,class _ARG3>
+struct LOAD_CHECK<_ARG1 ,_ARG2 ,_ARG3 ,ARGC<2>> {
+	using TYPE = typename LOAD_CHECK<_ARG1 ,_ARG2 ,_ARG3 ,ARGC<3>>::TYPE ;
+} ;
+
+template <>
+struct LOAD_CHECK<ARR<BYTE> ,ARR<BOOL> ,VOID ,ARGC<3>> {
+	using TYPE = ARGC<TRUE> ;
+} ;
+
+template <class _ARG1>
+struct LOAD_CHECK<ARR<BYTE> ,ARR<_ARG1> ,ENABLE_TYPE<is_var_xyz<_ARG1>::value> ,ARGC<3>> {
+	using TYPE = ARGC<TRUE> ;
+} ;
+
+template <class _ARG1>
+struct LOAD_CHECK<ARR<BYTE> ,ARR<_ARG1> ,ENABLE_TYPE<is_val_xyz<_ARG1>::value> ,ARGC<3>> {
+	using TYPE = ARGC<TRUE> ;
+} ;
+
+template <class _ARG1>
+struct LOAD_CHECK<ARR<BYTE> ,ARR<_ARG1> ,ENABLE_TYPE<(is_byte_xyz<_ARG1>::value && !is_str_xyz<_ARG1>::value)> ,ARGC<3>> {
+	using TYPE = ARGC<TRUE> ;
+} ;
+
+template <class _ARG1>
+struct LOAD_CHECK<ARR<BYTE> ,ARR<_ARG1> ,ENABLE_TYPE<(is_str_xyz<_ARG1>::value && !is_byte_xyz<_ARG1>::value)> ,ARGC<3>> {
+	using TYPE = ARGC<TRUE> ;
+} ;
+
+//@info: compatible for old c api
+template <>
+struct LOAD_CHECK<ARR<STRA> ,ARR<BYTE> ,VOID ,ARGC<3>> {
+	using TYPE = ARGC<TRUE> ;
+} ;
+
+template <class _ARG1 ,class _ARG2 ,class _ARG3>
+struct LOAD_CHECK<_ARG1 ,_ARG2 ,_ARG3 ,ARGC<3>> {
+	using TYPE = typename LOAD_CHECK<_ARG1 ,_ARG2 ,_ARG3 ,ARGC<4>>::TYPE ;
+} ;
+
+template <class _ARG1 ,class _ARG2>
+struct LOAD_CHECK<TEMP<_ARG1> ,TEMP<_ARG2> ,ENABLE_TYPE<(_SIZEOF_ (TEMP<_ARG2>) >= _SIZEOF_ (TEMP<_ARG1>) && _ALIGNOF_ (TEMP<_ARG2>) % _ALIGNOF_ (TEMP<_ARG1>) == 0)> ,ARGC<4>> {
+	using TYPE = ARGC<TRUE> ;
+} ;
+
+template <class _ARG1 ,class _ARG2 ,class _ARG3>
+struct LOAD_CHECK<_ARG1 ,_ARG2 ,_ARG3 ,ARGC<4>> {
+	using TYPE = typename LOAD_CHECK<_ARG1 ,_ARG2 ,_ARG3 ,ARGC<5>>::TYPE ;
+} ;
+
+template <class _ARG1>
+struct LOAD_CHECK<_ARG1 ,VOID ,ENABLE_TYPE<!stl::is_pointer<_ARG1>::value> ,ARGC<5>> {
+	using TYPE = ARGC<TRUE> ;
+} ;
+
+template <class _ARG1 ,class _ARG2>
+using LOAD_CHECK_TYPE = typename LOAD_CHECK<_ARG1 ,_ARG2 ,VOID ,ARGC<1>>::TYPE ;
+} ;
+
+namespace U {
+template <class ,class ,class>
+struct INDEX_OF {
+	using TYPE = ARGC<VAR_NONE> ;
+} ;
+
+template <class _ARG1 ,class _ARG2 ,class... _ARGS>
+struct INDEX_OF<_ARG1 ,REMOVE_CVR_TYPE<_ARG2> ,ARGVS<_ARG2 ,_ARGS...>> {
+	using TYPE = _ARG1 ;
+} ;
+
+template <class _ARG1 ,class _ARG2 ,class _ARG3 ,class... _ARGS>
+struct INDEX_OF<_ARG1 ,_ARG2 ,ARGVS<_ARG3 ,_ARGS...>> {
+	using TYPE = typename INDEX_OF<ARGC<_ARG1::value + 1> ,_ARG2 ,ARGVS<_ARGS...>>::TYPE ;
+} ;
+
+template <class _ARG1 ,class _ARG2>
+using INDEX_OF_TYPE = typename INDEX_OF<ARGC<0> ,REMOVE_CVR_TYPE<_ARG1> ,_ARG2>::TYPE ;
+} ;
+
+namespace U {
+template <class ,class>
+struct INDEX_TO ;
+
+template <class _ARG1 ,class... _ARGS>
+struct INDEX_TO<ARGC<0> ,ARGVS<_ARG1 ,_ARGS...>> {
+	using TYPE = _ARG1 ;
+} ;
+
+template <class _ARG1 ,class _ARG2 ,class... _ARGS>
+struct INDEX_TO<_ARG1 ,ARGVS<_ARG2 ,_ARGS...>> {
+	_STATIC_ASSERT_ (LENGTH (_ARG1::value) > 0) ;
+	using TYPE = typename INDEX_TO<ARGC<_ARG1::value - 1> ,ARGVS<_ARGS...>>::TYPE ;
+} ;
+
+template <class _ARG1 ,class _ARG2>
+using INDEX_TO_TYPE = typename INDEX_TO<_ARG1 ,_ARG2>::TYPE ;
+} ;
+
+namespace U {
+template <class ,class>
+struct is_complete_type_help :public stl::false_type {} ;
+
+template <class _ARG1>
+struct is_complete_type_help<_ARG1 ,ENABLE_TYPE<(_SIZEOF_ (_ARG1) > 0)>> :public stl::true_type {} ;
+
+template <class _ARG1>
+using is_complete_type = is_complete_type_help<_ARG1 ,VOID> ;
+} ;
+
+namespace U {
+template <class ,class ,class>
+struct is_interface_type_help :public stl::false_type {} ;
+
+template <class _ARG1 ,class _ARG2>
+struct is_interface_type_help<_ARG1 ,_ARG2 ,ENABLE_TYPE<_SIZEOF_ (_ARG1) == _SIZEOF_ (_ARG2) && _ALIGNOF_ (_ARG1) == _ALIGNOF_ (_ARG2)>> :public stl::is_base_of<_ARG2 ,_ARG1> {} ;
+
+template <class _ARG1 ,class _ARG2>
+using is_interface_type = is_interface_type_help<_ARG1 ,_ARG2 ,VOID> ;
+} ;
+
+namespace U {
+template <class ,class ,class>
+struct is_always_base_of_help :public stl::false_type {} ;
+
+template <class _ARG1 ,class _ARG2>
+struct is_always_base_of_help<_ARG1 ,_ARG2 ,ENABLE_TYPE<(_SIZEOF_ (_ARG1) > 0 && _SIZEOF_ (_ARG2) > 0)>> :public stl::is_base_of<_ARG1 ,_ARG2> {} ;
+
+template <class _ARG1 ,class _ARG2>
+using is_always_base_of = is_always_base_of_help<_ARG1 ,_ARG2 ,VOID> ;
+} ;
+
+namespace U {
+template <class...>
+struct is_all_same_help :public stl::false_type {} ;
+
+template <class _ARG1>
+struct is_all_same_help<_ARG1> :public stl::true_type {} ;
+
+template <class _ARG1>
+struct is_all_same_help<_ARG1 ,_ARG1> :public stl::true_type {} ;
+
+template <class _ARG1 ,class... _ARGS>
+struct is_all_same_help<_ARG1 ,_ARG1 ,_ARGS...> :public is_all_same_help<_ARG1 ,_ARGS...> {} ;
+
+template <class... _ARGS>
+using is_all_same = is_all_same_help<_ARGS...> ;
+} ;
+
+namespace U {
+template <class...>
+struct is_any_same_help :public stl::false_type {} ;
+
+template <class _ARG1>
+struct is_any_same_help<_ARG1> :public stl::false_type {} ;
+
+template <class _ARG1 ,class... _ARGS>
+struct is_any_same_help<_ARG1 ,_ARG1 ,_ARGS...> :public stl::true_type {} ;
+
+template <class _ARG1 ,class _ARG2 ,class... _ARGS>
+struct is_any_same_help<_ARG1 ,_ARG2 ,_ARGS...> :public CONDITIONAL_TYPE<(is_any_same_help<_ARG1 ,_ARGS...>::value && is_any_same_help<_ARG2 ,_ARGS...>::value) ,stl::true_type ,stl::false_type> {} ;
+
+template <class... _ARGS>
+using is_any_same = is_any_same_help<_ARGS...> ;
+} ;
+
+namespace U {
+template <class>
+struct is_template_type_help :public stl::false_type {} ;
+
+template <template <class...> class _ARGT ,class... _ARGS>
+struct is_template_type_help<_ARGT<_ARGS...>> :public stl::true_type {} ;
+
+template <class _ARG1>
+using is_template_type = is_template_type_help<_ARG1> ;
+} ;
+
+namespace U {
+template <class>
+struct REMOVE_TEMPLATE ;
+
+template <template <class> class _ARGT ,class _ARG1>
+struct REMOVE_TEMPLATE<_ARGT<_ARG1>> {
+	using TYPE = _ARG1 ;
+} ;
+
+template <class _ARG1>
+using REMOVE_TEMPLATE_TYPE = typename REMOVE_TEMPLATE<_ARG1>::TYPE ;
+} ;
+
+namespace U {
+template <class>
+struct TEMPLATE_PARAMS ;
+
+template <template <class...> class _ARGT ,class... _ARGS>
+struct TEMPLATE_PARAMS<_ARGT<_ARGS...>> {
+	using TYPE = ARGVS<_ARGS...> ;
+} ;
+
+template <class _ARG1>
+using TEMPLATE_PARAMS_TYPE = typename TEMPLATE_PARAMS<_ARG1>::TYPE ;
+} ;
+#endif
 #pragma endregion
 
 template <BOOL _VAL1>
@@ -631,6 +1319,18 @@ using CAST_TRAITS_TYPE = U::CAST_TRAITS_TYPE<_ARG1 ,_ARG2> ;
 template <class _ARG1 ,class _ARG2>
 using LOAD_CHECK_TYPE = U::LOAD_CHECK_TYPE<_ARG1 ,_ARG2> ;
 
+template <class _ARG1 ,class _ARG2>
+using INDEX_OF_TYPE = U::INDEX_OF_TYPE<_ARG1 ,_ARG2> ;
+
+template <class _ARG1 ,class _ARG2>
+using INDEX_TO_TYPE = U::INDEX_TO_TYPE<_ARG1 ,_ARG2> ;
+
+template <class _ARG1>
+using REMOVE_TEMPLATE_TYPE = U::REMOVE_TEMPLATE_TYPE<_ARG1> ;
+
+template <class _ARG1>
+using TEMPLATE_PARAMS_TYPE = U::TEMPLATE_PARAMS_TYPE<_ARG1> ;
+
 namespace stl {
 template <class _ARG1>
 using is_var_xyz = U::is_var_xyz<_ARG1> ;
@@ -648,6 +1348,14 @@ template <class _ARG1 ,class _ARG2>
 using is_full_array_of = U::is_full_array_of<_ARG1 ,_ARG2> ;
 } ;
 
+namespace stl {
+template <class... _ARGS>
+using is_all_same = U::is_all_same<_ARGS...> ;
+
+template <class... _ARGS>
+using is_any_same = U::is_any_same<_ARGS...> ;
+} ;
+
 template <class UNIT>
 struct TEMP {
 	_STATIC_ASSERT_ (!std::is_reference<UNIT>::value) ;
@@ -656,44 +1364,45 @@ struct TEMP {
 
 template <class _RET>
 inline constexpr _RET &_NULL_ () {
-	return *PTR<REMOVE_REFERENCE_TYPE<_RET>> (NULL) ;
+	return (*PTR<REMOVE_REFERENCE_TYPE<_RET>> (NULL)) ;
+}
+
+template <class _RET>
+inline REMOVE_REFERENCE_TYPE<_RET> &_XVALUE_ (REMOVE_CVR_TYPE<_RET> &object) noexcept {
+	_STATIC_ASSERT_ (!std::is_reference<_RET>::value) ;
+	return object ;
+}
+
+template <class _RET>
+inline const REMOVE_REFERENCE_TYPE<_RET> &_XVALUE_ (const REMOVE_CVR_TYPE<_RET> &object) noexcept {
+	_STATIC_ASSERT_ (!std::is_reference<_RET>::value) ;
+	return object ;
 }
 
 template <class _ARG1>
-inline constexpr LENGTH _ADDRESS_ (const PTR<_ARG1> &address) {
+inline LENGTH _ADDRESS_ (PTR<_ARG1> address) popping {
+	//@info: as 'asm volatile("" :: "rm" (address) : "memory") ;'
+	static volatile auto mInstance = _XVALUE_<PTR<void (PTR<_ARG1>)>> ([] (PTR<_ARG1>) {}) ;
+	mInstance (address) ;
 	return LENGTH (address) ;
 }
 
-template <class _ARG1>
-inline constexpr _ARG1 &&_SWITCH_ (_ARG1 &&expr) {
-	return std::forward<_ARG1> (expr) ;
-}
-
-template <class _RET>
-inline REMOVE_REFERENCE_TYPE<_RET> &_XVALUE_ (REMOVE_CVR_TYPE<_RET> &arg1) noexcept {
-	_STATIC_ASSERT_ (!std::is_reference<_RET>::value) ;
-	return arg1 ;
-}
-
-template <class _RET>
-inline const REMOVE_REFERENCE_TYPE<_RET> &_XVALUE_ (const REMOVE_CVR_TYPE<_RET> &arg1) noexcept {
-	_STATIC_ASSERT_ (!std::is_reference<_RET>::value) ;
-	return arg1 ;
-}
-
-//@warn: not type-safe ,be careful about strict-aliasing
+//@warn: not type-safe; be careful about strict-aliasing
 template <class _RET ,class _ARG1>
-inline CAST_TRAITS_TYPE<_RET ,_ARG1> &_CAST_ (_ARG1 &arg1) noexcept {
+inline CAST_TRAITS_TYPE<_RET ,_ARG1> &_CAST_ (_ARG1 &object) noexcept {
 	_STATIC_ASSERT_ (!std::is_reference<_RET>::value) ;
 	_STATIC_ASSERT_ (!std::is_pointer<_RET>::value) ;
 	_STATIC_ASSERT_ (!(std::is_pointer<_ARG1>::value && !std::is_same<_RET ,TEMP<_ARG1>>::value)) ;
 	_STATIC_ASSERT_ (_SIZEOF_ (_RET) == _SIZEOF_ (_ARG1)) ;
 	_STATIC_ASSERT_ (_ALIGNOF_ (_ARG1) % _ALIGNOF_ (_RET) == 0) ;
-	const auto r1x = reinterpret_cast<PTR<CAST_TRAITS_TYPE<_RET ,_ARG1>>> (_ADDRESS_ (&arg1)) ;
+	const auto r1x = reinterpret_cast<PTR<CAST_TRAITS_TYPE<_RET ,_ARG1>>> (_ADDRESS_ (&object)) ;
+#ifdef __CSC_COMPILER_GNUC__
+	_ADDRESS_ (&object) ;
+#endif
 	return (*r1x) ;
 }
 
-//@warn: not type-safe ,be careful about strict-aliasing
+//@warn: not type-safe; be careful about strict-aliasing
 template <class _RET ,class _ARG1>
 inline CAST_TRAITS_TYPE<_RET ,_ARG1> &_LOAD_ (PTR<_ARG1> address) noexcept {
 	_STATIC_ASSERT_ (!std::is_reference<_RET>::value) ;
@@ -702,82 +1411,90 @@ inline CAST_TRAITS_TYPE<_RET ,_ARG1> &_LOAD_ (PTR<_ARG1> address) noexcept {
 	const auto r1x = _ALIGNOF_ (CONDITIONAL_TYPE<(std::is_same<REMOVE_CVR_TYPE<_RET> ,VOID>::value || std::is_same<REMOVE_CVR_TYPE<_RET> ,NONE>::value || std::is_same<REMOVE_CVR_TYPE<_RET> ,REMOVE_CVR_TYPE<_ARG1>>::value) ,BYTE ,REMOVE_ARRAY_TYPE<_RET>>) ;
 	_DEBUG_ASSERT_ (_ADDRESS_ (address) % r1x == 0) ;
 	(void) r1x ;
-	const auto r2x = reinterpret_cast<PTR<CAST_TRAITS_TYPE<_RET ,_ARG1>>> (address) ;
-	//@warn: simulate 'std::launder' to disable compiler's escape analysis
-	const auto r3x = _XVALUE_<volatile PTR<CAST_TRAITS_TYPE<_RET ,_ARG1>>> (r2x) ;
-	return (*r3x) ;
+	const auto r2x = reinterpret_cast<PTR<CAST_TRAITS_TYPE<_RET ,_ARG1>>> (_ADDRESS_ (address)) ;
+#ifdef __CSC_COMPILER_GNUC__
+	_ADDRESS_ (address) ;
+#endif
+	return (*r2x) ;
 }
 
-//@warn: not type-safe ,be careful about strict-aliasing
-template <class _RET>
-inline _RET &_LOAD_ (const DEF<decltype (NULL)> & ,LENGTH address) noexcept {
+//@warn: not type-safe; be careful about strict-aliasing
+template <class _RET ,class _ARG1>
+inline CAST_TRAITS_TYPE<_RET ,_ARG1> &_LOAD_ (PTR<_ARG1> owner ,LENGTH address) noexcept {
 	_STATIC_ASSERT_ (!std::is_reference<_RET>::value) ;
-	const auto r1x = _XVALUE_<PTR<VOID>> (&_NULL_<BYTE> () + address) ;
-	return _LOAD_<_RET> (r1x) ;
+	_STATIC_ASSERT_ (LOAD_CHECK_TYPE<REMOVE_CVR_TYPE<_RET> ,VOID>::value) ;
+	_DEBUG_ASSERT_ (address != 0) ;
+	const auto r1x = _ALIGNOF_ (CONDITIONAL_TYPE<(std::is_same<REMOVE_CVR_TYPE<_RET> ,VOID>::value || std::is_same<REMOVE_CVR_TYPE<_RET> ,NONE>::value) ,BYTE ,REMOVE_ARRAY_TYPE<_RET>>) ;
+	_DEBUG_ASSERT_ (address % r1x == 0) ;
+	(void) r1x ;
+	const auto r2x = reinterpret_cast<PTR<CAST_TRAITS_TYPE<_RET ,_ARG1>>> (address) ;
+#ifdef __CSC_COMPILER_GNUC__
+	_ADDRESS_ (owner) ;
+#endif
+	return (*r2x) ;
 }
 
 template <class _ARG1 ,class _ARG2 ,class _ARG3>
-inline CAST_TRAITS_TYPE<_ARG2 ,_ARG3> &_OFFSET_ (const DEF<_ARG1 _ARG2::*> &arg1 ,_ARG3 &arg2) noexcept {
+inline CAST_TRAITS_TYPE<_ARG2 ,_ARG3> &_OFFSET_ (const DEF<_ARG1 _ARG2::*> &mptr ,_ARG3 &mref) noexcept {
 	_STATIC_ASSERT_ (std::is_same<REMOVE_CVR_TYPE<_ARG3> ,_ARG1>::value) ;
-	_DEBUG_ASSERT_ (arg1 != NULL) ;
-	const auto r1x = _ADDRESS_ (&arg2) - _ADDRESS_ (&(_NULL_<_ARG2> ().*arg1)) ;
-	return _LOAD_<CAST_TRAITS_TYPE<_ARG2 ,_ARG3>> (NULL ,r1x) ;
+	_DEBUG_ASSERT_ (mptr != NULL) ;
+	const auto r1x = _ADDRESS_ (&mref) - _ADDRESS_ (&(_NULL_<_ARG2> ().*mptr)) ;
+	return _LOAD_<_ARG2> (&mref ,r1x) ;
 }
 
 template <class _ARG1>
-inline void _ZERO_ (_ARG1 &arg1) noexcept {
+inline void _ZERO_ (_ARG1 &object) noexcept {
 	_STATIC_ASSERT_ (std::is_pod<_ARG1>::value) ;
-	_CAST_<TEMP<_ARG1>> (arg1) = {0} ;
+	_CAST_<TEMP<_ARG1>> (object) = {0} ;
 }
 
 template <class _ARG1>
-inline _ARG1 _EXCHANGE_ (_ARG1 &arg1) noexcept popping {
+inline _ARG1 _COPY_ (const _ARG1 &object) {
+	return object ;
+}
+
+template <class _ARG1>
+inline _ARG1 _EXCHANGE_ (_ARG1 &handle) noexcept popping {
 	_STATIC_ASSERT_ (std::is_pod<_ARG1>::value) ;
-	_ARG1 ret = arg1 ;
-	_ZERO_ (arg1) ;
+	_ARG1 ret = handle ;
+	_ZERO_ (handle) ;
 	return std::move (ret) ;
 }
 
 template <class _ARG1>
-inline _ARG1 _EXCHANGE_ (_ARG1 &arg1 ,const REMOVE_CVR_TYPE<_ARG1> &arg2) noexcept popping {
+inline _ARG1 _EXCHANGE_ (_ARG1 &handle ,const REMOVE_CVR_TYPE<_ARG1> &nil_) noexcept popping {
 	_STATIC_ASSERT_ (std::is_pod<_ARG1>::value) ;
-	_ARG1 ret = arg1 ;
-	arg1 = arg2 ;
+	_ARG1 ret = handle ;
+	handle = nil_ ;
 	return std::move (ret) ;
 }
 
 template <class _ARG1>
-inline _ARG1 _COPY_ (const _ARG1 &arg1) {
-	return arg1 ;
-}
-
-template <class _ARG1>
-inline void _SWAP_ (_ARG1 &arg1 ,_ARG1 &arg2) noexcept {
+inline void _SWAP_ (_ARG1 &lhs ,_ARG1 &rhs) noexcept {
 	_STATIC_ASSERT_ (std::is_nothrow_move_constructible<_ARG1>::value) ;
 	_STATIC_ASSERT_ (std::is_nothrow_move_assignable<_ARG1>::value) ;
-	auto rax = std::move (arg1) ;
-	arg1 = std::move (arg2) ;
-	arg2 = std::move (rax) ;
+	auto rax = std::move (lhs) ;
+	lhs = std::move (rhs) ;
+	rhs = std::move (rax) ;
 }
 
 template <class _ARG1 ,class... _ARGS>
-inline void _CREATE_ (PTR<TEMP<_ARG1>> address ,_ARGS &&...args) {
+inline void _CREATE_ (PTR<TEMP<_ARG1>> address ,_ARGS &&...initval) {
 	_STATIC_ASSERT_ (std::is_nothrow_destructible<_ARG1>::value) ;
 	_STATIC_ASSERT_ (!std::is_array<_ARG1>::value) ;
-	_DEBUG_ASSERT_ (address != NULL) ;
-	const auto r1x = new (address) _ARG1 (std::forward<_ARGS> (args)...) ;
-	_DEBUG_ASSERT_ (r1x == &_LOAD_<_ARG1> (address)) ;
-	(void) r1x ;
+	auto &r1y = _LOAD_<_ARG1> (address) ;
+	const auto r2x = new (&r1y) _ARG1 (std::forward<_ARGS> (initval)...) ;
+	_DEBUG_ASSERT_ (r2x == &r1y) ;
+	(void) r2x ;
 }
 
 template <class _ARG1>
 inline void _DESTROY_ (PTR<TEMP<_ARG1>> address) noexcept {
 	_STATIC_ASSERT_ (std::is_nothrow_destructible<_ARG1>::value) ;
 	_STATIC_ASSERT_ (!std::is_array<_ARG1>::value) ;
-	_DEBUG_ASSERT_ (address != NULL) ;
-	const auto r1x = &_LOAD_<_ARG1> (address) ;
-	r1x->~_ARG1 () ;
-	(void) r1x ;
+	auto &r1y = _LOAD_<_ARG1> (address) ;
+	r1y.~_ARG1 () ;
+	(void) r1y ;
 }
 
 template <class _ARG1>
@@ -790,330 +1507,75 @@ inline FLAG _TYPEUID_ () noexcept {
 }
 
 template <class _ARG1>
-inline RESULT_OF_TYPE<_ARG1 ,ARGVS<>> _CALL_ (_ARG1 &&arg1) popping {
+inline constexpr _ARG1 &&_SWITCH_ (_ARG1 &&expr) {
+	return std::forward<_ARG1> (expr) ;
+}
+
+inline namespace S {
+template <class _ARG1>
+inline constexpr _ARG1 _ABS_ (const _ARG1 &val) {
+	return _SWITCH_ (
+		(val < 0) ? (-val) :
+		(+val)) ;
+}
+
+template <class _ARG1>
+inline constexpr _ARG1 _SQE_ (const _ARG1 &val) {
+	return val * val ;
+}
+
+template <class _ARG1>
+inline constexpr const _ARG1 &_MIN_ (const _ARG1 &lhs ,const _ARG1 &rhs) {
+	return _SWITCH_ (
+		!(rhs < lhs) ? lhs :
+		rhs) ;
+}
+
+template <class _ARG1>
+inline constexpr const _ARG1 &_MAX_ (const _ARG1 &lhs ,const _ARG1 &rhs) {
+	return _SWITCH_ (
+		!(lhs < rhs) ? lhs :
+		rhs) ;
+}
+} ;
+
+template <class _ARG1>
+inline RESULT_OF_TYPE<_ARG1 ,ARGVS<>> _CALL_ (_ARG1 &&func) popping {
 	_STATIC_ASSERT_ (!std::is_reference<_ARG1>::value) ;
 	_STATIC_ASSERT_ (!std::is_reference<RESULT_OF_TYPE<_ARG1 ,ARGVS<>>>::value) ;
-	return arg1 () ;
+	return func () ;
 }
 
 //@warn: assure ruined object when an exception was thrown
 template <class _ARG1>
-inline void _CALL_TRY_ (_ARG1 &&arg1) {
+inline void _CALL_TRY_ (_ARG1 &&proc) {
 	_STATIC_ASSERT_ (!std::is_reference<_ARG1>::value) ;
 	_STATIC_ASSERT_ (std::is_same<RESULT_OF_TYPE<_ARG1 ,ARGVS<>> ,void>::value) ;
-	arg1 () ;
+	proc () ;
 }
 
 //@warn: assure ruined object when an exception was thrown
 template <class _ARG1 ,class... _ARGS>
-inline void _CALL_TRY_ (_ARG1 &&arg1 ,_ARGS &&...args) ;
+inline void _CALL_TRY_ (_ARG1 &&proc_one ,_ARGS &&...proc_rest) ;
 
 template <class _ARG1>
-inline void _CATCH_ (_ARG1 &&arg1) noexcept {
+inline void _CATCH_ (_ARG1 &&proc) noexcept {
 	_STATIC_ASSERT_ (!std::is_reference<_ARG1>::value) ;
 	_STATIC_ASSERT_ (std::is_same<RESULT_OF_TYPE<_ARG1 ,ARGVS<>> ,void>::value) ;
-	arg1 () ;
+	proc () ;
 }
 
-//@info: the function is incompleted without 'csc_ext.hpp'
+//@info: this function is incompleted without 'csc_extend.hpp'
 template <class _ARG1 ,class _ARG2>
-inline void _CATCH_ (_ARG1 &&arg1 ,_ARG2 &&arg2) noexcept ;
+inline void _CATCH_ (_ARG1 &&try_proc ,_ARG2 &&catch_proc) noexcept ;
 
 template <class _ARG1>
-inline const RESULT_OF_TYPE<_ARG1 ,ARGVS<>> &_CACHE_ (_ARG1 &&arg1) popping {
+inline const RESULT_OF_TYPE<_ARG1 ,ARGVS<>> &_CACHE_ (_ARG1 &&func) popping {
 	_STATIC_ASSERT_ (!std::is_reference<_ARG1>::value) ;
 	_STATIC_ASSERT_ (!std::is_reference<RESULT_OF_TYPE<_ARG1 ,ARGVS<>>>::value) ;
-	static const RESULT_OF_TYPE<_ARG1 ,ARGVS<>> mInstance = arg1 () ;
+	static const RESULT_OF_TYPE<_ARG1 ,ARGVS<>> mInstance = func () ;
 	return mInstance ;
 }
-
-inline namespace S {
-template <class _ARG1>
-inline constexpr _ARG1 _ABS_ (const _ARG1 &arg1) {
-	return _SWITCH_ (
-		(arg1 < 0) ? (-arg1) :
-		(+arg1)) ;
-}
-
-template <class _ARG1>
-inline constexpr _ARG1 _SQE_ (const _ARG1 &arg1) {
-	return arg1 * arg1 ;
-}
-
-template <class _ARG1>
-inline constexpr const _ARG1 &_MIN_ (const _ARG1 &arg1 ,const _ARG1 &arg2) {
-	return _SWITCH_ (
-		!(arg2 < arg1) ? arg1 :
-		arg2) ;
-}
-
-template <class _ARG1>
-inline constexpr const _ARG1 &_MAX_ (const _ARG1 &arg1 ,const _ARG1 &arg2) {
-	return _SWITCH_ (
-		!(arg1 < arg2) ? arg1 :
-		arg2) ;
-}
-} ;
-
-inline namespace S {
-template <class _ARG1>
-inline BOOL _MEMEQUAL_ (const ARR<_ARG1> &src1 ,const ARR<_ARG1> &src2 ,LENGTH len) {
-#pragma GCC diagnostic push
-#ifdef __CSC_COMPILER_GNUC__
-#pragma GCC diagnostic ignored "-Warray-bounds"
-#endif
-	for (FOR_ONCE_DO) {
-		if (len == 0)
-			discard ;
-		_DEBUG_ASSERT_ (src1 != NULL) ;
-		_DEBUG_ASSERT_ (src2 != NULL) ;
-		_DEBUG_ASSERT_ (len >= 0) ;
-	}
-	if (src1 == src2)
-		return TRUE ;
-	for (INDEX i = 0 ,ie = len ; i < ie ; i++)
-		if (!(src1[i] == src2[i]))
-			return FALSE ;
-	return TRUE ;
-#pragma GCC diagnostic pop
-}
-
-template <class _ARG1>
-inline FLAG _MEMCOMPR_ (const ARR<_ARG1> &src1 ,const ARR<_ARG1> &src2 ,LENGTH len) {
-#pragma GCC diagnostic push
-#ifdef __CSC_COMPILER_GNUC__
-#pragma GCC diagnostic ignored "-Warray-bounds"
-#endif
-	for (FOR_ONCE_DO) {
-		if (len == 0)
-			discard ;
-		_DEBUG_ASSERT_ (src1 != NULL) ;
-		_DEBUG_ASSERT_ (src2 != NULL) ;
-		_DEBUG_ASSERT_ (len >= 0) ;
-	}
-	FLAG ret = 0 ;
-	INDEX ix = 0 ;
-	if (src1 == src2)
-		ix = len ;
-	while (TRUE) {
-		if (ix >= len)
-			break ;
-		for (FOR_ONCE_DO) {
-			if (ret != 0)
-				discard ;
-			if (!(src1[ix] < src2[ix]))
-				discard ;
-			ret = -1 ;
-		}
-		for (FOR_ONCE_DO) {
-			if (ret != 0)
-				discard ;
-			if (!(src2[ix] < src1[ix]))
-				discard ;
-			ret = +1 ;
-		}
-		if (ret != 0)
-			break ;
-		ix++ ;
-	}
-	return std::move (ret) ;
-#pragma GCC diagnostic pop
-}
-
-template <class _ARG1>
-inline FLAG _MEMHASH_ (const ARR<_ARG1> &src ,LENGTH len) {
-#pragma GCC diagnostic push
-#ifdef __CSC_COMPILER_GNUC__
-#pragma GCC diagnostic ignored "-Warray-bounds"
-#endif
-	_STATIC_ASSERT_ (std::is_same<_ARG1 ,BYTE>::value) ;
-	for (FOR_ONCE_DO) {
-		if (len == 0)
-			discard ;
-		_DEBUG_ASSERT_ (src != NULL) ;
-		_DEBUG_ASSERT_ (len >= 0) ;
-	}
-#ifdef __CSC_CONFIG_VAR32__
-	static constexpr auto M_MAGIC_N1 = VAR (-2128831035) ;
-	static constexpr auto M_MAGIC_N2 = VAR (16777619) ;
-#elif defined __CSC_CONFIG_VAR64__
-	static constexpr auto M_MAGIC_N1 = VAR (-3750763034362895579) ;
-	static constexpr auto M_MAGIC_N2 = VAR (1099511628211) ;
-#endif
-	FLAG ret = M_MAGIC_N1 ;
-	for (INDEX i = 0 ,ie = len ; i < ie ; i++) {
-		ret ^= FLAG (src[i]) ;
-		ret *= M_MAGIC_N2 ;
-	}
-	ret &= VAR_MAX ;
-	return std::move (ret) ;
-#pragma GCC diagnostic pop
-}
-
-template <class _ARG1>
-inline INDEX _MEMCHR_ (const ARR<_ARG1> &src ,LENGTH len ,const _ARG1 &val) {
-#pragma GCC diagnostic push
-#ifdef __CSC_COMPILER_GNUC__
-#pragma GCC diagnostic ignored "-Warray-bounds"
-#endif
-	for (FOR_ONCE_DO) {
-		if (len == 0)
-			discard ;
-		_DEBUG_ASSERT_ (src != NULL) ;
-		_DEBUG_ASSERT_ (len >= 0) ;
-	}
-	for (INDEX i = 0 ,ie = len ; i < ie ; i++)
-		if (src[i] == val)
-			return i ;
-	return VAR_NONE ;
-#pragma GCC diagnostic pop
-}
-
-template <class _ARG1>
-inline INDEX _MEMRCHR_ (const ARR<_ARG1> &src ,LENGTH len ,const _ARG1 &val) {
-#pragma GCC diagnostic push
-#ifdef __CSC_COMPILER_GNUC__
-#pragma GCC diagnostic ignored "-Warray-bounds"
-#endif
-	for (FOR_ONCE_DO) {
-		if (len == 0)
-			discard ;
-		_DEBUG_ASSERT_ (src != NULL) ;
-		_DEBUG_ASSERT_ (len >= 0) ;
-	}
-	for (INDEX i = 0 ,ie = len ; i < ie ; i++)
-		if (src[len + ~i] == val)
-			return (len + ~i) ;
-	return VAR_NONE ;
-#pragma GCC diagnostic pop
-}
-
-template <class _ARG1>
-inline void _MEMCOPY_ (ARR<_ARG1> &dst ,const ARR<_ARG1> &src ,LENGTH len) {
-#pragma GCC diagnostic push
-#ifdef __CSC_COMPILER_GNUC__
-#pragma GCC diagnostic ignored "-Warray-bounds"
-#endif
-	for (FOR_ONCE_DO) {
-		if (len == 0)
-			discard ;
-		_DEBUG_ASSERT_ (src != NULL) ;
-		_DEBUG_ASSERT_ (dst != NULL) ;
-		_DEBUG_ASSERT_ (len >= 0) ;
-	}
-	if (dst == src)
-		return ;
-	_DEBUG_ASSERT_ (_ABS_ (dst - src) >= len) ;
-	for (INDEX i = 0 ,ie = len ; i < ie ; i++)
-		dst[i] = src[i] ;
-#pragma GCC diagnostic pop
-}
-
-template <class _ARG1>
-inline void _MEMRCOPY_ (ARR<_ARG1> &dst ,const ARR<_ARG1> &src ,LENGTH len) {
-#pragma GCC diagnostic push
-#ifdef __CSC_COMPILER_GNUC__
-#pragma GCC diagnostic ignored "-Warray-bounds"
-#endif
-	for (FOR_ONCE_DO) {
-		if (len == 0)
-			discard ;
-		_DEBUG_ASSERT_ (src != NULL) ;
-		_DEBUG_ASSERT_ (dst != NULL) ;
-		_DEBUG_ASSERT_ (len >= 0) ;
-	}
-	if (dst == NULL)
-		return ;
-	if (src == NULL)
-		return ;
-	auto ifa = FALSE ;
-	if SWITCH_CASE (ifa) {
-		if (!(dst != src))
-			discard ;
-		_DEBUG_ASSERT_ (_ABS_ (dst - src) >= len) ;
-		for (INDEX i = 0 ,ie = len ; i < ie ; i++)
-			dst[i] = src[len + ~i] ;
-	}
-	if SWITCH_CASE (ifa) {
-		if (!(dst == src))
-			discard ;
-		for (INDEX i = 0 ,ie = len / 2 ; i < ie ; i++) {
-			const auto r1x = dst[i] ;
-			dst[i] = dst[len + ~i] ;
-			dst[len + ~i] = r1x ;
-		}
-	}
-#pragma GCC diagnostic pop
-}
-
-template <class _ARG1>
-inline void _MEMMOVE_ (ARR<_ARG1> &dst1 ,ARR<_ARG1> &dst2 ,LENGTH len) {
-#pragma GCC diagnostic push
-#ifdef __CSC_COMPILER_GNUC__
-#pragma GCC diagnostic ignored "-Warray-bounds"
-#endif
-	for (FOR_ONCE_DO) {
-		if (len == 0)
-			discard ;
-		_DEBUG_ASSERT_ (dst1 != NULL) ;
-		_DEBUG_ASSERT_ (dst2 != NULL) ;
-		_DEBUG_ASSERT_ (len >= 0) ;
-	}
-	if (dst1 == dst2)
-		return ;
-	auto ifa = FALSE ;
-	if SWITCH_CASE (ifa) {
-		if (!(dst1 < dst2))
-			discard ;
-		for (INDEX i = 0 ,ie = len ; i < ie ; i++)
-			dst1[i] = std::move (dst2[i]) ;
-	}
-	if SWITCH_CASE (ifa) {
-		if (!(dst1 > dst2))
-			discard ;
-		for (INDEX i = 0 ,ie = len ; i < ie ; i++)
-			dst1[len + ~i] = std::move (dst2[len + ~i]) ;
-	}
-#pragma GCC diagnostic pop
-}
-
-template <class _ARG1>
-inline void _MEMSWAP_ (ARR<_ARG1> &dst1 ,ARR<_ARG1> &dst2 ,LENGTH len) {
-#pragma GCC diagnostic push
-#ifdef __CSC_COMPILER_GNUC__
-#pragma GCC diagnostic ignored "-Warray-bounds"
-#endif
-	for (FOR_ONCE_DO) {
-		if (len == 0)
-			discard ;
-		_DEBUG_ASSERT_ (dst1 != NULL) ;
-		_DEBUG_ASSERT_ (dst2 != NULL) ;
-		_DEBUG_ASSERT_ (len >= 0) ;
-	}
-	if (dst1 == dst2)
-		return ;
-	_DEBUG_ASSERT_ (_ABS_ (dst1 - dst2) >= len) ;
-	for (INDEX i = 0 ,ie = len ; i < ie ; i++)
-		_SWAP_ (dst1[i] ,dst2[i]) ;
-#pragma GCC diagnostic pop
-}
-template <class _ARG1>
-inline void _MEMFILL_ (ARR<_ARG1> &dst ,LENGTH len ,const _ARG1 &val) {
-#pragma GCC diagnostic push
-#ifdef __CSC_COMPILER_GNUC__
-#pragma GCC diagnostic ignored "-Warray-bounds"
-#endif
-	for (FOR_ONCE_DO) {
-		if (len == 0)
-			discard ;
-		_DEBUG_ASSERT_ (dst != NULL) ;
-		_DEBUG_ASSERT_ (len >= 0) ;
-	}
-	for (INDEX i = 0 ,ie = len ; i < ie ; i++)
-		dst[i] = val ;
-#pragma GCC diagnostic pop
-}
-} ;
 
 class Interface {
 public:
@@ -1133,6 +1595,20 @@ inline FLAG _TYPEUID_ (const ARGV<_ARG1> &) noexcept {
 	Storage ret ;
 	return std::move (_CAST_<FLAG> (ret)) ;
 }
+
+namespace stl {
+template <class _ARG1>
+using is_template_type = U::is_template_type<_ARG1> ;
+
+template <class _ARG1>
+using is_complete_type = U::is_complete_type<_ARG1> ;
+
+template <class _ARG1>
+using is_interface_type = U::is_interface_type<_ARG1 ,Interface> ;
+
+template <class _ARG1 ,class _ARG2>
+using is_always_base_of = U::is_always_base_of<_ARG1 ,_ARG2> ;
+} ;
 
 template <class UNIT>
 class Wrapped {
@@ -1183,7 +1659,7 @@ public:
 	inline explicit Plain (const _ARG1 &that) noexcept :Plain (_CAST_<REAL[_COUNTOF_ (_ARG1)]> (that)) {}
 
 	template <class _ARG1 ,class... _ARGS>
-	inline explicit Plain (const ARGV<_ARG1> & ,const _ARGS &...args) noexcept :Plain (Detail::cache_string (_NULL_<ARGV<_ARG1>> () ,args...)) {}
+	inline explicit Plain (const ARGV<_ARG1> & ,const _ARGS &...text) noexcept :Plain (Detail::cache_string (_NULL_<ARGV<_ARG1>> () ,text...)) {}
 
 	inline constexpr LENGTH size () const {
 		return mSize ;
@@ -1211,30 +1687,30 @@ private:
 			inline PlainString () = delete ;
 
 			template <class... _ARGS>
-			inline explicit PlainString (const _ARGS &...args) noexcept {
-				template_write (mString ,_NULL_<ARGV<ARGC<0>>> () ,args...) ;
+			inline explicit PlainString (const _ARGS &...text) noexcept {
+				template_write (mString ,_NULL_<ARGV<ARGC<0>>> () ,text...) ;
 			}
 		} ;
 
-		inline static constexpr LENGTH constexpr_cache_string_size (const ARGVS<> &) {
+		inline static constexpr LENGTH constexpr_cache_string_size (const ARGV<ARGVS<>> &) {
 			return 1 ;
 		}
 
 		template <class _ARG1 ,class... _ARGS>
-		inline static constexpr LENGTH constexpr_cache_string_size (const ARGVS<_ARG1 ,_ARGS...> &) {
-			return _COUNTOF_ (_ARG1) - 1 + constexpr_cache_string_size (_NULL_<ARGVS<_ARGS...>> ()) ;
+		inline static constexpr LENGTH constexpr_cache_string_size (const ARGV<ARGVS<_ARG1 ,_ARGS...>> &) {
+			return _COUNTOF_ (_ARG1) - 1 + constexpr_cache_string_size (_NULL_<ARGV<ARGVS<_ARGS...>>> ()) ;
 		}
 
 		template <class... _ARGS>
-		using PLAIN_STRING_SIZE = ARGC<constexpr_cache_string_size (_NULL_<ARGVS<_ARGS...>> ())> ;
+		using PLAIN_STRING_SIZE = ARGC<constexpr_cache_string_size (_NULL_<ARGV<ARGVS<_ARGS...>>> ())> ;
 
 		template <class _ARG1 ,class... _ARGS>
-		inline static const DEF<REAL[PLAIN_STRING_SIZE<_ARGS...>::value]> &cache_string (const ARGV<_ARG1> & ,const _ARGS &...args) noexcept {
-			const auto r1x = PlainString<PLAIN_STRING_SIZE<_ARGS...>> (args...) ;
-			auto &r1 = _CACHE_ ([r1x] () noexcept {
-				return _COPY_ (r1x) ;
+		inline static const DEF<REAL[PLAIN_STRING_SIZE<_ARGS...>::value]> &cache_string (const ARGV<_ARG1> & ,const _ARGS &...text) noexcept {
+			const auto r1x = PlainString<PLAIN_STRING_SIZE<_ARGS...>> (text...) ;
+			auto &r2y = _CACHE_ ([r1x] () noexcept {
+				return r1x ;
 			}) ;
-			return r1.mString ;
+			return r2y.mString ;
 		}
 
 		template <class _ARG1 ,class _ARG2>
@@ -1245,24 +1721,13 @@ private:
 		}
 
 		template <class _ARG1 ,class _ARG2 ,class _ARG3 ,class... _ARGS>
-		inline static void template_write (_ARG1 &array ,const ARGV<_ARG2> & ,const _ARG3 &arg1 ,const _ARGS &...args) noexcept {
+		inline static void template_write (_ARG1 &array ,const ARGV<_ARG2> & ,const _ARG3 &text_one ,const _ARGS &...text_rest) noexcept {
 			_STATIC_ASSERT_ (stl::is_full_array_of<REAL ,_ARG1>::value) ;
 			_STATIC_ASSERT_ (LENGTH (_ARG2::value) >= 0 && LENGTH (_ARG2::value) < _COUNTOF_ (_ARG1)) ;
 			_STATIC_ASSERT_ (stl::is_full_array_of<STRX ,_ARG3>::value || stl::is_full_array_of<STRA ,_ARG3>::value || stl::is_full_array_of<STRW ,_ARG3>::value) ;
 			for (INDEX i = 0 ,ie = _COUNTOF_ (_ARG3) - 1 ; i < ie ; i++)
-				array[i + _ARG2::value] = raw_to_plain_str (arg1[i]) ;
-			template_write (array ,_NULL_<ARGV<ARGC<_ARG2::value + _COUNTOF_ (_ARG3) - 1>>> () ,args...) ;
-		}
-
-		template <class _ARG1>
-		inline static REAL raw_to_plain_str (const _ARG1 &arg1) noexcept {
-			if (arg1 >= _ARG1 (32) && arg1 <= _ARG1 (126))
-				return REAL (arg1) ;
-			if (arg1 == _ARG1 ('\t') || arg1 == _ARG1 ('\v'))
-				return REAL (arg1) ;
-			if (arg1 == _ARG1 ('\r') || arg1 == _ARG1 ('\n') || arg1 == _ARG1 ('\f'))
-				return REAL (arg1) ;
-			return REAL ('?') ;
+				array[i + _ARG2::value] = REAL (text_one[i]) ;
+			template_write (array ,_NULL_<ARGV<ARGC<_ARG2::value + _COUNTOF_ (_ARG3) - 1>>> () ,text_rest...) ;
 		}
 	} ;
 } ;
@@ -1274,7 +1739,7 @@ private:
 public:
 	inline Exception () = delete ;
 
-	inline explicit Exception (const Plain<STR> &_what) noexcept :mWhat (_what.self) {}
+	inline explicit Exception (const Plain<STR> &what_) noexcept :mWhat (what_.self) {}
 
 	inline Exception (const Exception &) = default ;
 	inline Exception &operator= (const Exception &) = delete ;
@@ -1286,2799 +1751,22 @@ public:
 		return mWhat ;
 	}
 
-	inline void rethrow () const {
+	inline void raise () const {
 		throw (*this) ;
 	}
 } ;
 
 //@warn: assure ruined object when an exception was thrown
 template <class _ARG1 ,class... _ARGS>
-inline void _CALL_TRY_ (_ARG1 &&arg1 ,_ARGS &&...args) {
+inline void _CALL_TRY_ (_ARG1 &&proc_one ,_ARGS &&...proc_rest) {
 	_STATIC_ASSERT_ (!std::is_reference<_ARG1>::value) ;
 	_STATIC_ASSERT_ (std::is_same<RESULT_OF_TYPE<_ARG1 ,ARGVS<>> ,void>::value) ;
 	try {
-		arg1 () ;
+		proc_one () ;
 		return ;
 	} catch (const Exception &) {
 		_STATIC_WARNING_ ("noop") ;
 	}
-	_CALL_TRY_ (std::forward<_ARGS> (args)...) ;
+	_CALL_TRY_ (std::forward<_ARGS> (proc_rest)...) ;
 }
-
-class GlobalHeap final :private Wrapped<void> {
-private:
-	template <class UNIT>
-	class OwnerProxy final {
-	private:
-		friend GlobalHeap ;
-		PTR<UNIT> mPointer ;
-
-	public:
-		inline OwnerProxy () = delete ;
-
-		inline ~OwnerProxy () noexcept {
-			if (mPointer == NULL)
-				return ;
-			GlobalHeap::free (mPointer) ;
-			mPointer = NULL ;
-		}
-
-		inline OwnerProxy (const OwnerProxy &) = delete ;
-		inline OwnerProxy &operator= (const OwnerProxy &) = delete ;
-
-		inline OwnerProxy (OwnerProxy &&) noexcept = default ;
-		inline OwnerProxy &operator= (OwnerProxy &&) = delete ;
-
-		inline implicit operator const PTR<UNIT> & () const & noexcept {
-			_DEBUG_ASSERT_ (mPointer != NULL) ;
-			return mPointer ;
-		}
-
-		inline implicit operator const PTR<UNIT> & () && = delete ;
-
-		template <class _RET ,class = ENABLE_TYPE<std::is_convertible<const PTR<UNIT> & ,_RET>::value>>
-		inline implicit operator _RET () const & {
-			_DEBUG_ASSERT_ (mPointer != NULL) ;
-			return _RET (_XVALUE_<const PTR<UNIT>> (mPointer)) ;
-		}
-
-		template <class _RET>
-		inline implicit operator _RET () && = delete ;
-
-		inline void operator= (DEF<decltype (NULL)>) & noexcept {
-			mPointer = NULL ;
-		}
-
-		inline void operator= (DEF<decltype (NULL)>) && = delete ;
-
-	private:
-		inline explicit OwnerProxy (PTR<UNIT> pointer) noexcept :mPointer (pointer) {}
-	} ;
-
-public:
-	template <class _RET>
-	inline static OwnerProxy<_RET> alloc () popping {
-		_STATIC_ASSERT_ (!std::is_reference<_RET>::value) ;
-		_STATIC_ASSERT_ (std::is_pod<_RET>::value) ;
-		_STATIC_ASSERT_ (_ALIGNOF_ (_RET) <= _ALIGNOF_ (stl::max_align_t)) ;
-		const auto r1x = operator new (_SIZEOF_ (_RET) ,std::nothrow) ;
-		_DYNAMIC_ASSERT_ (r1x != NULL) ;
-		const auto r2x = &_LOAD_<_RET> (r1x) ;
-		return OwnerProxy<_RET> (r2x) ;
-	}
-
-	template <class _RET>
-	inline static OwnerProxy<ARR<_RET>> alloc (LENGTH len) popping {
-		_STATIC_ASSERT_ (!std::is_reference<_RET>::value) ;
-		_STATIC_ASSERT_ (std::is_pod<_RET>::value) ;
-		_DEBUG_ASSERT_ (len > 0) ;
-		_DEBUG_ASSERT_ (len * _SIZEOF_ (_RET) > 0) ;
-		_STATIC_ASSERT_ (_ALIGNOF_ (_RET) <= _ALIGNOF_ (stl::max_align_t)) ;
-		const auto r1x = operator new (len * _SIZEOF_ (_RET) ,std::nothrow) ;
-		_DYNAMIC_ASSERT_ (r1x != NULL) ;
-		const auto r2x = &_LOAD_<ARR<_RET>> (r1x) ;
-		return OwnerProxy<ARR<_RET>> (r2x) ;
-	}
-
-	template <class _ARG1>
-	inline static void free (const PTR<_ARG1> &address) noexcept {
-		_DEBUG_ASSERT_ (address != NULL) ;
-		const auto r1x = &_LOAD_<ARR<BYTE>> (NULL ,_ADDRESS_ (address)) ;
-		operator delete (r1x ,std::nothrow) ;
-	}
-} ;
-
-template <class UNIT>
-class ScopedGuard final {
-private:
-	PTR<UNIT> mAddress ;
-
-public:
-	inline ScopedGuard () = delete ;
-
-	inline explicit ScopedGuard (UNIT &address) popping :ScopedGuard (ARGVP0) {
-		address.lock () ;
-		mAddress = &address ;
-	}
-
-	inline explicit ScopedGuard (UNIT &&) = delete ;
-
-	inline ~ScopedGuard () noexcept {
-		if (mAddress == NULL)
-			return ;
-		_CATCH_ ([&] () {
-			mAddress->unlock () ;
-		}) ;
-		mAddress = NULL ;
-	}
-
-	inline ScopedGuard (const ScopedGuard &) = delete ;
-	inline ScopedGuard &operator= (const ScopedGuard &) = delete ;
-	inline ScopedGuard (ScopedGuard &&) = delete ;
-	inline ScopedGuard &operator= (ScopedGuard &&) = delete ;
-
-private:
-	inline explicit ScopedGuard (const DEF<decltype (ARGVP0)> &) noexcept :mAddress (NULL) {}
-} ;
-
-template <class UNIT>
-class ScopedBuild final {
-private:
-	PTR<const volatile PTR<TEMP<UNIT>>> mAddress ;
-	LENGTH mSize ;
-
-public:
-	inline ScopedBuild () = delete ;
-
-	template <class... _ARGS>
-	inline explicit ScopedBuild (const volatile PTR<TEMP<UNIT>> &address ,_ARGS &&...args) popping :ScopedBuild (ARGVP0) {
-		mAddress = &address ;
-		const auto r1x = (*mAddress) ;
-		_CREATE_ (r1x ,std::forward<_ARGS> (args)...) ;
-		mSize++ ;
-	}
-
-	inline ~ScopedBuild () noexcept {
-		if (mAddress == NULL)
-			return ;
-		const auto r1x = (*mAddress) ;
-		if (r1x == NULL)
-			return ;
-		for (FOR_ONCE_DO) {
-			if (mSize <= 0)
-				discard ;
-			_DESTROY_ (r1x) ;
-			mSize-- ;
-		}
-		mAddress = NULL ;
-	}
-
-	inline ScopedBuild (const ScopedBuild &) = delete ;
-	inline ScopedBuild &operator= (const ScopedBuild &) = delete ;
-	inline ScopedBuild (ScopedBuild &&) = delete ;
-	inline ScopedBuild &operator= (ScopedBuild &&) = delete ;
-
-private:
-	inline explicit ScopedBuild (const DEF<decltype (ARGVP0)> &) noexcept :mAddress (NULL) ,mSize (0) {}
-} ;
-
-template <class UNIT>
-class ScopedBuild<ARR<UNIT>> final {
-private:
-	PTR<const volatile PTR<ARR<TEMP<UNIT>>>> mAddress ;
-	LENGTH mSize ;
-
-public:
-	inline ScopedBuild () = delete ;
-
-	inline explicit ScopedBuild (const volatile PTR<ARR<TEMP<UNIT>>> &address ,LENGTH len) popping :ScopedBuild (ARGVP0) {
-		mAddress = &address ;
-		const auto r1x = (*mAddress) ;
-		if (r1x == NULL)
-			return ;
-		while (TRUE) {
-			if (mSize >= len)
-				break ;
-			_CREATE_ (&(*r1x)[mSize]) ;
-			mSize++ ;
-		}
-	}
-
-	inline explicit ScopedBuild (const volatile PTR<ARR<TEMP<UNIT>>> &address ,const ARR<UNIT> &src ,LENGTH len) popping :ScopedBuild (ARGVP0) {
-		_DEBUG_ASSERT_ (src != NULL) ;
-		mAddress = &address ;
-		const auto r1x = (*mAddress) ;
-		if (r1x == NULL)
-			return ;
-		while (TRUE) {
-			if (mSize >= len)
-				break ;
-			_CREATE_ (&(*r1x)[mSize] ,src[mSize]) ;
-			mSize++ ;
-		}
-	}
-
-	inline ~ScopedBuild () noexcept {
-		if (mAddress == NULL)
-			return ;
-		const auto r1x = (*mAddress) ;
-		if (r1x == NULL)
-			return ;
-		while (TRUE) {
-			if (mSize <= 0)
-				break ;
-			_DESTROY_ (&(*r1x)[mSize - 1]) ;
-			mSize-- ;
-		}
-		mAddress = NULL ;
-	}
-
-	inline ScopedBuild (const ScopedBuild &) = delete ;
-	inline ScopedBuild &operator= (const ScopedBuild &) = delete ;
-	inline ScopedBuild (ScopedBuild &&) = delete ;
-	inline ScopedBuild &operator= (ScopedBuild &&) = delete ;
-
-private:
-	inline explicit ScopedBuild (const DEF<decltype (ARGVP0)> &) noexcept :mAddress (NULL) ,mSize (0) {}
-} ;
-
-template <class UNIT>
-class Singleton final {
-private:
-	class Holder {
-	private:
-		friend Singleton ;
-		UNIT mData ;
-	} ;
-
-private:
-	_STATIC_ASSERT_ (std::is_class<UNIT>::value) ;
-	_STATIC_ASSERT_ (!std::is_default_constructible<UNIT>::value) ;
-	_STATIC_ASSERT_ (std::is_nothrow_destructible<UNIT>::value) ;
-	friend UNIT ;
-	template <class>
-	friend class GlobalStatic ;
-	PTR<Holder> mPointer ;
-
-private:
-	inline Singleton () :Singleton (ARGVP0) {
-		auto rax = GlobalHeap::alloc<TEMP<Holder>> () ;
-		ScopedBuild<Holder> ANONYMOUS (rax) ;
-		mPointer = &_LOAD_<Holder> (_XVALUE_<PTR<TEMP<Holder>>> (rax)) ;
-		rax = NULL ;
-	}
-
-	inline ~Singleton () noexcept {
-		if (mPointer == NULL)
-			return ;
-		mPointer->~Holder () ;
-		GlobalHeap::free (mPointer) ;
-		mPointer = NULL ;
-	}
-
-	inline Singleton (const Singleton &) = delete ;
-	inline Singleton &operator= (const Singleton &) = delete ;
-	inline Singleton (Singleton &&) = delete ;
-	inline Singleton &operator= (Singleton &&) = delete ;
-
-	inline UNIT &to () {
-		_DEBUG_ASSERT_ (mPointer != NULL) ;
-		return mPointer->mData ;
-	}
-
-	inline implicit operator UNIT & () {
-		return to () ;
-	}
-
-private:
-	inline explicit Singleton (const DEF<decltype (ARGVP0)> &) noexcept :mPointer (NULL) {}
-
-public:
-	//@warn: static instance across DLL ruins Singleton
-	inline static DEF<UNIT & ()> instance ;
-} ;
-
-template <class>
-class AutoRef ;
-
-template <class UNIT>
-class AutoRef<SPECIALIZATION<UNIT ,FALSE>> {
-private:
-	using SPECIALIZATION_TYPE = AutoRef<UNIT> ;
-
-	class Holder {
-	private:
-		friend AutoRef ;
-		friend SPECIALIZATION_TYPE ;
-		UNIT mData ;
-
-	public:
-		template <class... _ARGS>
-		inline explicit Holder (_ARGS &&...args) :mData (std::forward<_ARGS> (args)...) {}
-	} ;
-
-private:
-	_STATIC_ASSERT_ (_SIZEOF_ (UNIT) > 0) ;
-	friend SPECIALIZATION_TYPE ;
-	PTR<Holder> mPointer ;
-
-public:
-	inline AutoRef () noexcept {
-		mPointer = NULL ;
-	}
-
-	inline ~AutoRef () noexcept {
-		if (mPointer == NULL)
-			return ;
-		mPointer->~Holder () ;
-		GlobalHeap::free (mPointer) ;
-		mPointer = NULL ;
-	}
-
-	inline AutoRef (const AutoRef &) = delete ;
-	inline AutoRef &operator= (const AutoRef &) = delete ;
-
-	inline AutoRef (AutoRef &&that) noexcept {
-		mPointer = _EXCHANGE_ (that.mPointer) ;
-	}
-
-	inline AutoRef &operator= (AutoRef &&that) noexcept {
-		for (FOR_ONCE_DO) {
-			if (this == &that)
-				discard ;
-			(*this).~AutoRef () ;
-			new (this) AutoRef (std::move (that)) ;
-		}
-		return (*this) ;
-	}
-
-private:
-	inline explicit AutoRef (PTR<Holder> pointer) noexcept :mPointer (pointer) {}
-} ;
-
-template <class UNIT>
-class AutoRef<SPECIALIZATION<UNIT ,TRUE>> {
-private:
-	using SPECIALIZATION_TYPE = AutoRef<UNIT> ;
-
-	class Holder {
-	private:
-		friend AutoRef ;
-		friend SPECIALIZATION_TYPE ;
-		UNIT mData ;
-
-	public:
-		template <class... _ARGS>
-		inline explicit Holder (_ARGS &&...args) :mData (std::forward<_ARGS> (args)...) {}
-	} ;
-
-private:
-	_STATIC_ASSERT_ (_SIZEOF_ (UNIT) > 0) ;
-	friend SPECIALIZATION_TYPE ;
-	PTR<Holder> mPointer ;
-
-public:
-	inline AutoRef () noexcept {
-		mPointer = NULL ;
-	}
-
-	inline ~AutoRef () noexcept {
-		if (mPointer == NULL)
-			return ;
-		mPointer->~Holder () ;
-		GlobalHeap::free (mPointer) ;
-		mPointer = NULL ;
-	}
-
-	inline AutoRef (const AutoRef &that) :AutoRef () {
-		if (that.mPointer == NULL)
-			return ;
-		auto rax = GlobalHeap::alloc<TEMP<Holder>> () ;
-		ScopedBuild<Holder> ANONYMOUS (rax ,_XVALUE_<const UNIT> (that.mPointer->mData)) ;
-		mPointer = &_LOAD_<Holder> (_XVALUE_<PTR<TEMP<Holder>>> (rax)) ;
-		rax = NULL ;
-	}
-
-	inline AutoRef &operator= (const AutoRef &that) {
-		for (FOR_ONCE_DO) {
-			if (this == &that)
-				discard ;
-			(*this).~AutoRef () ;
-			new (this) AutoRef (std::move (that)) ;
-		}
-		return (*this) ;
-	}
-
-	inline AutoRef (AutoRef &&that) noexcept {
-		mPointer = _EXCHANGE_ (that.mPointer) ;
-	}
-
-	inline AutoRef &operator= (AutoRef &&that) noexcept {
-		for (FOR_ONCE_DO) {
-			if (this == &that)
-				discard ;
-			(*this).~AutoRef () ;
-			new (this) AutoRef (std::move (that)) ;
-		}
-		return (*this) ;
-	}
-
-private:
-	inline explicit AutoRef (PTR<Holder> pointer) noexcept :mPointer (pointer) {}
-} ;
-
-template <class UNIT>
-class AutoRef :private AutoRef<SPECIALIZATION<UNIT ,(std::is_copy_constructible<UNIT>::value && std::is_nothrow_move_constructible<UNIT>::value)>> {
-private:
-	using SPECIALIZATION_BASE = AutoRef<SPECIALIZATION<UNIT ,(std::is_copy_constructible<UNIT>::value && std::is_nothrow_move_constructible<UNIT>::value)>> ;
-	using Holder = typename SPECIALIZATION_BASE::Holder ;
-
-private:
-	friend SPECIALIZATION_BASE ;
-	using SPECIALIZATION_BASE::mPointer ;
-
-public:
-	inline AutoRef () = default ;
-
-	inline BOOL exist () const {
-		if (mPointer == NULL)
-			return FALSE ;
-		return TRUE ;
-	}
-
-	inline UNIT &to () {
-		_DEBUG_ASSERT_ (exist ()) ;
-		return mPointer->mData ;
-	}
-
-	inline implicit operator UNIT & () {
-		return to () ;
-	}
-
-	inline PTR<UNIT> operator-> () {
-		return &to () ;
-	}
-
-	inline const UNIT &to () const {
-		_DEBUG_ASSERT_ (exist ()) ;
-		return mPointer->mData ;
-	}
-
-	inline implicit operator const UNIT & () const {
-		return to () ;
-	}
-
-	inline PTR<const UNIT> operator-> () const {
-		return &to () ;
-	}
-
-private:
-	inline explicit AutoRef (PTR<Holder> pointer) noexcept :SPECIALIZATION_BASE (pointer) {}
-
-public:
-	template <class... _ARGS>
-	inline static AutoRef make (_ARGS &&...args) {
-		auto rax = GlobalHeap::alloc<TEMP<Holder>> () ;
-		ScopedBuild<Holder> ANONYMOUS (rax ,std::forward<_ARGS> (args)...) ;
-		const auto r1x = &_LOAD_<Holder> (_XVALUE_<PTR<TEMP<Holder>>> (rax)) ;
-		AutoRef ret = AutoRef (r1x) ;
-		rax = NULL ;
-		return std::move (ret) ;
-	}
-} ;
-
-template <class UNIT>
-class SharedRef {
-private:
-	class Holder {
-	private:
-		friend SharedRef ;
-		UNIT mData ;
-		LENGTH mCounter ;
-
-	public:
-		template <class... _ARGS>
-		inline explicit Holder (_ARGS &&...args) :mData (std::forward<_ARGS> (args)...) ,mCounter (0) {}
-	} ;
-
-private:
-	_STATIC_ASSERT_ (_SIZEOF_ (UNIT) > 0) ;
-	PTR<Holder> mPointer ;
-
-public:
-	inline SharedRef () noexcept {
-		mPointer = NULL ;
-	}
-
-	inline ~SharedRef () noexcept {
-		if (mPointer == NULL)
-			return ;
-		for (FOR_ONCE_DO) {
-			const auto r1x = --mPointer->mCounter ;
-			if (r1x != 0)
-				discard ;
-			mPointer->~Holder () ;
-			GlobalHeap::free (mPointer) ;
-		}
-		mPointer = NULL ;
-	}
-
-	inline SharedRef (const SharedRef &that) :SharedRef (that.mPointer) {
-		_STATIC_WARNING_ ("noop") ;
-	}
-
-	inline SharedRef &operator= (const SharedRef &that) {
-		for (FOR_ONCE_DO) {
-			if (this == &that)
-				discard ;
-			(*this).~SharedRef () ;
-			new (this) SharedRef (std::move (that)) ;
-		}
-		return (*this) ;
-	}
-
-	inline SharedRef (SharedRef &&that) noexcept {
-		mPointer = _EXCHANGE_ (that.mPointer) ;
-	}
-
-	inline SharedRef &operator= (SharedRef &&that) noexcept {
-		for (FOR_ONCE_DO) {
-			if (this == &that)
-				discard ;
-			(*this).~SharedRef () ;
-			new (this) SharedRef (std::move (that)) ;
-		}
-		return (*this) ;
-	}
-
-	inline BOOL exist () const {
-		if (mPointer == NULL)
-			return FALSE ;
-		return TRUE ;
-	}
-
-	inline UNIT &to () const popping {
-		_DEBUG_ASSERT_ (exist ()) ;
-		const auto r1x = &_LOAD_<Holder> (mPointer) ;
-		return r1x->mData ;
-	}
-
-	inline implicit operator UNIT & () const popping {
-		return to () ;
-	}
-
-	inline PTR<UNIT> operator-> () const popping {
-		return &to () ;
-	}
-
-private:
-	inline explicit SharedRef (PTR<Holder> pointer) :SharedRef () {
-		if (pointer == NULL)
-			return ;
-		const auto r1x = ++pointer->mCounter ;
-		_DEBUG_ASSERT_ (r1x > 0) ;
-		(void) r1x ;
-		mPointer = pointer ;
-	}
-
-public:
-	template <class... _ARGS>
-	inline static SharedRef make (_ARGS &&...args) {
-		auto rax = GlobalHeap::alloc<TEMP<Holder>> () ;
-		ScopedBuild<Holder> ANONYMOUS (rax ,std::forward<_ARGS> (args)...) ;
-		const auto r1x = &_LOAD_<Holder> (_XVALUE_<PTR<TEMP<Holder>>> (rax)) ;
-		SharedRef ret = SharedRef (r1x) ;
-		rax = NULL ;
-		return std::move (ret) ;
-	}
-} ;
-
-template <class UNIT>
-class AnyRef {
-private:
-	struct Holder :public Interface {
-		virtual FLAG typeuid () const = 0 ;
-	} ;
-
-	template <class _UNIT>
-	class ImplHolder :public Holder {
-	private:
-		friend AnyRef ;
-		_UNIT mData ;
-
-	public:
-		template <class... _ARGS>
-		inline explicit ImplHolder (_ARGS &&...args) :mData (std::forward<_ARGS> (args)...) {}
-
-		inline FLAG typeuid () const override {
-			return _TYPEUID_<_UNIT> () ;
-		}
-	} ;
-
-private:
-	_STATIC_ASSERT_ (_SIZEOF_ (UNIT) > 0) ;
-	PTR<Holder> mPointer ;
-
-public:
-	inline AnyRef () noexcept {
-		mPointer = NULL ;
-	}
-
-	template <class _ARG1>
-	inline implicit AnyRef (AnyRef<_ARG1> &&that) : AnyRef (std::move (that.template rebind<UNIT> ())) {}
-
-	inline ~AnyRef () noexcept {
-		if (mPointer == NULL)
-			return ;
-		mPointer->~Holder () ;
-		GlobalHeap::free (mPointer) ;
-		mPointer = NULL ;
-	}
-
-	inline AnyRef (const AnyRef &) = delete ;
-	inline AnyRef &operator= (const AnyRef &) = delete ;
-
-	inline AnyRef (AnyRef &&that) noexcept {
-		mPointer = _EXCHANGE_ (that.mPointer) ;
-	}
-
-	inline AnyRef &operator= (AnyRef &&that) noexcept {
-		for (FOR_ONCE_DO) {
-			if (this == &that)
-				discard ;
-			(*this).~AnyRef () ;
-			new (this) AnyRef (std::move (that)) ;
-		}
-		return (*this) ;
-	}
-
-	template <class _RET>
-	inline AnyRef<_RET> &rebind () & {
-		_STATIC_ASSERT_ (!std::is_reference<_RET>::value) ;
-		return _CAST_<AnyRef<_RET>> ((*this)) ;
-	}
-
-	template <class _RET>
-	inline const AnyRef<_RET> &rebind () const & {
-		_STATIC_ASSERT_ (!std::is_reference<_RET>::value) ;
-		return _CAST_<AnyRef<_RET>> ((*this)) ;
-	}
-
-	template <class _RET>
-	inline AnyRef<_RET> &rebind () && = delete ;
-
-	inline BOOL exist () const {
-		if (mPointer == NULL)
-			return FALSE ;
-		return TRUE ;
-	}
-
-	inline FLAG typeuid () const {
-		_DEBUG_ASSERT_ (exist ()) ;
-		return mPointer->typeuid () ;
-	}
-
-	inline UNIT &to () {
-		_DEBUG_ASSERT_ (typeuid () == _TYPEUID_<UNIT> ()) ;
-		const auto r1x = static_cast<PTR<ImplHolder<UNIT>>> (mPointer) ;
-		return r1x->mData ;
-	}
-
-	inline implicit operator UNIT & () {
-		return to () ;
-	}
-
-	inline PTR<UNIT> operator-> () {
-		return &to () ;
-	}
-
-	inline const UNIT &to () const {
-		_DEBUG_ASSERT_ (typeuid () == _TYPEUID_<UNIT> ()) ;
-		const auto r1x = static_cast<PTR<ImplHolder<UNIT>>> (mPointer) ;
-		return r1x->mData ;
-	}
-
-	inline implicit operator const UNIT & () const {
-		return to () ;
-	}
-
-	inline PTR<const UNIT> operator-> () const {
-		return &to () ;
-	}
-
-private:
-	inline explicit AnyRef (PTR<Holder> pointer) noexcept :mPointer (pointer) {}
-
-public:
-	template <class... _ARGS>
-	inline static AnyRef make (_ARGS &&...args) {
-		auto rax = GlobalHeap::alloc<TEMP<ImplHolder<UNIT>>> () ;
-		ScopedBuild<ImplHolder<UNIT>> ANONYMOUS (rax ,std::forward<_ARGS> (args)...) ;
-		const auto r1x = &_LOAD_<ImplHolder<UNIT>> (_XVALUE_<PTR<TEMP<ImplHolder<UNIT>>>> (rax)) ;
-		AnyRef ret = AnyRef (r1x) ;
-		rax = NULL ;
-		return std::move (ret) ;
-	}
-} ;
-
-template <>
-class AnyRef<void> {
-private:
-	struct Holder :public Interface {
-		virtual FLAG typeuid () const = 0 ;
-	} ;
-
-private:
-	PTR<Holder> mPointer ;
-
-public:
-	inline AnyRef () noexcept {
-		mPointer = NULL ;
-	}
-
-	template <class _ARG1>
-	inline implicit AnyRef (AnyRef<_ARG1> &&that) :AnyRef (std::move (that.template rebind<void> ())) {}
-
-	inline ~AnyRef () noexcept {
-		if (mPointer == NULL)
-			return ;
-		mPointer->~Holder () ;
-		GlobalHeap::free (mPointer) ;
-		mPointer = NULL ;
-	}
-
-	inline AnyRef (const AnyRef &) = delete ;
-	inline AnyRef &operator= (const AnyRef &) = delete ;
-
-	inline AnyRef (AnyRef &&that) noexcept {
-		mPointer = _EXCHANGE_ (that.mPointer) ;
-	}
-
-	inline AnyRef &operator= (AnyRef &&that) noexcept {
-		for (FOR_ONCE_DO) {
-			if (this == &that)
-				discard ;
-			(*this).~AnyRef () ;
-			new (this) AnyRef (std::move (that)) ;
-		}
-		return (*this) ;
-	}
-
-	template <class _RET>
-	inline AnyRef<_RET> &rebind () & {
-		_STATIC_ASSERT_ (!std::is_reference<_RET>::value) ;
-		return _CAST_<AnyRef<_RET>> ((*this)) ;
-	}
-
-	template <class _RET>
-	inline const AnyRef<_RET> &rebind () const & {
-		_STATIC_ASSERT_ (!std::is_reference<_RET>::value) ;
-		return _CAST_<AnyRef<_RET>> ((*this)) ;
-	}
-
-	template <class _RET>
-	inline AnyRef<_RET> &rebind () && = delete ;
-
-	inline BOOL exist () const {
-		if (mPointer == NULL)
-			return FALSE ;
-		return TRUE ;
-	}
-
-	inline FLAG typeuid () const {
-		_DEBUG_ASSERT_ (exist ()) ;
-		return mPointer->typeuid () ;
-	}
-} ;
-
-template <class UNIT>
-class UniqueRef {
-private:
-	struct Holder :public Interface {
-		virtual void release () = 0 ;
-	} ;
-
-	template <class _UNIT>
-	class ImplHolder :public Holder {
-	private:
-		friend UniqueRef ;
-		REMOVE_CVR_TYPE<UNIT> mData ;
-		_UNIT mFunctor ;
-
-	public:
-		inline ImplHolder () = delete ;
-
-		inline explicit ImplHolder (_UNIT &&functor) :mFunctor (std::move (functor)) {}
-
-		inline void release () override {
-			mFunctor (mData) ;
-		}
-	} ;
-
-private:
-	_STATIC_ASSERT_ (_SIZEOF_ (UNIT) > 0) ;
-	PTR<Holder> mPointer ;
-
-public:
-	inline UniqueRef () noexcept {
-		mPointer = NULL ;
-	}
-
-	template <class _ARG1 ,class _ARG2>
-	inline explicit UniqueRef (_ARG1 &&constructor ,_ARG2 &&destructor) popping :UniqueRef () {
-		_STATIC_ASSERT_ (!std::is_reference<_ARG1>::value) ;
-		_STATIC_ASSERT_ (std::is_same<RESULT_OF_TYPE<_ARG1 ,ARGVS<UNIT &>> ,void>::value) ;
-		_STATIC_ASSERT_ (std::is_same<RESULT_OF_TYPE<_ARG2 ,ARGVS<UNIT &>> ,void>::value) ;
-		_STATIC_ASSERT_ (std::is_convertible<REMOVE_REFERENCE_TYPE<_ARG2> ,PTR<void (UNIT &)>>::value) ;
-		auto rax = GlobalHeap::alloc<TEMP<ImplHolder<REMOVE_REFERENCE_TYPE<_ARG2>>>> () ;
-		ScopedBuild<ImplHolder<REMOVE_REFERENCE_TYPE<_ARG2>>> ANONYMOUS (rax ,std::forward<_ARG2> (destructor)) ;
-		const auto r1x = &_LOAD_<ImplHolder<REMOVE_REFERENCE_TYPE<_ARG2>>> (_XVALUE_<PTR<TEMP<ImplHolder<REMOVE_REFERENCE_TYPE<_ARG2>>>>> (rax)) ;
-		constructor (r1x->mData) ;
-		mPointer = r1x ;
-		rax = NULL ;
-	}
-
-	inline ~UniqueRef () noexcept {
-		if (mPointer == NULL)
-			return ;
-		_CATCH_ ([&] () {
-			mPointer->release () ;
-		}) ;
-		mPointer->~Holder () ;
-		GlobalHeap::free (mPointer) ;
-		mPointer = NULL ;
-	}
-
-	inline UniqueRef (const UniqueRef &) = delete ;
-	inline UniqueRef &operator= (const UniqueRef &) = delete ;
-
-	inline UniqueRef (UniqueRef &&that) noexcept {
-		mPointer = _EXCHANGE_ (that.mPointer) ;
-	}
-
-	inline UniqueRef &operator= (UniqueRef &&that) noexcept {
-		for (FOR_ONCE_DO) {
-			if (this == &that)
-				discard ;
-			(*this).~UniqueRef () ;
-			new (this) UniqueRef (std::move (that)) ;
-		}
-		return (*this) ;
-	}
-
-	inline BOOL exist () const {
-		if (mPointer == NULL)
-			return FALSE ;
-		return TRUE ;
-	}
-
-	inline const UNIT &to () const {
-		_DEBUG_ASSERT_ (exist ()) ;
-		const auto r1x = static_cast<PTR<ImplHolder<PTR<void (UNIT &)>>>> (mPointer) ;
-		return r1x->mData ;
-	}
-
-	inline implicit operator const UNIT & () const {
-		return to () ;
-	}
-
-	inline PTR<const UNIT> operator-> () const {
-		return &to () ;
-	}
-
-private:
-	inline explicit UniqueRef (PTR<Holder> pointer) noexcept :mPointer (pointer) {}
-
-public:
-	template <class... _ARGS>
-	inline static UniqueRef make (_ARGS &&...args) {
-		auto rax = GlobalHeap::alloc<TEMP<ImplHolder<PTR<void (UNIT &)>>>> () ;
-		const auto r1x = _XVALUE_<PTR<void (UNIT &)>> ([] (UNIT &) {}) ;
-		ScopedBuild<ImplHolder<PTR<void (UNIT &)>>> ANONYMOUS (rax ,r1x) ;
-		const auto r2x = &_LOAD_<ImplHolder<PTR<void (UNIT &)>>> (_XVALUE_<PTR<TEMP<ImplHolder<PTR<void (UNIT &)>>>>> (rax)) ;
-		r2x->mData = UNIT (std::forward<_ARGS> (args)...) ;
-		UniqueRef ret = UniqueRef (_XVALUE_<PTR<Holder>> (r2x)) ;
-		rax = NULL ;
-		return std::move (ret) ;
-	}
-} ;
-
-template <>
-class UniqueRef<void> {
-private:
-	struct Holder :public Interface {
-		virtual void release () = 0 ;
-	} ;
-
-	template <class _UNIT>
-	class ImplHolder :public Holder {
-	private:
-		_UNIT mFunctor ;
-
-	public:
-		inline ImplHolder () = delete ;
-
-		inline explicit ImplHolder (_UNIT &&functor) :mFunctor (std::move (functor)) {}
-
-		inline void release () override {
-			mFunctor () ;
-		}
-	} ;
-
-private:
-	PTR<Holder> mPointer ;
-
-public:
-	inline UniqueRef () noexcept {
-		mPointer = NULL ;
-	}
-
-	template <class _ARG1 ,class _ARG2>
-	inline explicit UniqueRef (_ARG1 &&constructor ,_ARG2 &&destructor) popping :UniqueRef () {
-		_STATIC_ASSERT_ (!std::is_reference<_ARG1>::value) ;
-		_STATIC_ASSERT_ (std::is_same<RESULT_OF_TYPE<_ARG1 ,ARGVS<>> ,void>::value) ;
-		_STATIC_ASSERT_ (std::is_same<RESULT_OF_TYPE<_ARG2 ,ARGVS<>> ,void>::value) ;
-		_STATIC_ASSERT_ (std::is_convertible<REMOVE_REFERENCE_TYPE<_ARG2> ,PTR<void ()>>::value) ;
-		auto rax = GlobalHeap::alloc<TEMP<ImplHolder<REMOVE_REFERENCE_TYPE<_ARG2>>>> () ;
-		ScopedBuild<ImplHolder<REMOVE_REFERENCE_TYPE<_ARG2>>> ANONYMOUS (rax ,std::forward<_ARG2> (destructor)) ;
-		const auto r1x = &_LOAD_<ImplHolder<REMOVE_REFERENCE_TYPE<_ARG2>>> (_XVALUE_<PTR<TEMP<ImplHolder<REMOVE_REFERENCE_TYPE<_ARG2>>>>> (rax)) ;
-		constructor () ;
-		mPointer = r1x ;
-		rax = NULL ;
-	}
-
-	inline ~UniqueRef () noexcept {
-		if (mPointer == NULL)
-			return ;
-		_CATCH_ ([&] () {
-			mPointer->release () ;
-		}) ;
-		mPointer->~Holder () ;
-		GlobalHeap::free (mPointer) ;
-		mPointer = NULL ;
-	}
-
-	inline UniqueRef (const UniqueRef &) = delete ;
-	inline UniqueRef &operator= (const UniqueRef &) = delete ;
-
-	inline UniqueRef (UniqueRef &&that) noexcept {
-		mPointer = _EXCHANGE_ (that.mPointer) ;
-	}
-
-	inline UniqueRef &operator= (UniqueRef &&that) noexcept {
-		for (FOR_ONCE_DO) {
-			if (this == &that)
-				discard ;
-			(*this).~UniqueRef () ;
-			new (this) UniqueRef (std::move (that)) ;
-		}
-		return (*this) ;
-	}
-
-	inline BOOL exist () const {
-		if (mPointer == NULL)
-			return FALSE ;
-		return TRUE ;
-	}
-} ;
-
-template <class UNIT>
-class PhanRef {
-private:
-	PTR<UNIT> mPointer ;
-
-public:
-	inline PhanRef () noexcept {
-		mPointer = NULL ;
-	}
-
-	inline ~PhanRef () noexcept {
-		mPointer = NULL ;
-	}
-
-	inline PhanRef (const PhanRef &) = delete ;
-	inline PhanRef &operator= (const PhanRef &) = delete ;
-
-	inline PhanRef (PhanRef &&that) noexcept {
-		mPointer = _EXCHANGE_ (that.mPointer) ;
-	}
-
-	inline PhanRef &operator= (PhanRef &&that) noexcept {
-		for (FOR_ONCE_DO) {
-			if (this == &that)
-				discard ;
-			(*this).~PhanRef () ;
-			new (this) PhanRef (std::move (that)) ;
-		}
-		return (*this) ;
-	}
-
-	inline BOOL exist () const {
-		if (mPointer == NULL)
-			return FALSE ;
-		return TRUE ;
-	}
-
-	inline UNIT &to () const popping {
-		_DEBUG_ASSERT_ (exist ()) ;
-		return _LOAD_<UNIT> (mPointer) ;
-	}
-
-	inline implicit operator UNIT & () const popping {
-		return to () ;
-	}
-
-	inline PTR<UNIT> operator-> () const popping {
-		return &to () ;
-	}
-
-private:
-	inline explicit PhanRef (PTR<UNIT> pointer) :mPointer (pointer) {}
-
-public:
-	//@warn: phantom means deliver pointer without holder
-	inline static PhanRef make (UNIT &val) {
-		return PhanRef (&val) ;
-	}
-
-	inline static PhanRef make (const PhanRef<UNIT> &val) {
-		if (!val.exist ())
-			return PhanRef () ;
-		return make (val.self) ;
-	}
-} ;
-
-template <class>
-class Function ;
-
-template <class UNIT1 ,class... UNITS>
-class Function<UNIT1 (UNITS...)> {
-private:
-	struct Holder :public Interface {
-		virtual UNIT1 invoke (FORWARD_TRAITS_TYPE<UNITS> &&...args) const popping = 0 ;
-	} ;
-
-	template <class _UNIT>
-	class ImplHolder :public Function<UNIT1 (UNITS...)>::Holder {
-	private:
-		_UNIT mFunctor ;
-
-	public:
-		inline ImplHolder () = delete ;
-
-		inline explicit ImplHolder (const _UNIT &functor) :mFunctor (std::move (functor)) {}
-
-		inline explicit ImplHolder (_UNIT &&functor) :mFunctor (std::move (functor)) {}
-
-		inline UNIT1 invoke (FORWARD_TRAITS_TYPE<UNITS> &&...args) const popping override {
-			return mFunctor (std::forward<FORWARD_TRAITS_TYPE<UNITS>> (args)...) ;
-		}
-	} ;
-
-private:
-	PTR<Holder> mFunction_a ;
-	PTR<UNIT1 (UNITS...)> mFunction_b ;
-
-public:
-	inline Function () noexcept {
-		mFunction_a = NULL ;
-		mFunction_b = NULL ;
-	}
-
-	inline implicit Function (const PTR<UNIT1 (UNITS...)> &that) noexcept {
-		mFunction_a = NULL ;
-		mFunction_b = that ;
-	}
-
-	template <class _ARG1 ,class = ENABLE_TYPE<!std::is_same<REMOVE_CVR_TYPE<_ARG1> ,Function>::value && std::is_same<RESULT_OF_TYPE<_ARG1 ,ARGVS<UNITS...>> ,UNIT1>::value>>
-	inline implicit Function (_ARG1 &&that) :Function () {
-		auto rax = GlobalHeap::alloc<TEMP<ImplHolder<REMOVE_REFERENCE_TYPE<_ARG1>>>> () ;
-		ScopedBuild<ImplHolder<REMOVE_REFERENCE_TYPE<_ARG1>>> ANONYMOUS (rax ,std::forward<_ARG1> (that)) ;
-		mFunction_a = &_LOAD_<ImplHolder<REMOVE_REFERENCE_TYPE<_ARG1>>> (_XVALUE_<PTR<TEMP<ImplHolder<REMOVE_REFERENCE_TYPE<_ARG1>>>>> (rax)) ;
-		mFunction_b = NULL ;
-		rax = NULL ;
-	}
-
-	inline ~Function () noexcept {
-		if (mFunction_a == NULL && mFunction_b == NULL)
-			return ;
-		for (FOR_ONCE_DO) {
-			if (mFunction_a == NULL)
-				discard ;
-			mFunction_a->~Holder () ;
-			GlobalHeap::free (mFunction_a) ;
-		}
-		mFunction_a = NULL ;
-		mFunction_b = NULL ;
-	}
-
-	inline Function (const Function &) = delete ;
-	inline Function &operator= (const Function &) = delete ;
-
-	inline Function (Function &&that) noexcept {
-		mFunction_a = _EXCHANGE_ (that.mFunction_a) ;
-		mFunction_b = _EXCHANGE_ (that.mFunction_b) ;
-	}
-
-	inline Function &operator= (Function &&that) noexcept {
-		for (FOR_ONCE_DO) {
-			if (this == &that)
-				discard ;
-			(*this).~Function () ;
-			new (this) Function (std::move (that)) ;
-		}
-		return (*this) ;
-	}
-
-	inline BOOL exist () const {
-		if (mFunction_a != NULL)
-			return TRUE ;
-		if (mFunction_b != NULL)
-			return TRUE ;
-		return FALSE ;
-	}
-
-	inline UNIT1 invoke (FORWARD_TRAITS_TYPE<UNITS> &&...args) const popping {
-		_DEBUG_ASSERT_ (exist ()) ;
-		if (mFunction_b != NULL)
-			return mFunction_b (std::forward<FORWARD_TRAITS_TYPE<UNITS>> (args)...) ;
-		return mFunction_a->invoke (std::forward<FORWARD_TRAITS_TYPE<UNITS>> (args)...) ;
-	}
-
-	inline UNIT1 operator() (FORWARD_TRAITS_TYPE<UNITS> &&...args) const popping {
-		return invoke (std::forward<FORWARD_TRAITS_TYPE<UNITS>> (args)...) ;
-	}
-
-private:
-	inline explicit Function (const DEF<decltype (ARGVP0)> & ,PTR<Holder> pointer) :mFunction_a (pointer) ,mFunction_b (NULL) {}
-
-public:
-	//@info: the function is incompleted without 'csc_ext.hpp'
-	template <class... _ARGS>
-	inline static Function make (const PTR<UNIT1 (UNITS... ,_ARGS...)> &function ,const REMOVE_CVR_TYPE<_ARGS> &...args) ;
-} ;
-
-//@error: vs2017 is too useless to compile without hint
-template <class UNIT1 ,class... UNITS>
-using FIX_MSVC_DEDUCTION_2 = DEF<DEF<UNIT1 (UNITS...)> NONE::*> ;
-
-template <class UNIT1 ,class... UNITS>
-class Function<FIX_MSVC_DEDUCTION_2<UNIT1 ,UNITS...>> {
-#pragma push_macro ("fake")
-#undef fake
-#define fake m_fake ()
-
-private:
-	class FakeHolder ;
-
-	struct Holder :public Interface {
-		virtual void friend_copy (PTR<TEMP<FakeHolder>> address) const noexcept = 0 ;
-		virtual UNIT1 invoke (FORWARD_TRAITS_TYPE<UNITS> &&...args) const popping = 0 ;
-	} ;
-
-	class FakeHolder :public Holder {
-	private:
-		PTR<NONE> mContext ;
-		DEF<DEF<UNIT1 (UNITS...)> NONE::*> mFunction ;
-
-	public:
-		inline FakeHolder () = delete ;
-
-		inline void friend_copy (PTR<TEMP<FakeHolder>> address) const noexcept override ;
-		inline UNIT1 invoke (FORWARD_TRAITS_TYPE<UNITS> &&...args) const popping override ;
-	} ;
-
-	template <class>
-	class ImplHolder ;
-
-private:
-	class Detail ;
-	TEMP<FakeHolder> mVariant ;
-
-public:
-	inline Function () noexcept {
-		_ZERO_ (mVariant) ;
-	}
-
-	inline implicit Function (const PTR<UNIT1 (UNITS...)> &that) noexcept {
-		_DEBUG_ASSERT_ (that != NULL) ;
-		Detail::template static_create<typename Detail::PureHolder> (&mVariant ,that) ;
-	}
-
-	template <class _ARG1>
-	inline explicit Function (const PhanRef<_ARG1> &context ,const DEF<DEF<UNIT1 (UNITS...)> _ARG1::*> &function) noexcept {
-		_DEBUG_ASSERT_ (function != NULL) ;
-		Detail::template static_create<ImplHolder<_ARG1>> (&mVariant ,&context.self ,function) ;
-	}
-
-	template <class _ARG1>
-	inline explicit Function (const PhanRef<const _ARG1> &context ,const DEF<DEF<UNIT1 (UNITS...) const> _ARG1::*> &function) noexcept {
-		_DEBUG_ASSERT_ (function != NULL) ;
-		Detail::template static_create<ImplHolder<const _ARG1>> (&mVariant ,&context.self ,function) ;
-	}
-
-	template <class _ARG1>
-	inline explicit Function (const PhanRef<_ARG1> &context ,const PTR<UNIT1 (PTR<_ARG1> ,UNITS...)> &function) noexcept {
-		_DEBUG_ASSERT_ (function != NULL) ;
-		Detail::template static_create<ImplHolder<PTR<_ARG1>>> (&mVariant ,&context.self ,function) ;
-	}
-
-	template <class _ARG1>
-	inline explicit Function (const PhanRef<_ARG1> &context ,const PTR<UNIT1 (PTR<const _ARG1> ,UNITS...)> &function) noexcept {
-		_DEBUG_ASSERT_ (function != NULL) ;
-		Detail::template static_create<ImplHolder<PTR<const _ARG1>>> (&mVariant ,&context.self ,function) ;
-	}
-
-	inline ~Function () noexcept {
-		if (!exist ())
-			return ;
-		fake.~Holder () ;
-		_ZERO_ (mVariant) ;
-	}
-
-	inline Function (const Function &) = delete ;
-	inline Function &operator= (const Function &) = delete ;
-
-	inline Function (Function &&that) noexcept :Function () {
-		if (!that.exist ())
-			return ;
-		that.fake.friend_copy (&mVariant) ;
-	}
-
-	inline Function &operator= (Function &&that) noexcept {
-		for (FOR_ONCE_DO) {
-			if (this == &that)
-				discard ;
-			(*this).~Function () ;
-			new (this) Function (std::move (that)) ;
-		}
-		return (*this) ;
-	}
-
-	inline BOOL exist () const {
-		const auto r1x = _CAST_<VAR> (_XVALUE_<Interface> (fake)) ;
-		if (r1x == VAR_ZERO)
-			return FALSE ;
-		return TRUE ;
-	}
-
-	inline UNIT1 invoke (FORWARD_TRAITS_TYPE<UNITS> &&...args) const popping {
-		_DEBUG_ASSERT_ (exist ()) ;
-		return fake.invoke (std::forward<FORWARD_TRAITS_TYPE<UNITS>> (args)...) ;
-	}
-
-	inline UNIT1 operator() (FORWARD_TRAITS_TYPE<UNITS> &&...args) const popping {
-		return invoke (std::forward<FORWARD_TRAITS_TYPE<UNITS>> (args)...) ;
-	}
-
-private:
-	inline Holder &m_fake () & {
-		return _CAST_<FakeHolder> (mVariant) ;
-	}
-
-	inline const Holder &m_fake () const & {
-		return _CAST_<FakeHolder> (mVariant) ;
-	}
-
-	inline Holder &m_fake () && = delete ;
-
-private:
-	class Detail :private Wrapped<void> {
-	public:
-		class PureHolder :public Holder {
-		private:
-			PTR<UNIT1 (UNITS...)> mFunction ;
-
-		public:
-			inline PureHolder () = delete ;
-
-			inline explicit PureHolder (const PTR<UNIT1 (UNITS...)> &function) noexcept :mFunction (function) {}
-
-			inline void friend_copy (PTR<TEMP<FakeHolder>> address) const noexcept override {
-				static_create<PureHolder> (address ,mFunction) ;
-			}
-
-			inline UNIT1 invoke (FORWARD_TRAITS_TYPE<UNITS> &&...args) const popping override {
-				return mFunction (std::forward<FORWARD_TRAITS_TYPE<UNITS>> (args)...) ;
-			}
-		} ;
-
-		template <class _RET ,class... _ARGS>
-		inline static void static_create (PTR<TEMP<FakeHolder>> address ,_ARGS &&...args) noexcept {
-			_STATIC_ASSERT_ (_ALIGNOF_ (TEMP<FakeHolder>) >= _ALIGNOF_ (TEMP<_RET>)) ;
-			_STATIC_ASSERT_ (_SIZEOF_ (TEMP<FakeHolder>) >= _SIZEOF_ (TEMP<_RET>)) ;
-			_STATIC_ASSERT_ (std::is_nothrow_constructible<_RET ,_ARGS &&...>::value) ;
-			_DEBUG_ASSERT_ (address != NULL) ;
-			auto &r1 = _LOAD_<TEMP<_RET>> (NULL ,_ADDRESS_ (address)) ;
-			const auto r2x = &_XVALUE_<Holder> (_CAST_<_RET> (r1)) ;
-			_DEBUG_ASSERT_ (_ADDRESS_ (r2x) == _ADDRESS_ (static_cast<PTR<FakeHolder>> (r2x))) ;
-			_DEBUG_ASSERT_ (_ADDRESS_ (r2x) == _ADDRESS_ (static_cast<PTR<_RET>> (r2x))) ;
-			(void) r2x ;
-			_CREATE_ (&r1 ,std::forward<_ARGS> (args)...) ;
-		}
-	} ;
-
-#pragma pop_macro ("fake")
-} ;
-
-template <class UNIT1 ,class... UNITS>
-template <class _UNIT>
-class Function<FIX_MSVC_DEDUCTION_2<UNIT1 ,UNITS...>>::ImplHolder :public Holder {
-private:
-	PTR<_UNIT> mContext ;
-	DEF<DEF<UNIT1 (UNITS...)> _UNIT::*> mFunction ;
-
-public:
-	inline ImplHolder () = delete ;
-
-	inline explicit ImplHolder (PTR<_UNIT> context ,const DEF<DEF<UNIT1 (UNITS...)> _UNIT::*> &function) noexcept :mContext (context) ,mFunction (function) {}
-
-	inline void friend_copy (PTR<TEMP<FakeHolder>> address) const noexcept override {
-		Detail::template static_create<ImplHolder> (address ,mContext ,mFunction) ;
-	}
-
-	inline UNIT1 invoke (FORWARD_TRAITS_TYPE<UNITS> &&...args) const popping override {
-		return (mContext->*mFunction) (std::forward<FORWARD_TRAITS_TYPE<UNITS>> (args)...) ;
-	}
-} ;
-
-template <class UNIT1 ,class... UNITS>
-template <class _UNIT>
-class Function<FIX_MSVC_DEDUCTION_2<UNIT1 ,UNITS...>>::ImplHolder<const _UNIT> :public Holder {
-private:
-	PTR<const _UNIT> mContext ;
-	DEF<DEF<UNIT1 (UNITS...) const> _UNIT::*> mFunction ;
-
-public:
-	inline ImplHolder () = delete ;
-
-	inline explicit ImplHolder (PTR<const _UNIT> context ,const DEF<DEF<UNIT1 (UNITS...) const> _UNIT::*> &function) noexcept :mContext (context) ,mFunction (function) {}
-
-	inline void friend_copy (PTR<TEMP<FakeHolder>> address) const noexcept override {
-		Detail::template static_create<ImplHolder> (address ,mContext ,mFunction) ;
-	}
-
-	inline UNIT1 invoke (FORWARD_TRAITS_TYPE<UNITS> &&...args) const popping override {
-		return (mContext->*mFunction) (std::forward<FORWARD_TRAITS_TYPE<UNITS>> (args)...) ;
-	}
-} ;
-
-template <class UNIT1 ,class... UNITS>
-template <class _UNIT>
-class Function<FIX_MSVC_DEDUCTION_2<UNIT1 ,UNITS...>>::ImplHolder<PTR<_UNIT>> :public Holder {
-private:
-	PTR<_UNIT> mContext ;
-	PTR<UNIT1 (PTR<_UNIT> ,UNITS...)> mFunction ;
-
-public:
-	inline ImplHolder () = delete ;
-
-	inline explicit ImplHolder (PTR<_UNIT> context ,const PTR<UNIT1 (PTR<_UNIT> ,UNITS...)> &function) noexcept :mContext (context) ,mFunction (function) {}
-
-	inline void friend_copy (PTR<TEMP<FakeHolder>> address) const noexcept override {
-		Detail::template static_create<ImplHolder> (address ,mContext ,mFunction) ;
-	}
-
-	inline UNIT1 invoke (FORWARD_TRAITS_TYPE<UNITS> &&...args) const popping override {
-		return mFunction (mContext ,std::forward<FORWARD_TRAITS_TYPE<UNITS>> (args)...) ;
-	}
-} ;
-
-template <class ,class>
-class Buffer ;
-
-using SFLEX = ARGC<0> ;
-using SFIXED = ARGC<-1> ;
-using SAUTO = ARGC<-2> ;
-using SCPHAN = ARGC<-4> ;
-using SMPHAN = ARGC<-5> ;
-
-template <class UNIT ,LENGTH SIZE>
-class Buffer<UNIT ,ARGC<SIZE>> {
-private:
-	_STATIC_ASSERT_ (SIZE > 0) ;
-	_STATIC_ASSERT_ (_SIZEOF_ (UNIT) > 0) ;
-	DEF<UNIT[SIZE]> mBuffer ;
-
-public:
-	inline Buffer () = default ;
-
-	inline explicit Buffer (LENGTH len) {
-		_DEBUG_ASSERT_ (len >= 0 && len <= SIZE) ;
-	}
-
-	inline implicit Buffer (const DEF<UNIT[SIZE]> &that) :Buffer (std::move (Buffer::from (that))) {}
-
-	inline implicit Buffer (DEF<UNIT[SIZE]> &&that) : Buffer (std::move (Buffer::from (that))) {}
-
-	inline ARR<UNIT> &to () {
-		return PTRTOARR[mBuffer] ;
-	}
-
-	inline implicit operator ARR<UNIT> & () {
-		return to () ;
-	}
-
-	inline implicit operator PTR<UNIT> () = delete ;
-
-	inline const ARR<UNIT> &to () const {
-		return PTRTOARR[mBuffer] ;
-	}
-
-	inline implicit operator const ARR<UNIT> & () const {
-		return to () ;
-	}
-
-	inline implicit operator PTR<const UNIT> () = delete ;
-
-	inline LENGTH size () const {
-		return SIZE ;
-	}
-
-	inline UNIT &get (INDEX index) & {
-		_DEBUG_ASSERT_ (index >= 0 && index < size ()) ;
-		return mBuffer[index] ;
-	}
-
-	inline UNIT &operator[] (INDEX index) & {
-		return get (index) ;
-	}
-
-	inline const UNIT &get (INDEX index) const & {
-		_DEBUG_ASSERT_ (index >= 0 && index < size ()) ;
-		return mBuffer[index] ;
-	}
-
-	inline const UNIT &operator[] (INDEX index) const & {
-		return get (index) ;
-	}
-
-	inline UNIT &get (INDEX) && = delete ;
-
-	inline UNIT &operator[] (INDEX) && = delete ;
-
-	inline INDEX at (const UNIT &item) const {
-		INDEX ret = &item - mBuffer ;
-		if (!(ret >= 0 && ret < size ()))
-			ret = VAR_NONE ;
-		return std::move (ret) ;
-	}
-
-	inline BOOL equal (const Buffer &that) const {
-		return _MEMEQUAL_ (PTRTOARR[mBuffer] ,PTRTOARR[that.mBuffer] ,SIZE) ;
-	}
-
-	inline BOOL operator== (const Buffer &that) const {
-		return equal (that) ;
-	}
-
-	inline BOOL operator!= (const Buffer &that) const {
-		return !equal (that) ;
-	}
-
-	inline FLAG compr (const Buffer &that) const {
-		return _MEMCOMPR_ (PTRTOARR[mBuffer] ,PTRTOARR[that.mBuffer] ,SIZE) ;
-	}
-
-	inline BOOL operator< (const Buffer &that) const {
-		return BOOL (compr (that) < 0) ;
-	}
-
-	inline BOOL operator>= (const Buffer &that) const {
-		return BOOL (compr (that) >= 0) ;
-	}
-
-	inline BOOL operator> (const Buffer &that) const {
-		return BOOL (compr (that) > 0) ;
-	}
-
-	inline BOOL operator<= (const Buffer &that) const {
-		return BOOL (compr (that) <= 0) ;
-	}
-
-	inline Buffer expand () const {
-		return expand (0) ;
-	}
-
-	inline Buffer expand (LENGTH len) const {
-		_STATIC_WARNING_ ("unexpected") ;
-		_DEBUG_ASSERT_ (FALSE) ;
-		return Buffer () ;
-	}
-
-	inline void swap (Buffer &that) popping {
-		_MEMSWAP_ (PTRTOARR[mBuffer] ,PTRTOARR[that.mBuffer] ,SIZE) ;
-	}
-
-public:
-	inline static Buffer &from (DEF<UNIT[SIZE]> &_self) {
-		return _CAST_<Buffer> (_self) ;
-	}
-
-	inline static const Buffer &from (const DEF<UNIT[SIZE]> &_self) {
-		return _CAST_<Buffer> (_self) ;
-	}
-
-	inline static Buffer &from (DEF<UNIT[SIZE]> &&) = delete ;
-} ;
-
-template <class UNIT>
-class Buffer<UNIT ,SFIXED> {
-private:
-	_STATIC_ASSERT_ (_SIZEOF_ (UNIT) > 0) ;
-	PTR<ARR<UNIT>> mBuffer ;
-	LENGTH mSize ;
-
-public:
-	inline Buffer () noexcept {
-		mBuffer = NULL ;
-		mSize = 0 ;
-	}
-
-	inline explicit Buffer (LENGTH len) :Buffer () {
-		_DEBUG_ASSERT_ (len >= 0) ;
-		if (len == 0)
-			return ;
-		auto rax = GlobalHeap::alloc<TEMP<UNIT>> (len) ;
-		ScopedBuild<ARR<UNIT>> ANONYMOUS (_XVALUE_<PTR<ARR<TEMP<UNIT>>>> (rax) ,len) ;
-		mBuffer = &_LOAD_<ARR<UNIT>> (_XVALUE_<PTR<ARR<TEMP<UNIT>>>> (rax)) ;
-		mSize = len ;
-		rax = NULL ;
-	}
-
-	inline ~Buffer () noexcept {
-		if (mBuffer == NULL)
-			return ;
-		for (INDEX i = 0 ,ie = mSize ; i < ie ; i++)
-			(*mBuffer)[i].~UNIT () ;
-		GlobalHeap::free (mBuffer) ;
-		mBuffer = NULL ;
-		mSize = 0 ;
-	}
-
-	inline Buffer (const Buffer &) = delete ;
-	inline Buffer &operator= (const Buffer &) = delete ;
-	inline Buffer (Buffer &&) = delete ;
-	inline Buffer &operator= (Buffer &&) = delete ;
-
-	inline ARR<UNIT> &to () {
-		return (*mBuffer) ;
-	}
-
-	inline implicit operator ARR<UNIT> & () {
-		return to () ;
-	}
-
-	inline implicit operator PTR<UNIT> () = delete ;
-
-	inline const ARR<UNIT> &to () const {
-		return (*mBuffer) ;
-	}
-
-	inline implicit operator const ARR<UNIT> & () const {
-		return to () ;
-	}
-
-	inline implicit operator PTR<const UNIT> () = delete ;
-
-	inline LENGTH size () const {
-		return mSize ;
-	}
-
-	inline UNIT &get (INDEX index) & {
-		_DEBUG_ASSERT_ (index >= 0 && index < size ()) ;
-		return (*mBuffer)[index] ;
-	}
-
-	inline UNIT &operator[] (INDEX index) & {
-		return get (index) ;
-	}
-
-	inline const UNIT &get (INDEX index) const & {
-		_DEBUG_ASSERT_ (index >= 0 && index < size ()) ;
-		return (*mBuffer)[index] ;
-	}
-
-	inline const UNIT &operator[] (INDEX index) const & {
-		return get (index) ;
-	}
-
-	inline UNIT &get (INDEX) && = delete ;
-
-	inline UNIT &operator[] (INDEX) && = delete ;
-
-	inline INDEX at (const UNIT &item) const {
-		INDEX ret = &item - (*mBuffer) ;
-		if (!(ret >= 0 && ret < size ()))
-			ret = VAR_NONE ;
-		return std::move (ret) ;
-	}
-
-	inline BOOL equal (const Buffer &that) const {
-		if (mSize != that.mSize)
-			return FALSE ;
-		if (!_MEMEQUAL_ ((*mBuffer) ,(*that.mBuffer) ,that.mSize))
-			return FALSE ;
-		return TRUE ;
-	}
-
-	inline BOOL operator== (const Buffer &that) const {
-		return equal (that) ;
-	}
-
-	inline BOOL operator!= (const Buffer &that) const {
-		return !equal (that) ;
-	}
-
-	inline FLAG compr (const Buffer &that) const {
-		const auto r1x = _MIN_ (mSize ,that.mSize) ;
-		const auto r2x = _MEMCOMPR_ ((*mBuffer) ,(*that.mBuffer) ,r1x) ;
-		if (r2x != 0)
-			return _COPY_ (r2x) ;
-		return _MEMCOMPR_ (PTRTOARR[&mSize] ,PTRTOARR[&that.mSize] ,1) ;
-	}
-
-	inline BOOL operator< (const Buffer &that) const {
-		return BOOL (compr (that) < 0) ;
-	}
-
-	inline BOOL operator>= (const Buffer &that) const {
-		return BOOL (compr (that) >= 0) ;
-	}
-
-	inline BOOL operator> (const Buffer &that) const {
-		return BOOL (compr (that) > 0) ;
-	}
-
-	inline BOOL operator<= (const Buffer &that) const {
-		return BOOL (compr (that) <= 0) ;
-	}
-
-	inline Buffer<UNIT ,SAUTO> expand () const {
-		return expand (0) ;
-	}
-
-	inline Buffer<UNIT ,SAUTO> expand (LENGTH len) const {
-		_STATIC_WARNING_ ("unexpected") ;
-		_DYNAMIC_ASSERT_ (FALSE) ;
-		return Buffer<UNIT ,SAUTO> () ;
-	}
-
-	inline void swap (Buffer<UNIT ,SAUTO> &that) popping {
-		_STATIC_WARNING_ ("unexpected") ;
-		_DYNAMIC_ASSERT_ (FALSE) ;
-	}
-
-	inline void swap (Buffer &that) popping {
-		_DYNAMIC_ASSERT_ (mSize == that.mSize) ;
-		_MEMSWAP_ ((*mBuffer) ,(*that.mBuffer) ,mSize) ;
-	}
-} ;
-
-template <class UNIT>
-using FixedBuffer = Buffer<UNIT ,SFIXED> ;
-
-template <class UNIT>
-class Buffer<UNIT ,SAUTO> ;
-
-template <class UNIT>
-class Buffer<SPECIALIZATION<UNIT ,FALSE> ,SAUTO> {
-private:
-	_STATIC_ASSERT_ (_SIZEOF_ (UNIT) > 0) ;
-	friend Buffer<UNIT ,SAUTO> ;
-	PTR<ARR<UNIT>> mBuffer ;
-	LENGTH mSize ;
-
-public:
-	inline Buffer () noexcept {
-		mBuffer = NULL ;
-		mSize = 0 ;
-	}
-
-	inline explicit Buffer (LENGTH len) :Buffer () {
-		_DEBUG_ASSERT_ (len >= 0) ;
-		if (len == 0)
-			return ;
-		auto rax = GlobalHeap::alloc<TEMP<UNIT>> (len) ;
-		ScopedBuild<ARR<UNIT>> ANONYMOUS (_XVALUE_<PTR<ARR<TEMP<UNIT>>>> (rax) ,len) ;
-		mBuffer = &_LOAD_<ARR<UNIT>> (_XVALUE_<PTR<ARR<TEMP<UNIT>>>> (rax)) ;
-		mSize = len ;
-		rax = NULL ;
-	}
-
-	inline ~Buffer () noexcept {
-		if (mBuffer == NULL)
-			return ;
-		for (INDEX i = 0 ,ie = mSize ; i < ie ; i++)
-			(*mBuffer)[i].~UNIT () ;
-		GlobalHeap::free (mBuffer) ;
-		mBuffer = NULL ;
-		mSize = 0 ;
-	}
-
-	inline Buffer (const Buffer &) = delete ;
-	inline Buffer &operator= (const Buffer &) = delete ;
-
-	inline Buffer (Buffer &&that) noexcept {
-		mBuffer = _EXCHANGE_ (that.mBuffer) ;
-		mSize = _EXCHANGE_ (that.mSize) ;
-	}
-
-	inline Buffer &operator= (Buffer &&that) noexcept {
-		for (FOR_ONCE_DO) {
-			if (this == &that)
-				discard ;
-			(*this).~Buffer () ;
-			new (this) Buffer (std::move (that)) ;
-		}
-		return (*this) ;
-	}
-} ;
-
-template <class UNIT>
-class Buffer<SPECIALIZATION<UNIT ,TRUE> ,SAUTO> {
-private:
-	_STATIC_ASSERT_ (_SIZEOF_ (UNIT) > 0) ;
-	friend Buffer<UNIT ,SAUTO> ;
-	PTR<ARR<UNIT>> mBuffer ;
-	LENGTH mSize ;
-
-public:
-	inline Buffer () noexcept {
-		mBuffer = NULL ;
-		mSize = 0 ;
-	}
-
-	inline explicit Buffer (LENGTH len) :Buffer () {
-		_DEBUG_ASSERT_ (len >= 0) ;
-		if (len == 0)
-			return ;
-		auto rax = GlobalHeap::alloc<TEMP<UNIT>> (len) ;
-		ScopedBuild<ARR<UNIT>> ANONYMOUS (_XVALUE_<PTR<ARR<TEMP<UNIT>>>> (rax) ,len) ;
-		mBuffer = &_LOAD_<ARR<UNIT>> (_XVALUE_<PTR<ARR<TEMP<UNIT>>>> (rax)) ;
-		mSize = len ;
-		rax = NULL ;
-	}
-
-	inline ~Buffer () noexcept {
-		if (mBuffer == NULL)
-			return ;
-		for (INDEX i = 0 ,ie = mSize ; i < ie ; i++)
-			(*mBuffer)[i].~UNIT () ;
-		GlobalHeap::free (mBuffer) ;
-		mBuffer = NULL ;
-		mSize = 0 ;
-	}
-
-	inline Buffer (const Buffer &that) :Buffer () {
-		if (that.mBuffer == NULL)
-			return ;
-		auto rax = GlobalHeap::alloc<TEMP<UNIT>> (that.mSize) ;
-		ScopedBuild<ARR<UNIT>> ANONYMOUS (_XVALUE_<PTR<ARR<TEMP<UNIT>>>> (rax) ,(*that.mBuffer) ,that.mSize) ;
-		mBuffer = &_LOAD_<ARR<UNIT>> (_XVALUE_<PTR<ARR<TEMP<UNIT>>>> (rax)) ;
-		mSize = that.mSize ;
-		rax = NULL ;
-	}
-
-	inline Buffer &operator= (const Buffer &that) {
-		for (FOR_ONCE_DO) {
-			if (this == &that)
-				discard ;
-			(*this).~Buffer () ;
-			new (this) Buffer (std::move (that)) ;
-		}
-		return (*this) ;
-	}
-
-	inline Buffer (Buffer &&that) noexcept {
-		mBuffer = _EXCHANGE_ (that.mBuffer) ;
-		mSize = _EXCHANGE_ (that.mSize) ;
-	}
-
-	inline Buffer &operator= (Buffer &&that) noexcept {
-		for (FOR_ONCE_DO) {
-			if (this == &that)
-				discard ;
-			(*this).~Buffer () ;
-			new (this) Buffer (std::move (that)) ;
-		}
-		return (*this) ;
-	}
-} ;
-
-template <class UNIT>
-class Buffer<UNIT ,SAUTO> :private Buffer<SPECIALIZATION<UNIT ,(std::is_copy_constructible<UNIT>::value && std::is_nothrow_move_constructible<UNIT>::value)> ,SAUTO> {
-private:
-	using SPECIALIZATION_BASE = Buffer<SPECIALIZATION<UNIT ,(std::is_copy_constructible<UNIT>::value && std::is_nothrow_move_constructible<UNIT>::value)> ,SAUTO> ;
-
-private:
-	friend SPECIALIZATION_BASE ;
-	using SPECIALIZATION_BASE::mBuffer ;
-	using SPECIALIZATION_BASE::mSize ;
-
-public:
-	inline Buffer () = default ;
-
-	inline explicit Buffer (LENGTH len) :SPECIALIZATION_BASE (len) {}
-
-	inline ARR<UNIT> &to () {
-		return (*mBuffer) ;
-	}
-
-	inline implicit operator ARR<UNIT> & () {
-		return to () ;
-	}
-
-	inline implicit operator PTR<UNIT> () = delete ;
-
-	inline const ARR<UNIT> &to () const {
-		return (*mBuffer) ;
-	}
-
-	inline implicit operator const ARR<UNIT> & () const {
-		return to () ;
-	}
-
-	inline implicit operator PTR<const UNIT> () = delete ;
-
-	inline LENGTH size () const {
-		return mSize ;
-	}
-
-	inline UNIT &get (INDEX index) & {
-		_DEBUG_ASSERT_ (index >= 0 && index < size ()) ;
-		return (*mBuffer)[index] ;
-	}
-
-	inline UNIT &operator[] (INDEX index) & {
-		return get (index) ;
-	}
-
-	inline const UNIT &get (INDEX index) const & {
-		_DEBUG_ASSERT_ (index >= 0 && index < size ()) ;
-		return (*mBuffer)[index] ;
-	}
-
-	inline const UNIT &operator[] (INDEX index) const & {
-		return get (index) ;
-	}
-
-	inline UNIT &get (INDEX) && = delete ;
-
-	inline UNIT &operator[] (INDEX) && = delete ;
-
-	inline INDEX at (const UNIT &item) const {
-		INDEX ret = &item - (*mBuffer) ;
-		if (!(ret >= 0 && ret < size ()))
-			ret = VAR_NONE ;
-		return std::move (ret) ;
-	}
-
-	inline BOOL equal (const Buffer &that) const {
-		if (mSize != that.mSize)
-			return FALSE ;
-		if (!_MEMEQUAL_ ((*mBuffer) ,(*that.mBuffer) ,that.mSize))
-			return FALSE ;
-		return TRUE ;
-	}
-
-	inline BOOL operator== (const Buffer &that) const {
-		return equal (that) ;
-	}
-
-	inline BOOL operator!= (const Buffer &that) const {
-		return !equal (that) ;
-	}
-
-	inline FLAG compr (const Buffer &that) const {
-		const auto r1x = _MIN_ (mSize ,that.mSize) ;
-		const auto r2x = _MEMCOMPR_ ((*mBuffer) ,(*that.mBuffer) ,r1x) ;
-		if (r2x != 0)
-			return _COPY_ (r2x) ;
-		return _MEMCOMPR_ (PTRTOARR[&mSize] ,PTRTOARR[&that.mSize] ,1) ;
-	}
-
-	inline BOOL operator< (const Buffer &that) const {
-		return BOOL (compr (that) < 0) ;
-	}
-
-	inline BOOL operator>= (const Buffer &that) const {
-		return BOOL (compr (that) >= 0) ;
-	}
-
-	inline BOOL operator> (const Buffer &that) const {
-		return BOOL (compr (that) > 0) ;
-	}
-
-	inline BOOL operator<= (const Buffer &that) const {
-		return BOOL (compr (that) <= 0) ;
-	}
-
-	inline Buffer expand () const {
-		using DEFAULT_EXPANDFIRST_SIZE = ARGC<256> ;
-		const auto r1x = _MAX_ (LENGTH (mSize * MATH_SQRT2) ,(mSize + DEFAULT_EXPANDFIRST_SIZE::value)) ;
-		return expand (r1x) ;
-	}
-
-	inline Buffer expand (LENGTH len) const {
-		_DEBUG_ASSERT_ (len >= 0) ;
-		return Buffer (len) ;
-	}
-
-	inline void swap (Buffer &that) popping {
-		_SWAP_ (mBuffer ,that.mBuffer) ;
-		_SWAP_ (mSize ,that.mSize) ;
-	}
-} ;
-
-template <class UNIT>
-using AutoBuffer = Buffer<UNIT ,SAUTO> ;
-
-template <class UNIT>
-class Buffer<UNIT ,SCPHAN> {
-private:
-	_STATIC_ASSERT_ (_SIZEOF_ (UNIT) > 0) ;
-	PTR<const ARR<UNIT>> mBuffer ;
-	LENGTH mSize ;
-
-public:
-	inline Buffer () noexcept {
-		mBuffer = NULL ;
-		mSize = 0 ;
-	}
-
-	inline explicit Buffer (LENGTH len) :Buffer () {
-		_DEBUG_ASSERT_ (len == 0) ;
-	}
-
-	inline ~Buffer () noexcept {
-		if (mBuffer == NULL)
-			return ;
-		mBuffer = NULL ;
-		mSize = 0 ;
-	}
-
-	inline Buffer (const Buffer &) = delete ;
-	inline Buffer &operator= (const Buffer &) = delete ;
-
-	inline Buffer (Buffer &&that) noexcept {
-		mBuffer = _EXCHANGE_ (that.mBuffer) ;
-		mSize = _EXCHANGE_ (that.mSize) ;
-	}
-
-	inline Buffer &operator= (Buffer &&that) noexcept {
-		for (FOR_ONCE_DO) {
-			if (this == &that)
-				discard ;
-			(*this).~Buffer () ;
-			new (this) Buffer (std::move (that)) ;
-		}
-		return (*this) ;
-	}
-
-	inline const ARR<UNIT> &to () const popping {
-		if (mBuffer == NULL)
-			return (*mBuffer) ;
-		return _LOAD_<ARR<UNIT>> (mBuffer) ;
-	}
-
-	inline implicit operator const ARR<UNIT> & () const popping {
-		return to () ;
-	}
-
-	inline implicit operator PTR<const UNIT> () = delete ;
-
-	inline LENGTH size () const {
-		return mSize ;
-	}
-
-	inline const UNIT &get (INDEX index) const & popping {
-#pragma GCC diagnostic push
-#ifdef __CSC_COMPILER_GNUC__
-#pragma GCC diagnostic ignored "-Warray-bounds"
-#endif
-		_DEBUG_ASSERT_ (index >= 0 && index < size ()) ;
-		const auto r1x = &_LOAD_<ARR<UNIT>> (mBuffer) ;
-		return (*r1x)[index] ;
-#pragma GCC diagnostic pop
-	}
-
-	inline const UNIT &operator[] (INDEX index) const & popping {
-		return get (index) ;
-	}
-
-	inline const UNIT &get (INDEX) && = delete ;
-
-	inline const UNIT &operator[] (INDEX) && = delete ;
-
-	inline INDEX at (const UNIT &item) const {
-		INDEX ret = &item - (*mBuffer) ;
-		if (!(ret >= 0 && ret < size ()))
-			ret = VAR_NONE ;
-		return std::move (ret) ;
-	}
-
-	inline BOOL equal (const Buffer &that) const {
-		if (mSize != that.mSize)
-			return FALSE ;
-		if (!_MEMEQUAL_ ((*mBuffer) ,(*that.mBuffer) ,that.mSize))
-			return FALSE ;
-		return TRUE ;
-	}
-
-	inline BOOL operator== (const Buffer &that) const {
-		return equal (that) ;
-	}
-
-	inline BOOL operator!= (const Buffer &that) const {
-		return !equal (that) ;
-	}
-
-	inline FLAG compr (const Buffer &that) const {
-		const auto r1x = _MIN_ (mSize ,that.mSize) ;
-		const auto r2x = _MEMCOMPR_ ((*mBuffer) ,(*that.mBuffer) ,r1x) ;
-		if (r2x != 0)
-			return _COPY_ (r2x) ;
-		return _MEMCOMPR_ (PTRTOARR[&mSize] ,PTRTOARR[&that.mSize] ,1) ;
-	}
-
-	inline BOOL operator< (const Buffer &that) const {
-		return BOOL (compr (that) < 0) ;
-	}
-
-	inline BOOL operator>= (const Buffer &that) const {
-		return BOOL (compr (that) >= 0) ;
-	}
-
-	inline BOOL operator> (const Buffer &that) const {
-		return BOOL (compr (that) > 0) ;
-	}
-
-	inline BOOL operator<= (const Buffer &that) const {
-		return BOOL (compr (that) <= 0) ;
-	}
-
-	inline Buffer expand () const {
-		return expand (0) ;
-	}
-
-	inline Buffer expand (LENGTH len) const {
-		_STATIC_WARNING_ ("unexpected") ;
-		_DEBUG_ASSERT_ (FALSE) ;
-		return Buffer () ;
-	}
-
-	inline void swap (Buffer &that) popping {
-		_SWAP_ (mBuffer ,that.mBuffer) ;
-		_SWAP_ (mSize ,that.mSize) ;
-	}
-
-private:
-	inline explicit Buffer (PTR<const ARR<UNIT>> src ,LENGTH len) noexcept :mBuffer (src) ,mSize (len) {}
-
-public:
-	//@warn: phantom means deliver pointer without holder
-	inline static Buffer make (const ARR<UNIT> &src ,LENGTH len) {
-		if (len == 0)
-			return Buffer (NULL ,0) ;
-		_DEBUG_ASSERT_ (src != NULL) ;
-		_DEBUG_ASSERT_ (len >= 0) ;
-		return Buffer (&src ,len) ;
-	}
-
-	template <LENGTH _VAL1>
-	inline static Buffer make (const DEF<UNIT[_VAL1]> &src) {
-		return make (PTRTOARR[src] ,_VAL1) ;
-	}
-
-	template <class _ARG1>
-	inline static Buffer make (const Buffer<UNIT ,_ARG1> &src) {
-		return make (src ,src.size ()) ;
-	}
-
-	template <class _ARG1 ,class _ARG2 ,class = ENABLE_TYPE<std::is_same<UNIT ,BYTE>::value && !std::is_same<_ARG1 ,BYTE>::value && LOAD_CHECK_TYPE<ARR<BYTE> ,ARR<_ARG1>>::value>>
-	inline static Buffer make (const Buffer<_ARG1 ,_ARG2> &src) {
-		if (src.size () == 0)
-			return Buffer () ;
-		return make (_LOAD_<ARR<UNIT>> (&src.self) ,(src.size () * _SIZEOF_ (_ARG1))) ;
-	}
-} ;
-
-template <class UNIT>
-class Buffer<UNIT ,SMPHAN> {
-private:
-	_STATIC_ASSERT_ (_SIZEOF_ (UNIT) > 0) ;
-	PTR<ARR<UNIT>> mBuffer ;
-	LENGTH mSize ;
-
-public:
-	inline Buffer () noexcept {
-		mBuffer = NULL ;
-		mSize = 0 ;
-	}
-
-	inline explicit Buffer (LENGTH len) :Buffer () {
-		_DEBUG_ASSERT_ (len == 0) ;
-	}
-
-	inline ~Buffer () noexcept {
-		if (mBuffer == NULL)
-			return ;
-		mBuffer = NULL ;
-		mSize = 0 ;
-	}
-
-	inline Buffer (const Buffer &) = delete ;
-	inline Buffer &operator= (const Buffer &) = delete ;
-
-	inline Buffer (Buffer &&that) noexcept {
-		mBuffer = _EXCHANGE_ (that.mBuffer) ;
-		mSize = _EXCHANGE_ (that.mSize) ;
-	}
-
-	inline Buffer &operator= (Buffer &&that) noexcept {
-		for (FOR_ONCE_DO) {
-			if (this == &that)
-				discard ;
-			(*this).~Buffer () ;
-			new (this) Buffer (std::move (that)) ;
-		}
-		return (*this) ;
-	}
-
-	inline ARR<UNIT> &to () const popping {
-		if (mBuffer == NULL)
-			return (*mBuffer) ;
-		return _LOAD_<ARR<UNIT>> (mBuffer) ;
-	}
-
-	inline implicit operator ARR<UNIT> & () const popping {
-		return to () ;
-	}
-
-	inline implicit operator PTR<UNIT> () = delete ;
-
-	inline LENGTH size () const {
-		return mSize ;
-	}
-
-	inline UNIT &get (INDEX index) const & popping {
-#pragma GCC diagnostic push
-#ifdef __CSC_COMPILER_GNUC__
-#pragma GCC diagnostic ignored "-Warray-bounds"
-#endif
-		_DEBUG_ASSERT_ (index >= 0 && index < size ()) ;
-		const auto r1x = &_LOAD_<ARR<UNIT>> (mBuffer) ;
-		return (*r1x)[index] ;
-#pragma GCC diagnostic pop
-	}
-
-	inline UNIT &operator[] (INDEX index) const & popping {
-		return get (index) ;
-	}
-
-	inline UNIT &get (INDEX) && = delete ;
-
-	inline UNIT &operator[] (INDEX) && = delete ;
-
-	inline INDEX at (const UNIT &item) const {
-		INDEX ret = &item - (*mBuffer) ;
-		if (!(ret >= 0 && ret < size ()))
-			ret = VAR_NONE ;
-		return std::move (ret) ;
-	}
-
-	inline BOOL equal (const Buffer &that) const {
-		if (mSize != that.mSize)
-			return FALSE ;
-		if (!_MEMEQUAL_ ((*mBuffer) ,(*that.mBuffer) ,that.mSize))
-			return FALSE ;
-		return TRUE ;
-	}
-
-	inline BOOL operator== (const Buffer &that) const {
-		return equal (that) ;
-	}
-
-	inline BOOL operator!= (const Buffer &that) const {
-		return !equal (that) ;
-	}
-
-	inline FLAG compr (const Buffer &that) const {
-		const auto r1x = _MIN_ (mSize ,that.mSize) ;
-		const auto r2x = _MEMCOMPR_ ((*mBuffer) ,(*that.mBuffer) ,r1x) ;
-		if (r2x != 0)
-			return _COPY_ (r2x) ;
-		return _MEMCOMPR_ (PTRTOARR[&mSize] ,PTRTOARR[&that.mSize] ,1) ;
-	}
-
-	inline BOOL operator< (const Buffer &that) const {
-		return BOOL (compr (that) < 0) ;
-	}
-
-	inline BOOL operator>= (const Buffer &that) const {
-		return BOOL (compr (that) >= 0) ;
-	}
-
-	inline BOOL operator> (const Buffer &that) const {
-		return BOOL (compr (that) > 0) ;
-	}
-
-	inline BOOL operator<= (const Buffer &that) const {
-		return BOOL (compr (that) <= 0) ;
-	}
-
-	inline Buffer expand () const {
-		return expand (0) ;
-	}
-
-	inline Buffer expand (LENGTH len) const {
-		_STATIC_WARNING_ ("unexpected") ;
-		_DEBUG_ASSERT_ (FALSE) ;
-		return Buffer () ;
-	}
-
-	inline void swap (Buffer &that) popping {
-		_SWAP_ (mBuffer ,that.mBuffer) ;
-		_SWAP_ (mSize ,that.mSize) ;
-	}
-
-private:
-	inline explicit Buffer (PTR<ARR<UNIT>> src ,LENGTH len) noexcept :mBuffer (src) ,mSize (len) {}
-
-public:
-	//@warn: phantom means deliver pointer without holder
-	inline static Buffer make (ARR<UNIT> &src ,LENGTH len) {
-		if (len == 0)
-			return Buffer (NULL ,0) ;
-		_DEBUG_ASSERT_ (src != NULL) ;
-		_DEBUG_ASSERT_ (len >= 0) ;
-		return Buffer (&src ,len) ;
-	}
-
-	template <LENGTH _VAL1>
-	inline static Buffer make (DEF<UNIT[_VAL1]> &src) {
-		return make (PTRTOARR[src] ,_VAL1) ;
-	}
-
-	template <class _ARG1>
-	inline static Buffer make (Buffer<UNIT ,_ARG1> &src) {
-		return make (src.self ,src.size ()) ;
-	}
-
-	template <class _ARG1 ,class _ARG2 ,class = ENABLE_TYPE<std::is_same<UNIT ,BYTE>::value && !std::is_same<_ARG1 ,BYTE>::value && LOAD_CHECK_TYPE<ARR<BYTE> ,ARR<_ARG1>>::value>>
-	inline static Buffer make (Buffer<_ARG1 ,_ARG2> &src) {
-		if (src.size () == 0)
-			return Buffer () ;
-		return make (_LOAD_<ARR<UNIT>> (&src.self) ,(src.size () * _SIZEOF_ (_ARG1))) ;
-	}
-
-	inline static Buffer make (const Buffer<UNIT ,SMPHAN> &src) {
-		return make (src.self ,src.size ()) ;
-	}
-
-	template <class _ARG1 ,class = ENABLE_TYPE<std::is_same<UNIT ,BYTE>::value && !std::is_same<_ARG1 ,BYTE>::value && LOAD_CHECK_TYPE<ARR<BYTE> ,ARR<_ARG1>>::value>>
-	inline static Buffer make (const Buffer<_ARG1 ,SMPHAN> &src) {
-		if (src.size () == 0)
-			return Buffer () ;
-		return make (_LOAD_<ARR<UNIT>> (&src.self) ,(src.size () * _SIZEOF_ (_ARG1))) ;
-	}
-} ;
-
-template <class UNIT>
-using PhanBuffer = Buffer<REMOVE_CONST_TYPE<UNIT> ,CONDITIONAL_TYPE<std::is_const<UNIT>::value ,SCPHAN ,SMPHAN>> ;
-
-template <class ,class>
-class Allocator ;
-
-template <class UNIT ,class SIZE>
-class Allocator<SPECIALIZATION<UNIT ,FALSE ,FALSE> ,SIZE> {
-#pragma push_macro ("spec")
-#undef spec
-#define spec m_spec ()
-
-private:
-	using SPECIALIZATION_TYPE = Allocator<UNIT ,SIZE> ;
-
-	//@warn: memory alignment reduce utilization ratio of memory
-	class Node {
-	private:
-		friend Allocator ;
-		friend SPECIALIZATION_TYPE ;
-		TEMP<UNIT> mData ;
-		INDEX mNext ;
-
-	public:
-		inline Node () = default ;
-	} ;
-
-private:
-	friend SPECIALIZATION_TYPE ;
-	Buffer<Node ,SIZE> mAllocator ;
-	LENGTH mSize ;
-	LENGTH mLength ;
-	INDEX mFree ;
-
-public:
-	inline Allocator () :Allocator (ARGVP0 ,0) {
-		spec.update_reserve (mSize ,mFree) ;
-	}
-
-	inline explicit Allocator (LENGTH len) :Allocator (ARGVP0 ,len) {
-		spec.update_reserve (mSize ,mFree) ;
-	}
-
-	inline ~Allocator () noexcept {
-		if (mSize == 0)
-			return ;
-		spec.clear () ;
-		mSize = 0 ;
-		mLength = 0 ;
-		mFree = VAR_NONE ;
-	}
-
-	inline Allocator (const Allocator &) = delete ;
-	inline Allocator &operator= (const Allocator &) = delete ;
-	inline Allocator (Allocator &&) = delete ;
-	inline Allocator &operator= (Allocator &&) = delete ;
-
-private:
-	inline explicit Allocator (const DEF<decltype (ARGVP0)> & ,LENGTH len) :mAllocator (len) ,mSize (0) ,mLength (0) ,mFree (VAR_NONE) {}
-
-private:
-	inline SPECIALIZATION_TYPE &m_spec () & {
-		return *static_cast<PTR<SPECIALIZATION_TYPE>> (this) ;
-	}
-
-	inline const SPECIALIZATION_TYPE &m_spec () const & {
-		return *static_cast<PTR<const SPECIALIZATION_TYPE>> (this) ;
-	}
-
-	inline SPECIALIZATION_TYPE &m_spec () && = delete ;
-
-#pragma pop_macro ("spec")
-} ;
-
-template <class UNIT ,class SIZE>
-class Allocator<SPECIALIZATION<UNIT ,FALSE ,TRUE> ,SIZE> {
-#pragma push_macro ("spec")
-#undef spec
-#define spec m_spec ()
-
-private:
-	using SPECIALIZATION_TYPE = Allocator<UNIT ,SIZE> ;
-
-	//@warn: memory alignment reduce utilization ratio of memory
-	class Node {
-	private:
-		friend Allocator ;
-		friend SPECIALIZATION_TYPE ;
-		TEMP<UNIT> mData ;
-		INDEX mNext ;
-
-	public:
-		inline Node () = default ;
-	} ;
-
-private:
-	friend SPECIALIZATION_TYPE ;
-	Buffer<Node ,SIZE> mAllocator ;
-	LENGTH mSize ;
-	LENGTH mLength ;
-	INDEX mFree ;
-
-public:
-	inline Allocator () :Allocator (ARGVP0 ,0) {
-		spec.update_reserve (mSize ,mFree) ;
-	}
-
-	inline explicit Allocator (LENGTH len) :Allocator (ARGVP0 ,len) {
-		spec.update_reserve (mSize ,mFree) ;
-	}
-
-	inline ~Allocator () noexcept {
-		if (mSize == 0)
-			return ;
-		spec.clear () ;
-		mSize = 0 ;
-		mLength = 0 ;
-		mFree = VAR_NONE ;
-	}
-
-	inline Allocator (const Allocator &) = delete ;
-	inline Allocator &operator= (const Allocator &) = delete ;
-
-	inline Allocator (Allocator &&that) noexcept :Allocator (ARGVP0 ,std::move (that.mAllocator)) {
-		_STATIC_ASSERT_ (std::is_nothrow_move_constructible<UNIT>::value) ;
-		_STATIC_ASSERT_ (std::is_nothrow_move_assignable<UNIT>::value) ;
-		const auto r1x = _SWITCH_ (
-			(std::is_pod<UNIT>::value) ? (mAllocator.size ()) :
-			0) ;
-		mSize += r1x ;
-		while (TRUE) {
-			if (mSize >= that.mAllocator.size ())
-				break ;
-			for (FOR_ONCE_DO) {
-				INDEX ix = mSize ;
-				if (mAllocator[ix].mNext != VAR_USED)
-					discard ;
-				_CREATE_ (&mAllocator[ix].mData ,std::move (_CAST_<UNIT> (that.mAllocator[ix].mData))) ;
-				mSize++ ;
-			}
-		}
-		mSize = mAllocator.size () ;
-		mLength = that.mLength ;
-		mFree = that.mFree ;
-		that.spec.clear () ;
-	}
-
-	inline Allocator &operator= (Allocator &&that) noexcept {
-		for (FOR_ONCE_DO) {
-			if (this == &that)
-				discard ;
-			(*this).~Allocator () ;
-			new (this) Allocator (std::move (that)) ;
-		}
-		return (*this) ;
-	}
-
-private:
-	inline explicit Allocator (const DEF<decltype (ARGVP0)> & ,LENGTH len) :mAllocator (len) ,mSize (0) ,mLength (0) ,mFree (VAR_NONE) {}
-
-	inline explicit Allocator (const DEF<decltype (ARGVP0)> & ,Buffer<Node ,SIZE> &&_allocator) :mAllocator (std::move (_allocator)) ,mSize (0) ,mLength (0) ,mFree (VAR_NONE) {}
-
-private:
-	inline SPECIALIZATION_TYPE &m_spec () & {
-		return *static_cast<PTR<SPECIALIZATION_TYPE>> (this) ;
-	}
-
-	inline const SPECIALIZATION_TYPE &m_spec () const & {
-		return *static_cast<PTR<const SPECIALIZATION_TYPE>> (this) ;
-	}
-
-	inline SPECIALIZATION_TYPE &m_spec () && = delete ;
-
-#pragma pop_macro ("spec")
-} ;
-
-template <class UNIT ,class SIZE>
-class Allocator<SPECIALIZATION<UNIT ,TRUE ,TRUE> ,SIZE> {
-#pragma push_macro ("spec")
-#undef spec
-#define spec m_spec ()
-
-private:
-	using SPECIALIZATION_TYPE = Allocator<UNIT ,SIZE> ;
-
-	//@warn: memory alignment reduce utilization ratio of memory
-	class Node {
-	private:
-		friend Allocator ;
-		friend SPECIALIZATION_TYPE ;
-		TEMP<UNIT> mData ;
-		INDEX mNext ;
-
-	public:
-		inline Node () = default ;
-	} ;
-
-private:
-	friend SPECIALIZATION_TYPE ;
-	Buffer<Node ,SIZE> mAllocator ;
-	LENGTH mSize ;
-	LENGTH mLength ;
-	INDEX mFree ;
-
-public:
-	inline Allocator () :Allocator (ARGVP0 ,0) {
-		spec.update_reserve (mSize ,mFree) ;
-	}
-
-	inline explicit Allocator (LENGTH len) :Allocator (ARGVP0 ,len) {
-		spec.update_reserve (mSize ,mFree) ;
-	}
-
-	inline ~Allocator () noexcept {
-		if (mSize == 0)
-			return ;
-		spec.clear () ;
-		mSize = 0 ;
-		mLength = 0 ;
-		mFree = VAR_NONE ;
-	}
-
-	inline Allocator (const Allocator &that) :Allocator (ARGVP0 ,std::move (that.mAllocator)) {
-		class Finally :private Wrapped<Allocator> {
-		public:
-			inline void lock () {
-				const auto r1x = _SWITCH_ (
-					(std::is_pod<UNIT>::value) ? (Finally::mSelf.mAllocator.size ()) :
-					0) ;
-				Finally::mSelf.mSize += r1x ;
-			}
-
-			inline void unlock () {
-				if (Finally::mSelf.mSize == Finally::mSelf.mAllocator.size ())
-					return ;
-				while (TRUE) {
-					if (Finally::mSelf.mSize <= 0)
-						break ;
-					for (FOR_ONCE_DO) {
-						INDEX ix = Finally::mSelf.mSize - 1 ;
-						if (Finally::mSelf.mAllocator[ix].mNext != VAR_USED)
-							discard ;
-						_DESTROY_ (&Finally::mSelf.mAllocator[ix].mData) ;
-						Finally::mSelf.mSize-- ;
-					}
-				}
-			}
-		} ;
-		ScopedGuard<Finally> ANONYMOUS (_CAST_<Finally> ((*this))) ;
-		while (TRUE) {
-			if (mSize >= that.mAllocator.size ())
-				break ;
-			for (FOR_ONCE_DO) {
-				INDEX ix = mSize ;
-				if (mAllocator[ix].mNext != VAR_USED)
-					discard ;
-				_CREATE_ (&mAllocator[ix].mData ,std::move (_CAST_<UNIT> (that.mAllocator[ix].mData))) ;
-				mSize++ ;
-			}
-		}
-		mSize = mAllocator.size () ;
-		mLength = that.mLength ;
-		mFree = that.mFree ;
-	}
-
-	inline Allocator &operator= (const Allocator &that) {
-		for (FOR_ONCE_DO) {
-			if (this == &that)
-				discard ;
-			(*this).~Allocator () ;
-			new (this) Allocator (std::move (that)) ;
-		}
-		return (*this) ;
-	}
-
-	inline Allocator (Allocator &&that) noexcept :Allocator (ARGVP0 ,std::move (that.mAllocator)) {
-		_STATIC_ASSERT_ (std::is_nothrow_move_constructible<UNIT>::value) ;
-		_STATIC_ASSERT_ (std::is_nothrow_move_assignable<UNIT>::value) ;
-		const auto r1x = _SWITCH_ (
-			(std::is_pod<UNIT>::value) ? (mAllocator.size ()) :
-			0) ;
-		mSize += r1x ;
-		while (TRUE) {
-			if (mSize >= that.mAllocator.size ())
-				break ;
-			for (FOR_ONCE_DO) {
-				INDEX ix = mSize ;
-				if (mAllocator[ix].mNext != VAR_USED)
-					discard ;
-				_CREATE_ (&mAllocator[ix].mData ,std::move (_CAST_<UNIT> (that.mAllocator[ix].mData))) ;
-				mSize++ ;
-			}
-		}
-		mSize = mAllocator.size () ;
-		mLength = that.mLength ;
-		mFree = that.mFree ;
-		that.spec.clear () ;
-	}
-
-	inline Allocator &operator= (Allocator &&that) noexcept {
-		for (FOR_ONCE_DO) {
-			if (this == &that)
-				discard ;
-			(*this).~Allocator () ;
-			new (this) Allocator (std::move (that)) ;
-		}
-		return (*this) ;
-	}
-
-private:
-	inline explicit Allocator (const DEF<decltype (ARGVP0)> & ,LENGTH len) :mAllocator (len) ,mSize (0) ,mLength (0) ,mFree (VAR_NONE) {}
-
-	inline explicit Allocator (const DEF<decltype (ARGVP0)> & ,const Buffer<Node ,SIZE> &_allocator) :mAllocator (std::move (_allocator)) ,mSize (0) ,mLength (0) ,mFree (VAR_NONE) {}
-
-	inline explicit Allocator (const DEF<decltype (ARGVP0)> & ,Buffer<Node ,SIZE> &&_allocator) :mAllocator (std::move (_allocator)) ,mSize (0) ,mLength (0) ,mFree (VAR_NONE) {}
-
-private:
-	inline SPECIALIZATION_TYPE &m_spec () & {
-		return *static_cast<PTR<SPECIALIZATION_TYPE>> (this) ;
-	}
-
-	inline const SPECIALIZATION_TYPE &m_spec () const & {
-		return *static_cast<PTR<const SPECIALIZATION_TYPE>> (this) ;
-	}
-
-	inline SPECIALIZATION_TYPE &m_spec () && = delete ;
-
-#pragma pop_macro ("spec")
-} ;
-
-template <class UNIT ,class SIZE>
-class Allocator :private Allocator<SPECIALIZATION<UNIT ,(std::is_copy_constructible<Buffer<UNIT ,SIZE>>::value && std::is_nothrow_move_constructible<Buffer<UNIT ,SIZE>>::value) ,std::is_nothrow_move_constructible<Buffer<UNIT ,SIZE>>::value> ,SIZE> {
-private:
-	using SPECIALIZATION_BASE = Allocator<SPECIALIZATION<UNIT ,(std::is_copy_constructible<Buffer<UNIT ,SIZE>>::value && std::is_nothrow_move_constructible<Buffer<UNIT ,SIZE>>::value) ,std::is_nothrow_move_constructible<Buffer<UNIT ,SIZE>>::value> ,SIZE> ;
-	using Node = typename SPECIALIZATION_BASE::Node ;
-
-private:
-	friend SPECIALIZATION_BASE ;
-	using SPECIALIZATION_BASE::mAllocator ;
-	using SPECIALIZATION_BASE::mSize ;
-	using SPECIALIZATION_BASE::mLength ;
-	using SPECIALIZATION_BASE::mFree ;
-
-public:
-	inline Allocator () = default ;
-
-	inline explicit Allocator (LENGTH len) :SPECIALIZATION_BASE (len) {}
-
-	inline LENGTH size () const {
-		return mSize ;
-	}
-
-	inline LENGTH length () const {
-		if (mAllocator.size () == 0)
-			return 0 ;
-		return mLength ;
-	}
-
-	inline void clear () noexcept {
-		INDEX ix = VAR_NONE ;
-		INDEX iy = VAR_NONE ;
-		for (INDEX i = 0 ,ie = mAllocator.size () ; i < ie ; i++) {
-			iy = ix ;
-			ix = mAllocator.size () + ~i ;
-			if (mAllocator[ix].mNext == VAR_USED)
-				_DESTROY_ (&mAllocator[ix].mData) ;
-			mAllocator[ix].mNext = iy ;
-		}
-		mSize = mAllocator.size () ;
-		mLength = 0 ;
-		mFree = ix ;
-	}
-
-	inline BOOL used (INDEX index) const {
-		if (mAllocator[index].mNext != VAR_USED)
-			return FALSE ;
-		return TRUE ;
-	}
-
-	inline UNIT &get (INDEX index) & {
-		_DEBUG_ASSERT_ (used (index)) ;
-		return _CAST_<UNIT> (mAllocator[index].mData) ;
-	}
-
-	inline UNIT &operator[] (INDEX index) & {
-		return get (index) ;
-	}
-
-	inline const UNIT &get (INDEX index) const & {
-		_DEBUG_ASSERT_ (used (index)) ;
-		return _CAST_<UNIT> (mAllocator[index].mData) ;
-	}
-
-	inline const UNIT &operator[] (INDEX index) const & {
-		return get (index) ;
-	}
-
-	inline UNIT &get (INDEX) && = delete ;
-
-	inline UNIT &operator[] (INDEX) && = delete ;
-
-	inline INDEX at (const UNIT &item) const {
-		auto &r1 = _CAST_<TEMP<UNIT>> (item) ;
-		INDEX ret = mAllocator.at (_OFFSET_ (&Node::mData ,r1)) ;
-		if (!used (ret))
-			ret = VAR_NONE ;
-		return std::move (ret) ;
-	}
-
-	inline void swap (Allocator &that) popping {
-		mAllocator.swap (that.mAllocator) ;
-		_SWAP_ (mLength ,that.mLength) ;
-		_SWAP_ (mFree ,that.mFree) ;
-	}
-
-	template <class... _ARGS>
-	inline INDEX alloc (_ARGS &&...args) popping {
-		_STATIC_ASSERT_ (std::is_nothrow_move_constructible<UNIT>::value) ;
-		_STATIC_ASSERT_ (std::is_nothrow_move_assignable<UNIT>::value) ;
-		_DEBUG_ASSERT_ (mSize == mAllocator.size ()) ;
-		INDEX ret = VAR_NONE ;
-		for (FOR_ONCE_DO) {
-			if (ret != VAR_NONE)
-				discard ;
-			if (mFree != VAR_NONE)
-				discard ;
-			auto rax = mAllocator.expand () ;
-			ret = mSize ;
-			_CREATE_ (&rax[ret].mData ,std::forward<_ARGS> (args)...) ;
-			for (INDEX i = 0 ,ie = mSize ; i < ie ; i++) {
-				_CREATE_ (&rax[i].mData ,std::move (_CAST_<UNIT> (mAllocator[i].mData))) ;
-				rax[i].mNext = VAR_USED ;
-			}
-			mAllocator.swap (rax) ;
-			update_reserve (mSize ,mFree) ;
-		}
-		for (FOR_ONCE_DO) {
-			if (ret != VAR_NONE)
-				discard ;
-			if (mFree == VAR_NONE)
-				discard ;
-			ret = mFree ;
-			_CREATE_ (&mAllocator[ret].mData ,std::forward<_ARGS> (args)...) ;
-		}
-		mFree = mAllocator[ret].mNext ;
-		mAllocator[ret].mNext = VAR_USED ;
-		mLength++ ;
-		return std::move (ret) ;
-	}
-
-	inline void free (INDEX index) noexcept {
-		_DEBUG_ASSERT_ (mSize == mAllocator.size ()) ;
-		_DEBUG_ASSERT_ (used (index)) ;
-		_DESTROY_ (&mAllocator[index].mData) ;
-		mAllocator[index].mNext = mFree ;
-		mFree = index ;
-		mLength-- ;
-	}
-
-	inline void reserve (LENGTH len) {
-		_STATIC_ASSERT_ (std::is_nothrow_move_constructible<UNIT>::value) ;
-		_STATIC_ASSERT_ (std::is_nothrow_move_assignable<UNIT>::value) ;
-		_DEBUG_ASSERT_ (mSize == mAllocator.size ()) ;
-		_DEBUG_ASSERT_ (len >= 0) ;
-		const auto r2x = _MAX_ (len - (mSize - mLength) ,VAR_ZERO) ;
-		if (r2x == 0)
-			return ;
-		_DEBUG_ASSERT_ (mSize + r2x > mSize) ;
-		auto rax = mAllocator.expand (mSize + r2x) ;
-		for (INDEX i = 0 ,ie = mSize ; i < ie ; i++) {
-			if (mAllocator[i].mNext == VAR_USED)
-				_CREATE_ (&rax[i].mData ,std::move (_CAST_<UNIT> (mAllocator[i].mData))) ;
-			rax[i].mNext = mAllocator[i].mNext ;
-		}
-		mAllocator.swap (rax) ;
-		update_reserve (mSize ,mFree) ;
-	}
-
-	inline void clean () {
-		_STATIC_ASSERT_ (std::is_nothrow_move_constructible<UNIT>::value) ;
-		_STATIC_ASSERT_ (std::is_nothrow_move_assignable<UNIT>::value) ;
-		_DEBUG_ASSERT_ (mSize == mAllocator.size ()) ;
-		const auto r1x = shrink_size () ;
-		if (r1x == mSize)
-			return ;
-		_DYNAMIC_ASSERT_ (r1x == mLength) ;
-		auto rax = mAllocator.expand (r1x) ;
-		for (INDEX i = 0 ,ie = rax.size () ; i < ie ; i++) {
-			_DEBUG_ASSERT_ (mAllocator[i].mNext == VAR_USED) ;
-			_CREATE_ (&rax[i].mData ,std::move (_CAST_<UNIT> (mAllocator[i].mData))) ;
-			rax[i].mNext = VAR_USED ;
-		}
-		mAllocator.swap (rax) ;
-		update_reserve (r1x ,VAR_NONE) ;
-	}
-
-private:
-	inline void update_reserve (INDEX _size ,INDEX _free) {
-		INDEX ix = _free ;
-		INDEX iy = VAR_NONE ;
-		for (INDEX i = _size ,ie = mAllocator.size () ; i < ie ; i++) {
-			iy = ix ;
-			ix = mAllocator.size () + ~(i - _size) ;
-			mAllocator[ix].mNext = iy ;
-		}
-		mSize = mAllocator.size () ;
-		mFree = ix ;
-	}
-
-	inline LENGTH shrink_size () const {
-		LENGTH ret = mSize ;
-		while (ret - 1 >= 0 && mAllocator[ret - 1].mNext != VAR_USED)
-			ret-- ;
-		return std::move (ret) ;
-	}
-} ;
 } ;

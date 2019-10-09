@@ -33,19 +33,19 @@ public:
 		auto rbx = Priority<int> (rax.length ()) ;
 		for (auto &&i : rax)
 			rbx.add (i) ;
-		const auto r2x = rbx.esort () ;
+		const auto r1x = rbx.esort () ;
 		rax.sort () ;
 		for (INDEX i = 0 ,ie = rax.length () ; i < ie ; i++)
-			_UNITTEST_ASSERT_ (rbx[r2x[i]] == rax[i]) ;
+			_UNITTEST_ASSERT_ (rbx[r1x[i]] == rax[i]) ;
 		INDEX ir = 0 ;
 		while (TRUE) {
 			if (rbx.empty ())
 				break ;
-			const auto r3x = rbx[rbx.head ()].key ;
+			const auto r2x = rbx[rbx.head ()].key ;
 			rbx.take () ;
-			const auto r4x = ir++ ;
-			_UNITTEST_ASSERT_ (r3x == rax[r4x]) ;
-			(void) r4x ;
+			const auto r3x = ir++ ;
+			_UNITTEST_ASSERT_ (r2x == rax[r3x]) ;
+			(void) r3x ;
 		}
 	}
 
