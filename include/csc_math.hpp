@@ -9,7 +9,7 @@
 #include "csc_array.hpp"
 
 namespace CSC {
-inline namespace S {
+inline namespace MATH {
 inline BOOL _ISNAN_ (const VAL32 &x) {
 	const auto r1x = _CAST_<CHAR> (x) ;
 	if ((r1x & CHAR (0X7F800000)) != CHAR (0X7F800000))
@@ -231,7 +231,8 @@ template <class _ARG1>
 inline _ARG1 _ROUND_ (const _ARG1 &x ,const _ARG1 &y) {
 	_STATIC_ASSERT_ (stl::is_var_xyz<_ARG1>::value || stl::is_val_xyz<_ARG1>::value) ;
 	_DEBUG_ASSERT_ (y > _ARG1 (0)) ;
-	return _ARG1 (_FLOOR_ (VAL64 (x) + VAL64 (y) / 2 ,VAL64 (y))) ;
+	const auto r1x = VAL64 (x) + VAL64 (y) / 2 ;
+	return _ARG1 (_FLOOR_ (r1x ,VAL64 (y))) ;
 }
 
 template <class _ARG1 ,class _ARG2>
@@ -248,9 +249,10 @@ inline const _ARG1 &_MINOF_ (const _ARG1 &list_one) {
 	return list_one ;
 }
 
-template <class _ARG1 ,class... _ARGS>
-inline const _ARG1 &_MINOF_ (const _ARG1 &list_one ,const _ARG1 &list_two ,const _ARGS &...list_rest) {
-	return _MIN_ (list_one ,_MINOF_ (list_two ,list_rest...)) ;
+template <class _ARG1 ,class _ARG2 ,class... _ARGS>
+inline const _ARG1 &_MINOF_ (const _ARG1 &list_one ,const _ARG2 &list_two ,const _ARGS &...list_rest) {
+	_STATIC_ASSERT_ (std::is_same<_ARG1 ,_ARG2>::value) ;
+	return _MINOF_ (_MIN_ (list_one ,list_two) ,list_rest...) ;
 }
 
 template <class _ARG1>
@@ -258,9 +260,10 @@ inline const _ARG1 &_MAXOF_ (const _ARG1 &list_one) {
 	return list_one ;
 }
 
-template <class _ARG1 ,class... _ARGS>
-inline const _ARG1 &_MAXOF_ (const _ARG1 &list_one ,const _ARG1 &list_two ,const _ARGS &...list_rest) {
-	return _MAX_ (list_one ,_MAXOF_ (list_two ,list_rest...)) ;
+template <class _ARG1 ,class _ARG2 ,class... _ARGS>
+inline const _ARG1 &_MAXOF_ (const _ARG1 &list_one ,const _ARG2 &list_two ,const _ARGS &...list_rest) {
+	_STATIC_ASSERT_ (std::is_same<_ARG1 ,_ARG2>::value) ;
+	return _MAXOF_ (_MAX_ (list_one ,list_two) ,list_rest...) ;
 }
 
 inline ARRAY3<DATA> _inline_IEEE754_ENCODE_PART_ (const ARRAY3<VAR64> &sne2) {
@@ -282,7 +285,7 @@ inline ARRAY3<DATA> _inline_IEEE754_ENCODE_PART_ (const ARRAY3<VAR64> &sne2) {
 		ret[0] = ret[0] << 1 ;
 		ret[1]-- ;
 	}
-	if SWITCH_ONCE (TRUE) {
+	if SWITCH_CASE (TRUE) {
 		const auto r2x = VAR64 (DATA (-1074) - ret[1]) ;
 		if (r2x <= 0)
 			discard ;
@@ -327,8 +330,8 @@ inline ARRAY3<VAR64> _IEEE754_DECODE_ (const VAL64 &ieee754) {
 		ret[1]++ ;
 	}
 	const auto r3x = _SWITCH_ (
-		((r1x & DATA (0X8000000000000000)) == 0) ? (DATA (0)) :
-		(DATA (-1))) ;
+		((r1x & DATA (0X8000000000000000)) == 0) ? DATA (0) :
+		DATA (-1)) ;
 	ret[2] = r3x ;
 	return std::move (_CAST_<ARRAY3<VAR64>> (ret)) ;
 }

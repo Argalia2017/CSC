@@ -25,10 +25,12 @@ public:
 		_UNITTEST_ASSERT_ (r9x == _PCSTR_ ("0")) ;
 		const auto r10x = _CAST_<VAL64> (_XVALUE_<DATA> (DATA (0X4027FFFFFFFFFFE1))) ;
 		const auto r11x = _BUILDVAL64S_ (r10x) ;
-		_UNITTEST_ASSERT_ (r11x.length () >= 2 && r11x.segment (0 ,2) == _PCSTR_ ("12")) ;
+		_UNITTEST_ASSERT_ (r11x.length () >= 2) ;
+		_UNITTEST_ASSERT_ (r11x.segment (0 ,2) == _PCSTR_ ("12")) ;
 		const auto r12x = _CAST_<VAL64> (_XVALUE_<DATA> (DATA (0X3F9986338B47C730))) ;
 		const auto r13x = _BUILDVAL64S_ (r12x) ;
-		_UNITTEST_ASSERT_ (r13x.length () >= 6 && r13x.segment (0 ,6) == _PCSTR_ ("0.0249")) ;
+		_UNITTEST_ASSERT_ (r13x.length () >= 6) ;
+		_UNITTEST_ASSERT_ (r13x.segment (0 ,6) == _PCSTR_ ("0.0249")) ;
 		const auto r14x = _PARSEVAL64S_ (String<STR> (_PCSTR_ ("-0.0122"))) ;
 		_UNITTEST_ASSERT_ (_ABS_ (r14x - VAL64 (-0.0122)) < VAL64 (1E-4)) ;
 		const auto r15x = _PARSEVAL64S_ (String<STR> (_PCSTR_ ("1.42E38"))) ;

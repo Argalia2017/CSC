@@ -25,8 +25,6 @@
 
 #ifdef __CSC_DEPRECATED__
 #pragma region
-#include <cstdlib>
-
 #include <crtdbg.h>
 #include <signal.h>
 #pragma warning (push)
@@ -36,6 +34,10 @@
 #include <DbgHelp.h>
 #pragma warning (pop)
 #pragma endregion
+#endif
+
+#ifndef _DBGHELP_
+#error "∑(っ°Д° ;)っ : require 'DbgHelp.h'"
 #endif
 
 #ifdef __CSC_DEPRECATED__
@@ -78,8 +80,7 @@ public:
 		mConWriter = TextWriter<STR> (SharedRef<FixedBuffer<STR>>::make (r1x)) ;
 		mLogWriter = TextWriter<STR> (SharedRef<FixedBuffer<STR>>::make (r1x)) ;
 		mBufferSize = mLogWriter.size () - DEFAULT_LONGSTRING_SIZE::value ;
-		attach_console () ;
-		modify_option (OPTION_DEFAULT) ;
+		mOptionFlag = OPTION_DEFAULT ;
 		mLogPath = String<STR> () ;
 	}
 
@@ -87,14 +88,17 @@ public:
 		return mBufferSize ;
 	}
 
-	void modify_option (FLAG option) override {
-		if (option == OPTION_DEFAULT)
-			mOptionFlag = OPTION_DEFAULT ;
+	void enable_option (FLAG option) override {
 		mOptionFlag |= option ;
+	}
+
+	void disable_option (FLAG option) override {
+		mOptionFlag &= ~option ;
 	}
 
 	void print (const Binder &msg) override {
 		write_con_buffer (msg) ;
+		attach_console () ;
 		SetConsoleTextAttribute (mConsole ,(FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE)) ;
 		auto rax = VARY () ;
 		rax = VARY (0) ;
@@ -111,6 +115,7 @@ public:
 		if ((mOptionFlag & OPTION_NO_FATAL) != 0)
 			return ;
 		write_con_buffer (msg) ;
+		attach_console () ;
 		SetConsoleTextAttribute (mConsole ,(FOREGROUND_BLUE | FOREGROUND_INTENSITY)) ;
 		auto rax = VARY () ;
 		rax = VARY (0) ;
@@ -127,6 +132,7 @@ public:
 		if ((mOptionFlag & OPTION_NO_ERROR) != 0)
 			return ;
 		write_con_buffer (msg) ;
+		attach_console () ;
 		SetConsoleTextAttribute (mConsole ,(FOREGROUND_RED | FOREGROUND_INTENSITY)) ;
 		auto rax = VARY () ;
 		rax = VARY (0) ;
@@ -143,6 +149,7 @@ public:
 		if ((mOptionFlag & OPTION_NO_WARN) != 0)
 			return ;
 		write_con_buffer (msg) ;
+		attach_console () ;
 		SetConsoleTextAttribute (mConsole ,(FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_INTENSITY)) ;
 		auto rax = VARY () ;
 		rax = VARY (0) ;
@@ -159,6 +166,7 @@ public:
 		if ((mOptionFlag & OPTION_NO_INFO) != 0)
 			return ;
 		write_con_buffer (msg) ;
+		attach_console () ;
 		SetConsoleTextAttribute (mConsole ,(FOREGROUND_GREEN | FOREGROUND_INTENSITY)) ;
 		auto rax = VARY () ;
 		rax = VARY (0) ;
@@ -175,6 +183,7 @@ public:
 		if ((mOptionFlag & OPTION_NO_DEBUG) != 0)
 			return ;
 		write_con_buffer (msg) ;
+		attach_console () ;
 		SetConsoleTextAttribute (mConsole ,(FOREGROUND_GREEN | FOREGROUND_BLUE | FOREGROUND_INTENSITY)) ;
 		auto rax = VARY () ;
 		rax = VARY (0) ;
@@ -191,6 +200,7 @@ public:
 		if ((mOptionFlag & OPTION_NO_VERBOSE) != 0)
 			return ;
 		write_con_buffer (msg) ;
+		attach_console () ;
 		SetConsoleTextAttribute (mConsole ,(FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE | FOREGROUND_INTENSITY)) ;
 		auto rax = VARY () ;
 		rax = VARY (0) ;
@@ -205,7 +215,7 @@ public:
 
 	void attach_log (const String<STR> &path) override {
 		const auto r1x = _ABSOLUTEPATH_ (path) ;
-		if SWITCH_ONCE (TRUE) {
+		if SWITCH_CASE (TRUE) {
 			if (mLogPath == r1x)
 				discard ;
 			if (!mLogFileStream.exist ())
@@ -218,7 +228,7 @@ public:
 
 	void log (const Plain<STR> &tag ,const PhanBuffer<const STR> &msg) {
 		log (PhanBuffer<const STR>::make (tag.self ,tag.size ()) ,ImplBinder<PhanBuffer<const STR>> (msg)) ;
-	}
+}
 
 	void log (const PhanBuffer<const STR> &tag ,const Binder &msg) override {
 		write_log_buffer (tag ,msg) ;
@@ -229,8 +239,6 @@ public:
 	}
 
 	void show () override {
-		if (mConsole.exist () && mConsole.self != NULL)
-			return ;
 		mConsole = UniqueRef<HANDLE> ([&] (HANDLE &me) {
 			AllocConsole () ;
 			me = GetStdHandle (STD_OUTPUT_HANDLE) ;
@@ -241,27 +249,24 @@ public:
 	}
 
 	void hide () override {
-		attach_console () ;
+		mConsole = UniqueRef<HANDLE> () ;
 	}
 
-	void flash () override {
+	void pause () override {
 		if (!mConsole.exist ())
-			return ;
-		if (mConsole.self == NULL)
 			return ;
 		const auto r1x = GetConsoleWindow () ;
 		if (r1x == NULL)
 			return ;
 		FlashWindow (r1x ,TRUE) ;
-	}
-
-	void pause () override {
 		SetConsoleTextAttribute (mConsole ,(FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE)) ;
-		const auto r1x = std::system (_PCSTRA_ ("pause")) ;
-		(void) r1x ;
+		const auto r2x = std::system (_PCSTRA_ ("pause")) ;
+		(void) r2x ;
 	}
 
 	void clear () override {
+		if (!mConsole.exist ())
+			return ;
 		const auto r1x = std::system (_PCSTRA_ ("cls")) ;
 		(void) r1x ;
 	}
@@ -348,9 +353,6 @@ inline exports ConsoleService::ConsoleService () {
 	mThis = StrongRef<Implement>::make () ;
 }
 
-#if defined (_CSTDLIB_) || defined (_GLIBCXX_CSTDLIB)
-#ifdef _DBGHELP_
-#ifdef _INC_CRTDBG
 class DebuggerService::Implement :public DebuggerService::Abstract {
 private:
 	UniqueRef<HANDLE> mSymbolFromAddress ;
@@ -386,7 +388,7 @@ public:
 	void output_memory_leaks_report (BOOL flag) override {
 		_DEBUG_ASSERT_ (flag) ;
 		const auto r1x = _CrtSetDbgFlag (_CRTDBG_REPORT_FLAG) ;
-		const auto r2x = (r1x | _CRTDBG_LEAK_CHECK_DF) ;
+		const auto r2x = _COPY_ (r1x | _CRTDBG_LEAK_CHECK_DF) ;
 		const auto r3x = _CrtSetDbgFlag (r2x) ;
 		(void) r1x ;
 		(void) r2x ;
@@ -409,9 +411,9 @@ public:
 		attach_symbol_info () ;
 		Array<String<STR>> ret = Array<String<STR>> (list.length ()) ;
 		INDEX iw = 0 ;
-		auto fax = FALSE ;
+		auto fax = TRUE ;
 		if SWITCH_CASE (fax) {
-			if (!(mSymbolFromAddress.exist ()))
+			if (!mSymbolFromAddress.exist ())
 				discard ;
 			const auto r1x = _ALIGNOF_ (SYMBOL_INFO) - 1 + _SIZEOF_ (SYMBOL_INFO) + list.length () * DEFAULT_SHORTSTRING_SIZE::value ;
 			auto rax = AutoBuffer<BYTE> (r1x) ;
@@ -460,7 +462,4 @@ private:
 inline exports DebuggerService::DebuggerService () {
 	mThis = StrongRef<Implement>::make () ;
 }
-#endif
-#endif
-#endif
 } ;
