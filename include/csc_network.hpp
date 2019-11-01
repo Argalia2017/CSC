@@ -26,7 +26,7 @@ private:
 public:
 	TCPSocket () = delete ;
 
-	explicit TCPSocket (const String<STRU8> &addr) ;
+	explicit TCPSocket (const String<STRU8> &ip_addr) ;
 
 	String<STRU8> sock_name () const ;
 
@@ -34,7 +34,7 @@ public:
 
 	Listener listener () popping ;
 
-	void link (const String<STRU8> &addr) ;
+	void link (const String<STRU8> &ip_addr) ;
 
 	void modify_buffer (LENGTH rcv_len ,LENGTH snd_len) ;
 
@@ -69,9 +69,9 @@ public:
 	}
 
 public:
-	static String<STRU8> http_get (const String<STRU8> &addr ,const String<STRU8> &site ,const String<STRU8> &msg ,LENGTH buffer_len ,LENGTH timeout) popping ;
+	static String<STRU8> http_get (const String<STRU8> &ip_addr ,const String<STRU8> &site ,const String<STRU8> &msg ,LENGTH buffer_len ,LENGTH timeout) popping ;
 
-	static String<STRU8> http_post (const String<STRU8> &addr ,const String<STRU8> &site ,const String<STRU8> &msg ,LENGTH buffer_len ,LENGTH timeout) popping ;
+	static String<STRU8> http_post (const String<STRU8> &ip_addr ,const String<STRU8> &site ,const String<STRU8> &msg ,LENGTH buffer_len ,LENGTH timeout) popping ;
 } ;
 
 class TCPSocket::Listener {
@@ -104,13 +104,13 @@ private:
 public:
 	UDPSocket () = delete ;
 
-	explicit UDPSocket (const String<STRU8> &addr) ;
+	explicit UDPSocket (const String<STRU8> &ip_addr) ;
 
 	String<STRU8> sock_name () const ;
 
 	String<STRU8> peer_sock_name () const ;
 
-	void link (const String<STRU8> &addr) ;
+	void link (const String<STRU8> &ip_addr) ;
 
 	void modify_timeout (LENGTH timeout) ;
 

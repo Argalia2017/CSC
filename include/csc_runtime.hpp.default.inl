@@ -37,8 +37,8 @@
 
 namespace CSC {
 #ifdef __CSC_DEPRECATED__
-template <class UNIT>
-class Coroutine<UNIT>::Implement final :private Interface {
+template <class CONT>
+class Coroutine<CONT>::Implement final :private Interface {
 private:
 	struct CONTEXT_EBP {
 		jmp_buf mEbp ;
@@ -54,22 +54,22 @@ private:
 	} ;
 
 private:
-	friend Coroutine<UNIT> ;
+	friend Coroutine<CONT> ;
 
 public:
 	static void init_break_point (PTR<AnyRef<void>> bp) {
-		auto rax = BREAKPOINT () ;
-		_ZERO_ (rax) ;
-		rax.mStackPoint[0] = _ADDRESS_ (&bp) ;
-		rax.mStackPoint[1] = 0 ;
-		rax.mStackPoint[2] = 0 ;
-		(*bp) = AnyRef<BREAKPOINT>::make (std::move (rax)) ;
+		auto tmp = BREAKPOINT () ;
+		_ZERO_ (tmp) ;
+		tmp.mStackPoint[0] = _ADDRESS_ (&bp) ;
+		tmp.mStackPoint[1] = 0 ;
+		tmp.mStackPoint[2] = 0 ;
+		(*bp) = AnyRef<BREAKPOINT>::make (std::move (tmp)) ;
 	}
 
 	static void store_break_point (PTR<AnyRef<void>> bp) noexcept {
 		auto &r1y = bp->rebind<BREAKPOINT> ().self ;
 		_DEBUG_ASSERT_ (r1y.mStackPoint[0] != 0) ;
-		r1y.mStackPoint[1] = _ADDRESS_  (&bp) ;
+		r1y.mStackPoint[1] = _ADDRESS_ (&bp) ;
 		const auto r2x = r1y.mStackPoint[1] - r1y.mStackPoint[0] ;
 		_DEBUG_ASSERT_ (_ABS_ (r2x) <= _SIZEOF_ (decltype (r1y.mStackFrame))) ;
 		const auto r3x = EFLAG (r2x < 0) ;
@@ -84,7 +84,7 @@ public:
 		auto &r1y = bp->rebind<BREAKPOINT> ().self ;
 		_DEBUG_ASSERT_ (r1y.mStackPoint[0] != 0) ;
 		_DEBUG_ASSERT_ (r1y.mStackPoint[1] != 0) ;
-		r1y.mStackPoint[2] = _ADDRESS_  (&bp) ;
+		r1y.mStackPoint[2] = _ADDRESS_ (&bp) ;
 		_STATIC_WARNING_ ("mark") ;
 		_DEBUG_ASSERT_ (r1y.mStackPoint[2] == r1y.mStackPoint[1]) ;
 		const auto r2x = r1y.mStackPoint[1] - r1y.mStackPoint[0] ;
@@ -102,18 +102,18 @@ public:
 	}
 } ;
 
-template <class UNIT>
-inline exports void Coroutine<UNIT>::init_break_point (AnyRef<void> &bp) popping {
+template <class CONT>
+inline exports void Coroutine<CONT>::init_break_point (AnyRef<void> &bp) popping {
 	Implement::init_break_point (&bp) ;
 }
 
-template <class UNIT>
-inline exports void Coroutine<UNIT>::store_break_point (AnyRef<void> &bp) noexcept popping {
+template <class CONT>
+inline exports void Coroutine<CONT>::store_break_point (AnyRef<void> &bp) noexcept popping {
 	Implement::store_break_point (&bp) ;
 }
 
-template <class UNIT>
-inline exports void Coroutine<UNIT>::goto_break_point (AnyRef<void> &bp) noexcept popping {
+template <class CONT>
+inline exports void Coroutine<CONT>::goto_break_point (AnyRef<void> &bp) noexcept popping {
 	Implement::goto_break_point (&bp) ;
 }
 #endif

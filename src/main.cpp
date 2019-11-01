@@ -12,7 +12,8 @@ TEST_CLASS (UNITTEST_MAIN) {
 public:
 	TEST_METHOD (TEST_MAIN) {
 		using namespace UNITTEST ;
-		
+		//= _CALL_
+		//const auto r\d+x = _SWITCH_
 	}
 } ;
 

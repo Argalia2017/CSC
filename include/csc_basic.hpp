@@ -7,14 +7,42 @@
 #include "csc.hpp"
 
 namespace CSC {
-inline namespace S {
+inline namespace BASIC {
+template <class _ARG1>
+inline constexpr _ARG1 _ABS_ (const _ARG1 &val) {
+	return _SWITCH_ (
+		(val < 0) ? -val :
+		+val) ;
+}
+
+template <class _ARG1>
+inline constexpr _ARG1 _SQE_ (const _ARG1 &val) {
+	return val * val ;
+}
+
+template <class _ARG1>
+inline constexpr const _ARG1 &_MIN_ (const _ARG1 &lhs ,const _ARG1 &rhs) {
+	return _SWITCH_ (
+		!(rhs < lhs) ? lhs :
+		rhs) ;
+}
+
+template <class _ARG1>
+inline constexpr const _ARG1 &_MAX_ (const _ARG1 &lhs ,const _ARG1 &rhs) {
+	return _SWITCH_ (
+		!(lhs < rhs) ? lhs :
+		rhs) ;
+}
+} ;
+
+inline namespace BASIC {
 template <class _ARG1>
 inline BOOL _MEMEQUAL_ (const ARR<_ARG1> &src1 ,const ARR<_ARG1> &src2 ,LENGTH len) {
 #pragma GCC diagnostic push
 #ifdef __CSC_COMPILER_GNUC__
 #pragma GCC diagnostic ignored "-Warray-bounds"
 #endif
-	if SWITCH_ONCE (TRUE) {
+	if SWITCH_CASE (TRUE) {
 		if (len == 0)
 			discard ;
 		_DEBUG_ASSERT_ (src1 != NULL) ;
@@ -36,7 +64,7 @@ inline FLAG _MEMCOMPR_ (const ARR<_ARG1> &src1 ,const ARR<_ARG1> &src2 ,LENGTH l
 #ifdef __CSC_COMPILER_GNUC__
 #pragma GCC diagnostic ignored "-Warray-bounds"
 #endif
-	if SWITCH_ONCE (TRUE) {
+	if SWITCH_CASE (TRUE) {
 		if (len == 0)
 			discard ;
 		_DEBUG_ASSERT_ (src1 != NULL) ;
@@ -61,8 +89,7 @@ inline FLAG _MEMHASH_ (const ARR<_ARG1> &src ,LENGTH len) {
 #ifdef __CSC_COMPILER_GNUC__
 #pragma GCC diagnostic ignored "-Warray-bounds"
 #endif
-	_STATIC_ASSERT_ (std::is_same<_ARG1 ,BYTE>::value) ;
-	if SWITCH_ONCE (TRUE) {
+	if SWITCH_CASE (TRUE) {
 		if (len == 0)
 			discard ;
 		_DEBUG_ASSERT_ (src != NULL) ;
@@ -85,13 +112,52 @@ inline FLAG _MEMHASH_ (const ARR<_ARG1> &src ,LENGTH len) {
 #pragma GCC diagnostic pop
 }
 
+inline CHAR _inline_MEMCRC32_TABLE_EACH_ (CHAR val) {
+	CHAR ret = val ;
+	for (INDEX i = 0 ,ie = 8 ; i < ie ; i++) {
+		const auto r1x = ret & CHAR (0X00000001) ;
+		ret >>= 1 ;
+		if (r1x == 0)
+			continue ;
+		ret ^= CHAR (0XEDB88320) ;
+	}
+	return std::move (ret) ;
+}
+
+inline const PACK<CHAR[256]> &_inline_MEMCRC32_TABLE_ () {
+	return _CACHE_ ([] () {
+		PACK<CHAR[256]> ret ;
+		for (INDEX i = 0 ,ie = _COUNTOF_ (decltype (ret.P1)) ; i < ie ; i++)
+			ret.P1[i] = _inline_MEMCRC32_TABLE_EACH_ (CHAR (i)) ;
+		return std::move (ret) ;
+	}) ;
+}
+
+template <class _ARG1>
+inline FLAG _MEMCRC32_ (const ARR<_ARG1> &src ,LENGTH len) {
+#pragma GCC diagnostic push
+#ifdef __CSC_COMPILER_GNUC__
+#pragma GCC diagnostic ignored "-Warray-bounds"
+#endif
+	_STATIC_ASSERT_ (std::is_same<_ARG1 ,BYTE>::value) ;
+	FLAG ret = FLAG (0XFFFFFFFF) ;
+	auto &r1y = _inline_MEMCRC32_TABLE_ () ;
+	for (INDEX i = 0 ,ie = len ; i < ie ; i++) {
+		const auto r2x = INDEX ((CHAR (ret) ^ CHAR (src[i])) & CHAR (0X000000FF)) ;
+		ret = FLAG (r1y.P1[r2x] ^ (CHAR (ret) >> 8)) ;
+	}
+	ret &= VAR32_MAX ;
+	return std::move (ret) ;
+#pragma GCC diagnostic pop
+}
+
 template <class _ARG1>
 inline INDEX _MEMCHR_ (const ARR<_ARG1> &src ,LENGTH len ,const _ARG1 &val) {
 #pragma GCC diagnostic push
 #ifdef __CSC_COMPILER_GNUC__
 #pragma GCC diagnostic ignored "-Warray-bounds"
 #endif
-	if SWITCH_ONCE (TRUE) {
+	if SWITCH_CASE (TRUE) {
 		if (len == 0)
 			discard ;
 		_DEBUG_ASSERT_ (src != NULL) ;
@@ -110,7 +176,7 @@ inline INDEX _MEMRCHR_ (const ARR<_ARG1> &src ,LENGTH len ,const _ARG1 &val) {
 #ifdef __CSC_COMPILER_GNUC__
 #pragma GCC diagnostic ignored "-Warray-bounds"
 #endif
-	if SWITCH_ONCE (TRUE) {
+	if SWITCH_CASE (TRUE) {
 		if (len == 0)
 			discard ;
 		_DEBUG_ASSERT_ (src != NULL) ;
@@ -124,12 +190,31 @@ inline INDEX _MEMRCHR_ (const ARR<_ARG1> &src ,LENGTH len ,const _ARG1 &val) {
 }
 
 template <class _ARG1>
+inline LENGTH _MEMCOUNT_ (const ARR<_ARG1> &src ,LENGTH len ,const _ARG1 &val) {
+#pragma GCC diagnostic push
+#ifdef __CSC_COMPILER_GNUC__
+#pragma GCC diagnostic ignored "-Warray-bounds"
+#endif
+	if SWITCH_CASE (TRUE) {
+		if (len == 0)
+			discard ;
+		_DEBUG_ASSERT_ (src != NULL) ;
+		_DEBUG_ASSERT_ (len > 0) ;
+	}
+	LENGTH ret = 0 ;
+	for (INDEX i = 0 ,ie = len ; i < ie ; i++)
+		ret += EFLAG (src[i] == val) ;
+	return std::move (ret) ; ;
+#pragma GCC diagnostic pop
+}
+
+template <class _ARG1>
 inline void _MEMCOPY_ (ARR<_ARG1> &dst ,const ARR<_ARG1> &src ,LENGTH len) {
 #pragma GCC diagnostic push
 #ifdef __CSC_COMPILER_GNUC__
 #pragma GCC diagnostic ignored "-Warray-bounds"
 #endif
-	if SWITCH_ONCE (TRUE) {
+	if SWITCH_CASE (TRUE) {
 		if (len == 0)
 			discard ;
 		_DEBUG_ASSERT_ (src != NULL) ;
@@ -150,7 +235,7 @@ inline void _MEMRCOPY_ (ARR<_ARG1> &dst ,const ARR<_ARG1> &src ,LENGTH len) {
 #ifdef __CSC_COMPILER_GNUC__
 #pragma GCC diagnostic ignored "-Warray-bounds"
 #endif
-	if SWITCH_ONCE (TRUE) {
+	if SWITCH_CASE (TRUE) {
 		if (len == 0)
 			discard ;
 		_DEBUG_ASSERT_ (src != NULL) ;
@@ -161,7 +246,7 @@ inline void _MEMRCOPY_ (ARR<_ARG1> &dst ,const ARR<_ARG1> &src ,LENGTH len) {
 		return ;
 	if (src == NULL)
 		return ;
-	auto fax = FALSE ;
+	auto fax = TRUE ;
 	if SWITCH_CASE (fax) {
 		if (!(dst != src))
 			discard ;
@@ -187,7 +272,7 @@ inline void _MEMMOVE_ (ARR<_ARG1> &dst1 ,ARR<_ARG1> &dst2 ,LENGTH len) {
 #ifdef __CSC_COMPILER_GNUC__
 #pragma GCC diagnostic ignored "-Warray-bounds"
 #endif
-	if SWITCH_ONCE (TRUE) {
+	if SWITCH_CASE (TRUE) {
 		if (len == 0)
 			discard ;
 		_DEBUG_ASSERT_ (dst1 != NULL) ;
@@ -196,7 +281,7 @@ inline void _MEMMOVE_ (ARR<_ARG1> &dst1 ,ARR<_ARG1> &dst2 ,LENGTH len) {
 	}
 	if (dst1 == dst2)
 		return ;
-	auto fax = FALSE ;
+	auto fax = TRUE ;
 	if SWITCH_CASE (fax) {
 		if (!(dst1 < dst2))
 			discard ;
@@ -218,7 +303,7 @@ inline void _MEMSWAP_ (ARR<_ARG1> &dst1 ,ARR<_ARG1> &dst2 ,LENGTH len) {
 #ifdef __CSC_COMPILER_GNUC__
 #pragma GCC diagnostic ignored "-Warray-bounds"
 #endif
-	if SWITCH_ONCE (TRUE) {
+	if SWITCH_CASE (TRUE) {
 		if (len == 0)
 			discard ;
 		_DEBUG_ASSERT_ (dst1 != NULL) ;
@@ -232,13 +317,14 @@ inline void _MEMSWAP_ (ARR<_ARG1> &dst1 ,ARR<_ARG1> &dst2 ,LENGTH len) {
 		_SWAP_ (dst1[i] ,dst2[i]) ;
 #pragma GCC diagnostic pop
 }
+
 template <class _ARG1>
 inline void _MEMFILL_ (ARR<_ARG1> &dst ,LENGTH len ,const _ARG1 &val) {
 #pragma GCC diagnostic push
 #ifdef __CSC_COMPILER_GNUC__
 #pragma GCC diagnostic ignored "-Warray-bounds"
 #endif
-	if SWITCH_ONCE (TRUE) {
+	if SWITCH_CASE (TRUE) {
 		if (len == 0)
 			discard ;
 		_DEBUG_ASSERT_ (dst != NULL) ;
@@ -248,6 +334,60 @@ inline void _MEMFILL_ (ARR<_ARG1> &dst ,LENGTH len ,const _ARG1 &val) {
 		dst[i] = val ;
 #pragma GCC diagnostic pop
 }
+} ;
+
+namespace U {
+struct OPERATOR_COMPR {
+	template <class _ARG1>
+	inline static FLAG template_compr (const _ARG1 &lhs ,const _ARG1 &rhs ,const ARGV<ENABLE_TYPE<std::is_same<DEF<decltype (_NULL_<const REMOVE_REFERENCE_TYPE<_ARG1>> ().compr (_NULL_<const REMOVE_REFERENCE_TYPE<_ARG1>> ()))> ,FLAG>::value>> & ,const DEF<decltype (ARGVP3)> &) {
+		return lhs.compr (rhs) ;
+	}
+
+	template <class _ARG1>
+	inline static FLAG template_compr (const _ARG1 &lhs ,const _ARG1 &rhs ,const ARGV<ENABLE_TYPE<std::is_same<DEF<decltype (_NULL_<const REMOVE_REFERENCE_TYPE<_ARG1>> ().operator< (_NULL_<const REMOVE_REFERENCE_TYPE<_ARG1>> ()))> ,FLAG>::value>> & ,const DEF<decltype (ARGVP2)> &) {
+		if (lhs < rhs)
+			return FLAG (-1) ;
+		if (rhs < lhs)
+			return FLAG (+1) ;
+		return FLAG (0) ;
+	}
+
+	template <class _ARG1>
+	inline static FLAG template_compr (const _ARG1 &lhs ,const _ARG1 &rhs ,const ARGV<ENABLE_TYPE<std::is_pod<_ARG1>::value>> & ,const DEF<decltype (ARGVP1)> &) {
+		return _MEMCOMPR_ (PTRTOARR[_CAST_<BYTE[_SIZEOF_ (_ARG1)]> (lhs)] ,PTRTOARR[_CAST_<BYTE[_SIZEOF_ (_ARG1)]> (rhs)] ,_SIZEOF_ (_ARG1)) ;
+	}
+
+	template <class _ARG1>
+	inline static FLAG invoke (const _ARG1 &lhs ,const _ARG1 &rhs) {
+		return template_compr (lhs ,rhs ,ARGVPX ,ARGVP9) ;
+	}
+} ;
+} ;
+
+namespace U {
+struct OPERATOR_HASH {
+	template <class _ARG1>
+	inline static FLAG template_hash (const _ARG1 &self_ ,const ARGV<ENABLE_TYPE<std::is_same<DEF<decltype (_NULL_<const REMOVE_REFERENCE_TYPE<_ARG1>> ().hash ())> ,FLAG>::value>> & ,const DEF<decltype (ARGVP3)> &) {
+		return self_.hash () ;
+	}
+
+	template <class _ARG1>
+	inline static FLAG template_hash (const _ARG1 &self_ ,const ARGV<ENABLE_TYPE<std::is_integral<_ARG1>::value>> & ,const DEF<decltype (ARGVP2)> &) {
+		return FLAG (self_) ;
+	}
+
+	template <class _ARG1>
+	inline static FLAG template_hash (const _ARG1 &self_ ,const ARGV<ENABLE_TYPE<std::is_pod<_ARG1>::value>> & ,const DEF<decltype (ARGVP1)> &) {
+		return _MEMHASH_ (PTRTOARR[_CAST_<BYTE[_SIZEOF_ (_ARG1)]> (self_)] ,_SIZEOF_ (_ARG1)) ;
+	}
+
+	template <class _ARG1>
+	inline static FLAG invoke (const _ARG1 &self_) {
+		FLAG ret = template_hash (self_ ,ARGVPX ,ARGVP9) ;
+		ret &= VAR_MAX ;
+		return std::move (ret) ;
+	}
+} ;
 } ;
 
 class GlobalHeap final :private Wrapped<void> {
@@ -316,13 +456,14 @@ public:
 	inline static OwnerProxy<ARR<_RET>> alloc (LENGTH len) popping {
 		_STATIC_ASSERT_ (!std::is_reference<_RET>::value) ;
 		_STATIC_ASSERT_ (std::is_pod<_RET>::value) ;
-		_DEBUG_ASSERT_ (len > 0) ;
-		_DEBUG_ASSERT_ (len * _SIZEOF_ (_RET) > 0) ;
 		_STATIC_ASSERT_ (_ALIGNOF_ (_RET) <= _ALIGNOF_ (stl::max_align_t)) ;
-		const auto r1x = operator new (len * _SIZEOF_ (_RET) ,std::nothrow) ;
-		_DYNAMIC_ASSERT_ (r1x != NULL) ;
-		auto &r2y = _LOAD_<ARR<_RET>> (r1x) ;
-		return OwnerProxy<ARR<_RET>> (&r2y) ;
+		_DEBUG_ASSERT_ (len > 0) ;
+		const auto r1x = len * _SIZEOF_ (_RET) ;
+		_DEBUG_ASSERT_ (r1x > 0) ;
+		const auto r2x = operator new (r1x ,std::nothrow) ;
+		_DYNAMIC_ASSERT_ (r2x != NULL) ;
+		auto &r3y = _LOAD_<ARR<_RET>> (r2x) ;
+		return OwnerProxy<ARR<_RET>> (&r3y) ;
 	}
 
 	template <class _ARG1>
@@ -350,7 +491,7 @@ public:
 	inline ~ScopedGuard () noexcept {
 		if (mAddress == NULL)
 			return ;
-		_CATCH_ ([&] () {
+		_CALL_TRY_ ([&] () {
 			mAddress->unlock () ;
 		}) ;
 		mAddress = NULL ;
@@ -377,7 +518,7 @@ public:
 	template <class... _ARGS>
 	inline explicit ScopedBuild (const volatile PTR<TEMP<UNIT>> &address ,_ARGS &&...initval) popping :ScopedBuild (ARGVP0) {
 		mAddress = &address ;
-		const auto r1x = (*mAddress) ;
+		const auto r1x = _COPY_ (*mAddress) ;
 		_CREATE_ (r1x ,std::forward<_ARGS> (initval)...) ;
 		mSize++ ;
 	}
@@ -385,10 +526,10 @@ public:
 	inline ~ScopedBuild () noexcept {
 		if (mAddress == NULL)
 			return ;
-		const auto r1x = (*mAddress) ;
+		const auto r1x = _COPY_ (*mAddress) ;
 		if (r1x == NULL)
 			return ;
-		if SWITCH_ONCE (TRUE) {
+		if SWITCH_CASE (TRUE) {
 			if (mSize <= 0)
 				discard ;
 			_DESTROY_ (r1x) ;
@@ -417,7 +558,7 @@ public:
 
 	inline explicit ScopedBuild (const volatile PTR<ARR<TEMP<UNIT>>> &address ,LENGTH len) popping :ScopedBuild (ARGVP0) {
 		mAddress = &address ;
-		const auto r1x = (*mAddress) ;
+		const auto r1x = _COPY_ (*mAddress) ;
 		if (r1x == NULL)
 			return ;
 		while (TRUE) {
@@ -431,7 +572,7 @@ public:
 	inline explicit ScopedBuild (const volatile PTR<ARR<TEMP<UNIT>>> &address ,const ARR<UNIT> &src ,LENGTH len) popping :ScopedBuild (ARGVP0) {
 		_DEBUG_ASSERT_ (src != NULL) ;
 		mAddress = &address ;
-		const auto r1x = (*mAddress) ;
+		const auto r1x = _COPY_ (*mAddress) ;
 		if (r1x == NULL)
 			return ;
 		while (TRUE) {
@@ -445,7 +586,7 @@ public:
 	inline ~ScopedBuild () noexcept {
 		if (mAddress == NULL)
 			return ;
-		const auto r1x = (*mAddress) ;
+		const auto r1x = _COPY_ (*mAddress) ;
 		if (r1x == NULL)
 			return ;
 		while (TRUE) {
@@ -571,7 +712,7 @@ public:
 	}
 
 	inline AutoRef &operator= (AutoRef &&that) noexcept {
-		if SWITCH_ONCE (TRUE) {
+		if SWITCH_CASE (TRUE) {
 			if (this == &that)
 				discard ;
 			(*this).~AutoRef () ;
@@ -629,7 +770,7 @@ public:
 	}
 
 	inline AutoRef &operator= (const AutoRef &that) {
-		if SWITCH_ONCE (TRUE) {
+		if SWITCH_CASE (TRUE) {
 			if (this == &that)
 				discard ;
 			(*this).~AutoRef () ;
@@ -643,7 +784,7 @@ public:
 	}
 
 	inline AutoRef &operator= (AutoRef &&that) noexcept {
-		if SWITCH_ONCE (TRUE) {
+		if SWITCH_CASE (TRUE) {
 			if (this == &that)
 				discard ;
 			(*this).~AutoRef () ;
@@ -742,7 +883,7 @@ public:
 	inline ~SharedRef () noexcept {
 		if (mPointer == NULL)
 			return ;
-		if SWITCH_ONCE (TRUE) {
+		if SWITCH_CASE (TRUE) {
 			const auto r1x = --mPointer->mCounter ;
 			if (r1x != 0)
 				discard ;
@@ -757,7 +898,7 @@ public:
 	}
 
 	inline SharedRef &operator= (const SharedRef &that) {
-		if SWITCH_ONCE (TRUE) {
+		if SWITCH_CASE (TRUE) {
 			if (this == &that)
 				discard ;
 			(*this).~SharedRef () ;
@@ -771,7 +912,7 @@ public:
 	}
 
 	inline SharedRef &operator= (SharedRef &&that) noexcept {
-		if SWITCH_ONCE (TRUE) {
+		if SWITCH_CASE (TRUE) {
 			if (this == &that)
 				discard ;
 			(*this).~SharedRef () ;
@@ -828,7 +969,7 @@ class AnyRef ;
 template <>
 class AnyRef<void> {
 private:
-	struct Holder :public Interface {
+	exports struct Holder :public Interface {
 		virtual FLAG typeuid () const = 0 ;
 	} ;
 
@@ -861,7 +1002,7 @@ public:
 	}
 
 	inline AnyRef &operator= (AnyRef &&that) noexcept {
-		if SWITCH_ONCE (TRUE) {
+		if SWITCH_CASE (TRUE) {
 			if (this == &that)
 				discard ;
 			(*this).~AnyRef () ;
@@ -945,7 +1086,7 @@ public:
 	}
 
 	inline AnyRef &operator= (AnyRef &&that) noexcept {
-		if SWITCH_ONCE (TRUE) {
+		if SWITCH_CASE (TRUE) {
 			if (this == &that)
 				discard ;
 			(*this).~AnyRef () ;
@@ -1023,12 +1164,96 @@ public:
 	}
 } ;
 
+template <class>
+class UniqueRef ;
+
+template <>
+class UniqueRef<void> {
+private:
+	exports struct Holder :public Interface {
+		virtual void release () = 0 ;
+	} ;
+
+	template <class UNIT_>
+	class ImplHolder :public Holder {
+	private:
+		UNIT_ mFunctor ;
+
+	public:
+		inline ImplHolder () = delete ;
+
+		inline explicit ImplHolder (const UNIT_ &functor) :mFunctor (std::move (functor)) {}
+
+		inline explicit ImplHolder (UNIT_ &&functor) :mFunctor (std::move (functor)) {}
+
+		inline void release () override {
+			mFunctor () ;
+		}
+	} ;
+
+private:
+	template <class>
+	friend class UniqueRef ;
+	PTR<Holder> mPointer ;
+
+public:
+	inline UniqueRef () noexcept {
+		mPointer = NULL ;
+	}
+
+	template <class _ARG1 ,class _ARG2>
+	inline explicit UniqueRef (_ARG1 &&constructor ,_ARG2 &&destructor) popping :UniqueRef () {
+		_STATIC_ASSERT_ (!std::is_reference<_ARG1>::value) ;
+		_STATIC_ASSERT_ (std::is_same<RESULT_OF_TYPE<_ARG1 ,ARGVS<>> ,void>::value) ;
+		_STATIC_ASSERT_ (std::is_same<RESULT_OF_TYPE<_ARG2 ,ARGVS<>> ,void>::value) ;
+		_STATIC_ASSERT_ (std::is_convertible<REMOVE_REFERENCE_TYPE<_ARG2> ,PTR<void ()>>::value) ;
+		auto rax = GlobalHeap::alloc<TEMP<ImplHolder<REMOVE_REFERENCE_TYPE<_ARG2>>>> () ;
+		ScopedBuild<ImplHolder<REMOVE_REFERENCE_TYPE<_ARG2>>> ANONYMOUS (rax ,std::forward<_ARG2> (destructor)) ;
+		auto &r1y = _LOAD_<ImplHolder<REMOVE_REFERENCE_TYPE<_ARG2>>> (_XVALUE_<PTR<TEMP<ImplHolder<REMOVE_REFERENCE_TYPE<_ARG2>>>>> (rax)) ;
+		constructor () ;
+		mPointer = &r1y ;
+		rax = NULL ;
+	}
+
+	inline ~UniqueRef () noexcept {
+		if (mPointer == NULL)
+			return ;
+		_CALL_TRY_ ([&] () {
+			mPointer->release () ;
+		}) ;
+		mPointer->~Holder () ;
+		GlobalHeap::free (mPointer) ;
+		mPointer = NULL ;
+	}
+
+	inline UniqueRef (const UniqueRef &) = delete ;
+	inline UniqueRef &operator= (const UniqueRef &) = delete ;
+
+	inline UniqueRef (UniqueRef &&that) noexcept {
+		mPointer = _EXCHANGE_ (that.mPointer) ;
+	}
+
+	inline UniqueRef &operator= (UniqueRef &&that) noexcept {
+		if SWITCH_CASE (TRUE) {
+			if (this == &that)
+				discard ;
+			(*this).~UniqueRef () ;
+			new (this) UniqueRef (std::move (that)) ;
+		}
+		return (*this) ;
+	}
+
+	inline BOOL exist () const {
+		if (mPointer == NULL)
+			return FALSE ;
+		return TRUE ;
+	}
+} ;
+
 template <class UNIT>
 class UniqueRef {
 private:
-	struct Holder :public Interface {
-		virtual void release () = 0 ;
-	} ;
+	using Holder = typename UniqueRef<void>::Holder ;
 
 	template <class UNIT_>
 	class ImplHolder :public Holder {
@@ -1039,6 +1264,8 @@ private:
 
 	public:
 		inline ImplHolder () = delete ;
+
+		inline explicit ImplHolder (const UNIT_ &functor) :mFunctor (std::move (functor)) {}
 
 		inline explicit ImplHolder (UNIT_ &&functor) :mFunctor (std::move (functor)) {}
 
@@ -1073,7 +1300,7 @@ public:
 	inline ~UniqueRef () noexcept {
 		if (mPointer == NULL)
 			return ;
-		_CATCH_ ([&] () {
+		_CALL_TRY_ ([&] () {
 			mPointer->release () ;
 		}) ;
 		mPointer->~Holder () ;
@@ -1089,7 +1316,7 @@ public:
 	}
 
 	inline UniqueRef &operator= (UniqueRef &&that) noexcept {
-		if SWITCH_ONCE (TRUE) {
+		if SWITCH_CASE (TRUE) {
 			if (this == &that)
 				discard ;
 			(*this).~UniqueRef () ;
@@ -1135,85 +1362,6 @@ public:
 	}
 } ;
 
-template <>
-class UniqueRef<void> {
-private:
-	struct Holder :public Interface {
-		virtual void release () = 0 ;
-	} ;
-
-	template <class UNIT_>
-	class ImplHolder :public Holder {
-	private:
-		UNIT_ mFunctor ;
-
-	public:
-		inline ImplHolder () = delete ;
-
-		inline explicit ImplHolder (UNIT_ &&functor) :mFunctor (std::move (functor)) {}
-
-		inline void release () override {
-			mFunctor () ;
-		}
-	} ;
-
-private:
-	PTR<Holder> mPointer ;
-
-public:
-	inline UniqueRef () noexcept {
-		mPointer = NULL ;
-	}
-
-	template <class _ARG1 ,class _ARG2>
-	inline explicit UniqueRef (_ARG1 &&constructor ,_ARG2 &&destructor) popping :UniqueRef () {
-		_STATIC_ASSERT_ (!std::is_reference<_ARG1>::value) ;
-		_STATIC_ASSERT_ (std::is_same<RESULT_OF_TYPE<_ARG1 ,ARGVS<>> ,void>::value) ;
-		_STATIC_ASSERT_ (std::is_same<RESULT_OF_TYPE<_ARG2 ,ARGVS<>> ,void>::value) ;
-		_STATIC_ASSERT_ (std::is_convertible<REMOVE_REFERENCE_TYPE<_ARG2> ,PTR<void ()>>::value) ;
-		auto rax = GlobalHeap::alloc<TEMP<ImplHolder<REMOVE_REFERENCE_TYPE<_ARG2>>>> () ;
-		ScopedBuild<ImplHolder<REMOVE_REFERENCE_TYPE<_ARG2>>> ANONYMOUS (rax ,std::forward<_ARG2> (destructor)) ;
-		auto &r1y = _LOAD_<ImplHolder<REMOVE_REFERENCE_TYPE<_ARG2>>> (_XVALUE_<PTR<TEMP<ImplHolder<REMOVE_REFERENCE_TYPE<_ARG2>>>>> (rax)) ;
-		constructor () ;
-		mPointer = &r1y ;
-		rax = NULL ;
-	}
-
-	inline ~UniqueRef () noexcept {
-		if (mPointer == NULL)
-			return ;
-		_CATCH_ ([&] () {
-			mPointer->release () ;
-		}) ;
-		mPointer->~Holder () ;
-		GlobalHeap::free (mPointer) ;
-		mPointer = NULL ;
-	}
-
-	inline UniqueRef (const UniqueRef &) = delete ;
-	inline UniqueRef &operator= (const UniqueRef &) = delete ;
-
-	inline UniqueRef (UniqueRef &&that) noexcept {
-		mPointer = _EXCHANGE_ (that.mPointer) ;
-	}
-
-	inline UniqueRef &operator= (UniqueRef &&that) noexcept {
-		if SWITCH_ONCE (TRUE) {
-			if (this == &that)
-				discard ;
-			(*this).~UniqueRef () ;
-			new (this) UniqueRef (std::move (that)) ;
-		}
-		return (*this) ;
-	}
-
-	inline BOOL exist () const {
-		if (mPointer == NULL)
-			return FALSE ;
-		return TRUE ;
-	}
-} ;
-
 template <class UNIT>
 class PhanRef {
 private:
@@ -1236,7 +1384,7 @@ public:
 	}
 
 	inline PhanRef &operator= (PhanRef &&that) noexcept {
-		if SWITCH_ONCE (TRUE) {
+		if SWITCH_CASE (TRUE) {
 			if (this == &that)
 				discard ;
 			(*this).~PhanRef () ;
@@ -1289,7 +1437,7 @@ class Function ;
 template <class UNIT1 ,class... UNITS>
 class Function<UNIT1 (UNITS...)> {
 private:
-	struct Holder :public Interface {
+	exports struct Holder :public Interface {
 		virtual UNIT1 invoke (FORWARD_TRAITS_TYPE<UNITS> &&...funcval) const popping = 0 ;
 	} ;
 
@@ -1311,18 +1459,18 @@ private:
 	} ;
 
 private:
-	PTR<Holder> mFunction_a ;
-	PTR<UNIT1 (UNITS...)> mFunction_b ;
+	PTR<Holder> mFunction ;
+	PTR<UNIT1 (UNITS...)> mCPPFunction ;
 
 public:
 	inline Function () noexcept {
-		mFunction_a = NULL ;
-		mFunction_b = NULL ;
+		mFunction = NULL ;
+		mCPPFunction = NULL ;
 	}
 
 	inline implicit Function (const PTR<UNIT1 (UNITS...)> &that) noexcept {
-		mFunction_a = NULL ;
-		mFunction_b = that ;
+		mFunction = NULL ;
+		mCPPFunction = that ;
 	}
 
 	template <class _ARG1 ,class = ENABLE_TYPE<!std::is_same<REMOVE_CVR_TYPE<_ARG1> ,Function>::value && std::is_same<RESULT_OF_TYPE<_ARG1 ,ARGVS<UNITS...>> ,UNIT1>::value>>
@@ -1330,34 +1478,35 @@ public:
 		auto rax = GlobalHeap::alloc<TEMP<ImplHolder<REMOVE_REFERENCE_TYPE<_ARG1>>>> () ;
 		ScopedBuild<ImplHolder<REMOVE_REFERENCE_TYPE<_ARG1>>> ANONYMOUS (rax ,std::forward<_ARG1> (that)) ;
 		auto &r1y = _LOAD_<ImplHolder<REMOVE_REFERENCE_TYPE<_ARG1>>> (_XVALUE_<PTR<TEMP<ImplHolder<REMOVE_REFERENCE_TYPE<_ARG1>>>>> (rax)) ;
-		mFunction_a = &r1y ;
-		mFunction_b = NULL ;
+		mFunction = &r1y ;
+		mCPPFunction = NULL ;
 		rax = NULL ;
 	}
 
 	inline ~Function () noexcept {
-		if (mFunction_a == NULL && mFunction_b == NULL)
-			return ;
-		if SWITCH_ONCE (TRUE) {
-			if (mFunction_a == NULL)
+		if (mFunction == NULL)
+			if (mCPPFunction == NULL)
+				return ;
+		if SWITCH_CASE (TRUE) {
+			if (mFunction == NULL)
 				discard ;
-			mFunction_a->~Holder () ;
-			GlobalHeap::free (mFunction_a) ;
+			mFunction->~Holder () ;
+			GlobalHeap::free (mFunction) ;
 		}
-		mFunction_a = NULL ;
-		mFunction_b = NULL ;
+		mFunction = NULL ;
+		mCPPFunction = NULL ;
 	}
 
 	inline Function (const Function &) = delete ;
 	inline Function &operator= (const Function &) = delete ;
 
 	inline Function (Function &&that) noexcept {
-		mFunction_a = _EXCHANGE_ (that.mFunction_a) ;
-		mFunction_b = _EXCHANGE_ (that.mFunction_b) ;
+		mFunction = _EXCHANGE_ (that.mFunction) ;
+		mCPPFunction = _EXCHANGE_ (that.mCPPFunction) ;
 	}
 
 	inline Function &operator= (Function &&that) noexcept {
-		if SWITCH_ONCE (TRUE) {
+		if SWITCH_CASE (TRUE) {
 			if (this == &that)
 				discard ;
 			(*this).~Function () ;
@@ -1367,18 +1516,17 @@ public:
 	}
 
 	inline BOOL exist () const {
-		if (mFunction_a != NULL)
-			return TRUE ;
-		if (mFunction_b != NULL)
-			return TRUE ;
-		return FALSE ;
+		if (mFunction == NULL)
+			if (mCPPFunction == NULL)
+				return FALSE ;
+		return TRUE ;
 	}
 
 	inline UNIT1 invoke (FORWARD_TRAITS_TYPE<UNITS> &&...funcval) const popping {
 		_DEBUG_ASSERT_ (exist ()) ;
-		if (mFunction_b != NULL)
-			return mFunction_b (std::forward<FORWARD_TRAITS_TYPE<UNITS>> (funcval)...) ;
-		return mFunction_a->invoke (std::forward<FORWARD_TRAITS_TYPE<UNITS>> (funcval)...) ;
+		if (mCPPFunction != NULL)
+			return mCPPFunction (std::forward<FORWARD_TRAITS_TYPE<UNITS>> (funcval)...) ;
+		return mFunction->invoke (std::forward<FORWARD_TRAITS_TYPE<UNITS>> (funcval)...) ;
 	}
 
 	inline UNIT1 operator() (FORWARD_TRAITS_TYPE<UNITS> &&...funcval) const popping {
@@ -1386,7 +1534,7 @@ public:
 	}
 
 private:
-	inline explicit Function (const DEF<decltype (ARGVP0)> & ,PTR<Holder> pointer) :mFunction_a (pointer) ,mFunction_b (NULL) {}
+	inline explicit Function (const DEF<decltype (ARGVP0)> & ,PTR<Holder> _function) :mFunction (_function) ,mCPPFunction (NULL) {}
 
 public:
 	//@info: this function is incompleted without 'csc_extend.hpp'
@@ -1407,7 +1555,7 @@ class Function<FIX_MSVC_DEDUCTION_2<UNIT1 ,UNITS...>> {
 private:
 	class FakeHolder ;
 
-	struct Holder :public Interface {
+	exports struct Holder :public Interface {
 		virtual void friend_copy (PTR<TEMP<FakeHolder>> address) const noexcept = 0 ;
 		virtual UNIT1 invoke (FORWARD_TRAITS_TYPE<UNITS> &&...funcval) const popping = 0 ;
 	} ;
@@ -1428,7 +1576,7 @@ private:
 	class ImplHolder ;
 
 private:
-	class Detail ;
+	struct Detail ;
 	TEMP<FakeHolder> mVariant ;
 
 public:
@@ -1442,25 +1590,25 @@ public:
 	}
 
 	template <class _ARG1>
-	inline explicit Function (const PhanRef<_ARG1> &context ,const DEF<DEF<UNIT1 (UNITS...)> _ARG1::*> &func) noexcept {
-		Detail::template static_create<ImplHolder<_ARG1>> (&mVariant ,&context.self ,func) ;
+	inline explicit Function (const PhanRef<_ARG1> &context_ ,const DEF<DEF<UNIT1 (UNITS...)> _ARG1::*> &func) noexcept {
+		Detail::template static_create<ImplHolder<_ARG1>> (&mVariant ,&context_.self ,func) ;
 	}
 
 	template <class _ARG1>
-	inline explicit Function (const PhanRef<const _ARG1> &context ,const DEF<DEF<UNIT1 (UNITS...) const> _ARG1::*> &func) noexcept {
-		Detail::template static_create<ImplHolder<const _ARG1>> (&mVariant ,&context.self ,func) ;
+	inline explicit Function (const PhanRef<const _ARG1> &context_ ,const DEF<DEF<UNIT1 (UNITS...) const> _ARG1::*> &func) noexcept {
+		Detail::template static_create<ImplHolder<const _ARG1>> (&mVariant ,&context_.self ,func) ;
 	}
 
 	template <class _ARG1>
-	inline explicit Function (const PhanRef<_ARG1> &context ,const PTR<UNIT1 (PTR<_ARG1> ,UNITS...)> &func) noexcept {
+	inline explicit Function (const PhanRef<_ARG1> &context_ ,const PTR<UNIT1 (PTR<_ARG1> ,UNITS...)> &func) noexcept {
 		_DEBUG_ASSERT_ (func != NULL) ;
-		Detail::template static_create<ImplHolder<PTR<_ARG1>>> (&mVariant ,&context.self ,func) ;
+		Detail::template static_create<ImplHolder<PTR<_ARG1>>> (&mVariant ,&context_.self ,func) ;
 	}
 
 	template <class _ARG1>
-	inline explicit Function (const PhanRef<_ARG1> &context ,const PTR<UNIT1 (PTR<const _ARG1> ,UNITS...)> &func) noexcept {
+	inline explicit Function (const PhanRef<_ARG1> &context_ ,const PTR<UNIT1 (PTR<const _ARG1> ,UNITS...)> &func) noexcept {
 		_DEBUG_ASSERT_ (func != NULL) ;
-		Detail::template static_create<ImplHolder<PTR<const _ARG1>>> (&mVariant ,&context.self ,func) ;
+		Detail::template static_create<ImplHolder<PTR<const _ARG1>>> (&mVariant ,&context_.self ,func) ;
 	}
 
 	inline ~Function () noexcept {
@@ -1480,7 +1628,7 @@ public:
 	}
 
 	inline Function &operator= (Function &&that) noexcept {
-		if SWITCH_ONCE (TRUE) {
+		if SWITCH_CASE (TRUE) {
 			if (this == &that)
 				discard ;
 			(*this).~Function () ;
@@ -1517,8 +1665,7 @@ private:
 	inline Holder &m_fake () && = delete ;
 
 private:
-	class Detail :private Wrapped<void> {
-	public:
+	struct Detail {
 		class PureHolder :public Holder {
 		private:
 			PTR<UNIT1 (UNITS...)> mFunction ;
@@ -1564,7 +1711,7 @@ private:
 public:
 	inline ImplHolder () = delete ;
 
-	inline explicit ImplHolder (PTR<UNIT_> context ,const DEF<DEF<UNIT1 (UNITS...)> UNIT_::*> &func) noexcept :mContext (context) ,mFunction (func) {}
+	inline explicit ImplHolder (PTR<UNIT_> context_ ,const DEF<DEF<UNIT1 (UNITS...)> UNIT_::*> &func) noexcept :mContext (context_) ,mFunction (func) {}
 
 	inline void friend_copy (PTR<TEMP<FakeHolder>> address) const noexcept override {
 		Detail::template static_create<ImplHolder> (address ,mContext ,mFunction) ;
@@ -1585,7 +1732,7 @@ private:
 public:
 	inline ImplHolder () = delete ;
 
-	inline explicit ImplHolder (PTR<const UNIT_> context ,const DEF<DEF<UNIT1 (UNITS...) const> UNIT_::*> &func) noexcept :mContext (context) ,mFunction (func) {}
+	inline explicit ImplHolder (PTR<const UNIT_> context_ ,const DEF<DEF<UNIT1 (UNITS...) const> UNIT_::*> &func) noexcept :mContext (context_) ,mFunction (func) {}
 
 	inline void friend_copy (PTR<TEMP<FakeHolder>> address) const noexcept override {
 		Detail::template static_create<ImplHolder> (address ,mContext ,mFunction) ;
@@ -1606,7 +1753,7 @@ private:
 public:
 	inline ImplHolder () = delete ;
 
-	inline explicit ImplHolder (PTR<UNIT_> context ,const PTR<UNIT1 (PTR<UNIT_> ,UNITS...)> &func) noexcept :mContext (context) ,mFunction (func) {}
+	inline explicit ImplHolder (PTR<UNIT_> context_ ,const PTR<UNIT1 (PTR<UNIT_> ,UNITS...)> &func) noexcept :mContext (context_) ,mFunction (func) {}
 
 	inline void friend_copy (PTR<TEMP<FakeHolder>> address) const noexcept override {
 		Detail::template static_create<ImplHolder> (address ,mContext ,mFunction) ;
@@ -1949,7 +2096,7 @@ public:
 	}
 
 	inline Buffer &operator= (Buffer &&that) noexcept {
-		if SWITCH_ONCE (TRUE) {
+		if SWITCH_CASE (TRUE) {
 			if (this == &that)
 				discard ;
 			(*this).~Buffer () ;
@@ -2007,7 +2154,7 @@ public:
 	}
 
 	inline Buffer &operator= (const Buffer &that) {
-		if SWITCH_ONCE (TRUE) {
+		if SWITCH_CASE (TRUE) {
 			if (this == &that)
 				discard ;
 			(*this).~Buffer () ;
@@ -2022,7 +2169,7 @@ public:
 	}
 
 	inline Buffer &operator= (Buffer &&that) noexcept {
-		if SWITCH_ONCE (TRUE) {
+		if SWITCH_CASE (TRUE) {
 			if (this == &that)
 				discard ;
 			(*this).~Buffer () ;
@@ -2192,7 +2339,7 @@ public:
 	}
 
 	inline Buffer &operator= (Buffer &&that) noexcept {
-		if SWITCH_ONCE (TRUE) {
+		if SWITCH_CASE (TRUE) {
 			if (this == &that)
 				discard ;
 			(*this).~Buffer () ;
@@ -2322,7 +2469,7 @@ public:
 		return make (val ,val.size ()) ;
 	}
 
-	template <class _ARG1 ,class _ARG2 ,class = ENABLE_TYPE<std::is_same<UNIT ,BYTE>::value && !std::is_same<_ARG1 ,BYTE>::value && LOAD_CHECK_TYPE<ARR<BYTE> ,ARR<_ARG1>>::value>>
+	template <class _ARG1 ,class _ARG2 ,class = ENABLE_TYPE<std::is_same<UNIT ,BYTE>::value && !std::is_same<_ARG1 ,BYTE>::value && U::IS_SAFE_ALIASING_HELP<ARR<BYTE> ,ARR<_ARG1>>::value>>
 	inline static Buffer make (const Buffer<_ARG1 ,_ARG2> &val) {
 		if (val.size () == 0)
 			return Buffer () ;
@@ -2364,7 +2511,7 @@ public:
 	}
 
 	inline Buffer &operator= (Buffer &&that) noexcept {
-		if SWITCH_ONCE (TRUE) {
+		if SWITCH_CASE (TRUE) {
 			if (this == &that)
 				discard ;
 			(*this).~Buffer () ;
@@ -2494,7 +2641,7 @@ public:
 		return make (val.self ,val.size ()) ;
 	}
 
-	template <class _ARG1 ,class _ARG2 ,class = ENABLE_TYPE<std::is_same<UNIT ,BYTE>::value && !std::is_same<_ARG1 ,BYTE>::value && LOAD_CHECK_TYPE<ARR<BYTE> ,ARR<_ARG1>>::value>>
+	template <class _ARG1 ,class _ARG2 ,class = ENABLE_TYPE<std::is_same<UNIT ,BYTE>::value && !std::is_same<_ARG1 ,BYTE>::value && U::IS_SAFE_ALIASING_HELP<ARR<BYTE> ,ARR<_ARG1>>::value>>
 	inline static Buffer make (Buffer<_ARG1 ,_ARG2> &val) popping {
 		if (val.size () == 0)
 			return Buffer () ;
@@ -2506,7 +2653,7 @@ public:
 		return make (val.self ,val.size ()) ;
 	}
 
-	template <class _ARG1 ,class = ENABLE_TYPE<std::is_same<UNIT ,BYTE>::value && !std::is_same<_ARG1 ,BYTE>::value && LOAD_CHECK_TYPE<ARR<BYTE> ,ARR<_ARG1>>::value>>
+	template <class _ARG1 ,class = ENABLE_TYPE<std::is_same<UNIT ,BYTE>::value && !std::is_same<_ARG1 ,BYTE>::value && U::IS_SAFE_ALIASING_HELP<ARR<BYTE> ,ARR<_ARG1>>::value>>
 	inline static Buffer make (const Buffer<_ARG1 ,SMPHAN> &val) {
 		if (val.size () == 0)
 			return Buffer () ;
@@ -2642,13 +2789,13 @@ public:
 		_STATIC_ASSERT_ (std::is_nothrow_move_constructible<UNIT>::value) ;
 		_STATIC_ASSERT_ (std::is_nothrow_move_assignable<UNIT>::value) ;
 		const auto r1x = _SWITCH_ (
-			(std::is_pod<UNIT>::value) ? (mAllocator.size ()) :
+			(std::is_pod<UNIT>::value) ? mAllocator.size () :
 			0) ;
-		mSize += r1x ;
+		mSize = r1x ;
 		while (TRUE) {
 			if (mSize >= that.mAllocator.size ())
 				break ;
-			if SWITCH_ONCE (TRUE) {
+			if SWITCH_CASE (TRUE) {
 				INDEX ix = mSize ;
 				if (mAllocator[ix].mNext != VAR_USED)
 					discard ;
@@ -2663,7 +2810,7 @@ public:
 	}
 
 	inline Allocator &operator= (Allocator &&that) noexcept {
-		if SWITCH_ONCE (TRUE) {
+		if SWITCH_CASE (TRUE) {
 			if (this == &that)
 				discard ;
 			(*this).~Allocator () ;
@@ -2712,6 +2859,32 @@ private:
 		inline Node () = default ;
 	} ;
 
+	class Finally :private Wrapped<Allocator> {
+	public:
+		inline void lock () {
+			const auto r1x = _SWITCH_ (
+				(std::is_pod<UNIT>::value) ? Finally::mSelf.mAllocator.size () :
+				0) ;
+			Finally::mSelf.mSize = r1x ;
+		}
+
+		inline void unlock () {
+			if (Finally::mSelf.mSize == Finally::mSelf.mAllocator.size ())
+				return ;
+			while (TRUE) {
+				if (Finally::mSelf.mSize <= 0)
+					break ;
+				if SWITCH_CASE (TRUE) {
+					INDEX ix = Finally::mSelf.mSize - 1 ;
+					if (Finally::mSelf.mAllocator[ix].mNext != VAR_USED)
+						discard ;
+					_DESTROY_ (&Finally::mSelf.mAllocator[ix].mData) ;
+					Finally::mSelf.mSize-- ;
+				}
+			}
+		}
+	} ;
+
 private:
 	friend SPECIALIZATION_TYPE ;
 	Buffer<Node ,SIZE> mAllocator ;
@@ -2738,36 +2911,13 @@ public:
 	}
 
 	inline Allocator (const Allocator &that) :Allocator (ARGVP0 ,std::move (that.mAllocator)) {
-		class Finally :private Wrapped<Allocator> {
-		public:
-			inline void lock () {
-				const auto r1x = _SWITCH_ (
-					(std::is_pod<UNIT>::value) ? (Finally::mSelf.mAllocator.size ()) :
-					0) ;
-				Finally::mSelf.mSize += r1x ;
-			}
-
-			inline void unlock () {
-				if (Finally::mSelf.mSize == Finally::mSelf.mAllocator.size ())
-					return ;
-				while (TRUE) {
-					if (Finally::mSelf.mSize <= 0)
-						break ;
-					if SWITCH_ONCE (TRUE) {
-						INDEX ix = Finally::mSelf.mSize - 1 ;
-						if (Finally::mSelf.mAllocator[ix].mNext != VAR_USED)
-							discard ;
-						_DESTROY_ (&Finally::mSelf.mAllocator[ix].mData) ;
-						Finally::mSelf.mSize-- ;
-					}
-				}
-			}
-		} ;
+		_STATIC_ASSERT_ (std::is_nothrow_move_constructible<UNIT>::value) ;
+		_STATIC_ASSERT_ (std::is_nothrow_move_assignable<UNIT>::value) ;
 		ScopedGuard<Finally> ANONYMOUS (_CAST_<Finally> ((*this))) ;
 		while (TRUE) {
 			if (mSize >= that.mAllocator.size ())
 				break ;
-			if SWITCH_ONCE (TRUE) {
+			if SWITCH_CASE (TRUE) {
 				INDEX ix = mSize ;
 				if (mAllocator[ix].mNext != VAR_USED)
 					discard ;
@@ -2781,7 +2931,7 @@ public:
 	}
 
 	inline Allocator &operator= (const Allocator &that) {
-		if SWITCH_ONCE (TRUE) {
+		if SWITCH_CASE (TRUE) {
 			if (this == &that)
 				discard ;
 			(*this).~Allocator () ;
@@ -2794,13 +2944,13 @@ public:
 		_STATIC_ASSERT_ (std::is_nothrow_move_constructible<UNIT>::value) ;
 		_STATIC_ASSERT_ (std::is_nothrow_move_assignable<UNIT>::value) ;
 		const auto r1x = _SWITCH_ (
-			(std::is_pod<UNIT>::value) ? (mAllocator.size ()) :
+			(std::is_pod<UNIT>::value) ? mAllocator.size () :
 			0) ;
-		mSize += r1x ;
+		mSize = r1x ;
 		while (TRUE) {
 			if (mSize >= that.mAllocator.size ())
 				break ;
-			if SWITCH_ONCE (TRUE) {
+			if SWITCH_CASE (TRUE) {
 				INDEX ix = mSize ;
 				if (mAllocator[ix].mNext != VAR_USED)
 					discard ;
@@ -2815,7 +2965,7 @@ public:
 	}
 
 	inline Allocator &operator= (Allocator &&that) noexcept {
-		if SWITCH_ONCE (TRUE) {
+		if SWITCH_CASE (TRUE) {
 			if (this == &that)
 				discard ;
 			(*this).~Allocator () ;
@@ -2935,34 +3085,36 @@ public:
 		_STATIC_ASSERT_ (std::is_nothrow_move_constructible<UNIT>::value) ;
 		_STATIC_ASSERT_ (std::is_nothrow_move_assignable<UNIT>::value) ;
 		_DEBUG_ASSERT_ (mSize == mAllocator.size ()) ;
-		INDEX ret = VAR_NONE ;
-		if SWITCH_ONCE (TRUE) {
-			if (ret != VAR_NONE)
-				discard ;
+		if SWITCH_CASE (TRUE) {
 			if (mFree != VAR_NONE)
 				discard ;
-			auto rax = mAllocator.expand () ;
-			ret = mSize ;
-			_CREATE_ (&rax[ret].mData ,std::forward<_ARGS> (initval)...) ;
+			auto tmp = mAllocator.expand () ;
+			const auto r1x = mSize ;
+			_CREATE_ (&tmp[r1x].mData ,std::forward<_ARGS> (initval)...) ;
 			for (INDEX i = 0 ,ie = mSize ; i < ie ; i++) {
-				_CREATE_ (&rax[i].mData ,std::move (_CAST_<UNIT> (mAllocator[i].mData))) ;
-				rax[i].mNext = VAR_USED ;
+				_CREATE_ (&tmp[i].mData ,std::move (_CAST_<UNIT> (mAllocator[i].mData))) ;
+				tmp[i].mNext = VAR_USED ;
 			}
-			mAllocator.swap (rax) ;
+			mAllocator.swap (tmp) ;
 			update_reserve (mSize ,mFree) ;
+			mFree = mAllocator[r1x].mNext ;
+			mAllocator[r1x].mNext = VAR_USED ;
+			mLength++ ;
+			return r1x ;
 		}
-		if SWITCH_ONCE (TRUE) {
-			if (ret != VAR_NONE)
-				discard ;
+		if SWITCH_CASE (TRUE) {
 			if (mFree == VAR_NONE)
 				discard ;
-			ret = mFree ;
-			_CREATE_ (&mAllocator[ret].mData ,std::forward<_ARGS> (initval)...) ;
+			const auto r2x = mFree ;
+			_CREATE_ (&mAllocator[r2x].mData ,std::forward<_ARGS> (initval)...) ;
+			mFree = mAllocator[r2x].mNext ;
+			mAllocator[r2x].mNext = VAR_USED ;
+			mLength++ ;
+			return r2x ;
 		}
-		mFree = mAllocator[ret].mNext ;
-		mAllocator[ret].mNext = VAR_USED ;
-		mLength++ ;
-		return std::move (ret) ;
+		_STATIC_WARNING_ ("unexpected") ;
+		_DEBUG_ASSERT_ (FALSE) ;
+		return VAR_NONE ;
 	}
 
 	inline void free (INDEX index) noexcept {
@@ -2983,13 +3135,13 @@ public:
 		if (r1x == 0)
 			return ;
 		_DEBUG_ASSERT_ (mSize + r1x > mSize) ;
-		auto rax = mAllocator.expand (mSize + r1x) ;
+		auto tmp = mAllocator.expand (mSize + r1x) ;
 		for (INDEX i = 0 ,ie = mSize ; i < ie ; i++) {
 			if (mAllocator[i].mNext == VAR_USED)
-				_CREATE_ (&rax[i].mData ,std::move (_CAST_<UNIT> (mAllocator[i].mData))) ;
-			rax[i].mNext = mAllocator[i].mNext ;
+				_CREATE_ (&tmp[i].mData ,std::move (_CAST_<UNIT> (mAllocator[i].mData))) ;
+			tmp[i].mNext = mAllocator[i].mNext ;
 		}
-		mAllocator.swap (rax) ;
+		mAllocator.swap (tmp) ;
 		update_reserve (mSize ,mFree) ;
 	}
 
@@ -3001,13 +3153,13 @@ public:
 		if (r1x == mSize)
 			return ;
 		_DYNAMIC_ASSERT_ (r1x == mLength) ;
-		auto rax = mAllocator.expand (r1x) ;
-		for (INDEX i = 0 ,ie = rax.size () ; i < ie ; i++) {
+		auto tmp = mAllocator.expand (r1x) ;
+		for (INDEX i = 0 ,ie = tmp.size () ; i < ie ; i++) {
 			_DEBUG_ASSERT_ (mAllocator[i].mNext == VAR_USED) ;
-			_CREATE_ (&rax[i].mData ,std::move (_CAST_<UNIT> (mAllocator[i].mData))) ;
-			rax[i].mNext = VAR_USED ;
+			_CREATE_ (&tmp[i].mData ,std::move (_CAST_<UNIT> (mAllocator[i].mData))) ;
+			tmp[i].mNext = VAR_USED ;
 		}
-		mAllocator.swap (rax) ;
+		mAllocator.swap (tmp) ;
 		update_reserve (r1x ,VAR_NONE) ;
 	}
 
@@ -3026,8 +3178,13 @@ private:
 
 	inline LENGTH shrink_size () const {
 		LENGTH ret = mSize ;
-		while (ret - 1 >= 0 && mAllocator[ret - 1].mNext != VAR_USED)
+		while (TRUE) {
+			if (ret < 1)
+				break ;
+			if (mAllocator[ret - 1].mNext == VAR_USED)
+				break ;
 			ret-- ;
+		}
 		return std::move (ret) ;
 	}
 } ;

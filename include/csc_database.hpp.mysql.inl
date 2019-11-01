@@ -57,17 +57,17 @@ public:
 
 public:
 	AbstractDatabase_Engine_MYSQL () {
-		_STATIC_ASSERT_ (_SIZEOF_ (REMOVE_CVR_TYPE<decltype ((*this))>) == _SIZEOF_ (Interface)) ;
-		_STATIC_ASSERT_ (_ALIGNOF_ (REMOVE_CVR_TYPE<decltype ((*this))>) == _ALIGNOF_ (Interface)) ;
+		_STATIC_ASSERT_ (_SIZEOF_ (decltype ((*this))) == _SIZEOF_ (Interface)) ;
+		_STATIC_ASSERT_ (_ALIGNOF_ (decltype ((*this))) == _ALIGNOF_ (Interface)) ;
 	}
 
 	void compute_load_data (AnyRef<void> &this_) const override {
-		auto rax = UniqueRef<MYSQL> ([&] (MYSQL &me) {
+		auto tmp = UniqueRef<MYSQL> ([&] (MYSQL &me) {
 			::mysql_init (&me) ;
 		} ,[] (MYSQL &me) {
 			::mysql_close (&me) ;
 		}) ;
-		this_ = AnyRef<NATIVE_TYPE>::make (std::move (rax)) ;
+		this_ = AnyRef<NATIVE_TYPE>::make (std::move (tmp)) ;
 	}
 
 private:

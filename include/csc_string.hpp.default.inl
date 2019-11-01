@@ -38,12 +38,10 @@
 #endif
 
 namespace CSC {
-#if defined (_CLOCALE_) || defined (_GLIBCXX_CLOCALE)
-#if defined (_CSTDLIB_) || defined (_GLIBCXX_CSTDLIB)
-inline namespace S {
-inline String<STRW> _inline_LOCALE_LASTOWS_ (const String<STRA> &val) {
-#ifdef _CLOCALE_
-	auto &r1y = _CACHE_ ([] () {
+inline namespace STRING {
+#ifdef __CSC_COMPILER_MSVC__
+inline const UniqueRef<_locale_t> &_inline_LOCALE_PAGE_ () {
+	return _CACHE_ ([] () {
 		return UniqueRef<_locale_t> ([&] (_locale_t &me) {
 			me = ::_create_locale (LC_CTYPE ,_PCSTRA_ ("")) ;
 			_DYNAMIC_ASSERT_ (me != NULL) ;
@@ -51,19 +49,25 @@ inline String<STRW> _inline_LOCALE_LASTOWS_ (const String<STRA> &val) {
 			::_free_locale (me) ;
 		}) ;
 	}) ;
+}
+#endif
+
+inline String<STRW> _inline_LOCALE_LASTOWS_ (const String<STRA> &val) {
+#ifdef __CSC_COMPILER_MSVC__
+	auto &r1y = _inline_LOCALE_PAGE_ () ;
 	String<STRW> ret = String<STRW> (val.length () + 1) ;
 	_DEBUG_ASSERT_ (ret.size () < VAR32_MAX) ;
-	if SWITCH_ONCE (TRUE) {
+	if SWITCH_CASE (TRUE) {
 		const auto r2x = ::_mbstowcs_s_l (NULL ,ret.raw ().self ,VAR32 (ret.size ()) ,val.raw ().self ,_TRUNCATE ,r1y) ;
 		if (r2x == 0)
 			discard ;
 		ret = String<STRW> () ;
 	}
 	return std::move (ret) ;
-#elif defined _GLIBCXX_CLOCALE
+#else
 	String<STRW> ret = String<STRW> (val.length () + 1) ;
 	_DEBUG_ASSERT_ (ret.size () < VAR32_MAX) ;
-	if SWITCH_ONCE (TRUE) {
+	if SWITCH_CASE (TRUE) {
 		const auto r3x = std::mbstowcs (ret.raw ().self ,val.raw ().self ,VAR32 (ret.size ())) ;
 		if (r3x == 0)
 			discard ;
@@ -74,28 +78,21 @@ inline String<STRW> _inline_LOCALE_LASTOWS_ (const String<STRA> &val) {
 }
 
 inline String<STRA> _inline_LOCALE_WSTOLAS_ (const String<STRW> &val) {
-#ifdef _CLOCALE_
-	auto &r1y = _CACHE_ ([] () {
-		return UniqueRef<_locale_t> ([&] (_locale_t &me) {
-			me = ::_create_locale (LC_CTYPE ,_PCSTRA_ ("")) ;
-			_DYNAMIC_ASSERT_ (me != NULL) ;
-		} ,[] (_locale_t &me) {
-			::_free_locale (me) ;
-		}) ;
-	}) ;
+#ifdef __CSC_COMPILER_MSVC__
+	auto &r1y = _inline_LOCALE_PAGE_ () ;
 	String<STRA> ret = String<STRA> ((val.length () + 1) * _SIZEOF_ (STRW)) ;
 	_DEBUG_ASSERT_ (ret.size () < VAR32_MAX) ;
-	if SWITCH_ONCE (TRUE) {
+	if SWITCH_CASE (TRUE) {
 		const auto r2x = ::_wcstombs_s_l (NULL ,ret.raw ().self ,VAR32 (ret.size ()) ,val.raw ().self ,_TRUNCATE ,r1y) ;
 		if (r2x == 0)
 			discard ;
 		ret = String<STRA> () ;
 	}
 	return std::move (ret) ;
-#elif defined _GLIBCXX_CLOCALE
+#else
 	String<STRA> ret = String<STRA> ((val.length () + 1) * _SIZEOF_ (STRW)) ;
 	_DEBUG_ASSERT_ (ret.size () < VAR32_MAX) ;
-	if SWITCH_ONCE (TRUE) {
+	if SWITCH_CASE (TRUE) {
 		const auto r3x = std::wcstombs (ret.raw ().self ,val.raw ().self ,VAR32 (ret.size ())) ;
 		if (r3x == 0)
 			discard ;
@@ -110,12 +107,15 @@ inline exports String<STRW> _ASTOWS_ (const String<STRA> &val) {
 	const auto r1x = ::setlocale (LC_CTYPE ,NULL) ;
 	_DEBUG_ASSERT_ (r1x != NULL) ;
 	const auto r2x = _MEMCHR_ (PTRTOARR[r1x] ,VAR32_MAX ,STRA (0)) ;
-	if (r2x == 1 && _MEMEQUAL_ (PTRTOARR[r1x] ,_PCSTRA_ ("C").self ,1))
-		return _U8STOWS_ (_UASTOU8S_ (val)) ;
-	if (r2x >= 4 && _MEMEQUAL_ (PTRTOARR[&r1x[r2x - 4]] ,_PCSTRA_ (".936").self ,4))
-		return _GBKSTOWS_ (val) ;
-	if (r2x >= 5 && _MEMEQUAL_ (PTRTOARR[r1x] ,_PCSTRA_ ("zh_CN").self ,5))
-		return _GBKSTOWS_ (val) ;
+	if (r2x == 1)
+		if (_MEMEQUAL_ (PTRTOARR[r1x] ,_PCSTRA_ ("C").self ,1))
+			return _U8STOWS_ (_UASTOU8S_ (val)) ;
+	if (r2x >= 4)
+		if (_MEMEQUAL_ (PTRTOARR[&r1x[r2x - 4]] ,_PCSTRA_ (".936").self ,4))
+			return _GBKSTOWS_ (val) ;
+	if (r2x >= 5)
+		if (_MEMEQUAL_ (PTRTOARR[r1x] ,_PCSTRA_ ("zh_CN").self ,5))
+			return _GBKSTOWS_ (val) ;
 	return _inline_LOCALE_LASTOWS_ (val) ;
 }
 
@@ -124,30 +124,29 @@ inline exports String<STRA> _WSTOAS_ (const String<STRW> &val) {
 	const auto r1x = ::setlocale (LC_CTYPE ,NULL) ;
 	_DEBUG_ASSERT_ (r1x != NULL) ;
 	const auto r2x = _MEMCHR_ (PTRTOARR[r1x] ,VAR32_MAX ,STRA (0)) ;
-	if (r2x == 1 && _MEMEQUAL_ (PTRTOARR[r1x] ,_PCSTRA_ ("C").self ,1))
-		return _U8STOUAS_ (_WSTOU8S_ (val)) ;
-	if (r2x >= 4 && _MEMEQUAL_ (PTRTOARR[&r1x[r2x - 4]] ,_PCSTRA_ (".936").self ,4))
-		return _WSTOGBKS_ (val) ;
-	if (r2x >= 5 && _MEMEQUAL_ (PTRTOARR[r1x] ,_PCSTRA_ ("zh_CN").self ,5))
-		return _WSTOGBKS_ (val) ;
+	if (r2x == 1)
+		if (_MEMEQUAL_ (PTRTOARR[r1x] ,_PCSTRA_ ("C").self ,1))
+			return _U8STOUAS_ (_WSTOU8S_ (val)) ;
+	if (r2x >= 4)
+		if (_MEMEQUAL_ (PTRTOARR[&r1x[r2x - 4]] ,_PCSTRA_ (".936").self ,4))
+			return _WSTOGBKS_ (val) ;
+	if (r2x >= 5)
+		if (_MEMEQUAL_ (PTRTOARR[r1x] ,_PCSTRA_ ("zh_CN").self ,5))
+			return _WSTOGBKS_ (val) ;
 	return _inline_LOCALE_WSTOLAS_ (val) ;
 }
 } ;
-#endif
-#endif
 
-#if defined (_CTIME_) || defined (_GLIBCXX_CTIME)
-#if defined (_CHRONO_) || defined (_GLIBCXX_CHRONO)
-inline namespace S {
+inline namespace STRING {
 inline exports ARRAY8<VAR32> _LOCALE_MAKE_TIMEMETRIC_ (const std::chrono::system_clock::time_point &val) {
 	ARRAY8<VAR32> ret ;
 	ret.fill (0) ;
 	const auto r1x = ::time_t (std::chrono::system_clock::to_time_t (val)) ;
 	auto rax = std::tm () ;
 	_ZERO_ (rax) ;
-#ifdef _CTIME_
+#ifdef __CSC_COMPILER_MSVC__
 	localtime_s (&rax ,&r1x) ;
-#elif defined _GLIBCXX_CTIME
+#else
 	//@warn: not thread-safe due to internel storage
 	const auto r2x = std::localtime (&r1x) ;
 	_DEBUG_ASSERT_ (r2x != NULL) ;
@@ -168,20 +167,20 @@ inline exports std::chrono::system_clock::time_point _LOCALE_MAKE_TIMEPOINT_ (co
 	auto rax = std::tm () ;
 	_ZERO_ (rax) ;
 	const auto r1x = _SWITCH_ (
-		(val[0] > 0) ? (val[0] - 1900) :
+		(val[0] > 0) ? val[0] - 1900 :
 		0) ;
 	rax.tm_year = r1x ;
 	const auto r2x = _SWITCH_ (
-		(val[1] > 0) ? (val[1] - 1) :
+		(val[1] > 0) ? val[1] - 1 :
 		0) ;
 	rax.tm_mon = r2x ;
 	rax.tm_mday = val[2] ;
 	const auto r3x = _SWITCH_ (
-		(val[3] > 0) ? (val[3] - 1) :
+		(val[3] > 0) ? val[3] - 1 :
 		0) ;
 	rax.tm_wday = r3x ;
 	const auto r4x = _SWITCH_ (
-		(val[4] > 0) ? (val[4] - 1) :
+		(val[4] > 0) ? val[4] - 1 :
 		0) ;
 	rax.tm_yday = r4x ;
 	rax.tm_hour = val[5] ;
@@ -191,11 +190,7 @@ inline exports std::chrono::system_clock::time_point _LOCALE_MAKE_TIMEPOINT_ (co
 	return std::chrono::system_clock::from_time_t (r5x) ;
 }
 } ;
-#endif
-#endif
 
-#if defined (_STRING_) || defined (_GLIBCXX_STRING)
-#if defined (_REGEX_) || defined (_GLIBCXX_REGEX)
 class RegexMatcher::Implement final :private Interface {
 private:
 	AutoRef<std::regex> mRegex ;
@@ -219,7 +214,7 @@ public:
 
 	Deque<ARRAY2<INDEX>> search (const String<STRU8> &expr) const {
 		Deque<ARRAY2<INDEX>> ret = Deque<ARRAY2<INDEX>> (expr.length ()) ;
-		if SWITCH_ONCE (TRUE) {
+		if SWITCH_CASE (TRUE) {
 			if (expr.empty ())
 				discard ;
 			auto rax = AutoRef<std::smatch>::make () ;
@@ -271,10 +266,8 @@ inline exports Deque<ARRAY2<INDEX>> RegexMatcher::search (const String<STRU8> &e
 inline exports String<STRU8> RegexMatcher::replace (const String<STRU8> &expr ,const String<STRU8> &rep) const {
 	return mThis.rebind<Implement> ()->replace (expr ,rep) ;
 }
-#endif
-#endif
 
-inline namespace S {
+inline namespace STRING {
 inline exports PhanBuffer<const DEF<STRUW[2]>> _LOADUWSTOUGBKSTABLE_ () {
 #pragma region
 #ifdef __CSC_COMPILER_MSVC__
@@ -286,7 +279,7 @@ inline exports PhanBuffer<const DEF<STRUW[2]>> _LOADUWSTOUGBKSTABLE_ () {
 #ifdef __CSC_COMPILER_MSVC__
 		} ;
 #else
-		}) ;
+}) ;
 #endif
 #pragma endregion
 	return PhanBuffer<const DEF<STRUW[2]>>::make (M_TABLE.P1) ;

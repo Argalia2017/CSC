@@ -4,9 +4,6 @@
     <ClCompile Include="..\..\src\csc_array.cpp">
       <Filter>unittest</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\csc_ext.cpp">
-      <Filter>unittest</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\csc_stream.cpp">
       <Filter>unittest</Filter>
     </ClCompile>
@@ -17,7 +14,10 @@
       <Filter>unittest</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\main.cpp" />
-    <ClCompile Include="..\..\src\csc.cpp">
+    <ClCompile Include="..\..\src\csc_extend.cpp">
+      <Filter>unittest</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\csc_basic.cpp">
       <Filter>unittest</Filter>
     </ClCompile>
   </ItemGroup>

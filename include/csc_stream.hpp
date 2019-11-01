@@ -34,6 +34,11 @@ struct BYTE_TRAITS<ARGC<_SIZEOF_ (DATA)> ,ARGC<_ALIGNOF_ (DATA)>> {
 	using TYPE = DATA ;
 } ;
 
+template <class _ARG1>
+using BYTE_TRAITS_TYPE = typename U::BYTE_TRAITS<ARGC<_SIZEOF_ (_ARG1)> ,ARGC<_ALIGNOF_ (_ARG1)>>::TYPE ;
+} ;
+
+namespace U {
 template <class ,class>
 struct TEXT_TRAITS ;
 
@@ -51,82 +56,17 @@ template <>
 struct TEXT_TRAITS<ARGC<_SIZEOF_ (STRU32)> ,ARGC<_ALIGNOF_ (STRU32)>> {
 	using TYPE = STRU32 ;
 } ;
-} ;
-
-template <class _ARG1>
-using BYTE_TRAITS_TYPE = typename U::BYTE_TRAITS<ARGC<_SIZEOF_ (_ARG1)> ,ARGC<_ALIGNOF_ (_ARG1)>>::TYPE ;
 
 template <class _ARG1>
 using TEXT_TRAITS_TYPE = typename U::TEXT_TRAITS<ARGC<_SIZEOF_ (_ARG1)> ,ARGC<_ALIGNOF_ (_ARG1)>>::TYPE ;
-
-using STRUA = TEXT_TRAITS_TYPE<STRA> ;
-using STRUW = TEXT_TRAITS_TYPE<STRW> ;
-
-template <class UNIT>
-class EndianBytes :private Wrapped<BYTE[_SIZEOF_ (UNIT)]> {
-private:
-	inline static constexpr BYTE constexpr_big_endian (const ARGV<BYTE> &) {
-		//@info: 'big endian' [0] -> 0X00
-		return BYTE (0X00) ;
-	}
-
-	inline static constexpr WORD constexpr_big_endian (const ARGV<WORD> &) {
-		//@info: 'big endian' [0] -> 0X00
-		return WORD (0X0001) ;
-	}
-
-	inline static constexpr CHAR constexpr_big_endian (const ARGV<CHAR> &) {
-		//@info: 'big endian' [0] -> 0X00
-		return CHAR (0X00010203) ;
-	}
-
-	inline static constexpr DATA constexpr_big_endian (const ARGV<DATA> &) {
-		//@info: 'big endian' [0] -> 0X00
-		return DATA (0X0001020304050607) ;
-	}
-
-private:
-	_STATIC_ASSERT_ (stl::is_byte_xyz<UNIT>::value) ;
-
-public:
-	template <class _ARG1 ,class = ENABLE_TYPE<std::is_same<_ARG1 ,UNIT>::value>>
-	inline void operator>>= (_ARG1 &that) const & {
-		const auto r1x = constexpr_big_endian (_NULL_<ARGV<UNIT>> ()) ;
-		that = endian_bitwise_cast (_CAST_<BYTE[_SIZEOF_ (UNIT)]> (r1x)) ;
-	}
-
-	template <class _ARG1>
-	inline void operator>>= (_ARG1 &) && = delete ;
-
-	template <class _ARG1 ,class = ENABLE_TYPE<std::is_same<_ARG1 ,UNIT>::value>>
-	inline void operator<<= (const _ARG1 &that) & {
-		const auto r1x = constexpr_big_endian (_NULL_<ARGV<UNIT>> ()) ;
-		endian_bitwise_assign (_CAST_<TEMP<UNIT>> (that) ,_CAST_<BYTE[_SIZEOF_ (UNIT)]> (r1x)) ;
-	}
-
-	template <class _ARG1>
-	inline void operator<<= (const _ARG1 &) && = delete ;
-
-private:
-	inline UNIT endian_bitwise_cast (const DEF<BYTE[_SIZEOF_ (UNIT)]> &endian) const {
-		TEMP<UNIT> ret ;
-		_ZERO_ (ret) ;
-		for (INDEX i = 0 ,ie = _SIZEOF_ (UNIT) ; i < ie ; i++)
-			ret.unused[i] = EndianBytes::mSelf[endian[i]] ;
-		return std::move (_CAST_<UNIT> (ret)) ;
-	}
-
-	inline void endian_bitwise_assign (const TEMP<UNIT> &that ,const DEF<BYTE[_SIZEOF_ (UNIT)]> &endian) {
-		for (INDEX i = 0 ,ie = _SIZEOF_ (UNIT) ; i < ie ; i++)
-			EndianBytes::mSelf[endian[i]] = that.unused[i] ;
-	}
 } ;
+
+using STRUA = U::TEXT_TRAITS_TYPE<STRA> ;
+using STRUW = U::TEXT_TRAITS_TYPE<STRW> ;
 
 class ByteReader {
 private:
-	struct HEAP {
-		BYTE mNull ;
-	} ;
+	struct HEAP {} ;
 
 	class Attribute :private Wrapped<HEAP> {
 	public:
@@ -211,7 +151,7 @@ public:
 	}
 
 	void read (BYTE &data) popping {
-		auto fax = FALSE ;
+		auto fax = TRUE ;
 		if SWITCH_CASE (fax) {
 			if (!(mRead < mWrite))
 				discard ;
@@ -229,10 +169,11 @@ public:
 	}
 
 	void read (WORD &data) popping {
-		auto rax = PACK<BYTE[_SIZEOF_ (WORD)]> () ;
-		for (INDEX i = 0 ,ie = _COUNTOF_ (decltype (rax.P1)) ; i < ie ; i++)
-			read (rax.P1[i]) ;
-		_CAST_<EndianBytes<WORD>> (rax.P1) >>= data ;
+		const auto r1x = WORD (0X0001) ;
+		auto &r2y = _CAST_<BYTE[_SIZEOF_ (WORD)]> (r1x) ;
+		auto &r3y = _CAST_<BYTE[_SIZEOF_ (WORD)]> (data) ;
+		for (INDEX i = 0 ,ie = _COUNTOF_ (decltype (r3y)) ; i < ie ; i++)
+			read (r3y[r2y[i]]) ;
 	}
 
 	inline ByteReader &operator>> (WORD &data) popping {
@@ -241,10 +182,11 @@ public:
 	}
 
 	void read (CHAR &data) popping {
-		auto rax = PACK<BYTE[_SIZEOF_ (CHAR)]> () ;
-		for (INDEX i = 0 ,ie = _COUNTOF_ (decltype (rax.P1)) ; i < ie ; i++)
-			read (rax.P1[i]) ;
-		_CAST_<EndianBytes<CHAR>> (rax.P1) >>= data ;
+		const auto r1x = CHAR (0X00010203) ;
+		auto &r2y = _CAST_<BYTE[_SIZEOF_ (CHAR)]> (r1x) ;
+		auto &r3y = _CAST_<BYTE[_SIZEOF_ (CHAR)]> (data) ;
+		for (INDEX i = 0 ,ie = _COUNTOF_ (decltype (r3y)) ; i < ie ; i++)
+			read (r3y[r2y[i]]) ;
 	}
 
 	inline ByteReader &operator>> (CHAR &data) popping {
@@ -253,10 +195,11 @@ public:
 	}
 
 	void read (DATA &data) popping {
-		auto rax = PACK<BYTE[_SIZEOF_ (DATA)]> () ;
-		for (INDEX i = 0 ,ie = _COUNTOF_ (decltype (rax.P1)) ; i < ie ; i++)
-			read (rax.P1[i]) ;
-		_CAST_<EndianBytes<DATA>> (rax.P1) >>= data ;
+		const auto r1x = DATA (0X0001020304050607) ;
+		auto &r2y = _CAST_<BYTE[_SIZEOF_ (DATA)]> (r1x) ;
+		auto &r3y = _CAST_<BYTE[_SIZEOF_ (DATA)]> (data) ;
+		for (INDEX i = 0 ,ie = _COUNTOF_ (decltype (r3y)) ; i < ie ; i++)
+			read (r3y[r2y[i]]) ;
 	}
 
 	inline ByteReader &operator>> (DATA &data) popping {
@@ -265,7 +208,7 @@ public:
 	}
 
 	void read (BOOL &data) popping {
-		read (_CAST_<BYTE_TRAITS_TYPE<BOOL>> (data)) ;
+		read (_CAST_<U::BYTE_TRAITS_TYPE<BOOL>> (data)) ;
 	}
 
 	inline ByteReader &operator>> (BOOL &data) popping {
@@ -274,7 +217,7 @@ public:
 	}
 
 	void read (VAR32 &data) popping {
-		read (_CAST_<BYTE_TRAITS_TYPE<VAR32>> (data)) ;
+		read (_CAST_<U::BYTE_TRAITS_TYPE<VAR32>> (data)) ;
 	}
 
 	inline ByteReader &operator>> (VAR32 &data) popping {
@@ -283,7 +226,7 @@ public:
 	}
 
 	void read (VAR64 &data) popping {
-		read (_CAST_<BYTE_TRAITS_TYPE<VAR64>> (data)) ;
+		read (_CAST_<U::BYTE_TRAITS_TYPE<VAR64>> (data)) ;
 	}
 
 	inline ByteReader &operator>> (VAR64 &data) popping {
@@ -292,7 +235,7 @@ public:
 	}
 
 	void read (VAL32 &data) popping {
-		read (_CAST_<BYTE_TRAITS_TYPE<VAL32>> (data)) ;
+		read (_CAST_<U::BYTE_TRAITS_TYPE<VAL32>> (data)) ;
 	}
 
 	inline ByteReader &operator>> (VAL32 &data) popping {
@@ -301,7 +244,7 @@ public:
 	}
 
 	void read (VAL64 &data) popping {
-		read (_CAST_<BYTE_TRAITS_TYPE<VAL64>> (data)) ;
+		read (_CAST_<U::BYTE_TRAITS_TYPE<VAL64>> (data)) ;
 	}
 
 	inline ByteReader &operator>> (VAL64 &data) popping {
@@ -496,10 +439,11 @@ public:
 	}
 
 	void write (const WORD &data) {
-		auto rax = PACK<BYTE[_SIZEOF_ (WORD)]> () ;
-		_CAST_<EndianBytes<WORD>> (rax.P1) <<= data ;
-		for (INDEX i = 0 ,ie = _COUNTOF_ (decltype (rax.P1)) ; i < ie ; i++)
-			write (rax.P1[i]) ;
+		const auto r1x = WORD (0X0001) ;
+		auto &r2y = _CAST_<BYTE[_SIZEOF_ (WORD)]> (r1x) ;
+		auto &r3y = _CAST_<BYTE[_SIZEOF_ (WORD)]> (data) ;
+		for (INDEX i = 0 ,ie = _COUNTOF_ (decltype (r3y)) ; i < ie ; i++)
+			write (r3y[r2y[i]]) ;
 	}
 
 	inline ByteWriter &operator<< (const WORD &data) {
@@ -508,10 +452,11 @@ public:
 	}
 
 	void write (const CHAR &data) {
-		auto rax = PACK<BYTE[_SIZEOF_ (CHAR)]> () ;
-		_CAST_<EndianBytes<CHAR>> (rax.P1) <<= data ;
-		for (INDEX i = 0 ,ie = _COUNTOF_ (decltype (rax.P1)) ; i < ie ; i++)
-			write (rax.P1[i]) ;
+		const auto r1x = CHAR (0X00010203) ;
+		auto &r2y = _CAST_<BYTE[_SIZEOF_ (CHAR)]> (r1x) ;
+		auto &r3y = _CAST_<BYTE[_SIZEOF_ (CHAR)]> (data) ;
+		for (INDEX i = 0 ,ie = _COUNTOF_ (decltype (r3y)) ; i < ie ; i++)
+			write (r3y[r2y[i]]) ;
 	}
 
 	inline ByteWriter &operator<< (const CHAR &data) {
@@ -520,10 +465,11 @@ public:
 	}
 
 	void write (const DATA &data) {
-		auto rax = PACK<BYTE[_SIZEOF_ (DATA)]> () ;
-		_CAST_<EndianBytes<DATA>> (rax.P1) <<= data ;
-		for (INDEX i = 0 ,ie = _COUNTOF_ (decltype (rax.P1)) ; i < ie ; i++)
-			write (rax.P1[i]) ;
+		const auto r1x = DATA (0X0001020304050607) ;
+		auto &r2y = _CAST_<BYTE[_SIZEOF_ (DATA)]> (r1x) ;
+		auto &r3y = _CAST_<BYTE[_SIZEOF_ (DATA)]> (data) ;
+		for (INDEX i = 0 ,ie = _COUNTOF_ (decltype (r3y)) ; i < ie ; i++)
+			write (r3y[r2y[i]]) ;
 	}
 
 	inline ByteWriter &operator<< (const DATA &data) {
@@ -532,7 +478,7 @@ public:
 	}
 
 	void write (const BOOL &data) {
-		const auto r1x = _CAST_<BYTE_TRAITS_TYPE<BOOL>> (data) ;
+		const auto r1x = _CAST_<U::BYTE_TRAITS_TYPE<BOOL>> (data) ;
 		write (r1x) ;
 	}
 
@@ -546,7 +492,7 @@ public:
 	inline ByteWriter &operator<< (const PTR<const VOID> &) = delete ;
 
 	void write (const VAR32 &data) {
-		const auto r1x = _CAST_<BYTE_TRAITS_TYPE<VAR32>> (data) ;
+		const auto r1x = _CAST_<U::BYTE_TRAITS_TYPE<VAR32>> (data) ;
 		write (r1x) ;
 	}
 
@@ -556,7 +502,7 @@ public:
 	}
 
 	void write (const VAR64 &data) {
-		const auto r1x = _CAST_<BYTE_TRAITS_TYPE<VAR64>> (data) ;
+		const auto r1x = _CAST_<U::BYTE_TRAITS_TYPE<VAR64>> (data) ;
 		write (r1x) ;
 	}
 
@@ -566,7 +512,7 @@ public:
 	}
 
 	void write (const VAL32 &data) {
-		const auto r1x = _CAST_<BYTE_TRAITS_TYPE<VAL32>> (data) ;
+		const auto r1x = _CAST_<U::BYTE_TRAITS_TYPE<VAL32>> (data) ;
 		write (r1x) ;
 	}
 
@@ -576,7 +522,7 @@ public:
 	}
 
 	void write (const VAL64 &data) {
-		const auto r1x = _CAST_<BYTE_TRAITS_TYPE<VAL64>> (data) ;
+		const auto r1x = _CAST_<U::BYTE_TRAITS_TYPE<VAL64>> (data) ;
 		write (r1x) ;
 	}
 
@@ -609,7 +555,7 @@ public:
 		for (INDEX i = 0 ,ie = data.size () ; i < ie ; i++)
 			write (data.self[i]) ;
 #pragma GCC diagnostic pop
-	}
+}
 
 	template <class _ARG1>
 	inline ByteWriter &operator<< (const Plain<_ARG1> &data) {
@@ -690,8 +636,9 @@ private:
 		REAL convert_endian (const REAL &item) const {
 			if (!Attribute::mSelf.mEndianFlag)
 				return item ;
-			BYTE_TRAITS_TYPE<REAL> ret ;
-			_CAST_<EndianBytes<BYTE_TRAITS_TYPE<REAL>>> (item) >>= ret ;
+			U::BYTE_TRAITS_TYPE<REAL> ret ;
+			auto &r1y = _CAST_<BYTE[_SIZEOF_ (REAL)]> (item) ;
+			ByteReader (PhanBuffer<const BYTE>::make (r1y)) >> ret ;
 			return std::move (_CAST_<REAL> (ret)) ;
 		}
 
@@ -769,10 +716,9 @@ private:
 		}
 
 		BOOL varify_control (const REAL &item) const {
-			const auto r1x = BOOL (item >= REAL (0) && item <= REAL (32)) ;
-			const auto r2x = BOOL (item == REAL (127)) ;
-			if (!r1x && !r2x)
-				return FALSE ;
+			if (!(item >= REAL (0) && item <= REAL (32)))
+				if (item != REAL (127))
+					return FALSE ;
 			if (varify_space (item))
 				return FALSE ;
 			return TRUE ;
@@ -854,11 +800,11 @@ public:
 	}
 
 	void read (REAL &data) popping {
-		auto fax = FALSE ;
+		auto fax = TRUE ;
 		if SWITCH_CASE (fax) {
 			if (!(mRead < mWrite))
 				discard ;
-			if SWITCH_ONCE (TRUE) {
+			if SWITCH_CASE (TRUE) {
 				data = attr ().convert_endian (mStream[mRead]) ;
 				const auto r1x = attr ().varify_escape_r (data) ;
 				mRead++ ;
@@ -883,7 +829,7 @@ public:
 	void read (BOOL &data) popping {
 		auto rax = REAL () ;
 		read (rax) ;
-		auto fax = FALSE ;
+		auto fax = TRUE ;
 		if SWITCH_CASE (fax) {
 			if (!(rax == REAL ('t')))
 				discard ;
@@ -958,11 +904,12 @@ public:
 		auto rax = REAL () ;
 		read (rax) ;
 		const auto r1x = BOOL (rax == REAL ('-')) ;
-		if (rax == REAL ('+') || rax == REAL ('-'))
+		if (rax == REAL ('+') || r1x)
 			read (rax) ;
 		compute_read_number (data ,(*this) ,rax) ;
-		if (r1x)
-			data = -data ;
+		if (!r1x)
+			return ;
+		data = -data ;
 	}
 
 	inline TextReader &operator>> (VAR64 &data) popping {
@@ -972,7 +919,7 @@ public:
 
 	void read (VAL32 &data) popping {
 		const auto r1x = read<VAL64> () ;
-		if SWITCH_ONCE (TRUE) {
+		if SWITCH_CASE (TRUE) {
 			if (_ISINF_ (r1x))
 				discard ;
 			if (_ISNAN_ (r1x))
@@ -991,12 +938,9 @@ public:
 		auto rax = REAL () ;
 		read (rax) ;
 		const auto r1x = BOOL (rax == REAL ('-')) ;
-		if SWITCH_ONCE (TRUE) {
-			if (!(rax == REAL ('+') || rax == REAL ('-')))
-				discard ;
+		if (rax == REAL ('+') || r1x)
 			read (rax) ;
-		}
-		auto fax = FALSE ;
+		auto fax = TRUE ;
 		if SWITCH_CASE (fax) {
 			if (!(rax == REAL ('i')))
 				discard ;
@@ -1038,8 +982,9 @@ public:
 			_DYNAMIC_ASSERT_ (r2x) ;
 			compute_read_number (data ,(*this) ,rax) ;
 		}
-		if (r1x)
-			data = -data ;
+		if (!r1x)
+			return ;
+		data = -data ;
 	}
 
 	inline TextReader &operator>> (VAL64 &data) popping {
@@ -1070,7 +1015,7 @@ public:
 			_DYNAMIC_ASSERT_ (rax == data.self[i]) ;
 		}
 #pragma GCC diagnostic pop
-	}
+}
 
 	inline TextReader &operator>> (const Plain<REAL> &data) {
 		read (data) ;
@@ -1170,7 +1115,7 @@ private:
 			ris.read (top) ;
 		}
 		auto rax = ARRAY3<VAR64> {0 ,0 ,0} ;
-		if SWITCH_ONCE (TRUE) {
+		if SWITCH_CASE (TRUE) {
 			if (!attr ().varify_number_item (top))
 				discard ;
 			rax[0] = attr ().convert_number_r (top) ;
@@ -1179,7 +1124,7 @@ private:
 			while (TRUE) {
 				if (!attr ().varify_number_item (top))
 					break ;
-				auto fax = FALSE ;
+				auto fax = TRUE ;
 				if SWITCH_CASE (fax) {
 					const auto r1x = rax[0] * attr ().varify_radix () + attr ().convert_number_r (top) ;
 					if (!(rax[0] < r1x))
@@ -1193,7 +1138,7 @@ private:
 				ris.read (top) ;
 			}
 		}
-		if SWITCH_ONCE (TRUE) {
+		if SWITCH_CASE (TRUE) {
 			if (top != REAL ('.'))
 				discard ;
 			reader = ris.copy () ;
@@ -1202,7 +1147,7 @@ private:
 			while (TRUE) {
 				if (!attr ().varify_number_item (top))
 					break ;
-				if SWITCH_ONCE (TRUE) {
+				if SWITCH_CASE (TRUE) {
 					const auto r2x = rax[0] * attr ().varify_radix () + attr ().convert_number_r (top) ;
 					if (rax[0] > r2x)
 						discard ;
@@ -1213,14 +1158,14 @@ private:
 				ris.read (top) ;
 			}
 		}
-		if SWITCH_ONCE (TRUE) {
+		if SWITCH_CASE (TRUE) {
 			if (!(top == REAL ('e') || top == REAL ('E')))
 				discard ;
 			const auto r3x = ris.template read<VAR32> () ;
 			rax[1] += r3x ;
 			reader = ris.copy () ;
 		}
-		if SWITCH_ONCE (TRUE) {
+		if SWITCH_CASE (TRUE) {
 			if (rax[0] >= 0)
 				discard ;
 			rax[0] = -rax[0] ;
@@ -1258,8 +1203,9 @@ private:
 		REAL convert_endian (const REAL &item) const {
 			if (!Attribute::mSelf.mEndianFlag)
 				return item ;
-			BYTE_TRAITS_TYPE<REAL> ret ;
-			_CAST_<EndianBytes<BYTE_TRAITS_TYPE<REAL>>> (item) >>= ret ;
+			U::BYTE_TRAITS_TYPE<REAL> ret ;
+			auto &r1y = _CAST_<BYTE[_SIZEOF_ (REAL)]> (item) ;
+			ByteReader (PhanBuffer<const BYTE>::make (r1y)) >> ret ;
 			return std::move (_CAST_<REAL> (ret)) ;
 		}
 
@@ -1321,10 +1267,9 @@ private:
 		}
 
 		BOOL varify_control (const REAL &item) const {
-			const auto r1x = BOOL (item >= REAL (0) && item <= REAL (32)) ;
-			const auto r2x = BOOL (item == REAL (127)) ;
-			if (!r1x && !r2x)
-				return FALSE ;
+			if (!(item >= REAL (0) && item <= REAL (32)))
+				if (item != REAL (127))
+					return FALSE ;
 			if (varify_space (item))
 				return FALSE ;
 			return TRUE ;
@@ -1407,9 +1352,9 @@ public:
 	}
 
 	void write (const REAL &data) {
-		auto fax = FALSE ;
+		auto fax = TRUE ;
 		if SWITCH_CASE (fax) {
-			if (!(attr ().varify_escape_w (data)))
+			if (!attr ().varify_escape_w (data))
 				discard ;
 			_DYNAMIC_ASSERT_ (mWrite + 1 < mStream.size ()) ;
 			const auto r1x = attr ().varify_escape_item () ;
@@ -1437,8 +1382,8 @@ public:
 		static constexpr auto M_FALSE = PACK<REAL[5]> ({
 			REAL ('f') ,REAL ('a') ,REAL ('l') ,REAL ('s') ,REAL ('e')}) ;
 		const auto r1x = _SWITCH_ (
-			data ? (PhanBuffer<const REAL>::make (M_TRUE.P1)) :
-			(PhanBuffer<const REAL>::make (M_FALSE.P1))) ;
+			data ? PhanBuffer<const REAL>::make (M_TRUE.P1) :
+			PhanBuffer<const REAL>::make (M_FALSE.P1)) ;
 		write (r1x) ;
 	}
 
@@ -1479,21 +1424,21 @@ public:
 			REAL ('+') ,REAL ('i') ,REAL ('n') ,REAL ('f')}) ;
 		static constexpr auto M_SINF = PACK<REAL[4]> ({
 			REAL ('-') ,REAL ('i') ,REAL ('n') ,REAL ('f')}) ;
-		auto fax = FALSE ;
+		auto fax = TRUE ;
 		if SWITCH_CASE (fax) {
-			if (!(_ISNAN_ (data)))
+			if (!_ISNAN_ (data))
 				discard ;
 			write (PhanBuffer<const REAL>::make (M_NAN.P1)) ;
 		}
 		if SWITCH_CASE (fax) {
-			if (!(_ISINF_ (data)))
+			if (!_ISINF_ (data))
 				discard ;
 			if (!(data > 0))
 				discard ;
 			write (PhanBuffer<const REAL>::make (M_INF.P1)) ;
 		}
 		if SWITCH_CASE (fax) {
-			if (!(_ISINF_ (data)))
+			if (!_ISINF_ (data))
 				discard ;
 			if (!(data < 0))
 				discard ;
@@ -1520,21 +1465,21 @@ public:
 			REAL ('+') ,REAL ('i') ,REAL ('n') ,REAL ('f')}) ;
 		static constexpr auto M_SINF = PACK<REAL[4]> ({
 			REAL ('-') ,REAL ('i') ,REAL ('n') ,REAL ('f')}) ;
-		auto fax = FALSE ;
+		auto fax = TRUE ;
 		if SWITCH_CASE (fax) {
-			if (!(_ISNAN_ (data)))
+			if (!_ISNAN_ (data))
 				discard ;
 			write (PhanBuffer<const REAL>::make (M_NAN.P1)) ;
 		}
 		if SWITCH_CASE (fax) {
-			if (!(_ISINF_ (data)))
+			if (!_ISINF_ (data))
 				discard ;
 			if (!(data > 0))
 				discard ;
 			write (PhanBuffer<const REAL>::make (M_INF.P1)) ;
 		}
 		if SWITCH_CASE (fax) {
-			if (!(_ISINF_ (data)))
+			if (!_ISINF_ (data))
 				discard ;
 			if (!(data < 0))
 				discard ;
@@ -1574,7 +1519,7 @@ public:
 		for (INDEX i = 0 ,ie = data.size () ; i < ie ; i++)
 			write (data.self[i]) ;
 #pragma GCC diagnostic pop
-	}
+}
 
 	inline TextWriter &operator<< (const Plain<REAL> &data) {
 		write (data) ;
@@ -1632,7 +1577,7 @@ private:
 	void compute_write_number (const VAR64 &data ,const PhanBuffer<REAL> &out ,INDEX &out_i) const {
 		auto rax = data ;
 		INDEX iw = out_i ;
-		auto fax = FALSE ;
+		auto fax = TRUE ;
 		if SWITCH_CASE (fax) {
 			if (!(data > 0))
 				discard ;
@@ -1667,7 +1612,7 @@ private:
 		const auto r1x = _IEEE754_DECODE_ (data) ;
 		auto rax = _IEEE754_E2TOE10_ (r1x) ;
 		const auto r2x = log_of_number (rax[0]) ;
-		if SWITCH_ONCE (TRUE) {
+		if SWITCH_CASE (TRUE) {
 			const auto r3x = r2x - precision ;
 			for (INDEX i = 0 ,ie = r3x - 1 ; i < ie ; i++) {
 				rax[0] /= attr ().varify_radix () ;
@@ -1679,7 +1624,7 @@ private:
 			rax[1]++ ;
 		}
 		const auto r4x = log_of_number (rax[0]) ;
-		auto fax = FALSE ;
+		auto fax = TRUE ;
 		if SWITCH_CASE (fax) {
 			//@info: case '0'
 			if (!(rax[0] == 0))
@@ -1692,11 +1637,8 @@ private:
 			if (!(_ABS_ (r5x) >= precision))
 				discard ;
 			compute_write_number (r5x ,out ,iw) ;
-			if SWITCH_ONCE (TRUE) {
-				if (r5x <= 0)
-					discard ;
+			if (r5x > 0)
 				out[--iw] = REAL ('+') ;
-			}
 			out[--iw] = REAL ('e') ;
 			const auto r6x = _MAX_ ((r4x - 1 - precision) ,VAR_ZERO) ;
 			for (INDEX i = 0 ,ie = r6x ; i < ie ; i++)
@@ -1768,11 +1710,8 @@ private:
 			iw += EFLAG (out[ix] == REAL ('.')) ;
 			out[--iw] = attr ().convert_number_w (0) ;
 		}
-		if SWITCH_ONCE (TRUE) {
-			if (rax[2] == 0)
-				discard ;
+		if (rax[2] != 0)
 			out[--iw] = REAL ('-') ;
-		}
 		out_i = iw ;
 	}
 
@@ -1789,7 +1728,7 @@ private:
 	}
 } ;
 
-inline namespace S {
+inline namespace STREAM {
 inline void _CLS_ (ByteReader &reader) {
 	reader.reset () ;
 }
@@ -1952,7 +1891,7 @@ inline void _EOS_ (ByteReader &reader) {
 inline void _EOS_ (ByteWriter &writer) {
 	auto wos = writer.copy () ;
 	const auto r1x = wos.attr ().varify_ending_item () ;
-	while (wos.length () < wos.size ())
+	for (INDEX i = 0 ,ie = wos.size () - wos.length () ; i < ie ; i++)
 		wos << r1x ;
 	writer = std::move (wos) ;
 }
@@ -1974,7 +1913,7 @@ inline void _EOS_ (TextWriter<_ARG1> &writer) {
 }
 } ;
 
-inline namespace S {
+inline namespace STREAM {
 inline void _PRINTS_ (ByteWriter &writer) {
 	_STATIC_WARNING_ ("noop") ;
 }
@@ -2089,7 +2028,7 @@ public:
 		r1y.modify_escape_r (STRU8 ('/') ,STRU8 ('/')) ;
 		r1y.modify_escape_r (STRU8 ('\\') ,STRU8 ('\\')) ;
 		_STATIC_WARNING_ ("mark") ;
-		//@info: disable default escape-str convertion 
+		//@info: disable default escape-str convertion
 		r1y.enable_escape (FALSE) ;
 		mReader.self >> _BOM_ ;
 		for (INDEX i = 0 ,ie = mCache.length () ; i < ie ; i++)
@@ -2136,7 +2075,7 @@ public:
 			read () ;
 		}
 #pragma GCC diagnostic pop
-	}
+}
 
 	inline RegularReader &operator>> (const Plain<STRU8> &data) {
 		read (data) ;
@@ -2194,8 +2133,11 @@ public:
 	}
 
 	void read (const PTR<decltype (RegularReader<void>::SKIP_GAP)> &) {
-		while (mReader->attr ().varify_space (get (0)))
+		while (TRUE) {
+			if (!mReader->attr ().varify_space (get (0)))
+				break ;
 			read () ;
+		}
 	}
 
 	inline RegularReader &operator>> (const PTR<decltype (RegularReader<void>::SKIP_GAP)> &) {
@@ -2204,8 +2146,11 @@ public:
 	}
 
 	void read (const PTR<decltype (RegularReader<void>::SKIP_GAP_SPACE_ONLY)> &) {
-		while (mReader->attr ().varify_space (get (0) ,1))
+		while (TRUE) {
+			if (!mReader->attr ().varify_space (get (0) ,1))
+				break ;
 			read () ;
+		}
 	}
 
 	inline RegularReader &operator>> (const PTR<decltype (RegularReader<void>::SKIP_GAP_SPACE_ONLY)> &) {
@@ -2214,8 +2159,11 @@ public:
 	}
 
 	void read (const PTR<decltype (RegularReader<void>::SKIP_GAP_ENDLINE_ONLY)> &) {
-		while (mReader->attr ().varify_space (get (0) ,2))
+		while (TRUE) {
+			if (!mReader->attr ().varify_space (get (0) ,2))
+				break ;
 			read () ;
+		}
 	}
 
 	inline RegularReader &operator>> (const PTR<decltype (RegularReader<void>::SKIP_GAP_ENDLINE_ONLY)> &) {
@@ -2252,14 +2200,14 @@ public:
 			data = String<STRU8> (r2x) ;
 		data.clear () ;
 		auto rax = STRU8 () ;
-		if SWITCH_ONCE (TRUE) {
+		if SWITCH_CASE (TRUE) {
 			if (!r1x)
 				discard ;
 			_DYNAMIC_ASSERT_ (get (0) == STRU8 ('\"')) ;
 			read () ;
 		}
 		for (INDEX i = 0 ,ie = r2x ; i < ie ; i++) {
-			auto fax = FALSE ;
+			auto fax = TRUE ;
 			if SWITCH_CASE (fax) {
 				rax = get (0) ;
 				read () ;
@@ -2277,7 +2225,7 @@ public:
 				data[i] = rax ;
 			}
 		}
-		if SWITCH_ONCE (TRUE) {
+		if SWITCH_CASE (TRUE) {
 			if (!r1x)
 				discard ;
 			_DYNAMIC_ASSERT_ (get (0) == STRU8 ('\"')) ;
@@ -2298,15 +2246,12 @@ private:
 			const auto r1x = BOOL (ris[0] >= STRU8 ('A') && ris[0] <= STRU8 ('Z')) ;
 			const auto r2x = BOOL (ris[0] >= STRU8 ('a') && ris[0] <= STRU8 ('z')) ;
 			const auto r3x = BOOL (ris[0] == STRU8 ('_')) ;
-			if SWITCH_ONCE (TRUE) {
-				if (ret > 0)
-					discard ;
+			if (ret == 0)
 				_DYNAMIC_ASSERT_ (r1x || r2x || r3x) ;
-			}
-			const auto r4x = BOOL (ris[0] >= STRU8 ('0') && ris[0] <= STRU8 ('9')) ;
-			const auto r5x = BOOL (ris[0] == STRU8 ('-') || ris[0] == STRU8 ('.') || ris[0] == STRU8 (':')) ;
-			if (!r1x && !r2x && !r3x && !r4x && !r5x)
-				break ;
+			if (!r1x && !r2x && !r3x)
+				if (!(ris[0] >= STRU8 ('0') && ris[0] <= STRU8 ('9')))
+					if (!(ris[0] == STRU8 ('-') || ris[0] == STRU8 ('.') || ris[0] == STRU8 (':')))
+						break ;
 			ris++ ;
 			ret++ ;
 		}
@@ -2316,7 +2261,7 @@ private:
 	LENGTH next_value_size () popping {
 		LENGTH ret = 0 ;
 		auto ris = shadow () ;
-		if SWITCH_ONCE (TRUE) {
+		if SWITCH_CASE (TRUE) {
 			if (!(ris[0] == STRU8 ('+') || ris[0] == STRU8 ('-')))
 				discard ;
 			ris++ ;
@@ -2334,7 +2279,7 @@ private:
 			ris++ ;
 			ret++ ;
 		}
-		if SWITCH_ONCE (TRUE) {
+		if SWITCH_CASE (TRUE) {
 			if (ris[0] != STRU8 ('.'))
 				discard ;
 			ris++ ;
@@ -2346,12 +2291,12 @@ private:
 				ret++ ;
 			}
 		}
-		if SWITCH_ONCE (TRUE) {
+		if SWITCH_CASE (TRUE) {
 			if (!(ris[0] == STRU8 ('e') || ris[0] == STRU8 ('E')))
 				discard ;
 			ris++ ;
 			ret++ ;
-			if SWITCH_ONCE (TRUE) {
+			if SWITCH_CASE (TRUE) {
 				if (!(ris[0] == STRU8 ('+') || ris[0] == STRU8 ('-')))
 					discard ;
 				ris++ ;
@@ -2381,7 +2326,7 @@ private:
 				break ;
 			if (ris[0] == STRU8 ('\"'))
 				break ;
-			auto fax = FALSE ;
+			auto fax = TRUE ;
 			if SWITCH_CASE (fax) {
 				rax = ris[0] ;
 				ris++ ;
@@ -2434,5 +2379,5 @@ private:
 		}
 		return std::move (ret) ;
 	}
-} ;
+	} ;
 } ;

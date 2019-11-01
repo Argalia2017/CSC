@@ -26,7 +26,6 @@
 #define ANONYMOUS
 
 #define SWITCH_CASE
-#define SWITCH_ONCE
 
 #define FALSE
 #define TRUE

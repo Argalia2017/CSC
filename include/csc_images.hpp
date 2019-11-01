@@ -45,7 +45,7 @@ private:
 	} ;
 
 private:
-	class Detail ;
+	struct Detail ;
 	Array<LENGTH ,SIZE> mRange ;
 
 public:
@@ -73,11 +73,10 @@ public:
 	}
 
 private:
-	class Detail :private Wrapped<void> {
-	public:
-		inline static LENGTH total_length (const Array<LENGTH ,SIZE> &range) {
+	struct Detail {
+		inline static LENGTH total_length (const Array<LENGTH ,SIZE> &range_) {
 			LENGTH ret = 1 ;
-			for (auto &&i : range) {
+			for (auto &&i : range_) {
 				_DEBUG_ASSERT_ (i >= 0) ;
 				ret *= i ;
 				_DEBUG_ASSERT_ (ret >= 0) ;
@@ -85,25 +84,25 @@ private:
 			return std::move (ret) ;
 		}
 
-		inline static Array<LENGTH ,SIZE> first_item (const Array<LENGTH ,SIZE> &range) {
-			Array<LENGTH ,SIZE> ret = Array<LENGTH ,SIZE> (range.size ()) ;
+		inline static Array<LENGTH ,SIZE> first_item (const Array<LENGTH ,SIZE> &range_) {
+			Array<LENGTH ,SIZE> ret = Array<LENGTH ,SIZE> (range_.size ()) ;
 			ret.fill (0) ;
 			return std::move (ret) ;
 		}
 
-		inline static void template_incrase (const Array<LENGTH ,SIZE> &range ,Array<LENGTH ,SIZE> &item ,const ARGV<ARGC<0>> &) {
-			_DEBUG_ASSERT_ (item[0] < range[0]) ;
+		inline static void template_incrase (const Array<LENGTH ,SIZE> &range_ ,Array<LENGTH ,SIZE> &item ,const ARGV<ARGC<0>> &) {
+			_DEBUG_ASSERT_ (item[0] < range_[0]) ;
 			item[0]++ ;
 		}
 
 		template <class _ARG1>
-		inline static void template_incrase (const Array<LENGTH ,SIZE> &range ,Array<LENGTH ,SIZE> &item ,const ARGV<_ARG1> &) {
+		inline static void template_incrase (const Array<LENGTH ,SIZE> &range_ ,Array<LENGTH ,SIZE> &item ,const ARGV<_ARG1> &) {
 			_STATIC_ASSERT_ (LENGTH (_ARG1::value) > 0 && LENGTH (_ARG1::value) < LENGTH (SIZE::value)) ;
 			item[_ARG1::value]++ ;
-			if (item[_ARG1::value] < range[_ARG1::value])
+			if (item[_ARG1::value] < range_[_ARG1::value])
 				return ;
 			item[_ARG1::value] = 0 ;
-			template_incrase (range ,item ,_NULL_<ARGV<ARGC<_ARG1::value - 1>>> ()) ;
+			template_incrase (range_ ,item ,_NULL_<ARGV<ARGC<_ARG1::value - 1>>> ()) ;
 		}
 	} ;
 } ;
@@ -194,7 +193,10 @@ public:
 	}
 
 	ARRAY2<LENGTH> width () const {
-		return ARRAY2<LENGTH> {mCX ,mCY} ;
+		ARRAY2<LENGTH> ret ;
+		ret[0] = mCX ;
+		ret[1] = mCY ;
+		return std::move (ret) ;
 	}
 
 	LENGTH cx () const {
@@ -228,7 +230,7 @@ public:
 	void reset () {
 		const auto r1x = ARRAY5<LENGTH> {0 ,0 ,0 ,0 ,0} ;
 		auto &r2y = _SWITCH_ (
-			(mHeap.exist ()) ? (mHeap->mWidth) :
+			(mHeap.exist ()) ? mHeap->mWidth :
 			r1x) ;
 		mCX = r2y[0] ;
 		mCY = r2y[1] ;
@@ -695,8 +697,10 @@ private:
 		inline NativeProxy () = delete ;
 
 		inline ~NativeProxy () noexcept {
-			_CATCH_ ([&] () {
+			_CALL_TRY_ ([&] () {
 				Detail::static_update_layout (mAbstract ,mThis) ;
+			} ,[&] () {
+				_STATIC_WARNING_ ("noop") ;
 			}) ;
 		}
 
@@ -731,7 +735,7 @@ private:
 	} ;
 
 private:
-	class Detail ;
+	struct Detail ;
 	PhanRef<const Abstract> mAbstract ;
 	SharedRef<Holder> mThis ;
 
@@ -752,7 +756,10 @@ public:
 
 	ARRAY2<LENGTH> width () const {
 		_DEBUG_ASSERT_ (exist ()) ;
-		return ARRAY2<LENGTH> {mThis->mCX ,mThis->mCY} ;
+		ARRAY2<LENGTH> ret ;
+		ret[0] = mThis->mCX ;
+		ret[1] = mThis->mCY ;
+		return std::move (ret) ;
 	}
 
 	LENGTH cx () const {
@@ -839,7 +846,6 @@ public:
 
 	inline Row<AbstractImage> operator[] (INDEX) && = delete ;
 
-
 	template <class _RET>
 	inline NativeProxy<_RET> native () popping {
 		_STATIC_ASSERT_ (!std::is_reference<_RET>::value) ;
@@ -895,8 +901,7 @@ private:
 	explicit AbstractImage (PhanRef<const Abstract> &&abstract_ ,SharedRef<Holder> &&this_) :mAbstract (std::move (abstract_)) ,mThis (std::move (this_)) {}
 
 private:
-	class Detail :private Wrapped<void> {
-	public:
+	struct Detail {
 		inline static void static_update_layout (PhanRef<const Abstract> &abstract_ ,SharedRef<Holder> &this_) {
 			_DEBUG_ASSERT_ (abstract_.exist ()) ;
 			_DEBUG_ASSERT_ (this_.exist ()) ;

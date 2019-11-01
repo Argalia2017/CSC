@@ -11,12 +11,7 @@
 #include "csc_stream.hpp"
 
 namespace CSC {
-namespace U {
-template <class ,class>
-struct OPERATOR_CVT_STRING ;
-} ;
-
-inline namespace S {
+inline namespace STRING {
 inline String<STRU16> _U8STOU16S_ (const String<STRU8> &val) ;
 inline String<STRU8> _U16STOU8S_ (const String<STRU16> &val) ;
 inline String<STRU32> _U8STOU32S_ (const String<STRU8> &val) ;
@@ -43,183 +38,189 @@ inline imports DEF<String<STRA> (const String<STRW> &val)> _WSTOAS_ ;
 } ;
 
 namespace U {
+template <class ,class>
+struct STRING_TRAITS ;
+
 template <>
-struct OPERATOR_CVT_STRING<String<STRU8> ,String<STRU8>> {
+struct STRING_TRAITS<STRU8 ,STRU8> {
 	inline static String<STRU8> invoke (const String<STRU8> &val) {
 		return _COPY_ (val) ;
 	}
 } ;
 
 template <>
-struct OPERATOR_CVT_STRING<String<STRU16> ,String<STRU16>> {
+struct STRING_TRAITS<STRU16 ,STRU16> {
 	inline static String<STRU16> invoke (const String<STRU16> &val) {
 		return _COPY_ (val) ;
 	}
 } ;
 
 template <>
-struct OPERATOR_CVT_STRING<String<STRU32> ,String<STRU32>> {
+struct STRING_TRAITS<STRU32 ,STRU32> {
 	inline static String<STRU32> invoke (const String<STRU32> &val) {
 		return _COPY_ (val) ;
 	}
 } ;
 
 template <>
-struct OPERATOR_CVT_STRING<String<STRA> ,String<STRA>> {
+struct STRING_TRAITS<STRA ,STRA> {
 	inline static String<STRA> invoke (const String<STRA> &val) {
 		return _COPY_ (val) ;
 	}
 } ;
 
 template <>
-struct OPERATOR_CVT_STRING<String<STRW> ,String<STRW>> {
+struct STRING_TRAITS<STRW ,STRW> {
 	inline static String<STRW> invoke (const String<STRW> &val) {
 		return _COPY_ (val) ;
 	}
 } ;
 
 template <>
-struct OPERATOR_CVT_STRING<String<STRU8> ,String<STRU16>> {
+struct STRING_TRAITS<STRU8 ,STRU16> {
 	inline static String<STRU8> invoke (const String<STRU16> &val) {
 		return _U16STOU8S_ (val) ;
 	}
 } ;
 
 template <>
-struct OPERATOR_CVT_STRING<String<STRU16> ,String<STRU8>> {
+struct STRING_TRAITS<STRU16 ,STRU8> {
 	inline static String<STRU16> invoke (const String<STRU8> &val) {
 		return _U8STOU16S_ (val) ;
 	}
 } ;
 
 template <>
-struct OPERATOR_CVT_STRING<String<STRU8> ,String<STRU32>> {
+struct STRING_TRAITS<STRU8 ,STRU32> {
 	inline static String<STRU8> invoke (const String<STRU32> &val) {
 		return _U32STOU8S_ (val) ;
 	}
 } ;
 
 template <>
-struct OPERATOR_CVT_STRING<String<STRU32> ,String<STRU8>> {
+struct STRING_TRAITS<STRU32 ,STRU8> {
 	inline static String<STRU32> invoke (const String<STRU8> &val) {
 		return _U8STOU32S_ (val) ;
 	}
 } ;
 
 template <>
-struct OPERATOR_CVT_STRING<String<STRU16> ,String<STRU32>> {
+struct STRING_TRAITS<STRU16 ,STRU32> {
 	inline static String<STRU16> invoke (const String<STRU32> &val) {
 		return _U32STOU16S_ (val) ;
 	}
 } ;
 
 template <>
-struct OPERATOR_CVT_STRING<String<STRU32> ,String<STRU16>> {
+struct STRING_TRAITS<STRU32 ,STRU16> {
 	inline static String<STRU32> invoke (const String<STRU16> &val) {
 		return _U16STOU32S_ (val) ;
 	}
 } ;
 
 template <>
-struct OPERATOR_CVT_STRING<String<STRU8> ,String<STRW>> {
+struct STRING_TRAITS<STRU8 ,STRW> {
 	inline static String<STRU8> invoke (const String<STRW> &val) {
 		return _WSTOU8S_ (val) ;
 	}
 } ;
 
 template <>
-struct OPERATOR_CVT_STRING<String<STRW> ,String<STRU8>> {
+struct STRING_TRAITS<STRW ,STRU8> {
 	inline static String<STRW> invoke (const String<STRU8> &val) {
 		return _U8STOWS_ (val) ;
 	}
 } ;
 
 template <>
-struct OPERATOR_CVT_STRING<String<STRU16> ,String<STRW>> {
+struct STRING_TRAITS<STRU16 ,STRW> {
 	inline static String<STRU16> invoke (const String<STRW> &val) {
 		return _WSTOU16S_ (val) ;
 	}
 } ;
 
 template <>
-struct OPERATOR_CVT_STRING<String<STRW> ,String<STRU16>> {
+struct STRING_TRAITS<STRW ,STRU16> {
 	inline static String<STRW> invoke (const String<STRU16> &val) {
 		return _U16STOWS_ (val) ;
 	}
 } ;
 
 template <>
-struct OPERATOR_CVT_STRING<String<STRU32> ,String<STRW>> {
+struct STRING_TRAITS<STRU32 ,STRW> {
 	inline static String<STRU32> invoke (const String<STRW> &val) {
 		return _WSTOU32S_ (val) ;
 	}
 } ;
 
 template <>
-struct OPERATOR_CVT_STRING<String<STRW> ,String<STRU32>> {
+struct STRING_TRAITS<STRW ,STRU32> {
 	inline static String<STRW> invoke (const String<STRU32> &val) {
 		return _U32STOWS_ (val) ;
 	}
 } ;
 
 template <>
-struct OPERATOR_CVT_STRING<String<STRW> ,String<STRA>> {
+struct STRING_TRAITS<STRW ,STRA> {
 	inline static String<STRW> invoke (const String<STRA> &val) {
 		return _ASTOWS_ (val) ;
 	}
 } ;
 
 template <>
-struct OPERATOR_CVT_STRING<String<STRA> ,String<STRW>> {
+struct STRING_TRAITS<STRA ,STRW> {
 	inline static String<STRA> invoke (const String<STRW> &val) {
 		return _WSTOAS_ (val) ;
 	}
 } ;
 
 template <>
-struct OPERATOR_CVT_STRING<String<STRU8> ,String<STRA>> {
+struct STRING_TRAITS<STRU8 ,STRA> {
 	inline static String<STRU8> invoke (const String<STRA> &val) {
 		return _ASTOU8S_ (val) ;
 	}
 } ;
 
 template <>
-struct OPERATOR_CVT_STRING<String<STRA> ,String<STRU8>> {
+struct STRING_TRAITS<STRA ,STRU8> {
 	inline static String<STRA> invoke (const String<STRU8> &val) {
 		return _U8STOAS_ (val) ;
 	}
 } ;
 
 template <>
-struct OPERATOR_CVT_STRING<String<STRU16> ,String<STRA>> {
+struct STRING_TRAITS<STRU16 ,STRA> {
 	inline static String<STRU16> invoke (const String<STRA> &val) {
 		return _ASTOU16S_ (val) ;
 	}
 } ;
 
 template <>
-struct OPERATOR_CVT_STRING<String<STRA> ,String<STRU16>> {
+struct STRING_TRAITS<STRA ,STRU16> {
 	inline static String<STRA> invoke (const String<STRU16> &val) {
 		return _U16STOAS_ (val) ;
 	}
 } ;
 
 template <>
-struct OPERATOR_CVT_STRING<String<STRU32> ,String<STRA>> {
+struct STRING_TRAITS<STRU32 ,STRA> {
 	inline static String<STRU32> invoke (const String<STRA> &val) {
 		return _ASTOU32S_ (val) ;
 	}
 } ;
 
 template <>
-struct OPERATOR_CVT_STRING<String<STRA> ,String<STRU32>> {
+struct STRING_TRAITS<STRA ,STRU32> {
 	inline static String<STRA> invoke (const String<STRU32> &val) {
 		return _U32STOAS_ (val) ;
 	}
 } ;
+
+template <class _ARG1 ,class _ARG2>
+using STRING_TRAITS_HELP = STRING_TRAITS<REMOVE_CVR_TYPE<_ARG1> ,REMOVE_CVR_TYPE<_ARG2>> ;
 } ;
 
-inline namespace S {
+inline namespace STRING {
 inline String<STRU16> _U8STOU16S_ (const String<STRU8> &val) {
 	String<STRU16> ret = String<STRU16> (val.length ()) ;
 	INDEX iw = 0 ;
@@ -227,8 +228,8 @@ inline String<STRU16> _U8STOU16S_ (const String<STRU8> &val) {
 	auto rbx = STRU32 () ;
 	for (auto &&i : val) {
 		if (rax == VAR_NONE)
-			discard ;
-		auto fax = FALSE ;
+			continue ;
+		auto fax = TRUE ;
 		if SWITCH_CASE (fax) {
 			if (!(rax == 0))
 				discard ;
@@ -298,7 +299,7 @@ inline String<STRU16> _U8STOU16S_ (const String<STRU8> &val) {
 		}
 		if (rax < 10)
 			continue ;
-		auto fbx = FALSE ;
+		auto fbx = TRUE ;
 		if SWITCH_CASE (fbx) {
 			if (!(rax == 10))
 				discard ;
@@ -344,8 +345,8 @@ inline String<STRU8> _U16STOU8S_ (const String<STRU16> &val) {
 	auto rbx = STRU32 () ;
 	for (auto &&i : val) {
 		if (rax == VAR_NONE)
-			discard ;
-		auto fax = FALSE ;
+			continue ;
+		auto fax = TRUE ;
 		if SWITCH_CASE (fax) {
 			if (!(rax == 0))
 				discard ;
@@ -403,12 +404,12 @@ inline String<STRU8> _U16STOU8S_ (const String<STRU16> &val) {
 inline String<STRU32> _U8STOU32S_ (const String<STRU8> &val) {
 	_STATIC_WARNING_ ("note") ;
 	/*
-	1 bytes [0,0X7F] 0xxxxxxx
-	2 bytes [0x80,0X7FF] 110xxxxx 10xxxxxx
-	3 bytes [0x800,0XFFFF] 1110xxxx 10xxxxxx 10xxxxxx
-	4 bytes [0x10000,0X1FFFFF] 11110xxx 10xxxxxx 10xxxxxx 10xxxxxx
-	5 bytes [0x200000,0X3FFFFFF] 111110xx 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx
-	6 bytes [0x4000000,0X7FFFFFFF] 1111110x 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx
+	*	1 bytes [0,0X7F] 0xxxxxxx
+	*	2 bytes [0x80,0X7FF] 110xxxxx 10xxxxxx
+	*	3 bytes [0x800,0XFFFF] 1110xxxx 10xxxxxx 10xxxxxx
+	*	4 bytes [0x10000,0X1FFFFF] 11110xxx 10xxxxxx 10xxxxxx 10xxxxxx
+	*	5 bytes [0x200000,0X3FFFFFF] 111110xx 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx
+	*	6 bytes [0x4000000,0X7FFFFFFF] 1111110x 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx
 	*/
 	String<STRU32> ret = String<STRU32> (val.length ()) ;
 	INDEX iw = 0 ;
@@ -416,8 +417,8 @@ inline String<STRU32> _U8STOU32S_ (const String<STRU8> &val) {
 	auto rbx = STRU32 () ;
 	for (auto &&i : val) {
 		if (rax == VAR_NONE)
-			discard ;
-		auto fax = FALSE ;
+			continue ;
+		auto fax = TRUE ;
 		if SWITCH_CASE (fax) {
 			if (!(rax == 0))
 				discard ;
@@ -497,20 +498,20 @@ inline String<STRU32> _U8STOU32S_ (const String<STRU8> &val) {
 inline String<STRU8> _U32STOU8S_ (const String<STRU32> &val) {
 	_STATIC_WARNING_ ("note") ;
 	/*
-	1 bytes [0,0X7F] 0xxxxxxx
-	2 bytes [0x80,0X7FF] 110xxxxx 10xxxxxx
-	3 bytes [0x800,0XFFFF] 1110xxxx 10xxxxxx 10xxxxxx
-	4 bytes [0x10000,0X1FFFFF] 11110xxx 10xxxxxx 10xxxxxx 10xxxxxx
-	5 bytes [0x200000,0X3FFFFFF] 111110xx 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx
-	6 bytes [0x4000000,0X7FFFFFFF] 1111110x 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx
+	*	1 bytes [0,0X7F] 0xxxxxxx
+	*	2 bytes [0x80,0X7FF] 110xxxxx 10xxxxxx
+	*	3 bytes [0x800,0XFFFF] 1110xxxx 10xxxxxx 10xxxxxx
+	*	4 bytes [0x10000,0X1FFFFF] 11110xxx 10xxxxxx 10xxxxxx 10xxxxxx
+	*	5 bytes [0x200000,0X3FFFFFF] 111110xx 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx
+	*	6 bytes [0x4000000,0X7FFFFFFF] 1111110x 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx
 	*/
 	String<STRU8> ret = String<STRU8> (val.length () * 6) ;
 	INDEX iw = 0 ;
 	auto rax = VAR_ZERO ;
 	for (auto &&i : val) {
 		if (rax == VAR_NONE)
-			discard ;
-		auto fax = FALSE ;
+			continue ;
+		auto fax = TRUE ;
 		if SWITCH_CASE (fax) {
 			if (!(rax == 0))
 				discard ;
@@ -581,8 +582,8 @@ inline String<STRU8> _U32STOU8S_ (const String<STRU32> &val) {
 inline String<STRU32> _U16STOU32S_ (const String<STRU16> &val) {
 	_STATIC_WARNING_ ("note") ;
 	/*
-	utf16 surrogate pairs [D800,DBFF] 110110xx xxxxxxxx [DC00,DFFF] 110111xx xxxxxxxx
-	utf16-utf32 surrogate pairs [0X10000,0X10FFFF]-[0,0XFFFFF] 0000xxxx xxxxxxxx xxxxxxxx
+	*	utf16 surrogate pairs [D800,DBFF] 110110xx xxxxxxxx [DC00,DFFF] 110111xx xxxxxxxx
+	*	utf16-utf32 surrogate pairs [0X10000,0X10FFFF]-[0,0XFFFFF] 0000xxxx xxxxxxxx xxxxxxxx
 	*/
 	String<STRU32> ret = String<STRU32> (val.length ()) ;
 	INDEX iw = 0 ;
@@ -590,8 +591,8 @@ inline String<STRU32> _U16STOU32S_ (const String<STRU16> &val) {
 	auto rbx = STRU32 () ;
 	for (auto &&i : val) {
 		if (rax == VAR_NONE)
-			discard ;
-		auto fax = FALSE ;
+			continue ;
+		auto fax = TRUE ;
 		if SWITCH_CASE (fax) {
 			if (!(rax == 0))
 				discard ;
@@ -636,16 +637,16 @@ inline String<STRU32> _U16STOU32S_ (const String<STRU16> &val) {
 inline String<STRU16> _U32STOU16S_ (const String<STRU32> &val) {
 	_STATIC_WARNING_ ("note") ;
 	/*
-	utf16 surrogate pairs [D800,DBFF] 110110xx xxxxxxxx [DC00,DFFF] 110111xx xxxxxxxx
-	utf16-utf32 surrogate pairs [0X10000,0X10FFFF]-[0,0XFFFFF] 0000xxxx xxxxxxxx xxxxxxxx
+	*	utf16 surrogate pairs [D800,DBFF] 110110xx xxxxxxxx [DC00,DFFF] 110111xx xxxxxxxx
+	*	utf16-utf32 surrogate pairs [0X10000,0X10FFFF]-[0,0XFFFFF] 0000xxxx xxxxxxxx xxxxxxxx
 	*/
 	String<STRU16> ret = String<STRU16> (val.length () * 2) ;
 	INDEX iw = 0 ;
 	auto rax = VAR_ZERO ;
 	for (auto &&i : val) {
 		if (rax == VAR_NONE)
-			discard ;
-		auto fax = FALSE ;
+			continue ;
+		auto fax = TRUE ;
 		if SWITCH_CASE (fax) {
 			if (!(rax == 0))
 				discard ;
@@ -679,29 +680,29 @@ inline String<STRU16> _U32STOU16S_ (const String<STRU32> &val) {
 }
 
 inline String<STRU8> _WSTOU8S_ (const String<STRW> &val) {
-	return U::OPERATOR_CVT_STRING<String<STRU8> ,String<STRUW>>::invoke (_CAST_<String<STRUW>> (val)) ;
+	return U::STRING_TRAITS_HELP<STRU8 ,STRUW>::invoke (_CAST_<String<STRUW>> (val)) ;
 }
 
 inline String<STRW> _U8STOWS_ (const String<STRU8> &val) {
-	String<STRUW> ret = U::OPERATOR_CVT_STRING<String<STRUW> ,String<STRU8>>::invoke (val) ;
+	String<STRUW> ret = U::STRING_TRAITS_HELP<STRUW ,STRU8>::invoke (val) ;
 	return std::move (_CAST_<String<STRW>> (ret)) ;
 }
 
 inline String<STRU16> _WSTOU16S_ (const String<STRW> &val) {
-	return U::OPERATOR_CVT_STRING<String<STRU16> ,String<STRUW>>::invoke (_CAST_<String<STRUW>> (val)) ;
+	return U::STRING_TRAITS_HELP<STRU16 ,STRUW>::invoke (_CAST_<String<STRUW>> (val)) ;
 }
 
 inline String<STRW> _U16STOWS_ (const String<STRU16> &val) {
-	String<STRUW> ret = U::OPERATOR_CVT_STRING<String<STRUW> ,String<STRU16>>::invoke (val) ;
+	String<STRUW> ret = U::STRING_TRAITS_HELP<STRUW ,STRU16>::invoke (val) ;
 	return std::move (_CAST_<String<STRW>> (ret)) ;
 }
 
 inline String<STRU32> _WSTOU32S_ (const String<STRW> &val) {
-	return U::OPERATOR_CVT_STRING<String<STRU32> ,String<STRUW>>::invoke (_CAST_<String<STRUW>> (val)) ;
+	return U::STRING_TRAITS_HELP<STRU32 ,STRUW>::invoke (_CAST_<String<STRUW>> (val)) ;
 }
 
 inline String<STRW> _U32STOWS_ (const String<STRU32> &val) {
-	String<STRUW> ret = U::OPERATOR_CVT_STRING<String<STRUW> ,String<STRU32>>::invoke (val) ;
+	String<STRUW> ret = U::STRING_TRAITS_HELP<STRUW ,STRU32>::invoke (val) ;
 	return std::move (_CAST_<String<STRW>> (ret)) ;
 }
 
@@ -771,23 +772,27 @@ inline String<STRA> _U8STOUAS_ (String<STRU8> &&val) {
 
 inline imports DEF<PhanBuffer<const DEF<STRUW[2]>> ()> _LOADUWSTOUGBKSTABLE_ ;
 
-inline String<STRW> _GBKSTOWS_ (const String<STRA> &val) {
-	auto &r1y = _CACHE_ ([] () {
-		const auto r2x = _LOADUWSTOUGBKSTABLE_ () ;
-		HashSet<STRUW ,STRUW> ret = HashSet<STRUW ,STRUW> (r2x.size ()) ;
-		for (INDEX i = 0 ,ie = r2x.size () ; i < ie ; i++)
-			ret.add (r2x[i][1] ,r2x[i][0]) ;
+inline const HashSet<STRUW ,STRUW> &_inline_GBKSTOWS_TABLE_ () {
+	return _CACHE_ ([] () {
+		const auto r1x = _LOADUWSTOUGBKSTABLE_ () ;
+		HashSet<STRUW ,STRUW> ret = HashSet<STRUW ,STRUW> (r1x.size ()) ;
+		for (INDEX i = 0 ,ie = r1x.size () ; i < ie ; i++)
+			ret.add (r1x[i][1] ,r1x[i][0]) ;
 		return std::move (ret) ;
 	}) ;
-	auto &r3y = _CAST_<String<STRUA>> (val) ;
-	String<STRW> ret = String<STRW> (r3y.length ()) ;
+}
+
+inline String<STRW> _GBKSTOWS_ (const String<STRA> &val) {
+	auto &r1y = _inline_GBKSTOWS_TABLE_ () ;
+	auto &r2y = _CAST_<String<STRUA>> (val) ;
+	String<STRW> ret = String<STRW> (r2y.length ()) ;
 	INDEX iw = 0 ;
 	auto rax = VAR_ZERO ;
 	auto rbx = STRUW () ;
-	for (auto &&i : r3y) {
+	for (auto &&i : r2y) {
 		if (rax == VAR_NONE)
-			discard ;
-		auto fax = FALSE ;
+			continue ;
+		auto fax = TRUE ;
 		if SWITCH_CASE (fax) {
 			if (!(rax == 0))
 				discard ;
@@ -807,7 +812,7 @@ inline String<STRW> _GBKSTOWS_ (const String<STRA> &val) {
 		if (rax < 10)
 			continue ;
 		INDEX ix = r1y.find (rbx) ;
-		auto fbx = FALSE ;
+		auto fbx = TRUE ;
 		if SWITCH_CASE (fbx) {
 			if (!(rax == 10))
 				discard ;
@@ -851,22 +856,26 @@ inline String<STRW> _GBKSTOWS_ (const String<STRA> &val) {
 	return std::move (ret) ;
 }
 
-inline String<STRA> _WSTOGBKS_ (const String<STRW> &val) {
-	auto &r1y = _CACHE_ ([] () {
-		const auto r2x = _LOADUWSTOUGBKSTABLE_ () ;
-		HashSet<STRUW ,STRUW> ret = HashSet<STRUW ,STRUW> (r2x.size ()) ;
-		for (INDEX i = 0 ,ie = r2x.size () ; i < ie ; i++)
-			ret.add (r2x[i][0] ,r2x[i][1]) ;
+inline const HashSet<STRUW ,STRUW> &_inline_WSTOGBKS_TABLE_ () {
+	return _CACHE_ ([] () {
+		const auto r1x = _LOADUWSTOUGBKSTABLE_ () ;
+		HashSet<STRUW ,STRUW> ret = HashSet<STRUW ,STRUW> (r1x.size ()) ;
+		for (INDEX i = 0 ,ie = r1x.size () ; i < ie ; i++)
+			ret.add (r1x[i][0] ,r1x[i][1]) ;
 		return std::move (ret) ;
 	}) ;
+}
+
+inline String<STRA> _WSTOGBKS_ (const String<STRW> &val) {
+	auto &r1y = _inline_WSTOGBKS_TABLE_ () ;
 	String<STRUA> ret = String<STRUA> (val.length () * 2) ;
 	INDEX iw = 0 ;
 	auto rax = VAR_ZERO ;
 	for (auto &&i : val) {
 		if (rax == VAR_NONE)
-			discard ;
+			continue ;
 		INDEX ix = r1y.find (STRUW (i)) ;
-		auto fax = FALSE ;
+		auto fax = TRUE ;
 		if SWITCH_CASE (fax) {
 			if (!(rax == 0))
 				discard ;
@@ -900,11 +909,12 @@ inline String<STRA> _WSTOGBKS_ (const String<STRW> &val) {
 }
 } ;
 
-inline namespace S {
+inline namespace STRING {
 template <class _ARG1>
 inline BOOL _PARSEBOOLS_ (const String<_ARG1> &stri) {
 	BOOL ret ;
-	TextReader<_ARG1> (stri.raw ()) >> ret >> _EOS_ ;
+	auto ris = TextReader<_ARG1> (stri.raw ()) ;
+	ris >> ret >> _EOS_ ;
 	return std::move (ret) ;
 }
 
@@ -912,14 +922,16 @@ template <class _RET = STR>
 inline String<_RET> _BUILDBOOLS_ (const BOOL &stru) {
 	_STATIC_ASSERT_ (!std::is_reference<_RET>::value) ;
 	String<_RET> ret = String<_RET> (7) ;
-	TextWriter<_RET> (ret.raw ()) << stru << _EOS_ ;
+	auto wos = TextWriter<_RET> (ret.raw ()) ;
+	wos << stru << _EOS_ ;
 	return std::move (ret) ;
 }
 
 template <class _ARG1>
 inline VAR32 _PARSEVAR32S_ (const String<_ARG1> &stri) {
 	VAR32 ret ;
-	TextReader<_ARG1> (stri.raw ()) >> ret >> _EOS_ ;
+	auto ris = TextReader<_ARG1> (stri.raw ()) ;
+	ris >> ret >> _EOS_ ;
 	return std::move (ret) ;
 }
 
@@ -927,14 +939,16 @@ template <class _RET = STR>
 inline String<_RET> _BUILDVAR32S_ (const VAR32 &stru) {
 	_STATIC_ASSERT_ (!std::is_reference<_RET>::value) ;
 	String<_RET> ret = String<_RET> (63) ;
-	TextWriter<_RET> (ret.raw ()) << stru << _EOS_ ;
+	auto wos = TextWriter<_RET> (ret.raw ()) ;
+	wos << stru << _EOS_ ;
 	return std::move (ret) ;
 }
 
 template <class _ARG1>
 inline VAR64 _PARSEVAR64S_ (const String<_ARG1> &stri) {
 	VAR64 ret ;
-	TextReader<_ARG1> (stri.raw ()) >> ret >> _EOS_ ;
+	auto ris = TextReader<_ARG1> (stri.raw ()) ;
+	ris >> ret >> _EOS_ ;
 	return std::move (ret) ;
 }
 
@@ -942,14 +956,16 @@ template <class _RET = STR>
 inline String<_RET> _BUILDVAR64S_ (const VAR64 &stru) {
 	_STATIC_ASSERT_ (!std::is_reference<_RET>::value) ;
 	String<_RET> ret = String<_RET> (127) ;
-	TextWriter<_RET> (ret.raw ()) << stru << _EOS_ ;
+	auto wos = TextWriter<_RET> (ret.raw ()) ;
+	wos << stru << _EOS_ ;
 	return std::move (ret) ;
 }
 
 template <class _ARG1>
 inline VAR _PARSEVARS_ (const String<_ARG1> &stri) {
 	VAR ret ;
-	TextReader<_ARG1> (stri.raw ()) >> ret >> _EOS_ ;
+	auto ris = TextReader<_ARG1> (stri.raw ()) ;
+	ris >> ret >> _EOS_ ;
 	return std::move (ret) ;
 }
 
@@ -957,14 +973,16 @@ template <class _RET = STR>
 inline String<_RET> _BUILDVARS_ (const VAR &stru) {
 	_STATIC_ASSERT_ (!std::is_reference<_RET>::value) ;
 	String<_RET> ret = String<_RET> (127) ;
-	TextWriter<_RET> (ret.raw ()) << stru << _EOS_ ;
+	auto wos = TextWriter<_RET> (ret.raw ()) ;
+	wos << stru << _EOS_ ;
 	return std::move (ret) ;
 }
 
 template <class _ARG1>
 inline VAL32 _PARSEVAL32S_ (const String<_ARG1> &stri) {
 	VAL32 ret ;
-	TextReader<_ARG1> (stri.raw ()) >> ret >> _EOS_ ;
+	auto ris = TextReader<_ARG1> (stri.raw ()) ;
+	ris >> ret >> _EOS_ ;
 	return std::move (ret) ;
 }
 
@@ -972,14 +990,16 @@ template <class _RET = STR>
 inline String<_RET> _BUILDVAL32S_ (const VAL32 &stru) {
 	_STATIC_ASSERT_ (!std::is_reference<_RET>::value) ;
 	String<_RET> ret = String<_RET> (127) ;
-	TextWriter<_RET> (ret.raw ()) << stru << _EOS_ ;
+	auto wos = TextWriter<_RET> (ret.raw ()) ;
+	wos << stru << _EOS_ ;
 	return std::move (ret) ;
 }
 
 template <class _ARG1>
 inline VAL64 _PARSEVAL64S_ (const String<_ARG1> &stri) {
 	VAL64 ret ;
-	TextReader<_ARG1> (stri.raw ()) >> ret >> _EOS_ ;
+	auto ris = TextReader<_ARG1> (stri.raw ()) ;
+	ris >> ret >> _EOS_ ;
 	return std::move (ret) ;
 }
 
@@ -987,14 +1007,16 @@ template <class _RET = STR>
 inline String<_RET> _BUILDVAL64S_ (const VAL64 &stru) {
 	_STATIC_ASSERT_ (!std::is_reference<_RET>::value) ;
 	String<_RET> ret = String<_RET> (127) ;
-	TextWriter<_RET> (ret.raw ()) << stru << _EOS_ ;
+	auto wos = TextWriter<_RET> (ret.raw ()) ;
+	wos << stru << _EOS_ ;
 	return std::move (ret) ;
 }
 
 template <class _ARG1>
 inline VAL _PARSEVALS_ (const String<_ARG1> &stri) {
 	VAL ret ;
-	TextReader<_ARG1> (stri.raw ()) >> ret >> _EOS_ ;
+	auto ris = TextReader<_ARG1> (stri.raw ()) ;
+	ris >> ret >> _EOS_ ;
 	return std::move (ret) ;
 }
 
@@ -1002,19 +1024,20 @@ template <class _RET = STR>
 inline String<_RET> _BUILDVALS_ (const VAL &stru) {
 	_STATIC_ASSERT_ (!std::is_reference<_RET>::value) ;
 	String<_RET> ret = String<_RET> (127) ;
-	TextWriter<_RET> (ret.raw ()) << stru << _EOS_ ;
+	auto wos = TextWriter<_RET> (ret.raw ()) ;
+	wos << stru << _EOS_ ;
 	return std::move (ret) ;
 }
 
 template <class _ARG1>
 inline String<STR> _PARSESTRS_ (const String<_ARG1> &stri) {
-	return U::OPERATOR_CVT_STRING<String<STR> ,String<_ARG1>>::invoke (stri) ;
+	return U::STRING_TRAITS_HELP<STR ,_ARG1>::invoke (stri) ;
 }
 
 template <class _RET = STR>
 inline String<_RET> _BUILDSTRS_ (const String<STR> &stru) {
 	_STATIC_ASSERT_ (!std::is_reference<_RET>::value) ;
-	return U::OPERATOR_CVT_STRING<String<_RET> ,String<STR>>::invoke (stru) ;
+	return U::STRING_TRAITS_HELP<_RET ,STR>::invoke (stru) ;
 }
 } ;
 
@@ -1047,7 +1070,7 @@ public:
 	String<STRU8> replace (const String<STRU8> &expr ,const String<STRU8> &rep) const ;
 } ;
 
-inline namespace S {
+inline namespace STRING {
 template <class _ARG1>
 inline CHAR _PARSEHEX8S_ (const String<_ARG1> &stri) {
 	CHAR ret = 0 ;
@@ -1063,8 +1086,8 @@ inline CHAR _PARSEHEX8S_ (const String<_ARG1> &stri) {
 		const auto r2x = BOOL (rax >= _ARG1 ('A') && rax <= _ARG1 ('F')) ;
 		_DYNAMIC_ASSERT_ (r1x || r2x) ;
 		const auto r3x = _SWITCH_ (
-			r1x ? (_ARG1 ('0')) :
-			(_ARG1 ('A' - 10))) ;
+			r1x ? _ARG1 ('0') :
+			_ARG1 ('A' - 10)) ;
 		ret = (ret << 4) | CHAR (rax - r3x) ;
 	}
 	ris >> _EOS_ ;
@@ -1081,8 +1104,8 @@ inline String<_RET> _BUILDHEX8S_ (const CHAR &stru) {
 	for (INDEX i = 0 ,ie = 8 ; i < ie ; i++) {
 		const auto r1x = CHAR (stru >> (28 - i * 4)) & CHAR (0X0F) ;
 		const auto r2x = _SWITCH_ (
-			(r1x < DATA (10)) ? (_RET ('0')) :
-			(_RET ('A') - 10)) ;
+			(r1x < DATA (10)) ? _RET ('0') :
+			_RET ('A') - 10) ;
 		wos << _RET (r2x + r1x) ;
 	}
 	wos << _EOS_ ;
@@ -1104,8 +1127,8 @@ inline DATA _PARSEHEX16S_ (const String<_ARG1> &stri) {
 		const auto r2x = BOOL (rax >= _ARG1 ('A') && rax <= _ARG1 ('F')) ;
 		_DYNAMIC_ASSERT_ (r1x || r2x) ;
 		const auto r3x = _SWITCH_ (
-			r1x ? (_ARG1 ('0')) :
-			(_ARG1 ('A' - 10))) ;
+			r1x ? _ARG1 ('0') :
+			_ARG1 ('A' - 10)) ;
 		ret = (ret << 4) | DATA (rax - r3x) ;
 	}
 	ris >> _EOS_ ;
@@ -1122,8 +1145,8 @@ inline String<_RET> _BUILDHEX16S_ (const DATA &stru) {
 	for (INDEX i = 0 ,ie = 16 ; i < ie ; i++) {
 		const auto r1x = DATA (stru >> (60 - i * 4)) & DATA (0X0F) ;
 		const auto r2x = _SWITCH_ (
-			(r1x < DATA (10)) ? (_RET ('0')) :
-			(_RET ('A') - 10)) ;
+			(r1x < DATA (10)) ? _RET ('0') :
+			_RET ('A') - 10) ;
 		wos << _RET (r2x + r1x) ;
 	}
 	wos << _EOS_ ;
@@ -1149,8 +1172,8 @@ inline String<_RET> _BUILDBASE64U8S_ (const String<STRU8> &stru) {
 	auto rbx = CHAR () ;
 	for (auto &&i : stru) {
 		if (rax == VAR_NONE)
-			discard ;
-		auto fax = FALSE ;
+			continue ;
+		auto fax = TRUE ;
 		if SWITCH_CASE (fax) {
 			if (!(rax == 0))
 				discard ;
@@ -1178,8 +1201,8 @@ inline String<_RET> _BUILDBASE64U8S_ (const String<STRU8> &stru) {
 			rax = VAR_NONE ;
 		}
 	}
-	if SWITCH_ONCE (TRUE) {
-		auto fax = FALSE ;
+	if SWITCH_CASE (TRUE) {
+		auto fax = TRUE ;
 		if SWITCH_CASE (fax) {
 			if (!(rax == 1))
 				discard ;
@@ -1223,11 +1246,11 @@ inline String<STRU8> _PARSEBASE64U8S_ (const String<_ARG1> &stri) {
 	auto rbx = CHAR () ;
 	for (auto &&i : stri) {
 		if (rax == VAR_NONE)
-			discard ;
+			continue ;
 		const auto r2x = _SWITCH_ (
-			((i & STRU8 (0X80)) == 0) ? (M_BASE64.P1[LENGTH (i) - 32]) :
+			((i & STRU8 (0X80)) == 0) ? M_BASE64.P1[LENGTH (i) - 32] :
 			VAR_NONE) ;
-		auto fax = FALSE ;
+		auto fax = TRUE ;
 		if SWITCH_CASE (fax) {
 			if (!(rax == 0))
 				discard ;
@@ -1268,8 +1291,8 @@ inline String<STRU8> _PARSEBASE64U8S_ (const String<_ARG1> &stri) {
 			rax = VAR_NONE ;
 		}
 	}
-	if SWITCH_ONCE (TRUE) {
-		auto fax = FALSE ;
+	if SWITCH_CASE (TRUE) {
+		auto fax = TRUE ;
 		if SWITCH_CASE (fax) {
 			if (!(rax == 1))
 				discard ;
@@ -1324,11 +1347,11 @@ inline PACK<WORD ,CHAR> _PARSEIPV4S_ (const String<_ARG1> &stri) {
 	ris >> rbx ;
 	_DYNAMIC_ASSERT_ (rbx >= 0 && rbx < 256) ;
 	const auto r4x = BYTE (rbx) ;
-	const auto r5x = PACK<BYTE[4]> {r1x ,r2x ,r3x ,r4x} ;
-	_CAST_<EndianBytes<CHAR>> (r5x.P1) >>= ret.P2 ;
+	const auto r5x = PACK<BYTE[_SIZEOF_ (CHAR)]> {r1x ,r2x ,r3x ,r4x} ;
+	ByteReader (PhanBuffer<const BYTE>::make (r5x.P1)) >> ret.P2 ;
 	ret.P1 = 0 ;
 	ris.copy () >> rax ;
-	if SWITCH_ONCE (TRUE) {
+	if SWITCH_CASE (TRUE) {
 		if (rax != _ARG1 (':'))
 			discard ;
 		ris >> rax ;
@@ -1345,7 +1368,7 @@ inline String<_RET> _BUILDIPV4S_ (const PACK<WORD ,CHAR> &stru) {
 	_STATIC_ASSERT_ (!std::is_reference<_RET>::value) ;
 	String<_RET> ret = String<_RET> (63) ;
 	auto rax = PACK<BYTE[_SIZEOF_ (CHAR)]> () ;
-	_CAST_<EndianBytes<CHAR>> (rax.P1) <<= stru.P2 ;
+	ByteWriter (PhanBuffer<BYTE>::make (rax.P1)) << stru.P2 ;
 	auto wos = TextWriter<_RET> (ret.raw ()) ;
 	wos << VAR (rax.P1[0]) ;
 	wos << _RET ('.') ;
@@ -1354,7 +1377,7 @@ inline String<_RET> _BUILDIPV4S_ (const PACK<WORD ,CHAR> &stru) {
 	wos << VAR (rax.P1[2]) ;
 	wos << _RET ('.') ;
 	wos << VAR (rax.P1[3]) ;
-	if SWITCH_ONCE (TRUE) {
+	if SWITCH_CASE (TRUE) {
 		if (stru.P1 == 0)
 			discard ;
 		wos << _RET (':') ;

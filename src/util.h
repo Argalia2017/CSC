@@ -4,6 +4,7 @@
 #define _DEPRECATED
 
 #include <csc.hpp>
+#pragma warning (disable :4702)
 #include <csc_basic.hpp>
 #include <csc_extend.hpp>
 #include <csc_array.hpp>
@@ -62,23 +63,25 @@ using namespace Microsoft::VisualStudio::CppUnitTestFramework ;
 #endif
 
 #ifndef TEST_CLASS
-#define TEST_CLASS(name) class name
+#define TEST_CLASS(var1) class var1
 #endif
 
 #ifndef TEST_METHOD
-#define TEST_METHOD(name) void name () const
+#define TEST_METHOD(var1) void var1 () const
 #endif
 
 #if defined (__CSC_TARGET_EXE__) || defined (__CSC_TARGET_DLL__)
 namespace CSC {
 inline exports PTR<NONE> GlobalStatic<void>::unique_atomic_address (PTR<NONE> expect ,PTR<NONE> data) popping {
 	PTR<NONE> ret = NULL ;
-	_CATCH_ ([&] () {
-		const auto r1x = _CACHE_ ([] () {
+	_CALL_TRY_ ([&] () {
+		auto &r1y = _CACHE_ ([] () {
 			return SharedRef<std::atomic<PTR<NONE>>>::make (&_NULL_<NONE> ()) ;
 		}) ;
-		r1x->compare_exchange_strong (expect ,data) ;
-		ret = r1x->load () ;
+		r1y->compare_exchange_strong (expect ,data) ;
+		ret = r1y->load () ;
+	} ,[&] () {
+		ret = NULL ;
 	}) ;
 	return std::move (ret) ;
 }
@@ -114,9 +117,9 @@ using namespace CSC ;
 
 namespace UNITTEST {
 #ifdef __CSC_UNITTEST__
-class GlobalUnittestAssert final :private Wrapped<void> {
+class GlobalUnittest final :private Wrapped<void> {
 public:
-	inline static void done (const ARR<STR> &what) {
+	inline static void fail (const ARR<STR> &what) {
 #ifdef MS_CPP_UNITTESTFRAMEWORK
 #ifdef __CSC_STRING__
 		const auto r1x = _BUILDSTRS_<STRW> (what) ;
@@ -134,9 +137,9 @@ public:
 
 #ifdef __CSC_UNITTEST__
 #ifdef __CSC_COMPILER_MSVC__
-#define _UNITTEST_ASSERT_(...) do { if (!(_UNW_ (__VA_ARGS__))) GlobalUnittestAssert::done (CSC::Plain<CSC::STR> (_PCSTR_ ("unittest_assert failed : " _STR_ (__VA_ARGS__) " : at " M_FUNC " in " M_FILE " ," M_LINE))) ; } while (FALSE)
+#define _UNITTEST_ASSERT_(...) do { if (!(_UNW_ (__VA_ARGS__))) GlobalUnittest::fail (CSC::Plain<CSC::STR> (_PCSTR_ ("unittest_assert failed : " _STR_ (__VA_ARGS__) " : at " M_FUNC " in " M_FILE " ," M_LINE))) ; } while (FALSE)
 #else
-#define _UNITTEST_ASSERT_(...) do { struct ARGVPL ; if (!(_UNW_ (__VA_ARGS__))) GlobalUnittestAssert::done (CSC::Plain<CSC::STR> (CSC::_NULL_<CSC::ARGV<ARGVPL>> () ,"unittest_assert failed : " _STR_ (__VA_ARGS__) " : at " ,M_FUNC ," in " ,M_FILE ," ," ,M_LINE)) ; } while (FALSE)
+#define _UNITTEST_ASSERT_(...) do { struct ARGVPL ; if (!(_UNW_ (__VA_ARGS__))) GlobalUnittest::fail (CSC::Plain<CSC::STR> (CSC::_NULL_<CSC::ARGV<ARGVPL>> () ,"unittest_assert failed : " _STR_ (__VA_ARGS__) " : at " ,M_FUNC ," in " ,M_FILE ," ," ,M_LINE)) ; } while (FALSE)
 #endif
 #else
 #define _UNITTEST_ASSERT_(...) do {} while (FALSE)

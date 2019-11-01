@@ -7,7 +7,7 @@ public:
 	TEST_METHOD (TEST_CSC_STREAM) {
 		const auto r1x = CSC::CHAR (0X11223344) ;
 		auto rax = PACK<CSC::BYTE[_SIZEOF_ (CSC::CHAR)]> () ;
-		_CAST_<EndianBytes<CSC::CHAR>> (rax.P1) <<= r1x ;
+		ByteWriter (PhanBuffer<CSC::BYTE>::make (rax.P1)) << r1x ;
 		_UNITTEST_ASSERT_ (rax.P1[0] == CSC::BYTE (0X11)) ;
 		_UNITTEST_ASSERT_ (rax.P1[1] == CSC::BYTE (0X22)) ;
 		_UNITTEST_ASSERT_ (rax.P1[2] == CSC::BYTE (0X33)) ;
@@ -15,8 +15,8 @@ public:
 	}
 
 	TEST_METHOD (TEST_CSC_STREAM_BYTEREADER) {
-		auto rax = PACK<CSC::BYTE[12]> () ;
-		auto ris = ByteReader (PhanBuffer<const CSC::BYTE>::make (rax.P1)) ;
+		auto rax = Buffer<CSC::BYTE ,ARGC<12>> () ;
+		auto ris = ByteReader (PhanBuffer<const CSC::BYTE>::make (rax)) ;
 		auto rbx = Buffer<int ,ARGC<4>> () ;
 		ris >> rbx ;
 	}
@@ -27,12 +27,14 @@ public:
 		wos << rax ;
 	}
 
+	class CLASS_WRAPPED_int :private Wrapped<int> {
+	public:
+		inline void friend_read (TextReader<STRU8> &reader) popping {
+			reader >> CLASS_WRAPPED_int::mSelf >> _GAP_ ;
+		}
+	} ;
+
 	TEST_METHOD (TEST_CSC_STREAM_TEXTREADER) {
-		struct WRAPPED_int :private Wrapped<int> {
-			inline void friend_read (TextReader<STRU8> &reader) popping {
-				reader >> WRAPPED_int::mSelf >> _GAP_ ;
-			}
-		} ;
 		auto rax = Buffer<int ,ARGC<4>> () ;
 		auto rbx = Buffer<STRU8 ,ARGC<10>> () ;
 		auto ris = TextReader<STRU8> (PhanBuffer<const STRU8>::make (rbx)) ;
@@ -47,7 +49,7 @@ public:
 		rbx[7] = STRU8 (' ') ;
 		rbx[8] = STRU8 ('4') ;
 		rbx[9] = ris.attr ().varify_ending_item () ;
-		ris >> _CAST_<Buffer<WRAPPED_int ,ARGC<4>>> (rax) ;
+		ris >> _CAST_<Buffer<CLASS_WRAPPED_int ,ARGC<4>>> (rax) ;
 		_UNITTEST_ASSERT_ (rax[0] == 0) ;
 		_UNITTEST_ASSERT_ (rax[1] == 1) ;
 		_UNITTEST_ASSERT_ (rax[2] == 2) ;

@@ -115,10 +115,10 @@ template <>
 struct OPENGL_TRAITS<VAL64> {
 	using TYPE = ARGC<GL_DOUBLE> ;
 } ;
-} ;
 
 template <class _ARG1>
-using OPENGL_TRAITS_TYPE = typename U::OPENGL_TRAITS<_ARG1>::TYPE ;
+using OPENGL_TRAITS_TYPE = typename U::OPENGL_TRAITS<REMOVE_CVR_TYPE<_ARG1>>::TYPE ;
+} ;
 
 class AbstractShader_Engine_OPENGL :public AbstractShader::Abstract {
 private:
@@ -146,14 +146,14 @@ public:
 
 public:
 	AbstractShader_Engine_OPENGL () {
-		_STATIC_ASSERT_ (_SIZEOF_ (REMOVE_CVR_TYPE<decltype ((*this))>) == _SIZEOF_ (Interface)) ;
-		_STATIC_ASSERT_ (_ALIGNOF_ (REMOVE_CVR_TYPE<decltype ((*this))>) == _ALIGNOF_ (Interface)) ;
+		_STATIC_ASSERT_ (_SIZEOF_ (decltype ((*this))) == _SIZEOF_ (Interface)) ;
+		_STATIC_ASSERT_ (_ALIGNOF_ (decltype ((*this))) == _ALIGNOF_ (Interface)) ;
 	}
 
 	void compute_load_data (AnyRef<void> &this_ ,const PhanBuffer<const BYTE> &vs ,const PhanBuffer<const BYTE> &fs) const override {
 		_DEBUG_ASSERT_ (vs.size () < VAR32_MAX) ;
 		_DEBUG_ASSERT_ (fs.size () < VAR32_MAX) ;
-		auto rax = UniqueRef<CHAR> ([&] (CHAR &me) {
+		auto tmp = UniqueRef<CHAR> ([&] (CHAR &me) {
 			me = glCreateProgram () ;
 			_DYNAMIC_ASSERT_ (me != 0) ;
 			const auto r1x = glCreateShader (GL_VERTEX_SHADER) ;
@@ -175,7 +175,7 @@ public:
 		} ,[] (CHAR &me) {
 			glDeleteProgram (me) ;
 		}) ;
-		this_ = AnyRef<NATIVE_TYPE>::make (std::move (rax)) ;
+		this_ = AnyRef<NATIVE_TYPE>::make (std::move (tmp)) ;
 	}
 
 	void compute_active_pipeline (AnyRef<void> &this_) const override {
@@ -243,29 +243,28 @@ public:
 	}
 
 	void compute_sprite_load_data (AnyRef<void> &this_ ,const Mesh &mesh) const override {
-		auto rax = Holder () ;
-		rax.mVAO = UniqueRef<CHAR> ([&] (CHAR &me) {
+		auto tmp = Holder () ;
+		tmp.mVAO = UniqueRef<CHAR> ([&] (CHAR &me) {
 			glGenVertexArrays (1 ,&me) ;
 			_DYNAMIC_ASSERT_ (me != GL_INVALID_VALUE) ;
 		} ,[] (CHAR &me) {
 			glDeleteVertexArrays (1 ,&me) ;
-
 		}) ;
-		rax.mVBO = UniqueRef<AutoBuffer<CHAR>> ([&] (AutoBuffer<CHAR> &me) {
+		tmp.mVBO = UniqueRef<AutoBuffer<CHAR>> ([&] (AutoBuffer<CHAR> &me) {
 			me = AutoBuffer<CHAR> (1) ;
 			glGenBuffers (VAR32 (me.size ()) ,me.self) ;
 		} ,[] (AutoBuffer<CHAR> &me) {
 			glDeleteBuffers (VAR32 (me.size ()) ,me.self) ;
 		}) ;
-		rax.mVTO = UniqueRef<AutoBuffer<CHAR>> ([&] (AutoBuffer<CHAR> &me) {
+		tmp.mVTO = UniqueRef<AutoBuffer<CHAR>> ([&] (AutoBuffer<CHAR> &me) {
 			me = AutoBuffer<CHAR> (1) ;
 			glGenTextures (VAR32 (me.size ()) ,me.self) ;
 		} ,[] (AutoBuffer<CHAR> &me) {
 			glDeleteTextures (VAR32 (me.size ()) ,me.self) ;
 		}) ;
-		compute_transfer_data (rax ,bind_vertex (mesh.vertex () ,mesh.element ())) ;
-		compute_transfer_data (rax ,mesh.texture ()[0]) ;
-		this_ = AnyRef<SPRITE_NATIVE_TYPE>::make (std::move (rax)) ;
+		compute_transfer_data (tmp ,bind_vertex (mesh.vertex () ,mesh.element ())) ;
+		compute_transfer_data (tmp ,mesh.texture ()[0]) ;
+		this_ = AnyRef<SPRITE_NATIVE_TYPE>::make (std::move (tmp)) ;
 	}
 
 	void compute_sprite_active_texture (AnyRef<void> &this_ ,INDEX texture) const override {
@@ -277,7 +276,7 @@ public:
 	void compute_sprite_draw (AnyRef<void> &this_) const override {
 		auto &r1y = this_.rebind<SPRITE_NATIVE_TYPE> ().self ;
 		glBindVertexArray (r1y.mVAO) ;
-		if SWITCH_ONCE (TRUE) {
+		if SWITCH_CASE (TRUE) {
 			if (r1y.mTexture == VAR_NONE)
 				discard ;
 			glActiveTexture (GL_TEXTURE_2D) ;
@@ -373,9 +372,9 @@ private:
 		self_.mMode = GL_POINTS ;
 		glBindVertexArray (self_.mVAO) ;
 		glBindBuffer (GL_ARRAY_BUFFER ,self_.mVBO.self[0]) ;
-		glBufferData (GL_ARRAY_BUFFER ,self_.mSize * _SIZEOF_ (VERTEX) ,vbo[0][0].raw ().self ,GL_STATIC_DRAW) ;
+		glBufferData (GL_ARRAY_BUFFER ,(self_.mSize * _SIZEOF_ (VERTEX)) ,vbo[0][0].raw ().self ,GL_STATIC_DRAW) ;
 		glEnableVertexAttribArray (LAYOUT_POSITION) ;
-		glVertexAttribPointer (LAYOUT_POSITION ,3 ,OPENGL_TRAITS_TYPE<VAL32>::value ,GL_FALSE ,_SIZEOF_ (VERTEX) ,NULL) ;
+		glVertexAttribPointer (LAYOUT_POSITION ,3 ,U::OPENGL_TRAITS_TYPE<VAL32>::value ,GL_FALSE ,_SIZEOF_ (VERTEX) ,NULL) ;
 		glBindVertexArray (0) ;
 	}
 
@@ -385,9 +384,9 @@ private:
 		self_.mMode = GL_LINES ;
 		glBindVertexArray (self_.mVAO) ;
 		glBindBuffer (GL_ARRAY_BUFFER ,self_.mVBO.self[0]) ;
-		glBufferData (GL_ARRAY_BUFFER ,self_.mSize * _SIZEOF_ (VERTEX) ,vbo[0][0].raw ().self ,GL_STATIC_DRAW) ;
+		glBufferData (GL_ARRAY_BUFFER ,(self_.mSize * _SIZEOF_ (VERTEX)) ,vbo[0][0].raw ().self ,GL_STATIC_DRAW) ;
 		glEnableVertexAttribArray (LAYOUT_POSITION) ;
-		glVertexAttribPointer (LAYOUT_POSITION ,3 ,OPENGL_TRAITS_TYPE<VAL32>::value ,GL_FALSE ,_SIZEOF_ (VERTEX) ,NULL) ;
+		glVertexAttribPointer (LAYOUT_POSITION ,3 ,U::OPENGL_TRAITS_TYPE<VAL32>::value ,GL_FALSE ,_SIZEOF_ (VERTEX) ,NULL) ;
 		glBindVertexArray (0) ;
 	}
 
@@ -397,11 +396,11 @@ private:
 		self_.mMode = GL_LINES ;
 		glBindVertexArray (self_.mVAO) ;
 		glBindBuffer (GL_ARRAY_BUFFER ,self_.mVBO.self[0]) ;
-		glBufferData (GL_ARRAY_BUFFER ,self_.mSize * _SIZEOF_ (VERTEX) ,vbo[0][0].raw ().self ,GL_STATIC_DRAW) ;
+		glBufferData (GL_ARRAY_BUFFER ,(self_.mSize * _SIZEOF_ (VERTEX)) ,vbo[0][0].raw ().self ,GL_STATIC_DRAW) ;
 		glEnableVertexAttribArray (LAYOUT_POSITION) ;
-		glVertexAttribPointer (LAYOUT_POSITION ,3 ,OPENGL_TRAITS_TYPE<VAL32>::value ,GL_FALSE ,_SIZEOF_ (VERTEX) ,&_NULL_<VERTEX> ()[0]) ;
+		glVertexAttribPointer (LAYOUT_POSITION ,3 ,U::OPENGL_TRAITS_TYPE<VAL32>::value ,GL_FALSE ,_SIZEOF_ (VERTEX) ,&_NULL_<VERTEX> ()[0]) ;
 		glEnableVertexAttribArray (LAYOUT_TEXCOORD) ;
-		glVertexAttribPointer (LAYOUT_TEXCOORD ,2 ,OPENGL_TRAITS_TYPE<VAL32>::value ,GL_FALSE ,_SIZEOF_ (VERTEX) ,&_NULL_<VERTEX> ()[3]) ;
+		glVertexAttribPointer (LAYOUT_TEXCOORD ,2 ,U::OPENGL_TRAITS_TYPE<VAL32>::value ,GL_FALSE ,_SIZEOF_ (VERTEX) ,&_NULL_<VERTEX> ()[3]) ;
 		glBindVertexArray (0) ;
 	}
 
@@ -411,9 +410,9 @@ private:
 		self_.mMode = GL_TRIANGLES ;
 		glBindVertexArray (self_.mVAO) ;
 		glBindBuffer (GL_ARRAY_BUFFER ,self_.mVBO.self[0]) ;
-		glBufferData (GL_ARRAY_BUFFER ,self_.mSize * _SIZEOF_ (VERTEX) ,vbo[0][0].raw ().self ,GL_STATIC_DRAW) ;
+		glBufferData (GL_ARRAY_BUFFER ,(self_.mSize * _SIZEOF_ (VERTEX)) ,vbo[0][0].raw ().self ,GL_STATIC_DRAW) ;
 		glEnableVertexAttribArray (LAYOUT_POSITION) ;
-		glVertexAttribPointer (LAYOUT_POSITION ,3 ,OPENGL_TRAITS_TYPE<VAL32>::value ,GL_FALSE ,_SIZEOF_ (VERTEX) ,NULL) ;
+		glVertexAttribPointer (LAYOUT_POSITION ,3 ,U::OPENGL_TRAITS_TYPE<VAL32>::value ,GL_FALSE ,_SIZEOF_ (VERTEX) ,NULL) ;
 		glBindVertexArray (0) ;
 	}
 
@@ -423,11 +422,11 @@ private:
 		self_.mMode = GL_TRIANGLES ;
 		glBindVertexArray (self_.mVAO) ;
 		glBindBuffer (GL_ARRAY_BUFFER ,self_.mVBO.self[0]) ;
-		glBufferData (GL_ARRAY_BUFFER ,self_.mSize * _SIZEOF_ (VERTEX) ,vbo[0][0].raw ().self ,GL_STATIC_DRAW) ;
+		glBufferData (GL_ARRAY_BUFFER ,(self_.mSize * _SIZEOF_ (VERTEX)) ,vbo[0][0].raw ().self ,GL_STATIC_DRAW) ;
 		glEnableVertexAttribArray (LAYOUT_POSITION) ;
-		glVertexAttribPointer (LAYOUT_POSITION ,3 ,OPENGL_TRAITS_TYPE<VAL32>::value ,GL_FALSE ,_SIZEOF_ (VERTEX) ,&_NULL_<VERTEX> ()[0]) ;
+		glVertexAttribPointer (LAYOUT_POSITION ,3 ,U::OPENGL_TRAITS_TYPE<VAL32>::value ,GL_FALSE ,_SIZEOF_ (VERTEX) ,&_NULL_<VERTEX> ()[0]) ;
 		glEnableVertexAttribArray (LAYOUT_TEXCOORD) ;
-		glVertexAttribPointer (LAYOUT_TEXCOORD ,2 ,OPENGL_TRAITS_TYPE<VAL32>::value ,GL_FALSE ,_SIZEOF_ (VERTEX) ,&_NULL_<VERTEX> ()[3]) ;
+		glVertexAttribPointer (LAYOUT_TEXCOORD ,2 ,U::OPENGL_TRAITS_TYPE<VAL32>::value ,GL_FALSE ,_SIZEOF_ (VERTEX) ,&_NULL_<VERTEX> ()[3]) ;
 		glBindVertexArray (0) ;
 	}
 
@@ -437,13 +436,13 @@ private:
 		self_.mMode = GL_TRIANGLES ;
 		glBindVertexArray (self_.mVAO) ;
 		glBindBuffer (GL_ARRAY_BUFFER ,self_.mVBO.self[0]) ;
-		glBufferData (GL_ARRAY_BUFFER ,self_.mSize * _SIZEOF_ (VERTEX) ,vbo[0][0].raw ().self ,GL_STATIC_DRAW) ;
+		glBufferData (GL_ARRAY_BUFFER ,(self_.mSize * _SIZEOF_ (VERTEX)) ,vbo[0][0].raw ().self ,GL_STATIC_DRAW) ;
 		glEnableVertexAttribArray (LAYOUT_POSITION) ;
-		glVertexAttribPointer (LAYOUT_POSITION ,3 ,OPENGL_TRAITS_TYPE<VAL32>::value ,GL_FALSE ,_SIZEOF_ (VERTEX) ,&_NULL_<VERTEX> ()[0]) ;
+		glVertexAttribPointer (LAYOUT_POSITION ,3 ,U::OPENGL_TRAITS_TYPE<VAL32>::value ,GL_FALSE ,_SIZEOF_ (VERTEX) ,&_NULL_<VERTEX> ()[0]) ;
 		glEnableVertexAttribArray (LAYOUT_TEXCOORD) ;
-		glVertexAttribPointer (LAYOUT_TEXCOORD ,2 ,OPENGL_TRAITS_TYPE<VAL32>::value ,GL_FALSE ,_SIZEOF_ (VERTEX) ,&_NULL_<VERTEX> ()[3]) ;
+		glVertexAttribPointer (LAYOUT_TEXCOORD ,2 ,U::OPENGL_TRAITS_TYPE<VAL32>::value ,GL_FALSE ,_SIZEOF_ (VERTEX) ,&_NULL_<VERTEX> ()[3]) ;
 		glEnableVertexAttribArray (LAYOUT_NORMAL) ;
-		glVertexAttribPointer (LAYOUT_NORMAL ,3 ,OPENGL_TRAITS_TYPE<VAL32>::value ,GL_FALSE ,_SIZEOF_ (VERTEX) ,&_NULL_<VERTEX> ()[5]) ;
+		glVertexAttribPointer (LAYOUT_NORMAL ,3 ,U::OPENGL_TRAITS_TYPE<VAL32>::value ,GL_FALSE ,_SIZEOF_ (VERTEX) ,&_NULL_<VERTEX> ()[5]) ;
 		glBindVertexArray (0) ;
 	}
 
@@ -453,9 +452,9 @@ private:
 		self_.mMode = GL_QUADS ;
 		glBindVertexArray (self_.mVAO) ;
 		glBindBuffer (GL_ARRAY_BUFFER ,self_.mVBO.self[0]) ;
-		glBufferData (GL_ARRAY_BUFFER ,self_.mSize * _SIZEOF_ (VERTEX) ,vbo[0][0].raw ().self ,GL_STATIC_DRAW) ;
+		glBufferData (GL_ARRAY_BUFFER ,(self_.mSize * _SIZEOF_ (VERTEX)) ,vbo[0][0].raw ().self ,GL_STATIC_DRAW) ;
 		glEnableVertexAttribArray (LAYOUT_POSITION) ;
-		glVertexAttribPointer (LAYOUT_POSITION ,3 ,OPENGL_TRAITS_TYPE<VAL32>::value ,GL_FALSE ,_SIZEOF_ (VERTEX) ,NULL) ;
+		glVertexAttribPointer (LAYOUT_POSITION ,3 ,U::OPENGL_TRAITS_TYPE<VAL32>::value ,GL_FALSE ,_SIZEOF_ (VERTEX) ,NULL) ;
 		glBindVertexArray (0) ;
 	}
 
@@ -465,11 +464,11 @@ private:
 		self_.mMode = GL_QUADS ;
 		glBindVertexArray (self_.mVAO) ;
 		glBindBuffer (GL_ARRAY_BUFFER ,self_.mVBO.self[0]) ;
-		glBufferData (GL_ARRAY_BUFFER ,self_.mSize * _SIZEOF_ (VERTEX) ,vbo[0][0].raw ().self ,GL_STATIC_DRAW) ;
+		glBufferData (GL_ARRAY_BUFFER ,(self_.mSize * _SIZEOF_ (VERTEX)) ,vbo[0][0].raw ().self ,GL_STATIC_DRAW) ;
 		glEnableVertexAttribArray (LAYOUT_POSITION) ;
-		glVertexAttribPointer (LAYOUT_POSITION ,3 ,OPENGL_TRAITS_TYPE<VAL32>::value ,GL_FALSE ,_SIZEOF_ (VERTEX) ,&_NULL_<VERTEX> ()[0]) ;
+		glVertexAttribPointer (LAYOUT_POSITION ,3 ,U::OPENGL_TRAITS_TYPE<VAL32>::value ,GL_FALSE ,_SIZEOF_ (VERTEX) ,&_NULL_<VERTEX> ()[0]) ;
 		glEnableVertexAttribArray (LAYOUT_TEXCOORD) ;
-		glVertexAttribPointer (LAYOUT_TEXCOORD ,2 ,OPENGL_TRAITS_TYPE<VAL32>::value ,GL_FALSE ,_SIZEOF_ (VERTEX) ,&_NULL_<VERTEX> ()[3]) ;
+		glVertexAttribPointer (LAYOUT_TEXCOORD ,2 ,U::OPENGL_TRAITS_TYPE<VAL32>::value ,GL_FALSE ,_SIZEOF_ (VERTEX) ,&_NULL_<VERTEX> ()[3]) ;
 		glBindVertexArray (0) ;
 	}
 
@@ -479,13 +478,13 @@ private:
 		self_.mMode = GL_QUADS ;
 		glBindVertexArray (self_.mVAO) ;
 		glBindBuffer (GL_ARRAY_BUFFER ,self_.mVBO.self[0]) ;
-		glBufferData (GL_ARRAY_BUFFER ,self_.mSize * _SIZEOF_ (VERTEX) ,vbo[0][0].raw ().self ,GL_STATIC_DRAW) ;
+		glBufferData (GL_ARRAY_BUFFER ,(self_.mSize * _SIZEOF_ (VERTEX)) ,vbo[0][0].raw ().self ,GL_STATIC_DRAW) ;
 		glEnableVertexAttribArray (LAYOUT_POSITION) ;
-		glVertexAttribPointer (LAYOUT_POSITION ,3 ,OPENGL_TRAITS_TYPE<VAL32>::value ,GL_FALSE ,_SIZEOF_ (VERTEX) ,&_NULL_<VERTEX> ()[0]) ;
+		glVertexAttribPointer (LAYOUT_POSITION ,3 ,U::OPENGL_TRAITS_TYPE<VAL32>::value ,GL_FALSE ,_SIZEOF_ (VERTEX) ,&_NULL_<VERTEX> ()[0]) ;
 		glEnableVertexAttribArray (LAYOUT_TEXCOORD) ;
-		glVertexAttribPointer (LAYOUT_TEXCOORD ,2 ,OPENGL_TRAITS_TYPE<VAL32>::value ,GL_FALSE ,_SIZEOF_ (VERTEX) ,&_NULL_<VERTEX> ()[3]) ;
+		glVertexAttribPointer (LAYOUT_TEXCOORD ,2 ,U::OPENGL_TRAITS_TYPE<VAL32>::value ,GL_FALSE ,_SIZEOF_ (VERTEX) ,&_NULL_<VERTEX> ()[3]) ;
 		glEnableVertexAttribArray (LAYOUT_NORMAL) ;
-		glVertexAttribPointer (LAYOUT_NORMAL ,3 ,OPENGL_TRAITS_TYPE<VAL32>::value ,GL_FALSE ,_SIZEOF_ (VERTEX) ,&_NULL_<VERTEX> ()[5]) ;
+		glVertexAttribPointer (LAYOUT_NORMAL ,3 ,U::OPENGL_TRAITS_TYPE<VAL32>::value ,GL_FALSE ,_SIZEOF_ (VERTEX) ,&_NULL_<VERTEX> ()[5]) ;
 		glBindVertexArray (0) ;
 	}
 
@@ -497,7 +496,7 @@ private:
 		glTexParameteri (GL_TEXTURE_2D ,GL_TEXTURE_WRAP_T ,GL_REPEAT) ;
 		glTexParameteri (GL_TEXTURE_2D ,GL_TEXTURE_MAG_FILTER ,GL_LINEAR) ;
 		glTexParameteri (GL_TEXTURE_2D ,GL_TEXTURE_MIN_FILTER ,GL_LINEAR) ;
-		glTexImage2D (GL_TEXTURE_2D ,0 ,GL_RGB ,VAR32 (image.cx ()) ,VAR32 (image.cy ()) ,0 ,GL_BGR ,OPENGL_TRAITS_TYPE<BYTE>::value ,image.raw ().self) ;
+		glTexImage2D (GL_TEXTURE_2D ,0 ,GL_RGB ,VAR32 (image.cx ()) ,VAR32 (image.cy ()) ,0 ,GL_BGR ,U::OPENGL_TRAITS_TYPE<BYTE>::value ,image.raw ().self) ;
 		glBindVertexArray (0) ;
 	}
 

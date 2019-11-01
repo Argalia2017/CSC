@@ -60,7 +60,10 @@ namespace CSC {
 inline namespace NETWORK {
 inline TIMEVAL _inline_SOCKET_MAKE_TIMEVAL_ (LENGTH val) {
 	_DEBUG_ASSERT_ (val >= 0) ;
-	return TIMEVAL {VAR32 (val / 1000) ,VAR32 ((val % 1000) * 1000)} ;
+	TIMEVAL ret ;
+	ret.tv_sec = VAR32 (val / 1000) ;
+	ret.tv_usec = VAR32 ((val % 1000) * 1000) ;
+	return std::move (ret) ;
 }
 
 inline String<STRU8> _inline_SOCKET_MAKE_IPV4S_ (const SOCKADDR &val) {
@@ -68,8 +71,10 @@ inline String<STRU8> _inline_SOCKET_MAKE_IPV4S_ (const SOCKADDR &val) {
 	const auto r1x = _BITWISE_CAST_<SOCKADDR_IN> (val) ;
 	const auto r2x = _CALL_ ([&] () {
 		PACK<WORD ,CHAR> ret ;
-		_CAST_<EndianBytes<WORD>> (r1x.sin_port) >>= ret.P1 ;
-		_CAST_<EndianBytes<CHAR>> (r1x.sin_addr.S_un.S_addr) >>= ret.P2 ;
+		auto &r3y = _CAST_<CSC::BYTE[_SIZEOF_ (WORD)]> (r1x.sin_port) ;
+		auto &r4y = _CAST_<CSC::BYTE[_SIZEOF_ (CHAR)]> (r1x.sin_addr.S_un.S_addr) ;
+		ByteReader (PhanBuffer<const CSC::BYTE>::make (r3y)) >> ret.P1 ;
+		ByteReader (PhanBuffer<const CSC::BYTE>::make (r4y)) >> ret.P2 ;
 		return std::move (ret) ;
 	}) ;
 	return _BUILDIPV4S_<STRU8> (r2x) ;
@@ -82,15 +87,17 @@ inline SOCKADDR _inline_SOCKET_MAKE_SOCKETADDR_ (const String<STRU8> &val) {
 		_ZERO_ (ret) ;
 		ret.sin_family = AF_INET ;
 		const auto r2x = _PARSEIPV4S_ (val) ;
-		_CAST_<EndianBytes<WORD>> (ret.sin_port) <<= r2x.P1 ;
-		_CAST_<EndianBytes<CHAR>> (ret.sin_addr.S_un.S_addr) <<= r2x.P2 ;
+		auto &r3y = _CAST_<CSC::BYTE[_SIZEOF_ (WORD)]> (ret.sin_port) ;
+		auto &r4y = _CAST_<CSC::BYTE[_SIZEOF_ (CHAR)]> (ret.sin_addr.S_un.S_addr) ;
+		ByteWriter (PhanBuffer<CSC::BYTE>::make (r3y)) << r2x.P1 ;
+		ByteWriter (PhanBuffer<CSC::BYTE>::make (r4y)) << r2x.P2 ;
 		return std::move (ret) ;
 	}) ;
 	return _BITWISE_CAST_<SOCKADDR> (r1x) ;
 }
 
-inline void _inline_SOCKET_BIND_ (const SOCKET &socket_ ,const String<STRU8> &addr) {
-	const auto r1x = _inline_SOCKET_MAKE_SOCKETADDR_ (addr) ;
+inline void _inline_SOCKET_BIND_ (const SOCKET &socket_ ,const String<STRU8> &ip_addr) {
+	const auto r1x = _inline_SOCKET_MAKE_SOCKETADDR_ (ip_addr) ;
 	const auto r2x = ::bind (socket_ ,&r1x ,VAR32 (_SIZEOF_ (SOCKADDR))) ;
 	_DYNAMIC_ASSERT_ (r2x != SOCKET_ERROR) ;
 }
@@ -110,7 +117,6 @@ inline ARRAY2<fd_set> _inline_SOCKET_SELECT_ (const SOCKET &socket_ ,LENGTH time
 		const auto r1x = ::select (FD_SETSIZE ,&ret[0] ,&ret[1] ,NULL ,&rax) ;
 		if (r1x >= 0)
 			break ;
-		_STATIC_WARNING_ ("noop") ;
 	}
 	_ZERO_ (rax) ;
 	return std::move (ret) ;
@@ -136,7 +142,7 @@ private:
 public:
 	Implement () = delete ;
 
-	explicit Implement (const String<STRU8> &addr) {
+	explicit Implement (const String<STRU8> &ip_addr) {
 		using DEFAULT_TIMEOUT_SIZE = ARGC<30000> ;
 		mThis = SharedRef<Holder>::make () ;
 		mThis->mSocket = UniqueRef<SOCKET> ([&] (SOCKET &me) {
@@ -145,8 +151,8 @@ public:
 		} ,[] (SOCKET &me) {
 			::closesocket (me) ;
 		}) ;
-		if (!addr.empty ())
-			_inline_SOCKET_BIND_ (mThis->mSocket ,addr) ;
+		if (!ip_addr.empty ())
+			_inline_SOCKET_BIND_ (mThis->mSocket ,ip_addr) ;
 		_ZERO_ (mThis->mPeer) ;
 		mThis->mTimeout = DEFAULT_TIMEOUT_SIZE::value ;
 	}
@@ -165,8 +171,8 @@ public:
 		return _inline_SOCKET_MAKE_IPV4S_ (mThis->mPeer) ;
 	}
 
-	void link (const String<STRU8> &addr) {
-		mThis->mPeer = _inline_SOCKET_MAKE_SOCKETADDR_ (addr) ;
+	void link (const String<STRU8> &ip_addr) {
+		mThis->mPeer = _inline_SOCKET_MAKE_SOCKETADDR_ (ip_addr) ;
 		auto rax = ULONG () ;
 		rax = ULONG (1) ;
 		::ioctlsocket (mThis->mSocket ,FIONBIO ,&rax) ;
@@ -176,7 +182,7 @@ public:
 		if (r1x == 0)
 			return ;
 		//@info: state of 'this' has been changed
-		if SWITCH_ONCE (TRUE) {
+		if SWITCH_CASE (TRUE) {
 			if (r1x >= 0)
 				discard ;
 			const auto r2x = errno ;
@@ -208,7 +214,7 @@ public:
 		const auto r3x = _inline_SOCKET_MAKE_TIMEVAL_ (0) ;
 		::setsockopt (mThis->mSocket ,SOL_SOCKET ,SO_RCVTIMEO ,_CAST_<STRA[_SIZEOF_ (TIMEVAL)]> (r3x) ,VAR32 (_SIZEOF_ (TIMEVAL))) ;
 		//@info: state of 'this' has been changed
-		if SWITCH_ONCE (TRUE) {
+		if SWITCH_CASE (TRUE) {
 			if (r2x >= 0)
 				discard ;
 			const auto r4x = errno ;
@@ -228,7 +234,7 @@ public:
 		const auto r3x = _inline_SOCKET_MAKE_TIMEVAL_ (0) ;
 		::setsockopt (mThis->mSocket ,SOL_SOCKET ,SO_RCVTIMEO ,_CAST_<STRA[_SIZEOF_ (TIMEVAL)]> (r3x) ,VAR32 (_SIZEOF_ (TIMEVAL))) ;
 		//@info: state of 'this' has been changed
-		if SWITCH_ONCE (TRUE) {
+		if SWITCH_CASE (TRUE) {
 			if (r2x >= 0)
 				discard ;
 			const auto r4x = errno ;
@@ -247,7 +253,7 @@ public:
 		const auto r3x = _inline_SOCKET_MAKE_TIMEVAL_ (0) ;
 		::setsockopt (mThis->mSocket ,SOL_SOCKET ,SO_SNDTIMEO ,_CAST_<STRA[_SIZEOF_ (TIMEVAL)]> (r3x) ,VAR32 (_SIZEOF_ (TIMEVAL))) ;
 		//@info: state of 'this' has been changed
-		if SWITCH_ONCE (TRUE) {
+		if SWITCH_CASE (TRUE) {
 			if (r2x >= 0)
 				discard ;
 			const auto r4x = errno ;
@@ -273,8 +279,8 @@ private:
 	}
 } ;
 
-inline exports TCPSocket::TCPSocket (const String<STRU8> &addr) {
-	mThis = AnyRef<Implement>::make (addr) ;
+inline exports TCPSocket::TCPSocket (const String<STRU8> &ip_addr) {
+	mThis = AnyRef<Implement>::make (ip_addr) ;
 }
 
 inline exports String<STRU8> TCPSocket::sock_name () const {
@@ -285,8 +291,8 @@ inline exports String<STRU8> TCPSocket::peer_sock_name () const {
 	return mThis.rebind<Implement> ()->peer_sock_name () ;
 }
 
-inline exports void TCPSocket::link (const String<STRU8> &addr) {
-	mThis.rebind<Implement> ()->link (addr) ;
+inline exports void TCPSocket::link (const String<STRU8> &ip_addr) {
+	mThis.rebind<Implement> ()->link (ip_addr) ;
 }
 
 inline exports void TCPSocket::modify_buffer (LENGTH rcv_len ,LENGTH snd_len) {
@@ -309,13 +315,13 @@ inline exports void TCPSocket::write (const PhanBuffer<const BYTE> &data) {
 	mThis.rebind<Implement> ()->write (data) ;
 }
 
-inline String<STRU8> TCPSocket::http_get (const String<STRU8> &addr ,const String<STRU8> &site ,const String<STRU8> &msg ,LENGTH buffer_len ,LENGTH timeout) popping {
+inline String<STRU8> TCPSocket::http_get (const String<STRU8> &ip_addr ,const String<STRU8> &site ,const String<STRU8> &msg ,LENGTH buffer_len ,LENGTH timeout) popping {
 	String<STRU8> ret = String<STRU8> (buffer_len) ;
 	INDEX iw = 0 ;
 	auto rax = TCPSocket (_PCSTRU8_ ("")) ;
-	rax.link (addr) ;
+	rax.link (ip_addr) ;
 	const auto r1x = _XVALUE_<PTR<void (TextWriter<STRU8> &)>> (_GAP_) ;
-	const auto r2x = String<STRU8>::make (_PCSTRU8_ ("GET ") ,site ,_PCSTRU8_ ("?") ,msg ,_PCSTRU8_ (" HTTP/1.1") ,r1x ,_PCSTRU8_ ("HOST: ") ,addr ,r1x ,r1x) ;
+	const auto r2x = String<STRU8>::make (_PCSTRU8_ ("GET ") ,site ,_PCSTRU8_ ("?") ,msg ,_PCSTRU8_ (" HTTP/1.1") ,r1x ,_PCSTRU8_ ("HOST: ") ,ip_addr ,r1x ,r1x) ;
 	rax.write (PhanBuffer<const BYTE>::make (r2x.raw ())) ;
 	rax.read (PhanBuffer<BYTE>::make (ret.raw ()) ,iw ,timeout) ;
 	_DYNAMIC_ASSERT_ (iw >= 0 && iw < ret.size ()) ;
@@ -324,13 +330,13 @@ inline String<STRU8> TCPSocket::http_get (const String<STRU8> &addr ,const Strin
 	return std::move (ret) ;
 }
 
-inline String<STRU8> TCPSocket::http_post (const String<STRU8> &addr ,const String<STRU8> &site ,const String<STRU8> &msg ,LENGTH buffer_len ,LENGTH timeout) popping {
+inline String<STRU8> TCPSocket::http_post (const String<STRU8> &ip_addr ,const String<STRU8> &site ,const String<STRU8> &msg ,LENGTH buffer_len ,LENGTH timeout) popping {
 	String<STRU8> ret = String<STRU8> (buffer_len) ;
 	INDEX iw = 0 ;
 	auto rax = TCPSocket (_PCSTRU8_ ("")) ;
-	rax.link (addr) ;
+	rax.link (ip_addr) ;
 	const auto r1x = _XVALUE_<PTR<void (TextWriter<STRU8> &)>> (_GAP_) ;
-	const auto r2x = String<STRU8>::make (_PCSTRU8_ ("POST ") ,site ,_PCSTRU8_ (" HTTP/1.1") ,r1x ,_PCSTRU8_ ("HOST: ") ,addr ,r1x ,_PCSTRU8_ ("Content-Length: ") ,msg.length () ,r1x ,r1x ,msg) ;
+	const auto r2x = String<STRU8>::make (_PCSTRU8_ ("POST ") ,site ,_PCSTRU8_ (" HTTP/1.1") ,r1x ,_PCSTRU8_ ("HOST: ") ,ip_addr ,r1x ,_PCSTRU8_ ("Content-Length: ") ,msg.length () ,r1x ,r1x ,msg) ;
 	rax.write (PhanBuffer<const BYTE>::make (r2x.raw ())) ;
 	rax.read (PhanBuffer<BYTE>::make (ret.raw ()) ,iw ,timeout) ;
 	_DYNAMIC_ASSERT_ (iw >= 0 && iw < ret.size ()) ;
@@ -407,7 +413,7 @@ private:
 public:
 	Implement () = delete ;
 
-	explicit Implement (const String<STRU8> &addr) {
+	explicit Implement (const String<STRU8> &ip_addr) {
 		using DEFAULT_TIMEOUT_SIZE = ARGC<30000> ;
 		mThis->mSocket = UniqueRef<SOCKET> ([&] (SOCKET &me) {
 			me = ::socket (AF_INET ,SOCK_DGRAM ,IPPROTO_UDP) ;
@@ -418,8 +424,8 @@ public:
 		} ,[] (SOCKET &me) {
 			::closesocket (me) ;
 		}) ;
-		if (!addr.empty ())
-			_inline_SOCKET_BIND_ (mThis->mSocket ,addr) ;
+		if (!ip_addr.empty ())
+			_inline_SOCKET_BIND_ (mThis->mSocket ,ip_addr) ;
 		_ZERO_ (mThis->mPeer) ;
 		mThis->mTimeout = DEFAULT_TIMEOUT_SIZE::value ;
 	}
@@ -438,8 +444,8 @@ public:
 		return _inline_SOCKET_MAKE_IPV4S_ (mThis->mPeer) ;
 	}
 
-	void link (const String<STRU8> &addr) {
-		mThis->mPeer = _inline_SOCKET_MAKE_SOCKETADDR_ (addr) ;
+	void link (const String<STRU8> &ip_addr) {
+		mThis->mPeer = _inline_SOCKET_MAKE_SOCKETADDR_ (ip_addr) ;
 	}
 
 	void modify_timeout (LENGTH timeout) {
@@ -488,8 +494,8 @@ public:
 	}
 } ;
 
-inline exports UDPSocket::UDPSocket (const String<STRU8> &addr) {
-	mThis = AnyRef<Implement>::make (addr) ;
+inline exports UDPSocket::UDPSocket (const String<STRU8> &ip_addr) {
+	mThis = AnyRef<Implement>::make (ip_addr) ;
 }
 
 inline exports String<STRU8> UDPSocket::sock_name () const {
@@ -500,8 +506,8 @@ inline exports String<STRU8> UDPSocket::peer_sock_name () const {
 	return mThis.rebind<Implement> ()->peer_sock_name () ;
 }
 
-inline exports void UDPSocket::link (const String<STRU8> &addr) {
-	mThis.rebind<Implement> ()->link (addr) ;
+inline exports void UDPSocket::link (const String<STRU8> &ip_addr) {
+	mThis.rebind<Implement> ()->link (ip_addr) ;
 }
 
 inline exports void UDPSocket::modify_timeout (LENGTH timeout) {

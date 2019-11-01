@@ -15,8 +15,7 @@
 #include "csc_thread.hpp"
 
 namespace CSC {
-#ifdef __CSC_DEPRECATED__
-inline namespace S {
+inline namespace FILESYSTEM {
 inline imports DEF<AutoBuffer<BYTE> (const String<STR> &file) popping> _LOADFILE_ ;
 
 inline imports DEF<void (const String<STR> &file ,const PhanBuffer<BYTE> &data) popping> _LOADFILE_ ;
@@ -65,7 +64,6 @@ inline imports DEF<void (const String<STR> &dire ,Deque<String<STR>> &file_list 
 
 inline imports DEF<void (const String<STR> &dire)> _CLEARDIRECTORY_ ;
 } ;
-#endif
 
 class StreamLoader {
 private:
