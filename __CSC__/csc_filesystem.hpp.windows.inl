@@ -131,12 +131,6 @@ inline exports void _LINKFILE_ (const String<STR> &dst_file ,const String<STR> &
 	CreateHardLink (dst_file.raw ().self ,src_file.raw ().self ,NULL) ;
 }
 
-inline exports BOOL _GUARDFILE_ (const String<STR> &file) popping {
-	_STATIC_WARNING_ ("unimplemented") ;
-	_DEBUG_ASSERT_ (FALSE) ;
-	return FALSE ;
-}
-
 inline exports BOOL _IDENTICALFILE_ (const String<STR> &file1 ,const String<STR> &file2) popping {
 	auto rax = ARRAY2<BY_HANDLE_FILE_INFORMATION> () ;
 	const auto r1x = UniqueRef<HANDLE> ([&] (HANDLE &me) {
@@ -240,7 +234,7 @@ inline exports String<STR> _WORKINGPATH_ () {
 
 inline Deque<INDEX> _inline_RELATIVEPATHNAME_ (const Deque<String<STR>> &path_name) {
 	Deque<INDEX> ret = Deque<INDEX> (path_name.length ()) ;
-	for (INDEX i = 0 ,ie = path_name.length () ; i < ie ; i++) {
+	for (auto &&i : _RANGE_ (0 ,path_name.length ())) {
 		INDEX ix = path_name.access (i) ;
 		if (path_name[ix] == _PCSTR_ ("."))
 			continue ;
@@ -286,7 +280,7 @@ inline exports String<STR> _ABSOLUTEPATH_ (const String<STR> &path) {
 		ret += _PCSTR_ ("\\") ;
 	}
 	const auto r2x = _inline_RELATIVEPATHNAME_ (rax) ;
-	for (INDEX i = 0 ,ie = r2x.length () ; i < ie ; i++) {
+	for (auto &&i : _RANGE_ (0 ,r2x.length ())) {
 		if (i > 0)
 			ret += _PCSTR_ ("\\") ;
 		INDEX ix = r2x[r2x.access (i)] ;
@@ -335,6 +329,12 @@ inline exports BOOL _FINDDIRECTORY_ (const String<STR> &dire) popping {
 	return TRUE ;
 }
 
+inline exports BOOL _LOCKDIRECTORY_ (const String<STR> &dire) popping {
+	_STATIC_WARNING_ ("unimplemented") ;
+	_DYNAMIC_ASSERT_ (FALSE) ;
+	return TRUE ;
+}
+
 inline exports void _BUILDDIRECTORY_ (const String<STR> &dire) {
 	using DEFAULT_SHORTSTRING_SIZE = ARGC<1023> ;
 	if (_FINDDIRECTORY_ (dire))
@@ -349,7 +349,7 @@ inline exports void _BUILDDIRECTORY_ (const String<STR> &dire) {
 				discard ;
 		rax += _PCSTR_ ("\\") ;
 	}
-	for (INDEX i = 0 ,ie = r2x.length () ; i < ie ; i++) {
+	for (auto &&i : _RANGE_ (0 ,r2x.length ())) {
 		if (i > 0)
 			rax += _PCSTR_ ("\\") ;
 		INDEX ix = r2x.access (i) ;

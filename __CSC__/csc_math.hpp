@@ -46,6 +46,11 @@ inline BOOL _ISINF_ (const VAL64 &x) {
 	return TRUE ;
 }
 
+template <class _ARG1>
+inline _ARG1 _SQE_ (const _ARG1 &val) {
+	return val * val ;
+}
+
 inline imports DEF<VAL32 (const VAL32 &x)> _SQRT_ ;
 inline imports DEF<VAL64 (const VAL64 &x)> _SQRT_ ;
 

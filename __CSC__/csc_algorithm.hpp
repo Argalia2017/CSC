@@ -211,7 +211,7 @@ inline void DijstraAlgorithm<REAL>::initialize (const Bitmap<REAL> &adjacency ,I
 			if (mYVisit[y])
 				return ;
 			mYVisit[y] = TRUE ;
-			for (INDEX i = 0 ,ie = mPrev.length () ; i < ie ; i++) {
+			for (auto &&i : _RANGE_ (0 ,mPrev.length ())) {
 				if (i == y)
 					continue ;
 				if (mAdjacency[y][i] < REAL (0))
@@ -322,7 +322,7 @@ inline void KMeansAlgorithm<REAL>::initialize (const Set<REAL> &dataset ,const F
 					mClusterSet[iy].item = BitSet<> (mDataSet.size ()) ;
 				mClusterSet[iy].item[mDataSet.at (i)] = TRUE ;
 			}
-			for (INDEX i = 0 ,ie = mCenter.length () ; i < ie ; i++)
+			for (auto &&i : _RANGE_ (0 ,mCenter.length ()))
 				mClusterSet.add (i ,BitSet<> ()) ;
 		}
 
@@ -367,7 +367,7 @@ inline void KMeansAlgorithm<REAL>::initialize (const Set<REAL> &dataset ,const F
 
 		inline void update_convergence () {
 			INDEX ix = mConvergence.length () - 1 ;
-			for (INDEX i = 0 ,ie = ix ; i < ie ; i++)
+			for (auto &&i : _RANGE_ (0 ,ix))
 				mConvergence[i] = mConvergence[i + 1] ;
 			mConvergence[ix] = +mInfinity ;
 			if (mCurrCenterList.length () != mNextCenterList.length ())
@@ -382,7 +382,7 @@ inline void KMeansAlgorithm<REAL>::initialize (const Set<REAL> &dataset ,const F
 
 		inline BOOL reach_convergence () const {
 			INDEX ix = mConvergence.length () - 1 ;
-			for (INDEX i = 0 ,ie = ix ; i < ie ; i++)
+			for (auto &&i : _RANGE_ (0 ,ix))
 				if (mConvergence[i] > mConvergence[i + 1])
 					return FALSE ;
 			if (_ABS_ (mConvergence[0] - mConvergence[ix]) >= mTolerance)
@@ -483,7 +483,7 @@ inline void KMHungarianAlgorithm<REAL>::initialize (const Bitmap<REAL> &adjacenc
 		}
 
 		inline void generate () {
-			for (INDEX i = 0 ,ie = mAdjacency.cy () ; i < ie ; i++) {
+			for (auto &&i : _RANGE_ (0 ,mAdjacency.cy ())) {
 				while (TRUE) {
 					mXVisit.clear () ;
 					mYVisit.clear () ;
@@ -713,7 +713,7 @@ inline void KMHungarianAlgorithm<REAL>::initialize (const Bitmap<REAL> &adjacenc
 
 		inline REAL best_weight () const {
 			REAL ret = REAL (0) ;
-			for (INDEX i = 0 ,ie = mXYLink.length () ; i < ie ; i++)
+			for (auto &&i : _RANGE_ (0 ,mXYLink.length ()))
 				ret += mAdjacency[mXYLink[i]][i] ;
 			return std::move (ret) ;
 		}
@@ -721,7 +721,7 @@ inline void KMHungarianAlgorithm<REAL>::initialize (const Bitmap<REAL> &adjacenc
 		inline Array<ARRAY2<INDEX>> best_match () const {
 			Array<ARRAY2<INDEX>> ret = Array<ARRAY2<INDEX>> (best_match_depth ()) ;
 			INDEX iw = 0 ;
-			for (INDEX i = 0 ,ie = mXYLink.length () ; i < ie ; i++) {
+			for (auto &&i : _RANGE_ (0 ,mXYLink.length ())) {
 				if (mXYLink[i] == VAR_NONE)
 					continue ;
 				INDEX ix = iw++ ;
@@ -811,7 +811,7 @@ inline void BFGSAlgorithm<REAL>::initialize (const Function<REAL (const Array<RE
 			mDX = mFDX ;
 			mDM = Bitmap<REAL> (mDX.size () ,mDX.size ()) ;
 			mDM.fill (REAL (0)) ;
-			for (INDEX i = 0 ,ie = mDM.cy () ; i < ie ; i++)
+			for (auto &&i : _RANGE_ (0 ,mDM.cy ()))
 				mDM[i][i] = REAL (1) ;
 			mDG = Array<REAL> (mDX.size ()) ;
 			mIX = Array<REAL> (mDX.size ()) ;
@@ -834,13 +834,13 @@ inline void BFGSAlgorithm<REAL>::initialize (const Function<REAL (const Array<RE
 		}
 
 		inline void compute_gradient_of_loss (const Array<REAL> &dx ,Array<REAL> &dg ,Array<REAL> &sx) const {
-			for (INDEX i = 0 ,ie = dx.length () ; i < ie ; i++)
+			for (auto &&i : _RANGE_ (0 ,dx.length ()))
 				sx[i] = dx[i] ;
 			mGradientProc (sx ,dg) ;
 		}
 
 		inline void update_is_and_ig () {
-			for (INDEX i = 0 ,ie = mDG.length () ; i < ie ; i++)
+			for (auto &&i : _RANGE_ (0 ,mDG.length ()))
 				mIS[i] = -math_matrix_mul (mDM ,i ,mDG) ;
 			const auto r1x = math_vector_dot (mDG ,mIS) ;
 			mDXLoss[0] = _ABS_ (mLossFunc (mDX)) ;
@@ -853,7 +853,7 @@ inline void BFGSAlgorithm<REAL>::initialize (const Function<REAL (const Array<RE
 					break ;
 				if (mDXLoss[2] < mTolerance)
 					break ;
-				for (INDEX i = 0 ,ie = mIX.length () ; i < ie ; i++)
+				for (auto &&i : _RANGE_ (0 ,mIX.length ()))
 					mIX[i] = mDX[i] + mIS[i] * mDXLambda[1] ;
 				mDXLoss[1] = _ABS_ (mLossFunc (mIX)) ;
 				if SWITCH_CASE (TRUE) {
@@ -890,7 +890,7 @@ inline void BFGSAlgorithm<REAL>::initialize (const Function<REAL (const Array<RE
 
 		inline REAL math_matrix_mul (const Bitmap<REAL> &mat ,INDEX y ,const Array<REAL> &v) const {
 			REAL ret = REAL (0) ;
-			for (INDEX i = 0 ,ie = v.length () ; i < ie ; i++)
+			for (auto &&i : _RANGE_ (0 ,v.length ()))
 				ret += mat[y][i] * v[i] ;
 			return std::move (ret) ;
 		}
@@ -898,7 +898,7 @@ inline void BFGSAlgorithm<REAL>::initialize (const Function<REAL (const Array<RE
 		inline REAL math_vector_dot (const Array<REAL> &v1 ,const Array<REAL> &v2) const {
 			_DEBUG_ASSERT_ (v1.length () == v2.length ()) ;
 			REAL ret = REAL (0) ;
-			for (INDEX i = 0 ,ie = v1.length () ; i < ie ; i++)
+			for (auto &&i : _RANGE_ (0 ,v1.length ()))
 				ret += v1[i] * v2[i] ;
 			return std::move (ret) ;
 		}
@@ -912,7 +912,7 @@ inline void BFGSAlgorithm<REAL>::initialize (const Function<REAL (const Array<RE
 		}
 
 		inline void update_iy_and_dg () {
-			for (INDEX i = 0 ,ie = mIG.length () ; i < ie ; i++) {
+			for (auto &&i : _RANGE_ (0 ,mIG.length ())) {
 				mIY[i] = mIG[i] - mDG[i] ;
 				mDG[i] = mIG[i] ;
 			}
@@ -929,7 +929,7 @@ inline void BFGSAlgorithm<REAL>::initialize (const Function<REAL (const Array<RE
 
 		inline REAL hessian_matrix_each (INDEX y ,INDEX x ,const REAL &ys) const {
 			REAL ret = REAL (0) ;
-			for (INDEX i = 0 ,ie = mDM.cy () ; i < ie ; i++) {
+			for (auto &&i : _RANGE_ (0 ,mDM.cy ())) {
 				const auto r1x = hessian_matrix_each_factor (x ,i ,ys) ;
 				ret += r1x * (-mIS[y] * mIY[i] * ys) ;
 				if (i == y)
@@ -941,7 +941,7 @@ inline void BFGSAlgorithm<REAL>::initialize (const Function<REAL (const Array<RE
 
 		inline REAL hessian_matrix_each_factor (INDEX x ,INDEX z ,const REAL &ys) const {
 			REAL ret = REAL (0) ;
-			for (INDEX i = 0 ,ie = mDM.cx () ; i < ie ; i++) {
+			for (auto &&i : _RANGE_ (0 ,mDM.cx ())) {
 				ret += mDM[z][i] * (-mIY[i] * mIS[x] * ys) ;
 				if (i == x)
 					continue ;
@@ -1007,9 +1007,9 @@ public:
 	Array<PACK<INDEX ,REAL>> query_nearst (const ARRAY3<REAL> &point ,LENGTH count) const {
 		_DEBUG_ASSERT_ (count >= 1 && count <= mVertex.length ()) ;
 		const auto r1x = first_count_vertex (point ,count) ;
-		const auto r2x = r1x.esort () ;
+		const auto r2x = r1x.range_sort () ;
 		Array<PACK<INDEX ,REAL>> ret = Array<PACK<INDEX ,REAL>> (count) ;
-		for (INDEX i = 0 ,ie = ret.length () ; i < ie ; i++) {
+		for (auto &&i : _RANGE_ (0 ,ret.length ())) {
 			ret[i].P1 = r2x[i] ;
 			ret[i].P2 = r1x[r2x[i]] ;
 		}
@@ -1059,7 +1059,7 @@ private:
 	Deque<REAL> first_count_vertex (const ARRAY3<REAL> &point ,LENGTH count) const {
 		_DEBUG_ASSERT_ (count >= 1 && count <= mVertex.length ()) ;
 		Deque<REAL> ret = Deque<REAL> (count) ;
-		for (INDEX i = 0 ,ie = count ; i < ie ; i++) {
+		for (auto &&i : _RANGE_ (0 ,count)) {
 			const auto r1x = _SQE_ (mVertex[i][0] - point[0]) + _SQE_ (mVertex[i][1] - point[1]) + _SQE_ (mVertex[i][2] - point[2]) ;
 			ret.add (r1x) ;
 		}
@@ -1132,8 +1132,10 @@ inline void KDTreeAlgorithm<REAL>::initialize (const Array<ARRAY3<REAL>> &vertex
 	private:
 		inline void prepare () {
 			mNextRot = ARRAY3<INDEX> {1 ,2 ,0} ;
-			for (INDEX i = 0 ,ie = mOrder.length () ; i < ie ; i++)
-				mOrder[i] = stack_of_order (i).esort () ;
+			for (auto &&i : _RANGE_ (0 ,mOrder.length ())) {
+				const auto r1x = stack_of_order (i) ;
+				mOrder[i] = r1x.range_sort () ;
+			}
 			mKDTree = Allocator<Node ,SAUTO> (mVertex.length ()) ;
 			mRoot = VAR_NONE ;
 		}
@@ -1183,8 +1185,10 @@ inline void KDTreeAlgorithm<REAL>::initialize (const Array<ARRAY3<REAL>> &vertex
 				if (!(seg_len > 1))
 					discard ;
 				INDEX ix = seg + seg_len / 2 ;
-				for (INDEX i = seg ,ie = seg + seg_len - 1 ; i < ie ; i++)
+				for (auto &&i : _RANGE_ (seg ,seg + seg_len - 1)) {
 					_DEBUG_ASSERT_ (mVertex[mOrder[rot][i]][rot] <= mVertex[mOrder[rot][i + 1]][rot]) ;
+					(void) i ;
+				}
 				compute_order (mTempOrder ,mOrder ,rot ,mNextRot[rot] ,seg ,ix ,seg_len) ;
 				compute_order (mTempOrder ,mOrder ,rot ,mNextRot[mNextRot[rot]] ,seg ,ix ,seg_len) ;
 				INDEX jx = mKDTree.alloc (mVertex[mOrder[rot][ix]][rot] ,VAR_NONE ,VAR_NONE ,VAR_NONE) ;
@@ -1200,12 +1204,12 @@ inline void KDTreeAlgorithm<REAL>::initialize (const Array<ARRAY3<REAL>> &vertex
 			if (tmp_order.size () != mVertex.size ())
 				tmp_order = Array<INDEX> (mVertex.size ()) ;
 			INDEX iw = 0 ;
-			for (INDEX i = seg_a ,ie = seg_b ; i < ie ; i++)
+			for (auto &&i : _RANGE_ (seg_a ,seg_b))
 				tmp_order[iw++] = mOrder[n_rot][i] ;
-			for (INDEX i = seg_b ,ie = seg_a + seg_len ; i < ie ; i++)
+			for (auto &&i : _RANGE_ (seg_b ,seg_a + seg_len))
 				tmp_order[iw++] = mOrder[n_rot][i] ;
 			const auto r1x = ARRAY2<INDEX> {0 ,iw} ;
-			for (INDEX i = r1x[0] ,ie = r1x[1] ; i < ie ; i++)
+			for (auto &&i : _RANGE_ (r1x[0] ,r1x[1]))
 				order[n_rot][seg_a + i] = tmp_order[i] ;
 			_DEBUG_ASSERT_ (iw == seg_len) ;
 		}
@@ -1300,7 +1304,7 @@ inline void MaxFlowAlgorithm<REAL>::initialize (const Bitmap<REAL> &adjacency ,I
 				if (mBFSPath[mSource] == VAR_NONE)
 					break ;
 				const auto r1x = augument_max_flow () ;
-				for (INDEX i = mSource ; i != mSink ; i = mBFSPath[i]) {
+				for (INDEX i = mSource ,ie = mSink ; i != ie ; i = mBFSPath[i]) {
 					INDEX ix = mBFSPath[i] ;
 					const auto r2x = _MIN_ (mCurrentFlow[ix][i] ,r1x) ;
 					mCurrentFlow[ix][i] -= r2x ;
@@ -1320,7 +1324,7 @@ inline void MaxFlowAlgorithm<REAL>::initialize (const Bitmap<REAL> &adjacency ,I
 					break ;
 				INDEX ix = mTempQueue[mTempQueue.head ()] ;
 				mTempQueue.take () ;
-				for (INDEX i = 0 ,ie = mAdjacency.cy () ; i < ie ; i++) {
+				for (auto &&i : _RANGE_ (0 ,mAdjacency.cy ())) {
 					if (i == ix)
 						continue ;
 					if (mBFSPath[i] != VAR_NONE)
@@ -1335,7 +1339,7 @@ inline void MaxFlowAlgorithm<REAL>::initialize (const Bitmap<REAL> &adjacency ,I
 
 		inline REAL augument_max_flow () const {
 			REAL ret = mSingleFlow ;
-			for (INDEX i = mSource ; i != mSink ; i = mBFSPath[i]) {
+			for (INDEX i = mSource ,ie = mSink ; i != ie ; i = mBFSPath[i]) {
 				INDEX ix = mBFSPath[i] ;
 				_DEBUG_ASSERT_ (i != ix) ;
 				const auto r1x = mAdjacency[i][ix] + mCurrentFlow[ix][i] - mCurrentFlow[i][ix] ;
@@ -1351,7 +1355,7 @@ inline void MaxFlowAlgorithm<REAL>::initialize (const Bitmap<REAL> &adjacency ,I
 
 		inline REAL max_flow () const {
 			REAL ret = REAL (0) ;
-			for (INDEX i = 0 ,ie = mCurrentFlow.cy () ; i < ie ; i++)
+			for (auto &&i : _RANGE_ (0 ,mCurrentFlow.cy ()))
 				ret += mCurrentFlow[i][mSink] ;
 			return std::move (ret) ;
 		}

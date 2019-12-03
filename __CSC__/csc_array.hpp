@@ -11,14 +11,13 @@ namespace CSC {
 template <class BASE>
 class ArrayIterator final {
 private:
-	using ITERATOR = DEF<decltype (_NULL_<const BASE> ().ibegin ())> ;
-
-private:
 	BASE &mBase ;
-	ITERATOR mIndex ;
+	INDEX mIndex ;
 
 public:
 	inline ArrayIterator () = delete ;
+
+	inline explicit ArrayIterator (BASE &base ,INDEX index) popping : mBase (base) ,mIndex (index) {}
 
 	inline ArrayIterator (const ArrayIterator &) = delete ;
 	inline ArrayIterator &operator= (const ArrayIterator &) = delete ;
@@ -34,76 +33,19 @@ public:
 		return BOOL (mIndex != that.mIndex) ;
 	}
 
-	inline DEF<decltype (_NULL_<BASE> ().get (_NULL_<const ITERATOR> ()))> operator* () const {
-		return mBase.get (mIndex) ;
+	inline DEF<decltype (_NULL_<BASE> ().get (_NULL_<const INDEX> ()))> operator* () const {
+		return mBase.get (_XVALUE_<const INDEX> (mIndex)) ;
 	}
 
 	inline void operator++ () {
-		mIndex = _XVALUE_<const BASE> (mBase).inext (mIndex) ;
-	}
-
-private:
-	inline explicit ArrayIterator (BASE &base ,ITERATOR &&index) popping : mBase (base) ,mIndex (std::move (index)) {}
-
-public:
-	inline static ArrayIterator friend_begin (BASE &base) popping {
-		return ArrayIterator (base ,_XVALUE_<const BASE> (base).ibegin ()) ;
-	}
-
-	inline static ArrayIterator friend_end (BASE &base) popping {
-		return ArrayIterator (base ,_XVALUE_<const BASE> (base).iend ()) ;
-	}
-} ;
-
-inline namespace ARRAY {
-template <class _ARG1 ,class = ENABLE_TYPE<!std::is_reference<decltype (_NULL_<const REMOVE_REFERENCE_TYPE<_ARG1>> ().ibegin ())>::value>>
-inline ArrayIterator<REMOVE_REFERENCE_TYPE<FORWARD_TRAITS_TYPE<_ARG1>>> begin (_ARG1 &&array_) popping {
-	return ArrayIterator<REMOVE_REFERENCE_TYPE<FORWARD_TRAITS_TYPE<_ARG1>>>::friend_begin (array_) ;
-}
-
-template <class _ARG1 ,class = ENABLE_TYPE<!std::is_reference<decltype (_NULL_<const REMOVE_REFERENCE_TYPE<_ARG1>> ().iend ())>::value>>
-inline ArrayIterator<REMOVE_REFERENCE_TYPE<FORWARD_TRAITS_TYPE<_ARG1>>> end (_ARG1 &&array_) popping {
-	return ArrayIterator<REMOVE_REFERENCE_TYPE<FORWARD_TRAITS_TYPE<_ARG1>>>::friend_end (array_) ;
-}
-} ;
-
-template <class SIZE>
-class ArrayRange ;
-
-template <>
-class ArrayRange<ARGC<0>> final {
-private:
-	INDEX mIBegin ;
-	INDEX mIEnd ;
-
-public:
-	inline ArrayRange () = delete ;
-
-	inline explicit ArrayRange (INDEX ibegin_ ,INDEX iend_) :mIBegin (ibegin_) ,mIEnd (iend_) {}
-
-	inline INDEX ibegin () const {
-		_DEBUG_ASSERT_ (mIBegin >= 0 && mIBegin <= mIEnd) ;
-		return mIBegin ;
-	}
-
-	inline INDEX iend () const {
-		_DEBUG_ASSERT_ (mIBegin >= 0 && mIBegin <= mIEnd) ;
-		return mIEnd ;
-	}
-
-	inline INDEX inext (INDEX index) const {
-		return index + 1 ;
-	}
-
-	inline const INDEX &get (const INDEX &index) const {
-		return index ;
+		mIndex = mBase.inext (_XVALUE_<const INDEX> (mIndex)) ;
 	}
 } ;
 
 inline namespace ARRAY {
 template <class _ARG1 ,class _ARG2>
 inline void _inline_SORT_SLOW_ (const _ARG1 &array_ ,_ARG2 &out ,INDEX seg_a ,INDEX seg_b) {
-	for (INDEX i = seg_a + 1 ,ie = seg_b + 1 ; i < ie ; i++) {
+	for (auto &&i : _RANGE_ (seg_a + 1 ,seg_b + 1)) {
 		INDEX ix = i ;
 		auto tmp = std::move (out[ix]) ;
 		while (TRUE) {
@@ -182,15 +124,6 @@ class Array ;
 template <class ITEM ,class SIZE>
 class Array {
 private:
-	class ForwardArray :private Wrapped<decltype (ARGVPY)> {
-	public:
-		template <class _ARG1>
-		inline constexpr _ARG1 &operator[] (_ARG1 &val) const {
-			return val ;
-		}
-	} ;
-
-private:
 	Buffer<ITEM ,SIZE> mArray ;
 
 public:
@@ -236,6 +169,22 @@ public:
 
 	INDEX inext (INDEX index) const {
 		return index + 1 ;
+	}
+
+	ArrayIterator<Array> begin () {
+		return ArrayIterator<Array> ((*this) ,ibegin ()) ;
+	}
+
+	ArrayIterator<const Array> begin () const {
+		return ArrayIterator<const Array> ((*this) ,ibegin ()) ;
+	}
+
+	ArrayIterator<Array> end () {
+		return ArrayIterator<Array> ((*this) ,iend ()) ;
+	}
+
+	ArrayIterator<const Array> end () const {
+		return ArrayIterator<const Array> ((*this) ,iend ()) ;
 	}
 
 	ITEM &get (INDEX index) & {
@@ -301,12 +250,8 @@ public:
 		return VAR_NONE ;
 	}
 
-	void sort () {
-		_SORT_ (_CAST_<ForwardArray> (ARGVPY) ,mArray ,0 ,mArray.size ()) ;
-	}
-
 	void fill (const ITEM &item) {
-		for (INDEX i = 0 ,ie = mArray.size () ; i < ie ; i++)
+		for (auto &&i : _RANGE_ (0 ,mArray.size ()))
 			mArray[i] = item ;
 	}
 } ;
@@ -426,6 +371,22 @@ public:
 
 	INDEX inext (INDEX index) const {
 		return index + 1 ;
+	}
+
+	ArrayIterator<String> begin () {
+		return ArrayIterator<String> ((*this) ,ibegin ()) ;
+	}
+
+	ArrayIterator<const String> begin () const {
+		return ArrayIterator<const String> ((*this) ,ibegin ()) ;
+	}
+
+	ArrayIterator<String> end () {
+		return ArrayIterator<String> ((*this) ,iend ()) ;
+	}
+
+	ArrayIterator<const String> end () const {
+		return ArrayIterator<const String> ((*this) ,iend ()) ;
 	}
 
 	ITEM &get (INDEX index) & {
@@ -609,7 +570,7 @@ public:
 		_DEBUG_ASSERT_ (seg_len > 0) ;
 		_DEBUG_ASSERT_ (seg >= 0 && seg <= size () - seg_len) ;
 		String ret = String (seg_len) ;
-		for (INDEX i = 0 ,ie = ret.size () ; i < ie ; i++)
+		for (auto &&i : _RANGE_ (0 ,ret.size ()))
 			ret.get (i) = get (seg + i) ;
 		return std::move (ret) ;
 	}
@@ -639,17 +600,6 @@ class Deque ;
 template <class ITEM ,class SIZE>
 class Deque {
 private:
-	class AccessArray :private Wrapped<Deque> {
-	public:
-		inline ITEM &operator[] (INDEX index) {
-			return AccessArray::mSelf[AccessArray::mSelf.access (index)] ;
-		}
-
-		inline const ITEM &operator[] (INDEX index) const {
-			return AccessArray::mSelf[AccessArray::mSelf.access (index)] ;
-		}
-	} ;
-
 	inline static constexpr LENGTH constexpr_size (LENGTH len) {
 		return _SWITCH_ (
 			(len <= 0) ? len :
@@ -708,6 +658,22 @@ public:
 		return (index + 1) % mDeque.size () ;
 	}
 
+	ArrayIterator<Deque> begin () {
+		return ArrayIterator<Deque> ((*this) ,ibegin ()) ;
+	}
+
+	ArrayIterator<const Deque> begin () const {
+		return ArrayIterator<const Deque> ((*this) ,ibegin ()) ;
+	}
+
+	ArrayIterator<Deque> end () {
+		return ArrayIterator<Deque> ((*this) ,iend ()) ;
+	}
+
+	ArrayIterator<const Deque> end () const {
+		return ArrayIterator<const Deque> ((*this) ,iend ()) ;
+	}
+
 	//@warn: index would be no longer valid once resized
 	ITEM &get (INDEX index) & {
 		_DEBUG_ASSERT_ (ensure_index (index)) ;
@@ -742,6 +708,21 @@ public:
 	INDEX access (INDEX pos) const {
 		_DEBUG_ASSERT_ (pos >= 0 && pos < length ()) ;
 		return (mRead + pos) % mDeque.size () ;
+	}
+
+	Array<INDEX> range () const {
+		Array<INDEX> ret = Array<INDEX> (length ()) ;
+		INDEX iw = 0 ;
+		for (INDEX i = ibegin () ,ie = iend () ; i != ie ; i = inext (i))
+			ret[iw++] = i ;
+		_DEBUG_ASSERT_ (iw == ret.length ()) ;
+		return std::move (ret) ;
+	}
+
+	Array<INDEX> range_sort () const {
+		Array<INDEX> ret = range () ;
+		_SORT_ ((*this) ,ret ,0 ,ret.length ()) ;
+		return std::move (ret) ;
 	}
 
 	BOOL equal (const Deque &that) const {
@@ -791,7 +772,8 @@ public:
 	}
 
 	void add (const ITEM &item) {
-		reserve (1) ;
+		if (mDeque.size () == 0)
+			reserve (mDeque.expand_size ()) ;
 		mDeque[mWrite] = std::move (item) ;
 		mWrite = (mWrite + 1) % mDeque.size () ;
 		update_resize () ;
@@ -803,7 +785,8 @@ public:
 	}
 
 	void add (ITEM &&item) {
-		reserve (1) ;
+		if (mDeque.size () == 0)
+			reserve (mDeque.expand_size ()) ;
 		mDeque[mWrite] = std::move (item) ;
 		mWrite = (mWrite + 1) % mDeque.size () ;
 		update_resize () ;
@@ -855,7 +838,8 @@ public:
 	}
 
 	INDEX insert () popping {
-		reserve (1) ;
+		if (mDeque.size () == 0)
+			reserve (mDeque.expand_size ()) ;
 		INDEX ret = mWrite ;
 		mWrite = (mWrite + 1) % mDeque.size () ;
 		update_resize () ;
@@ -864,7 +848,8 @@ public:
 
 	INDEX insert_sort (const ITEM &item) popping {
 		_DEBUG_ASSERT_ (mRead == 0) ;
-		reserve (1) ;
+		if (mDeque.size () == 0)
+			reserve (mDeque.expand_size ()) ;
 		INDEX ret = mWrite ;
 		while (TRUE) {
 			if (ret - 1 < 0)
@@ -882,7 +867,8 @@ public:
 
 	INDEX insert_sort (ITEM &&item) popping {
 		_DEBUG_ASSERT_ (mRead == 0) ;
-		reserve (1) ;
+		if (mDeque.size () == 0)
+			reserve (mDeque.expand_size ()) ;
 		INDEX ret = mWrite ;
 		while (TRUE) {
 			if (ret - 1 < 0)
@@ -899,7 +885,8 @@ public:
 	}
 
 	void push (const ITEM &item) {
-		reserve (1) ;
+		if (mDeque.size () == 0)
+			reserve (mDeque.expand_size ()) ;
 		INDEX ix = (mRead - 1 + mDeque.size ()) % mDeque.size () ;
 		mDeque[ix] = std::move (item) ;
 		mRead = ix ;
@@ -907,7 +894,8 @@ public:
 	}
 
 	void push (ITEM &&item) {
-		reserve (1) ;
+		if (mDeque.size () == 0)
+			reserve (mDeque.expand_size ()) ;
 		INDEX ix = (mRead - 1 + mDeque.size ()) % mDeque.size () ;
 		mDeque[ix] = std::move (item) ;
 		mRead = ix ;
@@ -926,20 +914,6 @@ public:
 		return VAR_NONE ;
 	}
 
-	Array<INDEX> esort () const {
-		Array<INDEX> ret = Array<INDEX> (length ()) ;
-		INDEX iw = 0 ;
-		for (INDEX i = ibegin () ,ie = iend () ; i != ie ; i = inext (i))
-			ret[iw++] = i ;
-		_DEBUG_ASSERT_ (iw == ret.length ()) ;
-		_SORT_ ((*this) ,ret ,0 ,ret.length ()) ;
-		return std::move (ret) ;
-	}
-
-	void sort () {
-		_SORT_ (mDeque ,_CAST_<AccessArray> ((*this)) ,0 ,length ()) ;
-	}
-
 private:
 	explicit Deque (const DEF<decltype (ARGVP0)> & ,LENGTH len) :mDeque (len) {}
 
@@ -956,7 +930,7 @@ private:
 	}
 
 	void reserve (LENGTH len) {
-		const auto r1x = _MAX_ ((len - (mDeque.size () - length ())) ,VAR_ZERO) ;
+		const auto r1x = _MAX_ ((len - (size () - length ())) ,VAR_ZERO) ;
 		if (r1x == 0)
 			return ;
 		auto tmp = mDeque.expand (mDeque.size () + r1x) ;
@@ -980,7 +954,7 @@ private:
 	void update_resize () {
 		if (mRead != mWrite)
 			return ;
-		auto tmp = mDeque.expand () ;
+		auto tmp = mDeque.expand (mDeque.expand_size ()) ;
 		_MEMMOVE_ (tmp.self ,mDeque.self ,mWrite) ;
 		INDEX ix = 0 ;
 		INDEX iy = mDeque.size () ;
@@ -1045,7 +1019,6 @@ private:
 		inline explicit Pair (BASE &base ,INDEX index) popping : key (base.mPriority[index].mKey) ,item (base.mPriority[index].mItem) {}
 	} ;
 
-	using Pair_BASE = Pair<SPECIALIZATION_TYPE> ;
 	using Pair_const_BASE = Pair<const SPECIALIZATION_TYPE> ;
 
 	inline static constexpr LENGTH constexpr_size (LENGTH len) {
@@ -1074,7 +1047,8 @@ public:
 	}
 
 	void add (const KEY &key ,ITEM &&item) {
-		spec.reserve (1) ;
+		if (mPriority.size () == 0)
+			spec.reserve (mPriority.expand_size ()) ;
 		INDEX ix = mWrite ;
 		mPriority[ix].mKey = std::move (key) ;
 		mPriority[ix].mItem = std::move (item) ;
@@ -1092,7 +1066,8 @@ public:
 	}
 
 	void add (KEY &&key ,ITEM &&item) {
-		spec.reserve (1) ;
+		if (mPriority.size () == 0)
+			spec.reserve (mPriority.expand_size ()) ;
 		INDEX ix = mWrite ;
 		mPriority[ix].mKey = std::move (key) ;
 		mPriority[ix].mItem = std::move (item) ;
@@ -1179,7 +1154,6 @@ private:
 		inline explicit Pair (BASE &base ,INDEX index) popping : key (base.mPriority[index].mKey) {}
 	} ;
 
-	using Pair_BASE = Pair<SPECIALIZATION_TYPE> ;
 	using Pair_const_BASE = Pair<const SPECIALIZATION_TYPE> ;
 
 	inline static constexpr LENGTH constexpr_size (LENGTH len) {
@@ -1204,7 +1178,8 @@ public:
 	}
 
 	void add (const KEY &key) {
-		spec.reserve (1) ;
+		if (mPriority.size () == 0)
+			spec.reserve (mPriority.expand_size ()) ;
 		INDEX ix = mWrite ;
 		mPriority[ix].mKey = std::move (key) ;
 		mWrite++ ;
@@ -1217,7 +1192,8 @@ public:
 	}
 
 	void add (KEY &&key) {
-		spec.reserve (1) ;
+		if (mPriority.size () == 0)
+			spec.reserve (mPriority.expand_size ()) ;
 		INDEX ix = mWrite ;
 		mPriority[ix].mKey = std::move (key) ;
 		mWrite++ ;
@@ -1313,6 +1289,22 @@ public:
 		return index + 1 ;
 	}
 
+	ArrayIterator<Priority> begin () {
+		return ArrayIterator<Priority> ((*this) ,ibegin ()) ;
+	}
+
+	ArrayIterator<const Priority> begin () const {
+		return ArrayIterator<const Priority> ((*this) ,ibegin ()) ;
+	}
+
+	ArrayIterator<Priority> end () {
+		return ArrayIterator<Priority> ((*this) ,iend ()) ;
+	}
+
+	ArrayIterator<const Priority> end () const {
+		return ArrayIterator<const Priority> ((*this) ,iend ()) ;
+	}
+
 	//@warn: index would be no longer valid every time revised
 	Pair<Priority> get (INDEX index) & {
 		_DEBUG_ASSERT_ (index >= 0 && index < mWrite) ;
@@ -1349,6 +1341,30 @@ public:
 		INDEX ret = mPriority.at (_OFFSET_ (&Node::mKey ,item.key)) ;
 		if (!(ret >= 0 && ret < mWrite))
 			ret = VAR_NONE ;
+		return std::move (ret) ;
+	}
+
+	Array<INDEX> range () const {
+		Array<INDEX> ret = Array<INDEX> (length ()) ;
+		INDEX iw = 0 ;
+		for (INDEX i = ibegin () ,ie = iend () ; i != ie ; i = inext (i))
+			ret[iw++] = i ;
+		_DEBUG_ASSERT_ (iw == ret.length ()) ;
+		return std::move (ret) ;
+	}
+
+	Array<INDEX> range_sort () const {
+		Array<INDEX> ret = range () ;
+		INDEX ix = ret.length () ;
+		while (TRUE) {
+			if (ix - 1 < 1)
+				break ;
+			_SWAP_ (ret[0] ,ret[ix - 1]) ;
+			compute_esort (ret ,(ix - 1)) ;
+			ix-- ;
+		}
+		if (ret.size () > 0)
+			_MEMRCOPY_ (ret.raw ().self ,ret.raw ().self ,ret.size ()) ;
 		return std::move (ret) ;
 	}
 
@@ -1404,7 +1420,8 @@ public:
 	}
 
 	INDEX insert (const KEY &key) popping {
-		reserve (1) ;
+		if (mPriority.size () == 0)
+			reserve (mPriority.expand_size ()) ;
 		INDEX ret = mWrite ;
 		mPriority[ret].mKey = std::move (key) ;
 		mWrite++ ;
@@ -1415,7 +1432,8 @@ public:
 	}
 
 	INDEX insert (KEY &&key) popping {
-		reserve (1) ;
+		if (mPriority.size () == 0)
+			reserve (mPriority.expand_size ()) ;
 		INDEX ret = mWrite ;
 		mPriority[ret].mKey = std::move (key) ;
 		mWrite++ ;
@@ -1432,28 +1450,9 @@ public:
 		update_insert (index) ;
 	}
 
-	Array<INDEX> esort () const {
-		Array<INDEX> ret = Array<INDEX> (length ()) ;
-		INDEX iw = 0 ;
-		for (INDEX i = ibegin () ,ie = iend () ; i != ie ; i = inext (i))
-			ret[iw++] = i ;
-		_DEBUG_ASSERT_ (iw == ret.length ()) ;
-		INDEX ix = ret.length () ;
-		while (TRUE) {
-			if (ix - 1 < 1)
-				break ;
-			_SWAP_ (ret[0] ,ret[ix - 1]) ;
-			compute_esort (ret ,(ix - 1)) ;
-			ix-- ;
-		}
-		if (ret.size () > 0)
-			_MEMRCOPY_ (ret.raw ().self ,ret.raw ().self ,ret.size ()) ;
-		return std::move (ret) ;
-	}
-
 private:
 	void reserve (LENGTH len) {
-		const auto r1x = _MAX_ ((len - (mPriority.size () - length ())) ,VAR_ZERO) ;
+		const auto r1x = _MAX_ ((len - (size () - length ())) ,VAR_ZERO) ;
 		if (r1x == 0)
 			return ;
 		auto tmp = mPriority.expand (mPriority.size () + r1x) ;
@@ -1464,7 +1463,7 @@ private:
 	void update_resize () {
 		if (mWrite < mPriority.size ())
 			return ;
-		auto tmp = mPriority.expand () ;
+		auto tmp = mPriority.expand (mPriority.expand_size ()) ;
 		_MEMMOVE_ (tmp.self ,mPriority.self ,mPriority.size ()) ;
 		mPriority.swap (tmp) ;
 	}
@@ -1607,13 +1606,20 @@ public:
 		return mList[index].mRight ;
 	}
 
-	Array<INDEX> range () const {
-		Array<INDEX> ret = Array<INDEX> (length ()) ;
-		INDEX iw = 0 ;
-		for (INDEX i = ibegin () ,ie = iend () ; i != ie ; i = inext (i))
-			ret[iw++] = i ;
-		_DEBUG_ASSERT_ (iw == ret.length ()) ;
-		return std::move (ret) ;
+	ArrayIterator<QList> begin () {
+		return ArrayIterator<QList> ((*this) ,ibegin ()) ;
+	}
+
+	ArrayIterator<const QList> begin () const {
+		return ArrayIterator<const QList> ((*this) ,ibegin ()) ;
+	}
+
+	ArrayIterator<QList> end () {
+		return ArrayIterator<QList> ((*this) ,iend ()) ;
+	}
+
+	ArrayIterator<const QList> end () const {
+		return ArrayIterator<const QList> ((*this) ,iend ()) ;
 	}
 
 	ITEM &get (INDEX index) & {
@@ -1638,6 +1644,21 @@ public:
 
 	INDEX at (const ITEM &item) const {
 		return mList.at (_OFFSET_ (&Node::mItem ,item)) ;
+	}
+
+	Array<INDEX> range () const {
+		Array<INDEX> ret = Array<INDEX> (length ()) ;
+		INDEX iw = 0 ;
+		for (INDEX i = ibegin () ,ie = iend () ; i != ie ; i = inext (i))
+			ret[iw++] = i ;
+		_DEBUG_ASSERT_ (iw == ret.length ()) ;
+		return std::move (ret) ;
+	}
+
+	Array<INDEX> range_sort () const {
+		Array<INDEX> ret = range () ;
+		_SORT_ ((*this) ,ret ,0 ,ret.length ()) ;
+		return std::move (ret) ;
 	}
 
 	BOOL equal (const QList &that) const {
@@ -1887,30 +1908,23 @@ public:
 		return VAR_NONE ;
 	}
 
-	Array<INDEX> esort () const {
-		Array<INDEX> ret = range () ;
-		_SORT_ ((*this) ,ret ,0 ,ret.length ()) ;
-		return std::move (ret) ;
-	}
-
-	void sort () {
-		if (length () < 2)
+	void sort (const Array<INDEX> &order) {
+		_DEBUG_ASSERT_ (order.length () == length ()) ;
+		if (order.length () < 2)
 			return ;
-		const auto r1x = esort () ;
-		_DEBUG_ASSERT_ (r1x.length () >= 2) ;
-		for (INDEX i = 0 ,ie = 1 ; i < ie ; i++) {
-			mList[r1x[i]].mLeft = VAR_NONE ;
-			mList[r1x[i]].mRight = r1x[i + 1] ;
-			mFirst = r1x[i] ;
+		for (auto &&i : _RANGE_ (0 ,1)) {
+			mList[order[i]].mLeft = VAR_NONE ;
+			mList[order[i]].mRight = order[i + 1] ;
+			mFirst = order[i] ;
 		}
-		for (INDEX i = 1 ,ie = r1x.length () - 1 ; i < ie ; i++) {
-			mList[r1x[i]].mLeft = r1x[i - 1] ;
-			mList[r1x[i]].mRight = r1x[i + 1] ;
+		for (auto &&i : _RANGE_ (1 ,order.length () - 1)) {
+			mList[order[i]].mLeft = order[i - 1] ;
+			mList[order[i]].mRight = order[i + 1] ;
 		}
-		for (INDEX i = r1x.length () - 1 ,ie = r1x.length () ; i < ie ; i++) {
-			mList[r1x[i]].mLeft = r1x[i - 1] ;
-			mList[r1x[i]].mRight = VAR_NONE ;
-			mLast = r1x[i] ;
+		for (auto &&i : _RANGE_ (order.length () - 1 ,order.length ())) {
+			mList[order[i]].mLeft = order[i - 1] ;
+			mList[order[i]].mRight = VAR_NONE ;
+			mLast = order[i] ;
 		}
 	}
 
@@ -1997,7 +2011,7 @@ public:
 	INDEX ibegin () const {
 		if (mHead.size () == 0)
 			return VAR_NONE ;
-		for (INDEX i = mRead ,ie = mWrite + 1 ; i < ie ; i++)
+		for (auto &&i : _RANGE_ (mRead ,mWrite + 1))
 			if (mHead[i][0] != VAR_NONE)
 				return mHead[i][0] ;
 		return VAR_NONE ;
@@ -2008,19 +2022,26 @@ public:
 	}
 
 	INDEX inext (INDEX index) const {
-		for (INDEX i = mList[index].mSeq + 1 ,ie = mWrite + 1 ; i < ie ; i++)
+		for (auto &&i : _RANGE_ (mList[index].mSeq + 1 ,mWrite + 1))
 			if (mHead[i][0] != VAR_NONE)
 				return mHead[i][0] ;
 		return VAR_NONE ;
 	}
 
-	Array<INDEX> range () const {
-		Array<INDEX> ret = Array<INDEX> (length ()) ;
-		INDEX iw = 0 ;
-		for (INDEX i = ibegin () ,ie = iend () ; i != ie ; i = inext (i))
-			ret[iw++] = i ;
-		_DEBUG_ASSERT_ (iw == ret.length ()) ;
-		return std::move (ret) ;
+	ArrayIterator<SList> begin () {
+		return ArrayIterator<SList> ((*this) ,ibegin ()) ;
+	}
+
+	ArrayIterator<const SList> begin () const {
+		return ArrayIterator<const SList> ((*this) ,ibegin ()) ;
+	}
+
+	ArrayIterator<SList> end () {
+		return ArrayIterator<SList> ((*this) ,iend ()) ;
+	}
+
+	ArrayIterator<const SList> end () const {
+		return ArrayIterator<const SList> ((*this) ,iend ()) ;
 	}
 
 	ITEM &get (INDEX index) & {
@@ -2054,7 +2075,23 @@ public:
 		if (mWrite - mRead == mList.length ())
 			if (mHead[mWrite][0] == VAR_NONE)
 				return mHead[mRead + pos][0] ;
-		return access (pos ,mRead ,(mWrite - mRead + 1)) ;
+		INDEX ix = access (pos ,mRead ,mWrite) ;
+		return mHead[ix][0] ;
+	}
+
+	Array<INDEX> range () const {
+		Array<INDEX> ret = Array<INDEX> (length ()) ;
+		INDEX iw = 0 ;
+		for (INDEX i = ibegin () ,ie = iend () ; i != ie ; i = inext (i))
+			ret[iw++] = i ;
+		_DEBUG_ASSERT_ (iw == ret.length ()) ;
+		return std::move (ret) ;
+	}
+
+	Array<INDEX> range_sort () const {
+		Array<INDEX> ret = range () ;
+		_SORT_ ((*this) ,ret ,0 ,ret.length ()) ;
+		return std::move (ret) ;
 	}
 
 	BOOL equal (const SList &that) const {
@@ -2187,65 +2224,26 @@ public:
 		return VAR_NONE ;
 	}
 
-	Array<INDEX> esort () const {
-		Array<INDEX> ret = range () ;
-		_SORT_ ((*this) ,ret ,0 ,ret.length ()) ;
-		return std::move (ret) ;
-	}
-
-	void sort () {
-		if (length () < 2)
+	void sort (const Array<INDEX> &order) {
+		_DEBUG_ASSERT_ (order.length () == length ()) ;
+		if (order.length () < 2)
 			return ;
-		const auto r1x = esort () ;
-		for (INDEX i = 0 ,ie = r1x.length () ; i < ie ; i++)
-			sequence_rewrite (i ,r1x[i]) ;
-		for (INDEX i = r1x.length () ,ie = mHead.size () ; i < ie ; i++)
+		for (auto &&i : _RANGE_ (0 ,order.length ()))
+			sequence_rewrite (i ,order[i]) ;
+		for (auto &&i : _RANGE_ (order.length () ,mHead.size ()))
 			sequence_remove (i) ;
 		mRead = 0 ;
-		mWrite = _MAX_ ((r1x.length () - 1) ,VAR_ZERO) ;
-	}
-
-	void reverse () {
-		if (mHead.size () == 0)
-			return ;
-		INDEX ix = mRead ;
-		INDEX iy = mWrite ;
-		while (TRUE) {
-			while (TRUE) {
-				if (ix >= iy)
-					break ;
-				if (mHead[ix] == VAR_NONE)
-					break ;
-				ix++ ;
-			}
-			if (ix >= iy)
-				break ;
-			while (TRUE) {
-				if (ix >= iy)
-					break ;
-				if (mHead[iy] == VAR_NONE)
-					break ;
-				iy-- ;
-			}
-			if (ix >= iy)
-				break ;
-			const auto r1x = mHead[ix] ;
-			const auto r2x = mHead[iy] ;
-			sequence_rewrite (ix ,r2x) ;
-			sequence_rewrite (iy ,r1x) ;
-		}
+		mWrite = order.length () - 1 ;
 	}
 
 private:
 	explicit SList (const DEF<decltype (ARGVP0)> & ,LENGTH len) :mList (len) ,mHead (len) {}
 
 private:
-	INDEX access (INDEX pos ,INDEX seg ,LENGTH seg_len) const {
-		_DEBUG_ASSERT_ (seg_len > 0) ;
-		_DEBUG_ASSERT_ (seg >= 0 && seg <= mHead.size () - seg_len) ;
+	INDEX access (INDEX pos ,INDEX seg_a ,LENGTH seg_b) const {
 		INDEX ret = VAR_NONE ;
-		INDEX ix = seg ;
-		INDEX iy = seg + seg_len - 1 ;
+		INDEX ix = seg_a ;
+		INDEX iy = seg_b ;
 		while (TRUE) {
 			if (ix > iy)
 				break ;
@@ -2263,7 +2261,6 @@ private:
 			r1y = r2x ;
 		}
 		_DEBUG_ASSERT_ (ret != VAR_NONE) ;
-		ret = mHead[ret][0] ;
 		return std::move (ret) ;
 	}
 
@@ -2288,7 +2285,7 @@ private:
 			VAR_NONE ,
 			VAR_ZERO}) ;
 		_MEMFILL_ (tmp.self ,tmp.size () ,r1x) ;
-		for (INDEX i = 0 ,ie = mList.size () ; i < ie ; i++) {
+		for (auto &&i : _RANGE_ (0 ,mList.size ())) {
 			if (i == curr)
 				continue ;
 			if (!mList.used (i))
@@ -2323,7 +2320,7 @@ private:
 	void update_compress_left_force (INDEX curr ,INDEX last) {
 		INDEX ix = curr ;
 		INDEX iy = last ;
-		for (INDEX i = 0 ,ie = mList.length () ; i < ie ; i++) {
+		for (auto &&i : _RANGE_ (0 ,mList.length ())) {
 			while (TRUE) {
 				if (mRead == ix)
 					break ;
@@ -2519,7 +2516,7 @@ public:
 			3 ,4 ,4 ,5 ,4 ,5 ,5 ,6 ,4 ,5 ,5 ,6 ,5 ,6 ,6 ,7 ,
 			4 ,5 ,5 ,6 ,5 ,6 ,6 ,7 ,5 ,6 ,6 ,7 ,6 ,7 ,7 ,8}) ;
 		LENGTH ret = 0 ;
-		for (INDEX i = 0 ,ie = mSet.size () ; i < ie ; i++)
+		for (auto &&i : _RANGE_ (0 ,mSet.size ()))
 			ret += M_LENGTH.P1[mSet[i]] ;
 		if (mWidth % 8 != 0)
 			ret -= M_LENGTH.P1[mSet[mWidth / 8] & ~((VAR (1) << (mWidth % 8)) - 1)] ;
@@ -2531,7 +2528,7 @@ public:
 	}
 
 	INDEX ibegin () const {
-		for (INDEX i = 0 ,ie = size () ; i < ie ; i++)
+		for (auto &&i : _RANGE_ (0 ,size ()))
 			if (get (i))
 				return i ;
 		return VAR_NONE ;
@@ -2542,19 +2539,26 @@ public:
 	}
 
 	INDEX inext (INDEX index) const {
-		for (INDEX i = index + 1 ,ie = size () ; i < ie ; i++)
+		for (auto &&i : _RANGE_ (index + 1 ,size ()))
 			if (get (i))
 				return i ;
 		return VAR_NONE ;
 	}
 
-	Array<INDEX> range () const {
-		Array<INDEX> ret = Array<INDEX> (length ()) ;
-		INDEX iw = 0 ;
-		for (INDEX i = ibegin () ,ie = iend () ; i != ie ; i = inext (i))
-			ret[iw++] = i ;
-		_DEBUG_ASSERT_ (iw == ret.length ()) ;
-		return std::move (ret) ;
+	ArrayIterator<BitSet> begin () {
+		return ArrayIterator<BitSet> ((*this) ,ibegin ()) ;
+	}
+
+	ArrayIterator<const BitSet> begin () const {
+		return ArrayIterator<const BitSet> ((*this) ,ibegin ()) ;
+	}
+
+	ArrayIterator<BitSet> end () {
+		return ArrayIterator<BitSet> ((*this) ,iend ()) ;
+	}
+
+	ArrayIterator<const BitSet> end () const {
+		return ArrayIterator<const BitSet> ((*this) ,iend ()) ;
 	}
 
 	//@info: 'Bit &&' convert to 'BOOL' implicitly while 'const Bit &' convert to 'VAR' implicitly
@@ -2593,12 +2597,21 @@ public:
 		return INDEX (item) ;
 	}
 
+	Array<INDEX> range () const {
+		Array<INDEX> ret = Array<INDEX> (length ()) ;
+		INDEX iw = 0 ;
+		for (INDEX i = ibegin () ,ie = iend () ; i != ie ; i = inext (i))
+			ret[iw++] = i ;
+		_DEBUG_ASSERT_ (iw == ret.length ()) ;
+		return std::move (ret) ;
+	}
+
 	BOOL equal (const BitSet &that) const {
 		_DEBUG_ASSERT_ (size () == that.size ()) ;
 		INDEX ix = mSet.size () - 1 ;
 		if (ix < 0)
 			return TRUE ;
-		for (INDEX i = 0 ,ie = ix ; i < ie ; i++)
+		for (auto &&i : _RANGE_ (0 ,ix))
 			if (mSet[i] != that.mSet[i])
 				return FALSE ;
 		const auto r1x = mSet[ix] & (mWidth % 8 - 1) ;
@@ -2663,7 +2676,7 @@ public:
 	BitSet band (const BitSet &that) const {
 		_DEBUG_ASSERT_ (size () == that.size ()) ;
 		BitSet ret = BitSet (mWidth) ;
-		for (INDEX i = 0 ,ie = mSet.size () ; i < ie ; i++)
+		for (auto &&i : _RANGE_ (0 ,mSet.size ()))
 			ret.mSet[i] = mSet[i] & that.mSet[i] ;
 		return std::move (ret) ;
 	}
@@ -2674,7 +2687,7 @@ public:
 
 	void bandto (const BitSet &that) {
 		_DEBUG_ASSERT_ (size () == that.size ()) ;
-		for (INDEX i = 0 ,ie = mSet.size () ; i < ie ; i++)
+		for (auto &&i : _RANGE_ (0 ,mSet.size ()))
 			mSet[i] &= that.mSet[i] ;
 	}
 
@@ -2686,7 +2699,7 @@ public:
 	BitSet bor (const BitSet &that) const {
 		_DEBUG_ASSERT_ (size () == that.size ()) ;
 		BitSet ret = BitSet (mWidth) ;
-		for (INDEX i = 0 ,ie = mSet.size () ; i < ie ; i++)
+		for (auto &&i : _RANGE_ (0 ,mSet.size ()))
 			ret.mSet[i] = mSet[i] | that.mSet[i] ;
 		return std::move (ret) ;
 	}
@@ -2697,7 +2710,7 @@ public:
 
 	void borto (const BitSet &that) {
 		_DEBUG_ASSERT_ (size () == that.size ()) ;
-		for (INDEX i = 0 ,ie = mSet.size () ; i < ie ; i++)
+		for (auto &&i : _RANGE_ (0 ,mSet.size ()))
 			mSet[i] |= that.mSet[i] ;
 	}
 
@@ -2709,7 +2722,7 @@ public:
 	BitSet bxor (const BitSet &that) const {
 		_DEBUG_ASSERT_ (size () == that.size ()) ;
 		BitSet ret = BitSet (mWidth) ;
-		for (INDEX i = 0 ,ie = mSet.size () ; i < ie ; i++)
+		for (auto &&i : _RANGE_ (0 ,mSet.size ()))
 			ret.mSet[i] = mSet[i] ^ that.mSet[i] ;
 		return std::move (ret) ;
 	}
@@ -2720,7 +2733,7 @@ public:
 
 	void bxorto (const BitSet &that) {
 		_DEBUG_ASSERT_ (size () == that.size ()) ;
-		for (INDEX i = 0 ,ie = mSet.size () ; i < ie ; i++)
+		for (auto &&i : _RANGE_ (0 ,mSet.size ()))
 			mSet[i] ^= that.mSet[i] ;
 	}
 
@@ -2732,7 +2745,7 @@ public:
 	BitSet bsub (const BitSet &that) const {
 		_DEBUG_ASSERT_ (size () == that.size ()) ;
 		BitSet ret = BitSet (mWidth) ;
-		for (INDEX i = 0 ,ie = mSet.size () ; i < ie ; i++)
+		for (auto &&i : _RANGE_ (0 ,mSet.size ()))
 			ret.mSet[i] = mSet[i] & ~that.mSet[i] ;
 		return std::move (ret) ;
 	}
@@ -2743,7 +2756,7 @@ public:
 
 	void bsubto (const BitSet &that) {
 		_DEBUG_ASSERT_ (size () == that.size ()) ;
-		for (INDEX i = 0 ,ie = mSet.size () ; i < ie ; i++)
+		for (auto &&i : _RANGE_ (0 ,mSet.size ()))
 			mSet[i] &= ~that.mSet[i] ;
 	}
 
@@ -2754,7 +2767,7 @@ public:
 
 	BitSet bnot () const {
 		BitSet ret = BitSet (mWidth) ;
-		for (INDEX i = 0 ,ie = mSet.size () ; i < ie ; i++)
+		for (auto &&i : _RANGE_ (0 ,mSet.size ()))
 			ret.mSet[i] = ~mSet[i] ;
 		return std::move (ret) ;
 	}
@@ -2764,7 +2777,7 @@ public:
 	}
 
 	void fill (const BYTE &item) {
-		for (INDEX i = 0 ,ie = mSet.size () ; i < ie ; i++)
+		for (auto &&i : _RANGE_ (0 ,mSet.size ()))
 			mSet[i] = item ;
 	}
 
@@ -2851,7 +2864,6 @@ private:
 		inline explicit Pair (BASE &base ,INDEX index) popping : key (base.mSet[index].mKey) ,item (base.mSet[index].mItem) {}
 	} ;
 
-	using Pair_BASE = Pair<SPECIALIZATION_TYPE> ;
 	using Pair_const_BASE = Pair<const SPECIALIZATION_TYPE> ;
 
 private:
@@ -2993,7 +3005,6 @@ private:
 		inline explicit Pair (BASE &base ,INDEX index) popping : key (base.mSet[index].mKey) {}
 	} ;
 
-	using Pair_BASE = Pair<SPECIALIZATION_TYPE> ;
 	using Pair_const_BASE = Pair<const SPECIALIZATION_TYPE> ;
 
 private:
@@ -3115,7 +3126,7 @@ public:
 	}
 
 	INDEX ibegin () const {
-		for (INDEX i = 0 ,ie = size () ; i < ie ; i++)
+		for (auto &&i : _RANGE_ (0 ,size ()))
 			if (mSet.used (i))
 				return i ;
 		return VAR_NONE ;
@@ -3126,19 +3137,26 @@ public:
 	}
 
 	INDEX inext (INDEX index) const {
-		for (INDEX i = index + 1 ,ie = size () ; i < ie ; i++)
+		for (auto &&i : _RANGE_ (index + 1 ,size ()))
 			if (mSet.used (i))
 				return i ;
 		return VAR_NONE ;
 	}
 
-	Array<INDEX> range () const {
-		Array<INDEX> ret = Array<INDEX> (length ()) ;
-		INDEX iw = 0 ;
-		for (INDEX i = ibegin () ,ie = iend () ; i != ie ; i = inext (i))
-			ret[iw++] = i ;
-		_DEBUG_ASSERT_ (iw == ret.length ()) ;
-		return std::move (ret) ;
+	ArrayIterator<Set> begin () {
+		return ArrayIterator<Set> ((*this) ,ibegin ()) ;
+	}
+
+	ArrayIterator<const Set> begin () const {
+		return ArrayIterator<const Set> ((*this) ,ibegin ()) ;
+	}
+
+	ArrayIterator<Set> end () {
+		return ArrayIterator<Set> ((*this) ,iend ()) ;
+	}
+
+	ArrayIterator<const Set> end () const {
+		return ArrayIterator<const Set> ((*this) ,iend ()) ;
 	}
 
 	Pair<Set> get (INDEX index) & {
@@ -3168,6 +3186,23 @@ public:
 	//@error: vs2015 is too useless to compile without hint
 	INDEX at (const typename SPECIALIZATION_BASE::Pair_const_BASE &item) const {
 		return mSet.at (_OFFSET_ (&Node::mKey ,item.key)) ;
+	}
+
+	Array<INDEX> range () const {
+		Array<INDEX> ret = Array<INDEX> (length ()) ;
+		INDEX iw = 0 ;
+		for (INDEX i = ibegin () ,ie = iend () ; i != ie ; i = inext (i))
+			ret[iw++] = i ;
+		_DEBUG_ASSERT_ (iw == ret.length ()) ;
+		return std::move (ret) ;
+	}
+
+	Array<INDEX> range_sort () const {
+		Array<INDEX> ret = Array<INDEX> (length ()) ;
+		INDEX iw = 0 ;
+		compute_esort (mRoot ,ret ,iw) ;
+		_DEBUG_ASSERT_ (iw == ret.length ()) ;
+		return std::move (ret) ;
 	}
 
 	using SPECIALIZATION_BASE::add ;
@@ -3254,10 +3289,10 @@ public:
 			if (!r1x)
 				if (!(key > mSet[ret].mKey))
 					break ;
-			const auto r2x = _SWITCH_ (
+			auto &r2y = _SWITCH_ (
 				r1x ? mSet[ret].mLeft :
 				mSet[ret].mRight) ;
-			ret = r2x ;
+			ret = r2y ;
 		}
 		return std::move (ret) ;
 	}
@@ -3267,14 +3302,6 @@ public:
 		if (ix == VAR_NONE)
 			return ;
 		remove (ix) ;
-	}
-
-	Array<INDEX> esort () const {
-		Array<INDEX> ret = Array<INDEX> (length ()) ;
-		INDEX iw = 0 ;
-		compute_esort (mRoot ,ret ,iw) ;
-		_DEBUG_ASSERT_ (iw == ret.length ()) ;
-		return std::move (ret) ;
 	}
 
 private:
@@ -3661,7 +3688,6 @@ private:
 		inline explicit Pair (BASE &base ,INDEX index) popping : key (base.mSet[index].mKey) ,item (base.mSet[index].mItem) {}
 	} ;
 
-	using Pair_BASE = Pair<SPECIALIZATION_TYPE> ;
 	using Pair_const_BASE = Pair<const SPECIALIZATION_TYPE> ;
 
 private:
@@ -3801,7 +3827,6 @@ private:
 		inline explicit Pair (BASE &base ,INDEX index) popping : key (base.mSet[index].mKey) {}
 	} ;
 
-	using Pair_BASE = Pair<SPECIALIZATION_TYPE> ;
 	using Pair_const_BASE = Pair<const SPECIALIZATION_TYPE> ;
 
 private:
@@ -3923,7 +3948,7 @@ public:
 	}
 
 	INDEX ibegin () const {
-		for (INDEX i = 0 ,ie = size () ; i < ie ; i++)
+		for (auto &&i : _RANGE_ (0 ,size ()))
 			if (mSet.used (i))
 				return i ;
 		return VAR_NONE ;
@@ -3934,19 +3959,26 @@ public:
 	}
 
 	INDEX inext (INDEX index) const {
-		for (INDEX i = index + 1 ,ie = size () ; i < ie ; i++)
+		for (auto &&i : _RANGE_ (index + 1 ,size ()))
 			if (mSet.used (i))
 				return i ;
 		return VAR_NONE ;
 	}
 
-	Array<INDEX> range () const {
-		Array<INDEX> ret = Array<INDEX> (length ()) ;
-		INDEX iw = 0 ;
-		for (INDEX i = ibegin () ,ie = iend () ; i != ie ; i = inext (i))
-			ret[iw++] = i ;
-		_DEBUG_ASSERT_ (iw == ret.length ()) ;
-		return std::move (ret) ;
+	ArrayIterator<HashSet> begin () {
+		return ArrayIterator<HashSet> ((*this) ,ibegin ()) ;
+	}
+
+	ArrayIterator<const HashSet> begin () const {
+		return ArrayIterator<const HashSet> ((*this) ,ibegin ()) ;
+	}
+
+	ArrayIterator<HashSet> end () {
+		return ArrayIterator<HashSet> ((*this) ,iend ()) ;
+	}
+
+	ArrayIterator<const HashSet> end () const {
+		return ArrayIterator<const HashSet> ((*this) ,iend ()) ;
 	}
 
 	Pair<HashSet> get (INDEX index) & {
@@ -3976,6 +4008,15 @@ public:
 	//@error: vs2015 is too useless to compile without hint
 	INDEX at (const typename SPECIALIZATION_BASE::Pair_const_BASE &item) const {
 		return mSet.at (_OFFSET_ (&Node::mKey ,item.key)) ;
+	}
+
+	Array<INDEX> range () const {
+		Array<INDEX> ret = Array<INDEX> (length ()) ;
+		INDEX iw = 0 ;
+		for (INDEX i = ibegin () ,ie = iend () ; i != ie ; i = inext (i))
+			ret[iw++] = i ;
+		_DEBUG_ASSERT_ (iw == ret.length ()) ;
+		return std::move (ret) ;
 	}
 
 	using SPECIALIZATION_BASE::add ;
@@ -4058,7 +4099,7 @@ private:
 			return ;
 		auto tmp = mHead.expand (mSet.size ()) ;
 		_MEMFILL_ (tmp.self ,tmp.size () ,VAR_NONE) ;
-		for (INDEX i = 0 ,ie = mSet.size () ; i < ie ; i++) {
+		for (auto &&i : _RANGE_ (0 ,mSet.size ())) {
 			if (i == curr)
 				continue ;
 			if (!mSet.used (i))
@@ -4155,7 +4196,6 @@ private:
 		inline explicit Pair (BASE &base ,INDEX index) popping : key (base.mSet.self[index].mKey) ,item (base.mSet.self[index].mItem) {}
 	} ;
 
-	using Pair_BASE = Pair<SPECIALIZATION_TYPE> ;
 	using Pair_const_BASE = Pair<const SPECIALIZATION_TYPE> ;
 
 private:
@@ -4320,7 +4360,6 @@ private:
 		inline explicit Pair (BASE &base ,INDEX index) popping : key (base.mSet.self[index].mKey) {}
 	} ;
 
-	using Pair_BASE = Pair<SPECIALIZATION_TYPE> ;
 	using Pair_const_BASE = Pair<const SPECIALIZATION_TYPE> ;
 
 private:
@@ -4493,13 +4532,20 @@ public:
 		return mSet.self[index].mNext ;
 	}
 
-	Array<INDEX> range () const {
-		Array<INDEX> ret = Array<INDEX> (length ()) ;
-		INDEX iw = 0 ;
-		for (INDEX i = ibegin () ,ie = iend () ; i != ie ; i = inext (i))
-			ret[iw++] = i ;
-		_DEBUG_ASSERT_ (iw == ret.length ()) ;
-		return std::move (ret) ;
+	ArrayIterator<SoftSet> begin () {
+		return ArrayIterator<SoftSet> ((*this) ,ibegin ()) ;
+	}
+
+	ArrayIterator<const SoftSet> begin () const {
+		return ArrayIterator<const SoftSet> ((*this) ,ibegin ()) ;
+	}
+
+	ArrayIterator<SoftSet> end () {
+		return ArrayIterator<SoftSet> ((*this) ,iend ()) ;
+	}
+
+	ArrayIterator<const SoftSet> end () const {
+		return ArrayIterator<const SoftSet> ((*this) ,iend ()) ;
 	}
 
 	Pair<SoftSet> get (INDEX index) & {
@@ -4531,6 +4577,23 @@ public:
 	//@error: vs2015 is too useless to compile without hint
 	INDEX at (const typename SPECIALIZATION_BASE::Pair_const_BASE &item) const {
 		return mSet->at (_OFFSET_ (&Node::mKey ,item.key)) ;
+	}
+
+	Array<INDEX> range () const {
+		Array<INDEX> ret = Array<INDEX> (length ()) ;
+		INDEX iw = 0 ;
+		for (INDEX i = ibegin () ,ie = iend () ; i != ie ; i = inext (i))
+			ret[iw++] = i ;
+		_DEBUG_ASSERT_ (iw == ret.length ()) ;
+		return std::move (ret) ;
+	}
+
+	Array<INDEX> range_sort () const {
+		Array<INDEX> ret = Array<INDEX> (length ()) ;
+		INDEX iw = 0 ;
+		compute_esort (mRoot ,ret ,iw) ;
+		_DEBUG_ASSERT_ (iw == ret.length ()) ;
+		return std::move (ret) ;
 	}
 
 	using SPECIALIZATION_BASE::add ;
@@ -4616,19 +4679,11 @@ public:
 			if (!r1x)
 				if (!(key > mSet.self[ret].mKey))
 					break ;
-			const auto r2x = _SWITCH_ (
+			auto &r2y = _SWITCH_ (
 				r1x ? mSet.self[ret].mLeft :
 				mSet.self[ret].mRight) ;
-			ret = r2x ;
+			ret = r2y ;
 		}
-		return std::move (ret) ;
-	}
-
-	Array<INDEX> esort () const {
-		Array<INDEX> ret = Array<INDEX> (length ()) ;
-		INDEX iw = 0 ;
-		compute_esort (mRoot ,ret ,iw) ;
-		_DEBUG_ASSERT_ (iw == ret.length ()) ;
 		return std::move (ret) ;
 	}
 

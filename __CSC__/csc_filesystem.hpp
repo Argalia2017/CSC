@@ -34,8 +34,6 @@ inline imports DEF<void (const String<STR> &dst_file ,const String<STR> &src_fil
 
 inline imports DEF<void (const String<STR> &dst_file ,const String<STR> &src_file)> _LINKFILE_ ;
 
-inline imports DEF<BOOL (const String<STR> &file) popping> _GUARDFILE_ ;
-
 inline imports DEF<BOOL (const String<STR> &file1 ,const String<STR> &file2) popping> _IDENTICALFILE_ ;
 
 inline imports DEF<String<STR> (const String<STR> &file)> _PARSEFILEPATH_ ;
@@ -55,6 +53,8 @@ inline imports DEF<const String<STR> & () popping> _MODULEFILEPATH_ ;
 inline imports DEF<const String<STR> & () popping> _MODULEFILENAME_ ;
 
 inline imports DEF<BOOL (const String<STR> &dire) popping> _FINDDIRECTORY_ ;
+
+inline imports DEF<BOOL (const String<STR> &dire) popping> _LOCKDIRECTORY_ ;
 
 inline imports DEF<void (const String<STR> &dire)> _BUILDDIRECTORY_ ;
 

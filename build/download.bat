@@ -2,11 +2,11 @@
 
 cd %~dp0%/..
 
-mkdir include
-call :dircls "include"
+mkdir __CSC__
+call :dircls "__CSC__"
 set src=D:/Depends/__CSC__
 for /f "tokens=*" %%i in ('dir /b "%src%"') do (
-	mklink /H "include/%%i" "%src%/%%i")
+	call :copyf "%src%/%%i" "__CSC__/%%i")
 
 cls
 exit
@@ -38,4 +38,9 @@ rem takeown /f "%~1" /a /r /d Y
 rem icacls "%~1" /grant administrators:F
 rem attrib "%~1" -S -H
 rd /s /q "%~1"
+goto :EOF
+
+goto :EOF
+:copyf
+mklink /H "%~f2" "%~f1"
 goto :EOF

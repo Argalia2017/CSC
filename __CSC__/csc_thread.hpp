@@ -112,12 +112,7 @@ public:
 		return std::move (ret) ;
 	}
 
-	void start (const Array<INDEX> &pid ,Array<Function<DEF<ITEM ()> NONE::*>> &&proc) {
-		_DEBUG_ASSERT_ (pid.length () > 0) ;
-		for (auto &&i : pid) {
-			_DEBUG_ASSERT_ (i >= 0 && i < proc.size ()) ;
-			(void) i ;
-		}
+	void start (Array<Function<DEF<ITEM ()> NONE::*>> &&proc) {
 		for (auto &&i : proc) {
 			_DEBUG_ASSERT_ (i.exist ()) ;
 			(void) i ;
@@ -131,12 +126,12 @@ public:
 		r2y.mThreadCounter = 0 ;
 		r2y.mThreadProc = std::move (proc) ;
 		if (!r2y.mItemQueue.exist ())
-			r2y.mItemQueue = AutoRef<QList<ITEM ,SFIXED>>::make (pid.length ()) ;
+			r2y.mItemQueue = AutoRef<QList<ITEM ,SFIXED>>::make (proc.length ()) ;
 		r2y.mItemQueue->clear () ;
 		r2y.mException = AutoRef<Exception> () ;
-		r2y.mThreadPool = Array<AutoRef<std::thread>> (pid.size ()) ;
-		for (INDEX i = 0 ,ie = r2y.mThreadPool.length () ; i < ie ; i++) {
-			const auto r3x = PACK<PTR<Holder> ,INDEX> {&r2y ,pid[i]} ;
+		r2y.mThreadPool = Array<AutoRef<std::thread>> (proc.size ()) ;
+		for (auto &&i : _RANGE_ (0 ,r2y.mThreadPool.length ())) {
+			const auto r3x = PACK<PTR<Holder> ,INDEX> {&r2y ,i} ;
 			//@warn: move object having captured context
 			r2y.mThreadPool[i] = AutoRef<std::thread>::make ([r3x] () noexcept {
 				_CALL_TRY_ ([&] () {
@@ -191,13 +186,13 @@ private:
 			}
 		} ;
 
-		inline static void static_execute (Holder &self_ ,INDEX pid) {
+		inline static void static_execute (Holder &self_ ,INDEX tid) {
 			ScopedGuard<ThreadCounter> ANONYMOUS (_CAST_<ThreadCounter> (self_)) ;
 			auto rax = Optional<ITEM>::nullopt () ;
 			while (TRUE) {
 				_CATCH_ ([&] () {
 					//@warn: 'mThreadProc' is not protected by 'mThreadMutex'
-					rax = self_.mThreadProc[pid] () ;
+					rax = self_.mThreadProc[tid] () ;
 				} ,[&] (const Exception &e) noexcept {
 					_CALL_TRY_ ([&] () {
 						static_rethrow (self_ ,e) ;
@@ -440,7 +435,7 @@ public:
 		r2y.mItemQueue->clear () ;
 		r2y.mException = AutoRef<Exception> () ;
 		r2y.mThreadPool = Array<AutoRef<std::thread>> (count) ;
-		for (INDEX i = 0 ,ie = r2y.mThreadPool.length () ; i < ie ; i++) {
+		for (auto &&i : _RANGE_ (0 ,r2y.mThreadPool.length ())) {
 			const auto r3x = PACK<PTR<Holder>> {&r2y} ;
 			//@warn: move object having captured context
 			r2y.mThreadPool[i] = AutoRef<std::thread>::make ([r3x] () noexcept {
@@ -650,7 +645,7 @@ public:
 		Detail::static_push (r1x) ;
 	}
 
-	void raise (const Exception &e) {
+	void rethrow (const Exception &e) {
 		const auto r1x = mThis.watch () ;
 		Detail::static_rethrow (r1x) ;
 	}

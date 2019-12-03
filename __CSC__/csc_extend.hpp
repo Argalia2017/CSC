@@ -66,22 +66,21 @@ using std::chrono::steady_clock ;
 } ;
 
 namespace this_thread {
-using std::this_thread::get_id ;
 using std::this_thread::sleep_for ;
-using std::this_thread::sleep_until ;
 using std::this_thread::yield ;
 } ;
 
 using std::atomic_thread_fence ;
-using std::atomic_signal_fence ;
+
+using ::setlocale ;
 
 #ifndef __CSC_COMPILER_GNUC__
-//@error: 'std::max_align_t' is not avaliable in g++4.8
+//@error: 'std::quick_exit' is not avaliable in g++4.8
 using std::quick_exit ;
 #endif
 
 using std::exit ;
-using std::abort ;
+using std::terminate ;
 } ;
 
 #ifdef __CSC_COMPILER_MSVC__
@@ -116,8 +115,10 @@ public:
 		return std::chrono::steady_clock::now () ;
 	}
 
-	inline static std::thread::id thread_tid () {
-		return std::this_thread::get_id () ;
+	inline static FLAG thread_tid () {
+		_STATIC_WARNING_ ("unimplemented") ;
+		_DYNAMIC_ASSERT_ (FALSE) ;
+		return 0 ;
 	}
 
 	template <class _ARG1 ,class _ARG2>
@@ -143,10 +144,16 @@ public:
 	}
 
 	inline static void locale_init (const Plain<STRA> &locale_) {
-		::setlocale (LC_ALL ,locale_.self) ;
+		stl::setlocale (LC_ALL ,locale_.self) ;
 	}
 
-	inline static void process_exit () {
+	inline static FLAG process_pid () {
+		_STATIC_WARNING_ ("unimplemented") ;
+		_DYNAMIC_ASSERT_ (FALSE) ;
+		return 0 ;
+	}
+
+	inline static void process_exit[[noreturn]] () {
 #ifdef __CSC_COMPILER_GNUC__
 		//@error: g++4.8 is too useless to have 'std::quick_exit'
 		std::exit (EXIT_FAILURE) ;
@@ -155,7 +162,7 @@ public:
 #endif
 	}
 
-	inline static void process_abort () {
+	inline static void process_abort[[noreturn]] () {
 		std::terminate () ;
 	}
 } ;
@@ -195,7 +202,8 @@ private:
 			mName = NULL ;
 			mAddress = NULL ;
 			mTypeUID = 0 ;
-			mWatch = _XVALUE_<PTR<void (UNIT &)>> ([] (UNIT &) {}) ;
+			const auto r1x = _XVALUE_<PTR<void (UNIT &)>> ([] (UNIT &) {}) ;
+			mWatch = r1x ;
 		} ;
 	} ;
 
@@ -1528,9 +1536,6 @@ class SoftRef ;
 
 template <>
 class WeakRef<void> {
-public:
-	class Virtual ;
-
 private:
 	class Holder {
 	private:
@@ -1548,12 +1553,6 @@ private:
 	template <class>
 	friend class WeakRef ;
 	SharedRef<Holder> mHolder ;
-} ;
-
-class WeakRef<void>::Virtual :public virtual WeakRef<void> {
-private:
-	template <class>
-	friend class StrongRef ;
 } ;
 
 namespace U {
@@ -1598,16 +1597,6 @@ private:
 public:
 	inline StrongRef () noexcept {
 		mPointer = NULL ;
-	}
-
-	template <class _ARG1 ,class = ENABLE_TYPE<std::is_same<_ARG1 ,PTR<UNIT>>::value>>
-	inline explicit StrongRef (const _ARG1 &address) :StrongRef () {
-		_STATIC_ASSERT_ (stl::is_always_base_of<WeakRef<void>::Virtual ,UNIT>::value) ;
-		_DEBUG_ASSERT_ (address != NULL) ;
-		const auto r1x = _XVALUE_<PTR<CAST_TRAITS_TYPE<WeakRef<void>::Virtual ,UNIT>>> (address) ;
-		const auto r2x = _XVALUE_<PTR<CAST_TRAITS_TYPE<WeakRef<void> ,UNIT>>> (r1x) ;
-		mHolder = r2x->mHolder ;
-		mPointer = address ;
 	}
 
 	//@warn: circular reference ruins StrongRef
@@ -1758,25 +1747,8 @@ public:
 		rax->mData = AnyRef<REMOVE_CVR_TYPE<UNIT>>::make (std::forward<_ARGS> (initval)...) ;
 		rax->mCounter = 0 ;
 		auto &r1y = rax->mData.rebind<REMOVE_CVR_TYPE<UNIT>> ().self ;
-		Detail::template_shared (rax ,&r1y ,ARGVPX ,ARGVP9) ;
 		return StrongRef (rax ,&r1y) ;
 	}
-
-private:
-	struct Detail {
-		template <class _ARG1>
-		inline static void template_shared (const SharedRef<Holder> &holder ,PTR<_ARG1> address ,const ARGV<ENABLE_TYPE<stl::is_always_base_of<WeakRef<void>::Virtual ,_ARG1>::value>> & ,const DEF<decltype (ARGVP2)> &) {
-			_DEBUG_ASSERT_ (address != NULL) ;
-			const auto r1x = _XVALUE_<PTR<CAST_TRAITS_TYPE<WeakRef<void>::Virtual ,_ARG1>>> (address) ;
-			const auto r2x = _XVALUE_<PTR<CAST_TRAITS_TYPE<WeakRef<void> ,_ARG1>>> (r1x) ;
-			r2x->mHolder = holder ;
-		}
-
-		template <class _ARG1>
-		inline static void template_shared (const SharedRef<Holder> &holder ,PTR<_ARG1> address ,const DEF<decltype (ARGVPX)> & ,const DEF<decltype (ARGVP1)> &) {
-			_DEBUG_ASSERT_ (address != NULL) ;
-		}
-	} ;
 } ;
 
 template <class UNIT>
@@ -2020,7 +1992,7 @@ public:
 	inline void clean () const {
 		if (!mHeap.exist ())
 			return ;
-		for (INDEX i = 0 ,ie = mHeap->size () ; i < ie ; i++) {
+		for (auto &&i : _RANGE_ (0 ,mHeap->size ())) {
 			if (mHeap.self[i].mWeight < 0)
 				continue ;
 			mHeap.self[i].mData = StrongRef<UNIT> () ;
@@ -2042,7 +2014,7 @@ private:
 	}
 
 	inline INDEX find_has_linked (const WeakRef<UNIT> &that) const {
-		for (INDEX i = 0 ,ie = mHeap->size () ; i < ie ; i++)
+		for (auto &&i : _RANGE_ (0 ,mHeap->size ()))
 			if (mHeap.self[i].mData == that)
 				return i ;
 		return VAR_NONE ;
@@ -2062,7 +2034,7 @@ private:
 			const auto r1x = constexpr_log2x (mHeap.self[mIndex].mWeight) ;
 			if (r1x <= 0)
 				discard ;
-			for (INDEX i = 0 ,ie = mHeap->size () ; i < ie ; i++)
+			for (auto &&i : _RANGE_ (0 ,mHeap->size ()))
 				mHeap.self[i].mWeight = mHeap.self[i].mWeight >> r1x ;
 		}
 		_DYNAMIC_ASSERT_ (mIndex != VAR_NONE) ;
@@ -2073,7 +2045,7 @@ private:
 	inline INDEX find_min_weight () const {
 		INDEX ret = VAR_NONE ;
 		auto rax = LENGTH () ;
-		for (INDEX i = 0 ,ie = mHeap->size () ; i < ie ; i++) {
+		for (auto &&i : _RANGE_ (0 ,mHeap->size ())) {
 			const auto r1x = mHeap.self[i].mWeight ;
 			if (r1x < 0)
 				continue ;
@@ -2329,20 +2301,10 @@ public:
 	}
 } ;
 
+#ifdef __CSC_DEPRECATED__
 template <class UNIT>
 class Lazy {
 private:
-	class ApplyTo :private Wrapped<UNIT> {
-	public:
-		inline void friend_move (UNIT &data) popping {
-			data = std::move (ApplyTo::mSelf) ;
-		}
-
-		inline void friend_move (UNIT &data) const popping {
-			data = std::move (ApplyTo::mSelf) ;
-		}
-	} ;
-
 	class Holder {
 	private:
 		friend Lazy ;
@@ -2357,83 +2319,13 @@ private:
 public:
 	inline Lazy () = default ;
 
-	inline implicit Lazy (const UNIT &that) {
-		mThis = SoftRef<Holder> (9) ;
-		const auto r1x = StrongRef<Holder>::make () ;
-		auto &r2y = _CAST_<ApplyTo> (that) ;
-		const auto r3x = Function<DEF<void (UNIT &)> NONE::*> (PhanRef<const ApplyTo>::make (r2y) ,&ApplyTo::friend_move) ;
-		r1x->mData.apply (r3x) ;
-		r1x->mData.finish () ;
-		mThis.assign (r1x) ;
-		mThis.as_strong () ;
-	}
-
-	inline implicit Lazy (UNIT &&that) {
-		mThis = SoftRef<Holder> (9) ;
-		const auto r1x = StrongRef<Holder>::make () ;
-		auto &r2y = _CAST_<ApplyTo> (that) ;
-		const auto r3x = Function<DEF<void (UNIT &)> NONE::*> (PhanRef<ApplyTo>::make (r2y) ,&ApplyTo::friend_move) ;
-		r1x->mData.apply (r3x) ;
-		r1x->mData.finish () ;
-		mThis.assign (r1x) ;
-		mThis.as_strong () ;
-	}
-
-	inline implicit Lazy (Function<DEF<UNIT ()> NONE::*> &&that) {
-		mThis = SoftRef<Holder> (9) ;
-		const auto r1x = StrongRef<Holder>::make () ;
-		r1x->mData.signal () ;
-		r1x->mEvaluator = std::move (that) ;
-		mThis.assign (r1x) ;
-		mThis.as_strong () ;
-	}
-
-	inline explicit Lazy (Function<UNIT ()> &&that) {
-		mThis = SoftRef<Holder> (9) ;
-		const auto r1x = StrongRef<Holder>::make () ;
-		r1x->mData.signal () ;
-		r1x->mFunction = AnyRef<Function<UNIT ()>>::make (std::move (that)) ;
-		auto &r2y = r1x->mFunction.template rebind<Function<UNIT ()>> ().self ;
-		r1x->mEvaluator = Function<DEF<UNIT ()> NONE::*>::make (PhanRef<Function<UNIT ()>> (r2y) ,&Function<UNIT ()>::invoke) ;
-		mThis.assign (r1x) ;
-		mThis.as_strong () ;
-	}
-
-	inline BOOL exist () const {
-		return mThis.exist () ;
-	}
-
-	inline const UNIT &to () const {
-		_DEBUG_ASSERT_ (exist ()) ;
-		finish () ;
-		const auto r1x = mThis.watch () ;
-		return r1x->mData.self ;
-	}
-
-	inline implicit operator const UNIT & () const {
-		return to () ;
-	}
-
 	inline LENGTH rank () const {
-		_DEBUG_ASSERT_ (exist ()) ;
 		_STATIC_WARNING_ ("unimplemented") ;
 		_DYNAMIC_ASSERT_ (FALSE) ;
 		return 0 ;
 	}
 
-	inline void finish () const {
-		_DEBUG_ASSERT_ (exist ()) ;
-		const auto r1x = mThis.watch () ;
-		const auto r2x = Function<DEF<void (UNIT &)> NONE::*> (PhanRef<const Lazy>::make ((*this)) ,&Lazy::compute_evaluation) ;
-		r1x->mData.apply (r2x) ;
-		r1x->mData.finish () ;
-	}
-
 	inline Lazy concat (const Lazy &that) const {
-		if (!exist ())
-			return that ;
-		if (!that.exist ())
-			return (*this) ;
 		_STATIC_WARNING_ ("unimplemented") ;
 		_DYNAMIC_ASSERT_ (FALSE) ;
 		return Lazy () ;
@@ -2456,33 +2348,27 @@ public:
 		(*this) = that.concat ((*this)) ;
 		return (*this) ;
 	}
-
-private:
-	inline void compute_evaluation (UNIT &data) const {
-		const auto r1x = mThis.watch () ;
-		_DYNAMIC_ASSERT_ (r1x->mEvaluator.exist ()) ;
-		data = r1x->mEvaluator () ;
-	}
 } ;
+#endif
 
 inline namespace EXTEND {
 inline constexpr INDEX _ALIGNAS_ (INDEX base ,LENGTH align_) {
 	return base + (align_ - base % align_) % align_ ;
 }
 
-inline constexpr BOOL _RANGE00_ (INDEX base ,INDEX min_ ,INDEX max_) {
+inline constexpr BOOL _RANGE_IN00_ (INDEX base ,INDEX min_ ,INDEX max_) {
 	return BOOL (base > min_ && base < max_) ;
 }
 
-inline constexpr BOOL _RANGE01_ (INDEX base ,INDEX min_ ,INDEX max_) {
+inline constexpr BOOL _RANGE_IN01_ (INDEX base ,INDEX min_ ,INDEX max_) {
 	return BOOL (base > min_ && base <= max_) ;
 }
 
-inline constexpr BOOL _RANGE10_ (INDEX base ,INDEX min_ ,INDEX max_) {
+inline constexpr BOOL _RANGE_IN10_ (INDEX base ,INDEX min_ ,INDEX max_) {
 	return BOOL (base >= min_ && base < max_) ;
 }
 
-inline constexpr BOOL _RANGE11_ (INDEX base ,INDEX min_ ,INDEX max_) {
+inline constexpr BOOL _RANGE_IN11_ (INDEX base ,INDEX min_ ,INDEX max_) {
 	return BOOL (base >= min_ && base <= max_) ;
 }
 } ;
@@ -2575,7 +2461,7 @@ private:
 			auto rax = GlobalHeap::alloc<BYTE> (r2x) ;
 			const auto r3x = _ADDRESS_ (_XVALUE_<PTR<ARR<BYTE>>> (rax)) ;
 			const auto r4x = _ALIGNAS_ (r3x ,_ALIGNOF_ (CHUNK)) ;
-			auto &r5y = _LOAD_<CHUNK> (this ,r4x) ;
+			auto &r5y = _LOAD_<CHUNK> (_UNSAFE_ALIASING_ (r4x)) ;
 			r5y.mOrigin = _XVALUE_<PTR<ARR<BYTE>>> (rax) ;
 			r5y.mPrev = NULL ;
 			r5y.mNext = mRoot ;
@@ -2585,9 +2471,9 @@ private:
 			mRoot = &r5y ;
 			mSize += RESE::value * SIZE::value ;
 			const auto r6x = _ALIGNAS_ (r4x + _SIZEOF_ (CHUNK) ,_ALIGNOF_ (BLOCK)) ;
-			for (INDEX i = 0 ,ie = mRoot->mCount ; i < ie ; i++) {
+			for (auto &&i : _RANGE_ (0 ,mRoot->mCount)) {
 				const auto r7x = r6x + i * r1x ;
-				auto &r8y = _LOAD_<BLOCK> (this ,r7x) ;
+				auto &r8y = _LOAD_<BLOCK> (_UNSAFE_ALIASING_ (r7x)) ;
 				r8y.mNext = mFree ;
 				mFree = &r8y ;
 			}
@@ -2636,9 +2522,9 @@ private:
 		inline BOOL empty_node (PTR<const CHUNK> node) const {
 			const auto r1x = _ALIGNAS_ (_SIZEOF_ (BLOCK) + SIZE::value ,_ALIGNOF_ (BLOCK)) ;
 			const auto r2x = _ALIGNAS_ (_ADDRESS_ (node) + _SIZEOF_ (CHUNK) ,_ALIGNOF_ (BLOCK)) ;
-			for (INDEX i = 0 ,ie = node->mCount ; i < ie ; i++) {
+			for (auto &&i : _RANGE_ (0 ,node->mCount)) {
 				const auto r3x = r2x + i * r1x ;
-				auto &r4y = _LOAD_<BLOCK> (this ,r3x) ;
+				auto &r4y = _LOAD_<BLOCK> (_UNSAFE_ALIASING_ (r3x)) ;
 				if (_ADDRESS_ (r4y.mNext) == VAR_USED)
 					return FALSE ;
 			}
@@ -2692,7 +2578,7 @@ private:
 			auto rax = GlobalHeap::alloc<BYTE> (r2x) ;
 			const auto r3x = _ADDRESS_ (_XVALUE_<PTR<ARR<BYTE>>> (rax)) ;
 			const auto r4x = _ALIGNAS_ (r3x ,_ALIGNOF_ (BLOCK)) ;
-			auto &r5y = _LOAD_<BLOCK> (this ,r4x) ;
+			auto &r5y = _LOAD_<BLOCK> (_UNSAFE_ALIASING_ (r4x)) ;
 			r5y.mOrigin = _XVALUE_<PTR<ARR<BYTE>>> (rax) ;
 			r5y.mPrev = NULL ;
 			r5y.mNext = mRoot ;
@@ -2768,14 +2654,14 @@ public:
 
 	inline LENGTH size () const {
 		LENGTH ret = 0 ;
-		for (INDEX i = 0 ,ie = mPool.self.size () ; i < ie ; i++)
+		for (auto &&i : _RANGE_ (0 ,mPool.self.size ()))
 			ret += mPool.self[i]->size () ;
 		return std::move (ret) ;
 	}
 
 	inline LENGTH length () const {
 		LENGTH ret = 0 ;
-		for (INDEX i = 0 ,ie = mPool.self.size () ; i < ie ; i++)
+		for (auto &&i : _RANGE_ (0 ,mPool.self.size ()))
 			ret += mPool.self[i]->length () ;
 		return std::move (ret) ;
 	}
@@ -2789,11 +2675,12 @@ public:
 		INDEX ix = _MIN_ (((r1x - 1) / 8) ,_SIZEOF_ (HEADER)) ;
 		const auto r2x = mPool.self[ix]->alloc (r1x) ;
 		const auto r3x = _ALIGNAS_ (_ADDRESS_ (r2x) + _SIZEOF_ (HEADER) ,_ALIGNOF_ (_RET)) ;
-		auto &r4y = _LOAD_<HEADER> (this ,(r3x - _SIZEOF_ (HEADER))) ;
-		r4y.mPool = mPool.self[ix] ;
-		r4y.mCurr = r2x ;
-		auto &r5y = _LOAD_<_RET> (this ,r3x) ;
-		return &r5y ;
+		const auto r4x = r3x - _SIZEOF_ (HEADER) ;
+		auto &r5y = _LOAD_<HEADER> (_UNSAFE_ALIASING_ (r4x)) ;
+		r5y.mPool = mPool.self[ix] ;
+		r5y.mCurr = r2x ;
+		auto &r6y = _LOAD_<_RET> (_UNSAFE_ALIASING_ (r3x)) ;
+		return &r6y ;
 	}
 
 	//@warn: held by RAII to avoid static-memory-leaks
@@ -2806,25 +2693,26 @@ public:
 		INDEX ix = _MIN_ (((r1x - 1) / 8) ,_SIZEOF_ (HEADER)) ;
 		const auto r2x = mPool.self[ix]->alloc (r1x) ;
 		const auto r3x = _ALIGNAS_ (_ADDRESS_ (r2x) + _SIZEOF_ (HEADER) ,_ALIGNOF_ (_RET)) ;
-		auto &r4y = _LOAD_<HEADER> (this ,(r3x - _SIZEOF_ (HEADER))) ;
-		r4y.mPool = mPool.self[ix] ;
-		r4y.mCurr = r2x ;
-		auto &r5y = _LOAD_<ARR<_RET>> (this ,r3x) ;
-		return &r5y ;
+		const auto r4x = r3x - _SIZEOF_ (HEADER) ;
+		auto &r5y = _LOAD_<HEADER> (_UNSAFE_ALIASING_ (r4x)) ;
+		r5y.mPool = mPool.self[ix] ;
+		r5y.mCurr = r2x ;
+		auto &r6y = _LOAD_<ARR<_RET>> (_UNSAFE_ALIASING_ (r3x)) ;
+		return &r6y ;
 	}
 
 	template <class _ARG1>
 	inline void free (const PTR<_ARG1> &address) noexcept {
 		_STATIC_ASSERT_ (std::is_pod<REMOVE_ARRAY_TYPE<_ARG1>>::value) ;
 		const auto r1x = _ADDRESS_ (address) - _SIZEOF_ (HEADER) ;
-		auto &r2y = _LOAD_<HEADER> (this ,r1x) ;
+		auto &r2y = _LOAD_<HEADER> (_UNSAFE_ALIASING_ (r1x)) ;
 		INDEX ix = _MEMCHR_ (mPool.self.self ,mPool.self.size () ,r2y.mPool) ;
 		_DEBUG_ASSERT_ (ix != VAR_NONE) ;
 		mPool.self[ix]->free (r2y.mCurr) ;
 	}
 
 	inline void clean () {
-		for (INDEX i = 0 ,ie = mPool.self.size () ; i < ie ; i++)
+		for (auto &&i : _RANGE_ (0 ,mPool.self.size ()))
 			mPool.self[i]->clean () ;
 	}
 } ;
@@ -2832,6 +2720,8 @@ public:
 class Object ;
 
 exports struct Objective :public Interface {
+	virtual WeakRef<Object> &weak_of_this () = 0 ;
+	virtual const WeakRef<Object> &weak_of_this () const = 0 ;
 	virtual StrongRef<Object> clone () const = 0 ;
 } ;
 
@@ -2871,6 +2761,9 @@ private:
 		}
 	} ;
 
+private:
+	WeakRef<Object> mWeakOfThis ;
+
 public:
 	inline Object () = delete ;
 
@@ -2878,6 +2771,14 @@ public:
 	inline explicit Object (const ARGV<_ARG1> &) {
 		_STATIC_ASSERT_ (stl::is_always_base_of<Object ,_ARG1>::value) ;
 		_STATIC_ASSERT_ (!std::is_same<REMOVE_CVR_TYPE<_ARG1> ,Object>::value) ;
+	}
+	
+	inline WeakRef<Object> &weak_of_this () override {
+		return mWeakOfThis ;
+	}
+
+	inline const WeakRef<Object> &weak_of_this () const {
+		return mWeakOfThis ;
 	}
 
 	inline StrongRef<Object> clone () const override {

@@ -93,7 +93,7 @@ public:
 
 	Vector mul (const REAL &scale) const {
 		Vector ret ;
-		for (INDEX i = 0 ,ie = mVector.size () ; i < ie ; i++)
+		for (auto &&i : _RANGE_ (0 ,mVector.size ()))
 			ret.mVector[i] = mVector[i] * scale ;
 		return std::move (ret) ;
 	}
@@ -107,7 +107,7 @@ public:
 	}
 
 	void multo (const REAL &scale) {
-		for (INDEX i = 0 ,ie = mVector.size () ; i < ie ; i++)
+		for (auto &&i : _RANGE_ (0 ,mVector.size ()))
 			mVector[i] *= scale ;
 	}
 
@@ -139,7 +139,7 @@ public:
 
 	Vector add (const Vector &that) const {
 		Vector ret ;
-		for (INDEX i = 0 ,ie = mVector.size () ; i < ie ; i++)
+		for (auto &&i : _RANGE_ (0 ,mVector.size ()))
 			ret.mVector[i] = mVector[i] + that.mVector[i] ;
 		return std::move (ret) ;
 	}
@@ -149,7 +149,7 @@ public:
 	}
 
 	void addto (const Vector &that) {
-		for (INDEX i = 0 ,ie = mVector.size () ; i < ie ; i++)
+		for (auto &&i : _RANGE_ (0 ,mVector.size ()))
 			mVector[i] += that.mVector[i] ;
 	}
 
@@ -160,7 +160,7 @@ public:
 
 	Vector sub (const Vector &that) const {
 		Vector ret ;
-		for (INDEX i = 0 ,ie = mVector.size () ; i < ie ; i++)
+		for (auto &&i : _RANGE_ (0 ,mVector.size ()))
 			ret.mVector[i] = mVector[i] - that.mVector[i] ;
 		return std::move (ret) ;
 	}
@@ -170,7 +170,7 @@ public:
 	}
 
 	void subto (const Vector &that) {
-		for (INDEX i = 0 ,ie = mVector.size () ; i < ie ; i++)
+		for (auto &&i : _RANGE_ (0 ,mVector.size ()))
 			mVector[i] -= that.mVector[i] ;
 	}
 
@@ -181,7 +181,7 @@ public:
 
 	Vector plus () const {
 		Vector ret ;
-		for (INDEX i = 0 ,ie = mVector.size () ; i < ie ; i++)
+		for (auto &&i : _RANGE_ (0 ,mVector.size ()))
 			ret.mVector[i] = +mVector[i] ;
 		return std::move (ret) ;
 	}
@@ -192,7 +192,7 @@ public:
 
 	Vector minus () const {
 		Vector ret ;
-		for (INDEX i = 0 ,ie = mVector.size () ; i < ie ; i++)
+		for (auto &&i : _RANGE_ (0 ,mVector.size ()))
 			ret.mVector[i] = -mVector[i] ;
 		return std::move (ret) ;
 	}
@@ -256,7 +256,6 @@ public:
 	}
 
 	Vector normalize () const {
-		_DEBUG_ASSERT_ (mVector[3] == REAL (0)) ;
 		Vector ret ;
 		const auto r1x = _PINV_ (magnitude ()) ;
 		ret.mVector[0] = mVector[0] * r1x ;
@@ -271,21 +270,18 @@ public:
 		const auto r1x = _PINV_ (mVector[3]) ;
 		ret.mVector[0] = mVector[0] * r1x ;
 		ret.mVector[1] = mVector[1] * r1x ;
-		ret.mVector[2] = REAL (0) ;
+		ret.mVector[2] = mVector[2] * r1x ;
 		ret.mVector[3] = REAL (1) ;
 		return std::move (ret) ;
 	}
 
 	Vector homogenize () const {
 		Vector ret ;
-		_STATIC_WARNING_ ("unimplemented") ;
-		_DEBUG_ASSERT_ (FALSE) ;
+		ret.mVector[0] = mVector[0] ;
+		ret.mVector[1] = mVector[1] ;
+		ret.mVector[2] = mVector[2] ;
+		ret.mVector[3] = REAL (0) ;
 		return std::move (ret) ;
-	}
-
-	Vector reflect (const Vector<REAL> &normal) const {
-		const auto r1x = normal * (2 * mul (normal)) ;
-		return sub (r1x) ;
 	}
 
 public:
@@ -347,7 +343,7 @@ public:
 	Matrix () = default ;
 
 	implicit Matrix (const ARRAY4<REAL> &hx ,const ARRAY4<REAL> &hy ,const ARRAY4<REAL> &hz ,const ARRAY4<REAL> &hw) {
-		for (INDEX i = 0 ,ie = 4 ; i < ie ; i++) {
+		for (auto &&i : _RANGE_ (0 ,4)) {
 			get (0 ,i) = hx[i] ;
 			get (1 ,i) = hy[i] ;
 			get (2 ,i) = hz[i] ;
@@ -357,7 +353,7 @@ public:
 
 	template <class _ARG1 ,class = ENABLE_TYPE<std::is_same<_ARG1 ,REAL>::value>>
 	implicit Matrix (const Vector<_ARG1> &vx ,const Vector<_ARG1> &vy ,const Vector<_ARG1> &vz ,const Vector<_ARG1> &vw) {
-		for (INDEX i = 0 ,ie = 4 ; i < ie ; i++) {
+		for (auto &&i : _RANGE_ (0 ,4)) {
 			get (i ,0) = vx[i] ;
 			get (i ,1) = vy[i] ;
 			get (i ,2) = vz[i] ;
@@ -433,7 +429,7 @@ public:
 
 	Matrix mul (const REAL &scale) const {
 		Matrix ret ;
-		for (INDEX i = 0 ,ie = mMatrix.size () ; i < ie ; i++)
+		for (auto &&i : _RANGE_ (0 ,mMatrix.size ()))
 			ret.mMatrix[i] = mMatrix[i] * scale ;
 		return std::move (ret) ;
 	}
@@ -447,7 +443,7 @@ public:
 	}
 
 	void multo (const REAL &scale) {
-		for (INDEX i = 0 ,ie = mMatrix.size () ; i < ie ; i++)
+		for (auto &&i : _RANGE_ (0 ,mMatrix.size ()))
 			mMatrix[i] *= scale ;
 	}
 
@@ -479,7 +475,7 @@ public:
 
 	Matrix add (const Matrix &that) const {
 		Matrix ret ;
-		for (INDEX i = 0 ,ie = mMatrix.size () ; i < ie ; i++)
+		for (auto &&i : _RANGE_ (0 ,mMatrix.size ()))
 			ret.mMatrix[i] = mMatrix[i] + that.mMatrix[i] ;
 		return std::move (ret) ;
 	}
@@ -489,7 +485,7 @@ public:
 	}
 
 	void addto (const Matrix &that) {
-		for (INDEX i = 0 ,ie = mMatrix.size () ; i < ie ; i++)
+		for (auto &&i : _RANGE_ (0 ,mMatrix.size ()))
 			mMatrix[i] += that.mMatrix[i] ;
 	}
 
@@ -500,7 +496,7 @@ public:
 
 	Matrix sub (const Matrix &that) const {
 		Matrix ret ;
-		for (INDEX i = 0 ,ie = mMatrix.size () ; i < ie ; i++)
+		for (auto &&i : _RANGE_ (0 ,mMatrix.size ()))
 			ret.mMatrix[i] = mMatrix[i] - that.mMatrix[i] ;
 		return std::move (ret) ;
 	}
@@ -510,7 +506,7 @@ public:
 	}
 
 	void subto (const Matrix &that) {
-		for (INDEX i = 0 ,ie = mMatrix.size () ; i < ie ; i++)
+		for (auto &&i : _RANGE_ (0 ,mMatrix.size ()))
 			mMatrix[i] -= that.mMatrix[i] ;
 	}
 
@@ -521,7 +517,7 @@ public:
 
 	Matrix plus () const {
 		Matrix ret ;
-		for (INDEX i = 0 ,ie = mMatrix.size () ; i < ie ; i++)
+		for (auto &&i : _RANGE_ (0 ,mMatrix.size ()))
 			ret.mMatrix[i] = +mMatrix[i] ;
 		return std::move (ret) ;
 	}
@@ -532,7 +528,7 @@ public:
 
 	Matrix minus () const {
 		Matrix ret ;
-		for (INDEX i = 0 ,ie = mMatrix.size () ; i < ie ; i++)
+		for (auto &&i : _RANGE_ (0 ,mMatrix.size ()))
 			ret.mMatrix[i] = -mMatrix[i] ;
 		return std::move (ret) ;
 	}
@@ -583,12 +579,12 @@ public:
 
 	Matrix triangular () const {
 		Matrix ret = (*this) ;
-		for (INDEX i = 0 ,ie = 4 ; i < ie ; i++) {
+		for (auto &&i : _RANGE_ (0 ,4)) {
 			if SWITCH_CASE (TRUE) {
 				INDEX ix = ret.find_max_row (i) ;
 				if (ix == i)
 					discard ;
-				for (INDEX j = i ,je = 4 ; j < je ; j++) {
+				for (auto &&j : _RANGE_ (i ,4)) {
 					const auto r1x = -ret.get (i ,j) ;
 					ret.get (i ,j) = ret.get (ix ,j) ;
 					ret.get (ix ,j) = r1x ;
@@ -597,9 +593,9 @@ public:
 			const auto r2x = _PINV_ (ret.get (i ,i)) ;
 			if (r2x == REAL (0))
 				continue ;
-			for (INDEX j = i + 1 ,je = 4 ; j < je ; j++) {
+			for (auto &&j : _RANGE_ (i + 1 ,4)) {
 				const auto r3x = ret.get (j ,i) * r2x ;
-				for (INDEX k = i + 1 ,ke = 4 ; k < ke ; k++)
+				for (auto &&k : _RANGE_ (i + 1 ,4))
 					ret.get (j ,k) -= r3x * ret.get (i ,k) ;
 				ret.get (j ,i) = REAL (0) ;
 			}
@@ -610,7 +606,7 @@ public:
 	LENGTH rank () const {
 		LENGTH ret = 0 ;
 		const auto r1x = triangular () ;
-		for (INDEX i = 0 ,ie = 4 ; i < ie ; i++)
+		for (auto &&i : _RANGE_ (0 ,4))
 			ret += EFLAG (_PINV_ (r1x[i][i]) == REAL (0)) ;
 		ret = 4 - ret ;
 		return std::move (ret) ;
@@ -619,7 +615,7 @@ public:
 	REAL det () const {
 		const auto r1x = triangular () ;
 		REAL ret = REAL (1) ;
-		for (INDEX i = 0 ,ie = 4 ; i < ie ; i++)
+		for (auto &&i : _RANGE_ (0 ,4))
 			ret *= r1x.get (i ,i) ;
 		return std::move (ret) ;
 	}
@@ -628,14 +624,14 @@ public:
 		Matrix ret ;
 		const auto r1x = _PINV_ (det ()) ;
 		_DYNAMIC_ASSERT_ (r1x != REAL (0)) ;
-		for (INDEX i = 0 ,ie = 4 ; i < ie ; i++) {
+		for (auto &&i : _RANGE_ (0 ,4)) {
 			INDEX ix = 0 ;
 			ix += EFLAG (ix == i) ;
 			INDEX iy = ix + 1 ;
 			iy += EFLAG (iy == i) ;
 			INDEX iz = iy + 1 ;
 			iz += EFLAG (iz == i) ;
-			for (INDEX j = 0 ,je = 4 ; j < je ; j++) {
+			for (auto &&j : _RANGE_ (0 ,4)) {
 				INDEX jx = 0 ;
 				jx += EFLAG (jx == j) ;
 				INDEX jy = jx + 1 ;
@@ -669,14 +665,14 @@ public:
 
 	REAL trace () const {
 		REAL ret = REAL (0) ;
-		for (INDEX i = 0 ,ie = 4 ; i < ie ; i++)
+		for (auto &&i : _RANGE_ (0 ,4))
 			ret += get (i ,i) ;
 		return std::move (ret) ;
 	}
 
 	//@info: 3-translation * 2-rotation * 1-scale * 0-shear
 	ARRAY4<Matrix> decompose () const {
-		_DEBUG_ASSERT_ (affine_matrix_like ()) ;
+		_DYNAMIC_ASSERT_ (affine_matrix_like ()) ;
 		ARRAY4<Matrix> ret ;
 		const auto r1x = mul (Vector<REAL>::axis_x ()) ;
 		const auto r2x = mul (Vector<REAL>::axis_y ()) ;
@@ -687,19 +683,14 @@ public:
 		const auto r6x = r4x.mul (Vector<REAL>::axis_y ()) ;
 		const auto r7x = r4x.mul (Vector<REAL>::axis_z ()) ;
 		const auto r8x = r4x.mul (Vector<REAL>::axis_w ()) ;
-		const auto r9x = _SIGN_ ((r5x ^ r6x) * r7x) ;
-		const auto r10x = _PINV_ (r8x[3]) ;
-		const auto r11x = r5x.magnitude () * r10x * r9x ;
-		const auto r12x = r6x.magnitude () * r10x * r9x ;
-		const auto r13x = r7x.magnitude () * r10x * r9x ;
+		const auto r9x = _SIGN_ ((r5x ^ r6x) * r7x) * _PINV_ (r8x[3]) ;
+		const auto r11x = r5x.magnitude () * r9x ;
+		const auto r12x = r6x.magnitude () * r9x ;
+		const auto r13x = r7x.magnitude () * r9x ;
 		ret[1] = Matrix::make_diag (r11x ,r12x ,r13x ,REAL (1)) ;
-		const auto r14x = r5x.normalize () ;
-		const auto r15x = r6x.normalize () ;
-		const auto r16x = r7x.normalize () * r9x ;
-		ret[2] = Matrix {r14x ,r15x ,r16x ,Vector<REAL>::axis_w ()} ;
-		const auto r17x = r8x * r10x ;
-		const auto r18x = Vector<REAL> {r17x.xyz () ,1} ;
-		ret[3] = Matrix::make_translation (r18x) ;
+		ret[2] = Matrix::make_view (r5x ,r6x) ;
+		const auto r14x = r8x.projection () - Vector<REAL>::axis_w () ;
+		ret[3] = Matrix::make_translation (r14x) ;
 		return std::move (ret) ;
 	}
 
@@ -719,7 +710,7 @@ private:
 	INDEX find_max_row (INDEX yx) const {
 		INDEX ret = VAR_NONE ;
 		auto rax = REAL () ;
-		for (INDEX i = yx ,ie = 4 ; i < ie ; i++) {
+		for (auto &&i : _RANGE_ (yx ,4)) {
 			const auto r1x = _ABS_ (get (i ,yx)) ;
 			if (ret != VAR_NONE)
 				if (rax >= r1x)
@@ -749,22 +740,13 @@ public:
 		return std::move (ret) ;
 	}
 
-	static Matrix make_shear (const REAL &angle_xy ,const REAL &angle_xz ,const REAL &angle_yz) {
-		const auto r1x = _PINV_ (_SIN_ (angle_xy)) ;
-		const auto r2x = (_COS_ (angle_yz) - _COS_ (angle_xy) * _COS_ (angle_xz)) * r1x ;
-		const auto r3x = _SQRT_ (_SQE_ (_SIN_ (angle_xz)) - _SQE_ (r2x)) ;
-		Matrix ret = Matrix ({
-			{REAL (1) ,_COS_ (angle_xy) ,_COS_ (angle_xz) ,REAL (0)} ,
-			{REAL (0) ,_SIN_ (angle_xy) ,r2x ,REAL (0)} ,
-			{REAL (0) ,REAL (0) ,r3x ,REAL (0)} ,
-			{REAL (0) ,REAL (0) ,REAL (0) ,REAL (1)}}) ;
-		return std::move (ret) ;
-	}
-
-	static Matrix make_shear (const Vector<REAL> &x ,const Vector<REAL> &y ,const Vector<REAL> &z) {
-		const auto r1x = x.normalize () ;
-		const auto r2x = y.normalize () ;
-		const auto r3x = z.normalize () ;
+	static Matrix make_shear (const Vector<REAL> &vx ,const Vector<REAL> &vy ,const Vector<REAL> &vz) {
+		_DEBUG_ASSERT_ (vx[3] == REAL (0)) ;
+		_DEBUG_ASSERT_ (vy[3] == REAL (0)) ;
+		_DEBUG_ASSERT_ (vz[3] == REAL (0)) ;
+		const auto r1x = vx.normalize () ;
+		const auto r2x = vy.normalize () ;
+		const auto r3x = vz.normalize () ;
 		const auto r4x = r1x * r2x ;
 		const auto r5x = r1x * r3x ;
 		const auto r6x = r2x * r3x ;
@@ -783,7 +765,6 @@ public:
 		_DEBUG_ASSERT_ (normal[3] == REAL (0)) ;
 		Matrix ret ;
 		const auto r1x = normal.normalize () ;
-		_DEBUG_ASSERT_ (r1x.magnitude () > REAL (0)) ;
 		const auto r2x = _COS_ (angle) ;
 		const auto r3x = r1x * _SIN_ (angle) ;
 		const auto r4x = r1x * (REAL (1) - r2x) ;
@@ -845,7 +826,7 @@ public:
 		const auto r4x = _CALL_ ([&] () {
 			INDEX ret = VAR_NONE ;
 			auto rax = REAL () ;
-			for (INDEX i = 0 ,ie = 4 ; i < ie ; i++) {
+			for (auto &&i : _RANGE_ (0 ,4)) {
 				if (ret != VAR_NONE)
 					if (rax >= r3x[i])
 						continue ;
@@ -894,32 +875,108 @@ public:
 	static ARRAY3<REAL> make_rotation_axis (const Matrix &rot_mat) {
 		ARRAY3<REAL> ret ;
 		const auto r1x = make_rotation_quat (rot_mat) ;
-		const auto r2x = Vector<REAL> {r1x[0] ,r1x[1] ,r1x[2] ,0}.magnitude () ;
+		const auto r2x = Vector<REAL> {r1x[0] ,r1x[1] ,r1x[2] ,REAL (0)}.magnitude () ;
 		const auto r3x = r2x * _SIGN_ (r1x[3]) ;
 		const auto r4x = _ATAN_ (r3x ,_ABS_ (r1x[3])) ;
-		const auto r5x = (1 - (r2x - r4x) * _PINV_ (r2x)) * REAL (2) ;
+		const auto r5x = (REAL (1) - (r2x - r4x) * _PINV_ (r2x)) * REAL (2) ;
 		ret[0] = r1x[0] * r5x ;
 		ret[1] = r1x[1] * r5x ;
 		ret[2] = r1x[2] * r5x ;
 		return std::move (ret) ;
 	}
 
-	static Matrix make_translation (const Vector<REAL> &position) {
-		_DEBUG_ASSERT_ (position[3] == REAL (1)) ;
+	static Matrix make_translation (const Vector<REAL> &direction) {
+		_DEBUG_ASSERT_ (direction[3] == REAL (0)) ;
 		Matrix ret = Matrix ({
-			{REAL (1) ,REAL (0) ,REAL (0) ,position[0]} ,
-			{REAL (0) ,REAL (1) ,REAL (0) ,position[1]} ,
-			{REAL (0) ,REAL (0) ,REAL (1) ,position[2]} ,
+			{REAL (1) ,REAL (0) ,REAL (0) ,direction[0]} ,
+			{REAL (0) ,REAL (1) ,REAL (0) ,direction[1]} ,
+			{REAL (0) ,REAL (0) ,REAL (1) ,direction[2]} ,
 			{REAL (0) ,REAL (0) ,REAL (0) ,REAL (1)}}) ;
 		return std::move (ret) ;
 	}
 
-	static Matrix make_view (const Vector<REAL> &normal ,const Vector<REAL> &center) {
-		_DEBUG_ASSERT_ (normal[3] == REAL (0)) ;
-		_DEBUG_ASSERT_ (center[3] == REAL (1)) ;
-		Matrix ret ;
-		_STATIC_WARNING_ ("unimplemented") ;
-		_DEBUG_ASSERT_ (FALSE) ;
+	static Matrix make_view (const Vector<REAL> &vx ,const Vector<REAL> &vy) {
+		_DEBUG_ASSERT_ (vx[3] == REAL (0)) ;
+		_DEBUG_ASSERT_ (vy[3] == REAL (0)) ;
+		const auto r1x = vx.normalize () ;
+		const auto r2x = vy.normalize () ;
+		const auto r3x = (r1x ^ r2x).normalize () ;
+		const auto r4x = (r3x ^ r1x).normalize () ;
+		Matrix ret = Matrix ({
+			{r1x[0] ,r4x[0] ,r3x[0] ,REAL (0)} ,
+			{r1x[1] ,r4x[1] ,r3x[1] ,REAL (0)} ,
+			{r1x[2] ,r4x[2] ,r3x[2] ,REAL (0)} ,
+			{REAL (0) ,REAL (0) ,REAL (0) ,REAL (1)}}) ;
+		return std::move (ret) ;
+	}
+
+	static Matrix make_view_xy (const Vector<REAL> &vx ,const Vector<REAL> &vy) {
+		const auto r1x = Matrix ({
+			Vector<REAL>::axis_x () ,
+			Vector<REAL>::axis_y () ,
+			Vector<REAL>::axis_z () ,
+			Vector<REAL>::axis_w ()}) ;
+		return make_view (vx ,vy) * r1x ;
+	}
+
+	static Matrix make_view_zx (const Vector<REAL> &vz ,const Vector<REAL> &vx) {
+		const auto r1x = Matrix ({
+			Vector<REAL>::axis_y () ,
+			Vector<REAL>::axis_z () ,
+			Vector<REAL>::axis_x () ,
+			Vector<REAL>::axis_w ()}) ;
+		return make_view (vz ,vx) * r1x ;
+	}
+
+	static Matrix make_view_yz (const Vector<REAL> &vy ,const Vector<REAL> &vz) {
+		const auto r1x = Matrix ({
+			Vector<REAL>::axis_z () ,
+			Vector<REAL>::axis_x () ,
+			Vector<REAL>::axis_y () ,
+			Vector<REAL>::axis_w ()}) ;
+		return make_view (vy ,vz) * r1x ;
+	}
+
+	static Matrix make_view_yx (const Vector<REAL> &vy ,const Vector<REAL> &vx) {
+		const auto r1x = Matrix ({
+			Vector<REAL>::axis_y () ,
+			Vector<REAL>::axis_x () ,
+			-Vector<REAL>::axis_z () ,
+			Vector<REAL>::axis_w ()}) ;
+		return make_view (vy ,vx) * r1x ;
+	}
+
+	static Matrix make_view_xz (const Vector<REAL> &vx ,const Vector<REAL> &vz) {
+		const auto r1x = Matrix ({
+			Vector<REAL>::axis_x () ,
+			-Vector<REAL>::axis_z () ,
+			Vector<REAL>::axis_y () ,
+			Vector<REAL>::axis_w ()}) ;
+		return make_view (vx ,vz) * r1x ;
+	}
+
+	static Matrix make_view_zy (const Vector<REAL> &vz ,const Vector<REAL> &vy) {
+		const auto r1x = Matrix ({
+			-Vector<REAL>::axis_z () ,
+			Vector<REAL>::axis_y () ,
+			Vector<REAL>::axis_x () ,
+			Vector<REAL>::axis_w ()}) ;
+		return make_view (vz ,vy) * r1x ;
+	}
+
+	static Matrix make_view (const Vector<REAL> &px ,const Vector<REAL> &py ,const Vector<REAL> &pw) {
+		_DEBUG_ASSERT_ (px[3] == REAL (1)) ;
+		_DEBUG_ASSERT_ (py[3] == REAL (1)) ;
+		_DEBUG_ASSERT_ (pw[3] == REAL (1)) ;
+		const auto r1x = (px - pw).normalize () ;
+		const auto r2x = (py - pw).normalize () ;
+		const auto r3x = (r1x ^ r2x).normalize () ;
+		const auto r4x = (r3x ^ r1x).normalize () ;
+		Matrix ret = Matrix ({
+			{r1x[0] ,r4x[0] ,r3x[0] ,pw[0]} ,
+			{r1x[1] ,r4x[1] ,r3x[1] ,pw[1]} ,
+			{r1x[2] ,r4x[2] ,r3x[2] ,pw[2]} ,
+			{REAL (0) ,REAL (0) ,REAL (0) ,REAL (1)}}) ;
 		return std::move (ret) ;
 	}
 
@@ -934,42 +991,29 @@ public:
 		return std::move (ret) ;
 	}
 
-	static Matrix make_projection (const Vector<REAL> &normal ,const Vector<REAL> &center ,const Vector<REAL> &light) {
+	static Matrix make_projection (const Vector<REAL> &normal ,const REAL &center ,const Vector<REAL> &light) {
 		_DEBUG_ASSERT_ (normal[3] == REAL (0)) ;
-		_DEBUG_ASSERT_ (center[3] == REAL (1)) ;
-		_DEBUG_ASSERT_ (light[3] == REAL (0) || light[3] == REAL (1)) ;
+		_DEBUG_ASSERT_ (light[3] == REAL (0)) ;
 		Matrix ret ;
 		const auto r1x = normal.normalize () ;
-		_DEBUG_ASSERT_ (r1x.magnitude () > REAL (0)) ;
-		const auto r2x = _SWITCH_ (
-			(light[3] != REAL (0)) ? light :
-			light.normalize ()) ;
-		const auto r3x = (center - Vector<REAL>::axis_w ()) * r1x ;
-		const auto r4x = Vector<REAL> {r2x[0] ,r2x[1] ,r2x[2] ,REAL (0)} ;
-		const auto r5x = r4x * r1x ;
-		const auto r6x = Vector<REAL> {REAL (0) ,REAL (0) ,REAL (0) ,REAL (0)} ;
-		auto &r7y = _SWITCH_ (
-			(r2x[3] != REAL (0)) ? r3x :
-			r6x) ;
-		auto &r8y = _SWITCH_ (
-			(r2x[3] != REAL (0)) ? r1x :
-			r6x) ;
-		ret[0][0] = r1x[0] * r2x[0] - r5x + r7y ;
-		ret[0][1] = r1x[1] * r2x[0] ;
-		ret[0][2] = r1x[2] * r2x[0] ;
-		ret[0][3] = -r3x * r2x[0] ;
-		ret[1][0] = r1x[0] * r2x[1] ;
-		ret[1][1] = r1x[1] * r2x[1] - r5x + r7y ;
-		ret[1][2] = r1x[2] * r2x[1] ;
-		ret[1][3] = -r3x * r2x[1] ;
-		ret[2][0] = r1x[0] * r2x[2] ;
-		ret[2][1] = r1x[1] * r2x[2] ;
-		ret[2][2] = r1x[2] * r2x[2] - r5x + r7y ;
-		ret[2][3] = -r3x * r2x[2] ;
-		ret[3][0] = r8y[0] ;
-		ret[3][1] = r8y[1] ;
-		ret[3][2] = r8y[2] ;
-		ret[3][3] = -r5x ;
+		const auto r2x = light.normalize () ;
+		const auto r3x = r1x * r2x ;
+		ret[0][0] = r3x - r1x[0] * r2x[0] ;
+		ret[0][1] = -r1x[1] * r2x[0] ;
+		ret[0][2] = -r1x[2] * r2x[0] ;
+		ret[0][3] = center * r2x[0] ;
+		ret[1][0] = -r1x[0] * r2x[1] ;
+		ret[1][1] = r3x - r1x[1] * r2x[1] ;
+		ret[1][2] = -r1x[2] * r2x[1] ;
+		ret[1][3] = center * r2x[1] ;
+		ret[2][0] = -r1x[0] * r2x[2] ;
+		ret[2][1] = -r1x[1] * r2x[2] ;
+		ret[2][2] = r3x - r1x[2] * r2x[2] ;
+		ret[2][3] = center * r2x[2] ;
+		ret[3][0] = REAL (0) ;
+		ret[3][1] = REAL (0) ;
+		ret[3][2] = REAL (0) ;
+		ret[3][3] = r3x ;
 		return std::move (ret) ;
 	}
 
@@ -990,14 +1034,23 @@ public:
 			ret[i[0]][i[1]] = first[i[0]] * second[i[1]] ;
 		return std::move (ret) ;
 	}
+
+	static Matrix make_reflection (const Vector<REAL> &normal) {
+		_DEBUG_ASSERT_ (normal[3] == REAL (0)) ;
+		const auto r1x = normal.normalize () ;
+		return make_identity () - make_symmetry (r1x ,r1x) * REAL (2) ;
+	}
 } ;
 
 template <class REAL>
 inline Vector<REAL> Vector<REAL>::mul (const Matrix<REAL> &that) const {
 	Vector<REAL> ret ;
-	for (INDEX i = 0 ,ie = 4 ; i < ie ; i++) {
-		const auto r1x = get (0) * that.get (0 ,i) + get (1) * that.get (1 ,i) + get (2) * that.get (2 ,i) + get (3) * that.get (3 ,i) ;
-		ret.get (i) = r1x ;
+	for (auto &&i : _RANGE_ (0 ,4)) {
+		const auto r1x = get (0) * that.get (0 ,i) ;
+		const auto r2x = get (1) * that.get (1 ,i) ;
+		const auto r3x = get (2) * that.get (2 ,i) ;
+		const auto r4x = get (3) * that.get (3 ,i) ;
+		ret.get (i) = r1x + r2x + r3x + r4x ;
 	}
 	return std::move (ret) ;
 }
@@ -1005,9 +1058,12 @@ inline Vector<REAL> Vector<REAL>::mul (const Matrix<REAL> &that) const {
 template <class REAL>
 inline Vector<REAL> Matrix<REAL>::mul (const Vector<REAL> &that) const {
 	Vector<REAL> ret ;
-	for (INDEX i = 0 ,ie = 4 ; i < ie ; i++) {
-		const auto r1x = get (i ,0) * that.get (0) + get (i ,1) * that.get (1) + get (i ,2) * that.get (2) + get (i ,3) * that.get (3) ;
-		ret.get (i) = r1x ;
+	for (auto &&i : _RANGE_ (0 ,4)) {
+		const auto r1x = get (i ,0) * that.get (0) ;
+		const auto r2x = get (i ,1) * that.get (1) ;
+		const auto r3x = get (i ,2) * that.get (2) ;
+		const auto r4x = get (i ,3) * that.get (3) ;
+		ret.get (i) = r1x + r2x + r3x + r4x ;
 	}
 	return std::move (ret) ;
 }
