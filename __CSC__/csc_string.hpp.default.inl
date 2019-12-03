@@ -104,7 +104,7 @@ inline String<STRA> _inline_LOCALE_WSTOLAS_ (const String<STRW> &val) {
 
 inline exports String<STRW> _ASTOWS_ (const String<STRA> &val) {
 	//@warn: not thread-safe due to internel storage
-	const auto r1x = ::setlocale (LC_CTYPE ,NULL) ;
+	const auto r1x = stl::setlocale (LC_CTYPE ,NULL) ;
 	_DEBUG_ASSERT_ (r1x != NULL) ;
 	const auto r2x = _MEMCHR_ (PTRTOARR[r1x] ,VAR32_MAX ,STRA (0)) ;
 	if (r2x == 1)
@@ -121,7 +121,7 @@ inline exports String<STRW> _ASTOWS_ (const String<STRA> &val) {
 
 inline exports String<STRA> _WSTOAS_ (const String<STRW> &val) {
 	//@warn: not thread-safe due to internel storage
-	const auto r1x = ::setlocale (LC_CTYPE ,NULL) ;
+	const auto r1x = stl::setlocale (LC_CTYPE ,NULL) ;
 	_DEBUG_ASSERT_ (r1x != NULL) ;
 	const auto r2x = _MEMCHR_ (PTRTOARR[r1x] ,VAR32_MAX ,STRA (0)) ;
 	if (r2x == 1)

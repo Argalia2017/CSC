@@ -1421,9 +1421,9 @@ inline const REMOVE_REFERENCE_TYPE<_RET> &_XVALUE_ (const REMOVE_CVR_TYPE<_RET> 
 template <class _ARG1>
 inline LENGTH _ADDRESS_ (PTR<_ARG1> address) popping {
 	_STATIC_ASSERT_ (std::is_same<REMOVE_CVR_TYPE<_ARG1> ,_ARG1>::value) ;
-	//@info: as 'asm volatile ("" :: "rm" (address) : "memory") ;'
-	static volatile PTR<void (PTR<_ARG1>)> mInstance = _XVALUE_<PTR<void (PTR<_ARG1>)>> ([] (PTR<_ARG1>) {}) ;
-	mInstance (address) ;
+#ifdef __CSC_COMPILER_GNUC__
+	asm volatile ("" :: "rm" (address) : "memory") ;
+#endif
 	return LENGTH (address) ;
 }
 
@@ -1443,9 +1443,6 @@ inline CAST_TRAITS_TYPE<_RET ,_ARG1> &_CAST_ (_ARG1 &object) noexcept {
 	_STATIC_ASSERT_ (_ALIGNOF_ (_ARG1) % _ALIGNOF_ (_RET) == 0) ;
 	const auto r1x = _ADDRESS_ (&object) ;
 	const auto r2x = reinterpret_cast<PTR<CAST_TRAITS_TYPE<_RET ,_ARG1>>> (r1x) ;
-#ifdef __CSC_COMPILER_GNUC__
-	_ADDRESS_ (&object) ;
-#endif
 	return (*r2x) ;
 }
 
@@ -1455,31 +1452,19 @@ inline CAST_TRAITS_TYPE<_RET ,_ARG1> &_LOAD_ (PTR<_ARG1> address) noexcept {
 	_STATIC_ASSERT_ (!std::is_reference<_RET>::value) ;
 	_STATIC_ASSERT_ (U::IS_SAFE_ALIASING_HELP<REMOVE_CVR_TYPE<_RET> ,REMOVE_CVR_TYPE<_ARG1>>::value) ;
 	_DEBUG_ASSERT_ (address != NULL) ;
-	const auto r1x = _ALIGNOF_ (CONDITIONAL_TYPE<(std::is_same<REMOVE_CVR_TYPE<_RET> ,VOID>::value || std::is_same<REMOVE_CVR_TYPE<_RET> ,NONE>::value) ,BYTE ,_RET>) ;
+	const auto r1x = _ALIGNOF_ (CONDITIONAL_TYPE<(std::is_same<REMOVE_CVR_TYPE<_RET> ,NONE>::value) ,BYTE ,_RET>) ;
 	const auto r2x = _ADDRESS_ (address) ;
 	_DEBUG_ASSERT_ (r2x % r1x == 0) ;
 	(void) r1x ;
 	const auto r3x = reinterpret_cast<PTR<CAST_TRAITS_TYPE<_RET ,_ARG1>>> (r2x) ;
-#ifdef __CSC_COMPILER_GNUC__
-	_ADDRESS_ (address) ;
-#endif
 	return (*r3x) ;
 }
 
-//@warn: not type-safe; be careful about strict-aliasing
-template <class _RET ,class _ARG1>
-inline CAST_TRAITS_TYPE<_RET ,_ARG1> &_LOAD_ (PTR<_ARG1> owner ,LENGTH address) noexcept {
-	_STATIC_ASSERT_ (!std::is_reference<_RET>::value) ;
-	_STATIC_ASSERT_ (U::IS_SAFE_ALIASING_HELP<REMOVE_CVR_TYPE<_RET> ,VOID>::value) ;
-	_DEBUG_ASSERT_ (address != 0) ;
-	const auto r1x = _ALIGNOF_ (CONDITIONAL_TYPE<(std::is_same<REMOVE_CVR_TYPE<_RET> ,VOID>::value || std::is_same<REMOVE_CVR_TYPE<_RET> ,NONE>::value) ,BYTE ,_RET>) ;
-	_DEBUG_ASSERT_ (address % r1x == 0) ;
-	(void) r1x ;
-	const auto r2x = reinterpret_cast<PTR<CAST_TRAITS_TYPE<_RET ,_ARG1>>> (address) ;
+inline PTR<VOID> _UNSAFE_ALIASING_ (LENGTH address) noexcept {
 #ifdef __CSC_COMPILER_GNUC__
-	_ADDRESS_ (owner) ;
+	asm volatile ("" ::: "memory") ;
 #endif
-	return (*r2x) ;
+	return &_NULL_<BYTE> () + address ;
 }
 
 template <class _ARG1 ,class _ARG2 ,class _ARG3>
@@ -1487,7 +1472,7 @@ inline CAST_TRAITS_TYPE<_ARG2 ,_ARG3> &_OFFSET_ (const DEF<_ARG1 _ARG2::*> &mptr
 	_STATIC_ASSERT_ (std::is_same<REMOVE_CVR_TYPE<_ARG3> ,_ARG1>::value) ;
 	_DEBUG_ASSERT_ (mptr != NULL) ;
 	const auto r1x = _ADDRESS_ (&mref) - _ADDRESS_ (&(_NULL_<_ARG2> ().*mptr)) ;
-	return _LOAD_<_ARG2> (&mref ,r1x) ;
+	return _LOAD_<_ARG2> (_UNSAFE_ALIASING_ (r1x)) ;
 }
 
 template <class _ARG1>
@@ -1566,6 +1551,27 @@ inline FLAG _TYPEUID_ () noexcept {
 template <class _ARG1>
 inline constexpr _ARG1 &&_SWITCH_ (_ARG1 &&expr) {
 	return std::forward<_ARG1> (expr) ;
+}
+
+template <class _ARG1>
+inline constexpr _ARG1 _ABS_ (const _ARG1 &val) {
+	return _SWITCH_ (
+		(val < 0) ? -val :
+		+val) ;
+}
+
+template <class _ARG1>
+inline constexpr const _ARG1 &_MIN_ (const _ARG1 &lhs ,const _ARG1 &rhs) {
+	return _SWITCH_ (
+		!(rhs < lhs) ? lhs :
+		rhs) ;
+}
+
+template <class _ARG1>
+inline constexpr const _ARG1 &_MAX_ (const _ARG1 &lhs ,const _ARG1 &rhs) {
+	return _SWITCH_ (
+		!(lhs < rhs) ? lhs :
+		rhs) ;
 }
 
 template <class _ARG1>
@@ -1657,6 +1663,69 @@ public:
 	inline Wrapped &operator= (Wrapped &&) = delete ;
 } ;
 
+template <class SIZE>
+class ArrayRange ;
+
+template <>
+class ArrayRange<ARGC<0>> final {
+private:
+	template <class BASE>
+	class Iterator {
+	private:
+		friend ArrayRange ;
+		BASE &mBase ;
+		INDEX mIndex ;
+
+	public:
+		inline Iterator () = delete ;
+
+		inline Iterator (const Iterator &) = delete ;
+
+		inline Iterator (Iterator &&) noexcept = default ;
+
+		inline BOOL operator== (const Iterator &that) const {
+			return BOOL (mIndex == that.mIndex) ;
+		}
+
+		inline BOOL operator!= (const Iterator &that) const {
+			return BOOL (mIndex != that.mIndex) ;
+		}
+
+		inline const INDEX &operator* () const {
+			return mIndex ;
+		}
+
+		inline void operator++ () {
+			mIndex++ ;
+		}
+
+	private:
+		inline explicit Iterator (BASE &base ,INDEX index) popping : mBase (base) ,mIndex (index) {}
+	} ;
+
+private:
+	INDEX mIBegin ;
+	INDEX mIEnd ;
+
+public:
+	inline ArrayRange () = delete ;
+
+	inline explicit ArrayRange (INDEX ibegin_ ,INDEX iend_) :mIBegin (ibegin_) ,mIEnd (iend_) {}
+
+	inline Iterator<const ArrayRange> begin () const {
+		return Iterator<const ArrayRange> ((*this) ,mIBegin) ;
+	}
+
+	inline Iterator<const ArrayRange> end () const {
+		const auto r1x = _MAX_ (mIBegin ,mIEnd) ;
+		return Iterator<const ArrayRange> ((*this) ,r1x) ;
+	}
+} ;
+
+inline ArrayRange<ARGC<0>> _RANGE_ (INDEX ibegin_ ,INDEX iend_) {
+	return ArrayRange<ARGC<0>> (ibegin_ ,iend_) ;
+}
+
 template <class REAL>
 class Plain final {
 private:
@@ -1746,7 +1815,7 @@ private:
 			_STATIC_ASSERT_ (stl::is_full_array_of<REAL ,_ARG1>::value) ;
 			_STATIC_ASSERT_ (LENGTH (_ARG2::value) >= 0 && LENGTH (_ARG2::value) < _COUNTOF_ (_ARG1)) ;
 			_STATIC_ASSERT_ (stl::is_full_array_of<STRX ,_ARG3>::value || stl::is_full_array_of<STRA ,_ARG3>::value || stl::is_full_array_of<STRW ,_ARG3>::value) ;
-			for (INDEX i = 0 ,ie = _COUNTOF_ (_ARG3) - 1 ; i < ie ; i++)
+			for (auto &&i : _RANGE_ (0 ,_COUNTOF_ (_ARG3) - 1))
 				array_[i + _ARG2::value] = REAL (text_one[i]) ;
 			template_write (array_ ,_NULL_<ARGV<ARGC<_ARG2::value + _COUNTOF_ (_ARG3) - 1>>> () ,text_rest...) ;
 		}
@@ -1772,7 +1841,7 @@ public:
 		return mWhat ;
 	}
 
-	inline void raise () const {
+	inline void raise[[noreturn]] () const {
 		throw (*this) ;
 	}
 } ;

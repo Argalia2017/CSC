@@ -71,8 +71,9 @@ public:
 	void compute_layout (AnyRef<void> &this_ ,AbstractImage<COLOR_BGR>::LAYOUT &layout) const override {
 		auto &r1y = this_.rebind<NATIVE_TYPE> ().self ;
 		const auto r2x = FreeImage_GetBits (r1y) ;
-		auto &r3y = _LOAD_<ARR<COLOR_BGR>> (&r1y ,_ADDRESS_ (r2x)) ;
-		layout.mImage = &r3y ;
+		const auto r3x = _UNSAFE_ALIASING_ (_ADDRESS_ (r2x)) ;
+		auto &r4y = _LOAD_<ARR<COLOR_BGR>> (r3x) ;
+		layout.mImage = &r4y ;
 		layout.mCX = LENGTH (FreeImage_GetWidth (r1y)) ;
 		layout.mCY = LENGTH (FreeImage_GetHeight (r1y)) ;
 		layout.mCW = layout.mCX ;
@@ -184,8 +185,9 @@ public:
 	void compute_layout (AnyRef<void> &this_ ,AbstractImage<COLOR_BGRA>::LAYOUT &layout) const override {
 		auto &r1y = this_.rebind<NATIVE_TYPE> ().self ;
 		const auto r2x = FreeImage_GetBits (r1y) ;
-		auto &r3y = _LOAD_<ARR<COLOR_BGRA>> (&r1y ,_ADDRESS_ (r2x)) ;
-		layout.mImage = &r3y ;
+		const auto r3x = _UNSAFE_ALIASING_ (_ADDRESS_ (r2x)) ;
+		auto &r4y = _LOAD_<ARR<COLOR_BGRA>> (r3x) ;
+		layout.mImage = &r4y ;
 		layout.mCX = LENGTH (FreeImage_GetWidth (r1y)) ;
 		layout.mCY = LENGTH (FreeImage_GetHeight (r1y)) ;
 		layout.mCW = layout.mCX ;

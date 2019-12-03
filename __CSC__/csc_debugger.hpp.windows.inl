@@ -19,12 +19,35 @@
 #undef discard
 #endif
 
-#ifdef __CSC_DEPRECATED__
-#include <cstdio>
+#ifndef _INC_WINDOWS
+#error "∑(っ°Д° ;)っ : require 'Windows.h'"
+#endif
 
+#ifdef __CSC_DEPRECATED__
+#pragma region
+#include <crtdbg.h>
 #include <signal.h>
-#include <unistd.h>
-#include <execinfo.h>
+#pragma warning (push)
+#ifdef __CSC_COMPILER_MSVC__
+#pragma warning (disable :4091)
+#endif
+#include <DbgHelp.h>
+#pragma warning (pop)
+#pragma endregion
+#endif
+
+#ifndef _DBGHELP_
+#error "∑(っ°Д° ;)っ : require 'DbgHelp.h'"
+#endif
+
+#ifdef __CSC_DEPRECATED__
+#ifdef __CSC_COMPILER_MSVC__
+#ifndef use_comment_lib_dbghelp
+#define use_comment_lib_dbghelp "dbghelp.lib"
+#endif
+#pragma comment (lib ,use_comment_lib_dbghelp)
+#undef use_comment_lib_dbghelp
+#endif
 #endif
 
 #ifdef __CSC__
@@ -43,7 +66,7 @@ private:
 	TextWriter<STR> mLogWriter ;
 	LENGTH mBufferSize ;
 	FLAG mOptionFlag ;
-	UniqueRef<VAR32> mConsole ;
+	UniqueRef<HANDLE> mConsole ;
 	String<STR> mLogPath ;
 	AutoRef<StreamLoader> mLogFileStream ;
 
@@ -74,16 +97,19 @@ public:
 	}
 
 	void print (const Binder &msg) override {
+		if ((mOptionFlag & OPTION_NO_PRINT) != 0)
+			return ;
 		write_con_buffer (msg) ;
 		attach_console () ;
-#ifdef __CSC_CONFIG_STRA__
-		std::printf (_PCSTR_ ("%s\n") ,mConWriter.raw ().self) ;
-#elif defined __CSC_CONFIG_STRW__
-		std::wprintf (_PCSTR_ ("%ls\n") ,mConWriter.raw ().self) ;
-#endif
+		SetConsoleTextAttribute (mConsole ,(FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE)) ;
+		auto rax = VARY () ;
+		rax = VARY (0) ;
+		WriteConsole (mConsole ,mConWriter.raw ().self ,VARY (mConWriter.length () - 1) ,&rax ,NULL) ;
+		rax = VARY (0) ;
+		WriteConsole (mConsole ,_PCSTR_ ("\n") ,1 ,&rax ,NULL) ;
 		if (mLogPath.empty ())
 			return ;
-		const auto r1x = PhanBuffer<const STR>::make (mConWriter.raw () ,(mConWriter.length () - 1)) ;
+		const auto r1x = PhanBuffer<const STR>::make (mConWriter.raw ().self ,(mConWriter.length () - 1)) ;
 		log (_PCSTR_ ("PRINT") ,r1x) ;
 	}
 
@@ -92,14 +118,15 @@ public:
 			return ;
 		write_con_buffer (msg) ;
 		attach_console () ;
-#ifdef __CSC_CONFIG_STRA__
-		std::printf (_PCSTR_ ("\033[1;34m%s\033[0m\n") ,mConWriter.raw ().self) ;
-#elif defined __CSC_CONFIG_STRW__
-		std::wprintf (_PCSTR_ ("\033[1;34m%ls\033[0m\n") ,mConWriter.raw ().self) ;
-#endif
+		SetConsoleTextAttribute (mConsole ,(FOREGROUND_BLUE | FOREGROUND_INTENSITY)) ;
+		auto rax = VARY () ;
+		rax = VARY (0) ;
+		WriteConsole (mConsole ,mConWriter.raw ().self ,VARY (mConWriter.length () - 1) ,&rax ,NULL) ;
+		rax = VARY (0) ;
+		WriteConsole (mConsole ,_PCSTR_ ("\n") ,1 ,&rax ,NULL) ;
 		if (mLogPath.empty ())
 			return ;
-		const auto r1x = PhanBuffer<const STR>::make (mConWriter.raw () ,(mConWriter.length () - 1)) ;
+		const auto r1x = PhanBuffer<const STR>::make (mConWriter.raw ().self ,(mConWriter.length () - 1)) ;
 		log (_PCSTR_ ("FATAL") ,r1x) ;
 	}
 
@@ -108,14 +135,15 @@ public:
 			return ;
 		write_con_buffer (msg) ;
 		attach_console () ;
-#ifdef __CSC_CONFIG_STRA__
-		std::printf (_PCSTR_ ("\033[1;31m%s\033[0m\n") ,mConWriter.raw ().self) ;
-#elif defined __CSC_CONFIG_STRW__
-		std::wprintf (_PCSTR_ ("\033[1;31m%ls\033[0m\n") ,mConWriter.raw ().self) ;
-#endif
+		SetConsoleTextAttribute (mConsole ,(FOREGROUND_RED | FOREGROUND_INTENSITY)) ;
+		auto rax = VARY () ;
+		rax = VARY (0) ;
+		WriteConsole (mConsole ,mConWriter.raw ().self ,VARY (mConWriter.length () - 1) ,&rax ,NULL) ;
+		rax = VARY (0) ;
+		WriteConsole (mConsole ,_PCSTR_ ("\n") ,1 ,&rax ,NULL) ;
 		if (mLogPath.empty ())
 			return ;
-		const auto r1x = PhanBuffer<const STR>::make (mConWriter.raw () ,(mConWriter.length () - 1)) ;
+		const auto r1x = PhanBuffer<const STR>::make (mConWriter.raw ().self ,(mConWriter.length () - 1)) ;
 		log (_PCSTR_ ("ERROR") ,r1x) ;
 	}
 
@@ -124,14 +152,15 @@ public:
 			return ;
 		write_con_buffer (msg) ;
 		attach_console () ;
-#ifdef __CSC_CONFIG_STRA__
-		std::printf (_PCSTR_ ("\033[1;33m%s\033[0m\n") ,mConWriter.raw ().self) ;
-#elif defined __CSC_CONFIG_STRW__
-		std::wprintf (_PCSTR_ ("\033[1;33m%ls\033[0m\n") ,mConWriter.raw ().self) ;
-#endif
+		SetConsoleTextAttribute (mConsole ,(FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_INTENSITY)) ;
+		auto rax = VARY () ;
+		rax = VARY (0) ;
+		WriteConsole (mConsole ,mConWriter.raw ().self ,VARY (mConWriter.length () - 1) ,&rax ,NULL) ;
+		rax = VARY (0) ;
+		WriteConsole (mConsole ,_PCSTR_ ("\n") ,1 ,&rax ,NULL) ;
 		if (mLogPath.empty ())
 			return ;
-		const auto r1x = PhanBuffer<const STR>::make (mConWriter.raw () ,(mConWriter.length () - 1)) ;
+		const auto r1x = PhanBuffer<const STR>::make (mConWriter.raw ().self ,(mConWriter.length () - 1)) ;
 		log (_PCSTR_ ("WARN") ,r1x) ;
 	}
 
@@ -140,14 +169,15 @@ public:
 			return ;
 		write_con_buffer (msg) ;
 		attach_console () ;
-#ifdef __CSC_CONFIG_STRA__
-		std::printf (_PCSTR_ ("\033[1;32m%s\033[0m\n") ,mConWriter.raw ().self) ;
-#elif defined __CSC_CONFIG_STRW__
-		std::wprintf (_PCSTR_ ("\033[1;32m%ls\033[0m\n") ,mConWriter.raw ().self) ;
-#endif
+		SetConsoleTextAttribute (mConsole ,(FOREGROUND_GREEN | FOREGROUND_INTENSITY)) ;
+		auto rax = VARY () ;
+		rax = VARY (0) ;
+		WriteConsole (mConsole ,mConWriter.raw ().self ,VARY (mConWriter.length () - 1) ,&rax ,NULL) ;
+		rax = VARY (0) ;
+		WriteConsole (mConsole ,_PCSTR_ ("\n") ,1 ,&rax ,NULL) ;
 		if (mLogPath.empty ())
 			return ;
-		const auto r1x = PhanBuffer<const STR>::make (mConWriter.raw () ,(mConWriter.length () - 1)) ;
+		const auto r1x = PhanBuffer<const STR>::make (mConWriter.raw ().self ,(mConWriter.length () - 1)) ;
 		log (_PCSTR_ ("INFO") ,r1x) ;
 	}
 
@@ -156,14 +186,15 @@ public:
 			return ;
 		write_con_buffer (msg) ;
 		attach_console () ;
-#ifdef __CSC_CONFIG_STRA__
-		std::printf (_PCSTR_ ("\033[1;36m%s\033[0m\n") ,mConWriter.raw ().self) ;
-#elif defined __CSC_CONFIG_STRW__
-		std::wprintf (_PCSTR_ ("\033[1;36m%ls\033[0m\n") ,mConWriter.raw ().self) ;
-#endif
+		SetConsoleTextAttribute (mConsole ,(FOREGROUND_GREEN | FOREGROUND_BLUE | FOREGROUND_INTENSITY)) ;
+		auto rax = VARY () ;
+		rax = VARY (0) ;
+		WriteConsole (mConsole ,mConWriter.raw ().self ,VARY (mConWriter.length () - 1) ,&rax ,NULL) ;
+		rax = VARY (0) ;
+		WriteConsole (mConsole ,_PCSTR_ ("\n") ,1 ,&rax ,NULL) ;
 		if (mLogPath.empty ())
 			return ;
-		const auto r1x = PhanBuffer<const STR>::make (mConWriter.raw () ,(mConWriter.length () - 1)) ;
+		const auto r1x = PhanBuffer<const STR>::make (mConWriter.raw ().self ,(mConWriter.length () - 1)) ;
 		log (_PCSTR_ ("DEBUG") ,r1x) ;
 	}
 
@@ -172,14 +203,15 @@ public:
 			return ;
 		write_con_buffer (msg) ;
 		attach_console () ;
-#ifdef __CSC_CONFIG_STRA__
-		std::printf (_PCSTR_ ("\033[1;37m%s\033[0m\n") ,mConWriter.raw ().self) ;
-#elif defined __CSC_CONFIG_STRW__
-		std::wprintf (_PCSTR_ ("\033[1;37m%ls\033[0m\n") ,mConWriter.raw ().self) ;
-#endif
+		SetConsoleTextAttribute (mConsole ,(FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE | FOREGROUND_INTENSITY)) ;
+		auto rax = VARY () ;
+		rax = VARY (0) ;
+		WriteConsole (mConsole ,mConWriter.raw ().self ,VARY (mConWriter.length () - 1) ,&rax ,NULL) ;
+		rax = VARY (0) ;
+		WriteConsole (mConsole ,_PCSTR_ ("\n") ,1 ,&rax ,NULL) ;
 		if (mLogPath.empty ())
 			return ;
-		const auto r1x = PhanBuffer<const STR>::make (mConWriter.raw () ,(mConWriter.length () - 1)) ;
+		const auto r1x = PhanBuffer<const STR>::make (mConWriter.raw ().self ,(mConWriter.length () - 1)) ;
 		log (_PCSTR_ ("VERBOSE") ,r1x) ;
 	}
 
@@ -198,7 +230,7 @@ public:
 
 	void log (const Plain<STR> &tag ,const PhanBuffer<const STR> &msg) {
 		log (PhanBuffer<const STR>::make (tag.self ,tag.size ()) ,ImplBinder<PhanBuffer<const STR>> (msg)) ;
-	}
+}
 
 	void log (const PhanBuffer<const STR> &tag ,const Binder &msg) override {
 		write_log_buffer (tag ,msg) ;
@@ -209,35 +241,36 @@ public:
 	}
 
 	void show () override {
-		mConsole = UniqueRef<VAR32>::make (1) ;
+		mConsole = UniqueRef<HANDLE> ([&] (HANDLE &me) {
+			AllocConsole () ;
+			me = GetStdHandle (STD_OUTPUT_HANDLE) ;
+			_DYNAMIC_ASSERT_ (me != NULL) ;
+		} ,[] (HANDLE &me) {
+			FreeConsole () ;
+		}) ;
 	}
 
 	void hide () override {
-		mConsole = UniqueRef<VAR32> () ;
+		mConsole = UniqueRef<HANDLE> () ;
 	}
 
 	void pause () override {
 		if (!mConsole.exist ())
 			return ;
-#ifdef __CSC_CONFIG_STRA__
-		std::printf (_PCSTR_ ("press any key to continue...\n")) ;
-		const auto r1x = std::getchar () ;
-		(void) r1x ;
-#elif defined __CSC_CONFIG_STRW__
-		std::wprintf (_PCSTR_ ("press any key to continue...\n")) ;
-		const auto r2x = std::getchar () ;
+		const auto r1x = GetConsoleWindow () ;
+		if (r1x == NULL)
+			return ;
+		FlashWindow (r1x ,TRUE) ;
+		SetConsoleTextAttribute (mConsole ,(FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE)) ;
+		const auto r2x = std::system (_PCSTRA_ ("pause")) ;
 		(void) r2x ;
-#endif
 	}
 
 	void clear () override {
 		if (!mConsole.exist ())
 			return ;
-#ifdef __CSC_CONFIG_STRA__
-		std::printf (_PCSTR_ ("\f\f")) ;
-#elif defined __CSC_CONFIG_STRW__
-		std::wprintf (_PCSTR_ ("\f\f")) ;
-#endif
+		const auto r1x = std::system (_PCSTRA_ ("cls")) ;
+		(void) r1x ;
 	}
 
 private:
@@ -250,7 +283,11 @@ private:
 	void attach_console () {
 		if (mConsole.exist ())
 			return ;
-		mConsole = UniqueRef<VAR32>::make (0) ;
+		mConsole = UniqueRef<HANDLE> ([&] (HANDLE &me) {
+			me = GetStdHandle (STD_OUTPUT_HANDLE) ;
+		} ,[] (HANDLE &me) {
+			_STATIC_WARNING_ ("noop") ;
+		}) ;
 	}
 
 	void write_log_buffer (const PhanBuffer<const STR> &tag ,const Binder &msg) {
@@ -266,7 +303,7 @@ private:
 	}
 
 	void write_debugger () {
-		_STATIC_WARNING_ ("noop") ;
+		OutputDebugString (mLogWriter.raw ().self) ;
 	}
 
 	void write_log_file () {
@@ -319,8 +356,16 @@ inline exports ConsoleService::ConsoleService () {
 }
 
 class DebuggerService::Implement :public DebuggerService::Abstract {
+private:
+	UniqueRef<HANDLE> mSymbolFromAddress ;
+
 public:
 	void abort_once_invoked_exit (BOOL flag) override {
+#pragma region
+#pragma warning (push)
+#ifdef __CSC_COMPILER_MSVC__
+#pragma warning (disable :5039)
+#endif
 		_DEBUG_ASSERT_ (flag) ;
 		const auto r1x = _XVALUE_<PTR<void ()>> ([] () noexcept {
 			GlobalRuntime::process_abort () ;
@@ -335,54 +380,84 @@ public:
 			GlobalRuntime::process_abort () ;
 		}) ;
 		std::atexit (r1x) ;
-		::signal (SIGFPE ,r2x) ;
-		::signal (SIGILL ,r3x) ;
-		::signal (SIGSEGV ,r4x) ;
+		signal (SIGFPE ,r2x) ;
+		signal (SIGILL ,r3x) ;
+		signal (SIGSEGV ,r4x) ;
+#pragma warning (pop)
+#pragma endregion
 	}
 
 	void output_memory_leaks_report (BOOL flag) override {
 		_DEBUG_ASSERT_ (flag) ;
-		_STATIC_WARNING_ ("unimplemented") ;
-		_DYNAMIC_ASSERT_ (FALSE) ;
+		const auto r1x = _CrtSetDbgFlag (_CRTDBG_REPORT_FLAG) ;
+		const auto r2x = _COPY_ (r1x | _CRTDBG_LEAK_CHECK_DF) ;
+		const auto r3x = _CrtSetDbgFlag (r2x) ;
+		(void) r1x ;
+		(void) r2x ;
+		(void) r3x ;
 	}
 
 	Array<LENGTH> captrue_stack_trace () popping override {
 		using DEFAULT_RECURSIVE_SIZE = ARGC<256> ;
 		auto rax = AutoBuffer<PTR<VOID>> (DEFAULT_RECURSIVE_SIZE::value) ;
-		const auto r1x = ::backtrace (rax.self ,VAR32 (rax.size ())) ;
+		const auto r1x = CaptureStackBackTrace (3 ,VARY (rax.size ()) ,rax.self ,NULL) ;
 		Array<LENGTH> ret = Array<LENGTH> (r1x) ;
-		for (INDEX i = 0 ,ie = ret.length () ; i < ie ; i++)
+		for (auto &&i : _RANGE_ (0 ,ret.length ()))
 			ret[i] = _ADDRESS_ (rax[i]) ;
 		return std::move (ret) ;
 	}
 
 	Array<String<STR>> symbol_from_address (const Array<LENGTH> &list) popping override {
 		_DEBUG_ASSERT_ (list.length () < VAR32_MAX) ;
-		const auto r1x = _CALL_ ([&] () {
-			Array<PTR<VOID>> ret = Array<PTR<VOID>> (list.length ()) ;
-			for (INDEX i = 0 ,ie = ret.length () ; i < ie ; i++) {
-				const auto r2x = _XVALUE_<PTR<VOID>> (&_NULL_<BYTE> () + i) ;
-				ret[i] = r2x ;
-			}
-			return std::move (ret) ;
-		}) ;
-		const auto r3x = UniqueRef<PTR<PTR<STRA>>> ([&] (PTR<PTR<STRA>> &me) {
-			me = ::backtrace_symbols (r1x.raw ().self ,VAR32 (r1x.length ())) ;
-		} ,[&] (PTR<PTR<STRA>> &me) {
-			if (me == NULL)
-				return ;
-			::free (me) ;
-		}) ;
-		auto &r4y = PTRTOARR[r3x.self] ;
+		using DEFAULT_SHORTSTRING_SIZE = ARGC<1023> ;
+		attach_symbol_info () ;
 		Array<String<STR>> ret = Array<String<STR>> (list.length ()) ;
 		INDEX iw = 0 ;
-		for (INDEX i = 0 ,ie = ret.length () ; i < ie ; i++) {
-			const auto r5x = _BUILDHEX16S_ (list[i]) ;
-			const auto r6x = _PARSESTRS_ (String<STRA> (PTRTOARR[r4y[i]])) ;
-			ret[iw++] = String<STR>::make (_PCSTR_ ("[") ,r5x ,_PCSTR_ ("] : ") ,r6x) ;
+		auto fax = TRUE ;
+		if SWITCH_CASE (fax) {
+			if (!mSymbolFromAddress.exist ())
+				discard ;
+			const auto r1x = _ALIGNOF_ (SYMBOL_INFO) - 1 + _SIZEOF_ (SYMBOL_INFO) + list.length () * DEFAULT_SHORTSTRING_SIZE::value ;
+			auto rax = AutoBuffer<BYTE> (r1x) ;
+			const auto r2x = _ALIGNAS_ (_ADDRESS_ (&rax.self) ,_ALIGNOF_ (SYMBOL_INFO)) ;
+			auto &r3y = _LOAD_<SYMBOL_INFO> (_UNSAFE_ALIASING_ (r2x)) ;
+			r3y.SizeOfStruct = _SIZEOF_ (SYMBOL_INFO) ;
+			r3y.MaxNameLen = DEFAULT_SHORTSTRING_SIZE::value ;
+			for (auto &&i : list) {
+				SymFromAddr (mSymbolFromAddress ,DATA (i) ,NULL ,&r3y) ;
+				const auto r4x = _BUILDHEX16S_ (DATA (r3y.Address)) ;
+				const auto r5x = _PARSESTRS_ (String<STRA> (PTRTOARR[r3y.Name])) ;
+				ret[iw++] = String<STR>::make (_PCSTR_ ("[") ,r4x ,_PCSTR_ ("] : ") ,r5x) ;
+			}
+		}
+		if SWITCH_CASE (fax) {
+			for (auto &&i : list) {
+				const auto r6x = _BUILDHEX16S_ (DATA (i)) ;
+				ret[iw++] = String<STR>::make (_PCSTR_ ("[") ,r6x ,_PCSTR_ ("] : null")) ;
+			}
 		}
 		_DEBUG_ASSERT_ (iw == ret.length ()) ;
 		return std::move (ret) ;
+	}
+
+private:
+	void attach_symbol_info () {
+		if (mSymbolFromAddress.exist ())
+			return ;
+		mSymbolFromAddress = UniqueRef<HANDLE> ([&] (HANDLE &me) {
+			me = GetCurrentProcess () ;
+			const auto r1x = SymInitialize (me ,NULL ,TRUE) ;
+			if (r1x)
+				return ;
+			me = NULL ;
+		} ,[] (HANDLE &me) {
+			if (me == NULL)
+				return ;
+			SymCleanup (me) ;
+		}) ;
+		if (mSymbolFromAddress.self != NULL)
+			return ;
+		mSymbolFromAddress = UniqueRef<HANDLE> () ;
 	}
 } ;
 

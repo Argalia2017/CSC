@@ -4,7 +4,7 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup>
     <_PropertySheetDisplayName>build.Release.Win32</_PropertySheetDisplayName>
-    <IncludePath>D:\Depends\include;$(IncludePath)</IncludePath>
+    <IncludePath>D:\Depends\__CSC__;D:\Depends\include;$(IncludePath)</IncludePath>
     <LibraryPath>D:\Depends\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
 </Project>

@@ -29,29 +29,29 @@ public:
 	}
 
 	TEST_METHOD (TEST_CSC_ARRAY_PRIORITY) {
-		auto rax = Array<int> {1 ,2 ,3 ,1 ,2 ,5 ,7 ,5 ,3 ,2 ,4 ,5 ,6} ;
+		auto rax = Deque<int> {1 ,2 ,3 ,1 ,2 ,5 ,7 ,5 ,3 ,2 ,4 ,5 ,6} ;
 		auto rbx = Priority<int> (rax.length ()) ;
 		for (auto &&i : rax)
 			rbx.add (i) ;
-		const auto r1x = rbx.esort () ;
-		rax.sort () ;
-		for (INDEX i = 0 ,ie = rax.length () ; i < ie ; i++)
-			_UNITTEST_ASSERT_ (rbx[r1x[i]] == rax[i]) ;
+		const auto r1x = rbx.range_sort () ;
+		const auto r2x = rax.range_sort () ;
+		for (auto &&i : _RANGE_ (0 ,r2x.length ()))
+			_UNITTEST_ASSERT_ (rbx[r1x[i]] == rax[r2x[i]]) ;
 		INDEX ir = 0 ;
 		while (TRUE) {
 			if (rbx.empty ())
 				break ;
-			const auto r2x = rbx[rbx.head ()].key ;
+			const auto r3x = rbx[rbx.head ()].key ;
 			rbx.take () ;
-			const auto r3x = ir++ ;
-			_UNITTEST_ASSERT_ (r2x == rax[r3x]) ;
-			(void) r3x ;
+			const auto r4x = ir++ ;
+			_UNITTEST_ASSERT_ (r3x == rax[r2x[r4x]]) ;
+			(void) r4x ;
 		}
 	}
 
 	TEST_METHOD (TEST_CSC_ARRAY_SLIST) {
 		auto rax = SList<INDEX> (100000) ;
-		for (INDEX i = 0 ,ie = rax.size () ; i < ie ; i++)
+		for (auto &&i : _RANGE_ (0 ,rax.size ()))
 			rax.add (i) ;
 		rax.remove (1) ;
 		rax.remove (10) ;
@@ -59,7 +59,7 @@ public:
 		rax.remove (100) ;
 		rax.remove (101) ;
 		rax.remove (1000) ;
-		for (INDEX i = 0 ,ie = rax.length () ; i < ie ; i++) {
+		for (auto &&i : _RANGE_ (0 ,rax.length ())) {
 			INDEX ix = rax[rax.access (i)] ;
 			ix -= EFLAG (ix > 1000) ;
 			ix -= EFLAG (ix > 101) ;
@@ -84,7 +84,7 @@ public:
 				_UNITTEST_ASSERT_ (ix == rax.at (i)) ;
 			}
 		}
-		for (INDEX i = 0 ,ie = rax.size () ; i < ie ; i++) {
+		for (auto &&i : _RANGE_ (0 ,rax.size ())) {
 			const auto r2x = rbx.self () ;
 			INDEX ix = rax.find (r2x) ;
 			if (ix == VAR_NONE)
@@ -94,6 +94,7 @@ public:
 				INDEX jx = rax.find (j.key) ;
 				_UNITTEST_ASSERT_ (jx == rax.at (j)) ;
 			}
+			(void) i ;
 		}
 	}
 

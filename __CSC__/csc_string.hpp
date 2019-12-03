@@ -776,7 +776,7 @@ inline const HashSet<STRUW ,STRUW> &_inline_GBKSTOWS_TABLE_ () {
 	return _CACHE_ ([] () {
 		const auto r1x = _LOADUWSTOUGBKSTABLE_ () ;
 		HashSet<STRUW ,STRUW> ret = HashSet<STRUW ,STRUW> (r1x.size ()) ;
-		for (INDEX i = 0 ,ie = r1x.size () ; i < ie ; i++)
+		for (auto &&i : _RANGE_ (0 ,r1x.size ()))
 			ret.add (r1x[i][1] ,r1x[i][0]) ;
 		return std::move (ret) ;
 	}) ;
@@ -860,7 +860,7 @@ inline const HashSet<STRUW ,STRUW> &_inline_WSTOGBKS_TABLE_ () {
 	return _CACHE_ ([] () {
 		const auto r1x = _LOADUWSTOUGBKSTABLE_ () ;
 		HashSet<STRUW ,STRUW> ret = HashSet<STRUW ,STRUW> (r1x.size ()) ;
-		for (INDEX i = 0 ,ie = r1x.size () ; i < ie ; i++)
+		for (auto &&i : _RANGE_ (0 ,r1x.size ()))
 			ret.add (r1x[i][0] ,r1x[i][1]) ;
 		return std::move (ret) ;
 	}) ;
@@ -1080,7 +1080,7 @@ inline CHAR _PARSEHEX8S_ (const String<_ARG1> &stri) {
 	_DYNAMIC_ASSERT_ (rax == _ARG1 ('&')) ;
 	ris >> rax ;
 	_DYNAMIC_ASSERT_ (rax == _ARG1 ('H')) ;
-	for (INDEX i = 0 ,ie = 8 ; i < ie ; i++) {
+	for (auto &&i : _RANGE_ (0 ,8)) {
 		ris >> rax ;
 		const auto r1x = BOOL (rax >= _ARG1 ('0') && rax <= _ARG1 ('9')) ;
 		const auto r2x = BOOL (rax >= _ARG1 ('A') && rax <= _ARG1 ('F')) ;
@@ -1089,6 +1089,7 @@ inline CHAR _PARSEHEX8S_ (const String<_ARG1> &stri) {
 			r1x ? _ARG1 ('0') :
 			_ARG1 ('A' - 10)) ;
 		ret = (ret << 4) | CHAR (rax - r3x) ;
+		(void) i ;
 	}
 	ris >> _EOS_ ;
 	return std::move (ret) ;
@@ -1101,7 +1102,7 @@ inline String<_RET> _BUILDHEX8S_ (const CHAR &stru) {
 	auto wos = TextWriter<_RET> (ret.raw ()) ;
 	wos << _RET ('&') ;
 	wos << _RET ('H') ;
-	for (INDEX i = 0 ,ie = 8 ; i < ie ; i++) {
+	for (auto &&i : _RANGE_ (0 ,8)) {
 		const auto r1x = CHAR (stru >> (28 - i * 4)) & CHAR (0X0F) ;
 		const auto r2x = _SWITCH_ (
 			(r1x < DATA (10)) ? _RET ('0') :
@@ -1121,7 +1122,7 @@ inline DATA _PARSEHEX16S_ (const String<_ARG1> &stri) {
 	_DYNAMIC_ASSERT_ (rax == _ARG1 ('&')) ;
 	ris >> rax ;
 	_DYNAMIC_ASSERT_ (rax == _ARG1 ('H')) ;
-	for (INDEX i = 0 ,ie = 16 ; i < ie ; i++) {
+	for (auto &&i : _RANGE_ (0 ,16)) {
 		ris >> rax ;
 		const auto r1x = BOOL (rax >= _ARG1 ('0') && rax <= _ARG1 ('9')) ;
 		const auto r2x = BOOL (rax >= _ARG1 ('A') && rax <= _ARG1 ('F')) ;
@@ -1142,7 +1143,7 @@ inline String<_RET> _BUILDHEX16S_ (const DATA &stru) {
 	auto wos = TextWriter<_RET> (ret.raw ()) ;
 	wos << _RET ('&') ;
 	wos << _RET ('H') ;
-	for (INDEX i = 0 ,ie = 16 ; i < ie ; i++) {
+	for (auto &&i : _RANGE_ (0 ,16)) {
 		const auto r1x = DATA (stru >> (60 - i * 4)) & DATA (0X0F) ;
 		const auto r2x = _SWITCH_ (
 			(r1x < DATA (10)) ? _RET ('0') :

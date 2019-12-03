@@ -469,7 +469,7 @@ inline void XmlParser::initialize (const PhanBuffer<const STRU8> &data) {
 			*	$6-><!--comment-->
 			*	$7->${eps}|$5 $7|$6 $7
 			*	$8->${eps}|<?xml version = "1.0" ?>|<?xml version = "1.0" encoding = "utf-8" ?>
-			*	$9->#
+			*	$9->${end}
 			*/
 			update_shift_e0 () ;
 			_DEBUG_ASSERT_ (mLatestIndex == 0) ;
@@ -640,7 +640,7 @@ inline void XmlParser::initialize (const PhanBuffer<const STRU8> &data) {
 			mRis >> _PCSTRU8_ ("?>") ;
 		}
 
-		//@info: $9->#
+		//@info: $9->${end}
 		inline void update_shift_e9 () {
 			_DYNAMIC_ASSERT_ (mRis[0] == STRU8 ('\0')) ;
 		}
@@ -650,7 +650,7 @@ inline void XmlParser::initialize (const PhanBuffer<const STRU8> &data) {
 			mObjectSoftSet.clean () ;
 			mHeap = SharedRef<FixedBuffer<Node>>::make (mNodeHeap.length ()) ;
 			INDEX iw = 0 ;
-			for (INDEX i = 0 ,ie = mNodeHeap.size () ; i < ie ; i++) {
+			for (auto &&i : _RANGE_ (0 ,mNodeHeap.size ())) {
 				if (!mNodeHeap.used (i))
 					continue ;
 				mHeap.self[iw++] = std::move (mNodeHeap[i]) ;
@@ -990,7 +990,7 @@ inline void XmlParser::initialize (const Array<XmlParser> &sequence) {
 			mObjectSoftSet.clean () ;
 			mHeap = SharedRef<FixedBuffer<Node>>::make (mNodeHeap.length ()) ;
 			INDEX iw = 0 ;
-			for (INDEX i = 0 ,ie = mNodeHeap.size () ; i < ie ; i++) {
+			for (auto &&i : _RANGE_ (0 ,mNodeHeap.size ())) {
 				if (!mNodeHeap.used (i))
 					continue ;
 				mHeap.self[iw++] = std::move (mNodeHeap[i]) ;
@@ -1237,7 +1237,7 @@ private:
 
 	Set<PTR<const String<STRU8>>> object_key_adress_set () const {
 		Set<PTR<const String<STRU8>>> ret = Set<PTR<const String<STRU8>>> (mHeap->size ()) ;
-		for (INDEX i = 0 ,ie = mHeap->size () ; i < ie ; i++) {
+		for (auto &&i : _RANGE_ (0 ,mHeap->size ())) {
 			if (mHeap.self[i].mClazz != NODE_CLAZZ_OBJECT)
 				continue ;
 			auto &r1y = mHeap.self[i].mValue.rebind<SoftSet<String<STRU8> ,INDEX>> ().self ;
@@ -1468,12 +1468,12 @@ inline void JsonParser::initialize (const PhanBuffer<const STRU8> &data) {
 			*	$4->$1|$2|$2x|$3|$6|$9
 			*	$5->$4|$4 , $5
 			*	$6->[ ]|[ $5 ]
-			*	$7->$2 : $4
+			*	$7->$3 : $4
 			*	$8->$7|$7 , $8
 			*	$9->{ }|{ $8 }
 			*	$10->${eps}|$4
-			*	$11->#
-			*	$12->#
+			*	$11->${eps}
+			*	$12->${end}
 			*/
 			update_shift_e0 () ;
 			_DEBUG_ASSERT_ (mLatestIndex == 0) ;
@@ -1654,7 +1654,7 @@ inline void JsonParser::initialize (const PhanBuffer<const STRU8> &data) {
 			mLatestIndex = ix ;
 		}
 
-		//@info: $7->$2 : $4
+		//@info: $7->$3 : $4
 		inline void update_shift_e7 (INDEX curr) {
 			update_shift_e3 () ;
 			auto &r1y = mNodeHeap[curr].mValue.rebind<SoftSet<String<STRU8> ,INDEX>> ().self ;
@@ -1720,12 +1720,12 @@ inline void JsonParser::initialize (const PhanBuffer<const STRU8> &data) {
 			mLatestIndex = ix ;
 		}
 
-		//@info: $11->#
+		//@info: $11->${eps}
 		inline void update_shift_e11 () {
 			_STATIC_WARNING_ ("noop") ;
 		}
 
-		//@info: $12->#
+		//@info: $12->${end}
 		inline void update_shift_e12 () {
 			_DYNAMIC_ASSERT_ (mRis[0] == STRU8 ('\0')) ;
 		}
@@ -1735,7 +1735,7 @@ inline void JsonParser::initialize (const PhanBuffer<const STRU8> &data) {
 			mObjectSoftSet.clean () ;
 			mHeap = SharedRef<FixedBuffer<Node>>::make (mNodeHeap.length ()) ;
 			INDEX iw = 0 ;
-			for (INDEX i = 0 ,ie = mNodeHeap.size () ; i < ie ; i++) {
+			for (auto &&i : _RANGE_ (0 ,mNodeHeap.size ())) {
 				if (!mNodeHeap.used (i))
 					continue ;
 				mHeap.self[iw++] = std::move (mNodeHeap[i]) ;
@@ -1768,7 +1768,7 @@ public:
 		const auto r1x = _CALL_ ([&] () {
 			String<STRU8> ret = String<STRU8>::make () ;
 			auto wos = TextWriter<STRU8> (ret.raw ()) ;
-			for (INDEX i = 1 ,ie = LENGTH (argc) ; i < ie ; i++) {
+			for (auto &&i : _RANGE_ (1 ,LENGTH (argc))) {
 				wos << _ASTOU8S_ (PTRTOARR[argv[i]]) ;
 				wos << _PCSTRU8_ (" ") ;
 			}
@@ -1911,8 +1911,8 @@ inline void CommandParser::initialize (const PhanBuffer<const STRU8> &data) {
 			*	$5->-$1|-$1=$2|-$1=$3
 			*	$6->$2|$3
 			*	$7->${eps}|$4 $7|$5 $7|$6 $7
-			*	$8->#
-			*	$9->#
+			*	$8->${eps}
+			*	$9->${end}
 			*/
 			update_shift_e0 () ;
 			update_command () ;
@@ -2015,12 +2015,12 @@ inline void CommandParser::initialize (const PhanBuffer<const STRU8> &data) {
 			}
 		}
 
-		//@info: $8->#
+		//@info: $8->${eps}
 		inline void update_shift_e8 () {
 			_STATIC_WARNING_ ("noop") ;
 		}
 
-		//@info: $9->#
+		//@info: $9->${end}
 		inline void update_shift_e9 () {
 			_DYNAMIC_ASSERT_ (mRis[0] == STRU8 ('\0')) ;
 		}

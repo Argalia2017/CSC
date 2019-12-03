@@ -172,7 +172,7 @@ public:
 		const auto r1x = WORD (0X0001) ;
 		auto &r2y = _CAST_<BYTE[_SIZEOF_ (WORD)]> (r1x) ;
 		auto &r3y = _CAST_<BYTE[_SIZEOF_ (WORD)]> (data) ;
-		for (INDEX i = 0 ,ie = _COUNTOF_ (decltype (r3y)) ; i < ie ; i++)
+		for (auto &&i : _RANGE_ (0 ,_COUNTOF_ (decltype (r3y))))
 			read (r3y[r2y[i]]) ;
 	}
 
@@ -185,7 +185,7 @@ public:
 		const auto r1x = CHAR (0X00010203) ;
 		auto &r2y = _CAST_<BYTE[_SIZEOF_ (CHAR)]> (r1x) ;
 		auto &r3y = _CAST_<BYTE[_SIZEOF_ (CHAR)]> (data) ;
-		for (INDEX i = 0 ,ie = _COUNTOF_ (decltype (r3y)) ; i < ie ; i++)
+		for (auto &&i : _RANGE_ (0 ,_COUNTOF_ (decltype (r3y))))
 			read (r3y[r2y[i]]) ;
 	}
 
@@ -198,7 +198,7 @@ public:
 		const auto r1x = DATA (0X0001020304050607) ;
 		auto &r2y = _CAST_<BYTE[_SIZEOF_ (DATA)]> (r1x) ;
 		auto &r3y = _CAST_<BYTE[_SIZEOF_ (DATA)]> (data) ;
-		for (INDEX i = 0 ,ie = _COUNTOF_ (decltype (r3y)) ; i < ie ; i++)
+		for (auto &&i : _RANGE_ (0 ,_COUNTOF_ (decltype (r3y))))
 			read (r3y[r2y[i]]) ;
 	}
 
@@ -258,7 +258,7 @@ public:
 		_DYNAMIC_ASSERT_ (r1x >= 0 && r1x < VAR32_MAX) ;
 		if (data.size () < r1x)
 			data = Array<_ARG1 ,_ARG2> (r1x) ;
-		for (INDEX i = 0 ,ie = r1x ; i < ie ; i++)
+		for (auto &&i : _RANGE_ (0 ,r1x))
 			read (data[i]) ;
 	}
 
@@ -275,7 +275,7 @@ public:
 #pragma GCC diagnostic ignored "-Warray-bounds"
 #endif
 		auto rax = _ARG1 () ;
-		for (INDEX i = 0 ,ie = data.size () ; i < ie ; i++) {
+		for (auto &&i : _RANGE_ (0 ,data.size ())) {
 			read (rax) ;
 			_DYNAMIC_ASSERT_ (rax == data.self[i]) ;
 		}
@@ -296,7 +296,7 @@ public:
 		if (data.size () < r1x)
 			data = String<_ARG1 ,_ARG2> (r1x) ;
 		data.clear () ;
-		for (INDEX i = 0 ,ie = r1x ; i < ie ; i++)
+		for (auto &&i : _RANGE_ (0 ,r1x))
 			read (data[i]) ;
 	}
 
@@ -308,7 +308,7 @@ public:
 
 	template <class _ARG1 ,class _ARG2>
 	void read (Buffer<_ARG1 ,_ARG2> &data) popping {
-		for (INDEX i = 0 ,ie = data.size () ; i < ie ; i++)
+		for (auto &&i : _RANGE_ (0 ,data.size ()))
 			read (data[i]) ;
 	}
 
@@ -442,7 +442,7 @@ public:
 		const auto r1x = WORD (0X0001) ;
 		auto &r2y = _CAST_<BYTE[_SIZEOF_ (WORD)]> (r1x) ;
 		auto &r3y = _CAST_<BYTE[_SIZEOF_ (WORD)]> (data) ;
-		for (INDEX i = 0 ,ie = _COUNTOF_ (decltype (r3y)) ; i < ie ; i++)
+		for (auto &&i : _RANGE_ (0 ,_COUNTOF_ (decltype (r3y))))
 			write (r3y[r2y[i]]) ;
 	}
 
@@ -455,7 +455,7 @@ public:
 		const auto r1x = CHAR (0X00010203) ;
 		auto &r2y = _CAST_<BYTE[_SIZEOF_ (CHAR)]> (r1x) ;
 		auto &r3y = _CAST_<BYTE[_SIZEOF_ (CHAR)]> (data) ;
-		for (INDEX i = 0 ,ie = _COUNTOF_ (decltype (r3y)) ; i < ie ; i++)
+		for (auto &&i : _RANGE_ (0 ,_COUNTOF_ (decltype (r3y))))
 			write (r3y[r2y[i]]) ;
 	}
 
@@ -468,7 +468,7 @@ public:
 		const auto r1x = DATA (0X0001020304050607) ;
 		auto &r2y = _CAST_<BYTE[_SIZEOF_ (DATA)]> (r1x) ;
 		auto &r3y = _CAST_<BYTE[_SIZEOF_ (DATA)]> (data) ;
-		for (INDEX i = 0 ,ie = _COUNTOF_ (decltype (r3y)) ; i < ie ; i++)
+		for (auto &&i : _RANGE_ (0 ,_COUNTOF_ (decltype (r3y))))
 			write (r3y[r2y[i]]) ;
 	}
 
@@ -552,7 +552,7 @@ public:
 #ifdef __CSC_COMPILER_GNUC__
 #pragma GCC diagnostic ignored "-Warray-bounds"
 #endif
-		for (INDEX i = 0 ,ie = data.size () ; i < ie ; i++)
+		for (auto &&i : _RANGE_ (0 ,data.size ()))
 			write (data.self[i]) ;
 #pragma GCC diagnostic pop
 }
@@ -581,7 +581,7 @@ public:
 
 	template <class _ARG1 ,class _ARG2>
 	void write (const Buffer<_ARG1 ,_ARG2> &data) {
-		for (INDEX i = 0 ,ie = data.size () ; i < ie ; i++)
+		for (auto &&i : _RANGE_ (0 ,data.size ()))
 			write (data[i]) ;
 	}
 
@@ -1010,7 +1010,7 @@ public:
 #pragma GCC diagnostic ignored "-Warray-bounds"
 #endif
 		auto rax = REAL () ;
-		for (INDEX i = 0 ,ie = data.size () ; i < ie ; i++) {
+		for (auto &&i : _RANGE_ (0 ,data.size ())) {
 			read (rax) ;
 			_DYNAMIC_ASSERT_ (rax == data.self[i]) ;
 		}
@@ -1029,7 +1029,7 @@ public:
 		if (data.size () < r1x)
 			data = String<REAL ,_ARG1> (r1x) ;
 		data.clear () ;
-		for (INDEX i = 0 ,ie = r1x ; i < ie ; i++)
+		for (auto &&i : _RANGE_ (0 ,r1x))
 			read (data[i]) ;
 	}
 
@@ -1041,7 +1041,7 @@ public:
 
 	template <class _ARG1 ,class _ARG2>
 	void read (Buffer<_ARG1 ,_ARG2> &data) popping {
-		for (INDEX i = 0 ,ie = data.size () ; i < ie ; i++)
+		for (auto &&i : _RANGE_ (0 ,data.size ()))
 			read (data[i]) ;
 	}
 
@@ -1516,7 +1516,7 @@ public:
 #ifdef __CSC_COMPILER_GNUC__
 #pragma GCC diagnostic ignored "-Warray-bounds"
 #endif
-		for (INDEX i = 0 ,ie = data.size () ; i < ie ; i++)
+		for (auto &&i : _RANGE_ (0 ,data.size ()))
 			write (data.self[i]) ;
 #pragma GCC diagnostic pop
 }
@@ -1542,7 +1542,7 @@ public:
 
 	template <class _ARG1 ,class _ARG2>
 	void write (const Buffer<_ARG1 ,_ARG2> &data) {
-		for (INDEX i = 0 ,ie = data.size () ; i < ie ; i++)
+		for (auto &&i : _RANGE_ (0 ,data.size ()))
 			write (data[i]) ;
 	}
 
@@ -1614,9 +1614,10 @@ private:
 		const auto r2x = log_of_number (rax[0]) ;
 		if SWITCH_CASE (TRUE) {
 			const auto r3x = r2x - precision ;
-			for (INDEX i = 0 ,ie = r3x - 1 ; i < ie ; i++) {
+			for (auto &&i : _RANGE_ (0 ,r3x - 1)) {
 				rax[0] /= attr ().varify_radix () ;
 				rax[1]++ ;
+				(void) i ;
 			}
 			if (r3x <= 0)
 				discard ;
@@ -1641,13 +1642,16 @@ private:
 				out[--iw] = REAL ('+') ;
 			out[--iw] = REAL ('e') ;
 			const auto r6x = _MAX_ ((r4x - 1 - precision) ,VAR_ZERO) ;
-			for (INDEX i = 0 ,ie = r6x ; i < ie ; i++)
+			for (auto &&i : _RANGE_ (0 ,r6x)) {
 				rax[0] /= attr ().varify_radix () ;
+				(void) i ;
+			}
 			INDEX ix = iw - 1 ;
-			for (INDEX i = r6x ,ie = r4x - 1 ; i < ie ; i++) {
+			for (auto &&i : _RANGE_ (r6x ,r4x - 1)) {
 				out[--iw] = attr ().convert_number_w (rax[0] % attr ().varify_radix ()) ;
 				iw += EFLAG (out[ix] == attr ().convert_number_w (0)) ;
 				rax[0] /= attr ().varify_radix () ;
+				(void) i ;
 			}
 			out[--iw] = REAL ('.') ;
 			iw += EFLAG (out[ix] == REAL ('.')) ;
@@ -1658,11 +1662,14 @@ private:
 			//@info: case 'xxx000'
 			if (!(rax[1] >= 0))
 				discard ;
-			for (INDEX i = 0 ,ie = LENGTH (rax[1]) ; i < ie ; i++)
+			for (auto &&i : _RANGE_ (0 ,LENGTH (rax[1]))) {
 				out[--iw] = attr ().convert_number_w (0) ;
-			for (INDEX i = 0 ,ie = r4x ; i < ie ; i++) {
+				(void) i ;
+			}
+			for (auto &&i : _RANGE_ (0 ,r4x)) {
 				out[--iw] = attr ().convert_number_w (rax[0] % attr ().varify_radix ()) ;
 				rax[0] /= attr ().varify_radix () ;
+				(void) i ;
 			}
 		}
 		if SWITCH_CASE (fax) {
@@ -1672,19 +1679,23 @@ private:
 			if (!(rax[1] < 0))
 				discard ;
 			const auto r7x = _MAX_ (LENGTH (-rax[1] - precision) ,VAR_ZERO) ;
-			for (INDEX i = 0 ,ie = r7x ; i < ie ; i++)
+			for (auto &&i : _RANGE_ (0 ,r7x)) {
 				rax[0] /= attr ().varify_radix () ;
+				(void) i ;
+			}
 			INDEX ix = iw - 1 ;
-			for (INDEX i = r7x ,ie = LENGTH (-rax[1]) ; i < ie ; i++) {
+			for (auto &&i : _RANGE_ (r7x ,LENGTH (-rax[1]))) {
 				out[--iw] = attr ().convert_number_w (rax[0] % attr ().varify_radix ()) ;
 				iw += EFLAG (out[ix] == attr ().convert_number_w (0)) ;
 				rax[0] /= attr ().varify_radix () ;
+				(void) i ;
 			}
 			out[--iw] = REAL ('.') ;
 			iw += EFLAG (out[ix] == REAL ('.')) ;
-			for (INDEX i = 0 ,ie = LENGTH (r4x + rax[1]) ; i < ie ; i++) {
+			for (auto &&i : _RANGE_ (0 ,LENGTH (r4x + rax[1]))) {
 				out[--iw] = attr ().convert_number_w (rax[0] % attr ().varify_radix ()) ;
 				rax[0] /= attr ().varify_radix () ;
+				(void) i ;
 			}
 		}
 		if SWITCH_CASE (fax) {
@@ -1694,17 +1705,21 @@ private:
 			if (!(rax[1] < 0))
 				discard ;
 			const auto r8x = _MAX_ (LENGTH (-rax[1] - precision) ,VAR_ZERO) ;
-			for (INDEX i = 0 ,ie = r8x ; i < ie ; i++)
+			for (auto &&i : _RANGE_ (0 ,r8x)) {
 				rax[0] /= attr ().varify_radix () ;
+				(void) i ;
+			}
 			INDEX ix = iw - 1 ;
-			for (INDEX i = r8x ,ie = r4x ; i < ie ; i++) {
+			for (auto &&i : _RANGE_ (r8x ,r4x)) {
 				out[--iw] = attr ().convert_number_w (rax[0] % attr ().varify_radix ()) ;
 				iw += EFLAG (out[ix] == attr ().convert_number_w (0)) ;
 				rax[0] /= attr ().varify_radix () ;
+				(void) i ;
 			}
-			for (INDEX i = _MAX_ (r8x ,r4x) ,ie = LENGTH (-rax[1]) ; i < ie ; i++) {
+			for (auto &&i : _RANGE_ (_MAX_ (r8x ,r4x) ,LENGTH (-rax[1]))) {
 				out[--iw] = attr ().convert_number_w (0) ;
 				iw += EFLAG (out[ix] == attr ().convert_number_w (0)) ;
+				(void) i ;
 			}
 			out[--iw] = REAL ('.') ;
 			iw += EFLAG (out[ix] == REAL ('.')) ;
@@ -1891,8 +1906,10 @@ inline void _EOS_ (ByteReader &reader) {
 inline void _EOS_ (ByteWriter &writer) {
 	auto wos = writer.copy () ;
 	const auto r1x = wos.attr ().varify_ending_item () ;
-	for (INDEX i = 0 ,ie = wos.size () - wos.length () ; i < ie ; i++)
+	for (auto &&i : _RANGE_ (0 ,wos.size () - wos.length ())) {
 		wos << r1x ;
+		(void) i ;
+	}
 	writer = std::move (wos) ;
 }
 
@@ -2031,7 +2048,7 @@ public:
 		//@info: disable default escape-str convertion
 		r1y.enable_escape (FALSE) ;
 		mReader.self >> _BOM_ ;
-		for (INDEX i = 0 ,ie = mCache.length () ; i < ie ; i++)
+		for (auto &&i : _RANGE_ (0 ,mCache.length ()))
 			mReader.self >> mCache[i] ;
 		mPeek = 0 ;
 		mHintStringTextFlag = FALSE ;
@@ -2070,7 +2087,7 @@ public:
 #ifdef __CSC_COMPILER_GNUC__
 #pragma GCC diagnostic ignored "-Warray-bounds"
 #endif
-		for (INDEX i = 0 ,ie = data.size () ; i < ie ; i++) {
+		for (auto &&i : _RANGE_ (0 ,data.size ())) {
 			_DYNAMIC_ASSERT_ (get (0) == data.self[i]) ;
 			read () ;
 		}
@@ -2206,7 +2223,7 @@ public:
 			_DYNAMIC_ASSERT_ (get (0) == STRU8 ('\"')) ;
 			read () ;
 		}
-		for (INDEX i = 0 ,ie = r2x ; i < ie ; i++) {
+		for (auto &&i : _RANGE_ (0 ,r2x)) {
 			auto fax = TRUE ;
 			if SWITCH_CASE (fax) {
 				rax = get (0) ;

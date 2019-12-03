@@ -4,7 +4,7 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup>
     <_PropertySheetDisplayName>build.Debug.x64</_PropertySheetDisplayName>
-    <IncludePath>D:\Depends;D:\Depends\include;$(IncludePath)</IncludePath>
-    <LibraryPath>D:\Depends;D:\Depends\lib;$(LibraryPath)</LibraryPath>
+    <IncludePath>D:\Depends\__CSC__;D:\Depends\include;$(IncludePath)</IncludePath>
+    <LibraryPath>D:\Depends\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
 </Project>
