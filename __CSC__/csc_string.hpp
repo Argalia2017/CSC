@@ -1080,15 +1080,16 @@ inline CHAR _PARSEHEX8S_ (const String<_ARG1> &stri) {
 	_DYNAMIC_ASSERT_ (rax == _ARG1 ('&')) ;
 	ris >> rax ;
 	_DYNAMIC_ASSERT_ (rax == _ARG1 ('H')) ;
+	const auto r1x = ARRAY2<_ARG1> {_ARG1 ('0') ,(_ARG1 ('A' - 10))} ;
 	for (auto &&i : _RANGE_ (0 ,8)) {
 		ris >> rax ;
-		const auto r1x = BOOL (rax >= _ARG1 ('0') && rax <= _ARG1 ('9')) ;
-		const auto r2x = BOOL (rax >= _ARG1 ('A') && rax <= _ARG1 ('F')) ;
-		_DYNAMIC_ASSERT_ (r1x || r2x) ;
-		const auto r3x = _SWITCH_ (
-			r1x ? _ARG1 ('0') :
-			_ARG1 ('A' - 10)) ;
-		ret = (ret << 4) | CHAR (rax - r3x) ;
+		const auto r2x = BOOL (rax >= _ARG1 ('0') && rax <= _ARG1 ('9')) ;
+		const auto r3x = BOOL (rax >= _ARG1 ('A') && rax <= _ARG1 ('F')) ;
+		_DYNAMIC_ASSERT_ (r2x || r3x) ;
+		auto &r4y = _SWITCH_ (
+			r2x ? r1x[0] :
+			r1x[1]) ;
+		ret = (ret << 4) | CHAR (rax - r4y) ;
 		(void) i ;
 	}
 	ris >> _EOS_ ;
@@ -1102,12 +1103,13 @@ inline String<_RET> _BUILDHEX8S_ (const CHAR &stru) {
 	auto wos = TextWriter<_RET> (ret.raw ()) ;
 	wos << _RET ('&') ;
 	wos << _RET ('H') ;
+	const auto r1x = ARRAY2<_RET> {_RET ('0') ,(_RET ('A' - 10))} ;
 	for (auto &&i : _RANGE_ (0 ,8)) {
-		const auto r1x = CHAR (stru >> (28 - i * 4)) & CHAR (0X0F) ;
-		const auto r2x = _SWITCH_ (
-			(r1x < DATA (10)) ? _RET ('0') :
-			_RET ('A') - 10) ;
-		wos << _RET (r2x + r1x) ;
+		const auto r2x = CHAR (stru >> (28 - i * 4)) & CHAR (0X0F) ;
+		auto &r3y = _SWITCH_ (
+			(r2x < DATA (10)) ? r1x[0] :
+			r1x[1]) ;
+		wos << _RET (r3y + r2x) ;
 	}
 	wos << _EOS_ ;
 	return std::move (ret) ;
@@ -1122,15 +1124,16 @@ inline DATA _PARSEHEX16S_ (const String<_ARG1> &stri) {
 	_DYNAMIC_ASSERT_ (rax == _ARG1 ('&')) ;
 	ris >> rax ;
 	_DYNAMIC_ASSERT_ (rax == _ARG1 ('H')) ;
+	const auto r1x = ARRAY2<_ARG1> {_ARG1 ('0') ,(_ARG1 ('A' - 10))} ;
 	for (auto &&i : _RANGE_ (0 ,16)) {
 		ris >> rax ;
-		const auto r1x = BOOL (rax >= _ARG1 ('0') && rax <= _ARG1 ('9')) ;
-		const auto r2x = BOOL (rax >= _ARG1 ('A') && rax <= _ARG1 ('F')) ;
-		_DYNAMIC_ASSERT_ (r1x || r2x) ;
-		const auto r3x = _SWITCH_ (
-			r1x ? _ARG1 ('0') :
-			_ARG1 ('A' - 10)) ;
-		ret = (ret << 4) | DATA (rax - r3x) ;
+		const auto r2x = BOOL (rax >= _ARG1 ('0') && rax <= _ARG1 ('9')) ;
+		const auto r3x = BOOL (rax >= _ARG1 ('A') && rax <= _ARG1 ('F')) ;
+		_DYNAMIC_ASSERT_ (r2x || r3x) ;
+		auto &r4y = _SWITCH_ (
+			r2x ? r1x[0] :
+			r1x[1]) ;
+		ret = (ret << 4) | DATA (rax - r4y) ;
 	}
 	ris >> _EOS_ ;
 	return std::move (ret) ;
@@ -1143,12 +1146,13 @@ inline String<_RET> _BUILDHEX16S_ (const DATA &stru) {
 	auto wos = TextWriter<_RET> (ret.raw ()) ;
 	wos << _RET ('&') ;
 	wos << _RET ('H') ;
+	const auto r1x = ARRAY2<_RET> {_RET ('0') ,(_RET ('A' - 10))} ;
 	for (auto &&i : _RANGE_ (0 ,16)) {
-		const auto r1x = DATA (stru >> (60 - i * 4)) & DATA (0X0F) ;
-		const auto r2x = _SWITCH_ (
-			(r1x < DATA (10)) ? _RET ('0') :
-			_RET ('A') - 10) ;
-		wos << _RET (r2x + r1x) ;
+		const auto r2x = DATA (stru >> (60 - i * 4)) & DATA (0X0F) ;
+		auto &r3y = _SWITCH_ (
+			(r2x < DATA (10)) ? r1x[0] :
+			r1x[1]) ;
+		wos << _RET (r3y + r2x) ;
 	}
 	wos << _EOS_ ;
 	return std::move (ret) ;

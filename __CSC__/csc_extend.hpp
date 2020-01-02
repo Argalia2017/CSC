@@ -1020,6 +1020,34 @@ private:
 template <class UNIT>
 using Optional = Variant<UNIT> ;
 
+template <class UNIT>
+class Monostate {
+private:
+	SharedRef<UNIT> mThis ;
+
+public:
+	inline Monostate () {
+		mThis = SharedRef<UNIT>::make () ;
+	}
+
+	inline Monostate (const Monostate &) = delete ;
+	inline Monostate &operator= (const Monostate &) = delete ;
+	inline Monostate (Monostate &&) = delete ;
+	inline Monostate &operator= (Monostate &&) = delete ;
+
+	inline UNIT &to () const {
+		return mThis.self ;
+	}
+
+	inline implicit operator UNIT & () const {
+		return to () ;
+	}
+
+	inline void swap (Monostate &that) popping {
+		_SWAP_ (mThis ,that.mThis) ;
+	}
+} ;
+
 template <class...>
 class Tuple ;
 
@@ -2116,7 +2144,6 @@ private:
 	} ;
 
 private:
-	_STATIC_ASSERT_ (_SIZEOF_ (UNIT) > 0) ;
 	struct Detail ;
 	friend ScopedGuard<IntrusiveRef> ;
 	std::atomic<PTR<UNIT>> mPointer ;
@@ -2172,7 +2199,8 @@ public:
 	}
 
 	inline IntrusiveRef copy () popping {
-		ScopedGuard<typename Detail::LatchCounter> ANONYMOUS (_CAST_<typename Detail::LatchCounter> (mLatch)) ;
+		using LatchCounter = typename Detail::LatchCounter ;
+		ScopedGuard<LatchCounter> ANONYMOUS (_CAST_<LatchCounter> (mLatch)) ;
 		IntrusiveRef ret = IntrusiveRef (ARGVP0) ;
 		const auto r1x = mPointer.load () ;
 		Detail::acquire (r1x ,FALSE) ;
@@ -2183,7 +2211,8 @@ public:
 	}
 
 	inline WatchProxy watch () popping {
-		ScopedGuard<typename Detail::LatchCounter> ANONYMOUS (_CAST_<typename Detail::LatchCounter> (mLatch)) ;
+		using LatchCounter = typename Detail::LatchCounter ;
+		ScopedGuard<LatchCounter> ANONYMOUS (_CAST_<LatchCounter> (mLatch)) ;
 		const auto r1x = mPointer.load () ;
 		_DYNAMIC_ASSERT_ (r1x != NULL) ;
 		Detail::acquire (r1x ,FALSE) ;
@@ -2274,50 +2303,41 @@ private:
 } ;
 
 template <class UNIT>
-class Monostate {
-private:
-	SharedRef<UNIT> mThis ;
-
-public:
-	inline Monostate () {
-		mThis = SharedRef<UNIT>::make () ;
-	}
-
-	inline Monostate (const Monostate &) = delete ;
-	inline Monostate &operator= (const Monostate &) = delete ;
-	inline Monostate (Monostate &&) = delete ;
-	inline Monostate &operator= (Monostate &&) = delete ;
-
-	inline UNIT &to () const {
-		return mThis.self ;
-	}
-
-	inline implicit operator UNIT & () const {
-		return to () ;
-	}
-
-	inline void swap (Monostate &that) popping {
-		_SWAP_ (mThis ,that.mThis) ;
-	}
-} ;
-
-#ifdef __CSC_DEPRECATED__
-template <class UNIT>
-class Lazy {
+class Notation {
 private:
 	class Holder {
 	private:
-		friend Lazy ;
-		Mutable<UNIT> mData ;
+		friend Notation ;
 		Function<DEF<UNIT ()> NONE::*> mEvaluator ;
-		AnyRef<void> mFunction ;
 	} ;
 
 private:
 	SoftRef<Holder> mThis ;
 
 public:
-	inline Lazy () = default ;
+	inline Notation () = default ;
+
+	inline explicit Notation (const UNIT &that) {
+		_STATIC_WARNING_ ("unimplemented") ;
+		_DYNAMIC_ASSERT_ (FALSE) ;
+	}
+
+	inline explicit Notation (UNIT &&that) {
+		_STATIC_WARNING_ ("unimplemented") ;
+		_DYNAMIC_ASSERT_ (FALSE) ;
+	}
+
+	template <class... _ARGS>
+	inline explicit Notation (const Function<UNIT (const _ARGS &...)> &that) {
+		_STATIC_WARNING_ ("unimplemented") ;
+		_DYNAMIC_ASSERT_ (FALSE) ;
+	}
+
+	template <class... _ARGS>
+	inline explicit Notation (const Function<DEF<UNIT (const _ARGS &...)> NONE::*> &that) {
+		_STATIC_WARNING_ ("unimplemented") ;
+		_DYNAMIC_ASSERT_ (FALSE) ;
+	}
 
 	inline LENGTH rank () const {
 		_STATIC_WARNING_ ("unimplemented") ;
@@ -2325,51 +2345,34 @@ public:
 		return 0 ;
 	}
 
-	inline Lazy concat (const Lazy &that) const {
+	inline Notation concat (const Notation &that) const {
 		_STATIC_WARNING_ ("unimplemented") ;
 		_DYNAMIC_ASSERT_ (FALSE) ;
-		return Lazy () ;
+		return Notation () ;
 	}
 
-	inline Lazy operator+ (const Lazy &that) const {
+	inline Notation operator+ (const Notation &that) const {
 		return concat (that) ;
 	}
 
-	inline Lazy &operator+= (const Lazy &that) {
+	inline Notation &operator+= (const Notation &that) {
 		(*this) = concat (that) ;
 		return (*this) ;
 	}
 
-	inline Lazy operator- (const Lazy &that) const {
+	inline Notation operator- (const Notation &that) const {
 		return that.concat ((*this)) ;
 	}
 
-	inline Lazy &operator-= (const Lazy &that) {
+	inline Notation &operator-= (const Notation &that) {
 		(*this) = that.concat ((*this)) ;
 		return (*this) ;
 	}
 } ;
-#endif
 
 inline namespace EXTEND {
 inline constexpr INDEX _ALIGNAS_ (INDEX base ,LENGTH align_) {
 	return base + (align_ - base % align_) % align_ ;
-}
-
-inline constexpr BOOL _RANGE_IN00_ (INDEX base ,INDEX min_ ,INDEX max_) {
-	return BOOL (base > min_ && base < max_) ;
-}
-
-inline constexpr BOOL _RANGE_IN01_ (INDEX base ,INDEX min_ ,INDEX max_) {
-	return BOOL (base > min_ && base <= max_) ;
-}
-
-inline constexpr BOOL _RANGE_IN10_ (INDEX base ,INDEX min_ ,INDEX max_) {
-	return BOOL (base >= min_ && base < max_) ;
-}
-
-inline constexpr BOOL _RANGE_IN11_ (INDEX base ,INDEX min_ ,INDEX max_) {
-	return BOOL (base >= min_ && base <= max_) ;
 }
 } ;
 
@@ -2384,7 +2387,7 @@ inline _RET _BITWISE_CAST_ (const _ARG1 &object) {
 	_STATIC_ASSERT_ (_SIZEOF_ (_RET) == _SIZEOF_ (_ARG1)) ;
 	TEMP<_RET> ret ;
 	_ZERO_ (ret) ;
-	_MEMCOPY_ (PTRTOARR[ret.unused] ,PTRTOARR[_CAST_<BYTE[_SIZEOF_ (_ARG1)]> (object)] ,_SIZEOF_ (_ARG1)) ;
+	_MEMCOPY_ (PTRTOARR[_CAST_<BYTE[_SIZEOF_ (_RET)]> (ret)] ,PTRTOARR[_CAST_<BYTE[_SIZEOF_ (_ARG1)]> (object)] ,_SIZEOF_ (_ARG1)) ;
 	return std::move (_CAST_<_RET> (ret)) ;
 }
 } ;
@@ -2461,7 +2464,7 @@ private:
 			auto rax = GlobalHeap::alloc<BYTE> (r2x) ;
 			const auto r3x = _ADDRESS_ (_XVALUE_<PTR<ARR<BYTE>>> (rax)) ;
 			const auto r4x = _ALIGNAS_ (r3x ,_ALIGNOF_ (CHUNK)) ;
-			auto &r5y = _LOAD_<CHUNK> (_UNSAFE_ALIASING_ (r4x)) ;
+			auto &r5y = _LOAD_<CHUNK> (_XVALUE_<PTR<VOID>> (&_NULL_<BYTE> () + r4x)) ;
 			r5y.mOrigin = _XVALUE_<PTR<ARR<BYTE>>> (rax) ;
 			r5y.mPrev = NULL ;
 			r5y.mNext = mRoot ;
@@ -2473,7 +2476,7 @@ private:
 			const auto r6x = _ALIGNAS_ (r4x + _SIZEOF_ (CHUNK) ,_ALIGNOF_ (BLOCK)) ;
 			for (auto &&i : _RANGE_ (0 ,mRoot->mCount)) {
 				const auto r7x = r6x + i * r1x ;
-				auto &r8y = _LOAD_<BLOCK> (_UNSAFE_ALIASING_ (r7x)) ;
+				auto &r8y = _LOAD_<BLOCK> (_XVALUE_<PTR<VOID>> (&_NULL_<BYTE> () + r7x)) ;
 				r8y.mNext = mFree ;
 				mFree = &r8y ;
 			}
@@ -2524,7 +2527,7 @@ private:
 			const auto r2x = _ALIGNAS_ (_ADDRESS_ (node) + _SIZEOF_ (CHUNK) ,_ALIGNOF_ (BLOCK)) ;
 			for (auto &&i : _RANGE_ (0 ,node->mCount)) {
 				const auto r3x = r2x + i * r1x ;
-				auto &r4y = _LOAD_<BLOCK> (_UNSAFE_ALIASING_ (r3x)) ;
+				auto &r4y = _LOAD_<BLOCK> (_XVALUE_<PTR<VOID>> (&_NULL_<BYTE> () + r3x)) ;
 				if (_ADDRESS_ (r4y.mNext) == VAR_USED)
 					return FALSE ;
 			}
@@ -2578,7 +2581,7 @@ private:
 			auto rax = GlobalHeap::alloc<BYTE> (r2x) ;
 			const auto r3x = _ADDRESS_ (_XVALUE_<PTR<ARR<BYTE>>> (rax)) ;
 			const auto r4x = _ALIGNAS_ (r3x ,_ALIGNOF_ (BLOCK)) ;
-			auto &r5y = _LOAD_<BLOCK> (_UNSAFE_ALIASING_ (r4x)) ;
+			auto &r5y = _LOAD_<BLOCK> (_XVALUE_<PTR<VOID>> (&_NULL_<BYTE> () + r4x)) ;
 			r5y.mOrigin = _XVALUE_<PTR<ARR<BYTE>>> (rax) ;
 			r5y.mPrev = NULL ;
 			r5y.mNext = mRoot ;
@@ -2676,10 +2679,10 @@ public:
 		const auto r2x = mPool.self[ix]->alloc (r1x) ;
 		const auto r3x = _ALIGNAS_ (_ADDRESS_ (r2x) + _SIZEOF_ (HEADER) ,_ALIGNOF_ (_RET)) ;
 		const auto r4x = r3x - _SIZEOF_ (HEADER) ;
-		auto &r5y = _LOAD_<HEADER> (_UNSAFE_ALIASING_ (r4x)) ;
+		auto &r5y = _LOAD_<HEADER> (_XVALUE_<PTR<VOID>> (&_NULL_<BYTE> () + r4x)) ;
 		r5y.mPool = mPool.self[ix] ;
 		r5y.mCurr = r2x ;
-		auto &r6y = _LOAD_<_RET> (_UNSAFE_ALIASING_ (r3x)) ;
+		auto &r6y = _LOAD_<_RET> (_XVALUE_<PTR<VOID>> (&_NULL_<BYTE> () + r3x)) ;
 		return &r6y ;
 	}
 
@@ -2694,10 +2697,10 @@ public:
 		const auto r2x = mPool.self[ix]->alloc (r1x) ;
 		const auto r3x = _ALIGNAS_ (_ADDRESS_ (r2x) + _SIZEOF_ (HEADER) ,_ALIGNOF_ (_RET)) ;
 		const auto r4x = r3x - _SIZEOF_ (HEADER) ;
-		auto &r5y = _LOAD_<HEADER> (_UNSAFE_ALIASING_ (r4x)) ;
+		auto &r5y = _LOAD_<HEADER> (_XVALUE_<PTR<VOID>> (&_NULL_<BYTE> () + r4x)) ;
 		r5y.mPool = mPool.self[ix] ;
 		r5y.mCurr = r2x ;
-		auto &r6y = _LOAD_<ARR<_RET>> (_UNSAFE_ALIASING_ (r3x)) ;
+		auto &r6y = _LOAD_<ARR<_RET>> (_XVALUE_<PTR<VOID>> (&_NULL_<BYTE> () + r3x)) ;
 		return &r6y ;
 	}
 
@@ -2705,7 +2708,7 @@ public:
 	inline void free (const PTR<_ARG1> &address) noexcept {
 		_STATIC_ASSERT_ (std::is_pod<REMOVE_ARRAY_TYPE<_ARG1>>::value) ;
 		const auto r1x = _ADDRESS_ (address) - _SIZEOF_ (HEADER) ;
-		auto &r2y = _LOAD_<HEADER> (_UNSAFE_ALIASING_ (r1x)) ;
+		auto &r2y = _LOAD_<HEADER> (_XVALUE_<PTR<VOID>> (&_NULL_<BYTE> () + r1x)) ;
 		INDEX ix = _MEMCHR_ (mPool.self.self ,mPool.self.size () ,r2y.mPool) ;
 		_DEBUG_ASSERT_ (ix != VAR_NONE) ;
 		mPool.self[ix]->free (r2y.mCurr) ;
@@ -2777,7 +2780,7 @@ public:
 		return mWeakOfThis ;
 	}
 
-	inline const WeakRef<Object> &weak_of_this () const {
+	inline const WeakRef<Object> &weak_of_this () const override {
 		return mWeakOfThis ;
 	}
 

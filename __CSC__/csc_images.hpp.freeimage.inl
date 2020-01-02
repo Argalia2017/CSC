@@ -71,7 +71,7 @@ public:
 	void compute_layout (AnyRef<void> &this_ ,AbstractImage<COLOR_BGR>::LAYOUT &layout) const override {
 		auto &r1y = this_.rebind<NATIVE_TYPE> ().self ;
 		const auto r2x = FreeImage_GetBits (r1y) ;
-		const auto r3x = _UNSAFE_ALIASING_ (_ADDRESS_ (r2x)) ;
+		const auto r3x = _XVALUE_<PTR<VOID>> (&_NULL_<BYTE> () + _ADDRESS_ (r2x)) ;
 		auto &r4y = _LOAD_<ARR<COLOR_BGR>> (r3x) ;
 		layout.mImage = &r4y ;
 		layout.mCX = LENGTH (FreeImage_GetWidth (r1y)) ;
@@ -185,7 +185,7 @@ public:
 	void compute_layout (AnyRef<void> &this_ ,AbstractImage<COLOR_BGRA>::LAYOUT &layout) const override {
 		auto &r1y = this_.rebind<NATIVE_TYPE> ().self ;
 		const auto r2x = FreeImage_GetBits (r1y) ;
-		const auto r3x = _UNSAFE_ALIASING_ (_ADDRESS_ (r2x)) ;
+		const auto r3x = _XVALUE_<PTR<VOID>> (&_NULL_<BYTE> () + _ADDRESS_ (r2x)) ;
 		auto &r4y = _LOAD_<ARR<COLOR_BGRA>> (r3x) ;
 		layout.mImage = &r4y ;
 		layout.mCX = LENGTH (FreeImage_GetWidth (r1y)) ;
