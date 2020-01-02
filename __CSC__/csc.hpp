@@ -206,6 +206,10 @@
 #pragma pop_macro ("discard")
 #endif
 
+#if _HAS_CXX17
+#define __CSC_CXX_LATEST__
+#endif
+
 namespace CSC {
 namespace stl {
 using std::int32_t ;
@@ -694,53 +698,54 @@ using REMOVE_TEMP_TYPE = typename REMOVE_TEMP<REMOVE_CVR_TYPE<_ARG1>>::TYPE ;
 
 namespace U {
 template <class>
-struct REMOVE_MEMFUNC ;
+struct REMOVE_FUNCATTR ;
 
+//@warn: exclude reference attribute of function
 template <class _ARG1 ,class... _ARGS>
-struct REMOVE_MEMFUNC<_ARG1 (_ARGS...)> {
+struct REMOVE_FUNCATTR<_ARG1 (_ARGS...)> {
 	using TYPE = DEF<_ARG1 (_ARGS...)> ;
 } ;
 
 template <class _ARG1 ,class... _ARGS>
-struct REMOVE_MEMFUNC<_ARG1 (_ARGS...) const> {
+struct REMOVE_FUNCATTR<_ARG1 (_ARGS...) const> {
 	using TYPE = DEF<_ARG1 (_ARGS...)> ;
 } ;
 
 template <class _ARG1 ,class... _ARGS>
-struct REMOVE_MEMFUNC<_ARG1 (_ARGS...) volatile> {
+struct REMOVE_FUNCATTR<_ARG1 (_ARGS...) volatile> {
 	using TYPE = DEF<_ARG1 (_ARGS...)> ;
 } ;
 
 template <class _ARG1 ,class... _ARGS>
-struct REMOVE_MEMFUNC<_ARG1 (_ARGS...) const volatile> {
+struct REMOVE_FUNCATTR<_ARG1 (_ARGS...) const volatile> {
 	using TYPE = DEF<_ARG1 (_ARGS...)> ;
 } ;
 
 //@warn: behaviors of 'noexcept' changed in C++17
-#if _HAS_CXX17
+#ifdef __CSC_CXX_LATEST__
 template <class _ARG1 ,class... _ARGS>
-struct REMOVE_MEMFUNC<_ARG1 (_ARGS...) noexcept> {
+struct REMOVE_FUNCATTR<_ARG1 (_ARGS...) noexcept> {
 	using TYPE = DEF<_ARG1 (_ARGS...)> ;
 } ;
 
 template <class _ARG1 ,class... _ARGS>
-struct REMOVE_MEMFUNC<_ARG1 (_ARGS...) const noexcept> {
+struct REMOVE_FUNCATTR<_ARG1 (_ARGS...) const noexcept> {
 	using TYPE = DEF<_ARG1 (_ARGS...)> ;
 } ;
 
 template <class _ARG1 ,class... _ARGS>
-struct REMOVE_MEMFUNC<_ARG1 (_ARGS...) volatile noexcept> {
+struct REMOVE_FUNCATTR<_ARG1 (_ARGS...) volatile noexcept> {
 	using TYPE = DEF<_ARG1 (_ARGS...)> ;
 } ;
 
 template <class _ARG1 ,class... _ARGS>
-struct REMOVE_MEMFUNC<_ARG1 (_ARGS...) const volatile noexcept> {
+struct REMOVE_FUNCATTR<_ARG1 (_ARGS...) const volatile noexcept> {
 	using TYPE = DEF<_ARG1 (_ARGS...)> ;
 } ;
 #endif
 
 template <class _ARG1>
-using REMOVE_MEMFUNC_TYPE = typename REMOVE_MEMFUNC<_ARG1>::TYPE ;
+using REMOVE_FUNCATTR_TYPE = typename REMOVE_FUNCATTR<_ARG1>::TYPE ;
 } ;
 
 namespace U {
@@ -758,15 +763,15 @@ using REMOVE_MEMPTR_TYPE = typename REMOVE_MEMPTR<_ARG1>::TYPE ;
 
 namespace U {
 template <class>
-struct MEMBER_CLASS ;
+struct MEMPTR_CLASS ;
 
 template <class _ARG1 ,class _ARG2>
-struct MEMBER_CLASS<_ARG1 _ARG2::*> {
+struct MEMPTR_CLASS<_ARG1 _ARG2::*> {
 	using TYPE = _ARG2 ;
 } ;
 
 template <class _ARG1>
-using MEMPTR_CLASS_TYPE = typename MEMBER_CLASS<_ARG1>::TYPE ;
+using MEMPTR_CLASS_TYPE = typename MEMPTR_CLASS<_ARG1>::TYPE ;
 } ;
 
 namespace U {
@@ -813,7 +818,7 @@ struct RESULT_OF<_ARG1 (_ARGS...) ,ARGVS<_ARGS...> ,_ARG2> {
 
 template <class _ARG1 ,class _ARG2>
 struct RESULT_OF<_ARG1 ,_ARG2 ,ENABLE_TYPE<(_SIZEOF_ (decltype (&_ARG1::operator())) > 0)>> {
-	using TYPE = typename RESULT_OF<REMOVE_MEMFUNC_TYPE<REMOVE_MEMPTR_TYPE<decltype (&_ARG1::operator())>> ,_ARG2 ,VOID>::TYPE ;
+	using TYPE = typename RESULT_OF<REMOVE_FUNCATTR_TYPE<REMOVE_MEMPTR_TYPE<decltype (&_ARG1::operator())>> ,_ARG2 ,VOID>::TYPE ;
 } ;
 
 template <class _ARG1 ,class _ARG2>
@@ -1359,7 +1364,7 @@ using U::REMOVE_VOLATILE_TYPE ;
 using U::REMOVE_CVR_TYPE ;
 using U::REMOVE_POINTER_TYPE ;
 using U::REMOVE_ARRAY_TYPE ;
-using U::REMOVE_MEMFUNC_TYPE ;
+using U::REMOVE_FUNCATTR_TYPE ;
 using U::REMOVE_MEMPTR_TYPE ;
 using U::MEMPTR_CLASS_TYPE ;
 using U::INVOKE_RESULT_TYPE ;
@@ -1419,7 +1424,7 @@ inline const REMOVE_REFERENCE_TYPE<_RET> &_XVALUE_ (const REMOVE_CVR_TYPE<_RET> 
 }
 
 template <class _ARG1>
-inline LENGTH _ADDRESS_ (PTR<_ARG1> address) popping {
+inline LENGTH _ADDRESS_ (PTR<_ARG1> address) noexcept popping {
 	_STATIC_ASSERT_ (std::is_same<REMOVE_CVR_TYPE<_ARG1> ,_ARG1>::value) ;
 #ifdef __CSC_COMPILER_GNUC__
 	asm volatile ("" :: "rm" (address) : "memory") ;
@@ -1427,8 +1432,15 @@ inline LENGTH _ADDRESS_ (PTR<_ARG1> address) popping {
 	return LENGTH (address) ;
 }
 
+inline LENGTH _ADDRESS_ (PTR<VOID> address) noexcept popping {
+#ifdef __CSC_COMPILER_GNUC__
+	asm volatile ("" ::: "memory") ;
+#endif
+	return LENGTH (address) ;
+}
+
 template <class _ARG1>
-inline LENGTH _ADDRESS_ (PTR<const _ARG1> address) popping {
+inline LENGTH _ADDRESS_ (PTR<const _ARG1> address) noexcept popping {
 	_STATIC_ASSERT_ (std::is_same<REMOVE_CVR_TYPE<_ARG1> ,_ARG1>::value) ;
 	return LENGTH (address) ;
 }
@@ -1460,19 +1472,12 @@ inline CAST_TRAITS_TYPE<_RET ,_ARG1> &_LOAD_ (PTR<_ARG1> address) noexcept {
 	return (*r3x) ;
 }
 
-inline PTR<VOID> _UNSAFE_ALIASING_ (LENGTH address) noexcept {
-#ifdef __CSC_COMPILER_GNUC__
-	asm volatile ("" ::: "memory") ;
-#endif
-	return &_NULL_<BYTE> () + address ;
-}
-
 template <class _ARG1 ,class _ARG2 ,class _ARG3>
 inline CAST_TRAITS_TYPE<_ARG2 ,_ARG3> &_OFFSET_ (const DEF<_ARG1 _ARG2::*> &mptr ,_ARG3 &mref) noexcept {
-	_STATIC_ASSERT_ (std::is_same<REMOVE_CVR_TYPE<_ARG3> ,_ARG1>::value) ;
+	_STATIC_ASSERT_ (std::is_same<REMOVE_CVR_TYPE<_ARG1> ,REMOVE_CVR_TYPE<_ARG3>>::value) ;
 	_DEBUG_ASSERT_ (mptr != NULL) ;
 	const auto r1x = _ADDRESS_ (&mref) - _ADDRESS_ (&(_NULL_<_ARG2> ().*mptr)) ;
-	return _LOAD_<_ARG2> (_UNSAFE_ALIASING_ (r1x)) ;
+	return _LOAD_<CAST_TRAITS_TYPE<_ARG2 ,_ARG3>> (_XVALUE_<PTR<VOID>> (&_NULL_<BYTE> () + r1x)) ;
 }
 
 template <class _ARG1>
@@ -1549,7 +1554,12 @@ inline FLAG _TYPEUID_ () noexcept {
 }
 
 template <class _ARG1>
-inline constexpr _ARG1 &&_SWITCH_ (_ARG1 &&expr) {
+inline constexpr _ARG1 &_SWITCH_ (_ARG1 &expr) {
+	return expr ;
+}
+
+template <class _ARG1>
+inline constexpr _ARG1 _SWITCH_ (_ARG1 &&expr) {
 	return std::forward<_ARG1> (expr) ;
 }
 

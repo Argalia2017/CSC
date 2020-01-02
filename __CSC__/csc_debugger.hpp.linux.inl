@@ -363,7 +363,7 @@ public:
 		const auto r1x = _CALL_ ([&] () {
 			Array<PTR<VOID>> ret = Array<PTR<VOID>> (list.length ()) ;
 			for (auto &&i : _RANGE_ (0 ,ret.length ())) {
-				const auto r2x = _UNSAFE_ALIASING_ (i) ;
+				const auto r2x = _XVALUE_<PTR<VOID>> (&_NULL_<BYTE> () + i) ;
 				ret[i] = r2x ;
 			}
 			return std::move (ret) ;

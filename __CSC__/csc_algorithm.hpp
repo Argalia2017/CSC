@@ -40,10 +40,16 @@ inline void PrimeSieveAlgorithm::initialize (LENGTH len) {
 	mPrimeSet.fill (BYTE (0XAA)) ;
 	mPrimeSet[1] = FALSE ;
 	mPrimeSet[2] = TRUE ;
-	for (INDEX i = 3 ,ie = _SQRT_ (mPrimeSet.size ()) + 1 ; i < ie ; i += 2) {
-		const auto r1x = i * 2 ;
-		for (INDEX j = _SQE_ (i) ,je = mPrimeSet.size () ; j < je ; j += r1x)
-			mPrimeSet[j] = FALSE ;
+	const auto r1x = (_SQRT_ (mPrimeSet.size ()) - 2) / 2 + 1 ;
+	for (auto &&i : _RANGE_ (0 ,r1x)) {
+		INDEX ix = i * 2 + 3 ;
+		const auto r2x = ix * 2 ;
+		const auto r3x = _SQE_ (ix) ;
+		const auto r4x = (mPrimeSet.size () - r3x) / r2x + 1 ;
+		for (auto &&j : _RANGE_ (0 ,r4x)) {
+			INDEX jx = j * r2x + r3x ;
+			mPrimeSet[jx] = FALSE ;
+		}
 	}
 }
 
@@ -273,8 +279,8 @@ inline void KMeansAlgorithm<REAL>::initialize (const Set<REAL> &dataset ,const F
 		const REAL mTolerance ;
 		const REAL mInfinity ;
 
-		Deque<REAL> mCurrCenterList ;
-		Deque<REAL> mNextCenterList ;
+		SList<REAL> mCurrCenterList ;
+		SList<REAL> mNextCenterList ;
 		Array<ARRAY2<INDEX>> mCenterIndex ;
 		Set<INDEX ,BitSet<>> mClusterSet ;
 		ARRAY3<REAL> mConvergence ;
@@ -290,8 +296,8 @@ inline void KMeansAlgorithm<REAL>::initialize (const Set<REAL> &dataset ,const F
 
 	private:
 		inline void prepare () {
-			mCurrCenterList = Deque<REAL> (mCenterIndex.length ()) ;
-			mNextCenterList = Deque<REAL> (mCenterIndex.length ()) ;
+			mCurrCenterList = SList<REAL> (mCenterIndex.length ()) ;
+			mNextCenterList = SList<REAL> (mCenterIndex.length ()) ;
 			mCurrCenterList.appand (mCenter) ;
 			mCenterIndex = Array<ARRAY2<INDEX>> (mCurrCenterList.length ()) ;
 			INDEX iw = 0 ;

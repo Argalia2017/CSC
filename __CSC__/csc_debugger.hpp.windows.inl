@@ -420,7 +420,7 @@ public:
 			const auto r1x = _ALIGNOF_ (SYMBOL_INFO) - 1 + _SIZEOF_ (SYMBOL_INFO) + list.length () * DEFAULT_SHORTSTRING_SIZE::value ;
 			auto rax = AutoBuffer<BYTE> (r1x) ;
 			const auto r2x = _ALIGNAS_ (_ADDRESS_ (&rax.self) ,_ALIGNOF_ (SYMBOL_INFO)) ;
-			auto &r3y = _LOAD_<SYMBOL_INFO> (_UNSAFE_ALIASING_ (r2x)) ;
+			auto &r3y = _LOAD_<SYMBOL_INFO> (_XVALUE_<PTR<VOID>> (&_NULL_<BYTE> () + r2x)) ;
 			r3y.SizeOfStruct = _SIZEOF_ (SYMBOL_INFO) ;
 			r3y.MaxNameLen = DEFAULT_SHORTSTRING_SIZE::value ;
 			for (auto &&i : list) {

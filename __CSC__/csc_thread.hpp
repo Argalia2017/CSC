@@ -23,7 +23,7 @@ private:
 	private:
 		friend CalcThread ;
 		friend IntrusiveRef<Holder> ;
-		Monostate<std::atomic<LENGTH>> mCounter ;
+		std::atomic<LENGTH> mCounter ;
 		Monostate<std::mutex> mThreadMutex ;
 		Monostate<std::condition_variable> mThreadCondition ;
 		AutoRef<BOOL> mThreadFlag ;
@@ -233,7 +233,7 @@ private:
 
 		inline static void friend_create (Holder &self_) {
 			ScopedGuard<std::mutex> ANONYMOUS (self_.mThreadMutex) ;
-			self_.mCounter.self = 0 ;
+			self_.mCounter = 0 ;
 			self_.mThreadFlag = AutoRef<BOOL> () ;
 			self_.mThreadCounter = 0 ;
 			self_.mThreadPool = Array<AutoRef<std::thread>> () ;
@@ -266,11 +266,11 @@ private:
 		}
 
 		inline static LENGTH friend_attach (Holder &self_) popping {
-			return ++self_.mCounter.self ;
+			return ++self_.mCounter ;
 		}
 
 		inline static LENGTH friend_detach (Holder &self_) popping {
-			return --self_.mCounter.self ;
+			return --self_.mCounter ;
 		}
 
 		inline static void friend_latch (Holder &self_) {
@@ -291,7 +291,7 @@ private:
 	private:
 		friend WorkThread ;
 		friend IntrusiveRef<Holder> ;
-		Monostate<std::atomic<LENGTH>> mCounter ;
+		std::atomic<LENGTH> mCounter ;
 		Monostate<std::mutex> mThreadMutex ;
 		Monostate<std::condition_variable> mThreadCondition ;
 		LENGTH mThreadCounter ;
@@ -547,7 +547,7 @@ private:
 
 		inline static void friend_create (Holder &self_) {
 			ScopedGuard<std::mutex> ANONYMOUS (self_.mThreadMutex) ;
-			self_.mCounter.self = 0 ;
+			self_.mCounter = 0 ;
 			self_.mThreadFlag = AutoRef<BOOL> () ;
 			self_.mThreadCounter = 0 ;
 			self_.mThreadWaitCounter = 0 ;
@@ -582,11 +582,11 @@ private:
 		}
 
 		inline static LENGTH friend_attach (Holder &self_) popping {
-			return ++self_.mCounter.self ;
+			return ++self_.mCounter ;
 		}
 
 		inline static LENGTH friend_detach (Holder &self_) popping {
-			return --self_.mCounter.self ;
+			return --self_.mCounter ;
 		}
 
 		inline static void friend_latch (Holder &self_) {
@@ -611,7 +611,7 @@ private:
 		friend Promise ;
 		friend Future ;
 		friend IntrusiveRef<Holder> ;
-		Monostate<std::atomic<LENGTH>> mCounter ;
+		std::atomic<LENGTH> mCounter ;
 		Monostate<std::mutex> mThreadMutex ;
 		Monostate<std::condition_variable> mThreadCondition ;
 		LENGTH mThreadCounter ;
@@ -779,7 +779,7 @@ private:
 
 		inline static void friend_create (Holder &self_) {
 			ScopedGuard<std::mutex> ANONYMOUS (self_.mThreadMutex) ;
-			self_.mCounter.self = 0 ;
+			self_.mCounter = 0 ;
 			self_.mThreadFlag = AutoRef<BOOL> () ;
 			self_.mThreadCounter = 0 ;
 			self_.mThreadPool = AutoRef<std::thread> () ;
@@ -811,11 +811,11 @@ private:
 		}
 
 		inline static LENGTH friend_attach (Holder &self_) popping {
-			return ++self_.mCounter.self ;
+			return ++self_.mCounter ;
 		}
 
 		inline static LENGTH friend_detach (Holder &self_) popping {
-			return --self_.mCounter.self ;
+			return --self_.mCounter ;
 		}
 
 		inline static void friend_latch (Holder &self_) {

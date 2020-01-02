@@ -73,7 +73,7 @@ public:
 		const auto r2x = r1y.mStackPoint[1] - r1y.mStackPoint[0] ;
 		_DEBUG_ASSERT_ (_ABS_ (r2x) <= _SIZEOF_ (decltype (r1y.mStackFrame))) ;
 		const auto r3x = EFLAG (r2x < 0) ;
-		auto &r4y = _LOAD_<ARR<BYTE>> (_UNSAFE_ALIASING_ (r1y.mStackPoint[r3x])) ;
+		auto &r4y = _LOAD_<ARR<BYTE>> (_XVALUE_<PTR<VOID>> (&_NULL_<BYTE> () + r1y.mStackPoint[r3x])) ;
 		_MEMCOPY_ (PTRTOARR[r1y.mStackFrame] ,r4y ,_ABS_ (r2x)) ;
 		auto &r5y = load_context_ebp (r1y.mContextEbp) ;
 		const auto r6x = ::setjmp (r5y.mEbp) ;
@@ -90,7 +90,7 @@ public:
 		const auto r2x = r1y.mStackPoint[1] - r1y.mStackPoint[0] ;
 		_DEBUG_ASSERT_ (_ABS_ (r2x) <= _SIZEOF_ (decltype (r1y.mStackFrame))) ;
 		const auto r3x = EFLAG (r2x < 0) ;
-		auto &r4y = _LOAD_<ARR<BYTE>> (_UNSAFE_ALIASING_ (r1y.mStackPoint[r3x])) ;
+		auto &r4y = _LOAD_<ARR<BYTE>> (_XVALUE_<PTR<VOID>> (&_NULL_<BYTE> () + r1y.mStackPoint[r3x])) ;
 		_MEMCOPY_ (r4y ,PTRTOARR[r1y.mStackFrame] ,_ABS_ (r2x)) ;
 		auto &r5y = load_context_ebp (r1y.mContextEbp) ;
 		::longjmp (r5y.mEbp ,1) ;
