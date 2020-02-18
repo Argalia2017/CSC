@@ -10,12 +10,14 @@
 #pragma push_macro ("popping")
 #pragma push_macro ("imports")
 #pragma push_macro ("exports")
+#pragma push_macro ("switch_case")
 #pragma push_macro ("discard")
 #undef self
 #undef implicit
 #undef popping
 #undef imports
 #undef exports
+#undef switch_case
 #undef discard
 #endif
 
@@ -56,6 +58,7 @@
 #pragma pop_macro ("popping")
 #pragma pop_macro ("imports")
 #pragma pop_macro ("exports")
+#pragma pop_macro ("switch_case")
 #pragma pop_macro ("discard")
 #endif
 
@@ -217,7 +220,7 @@ public:
 
 	void attach_log (const String<STR> &path) override {
 		const auto r1x = _ABSOLUTEPATH_ (path) ;
-		if SWITCH_CASE (TRUE) {
+		if switch_case (TRUE) {
 			if (mLogPath == r1x)
 				discard ;
 			if (!mLogFileStream.exist ())
@@ -390,7 +393,7 @@ public:
 	void output_memory_leaks_report (BOOL flag) override {
 		_DEBUG_ASSERT_ (flag) ;
 		const auto r1x = _CrtSetDbgFlag (_CRTDBG_REPORT_FLAG) ;
-		const auto r2x = _COPY_ (r1x | _CRTDBG_LEAK_CHECK_DF) ;
+		const auto r2x = _XVALUE_<VAR32> (r1x | _CRTDBG_LEAK_CHECK_DF) ;
 		const auto r3x = _CrtSetDbgFlag (r2x) ;
 		(void) r1x ;
 		(void) r2x ;
@@ -414,7 +417,7 @@ public:
 		Array<String<STR>> ret = Array<String<STR>> (list.length ()) ;
 		INDEX iw = 0 ;
 		auto fax = TRUE ;
-		if SWITCH_CASE (fax) {
+		if switch_case (fax) {
 			if (!mSymbolFromAddress.exist ())
 				discard ;
 			const auto r1x = _ALIGNOF_ (SYMBOL_INFO) - 1 + _SIZEOF_ (SYMBOL_INFO) + list.length () * DEFAULT_SHORTSTRING_SIZE::value ;
@@ -430,7 +433,7 @@ public:
 				ret[iw++] = String<STR>::make (_PCSTR_ ("[") ,r4x ,_PCSTR_ ("] : ") ,r5x) ;
 			}
 		}
-		if SWITCH_CASE (fax) {
+		if switch_case (fax) {
 			for (auto &&i : list) {
 				const auto r6x = _BUILDHEX16S_ (DATA (i)) ;
 				ret[iw++] = String<STR>::make (_PCSTR_ ("[") ,r6x ,_PCSTR_ ("] : null")) ;

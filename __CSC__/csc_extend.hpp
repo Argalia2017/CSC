@@ -12,12 +12,14 @@
 #pragma push_macro ("popping")
 #pragma push_macro ("imports")
 #pragma push_macro ("exports")
+#pragma push_macro ("switch_case")
 #pragma push_macro ("discard")
 #undef self
 #undef implicit
 #undef popping
 #undef imports
 #undef exports
+#undef switch_case
 #undef discard
 #endif
 
@@ -43,6 +45,7 @@
 #pragma pop_macro ("popping")
 #pragma pop_macro ("imports")
 #pragma pop_macro ("exports")
+#pragma pop_macro ("switch_case")
 #pragma pop_macro ("discard")
 #endif
 
@@ -82,28 +85,6 @@ using std::quick_exit ;
 using std::exit ;
 using std::terminate ;
 } ;
-
-#ifdef __CSC_COMPILER_MSVC__
-#define DLLABI_IMPORT __declspec (dllimport)
-#define DLLABI_EXPORT __declspec (dllexport)
-#define DLLABI_API __stdcall
-#define DLLABI_NATIVE extern "C"
-#elif defined __CSC_COMPILER_GNUC__
-#define DLLABI_IMPORT
-#define DLLABI_EXPORT __attribute__ ((visibility ("default")))
-#define DLLABI_API
-#define DLLABI_NATIVE extern "C"
-#elif defined __CSC_COMPILER_CLANG__
-#define DLLABI_IMPORT
-#define DLLABI_EXPORT __attribute__ ((visibility ("default")))
-#define DLLABI_API
-#define DLLABI_NATIVE extern "C"
-#else
-#define DLLABI_IMPORT
-#define DLLABI_EXPORT
-#define DLLABI_API
-#define DLLABI_NATIVE
-#endif
 
 class GlobalRuntime final :private Wrapped<void> {
 public:
@@ -381,7 +362,7 @@ public:
 		const auto r1x = _CAST_<VAR64> (v2i0) ;
 		const auto r2x = _CAST_<VAR64> (that.v2i0) ;
 		auto fax = TRUE ;
-		if SWITCH_CASE (fax) {
+		if switch_case (fax) {
 			if (!(r1x >= 0))
 				discard ;
 			if (!(that.v4i0 == 0))
@@ -402,7 +383,7 @@ public:
 			rax = (DATA (rax % r3x) << (_SIZEOF_ (CHAR) * 8)) | DATA (v4i3) ;
 			ret.v4i3 = CHAR (rax / r3x) ;
 		}
-		if SWITCH_CASE (fax) {
+		if switch_case (fax) {
 			if (!(v2i0 == DATA (VAR64_MIN)))
 				discard ;
 			if (!(v2i1 == 0))
@@ -411,7 +392,7 @@ public:
 				discard ;
 			ret = -(-((*this) + that) / that + 1) ;
 		}
-		if SWITCH_CASE (fax) {
+		if switch_case (fax) {
 			if (!(v2i0 == DATA (VAR64_MIN)))
 				discard ;
 			if (!(v2i1 == 0))
@@ -420,12 +401,12 @@ public:
 				discard ;
 			ret = -(-((*this) - that) / that - 1) ;
 		}
-		if SWITCH_CASE (fax) {
+		if switch_case (fax) {
 			if (!(r1x < 0))
 				discard ;
 			ret = -(-(*this) / that) ;
 		}
-		if SWITCH_CASE (fax) {
+		if switch_case (fax) {
 			if (!(r1x >= 0))
 				discard ;
 			if (!(that.v2i0 == DATA (VAR64_MIN)))
@@ -434,14 +415,14 @@ public:
 				discard ;
 			ret = VAR128 (0) ;
 		}
-		if SWITCH_CASE (fax) {
+		if switch_case (fax) {
 			if (!(r1x >= 0))
 				discard ;
 			if (!(r2x < 0))
 				discard ;
 			ret = (*this) / (-that) ;
 		}
-		if SWITCH_CASE (fax) {
+		if switch_case (fax) {
 			ret = Detail::slow_divide ((*this) ,that) ;
 		}
 		return std::move (ret) ;
@@ -457,7 +438,7 @@ public:
 		const auto r1x = _CAST_<VAR64> (v2i0) ;
 		const auto r2x = _CAST_<VAR64> (that.v2i0) ;
 		auto fax = TRUE ;
-		if SWITCH_CASE (fax) {
+		if switch_case (fax) {
 			if (!(r1x >= 0))
 				discard ;
 			if (!(that.v4i0 == 0))
@@ -478,7 +459,7 @@ public:
 			rax = (DATA (rax % r3x) << (_SIZEOF_ (CHAR) * 8)) | DATA (v4i3) ;
 			ret.v4i3 = CHAR (rax % r3x) ;
 		}
-		if SWITCH_CASE (fax) {
+		if switch_case (fax) {
 			if (!(v2i0 == DATA (VAR64_MIN)))
 				discard ;
 			if (!(v2i1 == 0))
@@ -487,7 +468,7 @@ public:
 				discard ;
 			ret = -(-((*this) + that) % that) ;
 		}
-		if SWITCH_CASE (fax) {
+		if switch_case (fax) {
 			if (!(v2i0 == DATA (VAR64_MIN)))
 				discard ;
 			if (!(v2i1 == 0))
@@ -496,12 +477,12 @@ public:
 				discard ;
 			ret = -(-((*this) - that) % that) ;
 		}
-		if SWITCH_CASE (fax) {
+		if switch_case (fax) {
 			if (!(r1x < 0))
 				discard ;
 			ret = -(-(*this) % that) ;
 		}
-		if SWITCH_CASE (fax) {
+		if switch_case (fax) {
 			if (!(r1x >= 0))
 				discard ;
 			if (!(that.v2i0 == DATA (VAR64_MIN)))
@@ -510,14 +491,14 @@ public:
 				discard ;
 			ret = (*this) ;
 		}
-		if SWITCH_CASE (fax) {
+		if switch_case (fax) {
 			if (!(r1x >= 0))
 				discard ;
 			if (!(r2x < 0))
 				discard ;
 			ret = (*this) % (-that) ;
 		}
-		if SWITCH_CASE (fax) {
+		if switch_case (fax) {
 			ret = that - Detail::slow_divide ((*this) ,that) * that ;
 		}
 		return std::move (ret) ;
@@ -828,7 +809,7 @@ public:
 	}
 
 	inline Variant &operator= (const Variant &that) {
-		if SWITCH_CASE (TRUE) {
+		if switch_case (TRUE) {
 			if (this == &that)
 				discard ;
 			(*this).~Variant () ;
@@ -845,7 +826,7 @@ public:
 	}
 
 	inline Variant &operator= (Variant &&that) noexcept {
-		if SWITCH_CASE (TRUE) {
+		if switch_case (TRUE) {
 			if (this == &that)
 				discard ;
 			(*this).~Variant () ;
@@ -932,7 +913,7 @@ private:
 			_STATIC_ASSERT_ (std::is_nothrow_move_constructible<_ARG1>::value) ;
 			_STATIC_ASSERT_ (std::is_nothrow_move_assignable<_ARG1>::value) ;
 			const auto r1x = BOOL (index == 0) ;
-			if SWITCH_CASE (TRUE) {
+			if switch_case (TRUE) {
 				if (!r1x)
 					discard ;
 				auto &r2y = _LOAD_<TEMP<_ARG1>> (address) ;
@@ -953,7 +934,7 @@ private:
 			_STATIC_ASSERT_ (std::is_nothrow_move_constructible<_ARG1>::value) ;
 			_STATIC_ASSERT_ (std::is_nothrow_move_assignable<_ARG1>::value) ;
 			const auto r1x = BOOL (index == 0) ;
-			if SWITCH_CASE (TRUE) {
+			if switch_case (TRUE) {
 				if (!r1x)
 					discard ;
 				auto &r2y = _LOAD_<TEMP<_ARG1>> (address) ;
@@ -971,7 +952,7 @@ private:
 		template <class _ARG1 ,class... _ARGS>
 		inline static void template_copy_construct (PTR<TEMP<VARIANT>> address ,PTR<const TEMP<VARIANT>> that ,INDEX index ,const ARGV<ARGVS<_ARG1 ,_ARGS...>> &) {
 			const auto r1x = BOOL (index == 0) ;
-			if SWITCH_CASE (TRUE) {
+			if switch_case (TRUE) {
 				if (!r1x)
 					discard ;
 				auto &r2y = _LOAD_<TEMP<_ARG1>> (address) ;
@@ -992,7 +973,7 @@ private:
 			_STATIC_ASSERT_ (std::is_nothrow_move_constructible<_ARG1>::value) ;
 			_STATIC_ASSERT_ (std::is_nothrow_move_assignable<_ARG1>::value) ;
 			const auto r1x = BOOL (index == 0) ;
-			if SWITCH_CASE (TRUE) {
+			if switch_case (TRUE) {
 				if (!r1x)
 					discard ;
 				auto &r2y = _LOAD_<TEMP<_ARG1>> (address) ;
@@ -1642,7 +1623,7 @@ public:
 			return ;
 		if (!mHolder->mData.exist ())
 			return ;
-		if SWITCH_CASE (TRUE) {
+		if switch_case (TRUE) {
 			const auto r1x = --mHolder->mCounter ;
 			if (r1x != 0)
 				discard ;
@@ -1656,7 +1637,7 @@ public:
 	}
 
 	inline StrongRef &operator= (const StrongRef &that) {
-		if SWITCH_CASE (TRUE) {
+		if switch_case (TRUE) {
 			if (this == &that)
 				discard ;
 			(*this).~StrongRef () ;
@@ -1671,7 +1652,7 @@ public:
 	}
 
 	inline StrongRef &operator= (StrongRef &&that) noexcept {
-		if SWITCH_CASE (TRUE) {
+		if switch_case (TRUE) {
 			if (this == &that)
 				discard ;
 			(*this).~StrongRef () ;
@@ -1911,7 +1892,7 @@ public:
 	}
 
 	inline SoftRef &operator= (const SoftRef &that) {
-		if SWITCH_CASE (TRUE) {
+		if switch_case (TRUE) {
 			if (this == &that)
 				discard ;
 			(*this).~SoftRef () ;
@@ -1927,7 +1908,7 @@ public:
 	}
 
 	inline SoftRef &operator= (SoftRef &&that) noexcept {
-		if SWITCH_CASE (TRUE) {
+		if switch_case (TRUE) {
 			if (this == &that)
 				discard ;
 			(*this).~SoftRef () ;
@@ -1978,7 +1959,7 @@ public:
 	}
 
 	inline StrongRef<UNIT> watch () const {
-		if SWITCH_CASE (TRUE) {
+		if switch_case (TRUE) {
 			if (!linked ())
 				discard ;
 			auto &r1y = mHeap.self[mIndex].mWeight ;
@@ -2055,7 +2036,7 @@ private:
 			return ;
 		if (!mWeakRef.exist ())
 			return ;
-		if SWITCH_CASE (TRUE) {
+		if switch_case (TRUE) {
 			mIndex = find_min_weight () ;
 			if (mIndex == VAR_NONE)
 				discard ;
@@ -2182,7 +2163,7 @@ public:
 	}
 
 	inline IntrusiveRef &operator= (IntrusiveRef &&that) noexcept {
-		if SWITCH_CASE (TRUE) {
+		if switch_case (TRUE) {
 			if (this == &that)
 				discard ;
 			(*this).~IntrusiveRef () ;
@@ -2303,11 +2284,11 @@ private:
 } ;
 
 template <class UNIT>
-class Notation {
+class Monoid {
 private:
 	class Holder {
 	private:
-		friend Notation ;
+		friend Monoid ;
 		Function<DEF<UNIT ()> NONE::*> mEvaluator ;
 	} ;
 
@@ -2315,26 +2296,26 @@ private:
 	SoftRef<Holder> mThis ;
 
 public:
-	inline Notation () = default ;
+	inline Monoid () = default ;
 
-	inline explicit Notation (const UNIT &that) {
+	inline explicit Monoid (const UNIT &that) {
 		_STATIC_WARNING_ ("unimplemented") ;
 		_DYNAMIC_ASSERT_ (FALSE) ;
 	}
 
-	inline explicit Notation (UNIT &&that) {
-		_STATIC_WARNING_ ("unimplemented") ;
-		_DYNAMIC_ASSERT_ (FALSE) ;
-	}
-
-	template <class... _ARGS>
-	inline explicit Notation (const Function<UNIT (const _ARGS &...)> &that) {
+	inline explicit Monoid (UNIT &&that) {
 		_STATIC_WARNING_ ("unimplemented") ;
 		_DYNAMIC_ASSERT_ (FALSE) ;
 	}
 
 	template <class... _ARGS>
-	inline explicit Notation (const Function<DEF<UNIT (const _ARGS &...)> NONE::*> &that) {
+	inline explicit Monoid (const Function<UNIT (const _ARGS &...)> &that) {
+		_STATIC_WARNING_ ("unimplemented") ;
+		_DYNAMIC_ASSERT_ (FALSE) ;
+	}
+
+	template <class... _ARGS>
+	inline explicit Monoid (const Function<DEF<UNIT (const _ARGS &...)> NONE::*> &that) {
 		_STATIC_WARNING_ ("unimplemented") ;
 		_DYNAMIC_ASSERT_ (FALSE) ;
 	}
@@ -2345,26 +2326,26 @@ public:
 		return 0 ;
 	}
 
-	inline Notation concat (const Notation &that) const {
+	inline Monoid concat (const Monoid &that) const {
 		_STATIC_WARNING_ ("unimplemented") ;
 		_DYNAMIC_ASSERT_ (FALSE) ;
-		return Notation () ;
+		return Monoid () ;
 	}
 
-	inline Notation operator+ (const Notation &that) const {
+	inline Monoid operator+ (const Monoid &that) const {
 		return concat (that) ;
 	}
 
-	inline Notation &operator+= (const Notation &that) {
+	inline Monoid &operator+= (const Monoid &that) {
 		(*this) = concat (that) ;
 		return (*this) ;
 	}
 
-	inline Notation operator- (const Notation &that) const {
+	inline Monoid operator- (const Monoid &that) const {
 		return that.concat ((*this)) ;
 	}
 
-	inline Notation &operator-= (const Notation &that) {
+	inline Monoid &operator-= (const Monoid &that) {
 		(*this) = that.concat ((*this)) ;
 		return (*this) ;
 	}

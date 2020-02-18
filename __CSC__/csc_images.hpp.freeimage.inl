@@ -10,12 +10,14 @@
 #pragma push_macro ("popping")
 #pragma push_macro ("imports")
 #pragma push_macro ("exports")
+#pragma push_macro ("switch_case")
 #pragma push_macro ("discard")
 #undef self
 #undef implicit
 #undef popping
 #undef imports
 #undef exports
+#undef switch_case
 #undef discard
 #endif
 
@@ -50,6 +52,7 @@
 #pragma pop_macro ("popping")
 #pragma pop_macro ("imports")
 #pragma pop_macro ("exports")
+#pragma pop_macro ("switch_case")
 #pragma pop_macro ("discard")
 #endif
 
@@ -131,7 +134,7 @@ public:
 		tmp.P2 = VARY (0) ;
 		const auto r4x = FreeImage_AcquireMemory (r1x.self ,&tmp.P1 ,&tmp.P2) ;
 		_DYNAMIC_ASSERT_ (r4x) ;
-		if SWITCH_CASE (TRUE) {
+		if switch_case (TRUE) {
 			if (LENGTH (tmp.P2) == 0)
 				discard ;
 			_DYNAMIC_ASSERT_ (tmp.P1 != NULL) ;
@@ -245,7 +248,7 @@ public:
 		tmp.P2 = VARY (0) ;
 		const auto r4x = FreeImage_AcquireMemory (r1x.self ,&tmp.P1 ,&tmp.P2) ;
 		_DYNAMIC_ASSERT_ (r4x) ;
-		if SWITCH_CASE (TRUE) {
+		if switch_case (TRUE) {
 			if (LENGTH (tmp.P2) == 0)
 				discard ;
 			_DYNAMIC_ASSERT_ (tmp.P1 != NULL) ;

@@ -119,7 +119,7 @@ public:
 		}
 		const auto r1x = mThis.watch () ;
 		auto &r2y = _XVALUE_<Holder> (r1x) ;
-		std::unique_lock<std::mutex> sgd (r2y.mThreadMutex) ;
+		ScopedGuard<std::mutex> ANONYMOUS (r2y.mThreadMutex) ;
 		_DEBUG_ASSERT_ (!r2y.mThreadFlag.exist ()) ;
 		_DEBUG_ASSERT_ (r2y.mThreadCounter == 0) ;
 		r2y.mThreadFlag = AutoRef<BOOL>::make (TRUE) ;
@@ -211,7 +211,7 @@ private:
 			_DEBUG_ASSERT_ (self_.mThreadFlag.exist ()) ;
 			_DYNAMIC_ASSERT_ (self_.mThreadFlag.self) ;
 			_DYNAMIC_ASSERT_ (self_.mItemQueue->size () > 0) ;
-			if SWITCH_CASE (TRUE) {
+			if switch_case (TRUE) {
 				if (!self_.mItemQueue->full ())
 					discard ;
 				self_.mThreadCondition.self.wait_for (sgd ,std::chrono::milliseconds (0)) ;
@@ -423,7 +423,7 @@ public:
 		_DEBUG_ASSERT_ (proc.exist ()) ;
 		const auto r1x = mThis.watch () ;
 		auto &r2y = _XVALUE_<Holder> (r1x) ;
-		std::unique_lock<std::mutex> sgd (r2y.mThreadMutex) ;
+		ScopedGuard<std::mutex> ANONYMOUS (r2y.mThreadMutex) ;
 		_DEBUG_ASSERT_ (!r2y.mThreadFlag.exist ()) ;
 		_DEBUG_ASSERT_ (r2y.mThreadCounter == 0) ;
 		r2y.mThreadFlag = AutoRef<BOOL>::make (TRUE) ;
@@ -653,7 +653,7 @@ public:
 	void start () {
 		const auto r1x = mThis.watch () ;
 		auto &r2y = _XVALUE_<Holder> (r1x) ;
-		std::unique_lock<std::mutex> sgd (r2y.mThreadMutex) ;
+		ScopedGuard<std::mutex> ANONYMOUS (r2y.mThreadMutex) ;
 		_DYNAMIC_ASSERT_ (!r2y.mThreadFlag.exist ()) ;
 		_DEBUG_ASSERT_ (r2y.mThreadCounter == 0) ;
 		r2y.mThreadFlag = AutoRef<BOOL>::make (TRUE) ;
@@ -669,7 +669,7 @@ public:
 		_DEBUG_ASSERT_ (proc.exist ()) ;
 		const auto r1x = mThis.watch () ;
 		auto &r2y = _XVALUE_<Holder> (r1x) ;
-		std::unique_lock<std::mutex> sgd (r2y.mThreadMutex) ;
+		ScopedGuard<std::mutex> ANONYMOUS (r2y.mThreadMutex) ;
 		_DYNAMIC_ASSERT_ (!r2y.mThreadFlag.exist ()) ;
 		_DEBUG_ASSERT_ (r2y.mThreadCounter == 0) ;
 		r2y.mThreadFlag = AutoRef<BOOL>::make (TRUE) ;
@@ -767,7 +767,7 @@ private:
 			_DEBUG_ASSERT_ (self_.mThreadFlag.exist ()) ;
 			self_.mThreadFlag.self = FALSE ;
 			self_.mThreadCondition.self.notify_all () ;
-			if SWITCH_CASE (TRUE) {
+			if switch_case (TRUE) {
 				if (!self_.mItem.exist ())
 					discard ;
 				if (!self_.mCallbackProc.exist ())

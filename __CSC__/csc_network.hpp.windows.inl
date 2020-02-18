@@ -10,12 +10,14 @@
 #pragma push_macro ("popping")
 #pragma push_macro ("imports")
 #pragma push_macro ("exports")
+#pragma push_macro ("switch_case")
 #pragma push_macro ("discard")
 #undef self
 #undef implicit
 #undef popping
 #undef imports
 #undef exports
+#undef switch_case
 #undef discard
 #endif
 
@@ -53,6 +55,7 @@
 #pragma pop_macro ("popping")
 #pragma pop_macro ("imports")
 #pragma pop_macro ("exports")
+#pragma pop_macro ("switch_case")
 #pragma pop_macro ("discard")
 #endif
 
@@ -117,6 +120,7 @@ inline ARRAY2<fd_set> _inline_SOCKET_SELECT_ (const SOCKET &socket_ ,LENGTH time
 		const auto r1x = ::select (FD_SETSIZE ,&ret[0] ,&ret[1] ,NULL ,&rax) ;
 		if (r1x >= 0)
 			break ;
+		_STATIC_WARNING_ ("noop") ;
 	}
 	_ZERO_ (rax) ;
 	return std::move (ret) ;
@@ -182,7 +186,7 @@ public:
 		if (r1x == 0)
 			return ;
 		//@info: state of 'this' has been changed
-		if SWITCH_CASE (TRUE) {
+		if switch_case (TRUE) {
 			if (r1x >= 0)
 				discard ;
 			const auto r2x = errno ;
@@ -214,7 +218,7 @@ public:
 		const auto r3x = _inline_SOCKET_MAKE_TIMEVAL_ (0) ;
 		::setsockopt (mThis->mSocket ,SOL_SOCKET ,SO_RCVTIMEO ,_CAST_<STRA[_SIZEOF_ (TIMEVAL)]> (r3x) ,VAR32 (_SIZEOF_ (TIMEVAL))) ;
 		//@info: state of 'this' has been changed
-		if SWITCH_CASE (TRUE) {
+		if switch_case (TRUE) {
 			if (r2x >= 0)
 				discard ;
 			const auto r4x = errno ;
@@ -234,7 +238,7 @@ public:
 		const auto r3x = _inline_SOCKET_MAKE_TIMEVAL_ (0) ;
 		::setsockopt (mThis->mSocket ,SOL_SOCKET ,SO_RCVTIMEO ,_CAST_<STRA[_SIZEOF_ (TIMEVAL)]> (r3x) ,VAR32 (_SIZEOF_ (TIMEVAL))) ;
 		//@info: state of 'this' has been changed
-		if SWITCH_CASE (TRUE) {
+		if switch_case (TRUE) {
 			if (r2x >= 0)
 				discard ;
 			const auto r4x = errno ;
@@ -253,7 +257,7 @@ public:
 		const auto r3x = _inline_SOCKET_MAKE_TIMEVAL_ (0) ;
 		::setsockopt (mThis->mSocket ,SOL_SOCKET ,SO_SNDTIMEO ,_CAST_<STRA[_SIZEOF_ (TIMEVAL)]> (r3x) ,VAR32 (_SIZEOF_ (TIMEVAL))) ;
 		//@info: state of 'this' has been changed
-		if SWITCH_CASE (TRUE) {
+		if switch_case (TRUE) {
 			if (r2x >= 0)
 				discard ;
 			const auto r4x = errno ;
@@ -535,7 +539,7 @@ public:
 		if (mService.exist ())
 			return ;
 		mService = UniqueRef<void> ([&] () {
-			const auto r1x = (WORD (2) << (_SIZEOF_ (BYTE) * 8)) | WORD (2) ;
+			const auto r1x = _XVALUE_<WORD> ((WORD (2) << (_SIZEOF_ (BYTE) * 8)) | WORD (2)) ;
 			auto rax = WSADATA () ;
 			_ZERO_ (rax) ;
 			const auto r2x = WSAStartup (r1x ,&rax) ;

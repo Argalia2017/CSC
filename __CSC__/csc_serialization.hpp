@@ -87,7 +87,7 @@ public:
 
 	Array<XmlParser> child_array () const {
 		Array<XmlParser> ret ;
-		if SWITCH_CASE (TRUE) {
+		if switch_case (TRUE) {
 			if (!exist ())
 				discard ;
 			ret = Array<XmlParser> (mHeap.self[mIndex].mMemberSet.length ()) ;
@@ -102,7 +102,7 @@ public:
 	Array<XmlParser> child_array (LENGTH fixed_len) const {
 		Array<XmlParser> ret = Array<XmlParser> (fixed_len) ;
 		INDEX iw = 0 ;
-		if SWITCH_CASE (TRUE) {
+		if switch_case (TRUE) {
 			if (!exist ())
 				discard ;
 			for (auto &&i : mHeap.self[mIndex].mMemberSet) {
@@ -329,7 +329,7 @@ inline void XmlParser::friend_write (TextWriter<STRU8> &writer) const {
 		const auto r1x = rax[rax.tail ()] ;
 		rax.pop () ;
 		auto fax = TRUE ;
-		if SWITCH_CASE (fax) {
+		if switch_case (fax) {
 			//@info: case '<?xml ...>'
 			if (!(r1x[0] != VAR_NONE))
 				discard ;
@@ -341,8 +341,10 @@ inline void XmlParser::friend_write (TextWriter<STRU8> &writer) const {
 			writer << _PCSTRU8_ ("<?xml version=\"1.0\" encoding=\"utf-8\" ?>") ;
 			writer << _GAP_ ;
 			rbx.clear () ;
-			for (INDEX i = r2y.mChild ; i != VAR_NONE ; i = mHeap.self[i].mBrother)
+			for (INDEX i = r2y.mChild ,it ; i != VAR_NONE ; i = it) {
+				it = mHeap.self[i].mBrother ;
 				rbx.add (ARRAY2<INDEX> {i ,FLAG (0)}) ;
+			}
 			while (TRUE) {
 				if (rbx.empty ())
 					break ;
@@ -350,7 +352,7 @@ inline void XmlParser::friend_write (TextWriter<STRU8> &writer) const {
 				rbx.pop () ;
 			}
 		}
-		if SWITCH_CASE (fax) {
+		if switch_case (fax) {
 			//@info: case '<xxx ("xxx"="xxx"( "xxx"="xxx")?)?/>'
 			if (!(r1x[0] != VAR_NONE))
 				discard ;
@@ -367,7 +369,7 @@ inline void XmlParser::friend_write (TextWriter<STRU8> &writer) const {
 			}
 			writer << _PCSTRU8_ ("/>") ;
 		}
-		if SWITCH_CASE (fax) {
+		if switch_case (fax) {
 			//@info: case '<xxx ("xxx"="xxx"( "xxx"="xxx")?)?>'
 			if (!(r1x[0] != VAR_NONE))
 				discard ;
@@ -384,8 +386,10 @@ inline void XmlParser::friend_write (TextWriter<STRU8> &writer) const {
 			}
 			writer << _PCSTRU8_ (">") ;
 			rbx.clear () ;
-			for (INDEX i = r4y.mChild ; i != VAR_NONE ; i = mHeap.self[i].mBrother)
+			for (INDEX i = r4y.mChild ,it ; i != VAR_NONE ; i = it) {
+				it = mHeap.self[i].mBrother ;
 				rbx.add (ARRAY2<INDEX> {i ,FLAG (0)}) ;
+			}
 			rbx.add (ARRAY2<INDEX> {r1x[0] ,FLAG (1)}) ;
 			while (TRUE) {
 				if (rbx.empty ())
@@ -394,7 +398,7 @@ inline void XmlParser::friend_write (TextWriter<STRU8> &writer) const {
 				rbx.pop () ;
 			}
 		}
-		if SWITCH_CASE (fax) {
+		if switch_case (fax) {
 			//@info: case '</xxx>'
 			if (!(r1x[0] != VAR_NONE))
 				discard ;
@@ -427,14 +431,15 @@ inline void XmlParser::initialize (const PhanBuffer<const STRU8> &data) {
 		TextReader<STRU8> mTextReader ;
 		RegularReader<ARGC<2>> mRis ;
 		LENGTH mRecursiveCounter ;
+		INDEX mLatestIndex ;
+		String<STRU8> mLatestString ;
+
 		SoftSet<String<STRU8> ,String<STRU8>> mAttributeSoftSet ;
 		SoftSet<INDEX ,INDEX> mMemberSoftSet ;
 		SoftSet<String<STRU8> ,INDEX> mObjectSoftSet ;
 		Allocator<Node ,SAUTO> mNodeHeap ;
 		SharedRef<FixedBuffer<Node>> mHeap ;
 		INDEX mRoot ;
-		INDEX mLatestIndex ;
-		String<STRU8> mLatestString ;
 
 	public:
 		inline explicit Lambda (XmlParser &context_ ,const PhanBuffer<const STRU8> &data) popping : mContext (context_) ,mTextReader (data) {}
@@ -542,7 +547,7 @@ inline void XmlParser::initialize (const PhanBuffer<const STRU8> &data) {
 			update_shift_e4 (ix) ;
 			mRis >> RegularReader<>::SKIP_GAP ;
 			auto fax = TRUE ;
-			if SWITCH_CASE (fax) {
+			if switch_case (fax) {
 				if (!(mRis[0] == STRU8 ('>')))
 					discard ;
 				mRis++ ;
@@ -558,7 +563,7 @@ inline void XmlParser::initialize (const PhanBuffer<const STRU8> &data) {
 				mRis >> RegularReader<>::SKIP_GAP ;
 				mRis >> _PCSTRU8_ (">") ;
 			}
-			if SWITCH_CASE (fax) {
+			if switch_case (fax) {
 				mRis >> _PCSTRU8_ ("/>") ;
 			}
 			mLatestIndex = ix ;
@@ -589,12 +594,12 @@ inline void XmlParser::initialize (const PhanBuffer<const STRU8> &data) {
 				if (!r1x && !r2x)
 					break ;
 				auto fax = TRUE ;
-				if SWITCH_CASE (fax) {
+				if switch_case (fax) {
 					if (!r1x)
 						discard ;
 					update_shift_e6 () ;
 				}
-				if SWITCH_CASE (fax) {
+				if switch_case (fax) {
 					if (!r2x)
 						discard ;
 					update_shift_e5 (curr) ;
@@ -627,7 +632,7 @@ inline void XmlParser::initialize (const PhanBuffer<const STRU8> &data) {
 			mRis >> RegularReader<>::SKIP_GAP ;
 			mRis >> _PCSTRU8_ ("\"1.0\"") ;
 			mRis >> RegularReader<>::SKIP_GAP ;
-			if SWITCH_CASE (TRUE) {
+			if switch_case (TRUE) {
 				if (mRis[0] == STRU8 ('?'))
 					discard ;
 				mRis >> _PCSTRU8_ ("encoding") ;
@@ -721,7 +726,7 @@ inline void XmlParser::initialize (const Array<XmlParser> &sequence) {
 			mMemberSoftSet = SoftSet<INDEX ,INDEX> (0) ;
 			mObjectSoftSet = SoftSet<String<STRU8> ,INDEX> (0) ;
 			mNodeHeap = Allocator<Node ,SAUTO> () ;
-			if SWITCH_CASE (TRUE) {
+			if switch_case (TRUE) {
 				mRootName.clear () ;
 				mRootType = VAR_NONE ;
 				INDEX ix = find_normal_node () ;
@@ -774,7 +779,7 @@ inline void XmlParser::initialize (const Array<XmlParser> &sequence) {
 					break ;
 				mTempNode = std::move (mNodeStack[mNodeStack.tail ()]) ;
 				mNodeStack.pop () ;
-				if SWITCH_CASE (TRUE) {
+				if switch_case (TRUE) {
 					if (mTempNode.P2 == VAR_NONE)
 						discard ;
 					for (auto &&i : mTempNode.P1)
@@ -793,7 +798,7 @@ inline void XmlParser::initialize (const Array<XmlParser> &sequence) {
 				mNodeStack[ix].P1.add (i.child ()) ;
 			mNodeStack[ix].P2 = mRootType ;
 			INDEX iy = mRoot ;
-			if SWITCH_CASE (TRUE) {
+			if switch_case (TRUE) {
 				if (mRootName.empty ())
 					discard ;
 				iy = mNodeHeap.alloc () ;
@@ -815,13 +820,14 @@ inline void XmlParser::initialize (const Array<XmlParser> &sequence) {
 		}
 
 		inline void update_found_table_node (const XmlParser &node) {
-			for (XmlParser i = node ; i.exist () ; i = i.brother ()) {
+			for (XmlParser i = node ,it ; i.exist () ; i = it) {
+				it = i.brother () ;
 				INDEX ix = find_found_node_name (i.name ()) ;
 				INDEX iy = mFoundNode.insert () ;
 				mFoundNode[iy].mName = i.name () ;
 				mFoundNodeNameSet.add (mFoundNode[iy].mName ,iy) ;
 				mFoundNode[iy].mType = node_type (i) ;
-				if SWITCH_CASE (TRUE) {
+				if switch_case (TRUE) {
 					if (ix == VAR_NONE)
 						discard ;
 					_DYNAMIC_ASSERT_ (mFoundNode[ix].mType != NODE_CLAZZ_FINAL) ;
@@ -840,10 +846,11 @@ inline void XmlParser::initialize (const Array<XmlParser> &sequence) {
 		}
 
 		inline void update_found_object_node (const XmlParser &node) {
-			for (XmlParser i = node ; i.exist () ; i = i.brother ()) {
+			for (XmlParser i = node ,it ; i.exist () ; i = it) {
+				it = i.brother () ;
 				INDEX ix = find_found_node_name (i.name ()) ;
 				INDEX iy = ix ;
-				if SWITCH_CASE (TRUE) {
+				if switch_case (TRUE) {
 					if (iy != VAR_NONE)
 						discard ;
 					iy = mFoundNode.insert () ;
@@ -856,7 +863,7 @@ inline void XmlParser::initialize (const Array<XmlParser> &sequence) {
 					mFoundNodeBaseNodeHeap.take (mFoundNode[iy].mBaseNode) ;
 					mFoundNode[iy].mBaseNode.clear () ;
 				}
-				if SWITCH_CASE (TRUE) {
+				if switch_case (TRUE) {
 					if (ix == VAR_NONE)
 						discard ;
 					_DYNAMIC_ASSERT_ (ix == iy) ;
@@ -871,7 +878,8 @@ inline void XmlParser::initialize (const Array<XmlParser> &sequence) {
 		}
 
 		inline void update_found_array_node (const XmlParser &node) {
-			for (XmlParser i = node ; i.exist () ; i = i.brother ()) {
+			for (XmlParser i = node ,it ; i.exist () ; i = it) {
+				it = i.brother () ;
 				INDEX ix = mFoundNodeNameSet.head () ;
 				if (ix != VAR_NONE)
 					ix = mFoundNodeNameSet[ix].item ;
@@ -879,7 +887,7 @@ inline void XmlParser::initialize (const Array<XmlParser> &sequence) {
 				mFoundNode[iy].mName = i.name () ;
 				mFoundNodeNameSet.add (mFoundNode[iy].mName ,iy) ;
 				mFoundNode[iy].mType = node_type (i) ;
-				if SWITCH_CASE (TRUE) {
+				if switch_case (TRUE) {
 					if (ix == VAR_NONE)
 						discard ;
 					_DYNAMIC_ASSERT_ (mFoundNode[ix].mName == mFoundNode[iy].mName) ;
@@ -914,13 +922,13 @@ inline void XmlParser::initialize (const Array<XmlParser> &sequence) {
 				mNodeHeap[ix].mName = std::move (i.mName) ;
 				mNodeHeap[ix].mAttributeSet = std::move (i.mAttributeSet) ;
 				mNodeHeap[ix].mParent = curr ;
-				if SWITCH_CASE (TRUE) {
+				if switch_case (TRUE) {
 					INDEX jx = mNodeHeap[ix].mParent ;
 					if (jx == VAR_NONE)
 						discard ;
 					if (mNodeHeap[jx].mChild == VAR_NONE)
 						mNodeHeap[jx].mChild = ix ;
-					if SWITCH_CASE (TRUE) {
+					if switch_case (TRUE) {
 						if (mNodeHeap[jx].mMemberSet.size () > 0)
 							discard ;
 						mNodeHeap[jx].mMemberSet = mMemberSoftSet.share () ;
@@ -1058,7 +1066,7 @@ public:
 
 	Array<JsonParser> child_array () const {
 		Array<JsonParser> ret ;
-		if SWITCH_CASE (TRUE) {
+		if switch_case (TRUE) {
 			if (!exist ())
 				discard ;
 			if (!array_type ())
@@ -1076,7 +1084,7 @@ public:
 	Array<JsonParser> child_array (LENGTH fixed_len) const {
 		Array<JsonParser> ret = Array<JsonParser> (fixed_len) ;
 		INDEX iw = 0 ;
-		if SWITCH_CASE (TRUE) {
+		if switch_case (TRUE) {
 			if (!exist ())
 				discard ;
 			if (!array_type ())
@@ -1225,7 +1233,7 @@ inline void JsonParser::friend_write (TextWriter<STRU8> &writer) const {
 		const auto r2x = rax[rax.tail ()] ;
 		rax.pop () ;
 		auto fax = TRUE ;
-		if SWITCH_CASE (fax) {
+		if switch_case (fax) {
 			//@info: case 'null'
 			if (!(r2x[0] != VAR_NONE))
 				discard ;
@@ -1235,7 +1243,7 @@ inline void JsonParser::friend_write (TextWriter<STRU8> &writer) const {
 				discard ;
 			writer << _PCSTRU8_ ("null") ;
 		}
-		if SWITCH_CASE (fax) {
+		if switch_case (fax) {
 			//@info: case '"xxx"'
 			if (!(r2x[0] != VAR_NONE))
 				discard ;
@@ -1248,7 +1256,7 @@ inline void JsonParser::friend_write (TextWriter<STRU8> &writer) const {
 			writer << r3y ;
 			writer << _PCSTRU8_ ("\"") ;
 		}
-		if SWITCH_CASE (fax) {
+		if switch_case (fax) {
 			//@info: case '[(yyy(,yyy)*)?]'
 			if (!(r2x[0] != VAR_NONE))
 				discard ;
@@ -1274,7 +1282,7 @@ inline void JsonParser::friend_write (TextWriter<STRU8> &writer) const {
 				rbx.pop () ;
 			}
 		}
-		if SWITCH_CASE (fax) {
+		if switch_case (fax) {
 			//@info: case '{("xxx":yyy(,"xxx":yyy)*)?}'
 			if (!(r2x[0] != VAR_NONE))
 				discard ;
@@ -1304,7 +1312,7 @@ inline void JsonParser::friend_write (TextWriter<STRU8> &writer) const {
 				rbx.pop () ;
 			}
 		}
-		if SWITCH_CASE (fax) {
+		if switch_case (fax) {
 			if (!(r2x[0] != VAR_NONE))
 				discard ;
 			if (!(r2x[1] == 1))
@@ -1314,49 +1322,49 @@ inline void JsonParser::friend_write (TextWriter<STRU8> &writer) const {
 			writer << r6y ;
 			writer << _PCSTRU8_ ("\"") ;
 		}
-		if SWITCH_CASE (fax) {
+		if switch_case (fax) {
 			if (!(r2x[0] == VAR_NONE))
 				discard ;
 			if (!(r2x[1] == 2))
 				discard ;
 			writer << _PCSTRU8_ ("[") ;
 		}
-		if SWITCH_CASE (fax) {
+		if switch_case (fax) {
 			if (!(r2x[0] == VAR_NONE))
 				discard ;
 			if (!(r2x[1] == 3))
 				discard ;
 			writer << _PCSTRU8_ (",") ;
 		}
-		if SWITCH_CASE (fax) {
+		if switch_case (fax) {
 			if (!(r2x[0] == VAR_NONE))
 				discard ;
 			if (!(r2x[1] == 4))
 				discard ;
 			writer << _PCSTRU8_ ("]") ;
 		}
-		if SWITCH_CASE (fax) {
+		if switch_case (fax) {
 			if (!(r2x[0] == VAR_NONE))
 				discard ;
 			if (!(r2x[1] == 5))
 				discard ;
 			writer << _PCSTRU8_ ("{") ;
 		}
-		if SWITCH_CASE (fax) {
+		if switch_case (fax) {
 			if (!(r2x[0] == VAR_NONE))
 				discard ;
 			if (!(r2x[1] == 6))
 				discard ;
 			writer << _PCSTRU8_ (",") ;
 		}
-		if SWITCH_CASE (fax) {
+		if switch_case (fax) {
 			if (!(r2x[0] == VAR_NONE))
 				discard ;
 			if (!(r2x[1] == 7))
 				discard ;
 			writer << _PCSTRU8_ (":") ;
 		}
-		if SWITCH_CASE (fax) {
+		if switch_case (fax) {
 			if (!(r2x[0] == VAR_NONE))
 				discard ;
 			if (!(r2x[1] == 8))
@@ -1388,13 +1396,14 @@ inline void JsonParser::initialize (const PhanBuffer<const STRU8> &data) {
 		TextReader<STRU8> mTextReader ;
 		RegularReader<ARGC<2>> mRis ;
 		LENGTH mRecursiveCounter ;
+		INDEX mLatestIndex ;
+		String<STRU8> mLatestString ;
+
 		SoftSet<INDEX ,INDEX> mArraySoftSet ;
 		SoftSet<String<STRU8> ,INDEX> mObjectSoftSet ;
 		Allocator<Node ,SAUTO> mNodeHeap ;
 		SharedRef<FixedBuffer<Node>> mHeap ;
 		INDEX mRoot ;
-		INDEX mLatestIndex ;
-		String<STRU8> mLatestString ;
 
 	public:
 		inline explicit Lambda (JsonParser &context_ ,const PhanBuffer<const STRU8> &data) popping : mContext (context_) ,mTextReader (data) {}
@@ -1459,31 +1468,31 @@ inline void JsonParser::initialize (const PhanBuffer<const STRU8> &data) {
 		//@info: $2->true|TRUE|false|FALSE
 		inline void update_shift_e2 () {
 			auto fax = TRUE ;
-			if SWITCH_CASE (fax) {
+			if switch_case (fax) {
 				if (!(mRis[0] == STRU8 ('t')))
 					discard ;
 				mRis >> _PCSTRU8_ ("true") ;
 				mLatestString = _PCSTRU8_ ("true") ;
 			}
-			if SWITCH_CASE (fax) {
+			if switch_case (fax) {
 				if (!(mRis[0] == STRU8 ('T')))
 					discard ;
 				mRis >> _PCSTRU8_ ("TRUE") ;
 				mLatestString = _PCSTRU8_ ("TRUE") ;
 			}
-			if SWITCH_CASE (fax) {
+			if switch_case (fax) {
 				if (!(mRis[0] == STRU8 ('f')))
 					discard ;
 				mRis >> _PCSTRU8_ ("false") ;
 				mLatestString = _PCSTRU8_ ("false") ;
 			}
-			if SWITCH_CASE (fax) {
+			if switch_case (fax) {
 				if (!(mRis[0] == STRU8 ('F')))
 					discard ;
 				mRis >> _PCSTRU8_ ("FALSE") ;
 				mLatestString = _PCSTRU8_ ("FALSE") ;
 			}
-			if SWITCH_CASE (fax) {
+			if switch_case (fax) {
 				_STATIC_WARNING_ ("unexpected") ;
 				_DYNAMIC_ASSERT_ (FALSE) ;
 			}
@@ -1505,7 +1514,7 @@ inline void JsonParser::initialize (const PhanBuffer<const STRU8> &data) {
 			ScopedGuard<RecursiveCounter> ANONYMOUS (_CAST_<RecursiveCounter> (mRecursiveCounter)) ;
 			INDEX ix = VAR_NONE ;
 			auto fax = TRUE ;
-			if SWITCH_CASE (fax) {
+			if switch_case (fax) {
 				if (!(mRis[0] == STRU8 ('+') || mRis[0] == STRU8 ('-')))
 					if (!(mRis[0] >= STRU8 ('0') && mRis[0] <= STRU8 ('9')))
 						discard ;
@@ -1517,7 +1526,7 @@ inline void JsonParser::initialize (const PhanBuffer<const STRU8> &data) {
 				mNodeHeap[ix].mBrother = VAR_NONE ;
 				mNodeHeap[ix].mChild = VAR_NONE ;
 			}
-			if SWITCH_CASE (fax) {
+			if switch_case (fax) {
 				if (!(mRis[0] == STRU8 ('t') || mRis[0] == STRU8 ('T')))
 					if (!(mRis[0] == STRU8 ('f') || mRis[0] == STRU8 ('F')))
 						discard ;
@@ -1529,7 +1538,7 @@ inline void JsonParser::initialize (const PhanBuffer<const STRU8> &data) {
 				mNodeHeap[ix].mBrother = VAR_NONE ;
 				mNodeHeap[ix].mChild = VAR_NONE ;
 			}
-			if SWITCH_CASE (fax) {
+			if switch_case (fax) {
 				if (!(mRis[0] == STRU8 ('n')))
 					discard ;
 				ix = mNodeHeap.alloc () ;
@@ -1539,7 +1548,7 @@ inline void JsonParser::initialize (const PhanBuffer<const STRU8> &data) {
 				mNodeHeap[ix].mBrother = VAR_NONE ;
 				mNodeHeap[ix].mChild = VAR_NONE ;
 			}
-			if SWITCH_CASE (fax) {
+			if switch_case (fax) {
 				if (!(mRis[0] == STRU8 ('\"')))
 					discard ;
 				ix = mNodeHeap.alloc () ;
@@ -1550,19 +1559,19 @@ inline void JsonParser::initialize (const PhanBuffer<const STRU8> &data) {
 				mNodeHeap[ix].mBrother = VAR_NONE ;
 				mNodeHeap[ix].mChild = VAR_NONE ;
 			}
-			if SWITCH_CASE (fax) {
+			if switch_case (fax) {
 				if (!(mRis[0] == STRU8 ('[')))
 					discard ;
 				update_shift_e6 (curr) ;
 				ix = mLatestIndex ;
 			}
-			if SWITCH_CASE (fax) {
+			if switch_case (fax) {
 				if (!(mRis[0] == STRU8 ('{')))
 					discard ;
 				update_shift_e9 (curr) ;
 				ix = mLatestIndex ;
 			}
-			if SWITCH_CASE (fax) {
+			if switch_case (fax) {
 				_STATIC_WARNING_ ("unexpected") ;
 				_DYNAMIC_ASSERT_ (FALSE) ;
 			}
@@ -1602,7 +1611,7 @@ inline void JsonParser::initialize (const PhanBuffer<const STRU8> &data) {
 			mNodeHeap[ix].mBrother = VAR_NONE ;
 			mNodeHeap[ix].mChild = VAR_NONE ;
 			mRis >> RegularReader<>::SKIP_GAP ;
-			if SWITCH_CASE (TRUE) {
+			if switch_case (TRUE) {
 				if (mRis[0] == STRU8 (']'))
 					discard ;
 				update_shift_e5 (ix) ;
@@ -1656,7 +1665,7 @@ inline void JsonParser::initialize (const PhanBuffer<const STRU8> &data) {
 			mNodeHeap[ix].mBrother = VAR_NONE ;
 			mNodeHeap[ix].mChild = VAR_NONE ;
 			mRis >> RegularReader<>::SKIP_GAP ;
-			if SWITCH_CASE (TRUE) {
+			if switch_case (TRUE) {
 				if (mRis[0] == STRU8 ('}'))
 					discard ;
 				update_shift_e8 (ix) ;
@@ -1670,7 +1679,7 @@ inline void JsonParser::initialize (const PhanBuffer<const STRU8> &data) {
 		//@info: $10->${eps}|$4
 		inline void update_shift_e10 () {
 			INDEX ix = VAR_NONE ;
-			if SWITCH_CASE (TRUE) {
+			if switch_case (TRUE) {
 				if (mRis[0] == STRU8 ('\0'))
 					discard ;
 				update_shift_e4 (VAR_NONE) ;
@@ -1836,11 +1845,12 @@ inline void CommandParser::initialize (const PhanBuffer<const STRU8> &data) {
 
 		TextReader<STRU8> mTextReader ;
 		RegularReader<ARGC<2>> mRis ;
+		String<STRU8> mLatestString ;
+
 		Set<String<STRU8>> mOptionSet ;
 		Set<String<STRU8> ,String<STRU8>> mAttributeSet ;
 		SList<String<STRU8>> mCommandList ;
 		Array<String<STRU8>> mCommand ;
-		String<STRU8> mLatestString ;
 
 	public:
 		inline explicit Lambda (CommandParser &context_ ,const PhanBuffer<const STRU8> &data) popping : mContext (context_) ,mTextReader (data) {}
@@ -1916,7 +1926,7 @@ inline void CommandParser::initialize (const PhanBuffer<const STRU8> &data) {
 			_DYNAMIC_ASSERT_ (ix == VAR_NONE) ;
 			ix = mAttributeSet.insert (std::move (mLatestString)) ;
 			auto fax = TRUE ;
-			if SWITCH_CASE (fax) {
+			if switch_case (fax) {
 				if (!(mRis[0] == STRU8 ('=')))
 					discard ;
 				if (!(mRis[1] == STRU8 ('\"')))
@@ -1925,14 +1935,14 @@ inline void CommandParser::initialize (const PhanBuffer<const STRU8> &data) {
 				update_shift_e2 () ;
 				mAttributeSet[ix].item = std::move (mLatestString) ;
 			}
-			if SWITCH_CASE (fax) {
+			if switch_case (fax) {
 				if (!(mRis[0] == STRU8 ('=')))
 					discard ;
 				mRis >> _PCSTRU8_ ("=") ;
 				update_shift_e3 () ;
 				mAttributeSet[ix].item = std::move (mLatestString) ;
 			}
-			if SWITCH_CASE (fax) {
+			if switch_case (fax) {
 				mAttributeSet[ix].item = _PCSTRU8_ ("TRUE") ;
 			}
 		}
@@ -1940,12 +1950,12 @@ inline void CommandParser::initialize (const PhanBuffer<const STRU8> &data) {
 		//@info: $6->$2|$3
 		inline void update_shift_e6 () {
 			auto fax = TRUE ;
-			if SWITCH_CASE (fax) {
+			if switch_case (fax) {
 				if (!(mRis[0] == STRU8 ('\"')))
 					discard ;
 				update_shift_e2 () ;
 			}
-			if SWITCH_CASE (fax) {
+			if switch_case (fax) {
 				update_shift_e3 () ;
 			}
 			mCommandList.add (std::move (mLatestString)) ;
@@ -1957,17 +1967,17 @@ inline void CommandParser::initialize (const PhanBuffer<const STRU8> &data) {
 				if (mRis[0] == STRU8 ('\0'))
 					break ;
 				auto fax = TRUE ;
-				if SWITCH_CASE (fax) {
+				if switch_case (fax) {
 					if (!(mRis[0] == STRU8 ('/')))
 						discard ;
 					update_shift_e4 () ;
 				}
-				if SWITCH_CASE (fax) {
+				if switch_case (fax) {
 					if (!(mRis[0] == STRU8 ('-')))
 						discard ;
 					update_shift_e5 () ;
 				}
-				if SWITCH_CASE (fax) {
+				if switch_case (fax) {
 					update_shift_e6 () ;
 				}
 				mRis >> RegularReader<>::SKIP_GAP_SPACE_ONLY ;

@@ -101,7 +101,7 @@
 
 #ifdef __CSC_DEPRECATED__
 #ifdef __CSC_COMPILER_MSVC__
-//@info see also 'https://github.com/isocpp/CppCoreGuidelines/blob/master/CppCoreGuidelines.md'
+//@info: see also 'https://github.com/isocpp/CppCoreGuidelines/blob/master/CppCoreGuidelines.md'
 #pragma warning (default :26401) //@info: warning C26401: Do not delete a raw pointer that is not an owner<T> (i.11).
 #pragma warning (default :26403) //@info: warning C26403: Reset or explicitly delete an owner<T> pointer 'xxx' (r.3).
 #pragma warning (default :26406) //@info: warning C26406: Do not assign a raw pointer to an owner<T> (r.3).
@@ -166,6 +166,11 @@
 #endif
 #define exports
 
+#ifdef switch_case
+#error "∑(っ°Д° ;)っ : defined 'switch_case'"
+#endif
+#define switch_case SWITCH_CASE_IMPL
+
 #ifdef discard
 #error "∑(っ°Д° ;)っ : defined 'discard'"
 #endif
@@ -178,12 +183,14 @@
 #pragma push_macro ("popping")
 #pragma push_macro ("imports")
 #pragma push_macro ("exports")
+#pragma push_macro ("switch_case")
 #pragma push_macro ("discard")
 #undef self
 #undef implicit
 #undef popping
 #undef imports
 #undef exports
+#undef switch_case
 #undef discard
 #endif
 
@@ -203,6 +210,7 @@
 #pragma pop_macro ("popping")
 #pragma pop_macro ("imports")
 #pragma pop_macro ("exports")
+#pragma pop_macro ("switch_case")
 #pragma pop_macro ("discard")
 #endif
 
@@ -263,13 +271,6 @@ using std::is_nothrow_move_assignable ;
 using std::is_convertible ;
 } ;
 
-#define _UNWIND_IMPL_(...) __VA_ARGS__
-#define _UNW_(...) _UNWIND_IMPL_(__VA_ARGS__)
-#define _STRINGIZE_IMPL_(...) #__VA_ARGS__
-#define _STR_(...) _STRINGIZE_IMPL_(__VA_ARGS__)
-#define _CONCAT_IMPL_(var1 ,var2) var1##var2
-#define _CAT_(var1 ,var2) _CONCAT_IMPL_(var1 ,var2)
-
 #define M_DATE __DATE__
 #define M_HOUR __TIME__
 #define M_FILE __FILE__
@@ -284,6 +285,35 @@ using std::is_convertible ;
 #else
 #define M_FUNC __func__
 #endif
+
+#ifdef __CSC_COMPILER_MSVC__
+#define DLLABI_IMPORT __declspec (dllimport)
+#define DLLABI_EXPORT __declspec (dllexport)
+#define DLLABI_API __stdcall
+#define DLLABI_NATIVE extern "C"
+#elif defined __CSC_COMPILER_GNUC__
+#define DLLABI_IMPORT
+#define DLLABI_EXPORT __attribute__ ((visibility ("default")))
+#define DLLABI_API
+#define DLLABI_NATIVE extern "C"
+#elif defined __CSC_COMPILER_CLANG__
+#define DLLABI_IMPORT
+#define DLLABI_EXPORT __attribute__ ((visibility ("default")))
+#define DLLABI_API
+#define DLLABI_NATIVE extern "C"
+#else
+#define DLLABI_IMPORT
+#define DLLABI_EXPORT
+#define DLLABI_API
+#define DLLABI_NATIVE
+#endif
+
+#define _UNWIND_IMPL_(...) __VA_ARGS__
+#define _UNW_(...) _UNWIND_IMPL_(__VA_ARGS__)
+#define _STRINGIZE_IMPL_(...) #__VA_ARGS__
+#define _STR_(...) _STRINGIZE_IMPL_(__VA_ARGS__)
+#define _CONCAT_IMPL_(var1 ,var2) var1##var2
+#define _CAT_(var1 ,var2) _CONCAT_IMPL_(var1 ,var2)
 
 #define _STATIC_ASSERT_(...) static_assert ((_UNW_ (__VA_ARGS__)) ,"static_assert failed : " _STR_ (__VA_ARGS__))
 
@@ -315,7 +345,7 @@ using std::is_convertible ;
 
 #define ANONYMOUS _CAT_ (_anonymous_ ,__LINE__)
 
-#define SWITCH_CASE(var1) (var1) goto ANONYMOUS ; while (_FOR_ONCE_ (var1)) ANONYMOUS:
+#define SWITCH_CASE_IMPL(var1) (var1) goto ANONYMOUS ; while (CSC::_FOR_ONCE_ (var1)) ANONYMOUS:
 
 using BOOL = bool ;
 
@@ -1507,11 +1537,11 @@ inline _ARG1 _EXCHANGE_ (_ARG1 &handle ,const REMOVE_CVR_TYPE<_ARG1> &val) noexc
 	return std::move (ret) ;
 }
 
-inline BOOL _FOR_ONCE_ (const BOOL &) {
+inline BOOL _FOR_ONCE_ (const BOOL &) noexcept {
 	return FALSE ;
 }
 
-inline BOOL _FOR_ONCE_ (BOOL &flag) popping {
+inline BOOL _FOR_ONCE_ (BOOL &flag) noexcept popping {
 	flag = FALSE ;
 	return FALSE ;
 }

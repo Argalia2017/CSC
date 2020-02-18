@@ -5,6 +5,7 @@
 #define popping
 #define imports
 #define exports
+#define switch_case
 #define discard
 
 #define M_DATE
@@ -12,6 +13,11 @@
 #define M_FILE
 #define M_LINE
 #define M_FUNC
+
+#define DLLABI_IMPORT
+#define DLLABI_EXPORT
+#define DLLABI_API
+#define DLLABI_NATIVE
 
 #define _UNW_
 #define _STR_
@@ -24,8 +30,6 @@
 #define _UNITTEST_WATCH_
 
 #define ANONYMOUS
-
-#define SWITCH_CASE
 
 #define FALSE
 #define TRUE
@@ -43,8 +47,3 @@
 #define _PCSTRA_
 #define _PCSTRW_
 #define _PCSTR_
-
-#define DLLABI_IMPORT
-#define DLLABI_EXPORT
-#define DLLABI_API
-#define DLLABI_NATIVE
