@@ -187,6 +187,15 @@
   
   
   <!--csc_extend.hpp-->
+
+
+  <Type Name="CSC::GlobalWatch::Storage&lt;*&gt;">
+    <Expand>
+      <Item Name="[name]">mName</Item>
+      <Item Name="[type]">mTypeUID</Item>
+      <ExpandedItem>*mAddress</ExpandedItem>
+    </Expand>
+  </Type>
   
   
   <Type Name="CSC::StrongRef&lt;*&gt;">

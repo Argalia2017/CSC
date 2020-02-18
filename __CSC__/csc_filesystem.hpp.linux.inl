@@ -10,12 +10,14 @@
 #pragma push_macro ("popping")
 #pragma push_macro ("imports")
 #pragma push_macro ("exports")
+#pragma push_macro ("switch_case")
 #pragma push_macro ("discard")
 #undef self
 #undef implicit
 #undef popping
 #undef imports
 #undef exports
+#undef switch_case
 #undef discard
 #endif
 
@@ -36,6 +38,7 @@
 #pragma pop_macro ("popping")
 #pragma pop_macro ("imports")
 #pragma pop_macro ("exports")
+#pragma pop_macro ("switch_case")
 #pragma pop_macro ("discard")
 #endif
 
@@ -232,13 +235,13 @@ inline exports Deque<String<STR>> _DECOUPLEPATHNAME_ (const String<STR> &file) {
 inline exports String<STR> _WORKINGPATH_ () {
 	using DEFAULT_SHORTSTRING_SIZE = ARGC<1023> ;
 	auto rax = String<STRA> (DEFAULT_SHORTSTRING_SIZE::value) ;
-	if SWITCH_CASE (TRUE) {
+	if switch_case (TRUE) {
 		const auto r1x = ::getcwd (rax.raw ().self ,VAR32 (rax.size ())) ;
 		if (r1x != NULL)
 			discard ;
 		rax.clear () ;
 	}
-	if SWITCH_CASE (TRUE) {
+	if switch_case (TRUE) {
 		const auto r2x = rax.length () ;
 		if (r2x < 1)
 			discard ;
@@ -258,7 +261,7 @@ inline Deque<INDEX> _inline_RELATIVEPATHNAME_ (const Deque<String<STR>> &path_na
 		if (path_name[ix] == _PCSTR_ ("."))
 			continue ;
 		auto fax = TRUE ;
-		if SWITCH_CASE (fax) {
+		if switch_case (fax) {
 			if (ret.empty ())
 				discard ;
 			if (!(path_name[ix] == _PCSTR_ ("..")))
@@ -267,7 +270,7 @@ inline Deque<INDEX> _inline_RELATIVEPATHNAME_ (const Deque<String<STR>> &path_na
 				discard ;
 			ret.pop () ;
 		}
-		if SWITCH_CASE (fax) {
+		if switch_case (fax) {
 			ret.add (ix) ;
 		}
 	}
@@ -279,22 +282,28 @@ inline exports String<STR> _ABSOLUTEPATH_ (const String<STR> &path) {
 	String<STR> ret = String<STR> (DEFAULT_SHORTSTRING_SIZE::value) ;
 	auto rax = _DECOUPLEPATHNAME_ (path) ;
 	auto fax = TRUE ;
-	if SWITCH_CASE (fax) {
-		if (!(path.size () >= 1 && path[0] == STR ('\\')))
-			if (!(path.size () >= 1 && path[0] == STR ('/')))
+	if switch_case (fax) {
+		if (path.size () < 1)
+			discard ;
+		if (path[0] != STR ('\\'))
+			if (path[0] != STR ('/'))
 				discard ;
 		ret += _PCSTR_ ("/") ;
 	}
-	if SWITCH_CASE (fax) {
-		if (!(rax.length () >= 1 && rax[rax.access (0)] == _PCSTR_ (".")))
-			if (!(rax.length () >= 1 && rax[rax.access (0)] == _PCSTR_ ("..")))
+	if switch_case (fax) {
+		if (rax.length () < 1)
+			discard ;
+		if (rax[rax.access (0)] != _PCSTR_ ("."))
+			if (rax[rax.access (0)] != _PCSTR_ (".."))
 				discard ;
 		const auto r1x = _WORKINGPATH_ () ;
-		auto tmp = _DECOUPLEPATHNAME_ (r1x) ;
-		tmp.appand (std::move (rax)) ;
-		rax = std::move (tmp) ;
-		if (!(r1x.size () >= 1 && r1x[0] == STR ('\\')))
-			if (!(r1x.size () >= 1 && r1x[0] == STR ('/')))
+		auto tmp = std::move (rax) ;
+		rax = _DECOUPLEPATHNAME_ (r1x) ;
+		rax.appand (std::move (tmp)) ;
+		if (r1x.size () < 1)
+			discard ;
+		if (r1x[0] != STR ('\\'))
+			if (r1x[0] != STR ('/'))
 				discard ;
 		ret += _PCSTR_ ("/") ;
 	}
@@ -305,7 +314,7 @@ inline exports String<STR> _ABSOLUTEPATH_ (const String<STR> &path) {
 		INDEX ix = r2x[r2x.access (i)] ;
 		ret += rax[ix] ;
 	}
-	if SWITCH_CASE (TRUE) {
+	if switch_case (TRUE) {
 		const auto r3x = ret.length () ;
 		if (r3x < 1)
 			discard ;
@@ -372,9 +381,11 @@ inline exports void _BUILDDIRECTORY_ (const String<STR> &dire) {
 	const auto r1x = _ABSOLUTEPATH_ (dire) ;
 	const auto r2x = _DECOUPLEPATHNAME_ (r1x) ;
 	_DEBUG_ASSERT_ (r2x.length () >= 1) ;
-	if SWITCH_CASE (TRUE) {
-		if (!(dire.size () >= 1 && dire[0] == STR ('\\')))
-			if (!(dire.size () >= 1 && dire[0] == STR ('/')))
+	if switch_case (TRUE) {
+		if (dire.size () < 1)
+			discard ;
+		if (dire[0] != STR ('\\'))
+			if (dire[0] != STR ('/'))
 				discard ;
 		rax += _PCSTR_ ("/") ;
 	}
@@ -425,7 +436,7 @@ inline exports void _ENUMDIRECTORY_ (const String<STR> &dire ,Deque<String<STR>>
 		if (r4x == NULL)
 			break ;
 		const auto r5x = _PARSESTRS_ (String<STRA> (PTRTOARR[r4x->d_name])) ;
-		if SWITCH_CASE (TRUE) {
+		if switch_case (TRUE) {
 			if (r5x == _PCSTR_ ("."))
 				discard ;
 			if (r5x == _PCSTR_ (".."))
@@ -458,12 +469,12 @@ inline exports void _CLEARDIRECTORY_ (const String<STR> &dire) {
 		INDEX ix = rax.tail () ;
 		_ERASEDIRECTORY_ (rax[ix].P1) ;
 		auto fax = TRUE ;
-		if SWITCH_CASE (fax) {
+		if switch_case (fax) {
 			if (!rax[ix].P2)
 				discard ;
 			rax.pop () ;
 		}
-		if SWITCH_CASE (fax) {
+		if switch_case (fax) {
 			rbx[0].clear () ;
 			rbx[1].clear () ;
 			_ENUMDIRECTORY_ (rax[ix].P1 ,rbx[0] ,rbx[1]) ;

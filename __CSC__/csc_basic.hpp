@@ -14,7 +14,7 @@ inline BOOL _MEMEQUAL_ (const ARR<_ARG1> &src1 ,const ARR<_ARG1> &src2 ,LENGTH l
 #ifdef __CSC_COMPILER_GNUC__
 #pragma GCC diagnostic ignored "-Warray-bounds"
 #endif
-	if SWITCH_CASE (TRUE) {
+	if switch_case (TRUE) {
 		if (len == 0)
 			discard ;
 		_DEBUG_ASSERT_ (src1 != NULL) ;
@@ -36,7 +36,7 @@ inline FLAG _MEMCOMPR_ (const ARR<_ARG1> &src1 ,const ARR<_ARG1> &src2 ,LENGTH l
 #ifdef __CSC_COMPILER_GNUC__
 #pragma GCC diagnostic ignored "-Warray-bounds"
 #endif
-	if SWITCH_CASE (TRUE) {
+	if switch_case (TRUE) {
 		if (len == 0)
 			discard ;
 		_DEBUG_ASSERT_ (src1 != NULL) ;
@@ -61,7 +61,7 @@ inline FLAG _MEMHASH_ (const ARR<_ARG1> &src ,LENGTH len) {
 #ifdef __CSC_COMPILER_GNUC__
 #pragma GCC diagnostic ignored "-Warray-bounds"
 #endif
-	if SWITCH_CASE (TRUE) {
+	if switch_case (TRUE) {
 		if (len == 0)
 			discard ;
 		_DEBUG_ASSERT_ (src != NULL) ;
@@ -87,7 +87,7 @@ inline FLAG _MEMHASH_ (const ARR<_ARG1> &src ,LENGTH len) {
 inline CHAR _inline_MEMCRC32_TABLE_EACH_ (CHAR val) {
 	CHAR ret = val ;
 	for (auto &&i : _RANGE_ (0 ,8)) {
-		const auto r1x = ret & CHAR (0X00000001) ;
+		const auto r1x = _XVALUE_<CHAR> (ret & CHAR (0X00000001)) ;
 		ret >>= 1 ;
 		if (r1x == 0)
 			continue ;
@@ -130,7 +130,7 @@ inline INDEX _MEMCHR_ (const ARR<_ARG1> &src ,LENGTH len ,const _ARG1 &val) {
 #ifdef __CSC_COMPILER_GNUC__
 #pragma GCC diagnostic ignored "-Warray-bounds"
 #endif
-	if SWITCH_CASE (TRUE) {
+	if switch_case (TRUE) {
 		if (len == 0)
 			discard ;
 		_DEBUG_ASSERT_ (src != NULL) ;
@@ -149,7 +149,7 @@ inline INDEX _MEMRCHR_ (const ARR<_ARG1> &src ,LENGTH len ,const _ARG1 &val) {
 #ifdef __CSC_COMPILER_GNUC__
 #pragma GCC diagnostic ignored "-Warray-bounds"
 #endif
-	if SWITCH_CASE (TRUE) {
+	if switch_case (TRUE) {
 		if (len == 0)
 			discard ;
 		_DEBUG_ASSERT_ (src != NULL) ;
@@ -168,7 +168,7 @@ inline void _MEMCOPY_ (ARR<_ARG1> &dst ,const ARR<_ARG1> &src ,LENGTH len) {
 #ifdef __CSC_COMPILER_GNUC__
 #pragma GCC diagnostic ignored "-Warray-bounds"
 #endif
-	if SWITCH_CASE (TRUE) {
+	if switch_case (TRUE) {
 		if (len == 0)
 			discard ;
 		_DEBUG_ASSERT_ (src != NULL) ;
@@ -189,7 +189,7 @@ inline void _MEMRCOPY_ (ARR<_ARG1> &dst ,const ARR<_ARG1> &src ,LENGTH len) {
 #ifdef __CSC_COMPILER_GNUC__
 #pragma GCC diagnostic ignored "-Warray-bounds"
 #endif
-	if SWITCH_CASE (TRUE) {
+	if switch_case (TRUE) {
 		if (len == 0)
 			discard ;
 		_DEBUG_ASSERT_ (src != NULL) ;
@@ -201,14 +201,14 @@ inline void _MEMRCOPY_ (ARR<_ARG1> &dst ,const ARR<_ARG1> &src ,LENGTH len) {
 	if (src == NULL)
 		return ;
 	auto fax = TRUE ;
-	if SWITCH_CASE (fax) {
+	if switch_case (fax) {
 		if (!(dst != src))
 			discard ;
 		_DEBUG_ASSERT_ (_ABS_ (dst - src) >= len) ;
 		for (auto &&i : _RANGE_ (0 ,len))
 			dst[i] = src[len + ~i] ;
 	}
-	if SWITCH_CASE (fax) {
+	if switch_case (fax) {
 		if (!(dst == src))
 			discard ;
 		for (auto &&i : _RANGE_ (0 ,len / 2)) {
@@ -226,7 +226,7 @@ inline void _MEMMOVE_ (ARR<_ARG1> &dst1 ,ARR<_ARG1> &dst2 ,LENGTH len) {
 #ifdef __CSC_COMPILER_GNUC__
 #pragma GCC diagnostic ignored "-Warray-bounds"
 #endif
-	if SWITCH_CASE (TRUE) {
+	if switch_case (TRUE) {
 		if (len == 0)
 			discard ;
 		_DEBUG_ASSERT_ (dst1 != NULL) ;
@@ -236,13 +236,13 @@ inline void _MEMMOVE_ (ARR<_ARG1> &dst1 ,ARR<_ARG1> &dst2 ,LENGTH len) {
 	if (dst1 == dst2)
 		return ;
 	auto fax = TRUE ;
-	if SWITCH_CASE (fax) {
+	if switch_case (fax) {
 		if (!(dst1 < dst2))
 			discard ;
 		for (auto &&i : _RANGE_ (0 ,len))
 			dst1[i] = std::move (dst2[i]) ;
 	}
-	if SWITCH_CASE (fax) {
+	if switch_case (fax) {
 		if (!(dst1 > dst2))
 			discard ;
 		for (auto &&i : _RANGE_ (0 ,len))
@@ -257,7 +257,7 @@ inline void _MEMSWAP_ (ARR<_ARG1> &dst1 ,ARR<_ARG1> &dst2 ,LENGTH len) {
 #ifdef __CSC_COMPILER_GNUC__
 #pragma GCC diagnostic ignored "-Warray-bounds"
 #endif
-	if SWITCH_CASE (TRUE) {
+	if switch_case (TRUE) {
 		if (len == 0)
 			discard ;
 		_DEBUG_ASSERT_ (dst1 != NULL) ;
@@ -278,7 +278,7 @@ inline void _MEMFILL_ (ARR<_ARG1> &dst ,LENGTH len ,const _ARG1 &val) {
 #ifdef __CSC_COMPILER_GNUC__
 #pragma GCC diagnostic ignored "-Warray-bounds"
 #endif
-	if SWITCH_CASE (TRUE) {
+	if switch_case (TRUE) {
 		if (len == 0)
 			discard ;
 		_DEBUG_ASSERT_ (dst != NULL) ;
@@ -483,7 +483,7 @@ public:
 		const auto r1x = _COPY_ (*mAddress) ;
 		if (r1x == NULL)
 			return ;
-		if SWITCH_CASE (TRUE) {
+		if switch_case (TRUE) {
 			if (mSize <= 0)
 				discard ;
 			_DESTROY_ (r1x) ;
@@ -666,7 +666,7 @@ public:
 	}
 
 	inline AutoRef &operator= (AutoRef &&that) noexcept {
-		if SWITCH_CASE (TRUE) {
+		if switch_case (TRUE) {
 			if (this == &that)
 				discard ;
 			(*this).~AutoRef () ;
@@ -724,7 +724,7 @@ public:
 	}
 
 	inline AutoRef &operator= (const AutoRef &that) {
-		if SWITCH_CASE (TRUE) {
+		if switch_case (TRUE) {
 			if (this == &that)
 				discard ;
 			(*this).~AutoRef () ;
@@ -738,7 +738,7 @@ public:
 	}
 
 	inline AutoRef &operator= (AutoRef &&that) noexcept {
-		if SWITCH_CASE (TRUE) {
+		if switch_case (TRUE) {
 			if (this == &that)
 				discard ;
 			(*this).~AutoRef () ;
@@ -837,7 +837,7 @@ public:
 	inline ~SharedRef () noexcept {
 		if (mPointer == NULL)
 			return ;
-		if SWITCH_CASE (TRUE) {
+		if switch_case (TRUE) {
 			const auto r1x = --mPointer->mCounter ;
 			if (r1x != 0)
 				discard ;
@@ -852,7 +852,7 @@ public:
 	}
 
 	inline SharedRef &operator= (const SharedRef &that) {
-		if SWITCH_CASE (TRUE) {
+		if switch_case (TRUE) {
 			if (this == &that)
 				discard ;
 			(*this).~SharedRef () ;
@@ -866,7 +866,7 @@ public:
 	}
 
 	inline SharedRef &operator= (SharedRef &&that) noexcept {
-		if SWITCH_CASE (TRUE) {
+		if switch_case (TRUE) {
 			if (this == &that)
 				discard ;
 			(*this).~SharedRef () ;
@@ -956,7 +956,7 @@ public:
 	}
 
 	inline AnyRef &operator= (AnyRef &&that) noexcept {
-		if SWITCH_CASE (TRUE) {
+		if switch_case (TRUE) {
 			if (this == &that)
 				discard ;
 			(*this).~AnyRef () ;
@@ -1040,7 +1040,7 @@ public:
 	}
 
 	inline AnyRef &operator= (AnyRef &&that) noexcept {
-		if SWITCH_CASE (TRUE) {
+		if switch_case (TRUE) {
 			if (this == &that)
 				discard ;
 			(*this).~AnyRef () ;
@@ -1188,7 +1188,7 @@ public:
 	}
 
 	inline UniqueRef &operator= (UniqueRef &&that) noexcept {
-		if SWITCH_CASE (TRUE) {
+		if switch_case (TRUE) {
 			if (this == &that)
 				discard ;
 			(*this).~UniqueRef () ;
@@ -1270,7 +1270,7 @@ public:
 	}
 
 	inline UniqueRef &operator= (UniqueRef &&that) noexcept {
-		if SWITCH_CASE (TRUE) {
+		if switch_case (TRUE) {
 			if (this == &that)
 				discard ;
 			(*this).~UniqueRef () ;
@@ -1338,7 +1338,7 @@ public:
 	}
 
 	inline PhanRef &operator= (PhanRef &&that) noexcept {
-		if SWITCH_CASE (TRUE) {
+		if switch_case (TRUE) {
 			if (this == &that)
 				discard ;
 			(*this).~PhanRef () ;
@@ -1441,7 +1441,7 @@ public:
 		if (mFunction == NULL)
 			if (mCPPFunction == NULL)
 				return ;
-		if SWITCH_CASE (TRUE) {
+		if switch_case (TRUE) {
 			if (mFunction == NULL)
 				discard ;
 			mFunction->~Holder () ;
@@ -1460,7 +1460,7 @@ public:
 	}
 
 	inline Function &operator= (Function &&that) noexcept {
-		if SWITCH_CASE (TRUE) {
+		if switch_case (TRUE) {
 			if (this == &that)
 				discard ;
 			(*this).~Function () ;
@@ -1583,7 +1583,7 @@ public:
 	}
 
 	inline Function &operator= (Function &&that) noexcept {
-		if SWITCH_CASE (TRUE) {
+		if switch_case (TRUE) {
 			if (this == &that)
 				discard ;
 			(*this).~Function () ;
@@ -1995,7 +1995,7 @@ public:
 
 	inline void swap (Buffer &that) popping {
 		_DYNAMIC_ASSERT_ (mSize == that.mSize) ;
-		_MEMSWAP_ ((*mBuffer) ,(*that.mBuffer) ,mSize) ;
+		_MEMSWAP_ (PTRTOARR[mBuffer] ,PTRTOARR[that.mBuffer] ,mSize) ;
 	}
 } ;
 
@@ -2052,7 +2052,7 @@ public:
 	}
 
 	inline Buffer &operator= (Buffer &&that) noexcept {
-		if SWITCH_CASE (TRUE) {
+		if switch_case (TRUE) {
 			if (this == &that)
 				discard ;
 			(*this).~Buffer () ;
@@ -2112,7 +2112,7 @@ public:
 	}
 
 	inline Buffer &operator= (const Buffer &that) {
-		if SWITCH_CASE (TRUE) {
+		if switch_case (TRUE) {
 			if (this == &that)
 				discard ;
 			(*this).~Buffer () ;
@@ -2127,7 +2127,7 @@ public:
 	}
 
 	inline Buffer &operator= (Buffer &&that) noexcept {
-		if SWITCH_CASE (TRUE) {
+		if switch_case (TRUE) {
 			if (this == &that)
 				discard ;
 			(*this).~Buffer () ;
@@ -2255,7 +2255,7 @@ public:
 	inline Buffer expand (LENGTH len) const {
 		return Buffer (len) ;
 	}
-
+	
 	inline void swap (Buffer &that) popping {
 		_SWAP_ (mBuffer ,that.mBuffer) ;
 		_SWAP_ (mSize ,that.mSize) ;
@@ -2298,7 +2298,7 @@ public:
 	}
 
 	inline Buffer &operator= (Buffer &&that) noexcept {
-		if SWITCH_CASE (TRUE) {
+		if switch_case (TRUE) {
 			if (this == &that)
 				discard ;
 			(*this).~Buffer () ;
@@ -2470,7 +2470,7 @@ public:
 	}
 
 	inline Buffer &operator= (Buffer &&that) noexcept {
-		if SWITCH_CASE (TRUE) {
+		if switch_case (TRUE) {
 			if (this == &that)
 				discard ;
 			(*this).~Buffer () ;
@@ -2754,7 +2754,7 @@ public:
 		while (TRUE) {
 			if (mSize >= that.mAllocator.size ())
 				break ;
-			if SWITCH_CASE (TRUE) {
+			if switch_case (TRUE) {
 				INDEX ix = mSize ;
 				if (mAllocator[ix].mNext != VAR_USED)
 					discard ;
@@ -2769,7 +2769,7 @@ public:
 	}
 
 	inline Allocator &operator= (Allocator &&that) noexcept {
-		if SWITCH_CASE (TRUE) {
+		if switch_case (TRUE) {
 			if (this == &that)
 				discard ;
 			(*this).~Allocator () ;
@@ -2833,7 +2833,7 @@ private:
 			while (TRUE) {
 				if (Finally::mSelf.mSize <= 0)
 					break ;
-				if SWITCH_CASE (TRUE) {
+				if switch_case (TRUE) {
 					INDEX ix = Finally::mSelf.mSize - 1 ;
 					if (Finally::mSelf.mAllocator[ix].mNext != VAR_USED)
 						discard ;
@@ -2876,7 +2876,7 @@ public:
 		while (TRUE) {
 			if (mSize >= that.mAllocator.size ())
 				break ;
-			if SWITCH_CASE (TRUE) {
+			if switch_case (TRUE) {
 				INDEX ix = mSize ;
 				if (mAllocator[ix].mNext != VAR_USED)
 					discard ;
@@ -2890,7 +2890,7 @@ public:
 	}
 
 	inline Allocator &operator= (const Allocator &that) {
-		if SWITCH_CASE (TRUE) {
+		if switch_case (TRUE) {
 			if (this == &that)
 				discard ;
 			(*this).~Allocator () ;
@@ -2909,7 +2909,7 @@ public:
 		while (TRUE) {
 			if (mSize >= that.mAllocator.size ())
 				break ;
-			if SWITCH_CASE (TRUE) {
+			if switch_case (TRUE) {
 				INDEX ix = mSize ;
 				if (mAllocator[ix].mNext != VAR_USED)
 					discard ;
@@ -2924,7 +2924,7 @@ public:
 	}
 
 	inline Allocator &operator= (Allocator &&that) noexcept {
-		if SWITCH_CASE (TRUE) {
+		if switch_case (TRUE) {
 			if (this == &that)
 				discard ;
 			(*this).~Allocator () ;
@@ -3033,18 +3033,12 @@ public:
 		return std::move (ret) ;
 	}
 
-	inline void swap (Allocator &that) popping {
-		mAllocator.swap (that.mAllocator) ;
-		_SWAP_ (mLength ,that.mLength) ;
-		_SWAP_ (mFree ,that.mFree) ;
-	}
-
 	template <class... _ARGS>
 	inline INDEX alloc (_ARGS &&...initval) popping {
 		_STATIC_ASSERT_ (std::is_nothrow_move_constructible<UNIT>::value) ;
 		_STATIC_ASSERT_ (std::is_nothrow_move_assignable<UNIT>::value) ;
 		_DEBUG_ASSERT_ (mSize == mAllocator.size ()) ;
-		if SWITCH_CASE (TRUE) {
+		if switch_case (TRUE) {
 			if (mFree != VAR_NONE)
 				discard ;
 			auto tmp = mAllocator.expand (mAllocator.expand_size ()) ;
@@ -3061,7 +3055,7 @@ public:
 			mLength++ ;
 			return r1x ;
 		}
-		if SWITCH_CASE (TRUE) {
+		if switch_case (TRUE) {
 			if (mFree == VAR_NONE)
 				discard ;
 			const auto r2x = mFree ;

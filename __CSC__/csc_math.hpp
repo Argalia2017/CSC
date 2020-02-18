@@ -290,7 +290,7 @@ inline ARRAY3<DATA> _inline_IEEE754_ENCODE_PART_ (const ARRAY3<VAR64> &sne2) {
 		ret[0] = ret[0] << 1 ;
 		ret[1]-- ;
 	}
-	if SWITCH_CASE (TRUE) {
+	if switch_case (TRUE) {
 		const auto r2x = VAR64 (DATA (-1074) - ret[1]) ;
 		if (r2x <= 0)
 			discard ;
@@ -319,7 +319,7 @@ inline ARRAY3<VAR64> _IEEE754_DECODE_ (const VAL64 &ieee754) {
 	ARRAY3<DATA> ret ;
 	const auto r1x = _CAST_<DATA> (ieee754) ;
 	ret[0] = r1x & DATA (0X000FFFFFFFFFFFFF) ;
-	const auto r2x = r1x & DATA (0X7FF0000000000000) ;
+	const auto r2x = _XVALUE_<DATA> (r1x & DATA (0X7FF0000000000000)) ;
 	if (r2x != 0)
 		ret[0] |= DATA (0X0010000000000000) ;
 	ret[1] = r2x >> 52 ;
@@ -371,7 +371,7 @@ inline ARRAY3<VAR64> _inline_IEEE754_E2TOE10_PART_ (const ARRAY3<VAR64> &sne2) {
 	while (TRUE) {
 		if (ret[0] == 0)
 			break ;
-		const auto r2x = ret[0] << 1 ;
+		const auto r2x = _XVALUE_<DATA> (ret[0] << 1) ;
 		if ((r2x & ~DATA (0X000FFFFFFFFFFFFF)) != 0)
 			break ;
 		ret[0] = r2x ;
@@ -415,7 +415,7 @@ inline ARRAY3<VAR64> _inline_IEEE754_E10TOE2_PART_ (const ARRAY3<VAR64> &sne10) 
 	while (TRUE) {
 		if (ret[0] == 0)
 			break ;
-		const auto r2x = (ret[0] << 3) + (ret[0] << 1) ;
+		const auto r2x = _XVALUE_<DATA> ((ret[0] << 3) + (ret[0] << 1)) ;
 		if ((r2x & ~DATA (0X000FFFFFFFFFFFFF)) != 0)
 			break ;
 		ret[0] = r2x ;

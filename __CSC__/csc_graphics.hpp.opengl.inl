@@ -10,12 +10,14 @@
 #pragma push_macro ("popping")
 #pragma push_macro ("imports")
 #pragma push_macro ("exports")
+#pragma push_macro ("switch_case")
 #pragma push_macro ("discard")
 #undef self
 #undef implicit
 #undef popping
 #undef imports
 #undef exports
+#undef switch_case
 #undef discard
 #endif
 
@@ -78,6 +80,7 @@
 #pragma pop_macro ("popping")
 #pragma pop_macro ("imports")
 #pragma pop_macro ("exports")
+#pragma pop_macro ("switch_case")
 #pragma pop_macro ("discard")
 #endif
 
@@ -276,7 +279,7 @@ public:
 	void compute_sprite_draw (AnyRef<void> &this_) const override {
 		auto &r1y = this_.rebind<SPRITE_NATIVE_TYPE> ().self ;
 		glBindVertexArray (r1y.mVAO) ;
-		if SWITCH_CASE (TRUE) {
+		if switch_case (TRUE) {
 			if (r1y.mTexture == VAR_NONE)
 				discard ;
 			glActiveTexture (GL_TEXTURE_2D) ;
