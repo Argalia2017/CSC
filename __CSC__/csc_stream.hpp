@@ -12,57 +12,57 @@
 namespace CSC {
 namespace U {
 template <class ,class>
-struct BYTE_TRAITS ;
+struct BYTE_BASE ;
 
 template <>
-struct BYTE_TRAITS<ARGC<_SIZEOF_ (BYTE)> ,ARGC<_ALIGNOF_ (BYTE)>> {
+struct BYTE_BASE<ARGC<_SIZEOF_ (BYTE)> ,ARGC<_ALIGNOF_ (BYTE)>> {
 	using TYPE = BYTE ;
 } ;
 
 template <>
-struct BYTE_TRAITS<ARGC<_SIZEOF_ (WORD)> ,ARGC<_ALIGNOF_ (WORD)>> {
+struct BYTE_BASE<ARGC<_SIZEOF_ (WORD)> ,ARGC<_ALIGNOF_ (WORD)>> {
 	using TYPE = WORD ;
 } ;
 
 template <>
-struct BYTE_TRAITS<ARGC<_SIZEOF_ (CHAR)> ,ARGC<_ALIGNOF_ (CHAR)>> {
+struct BYTE_BASE<ARGC<_SIZEOF_ (CHAR)> ,ARGC<_ALIGNOF_ (CHAR)>> {
 	using TYPE = CHAR ;
 } ;
 
 template <>
-struct BYTE_TRAITS<ARGC<_SIZEOF_ (DATA)> ,ARGC<_ALIGNOF_ (DATA)>> {
+struct BYTE_BASE<ARGC<_SIZEOF_ (DATA)> ,ARGC<_ALIGNOF_ (DATA)>> {
 	using TYPE = DATA ;
 } ;
 
 template <class _ARG1>
-using BYTE_TRAITS_TYPE = typename U::BYTE_TRAITS<ARGC<_SIZEOF_ (_ARG1)> ,ARGC<_ALIGNOF_ (_ARG1)>>::TYPE ;
+using BYTE_BASE_TYPE = typename U::BYTE_BASE<ARGC<_SIZEOF_ (_ARG1)> ,ARGC<_ALIGNOF_ (_ARG1)>>::TYPE ;
 } ;
 
 namespace U {
 template <class ,class>
-struct TEXT_TRAITS ;
+struct TEXT_BASE ;
 
 template <>
-struct TEXT_TRAITS<ARGC<_SIZEOF_ (STRU8)> ,ARGC<_ALIGNOF_ (STRU8)>> {
+struct TEXT_BASE<ARGC<_SIZEOF_ (STRU8)> ,ARGC<_ALIGNOF_ (STRU8)>> {
 	using TYPE = STRU8 ;
 } ;
 
 template <>
-struct TEXT_TRAITS<ARGC<_SIZEOF_ (STRU16)> ,ARGC<_ALIGNOF_ (STRU16)>> {
+struct TEXT_BASE<ARGC<_SIZEOF_ (STRU16)> ,ARGC<_ALIGNOF_ (STRU16)>> {
 	using TYPE = STRU16 ;
 } ;
 
 template <>
-struct TEXT_TRAITS<ARGC<_SIZEOF_ (STRU32)> ,ARGC<_ALIGNOF_ (STRU32)>> {
+struct TEXT_BASE<ARGC<_SIZEOF_ (STRU32)> ,ARGC<_ALIGNOF_ (STRU32)>> {
 	using TYPE = STRU32 ;
 } ;
 
 template <class _ARG1>
-using TEXT_TRAITS_TYPE = typename U::TEXT_TRAITS<ARGC<_SIZEOF_ (_ARG1)> ,ARGC<_ALIGNOF_ (_ARG1)>>::TYPE ;
+using TEXT_BASE_TYPE = typename U::TEXT_BASE<ARGC<_SIZEOF_ (_ARG1)> ,ARGC<_ALIGNOF_ (_ARG1)>>::TYPE ;
 } ;
 
-using STRUA = U::TEXT_TRAITS_TYPE<STRA> ;
-using STRUW = U::TEXT_TRAITS_TYPE<STRW> ;
+using STRUA = U::TEXT_BASE_TYPE<STRA> ;
+using STRUW = U::TEXT_BASE_TYPE<STRW> ;
 
 class ByteReader {
 private:
@@ -208,7 +208,7 @@ public:
 	}
 
 	void read (BOOL &data) popping {
-		read (_CAST_<U::BYTE_TRAITS_TYPE<BOOL>> (data)) ;
+		read (_CAST_<U::BYTE_BASE_TYPE<BOOL>> (data)) ;
 	}
 
 	inline ByteReader &operator>> (BOOL &data) popping {
@@ -217,7 +217,7 @@ public:
 	}
 
 	void read (VAR32 &data) popping {
-		read (_CAST_<U::BYTE_TRAITS_TYPE<VAR32>> (data)) ;
+		read (_CAST_<U::BYTE_BASE_TYPE<VAR32>> (data)) ;
 	}
 
 	inline ByteReader &operator>> (VAR32 &data) popping {
@@ -226,7 +226,7 @@ public:
 	}
 
 	void read (VAR64 &data) popping {
-		read (_CAST_<U::BYTE_TRAITS_TYPE<VAR64>> (data)) ;
+		read (_CAST_<U::BYTE_BASE_TYPE<VAR64>> (data)) ;
 	}
 
 	inline ByteReader &operator>> (VAR64 &data) popping {
@@ -235,7 +235,7 @@ public:
 	}
 
 	void read (VAL32 &data) popping {
-		read (_CAST_<U::BYTE_TRAITS_TYPE<VAL32>> (data)) ;
+		read (_CAST_<U::BYTE_BASE_TYPE<VAL32>> (data)) ;
 	}
 
 	inline ByteReader &operator>> (VAL32 &data) popping {
@@ -244,7 +244,7 @@ public:
 	}
 
 	void read (VAL64 &data) popping {
-		read (_CAST_<U::BYTE_TRAITS_TYPE<VAL64>> (data)) ;
+		read (_CAST_<U::BYTE_BASE_TYPE<VAL64>> (data)) ;
 	}
 
 	inline ByteReader &operator>> (VAL64 &data) popping {
@@ -478,7 +478,7 @@ public:
 	}
 
 	void write (const BOOL &data) {
-		const auto r1x = _CAST_<U::BYTE_TRAITS_TYPE<BOOL>> (data) ;
+		const auto r1x = _CAST_<U::BYTE_BASE_TYPE<BOOL>> (data) ;
 		write (r1x) ;
 	}
 
@@ -492,7 +492,7 @@ public:
 	inline ByteWriter &operator<< (const PTR<const VOID> &) = delete ;
 
 	void write (const VAR32 &data) {
-		const auto r1x = _CAST_<U::BYTE_TRAITS_TYPE<VAR32>> (data) ;
+		const auto r1x = _CAST_<U::BYTE_BASE_TYPE<VAR32>> (data) ;
 		write (r1x) ;
 	}
 
@@ -502,7 +502,7 @@ public:
 	}
 
 	void write (const VAR64 &data) {
-		const auto r1x = _CAST_<U::BYTE_TRAITS_TYPE<VAR64>> (data) ;
+		const auto r1x = _CAST_<U::BYTE_BASE_TYPE<VAR64>> (data) ;
 		write (r1x) ;
 	}
 
@@ -512,7 +512,7 @@ public:
 	}
 
 	void write (const VAL32 &data) {
-		const auto r1x = _CAST_<U::BYTE_TRAITS_TYPE<VAL32>> (data) ;
+		const auto r1x = _CAST_<U::BYTE_BASE_TYPE<VAL32>> (data) ;
 		write (r1x) ;
 	}
 
@@ -522,7 +522,7 @@ public:
 	}
 
 	void write (const VAL64 &data) {
-		const auto r1x = _CAST_<U::BYTE_TRAITS_TYPE<VAL64>> (data) ;
+		const auto r1x = _CAST_<U::BYTE_BASE_TYPE<VAL64>> (data) ;
 		write (r1x) ;
 	}
 
@@ -636,7 +636,7 @@ private:
 		REAL convert_endian (const REAL &item) const {
 			if (!Attribute::mSelf.mEndianFlag)
 				return item ;
-			U::BYTE_TRAITS_TYPE<REAL> ret ;
+			U::BYTE_BASE_TYPE<REAL> ret ;
 			auto &r1y = _CAST_<BYTE[_SIZEOF_ (REAL)]> (item) ;
 			ByteReader (PhanBuffer<const BYTE>::make (r1y)) >> ret ;
 			return std::move (_CAST_<REAL> (ret)) ;
@@ -879,7 +879,6 @@ public:
 			data = FALSE ;
 		}
 		if switch_case (fax) {
-			_STATIC_WARNING_ ("unexpected") ;
 			_DYNAMIC_ASSERT_ (FALSE) ;
 		}
 	}
@@ -994,7 +993,6 @@ public:
 
 	template <class _ARG1 ,class _ARG2>
 	void read (Array<_ARG1 ,_ARG2> &data) popping {
-		_STATIC_WARNING_ ("unexpected") ;
 		_DEBUG_ASSERT_ (FALSE) ;
 	}
 
@@ -1203,7 +1201,7 @@ private:
 		REAL convert_endian (const REAL &item) const {
 			if (!Attribute::mSelf.mEndianFlag)
 				return item ;
-			U::BYTE_TRAITS_TYPE<REAL> ret ;
+			U::BYTE_BASE_TYPE<REAL> ret ;
 			auto &r1y = _CAST_<BYTE[_SIZEOF_ (REAL)]> (item) ;
 			ByteReader (PhanBuffer<const BYTE>::make (r1y)) >> ret ;
 			return std::move (_CAST_<REAL> (ret)) ;
@@ -1381,9 +1379,11 @@ public:
 			REAL ('t') ,REAL ('r') ,REAL ('u') ,REAL ('e')}) ;
 		static constexpr auto M_FALSE = PACK<REAL[5]> ({
 			REAL ('f') ,REAL ('a') ,REAL ('l') ,REAL ('s') ,REAL ('e')}) ;
-		const auto r1x = _SWITCH_ (
-			data ? PhanBuffer<const REAL>::make (M_TRUE.P1) :
-			PhanBuffer<const REAL>::make (M_FALSE.P1)) ;
+		const auto r1x = _CALL_ ([&] () {
+			if (data)
+				return PhanBuffer<const REAL>::make (M_TRUE.P1) ;
+			return PhanBuffer<const REAL>::make (M_FALSE.P1) ;
+		}) ;
 		write (r1x) ;
 	}
 
@@ -1501,7 +1501,6 @@ public:
 
 	template <class _ARG1 ,class _ARG2>
 	void write (const Array<_ARG1 ,_ARG2> &data) {
-		_STATIC_WARNING_ ("unexpected") ;
 		_DEBUG_ASSERT_ (FALSE) ;
 	}
 
@@ -1931,6 +1930,27 @@ inline void _EOS_ (TextWriter<_ARG1> &writer) {
 } ;
 
 inline namespace STREAM {
+inline void _SCANS_ (ByteReader &reader) {
+	_STATIC_WARNING_ ("noop") ;
+}
+
+template <class _ARG1 ,class... _ARGS>
+inline void _SCANS_ (ByteReader &reader ,const _ARG1 &list_one ,const _ARGS &...list_rest) {
+	reader >> list_one ;
+	_SCANS_ (reader ,list_rest...) ;
+}
+
+template <class _ARG1>
+inline void _SCANS_ (TextReader<_ARG1> &reader) {
+	_STATIC_WARNING_ ("noop") ;
+}
+
+template <class _ARG1 ,class _ARG2 ,class... _ARGS>
+inline void _SCANS_ (TextReader<_ARG1> &reader ,const _ARG2 &list_one ,const _ARGS &...list_rest) {
+	reader >> list_one ;
+	_SCANS_ (reader ,list_rest...) ;
+}
+
 inline void _PRINTS_ (ByteWriter &writer) {
 	_STATIC_WARNING_ ("noop") ;
 }

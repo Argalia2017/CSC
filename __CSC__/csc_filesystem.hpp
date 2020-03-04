@@ -36,7 +36,7 @@ inline imports DEF<void (const String<STR> &dst_file ,const String<STR> &src_fil
 
 inline imports DEF<BOOL (const String<STR> &file1 ,const String<STR> &file2) popping> _IDENTICALFILE_ ;
 
-inline imports DEF<String<STR> (const String<STR> &file)> _PARSEFILEPATH_ ;
+inline imports DEF<String<STR> (const String<STR> &file)> _PARSEDIRENAME_ ;
 
 inline imports DEF<String<STR> (const String<STR> &file)> _PARSEFILENAME_ ;
 
@@ -45,8 +45,6 @@ inline imports DEF<Deque<String<STR>> (const String<STR> &file)> _DECOUPLEPATHNA
 inline imports DEF<String<STR> ()> _WORKINGPATH_ ;
 
 inline imports DEF<String<STR> (const String<STR> &path)> _ABSOLUTEPATH_ ;
-
-inline imports DEF<String<STR> (const String<STR> &path ,const String<STR> &file)> _RELATIVEPATHNAME_ ;
 
 inline imports DEF<const String<STR> & () popping> _MODULEFILEPATH_ ;
 

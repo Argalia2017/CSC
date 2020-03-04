@@ -463,7 +463,6 @@ inline void XmlParser::initialize (const PhanBuffer<const STRU8> &data) {
 		}
 
 		inline void generate () {
-			_STATIC_WARNING_ ("note") ;
 			/*
 			*	$0->$8 $7 $9
 			*	$1->${identity}
@@ -883,26 +882,26 @@ inline void XmlParser::initialize (const Array<XmlParser> &sequence) {
 				INDEX ix = mFoundNodeNameSet.head () ;
 				if (ix != VAR_NONE)
 					ix = mFoundNodeNameSet[ix].item ;
-				INDEX iy = mFoundNode.insert () ;
-				mFoundNode[iy].mName = i.name () ;
-				mFoundNodeNameSet.add (mFoundNode[iy].mName ,iy) ;
-				mFoundNode[iy].mType = node_type (i) ;
+				INDEX jx = mFoundNode.insert () ;
+				mFoundNode[jx].mName = i.name () ;
+				mFoundNodeNameSet.add (mFoundNode[jx].mName ,jx) ;
+				mFoundNode[jx].mType = node_type (i) ;
 				if switch_case (TRUE) {
 					if (ix == VAR_NONE)
 						discard ;
-					_DYNAMIC_ASSERT_ (mFoundNode[ix].mName == mFoundNode[iy].mName) ;
+					_DYNAMIC_ASSERT_ (mFoundNode[ix].mName == mFoundNode[jx].mName) ;
 					_DYNAMIC_ASSERT_ (mFoundNode[ix].mType != NODE_CLAZZ_FINAL) ;
-					_DYNAMIC_ASSERT_ (mFoundNode[iy].mType != NODE_CLAZZ_FINAL) ;
+					_DYNAMIC_ASSERT_ (mFoundNode[jx].mType != NODE_CLAZZ_FINAL) ;
 				}
-				if (mFoundNode[iy].mType == NODE_CLAZZ_FINAL)
+				if (mFoundNode[jx].mType == NODE_CLAZZ_FINAL)
 					_DYNAMIC_ASSERT_ (i.mHeap.self[i.mIndex].mAttributeSet.length () == 1) ;
-				mFoundNode[iy].mAttributeSet = mAttributeSoftSet.share () ;
-				mFoundNode[iy].mAttributeSet.appand (i.mHeap.self[i.mIndex].mAttributeSet) ;
+				mFoundNode[jx].mAttributeSet = mAttributeSoftSet.share () ;
+				mFoundNode[jx].mAttributeSet.appand (i.mHeap.self[i.mIndex].mAttributeSet) ;
 				if (mFoundNodeBaseNodeHeap.empty ())
 					mFoundNodeBaseNodeHeap.add (Deque<XmlParser> ()) ;
-				mFoundNodeBaseNodeHeap.take (mFoundNode[iy].mBaseNode) ;
-				mFoundNode[iy].mBaseNode.clear () ;
-				mFoundNode[iy].mBaseNode.add (i.child ()) ;
+				mFoundNodeBaseNodeHeap.take (mFoundNode[jx].mBaseNode) ;
+				mFoundNode[jx].mBaseNode.clear () ;
+				mFoundNode[jx].mBaseNode.add (i.child ()) ;
 			}
 		}
 
@@ -1426,7 +1425,6 @@ inline void JsonParser::initialize (const PhanBuffer<const STRU8> &data) {
 		}
 
 		inline void generate () {
-			_STATIC_WARNING_ ("note") ;
 			/*
 			*	$0->$11 $10 $12
 			*	$1->${value}
@@ -1493,7 +1491,6 @@ inline void JsonParser::initialize (const PhanBuffer<const STRU8> &data) {
 				mLatestString = _PCSTRU8_ ("FALSE") ;
 			}
 			if switch_case (fax) {
-				_STATIC_WARNING_ ("unexpected") ;
 				_DYNAMIC_ASSERT_ (FALSE) ;
 			}
 		}
@@ -1572,7 +1569,6 @@ inline void JsonParser::initialize (const PhanBuffer<const STRU8> &data) {
 				ix = mLatestIndex ;
 			}
 			if switch_case (fax) {
-				_STATIC_WARNING_ ("unexpected") ;
 				_DYNAMIC_ASSERT_ (FALSE) ;
 			}
 			mLatestIndex = ix ;
@@ -1870,7 +1866,6 @@ inline void CommandParser::initialize (const PhanBuffer<const STRU8> &data) {
 		}
 
 		inline void generate () {
-			_STATIC_WARNING_ ("note") ;
 			/*
 			*	$0->$8 $7 $9
 			*	$1->${identity}

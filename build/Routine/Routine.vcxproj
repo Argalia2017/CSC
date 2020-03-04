@@ -44,6 +44,7 @@
     <ClInclude Include="..\..\..\..\..\Depends\__CSC__\csc_debugger.hpp" />
     <ClInclude Include="..\..\..\..\..\Depends\__CSC__\csc_extend.hpp" />
     <ClInclude Include="..\..\..\..\..\Depends\__CSC__\csc_filesystem.hpp" />
+    <ClInclude Include="..\..\..\..\..\Depends\__CSC__\csc_functional.hpp" />
     <ClInclude Include="..\..\..\..\..\Depends\__CSC__\csc_geometry.hpp" />
     <ClInclude Include="..\..\..\..\..\Depends\__CSC__\csc_graphics.hpp" />
     <ClInclude Include="..\..\..\..\..\Depends\__CSC__\csc_images.hpp" />
@@ -63,6 +64,7 @@
     <None Include="..\..\..\..\..\Depends\__CSC__\csc_debugger.hpp.windows.inl" />
     <None Include="..\..\..\..\..\Depends\__CSC__\csc_filesystem.hpp.linux.inl" />
     <None Include="..\..\..\..\..\Depends\__CSC__\csc_filesystem.hpp.windows.inl" />
+    <None Include="..\..\..\..\..\Depends\__CSC__\csc_functional.hpp.op.inl" />
     <None Include="..\..\..\..\..\Depends\__CSC__\csc_graphics.hpp.opengl.inl" />
     <None Include="..\..\..\..\..\Depends\__CSC__\csc_images.hpp.freeimage.inl" />
     <None Include="..\..\..\..\..\Depends\__CSC__\csc_images.hpp.opencv.inl" />
@@ -70,6 +72,7 @@
     <None Include="..\..\..\..\..\Depends\__CSC__\csc_network.hpp.windows.inl" />
     <None Include="..\..\..\..\..\Depends\__CSC__\csc_runtime.hpp.default.inl" />
     <None Include="..\..\..\..\..\Depends\__CSC__\csc_string.hpp.default.inl" />
+    <None Include="..\..\..\..\..\Depends\__CSC__\csc_string.hpp.gbk.inl" />
   </ItemGroup>
   <ItemGroup>
     <Natvis Include="..\..\..\..\..\Depends\__CSC__\cpp.natvis" />

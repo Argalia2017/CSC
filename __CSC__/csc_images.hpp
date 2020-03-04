@@ -28,10 +28,6 @@ private:
 
 		inline Iterator (Iterator &&) noexcept = default ;
 
-		inline BOOL operator== (const Iterator &that) const {
-			return BOOL (mIndex == that.mIndex) ;
-		}
-
 		inline BOOL operator!= (const Iterator &that) const {
 			return BOOL (mIndex != that.mIndex) ;
 		}
@@ -42,7 +38,7 @@ private:
 
 		inline void operator++ () {
 			mIndex++ ;
-			Detail::template_incrase (mBase.mRange ,mItem ,_NULL_<ARGV<ARGC<SIZE::value - 1>>> ()) ;
+			Detail::template_incrase (mBase.mRange ,mItem ,_NULL_<ARGV<DECREASE<SIZE>>> ()) ;
 		}
 
 	public:
@@ -85,7 +81,7 @@ private:
 			return std::move (ret) ;
 		}
 
-		inline static void template_incrase (const Array<LENGTH ,SIZE> &range_ ,Array<LENGTH ,SIZE> &item ,const ARGV<ARGC<0>> &) {
+		inline static void template_incrase (const Array<LENGTH ,SIZE> &range_ ,Array<LENGTH ,SIZE> &item ,const ARGV<ZERO> &) {
 			_DEBUG_ASSERT_ (item[0] < range_[0]) ;
 			item[0]++ ;
 		}
@@ -97,7 +93,7 @@ private:
 			if (item[_ARG1::value] < range_[_ARG1::value])
 				return ;
 			item[_ARG1::value] = 0 ;
-			template_incrase (range_ ,item ,_NULL_<ARGV<ARGC<_ARG1::value - 1>>> ()) ;
+			template_incrase (range_ ,item ,_NULL_<ARGV<DECREASE<_ARG1>>> ()) ;
 		}
 	} ;
 } ;

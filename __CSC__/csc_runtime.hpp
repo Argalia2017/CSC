@@ -45,7 +45,7 @@ struct OPERATOR_TYPENAME {
 		_DYNAMIC_ASSERT_ (r9x > 0) ;
 		ret.mName = ret.mName.segment (r7x ,r9x) ;
 #else
-		ret.mName = _BUILDVAR64S_ (_TYPEUID_<_RET> ()) ;
+		ret.mName = _BUILDVAR64S_ (_TYPEMID_<_RET> ()) ;
 #endif
 		return std::move (ret) ;
 	}

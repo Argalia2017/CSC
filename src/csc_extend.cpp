@@ -47,7 +47,7 @@ public:
 				return _SQE_ (x) ;
 			return 0 ;
 		}) ;
-		const auto r2x = Function<int (const int &)>::make (r1x ,_XVALUE_<int> (2)) ;
+		const auto r2x = Function<int (const int &)>::make (r1x ,int (2)) ;
 		_UNITTEST_ASSERT_ (r2x (2) == 4) ;
 		_UNITTEST_ASSERT_ (r2x (3) == 9) ;
 		const auto r3x = Function<int (const int & ,const int &)>::make (r1x) ;

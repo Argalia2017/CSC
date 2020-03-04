@@ -87,7 +87,7 @@ inline FLAG _MEMHASH_ (const ARR<_ARG1> &src ,LENGTH len) {
 inline CHAR _inline_MEMCRC32_TABLE_EACH_ (CHAR val) {
 	CHAR ret = val ;
 	for (auto &&i : _RANGE_ (0 ,8)) {
-		const auto r1x = _XVALUE_<CHAR> (ret & CHAR (0X00000001)) ;
+		const auto r1x = CHAR (ret & CHAR (0X00000001)) ;
 		ret >>= 1 ;
 		if (r1x == 0)
 			continue ;
@@ -116,8 +116,8 @@ inline FLAG _MEMCRC32_ (const ARR<_ARG1> &src ,LENGTH len) {
 	FLAG ret = FLAG (0XFFFFFFFF) ;
 	auto &r1y = _inline_MEMCRC32_TABLE_ () ;
 	for (auto &&i : _RANGE_ (0 ,len)) {
-		const auto r2x = INDEX ((CHAR (ret) ^ CHAR (src[i])) & CHAR (0X000000FF)) ;
-		ret = FLAG (r1y.P1[r2x] ^ (CHAR (ret) >> 8)) ;
+		const auto r2x = CHAR ((CHAR (ret) ^ CHAR (src[i])) & CHAR (0X000000FF)) ;
+		ret = FLAG (r1y.P1[INDEX (r2x)] ^ (CHAR (ret) >> 8)) ;
 	}
 	ret &= VAR32_MAX ;
 	return std::move (ret) ;
@@ -924,7 +924,7 @@ template <>
 class AnyRef<void> {
 private:
 	exports struct Holder :public Interface {
-		virtual FLAG typeuid () const = 0 ;
+		virtual FLAG typemid () const = 0 ;
 	} ;
 
 private:
@@ -986,9 +986,9 @@ public:
 		return TRUE ;
 	}
 
-	inline FLAG typeuid () const {
+	inline FLAG typemid () const {
 		_DEBUG_ASSERT_ (exist ()) ;
-		return mPointer->typeuid () ;
+		return mPointer->typemid () ;
 	}
 } ;
 
@@ -1007,8 +1007,8 @@ private:
 		template <class... _ARGS>
 		inline explicit ImplHolder (_ARGS &&...initval) :mData (std::forward<_ARGS> (initval)...) {}
 
-		inline FLAG typeuid () const override {
-			return _TYPEUID_<UNIT_> () ;
+		inline FLAG typemid () const override {
+			return _TYPEMID_<UNIT_> () ;
 		}
 	} ;
 
@@ -1070,13 +1070,13 @@ public:
 		return TRUE ;
 	}
 
-	inline FLAG typeuid () const {
+	inline FLAG typemid () const {
 		_DEBUG_ASSERT_ (exist ()) ;
-		return mPointer->typeuid () ;
+		return mPointer->typemid () ;
 	}
 
 	inline UNIT &to () {
-		_DEBUG_ASSERT_ (typeuid () == _TYPEUID_<UNIT> ()) ;
+		_DEBUG_ASSERT_ (typemid () == _TYPEMID_<UNIT> ()) ;
 		const auto r1x = static_cast<PTR<ImplHolder<UNIT>>> (mPointer) ;
 		return r1x->mData ;
 	}
@@ -1090,7 +1090,7 @@ public:
 	}
 
 	inline const UNIT &to () const {
-		_DEBUG_ASSERT_ (typeuid () == _TYPEUID_<UNIT> ()) ;
+		_DEBUG_ASSERT_ (typemid () == _TYPEMID_<UNIT> ()) ;
 		const auto r1x = static_cast<PTR<ImplHolder<UNIT>>> (mPointer) ;
 		return r1x->mData ;
 	}
@@ -1719,7 +1719,7 @@ public:
 template <class ,class>
 class Buffer ;
 
-using SFLEX = ARGC<0> ;
+using SFLEX = ZERO ;
 using SFIXED = ARGC<-1> ;
 using SAUTO = ARGC<-2> ;
 using SCPHAN = ARGC<-4> ;
@@ -1833,7 +1833,6 @@ public:
 	}
 
 	inline Buffer expand (LENGTH len) const {
-		_STATIC_WARNING_ ("unexpected") ;
 		_DEBUG_ASSERT_ (FALSE) ;
 		return Buffer () ;
 	}
@@ -1983,13 +1982,11 @@ public:
 	}
 
 	inline Buffer<UNIT ,SAUTO> expand (LENGTH len) const {
-		_STATIC_WARNING_ ("unexpected") ;
 		_DYNAMIC_ASSERT_ (FALSE) ;
 		return Buffer<UNIT ,SAUTO> () ;
 	}
 
 	inline void swap (Buffer<UNIT ,SAUTO> &that) popping {
-		_STATIC_WARNING_ ("unexpected") ;
 		_DYNAMIC_ASSERT_ (FALSE) ;
 	}
 
@@ -2395,7 +2392,6 @@ public:
 	}
 
 	inline Buffer expand (LENGTH len) const {
-		_STATIC_WARNING_ ("unexpected") ;
 		_DEBUG_ASSERT_ (FALSE) ;
 		return Buffer () ;
 	}
@@ -2418,9 +2414,9 @@ public:
 		return Buffer (&src ,len) ;
 	}
 
-	template <LENGTH _VAL1>
-	inline static Buffer make (const DEF<UNIT[_VAL1]> &val) popping {
-		return make (PTRTOARR[val] ,_VAL1) ;
+	template <class _ARG1 ,class = ENABLE_TYPE<stl::is_full_array_of<UNIT ,_ARG1>::value>>
+	inline static Buffer make (const _ARG1 &val) popping {
+		return make (PTRTOARR[val] ,_COUNTOF_ (_ARG1)) ;
 	}
 
 	template <class _ARG1>
@@ -2567,7 +2563,6 @@ public:
 	}
 
 	inline Buffer expand (LENGTH len) const {
-		_STATIC_WARNING_ ("unexpected") ;
 		_DEBUG_ASSERT_ (FALSE) ;
 		return Buffer () ;
 	}
@@ -2590,9 +2585,9 @@ public:
 		return Buffer (&src ,len) ;
 	}
 
-	template <LENGTH _VAL1>
-	inline static Buffer make (DEF<UNIT[_VAL1]> &val) popping {
-		return make (PTRTOARR[val] ,_VAL1) ;
+	template <class _ARG1 ,class = ENABLE_TYPE<stl::is_full_array_of<UNIT ,_ARG1>::value>>
+	inline static Buffer make (_ARG1 &val) popping {
+		return make (PTRTOARR[val] ,_COUNTOF_ (_ARG1)) ;
 	}
 
 	template <class _ARG1>
@@ -2747,9 +2742,7 @@ public:
 	inline Allocator (Allocator &&that) noexcept :Allocator (ARGVP0 ,std::move (that.mAllocator)) {
 		_STATIC_ASSERT_ (std::is_nothrow_move_constructible<UNIT>::value) ;
 		_STATIC_ASSERT_ (std::is_nothrow_move_assignable<UNIT>::value) ;
-		const auto r1x = _SWITCH_ (
-			(std::is_pod<UNIT>::value) ? mAllocator.size () :
-			0) ;
+		const auto r1x = EFLAG (std::is_pod<UNIT>::value) * mAllocator.size () ;
 		mSize = r1x ;
 		while (TRUE) {
 			if (mSize >= that.mAllocator.size ())
@@ -2821,9 +2814,7 @@ private:
 	class Finally :private Wrapped<Allocator> {
 	public:
 		inline void lock () {
-			const auto r1x = _SWITCH_ (
-				(std::is_pod<UNIT>::value) ? Finally::mSelf.mAllocator.size () :
-				0) ;
+			const auto r1x = EFLAG (std::is_pod<UNIT>::value) * Finally::mSelf.mAllocator.size () ;
 			Finally::mSelf.mSize = r1x ;
 		}
 
@@ -2902,9 +2893,7 @@ public:
 	inline Allocator (Allocator &&that) noexcept :Allocator (ARGVP0 ,std::move (that.mAllocator)) {
 		_STATIC_ASSERT_ (std::is_nothrow_move_constructible<UNIT>::value) ;
 		_STATIC_ASSERT_ (std::is_nothrow_move_assignable<UNIT>::value) ;
-		const auto r1x = _SWITCH_ (
-			(std::is_pod<UNIT>::value) ? mAllocator.size () :
-			0) ;
+		const auto r1x = EFLAG (std::is_pod<UNIT>::value) * mAllocator.size () ;
 		mSize = r1x ;
 		while (TRUE) {
 			if (mSize >= that.mAllocator.size ())
@@ -3065,7 +3054,6 @@ public:
 			mLength++ ;
 			return r2x ;
 		}
-		_STATIC_WARNING_ ("unexpected") ;
 		_DEBUG_ASSERT_ (FALSE) ;
 		return VAR_NONE ;
 	}

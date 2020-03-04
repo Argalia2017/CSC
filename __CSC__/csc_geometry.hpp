@@ -642,9 +642,7 @@ public:
 				const auto r3x = get (iy ,jx) * (get (ix ,jy) * get (iz ,jz) - get (iz ,jy) * get (ix ,jz)) ;
 				const auto r4x = get (iz ,jx) * (get (ix ,jy) * get (iy ,jz) - get (iy ,jy) * get (ix ,jz)) ;
 				const auto r5x = r2x - r3x + r4x ;
-				const auto r6x = _SWITCH_ (
-					((i + j) % 2 != 0) ? -r5x :
-					r5x) ;
+				const auto r6x = _NEGATIVE_ (r5x ,(i + j)) ;
 				ret.get (j ,i) = r6x ;
 			}
 		}

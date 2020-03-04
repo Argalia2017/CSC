@@ -44,6 +44,7 @@ inline void PrimeSieveAlgorithm::initialize (LENGTH len) {
 	for (auto &&i : _RANGE_ (0 ,r1x)) {
 		INDEX ix = i * 2 + 3 ;
 		const auto r2x = ix * 2 ;
+		_DEBUG_ASSERT_ (r2x > 0) ;
 		const auto r3x = _SQE_ (ix) ;
 		const auto r4x = (mPrimeSet.size () - r3x) / r2x + 1 ;
 		for (auto &&j : _RANGE_ (0 ,r4x)) {
@@ -288,7 +289,7 @@ inline void KMeansAlgorithm<REAL>::initialize (const Set<REAL> &dataset ,const F
 
 		SList<REAL> mCurrCenterList ;
 		SList<REAL> mNextCenterList ;
-		Array<ARRAY2<INDEX>> mCenterIndex ;
+		Set<INDEX ,INDEX> mCenterMoveSet ;
 		Set<INDEX ,BitSet<>> mClusterSet ;
 		ARRAY3<REAL> mConvergence ;
 
@@ -303,14 +304,10 @@ inline void KMeansAlgorithm<REAL>::initialize (const Set<REAL> &dataset ,const F
 
 	private:
 		inline void prepare () {
-			mCurrCenterList = SList<REAL> (mCenterIndex.length ()) ;
-			mNextCenterList = SList<REAL> (mCenterIndex.length ()) ;
+			mCurrCenterList = SList<REAL> (mCenter.length ()) ;
+			mNextCenterList = SList<REAL> (mCenter.length ()) ;
 			mCurrCenterList.appand (mCenter) ;
-			mCenterIndex = Array<ARRAY2<INDEX>> (mCurrCenterList.length ()) ;
-			INDEX iw = 0 ;
-			for (auto &&i : mCurrCenterList)
-				mCenterIndex[iw++][0] = mCurrCenterList.at (i) ;
-			_DEBUG_ASSERT_ (iw == mCenterIndex.length ()) ;
+			mCenterMoveSet = Set<INDEX ,INDEX> (mCenter.length ()) ;
 			mClusterSet = Set<INDEX ,BitSet<>> () ;
 			mConvergence.fill (mInfinity) ;
 		}
@@ -318,11 +315,10 @@ inline void KMeansAlgorithm<REAL>::initialize (const Set<REAL> &dataset ,const F
 		inline void generate () {
 			while (TRUE) {
 				update_cluster_set () ;
-				update_next_center_list () ;
 				update_convergence () ;
 				if (reach_convergence ())
 					break ;
-				update_curr_center_list () ;
+				update_center_list () ;
 			}
 		}
 
@@ -333,10 +329,16 @@ inline void KMeansAlgorithm<REAL>::initialize (const Set<REAL> &dataset ,const F
 				INDEX iy = mClusterSet.insert (ix) ;
 				if (mClusterSet[iy].item.size () == 0)
 					mClusterSet[iy].item = BitSet<> (mDataSet.size ()) ;
-				mClusterSet[iy].item[mDataSet.at (i)] = TRUE ;
+				INDEX jx = mDataSet.at (i) ;
+				mClusterSet[iy].item[jx] = TRUE ;
 			}
-			for (auto &&i : _RANGE_ (0 ,mCenter.length ()))
-				mClusterSet.add (i ,BitSet<> ()) ;
+			for (auto &&i : mClusterSet) {
+				if (i.item.length () == 0)
+					continue ;
+				INDEX ix = mNextCenterList.insert () ;
+				mNextCenterList[ix] = average_center (i.item) ;
+				mCenterMoveSet.add (i.key ,ix) ;
+			}
 		}
 
 		inline INDEX closest_center_of_point (const REAL &point) const {
@@ -351,21 +353,6 @@ inline void KMeansAlgorithm<REAL>::initialize (const Set<REAL> &dataset ,const F
 				rax = r1x ;
 			}
 			return std::move (ret) ;
-		}
-
-		inline void update_next_center_list () {
-			mNextCenterList.clear () ;
-			for (auto &&i : mClusterSet) {
-				const auto r1x = _SWITCH_ (
-					(i.item.length () > 0) ? average_center (i.item) :
-					mCurrCenterList[i.key]) ;
-				mNextCenterList.add (r1x) ;
-			}
-			_DEBUG_ASSERT_ (mCenterIndex.size () == mNextCenterList.length ()) ;
-			INDEX iw = 0 ;
-			for (auto &&i : mNextCenterList)
-				mCenterIndex[iw++][0] = mNextCenterList.at (i) ;
-			_DEBUG_ASSERT_ (iw == mCenterIndex.length ()) ;
 		}
 
 		inline REAL average_center (const BitSet<> &cluster) const {
@@ -386,9 +373,8 @@ inline void KMeansAlgorithm<REAL>::initialize (const Set<REAL> &dataset ,const F
 			if (mCurrCenterList.length () != mNextCenterList.length ())
 				return ;
 			mConvergence[ix] = REAL (0) ;
-			_DEBUG_ASSERT_ (mCurrCenterList.length () == mNextCenterList.length ()) ;
-			for (auto &&i : mCenterIndex) {
-				const auto r1x = mDistanceFunc (mCurrCenterList[i[0]] ,mNextCenterList[i[1]]) ;
+			for (auto &&i : mCenterMoveSet) {
+				const auto r1x = mDistanceFunc (mCurrCenterList[i.key] ,mNextCenterList[i.item]) ;
 				mConvergence[ix] = _MAX_ (mConvergence[ix] ,r1x) ;
 			}
 		}
@@ -403,14 +389,11 @@ inline void KMeansAlgorithm<REAL>::initialize (const Set<REAL> &dataset ,const F
 			return TRUE ;
 		}
 
-		inline void update_curr_center_list () {
+		inline void update_center_list () {
 			mCurrCenterList.clear () ;
 			mCurrCenterList.appand (mNextCenterList) ;
-			_DEBUG_ASSERT_ (mCenterIndex.size () == mCurrCenterList.length ()) ;
-			INDEX iw = 0 ;
-			for (auto &&i : mCurrCenterList)
-				mCenterIndex[iw++][0] = mCurrCenterList.at (i) ;
-			_DEBUG_ASSERT_ (iw == mCenterIndex.length ()) ;
+			mNextCenterList.clear () ;
+			mCenterMoveSet.clear () ;
 		}
 
 		inline void refresh () {
@@ -512,7 +495,6 @@ inline void KMHungarianAlgorithm<REAL>::initialize (const Bitmap<REAL> &adjacenc
 		}
 
 		inline void update_lack_weight (INDEX y) {
-			_STATIC_WARNING_ ("note") ;
 			/*
 			*	inline void update_lack_weight_e0 (INDEX y) {
 			*		//@info: $0
@@ -610,18 +592,14 @@ inline void KMHungarianAlgorithm<REAL>::initialize (const Bitmap<REAL> &adjacenc
 				if switch_case (TRUE) {
 					if (!(mTempState == 4))
 						discard ;
-					const auto r1x = _SWITCH_ (
-						(mTempStack[ix][0] < mAdjacency.cx ()) ? 5 :
-						16) ;
-					mTempState = r1x ;
+					const auto r1x = ARRAY2<INDEX> {5 ,16} ;
+					mTempState = r1x[EFLAG ((mTempStack[ix][0] < mAdjacency.cx ()))] ;
 				}
 				if switch_case (TRUE) {
 					if (!(mTempState == 5))
 						discard ;
-					const auto r2x = _SWITCH_ (
-						(mXVisit[mTempStack[ix][0]]) ? 15 :
-						6) ;
-					mTempState = r2x ;
+					const auto r2x = ARRAY2<INDEX> {15 ,6} ;
+					mTempState = r2x[EFLAG ((mXVisit[mTempStack[ix][0]]))] ;
 				}
 				if switch_case (TRUE) {
 					if (!(mTempState == 6))
@@ -633,10 +611,8 @@ inline void KMHungarianAlgorithm<REAL>::initialize (const Bitmap<REAL> &adjacenc
 					if (!(mTempState == 7))
 						discard ;
 					ix = mTempStack.tail () ;
-					const auto r3x = _SWITCH_ (
-						(mTempStack[ix][1] == VAR_NONE) ? 2 :
-						3) ;
-					mTempState = r3x ;
+					const auto r3x = ARRAY2<INDEX> {2 ,3} ;
+					mTempState = r3x[EFLAG (mTempStack[ix][1] == VAR_NONE)] ;
 				}
 				if switch_case (TRUE) {
 					if (!(mTempState == 8))
@@ -648,19 +624,15 @@ inline void KMHungarianAlgorithm<REAL>::initialize (const Bitmap<REAL> &adjacenc
 				if switch_case (TRUE) {
 					if (!(mTempState == 9))
 						discard ;
-					const auto r4x = _SWITCH_ (
-						(mLackWeight[0] < mTolerance) ? 8 :
-						14) ;
-					mTempState = r4x ;
+					const auto r4x = ARRAY2<INDEX> {8 ,14} ;
+					mTempState = r4x[EFLAG (mLackWeight[0] < mTolerance)] ;
 				}
 				if switch_case (TRUE) {
 					if (!(mTempState == 10))
 						discard ;
 					ix = mTempStack.tail () ;
-					const auto r5x = _SWITCH_ (
-						mTempRet ? 11 :
-						15) ;
-					mTempState = r5x ;
+					const auto r5x = ARRAY2<INDEX> {11 ,15} ;
+					mTempState = r5x[EFLAG (mTempRet)] ;
 				}
 				if switch_case (TRUE) {
 					if (!(mTempState == 11))
@@ -691,18 +663,14 @@ inline void KMHungarianAlgorithm<REAL>::initialize (const Bitmap<REAL> &adjacenc
 					if (!(mTempState == 17))
 						discard ;
 					mTempStack.pop () ;
-					const auto r6x = _SWITCH_ (
-						(mTempStack.length () > 0) ? 10 :
-						18) ;
-					mTempState = r6x ;
+					const auto r6x = ARRAY2<INDEX> {10 ,18} ;
+					mTempState = r6x[EFLAG (mTempStack.length () > 0)] ;
 				}
 				if switch_case (TRUE) {
 					if (!(mTempState == 18))
 						discard ;
-					const auto r7x = _SWITCH_ (
-						mTempRet ? 19 :
-						20) ;
-					mTempState = r7x ;
+					const auto r7x = ARRAY2<INDEX> {19 ,20} ;
+					mTempState = r7x[EFLAG (mTempRet)] ;
 				}
 				if switch_case (TRUE) {
 					if (!(mTempState == 19))
