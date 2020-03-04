@@ -21,6 +21,17 @@
 #undef discard
 #endif
 
+#ifdef __CSC_SYSTEM_WINDOWS__
+#ifndef _INC_WINDOWS
+#error "б╞(д├бузебу ;)д├ : require 'Windows.h'"
+#endif
+#elif defined __CSC_SYSTEM_LINUX__
+#ifdef __CSC_DEPRECATED__
+#include <unistd.h>
+#include <sys/syscall.h>
+#endif
+#endif
+
 #ifdef __CSC_DEPRECATED__
 #include <cmath>
 #include <random>
@@ -39,6 +50,109 @@
 #endif
 
 namespace CSC {
+#ifdef __CSC_SYSTEM_WINDOWS__
+inline FLAG GlobalRuntime::thread_tid () {
+	return FLAG (GetCurrentThreadId ()) ;
+}
+
+inline FLAG GlobalRuntime::process_pid () {
+	return FLAG (GetCurrentProcessId ()) ;
+}
+
+inline Buffer<BYTE ,ARGC<128>> GlobalRuntime::process_info (FLAG pid) {
+	Buffer<BYTE ,ARGC<128>> ret ;
+	auto wos = ByteWriter (PhanBuffer<STRU8>::make (ret)) ;
+	if switch_case (TRUE) {
+		const auto r1x = UniqueRef<HANDLE> ([&] (HANDLE &me) {
+			me = OpenProcess (PROCESS_QUERY_INFORMATION ,FALSE ,VARY (pid)) ;
+		} ,[] (HANDLE &me) {
+			if (me == NULL)
+				return ;
+			CloseHandle (me) ;
+		}) ;
+		if (r1x == NULL)
+			discard ;
+		wos << VAR64 (pid) ;
+		wos << _GAP_ ;
+		wos << _PCSTRU8_ ("windows") ;
+		wos << _GAP_ ;
+		auto rax = ARRAY4<FILETIME> () ;
+		_ZERO_ (rax[0]) ;
+		_ZERO_ (rax[1]) ;
+		_ZERO_ (rax[2]) ;
+		_ZERO_ (rax[3]) ;
+		GetProcessTimes (r1x ,&rax[0] ,&rax[1] ,&rax[2] ,&rax[3]) ;
+		const auto r2x = (VAR64 (rax[0].dwHighDateTime) << 32) | VAR64 (rax[0].dwLowDateTime) ;
+		wos << VAR64 (r2x) ;
+		wos << _GAP_ ;
+	}
+	wos << _EOS_ ;
+	return std::move (ret) ;
+}
+
+inline FLAG GlobalRuntime::process_info_pid (const PhanBuffer<const STRU8> &info) {
+	_DEBUG_ASSERT_ (info.size () == 128) ;
+	auto ris = ByteReader (info) ;
+	return ris.template read<VAR64> () ;
+}
+#elif defined __CSC_SYSTEM_LINUX__
+inline FLAG GlobalRuntime::thread_tid () {
+	return FLAG (syscall (SYS_gettid)) ;
+}
+
+inline FLAG GlobalRuntime::process_pid () {
+	return FLAG (syscall (SYS_getpid)) ;
+}
+
+inline Buffer<BYTE ,ARGC<128>> GlobalRuntime::process_info (FLAG pid) {
+	Buffer<BYTE ,ARGC<128>> ret ;
+	auto wos = ByteWriter (PhanBuffer<STRU8>::make (ret)) ;
+	if switch_case (TRUE) {
+		const auto r1x = getpgid (pid_t (pid)) ;
+		if (r1x < 0)
+			discard ;
+		wos << VAR64 (pid) ;
+		wos << _GAP_ ;
+		wos << _PCSTRU8_ ("linux") ;
+		wos << _GAP_ ;
+		wos << VAR64 (r1x) ;
+		wos << _GAP_ ;
+		const auto r2x = getsid (pid_t (pid)) ;
+		wos << VAR64 (r2x) ;
+		wos << _GAP_ ;
+	}
+	wos << _EOS_ ;
+	return std::move (ret) ;
+}
+
+inline FLAG GlobalRuntime::process_info_pid (const PhanBuffer<const STRU8> &info) {
+	_DEBUG_ASSERT_ (info.size () == 128) ;
+	auto ris = ByteReader (info) ;
+	return ris.template read<VAR64> () ;
+}
+#else
+inline FLAG GlobalRuntime::thread_tid () {
+	_DYNAMIC_ASSERT_ (FALSE) ;
+	return 0 ;
+}
+
+inline FLAG GlobalRuntime::process_pid () {
+	_DYNAMIC_ASSERT_ (FALSE) ;
+	return 0 ;
+}
+
+inline Buffer<BYTE ,ARGC<128>> GlobalRuntime::process_info (FLAG pid) {
+	_DYNAMIC_ASSERT_ (FALSE) ;
+	return Buffer<BYTE ,ARGC<128>> () ;
+}
+
+inline FLAG GlobalRuntime::process_info_pid (const PhanBuffer<const STRU8> &info) {
+	_DEBUG_ASSERT_ (info.size () == 128) ;
+	_DYNAMIC_ASSERT_ (FALSE) ;
+	return 0 ;
+}
+#endif
+
 #ifdef __CSC_DEPRECATED__
 template <class CONT>
 class Coroutine<CONT>::Implement final :private Interface {

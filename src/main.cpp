@@ -12,8 +12,6 @@ TEST_CLASS (UNITTEST_MAIN) {
 public:
 	TEST_METHOD (TEST_MAIN) {
 		using namespace UNITTEST ;
-		//= _CALL_
-		//const auto r\d+x = _SWITCH_
 
 	}
 } ;
@@ -43,6 +41,10 @@ exports int main () noexcept popping {
 #pragma region
 #ifdef __CSC_MATH__
 #include "csc_math.hpp.default.inl"
+#endif
+
+#ifdef __CSC_FUNCTIONAL__
+#include "csc_functional.hpp.op.inl"
 #endif
 
 #ifdef __CSC_IMAGES__

@@ -25,10 +25,6 @@ public:
 	inline ArrayIterator (ArrayIterator &&) noexcept = default ;
 	inline ArrayIterator &operator= (ArrayIterator &&) = delete ;
 
-	inline BOOL operator== (const ArrayIterator &that) const {
-		return BOOL (mIndex == that.mIndex) ;
-	}
-
 	inline BOOL operator!= (const ArrayIterator &that) const {
 		return BOOL (mIndex != that.mIndex) ;
 	}
@@ -282,28 +278,27 @@ using ARRAY15 = Array<ITEM ,ARGC<15>> ;
 template <class ITEM>
 using ARRAY16 = Array<ITEM ,ARGC<16>> ;
 
+namespace U {
+inline constexpr LENGTH constexpr_reserve_size (LENGTH len) {
+	return len + EFLAG (len > 0) ;
+}
+} ;
+
 template <class ITEM ,class SIZE = SAUTO>
 class String ;
 
 template <class ITEM ,class SIZE>
 class String {
 private:
-	inline static constexpr LENGTH constexpr_size (LENGTH len) {
-		return _SWITCH_ (
-			(len <= 0) ? len :
-			len + 1) ;
-	}
-
-private:
 	struct Detail ;
-	Buffer<ITEM ,ARGC<constexpr_size (SIZE::value)>> mString ;
+	Buffer<ITEM ,ARGC<U::constexpr_reserve_size (SIZE::value)>> mString ;
 
 public:
 	String () {
 		clear () ;
 	}
 
-	explicit String (LENGTH len) :String (ARGVP0 ,constexpr_size (len)) {
+	explicit String (LENGTH len) :String (ARGVP0 ,U::constexpr_reserve_size (len)) {
 		clear () ;
 	}
 
@@ -593,14 +588,7 @@ class Deque ;
 template <class ITEM ,class SIZE>
 class Deque {
 private:
-	inline static constexpr LENGTH constexpr_size (LENGTH len) {
-		return _SWITCH_ (
-			(len <= 0) ? len :
-			len + 1) ;
-	}
-
-private:
-	Buffer<ITEM ,ARGC<constexpr_size (SIZE::value)>> mDeque ;
+	Buffer<ITEM ,ARGC<U::constexpr_reserve_size (SIZE::value)>> mDeque ;
 	INDEX mRead ;
 	INDEX mWrite ;
 
@@ -609,7 +597,7 @@ public:
 		clear () ;
 	}
 
-	explicit Deque (LENGTH len) :Deque (ARGVP0 ,constexpr_size (len)) {
+	explicit Deque (LENGTH len) :Deque (ARGVP0 ,U::constexpr_reserve_size (len)) {
 		clear () ;
 	}
 
@@ -1013,15 +1001,9 @@ private:
 
 	using Pair_const_BASE = Pair<const SPECIALIZATION_TYPE> ;
 
-	inline static constexpr LENGTH constexpr_size (LENGTH len) {
-		return _SWITCH_ (
-			(len <= 0) ? len :
-			len + 1) ;
-	}
-
 private:
 	friend SPECIALIZATION_TYPE ;
-	Buffer<Node ,ARGC<constexpr_size (SIZE::value)>> mPriority ;
+	Buffer<Node ,ARGC<U::constexpr_reserve_size (SIZE::value)>> mPriority ;
 	INDEX mWrite ;
 	INDEX mTop ;
 
@@ -1030,7 +1012,7 @@ public:
 		spec.clear () ;
 	}
 
-	explicit Priority (LENGTH len) :Priority (ARGVP0 ,constexpr_size (len)) {
+	explicit Priority (LENGTH len) :Priority (ARGVP0 ,U::constexpr_reserve_size (len)) {
 		spec.clear () ;
 	}
 
@@ -1152,15 +1134,9 @@ private:
 
 	using Pair_const_BASE = Pair<const SPECIALIZATION_TYPE> ;
 
-	inline static constexpr LENGTH constexpr_size (LENGTH len) {
-		return _SWITCH_ (
-			(len <= 0) ? len :
-			len + 1) ;
-	}
-
 private:
 	friend SPECIALIZATION_TYPE ;
-	Buffer<Node ,ARGC<constexpr_size (SIZE::value)>> mPriority ;
+	Buffer<Node ,ARGC<U::constexpr_reserve_size (SIZE::value)>> mPriority ;
 	INDEX mWrite ;
 	INDEX mTop ;
 
@@ -1169,7 +1145,7 @@ public:
 		spec.clear () ;
 	}
 
-	explicit Priority (LENGTH len) :Priority (ARGVP0 ,constexpr_size (len)) {
+	explicit Priority (LENGTH len) :Priority (ARGVP0 ,U::constexpr_reserve_size (len)) {
 		spec.clear () ;
 	}
 
@@ -2193,9 +2169,11 @@ public:
 	INDEX insert_before (INDEX index) popping {
 		INDEX ret = mList.alloc (VAR_NONE) ;
 		update_resize (ret) ;
-		const auto r1x = _SWITCH_ (
-			(index != VAR_NONE) ? mList[index].mSeq :
-			mWrite) ;
+		const auto r1x = _CALL_ ([&] () {
+			if (index != VAR_NONE)
+				return mList[index].mSeq ;
+			return mWrite ;
+		}) ;
 		update_compress_left (r1x ,ret) ;
 		return std::move (ret) ;
 	}
@@ -2203,9 +2181,11 @@ public:
 	INDEX insert_after (INDEX index) popping {
 		INDEX ret = mList.alloc (VAR_NONE) ;
 		update_resize (ret) ;
-		const auto r1x = _SWITCH_ (
-			(index != VAR_NONE) ? mList[index].mSeq + 1 :
-			mRead) ;
+		const auto r1x = _CALL_ ([&] () {
+			if (index != VAR_NONE)
+				return mList[index].mSeq + 1 ;
+			return mRead ;
+		}) ;
 		update_compress_left (r1x ,ret) ;
 		return std::move (ret) ;
 	}
@@ -2219,17 +2199,21 @@ public:
 
 	void splice_before (INDEX index ,INDEX last) {
 		sequence_remove (mList[last].mSeq) ;
-		const auto r1x = _SWITCH_ (
-			(index != VAR_NONE) ? mList[index].mSeq :
-			mWrite) ;
+		const auto r1x = _CALL_ ([&] () {
+			if (index != VAR_NONE)
+				return mList[index].mSeq ;
+			return mWrite ;
+		}) ;
 		update_compress_left (r1x ,last) ;
 	}
 
 	void splice_after (INDEX index ,INDEX last) {
 		sequence_remove (mList[last].mSeq) ;
-		const auto r1x = _SWITCH_ (
-			(index != VAR_NONE) ? mList[index].mSeq + 1 :
-			mRead) ;
+		const auto r1x = _CALL_ ([&] () {
+			if (index != VAR_NONE)
+				return mList[index].mSeq + 1 ;
+			return mRead ;
+		}) ;
 		update_compress_left (r1x ,last) ;
 	}
 
@@ -2276,13 +2260,15 @@ private:
 			if (jx == pos)
 				if (mHead[ret].mIndex != VAR_NONE)
 					break ;
-			auto &r1y = _SWITCH_ (
-				(jx < pos) ? ix :
-				iy) ;
-			const auto r2x = _SWITCH_ (
-				(jx < pos) ? ret + 1 :
-				ret - 1) ;
-			r1y = r2x ;
+			auto fax = TRUE ;
+			if switch_case (fax) {
+				if (!(jx < pos))
+					discard ;
+				ix = ret + 1 ;
+			}
+			if switch_case (fax) {
+				iy = ret - 1 ;
+			}
 		}
 		_DEBUG_ASSERT_ (ret != VAR_NONE) ;
 		return std::move (ret) ;
@@ -2410,18 +2396,33 @@ private:
 	}
 } ;
 
+//@error: fuck gcc again
+template <class _ARG1>
+struct FIX_GCC_FORWARD_CONSTEXPR_2 {
+	inline static constexpr _ARG1 case1 (const _ARG1 &len) {
+		return len ;
+	}
+
+	inline static constexpr _ARG1 case2 (const _ARG1 &len) {
+		return (len + 7) / 8 ;
+	}
+} ;
+
+namespace U {
+inline constexpr LENGTH constexpr_ceil8_size (LENGTH len) {
+	return _SWITCH_ (
+		(len <= 0) ? FIX_GCC_FORWARD_CONSTEXPR_2<LENGTH>::case1 :
+		FIX_GCC_FORWARD_CONSTEXPR_2<LENGTH>::case2)
+		(len) ;
+}
+} ;
+
 template <class SIZE = SAUTO>
 class BitSet ;
 
 template <class SIZE>
 class BitSet {
 private:
-	inline static constexpr LENGTH constexpr_size (LENGTH len) {
-		return _SWITCH_ (
-			(len <= 0) ? len :
-			(len + 7) / 8) ;
-	}
-
 	template <class BASE>
 	class Bit final {
 	private:
@@ -2439,8 +2440,9 @@ private:
 		inline explicit operator BOOL () const & = delete ;
 
 		inline implicit operator BOOL () && {
-			const auto r1x = _XVALUE_<BYTE> (mBase.mSet[mIndex / 8] & (BYTE (0X01) << (mIndex % 8))) ;
-			if (r1x == 0)
+			const auto r1x = BYTE (BYTE (0X01) << (mIndex % 8)) ;
+			const auto r2x = BYTE (mBase.mSet[mIndex / 8] & r1x) ;
+			if (r2x == 0)
 				return FALSE ;
 			return TRUE ;
 		}
@@ -2472,12 +2474,16 @@ private:
 #endif
 
 		inline void operator= (const BOOL &that) && {
-			const auto r1x = mBase.mSet[mIndex / 8] ;
-			const auto r2x = _SWITCH_ (
-				that ? ~r1x :
-				r1x) ;
-			const auto r3x = _XVALUE_<BYTE> (r2x & (BYTE (0X01) << (mIndex % 8))) ;
-			mBase.mSet[mIndex / 8] = BYTE (r1x ^ r3x) ;
+			const auto r1x = BYTE (BYTE (0X01) << (mIndex % 8)) ;
+			auto fax = TRUE ;
+			if switch_case (fax) {
+				if (!that)
+					discard ;
+				mBase.mSet[mIndex / 8] |= r1x ;
+			}
+			if switch_case (fax) {
+				mBase.mSet[mIndex / 8] &= ~r1x ;
+			}
 		}
 
 		inline void operator= (Bit<BitSet> &&that) && {
@@ -2496,7 +2502,7 @@ private:
 
 private:
 	struct Detail ;
-	Buffer<BYTE ,ARGC<constexpr_size (SIZE::value)>> mSet ;
+	Buffer<BYTE ,ARGC<U::constexpr_ceil8_size (SIZE::value)>> mSet ;
 	LENGTH mWidth ;
 
 public:
@@ -2504,7 +2510,7 @@ public:
 		clear () ;
 	}
 
-	explicit BitSet (LENGTH len) :BitSet (ARGVP0 ,constexpr_size (len) ,Detail::forward_width (len)) {
+	explicit BitSet (LENGTH len) :BitSet (ARGVP0 ,U::constexpr_ceil8_size (len) ,Detail::forward_width (len)) {
 		clear () ;
 	}
 
@@ -2535,8 +2541,13 @@ public:
 		LENGTH ret = 0 ;
 		for (auto &&i : _RANGE_ (0 ,mSet.size ()))
 			ret += M_LENGTH.P1[mSet[i]] ;
-		if (mWidth % 8 != 0)
-			ret -= M_LENGTH.P1[mSet[mWidth / 8] & ~((VAR (1) << (mWidth % 8)) - 1)] ;
+		if switch_case (TRUE) {
+			if (mWidth % 8 == 0)
+				discard ;
+			const auto r1x = BYTE (BYTE (0X01) << (mWidth % 8)) ;
+			const auto r2x = BYTE (mSet[mWidth / 8] & ~BYTE (INDEX (r1x) - 1)) ;
+			ret -= M_LENGTH.P1[INDEX (r2x)] ;
+		}
 		return std::move (ret) ;
 	}
 
@@ -2633,8 +2644,8 @@ public:
 		for (auto &&i : _RANGE_ (0 ,ix))
 			if (mSet[i] != that.mSet[i])
 				return FALSE ;
-		const auto r1x = _XVALUE_<BYTE> (mSet[ix] & (mWidth % 8 - 1)) ;
-		const auto r2x = _XVALUE_<BYTE> (that.mSet[ix] & (mWidth % 8 - 1)) ;
+		const auto r1x = BYTE (mSet[ix] & (mWidth % 8 - 1)) ;
+		const auto r2x = BYTE (that.mSet[ix] & (mWidth % 8 - 1)) ;
 		if (r1x != r2x)
 			return FALSE ;
 		return TRUE ;
@@ -2656,8 +2667,8 @@ public:
 		const auto r1x = _MEMCOMPR_ (mSet ,that.mSet ,ix) ;
 		if (r1x != 0)
 			return r1x ;
-		const auto r2x = _XVALUE_<BYTE> (mSet[ix] & (mWidth % 8 - 1)) ;
-		const auto r3x = _XVALUE_<BYTE> (that.mSet[ix] & (mWidth % 8 - 1)) ;
+		const auto r2x = BYTE (mSet[ix] & (mWidth % 8 - 1)) ;
+		const auto r3x = BYTE (that.mSet[ix] & (mWidth % 8 - 1)) ;
 		return _MEMCOMPR_ (PTRTOARR[&r2x] ,PTRTOARR[&r3x] ,1) ;
 	}
 

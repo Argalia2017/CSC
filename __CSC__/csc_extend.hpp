@@ -96,11 +96,7 @@ public:
 		return std::chrono::steady_clock::now () ;
 	}
 
-	inline static FLAG thread_tid () {
-		_STATIC_WARNING_ ("unimplemented") ;
-		_DYNAMIC_ASSERT_ (FALSE) ;
-		return 0 ;
-	}
+	inline static FLAG thread_tid () ;
 
 	template <class _ARG1 ,class _ARG2>
 	inline static void thread_sleep (const std::chrono::duration<_ARG1 ,_ARG2> &time_) {
@@ -128,10 +124,14 @@ public:
 		stl::setlocale (LC_ALL ,locale_.self) ;
 	}
 
-	inline static FLAG process_pid () {
-		_STATIC_WARNING_ ("unimplemented") ;
-		_DYNAMIC_ASSERT_ (FALSE) ;
-		return 0 ;
+	inline static FLAG process_pid () ;
+
+	inline static Buffer<BYTE ,ARGC<128>> process_info (FLAG pid) ;
+
+	inline static FLAG process_info_pid (const PhanBuffer<const STRU8> &info) ;
+
+	inline static FLAG module_mid () {
+		return _TYPEMID_<Interface> () ;
 	}
 
 	inline static void process_exit[[noreturn]] () {
@@ -194,7 +194,7 @@ public:
 		static volatile Storage<_ARG2> mInstance ;
 		mInstance.mName = name.self ;
 		mInstance.mAddress = &data ;
-		mInstance.mTypeUID = _TYPEUID_<_ARG2> () ;
+		mInstance.mTypeUID = _TYPEMID_<_ARG2> () ;
 		mInstance.mWatch (data) ;
 	}
 } ;
@@ -229,10 +229,8 @@ public:
 	inline VAR128 () = default ;
 
 	inline implicit VAR128 (VAR64 that) {
+		const auto r1x = EFLAG (that < 0) * DATA (-1) ;
 		v2i1 = DATA (that) ;
-		const auto r1x = _SWITCH_ (
-			(that >= 0) ? DATA (0) :
-			DATA (-1)) ;
 		v2i0 = r1x ;
 	}
 
@@ -245,39 +243,27 @@ public:
 	}
 
 	inline BOOL operator== (const VAR128 &that) const {
-		if (v2i1 != that.v2i1)
-			return FALSE ;
-		if (v2i0 != that.v2i0)
-			return FALSE ;
-		return TRUE ;
+		return equal (that) ;
 	}
 
 	inline BOOL operator!= (const VAR128 &that) const {
-		return !BOOL ((*this) == that) ;
+		return !equal (that) ;
 	}
 
 	inline BOOL operator< (const VAR128 &that) const {
-		const auto r1x = _CAST_<VAR64> (v2i0) ;
-		const auto r2x = _CAST_<VAR64> (that.v2i0) ;
-		if (r1x < r2x)
-			return TRUE ;
-		if (r1x > r2x)
-			return FALSE ;
-		if (v2i1 >= that.v2i1)
-			return FALSE ;
-		return TRUE ;
+		return BOOL (compr (that) < 0) ;
 	}
 
 	inline BOOL operator>= (const VAR128 &that) const {
-		return !BOOL ((*this) < that) ;
+		return BOOL (compr (that) >= 0) ;
 	}
 
 	inline BOOL operator> (const VAR128 &that) const {
-		return BOOL (that < (*this)) ;
+		return BOOL (compr (that) > 0) ;
 	}
 
 	inline BOOL operator<= (const VAR128 &that) const {
-		return !BOOL ((*this) > that) ;
+		return BOOL (compr (that) <= 0) ;
 	}
 
 	inline VAR128 operator& (const VAR128 &) const = delete ;
@@ -545,6 +531,24 @@ public:
 	}
 
 private:
+	inline BOOL equal (const VAR128 &that) const {
+		if (v2i1 != that.v2i1)
+			return FALSE ;
+		if (v2i0 != that.v2i0)
+			return FALSE ;
+		return TRUE ;
+	}
+
+	inline FLAG compr (const VAR128 &that) const {
+		const auto r1x = _CAST_<VAR64> (v2i0) ;
+		const auto r2x = _CAST_<VAR64> (that.v2i0) ;
+		const auto r3x = _MEMCOMPR_ (PTRTOARR[&r1x] ,PTRTOARR[&r2x] ,1) ;
+		if (r3x != 0)
+			return r3x ;
+		return _MEMCOMPR_ (PTRTOARR[&v2i1] ,PTRTOARR[&that.v2i1] ,1) ;
+	}
+
+private:
 	inline DATA &m_v2i0 () & {
 		_STATIC_WARNING_ ("mark") ;
 		const auto r1x = WORD (0X0001) ;
@@ -639,13 +643,15 @@ private:
 				const auto r1x = x * ret ;
 				if (r1x == y)
 					break ;
-				auto &r2y = _SWITCH_ (
-					(r1x < y) ? rax[0] :
-					rax[1]) ;
-				const auto r3x = _SWITCH_ (
-					(r1x < y) ? ret + 1 :
-					ret - 1) ;
-				r2y = r3x ;
+				auto fax = TRUE ;
+				if switch_case (fax) {
+					if (!(r1x < y))
+						discard ;
+					rax[0] = ret + 1 ;
+				}
+				if switch_case (fax) {
+					rax[1] = ret - 1 ;
+				}
 			}
 			ret -= EFLAG (ret * x > y) ;
 			return std::move (ret) ;
@@ -728,27 +734,29 @@ private:
 	inline explicit Mutable (const DEF<decltype (ARGVP0)> & ,_ARGS &&...initval) :mData (std::forward<_ARGS> (initval)...) ,mStatus (STATUS_CACHED) {}
 } ;
 
+namespace U {
+inline constexpr LENGTH constexpr_max_sizeof (const ARGV<ARGVS<>> &) {
+	return 1 ;
+}
+
+template <class _ARG1 ,class... _ARGS>
+inline constexpr LENGTH constexpr_max_sizeof (const ARGV<ARGVS<_ARG1 ,_ARGS...>> &) {
+	return _MAX_ (_SIZEOF_ (_ARG1) ,constexpr_max_sizeof (_NULL_<ARGV<ARGVS<_ARGS...>>> ())) ;
+}
+
+inline constexpr LENGTH constexpr_max_alignof (const ARGV<ARGVS<>> &) {
+	return 1 ;
+}
+
+template <class _ARG1 ,class... _ARGS>
+inline constexpr LENGTH constexpr_max_alignof (const ARGV<ARGVS<_ARG1 ,_ARGS...>> &) {
+	return _MAX_ (_ALIGNOF_ (_ARG1) ,constexpr_max_alignof (_NULL_<ARGV<ARGVS<_ARGS...>>> ())) ;
+}
+} ;
+
 template <class... UNITS>
 class Variant {
 private:
-	inline static constexpr LENGTH constexpr_max_sizeof (const ARGV<ARGVS<>> &) {
-		return 1 ;
-	}
-
-	template <class _ARG1 ,class... _ARGS>
-	inline static constexpr LENGTH constexpr_max_sizeof (const ARGV<ARGVS<_ARG1 ,_ARGS...>> &) {
-		return _MAX_ (_SIZEOF_ (_ARG1) ,constexpr_max_sizeof (_NULL_<ARGV<ARGVS<_ARGS...>>> ())) ;
-	}
-
-	inline static constexpr LENGTH constexpr_max_alignof (const ARGV<ARGVS<>> &) {
-		return 1 ;
-	}
-
-	template <class _ARG1 ,class... _ARGS>
-	inline static constexpr LENGTH constexpr_max_alignof (const ARGV<ARGVS<_ARG1 ,_ARGS...>> &) {
-		return _MAX_ (_ALIGNOF_ (_ARG1) ,constexpr_max_alignof (_NULL_<ARGV<ARGVS<_ARGS...>>> ())) ;
-	}
-
 	//@error: g++4.8 is too useless to use constexpr value in alignas expression
 	template <LENGTH ALIGN ,LENGTH SIZE>
 	struct ALIGNED_UNION {
@@ -756,24 +764,24 @@ private:
 	} ;
 
 	//@error: 'std::aligned_union' is not avaliable in g++4.8
-	using VARIANT = ALIGNED_UNION<constexpr_max_alignof (_NULL_<ARGV<ARGVS<UNITS...>>> ()) ,constexpr_max_sizeof (_NULL_<ARGV<ARGVS<UNITS...>>> ())> ;
+	using VARIANT = ALIGNED_UNION<U::constexpr_max_alignof (_NULL_<ARGV<ARGVS<UNITS...>>> ()) ,U::constexpr_max_sizeof (_NULL_<ARGV<ARGVS<UNITS...>>> ())> ;
 
 	template <class _ARG1>
-	inline static constexpr INDEX default_constructible_index (const ARGV<_ARG1> & ,const ARGV<ARGVS<>> &) {
+	inline static INDEX default_constructible_index (const ARGV<_ARG1> & ,const ARGV<ARGVS<>> &) {
 		return VAR_NONE ;
 	}
 
 	template <class _ARG1 ,class _ARG2 ,class... _ARGS>
-	inline static constexpr INDEX default_constructible_index (const ARGV<_ARG1> & ,const ARGV<ARGVS<_ARG2 ,_ARGS...>> &) {
-		return _SWITCH_ (
-			(std::is_default_constructible<_ARG2>::value) ? _ARG1::value :
-			default_constructible_index (_NULL_<ARGV<ARGC<_ARG1::value + 1>>> () ,_NULL_<ARGV<ARGVS<_ARGS...>>> ())) ;
+	inline static INDEX default_constructible_index (const ARGV<_ARG1> & ,const ARGV<ARGVS<_ARG2 ,_ARGS...>> &) {
+		if (std::is_default_constructible<_ARG2>::value)
+			return _ARG1::value ;
+		return default_constructible_index (_NULL_<ARGV<INCREASE<_ARG1>>> () ,_NULL_<ARGV<ARGVS<_ARGS...>>> ()) ;
 	}
 
-	using OPTIONAL_TYPE = INDEX_TO_TYPE<ARGC<0> ,ARGVS<UNITS...>> ;
+	using OPTIONAL_TYPE = INDEX_TO_TYPE<ZERO ,ARGVS<UNITS...>> ;
 
 private:
-	_STATIC_ASSERT_ (_CAPACITYOF_ (UNITS) > 0) ;
+	_STATIC_ASSERT_ (_CAPACITYOF_ (ARGVS<UNITS...>) > 0) ;
 	_STATIC_ASSERT_ (!stl::is_any_same<REMOVE_CVR_TYPE<UNITS>...>::value) ;
 	struct Detail ;
 	TEMP<VARIANT> mVariant ;
@@ -781,7 +789,7 @@ private:
 
 public:
 	inline Variant () :Variant (ARGVP0) {
-		const auto r1x = default_constructible_index (_NULL_<ARGV<ARGC<0>>> () ,_NULL_<ARGV<ARGVS<UNITS...>>> ()) ;
+		const auto r1x = default_constructible_index (_NULL_<ARGV<ZERO>> () ,_NULL_<ARGV<ARGVS<UNITS...>>> ()) ;
 		Detail::template_construct (&mVariant ,r1x ,_NULL_<ARGV<ARGVS<UNITS...>>> ()) ;
 		mIndex = r1x ;
 	}
@@ -790,7 +798,8 @@ public:
 	inline implicit Variant (_ARG1 &&that) :Variant (ARGVP0) {
 		_STATIC_ASSERT_ (!std::is_same<REMOVE_CVR_TYPE<_ARG1> ,DEF<decltype (ARGVP0)>>::value) ;
 		auto &r1y = _LOAD_<TEMP<REMOVE_CVR_TYPE<_ARG1>>> (&mVariant) ;
-		Detail::template_create (_NULL_<ARGV<ARGC<std::is_constructible<REMOVE_CVR_TYPE<_ARG1> ,_ARG1 &&>::value>>> () ,&r1y ,std::forward<_ARG1> (that)) ;
+		using CREATE_FLAG = ARGC<std::is_constructible<REMOVE_CVR_TYPE<_ARG1> ,_ARG1 &&>::value> ;
+		Detail::template_create (_NULL_<ARGV<CREATE_FLAG>> () ,&r1y ,std::forward<_ARG1> (that)) ;
 		mIndex = INDEX_OF_TYPE<REMOVE_CVR_TYPE<_ARG1> ,ARGVS<UNITS...>>::value ;
 	}
 
@@ -851,7 +860,7 @@ public:
 	}
 
 	inline OPTIONAL_TYPE &to () {
-		_STATIC_ASSERT_ (_CAPACITYOF_ (UNITS) == 1) ;
+		_STATIC_ASSERT_ (_CAPACITYOF_ (ARGVS<UNITS...>) == 1) ;
 		_DYNAMIC_ASSERT_ (exist ()) ;
 		auto &r1y = _LOAD_<TEMP<OPTIONAL_TYPE>> (&mVariant) ;
 		return _CAST_<OPTIONAL_TYPE> (r1y) ;
@@ -862,7 +871,7 @@ public:
 	}
 
 	inline const OPTIONAL_TYPE &to () const {
-		_STATIC_ASSERT_ (_CAPACITYOF_ (UNITS) == 1) ;
+		_STATIC_ASSERT_ (_CAPACITYOF_ (ARGVS<UNITS...>) == 1) ;
 		_DYNAMIC_ASSERT_ (exist ()) ;
 		auto &r1y = _LOAD_<TEMP<OPTIONAL_TYPE>> (&mVariant) ;
 		return _CAST_<OPTIONAL_TYPE> (r1y) ;
@@ -917,7 +926,8 @@ private:
 				if (!r1x)
 					discard ;
 				auto &r2y = _LOAD_<TEMP<_ARG1>> (address) ;
-				template_create (_NULL_<ARGV<ARGC<std::is_default_constructible<_ARG1>::value>>> () ,&r2y) ;
+				using CREATE_FLAG = ARGC<std::is_default_constructible<_ARG1>::value> ;
+				template_create (_NULL_<ARGV<CREATE_FLAG>> () ,&r2y) ;
 			}
 			if (r1x)
 				return ;
@@ -957,7 +967,8 @@ private:
 					discard ;
 				auto &r2y = _LOAD_<TEMP<_ARG1>> (address) ;
 				auto &r3y = _LOAD_<TEMP<_ARG1>> (that) ;
-				template_create (_NULL_<ARGV<ARGC<std::is_copy_constructible<_ARG1>::value && std::is_nothrow_move_constructible<_ARG1>::value>>> () ,&r2y ,std::move (_CAST_<_ARG1> (r3y))) ;
+				using CREATE_FLAG = ARGC<std::is_copy_constructible<_ARG1>::value && std::is_nothrow_move_constructible<_ARG1>::value> ;
+				template_create (_NULL_<ARGV<CREATE_FLAG>> () ,&r2y ,std::move (_CAST_<_ARG1> (r3y))) ;
 			}
 			if (r1x)
 				return ;
@@ -992,7 +1003,6 @@ private:
 
 		template <class _ARG1 ,class... _ARGS>
 		inline static void template_create (const ARGV<ARGC<FALSE>> & ,PTR<TEMP<_ARG1>> address ,_ARGS &&...initval) {
-			_STATIC_WARNING_ ("unexpected") ;
 			_DYNAMIC_ASSERT_ (FALSE) ;
 		}
 	} ;
@@ -1112,18 +1122,20 @@ public:
 
 	inline Tuple<UNITS...> &rest () && = delete ;
 
-	template <class _RET>
-	inline INDEX_TO_TYPE<_RET ,ARGVS<UNIT1 ,UNITS...>> &pick () & {
-		return Detail::template_pick ((*this) ,_NULL_<ARGV<_RET>> ()) ;
+	template <class _ARG1>
+	inline auto pick (const ARGV<ARGVP<_ARG1>> &) &
+		->DEF<INDEX_TO_TYPE<DECREASE<_ARG1> ,ARGVS<UNIT1 ,UNITS...>> &> {
+		return Detail::template_pick ((*this) ,_NULL_<ARGV<DECREASE<_ARG1>>> ()) ;
 	}
 
-	template <class _RET>
-	inline constexpr const INDEX_TO_TYPE<_RET ,ARGVS<UNIT1 ,UNITS...>> &pick () const & {
-		return Detail::template_pick ((*this) ,_NULL_<ARGV<_RET>> ()) ;
+	template <class _ARG1>
+	inline constexpr auto pick (const ARGV<ARGVP<_ARG1>> &) const &
+		->DEF<const INDEX_TO_TYPE<DECREASE<_ARG1> ,ARGVS<UNIT1 ,UNITS...>> &> {
+		return Detail::template_pick ((*this) ,_NULL_<ARGV<DECREASE<_ARG1>>> ()) ;
 	}
 
-	template <class _RET>
-	inline INDEX_TO_TYPE<_RET ,ARGVS<UNIT1 ,UNITS...>> &pick () && = delete ;
+	template <class _ARG1>
+	inline void pick (const ARGV<ARGVP<_ARG1>> &) && = delete ;
 
 	inline BOOL equal (const Tuple &that) const {
 		if (one () != that.one ())
@@ -1166,24 +1178,26 @@ public:
 
 private:
 	struct Detail {
-		inline static UNIT1 &template_pick (Tuple &self_ ,const ARGV<ARGC<0>> &) {
+		inline static UNIT1 &template_pick (Tuple &self_ ,const ARGV<ZERO> &) {
 			return self_.one () ;
 		}
 
 		template <class _ARG1>
-		inline static INDEX_TO_TYPE<_ARG1 ,ARGVS<UNIT1 ,UNITS...>> &template_pick (Tuple &self_ ,const ARGV<_ARG1> &) {
-			_STATIC_ASSERT_ (LENGTH (_ARG1::value) > 0 && LENGTH (_ARG1::value) < 1 + _CAPACITYOF_ (UNITS)) ;
-			return Tuple<UNITS...>::template_pick (self_.rest () ,_NULL_<ARGV<ARGC<_ARG1::value - 1>>> ()) ;
+		inline static auto template_pick (Tuple &self_ ,const ARGV<_ARG1> &)
+			->INDEX_TO_TYPE<_ARG1 ,ARGVS<UNIT1 ,UNITS...>> & {
+			_STATIC_ASSERT_ (LENGTH (_ARG1::value) > 0 && LENGTH (_ARG1::value) <= _CAPACITYOF_ (ARGVS<UNITS...>)) ;
+			return Tuple<UNITS...>::Detail::template_pick (self_.rest () ,_NULL_<ARGV<DECREASE<_ARG1>>> ()) ;
 		}
 
-		inline static constexpr const UNIT1 &template_pick (const Tuple &self_ ,const ARGV<ARGC<0>> &) {
+		inline static constexpr const UNIT1 &template_pick (const Tuple &self_ ,const ARGV<ZERO> &) {
 			return self_.one () ;
 		}
 
 		template <class _ARG1>
-		inline static constexpr const INDEX_TO_TYPE<_ARG1 ,ARGVS<UNIT1 ,UNITS...>> &template_pick (const Tuple &self_ ,const ARGV<_ARG1> &) {
-			_STATIC_ASSERT_ (LENGTH (_ARG1::value) > 0 && LENGTH (_ARG1::value) < 1 + _CAPACITYOF_ (UNITS)) ;
-			return Tuple<UNITS...>::template_pick (self_.rest () ,_NULL_<ARGV<ARGC<_ARG1::value - 1>>> ()) ;
+		inline static constexpr auto template_pick (const Tuple &self_ ,const ARGV<_ARG1> &)
+			->const INDEX_TO_TYPE<_ARG1 ,ARGVS<UNIT1 ,UNITS...>> & {
+			_STATIC_ASSERT_ (LENGTH (_ARG1::value) > 0 && LENGTH (_ARG1::value) <= _CAPACITYOF_ (ARGVS<UNITS...>)) ;
+			return Tuple<UNITS...>::Detail::template_pick (self_.rest () ,_NULL_<ARGV<DECREASE<_ARG1>>> ()) ;
 		}
 	} ;
 } ;
@@ -1245,10 +1259,10 @@ class AnyOfTuple ;
 template <class... UNITS>
 class AllOfTuple final :private TupleBinder<const UNITS...> {
 private:
-	using WRAPPED_TYPE = INDEX_TO_TYPE<ARGC<0> ,ARGVS<UNITS...>> ;
+	using WRAPPED_TYPE = INDEX_TO_TYPE<ZERO ,ARGVS<UNITS...>> ;
 
 private:
-	_STATIC_ASSERT_ (_CAPACITYOF_ (UNITS) > 0) ;
+	_STATIC_ASSERT_ (_CAPACITYOF_ (ARGVS<UNITS...>) > 0) ;
 	_STATIC_ASSERT_ (stl::is_all_same<UNITS...>::value) ;
 	struct Detail ;
 
@@ -1383,10 +1397,10 @@ private:
 template <class... UNITS>
 class AnyOfTuple final :private TupleBinder<const UNITS...> {
 private:
-	using WRAPPED_TYPE = INDEX_TO_TYPE<ARGC<0> ,ARGVS<UNITS...>> ;
+	using WRAPPED_TYPE = INDEX_TO_TYPE<ZERO ,ARGVS<UNITS...>> ;
 
 private:
-	_STATIC_ASSERT_ (_CAPACITYOF_ (UNITS) > 0) ;
+	_STATIC_ASSERT_ (_CAPACITYOF_ (ARGVS<UNITS...>) > 0) ;
 	_STATIC_ASSERT_ (stl::is_all_same<UNITS...>::value) ;
 	struct Detail ;
 
@@ -1521,14 +1535,14 @@ private:
 inline namespace EXTEND {
 template <class... _ARGS>
 inline static AllOfTuple<_ARGS...> _ALLOF_ (const _ARGS &...list) {
-	_STATIC_ASSERT_ (_CAPACITYOF_ (_ARGS) > 0) ;
+	_STATIC_ASSERT_ (_CAPACITYOF_ (ARGVS<_ARGS...>) > 0) ;
 	TupleBinder<const _ARGS...> ret = TupleBinder<const _ARGS...> (list...) ;
 	return std::move (_CAST_<AllOfTuple<_ARGS...>> (ret)) ;
 }
 
 template <class... _ARGS>
 inline static AnyOfTuple<_ARGS...> _ANYOF_ (const _ARGS &...list) {
-	_STATIC_ASSERT_ (_CAPACITYOF_ (_ARGS) > 0) ;
+	_STATIC_ASSERT_ (_CAPACITYOF_ (ARGVS<_ARGS...>) > 0) ;
 	TupleBinder<const _ARGS...> ret = TupleBinder<const _ARGS...> (list...) ;
 	return std::move (_CAST_<AnyOfTuple<_ARGS...>> (ret)) ;
 }
@@ -1862,13 +1876,6 @@ private:
 		inline Node () :mWeight (0) {}
 	} ;
 
-	inline static constexpr VAR constexpr_log2x (VAR val) {
-		return _SWITCH_ (
-			(val <= 0) ? VAR_NONE :
-			(val == 1) ? 0 :
-			(1 + constexpr_log2x (val / 2))) ;
-	}
-
 private:
 	SharedRef<FixedBuffer<Node>> mHeap ;
 	WeakRef<UNIT> mWeakRef ;
@@ -2040,7 +2047,7 @@ private:
 			mIndex = find_min_weight () ;
 			if (mIndex == VAR_NONE)
 				discard ;
-			const auto r1x = constexpr_log2x (mHeap.self[mIndex].mWeight) ;
+			const auto r1x = easy_log2x (mHeap.self[mIndex].mWeight) ;
 			if (r1x <= 0)
 				discard ;
 			for (auto &&i : _RANGE_ (0 ,mHeap->size ()))
@@ -2049,6 +2056,14 @@ private:
 		_DYNAMIC_ASSERT_ (mIndex != VAR_NONE) ;
 		mHeap.self[mIndex].mData = mWeakRef ;
 		mHeap.self[mIndex].mWeight = 3 ;
+	}
+
+	inline VAR easy_log2x (VAR val) const {
+		if (val <= 0)
+			return VAR_NONE ;
+		if (val == 1)
+			return 0 ;
+		return 1 + easy_log2x (val / 2) ;
 	}
 
 	inline INDEX find_min_weight () const {
@@ -2281,74 +2296,6 @@ private:
 			GlobalHeap::free (address) ;
 		}
 	} ;
-} ;
-
-template <class UNIT>
-class Monoid {
-private:
-	class Holder {
-	private:
-		friend Monoid ;
-		Function<DEF<UNIT ()> NONE::*> mEvaluator ;
-	} ;
-
-private:
-	SoftRef<Holder> mThis ;
-
-public:
-	inline Monoid () = default ;
-
-	inline explicit Monoid (const UNIT &that) {
-		_STATIC_WARNING_ ("unimplemented") ;
-		_DYNAMIC_ASSERT_ (FALSE) ;
-	}
-
-	inline explicit Monoid (UNIT &&that) {
-		_STATIC_WARNING_ ("unimplemented") ;
-		_DYNAMIC_ASSERT_ (FALSE) ;
-	}
-
-	template <class... _ARGS>
-	inline explicit Monoid (const Function<UNIT (const _ARGS &...)> &that) {
-		_STATIC_WARNING_ ("unimplemented") ;
-		_DYNAMIC_ASSERT_ (FALSE) ;
-	}
-
-	template <class... _ARGS>
-	inline explicit Monoid (const Function<DEF<UNIT (const _ARGS &...)> NONE::*> &that) {
-		_STATIC_WARNING_ ("unimplemented") ;
-		_DYNAMIC_ASSERT_ (FALSE) ;
-	}
-
-	inline LENGTH rank () const {
-		_STATIC_WARNING_ ("unimplemented") ;
-		_DYNAMIC_ASSERT_ (FALSE) ;
-		return 0 ;
-	}
-
-	inline Monoid concat (const Monoid &that) const {
-		_STATIC_WARNING_ ("unimplemented") ;
-		_DYNAMIC_ASSERT_ (FALSE) ;
-		return Monoid () ;
-	}
-
-	inline Monoid operator+ (const Monoid &that) const {
-		return concat (that) ;
-	}
-
-	inline Monoid &operator+= (const Monoid &that) {
-		(*this) = concat (that) ;
-		return (*this) ;
-	}
-
-	inline Monoid operator- (const Monoid &that) const {
-		return that.concat ((*this)) ;
-	}
-
-	inline Monoid &operator-= (const Monoid &that) {
-		(*this) = that.concat ((*this)) ;
-		return (*this) ;
-	}
 } ;
 
 inline namespace EXTEND {
@@ -2731,7 +2678,7 @@ private:
 			_STATIC_ASSERT_ (std::is_same<REMOVE_CVR_TYPE<_ARG1> ,_ARG1>::value) ;
 			mObjectSize = _SIZEOF_ (_ARG1) ;
 			mObjectAlign = _ALIGNOF_ (_ARG1) ;
-			mObjectTypeUID = _TYPEUID_<_ARG1> () ;
+			mObjectTypeUID = _TYPEMID_<_ARG1> () ;
 			const auto r1x = _XVALUE_<PTR<void (PTR<NONE>)>> ([] (PTR<NONE> address) {
 				auto &r2y = _LOAD_<TEMP<_ARG1>> (address) ;
 				_CREATE_ (&r2y) ;
@@ -2756,7 +2703,7 @@ public:
 		_STATIC_ASSERT_ (stl::is_always_base_of<Object ,_ARG1>::value) ;
 		_STATIC_ASSERT_ (!std::is_same<REMOVE_CVR_TYPE<_ARG1> ,Object>::value) ;
 	}
-	
+
 	inline WeakRef<Object> &weak_of_this () override {
 		return mWeakOfThis ;
 	}
@@ -2829,7 +2776,7 @@ public:
 
 	template <class... _ARGS>
 	inline explicit Serializer (const DEF<_ARGS CONT::*> &...memptr) {
-		_STATIC_ASSERT_ (_CAPACITYOF_ (_ARGS) > 0) ;
+		_STATIC_ASSERT_ (_CAPACITYOF_ (ARGVS<_ARGS...>) > 0) ;
 		_DEBUG_ASSERT_ (Detail::template_available (memptr...)) ;
 		mBinder = StrongRef<const ImplBinder<_ARGS...>>::make (memptr...) ;
 	}
@@ -2869,7 +2816,6 @@ private:
 template <class UNIT ,class CONT>
 inline void Serializer<UNIT ,CONT>::Binder::compute_visit (UNIT &visitor ,CONT &context_) const {
 	//@error: g++4.8 is too useless to compile with a function-local-type
-	_STATIC_WARNING_ ("unexpected") ;
 	_DEBUG_ASSERT_ (FALSE) ;
 }
 #endif

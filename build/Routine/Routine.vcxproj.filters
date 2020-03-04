@@ -77,6 +77,9 @@
     <ClInclude Include="..\..\..\..\..\Depends\__CSC__\csc_extend.hpp">
       <Filter>csc</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\..\..\..\Depends\__CSC__\csc_functional.hpp">
+      <Filter>csc</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="csc">
@@ -122,6 +125,12 @@
     </None>
     <None Include="..\..\..\..\..\Depends\__CSC__\cpp.hint" />
     <None Include="..\..\..\..\..\Depends\__CSC__\csc_runtime.hpp.default.inl">
+      <Filter>csc</Filter>
+    </None>
+    <None Include="..\..\..\..\..\Depends\__CSC__\csc_string.hpp.gbk.inl">
+      <Filter>csc</Filter>
+    </None>
+    <None Include="..\..\..\..\..\Depends\__CSC__\csc_functional.hpp.op.inl">
       <Filter>csc</Filter>
     </None>
   </ItemGroup>

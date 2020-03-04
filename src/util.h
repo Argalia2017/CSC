@@ -8,6 +8,7 @@
 #include <csc_extend.hpp>
 #include <csc_array.hpp>
 #include <csc_math.hpp>
+#include <csc_functional.hpp>
 #include <csc_images.hpp>
 #include <csc_geometry.hpp>
 #include <csc_algorithm.hpp>
@@ -150,8 +151,13 @@ public:
 #include "csc_math.hpp.default.inl"
 #endif
 
+#ifdef __CSC_FUNCTIONAL__
+#include "csc_functional.hpp.op.inl"
+#endif
+
 #ifdef __CSC_STRING__
 #include "csc_string.hpp.default.inl"
+#include "csc_string.hpp.gbk.inl"
 #endif
 
 #ifdef __CSC_RUNTIME__

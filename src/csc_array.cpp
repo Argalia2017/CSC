@@ -81,7 +81,8 @@ public:
 			rax.add (r1x) ;
 			for (auto &&i : rax) {
 				INDEX ix = rax.find (i.key) ;
-				_UNITTEST_ASSERT_ (ix == rax.at (i)) ;
+				INDEX iy = rax.at (i) ;
+				_UNITTEST_ASSERT_ (ix == iy) ;
 			}
 		}
 		for (auto &&i : _RANGE_ (0 ,rax.size ())) {
@@ -92,7 +93,8 @@ public:
 			rax.remove (ix) ;
 			for (auto &&j : rax) {
 				INDEX jx = rax.find (j.key) ;
-				_UNITTEST_ASSERT_ (jx == rax.at (j)) ;
+				INDEX jy = rax.at (j) ;
+				_UNITTEST_ASSERT_ (jx == jy) ;
 			}
 			(void) i ;
 		}
@@ -108,7 +110,8 @@ public:
 			rax.add (r1x) ;
 			for (auto &&j : rax) {
 				INDEX ix = rax.find (j.key) ;
-				_UNITTEST_ASSERT_ (ix == rax.at (j)) ;
+				INDEX iy = rax.at (j) ;
+				_UNITTEST_ASSERT_ (ix == iy) ;
 			}
 		}
 	}
