@@ -54,9 +54,10 @@
 #endif
 
 namespace CSC {
-class AbstractDatabase_Engine_MYSQL :public AbstractDatabase::Abstract {
-public:
-	using NATIVE_TYPE = UniqueRef<MYSQL> ;
+class AbstractDatabase_Engine_MYSQL
+	:public AbstractDatabase::Abstract {
+private:
+	using NATIVE_THIS = UniqueRef<MYSQL> ;
 
 public:
 	AbstractDatabase_Engine_MYSQL () {
@@ -70,7 +71,7 @@ public:
 		} ,[] (MYSQL &me) {
 			::mysql_close (&me) ;
 		}) ;
-		this_ = AnyRef<NATIVE_TYPE>::make (std::move (tmp)) ;
+		this_ = AnyRef<NATIVE_THIS>::make (std::move (tmp)) ;
 	}
 
 private:

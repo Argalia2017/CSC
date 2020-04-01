@@ -7,4 +7,9 @@
     <IncludePath>D:\Depends\__CSC__;D:\Depends\include;$(IncludePath)</IncludePath>
     <LibraryPath>D:\Depends\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <PreprocessorDefinitions>_DEPRECATED;_UNITTEST;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
+  </ItemDefinitionGroup>
 </Project>

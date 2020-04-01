@@ -46,6 +46,14 @@ inline exports VAL64 _SQRT_ (const VAL64 &x) {
 	return std::sqrt (x) ;
 }
 
+inline exports VAL32 _CBRT_ (const VAL32 &x) {
+	return std::cbrt (x) ;
+}
+
+inline exports VAL64 _CBRT_ (const VAL64 &x) {
+	return std::cbrt (x) ;
+}
+
 inline exports VAL32 _POW_ (const VAL32 &x ,const VAL32 &y) {
 	return std::pow (x ,y) ;
 }
@@ -68,6 +76,14 @@ inline exports VAL32 _LOG_ (const VAL32 &x) {
 
 inline exports VAL64 _LOG_ (const VAL64 &x) {
 	return std::log (x) ;
+}
+
+inline exports VAL32 _NCDF_ (const VAL32 &x) {
+	return std::erf (x * _PINV_ (VAL32 (MATH_SQRT2))) / 2 + VAL32 (0.5) ;
+}
+
+inline exports VAL64 _NCDF_ (const VAL64 &x) {
+	return std::erf (x * _PINV_ (VAL64 (MATH_SQRT2))) / 2 + VAL64 (0.5) ;
 }
 
 inline exports VAL32 _SIN_ (const VAL32 &x) {

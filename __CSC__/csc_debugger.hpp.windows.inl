@@ -63,12 +63,13 @@
 #endif
 
 namespace CSC {
-class ConsoleService::Implement :public ConsoleService::Abstract {
+class ConsoleService::Implement
+	:public ConsoleService::Abstract {
 private:
 	TextWriter<STR> mConWriter ;
 	TextWriter<STR> mLogWriter ;
 	LENGTH mBufferSize ;
-	FLAG mOptionFlag ;
+	Set<EFLAG> mOptionSet ;
 	UniqueRef<HANDLE> mConsole ;
 	String<STR> mLogPath ;
 	AutoRef<StreamLoader> mLogFileStream ;
@@ -77,13 +78,11 @@ private:
 
 public:
 	Implement () {
-		using DEFAULT_HUGESTRING_SIZE = ARGC<8388607> ;
-		using DEFAULT_LONGSTRING_SIZE = ARGC<8195> ;
 		const auto r1x = DEFAULT_HUGESTRING_SIZE::value + 1 ;
 		mConWriter = TextWriter<STR> (SharedRef<FixedBuffer<STR>>::make (r1x)) ;
 		mLogWriter = TextWriter<STR> (SharedRef<FixedBuffer<STR>>::make (r1x)) ;
 		mBufferSize = mLogWriter.size () - DEFAULT_LONGSTRING_SIZE::value ;
-		mOptionFlag = OPTION_DEFAULT ;
+		mOptionSet = Set<EFLAG> (128) ;
 		mLogPath = String<STR> () ;
 	}
 
@@ -91,16 +90,18 @@ public:
 		return mBufferSize ;
 	}
 
-	void enable_option (FLAG option) override {
-		mOptionFlag |= option ;
+	void enable_option (EFLAG option) override {
+		if (option == OPTION_DEFAULT)
+			mOptionSet.clear () ;
+		mOptionSet.add (option) ;
 	}
 
-	void disable_option (FLAG option) override {
-		mOptionFlag &= ~option ;
+	void disable_option (EFLAG option) override {
+		mOptionSet.erase (option) ;
 	}
 
 	void print (const Binder &msg) override {
-		if ((mOptionFlag & OPTION_NO_PRINT) != 0)
+		if (mOptionSet.find (EFLAG (OPTION_NO_PRINT)) != VAR_NONE)
 			return ;
 		write_con_buffer (msg) ;
 		attach_console () ;
@@ -117,7 +118,7 @@ public:
 	}
 
 	void fatal (const Binder &msg) override {
-		if ((mOptionFlag & OPTION_NO_FATAL) != 0)
+		if (mOptionSet.find (EFLAG (OPTION_NO_FATAL)) != VAR_NONE)
 			return ;
 		write_con_buffer (msg) ;
 		attach_console () ;
@@ -134,7 +135,7 @@ public:
 	}
 
 	void error (const Binder &msg) override {
-		if ((mOptionFlag & OPTION_NO_ERROR) != 0)
+		if (mOptionSet.find (EFLAG (OPTION_NO_ERROR)) != VAR_NONE)
 			return ;
 		write_con_buffer (msg) ;
 		attach_console () ;
@@ -151,7 +152,7 @@ public:
 	}
 
 	void warn (const Binder &msg) override {
-		if ((mOptionFlag & OPTION_NO_WARN) != 0)
+		if (mOptionSet.find (EFLAG (OPTION_NO_WARN)) != VAR_NONE)
 			return ;
 		write_con_buffer (msg) ;
 		attach_console () ;
@@ -168,7 +169,7 @@ public:
 	}
 
 	void info (const Binder &msg) override {
-		if ((mOptionFlag & OPTION_NO_INFO) != 0)
+		if (mOptionSet.find (EFLAG (OPTION_NO_INFO)) != VAR_NONE)
 			return ;
 		write_con_buffer (msg) ;
 		attach_console () ;
@@ -185,7 +186,7 @@ public:
 	}
 
 	void debug (const Binder &msg) override {
-		if ((mOptionFlag & OPTION_NO_DEBUG) != 0)
+		if (mOptionSet.find (EFLAG (OPTION_NO_DEBUG)) != VAR_NONE)
 			return ;
 		write_con_buffer (msg) ;
 		attach_console () ;
@@ -202,7 +203,7 @@ public:
 	}
 
 	void verbose (const Binder &msg) override {
-		if ((mOptionFlag & OPTION_NO_VERBOSE) != 0)
+		if (mOptionSet.find (EFLAG (OPTION_NO_VERBOSE)) != VAR_NONE)
 			return ;
 		write_con_buffer (msg) ;
 		attach_console () ;
@@ -232,8 +233,9 @@ public:
 	}
 
 	void log (const Plain<STR> &tag ,const PhanBuffer<const STR> &msg) {
-		log (PhanBuffer<const STR>::make (tag.self ,tag.size ()) ,ImplBinder<PhanBuffer<const STR>> (msg)) ;
-}
+		using ImplBinder = typename Detail::template ImplBinder<PhanBuffer<const STR>> ;
+		log (PhanBuffer<const STR>::make (tag.self ,tag.size ()) ,ImplBinder (msg)) ;
+	}
 
 	void log (const PhanBuffer<const STR> &tag ,const Binder &msg) override {
 		write_log_buffer (tag ,msg) ;
@@ -336,7 +338,7 @@ private:
 			mLogFileStream = AutoRef<StreamLoader> () ;
 			mTempState = FALSE ;
 		}) ;
-		if ((mOptionFlag & OPTION_ALWAYS_FLUSH) == 0)
+		if (mOptionSet.find (EFLAG (OPTION_ALWAYS_FLUSH)) == VAR_NONE)
 			return ;
 		if (!mLogFileStream.exist ())
 			return ;
@@ -358,7 +360,8 @@ inline exports ConsoleService::ConsoleService () {
 	mThis = StrongRef<Implement>::make () ;
 }
 
-class DebuggerService::Implement :public DebuggerService::Abstract {
+class DebuggerService::Implement
+	:public DebuggerService::Abstract {
 private:
 	UniqueRef<HANDLE> mSymbolFromAddress ;
 
@@ -401,7 +404,6 @@ public:
 	}
 
 	Array<LENGTH> captrue_stack_trace () popping override {
-		using DEFAULT_RECURSIVE_SIZE = ARGC<256> ;
 		auto rax = AutoBuffer<PTR<VOID>> (DEFAULT_RECURSIVE_SIZE::value) ;
 		const auto r1x = CaptureStackBackTrace (3 ,VARY (rax.size ()) ,rax.self ,NULL) ;
 		Array<LENGTH> ret = Array<LENGTH> (r1x) ;
@@ -412,7 +414,6 @@ public:
 
 	Array<String<STR>> symbol_from_address (const Array<LENGTH> &list) popping override {
 		_DEBUG_ASSERT_ (list.length () < VAR32_MAX) ;
-		using DEFAULT_SHORTSTRING_SIZE = ARGC<1023> ;
 		attach_symbol_info () ;
 		Array<String<STR>> ret = Array<String<STR>> (list.length ()) ;
 		INDEX iw = 0 ;
@@ -420,16 +421,16 @@ public:
 		if switch_case (fax) {
 			if (!mSymbolFromAddress.exist ())
 				discard ;
-			const auto r1x = _ALIGNOF_ (SYMBOL_INFO) - 1 + _SIZEOF_ (SYMBOL_INFO) + list.length () * DEFAULT_SHORTSTRING_SIZE::value ;
+			const auto r1x = _ALIGNOF_ (SYMBOL_INFO) - 1 + _SIZEOF_ (SYMBOL_INFO) + list.length () * DEFAULT_FILEPATH_SIZE::value ;
 			auto rax = AutoBuffer<BYTE> (r1x) ;
 			const auto r2x = _ALIGNAS_ (_ADDRESS_ (&rax.self) ,_ALIGNOF_ (SYMBOL_INFO)) ;
-			auto &r3y = _LOAD_<SYMBOL_INFO> (_XVALUE_<PTR<VOID>> (&_NULL_<BYTE> () + r2x)) ;
-			r3y.SizeOfStruct = _SIZEOF_ (SYMBOL_INFO) ;
-			r3y.MaxNameLen = DEFAULT_SHORTSTRING_SIZE::value ;
+			auto &r3x = _LOAD_<SYMBOL_INFO> (_XVALUE_<PTR<VOID>> (&_NULL_<BYTE> () + r2x)) ;
+			r3x.SizeOfStruct = _SIZEOF_ (SYMBOL_INFO) ;
+			r3x.MaxNameLen = DEFAULT_FILEPATH_SIZE::value ;
 			for (auto &&i : list) {
-				SymFromAddr (mSymbolFromAddress ,DATA (i) ,NULL ,&r3y) ;
-				const auto r4x = _BUILDHEX16S_ (DATA (r3y.Address)) ;
-				const auto r5x = _PARSESTRS_ (String<STRA> (PTRTOARR[r3y.Name])) ;
+				SymFromAddr (mSymbolFromAddress ,DATA (i) ,NULL ,&r3x) ;
+				const auto r4x = _BUILDHEX16S_ (DATA (r3x.Address)) ;
+				const auto r5x = _PARSESTRS_ (String<STRA> (PTRTOARR[r3x.Name])) ;
 				ret[iw++] = String<STR>::make (_PCSTR_ ("[") ,r4x ,_PCSTR_ ("] : ") ,r5x) ;
 			}
 		}

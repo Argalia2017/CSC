@@ -44,7 +44,7 @@ namespace CSC {
 inline namespace STRING {
 #ifdef __CSC_COMPILER_MSVC__
 inline const UniqueRef<_locale_t> &_inline_LOCALE_PAGE_ () {
-	return _CACHE_ ([] () {
+	return _CACHE_ ([&] () {
 		return UniqueRef<_locale_t> ([&] (_locale_t &me) {
 			me = ::_create_locale (LC_CTYPE ,_PCSTRA_ ("")) ;
 			_DYNAMIC_ASSERT_ (me != NULL) ;
@@ -57,11 +57,11 @@ inline const UniqueRef<_locale_t> &_inline_LOCALE_PAGE_ () {
 
 inline String<STRW> _inline_LOCALE_LASTOWS_ (const String<STRA> &val) {
 #ifdef __CSC_COMPILER_MSVC__
-	auto &r1y = _inline_LOCALE_PAGE_ () ;
+	auto &r1x = _inline_LOCALE_PAGE_ () ;
 	String<STRW> ret = String<STRW> (val.length () + 1) ;
 	_DEBUG_ASSERT_ (ret.size () < VAR32_MAX) ;
 	if switch_case (TRUE) {
-		const auto r2x = ::_mbstowcs_s_l (NULL ,ret.raw ().self ,VAR32 (ret.size ()) ,val.raw ().self ,_TRUNCATE ,r1y) ;
+		const auto r2x = ::_mbstowcs_s_l (NULL ,ret.raw ().self ,VAR32 (ret.size ()) ,val.raw ().self ,_TRUNCATE ,r1x) ;
 		if (r2x == 0)
 			discard ;
 		ret = String<STRW> () ;
@@ -82,11 +82,11 @@ inline String<STRW> _inline_LOCALE_LASTOWS_ (const String<STRA> &val) {
 
 inline String<STRA> _inline_LOCALE_WSTOLAS_ (const String<STRW> &val) {
 #ifdef __CSC_COMPILER_MSVC__
-	auto &r1y = _inline_LOCALE_PAGE_ () ;
+	auto &r1x = _inline_LOCALE_PAGE_ () ;
 	String<STRA> ret = String<STRA> ((val.length () + 1) * _SIZEOF_ (STRW)) ;
 	_DEBUG_ASSERT_ (ret.size () < VAR32_MAX) ;
 	if switch_case (TRUE) {
-		const auto r2x = ::_wcstombs_s_l (NULL ,ret.raw ().self ,VAR32 (ret.size ()) ,val.raw ().self ,_TRUNCATE ,r1y) ;
+		const auto r2x = ::_wcstombs_s_l (NULL ,ret.raw ().self ,VAR32 (ret.size ()) ,val.raw ().self ,_TRUNCATE ,r1x) ;
 		if (r2x == 0)
 			discard ;
 		ret = String<STRA> () ;
@@ -169,14 +169,14 @@ inline exports ARRAY8<VAR32> _LOCALE_MAKE_TIMEMETRIC_ (const std::chrono::system
 inline exports std::chrono::system_clock::time_point _LOCALE_MAKE_TIMEPOINT_ (const ARRAY8<VAR32> &val) {
 	auto rax = std::tm () ;
 	_ZERO_ (rax) ;
-	const auto r1x = EFLAG (val[0] > 0) * (val[0] - 1900) ;
+	const auto r1x = _EBOOL_ (val[0] > 0) * (val[0] - 1900) ;
 	rax.tm_year = VAR32 (r1x) ;
-	const auto r2x = EFLAG (val[1] > 0) * (val[1] - 1) ;
+	const auto r2x = _EBOOL_ (val[1] > 0) * (val[1] - 1) ;
 	rax.tm_mon = VAR32 (r2x) ;
 	rax.tm_mday = val[2] ;
-	const auto r3x = EFLAG (val[3] > 0) * (val[3] - 1) ;
+	const auto r3x = _EBOOL_ (val[3] > 0) * (val[3] - 1) ;
 	rax.tm_wday = VAR32 (r3x) ;
-	const auto r4x = EFLAG (val[4] > 0) * (val[4] - 1) ;
+	const auto r4x = _EBOOL_ (val[4] > 0) * (val[4] - 1) ;
 	rax.tm_yday = VAR32 (r4x) ;
 	rax.tm_hour = val[5] ;
 	rax.tm_min = val[6] ;
@@ -186,7 +186,7 @@ inline exports std::chrono::system_clock::time_point _LOCALE_MAKE_TIMEPOINT_ (co
 }
 } ;
 
-class RegexMatcher::Implement final :private Interface {
+class RegexMatcher::Implement {
 private:
 	AutoRef<std::regex> mRegex ;
 
@@ -222,10 +222,10 @@ public:
 				if (!r4x)
 					break ;
 				INDEX ix = ret.insert () ;
-				auto &r5y = rax.self[0].first ;
-				auto &r6y = rax.self[0].second ;
-				ret[ix][0] = INDEX (&(*r5y) - &r2x[0]) ;
-				ret[ix][1] = INDEX (&(*r6y) - &r2x[0]) ;
+				auto &r5x = rax.self[0].first ;
+				auto &r6x = rax.self[0].second ;
+				ret[ix][0] = INDEX (&(*r5x) - &r2x[0]) ;
+				ret[ix][1] = INDEX (&(*r6x) - &r2x[0]) ;
 				rbx = rax.self[0].second ;
 			}
 		}

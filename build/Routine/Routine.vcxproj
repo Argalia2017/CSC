@@ -27,12 +27,6 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\src\csc_basic.cpp" />
-    <ClCompile Include="..\..\src\csc_array.cpp" />
-    <ClCompile Include="..\..\src\csc_extend.cpp" />
-    <ClCompile Include="..\..\src\csc_stream.cpp" />
-    <ClCompile Include="..\..\src\csc_string.cpp" />
-    <ClCompile Include="..\..\src\csc_thread.cpp" />
     <ClCompile Include="..\..\src\main.cpp" />
   </ItemGroup>
   <ItemGroup>

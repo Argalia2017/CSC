@@ -1,8 +1,5 @@
 ﻿#pragma once
 
-#define _UNITTEST
-#define _DEPRECATED
-
 #include <csc.hpp>
 #include <csc_basic.hpp>
 #include <csc_extend.hpp>
@@ -117,9 +114,10 @@ using namespace CSC ;
 
 namespace UNITTEST {
 #ifdef __CSC_UNITTEST__
-class GlobalUnittest final :private Wrapped<void> {
+class GlobalUnittest final
+	:private Wrapped<void> {
 public:
-	inline static void fail (const ARR<STR> &what) {
+	inline static void done (const ARR<STR> &what) {
 #ifdef MS_CPP_UNITTESTFRAMEWORK
 #ifdef __CSC_STRING__
 		const auto r1x = _BUILDSTRS_<STRW> (what) ;
@@ -137,9 +135,9 @@ public:
 
 #ifdef __CSC_UNITTEST__
 #ifdef __CSC_COMPILER_MSVC__
-#define _UNITTEST_ASSERT_(...) do { if (!(_UNW_ (__VA_ARGS__))) GlobalUnittest::fail (CSC::Plain<CSC::STR> (_PCSTR_ ("unittest_assert failed : " _STR_ (__VA_ARGS__) " : at " M_FUNC " in " M_FILE " ," M_LINE))) ; } while (FALSE)
+#define _UNITTEST_ASSERT_(...) do { if (!(_UNW_ (__VA_ARGS__))) GlobalUnittest::done (CSC::Plain<CSC::STR> (_PCSTR_ ("unittest_assert failed : " _STR_ (__VA_ARGS__) " : at " M_FUNC " in " M_FILE " ," M_LINE))) ; } while (FALSE)
 #else
-#define _UNITTEST_ASSERT_(...) do { struct ARGVPL ; if (!(_UNW_ (__VA_ARGS__))) GlobalUnittest::fail (CSC::Plain<CSC::STR> (CSC::_NULL_<CSC::ARGV<ARGVPL>> () ,"unittest_assert failed : " _STR_ (__VA_ARGS__) " : at " ,M_FUNC ," in " ,M_FILE ," ," ,M_LINE)) ; } while (FALSE)
+#define _UNITTEST_ASSERT_(...) do { struct ARGVPL ; if (!(_UNW_ (__VA_ARGS__))) GlobalUnittest::done (CSC::Plain<CSC::STR> (CSC::_NULL_<CSC::ARGV<ARGVPL>> () ,"unittest_assert failed : " _STR_ (__VA_ARGS__) " : at " ,M_FUNC ," in " ,M_FILE ," ," ,M_LINE)) ; } while (FALSE)
 #endif
 #else
 #define _UNITTEST_ASSERT_(...) do {} while (FALSE)
@@ -148,16 +146,16 @@ public:
 #ifdef __CSC_COMPILER_GNUC__
 #pragma region
 #ifdef __CSC_MATH__
-#include "csc_math.hpp.default.inl"
+#include <csc_math.hpp.default.inl>
 #endif
 
 #ifdef __CSC_FUNCTIONAL__
-#include "csc_functional.hpp.op.inl"
+#include <csc_functional.hpp.op.inl>
 #endif
 
 #ifdef __CSC_STRING__
-#include "csc_string.hpp.default.inl"
-#include "csc_string.hpp.gbk.inl"
+#include <csc_string.hpp.default.inl>
+#include <csc_string.hpp.gbk.inl>
 #endif
 
 #ifdef __CSC_RUNTIME__
@@ -166,23 +164,23 @@ public:
 
 #ifdef __CSC_FILESYSTEM__
 #ifdef __CSC_SYSTEM_WINDOWS__
-#include "csc_filesystem.hpp.windows.inl"
+#include <csc_filesystem.hpp.windows.inl>
 #elif defined __CSC_SYSTEM_LINUX__
-#include "csc_filesystem.hpp.linux.inl"
+#include <csc_filesystem.hpp.linux.inl>
 #endif
 #endif
 
 #ifdef __CSC_NETWORK__
 #ifdef __CSC_SYSTEM_WINDOWS__
-#include "csc_network.hpp.windows.inl"
+#include <csc_network.hpp.windows.inl>
 #endif
 #endif
 
 #ifdef __CSC_DEBUGGER__
 #ifdef __CSC_SYSTEM_WINDOWS__
-#include "csc_debugger.hpp.windows.inl"
+#include <csc_debugger.hpp.windows.inl>
 #elif defined __CSC_SYSTEM_LINUX__
-#include "csc_debugger.hpp.linux.inl"
+#include <csc_debugger.hpp.linux.inl>
 #endif
 #endif
 #pragma endregion

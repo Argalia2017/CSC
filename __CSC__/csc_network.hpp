@@ -32,7 +32,13 @@ public:
 
 	String<STRU8> peer_sock_name () const ;
 
-	Listener listener () popping ;
+	template <class _RET = NONE>
+	auto listener () popping
+		->DEF<DEPENDENT_TYPE<Listener ,ARGVS<_RET>>> {
+		struct Dependent ;
+		_DEBUG_ASSERT_ (mThis.exist ()) ;
+		return DEPENDENT_TYPE<Listener ,Dependent> (mThis) ;
+	}
 
 	void link (const String<STRU8> &ip_addr) ;
 
@@ -40,20 +46,20 @@ public:
 
 	void modify_timeout (LENGTH timeout) ;
 
-	void read (const PhanBuffer<BYTE> &data) popping ;
+	void read (const PhanBuffer<BYTE> &data) ;
 
 	template <class _ARG1>
-	void read (Buffer<BYTE ,_ARG1> &data) popping {
+	void read (Buffer<BYTE ,_ARG1> &data) {
 		read (PhanBuffer<BYTE>::make (data)) ;
 	}
 
 	template <class _ARG1>
-	inline TCPSocket &operator>> (Buffer<BYTE ,_ARG1> &data) popping {
+	inline TCPSocket &operator>> (Buffer<BYTE ,_ARG1> &data) {
 		read (data) ;
 		return (*this) ;
 	}
 
-	void read (const PhanBuffer<BYTE> &data ,INDEX &out_i ,LENGTH timeout) popping ;
+	void read (const PhanBuffer<BYTE> &data ,INDEX &out_i ,LENGTH timeout) ;
 
 	void write (const PhanBuffer<const BYTE> &data) ;
 
@@ -91,11 +97,6 @@ private:
 	explicit Listener (const AnyRef<void> &socket_) ;
 } ;
 
-inline TCPSocket::Listener TCPSocket::listener () popping {
-	_DEBUG_ASSERT_ (mThis.exist ()) ;
-	return TCPSocket::Listener (mThis) ;
-}
-
 class UDPSocket {
 private:
 	class Implement ;
@@ -114,20 +115,20 @@ public:
 
 	void modify_timeout (LENGTH timeout) ;
 
-	void read (const PhanBuffer<BYTE> &data) popping ;
+	void read (const PhanBuffer<BYTE> &data) ;
 
 	template <class _ARG1>
-	void read (Buffer<BYTE ,_ARG1> &data) popping {
+	void read (Buffer<BYTE ,_ARG1> &data) {
 		read (PhanBuffer<BYTE>::make (data)) ;
 	}
 
 	template <class _ARG1>
-	inline UDPSocket &operator>> (Buffer<BYTE ,_ARG1> &data) popping {
+	inline UDPSocket &operator>> (Buffer<BYTE ,_ARG1> &data) {
 		read (data) ;
 		return (*this) ;
 	}
 
-	void read (const PhanBuffer<BYTE> &data ,INDEX &out_i ,LENGTH timeout) popping ;
+	void read (const PhanBuffer<BYTE> &data ,INDEX &out_i ,LENGTH timeout) ;
 
 	void write (const PhanBuffer<const BYTE> &data) ;
 
@@ -143,9 +144,12 @@ public:
 	}
 } ;
 
-class NetworkService final :private Interface {
+class NetworkService final
+	:private Proxy {
 private:
-	exports struct Abstract :public Interface {
+	exports class Abstract
+		:public Interface {
+	public:
 		virtual void startup () = 0 ;
 		virtual void shutdown () = 0 ;
 		virtual String<STRU8> localhost_name () const = 0 ;

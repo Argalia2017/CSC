@@ -61,7 +61,7 @@ inline exports AutoBuffer<BYTE> _LOADFILE_ (const String<STR> &file) popping {
 	return std::move (ret) ;
 }
 
-inline exports void _LOADFILE_ (const String<STR> &file ,const PhanBuffer<BYTE> &data) popping {
+inline exports void _LOADFILE_ (const String<STR> &file ,const PhanBuffer<BYTE> &data) {
 	const auto r1x = _BUILDSTRS_<STRA> (file) ;
 	const auto r2x = UniqueRef<VAR32> ([&] (VAR32 &me) {
 		me = ::open (r1x.raw ().self ,O_RDONLY) ;
@@ -113,9 +113,10 @@ inline exports BOOL _FINDFILE_ (const String<STR> &file) popping {
 }
 
 inline BOOL _inline_FINDJUNTION_ (const String<STRA> &dire) popping {
-	const auto r1x = UniqueRef<PTR<DIR>> ([&] (PTR<DIR> &me) {
+	using HDIR = PTR<DIR> ;
+	const auto r1x = UniqueRef<HDIR> ([&] (HDIR &me) {
 		me = ::opendir (dire.raw ().self) ;
-	} ,[] (PTR<DIR> &me) {
+	} ,[] (HDIR &me) {
 		if (me == NULL)
 			return ;
 		::closedir (me) ;
@@ -183,8 +184,7 @@ inline exports BOOL _IDENTICALFILE_ (const String<STR> &file1 ,const String<STR>
 }
 
 inline exports String<STR> _PARSEDIRENAME_ (const String<STR> &file) {
-	using DEFAULT_SHORTSTRING_SIZE = ARGC<1023> ;
-	String<STR> ret = String<STR> (DEFAULT_SHORTSTRING_SIZE::value) ;
+	String<STR> ret = String<STR> (DEFAULT_FILEPATH_SIZE::value) ;
 	const auto r1x = file.length () ;
 	const auto r2x = file.raw () ;
 	const auto r3x = _MEMRCHR_ (r2x.self ,r1x ,STR ('\\')) ;
@@ -195,8 +195,7 @@ inline exports String<STR> _PARSEDIRENAME_ (const String<STR> &file) {
 }
 
 inline exports String<STR> _PARSEFILENAME_ (const String<STR> &file) {
-	using DEFAULT_SHORTSTRING_SIZE = ARGC<1023> ;
-	String<STR> ret = String<STR> (DEFAULT_SHORTSTRING_SIZE::value) ;
+	String<STR> ret = String<STR> (DEFAULT_FILEPATH_SIZE::value) ;
 	const auto r1x = file.length () ;
 	const auto r2x = file.raw () ;
 	const auto r3x = _MEMRCHR_ (r2x.self ,r1x ,STR ('\\')) ;
@@ -237,8 +236,7 @@ inline exports Deque<String<STR>> _DECOUPLEPATHNAME_ (const String<STR> &file) {
 }
 
 inline exports String<STR> _WORKINGPATH_ () {
-	using DEFAULT_SHORTSTRING_SIZE = ARGC<1023> ;
-	auto rax = String<STRA> (DEFAULT_SHORTSTRING_SIZE::value) ;
+	auto rax = String<STRA> (DEFAULT_FILEPATH_SIZE::value) ;
 	if switch_case (TRUE) {
 		const auto r1x = ::getcwd (rax.raw ().self ,VAR32 (rax.size ())) ;
 		if (r1x != NULL)
@@ -282,8 +280,7 @@ inline Deque<INDEX> _inline_RELATIVEPATHNAME_ (const Deque<String<STR>> &path_na
 }
 
 inline exports String<STR> _ABSOLUTEPATH_ (const String<STR> &path) {
-	using DEFAULT_SHORTSTRING_SIZE = ARGC<1023> ;
-	String<STR> ret = String<STR> (DEFAULT_SHORTSTRING_SIZE::value) ;
+	String<STR> ret = String<STR> (DEFAULT_FILEPATH_SIZE::value) ;
 	auto rax = _DECOUPLEPATHNAME_ (path) ;
 	auto fax = TRUE ;
 	if switch_case (fax) {
@@ -334,9 +331,8 @@ inline exports String<STR> _ABSOLUTEPATH_ (const String<STR> &path) {
 }
 
 inline exports const String<STR> &_MODULEFILEPATH_ () popping {
-	using DEFAULT_SHORTSTRING_SIZE = ARGC<1023> ;
-	return _CACHE_ ([] () {
-		auto rax = String<STRA> (DEFAULT_SHORTSTRING_SIZE::value) ;
+	return _CACHE_ ([&] () {
+		auto rax = String<STRA> (DEFAULT_FILEPATH_SIZE::value) ;
 		const auto r1x = ::readlink (_PCSTRA_ ("/proc/self/exe") ,rax.raw ().self ,VAR32 (rax.size ())) ;
 		if (!(r1x >= 0 && r1x < rax.size ()))
 			rax.clear () ;
@@ -348,9 +344,8 @@ inline exports const String<STR> &_MODULEFILEPATH_ () popping {
 }
 
 inline exports const String<STR> &_MODULEFILENAME_ () popping {
-	using DEFAULT_SHORTSTRING_SIZE = ARGC<1023> ;
-	return _CACHE_ ([] () {
-		auto rax = String<STRA> (DEFAULT_SHORTSTRING_SIZE::value) ;
+	return _CACHE_ ([&] () {
+		auto rax = String<STRA> (DEFAULT_FILEPATH_SIZE::value) ;
 		const auto r1x = ::readlink (_PCSTRA_ ("/proc/self/exe") ,rax.raw ().self ,VAR32 (rax.size ())) ;
 		if (!(r1x >= 0 && r1x < rax.size ()))
 			rax.clear () ;
@@ -360,10 +355,11 @@ inline exports const String<STR> &_MODULEFILENAME_ () popping {
 }
 
 inline exports BOOL _FINDDIRECTORY_ (const String<STR> &dire) popping {
+	using HDIR = PTR<DIR> ;
 	const auto r1x = _BUILDSTRS_<STRA> (dire) ;
-	const auto r2x = UniqueRef<PTR<DIR>> ([&] (PTR<DIR> &me) {
+	const auto r2x = UniqueRef<HDIR> ([&] (HDIR &me) {
 		me = ::opendir (r1x.raw ().self) ;
-	} ,[] (PTR<DIR> &me) {
+	} ,[] (HDIR &me) {
 		if (me == NULL)
 			return ;
 		::closedir (me) ;
@@ -395,7 +391,7 @@ inline exports BOOL _LOCKDIRECTORY_ (const String<STR> &dire) popping {
 		ret = CSC::BOOL (r2x == r6x) ;
 	}
 	if switch_case (fax) {
-		auto &r9y = _CACHE_ ([&] () {
+		auto &r9x = _CACHE_ ([&] () {
 			return UniqueRef<String<STR>> ([&] (String<STR> &me) {
 				me = r1x ;
 				_SAVEFILE_ (r1x ,PhanBuffer<const CSC::BYTE>::make (r3x)) ;
@@ -403,17 +399,16 @@ inline exports BOOL _LOCKDIRECTORY_ (const String<STR> &dire) popping {
 				_ERASEFILE_ (me) ;
 			}) ;
 		}) ;
-		(void) r9y ;
+		(void) r9x ;
 		ret = TRUE ;
 	}
 	return std::move (ret) ;
 }
 
 inline exports void _BUILDDIRECTORY_ (const String<STR> &dire) {
-	using DEFAULT_SHORTSTRING_SIZE = ARGC<1023> ;
 	if (_FINDDIRECTORY_ (dire))
 		return ;
-	auto rax = String<STR> (DEFAULT_SHORTSTRING_SIZE::value) ;
+	auto rax = String<STR> (DEFAULT_FILEPATH_SIZE::value) ;
 	const auto r1x = _ABSOLUTEPATH_ (dire) ;
 	const auto r2x = _DECOUPLEPATHNAME_ (r1x) ;
 	_DEBUG_ASSERT_ (r2x.length () >= 1) ;
@@ -452,16 +447,16 @@ inline exports void _ERASEDIRECTORY_ (const String<STR> &dire) {
 }
 
 //@warn: recursive call with junction(symbolic link) may cause endless loop
-inline exports void _ENUMDIRECTORY_ (const String<STR> &dire ,Deque<String<STR>> &file_list ,Deque<String<STR>> &dire_list) popping {
-	using DEFAULT_SHORTSTRING_SIZE = ARGC<1023> ;
-	auto rax = String<STR> (DEFAULT_SHORTSTRING_SIZE::value) ;
+inline exports void _ENUMDIRECTORY_ (const String<STR> &dire ,Deque<String<STR>> &file_list ,Deque<String<STR>> &dire_list) {
+	using HDIR = PTR<DIR> ;
+	auto rax = String<STR> (DEFAULT_FILEPATH_SIZE::value) ;
 	rax += dire ;
 	rax += _PCSTR_ ("/") ;
 	const auto r1x = rax.length () ;
 	const auto r2x = _BUILDSTRS_<STRA> (rax) ;
-	const auto r3x = UniqueRef<PTR<DIR>> ([&] (PTR<DIR> &me) {
+	const auto r3x = UniqueRef<HDIR> ([&] (HDIR &me) {
 		me = ::opendir (r2x.raw ().self) ;
-	} ,[] (PTR<DIR> &me) {
+	} ,[] (HDIR &me) {
 		if (me == NULL)
 			return ;
 		::closedir (me) ;
@@ -479,17 +474,16 @@ inline exports void _ENUMDIRECTORY_ (const String<STR> &dire ,Deque<String<STR>>
 			if (r5x == _PCSTR_ (".."))
 				discard ;
 			rax += r5x ;
-			auto &r6y = _SWITCH_ (
+			auto &r6x = _SWITCH_ (
 				(_FINDDIRECTORY_ (rax)) ? dire_list :
 				file_list) ;
-			r6y.add (rax) ;
+			r6x.add (rax) ;
 		}
 		rax[r1x] = 0 ;
 	}
 }
 
 inline exports void _CLEARDIRECTORY_ (const String<STR> &dire) {
-	using DEFAULT_EXPANDLIMIT_SIZE = ARGC<65536> ;
 	auto rax = Deque<PACK<String<STR> ,BOOL>> () ;
 	auto rbx = ARRAY2<Deque<String<STR>>> () ;
 	rbx[0].clear () ;
@@ -497,9 +491,9 @@ inline exports void _CLEARDIRECTORY_ (const String<STR> &dire) {
 	_ENUMDIRECTORY_ (dire ,rbx[0] ,rbx[1]) ;
 	for (auto &&i : rbx[0])
 		_ERASEFILE_ (i) ;
-	_DYNAMIC_ASSERT_ (rax.length () + rbx[1].length () < DEFAULT_EXPANDLIMIT_SIZE::value) ;
 	for (auto &&i : rbx[1])
 		rax.add (PACK<String<STR> ,BOOL> {i ,FALSE}) ;
+	_DYNAMIC_ASSERT_ (rax.length () <= DEFAULT_DIRECTORY_SIZE::value) ;
 	while (TRUE) {
 		if (rax.empty ())
 			break ;
@@ -517,16 +511,16 @@ inline exports void _CLEARDIRECTORY_ (const String<STR> &dire) {
 			_ENUMDIRECTORY_ (rax[ix].P1 ,rbx[0] ,rbx[1]) ;
 			for (auto &&i : rbx[0])
 				_ERASEFILE_ (i) ;
-			_DYNAMIC_ASSERT_ (rax.length () + rbx[1].length () < DEFAULT_EXPANDLIMIT_SIZE::value) ;
 			for (auto &&i : rbx[1])
 				rax.add (PACK<String<STR> ,BOOL> {i ,FALSE}) ;
+			_DYNAMIC_ASSERT_ (rax.length () <= DEFAULT_DIRECTORY_SIZE::value) ;
 			rax[ix].P2 = TRUE ;
 		}
 	}
 }
 } ;
 
-class StreamLoader::Implement final :private Interface {
+class StreamLoader::Implement {
 private:
 	UniqueRef<VAR32> mReadFile ;
 	UniqueRef<VAR32> mWriteFile ;
@@ -552,7 +546,7 @@ public:
 		}) ;
 	}
 
-	void read (const PhanBuffer<BYTE> &data) popping {
+	void read (const PhanBuffer<BYTE> &data) {
 		_DEBUG_ASSERT_ (data.size () < VAR32_MAX) ;
 		const auto r1x = LENGTH (::read (mReadFile ,data.self ,VAR32 (data.size ()))) ;
 		//@info: state of 'this' has been changed
@@ -576,7 +570,7 @@ inline exports StreamLoader::StreamLoader (const String<STR> &file) {
 	mThis = AnyRef<Implement>::make (file) ;
 }
 
-inline exports void StreamLoader::read (const PhanBuffer<BYTE> &data) popping {
+inline exports void StreamLoader::read (const PhanBuffer<BYTE> &data) {
 	mThis.rebind<Implement> ()->read (data) ;
 }
 
@@ -588,7 +582,7 @@ inline exports void StreamLoader::flush () {
 	mThis.rebind<Implement> ()->flush () ;
 }
 
-class BufferLoader::Implement final :private Interface {
+class BufferLoader::Implement {
 public:
 	Implement () = delete ;
 
@@ -628,7 +622,7 @@ public:
 		return PhanBuffer<const BYTE> () ;
 	}
 
-	PhanBuffer<BYTE> watch () && = delete ;
+	auto watch () && ->void = delete ;
 
 	void flush () {
 		_STATIC_WARNING_ ("unimplemented") ;
@@ -664,7 +658,8 @@ inline exports void BufferLoader::flush () {
 	mThis.rebind<Implement> ()->flush () ;
 }
 
-class FileSystemService::Implement :public FileSystemService::Abstract {
+class FileSystemService::Implement
+	:public FileSystemService::Abstract {
 public:
 	void startup () override {
 		_STATIC_WARNING_ ("noop") ;
