@@ -30,19 +30,19 @@ public:
 		return mVertexSet ;
 	}
 
-	const Set<ARRAY3<VAL32>> &vertex () && = delete ;
+	auto vertex () && ->void = delete ;
 
 	const SList<ARRAY3<INDEX>> &element () const & {
 		return mElementList ;
 	}
 
-	const SList<ARRAY3<INDEX>> &element () && = delete ;
+	auto element () && ->void = delete ;
 
 	const Array<Bitmap<COLOR_BGR>> &texture () const & {
 		return mTexture ;
 	}
 
-	const Array<Bitmap<COLOR_BGR>> &texture () && = delete ;
+	auto texture () && ->void = delete ;
 
 	void add_vertex (const Set<ARRAY3<VAL32>> &vertex_) {
 		mVertexSet.appand (vertex_) ;
@@ -233,9 +233,13 @@ private:
 	}
 } ;
 
+class AbstractSprite ;
+
 class AbstractShader {
 public:
-	exports struct Abstract :public Interface {
+	exports class Abstract
+		:public Interface {
+	public:
 		virtual void compute_load_data (AnyRef<void> &this_ ,const PhanBuffer<const BYTE> &vs ,const PhanBuffer<const BYTE> &fs) const = 0 ;
 		virtual void compute_active_pipeline (AnyRef<void> &this_) const = 0 ;
 		virtual void compute_uniform_find (AnyRef<void> &this_ ,const String<STR> &name ,INDEX &index) const = 0 ;
@@ -252,17 +256,17 @@ public:
 		virtual void compute_sprite_draw (AnyRef<void> &this_) const = 0 ;
 	} ;
 
-	class Sprite ;
-
 private:
+	friend AbstractSprite ;
 	PhanRef<const Abstract> mAbstract ;
 	AnyRef<void> mHolder ;
-	Set<String<STR> ,INDEX> mUniformSet ;
+	Set<String<STR>> mUniformMappingSet ;
 
 public:
 	AbstractShader () = default ;
 
-	explicit AbstractShader (const PhanRef<const Abstract> &abstract_) :mAbstract (PhanRef<const Abstract>::make (abstract_)) {}
+	explicit AbstractShader (const PhanRef<const Abstract> &abstract_)
+		:mAbstract (PhanRef<const Abstract>::make (abstract_)) {}
 
 	BOOL exist () const {
 		if (!mAbstract.exist ())
@@ -284,111 +288,119 @@ public:
 
 	void uniform (const String<STR> &name ,const VAR32 &data) {
 		_DEBUG_ASSERT_ (exist ()) ;
-		INDEX ix = mUniformSet.find (name) ;
+		INDEX ix = mUniformMappingSet.map (name) ;
 		if switch_case (TRUE) {
 			if (ix != VAR_NONE)
 				discard ;
-			ix = mUniformSet.find (name) ;
-			mAbstract->compute_uniform_find (mHolder ,name ,mUniformSet[ix].item) ;
+			ix = mUniformMappingSet.map (name) ;
+			mAbstract->compute_uniform_find (mHolder ,name ,ix) ;
 		}
-		mAbstract->compute_uniform_write (mHolder ,mUniformSet[ix].item ,data) ;
+		mAbstract->compute_uniform_write (mHolder ,ix ,data) ;
 	}
 
 	void uniform (const String<STR> &name ,const VAR64 &data) {
 		_DEBUG_ASSERT_ (exist ()) ;
-		INDEX ix = mUniformSet.find (name) ;
+		INDEX ix = mUniformMappingSet.map (name) ;
 		if switch_case (TRUE) {
 			if (ix != VAR_NONE)
 				discard ;
-			ix = mUniformSet.find (name) ;
-			mAbstract->compute_uniform_find (mHolder ,name ,mUniformSet[ix].item) ;
+			ix = mUniformMappingSet.map (name) ;
+			mAbstract->compute_uniform_find (mHolder ,name ,ix) ;
 		}
-		mAbstract->compute_uniform_write (mHolder ,mUniformSet[ix].item ,data) ;
+		mAbstract->compute_uniform_write (mHolder ,ix ,data) ;
 	}
 
 	void uniform (const String<STR> &name ,const VAL32 &data) {
 		_DEBUG_ASSERT_ (exist ()) ;
-		INDEX ix = mUniformSet.find (name) ;
+		INDEX ix = mUniformMappingSet.map (name) ;
 		if switch_case (TRUE) {
 			if (ix != VAR_NONE)
 				discard ;
-			ix = mUniformSet.find (name) ;
-			mAbstract->compute_uniform_find (mHolder ,name ,mUniformSet[ix].item) ;
+			ix = mUniformMappingSet.map (name) ;
+			mAbstract->compute_uniform_find (mHolder ,name ,ix) ;
 		}
-		mAbstract->compute_uniform_write (mHolder ,mUniformSet[ix].item ,data) ;
+		mAbstract->compute_uniform_write (mHolder ,ix ,data) ;
 	}
 
 	void uniform (const String<STR> &name ,const VAL64 &data) {
 		_DEBUG_ASSERT_ (exist ()) ;
-		INDEX ix = mUniformSet.find (name) ;
+		INDEX ix = mUniformMappingSet.map (name) ;
 		if switch_case (TRUE) {
 			if (ix != VAR_NONE)
 				discard ;
-			ix = mUniformSet.find (name) ;
-			mAbstract->compute_uniform_find (mHolder ,name ,mUniformSet[ix].item) ;
+			ix = mUniformMappingSet.map (name) ;
+			mAbstract->compute_uniform_find (mHolder ,name ,ix) ;
 		}
-		mAbstract->compute_uniform_write (mHolder ,mUniformSet[ix].item ,data) ;
+		mAbstract->compute_uniform_write (mHolder ,ix ,data) ;
 	}
 
 	void uniform (const String<STR> &name ,const Vector<VAL32> &data) {
 		_DEBUG_ASSERT_ (exist ()) ;
-		INDEX ix = mUniformSet.find (name) ;
+		INDEX ix = mUniformMappingSet.map (name) ;
 		if switch_case (TRUE) {
 			if (ix != VAR_NONE)
 				discard ;
-			ix = mUniformSet.find (name) ;
-			mAbstract->compute_uniform_find (mHolder ,name ,mUniformSet[ix].item) ;
+			ix = mUniformMappingSet.map (name) ;
+			mAbstract->compute_uniform_find (mHolder ,name ,ix) ;
 		}
-		mAbstract->compute_uniform_write (mHolder ,mUniformSet[ix].item ,data) ;
+		mAbstract->compute_uniform_write (mHolder ,ix ,data) ;
 	}
 
 	void uniform (const String<STR> &name ,const Vector<VAL64> &data) {
 		_DEBUG_ASSERT_ (exist ()) ;
-		INDEX ix = mUniformSet.find (name) ;
+		INDEX ix = mUniformMappingSet.map (name) ;
 		if switch_case (TRUE) {
 			if (ix != VAR_NONE)
 				discard ;
-			ix = mUniformSet.find (name) ;
-			mAbstract->compute_uniform_find (mHolder ,name ,mUniformSet[ix].item) ;
+			ix = mUniformMappingSet.map (name) ;
+			mAbstract->compute_uniform_find (mHolder ,name ,ix) ;
 		}
-		mAbstract->compute_uniform_write (mHolder ,mUniformSet[ix].item ,data) ;
+		mAbstract->compute_uniform_write (mHolder ,ix ,data) ;
 	}
 
 	void uniform (const String<STR> &name ,const Matrix<VAL32> &data) {
 		_DEBUG_ASSERT_ (exist ()) ;
-		INDEX ix = mUniformSet.find (name) ;
+		INDEX ix = mUniformMappingSet.map (name) ;
 		if switch_case (TRUE) {
 			if (ix != VAR_NONE)
 				discard ;
-			ix = mUniformSet.find (name) ;
-			mAbstract->compute_uniform_find (mHolder ,name ,mUniformSet[ix].item) ;
+			ix = mUniformMappingSet.map (name) ;
+			mAbstract->compute_uniform_find (mHolder ,name ,ix) ;
 		}
-		mAbstract->compute_uniform_write (mHolder ,mUniformSet[ix].item ,data) ;
+		mAbstract->compute_uniform_write (mHolder ,ix ,data) ;
 	}
 
 	void uniform (const String<STR> &name ,const Matrix<VAL64> &data) {
 		_DEBUG_ASSERT_ (exist ()) ;
-		INDEX ix = mUniformSet.find (name) ;
+		INDEX ix = mUniformMappingSet.map (name) ;
 		if switch_case (TRUE) {
 			if (ix != VAR_NONE)
 				discard ;
-			ix = mUniformSet.find (name) ;
-			mAbstract->compute_uniform_find (mHolder ,name ,mUniformSet[ix].item) ;
+			ix = mUniformMappingSet.map (name) ;
+			mAbstract->compute_uniform_find (mHolder ,name ,ix) ;
 		}
-		mAbstract->compute_uniform_write (mHolder ,mUniformSet[ix].item ,data) ;
+		mAbstract->compute_uniform_write (mHolder ,ix ,data) ;
 	}
 
-	Sprite create_sprite () popping ;
+	template <class _RET = NONE>
+	auto create_sprite () popping
+		->DEF<DEPENDENT_TYPE<AbstractSprite ,ARGVS<_RET>>> {
+		struct Dependent ;
+		return DEPENDENT_TYPE<AbstractSprite ,Dependent> (mAbstract) ;
+	}
 } ;
 
-class AbstractShader::Sprite {
+class AbstractSprite {
+public:
+	using Abstract = typename AbstractShader::Abstract ;
+
 private:
 	friend AbstractShader ;
 	PhanRef<const Abstract> mAbstract ;
 	AnyRef<void> mHolder ;
 
 public:
-	Sprite () = delete ;
+	AbstractSprite () = delete ;
 
 	BOOL exist () const {
 		if (!mAbstract.exist ())
@@ -416,10 +428,7 @@ public:
 	}
 
 private:
-	explicit Sprite (const PhanRef<const Abstract> &abstract_) :mAbstract (PhanRef<const Abstract>::make (abstract_)) {}
+	explicit AbstractSprite (const PhanRef<const Abstract> &abstract_)
+		:mAbstract (PhanRef<const Abstract>::make (abstract_)) {}
 } ;
-
-inline AbstractShader::Sprite AbstractShader::create_sprite () popping {
-	return Sprite (mAbstract) ;
-}
 } ;

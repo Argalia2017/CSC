@@ -27,15 +27,13 @@ public:
 		return mPrimeSet ;
 	}
 
-	BitSet<> query () && {
-		return std::move (mPrimeSet) ;
-	}
+	auto query () && ->void = delete ;
 
 private:
 	void initialize (LENGTH len) ;
 } ;
 
-inline void PrimeSieveAlgorithm::initialize (LENGTH len) {
+inline exports void PrimeSieveAlgorithm::initialize (LENGTH len) {
 	mPrimeSet = BitSet<> (len) ;
 	mPrimeSet.fill (BYTE (0XAA)) ;
 	mPrimeSet[1] = FALSE ;
@@ -45,7 +43,7 @@ inline void PrimeSieveAlgorithm::initialize (LENGTH len) {
 		INDEX ix = i * 2 + 3 ;
 		const auto r2x = ix * 2 ;
 		_DEBUG_ASSERT_ (r2x > 0) ;
-		const auto r3x = _SQE_ (ix) ;
+		const auto r3x = _SQUARE_ (ix) ;
 		const auto r4x = (mPrimeSet.size () - r3x) / r2x + 1 ;
 		for (auto &&j : _RANGE_ (0 ,r4x)) {
 			INDEX jx = j * r2x + r3x ;
@@ -53,6 +51,91 @@ inline void PrimeSieveAlgorithm::initialize (LENGTH len) {
 		}
 	}
 }
+
+class DisjointTable {
+private:
+	class Node {
+	private:
+		friend DisjointTable ;
+		INDEX mUp ;
+		LENGTH mWidth ;
+
+	public:
+		inline Node () {
+			mUp = VAR_NONE ;
+			mWidth = 0 ;
+		}
+	} ;
+
+private:
+	Array<Node> mTable ;
+
+public:
+	DisjointTable () = delete ;
+
+	explicit DisjointTable (LENGTH len) {
+		mTable = Array<Node> (len) ;
+	}
+
+	INDEX lead (INDEX index) popping {
+		INDEX ret = index ;
+		if switch_case (TRUE) {
+			if (mTable[ret].mUp != VAR_NONE)
+				discard ;
+			mTable[ret].mUp = ret ;
+			mTable[ret].mWidth = 1 ;
+		}
+		while (TRUE) {
+			if (mTable[ret].mUp == ret)
+				break ;
+			ret = mTable[ret].mUp ;
+		}
+		for (INDEX i = index ,it ,ie = ret ; i != ie ; i = it) {
+			it = mTable[i].mUp ;
+			mTable[i].mUp = ret ;
+			if (it == ret)
+				continue ;
+			mTable[it].mWidth -= mTable[i].mWidth ;
+		}
+		return std::move (ret) ;
+	}
+
+	void joint (INDEX index1 ,INDEX index2) {
+		INDEX ix = lead (index1) ;
+		INDEX iy = lead (index2) ;
+		if (ix == iy)
+			return ;
+		mTable[iy].mUp = ix ;
+		mTable[ix].mWidth += mTable[iy].mWidth ;
+	}
+
+	Array<BitSet<>> closure () popping {
+		const auto r1x = map_of_closure () ;
+		Array<BitSet<>> ret = Array<BitSet<>> (r1x.length ()) ;
+		for (auto &&i : _RANGE_ (0 ,ret.length ()))
+			ret[i] = BitSet<> (mTable.size ()) ;
+		for (auto &&i : _RANGE_ (0 ,mTable.length ())) {
+			if (mTable[i].mUp == VAR_NONE)
+				continue ;
+			INDEX ix = lead (i) ;
+			INDEX iy = r1x.map (ix) ;
+			ret[iy][i] = TRUE ;
+		}
+		return std::move (ret) ;
+	}
+
+private:
+	Set<INDEX> map_of_closure () const {
+		Set<INDEX> ret = Set<INDEX> (mTable.length ()) ;
+		for (auto &&i : _RANGE_ (0 ,mTable.length ())) {
+			if (mTable[i].mUp != i)
+				continue ;
+			const auto r1x = ret.length () ;
+			ret.add (i ,r1x) ;
+		}
+		return std::move (ret) ;
+	}
+} ;
 
 template <class REAL>
 class KMPAlgorithm {
@@ -108,7 +191,7 @@ private:
 } ;
 
 template <class REAL>
-inline void KMPAlgorithm<REAL>::initialize (const PhanBuffer<const REAL> &pattern) {
+inline exports void KMPAlgorithm<REAL>::initialize (const PhanBuffer<const REAL> &pattern) {
 	mNext = Array<INDEX> (pattern.size ()) ;
 	mPattern = Array<REAL> (pattern.size ()) ;
 	INDEX ix = 0 ;
@@ -176,8 +259,9 @@ private:
 } ;
 
 template <class REAL>
-inline void DijstraAlgorithm<REAL>::initialize (const Bitmap<REAL> &adjacency ,INDEX root_) {
-	class Lambda {
+inline exports void DijstraAlgorithm<REAL>::initialize (const Bitmap<REAL> &adjacency ,INDEX root_) {
+	class Lambda final
+		:private Proxy {
 	private:
 		DijstraAlgorithm &mContext ;
 		const Bitmap<REAL> &mAdjacency ;
@@ -190,7 +274,8 @@ inline void DijstraAlgorithm<REAL>::initialize (const Bitmap<REAL> &adjacency ,I
 		BitSet<> mYVisit ;
 
 	public:
-		inline explicit Lambda (DijstraAlgorithm &context_ ,const Bitmap<REAL> &adjancency ,INDEX root_) popping : mContext (context_) ,mAdjacency (adjancency) ,mRoot (root_) {}
+		inline explicit Lambda (DijstraAlgorithm &context_ ,const Bitmap<REAL> &adjancency ,INDEX root_)
+			: mContext (context_) ,mAdjacency (adjancency) ,mRoot (root_) {}
 
 		inline void operator() () {
 			prepare () ;
@@ -215,7 +300,7 @@ inline void DijstraAlgorithm<REAL>::initialize (const Bitmap<REAL> &adjacency ,I
 			while (TRUE) {
 				if (mPriority.empty ())
 					break ;
-				const auto r1x = mPriority[mPriority.head ()].item ;
+				const auto r1x = mPriority[mPriority.head ()].mapx ;
 				mPriority.take () ;
 				update_distance (r1x) ;
 			}
@@ -253,7 +338,7 @@ inline void DijstraAlgorithm<REAL>::initialize (const Bitmap<REAL> &adjacency ,I
 template <class REAL>
 class KMeansAlgorithm {
 private:
-	Set<BitSet<>> mClusterSet ;
+	Deque<BitSet<>> mClusterList ;
 
 public:
 	KMeansAlgorithm () = delete ;
@@ -264,21 +349,20 @@ public:
 		initialize (dataset ,distance ,center) ;
 	}
 
-	const Set<BitSet<>> &query () const & {
-		return mClusterSet ;
+	const Deque<BitSet<>> &query () const & {
+		return mClusterList ;
 	}
 
-	Set<BitSet<>> query () && {
-		return std::move (mClusterSet) ;
-	}
+	auto query () && ->void = delete ;
 
 private:
 	void initialize (const Set<REAL> &dataset ,const Function<REAL (const REAL & ,const REAL &)> &distance ,const Array<REAL> &center) ;
 } ;
 
 template <class REAL>
-inline void KMeansAlgorithm<REAL>::initialize (const Set<REAL> &dataset ,const Function<REAL (const REAL & ,const REAL &)> &distance ,const Array<REAL> &center) {
-	class Lambda {
+inline exports void KMeansAlgorithm<REAL>::initialize (const Set<REAL> &dataset ,const Function<REAL (const REAL & ,const REAL &)> &distance ,const Array<REAL> &center) {
+	class Lambda final
+		:private Proxy {
 	private:
 		KMeansAlgorithm &mContext ;
 		const Set<REAL> &mDataSet ;
@@ -289,12 +373,14 @@ inline void KMeansAlgorithm<REAL>::initialize (const Set<REAL> &dataset ,const F
 
 		SList<REAL> mCurrCenterList ;
 		SList<REAL> mNextCenterList ;
-		Set<INDEX ,INDEX> mCenterMoveSet ;
-		Set<INDEX ,BitSet<>> mClusterSet ;
+		Set<INDEX> mCenterMoveSet ;
+		Deque<BitSet<>> mClusterList ;
+		Set<INDEX> mClusterMappingSet ;
 		ARRAY3<REAL> mConvergence ;
 
 	public:
-		inline explicit Lambda (KMeansAlgorithm &context_ ,const Set<REAL> &dataset ,const Function<REAL (const REAL & ,const REAL &)> &distance ,const Array<REAL> &center) popping : mContext (context_) ,mDistanceFunc (distance) ,mDataSet (dataset) ,mCenter (center) ,mTolerance (1E-6) ,mInfinity (VAL_INF) {}
+		inline explicit Lambda (KMeansAlgorithm &context_ ,const Set<REAL> &dataset ,const Function<REAL (const REAL & ,const REAL &)> &distance ,const Array<REAL> &center)
+			: mContext (context_) ,mDistanceFunc (distance) ,mDataSet (dataset) ,mCenter (center) ,mTolerance (1E-6) ,mInfinity (VAL_INF) {}
 
 		inline void operator() () {
 			prepare () ;
@@ -307,8 +393,9 @@ inline void KMeansAlgorithm<REAL>::initialize (const Set<REAL> &dataset ,const F
 			mCurrCenterList = SList<REAL> (mCenter.length ()) ;
 			mNextCenterList = SList<REAL> (mCenter.length ()) ;
 			mCurrCenterList.appand (mCenter) ;
-			mCenterMoveSet = Set<INDEX ,INDEX> (mCenter.length ()) ;
-			mClusterSet = Set<INDEX ,BitSet<>> () ;
+			mCenterMoveSet = Set<INDEX> (mCenter.length ()) ;
+			mClusterList = Deque<BitSet<>> () ;
+			mClusterMappingSet = Set<INDEX> () ;
 			mConvergence.fill (mInfinity) ;
 		}
 
@@ -323,20 +410,24 @@ inline void KMeansAlgorithm<REAL>::initialize (const Set<REAL> &dataset ,const F
 		}
 
 		inline void update_cluster_set () {
-			mClusterSet.clear () ;
+			mClusterList.clear () ;
+			mClusterMappingSet.clear () ;
 			for (auto &&i : mDataSet) {
 				INDEX ix = closest_center_of_point (i) ;
-				INDEX iy = mClusterSet.insert (ix) ;
-				if (mClusterSet[iy].item.size () == 0)
-					mClusterSet[iy].item = BitSet<> (mDataSet.size ()) ;
+				INDEX iy = mClusterMappingSet.map (ix) ;
+				if switch_case (TRUE) {
+					if (iy != VAR_NONE)
+						discard ;
+					iy = mClusterList.insert () ;
+					mClusterMappingSet.add (ix ,iy) ;
+					mClusterList[iy] = BitSet<> (mDataSet.size ()) ;
+				}
 				INDEX jx = mDataSet.at (i) ;
-				mClusterSet[iy].item[jx] = TRUE ;
+				mClusterList[iy][jx] = TRUE ;
 			}
-			for (auto &&i : mClusterSet) {
-				if (i.item.length () == 0)
-					continue ;
+			for (auto &&i : mClusterMappingSet) {
 				INDEX ix = mNextCenterList.insert () ;
-				mNextCenterList[ix] = average_center (i.item) ;
+				mNextCenterList[ix] = average_center (mClusterList[i.mapx]) ;
 				mCenterMoveSet.add (i.key ,ix) ;
 			}
 		}
@@ -374,7 +465,7 @@ inline void KMeansAlgorithm<REAL>::initialize (const Set<REAL> &dataset ,const F
 				return ;
 			mConvergence[ix] = REAL (0) ;
 			for (auto &&i : mCenterMoveSet) {
-				const auto r1x = mDistanceFunc (mCurrCenterList[i.key] ,mNextCenterList[i.item]) ;
+				const auto r1x = mDistanceFunc (mCurrCenterList[i.key] ,mNextCenterList[i.mapx]) ;
 				mConvergence[ix] = _MAX_ (mConvergence[ix] ,r1x) ;
 			}
 		}
@@ -397,8 +488,7 @@ inline void KMeansAlgorithm<REAL>::initialize (const Set<REAL> &dataset ,const F
 		}
 
 		inline void refresh () {
-			mContext.mClusterSet = Set<BitSet<>> () ;
-			mContext.mClusterSet.appand (mClusterSet) ;
+			mContext.mClusterList = std::move (mClusterList) ;
 		}
 	} ;
 	_CALL_ (Lambda ((*this) ,dataset ,distance ,center)) ;
@@ -425,17 +515,16 @@ public:
 		return mMatch ;
 	}
 
-	Array<ARRAY2<INDEX>> query_match () && {
-		return std::move (mMatch) ;
-	}
+	auto query_match () && ->void = delete ;
 
 private:
 	void initialize (const Bitmap<REAL> &adjacency) ;
 } ;
 
 template <class REAL>
-inline void KMHungarianAlgorithm<REAL>::initialize (const Bitmap<REAL> &adjacency) {
-	class Lambda {
+inline exports void KMHungarianAlgorithm<REAL>::initialize (const Bitmap<REAL> &adjacency) {
+	class Lambda final
+		:private Proxy {
 	private:
 		KMHungarianAlgorithm &mContext ;
 		const Bitmap<REAL> &mAdjacency ;
@@ -451,10 +540,11 @@ inline void KMHungarianAlgorithm<REAL>::initialize (const Bitmap<REAL> &adjacenc
 
 		Deque<ARRAY2<INDEX>> mTempStack ;
 		BOOL mTempRet ;
-		FLAG mTempState ;
+		EFLAG mTempState ;
 
 	public:
-		inline explicit Lambda (KMHungarianAlgorithm &context_ ,const Bitmap<REAL> &adjacency) popping : mContext (context_) ,mAdjacency (adjacency) ,mTolerance (1E-6) ,mInfinity (VAL_INF) {}
+		inline explicit Lambda (KMHungarianAlgorithm &context_ ,const Bitmap<REAL> &adjacency)
+			: mContext (context_) ,mAdjacency (adjacency) ,mTolerance (1E-6) ,mInfinity (VAL_INF) {}
 
 		inline void operator() () {
 			prepare () ;
@@ -512,7 +602,7 @@ inline void KMHungarianAlgorithm<REAL>::initialize (const Bitmap<REAL> &adjacenc
 			*		//@info: $20
 			*	}
 			*
-			*	inline void update_lack_weight_e7 (INDEX stack_x ,INDEX stack_y ,BOOL &stack_ret) popping {
+			*	inline void update_lack_weight_e7 (INDEX stack_x ,INDEX stack_y ,BOOL &stack_ret) {
 			*		//@info: $7
 			*		if (stack_y == VAR_NONE) {
 			*			//@info: $2
@@ -556,133 +646,153 @@ inline void KMHungarianAlgorithm<REAL>::initialize (const Bitmap<REAL> &adjacenc
 			*		return ;
 			*	}
 			*/
+			static const auto M_STATE = PACK<EFLAG[21]> ({
+				EFLAG (1) ,EFLAG (2) ,EFLAG (3) ,EFLAG (4) ,
+				EFLAG (5) ,EFLAG (6) ,EFLAG (7) ,EFLAG (8) ,EFLAG (9) ,
+				EFLAG (10) ,EFLAG (11) ,EFLAG (12) ,EFLAG (13) ,EFLAG (14) ,
+				EFLAG (15) ,EFLAG (16) ,EFLAG (17) ,EFLAG (18) ,EFLAG (19) ,
+				EFLAG (20) ,EFLAG (21)}) ;
 			mTempStack.clear () ;
-			mTempState = VAR_ZERO ;
+			mTempState = M_STATE.P1[0] ;
 			INDEX ix = VAR_NONE ;
 			while (TRUE) {
-				if (mTempState == VAR_NONE)
+				if (mTempState == UNKNOWN)
 					break ;
 				if switch_case (TRUE) {
-					if (!(mTempState == 0))
+					if (!(mTempState == M_STATE.P1[0]))
 						discard ;
 					mLackWeight[0] = 0 ;
 					mLackWeight[1] = +mInfinity ;
-					mTempState = 1 ;
+					mTempState = M_STATE.P1[1] ;
 				}
 				if switch_case (TRUE) {
-					if (!(mTempState == 1))
+					if (!(mTempState == M_STATE.P1[1]))
 						discard ;
 					mTempRet = FALSE ;
 					mTempStack.add (ARRAY2<INDEX> {0 ,y}) ;
-					mTempState = 7 ;
+					mTempState = M_STATE.P1[7] ;
 				}
 				if switch_case (TRUE) {
-					if (!(mTempState == 2))
+					if (!(mTempState == M_STATE.P1[2]))
 						discard ;
 					mTempRet = TRUE ;
-					mTempState = 17 ;
+					mTempState = M_STATE.P1[17] ;
 				}
 				if switch_case (TRUE) {
-					if (!(mTempState == 3))
+					if (!(mTempState == M_STATE.P1[3]))
 						discard ;
 					mYVisit[mTempStack[ix][1]] = TRUE ;
 					mTempStack[ix][0] = 0 ;
-					mTempState = 4 ;
+					mTempState = M_STATE.P1[4] ;
 				}
 				if switch_case (TRUE) {
-					if (!(mTempState == 4))
+					if (!(mTempState == M_STATE.P1[4]))
 						discard ;
-					const auto r1x = ARRAY2<INDEX> {5 ,16} ;
-					mTempState = r1x[EFLAG ((mTempStack[ix][0] < mAdjacency.cx ()))] ;
+					auto &r1x = _SWITCH_ (
+						(mTempStack[ix][0] < mAdjacency.cx ()) ? M_STATE.P1[5] :
+						M_STATE.P1[16]) ;
+					mTempState = r1x ;
 				}
 				if switch_case (TRUE) {
-					if (!(mTempState == 5))
+					if (!(mTempState == M_STATE.P1[5]))
 						discard ;
-					const auto r2x = ARRAY2<INDEX> {15 ,6} ;
-					mTempState = r2x[EFLAG ((mXVisit[mTempStack[ix][0]]))] ;
+					auto &r2x = _SWITCH_ (
+						(mXVisit[mTempStack[ix][0]]) ? M_STATE.P1[15] :
+						M_STATE.P1[6]) ;
+					mTempState = r2x ;
 				}
 				if switch_case (TRUE) {
-					if (!(mTempState == 6))
+					if (!(mTempState == M_STATE.P1[6]))
 						discard ;
 					mLackWeight[0] = mYWeight[mTempStack[ix][1]] + mXWeight[mTempStack[ix][0]] - mAdjacency[mTempStack[ix][1]][mTempStack[ix][0]] ;
-					mTempState = 9 ;
+					mTempState = M_STATE.P1[9] ;
 				}
 				if switch_case (TRUE) {
-					if (!(mTempState == 7))
+					if (!(mTempState == M_STATE.P1[7]))
 						discard ;
 					ix = mTempStack.tail () ;
-					const auto r3x = ARRAY2<INDEX> {2 ,3} ;
-					mTempState = r3x[EFLAG (mTempStack[ix][1] == VAR_NONE)] ;
+					auto &r3x = _SWITCH_ (
+						(mTempStack[ix][1] == VAR_NONE) ? M_STATE.P1[2] :
+						M_STATE.P1[3]) ;
+					mTempState = r3x ;
 				}
 				if switch_case (TRUE) {
-					if (!(mTempState == 8))
+					if (!(mTempState == M_STATE.P1[8]))
 						discard ;
 					mXVisit[mTempStack[ix][0]] = TRUE ;
 					mTempStack.add (ARRAY2<INDEX> {0 ,mXYLink[mTempStack[ix][0]]}) ;
-					mTempState = 7 ;
+					mTempState = M_STATE.P1[7] ;
 				}
 				if switch_case (TRUE) {
-					if (!(mTempState == 9))
+					if (!(mTempState == M_STATE.P1[9]))
 						discard ;
-					const auto r4x = ARRAY2<INDEX> {8 ,14} ;
-					mTempState = r4x[EFLAG (mLackWeight[0] < mTolerance)] ;
+					auto &r4x = _SWITCH_ (
+						(mLackWeight[0] < mTolerance) ? M_STATE.P1[8] :
+						M_STATE.P1[14]) ;
+					mTempState = r4x ;
 				}
 				if switch_case (TRUE) {
-					if (!(mTempState == 10))
+					if (!(mTempState == M_STATE.P1[10]))
 						discard ;
 					ix = mTempStack.tail () ;
-					const auto r5x = ARRAY2<INDEX> {11 ,15} ;
-					mTempState = r5x[EFLAG (mTempRet)] ;
+					auto &r5x = _SWITCH_ (
+						mTempRet ? M_STATE.P1[11] :
+						M_STATE.P1[15]) ;
+					mTempState = r5x ;
 				}
 				if switch_case (TRUE) {
-					if (!(mTempState == 11))
+					if (!(mTempState == M_STATE.P1[11]))
 						discard ;
 					mXYLink[mTempStack[ix][0]] = mTempStack[ix][1] ;
 					mTempRet = TRUE ;
-					mTempState = 17 ;
+					mTempState = M_STATE.P1[17] ;
 				}
 				if switch_case (TRUE) {
-					if (!(mTempState == 14))
+					if (!(mTempState == M_STATE.P1[14]))
 						discard ;
 					mLackWeight[1] = _MIN_ (mLackWeight[1] ,mLackWeight[0]) ;
-					mTempState = 15 ;
+					mTempState = M_STATE.P1[15] ;
 				}
 				if switch_case (TRUE) {
-					if (!(mTempState == 15))
+					if (!(mTempState == M_STATE.P1[15]))
 						discard ;
 					mTempStack[ix][0]++ ;
-					mTempState = 4 ;
+					mTempState = M_STATE.P1[4] ;
 				}
 				if switch_case (TRUE) {
-					if (!(mTempState == 16))
+					if (!(mTempState == M_STATE.P1[16]))
 						discard ;
 					mTempRet = FALSE ;
-					mTempState = 17 ;
+					mTempState = M_STATE.P1[17] ;
 				}
 				if switch_case (TRUE) {
-					if (!(mTempState == 17))
+					if (!(mTempState == M_STATE.P1[17]))
 						discard ;
 					mTempStack.pop () ;
-					const auto r6x = ARRAY2<INDEX> {10 ,18} ;
-					mTempState = r6x[EFLAG (mTempStack.length () > 0)] ;
+					auto &r6x = _SWITCH_ (
+						(mTempStack.length () > 0) ? M_STATE.P1[10] :
+						M_STATE.P1[18]) ;
+					mTempState = r6x ;
 				}
 				if switch_case (TRUE) {
-					if (!(mTempState == 18))
+					if (!(mTempState == M_STATE.P1[18]))
 						discard ;
-					const auto r7x = ARRAY2<INDEX> {19 ,20} ;
-					mTempState = r7x[EFLAG (mTempRet)] ;
+					auto &r7x = _SWITCH_ (
+						mTempRet ? M_STATE.P1[19] :
+						M_STATE.P1[20]) ;
+					mTempState = r7x ;
 				}
 				if switch_case (TRUE) {
-					if (!(mTempState == 19))
+					if (!(mTempState == M_STATE.P1[19]))
 						discard ;
 					mLackWeight[0] = 0 ;
 					mLackWeight[1] = +mInfinity ;
-					mTempState = 20 ;
+					mTempState = M_STATE.P1[20] ;
 				}
 				if switch_case (TRUE) {
-					if (!(mTempState == 20))
+					if (!(mTempState == M_STATE.P1[20]))
 						discard ;
-					mTempState = VAR_NONE ;
+					mTempState = UNKNOWN ;
 				}
 			}
 		}
@@ -716,7 +826,7 @@ inline void KMHungarianAlgorithm<REAL>::initialize (const Bitmap<REAL> &adjacenc
 		inline LENGTH best_match_depth () const {
 			LENGTH ret = 0 ;
 			for (auto &&i : mXYLink)
-				ret += EFLAG (i != VAR_NONE) ;
+				ret += _EBOOL_ (i != VAR_NONE) ;
 			return std::move (ret) ;
 		}
 	} ;
@@ -740,9 +850,7 @@ public:
 		return mDX ;
 	}
 
-	Array<REAL> query () && {
-		return std::move (mDX) ;
-	}
+	auto query () && ->void = delete ;
 
 	REAL query_loss () const {
 		return mDXLoss ;
@@ -753,8 +861,9 @@ private:
 } ;
 
 template <class REAL>
-inline void BFGSAlgorithm<REAL>::initialize (const Function<REAL (const Array<REAL> &)> &loss ,const Array<REAL> &fdx) {
-	class Lambda {
+inline exports void BFGSAlgorithm<REAL>::initialize (const Function<REAL (const Array<REAL> &)> &loss ,const Array<REAL> &fdx) {
+	class Lambda final
+		:private Proxy {
 	private:
 		BFGSAlgorithm &mContext ;
 		const Function<REAL (const Array<REAL> &)> &mLossFunc ;
@@ -779,7 +888,8 @@ inline void BFGSAlgorithm<REAL>::initialize (const Function<REAL (const Array<RE
 		Array<REAL> mSX ;
 
 	public:
-		inline explicit Lambda (BFGSAlgorithm &context_ ,const Function<REAL (const Array<REAL> &)> &loss ,const Function<void (const Array<REAL> & ,Array<REAL> &)> &gradient ,const Array<REAL> &fdx) popping : mContext (context_) ,mLossFunc (loss) ,mGradientProc (gradient) ,mFDX (fdx) ,mTolerance (1E-6) ,mDXLambdaFirst (1000) ,mDXLambdaPower (0.618) ,mDXLambdaC1 (1E-4) ,mDXLambdaC2 (0.9) {}
+		inline explicit Lambda (BFGSAlgorithm &context_ ,const Function<REAL (const Array<REAL> &)> &loss ,const Function<void (const Array<REAL> & ,Array<REAL> &)> &gradient ,const Array<REAL> &fdx)
+			: mContext (context_) ,mLossFunc (loss) ,mGradientProc (gradient) ,mFDX (fdx) ,mTolerance (1E-6) ,mDXLambdaFirst (1000) ,mDXLambdaPower (0.618) ,mDXLambdaC1 (1E-4) ,mDXLambdaC2 (0.9) {}
 
 		inline void operator() () {
 			prepare () ;
@@ -857,10 +967,10 @@ inline void BFGSAlgorithm<REAL>::initialize (const Function<REAL (const Array<RE
 			if switch_case (fax) {
 				if (!(mDXLoss[0] >= mDXLoss[2]))
 					discard ;
-				auto &r2y = _SWITCH_ (
+				auto &r2x = _SWITCH_ (
 					(mDXLoss[2] > REAL (0)) ? mDXLoss[2] :
 					mDXLoss[1]) ;
-				mDXLoss[0] = r2y ;
+				mDXLoss[0] = r2x ;
 				_SWAP_ (mDX ,mIX) ;
 				compute_gradient_of_loss (mDX ,mIG ,mSX) ;
 			}
@@ -887,7 +997,7 @@ inline void BFGSAlgorithm<REAL>::initialize (const Function<REAL (const Array<RE
 		inline REAL current_convergence () const {
 			REAL ret = REAL (0) ;
 			for (auto &&i : mIG)
-				ret += _SQE_ (i) ;
+				ret += _SQUARE_ (i) ;
 			ret = _SQRT_ (ret) ;
 			return std::move (ret) ;
 		}
@@ -953,7 +1063,8 @@ private:
 	public:
 		inline Node () = delete ;
 
-		inline explicit Node (const REAL &key ,INDEX leaf ,INDEX left ,INDEX right) :mKey (std::move (key)) ,mLeaf (leaf) ,mLeft (left) ,mRight (right) {}
+		inline implicit Node (const REAL &key ,INDEX leaf ,INDEX left ,INDEX right)
+			:mKey (std::move (key)) ,mLeaf (leaf) ,mLeft (left) ,mRight (right) {}
 	} ;
 
 private:
@@ -981,7 +1092,7 @@ public:
 		rax[1][1] = _MIN_ ((point[1] + width) ,mBound[1][1]) ;
 		rax[2][0] = _MAX_ ((point[2] - width) ,mBound[2][0]) ;
 		rax[2][1] = _MIN_ ((point[2] + width) ,mBound[2][1]) ;
-		compute_search_range (point ,_SQE_ (width) ,mRoot ,0 ,rax ,ret) ;
+		compute_search_range (point ,width ,mRoot ,0 ,rax ,ret) ;
 		return std::move (ret) ;
 	}
 
@@ -1001,15 +1112,21 @@ public:
 private:
 	void initialize (const Array<ARRAY3<REAL>> &vertex) ;
 
-	void compute_search_range (const ARRAY3<REAL> &point ,const REAL &sqe_range ,INDEX curr ,INDEX rot ,ARRAY3<ARRAY2<REAL>> &bound ,Deque<INDEX> &out) const {
+	REAL distance_of_point (const ARRAY3<REAL> &a ,const ARRAY3<REAL> &b) const {
+		const auto r1x = Vector<REAL> {a ,REAL (0)} ;
+		const auto r2x = Vector<REAL> {b ,REAL (0)} ;
+		return (r1x - r2x).magnitude () ;
+	}
+
+	void compute_search_range (const ARRAY3<REAL> &point ,const REAL &width ,INDEX curr ,INDEX rot ,ARRAY3<ARRAY2<REAL>> &bound ,Deque<INDEX> &out) const {
 		auto fax = TRUE ;
 		if switch_case (fax) {
 			if (!(mKDTree[curr].mLeaf != VAR_NONE))
 				discard ;
 			if switch_case (TRUE) {
 				INDEX ix = mKDTree[curr].mLeaf ;
-				const auto r1x = _SQE_ (mVertex[ix][0] - point[0]) + _SQE_ (mVertex[ix][1] - point[1]) + _SQE_ (mVertex[ix][2] - point[2]) ;
-				if (r1x > sqe_range)
+				const auto r1x = distance_of_point (mVertex[ix] ,point) ;
+				if (r1x > width)
 					discard ;
 				out.add (ix) ;
 			}
@@ -1023,7 +1140,7 @@ private:
 					discard ;
 				const auto r3x = bound[rot][1] ;
 				bound[rot][1] = _MIN_ (bound[rot][1] ,r2x) ;
-				compute_search_range (point ,sqe_range ,mKDTree[curr].mLeft ,mNextRot[rot] ,bound ,out) ;
+				compute_search_range (point ,width ,mKDTree[curr].mLeft ,mNextRot[rot] ,bound ,out) ;
 				bound[rot][1] = r3x ;
 			}
 			if switch_case (TRUE) {
@@ -1031,7 +1148,7 @@ private:
 					discard ;
 				const auto r4x = bound[rot][0] ;
 				bound[rot][0] = _MAX_ (bound[rot][0] ,r2x) ;
-				compute_search_range (point ,sqe_range ,mKDTree[curr].mRight ,mNextRot[rot] ,bound ,out) ;
+				compute_search_range (point ,width ,mKDTree[curr].mRight ,mNextRot[rot] ,bound ,out) ;
 				bound[rot][0] = r4x ;
 			}
 		}
@@ -1041,7 +1158,7 @@ private:
 		_DEBUG_ASSERT_ (count >= 1 && count <= mVertex.length ()) ;
 		Deque<REAL> ret = Deque<REAL> (count) ;
 		for (auto &&i : _RANGE_ (0 ,count)) {
-			const auto r1x = _SQE_ (mVertex[i][0] - point[0]) + _SQE_ (mVertex[i][1] - point[1]) + _SQE_ (mVertex[i][2] - point[2]) ;
+			const auto r1x = distance_of_point (mVertex[i] ,point) ;
 			ret.add (r1x) ;
 		}
 		return std::move (ret) ;
@@ -1054,14 +1171,12 @@ private:
 				discard ;
 			if switch_case (TRUE) {
 				INDEX ix = mKDTree[curr].mLeaf ;
-				const auto r1x = Vector<REAL> {mVertex[ix] ,REAL (0)} ;
-				const auto r2x = Vector<REAL> {point ,REAL (0)} ;
-				const auto r3x = (r1x - r2x).magnitude () ;
+				const auto r1x = distance_of_point (mVertex[ix] ,point) ;
 				INDEX jx = out.length () ;
 				while (TRUE) {
 					if (jx - 1 < 0)
 						break ;
-					if (r3x >= out[jx - 1].P2)
+					if (r1x >= out[jx - 1].P2)
 						break ;
 					if (jx < out.length ())
 						out[jx] = out[jx - 1] ;
@@ -1070,24 +1185,25 @@ private:
 				if (jx >= out.length ())
 					discard ;
 				out[jx].P1 = ix ;
-				out[jx].P2 = r3x ;
+				out[jx].P2 = r1x ;
 			}
 		}
 		if switch_case (fax) {
 			if (!(mKDTree[curr].mLeaf == VAR_NONE))
 				discard ;
-			const auto r4x = mKDTree[curr].mKey ;
-			if (r4x >= point[rot] - out[out.length () - 1].P2)
+			const auto r2x = mKDTree[curr].mKey ;
+			if (r2x >= point[rot] - out[out.length () - 1].P2)
 				compute_search_range (point ,mKDTree[curr].mLeft ,mNextRot[rot] ,out) ;
-			if (r4x <= point[rot] + out[out.length () - 1].P2)
+			if (r2x <= point[rot] + out[out.length () - 1].P2)
 				compute_search_range (point ,mKDTree[curr].mRight ,mNextRot[rot] ,out) ;
 		}
 	}
 } ;
 
 template <class REAL>
-inline void KDTreeAlgorithm<REAL>::initialize (const Array<ARRAY3<REAL>> &vertex) {
-	class Lambda {
+inline exports void KDTreeAlgorithm<REAL>::initialize (const Array<ARRAY3<REAL>> &vertex) {
+	class Lambda final
+		:private Proxy {
 	private:
 		KDTreeAlgorithm &mContext ;
 		const Array<ARRAY3<REAL>> &mVertex ;
@@ -1102,7 +1218,8 @@ inline void KDTreeAlgorithm<REAL>::initialize (const Array<ARRAY3<REAL>> &vertex
 		Array<INDEX> mTempOrder ;
 
 	public:
-		inline explicit Lambda (KDTreeAlgorithm &context_ ,const Array<ARRAY3<REAL>> &vertex) popping : mContext (context_) ,mVertex (vertex) {}
+		inline explicit Lambda (KDTreeAlgorithm &context_ ,const Array<ARRAY3<REAL>> &vertex)
+			: mContext (context_) ,mVertex (vertex) {}
 
 		inline void operator() () {
 			prepare () ;
@@ -1229,17 +1346,16 @@ public:
 		return mCurrentFlow ;
 	}
 
-	Bitmap<REAL> query_flow () && {
-		return std::move (mCurrentFlow) ;
-	}
+	auto query_flow () && ->void = delete ;
 
 private:
 	void initialize (const Bitmap<REAL> &adjacency ,INDEX source ,INDEX sink) ;
 } ;
 
 template <class REAL>
-inline void MaxFlowAlgorithm<REAL>::initialize (const Bitmap<REAL> &adjacency ,INDEX source ,INDEX sink) {
-	class Lambda {
+inline exports void MaxFlowAlgorithm<REAL>::initialize (const Bitmap<REAL> &adjacency ,INDEX source ,INDEX sink) {
+	class Lambda final
+		:private Proxy {
 	private:
 		MaxFlowAlgorithm &mContext ;
 		const Bitmap<REAL> &mAdjacency ;
@@ -1253,7 +1369,8 @@ inline void MaxFlowAlgorithm<REAL>::initialize (const Bitmap<REAL> &adjacency ,I
 		Deque<INDEX> mTempQueue ;
 
 	public:
-		inline explicit Lambda (MaxFlowAlgorithm &context_ ,const Bitmap<REAL> &adjacency ,INDEX source ,INDEX sink) popping : mContext (context_) ,mAdjacency (adjacency) ,mSource (source) ,mSink (sink) {}
+		inline explicit Lambda (MaxFlowAlgorithm &context_ ,const Bitmap<REAL> &adjacency ,INDEX source ,INDEX sink)
+			: mContext (context_) ,mAdjacency (adjacency) ,mSource (source) ,mSink (sink) {}
 
 		inline void operator() () {
 			prepare () ;

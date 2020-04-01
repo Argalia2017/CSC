@@ -21,52 +21,29 @@
 #include "csc_database.hpp"
 
 namespace CSC {
-class ConsoleService final :private Interface {
+class ConsoleService final
+	:private Proxy {
 public:
-	static constexpr auto OPTION_DEFAULT = FLAG (0) ;
-	static constexpr auto OPTION_NO_PRINT = FLAG (0X00000001) ;
-	static constexpr auto OPTION_NO_FATAL = FLAG (0X00000002) ;
-	static constexpr auto OPTION_NO_ERROR = FLAG (0X00000004) ;
-	static constexpr auto OPTION_NO_WARN = FLAG (0X00000008) ;
-	static constexpr auto OPTION_NO_INFO = FLAG (0X00000010) ;
-	static constexpr auto OPTION_NO_DEBUG = FLAG (0X00000020) ;
-	static constexpr auto OPTION_NO_VERBOSE = FLAG (0X00000040) ;
-	static constexpr auto OPTION_ALWAYS_FLUSH = FLAG (0X00000080) ;
-	static constexpr auto OPTION_TESTING = FLAG (0X00000100) ;
+	static constexpr auto OPTION_DEFAULT = EFLAG (0) ;
+	static constexpr auto OPTION_NO_PRINT = EFLAG (1) ;
+	static constexpr auto OPTION_NO_FATAL = EFLAG (2) ;
+	static constexpr auto OPTION_NO_ERROR = EFLAG (3) ;
+	static constexpr auto OPTION_NO_WARN = EFLAG (4) ;
+	static constexpr auto OPTION_NO_INFO = EFLAG (5) ;
+	static constexpr auto OPTION_NO_DEBUG = EFLAG (6) ;
+	static constexpr auto OPTION_NO_VERBOSE = EFLAG (7) ;
+	static constexpr auto OPTION_ALWAYS_FLUSH = EFLAG (8) ;
+	static constexpr auto OPTION_TESTING = EFLAG (9) ;
 
 private:
-	exports struct Binder :public Interface {
-		virtual void friend_write (TextWriter<STR> &writer) const = 0 ;
-	} ;
+	using Binder = typename TextWriter<STR>::Binder ;
 
-	template <class... UNITS>
-	class ImplBinder :public Binder {
-	private:
-		TupleBinder<const UNITS...> mBinder ;
-
+	exports class Abstract
+		:public Interface {
 	public:
-		inline explicit ImplBinder (const UNITS &...initval) :mBinder (initval...) {}
-
-		inline void friend_write (TextWriter<STR> &writer) const override {
-			template_write (writer ,mBinder) ;
-		}
-
-	public:
-		inline static void template_write (TextWriter<STR> &writer ,const Tuple<> &binder) {
-			_STATIC_WARNING_ ("noop") ;
-		}
-
-		template <class... _ARGS>
-		inline static void template_write (TextWriter<STR> &writer ,const Tuple<_ARGS...> &binder) {
-			writer << binder.one () ;
-			template_write (writer ,binder.rest ()) ;
-		}
-	} ;
-
-	exports struct Abstract :public Interface {
 		virtual LENGTH buffer_size () const = 0 ;
-		virtual void enable_option (FLAG option) = 0 ;
-		virtual void disable_option (FLAG option) = 0 ;
+		virtual void enable_option (EFLAG option) = 0 ;
+		virtual void disable_option (EFLAG option) = 0 ;
 		virtual void print (const Binder &msg) = 0 ;
 		virtual void fatal (const Binder &msg) = 0 ;
 		virtual void error (const Binder &msg) = 0 ;
@@ -83,6 +60,7 @@ private:
 	} ;
 
 private:
+	struct Detail ;
 	class Implement ;
 	friend Singleton<ConsoleService> ;
 	Monostate<std::recursive_mutex> mMutex ;
@@ -94,56 +72,70 @@ public:
 		return mThis->buffer_size () ;
 	}
 
-	void enable_option (FLAG option) {
+	void enable_option (EFLAG option) {
 		ScopedGuard<std::recursive_mutex> ANONYMOUS (mMutex) ;
 		mThis->enable_option (option) ;
 	}
 
-	void disable_option (FLAG option) {
+	void disable_option (EFLAG option) {
 		ScopedGuard<std::recursive_mutex> ANONYMOUS (mMutex) ;
 		mThis->disable_option (option) ;
 	}
 
 	template <class... _ARGS>
 	void print (const _ARGS &...msg) {
+		struct Dependent ;
+		using ImplBinder = typename DEPENDENT_TYPE<Detail ,Dependent>::template ImplBinder<_ARGS...> ;
 		ScopedGuard<std::recursive_mutex> ANONYMOUS (mMutex) ;
-		mThis->print (ImplBinder<_ARGS...> (msg...)) ;
+		mThis->print (ImplBinder (msg...)) ;
 	}
 
 	template <class... _ARGS>
 	void fatal (const _ARGS &...msg) {
+		struct Dependent ;
+		using ImplBinder = typename DEPENDENT_TYPE<Detail ,Dependent>::template ImplBinder<_ARGS...> ;
 		ScopedGuard<std::recursive_mutex> ANONYMOUS (mMutex) ;
-		mThis->fatal (ImplBinder<_ARGS...> (msg...)) ;
+		mThis->fatal (ImplBinder (msg...)) ;
 	}
 
 	template <class... _ARGS>
 	void error (const _ARGS &...msg) {
+		struct Dependent ;
+		using ImplBinder = typename DEPENDENT_TYPE<Detail ,Dependent>::template ImplBinder<_ARGS...> ;
 		ScopedGuard<std::recursive_mutex> ANONYMOUS (mMutex) ;
-		mThis->error (ImplBinder<_ARGS...> (msg...)) ;
+		mThis->error (ImplBinder (msg...)) ;
 	}
 
 	template <class... _ARGS>
 	void warn (const _ARGS &...msg) {
+		struct Dependent ;
+		using ImplBinder = typename DEPENDENT_TYPE<Detail ,Dependent>::template ImplBinder<_ARGS...> ;
 		ScopedGuard<std::recursive_mutex> ANONYMOUS (mMutex) ;
-		mThis->warn (ImplBinder<_ARGS...> (msg...)) ;
+		mThis->warn (ImplBinder (msg...)) ;
 	}
 
 	template <class... _ARGS>
 	void info (const _ARGS &...msg) {
+		struct Dependent ;
+		using ImplBinder = typename DEPENDENT_TYPE<Detail ,Dependent>::template ImplBinder<_ARGS...> ;
 		ScopedGuard<std::recursive_mutex> ANONYMOUS (mMutex) ;
-		mThis->info (ImplBinder<_ARGS...> (msg...)) ;
+		mThis->info (ImplBinder (msg...)) ;
 	}
 
 	template <class... _ARGS>
 	void debug (const _ARGS &...msg) {
+		struct Dependent ;
+		using ImplBinder = typename DEPENDENT_TYPE<Detail ,Dependent>::template ImplBinder<_ARGS...> ;
 		ScopedGuard<std::recursive_mutex> ANONYMOUS (mMutex) ;
-		mThis->debug (ImplBinder<_ARGS...> (msg...)) ;
+		mThis->debug (ImplBinder (msg...)) ;
 	}
 
 	template <class... _ARGS>
 	void verbose (const _ARGS &...msg) {
+		struct Dependent ;
+		using ImplBinder = typename DEPENDENT_TYPE<Detail ,Dependent>::template ImplBinder<_ARGS...> ;
 		ScopedGuard<std::recursive_mutex> ANONYMOUS (mMutex) ;
-		mThis->verbose (ImplBinder<_ARGS...> (msg...)) ;
+		mThis->verbose (ImplBinder (msg...)) ;
 	}
 
 	void attach_log (const String<STR> &path) {
@@ -153,8 +145,10 @@ public:
 
 	template <class... _ARGS>
 	void log (const String<STR> &tag ,const _ARGS &...msg) {
+		struct Dependent ;
+		using ImplBinder = typename DEPENDENT_TYPE<Detail ,Dependent>::template ImplBinder<_ARGS...> ;
 		ScopedGuard<std::recursive_mutex> ANONYMOUS (mMutex) ;
-		mThis->log (tag.raw () ,ImplBinder<_ARGS...> (msg...)) ;
+		mThis->log (tag.raw () ,ImplBinder (msg...)) ;
 	}
 
 	void show () {
@@ -181,9 +175,40 @@ private:
 	ConsoleService () ;
 } ;
 
-class DebuggerService final :private Interface {
+struct ConsoleService::Detail {
+	template <class... UNITS>
+	class ImplBinder
+		:public Binder {
+	private:
+		TupleBinder<const UNITS...> mBinder ;
+
+	public:
+		inline explicit ImplBinder (const UNITS &...initval)
+			:mBinder (initval...) {}
+
+		inline void friend_write (TextWriter<STR> &writer) const override {
+			template_write (writer ,mBinder) ;
+		}
+
+	private:
+		inline void template_write (TextWriter<STR> &writer ,const Tuple<> &binder) const {
+			_STATIC_WARNING_ ("noop") ;
+		}
+
+		template <class... _ARGS>
+		inline void template_write (TextWriter<STR> &writer ,const Tuple<_ARGS...> &binder) const {
+			writer << binder.one () ;
+			template_write (writer ,binder.rest ()) ;
+		}
+	} ;
+} ;
+
+class DebuggerService final
+	:private Proxy {
 private:
-	exports struct Abstract :public Interface {
+	exports class Abstract
+		:public Interface {
+	public:
 		virtual void abort_once_invoked_exit (BOOL flag) = 0 ;
 		virtual void output_memory_leaks_report (BOOL flag) = 0 ;
 		virtual Array<LENGTH> captrue_stack_trace () popping = 0 ;

@@ -47,7 +47,7 @@ inline BOOL _ISINF_ (const VAL64 &x) {
 }
 
 template <class _ARG1>
-inline _ARG1 _SQE_ (const _ARG1 &val) {
+inline _ARG1 _SQUARE_ (const _ARG1 &val) {
 	return val * val ;
 }
 
@@ -58,6 +58,20 @@ template <class _ARG1>
 inline _ARG1 _SQRT_ (const _ARG1 &x) {
 	_STATIC_ASSERT_ (stl::is_var_xyz<_ARG1>::value || stl::is_val_xyz<_ARG1>::value) ;
 	return _ARG1 (_SQRT_ (VAL64 (x))) ;
+}
+
+template <class _ARG1>
+inline _ARG1 _CUBE_ (const _ARG1 &val) {
+	return val * val * val ;
+}
+
+inline imports DEF<VAL32 (const VAL32 &x)> _CBRT_ ;
+inline imports DEF<VAL64 (const VAL64 &x)> _CBRT_ ;
+
+template <class _ARG1>
+inline _ARG1 _CBRT_ (const _ARG1 &x) {
+	_STATIC_ASSERT_ (stl::is_var_xyz<_ARG1>::value || stl::is_val_xyz<_ARG1>::value) ;
+	return _ARG1 (_CBRT_ (VAL64 (x))) ;
 }
 
 inline imports DEF<VAL32 (const VAL32 &x ,const VAL32 &y)> _POW_ ;
@@ -184,6 +198,23 @@ inline VAL64 _PINV_ (const VAL64 &x) {
 	return _PINV_ (x ,VAL64_EPS) ;
 }
 
+template <class _ARG1>
+inline _ARG1 _NPDF_ (const _ARG1 &x) {
+	_STATIC_ASSERT_ (stl::is_val_xyz<_ARG1>::value) ;
+	static const auto M_2PII = _PINV_ (_SQRT_ (VAL64 (2 * MATH_PI))) ;
+	const auto r1x = -_SQUARE_ (VAL64 (x)) / 2 ;
+	return _EXP_ (r1x) * M_2PII ;
+}
+
+inline imports DEF<VAL32 (const VAL32 &x)> _NCDF_ ;
+inline imports DEF<VAL64 (const VAL64 &x)> _NCDF_ ;
+
+template <class _ARG1>
+inline _ARG1 _NCDF_ (const _ARG1 &x) {
+	_STATIC_ASSERT_ (stl::is_val_xyz<_ARG1>::value) ;
+	return _ARG1 (_NCDF_ (VAL64 (x))) ;
+}
+
 inline VAL32 _FLOOR_ (const VAL32 &x ,const VAL32 &y) {
 	_DEBUG_ASSERT_ (y > 0) ;
 	const auto r1x = VAR64 (x * _PINV_ (y)) ;
@@ -238,6 +269,12 @@ template <class _ARG1>
 inline _ARG1 _CEIL_ (const _ARG1 &x ,const _ARG1 &y) {
 	_STATIC_ASSERT_ (stl::is_var_xyz<_ARG1>::value || stl::is_val_xyz<_ARG1>::value) ;
 	return _ARG1 (_CEIL_ (VAL64 (x) ,VAL64 (y))) ;
+}
+
+template <class _ARG1>
+inline _ARG1 _TRUNC_ (const _ARG1 &x ,const _ARG1 &y) {
+	_STATIC_ASSERT_ (stl::is_var_xyz<_ARG1>::value || stl::is_val_xyz<_ARG1>::value) ;
+	return _FLOOR_ (_ABS_ (x) ,y) * _SIGN_ (x) ;
 }
 
 template <class _ARG1>
@@ -331,7 +368,7 @@ inline ARRAY3<VAR64> _IEEE754_DECODE_ (const VAL64 &ieee754) {
 	if (r2x != 0)
 		ret[0] |= DATA (0X0010000000000000) ;
 	ret[1] = r2x >> 52 ;
-	ret[1] -= DATA (1075 - EFLAG (r2x == 0)) ;
+	ret[1] -= DATA (1075 - _EBOOL_ (r2x == 0)) ;
 	if (ret[0] == 0)
 		ret[1] = 0 ;
 	while (TRUE) {
@@ -342,7 +379,7 @@ inline ARRAY3<VAR64> _IEEE754_DECODE_ (const VAL64 &ieee754) {
 		ret[0] = ret[0] >> 1 ;
 		ret[1]++ ;
 	}
-	const auto r3x = EFLAG ((r1x & DATA (0X8000000000000000)) != 0) * DATA (-1) ;
+	const auto r3x = _EBOOL_ ((r1x & DATA (0X8000000000000000)) != 0) * DATA (-1) ;
 	ret[2] = r3x ;
 	return std::move (_CAST_<ARRAY3<VAR64>> (ret)) ;
 }

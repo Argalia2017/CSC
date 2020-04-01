@@ -51,17 +51,17 @@
 
 namespace CSC {
 #ifdef __CSC_SYSTEM_WINDOWS__
-inline FLAG GlobalRuntime::thread_tid () {
+inline exports FLAG GlobalRuntime::thread_tid () {
 	return FLAG (GetCurrentThreadId ()) ;
 }
 
-inline FLAG GlobalRuntime::process_pid () {
+inline exports FLAG GlobalRuntime::process_pid () {
 	return FLAG (GetCurrentProcessId ()) ;
 }
 
-inline Buffer<BYTE ,ARGC<128>> GlobalRuntime::process_info (FLAG pid) {
+inline exports Buffer<BYTE ,ARGC<128>> GlobalRuntime::process_info (FLAG pid) {
 	Buffer<BYTE ,ARGC<128>> ret ;
-	auto wos = ByteWriter (PhanBuffer<STRU8>::make (ret)) ;
+	auto wos = ByteWriter<BYTE> (PhanBuffer<BYTE>::make (ret)) ;
 	if switch_case (TRUE) {
 		const auto r1x = UniqueRef<HANDLE> ([&] (HANDLE &me) {
 			me = OpenProcess (PROCESS_QUERY_INFORMATION ,FALSE ,VARY (pid)) ;
@@ -90,23 +90,25 @@ inline Buffer<BYTE ,ARGC<128>> GlobalRuntime::process_info (FLAG pid) {
 	return std::move (ret) ;
 }
 
-inline FLAG GlobalRuntime::process_info_pid (const PhanBuffer<const STRU8> &info) {
+inline exports FLAG GlobalRuntime::process_info_pid (const PhanBuffer<const STRU8> &info) {
 	_DEBUG_ASSERT_ (info.size () == 128) ;
-	auto ris = ByteReader (info) ;
-	return ris.template read<VAR64> () ;
+	auto ris = ByteReader<BYTE> (info) ;
+	const auto r1x = ris.template read<VAR64> () ;
+	_DYNAMIC_ASSERT_ (r1x >= VAR32_MIN && r1x <= VAR32_MAX) ;
+	return FLAG (r1x) ;
 }
 #elif defined __CSC_SYSTEM_LINUX__
-inline FLAG GlobalRuntime::thread_tid () {
+inline exports FLAG GlobalRuntime::thread_tid () {
 	return FLAG (syscall (SYS_gettid)) ;
 }
 
-inline FLAG GlobalRuntime::process_pid () {
+inline exports FLAG GlobalRuntime::process_pid () {
 	return FLAG (syscall (SYS_getpid)) ;
 }
 
-inline Buffer<BYTE ,ARGC<128>> GlobalRuntime::process_info (FLAG pid) {
+inline exports Buffer<BYTE ,ARGC<128>> GlobalRuntime::process_info (FLAG pid) {
 	Buffer<BYTE ,ARGC<128>> ret ;
-	auto wos = ByteWriter (PhanBuffer<STRU8>::make (ret)) ;
+	auto wos = ByteWriter<BYTE> (PhanBuffer<BYTE>::make (ret)) ;
 	if switch_case (TRUE) {
 		const auto r1x = getpgid (pid_t (pid)) ;
 		if (r1x < 0)
@@ -125,28 +127,30 @@ inline Buffer<BYTE ,ARGC<128>> GlobalRuntime::process_info (FLAG pid) {
 	return std::move (ret) ;
 }
 
-inline FLAG GlobalRuntime::process_info_pid (const PhanBuffer<const STRU8> &info) {
+inline exports FLAG GlobalRuntime::process_info_pid (const PhanBuffer<const STRU8> &info) {
 	_DEBUG_ASSERT_ (info.size () == 128) ;
-	auto ris = ByteReader (info) ;
-	return ris.template read<VAR64> () ;
+	auto ris = ByteReader<BYTE> (info) ;
+	const auto r1x = ris.template read<VAR64> () ;
+	_DYNAMIC_ASSERT_ (r1x >= VAR32_MIN && r1x <= VAR32_MAX) ;
+	return FLAG (r1x) ;
 }
 #else
-inline FLAG GlobalRuntime::thread_tid () {
+inline exports FLAG GlobalRuntime::thread_tid () {
 	_DYNAMIC_ASSERT_ (FALSE) ;
 	return 0 ;
 }
 
-inline FLAG GlobalRuntime::process_pid () {
+inline exports FLAG GlobalRuntime::process_pid () {
 	_DYNAMIC_ASSERT_ (FALSE) ;
 	return 0 ;
 }
 
-inline Buffer<BYTE ,ARGC<128>> GlobalRuntime::process_info (FLAG pid) {
+inline exports Buffer<BYTE ,ARGC<128>> GlobalRuntime::process_info (FLAG pid) {
 	_DYNAMIC_ASSERT_ (FALSE) ;
 	return Buffer<BYTE ,ARGC<128>> () ;
 }
 
-inline FLAG GlobalRuntime::process_info_pid (const PhanBuffer<const STRU8> &info) {
+inline exports FLAG GlobalRuntime::process_info_pid (const PhanBuffer<const STRU8> &info) {
 	_DEBUG_ASSERT_ (info.size () == 128) ;
 	_DYNAMIC_ASSERT_ (FALSE) ;
 	return 0 ;
@@ -155,19 +159,19 @@ inline FLAG GlobalRuntime::process_info_pid (const PhanBuffer<const STRU8> &info
 
 #ifdef __CSC_DEPRECATED__
 template <class CONT>
-class Coroutine<CONT>::Implement final :private Interface {
+class Coroutine<CONT>::Implement {
 private:
 	struct CONTEXT_EBP {
 		jmp_buf mEbp ;
 	} ;
 
-	using CONTEXT_EBP_SIZE = ARGC<_ALIGNOF_ (CONTEXT_EBP) - 1 + _SIZEOF_ (CONTEXT_EBP)> ;
-	using STACK_FRAME_SIZE = ARGC<65536> ;
+	static constexpr auto CONTEXT_EBP_SIZE = _ALIGNOF_ (CONTEXT_EBP) - 1 + _SIZEOF_ (CONTEXT_EBP) ;
+	static constexpr auto STACK_FRAME_SIZE = 65536 ;
 
 	struct BREAKPOINT {
-		DEF<BYTE[CONTEXT_EBP_SIZE::value]> mContextEbp ;
+		DEF<BYTE[CONTEXT_EBP_SIZE]> mContextEbp ;
 		ARRAY3<LENGTH> mStackPoint ;
-		DEF<BYTE[STACK_FRAME_SIZE::value]> mStackFrame ;
+		DEF<BYTE[STACK_FRAME_SIZE]> mStackFrame ;
 	} ;
 
 private:
@@ -184,58 +188,59 @@ public:
 	}
 
 	static void store_break_point (PTR<AnyRef<void>> bp) noexcept {
-		auto &r1y = bp->rebind<BREAKPOINT> ().self ;
-		_DEBUG_ASSERT_ (r1y.mStackPoint[0] != 0) ;
-		r1y.mStackPoint[1] = _ADDRESS_ (&bp) ;
-		const auto r2x = r1y.mStackPoint[1] - r1y.mStackPoint[0] ;
-		_DEBUG_ASSERT_ (_ABS_ (r2x) <= _SIZEOF_ (decltype (r1y.mStackFrame))) ;
-		const auto r3x = EFLAG (r2x < 0) ;
-		auto &r4y = _LOAD_<ARR<BYTE>> (_XVALUE_<PTR<VOID>> (&_NULL_<BYTE> () + r1y.mStackPoint[r3x])) ;
-		_MEMCOPY_ (PTRTOARR[r1y.mStackFrame] ,r4y ,_ABS_ (r2x)) ;
-		auto &r5y = load_context_ebp (r1y.mContextEbp) ;
-		const auto r6x = ::setjmp (r5y.mEbp) ;
+		auto &r1x = bp->rebind<BREAKPOINT> ().self ;
+		_DEBUG_ASSERT_ (r1x.mStackPoint[0] != 0) ;
+		r1x.mStackPoint[1] = _ADDRESS_ (&bp) ;
+		const auto r2x = r1x.mStackPoint[1] - r1x.mStackPoint[0] ;
+		_DEBUG_ASSERT_ (_ABS_ (r2x) <= _SIZEOF_ (decltype (r1x.mStackFrame))) ;
+		const auto r3x = _EBOOL_ (r2x < 0) ;
+		auto &r4x = _LOAD_<ARR<BYTE>> (_XVALUE_<PTR<VOID>> (&_NULL_<BYTE> () + r1x.mStackPoint[r3x])) ;
+		_MEMCOPY_ (PTRTOARR[r1x.mStackFrame] ,r4x ,_ABS_ (r2x)) ;
+		auto &r5x = load_context_ebp (r1x.mContextEbp) ;
+		const auto r6x = ::setjmp (r5x.mEbp) ;
 		(void) r6x ;
 	}
 
 	static void goto_break_point (PTR<AnyRef<void>> bp) noexcept {
-		auto &r1y = bp->rebind<BREAKPOINT> ().self ;
-		_DEBUG_ASSERT_ (r1y.mStackPoint[0] != 0) ;
-		_DEBUG_ASSERT_ (r1y.mStackPoint[1] != 0) ;
-		r1y.mStackPoint[2] = _ADDRESS_ (&bp) ;
+		auto &r1x = bp->rebind<BREAKPOINT> ().self ;
+		_DEBUG_ASSERT_ (r1x.mStackPoint[0] != 0) ;
+		_DEBUG_ASSERT_ (r1x.mStackPoint[1] != 0) ;
+		r1x.mStackPoint[2] = _ADDRESS_ (&bp) ;
 		_STATIC_WARNING_ ("mark") ;
-		_DEBUG_ASSERT_ (r1y.mStackPoint[2] == r1y.mStackPoint[1]) ;
-		const auto r2x = r1y.mStackPoint[1] - r1y.mStackPoint[0] ;
-		_DEBUG_ASSERT_ (_ABS_ (r2x) <= _SIZEOF_ (decltype (r1y.mStackFrame))) ;
-		const auto r3x = EFLAG (r2x < 0) ;
-		auto &r4y = _LOAD_<ARR<BYTE>> (_XVALUE_<PTR<VOID>> (&_NULL_<BYTE> () + r1y.mStackPoint[r3x])) ;
-		_MEMCOPY_ (r4y ,PTRTOARR[r1y.mStackFrame] ,_ABS_ (r2x)) ;
-		auto &r5y = load_context_ebp (r1y.mContextEbp) ;
-		::longjmp (r5y.mEbp ,1) ;
+		_DEBUG_ASSERT_ (r1x.mStackPoint[2] == r1x.mStackPoint[1]) ;
+		const auto r2x = r1x.mStackPoint[1] - r1x.mStackPoint[0] ;
+		_DEBUG_ASSERT_ (_ABS_ (r2x) <= _SIZEOF_ (decltype (r1x.mStackFrame))) ;
+		const auto r3x = _EBOOL_ (r2x < 0) ;
+		auto &r4x = _LOAD_<ARR<BYTE>> (_XVALUE_<PTR<VOID>> (&_NULL_<BYTE> () + r1x.mStackPoint[r3x])) ;
+		_MEMCOPY_ (r4x ,PTRTOARR[r1x.mStackFrame] ,_ABS_ (r2x)) ;
+		auto &r5x = load_context_ebp (r1x.mContextEbp) ;
+		::longjmp (r5x.mEbp ,1) ;
 	}
 
-	static CONTEXT_EBP &load_context_ebp (DEF<BYTE[CONTEXT_EBP_SIZE::value]> &ebp) noexcept {
+	static CONTEXT_EBP &load_context_ebp (DEF<BYTE[CONTEXT_EBP_SIZE]> &ebp) noexcept {
 		const auto r1x = _ALIGNAS_ (_ADDRESS_ (&ebp) ,_ALIGNOF_ (CONTEXT_EBP)) ;
-		return _LOAD_<CONTEXT_EBP> (_UNSAFE_ALIASING_ (r1x)) ;
+		return _LOAD_<CONTEXT_EBP> (_XVALUE_<PTR<VOID>> (&_NULL_<BYTE> () + r1x)) ;
 	}
 } ;
 
 template <class CONT>
-inline exports void Coroutine<CONT>::init_break_point (AnyRef<void> &bp) popping {
+inline exports void Coroutine<CONT>::init_break_point (AnyRef<void> &bp) {
 	Implement::init_break_point (&bp) ;
 }
 
 template <class CONT>
-inline exports void Coroutine<CONT>::store_break_point (AnyRef<void> &bp) noexcept popping {
+inline exports void Coroutine<CONT>::store_break_point (AnyRef<void> &bp) noexcept {
 	Implement::store_break_point (&bp) ;
 }
 
 template <class CONT>
-inline exports void Coroutine<CONT>::goto_break_point (AnyRef<void> &bp) noexcept popping {
+inline exports void Coroutine<CONT>::goto_break_point (AnyRef<void> &bp) noexcept {
 	Implement::goto_break_point (&bp) ;
 }
 #endif
 
-class RandomService::Implement :public RandomService::Abstract {
+class RandomService::Implement
+	:public RandomService::Abstract {
 private:
 	SharedRef<std::random_device> mRandomSeed ;
 	AutoRef<std::mt19937> mRandomDevice ;

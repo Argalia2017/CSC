@@ -17,12 +17,14 @@
 
 namespace CSC {
 class AbstractDatabase {
-public:
-	exports struct Abstract :public Interface {
+private:
+	exports class Abstract
+		:public Interface {
+	public:
 		virtual void compute_load_data (AnyRef<void> &this_) const = 0 ;
 	} ;
 
-	class Holder {
+	class Pack {
 	private:
 		friend AbstractDatabase ;
 		AnyRef<void> mHolder ;
@@ -30,12 +32,13 @@ public:
 
 private:
 	PhanRef<const Abstract> mAbstract ;
-	SharedRef<Holder> mThis ;
+	SharedRef<Pack> mThis ;
 
 public:
 	AbstractDatabase () = default ;
 
-	explicit AbstractDatabase (const PhanRef<const Abstract> &abstract_) :AbstractDatabase (PhanRef<const Abstract>::make (abstract_) ,SharedRef<Holder>::make ()) {}
+	explicit AbstractDatabase (const PhanRef<const Abstract> &abstract_)
+		:AbstractDatabase (PhanRef<const Abstract>::make (abstract_) ,SharedRef<Pack>::make ()) {}
 
 	BOOL exist () const {
 		if (!mAbstract.exist ())
@@ -48,6 +51,7 @@ public:
 	}
 
 private:
-	explicit AbstractDatabase (PhanRef<const Abstract> &&abstract_ ,SharedRef<Holder> &&this_) :mAbstract (std::move (abstract_)) ,mThis (std::move (this_)) {}
+	explicit AbstractDatabase (PhanRef<const Abstract> &&abstract_ ,SharedRef<Pack> &&this_)
+		:mAbstract (std::move (abstract_)) ,mThis (std::move (this_)) {}
 } ;
 } ;

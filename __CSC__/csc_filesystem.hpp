@@ -15,10 +15,13 @@
 #include "csc_thread.hpp"
 
 namespace CSC {
+using DEFAULT_FILEPATH_SIZE = ARGC<1023> ;
+using DEFAULT_DIRECTORY_SIZE = ARGC<65536> ;
+
 inline namespace FILESYSTEM {
 inline imports DEF<AutoBuffer<BYTE> (const String<STR> &file) popping> _LOADFILE_ ;
 
-inline imports DEF<void (const String<STR> &file ,const PhanBuffer<BYTE> &data) popping> _LOADFILE_ ;
+inline imports DEF<void (const String<STR> &file ,const PhanBuffer<BYTE> &data)> _LOADFILE_ ;
 
 inline imports DEF<void (const String<STR> &file ,const PhanBuffer<const BYTE> &data)> _SAVEFILE_ ;
 
@@ -58,7 +61,7 @@ inline imports DEF<void (const String<STR> &dire)> _BUILDDIRECTORY_ ;
 
 inline imports DEF<void (const String<STR> &dire)> _ERASEDIRECTORY_ ;
 
-inline imports DEF<void (const String<STR> &dire ,Deque<String<STR>> &file_list ,Deque<String<STR>> &dire_list) popping> _ENUMDIRECTORY_ ;
+inline imports DEF<void (const String<STR> &dire ,Deque<String<STR>> &file_list ,Deque<String<STR>> &dire_list)> _ENUMDIRECTORY_ ;
 
 inline imports DEF<void (const String<STR> &dire)> _CLEARDIRECTORY_ ;
 } ;
@@ -73,10 +76,10 @@ public:
 
 	explicit StreamLoader (const String<STR> &file) ;
 
-	void read (const PhanBuffer<BYTE> &data) popping ;
+	void read (const PhanBuffer<BYTE> &data) ;
 
 	template <class _ARG1>
-	void read (Buffer<BYTE ,_ARG1> &data) popping {
+	void read (Buffer<BYTE ,_ARG1> &data) {
 		read (PhanBuffer<BYTE>::make (data)) ;
 	}
 
@@ -110,14 +113,17 @@ public:
 
 	PhanBuffer<const BYTE> watch () const & ;
 
-	PhanBuffer<BYTE> watch () && = delete ;
+	auto watch () && ->void = delete ;
 
 	void flush () ;
 } ;
 
-class FileSystemService final :private Interface {
+class FileSystemService final
+	:private Proxy {
 private:
-	exports struct Abstract :public Interface {
+	exports class Abstract
+		:public Interface {
+	public:
 		virtual void startup () = 0 ;
 		virtual void shutdown () = 0 ;
 	} ;
