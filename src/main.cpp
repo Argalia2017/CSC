@@ -12,7 +12,7 @@ TEST_CLASS (UNITTEST_MAIN) {
 public:
 	TEST_METHOD (TEST_MAIN) {
 		using namespace UNITTEST ;
-		//(?<!(Detail|CSC) ){(\r\n[^\r]+)*(?<!private:)\r\n\t+class (?!Lambda {)
+
 	}
 } ;
 
@@ -76,7 +76,9 @@ exports int main () noexcept popping {
 #ifdef __CSC_FILESYSTEM__
 #ifdef __CSC_SYSTEM_WINDOWS__
 #include <csc_filesystem.hpp.windows.inl>
-#elif defined __CSC_SYSTEM_LINUX__
+#endif
+
+#ifdef __CSC_SYSTEM_LINUX__
 #include <csc_filesystem.hpp.linux.inl>
 #endif
 #endif
@@ -98,7 +100,9 @@ exports int main () noexcept popping {
 #ifdef __CSC_DEBUGGER__
 #ifdef __CSC_SYSTEM_WINDOWS__
 #include <csc_debugger.hpp.windows.inl>
-#elif defined __CSC_SYSTEM_LINUX__
+#endif
+
+#ifdef __CSC_SYSTEM_LINUX__
 #include <csc_debugger.hpp.linux.inl>
 #endif
 #endif

@@ -28,12 +28,14 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\main.cpp" />
+    <ClCompile Include="..\..\src\test.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\..\..\Depends\__CSC__\csc.hpp" />
     <ClInclude Include="..\..\..\..\..\Depends\__CSC__\csc_algorithm.hpp" />
     <ClInclude Include="..\..\..\..\..\Depends\__CSC__\csc_array.hpp" />
     <ClInclude Include="..\..\..\..\..\Depends\__CSC__\csc_basic.hpp" />
+    <ClInclude Include="..\..\..\..\..\Depends\__CSC__\csc_core.hpp" />
     <ClInclude Include="..\..\..\..\..\Depends\__CSC__\csc_database.hpp" />
     <ClInclude Include="..\..\..\..\..\Depends\__CSC__\csc_debugger.hpp" />
     <ClInclude Include="..\..\..\..\..\Depends\__CSC__\csc_extend.hpp" />

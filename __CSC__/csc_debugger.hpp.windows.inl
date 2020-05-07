@@ -8,6 +8,8 @@
 #pragma push_macro ("self")
 #pragma push_macro ("implicit")
 #pragma push_macro ("popping")
+#pragma push_macro ("leftvalue")
+#pragma push_macro ("rightvalue")
 #pragma push_macro ("imports")
 #pragma push_macro ("exports")
 #pragma push_macro ("switch_case")
@@ -15,6 +17,8 @@
 #undef self
 #undef implicit
 #undef popping
+#undef leftvalue
+#undef rightvalue
 #undef imports
 #undef exports
 #undef switch_case
@@ -56,6 +60,8 @@
 #pragma pop_macro ("self")
 #pragma pop_macro ("implicit")
 #pragma pop_macro ("popping")
+#pragma pop_macro ("leftvalue")
+#pragma pop_macro ("rightvalue")
 #pragma pop_macro ("imports")
 #pragma pop_macro ("exports")
 #pragma pop_macro ("switch_case")
@@ -63,6 +69,28 @@
 #endif
 
 namespace CSC {
+namespace api {
+using ::SYMBOL_INFO ;
+
+using std::system ;
+
+using ::atexit ;
+using ::signal ;
+
+using ::SetConsoleTextAttribute ;
+using ::WriteConsole ;
+using ::GetStdHandle ;
+using ::AllocConsole ;
+using ::FreeConsole ;
+using ::GetConsoleWindow ;
+using ::FlashWindow ;
+using ::GetCurrentProcess ;
+using ::OutputDebugString ;
+using ::SymFromAddr ;
+using ::SymInitialize ;
+using ::SymCleanup ;
+} ;
+
 class ConsoleService::Implement
 	:public ConsoleService::Abstract {
 private:
@@ -90,13 +118,13 @@ public:
 		return mBufferSize ;
 	}
 
-	void enable_option (EFLAG option) override {
+	void enable_option (const EFLAG &option) override {
 		if (option == OPTION_DEFAULT)
 			mOptionSet.clear () ;
 		mOptionSet.add (option) ;
 	}
 
-	void disable_option (EFLAG option) override {
+	void disable_option (const EFLAG &option) override {
 		mOptionSet.erase (option) ;
 	}
 
@@ -105,12 +133,12 @@ public:
 			return ;
 		write_con_buffer (msg) ;
 		attach_console () ;
-		SetConsoleTextAttribute (mConsole ,(FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE)) ;
+		api::SetConsoleTextAttribute (mConsole ,(FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE)) ;
 		auto rax = VARY () ;
 		rax = VARY (0) ;
-		WriteConsole (mConsole ,mConWriter.raw ().self ,VARY (mConWriter.length () - 1) ,&rax ,NULL) ;
+		api::WriteConsole (mConsole ,mConWriter.raw ().self ,VARY (mConWriter.length () - 1) ,DEPTR[rax] ,NULL) ;
 		rax = VARY (0) ;
-		WriteConsole (mConsole ,_PCSTR_ ("\n") ,1 ,&rax ,NULL) ;
+		api::WriteConsole (mConsole ,_PCSTR_ ("\n") ,1 ,DEPTR[rax] ,NULL) ;
 		if (mLogPath.empty ())
 			return ;
 		const auto r1x = PhanBuffer<const STR>::make (mConWriter.raw ().self ,(mConWriter.length () - 1)) ;
@@ -122,12 +150,12 @@ public:
 			return ;
 		write_con_buffer (msg) ;
 		attach_console () ;
-		SetConsoleTextAttribute (mConsole ,(FOREGROUND_BLUE | FOREGROUND_INTENSITY)) ;
+		api::SetConsoleTextAttribute (mConsole ,(FOREGROUND_BLUE | FOREGROUND_INTENSITY)) ;
 		auto rax = VARY () ;
 		rax = VARY (0) ;
-		WriteConsole (mConsole ,mConWriter.raw ().self ,VARY (mConWriter.length () - 1) ,&rax ,NULL) ;
+		api::WriteConsole (mConsole ,mConWriter.raw ().self ,VARY (mConWriter.length () - 1) ,DEPTR[rax] ,NULL) ;
 		rax = VARY (0) ;
-		WriteConsole (mConsole ,_PCSTR_ ("\n") ,1 ,&rax ,NULL) ;
+		api::WriteConsole (mConsole ,_PCSTR_ ("\n") ,1 ,DEPTR[rax] ,NULL) ;
 		if (mLogPath.empty ())
 			return ;
 		const auto r1x = PhanBuffer<const STR>::make (mConWriter.raw ().self ,(mConWriter.length () - 1)) ;
@@ -139,12 +167,12 @@ public:
 			return ;
 		write_con_buffer (msg) ;
 		attach_console () ;
-		SetConsoleTextAttribute (mConsole ,(FOREGROUND_RED | FOREGROUND_INTENSITY)) ;
+		api::SetConsoleTextAttribute (mConsole ,(FOREGROUND_RED | FOREGROUND_INTENSITY)) ;
 		auto rax = VARY () ;
 		rax = VARY (0) ;
-		WriteConsole (mConsole ,mConWriter.raw ().self ,VARY (mConWriter.length () - 1) ,&rax ,NULL) ;
+		api::WriteConsole (mConsole ,mConWriter.raw ().self ,VARY (mConWriter.length () - 1) ,DEPTR[rax] ,NULL) ;
 		rax = VARY (0) ;
-		WriteConsole (mConsole ,_PCSTR_ ("\n") ,1 ,&rax ,NULL) ;
+		api::WriteConsole (mConsole ,_PCSTR_ ("\n") ,1 ,DEPTR[rax] ,NULL) ;
 		if (mLogPath.empty ())
 			return ;
 		const auto r1x = PhanBuffer<const STR>::make (mConWriter.raw ().self ,(mConWriter.length () - 1)) ;
@@ -156,12 +184,12 @@ public:
 			return ;
 		write_con_buffer (msg) ;
 		attach_console () ;
-		SetConsoleTextAttribute (mConsole ,(FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_INTENSITY)) ;
+		api::SetConsoleTextAttribute (mConsole ,(FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_INTENSITY)) ;
 		auto rax = VARY () ;
 		rax = VARY (0) ;
-		WriteConsole (mConsole ,mConWriter.raw ().self ,VARY (mConWriter.length () - 1) ,&rax ,NULL) ;
+		api::WriteConsole (mConsole ,mConWriter.raw ().self ,VARY (mConWriter.length () - 1) ,DEPTR[rax] ,NULL) ;
 		rax = VARY (0) ;
-		WriteConsole (mConsole ,_PCSTR_ ("\n") ,1 ,&rax ,NULL) ;
+		api::WriteConsole (mConsole ,_PCSTR_ ("\n") ,1 ,DEPTR[rax] ,NULL) ;
 		if (mLogPath.empty ())
 			return ;
 		const auto r1x = PhanBuffer<const STR>::make (mConWriter.raw ().self ,(mConWriter.length () - 1)) ;
@@ -173,12 +201,12 @@ public:
 			return ;
 		write_con_buffer (msg) ;
 		attach_console () ;
-		SetConsoleTextAttribute (mConsole ,(FOREGROUND_GREEN | FOREGROUND_INTENSITY)) ;
+		api::SetConsoleTextAttribute (mConsole ,(FOREGROUND_GREEN | FOREGROUND_INTENSITY)) ;
 		auto rax = VARY () ;
 		rax = VARY (0) ;
-		WriteConsole (mConsole ,mConWriter.raw ().self ,VARY (mConWriter.length () - 1) ,&rax ,NULL) ;
+		api::WriteConsole (mConsole ,mConWriter.raw ().self ,VARY (mConWriter.length () - 1) ,DEPTR[rax] ,NULL) ;
 		rax = VARY (0) ;
-		WriteConsole (mConsole ,_PCSTR_ ("\n") ,1 ,&rax ,NULL) ;
+		api::WriteConsole (mConsole ,_PCSTR_ ("\n") ,1 ,DEPTR[rax] ,NULL) ;
 		if (mLogPath.empty ())
 			return ;
 		const auto r1x = PhanBuffer<const STR>::make (mConWriter.raw ().self ,(mConWriter.length () - 1)) ;
@@ -190,12 +218,12 @@ public:
 			return ;
 		write_con_buffer (msg) ;
 		attach_console () ;
-		SetConsoleTextAttribute (mConsole ,(FOREGROUND_GREEN | FOREGROUND_BLUE | FOREGROUND_INTENSITY)) ;
+		api::SetConsoleTextAttribute (mConsole ,(FOREGROUND_GREEN | FOREGROUND_BLUE | FOREGROUND_INTENSITY)) ;
 		auto rax = VARY () ;
 		rax = VARY (0) ;
-		WriteConsole (mConsole ,mConWriter.raw ().self ,VARY (mConWriter.length () - 1) ,&rax ,NULL) ;
+		api::WriteConsole (mConsole ,mConWriter.raw ().self ,VARY (mConWriter.length () - 1) ,DEPTR[rax] ,NULL) ;
 		rax = VARY (0) ;
-		WriteConsole (mConsole ,_PCSTR_ ("\n") ,1 ,&rax ,NULL) ;
+		api::WriteConsole (mConsole ,_PCSTR_ ("\n") ,1 ,DEPTR[rax] ,NULL) ;
 		if (mLogPath.empty ())
 			return ;
 		const auto r1x = PhanBuffer<const STR>::make (mConWriter.raw ().self ,(mConWriter.length () - 1)) ;
@@ -207,12 +235,12 @@ public:
 			return ;
 		write_con_buffer (msg) ;
 		attach_console () ;
-		SetConsoleTextAttribute (mConsole ,(FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE | FOREGROUND_INTENSITY)) ;
+		api::SetConsoleTextAttribute (mConsole ,(FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE | FOREGROUND_INTENSITY)) ;
 		auto rax = VARY () ;
 		rax = VARY (0) ;
-		WriteConsole (mConsole ,mConWriter.raw ().self ,VARY (mConWriter.length () - 1) ,&rax ,NULL) ;
+		api::WriteConsole (mConsole ,mConWriter.raw ().self ,VARY (mConWriter.length () - 1) ,DEPTR[rax] ,NULL) ;
 		rax = VARY (0) ;
-		WriteConsole (mConsole ,_PCSTR_ ("\n") ,1 ,&rax ,NULL) ;
+		api::WriteConsole (mConsole ,_PCSTR_ ("\n") ,1 ,DEPTR[rax] ,NULL) ;
 		if (mLogPath.empty ())
 			return ;
 		const auto r1x = PhanBuffer<const STR>::make (mConWriter.raw ().self ,(mConWriter.length () - 1)) ;
@@ -220,7 +248,7 @@ public:
 	}
 
 	void attach_log (const String<STR> &path) override {
-		const auto r1x = _ABSOLUTEPATH_ (path) ;
+		const auto r1x = FileSystemProc::absolute_path (path) ;
 		if switch_case (TRUE) {
 			if (mLogPath == r1x)
 				discard ;
@@ -247,11 +275,11 @@ public:
 
 	void show () override {
 		mConsole = UniqueRef<HANDLE> ([&] (HANDLE &me) {
-			AllocConsole () ;
-			me = GetStdHandle (STD_OUTPUT_HANDLE) ;
+			api::AllocConsole () ;
+			me = api::GetStdHandle (STD_OUTPUT_HANDLE) ;
 			_DYNAMIC_ASSERT_ (me != NULL) ;
 		} ,[] (HANDLE &me) {
-			FreeConsole () ;
+			api::FreeConsole () ;
 		}) ;
 	}
 
@@ -262,53 +290,54 @@ public:
 	void pause () override {
 		if (!mConsole.exist ())
 			return ;
-		const auto r1x = GetConsoleWindow () ;
+		const auto r1x = api::GetConsoleWindow () ;
 		if (r1x == NULL)
 			return ;
-		FlashWindow (r1x ,TRUE) ;
-		SetConsoleTextAttribute (mConsole ,(FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE)) ;
-		const auto r2x = std::system (_PCSTRA_ ("pause")) ;
-		(void) r2x ;
+		api::FlashWindow (r1x ,TRUE) ;
+		api::SetConsoleTextAttribute (mConsole ,(FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE)) ;
+		const auto r2x = api::system (_PCSTRA_ ("pause")) ;
+		_STATIC_UNUSED_ (r2x) ;
 	}
 
 	void clear () override {
 		if (!mConsole.exist ())
 			return ;
-		const auto r1x = std::system (_PCSTRA_ ("cls")) ;
-		(void) r1x ;
+		const auto r1x = api::system (_PCSTRA_ ("cls")) ;
+		_STATIC_UNUSED_ (r1x) ;
 	}
 
 private:
 	void write_con_buffer (const Binder &msg) {
-		mConWriter << _CLS_ ;
+		mConWriter << TextWriter<STR>::CLS ;
 		mConWriter << msg ;
-		mConWriter << _EOS_ ;
+		mConWriter << TextWriter<STR>::EOS ;
 	}
 
 	void attach_console () {
 		if (mConsole.exist ())
 			return ;
 		mConsole = UniqueRef<HANDLE> ([&] (HANDLE &me) {
-			me = GetStdHandle (STD_OUTPUT_HANDLE) ;
+			me = api::GetStdHandle (STD_OUTPUT_HANDLE) ;
 		} ,[] (HANDLE &me) {
 			_STATIC_WARNING_ ("noop") ;
 		}) ;
 	}
 
 	void write_log_buffer (const PhanBuffer<const STR> &tag ,const Binder &msg) {
-		mLogWriter << _CLS_ ;
+		mLogWriter << TextWriter<STR>::CLS ;
 		mLogWriter << _PCSTR_ ("[") ;
-		mLogWriter << _BUILDHOURS_ (std::chrono::system_clock ().now ()) ;
+		const auto r1x = GlobalRuntime::clock_now () ;
+		mLogWriter << StringProc::build_hours (r1x) ;
 		mLogWriter << _PCSTR_ ("][") ;
 		mLogWriter << tag ;
 		mLogWriter << _PCSTR_ ("] : ") ;
 		mLogWriter << msg ;
-		mLogWriter << _GAP_ ;
-		mLogWriter << _EOS_ ;
+		mLogWriter << TextWriter<STR>::GAP ;
+		mLogWriter << TextWriter<STR>::EOS ;
 	}
 
 	void write_debugger () {
-		OutputDebugString (mLogWriter.raw ().self) ;
+		api::OutputDebugString (mLogWriter.raw ().self) ;
 	}
 
 	void write_log_file () {
@@ -348,10 +377,10 @@ private:
 	void attach_log_file () {
 		const auto r1x = mLogPath + _PCSTR_ ("console.log") ;
 		const auto r2x = mLogPath + _PCSTR_ ("console.old.log") ;
-		_ERASEFILE_ (r2x) ;
-		_MOVEFILE_ (r2x ,r1x) ;
+		FileSystemProc::erase_file (r2x) ;
+		FileSystemProc::move_file (r2x ,r1x) ;
 		mLogFileStream = AutoRef<StreamLoader>::make (r1x) ;
-		const auto r3x = String<STR>::make (_XVALUE_<PTR<void (TextWriter<STR> &)>> (_BOM_)) ;
+		const auto r3x = String<STR>::make (TextWriter<STR>::BOM) ;
 		mLogFileStream->write (PhanBuffer<const BYTE>::make (r3x.raw ())) ;
 	}
 } ;
@@ -366,41 +395,41 @@ private:
 	UniqueRef<HANDLE> mSymbolFromAddress ;
 
 public:
-	void abort_once_invoked_exit (BOOL flag) override {
+	void abort_once_invoked_exit (const BOOL &flag) override {
 #pragma region
 #pragma warning (push)
 #ifdef __CSC_COMPILER_MSVC__
 #pragma warning (disable :5039)
 #endif
 		_DEBUG_ASSERT_ (flag) ;
-		const auto r1x = _XVALUE_<PTR<void ()>> ([] () noexcept {
+		const auto r1x = _FORWARD_<PTR<void ()>> ([] () noexcept {
 			GlobalRuntime::process_abort () ;
 		}) ;
-		const auto r2x = _XVALUE_<PTR<void (VAR32)>> ([] (VAR32) noexcept {
+		const auto r2x = _FORWARD_<PTR<void (VAR32)>> ([] (VAR32) noexcept {
 			GlobalRuntime::process_abort () ;
 		}) ;
-		const auto r3x = _XVALUE_<PTR<void (VAR32)>> ([] (VAR32) noexcept {
+		const auto r3x = _FORWARD_<PTR<void (VAR32)>> ([] (VAR32) noexcept {
 			GlobalRuntime::process_abort () ;
 		}) ;
-		const auto r4x = _XVALUE_<PTR<void (VAR32)>> ([] (VAR32) noexcept {
+		const auto r4x = _FORWARD_<PTR<void (VAR32)>> ([] (VAR32) noexcept {
 			GlobalRuntime::process_abort () ;
 		}) ;
-		std::atexit (r1x) ;
-		signal (SIGFPE ,r2x) ;
-		signal (SIGILL ,r3x) ;
-		signal (SIGSEGV ,r4x) ;
+		api::atexit (r1x) ;
+		api::signal (SIGFPE ,r2x) ;
+		api::signal (SIGILL ,r3x) ;
+		api::signal (SIGSEGV ,r4x) ;
 #pragma warning (pop)
 #pragma endregion
 	}
 
-	void output_memory_leaks_report (BOOL flag) override {
+	void output_memory_leaks_report (const BOOL &flag) override {
 		_DEBUG_ASSERT_ (flag) ;
 		const auto r1x = _CrtSetDbgFlag (_CRTDBG_REPORT_FLAG) ;
 		const auto r2x = VAR32 (r1x | _CRTDBG_LEAK_CHECK_DF) ;
 		const auto r3x = _CrtSetDbgFlag (r2x) ;
-		(void) r1x ;
-		(void) r2x ;
-		(void) r3x ;
+		_STATIC_UNUSED_ (r1x) ;
+		_STATIC_UNUSED_ (r2x) ;
+		_STATIC_UNUSED_ (r3x) ;
 	}
 
 	Array<LENGTH> captrue_stack_trace () popping override {
@@ -409,7 +438,7 @@ public:
 		Array<LENGTH> ret = Array<LENGTH> (r1x) ;
 		for (auto &&i : _RANGE_ (0 ,ret.length ()))
 			ret[i] = _ADDRESS_ (rax[i]) ;
-		return std::move (ret) ;
+		return _MOVE_ (ret) ;
 	}
 
 	Array<String<STR>> symbol_from_address (const Array<LENGTH> &list) popping override {
@@ -421,27 +450,27 @@ public:
 		if switch_case (fax) {
 			if (!mSymbolFromAddress.exist ())
 				discard ;
-			const auto r1x = _ALIGNOF_ (SYMBOL_INFO) - 1 + _SIZEOF_ (SYMBOL_INFO) + list.length () * DEFAULT_FILEPATH_SIZE::value ;
+			const auto r1x = _ALIGNOF_ (api::SYMBOL_INFO) - 1 + _SIZEOF_ (api::SYMBOL_INFO) + list.length () * DEFAULT_FILEPATH_SIZE::value ;
 			auto rax = AutoBuffer<BYTE> (r1x) ;
-			const auto r2x = _ALIGNAS_ (_ADDRESS_ (&rax.self) ,_ALIGNOF_ (SYMBOL_INFO)) ;
-			auto &r3x = _LOAD_<SYMBOL_INFO> (_XVALUE_<PTR<VOID>> (&_NULL_<BYTE> () + r2x)) ;
-			r3x.SizeOfStruct = _SIZEOF_ (SYMBOL_INFO) ;
+			const auto r2x = _ALIGNAS_ (_ADDRESS_ (DEPTR[rax.self]) ,_ALIGNOF_ (api::SYMBOL_INFO)) ;
+			auto &r3x = _LOAD_UNSAFE_<api::SYMBOL_INFO> (r2x) ;
+			r3x.SizeOfStruct = _SIZEOF_ (api::SYMBOL_INFO) ;
 			r3x.MaxNameLen = DEFAULT_FILEPATH_SIZE::value ;
 			for (auto &&i : list) {
-				SymFromAddr (mSymbolFromAddress ,DATA (i) ,NULL ,&r3x) ;
-				const auto r4x = _BUILDHEX16S_ (DATA (r3x.Address)) ;
-				const auto r5x = _PARSESTRS_ (String<STRA> (PTRTOARR[r3x.Name])) ;
+				api::SymFromAddr (mSymbolFromAddress ,DATA (i) ,NULL ,DEPTR[r3x]) ;
+				const auto r4x = StringProc::build_hex16s (DATA (r3x.Address)) ;
+				const auto r5x = StringProc::parse_strs (String<STRA> (PTRTOARR[r3x.Name])) ;
 				ret[iw++] = String<STR>::make (_PCSTR_ ("[") ,r4x ,_PCSTR_ ("] : ") ,r5x) ;
 			}
 		}
 		if switch_case (fax) {
 			for (auto &&i : list) {
-				const auto r6x = _BUILDHEX16S_ (DATA (i)) ;
+				const auto r6x = StringProc::build_hex16s (DATA (i)) ;
 				ret[iw++] = String<STR>::make (_PCSTR_ ("[") ,r6x ,_PCSTR_ ("] : null")) ;
 			}
 		}
 		_DEBUG_ASSERT_ (iw == ret.length ()) ;
-		return std::move (ret) ;
+		return _MOVE_ (ret) ;
 	}
 
 private:
@@ -449,15 +478,15 @@ private:
 		if (mSymbolFromAddress.exist ())
 			return ;
 		mSymbolFromAddress = UniqueRef<HANDLE> ([&] (HANDLE &me) {
-			me = GetCurrentProcess () ;
-			const auto r1x = SymInitialize (me ,NULL ,TRUE) ;
+			me = api::GetCurrentProcess () ;
+			const auto r1x = api::SymInitialize (me ,NULL ,TRUE) ;
 			if (r1x)
 				return ;
 			me = NULL ;
 		} ,[] (HANDLE &me) {
 			if (me == NULL)
 				return ;
-			SymCleanup (me) ;
+			api::SymCleanup (me) ;
 		}) ;
 		if (mSymbolFromAddress.self != NULL)
 			return ;

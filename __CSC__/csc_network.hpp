@@ -5,6 +5,7 @@
 #endif
 
 #include "csc.hpp"
+#include "csc_core.hpp"
 #include "csc_basic.hpp"
 #include "csc_extend.hpp"
 #include "csc_array.hpp"
@@ -21,7 +22,7 @@ public:
 
 private:
 	class Implement ;
-	AnyRef<void> mThis ;
+	StrongRef<Implement> mThis ;
 
 public:
 	TCPSocket () = delete ;
@@ -33,8 +34,7 @@ public:
 	String<STRU8> peer_sock_name () const ;
 
 	template <class _RET = NONE>
-	auto listener () popping
-		->DEF<DEPENDENT_TYPE<Listener ,ARGVS<_RET>>> {
+	DEPENDENT_TYPE<Listener ,_RET> listener () popping {
 		struct Dependent ;
 		_DEBUG_ASSERT_ (mThis.exist ()) ;
 		return DEPENDENT_TYPE<Listener ,Dependent> (mThis) ;
@@ -42,9 +42,9 @@ public:
 
 	void link (const String<STRU8> &ip_addr) ;
 
-	void modify_buffer (LENGTH rcv_len ,LENGTH snd_len) ;
+	void modify_buffer (const LENGTH &rcv_len ,const LENGTH &snd_len) ;
 
-	void modify_timeout (LENGTH timeout) ;
+	void modify_timeout (const LENGTH &timeout) ;
 
 	void read (const PhanBuffer<BYTE> &data) ;
 
@@ -56,10 +56,10 @@ public:
 	template <class _ARG1>
 	inline TCPSocket &operator>> (Buffer<BYTE ,_ARG1> &data) {
 		read (data) ;
-		return (*this) ;
+		return DEREF[this] ;
 	}
 
-	void read (const PhanBuffer<BYTE> &data ,INDEX &out_i ,LENGTH timeout) ;
+	void read (const PhanBuffer<BYTE> &data ,INDEX &out_i ,const LENGTH &timeout) ;
 
 	void write (const PhanBuffer<const BYTE> &data) ;
 
@@ -71,20 +71,20 @@ public:
 	template <class _ARG1>
 	inline TCPSocket &operator<< (const Buffer<BYTE ,_ARG1> &data) {
 		write (data) ;
-		return (*this) ;
+		return DEREF[this] ;
 	}
 
 public:
-	static String<STRU8> http_get (const String<STRU8> &ip_addr ,const String<STRU8> &site ,const String<STRU8> &msg ,LENGTH buffer_len ,LENGTH timeout) popping ;
+	imports_static String<STRU8> http_get (const String<STRU8> &ip_addr ,const String<STRU8> &site ,const String<STRU8> &msg ,const LENGTH &buffer_len ,const LENGTH &timeout) popping ;
 
-	static String<STRU8> http_post (const String<STRU8> &ip_addr ,const String<STRU8> &site ,const String<STRU8> &msg ,LENGTH buffer_len ,LENGTH timeout) popping ;
+	imports_static String<STRU8> http_post (const String<STRU8> &ip_addr ,const String<STRU8> &site ,const String<STRU8> &msg ,const LENGTH &buffer_len ,const LENGTH &timeout) popping ;
 } ;
 
 class TCPSocket::Listener {
 private:
 	friend TCPSocket ;
 	class Implement ;
-	AnyRef<void> mThis ;
+	StrongRef<Implement> mThis ;
 
 public:
 	Listener () = delete ;
@@ -94,13 +94,13 @@ public:
 	void accept () ;
 
 private:
-	explicit Listener (const AnyRef<void> &socket_) ;
+	explicit Listener (const StrongRef<TCPSocket::Implement> &socket_) ;
 } ;
 
 class UDPSocket {
 private:
 	class Implement ;
-	AnyRef<void> mThis ;
+	StrongRef<Implement> mThis ;
 
 public:
 	UDPSocket () = delete ;
@@ -113,7 +113,7 @@ public:
 
 	void link (const String<STRU8> &ip_addr) ;
 
-	void modify_timeout (LENGTH timeout) ;
+	void modify_timeout (const LENGTH &timeout) ;
 
 	void read (const PhanBuffer<BYTE> &data) ;
 
@@ -125,10 +125,10 @@ public:
 	template <class _ARG1>
 	inline UDPSocket &operator>> (Buffer<BYTE ,_ARG1> &data) {
 		read (data) ;
-		return (*this) ;
+		return DEREF[this] ;
 	}
 
-	void read (const PhanBuffer<BYTE> &data ,INDEX &out_i ,LENGTH timeout) ;
+	void read (const PhanBuffer<BYTE> &data ,INDEX &out_i ,const LENGTH &timeout) ;
 
 	void write (const PhanBuffer<const BYTE> &data) ;
 
@@ -140,7 +140,7 @@ public:
 	template <class _ARG1>
 	inline UDPSocket &operator<< (const Buffer<BYTE ,_ARG1> &data) {
 		write (data) ;
-		return (*this) ;
+		return DEREF[this] ;
 	}
 } ;
 
@@ -161,37 +161,37 @@ private:
 private:
 	class Implement ;
 	friend Singleton<NetworkService> ;
-	Monostate<std::recursive_mutex> mMutex ;
+	Monostate<RecursiveMutex> mMutex ;
 	StrongRef<Abstract> mThis ;
 
 public:
 	void startup () {
-		ScopedGuard<std::recursive_mutex> ANONYMOUS (mMutex) ;
+		ScopedGuard<RecursiveMutex> ANONYMOUS (mMutex) ;
 		mThis->startup () ;
 	}
 
 	void shutdown () {
-		ScopedGuard<std::recursive_mutex> ANONYMOUS (mMutex) ;
+		ScopedGuard<RecursiveMutex> ANONYMOUS (mMutex) ;
 		mThis->shutdown () ;
 	}
 
 	String<STRU8> localhost_name () const {
-		ScopedGuard<std::recursive_mutex> ANONYMOUS (mMutex) ;
+		ScopedGuard<RecursiveMutex> ANONYMOUS (mMutex) ;
 		return mThis->localhost_name () ;
 	}
 
 	String<STRU8> localhost_addr () const {
-		ScopedGuard<std::recursive_mutex> ANONYMOUS (mMutex) ;
+		ScopedGuard<RecursiveMutex> ANONYMOUS (mMutex) ;
 		return mThis->localhost_addr () ;
 	}
 
 	String<STRU8> broadcast_addr () const {
-		ScopedGuard<std::recursive_mutex> ANONYMOUS (mMutex) ;
+		ScopedGuard<RecursiveMutex> ANONYMOUS (mMutex) ;
 		return mThis->broadcast_addr () ;
 	}
 
 	LENGTH pref_timeout () const {
-		ScopedGuard<std::recursive_mutex> ANONYMOUS (mMutex) ;
+		ScopedGuard<RecursiveMutex> ANONYMOUS (mMutex) ;
 		return mThis->pref_timeout () ;
 	}
 

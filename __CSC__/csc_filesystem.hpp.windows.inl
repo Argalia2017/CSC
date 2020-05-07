@@ -8,6 +8,8 @@
 #pragma push_macro ("self")
 #pragma push_macro ("implicit")
 #pragma push_macro ("popping")
+#pragma push_macro ("leftvalue")
+#pragma push_macro ("rightvalue")
 #pragma push_macro ("imports")
 #pragma push_macro ("exports")
 #pragma push_macro ("switch_case")
@@ -15,6 +17,8 @@
 #undef self
 #undef implicit
 #undef popping
+#undef leftvalue
+#undef rightvalue
 #undef imports
 #undef exports
 #undef switch_case
@@ -29,6 +33,8 @@
 #pragma pop_macro ("self")
 #pragma pop_macro ("implicit")
 #pragma pop_macro ("popping")
+#pragma pop_macro ("leftvalue")
+#pragma pop_macro ("rightvalue")
 #pragma pop_macro ("imports")
 #pragma pop_macro ("exports")
 #pragma pop_macro ("switch_case")
@@ -36,61 +42,75 @@
 #endif
 
 namespace CSC {
-inline namespace FILESYSTEM {
-inline exports AutoBuffer<BYTE> _LOADFILE_ (const String<STR> &file) popping {
-	const auto r1x = UniqueRef<HANDLE> ([&] (HANDLE &me) {
-		me = CreateFile (file.raw ().self ,GENERIC_READ ,FILE_SHARE_READ ,NULL ,OPEN_EXISTING ,FILE_ATTRIBUTE_NORMAL ,NULL) ;
+namespace api {
+using ::HANDLE ;
+using ::WIN32_FIND_DATA ;
+using ::MEMORY_BASIC_INFORMATION ;
+
+using ::CreateFile ;
+using ::CloseHandle ;
+using ::GetFileSize ;
+using ::ReadFile ;
+using ::WriteFile ;
+using ::CreateFileMapping ;
+using ::MapViewOfFile ;
+using ::UnmapViewOfFile ;
+} ;
+
+inline exports AutoBuffer<BYTE> FileSystemProc::load_file (const String<STR> &file) popping {
+	const auto r1x = UniqueRef<api::HANDLE> ([&] (api::HANDLE &me) {
+		me = api::CreateFile (file.raw ().self ,GENERIC_READ ,FILE_SHARE_READ ,NULL ,OPEN_EXISTING ,FILE_ATTRIBUTE_NORMAL ,NULL) ;
 		if (me == INVALID_HANDLE_VALUE)
 			me = NULL ;
 		_DYNAMIC_ASSERT_ (me != NULL) ;
-	} ,[] (HANDLE &me) {
-		CloseHandle (me) ;
+	} ,[] (api::HANDLE &me) {
+		api::CloseHandle (me) ;
 	}) ;
-	const auto r2x = LENGTH (GetFileSize (r1x.self ,NULL)) ;
+	const auto r2x = LENGTH (api::GetFileSize (r1x.self ,NULL)) ;
 	_DYNAMIC_ASSERT_ (r2x >= 0 && r2x < VAR32_MAX) ;
 	AutoBuffer<BYTE> ret = AutoBuffer<BYTE> (r2x) ;
 	auto rax = VARY () ;
 	rax = VARY (0) ;
-	const auto r3x = ReadFile (r1x.self ,ret.self ,VARY (r2x) ,&rax ,NULL) ;
+	const auto r3x = api::ReadFile (r1x.self ,ret.self ,VARY (r2x) ,DEPTR[rax] ,NULL) ;
 	_DYNAMIC_ASSERT_ (r3x) ;
-	return std::move (ret) ;
+	return _MOVE_ (ret) ;
 }
 
-inline exports void _LOADFILE_ (const String<STR> &file ,const PhanBuffer<BYTE> &data) {
-	const auto r1x = UniqueRef<HANDLE> ([&] (HANDLE &me) {
-		me = CreateFile (file.raw ().self ,GENERIC_READ ,FILE_SHARE_READ ,NULL ,OPEN_EXISTING ,FILE_ATTRIBUTE_NORMAL ,NULL) ;
+inline exports void FileSystemProc::load_file (const String<STR> &file ,const PhanBuffer<BYTE> &data) {
+	const auto r1x = UniqueRef<api::HANDLE> ([&] (api::HANDLE &me) {
+		me = api::CreateFile (file.raw ().self ,GENERIC_READ ,FILE_SHARE_READ ,NULL ,OPEN_EXISTING ,FILE_ATTRIBUTE_NORMAL ,NULL) ;
 		if (me == INVALID_HANDLE_VALUE)
 			me = NULL ;
 		_DYNAMIC_ASSERT_ (me != NULL) ;
-	} ,[] (HANDLE &me) {
-		CloseHandle (me) ;
+	} ,[] (api::HANDLE &me) {
+		api::CloseHandle (me) ;
 	}) ;
-	const auto r2x = LENGTH (GetFileSize (r1x.self ,NULL)) ;
+	const auto r2x = LENGTH (api::GetFileSize (r1x.self ,NULL)) ;
 	_DYNAMIC_ASSERT_ (r2x > 0 && r2x <= data.size ()) ;
 	auto rax = VARY () ;
 	rax = VARY (0) ;
-	const auto r3x = ReadFile (r1x.self ,data ,VARY (r2x) ,&rax ,NULL) ;
+	const auto r3x = api::ReadFile (r1x.self ,data ,VARY (r2x) ,DEPTR[rax] ,NULL) ;
 	_DYNAMIC_ASSERT_ (r3x) ;
-	_MEMFILL_ (PTRTOARR[&data.self[r2x]] ,(data.size () - r2x) ,BYTE (0X00)) ;
+	BasicProc::mem_fill (PTRTOARR[&data.self[r2x]] ,(data.size () - r2x) ,BYTE (0X00)) ;
 }
 
-inline exports void _SAVEFILE_ (const String<STR> &file ,const PhanBuffer<const BYTE> &data) {
+inline exports void FileSystemProc::save_file (const String<STR> &file ,const PhanBuffer<const BYTE> &data) {
 	_DEBUG_ASSERT_ (data.size () < VAR32_MAX) ;
-	const auto r1x = UniqueRef<HANDLE> ([&] (HANDLE &me) {
-		me = CreateFile (file.raw ().self ,GENERIC_WRITE ,0 ,NULL ,CREATE_ALWAYS ,FILE_ATTRIBUTE_NORMAL ,NULL) ;
+	const auto r1x = UniqueRef<api::HANDLE> ([&] (api::HANDLE &me) {
+		me = api::CreateFile (file.raw ().self ,GENERIC_WRITE ,0 ,NULL ,CREATE_ALWAYS ,FILE_ATTRIBUTE_NORMAL ,NULL) ;
 		if (me == INVALID_HANDLE_VALUE)
 			me = NULL ;
 		_DYNAMIC_ASSERT_ (me != NULL) ;
-	} ,[] (HANDLE &me) {
-		CloseHandle (me) ;
+	} ,[] (api::HANDLE &me) {
+		api::CloseHandle (me) ;
 	}) ;
 	auto rax = VARY () ;
 	rax = VARY (0) ;
-	const auto r2x = WriteFile (r1x.self ,data.self ,VARY (data.size ()) ,&rax ,NULL) ;
+	const auto r2x = api::WriteFile (r1x.self ,data.self ,VARY (data.size ()) ,DEPTR[rax] ,NULL) ;
 	_DYNAMIC_ASSERT_ (r2x) ;
 }
 
-inline exports PhanBuffer<const BYTE> _LOADASSETFILE_ (FLAG resource) popping {
+inline exports PhanBuffer<const BYTE> FileSystemProc::load_assert_file (const FLAG &resource) popping {
 	const auto r1x = FindResource (NULL ,MAKEINTRESOURCE (resource) ,_PCSTR_ ("BIN")) ;
 	_DYNAMIC_ASSERT_ (r1x != NULL) ;
 	const auto r2x = LoadResource (NULL ,r1x) ;
@@ -103,7 +123,7 @@ inline exports PhanBuffer<const BYTE> _LOADASSETFILE_ (FLAG resource) popping {
 	return PhanBuffer<const BYTE>::make (r5x ,r4x) ;
 }
 
-inline exports BOOL _FINDFILE_ (const String<STR> &file) popping {
+inline exports BOOL FileSystemProc::find_file (const String<STR> &file) popping {
 	const auto r1x = GetFileAttributes (file.raw ().self) ;
 	if (r1x == INVALID_FILE_ATTRIBUTES)
 		return FALSE ;
@@ -112,56 +132,56 @@ inline exports BOOL _FINDFILE_ (const String<STR> &file) popping {
 	return TRUE ;
 }
 
-inline exports void _ERASEFILE_ (const String<STR> &file) {
+inline exports void FileSystemProc::erase_file (const String<STR> &file) {
 	DeleteFile (file.raw ().self) ;
 }
 
-inline exports void _COPYFILE_ (const String<STR> &dst_file ,const String<STR> &src_file) {
-	const auto r1x = _FINDFILE_ (dst_file) ;
+inline exports void FileSystemProc::copy_file (const String<STR> &dst_file ,const String<STR> &src_file) {
+	const auto r1x = FileSystemProc::find_file (dst_file) ;
 	_DYNAMIC_ASSERT_ (!r1x) ;
 	CopyFile (src_file.raw ().self ,dst_file.raw ().self ,TRUE) ;
 }
 
-inline exports void _MOVEFILE_ (const String<STR> &dst_file ,const String<STR> &src_file) {
-	const auto r1x = _FINDFILE_ (dst_file) ;
+inline exports void FileSystemProc::move_file (const String<STR> &dst_file ,const String<STR> &src_file) {
+	const auto r1x = FileSystemProc::find_file (dst_file) ;
 	_DYNAMIC_ASSERT_ (!r1x) ;
 	MoveFile (src_file.raw ().self ,dst_file.raw ().self) ;
 }
 
-inline exports void _LINKFILE_ (const String<STR> &dst_file ,const String<STR> &src_file) {
-	const auto r1x = _FINDFILE_ (dst_file) ;
+inline exports void FileSystemProc::link_file (const String<STR> &dst_file ,const String<STR> &src_file) {
+	const auto r1x = FileSystemProc::find_file (dst_file) ;
 	_DYNAMIC_ASSERT_ (!r1x) ;
 	CreateHardLink (dst_file.raw ().self ,src_file.raw ().self ,NULL) ;
 }
 
-inline exports BOOL _IDENTICALFILE_ (const String<STR> &file1 ,const String<STR> &file2) popping {
+inline exports BOOL FileSystemProc::identical_file (const String<STR> &file1 ,const String<STR> &file2) popping {
 	auto rax = ARRAY2<BY_HANDLE_FILE_INFORMATION> () ;
-	const auto r1x = UniqueRef<HANDLE> ([&] (HANDLE &me) {
-		me = CreateFile (file1.raw ().self ,GENERIC_READ ,FILE_SHARE_READ ,NULL ,OPEN_EXISTING ,FILE_ATTRIBUTE_NORMAL ,NULL) ;
+	const auto r1x = UniqueRef<api::HANDLE> ([&] (api::HANDLE &me) {
+		me = api::CreateFile (file1.raw ().self ,GENERIC_READ ,FILE_SHARE_READ ,NULL ,OPEN_EXISTING ,FILE_ATTRIBUTE_NORMAL ,NULL) ;
 		if (me == INVALID_HANDLE_VALUE)
 			me = NULL ;
-	} ,[] (HANDLE &me) {
+	} ,[] (api::HANDLE &me) {
 		if (me == NULL)
 			return ;
-		CloseHandle (me) ;
+		api::CloseHandle (me) ;
 	}) ;
 	_ZERO_ (rax[0]) ;
-	const auto r2x = GetFileInformationByHandle (r1x.self ,&rax[0]) ;
+	const auto r2x = GetFileInformationByHandle (r1x.self ,DEPTR[rax[0]]) ;
 	if (r2x == 0)
 		return FALSE ;
 	if (rax[0].nNumberOfLinks == 0)
 		return FALSE ;
-	const auto r3x = UniqueRef<HANDLE> ([&] (HANDLE &me) {
-		me = CreateFile (file2.raw ().self ,GENERIC_READ ,FILE_SHARE_READ ,NULL ,OPEN_EXISTING ,FILE_ATTRIBUTE_NORMAL ,NULL) ;
+	const auto r3x = UniqueRef<api::HANDLE> ([&] (api::HANDLE &me) {
+		me = api::CreateFile (file2.raw ().self ,GENERIC_READ ,FILE_SHARE_READ ,NULL ,OPEN_EXISTING ,FILE_ATTRIBUTE_NORMAL ,NULL) ;
 		if (me == INVALID_HANDLE_VALUE)
 			me = NULL ;
-	} ,[] (HANDLE &me) {
+	} ,[] (api::HANDLE &me) {
 		if (me == NULL)
 			return ;
-		CloseHandle (me) ;
+		api::CloseHandle (me) ;
 	}) ;
 	_ZERO_ (rax[1]) ;
-	const auto r4x = GetFileInformationByHandle (r3x.self ,&rax[1]) ;
+	const auto r4x = GetFileInformationByHandle (r3x.self ,DEPTR[rax[1]]) ;
 	if (r4x == 0)
 		return FALSE ;
 	if (rax[1].nNumberOfLinks == 0)
@@ -175,66 +195,68 @@ inline exports BOOL _IDENTICALFILE_ (const String<STR> &file1 ,const String<STR>
 	return TRUE ;
 }
 
-inline exports String<STR> _PARSEDIRENAME_ (const String<STR> &file) {
+inline exports String<STR> FileSystemProc::parse_path_name (const String<STR> &file) {
 	String<STR> ret = String<STR> (DEFAULT_FILEPATH_SIZE::value) ;
 	const auto r1x = file.length () ;
 	const auto r2x = file.raw () ;
-	const auto r3x = _MEMRCHR_ (r2x.self ,r1x ,STR ('\\')) ;
-	const auto r4x = _MEMRCHR_ (r2x.self ,r1x ,STR ('/')) ;
-	const auto r5x = _MAXOF_ (r3x ,r4x ,VAR_ZERO) ;
-	_MEMCOPY_ (ret.raw ().self ,r2x.self ,r5x) ;
-	return std::move (ret) ;
+	const auto r3x = BasicProc::mem_rchr (r2x.self ,r1x ,STR ('\\')) ;
+	const auto r4x = BasicProc::mem_rchr (r2x.self ,r1x ,STR ('/')) ;
+	const auto r5x = MathProc::maxof (r3x ,r4x ,VAR_ZERO) ;
+	BasicProc::mem_copy (ret.raw ().self ,r2x.self ,r5x) ;
+	return _MOVE_ (ret) ;
 }
 
-inline exports String<STR> _PARSEFILENAME_ (const String<STR> &file) {
+inline exports String<STR> FileSystemProc::parse_file_name (const String<STR> &file) {
 	String<STR> ret = String<STR> (DEFAULT_FILEPATH_SIZE::value) ;
 	const auto r1x = file.length () ;
 	const auto r2x = file.raw () ;
-	const auto r3x = _MEMRCHR_ (r2x.self ,r1x ,STR ('\\')) ;
-	const auto r4x = _MEMRCHR_ (r2x.self ,r1x ,STR ('/')) ;
-	const auto r5x = _MAX_ (r3x ,r4x) + 1 ;
-	_MEMCOPY_ (ret.raw ().self ,PTRTOARR[&r2x.self[r5x]] ,(r1x - r5x)) ;
-	return std::move (ret) ;
+	const auto r3x = BasicProc::mem_rchr (r2x.self ,r1x ,STR ('\\')) ;
+	const auto r4x = BasicProc::mem_rchr (r2x.self ,r1x ,STR ('/')) ;
+	const auto r5x = MathProc::maxof (r3x ,r4x) + 1 ;
+	BasicProc::mem_copy (ret.raw ().self ,PTRTOARR[&r2x.self[r5x]] ,(r1x - r5x)) ;
+	return _MOVE_ (ret) ;
 }
 
-inline exports Deque<String<STR>> _DECOUPLEPATHNAME_ (const String<STR> &file) {
+inline exports Deque<String<STR>> FileSystemProc::decouple_path_name (const String<STR> &file) {
 	const auto r1x = _CALL_ ([&] () {
 		if (!file.empty ())
 			return file.raw () ;
 		return PhanBuffer<const STR> () ;
 	}) ;
-	auto ris = TextReader<STR> (r1x) ;
-	ris.attr ().modify_space (STR ('\\') ,0) ;
-	ris.attr ().modify_space (STR ('/') ,0) ;
-	auto rax = STR () ;
+	auto rax = TextReader<STR> (r1x) ;
+	const auto r2x = rax.attr () ;
+	r2x.modify_space (STR ('\\') ,0) ;
+	r2x.modify_space (STR ('/') ,0) ;
+	auto rbx = STR () ;
 	Deque<String<STR>> ret ;
 	INDEX ix = ret.insert () ;
-	ris.copy () >> rax ;
-	if (ris.attr ().varify_space (rax))
-		ris >> rax ;
+	rax.share () >> rbx ;
+	if (r2x.varify_space (rbx))
+		rax >> rbx ;
 	while (TRUE) {
-		ris >> ret[ix] ;
+		rax >> ret[ix] ;
 		if (ret[ix].empty ())
 			break ;
 		ix = ret.insert () ;
-		ris >> rax ;
-		if (rax == ris.attr ().varify_ending_item ())
+		rax >> rbx ;
+		if (rbx == r2x.varify_ending_item ())
 			break ;
-		_DYNAMIC_ASSERT_ (ris.attr ().varify_space (rax)) ;
+		_DYNAMIC_ASSERT_ (r2x.varify_space (rbx)) ;
 	}
 	ret.pop () ;
-	ris >> _EOS_ ;
-	return std::move (ret) ;
+	rax >> TextReader<STR>::EOS ;
+	return _MOVE_ (ret) ;
 }
 
-inline exports String<STR> _WORKINGPATH_ () {
+inline exports String<STR> FileSystemProc::working_path () {
 	String<STR> ret = String<STR> (DEFAULT_FILEPATH_SIZE::value) ;
 	GetCurrentDirectory (VARY (ret.size ()) ,ret.raw ().self) ;
 	ret += _PCSTR_ ("\\") ;
-	return std::move (ret) ;
+	return _MOVE_ (ret) ;
 }
 
-inline Deque<INDEX> _inline_RELATIVEPATHNAME_ (const Deque<String<STR>> &path_name) {
+namespace U {
+inline Deque<INDEX> static_relative_path_name (const Deque<String<STR>> &path_name) {
 	Deque<INDEX> ret = Deque<INDEX> (path_name.length ()) ;
 	for (auto &&i : _RANGE_ (0 ,path_name.length ())) {
 		INDEX ix = path_name.access (i) ;
@@ -254,12 +276,13 @@ inline Deque<INDEX> _inline_RELATIVEPATHNAME_ (const Deque<String<STR>> &path_na
 			ret.add (ix) ;
 		}
 	}
-	return std::move (ret) ;
+	return _MOVE_ (ret) ;
 }
+} ;
 
-inline exports String<STR> _ABSOLUTEPATH_ (const String<STR> &path) {
+inline exports String<STR> FileSystemProc::absolute_path (const String<STR> &path) {
 	String<STR> ret = String<STR> (DEFAULT_FILEPATH_SIZE::value) ;
-	auto rax = _DECOUPLEPATHNAME_ (path) ;
+	auto rax = FileSystemProc::decouple_path_name (path) ;
 	auto fax = TRUE ;
 	if switch_case (fax) {
 		if (path.size () < 1)
@@ -275,11 +298,11 @@ inline exports String<STR> _ABSOLUTEPATH_ (const String<STR> &path) {
 		if (rax[rax.access (0)] != _PCSTR_ ("."))
 			if (rax[rax.access (0)] != _PCSTR_ (".."))
 				discard ;
-		const auto r1x = _WORKINGPATH_ () ;
+		const auto r1x = FileSystemProc::working_path () ;
 		if switch_case (TRUE) {
-			auto tmp = _DECOUPLEPATHNAME_ (r1x) ;
-			tmp.appand (std::move (rax)) ;
-			rax = std::move (tmp) ;
+			auto tmp = FileSystemProc::decouple_path_name (r1x) ;
+			tmp.appand (_MOVE_ (rax)) ;
+			rax = _MOVE_ (tmp) ;
 		}
 		if (r1x.size () < 0)
 			discard ;
@@ -288,7 +311,7 @@ inline exports String<STR> _ABSOLUTEPATH_ (const String<STR> &path) {
 				discard ;
 		ret += _PCSTR_ ("\\") ;
 	}
-	const auto r2x = _inline_RELATIVEPATHNAME_ (rax) ;
+	const auto r2x = U::static_relative_path_name (rax) ;
 	for (auto &&i : _RANGE_ (0 ,r2x.length ())) {
 		if (i > 0)
 			ret += _PCSTR_ ("\\") ;
@@ -305,29 +328,29 @@ inline exports String<STR> _ABSOLUTEPATH_ (const String<STR> &path) {
 			discard ;
 		ret += _PCSTR_ ("\\") ;
 	}
-	return std::move (ret) ;
+	return _MOVE_ (ret) ;
 }
 
-inline exports const String<STR> &_MODULEFILEPATH_ () popping {
+inline exports const String<STR> &FileSystemProc::module_file_path () popping {
 	return _CACHE_ ([&] () {
 		String<STR> ret = String<STR> (DEFAULT_FILEPATH_SIZE::value) ;
 		GetModuleFileName (NULL ,ret.raw ().self ,VARY (ret.size ())) ;
-		ret = _PARSEDIRENAME_ (ret) ;
+		ret = FileSystemProc::parse_path_name (ret) ;
 		ret += _PCSTR_ ("\\") ;
-		return std::move (ret) ;
+		return _MOVE_ (ret) ;
 	}) ;
 }
 
-inline exports const String<STR> &_MODULEFILENAME_ () popping {
+inline exports const String<STR> &FileSystemProc::module_file_name () popping {
 	return _CACHE_ ([&] () {
 		String<STR> ret = String<STR> (DEFAULT_FILEPATH_SIZE::value) ;
 		GetModuleFileName (NULL ,ret.raw ().self ,VARY (ret.size ())) ;
-		ret = _PARSEFILENAME_ (ret) ;
-		return std::move (ret) ;
+		ret = FileSystemProc::parse_file_name (ret) ;
+		return _MOVE_ (ret) ;
 	}) ;
 }
 
-inline exports BOOL _FINDDIRECTORY_ (const String<STR> &dire) popping {
+inline exports BOOL FileSystemProc::find_directory (const String<STR> &dire) popping {
 	const auto r1x = GetFileAttributes (dire.raw ().self) ;
 	if (r1x == INVALID_FILE_ATTRIBUTES)
 		return FALSE ;
@@ -336,23 +359,23 @@ inline exports BOOL _FINDDIRECTORY_ (const String<STR> &dire) popping {
 	return TRUE ;
 }
 
-inline exports BOOL _LOCKDIRECTORY_ (const String<STR> &dire) popping {
+inline exports BOOL FileSystemProc::lock_directory (const String<STR> &dire) popping {
 	BOOL ret = FALSE ;
 	const auto r1x = String<STR>::make (dire ,_PCSTR_ ("\\") ,_PCSTR_ (".lockdirectory")) ;
 	const auto r2x = GlobalRuntime::process_pid () ;
 	const auto r3x = GlobalRuntime::process_info (r2x) ;
 	auto fax = TRUE ;
 	if switch_case (fax) {
-		const auto r4x = _FINDFILE_ (r1x) ;
+		const auto r4x = FileSystemProc::find_file (r1x) ;
 		if (!r4x)
 			discard ;
-		const auto r5x = _LOADFILE_ (r1x) ;
+		const auto r5x = FileSystemProc::load_file (r1x) ;
 		if (r5x.size () != r3x.size ())
 			discard ;
 		const auto r6x = GlobalRuntime::process_info_pid (PhanBuffer<const STRU8>::make (r5x)) ;
 		const auto r7x = GlobalRuntime::process_info (r6x) ;
 		_DEBUG_ASSERT_ (r7x.size () == r5x.size ()) ;
-		const auto r8x = _MEMCOMPR_ (r7x.self ,r5x.self ,r5x.size ()) ;
+		const auto r8x = BasicProc::mem_compr (r7x.self ,r5x.self ,r5x.size ()) ;
 		if (r8x != 0)
 			discard ;
 		ret = CSC::BOOL (r2x == r6x) ;
@@ -361,23 +384,23 @@ inline exports BOOL _LOCKDIRECTORY_ (const String<STR> &dire) popping {
 		auto &r9x = _CACHE_ ([&] () {
 			return UniqueRef<String<STR>> ([&] (String<STR> &me) {
 				me = r1x ;
-				_SAVEFILE_ (r1x ,PhanBuffer<const CSC::BYTE>::make (r3x)) ;
+				FileSystemProc::save_file (r1x ,PhanBuffer<const CSC::BYTE>::make (r3x)) ;
 			} ,[] (String<STR> &me) {
-				_ERASEFILE_ (me) ;
+				FileSystemProc::erase_file (me) ;
 			}) ;
 		}) ;
-		(void) r9x ;
+		_STATIC_UNUSED_ (r9x) ;
 		ret = TRUE ;
 	}
-	return std::move (ret) ;
+	return _MOVE_ (ret) ;
 }
 
-inline exports void _BUILDDIRECTORY_ (const String<STR> &dire) {
-	if (_FINDDIRECTORY_ (dire))
+inline exports void FileSystemProc::build_directory (const String<STR> &dire) {
+	if (FileSystemProc::find_directory (dire))
 		return ;
 	auto rax = String<STR> (DEFAULT_FILEPATH_SIZE::value) ;
-	const auto r1x = _ABSOLUTEPATH_ (dire) ;
-	const auto r2x = _DECOUPLEPATHNAME_ (r1x) ;
+	const auto r1x = FileSystemProc::absolute_path (dire) ;
+	const auto r2x = FileSystemProc::decouple_path_name (r1x) ;
 	_DEBUG_ASSERT_ (r2x.length () >= 1) ;
 	if switch_case (TRUE) {
 		if (dire.size () < 1)
@@ -400,25 +423,25 @@ inline exports void _BUILDDIRECTORY_ (const String<STR> &dire) {
 	}
 }
 
-inline exports void _ERASEDIRECTORY_ (const String<STR> &dire) {
+inline exports void FileSystemProc::erase_directory (const String<STR> &dire) {
 	RemoveDirectory (dire.raw ().self) ;
 }
 
-//@warn: recursive call with junction(symbolic link) may cause endless loop
-inline exports void _ENUMDIRECTORY_ (const String<STR> &dire ,Deque<String<STR>> &file_list ,Deque<String<STR>> &dire_list) {
+//@warn: recursive call with junction(const symbolic &link) may cause endless loop
+inline exports void FileSystemProc::enum_directory (const String<STR> &dire ,Deque<String<STR>> &file_list ,Deque<String<STR>> &dire_list) {
 	auto rax = String<STR> (DEFAULT_FILEPATH_SIZE::value) ;
 	rax += dire ;
 	rax += _PCSTR_ ("\\") ;
 	const auto r1x = rax.length () ;
-	auto rbx = WIN32_FIND_DATA () ;
-	const auto r2x = UniqueRef<HANDLE> ([&] (HANDLE &me) {
+	auto rbx = api::WIN32_FIND_DATA () ;
+	const auto r2x = UniqueRef<api::HANDLE> ([&] (api::HANDLE &me) {
 		rax += _PCSTR_ ("*.*") ;
 		_ZERO_ (rbx) ;
-		me = FindFirstFile (rax.raw ().self ,&rbx) ;
+		me = FindFirstFile (rax.raw ().self ,DEPTR[rbx]) ;
 		if (me == INVALID_HANDLE_VALUE)
 			me = NULL ;
 		rax[r1x] = 0 ;
-	} ,[] (HANDLE &me) {
+	} ,[] (api::HANDLE &me) {
 		if (me == NULL)
 			return ;
 		FindClose (me) ;
@@ -442,18 +465,18 @@ inline exports void _ENUMDIRECTORY_ (const String<STR> &dire ,Deque<String<STR>>
 		}
 		rax[r1x] = 0 ;
 		rbx.cFileName[0] = 0 ;
-		FindNextFile (r2x.self ,&rbx) ;
+		FindNextFile (r2x.self ,DEPTR[rbx]) ;
 	}
 }
 
-inline exports void _CLEARDIRECTORY_ (const String<STR> &dire) {
+inline exports void FileSystemProc::clear_directory (const String<STR> &dire) {
 	auto rax = Deque<PACK<String<STR> ,BOOL>> () ;
 	auto rbx = ARRAY2<Deque<String<STR>>> () ;
 	rbx[0].clear () ;
 	rbx[1].clear () ;
-	_ENUMDIRECTORY_ (dire ,rbx[0] ,rbx[1]) ;
+	FileSystemProc::enum_directory (dire ,rbx[0] ,rbx[1]) ;
 	for (auto &&i : rbx[0])
-		_ERASEFILE_ (i) ;
+		FileSystemProc::erase_file (i) ;
 	for (auto &&i : rbx[1])
 		rax.add (PACK<String<STR> ,BOOL> {i ,FALSE}) ;
 	_DYNAMIC_ASSERT_ (rax.length () <= DEFAULT_DIRECTORY_SIZE::value) ;
@@ -461,7 +484,7 @@ inline exports void _CLEARDIRECTORY_ (const String<STR> &dire) {
 		if (rax.empty ())
 			break ;
 		INDEX ix = rax.tail () ;
-		_ERASEDIRECTORY_ (rax[ix].P1) ;
+		FileSystemProc::erase_directory (rax[ix].P1) ;
 		auto fax = TRUE ;
 		if switch_case (fax) {
 			if (!rax[ix].P2)
@@ -471,9 +494,9 @@ inline exports void _CLEARDIRECTORY_ (const String<STR> &dire) {
 		if switch_case (fax) {
 			rbx[0].clear () ;
 			rbx[1].clear () ;
-			_ENUMDIRECTORY_ (rax[ix].P1 ,rbx[0] ,rbx[1]) ;
+			FileSystemProc::enum_directory (rax[ix].P1 ,rbx[0] ,rbx[1]) ;
 			for (auto &&i : rbx[0])
-				_ERASEFILE_ (i) ;
+				FileSystemProc::erase_file (i) ;
 			for (auto &&i : rbx[1])
 				rax.add (PACK<String<STR> ,BOOL> {i ,FALSE}) ;
 			_DYNAMIC_ASSERT_ (rax.length () <= DEFAULT_DIRECTORY_SIZE::value) ;
@@ -481,35 +504,34 @@ inline exports void _CLEARDIRECTORY_ (const String<STR> &dire) {
 		}
 	}
 }
-} ;
 
 class StreamLoader::Implement {
 private:
-	UniqueRef<HANDLE> mReadFile ;
-	UniqueRef<HANDLE> mWriteFile ;
+	UniqueRef<api::HANDLE> mReadFile ;
+	UniqueRef<api::HANDLE> mWriteFile ;
 
 public:
 	Implement () = delete ;
 
 	explicit Implement (const String<STR> &file) {
-		mWriteFile = UniqueRef<HANDLE> ([&] (HANDLE &me) {
+		mWriteFile = UniqueRef<api::HANDLE> ([&] (api::HANDLE &me) {
 			const auto r1x = VAR32 (FILE_SHARE_READ | FILE_SHARE_WRITE) ;
-			me = CreateFile (file.raw ().self ,GENERIC_WRITE ,r1x ,NULL ,OPEN_ALWAYS ,FILE_FLAG_SEQUENTIAL_SCAN ,NULL) ;
+			me = api::CreateFile (file.raw ().self ,GENERIC_WRITE ,r1x ,NULL ,OPEN_ALWAYS ,FILE_FLAG_SEQUENTIAL_SCAN ,NULL) ;
 			if (me == INVALID_HANDLE_VALUE)
 				me = NULL ;
 			_DYNAMIC_ASSERT_ (me != NULL) ;
 			SetFilePointer (me ,0 ,NULL ,FILE_END) ;
-		} ,[] (HANDLE &me) {
-			CloseHandle (me) ;
+		} ,[] (api::HANDLE &me) {
+			api::CloseHandle (me) ;
 		}) ;
-		mReadFile = UniqueRef<HANDLE> ([&] (HANDLE &me) {
+		mReadFile = UniqueRef<api::HANDLE> ([&] (api::HANDLE &me) {
 			const auto r2x = VAR32 (FILE_SHARE_READ | FILE_SHARE_WRITE) ;
-			me = CreateFile (file.raw ().self ,GENERIC_READ ,r2x ,NULL ,OPEN_ALWAYS ,FILE_FLAG_SEQUENTIAL_SCAN ,NULL) ;
+			me = api::CreateFile (file.raw ().self ,GENERIC_READ ,r2x ,NULL ,OPEN_ALWAYS ,FILE_FLAG_SEQUENTIAL_SCAN ,NULL) ;
 			if (me == INVALID_HANDLE_VALUE)
 				me = NULL ;
 			_DYNAMIC_ASSERT_ (me != NULL) ;
-		} ,[] (HANDLE &me) {
-			CloseHandle (me) ;
+		} ,[] (api::HANDLE &me) {
+			api::CloseHandle (me) ;
 		}) ;
 	}
 
@@ -517,20 +539,20 @@ public:
 		_DEBUG_ASSERT_ (data.size () < VAR32_MAX) ;
 		auto rax = VARY () ;
 		rax = VARY (0) ;
-		const auto r1x = ReadFile (mReadFile ,data.self ,VARY (data.size ()) ,&rax ,NULL) ;
+		const auto r1x = api::ReadFile (mReadFile ,data.self ,VARY (data.size ()) ,DEPTR[rax] ,NULL) ;
 		const auto r2x = _EBOOL_ (r1x != 0) * LENGTH (rax) ;
 		//@info: state of 'this' has been changed
 		_DYNAMIC_ASSERT_ (r2x >= 0 && r2x < VAR32_MAX) ;
 		if (data.size () - r2x == 0)
 			return ;
-		_MEMFILL_ (PTRTOARR[&data[r2x]] ,(data.size () - r2x) ,BYTE (0X00)) ;
+		BasicProc::mem_fill (PTRTOARR[&data[r2x]] ,(data.size () - r2x) ,BYTE (0X00)) ;
 	}
 
 	void write (const PhanBuffer<const BYTE> &data) {
 		_DEBUG_ASSERT_ (data.size () < VAR32_MAX) ;
 		auto rax = VARY () ;
 		rax = VARY (0) ;
-		const auto r1x = WriteFile (mWriteFile ,data.self ,VARY (data.size ()) ,&rax ,NULL) ;
+		const auto r1x = api::WriteFile (mWriteFile ,data.self ,VARY (data.size ()) ,DEPTR[rax] ,NULL) ;
 		const auto r2x = _EBOOL_ (r1x != 0) * LENGTH (rax) ;
 		//@info: state of 'this' has been changed
 		_DYNAMIC_ASSERT_ (r2x == data.size ()) ;
@@ -542,19 +564,19 @@ public:
 } ;
 
 inline exports StreamLoader::StreamLoader (const String<STR> &file) {
-	mThis = AnyRef<Implement>::make (file) ;
+	mThis = StrongRef<Implement>::make (file) ;
 }
 
 inline exports void StreamLoader::read (const PhanBuffer<BYTE> &data) {
-	mThis.rebind<Implement> ()->read (data) ;
+	mThis->read (data) ;
 }
 
 inline exports void StreamLoader::write (const PhanBuffer<const BYTE> &data) {
-	mThis.rebind<Implement> ()->write (data) ;
+	mThis->write (data) ;
 }
 
 inline exports void StreamLoader::flush () {
-	mThis.rebind<Implement> ()->flush () ;
+	mThis->flush () ;
 }
 
 class BufferLoader::Implement {
@@ -562,194 +584,231 @@ private:
 	class Pack {
 	private:
 		friend Implement ;
-		UniqueRef<HANDLE> mFile ;
-		UniqueRef<HANDLE> mMapping ;
+		UniqueRef<api::HANDLE> mFile ;
+		UniqueRef<api::HANDLE> mMapping ;
 		UniqueRef<PhanBuffer<BYTE>> mBuffer ;
 	} ;
 
 private:
-	UniqueRef<SharedRef<Pack>> mThis ;
+	UniqueRef<api::HANDLE> mBuildFile ;
+	UniqueRef<api::HANDLE> mBuildMapping ;
+	UniqueRef<PhanBuffer<BYTE>> mBuildBuffer ;
+	UniqueRef<Pack> mThis ;
 
 public:
 	Implement () = delete ;
 
 	explicit Implement (const String<STR> &file) {
-		mThis = UniqueRef<SharedRef<Pack>> ([&] (SharedRef<Pack> &me) {
-			me = SharedRef<Pack>::make () ;
-		} ,[] (SharedRef<Pack> &me) {
-			me->mBuffer = UniqueRef<PhanBuffer<BYTE>> () ;
-			me->mMapping = UniqueRef<HANDLE> () ;
-			me->mFile = UniqueRef<HANDLE> () ;
+		UniqueRef<PhanRef<Implement>> ANONYMOUS ([&] (PhanRef<Implement> &me) {
+			me = PhanRef<Implement>::make (DEREF[this]) ;
+		} ,[] (PhanRef<Implement> &me) {
+			me->mBuildBuffer = UniqueRef<PhanBuffer<BYTE>> () ;
+			me->mBuildMapping = UniqueRef<api::HANDLE> () ;
+			me->mBuildFile = UniqueRef<api::HANDLE> () ;
 		}) ;
-		mThis.self->mFile = UniqueRef<HANDLE> ([&] (HANDLE &me) {
-			me = CreateFile (file.raw ().self ,GENERIC_READ ,FILE_SHARE_READ ,NULL ,OPEN_EXISTING ,FILE_ATTRIBUTE_NORMAL ,NULL) ;
+		mBuildFile = UniqueRef<api::HANDLE> ([&] (api::HANDLE &me) {
+			me = api::CreateFile (file.raw ().self ,GENERIC_READ ,FILE_SHARE_READ ,NULL ,OPEN_EXISTING ,FILE_ATTRIBUTE_NORMAL ,NULL) ;
 			if (me == INVALID_HANDLE_VALUE)
 				me = NULL ;
 			_DYNAMIC_ASSERT_ (me != NULL) ;
-		} ,[] (HANDLE &me) {
-			CloseHandle (me) ;
+		} ,[] (api::HANDLE &me) {
+			api::CloseHandle (me) ;
 		}) ;
-		const auto r1x = LENGTH (GetFileSize (mThis.self->mFile.self ,NULL)) ;
+		const auto r1x = LENGTH (api::GetFileSize (mBuildFile.self ,NULL)) ;
 		_DYNAMIC_ASSERT_ (r1x >= 0 && r1x < VAR32_MAX) ;
-		mThis.self->mMapping = UniqueRef<HANDLE> ([&] (HANDLE &me) {
-			me = CreateFileMapping (mThis.self->mFile.self ,NULL ,PAGE_READONLY ,0 ,VARY (r1x) ,NULL) ;
+		mBuildMapping = UniqueRef<api::HANDLE> ([&] (api::HANDLE &me) {
+			me = api::CreateFileMapping (mBuildFile.self ,NULL ,PAGE_READONLY ,0 ,VARY (r1x) ,NULL) ;
 			_DYNAMIC_ASSERT_ (me != NULL) ;
-		} ,[] (HANDLE &me) {
-			CloseHandle (me) ;
+		} ,[] (api::HANDLE &me) {
+			api::CloseHandle (me) ;
 		}) ;
-		mThis.self->mBuffer = UniqueRef<PhanBuffer<BYTE>> ([&] (PhanBuffer<BYTE> &me) {
-			const auto r2x = MapViewOfFile (mThis.self->mMapping.self ,FILE_MAP_READ ,0 ,0 ,r1x) ;
+		mBuildBuffer = UniqueRef<PhanBuffer<BYTE>> ([&] (PhanBuffer<BYTE> &me) {
+			const auto r2x = api::MapViewOfFile (mBuildMapping.self ,FILE_MAP_READ ,0 ,0 ,r1x) ;
 			_DYNAMIC_ASSERT_ (r2x != NULL) ;
 			auto &r3x = _LOAD_<ARR<BYTE>> (r2x) ;
 			me = PhanBuffer<BYTE>::make (r3x ,r1x) ;
 		} ,[] (PhanBuffer<BYTE> &me) {
-			UnmapViewOfFile (me.self) ;
+			api::UnmapViewOfFile (me.self) ;
+		}) ;
+		mThis = UniqueRef<Pack> ([&] (Pack &me) {
+			me.mFile = _MOVE_ (mBuildFile) ;
+			me.mMapping = _MOVE_ (mBuildMapping) ;
+			me.mBuffer = _MOVE_ (mBuildBuffer) ;
+		} ,[] (Pack &me) {
+			me.mBuffer = UniqueRef<PhanBuffer<BYTE>> () ;
+			me.mMapping = UniqueRef<api::HANDLE> () ;
+			me.mFile = UniqueRef<api::HANDLE> () ;
 		}) ;
 	}
 
-	explicit Implement (const String<STR> &file ,LENGTH file_len) {
+	explicit Implement (const String<STR> &file ,const LENGTH &file_len) {
 		_DEBUG_ASSERT_ (file_len >= 0 && file_len < VAR32_MAX) ;
-		mThis = UniqueRef<SharedRef<Pack>> ([&] (SharedRef<Pack> &me) {
-			me = SharedRef<Pack>::make () ;
-		} ,[] (SharedRef<Pack> &me) {
-			me->mBuffer = UniqueRef<PhanBuffer<BYTE>> () ;
-			me->mMapping = UniqueRef<HANDLE> () ;
-			me->mFile = UniqueRef<HANDLE> () ;
+		UniqueRef<PhanRef<Implement>> ANONYMOUS ([&] (PhanRef<Implement> &me) {
+			me = PhanRef<Implement>::make (DEREF[this]) ;
+		} ,[] (PhanRef<Implement> &me) {
+			me->mBuildBuffer = UniqueRef<PhanBuffer<BYTE>> () ;
+			me->mBuildMapping = UniqueRef<api::HANDLE> () ;
+			me->mBuildFile = UniqueRef<api::HANDLE> () ;
 		}) ;
-		mThis.self->mFile = UniqueRef<HANDLE> ([&] (HANDLE &me) {
+		mBuildFile = UniqueRef<api::HANDLE> ([&] (api::HANDLE &me) {
 			const auto r1x = CSC::CHAR (GENERIC_READ | GENERIC_WRITE) ;
-			me = CreateFile (file.raw ().self ,r1x ,0 ,NULL ,CREATE_ALWAYS ,FILE_ATTRIBUTE_NORMAL ,NULL) ;
+			me = api::CreateFile (file.raw ().self ,r1x ,0 ,NULL ,CREATE_ALWAYS ,FILE_ATTRIBUTE_NORMAL ,NULL) ;
 			if (me == INVALID_HANDLE_VALUE)
 				me = NULL ;
 			_DYNAMIC_ASSERT_ (me != NULL) ;
-		} ,[] (HANDLE &me) {
-			CloseHandle (me) ;
+		} ,[] (api::HANDLE &me) {
+			api::CloseHandle (me) ;
 		}) ;
-		mThis.self->mMapping = UniqueRef<HANDLE> ([&] (HANDLE &me) {
-			me = CreateFileMapping (mThis.self->mFile.self ,NULL ,PAGE_READWRITE ,0 ,VARY (file_len) ,NULL) ;
+		mBuildMapping = UniqueRef<api::HANDLE> ([&] (api::HANDLE &me) {
+			me = api::CreateFileMapping (mBuildFile.self ,NULL ,PAGE_READWRITE ,0 ,VARY (file_len) ,NULL) ;
 			_DYNAMIC_ASSERT_ (me != NULL) ;
-		} ,[] (HANDLE &me) {
-			CloseHandle (me) ;
+		} ,[] (api::HANDLE &me) {
+			api::CloseHandle (me) ;
 		}) ;
-		mThis.self->mBuffer = UniqueRef<PhanBuffer<BYTE>> ([&] (PhanBuffer<BYTE> &me) {
+		mBuildBuffer = UniqueRef<PhanBuffer<BYTE>> ([&] (PhanBuffer<BYTE> &me) {
 			const auto r2x = VAR32 (FILE_MAP_READ | FILE_MAP_WRITE) ;
-			const auto r3x = MapViewOfFile (mThis.self->mMapping.self ,r2x ,0 ,0 ,file_len) ;
+			const auto r3x = api::MapViewOfFile (mBuildMapping.self ,r2x ,0 ,0 ,file_len) ;
 			_DYNAMIC_ASSERT_ (r3x != NULL) ;
 			auto &r4x = _LOAD_<ARR<BYTE>> (r3x) ;
 			me = PhanBuffer<BYTE>::make (r4x ,file_len) ;
 		} ,[] (PhanBuffer<BYTE> &me) {
-			UnmapViewOfFile (me.self) ;
+			api::UnmapViewOfFile (me.self) ;
+		}) ;
+		mThis = UniqueRef<Pack> ([&] (Pack &me) {
+			me.mFile = _MOVE_ (mBuildFile) ;
+			me.mMapping = _MOVE_ (mBuildMapping) ;
+			me.mBuffer = _MOVE_ (mBuildBuffer) ;
+		} ,[] (Pack &me) {
+			me.mBuffer = UniqueRef<PhanBuffer<BYTE>> () ;
+			me.mMapping = UniqueRef<api::HANDLE> () ;
+			me.mFile = UniqueRef<api::HANDLE> () ;
 		}) ;
 	}
 
-	explicit Implement (const String<STR> &file ,BOOL cache) {
+	explicit Implement (const String<STR> &file ,const BOOL &cache) {
 		_DEBUG_ASSERT_ (cache) ;
-		mThis = UniqueRef<SharedRef<Pack>> ([&] (SharedRef<Pack> &me) {
-			me = SharedRef<Pack>::make () ;
-		} ,[] (SharedRef<Pack> &me) {
-			me->mBuffer = UniqueRef<PhanBuffer<BYTE>> () ;
-			me->mMapping = UniqueRef<HANDLE> () ;
-			me->mFile = UniqueRef<HANDLE> () ;
+		UniqueRef<PhanRef<Implement>> ANONYMOUS ([&] (PhanRef<Implement> &me) {
+			me = PhanRef<Implement>::make (DEREF[this]) ;
+		} ,[] (PhanRef<Implement> &me) {
+			me->mBuildBuffer = UniqueRef<PhanBuffer<BYTE>> () ;
+			me->mBuildMapping = UniqueRef<api::HANDLE> () ;
+			me->mBuildFile = UniqueRef<api::HANDLE> () ;
 		}) ;
-		mThis.self->mMapping = UniqueRef<HANDLE> ([&] (HANDLE &me) {
+		mBuildMapping = UniqueRef<api::HANDLE> ([&] (api::HANDLE &me) {
 			me = OpenFileMapping (FILE_MAP_READ ,FALSE ,file.raw ().self) ;
 			_DYNAMIC_ASSERT_ (me != NULL) ;
-		} ,[] (HANDLE &me) {
-			CloseHandle (me) ;
+		} ,[] (api::HANDLE &me) {
+			api::CloseHandle (me) ;
 		}) ;
-		mThis.self->mBuffer = UniqueRef<PhanBuffer<BYTE>> ([&] (PhanBuffer<BYTE> &me) {
+		mBuildBuffer = UniqueRef<PhanBuffer<BYTE>> ([&] (PhanBuffer<BYTE> &me) {
 			const auto r1x = UniqueRef<PhanBuffer<BYTE>> ([&] (PhanBuffer<BYTE> &me) {
-				const auto r2x = MapViewOfFile (mThis.self->mMapping.self ,FILE_MAP_READ ,0 ,0 ,0) ;
+				const auto r2x = api::MapViewOfFile (mBuildMapping.self ,FILE_MAP_READ ,0 ,0 ,0) ;
 				_DYNAMIC_ASSERT_ (r2x != NULL) ;
 				auto &r3x = _LOAD_<ARR<BYTE>> (r2x) ;
 				me = PhanBuffer<BYTE>::make (r3x ,1) ;
 			} ,[] (PhanBuffer<BYTE> &me) {
-				UnmapViewOfFile (me.self) ;
+				api::UnmapViewOfFile (me.self) ;
 			}) ;
-			auto rax = MEMORY_BASIC_INFORMATION () ;
+			auto rax = api::MEMORY_BASIC_INFORMATION () ;
 			_ZERO_ (rax) ;
-			const auto r4x = VirtualQuery (r1x->self ,&rax ,_SIZEOF_ (MEMORY_BASIC_INFORMATION)) ;
-			_DYNAMIC_ASSERT_ (r4x == _SIZEOF_ (MEMORY_BASIC_INFORMATION)) ;
-			const auto r5x = MapViewOfFile (mThis.self->mMapping.self ,FILE_MAP_READ ,0 ,0 ,rax.RegionSize) ;
+			const auto r4x = VirtualQuery (r1x->self ,DEPTR[rax] ,_SIZEOF_ (api::MEMORY_BASIC_INFORMATION)) ;
+			_DYNAMIC_ASSERT_ (r4x == _SIZEOF_ (api::MEMORY_BASIC_INFORMATION)) ;
+			const auto r5x = api::MapViewOfFile (mBuildMapping.self ,FILE_MAP_READ ,0 ,0 ,rax.RegionSize) ;
 			_DYNAMIC_ASSERT_ (r5x != NULL) ;
 			auto &r6x = _LOAD_<ARR<BYTE>> (r5x) ;
 			me = PhanBuffer<BYTE>::make (r6x ,LENGTH (rax.RegionSize)) ;
 		} ,[] (PhanBuffer<BYTE> &me) {
-			UnmapViewOfFile (me.self) ;
+			api::UnmapViewOfFile (me.self) ;
+		}) ;
+		mThis = UniqueRef<Pack> ([&] (Pack &me) {
+			me.mFile = _MOVE_ (mBuildFile) ;
+			me.mMapping = _MOVE_ (mBuildMapping) ;
+			me.mBuffer = _MOVE_ (mBuildBuffer) ;
+		} ,[] (Pack &me) {
+			me.mBuffer = UniqueRef<PhanBuffer<BYTE>> () ;
+			me.mMapping = UniqueRef<api::HANDLE> () ;
+			me.mFile = UniqueRef<api::HANDLE> () ;
 		}) ;
 	}
 
-	explicit Implement (const String<STR> &file ,LENGTH file_len ,BOOL cache) {
+	explicit Implement (const String<STR> &file ,const LENGTH &file_len ,const BOOL &cache) {
 		_DEBUG_ASSERT_ (file_len >= 0 && file_len < VAR32_MAX) ;
 		_DEBUG_ASSERT_ (cache) ;
-		mThis = UniqueRef<SharedRef<Pack>> ([&] (SharedRef<Pack> &me) {
-			me = SharedRef<Pack>::make () ;
-		} ,[] (SharedRef<Pack> &me) {
-			me->mBuffer = UniqueRef<PhanBuffer<BYTE>> () ;
-			me->mMapping = UniqueRef<HANDLE> () ;
-			me->mFile = UniqueRef<HANDLE> () ;
+		UniqueRef<PhanRef<Implement>> ANONYMOUS ([&] (PhanRef<Implement> &me) {
+			me = PhanRef<Implement>::make (DEREF[this]) ;
+		} ,[] (PhanRef<Implement> &me) {
+			me->mBuildBuffer = UniqueRef<PhanBuffer<BYTE>> () ;
+			me->mBuildMapping = UniqueRef<api::HANDLE> () ;
+			me->mBuildFile = UniqueRef<api::HANDLE> () ;
 		}) ;
-		mThis.self->mMapping = UniqueRef<HANDLE> ([&] (HANDLE &me) {
-			me = CreateFileMapping (INVALID_HANDLE_VALUE ,NULL ,PAGE_READWRITE ,0 ,VARY (file_len) ,file.raw ().self) ;
+		mBuildMapping = UniqueRef<api::HANDLE> ([&] (api::HANDLE &me) {
+			me = api::CreateFileMapping (INVALID_HANDLE_VALUE ,NULL ,PAGE_READWRITE ,0 ,VARY (file_len) ,file.raw ().self) ;
 			_DYNAMIC_ASSERT_ (me != NULL) ;
-		} ,[] (HANDLE &me) {
-			CloseHandle (me) ;
+		} ,[] (api::HANDLE &me) {
+			api::CloseHandle (me) ;
 		}) ;
-		mThis.self->mBuffer = UniqueRef<PhanBuffer<BYTE>> ([&] (PhanBuffer<BYTE> &me) {
+		mBuildBuffer = UniqueRef<PhanBuffer<BYTE>> ([&] (PhanBuffer<BYTE> &me) {
 			const auto r1x = VAR32 (FILE_MAP_READ | FILE_MAP_WRITE) ;
-			const auto r2x = MapViewOfFile (mThis.self->mMapping.self ,r1x ,0 ,0 ,file_len) ;
+			const auto r2x = api::MapViewOfFile (mBuildMapping.self ,r1x ,0 ,0 ,file_len) ;
 			_DYNAMIC_ASSERT_ (r2x != NULL) ;
 			auto &r3x = _LOAD_<ARR<BYTE>> (r2x) ;
 			me = PhanBuffer<BYTE>::make (r3x ,file_len) ;
 		} ,[] (PhanBuffer<BYTE> &me) {
-			UnmapViewOfFile (me.self) ;
+			api::UnmapViewOfFile (me.self) ;
+		}) ;
+		mThis = UniqueRef<Pack> ([&] (Pack &me) {
+			me.mFile = _MOVE_ (mBuildFile) ;
+			me.mMapping = _MOVE_ (mBuildMapping) ;
+			me.mBuffer = _MOVE_ (mBuildBuffer) ;
+		} ,[] (Pack &me) {
+			me.mBuffer = UniqueRef<PhanBuffer<BYTE>> () ;
+			me.mMapping = UniqueRef<api::HANDLE> () ;
+			me.mFile = UniqueRef<api::HANDLE> () ;
 		}) ;
 	}
 
-	PhanBuffer<BYTE> watch () & {
+	PhanBuffer<BYTE> watch () leftvalue {
 		_DEBUG_ASSERT_ (mThis.exist ()) ;
-		return PhanBuffer<BYTE>::make (mThis.self->mBuffer.self) ;
+		return PhanBuffer<BYTE>::make (mThis->mBuffer.self) ;
 	}
 
-	PhanBuffer<const BYTE> watch () const & {
+	PhanBuffer<const BYTE> watch () const leftvalue {
 		_DEBUG_ASSERT_ (mThis.exist ()) ;
-		return PhanBuffer<const BYTE>::make (mThis.self->mBuffer.self) ;
+		return PhanBuffer<const BYTE>::make (mThis->mBuffer.self) ;
 	}
-
-	auto watch () && ->void = delete ;
 
 	void flush () {
 		_DEBUG_ASSERT_ (mThis.exist ()) ;
-		FlushViewOfFile (mThis.self->mBuffer->self ,mThis.self->mBuffer->size ()) ;
+		FlushViewOfFile (mThis->mBuffer->self ,mThis->mBuffer->size ()) ;
 	}
 } ;
 
 inline exports BufferLoader::BufferLoader (const String<STR> &file) {
-	mThis = AnyRef<Implement>::make (file) ;
+	mThis = StrongRef<Implement>::make (file) ;
 }
 
-inline exports BufferLoader::BufferLoader (const String<STR> &file ,LENGTH file_len) {
-	mThis = AnyRef<Implement>::make (file ,file_len) ;
+inline exports BufferLoader::BufferLoader (const String<STR> &file ,const LENGTH &file_len) {
+	mThis = StrongRef<Implement>::make (file ,file_len) ;
 }
 
-inline exports BufferLoader::BufferLoader (const String<STR> &file ,BOOL cache) {
-	mThis = AnyRef<Implement>::make (file ,cache) ;
+inline exports BufferLoader::BufferLoader (const String<STR> &file ,const BOOL &cache) {
+	mThis = StrongRef<Implement>::make (file ,cache) ;
 }
 
-inline exports BufferLoader::BufferLoader (const String<STR> &file ,LENGTH file_len ,BOOL cache) {
-	mThis = AnyRef<Implement>::make (file ,file_len ,cache) ;
+inline exports BufferLoader::BufferLoader (const String<STR> &file ,const LENGTH &file_len ,const BOOL &cache) {
+	mThis = StrongRef<Implement>::make (file ,file_len ,cache) ;
 }
 
-inline exports PhanBuffer<BYTE> BufferLoader::watch () & {
-	return mThis.rebind<Implement> ()->watch () ;
+inline exports PhanBuffer<BYTE> BufferLoader::watch () leftvalue {
+	return _FORWARD_<Implement &> (mThis).watch () ;
 }
 
-inline exports PhanBuffer<const BYTE> BufferLoader::watch () const & {
-	return mThis.rebind<Implement> ()->watch () ;
+inline exports PhanBuffer<const BYTE> BufferLoader::watch () const leftvalue {
+	return _FORWARD_<const Implement &> (mThis).watch () ;
 }
 
 inline exports void BufferLoader::flush () {
-	mThis.rebind<Implement> ()->flush () ;
+	mThis->flush () ;
 }
 
 class FileSystemService::Implement

@@ -8,6 +8,8 @@
 #pragma push_macro ("self")
 #pragma push_macro ("implicit")
 #pragma push_macro ("popping")
+#pragma push_macro ("leftvalue")
+#pragma push_macro ("rightvalue")
 #pragma push_macro ("imports")
 #pragma push_macro ("exports")
 #pragma push_macro ("switch_case")
@@ -15,6 +17,8 @@
 #undef self
 #undef implicit
 #undef popping
+#undef leftvalue
+#undef rightvalue
 #undef imports
 #undef exports
 #undef switch_case
@@ -34,7 +38,11 @@
 #ifndef use_comment_lib_mysql
 #ifdef __CSC_DEBUG__
 #define use_comment_lib_mysql "libmysqld.lib"
-#else
+#endif
+#endif
+
+#ifndef use_comment_lib_mysql
+#ifndef __CSC_DEBUG__
 #define use_comment_lib_mysql "libmysql.lib"
 #endif
 #endif
@@ -47,6 +55,8 @@
 #pragma pop_macro ("self")
 #pragma pop_macro ("implicit")
 #pragma pop_macro ("popping")
+#pragma pop_macro ("leftvalue")
+#pragma pop_macro ("rightvalue")
 #pragma pop_macro ("imports")
 #pragma pop_macro ("exports")
 #pragma pop_macro ("switch_case")
@@ -54,29 +64,37 @@
 #endif
 
 namespace CSC {
+namespace api {
+using ::MYSQL ;
+
+using ::mysql_init ;
+using ::mysql_close ;
+using ::mysql_error ;
+} ;
+
 class AbstractDatabase_Engine_MYSQL
 	:public AbstractDatabase::Abstract {
 private:
-	using NATIVE_THIS = UniqueRef<MYSQL> ;
+	using NATIVE_THIS = UniqueRef<api::MYSQL> ;
 
 public:
 	AbstractDatabase_Engine_MYSQL () {
-		_STATIC_ASSERT_ (_SIZEOF_ (decltype ((*this))) == _SIZEOF_ (Interface)) ;
-		_STATIC_ASSERT_ (_ALIGNOF_ (decltype ((*this))) == _ALIGNOF_ (Interface)) ;
+		_STATIC_ASSERT_ (_SIZEOF_ (decltype (DEREF[this])) == _SIZEOF_ (Interface)) ;
+		_STATIC_ASSERT_ (_ALIGNOF_ (decltype (DEREF[this])) == _ALIGNOF_ (Interface)) ;
 	}
 
-	void compute_load_data (AnyRef<void> &this_) const override {
-		auto tmp = UniqueRef<MYSQL> ([&] (MYSQL &me) {
-			::mysql_init (&me) ;
-		} ,[] (MYSQL &me) {
-			::mysql_close (&me) ;
+	void compute_load_data (AnyRef<void> &holder) const override {
+		auto tmp = UniqueRef<api::MYSQL> ([&] (api::MYSQL &me) {
+			api::mysql_init (DEPTR[me]) ;
+		} ,[] (api::MYSQL &me) {
+			api::mysql_close (DEPTR[me]) ;
 		}) ;
-		this_ = AnyRef<NATIVE_THIS>::make (std::move (tmp)) ;
+		holder = AnyRef<NATIVE_THIS>::make (_MOVE_ (tmp)) ;
 	}
 
 private:
-	inline void compute_check_error (MYSQL &self_) const {
-		const auto r1x = ::mysql_error (&self_) ;
+	inline void compute_check_error (api::MYSQL &self_) const {
+		const auto r1x = api::mysql_error (DEPTR[self_]) ;
 		_DYNAMIC_ASSERT_ (r1x == NULL) ;
 	}
 } ;

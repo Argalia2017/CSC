@@ -5,372 +5,405 @@
 #endif
 
 namespace CSC {
-inline namespace FUNCTIONAL {
-template <class...>
-struct op_equal ;
+namespace U {
+template <class _ARG1 ,class _ARG2>
+struct COMPILE_RETURN {
+	using TYPE = REMOVE_CVR_TYPE<RESULT_OF_TYPE<DEF<decltype (&_ARG1::compile)> ,ARGVS<_ARG2 &>>> ;
+} ;
 
-template <class _ARG1>
-struct op_equal<_ARG1 ,_ARG1> {
-	inline static Expression<RANK2> compile () {
-		return Operator ([] (const _ARG1 &arg1 ,const _ARG1 &arg2) {
-			return BOOL (arg1 == arg2) ;
-		}) ;
-	}
+template <class _ARG1 ,class _ARG2>
+using COMPILE_RETURN_TYPE = CALL<COMPILE_RETURN<_ARG1 ,_ARG2>> ;
 } ;
 
 template <class...>
-struct op_compr ;
+struct FUN_equal ;
 
-template <class _ARG1>
-struct op_compr<_ARG1 ,_ARG1> {
-	inline static Expression<RANK2> compile () {
-		return Operator ([] (const _ARG1 &arg1 ,const _ARG1 &arg2) {
-			return _MEMCOMPR_ (PTRTOARR[&arg1] ,PTRTOARR[&arg2] ,1) ;
-		}) ;
-	}
+template <class IN_lhs ,class IN_rhs>
+struct FUN_equal<IN_lhs ,IN_rhs> {
+	struct CON_equal {
+		template <class CONTEXT>
+		static BOOL compile (CONTEXT &me) {
+			return IN_lhs::compile (me) == IN_rhs::compile (me) ;
+		}
+	} ;
+
+	using TYPE = CON_equal ;
 } ;
 
 template <class...>
-struct op_not ;
+struct FUN_compr ;
 
-template <class _ARG1>
-struct op_not<_ARG1> {
-	inline static Expression<RANK1> compile () {
-		return Operator ([] (const _ARG1 &arg1) {
-			return _XVALUE_<_ARG1> (~arg1) ;
-		}) ;
-	}
-} ;
+template <class IN_lhs ,class IN_rhs>
+struct FUN_compr<IN_lhs ,IN_rhs> {
+	struct CON_compr {
+		template <class CONTEXT>
+		static FLAG compile (CONTEXT &me) {
+			return U::OPERATOR_COMPR::invoke (IN_lhs::compile (me) ,IN_rhs::compile (me)) ;
+		}
+	} ;
 
-template <>
-struct op_not<BOOL> {
-	inline static Expression<RANK1> compile () {
-		return Operator ([] (const BOOL &arg1) {
-			return BOOL (!arg1) ;
-		}) ;
-	}
+	using TYPE = CON_compr ;
 } ;
 
 template <class...>
-struct op_and ;
+struct FUN_not ;
 
-template <class _ARG1>
-struct op_and<_ARG1 ,_ARG1> {
-	inline static Expression<RANK2> compile () {
-		return Operator ([] (const _ARG1 &arg1 ,const _ARG1 &arg2) {
-			return _XVALUE_<_ARG1> (arg1 & arg2) ;
-		}) ;
-	}
-} ;
+template <class IN_lhs>
+struct FUN_not<IN_lhs> {
+	struct CON_not {
+		template <class CONTEXT>
+		static BOOL compile (CONTEXT &me) {
+			return !IN_lhs::compile (me) ;
+		}
+	} ;
 
-template <>
-struct op_and<BOOL ,BOOL> {
-	inline static Expression<RANK2> compile () {
-		return Operator ([] (const BOOL &arg1 ,const BOOL &arg2) {
-			return BOOL (arg1 && arg2) ;
-		}) ;
-	}
+	using TYPE = CON_not ;
 } ;
 
 template <class...>
-struct op_or ;
+struct FUN_and ;
 
-template <class _ARG1>
-struct op_or<_ARG1 ,_ARG1> {
-	inline static Expression<RANK2> compile () {
-		return Operator ([] (const _ARG1 &arg1 ,const _ARG1 &arg2) {
-			return _XVALUE_<_ARG1> (arg1 | arg2) ;
-		}) ;
-	}
-} ;
+template <class IN_lhs ,class IN_rhs>
+struct FUN_and<IN_lhs ,IN_rhs> {
+	struct CON_and {
+		template <class CONTEXT>
+		static BOOL compile (CONTEXT &me) {
+			return IN_lhs::compile (me) && IN_rhs::compile (me) ;
+		}
+	} ;
 
-template <>
-struct op_or<BOOL ,BOOL> {
-	inline static Expression<RANK2> compile () {
-		return Operator ([] (const BOOL &arg1 ,const BOOL &arg2) {
-			return BOOL (arg1 || arg2) ;
-		}) ;
-	}
+	using TYPE = CON_and ;
 } ;
 
 template <class...>
-struct op_xor ;
+struct FUN_band ;
 
-template <class _ARG1>
-struct op_xor<_ARG1 ,_ARG1> {
-	inline static Expression<RANK2> compile () {
-		return Operator ([] (const _ARG1 &arg1 ,const _ARG1 &arg2) {
-			return _XVALUE_<_ARG1> (arg1 ^ arg2) ;
-		}) ;
-	}
-} ;
+template <class IN_lhs ,class IN_rhs>
+struct FUN_band<IN_lhs ,IN_rhs> {
+	struct CON_band {
+		template <class CONTEXT>
+		static U::COMPILE_RETURN_TYPE<IN_lhs ,CONTEXT> compile (CONTEXT &me) {
+			const auto r1x = IN_lhs::compile (me) & IN_rhs::compile (me) ;
+			return U::COMPILE_RETURN_TYPE<IN_lhs ,CONTEXT> (r1x) ;
+		}
+	} ;
 
-template <>
-struct op_xor<BOOL ,BOOL> {
-	inline static Expression<RANK2> compile () {
-		return Operator ([] (const BOOL &arg1 ,const BOOL &arg2) {
-			return BOOL (arg1 != arg2) ;
-		}) ;
-	}
+	using TYPE = CON_band ;
 } ;
 
 template <class...>
-struct op_plus ;
+struct FUN_or ;
 
-template <class _ARG1>
-struct op_plus<_ARG1> {
-	inline static Expression<RANK1> compile () {
-		return Operator ([] (const _ARG1 &arg1) {
-			return +arg1 ;
-		}) ;
-	}
+template <class IN_lhs ,class IN_rhs>
+struct FUN_or<IN_lhs ,IN_rhs> {
+	struct CON_or {
+		template <class CONTEXT>
+		static BOOL compile (CONTEXT &me) {
+			return IN_lhs::compile (me) || IN_rhs::compile (me) ;
+		}
+	} ;
+
+	using TYPE = CON_or ;
 } ;
 
 template <class...>
-struct op_minus ;
+struct FUN_bor ;
 
-template <class _ARG1>
-struct op_minus<_ARG1> {
-	inline static Expression<RANK1> compile () {
-		return Operator ([] (const _ARG1 &arg1) {
-			return -arg1 ;
-		}) ;
-	}
+template <class IN_lhs ,class IN_rhs>
+struct FUN_bor<IN_lhs ,IN_rhs> {
+	struct CON_bor {
+		template <class CONTEXT>
+		static U::COMPILE_RETURN_TYPE<IN_lhs ,CONTEXT> compile (CONTEXT &me) {
+			const auto r1x = IN_lhs::compile (me) | IN_rhs::compile (me) ;
+			return U::COMPILE_RETURN_TYPE<IN_lhs ,CONTEXT> (r1x) ;
+		}
+	} ;
+
+	using TYPE = CON_bor ;
 } ;
 
 template <class...>
-struct op_increase ;
+struct FUN_xor ;
 
-template <class _ARG1>
-struct op_increase<_ARG1> {
-	inline static Expression<RANK1> compile () {
-		return Operator ([] (const _ARG1 &arg1) {
-			_ARG1 ret = arg1 ;
+template <class IN_lhs ,class IN_rhs>
+struct FUN_xor<IN_lhs ,IN_rhs> {
+	struct CON_xor {
+		template <class CONTEXT>
+		static BOOL compile (CONTEXT &me) {
+			return IN_lhs::compile (me) != IN_rhs::compile (me) ;
+		}
+	} ;
+
+	using TYPE = CON_xor ;
+} ;
+
+template <class...>
+struct FUN_bxor ;
+
+template <class IN_lhs ,class IN_rhs>
+struct FUN_bxor<IN_lhs ,IN_rhs> {
+	struct CON_bxor {
+		template <class CONTEXT>
+		static U::COMPILE_RETURN_TYPE<IN_lhs ,CONTEXT> compile (CONTEXT &me) {
+			const auto r1x = IN_lhs::compile (me) ^ IN_rhs::compile (me) ;
+			return U::COMPILE_RETURN_TYPE<IN_lhs ,CONTEXT> (r1x) ;
+		}
+	} ;
+
+	using TYPE = CON_bxor ;
+} ;
+
+template <class...>
+struct FUN_plus ;
+
+template <class IN_lhs>
+struct FUN_plus<IN_lhs> {
+	struct CON_plus {
+		template <class CONTEXT>
+		static U::COMPILE_RETURN_TYPE<IN_lhs ,CONTEXT> compile (CONTEXT &me) {
+			return +IN_lhs::compile (me) ;
+		}
+	} ;
+
+	using TYPE = CON_plus ;
+} ;
+
+template <class...>
+struct FUN_minus ;
+
+template <class IN_lhs>
+struct FUN_minus<IN_lhs> {
+	struct CON_minus {
+		template <class CONTEXT>
+		static U::COMPILE_RETURN_TYPE<IN_lhs ,CONTEXT> compile (CONTEXT &me) {
+			return -IN_lhs::compile (me) ;
+		}
+	} ;
+
+	using TYPE = CON_minus ;
+} ;
+
+template <class...>
+struct FUN_increase ;
+
+template <class IN_lhs>
+struct FUN_increase<IN_lhs> {
+	struct CON_increase {
+		template <class CONTEXT>
+		static U::COMPILE_RETURN_TYPE<IN_lhs ,CONTEXT> compile (CONTEXT &me) {
+			U::COMPILE_RETURN_TYPE<IN_lhs ,CONTEXT> ret = IN_lhs::compile (me) ;
 			++ret ;
-			return std::move (ret) ;
-		}) ;
-	}
+			return _MOVE_ (ret) ;
+		}
+	} ;
+
+	using TYPE = CON_increase ;
 } ;
 
 template <class...>
-struct op_decrease ;
+struct FUN_decrease ;
 
-template <class _ARG1>
-struct op_decrease<_ARG1> {
-	inline static Expression<RANK1> compile () {
-		return Operator ([] (const _ARG1 &arg1) {
-			_ARG1 ret = arg1 ;
+template <class IN_lhs>
+struct FUN_decrease<IN_lhs> {
+	struct CON_decrease {
+		template <class CONTEXT>
+		static U::COMPILE_RETURN_TYPE<IN_lhs ,CONTEXT> compile (CONTEXT &me) {
+			U::COMPILE_RETURN_TYPE<IN_lhs ,CONTEXT> ret = IN_lhs::compile (me) ;
 			--ret ;
-			return std::move (ret) ;
-		}) ;
-	}
+			return _MOVE_ (ret) ;
+		}
+	} ;
+
+	using TYPE = CON_decrease ;
 } ;
 
 template <class...>
-struct op_add ;
+struct FUN_add ;
 
-template <class _ARG1 ,class _ARG2>
-struct op_add<_ARG1 ,_ARG2> {
-	inline static Expression<RANK2> compile () {
-		return Operator ([] (const _ARG1 &arg1 ,const _ARG2 &arg2) {
-			return arg1 + arg2 ;
-		}) ;
-	}
+template <class IN_lhs ,class IN_rhs>
+struct FUN_add<IN_lhs ,IN_rhs> {
+	struct CON_add {
+		template <class CONTEXT>
+		static U::COMPILE_RETURN_TYPE<IN_lhs ,CONTEXT> compile (CONTEXT &me) {
+			return IN_lhs::compile (me) + IN_rhs::compile (me) ;
+		}
+	} ;
+
+	using TYPE = CON_add ;
 } ;
 
 template <class...>
-struct op_sub ;
+struct FUN_sub ;
 
-template <class _ARG1 ,class _ARG2>
-struct op_sub<_ARG1 ,_ARG2> {
-	inline static Expression<RANK2> compile () {
-		return Operator ([] (const _ARG1 &arg1 ,const _ARG2 &arg2) {
-			return arg1 - arg2 ;
-		}) ;
-	}
+template <class IN_lhs ,class IN_rhs>
+struct FUN_sub<IN_lhs ,IN_rhs> {
+	struct CON_sub {
+		template <class CONTEXT>
+		static U::COMPILE_RETURN_TYPE<IN_lhs ,CONTEXT> compile (CONTEXT &me) {
+			return IN_lhs::compile (me) - IN_rhs::compile (me) ;
+		}
+	} ;
+
+	using TYPE = CON_sub ;
 } ;
 
 template <class...>
-struct op_mul ;
+struct FUN_mul ;
 
-template <class _ARG1 ,class _ARG2>
-struct op_mul<_ARG1 ,_ARG2> {
-	inline static Expression<RANK2> compile () {
-		return Operator ([] (const _ARG1 &arg1 ,const _ARG2 &arg2) {
-			return arg1 * arg2 ;
-		}) ;
-	}
+template <class IN_lhs ,class IN_rhs>
+struct FUN_mul<IN_lhs ,IN_rhs> {
+	struct CON_mul {
+		template <class CONTEXT>
+		static U::COMPILE_RETURN_TYPE<IN_lhs ,CONTEXT> compile (CONTEXT &me) {
+			return IN_lhs::compile (me) * IN_rhs::compile (me) ;
+		}
+	} ;
+
+	using TYPE = CON_mul ;
 } ;
 
 template <class...>
-struct op_div ;
+struct FUN_div ;
 
-template <class _ARG1 ,class _ARG2>
-struct op_div<_ARG1 ,_ARG2> {
-	inline static Expression<RANK2> compile () {
-		return Operator ([] (const _ARG1 &arg1 ,const _ARG2 &arg2) {
-			return arg1 / arg2 ;
-		}) ;
-	}
+template <class IN_lhs ,class IN_rhs>
+struct FUN_div<IN_lhs ,IN_rhs> {
+	struct CON_div {
+		template <class CONTEXT>
+		static U::COMPILE_RETURN_TYPE<IN_lhs ,CONTEXT> compile (CONTEXT &me) {
+			return IN_lhs::compile (me) / IN_rhs::compile (me) ;
+		}
+	} ;
+
+	using TYPE = CON_div ;
 } ;
 
 template <class...>
-struct op_mod ;
+struct FUN_mod ;
 
-template <class _ARG1 ,class _ARG2>
-struct op_mod<_ARG1 ,_ARG2> {
-	inline static Expression<RANK2> compile () {
-		return Operator ([] (const _ARG1 &arg1 ,const _ARG2 &arg2) {
-			return arg1 % arg2 ;
-		}) ;
-	}
+template <class IN_lhs ,class IN_rhs>
+struct FUN_mod<IN_lhs ,IN_rhs> {
+	struct CON_mod {
+		template <class CONTEXT>
+		static U::COMPILE_RETURN_TYPE<IN_lhs ,CONTEXT> compile (CONTEXT &me) {
+			return IN_lhs::compile (me) % IN_rhs::compile (me) ;
+		}
+	} ;
+
+	using TYPE = CON_mod ;
 } ;
 
 template <class...>
-struct op_cross ;
+struct FUN_cross ;
 
-template <class _ARG1 ,class _ARG2>
-struct op_cross<_ARG1 ,_ARG2> {
-	inline static Expression<RANK2> compile () {
-		return Operator ([] (const _ARG1 &arg1 ,const _ARG2 &arg2) {
-			return arg1 ^ arg2 ;
-		}) ;
-	}
+template <class IN_lhs ,class IN_rhs>
+struct FUN_cross<IN_lhs ,IN_rhs> {
+	struct CON_cross {
+		template <class CONTEXT>
+		static U::COMPILE_RETURN_TYPE<IN_lhs ,CONTEXT> compile (CONTEXT &me) {
+			return IN_lhs::compile (me) ^ IN_rhs::compile (me) ;
+		}
+	} ;
+
+	using TYPE = CON_cross ;
+} ;
+
+template <class... IN_lhs>
+struct FUN_tuple {
+	struct CON_tuple {
+		using TYPE = ARGVS<IN_lhs...> ;
+	} ;
+
+	using TYPE = CON_tuple ;
 } ;
 
 template <class...>
-struct op_cast ;
+struct FUN_tuple_pick ;
 
-template <class _ARG1 ,class _ARG2>
-struct op_cast<_ARG1 ,_ARG2> {
-	inline static Expression<RANK1> compile () {
-		return Operator ([] (const _ARG1 &arg1) {
-			return _XVALUE_<_ARG2> (arg1) ;
-		}) ;
-	}
+template <class IN_tuple ,class IN_id>
+struct FUN_tuple_pick<IN_tuple ,IN_id> {
+	using tuple_argvs = CALL<IN_tuple> ;
+
+	using TYPE = INDEX_TO_TYPE<IN_id ,tuple_argvs> ;
 } ;
 
 template <class...>
-struct op_get ;
+struct FUN_get ;
 
-template <class _ARG1>
-struct op_get<_ARG1 ,INDEX> {
-	inline static Expression<RANK2> compile () {
-		return Operator ([] (const _ARG1 &arg1 ,const INDEX &arg2) {
-			return arg1[arg2] ;
-		}) ;
-	}
+template <class IN_lhs ,class IN_rhs>
+struct FUN_get<IN_lhs ,IN_rhs> {
+	struct CON_get {
+		template <class CONTEXT>
+		static auto compile (CONTEXT &me)
+			->DEPENDENT_TYPE<DEF<decltype (_NULL_<U::COMPILE_RETURN_TYPE<IN_lhs ,CONTEXT>> ()[_NULL_<U::COMPILE_RETURN_TYPE<IN_rhs ,CONTEXT>> ()])> ,CONTEXT> {
+			return IN_lhs::compile (me)[IN_rhs::compile (me)] ;
+		}
+	} ;
+
+	using TYPE = CON_get ;
 } ;
 
 template <class...>
-struct op_call ;
+struct FUN_assign ;
 
-template <class _ARG1>
-struct op_call<_ARG1> {
-	inline static Expression<RANK1> compile () {
-		return Operator ([] (const _ARG1 &arg1) {
-			return arg1 () ;
-		}) ;
-	}
-} ;
+template <class IN_lhs ,class IN_rhs>
+struct FUN_assign<IN_lhs ,IN_rhs> {
+	struct CON_assign {
+		template <class CONTEXT>
+		static U::COMPILE_RETURN_TYPE<IN_lhs ,CONTEXT> compile (CONTEXT &me) {
+			_STATIC_ASSERT_ (stl::is_lvalue_reference<U::COMPILE_RETURN_TYPE<IN_lhs ,CONTEXT>>::value) ;
+			return IN_lhs::compile (me) = IN_rhs::compile (me) ;
+		}
+	} ;
 
-template <class _ARG1 ,class _ARG2>
-struct op_call<_ARG1 ,_ARG2> {
-	inline static Expression<RANK2> compile () {
-		return Operator ([] (const _ARG1 &arg1 ,const _ARG2 &arg2) {
-			return arg1 (arg2) ;
-		}) ;
-	}
-} ;
-
-template <class _ARG1 ,class _ARG2 ,class _ARG3>
-struct op_call<_ARG1 ,_ARG2 ,_ARG3> {
-	inline static Expression<RANK3> compile () {
-		return Operator ([] (const _ARG1 &arg1 ,const _ARG2 &arg2 ,const _ARG3 &arg3) {
-			return arg1 (arg2 ,arg3) ;
-		}) ;
-	}
+	using TYPE = CON_assign ;
 } ;
 
 template <class...>
-struct op_switch ;
+struct FUN_call ;
 
-template <>
-struct op_switch<BOOL ,Operand ,Operand> {
-	inline static Expression<RANK3> compile () {
-		return Operator ([] (const BOOL &flag ,const Operand &case1 ,const Operand &case2) {
-			if (flag)
-				return case1 ;
-			return case2 ;
-		}) ;
-	}
+template <class IN_lhs ,class... IN_rhs>
+struct FUN_call<IN_lhs ,IN_rhs...> {
+	struct CON_call {
+		template <class CONTEXT>
+		static auto compile (CONTEXT &me)
+			->DEPENDENT_TYPE<RESULT_OF_TYPE<DEF<decltype (&U::COMPILE_RETURN_TYPE<IN_lhs ,CONTEXT>::operator())> ,ARGVS<U::COMPILE_RETURN_TYPE<IN_rhs ,CONTEXT>...>> ,CONTEXT> {
+			return IN_lhs::compile (me) (IN_rhs::compile (me)...) ;
+		}
+	} ;
+
+	using TYPE = CON_call ;
 } ;
 
 template <class...>
-struct op_assert ;
+struct FUN_assert ;
 
-template <>
-struct op_assert<BOOL ,Operand> {
-	inline static Expression<RANK2> compile () {
-		return Operator ([] (const BOOL &arg1 ,const Operand &arg2) {
-			_DYNAMIC_ASSERT_ (arg1) ;
-			return arg2 ;
-		}) ;
-	}
+template <class IN_lhs>
+struct FUN_assert<IN_lhs> {
+	struct CON_assert {
+		template <class CONTEXT>
+		static BOOL compile (CONTEXT &me) {
+			_DYNAMIC_ASSERT_ (IN_lhs::compile (me)) ;
+			return TRUE ;
+		}
+	} ;
+
+	using TYPE = CON_assert ;
 } ;
 
 template <class...>
-struct op_tuple ;
+struct FUN_switch ;
 
-template <>
-struct op_tuple<Operand> {
-	inline static Expression<RANK1> compile () {
-		return Operator ([] (const Operand &arg1) {
-			const auto r1x = Operator ([] (const Operand &sw ,const Operand &arg1_) {
-				if (sw == Operand::nth (ARGVP1))
-					return arg1_ ;
-				_DYNAMIC_ASSERT_ (FALSE) ;
-				return Operand () ;
-			}) ;
-			return Expression<RANK2> (r1x).flip () + Expression<RANK0> (arg1) ;
-		}) ;
-	}
-} ;
+template <class IN_lhs ,class IN_rhs1 ,class IN_rhs2>
+struct FUN_switch<IN_lhs ,IN_rhs1 ,IN_rhs2> {
+	struct CON_switch {
+		template <class CONTEXT>
+		static U::COMPILE_RETURN_TYPE<IN_rhs1 ,CONTEXT> compile (CONTEXT &me) {
+			if (IN_lhs::compile (me))
+				return IN_rhs1::compile (me) ;
+			return IN_rhs2::compile (me) ;
+		}
+	} ;
 
-template <>
-struct op_tuple<Operand ,Operand> {
-	inline static Expression<RANK1> compile () {
-		return Operator ([] (const Operand &arg1 ,const Operand &arg2) {
-			const auto r1x = Operator ([] (const Operand &sw ,const Operand &arg1_ ,const Operand &arg2_) {
-				if (sw == Operand::nth (ARGVP1))
-					return arg1_ ;
-				if (sw == Operand::nth (ARGVP2))
-					return arg2_ ;
-				_DYNAMIC_ASSERT_ (FALSE) ;
-				return Operand () ;
-			}) ;
-			return Expression<RANK3> (r1x).flip () + Expression<RANK0> (arg1) + Expression<RANK0> (arg2) ;
-		}) ;
-	}
-} ;
-
-template <>
-struct op_tuple<Operand ,Operand ,Operand> {
-	inline static Expression<RANK1> compile () {
-		return Operator ([] (const Operand &arg1 ,const Operand &arg2 ,const Operand &arg3) {
-			const auto r1x = Operator ([] (const Operand &sw ,const Operand &arg1_ ,const Operand &arg2_ ,const Operand &arg3_) {
-				if (sw == Operand::nth (ARGVP1))
-					return arg1_ ;
-				if (sw == Operand::nth (ARGVP2))
-					return arg2_ ;
-				if (sw == Operand::nth (ARGVP3))
-					return arg3_ ;
-				_DYNAMIC_ASSERT_ (FALSE) ;
-				return Operand () ;
-			}) ;
-			return Expression<RANK4> (r1x).flip () + Expression<RANK0> (arg1) + Expression<RANK0> (arg2) + Expression<RANK0> (arg3) ;
-		}) ;
-	}
-} ;
+	using TYPE = CON_switch ;
 } ;
 } ;

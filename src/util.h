@@ -1,6 +1,7 @@
 ﻿#pragma once
 
 #include <csc.hpp>
+#include <csc_core.hpp>
 #include <csc_basic.hpp>
 #include <csc_extend.hpp>
 #include <csc_array.hpp>
@@ -26,8 +27,6 @@
 #ifdef __CSC_COMPILER_MSVC__
 #pragma warning (disable :4996)
 #pragma warning (disable :5039)
-#endif
-#ifdef __CSC_COMPILER_MSVC__
 #pragma warning (disable :26429)
 #pragma warning (disable :26432)
 #pragma warning (disable :26433)
@@ -42,13 +41,17 @@
 #pragma warning (disable :26495)
 #pragma warning (disable :26496)
 #endif
+
 #ifndef NOMINMAX
 #define NOMINMAX
 #endif
+
 #ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
 #endif
+
 #include <Windows.h>
+
 #ifdef __CSC_COMPILER_MSVC__
 #ifdef __CSC_TARGET_DLL__
 #include <CppUnitTest.h>
@@ -60,88 +63,50 @@ using namespace Microsoft::VisualStudio::CppUnitTestFramework ;
 #endif
 
 #ifndef TEST_CLASS
-#define TEST_CLASS(var1) class var1
+#define TEST_CLASS(arg) class arg
 #endif
 
 #ifndef TEST_METHOD
-#define TEST_METHOD(var1) void var1 () const
+#define TEST_METHOD(arg) void arg () const
 #endif
 
 #if defined (__CSC_TARGET_EXE__) || defined (__CSC_TARGET_DLL__)
 namespace CSC {
-inline exports PTR<NONE> GlobalStatic<void>::unique_atomic_address (PTR<NONE> expect ,PTR<NONE> data) popping {
+inline exports PTR<NONE> GlobalStatic<void>::Extern::unique_atomic_address (const PTR<NONE> &expect ,const PTR<NONE> &data) popping {
 	PTR<NONE> ret = NULL ;
 	_CALL_TRY_ ([&] () {
-		auto &r1y = _CACHE_ ([] () {
-			return SharedRef<std::atomic<PTR<NONE>>>::make (_XVALUE_<PTR<NONE>> (NULL)) ;
+		auto &r1x = _CACHE_ ([] () {
+			return SharedRef<Atomic>::make () ;
 		}) ;
-		r1y->compare_exchange_strong (expect ,data) ;
-		ret = r1y->load () ;
+		const auto r2x = r1x->compare_exchange (_ADDRESS_ (expect) ,_ADDRESS_ (data)) ;
+		auto &r3x = _LOAD_UNSAFE_<NONE> (r2x) ;
+		ret = DEPTR[r3x] ;
 	} ,[&] () {
 		ret = NULL ;
 	}) ;
-	return std::move (ret) ;
+	return _MOVE_ (ret) ;
 }
 } ;
 #endif
 
-namespace CSC {
-template <>
-inline exports ConsoleService &Singleton<ConsoleService>::instance () {
-	return GlobalStatic<Singleton<ConsoleService>>::unique () ;
-}
-} ;
-
+#ifdef __CSC_UNITTEST__
 #ifdef __CSC_COMPILER_MSVC__
 namespace CSC {
-template <>
-inline exports NetworkService &Singleton<NetworkService>::instance () {
-	return GlobalStatic<Singleton<NetworkService>>::unique () ;
+inline exports void GlobalWatch::Extern::done (const Exception &e) {
+	const auto r1x = String<STR> (e.what ()) ;
+	Singleton<ConsoleService>::instance ().fatal (r1x) ;
+#ifdef MS_CPP_UNITTESTFRAMEWORK
+	const auto r2x = StringProc::build_strs<STRW> (r1x) ;
+	Assert::Fail (r2x.raw ().self) ;
+#endif
 }
 } ;
-
-namespace CSC {
-template <>
-inline exports DebuggerService &Singleton<DebuggerService>::instance () {
-	return GlobalStatic<Singleton<DebuggerService>>::unique () ;
-}
-} ;
+#endif
 #endif
 
 namespace UNITTEST {
 using namespace CSC ;
 } ;
-
-namespace UNITTEST {
-#ifdef __CSC_UNITTEST__
-class GlobalUnittest final
-	:private Wrapped<void> {
-public:
-	inline static void done (const ARR<STR> &what) {
-#ifdef MS_CPP_UNITTESTFRAMEWORK
-#ifdef __CSC_STRING__
-		const auto r1x = _BUILDSTRS_<STRW> (what) ;
-		Assert::Fail (r1x.raw ().self) ;
-#else
-		Assert::Fail () ;
-#endif
-#else
-		Singleton<ConsoleService>::instance ().fatal (String<STR> (what)) ;
-#endif
-	}
-} ;
-#endif
-} ;
-
-#ifdef __CSC_UNITTEST__
-#ifdef __CSC_COMPILER_MSVC__
-#define _UNITTEST_ASSERT_(...) do { if (!(_UNW_ (__VA_ARGS__))) GlobalUnittest::done (CSC::Plain<CSC::STR> (_PCSTR_ ("unittest_assert failed : " _STR_ (__VA_ARGS__) " : at " M_FUNC " in " M_FILE " ," M_LINE))) ; } while (FALSE)
-#else
-#define _UNITTEST_ASSERT_(...) do { struct ARGVPL ; if (!(_UNW_ (__VA_ARGS__))) GlobalUnittest::done (CSC::Plain<CSC::STR> (CSC::_NULL_<CSC::ARGV<ARGVPL>> () ,"unittest_assert failed : " _STR_ (__VA_ARGS__) " : at " ,M_FUNC ," in " ,M_FILE ," ," ,M_LINE)) ; } while (FALSE)
-#endif
-#else
-#define _UNITTEST_ASSERT_(...) do {} while (FALSE)
-#endif
 
 #ifdef __CSC_COMPILER_GNUC__
 #pragma region
@@ -165,7 +130,9 @@ public:
 #ifdef __CSC_FILESYSTEM__
 #ifdef __CSC_SYSTEM_WINDOWS__
 #include <csc_filesystem.hpp.windows.inl>
-#elif defined __CSC_SYSTEM_LINUX__
+#endif
+
+#ifdef __CSC_SYSTEM_LINUX__
 #include <csc_filesystem.hpp.linux.inl>
 #endif
 #endif
@@ -179,7 +146,9 @@ public:
 #ifdef __CSC_DEBUGGER__
 #ifdef __CSC_SYSTEM_WINDOWS__
 #include <csc_debugger.hpp.windows.inl>
-#elif defined __CSC_SYSTEM_LINUX__
+#endif
+
+#ifdef __CSC_SYSTEM_LINUX__
 #include <csc_debugger.hpp.linux.inl>
 #endif
 #endif
