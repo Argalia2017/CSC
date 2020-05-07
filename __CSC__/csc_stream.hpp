@@ -5,6 +5,7 @@
 #endif
 
 #include "csc.hpp"
+#include "csc_core.hpp"
 #include "csc_basic.hpp"
 #include "csc_array.hpp"
 #include "csc_math.hpp"
@@ -35,7 +36,7 @@ struct BYTE_BASE<ARGC<_SIZEOF_ (DATA)> ,ARGC<_ALIGNOF_ (DATA)>> {
 } ;
 
 template <class _ARG1>
-using BYTE_BASE_TYPE = typename U::BYTE_BASE<ARGC<_SIZEOF_ (_ARG1)> ,ARGC<_ALIGNOF_ (_ARG1)>>::TYPE ;
+using BYTE_BASE_TYPE = CALL<U::BYTE_BASE<ARGC<_SIZEOF_ (_ARG1)> ,ARGC<_ALIGNOF_ (_ARG1)>>> ;
 } ;
 
 namespace U {
@@ -58,7 +59,7 @@ struct TEXT_BASE<ARGC<_SIZEOF_ (STRU32)> ,ARGC<_ALIGNOF_ (STRU32)>> {
 } ;
 
 template <class _ARG1>
-using TEXT_BASE_TYPE = typename U::TEXT_BASE<ARGC<_SIZEOF_ (_ARG1)> ,ARGC<_ALIGNOF_ (_ARG1)>>::TYPE ;
+using TEXT_BASE_TYPE = CALL<U::TEXT_BASE<ARGC<_SIZEOF_ (_ARG1)> ,ARGC<_ALIGNOF_ (_ARG1)>>> ;
 } ;
 
 using STRUA = U::TEXT_BASE_TYPE<STRA> ;
@@ -66,7 +67,7 @@ using STRUW = U::TEXT_BASE_TYPE<STRW> ;
 
 template <class REAL>
 class ByteReader {
-	_STATIC_ASSERT_ (std::is_same<REAL ,BYTE>::value) ;
+	_STATIC_ASSERT_ (stl::is_same<REAL ,BYTE>::value) ;
 
 public:
 	exports class Binder
@@ -74,6 +75,10 @@ public:
 	public:
 		virtual void friend_read (ByteReader &reader) = 0 ;
 	} ;
+
+	static DEF<void (const ARGV<ARGC<1>> &)> CLS ;
+	static DEF<void (const ARGV<ARGC<3>> &)> GAP ;
+	static DEF<void (const ARGV<ARGC<4>> &)> EOS ;
 
 private:
 	class Heap {
@@ -100,12 +105,10 @@ public:
 		reset () ;
 	}
 
-	DEF<typename Detail::template Attribute<ByteReader>> attr () & {
+	DEF<typename Detail::template Attribute<ByteReader>> attr () leftvalue {
 		using Attribute = typename Detail::template Attribute<ByteReader> ;
-		return Attribute ((*this)) ;
+		return Attribute (DEREF[this]) ;
 	}
-
-	auto attr () && ->void = delete ;
 
 	LENGTH size () const {
 		return mStream.size () ;
@@ -117,19 +120,17 @@ public:
 		return mWrite - mRead ;
 	}
 
-	PhanBuffer<const REAL> raw () const & {
+	PhanBuffer<const REAL> raw () const leftvalue {
 		_DYNAMIC_ASSERT_ (size () > 0) ;
 		return PhanBuffer<const REAL>::make (mStream ,length ()) ;
 	}
-
-	auto raw () && ->void = delete ;
 
 	void reset () {
 		mRead = 0 ;
 		mWrite = mStream.size () ;
 	}
 
-	void reset (INDEX read_ ,INDEX write_) {
+	void reset (const INDEX &read_ ,const INDEX &write_) {
 		_DEBUG_ASSERT_ (mHeap.exist ()) ;
 		_DEBUG_ASSERT_ (read_ >= 0 && read_ < mStream.size ()) ;
 		_DEBUG_ASSERT_ (write_ >= 0 && write_ < mStream.size ()) ;
@@ -138,21 +139,21 @@ public:
 		mWrite = write_ ;
 	}
 
-	ByteReader copy () popping {
+	ByteReader share () popping {
 		ByteReader ret ;
 		ret.mHeap = mHeap ;
 		ret.mStream = PhanBuffer<const REAL>::make (mStream) ;
 		ret.mRead = mRead ;
 		ret.mWrite = mWrite ;
-		return std::move (ret) ;
+		return _MOVE_ (ret) ;
 	}
 
 	template <class _RET>
 	_RET read () popping {
-		_STATIC_ASSERT_ (!std::is_reference<_RET>::value) ;
+		_STATIC_ASSERT_ (!stl::is_reference<_RET>::value) ;
 		_RET ret ;
 		read (ret) ;
-		return std::move (ret) ;
+		return _MOVE_ (ret) ;
 	}
 
 	void read (BYTE &data) {
@@ -171,7 +172,7 @@ public:
 
 	inline ByteReader &operator>> (BYTE &data) {
 		read (data) ;
-		return (*this) ;
+		return DEREF[this] ;
 	}
 
 	void read (WORD &data) {
@@ -184,7 +185,7 @@ public:
 
 	inline ByteReader &operator>> (WORD &data) {
 		read (data) ;
-		return (*this) ;
+		return DEREF[this] ;
 	}
 
 	void read (CHAR &data) {
@@ -197,7 +198,7 @@ public:
 
 	inline ByteReader &operator>> (CHAR &data) {
 		read (data) ;
-		return (*this) ;
+		return DEREF[this] ;
 	}
 
 	void read (DATA &data) {
@@ -210,7 +211,7 @@ public:
 
 	inline ByteReader &operator>> (DATA &data) {
 		read (data) ;
-		return (*this) ;
+		return DEREF[this] ;
 	}
 
 	void read (BOOL &data) {
@@ -219,7 +220,7 @@ public:
 
 	inline ByteReader &operator>> (BOOL &data) {
 		read (data) ;
-		return (*this) ;
+		return DEREF[this] ;
 	}
 
 	void read (VAR32 &data) {
@@ -228,7 +229,7 @@ public:
 
 	inline ByteReader &operator>> (VAR32 &data) {
 		read (data) ;
-		return (*this) ;
+		return DEREF[this] ;
 	}
 
 	void read (VAR64 &data) {
@@ -237,7 +238,7 @@ public:
 
 	inline ByteReader &operator>> (VAR64 &data) {
 		read (data) ;
-		return (*this) ;
+		return DEREF[this] ;
 	}
 
 	void read (VAL32 &data) {
@@ -246,7 +247,7 @@ public:
 
 	inline ByteReader &operator>> (VAL32 &data) {
 		read (data) ;
-		return (*this) ;
+		return DEREF[this] ;
 	}
 
 	void read (VAL64 &data) {
@@ -255,7 +256,7 @@ public:
 
 	inline ByteReader &operator>> (VAL64 &data) {
 		read (data) ;
-		return (*this) ;
+		return DEREF[this] ;
 	}
 
 	template <class _ARG1 ,class _ARG2>
@@ -271,27 +272,29 @@ public:
 	template <class _ARG1 ,class _ARG2>
 	inline ByteReader &operator>> (Array<_ARG1 ,_ARG2> &data) {
 		read (data) ;
-		return (*this) ;
+		return DEREF[this] ;
 	}
 
 	template <class _ARG1>
 	void read (const Plain<_ARG1> &data) {
-#pragma GCC diagnostic push
 #ifdef __CSC_COMPILER_GNUC__
+#pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Warray-bounds"
 #endif
-		auto rax = _ARG1 () ;
+		auto rax = REAL () ;
 		for (auto &&i : _RANGE_ (0 ,data.size ())) {
 			read (rax) ;
 			_DYNAMIC_ASSERT_ (rax == data.self[i]) ;
 		}
+#ifdef __CSC_COMPILER_GNUC__
 #pragma GCC diagnostic pop
+#endif
 	}
 
 	template <class _ARG1>
 	inline ByteReader &operator>> (const Plain<_ARG1> &data) {
 		read (data) ;
-		return (*this) ;
+		return DEREF[this] ;
 	}
 
 	template <class _ARG1 ,class _ARG2>
@@ -309,7 +312,7 @@ public:
 	template <class _ARG1 ,class _ARG2>
 	inline ByteReader &operator>> (String<_ARG1 ,_ARG2> &data) {
 		read (data) ;
-		return (*this) ;
+		return DEREF[this] ;
 	}
 
 	template <class _ARG1 ,class _ARG2>
@@ -321,26 +324,79 @@ public:
 	template <class _ARG1 ,class _ARG2>
 	inline ByteReader &operator>> (Buffer<_ARG1 ,_ARG2> &data) {
 		read (data) ;
-		return (*this) ;
+		return DEREF[this] ;
 	}
 
 	void read (Binder &data) {
-		data.friend_read ((*this)) ;
+		data.friend_read (DEREF[this]) ;
 	}
 
 	inline ByteReader &operator>> (Binder &data) {
 		read (data) ;
-		return (*this) ;
+		return DEREF[this] ;
 	}
 
 	void read (const PTR<void (ByteReader &)> &proc) {
 		const auto r1x = Function<void (ByteReader &)> (proc) ;
-		r1x ((*this)) ;
+		r1x (DEREF[this]) ;
 	}
 
 	inline ByteReader &operator>> (const PTR<void (ByteReader &)> &proc) {
 		read (proc) ;
-		return (*this) ;
+		return DEREF[this] ;
+	}
+
+	void scans () {
+		_STATIC_WARNING_ ("noop") ;
+	}
+
+	template <class _ARG1 ,class... _ARGS>
+	void scans (_ARG1 &list_one ,_ARGS &...list_rest) {
+		read (list_one) ;
+		scans (list_rest...) ;
+	}
+
+	void read (const PTR<decltype (CLS)> &) {
+		reset () ;
+	}
+
+	inline ByteReader &operator>> (const PTR<decltype (CLS)> &proc) {
+		read (proc) ;
+		return DEREF[this] ;
+	}
+
+	void read (const PTR<decltype (GAP)> &) {
+		const auto r1x = attr () ;
+		auto rax = share () ;
+		auto rbx = REAL () ;
+		rax >> rbx ;
+		_DYNAMIC_ASSERT_ (rbx == r1x.varify_space_item ()) ;
+		rax >> rbx ;
+		_DYNAMIC_ASSERT_ (rbx == r1x.varify_space_item ()) ;
+		DEREF[this] = rax.share () ;
+	}
+
+	inline ByteReader &operator>> (const PTR<decltype (GAP)> &proc) {
+		read (proc) ;
+		return DEREF[this] ;
+	}
+
+	void read (const PTR<decltype (EOS)> &) {
+		const auto r1x = attr () ;
+		auto rax = share () ;
+		auto rbx = REAL () ;
+		while (TRUE) {
+			if (rax.length () == 0)
+				break ;
+			rax >> rbx ;
+			_DYNAMIC_ASSERT_ (rbx == r1x.varify_ending_item ()) ;
+		}
+		DEREF[this] = rax.share () ;
+	}
+
+	inline ByteReader &operator>> (const PTR<decltype (EOS)> &proc) {
+		read (proc) ;
+		return DEREF[this] ;
 	}
 } ;
 
@@ -356,12 +412,12 @@ struct ByteReader<REAL>::Detail {
 	public:
 		inline Attribute () = delete ;
 
-		inline BYTE varify_ending_item () const {
-			return BYTE (0X00) ;
+		inline REAL varify_ending_item () const {
+			return REAL (0X00) ;
 		}
 
-		inline BYTE varify_space_item () const {
-			return BYTE (0X00) ;
+		inline REAL varify_space_item () const {
+			return REAL (0X00) ;
 		}
 
 	private:
@@ -371,8 +427,15 @@ struct ByteReader<REAL>::Detail {
 } ;
 
 template <class REAL>
+inline void ByteReader<REAL>::CLS (const ARGV<ARGC<1>> &) {}
+template <class REAL>
+inline void ByteReader<REAL>::GAP (const ARGV<ARGC<3>> &) {}
+template <class REAL>
+inline void ByteReader<REAL>::EOS (const ARGV<ARGC<4>> &) {}
+
+template <class REAL>
 class ByteWriter {
-	_STATIC_ASSERT_ (std::is_same<REAL ,BYTE>::value) ;
+	_STATIC_ASSERT_ (stl::is_same<REAL ,BYTE>::value) ;
 
 public:
 	exports class Binder
@@ -380,6 +443,10 @@ public:
 	public:
 		virtual void friend_write (ByteWriter &writer) const = 0 ;
 	} ;
+
+	static DEF<void (const ARGV<ARGC<1>> &)> CLS ;
+	static DEF<void (const ARGV<ARGC<3>> &)> GAP ;
+	static DEF<void (const ARGV<ARGC<4>> &)> EOS ;
 
 private:
 	class Heap {
@@ -408,17 +475,15 @@ public:
 
 	explicit ByteWriter (SharedRef<FixedBuffer<REAL>> &&stream) {
 		mHeap = SharedRef<Heap>::make () ;
-		mHeap->mBuffer = std::move (stream) ;
+		mHeap->mBuffer = _MOVE_ (stream) ;
 		mStream = PhanBuffer<REAL>::make (mHeap->mBuffer.self) ;
 		reset () ;
 	}
 
-	DEF<typename Detail::template Attribute<ByteWriter>> attr () & {
+	DEF<typename Detail::template Attribute<ByteWriter>> attr () leftvalue {
 		using Attribute = typename Detail::template Attribute<ByteWriter> ;
-		return Attribute ((*this)) ;
+		return Attribute (DEREF[this]) ;
 	}
-
-	auto attr () && ->void = delete ;
 
 	LENGTH size () const {
 		return mStream.size () ;
@@ -430,19 +495,17 @@ public:
 		return mWrite - mRead ;
 	}
 
-	PhanBuffer<const REAL> raw () const & {
+	PhanBuffer<const REAL> raw () const leftvalue {
 		_DYNAMIC_ASSERT_ (size () > 0) ;
 		return PhanBuffer<const REAL>::make (mStream ,length ()) ;
 	}
-
-	auto raw () && ->void = delete ;
 
 	void reset () {
 		mRead = 0 ;
 		mWrite = 0 ;
 	}
 
-	void reset (INDEX read_ ,INDEX write_) {
+	void reset (const INDEX &read_ ,const INDEX &write_) {
 		_DEBUG_ASSERT_ (mHeap.exist ()) ;
 		_DEBUG_ASSERT_ (read_ >= 0 && read_ < mStream.size ()) ;
 		_DEBUG_ASSERT_ (write_ >= 0 && write_ < mStream.size ()) ;
@@ -451,13 +514,13 @@ public:
 		mWrite = write_ ;
 	}
 
-	ByteWriter copy () popping {
+	ByteWriter share () popping {
 		ByteWriter ret ;
 		ret.mHeap = mHeap ;
 		ret.mStream = PhanBuffer<REAL>::make (mStream) ;
 		ret.mRead = mRead ;
 		ret.mWrite = mWrite ;
-		return std::move (ret) ;
+		return _MOVE_ (ret) ;
 	}
 
 	void write (const BYTE &data) {
@@ -468,7 +531,7 @@ public:
 
 	inline ByteWriter &operator<< (const BYTE &data) {
 		write (data) ;
-		return (*this) ;
+		return DEREF[this] ;
 	}
 
 	void write (const WORD &data) {
@@ -481,7 +544,7 @@ public:
 
 	inline ByteWriter &operator<< (const WORD &data) {
 		write (data) ;
-		return (*this) ;
+		return DEREF[this] ;
 	}
 
 	void write (const CHAR &data) {
@@ -494,7 +557,7 @@ public:
 
 	inline ByteWriter &operator<< (const CHAR &data) {
 		write (data) ;
-		return (*this) ;
+		return DEREF[this] ;
 	}
 
 	void write (const DATA &data) {
@@ -507,7 +570,7 @@ public:
 
 	inline ByteWriter &operator<< (const DATA &data) {
 		write (data) ;
-		return (*this) ;
+		return DEREF[this] ;
 	}
 
 	void write (const BOOL &data) {
@@ -517,7 +580,7 @@ public:
 
 	inline ByteWriter &operator<< (const BOOL &data) {
 		write (data) ;
-		return (*this) ;
+		return DEREF[this] ;
 	}
 
 	void write (const PTR<const VOID> &) = delete ;
@@ -531,7 +594,7 @@ public:
 
 	inline ByteWriter &operator<< (const VAR32 &data) {
 		write (data) ;
-		return (*this) ;
+		return DEREF[this] ;
 	}
 
 	void write (const VAR64 &data) {
@@ -541,7 +604,7 @@ public:
 
 	inline ByteWriter &operator<< (const VAR64 &data) {
 		write (data) ;
-		return (*this) ;
+		return DEREF[this] ;
 	}
 
 	void write (const VAL32 &data) {
@@ -551,7 +614,7 @@ public:
 
 	inline ByteWriter &operator<< (const VAL32 &data) {
 		write (data) ;
-		return (*this) ;
+		return DEREF[this] ;
 	}
 
 	void write (const VAL64 &data) {
@@ -561,7 +624,7 @@ public:
 
 	inline ByteWriter &operator<< (const VAL64 &data) {
 		write (data) ;
-		return (*this) ;
+		return DEREF[this] ;
 	}
 
 	template <class _ARG1 ,class _ARG2>
@@ -576,24 +639,26 @@ public:
 	template <class _ARG1 ,class _ARG2>
 	inline ByteWriter &operator<< (const Array<_ARG1 ,_ARG2> &data) {
 		write (data) ;
-		return (*this) ;
+		return DEREF[this] ;
 	}
 
 	template <class _ARG1>
 	void write (const Plain<_ARG1> &data) {
-#pragma GCC diagnostic push
 #ifdef __CSC_COMPILER_GNUC__
+#pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Warray-bounds"
 #endif
 		for (auto &&i : _RANGE_ (0 ,data.size ()))
 			write (data.self[i]) ;
+#ifdef __CSC_COMPILER_GNUC__
 #pragma GCC diagnostic pop
+#endif
 	}
 
 	template <class _ARG1>
 	inline ByteWriter &operator<< (const Plain<_ARG1> &data) {
 		write (data) ;
-		return (*this) ;
+		return DEREF[this] ;
 	}
 
 	template <class _ARG1 ,class _ARG2>
@@ -609,7 +674,7 @@ public:
 	template <class _ARG1 ,class _ARG2>
 	inline ByteWriter &operator<< (const String<_ARG1 ,_ARG2> &data) {
 		write (data) ;
-		return (*this) ;
+		return DEREF[this] ;
 	}
 
 	template <class _ARG1 ,class _ARG2>
@@ -621,26 +686,73 @@ public:
 	template <class _ARG1 ,class _ARG2>
 	inline ByteWriter &operator<< (const Buffer<_ARG1 ,_ARG2> &data) {
 		write (data) ;
-		return (*this) ;
+		return DEREF[this] ;
 	}
 
 	void write (const Binder &data) {
-		data.friend_write ((*this)) ;
+		data.friend_write (DEREF[this]) ;
 	}
 
 	inline ByteWriter &operator<< (const Binder &data) {
 		write (data) ;
-		return (*this) ;
+		return DEREF[this] ;
 	}
 
 	void write (const PTR<void (ByteWriter &)> &proc) {
 		const auto r1x = Function<void (ByteWriter &)> (proc) ;
-		r1x ((*this)) ;
+		r1x (DEREF[this]) ;
 	}
 
 	inline ByteWriter &operator<< (const PTR<void (ByteWriter &)> &proc) {
 		write (proc) ;
-		return (*this) ;
+		return DEREF[this] ;
+	}
+
+	void prints () {
+		_STATIC_WARNING_ ("noop") ;
+	}
+
+	template <class _ARG1 ,class... _ARGS>
+	void prints (const _ARG1 &list_one ,const _ARGS &...list_rest) {
+		write (list_one) ;
+		prints (list_rest...) ;
+	}
+
+	void write (const PTR<decltype (CLS)> &) {
+		reset () ;
+	}
+
+	inline ByteWriter &operator<< (const PTR<decltype (CLS)> &proc) {
+		write (proc) ;
+		return DEREF[this] ;
+	}
+
+	void write (const PTR<decltype (GAP)> &) {
+		const auto r1x = attr () ;
+		auto rax = share () ;
+		rax << r1x.varify_space_item () ;
+		rax << r1x.varify_space_item () ;
+		DEREF[this] = rax.share () ;
+	}
+
+	inline ByteWriter &operator<< (const PTR<decltype (GAP)> &proc) {
+		write (proc) ;
+		return DEREF[this] ;
+	}
+
+	void write (const PTR<decltype (EOS)> &) {
+		const auto r1x = attr () ;
+		auto rax = share () ;
+		for (auto &&i : _RANGE_ (0 ,rax.size () - rax.length ())) {
+			rax << r1x.varify_ending_item () ;
+			_STATIC_UNUSED_ (i) ;
+		}
+		DEREF[this] = rax.share () ;
+	}
+
+	inline ByteWriter &operator<< (const PTR<decltype (EOS)> &proc) {
+		write (proc) ;
+		return DEREF[this] ;
 	}
 } ;
 
@@ -656,12 +768,12 @@ struct ByteWriter<REAL>::Detail {
 	public:
 		inline Attribute () = delete ;
 
-		inline BYTE varify_ending_item () const {
-			return BYTE (0X00) ;
+		inline REAL varify_ending_item () const {
+			return REAL (0X00) ;
 		}
 
-		inline BYTE varify_space_item () const {
-			return BYTE (0X00) ;
+		inline REAL varify_space_item () const {
+			return REAL (0X00) ;
 		}
 
 	private:
@@ -669,6 +781,13 @@ struct ByteWriter<REAL>::Detail {
 			:mBase (base) {}
 	} ;
 } ;
+
+template <class REAL>
+inline void ByteWriter<REAL>::CLS (const ARGV<ARGC<1>> &) {}
+template <class REAL>
+inline void ByteWriter<REAL>::GAP (const ARGV<ARGC<3>> &) {}
+template <class REAL>
+inline void ByteWriter<REAL>::EOS (const ARGV<ARGC<4>> &) {}
 
 template <class REAL>
 class TextReader {
@@ -680,6 +799,11 @@ public:
 	public:
 		virtual void friend_read (TextReader &reader) = 0 ;
 	} ;
+
+	static DEF<void (const ARGV<ARGC<1>> &)> CLS ;
+	static DEF<void (const ARGV<ARGC<2>> &)> BOM ;
+	static DEF<void (const ARGV<ARGC<3>> &)> GAP ;
+	static DEF<void (const ARGV<ARGC<4>> &)> EOS ;
 
 private:
 	class Heap {
@@ -694,6 +818,8 @@ private:
 	} ;
 
 private:
+	template <class>
+	friend class TextReader ;
 	struct Detail ;
 	SharedRef<Heap> mHeap ;
 	PhanBuffer<const REAL> mStream ;
@@ -714,12 +840,10 @@ public:
 		reset () ;
 	}
 
-	DEF<typename Detail::template Attribute<TextReader>> attr () & {
+	DEF<typename Detail::template Attribute<TextReader>> attr () leftvalue {
 		using Attribute = typename Detail::template Attribute<TextReader> ;
-		return Attribute ((*this)) ;
+		return Attribute (DEREF[this]) ;
 	}
-
-	auto attr () && ->void = delete ;
 
 	LENGTH size () const {
 		return mStream.size () ;
@@ -731,19 +855,17 @@ public:
 		return mWrite - mRead ;
 	}
 
-	PhanBuffer<const REAL> raw () const & {
+	PhanBuffer<const REAL> raw () const leftvalue {
 		_DYNAMIC_ASSERT_ (size () > 0) ;
 		return PhanBuffer<const REAL>::make (mStream ,length ()) ;
 	}
-
-	auto raw () && ->void = delete ;
 
 	void reset () {
 		mRead = 0 ;
 		mWrite = mStream.size () ;
 	}
 
-	void reset (INDEX read_ ,INDEX write_) {
+	void reset (const INDEX &read_ ,const INDEX &write_) {
 		_DEBUG_ASSERT_ (mHeap.exist ()) ;
 		_DEBUG_ASSERT_ (read_ >= 0 && read_ < mStream.size ()) ;
 		_DEBUG_ASSERT_ (write_ >= 0 && write_ < mStream.size ()) ;
@@ -752,21 +874,21 @@ public:
 		mWrite = write_ ;
 	}
 
-	TextReader copy () popping {
+	TextReader share () popping {
 		TextReader ret ;
 		ret.mHeap = mHeap ;
 		ret.mStream = PhanBuffer<const REAL>::make (mStream) ;
 		ret.mRead = mRead ;
 		ret.mWrite = mWrite ;
-		return std::move (ret) ;
+		return _MOVE_ (ret) ;
 	}
 
 	template <class _RET>
 	_RET read () popping {
-		_STATIC_ASSERT_ (!std::is_reference<_RET>::value) ;
+		_STATIC_ASSERT_ (!stl::is_reference<_RET>::value) ;
 		_RET ret ;
 		read (ret) ;
-		return std::move (ret) ;
+		return _MOVE_ (ret) ;
 	}
 
 	void read (REAL &data) {
@@ -794,7 +916,7 @@ public:
 
 	inline TextReader &operator>> (REAL &data) {
 		read (data) ;
-		return (*this) ;
+		return DEREF[this] ;
 	}
 
 	void read (BOOL &data) {
@@ -856,7 +978,7 @@ public:
 
 	inline TextReader &operator>> (BOOL &data) {
 		read (data) ;
-		return (*this) ;
+		return DEREF[this] ;
 	}
 
 	void read (VAR32 &data) {
@@ -867,7 +989,7 @@ public:
 
 	inline TextReader &operator>> (VAR32 &data) {
 		read (data) ;
-		return (*this) ;
+		return DEREF[this] ;
 	}
 
 	void read (VAR64 &data) {
@@ -876,7 +998,7 @@ public:
 		const auto r1x = BOOL (rax == REAL ('-')) ;
 		if (rax == REAL ('+') || r1x)
 			read (rax) ;
-		compute_read_number (data ,(*this) ,rax) ;
+		compute_read_number (data ,rax) ;
 		if (!r1x)
 			return ;
 		data = -data ;
@@ -884,15 +1006,15 @@ public:
 
 	inline TextReader &operator>> (VAR64 &data) {
 		read (data) ;
-		return (*this) ;
+		return DEREF[this] ;
 	}
 
 	void read (VAL32 &data) {
 		const auto r1x = read<VAL64> () ;
 		if switch_case (TRUE) {
-			if (_ISINF_ (r1x))
+			if (MathProc::is_infinite (r1x))
 				discard ;
-			if (_ISNAN_ (r1x))
+			if (MathProc::is_nan (r1x))
 				discard ;
 			_DYNAMIC_ASSERT_ (r1x >= VAL32_MIN && r1x <= VAL32_MAX) ;
 		}
@@ -901,7 +1023,7 @@ public:
 
 	inline TextReader &operator>> (VAL32 &data) {
 		read (data) ;
-		return (*this) ;
+		return DEREF[this] ;
 	}
 
 	void read (VAL64 &data) {
@@ -951,7 +1073,7 @@ public:
 		if switch_case (fax) {
 			const auto r3x = r1x.varify_number_item (rax) ;
 			_DYNAMIC_ASSERT_ (r3x) ;
-			compute_read_number (data ,(*this) ,rax) ;
+			compute_read_number (data ,rax) ;
 		}
 		if (!r2x)
 			return ;
@@ -960,7 +1082,7 @@ public:
 
 	inline TextReader &operator>> (VAL64 &data) {
 		read (data) ;
-		return (*this) ;
+		return DEREF[this] ;
 	}
 
 	template <class _ARG1 ,class _ARG2>
@@ -971,12 +1093,12 @@ public:
 	template <class _ARG1 ,class _ARG2>
 	inline TextReader &operator>> (Array<_ARG1 ,_ARG2> &data) {
 		read (data) ;
-		return (*this) ;
+		return DEREF[this] ;
 	}
 
 	void read (const Plain<REAL> &data) {
-#pragma GCC diagnostic push
 #ifdef __CSC_COMPILER_GNUC__
+#pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Warray-bounds"
 #endif
 		auto rax = REAL () ;
@@ -984,12 +1106,14 @@ public:
 			read (rax) ;
 			_DYNAMIC_ASSERT_ (rax == data.self[i]) ;
 		}
+#ifdef __CSC_COMPILER_GNUC__
 #pragma GCC diagnostic pop
-	}
+#endif
+}
 
 	inline TextReader &operator>> (const Plain<REAL> &data) {
 		read (data) ;
-		return (*this) ;
+		return DEREF[this] ;
 	}
 
 	template <class _ARG1>
@@ -1006,7 +1130,7 @@ public:
 	template <class _ARG1>
 	inline TextReader &operator>> (String<REAL ,_ARG1> &data) {
 		read (data) ;
-		return (*this) ;
+		return DEREF[this] ;
 	}
 
 	template <class _ARG1 ,class _ARG2>
@@ -1018,136 +1142,254 @@ public:
 	template <class _ARG1 ,class _ARG2>
 	inline TextReader &operator>> (Buffer<_ARG1 ,_ARG2> &data) {
 		read (data) ;
-		return (*this) ;
+		return DEREF[this] ;
 	}
 
 	void read (Binder &data) {
-		data.friend_read ((*this)) ;
+		data.friend_read (DEREF[this]) ;
 	}
 
 	inline TextReader &operator>> (Binder &data) {
 		read (data) ;
-		return (*this) ;
+		return DEREF[this] ;
 	}
 
 	void read (const PTR<void (TextReader &)> &proc) {
 		const auto r1x = Function<void (TextReader &)> (proc) ;
-		r1x ((*this)) ;
+		r1x (DEREF[this]) ;
 	}
 
 	inline TextReader &operator>> (const PTR<void (TextReader &)> &proc) {
 		read (proc) ;
-		return (*this) ;
+		return DEREF[this] ;
+	}
+
+	void scans () {
+		_STATIC_WARNING_ ("noop") ;
+	}
+
+	template <class _ARG1 ,class... _ARGS>
+	void scans (_ARG1 &list_one ,_ARGS &...list_rest) {
+		read (list_one) ;
+		scans (list_rest...) ;
+	}
+
+	void read (const PTR<decltype (CLS)> &) {
+		reset () ;
+	}
+
+	inline TextReader &operator>> (const PTR<decltype (CLS)> &proc) {
+		read (proc) ;
+		return DEREF[this] ;
+	}
+
+	void read (const PTR<decltype (BOM)> &) {
+		template_read_bom (_NULL_<ARGV<REAL>> ()) ;
+	}
+
+	inline TextReader &operator>> (const PTR<decltype (BOM)> &proc) {
+		read (proc) ;
+		return DEREF[this] ;
+	}
+
+	void read (const PTR<decltype (GAP)> &) {
+		const auto r1x = attr () ;
+		auto rax = share () ;
+		auto rbx = REAL () ;
+		rax >> rbx ;
+		while (TRUE) {
+			if (!r1x.varify_space (rbx))
+				break ;
+			DEREF[this] = rax.share () ;
+			rax >> rbx ;
+		}
+	}
+
+	inline TextReader &operator>> (const PTR<decltype (GAP)> &proc) {
+		read (proc) ;
+		return DEREF[this] ;
+	}
+
+	void read (const PTR<decltype (EOS)> &) {
+		const auto r1x = attr () ;
+		auto rax = share () ;
+		auto rbx = REAL () ;
+		rax.read (rbx) ;
+		_DYNAMIC_ASSERT_ (rbx == r1x.varify_ending_item ()) ;
+		DEREF[this] = rax.share () ;
+	}
+
+	inline TextReader &operator>> (const PTR<decltype (EOS)> &proc) {
+		read (proc) ;
+		return DEREF[this] ;
 	}
 
 private:
 	LENGTH next_string_size () popping {
 		const auto r1x = attr () ;
 		LENGTH ret = 0 ;
-		auto ris = copy () ;
-		auto rax = REAL () ;
-		ris.read (rax) ;
+		auto rax = share () ;
+		auto rbx = REAL () ;
+		rax.read (rbx) ;
 		while (TRUE) {
-			if (rax == r1x.varify_ending_item ())
+			if (rbx == r1x.varify_ending_item ())
 				break ;
-			if (r1x.varify_space (rax))
+			if (r1x.varify_space (rbx))
 				break ;
 			ret++ ;
-			ris.read (rax) ;
+			rax.read (rbx) ;
 		}
-		return std::move (ret) ;
+		return _MOVE_ (ret) ;
 	}
 
-	void compute_read_number (VAR64 &data ,TextReader &reader ,REAL &top) const {
-		const auto r1x = reader.attr () ;
+	void compute_read_number (VAR64 &data ,REAL &top) {
+		const auto r1x = attr () ;
 		_DEBUG_ASSERT_ (r1x.varify_number_item (top)) ;
-		auto ris = reader.copy () ;
+		auto rax = share () ;
 		data = r1x.convert_number_r (top) ;
-		ris.read (top) ;
+		rax.read (top) ;
 		while (TRUE) {
 			if (!r1x.varify_number_item (top))
 				break ;
 			const auto r2x = data * r1x.varify_radix () + r1x.convert_number_r (top) ;
 			_DYNAMIC_ASSERT_ (data <= r2x) ;
 			data = r2x ;
-			reader = ris.copy () ;
-			ris.read (top) ;
+			DEREF[this] = rax.share () ;
+			rax.read (top) ;
 		}
 	}
 
-	void compute_read_number (VAL64 &data ,TextReader &reader ,REAL &top) const {
-		const auto r1x = reader.attr () ;
+	void compute_read_number (VAL64 &data ,REAL &top) {
+		const auto r1x = attr () ;
 		_DEBUG_ASSERT_ (r1x.varify_number_item (top)) ;
-		auto ris = reader.copy () ;
+		auto rax = share () ;
 		while (TRUE) {
 			if (r1x.convert_number_r (top) != 0)
 				break ;
-			reader = ris.copy () ;
-			ris.read (top) ;
+			DEREF[this] = rax.share () ;
+			rax.read (top) ;
 		}
-		auto rax = ARRAY3<VAR64> {0 ,0 ,0} ;
+		auto rbx = ARRAY3<VAR64> {0 ,0 ,0} ;
 		if switch_case (TRUE) {
 			if (!r1x.varify_number_item (top))
 				discard ;
-			rax[0] = r1x.convert_number_r (top) ;
-			reader = ris.copy () ;
-			ris.read (top) ;
+			rbx[0] = r1x.convert_number_r (top) ;
+			DEREF[this] = rax.share () ;
+			rax.read (top) ;
 			while (TRUE) {
 				if (!r1x.varify_number_item (top))
 					break ;
 				auto fax = TRUE ;
 				if switch_case (fax) {
-					const auto r2x = rax[0] * r1x.varify_radix () + r1x.convert_number_r (top) ;
-					if (!(rax[0] < r2x))
+					const auto r2x = rbx[0] * r1x.varify_radix () + r1x.convert_number_r (top) ;
+					if (!(rbx[0] < r2x))
 						discard ;
-					rax[0] = r2x ;
+					rbx[0] = r2x ;
 				}
 				if switch_case (fax) {
-					rax[1]++ ;
+					rbx[1]++ ;
 				}
-				reader = ris.copy () ;
-				ris.read (top) ;
+				DEREF[this] = rax.share () ;
+				rax.read (top) ;
 			}
 		}
 		if switch_case (TRUE) {
 			if (top != REAL ('.'))
 				discard ;
-			reader = ris.copy () ;
-			ris.read (top) ;
+			DEREF[this] = rax.share () ;
+			rax.read (top) ;
 			_DYNAMIC_ASSERT_ (r1x.varify_number_item (top)) ;
 			while (TRUE) {
 				if (!r1x.varify_number_item (top))
 					break ;
 				if switch_case (TRUE) {
-					const auto r3x = rax[0] * r1x.varify_radix () + r1x.convert_number_r (top) ;
-					if (rax[0] > r3x)
+					const auto r3x = rbx[0] * r1x.varify_radix () + r1x.convert_number_r (top) ;
+					if (rbx[0] > r3x)
 						discard ;
-					rax[0] = r3x ;
-					rax[1]-- ;
+					rbx[0] = r3x ;
+					rbx[1]-- ;
 				}
-				reader = ris.copy () ;
-				ris.read (top) ;
+				DEREF[this] = rax.share () ;
+				rax.read (top) ;
 			}
 		}
 		if switch_case (TRUE) {
 			if (!(top == REAL ('e') || top == REAL ('E')))
 				discard ;
-			const auto r4x = ris.template read<VAR32> () ;
-			rax[1] += r4x ;
-			reader = ris.copy () ;
+			const auto r4x = rax.template read<VAR32> () ;
+			rbx[1] += r4x ;
+			DEREF[this] = rax.share () ;
 		}
 		if switch_case (TRUE) {
-			if (rax[0] >= 0)
+			if (rbx[0] >= 0)
 				discard ;
-			rax[0] = -rax[0] ;
-			rax[2] = -1 ;
-			if (rax[0] >= 0)
+			rbx[0] = -rbx[0] ;
+			rbx[2] = -1 ;
+			if (rbx[0] >= 0)
 				discard ;
-			rax[0] = -(rax[0] / r1x.varify_radix ()) ;
-			rax[1]++ ;
+			rbx[0] = -(rbx[0] / r1x.varify_radix ()) ;
+			rbx[1]++ ;
 		}
-		const auto r5x = _IEEE754_E10TOE2_ (rax) ;
-		data = _IEEE754_ENCODE_ (r5x) ;
+		const auto r5x = MathProc::ieee754_e10_e2 (rbx) ;
+		data = MathProc::ieee754_encode (r5x) ;
+	}
+
+	template <class _ARG1>
+	void template_read_bom (const ARGV<_ARG1> &) {
+		_STATIC_WARNING_ ("noop") ;
+	}
+
+	void template_read_bom (const ARGV<STRU8> &) {
+		static constexpr auto M_BOM = PACK<STRU8[3]> ({
+			STRU8 (0XEF) ,STRU8 (0XBB) ,STRU8 (0XBF)}) ;
+		const auto r1x = attr () ;
+		auto rax = share () ;
+		auto rbx = STRU8 () ;
+		rax >> rbx ;
+		if (rbx != M_BOM.P1[0])
+			return ;
+		rax >> rbx ;
+		if (rbx != M_BOM.P1[1])
+			return ;
+		rax >> rbx ;
+		if (rbx != M_BOM.P1[2])
+			return ;
+		r1x.enable_endian (FALSE) ;
+		DEREF[this] = rax.share () ;
+	}
+
+	void template_read_bom (const ARGV<STRU16> &) {
+		static constexpr auto M_BOM = PACK<STRU16[2]> ({
+			STRU16 (0XFEFF) ,STRU16 (0XFFFE)}) ;
+		const auto r1x = attr () ;
+		auto rax = share () ;
+		auto rbx = STRU16 () ;
+		rax >> rbx ;
+		if (!(rbx == M_BOM.P1[0] || rbx == M_BOM.P1[1]))
+			return ;
+		const auto r2x = BOOL (rbx != M_BOM.P1[0]) ;
+		r1x.enable_endian (r2x) ;
+		DEREF[this] = rax.share () ;
+	}
+
+	void template_read_bom (const ARGV<STRU32> &) {
+		static constexpr auto M_BOM = PACK<STRU32[2]> ({
+			STRU32 (0X0000FEFF) ,STRU32 (0XFFFE0000)}) ;
+		const auto r1x = attr () ;
+		auto rax = share () ;
+		auto rbx = STRU32 () ;
+		rax >> rbx ;
+		if (!(rbx == M_BOM.P1[0] || rbx == M_BOM.P1[1]))
+			return ;
+		const auto r2x = BOOL (rbx != M_BOM.P1[0]) ;
+		r1x.enable_endian (r2x) ;
+		DEREF[this] = rax.share () ;
+	}
+
+	void template_read_bom (const ARGV<STRW> &) {
+		auto rax = share () ;
+		_CAST_<TextReader<STRUW>> (rax).template_read_bom (_NULL_<ARGV<STRUW>> ()) ;
+		DEREF[this] = rax.share () ;
 	}
 } ;
 
@@ -1167,8 +1409,8 @@ struct TextReader<REAL>::Detail {
 			return REAL ('\0') ;
 		}
 
-		inline void enable_endian (BOOL flag) const {
-			_STATIC_ASSERT_ (!std::is_const<BASE>::value) ;
+		inline void enable_endian (const BOOL &flag) const {
+			_STATIC_ASSERT_ (!stl::is_const<BASE>::value) ;
 			mBase.mHeap->mEndianFlag = flag ;
 		}
 
@@ -1178,7 +1420,7 @@ struct TextReader<REAL>::Detail {
 			U::BYTE_BASE_TYPE<REAL> ret ;
 			auto &r1x = _CAST_<BYTE[_SIZEOF_ (REAL)]> (item) ;
 			ByteReader<BYTE> (PhanBuffer<const BYTE>::make (r1x)) >> ret ;
-			return std::move (_CAST_<REAL> (ret)) ;
+			return _MOVE_ (_CAST_<REAL> (ret)) ;
 		}
 
 		inline VAR64 varify_radix () const {
@@ -1204,8 +1446,8 @@ struct TextReader<REAL>::Detail {
 			return VAR64 (item) - VAR64 ('0') ;
 		}
 
-		inline void enable_escape (BOOL flag) const {
-			_STATIC_ASSERT_ (!std::is_const<BASE>::value) ;
+		inline void enable_escape (const BOOL &flag) const {
+			_STATIC_ASSERT_ (!stl::is_const<BASE>::value) ;
 			mBase.mHeap->mEscapeFlag = flag ;
 		}
 
@@ -1222,7 +1464,7 @@ struct TextReader<REAL>::Detail {
 		}
 
 		inline void modify_escape_r (const REAL &str_a ,const REAL &str_e) const {
-			_STATIC_ASSERT_ (!std::is_const<BASE>::value) ;
+			_STATIC_ASSERT_ (!stl::is_const<BASE>::value) ;
 			_DEBUG_ASSERT_ (str_e != varify_ending_item ()) ;
 			INDEX ix = mBase.mHeap->mEscapeMappingSet.map (str_a) ;
 			_DEBUG_ASSERT_ (ix == VAR_NONE) ;
@@ -1244,7 +1486,7 @@ struct TextReader<REAL>::Detail {
 			return TRUE ;
 		}
 
-		inline BOOL varify_space (const REAL &item ,VAR32 group) const {
+		inline BOOL varify_space (const REAL &item ,const VAR32 &group) const {
 			INDEX ix = mBase.mHeap->mSpaceMappingSet.map (item) ;
 			if (ix == VAR_NONE)
 				return FALSE ;
@@ -1253,8 +1495,8 @@ struct TextReader<REAL>::Detail {
 			return TRUE ;
 		}
 
-		inline void modify_space (const REAL &item ,VAR32 group) const {
-			_STATIC_ASSERT_ (!std::is_const<BASE>::value) ;
+		inline void modify_space (const REAL &item ,const VAR32 &group) const {
+			_STATIC_ASSERT_ (!stl::is_const<BASE>::value) ;
 			_DEBUG_ASSERT_ (item != varify_ending_item ()) ;
 			INDEX ix = mBase.mHeap->mSpaceMappingSet.map (item) ;
 			_DEBUG_ASSERT_ (ix == VAR_NONE) ;
@@ -1280,6 +1522,15 @@ struct TextReader<REAL>::Detail {
 } ;
 
 template <class REAL>
+inline void TextReader<REAL>::CLS (const ARGV<ARGC<1>> &) {}
+template <class REAL>
+inline void TextReader<REAL>::BOM (const ARGV<ARGC<2>> &) {}
+template <class REAL>
+inline void TextReader<REAL>::GAP (const ARGV<ARGC<3>> &) {}
+template <class REAL>
+inline void TextReader<REAL>::EOS (const ARGV<ARGC<4>> &) {}
+
+template <class REAL>
 class TextWriter {
 	_STATIC_ASSERT_ (stl::is_str_xyz<REAL>::value) ;
 
@@ -1289,6 +1540,11 @@ public:
 	public:
 		virtual void friend_write (TextWriter &writer) const = 0 ;
 	} ;
+
+	static DEF<void (const ARGV<ARGC<1>> &)> CLS ;
+	static DEF<void (const ARGV<ARGC<2>> &)> BOM ;
+	static DEF<void (const ARGV<ARGC<3>> &)> GAP ;
+	static DEF<void (const ARGV<ARGC<4>> &)> EOS ;
 
 private:
 	class Heap {
@@ -1301,6 +1557,8 @@ private:
 	} ;
 
 private:
+	template <class>
+	friend class TextWriter ;
 	struct Detail ;
 	SharedRef<Heap> mHeap ;
 	PhanBuffer<REAL> mStream ;
@@ -1323,18 +1581,16 @@ public:
 	explicit TextWriter (SharedRef<FixedBuffer<REAL>> &&stream) {
 		const auto r1x = attr () ;
 		mHeap = SharedRef<Heap>::make () ;
-		mHeap->mBuffer = std::move (stream) ;
+		mHeap->mBuffer = _MOVE_ (stream) ;
 		r1x.enable_escape (FALSE) ;
 		mStream = PhanBuffer<REAL>::make (mHeap->mBuffer.self) ;
 		reset () ;
 	}
 
-	DEF<typename Detail::template Attribute<TextWriter>> attr () & {
+	DEF<typename Detail::template Attribute<TextWriter>> attr () leftvalue {
 		using Attribute = typename Detail::template Attribute<TextWriter> ;
-		return Attribute ((*this)) ;
+		return Attribute (DEREF[this]) ;
 	}
-
-	auto attr () && ->void = delete ;
 
 	LENGTH size () const {
 		return mStream.size () ;
@@ -1346,19 +1602,17 @@ public:
 		return mWrite - mRead ;
 	}
 
-	PhanBuffer<const REAL> raw () const & {
+	PhanBuffer<const REAL> raw () const leftvalue {
 		_DYNAMIC_ASSERT_ (size () > 0) ;
 		return PhanBuffer<const REAL>::make (mStream ,length ()) ;
 	}
-
-	auto raw () && ->void = delete ;
 
 	void reset () {
 		mRead = 0 ;
 		mWrite = 0 ;
 	}
 
-	void reset (INDEX read_ ,INDEX write_) {
+	void reset (const INDEX &read_ ,const INDEX &write_) {
 		_DEBUG_ASSERT_ (mHeap.exist ()) ;
 		_DEBUG_ASSERT_ (read_ >= 0 && read_ < mStream.size ()) ;
 		_DEBUG_ASSERT_ (write_ >= 0 && write_ < mStream.size ()) ;
@@ -1367,13 +1621,13 @@ public:
 		mWrite = write_ ;
 	}
 
-	TextWriter copy () popping {
+	TextWriter share () popping {
 		TextWriter ret ;
 		ret.mHeap = mHeap ;
 		ret.mStream = PhanBuffer<REAL>::make (mStream) ;
 		ret.mRead = mRead ;
 		ret.mWrite = mWrite ;
-		return std::move (ret) ;
+		return _MOVE_ (ret) ;
 	}
 
 	void write (const REAL &data) {
@@ -1398,7 +1652,7 @@ public:
 
 	inline TextWriter &operator<< (const REAL &data) {
 		write (data) ;
-		return (*this) ;
+		return DEREF[this] ;
 	}
 
 	void write (const BOOL &data) {
@@ -1416,7 +1670,7 @@ public:
 
 	inline TextWriter &operator<< (const BOOL &data) {
 		write (data) ;
-		return (*this) ;
+		return DEREF[this] ;
 	}
 
 	void write (const PTR<const VOID> &) = delete ;
@@ -1429,19 +1683,20 @@ public:
 
 	inline TextWriter &operator<< (const VAR32 &data) {
 		write (data) ;
-		return (*this) ;
+		return DEREF[this] ;
 	}
 
 	void write (const VAR64 &data) {
 		auto rax = Buffer<REAL ,ARGC<128>> () ;
 		INDEX ix = rax.size () ;
-		compute_write_number (data ,(*this) ,PhanBuffer<REAL>::make (rax) ,ix) ;
-		write (PhanBuffer<const REAL>::make (PTRTOARR[&rax.self[ix]] ,(rax.size () - ix))) ;
+		compute_write_number (data ,PhanBuffer<REAL>::make (rax) ,ix) ;
+		const auto r1x = PhanBuffer<const REAL>::make (PTRTOARR[&rax.self[ix]] ,(rax.size () - ix)) ;
+		write (r1x) ;
 	}
 
 	inline TextWriter &operator<< (const VAR64 &data) {
 		write (data) ;
-		return (*this) ;
+		return DEREF[this] ;
 	}
 
 	void write (const VAL32 &data) {
@@ -1454,19 +1709,19 @@ public:
 		const auto r1x = attr () ;
 		auto fax = TRUE ;
 		if switch_case (fax) {
-			if (!_ISNAN_ (data))
+			if (!MathProc::is_nan (data))
 				discard ;
 			write (PhanBuffer<const REAL>::make (M_NAN.P1)) ;
 		}
 		if switch_case (fax) {
-			if (!_ISINF_ (data))
+			if (!MathProc::is_infinite (data))
 				discard ;
 			if (!(data > 0))
 				discard ;
 			write (PhanBuffer<const REAL>::make (M_INF.P1)) ;
 		}
 		if switch_case (fax) {
-			if (!_ISINF_ (data))
+			if (!MathProc::is_infinite (data))
 				discard ;
 			if (!(data < 0))
 				discard ;
@@ -1476,14 +1731,15 @@ public:
 			auto rax = Buffer<REAL ,ARGC<256>> () ;
 			INDEX ix = rax.size () ;
 			const auto r2x = r1x.varify_val32_precision () ;
-			compute_write_number (data ,(*this) ,r2x ,PhanBuffer<REAL>::make (rax) ,ix) ;
-			write (PhanBuffer<const REAL>::make (PTRTOARR[&rax.self[ix]] ,(rax.size () - ix))) ;
+			compute_write_number (data ,r2x ,PhanBuffer<REAL>::make (rax) ,ix) ;
+			const auto r3x = PhanBuffer<const REAL>::make (PTRTOARR[&rax.self[ix]] ,(rax.size () - ix)) ;
+			write (r3x) ;
 		}
 	}
 
 	inline TextWriter &operator<< (const VAL32 &data) {
 		write (data) ;
-		return (*this) ;
+		return DEREF[this] ;
 	}
 
 	void write (const VAL64 &data) {
@@ -1496,19 +1752,19 @@ public:
 		const auto r1x = attr () ;
 		auto fax = TRUE ;
 		if switch_case (fax) {
-			if (!_ISNAN_ (data))
+			if (!MathProc::is_nan (data))
 				discard ;
 			write (PhanBuffer<const REAL>::make (M_NAN.P1)) ;
 		}
 		if switch_case (fax) {
-			if (!_ISINF_ (data))
+			if (!MathProc::is_infinite (data))
 				discard ;
 			if (!(data > 0))
 				discard ;
 			write (PhanBuffer<const REAL>::make (M_INF.P1)) ;
 		}
 		if switch_case (fax) {
-			if (!_ISINF_ (data))
+			if (!MathProc::is_infinite (data))
 				discard ;
 			if (!(data < 0))
 				discard ;
@@ -1518,14 +1774,15 @@ public:
 			auto rax = Buffer<REAL ,ARGC<256>> () ;
 			INDEX ix = rax.size () ;
 			const auto r2x = r1x.varify_val64_precision () ;
-			compute_write_number (data ,(*this) ,r2x ,PhanBuffer<REAL>::make (rax) ,ix) ;
-			write (PhanBuffer<const REAL>::make (PTRTOARR[&rax.self[ix]] ,(rax.size () - ix))) ;
+			compute_write_number (data ,r2x ,PhanBuffer<REAL>::make (rax) ,ix) ;
+			const auto r3x = PhanBuffer<const REAL>::make (PTRTOARR[&rax.self[ix]] ,(rax.size () - ix)) ;
+			write (r3x) ;
 		}
 	}
 
 	inline TextWriter &operator<< (const VAL64 &data) {
 		write (data) ;
-		return (*this) ;
+		return DEREF[this] ;
 	}
 
 	template <class _ARG1 ,class _ARG2>
@@ -1536,22 +1793,24 @@ public:
 	template <class _ARG1 ,class _ARG2>
 	inline TextWriter &operator<< (const Array<_ARG1 ,_ARG2> &data) {
 		write (data) ;
-		return (*this) ;
+		return DEREF[this] ;
 	}
 
 	void write (const Plain<REAL> &data) {
-#pragma GCC diagnostic push
 #ifdef __CSC_COMPILER_GNUC__
+#pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Warray-bounds"
 #endif
 		for (auto &&i : _RANGE_ (0 ,data.size ()))
 			write (data.self[i]) ;
+#ifdef __CSC_COMPILER_GNUC__
 #pragma GCC diagnostic pop
-	}
+#endif
+}
 
 	inline TextWriter &operator<< (const Plain<REAL> &data) {
 		write (data) ;
-		return (*this) ;
+		return DEREF[this] ;
 	}
 
 	template <class _ARG1>
@@ -1565,7 +1824,7 @@ public:
 	template <class _ARG1>
 	inline TextWriter &operator<< (const String<REAL ,_ARG1> &data) {
 		write (data) ;
-		return (*this) ;
+		return DEREF[this] ;
 	}
 
 	template <class _ARG1 ,class _ARG2>
@@ -1577,31 +1836,83 @@ public:
 	template <class _ARG1 ,class _ARG2>
 	inline TextWriter &operator<< (const Buffer<_ARG1 ,_ARG2> &data) {
 		write (data) ;
-		return (*this) ;
+		return DEREF[this] ;
 	}
 
 	void write (const Binder &data) {
-		data.friend_write ((*this)) ;
+		data.friend_write (DEREF[this]) ;
 	}
 
 	inline TextWriter &operator<< (const Binder &data) {
 		write (data) ;
-		return (*this) ;
+		return DEREF[this] ;
 	}
 
 	void write (const PTR<void (TextWriter &)> &proc) {
 		const auto r1x = Function<void (TextWriter &)> (proc) ;
-		r1x ((*this)) ;
+		r1x (DEREF[this]) ;
 	}
 
 	inline TextWriter &operator<< (const PTR<void (TextWriter &)> &proc) {
 		write (proc) ;
-		return (*this) ;
+		return DEREF[this] ;
+	}
+
+	void prints () {
+		_STATIC_WARNING_ ("noop") ;
+	}
+
+	template <class _ARG1 ,class... _ARGS>
+	void prints (const _ARG1 &list_one ,const _ARGS &...list_rest) {
+		write (list_one) ;
+		prints (list_rest...) ;
+	}
+
+	void write (const PTR<decltype (CLS)> &) {
+		reset () ;
+	}
+
+	inline TextWriter &operator<< (const PTR<decltype (CLS)> &proc) {
+		write (proc) ;
+		return DEREF[this] ;
+	}
+
+	void write (const PTR<decltype (BOM)> &) {
+		template_write_bom (_NULL_<ARGV<REAL>> ()) ;
+	}
+
+	inline TextWriter &operator<< (const PTR<decltype (BOM)> &proc) {
+		write (proc) ;
+		return DEREF[this] ;
+	}
+
+	void write (const PTR<decltype (GAP)> &) {
+		auto rax = share () ;
+		_DYNAMIC_ASSERT_ (rax.length () + 2 < rax.size ()) ;
+		rax << REAL ('\r') << REAL ('\n') ;
+		DEREF[this] = rax.share () ;
+	}
+
+	inline TextWriter &operator<< (const PTR<decltype (GAP)> &proc) {
+		write (proc) ;
+		return DEREF[this] ;
+	}
+
+	void write (const PTR<decltype (EOS)> &) {
+		const auto r1x = attr () ;
+		auto rax = share () ;
+		rax << r1x.varify_ending_item () ;
+		DEREF[this] = rax.share () ;
+	}
+
+	inline TextWriter &operator<< (const PTR<decltype (EOS)> &proc) {
+		write (proc) ;
+		return DEREF[this] ;
 	}
 
 private:
-	void compute_write_number (const VAR64 &data ,TextWriter &writer ,const PhanBuffer<REAL> &out ,INDEX &out_i) const {
-		const auto r1x = writer.attr () ;
+	void compute_write_number (const VAR64 &data ,const PhanBuffer<REAL> &out ,INDEX &out_i) {
+		const auto r1x = attr () ;
 		auto rax = data ;
 		INDEX iw = out_i ;
 		auto fax = TRUE ;
@@ -1634,22 +1945,22 @@ private:
 		out_i = iw ;
 	}
 
-	void compute_write_number (const VAL64 &data ,TextWriter &writer ,LENGTH precision ,const PhanBuffer<REAL> &out ,INDEX &out_i) const {
-		const auto r1x = writer.attr () ;
+	void compute_write_number (const VAL64 &data ,const LENGTH &precision ,const PhanBuffer<REAL> &out ,INDEX &out_i) {
+		const auto r1x = attr () ;
 		INDEX iw = out_i ;
-		const auto r2x = _IEEE754_DECODE_ (data) ;
-		auto rax = _IEEE754_E2TOE10_ (r2x) ;
+		const auto r2x = MathProc::ieee754_decode (data) ;
+		auto rax = MathProc::ieee754_e2_e10 (r2x) ;
 		const auto r3x = log_of_number (rax[0] ,r1x.varify_radix ()) ;
 		if switch_case (TRUE) {
 			const auto r4x = r3x - precision ;
 			for (auto &&i : _RANGE_ (0 ,r4x - 1)) {
 				rax[0] /= r1x.varify_radix () ;
 				rax[1]++ ;
-				(void) i ;
+				_STATIC_UNUSED_ (i) ;
 			}
 			if (r4x <= 0)
 				discard ;
-			rax[0] = _ROUND_ (rax[0] ,r1x.varify_radix ()) / r1x.varify_radix () ;
+			rax[0] = MathProc::round (rax[0] ,r1x.varify_radix ()) / r1x.varify_radix () ;
 			rax[1]++ ;
 		}
 		const auto r5x = log_of_number (rax[0] ,r1x.varify_radix ()) ;
@@ -1663,23 +1974,23 @@ private:
 		if switch_case (fax) {
 			//@info: case 'x.xxxExxx'
 			const auto r6x = r5x - 1 + rax[1] ;
-			if (!(_ABS_ (r6x) >= precision))
+			if (!(MathProc::abs (r6x) >= precision))
 				discard ;
-			compute_write_number (r6x ,writer ,out ,iw) ;
+			compute_write_number (r6x ,out ,iw) ;
 			if (r6x > 0)
 				out[--iw] = REAL ('+') ;
 			out[--iw] = REAL ('e') ;
-			const auto r7x = _MAX_ ((r5x - 1 - precision) ,VAR_ZERO) ;
+			const auto r7x = MathProc::maxof ((r5x - 1 - precision) ,VAR_ZERO) ;
 			for (auto &&i : _RANGE_ (0 ,r7x)) {
 				rax[0] /= r1x.varify_radix () ;
-				(void) i ;
+				_STATIC_UNUSED_ (i) ;
 			}
 			INDEX ix = iw - 1 ;
 			for (auto &&i : _RANGE_ (r7x ,r5x - 1)) {
 				out[--iw] = r1x.convert_number_w (rax[0] % r1x.varify_radix ()) ;
 				iw += _EBOOL_ (out[ix] == r1x.convert_number_w (0)) ;
 				rax[0] /= r1x.varify_radix () ;
-				(void) i ;
+				_STATIC_UNUSED_ (i) ;
 			}
 			out[--iw] = REAL ('.') ;
 			iw += _EBOOL_ (out[ix] == REAL ('.')) ;
@@ -1692,12 +2003,12 @@ private:
 				discard ;
 			for (auto &&i : _RANGE_ (0 ,LENGTH (rax[1]))) {
 				out[--iw] = r1x.convert_number_w (0) ;
-				(void) i ;
+				_STATIC_UNUSED_ (i) ;
 			}
 			for (auto &&i : _RANGE_ (0 ,r5x)) {
 				out[--iw] = r1x.convert_number_w (rax[0] % r1x.varify_radix ()) ;
 				rax[0] /= r1x.varify_radix () ;
-				(void) i ;
+				_STATIC_UNUSED_ (i) ;
 			}
 		}
 		if switch_case (fax) {
@@ -1706,24 +2017,24 @@ private:
 				discard ;
 			if (!(rax[1] < 0))
 				discard ;
-			const auto r8x = _MAX_ (LENGTH (-rax[1] - precision) ,VAR_ZERO) ;
+			const auto r8x = MathProc::maxof (LENGTH (-rax[1] - precision) ,VAR_ZERO) ;
 			for (auto &&i : _RANGE_ (0 ,r8x)) {
 				rax[0] /= r1x.varify_radix () ;
-				(void) i ;
+				_STATIC_UNUSED_ (i) ;
 			}
 			INDEX ix = iw - 1 ;
 			for (auto &&i : _RANGE_ (r8x ,LENGTH (-rax[1]))) {
 				out[--iw] = r1x.convert_number_w (rax[0] % r1x.varify_radix ()) ;
 				iw += _EBOOL_ (out[ix] == r1x.convert_number_w (0)) ;
 				rax[0] /= r1x.varify_radix () ;
-				(void) i ;
+				_STATIC_UNUSED_ (i) ;
 			}
 			out[--iw] = REAL ('.') ;
 			iw += _EBOOL_ (out[ix] == REAL ('.')) ;
 			for (auto &&i : _RANGE_ (0 ,LENGTH (r5x + rax[1]))) {
 				out[--iw] = r1x.convert_number_w (rax[0] % r1x.varify_radix ()) ;
 				rax[0] /= r1x.varify_radix () ;
-				(void) i ;
+				_STATIC_UNUSED_ (i) ;
 			}
 		}
 		if switch_case (fax) {
@@ -1732,22 +2043,22 @@ private:
 				discard ;
 			if (!(rax[1] < 0))
 				discard ;
-			const auto r9x = _MAX_ (LENGTH (-rax[1] - precision) ,VAR_ZERO) ;
+			const auto r9x = MathProc::maxof (LENGTH (-rax[1] - precision) ,VAR_ZERO) ;
 			for (auto &&i : _RANGE_ (0 ,r9x)) {
 				rax[0] /= r1x.varify_radix () ;
-				(void) i ;
+				_STATIC_UNUSED_ (i) ;
 			}
 			INDEX ix = iw - 1 ;
 			for (auto &&i : _RANGE_ (r9x ,r5x)) {
 				out[--iw] = r1x.convert_number_w (rax[0] % r1x.varify_radix ()) ;
 				iw += _EBOOL_ (out[ix] == r1x.convert_number_w (0)) ;
 				rax[0] /= r1x.varify_radix () ;
-				(void) i ;
+				_STATIC_UNUSED_ (i) ;
 			}
-			for (auto &&i : _RANGE_ (_MAX_ (r9x ,r5x) ,LENGTH (-rax[1]))) {
+			for (auto &&i : _RANGE_ (MathProc::maxof (r9x ,r5x) ,LENGTH (-rax[1]))) {
 				out[--iw] = r1x.convert_number_w (0) ;
 				iw += _EBOOL_ (out[ix] == r1x.convert_number_w (0)) ;
-				(void) i ;
+				_STATIC_UNUSED_ (i) ;
 			}
 			out[--iw] = REAL ('.') ;
 			iw += _EBOOL_ (out[ix] == REAL ('.')) ;
@@ -1758,7 +2069,7 @@ private:
 		out_i = iw ;
 	}
 
-	LENGTH log_of_number (VAR64 val ,LENGTH radix) const {
+	LENGTH log_of_number (const VAR64 &val ,const LENGTH &radix) const {
 		LENGTH ret = 0 ;
 		auto rax = VAR64 (1) ;
 		while (TRUE) {
@@ -1767,7 +2078,42 @@ private:
 			ret++ ;
 			rax *= radix ;
 		}
-		return std::move (ret) ;
+		return _MOVE_ (ret) ;
+	}
+	
+	template <class _ARG1>
+	void template_write_bom (const ARGV<_ARG1> &) {
+		_STATIC_WARNING_ ("noop") ;
+	}
+
+	void template_write_bom (const ARGV<STRU8> &) {
+		static constexpr auto M_BOM = PACK<STRU8[3]> ({
+			STRU8 (0XEF) ,STRU8 (0XBB) ,STRU8 (0XBF)}) ;
+		auto rax = share () ;
+		rax << PhanBuffer<const STRU8>::make (M_BOM.P1) ;
+		DEREF[this] = rax.share () ;
+	}
+
+	void template_write_bom (const ARGV<STRU16> &) {
+		static constexpr auto M_BOM = PACK<STRU16[1]> ({
+			STRU16 (0XFEFF)}) ;
+		auto rax = share () ;
+		rax << PhanBuffer<const STRU16>::make (M_BOM.P1) ;
+		DEREF[this] = rax.share () ;
+	}
+
+	void template_write_bom (const ARGV<STRU32> &) {
+		static constexpr auto M_BOM = PACK<STRU32[1]> ({
+			STRU32 (0X0000FEFF)}) ;
+		auto rax = share () ;
+		rax << PhanBuffer<const STRU32>::make (M_BOM.P1) ;
+		DEREF[this] = rax.share () ;
+	}
+
+	void template_write_bom (const ARGV<STRW> &) {
+		auto rax = share () ;
+		_CAST_<TextWriter<STRUW>> (rax).template_write_bom (_NULL_<ARGV<STRUW>> ()) ;
+		DEREF[this] = rax.share () ;
 	}
 } ;
 
@@ -1806,11 +2152,11 @@ struct TextWriter<REAL>::Detail {
 			return TRUE ;
 		}
 
-		inline REAL convert_number_w (VAR64 number) const {
+		inline REAL convert_number_w (const VAR64 &number) const {
 			return REAL (VAR64 ('0') + number) ;
 		}
 
-		inline void enable_escape (BOOL flag) const {
+		inline void enable_escape (const BOOL &flag) const {
 			mBase.mHeap->mEscapeFlag = flag ;
 		}
 
@@ -1862,278 +2208,29 @@ struct TextWriter<REAL>::Detail {
 	} ;
 } ;
 
-inline namespace STREAM {
-template <class _ARG1>
-inline void _CLS_ (ByteReader<_ARG1> &reader) {
-	reader.reset () ;
-}
-
-template <class _ARG1>
-inline void _CLS_ (ByteWriter<_ARG1> &writer) {
-	writer.reset () ;
-}
-
-template <class _ARG1>
-inline void _CLS_ (TextReader<_ARG1> &reader) {
-	reader.reset () ;
-}
-
-template <class _ARG1>
-inline void _CLS_ (TextWriter<_ARG1> &writer) {
-	writer.reset () ;
-}
-
-template <class _ARG1>
-inline void _BOM_ (TextReader<_ARG1> &reader) {
-	_STATIC_WARNING_ ("noop") ;
-}
-
-inline void _BOM_ (TextReader<STRU8> &reader) {
-	static constexpr auto M_BOM = PACK<STRU8[3]> ({
-		STRU8 (0XEF) ,STRU8 (0XBB) ,STRU8 (0XBF)}) ;
-	const auto r1x = reader.attr () ;
-	auto ris = reader.copy () ;
-	auto rax = STRU8 () ;
-	ris >> rax ;
-	if (rax != M_BOM.P1[0])
-		return ;
-	ris >> rax ;
-	if (rax != M_BOM.P1[1])
-		return ;
-	ris >> rax ;
-	if (rax != M_BOM.P1[2])
-		return ;
-	r1x.enable_endian (FALSE) ;
-	reader = std::move (ris) ;
-}
-
-inline void _BOM_ (TextReader<STRU16> &reader) {
-	static constexpr auto M_BOM = PACK<STRU16[2]> ({
-		STRU16 (0XFEFF) ,STRU16 (0XFFFE)}) ;
-	const auto r1x = reader.attr () ;
-	auto ris = reader.copy () ;
-	auto rax = STRU16 () ;
-	ris >> rax ;
-	if (!(rax == M_BOM.P1[0] || rax == M_BOM.P1[1]))
-		return ;
-	const auto r2x = BOOL (rax != M_BOM.P1[0]) ;
-	r1x.enable_endian (r2x) ;
-	reader = std::move (ris) ;
-}
-
-inline void _BOM_ (TextReader<STRU32> &reader) {
-	static constexpr auto M_BOM = PACK<STRU32[2]> ({
-		STRU32 (0X0000FEFF) ,STRU32 (0XFFFE0000)}) ;
-	const auto r1x = reader.attr () ;
-	auto ris = reader.copy () ;
-	auto rax = STRU32 () ;
-	ris >> rax ;
-	if (!(rax == M_BOM.P1[0] || rax == M_BOM.P1[1]))
-		return ;
-	const auto r2x = BOOL (rax != M_BOM.P1[0]) ;
-	r1x.enable_endian (r2x) ;
-	reader = std::move (ris) ;
-}
-
-inline void _BOM_ (TextReader<STRW> &reader) {
-	_BOM_ (_CAST_<TextReader<STRUW>> (reader)) ;
-}
-
-template <class _ARG1>
-inline void _BOM_ (TextWriter<_ARG1> &writer) {
-	_STATIC_WARNING_ ("noop") ;
-}
-
-inline void _BOM_ (TextWriter<STRU8> &writer) {
-	static constexpr auto M_BOM = PACK<STRU8[3]> ({
-		STRU8 (0XEF) ,STRU8 (0XBB) ,STRU8 (0XBF)}) ;
-	auto wos = writer.copy () ;
-	wos << PhanBuffer<const STRU8>::make (M_BOM.P1) ;
-	writer = std::move (wos) ;
-}
-
-inline void _BOM_ (TextWriter<STRU16> &writer) {
-	static constexpr auto M_BOM = PACK<STRU16[1]> ({
-		STRU16 (0XFEFF)}) ;
-	auto wos = writer.copy () ;
-	wos << PhanBuffer<const STRU16>::make (M_BOM.P1) ;
-	writer = std::move (wos) ;
-}
-
-inline void _BOM_ (TextWriter<STRU32> &writer) {
-	static constexpr auto M_BOM = PACK<STRU32[1]> ({
-		STRU32 (0X0000FEFF)}) ;
-	auto wos = writer.copy () ;
-	wos << PhanBuffer<const STRU32>::make (M_BOM.P1) ;
-	writer = std::move (wos) ;
-}
-
-inline void _BOM_ (TextWriter<STRA> &writer) {
-	_STATIC_WARNING_ ("noop") ;
-}
-
-inline void _BOM_ (TextWriter<STRW> &writer) {
-	_BOM_ (_CAST_<TextWriter<STRUW>> (writer)) ;
-}
-
-template <class _ARG1>
-inline void _GAP_ (ByteReader<_ARG1> &reader) {
-	const auto r1x = reader.attr () ;
-	auto ris = reader.copy () ;
-	auto rax = BYTE () ;
-	ris >> rax ;
-	_DYNAMIC_ASSERT_ (rax == r1x.varify_space_item ()) ;
-	ris >> rax ;
-	_DYNAMIC_ASSERT_ (rax == r1x.varify_space_item ()) ;
-	reader = std::move (ris) ;
-}
-
-template <class _ARG1>
-inline void _GAP_ (ByteWriter<_ARG1> &writer) {
-	const auto r1x = writer.attr () ;
-	auto wos = writer.copy () ;
-	wos << r1x.varify_space_item () ;
-	wos << r1x.varify_space_item () ;
-	writer = std::move (wos) ;
-}
-
-template <class _ARG1>
-inline void _GAP_ (TextReader<_ARG1> &reader) {
-	const auto r1x = reader.attr () ;
-	auto ris = reader.copy () ;
-	auto rax = _ARG1 () ;
-	ris >> rax ;
-	while (TRUE) {
-		if (!r1x.varify_space (rax))
-			break ;
-		reader = ris.copy () ;
-		ris >> rax ;
-	}
-}
-
-template <class _ARG1>
-inline void _GAP_ (TextWriter<_ARG1> &writer) {
-	auto wos = writer.copy () ;
-	_DYNAMIC_ASSERT_ (wos.length () + 2 < wos.size ()) ;
-	wos << _ARG1 ('\r') << _ARG1 ('\n') ;
-	writer = std::move (wos) ;
-}
-
-template <class _ARG1>
-inline void _EOS_ (ByteReader<_ARG1> &reader) {
-	const auto r1x = reader.attr () ;
-	auto ris = reader.copy () ;
-	auto rax = BYTE () ;
-	while (TRUE) {
-		if (ris.length () == 0)
-			break ;
-		ris >> rax ;
-		_DYNAMIC_ASSERT_ (rax == r1x.varify_ending_item ()) ;
-	}
-	reader = std::move (ris) ;
-}
-
-template <class _ARG1>
-inline void _EOS_ (ByteWriter<_ARG1> &writer) {
-	const auto r1x = writer.attr () ;
-	auto wos = writer.copy () ;
-	for (auto &&i : _RANGE_ (0 ,wos.size () - wos.length ())) {
-		wos << r1x.varify_ending_item () ;
-		(void) i ;
-	}
-	writer = std::move (wos) ;
-}
-
-template <class _ARG1>
-inline void _EOS_ (TextReader<_ARG1> &reader) {
-	const auto r1x = reader.attr () ;
-	auto ris = reader.copy () ;
-	auto rax = _ARG1 () ;
-	ris.read (rax) ;
-	_DYNAMIC_ASSERT_ (rax == r1x.varify_ending_item ()) ;
-	reader = std::move (ris) ;
-}
-
-template <class _ARG1>
-inline void _EOS_ (TextWriter<_ARG1> &writer) {
-	const auto r1x = writer.attr () ;
-	auto wos = writer.copy () ;
-	wos << r1x.varify_ending_item () ;
-	writer = std::move (wos) ;
-}
-} ;
-
-inline namespace STREAM {
-template <class _ARG1>
-inline void _SCANS_ (ByteReader<_ARG1> &reader) {
-	_STATIC_WARNING_ ("noop") ;
-}
-
-template <class _ARG1 ,class _ARG2 ,class... _ARGS>
-inline void _SCANS_ (ByteReader<_ARG1> &reader ,const _ARG2 &list_one ,const _ARGS &...list_rest) {
-	reader >> list_one ;
-	_SCANS_ (reader ,list_rest...) ;
-}
-
-template <class _ARG1>
-inline void _SCANS_ (TextReader<_ARG1> &reader) {
-	_STATIC_WARNING_ ("noop") ;
-}
-
-template <class _ARG1 ,class _ARG2 ,class... _ARGS>
-inline void _SCANS_ (TextReader<_ARG1> &reader ,const _ARG2 &list_one ,const _ARGS &...list_rest) {
-	reader >> list_one ;
-	_SCANS_ (reader ,list_rest...) ;
-}
-
-template <class _ARG1>
-inline void _PRINTS_ (ByteWriter<_ARG1> &writer) {
-	_STATIC_WARNING_ ("noop") ;
-}
-
-template <class _ARG1 ,class _ARG2 ,class... _ARGS>
-inline void _PRINTS_ (ByteWriter<_ARG1> &writer ,const _ARG2 &list_one ,const _ARGS &...list_rest) {
-	writer << list_one ;
-	_PRINTS_ (writer ,list_rest...) ;
-}
-
-template <class _ARG1>
-inline void _PRINTS_ (TextWriter<_ARG1> &writer) {
-	_STATIC_WARNING_ ("noop") ;
-}
-
-template <class _ARG1 ,class _ARG2 ,class... _ARGS>
-inline void _PRINTS_ (TextWriter<_ARG1> &writer ,const _ARG2 &list_one ,const _ARGS &...list_rest) {
-	writer << list_one ;
-	_PRINTS_ (writer ,list_rest...) ;
-}
-} ;
+template <class REAL>
+inline void TextWriter<REAL>::CLS (const ARGV<ARGC<1>> &) {}
+template <class REAL>
+inline void TextWriter<REAL>::BOM (const ARGV<ARGC<2>> &) {}
+template <class REAL>
+inline void TextWriter<REAL>::GAP (const ARGV<ARGC<3>> &) {}
+template <class REAL>
+inline void TextWriter<REAL>::EOS (const ARGV<ARGC<4>> &) {}
 
 class RegularReader {
-private:
-	struct HINT_IDENTIFIER_TEXT_TYPE ;
-	struct HINT_VALUE_TEXT_TYPE ;
-	struct HINT_STRING_TEXT_TYPE ;
-	struct HINT_NEWGAP_TEXT_TYPE ;
-	struct HINT_NEWLINE_TEXT_TYPE ;
-	struct SKIP_GAP_TYPE ;
-	struct SKIP_GAP_SPACE_ONLY_TYPE ;
-	struct SKIP_GAP_ENDLINE_ONLY_TYPE ;
-	struct SKIP_LINE_TYPE ;
-
 public:
-	static void HINT_IDENTIFIER_TEXT (const ARGV<HINT_IDENTIFIER_TEXT_TYPE> &) {}
-	static void HINT_VALUE_TEXT (const ARGV<HINT_VALUE_TEXT_TYPE> &) {}
-	static void HINT_STRING_TEXT (const ARGV<HINT_STRING_TEXT_TYPE> &) {}
-	static void HINT_NEWGAP_TEXT (const ARGV<HINT_NEWGAP_TEXT_TYPE> &) {}
-	static void HINT_NEWLINE_TEXT (const ARGV<HINT_NEWLINE_TEXT_TYPE> &) {}
-	static void SKIP_GAP (const ARGV<SKIP_GAP_TYPE> &) {}
-	static void SKIP_GAP_SPACE_ONLY (const ARGV<SKIP_GAP_SPACE_ONLY_TYPE> &) {}
-	static void SKIP_GAP_ENDLINE_ONLY (const ARGV<SKIP_GAP_ENDLINE_ONLY_TYPE> &) {}
-	static void SKIP_LINE (const ARGV<SKIP_LINE_TYPE> &) {}
+	static DEF<void (const ARGV<ARGC<1>> &)> HINT_IDENTIFIER ;
+	static DEF<void (const ARGV<ARGC<2>> &)> HINT_VALUE ;
+	static DEF<void (const ARGV<ARGC<3>> &)> HINT_STRING ;
+	static DEF<void (const ARGV<ARGC<4>> &)> HINT_NEWGAP ;
+	static DEF<void (const ARGV<ARGC<5>> &)> HINT_NEWLINE ;
+	static DEF<void (const ARGV<ARGC<6>> &)> SKIP_GAP ;
+	static DEF<void (const ARGV<ARGC<7>> &)> SKIP_GAP_SPACE ;
+	static DEF<void (const ARGV<ARGC<8>> &)> SKIP_GAP_ENDLINE ;
+	static DEF<void (const ARGV<ARGC<9>> &)> SKIP_LINE ;
 
 private:
-	TextReader<STRU8> mShadowReader ;
+	AutoRef<TextReader<STRU8>> mShareReader ;
 	PhanRef<TextReader<STRU8>> mReader ;
 	Array<STRU8> mCache ;
 	INDEX mPeek ;
@@ -2147,7 +2244,7 @@ public:
 		mHintNextTextSize = 0 ;
 	}
 
-	explicit RegularReader (const PhanRef<TextReader<STRU8>> &reader ,LENGTH ll_len) {
+	explicit RegularReader (const PhanRef<TextReader<STRU8>> &reader ,const LENGTH &ll_len) {
 		_DEBUG_ASSERT_ (reader.exist ()) ;
 		mReader = PhanRef<TextReader<STRU8>>::make (reader) ;
 		const auto r1x = mReader->attr () ;
@@ -2168,7 +2265,7 @@ public:
 		_STATIC_WARNING_ ("mark") ;
 		//@info: disable default escape-str convertion
 		r1x.enable_escape (FALSE) ;
-		mReader.self >> _BOM_ ;
+		mReader.self >> TextReader<STRU8>::BOM ;
 		mCache = Array<STRU8> (ll_len) ;
 		for (auto &&i : _RANGE_ (0 ,mCache.length ()))
 			mReader.self >> mCache[i] ;
@@ -2177,23 +2274,26 @@ public:
 		mHintNextTextSize = 0 ;
 	}
 
-	RegularReader copy () popping {
-		return RegularReader (mReader->copy () ,mCache ,mPeek) ;
+	RegularReader share () popping {
+		RegularReader ret ;
+		ret.mShareReader = AutoRef<TextReader<STRU8>>::make (mReader->share ()) ;
+		ret.mReader = PhanRef<TextReader<STRU8>>::make (ret.mShareReader.self) ;
+		ret.mCache = mCache ;
+		ret.mPeek = mPeek ;
+		ret.mHintStringTextFlag = FALSE ;
+		ret.mHintNextTextSize = 0 ;
+		return _MOVE_ (ret) ;
 	}
 
-	const STRU8 &get (INDEX index) const & {
+	const STRU8 &get (const INDEX &index) const leftvalue {
 		_DEBUG_ASSERT_ (index >= 0 && index < mCache.length ()) ;
 		_DEBUG_ASSERT_ (mPeek >= 0 && mPeek < mCache.length ()) ;
 		return mCache[(mPeek + index) % mCache.length ()] ;
 	}
 
-	inline const STRU8 &operator[] (INDEX index) const & {
+	inline const STRU8 &operator[] (const INDEX &index) const leftvalue {
 		return get (index) ;
 	}
-
-	auto get (INDEX) && ->void = delete ;
-
-	inline auto operator[] (INDEX) && ->void = delete ;
 
 	void read () {
 		mReader.self >> mCache[mPeek] ;
@@ -2205,70 +2305,72 @@ public:
 	}
 
 	void read (const Plain<STRU8> &data) {
-#pragma GCC diagnostic push
 #ifdef __CSC_COMPILER_GNUC__
+#pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Warray-bounds"
 #endif
 		for (auto &&i : _RANGE_ (0 ,data.size ())) {
 			_DYNAMIC_ASSERT_ (get (0) == data.self[i]) ;
 			read () ;
 		}
+#ifdef __CSC_COMPILER_GNUC__
 #pragma GCC diagnostic pop
-	}
+#endif
+}
 
 	inline RegularReader &operator>> (const Plain<STRU8> &data) {
 		read (data) ;
-		return (*this) ;
+		return DEREF[this] ;
 	}
 
-	void read (const PTR<decltype (HINT_IDENTIFIER_TEXT)> &) {
+	void read (const PTR<decltype (HINT_IDENTIFIER)> &) {
 		mHintStringTextFlag = FALSE ;
 		mHintNextTextSize = next_identifier_size () ;
 	}
 
-	inline RegularReader &operator>> (const PTR<decltype (HINT_IDENTIFIER_TEXT)> &) {
-		read (HINT_IDENTIFIER_TEXT) ;
-		return (*this) ;
+	inline RegularReader &operator>> (const PTR<decltype (HINT_IDENTIFIER)> &) {
+		read (HINT_IDENTIFIER) ;
+		return DEREF[this] ;
 	}
 
-	void read (const PTR<decltype (HINT_VALUE_TEXT)> &) {
+	void read (const PTR<decltype (HINT_VALUE)> &) {
 		mHintStringTextFlag = FALSE ;
 		mHintNextTextSize = next_value_size () ;
 	}
 
-	inline RegularReader &operator>> (const PTR<decltype (HINT_VALUE_TEXT)> &) {
-		read (HINT_VALUE_TEXT) ;
-		return (*this) ;
+	inline RegularReader &operator>> (const PTR<decltype (HINT_VALUE)> &) {
+		read (HINT_VALUE) ;
+		return DEREF[this] ;
 	}
 
-	void read (const PTR<decltype (HINT_STRING_TEXT)> &) {
+	void read (const PTR<decltype (HINT_STRING)> &) {
 		mHintStringTextFlag = TRUE ;
 		mHintNextTextSize = next_string_size () ;
 	}
 
-	inline RegularReader &operator>> (const PTR<decltype (HINT_STRING_TEXT)> &) {
-		read (HINT_STRING_TEXT) ;
-		return (*this) ;
+	inline RegularReader &operator>> (const PTR<decltype (HINT_STRING)> &) {
+		read (HINT_STRING) ;
+		return DEREF[this] ;
 	}
 
-	void read (const PTR<decltype (HINT_NEWGAP_TEXT)> &) {
+	void read (const PTR<decltype (HINT_NEWGAP)> &) {
 		mHintStringTextFlag = FALSE ;
 		mHintNextTextSize = next_newgap_text_size () ;
 	}
 
-	inline RegularReader &operator>> (const PTR<decltype (HINT_NEWGAP_TEXT)> &) {
-		read (HINT_NEWGAP_TEXT) ;
-		return (*this) ;
+	inline RegularReader &operator>> (const PTR<decltype (HINT_NEWGAP)> &) {
+		read (HINT_NEWGAP) ;
+		return DEREF[this] ;
 	}
 
-	void read (const PTR<decltype (HINT_NEWLINE_TEXT)> &) {
+	void read (const PTR<decltype (HINT_NEWLINE)> &) {
 		mHintStringTextFlag = FALSE ;
 		mHintNextTextSize = next_newline_text_size () ;
 	}
 
-	inline RegularReader &operator>> (const PTR<decltype (HINT_NEWLINE_TEXT)> &) {
-		read (HINT_NEWLINE_TEXT) ;
-		return (*this) ;
+	inline RegularReader &operator>> (const PTR<decltype (HINT_NEWLINE)> &) {
+		read (HINT_NEWLINE) ;
+		return DEREF[this] ;
 	}
 
 	void read (const PTR<decltype (SKIP_GAP)> &) {
@@ -2282,10 +2384,10 @@ public:
 
 	inline RegularReader &operator>> (const PTR<decltype (SKIP_GAP)> &) {
 		read (SKIP_GAP) ;
-		return (*this) ;
+		return DEREF[this] ;
 	}
 
-	void read (const PTR<decltype (SKIP_GAP_SPACE_ONLY)> &) {
+	void read (const PTR<decltype (SKIP_GAP_SPACE)> &) {
 		const auto r1x = mReader->attr () ;
 		while (TRUE) {
 			if (!r1x.varify_space (get (0) ,1))
@@ -2294,12 +2396,12 @@ public:
 		}
 	}
 
-	inline RegularReader &operator>> (const PTR<decltype (SKIP_GAP_SPACE_ONLY)> &) {
-		read (SKIP_GAP_SPACE_ONLY) ;
-		return (*this) ;
+	inline RegularReader &operator>> (const PTR<decltype (SKIP_GAP_SPACE)> &) {
+		read (SKIP_GAP_SPACE) ;
+		return DEREF[this] ;
 	}
 
-	void read (const PTR<decltype (SKIP_GAP_ENDLINE_ONLY)> &) {
+	void read (const PTR<decltype (SKIP_GAP_ENDLINE)> &) {
 		const auto r1x = mReader->attr () ;
 		while (TRUE) {
 			if (!r1x.varify_space (get (0) ,2))
@@ -2308,9 +2410,9 @@ public:
 		}
 	}
 
-	inline RegularReader &operator>> (const PTR<decltype (SKIP_GAP_ENDLINE_ONLY)> &) {
-		read (SKIP_GAP_ENDLINE_ONLY) ;
-		return (*this) ;
+	inline RegularReader &operator>> (const PTR<decltype (SKIP_GAP_ENDLINE)> &) {
+		read (SKIP_GAP_ENDLINE) ;
+		return DEREF[this] ;
 	}
 
 	void read (const PTR<decltype (SKIP_LINE)> &) {
@@ -2332,7 +2434,7 @@ public:
 
 	inline RegularReader &operator>> (const PTR<decltype (SKIP_LINE)> &) {
 		read (SKIP_LINE) ;
-		return (*this) ;
+		return DEREF[this] ;
 	}
 
 	void read (String<STRU8> &data) {
@@ -2378,160 +2480,160 @@ public:
 
 	inline RegularReader &operator>> (String<STRU8> &data) {
 		read (data) ;
-		return (*this) ;
-	}
-
-private:
-	explicit RegularReader (TextReader<STRU8> &&reader ,const Array<STRU8> &cache ,INDEX peek) {
-		mShadowReader = std::move (reader) ;
-		mReader = PhanRef<TextReader<STRU8>>::make (mShadowReader) ;
-		mCache = cache ;
-		mPeek = peek ;
-		mHintStringTextFlag = FALSE ;
-		mHintNextTextSize = 0 ;
+		return DEREF[this] ;
 	}
 
 private:
 	LENGTH next_identifier_size () popping {
 		LENGTH ret = 0 ;
-		auto ris = copy () ;
+		auto rax = share () ;
 		while (TRUE) {
-			const auto r1x = BOOL (ris[0] >= STRU8 ('A') && ris[0] <= STRU8 ('Z')) ;
-			const auto r2x = BOOL (ris[0] >= STRU8 ('a') && ris[0] <= STRU8 ('z')) ;
-			const auto r3x = BOOL (ris[0] == STRU8 ('_')) ;
+			const auto r1x = BOOL (rax[0] >= STRU8 ('A') && rax[0] <= STRU8 ('Z')) ;
+			const auto r2x = BOOL (rax[0] >= STRU8 ('a') && rax[0] <= STRU8 ('z')) ;
+			const auto r3x = BOOL (rax[0] == STRU8 ('_')) ;
 			if (ret == 0)
 				_DYNAMIC_ASSERT_ (r1x || r2x || r3x) ;
 			if (!r1x && !r2x && !r3x)
-				if (!(ris[0] >= STRU8 ('0') && ris[0] <= STRU8 ('9')))
-					if (!(ris[0] == STRU8 ('-') || ris[0] == STRU8 ('.') || ris[0] == STRU8 (':')))
+				if (!(rax[0] >= STRU8 ('0') && rax[0] <= STRU8 ('9')))
+					if (!(rax[0] == STRU8 ('-') || rax[0] == STRU8 ('.') || rax[0] == STRU8 (':')))
 						break ;
-			ris++ ;
+			rax++ ;
 			ret++ ;
 		}
-		return std::move (ret) ;
+		return _MOVE_ (ret) ;
 	}
 
 	LENGTH next_value_size () popping {
 		LENGTH ret = 0 ;
-		auto ris = copy () ;
+		auto rax = share () ;
 		if switch_case (TRUE) {
-			if (!(ris[0] == STRU8 ('+') || ris[0] == STRU8 ('-')))
+			if (!(rax[0] == STRU8 ('+') || rax[0] == STRU8 ('-')))
 				discard ;
-			ris++ ;
+			rax++ ;
 			ret++ ;
 		}
-		const auto r1x = ris[0] ;
+		const auto r1x = rax[0] ;
 		_DYNAMIC_ASSERT_ (r1x >= STRU8 ('0') && r1x <= STRU8 ('9')) ;
-		ris++ ;
+		rax++ ;
 		ret++ ;
 		while (TRUE) {
 			if (r1x == STRU8 ('0'))
 				break ;
-			if (!(ris[0] >= STRU8 ('0') && ris[0] <= STRU8 ('9')))
+			if (!(rax[0] >= STRU8 ('0') && rax[0] <= STRU8 ('9')))
 				break ;
-			ris++ ;
+			rax++ ;
 			ret++ ;
 		}
 		if switch_case (TRUE) {
-			if (ris[0] != STRU8 ('.'))
+			if (rax[0] != STRU8 ('.'))
 				discard ;
-			ris++ ;
+			rax++ ;
 			ret++ ;
 			while (TRUE) {
-				if (!(ris[0] >= STRU8 ('0') && ris[0] <= STRU8 ('9')))
+				if (!(rax[0] >= STRU8 ('0') && rax[0] <= STRU8 ('9')))
 					break ;
-				ris++ ;
+				rax++ ;
 				ret++ ;
 			}
 		}
 		if switch_case (TRUE) {
-			if (!(ris[0] == STRU8 ('e') || ris[0] == STRU8 ('E')))
+			if (!(rax[0] == STRU8 ('e') || rax[0] == STRU8 ('E')))
 				discard ;
-			ris++ ;
+			rax++ ;
 			ret++ ;
 			if switch_case (TRUE) {
-				if (!(ris[0] == STRU8 ('+') || ris[0] == STRU8 ('-')))
+				if (!(rax[0] == STRU8 ('+') || rax[0] == STRU8 ('-')))
 					discard ;
-				ris++ ;
+				rax++ ;
 				ret++ ;
 			}
-			_DYNAMIC_ASSERT_ (ris[0] >= STRU8 ('0') && ris[0] <= STRU8 ('9')) ;
-			ris++ ;
+			_DYNAMIC_ASSERT_ (rax[0] >= STRU8 ('0') && rax[0] <= STRU8 ('9')) ;
+			rax++ ;
 			ret++ ;
 			while (TRUE) {
-				if (!(ris[0] >= STRU8 ('0') && ris[0] <= STRU8 ('9')))
+				if (!(rax[0] >= STRU8 ('0') && rax[0] <= STRU8 ('9')))
 					break ;
-				ris++ ;
+				rax++ ;
 				ret++ ;
 			}
 		}
-		return std::move (ret) ;
+		return _MOVE_ (ret) ;
 	}
 
 	LENGTH next_string_size () popping {
 		const auto r1x = mReader->attr () ;
 		LENGTH ret = 0 ;
-		auto ris = copy () ;
-		auto rax = STRU8 () ;
-		_DYNAMIC_ASSERT_ (ris[0] == STRU8 ('\"')) ;
-		ris++ ;
+		auto rax = share () ;
+		auto rbx = STRU8 () ;
+		_DYNAMIC_ASSERT_ (rax[0] == STRU8 ('\"')) ;
+		rax++ ;
 		while (TRUE) {
-			if (ris[0] == STRU8 ('\0'))
+			if (rax[0] == STRU8 ('\0'))
 				break ;
-			if (ris[0] == STRU8 ('\"'))
+			if (rax[0] == STRU8 ('\"'))
 				break ;
 			auto fax = TRUE ;
 			if switch_case (fax) {
-				rax = ris[0] ;
-				ris++ ;
-				if (!(rax == r1x.varify_escape_item ()))
+				rbx = rax[0] ;
+				rax++ ;
+				if (!(rbx == r1x.varify_escape_item ()))
 					discard ;
-				rax = ris[0] ;
-				ris++ ;
-				rax = r1x.convert_escape_r (rax) ;
+				rbx = rax[0] ;
+				rax++ ;
+				rbx = r1x.convert_escape_r (rbx) ;
 				ret++ ;
 			}
 			if switch_case (fax) {
-				const auto r2x = r1x.varify_control (rax) ;
+				const auto r2x = r1x.varify_control (rbx) ;
 				_DYNAMIC_ASSERT_ (!r2x) ;
 				ret++ ;
 			}
 		}
-		_DYNAMIC_ASSERT_ (ris[0] == STRU8 ('\"')) ;
-		ris++ ;
-		return std::move (ret) ;
+		_DYNAMIC_ASSERT_ (rax[0] == STRU8 ('\"')) ;
+		rax++ ;
+		return _MOVE_ (ret) ;
 	}
 
 	LENGTH next_newgap_text_size () popping {
 		LENGTH ret = 0 ;
-		auto ris = copy () ;
+		auto rax = share () ;
 		const auto r1x = mReader->attr () ;
 		while (TRUE) {
-			if (ris[0] == r1x.varify_ending_item ())
+			if (rax[0] == r1x.varify_ending_item ())
 				break ;
-			if (r1x.varify_space (ris[0]))
+			if (r1x.varify_space (rax[0]))
 				break ;
-			_DYNAMIC_ASSERT_ (!r1x.varify_control (ris[0])) ;
-			ris++ ;
+			_DYNAMIC_ASSERT_ (!r1x.varify_control (rax[0])) ;
+			rax++ ;
 			ret++ ;
 		}
-		return std::move (ret) ;
+		return _MOVE_ (ret) ;
 	}
 
 	LENGTH next_newline_text_size () popping {
 		LENGTH ret = 0 ;
-		auto ris = copy () ;
+		auto rax = share () ;
 		const auto r1x = mReader->attr () ;
 		while (TRUE) {
-			if (ris[0] == r1x.varify_ending_item ())
+			if (rax[0] == r1x.varify_ending_item ())
 				break ;
-			if (r1x.varify_space (ris[0] ,2))
+			if (r1x.varify_space (rax[0] ,2))
 				break ;
-			_DYNAMIC_ASSERT_ (!r1x.varify_control (ris[0])) ;
-			ris++ ;
+			_DYNAMIC_ASSERT_ (!r1x.varify_control (rax[0])) ;
+			rax++ ;
 			ret++ ;
 		}
-		return std::move (ret) ;
+		return _MOVE_ (ret) ;
 	}
 } ;
+
+inline void RegularReader::HINT_IDENTIFIER (const ARGV<ARGC<1>> &) {}
+inline void RegularReader::HINT_VALUE (const ARGV<ARGC<2>> &) {}
+inline void RegularReader::HINT_STRING (const ARGV<ARGC<3>> &) {}
+inline void RegularReader::HINT_NEWGAP (const ARGV<ARGC<4>> &) {}
+inline void RegularReader::HINT_NEWLINE (const ARGV<ARGC<5>> &) {}
+inline void RegularReader::SKIP_GAP (const ARGV<ARGC<6>> &) {}
+inline void RegularReader::SKIP_GAP_SPACE (const ARGV<ARGC<7>> &) {}
+inline void RegularReader::SKIP_GAP_ENDLINE (const ARGV<ARGC<8>> &) {}
+inline void RegularReader::SKIP_LINE (const ARGV<ARGC<9>> &) {}
 } ;

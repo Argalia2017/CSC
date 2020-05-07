@@ -5,6 +5,7 @@
 #endif
 
 #include "csc.hpp"
+#include "csc_core.hpp"
 #include "csc_extend.hpp"
 #include "csc_array.hpp"
 #include "csc_math.hpp"
@@ -21,7 +22,7 @@ private:
 	exports class Abstract
 		:public Interface {
 	public:
-		virtual void compute_load_data (AnyRef<void> &this_) const = 0 ;
+		virtual void compute_load_data (AnyRef<void> &holder) const = 0 ;
 	} ;
 
 	class Pack {
@@ -37,8 +38,10 @@ private:
 public:
 	AbstractDatabase () = default ;
 
-	explicit AbstractDatabase (const PhanRef<const Abstract> &abstract_)
-		:AbstractDatabase (PhanRef<const Abstract>::make (abstract_) ,SharedRef<Pack>::make ()) {}
+	explicit AbstractDatabase (const PhanRef<const Abstract> &abstract_) {
+		mAbstract = PhanRef<const Abstract>::make (abstract_) ;
+		mThis = SharedRef<Pack>::make () ;
+	}
 
 	BOOL exist () const {
 		if (!mAbstract.exist ())
@@ -49,9 +52,5 @@ public:
 			return FALSE ;
 		return TRUE ;
 	}
-
-private:
-	explicit AbstractDatabase (PhanRef<const Abstract> &&abstract_ ,SharedRef<Pack> &&this_)
-		:mAbstract (std::move (abstract_)) ,mThis (std::move (this_)) {}
 } ;
 } ;

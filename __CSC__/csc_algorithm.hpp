@@ -5,6 +5,7 @@
 #endif
 
 #include "csc.hpp"
+#include "csc_core.hpp"
 #include "csc_basic.hpp"
 #include "csc_array.hpp"
 #include "csc_math.hpp"
@@ -19,31 +20,29 @@ private:
 public:
 	PrimeSieveAlgorithm () = delete ;
 
-	explicit PrimeSieveAlgorithm (LENGTH len) {
+	explicit PrimeSieveAlgorithm (const LENGTH &len) {
 		initialize (len) ;
 	}
 
-	const BitSet<> &query () const & {
+	const BitSet<> &query () const leftvalue {
 		return mPrimeSet ;
 	}
 
-	auto query () && ->void = delete ;
-
 private:
-	void initialize (LENGTH len) ;
+	void initialize (const LENGTH &len) ;
 } ;
 
-inline exports void PrimeSieveAlgorithm::initialize (LENGTH len) {
+inline exports void PrimeSieveAlgorithm::initialize (const LENGTH &len) {
 	mPrimeSet = BitSet<> (len) ;
 	mPrimeSet.fill (BYTE (0XAA)) ;
 	mPrimeSet[1] = FALSE ;
 	mPrimeSet[2] = TRUE ;
-	const auto r1x = (_SQRT_ (mPrimeSet.size ()) - 2) / 2 + 1 ;
+	const auto r1x = (MathProc::sqrt (mPrimeSet.size ()) - 2) / 2 + 1 ;
 	for (auto &&i : _RANGE_ (0 ,r1x)) {
 		INDEX ix = i * 2 + 3 ;
 		const auto r2x = ix * 2 ;
 		_DEBUG_ASSERT_ (r2x > 0) ;
-		const auto r3x = _SQUARE_ (ix) ;
+		const auto r3x = MathProc::square (ix) ;
 		const auto r4x = (mPrimeSet.size () - r3x) / r2x + 1 ;
 		for (auto &&j : _RANGE_ (0 ,r4x)) {
 			INDEX jx = j * r2x + r3x ;
@@ -73,11 +72,11 @@ private:
 public:
 	DisjointTable () = delete ;
 
-	explicit DisjointTable (LENGTH len) {
+	explicit DisjointTable (const LENGTH &len) {
 		mTable = Array<Node> (len) ;
 	}
 
-	INDEX lead (INDEX index) popping {
+	INDEX lead (const INDEX &index) popping {
 		INDEX ret = index ;
 		if switch_case (TRUE) {
 			if (mTable[ret].mUp != VAR_NONE)
@@ -97,10 +96,10 @@ public:
 				continue ;
 			mTable[it].mWidth -= mTable[i].mWidth ;
 		}
-		return std::move (ret) ;
+		return _MOVE_ (ret) ;
 	}
 
-	void joint (INDEX index1 ,INDEX index2) {
+	void joint (const INDEX &index1 ,const INDEX &index2) {
 		INDEX ix = lead (index1) ;
 		INDEX iy = lead (index2) ;
 		if (ix == iy)
@@ -121,7 +120,7 @@ public:
 			INDEX iy = r1x.map (ix) ;
 			ret[iy][i] = TRUE ;
 		}
-		return std::move (ret) ;
+		return _MOVE_ (ret) ;
 	}
 
 private:
@@ -133,7 +132,7 @@ private:
 			const auto r1x = ret.length () ;
 			ret.add (i ,r1x) ;
 		}
-		return std::move (ret) ;
+		return _MOVE_ (ret) ;
 	}
 } ;
 
@@ -150,7 +149,7 @@ public:
 		initialize (pattern) ;
 	}
 
-	INDEX query (const PhanBuffer<const REAL> &target ,INDEX seg) const {
+	INDEX query (const PhanBuffer<const REAL> &target ,const INDEX &seg) const {
 		_DEBUG_ASSERT_ (seg >= 0 && seg < target.size ()) ;
 		INDEX ix = seg ;
 		INDEX iy = 0 ;
@@ -179,12 +178,11 @@ public:
 private:
 	void initialize (const PhanBuffer<const REAL> &pattern) ;
 
-	INDEX find_next (INDEX slow ,INDEX fast) const {
+	INDEX find_next (const INDEX &slow ,const INDEX &fast) const {
 		for (INDEX i = fast ,it ; i != VAR_NONE ; i = it) {
 			it = mNext[i] ;
-			if (mPattern[i] == mPattern[slow])
-				continue ;
-			return i ;
+			if (mPattern[i] != mPattern[slow])
+				return i ;
 		}
 		return VAR_NONE ;
 	}
@@ -225,16 +223,16 @@ private:
 public:
 	DijstraAlgorithm () = delete ;
 
-	explicit DijstraAlgorithm (const Bitmap<REAL> &adjacency ,INDEX root_) {
+	explicit DijstraAlgorithm (const Bitmap<REAL> &adjacency ,const INDEX &root_) {
 		_DEBUG_ASSERT_ (adjacency.cx () == adjacency.cy ()) ;
 		initialize (adjacency ,root_) ;
 	}
 
-	REAL query (INDEX index) const {
+	REAL query (const INDEX &index) const {
 		return mDistance[index] ;
 	}
 
-	Array<INDEX> query_path (INDEX index) const {
+	Array<INDEX> query_path (const INDEX &index) const {
 		Array<INDEX> ret = Array<INDEX> (query_path_depth (index)) ;
 		INDEX iw = ret.length () ;
 		for (INDEX i = index ,it ; i != VAR_NONE ; i = it) {
@@ -242,24 +240,24 @@ public:
 			ret[--iw] = i ;
 		}
 		_DEBUG_ASSERT_ (iw == 0) ;
-		return std::move (ret) ;
+		return _MOVE_ (ret) ;
 	}
 
 private:
-	void initialize (const Bitmap<REAL> &adjacency ,INDEX root_) ;
+	void initialize (const Bitmap<REAL> &adjacency ,const INDEX &root_) ;
 
-	LENGTH query_path_depth (INDEX index) const {
+	LENGTH query_path_depth (const INDEX &index) const {
 		LENGTH ret = 0 ;
 		for (INDEX i = index ,it ; i != VAR_NONE ; i = it) {
 			it = mPrev[i] ;
 			ret++ ;
 		}
-		return std::move (ret) ;
+		return _MOVE_ (ret) ;
 	}
 } ;
 
 template <class REAL>
-inline exports void DijstraAlgorithm<REAL>::initialize (const Bitmap<REAL> &adjacency ,INDEX root_) {
+inline exports void DijstraAlgorithm<REAL>::initialize (const Bitmap<REAL> &adjacency ,const INDEX &root_) {
 	class Lambda final
 		:private Proxy {
 	private:
@@ -274,7 +272,7 @@ inline exports void DijstraAlgorithm<REAL>::initialize (const Bitmap<REAL> &adja
 		BitSet<> mYVisit ;
 
 	public:
-		inline explicit Lambda (DijstraAlgorithm &context_ ,const Bitmap<REAL> &adjancency ,INDEX root_)
+		inline explicit Lambda (DijstraAlgorithm &context_ ,const Bitmap<REAL> &adjancency ,const INDEX &root_)
 			: mContext (context_) ,mAdjacency (adjancency) ,mRoot (root_) {}
 
 		inline void operator() () {
@@ -300,13 +298,13 @@ inline exports void DijstraAlgorithm<REAL>::initialize (const Bitmap<REAL> &adja
 			while (TRUE) {
 				if (mPriority.empty ())
 					break ;
-				const auto r1x = mPriority[mPriority.head ()].mapx ;
+				const auto r1x = mPriority[mPriority.head ()].sid ;
 				mPriority.take () ;
 				update_distance (r1x) ;
 			}
 		}
 
-		inline void update_distance (INDEX y) {
+		inline void update_distance (const INDEX &y) {
 			if (mYVisit[y])
 				return ;
 			mYVisit[y] = TRUE ;
@@ -327,12 +325,12 @@ inline exports void DijstraAlgorithm<REAL>::initialize (const Bitmap<REAL> &adja
 		}
 
 		inline void refresh () {
-			mContext.mPrev = std::move (mPrev) ;
-			mContext.mDistance = std::move (mDistance) ;
+			mContext.mPrev = _MOVE_ (mPrev) ;
+			mContext.mDistance = _MOVE_ (mDistance) ;
 			mContext.mRoot = mRoot ;
 		}
 	} ;
-	_CALL_ (Lambda ((*this) ,adjacency ,root_)) ;
+	_CALL_ (Lambda (DEREF[this] ,adjacency ,root_)) ;
 }
 
 template <class REAL>
@@ -349,11 +347,9 @@ public:
 		initialize (dataset ,distance ,center) ;
 	}
 
-	const Deque<BitSet<>> &query () const & {
+	const Deque<BitSet<>> &query () const leftvalue {
 		return mClusterList ;
 	}
-
-	auto query () && ->void = delete ;
 
 private:
 	void initialize (const Set<REAL> &dataset ,const Function<REAL (const REAL & ,const REAL &)> &distance ,const Array<REAL> &center) ;
@@ -371,8 +367,8 @@ inline exports void KMeansAlgorithm<REAL>::initialize (const Set<REAL> &dataset 
 		const REAL mTolerance ;
 		const REAL mInfinity ;
 
-		SList<REAL> mCurrCenterList ;
-		SList<REAL> mNextCenterList ;
+		SoftList<REAL> mCurrCenterList ;
+		SoftList<REAL> mNextCenterList ;
 		Set<INDEX> mCenterMoveSet ;
 		Deque<BitSet<>> mClusterList ;
 		Set<INDEX> mClusterMappingSet ;
@@ -390,8 +386,8 @@ inline exports void KMeansAlgorithm<REAL>::initialize (const Set<REAL> &dataset 
 
 	private:
 		inline void prepare () {
-			mCurrCenterList = SList<REAL> (mCenter.length ()) ;
-			mNextCenterList = SList<REAL> (mCenter.length ()) ;
+			mCurrCenterList = SoftList<REAL> (mCenter.length ()) ;
+			mNextCenterList = SoftList<REAL> (mCenter.length ()) ;
 			mCurrCenterList.appand (mCenter) ;
 			mCenterMoveSet = Set<INDEX> (mCenter.length ()) ;
 			mClusterList = Deque<BitSet<>> () ;
@@ -427,7 +423,7 @@ inline exports void KMeansAlgorithm<REAL>::initialize (const Set<REAL> &dataset 
 			}
 			for (auto &&i : mClusterMappingSet) {
 				INDEX ix = mNextCenterList.insert () ;
-				mNextCenterList[ix] = average_center (mClusterList[i.mapx]) ;
+				mNextCenterList[ix] = average_center (mClusterList[i.sid]) ;
 				mCenterMoveSet.add (i.key ,ix) ;
 			}
 		}
@@ -443,7 +439,7 @@ inline exports void KMeansAlgorithm<REAL>::initialize (const Set<REAL> &dataset 
 				ret = mCurrCenterList.at (i) ;
 				rax = r1x ;
 			}
-			return std::move (ret) ;
+			return _MOVE_ (ret) ;
 		}
 
 		inline REAL average_center (const BitSet<> &cluster) const {
@@ -452,8 +448,8 @@ inline exports void KMeansAlgorithm<REAL>::initialize (const Set<REAL> &dataset 
 			_DEBUG_ASSERT_ (r1x != 0) ;
 			for (auto &&i : cluster)
 				ret += mDataSet[i] ;
-			ret *= _PINV_ (REAL (r1x)) ;
-			return std::move (ret) ;
+			ret *= MathProc::inverse (REAL (r1x)) ;
+			return _MOVE_ (ret) ;
 		}
 
 		inline void update_convergence () {
@@ -465,8 +461,8 @@ inline exports void KMeansAlgorithm<REAL>::initialize (const Set<REAL> &dataset 
 				return ;
 			mConvergence[ix] = REAL (0) ;
 			for (auto &&i : mCenterMoveSet) {
-				const auto r1x = mDistanceFunc (mCurrCenterList[i.key] ,mNextCenterList[i.mapx]) ;
-				mConvergence[ix] = _MAX_ (mConvergence[ix] ,r1x) ;
+				const auto r1x = mDistanceFunc (mCurrCenterList[i.key] ,mNextCenterList[i.sid]) ;
+				mConvergence[ix] = MathProc::maxof (mConvergence[ix] ,r1x) ;
 			}
 		}
 
@@ -475,7 +471,7 @@ inline exports void KMeansAlgorithm<REAL>::initialize (const Set<REAL> &dataset 
 			for (auto &&i : _RANGE_ (0 ,ix))
 				if (mConvergence[i] > mConvergence[i + 1])
 					return FALSE ;
-			if (_ABS_ (mConvergence[0] - mConvergence[ix]) >= mTolerance)
+			if (MathProc::abs (mConvergence[0] - mConvergence[ix]) >= mTolerance)
 				return FALSE ;
 			return TRUE ;
 		}
@@ -488,10 +484,10 @@ inline exports void KMeansAlgorithm<REAL>::initialize (const Set<REAL> &dataset 
 		}
 
 		inline void refresh () {
-			mContext.mClusterList = std::move (mClusterList) ;
+			mContext.mClusterList = _MOVE_ (mClusterList) ;
 		}
 	} ;
-	_CALL_ (Lambda ((*this) ,dataset ,distance ,center)) ;
+	_CALL_ (Lambda (DEREF[this] ,dataset ,distance ,center)) ;
 }
 
 template <class REAL>
@@ -511,11 +507,9 @@ public:
 		return mWeight ;
 	}
 
-	const Array<ARRAY2<INDEX>> &query_match () const & {
+	const Array<ARRAY2<INDEX>> &query_match () const leftvalue {
 		return mMatch ;
 	}
-
-	auto query_match () && ->void = delete ;
 
 private:
 	void initialize (const Bitmap<REAL> &adjacency) ;
@@ -564,7 +558,7 @@ inline exports void KMHungarianAlgorithm<REAL>::initialize (const Bitmap<REAL> &
 			mYWeight.fill (REAL (0)) ;
 			for (auto &&i : mAdjacency.range ()) {
 				_DYNAMIC_ASSERT_ (mAdjacency[i] >= REAL (0)) ;
-				mYWeight[i[0]] = _MAX_ (mYWeight[i[0]] ,mAdjacency[i]) ;
+				mYWeight[i[0]] = MathProc::maxof (mYWeight[i[0]] ,mAdjacency[i]) ;
 			}
 		}
 
@@ -584,9 +578,9 @@ inline exports void KMHungarianAlgorithm<REAL>::initialize (const Bitmap<REAL> &
 			}
 		}
 
-		inline void update_lack_weight (INDEX y) {
+		inline void update_lack_weight (const INDEX &y) {
 			/*
-			*	inline void update_lack_weight_e0 (INDEX y) {
+			*	inline void update_lack_weight_e0 (const INDEX &y) {
 			*		//@info: $0
 			*		mLackWeight[0] = 0 ;
 			*		mLackWeight[1] = +mInfinity ;
@@ -602,7 +596,7 @@ inline exports void KMHungarianAlgorithm<REAL>::initialize (const Bitmap<REAL> &
 			*		//@info: $20
 			*	}
 			*
-			*	inline void update_lack_weight_e7 (INDEX stack_x ,INDEX stack_y ,BOOL &stack_ret) {
+			*	inline void update_lack_weight_e7 (const INDEX &stack_x ,const INDEX &stack_y ,BOOL &stack_ret) {
 			*		//@info: $7
 			*		if (stack_y == VAR_NONE) {
 			*			//@info: $2
@@ -634,7 +628,7 @@ inline exports void KMHungarianAlgorithm<REAL>::initialize (const Bitmap<REAL> &
 			*					}
 			*				} else {
 			*					//@info: $14
-			*					mLackWeight[1] = _MIN_ (mLackWeight[1] ,mLackWeight[0]) ;
+			*					mLackWeight[1] = MathProc::minof (mLackWeight[1] ,mLackWeight[0]) ;
 			*				}
 			*			}
 			*			//@info: $15
@@ -646,46 +640,47 @@ inline exports void KMHungarianAlgorithm<REAL>::initialize (const Bitmap<REAL> &
 			*		return ;
 			*	}
 			*/
-			static const auto M_STATE = PACK<EFLAG[21]> ({
-				EFLAG (1) ,EFLAG (2) ,EFLAG (3) ,EFLAG (4) ,
+			static const auto M_STATE = PACK<EFLAG[22]> ({
+				EFLAG (0) ,EFLAG (1) ,EFLAG (2) ,EFLAG (3) ,EFLAG (4) ,
 				EFLAG (5) ,EFLAG (6) ,EFLAG (7) ,EFLAG (8) ,EFLAG (9) ,
 				EFLAG (10) ,EFLAG (11) ,EFLAG (12) ,EFLAG (13) ,EFLAG (14) ,
 				EFLAG (15) ,EFLAG (16) ,EFLAG (17) ,EFLAG (18) ,EFLAG (19) ,
 				EFLAG (20) ,EFLAG (21)}) ;
 			mTempStack.clear () ;
-			mTempState = M_STATE.P1[0] ;
+			mTempState = M_STATE.P1[21] ;
 			INDEX ix = VAR_NONE ;
 			while (TRUE) {
-				if (mTempState == UNKNOWN)
+				if (mTempState == M_STATE.P1[0])
 					break ;
-				if switch_case (TRUE) {
-					if (!(mTempState == M_STATE.P1[0]))
+				auto fax = TRUE ;
+				if switch_case (fax) {
+					if (!(mTempState == M_STATE.P1[21]))
 						discard ;
 					mLackWeight[0] = 0 ;
 					mLackWeight[1] = +mInfinity ;
 					mTempState = M_STATE.P1[1] ;
 				}
-				if switch_case (TRUE) {
+				if switch_case (fax) {
 					if (!(mTempState == M_STATE.P1[1]))
 						discard ;
 					mTempRet = FALSE ;
 					mTempStack.add (ARRAY2<INDEX> {0 ,y}) ;
 					mTempState = M_STATE.P1[7] ;
 				}
-				if switch_case (TRUE) {
+				if switch_case (fax) {
 					if (!(mTempState == M_STATE.P1[2]))
 						discard ;
 					mTempRet = TRUE ;
 					mTempState = M_STATE.P1[17] ;
 				}
-				if switch_case (TRUE) {
+				if switch_case (fax) {
 					if (!(mTempState == M_STATE.P1[3]))
 						discard ;
 					mYVisit[mTempStack[ix][1]] = TRUE ;
 					mTempStack[ix][0] = 0 ;
 					mTempState = M_STATE.P1[4] ;
 				}
-				if switch_case (TRUE) {
+				if switch_case (fax) {
 					if (!(mTempState == M_STATE.P1[4]))
 						discard ;
 					auto &r1x = _SWITCH_ (
@@ -693,7 +688,7 @@ inline exports void KMHungarianAlgorithm<REAL>::initialize (const Bitmap<REAL> &
 						M_STATE.P1[16]) ;
 					mTempState = r1x ;
 				}
-				if switch_case (TRUE) {
+				if switch_case (fax) {
 					if (!(mTempState == M_STATE.P1[5]))
 						discard ;
 					auto &r2x = _SWITCH_ (
@@ -701,13 +696,13 @@ inline exports void KMHungarianAlgorithm<REAL>::initialize (const Bitmap<REAL> &
 						M_STATE.P1[6]) ;
 					mTempState = r2x ;
 				}
-				if switch_case (TRUE) {
+				if switch_case (fax) {
 					if (!(mTempState == M_STATE.P1[6]))
 						discard ;
 					mLackWeight[0] = mYWeight[mTempStack[ix][1]] + mXWeight[mTempStack[ix][0]] - mAdjacency[mTempStack[ix][1]][mTempStack[ix][0]] ;
 					mTempState = M_STATE.P1[9] ;
 				}
-				if switch_case (TRUE) {
+				if switch_case (fax) {
 					if (!(mTempState == M_STATE.P1[7]))
 						discard ;
 					ix = mTempStack.tail () ;
@@ -716,14 +711,14 @@ inline exports void KMHungarianAlgorithm<REAL>::initialize (const Bitmap<REAL> &
 						M_STATE.P1[3]) ;
 					mTempState = r3x ;
 				}
-				if switch_case (TRUE) {
+				if switch_case (fax) {
 					if (!(mTempState == M_STATE.P1[8]))
 						discard ;
 					mXVisit[mTempStack[ix][0]] = TRUE ;
 					mTempStack.add (ARRAY2<INDEX> {0 ,mXYLink[mTempStack[ix][0]]}) ;
 					mTempState = M_STATE.P1[7] ;
 				}
-				if switch_case (TRUE) {
+				if switch_case (fax) {
 					if (!(mTempState == M_STATE.P1[9]))
 						discard ;
 					auto &r4x = _SWITCH_ (
@@ -731,7 +726,7 @@ inline exports void KMHungarianAlgorithm<REAL>::initialize (const Bitmap<REAL> &
 						M_STATE.P1[14]) ;
 					mTempState = r4x ;
 				}
-				if switch_case (TRUE) {
+				if switch_case (fax) {
 					if (!(mTempState == M_STATE.P1[10]))
 						discard ;
 					ix = mTempStack.tail () ;
@@ -740,32 +735,32 @@ inline exports void KMHungarianAlgorithm<REAL>::initialize (const Bitmap<REAL> &
 						M_STATE.P1[15]) ;
 					mTempState = r5x ;
 				}
-				if switch_case (TRUE) {
+				if switch_case (fax) {
 					if (!(mTempState == M_STATE.P1[11]))
 						discard ;
 					mXYLink[mTempStack[ix][0]] = mTempStack[ix][1] ;
 					mTempRet = TRUE ;
 					mTempState = M_STATE.P1[17] ;
 				}
-				if switch_case (TRUE) {
+				if switch_case (fax) {
 					if (!(mTempState == M_STATE.P1[14]))
 						discard ;
-					mLackWeight[1] = _MIN_ (mLackWeight[1] ,mLackWeight[0]) ;
+					mLackWeight[1] = MathProc::minof (mLackWeight[1] ,mLackWeight[0]) ;
 					mTempState = M_STATE.P1[15] ;
 				}
-				if switch_case (TRUE) {
+				if switch_case (fax) {
 					if (!(mTempState == M_STATE.P1[15]))
 						discard ;
 					mTempStack[ix][0]++ ;
 					mTempState = M_STATE.P1[4] ;
 				}
-				if switch_case (TRUE) {
+				if switch_case (fax) {
 					if (!(mTempState == M_STATE.P1[16]))
 						discard ;
 					mTempRet = FALSE ;
 					mTempState = M_STATE.P1[17] ;
 				}
-				if switch_case (TRUE) {
+				if switch_case (fax) {
 					if (!(mTempState == M_STATE.P1[17]))
 						discard ;
 					mTempStack.pop () ;
@@ -774,7 +769,7 @@ inline exports void KMHungarianAlgorithm<REAL>::initialize (const Bitmap<REAL> &
 						M_STATE.P1[18]) ;
 					mTempState = r6x ;
 				}
-				if switch_case (TRUE) {
+				if switch_case (fax) {
 					if (!(mTempState == M_STATE.P1[18]))
 						discard ;
 					auto &r7x = _SWITCH_ (
@@ -782,17 +777,17 @@ inline exports void KMHungarianAlgorithm<REAL>::initialize (const Bitmap<REAL> &
 						M_STATE.P1[20]) ;
 					mTempState = r7x ;
 				}
-				if switch_case (TRUE) {
+				if switch_case (fax) {
 					if (!(mTempState == M_STATE.P1[19]))
 						discard ;
 					mLackWeight[0] = 0 ;
 					mLackWeight[1] = +mInfinity ;
 					mTempState = M_STATE.P1[20] ;
 				}
-				if switch_case (TRUE) {
+				if switch_case (fax) {
 					if (!(mTempState == M_STATE.P1[20]))
 						discard ;
-					mTempState = UNKNOWN ;
+					mTempState = M_STATE.P1[0] ;
 				}
 			}
 		}
@@ -806,7 +801,7 @@ inline exports void KMHungarianAlgorithm<REAL>::initialize (const Bitmap<REAL> &
 			REAL ret = REAL (0) ;
 			for (auto &&i : _RANGE_ (0 ,mXYLink.length ()))
 				ret += mAdjacency[mXYLink[i]][i] ;
-			return std::move (ret) ;
+			return _MOVE_ (ret) ;
 		}
 
 		inline Array<ARRAY2<INDEX>> best_match () const {
@@ -820,17 +815,17 @@ inline exports void KMHungarianAlgorithm<REAL>::initialize (const Bitmap<REAL> &
 				ret[ix][1] = i ;
 			}
 			_DEBUG_ASSERT_ (iw == ret.length ()) ;
-			return std::move (ret) ;
+			return _MOVE_ (ret) ;
 		}
 
 		inline LENGTH best_match_depth () const {
 			LENGTH ret = 0 ;
 			for (auto &&i : mXYLink)
 				ret += _EBOOL_ (i != VAR_NONE) ;
-			return std::move (ret) ;
+			return _MOVE_ (ret) ;
 		}
 	} ;
-	_CALL_ (Lambda ((*this) ,adjacency)) ;
+	_CALL_ (Lambda (DEREF[this] ,adjacency)) ;
 }
 
 template <class REAL>
@@ -846,11 +841,9 @@ public:
 		initialize (loss ,gradient ,fdx) ;
 	}
 
-	const Array<REAL> &query () const & {
+	const Array<REAL> &query () const leftvalue {
 		return mDX ;
 	}
-
-	auto query () && ->void = delete ;
 
 	REAL query_loss () const {
 		return mDXLoss ;
@@ -934,7 +927,7 @@ inline exports void BFGSAlgorithm<REAL>::initialize (const Function<REAL (const 
 			for (auto &&i : _RANGE_ (0 ,mDG.length ()))
 				mIS[i] = -math_matrix_mul (mDM ,i ,mDG) ;
 			const auto r1x = math_vector_dot (mDG ,mIS) ;
-			mDXLoss[0] = _ABS_ (mLossFunc (mDX)) ;
+			mDXLoss[0] = MathProc::abs (mLossFunc (mDX)) ;
 			mDXLoss[2] = mDXLoss[0] ;
 			mDXLambda[0] = REAL (0) ;
 			mDXLambda[1] = mDXLambdaFirst ;
@@ -946,12 +939,12 @@ inline exports void BFGSAlgorithm<REAL>::initialize (const Function<REAL (const 
 					break ;
 				for (auto &&i : _RANGE_ (0 ,mIX.length ()))
 					mIX[i] = mDX[i] + mIS[i] * mDXLambda[1] ;
-				mDXLoss[1] = _ABS_ (mLossFunc (mIX)) ;
+				mDXLoss[1] = MathProc::abs (mLossFunc (mIX)) ;
 				if switch_case (TRUE) {
 					if (mDXLoss[1] - mDXLoss[0] > mDXLambda[1] * mDXLambdaC1 * r1x)
 						discard ;
 					compute_gradient_of_loss (mIX ,mIG ,mSX) ;
-					if (_ABS_ (math_vector_dot (mIG ,mIS)) > -mDXLambdaC2 * r1x)
+					if (MathProc::abs (math_vector_dot (mIG ,mIS)) > -mDXLambdaC2 * r1x)
 						discard ;
 					mDXLoss[2] = REAL (0) ;
 				}
@@ -979,11 +972,11 @@ inline exports void BFGSAlgorithm<REAL>::initialize (const Function<REAL (const 
 			}
 		}
 
-		inline REAL math_matrix_mul (const Bitmap<REAL> &mat ,INDEX y ,const Array<REAL> &v) const {
+		inline REAL math_matrix_mul (const Bitmap<REAL> &mat ,const INDEX &y ,const Array<REAL> &v) const {
 			REAL ret = REAL (0) ;
 			for (auto &&i : _RANGE_ (0 ,v.length ()))
 				ret += mat[y][i] * v[i] ;
-			return std::move (ret) ;
+			return _MOVE_ (ret) ;
 		}
 
 		inline REAL math_vector_dot (const Array<REAL> &v1 ,const Array<REAL> &v2) const {
@@ -991,15 +984,15 @@ inline exports void BFGSAlgorithm<REAL>::initialize (const Function<REAL (const 
 			REAL ret = REAL (0) ;
 			for (auto &&i : _RANGE_ (0 ,v1.length ()))
 				ret += v1[i] * v2[i] ;
-			return std::move (ret) ;
+			return _MOVE_ (ret) ;
 		}
 
 		inline REAL current_convergence () const {
 			REAL ret = REAL (0) ;
 			for (auto &&i : mIG)
-				ret += _SQUARE_ (i) ;
-			ret = _SQRT_ (ret) ;
-			return std::move (ret) ;
+				ret += MathProc::square (i) ;
+			ret = MathProc::sqrt (ret) ;
+			return _MOVE_ (ret) ;
 		}
 
 		inline void update_iy_and_dg () {
@@ -1010,7 +1003,7 @@ inline exports void BFGSAlgorithm<REAL>::initialize (const Function<REAL (const 
 		}
 
 		inline void update_dm () {
-			const auto r1x = _PINV_ (math_vector_dot (mIY ,mIS)) ;
+			const auto r1x = MathProc::inverse (math_vector_dot (mIY ,mIS)) ;
 			for (auto &&i : mDM.range ()) {
 				const auto r2x = hessian_matrix_each (i[0] ,i[1] ,r1x) ;
 				mIM[i] = r2x + mIS[i[0]] * mIS[i[1]] * r1x ;
@@ -1018,7 +1011,7 @@ inline exports void BFGSAlgorithm<REAL>::initialize (const Function<REAL (const 
 			_SWAP_ (mDM ,mIM) ;
 		}
 
-		inline REAL hessian_matrix_each (INDEX y ,INDEX x ,const REAL &ys) const {
+		inline REAL hessian_matrix_each (const INDEX &y ,const INDEX &x ,const REAL &ys) const {
 			REAL ret = REAL (0) ;
 			for (auto &&i : _RANGE_ (0 ,mDM.cy ())) {
 				const auto r1x = hessian_matrix_each_factor (x ,i ,ys) ;
@@ -1027,10 +1020,10 @@ inline exports void BFGSAlgorithm<REAL>::initialize (const Function<REAL (const 
 					continue ;
 				ret += r1x ;
 			}
-			return std::move (ret) ;
+			return _MOVE_ (ret) ;
 		}
 
-		inline REAL hessian_matrix_each_factor (INDEX x ,INDEX z ,const REAL &ys) const {
+		inline REAL hessian_matrix_each_factor (const INDEX &x ,const INDEX &z ,const REAL &ys) const {
 			REAL ret = REAL (0) ;
 			for (auto &&i : _RANGE_ (0 ,mDM.cx ())) {
 				ret += mDM[z][i] * (-mIY[i] * mIS[x] * ys) ;
@@ -1038,15 +1031,15 @@ inline exports void BFGSAlgorithm<REAL>::initialize (const Function<REAL (const 
 					continue ;
 				ret += mDM[z][i] ;
 			}
-			return std::move (ret) ;
+			return _MOVE_ (ret) ;
 		}
 
 		inline void refresh () {
-			mContext.mDX = std::move (mDX) ;
+			mContext.mDX = _MOVE_ (mDX) ;
 			mContext.mDXLoss = mDXLoss[0] ;
 		}
 	} ;
-	_CALL_ (Lambda ((*this) ,loss ,fdx)) ;
+	_CALL_ (Lambda (DEREF[this] ,loss ,fdx)) ;
 }
 
 template <class REAL>
@@ -1063,8 +1056,8 @@ private:
 	public:
 		inline Node () = delete ;
 
-		inline implicit Node (const REAL &key ,INDEX leaf ,INDEX left ,INDEX right)
-			:mKey (std::move (key)) ,mLeaf (leaf) ,mLeft (left) ,mRight (right) {}
+		inline implicit Node (const REAL &key ,const INDEX &leaf ,const INDEX &left ,const INDEX &right)
+			:mKey (_MOVE_ (key)) ,mLeaf (leaf) ,mLeft (left) ,mRight (right) {}
 	} ;
 
 private:
@@ -1086,17 +1079,17 @@ public:
 		_DEBUG_ASSERT_ (width > REAL (0)) ;
 		Deque<INDEX> ret ;
 		auto rax = ARRAY3<ARRAY2<REAL>> () ;
-		rax[0][0] = _MAX_ ((point[0] - width) ,mBound[0][0]) ;
-		rax[0][1] = _MIN_ ((point[0] + width) ,mBound[0][1]) ;
-		rax[1][0] = _MAX_ ((point[1] - width) ,mBound[1][0]) ;
-		rax[1][1] = _MIN_ ((point[1] + width) ,mBound[1][1]) ;
-		rax[2][0] = _MAX_ ((point[2] - width) ,mBound[2][0]) ;
-		rax[2][1] = _MIN_ ((point[2] + width) ,mBound[2][1]) ;
+		rax[0][0] = MathProc::maxof ((point[0] - width) ,mBound[0][0]) ;
+		rax[0][1] = MathProc::minof ((point[0] + width) ,mBound[0][1]) ;
+		rax[1][0] = MathProc::maxof ((point[1] - width) ,mBound[1][0]) ;
+		rax[1][1] = MathProc::minof ((point[1] + width) ,mBound[1][1]) ;
+		rax[2][0] = MathProc::maxof ((point[2] - width) ,mBound[2][0]) ;
+		rax[2][1] = MathProc::minof ((point[2] + width) ,mBound[2][1]) ;
 		compute_search_range (point ,width ,mRoot ,0 ,rax ,ret) ;
-		return std::move (ret) ;
+		return _MOVE_ (ret) ;
 	}
 
-	Array<PACK<INDEX ,REAL>> query_nearst (const ARRAY3<REAL> &point ,LENGTH count) const {
+	Array<PACK<INDEX ,REAL>> query_nearst (const ARRAY3<REAL> &point ,const LENGTH &count) const {
 		_DEBUG_ASSERT_ (count >= 1 && count <= mVertex.length ()) ;
 		const auto r1x = first_count_vertex (point ,count) ;
 		const auto r2x = r1x.range_sort () ;
@@ -1106,7 +1099,7 @@ public:
 			ret[i].P2 = r1x[r2x[i]] ;
 		}
 		compute_search_range (point ,mRoot ,0 ,ret) ;
-		return std::move (ret) ;
+		return _MOVE_ (ret) ;
 	}
 
 private:
@@ -1118,7 +1111,7 @@ private:
 		return (r1x - r2x).magnitude () ;
 	}
 
-	void compute_search_range (const ARRAY3<REAL> &point ,const REAL &width ,INDEX curr ,INDEX rot ,ARRAY3<ARRAY2<REAL>> &bound ,Deque<INDEX> &out) const {
+	void compute_search_range (const ARRAY3<REAL> &point ,const REAL &width ,const INDEX &curr ,const INDEX &rot ,ARRAY3<ARRAY2<REAL>> &bound ,Deque<INDEX> &out) const {
 		auto fax = TRUE ;
 		if switch_case (fax) {
 			if (!(mKDTree[curr].mLeaf != VAR_NONE))
@@ -1139,7 +1132,7 @@ private:
 				if (r2x < bound[rot][0])
 					discard ;
 				const auto r3x = bound[rot][1] ;
-				bound[rot][1] = _MIN_ (bound[rot][1] ,r2x) ;
+				bound[rot][1] = MathProc::minof (bound[rot][1] ,r2x) ;
 				compute_search_range (point ,width ,mKDTree[curr].mLeft ,mNextRot[rot] ,bound ,out) ;
 				bound[rot][1] = r3x ;
 			}
@@ -1147,24 +1140,24 @@ private:
 				if (r2x > bound[rot][1])
 					discard ;
 				const auto r4x = bound[rot][0] ;
-				bound[rot][0] = _MAX_ (bound[rot][0] ,r2x) ;
+				bound[rot][0] = MathProc::maxof (bound[rot][0] ,r2x) ;
 				compute_search_range (point ,width ,mKDTree[curr].mRight ,mNextRot[rot] ,bound ,out) ;
 				bound[rot][0] = r4x ;
 			}
 		}
 	}
 
-	Deque<REAL> first_count_vertex (const ARRAY3<REAL> &point ,LENGTH count) const {
+	Deque<REAL> first_count_vertex (const ARRAY3<REAL> &point ,const LENGTH &count) const {
 		_DEBUG_ASSERT_ (count >= 1 && count <= mVertex.length ()) ;
 		Deque<REAL> ret = Deque<REAL> (count) ;
 		for (auto &&i : _RANGE_ (0 ,count)) {
 			const auto r1x = distance_of_point (mVertex[i] ,point) ;
 			ret.add (r1x) ;
 		}
-		return std::move (ret) ;
+		return _MOVE_ (ret) ;
 	}
 
-	void compute_search_range (const ARRAY3<REAL> &point ,INDEX curr ,INDEX rot ,Array<PACK<INDEX ,REAL>> &out) const {
+	void compute_search_range (const ARRAY3<REAL> &point ,const INDEX &curr ,const INDEX &rot ,Array<PACK<INDEX ,REAL>> &out) const {
 		auto fax = TRUE ;
 		if switch_case (fax) {
 			if (!(mKDTree[curr].mLeaf != VAR_NONE))
@@ -1173,14 +1166,16 @@ private:
 				INDEX ix = mKDTree[curr].mLeaf ;
 				const auto r1x = distance_of_point (mVertex[ix] ,point) ;
 				INDEX jx = out.length () ;
+				INDEX jy = jx - 1 ;
 				while (TRUE) {
-					if (jx - 1 < 0)
+					if (jy < 0)
 						break ;
-					if (r1x >= out[jx - 1].P2)
+					if (r1x >= out[jy].P2)
 						break ;
 					if (jx < out.length ())
-						out[jx] = out[jx - 1] ;
-					jx-- ;
+						out[jx] = out[jy] ;
+					jx = jy ;
+					jy-- ;
 				}
 				if (jx >= out.length ())
 					discard ;
@@ -1238,11 +1233,11 @@ inline exports void KDTreeAlgorithm<REAL>::initialize (const Array<ARRAY3<REAL>>
 			mRoot = VAR_NONE ;
 		}
 
-		Deque<INDEX> stack_of_order (INDEX rot) const {
+		Deque<INDEX> stack_of_order (const INDEX &rot) const {
 			Deque<INDEX> ret = Deque<INDEX> (mVertex.length ()) ;
 			for (auto &&i : mVertex)
 				ret.add (i[rot]) ;
-			return std::move (ret) ;
+			return _MOVE_ (ret) ;
 		}
 
 		inline void generate () {
@@ -1260,16 +1255,16 @@ inline exports void KDTreeAlgorithm<REAL>::initialize (const Array<ARRAY3<REAL>>
 			mBound[2][0] = mVertex[0][2] ;
 			mBound[2][1] = mVertex[0][2] ;
 			for (auto &&i : mVertex) {
-				mBound[0][0] = _MIN_ (mBound[0][0] ,i[0]) ;
-				mBound[0][1] = _MAX_ (mBound[0][1] ,i[0]) ;
-				mBound[1][0] = _MIN_ (mBound[1][0] ,i[1]) ;
-				mBound[1][1] = _MAX_ (mBound[1][1] ,i[1]) ;
-				mBound[2][0] = _MIN_ (mBound[2][0] ,i[2]) ;
-				mBound[2][1] = _MAX_ (mBound[2][1] ,i[2]) ;
+				mBound[0][0] = MathProc::minof (mBound[0][0] ,i[0]) ;
+				mBound[0][1] = MathProc::maxof (mBound[0][1] ,i[0]) ;
+				mBound[1][0] = MathProc::minof (mBound[1][0] ,i[1]) ;
+				mBound[1][1] = MathProc::maxof (mBound[1][1] ,i[1]) ;
+				mBound[2][0] = MathProc::minof (mBound[2][0] ,i[2]) ;
+				mBound[2][1] = MathProc::maxof (mBound[2][1] ,i[2]) ;
 			}
 		}
 
-		void update_build_tree (INDEX curr ,INDEX rot ,INDEX seg ,LENGTH seg_len) {
+		void update_build_tree (const INDEX &curr ,const INDEX &rot ,const INDEX &seg ,const LENGTH &seg_len) {
 			_DEBUG_ASSERT_ (seg_len > 0) ;
 			_DEBUG_ASSERT_ (seg >= 0 && seg <= mVertex.size () - seg_len) ;
 			auto fax = TRUE ;
@@ -1285,7 +1280,7 @@ inline exports void KDTreeAlgorithm<REAL>::initialize (const Array<ARRAY3<REAL>>
 				INDEX ix = seg + seg_len / 2 ;
 				for (auto &&i : _RANGE_ (seg ,seg + seg_len - 1)) {
 					_DEBUG_ASSERT_ (mVertex[mOrder[rot][i]][rot] <= mVertex[mOrder[rot][i + 1]][rot]) ;
-					(void) i ;
+					_STATIC_UNUSED_ (i) ;
 				}
 				compute_order (mTempOrder ,mOrder ,rot ,mNextRot[rot] ,seg ,ix ,seg_len) ;
 				compute_order (mTempOrder ,mOrder ,rot ,mNextRot[mNextRot[rot]] ,seg ,ix ,seg_len) ;
@@ -1298,7 +1293,7 @@ inline exports void KDTreeAlgorithm<REAL>::initialize (const Array<ARRAY3<REAL>>
 			}
 		}
 
-		void compute_order (Array<INDEX> &tmp_order ,ARRAY3<Array<INDEX>> &order ,INDEX rot ,INDEX n_rot ,INDEX seg_a ,INDEX seg_b ,LENGTH seg_len) const {
+		void compute_order (Array<INDEX> &tmp_order ,ARRAY3<Array<INDEX>> &order ,const INDEX &rot ,const INDEX &n_rot ,const INDEX &seg_a ,const INDEX &seg_b ,const LENGTH &seg_len) const {
 			if (tmp_order.size () != mVertex.size ())
 				tmp_order = Array<INDEX> (mVertex.size ()) ;
 			INDEX iw = 0 ;
@@ -1315,12 +1310,12 @@ inline exports void KDTreeAlgorithm<REAL>::initialize (const Array<ARRAY3<REAL>>
 		inline void refresh () {
 			mContext.mVertex = mVertex ;
 			mContext.mNextRot = mNextRot ;
-			mContext.mBound = std::move (mBound) ;
-			mContext.mKDTree = std::move (mKDTree) ;
+			mContext.mBound = _MOVE_ (mBound) ;
+			mContext.mKDTree = _MOVE_ (mKDTree) ;
 			mContext.mRoot = mRoot ;
 		}
 	} ;
-	_CALL_ (Lambda ((*this) ,vertex)) ;
+	_CALL_ (Lambda (DEREF[this] ,vertex)) ;
 }
 
 template <class REAL>
@@ -1332,7 +1327,7 @@ private:
 public:
 	MaxFlowAlgorithm () = delete ;
 
-	explicit MaxFlowAlgorithm (const Bitmap<REAL> &adjacency ,INDEX source ,INDEX sink) {
+	explicit MaxFlowAlgorithm (const Bitmap<REAL> &adjacency ,const INDEX &source ,const INDEX &sink) {
 		_DEBUG_ASSERT_ (adjacency.cx () == adjacency.cy ()) ;
 		_DEBUG_ASSERT_ (source != sink) ;
 		initialize (adjacency ,source ,sink) ;
@@ -1342,18 +1337,16 @@ public:
 		return mMaxFlow ;
 	}
 
-	const Bitmap<REAL> &query_flow () const & {
+	const Bitmap<REAL> &query_flow () const leftvalue {
 		return mCurrentFlow ;
 	}
 
-	auto query_flow () && ->void = delete ;
-
 private:
-	void initialize (const Bitmap<REAL> &adjacency ,INDEX source ,INDEX sink) ;
+	void initialize (const Bitmap<REAL> &adjacency ,const INDEX &source ,const INDEX &sink) ;
 } ;
 
 template <class REAL>
-inline exports void MaxFlowAlgorithm<REAL>::initialize (const Bitmap<REAL> &adjacency ,INDEX source ,INDEX sink) {
+inline exports void MaxFlowAlgorithm<REAL>::initialize (const Bitmap<REAL> &adjacency ,const INDEX &source ,const INDEX &sink) {
 	class Lambda final
 		:private Proxy {
 	private:
@@ -1369,7 +1362,7 @@ inline exports void MaxFlowAlgorithm<REAL>::initialize (const Bitmap<REAL> &adja
 		Deque<INDEX> mTempQueue ;
 
 	public:
-		inline explicit Lambda (MaxFlowAlgorithm &context_ ,const Bitmap<REAL> &adjacency ,INDEX source ,INDEX sink)
+		inline explicit Lambda (MaxFlowAlgorithm &context_ ,const Bitmap<REAL> &adjacency ,const INDEX &source ,const INDEX &sink)
 			: mContext (context_) ,mAdjacency (adjacency) ,mSource (source) ,mSink (sink) {}
 
 		inline void operator() () {
@@ -1391,9 +1384,9 @@ inline exports void MaxFlowAlgorithm<REAL>::initialize (const Bitmap<REAL> &adja
 			for (auto &&i : mAdjacency.range ()) {
 				if (i[0] == i[1])
 					continue ;
-				ret = _MAX_ (ret ,mAdjacency[i]) ;
+				ret = MathProc::maxof (ret ,mAdjacency[i]) ;
 			}
-			return std::move (ret) ;
+			return _MOVE_ (ret) ;
 		}
 
 		inline void generate () {
@@ -1404,7 +1397,7 @@ inline exports void MaxFlowAlgorithm<REAL>::initialize (const Bitmap<REAL> &adja
 				const auto r1x = augument_max_flow () ;
 				for (INDEX i = mSource ,it ,ie = mSink ; i != ie ; i = it) {
 					it = mBFSPath[i] ;
-					const auto r2x = _MIN_ (mCurrentFlow[it][i] ,r1x) ;
+					const auto r2x = MathProc::minof (mCurrentFlow[it][i] ,r1x) ;
 					mCurrentFlow[it][i] -= r2x ;
 					mCurrentFlow[i][it] += r1x - r2x ;
 				}
@@ -1441,23 +1434,23 @@ inline exports void MaxFlowAlgorithm<REAL>::initialize (const Bitmap<REAL> &adja
 				it = mBFSPath[i] ;
 				_DEBUG_ASSERT_ (i != it) ;
 				const auto r1x = mAdjacency[i][it] + mCurrentFlow[it][i] - mCurrentFlow[i][it] ;
-				ret = _MIN_ (ret ,r1x) ;
+				ret = MathProc::minof (ret ,r1x) ;
 			}
-			return std::move (ret) ;
+			return _MOVE_ (ret) ;
 		}
 
 		inline void refresh () {
 			mContext.mMaxFlow = max_flow () ;
-			mContext.mCurrentFlow = std::move (mCurrentFlow) ;
+			mContext.mCurrentFlow = _MOVE_ (mCurrentFlow) ;
 		}
 
 		inline REAL max_flow () const {
 			REAL ret = REAL (0) ;
 			for (auto &&i : _RANGE_ (0 ,mCurrentFlow.cy ()))
 				ret += mCurrentFlow[i][mSink] ;
-			return std::move (ret) ;
+			return _MOVE_ (ret) ;
 		}
 	} ;
-	_CALL_ (Lambda ((*this) ,adjacency ,source ,sink)) ;
+	_CALL_ (Lambda (DEREF[this] ,adjacency ,source ,sink)) ;
 }
 } ;

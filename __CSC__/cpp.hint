@@ -5,6 +5,8 @@
 #define popping
 #define imports
 #define exports
+#define leftvalue
+#define rightvalue
 #define switch_case
 #define discard
 
@@ -25,6 +27,7 @@
 
 #define _STATIC_ASSERT_
 #define _STATIC_WARNING_
+#define _STATIC_UNUSED_
 #define _DEBUG_ASSERT_
 #define _DYNAMIC_ASSERT_
 #define _UNITTEST_WATCH_

@@ -5,6 +5,7 @@
 #endif
 
 #include "csc.hpp"
+#include "csc_core.hpp"
 #include "csc_basic.hpp"
 #include "csc_extend.hpp"
 #include "csc_array.hpp"
@@ -20,29 +21,23 @@ namespace CSC {
 class Mesh {
 private:
 	Set<ARRAY3<VAL32>> mVertexSet ;
-	SList<ARRAY3<INDEX>> mElementList ;
+	SoftList<ARRAY3<INDEX>> mElementList ;
 	Array<Bitmap<COLOR_BGR>> mTexture ;
 
 public:
 	Mesh () = default ;
 
-	const Set<ARRAY3<VAL32>> &vertex () const & {
+	const Set<ARRAY3<VAL32>> &vertex () const leftvalue {
 		return mVertexSet ;
 	}
 
-	auto vertex () && ->void = delete ;
-
-	const SList<ARRAY3<INDEX>> &element () const & {
+	const SoftList<ARRAY3<INDEX>> &element () const leftvalue {
 		return mElementList ;
 	}
 
-	auto element () && ->void = delete ;
-
-	const Array<Bitmap<COLOR_BGR>> &texture () const & {
+	const Array<Bitmap<COLOR_BGR>> &texture () const leftvalue {
 		return mTexture ;
 	}
-
-	auto texture () && ->void = delete ;
 
 	void add_vertex (const Set<ARRAY3<VAL32>> &vertex_) {
 		mVertexSet.appand (vertex_) ;
@@ -54,7 +49,7 @@ public:
 
 	void add_texture (Bitmap<COLOR_BGR> &&texture_) {
 		mTexture = Array<Bitmap<COLOR_BGR>> (1) ;
-		mTexture[0] = std::move (texture_) ;
+		mTexture[0] = _MOVE_ (texture_) ;
 	}
 } ;
 
@@ -101,24 +96,24 @@ public:
 		if switch_case (TRUE) {
 			if (angle_vn == REAL (0))
 				discard ;
-			const auto r1x = mEyeN * _COS_ (angle_vn) - mEyeV * _SIN_ (angle_vn) ;
-			const auto r2x = mEyeV * _COS_ (angle_vn) + mEyeN * _SIN_ (angle_vn) ;
+			const auto r1x = mEyeN * MathProc::cos (angle_vn) - mEyeV * MathProc::sin (angle_vn) ;
+			const auto r2x = mEyeV * MathProc::cos (angle_vn) + mEyeN * MathProc::sin (angle_vn) ;
 			mEyeN = r1x.normalize () ;
 			mEyeV = r2x.normalize () ;
 		}
 		if switch_case (TRUE) {
 			if (angle_nu == REAL (0))
 				discard ;
-			const auto r3x = mEyeU * _COS_ (angle_nu) - mEyeN * _SIN_ (angle_nu) ;
-			const auto r4x = mEyeN * _COS_ (angle_nu) + mEyeU * _SIN_ (angle_nu) ;
+			const auto r3x = mEyeU * MathProc::cos (angle_nu) - mEyeN * MathProc::sin (angle_nu) ;
+			const auto r4x = mEyeN * MathProc::cos (angle_nu) + mEyeU * MathProc::sin (angle_nu) ;
 			mEyeU = r3x.normalize () ;
 			mEyeN = r4x.normalize () ;
 		}
 		if switch_case (TRUE) {
 			if (angle_uv == REAL (0))
 				discard ;
-			const auto r5x = mEyeV * _COS_ (angle_uv) - mEyeU * _SIN_ (angle_uv) ;
-			const auto r6x = mEyeU * _COS_ (angle_uv) + mEyeV * _SIN_ (angle_uv) ;
+			const auto r5x = mEyeV * MathProc::cos (angle_uv) - mEyeU * MathProc::sin (angle_uv) ;
+			const auto r6x = mEyeU * MathProc::cos (angle_uv) + mEyeV * MathProc::sin (angle_uv) ;
 			mEyeV = r5x.normalize () ;
 			mEyeU = r6x.normalize () ;
 		}
@@ -132,7 +127,7 @@ public:
 	}
 
 	Matrix<REAL> view_matrix () const {
-		const auto r1x = Function<DEF<void (Matrix<REAL> &)> NONE::*> (PhanRef<const Camera>::make ((*this)) ,&Camera::compute_view_matrix) ;
+		const auto r1x = Function<DEF<void (Matrix<REAL> &)> NONE::*> (PhanRef<const Camera>::make (DEREF[this]) ,&Camera::compute_view_matrix) ;
 		mViewMatrix.apply (r1x) ;
 		return mViewMatrix ;
 	}
@@ -152,7 +147,7 @@ public:
 	void perspective (const REAL &fov ,const REAL &aspect ,const REAL &near_ ,const REAL &far_) {
 		_DEBUG_ASSERT_ (fov > REAL (0) && fov < REAL (180)) ;
 		_DEBUG_ASSERT_ (aspect > REAL (0)) ;
-		const auto r1x = near_ * _TAN_ (fov * REAL (MATH_PI / 180) * REAL (0.5)) ;
+		const auto r1x = near_ * MathProc::tan (fov * REAL (MATH_PI / 180) * REAL (0.5)) ;
 		const auto r2x = r1x * aspect ;
 		frustum (-r2x ,r2x ,-r1x ,r1x ,near_ ,far_) ;
 	}
@@ -164,18 +159,18 @@ public:
 		mScreenW = right - left ;
 		mScreenH = top - bottom ;
 		mScreenD = far_ - near_ ;
-		mProjectionMatrix[0][0] = REAL (2) * near_ * _PINV_ (mScreenW) ;
+		mProjectionMatrix[0][0] = REAL (2) * near_ * MathProc::inverse (mScreenW) ;
 		mProjectionMatrix[0][1] = REAL (0) ;
-		mProjectionMatrix[0][2] = (right + left) * _PINV_ (mScreenW) ;
+		mProjectionMatrix[0][2] = (right + left) * MathProc::inverse (mScreenW) ;
 		mProjectionMatrix[0][3] = REAL (0) ;
 		mProjectionMatrix[1][0] = REAL (0) ;
-		mProjectionMatrix[1][1] = REAL (2) * near_ * _PINV_ (mScreenH) ;
-		mProjectionMatrix[1][2] = (top + bottom) * _PINV_ (mScreenH) ;
+		mProjectionMatrix[1][1] = REAL (2) * near_ * MathProc::inverse (mScreenH) ;
+		mProjectionMatrix[1][2] = (top + bottom) * MathProc::inverse (mScreenH) ;
 		mProjectionMatrix[1][3] = REAL (0) ;
 		mProjectionMatrix[2][0] = REAL (0) ;
 		mProjectionMatrix[2][1] = REAL (0) ;
-		mProjectionMatrix[2][2] = -(far_ + near_) * _PINV_ (mScreenD) ;
-		mProjectionMatrix[2][3] = -(REAL (2) * near_ * far_) * _PINV_ (mScreenD) ;
+		mProjectionMatrix[2][2] = -(far_ + near_) * MathProc::inverse (mScreenD) ;
+		mProjectionMatrix[2][3] = -(REAL (2) * near_ * far_) * MathProc::inverse (mScreenD) ;
 		mProjectionMatrix[3][0] = REAL (0) ;
 		mProjectionMatrix[3][1] = REAL (0) ;
 		mProjectionMatrix[3][2] = REAL (-1) ;
@@ -189,21 +184,21 @@ public:
 		mScreenW = right - left ;
 		mScreenH = top - bottom ;
 		mScreenD = far_ - near_ ;
-		mProjectionMatrix[0][0] = REAL (2) * _PINV_ (mScreenW) ;
+		mProjectionMatrix[0][0] = REAL (2) * MathProc::inverse (mScreenW) ;
 		mProjectionMatrix[0][1] = REAL (0) ;
 		mProjectionMatrix[0][2] = REAL (0) ;
 		mProjectionMatrix[0][3] = REAL (0) ;
 		mProjectionMatrix[1][0] = REAL (0) ;
-		mProjectionMatrix[1][1] = REAL (2) * _PINV_ (mScreenH) ;
+		mProjectionMatrix[1][1] = REAL (2) * MathProc::inverse (mScreenH) ;
 		mProjectionMatrix[1][2] = REAL (0) ;
 		mProjectionMatrix[1][3] = REAL (0) ;
 		mProjectionMatrix[2][0] = REAL (0) ;
 		mProjectionMatrix[2][1] = REAL (0) ;
-		mProjectionMatrix[2][2] = REAL (-2) * _PINV_ (mScreenD) ;
+		mProjectionMatrix[2][2] = REAL (-2) * MathProc::inverse (mScreenD) ;
 		mProjectionMatrix[2][3] = REAL (0) ;
-		mProjectionMatrix[3][0] = -(right + left) * _PINV_ (mScreenW) ;
-		mProjectionMatrix[3][1] = -(top + bottom) * _PINV_ (mScreenH) ;
-		mProjectionMatrix[3][2] = -(far_ + near_) * _PINV_ (mScreenD) ;
+		mProjectionMatrix[3][0] = -(right + left) * MathProc::inverse (mScreenW) ;
+		mProjectionMatrix[3][1] = -(top + bottom) * MathProc::inverse (mScreenH) ;
+		mProjectionMatrix[3][2] = -(far_ + near_) * MathProc::inverse (mScreenD) ;
 		mProjectionMatrix[3][3] = REAL (1) ;
 	}
 
@@ -240,20 +235,20 @@ public:
 	exports class Abstract
 		:public Interface {
 	public:
-		virtual void compute_load_data (AnyRef<void> &this_ ,const PhanBuffer<const BYTE> &vs ,const PhanBuffer<const BYTE> &fs) const = 0 ;
-		virtual void compute_active_pipeline (AnyRef<void> &this_) const = 0 ;
-		virtual void compute_uniform_find (AnyRef<void> &this_ ,const String<STR> &name ,INDEX &index) const = 0 ;
-		virtual void compute_uniform_write (AnyRef<void> &this_ ,INDEX index ,const VAR32 &data) const = 0 ;
-		virtual void compute_uniform_write (AnyRef<void> &this_ ,INDEX index ,const VAR64 &data) const = 0 ;
-		virtual void compute_uniform_write (AnyRef<void> &this_ ,INDEX index ,const VAL32 &data) const = 0 ;
-		virtual void compute_uniform_write (AnyRef<void> &this_ ,INDEX index ,const VAL64 &data) const = 0 ;
-		virtual void compute_uniform_write (AnyRef<void> &this_ ,INDEX index ,const Vector<VAL32> &data) const = 0 ;
-		virtual void compute_uniform_write (AnyRef<void> &this_ ,INDEX index ,const Vector<VAL64> &data) const = 0 ;
-		virtual void compute_uniform_write (AnyRef<void> &this_ ,INDEX index ,const Matrix<VAL32> &data) const = 0 ;
-		virtual void compute_uniform_write (AnyRef<void> &this_ ,INDEX index ,const Matrix<VAL64> &data) const = 0 ;
-		virtual void compute_sprite_load_data (AnyRef<void> &this_ ,const Mesh &mesh) const = 0 ;
-		virtual void compute_sprite_active_texture (AnyRef<void> &this_ ,INDEX texture) const = 0 ;
-		virtual void compute_sprite_draw (AnyRef<void> &this_) const = 0 ;
+		virtual void compute_load_data (AnyRef<void> &holder ,const PhanBuffer<const BYTE> &vs ,const PhanBuffer<const BYTE> &fs) const = 0 ;
+		virtual void compute_active_pipeline (AnyRef<void> &holder) const = 0 ;
+		virtual void compute_uniform_find (AnyRef<void> &holder ,const String<STR> &name ,INDEX &index) const = 0 ;
+		virtual void compute_uniform_write (AnyRef<void> &holder ,const INDEX &index ,const VAR32 &data) const = 0 ;
+		virtual void compute_uniform_write (AnyRef<void> &holder ,const INDEX &index ,const VAR64 &data) const = 0 ;
+		virtual void compute_uniform_write (AnyRef<void> &holder ,const INDEX &index ,const VAL32 &data) const = 0 ;
+		virtual void compute_uniform_write (AnyRef<void> &holder ,const INDEX &index ,const VAL64 &data) const = 0 ;
+		virtual void compute_uniform_write (AnyRef<void> &holder ,const INDEX &index ,const Vector<VAL32> &data) const = 0 ;
+		virtual void compute_uniform_write (AnyRef<void> &holder ,const INDEX &index ,const Vector<VAL64> &data) const = 0 ;
+		virtual void compute_uniform_write (AnyRef<void> &holder ,const INDEX &index ,const Matrix<VAL32> &data) const = 0 ;
+		virtual void compute_uniform_write (AnyRef<void> &holder ,const INDEX &index ,const Matrix<VAL64> &data) const = 0 ;
+		virtual void compute_sprite_load_data (AnyRef<void> &holder ,const Mesh &mesh) const = 0 ;
+		virtual void compute_sprite_active_texture (AnyRef<void> &holder ,const INDEX &texture) const = 0 ;
+		virtual void compute_sprite_draw (AnyRef<void> &holder) const = 0 ;
 	} ;
 
 private:
@@ -265,8 +260,9 @@ private:
 public:
 	AbstractShader () = default ;
 
-	explicit AbstractShader (const PhanRef<const Abstract> &abstract_)
-		:mAbstract (PhanRef<const Abstract>::make (abstract_)) {}
+	explicit AbstractShader (const PhanRef<const Abstract> &abstract_) {
+		mAbstract = PhanRef<const Abstract>::make (abstract_) ;
+	}
 
 	BOOL exist () const {
 		if (!mAbstract.exist ())
@@ -292,8 +288,8 @@ public:
 		if switch_case (TRUE) {
 			if (ix != VAR_NONE)
 				discard ;
-			ix = mUniformMappingSet.map (name) ;
 			mAbstract->compute_uniform_find (mHolder ,name ,ix) ;
+			mUniformMappingSet.add (name ,ix) ;
 		}
 		mAbstract->compute_uniform_write (mHolder ,ix ,data) ;
 	}
@@ -304,8 +300,8 @@ public:
 		if switch_case (TRUE) {
 			if (ix != VAR_NONE)
 				discard ;
-			ix = mUniformMappingSet.map (name) ;
 			mAbstract->compute_uniform_find (mHolder ,name ,ix) ;
+			mUniformMappingSet.add (name ,ix) ;
 		}
 		mAbstract->compute_uniform_write (mHolder ,ix ,data) ;
 	}
@@ -316,8 +312,8 @@ public:
 		if switch_case (TRUE) {
 			if (ix != VAR_NONE)
 				discard ;
-			ix = mUniformMappingSet.map (name) ;
 			mAbstract->compute_uniform_find (mHolder ,name ,ix) ;
+			mUniformMappingSet.add (name ,ix) ;
 		}
 		mAbstract->compute_uniform_write (mHolder ,ix ,data) ;
 	}
@@ -328,8 +324,8 @@ public:
 		if switch_case (TRUE) {
 			if (ix != VAR_NONE)
 				discard ;
-			ix = mUniformMappingSet.map (name) ;
 			mAbstract->compute_uniform_find (mHolder ,name ,ix) ;
+			mUniformMappingSet.add (name ,ix) ;
 		}
 		mAbstract->compute_uniform_write (mHolder ,ix ,data) ;
 	}
@@ -340,8 +336,8 @@ public:
 		if switch_case (TRUE) {
 			if (ix != VAR_NONE)
 				discard ;
-			ix = mUniformMappingSet.map (name) ;
 			mAbstract->compute_uniform_find (mHolder ,name ,ix) ;
+			mUniformMappingSet.add (name ,ix) ;
 		}
 		mAbstract->compute_uniform_write (mHolder ,ix ,data) ;
 	}
@@ -352,8 +348,8 @@ public:
 		if switch_case (TRUE) {
 			if (ix != VAR_NONE)
 				discard ;
-			ix = mUniformMappingSet.map (name) ;
 			mAbstract->compute_uniform_find (mHolder ,name ,ix) ;
+			mUniformMappingSet.add (name ,ix) ;
 		}
 		mAbstract->compute_uniform_write (mHolder ,ix ,data) ;
 	}
@@ -364,8 +360,8 @@ public:
 		if switch_case (TRUE) {
 			if (ix != VAR_NONE)
 				discard ;
-			ix = mUniformMappingSet.map (name) ;
 			mAbstract->compute_uniform_find (mHolder ,name ,ix) ;
+			mUniformMappingSet.add (name ,ix) ;
 		}
 		mAbstract->compute_uniform_write (mHolder ,ix ,data) ;
 	}
@@ -376,15 +372,14 @@ public:
 		if switch_case (TRUE) {
 			if (ix != VAR_NONE)
 				discard ;
-			ix = mUniformMappingSet.map (name) ;
 			mAbstract->compute_uniform_find (mHolder ,name ,ix) ;
+			mUniformMappingSet.add (name ,ix) ;
 		}
 		mAbstract->compute_uniform_write (mHolder ,ix ,data) ;
 	}
 
 	template <class _RET = NONE>
-	auto create_sprite () popping
-		->DEF<DEPENDENT_TYPE<AbstractSprite ,ARGVS<_RET>>> {
+	DEPENDENT_TYPE<AbstractSprite ,_RET> create_sprite () popping {
 		struct Dependent ;
 		return DEPENDENT_TYPE<AbstractSprite ,Dependent> (mAbstract) ;
 	}
@@ -415,7 +410,7 @@ public:
 		mAbstract->compute_sprite_load_data (mHolder ,mesh) ;
 	}
 
-	void active_texture (INDEX texture) {
+	void active_texture (const INDEX &texture) {
 		if (!exist ())
 			return ;
 		mAbstract->compute_sprite_active_texture (mHolder ,texture) ;
@@ -428,7 +423,8 @@ public:
 	}
 
 private:
-	explicit AbstractSprite (const PhanRef<const Abstract> &abstract_)
-		:mAbstract (PhanRef<const Abstract>::make (abstract_)) {}
+	explicit AbstractSprite (const PhanRef<const Abstract> &abstract_) {
+		mAbstract = PhanRef<const Abstract>::make (abstract_) ;
+	}
 } ;
 } ;
