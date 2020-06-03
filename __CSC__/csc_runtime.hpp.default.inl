@@ -7,21 +7,21 @@
 #ifdef __CSC__
 #pragma push_macro ("self")
 #pragma push_macro ("implicit")
-#pragma push_macro ("popping")
+#pragma push_macro ("side_effects")
 #pragma push_macro ("leftvalue")
 #pragma push_macro ("rightvalue")
 #pragma push_macro ("imports")
 #pragma push_macro ("exports")
-#pragma push_macro ("switch_case")
+#pragma push_macro ("switch_once")
 #pragma push_macro ("discard")
 #undef self
 #undef implicit
-#undef popping
+#undef side_effects
 #undef leftvalue
 #undef rightvalue
 #undef imports
 #undef exports
-#undef switch_case
+#undef switch_once
 #undef discard
 #endif
 
@@ -62,12 +62,12 @@
 #ifdef __CSC__
 #pragma pop_macro ("self")
 #pragma pop_macro ("implicit")
-#pragma pop_macro ("popping")
+#pragma pop_macro ("side_effects")
 #pragma pop_macro ("leftvalue")
 #pragma pop_macro ("rightvalue")
 #pragma pop_macro ("imports")
 #pragma pop_macro ("exports")
-#pragma pop_macro ("switch_case")
+#pragma pop_macro ("switch_once")
 #pragma pop_macro ("discard")
 #endif
 
@@ -135,15 +135,12 @@ using ::getsid ;
 #endif
 } ;
 
-class Duration::Implement {
+class Duration::Private::Implement {
 private:
-	friend GlobalRuntime ;
-	friend UniqueLock ;
-	friend TimePoint ;
 	api::chrono::system_clock::duration mDuration ;
 
 public:
-	Implement () = delete ;
+	implicit Implement () = delete ;
 
 	explicit Implement (const LENGTH &milliseconds_) {
 		const auto r1x = api::chrono::milliseconds (milliseconds_) ;
@@ -163,6 +160,10 @@ public:
 
 	explicit Implement (const api::chrono::system_clock::duration &time_) {
 		mDuration = api::chrono::duration_cast<api::chrono::system_clock::duration> (time_) ;
+	}
+
+	const api::chrono::system_clock::duration &native () const leftvalue {
+		return mDuration ;
 	}
 
 	LENGTH hours () const {
@@ -254,14 +255,12 @@ inline exports Duration Duration::sub (const Duration &that) const {
 	return mThis->sub (that.mThis) ;
 }
 
-class TimePoint::Implement {
+class TimePoint::Private::Implement {
 private:
-	friend GlobalRuntime ;
-	friend UniqueLock ;
 	api::chrono::system_clock::time_point mTimePoint ;
 
 public:
-	Implement () = delete ;
+	implicit Implement () = delete ;
 
 	explicit Implement (const ARRAY8<LENGTH> &time_) {
 		auto rax = api::tm () ;
@@ -284,6 +283,10 @@ public:
 
 	explicit Implement (const api::chrono::system_clock::time_point &time_) {
 		mTimePoint = api::chrono::time_point_cast<api::chrono::system_clock::duration> (time_) ;
+	}
+
+	const api::chrono::system_clock::time_point &native () const leftvalue {
+		return mTimePoint ;
 	}
 
 #ifdef __CSC_COMPILER_MSVC__
@@ -330,14 +333,14 @@ public:
 #endif
 
 	TimePoint add (const Duration::Implement &that) const {
-		const auto r1x = mTimePoint + that.mDuration ;
+		const auto r1x = mTimePoint + that.native () ;
 		const auto r2x = api::chrono::time_point_cast<api::chrono::system_clock::duration> (r1x) ;
-		auto tmp = StrongRef<TimePoint::Implement>::make (r2x) ;
+		auto tmp = StrongRef<Implement>::make (r2x) ;
 		return TimePoint (_MOVE_ (tmp)) ;
 	}
 
-	Duration sub (const TimePoint::Implement &that) const {
-		const auto r1x = mTimePoint - that.mTimePoint ;
+	Duration sub (const Implement &that) const {
+		const auto r1x = mTimePoint - that.native () ;
 		const auto r2x = api::chrono::duration_cast<api::chrono::system_clock::duration> (r1x) ;
 		auto tmp = StrongRef<Duration::Implement>::make (r2x) ;
 		return Duration (_MOVE_ (tmp)) ;
@@ -357,19 +360,19 @@ inline exports ARRAY8<LENGTH> TimePoint::calendar () const {
 }
 
 inline exports TimePoint TimePoint::add (const Duration &that) const {
-	return mThis->add (that.mThis) ;
+	return mThis->add (that.native ()) ;
 }
 
 inline exports Duration TimePoint::sub (const TimePoint &that) const {
-	return mThis->sub (that.mThis) ;
+	return mThis->sub (that.native ()) ;
 }
 
-class Atomic::Implement {
+class Atomic::Private::Implement {
 private:
 	api::atomic<VAR> mAtomic ;
 
 public:
-	Implement () {
+	implicit Implement () {
 		mAtomic = 0 ;
 	}
 
@@ -377,7 +380,7 @@ public:
 		return mAtomic.load (api::memory_order::memory_order_seq_cst) ;
 	}
 
-	VAR compare_exchange (const VAR &expect ,const VAR &data) popping {
+	VAR compare_exchange (const VAR &expect ,const VAR &data) side_effects {
 		VAR ret = expect ;
 		const auto r1x = mAtomic.compare_exchange_strong (ret ,data ,api::memory_order::memory_order_seq_cst) ;
 		if (r1x)
@@ -389,12 +392,12 @@ public:
 		mAtomic.store (data ,api::memory_order::memory_order_seq_cst) ;
 	}
 
-	VAR increase () popping {
+	VAR increase () side_effects {
 		const auto r1x = mAtomic.fetch_add (1 ,api::memory_order::memory_order_seq_cst) ;
 		return r1x + 1 ;
 	}
 
-	VAR decrease () popping {
+	VAR decrease () side_effects {
 		const auto r1x = mAtomic.fetch_sub (1 ,api::memory_order::memory_order_seq_cst) ;
 		return r1x - 1 ;
 	}
@@ -408,7 +411,7 @@ inline exports VAR Atomic::fetch () const {
 	return mThis->fetch () ;
 }
 
-inline exports VAR Atomic::compare_exchange (const VAR &expect ,const VAR &data) popping {
+inline exports VAR Atomic::compare_exchange (const VAR &expect ,const VAR &data) side_effects {
 	return mThis->compare_exchange (expect ,data) ;
 }
 
@@ -416,27 +419,30 @@ inline exports void Atomic::store (const VAR &data) {
 	return mThis->store (data) ;
 }
 
-inline exports VAR Atomic::increase () popping {
+inline exports VAR Atomic::increase () side_effects {
 	return mThis->increase () ;
 }
 
-inline exports VAR Atomic::decrease () popping {
+inline exports VAR Atomic::decrease () side_effects {
 	return mThis->decrease () ;
 }
 
-class Mutex::Implement {
+class Mutex::Private::Implement {
 private:
-	friend UniqueLock ;
 	api::mutex mMutex ;
 
 public:
-	Implement () = default ;
+	implicit Implement () = default ;
+
+	api::mutex &native () leftvalue {
+		return mMutex ;
+	}
 
 	void lock () {
 		mMutex.lock () ;
 	}
 
-	BOOL try_lock () popping {
+	BOOL try_lock () side_effects {
 		return mMutex.try_lock () ;
 	}
 
@@ -453,7 +459,7 @@ inline exports void Mutex::lock () {
 	mThis->lock () ;
 }
 
-inline exports BOOL Mutex::try_lock () popping {
+inline exports BOOL Mutex::try_lock () side_effects {
 	return mThis->try_lock () ;
 }
 
@@ -461,18 +467,22 @@ inline exports void Mutex::unlock () {
 	mThis->unlock () ;
 }
 
-class RecursiveMutex::Implement {
+class RecursiveMutex::Private::Implement {
 private:
 	api::recursive_mutex mMutex ;
 
 public:
-	Implement () = default ;
+	implicit Implement () = default ;
+
+	api::recursive_mutex &native () leftvalue {
+		return mMutex ;
+	}
 
 	void lock () {
 		mMutex.lock () ;
 	}
 
-	BOOL try_lock () popping {
+	BOOL try_lock () side_effects {
 		return mMutex.try_lock () ;
 	}
 
@@ -489,7 +499,7 @@ inline exports void RecursiveMutex::lock () {
 	mThis->lock () ;
 }
 
-inline exports BOOL RecursiveMutex::try_lock () popping {
+inline exports BOOL RecursiveMutex::try_lock () side_effects {
 	return mThis->try_lock () ;
 }
 
@@ -497,31 +507,33 @@ inline exports void RecursiveMutex::unlock () {
 	mThis->unlock () ;
 }
 
-class ConditionLock::Implement {
+class ConditionLock::Private::Implement {
 private:
-	friend UniqueLock ;
 	api::condition_variable mConditionLock ;
 
 public:
-	Implement () = default ;
+	implicit Implement () = default ;
+
+	api::condition_variable &native () leftvalue {
+		return mConditionLock ;
+	}
 } ;
 
 inline exports ConditionLock::ConditionLock () {
 	mThis = StrongRef<Implement>::make () ;
 }
 
-class UniqueLock::Implement {
+class UniqueLock::Private::Implement {
 private:
-	struct Detail ;
 	api::unique_lock<api::mutex> mUniqueLock ;
 	PhanRef<api::condition_variable> mConditionLock ;
 
 public:
-	Implement () = delete ;
+	implicit Implement () = delete ;
 
 	explicit Implement (Mutex &mutex_ ,ConditionLock &condition) {
-		mUniqueLock = api::unique_lock<api::mutex> (mutex_.native ().mMutex) ;
-		mConditionLock = PhanRef<api::condition_variable>::make (condition.native ().mConditionLock) ;
+		mUniqueLock = api::unique_lock<api::mutex> (mutex_.native ().native ()) ;
+		mConditionLock = PhanRef<api::condition_variable>::make (condition.native ().native ()) ;
 	}
 
 	void wait () {
@@ -529,13 +541,13 @@ public:
 	}
 
 	void wait (const TimePoint &time_) {
-		auto &r1x = time_.native () ;
-		mConditionLock->wait_until (mUniqueLock ,r1x.mTimePoint) ;
+		auto &r1x = time_.native ().native () ;
+		mConditionLock->wait_until (mUniqueLock ,r1x) ;
 	}
 
 	void wait (const Duration &time_) {
-		auto &r1x = time_.native () ;
-		mConditionLock->wait_for (mUniqueLock ,r1x.mDuration) ;
+		auto &r1x = time_.native ().native () ;
+		mConditionLock->wait_for (mUniqueLock ,r1x) ;
 	}
 
 	void yield () {
@@ -572,18 +584,17 @@ inline exports void UniqueLock::notify () const {
 	mThis->notify () ;
 }
 
-class Thread::Implement {
+class Thread::Private::Implement {
 private:
 	StrongRef<Binder> mRunnable ;
 	api::thread mThread ;
 
 public:
-	Implement () = delete ;
+	implicit Implement () = delete ;
 
 	explicit Implement (StrongRef<Binder> &&runnable) {
 		mRunnable = _MOVE_ (runnable) ;
-		const auto r1x = PhanRef<Binder>::make (mRunnable.self) ;
-		mThread = api::thread (Detail::Runnable (r1x)) ;
+		mThread = api::thread (Private::Runnable (PhanRef<Binder>::make (mRunnable.self))) ;
 	}
 
 	void join () {
@@ -600,17 +611,15 @@ inline exports void Thread::join () {
 }
 
 inline exports TimePoint GlobalRuntime::clock_now () {
-	using Implement = REMOVE_CVR_TYPE<DEF<decltype (_NULL_<TimePoint> ().native ())>> ;
 	const auto r1x = api::chrono::system_clock::now () ;
-	auto tmp = StrongRef<Implement>::make (r1x) ;
+	auto tmp = StrongRef<TimePoint::Implement>::make (r1x) ;
 	return TimePoint (_MOVE_ (tmp)) ;
 }
 
 inline exports TimePoint GlobalRuntime::clock_epoch () {
-	using Implement = REMOVE_CVR_TYPE<DEF<decltype (_NULL_<TimePoint> ().native ())>> ;
 	const auto r1x = api::chrono::system_clock::duration::zero () ;
 	const auto r2x = api::chrono::system_clock::time_point (r1x) ;
-	auto tmp = StrongRef<Implement>::make (r2x) ;
+	auto tmp = StrongRef<TimePoint::Implement>::make (r2x) ;
 	return TimePoint (_MOVE_ (tmp)) ;
 }
 
@@ -627,13 +636,13 @@ inline exports FLAG GlobalRuntime::thread_tid () {
 #endif
 
 inline exports void GlobalRuntime::thread_sleep (const Duration &time_) {
-	auto &r1x = time_.native () ;
-	api::this_thread::sleep_for (r1x.mDuration) ;
+	auto &r1x = time_.native ().native () ;
+	api::this_thread::sleep_for (r1x) ;
 }
 
 inline exports void GlobalRuntime::thread_sleep (const TimePoint &time_) {
-	auto &r1x = time_.native () ;
-	api::this_thread::sleep_until (r1x.mTimePoint) ;
+	auto &r1x = time_.native ().native () ;
+	api::this_thread::sleep_until (r1x) ;
 }
 
 inline exports void GlobalRuntime::thread_yield () {
@@ -660,7 +669,7 @@ inline exports FLAG GlobalRuntime::process_pid () {
 inline exports Buffer<BYTE ,ARGC<128>> GlobalRuntime::process_info (const FLAG &pid) {
 	Buffer<BYTE ,ARGC<128>> ret ;
 	auto rax = ByteWriter<BYTE> (PhanBuffer<BYTE>::make (ret)) ;
-	if switch_case (TRUE) {
+	if switch_once (TRUE) {
 		const auto r1x = UniqueRef<api::HANDLE> ([&] (api::HANDLE &me) {
 			me = api::OpenProcess (PROCESS_QUERY_INFORMATION ,FALSE ,VARY (pid)) ;
 		} ,[] (api::HANDLE &me) {
@@ -691,7 +700,7 @@ inline exports Buffer<BYTE ,ARGC<128>> GlobalRuntime::process_info (const FLAG &
 inline exports FLAG GlobalRuntime::process_info_pid (const PhanBuffer<const STRU8> &info) {
 	_DEBUG_ASSERT_ (info.size () == 128) ;
 	auto rax = ByteReader<BYTE> (info) ;
-	const auto r1x = rax.template read<VAR64> () ;
+	const auto r1x = rax.read (ARGV<VAR64>::null) ;
 	_DYNAMIC_ASSERT_ (r1x >= VAR32_MIN && r1x <= VAR32_MAX) ;
 	return FLAG (r1x) ;
 }
@@ -705,7 +714,7 @@ inline exports FLAG GlobalRuntime::process_pid () {
 inline exports Buffer<BYTE ,ARGC<128>> GlobalRuntime::process_info (const FLAG &pid) {
 	Buffer<BYTE ,ARGC<128>> ret ;
 	auto rax = ByteWriter<BYTE> (PhanBuffer<BYTE>::make (ret)) ;
-	if switch_case (TRUE) {
+	if switch_once (TRUE) {
 		const auto r1x = api::getpgid (api::pid_t (pid)) ;
 		if (r1x < 0)
 			discard ;
@@ -726,7 +735,7 @@ inline exports Buffer<BYTE ,ARGC<128>> GlobalRuntime::process_info (const FLAG &
 inline exports FLAG GlobalRuntime::process_info_pid (const PhanBuffer<const STRU8> &info) {
 	_DEBUG_ASSERT_ (info.size () == 128) ;
 	auto rax = ByteReader<BYTE> (info) ;
-	const auto r1x = rax.template read<VAR64> () ;
+	const auto r1x = rax.read (ARGV<VAR64>::null) ;
 	_DYNAMIC_ASSERT_ (r1x >= VAR32_MIN && r1x <= VAR32_MAX) ;
 	return FLAG (r1x) ;
 }
@@ -750,20 +759,20 @@ inline exports void GlobalRuntime::process_abort[[noreturn]] () {
 }
 
 
-inline exports FLAG GlobalRuntime::system_exec (const String<STR> &cmd) popping {
-	const auto r1x = StringProc::build_strs<STRA> (cmd) ;
+inline exports FLAG GlobalRuntime::system_exec (const String<STR> &cmd) side_effects {
+	const auto r1x = StringProc::build_strs (ARGV<STRA>::null ,cmd) ;
 	const auto r2x = api::system (r1x.raw ().self) ;
 	return FLAG (r2x) ;
 }
 
-class RandomService::Implement
+class RandomService::Private::Implement
 	:public RandomService::Abstract {
 private:
 	SharedRef<api::random_device> mRandomSeed ;
 	AutoRef<api::mt19937> mRandomDevice ;
 
 public:
-	Implement () {
+	implicit Implement () {
 		mRandomSeed = SharedRef<api::random_device>::make () ;
 		mRandomDevice = AutoRef<api::mt19937>::make (CHAR (mRandomSeed.self ())) ;
 	}
@@ -776,7 +785,7 @@ public:
 		mRandomDevice = AutoRef<api::mt19937>::make (CHAR (seed_)) ;
 	}
 
-	VAR random_value () popping override {
+	VAR random_value () side_effects override {
 		return VAR (mRandomDevice.self ()) ;
 	}
 

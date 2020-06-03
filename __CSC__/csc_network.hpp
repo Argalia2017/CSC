@@ -16,16 +16,22 @@
 #include "csc_thread.hpp"
 
 namespace CSC {
+class TCPListener ;
+
 class TCPSocket {
-public:
-	class Listener ;
+private:
+	struct Private {
+		class Implement ;
+	} ;
+
+	using Implement = typename Private::Implement ;
 
 private:
-	class Implement ;
+	friend TCPListener ;
 	StrongRef<Implement> mThis ;
 
 public:
-	TCPSocket () = delete ;
+	implicit TCPSocket () = delete ;
 
 	explicit TCPSocket (const String<STRU8> &ip_addr) ;
 
@@ -33,11 +39,12 @@ public:
 
 	String<STRU8> peer_sock_name () const ;
 
-	template <class _RET = NONE>
-	DEPENDENT_TYPE<Listener ,_RET> listener () popping {
+	template <class _RET = REMOVE_CVR_TYPE<TCPListener>>
+	_RET listener () side_effects {
 		struct Dependent ;
+		using TCPListener = DEPENDENT_TYPE<TCPListener ,Dependent> ;
 		_DEBUG_ASSERT_ (mThis.exist ()) ;
-		return DEPENDENT_TYPE<Listener ,Dependent> (mThis) ;
+		return TCPListener (mThis) ;
 	}
 
 	void link (const String<STRU8> &ip_addr) ;
@@ -75,35 +82,45 @@ public:
 	}
 
 public:
-	imports_static String<STRU8> http_get (const String<STRU8> &ip_addr ,const String<STRU8> &site ,const String<STRU8> &msg ,const LENGTH &buffer_len ,const LENGTH &timeout) popping ;
+	imports String<STRU8> http_get (const String<STRU8> &ip_addr ,const String<STRU8> &site ,const String<STRU8> &msg ,const LENGTH &buffer_len ,const LENGTH &timeout) side_effects ;
 
-	imports_static String<STRU8> http_post (const String<STRU8> &ip_addr ,const String<STRU8> &site ,const String<STRU8> &msg ,const LENGTH &buffer_len ,const LENGTH &timeout) popping ;
+	imports String<STRU8> http_post (const String<STRU8> &ip_addr ,const String<STRU8> &site ,const String<STRU8> &msg ,const LENGTH &buffer_len ,const LENGTH &timeout) side_effects ;
 } ;
 
-class TCPSocket::Listener {
+class TCPListener {
 private:
-	friend TCPSocket ;
-	class Implement ;
+	struct Private {
+		class Implement ;
+	} ;
+
+	using Implement = typename Private::Implement ;
+
+private:
 	StrongRef<Implement> mThis ;
 
 public:
-	Listener () = delete ;
+	implicit TCPListener () = delete ;
+
+	explicit TCPListener (const StrongRef<TCPSocket::Implement> &socket_) ;
 
 	void wait_linker () ;
 
 	void accept () ;
-
-private:
-	explicit Listener (const StrongRef<TCPSocket::Implement> &socket_) ;
 } ;
 
 class UDPSocket {
 private:
-	class Implement ;
+	struct Private {
+		class Implement ;
+	} ;
+
+	using Implement = typename Private::Implement ;
+
+private:
 	StrongRef<Implement> mThis ;
 
 public:
-	UDPSocket () = delete ;
+	implicit UDPSocket () = delete ;
 
 	explicit UDPSocket (const String<STRU8> &ip_addr) ;
 
@@ -144,10 +161,10 @@ public:
 	}
 } ;
 
-class NetworkService final
+class NetworkService
 	:private Proxy {
 private:
-	exports class Abstract
+	class Abstract
 		:public Interface {
 	public:
 		virtual void startup () = 0 ;
@@ -158,8 +175,13 @@ private:
 		virtual LENGTH pref_timeout () const = 0 ;
 	} ;
 
+	struct Private {
+		class Implement ;
+	} ;
+
+	using Implement = typename Private::Implement ;
+
 private:
-	class Implement ;
 	friend Singleton<NetworkService> ;
 	Monostate<RecursiveMutex> mMutex ;
 	StrongRef<Abstract> mThis ;

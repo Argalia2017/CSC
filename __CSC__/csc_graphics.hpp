@@ -25,7 +25,7 @@ private:
 	Array<Bitmap<COLOR_BGR>> mTexture ;
 
 public:
-	Mesh () = default ;
+	implicit Mesh () = default ;
 
 	const Set<ARRAY3<VAL32>> &vertex () const leftvalue {
 		return mVertexSet ;
@@ -67,7 +67,7 @@ private:
 	Matrix<REAL> mProjectionMatrix ;
 
 public:
-	Camera () {
+	implicit Camera () {
 		const auto r1x = Vector<REAL> {REAL (0) ,REAL (0) ,REAL (1) ,REAL (1)} ;
 		const auto r2x = Vector<REAL> {REAL (0) ,REAL (0) ,REAL (0) ,REAL (1)} ;
 		const auto r3x = Vector<REAL> {REAL (0) ,REAL (1) ,REAL (0) ,REAL (0)} ;
@@ -93,7 +93,7 @@ public:
 
 	//@info: 'angle_vn-angle_nu-angle_uv' equals to 'pitch-yaw-roll' (heading-pitch-bank)
 	void rotate (const REAL &angle_vn ,const REAL &angle_nu ,const REAL &angle_uv) {
-		if switch_case (TRUE) {
+		if switch_once (TRUE) {
 			if (angle_vn == REAL (0))
 				discard ;
 			const auto r1x = mEyeN * MathProc::cos (angle_vn) - mEyeV * MathProc::sin (angle_vn) ;
@@ -101,7 +101,7 @@ public:
 			mEyeN = r1x.normalize () ;
 			mEyeV = r2x.normalize () ;
 		}
-		if switch_case (TRUE) {
+		if switch_once (TRUE) {
 			if (angle_nu == REAL (0))
 				discard ;
 			const auto r3x = mEyeU * MathProc::cos (angle_nu) - mEyeN * MathProc::sin (angle_nu) ;
@@ -109,7 +109,7 @@ public:
 			mEyeU = r3x.normalize () ;
 			mEyeN = r4x.normalize () ;
 		}
-		if switch_case (TRUE) {
+		if switch_once (TRUE) {
 			if (angle_uv == REAL (0))
 				discard ;
 			const auto r5x = mEyeV * MathProc::cos (angle_uv) - mEyeU * MathProc::sin (angle_uv) ;
@@ -127,7 +127,7 @@ public:
 	}
 
 	Matrix<REAL> view_matrix () const {
-		const auto r1x = Function<DEF<void (Matrix<REAL> &)> NONE::*> (PhanRef<const Camera>::make (DEREF[this]) ,&Camera::compute_view_matrix) ;
+		const auto r1x = Function<MEMPTR<void (Matrix<REAL> &)>> (PhanRef<const Camera>::make (DEREF[this]) ,&Camera::compute_view_matrix) ;
 		mViewMatrix.apply (r1x) ;
 		return mViewMatrix ;
 	}
@@ -232,7 +232,7 @@ class AbstractSprite ;
 
 class AbstractShader {
 public:
-	exports class Abstract
+	class Abstract
 		:public Interface {
 	public:
 		virtual void compute_load_data (AnyRef<void> &holder ,const PhanBuffer<const BYTE> &vs ,const PhanBuffer<const BYTE> &fs) const = 0 ;
@@ -252,16 +252,15 @@ public:
 	} ;
 
 private:
-	friend AbstractSprite ;
 	PhanRef<const Abstract> mAbstract ;
 	AnyRef<void> mHolder ;
 	Set<String<STR>> mUniformMappingSet ;
 
 public:
-	AbstractShader () = default ;
+	implicit AbstractShader () = default ;
 
-	explicit AbstractShader (const PhanRef<const Abstract> &abstract_) {
-		mAbstract = PhanRef<const Abstract>::make (abstract_) ;
+	explicit AbstractShader (PhanRef<const Abstract> &&abstract_) {
+		mAbstract = _MOVE_ (abstract_) ;
 	}
 
 	BOOL exist () const {
@@ -285,7 +284,7 @@ public:
 	void uniform (const String<STR> &name ,const VAR32 &data) {
 		_DEBUG_ASSERT_ (exist ()) ;
 		INDEX ix = mUniformMappingSet.map (name) ;
-		if switch_case (TRUE) {
+		if switch_once (TRUE) {
 			if (ix != VAR_NONE)
 				discard ;
 			mAbstract->compute_uniform_find (mHolder ,name ,ix) ;
@@ -297,7 +296,7 @@ public:
 	void uniform (const String<STR> &name ,const VAR64 &data) {
 		_DEBUG_ASSERT_ (exist ()) ;
 		INDEX ix = mUniformMappingSet.map (name) ;
-		if switch_case (TRUE) {
+		if switch_once (TRUE) {
 			if (ix != VAR_NONE)
 				discard ;
 			mAbstract->compute_uniform_find (mHolder ,name ,ix) ;
@@ -309,7 +308,7 @@ public:
 	void uniform (const String<STR> &name ,const VAL32 &data) {
 		_DEBUG_ASSERT_ (exist ()) ;
 		INDEX ix = mUniformMappingSet.map (name) ;
-		if switch_case (TRUE) {
+		if switch_once (TRUE) {
 			if (ix != VAR_NONE)
 				discard ;
 			mAbstract->compute_uniform_find (mHolder ,name ,ix) ;
@@ -321,7 +320,7 @@ public:
 	void uniform (const String<STR> &name ,const VAL64 &data) {
 		_DEBUG_ASSERT_ (exist ()) ;
 		INDEX ix = mUniformMappingSet.map (name) ;
-		if switch_case (TRUE) {
+		if switch_once (TRUE) {
 			if (ix != VAR_NONE)
 				discard ;
 			mAbstract->compute_uniform_find (mHolder ,name ,ix) ;
@@ -333,7 +332,7 @@ public:
 	void uniform (const String<STR> &name ,const Vector<VAL32> &data) {
 		_DEBUG_ASSERT_ (exist ()) ;
 		INDEX ix = mUniformMappingSet.map (name) ;
-		if switch_case (TRUE) {
+		if switch_once (TRUE) {
 			if (ix != VAR_NONE)
 				discard ;
 			mAbstract->compute_uniform_find (mHolder ,name ,ix) ;
@@ -345,7 +344,7 @@ public:
 	void uniform (const String<STR> &name ,const Vector<VAL64> &data) {
 		_DEBUG_ASSERT_ (exist ()) ;
 		INDEX ix = mUniformMappingSet.map (name) ;
-		if switch_case (TRUE) {
+		if switch_once (TRUE) {
 			if (ix != VAR_NONE)
 				discard ;
 			mAbstract->compute_uniform_find (mHolder ,name ,ix) ;
@@ -357,7 +356,7 @@ public:
 	void uniform (const String<STR> &name ,const Matrix<VAL32> &data) {
 		_DEBUG_ASSERT_ (exist ()) ;
 		INDEX ix = mUniformMappingSet.map (name) ;
-		if switch_case (TRUE) {
+		if switch_once (TRUE) {
 			if (ix != VAR_NONE)
 				discard ;
 			mAbstract->compute_uniform_find (mHolder ,name ,ix) ;
@@ -369,7 +368,7 @@ public:
 	void uniform (const String<STR> &name ,const Matrix<VAL64> &data) {
 		_DEBUG_ASSERT_ (exist ()) ;
 		INDEX ix = mUniformMappingSet.map (name) ;
-		if switch_case (TRUE) {
+		if switch_once (TRUE) {
 			if (ix != VAR_NONE)
 				discard ;
 			mAbstract->compute_uniform_find (mHolder ,name ,ix) ;
@@ -378,10 +377,11 @@ public:
 		mAbstract->compute_uniform_write (mHolder ,ix ,data) ;
 	}
 
-	template <class _RET = NONE>
-	DEPENDENT_TYPE<AbstractSprite ,_RET> create_sprite () popping {
+	template <class _RET = REMOVE_CVR_TYPE<AbstractSprite>>
+	_RET create_sprite () side_effects {
 		struct Dependent ;
-		return DEPENDENT_TYPE<AbstractSprite ,Dependent> (mAbstract) ;
+		using AbstractSprite = DEPENDENT_TYPE<AbstractSprite ,Dependent> ;
+		return AbstractSprite (mAbstract) ;
 	}
 } ;
 
@@ -390,12 +390,15 @@ public:
 	using Abstract = typename AbstractShader::Abstract ;
 
 private:
-	friend AbstractShader ;
 	PhanRef<const Abstract> mAbstract ;
 	AnyRef<void> mHolder ;
 
 public:
-	AbstractSprite () = delete ;
+	implicit AbstractSprite () = delete ;
+
+	explicit AbstractSprite (PhanRef<const Abstract> &&abstract_) {
+		mAbstract = _MOVE_ (abstract_) ;
+	}
 
 	BOOL exist () const {
 		if (!mAbstract.exist ())
@@ -420,11 +423,6 @@ public:
 		if (!exist ())
 			return ;
 		mAbstract->compute_sprite_draw (mHolder) ;
-	}
-
-private:
-	explicit AbstractSprite (const PhanRef<const Abstract> &abstract_) {
-		mAbstract = PhanRef<const Abstract>::make (abstract_) ;
 	}
 } ;
 } ;

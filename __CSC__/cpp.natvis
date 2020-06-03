@@ -56,15 +56,6 @@
   </Type>
 
 
-  <Type Name="CSC::Function&lt;*&gt;">
-    <DisplayString Condition="mFunction_a==0&amp;&amp;mFunction_b==0">{{ NULL }}</DisplayString>
-    <Expand>
-      <Item Name="[function]" Condition="mFunction_a!=0">mFunction_a</Item>
-      <Item Name="[function]" Condition="mFunction_b!=0">mFunction_b</Item>
-    </Expand>
-  </Type>
-
-
   <Type Name="CSC::Buffer&lt;*,CSC::ARGC&lt;*&gt; &gt;">
     <Expand>
       <Item Name="[size]">sizeof(mBuffer)/sizeof(mBuffer[0])</Item>
@@ -200,13 +191,6 @@
   <Type Name="CSC::WeakRef&lt;*&gt;">
     <Expand>
       <ExpandedItem>*mPointer</ExpandedItem>
-    </Expand>
-  </Type>
-
-
-  <Type Name="CSC::SoftRef&lt;*&gt;">
-    <Expand>
-      <ExpandedItem>*mWeakRef.mPointer</ExpandedItem>
     </Expand>
   </Type>
 

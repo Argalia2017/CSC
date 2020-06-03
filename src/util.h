@@ -72,14 +72,14 @@ using namespace Microsoft::VisualStudio::CppUnitTestFramework ;
 
 #if defined (__CSC_TARGET_EXE__) || defined (__CSC_TARGET_DLL__)
 namespace CSC {
-inline exports PTR<NONE> GlobalStatic<void>::Extern::unique_atomic_address (const PTR<NONE> &expect ,const PTR<NONE> &data) popping {
+inline exports PTR<NONE> GlobalStatic<void>::Public::unique_atomic_address (const PTR<NONE> &expect ,const PTR<NONE> &data) side_effects {
 	PTR<NONE> ret = NULL ;
 	_CALL_TRY_ ([&] () {
-		auto &r1x = _CACHE_ ([] () {
+		auto &r1x = _CACHE_ ([&] () {
 			return SharedRef<Atomic>::make () ;
 		}) ;
 		const auto r2x = r1x->compare_exchange (_ADDRESS_ (expect) ,_ADDRESS_ (data)) ;
-		auto &r3x = _LOAD_UNSAFE_<NONE> (r2x) ;
+		auto &r3x = _LOAD_UNSAFE_ (ARGV<NONE>::null ,r2x) ;
 		ret = DEPTR[r3x] ;
 	} ,[&] () {
 		ret = NULL ;
@@ -92,11 +92,11 @@ inline exports PTR<NONE> GlobalStatic<void>::Extern::unique_atomic_address (cons
 #ifdef __CSC_UNITTEST__
 #ifdef __CSC_COMPILER_MSVC__
 namespace CSC {
-inline exports void GlobalWatch::Extern::done (const Exception &e) {
+inline exports void GlobalWatch::Public::done (const Exception &e) {
 	const auto r1x = String<STR> (e.what ()) ;
 	Singleton<ConsoleService>::instance ().fatal (r1x) ;
 #ifdef MS_CPP_UNITTESTFRAMEWORK
-	const auto r2x = StringProc::build_strs<STRW> (r1x) ;
+	const auto r2x = StringProc::build_strs (ARGV<STRW>::null ,r1x) ;
 	Assert::Fail (r2x.raw ().self) ;
 #endif
 }

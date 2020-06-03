@@ -7,21 +7,21 @@
 #ifdef __CSC__
 #pragma push_macro ("self")
 #pragma push_macro ("implicit")
-#pragma push_macro ("popping")
+#pragma push_macro ("side_effects")
 #pragma push_macro ("leftvalue")
 #pragma push_macro ("rightvalue")
 #pragma push_macro ("imports")
 #pragma push_macro ("exports")
-#pragma push_macro ("switch_case")
+#pragma push_macro ("switch_once")
 #pragma push_macro ("discard")
 #undef self
 #undef implicit
-#undef popping
+#undef side_effects
 #undef leftvalue
 #undef rightvalue
 #undef imports
 #undef exports
-#undef switch_case
+#undef switch_once
 #undef discard
 #endif
 
@@ -54,12 +54,12 @@
 #ifdef __CSC__
 #pragma pop_macro ("self")
 #pragma pop_macro ("implicit")
-#pragma pop_macro ("popping")
+#pragma pop_macro ("side_effects")
 #pragma pop_macro ("leftvalue")
 #pragma pop_macro ("rightvalue")
 #pragma pop_macro ("imports")
 #pragma pop_macro ("exports")
-#pragma pop_macro ("switch_case")
+#pragma pop_macro ("switch_once")
 #pragma pop_macro ("discard")
 #endif
 
@@ -78,9 +78,9 @@ private:
 	using NATIVE_THIS = UniqueRef<api::MYSQL> ;
 
 public:
-	AbstractDatabase_Engine_MYSQL () {
-		_STATIC_ASSERT_ (_SIZEOF_ (decltype (DEREF[this])) == _SIZEOF_ (Interface)) ;
-		_STATIC_ASSERT_ (_ALIGNOF_ (decltype (DEREF[this])) == _ALIGNOF_ (Interface)) ;
+ 	implicit AbstractDatabase_Engine_MYSQL () {
+		_STATIC_ASSERT_ (_SIZEOF_ (DEF<decltype (DEREF[this])>) == _SIZEOF_ (Interface)) ;
+		_STATIC_ASSERT_ (_ALIGNOF_ (DEF<decltype (DEREF[this])>) == _ALIGNOF_ (Interface)) ;
 	}
 
 	void compute_load_data (AnyRef<void> &holder) const override {
@@ -93,7 +93,7 @@ public:
 	}
 
 private:
-	inline void compute_check_error (api::MYSQL &self_) const {
+	void compute_check_error (api::MYSQL &self_) const {
 		const auto r1x = api::mysql_error (DEPTR[self_]) ;
 		_DYNAMIC_ASSERT_ (r1x == NULL) ;
 	}
