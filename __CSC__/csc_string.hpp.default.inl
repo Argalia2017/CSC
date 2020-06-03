@@ -7,21 +7,21 @@
 #ifdef __CSC__
 #pragma push_macro ("self")
 #pragma push_macro ("implicit")
-#pragma push_macro ("popping")
+#pragma push_macro ("side_effects")
 #pragma push_macro ("leftvalue")
 #pragma push_macro ("rightvalue")
 #pragma push_macro ("imports")
 #pragma push_macro ("exports")
-#pragma push_macro ("switch_case")
+#pragma push_macro ("switch_once")
 #pragma push_macro ("discard")
 #undef self
 #undef implicit
-#undef popping
+#undef side_effects
 #undef leftvalue
 #undef rightvalue
 #undef imports
 #undef exports
-#undef switch_case
+#undef switch_once
 #undef discard
 #endif
 
@@ -35,12 +35,12 @@
 #ifdef __CSC__
 #pragma pop_macro ("self")
 #pragma pop_macro ("implicit")
-#pragma pop_macro ("popping")
+#pragma pop_macro ("side_effects")
 #pragma pop_macro ("leftvalue")
 #pragma pop_macro ("rightvalue")
 #pragma pop_macro ("imports")
 #pragma pop_macro ("exports")
-#pragma pop_macro ("switch_case")
+#pragma pop_macro ("switch_once")
 #pragma pop_macro ("discard")
 #endif
 
@@ -72,9 +72,20 @@ using ::_wcstombs_s_l ;
 #endif
 } ;
 
-namespace U {
+class LocaleStaticProc
+	:private Wrapped<void> {
+public:
 #ifdef __CSC_COMPILER_MSVC__
-inline const UniqueRef<_locale_t> &static_locale_page () {
+	imports const UniqueRef<_locale_t> &static_locale_page () ;
+#endif
+
+	imports String<STRW> static_locale_cvt_lastows (const String<STRA> &val) ;
+
+	imports String<STRA> static_locale_cvt_wstolas (const String<STRW> &val) ;
+} ;
+
+#ifdef __CSC_COMPILER_MSVC__
+inline exports const UniqueRef<_locale_t> &LocaleStaticProc::static_locale_page () {
 	return _CACHE_ ([&] () {
 		return UniqueRef<_locale_t> ([&] (_locale_t &me) {
 			me = api::_create_locale (LC_CTYPE ,_PCSTRA_ ("")) ;
@@ -87,11 +98,11 @@ inline const UniqueRef<_locale_t> &static_locale_page () {
 #endif
 
 #ifdef __CSC_COMPILER_MSVC__
-inline String<STRW> static_locale_cvt_lastows (const String<STRA> &val) {
-	auto &r1x = static_locale_page () ;
+inline exports String<STRW> LocaleStaticProc::static_locale_cvt_lastows (const String<STRA> &val) {
+	auto &r1x = LocaleStaticProc::static_locale_page () ;
 	String<STRW> ret = String<STRW> (val.length () + 1) ;
 	_DEBUG_ASSERT_ (ret.size () < VAR32_MAX) ;
-	if switch_case (TRUE) {
+	if switch_once (TRUE) {
 		const auto r2x = api::_mbstowcs_s_l (NULL ,ret.raw ().self ,VAR32 (ret.size ()) ,val.raw ().self ,_TRUNCATE ,r1x) ;
 		if (r2x == 0)
 			discard ;
@@ -102,10 +113,10 @@ inline String<STRW> static_locale_cvt_lastows (const String<STRA> &val) {
 #endif
 
 #ifndef __CSC_COMPILER_MSVC__
-inline String<STRW> static_locale_cvt_lastows (const String<STRA> &val) {
+inline exports String<STRW> LocaleStaticProc::static_locale_cvt_lastows (const String<STRA> &val) {
 	String<STRW> ret = String<STRW> (val.length () + 1) ;
 	_DEBUG_ASSERT_ (ret.size () < VAR32_MAX) ;
-	if switch_case (TRUE) {
+	if switch_once (TRUE) {
 		const auto r3x = api::mbstowcs (ret.raw ().self ,val.raw ().self ,VAR32 (ret.size ())) ;
 		if (r3x == 0)
 			discard ;
@@ -116,11 +127,11 @@ inline String<STRW> static_locale_cvt_lastows (const String<STRA> &val) {
 #endif
 
 #ifdef __CSC_COMPILER_MSVC__
-inline String<STRA> static_locale_cvt_wstolas (const String<STRW> &val) {
-	auto &r1x = static_locale_page () ;
+inline exports String<STRA> LocaleStaticProc::static_locale_cvt_wstolas (const String<STRW> &val) {
+	auto &r1x = LocaleStaticProc::static_locale_page () ;
 	String<STRA> ret = String<STRA> ((val.length () + 1) * _SIZEOF_ (STRW)) ;
 	_DEBUG_ASSERT_ (ret.size () < VAR32_MAX) ;
-	if switch_case (TRUE) {
+	if switch_once (TRUE) {
 		const auto r2x = api::_wcstombs_s_l (NULL ,ret.raw ().self ,VAR32 (ret.size ()) ,val.raw ().self ,_TRUNCATE ,r1x) ;
 		if (r2x == 0)
 			discard ;
@@ -131,10 +142,10 @@ inline String<STRA> static_locale_cvt_wstolas (const String<STRW> &val) {
 #endif
 
 #ifndef __CSC_COMPILER_MSVC__
-inline String<STRA> static_locale_cvt_wstolas (const String<STRW> &val) {
+inline exports String<STRA> LocaleStaticProc::static_locale_cvt_wstolas (const String<STRW> &val) {
 	String<STRA> ret = String<STRA> ((val.length () + 1) * _SIZEOF_ (STRW)) ;
 	_DEBUG_ASSERT_ (ret.size () < VAR32_MAX) ;
-	if switch_case (TRUE) {
+	if switch_once (TRUE) {
 		const auto r3x = api::wcstombs (ret.raw ().self ,val.raw ().self ,VAR32 (ret.size ())) ;
 		if (r3x == 0)
 			discard ;
@@ -143,7 +154,6 @@ inline String<STRA> static_locale_cvt_wstolas (const String<STRW> &val) {
 	return _MOVE_ (ret) ;
 }
 #endif
-} ;
 
 inline exports String<STRW> StringProc::cvt_as_ws (const String<STRA> &val) {
 	//@warn: not thread-safe due to internel storage
@@ -154,12 +164,12 @@ inline exports String<STRW> StringProc::cvt_as_ws (const String<STRA> &val) {
 		if (BasicProc::mem_equal (PTRTOARR[r1x] ,_PCSTRA_ ("C").self ,1))
 			return StringProc::cvt_u8s_ws (StringProc::cvt_uas_u8s (val)) ;
 	if (r2x >= 4)
-		if (BasicProc::mem_equal (PTRTOARR[&r1x[r2x - 4]] ,_PCSTRA_ (".936").self ,4))
+		if (BasicProc::mem_equal (PTRTOARR[DEPTR[r1x[r2x - 4]]] ,_PCSTRA_ (".936").self ,4))
 			return StringProc::cvt_gbks_ws (val) ;
 	if (r2x >= 5)
 		if (BasicProc::mem_equal (PTRTOARR[r1x] ,_PCSTRA_ ("zh_CN").self ,5))
 			return StringProc::cvt_gbks_ws (val) ;
-	return U::static_locale_cvt_lastows (val) ;
+	return LocaleStaticProc::static_locale_cvt_lastows (val) ;
 }
 
 inline exports String<STRA> StringProc::cvt_ws_as (const String<STRW> &val) {
@@ -171,21 +181,21 @@ inline exports String<STRA> StringProc::cvt_ws_as (const String<STRW> &val) {
 		if (BasicProc::mem_equal (PTRTOARR[r1x] ,_PCSTRA_ ("C").self ,1))
 			return StringProc::cvt_u8s_uas (StringProc::cvt_ws_u8s (val)) ;
 	if (r2x >= 4)
-		if (BasicProc::mem_equal (PTRTOARR[&r1x[r2x - 4]] ,_PCSTRA_ (".936").self ,4))
+		if (BasicProc::mem_equal (PTRTOARR[DEPTR[r1x[r2x - 4]]] ,_PCSTRA_ (".936").self ,4))
 			return StringProc::cvt_ws_gbks (val) ;
 	if (r2x >= 5)
 		if (BasicProc::mem_equal (PTRTOARR[r1x] ,_PCSTRA_ ("zh_CN").self ,5))
 			return StringProc::cvt_ws_gbks (val) ;
-	return U::static_locale_cvt_wstolas (val) ;
+	return LocaleStaticProc::static_locale_cvt_wstolas (val) ;
 }
 
 #ifdef __CSC_EXTEND__
-class RegexMatcher::Implement {
+class RegexMatcher::Private::Implement {
 private:
 	AutoRef<api::regex> mRegex ;
 
 public:
-	Implement () = delete ;
+	implicit Implement () = delete ;
 
 	explicit Implement (const String<STRU8> &reg) {
 		const auto r1x = StringProc::cvt_u8s_uas (reg) ;
@@ -203,7 +213,7 @@ public:
 
 	Deque<ARRAY2<INDEX>> search (const String<STRU8> &expr) const {
 		Deque<ARRAY2<INDEX>> ret = Deque<ARRAY2<INDEX>> (expr.length ()) ;
-		if switch_case (TRUE) {
+		if switch_once (TRUE) {
 			if (expr.empty ())
 				discard ;
 			auto rax = AutoRef<api::smatch>::make () ;
@@ -218,8 +228,8 @@ public:
 				INDEX ix = ret.insert () ;
 				auto &r5x = (*rax.self[0].first) ;
 				auto &r6x = (*rax.self[0].second) ;
-				ret[ix][0] = INDEX (DEPTR[r5x] - &r2x[0]) ;
-				ret[ix][1] = INDEX (DEPTR[r6x] - &r2x[0]) ;
+				ret[ix][0] = INDEX (DEPTR[r5x] - DEPTR[r2x[0]]) ;
+				ret[ix][1] = INDEX (DEPTR[r6x] - DEPTR[r2x[0]]) ;
 				rbx = rax.self[0].second ;
 			}
 		}

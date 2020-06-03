@@ -158,10 +158,10 @@
 #endif
 #define implicit
 
-#ifdef popping
-#error "б╞(д├бузебу ;)д├ : defined 'popping'"
+#ifdef side_effects
+#error "б╞(д├бузебу ;)д├ : defined 'side_effects'"
 #endif
-#define popping
+#define side_effects
 
 #ifdef leftvalue
 #error "б╞(д├бузебу ;)д├ : defined 'leftvalue'"
@@ -176,22 +176,17 @@
 #ifdef imports
 #error "б╞(д├бузебу ;)д├ : defined 'imports'"
 #endif
-#define imports extern
-
-#ifdef imports_static
-#error "б╞(д├бузебу ;)д├ : defined 'imports'"
-#endif
-#define imports_static static
+#define imports static
 
 #ifdef exports
 #error "б╞(д├бузебу ;)д├ : defined 'exports'"
 #endif
 #define exports
 
-#ifdef switch_case
-#error "б╞(д├бузебу ;)д├ : defined 'switch_case'"
+#ifdef switch_once
+#error "б╞(д├бузебу ;)д├ : defined 'switch_once'"
 #endif
-#define switch_case _SWITCH_CASE_
+#define switch_once _SWITCH_ONCE_
 
 #ifdef discard
 #error "б╞(д├бузебу ;)д├ : defined 'discard'"
@@ -202,21 +197,21 @@
 #ifdef __CSC__
 #pragma push_macro ("self")
 #pragma push_macro ("implicit")
-#pragma push_macro ("popping")
+#pragma push_macro ("side_effects")
 #pragma push_macro ("leftvalue")
 #pragma push_macro ("rightvalue")
 #pragma push_macro ("imports")
 #pragma push_macro ("exports")
-#pragma push_macro ("switch_case")
+#pragma push_macro ("switch_once")
 #pragma push_macro ("discard")
 #undef self
 #undef implicit
-#undef popping
+#undef side_effects
 #undef leftvalue
 #undef rightvalue
 #undef imports
 #undef exports
-#undef switch_case
+#undef switch_once
 #undef discard
 #endif
 
@@ -235,12 +230,12 @@
 #ifdef __CSC__
 #pragma pop_macro ("self")
 #pragma pop_macro ("implicit")
-#pragma pop_macro ("popping")
+#pragma pop_macro ("side_effects")
 #pragma pop_macro ("leftvalue")
 #pragma pop_macro ("rightvalue")
 #pragma pop_macro ("imports")
 #pragma pop_macro ("exports")
-#pragma pop_macro ("switch_case")
+#pragma pop_macro ("switch_once")
 #pragma pop_macro ("discard")
 #endif
 
@@ -252,11 +247,26 @@
 
 namespace CSC {
 /*
+*	MIT License
 *
+*	Copyright (c) 2018 csc-std
 *
+*	Permission is hereby granted, free of charge, to any person obtaining a copy
+*	of this software and associated documentation files (the "Software"), to deal
+*	in the Software without restriction, including without limitation the rights
+*	to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+*	copies of the Software, and to permit persons to whom the Software is
+*	furnished to do so, subject to the following conditions:
 *
+*	The above copyright notice and this permission notice shall be included in all
+*	copies or substantial portions of the Software.
 *
-*
-*
+*	THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+*	IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+*	FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+*	AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+*	LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+*	OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+*	SOFTWARE.
 */
 } ;

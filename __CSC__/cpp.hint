@@ -2,12 +2,12 @@
 
 #define self
 #define implicit
-#define popping
+#define side_effects
 #define imports
 #define exports
 #define leftvalue
 #define rightvalue
-#define switch_case
+#define switch_once
 #define discard
 
 #define M_DATE

@@ -7,21 +7,21 @@
 #ifdef __CSC__
 #pragma push_macro ("self")
 #pragma push_macro ("implicit")
-#pragma push_macro ("popping")
+#pragma push_macro ("side_effects")
 #pragma push_macro ("leftvalue")
 #pragma push_macro ("rightvalue")
 #pragma push_macro ("imports")
 #pragma push_macro ("exports")
-#pragma push_macro ("switch_case")
+#pragma push_macro ("switch_once")
 #pragma push_macro ("discard")
 #undef self
 #undef implicit
-#undef popping
+#undef side_effects
 #undef leftvalue
 #undef rightvalue
 #undef imports
 #undef exports
-#undef switch_case
+#undef switch_once
 #undef discard
 #endif
 
@@ -134,12 +134,12 @@
 #ifdef __CSC__
 #pragma pop_macro ("self")
 #pragma pop_macro ("implicit")
-#pragma pop_macro ("popping")
+#pragma pop_macro ("side_effects")
 #pragma pop_macro ("leftvalue")
 #pragma pop_macro ("rightvalue")
 #pragma pop_macro ("imports")
 #pragma pop_macro ("exports")
-#pragma pop_macro ("switch_case")
+#pragma pop_macro ("switch_once")
 #pragma pop_macro ("discard")
 #endif
 
@@ -171,14 +171,14 @@ private:
 	using NATIVE_THIS = api::Mat ;
 
 public:
-	AbstractImage_Engine_OPENCV () {
-		_STATIC_ASSERT_ (_SIZEOF_ (decltype (DEREF[this])) == _SIZEOF_ (Interface)) ;
-		_STATIC_ASSERT_ (_ALIGNOF_ (decltype (DEREF[this])) == _ALIGNOF_ (Interface)) ;
+ 	implicit AbstractImage_Engine_OPENCV () {
+		_STATIC_ASSERT_ (_SIZEOF_ (DEF<decltype (DEREF[this])>) == _SIZEOF_ (Interface)) ;
+		_STATIC_ASSERT_ (_ALIGNOF_ (DEF<decltype (DEREF[this])>) == _ALIGNOF_ (Interface)) ;
 	}
 
 	void compute_layout (AnyRef<void> &holder ,AbstractImage<COLOR_BGR>::LAYOUT &layout) const override {
-		auto &r1x = holder.rebind<NATIVE_THIS> ().self ;
-		auto &r2x = _LOAD_UNSAFE_<ARR<COLOR_BGR>> (_ADDRESS_ (r1x.data)) ;
+		auto &r1x = holder.rebind (ARGV<NATIVE_THIS>::null).self ;
+		auto &r2x = _LOAD_UNSAFE_ (ARGV<ARR<COLOR_BGR>>::null ,_ADDRESS_ (r1x.data)) ;
 		layout.mImage = DEPTR[r2x] ;
 		layout.mCX = LENGTH (r1x.cols) ;
 		layout.mCY = LENGTH (r1x.rows) ;
@@ -189,8 +189,8 @@ public:
 
 	void compute_load_data (AnyRef<void> &holder ,const LENGTH &cx_ ,const LENGTH &cy_) const override {
 		const auto r1x = cx_ * cy_ * _SIZEOF_ (COLOR_BGR) ;
-		_DEBUG_ASSERT_ (r1x >= 0 && r1x < VAR32_MAX) ;
 		_STATIC_UNUSED_ (r1x) ;
+		_DEBUG_ASSERT_ (r1x >= 0 && r1x < VAR32_MAX) ;
 		auto tmp = api::Mat (api::Mat::zeros (VAR32 (cy_) ,VAR32 (cx_) ,CV_8UC3)) ;
 		_DYNAMIC_ASSERT_ (!tmp.empty ()) ;
 		_DYNAMIC_ASSERT_ (tmp.type () == CV_8UC3) ;
@@ -199,18 +199,19 @@ public:
 
 	void compute_load_data (AnyRef<void> &holder ,const AutoBuffer<BYTE> &data) const override {
 		_DEBUG_ASSERT_ (data.size () < VAR32_MAX) ;
-		auto tmp = api::imdecode (api::_InputArray (data.self ,VAR32 (data.size ())) ,api::IMREAD_COLOR) ;
+		const auto r1x = api::_InputArray (data.self ,VAR32 (data.size ())) ;
+		auto tmp = api::imdecode (r1x ,api::IMREAD_COLOR) ;
 		_DYNAMIC_ASSERT_ (!tmp.empty ()) ;
 		_DYNAMIC_ASSERT_ (tmp.type () == CV_8UC3) ;
 		holder = AnyRef<NATIVE_THIS>::make (_MOVE_ (tmp)) ;
 	}
 
 	void compute_save_data (const AnyRef<void> &holder ,AutoBuffer<BYTE> &data ,const AnyRef<void> &option) const override {
-		auto &r1x = holder.rebind<NATIVE_THIS> ().self ;
+		auto &r1x = holder.rebind (ARGV<NATIVE_THIS>::null).self ;
 		auto rax = AutoRef<api::vector<uchar>>::make () ;
 		const auto r2x = api::vector<VAR32> () ;
 		auto &r3x = _SWITCH_ (
-			(option.exist ()) ? option.rebind<api::vector<VAR32>> ().self :
+			(option.exist ()) ? option.rebind (ARGV<api::vector<VAR32>>::null).self :
 			r2x) ;
 		api::imencode (_PCSTRA_ ("bmp").self ,r1x ,rax.self ,r3x) ;
 		_DYNAMIC_ASSERT_ (rax->size () < VAR32_MAX) ;
@@ -220,7 +221,7 @@ public:
 	}
 
 	void compute_load_data_file (AnyRef<void> &holder ,const String<STR> &file) const override {
-		const auto r1x = StringProc::build_strs<STRA> (file) ;
+		const auto r1x = StringProc::build_strs (ARGV<STRA>::null ,file) ;
 		auto tmp = api::imread (r1x.raw ().self ,api::IMREAD_COLOR) ;
 		_DYNAMIC_ASSERT_ (!tmp.empty ()) ;
 		_DYNAMIC_ASSERT_ (tmp.type () == CV_8UC3) ;
@@ -228,11 +229,11 @@ public:
 	}
 
 	void compute_save_data_file (const AnyRef<void> &holder ,const String<STR> &file ,const AnyRef<void> &option) const override {
-		auto &r1x = holder.rebind<NATIVE_THIS> ().self ;
-		const auto r2x = StringProc::build_strs<STRA> (file) ;
+		auto &r1x = holder.rebind (ARGV<NATIVE_THIS>::null).self ;
+		const auto r2x = StringProc::build_strs (ARGV<STRA>::null ,file) ;
 		const auto r3x = api::vector<VAR32> () ;
 		auto &r4x = _SWITCH_ (
-			(option.exist ()) ? option.rebind<api::vector<VAR32>> ().self :
+			(option.exist ()) ? option.rebind (ARGV<api::vector<VAR32>>::null).self :
 			r3x) ;
 		const auto r5x = api::imwrite (r2x.raw ().self ,r1x ,r4x) ;
 		_DYNAMIC_ASSERT_ (r5x) ;
@@ -246,14 +247,14 @@ private:
 	using NATIVE_THIS = api::Mat ;
 
 public:
-	AbstractImage_Engine_OPENCV () {
-		_STATIC_ASSERT_ (_SIZEOF_ (decltype (DEREF[this])) == _SIZEOF_ (Interface)) ;
-		_STATIC_ASSERT_ (_ALIGNOF_ (decltype (DEREF[this])) == _ALIGNOF_ (Interface)) ;
+ 	implicit AbstractImage_Engine_OPENCV () {
+		_STATIC_ASSERT_ (_SIZEOF_ (DEF<decltype (DEREF[this])>) == _SIZEOF_ (Interface)) ;
+		_STATIC_ASSERT_ (_ALIGNOF_ (DEF<decltype (DEREF[this])>) == _ALIGNOF_ (Interface)) ;
 	}
 
 	void compute_layout (AnyRef<void> &holder ,AbstractImage<COLOR_BGRA>::LAYOUT &layout) const override {
-		auto &r1x = holder.rebind<NATIVE_THIS> ().self ;
-		auto &r2x = _LOAD_UNSAFE_<ARR<COLOR_BGRA>> (_ADDRESS_ (r1x.data)) ;
+		auto &r1x = holder.rebind (ARGV<NATIVE_THIS>::null).self ;
+		auto &r2x = _LOAD_UNSAFE_ (ARGV<ARR<COLOR_BGRA>>::null ,_ADDRESS_ (r1x.data)) ;
 		layout.mImage = DEPTR[r2x] ;
 		layout.mCX = LENGTH (r1x.cols) ;
 		layout.mCY = LENGTH (r1x.rows) ;
@@ -264,8 +265,8 @@ public:
 
 	void compute_load_data (AnyRef<void> &holder ,const LENGTH &cx_ ,const LENGTH &cy_) const override {
 		const auto r1x = cx_ * cy_ * _SIZEOF_ (COLOR_BGRA) ;
-		_DEBUG_ASSERT_ (r1x >= 0 && r1x < VAR32_MAX) ;
 		_STATIC_UNUSED_ (r1x) ;
+		_DEBUG_ASSERT_ (r1x >= 0 && r1x < VAR32_MAX) ;
 		auto tmp = api::Mat (api::Mat::zeros (VAR32 (cy_) ,VAR32 (cx_) ,CV_8UC4)) ;
 		_DYNAMIC_ASSERT_ (!tmp.empty ()) ;
 		_DYNAMIC_ASSERT_ (tmp.type () == CV_8UC4) ;
@@ -274,18 +275,19 @@ public:
 
 	void compute_load_data (AnyRef<void> &holder ,const AutoBuffer<BYTE> &data) const override {
 		_DEBUG_ASSERT_ (data.size () < VAR32_MAX) ;
-		auto tmp = api::imdecode (api::_InputArray (data.self ,VAR32 (data.size ())) ,api::IMREAD_COLOR) ;
+		const auto r1x = api::_InputArray (data.self ,VAR32 (data.size ())) ;
+		auto tmp = api::imdecode (r1x ,api::IMREAD_COLOR) ;
 		_DYNAMIC_ASSERT_ (!tmp.empty ()) ;
 		_DYNAMIC_ASSERT_ (tmp.type () == CV_8UC4) ;
 		holder = AnyRef<NATIVE_THIS>::make (_MOVE_ (tmp)) ;
 	}
 
 	void compute_save_data (const AnyRef<void> &holder ,AutoBuffer<BYTE> &data ,const AnyRef<void> &option) const override {
-		auto &r1x = holder.rebind<NATIVE_THIS> ().self ;
+		auto &r1x = holder.rebind (ARGV<NATIVE_THIS>::null).self ;
 		auto rax = AutoRef<api::vector<uchar>>::make () ;
 		const auto r2x = api::vector<VAR32> () ;
 		auto &r3x = _SWITCH_ (
-			(option.exist ()) ? option.rebind<api::vector<VAR32>> ().self :
+			(option.exist ()) ? option.rebind (ARGV<api::vector<VAR32>>::null).self :
 			r2x) ;
 		api::imencode (_PCSTRA_ ("bmp").self ,r1x ,rax.self ,r3x) ;
 		_DYNAMIC_ASSERT_ (rax->size () < VAR32_MAX) ;
@@ -295,7 +297,7 @@ public:
 	}
 
 	void compute_load_data_file (AnyRef<void> &holder ,const String<STR> &file) const override {
-		const auto r1x = StringProc::build_strs<STRA> (file) ;
+		const auto r1x = StringProc::build_strs (ARGV<STRA>::null ,file) ;
 		auto tmp = api::imread (r1x.raw ().self ,api::IMREAD_UNCHANGED) ;
 		_DYNAMIC_ASSERT_ (!tmp.empty ()) ;
 		_DYNAMIC_ASSERT_ (tmp.type () == CV_8UC4) ;
@@ -303,11 +305,11 @@ public:
 	}
 
 	void compute_save_data_file (const AnyRef<void> &holder ,const String<STR> &file ,const AnyRef<void> &option) const override {
-		auto &r1x = holder.rebind<NATIVE_THIS> ().self ;
-		const auto r2x = StringProc::build_strs<STRA> (file) ;
+		auto &r1x = holder.rebind (ARGV<NATIVE_THIS>::null).self ;
+		const auto r2x = StringProc::build_strs (ARGV<STRA>::null ,file) ;
 		const auto r3x = api::vector<VAR32> () ;
 		auto &r4x = _SWITCH_ (
-			(option.exist ()) ? option.rebind<api::vector<VAR32>> ().self :
+			(option.exist ()) ? option.rebind (ARGV<api::vector<VAR32>>::null).self :
 			r3x) ;
 		const auto r5x = api::imwrite (r2x.raw ().self ,r1x ,r4x) ;
 		_DYNAMIC_ASSERT_ (r5x) ;
@@ -321,14 +323,14 @@ private:
 	using NATIVE_THIS = api::Mat ;
 
 public:
-	AbstractImage_Engine_OPENCV () {
-		_STATIC_ASSERT_ (_SIZEOF_ (decltype (DEREF[this])) == _SIZEOF_ (Interface)) ;
-		_STATIC_ASSERT_ (_ALIGNOF_ (decltype (DEREF[this])) == _ALIGNOF_ (Interface)) ;
+ 	implicit AbstractImage_Engine_OPENCV () {
+		_STATIC_ASSERT_ (_SIZEOF_ (DEF<decltype (DEREF[this])>) == _SIZEOF_ (Interface)) ;
+		_STATIC_ASSERT_ (_ALIGNOF_ (DEF<decltype (DEREF[this])>) == _ALIGNOF_ (Interface)) ;
 	}
 
 	void compute_layout (AnyRef<void> &holder ,AbstractImage<COLOR_GRAY>::LAYOUT &layout) const override {
-		auto &r1x = holder.rebind<NATIVE_THIS> ().self ;
-		auto &r2x = _LOAD_UNSAFE_<ARR<COLOR_GRAY>> (_ADDRESS_ (r1x.data)) ;
+		auto &r1x = holder.rebind (ARGV<NATIVE_THIS>::null).self ;
+		auto &r2x = _LOAD_UNSAFE_ (ARGV<ARR<COLOR_GRAY>>::null ,_ADDRESS_ (r1x.data)) ;
 		layout.mImage = DEPTR[r2x] ;
 		layout.mCX = LENGTH (r1x.cols) ;
 		layout.mCY = LENGTH (r1x.rows) ;
@@ -339,8 +341,8 @@ public:
 
 	void compute_load_data (AnyRef<void> &holder ,const LENGTH &cx_ ,const LENGTH &cy_) const override {
 		const auto r1x = cx_ * cy_ * _SIZEOF_ (COLOR_GRAY) ;
-		_DEBUG_ASSERT_ (r1x >= 0 && r1x < VAR32_MAX) ;
 		_STATIC_UNUSED_ (r1x) ;
+		_DEBUG_ASSERT_ (r1x >= 0 && r1x < VAR32_MAX) ;
 		auto tmp = api::Mat (api::Mat::zeros (VAR32 (cy_) ,VAR32 (cx_) ,CV_8UC1)) ;
 		_DYNAMIC_ASSERT_ (!tmp.empty ()) ;
 		_DYNAMIC_ASSERT_ (tmp.type () == CV_8UC1) ;
@@ -349,18 +351,19 @@ public:
 
 	void compute_load_data (AnyRef<void> &holder ,const AutoBuffer<BYTE> &data) const override {
 		_DEBUG_ASSERT_ (data.size () < VAR32_MAX) ;
-		auto tmp = api::imdecode (api::_InputArray (data.self ,VAR32 (data.size ())) ,api::IMREAD_COLOR) ;
+		const auto r1x = api::_InputArray (data.self ,VAR32 (data.size ())) ;
+		auto tmp = api::imdecode (r1x ,api::IMREAD_COLOR) ;
 		_DYNAMIC_ASSERT_ (!tmp.empty ()) ;
 		_DYNAMIC_ASSERT_ (tmp.type () == CV_8UC1) ;
 		holder = AnyRef<NATIVE_THIS>::make (_MOVE_ (tmp)) ;
 	}
 
 	void compute_save_data (const AnyRef<void> &holder ,AutoBuffer<BYTE> &data ,const AnyRef<void> &option) const override {
-		auto &r1x = holder.rebind<NATIVE_THIS> ().self ;
+		auto &r1x = holder.rebind (ARGV<NATIVE_THIS>::null).self ;
 		auto rax = AutoRef<api::vector<uchar>>::make () ;
 		const auto r2x = api::vector<VAR32> () ;
 		auto &r3x = _SWITCH_ (
-			(option.exist ()) ? option.rebind<api::vector<VAR32>> ().self :
+			(option.exist ()) ? option.rebind (ARGV<api::vector<VAR32>>::null).self :
 			r2x) ;
 		api::imencode (_PCSTRA_ ("bmp").self ,r1x ,rax.self ,r3x) ;
 		_DYNAMIC_ASSERT_ (rax->size () < VAR32_MAX) ;
@@ -370,7 +373,7 @@ public:
 	}
 
 	void compute_load_data_file (AnyRef<void> &holder ,const String<STR> &file) const override {
-		const auto r1x = StringProc::build_strs<STRA> (file) ;
+		const auto r1x = StringProc::build_strs (ARGV<STRA>::null ,file) ;
 		auto tmp = api::imread (r1x.raw ().self ,api::IMREAD_GRAYSCALE) ;
 		_DYNAMIC_ASSERT_ (!tmp.empty ()) ;
 		_DYNAMIC_ASSERT_ (tmp.type () == CV_8UC1) ;
@@ -378,11 +381,11 @@ public:
 	}
 
 	void compute_save_data_file (const AnyRef<void> &holder ,const String<STR> &file ,const AnyRef<void> &option) const override {
-		auto &r1x = holder.rebind<NATIVE_THIS> ().self ;
-		const auto r2x = StringProc::build_strs<STRA> (file) ;
+		auto &r1x = holder.rebind (ARGV<NATIVE_THIS>::null).self ;
+		const auto r2x = StringProc::build_strs (ARGV<STRA>::null ,file) ;
 		const auto r3x = api::vector<VAR32> () ;
 		auto &r4x = _SWITCH_ (
-			(option.exist ()) ? option.rebind<api::vector<VAR32>> ().self :
+			(option.exist ()) ? option.rebind (ARGV<api::vector<VAR32>>::null).self :
 			r3x) ;
 		const auto r5x = api::imwrite (r2x.raw ().self ,r1x ,r4x) ;
 		_DYNAMIC_ASSERT_ (r5x) ;
@@ -396,14 +399,14 @@ private:
 	using NATIVE_THIS = api::Mat ;
 
 public:
-	AbstractImage_Engine_OPENCV () {
-		_STATIC_ASSERT_ (_SIZEOF_ (decltype (DEREF[this])) == _SIZEOF_ (Interface)) ;
-		_STATIC_ASSERT_ (_ALIGNOF_ (decltype (DEREF[this])) == _ALIGNOF_ (Interface)) ;
+ 	implicit AbstractImage_Engine_OPENCV () {
+		_STATIC_ASSERT_ (_SIZEOF_ (DEF<decltype (DEREF[this])>) == _SIZEOF_ (Interface)) ;
+		_STATIC_ASSERT_ (_ALIGNOF_ (DEF<decltype (DEREF[this])>) == _ALIGNOF_ (Interface)) ;
 	}
 
 	void compute_layout (AnyRef<void> &holder ,AbstractImage<COLOR_GRAY32>::LAYOUT &layout) const override {
-		auto &r1x = holder.rebind<NATIVE_THIS> ().self ;
-		auto &r2x = _LOAD_UNSAFE_<ARR<COLOR_GRAY32>> (_ADDRESS_ (r1x.data)) ;
+		auto &r1x = holder.rebind (ARGV<NATIVE_THIS>::null).self ;
+		auto &r2x = _LOAD_UNSAFE_ (ARGV<ARR<COLOR_GRAY32>>::null ,_ADDRESS_ (r1x.data)) ;
 		layout.mImage = DEPTR[r2x] ;
 		layout.mCX = LENGTH (r1x.cols) ;
 		layout.mCY = LENGTH (r1x.rows) ;
@@ -414,8 +417,8 @@ public:
 
 	void compute_load_data (AnyRef<void> &holder ,const LENGTH &cx_ ,const LENGTH &cy_) const override {
 		const auto r1x = cx_ * cy_ * _SIZEOF_ (COLOR_GRAY32) ;
-		_DEBUG_ASSERT_ (r1x >= 0 && r1x < VAR32_MAX) ;
 		_STATIC_UNUSED_ (r1x) ;
+		_DEBUG_ASSERT_ (r1x >= 0 && r1x < VAR32_MAX) ;
 		auto tmp = api::Mat (api::Mat::zeros (VAR32 (cy_) ,VAR32 (cx_) ,CV_32FC1)) ;
 		_DYNAMIC_ASSERT_ (!tmp.empty ()) ;
 		_DYNAMIC_ASSERT_ (tmp.type () == CV_32FC1) ;
@@ -424,18 +427,19 @@ public:
 
 	void compute_load_data (AnyRef<void> &holder ,const AutoBuffer<BYTE> &data) const override {
 		_DEBUG_ASSERT_ (data.size () < VAR32_MAX) ;
-		auto tmp = api::imdecode (api::_InputArray (data.self ,VAR32 (data.size ())) ,api::IMREAD_COLOR) ;
+		const auto r1x = api::_InputArray (data.self ,VAR32 (data.size ())) ;
+		auto tmp = api::imdecode (r1x ,api::IMREAD_COLOR) ;
 		_DYNAMIC_ASSERT_ (!tmp.empty ()) ;
 		_DYNAMIC_ASSERT_ (tmp.type () == CV_32FC1) ;
 		holder = AnyRef<NATIVE_THIS>::make (_MOVE_ (tmp)) ;
 	}
 
 	void compute_save_data (const AnyRef<void> &holder ,AutoBuffer<BYTE> &data ,const AnyRef<void> &option) const override {
-		auto &r1x = holder.rebind<NATIVE_THIS> ().self ;
+		auto &r1x = holder.rebind (ARGV<NATIVE_THIS>::null).self ;
 		auto rax = AutoRef<api::vector<uchar>>::make () ;
 		const auto r2x = api::vector<VAR32> () ;
 		auto &r3x = _SWITCH_ (
-			(option.exist ()) ? option.rebind<api::vector<VAR32>> ().self :
+			(option.exist ()) ? option.rebind (ARGV<api::vector<VAR32>>::null).self :
 			r2x) ;
 		api::imencode (_PCSTRA_ ("bmp").self ,r1x ,rax.self ,r3x) ;
 		_DYNAMIC_ASSERT_ (rax->size () < VAR32_MAX) ;
@@ -445,7 +449,7 @@ public:
 	}
 
 	void compute_load_data_file (AnyRef<void> &holder ,const String<STR> &file) const override {
-		const auto r1x = StringProc::build_strs<STRA> (file) ;
+		const auto r1x = StringProc::build_strs (ARGV<STRA>::null ,file) ;
 		auto tmp = api::imread (r1x.raw ().self ,api::IMREAD_REDUCED_GRAYSCALE_4) ;
 		_DYNAMIC_ASSERT_ (!tmp.empty ()) ;
 		_DYNAMIC_ASSERT_ (tmp.type () == CV_32FC1) ;
@@ -453,11 +457,11 @@ public:
 	}
 
 	void compute_save_data_file (const AnyRef<void> &holder ,const String<STR> &file ,const AnyRef<void> &option) const override {
-		auto &r1x = holder.rebind<NATIVE_THIS> ().self ;
-		const auto r2x = StringProc::build_strs<STRA> (file) ;
+		auto &r1x = holder.rebind (ARGV<NATIVE_THIS>::null).self ;
+		const auto r2x = StringProc::build_strs (ARGV<STRA>::null ,file) ;
 		const auto r3x = api::vector<VAR32> () ;
 		auto &r4x = _SWITCH_ (
-			(option.exist ()) ? option.rebind<api::vector<VAR32>> ().self :
+			(option.exist ()) ? option.rebind (ARGV<api::vector<VAR32>>::null).self :
 			r3x) ;
 		const auto r5x = api::imwrite (r2x.raw ().self ,r1x ,r4x) ;
 		_DYNAMIC_ASSERT_ (r5x) ;
@@ -471,14 +475,14 @@ private:
 	using NATIVE_THIS = api::Mat ;
 
 public:
-	AbstractImage_Engine_OPENCV () {
-		_STATIC_ASSERT_ (_SIZEOF_ (decltype (DEREF[this])) == _SIZEOF_ (Interface)) ;
-		_STATIC_ASSERT_ (_ALIGNOF_ (decltype (DEREF[this])) == _ALIGNOF_ (Interface)) ;
+ 	implicit AbstractImage_Engine_OPENCV () {
+		_STATIC_ASSERT_ (_SIZEOF_ (DEF<decltype (DEREF[this])>) == _SIZEOF_ (Interface)) ;
+		_STATIC_ASSERT_ (_ALIGNOF_ (DEF<decltype (DEREF[this])>) == _ALIGNOF_ (Interface)) ;
 	}
 
 	void compute_layout (AnyRef<void> &holder ,AbstractImage<COLOR_GRAY64>::LAYOUT &layout) const override {
-		auto &r1x = holder.rebind<NATIVE_THIS> ().self ;
-		auto &r2x = _LOAD_UNSAFE_<ARR<COLOR_GRAY64>> (_ADDRESS_ (r1x.data)) ;
+		auto &r1x = holder.rebind (ARGV<NATIVE_THIS>::null).self ;
+		auto &r2x = _LOAD_UNSAFE_ (ARGV<ARR<COLOR_GRAY64>>::null ,_ADDRESS_ (r1x.data)) ;
 		layout.mImage = DEPTR[r2x] ;
 		layout.mCX = LENGTH (r1x.cols) ;
 		layout.mCY = LENGTH (r1x.rows) ;
@@ -489,8 +493,8 @@ public:
 
 	void compute_load_data (AnyRef<void> &holder ,const LENGTH &cx_ ,const LENGTH &cy_) const override {
 		const auto r1x = cx_ * cy_ * _SIZEOF_ (COLOR_GRAY64) ;
-		_DEBUG_ASSERT_ (r1x >= 0 && r1x < VAR32_MAX) ;
 		_STATIC_UNUSED_ (r1x) ;
+		_DEBUG_ASSERT_ (r1x >= 0 && r1x < VAR32_MAX) ;
 		auto tmp = api::Mat (api::Mat::zeros (VAR32 (cy_) ,VAR32 (cx_) ,CV_64FC1)) ;
 		_DYNAMIC_ASSERT_ (!tmp.empty ()) ;
 		_DYNAMIC_ASSERT_ (tmp.type () == CV_64FC1) ;
@@ -499,18 +503,19 @@ public:
 
 	void compute_load_data (AnyRef<void> &holder ,const AutoBuffer<BYTE> &data) const override {
 		_DEBUG_ASSERT_ (data.size () < VAR32_MAX) ;
-		auto tmp = api::imdecode (api::_InputArray (data.self ,VAR32 (data.size ())) ,api::IMREAD_COLOR) ;
+		const auto r1x = api::_InputArray (data.self ,VAR32 (data.size ())) ;
+		auto tmp = api::imdecode (r1x ,api::IMREAD_COLOR) ;
 		_DYNAMIC_ASSERT_ (!tmp.empty ()) ;
 		_DYNAMIC_ASSERT_ (tmp.type () == CV_64FC1) ;
 		holder = AnyRef<NATIVE_THIS>::make (_MOVE_ (tmp)) ;
 	}
 
 	void compute_save_data (const AnyRef<void> &holder ,AutoBuffer<BYTE> &data ,const AnyRef<void> &option) const override {
-		auto &r1x = holder.rebind<NATIVE_THIS> ().self ;
+		auto &r1x = holder.rebind (ARGV<NATIVE_THIS>::null).self ;
 		auto rax = AutoRef<api::vector<uchar>>::make () ;
 		const auto r2x = api::vector<VAR32> () ;
 		auto &r3x = _SWITCH_ (
-			(option.exist ()) ? option.rebind<api::vector<VAR32>> ().self :
+			(option.exist ()) ? option.rebind (ARGV<api::vector<VAR32>>::null).self :
 			r2x) ;
 		api::imencode (_PCSTRA_ ("bmp").self ,r1x ,rax.self ,r3x) ;
 		_DYNAMIC_ASSERT_ (rax->size () < VAR32_MAX) ;
@@ -520,7 +525,7 @@ public:
 	}
 
 	void compute_load_data_file (AnyRef<void> &holder ,const String<STR> &file) const override {
-		const auto r1x = StringProc::build_strs<STRA> (file) ;
+		const auto r1x = StringProc::build_strs (ARGV<STRA>::null ,file) ;
 		auto tmp = api::imread (r1x.raw ().self ,api::IMREAD_REDUCED_GRAYSCALE_8) ;
 		_DYNAMIC_ASSERT_ (!tmp.empty ()) ;
 		_DYNAMIC_ASSERT_ (tmp.type () == CV_64FC1) ;
@@ -528,11 +533,11 @@ public:
 	}
 
 	void compute_save_data_file (const AnyRef<void> &holder ,const String<STR> &file ,const AnyRef<void> &option) const override {
-		auto &r1x = holder.rebind<NATIVE_THIS> ().self ;
-		const auto r2x = StringProc::build_strs<STRA> (file) ;
+		auto &r1x = holder.rebind (ARGV<NATIVE_THIS>::null).self ;
+		const auto r2x = StringProc::build_strs (ARGV<STRA>::null ,file) ;
 		const auto r3x = api::vector<VAR32> () ;
 		auto &r4x = _SWITCH_ (
-			(option.exist ()) ? option.rebind<api::vector<VAR32>> ().self :
+			(option.exist ()) ? option.rebind (ARGV<api::vector<VAR32>>::null).self :
 			r3x) ;
 		const auto r5x = api::imwrite (r2x.raw ().self ,r1x ,r4x) ;
 		_DYNAMIC_ASSERT_ (r5x) ;

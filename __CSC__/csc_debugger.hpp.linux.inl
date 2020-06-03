@@ -7,21 +7,21 @@
 #ifdef __CSC__
 #pragma push_macro ("self")
 #pragma push_macro ("implicit")
-#pragma push_macro ("popping")
+#pragma push_macro ("side_effects")
 #pragma push_macro ("leftvalue")
 #pragma push_macro ("rightvalue")
 #pragma push_macro ("imports")
 #pragma push_macro ("exports")
-#pragma push_macro ("switch_case")
+#pragma push_macro ("switch_once")
 #pragma push_macro ("discard")
 #undef self
 #undef implicit
-#undef popping
+#undef side_effects
 #undef leftvalue
 #undef rightvalue
 #undef imports
 #undef exports
-#undef switch_case
+#undef switch_once
 #undef discard
 #endif
 
@@ -36,12 +36,12 @@
 #ifdef __CSC__
 #pragma pop_macro ("self")
 #pragma pop_macro ("implicit")
-#pragma pop_macro ("popping")
+#pragma pop_macro ("side_effects")
 #pragma pop_macro ("leftvalue")
 #pragma pop_macro ("rightvalue")
 #pragma pop_macro ("imports")
 #pragma pop_macro ("exports")
-#pragma pop_macro ("switch_case")
+#pragma pop_macro ("switch_once")
 #pragma pop_macro ("discard")
 #endif
 
@@ -58,7 +58,7 @@ using ::free ;
 using ::backtrace_symbols ;
 } ;
 
-class ConsoleService::Implement
+class ConsoleService::Private::Implement
 	:public ConsoleService::Abstract {
 private:
 	TextWriter<STR> mConWriter ;
@@ -72,7 +72,7 @@ private:
 	BOOL mTempState ;
 
 public:
-	Implement () {
+ 	implicit Implement () {
 		const auto r1x = DEFAULT_HUGESTRING_SIZE::value + 1 ;
 		mConWriter = TextWriter<STR> (SharedRef<FixedBuffer<STR>>::make (r1x)) ;
 		mLogWriter = TextWriter<STR> (SharedRef<FixedBuffer<STR>>::make (r1x)) ;
@@ -293,7 +293,7 @@ public:
 
 	void attach_log (const String<STR> &path) override {
 		const auto r1x = FileSystemProc::absolute_path (path) ;
-		if switch_case (TRUE) {
+		if switch_once (TRUE) {
 			if (mLogPath == r1x)
 				discard ;
 			if (!mLogFileStream.exist ())
@@ -305,8 +305,10 @@ public:
 	}
 
 	void log (const Plain<STR> &tag ,const PhanBuffer<const STR> &msg) {
-		using ImplBinder = typename Detail::template ImplBinder<PhanBuffer<const STR>> ;
-		log (PhanBuffer<const STR>::make (tag.self ,tag.size ()) ,ImplBinder (msg)) ;
+		struct Dependent ;
+		using ImplBinder = typename DEPENDENT_TYPE<Private ,Dependent>::template ImplBinder<PhanBuffer<const STR>> ;
+		const auto r1x = PhanBuffer<const STR>::make (tag.self ,tag.size ()) ;
+		log (r1x ,ImplBinder (msg)) ;
 	}
 
 	void log (const PhanBuffer<const STR> &tag ,const Binder &msg) override {
@@ -356,7 +358,7 @@ private:
 		mLogWriter << TextWriter<STR>::CLS ;
 		mLogWriter << _PCSTR_ ("[") ;
 		const auto r1x = GlobalRuntime::clock_now () ;
-		mLogWriter << StringProc::build_hours (r1x) ;
+		mLogWriter << StringProc::build_hours (ARGV<STR>::null ,r1x) ;
 		mLogWriter << _PCSTR_ ("][") ;
 		mLogWriter << tag ;
 		mLogWriter << _PCSTR_ ("] : ") ;
@@ -418,21 +420,21 @@ inline exports ConsoleService::ConsoleService () {
 	mThis = StrongRef<Implement>::make () ;
 }
 
-class DebuggerService::Implement
+class DebuggerService::Private::Implement
 	:public DebuggerService::Abstract {
 public:
 	void abort_once_invoked_exit (const BOOL &flag) override {
 		_DEBUG_ASSERT_ (flag) ;
-		const auto r1x = _FORWARD_<PTR<void ()>> ([] () noexcept {
+		const auto r1x = Function<void ()> ([] () noexcept {
 			GlobalRuntime::process_abort () ;
 		}) ;
-		const auto r2x = _FORWARD_<PTR<void (VAR32)>> ([] (VAR32) noexcept {
+		const auto r2x = Function<void (VAR32)> ([] (VAR32) noexcept {
 			GlobalRuntime::process_abort () ;
 		}) ;
-		const auto r3x = _FORWARD_<PTR<void (VAR32)>> ([] (VAR32) noexcept {
+		const auto r3x = Function<void (VAR32)> ([] (VAR32) noexcept {
 			GlobalRuntime::process_abort () ;
 		}) ;
-		const auto r4x = _FORWARD_<PTR<void (VAR32)>> ([] (VAR32) noexcept {
+		const auto r4x = Function<void (VAR32)> ([] (VAR32) noexcept {
 			GlobalRuntime::process_abort () ;
 		}) ;
 		api::atexit (r1x) ;
@@ -447,7 +449,7 @@ public:
 		_DYNAMIC_ASSERT_ (FALSE) ;
 	}
 
-	Array<LENGTH> captrue_stack_trace () popping override {
+	Array<LENGTH> captrue_stack_trace () side_effects override {
 		auto rax = AutoBuffer<PTR<VOID>> (DEFAULT_RECURSIVE_SIZE::value) ;
 		const auto r1x = api::backtrace (rax.self ,VAR32 (rax.size ())) ;
 		Array<LENGTH> ret = Array<LENGTH> (r1x) ;
@@ -456,12 +458,12 @@ public:
 		return _MOVE_ (ret) ;
 	}
 
-	Array<String<STR>> symbol_from_address (const Array<LENGTH> &address) popping override {
+	Array<String<STR>> symbol_from_address (const Array<LENGTH> &address) side_effects override {
 		_DEBUG_ASSERT_ (address.length () < VAR32_MAX) ;
 		const auto r1x = _CALL_ ([&] () {
 			Array<PTR<VOID>> ret = Array<PTR<VOID>> (address.length ()) ;
 			for (auto &&i : _RANGE_ (0 ,ret.length ())) {
-				auto &r2x = _LOAD_UNSAFE_<NONE> (address[i]) ;
+				auto &r2x = _LOAD_UNSAFE_ (ARGV<NONE>::null ,address[i]) ;
 				ret[i] = DEPTR[r2x] ;
 			}
 			return _MOVE_ (ret) ;
@@ -476,7 +478,7 @@ public:
 		Array<String<STR>> ret = Array<String<STR>> (address.length ()) ;
 		INDEX iw = 0 ;
 		for (auto &&i : _RANGE_ (0 ,ret.length ())) {
-			const auto r4x = StringProc::build_hex16s (address[i]) ;
+			const auto r4x = StringProc::build_hex16s (ARGV<STR>::null ,address[i]) ;
 			const auto r5x = StringProc::parse_strs (String<STRA> (PTRTOARR[PTRTOARR[r3x.self][i]])) ;
 			ret[iw++] = String<STR>::make (_PCSTR_ ("[") ,r4x ,_PCSTR_ ("] : ") ,r5x) ;
 		}
