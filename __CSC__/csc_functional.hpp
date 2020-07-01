@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #ifndef __CSC_FUNCTIONAL__
 #define __CSC_FUNCTIONAL__

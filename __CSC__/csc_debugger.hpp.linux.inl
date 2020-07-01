@@ -458,12 +458,12 @@ public:
 		return _MOVE_ (ret) ;
 	}
 
-	Array<String<STR>> symbol_from_address (const Array<LENGTH> &address) side_effects override {
-		_DEBUG_ASSERT_ (address.length () < VAR32_MAX) ;
+	Array<String<STR>> symbol_from_address (const Array<LENGTH> &list) side_effects override {
+		_DEBUG_ASSERT_ (list.length () < VAR32_MAX) ;
 		const auto r1x = _CALL_ ([&] () {
-			Array<PTR<VOID>> ret = Array<PTR<VOID>> (address.length ()) ;
+			Array<PTR<VOID>> ret = Array<PTR<VOID>> (list.length ()) ;
 			for (auto &&i : _RANGE_ (0 ,ret.length ())) {
-				auto &r2x = _LOAD_UNSAFE_ (ARGV<NONE>::null ,address[i]) ;
+				auto &r2x = _LOAD_UNSAFE_ (ARGV<NONE>::null ,list[i]) ;
 				ret[i] = DEPTR[r2x] ;
 			}
 			return _MOVE_ (ret) ;
@@ -475,14 +475,12 @@ public:
 				return ;
 			api::free (me) ;
 		}) ;
-		Array<String<STR>> ret = Array<String<STR>> (address.length ()) ;
-		INDEX iw = 0 ;
-		for (auto &&i : _RANGE_ (0 ,ret.length ())) {
-			const auto r4x = StringProc::build_hex16s (ARGV<STR>::null ,address[i]) ;
+		Array<String<STR>> ret = Array<String<STR>> (list.size ()) ;
+		for (auto &&i : _RANGE_ (0 ,list.length ())) {
+			const auto r4x = StringProc::build_hex16s (ARGV<STR>::null ,list[i]) ;
 			const auto r5x = StringProc::parse_strs (String<STRA> (PTRTOARR[PTRTOARR[r3x.self][i]])) ;
-			ret[iw++] = String<STR>::make (_PCSTR_ ("[") ,r4x ,_PCSTR_ ("] : ") ,r5x) ;
+			ret[i] = String<STR>::make (_PCSTR_ ("[") ,r4x ,_PCSTR_ ("] : ") ,r5x) ;
 		}
-		_DEBUG_ASSERT_ (iw == ret.length ()) ;
 		return _MOVE_ (ret) ;
 	}
 } ;

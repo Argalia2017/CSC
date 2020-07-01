@@ -446,8 +446,7 @@ public:
 	Array<String<STR>> symbol_from_address (const Array<LENGTH> &list) side_effects override {
 		_DEBUG_ASSERT_ (list.length () < VAR32_MAX) ;
 		attach_symbol_info () ;
-		Array<String<STR>> ret = Array<String<STR>> (list.length ()) ;
-		INDEX iw = 0 ;
+		Array<String<STR>> ret = Array<String<STR>> (list.size ()) ;
 		auto fax = TRUE ;
 		if switch_once (fax) {
 			if (!mSymbolFromAddress.exist ())
@@ -458,20 +457,19 @@ public:
 			auto &r3x = _LOAD_UNSAFE_ (ARGV<api::SYMBOL_INFO>::null ,r2x) ;
 			r3x.SizeOfStruct = _SIZEOF_ (api::SYMBOL_INFO) ;
 			r3x.MaxNameLen = DEFAULT_FILEPATH_SIZE::value ;
-			for (auto &&i : list) {
-				api::SymFromAddr (mSymbolFromAddress ,DATA (i) ,NULL ,DEPTR[r3x]) ;
+			for (auto &&i : _RANGE_ (0 ,list.length ())) {
+				api::SymFromAddr (mSymbolFromAddress ,DATA (list[i]) ,NULL ,DEPTR[r3x]) ;
 				const auto r4x = StringProc::build_hex16s (ARGV<STR>::null ,DATA (r3x.Address)) ;
 				const auto r5x = StringProc::parse_strs (String<STRA> (PTRTOARR[r3x.Name])) ;
-				ret[iw++] = String<STR>::make (_PCSTR_ ("[") ,r4x ,_PCSTR_ ("] : ") ,r5x) ;
+				ret[i] = String<STR>::make (_PCSTR_ ("[") ,r4x ,_PCSTR_ ("] : ") ,r5x) ;
 			}
 		}
 		if switch_once (fax) {
-			for (auto &&i : list) {
-				const auto r6x = StringProc::build_hex16s (ARGV<STR>::null ,DATA (i)) ;
-				ret[iw++] = String<STR>::make (_PCSTR_ ("[") ,r6x ,_PCSTR_ ("] : null")) ;
+			for (auto &&i : _RANGE_ (0 ,list.length ())) {
+				const auto r6x = StringProc::build_hex16s (ARGV<STR>::null ,DATA (list[i])) ;
+				ret[i] = String<STR>::make (_PCSTR_ ("[") ,r6x ,_PCSTR_ ("] : null")) ;
 			}
 		}
-		_DEBUG_ASSERT_ (iw == ret.length ()) ;
 		return _MOVE_ (ret) ;
 	}
 

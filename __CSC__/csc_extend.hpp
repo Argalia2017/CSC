@@ -14,7 +14,7 @@ class GlobalWatch
 	:private Wrapped<void> {
 public:
 	struct Public {
-		imports DEF<void (const Exception &)> done ;
+		imports void done (const Exception &e) ;
 	} ;
 
 private:
@@ -32,10 +32,9 @@ public:
 	imports void done (const ARGVF<_ARG1> & ,const Plain<STR> &name ,_ARG2 &data) {
 		struct Dependent ;
 		using WatchInterface = typename DEPENDENT_TYPE<Private ,Dependent>::template WatchInterface<_ARG2> ;
-		imports WatchInterface mInstance ;
+		static WatchInterface mInstance ;
 		mInstance.mName = name.self ;
 		mInstance.mAddress = DEPTR[data] ;
-		mInstance.mTypeMID = _TYPEMID_ (ARGV<_ARG2>::null) ;
 		mInstance.mWatch (data) ;
 	}
 } ;
@@ -54,7 +53,7 @@ public:
 	implicit WatchInterface () {
 		mName = NULL ;
 		mAddress = NULL ;
-		mTypeMID = 0 ;
+		mTypeMID = _TYPEMID_ (ARGV<UNIT>::null) ;
 		mWatch = Function<void (UNIT &)> ([] (UNIT &) {}) ;
 	} ;
 } ;
@@ -137,9 +136,8 @@ public:
 	implicit VAR128 () = default ;
 
 	implicit VAR128 (const VAR64 &that) {
-		const auto r1x = _EBOOL_ (that < 0) * DATA (-1) ;
 		v2i1 = DATA (that) ;
-		v2i0 = r1x ;
+		v2i0 = DATA (-_EBOOL_ (that < 0)) ;
 	}
 
 	inline explicit operator VAR32 () const {
@@ -564,74 +562,6 @@ private:
 #pragma pop_macro ("v4i1")
 #pragma pop_macro ("v4i0")
 #pragma endregion
-} ;
-
-template <class UNIT>
-class Mutable {
-private:
-	static constexpr auto STATE_CACHED = EFLAG (1) ;
-	static constexpr auto STATE_SIGNALED = EFLAG (2) ;
-	static constexpr auto STATE_FINISHED = EFLAG (3) ;
-
-private:
-	mutable UNIT mValue ;
-	mutable EFLAG mState ;
-
-public:
-	implicit Mutable () {
-		mState = STATE_SIGNALED ;
-	}
-
-	implicit Mutable (const REMOVE_CVR_TYPE<UNIT> &that)
-		:Mutable (ARGVP0 ,_MOVE_ (that)) {
-		_STATIC_WARNING_ ("noop") ;
-	}
-
-	implicit Mutable (REMOVE_CVR_TYPE<UNIT> &&that)
-		: Mutable (ARGVP0 ,_MOVE_ (that)) {
-		_STATIC_WARNING_ ("noop") ;
-	}
-
-	const UNIT &to () const leftvalue {
-		return mValue ;
-	}
-
-	inline implicit operator const UNIT & () const leftvalue {
-		return to () ;
-	}
-
-	template <class _ARG1>
-	void apply (const Function<void (_ARG1 &)> &proc) const {
-		_STATIC_ASSERT_ (stl::is_same<REMOVE_CVR_TYPE<_ARG1> ,UNIT>::value) ;
-		if (mState != STATE_SIGNALED)
-			return ;
-		proc (mValue) ;
-		mState = STATE_CACHED ;
-	}
-
-	template <class _ARG1>
-	void apply (const Function<MEMPTR<void (_ARG1 &)>> &proc) const {
-		_STATIC_ASSERT_ (stl::is_same<REMOVE_CVR_TYPE<_ARG1> ,UNIT>::value) ;
-		if (mState != STATE_SIGNALED)
-			return ;
-		proc (mValue) ;
-		mState = STATE_CACHED ;
-	}
-
-	void signal () const {
-		if (mState != STATE_CACHED)
-			return ;
-		mState = STATE_SIGNALED ;
-	}
-
-	void finish () const {
-		mState = STATE_FINISHED ;
-	}
-
-private:
-	template <class... _ARGS>
-	explicit Mutable (const DEF<decltype (ARGVP0)> & ,_ARGS &&...initval)
-		:mValue (_FORWARD_ (ARGV<_ARGS>::null ,initval)...) ,mState (STATE_CACHED) {}
 } ;
 
 namespace U {
@@ -1708,11 +1638,6 @@ public:
 		mThis = that.mThis ;
 		mPointer = that.mPointer ;
 	}
-
-	void assign (StrongRef<UNIT> &&that) {
-		mThis = _MOVE_ (that.mThis) ;
-		mPointer = _MOVE_ (that.mPointer) ;
-	}
 } ;
 
 #ifdef __CSC_DEPRECATED__
@@ -1792,7 +1717,7 @@ public:
 		return TRUE ;
 	}
 
-	IntrusiveRef share () side_effects {
+	IntrusiveRef share () leftvalue {
 		struct Dependent ;
 		using LatchCounter = typename DEPENDENT_TYPE<Private ,Dependent>::LatchCounter ;
 		ScopedGuard<LatchCounter> ANONYMOUS (_CAST_ (ARGV<LatchCounter>::null ,mLatch)) ;
@@ -1836,9 +1761,9 @@ private:
 		const auto r1x = mPointer.exchange (address) ;
 		if (r1x == NULL)
 			return r1x ;
-		INDEX ir = 0 ;
+		INDEX iw = 0 ;
 		while (TRUE) {
-			const auto r2x = ir++ ;
+			const auto r2x = iw++ ;
 			_STATIC_UNUSED_ (r2x) ;
 			_DEBUG_ASSERT_ (r2x <= DEFAULT_RECURSIVE_SIZE::value) ;
 			const auto r3x = mLatch.load () ;
@@ -2063,11 +1988,13 @@ public:
 	void clear () noexcept override {
 		if (mRoot == NULL)
 			return ;
-		for (PTR<CHUNK> i = mRoot ,it ; i != NULL ; i = it) {
-			it = i->mNext ;
-			GlobalHeap::free (i->mOrigin) ;
+		while (TRUE) {
+			if (mRoot == NULL)
+				break ;
+			const auto r1x = mRoot->mNext ;
+			GlobalHeap::free (mRoot->mOrigin) ;
+			mRoot = r1x ;
 		}
-		mRoot = NULL ;
 		mFree = NULL ;
 		mSize = 0 ;
 		mLength = 0 ;
@@ -2131,18 +2058,24 @@ public:
 	void clean () noexcept override {
 		if (mSize == mLength)
 			return ;
-		for (PTR<CHUNK> i = mRoot ,it ; i != NULL ; i = it) {
-			it = i->mNext ;
-			if (!empty_node (i))
-				continue ;
-			auto &r1x = _SWITCH_ (
-				(i->mPrev != NULL) ? i->mPrev->mNext :
-				mRoot) ;
-			r1x = i->mNext ;
-			if (i->mNext != NULL)
-				i->mNext->mPrev = i->mPrev ;
-			mSize -= i->mCount * SIZE::value ;
-			GlobalHeap::free (i->mOrigin) ;
+		auto rax = mRoot ;
+		while (TRUE) {
+			if (rax == NULL)
+				break ;
+			const auto r1x = rax->mNext ;
+			if switch_once (TRUE) {
+				if (!empty_node (rax))
+					discard ;
+				auto &r2x = _SWITCH_ (
+					(rax->mPrev != NULL) ? rax->mPrev->mNext :
+					mRoot) ;
+				r2x = rax->mNext ;
+				if (rax->mNext != NULL)
+					rax->mNext->mPrev = rax->mPrev ;
+				mSize -= rax->mCount * SIZE::value ;
+				GlobalHeap::free (rax->mOrigin) ;
+			}
+			rax = r1x ;
 		}
 	}
 
@@ -2186,11 +2119,13 @@ public:
 	void clear () noexcept override {
 		if (mRoot == NULL)
 			return ;
-		for (PTR<FBLOCK> i = mRoot ,it ; i != NULL ; i = it) {
-			it = i->mNext ;
-			GlobalHeap::free (i->mOrigin) ;
+		while (TRUE) {
+			if (mRoot == NULL)
+				break ;
+			const auto r1x = mRoot->mNext ;
+			GlobalHeap::free (mRoot->mOrigin) ;
+			mRoot = r1x ;
 		}
-		mRoot = NULL ;
 		mSize = 0 ;
 		mLength = 0 ;
 	}
@@ -2347,8 +2282,8 @@ private:
 			_CREATE_ (DEPTR[r1x]) ;
 		}) ;
 		mDestructor = Function<void (PTR<NONE>)> ([] (const PTR<NONE> &address) {
-			auto &r2x = _LOAD_ (ARGV<TEMP<_ARG1>>::null ,address) ;
-			_DESTROY_ (DEPTR[r2x]) ;
+			auto &r1x = _LOAD_ (ARGV<TEMP<_ARG1>>::null ,address) ;
+			_DESTROY_ (DEPTR[r1x]) ;
 		}) ;
 	}
 } ;
@@ -2393,11 +2328,11 @@ public:
 	}
 
 	template <class _RET = REMOVE_CVR_TYPE<typename Private::Member>>
-	inline _RET operator() (CONT &context_) const side_effects {
+	inline _RET operator() (PhanRef<CONT> &&context_) const side_effects {
 		struct Dependent ;
 		using Member = typename DEPENDENT_TYPE<Private ,Dependent>::Member ;
 		_DEBUG_ASSERT_ (mHolder.exist ()) ;
-		return Member (DEREF[this] ,context_) ;
+		return Member (PhanRef<const Serializer>::make (DEREF[this]) ,_MOVE_ (context_)) ;
 	}
 } ;
 
@@ -2405,17 +2340,19 @@ template <class UNIT ,class CONT>
 class Serializer<UNIT ,CONT>::Private::Member
 	:private Proxy {
 private:
-	const Serializer &mBase ;
-	CONT &mContext ;
+	PhanRef<const Serializer> mBase ;
+	PhanRef<CONT> mContext ;
 
 public:
 	implicit Member () = delete ;
 
-	explicit Member (const Serializer &base ,CONT &context_)
-		: mBase (base) ,mContext (context_) {}
+	explicit Member (PhanRef<const Serializer> &&base ,PhanRef<CONT> &&context_) {
+		mBase = _MOVE_ (base) ;
+		mContext = _MOVE_ (context_) ;
+	}
 
 	void friend_visit (UNIT &visitor) {
-		mBase.mHolder->compute_visit (visitor ,mContext) ;
+		mBase->mHolder->compute_visit (visitor ,mContext) ;
 	}
 } ;
 

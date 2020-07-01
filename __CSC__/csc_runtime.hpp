@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #ifndef __CSC_RUNTIME__
 #define __CSC_RUNTIME__
@@ -37,7 +37,7 @@ public:
 
 	explicit Duration (const ARRAY6<LENGTH> &time_) ;
 
-	explicit Duration (StrongRef<Implement> &&this_) ;
+	explicit Duration (const StrongRef<Implement> &this_) ;
 
 	Implement &native () const leftvalue {
 		return mThis ;
@@ -86,7 +86,7 @@ public:
 
 	explicit TimePoint (const ARRAY8<LENGTH> &time_) ;
 
-	explicit TimePoint (StrongRef<Implement> &&this_) ;
+	explicit TimePoint (const StrongRef<Implement> &this_) ;
 
 	Implement &native () const leftvalue {
 		return mThis ;
@@ -227,10 +227,10 @@ public:
 	}
 
 	template <class _RET = REMOVE_CVR_TYPE<UniqueLock>>
-	_RET watch (Mutex &mutex_) side_effects {
+	_RET watch (PhanRef<Mutex> &&mutex_) leftvalue {
 		struct Dependent ;
 		using UniqueLock = DEPENDENT_TYPE<UniqueLock ,Dependent> ;
-		return UniqueLock (mutex_ ,DEREF[this]) ;
+		return UniqueLock (_MOVE_ (mutex_) ,PhanRef<ConditionLock>::make (DEREF[this])) ;
 	}
 } ;
 
@@ -249,7 +249,7 @@ private:
 public:
 	implicit UniqueLock () = delete ;
 
-	explicit UniqueLock (Mutex &mutex_ ,ConditionLock &condition) ;
+	explicit UniqueLock (PhanRef<Mutex> &&mutex_ ,PhanRef<ConditionLock> &&condition_lock) ;
 
 	void wait () const ;
 
@@ -286,7 +286,7 @@ private:
 public:
 	implicit Thread () = delete ;
 
-	explicit Thread (StrongRef<Binder> &&runnable) ;
+	explicit Thread (const StrongRef<Binder> &runnable) ;
 
 	Implement &native () const leftvalue {
 		return mThis ;
@@ -354,15 +354,19 @@ struct OPERATOR_TYPENAME {
 #ifdef __CSC_COMPILER_MSVC__
 	template <class _RET>
 	imports TYPENAME typeid_name_from_func () {
-		static constexpr auto M_PREFIX = _PCSTR_ ("struct CSC::U::OPERATOR_TYPENAME::TYPENAME __cdecl CSC::U::OPERATOR_TYPENAME::typeid_name_from_func<") ;
-		static constexpr auto M_SUFFIX = _PCSTR_ (">(void)") ;
+		auto &r1x = _CACHE_ ([&] () {
+			return _PCSTR_ ("struct CSC::U::OPERATOR_TYPENAME::TYPENAME __cdecl CSC::U::OPERATOR_TYPENAME::typeid_name_from_func<") ;
+		}) ;
+		auto &r2x = _CACHE_ ([&] () {
+			return _PCSTR_ (">(void)") ;
+		}) ;
 		TYPENAME ret ;
 		ret.mName = StringProc::parse_strs (String<STRA> (M_FUNC)) ;
-		const auto r1x = M_PREFIX.size () ;
-		const auto r2x = M_SUFFIX.size () ;
-		const auto r3x = ret.mName.length () - r1x - r2x ;
-		_DYNAMIC_ASSERT_ (r3x > 0) ;
-		ret.mName = ret.mName.segment (r1x ,r3x) ;
+		const auto r3x = r1x.size () ;
+		const auto r4x = r2x.size () ;
+		const auto r5x = ret.mName.length () - r3x - r4x ;
+		_DYNAMIC_ASSERT_ (r5x > 0) ;
+		ret.mName = ret.mName.segment (r3x ,r5x) ;
 		return _MOVE_ (ret) ;
 	}
 #endif
@@ -370,15 +374,19 @@ struct OPERATOR_TYPENAME {
 #ifdef __CSC_COMPILER_GNUC__
 	template <class _RET>
 	imports TYPENAME typeid_name_from_func () {
-		static constexpr auto M_PREFIX = _PCSTR_ ("static CSC::U::OPERATOR_TYPENAME::TYPENAME CSC::U::OPERATOR_TYPENAME::typeid_name_from_func() [with _RET = ") ;
-		static constexpr auto M_SUFFIX = _PCSTR_ ("]") ;
+		auto &r1x = _CACHE_ ([&] () {
+			return _PCSTR_ ("static CSC::U::OPERATOR_TYPENAME::TYPENAME CSC::U::OPERATOR_TYPENAME::typeid_name_from_func() [with _RET = ") ;
+		}) ;
+		auto &r2x = _CACHE_ ([&] () {
+			return _PCSTR_ ("]") ;
+		}) ;
 		TYPENAME ret ;
 		ret.mName = StringProc::parse_strs (String<STRA> (M_FUNC)) ;
-		const auto r1x = M_PREFIX.size () ;
-		const auto r2x = M_SUFFIX.size () ;
-		const auto r3x = ret.mName.length () - r1x - r2x ;
-		_DYNAMIC_ASSERT_ (r3x > 0) ;
-		ret.mName = ret.mName.segment (r1x ,r3x) ;
+		const auto r3x = r1x.size () ;
+		const auto r4x = r2x.size () ;
+		const auto r5x = ret.mName.length () - r3x - r4x ;
+		_DYNAMIC_ASSERT_ (r5x > 0) ;
+		ret.mName = ret.mName.segment (r3x ,r5x) ;
 		return _MOVE_ (ret) ;
 	}
 #endif
@@ -386,15 +394,19 @@ struct OPERATOR_TYPENAME {
 #ifdef __CSC_COMPILER_CLANG__
 	template <class _RET>
 	imports TYPENAME typeid_name_from_func () {
-		static constexpr auto M_PREFIX = _PCSTR_ ("static CSC::U::OPERATOR_TYPENAME::TYPENAME CSC::U::OPERATOR_TYPENAME::typeid_name_from_func() [_RET = ") ;
-		static constexpr auto M_SUFFIX = _PCSTR_ ("]") ;
+		auto &r1x = _CACHE_ ([&] () {
+			return _PCSTR_ ("static CSC::U::OPERATOR_TYPENAME::TYPENAME CSC::U::OPERATOR_TYPENAME::typeid_name_from_func() [_RET = ") ;
+		}) ;
+		auto &r2x = _CACHE_ ([&] () {
+			return _PCSTR_ ("]") ;
+		}) ;
 		TYPENAME ret ;
 		ret.mName = StringProc::parse_strs (String<STRA> (M_FUNC)) ;
-		const auto r1x = M_PREFIX.size () ;
-		const auto r2x = M_SUFFIX.size () ;
-		const auto r3x = ret.mName.length () - r1x - r2x ;
-		_DYNAMIC_ASSERT_ (r3x > 0) ;
-		ret.mName = ret.mName.segment (r1x ,r3x) ;
+		const auto r3x = r1x.size () ;
+		const auto r4x = r2x.size () ;
+		const auto r5x = ret.mName.length () - r3x - r4x ;
+		_DYNAMIC_ASSERT_ (r5x > 0) ;
+		ret.mName = ret.mName.segment (r3x ,r5x) ;
 		return _MOVE_ (ret) ;
 	}
 #endif
@@ -644,7 +656,7 @@ class GlobalStatic<void>
 public:
 	struct Public {
 		//@warn: this function should be implemented in a 'runtime.dll'
-		imports DEF<PTR<NONE> (const PTR<NONE> & ,const PTR<NONE> &) side_effects> unique_atomic_address ;
+		imports PTR<NONE> unique_atomic_address (const PTR<NONE> &expect ,const PTR<NONE> &data) side_effects ;
 	} ;
 
 private:
@@ -662,9 +674,9 @@ private:
 	struct SELF_PACK {
 		Atomic mCounter ;
 		Mutex mNodeMutex ;
-		Deque<VALUE_NODE> mValueList ;
+		Deque<VALUE_NODE> mValue ;
 		HashSet<FLAG> mValueMappingSet ;
-		Deque<CLASS_NODE> mClassList ;
+		Deque<CLASS_NODE> mClass ;
 		HashSet<FLAG> mClassMappingSet ;
 	} ;
 
@@ -702,11 +714,11 @@ private:
 		if switch_once (TRUE) {
 			if (ix != VAR_NONE)
 				discard ;
-			ix = self_.mValueList.insert () ;
+			ix = self_.mValue.insert () ;
 			self_.mValueMappingSet.add (r1x ,ix) ;
-			self_.mValueList[ix].mGUID = guid ;
+			self_.mValue[ix].mGUID = guid ;
 		}
-		return DEPTR[self_.mValueList[ix]] ;
+		return DEPTR[self_.mValue[ix]] ;
 	}
 
 	imports FLAG node_guid_hash (const FLAG &guid) {
@@ -718,7 +730,7 @@ private:
 		INDEX ix = self_.mValueMappingSet.map (r1x) ;
 		if (ix == VAR_NONE)
 			return NULL ;
-		return DEPTR[self_.mValueList[ix]] ;
+		return DEPTR[self_.mValue[ix]] ;
 	}
 
 	imports PTR<CLASS_NODE> static_new_node (SELF_PACK &self_ ,const String<STR> &guid) side_effects {
@@ -727,11 +739,11 @@ private:
 		if switch_once (TRUE) {
 			if (ix != VAR_NONE)
 				discard ;
-			ix = self_.mClassList.insert () ;
+			ix = self_.mClass.insert () ;
 			self_.mClassMappingSet.add (r1x ,ix) ;
-			self_.mClassList[ix].mGUID = guid ;
+			self_.mClass[ix].mGUID = guid ;
 		}
-		return DEPTR[self_.mClassList[ix]] ;
+		return DEPTR[self_.mClass[ix]] ;
 	}
 
 	imports FLAG node_guid_hash (const String<STR> &guid) {
@@ -745,21 +757,21 @@ private:
 		INDEX ix = self_.mClassMappingSet.map (r1x) ;
 		if (ix == VAR_NONE)
 			return NULL ;
-		return DEPTR[self_.mClassList[ix]] ;
+		return DEPTR[self_.mClass[ix]] ;
 	}
 
 private:
 	imports void friend_create (SELF_PACK &self_) {
 		ScopedGuard<Mutex> ANONYMOUS (self_.mNodeMutex) ;
 		self_.mCounter = 0 ;
-		self_.mValueList = Deque<VALUE_NODE> () ;
-		self_.mClassList = Deque<CLASS_NODE> () ;
+		self_.mValue = Deque<VALUE_NODE> () ;
+		self_.mClass = Deque<CLASS_NODE> () ;
 	}
 
 	imports void friend_destroy (SELF_PACK &self_) {
 		ScopedGuard<Mutex> ANONYMOUS (self_.mNodeMutex) ;
-		self_.mValueList = Deque<VALUE_NODE> () ;
-		self_.mClassList = Deque<CLASS_NODE> () ;
+		self_.mValue = Deque<VALUE_NODE> () ;
+		self_.mClass = Deque<CLASS_NODE> () ;
 	}
 
 	imports LENGTH friend_attach (SELF_PACK &self_) side_effects {
@@ -992,28 +1004,30 @@ public:
 	}
 
 	String<STR> random_uuid () side_effects {
-		static constexpr auto M_UUID = _PCSTR_ ("00000000-0000-0000-000000000000") ;
-		String<STR> ret = String<STR> (M_UUID.size ()) ;
+		auto &r1x = _CACHE_ ([&] () {
+			return _PCSTR_ ("00000000-0000-0000-000000000000") ;
+		}) ;
+		String<STR> ret = String<STR> (r1x.size ()) ;
 		INDEX iw = 0 ;
-		const auto r1x = random_value (0 ,36 ,28) ;
+		const auto r2x = random_value (0 ,36 ,28) ;
 		for (auto &&i : _RANGE_ (0 ,8)) {
 			INDEX ix = 0 + i ;
-			ret[iw++] = index_to_hex_str (r1x[ix]) ;
+			ret[iw++] = index_to_hex_str (r2x[ix]) ;
 		}
 		ret[iw++] = STRU8 ('-') ;
 		for (auto &&i : _RANGE_ (0 ,4)) {
 			INDEX ix = 8 + i ;
-			ret[iw++] = index_to_hex_str (r1x[ix]) ;
+			ret[iw++] = index_to_hex_str (r2x[ix]) ;
 		}
 		ret[iw++] = STRU8 ('-') ;
 		for (auto &&i : _RANGE_ (0 ,4)) {
 			INDEX ix = 12 + i ;
-			ret[iw++] = index_to_hex_str (r1x[ix]) ;
+			ret[iw++] = index_to_hex_str (r2x[ix]) ;
 		}
 		ret[iw++] = STRU8 ('-') ;
 		for (auto &&i : _RANGE_ (0 ,12)) {
 			INDEX ix = 16 + i ;
-			ret[iw++] = index_to_hex_str (r1x[ix]) ;
+			ret[iw++] = index_to_hex_str (r2x[ix]) ;
 		}
 		if (iw < ret.size ())
 			ret[iw] = 0 ;

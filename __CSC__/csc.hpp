@@ -1,4 +1,4 @@
-#pragma once
+ï»¿#pragma once
 
 #ifndef __CSC__
 #define __CSC__
@@ -23,7 +23,7 @@
 #elif defined _MSC_VER
 #define __CSC_COMPILER_MSVC__
 #else
-#error "¡Æ(¤Ã¡ã§¥¡ã ;)¤Ã : unsupported"
+#error "âˆ‘(ã£Â°Ğ”Â° ;)ã£ : unsupported"
 #endif
 
 #if defined (linux) || defined (__linux) || defined (__linux__)
@@ -31,7 +31,7 @@
 #elif defined (WIN32) || defined (_WIN32) || defined (__WIN32__)
 #define __CSC_SYSTEM_WINDOWS__
 #else
-#error "¡Æ(¤Ã¡ã§¥¡ã ;)¤Ã : unsupported"
+#error "âˆ‘(ã£Â°Ğ”Â° ;)ã£ : unsupported"
 #endif
 
 #if defined (_M_IX86) || defined (__i386__) || defined (__i386)
@@ -45,7 +45,7 @@
 #elif defined (_M_IA64) || defined (__ia64__)
 #define __CSC_PLATFORM_IA64__
 #else
-#error "¡Æ(¤Ã¡ã§¥¡ã ;)¤Ã : unsupported"
+#error "âˆ‘(ã£Â°Ğ”Â° ;)ã£ : unsupported"
 #endif
 
 #ifdef _WINEXE
@@ -79,6 +79,7 @@
 
 #ifdef __CSC_COMPILER_MSVC__
 #pragma warning (disable :4068) //@info: warning C4068: unknown pragma
+#pragma warning (disable :4065) //@info: warning C4065: switch statement contains 'default' but no 'case' labels
 #pragma warning (disable :4619) //@info: warning C4619: #pragma warning: there is no warning number 'xxx'
 #pragma warning (disable :4100) //@info: warning C4100: 'xxx': unreferenced formal parameter
 #pragma warning (disable :4180) //@info: warning C4180: qualifier applied to function type has no meaning; ignored
@@ -149,47 +150,47 @@
 
 #ifdef __CSC__
 #ifdef self
-#error "¡Æ(¤Ã¡ã§¥¡ã ;)¤Ã : defined 'self'"
+#error "âˆ‘(ã£Â°Ğ”Â° ;)ã£ : defined 'self'"
 #endif
 #define self to ()
 
 #ifdef implicit
-#error "¡Æ(¤Ã¡ã§¥¡ã ;)¤Ã : defined 'implicit'"
+#error "âˆ‘(ã£Â°Ğ”Â° ;)ã£ : defined 'implicit'"
 #endif
 #define implicit
 
 #ifdef side_effects
-#error "¡Æ(¤Ã¡ã§¥¡ã ;)¤Ã : defined 'side_effects'"
+#error "âˆ‘(ã£Â°Ğ”Â° ;)ã£ : defined 'side_effects'"
 #endif
 #define side_effects
 
 #ifdef leftvalue
-#error "¡Æ(¤Ã¡ã§¥¡ã ;)¤Ã : defined 'leftvalue'"
+#error "âˆ‘(ã£Â°Ğ”Â° ;)ã£ : defined 'leftvalue'"
 #endif
 #define leftvalue &
 
 #ifdef rightvalue
-#error "¡Æ(¤Ã¡ã§¥¡ã ;)¤Ã : defined 'leftvalue'"
+#error "âˆ‘(ã£Â°Ğ”Â° ;)ã£ : defined 'leftvalue'"
 #endif
 #define rightvalue &&
 
 #ifdef imports
-#error "¡Æ(¤Ã¡ã§¥¡ã ;)¤Ã : defined 'imports'"
+#error "âˆ‘(ã£Â°Ğ”Â° ;)ã£ : defined 'imports'"
 #endif
 #define imports static
 
 #ifdef exports
-#error "¡Æ(¤Ã¡ã§¥¡ã ;)¤Ã : defined 'exports'"
+#error "âˆ‘(ã£Â°Ğ”Â° ;)ã£ : defined 'exports'"
 #endif
 #define exports
 
 #ifdef switch_once
-#error "¡Æ(¤Ã¡ã§¥¡ã ;)¤Ã : defined 'switch_once'"
+#error "âˆ‘(ã£Â°Ğ”Â° ;)ã£ : defined 'switch_once'"
 #endif
 #define switch_once _SWITCH_ONCE_
 
 #ifdef discard
-#error "¡Æ(¤Ã¡ã§¥¡ã ;)¤Ã : defined 'discard'"
+#error "âˆ‘(ã£Â°Ğ”Â° ;)ã£ : defined 'discard'"
 #endif
 #define discard break
 #endif

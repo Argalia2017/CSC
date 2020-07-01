@@ -21,7 +21,7 @@ namespace CSC {
 class Mesh {
 private:
 	Set<ARRAY3<VAL32>> mVertexSet ;
-	SoftList<ARRAY3<INDEX>> mElementList ;
+	Deque<ARRAY3<INDEX>> mElement ;
 	Array<Bitmap<COLOR_BGR>> mTexture ;
 
 public:
@@ -31,8 +31,8 @@ public:
 		return mVertexSet ;
 	}
 
-	const SoftList<ARRAY3<INDEX>> &element () const leftvalue {
-		return mElementList ;
+	const Deque<ARRAY3<INDEX>> &element () const leftvalue {
+		return mElement ;
 	}
 
 	const Array<Bitmap<COLOR_BGR>> &texture () const leftvalue {
@@ -44,7 +44,7 @@ public:
 	}
 
 	void add_element (const Deque<ARRAY3<INDEX>> &element_) {
-		mElementList.appand (element_) ;
+		mElement.appand (element_) ;
 	}
 
 	void add_texture (Bitmap<COLOR_BGR> &&texture_) {
@@ -60,7 +60,7 @@ private:
 	Vector<REAL> mEyeV ;
 	Vector<REAL> mEyeN ;
 	Vector<REAL> mEyeP ;
-	Mutable<Matrix<REAL>> mViewMatrix ;
+	Matrix<REAL> mViewMatrix ;
 	REAL mScreenW ;
 	REAL mScreenH ;
 	REAL mScreenD ;
@@ -83,12 +83,12 @@ public:
 		mEyeU = (mEyeN ^ up).normalize () ;
 		mEyeV = (mEyeN ^ mEyeU).normalize () ;
 		mEyeP = eye ;
-		mViewMatrix.signal () ;
+		update_view_matrix () ;
 	}
 
 	void translate (const REAL &distance_u ,const REAL &distance_v ,const REAL &distance_n) {
 		mEyeP += mEyeU * distance_u + mEyeV * distance_v + mEyeN * distance_n ;
-		mViewMatrix.signal () ;
+		update_view_matrix () ;
 	}
 
 	//@info: 'angle_vn-angle_nu-angle_uv' equals to 'pitch-yaw-roll' (heading-pitch-bank)
@@ -117,7 +117,7 @@ public:
 			mEyeV = r5x.normalize () ;
 			mEyeU = r6x.normalize () ;
 		}
-		mViewMatrix.signal () ;
+		update_view_matrix () ;
 	}
 
 	void circle (const REAL &near_ ,const REAL &angle_un ,const REAL &angle_nv) {
@@ -127,8 +127,6 @@ public:
 	}
 
 	Matrix<REAL> view_matrix () const {
-		const auto r1x = Function<MEMPTR<void (Matrix<REAL> &)>> (PhanRef<const Camera>::make (DEREF[this]) ,&Camera::compute_view_matrix) ;
-		mViewMatrix.apply (r1x) ;
 		return mViewMatrix ;
 	}
 
@@ -207,24 +205,24 @@ public:
 	}
 
 private:
-	void compute_view_matrix (Matrix<REAL> &view_mat) const {
+	void update_view_matrix () {
 		const auto r1x = Vector<REAL> {-mEyeP[0] ,-mEyeP[1] ,-mEyeP[2] ,REAL (0)} ;
-		view_mat[0][0] = mEyeU[0] ;
-		view_mat[0][1] = -mEyeU[1] ;
-		view_mat[0][2] = -mEyeU[2] ;
-		view_mat[0][3] = mEyeU * r1x ;
-		view_mat[1][0] = mEyeV[0] ;
-		view_mat[1][1] = -mEyeV[1] ;
-		view_mat[1][2] = -mEyeV[2] ;
-		view_mat[1][3] = mEyeV * r1x ;
-		view_mat[2][0] = mEyeN[0] ;
-		view_mat[2][1] = -mEyeN[1] ;
-		view_mat[2][2] = -mEyeN[2] ;
-		view_mat[2][3] = mEyeN * r1x - REAL (1) ;
-		view_mat[3][0] = REAL (0) ;
-		view_mat[3][1] = REAL (0) ;
-		view_mat[3][2] = REAL (0) ;
-		view_mat[3][3] = REAL (1) ;
+		mViewMatrix[0][0] = mEyeU[0] ;
+		mViewMatrix[0][1] = -mEyeU[1] ;
+		mViewMatrix[0][2] = -mEyeU[2] ;
+		mViewMatrix[0][3] = mEyeU * r1x ;
+		mViewMatrix[1][0] = mEyeV[0] ;
+		mViewMatrix[1][1] = -mEyeV[1] ;
+		mViewMatrix[1][2] = -mEyeV[2] ;
+		mViewMatrix[1][3] = mEyeV * r1x ;
+		mViewMatrix[2][0] = mEyeN[0] ;
+		mViewMatrix[2][1] = -mEyeN[1] ;
+		mViewMatrix[2][2] = -mEyeN[2] ;
+		mViewMatrix[2][3] = mEyeN * r1x - REAL (1) ;
+		mViewMatrix[3][0] = REAL (0) ;
+		mViewMatrix[3][1] = REAL (0) ;
+		mViewMatrix[3][2] = REAL (0) ;
+		mViewMatrix[3][3] = REAL (1) ;
 	}
 } ;
 

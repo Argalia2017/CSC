@@ -13,14 +13,6 @@ namespace CSC {
 class MathProc
 	:private Wrapped<void> {
 public:
-	imports BOOL is_nan (const VAL32 &x) ;
-
-	imports BOOL is_nan (const VAL64 &x) ;
-
-	imports BOOL is_infinite (const VAL32 &x) ;
-
-	imports BOOL is_infinite (const VAL64 &x) ;
-
 	template <class _ARG1>
 	imports REMOVE_CVR_TYPE<_ARG1> square (const _ARG1 &val) ;
 
@@ -169,6 +161,14 @@ public:
 	template <class _ARG1 ,class _ARG2 ,class... _ARGS>
 	imports REMOVE_CVR_TYPE<_ARG1> maxof (const _ARG1 &list_one ,const _ARG2 &list_two ,const _ARGS &...list_rest) ;
 
+	imports BOOL is_nan (const VAL32 &x) ;
+
+	imports BOOL is_nan (const VAL64 &x) ;
+
+	imports BOOL is_infinite (const VAL32 &x) ;
+
+	imports BOOL is_infinite (const VAL64 &x) ;
+
 	imports VAL64 ieee754_encode (const ARRAY3<VAR64> &sne2) ;
 
 	imports ARRAY3<VAR64> ieee754_decode (const VAL64 &ieee754) ;
@@ -177,42 +177,6 @@ public:
 
 	imports ARRAY3<VAR64> ieee754_e10_e2 (const ARRAY3<VAR64> &sne10) ;
 } ;
-
-inline exports BOOL MathProc::is_nan (const VAL32 &x) {
-	const auto r1x = _CAST_ (ARGV<CHAR>::null ,x) ;
-	if ((r1x & CHAR (0X7F800000)) != CHAR (0X7F800000))
-		return FALSE ;
-	if ((r1x & CHAR (0X007FFFFF)) == 0)
-		return FALSE ;
-	return TRUE ;
-}
-
-inline exports BOOL MathProc::is_nan (const VAL64 &x) {
-	const auto r1x = _CAST_ (ARGV<DATA>::null ,x) ;
-	if ((r1x & DATA (0X7FF0000000000000)) != DATA (0X7FF0000000000000))
-		return FALSE ;
-	if ((r1x & DATA (0X000FFFFFFFFFFFFF)) == 0)
-		return FALSE ;
-	return TRUE ;
-}
-
-inline exports BOOL MathProc::is_infinite (const VAL32 &x) {
-	const auto r1x = _CAST_ (ARGV<CHAR>::null ,x) ;
-	if ((r1x & CHAR (0X7F800000)) != CHAR (0X7F800000))
-		return FALSE ;
-	if ((r1x & CHAR (0X007FFFFF)) != 0)
-		return FALSE ;
-	return TRUE ;
-}
-
-inline exports BOOL MathProc::is_infinite (const VAL64 &x) {
-	const auto r1x = _CAST_ (ARGV<DATA>::null ,x) ;
-	if ((r1x & DATA (0X7FF0000000000000)) != DATA (0X7FF0000000000000))
-		return FALSE ;
-	if ((r1x & DATA (0X000FFFFFFFFFFFFF)) != 0)
-		return FALSE ;
-	return TRUE ;
-}
 
 template <class _ARG1>
 inline exports REMOVE_CVR_TYPE<_ARG1> MathProc::square (const _ARG1 &val) {
@@ -493,6 +457,42 @@ inline exports ARRAY3<DATA> MathStaticProc::static_ieee754_encode_part (const AR
 	return _MOVE_ (ret) ;
 }
 
+inline exports BOOL MathProc::is_nan (const VAL32 &x) {
+	const auto r1x = _CAST_ (ARGV<CHAR>::null ,x) ;
+	if ((r1x & CHAR (0X7F800000)) != CHAR (0X7F800000))
+		return FALSE ;
+	if ((r1x & CHAR (0X007FFFFF)) == 0)
+		return FALSE ;
+	return TRUE ;
+}
+
+inline exports BOOL MathProc::is_nan (const VAL64 &x) {
+	const auto r1x = _CAST_ (ARGV<DATA>::null ,x) ;
+	if ((r1x & DATA (0X7FF0000000000000)) != DATA (0X7FF0000000000000))
+		return FALSE ;
+	if ((r1x & DATA (0X000FFFFFFFFFFFFF)) == 0)
+		return FALSE ;
+	return TRUE ;
+}
+
+inline exports BOOL MathProc::is_infinite (const VAL32 &x) {
+	const auto r1x = _CAST_ (ARGV<CHAR>::null ,x) ;
+	if ((r1x & CHAR (0X7F800000)) != CHAR (0X7F800000))
+		return FALSE ;
+	if ((r1x & CHAR (0X007FFFFF)) != 0)
+		return FALSE ;
+	return TRUE ;
+}
+
+inline exports BOOL MathProc::is_infinite (const VAL64 &x) {
+	const auto r1x = _CAST_ (ARGV<DATA>::null ,x) ;
+	if ((r1x & DATA (0X7FF0000000000000)) != DATA (0X7FF0000000000000))
+		return FALSE ;
+	if ((r1x & DATA (0X000FFFFFFFFFFFFF)) != 0)
+		return FALSE ;
+	return TRUE ;
+}
+
 inline exports VAL64 MathProc::ieee754_encode (const ARRAY3<VAR64> &sne2) {
 	const auto r1x = MathStaticProc::static_ieee754_encode_part (sne2) ;
 	_DYNAMIC_ASSERT_ ((r1x[0] & ~DATA (0X001FFFFFFFFFFFFF)) == 0) ;
@@ -523,8 +523,7 @@ inline exports ARRAY3<VAR64> MathProc::ieee754_decode (const VAL64 &ieee754) {
 		ret[0] = ret[0] >> 1 ;
 		ret[1]++ ;
 	}
-	const auto r3x = _EBOOL_ ((r1x & DATA (0X8000000000000000)) != 0) * DATA (-1) ;
-	ret[2] = r3x ;
+	ret[2] = DATA (-_EBOOL_ ((r1x & DATA (0X8000000000000000)) != 0)) ;
 	return _MOVE_ (_CAST_ (ARGV<ARRAY3<VAR64>>::null ,ret)) ;
 }
 

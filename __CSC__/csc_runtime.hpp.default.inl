@@ -1,7 +1,7 @@
-#pragma once
+Ôªø#pragma once
 
 #ifndef __CSC_RUNTIME__
-#error "°∆(§√°„ß•°„ ;)§√ : require 'csc_runtime.hpp'"
+#error "‚àë(„Å£¬∞–î¬∞ ;)„Å£ : require 'csc_runtime.hpp'"
 #endif
 
 #ifdef __CSC__
@@ -27,7 +27,7 @@
 
 #ifdef __CSC_SYSTEM_WINDOWS__
 #ifndef _INC_WINDOWS
-#error "°∆(§√°„ß•°„ ;)§√ : require 'Windows.h'"
+#error "‚àë(„Å£¬∞–î¬∞ ;)„Å£ : require 'Windows.h'"
 #endif
 #endif
 
@@ -199,15 +199,15 @@ public:
 	Duration add (const Implement &that) const {
 		const auto r1x = mDuration + that.mDuration ;
 		const auto r2x = api::chrono::duration_cast<api::chrono::system_clock::duration> (r1x) ;
-		auto tmp = StrongRef<Duration::Implement>::make (r2x) ;
-		return Duration (_MOVE_ (tmp)) ;
+		const auto r3x = StrongRef<Duration::Implement>::make (r2x) ;
+		return Duration (r3x) ;
 	}
 
 	Duration sub (const Implement &that) const {
 		const auto r1x = mDuration - that.mDuration ;
 		const auto r2x = api::chrono::duration_cast<api::chrono::system_clock::duration> (r1x) ;
-		auto tmp = StrongRef<Duration::Implement>::make (r2x) ;
-		return Duration (_MOVE_ (tmp)) ;
+		const auto r3x = StrongRef<Duration::Implement>::make (r2x) ;
+		return Duration (r3x) ;
 	}
 } ;
 
@@ -219,8 +219,8 @@ inline exports Duration::Duration (const ARRAY6<LENGTH> &time_) {
 	mThis = StrongRef<Implement>::make (time_) ;
 }
 
-inline exports Duration::Duration (StrongRef<Implement> &&this_) {
-	mThis = _MOVE_ (this_) ;
+inline exports Duration::Duration (const StrongRef<Implement> &this_) {
+	mThis = this_ ;
 }
 
 inline exports LENGTH Duration::hours () const {
@@ -265,14 +265,14 @@ public:
 	explicit Implement (const ARRAY8<LENGTH> &time_) {
 		auto rax = api::tm () ;
 		_ZERO_ (rax) ;
-		const auto r1x = _EBOOL_ (time_[0] > 0) * (time_[0] - 1900) ;
+		const auto r1x = (time_[0] - 1900) * _EBOOL_ (time_[0] > 0) ;
 		rax.tm_year = VAR32 (r1x) ;
-		const auto r2x = _EBOOL_ (time_[1] > 0) * (time_[1] - 1) ;
+		const auto r2x = (time_[1] - 1) * _EBOOL_ (time_[1] > 0) ;
 		rax.tm_mon = VAR32 (r2x) ;
 		rax.tm_mday = VAR32 (time_[2]) ;
-		const auto r3x = _EBOOL_ (time_[3] > 0) * (time_[3] - 1) ;
+		const auto r3x = (time_[3] - 1) * _EBOOL_ (time_[3] > 0) ;
 		rax.tm_wday = VAR32 (r3x) ;
-		const auto r4x = _EBOOL_ (time_[4] > 0) * (time_[4] - 1) ;
+		const auto r4x = (time_[4] - 1) * _EBOOL_ (time_[4] > 0) ;
 		rax.tm_yday = VAR32 (r4x) ;
 		rax.tm_hour = VAR32 (time_[5]) ;
 		rax.tm_min = VAR32 (time_[6]) ;
@@ -335,15 +335,15 @@ public:
 	TimePoint add (const Duration::Implement &that) const {
 		const auto r1x = mTimePoint + that.native () ;
 		const auto r2x = api::chrono::time_point_cast<api::chrono::system_clock::duration> (r1x) ;
-		auto tmp = StrongRef<Implement>::make (r2x) ;
-		return TimePoint (_MOVE_ (tmp)) ;
+		const auto r3x = StrongRef<Implement>::make (r2x) ;
+		return TimePoint (r3x) ;
 	}
 
 	Duration sub (const Implement &that) const {
 		const auto r1x = mTimePoint - that.native () ;
 		const auto r2x = api::chrono::duration_cast<api::chrono::system_clock::duration> (r1x) ;
-		auto tmp = StrongRef<Duration::Implement>::make (r2x) ;
-		return Duration (_MOVE_ (tmp)) ;
+		const auto r3x = StrongRef<Duration::Implement>::make (r2x) ;
+		return Duration (r3x) ;
 	}
 } ;
 
@@ -351,8 +351,8 @@ inline exports TimePoint::TimePoint (const ARRAY8<LENGTH> &time_) {
 	mThis = StrongRef<Implement>::make (time_) ;
 }
 
-inline exports TimePoint::TimePoint (StrongRef<Implement> &&this_) {
-	mThis = _MOVE_ (this_) ;
+inline exports TimePoint::TimePoint (const StrongRef<Implement> &this_) {
+	mThis = this_ ;
 }
 
 inline exports ARRAY8<LENGTH> TimePoint::calendar () const {
@@ -525,43 +525,45 @@ inline exports ConditionLock::ConditionLock () {
 
 class UniqueLock::Private::Implement {
 private:
+	PhanRef<Mutex> mMutex ;
+	PhanRef<ConditionLock> mConditionLock ;
 	api::unique_lock<api::mutex> mUniqueLock ;
-	PhanRef<api::condition_variable> mConditionLock ;
 
 public:
 	implicit Implement () = delete ;
 
-	explicit Implement (Mutex &mutex_ ,ConditionLock &condition) {
-		mUniqueLock = api::unique_lock<api::mutex> (mutex_.native ().native ()) ;
-		mConditionLock = PhanRef<api::condition_variable>::make (condition.native ().native ()) ;
+	explicit Implement (PhanRef<Mutex> &&mutex_ ,PhanRef<ConditionLock> &&condition_lock) {
+		mMutex = _MOVE_ (mutex_) ;
+		mConditionLock = _MOVE_ (condition_lock) ;
+		mUniqueLock = api::unique_lock<api::mutex> (mMutex->native ().native ()) ;
 	}
 
 	void wait () {
-		mConditionLock->wait (mUniqueLock) ;
+		mConditionLock->native ().native ().wait (mUniqueLock) ;
 	}
 
 	void wait (const TimePoint &time_) {
 		auto &r1x = time_.native ().native () ;
-		mConditionLock->wait_until (mUniqueLock ,r1x) ;
+		mConditionLock->native ().native ().wait_until (mUniqueLock ,r1x) ;
 	}
 
 	void wait (const Duration &time_) {
 		auto &r1x = time_.native ().native () ;
-		mConditionLock->wait_for (mUniqueLock ,r1x) ;
+		mConditionLock->native ().native ().wait_for (mUniqueLock ,r1x) ;
 	}
 
 	void yield () {
 		const auto r1x = api::chrono::milliseconds (0) ;
-		mConditionLock->wait_for (mUniqueLock ,r1x) ;
+		mConditionLock->native ().native ().wait_for (mUniqueLock ,r1x) ;
 	}
 
 	void notify () {
-		mConditionLock->notify_all () ;
+		mConditionLock->native ().native ().notify_all () ;
 	}
 } ;
 
-inline exports UniqueLock::UniqueLock (Mutex &mutex_ ,ConditionLock &condition) {
-	mThis = StrongRef<Implement>::make (mutex_ ,condition) ;
+inline exports UniqueLock::UniqueLock (PhanRef<Mutex> &&mutex_ ,PhanRef<ConditionLock> &&condition_lock) {
+	mThis = StrongRef<Implement>::make (_MOVE_ (mutex_) ,_MOVE_ (condition_lock)) ;
 }
 
 inline exports void UniqueLock::wait () const {
@@ -592,8 +594,8 @@ private:
 public:
 	implicit Implement () = delete ;
 
-	explicit Implement (StrongRef<Binder> &&runnable) {
-		mRunnable = _MOVE_ (runnable) ;
+	explicit Implement (const StrongRef<Binder> &runnable) {
+		mRunnable = runnable ;
 		mThread = api::thread (Private::Runnable (PhanRef<Binder>::make (mRunnable.self))) ;
 	}
 
@@ -602,8 +604,8 @@ public:
 	}
 } ;
 
-inline exports Thread::Thread (StrongRef<Binder> &&runnable) {
-	mThis = StrongRef<Implement>::make (_MOVE_ (runnable)) ;
+inline exports Thread::Thread (const StrongRef<Binder> &runnable) {
+	mThis = StrongRef<Implement>::make (runnable) ;
 }
 
 inline exports void Thread::join () {
@@ -612,15 +614,15 @@ inline exports void Thread::join () {
 
 inline exports TimePoint GlobalRuntime::clock_now () {
 	const auto r1x = api::chrono::system_clock::now () ;
-	auto tmp = StrongRef<TimePoint::Implement>::make (r1x) ;
-	return TimePoint (_MOVE_ (tmp)) ;
+	const auto r2x = StrongRef<TimePoint::Implement>::make (r1x) ;
+	return TimePoint (r2x) ;
 }
 
 inline exports TimePoint GlobalRuntime::clock_epoch () {
 	const auto r1x = api::chrono::system_clock::duration::zero () ;
 	const auto r2x = api::chrono::system_clock::time_point (r1x) ;
-	auto tmp = StrongRef<TimePoint::Implement>::make (r2x) ;
-	return TimePoint (_MOVE_ (tmp)) ;
+	const auto r3x = StrongRef<TimePoint::Implement>::make (r2x) ;
+	return TimePoint (r3x) ;
 }
 
 #ifdef __CSC_SYSTEM_WINDOWS__
@@ -699,7 +701,7 @@ inline exports Buffer<BYTE ,ARGC<128>> GlobalRuntime::process_info (const FLAG &
 
 inline exports FLAG GlobalRuntime::process_info_pid (const PhanBuffer<const STRU8> &info) {
 	_DEBUG_ASSERT_ (info.size () == 128) ;
-	auto rax = ByteReader<BYTE> (info) ;
+	auto rax = ByteReader<BYTE> (PhanBuffer<const BYTE>::make (info)) ;
 	const auto r1x = rax.read (ARGV<VAR64>::null) ;
 	_DYNAMIC_ASSERT_ (r1x >= VAR32_MIN && r1x <= VAR32_MAX) ;
 	return FLAG (r1x) ;
@@ -734,7 +736,7 @@ inline exports Buffer<BYTE ,ARGC<128>> GlobalRuntime::process_info (const FLAG &
 
 inline exports FLAG GlobalRuntime::process_info_pid (const PhanBuffer<const STRU8> &info) {
 	_DEBUG_ASSERT_ (info.size () == 128) ;
-	auto rax = ByteReader<BYTE> (info) ;
+	auto rax = ByteReader<BYTE> (PhanBuffer<const BYTE>::make (info)) ;
 	const auto r1x = rax.read (ARGV<VAR64>::null) ;
 	_DYNAMIC_ASSERT_ (r1x >= VAR32_MIN && r1x <= VAR32_MAX) ;
 	return FLAG (r1x) ;
