@@ -117,8 +117,8 @@ inline exports String<STRW> LocaleStaticProc::static_locale_cvt_lastows (const S
 	String<STRW> ret = String<STRW> (val.length () + 1) ;
 	_DEBUG_ASSERT_ (ret.size () < VAR32_MAX) ;
 	if switch_once (TRUE) {
-		const auto r3x = api::mbstowcs (ret.raw ().self ,val.raw ().self ,VAR32 (ret.size ())) ;
-		if (r3x == 0)
+		const auto r1x = api::mbstowcs (ret.raw ().self ,val.raw ().self ,VAR32 (ret.size ())) ;
+		if (r1x == 0)
 			discard ;
 		ret = String<STRW> () ;
 	}
@@ -146,8 +146,8 @@ inline exports String<STRA> LocaleStaticProc::static_locale_cvt_wstolas (const S
 	String<STRA> ret = String<STRA> ((val.length () + 1) * _SIZEOF_ (STRW)) ;
 	_DEBUG_ASSERT_ (ret.size () < VAR32_MAX) ;
 	if switch_once (TRUE) {
-		const auto r3x = api::wcstombs (ret.raw ().self ,val.raw ().self ,VAR32 (ret.size ())) ;
-		if (r3x == 0)
+		const auto r1x = api::wcstombs (ret.raw ().self ,val.raw ().self ,VAR32 (ret.size ())) ;
+		if (r1x == 0)
 			discard ;
 		ret = String<STRA> () ;
 	}

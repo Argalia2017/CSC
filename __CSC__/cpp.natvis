@@ -284,11 +284,9 @@
   </Type>
 
 
-  <Type Name="CSC::SoftList&lt;*,CSC::ARGC&lt;*&gt; &gt;">
+  <Type Name="CSC::ArrayList&lt;*,CSC::ARGC&lt;*&gt; &gt;">
     <Expand>
-      <Item Name="[mHead]">mHead</Item>
-      <Item Name="[mRead]">mRead</Item>
-      <Item Name="[mWrite]">mWrite</Item>
+      <Item Name="[mRange]">mRange</Item>
       <ExpandedItem>mList</ExpandedItem>
     </Expand>
   </Type>
@@ -312,7 +310,7 @@
 
   <Type Name="CSC::HashSet&lt;*,CSC::ARGC&lt;*&gt; &gt;">
     <Expand>
-      <Item Name="[mHead]">mHead</Item>
+      <Item Name="[mRange]">mRange</Item>
       <ExpandedItem>mSet</ExpandedItem>
     </Expand>
   </Type>

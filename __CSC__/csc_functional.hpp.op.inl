@@ -1,7 +1,7 @@
-#pragma once
+Ôªø#pragma once
 
 #ifndef __CSC_FUNCTIONAL__
-#error "°∆(§√°„ß•°„ ;)§√ : require 'csc_functional.hpp'"
+#error "‚àë(„Å£¬∞–î¬∞ ;)„Å£ : require 'csc_functional.hpp'"
 #endif
 
 namespace CSC {

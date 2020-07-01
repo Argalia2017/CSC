@@ -54,9 +54,10 @@ inline exports BOOL BasicProc::mem_equal (const ARR<_ARG1> &src1 ,const ARR<_ARG
 	_DEBUG_ASSERT_ (len >= 0) ;
 	if (src1 == src2)
 		return TRUE ;
-	for (auto &&i : _RANGE_ (0 ,len))
+	for (auto &&i : _RANGE_ (0 ,len)) {
 		if (!(src1[i] == src2[i]))
 			return FALSE ;
+	}
 	return TRUE ;
 #ifdef __CSC_COMPILER_GNUC__
 #pragma GCC diagnostic pop
@@ -240,9 +241,10 @@ inline exports INDEX BasicProc::mem_chr (const ARR<_ARG1> &src ,const LENGTH &le
 #pragma GCC diagnostic ignored "-Warray-bounds"
 #endif
 	_DEBUG_ASSERT_ (len >= 0) ;
-	for (auto &&i : _RANGE_ (0 ,len))
+	for (auto &&i : _RANGE_ (0 ,len)) {
 		if (src[i] == val)
 			return i ;
+	}
 	return VAR_NONE ;
 #ifdef __CSC_COMPILER_GNUC__
 #pragma GCC diagnostic pop
@@ -256,9 +258,10 @@ inline exports INDEX BasicProc::mem_rchr (const ARR<_ARG1> &src ,const LENGTH &l
 #pragma GCC diagnostic ignored "-Warray-bounds"
 #endif
 	_DEBUG_ASSERT_ (len >= 0) ;
-	for (auto &&i : _RANGE_ (0 ,len))
+	for (auto &&i : _RANGE_ (0 ,len)) {
 		if (src[len + ~i] == val)
 			return (len + ~i) ;
+	}
 	return VAR_NONE ;
 #ifdef __CSC_COMPILER_GNUC__
 #pragma GCC diagnostic pop
@@ -291,15 +294,13 @@ inline exports void BasicProc::mem_rcopy (ARR<_ARG1> &dst ,const ARR<_ARG1> &src
 	_DEBUG_ASSERT_ (len >= 0) ;
 	auto fax = TRUE ;
 	if switch_once (fax) {
-		if (!(dst != src))
+		if (dst == src)
 			discard ;
 		_DEBUG_ASSERT_ (_ABS_ (dst - src) >= len) ;
 		for (auto &&i : _RANGE_ (0 ,len))
 			dst[i] = src[len + ~i] ;
 	}
 	if switch_once (fax) {
-		if (!(dst == src))
-			discard ;
 		for (auto &&i : _RANGE_ (0 ,len / 2)) {
 			const auto r1x = dst[i] ;
 			dst[i] = dst[len + ~i] ;
@@ -322,14 +323,12 @@ inline exports void BasicProc::mem_move (ARR<_ARG1> &dst1 ,ARR<_ARG1> &dst2 ,con
 		return ;
 	auto fax = TRUE ;
 	if switch_once (fax) {
-		if (!(dst1 < dst2))
+		if (!(dst1 <= dst2))
 			discard ;
 		for (auto &&i : _RANGE_ (0 ,len))
 			dst1[i] = _MOVE_ (dst2[i]) ;
 	}
 	if switch_once (fax) {
-		if (!(dst1 > dst2))
-			discard ;
 		for (auto &&i : _RANGE_ (0 ,len))
 			dst1[len + ~i] = _MOVE_ (dst2[len + ~i]) ;
 	}
@@ -1660,7 +1659,7 @@ private:
 	class Holder
 		:public Interface {
 	public:
-		virtual void friend_copy (const PTR<TEMP<FakeHolder>> &address) const = 0 ;
+		virtual void friend_move (const PTR<TEMP<FakeHolder>> &address) = 0 ;
 		virtual UNIT1 invoke (FORWARD_TRAITS_TYPE<UNITS> &&...funcval) const = 0 ;
 	} ;
 
@@ -1673,7 +1672,7 @@ private:
 	public:
 		implicit FakeHolder () = delete ;
 
-		void friend_copy (const PTR<TEMP<FakeHolder>> &address) const override ;
+		void friend_move (const PTR<TEMP<FakeHolder>> &address) override ;
 
 		UNIT1 invoke (FORWARD_TRAITS_TYPE<UNITS> &&...funcval) const override ;
 	} ;
@@ -1702,35 +1701,35 @@ public:
 	}
 
 	template <class _ARG1>
-	explicit Function (const PhanRef<_ARG1> &context_ ,const MEMPTR<DEF<UNIT1 (UNITS...)> ,_ARG1> &functor)
+	explicit Function (PhanRef<_ARG1> &&context_ ,const MEMPTR<DEF<UNIT1 (UNITS...)> ,_ARG1> &functor)
 		:Function (ARGVP0) {
 		struct Dependent ;
 		using ImplHolder = typename DEPENDENT_TYPE<Private ,Dependent>::template ImplHolder<_ARG1 ,DEF<decltype (ARGVP1)>> ;
-		static_create (ARGV<ImplHolder>::null ,DEPTR[mVariant] ,DEPTR[context_.self] ,functor) ;
+		static_create (ARGV<ImplHolder>::null ,DEPTR[mVariant] ,_MOVE_ (context_) ,functor) ;
 	}
 
 	template <class _ARG1>
-	explicit Function (const PhanRef<const _ARG1> &context_ ,const MEMPTR<DEF<UNIT1 (UNITS...) const> ,_ARG1> &functor)
+	explicit Function (PhanRef<const _ARG1> &&context_ ,const MEMPTR<DEF<UNIT1 (UNITS...) const> ,_ARG1> &functor)
 		:Function (ARGVP0) {
 		struct Dependent ;
 		using ImplHolder = typename DEPENDENT_TYPE<Private ,Dependent>::template ImplHolder<_ARG1 ,DEF<decltype (ARGVP2)>> ;
-		static_create (ARGV<ImplHolder>::null ,DEPTR[mVariant] ,DEPTR[context_.self] ,functor) ;
+		static_create (ARGV<ImplHolder>::null ,DEPTR[mVariant] ,_MOVE_ (context_) ,functor) ;
 	}
 
 	template <class _ARG1 ,class _ARG2 ,class = ENABLE_TYPE<(!stl::is_function<_ARG2>::value)>>
-	explicit Function (const PhanRef<_ARG1> &context_ ,const MEMPTR<_ARG2 ,_ARG1> &functor)
+	explicit Function (PhanRef<_ARG1> &&context_ ,const MEMPTR<_ARG2 ,_ARG1> &functor)
 		:Function (ARGVP0) {
 		struct Dependent ;
 		using ImplHolder = typename DEPENDENT_TYPE<Private ,Dependent>::template ImplHolder<_ARG1 ,DEF<decltype (ARGVP3)>> ;
-		static_create (ARGV<ImplHolder>::null ,DEPTR[mVariant] ,DEPTR[context_.self] ,functor) ;
+		static_create (ARGV<ImplHolder>::null ,DEPTR[mVariant] ,_MOVE_ (context_) ,functor) ;
 	}
 
 	template <class _ARG1>
-	explicit Function (const PhanRef<_ARG1> &context_ ,const DEF<UNIT1 (_ARG1 & ,UNITS...)> &functor)
+	explicit Function (PhanRef<_ARG1> &&context_ ,const DEF<UNIT1 (_ARG1 & ,UNITS...)> &functor)
 		:Function (ARGVP0) {
 		struct Dependent ;
 		using ImplHolder = typename DEPENDENT_TYPE<Private ,Dependent>::template ImplHolder<_ARG1 ,DEF<decltype (ARGVP4)>> ;
-		static_create (ARGV<ImplHolder>::null ,DEPTR[mVariant] ,DEPTR[context_.self] ,functor) ;
+		static_create (ARGV<ImplHolder>::null ,DEPTR[mVariant] ,_MOVE_ (context_) ,functor) ;
 	}
 
 	implicit ~Function () noexcept {
@@ -1747,7 +1746,7 @@ public:
 		:Function (ARGVP0) {
 		if (!that.exist ())
 			return ;
-		that.fake.friend_copy (DEPTR[mVariant]) ;
+		that.fake.friend_move (DEPTR[mVariant]) ;
 	}
 
 	inline Function &operator= (Function &&that) noexcept {
@@ -1815,8 +1814,8 @@ public:
 	explicit PureHolder (_ARGS &&...initval)
 		:mFunctor (_FORWARD_ (ARGV<_ARGS>::null ,initval)...) {}
 
-	void friend_copy (const PTR<TEMP<FakeHolder>> &address) const override {
-		static_create (ARGV<PureHolder>::null ,address ,mFunctor) ;
+	void friend_move (const PTR<TEMP<FakeHolder>> &address) override {
+		static_create (ARGV<PureHolder>::null ,address ,_MOVE_ (mFunctor)) ;
 	}
 
 	UNIT1 invoke (FORWARD_TRAITS_TYPE<UNITS> &&...funcval) const override {
@@ -1830,19 +1829,19 @@ class Function<MEMPTR<UNIT1 (UNITS...)>>::Private::ImplHolder<UNIT_ ,DEF<decltyp
 	:public Holder {
 private:
 	MEMPTR<DEF<UNIT1 (UNITS...)> ,UNIT_> mFunctor ;
-	PTR<UNIT_> mContext ;
+	PhanRef<UNIT_> mContext ;
 
 public:
 	template <class... _ARGS>
-	explicit ImplHolder (const PTR<UNIT_> &context_ ,_ARGS &&...initval)
-		:mFunctor (_FORWARD_ (ARGV<_ARGS>::null ,initval)...) ,mContext (context_) {}
+	explicit ImplHolder (PhanRef<UNIT_> &&context_ ,_ARGS &&...initval)
+		:mFunctor (_FORWARD_ (ARGV<_ARGS>::null ,initval)...) ,mContext (_MOVE_ (context_)) {}
 
-	void friend_copy (const PTR<TEMP<FakeHolder>> &address) const override {
-		static_create (ARGV<ImplHolder>::null ,address ,mContext ,mFunctor) ;
+	void friend_move (const PTR<TEMP<FakeHolder>> &address) override {
+		static_create (ARGV<ImplHolder>::null ,address ,_MOVE_ (mContext) ,_MOVE_ (mFunctor)) ;
 	}
 
 	UNIT1 invoke (FORWARD_TRAITS_TYPE<UNITS> &&...funcval) const override {
-		return (DEREF[mContext].*mFunctor) (_FORWARD_ (ARGV<FORWARD_TRAITS_TYPE<UNITS>>::null ,funcval)...) ;
+		return (mContext.self.*mFunctor) (_FORWARD_ (ARGV<FORWARD_TRAITS_TYPE<UNITS>>::null ,funcval)...) ;
 	}
 } ;
 
@@ -1852,19 +1851,19 @@ class Function<MEMPTR<UNIT1 (UNITS...)>>::Private::ImplHolder<UNIT_ ,DEF<decltyp
 	:public Holder {
 private:
 	MEMPTR<DEF<UNIT1 (UNITS...) const> ,UNIT_> mFunctor ;
-	PTR<const UNIT_> mContext ;
+	PhanRef<const UNIT_> mContext ;
 
 public:
 	template <class... _ARGS>
-	explicit ImplHolder (const PTR<const UNIT_> &context_ ,_ARGS &&...initval)
-		:mFunctor (_FORWARD_ (ARGV<_ARGS>::null ,initval)...) ,mContext (context_) {}
+	explicit ImplHolder (PhanRef<const UNIT_> &&context_ ,_ARGS &&...initval)
+		:mFunctor (_FORWARD_ (ARGV<_ARGS>::null ,initval)...) ,mContext (_MOVE_ (context_)) {}
 
-	void friend_copy (const PTR<TEMP<FakeHolder>> &address) const override {
-		static_create (ARGV<ImplHolder>::null ,address ,mContext ,mFunctor) ;
+	void friend_move (const PTR<TEMP<FakeHolder>> &address) override {
+		static_create (ARGV<ImplHolder>::null ,address ,_MOVE_ (mContext) ,_MOVE_ (mFunctor)) ;
 	}
 
 	UNIT1 invoke (FORWARD_TRAITS_TYPE<UNITS> &&...funcval) const override {
-		return (DEREF[mContext].*mFunctor) (_FORWARD_ (ARGV<FORWARD_TRAITS_TYPE<UNITS>>::null ,funcval)...) ;
+		return (mContext.self.*mFunctor) (_FORWARD_ (ARGV<FORWARD_TRAITS_TYPE<UNITS>>::null ,funcval)...) ;
 	}
 } ;
 
@@ -1876,19 +1875,19 @@ class Function<MEMPTR<UNIT1 (UNITS...)>>::Private::ImplHolder<UNIT_ ,DEF<decltyp
 
 private:
 	MEMPTR<REMOVE_REFERENCE_TYPE<UNIT1> ,UNIT_> mFunctor ;
-	PTR<UNIT_> mContext ;
+	PhanRef<UNIT_> mContext ;
 
 public:
 	template <class... _ARGS>
-	explicit ImplHolder (const PTR<UNIT_> &context_ ,_ARGS &&...initval)
-		:mFunctor (_FORWARD_ (ARGV<_ARGS>::null ,initval)...) ,mContext (context_) {}
+	explicit ImplHolder (PhanRef<UNIT_> &&context_ ,_ARGS &&...initval)
+		:mFunctor (_FORWARD_ (ARGV<_ARGS>::null ,initval)...) ,mContext (_MOVE_ (context_)) {}
 
-	void friend_copy (const PTR<TEMP<FakeHolder>> &address) const override {
-		static_create (ARGV<ImplHolder>::null ,address ,mContext ,mFunctor) ;
+	void friend_move (const PTR<TEMP<FakeHolder>> &address) override {
+		static_create (ARGV<ImplHolder>::null ,address ,_MOVE_ (mContext) ,_MOVE_ (mFunctor)) ;
 	}
 
 	UNIT1 invoke (FORWARD_TRAITS_TYPE<UNITS> &&...funcval) const override {
-		return (DEREF[mContext].*mFunctor) ;
+		return (mContext.self.*mFunctor) ;
 	}
 } ;
 
@@ -1898,19 +1897,19 @@ class Function<MEMPTR<UNIT1 (UNITS...)>>::Private::ImplHolder<UNIT_ ,DEF<decltyp
 	:public Holder {
 private:
 	Function<UNIT1 (UNIT_ & ,UNITS...)> mFunctor ;
-	PTR<UNIT_> mContext ;
+	PhanRef<UNIT_> mContext ;
 
 public:
 	template <class... _ARGS>
-	explicit ImplHolder (const PTR<UNIT_> &context_ ,_ARGS &&...initval)
-		:mFunctor (_FORWARD_ (ARGV<_ARGS>::null ,initval)...) ,mContext (context_) {}
+	explicit ImplHolder (PhanRef<UNIT_> &&context_ ,_ARGS &&...initval)
+		:mFunctor (_FORWARD_ (ARGV<_ARGS>::null ,initval)...) ,mContext (_MOVE_ (context_)) {}
 
-	void friend_copy (const PTR<TEMP<FakeHolder>> &address) const override {
-		static_create (ARGV<ImplHolder>::null ,address ,mContext ,mFunctor) ;
+	void friend_move (const PTR<TEMP<FakeHolder>> &address) override {
+		static_create (ARGV<ImplHolder>::null ,address ,_MOVE_ (mContext) ,_MOVE_ (mFunctor)) ;
 	}
 
 	UNIT1 invoke (FORWARD_TRAITS_TYPE<UNITS> &&...funcval) const override {
-		return mFunctor (mContext ,_FORWARD_ (ARGV<FORWARD_TRAITS_TYPE<UNITS>>::null ,funcval)...) ;
+		return mFunctor (mContext.self ,_FORWARD_ (ARGV<FORWARD_TRAITS_TYPE<UNITS>>::null ,funcval)...) ;
 	}
 } ;
 
@@ -3009,7 +3008,7 @@ public:
 			mSize = _EXCHANGE_ (that.mSize) ;
 		const auto r1x = that.mSize - mSize ;
 		const auto r2x = VAR_ZERO ;
-		mSize += _EBOOL_ (stl::is_pod<UNIT>::value) * _MAX_ (r1x ,r2x) ;
+		mSize += _MAX_ (r1x ,r2x) * _EBOOL_ (stl::is_pod<UNIT>::value) ;
 		while (TRUE) {
 			if (mSize >= that.mSize)
 				break ;
@@ -3111,7 +3110,7 @@ public:
 			mSize = that.mSize ;
 		const auto r1x = that.mSize - mSize ;
 		const auto r2x = VAR_ZERO ;
-		mSize += _EBOOL_ (stl::is_pod<UNIT>::value) * _MAX_ (r1x ,r2x) ;
+		mSize += _MAX_ (r1x ,r2x) * _EBOOL_ (stl::is_pod<UNIT>::value) ;
 		while (TRUE) {
 			if (mSize >= that.mSize)
 				break ;
@@ -3143,7 +3142,7 @@ public:
 			mSize = _EXCHANGE_ (that.mSize) ;
 		const auto r1x = that.mSize - mSize ;
 		const auto r2x = VAR_ZERO ;
-		mSize += _EBOOL_ (stl::is_pod<UNIT>::value) * _MAX_ (r1x ,r2x) ;
+		mSize += _MAX_ (r1x ,r2x) * _EBOOL_ (stl::is_pod<UNIT>::value) ;
 		while (TRUE) {
 			if (mSize >= that.mSize)
 				break ;
@@ -3279,14 +3278,14 @@ public:
 		if switch_once (fax) {
 			if (mFree != VAR_NONE)
 				discard ;
-			auto tmp = mAllocator.expand (mAllocator.expand_size ()) ;
+			auto rax = mAllocator.expand (mAllocator.expand_size ()) ;
 			ret = mSize ;
-			_CREATE_ (DEPTR[tmp[ret].mValue] ,_FORWARD_ (ARGV<_ARGS>::null ,initval)...) ;
+			_CREATE_ (DEPTR[rax[ret].mValue] ,_FORWARD_ (ARGV<_ARGS>::null ,initval)...) ;
 			for (auto &&i : _RANGE_ (0 ,mSize)) {
-				_CREATE_ (DEPTR[tmp[i].mValue] ,_MOVE_ (_CAST_ (ARGV<UNIT>::null ,mAllocator[i].mValue))) ;
-				tmp[i].mNext = VAR_USED ;
+				_CREATE_ (DEPTR[rax[i].mValue] ,_MOVE_ (_CAST_ (ARGV<UNIT>::null ,mAllocator[i].mValue))) ;
+				rax[i].mNext = VAR_USED ;
 			}
-			mAllocator.swap (tmp) ;
+			mAllocator.swap (rax) ;
 			update_reserve (mSize ,mFree) ;
 		}
 		if switch_once (fax) {
@@ -3315,13 +3314,13 @@ public:
 		if (r3x == 0)
 			return ;
 		_DEBUG_ASSERT_ (mSize + r3x > mSize) ;
-		auto tmp = mAllocator.expand (mSize + r3x) ;
+		auto rax = mAllocator.expand (mSize + r3x) ;
 		for (auto &&i : _RANGE_ (0 ,mSize)) {
 			if (mAllocator[i].mNext == VAR_USED)
-				_CREATE_ (DEPTR[tmp[i].mValue] ,_MOVE_ (_CAST_ (ARGV<UNIT>::null ,mAllocator[i].mValue))) ;
-			tmp[i].mNext = mAllocator[i].mNext ;
+				_CREATE_ (DEPTR[rax[i].mValue] ,_MOVE_ (_CAST_ (ARGV<UNIT>::null ,mAllocator[i].mValue))) ;
+			rax[i].mNext = mAllocator[i].mNext ;
 		}
-		mAllocator.swap (tmp) ;
+		mAllocator.swap (rax) ;
 		update_reserve (mSize ,mFree) ;
 	}
 
@@ -3330,13 +3329,13 @@ public:
 		if (r1x == mSize)
 			return ;
 		_DYNAMIC_ASSERT_ (r1x == mLength) ;
-		auto tmp = mAllocator.expand (r1x) ;
-		for (auto &&i : _RANGE_ (0 ,tmp.size ())) {
+		auto rax = mAllocator.expand (r1x) ;
+		for (auto &&i : _RANGE_ (0 ,rax.size ())) {
 			_DEBUG_ASSERT_ (mAllocator[i].mNext == VAR_USED) ;
-			_CREATE_ (DEPTR[tmp[i].mValue] ,_MOVE_ (_CAST_ (ARGV<UNIT>::null ,mAllocator[i].mValue))) ;
-			tmp[i].mNext = VAR_USED ;
+			_CREATE_ (DEPTR[rax[i].mValue] ,_MOVE_ (_CAST_ (ARGV<UNIT>::null ,mAllocator[i].mValue))) ;
+			rax[i].mNext = VAR_USED ;
 		}
-		mAllocator.swap (tmp) ;
+		mAllocator.swap (rax) ;
 		update_reserve (r1x ,VAR_NONE) ;
 	}
 

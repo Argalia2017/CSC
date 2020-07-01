@@ -329,53 +329,45 @@ private:
 		_DYNAMIC_ASSERT_ (rbx.empty ()) ;
 	}
 
-	Array<ARRAY1<ARRAY3<VAL32>>> bind_vertex (const Set<ARRAY3<VAL32>> &vertex ,const SoftList<ARRAY1<INDEX>> &element) const {
+	Array<ARRAY1<ARRAY3<VAL32>>> bind_vertex (const Set<ARRAY3<VAL32>> &vertex ,const Deque<ARRAY1<INDEX>> &element) const {
 		Array<ARRAY1<ARRAY3<VAL32>>> ret = Array<ARRAY1<ARRAY3<VAL32>>> (element.length ()) ;
-		INDEX iw = 0 ;
-		for (auto &&i : element) {
-			INDEX ix = iw++ ;
-			ret[ix][0] = vertex[i[0]] ;
+		for (auto &&i : _RANGE_ (0 ,element.length ())) {
+			INDEX ix = element.access (i) ;
+			ret[i][0] = vertex[element[ix][0]] ;
 		}
-		_DEBUG_ASSERT_ (iw == ret.length ()) ;
 		return _MOVE_ (ret) ;
 	}
 
-	Array<ARRAY2<ARRAY3<VAL32>>> bind_vertex (const Set<ARRAY3<VAL32>> &vertex ,const SoftList<ARRAY2<INDEX>> &element) const {
+	Array<ARRAY2<ARRAY3<VAL32>>> bind_vertex (const Set<ARRAY3<VAL32>> &vertex ,const Deque<ARRAY2<INDEX>> &element) const {
 		Array<ARRAY2<ARRAY3<VAL32>>> ret = Array<ARRAY2<ARRAY3<VAL32>>> (element.length ()) ;
-		INDEX iw = 0 ;
-		for (auto &&i : element) {
-			INDEX ix = iw++ ;
-			ret[ix][0] = vertex[i[0]] ;
-			ret[ix][1] = vertex[i[1]] ;
+		for (auto &&i : _RANGE_ (0 ,element.length ())) {
+			INDEX ix = element.access (i) ;
+			ret[i][0] = vertex[element[ix][0]] ;
+			ret[i][1] = vertex[element[ix][1]] ;
 		}
-		_DEBUG_ASSERT_ (iw == ret.length ()) ;
 		return _MOVE_ (ret) ;
 	}
 
-	Array<ARRAY3<ARRAY3<VAL32>>> bind_vertex (const Set<ARRAY3<VAL32>> &vertex ,const SoftList<ARRAY3<INDEX>> &element) const {
+	Array<ARRAY3<ARRAY3<VAL32>>> bind_vertex (const Set<ARRAY3<VAL32>> &vertex ,const Deque<ARRAY3<INDEX>> &element) const {
 		Array<ARRAY3<ARRAY3<VAL32>>> ret = Array<ARRAY3<ARRAY3<VAL32>>> (element.length ()) ;
-		INDEX iw = 0 ;
-		for (auto &&i : element) {
-			INDEX ix = iw++ ;
-			ret[ix][0] = vertex[i[0]] ;
-			ret[ix][1] = vertex[i[1]] ;
-			ret[ix][2] = vertex[i[2]] ;
+		for (auto &&i : _RANGE_ (0 ,element.length ())) {
+			INDEX ix = element.access (i) ;
+			ret[i][0] = vertex[element[ix][0]] ;
+			ret[i][1] = vertex[element[ix][1]] ;
+			ret[i][2] = vertex[element[ix][2]] ;
 		}
-		_DEBUG_ASSERT_ (iw == ret.length ()) ;
 		return _MOVE_ (ret) ;
 	}
 
-	Array<ARRAY4<ARRAY3<VAL32>>> bind_vertex (const Set<ARRAY3<VAL32>> &vertex ,const SoftList<ARRAY4<INDEX>> &element) const {
+	Array<ARRAY4<ARRAY3<VAL32>>> bind_vertex (const Set<ARRAY3<VAL32>> &vertex ,const Deque<ARRAY4<INDEX>> &element) const {
 		Array<ARRAY4<ARRAY3<VAL32>>> ret = Array<ARRAY4<ARRAY3<VAL32>>> (element.length ()) ;
-		INDEX iw = 0 ;
-		for (auto &&i : element) {
-			INDEX ix = iw++ ;
-			ret[ix][0] = vertex[i[0]] ;
-			ret[ix][1] = vertex[i[1]] ;
-			ret[ix][2] = vertex[i[2]] ;
-			ret[ix][3] = vertex[i[3]] ;
+		for (auto &&i : _RANGE_ (0 ,element.length ())) {
+			INDEX ix = element.access (i) ;
+			ret[i][0] = vertex[element[ix][0]] ;
+			ret[i][1] = vertex[element[ix][1]] ;
+			ret[i][2] = vertex[element[ix][2]] ;
+			ret[i][3] = vertex[element[ix][3]] ;
 		}
-		_DEBUG_ASSERT_ (iw == ret.length ()) ;
 		return _MOVE_ (ret) ;
 	}
 

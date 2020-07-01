@@ -153,16 +153,6 @@ using std::atomic ;
 
 #ifdef __CSC_UNITTEST__
 #ifdef __CSC_COMPILER_MSVC__
-#define _UNITTEST_ASSERT_(...) do { if (!(_UNW_ (__VA_ARGS__))) CSC::GlobalWatch::done (CSC::Exception (_PCSTR_ ("unittest_assert failed : " _STR_ (__VA_ARGS__) " : at " M_FUNC " in " M_FILE " ," M_LINE))) ; } while (FALSE)
-#endif
-#endif
-
-#ifndef _UNITTEST_ASSERT_
-#define _UNITTEST_ASSERT_(...) do {} while (FALSE)
-#endif
-
-#ifdef __CSC_UNITTEST__
-#ifdef __CSC_COMPILER_MSVC__
 #define _UNITTEST_WATCH_(...) do { struct ARGVPL ; CSC::GlobalWatch::done (CSC::ARGV<ARGVPL>::null ,_PCSTR_ (_STR_ (__VA_ARGS__)) ,(_UNW_ (__VA_ARGS__))) ; } while (FALSE)
 #endif
 #endif
@@ -362,11 +352,11 @@ using DECREASE = ARGC<(_ARG1::value - 1)> ;
 
 template <class UNIT>
 struct ARGV {
-	imports DEF<void (const ARGV &)> null ;
+	static DEF<void (const ARGV &)> null ;
 } ;
 
 template <class UNIT>
-inline exports void ARGV<UNIT>::null (const ARGV &) {}
+inline void ARGV<UNIT>::null (const ARGV &) {}
 
 template <class _ARG1>
 using ARGVF = DEF<void (const ARGV<_ARG1> &)> ;
@@ -1526,9 +1516,9 @@ template <class _ARG1>
 inline void _SWAP_ (_ARG1 &lhs ,_ARG1 &rhs) {
 	_STATIC_ASSERT_ (stl::is_nothrow_move_constructible<_ARG1>::value) ;
 	_STATIC_ASSERT_ (stl::is_nothrow_move_assignable<_ARG1>::value) ;
-	auto tmp = _MOVE_ (lhs) ;
+	auto rax = _MOVE_ (lhs) ;
 	lhs = _MOVE_ (rhs) ;
-	rhs = _MOVE_ (tmp) ;
+	rhs = _MOVE_ (rax) ;
 }
 
 template <class _ARG1 ,class _ARG2>
@@ -1635,10 +1625,10 @@ struct CONSTEXPR_EBOOL_SWITCH {
 } ;
 } ;
 
-inline constexpr VAR32 _EBOOL_ (const BOOL &flag) {
+inline constexpr INDEX _EBOOL_ (const BOOL &flag) {
 	return _SWITCH_ (
-		flag ? U::CONSTEXPR_EBOOL_SWITCH<VAR32>::case1 :
-		U::CONSTEXPR_EBOOL_SWITCH<VAR32>::case2)
+		flag ? U::CONSTEXPR_EBOOL_SWITCH<INDEX>::case1 :
+		U::CONSTEXPR_EBOOL_SWITCH<INDEX>::case2)
 		() ;
 }
 
@@ -1776,7 +1766,7 @@ public:
 	_RET begin () const {
 		struct Dependent ;
 		using Iterator = typename DEPENDENT_TYPE<Private ,Dependent>::Iterator ;
-		return Iterator (DEREF[this] ,mIBegin) ;
+		return Iterator (mIBegin) ;
 	}
 
 	template <class _RET = REMOVE_CVR_TYPE<typename Private::Iterator>>
@@ -1784,21 +1774,21 @@ public:
 		struct Dependent ;
 		using Iterator = typename DEPENDENT_TYPE<Private ,Dependent>::Iterator ;
 		const auto r1x = _MAX_ (mIBegin ,mIEnd) ;
-		return Iterator (DEREF[this] ,r1x) ;
+		return Iterator (r1x) ;
 	}
 } ;
 
 class ArrayRange<ZERO>::Private::Iterator
 	:private Proxy {
 private:
-	const ArrayRange &mBase ;
 	INDEX mIndex ;
 
 public:
 	implicit Iterator () = delete ;
 
-	explicit Iterator (const ArrayRange &base ,const INDEX &index)
-		: mBase (base) ,mIndex (index) {}
+	explicit Iterator (const INDEX &index) {
+		mIndex = index ;
+	}
 
 	inline BOOL operator!= (const Iterator &that) const {
 		return BOOL (mIndex != that.mIndex) ;
@@ -1817,11 +1807,21 @@ inline ArrayRange<ZERO> _RANGE_ (const INDEX &ibegin_ ,const INDEX &iend_) {
 	return ArrayRange<ZERO> (ibegin_ ,iend_) ;
 }
 
+template <class ,class>
+class Array ;
+
+template <class _ARG1>
+inline ArrayRange<_ARG1> _RANGE_ (const Array<LENGTH ,_ARG1> &range_) {
+	struct Depentent ;
+	using ArrayRange_SIZE = DEPENDENT_TYPE<ArrayRange<_ARG1> ,Depentent> ;
+	return ArrayRange_SIZE (range_) ;
+}
+
 template <class _ARG1>
 inline const RESULT_OF_TYPE<_ARG1 ,ARGVS<>> &_CACHE_ (const _ARG1 &proc) side_effects {
 	_STATIC_ASSERT_ (!stl::is_reference<RESULT_OF_TYPE<_ARG1 ,ARGVS<>>>::value) ;
 	_STATIC_ASSERT_ (!stl::is_same<RESULT_OF_TYPE<_ARG1 ,ARGVS<>> ,void>::value) ;
-	imports const RESULT_OF_TYPE<_ARG1 ,ARGVS<>> mInstance = proc () ;
+	static const RESULT_OF_TYPE<_ARG1 ,ARGVS<>> mInstance = proc () ;
 	return mInstance ;
 }
 
@@ -1875,7 +1875,7 @@ public:
 	implicit Plain () = delete ;
 
 	template <class _ARG1 ,class = ENABLE_TYPE<(stl::is_const<_ARG1>::value && stl::is_bounded_array_of<REAL ,_ARG1>::value)>>
-	constexpr implicit Plain (_ARG1 &that)
+	implicit Plain (_ARG1 &that)
 		:mPlain (DEPTR[that[0]]) ,mSize (_COUNTOF_ (_ARG1) - 1) {}
 
 	template <class _ARG1 ,class... _ARGS>
@@ -1884,16 +1884,16 @@ public:
 		_STATIC_WARNING_ ("noop") ;
 	}
 
-	constexpr LENGTH size () const {
+	LENGTH size () const {
 		return mSize ;
 	}
 
-	constexpr const ARR<REAL> &to () const leftvalue {
+	const ARR<REAL> &to () const leftvalue {
 		_STATIC_WARNING_ ("mark") ;
 		return PTRTOARR[mPlain] ;
 	}
 
-	inline constexpr implicit operator const ARR<REAL> & () const leftvalue {
+	inline implicit operator const ARR<REAL> & () const leftvalue {
 		return to () ;
 	}
 
@@ -1978,8 +1978,14 @@ inline CAST_TRAITS_TYPE<_ARG1 ,_ARG2> &_LOAD_ (const ARGVF<_ARG1> & ,const PTR<_
 	return DEREF[r3x] ;
 }
 
+template <class _ARG1 ,class = ENABLE_TYPE<std::is_same<RESULT_OF_TYPE<_ARG1 ,ARGVS<>> ,void>::value>>
+inline void _CALL_ (_ARG1 &&proc) {
+	_STATIC_ASSERT_ (!stl::is_reference<_ARG1>::value) ;
+	return proc () ;
+}
+
 template <class _ARG1>
-inline RESULT_OF_TYPE<_ARG1 ,ARGVS<>> _CALL_ (_ARG1 &&proc) side_effects {
+inline RESULT_OF_TYPE<_ARG1 ,ARGVS<>> _CALL_ (const _ARG1 &proc) side_effects {
 	_STATIC_ASSERT_ (!stl::is_reference<_ARG1>::value) ;
 	_STATIC_ASSERT_ (!stl::is_reference<RESULT_OF_TYPE<_ARG1 ,ARGVS<>>>::value) ;
 	return proc () ;

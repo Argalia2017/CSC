@@ -187,14 +187,16 @@ public:
 		} ,[] (HFIBITMAP &me) {
 			api::FreeImage_Unload (me) ;
 		}) ;
-		if (api::FreeImage_GetBPP (tmp.self) == 24)
-			return ;
-		tmp = UniqueRef<HFIBITMAP> ([&] (HFIBITMAP &me) {
-			me = api::FreeImage_ConvertTo24Bits (tmp.self) ;
-			_DYNAMIC_ASSERT_ (me != NULL) ;
-		} ,[] (HFIBITMAP &me) {
-			api::FreeImage_Unload (me) ;
-		}) ;
+		if switch_once (TRUE) {
+			if (api::FreeImage_GetBPP (tmp.self) == 24)
+				discard ;
+			tmp = UniqueRef<HFIBITMAP> ([&] (HFIBITMAP &me) {
+				me = api::FreeImage_ConvertTo24Bits (tmp.self) ;
+				_DYNAMIC_ASSERT_ (me != NULL) ;
+			} ,[] (HFIBITMAP &me) {
+				api::FreeImage_Unload (me) ;
+			}) ;
+		}
 		holder = AnyRef<NATIVE_THIS>::make (_MOVE_ (tmp)) ;
 	}
 
@@ -304,14 +306,16 @@ public:
 		} ,[] (HFIBITMAP &me) {
 			api::FreeImage_Unload (me) ;
 		}) ;
-		if (api::FreeImage_GetBPP (tmp.self) == 32)
-			return ;
-		tmp = UniqueRef<HFIBITMAP> ([&] (HFIBITMAP &me) {
-			me = api::FreeImage_ConvertTo32Bits (tmp.self) ;
-			_DYNAMIC_ASSERT_ (me != NULL) ;
-		} ,[] (HFIBITMAP &me) {
-			api::FreeImage_Unload (me) ;
-		}) ;
+		if switch_once (TRUE) {
+			if (api::FreeImage_GetBPP (tmp.self) == 32)
+				discard ;
+			tmp = UniqueRef<HFIBITMAP> ([&] (HFIBITMAP &me) {
+				me = api::FreeImage_ConvertTo32Bits (tmp.self) ;
+				_DYNAMIC_ASSERT_ (me != NULL) ;
+			} ,[] (HFIBITMAP &me) {
+				api::FreeImage_Unload (me) ;
+			}) ;
+		}
 		holder = AnyRef<NATIVE_THIS>::make (_MOVE_ (tmp)) ;
 	}
 

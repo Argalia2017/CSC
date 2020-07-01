@@ -161,7 +161,6 @@ inline exports ARRAY2<api::fd_set> SocketStaticProc::static_socket_select (const
 		const auto r1x = api::select (FD_SETSIZE ,DEPTR[ret[0]] ,DEPTR[ret[1]] ,NULL ,DEPTR[rax]) ;
 		if (r1x >= 0)
 			break ;
-		_STATIC_WARNING_ ("noop") ;
 	}
 	_ZERO_ (rax) ;
 	return _MOVE_ (ret) ;
@@ -388,7 +387,10 @@ inline exports String<STRU8> TCPSocket::http_post (const String<STRU8> &ip_addr 
 
 class TCPListener::Private::Implement {
 private:
-	SharedRef<TCPSocket::Implement::SELF_PACK> mThis ;
+	using SELF_PACK = TCPSocket::Implement::SELF_PACK ;
+
+private:
+	SharedRef<SELF_PACK> mThis ;
 	UniqueRef<SOCKET> mListener ;
 	UniqueRef<SOCKET> mLinker ;
 

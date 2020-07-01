@@ -1,7 +1,7 @@
-#pragma once
+ï»¿#pragma once
 
 #ifndef __CSC_DATABASE__
-#error "¡Æ(¤Ã¡ã§¥¡ã ;)¤Ã : require 'csc_database.hpp'"
+#error "âˆ‘(ã£Â°Ğ”Â° ;)ã£ : require 'csc_database.hpp'"
 #endif
 
 #ifdef __CSC__
@@ -30,7 +30,7 @@
 #endif
 
 #ifndef _mysql_h
-#error "¡Æ(¤Ã¡ã§¥¡ã ;)¤Ã : require 'mysql.h'"
+#error "âˆ‘(ã£Â°Ğ”Â° ;)ã£ : require 'mysql.h'"
 #endif
 
 #ifdef __CSC_DEPRECATED__

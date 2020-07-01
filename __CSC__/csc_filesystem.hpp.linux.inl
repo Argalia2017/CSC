@@ -240,33 +240,32 @@ inline exports String<STR> FileSystemProc::parse_file_name (const String<STR> &f
 }
 
 inline exports Deque<String<STR>> FileSystemProc::decouple_path_name (const String<STR> &file) {
-	const auto r1x = _CALL_ ([&] () {
-		if (!file.empty ())
-			return file.raw () ;
-		return PhanBuffer<const STR> () ;
-	}) ;
-	auto rax = TextReader<STR> (r1x) ;
-	const auto r2x = rax.attr () ;
-	r2x.modify_space (STR ('\\') ,0) ;
-	r2x.modify_space (STR ('/') ,0) ;
-	auto rbx = STR () ;
 	Deque<String<STR>> ret ;
-	INDEX ix = ret.insert () ;
-	rax.share () >> rbx ;
-	if (r2x.varify_space (rbx))
-		rax >> rbx ;
-	while (TRUE) {
-		rax >> ret[ix] ;
-		if (ret[ix].empty ())
-			break ;
-		ix = ret.insert () ;
-		rax >> rbx ;
-		if (rbx == r2x.varify_ending_item ())
-			break ;
-		_DYNAMIC_ASSERT_ (r2x.varify_space (rbx)) ;
+	if switch_once (TRUE) {
+		if (file.empty ())
+			discard ;
+		auto rax = TextReader<STR> (file.raw ()) ;
+		const auto r2x = rax.attr () ;
+		r2x.modify_space (STR ('\\') ,0) ;
+		r2x.modify_space (STR ('/') ,0) ;
+		auto rbx = STR () ;
+		INDEX ix = ret.insert () ;
+		rax.share () >> rbx ;
+		if (r2x.varify_space (rbx))
+			rax >> rbx ;
+		while (TRUE) {
+			rax >> ret[ix] ;
+			if (ret[ix].empty ())
+				break ;
+			ix = ret.insert () ;
+			rax >> rbx ;
+			if (rbx == r2x.varify_ending_item ())
+				break ;
+			_DYNAMIC_ASSERT_ (r2x.varify_space (rbx)) ;
+		}
+		ret.pop () ;
+		rax >> TextReader<STR>::EOS ;
 	}
-	ret.pop () ;
-	rax >> TextReader<STR>::EOS ;
 	return _MOVE_ (ret) ;
 }
 
@@ -329,14 +328,15 @@ inline exports String<STR> FileSystemProc::absolute_path (const String<STR> &pat
 	if switch_once (fax) {
 		if (rax.length () < 1)
 			discard ;
-		if (rax[rax.access (0)] != _PCSTR_ ("."))
-			if (rax[rax.access (0)] != _PCSTR_ (".."))
+		INDEX ix = rax.access (0) ;
+		if (rax[ix] != _PCSTR_ ("."))
+			if (rax[ix] != _PCSTR_ (".."))
 				discard ;
 		const auto r1x = FileSystemProc::working_path () ;
 		if switch_once (TRUE) {
-			auto tmp = FileSystemProc::decouple_path_name (r1x) ;
-			tmp.appand (_MOVE_ (rax)) ;
-			rax = _MOVE_ (tmp) ;
+			auto rbx = FileSystemProc::decouple_path_name (r1x) ;
+			rbx.appand (_MOVE_ (rax)) ;
+			rax = _MOVE_ (rbx) ;
 		}
 		if (r1x.size () < 1)
 			discard ;
@@ -347,10 +347,10 @@ inline exports String<STR> FileSystemProc::absolute_path (const String<STR> &pat
 	}
 	const auto r2x = FileSystemStaticProc::static_relative_path_name (rax) ;
 	for (auto &&i : _RANGE_ (0 ,r2x.length ())) {
+		INDEX ix = r2x.access (i) ;
 		if (i > 0)
 			ret += _PCSTR_ ("/") ;
-		INDEX ix = r2x[r2x.access (i)] ;
-		ret += rax[ix] ;
+		ret += rax[r2x[ix]] ;
 	}
 	if switch_once (TRUE) {
 		const auto r3x = ret.length () ;
@@ -456,9 +456,9 @@ inline exports void FileSystemProc::build_directory (const String<STR> &dire) {
 		rax += _PCSTR_ ("/") ;
 	}
 	for (auto &&i : _RANGE_ (0 ,r2x.length ())) {
+		INDEX ix = r2x.access (i) ;
 		if (i > 0)
 			rax += _PCSTR_ ("/") ;
-		INDEX ix = r2x.access (i) ;
 		rax += r2x[ix] ;
 		const auto r3x = r2x[ix].length () ;
 		if (r3x > 1)

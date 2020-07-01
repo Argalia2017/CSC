@@ -83,12 +83,18 @@ public:
 				break ;
 			ret = mTable[ret].mUp ;
 		}
-		for (INDEX i = index ,it ,ie = ret ; i != ie ; i = it) {
-			it = mTable[i].mUp ;
-			mTable[i].mUp = ret ;
-			if (it == ret)
-				continue ;
-			mTable[it].mWidth -= mTable[i].mWidth ;
+		INDEX ix = index ;
+		while (TRUE) {
+			if (ix == ret)
+				break ;
+			INDEX iy = mTable[ix].mUp ;
+			mTable[ix].mUp = ret ;
+			if switch_once (TRUE) {
+				if (iy == ret)
+					discard ;
+				mTable[iy].mWidth -= mTable[ix].mWidth ;
+			}
+			ix = iy ;
 		}
 		return _MOVE_ (ret) ;
 	}
@@ -180,12 +186,15 @@ private:
 	void initialize (const PhanBuffer<const REAL> &pattern) ;
 
 	INDEX find_next (const INDEX &slow ,const INDEX &fast) const {
-		for (INDEX i = fast ,it ; i != VAR_NONE ; i = it) {
-			it = mNext[i] ;
-			if (mPattern[i] != mPattern[slow])
-				return i ;
+		INDEX ret = fast ;
+		while (TRUE) {
+			if (ret == VAR_NONE)
+				break ;
+			if (mPattern[ret] != mPattern[slow])
+				break ;
+			ret = mNext[ret] ;
 		}
-		return VAR_NONE ;
+		return _MOVE_ (ret) ;
 	}
 } ;
 
@@ -239,13 +248,13 @@ public:
 	}
 
 	Array<INDEX> query_path (const INDEX &index) const {
-		Array<INDEX> ret = Array<INDEX> (query_path_depth (index)) ;
-		INDEX iw = ret.length () ;
-		for (INDEX i = index ,it ; i != VAR_NONE ; i = it) {
-			it = mPrev[i] ;
-			ret[--iw] = i ;
+		const auto r1x = query_path_depth (index) ;
+		Array<INDEX> ret = Array<INDEX> (r1x.length ()) ;
+		for (auto &&i : _RANGE_ (0 ,r1x.length ())) {
+			INDEX ix = r1x.access (i) ;
+			INDEX iy = ret.length () + ~i ;
+			ret[iy] = r1x[ix] ;
 		}
-		_DEBUG_ASSERT_ (iw == 0) ;
 		return _MOVE_ (ret) ;
 	}
 
@@ -256,11 +265,14 @@ private:
 		_CALL_ (InitializeLambda (DEREF[this] ,adjacency ,root_)) ;
 	}
 
-	LENGTH query_path_depth (const INDEX &index) const {
-		LENGTH ret = 0 ;
-		for (INDEX i = index ,it ; i != VAR_NONE ; i = it) {
-			it = mPrev[i] ;
-			ret++ ;
+	Deque<INDEX> query_path_depth (const INDEX &index) const {
+		Deque<INDEX> ret = Deque<INDEX> (mPrev.length ()) ;
+		INDEX ix = index ;
+		while (TRUE) {
+			if (ix == VAR_NONE)
+				break ;
+			ret.add (ix) ;
+			ix = mPrev[ix] ;
 		}
 		return _MOVE_ (ret) ;
 	}
@@ -348,7 +360,7 @@ private:
 	} ;
 
 private:
-	Deque<BitSet<>> mClusterList ;
+	Deque<BitSet<>> mCluster ;
 
 public:
 	implicit KMeansAlgorithm () = delete ;
@@ -360,7 +372,7 @@ public:
 	}
 
 	const Deque<BitSet<>> &query () const leftvalue {
-		return mClusterList ;
+		return mCluster ;
 	}
 
 private:
@@ -382,10 +394,9 @@ private:
 	const REAL mTolerance ;
 	const REAL mInfinity ;
 
-	SoftList<REAL> mCurrCenterList ;
-	SoftList<REAL> mNextCenterList ;
-	Set<INDEX> mCenterMoveSet ;
-	Deque<BitSet<>> mClusterList ;
+	ArrayList<REAL> mCurrCenter ;
+	ArrayList<REAL> mNextCenter ;
+	Deque<BitSet<>> mCluster ;
 	Set<INDEX> mClusterMappingSet ;
 	ARRAY3<REAL> mConvergence ;
 
@@ -401,12 +412,10 @@ public:
 
 private:
 	void prepare () {
-		mCurrCenterList = SoftList<REAL> (mCenter.length ()) ;
-		mNextCenterList = SoftList<REAL> (mCenter.length ()) ;
-		mCurrCenterList.appand (mCenter) ;
-		mCenterMoveSet = Set<INDEX> (mCenter.length ()) ;
-		mClusterList = Deque<BitSet<>> () ;
-		mClusterMappingSet = Set<INDEX> () ;
+		mCurrCenter = ArrayList<REAL> (mCenter.size ()) ;
+		mNextCenter = ArrayList<REAL> (mCenter.size ()) ;
+		mCurrCenter.appand (mCenter) ;
+		mCluster = Deque<BitSet<>> (mCenter.size ()) ;
 		mConvergence.fill (mInfinity) ;
 	}
 
@@ -421,37 +430,35 @@ private:
 	}
 
 	void update_cluster_set () {
-		mClusterList.clear () ;
-		mClusterMappingSet.clear () ;
+		mCluster.clear () ;
 		for (auto &&i : mDataSet) {
-			INDEX ix = closest_center_of_point (i) ;
-			INDEX iy = mClusterMappingSet.map (ix) ;
+			const auto r1x = mDataSet.at (i) ;
+			INDEX jx = closest_center_of_point (i) ;
+			INDEX jy = mClusterMappingSet.map (jx) ;
 			if switch_once (TRUE) {
-				if (iy != VAR_NONE)
+				if (jy != VAR_NONE)
 					discard ;
-				iy = mClusterList.insert () ;
-				mClusterMappingSet.add (ix ,iy) ;
-				mClusterList[iy] = BitSet<> (mDataSet.size ()) ;
+				jy = mCluster.insert () ;
+				mClusterMappingSet.add (jx ,jy) ;
+				mCluster[jy] = BitSet<> (mDataSet.size ()) ;
 			}
-			INDEX jx = mDataSet.at (i) ;
-			mClusterList[iy][jx] = TRUE ;
+			mCluster[jx][r1x] = TRUE ;
 		}
 		for (auto &&i : mClusterMappingSet) {
-			INDEX ix = mNextCenterList.insert () ;
-			mNextCenterList[ix] = average_center (mClusterList[i.sid]) ;
-			mCenterMoveSet.add (i.key ,ix) ;
+			INDEX jx = mNextCenter.insert (i.key) ;
+			mNextCenter[jx] = average_center (mCluster[i.sid]) ;
 		}
 	}
 
 	INDEX closest_center_of_point (const REAL &point) const {
 		INDEX ret = VAR_NONE ;
 		auto rax = REAL () ;
-		for (auto &&i : mCurrCenterList) {
+		for (auto &&i : mCurrCenter) {
 			const auto r1x = mDistanceFunc (point ,i) ;
 			if (ret != VAR_NONE)
 				if (rax <= r1x)
 					continue ;
-			ret = mCurrCenterList.at (i) ;
+			ret = mCurrCenter.at (i) ;
 			rax = r1x ;
 		}
 		return _MOVE_ (ret) ;
@@ -472,34 +479,33 @@ private:
 		for (auto &&i : _RANGE_ (0 ,ix))
 			mConvergence[i] = mConvergence[i + 1] ;
 		mConvergence[ix] = +mInfinity ;
-		if (mCurrCenterList.length () != mNextCenterList.length ())
+		if (mCurrCenter.length () != mNextCenter.length ())
 			return ;
 		mConvergence[ix] = REAL (0) ;
-		for (auto &&i : mCenterMoveSet) {
-			const auto r1x = mDistanceFunc (mCurrCenterList[i.key] ,mNextCenterList[i.sid]) ;
+		for (auto &&i : mClusterMappingSet) {
+			const auto r1x = mDistanceFunc (mCurrCenter[i.key] ,mNextCenter[i.key]) ;
 			mConvergence[ix] = MathProc::maxof (mConvergence[ix] ,r1x) ;
 		}
 	}
 
 	BOOL reach_convergence () const {
 		INDEX ix = mConvergence.length () - 1 ;
-		for (auto &&i : _RANGE_ (0 ,ix))
+		for (auto &&i : _RANGE_ (0 ,ix)) {
 			if (mConvergence[i] > mConvergence[i + 1])
 				return FALSE ;
+		}
 		if (MathProc::abs (mConvergence[0] - mConvergence[ix]) >= mTolerance)
 			return FALSE ;
 		return TRUE ;
 	}
 
 	void update_center_list () {
-		mCurrCenterList.clear () ;
-		mCurrCenterList.appand (mNextCenterList) ;
-		mNextCenterList.clear () ;
-		mCenterMoveSet.clear () ;
+		_SWAP_ (mCurrCenter ,mNextCenter) ;
+		mNextCenter.clear () ;
 	}
 
 	void refresh () {
-		mContext.mClusterList = _MOVE_ (mClusterList) ;
+		mContext.mCluster = _MOVE_ (mCluster) ;
 	}
 } ;
 
@@ -599,24 +605,23 @@ private:
 		}
 	}
 
-#if FALSE
 	void update_lack_weight_e0 (const INDEX &y) {
 		//@info: $0
 		mLackWeight[0] = 0 ;
-		*mLackWeight[1] = +mInfinity ;
+		mLackWeight[1] = +mInfinity ;
 		//@info: $1
 		auto rax = FALSE ;
-		*update_lack_weight_e7 (0 ,y ,rax) ;
+		update_lack_weight_e7 (y ,rax) ;
 		//@info: $18
 		if (rax) {
 			//@info: $19
 			mLackWeight[0] = 0 ;
-			*mLackWeight[1] = +mInfinity ;
+			mLackWeight[1] = +mInfinity ;
 		}
 		//@info: $20
 	}
 
-	void update_lack_weight_e7 (const INDEX &stack_x ,const INDEX &stack_y ,BOOL &stack_ret) {
+	void update_lack_weight_e7 (const INDEX &stack_y ,BOOL &stack_ret) {
 		//@info: $7
 		if (stack_y == VAR_NONE) {
 			//@info: $2
@@ -626,7 +631,7 @@ private:
 		}
 		//@info: $3
 		mYVisit[stack_y] = TRUE ;
-		*stack_x = 0 ;
+		auto stack_x = VAR_ZERO ;
 		//@info: $4
 		while (stack_x < mAdjacency.cx ()) {
 			//@info: $5
@@ -637,12 +642,12 @@ private:
 				if (mLackWeight[0] < mTolerance) {
 					//@info: $8
 					mXVisit[stack_x] = TRUE ;
-					update_lack_weight_e7 (0 ,mXYLink[stack_x] ,stack_ret) ;
+					update_lack_weight_e7 (mXYLink[stack_x] ,stack_ret) ;
 					//@info: $10
 					if (stack_ret) {
 						//@info: $11
 						mXYLink[stack_x] = stack_y ;
-						*stack_ret = TRUE ;
+						stack_ret = TRUE ;
 						//@info: $17
 						return ;
 					}
@@ -659,13 +664,8 @@ private:
 		//@info: $17
 		return ;
 	}
-#endif
 
 	void update_lack_weight (const INDEX &y) {
-		/*
-		*	update_lack_weight_e0
-		*	update_lack_weight_e7
-		*/
 		static constexpr auto M_STATE = PACK<EFLAG[22]> ({
 			EFLAG (0) ,EFLAG (1) ,EFLAG (2) ,EFLAG (3) ,EFLAG (4) ,
 			EFLAG (5) ,EFLAG (6) ,EFLAG (7) ,EFLAG (8) ,EFLAG (9) ,
@@ -831,23 +831,24 @@ private:
 	}
 
 	Array<ARRAY2<INDEX>> best_match () const {
-		Array<ARRAY2<INDEX>> ret = Array<ARRAY2<INDEX>> (best_match_depth ()) ;
-		INDEX iw = 0 ;
-		for (auto &&i : _RANGE_ (0 ,mXYLink.length ())) {
-			if (mXYLink[i] == VAR_NONE)
-				continue ;
-			INDEX ix = iw++ ;
-			ret[ix][0] = mXYLink[i] ;
-			ret[ix][1] = i ;
+		const auto r1x = best_match_depth () ;
+		Array<ARRAY2<INDEX>> ret = Array<ARRAY2<INDEX>> (r1x.length ()) ;
+		for (auto &&i : _RANGE_ (0 ,r1x.length ())) {
+			INDEX ix = r1x.access (i) ;
+			ret[i] = r1x[ix] ;
 		}
-		_DEBUG_ASSERT_ (iw == ret.length ()) ;
 		return _MOVE_ (ret) ;
 	}
 
-	LENGTH best_match_depth () const {
-		LENGTH ret = 0 ;
-		for (auto &&i : mXYLink)
-			ret += _EBOOL_ (i != VAR_NONE) ;
+	Deque<ARRAY2<INDEX>> best_match_depth () const {
+		Deque<ARRAY2<INDEX>> ret = Deque<ARRAY2<INDEX>> (mXYLink.length ()) ;
+		for (auto &&i : _RANGE_ (0 ,mXYLink.length ())) {
+			if (mXYLink[i] == VAR_NONE)
+				continue ;
+			INDEX ix = ret.insert () ;
+			ret[ix][0] = mXYLink[i] ;
+			ret[ix][1] = i ;
+		}
 		return _MOVE_ (ret) ;
 	}
 } ;
@@ -1144,7 +1145,7 @@ private:
 	void compute_search_range (const ARRAY3<REAL> &point ,const REAL &width ,const INDEX &curr ,const INDEX &rot ,ARRAY3<ARRAY2<REAL>> &bound ,Deque<INDEX> &out) const {
 		auto fax = TRUE ;
 		if switch_once (fax) {
-			if (!(mKDTree[curr].mLeaf != VAR_NONE))
+			if (mKDTree[curr].mLeaf == VAR_NONE)
 				discard ;
 			if switch_once (TRUE) {
 				INDEX ix = mKDTree[curr].mLeaf ;
@@ -1155,8 +1156,6 @@ private:
 			}
 		}
 		if switch_once (fax) {
-			if (!(mKDTree[curr].mLeaf == VAR_NONE))
-				discard ;
 			const auto r2x = mKDTree[curr].mKey ;
 			if switch_once (TRUE) {
 				if (r2x < bound[rot][0])
@@ -1190,7 +1189,7 @@ private:
 	void compute_search_range (const ARRAY3<REAL> &point ,const INDEX &curr ,const INDEX &rot ,Array<PACK<INDEX ,REAL>> &out) const {
 		auto fax = TRUE ;
 		if switch_once (fax) {
-			if (!(mKDTree[curr].mLeaf != VAR_NONE))
+			if (mKDTree[curr].mLeaf == VAR_NONE)
 				discard ;
 			if switch_once (TRUE) {
 				INDEX ix = mKDTree[curr].mLeaf ;
@@ -1214,8 +1213,6 @@ private:
 			}
 		}
 		if switch_once (fax) {
-			if (!(mKDTree[curr].mLeaf == VAR_NONE))
-				discard ;
 			const auto r2x = mKDTree[curr].mKey ;
 			if (r2x >= point[rot] - out[out.length () - 1].mP2)
 				compute_search_range (point ,mKDTree[curr].mLeft ,mNextRot[rot] ,out) ;
@@ -1298,7 +1295,7 @@ private:
 		_DEBUG_ASSERT_ (seg >= 0 && seg <= mVertex.size () - seg_len) ;
 		auto fax = TRUE ;
 		if switch_once (fax) {
-			if (!(seg_len == 1))
+			if (seg_len > 1)
 				discard ;
 			INDEX jx = mKDTree.insert () ;
 			mKDTree[jx].mKey = REAL (0) ;
@@ -1308,8 +1305,6 @@ private:
 			mLatestIndex = jx ;
 		}
 		if switch_once (fax) {
-			if (!(seg_len > 1))
-				discard ;
 			INDEX ix = seg + seg_len / 2 ;
 			for (auto &&i : _RANGE_ (seg ,seg + seg_len - 1)) {
 				_STATIC_UNUSED_ (i) ;
@@ -1330,17 +1325,17 @@ private:
 		}
 	}
 
-	void compute_order (Array<INDEX> &tmp_order ,ARRAY3<Array<INDEX>> &order ,const INDEX &rot ,const INDEX &n_rot ,const INDEX &seg_a ,const INDEX &seg_b ,const LENGTH &seg_len) const {
-		if (tmp_order.size () != mVertex.size ())
-			tmp_order = Array<INDEX> (mVertex.size ()) ;
+	void compute_order (Array<INDEX> &temp_order ,ARRAY3<Array<INDEX>> &order_ ,const INDEX &rot ,const INDEX &n_rot ,const INDEX &seg_a ,const INDEX &seg_b ,const LENGTH &seg_len) const {
+		if (temp_order.size () != mVertex.size ())
+			temp_order = Array<INDEX> (mVertex.size ()) ;
 		INDEX iw = 0 ;
 		for (auto &&i : _RANGE_ (seg_a ,seg_b))
-			tmp_order[iw++] = mOrder[n_rot][i] ;
+			temp_order[iw++] = mOrder[n_rot][i] ;
 		for (auto &&i : _RANGE_ (seg_b ,seg_a + seg_len))
-			tmp_order[iw++] = mOrder[n_rot][i] ;
+			temp_order[iw++] = mOrder[n_rot][i] ;
 		const auto r1x = ARRAY2<INDEX> {0 ,iw} ;
 		for (auto &&i : _RANGE_ (r1x[0] ,r1x[1]))
-			order[n_rot][seg_a + i] = tmp_order[i] ;
+			order_[n_rot][seg_a + i] = temp_order[i] ;
 		_DEBUG_ASSERT_ (iw == seg_len) ;
 	}
 
@@ -1438,11 +1433,15 @@ private:
 			if (mBFSPath[mSource] == VAR_NONE)
 				break ;
 			const auto r1x = augument_max_flow () ;
-			for (INDEX i = mSource ,it ,ie = mSink ; i != ie ; i = it) {
-				it = mBFSPath[i] ;
-				const auto r2x = MathProc::minof (mCurrentFlow[it][i] ,r1x) ;
-				mCurrentFlow[it][i] -= r2x ;
-				mCurrentFlow[i][it] += r1x - r2x ;
+			INDEX ix = mSource ;
+			while (TRUE) {
+				if (ix == mSink)
+					break ;
+				INDEX iy = mBFSPath[ix] ;
+				const auto r2x = MathProc::minof (mCurrentFlow[iy][ix] ,r1x) ;
+				mCurrentFlow[iy][ix] -= r2x ;
+				mCurrentFlow[ix][iy] += r1x - r2x ;
+				ix = iy ;
 			}
 		}
 	}
@@ -1473,11 +1472,15 @@ private:
 
 	REAL augument_max_flow () const {
 		REAL ret = mSingleFlow ;
-		for (INDEX i = mSource ,it ,ie = mSink ; i != ie ; i = it) {
-			it = mBFSPath[i] ;
-			_DEBUG_ASSERT_ (i != it) ;
-			const auto r1x = mAdjacency[i][it] + mCurrentFlow[it][i] - mCurrentFlow[i][it] ;
+		INDEX ix = mSource ;
+		while (TRUE) {
+			if (ix == mSink)
+				break ;
+			INDEX iy = mBFSPath[ix] ;
+			_DEBUG_ASSERT_ (ix != iy) ;
+			const auto r1x = mAdjacency[ix][iy] + mCurrentFlow[iy][ix] - mCurrentFlow[ix][iy] ;
 			ret = MathProc::minof (ret ,r1x) ;
+			ix = iy ;
 		}
 		return _MOVE_ (ret) ;
 	}

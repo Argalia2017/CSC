@@ -203,9 +203,11 @@ public:
 	}
 
 	REAL mul (const Vector &that) const {
-		_DEBUG_ASSERT_ (mVector[3] == REAL (0)) ;
-		_DEBUG_ASSERT_ (that.mVector[3] == REAL (0)) ;
-		return mVector[0] * that.mVector[0] + mVector[1] * that.mVector[1] + mVector[2] * that.mVector[2] ;
+		const auto r1x = mVector[0] * that.mVector[0] ;
+		const auto r2x = mVector[1] * that.mVector[1] ;
+		const auto r3x = mVector[2] * that.mVector[2] ;
+		const auto r4x = mVector[3] * that.mVector[3] ;
+		return r1x + r2x + r3x + r4x ;
 	}
 
 	inline REAL operator* (const Vector &that) const {
@@ -265,8 +267,10 @@ public:
 
 	REAL magnitude () const {
 		_DEBUG_ASSERT_ (mVector[3] == REAL (0)) ;
-		const auto r1x = MathProc::square (mVector[0]) + MathProc::square (mVector[1]) + MathProc::square (mVector[2]) ;
-		return MathProc::sqrt (r1x) ;
+		const auto r1x = MathProc::square (mVector[0]) ;
+		const auto r2x = MathProc::square (mVector[1]) ;
+		const auto r3x = MathProc::square (mVector[2]) ;
+		return MathProc::sqrt (r1x + r2x + r3x) ;
 	}
 
 	Vector normalize () const {
@@ -375,7 +379,7 @@ public:
 	_RET get (const INDEX &y) leftvalue {
 		struct Dependent ;
 		using Row = typename DEPENDENT_TYPE<Private ,Dependent>::template Row<Matrix> ;
-		return Row (DEREF[this] ,y) ;
+		return Row (PhanRef<Matrix>::make (DEREF[this]) ,y) ;
 	}
 
 	template <class _RET = REMOVE_CVR_TYPE<typename Private::template Row<Matrix>>>
@@ -387,7 +391,7 @@ public:
 	_RET get (const INDEX &y) const leftvalue {
 		struct Dependent ;
 		using Row = typename DEPENDENT_TYPE<Private ,Dependent>::template Row<const Matrix> ;
-		return Row (DEREF[this] ,y) ;
+		return Row (PhanRef<const Matrix>::make (DEREF[this]) ,y) ;
 	}
 
 	template <class _RET = REMOVE_CVR_TYPE<typename Private::template Row<const Matrix>>>
@@ -1059,17 +1063,19 @@ template <class BASE>
 class Matrix<REAL>::Private::Row
 	:private Proxy {
 private:
-	BASE &mBase ;
+	PhanRef<BASE> mBase ;
 	INDEX mY ;
 
 public:
 	implicit Row () = delete ;
 
-	explicit Row (BASE &base ,const INDEX &y)
-		: mBase (base) ,mY (y) {}
+	explicit Row (PhanRef<BASE> &&base ,const INDEX &y) {
+		mBase = _MOVE_ (base) ;
+		mY = y ;
+	}
 
 	inline CAST_TRAITS_TYPE<REAL ,BASE> &operator[] (const INDEX &x) rightvalue {
-		return mBase.get (mY ,x) ;
+		return mBase->get (mY ,x) ;
 	}
 } ;
 } ;
