@@ -7,7 +7,6 @@
 #ifdef __CSC__
 #pragma push_macro ("self")
 #pragma push_macro ("implicit")
-#pragma push_macro ("side_effects")
 #pragma push_macro ("leftvalue")
 #pragma push_macro ("rightvalue")
 #pragma push_macro ("imports")
@@ -16,7 +15,6 @@
 #pragma push_macro ("discard")
 #undef self
 #undef implicit
-#undef side_effects
 #undef leftvalue
 #undef rightvalue
 #undef imports
@@ -83,7 +81,6 @@
 #ifdef __CSC__
 #pragma pop_macro ("self")
 #pragma pop_macro ("implicit")
-#pragma pop_macro ("side_effects")
 #pragma pop_macro ("leftvalue")
 #pragma pop_macro ("rightvalue")
 #pragma pop_macro ("imports")
@@ -144,7 +141,7 @@ private:
 	//@warn: bind to (layout == 3) Vec3 in GLSL
 	static constexpr auto LAYOUT_NORMAL = CHAR (3) ;
 
-	struct SELF_PACK {
+	struct THIS_PACK {
 		UniqueRef<CHAR> mVAO ;
 		UniqueRef<AutoBuffer<CHAR>> mVBO ;
 		UniqueRef<AutoBuffer<CHAR>> mVTO ;
@@ -154,87 +151,89 @@ private:
 	} ;
 
 	using NATIVE_THIS = UniqueRef<CHAR> ;
-	using SPRITE_NATIVE_THIS = SELF_PACK ;
+	using SPRITE_NATIVE_THIS = THIS_PACK ;
 
 public:
- 	implicit AbstractShader_Engine_OPENGL () {
+	implicit AbstractShader_Engine_OPENGL () {
 		_STATIC_ASSERT_ (_SIZEOF_ (DEF<decltype (DEREF[this])>) == _SIZEOF_ (Interface)) ;
 		_STATIC_ASSERT_ (_ALIGNOF_ (DEF<decltype (DEREF[this])>) == _ALIGNOF_ (Interface)) ;
 	}
 
-	void compute_load_data (AnyRef<void> &holder ,const PhanBuffer<const BYTE> &vs ,const PhanBuffer<const BYTE> &fs) const override {
+	void compute_load_data (AnyRef<> &holder ,const PhanBuffer<const BYTE> &vs ,const PhanBuffer<const BYTE> &fs) const override {
 		_DEBUG_ASSERT_ (vs.size () < VAR32_MAX) ;
 		_DEBUG_ASSERT_ (fs.size () < VAR32_MAX) ;
-		auto tmp = UniqueRef<CHAR> ([&] (CHAR &me) {
+		auto rax = UniqueRef<CHAR> ([&] (CHAR &me) {
 			me = api::glCreateProgram () ;
 			_DYNAMIC_ASSERT_ (me != 0) ;
 			const auto r1x = api::glCreateShader (GL_VERTEX_SHADER) ;
-			const auto r2x = _LOAD_ (ARGV<ARR<STRA>>::null ,DEPTR[vs.self]) ;
-			const auto r3x = VAR32 (vs.size ()) ;
-			api::glShaderSource (r1x ,1 ,DEPTR[r2x] ,DEPTR[r3x]) ;
+			const auto r2x = _POINTER_CAST_ (ARGV<ARR<STRA>>::null ,DEPTR[vs.self]) ;
+			const auto r3x = DEPTR[DEREF[r2x][0]] ;
+			const auto r4x = VAR32 (vs.size ()) ;
+			api::glShaderSource (r1x ,1 ,DEPTR[r3x] ,DEPTR[r4x]) ;
 			api::glCompileShader (r1x) ;
 			compute_check_shaderiv (r1x) ;
 			api::glAttachShader (me ,r1x) ;
-			const auto r4x = api::glCreateShader (GL_FRAGMENT_SHADER) ;
-			const auto r5x = _LOAD_ (ARGV<ARR<STRA>>::null ,DEPTR[fs.self]) ;
-			const auto r6x = VAR32 (fs.size ()) ;
-			api::glShaderSource (r4x ,1 ,DEPTR[r5x] ,DEPTR[r6x]) ;
-			api::glCompileShader (r4x) ;
-			compute_check_shaderiv (r4x) ;
-			api::glAttachShader (me ,r4x) ;
+			const auto r5x = api::glCreateShader (GL_FRAGMENT_SHADER) ;
+			const auto r6x = _POINTER_CAST_ (ARGV<ARR<STRA>>::null ,DEPTR[fs.self]) ;
+			const auto r7x = DEPTR[DEREF[r6x][0]] ;
+			const auto r8x = VAR32 (fs.size ()) ;
+			api::glShaderSource (r5x ,1 ,DEPTR[r7x] ,DEPTR[r8x]) ;
+			api::glCompileShader (r5x) ;
+			compute_check_shaderiv (r5x) ;
+			api::glAttachShader (me ,r5x) ;
 			api::glLinkProgram (me) ;
 			compute_check_programiv (me) ;
 		} ,[] (CHAR &me) {
 			api::glDeleteProgram (me) ;
 		}) ;
-		holder = AnyRef<NATIVE_THIS>::make (_MOVE_ (tmp)) ;
+		holder = AnyRef<NATIVE_THIS>::make (_MOVE_ (rax)) ;
 	}
 
-	void compute_active_pipeline (AnyRef<void> &holder) const override {
+	void compute_active_pipeline (AnyRef<> &holder) const override {
 		auto &r1x = holder.rebind (ARGV<NATIVE_THIS>::null).self ;
 		api::glUseProgram (r1x) ;
 	}
 
-	void compute_uniform_find (AnyRef<void> &holder ,const String<STR> &name ,INDEX &index) const override {
+	void compute_uniform_find (AnyRef<> &holder ,const String<STR> &name ,INDEX &index) const override {
 		auto &r1x = holder.rebind (ARGV<NATIVE_THIS>::null).self ;
 		const auto r2x = identity_name (name) ;
 		index = INDEX (api::glGetUniformLocation (r1x ,r2x.raw ().self)) ;
 		_DEBUG_ASSERT_ (index != GL_INVALID_VALUE) ;
 	}
 
-	void compute_uniform_write (AnyRef<void> &holder ,const INDEX &index ,const VAR32 &data) const override {
+	void compute_uniform_write (AnyRef<> &holder ,const INDEX &index ,const VAR32 &data) const override {
 		_DEBUG_ASSERT_ (index != GL_INVALID_VALUE) ;
 		api::glUniform1i (VAR32 (index) ,data) ;
 	}
 
-	void compute_uniform_write (AnyRef<void> &holder ,const INDEX &index ,const VAR64 &data) const override {
+	void compute_uniform_write (AnyRef<> &holder ,const INDEX &index ,const VAR64 &data) const override {
 		_DEBUG_ASSERT_ (index != GL_INVALID_VALUE) ;
 		api::glUniform1i64NV (VAR32 (index) ,data) ;
 	}
 
-	void compute_uniform_write (AnyRef<void> &holder ,const INDEX &index ,const VAL32 &data) const override {
+	void compute_uniform_write (AnyRef<> &holder ,const INDEX &index ,const VAL32 &data) const override {
 		_DEBUG_ASSERT_ (index != GL_INVALID_VALUE) ;
 		api::glUniform1f (VAR32 (index) ,data) ;
 	}
 
-	void compute_uniform_write (AnyRef<void> &holder ,const INDEX &index ,const VAL64 &data) const override {
+	void compute_uniform_write (AnyRef<> &holder ,const INDEX &index ,const VAL64 &data) const override {
 		_DEBUG_ASSERT_ (index != GL_INVALID_VALUE) ;
 		api::glUniform1d (VAR32 (index) ,data) ;
 	}
 
-	void compute_uniform_write (AnyRef<void> &holder ,const INDEX &index ,const Vector<VAL32> &data) const override {
+	void compute_uniform_write (AnyRef<> &holder ,const INDEX &index ,const Vector<VAL32> &data) const override {
 		_DEBUG_ASSERT_ (index != GL_INVALID_VALUE) ;
 		const auto r1x = ARRAY4<VAL32> {data[0] ,data[1] ,data[2] ,data[3]} ;
 		api::glUniform4fv (VAR32 (index) ,1 ,r1x.raw ().self) ;
 	}
 
-	void compute_uniform_write (AnyRef<void> &holder ,const INDEX &index ,const Vector<VAL64> &data) const override {
+	void compute_uniform_write (AnyRef<> &holder ,const INDEX &index ,const Vector<VAL64> &data) const override {
 		_DEBUG_ASSERT_ (index != GL_INVALID_VALUE) ;
 		const auto r1x = ARRAY4<VAL64> {data[0] ,data[1] ,data[2] ,data[3]} ;
 		api::glUniform4dv (VAR32 (index) ,1 ,r1x.raw ().self) ;
 	}
 
-	void compute_uniform_write (AnyRef<void> &holder ,const INDEX &index ,const Matrix<VAL32> &data) const override {
+	void compute_uniform_write (AnyRef<> &holder ,const INDEX &index ,const Matrix<VAL32> &data) const override {
 		_DEBUG_ASSERT_ (index != GL_INVALID_VALUE) ;
 		const auto r1x = Array<VAL32 ,ARGC<16>> ({
 			data[0][0] ,data[0][1] ,data[0][2] ,data[0][3] ,
@@ -244,7 +243,7 @@ public:
 		api::glUniformMatrix4fv (VAR32 (index) ,1 ,GL_TRUE ,r1x.raw ().self) ;
 	}
 
-	void compute_uniform_write (AnyRef<void> &holder ,const INDEX &index ,const Matrix<VAL64> &data) const override {
+	void compute_uniform_write (AnyRef<> &holder ,const INDEX &index ,const Matrix<VAL64> &data) const override {
 		_DEBUG_ASSERT_ (index != GL_INVALID_VALUE) ;
 		const auto r1x = Array<VAL64 ,ARGC<16>> ({
 			data[0][0] ,data[0][1] ,data[0][2] ,data[0][3] ,
@@ -254,39 +253,39 @@ public:
 		api::glUniformMatrix4dv (VAR32 (index) ,1 ,GL_TRUE ,r1x.raw ().self) ;
 	}
 
-	void compute_sprite_load_data (AnyRef<void> &holder ,const Mesh &mesh) const override {
-		auto tmp = SELF_PACK () ;
-		tmp.mVAO = UniqueRef<CHAR> ([&] (CHAR &me) {
+	void compute_sprite_load_data (AnyRef<> &holder ,const Mesh &mesh) const override {
+		auto rax = THIS_PACK () ;
+		rax.mVAO = UniqueRef<CHAR> ([&] (CHAR &me) {
 			api::glGenVertexArrays (1 ,DEPTR[me]) ;
 			_DYNAMIC_ASSERT_ (me != GL_INVALID_VALUE) ;
 		} ,[] (CHAR &me) {
 			api::glDeleteVertexArrays (1 ,DEPTR[me]) ;
 		}) ;
-		tmp.mVBO = UniqueRef<AutoBuffer<CHAR>> ([&] (AutoBuffer<CHAR> &me) {
+		rax.mVBO = UniqueRef<AutoBuffer<CHAR>> ([&] (AutoBuffer<CHAR> &me) {
 			me = AutoBuffer<CHAR> (1) ;
 			api::glGenBuffers (VAR32 (me.size ()) ,me.self) ;
 		} ,[] (AutoBuffer<CHAR> &me) {
 			api::glDeleteBuffers (VAR32 (me.size ()) ,me.self) ;
 		}) ;
-		tmp.mVTO = UniqueRef<AutoBuffer<CHAR>> ([&] (AutoBuffer<CHAR> &me) {
+		rax.mVTO = UniqueRef<AutoBuffer<CHAR>> ([&] (AutoBuffer<CHAR> &me) {
 			me = AutoBuffer<CHAR> (1) ;
 			api::glGenTextures (VAR32 (me.size ()) ,me.self) ;
 		} ,[] (AutoBuffer<CHAR> &me) {
 			api::glDeleteTextures (VAR32 (me.size ()) ,me.self) ;
 		}) ;
 		const auto r1x = bind_vertex (mesh.vertex () ,mesh.element ()) ;
-		compute_transfer_data (tmp ,r1x) ;
-		compute_transfer_data (tmp ,mesh.texture ()[0]) ;
-		holder = AnyRef<SPRITE_NATIVE_THIS>::make (_MOVE_ (tmp)) ;
+		compute_transfer_data (rax ,r1x) ;
+		compute_transfer_data (rax ,mesh.texture ()[0]) ;
+		holder = AnyRef<SPRITE_NATIVE_THIS>::make (_MOVE_ (rax)) ;
 	}
 
-	void compute_sprite_active_texture (AnyRef<void> &holder ,const INDEX &texture) const override {
+	void compute_sprite_active_texture (AnyRef<> &holder ,const INDEX &texture) const override {
 		auto &r1x = holder.rebind (ARGV<SPRITE_NATIVE_THIS>::null).self ;
 		_DYNAMIC_ASSERT_ (texture >= 0 && texture < r1x.mVTO->size ()) ;
 		r1x.mTexture = texture ;
 	}
 
-	void compute_sprite_draw (AnyRef<void> &holder) const override {
+	void compute_sprite_draw (AnyRef<> &holder) const override {
 		auto &r1x = holder.rebind (ARGV<SPRITE_NATIVE_THIS>::null).self ;
 		api::glBindVertexArray (r1x.mVAO) ;
 		if switch_once (TRUE) {
@@ -371,7 +370,7 @@ private:
 		return _MOVE_ (ret) ;
 	}
 
-	void compute_transfer_data (SELF_PACK &self_ ,const Array<ARRAY1<ARRAY3<VAL32>>> &vbo) const {
+	void compute_transfer_data (THIS_PACK &self_ ,const Array<ARRAY1<ARRAY3<VAL32>>> &vbo) const {
 		const auto r1x = _SIZEOF_ (ARRAY3<VAL32>) ;
 		self_.mSize = vbo.length () * vbo[0].length () ;
 		self_.mMode = GL_POINTS ;
@@ -383,7 +382,7 @@ private:
 		api::glBindVertexArray (0) ;
 	}
 
-	void compute_transfer_data (SELF_PACK &self_ ,const Array<ARRAY2<ARRAY3<VAL32>>> &vbo) const {
+	void compute_transfer_data (THIS_PACK &self_ ,const Array<ARRAY2<ARRAY3<VAL32>>> &vbo) const {
 		const auto r1x = _SIZEOF_ (ARRAY3<VAL32>) ;
 		self_.mSize = vbo.length () * vbo[0].length () ;
 		self_.mMode = GL_LINES ;
@@ -395,7 +394,7 @@ private:
 		api::glBindVertexArray (0) ;
 	}
 
-	void compute_transfer_data (SELF_PACK &self_ ,const Array<ARRAY2<ARRAY5<VAL32>>> &vbo) const {
+	void compute_transfer_data (THIS_PACK &self_ ,const Array<ARRAY2<ARRAY5<VAL32>>> &vbo) const {
 		const auto r1x = _SIZEOF_ (ARRAY5<VAL32>) ;
 		self_.mSize = vbo.length () * vbo[0].length () ;
 		self_.mMode = GL_LINES ;
@@ -411,7 +410,7 @@ private:
 		api::glBindVertexArray (0) ;
 	}
 
-	void compute_transfer_data (SELF_PACK &self_ ,const Array<ARRAY3<ARRAY3<VAL32>>> &vbo) const {
+	void compute_transfer_data (THIS_PACK &self_ ,const Array<ARRAY3<ARRAY3<VAL32>>> &vbo) const {
 		const auto r1x = _SIZEOF_ (ARRAY3<VAL32>) ;
 		self_.mSize = vbo.length () * vbo[0].length () ;
 		self_.mMode = GL_TRIANGLES ;
@@ -423,7 +422,7 @@ private:
 		api::glBindVertexArray (0) ;
 	}
 
-	void compute_transfer_data (SELF_PACK &self_ ,const Array<ARRAY3<ARRAY5<VAL32>>> &vbo) const {
+	void compute_transfer_data (THIS_PACK &self_ ,const Array<ARRAY3<ARRAY5<VAL32>>> &vbo) const {
 		const auto r1x = _SIZEOF_ (ARRAY5<VAL32>) ;
 		self_.mSize = vbo.length () * vbo[0].length () ;
 		self_.mMode = GL_TRIANGLES ;
@@ -439,7 +438,7 @@ private:
 		api::glBindVertexArray (0) ;
 	}
 
-	void compute_transfer_data (SELF_PACK &self_ ,const Array<ARRAY3<ARRAY8<VAL32>>> &vbo) const {
+	void compute_transfer_data (THIS_PACK &self_ ,const Array<ARRAY3<ARRAY8<VAL32>>> &vbo) const {
 		const auto r1x = _SIZEOF_ (ARRAY8<VAL32>) ;
 		self_.mSize = vbo.length () * vbo[0].length () ;
 		self_.mMode = GL_TRIANGLES ;
@@ -458,7 +457,7 @@ private:
 		api::glBindVertexArray (0) ;
 	}
 
-	void compute_transfer_data (SELF_PACK &self_ ,const Array<ARRAY4<ARRAY3<VAL32>>> &vbo) const {
+	void compute_transfer_data (THIS_PACK &self_ ,const Array<ARRAY4<ARRAY3<VAL32>>> &vbo) const {
 		const auto r1x = _SIZEOF_ (ARRAY3<VAL32>) ;
 		self_.mSize = vbo.length () * vbo[0].length () ;
 		self_.mMode = GL_QUADS ;
@@ -470,7 +469,7 @@ private:
 		api::glBindVertexArray (0) ;
 	}
 
-	void compute_transfer_data (SELF_PACK &self_ ,const Array<ARRAY4<ARRAY5<VAL32>>> &vbo) const {
+	void compute_transfer_data (THIS_PACK &self_ ,const Array<ARRAY4<ARRAY5<VAL32>>> &vbo) const {
 		const auto r1x = _SIZEOF_ (ARRAY5<VAL32>) ;
 		self_.mSize = vbo.length () * vbo[0].length () ;
 		self_.mMode = GL_QUADS ;
@@ -486,7 +485,7 @@ private:
 		api::glBindVertexArray (0) ;
 	}
 
-	void compute_transfer_data (SELF_PACK &self_ ,const Array<ARRAY4<ARRAY8<VAL32>>> &vbo) const {
+	void compute_transfer_data (THIS_PACK &self_ ,const Array<ARRAY4<ARRAY8<VAL32>>> &vbo) const {
 		const auto r1x = _SIZEOF_ (ARRAY8<VAL32>) ;
 		self_.mSize = vbo.length () * vbo[0].length () ;
 		self_.mMode = GL_QUADS ;
@@ -505,7 +504,7 @@ private:
 		api::glBindVertexArray (0) ;
 	}
 
-	void compute_transfer_data (SELF_PACK &self_ ,const Bitmap<COLOR_BGR> &image) const {
+	void compute_transfer_data (THIS_PACK &self_ ,const Bitmap<COLOR_BGR> &image) const {
 		self_.mTexture = 0 ;
 		api::glBindVertexArray (self_.mVAO) ;
 		api::glBindTexture (GL_TEXTURE_2D ,self_.mVTO.self[0]) ;

@@ -20,17 +20,17 @@ using DEFAULT_FILEPATH_SIZE = ARGC<1023> ;
 using DEFAULT_DIRECTORY_SIZE = ARGC<65536> ;
 
 class FileSystemProc
-	:private Wrapped<void> {
+	:private Wrapped<> {
 public:
-	imports AutoBuffer<BYTE> load_file (const String<STR> &file) side_effects ;
+	imports AutoBuffer<BYTE> load_file (const String<STR> &file) ;
 
 	imports void load_file (const String<STR> &file ,const PhanBuffer<BYTE> &data) ;
 
 	imports void save_file (const String<STR> &file ,const PhanBuffer<const BYTE> &data) ;
 
-	imports PhanBuffer<const BYTE> load_assert_file (const FLAG &resource) side_effects ;
+	imports PhanBuffer<const BYTE> load_assert_file (const FLAG &resource) ;
 
-	imports BOOL find_file (const String<STR> &file) side_effects ;
+	imports BOOL find_file (const String<STR> &file) ;
 
 	imports void erase_file (const String<STR> &file) ;
 
@@ -40,7 +40,7 @@ public:
 
 	imports void link_file (const String<STR> &dst_file ,const String<STR> &src_file) ;
 
-	imports BOOL identical_file (const String<STR> &file1 ,const String<STR> &file2) side_effects ;
+	imports BOOL identical_file (const String<STR> &file1 ,const String<STR> &file2) ;
 
 	imports String<STR> parse_path_name (const String<STR> &file) ;
 
@@ -52,13 +52,13 @@ public:
 
 	imports String<STR> absolute_path (const String<STR> &path) ;
 
-	imports const String<STR> &module_file_path () side_effects ;
+	imports const String<STR> &module_file_path () ;
 
-	imports const String<STR> &module_file_name () side_effects ;
+	imports const String<STR> &module_file_name () ;
 
-	imports BOOL find_directory (const String<STR> &dire) side_effects ;
+	imports BOOL find_directory (const String<STR> &dire) ;
 
-	imports BOOL lock_directory (const String<STR> &dire) side_effects ;
+	imports BOOL lock_directory (const String<STR> &dire) ;
 
 	imports void build_directory (const String<STR> &dire) ;
 
@@ -75,31 +75,43 @@ private:
 		class Implement ;
 	} ;
 
-	using Implement = typename Private::Implement ;
+	class Abstract
+		:public Interface {
+	public:
+		virtual void read (const PhanBuffer<BYTE> &data) = 0 ;
+		virtual void write (const PhanBuffer<const BYTE> &data) = 0 ;
+		virtual void flush () = 0 ;
+	} ;
 
 private:
-	StrongRef<Implement> mThis ;
+	StrongRef<Abstract> mThis ;
 
 public:
 	implicit StreamLoader () = delete ;
 
 	explicit StreamLoader (const String<STR> &file) ;
 
-	void read (const PhanBuffer<BYTE> &data) ;
+	void read (const PhanBuffer<BYTE> &data) {
+		return mThis->read (data) ;
+	}
 
 	template <class _ARG1>
 	void read (Buffer<BYTE ,_ARG1> &data) {
 		read (PhanBuffer<BYTE>::make (data)) ;
 	}
 
-	void write (const PhanBuffer<const BYTE> &data) ;
+	void write (const PhanBuffer<const BYTE> &data) {
+		return mThis->write (data) ;
+	}
 
 	template <class _ARG1>
 	void write (const Buffer<BYTE ,_ARG1> &data) {
 		write (PhanBuffer<const BYTE>::make (data)) ;
 	}
 
-	void flush () ;
+	void flush () {
+		return mThis->flush () ;
+	}
 } ;
 
 class BufferLoader {
@@ -108,10 +120,16 @@ private:
 		class Implement ;
 	} ;
 
-	using Implement = typename Private::Implement ;
+	class Abstract
+		:public Interface {
+	public:
+		virtual PhanBuffer<BYTE> watch () leftvalue = 0 ;
+		virtual PhanBuffer<const BYTE> watch () const leftvalue = 0 ;
+		virtual void flush () = 0 ;
+	} ;
 
 private:
-	StrongRef<Implement> mThis ;
+	StrongRef<Abstract> mThis ;
 
 public:
 	implicit BufferLoader () = delete ;
@@ -124,16 +142,26 @@ public:
 
 	explicit BufferLoader (const String<STR> &file ,const LENGTH &file_len ,const BOOL &cache) ;
 
-	PhanBuffer<BYTE> watch () leftvalue ;
+	PhanBuffer<BYTE> watch () leftvalue {
+		return mThis->watch () ;
+	}
 
-	PhanBuffer<const BYTE> watch () const leftvalue ;
+	PhanBuffer<const BYTE> watch () const leftvalue {
+		return mThis->watch () ;
+	}
 
-	void flush () ;
+	void flush () {
+		return mThis->flush () ;
+	}
 } ;
 
 class FileSystemService
 	:private Proxy {
 private:
+	struct Private {
+		class Implement ;
+	} ;
+
 	class Abstract
 		:public Interface {
 	public:
@@ -141,29 +169,25 @@ private:
 		virtual void shutdown () = 0 ;
 	} ;
 
-	struct Private {
-		class Implement ;
-	} ;
-
-	using Implement = typename Private::Implement ;
-
 private:
 	friend Singleton<FileSystemService> ;
 	Monostate<RecursiveMutex> mMutex ;
 	StrongRef<Abstract> mThis ;
 
 public:
+	implicit FileSystemService () = delete ;
+
 	void startup () {
 		ScopedGuard<RecursiveMutex> ANONYMOUS (mMutex) ;
-		mThis->startup () ;
+		return mThis->startup () ;
 	}
 
 	void shutdown () {
 		ScopedGuard<RecursiveMutex> ANONYMOUS (mMutex) ;
-		mThis->shutdown () ;
+		return mThis->shutdown () ;
 	}
 
 private:
-	FileSystemService () ;
+	explicit FileSystemService (const ARGVF<Singleton<FileSystemService>> &) ;
 } ;
 } ;

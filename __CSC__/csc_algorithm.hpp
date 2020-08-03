@@ -13,64 +13,57 @@
 #include "csc_geometry.hpp"
 
 namespace CSC {
-class PrimeSieveAlgorithm {
+class PrimeBitSet {
 private:
-	BitSet<> mPrimeSet ;
+	BitSet<> mPrimeBitSet ;
 
 public:
-	implicit PrimeSieveAlgorithm () = delete ;
+	implicit PrimeBitSet () = default ;
 
-	explicit PrimeSieveAlgorithm (const LENGTH &len) {
-		initialize (len) ;
+	explicit PrimeBitSet (const LENGTH &len) {
+		mPrimeBitSet = BitSet<> (len) ;
+		mPrimeBitSet.fill (BYTE (0XAA)) ;
+		mPrimeBitSet[1] = FALSE ;
+		mPrimeBitSet[2] = TRUE ;
+		const auto r1x = (MathProc::sqrt (mPrimeBitSet.size ()) - 2) / 2 + 1 ;
+		for (auto &&i : _RANGE_ (0 ,r1x)) {
+			INDEX ix = i * 2 + 3 ;
+			const auto r2x = ix * 2 ;
+			_DEBUG_ASSERT_ (r2x > 0) ;
+			const auto r3x = MathProc::square (ix) ;
+			const auto r4x = (mPrimeBitSet.size () - r3x) / r2x + 1 ;
+			for (auto &&j : _RANGE_ (0 ,r4x)) {
+				INDEX jx = j * r2x + r3x ;
+				mPrimeBitSet[jx] = FALSE ;
+			}
+		}
 	}
 
 	const BitSet<> &query () const leftvalue {
-		return mPrimeSet ;
+		return mPrimeBitSet ;
 	}
-
-private:
-	void initialize (const LENGTH &len) ;
 } ;
-
-inline exports void PrimeSieveAlgorithm::initialize (const LENGTH &len) {
-	mPrimeSet = BitSet<> (len) ;
-	mPrimeSet.fill (BYTE (0XAA)) ;
-	mPrimeSet[1] = FALSE ;
-	mPrimeSet[2] = TRUE ;
-	const auto r1x = (MathProc::sqrt (mPrimeSet.size ()) - 2) / 2 + 1 ;
-	for (auto &&i : _RANGE_ (0 ,r1x)) {
-		INDEX ix = i * 2 + 3 ;
-		const auto r2x = ix * 2 ;
-		_DEBUG_ASSERT_ (r2x > 0) ;
-		const auto r3x = MathProc::square (ix) ;
-		const auto r4x = (mPrimeSet.size () - r3x) / r2x + 1 ;
-		for (auto &&j : _RANGE_ (0 ,r4x)) {
-			INDEX jx = j * r2x + r3x ;
-			mPrimeSet[jx] = FALSE ;
-		}
-	}
-}
 
 class DisjointTable {
 private:
-	struct NODE {
+	struct NODE_PACK {
 		INDEX mUp ;
 		LENGTH mWidth ;
 	} ;
 
 private:
-	Array<NODE> mTable ;
+	Array<NODE_PACK> mTable ;
 
 public:
-	implicit DisjointTable () = delete ;
+	implicit DisjointTable () = default ;
 
 	explicit DisjointTable (const LENGTH &len) {
-		mTable = Array<NODE> (len) ;
+		mTable = Array<NODE_PACK> (len) ;
 		const auto r1x = empty_node () ;
 		mTable.fill (r1x) ;
 	}
 
-	INDEX lead (const INDEX &index) side_effects {
+	INDEX lead (const INDEX &index) {
 		INDEX ret = index ;
 		if switch_once (TRUE) {
 			if (mTable[ret].mUp != VAR_NONE)
@@ -83,19 +76,7 @@ public:
 				break ;
 			ret = mTable[ret].mUp ;
 		}
-		INDEX ix = index ;
-		while (TRUE) {
-			if (ix == ret)
-				break ;
-			INDEX iy = mTable[ix].mUp ;
-			mTable[ix].mUp = ret ;
-			if switch_once (TRUE) {
-				if (iy == ret)
-					discard ;
-				mTable[iy].mWidth -= mTable[ix].mWidth ;
-			}
-			ix = iy ;
-		}
+		compress (index ,ret) ;
 		return _MOVE_ (ret) ;
 	}
 
@@ -108,7 +89,7 @@ public:
 		mTable[ix].mWidth += mTable[iy].mWidth ;
 	}
 
-	Array<BitSet<>> closure () side_effects {
+	Array<BitSet<>> closure () {
 		const auto r1x = map_of_closure () ;
 		Array<BitSet<>> ret = Array<BitSet<>> (r1x.length ()) ;
 		for (auto &&i : _RANGE_ (0 ,ret.length ()))
@@ -124,8 +105,8 @@ public:
 	}
 
 private:
-	NODE empty_node () const {
-		NODE ret ;
+	NODE_PACK empty_node () const {
+		NODE_PACK ret ;
 		ret.mUp = VAR_NONE ;
 		ret.mWidth = 0 ;
 		return _MOVE_ (ret) ;
@@ -141,6 +122,120 @@ private:
 		}
 		return _MOVE_ (ret) ;
 	}
+
+	void compress (const INDEX &index ,const INDEX &root) {
+		INDEX ix = index ;
+		while (TRUE) {
+			INDEX iy = ix ;
+			ix = mTable[iy].mUp ;
+			if (ix == root)
+				break ;
+			mTable[iy].mUp = root ;
+			mTable[ix].mWidth -= mTable[iy].mWidth ;
+		}
+	}
+} ;
+
+template <class REAL>
+class SegmentTable {
+private:
+	AutoRef<REAL> mTolerance ;
+	Set<REAL> mSegmentSet ;
+	Array<INDEX> mSegmentSetRange ;
+	Array<INDEX> mSegmentSetOrder ;
+	BitSet<> mRealLeft ;
+	BitSet<> mRealRight ;
+	BitSet<> mReal ;
+
+public:
+	implicit SegmentTable () = default ;
+
+	explicit SegmentTable (const REAL &tolerance) {
+		mTolerance = AutoRef<REAL>::make (tolerance) ;
+	}
+
+	void add (const REAL &lb ,const REAL &rb) {
+		INDEX ix = insert (lb) ;
+		INDEX iy = insert (rb) ;
+		const auto r1x = MathProc::sort (mSegmentSetOrder[ix] ,mSegmentSetOrder[iy]) ;
+		for (auto &&i : _RANGE_ (r1x[0] ,r1x[1])) {
+			mReal[i] = TRUE ;
+			mRealLeft[mSegmentSetRange[i]] = TRUE ;
+			mRealRight[mSegmentSetRange[i + 1]] = TRUE ;
+		}
+	}
+
+	void erase (const REAL &lb ,const REAL &rb) {
+		INDEX ix = insert (lb) ;
+		INDEX iy = insert (rb) ;
+		const auto r1x = MathProc::sort (mSegmentSetOrder[ix] ,mSegmentSetOrder[iy]) ;
+		for (auto &&i : _RANGE_ (r1x[0] ,r1x[1])) {
+			mReal[i] = FALSE ;
+			mRealLeft[mSegmentSetRange[i]] = FALSE ;
+			mRealRight[mSegmentSetRange[i + 1]] = FALSE ;
+		}
+	}
+
+	REAL percent (const REAL &lb ,const REAL &rb) {
+		INDEX ix = insert (lb) ;
+		INDEX iy = insert (rb) ;
+		REAL ret = REAL (0) ;
+		const auto r1x = MathProc::sort (mSegmentSetOrder[ix] ,mSegmentSetOrder[iy]) ;
+		for (auto &&i : _RANGE_ (r1x[0] ,r1x[1])) {
+			if (!mReal[i])
+				continue ;
+			ret += mSegmentSet[mSegmentSetRange[i]] - mSegmentSet[mSegmentSetRange[i + 1]] ;
+		}
+		const auto r2x = mSegmentSet[ix] - mSegmentSet[iy] ;
+		ret *= MathProc::inverse (r2x ,mTolerance.self) ;
+		return _MOVE_ (ret) ;
+	}
+
+private:
+	INDEX insert (const REAL &point) {
+		const auto r1x = MathProc::round (point ,mTolerance.self) ;
+		INDEX ret = mSegmentSet.find (point) ;
+		if switch_once (TRUE) {
+			if (ret != VAR_NONE)
+				break ;
+			ret = mSegmentSet.insert (point) ;
+			update_range () ;
+		}
+		return _MOVE_ (ret) ;
+	}
+
+	void update_range () {
+		if switch_once (TRUE) {
+			if (mSegmentSetOrder.size () == mSegmentSet.size ())
+				discard ;
+			mSegmentSetOrder = Array<INDEX> (mSegmentSet.size ()) ;
+			mSegmentSetOrder.fill (VAR_NONE) ;
+		}
+		mSegmentSetRange = mSegmentSet.range_sort () ;
+		for (auto &&i : _RANGE_ (0 ,mSegmentSetRange.length ()))
+			mSegmentSetOrder[mSegmentSetRange[i]] = i ;
+		if switch_once (TRUE) {
+			if (mRealLeft.size () == mSegmentSet.size ())
+				discard ;
+			const auto r1x = mRealLeft.range () ;
+			mRealLeft = BitSet<> (r1x ,mSegmentSet.size ()) ;
+		}
+		if switch_once (TRUE) {
+			if (mRealRight.size () == mSegmentSet.size ())
+				discard ;
+			const auto r2x = mRealRight.range () ;
+			mRealRight = BitSet<> (r2x ,mSegmentSet.size ()) ;
+		}
+		mReal = BitSet<> (mSegmentSetRange.size ()) ;
+		for (auto &&i : _RANGE_ (0 ,mSegmentSetRange.length () - 1)) {
+			if (!mRealLeft[mSegmentSetRange[i]])
+				if (!mRealRight[mSegmentSetRange[i + 1]])
+					continue ;
+			mReal[i] = TRUE ;
+			mRealLeft[mSegmentSetRange[i]] = TRUE ;
+			mRealRight[mSegmentSetRange[i + 1]] = TRUE ;
+		}
+	}
 } ;
 
 template <class REAL>
@@ -153,14 +248,34 @@ public:
 	implicit KMPAlgorithm () = delete ;
 
 	explicit KMPAlgorithm (const PhanBuffer<const REAL> &pattern) {
-		initialize (pattern) ;
+		mNext = Array<INDEX> (pattern.size ()) ;
+		mPattern = Array<REAL> (pattern.size ()) ;
+		INDEX ix = 0 ;
+		INDEX iy = VAR_NONE ;
+		mNext[ix] = VAR_NONE ;
+		mPattern[ix] = pattern[ix] ;
+		while (TRUE) {
+			if (ix >= pattern.size () - 1)
+				break ;
+			while (TRUE) {
+				if (iy == VAR_NONE)
+					break ;
+				if (pattern[ix] == pattern[iy])
+					break ;
+				iy = mNext[iy] ;
+			}
+			ix++ ;
+			iy++ ;
+			mNext[ix] = find_next (ix ,iy) ;
+			mPattern[ix] = pattern[ix] ;
+		}
 	}
 
-	INDEX query (const PhanBuffer<const REAL> &target ,const INDEX &seg) const {
-		_DEBUG_ASSERT_ (seg >= 0 && seg < target.size ()) ;
-		INDEX ix = seg ;
+	INDEX query (const PhanBuffer<const REAL> &target ,const INDEX &index) const {
+		_DEBUG_ASSERT_ (index >= 0 && index < target.size ()) ;
+		INDEX ix = index ;
 		INDEX iy = 0 ;
-		if (target.size () - seg < mNext.length ())
+		if (target.size () - index < mNext.length ())
 			return VAR_NONE ;
 		while (TRUE) {
 			if (ix >= target.size ())
@@ -183,8 +298,6 @@ public:
 	}
 
 private:
-	void initialize (const PhanBuffer<const REAL> &pattern) ;
-
 	INDEX find_next (const INDEX &slow ,const INDEX &fast) const {
 		INDEX ret = fast ;
 		while (TRUE) {
@@ -197,31 +310,6 @@ private:
 		return _MOVE_ (ret) ;
 	}
 } ;
-
-template <class REAL>
-inline exports void KMPAlgorithm<REAL>::initialize (const PhanBuffer<const REAL> &pattern) {
-	mNext = Array<INDEX> (pattern.size ()) ;
-	mPattern = Array<REAL> (pattern.size ()) ;
-	INDEX ix = 0 ;
-	INDEX iy = VAR_NONE ;
-	mNext[ix] = VAR_NONE ;
-	mPattern[ix] = pattern[ix] ;
-	while (TRUE) {
-		if (ix >= pattern.size () - 1)
-			break ;
-		while (TRUE) {
-			if (iy == VAR_NONE)
-				break ;
-			if (pattern[ix] == pattern[iy])
-				break ;
-			iy = mNext[iy] ;
-		}
-		ix++ ;
-		iy++ ;
-		mNext[ix] = find_next (ix ,iy) ;
-		mPattern[ix] = pattern[ix] ;
-	}
-}
 
 template <class REAL>
 class DijstraAlgorithm {
@@ -262,7 +350,7 @@ private:
 	void initialize (const Bitmap<REAL> &adjacency ,const INDEX &root_) {
 		struct Dependent ;
 		using InitializeLambda = typename DEPENDENT_TYPE<Private ,Dependent>::InitializeLambda ;
-		_CALL_ (InitializeLambda (DEREF[this] ,adjacency ,root_)) ;
+		_CALL_TRY_ (InitializeLambda (DEREF[this] ,adjacency ,root_)) ;
 	}
 
 	Deque<INDEX> query_path_depth (const INDEX &index) const {
@@ -319,7 +407,7 @@ private:
 		while (TRUE) {
 			if (mPriority.empty ())
 				break ;
-			const auto r1x = mPriority[mPriority.head ()].sid ;
+			const auto r1x = mPriority.map_get (mPriority.head ()) ;
 			mPriority.take () ;
 			update_distance (r1x) ;
 		}
@@ -379,7 +467,7 @@ private:
 	void initialize (const Set<REAL> &dataset ,const Function<REAL (const REAL & ,const REAL &)> &distance ,const Array<REAL> &center) {
 		struct Dependent ;
 		using InitializeLambda = typename DEPENDENT_TYPE<Private ,Dependent>::InitializeLambda ;
-		_CALL_ (InitializeLambda (DEREF[this] ,dataset ,distance ,center)) ;
+		_CALL_TRY_ (InitializeLambda (DEREF[this] ,dataset ,distance ,center)) ;
 	}
 } ;
 
@@ -445,8 +533,10 @@ private:
 			mCluster[jx][r1x] = TRUE ;
 		}
 		for (auto &&i : mClusterMappingSet) {
-			INDEX jx = mNextCenter.insert (i.key) ;
-			mNextCenter[jx] = average_center (mCluster[i.sid]) ;
+			const auto r2x = mClusterMappingSet.at (i) ;
+			INDEX jx = mNextCenter.insert (i) ;
+			INDEX kx = mClusterMappingSet.map_get (r2x) ;
+			mNextCenter[jx] = average_center (mCluster[kx]) ;
 		}
 	}
 
@@ -483,7 +573,7 @@ private:
 			return ;
 		mConvergence[ix] = REAL (0) ;
 		for (auto &&i : mClusterMappingSet) {
-			const auto r1x = mDistanceFunc (mCurrCenter[i.key] ,mNextCenter[i.key]) ;
+			const auto r1x = mDistanceFunc (mCurrCenter[i] ,mNextCenter[i]) ;
 			mConvergence[ix] = MathProc::maxof (mConvergence[ix] ,r1x) ;
 		}
 	}
@@ -539,7 +629,7 @@ private:
 	void initialize (const Bitmap<REAL> &adjacency) {
 		struct Dependent ;
 		using InitializeLambda = typename DEPENDENT_TYPE<Private ,Dependent>::InitializeLambda ;
-		_CALL_ (InitializeLambda (DEREF[this] ,adjacency)) ;
+		_CALL_TRY_ (InitializeLambda (DEREF[this] ,adjacency)) ;
 	}
 } ;
 
@@ -883,7 +973,7 @@ private:
 	void initialize (const Function<REAL (const Array<REAL> &)> &loss ,const Array<REAL> &fdx) {
 		struct Dependent ;
 		using InitializeLambda = typename DEPENDENT_TYPE<Private ,Dependent>::InitializeLambda ;
-		_CALL_ (InitializeLambda (DEREF[this] ,loss ,fdx)) ;
+		_CALL_TRY_ (InitializeLambda (DEREF[this] ,loss ,fdx)) ;
 	}
 } ;
 
@@ -1076,7 +1166,7 @@ private:
 template <class REAL>
 class KDTreeAlgorithm {
 private:
-	struct NODE {
+	struct NODE_PACK {
 		REAL mKey ;
 		INDEX mLeaf ;
 		INDEX mLeft ;
@@ -1091,7 +1181,7 @@ private:
 	Array<ARRAY3<REAL>> mVertex ;
 	ARRAY3<INDEX> mNextRot ;
 	ARRAY3<ARRAY2<REAL>> mBound ;
-	List<NODE> mKDTree ;
+	List<NODE_PACK> mKDTree ;
 	INDEX mRoot ;
 
 public:
@@ -1133,7 +1223,7 @@ private:
 	void initialize (const Array<ARRAY3<REAL>> &vertex) {
 		struct Dependent ;
 		using InitializeLambda = typename DEPENDENT_TYPE<Private ,Dependent>::InitializeLambda ;
-		_CALL_ (InitializeLambda (DEREF[this] ,vertex)) ;
+		_CALL_TRY_ (InitializeLambda (DEREF[this] ,vertex)) ;
 	}
 
 	REAL distance_of_point (const ARRAY3<REAL> &a ,const ARRAY3<REAL> &b) const {
@@ -1232,7 +1322,7 @@ private:
 	ARRAY3<INDEX> mNextRot ;
 	ARRAY3<Array<INDEX>> mOrder ;
 	ARRAY3<ARRAY2<REAL>> mBound ;
-	List<NODE> mKDTree ;
+	List<NODE_PACK> mKDTree ;
 	INDEX mRoot ;
 	INDEX mLatestIndex ;
 
@@ -1255,7 +1345,7 @@ private:
 			const auto r1x = stack_of_order (i) ;
 			mOrder[i] = r1x.range_sort () ;
 		}
-		mKDTree = List<NODE> (mVertex.length ()) ;
+		mKDTree = List<NODE_PACK> (mVertex.length ()) ;
 		mRoot = VAR_NONE ;
 	}
 
@@ -1268,7 +1358,7 @@ private:
 
 	void generate () {
 		update_bound () ;
-		update_build_tree (mRoot ,0 ,0 ,mVertex.length ()) ;
+		update_build_tree (mRoot ,0 ,0 ,mVertex.length () - 1) ;
 		mRoot = mLatestIndex ;
 	}
 
@@ -1290,53 +1380,49 @@ private:
 		}
 	}
 
-	void update_build_tree (const INDEX &curr ,const INDEX &rot ,const INDEX &seg ,const LENGTH &seg_len) {
-		_DEBUG_ASSERT_ (seg_len > 0) ;
-		_DEBUG_ASSERT_ (seg >= 0 && seg <= mVertex.size () - seg_len) ;
+	void update_build_tree (const INDEX &curr ,const INDEX &rot ,const INDEX &seg_lb ,const INDEX &seg_rb) {
+		const auto r1x = seg_rb - seg_lb + 1 ;
+		if (r1x <= 0)
+			return ;
+		_DEBUG_ASSERT_ (seg_lb >= 0 && seg_lb < mVertex.size ()) ;
+		_DEBUG_ASSERT_ (seg_rb >= 0 && seg_rb < mVertex.size ()) ;
 		auto fax = TRUE ;
 		if switch_once (fax) {
-			if (seg_len > 1)
+			if (r1x > 1)
 				discard ;
 			INDEX jx = mKDTree.insert () ;
 			mKDTree[jx].mKey = REAL (0) ;
-			mKDTree[jx].mLeaf = mOrder[rot][seg] ;
+			mKDTree[jx].mLeaf = mOrder[rot][seg_lb] ;
 			mKDTree[jx].mLeft = VAR_NONE ;
 			mKDTree[jx].mRight = VAR_NONE ;
 			mLatestIndex = jx ;
 		}
 		if switch_once (fax) {
-			INDEX ix = seg + seg_len / 2 ;
-			for (auto &&i : _RANGE_ (seg ,seg + seg_len - 1)) {
-				_STATIC_UNUSED_ (i) ;
-				_DEBUG_ASSERT_ (mVertex[mOrder[rot][i]][rot] <= mVertex[mOrder[rot][i + 1]][rot]) ;
-			}
-			compute_order (mTempOrder ,mOrder ,rot ,mNextRot[rot] ,seg ,ix ,seg_len) ;
-			compute_order (mTempOrder ,mOrder ,rot ,mNextRot[mNextRot[rot]] ,seg ,ix ,seg_len) ;
+			INDEX ix = seg_lb + r1x / 2 ;
+			compute_order (mTempOrder ,mOrder ,rot ,mNextRot[rot] ,seg_lb ,seg_rb) ;
+			compute_order (mTempOrder ,mOrder ,rot ,mNextRot[mNextRot[rot]] ,seg_lb ,seg_rb) ;
 			INDEX jx = mKDTree.insert () ;
 			mKDTree[jx].mKey = mVertex[mOrder[rot][ix]][rot] ;
 			mKDTree[jx].mLeaf = VAR_NONE ;
 			mKDTree[jx].mLeft = VAR_NONE ;
 			mKDTree[jx].mRight = VAR_NONE ;
-			update_build_tree (mKDTree[jx].mLeft ,mNextRot[rot] ,seg ,(ix - seg)) ;
+			update_build_tree (mKDTree[jx].mLeft ,mNextRot[rot] ,seg_lb ,ix - 1) ;
 			mKDTree[jx].mLeft = mLatestIndex ;
-			update_build_tree (mKDTree[jx].mRight ,mNextRot[rot] ,ix ,(seg_len - (ix - seg))) ;
+			update_build_tree (mKDTree[jx].mRight ,mNextRot[rot] ,ix ,seg_rb) ;
 			mKDTree[jx].mRight = mLatestIndex ;
 			mLatestIndex = curr ;
 		}
 	}
 
-	void compute_order (Array<INDEX> &temp_order ,ARRAY3<Array<INDEX>> &order_ ,const INDEX &rot ,const INDEX &n_rot ,const INDEX &seg_a ,const INDEX &seg_b ,const LENGTH &seg_len) const {
+	void compute_order (Array<INDEX> &temp_order ,ARRAY3<Array<INDEX>> &order_ ,const INDEX &rot ,const INDEX &n_rot ,const INDEX &seg_lb ,const INDEX &seg_rb) const {
 		if (temp_order.size () != mVertex.size ())
 			temp_order = Array<INDEX> (mVertex.size ()) ;
 		INDEX iw = 0 ;
-		for (auto &&i : _RANGE_ (seg_a ,seg_b))
-			temp_order[iw++] = mOrder[n_rot][i] ;
-		for (auto &&i : _RANGE_ (seg_b ,seg_a + seg_len))
+		for (auto &&i : _RANGE_ (seg_lb ,seg_rb + 1))
 			temp_order[iw++] = mOrder[n_rot][i] ;
 		const auto r1x = ARRAY2<INDEX> {0 ,iw} ;
 		for (auto &&i : _RANGE_ (r1x[0] ,r1x[1]))
-			order_[n_rot][seg_a + i] = temp_order[i] ;
-		_DEBUG_ASSERT_ (iw == seg_len) ;
+			order_[n_rot][seg_lb + i] = temp_order[i] ;
 	}
 
 	void refresh () {
@@ -1380,7 +1466,7 @@ private:
 	void initialize (const Bitmap<REAL> &adjacency ,const INDEX &source ,const INDEX &sink) {
 		struct Dependent ;
 		using InitializeLambda = typename DEPENDENT_TYPE<Private ,Dependent>::InitializeLambda ;
-		_CALL_ (InitializeLambda (DEREF[this] ,adjacency ,source ,sink)) ;
+		_CALL_TRY_ (InitializeLambda (DEREF[this] ,adjacency ,source ,sink)) ;
 	}
 } ;
 

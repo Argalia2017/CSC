@@ -7,7 +7,6 @@
 #ifdef __CSC__
 #pragma push_macro ("self")
 #pragma push_macro ("implicit")
-#pragma push_macro ("side_effects")
 #pragma push_macro ("leftvalue")
 #pragma push_macro ("rightvalue")
 #pragma push_macro ("imports")
@@ -16,7 +15,6 @@
 #pragma push_macro ("discard")
 #undef self
 #undef implicit
-#undef side_effects
 #undef leftvalue
 #undef rightvalue
 #undef imports
@@ -54,7 +52,6 @@
 #ifdef __CSC__
 #pragma pop_macro ("self")
 #pragma pop_macro ("implicit")
-#pragma pop_macro ("side_effects")
 #pragma pop_macro ("leftvalue")
 #pragma pop_macro ("rightvalue")
 #pragma pop_macro ("imports")
@@ -78,18 +75,18 @@ private:
 	using NATIVE_THIS = UniqueRef<api::MYSQL> ;
 
 public:
- 	implicit AbstractDatabase_Engine_MYSQL () {
+	implicit AbstractDatabase_Engine_MYSQL () {
 		_STATIC_ASSERT_ (_SIZEOF_ (DEF<decltype (DEREF[this])>) == _SIZEOF_ (Interface)) ;
 		_STATIC_ASSERT_ (_ALIGNOF_ (DEF<decltype (DEREF[this])>) == _ALIGNOF_ (Interface)) ;
 	}
 
-	void compute_load_data (AnyRef<void> &holder) const override {
-		auto tmp = UniqueRef<api::MYSQL> ([&] (api::MYSQL &me) {
+	void compute_load_data (AnyRef<> &holder) const override {
+		auto rax = UniqueRef<api::MYSQL> ([&] (api::MYSQL &me) {
 			api::mysql_init (DEPTR[me]) ;
 		} ,[] (api::MYSQL &me) {
 			api::mysql_close (DEPTR[me]) ;
 		}) ;
-		holder = AnyRef<NATIVE_THIS>::make (_MOVE_ (tmp)) ;
+		holder = AnyRef<NATIVE_THIS>::make (_MOVE_ (rax)) ;
 	}
 
 private:
