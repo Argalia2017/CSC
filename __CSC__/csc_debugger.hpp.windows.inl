@@ -7,7 +7,6 @@
 #ifdef __CSC__
 #pragma push_macro ("self")
 #pragma push_macro ("implicit")
-#pragma push_macro ("side_effects")
 #pragma push_macro ("leftvalue")
 #pragma push_macro ("rightvalue")
 #pragma push_macro ("imports")
@@ -16,7 +15,6 @@
 #pragma push_macro ("discard")
 #undef self
 #undef implicit
-#undef side_effects
 #undef leftvalue
 #undef rightvalue
 #undef imports
@@ -59,7 +57,6 @@
 #ifdef __CSC__
 #pragma pop_macro ("self")
 #pragma pop_macro ("implicit")
-#pragma pop_macro ("side_effects")
 #pragma pop_macro ("leftvalue")
 #pragma pop_macro ("rightvalue")
 #pragma pop_macro ("imports")
@@ -105,7 +102,7 @@ private:
 	BOOL mTempState ;
 
 public:
- 	implicit Implement () {
+	implicit Implement () {
 		const auto r1x = DEFAULT_HUGESTRING_SIZE::value + 1 ;
 		mConWriter = TextWriter<STR> (SharedRef<FixedBuffer<STR>>::make (r1x)) ;
 		mLogWriter = TextWriter<STR> (SharedRef<FixedBuffer<STR>>::make (r1x)) ;
@@ -387,7 +384,8 @@ private:
 	}
 } ;
 
-inline exports ConsoleService::ConsoleService () {
+inline exports ConsoleService::ConsoleService (const ARGVF<Singleton<ConsoleService>> &) {
+	using Implement = typename Private::Implement ;
 	mThis = StrongRef<Implement>::make () ;
 }
 
@@ -397,6 +395,8 @@ private:
 	UniqueRef<HANDLE> mSymbolFromAddress ;
 
 public:
+	implicit Implement () = default ;
+
 	void abort_once_invoked_exit (const BOOL &flag) override {
 #pragma region
 #pragma warning (push)
@@ -416,10 +416,10 @@ public:
 		const auto r4x = Function<void (VAR32)> ([] (VAR32) noexcept {
 			GlobalRuntime::process_abort () ;
 		}) ;
-		api::atexit (r1x) ;
-		api::signal (SIGFPE ,r2x) ;
-		api::signal (SIGILL ,r3x) ;
-		api::signal (SIGSEGV ,r4x) ;
+		api::atexit (DEPTR[r1x.self]) ;
+		api::signal (SIGFPE ,DEPTR[r2x.self]) ;
+		api::signal (SIGILL ,DEPTR[r3x.self]) ;
+		api::signal (SIGSEGV ,DEPTR[r4x.self]) ;
 #pragma warning (pop)
 #pragma endregion
 	}
@@ -434,8 +434,8 @@ public:
 		_STATIC_UNUSED_ (r3x) ;
 	}
 
-	Array<LENGTH> captrue_stack_trace () side_effects override {
-		auto rax = AutoBuffer<PTR<VOID>> (DEFAULT_RECURSIVE_SIZE::value) ;
+	Array<LENGTH> captrue_stack_trace () override {
+		auto rax = AutoBuffer<PTR<NONE>> (DEFAULT_RECURSIVE_SIZE::value) ;
 		const auto r1x = CaptureStackBackTrace (3 ,VARY (rax.size ()) ,rax.self ,NULL) ;
 		Array<LENGTH> ret = Array<LENGTH> (r1x) ;
 		for (auto &&i : _RANGE_ (0 ,ret.length ()))
@@ -443,7 +443,7 @@ public:
 		return _MOVE_ (ret) ;
 	}
 
-	Array<String<STR>> symbol_from_address (const Array<LENGTH> &list) side_effects override {
+	Array<String<STR>> symbol_from_address (const Array<LENGTH> &list) override {
 		_DEBUG_ASSERT_ (list.length () < VAR32_MAX) ;
 		attach_symbol_info () ;
 		Array<String<STR>> ret = Array<String<STR>> (list.size ()) ;
@@ -453,21 +453,22 @@ public:
 				discard ;
 			const auto r1x = _ALIGNOF_ (api::SYMBOL_INFO) - 1 + _SIZEOF_ (api::SYMBOL_INFO) + list.length () * DEFAULT_FILEPATH_SIZE::value ;
 			auto rax = AutoBuffer<BYTE> (r1x) ;
-			const auto r2x = _ALIGNAS_ (_ADDRESS_ (DEPTR[rax.self]) ,_ALIGNOF_ (api::SYMBOL_INFO)) ;
-			auto &r3x = _LOAD_UNSAFE_ (ARGV<api::SYMBOL_INFO>::null ,r2x) ;
-			r3x.SizeOfStruct = _SIZEOF_ (api::SYMBOL_INFO) ;
-			r3x.MaxNameLen = DEFAULT_FILEPATH_SIZE::value ;
+			const auto r2x = _ADDRESS_ (DEPTR[rax.self]) ;
+			const auto r3x = _ALIGNAS_ (r2x ,_ALIGNOF_ (api::SYMBOL_INFO)) ;
+			const auto r4x = _UNSAFE_POINTER_CAST_ (ARGV<api::SYMBOL_INFO>::null ,r3x) ;
+			DEREF[r4x].SizeOfStruct = _SIZEOF_ (api::SYMBOL_INFO) ;
+			DEREF[r4x].MaxNameLen = DEFAULT_FILEPATH_SIZE::value ;
 			for (auto &&i : _RANGE_ (0 ,list.length ())) {
-				api::SymFromAddr (mSymbolFromAddress ,DATA (list[i]) ,NULL ,DEPTR[r3x]) ;
-				const auto r4x = StringProc::build_hex16s (ARGV<STR>::null ,DATA (r3x.Address)) ;
-				const auto r5x = StringProc::parse_strs (String<STRA> (PTRTOARR[r3x.Name])) ;
-				ret[i] = String<STR>::make (_PCSTR_ ("[") ,r4x ,_PCSTR_ ("] : ") ,r5x) ;
+				api::SymFromAddr (mSymbolFromAddress ,DATA (list[i]) ,NULL ,r4x) ;
+				const auto r5x = StringProc::build_hexs (ARGV<STR>::null ,DATA (DEREF[r4x].Address)) ;
+				const auto r6x = StringProc::parse_strs (String<STRA> (PTRTOARR[DEREF[r4x].Name])) ;
+				ret[i] = String<STR>::make (_PCSTR_ ("[") ,r5x ,_PCSTR_ ("] : ") ,r6x) ;
 			}
 		}
 		if switch_once (fax) {
 			for (auto &&i : _RANGE_ (0 ,list.length ())) {
-				const auto r6x = StringProc::build_hex16s (ARGV<STR>::null ,DATA (list[i])) ;
-				ret[i] = String<STR>::make (_PCSTR_ ("[") ,r6x ,_PCSTR_ ("] : null")) ;
+				const auto r7x = StringProc::build_hexs (ARGV<STR>::null ,DATA (list[i])) ;
+				ret[i] = String<STR>::make (_PCSTR_ ("[") ,r7x ,_PCSTR_ ("] : null")) ;
 			}
 		}
 		return _MOVE_ (ret) ;
@@ -494,7 +495,8 @@ private:
 	}
 } ;
 
-inline exports DebuggerService::DebuggerService () {
+inline exports DebuggerService::DebuggerService (const ARGVF<Singleton<DebuggerService>> &) {
+	using Implement = typename Private::Implement ;
 	mThis = StrongRef<Implement>::make () ;
 }
 } ;

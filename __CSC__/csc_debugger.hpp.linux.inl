@@ -7,7 +7,6 @@
 #ifdef __CSC__
 #pragma push_macro ("self")
 #pragma push_macro ("implicit")
-#pragma push_macro ("side_effects")
 #pragma push_macro ("leftvalue")
 #pragma push_macro ("rightvalue")
 #pragma push_macro ("imports")
@@ -16,7 +15,6 @@
 #pragma push_macro ("discard")
 #undef self
 #undef implicit
-#undef side_effects
 #undef leftvalue
 #undef rightvalue
 #undef imports
@@ -36,7 +34,6 @@
 #ifdef __CSC__
 #pragma pop_macro ("self")
 #pragma pop_macro ("implicit")
-#pragma pop_macro ("side_effects")
 #pragma pop_macro ("leftvalue")
 #pragma pop_macro ("rightvalue")
 #pragma pop_macro ("imports")
@@ -72,7 +69,7 @@ private:
 	BOOL mTempState ;
 
 public:
- 	implicit Implement () {
+	implicit Implement () {
 		const auto r1x = DEFAULT_HUGESTRING_SIZE::value + 1 ;
 		mConWriter = TextWriter<STR> (SharedRef<FixedBuffer<STR>>::make (r1x)) ;
 		mLogWriter = TextWriter<STR> (SharedRef<FixedBuffer<STR>>::make (r1x)) ;
@@ -416,13 +413,16 @@ private:
 	}
 } ;
 
-inline exports ConsoleService::ConsoleService () {
+inline exports ConsoleService::ConsoleService (const ARGVF<Singleton<ConsoleService>> &) {
+	using Implement = typename Private::Implement ;
 	mThis = StrongRef<Implement>::make () ;
 }
 
 class DebuggerService::Private::Implement
 	:public DebuggerService::Abstract {
 public:
+	implicit Implement () = default ;
+
 	void abort_once_invoked_exit (const BOOL &flag) override {
 		_DEBUG_ASSERT_ (flag) ;
 		const auto r1x = Function<void ()> ([] () noexcept {
@@ -449,8 +449,8 @@ public:
 		_DYNAMIC_ASSERT_ (FALSE) ;
 	}
 
-	Array<LENGTH> captrue_stack_trace () side_effects override {
-		auto rax = AutoBuffer<PTR<VOID>> (DEFAULT_RECURSIVE_SIZE::value) ;
+	Array<LENGTH> captrue_stack_trace () override {
+		auto rax = AutoBuffer<PTR<NONE>> (DEFAULT_RECURSIVE_SIZE::value) ;
 		const auto r1x = api::backtrace (rax.self ,VAR32 (rax.size ())) ;
 		Array<LENGTH> ret = Array<LENGTH> (r1x) ;
 		for (auto &&i : _RANGE_ (0 ,ret.length ()))
@@ -458,13 +458,13 @@ public:
 		return _MOVE_ (ret) ;
 	}
 
-	Array<String<STR>> symbol_from_address (const Array<LENGTH> &list) side_effects override {
+	Array<String<STR>> symbol_from_address (const Array<LENGTH> &list) override {
 		_DEBUG_ASSERT_ (list.length () < VAR32_MAX) ;
 		const auto r1x = _CALL_ ([&] () {
-			Array<PTR<VOID>> ret = Array<PTR<VOID>> (list.length ()) ;
+			Array<PTR<NONE>> ret = Array<PTR<NONE>> (list.length ()) ;
 			for (auto &&i : _RANGE_ (0 ,ret.length ())) {
-				auto &r2x = _LOAD_UNSAFE_ (ARGV<NONE>::null ,list[i]) ;
-				ret[i] = DEPTR[r2x] ;
+				const auto r2x = _POINTER_CAST_ (ARGV<NONE>::null ,list[i]) ;
+				ret[i] = r2x ;
 			}
 			return _MOVE_ (ret) ;
 		}) ;
@@ -485,7 +485,8 @@ public:
 	}
 } ;
 
-inline exports DebuggerService::DebuggerService () {
+inline exports DebuggerService::DebuggerService (const ARGVF<Singleton<DebuggerService>> &) {
+	using Implement = typename Private::Implement ;
 	mThis = StrongRef<Implement>::make () ;
 }
 } ;

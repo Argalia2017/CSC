@@ -22,31 +22,24 @@ private:
 	class Abstract
 		:public Interface {
 	public:
-		virtual void compute_load_data (AnyRef<void> &holder) const = 0 ;
-	} ;
-
-	struct SELF_PACK {
-		AnyRef<void> mHolder ;
+		virtual void compute_load_data (AnyRef<> &holder) const = 0 ;
 	} ;
 
 private:
 	PhanRef<const Abstract> mAbstract ;
-	SharedRef<SELF_PACK> mThis ;
+	AnyRef<> mHolder ;
 
 public:
 	implicit AbstractDatabase () = default ;
 
 	explicit AbstractDatabase (PhanRef<const Abstract> &&abstract_) {
 		mAbstract = _MOVE_ (abstract_) ;
-		mThis = SharedRef<SELF_PACK>::make () ;
 	}
 
 	BOOL exist () const {
 		if (!mAbstract.exist ())
 			return FALSE ;
-		if (!mThis.exist ())
-			return FALSE ;
-		if (!mThis->mHolder.exist ())
+		if (!mHolder.exist ())
 			return FALSE ;
 		return TRUE ;
 	}

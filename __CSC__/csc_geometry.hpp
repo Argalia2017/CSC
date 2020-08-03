@@ -16,7 +16,7 @@ class Matrix ;
 
 template <class REAL>
 class Vector {
-	_STATIC_ASSERT_ (stl::is_val_xyz<REAL>::value) ;
+	_STATIC_ASSERT_ (IS_VAL_XYZ_HELP<REAL>::value) ;
 
 private:
 	Buffer<REAL ,ARGC<4>> mVector ;
@@ -217,7 +217,7 @@ public:
 	Vector mul (const Matrix<REAL> &that) const {
 		struct Dependent ;
 		Vector<REAL> ret ;
-		auto &r1x = _XVALUE_ (ARGV<DEPENDENT_TYPE<Matrix<REAL> ,Dependent>>::null ,that) ;
+		auto &r1x = _FORWARD_ (ARGV<DEPENDENT_TYPE<Matrix<REAL> ,Dependent>>::null ,that) ;
 		for (auto &&i : _RANGE_ (0 ,4)) {
 			const auto r2x = get (0) * r1x.get (0 ,i) ;
 			const auto r3x = get (1) * r1x.get (1 ,i) ;
@@ -302,7 +302,6 @@ public:
 		return _MOVE_ (ret) ;
 	}
 
-public:
 	imports const Vector &axis_x () {
 		return _CACHE_ ([&] () {
 			return Vector {REAL (1) ,REAL (0) ,REAL (0) ,REAL (0)} ;
@@ -330,7 +329,7 @@ public:
 
 template <class REAL>
 class Matrix {
-	_STATIC_ASSERT_ (stl::is_val_xyz<REAL>::value) ;
+	_STATIC_ASSERT_ (IS_VAL_XYZ_HELP<REAL>::value) ;
 
 private:
 	struct Private {
@@ -353,7 +352,7 @@ public:
 		}
 	}
 
-	template <class _ARG1 ,class = ENABLE_TYPE<(stl::is_same<_ARG1 ,REAL>::value)>>
+	template <class _ARG1 ,class = ENABLE_TYPE<(IS_SAME_HELP<_ARG1 ,REAL>::value)>>
 	implicit Matrix (const Vector<_ARG1> &vx ,const Vector<_ARG1> &vy ,const Vector<_ARG1> &vz ,const Vector<_ARG1> &vw) {
 		for (auto &&i : _RANGE_ (0 ,4)) {
 			get (i ,0) = vx[i] ;
@@ -544,7 +543,7 @@ public:
 	Matrix mul (const Matrix &that) const {
 		Matrix ret ;
 		const auto r1x = ARRAY2<LENGTH> {4 ,4} ;
-		for (auto &&i : ArrayRange<ARGC<2>> (r1x)) {
+		for (auto &&i : _RANGE_ (r1x)) {
 			const auto r2x = get (i[0] ,0) * that.get (0 ,i[1]) ;
 			const auto r3x = get (i[0] ,1) * that.get (1 ,i[1]) ;
 			const auto r4x = get (i[0] ,2) * that.get (2 ,i[1]) ;
@@ -586,7 +585,7 @@ public:
 	Matrix transpose () const {
 		Matrix ret ;
 		const auto r1x = ARRAY2<LENGTH> {4 ,4} ;
-		for (auto &&i : ArrayRange<ARGC<2>> (r1x))
+		for (auto &&i : _RANGE_ (r1x))
 			ret.get (i[1] ,i[0]) = get (i[0] ,i[1]) ;
 		return _MOVE_ (ret) ;
 	}
@@ -639,19 +638,13 @@ public:
 		const auto r1x = MathProc::inverse (det ()) ;
 		_DYNAMIC_ASSERT_ (r1x != REAL (0)) ;
 		for (auto &&i : _RANGE_ (0 ,4)) {
-			INDEX ix = 0 ;
-			ix += _EBOOL_ (ix == i) ;
-			INDEX iy = ix + 1 ;
-			iy += _EBOOL_ (iy == i) ;
-			INDEX iz = iy + 1 ;
-			iz += _EBOOL_ (iz == i) ;
+			INDEX ix = _EBOOL_ (i == 0) ;
+			INDEX iy = ix + 1 + _EBOOL_ (i == 1) ;
+			INDEX iz = iy + 1 + _EBOOL_ (i == 2) ;
 			for (auto &&j : _RANGE_ (0 ,4)) {
-				INDEX jx = 0 ;
-				jx += _EBOOL_ (jx == j) ;
-				INDEX jy = jx + 1 ;
-				jy += _EBOOL_ (jy == j) ;
-				INDEX jz = jy + 1 ;
-				jz += _EBOOL_ (jz == j) ;
+				INDEX jx = _EBOOL_ (j == 0) ;
+				INDEX jy = jx + 1 + _EBOOL_ (j == 1) ;
+				INDEX jz = jy + 1 + _EBOOL_ (j == 2) ;
 				const auto r2x = get (ix ,jx) * (get (iy ,jy) * get (iz ,jz) - get (iz ,jy) * get (iy ,jz)) ;
 				const auto r3x = get (iy ,jx) * (get (ix ,jy) * get (iz ,jz) - get (iz ,jy) * get (ix ,jz)) ;
 				const auto r4x = get (iz ,jx) * (get (ix ,jy) * get (iy ,jz) - get (iy ,jy) * get (ix ,jz)) ;
@@ -709,7 +702,6 @@ public:
 		return _MOVE_ (ret) ;
 	}
 
-public:
 	imports const Matrix &identity () {
 		return _CACHE_ ([&] () {
 			return Matrix ({
@@ -1019,7 +1011,7 @@ public:
 	imports Matrix make_symmetry (const Vector<REAL> &first ,const Vector<REAL> &second) {
 		Matrix ret ;
 		const auto r1x = ARRAY2<LENGTH> {4 ,4} ;
-		for (auto &&i : ArrayRange<ARGC<2>> (r1x))
+		for (auto &&i : _RANGE_ (r1x))
 			ret[i[0]][i[1]] = first[i[0]] * second[i[1]] ;
 		return _MOVE_ (ret) ;
 	}

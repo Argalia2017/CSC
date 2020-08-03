@@ -92,9 +92,6 @@
     <None Include="..\..\..\..\..\Depends\__CSC__\csc_filesystem.hpp.windows.inl">
       <Filter>csc</Filter>
     </None>
-    <None Include="..\..\..\..\..\Depends\__CSC__\csc_functional.hpp.op.inl">
-      <Filter>csc</Filter>
-    </None>
     <None Include="..\..\..\..\..\Depends\__CSC__\csc_graphics.hpp.opengl.inl">
       <Filter>csc</Filter>
     </None>

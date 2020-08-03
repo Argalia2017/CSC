@@ -7,7 +7,6 @@
 #ifdef __CSC__
 #pragma push_macro ("self")
 #pragma push_macro ("implicit")
-#pragma push_macro ("side_effects")
 #pragma push_macro ("leftvalue")
 #pragma push_macro ("rightvalue")
 #pragma push_macro ("imports")
@@ -16,7 +15,6 @@
 #pragma push_macro ("discard")
 #undef self
 #undef implicit
-#undef side_effects
 #undef leftvalue
 #undef rightvalue
 #undef imports
@@ -35,7 +33,6 @@
 #ifdef __CSC__
 #pragma pop_macro ("self")
 #pragma pop_macro ("implicit")
-#pragma pop_macro ("side_effects")
 #pragma pop_macro ("leftvalue")
 #pragma pop_macro ("rightvalue")
 #pragma pop_macro ("imports")
@@ -73,7 +70,7 @@ using ::_wcstombs_s_l ;
 } ;
 
 class LocaleStaticProc
-	:private Wrapped<void> {
+	:private Wrapped<> {
 public:
 #ifdef __CSC_COMPILER_MSVC__
 	imports const UniqueRef<_locale_t> &static_locale_page () ;
@@ -190,7 +187,8 @@ inline exports String<STRA> StringProc::cvt_ws_as (const String<STRW> &val) {
 }
 
 #ifdef __CSC_EXTEND__
-class RegexMatcher::Private::Implement {
+class RegexMatcher::Private::Implement
+	:public Abstract {
 private:
 	AutoRef<api::regex> mRegex ;
 
@@ -202,7 +200,7 @@ public:
 		mRegex = AutoRef<api::regex>::make (r1x.raw ().self) ;
 	}
 
-	BOOL match (const String<STRU8> &expr) const {
+	BOOL match (const String<STRU8> &expr) const override {
 		if (expr.empty ())
 			return FALSE ;
 		const auto r1x = StringProc::cvt_u8s_uas (expr) ;
@@ -211,7 +209,7 @@ public:
 		return TRUE ;
 	}
 
-	Deque<ARRAY2<INDEX>> search (const String<STRU8> &expr) const {
+	Deque<ARRAY2<INDEX>> search (const String<STRU8> &expr) const override {
 		Deque<ARRAY2<INDEX>> ret = Deque<ARRAY2<INDEX>> (expr.length ()) ;
 		if switch_once (TRUE) {
 			if (expr.empty ())
@@ -236,7 +234,7 @@ public:
 		return _MOVE_ (ret) ;
 	}
 
-	String<STRU8> replace (const String<STRU8> &expr ,const String<STRU8> &rep) const {
+	String<STRU8> replace (const String<STRU8> &expr ,const String<STRU8> &rep) const override {
 		if (expr.empty ())
 			return String<STRU8> () ;
 		const auto r1x = StringProc::cvt_u8s_uas (expr) ;
@@ -251,19 +249,8 @@ public:
 } ;
 
 inline exports RegexMatcher::RegexMatcher (const String<STRU8> &reg) {
+	using Implement = typename Private::Implement ;
 	mThis = StrongRef<Implement>::make (reg) ;
-}
-
-inline exports BOOL RegexMatcher::match (const String<STRU8> &expr) const {
-	return mThis->match (expr) ;
-}
-
-inline exports Deque<ARRAY2<INDEX>> RegexMatcher::search (const String<STRU8> &expr) const {
-	return mThis->search (expr) ;
-}
-
-inline exports String<STRU8> RegexMatcher::replace (const String<STRU8> &expr ,const String<STRU8> &rep) const {
-	return mThis->replace (expr ,rep) ;
 }
 #endif
 } ;

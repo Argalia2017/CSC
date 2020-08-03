@@ -2,7 +2,6 @@
 
 #define self
 #define implicit
-#define side_effects
 #define imports
 #define exports
 #define leftvalue

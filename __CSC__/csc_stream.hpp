@@ -11,63 +11,12 @@
 #include "csc_math.hpp"
 
 namespace CSC {
-namespace U {
-template <class ,class>
-struct BYTE_BASE ;
-
-template <>
-struct BYTE_BASE<ARGC<_SIZEOF_ (BYTE)> ,ARGC<_ALIGNOF_ (BYTE)>> {
-	using TYPE = BYTE ;
-} ;
-
-template <>
-struct BYTE_BASE<ARGC<_SIZEOF_ (WORD)> ,ARGC<_ALIGNOF_ (WORD)>> {
-	using TYPE = WORD ;
-} ;
-
-template <>
-struct BYTE_BASE<ARGC<_SIZEOF_ (CHAR)> ,ARGC<_ALIGNOF_ (CHAR)>> {
-	using TYPE = CHAR ;
-} ;
-
-template <>
-struct BYTE_BASE<ARGC<_SIZEOF_ (DATA)> ,ARGC<_ALIGNOF_ (DATA)>> {
-	using TYPE = DATA ;
-} ;
-
-template <class _ARG1>
-using BYTE_BASE_TYPE = typename U::BYTE_BASE<ARGC<_SIZEOF_ (_ARG1)> ,ARGC<_ALIGNOF_ (_ARG1)>>::TYPE ;
-} ;
-
-namespace U {
-template <class ,class>
-struct TEXT_BASE ;
-
-template <>
-struct TEXT_BASE<ARGC<_SIZEOF_ (STRU8)> ,ARGC<_ALIGNOF_ (STRU8)>> {
-	using TYPE = STRU8 ;
-} ;
-
-template <>
-struct TEXT_BASE<ARGC<_SIZEOF_ (STRU16)> ,ARGC<_ALIGNOF_ (STRU16)>> {
-	using TYPE = STRU16 ;
-} ;
-
-template <>
-struct TEXT_BASE<ARGC<_SIZEOF_ (STRU32)> ,ARGC<_ALIGNOF_ (STRU32)>> {
-	using TYPE = STRU32 ;
-} ;
-
-template <class _ARG1>
-using TEXT_BASE_TYPE = typename U::TEXT_BASE<ARGC<_SIZEOF_ (_ARG1)> ,ARGC<_ALIGNOF_ (_ARG1)>>::TYPE ;
-} ;
-
-using STRUA = U::TEXT_BASE_TYPE<STRA> ;
-using STRUW = U::TEXT_BASE_TYPE<STRW> ;
+using STRUA = TEXT_BASE_TYPE<STRA> ;
+using STRUW = TEXT_BASE_TYPE<STRW> ;
 
 template <class REAL>
 class ByteReader {
-	_STATIC_ASSERT_ (stl::is_same<REAL ,BYTE>::value) ;
+	_STATIC_ASSERT_ (IS_SAME_HELP<REAL ,BYTE>::value) ;
 
 public:
 	class Binder
@@ -97,7 +46,7 @@ private:
 	INDEX mWrite ;
 
 public:
- 	implicit ByteReader () {
+	implicit ByteReader () {
 		reset () ;
 	}
 
@@ -153,7 +102,7 @@ public:
 	}
 
 	template <class _ARG1>
-	_ARG1 read (const ARGVF<_ARG1> &) side_effects {
+	REMOVE_CVR_TYPE<_ARG1> read (const ARGVF<_ARG1> &) {
 		_ARG1 ret ;
 		read (ret) ;
 		return _MOVE_ (ret) ;
@@ -302,7 +251,7 @@ public:
 
 	template <class _ARG1 ,class _ARG2>
 	void read (String<_ARG1 ,_ARG2> &data) {
-		_STATIC_ASSERT_ (stl::is_str_xyz<_ARG1>::value) ;
+		_STATIC_ASSERT_ (IS_STR_XYZ_HELP<_ARG1>::value) ;
 		const auto r1x = LENGTH (read (ARGV<VAR32>::null)) ;
 		_DYNAMIC_ASSERT_ (r1x >= 0 && r1x < VAR32_MAX) ;
 		if (data.size () < r1x)
@@ -437,7 +386,7 @@ inline void ByteReader<REAL>::EOS (const ARGVF<ARGC<4>> &) {}
 
 template <class REAL>
 class ByteWriter {
-	_STATIC_ASSERT_ (stl::is_same<REAL ,BYTE>::value) ;
+	_STATIC_ASSERT_ (IS_SAME_HELP<REAL ,BYTE>::value) ;
 
 public:
 	class Binder
@@ -467,7 +416,7 @@ private:
 	INDEX mWrite ;
 
 public:
- 	implicit ByteWriter () {
+	implicit ByteWriter () {
 		reset () ;
 	}
 
@@ -589,9 +538,9 @@ public:
 		return DEREF[this] ;
 	}
 
-	void write (const PTR<const VOID> &) = delete ;
+	void write (const PTR<const NONE> &) = delete ;
 
-	inline ByteWriter &operator<< (const PTR<const VOID> &) = delete ;
+	inline ByteWriter &operator<< (const PTR<const NONE> &) = delete ;
 
 	void write (const VAR32 &data) {
 		const auto r1x = _CAST_ (ARGV<U::BYTE_BASE_TYPE<VAR32>>::null ,data) ;
@@ -669,7 +618,7 @@ public:
 
 	template <class _ARG1 ,class _ARG2>
 	void write (const String<_ARG1 ,_ARG2> &data) {
-		_STATIC_ASSERT_ (stl::is_str_xyz<_ARG1>::value) ;
+		_STATIC_ASSERT_ (IS_STR_XYZ_HELP<_ARG1>::value) ;
 		const auto r1x = data.length () ;
 		_DYNAMIC_ASSERT_ (r1x >= 0 && r1x < VAR32_MAX) ;
 		write (VAR32 (r1x)) ;
@@ -796,7 +745,7 @@ inline void ByteWriter<REAL>::EOS (const ARGVF<ARGC<4>> &) {}
 
 template <class REAL>
 class TextReader {
-	_STATIC_ASSERT_ (stl::is_str_xyz<REAL>::value) ;
+	_STATIC_ASSERT_ (IS_STR_XYZ_HELP<REAL>::value) ;
 
 public:
 	class Binder
@@ -834,7 +783,7 @@ private:
 	INDEX mWrite ;
 
 public:
- 	implicit TextReader () {
+	implicit TextReader () {
 		reset () ;
 	}
 
@@ -893,7 +842,7 @@ public:
 	}
 
 	template <class _ARG1>
-	_ARG1 read (const ARGVF<_ARG1> &) side_effects {
+	REMOVE_CVR_TYPE<_ARG1> read (const ARGVF<_ARG1> &) {
 		_ARG1 ret ;
 		read (ret) ;
 		return _MOVE_ (ret) ;
@@ -1004,8 +953,13 @@ public:
 		auto rax = REAL () ;
 		read (rax) ;
 		const auto r1x = BOOL (rax == REAL ('-')) ;
-		if (rax == REAL ('+') || r1x)
+		const auto r2x = BOOL (rax == REAL ('+')) ;
+		if switch_once (TRUE) {
+			if (!r1x)
+				if (!r2x)
+					discard ;
 			read (rax) ;
+		}
 		compute_read_number (data ,rax) ;
 		if (!r1x)
 			return ;
@@ -1039,8 +993,12 @@ public:
 		auto rax = REAL () ;
 		read (rax) ;
 		const auto r2x = BOOL (rax == REAL ('-')) ;
-		if (rax == REAL ('+') || r2x)
+		if switch_once (TRUE) {
+			if (!r2x)
+				if (rax != REAL ('+'))
+					discard ;
 			read (rax) ;
+		}
 		auto fax = TRUE ;
 		if switch_once (fax) {
 			if (!(rax == REAL ('i')))
@@ -1233,7 +1191,7 @@ public:
 	}
 
 private:
-	LENGTH next_string_size () side_effects {
+	LENGTH next_string_size () {
 		const auto r1x = attr () ;
 		LENGTH ret = 0 ;
 		auto rax = share () ;
@@ -1420,7 +1378,7 @@ public:
 	}
 
 	void enable_endian (const BOOL &flag) const {
-		_STATIC_ASSERT_ (!stl::is_const<BASE>::value) ;
+		_STATIC_ASSERT_ (!IS_CONST_HELP<BASE>::value) ;
 		mBase->mHeap->mEndianFlag = flag ;
 	}
 
@@ -1457,7 +1415,7 @@ public:
 	}
 
 	void enable_escape (const BOOL &flag) const {
-		_STATIC_ASSERT_ (!stl::is_const<BASE>::value) ;
+		_STATIC_ASSERT_ (!IS_CONST_HELP<BASE>::value) ;
 		mBase->mHeap->mEscapeFlag = flag ;
 	}
 
@@ -1474,7 +1432,7 @@ public:
 	}
 
 	void modify_escape_r (const REAL &str_a ,const REAL &str_e) const {
-		_STATIC_ASSERT_ (!stl::is_const<BASE>::value) ;
+		_STATIC_ASSERT_ (!IS_CONST_HELP<BASE>::value) ;
 		_DEBUG_ASSERT_ (str_e != varify_ending_item ()) ;
 		INDEX ix = mBase->mHeap->mEscapeMappingSet.map (str_a) ;
 		_DEBUG_ASSERT_ (ix == VAR_NONE) ;
@@ -1506,7 +1464,7 @@ public:
 	}
 
 	void modify_space (const REAL &item ,const VAR32 &group) const {
-		_STATIC_ASSERT_ (!stl::is_const<BASE>::value) ;
+		_STATIC_ASSERT_ (!IS_CONST_HELP<BASE>::value) ;
 		_DEBUG_ASSERT_ (item != varify_ending_item ()) ;
 		INDEX ix = mBase->mHeap->mSpaceMappingSet.map (item) ;
 		_DEBUG_ASSERT_ (ix == VAR_NONE) ;
@@ -1540,7 +1498,7 @@ inline void TextReader<REAL>::EOS (const ARGVF<ARGC<4>> &) {}
 
 template <class REAL>
 class TextWriter {
-	_STATIC_ASSERT_ (stl::is_str_xyz<REAL>::value) ;
+	_STATIC_ASSERT_ (IS_STR_XYZ_HELP<REAL>::value) ;
 
 public:
 	class Binder
@@ -1576,7 +1534,7 @@ private:
 	INDEX mWrite ;
 
 public:
- 	implicit TextWriter () {
+	implicit TextWriter () {
 		reset () ;
 	}
 
@@ -1616,7 +1574,7 @@ public:
 
 	PhanBuffer<const REAL> raw () const leftvalue {
 		_DYNAMIC_ASSERT_ (size () > 0) ;
-		return PhanBuffer<const REAL>::make (mStream ,length ()) ;
+		return PhanBuffer<const REAL>::make (mStream.self ,length ()) ;
 	}
 
 	void reset () {
@@ -1685,9 +1643,9 @@ public:
 		return DEREF[this] ;
 	}
 
-	void write (const PTR<const VOID> &) = delete ;
+	void write (const PTR<const NONE> &) = delete ;
 
-	inline TextWriter &operator<< (const PTR<const VOID> &) = delete ;
+	inline TextWriter &operator<< (const PTR<const NONE> &) = delete ;
 
 	void write (const VAR32 &data) {
 		write (VAR64 (data)) ;
@@ -2256,7 +2214,7 @@ private:
 	LENGTH mHintNextTextSize ;
 
 public:
- 	implicit RegularReader () {
+	implicit RegularReader () {
 		mPeek = 0 ;
 		mHintStringTextFlag = FALSE ;
 		mHintNextTextSize = 0 ;
@@ -2574,8 +2532,10 @@ public:
 
 	void read (String<STRU8> &data) {
 		const auto r1x = mReader->attr () ;
-		const auto r2x = _EXCHANGE_ (mHintStringTextFlag ,FALSE) ;
-		const auto r3x = _EXCHANGE_ (mHintNextTextSize ,VAR_ZERO) ;
+		const auto r2x = mHintStringTextFlag ;
+		const auto r3x = mHintNextTextSize ;
+		mHintStringTextFlag = FALSE ;
+		mHintNextTextSize = 0 ;
 		if (data.size () < r3x)
 			data = String<STRU8> (r3x) ;
 		data.clear () ;

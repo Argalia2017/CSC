@@ -13,7 +13,9 @@ template <class BASE>
 class ArrayIterator
 	:private Proxy {
 private:
-	friend BASE ;
+	using HINT_ITEM = DEF<decltype (_NULL_ (ARGV<BASE>::null).get (_NULL_ (ARGV<const INDEX>::null)))> ;
+
+private:
 	PhanRef<BASE> mBase ;
 	INDEX mIndex ;
 
@@ -29,26 +31,39 @@ public:
 		return BOOL (mIndex != that.mIndex) ;
 	}
 
-	template <class _RET = DEF<decltype (_NULL_ (ARGV<BASE>::null).get (_NULL_ (ARGV<const INDEX>::null)))>>
-	inline _RET operator* () const leftvalue {
-		return mBase->get (_XVALUE_ (ARGV<const INDEX>::null ,mIndex)) ;
+	inline HINT_ITEM operator* () const leftvalue {
+		auto &r1x = _FORWARD_ (ARGV<const INDEX>::null ,mIndex) ;
+		return mBase->get (r1x) ;
 	}
 
 	inline void operator++ () {
-		mIndex = mBase->inext (_XVALUE_ (ARGV<const INDEX>::null ,mIndex)) ;
+		auto &r1x = _FORWARD_ (ARGV<const INDEX>::null ,mIndex) ;
+		mIndex = mBase->inext (r1x) ;
 	}
 } ;
 
-namespace U {
-struct OPERATOR_SORT {
+class SortInvokeProc
+	:private Wrapped<> {
+public:
 	template <class _ARG1 ,class _ARG2>
-	imports void insert_sort (const _ARG1 &array_ ,_ARG2 &out ,const INDEX &seg_a ,const INDEX &seg_b) {
-		for (auto &&i : _RANGE_ (seg_a ,seg_b)) {
+	imports void invoke (const _ARG1 &array_ ,_ARG2 &out ,const INDEX &seg_lb ,const INDEX &seg_rb) {
+		const auto r1x = seg_rb - seg_lb + 1 ;
+		if (r1x <= 0)
+			return ;
+		_DEBUG_ASSERT_ (seg_lb >= 0 && seg_lb < out.size ()) ;
+		_DEBUG_ASSERT_ (seg_rb >= 0 && seg_rb < out.size ()) ;
+		quick_sort (array_ ,out ,seg_lb ,seg_rb ,r1x) ;
+	}
+
+private:
+	template <class _ARG1 ,class _ARG2>
+	imports void insert_sort (const _ARG1 &array_ ,_ARG2 &out ,const INDEX &seg_lb ,const INDEX &seg_rb) {
+		for (auto &&i : _RANGE_ (seg_lb ,seg_rb)) {
 			INDEX ix = i + 1 ;
 			INDEX iy = i ;
 			auto rax = _MOVE_ (out[ix]) ;
 			while (TRUE) {
-				if (iy < seg_a)
+				if (iy < seg_lb)
 					break ;
 				if (array_[rax] >= array_[out[iy]])
 					break ;
@@ -61,9 +76,9 @@ struct OPERATOR_SORT {
 	}
 
 	template <class _ARG1 ,class _ARG2>
-	imports void quick_sort_partition (const _ARG1 &array_ ,_ARG2 &out ,const INDEX &seg_a ,const INDEX &seg_b ,INDEX &mid_one) {
-		INDEX ix = seg_a ;
-		INDEX iy = seg_b ;
+	imports void quick_sort_partition (const _ARG1 &array_ ,_ARG2 &out ,const INDEX &seg_lb ,const INDEX &seg_rb ,INDEX &mid_one) {
+		INDEX ix = seg_lb ;
+		INDEX iy = seg_rb ;
 		auto rax = _MOVE_ (out[ix]) ;
 		while (TRUE) {
 			while (TRUE) {
@@ -92,10 +107,10 @@ struct OPERATOR_SORT {
 	}
 
 	template <class _ARG1 ,class _ARG2>
-	imports void quick_sort (const _ARG1 &array_ ,_ARG2 &out ,const INDEX &seg_a ,const INDEX &seg_b ,const LENGTH &ideal) {
+	imports void quick_sort (const _ARG1 &array_ ,_ARG2 &out ,const INDEX &seg_lb ,const INDEX &seg_rb ,const LENGTH &ideal) {
 		auto rax = ideal ;
-		INDEX ix = seg_a ;
-		INDEX iy = seg_b ;
+		INDEX ix = seg_lb ;
+		INDEX iy = seg_rb ;
 		while (TRUE) {
 			if (ix >= iy)
 				break ;
@@ -112,14 +127,6 @@ struct OPERATOR_SORT {
 			return ;
 		insert_sort (array_ ,out ,ix ,iy) ;
 	}
-
-	template <class _ARG1 ,class _ARG2>
-	imports void invoke (const _ARG1 &array_ ,_ARG2 &out ,const INDEX &seg ,const LENGTH &seg_len) {
-		_DEBUG_ASSERT_ (seg_len > 0) ;
-		_DEBUG_ASSERT_ (seg >= 0 && seg <= out.size () - seg_len) ;
-		quick_sort (array_ ,out ,seg ,(seg + seg_len - 1) ,seg_len) ;
-	}
-} ;
 } ;
 
 template <class ITEM ,class SIZE = SAUTO>
@@ -138,7 +145,7 @@ public:
 		_STATIC_WARNING_ ("noop") ;
 	}
 
-	implicit Array (const stl::initializer_list<ITEM> &that)
+	implicit Array (const api::initializer_list<ITEM> &that)
 		: Array (that.size ()) {
 		_DEBUG_ASSERT_ (size () == LENGTH (that.size ())) ;
 		INDEX iw = 0 ;
@@ -250,6 +257,17 @@ public:
 			mArray[i] = item ;
 	}
 
+	template <class... _ARGS>
+	imports Array make (const _ARGS &...args) {
+		const auto r1x = _RANGE_ (args...) ;
+		Array ret = Array (r1x.size ()) ;
+		INDEX iw = 0 ;
+		for (auto &&i : r1x)
+			ret[iw++] = i ;
+		_DEBUG_ASSERT_ (iw == ret.size ()) ;
+		return _MOVE_ (ret) ;
+	}
+
 private:
 	explicit Array (const DEF<decltype (ARGVP0)> & ,const LENGTH &len)
 		:mArray (len) {}
@@ -303,7 +321,7 @@ public:
 		clear () ;
 	}
 
-	implicit String (const stl::initializer_list<ITEM> &that)
+	implicit String (const api::initializer_list<ITEM> &that)
 		: String (that.size ()) {
 		_DEBUG_ASSERT_ (size () == LENGTH (that.size ())) ;
 		INDEX iw = 0 ;
@@ -405,13 +423,10 @@ public:
 	}
 
 	BOOL equal (const String &that) const {
-		if (empty ())
-			if (that.empty ())
-				return TRUE ;
-		if (empty ())
+		if (_EBOOL_ (empty ()) != _EBOOL_ (that.empty ()))
 			return FALSE ;
-		if (that.empty ())
-			return FALSE ;
+		if (empty ())
+			return TRUE ;
 		INDEX ix = 0 ;
 		while (TRUE) {
 			if (mString[ix] == ITEM (0))
@@ -453,9 +468,9 @@ public:
 		const auto r1x = size () ;
 		const auto r2x = that.size () ;
 		if (r1x == 0)
-			return U::OPERATOR_COMPR::invoke (r1x ,r2x) ;
+			return ComprInvokeProc::invoke (r1x ,r2x) ;
 		if (r2x == 0)
-			return U::OPERATOR_COMPR::invoke (r1x ,r2x) ;
+			return ComprInvokeProc::invoke (r1x ,r2x) ;
 		INDEX ix = 0 ;
 		while (TRUE) {
 			if (mString[ix] == ITEM (0))
@@ -464,7 +479,7 @@ public:
 				break ;
 			ix++ ;
 		}
-		return U::OPERATOR_COMPR::invoke (mString[ix] ,that.mString[ix]) ;
+		return ComprInvokeProc::invoke (mString[ix] ,that.mString[ix]) ;
 	}
 
 	inline BOOL operator< (const String &that) const {
@@ -552,25 +567,30 @@ public:
 		return DEREF[this] ;
 	}
 
-	String segment (const INDEX &seg ,const LENGTH &seg_len) const {
-		_DEBUG_ASSERT_ (seg_len > 0) ;
-		_DEBUG_ASSERT_ (seg >= 0 && seg <= size () - seg_len) ;
-		String ret = String (seg_len) ;
-		for (auto &&i : _RANGE_ (0 ,ret.size ()))
-			ret.get (i) = get (seg + i) ;
+	String segment (const INDEX &seg_lb ,const INDEX &seg_rb) const {
+		String ret ;
+		const auto r1x = seg_rb - seg_lb + 1 ;
+		if switch_once (TRUE) {
+			if (r1x <= 0)
+				discard ;
+			_DEBUG_ASSERT_ (seg_lb >= 0 && seg_lb < size ()) ;
+			_DEBUG_ASSERT_ (seg_rb >= 0 && seg_rb < size ()) ;
+			ret = String (r1x) ;
+			for (auto &&i : _RANGE_ (0 ,r1x))
+				ret.get (i) = get (seg_lb + i) ;
+		}
 		return _MOVE_ (ret) ;
 	}
 
-public:
 	template <class... _ARGS>
 	imports String make (const _ARGS &...initval) {
 		struct Dependent ;
-		using TextWriter_ITEM = DEPENDENT_TYPE<TextWriter<ITEM> ,Dependent> ;
-		_STATIC_ASSERT_ (stl::is_same<SIZE ,SAUTO>::value) ;
+		using TextWriter = DEPENDENT_TYPE<TextWriter<ITEM> ,Dependent> ;
+		_STATIC_ASSERT_ (IS_SAME_HELP<SIZE ,SAUTO>::value) ;
 		String ret = String (DEFAULT_LONGSTRING_SIZE::value) ;
-		auto rax = TextWriter_ITEM (ret.raw ()) ;
+		auto rax = TextWriter (ret.raw ()) ;
 		rax.prints (initval...) ;
-		rax << TextWriter_ITEM::EOS ;
+		rax << TextWriter::EOS ;
 		return _MOVE_ (ret) ;
 	}
 
@@ -578,7 +598,6 @@ private:
 	explicit String (const DEF<decltype (ARGVP0)> & ,const LENGTH &len)
 		:mString (len) {}
 
-private:
 	imports LENGTH plain_string_length (const ARR<ITEM> &val) {
 		const auto r1x = DEFAULT_HUGESTRING_SIZE::value + 1 ;
 		LENGTH ret = BasicProc::mem_chr (val ,r1x ,ITEM (0)) ;
@@ -607,7 +626,7 @@ public:
 		clear () ;
 	}
 
-	implicit Deque (const stl::initializer_list<ITEM> &that)
+	implicit Deque (const api::initializer_list<ITEM> &that)
 		: Deque (that.size ()) {
 		for (auto &&i : that)
 			add (i) ;
@@ -711,7 +730,7 @@ public:
 
 	Array<INDEX> range_sort () const {
 		Array<INDEX> ret = range () ;
-		U::OPERATOR_SORT::invoke (DEREF[this] ,ret ,0 ,ret.length ()) ;
+		SortInvokeProc::invoke (DEREF[this] ,ret ,0 ,ret.length () - 1) ;
 		return _MOVE_ (ret) ;
 	}
 
@@ -761,7 +780,7 @@ public:
 		return TRUE ;
 	}
 
-	void add (const REMOVE_CVR_TYPE<ITEM> &item) {
+	void add (const REMOVE_CONST_TYPE<ITEM> &item) {
 		if (mDeque.size () == 0)
 			update_emplace () ;
 		mDeque[mWrite] = _MOVE_ (item) ;
@@ -769,12 +788,12 @@ public:
 		update_emplace () ;
 	}
 
-	inline Deque &operator<< (const REMOVE_CVR_TYPE<ITEM> &item) {
+	inline Deque &operator<< (const REMOVE_CONST_TYPE<ITEM> &item) {
 		add (_MOVE_ (item)) ;
 		return DEREF[this] ;
 	}
 
-	void add (REMOVE_CVR_TYPE<ITEM> &&item) {
+	void add (REMOVE_CONST_TYPE<ITEM> &&item) {
 		if (mDeque.size () == 0)
 			update_emplace () ;
 		mDeque[mWrite] = _MOVE_ (item) ;
@@ -782,7 +801,7 @@ public:
 		update_emplace () ;
 	}
 
-	inline Deque &operator<< (REMOVE_CVR_TYPE<ITEM> &&item) {
+	inline Deque &operator<< (REMOVE_CONST_TYPE<ITEM> &&item) {
 		add (_MOVE_ (item)) ;
 		return DEREF[this] ;
 	}
@@ -810,26 +829,7 @@ public:
 		return DEREF[this] ;
 	}
 
-	INDEX head () const {
-		_DEBUG_ASSERT_ (!empty ()) ;
-		return mRead ;
-	}
-
-	INDEX tail () const {
-		_DEBUG_ASSERT_ (!empty ()) ;
-		return (mWrite - 1 + mDeque.size ()) % mDeque.size () ;
-	}
-
-	INDEX insert () side_effects {
-		if (mDeque.size () == 0)
-			update_emplace () ;
-		INDEX ret = mWrite ;
-		mWrite = (mWrite + 1) % mDeque.size () ;
-		update_emplace () ;
-		return _MOVE_ (ret) ;
-	}
-
-	void push (const REMOVE_CVR_TYPE<ITEM> &item) {
+	void push (const REMOVE_CONST_TYPE<ITEM> &item) {
 		if (mDeque.size () == 0)
 			update_emplace () ;
 		INDEX ix = (mRead - 1 + mDeque.size ()) % mDeque.size () ;
@@ -838,7 +838,7 @@ public:
 		update_emplace () ;
 	}
 
-	void push (REMOVE_CVR_TYPE<ITEM> &&item) {
+	void push (REMOVE_CONST_TYPE<ITEM> &&item) {
 		if (mDeque.size () == 0)
 			update_emplace () ;
 		INDEX ix = (mRead - 1 + mDeque.size ()) % mDeque.size () ;
@@ -852,11 +852,29 @@ public:
 		mWrite = (mWrite - 1 + mDeque.size ()) % mDeque.size () ;
 	}
 
+	INDEX head () const {
+		_DEBUG_ASSERT_ (!empty ()) ;
+		return mRead ;
+	}
+
+	INDEX tail () const {
+		_DEBUG_ASSERT_ (!empty ()) ;
+		return (mWrite - 1 + mDeque.size ()) % mDeque.size () ;
+	}
+
+	INDEX insert () {
+		if (mDeque.size () == 0)
+			update_emplace () ;
+		INDEX ret = mWrite ;
+		mWrite = (mWrite + 1) % mDeque.size () ;
+		update_emplace () ;
+		return _MOVE_ (ret) ;
+	}
+
 private:
 	explicit Deque (const DEF<decltype (ARGVP0)> & ,const LENGTH &len)
 		:mDeque (len) {}
 
-private:
 	BOOL ensure_index (const INDEX &index) const {
 		if (mRead <= mWrite)
 			if (!(index >= mRead && index < mWrite))
@@ -917,18 +935,13 @@ class Priority ;
 template <class ITEM ,class SIZE>
 class Priority {
 private:
-	struct NODE {
+	struct NODE_PACK {
 		ITEM mItem ;
 		INDEX mMap ;
 	} ;
 
-	struct Private {
-		template <class>
-		class Pair ;
-	} ;
-
 private:
-	Buffer<NODE ,ARGC<(U::CONSTEXPR_RESERVE_SIZE::invoke (SIZE::value))>> mPriority ;
+	Buffer<NODE_PACK ,ARGC<(U::CONSTEXPR_RESERVE_SIZE::invoke (SIZE::value))>> mPriority ;
 	INDEX mWrite ;
 	INDEX mTop ;
 
@@ -942,7 +955,7 @@ public:
 		clear () ;
 	}
 
-	implicit Priority (const stl::initializer_list<ITEM> &that)
+	implicit Priority (const api::initializer_list<ITEM> &that)
 		: Priority (that.size ()) {
 		for (auto &&i : that)
 			add (i) ;
@@ -977,69 +990,33 @@ public:
 		return index + 1 ;
 	}
 
-	ArrayIterator<Priority> begin () leftvalue {
-		return ArrayIterator<Priority> (PhanRef<Priority>::make (DEREF[this]) ,ibegin ()) ;
-	}
-
 	ArrayIterator<const Priority> begin () const leftvalue {
 		return ArrayIterator<const Priority> (PhanRef<const Priority>::make (DEREF[this]) ,ibegin ()) ;
-	}
-
-	ArrayIterator<Priority> end () leftvalue {
-		return ArrayIterator<Priority> (PhanRef<Priority>::make (DEREF[this]) ,iend ()) ;
 	}
 
 	ArrayIterator<const Priority> end () const leftvalue {
 		return ArrayIterator<const Priority> (PhanRef<const Priority>::make (DEREF[this]) ,iend ()) ;
 	}
 
-	//@warn: index would be no longer valid every time revised
-	template <class _RET = REMOVE_CVR_TYPE<typename Private::template Pair<Priority>>>
-	_RET get (const INDEX &index) leftvalue {
-		struct Dependent ;
-		using Pair = typename DEPENDENT_TYPE<Private ,Dependent>::template Pair<Priority> ;
-		_DEBUG_ASSERT_ (index >= 0 && index < mWrite) ;
-		return Pair (PhanRef<Priority>::make (DEREF[this]) ,index) ;
+	const ITEM &get (const INDEX &index) const leftvalue {
+		return mPriority[index].mItem ;
 	}
 
-	template <class _RET = REMOVE_CVR_TYPE<typename Private::template Pair<Priority>>>
-	inline _RET operator[] (const INDEX &index) leftvalue {
-		return get (index) ;
-	}
-
-	//@warn: index would be no longer valid every time revised
-	template <class _RET = REMOVE_CVR_TYPE<typename Private::template Pair<const Priority>>>
-	_RET get (const INDEX &index) const leftvalue {
-		struct Dependent ;
-		using Pair = typename DEPENDENT_TYPE<Private ,Dependent>::template Pair<const Priority> ;
-		_DEBUG_ASSERT_ (index >= 0 && index < mWrite) ;
-		return Pair (PhanRef<const Priority>::make (DEREF[this]) ,index) ;
-	}
-
-	template <class _RET = REMOVE_CVR_TYPE<typename Private::template Pair<const Priority>>>
-	inline _RET operator[] (const INDEX &index) const leftvalue {
+	inline const ITEM &operator[] (const INDEX &index) const leftvalue {
 		return get (index) ;
 	}
 
 	INDEX at (const ITEM &item) const {
-		INDEX ret = mPriority.at (_OFFSET_ (&NODE::mItem ,item)) ;
+		INDEX ret = mPriority.at (_OFFSET_ (&NODE_PACK::mItem ,item)) ;
 		if (!(ret >= 0 && ret < mWrite))
 			ret = VAR_NONE ;
 		return _MOVE_ (ret) ;
 	}
 
-	INDEX at (const DEF<typename Private::template Pair<Priority>> &item) const {
-		struct Dependent ;
-		using Pair = typename DEPENDENT_TYPE<Private ,Dependent>::template Pair<Priority> ;
-		auto &r1x = _XVALUE_ (ARGV<Pair>::null ,item) ;
-		return at (r1x.key) ;
-	}
-
-	INDEX at (const DEF<typename Private::template Pair<const Priority>> &item) const {
-		struct Dependent ;
-		using Pair = typename DEPENDENT_TYPE<Private ,Dependent>::template Pair<const Priority> ;
-		auto &r1x = _XVALUE_ (ARGV<Pair>::null ,item) ;
-		return at (r1x.key) ;
+	INDEX map_get (const INDEX &index) const {
+		if (index == VAR_NONE)
+			return VAR_NONE ;
+		return mPriority[index].mMap ;
 	}
 
 	Array<INDEX> range () const {
@@ -1060,14 +1037,12 @@ public:
 	Array<INDEX> range_sort () const {
 		Array<INDEX> ret = range () ;
 		INDEX ix = ret.length () ;
-		INDEX iy = ix - 1 ;
 		while (TRUE) {
-			if (iy < 1)
+			ix-- ;
+			if (ix < 1)
 				break ;
-			_SWAP_ (ret[0] ,ret[iy]) ;
-			compute_order (ret ,iy) ;
-			ix = iy ;
-			iy-- ;
+			_SWAP_ (ret[0] ,ret[ix]) ;
+			compute_order (ret ,ix) ;
 		}
 		if (ret.size () > 0)
 			BasicProc::mem_rcopy (ret.raw ().self ,ret.raw ().self ,ret.size ()) ;
@@ -1095,7 +1070,7 @@ public:
 		return DEREF[this] ;
 	}
 
-	void add (const REMOVE_CVR_TYPE<ITEM> &item ,const INDEX &map_) {
+	void add (const REMOVE_CONST_TYPE<ITEM> &item ,const INDEX &map_) {
 		if (mPriority.size () == 0)
 			update_emplace () ;
 		INDEX ix = mWrite ;
@@ -1106,16 +1081,16 @@ public:
 		update_insert (ix) ;
 	}
 
-	void add (REMOVE_CVR_TYPE<ITEM> &&item) {
+	void add (REMOVE_CONST_TYPE<ITEM> &&item) {
 		add (_MOVE_ (item) ,VAR_NONE) ;
 	}
 
-	inline Priority &operator<< (REMOVE_CVR_TYPE<ITEM> &&item) {
+	inline Priority &operator<< (REMOVE_CONST_TYPE<ITEM> &&item) {
 		add (_MOVE_ (item)) ;
 		return DEREF[this] ;
 	}
 
-	void add (REMOVE_CVR_TYPE<ITEM> &&item ,const INDEX &map_) {
+	void add (REMOVE_CONST_TYPE<ITEM> &&item ,const INDEX &map_) {
 		if (mPriority.size () == 0)
 			update_emplace () ;
 		INDEX ix = mWrite ;
@@ -1129,8 +1104,10 @@ public:
 	template <class _ARG1>
 	void appand (const _ARG1 &val) {
 		reserve (val.length ()) ;
-		for (auto &&i : val)
-			add (i.key ,i.sid) ;
+		for (auto &&i : val) {
+			const auto r1x = val.at (i) ;
+			add (i ,val.map_get (r1x)) ;
+		}
 	}
 
 	void take () {
@@ -1160,12 +1137,12 @@ public:
 		return 0 ;
 	}
 
-	INDEX insert (const REMOVE_CVR_TYPE<ITEM> &item) side_effects {
+	INDEX insert (const REMOVE_CONST_TYPE<ITEM> &item) {
 		add (_MOVE_ (item)) ;
 		return mTop ;
 	}
 
-	INDEX insert (REMOVE_CVR_TYPE<ITEM> &&item) side_effects {
+	INDEX insert (REMOVE_CONST_TYPE<ITEM> &&item) {
 		add (_MOVE_ (item)) ;
 		return mTop ;
 	}
@@ -1182,7 +1159,6 @@ private:
 	explicit Priority (const DEF<decltype (ARGVP0)> & ,const LENGTH &len)
 		:mPriority (len) {}
 
-private:
 	void reserve (const LENGTH &len) {
 		const auto r1x = len - (size () - length ()) ;
 		const auto r2x = VAR_ZERO ;
@@ -1285,46 +1261,24 @@ private:
 	}
 } ;
 
-template <class ITEM ,class SIZE>
-template <class BASE>
-class Priority<ITEM ,SIZE>::Private::Pair
-	:private Proxy {
-public:
-	const ITEM &key ;
-	CAST_TRAITS_TYPE<INDEX ,BASE> &sid ;
-
-public:
-	implicit Pair () = delete ;
-
-	explicit Pair (PhanRef<BASE> &&base ,const INDEX &index)
-		: key (base->mPriority[index].mItem) ,sid (base->mPriority[index].mMap) {}
-
-	inline implicit operator const ITEM & () rightvalue {
-		return key ;
-	}
-} ;
-
 template <class ITEM ,class SIZE = SAUTO>
 class List ;
 
 template <class ITEM ,class SIZE>
 class List {
 private:
-	class Node {
-	private:
-		friend List ;
+	struct NODE_PACK {
 		ITEM mItem ;
 		INDEX mLeft ;
 		INDEX mRight ;
 
-	public:
 		template <class... _ARGS>
-		explicit Node (_ARGS &&...initval)
-			:mItem (_FORWARD_ (ARGV<_ARGS>::null ,initval)...) ,mLeft (VAR_NONE) ,mRight (VAR_NONE) {}
+		explicit NODE_PACK (const DEF<decltype (ARGVP0)> & ,_ARGS &&...initval)
+			:mItem (_FORWARD_ (ARGV<_ARGS &&>::null ,initval)...) ,mLeft (VAR_NONE) ,mRight (VAR_NONE) {}
 	} ;
 
 private:
-	Allocator<Node ,SIZE> mList ;
+	Allocator<NODE_PACK ,SIZE> mList ;
 	INDEX mFirst ;
 	INDEX mLast ;
 
@@ -1338,7 +1292,7 @@ public:
 		clear () ;
 	}
 
-	implicit List (const stl::initializer_list<ITEM> &that)
+	implicit List (const api::initializer_list<ITEM> &that)
 		: List (that.size ()) {
 		for (auto &&i : that)
 			add (i) ;
@@ -1403,7 +1357,7 @@ public:
 	}
 
 	INDEX at (const ITEM &item) const {
-		return mList.at (_OFFSET_ (&Node::mItem ,item)) ;
+		return mList.at (_OFFSET_ (&NODE_PACK::mItem ,item)) ;
 	}
 
 	Array<INDEX> range () const {
@@ -1423,7 +1377,7 @@ public:
 
 	Array<INDEX> range_sort () const {
 		Array<INDEX> ret = range () ;
-		U::OPERATOR_SORT::invoke (DEREF[this] ,ret ,0 ,ret.length ()) ;
+		SortInvokeProc::invoke (DEREF[this] ,ret ,0 ,ret.length () - 1) ;
 		return _MOVE_ (ret) ;
 	}
 
@@ -1471,8 +1425,8 @@ public:
 		return TRUE ;
 	}
 
-	void add (const REMOVE_CVR_TYPE<ITEM> &item) {
-		INDEX ix = mList.alloc (_MOVE_ (item)) ;
+	void add (const REMOVE_CONST_TYPE<ITEM> &item) {
+		INDEX ix = mList.alloc (ARGVP0 ,_MOVE_ (item)) ;
 		mList[ix].mLeft = mLast ;
 		auto &r1x = _SWITCH_ (
 			(mLast != VAR_NONE) ? mList[mLast].mRight :
@@ -1481,13 +1435,13 @@ public:
 		mLast = ix ;
 	}
 
-	inline List &operator<< (const REMOVE_CVR_TYPE<ITEM> &item) {
+	inline List &operator<< (const REMOVE_CONST_TYPE<ITEM> &item) {
 		add (_MOVE_ (item)) ;
 		return DEREF[this] ;
 	}
 
-	void add (REMOVE_CVR_TYPE<ITEM> &&item) {
-		INDEX ix = mList.alloc (_MOVE_ (item)) ;
+	void add (REMOVE_CONST_TYPE<ITEM> &&item) {
+		INDEX ix = mList.alloc (ARGVP0 ,_MOVE_ (item)) ;
 		mList[ix].mLeft = mLast ;
 		auto &r1x = _SWITCH_ (
 			(mLast != VAR_NONE) ? mList[mLast].mRight :
@@ -1496,7 +1450,7 @@ public:
 		mLast = ix ;
 	}
 
-	inline List &operator<< (REMOVE_CVR_TYPE<ITEM> &&item) {
+	inline List &operator<< (REMOVE_CONST_TYPE<ITEM> &&item) {
 		add (_MOVE_ (item)) ;
 		return DEREF[this] ;
 	}
@@ -1536,59 +1490,8 @@ public:
 		return DEREF[this] ;
 	}
 
-	INDEX head () const {
-		_DEBUG_ASSERT_ (!empty ()) ;
-		return mFirst ;
-	}
-
-	INDEX tail () const {
-		_DEBUG_ASSERT_ (!empty ()) ;
-		return mLast ;
-	}
-
-	INDEX insert () side_effects {
-		INDEX ret = mList.alloc () ;
-		mList[ret].mLeft = mLast ;
-		auto &r1x = _SWITCH_ (
-			(mLast != VAR_NONE) ? mList[mLast].mRight :
-			mFirst) ;
-		r1x = ret ;
-		mLast = ret ;
-		return _MOVE_ (ret) ;
-	}
-
-	INDEX insert_before (const INDEX &index) side_effects {
-		auto &r1x = _SWITCH_ (
-			(index != VAR_NONE) ? mList[index].mLeft :
-			mLast) ;
-		INDEX ret = mList.alloc () ;
-		mList[ret].mLeft = r1x ;
-		mList[ret].mRight = index ;
-		auto &r2x = _SWITCH_ (
-			(r1x != VAR_NONE) ? mList[r1x].mRight :
-			mFirst) ;
-		r2x = ret ;
-		r1x = ret ;
-		return _MOVE_ (ret) ;
-	}
-
-	INDEX insert_after (const INDEX &index) side_effects {
-		auto &r1x = _SWITCH_ (
-			(index != VAR_NONE) ? mList[index].mRight :
-			mFirst) ;
-		INDEX ret = mList.alloc () ;
-		mList[ret].mLeft = r1x ;
-		mList[ret].mRight = index ;
-		auto &r2x = _SWITCH_ (
-			(r1x != VAR_NONE) ? mList[r1x].mLeft :
-			mLast) ;
-		r2x = ret ;
-		r1x = ret ;
-		return _MOVE_ (ret) ;
-	}
-
-	void push (const REMOVE_CVR_TYPE<ITEM> &item) {
-		INDEX ix = mList.alloc (_MOVE_ (item)) ;
+	void push (const REMOVE_CONST_TYPE<ITEM> &item) {
+		INDEX ix = mList.alloc (ARGVP0 ,_MOVE_ (item)) ;
 		mList[ix].mRight = mFirst ;
 		auto &r1x = _SWITCH_ (
 			(mFirst != VAR_NONE) ? mList[mFirst].mLeft :
@@ -1597,8 +1500,8 @@ public:
 		mFirst = ix ;
 	}
 
-	void push (REMOVE_CVR_TYPE<ITEM> &&item) {
-		INDEX ix = mList.alloc (_MOVE_ (item)) ;
+	void push (REMOVE_CONST_TYPE<ITEM> &&item) {
+		INDEX ix = mList.alloc (ARGVP0 ,_MOVE_ (item)) ;
 		mList[ix].mRight = mFirst ;
 		auto &r1x = _SWITCH_ (
 			(mFirst != VAR_NONE) ? mList[mFirst].mLeft :
@@ -1616,6 +1519,33 @@ public:
 			mFirst) ;
 		r1x = VAR_NONE ;
 		mList.free (ix) ;
+	}
+
+	INDEX head () const {
+		_DEBUG_ASSERT_ (!empty ()) ;
+		return mFirst ;
+	}
+
+	INDEX tail () const {
+		_DEBUG_ASSERT_ (!empty ()) ;
+		return mLast ;
+	}
+
+	INDEX insert () {
+		INDEX ret = mList.alloc (ARGVP0) ;
+		mList[ret].mLeft = mLast ;
+		auto &r1x = _SWITCH_ (
+			(mLast != VAR_NONE) ? mList[mLast].mRight :
+			mFirst) ;
+		r1x = ret ;
+		mLast = ret ;
+		return _MOVE_ (ret) ;
+	}
+
+	void remove (const INDEX &index) {
+		prev_next (index) = mList[index].mRight ;
+		next_prev (index) = mList[index].mLeft ;
+		mList.free (index) ;
 	}
 
 	void eswap (const INDEX &index1 ,const INDEX &index2) {
@@ -1663,16 +1593,21 @@ public:
 		r1x = last ;
 	}
 
-	void remove (const INDEX &index) {
-		prev_next (index) = mList[index].mRight ;
-		next_prev (index) = mList[index].mLeft ;
-		mList.free (index) ;
-	}
-
-	void sort (const Array<INDEX> &order_) {
+	void esort (const Array<INDEX> &order_) {
 		_DEBUG_ASSERT_ (order_.length () == length ()) ;
 		if (order_.length () < 2)
 			return ;
+		for (auto &&i : order_) {
+			if switch_once (TRUE) {
+				if (mList[i].mLeft != VAR_NONE)
+					discard ;
+				if (mList[i].mRight != VAR_NONE)
+					discard ;
+				_DEBUG_ASSERT_ (FALSE) ;
+			}
+			mList[i].mLeft = VAR_NONE ;
+			mList[i].mRight = VAR_NONE ;
+		}
 		for (auto &&i : _RANGE_ (0 ,1)) {
 			mList[order_[i]].mLeft = VAR_NONE ;
 			mList[order_[i]].mRight = order_[i + 1] ;
@@ -1693,7 +1628,6 @@ private:
 	explicit List (const DEF<decltype (ARGVP0)> & ,const LENGTH &len)
 		:mList (len) {}
 
-private:
 	INDEX &prev_next (const INDEX &curr) leftvalue {
 		if (mList[curr].mLeft == VAR_NONE)
 			return mFirst ;
@@ -1713,22 +1647,19 @@ class ArrayList ;
 template <class ITEM ,class SIZE>
 class ArrayList {
 private:
-	class Node {
-	private:
-		friend ArrayList ;
+	struct NODE_PACK {
 		ITEM mItem ;
 		INDEX mIndex ;
 
-	public:
 		template <class... _ARGS>
-		explicit Node (_ARGS &&...initval)
-			:mItem (_FORWARD_ (ARGV<_ARGS>::null ,initval)...) ,mIndex (VAR_NONE) {}
+		explicit NODE_PACK (const DEF<decltype (ARGVP0)> & ,_ARGS &&...initval)
+			:mItem (_FORWARD_ (ARGV<_ARGS &&>::null ,initval)...) ,mIndex (VAR_NONE) {}
 	} ;
 
 private:
-	Allocator<Node ,SIZE> mList ;
+	Allocator<NODE_PACK ,SIZE> mList ;
 	Buffer<INDEX ,SIZE> mRange ;
-	INDEX mWrite ;
+	INDEX mFree ;
 
 public:
 	implicit ArrayList () {
@@ -1740,14 +1671,14 @@ public:
 		clear () ;
 	}
 
-	implicit ArrayList (const stl::initializer_list<ITEM> &that)
+	implicit ArrayList (const api::initializer_list<ITEM> &that)
 		: ArrayList (that.size ()) {
 		for (auto &&i : that)
 			add (i) ;
 	}
 
 	LENGTH size () const {
-		return mList.size () ;
+		return mRange.size () ;
 	}
 
 	LENGTH length () const {
@@ -1757,11 +1688,11 @@ public:
 	void clear () {
 		mList.clear () ;
 		BasicProc::mem_fill (mRange.self ,mRange.size () ,VAR_NONE) ;
-		mWrite = 0 ;
+		mFree = 0 ;
 	}
 
 	INDEX ibegin () const {
-		for (auto &&i : _RANGE_ (0 ,mWrite)) {
+		for (auto &&i : _RANGE_ (0 ,mRange.size ())) {
 			if (mRange[i] != VAR_NONE)
 				return i ;
 		}
@@ -1774,7 +1705,7 @@ public:
 
 	INDEX inext (const INDEX &index) const {
 		const auto r1x = index + 1 ;
-		for (auto &&i : _RANGE_ (r1x ,mWrite)) {
+		for (auto &&i : _RANGE_ (r1x ,mRange.size ())) {
 			if (mRange[i] != VAR_NONE)
 				return i ;
 		}
@@ -1814,7 +1745,7 @@ public:
 	}
 
 	INDEX at (const ITEM &item) const {
-		INDEX ret = mList.at (_OFFSET_ (&Node::mItem ,item)) ;
+		INDEX ret = mList.at (_OFFSET_ (&NODE_PACK::mItem ,item)) ;
 		if (ret != VAR_NONE)
 			ret = mList[ret].mIndex ;
 		return _MOVE_ (ret) ;
@@ -1867,32 +1798,26 @@ public:
 		return !equal (that) ;
 	}
 
-	void add (const REMOVE_CVR_TYPE<ITEM> &item) {
-		INDEX ix = mList.alloc (_MOVE_ (item)) ;
+	void add (const REMOVE_CONST_TYPE<ITEM> &item) {
+		INDEX ix = mList.alloc (ARGVP0 ,_MOVE_ (item)) ;
 		update_range (ix) ;
 		mList[ix].mIndex = min_free_one () ;
 		mRange[mList[ix].mIndex] = ix ;
-		const auto r1x = mWrite ;
-		const auto r2x = mList[ix].mIndex + 1 ;
-		mWrite = _MAX_ (r1x ,r2x) ;
 	}
 
-	inline ArrayList &operator<< (const REMOVE_CVR_TYPE<ITEM> &item) {
+	inline ArrayList &operator<< (const REMOVE_CONST_TYPE<ITEM> &item) {
 		add (_MOVE_ (item)) ;
 		return DEREF[this] ;
 	}
 
-	void add (REMOVE_CVR_TYPE<ITEM> &&item) {
-		INDEX ix = mList.alloc (_MOVE_ (item)) ;
+	void add (REMOVE_CONST_TYPE<ITEM> &&item) {
+		INDEX ix = mList.alloc (ARGVP0 ,_MOVE_ (item)) ;
 		update_range (ix) ;
 		mList[ix].mIndex = min_free_one () ;
 		mRange[mList[ix].mIndex] = ix ;
-		const auto r1x = mWrite ;
-		const auto r2x = mList[ix].mIndex + 1 ;
-		mWrite = _MAX_ (r1x ,r2x) ;
 	}
 
-	inline ArrayList &operator<< (REMOVE_CVR_TYPE<ITEM> &&item) {
+	inline ArrayList &operator<< (REMOVE_CONST_TYPE<ITEM> &&item) {
 		add (_MOVE_ (item)) ;
 		return DEREF[this] ;
 	}
@@ -1904,30 +1829,29 @@ public:
 			add (i) ;
 	}
 
-	INDEX insert () side_effects {
-		INDEX ix = mList.alloc () ;
+	INDEX insert () {
+		INDEX ix = mList.alloc (ARGVP0) ;
 		update_range (ix) ;
 		mList[ix].mIndex = min_free_one () ;
 		mRange[mList[ix].mIndex] = ix ;
-		const auto r1x = mWrite ;
-		const auto r2x = mList[ix].mIndex + 1 ;
-		mWrite = _MAX_ (r1x ,r2x) ;
 		return mList[ix].mIndex ;
 	}
 
-	INDEX insert (const INDEX &index) side_effects {
+	INDEX insert (const INDEX &index) {
 		if switch_once (TRUE) {
 			if (mRange[index] != VAR_NONE)
 				discard ;
-			INDEX ix = mList.alloc () ;
+			INDEX ix = mList.alloc (ARGVP0) ;
 			update_range (ix) ;
 			mList[ix].mIndex = index ;
 			mRange[mList[ix].mIndex] = ix ;
-			const auto r1x = mWrite ;
-			const auto r2x = mList[ix].mIndex + 1 ;
-			mWrite = _MAX_ (r1x ,r2x) ;
 		}
 		return mList[mRange[index]].mIndex ;
+	}
+
+	void remove (const INDEX &index) {
+		mList.free (mRange[index]) ;
+		mRange[index] = VAR_NONE ;
 	}
 
 	void eswap (const INDEX &index1 ,const INDEX &index2) {
@@ -1938,50 +1862,66 @@ public:
 		mList[mRange[index2]].mIndex = index2 ;
 	}
 
-	void remove (const INDEX &index) {
-		mList.free (mRange[index]) ;
-		mRange[index] = VAR_NONE ;
+	void esort (const Array<INDEX> &order_) {
+		_DEBUG_ASSERT_ (order_.length () == length ()) ;
+		if (order_.length () < 2)
+			return ;
+		for (auto &&i : _RANGE_ (0 ,order_.length ())) {
+			mList[mRange[order_[i]]].mIndex = i ;
+			mRange[order_[i]] = VAR_NONE ;
+		}
+		BasicProc::mem_fill (mRange.self ,mRange.size () ,VAR_NONE) ;
+		for (auto &&i : _RANGE_ (0 ,mList.size ())) {
+			if (!mList.used (i))
+				continue ;
+			mRange[mList[i].mIndex] = i ;
+		}
 	}
 
 	void remap () {
-		if (mWrite == mList.length ())
+		if (mRange.size () == mList.length ())
 			return ;
-		INDEX ix = 0 ;
-		while (TRUE) {
-			_DEBUG_ASSERT_ (ix < mWrite) ;
-			if (mRange[ix] != VAR_NONE)
-				break ;
-			ix++ ;
-		}
-		for (auto &&i : _RANGE_ (ix + 1 ,mWrite)) {
+		auto rax = mRange.expand (mList.length ()) ;
+		INDEX iw = 0 ;
+		for (auto &&i : _RANGE_ (0 ,mRange.size ())) {
 			if (mRange[i] == VAR_NONE)
 				continue ;
-			mRange[ix] = mRange[i] ;
-			mList[mRange[ix]].mIndex = ix ;
+			INDEX ix = iw++ ;
+			rax[ix] = mRange[i] ;
+			mList[rax[ix]].mIndex = ix ;
 			mRange[i] = VAR_NONE ;
-			ix++ ;
 		}
-		_DEBUG_ASSERT_ (ix == mList.length ()) ;
-		mWrite = ix ;
-	}
-
-	void clean () {
-		for (auto &&i : _RANGE_ (0 ,mWrite))
-			_DYNAMIC_ASSERT_ (mRange[i] >= 0 && mRange[i] < mWrite) ;
-		mList.clean () ;
-		update_range (VAR_NONE) ;
+		_DEBUG_ASSERT_ (iw == rax.size ()) ;
+		mRange.swap (rax) ;
 	}
 
 private:
 	explicit ArrayList (const DEF<decltype (ARGVP0)> & ,const LENGTH &len)
 		:mList (len) ,mRange (len) {}
 
-private:
-	INDEX min_free_one () const {
-		for (auto &&i : _RANGE_ (0 ,mRange.size ())) {
-			if (mRange[i] == VAR_NONE)
-				return i ;
+	INDEX min_free_one () {
+		_DEBUG_ASSERT_ (mRange.size () > 0) ;
+		const auto r1x = mFree % mRange.size () ;
+		mFree = r1x ;
+		while (TRUE) {
+			if (mFree >= mRange.size ())
+				break ;
+			if (mRange[mFree] == VAR_NONE)
+				break ;
+			mFree++ ;
 		}
+		if (mFree < mRange.size ())
+			return mFree ;
+		mFree = 0 ;
+		while (TRUE) {
+			if (mFree >= r1x)
+				break ;
+			if (mRange[mFree] == VAR_NONE)
+				break ;
+			mFree++ ;
+		}
+		if (mFree < r1x)
+			return mFree ;
 		return VAR_NONE ;
 	}
 
@@ -2005,12 +1945,15 @@ private:
 
 namespace U {
 template <class UNIT>
-struct CONSTEXPR_CEIL8_SIZE_SWITCH {
-	imports constexpr UNIT case1 (const UNIT &len) {
+struct CONSTEXPR_CEIL8_SIZE_SWITCH_CASE1 {
+	imports constexpr UNIT invoke (const UNIT &len) {
 		return len ;
 	}
+} ;
 
-	imports constexpr UNIT case2 (const UNIT &len) {
+template <class UNIT>
+struct CONSTEXPR_CEIL8_SIZE_SWITCH_CASE2 {
+	imports constexpr UNIT invoke (const UNIT &len) {
 		return (len + 7) / 8 ;
 	}
 } ;
@@ -2018,8 +1961,8 @@ struct CONSTEXPR_CEIL8_SIZE_SWITCH {
 struct CONSTEXPR_CEIL8_SIZE {
 	imports constexpr LENGTH invoke (const LENGTH &len) {
 		return _SWITCH_ (
-			(len <= 0) ? CONSTEXPR_CEIL8_SIZE_SWITCH<LENGTH>::case1 :
-			CONSTEXPR_CEIL8_SIZE_SWITCH<LENGTH>::case2)
+			(len <= 0) ? CONSTEXPR_CEIL8_SIZE_SWITCH_CASE1<LENGTH>::invoke :
+			CONSTEXPR_CEIL8_SIZE_SWITCH_CASE2<LENGTH>::invoke)
 			(len) ;
 	}
 } ;
@@ -2034,6 +1977,9 @@ private:
 	struct Private {
 		template <class>
 		class Bit ;
+
+		template <class>
+		class ArrayRange ;
 	} ;
 
 private:
@@ -2049,6 +1995,12 @@ public:
 	explicit BitSet (const LENGTH &len)
 		:BitSet (ARGVP0 ,U::CONSTEXPR_CEIL8_SIZE::invoke (len) ,forward_width (len)) {
 		clear () ;
+	}
+
+	explicit BitSet (const Array<INDEX> &range_ ,const LENGTH &len)
+		:BitSet (len) {
+		for (auto &&i : range_)
+			add (i) ;
 	}
 
 	LENGTH size () const {
@@ -2113,20 +2065,16 @@ public:
 		return VAR_NONE ;
 	}
 
-	ArrayIterator<BitSet> begin () leftvalue {
-		return ArrayIterator<BitSet> (PhanRef<BitSet>::make (DEREF[this]) ,ibegin ()) ;
+	template <class _RET = REMOVE_CVR_TYPE<typename Private::template ArrayRange<const BitSet>>>
+	ArrayIterator<const _RET> begin () const leftvalue {
+		auto &r1x = _CAST_ (ARGV<const _RET>::null ,DEREF[this]) ;
+		return ArrayIterator<const _RET> (PhanRef<const _RET>::make (r1x) ,ibegin ()) ;
 	}
 
-	ArrayIterator<const BitSet> begin () const leftvalue {
-		return ArrayIterator<const BitSet> (PhanRef<const BitSet>::make (DEREF[this]) ,ibegin ()) ;
-	}
-
-	ArrayIterator<BitSet> end () leftvalue {
-		return ArrayIterator<BitSet> (PhanRef<BitSet>::make (DEREF[this]) ,iend ()) ;
-	}
-
-	ArrayIterator<const BitSet> end () const leftvalue {
-		return ArrayIterator<const BitSet> (PhanRef<const BitSet>::make (DEREF[this]) ,iend ()) ;
+	template <class _RET = REMOVE_CVR_TYPE<typename Private::template ArrayRange<const BitSet>>>
+	ArrayIterator<const _RET> end () const leftvalue {
+		auto &r1x = _CAST_ (ARGV<const _RET>::null ,DEREF[this]) ;
+		return ArrayIterator<const _RET> (PhanRef<const _RET>::make (r1x) ,iend ()) ;
 	}
 
 	//@info: 'Bit &&' convert to 'BOOL' implicitly while 'const Bit &' convert to 'VAR' implicitly
@@ -2160,18 +2108,14 @@ public:
 	INDEX at (const DEF<typename Private::template Bit<BitSet>> &item) const {
 		struct Dependent ;
 		using Bit = typename DEPENDENT_TYPE<Private ,Dependent>::template Bit<BitSet> ;
-		auto &r1x = _XVALUE_ (ARGV<Bit>::null ,item) ;
-		if (this != DEPTR[r1x.mBase])
-			return VAR_NONE ;
+		auto &r1x = _FORWARD_ (ARGV<Bit>::null ,item) ;
 		return r1x ;
 	}
 
 	INDEX at (const DEF<typename Private::template Bit<const BitSet>> &item) const {
 		struct Dependent ;
 		using Bit = typename DEPENDENT_TYPE<Private ,Dependent>::template Bit<const BitSet> ;
-		auto &r1x = _XVALUE_ (ARGV<Bit>::null ,item) ;
-		if (this != DEPTR[r1x.mBase])
-			return VAR_NONE ;
+		auto &r1x = _FORWARD_ (ARGV<Bit>::null ,item) ;
 		return r1x ;
 	}
 
@@ -2219,13 +2163,13 @@ public:
 		INDEX ix = mSet.size () - 1 ;
 		if (ix < 0)
 			return 0 ;
-		const auto r1x = BasicProc::mem_compr (mSet ,that.mSet ,ix) ;
+		const auto r1x = BasicProc::mem_compr (mSet.self ,that.mSet.self ,ix) ;
 		if (r1x != 0)
 			return r1x ;
 		const auto r2x = BYTE (mWidth % 8 - 1) ;
 		const auto r3x = BYTE (mSet[ix] & r2x) ;
 		const auto r4x = BYTE (that.mSet[ix] & r2x) ;
-		return U::OPERATOR_COMPR::invoke (r3x ,r4x) ;
+		return ComprInvokeProc::invoke (r3x ,r4x) ;
 	}
 
 	inline BOOL operator< (const BitSet &that) const {
@@ -2377,7 +2321,6 @@ private:
 	explicit BitSet (const DEF<decltype (ARGVP0)> & ,const LENGTH &len ,const LENGTH &width)
 		:mSet (len) ,mWidth (width) {}
 
-private:
 	imports LENGTH forward_width (const LENGTH &width) {
 		_DEBUG_ASSERT_ (width >= 0 && width < VAR32_MAX) ;
 		return width ;
@@ -2389,7 +2332,6 @@ template <class BASE>
 class BitSet<SIZE>::Private::Bit
 	:private Proxy {
 private:
-	friend BitSet ;
 	PhanRef<BASE> mBase ;
 	INDEX mIndex ;
 
@@ -2409,25 +2351,7 @@ public:
 		return TRUE ;
 	}
 
-#ifdef __CSC_CONFIG_VAR32__
-	inline implicit operator VAR32 () const leftvalue {
-		return VAR32 (mIndex) ;
-	}
-
-	inline explicit operator VAR64 () const leftvalue {
-		return VAR64 (mIndex) ;
-	}
-#endif
-
-#ifdef __CSC_CONFIG_VAR64__
-	inline explicit operator VAR32 () const leftvalue {
-		return VAR32 (mIndex) ;
-	}
-
-	inline implicit operator VAR64 () const leftvalue {
-		return VAR64 (mIndex) ;
-	}
-#endif
+	inline implicit operator BOOL () const leftvalue = delete ;
 
 	inline void operator= (const BOOL &that) rightvalue {
 		const auto r1x = BYTE (BYTE (0X01) << (mIndex % 8)) ;
@@ -2443,15 +2367,30 @@ public:
 	}
 } ;
 
+template <class SIZE>
+template <class BASE>
+class BitSet<SIZE>::Private::ArrayRange
+	:private Wrapped<BASE> {
+private:
+	using Wrapped<BASE>::mSelf ;
+
+public:
+	INDEX inext (const INDEX &index) const {
+		return mSelf.inext (index) ;
+	}
+
+	const INDEX &get (const INDEX &index) const leftvalue {
+		return index ;
+	}
+} ;
+
 template <class ITEM ,class SIZE = SAUTO>
 class Set ;
 
 template <class ITEM ,class SIZE>
 class Set {
 private:
-	class Node {
-	private:
-		friend Set ;
+	struct NODE_PACK {
 		ITEM mItem ;
 		INDEX mMap ;
 		BOOL mRed ;
@@ -2459,19 +2398,13 @@ private:
 		INDEX mLeft ;
 		INDEX mRight ;
 
-	public:
 		template <class... _ARGS>
-		explicit Node (_ARGS &&...initval)
-			:mItem (_FORWARD_ (ARGV<_ARGS>::null ,initval)...) ,mMap (VAR_NONE) ,mRed (FALSE) ,mUp (VAR_NONE) ,mLeft (VAR_NONE) ,mRight (VAR_NONE) {}
-	} ;
-
-	struct Private {
-		template <class>
-		class Pair ;
+		explicit NODE_PACK (const DEF<decltype (ARGVP0)> & ,_ARGS &&...initval)
+			:mItem (_FORWARD_ (ARGV<_ARGS &&>::null ,initval)...) ,mMap (VAR_NONE) ,mRed (FALSE) ,mUp (VAR_NONE) ,mLeft (VAR_NONE) ,mRight (VAR_NONE) {}
 	} ;
 
 private:
-	Allocator<Node ,SIZE> mSet ;
+	Allocator<NODE_PACK ,SIZE> mSet ;
 	INDEX mRoot ;
 	INDEX mTop ;
 
@@ -2485,7 +2418,7 @@ public:
 		clear () ;
 	}
 
-	implicit Set (const stl::initializer_list<ITEM> &that)
+	implicit Set (const api::initializer_list<ITEM> &that)
 		: Set (that.size ()) {
 		for (auto &&i : that)
 			add (i) ;
@@ -2526,62 +2459,30 @@ public:
 		return VAR_NONE ;
 	}
 
-	ArrayIterator<Set> begin () leftvalue {
-		return ArrayIterator<Set> (PhanRef<Set>::make (DEREF[this]) ,ibegin ()) ;
-	}
-
 	ArrayIterator<const Set> begin () const leftvalue {
 		return ArrayIterator<const Set> (PhanRef<const Set>::make (DEREF[this]) ,ibegin ()) ;
-	}
-
-	ArrayIterator<Set> end () leftvalue {
-		return ArrayIterator<Set> (PhanRef<Set>::make (DEREF[this]) ,iend ()) ;
 	}
 
 	ArrayIterator<const Set> end () const leftvalue {
 		return ArrayIterator<const Set> (PhanRef<const Set>::make (DEREF[this]) ,iend ()) ;
 	}
 
-	template <class _RET = REMOVE_CVR_TYPE<typename Private::template Pair<Set>>>
-	_RET get (const INDEX &index) leftvalue {
-		struct Dependent ;
-		using Pair = typename DEPENDENT_TYPE<Private ,Dependent>::template Pair<Set> ;
-		return Pair (PhanRef<Set>::make (DEREF[this]) ,index) ;
+	const ITEM &get (const INDEX &index) const leftvalue {
+		return mSet[index].mItem ;
 	}
 
-	template <class _RET = REMOVE_CVR_TYPE<typename Private::template Pair<Set>>>
-	inline _RET operator[] (const INDEX &index) leftvalue {
-		return get (index) ;
-	}
-
-	template <class _RET = REMOVE_CVR_TYPE<typename Private::template Pair<const Set>>>
-	_RET get (const INDEX &index) const leftvalue {
-		struct Dependent ;
-		using Pair = typename DEPENDENT_TYPE<Private ,Dependent>::template Pair<const Set> ;
-		return Pair (PhanRef<const Set>::make (DEREF[this]) ,index) ;
-	}
-
-	template <class _RET = REMOVE_CVR_TYPE<typename Private::template Pair<const Set>>>
-	inline _RET operator[] (const INDEX &index) const leftvalue {
+	inline const ITEM &operator[] (const INDEX &index) const leftvalue {
 		return get (index) ;
 	}
 
 	INDEX at (const ITEM &item) const {
-		return mSet.at (_OFFSET_ (&Node::mItem ,item)) ;
+		return mSet.at (_OFFSET_ (&NODE_PACK::mItem ,item)) ;
 	}
 
-	INDEX at (const DEF<typename Private::template Pair<Set>> &item) const {
-		struct Dependent ;
-		using Pair = typename DEPENDENT_TYPE<Private ,Dependent>::template Pair<Set> ;
-		auto &r1x = _XVALUE_ (ARGV<Pair>::null ,item) ;
-		return at (r1x.key) ;
-	}
-
-	INDEX at (const DEF<typename Private::template Pair<const Set>> &item) const {
-		struct Dependent ;
-		using Pair = typename DEPENDENT_TYPE<Private ,Dependent>::template Pair<const Set> ;
-		auto &r1x = _XVALUE_ (ARGV<Pair>::null ,item) ;
-		return at (r1x.key) ;
+	INDEX map_get (const INDEX &index) const {
+		if (index == VAR_NONE)
+			return VAR_NONE ;
+		return mSet[index].mMap ;
 	}
 
 	Array<INDEX> range () const {
@@ -2607,21 +2508,21 @@ public:
 		return _MOVE_ (ret) ;
 	}
 
-	void add (const REMOVE_CVR_TYPE<ITEM> &item) {
+	void add (const REMOVE_CONST_TYPE<ITEM> &item) {
 		add (_MOVE_ (item) ,VAR_NONE) ;
 	}
 
-	inline Set &operator<< (const REMOVE_CVR_TYPE<ITEM> &item) {
+	inline Set &operator<< (const REMOVE_CONST_TYPE<ITEM> &item) {
 		add (_MOVE_ (item)) ;
 		return DEREF[this] ;
 	}
 
-	void add (const REMOVE_CVR_TYPE<ITEM> &item ,const INDEX &map_) {
+	void add (const REMOVE_CONST_TYPE<ITEM> &item ,const INDEX &map_) {
 		INDEX ix = find (item) ;
 		if switch_once (TRUE) {
 			if (ix != VAR_NONE)
 				discard ;
-			ix = mSet.alloc (_MOVE_ (item)) ;
+			ix = mSet.alloc (ARGVP0 ,_MOVE_ (item)) ;
 			mSet[ix].mMap = map_ ;
 			mSet[ix].mRed = TRUE ;
 			update_emplace (mRoot ,ix) ;
@@ -2631,21 +2532,21 @@ public:
 		mTop = ix ;
 	}
 
-	void add (REMOVE_CVR_TYPE<ITEM> &&item) {
+	void add (REMOVE_CONST_TYPE<ITEM> &&item) {
 		add (_MOVE_ (item) ,VAR_NONE) ;
 	}
 
-	inline Set &operator<< (REMOVE_CVR_TYPE<ITEM> &&item) {
+	inline Set &operator<< (REMOVE_CONST_TYPE<ITEM> &&item) {
 		add (_MOVE_ (item)) ;
 		return DEREF[this] ;
 	}
 
-	void add (REMOVE_CVR_TYPE<ITEM> &&item ,const INDEX &map_) {
+	void add (REMOVE_CONST_TYPE<ITEM> &&item ,const INDEX &map_) {
 		INDEX ix = find (item) ;
 		if switch_once (TRUE) {
 			if (ix != VAR_NONE)
 				discard ;
-			ix = mSet.alloc (_MOVE_ (item)) ;
+			ix = mSet.alloc (ARGVP0 ,_MOVE_ (item)) ;
 			mSet[ix].mMap = map_ ;
 			mSet[ix].mRed = TRUE ;
 			update_emplace (mRoot ,ix) ;
@@ -2658,8 +2559,10 @@ public:
 	template <class _ARG1>
 	void appand (const _ARG1 &val) {
 		mSet.reserve (val.length ()) ;
-		for (auto &&i : val)
-			add (i.key ,i.sid) ;
+		for (auto &&i : val) {
+			const auto r1x = val.at (i) ;
+			add (i ,val.map_get (r1x)) ;
+		}
 	}
 
 	INDEX head () const {
@@ -2688,12 +2591,12 @@ public:
 		return _MOVE_ (ret) ;
 	}
 
-	INDEX insert (const REMOVE_CVR_TYPE<ITEM> &item) side_effects {
+	INDEX insert (const REMOVE_CONST_TYPE<ITEM> &item) {
 		add (_MOVE_ (item)) ;
 		return mTop ;
 	}
 
-	INDEX insert (REMOVE_CVR_TYPE<ITEM> &&item) side_effects {
+	INDEX insert (REMOVE_CONST_TYPE<ITEM> &&item) {
 		add (_MOVE_ (item)) ;
 		return mTop ;
 	}
@@ -2735,10 +2638,7 @@ public:
 	}
 
 	INDEX map (const ITEM &item) const {
-		INDEX ix = find (item) ;
-		if (ix == VAR_NONE)
-			return VAR_NONE ;
-		return mSet[ix].mMap ;
+		return map_get (find (item)) ;
 	}
 
 	void erase (const ITEM &item) {
@@ -2752,7 +2652,6 @@ private:
 	explicit Set (const DEF<decltype (ARGVP0)> & ,const LENGTH &len)
 		:mSet (len) {}
 
-private:
 	void update_emplace (const INDEX &curr ,const INDEX &last) {
 		auto fax = TRUE ;
 		if switch_once (fax) {
@@ -3081,52 +2980,25 @@ private:
 	}
 } ;
 
-template <class ITEM ,class SIZE>
-template <class BASE>
-class Set<ITEM ,SIZE>::Private::Pair
-	:private Proxy {
-public:
-	const ITEM &key ;
-	CAST_TRAITS_TYPE<INDEX ,BASE> &sid ;
-
-public:
-	implicit Pair () = delete ;
-
-	explicit Pair (PhanRef<BASE> &&base ,const INDEX &index)
-		: key (base->mSet[index].mItem) ,sid (base->mSet[index].mMap) {}
-
-	inline implicit operator const ITEM & () rightvalue {
-		return key ;
-	}
-} ;
-
 template <class ITEM ,class SIZE = SAUTO>
 class HashSet ;
 
 template <class ITEM ,class SIZE>
 class HashSet {
 private:
-	class Node {
-	private:
-		friend HashSet ;
+	struct NODE_PACK {
 		ITEM mItem ;
 		INDEX mMap ;
 		FLAG mHash ;
 		INDEX mNext ;
 
-	public:
 		template <class... _ARGS>
-		explicit Node (_ARGS &&...initval)
-			:mItem (_FORWARD_ (ARGV<_ARGS>::null ,initval)...) ,mMap (VAR_NONE) ,mHash (0) ,mNext (VAR_NONE) {}
-	} ;
-
-	struct Private {
-		template <class>
-		class Pair ;
+		explicit NODE_PACK (const DEF<decltype (ARGVP0)> & ,_ARGS &&...initval)
+			:mItem (_FORWARD_ (ARGV<_ARGS &&>::null ,initval)...) ,mMap (VAR_NONE) ,mHash (0) ,mNext (VAR_NONE) {}
 	} ;
 
 private:
-	Allocator<Node ,SIZE> mSet ;
+	Allocator<NODE_PACK ,SIZE> mSet ;
 	Buffer<INDEX ,SIZE> mRange ;
 	INDEX mTop ;
 
@@ -3140,7 +3012,7 @@ public:
 		clear () ;
 	}
 
-	implicit HashSet (const stl::initializer_list<ITEM> &that)
+	implicit HashSet (const api::initializer_list<ITEM> &that)
 		: HashSet (that.size ()) {
 		for (auto &&i : that)
 			add (i) ;
@@ -3181,62 +3053,30 @@ public:
 		return VAR_NONE ;
 	}
 
-	ArrayIterator<HashSet> begin () leftvalue {
-		return ArrayIterator<HashSet> (PhanRef<HashSet>::make (DEREF[this]) ,ibegin ()) ;
-	}
-
 	ArrayIterator<const HashSet> begin () const leftvalue {
 		return ArrayIterator<const HashSet> (PhanRef<const HashSet>::make (DEREF[this]) ,ibegin ()) ;
-	}
-
-	ArrayIterator<HashSet> end () leftvalue {
-		return ArrayIterator<HashSet> (PhanRef<HashSet>::make (DEREF[this]) ,iend ()) ;
 	}
 
 	ArrayIterator<const HashSet> end () const leftvalue {
 		return ArrayIterator<const HashSet> (PhanRef<const HashSet>::make (DEREF[this]) ,iend ()) ;
 	}
 
-	template <class _RET = REMOVE_CVR_TYPE<typename Private::template Pair<HashSet>>>
-	_RET get (const INDEX &index) leftvalue {
-		struct Dependent ;
-		using Pair = typename DEPENDENT_TYPE<Private ,Dependent>::template Pair<HashSet> ;
-		return Pair (PhanRef<HashSet>::make (DEREF[this]) ,index) ;
+	const ITEM &get (const INDEX &index) const leftvalue {
+		return mSet[index].mItem ;
 	}
 
-	template <class _RET = REMOVE_CVR_TYPE<typename Private::template Pair<HashSet>>>
-	inline _RET operator[] (const INDEX &index) leftvalue {
-		return get (index) ;
-	}
-
-	template <class _RET = REMOVE_CVR_TYPE<typename Private::template Pair<const HashSet>>>
-	_RET get (const INDEX &index) const leftvalue {
-		struct Dependent ;
-		using Pair = typename DEPENDENT_TYPE<Private ,Dependent>::template Pair<const HashSet> ;
-		return Pair (PhanRef<const HashSet>::make (DEREF[this]) ,index) ;
-	}
-
-	template <class _RET = REMOVE_CVR_TYPE<typename Private::template Pair<const HashSet>>>
-	inline _RET operator[] (const INDEX &index) const leftvalue {
+	inline const ITEM &operator[] (const INDEX &index) const leftvalue {
 		return get (index) ;
 	}
 
 	INDEX at (const ITEM &item) const {
-		return mSet.at (_OFFSET_ (&Node::mItem ,item)) ;
+		return mSet.at (_OFFSET_ (&NODE_PACK::mItem ,item)) ;
 	}
 
-	INDEX at (const DEF<typename Private::template Pair<HashSet>> &item) const {
-		struct Dependent ;
-		using Pair = typename DEPENDENT_TYPE<Private ,Dependent>::template Pair<HashSet> ;
-		auto &r1x = _XVALUE_ (ARGV<Pair>::null ,item) ;
-		return at (r1x.key) ;
-	}
-
-	INDEX at (const DEF<typename Private::template Pair<const HashSet>> &item) const {
-		struct Dependent ;
-		using Pair = typename DEPENDENT_TYPE<Private ,Dependent>::template Pair<const HashSet> ;
-		auto &r1x = _XVALUE_ (ARGV<Pair>::null ,item) ;
-		return at (r1x.key) ;
+	INDEX map_get (const INDEX &index) const {
+		if (index == VAR_NONE)
+			return VAR_NONE ;
+		return mSet[index].mMap ;
 	}
 
 	Array<INDEX> range () const {
@@ -3254,47 +3094,47 @@ public:
 		return _MOVE_ (ret) ;
 	}
 
-	void add (const REMOVE_CVR_TYPE<ITEM> &item) {
+	void add (const REMOVE_CONST_TYPE<ITEM> &item) {
 		add (_MOVE_ (item) ,VAR_NONE) ;
 	}
 
-	inline HashSet &operator<< (const REMOVE_CVR_TYPE<ITEM> &item) {
+	inline HashSet &operator<< (const REMOVE_CONST_TYPE<ITEM> &item) {
 		add (_MOVE_ (item)) ;
 		return DEREF[this] ;
 	}
 
-	void add (const REMOVE_CVR_TYPE<ITEM> &item ,const INDEX &map_) {
+	void add (const REMOVE_CONST_TYPE<ITEM> &item ,const INDEX &map_) {
 		INDEX ix = find (item) ;
 		if switch_once (TRUE) {
 			if (ix != VAR_NONE)
 				discard ;
-			ix = mSet.alloc (_MOVE_ (item)) ;
+			ix = mSet.alloc (ARGVP0 ,_MOVE_ (item)) ;
 			update_range (ix) ;
 			mSet[ix].mMap = map_ ;
-			mSet[ix].mHash = U::OPERATOR_HASH::invoke (item) ;
+			mSet[ix].mHash = HashInvokeProc::invoke (item) ;
 			update_insert (ix) ;
 		}
 		mTop = ix ;
 	}
 
-	void add (REMOVE_CVR_TYPE<ITEM> &&item) {
+	void add (REMOVE_CONST_TYPE<ITEM> &&item) {
 		add (_MOVE_ (item) ,VAR_NONE) ;
 	}
 
-	inline HashSet &operator<< (REMOVE_CVR_TYPE<ITEM> &&item) {
+	inline HashSet &operator<< (REMOVE_CONST_TYPE<ITEM> &&item) {
 		add (_MOVE_ (item)) ;
 		return DEREF[this] ;
 	}
 
-	void add (REMOVE_CVR_TYPE<ITEM> &&item ,const INDEX &map_) {
+	void add (REMOVE_CONST_TYPE<ITEM> &&item ,const INDEX &map_) {
 		INDEX ix = find (item) ;
 		if switch_once (TRUE) {
 			if (ix != VAR_NONE)
 				discard ;
-			ix = mSet.alloc (_MOVE_ (item)) ;
+			ix = mSet.alloc (ARGVP0 ,_MOVE_ (item)) ;
 			update_range (ix) ;
 			mSet[ix].mMap = map_ ;
-			mSet[ix].mHash = U::OPERATOR_HASH::invoke (item) ;
+			mSet[ix].mHash = HashInvokeProc::invoke (item) ;
 			update_insert (ix) ;
 		}
 		mTop = ix ;
@@ -3303,16 +3143,18 @@ public:
 	template <class _ARG1>
 	void appand (const _ARG1 &val) {
 		mSet.reserve (val.length ()) ;
-		for (auto &&i : val)
-			add (i.key ,i.sid) ;
+		for (auto &&i : val) {
+			const auto r1x = val.at (i) ;
+			add (i ,val.map_get (r1x)) ;
+		}
 	}
 
-	INDEX insert (const REMOVE_CVR_TYPE<ITEM> &item) side_effects {
+	INDEX insert (const REMOVE_CONST_TYPE<ITEM> &item) {
 		add (_MOVE_ (item)) ;
 		return mTop ;
 	}
 
-	INDEX insert (REMOVE_CVR_TYPE<ITEM> &&item) side_effects {
+	INDEX insert (REMOVE_CONST_TYPE<ITEM> &&item) {
 		add (_MOVE_ (item)) ;
 		return mTop ;
 	}
@@ -3327,7 +3169,7 @@ public:
 		if switch_once (TRUE) {
 			if (size () == 0)
 				discard ;
-			const auto r1x = U::OPERATOR_HASH::invoke (item) ;
+			const auto r1x = HashInvokeProc::invoke (item) ;
 			_DEBUG_ASSERT_ (r1x >= 0) ;
 			ret = mRange[r1x % mRange.size ()] ;
 			while (TRUE) {
@@ -3343,10 +3185,7 @@ public:
 	}
 
 	INDEX map (const ITEM &item) const {
-		INDEX ix = find (item) ;
-		if (ix == VAR_NONE)
-			return VAR_NONE ;
-		return mSet[ix].mMap ;
+		return map_get (find (item)) ;
 	}
 
 	void erase (const ITEM &item) {
@@ -3360,7 +3199,6 @@ private:
 	explicit HashSet (const DEF<decltype (ARGVP0)> & ,const LENGTH &len)
 		:mSet (len) ,mRange (len) {}
 
-private:
 	void update_range (const INDEX &curr) {
 		if (mRange.size () == mSet.size ())
 			return ;
@@ -3403,34 +3241,13 @@ private:
 	}
 } ;
 
-template <class ITEM ,class SIZE>
-template <class BASE>
-class HashSet<ITEM ,SIZE>::Private::Pair
-	:private Proxy {
-public:
-	const ITEM &key ;
-	CAST_TRAITS_TYPE<ITEM ,BASE> &sid ;
-
-public:
-	implicit Pair () = delete ;
-
-	explicit Pair (PhanRef<BASE> &&base ,const INDEX &index)
-		: key (base->mSet[index].mItem) ,sid (base->mSet[index].mMap) {}
-
-	inline implicit operator const ITEM & () rightvalue {
-		return key ;
-	}
-} ;
-
 template <class ITEM ,class SIZE = SAUTO>
 class SoftSet ;
 
 template <class ITEM ,class SIZE>
 class SoftSet {
 private:
-	class Node {
-	private:
-		friend SoftSet ;
+	struct NODE_PACK {
 		ITEM mItem ;
 		INDEX mMap ;
 		LENGTH mWeight ;
@@ -3438,24 +3255,18 @@ private:
 		INDEX mRight ;
 		INDEX mNext ;
 
-	public:
 		template <class... _ARGS>
-		explicit Node (_ARGS &&...initval)
-			:mItem (_FORWARD_ (ARGV<_ARGS>::null ,initval)...) ,mMap (VAR_NONE) ,mWeight (0) ,mLeft (VAR_NONE) ,mRight (VAR_NONE) ,mNext (VAR_NONE) {}
+		explicit NODE_PACK (const DEF<decltype (ARGVP0)> & ,_ARGS &&...initval)
+			:mItem (_FORWARD_ (ARGV<_ARGS &&>::null ,initval)...) ,mMap (VAR_NONE) ,mWeight (0) ,mLeft (VAR_NONE) ,mRight (VAR_NONE) ,mNext (VAR_NONE) {}
 	} ;
 
 	struct HEAP_PACK {
-		AutoRef<Allocator<Node ,SIZE>> mBuffer ;
-	} ;
-
-	struct Private {
-		template <class>
-		class Pair ;
+		AutoRef<Allocator<NODE_PACK ,SIZE>> mBuffer ;
 	} ;
 
 private:
 	SharedRef<HEAP_PACK> mHeap ;
-	PhanRef<Allocator<Node ,SIZE>> mSet ;
+	PhanRef<Allocator<NODE_PACK ,SIZE>> mSet ;
 	LENGTH mLength ;
 	INDEX mFirst ;
 	INDEX mLast ;
@@ -3473,8 +3284,8 @@ public:
 
 	explicit SoftSet (const LENGTH &len) {
 		mHeap = SharedRef<HEAP_PACK>::make () ;
-		mHeap->mBuffer = AutoRef<Allocator<Node ,SIZE>>::make (len) ;
-		mSet = PhanRef<Allocator<Node ,SIZE>>::make (mHeap->mBuffer.self) ;
+		mHeap->mBuffer = AutoRef<Allocator<NODE_PACK ,SIZE>>::make (len) ;
+		mSet = PhanRef<Allocator<NODE_PACK ,SIZE>>::make (mHeap->mBuffer.self) ;
 		mLength = 0 ;
 		mFirst = VAR_NONE ;
 		mLast = VAR_NONE ;
@@ -3497,7 +3308,7 @@ public:
 	SoftSet share () leftvalue {
 		SoftSet ret ;
 		ret.mHeap = mHeap ;
-		ret.mSet = PhanRef<Allocator<Node ,SIZE>>::make (ret.mHeap->mBuffer.self) ;
+		ret.mSet = PhanRef<Allocator<NODE_PACK ,SIZE>>::make (ret.mHeap->mBuffer.self) ;
 		ret.mLength = 0 ;
 		ret.mFirst = VAR_NONE ;
 		ret.mLast = VAR_NONE ;
@@ -3519,64 +3330,30 @@ public:
 		return mSet.self[index].mNext ;
 	}
 
-	ArrayIterator<SoftSet> begin () leftvalue {
-		return ArrayIterator<SoftSet> (PhanRef<SoftSet>::make (DEREF[this]) ,ibegin ()) ;
-	}
-
 	ArrayIterator<const SoftSet> begin () const leftvalue {
 		return ArrayIterator<const SoftSet> (PhanRef<const SoftSet>::make (DEREF[this]) ,ibegin ()) ;
-	}
-
-	ArrayIterator<SoftSet> end () leftvalue {
-		return ArrayIterator<SoftSet> (PhanRef<SoftSet>::make (DEREF[this]) ,iend ()) ;
 	}
 
 	ArrayIterator<const SoftSet> end () const leftvalue {
 		return ArrayIterator<const SoftSet> (PhanRef<const SoftSet>::make (DEREF[this]) ,iend ()) ;
 	}
 
-	template <class _RET = REMOVE_CVR_TYPE<typename Private::template Pair<SoftSet>>>
-	_RET get (const INDEX &index) leftvalue {
-		struct Dependent ;
-		using Pair = typename DEPENDENT_TYPE<Private ,Dependent>::template Pair<SoftSet> ;
-		_DEBUG_ASSERT_ (mHeap.exist ()) ;
-		return Pair (PhanRef<SoftSet>::make (DEREF[this]) ,index) ;
+	const ITEM &get (const INDEX &index) const leftvalue {
+		return mSet.self[index].mItem ;
 	}
 
-	template <class _RET = REMOVE_CVR_TYPE<typename Private::template Pair<SoftSet>>>
-	inline _RET operator[] (const INDEX &index) leftvalue {
-		return get (index) ;
-	}
-
-	template <class _RET = REMOVE_CVR_TYPE<typename Private::template Pair<const SoftSet>>>
-	_RET get (const INDEX &index) const leftvalue {
-		struct Dependent ;
-		using Pair = typename DEPENDENT_TYPE<Private ,Dependent>::template Pair<const SoftSet> ;
-		_DEBUG_ASSERT_ (mHeap.exist ()) ;
-		return Pair (PhanRef<const SoftSet>::make (DEREF[this]) ,index) ;
-	}
-
-	template <class _RET = REMOVE_CVR_TYPE<typename Private::template Pair<const SoftSet>>>
-	inline _RET operator[] (const INDEX &index) const leftvalue {
+	inline const ITEM &operator[] (const INDEX &index) const leftvalue {
 		return get (index) ;
 	}
 
 	INDEX at (const ITEM &item) const {
-		return mSet.at (_OFFSET_ (&Node::mItem ,item)) ;
+		return mSet->at (_OFFSET_ (&NODE_PACK::mItem ,item)) ;
 	}
 
-	INDEX at (const DEF<typename Private::template Pair<SoftSet>> &item) const {
-		struct Dependent ;
-		using Pair = typename DEPENDENT_TYPE<Private ,Dependent>::template Pair<SoftSet> ;
-		auto &r1x = _XVALUE_ (ARGV<Pair>::null ,item) ;
-		return at (r1x.key) ;
-	}
-
-	INDEX at (const DEF<typename Private::template Pair<const SoftSet>> &item) const {
-		struct Dependent ;
-		using Pair = typename DEPENDENT_TYPE<Private ,Dependent>::template Pair<const SoftSet> ;
-		auto &r1x = _XVALUE_ (ARGV<Pair>::null ,item) ;
-		return at (r1x.key) ;
+	INDEX map_get (const INDEX &index) const {
+		if (index == VAR_NONE)
+			return VAR_NONE ;
+		return mSet.self[index].mMap ;
 	}
 
 	Array<INDEX> range () const {
@@ -3602,22 +3379,22 @@ public:
 		return _MOVE_ (ret) ;
 	}
 
-	void add (const REMOVE_CVR_TYPE<ITEM> &item) {
+	void add (const REMOVE_CONST_TYPE<ITEM> &item) {
 		add (_MOVE_ (item) ,VAR_NONE) ;
 	}
 
-	inline SoftSet &operator<< (const REMOVE_CVR_TYPE<ITEM> &item) {
+	inline SoftSet &operator<< (const REMOVE_CONST_TYPE<ITEM> &item) {
 		add (_MOVE_ (item)) ;
 		return DEREF[this] ;
 	}
 
-	void add (const REMOVE_CVR_TYPE<ITEM> &item ,const INDEX &map_) {
+	void add (const REMOVE_CONST_TYPE<ITEM> &item ,const INDEX &map_) {
 		_DEBUG_ASSERT_ (mHeap.exist ()) ;
 		INDEX ix = find (item) ;
 		if switch_once (TRUE) {
 			if (ix != VAR_NONE)
 				discard ;
-			ix = mSet->alloc (_MOVE_ (item)) ;
+			ix = mSet->alloc (ARGVP0 ,_MOVE_ (item)) ;
 			mSet.self[ix].mMap = map_ ;
 			mSet.self[ix].mWeight = 1 ;
 			auto &r1x = _SWITCH_ (
@@ -3632,22 +3409,22 @@ public:
 		mTop = ix ;
 	}
 
-	void add (REMOVE_CVR_TYPE<ITEM> &&item) {
+	void add (REMOVE_CONST_TYPE<ITEM> &&item) {
 		add (_MOVE_ (item) ,VAR_NONE) ;
 	}
 
-	inline SoftSet &operator<< (REMOVE_CVR_TYPE<ITEM> &&item) {
+	inline SoftSet &operator<< (REMOVE_CONST_TYPE<ITEM> &&item) {
 		add (_MOVE_ (item)) ;
 		return DEREF[this] ;
 	}
 
-	void add (REMOVE_CVR_TYPE<ITEM> &&item ,const INDEX &map_) {
+	void add (REMOVE_CONST_TYPE<ITEM> &&item ,const INDEX &map_) {
 		_DEBUG_ASSERT_ (mHeap.exist ()) ;
 		INDEX ix = find (item) ;
 		if switch_once (TRUE) {
 			if (ix != VAR_NONE)
 				discard ;
-			ix = mSet->alloc (_MOVE_ (item)) ;
+			ix = mSet->alloc (ARGVP0 ,_MOVE_ (item)) ;
 			mSet.self[ix].mMap = map_ ;
 			mSet.self[ix].mWeight = 1 ;
 			auto &r1x = _SWITCH_ (
@@ -3666,8 +3443,10 @@ public:
 	void appand (const _ARG1 &val) {
 		_DEBUG_ASSERT_ (mHeap.exist ()) ;
 		mSet->reserve (val.length ()) ;
-		for (auto &&i : val)
-			add (i.key ,i.sid) ;
+		for (auto &&i : val) {
+			const auto r1x = val.at (i) ;
+			add (i ,val.map_get (r1x)) ;
+		}
 	}
 
 	INDEX head () const {
@@ -3700,12 +3479,12 @@ public:
 		return _MOVE_ (ret) ;
 	}
 
-	INDEX insert (const REMOVE_CVR_TYPE<ITEM> &item) side_effects {
+	INDEX insert (const REMOVE_CONST_TYPE<ITEM> &item) {
 		add (_MOVE_ (item)) ;
 		return mTop ;
 	}
 
-	INDEX insert (REMOVE_CVR_TYPE<ITEM> &&item) side_effects {
+	INDEX insert (REMOVE_CONST_TYPE<ITEM> &&item) {
 		add (_MOVE_ (item)) ;
 		return mTop ;
 	}
@@ -3730,10 +3509,7 @@ public:
 	}
 
 	INDEX map (const ITEM &item) const {
-		INDEX ix = find (item) ;
-		if (ix == VAR_NONE)
-			return VAR_NONE ;
-		return mSet.self[ix].mMap ;
+		return map_get (find (item)) ;
 	}
 
 	void clean () {
@@ -3874,25 +3650,6 @@ private:
 		out[iw++] = curr ;
 		compute_order (mSet[curr].mRight ,out ,iw) ;
 		out_iw = iw ;
-	}
-} ;
-
-template <class ITEM ,class SIZE>
-template <class BASE>
-class SoftSet<ITEM ,SIZE>::Private::Pair
-	:private Proxy {
-public:
-	const ITEM &key ;
-	CAST_TRAITS_TYPE<INDEX ,BASE> &sid ;
-
-public:
-	implicit Pair () = delete ;
-
-	explicit Pair (PhanRef<BASE> &&base ,const INDEX &index)
-		: key (base->mSet.self[index].mItem) ,sid (base->mSet.self[index].mMap) {}
-
-	inline implicit operator const ITEM & () rightvalue {
-		return key ;
 	}
 } ;
 } ;
