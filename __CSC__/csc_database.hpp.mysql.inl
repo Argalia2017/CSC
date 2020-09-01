@@ -75,10 +75,7 @@ private:
 	using NATIVE_THIS = UniqueRef<api::MYSQL> ;
 
 public:
-	implicit AbstractDatabase_Engine_MYSQL () {
-		_STATIC_ASSERT_ (_SIZEOF_ (DEF<decltype (DEREF[this])>) == _SIZEOF_ (Interface)) ;
-		_STATIC_ASSERT_ (_ALIGNOF_ (DEF<decltype (DEREF[this])>) == _ALIGNOF_ (Interface)) ;
-	}
+	implicit AbstractDatabase_Engine_MYSQL () = default ;
 
 	void compute_load_data (AnyRef<> &holder) const override {
 		auto rax = UniqueRef<api::MYSQL> ([&] (api::MYSQL &me) {
@@ -90,8 +87,8 @@ public:
 	}
 
 private:
-	void compute_check_error (api::MYSQL &self_) const {
-		const auto r1x = api::mysql_error (DEPTR[self_]) ;
+	void compute_check_error (api::MYSQL &this_) const {
+		const auto r1x = api::mysql_error (DEPTR[this_]) ;
 		_DYNAMIC_ASSERT_ (r1x == NULL) ;
 	}
 } ;

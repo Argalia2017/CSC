@@ -378,8 +378,8 @@ public:
 	template <class _RET = REMOVE_CVR_TYPE<AbstractSprite>>
 	_RET create_sprite () {
 		struct Dependent ;
-		using AbstractSprite = DEPENDENT_TYPE<AbstractSprite ,Dependent> ;
-		return AbstractSprite (mAbstract) ;
+		using R1X = DEPENDENT_TYPE<AbstractSprite ,Dependent> ;
+		return R1X (mAbstract) ;
 	}
 } ;
 

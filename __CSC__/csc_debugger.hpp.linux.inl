@@ -70,10 +70,10 @@ private:
 
 public:
 	implicit Implement () {
-		const auto r1x = DEFAULT_HUGESTRING_SIZE::value + 1 ;
-		mConWriter = TextWriter<STR> (SharedRef<FixedBuffer<STR>>::make (r1x)) ;
-		mLogWriter = TextWriter<STR> (SharedRef<FixedBuffer<STR>>::make (r1x)) ;
-		mBufferSize = mLogWriter.size () - DEFAULT_LONGSTRING_SIZE::value ;
+		using R1X = U::CONSTEXPR_INCREASE<DEFAULT_HUGESTRING_SIZE> ;
+		mConWriter = TextWriter<STR> (SharedRef<FixedBuffer<STR>>::make (R1X::compile ())) ;
+		mLogWriter = TextWriter<STR> (SharedRef<FixedBuffer<STR>>::make (R1X::compile ())) ;
+		mBufferSize = mLogWriter.size () - DEFAULT_LONGSTRING_SIZE::compile () ;
 		mOptionSet = Set<EFLAG> (128) ;
 		mLogPath = String<STR> () ;
 	}
@@ -94,7 +94,7 @@ public:
 
 #ifdef __CSC_CONFIG_STRA__
 	void print (const Binder &msg) override {
-		if (mOptionSet.find (EFLAG (OPTION_NO_PRINT)) != VAR_NONE)
+		if (mOptionSet.find (OPTION_NO_PRINT) != VAR_NONE)
 			return ;
 		write_con_buffer (msg) ;
 		attach_console () ;
@@ -108,7 +108,7 @@ public:
 
 #ifdef __CSC_CONFIG_STRW__
 	void print (const Binder &msg) override {
-		if (mOptionSet.find (EFLAG (OPTION_NO_PRINT)) != VAR_NONE)
+		if (mOptionSet.find (OPTION_NO_PRINT) != VAR_NONE)
 			return ;
 		write_con_buffer (msg) ;
 		attach_console () ;
@@ -122,7 +122,7 @@ public:
 
 #ifdef __CSC_CONFIG_STRA__
 	void fatal (const Binder &msg) override {
-		if (mOptionSet.find (EFLAG (OPTION_NO_FATAL)) != VAR_NONE)
+		if (mOptionSet.find (OPTION_NO_FATAL) != VAR_NONE)
 			return ;
 		write_con_buffer (msg) ;
 		attach_console () ;
@@ -136,7 +136,7 @@ public:
 
 #ifdef __CSC_CONFIG_STRW__
 	void fatal (const Binder &msg) override {
-		if (mOptionSet.find (EFLAG (OPTION_NO_FATAL)) != VAR_NONE)
+		if (mOptionSet.find (OPTION_NO_FATAL) != VAR_NONE)
 			return ;
 		write_con_buffer (msg) ;
 		attach_console () ;
@@ -150,7 +150,7 @@ public:
 
 #ifdef __CSC_CONFIG_STRA__
 	void error (const Binder &msg) override {
-		if (mOptionSet.find (EFLAG (OPTION_NO_ERROR)) != VAR_NONE)
+		if (mOptionSet.find (OPTION_NO_ERROR) != VAR_NONE)
 			return ;
 		write_con_buffer (msg) ;
 		attach_console () ;
@@ -164,7 +164,7 @@ public:
 
 #ifdef __CSC_CONFIG_STRW__
 	void error (const Binder &msg) override {
-		if (mOptionSet.find (EFLAG (OPTION_NO_ERROR)) != VAR_NONE)
+		if (mOptionSet.find (OPTION_NO_ERROR) != VAR_NONE)
 			return ;
 		write_con_buffer (msg) ;
 		attach_console () ;
@@ -178,7 +178,7 @@ public:
 
 #ifdef __CSC_CONFIG_STRA__
 	void warn (const Binder &msg) override {
-		if (mOptionSet.find (EFLAG (OPTION_NO_WARN)) != VAR_NONE)
+		if (mOptionSet.find (OPTION_NO_WARN) != VAR_NONE)
 			return ;
 		write_con_buffer (msg) ;
 		attach_console () ;
@@ -192,7 +192,7 @@ public:
 
 #ifdef __CSC_CONFIG_STRW__
 	void warn (const Binder &msg) override {
-		if (mOptionSet.find (EFLAG (OPTION_NO_WARN)) != VAR_NONE)
+		if (mOptionSet.find (OPTION_NO_WARN) != VAR_NONE)
 			return ;
 		write_con_buffer (msg) ;
 		attach_console () ;
@@ -206,7 +206,7 @@ public:
 
 #ifdef __CSC_CONFIG_STRA__
 	void info (const Binder &msg) override {
-		if (mOptionSet.find (EFLAG (OPTION_NO_INFO)) != VAR_NONE)
+		if (mOptionSet.find (OPTION_NO_INFO) != VAR_NONE)
 			return ;
 		write_con_buffer (msg) ;
 		attach_console () ;
@@ -220,7 +220,7 @@ public:
 
 #ifdef __CSC_CONFIG_STRW__
 	void info (const Binder &msg) override {
-		if (mOptionSet.find (EFLAG (OPTION_NO_INFO)) != VAR_NONE)
+		if (mOptionSet.find (OPTION_NO_INFO) != VAR_NONE)
 			return ;
 		write_con_buffer (msg) ;
 		attach_console () ;
@@ -234,7 +234,7 @@ public:
 
 #ifdef __CSC_CONFIG_STRA__
 	void debug (const Binder &msg) override {
-		if (mOptionSet.find (EFLAG (OPTION_NO_DEBUG)) != VAR_NONE)
+		if (mOptionSet.find (OPTION_NO_DEBUG) != VAR_NONE)
 			return ;
 		write_con_buffer (msg) ;
 		attach_console () ;
@@ -248,7 +248,7 @@ public:
 
 #ifdef __CSC_CONFIG_STRW__
 	void debug (const Binder &msg) override {
-		if (mOptionSet.find (EFLAG (OPTION_NO_DEBUG)) != VAR_NONE)
+		if (mOptionSet.find (OPTION_NO_DEBUG) != VAR_NONE)
 			return ;
 		write_con_buffer (msg) ;
 		attach_console () ;
@@ -262,7 +262,7 @@ public:
 
 #ifdef __CSC_CONFIG_STRA__
 	void verbose (const Binder &msg) override {
-		if (mOptionSet.find (EFLAG (OPTION_NO_VERBOSE)) != VAR_NONE)
+		if (mOptionSet.find (OPTION_NO_VERBOSE) != VAR_NONE)
 			return ;
 		write_con_buffer (msg) ;
 		attach_console () ;
@@ -276,7 +276,7 @@ public:
 
 #ifdef __CSC_CONFIG_STRW__
 	void verbose (const Binder &msg) override {
-		if (mOptionSet.find (EFLAG (OPTION_NO_VERBOSE)) != VAR_NONE)
+		if (mOptionSet.find (OPTION_NO_VERBOSE) != VAR_NONE)
 			return ;
 		write_con_buffer (msg) ;
 		attach_console () ;
@@ -303,9 +303,9 @@ public:
 
 	void log (const Plain<STR> &tag ,const PhanBuffer<const STR> &msg) {
 		struct Dependent ;
-		using ImplBinder = typename DEPENDENT_TYPE<Private ,Dependent>::template ImplBinder<PhanBuffer<const STR>> ;
+		using R1X = typename DEPENDENT_TYPE<Private ,Dependent>::template ImplBinder<PhanBuffer<const STR>> ;
 		const auto r1x = PhanBuffer<const STR>::make (tag.self ,tag.size ()) ;
-		log (r1x ,ImplBinder (msg)) ;
+		log (r1x ,R1X (msg)) ;
 	}
 
 	void log (const PhanBuffer<const STR> &tag ,const Binder &msg) override {
@@ -317,6 +317,9 @@ public:
 	}
 
 	void show () override {
+		if (mConsole.exist ())
+			if (mConsole.self > 0)
+				return ;
 		mConsole = UniqueRef<VAR32>::make (1) ;
 	}
 
@@ -355,7 +358,7 @@ private:
 		mLogWriter << TextWriter<STR>::CLS ;
 		mLogWriter << _PCSTR_ ("[") ;
 		const auto r1x = GlobalRuntime::clock_now () ;
-		mLogWriter << StringProc::build_hours (ARGV<STR>::null ,r1x) ;
+		mLogWriter << StringProc::build_hours (ARGV<STR>::ID ,r1x) ;
 		mLogWriter << _PCSTR_ ("][") ;
 		mLogWriter << tag ;
 		mLogWriter << _PCSTR_ ("] : ") ;
@@ -395,7 +398,7 @@ private:
 			mLogFileStream = AutoRef<StreamLoader> () ;
 			mTempState = FALSE ;
 		}) ;
-		if (mOptionSet.find (EFLAG (OPTION_ALWAYS_FLUSH)) == VAR_NONE)
+		if (mOptionSet.find (OPTION_ALWAYS_FLUSH) == VAR_NONE)
 			return ;
 		if (!mLogFileStream.exist ())
 			return ;
@@ -414,8 +417,8 @@ private:
 } ;
 
 inline exports ConsoleService::ConsoleService (const ARGVF<Singleton<ConsoleService>> &) {
-	using Implement = typename Private::Implement ;
-	mThis = StrongRef<Implement>::make () ;
+	using R1X = typename Private::Implement ;
+	mThis = StrongRef<R1X>::make () ;
 }
 
 class DebuggerService::Private::Implement
@@ -437,10 +440,10 @@ public:
 		const auto r4x = Function<void (VAR32)> ([] (VAR32) noexcept {
 			GlobalRuntime::process_abort () ;
 		}) ;
-		api::atexit (r1x) ;
-		api::signal (SIGFPE ,r2x) ;
-		api::signal (SIGILL ,r3x) ;
-		api::signal (SIGSEGV ,r4x) ;
+		api::atexit (DEPTR[r1x.self]) ;
+		api::signal (SIGFPE ,DEPTR[r2x.self]) ;
+		api::signal (SIGILL ,DEPTR[r3x.self]) ;
+		api::signal (SIGSEGV ,DEPTR[r4x.self]) ;
 	}
 
 	void output_memory_leaks_report (const BOOL &flag) override {
@@ -450,7 +453,7 @@ public:
 	}
 
 	Array<LENGTH> captrue_stack_trace () override {
-		auto rax = AutoBuffer<PTR<NONE>> (DEFAULT_RECURSIVE_SIZE::value) ;
+		auto rax = AutoBuffer<PTR<NONE>> (DEFAULT_RECURSIVE_SIZE::compile ()) ;
 		const auto r1x = api::backtrace (rax.self ,VAR32 (rax.size ())) ;
 		Array<LENGTH> ret = Array<LENGTH> (r1x) ;
 		for (auto &&i : _RANGE_ (0 ,ret.length ()))
@@ -463,7 +466,7 @@ public:
 		const auto r1x = _CALL_ ([&] () {
 			Array<PTR<NONE>> ret = Array<PTR<NONE>> (list.length ()) ;
 			for (auto &&i : _RANGE_ (0 ,ret.length ())) {
-				const auto r2x = _POINTER_CAST_ (ARGV<NONE>::null ,list[i]) ;
+				const auto r2x = _UNSAFE_POINTER_CAST_ (ARGV<NONE>::ID ,list[i]) ;
 				ret[i] = r2x ;
 			}
 			return _MOVE_ (ret) ;
@@ -477,7 +480,7 @@ public:
 		}) ;
 		Array<String<STR>> ret = Array<String<STR>> (list.size ()) ;
 		for (auto &&i : _RANGE_ (0 ,list.length ())) {
-			const auto r4x = StringProc::build_hex16s (ARGV<STR>::null ,list[i]) ;
+			const auto r4x = StringProc::build_hexs (ARGV<STR>::ID ,DATA (list[i])) ;
 			const auto r5x = StringProc::parse_strs (String<STRA> (PTRTOARR[PTRTOARR[r3x.self][i]])) ;
 			ret[i] = String<STR>::make (_PCSTR_ ("[") ,r4x ,_PCSTR_ ("] : ") ,r5x) ;
 		}
@@ -486,7 +489,7 @@ public:
 } ;
 
 inline exports DebuggerService::DebuggerService (const ARGVF<Singleton<DebuggerService>> &) {
-	using Implement = typename Private::Implement ;
-	mThis = StrongRef<Implement>::make () ;
+	using R1X = typename Private::Implement ;
+	mThis = StrongRef<R1X>::make () ;
 }
 } ;

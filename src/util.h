@@ -22,9 +22,8 @@
 #include <csc_debugger.hpp>
 
 #ifdef __CSC_SYSTEM_WINDOWS__
-#pragma region
-#pragma warning (push)
 #ifdef __CSC_COMPILER_MSVC__
+#pragma warning (push)
 #pragma warning (disable :4996)
 #pragma warning (disable :5039)
 #pragma warning (disable :26429)
@@ -58,8 +57,9 @@
 using namespace Microsoft::VisualStudio::CppUnitTestFramework ;
 #endif
 #endif
+#ifdef __CSC_COMPILER_MSVC__
 #pragma warning (pop)
-#pragma endregion
+#endif
 #endif
 
 #ifndef TEST_CLASS
@@ -92,7 +92,6 @@ using namespace CSC ;
 } ;
 
 #ifdef __CSC_COMPILER_GNUC__
-#pragma region
 #ifdef __CSC_MATH__
 #include <csc_math.hpp.default.inl>
 #endif
@@ -131,5 +130,4 @@ using namespace CSC ;
 #include <csc_debugger.hpp.linux.inl>
 #endif
 #endif
-#pragma endregion
 #endif

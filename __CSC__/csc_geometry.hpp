@@ -16,7 +16,7 @@ class Matrix ;
 
 template <class REAL>
 class Vector {
-	_STATIC_ASSERT_ (IS_VAL_XYZ_HELP<REAL>::value) ;
+	_STATIC_ASSERT_ (IS_VAL_XYZ_HELP<REAL>::compile ()) ;
 
 private:
 	Buffer<REAL ,ARGC<4>> mVector ;
@@ -103,8 +103,8 @@ public:
 		return mul (scale) ;
 	}
 
-	inline friend Vector operator* (const REAL &scale ,const Vector &self_) {
-		return self_.mul (scale) ;
+	inline friend Vector operator* (const REAL &scale ,const Vector &this_) {
+		return this_.mul (scale) ;
 	}
 
 	void multo (const REAL &scale) {
@@ -125,8 +125,8 @@ public:
 		return div (scale) ;
 	}
 
-	inline friend Vector operator/ (const REAL &scale ,const Vector &self_) {
-		return self_.div (scale) ;
+	inline friend Vector operator/ (const REAL &scale ,const Vector &this_) {
+		return this_.div (scale) ;
 	}
 
 	void divto (const REAL &scale) {
@@ -217,7 +217,7 @@ public:
 	Vector mul (const Matrix<REAL> &that) const {
 		struct Dependent ;
 		Vector<REAL> ret ;
-		auto &r1x = _FORWARD_ (ARGV<DEPENDENT_TYPE<Matrix<REAL> ,Dependent>>::null ,that) ;
+		auto &r1x = _FORWARD_ (ARGV<DEPENDENT_TYPE<Matrix<REAL> ,Dependent>>::ID ,that) ;
 		for (auto &&i : _RANGE_ (0 ,4)) {
 			const auto r2x = get (0) * r1x.get (0 ,i) ;
 			const auto r3x = get (1) * r1x.get (1 ,i) ;
@@ -329,7 +329,7 @@ public:
 
 template <class REAL>
 class Matrix {
-	_STATIC_ASSERT_ (IS_VAL_XYZ_HELP<REAL>::value) ;
+	_STATIC_ASSERT_ (IS_VAL_XYZ_HELP<REAL>::compile ()) ;
 
 private:
 	struct Private {
@@ -352,7 +352,7 @@ public:
 		}
 	}
 
-	template <class _ARG1 ,class = ENABLE_TYPE<(IS_SAME_HELP<_ARG1 ,REAL>::value)>>
+	template <class _ARG1 ,class = ENABLE_TYPE<IS_SAME_HELP<_ARG1 ,REAL>>>
 	implicit Matrix (const Vector<_ARG1> &vx ,const Vector<_ARG1> &vy ,const Vector<_ARG1> &vz ,const Vector<_ARG1> &vw) {
 		for (auto &&i : _RANGE_ (0 ,4)) {
 			get (i ,0) = vx[i] ;
@@ -377,8 +377,8 @@ public:
 	template <class _RET = REMOVE_CVR_TYPE<typename Private::template Row<Matrix>>>
 	_RET get (const INDEX &y) leftvalue {
 		struct Dependent ;
-		using Row = typename DEPENDENT_TYPE<Private ,Dependent>::template Row<Matrix> ;
-		return Row (PhanRef<Matrix>::make (DEREF[this]) ,y) ;
+		using R1X = typename DEPENDENT_TYPE<Private ,Dependent>::template Row<Matrix> ;
+		return R1X (PhanRef<Matrix>::make (DEREF[this]) ,y) ;
 	}
 
 	template <class _RET = REMOVE_CVR_TYPE<typename Private::template Row<Matrix>>>
@@ -389,8 +389,8 @@ public:
 	template <class _RET = REMOVE_CVR_TYPE<typename Private::template Row<const Matrix>>>
 	_RET get (const INDEX &y) const leftvalue {
 		struct Dependent ;
-		using Row = typename DEPENDENT_TYPE<Private ,Dependent>::template Row<const Matrix> ;
-		return Row (PhanRef<const Matrix>::make (DEREF[this]) ,y) ;
+		using R1X = typename DEPENDENT_TYPE<Private ,Dependent>::template Row<const Matrix> ;
+		return R1X (PhanRef<const Matrix>::make (DEREF[this]) ,y) ;
 	}
 
 	template <class _RET = REMOVE_CVR_TYPE<typename Private::template Row<const Matrix>>>
@@ -441,8 +441,8 @@ public:
 		return mul (scale) ;
 	}
 
-	inline friend Matrix operator* (const REAL &scale ,const Matrix &self_) {
-		return self_.mul (scale) ;
+	inline friend Matrix operator* (const REAL &scale ,const Matrix &this_) {
+		return this_.mul (scale) ;
 	}
 
 	void multo (const REAL &scale) {
@@ -463,8 +463,8 @@ public:
 		return div (scale) ;
 	}
 
-	inline friend Matrix operator/ (const REAL &scale ,const Matrix &self_) {
-		return self_.div (scale) ;
+	inline friend Matrix operator/ (const REAL &scale ,const Matrix &this_) {
+		return this_.div (scale) ;
 	}
 
 	void divto (const REAL &scale) {

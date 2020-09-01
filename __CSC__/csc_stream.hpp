@@ -16,7 +16,7 @@ using STRUW = TEXT_BASE_TYPE<STRW> ;
 
 template <class REAL>
 class ByteReader {
-	_STATIC_ASSERT_ (IS_SAME_HELP<REAL ,BYTE>::value) ;
+	_STATIC_ASSERT_ (IS_SAME_HELP<REAL ,BYTE>::compile ()) ;
 
 public:
 	class Binder
@@ -59,8 +59,8 @@ public:
 	template <class _RET = REMOVE_CVR_TYPE<typename Private::template Attribute<ByteReader>>>
 	_RET attr () leftvalue {
 		struct Dependent ;
-		using Attribute = typename DEPENDENT_TYPE<Private ,Dependent>::template Attribute<ByteReader> ;
-		return Attribute (PhanRef<ByteReader>::make (DEREF[this])) ;
+		using R1X = typename DEPENDENT_TYPE<Private ,Dependent>::template Attribute<ByteReader> ;
+		return R1X (PhanRef<ByteReader>::make (DEREF[this])) ;
 	}
 
 	LENGTH size () const {
@@ -129,8 +129,8 @@ public:
 
 	void read (WORD &data) {
 		const auto r1x = WORD (0X0001) ;
-		auto &r2x = _CAST_ (ARGV<BYTE[_SIZEOF_ (WORD)]>::null ,r1x) ;
-		auto &r3x = _CAST_ (ARGV<BYTE[_SIZEOF_ (WORD)]>::null ,data) ;
+		auto &r2x = _CAST_ (ARGV<BYTE[_SIZEOF_ (WORD)]>::ID ,r1x) ;
+		auto &r3x = _CAST_ (ARGV<BYTE[_SIZEOF_ (WORD)]>::ID ,data) ;
 		for (auto &&i : _RANGE_ (0 ,_COUNTOF_ (DEF<decltype (r3x)>)))
 			read (r3x[r2x[i]]) ;
 	}
@@ -142,8 +142,8 @@ public:
 
 	void read (CHAR &data) {
 		const auto r1x = CHAR (0X00010203) ;
-		auto &r2x = _CAST_ (ARGV<BYTE[_SIZEOF_ (CHAR)]>::null ,r1x) ;
-		auto &r3x = _CAST_ (ARGV<BYTE[_SIZEOF_ (CHAR)]>::null ,data) ;
+		auto &r2x = _CAST_ (ARGV<BYTE[_SIZEOF_ (CHAR)]>::ID ,r1x) ;
+		auto &r3x = _CAST_ (ARGV<BYTE[_SIZEOF_ (CHAR)]>::ID ,data) ;
 		for (auto &&i : _RANGE_ (0 ,_COUNTOF_ (DEF<decltype (r3x)>)))
 			read (r3x[r2x[i]]) ;
 	}
@@ -155,8 +155,8 @@ public:
 
 	void read (DATA &data) {
 		const auto r1x = DATA (0X0001020304050607) ;
-		auto &r2x = _CAST_ (ARGV<BYTE[_SIZEOF_ (DATA)]>::null ,r1x) ;
-		auto &r3x = _CAST_ (ARGV<BYTE[_SIZEOF_ (DATA)]>::null ,data) ;
+		auto &r2x = _CAST_ (ARGV<BYTE[_SIZEOF_ (DATA)]>::ID ,r1x) ;
+		auto &r3x = _CAST_ (ARGV<BYTE[_SIZEOF_ (DATA)]>::ID ,data) ;
 		for (auto &&i : _RANGE_ (0 ,_COUNTOF_ (DEF<decltype (r3x)>)))
 			read (r3x[r2x[i]]) ;
 	}
@@ -167,7 +167,7 @@ public:
 	}
 
 	void read (BOOL &data) {
-		read (_CAST_ (ARGV<U::BYTE_BASE_TYPE<BOOL>>::null ,data)) ;
+		read (_CAST_ (ARGV<U::BYTE_BASE_TYPE<BOOL>>::ID ,data)) ;
 	}
 
 	inline ByteReader &operator>> (BOOL &data) {
@@ -176,7 +176,7 @@ public:
 	}
 
 	void read (VAR32 &data) {
-		read (_CAST_ (ARGV<U::BYTE_BASE_TYPE<VAR32>>::null ,data)) ;
+		read (_CAST_ (ARGV<U::BYTE_BASE_TYPE<VAR32>>::ID ,data)) ;
 	}
 
 	inline ByteReader &operator>> (VAR32 &data) {
@@ -185,7 +185,7 @@ public:
 	}
 
 	void read (VAR64 &data) {
-		read (_CAST_ (ARGV<U::BYTE_BASE_TYPE<VAR64>>::null ,data)) ;
+		read (_CAST_ (ARGV<U::BYTE_BASE_TYPE<VAR64>>::ID ,data)) ;
 	}
 
 	inline ByteReader &operator>> (VAR64 &data) {
@@ -194,7 +194,7 @@ public:
 	}
 
 	void read (VAL32 &data) {
-		read (_CAST_ (ARGV<U::BYTE_BASE_TYPE<VAL32>>::null ,data)) ;
+		read (_CAST_ (ARGV<U::BYTE_BASE_TYPE<VAL32>>::ID ,data)) ;
 	}
 
 	inline ByteReader &operator>> (VAL32 &data) {
@@ -203,7 +203,7 @@ public:
 	}
 
 	void read (VAL64 &data) {
-		read (_CAST_ (ARGV<U::BYTE_BASE_TYPE<VAL64>>::null ,data)) ;
+		read (_CAST_ (ARGV<U::BYTE_BASE_TYPE<VAL64>>::ID ,data)) ;
 	}
 
 	inline ByteReader &operator>> (VAL64 &data) {
@@ -213,7 +213,7 @@ public:
 
 	template <class _ARG1 ,class _ARG2>
 	void read (Array<_ARG1 ,_ARG2> &data) {
-		const auto r1x = LENGTH (read (ARGV<VAR32>::null)) ;
+		const auto r1x = LENGTH (read (ARGV<VAR32>::ID)) ;
 		_DYNAMIC_ASSERT_ (r1x >= 0 && r1x < VAR32_MAX) ;
 		if (data.size () < r1x)
 			data = Array<_ARG1 ,_ARG2> (r1x) ;
@@ -229,18 +229,11 @@ public:
 
 	template <class _ARG1>
 	void read (const Plain<_ARG1> &data) {
-#ifdef __CSC_COMPILER_GNUC__
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Warray-bounds"
-#endif
 		auto rax = REAL () ;
 		for (auto &&i : _RANGE_ (0 ,data.size ())) {
 			read (rax) ;
-			_DYNAMIC_ASSERT_ (rax == data.self[i]) ;
+			_DYNAMIC_ASSERT_ (rax == data[i]) ;
 		}
-#ifdef __CSC_COMPILER_GNUC__
-#pragma GCC diagnostic pop
-#endif
 	}
 
 	template <class _ARG1>
@@ -251,8 +244,8 @@ public:
 
 	template <class _ARG1 ,class _ARG2>
 	void read (String<_ARG1 ,_ARG2> &data) {
-		_STATIC_ASSERT_ (IS_STR_XYZ_HELP<_ARG1>::value) ;
-		const auto r1x = LENGTH (read (ARGV<VAR32>::null)) ;
+		_STATIC_ASSERT_ (IS_STR_XYZ_HELP<_ARG1>::compile ()) ;
+		const auto r1x = LENGTH (read (ARGV<VAR32>::ID)) ;
 		_DYNAMIC_ASSERT_ (r1x >= 0 && r1x < VAR32_MAX) ;
 		if (data.size () < r1x)
 			data = String<_ARG1 ,_ARG2> (r1x) ;
@@ -386,7 +379,7 @@ inline void ByteReader<REAL>::EOS (const ARGVF<ARGC<4>> &) {}
 
 template <class REAL>
 class ByteWriter {
-	_STATIC_ASSERT_ (IS_SAME_HELP<REAL ,BYTE>::value) ;
+	_STATIC_ASSERT_ (IS_SAME_HELP<REAL ,BYTE>::compile ()) ;
 
 public:
 	class Binder
@@ -436,8 +429,8 @@ public:
 	template <class _RET = REMOVE_CVR_TYPE<typename Private::template Attribute<ByteWriter>>>
 	_RET attr () leftvalue {
 		struct Dependent ;
-		using Attribute = typename DEPENDENT_TYPE<Private ,Dependent>::template Attribute<ByteWriter> ;
-		return Attribute (PhanRef<ByteWriter>::make (DEREF[this])) ;
+		using R1X = typename DEPENDENT_TYPE<Private ,Dependent>::template Attribute<ByteWriter> ;
+		return R1X (PhanRef<ByteWriter>::make (DEREF[this])) ;
 	}
 
 	LENGTH size () const {
@@ -491,8 +484,8 @@ public:
 
 	void write (const WORD &data) {
 		const auto r1x = WORD (0X0001) ;
-		auto &r2x = _CAST_ (ARGV<BYTE[_SIZEOF_ (WORD)]>::null ,r1x) ;
-		auto &r3x = _CAST_ (ARGV<BYTE[_SIZEOF_ (WORD)]>::null ,data) ;
+		auto &r2x = _CAST_ (ARGV<BYTE[_SIZEOF_ (WORD)]>::ID ,r1x) ;
+		auto &r3x = _CAST_ (ARGV<BYTE[_SIZEOF_ (WORD)]>::ID ,data) ;
 		for (auto &&i : _RANGE_ (0 ,_COUNTOF_ (DEF<decltype (r3x)>)))
 			write (r3x[r2x[i]]) ;
 	}
@@ -504,8 +497,8 @@ public:
 
 	void write (const CHAR &data) {
 		const auto r1x = CHAR (0X00010203) ;
-		auto &r2x = _CAST_ (ARGV<BYTE[_SIZEOF_ (CHAR)]>::null ,r1x) ;
-		auto &r3x = _CAST_ (ARGV<BYTE[_SIZEOF_ (CHAR)]>::null ,data) ;
+		auto &r2x = _CAST_ (ARGV<BYTE[_SIZEOF_ (CHAR)]>::ID ,r1x) ;
+		auto &r3x = _CAST_ (ARGV<BYTE[_SIZEOF_ (CHAR)]>::ID ,data) ;
 		for (auto &&i : _RANGE_ (0 ,_COUNTOF_ (DEF<decltype (r3x)>)))
 			write (r3x[r2x[i]]) ;
 	}
@@ -517,8 +510,8 @@ public:
 
 	void write (const DATA &data) {
 		const auto r1x = DATA (0X0001020304050607) ;
-		auto &r2x = _CAST_ (ARGV<BYTE[_SIZEOF_ (DATA)]>::null ,r1x) ;
-		auto &r3x = _CAST_ (ARGV<BYTE[_SIZEOF_ (DATA)]>::null ,data) ;
+		auto &r2x = _CAST_ (ARGV<BYTE[_SIZEOF_ (DATA)]>::ID ,r1x) ;
+		auto &r3x = _CAST_ (ARGV<BYTE[_SIZEOF_ (DATA)]>::ID ,data) ;
 		for (auto &&i : _RANGE_ (0 ,_COUNTOF_ (DEF<decltype (r3x)>)))
 			write (r3x[r2x[i]]) ;
 	}
@@ -529,7 +522,7 @@ public:
 	}
 
 	void write (const BOOL &data) {
-		const auto r1x = _CAST_ (ARGV<U::BYTE_BASE_TYPE<BOOL>>::null ,data) ;
+		const auto r1x = _CAST_ (ARGV<U::BYTE_BASE_TYPE<BOOL>>::ID ,data) ;
 		write (r1x) ;
 	}
 
@@ -543,7 +536,7 @@ public:
 	inline ByteWriter &operator<< (const PTR<const NONE> &) = delete ;
 
 	void write (const VAR32 &data) {
-		const auto r1x = _CAST_ (ARGV<U::BYTE_BASE_TYPE<VAR32>>::null ,data) ;
+		const auto r1x = _CAST_ (ARGV<U::BYTE_BASE_TYPE<VAR32>>::ID ,data) ;
 		write (r1x) ;
 	}
 
@@ -553,7 +546,7 @@ public:
 	}
 
 	void write (const VAR64 &data) {
-		const auto r1x = _CAST_ (ARGV<U::BYTE_BASE_TYPE<VAR64>>::null ,data) ;
+		const auto r1x = _CAST_ (ARGV<U::BYTE_BASE_TYPE<VAR64>>::ID ,data) ;
 		write (r1x) ;
 	}
 
@@ -563,7 +556,7 @@ public:
 	}
 
 	void write (const VAL32 &data) {
-		const auto r1x = _CAST_ (ARGV<U::BYTE_BASE_TYPE<VAL32>>::null ,data) ;
+		const auto r1x = _CAST_ (ARGV<U::BYTE_BASE_TYPE<VAL32>>::ID ,data) ;
 		write (r1x) ;
 	}
 
@@ -573,7 +566,7 @@ public:
 	}
 
 	void write (const VAL64 &data) {
-		const auto r1x = _CAST_ (ARGV<U::BYTE_BASE_TYPE<VAL64>>::null ,data) ;
+		const auto r1x = _CAST_ (ARGV<U::BYTE_BASE_TYPE<VAL64>>::ID ,data) ;
 		write (r1x) ;
 	}
 
@@ -599,15 +592,8 @@ public:
 
 	template <class _ARG1>
 	void write (const Plain<_ARG1> &data) {
-#ifdef __CSC_COMPILER_GNUC__
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Warray-bounds"
-#endif
 		for (auto &&i : _RANGE_ (0 ,data.size ()))
-			write (data.self[i]) ;
-#ifdef __CSC_COMPILER_GNUC__
-#pragma GCC diagnostic pop
-#endif
+			write (data[i]) ;
 	}
 
 	template <class _ARG1>
@@ -618,7 +604,7 @@ public:
 
 	template <class _ARG1 ,class _ARG2>
 	void write (const String<_ARG1 ,_ARG2> &data) {
-		_STATIC_ASSERT_ (IS_STR_XYZ_HELP<_ARG1>::value) ;
+		_STATIC_ASSERT_ (IS_STR_XYZ_HELP<_ARG1>::compile ()) ;
 		const auto r1x = data.length () ;
 		_DYNAMIC_ASSERT_ (r1x >= 0 && r1x < VAR32_MAX) ;
 		write (VAR32 (r1x)) ;
@@ -745,7 +731,7 @@ inline void ByteWriter<REAL>::EOS (const ARGVF<ARGC<4>> &) {}
 
 template <class REAL>
 class TextReader {
-	_STATIC_ASSERT_ (IS_STR_XYZ_HELP<REAL>::value) ;
+	_STATIC_ASSERT_ (IS_STR_XYZ_HELP<REAL>::compile ()) ;
 
 public:
 	class Binder
@@ -799,8 +785,8 @@ public:
 	template <class _RET = REMOVE_CVR_TYPE<typename Private::template Attribute<TextReader>>>
 	_RET attr () leftvalue {
 		struct Dependent ;
-		using Attribute = typename DEPENDENT_TYPE<Private ,Dependent>::template Attribute<TextReader> ;
-		return Attribute (PhanRef<TextReader>::make (DEREF[this])) ;
+		using R1X = typename DEPENDENT_TYPE<Private ,Dependent>::template Attribute<TextReader> ;
+		return R1X (PhanRef<TextReader>::make (DEREF[this])) ;
 	}
 
 	LENGTH size () const {
@@ -939,7 +925,7 @@ public:
 	}
 
 	void read (VAR32 &data) {
-		const auto r1x = read (ARGV<VAR64>::null) ;
+		const auto r1x = read (ARGV<VAR64>::ID) ;
 		_DYNAMIC_ASSERT_ (r1x >= VAR32_MIN && r1x <= VAR32_MAX) ;
 		data = VAR32 (r1x) ;
 	}
@@ -972,7 +958,7 @@ public:
 	}
 
 	void read (VAL32 &data) {
-		const auto r1x = read (ARGV<VAL64>::null) ;
+		const auto r1x = read (ARGV<VAL64>::ID) ;
 		if switch_once (TRUE) {
 			if (MathProc::is_infinite (r1x))
 				discard ;
@@ -1063,18 +1049,11 @@ public:
 	}
 
 	void read (const Plain<REAL> &data) {
-#ifdef __CSC_COMPILER_GNUC__
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Warray-bounds"
-#endif
 		auto rax = REAL () ;
 		for (auto &&i : _RANGE_ (0 ,data.size ())) {
 			read (rax) ;
-			_DYNAMIC_ASSERT_ (rax == data.self[i]) ;
+			_DYNAMIC_ASSERT_ (rax == data[i]) ;
 		}
-#ifdef __CSC_COMPILER_GNUC__
-#pragma GCC diagnostic pop
-#endif
 	}
 
 	inline TextReader &operator>> (const Plain<REAL> &data) {
@@ -1150,7 +1129,7 @@ public:
 	}
 
 	void read (const DEF<decltype (BOM)> &) {
-		template_read_bom (ARGV<REAL>::null) ;
+		template_read_bom (ARGV<REAL>::ID) ;
 	}
 
 	inline TextReader &operator>> (const DEF<decltype (BOM)> &proc) {
@@ -1282,7 +1261,7 @@ private:
 		if switch_once (TRUE) {
 			if (!(top == REAL ('e') || top == REAL ('E')))
 				discard ;
-			const auto r4x = rax.read (ARGV<VAR32>::null) ;
+			const auto r4x = rax.read (ARGV<VAR32>::ID) ;
 			rbx[1] += r4x ;
 			DEREF[this] = rax.share () ;
 		}
@@ -1354,7 +1333,7 @@ private:
 
 	void template_read_bom (const ARGVF<STRW> &) {
 		auto rax = share () ;
-		_CAST_ (ARGV<TextReader<STRUW>>::null ,rax).template_read_bom (ARGV<STRUW>::null) ;
+		_CAST_ (ARGV<TextReader<STRUW>>::ID ,rax).template_read_bom (ARGV<STRUW>::ID) ;
 		DEREF[this] = rax.share () ;
 	}
 } ;
@@ -1378,7 +1357,7 @@ public:
 	}
 
 	void enable_endian (const BOOL &flag) const {
-		_STATIC_ASSERT_ (!IS_CONST_HELP<BASE>::value) ;
+		_STATIC_ASSERT_ (U::CONSTEXPR_NOT<IS_CONST_HELP<BASE>>::compile ()) ;
 		mBase->mHeap->mEndianFlag = flag ;
 	}
 
@@ -1386,9 +1365,9 @@ public:
 		if (!mBase->mHeap->mEndianFlag)
 			return item ;
 		U::BYTE_BASE_TYPE<REAL> ret ;
-		auto &r1x = _CAST_ (ARGV<BYTE[_SIZEOF_ (REAL)]>::null ,item) ;
+		auto &r1x = _CAST_ (ARGV<BYTE[_SIZEOF_ (REAL)]>::ID ,item) ;
 		ByteReader<BYTE> (PhanBuffer<const BYTE>::make (r1x)) >> ret ;
-		return _MOVE_ (_CAST_ (ARGV<REAL>::null ,ret)) ;
+		return _MOVE_ (_CAST_ (ARGV<REAL>::ID ,ret)) ;
 	}
 
 	VAR64 varify_radix () const {
@@ -1415,7 +1394,7 @@ public:
 	}
 
 	void enable_escape (const BOOL &flag) const {
-		_STATIC_ASSERT_ (!IS_CONST_HELP<BASE>::value) ;
+		_STATIC_ASSERT_ (U::CONSTEXPR_NOT<IS_CONST_HELP<BASE>>::compile ()) ;
 		mBase->mHeap->mEscapeFlag = flag ;
 	}
 
@@ -1432,7 +1411,7 @@ public:
 	}
 
 	void modify_escape_r (const REAL &str_a ,const REAL &str_e) const {
-		_STATIC_ASSERT_ (!IS_CONST_HELP<BASE>::value) ;
+		_STATIC_ASSERT_ (U::CONSTEXPR_NOT<IS_CONST_HELP<BASE>>::compile ()) ;
 		_DEBUG_ASSERT_ (str_e != varify_ending_item ()) ;
 		INDEX ix = mBase->mHeap->mEscapeMappingSet.map (str_a) ;
 		_DEBUG_ASSERT_ (ix == VAR_NONE) ;
@@ -1464,7 +1443,7 @@ public:
 	}
 
 	void modify_space (const REAL &item ,const VAR32 &group) const {
-		_STATIC_ASSERT_ (!IS_CONST_HELP<BASE>::value) ;
+		_STATIC_ASSERT_ (U::CONSTEXPR_NOT<IS_CONST_HELP<BASE>>::compile ()) ;
 		_DEBUG_ASSERT_ (item != varify_ending_item ()) ;
 		INDEX ix = mBase->mHeap->mSpaceMappingSet.map (item) ;
 		_DEBUG_ASSERT_ (ix == VAR_NONE) ;
@@ -1498,7 +1477,7 @@ inline void TextReader<REAL>::EOS (const ARGVF<ARGC<4>> &) {}
 
 template <class REAL>
 class TextWriter {
-	_STATIC_ASSERT_ (IS_STR_XYZ_HELP<REAL>::value) ;
+	_STATIC_ASSERT_ (IS_STR_XYZ_HELP<REAL>::compile ()) ;
 
 public:
 	class Binder
@@ -1558,8 +1537,8 @@ public:
 	template <class _RET = REMOVE_CVR_TYPE<typename Private::template Attribute<TextWriter>>>
 	_RET attr () leftvalue {
 		struct Dependent ;
-		using Attribute = typename DEPENDENT_TYPE<Private ,Dependent>::template Attribute<TextWriter> ;
-		return Attribute (PhanRef<TextWriter>::make (DEREF[this])) ;
+		using R1X = typename DEPENDENT_TYPE<Private ,Dependent>::template Attribute<TextWriter> ;
+		return R1X (PhanRef<TextWriter>::make (DEREF[this])) ;
 	}
 
 	LENGTH size () const {
@@ -1767,15 +1746,8 @@ public:
 	}
 
 	void write (const Plain<REAL> &data) {
-#ifdef __CSC_COMPILER_GNUC__
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Warray-bounds"
-#endif
 		for (auto &&i : _RANGE_ (0 ,data.size ()))
-			write (data.self[i]) ;
-#ifdef __CSC_COMPILER_GNUC__
-#pragma GCC diagnostic pop
-#endif
+			write (data[i]) ;
 	}
 
 	inline TextWriter &operator<< (const Plain<REAL> &data) {
@@ -1848,7 +1820,7 @@ public:
 	}
 
 	void write (const DEF<decltype (BOM)> &) {
-		template_write_bom (ARGV<REAL>::null) ;
+		template_write_bom (ARGV<REAL>::ID) ;
 	}
 
 	inline TextWriter &operator<< (const DEF<decltype (BOM)> &proc) {
@@ -2083,7 +2055,7 @@ private:
 
 	void template_write_bom (const ARGVF<STRW> &) {
 		auto rax = share () ;
-		_CAST_ (ARGV<TextWriter<STRUW>>::null ,rax).template_write_bom (ARGV<STRUW>::null) ;
+		_CAST_ (ARGV<TextWriter<STRUW>>::ID ,rax).template_write_bom (ARGV<STRUW>::ID) ;
 		DEREF[this] = rax.share () ;
 	}
 } ;
@@ -2193,12 +2165,11 @@ public:
 	static DEF<void (const ARGVF<ARGC<1>> &)> HINT_IDENTIFIER ;
 	static DEF<void (const ARGVF<ARGC<2>> &)> HINT_VALUE ;
 	static DEF<void (const ARGVF<ARGC<3>> &)> HINT_STRING ;
-	static DEF<void (const ARGVF<ARGC<4>> &)> HINT_NEWGAP ;
-	static DEF<void (const ARGVF<ARGC<5>> &)> HINT_NEWLINE ;
+	static DEF<void (const ARGVF<ARGC<4>> &)> HINT_WORD_GAP ;
+	static DEF<void (const ARGVF<ARGC<5>> &)> HINT_WORD_GAP_ENDLINE ;
 	static DEF<void (const ARGVF<ARGC<6>> &)> SKIP_GAP ;
 	static DEF<void (const ARGVF<ARGC<7>> &)> SKIP_GAP_SPACE ;
 	static DEF<void (const ARGVF<ARGC<8>> &)> SKIP_GAP_ENDLINE ;
-	static DEF<void (const ARGVF<ARGC<9>> &)> SKIP_LINE ;
 
 private:
 	struct HEAP_PACK {
@@ -2208,14 +2179,12 @@ private:
 private:
 	SharedRef<HEAP_PACK> mHeap ;
 	PhanRef<TextReader<STRU8>> mReader ;
-	Array<STRU8> mCache ;
-	INDEX mPeek ;
+	Deque<STRU8> mCache ;
 	BOOL mHintStringTextFlag ;
 	LENGTH mHintNextTextSize ;
 
 public:
 	implicit RegularReader () {
-		mPeek = 0 ;
 		mHintStringTextFlag = FALSE ;
 		mHintNextTextSize = 0 ;
 	}
@@ -2226,25 +2195,32 @@ public:
 		r1x.modify_space (STRU8 (' ') ,1) ;
 		r1x.modify_space (STRU8 ('\t') ,1) ;
 		r1x.modify_space (STRU8 ('\v') ,1) ;
+		r1x.modify_space (STRU8 ('\b') ,1) ;
 		r1x.modify_space (STRU8 ('\r') ,2) ;
 		r1x.modify_space (STRU8 ('\n') ,2) ;
 		r1x.modify_space (STRU8 ('\f') ,2) ;
 		r1x.modify_escape_r (STRU8 ('t') ,STRU8 ('\t')) ;
 		r1x.modify_escape_r (STRU8 ('v') ,STRU8 ('\v')) ;
+		r1x.modify_escape_r (STRU8 ('b') ,STRU8 ('\b')) ;
 		r1x.modify_escape_r (STRU8 ('r') ,STRU8 ('\r')) ;
 		r1x.modify_escape_r (STRU8 ('n') ,STRU8 ('\n')) ;
 		r1x.modify_escape_r (STRU8 ('f') ,STRU8 ('\f')) ;
+		r1x.modify_escape_r (STRU8 ('\'') ,STRU8 ('\'')) ;
 		r1x.modify_escape_r (STRU8 ('\"') ,STRU8 ('\"')) ;
 		r1x.modify_escape_r (STRU8 ('/') ,STRU8 ('/')) ;
 		r1x.modify_escape_r (STRU8 ('\\') ,STRU8 ('\\')) ;
+		r1x.modify_escape_r (STRU8 ('u') ,STRU8 ('u')) ;
+		r1x.modify_escape_r (STRU8 ('x') ,STRU8 ('x')) ;
 		_STATIC_WARNING_ ("mark") ;
 		//@info: disable default escape-str convertion
 		r1x.enable_escape (FALSE) ;
 		mReader.self >> TextReader<STRU8>::BOM ;
-		mCache = Array<STRU8> (ll_len) ;
-		for (auto &&i : _RANGE_ (0 ,mCache.length ()))
-			mReader.self >> mCache[i] ;
-		mPeek = 0 ;
+		mCache = Deque<STRU8> (ll_len) ;
+		for (auto &&i : _RANGE_ (0 ,ll_len)) {
+			_STATIC_UNUSED_ (i) ;
+			INDEX ix = mCache.insert () ;
+			mReader.self >> mCache[ix] ;
+		}
 		mHintStringTextFlag = FALSE ;
 		mHintNextTextSize = 0 ;
 	}
@@ -2255,7 +2231,6 @@ public:
 		ret.mHeap->mReader = mReader->share () ;
 		ret.mReader = PhanRef<TextReader<STRU8>>::make (ret.mHeap->mReader) ;
 		ret.mCache = mCache ;
-		ret.mPeek = mPeek ;
 		ret.mHintStringTextFlag = FALSE ;
 		ret.mHintNextTextSize = 0 ;
 		return _MOVE_ (ret) ;
@@ -2263,8 +2238,7 @@ public:
 
 	const STRU8 &get (const INDEX &index) const leftvalue {
 		_DEBUG_ASSERT_ (index >= 0 && index < mCache.length ()) ;
-		_DEBUG_ASSERT_ (mPeek >= 0 && mPeek < mCache.length ()) ;
-		return mCache[(mPeek + index) % mCache.length ()] ;
+		return mCache[mCache.access (index)] ;
 	}
 
 	inline const STRU8 &operator[] (const INDEX &index) const leftvalue {
@@ -2272,8 +2246,9 @@ public:
 	}
 
 	void read () {
-		mReader.self >> mCache[mPeek] ;
-		mPeek = (mPeek + 1) % mCache.length () ;
+		mCache.take () ;
+		INDEX ix = mCache.insert () ;
+		mReader.self >> mCache[ix] ;
 	}
 
 	inline void operator++ (VAR32) {
@@ -2281,17 +2256,10 @@ public:
 	}
 
 	void read (const Plain<STRU8> &data) {
-#ifdef __CSC_COMPILER_GNUC__
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Warray-bounds"
-#endif
 		for (auto &&i : _RANGE_ (0 ,data.size ())) {
-			_DYNAMIC_ASSERT_ (get (0) == data.self[i]) ;
+			_DYNAMIC_ASSERT_ (get (0) == data[i]) ;
 			read () ;
 		}
-#ifdef __CSC_COMPILER_GNUC__
-#pragma GCC diagnostic pop
-#endif
 	}
 
 	inline RegularReader &operator>> (const Plain<STRU8> &data) {
@@ -2424,7 +2392,7 @@ public:
 		return DEREF[this] ;
 	}
 
-	void read (const DEF<decltype (HINT_NEWGAP)> &) {
+	void read (const DEF<decltype (HINT_WORD_GAP)> &) {
 		mHintStringTextFlag = FALSE ;
 		mHintNextTextSize = 0 ;
 		auto rax = share () ;
@@ -2440,12 +2408,12 @@ public:
 		}
 	}
 
-	inline RegularReader &operator>> (const DEF<decltype (HINT_NEWGAP)> &) {
-		read (HINT_NEWGAP) ;
+	inline RegularReader &operator>> (const DEF<decltype (HINT_WORD_GAP)> &) {
+		read (HINT_WORD_GAP) ;
 		return DEREF[this] ;
 	}
 
-	void read (const DEF<decltype (HINT_NEWLINE)> &) {
+	void read (const DEF<decltype (HINT_WORD_GAP_ENDLINE)> &) {
 		mHintStringTextFlag = FALSE ;
 		mHintNextTextSize = 0 ;
 		auto rax = share () ;
@@ -2461,8 +2429,8 @@ public:
 		}
 	}
 
-	inline RegularReader &operator>> (const DEF<decltype (HINT_NEWLINE)> &) {
-		read (HINT_NEWLINE) ;
+	inline RegularReader &operator>> (const DEF<decltype (HINT_WORD_GAP_ENDLINE)> &) {
+		read (HINT_WORD_GAP_ENDLINE) ;
 		return DEREF[this] ;
 	}
 
@@ -2483,6 +2451,8 @@ public:
 	void read (const DEF<decltype (SKIP_GAP_SPACE)> &) {
 		const auto r1x = mReader->attr () ;
 		while (TRUE) {
+			if (get (0) == r1x.varify_ending_item ())
+				break ;
 			if (!r1x.varify_space (get (0) ,1))
 				break ;
 			read () ;
@@ -2497,6 +2467,8 @@ public:
 	void read (const DEF<decltype (SKIP_GAP_ENDLINE)> &) {
 		const auto r1x = mReader->attr () ;
 		while (TRUE) {
+			if (get (0) == r1x.varify_ending_item ())
+				break ;
 			if (!r1x.varify_space (get (0) ,2))
 				break ;
 			read () ;
@@ -2505,28 +2477,6 @@ public:
 
 	inline RegularReader &operator>> (const DEF<decltype (SKIP_GAP_ENDLINE)> &) {
 		read (SKIP_GAP_ENDLINE) ;
-		return DEREF[this] ;
-	}
-
-	void read (const DEF<decltype (SKIP_LINE)> &) {
-		auto rax = STRU8 () ;
-		while (TRUE) {
-			rax = get (0) ;
-			const auto r1x = BOOL (rax == STRU8 ('\r') || rax == STRU8 ('\n') || rax == STRU8 ('\f')) ;
-			if (r1x)
-				break ;
-			read () ;
-		}
-		if (rax != STRU8 ('\r'))
-			return ;
-		const auto r2x = get (0) ;
-		if (r2x != STRU8 ('\n'))
-			return ;
-		read () ;
-	}
-
-	inline RegularReader &operator>> (const DEF<decltype (SKIP_LINE)> &) {
-		read (SKIP_LINE) ;
 		return DEREF[this] ;
 	}
 
@@ -2585,15 +2535,13 @@ inline void RegularReader::HINT_VALUE (const ARGVF<ARGC<2>> &) {}
 
 inline void RegularReader::HINT_STRING (const ARGVF<ARGC<3>> &) {}
 
-inline void RegularReader::HINT_NEWGAP (const ARGVF<ARGC<4>> &) {}
+inline void RegularReader::HINT_WORD_GAP (const ARGVF<ARGC<4>> &) {}
 
-inline void RegularReader::HINT_NEWLINE (const ARGVF<ARGC<5>> &) {}
+inline void RegularReader::HINT_WORD_GAP_ENDLINE (const ARGVF<ARGC<5>> &) {}
 
 inline void RegularReader::SKIP_GAP (const ARGVF<ARGC<6>> &) {}
 
 inline void RegularReader::SKIP_GAP_SPACE (const ARGVF<ARGC<7>> &) {}
 
 inline void RegularReader::SKIP_GAP_ENDLINE (const ARGVF<ARGC<8>> &) {}
-
-inline void RegularReader::SKIP_LINE (const ARGVF<ARGC<9>> &) {}
 } ;

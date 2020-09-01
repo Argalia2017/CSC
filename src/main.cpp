@@ -29,7 +29,6 @@ imports void main_shutdown () {
 	Singleton<ConsoleService>::instance ().log (_PCSTR_ ("UNITTEST") ,_PCSTR_ ("main_shutdown")) ;
 }
 
-
 #ifdef __CSC_TARGET_EXE__
 exports int main () noexcept {
 	using namespace UNITTEST ;
@@ -41,7 +40,7 @@ exports int main () noexcept {
 		Singleton<ConsoleService>::instance ().fatal (r1x) ;
 #ifdef __CSC_UNITTEST__
 #ifdef __CSC_COMPILER_MSVC__
-		const auto r2x = StringProc::build_strs (ARGV<STRW>::null ,r1x) ;
+		const auto r2x = StringProc::build_strs (ARGV<STRW>::ID ,r1x) ;
 		Assert::Fail (r2x.raw ().self) ;
 #endif
 #endif
@@ -50,7 +49,7 @@ exports int main () noexcept {
 }
 #endif
 
-#pragma region
+#ifdef __CSC__
 #ifdef __CSC_MATH__
 #include <csc_math.hpp.default.inl>
 #endif
@@ -114,4 +113,4 @@ exports int main () noexcept {
 #include <csc_debugger.hpp.linux.inl>
 #endif
 #endif
-#pragma endregion
+#endif

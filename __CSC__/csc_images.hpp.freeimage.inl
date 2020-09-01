@@ -24,14 +24,14 @@
 #endif
 
 #ifdef __CSC_DEPRECATED__
-#pragma region
-#pragma warning (push)
 #ifdef __CSC_COMPILER_MSVC__
+#pragma warning (push)
 #pragma warning (disable :26477)
 #endif
 #include <freeimage.h>
+#ifdef __CSC_COMPILER_MSVC__
 #pragma warning (pop)
-#pragma endregion
+#endif
 #endif
 
 #ifndef FREEIMAGE_H
@@ -93,18 +93,16 @@ class AbstractImage_Engine_FREEIMAGE<COLOR_BGR>
 private:
 	using HFIBITMAP = PTR<FIBITMAP> ;
 	using NATIVE_THIS = UniqueRef<HFIBITMAP> ;
+	using LAYOUT_PACK = typename AbstractImage<COLOR_BGR>::LAYOUT_PACK ;
 
 public:
-	implicit AbstractImage_Engine_FREEIMAGE () {
-		_STATIC_ASSERT_ (_SIZEOF_ (DEF<decltype (DEREF[this])>) == _SIZEOF_ (Interface)) ;
-		_STATIC_ASSERT_ (_ALIGNOF_ (DEF<decltype (DEREF[this])>) == _ALIGNOF_ (Interface)) ;
-	}
+	implicit AbstractImage_Engine_FREEIMAGE () = default ;
 
-	void compute_layout (AnyRef<> &holder ,AbstractImage<COLOR_BGR>::LAYOUT_PACK &layout) const override {
-		auto &r1x = holder.rebind (ARGV<NATIVE_THIS>::null).self ;
+	void compute_layout (AnyRef<> &holder ,LAYOUT_PACK &layout) const override {
+		auto &r1x = holder.rebind (ARGV<NATIVE_THIS>::ID).self ;
 		const auto r2x = api::FreeImage_GetBits (r1x) ;
 		const auto r3x = _ADDRESS_ (r2x) ;
-		const auto r4x = _UNSAFE_POINTER_CAST_ (ARGV<ARR<COLOR_BGR>>::null ,r3x) ;
+		const auto r4x = _UNSAFE_POINTER_CAST_ (ARGV<ARR<COLOR_BGR>>::ID ,r3x) ;
 		layout.mImage = r4x ;
 		layout.mCX = LENGTH (api::FreeImage_GetWidth (r1x)) ;
 		layout.mCY = LENGTH (api::FreeImage_GetHeight (r1x)) ;
@@ -128,13 +126,13 @@ public:
 	}
 
 	void compute_load_data (AnyRef<> &holder ,const AutoBuffer<BYTE> &data) const override {
-		using HFIMEMORY = PTR<api::FIMEMORY> ;
+		using R1X = PTR<api::FIMEMORY> ;
 		auto rax = UniqueRef<HFIBITMAP> ([&] (HFIBITMAP &me) {
-			const auto r1x = UniqueRef<PACK<HFIMEMORY ,AutoBuffer<BYTE>>> ([&] (PACK<HFIMEMORY ,AutoBuffer<BYTE>> &me) {
+			const auto r1x = UniqueRef<PACK<R1X ,AutoBuffer<BYTE>>> ([&] (PACK<R1X ,AutoBuffer<BYTE>> &me) {
 				me.mP2 = data ;
 				me.mP1 = api::FreeImage_OpenMemory (me.mP2.self ,VARY (me.mP2.size ())) ;
 				_DYNAMIC_ASSERT_ (me.mP1 != NULL) ;
-			} ,[] (PACK<HFIMEMORY ,AutoBuffer<BYTE>> &me) {
+			} ,[] (PACK<R1X ,AutoBuffer<BYTE>> &me) {
 				api::FreeImage_CloseMemory (me.mP1) ;
 			}) ;
 			const auto r2x = api::FreeImage_GetFileTypeFromMemory (r1x->mP1) ;
@@ -149,15 +147,15 @@ public:
 	}
 
 	void compute_save_data (const AnyRef<> &holder ,AutoBuffer<BYTE> &data ,const AnyRef<> &option) const override {
-		using HFIMEMORY = PTR<api::FIMEMORY> ;
+		using R1X = PTR<api::FIMEMORY> ;
 		_DEBUG_ASSERT_ (!option.exist ()) ;
-		const auto r1x = UniqueRef<HFIMEMORY> ([&] (HFIMEMORY &me) {
+		const auto r1x = UniqueRef<R1X> ([&] (R1X &me) {
 			me = api::FreeImage_OpenMemory () ;
 			_DYNAMIC_ASSERT_ (me != NULL) ;
-		} ,[] (HFIMEMORY &me) {
+		} ,[] (R1X &me) {
 			api::FreeImage_CloseMemory (me) ;
 		}) ;
-		const auto r2x = holder.rebind (ARGV<NATIVE_THIS>::null)->self ;
+		const auto r2x = holder.rebind (ARGV<NATIVE_THIS>::ID)->self ;
 		const auto r3x = api::FreeImage_SaveToMemory (FIF_BMP ,r2x ,r1x.self) ;
 		_DYNAMIC_ASSERT_ (r3x) ;
 		auto rax = PACK<PTR<BYTE> ,VARY> () ;
@@ -176,7 +174,7 @@ public:
 	}
 
 	void compute_load_data_file (AnyRef<> &holder ,const String<STR> &file) const override {
-		const auto r1x = StringProc::build_strs (ARGV<STRA>::null ,file) ;
+		const auto r1x = StringProc::build_strs (ARGV<STRA>::ID ,file) ;
 		auto rax = UniqueRef<HFIBITMAP> ([&] (HFIBITMAP &me) {
 			const auto r2x = api::FreeImage_GetFileType (r1x.raw ().self) ;
 			_DYNAMIC_ASSERT_ (r2x != FIF_UNKNOWN) ;
@@ -200,8 +198,8 @@ public:
 
 	void compute_save_data_file (const AnyRef<> &holder ,const String<STR> &file ,const AnyRef<> &option) const override {
 		_DEBUG_ASSERT_ (!option.exist ()) ;
-		auto &r1x = holder.rebind (ARGV<NATIVE_THIS>::null).self ;
-		const auto r2x = StringProc::build_strs (ARGV<STRA>::null ,file) ;
+		auto &r1x = holder.rebind (ARGV<NATIVE_THIS>::ID).self ;
+		const auto r2x = StringProc::build_strs (ARGV<STRA>::ID ,file) ;
 		const auto r3x = api::FreeImage_Save (FIF_JPEG ,r1x ,r2x.raw ().self) ;
 		_DYNAMIC_ASSERT_ (r3x) ;
 	}
@@ -213,18 +211,16 @@ class AbstractImage_Engine_FREEIMAGE<COLOR_BGRA>
 private:
 	using HFIBITMAP = PTR<FIBITMAP> ;
 	using NATIVE_THIS = UniqueRef<HFIBITMAP> ;
+	using LAYOUT_PACK = typename AbstractImage<COLOR_BGRA>::LAYOUT_PACK ;
 
 public:
-	implicit AbstractImage_Engine_FREEIMAGE () {
-		_STATIC_ASSERT_ (_SIZEOF_ (DEF<decltype (DEREF[this])>) == _SIZEOF_ (Interface)) ;
-		_STATIC_ASSERT_ (_ALIGNOF_ (DEF<decltype (DEREF[this])>) == _ALIGNOF_ (Interface)) ;
-	}
+	implicit AbstractImage_Engine_FREEIMAGE () = default ;
 
-	void compute_layout (AnyRef<> &holder ,AbstractImage<COLOR_BGRA>::LAYOUT_PACK &layout) const override {
-		auto &r1x = holder.rebind (ARGV<NATIVE_THIS>::null).self ;
+	void compute_layout (AnyRef<> &holder ,LAYOUT_PACK &layout) const override {
+		auto &r1x = holder.rebind (ARGV<NATIVE_THIS>::ID).self ;
 		const auto r2x = api::FreeImage_GetBits (r1x) ;
 		const auto r3x = _ADDRESS_ (r2x) ;
-		const auto r4x = _UNSAFE_POINTER_CAST_ (ARGV<ARR<COLOR_BGRA>>::null ,r3x) ;
+		const auto r4x = _UNSAFE_POINTER_CAST_ (ARGV<ARR<COLOR_BGRA>>::ID ,r3x) ;
 		layout.mImage = r4x ;
 		layout.mCX = LENGTH (api::FreeImage_GetWidth (r1x)) ;
 		layout.mCY = LENGTH (api::FreeImage_GetHeight (r1x)) ;
@@ -248,13 +244,13 @@ public:
 	}
 
 	void compute_load_data (AnyRef<> &holder ,const AutoBuffer<BYTE> &data) const override {
-		using HFIMEMORY = PTR<api::FIMEMORY> ;
+		using R1X = PTR<api::FIMEMORY> ;
 		auto rax = UniqueRef<HFIBITMAP> ([&] (HFIBITMAP &me) {
-			const auto r1x = UniqueRef<PACK<HFIMEMORY ,AutoBuffer<BYTE>>> ([&] (PACK<HFIMEMORY ,AutoBuffer<BYTE>> &me) {
+			const auto r1x = UniqueRef<PACK<R1X ,AutoBuffer<BYTE>>> ([&] (PACK<R1X ,AutoBuffer<BYTE>> &me) {
 				me.mP2 = data ;
 				me.mP1 = api::FreeImage_OpenMemory (me.mP2.self ,VARY (me.mP2.size ())) ;
 				_DYNAMIC_ASSERT_ (me.mP1 != NULL) ;
-			} ,[] (PACK<HFIMEMORY ,AutoBuffer<BYTE>> &me) {
+			} ,[] (PACK<R1X ,AutoBuffer<BYTE>> &me) {
 				api::FreeImage_CloseMemory (me.mP1) ;
 			}) ;
 			const auto r2x = api::FreeImage_GetFileTypeFromMemory (r1x->mP1) ;
@@ -269,15 +265,15 @@ public:
 	}
 
 	void compute_save_data (const AnyRef<> &holder ,AutoBuffer<BYTE> &data ,const AnyRef<> &option) const override {
-		using HFIMEMORY = PTR<api::FIMEMORY> ;
+		using R1X = PTR<api::FIMEMORY> ;
 		_DEBUG_ASSERT_ (!option.exist ()) ;
-		const auto r1x = UniqueRef<HFIMEMORY> ([&] (HFIMEMORY &me) {
+		const auto r1x = UniqueRef<R1X> ([&] (R1X &me) {
 			me = api::FreeImage_OpenMemory () ;
 			_DYNAMIC_ASSERT_ (me != NULL) ;
-		} ,[] (HFIMEMORY &me) {
+		} ,[] (R1X &me) {
 			api::FreeImage_CloseMemory (me) ;
 		}) ;
-		const auto r2x = holder.rebind (ARGV<NATIVE_THIS>::null)->self ;
+		const auto r2x = holder.rebind (ARGV<NATIVE_THIS>::ID)->self ;
 		const auto r3x = api::FreeImage_SaveToMemory (FIF_BMP ,r2x ,r1x.self) ;
 		_DYNAMIC_ASSERT_ (r3x) ;
 		auto rax = PACK<PTR<BYTE> ,VARY> () ;
@@ -296,7 +292,7 @@ public:
 	}
 
 	void compute_load_data_file (AnyRef<> &holder ,const String<STR> &file) const override {
-		const auto r1x = StringProc::build_strs (ARGV<STRA>::null ,file) ;
+		const auto r1x = StringProc::build_strs (ARGV<STRA>::ID ,file) ;
 		auto rax = UniqueRef<HFIBITMAP> ([&] (HFIBITMAP &me) {
 			const auto r2x = api::FreeImage_GetFileType (r1x.raw ().self) ;
 			_DYNAMIC_ASSERT_ (r2x != FIF_UNKNOWN) ;
@@ -320,8 +316,8 @@ public:
 
 	void compute_save_data_file (const AnyRef<> &holder ,const String<STR> &file ,const AnyRef<> &option) const override {
 		_DEBUG_ASSERT_ (!option.exist ()) ;
-		auto &r1x = holder.rebind (ARGV<NATIVE_THIS>::null).self ;
-		const auto r2x = StringProc::build_strs (ARGV<STRA>::null ,file) ;
+		auto &r1x = holder.rebind (ARGV<NATIVE_THIS>::ID).self ;
+		const auto r2x = StringProc::build_strs (ARGV<STRA>::ID ,file) ;
 		const auto r3x = api::FreeImage_Save (FIF_JPEG ,r1x ,r2x.raw ().self) ;
 		_DYNAMIC_ASSERT_ (r3x) ;
 	}
