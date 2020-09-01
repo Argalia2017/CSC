@@ -14,7 +14,7 @@ namespace CSC {
 template <class SIZE>
 class ArrayRange
 	:private Proxy {
-	_STATIC_ASSERT_ (SIZE::value > 0) ;
+	_STATIC_ASSERT_ (U::CONSTEXPR_COMPR_GT<SIZE ,ZERO>::compile ()) ;
 
 private:
 	struct Private {
@@ -40,17 +40,17 @@ public:
 	template <class _RET = REMOVE_CVR_TYPE<typename Private::Iterator>>
 	_RET begin () const {
 		struct Dependent ;
-		using Iterator = typename DEPENDENT_TYPE<Private ,Dependent>::Iterator ;
+		using R1X = typename DEPENDENT_TYPE<Private ,Dependent>::Iterator ;
 		const auto r1x = first_item () ;
-		return Iterator (PhanRef<const ArrayRange>::make (DEREF[this]) ,0 ,r1x) ;
+		return R1X (PhanRef<const ArrayRange>::make (DEREF[this]) ,0 ,r1x) ;
 	}
 
 	template <class _RET = REMOVE_CVR_TYPE<typename Private::Iterator>>
 	_RET end () const {
 		struct Dependent ;
-		using Iterator = typename DEPENDENT_TYPE<Private ,Dependent>::Iterator ;
+		using R1X = typename DEPENDENT_TYPE<Private ,Dependent>::Iterator ;
 		const auto r1x = first_item () ;
-		return Iterator (PhanRef<const ArrayRange>::make (DEREF[this]) ,mSize ,r1x) ;
+		return R1X (PhanRef<const ArrayRange>::make (DEREF[this]) ,mSize ,r1x) ;
 	}
 
 private:
@@ -98,7 +98,7 @@ public:
 
 	inline void operator++ () {
 		mIndex++ ;
-		template_incrase (ARGV<DECREASE<SIZE>>::null) ;
+		template_incrase (ARGV<U::CONSTEXPR_DECREASE<SIZE>>::ID) ;
 	}
 
 private:
@@ -109,12 +109,13 @@ private:
 
 	template <class _ARG1>
 	void template_incrase (const ARGVF<_ARG1> &) {
-		_STATIC_ASSERT_ (_ARG1::value > 0 && _ARG1::value < LENGTH (SIZE::value)) ;
-		mItem[_ARG1::value]++ ;
-		if (mItem[_ARG1::value] < mBase->mRange[_ARG1::value])
+		using R1X = ARGC_TYPE<U::CONSTEXPR_DECREASE<_ARG1>> ;
+		_STATIC_ASSERT_ (U::CONSTEXPR_RANGE_CHECK<R1X ,ZERO ,SIZE>::compile ()) ;
+		mItem[_ARG1::compile ()]++ ;
+		if (mItem[_ARG1::compile ()] < mBase->mRange[_ARG1::compile ()])
 			return ;
-		mItem[_ARG1::value] = 0 ;
-		template_incrase (ARGV<DECREASE<_ARG1>>::null) ;
+		mItem[_ARG1::compile ()] = 0 ;
+		template_incrase (ARGV<R1X>::ID) ;
 	}
 } ;
 
@@ -258,7 +259,7 @@ public:
 		return _MOVE_ (ret) ;
 	}
 
-	template <class _RET = REMOVE_CVR_TYPE<decltype (_RANGE_ (_NULL_ (ARGV<const ARRAY2<LENGTH>>::null)))>>
+	template <class _RET = REMOVE_CVR_TYPE<decltype (_RANGE_ (_NULL_ (ARGV<const ARRAY2<LENGTH>>::ID)))>>
 	_RET array_range () const {
 		const auto r1x = ARRAY2<LENGTH> {mCY ,mCX} ;
 		return _RANGE_ (r1x) ;
@@ -295,8 +296,8 @@ public:
 	template <class _RET = REMOVE_CVR_TYPE<typename Private::template Row<Bitmap>>>
 	_RET get (const INDEX &y) leftvalue {
 		struct Dependent ;
-		using Row = typename DEPENDENT_TYPE<Private ,Dependent>::template Row<Bitmap> ;
-		return Row (PhanRef<Bitmap>::make (DEREF[this]) ,y) ;
+		using R1X = typename DEPENDENT_TYPE<Private ,Dependent>::template Row<Bitmap> ;
+		return R1X (PhanRef<Bitmap>::make (DEREF[this]) ,y) ;
 	}
 
 	template <class _RET = REMOVE_CVR_TYPE<typename Private::template Row<Bitmap>>>
@@ -307,8 +308,8 @@ public:
 	template <class _RET = REMOVE_CVR_TYPE<typename Private::template Row<const Bitmap>>>
 	_RET get (const INDEX &y) const leftvalue {
 		struct Dependent ;
-		using Row = typename DEPENDENT_TYPE<Private ,Dependent>::template Row<const Bitmap> ;
-		return Row (PhanRef<const Bitmap>::make (DEREF[this]) ,y) ;
+		using R1X = typename DEPENDENT_TYPE<Private ,Dependent>::template Row<const Bitmap> ;
+		return R1X (PhanRef<const Bitmap>::make (DEREF[this]) ,y) ;
 	}
 
 	template <class _RET = REMOVE_CVR_TYPE<typename Private::template Row<const Bitmap>>>
@@ -736,7 +737,7 @@ public:
 		return mCK ;
 	}
 
-	template <class _RET = REMOVE_CVR_TYPE<decltype (_RANGE_ (_NULL_ (ARGV<const ARRAY2<LENGTH>>::null)))>>
+	template <class _RET = REMOVE_CVR_TYPE<decltype (_RANGE_ (_NULL_ (ARGV<const ARRAY2<LENGTH>>::ID)))>>
 	_RET array_range () const {
 		_DEBUG_ASSERT_ (exist ()) ;
 		const auto r1x = ARRAY2<LENGTH> {mCY ,mCX} ;
@@ -778,8 +779,8 @@ public:
 	template <class _RET = REMOVE_CVR_TYPE<typename Private::template Row<AbstractImage>>>
 	_RET get (const INDEX &y) leftvalue {
 		struct Dependent ;
-		using Row = typename DEPENDENT_TYPE<Private ,Dependent>::template Row<AbstractImage> ;
-		return Row (PhanRef<AbstractImage>::make (DEREF[this]) ,y) ;
+		using R1X = typename DEPENDENT_TYPE<Private ,Dependent>::template Row<AbstractImage> ;
+		return R1X (PhanRef<AbstractImage>::make (DEREF[this]) ,y) ;
 	}
 
 	template <class _RET = REMOVE_CVR_TYPE<typename Private::template Row<AbstractImage>>>
@@ -790,8 +791,8 @@ public:
 	template <class _RET = REMOVE_CVR_TYPE<typename Private::template Row<const AbstractImage>>>
 	_RET get (const INDEX &y) const leftvalue {
 		struct Dependent ;
-		using Row = typename DEPENDENT_TYPE<Private ,Dependent>::template Row<const AbstractImage> ;
-		return Row (PhanRef<const AbstractImage>::make (DEREF[this]) ,y) ;
+		using R1X = typename DEPENDENT_TYPE<Private ,Dependent>::template Row<const AbstractImage> ;
+		return R1X (PhanRef<const AbstractImage>::make (DEREF[this]) ,y) ;
 	}
 
 	template <class _RET = REMOVE_CVR_TYPE<typename Private::template Row<const AbstractImage>>>
@@ -802,8 +803,8 @@ public:
 	template <class _ARG1 ,class _RET = REMOVE_CVR_TYPE<typename Private::template NativeProxy<_ARG1>>>
 	_RET native (const ARGVF<_ARG1> &) {
 		struct Dependent ;
-		using NativeProxy = typename DEPENDENT_TYPE<Private ,Dependent>::template NativeProxy<_ARG1> ;
-		return NativeProxy (PhanRef<AbstractImage>::make (DEREF[this])) ;
+		using R1X = typename DEPENDENT_TYPE<Private ,Dependent>::template NativeProxy<_ARG1> ;
+		return R1X (PhanRef<AbstractImage>::make (DEREF[this])) ;
 	}
 
 	Bitmap<UNIT> standardize () const {
@@ -904,7 +905,7 @@ public:
 
 	UNIT_ &to () const leftvalue {
 		_DEBUG_ASSERT_ (mBase.exist ()) ;
-		return mBase->self.mHolder.rebind (ARGV<UNIT_>::null).self ;
+		return mBase->self.mHolder.rebind (ARGV<UNIT_>::ID).self ;
 	}
 
 	inline implicit operator UNIT_ & () const leftvalue {

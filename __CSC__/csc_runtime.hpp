@@ -45,7 +45,7 @@ public:
 
 	explicit Duration (const LENGTH &milliseconds_) ;
 
-	template <class _ARG1 ,class = ENABLE_TYPE<(!IS_SAME_HELP<REMOVE_CVR_TYPE<_ARG1> ,Duration>::value && !IS_SAME_HELP<REMOVE_CVR_TYPE<_ARG1> ,REMOVE_CVR_TYPE<decltype (ARGVP0)>>::value)>>
+	template <class _ARG1 ,class = ENABLE_TYPE<U::CONSTEXPR_AND<U::CONSTEXPR_NOT<IS_PLACEHOLDER_HELP<_ARG1>> ,U::CONSTEXPR_NOT<IS_SAME_HELP<REMOVE_CVR_TYPE<_ARG1> ,Duration>>>>>
 	explicit Duration (_ARG1 &&time_) ;
 
 	const DEF<typename Private::Implement> &native () const leftvalue {
@@ -114,7 +114,7 @@ private:
 public:
 	implicit TimePoint () = default ;
 
-	template <class _ARG1 ,class = ENABLE_TYPE<(!IS_SAME_HELP<REMOVE_CVR_TYPE<_ARG1> ,TimePoint>::value && !IS_SAME_HELP<REMOVE_CVR_TYPE<_ARG1> ,REMOVE_CVR_TYPE<decltype (ARGVP0)>>::value)>>
+	template <class _ARG1 ,class = ENABLE_TYPE<U::CONSTEXPR_AND<U::CONSTEXPR_NOT<IS_PLACEHOLDER_HELP<_ARG1>> ,U::CONSTEXPR_NOT<IS_SAME_HELP<REMOVE_CVR_TYPE<_ARG1> ,TimePoint>>>>>
 	explicit TimePoint (_ARG1 &&time_) ;
 
 	const DEF<typename Private::Implement> &native () const leftvalue {
@@ -260,8 +260,8 @@ public:
 	template <class _RET = REMOVE_CVR_TYPE<UniqueLock>>
 	_RET watch (PhanRef<Mutex> &&mutex_) leftvalue {
 		struct Dependent ;
-		using UniqueLock = DEPENDENT_TYPE<UniqueLock ,Dependent> ;
-		return UniqueLock (_MOVE_ (mutex_) ,PhanRef<ConditionLock>::make (DEREF[this])) ;
+		using R1X = DEPENDENT_TYPE<UniqueLock ,Dependent> ;
+		return R1X (_MOVE_ (mutex_) ,PhanRef<ConditionLock>::make (DEREF[this])) ;
 	}
 } ;
 
@@ -277,8 +277,8 @@ private:
 		virtual void wait () = 0 ;
 		virtual void wait (const Duration &time_) = 0 ;
 		virtual void wait (const TimePoint &time_) = 0 ;
-		virtual void yield () = 0 ;
 		virtual void notify () = 0 ;
+		virtual void yield () = 0 ;
 	} ;
 
 private:
@@ -301,12 +301,12 @@ public:
 		return mThis->wait (time_) ;
 	}
 
-	void yield () {
-		return mThis->yield () ;
-	}
-
 	void notify () {
 		return mThis->notify () ;
+	}
+
+	void yield () {
+		return mThis->yield () ;
 	}
 } ;
 
@@ -405,7 +405,7 @@ public:
 	template <class _ARG1>
 	imports String<STR> invoke (const ARGVF<_ARG1> &) {
 		const auto r1x = Function<void (TextWriter<STR> &)> ([] (TextWriter<STR> &writer) {
-			template_write_typename_x (writer ,ARGV<_ARG1>::null) ;
+			template_write_typename_x (writer ,ARGV<_ARG1>::ID) ;
 		}) ;
 		return String<STR>::make (r1x.self) ;
 	}
@@ -465,17 +465,17 @@ private:
 }
 #endif
 
-	template <class _ARG1 ,class = ENABLE_TYPE<(IS_CONST_HELP<_ARG1>::value && api::is_volatile<_ARG1>::value)>>
+	template <class _ARG1 ,class = ENABLE_TYPE<U::CONSTEXPR_AND<IS_CONST_HELP<_ARG1> ,IS_VOLATILE_HELP<_ARG1>>>>
 	imports void template_write_typename_cv (TextWriter<STR> &writer ,const ARGVF<_ARG1> & ,const DEF<decltype (ARGVP4)> &) {
 		writer << _PCSTR_ ("const volatile ") ;
 	}
 
-	template <class _ARG1 ,class = ENABLE_TYPE<(IS_CONST_HELP<_ARG1>::value)>>
+	template <class _ARG1 ,class = ENABLE_TYPE<IS_CONST_HELP<_ARG1>>>
 	imports void template_write_typename_cv (TextWriter<STR> &writer ,const ARGVF<_ARG1> & ,const DEF<decltype (ARGVP3)> &) {
 		writer << _PCSTR_ ("const ") ;
 	}
 
-	template <class _ARG1 ,class = ENABLE_TYPE<(api::is_volatile<_ARG1>::value)>>
+	template <class _ARG1 ,class = ENABLE_TYPE<IS_VOLATILE_HELP<_ARG1>>>
 	imports void template_write_typename_cv (TextWriter<STR> &writer ,const ARGVF<_ARG1> & ,const DEF<decltype (ARGVP2)> &) {
 		writer << _PCSTR_ ("volatile ") ;
 	}
@@ -485,12 +485,12 @@ private:
 		_STATIC_WARNING_ ("noop") ;
 	}
 
-	template <class _ARG1 ,class = ENABLE_TYPE<(IS_LVALUE_REFERENCE_HELP<_ARG1>::value)>>
+	template <class _ARG1 ,class = ENABLE_TYPE<IS_LVALUE_REFERENCE_HELP<_ARG1>>>
 	imports void template_write_typename_ref (TextWriter<STR> &writer ,const ARGVF<_ARG1> & ,const DEF<decltype (ARGVP3)> &) {
 		writer << _PCSTR_ (" &") ;
 	}
 
-	template <class _ARG1 ,class = ENABLE_TYPE<(IS_RVALUE_REFERENCE_HELP<_ARG1>::value)>>
+	template <class _ARG1 ,class = ENABLE_TYPE<IS_RVALUE_REFERENCE_HELP<_ARG1>>>
 	imports void template_write_typename_ref (TextWriter<STR> &writer ,const ARGVF<_ARG1> & ,const DEF<decltype (ARGVP2)> &) {
 		writer << _PCSTR_ (" &&") ;
 	}
@@ -500,64 +500,64 @@ private:
 		_STATIC_WARNING_ ("noop") ;
 	}
 
-	template <class _ARG1 ,class = ENABLE_TYPE<(IS_POINTER_HELP<_ARG1>::value)>>
+	template <class _ARG1 ,class = ENABLE_TYPE<IS_POINTER_HELP<_ARG1>>>
 	imports void template_write_typename_id (TextWriter<STR> &writer ,const ARGVF<_ARG1> & ,const DEF<decltype (ARGVP8)> &) {
 		writer << _PCSTR_ ("PTR<") ;
-		template_write_typename_x (writer ,ARGV<REMOVE_POINTER_TYPE<_ARG1>>::null) ;
+		template_write_typename_x (writer ,ARGV<REMOVE_POINTER_TYPE<_ARG1>>::ID) ;
 		writer << _PCSTR_ (">") ;
 	}
 
-	template <class _ARG1 ,class = ENABLE_TYPE<(IS_MEMPTR_HELP<_ARG1>::value)>>
+	template <class _ARG1 ,class = ENABLE_TYPE<IS_MEMPTR_HELP<_ARG1>>>
 	imports void template_write_typename_id (TextWriter<STR> &writer ,const ARGVF<_ARG1> & ,const DEF<decltype (ARGVP7)> &) {
 		writer << _PCSTR_ ("DEF<") ;
-		template_write_typename_x (writer ,ARGV<REMOVE_MEMPTR_TYPE<_ARG1>>::null) ;
+		template_write_typename_x (writer ,ARGV<REMOVE_MEMPTR_TYPE<_ARG1>>::ID) ;
 		writer << _PCSTR_ (" ") ;
-		template_write_typename_x (writer ,ARGV<MEMPTR_CLASS_TYPE<_ARG1>>::null) ;
+		template_write_typename_x (writer ,ARGV<MEMPTR_CLASS_TYPE<_ARG1>>::ID) ;
 		writer << _PCSTR_ ("::*>") ;
 	}
 
-	template <class _ARG1 ,class = ENABLE_TYPE<(IS_SAME_HELP<_ARG1 ,ARR<REMOVE_ARRAY_TYPE<_ARG1>>>::value)>>
+	template <class _ARG1 ,class = ENABLE_TYPE<IS_SAME_HELP<_ARG1 ,ARR<REMOVE_ARRAY_TYPE<_ARG1>>>>>
 	imports void template_write_typename_arr (TextWriter<STR> &writer ,const ARGVF<_ARG1> & ,const DEF<decltype (ARGVP2)> &) {
 		writer << _PCSTR_ ("ARR<") ;
-		template_write_typename_x (writer ,ARGV<REMOVE_ARRAY_TYPE<_ARG1>>::null) ;
+		template_write_typename_x (writer ,ARGV<REMOVE_ARRAY_TYPE<_ARG1>>::ID) ;
 		writer << _PCSTR_ (">") ;
 	}
 
-	template <class _ARG1 ,class = ENABLE_TYPE<(IS_ARRAY_OF_HELP<REMOVE_ARRAY_TYPE<_ARG1> ,_ARG1>::value)>>
+	template <class _ARG1 ,class = ENABLE_TYPE<IS_ARRAY_OF_HELP<REMOVE_ARRAY_TYPE<_ARG1> ,_ARG1>>>
 	imports void template_write_typename_arr (TextWriter<STR> &writer ,const ARGVF<_ARG1> & ,const DEF<decltype (ARGVP1)> &) {
 		writer << _PCSTR_ ("DEF<") ;
-		template_write_typename_x (writer ,ARGV<REMOVE_ARRAY_TYPE<_ARG1>>::null) ;
+		template_write_typename_x (writer ,ARGV<REMOVE_ARRAY_TYPE<_ARG1>>::ID) ;
 		writer << _PCSTR_ ("[") ;
 		writer << _COUNTOF_ (_ARG1) ;
 		writer << _PCSTR_ ("]>") ;
 	}
 
-	template <class _ARG1 ,class = ENABLE_TYPE<(IS_ARRAY_HELP<_ARG1>::value)>>
+	template <class _ARG1 ,class = ENABLE_TYPE<IS_ARRAY_HELP<_ARG1>>>
 	imports void template_write_typename_id (TextWriter<STR> &writer ,const ARGVF<_ARG1> & ,const DEF<decltype (ARGVP6)> &) {
-		template_write_typename_arr (writer ,ARGV<_ARG1>::null ,ARGVPX) ;
+		template_write_typename_arr (writer ,ARGV<_ARG1>::ID ,ARGVPX) ;
 	}
 
 	template <class _ARG1>
 	imports void template_write_typename_func (TextWriter<STR> &writer ,const ARGVF<_ARG1> & ,const DEF<decltype (ARGVP1)> &) {
 		writer << _PCSTR_ ("DEF<") ;
-		template_write_typename_x (writer ,ARGV<REMOVE_FUNCTION_TYPE<_ARG1>>::null) ;
+		template_write_typename_x (writer ,ARGV<REMOVE_FUNCTION_TYPE<_ARG1>>::ID) ;
 		writer << _PCSTR_ (" (") ;
-		template_write_typename_y (writer ,ARGV<FUNCTION_PARAMS_TYPE<_ARG1>>::null) ;
+		template_write_typename_y (writer ,ARGV<FUNCTION_PARAMS_TYPE<_ARG1>>::ID) ;
 		writer << _PCSTR_ (")>") ;
 	}
 
-	template <class _ARG1 ,class = ENABLE_TYPE<(IS_FUNCTION_HELP<_ARG1>::value)>>
+	template <class _ARG1 ,class = ENABLE_TYPE<IS_FUNCTION_HELP<_ARG1>>>
 	imports void template_write_typename_id (TextWriter<STR> &writer ,const ARGVF<_ARG1> & ,const DEF<decltype (ARGVP5)> &) {
-		template_write_typename_func (writer ,ARGV<REMOVE_FUNCATTR_TYPE<_ARG1>>::null ,ARGVPX) ;
+		template_write_typename_func (writer ,ARGV<REMOVE_FUNCATTR_TYPE<_ARG1>>::ID ,ARGVPX) ;
 	}
 
-	template <class _ARG1 ,class = ENABLE_TYPE<(IS_TEMPLATE_HELP<_ARG1>::value)>>
+	template <class _ARG1 ,class = ENABLE_TYPE<IS_TEMPLATE_HELP<_ARG1>>>
 	imports void template_write_typename_claz (TextWriter<STR> &writer ,const ARGVF<_ARG1> & ,const DEF<decltype (ARGVP2)> &) {
 		const auto r1x = typeid_name_from_func<_ARG1> () ;
 		writer << _PCSTR_ ("template '") ;
 		writer << r1x.mName ;
 		writer << _PCSTR_ ("'<") ;
-		template_write_typename_y (writer ,ARGV<TEMPLATE_PARAMS_TYPE<_ARG1>>::null) ;
+		template_write_typename_y (writer ,ARGV<TEMPLATE_PARAMS_TYPE<_ARG1>>::ID) ;
 		writer << _PCSTR_ (">") ;
 	}
 
@@ -569,9 +569,9 @@ private:
 		writer << _PCSTR_ ("'") ;
 	}
 
-	template <class _ARG1 ,class = ENABLE_TYPE<(IS_CLASS_HELP<_ARG1>::value)>>
+	template <class _ARG1 ,class = ENABLE_TYPE<IS_CLASS_HELP<_ARG1>>>
 	imports void template_write_typename_id (TextWriter<STR> &writer ,const ARGVF<_ARG1> & ,const DEF<decltype (ARGVP4)> &) {
-		template_write_typename_claz (writer ,ARGV<_ARG1>::null ,ARGVPX) ;
+		template_write_typename_claz (writer ,ARGV<_ARG1>::ID ,ARGVPX) ;
 	}
 
 	imports void template_write_typename_id (TextWriter<STR> &writer ,const ARGVF<BOOL> & ,const DEF<decltype (ARGVP3)> &) {
@@ -664,9 +664,9 @@ private:
 
 	template <class _ARG1>
 	imports void template_write_typename_x (TextWriter<STR> &writer ,const ARGVF<_ARG1> &) {
-		template_write_typename_cv (writer ,ARGV<REMOVE_REFERENCE_TYPE<_ARG1>>::null ,ARGVPX) ;
-		template_write_typename_id (writer ,ARGV<REMOVE_CVR_TYPE<_ARG1>>::null ,ARGVPX) ;
-		template_write_typename_ref (writer ,ARGV<REMOVE_CONST_TYPE<REMOVE_VOLATILE_TYPE<_ARG1>>>::null ,ARGVPX) ;
+		template_write_typename_cv (writer ,ARGV<REMOVE_REFERENCE_TYPE<_ARG1>>::ID ,ARGVPX) ;
+		template_write_typename_id (writer ,ARGV<REMOVE_CVR_TYPE<_ARG1>>::ID ,ARGVPX) ;
+		template_write_typename_ref (writer ,ARGV<REMOVE_CONST_TYPE<REMOVE_VOLATILE_TYPE<_ARG1>>>::ID ,ARGVPX) ;
 	}
 
 	imports void template_write_typename_y (TextWriter<STR> &writer ,const ARGVF<ARGVS<>> &) {
@@ -675,16 +675,16 @@ private:
 
 	template <class _ARG1>
 	imports void template_write_typename_y (TextWriter<STR> &writer ,const ARGVF<ARGVS<_ARG1>> &) {
-		template_write_typename_x (writer ,ARGV<_ARG1>::null) ;
+		template_write_typename_x (writer ,ARGV<_ARG1>::ID) ;
 	}
 
 	template <class _ARG1>
 	imports void template_write_typename_y (TextWriter<STR> &writer ,const ARGVF<_ARG1> &) {
-		using HINT_T1 = ARGVS_ONE_TYPE<_ARG1> ;
-		using HINT_T2 = ARGVS_REST_TYPE<_ARG1> ;
-		template_write_typename_x (writer ,ARGV<HINT_T1>::null) ;
+		using R1X = PARAMS_ONE_TYPE<_ARG1> ;
+		using R2X = PARAMS_REST_TYPE<_ARG1> ;
+		template_write_typename_x (writer ,ARGV<R1X>::ID) ;
 		writer << _PCSTR_ (" ,") ;
-		template_write_typename_y (writer ,ARGV<HINT_T2>::null) ;
+		template_write_typename_y (writer ,ARGV<R2X>::ID) ;
 	}
 } ;
 
@@ -723,7 +723,7 @@ public:
 
 private:
 	imports THIS_PACK &static_unique () {
-		using HINT_T1 = REMOVE_POINTER_TYPE<decltype (_NULL_ (ARGV<WeakRef>::null).intrusive ())> ;
+		using R1X = REMOVE_POINTER_TYPE<decltype (_NULL_ (ARGV<WeakRef>::ID).intrusive ())> ;
 		auto &r1x = _CACHE_ ([&] () {
 			_STATIC_WARNING_ ("mark") ;
 			auto rax = unique_compare_exchange (NULL ,NULL) ;
@@ -738,50 +738,50 @@ private:
 				rax = unique_compare_exchange (NULL ,r3x) ;
 			}
 			_DYNAMIC_ASSERT_ (rax != NULL) ;
-			const auto r4x = _POINTER_CAST_ (ARGV<HINT_T1>::null ,rax) ;
-			return WeakRef (r4x).strong (ARGV<THIS_PACK>::null) ;
+			const auto r4x = _POINTER_CAST_ (ARGV<R1X>::ID ,rax) ;
+			return WeakRef (r4x).strong (ARGV<THIS_PACK>::ID) ;
 		}) ;
 		auto rcx = r1x.share () ;
 		_DYNAMIC_ASSERT_ (rcx.exist ()) ;
 		return rcx.self ;
 	}
 
-	imports PTR<VARXX_NODE> static_new_node (THIS_PACK &self_ ,const FLAG &guid) {
+	imports PTR<VARXX_NODE> static_new_node (THIS_PACK &this_ ,const FLAG &guid) {
 		const auto r1x = node_guid_hash (guid) ;
-		INDEX ix = self_.mVarxxMappingSet.map (r1x) ;
+		INDEX ix = this_.mVarxxMappingSet.map (r1x) ;
 		if switch_once (TRUE) {
 			if (ix != VAR_NONE)
 				discard ;
-			ix = self_.mVarxx.insert () ;
-			self_.mVarxxMappingSet.add (r1x ,ix) ;
-			self_.mVarxx[ix].mGUID = guid ;
+			ix = this_.mVarxx.insert () ;
+			this_.mVarxxMappingSet.add (r1x ,ix) ;
+			this_.mVarxx[ix].mGUID = guid ;
 		}
-		return DEPTR[self_.mVarxx[ix]] ;
+		return DEPTR[this_.mVarxx[ix]] ;
 	}
 
 	imports FLAG node_guid_hash (const FLAG &guid) {
 		return guid ;
 	}
 
-	imports PTR<VARXX_NODE> static_find_node (THIS_PACK &self_ ,const FLAG &guid) {
+	imports PTR<VARXX_NODE> static_find_node (THIS_PACK &this_ ,const FLAG &guid) {
 		const auto r1x = node_guid_hash (guid) ;
-		INDEX ix = self_.mVarxxMappingSet.map (r1x) ;
+		INDEX ix = this_.mVarxxMappingSet.map (r1x) ;
 		if (ix == VAR_NONE)
 			return NULL ;
-		return DEPTR[self_.mVarxx[ix]] ;
+		return DEPTR[this_.mVarxx[ix]] ;
 	}
 
-	imports PTR<CLAZZ_NODE> static_new_node (THIS_PACK &self_ ,const String<STR> &guid) {
+	imports PTR<CLAZZ_NODE> static_new_node (THIS_PACK &this_ ,const String<STR> &guid) {
 		const auto r1x = node_guid_hash (guid) ;
-		INDEX ix = self_.mClazzMappingSet.map (r1x) ;
+		INDEX ix = this_.mClazzMappingSet.map (r1x) ;
 		if switch_once (TRUE) {
 			if (ix != VAR_NONE)
 				discard ;
-			ix = self_.mClazz.insert () ;
-			self_.mClazzMappingSet.add (r1x ,ix) ;
-			self_.mClazz[ix].mGUID = guid ;
+			ix = this_.mClazz.insert () ;
+			this_.mClazzMappingSet.add (r1x ,ix) ;
+			this_.mClazz[ix].mGUID = guid ;
 		}
-		return DEPTR[self_.mClazz[ix]] ;
+		return DEPTR[this_.mClazz[ix]] ;
 	}
 
 	imports FLAG node_guid_hash (const String<STR> &guid) {
@@ -790,28 +790,28 @@ private:
 		return BasicProc::mem_hash (r2x.self ,r2x.size ()) ;
 	}
 
-	imports PTR<CLAZZ_NODE> static_find_node (THIS_PACK &self_ ,const String<STR> &guid) {
+	imports PTR<CLAZZ_NODE> static_find_node (THIS_PACK &this_ ,const String<STR> &guid) {
 		const auto r1x = node_guid_hash (guid) ;
-		INDEX ix = self_.mClazzMappingSet.map (r1x) ;
+		INDEX ix = this_.mClazzMappingSet.map (r1x) ;
 		if (ix == VAR_NONE)
 			return NULL ;
-		return DEPTR[self_.mClazz[ix]] ;
+		return DEPTR[this_.mClazz[ix]] ;
 	}
 } ;
 
 template <class GUID>
 class GlobalStatic
 	:private Wrapped<> {
-	_STATIC_ASSERT_ (GUID::value > 0) ;
+	_STATIC_ASSERT_ (U::CONSTEXPR_COMPR_GT<GUID ,ZERO>::compile ()) ;
 
 public:
 	imports void init (const VAR &data) {
 		auto &r1x = GlobalStaticEngine::static_unique () ;
 		ScopedGuard<Mutex> ANONYMOUS (r1x.mNodeMutex) ;
-		const auto r2x = GlobalStaticEngine::static_find_node (r1x ,GUID::value) ;
+		const auto r2x = GlobalStaticEngine::static_find_node (r1x ,GUID::compile ()) ;
 		if (r2x != NULL)
 			return ;
-		const auto r3x = GlobalStaticEngine::static_new_node (r1x ,GUID::value) ;
+		const auto r3x = GlobalStaticEngine::static_new_node (r1x ,GUID::compile ()) ;
 		_DYNAMIC_ASSERT_ (r3x != NULL) ;
 		DEREF[r3x].mReadOnly = TRUE ;
 		DEREF[r3x].mValue = data ;
@@ -820,7 +820,7 @@ public:
 	imports VAR fetch () {
 		auto &r1x = GlobalStaticEngine::static_unique () ;
 		ScopedGuard<Mutex> ANONYMOUS (r1x.mNodeMutex) ;
-		const auto r2x = GlobalStaticEngine::static_find_node (r1x ,GUID::value) ;
+		const auto r2x = GlobalStaticEngine::static_find_node (r1x ,GUID::compile ()) ;
 		_DYNAMIC_ASSERT_ (r2x != NULL) ;
 		return DEREF[r2x].mValue ;
 	}
@@ -828,7 +828,7 @@ public:
 	imports VAR compare_exchange (const VAR &expect ,const VAR &data) {
 		auto &r1x = GlobalStaticEngine::static_unique () ;
 		ScopedGuard<Mutex> ANONYMOUS (r1x.mNodeMutex) ;
-		const auto r2x = GlobalStaticEngine::static_find_node (r1x ,GUID::value) ;
+		const auto r2x = GlobalStaticEngine::static_find_node (r1x ,GUID::compile ()) ;
 		_DYNAMIC_ASSERT_ (r2x != NULL) ;
 		_DYNAMIC_ASSERT_ (!DEREF[r2x].mReadOnly) ;
 		if (DEREF[r2x].mValue == expect)
@@ -839,11 +839,11 @@ public:
 	imports void store (const VAR &data) {
 		auto &r1x = GlobalStaticEngine::static_unique () ;
 		ScopedGuard<Mutex> ANONYMOUS (r1x.mNodeMutex) ;
-		auto rax = GlobalStaticEngine::static_find_node (r1x ,GUID::value) ;
+		auto rax = GlobalStaticEngine::static_find_node (r1x ,GUID::compile ()) ;
 		if switch_once (TRUE) {
 			if (rax != NULL)
 				discard ;
-			rax = GlobalStaticEngine::static_new_node (r1x ,GUID::value) ;
+			rax = GlobalStaticEngine::static_new_node (r1x ,GUID::compile ()) ;
 			rax->mReadOnly = FALSE ;
 		}
 		_DYNAMIC_ASSERT_ (rax != NULL) ;
@@ -862,11 +862,11 @@ private:
 
 public:
 	imports Singleton<UNIT> &unique () {
-		using HINT_T1 = REMOVE_POINTER_TYPE<decltype (_NULL_ (ARGV<WeakRef>::null).intrusive ())> ;
+		using R1X = REMOVE_POINTER_TYPE<decltype (_NULL_ (ARGV<WeakRef>::ID).intrusive ())> ;
 		auto &r1x = _CACHE_ ([&] () {
 			auto &r2x = GlobalStaticEngine::static_unique () ;
 			ScopedGuard<Mutex> ANONYMOUS (r2x.mNodeMutex) ;
-			const auto r3x = TypeNameInvokeProc::invoke (ARGV<Singleton<UNIT>>::null) ;
+			const auto r3x = TypeNameInvokeProc::invoke (ARGV<Singleton<UNIT>>::ID) ;
 			auto rax = GlobalStaticEngine::static_find_node (r2x ,r3x) ;
 			auto rbx = StrongRef<THIS_PACK> () ;
 			if switch_once (TRUE) {
@@ -879,8 +879,8 @@ public:
 				const auto r4x = rbx.weak () ;
 				DEREF[rax].mValue = r4x.intrusive () ;
 			}
-			const auto r5x = _POINTER_CAST_ (ARGV<HINT_T1>::null ,DEREF[rax].mValue) ;
-			return WeakRef (r5x).strong (ARGV<THIS_PACK>::null) ;
+			const auto r5x = _POINTER_CAST_ (ARGV<R1X>::ID ,DEREF[rax].mValue) ;
+			return WeakRef (r5x).strong (ARGV<THIS_PACK>::ID) ;
 		}) ;
 		auto rcx = r1x.share () ;
 		_DYNAMIC_ASSERT_ (rcx.exist ()) ;
@@ -933,22 +933,24 @@ public:
 		return mThis->reset_seed (seed_) ;
 	}
 
-	VAR random_value (const VAR &min_ ,const VAR &max_) {
+	VAR random_value (const VAR &lb ,const VAR &rb) {
 		ScopedGuard<RecursiveMutex> ANONYMOUS (mMutex) ;
-		_DEBUG_ASSERT_ (min_ <= max_) ;
-		const auto r1x = max_ - min_ + 1 ;
-		const auto r2x = mThis->random_value () ;
-		return r2x % r1x + min_ ;
+		_DEBUG_ASSERT_ (lb <= rb) ;
+		const auto r1x = rb - lb + 1 ;
+		const auto r2x = MathProc::maxof (r1x ,VAR (1)) ;
+		const auto r3x = mThis->random_value () ;
+		return r3x % r2x + lb ;
 	}
 
-	Array<VAR> random_value (const VAR &min_ ,const VAR &max_ ,const LENGTH &len) {
+	Array<VAR> random_value (const VAR &lb ,const VAR &rb ,const LENGTH &len) {
 		ScopedGuard<RecursiveMutex> ANONYMOUS (mMutex) ;
-		_DEBUG_ASSERT_ (min_ <= max_) ;
+		_DEBUG_ASSERT_ (lb <= rb) ;
 		Array<VAR> ret = Array<VAR> (len) ;
-		const auto r1x = max_ - min_ + 1 ;
+		const auto r1x = rb - lb + 1 ;
+		const auto r2x = MathProc::maxof (r1x ,VAR (1)) ;
 		for (auto &&i : _RANGE_ (0 ,ret.length ())) {
-			const auto r2x = mThis->random_value () ;
-			ret[i] = r2x % r1x + min_ ;
+			const auto r3x = mThis->random_value () ;
+			ret[i] = r3x % r2x + lb ;
 		}
 		return _MOVE_ (ret) ;
 	}
@@ -995,7 +997,7 @@ public:
 		}) ;
 		String<STR> ret = String<STR> (r1x.size ()) ;
 		INDEX iw = 0 ;
-		const auto r2x = random_value (0 ,36 ,28) ;
+		const auto r2x = random_value (0 ,35 ,28) ;
 		for (auto &&i : _RANGE_ (0 ,8)) {
 			INDEX ix = 0 + i ;
 			ret[iw++] = index_to_hex_str (r2x[ix]) ;

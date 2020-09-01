@@ -194,11 +194,11 @@ public:
 private:
 	INDEX insert (const REAL &point) {
 		const auto r1x = MathProc::round (point ,mTolerance.self) ;
-		INDEX ret = mSegmentSet.find (point) ;
+		INDEX ret = mSegmentSet.find (r1x) ;
 		if switch_once (TRUE) {
 			if (ret != VAR_NONE)
-				break ;
-			ret = mSegmentSet.insert (point) ;
+				discard ;
+			ret = mSegmentSet.insert (r1x) ;
 			update_range () ;
 		}
 		return _MOVE_ (ret) ;
@@ -349,8 +349,8 @@ public:
 private:
 	void initialize (const Bitmap<REAL> &adjacency ,const INDEX &root_) {
 		struct Dependent ;
-		using InitializeLambda = typename DEPENDENT_TYPE<Private ,Dependent>::InitializeLambda ;
-		_CALL_TRY_ (InitializeLambda (DEREF[this] ,adjacency ,root_)) ;
+		using R1X = typename DEPENDENT_TYPE<Private ,Dependent>::InitializeLambda ;
+		_CALL_TRY_ (R1X (DEREF[this] ,adjacency ,root_)) ;
 	}
 
 	Deque<INDEX> query_path_depth (const INDEX &index) const {
@@ -466,8 +466,8 @@ public:
 private:
 	void initialize (const Set<REAL> &dataset ,const Function<REAL (const REAL & ,const REAL &)> &distance ,const Array<REAL> &center) {
 		struct Dependent ;
-		using InitializeLambda = typename DEPENDENT_TYPE<Private ,Dependent>::InitializeLambda ;
-		_CALL_TRY_ (InitializeLambda (DEREF[this] ,dataset ,distance ,center)) ;
+		using R1X = typename DEPENDENT_TYPE<Private ,Dependent>::InitializeLambda ;
+		_CALL_TRY_ (R1X (DEREF[this] ,dataset ,distance ,center)) ;
 	}
 } ;
 
@@ -628,8 +628,8 @@ public:
 private:
 	void initialize (const Bitmap<REAL> &adjacency) {
 		struct Dependent ;
-		using InitializeLambda = typename DEPENDENT_TYPE<Private ,Dependent>::InitializeLambda ;
-		_CALL_TRY_ (InitializeLambda (DEREF[this] ,adjacency)) ;
+		using R1X = typename DEPENDENT_TYPE<Private ,Dependent>::InitializeLambda ;
+		_CALL_TRY_ (R1X (DEREF[this] ,adjacency)) ;
 	}
 } ;
 
@@ -757,8 +757,8 @@ private:
 
 	void update_lack_weight (const INDEX &y) {
 		static constexpr auto M_STATE = PACK<EFLAG[22]> ({
-			EFLAG (0) ,EFLAG (1) ,EFLAG (2) ,EFLAG (3) ,EFLAG (4) ,
-			EFLAG (5) ,EFLAG (6) ,EFLAG (7) ,EFLAG (8) ,EFLAG (9) ,
+			EFLAG (+0) ,EFLAG (+1) ,EFLAG (+2) ,EFLAG (+3) ,EFLAG (+4) ,
+			EFLAG (+5) ,EFLAG (+6) ,EFLAG (+7) ,EFLAG (+8) ,EFLAG (+9) ,
 			EFLAG (10) ,EFLAG (11) ,EFLAG (12) ,EFLAG (13) ,EFLAG (14) ,
 			EFLAG (15) ,EFLAG (16) ,EFLAG (17) ,EFLAG (18) ,EFLAG (19) ,
 			EFLAG (20) ,EFLAG (21)}) ;
@@ -972,8 +972,8 @@ public:
 private:
 	void initialize (const Function<REAL (const Array<REAL> &)> &loss ,const Array<REAL> &fdx) {
 		struct Dependent ;
-		using InitializeLambda = typename DEPENDENT_TYPE<Private ,Dependent>::InitializeLambda ;
-		_CALL_TRY_ (InitializeLambda (DEREF[this] ,loss ,fdx)) ;
+		using R1X = typename DEPENDENT_TYPE<Private ,Dependent>::InitializeLambda ;
+		_CALL_TRY_ (R1X (DEREF[this] ,loss ,fdx)) ;
 	}
 } ;
 
@@ -1222,8 +1222,8 @@ public:
 private:
 	void initialize (const Array<ARRAY3<REAL>> &vertex) {
 		struct Dependent ;
-		using InitializeLambda = typename DEPENDENT_TYPE<Private ,Dependent>::InitializeLambda ;
-		_CALL_TRY_ (InitializeLambda (DEREF[this] ,vertex)) ;
+		using R1X = typename DEPENDENT_TYPE<Private ,Dependent>::InitializeLambda ;
+		_CALL_TRY_ (R1X (DEREF[this] ,vertex)) ;
 	}
 
 	REAL distance_of_point (const ARRAY3<REAL> &a ,const ARRAY3<REAL> &b) const {
@@ -1380,49 +1380,49 @@ private:
 		}
 	}
 
-	void update_build_tree (const INDEX &curr ,const INDEX &rot ,const INDEX &seg_lb ,const INDEX &seg_rb) {
-		const auto r1x = seg_rb - seg_lb + 1 ;
+	void update_build_tree (const INDEX &curr ,const INDEX &rot ,const INDEX &lb ,const INDEX &rb) {
+		const auto r1x = rb - lb + 1 ;
 		if (r1x <= 0)
 			return ;
-		_DEBUG_ASSERT_ (seg_lb >= 0 && seg_lb < mVertex.size ()) ;
-		_DEBUG_ASSERT_ (seg_rb >= 0 && seg_rb < mVertex.size ()) ;
+		_DEBUG_ASSERT_ (lb >= 0 && lb < mVertex.size ()) ;
+		_DEBUG_ASSERT_ (rb >= 0 && rb < mVertex.size ()) ;
 		auto fax = TRUE ;
 		if switch_once (fax) {
 			if (r1x > 1)
 				discard ;
 			INDEX jx = mKDTree.insert () ;
 			mKDTree[jx].mKey = REAL (0) ;
-			mKDTree[jx].mLeaf = mOrder[rot][seg_lb] ;
+			mKDTree[jx].mLeaf = mOrder[rot][lb] ;
 			mKDTree[jx].mLeft = VAR_NONE ;
 			mKDTree[jx].mRight = VAR_NONE ;
 			mLatestIndex = jx ;
 		}
 		if switch_once (fax) {
-			INDEX ix = seg_lb + r1x / 2 ;
-			compute_order (mTempOrder ,mOrder ,rot ,mNextRot[rot] ,seg_lb ,seg_rb) ;
-			compute_order (mTempOrder ,mOrder ,rot ,mNextRot[mNextRot[rot]] ,seg_lb ,seg_rb) ;
+			INDEX ix = lb + r1x / 2 ;
+			compute_order (mTempOrder ,mOrder ,rot ,mNextRot[rot] ,lb ,rb) ;
+			compute_order (mTempOrder ,mOrder ,rot ,mNextRot[mNextRot[rot]] ,lb ,rb) ;
 			INDEX jx = mKDTree.insert () ;
 			mKDTree[jx].mKey = mVertex[mOrder[rot][ix]][rot] ;
 			mKDTree[jx].mLeaf = VAR_NONE ;
 			mKDTree[jx].mLeft = VAR_NONE ;
 			mKDTree[jx].mRight = VAR_NONE ;
-			update_build_tree (mKDTree[jx].mLeft ,mNextRot[rot] ,seg_lb ,ix - 1) ;
+			update_build_tree (mKDTree[jx].mLeft ,mNextRot[rot] ,lb ,ix - 1) ;
 			mKDTree[jx].mLeft = mLatestIndex ;
-			update_build_tree (mKDTree[jx].mRight ,mNextRot[rot] ,ix ,seg_rb) ;
+			update_build_tree (mKDTree[jx].mRight ,mNextRot[rot] ,ix ,rb) ;
 			mKDTree[jx].mRight = mLatestIndex ;
 			mLatestIndex = curr ;
 		}
 	}
 
-	void compute_order (Array<INDEX> &temp_order ,ARRAY3<Array<INDEX>> &order_ ,const INDEX &rot ,const INDEX &n_rot ,const INDEX &seg_lb ,const INDEX &seg_rb) const {
+	void compute_order (Array<INDEX> &temp_order ,ARRAY3<Array<INDEX>> &order_ ,const INDEX &rot ,const INDEX &n_rot ,const INDEX &lb ,const INDEX &rb) const {
 		if (temp_order.size () != mVertex.size ())
 			temp_order = Array<INDEX> (mVertex.size ()) ;
 		INDEX iw = 0 ;
-		for (auto &&i : _RANGE_ (seg_lb ,seg_rb + 1))
+		for (auto &&i : _RANGE_ (lb ,rb + 1))
 			temp_order[iw++] = mOrder[n_rot][i] ;
 		const auto r1x = ARRAY2<INDEX> {0 ,iw} ;
 		for (auto &&i : _RANGE_ (r1x[0] ,r1x[1]))
-			order_[n_rot][seg_lb + i] = temp_order[i] ;
+			order_[n_rot][lb + i] = temp_order[i] ;
 	}
 
 	void refresh () {
@@ -1465,8 +1465,8 @@ public:
 private:
 	void initialize (const Bitmap<REAL> &adjacency ,const INDEX &source ,const INDEX &sink) {
 		struct Dependent ;
-		using InitializeLambda = typename DEPENDENT_TYPE<Private ,Dependent>::InitializeLambda ;
-		_CALL_TRY_ (InitializeLambda (DEREF[this] ,adjacency ,source ,sink)) ;
+		using R1X = typename DEPENDENT_TYPE<Private ,Dependent>::InitializeLambda ;
+		_CALL_TRY_ (R1X (DEREF[this] ,adjacency ,source ,sink)) ;
 	}
 } ;
 

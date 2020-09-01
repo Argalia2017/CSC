@@ -37,9 +37,8 @@
 #endif
 
 #ifdef __CSC_DEPRECATED__
-#pragma region
-#pragma warning (push)
 #ifdef __CSC_COMPILER_MSVC__
+#pragma warning (push)
 #pragma warning (disable :5039)
 #endif
 #include <cstdlib>
@@ -53,8 +52,9 @@
 #include <random>
 
 #include <setjmp.h>
+#ifdef __CSC_COMPILER_MSVC__
 #pragma warning (pop)
-#pragma endregion
+#endif
 #endif
 
 #ifdef __CSC__
@@ -204,14 +204,14 @@ public:
 } ;
 
 inline exports Duration::Duration (const LENGTH &milliseconds_) {
-	using Implement = typename Private::Implement ;
-	mThis = StrongRef<Implement>::make (milliseconds_) ;
+	using R1X = typename Private::Implement ;
+	mThis = StrongRef<R1X>::make (milliseconds_) ;
 }
 
 template <class _ARG1 ,class>
 inline exports Duration::Duration (_ARG1 &&time_) {
-	using Implement = typename Private::Implement ;
-	mThis = StrongRef<Implement>::make (_FORWARD_ (ARGV<_ARG1 &&>::null ,time_)) ;
+	using R1X = typename Private::Implement ;
+	mThis = StrongRef<R1X>::make (_FORWARD_ (ARGV<_ARG1 &&>::ID ,time_)) ;
 }
 
 class TimePoint::Private::Implement
@@ -311,8 +311,8 @@ public:
 
 template <class _ARG1 ,class>
 inline exports TimePoint::TimePoint (_ARG1 &&time_) {
-	using Implement = typename Private::Implement ;
-	mThis = StrongRef<Implement>::make (_FORWARD_ (ARGV<_ARG1 &&>::null ,time_)) ;
+	using R1X = typename Private::Implement ;
+	mThis = StrongRef<R1X>::make (_FORWARD_ (ARGV<_ARG1 &&>::ID ,time_)) ;
 }
 
 class Mutex::Private::Implement
@@ -349,8 +349,8 @@ public:
 } ;
 
 inline exports Mutex::Mutex () {
-	using Implement = typename Private::Implement ;
-	mThis = StrongRef<Implement>::make () ;
+	using R1X = typename Private::Implement ;
+	mThis = StrongRef<R1X>::make () ;
 }
 
 class RecursiveMutex::Private::Implement
@@ -387,8 +387,8 @@ public:
 } ;
 
 inline exports RecursiveMutex::RecursiveMutex () {
-	using Implement = typename Private::Implement ;
-	mThis = StrongRef<Implement>::make () ;
+	using R1X = typename Private::Implement ;
+	mThis = StrongRef<R1X>::make () ;
 }
 
 class ConditionLock::Private::Implement
@@ -413,8 +413,8 @@ public:
 } ;
 
 inline exports ConditionLock::ConditionLock () {
-	using Implement = typename Private::Implement ;
-	mThis = StrongRef<Implement>::make () ;
+	using R1X = typename Private::Implement ;
+	mThis = StrongRef<R1X>::make () ;
 }
 
 class UniqueLock::Private::Implement
@@ -447,19 +447,20 @@ public:
 		mConditionLock->native ().get_mConditionLock ().wait_for (mUniqueLock ,r1x) ;
 	}
 
-	void yield () override {
-		const auto r1x = api::milliseconds (0) ;
-		mConditionLock->native ().get_mConditionLock ().wait_for (mUniqueLock ,r1x) ;
-	}
-
 	void notify () override {
 		mConditionLock->native ().get_mConditionLock ().notify_all () ;
+	}
+
+	void yield () override {
+		mConditionLock->native ().get_mConditionLock ().notify_all () ;
+		const auto r1x = api::milliseconds (0) ;
+		mConditionLock->native ().get_mConditionLock ().wait_for (mUniqueLock ,r1x) ;
 	}
 } ;
 
 inline exports UniqueLock::UniqueLock (PhanRef<Mutex> &&mutex_ ,PhanRef<ConditionLock> &&condition_lock) {
-	using Implement = typename Private::Implement ;
-	mThis = StrongRef<Implement>::make (_MOVE_ (mutex_) ,_MOVE_ (condition_lock)) ;
+	using R1X = typename Private::Implement ;
+	mThis = StrongRef<R1X>::make (_MOVE_ (mutex_) ,_MOVE_ (condition_lock)) ;
 }
 
 class Thread::Private::Implement
@@ -482,8 +483,8 @@ public:
 } ;
 
 inline exports Thread::Thread (const StrongRef<Binder> &runnable) {
-	using Implement = typename Private::Implement ;
-	mThis = StrongRef<Implement>::make (runnable) ;
+	using R1X = typename Private::Implement ;
+	mThis = StrongRef<R1X>::make (runnable) ;
 }
 
 inline exports TimePoint GlobalRuntime::clock_now () {
@@ -574,7 +575,7 @@ inline exports Buffer<BYTE ,ARGC<128>> GlobalRuntime::process_info (const FLAG &
 inline exports FLAG GlobalRuntime::process_info_pid (const PhanBuffer<const STRU8> &info) {
 	_DEBUG_ASSERT_ (info.size () == 128) ;
 	auto rax = ByteReader<BYTE> (PhanBuffer<const BYTE>::make (info)) ;
-	const auto r1x = rax.read (ARGV<VAR64>::null) ;
+	const auto r1x = rax.read (ARGV<VAR64>::ID) ;
 	_DYNAMIC_ASSERT_ (r1x >= VAR32_MIN && r1x <= VAR32_MAX) ;
 	return FLAG (r1x) ;
 }
@@ -609,7 +610,7 @@ inline exports Buffer<BYTE ,ARGC<128>> GlobalRuntime::process_info (const FLAG &
 inline exports FLAG GlobalRuntime::process_info_pid (const PhanBuffer<const STRU8> &info) {
 	_DEBUG_ASSERT_ (info.size () == 128) ;
 	auto rax = ByteReader<BYTE> (PhanBuffer<const BYTE>::make (info)) ;
-	const auto r1x = rax.read (ARGV<VAR64>::null) ;
+	const auto r1x = rax.read (ARGV<VAR64>::ID) ;
 	_DYNAMIC_ASSERT_ (r1x >= VAR32_MIN && r1x <= VAR32_MAX) ;
 	return FLAG (r1x) ;
 }
@@ -632,9 +633,8 @@ inline exports void GlobalRuntime::process_abort[[noreturn]] () {
 	api::terminate () ;
 }
 
-
 inline exports FLAG GlobalRuntime::system_exec (const String<STR> &cmd) {
-	const auto r1x = StringProc::build_strs (ARGV<STRA>::null ,cmd) ;
+	const auto r1x = StringProc::build_strs (ARGV<STRA>::ID ,cmd) ;
 	const auto r2x = api::system (r1x.raw ().self) ;
 	return FLAG (r2x) ;
 }
@@ -672,7 +672,7 @@ public:
 } ;
 
 inline exports RandomService::RandomService (const ARGVF<Singleton<RandomService>> &) {
-	using Implement = typename Private::Implement ;
-	mThis = StrongRef<Implement>::make () ;
+	using R1X = typename Private::Implement ;
+	mThis = StrongRef<R1X>::make () ;
 }
 } ;

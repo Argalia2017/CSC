@@ -25,13 +25,15 @@ inline exports const String<STRU8> &SerializationStaticProc::static_empty_string
 	}) ;
 }
 
+static constexpr auto NODE_CLAZZ_NULL = EFLAG (1) ;
+static constexpr auto NODE_CLAZZ_STRING = EFLAG (2) ;
+static constexpr auto NODE_CLAZZ_ARRAY = EFLAG (3) ;
+static constexpr auto NODE_CLAZZ_OBJECT = EFLAG (4) ;
+static constexpr auto NODE_CLAZZ_TABLE = EFLAG (5) ;
+static constexpr auto NODE_CLAZZ_FINAL = EFLAG (6) ;
+
 class XmlParser {
 private:
-	static constexpr auto NODE_CLAZZ_TABLE = EFLAG (1) ;
-	static constexpr auto NODE_CLAZZ_OBJECT = EFLAG (2) ;
-	static constexpr auto NODE_CLAZZ_ARRAY = EFLAG (3) ;
-	static constexpr auto NODE_CLAZZ_FINAL = EFLAG (4) ;
-
 	struct NODE_PACK {
 		String<STRU8> mName ;
 		Deque<String<STRU8>> mAttribute ;
@@ -421,9 +423,9 @@ public:
 	}
 
 private:
-	imports void initialize (XmlParser &self_ ,const PhanBuffer<const STRU8> &data) ;
+	imports void initialize (XmlParser &this_ ,const PhanBuffer<const STRU8> &data) ;
 
-	imports void initialize (XmlParser &self_ ,const Array<XmlParser> &sequence) ;
+	imports void initialize (XmlParser &this_ ,const Array<XmlParser> &sequence) ;
 } ;
 
 class XmlParser::Private::RecursiveCounter
@@ -433,7 +435,7 @@ private:
 
 public:
 	void lock () {
-		_DYNAMIC_ASSERT_ (mSelf <= DEFAULT_RECURSIVE_SIZE::value) ;
+		_DYNAMIC_ASSERT_ (mSelf <= DEFAULT_RECURSIVE_SIZE::compile ()) ;
 		mSelf++ ;
 	}
 
@@ -555,7 +557,7 @@ private:
 
 	//@info: $5-><$1 $4 />|<$1 $4 > $7 </$1 >
 	void update_shift_e5 (const INDEX &curr) {
-		ScopedGuard<RecursiveCounter> ANONYMOUS (_CAST_ (ARGV<RecursiveCounter>::null ,mRecursiveCounter)) ;
+		ScopedGuard<RecursiveCounter> ANONYMOUS (_CAST_ (ARGV<RecursiveCounter>::ID ,mRecursiveCounter)) ;
 		mRis >> _PCSTRU8_ ("<") ;
 		INDEX ix = mNodeTree.insert () ;
 		update_shift_e1 () ;
@@ -607,7 +609,7 @@ private:
 
 	//@info: $7->${eps}|$5 $7|$6 $7
 	void update_shift_e7 (const INDEX &curr) {
-		ScopedGuard<RecursiveCounter> ANONYMOUS (_CAST_ (ARGV<RecursiveCounter>::null ,mRecursiveCounter)) ;
+		ScopedGuard<RecursiveCounter> ANONYMOUS (_CAST_ (ARGV<RecursiveCounter>::ID ,mRecursiveCounter)) ;
 		INDEX ix = VAR_NONE ;
 		INDEX iy = VAR_NONE ;
 		while (TRUE) {
@@ -715,7 +717,7 @@ private:
 	const String<STRU8> mFinalClazzString ;
 
 	Deque<STACK_NODE> mNodeStack ;
-	Array<Function<MEMPTR<void (const XmlParser &)>>> mFoundNodeProc ;
+	Array<Function<void (const XmlParser &)>> mFoundNodeProc ;
 	Set<EFLAG> mFoundNodeProcMappingSet ;
 	SoftSet<String<STRU8>> mAttributeMappingSoftSet ;
 	SoftSet<INDEX> mMemberSoftSet ;
@@ -743,14 +745,20 @@ private:
 	void prepare () {
 		mNodeStack = Deque<STACK_NODE> () ;
 		//@error: fuck g++4.8
-		mFoundNodeProc = Array<Function<MEMPTR<void (const XmlParser &)>>> (3) ;
-		mFoundNodeProcMappingSet.add (EFLAG (NODE_CLAZZ_TABLE) ,0) ;
-		mFoundNodeProcMappingSet.add (EFLAG (NODE_CLAZZ_OBJECT) ,1) ;
-		mFoundNodeProcMappingSet.add (EFLAG (NODE_CLAZZ_ARRAY) ,2) ;
-		mFoundNodeProcMappingSet.add (EFLAG (NODE_CLAZZ_FINAL) ,0) ;
-		mFoundNodeProc[0] = Function<MEMPTR<void (const XmlParser &)>> (PhanRef<InitializeX2Lambda>::make (DEREF[this]) ,&InitializeX2Lambda::update_found_table_node) ;
-		mFoundNodeProc[1] = Function<MEMPTR<void (const XmlParser &)>> (PhanRef<InitializeX2Lambda>::make (DEREF[this]) ,&InitializeX2Lambda::update_found_object_node) ;
-		mFoundNodeProc[2] = Function<MEMPTR<void (const XmlParser &)>> (PhanRef<InitializeX2Lambda>::make (DEREF[this]) ,&InitializeX2Lambda::update_found_array_node) ;
+		mFoundNodeProc = Array<Function<void (const XmlParser &)>> (3) ;
+		mFoundNodeProcMappingSet.add (NODE_CLAZZ_TABLE ,0) ;
+		mFoundNodeProcMappingSet.add (NODE_CLAZZ_OBJECT ,1) ;
+		mFoundNodeProcMappingSet.add (NODE_CLAZZ_ARRAY ,2) ;
+		mFoundNodeProcMappingSet.add (NODE_CLAZZ_FINAL ,0) ;
+		mFoundNodeProc[0] = Function<void (const XmlParser &)> ([&] (const XmlParser &node) {
+			update_found_table_node (node) ;
+		}) ;
+		mFoundNodeProc[1] = Function<void (const XmlParser &)> ([&] (const XmlParser &node) {
+			update_found_object_node (node) ;
+		}) ;
+		mFoundNodeProc[2] = Function<void (const XmlParser &)> ([&] (const XmlParser &node) {
+			update_found_array_node (node) ;
+		}) ;
 		mAttributeMappingSoftSet = SoftSet<String<STRU8>> (0) ;
 		mMemberSoftSet = SoftSet<INDEX> (0) ;
 		mObjectSoftSet = SoftSet<String<STRU8>> (0) ;
@@ -971,25 +979,20 @@ private:
 	}
 } ;
 
-inline exports void XmlParser::initialize (XmlParser &self_ ,const PhanBuffer<const STRU8> &data) {
+inline exports void XmlParser::initialize (XmlParser &this_ ,const PhanBuffer<const STRU8> &data) {
 	struct Dependent ;
-	using InitializeX1Lambda = typename DEPENDENT_TYPE<Private ,Dependent>::InitializeX1Lambda ;
-	_CALL_TRY_ (InitializeX1Lambda (self_ ,PhanBuffer<const STRU8>::make (data))) ;
+	using R1X = typename DEPENDENT_TYPE<Private ,Dependent>::InitializeX1Lambda ;
+	_CALL_TRY_ (R1X (this_ ,PhanBuffer<const STRU8>::make (data))) ;
 }
 
-inline exports void XmlParser::initialize (XmlParser &self_ ,const Array<XmlParser> &sequence) {
+inline exports void XmlParser::initialize (XmlParser &this_ ,const Array<XmlParser> &sequence) {
 	struct Dependent ;
-	using InitializeX2Lambda = typename DEPENDENT_TYPE<Private ,Dependent>::InitializeX2Lambda ;
-	_CALL_TRY_ (InitializeX2Lambda (self_ ,sequence)) ;
+	using R1X = typename DEPENDENT_TYPE<Private ,Dependent>::InitializeX2Lambda ;
+	_CALL_TRY_ (R1X (this_ ,sequence)) ;
 }
 
 class JsonParser {
 private:
-	static constexpr auto NODE_CLAZZ_NULL = EFLAG (1) ;
-	static constexpr auto NODE_CLAZZ_STRING = EFLAG (2) ;
-	static constexpr auto NODE_CLAZZ_ARRAY = EFLAG (3) ;
-	static constexpr auto NODE_CLAZZ_OBJECT = EFLAG (4) ;
-
 	struct NODE_PACK {
 		AnyRef<> mValue ;
 		EFLAG mClazz ;
@@ -1075,7 +1078,7 @@ public:
 			return JsonParser (mHeap ,VAR_NONE) ;
 		if (!object_type ())
 			return JsonParser (mHeap ,VAR_NONE) ;
-		auto &r1x = mHeap.self[mIndex].mValue.rebind (ARGV<SoftSet<String<STRU8>>>::null).self ;
+		auto &r1x = mHeap.self[mIndex].mValue.rebind (ARGV<SoftSet<String<STRU8>>>::ID).self ;
 		INDEX ix = r1x.map (key) ;
 		return JsonParser (mHeap ,ix) ;
 	}
@@ -1087,7 +1090,7 @@ public:
 				discard ;
 			if (!array_type ())
 				discard ;
-			auto &r1x = mHeap.self[mIndex].mValue.rebind (ARGV<SoftSet<INDEX>>::null).self ;
+			auto &r1x = mHeap.self[mIndex].mValue.rebind (ARGV<SoftSet<INDEX>>::ID).self ;
 			const auto r2x = r1x.range () ;
 			ret = Array<JsonParser> (r2x.length ()) ;
 			for (auto &&i : _RANGE_ (0 ,r2x.length ()))
@@ -1101,7 +1104,7 @@ public:
 		if switch_once (TRUE) {
 			if (!exist ())
 				discard ;
-			auto &r1x = mHeap.self[mIndex].mValue.rebind (ARGV<SoftSet<INDEX>>::null).self ;
+			auto &r1x = mHeap.self[mIndex].mValue.rebind (ARGV<SoftSet<INDEX>>::ID).self ;
 			for (auto &&i : r1x) {
 				const auto r2x = r1x.at (i) ;
 				if (rax.length () >= rax.size ())
@@ -1141,7 +1144,7 @@ public:
 	const String<STRU8> &value () const leftvalue {
 		_DYNAMIC_ASSERT_ (exist ()) ;
 		_DYNAMIC_ASSERT_ (string_type ()) ;
-		return mHeap.self[mIndex].mValue.rebind (ARGV<String<STRU8>>::null).self ;
+		return mHeap.self[mIndex].mValue.rebind (ARGV<String<STRU8>>::ID).self ;
 	}
 
 	template <class _ARG1>
@@ -1245,7 +1248,7 @@ public:
 					discard ;
 				if (!(r2x.mP2 == M_NODE_X1))
 					discard ;
-				auto &r3x = mHeap.self[r2x.mP1].mValue.rebind (ARGV<String<STRU8>>::null).self ;
+				auto &r3x = mHeap.self[r2x.mP1].mValue.rebind (ARGV<String<STRU8>>::ID).self ;
 				writer << _PCSTRU8_ ("\"") ;
 				writer << r3x ;
 				writer << _PCSTRU8_ ("\"") ;
@@ -1258,7 +1261,7 @@ public:
 					discard ;
 				if (!(r2x.mP2 == M_NODE_X1))
 					discard ;
-				auto &r4x = mHeap.self[r2x.mP1].mValue.rebind (ARGV<SoftSet<INDEX>>::null).self ;
+				auto &r4x = mHeap.self[r2x.mP1].mValue.rebind (ARGV<SoftSet<INDEX>>::ID).self ;
 				rbx.clear () ;
 				rbx.add (PACK<INDEX ,EFLAG> {VAR_NONE ,M_NODE_X3}) ;
 				INDEX iw = 0 ;
@@ -1285,7 +1288,7 @@ public:
 					discard ;
 				if (!(r2x.mP2 == M_NODE_X1))
 					discard ;
-				auto &r6x = mHeap.self[r2x.mP1].mValue.rebind (ARGV<SoftSet<String<STRU8>>>::null).self ;
+				auto &r6x = mHeap.self[r2x.mP1].mValue.rebind (ARGV<SoftSet<String<STRU8>>>::ID).self ;
 				rbx.clear () ;
 				rbx.add (PACK<INDEX ,EFLAG> {VAR_NONE ,M_NODE_X6}) ;
 				INDEX iw = 0 ;
@@ -1380,7 +1383,7 @@ private:
 		for (auto &&i : _RANGE_ (0 ,mHeap->size ())) {
 			if (mHeap.self[i].mClazz != NODE_CLAZZ_OBJECT)
 				continue ;
-			auto &r1x = mHeap.self[i].mValue.rebind (ARGV<SoftSet<String<STRU8>>>::null).self ;
+			auto &r1x = mHeap.self[i].mValue.rebind (ARGV<SoftSet<String<STRU8>>>::ID).self ;
 			for (auto &&j : r1x)
 				ret.add (DEPTR[j]) ;
 		}
@@ -1388,7 +1391,7 @@ private:
 	}
 
 private:
-	imports void initialize (JsonParser &self_ ,const PhanBuffer<const STRU8> &data) ;
+	imports void initialize (JsonParser &this_ ,const PhanBuffer<const STRU8> &data) ;
 } ;
 
 class JsonParser::Private::RecursiveCounter
@@ -1398,7 +1401,7 @@ private:
 
 public:
 	void lock () {
-		_DYNAMIC_ASSERT_ (mSelf <= DEFAULT_RECURSIVE_SIZE::value) ;
+		_DYNAMIC_ASSERT_ (mSelf <= DEFAULT_RECURSIVE_SIZE::compile ()) ;
 		mSelf++ ;
 	}
 
@@ -1529,7 +1532,7 @@ private:
 
 	//@info: $4->$1|$2|$2x|$3|$6|$9
 	void update_shift_e4 (const INDEX &curr) {
-		ScopedGuard<RecursiveCounter> ANONYMOUS (_CAST_ (ARGV<RecursiveCounter>::null ,mRecursiveCounter)) ;
+		ScopedGuard<RecursiveCounter> ANONYMOUS (_CAST_ (ARGV<RecursiveCounter>::ID ,mRecursiveCounter)) ;
 		INDEX ix = VAR_NONE ;
 		auto fax = TRUE ;
 		if switch_once (fax) {
@@ -1601,7 +1604,7 @@ private:
 		INDEX iy = VAR_NONE ;
 		while (TRUE) {
 			update_shift_e4 (curr) ;
-			auto &r1x = mNodeTree[curr].mValue.rebind (ARGV<SoftSet<INDEX>>::null).self ;
+			auto &r1x = mNodeTree[curr].mValue.rebind (ARGV<SoftSet<INDEX>>::ID).self ;
 			const auto r2x = r1x.length () ;
 			r1x.add (r2x ,mLatestIndex) ;
 			auto &r3x = _SWITCH_ (
@@ -1620,7 +1623,7 @@ private:
 
 	//@info: $6->[ ]|[ $5 ]
 	void update_shift_e6 (const INDEX &curr) {
-		ScopedGuard<RecursiveCounter> ANONYMOUS (_CAST_ (ARGV<RecursiveCounter>::null ,mRecursiveCounter)) ;
+		ScopedGuard<RecursiveCounter> ANONYMOUS (_CAST_ (ARGV<RecursiveCounter>::ID ,mRecursiveCounter)) ;
 		mRis >> _PCSTRU8_ ("[") ;
 		INDEX ix = mNodeTree.insert () ;
 		mNodeTree[ix].mValue = AnyRef<SoftSet<INDEX>>::make (mArraySoftSet.share ()) ;
@@ -1648,7 +1651,7 @@ private:
 		mRis >> _PCSTRU8_ (":") ;
 		mRis >> RegularReader::SKIP_GAP ;
 		update_shift_e4 (curr) ;
-		auto &r2x = mNodeTree[curr].mValue.rebind (ARGV<SoftSet<String<STRU8>>>::null).self ;
+		auto &r2x = mNodeTree[curr].mValue.rebind (ARGV<SoftSet<String<STRU8>>>::ID).self ;
 		r2x.add (r1x ,mLatestIndex) ;
 	}
 
@@ -1674,7 +1677,7 @@ private:
 
 	//@info: $9->{ }|{ $8 }
 	void update_shift_e9 (const INDEX &curr) {
-		ScopedGuard<RecursiveCounter> ANONYMOUS (_CAST_ (ARGV<RecursiveCounter>::null ,mRecursiveCounter)) ;
+		ScopedGuard<RecursiveCounter> ANONYMOUS (_CAST_ (ARGV<RecursiveCounter>::ID ,mRecursiveCounter)) ;
 		mRis >> _PCSTRU8_ ("{") ;
 		INDEX ix = mNodeTree.insert () ;
 		mNodeTree[ix].mValue = AnyRef<SoftSet<String<STRU8>>>::make (mObjectSoftSet.share ()) ;
@@ -1731,10 +1734,10 @@ private:
 	}
 } ;
 
-inline exports void JsonParser::initialize (JsonParser &self_ ,const PhanBuffer<const STRU8> &data) {
+inline exports void JsonParser::initialize (JsonParser &this_ ,const PhanBuffer<const STRU8> &data) {
 	struct Dependent ;
-	using InitializeLambda = typename DEPENDENT_TYPE<Private ,Dependent>::InitializeLambda ;
-	_CALL_TRY_ (InitializeLambda (self_ ,PhanBuffer<const STRU8>::make (data))) ;
+	using R1X = typename DEPENDENT_TYPE<Private ,Dependent>::InitializeLambda ;
+	_CALL_TRY_ (R1X (this_ ,PhanBuffer<const STRU8>::make (data))) ;
 }
 
 class CommandParser {
@@ -1852,7 +1855,7 @@ public:
 	}
 
 private:
-	imports void initialize (CommandParser &self_ ,const PhanBuffer<const STRU8> &data) ;
+	imports void initialize (CommandParser &this_ ,const PhanBuffer<const STRU8> &data) ;
 } ;
 
 class CommandParser::Private::InitializeLambda
@@ -1893,7 +1896,7 @@ private:
 		*	$0->$8 $7 $9
 		*	$1->${identity}
 		*	$2->"${string}"
-		*	$3->${newgap}
+		*	$3->${word_gap}
 		*	$4->/$1
 		*	$5->-$1|-$1=$2|-$1=$3
 		*	$6->$2|$3
@@ -1923,9 +1926,9 @@ private:
 		mRis >> RegularReader::HINT_STRING >> mLatestString ;
 	}
 
-	//@info: $3->${newgap}
+	//@info: $3->${word_gap}
 	void update_shift_e3 () {
-		mRis >> RegularReader::HINT_NEWGAP >> mLatestString ;
+		mRis >> RegularReader::HINT_WORD_GAP >> mLatestString ;
 	}
 
 	//@info: $4->/$1
@@ -2021,9 +2024,9 @@ private:
 	}
 } ;
 
-inline exports void CommandParser::initialize (CommandParser &self_ ,const PhanBuffer<const STRU8> &data) {
+inline exports void CommandParser::initialize (CommandParser &this_ ,const PhanBuffer<const STRU8> &data) {
 	struct Dependent ;
-	using InitializeLambda = typename DEPENDENT_TYPE<Private ,Dependent>::InitializeLambda ;
-	_CALL_TRY_ (InitializeLambda (self_ ,PhanBuffer<const STRU8>::make (data))) ;
+	using R1X = typename DEPENDENT_TYPE<Private ,Dependent>::InitializeLambda ;
+	_CALL_TRY_ (R1X (this_ ,PhanBuffer<const STRU8>::make (data))) ;
 }
 } ;

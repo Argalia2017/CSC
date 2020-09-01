@@ -249,8 +249,8 @@ public:
 } ;
 
 inline exports RegexMatcher::RegexMatcher (const String<STRU8> &reg) {
-	using Implement = typename Private::Implement ;
-	mThis = StrongRef<Implement>::make (reg) ;
+	using R1X = typename Private::Implement ;
+	mThis = StrongRef<R1X>::make (reg) ;
 }
 #endif
 } ;

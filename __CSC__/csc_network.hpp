@@ -57,9 +57,9 @@ public:
 	template <class _RET = REMOVE_CVR_TYPE<TCPListener>>
 	_RET listener () {
 		struct Dependent ;
-		using TCPListener = DEPENDENT_TYPE<TCPListener ,Dependent> ;
+		using R1X = DEPENDENT_TYPE<TCPListener ,Dependent> ;
 		_DEBUG_ASSERT_ (mThis.exist ()) ;
-		return TCPListener (mThis) ;
+		return R1X (mThis) ;
 	}
 
 	void link (const String<STRU8> &ip_addr) {
