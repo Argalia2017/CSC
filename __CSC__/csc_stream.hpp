@@ -16,27 +16,27 @@ using STRUW = TEXT_BASE_TYPE<STRW> ;
 
 template <class REAL>
 class ByteReader {
-	_STATIC_ASSERT_ (IS_SAME_HELP<REAL ,BYTE>::compile ()) ;
-
 public:
-	class Binder
-		:public Interface {
+	class Binder :
+		delegate public Interface {
 	public:
 		virtual void friend_read (ByteReader &reader) = 0 ;
 	} ;
 
-	static DEF<void (const ARGVF<ARGC<1>> &)> CLS ;
-	static DEF<void (const ARGVF<ARGC<3>> &)> GAP ;
-	static DEF<void (const ARGVF<ARGC<4>> &)> EOS ;
+	static DEF<void (const ARGV<ARGVP<ARGC<1>>> &)> CLS ;
+	static DEF<void (const ARGV<ARGVP<ARGC<3>>> &)> GAP ;
+	static DEF<void (const ARGV<ARGVP<ARGC<4>>> &)> EOS ;
 
 private:
-	struct HEAP_PACK {
-		BOOL mEndianFlag ;
-	} ;
+	_STATIC_ASSERT_ (IS_SAME_HELP<REAL ,BYTE>::compile ()) ;
 
 	struct Private {
 		template <class>
 		class Attribute ;
+	} ;
+
+	struct HEAP_PACK {
+		BOOL mEndianFlag ;
 	} ;
 
 private:
@@ -58,8 +58,7 @@ public:
 
 	template <class _RET = REMOVE_CVR_TYPE<typename Private::template Attribute<ByteReader>>>
 	_RET attr () leftvalue {
-		struct Dependent ;
-		using R1X = typename DEPENDENT_TYPE<Private ,Dependent>::template Attribute<ByteReader> ;
+		using R1X = typename DEPENDENT_TYPE<Private ,struct ANONYMOUS>::template Attribute<ByteReader> ;
 		return R1X (PhanRef<ByteReader>::make (DEREF[this])) ;
 	}
 
@@ -92,7 +91,7 @@ public:
 		mWrite = write_ ;
 	}
 
-	ByteReader share () leftvalue {
+	ByteReader share () const {
 		ByteReader ret ;
 		ret.mHeap = mHeap ;
 		ret.mStream = PhanBuffer<const REAL>::make (mStream) ;
@@ -129,10 +128,11 @@ public:
 
 	void read (WORD &data) {
 		const auto r1x = WORD (0X0001) ;
-		auto &r2x = _CAST_ (ARGV<BYTE[_SIZEOF_ (WORD)]>::ID ,r1x) ;
-		auto &r3x = _CAST_ (ARGV<BYTE[_SIZEOF_ (WORD)]>::ID ,data) ;
-		for (auto &&i : _RANGE_ (0 ,_COUNTOF_ (DEF<decltype (r3x)>)))
-			read (r3x[r2x[i]]) ;
+		const auto r2x = _BITWISE_CAST_ (ARGV<PACK<ARRAY_BIND_TYPE<BYTE ,SIZE_OF_TYPE<WORD>>>>::ID ,r1x) ;
+		auto rax = PACK<ARRAY_BIND_TYPE<BYTE ,SIZE_OF_TYPE<WORD>>> () ;
+		for (auto &&i : _RANGE_ (0 ,_COUNTOF_ (DEF<decltype (rax.mP1)>)))
+			read (rax.mP1[r2x.mP1[i]]) ;
+		data = _BITWISE_CAST_ (ARGV<WORD>::ID ,rax) ;
 	}
 
 	inline ByteReader &operator>> (WORD &data) {
@@ -142,10 +142,11 @@ public:
 
 	void read (CHAR &data) {
 		const auto r1x = CHAR (0X00010203) ;
-		auto &r2x = _CAST_ (ARGV<BYTE[_SIZEOF_ (CHAR)]>::ID ,r1x) ;
-		auto &r3x = _CAST_ (ARGV<BYTE[_SIZEOF_ (CHAR)]>::ID ,data) ;
-		for (auto &&i : _RANGE_ (0 ,_COUNTOF_ (DEF<decltype (r3x)>)))
-			read (r3x[r2x[i]]) ;
+		const auto r2x = _BITWISE_CAST_ (ARGV<PACK<ARRAY_BIND_TYPE<BYTE ,SIZE_OF_TYPE<CHAR>>>>::ID ,r1x) ;
+		auto rax = PACK<ARRAY_BIND_TYPE<BYTE ,SIZE_OF_TYPE<CHAR>>> () ;
+		for (auto &&i : _RANGE_ (0 ,_COUNTOF_ (DEF<decltype (rax.mP1)>)))
+			read (rax.mP1[r2x.mP1[i]]) ;
+		data = _BITWISE_CAST_ (ARGV<CHAR>::ID ,rax) ;
 	}
 
 	inline ByteReader &operator>> (CHAR &data) {
@@ -155,10 +156,11 @@ public:
 
 	void read (DATA &data) {
 		const auto r1x = DATA (0X0001020304050607) ;
-		auto &r2x = _CAST_ (ARGV<BYTE[_SIZEOF_ (DATA)]>::ID ,r1x) ;
-		auto &r3x = _CAST_ (ARGV<BYTE[_SIZEOF_ (DATA)]>::ID ,data) ;
-		for (auto &&i : _RANGE_ (0 ,_COUNTOF_ (DEF<decltype (r3x)>)))
-			read (r3x[r2x[i]]) ;
+		const auto r2x = _BITWISE_CAST_ (ARGV<PACK<ARRAY_BIND_TYPE<BYTE ,SIZE_OF_TYPE<DATA>>>>::ID ,r1x) ;
+		auto rax = PACK<ARRAY_BIND_TYPE<BYTE ,SIZE_OF_TYPE<DATA>>> () ;
+		for (auto &&i : _RANGE_ (0 ,_COUNTOF_ (DEF<decltype (rax.mP1)>)))
+			read (rax.mP1[r2x.mP1[i]]) ;
+		data = _BITWISE_CAST_ (ARGV<DATA>::ID ,rax) ;
 	}
 
 	inline ByteReader &operator>> (DATA &data) {
@@ -167,7 +169,9 @@ public:
 	}
 
 	void read (BOOL &data) {
-		read (_CAST_ (ARGV<U::BYTE_BASE_TYPE<BOOL>>::ID ,data)) ;
+		auto rax = U::BYTE_BASE_TYPE<BOOL> () ;
+		read (rax) ;
+		data = _BITWISE_CAST_ (ARGV<BOOL>::ID ,rax) ;
 	}
 
 	inline ByteReader &operator>> (BOOL &data) {
@@ -176,7 +180,9 @@ public:
 	}
 
 	void read (VAR32 &data) {
-		read (_CAST_ (ARGV<U::BYTE_BASE_TYPE<VAR32>>::ID ,data)) ;
+		auto rax = U::BYTE_BASE_TYPE<VAR32> () ;
+		read (rax) ;
+		data = _BITWISE_CAST_ (ARGV<VAR32>::ID ,rax) ;
 	}
 
 	inline ByteReader &operator>> (VAR32 &data) {
@@ -185,7 +191,9 @@ public:
 	}
 
 	void read (VAR64 &data) {
-		read (_CAST_ (ARGV<U::BYTE_BASE_TYPE<VAR64>>::ID ,data)) ;
+		auto rax = U::BYTE_BASE_TYPE<VAR64> () ;
+		read (rax) ;
+		data = _BITWISE_CAST_ (ARGV<VAR64>::ID ,rax) ;
 	}
 
 	inline ByteReader &operator>> (VAR64 &data) {
@@ -194,7 +202,9 @@ public:
 	}
 
 	void read (VAL32 &data) {
-		read (_CAST_ (ARGV<U::BYTE_BASE_TYPE<VAL32>>::ID ,data)) ;
+		auto rax = U::BYTE_BASE_TYPE<VAL32> () ;
+		read (rax) ;
+		data = _BITWISE_CAST_ (ARGV<VAL32>::ID ,rax) ;
 	}
 
 	inline ByteReader &operator>> (VAL32 &data) {
@@ -203,7 +213,9 @@ public:
 	}
 
 	void read (VAL64 &data) {
-		read (_CAST_ (ARGV<U::BYTE_BASE_TYPE<VAL64>>::ID ,data)) ;
+		auto rax = U::BYTE_BASE_TYPE<VAL64> () ;
+		read (rax) ;
+		data = _BITWISE_CAST_ (ARGV<VAL64>::ID ,rax) ;
 	}
 
 	inline ByteReader &operator>> (VAL64 &data) {
@@ -347,8 +359,8 @@ public:
 
 template <class REAL>
 template <class BASE>
-class ByteReader<REAL>::Private::Attribute
-	:private Proxy {
+class ByteReader<REAL>::Private::Attribute :
+	delegate private Proxy {
 private:
 	PhanRef<BASE> mBase ;
 
@@ -369,37 +381,37 @@ public:
 } ;
 
 template <class REAL>
-inline void ByteReader<REAL>::CLS (const ARGVF<ARGC<1>> &) {}
+inline void ByteReader<REAL>::CLS (const ARGV<ARGVP<ARGC<1>>> &) {}
 
 template <class REAL>
-inline void ByteReader<REAL>::GAP (const ARGVF<ARGC<3>> &) {}
+inline void ByteReader<REAL>::GAP (const ARGV<ARGVP<ARGC<3>>> &) {}
 
 template <class REAL>
-inline void ByteReader<REAL>::EOS (const ARGVF<ARGC<4>> &) {}
+inline void ByteReader<REAL>::EOS (const ARGV<ARGVP<ARGC<4>>> &) {}
 
 template <class REAL>
 class ByteWriter {
-	_STATIC_ASSERT_ (IS_SAME_HELP<REAL ,BYTE>::compile ()) ;
-
 public:
-	class Binder
-		:public Interface {
+	class Binder :
+		delegate public Interface {
 	public:
 		virtual void friend_write (ByteWriter &writer) const = 0 ;
 	} ;
 
-	static DEF<void (const ARGVF<ARGC<1>> &)> CLS ;
-	static DEF<void (const ARGVF<ARGC<3>> &)> GAP ;
-	static DEF<void (const ARGVF<ARGC<4>> &)> EOS ;
+	static DEF<void (const ARGV<ARGVP<ARGC<1>>> &)> CLS ;
+	static DEF<void (const ARGV<ARGVP<ARGC<3>>> &)> GAP ;
+	static DEF<void (const ARGV<ARGVP<ARGC<4>>> &)> EOS ;
 
 private:
-	struct HEAP_PACK {
-		SharedRef<FixedBuffer<REAL>> mBuffer ;
-	} ;
+	_STATIC_ASSERT_ (IS_SAME_HELP<REAL ,BYTE>::compile ()) ;
 
 	struct Private {
 		template <class>
 		class Attribute ;
+	} ;
+
+	struct HEAP_PACK {
+		SharedRef<FixedBuffer<REAL>> mBuffer ;
 	} ;
 
 private:
@@ -428,8 +440,7 @@ public:
 
 	template <class _RET = REMOVE_CVR_TYPE<typename Private::template Attribute<ByteWriter>>>
 	_RET attr () leftvalue {
-		struct Dependent ;
-		using R1X = typename DEPENDENT_TYPE<Private ,Dependent>::template Attribute<ByteWriter> ;
+		using R1X = typename DEPENDENT_TYPE<Private ,struct ANONYMOUS>::template Attribute<ByteWriter> ;
 		return R1X (PhanRef<ByteWriter>::make (DEREF[this])) ;
 	}
 
@@ -462,7 +473,7 @@ public:
 		mWrite = write_ ;
 	}
 
-	ByteWriter share () leftvalue {
+	ByteWriter share () const {
 		ByteWriter ret ;
 		ret.mHeap = mHeap ;
 		ret.mStream = PhanBuffer<REAL>::make (mStream) ;
@@ -484,10 +495,10 @@ public:
 
 	void write (const WORD &data) {
 		const auto r1x = WORD (0X0001) ;
-		auto &r2x = _CAST_ (ARGV<BYTE[_SIZEOF_ (WORD)]>::ID ,r1x) ;
-		auto &r3x = _CAST_ (ARGV<BYTE[_SIZEOF_ (WORD)]>::ID ,data) ;
-		for (auto &&i : _RANGE_ (0 ,_COUNTOF_ (DEF<decltype (r3x)>)))
-			write (r3x[r2x[i]]) ;
+		const auto r2x = _BITWISE_CAST_ (ARGV<PACK<ARRAY_BIND_TYPE<BYTE ,SIZE_OF_TYPE<WORD>>>>::ID ,r1x) ;
+		const auto r3x = _BITWISE_CAST_ (ARGV<PACK<ARRAY_BIND_TYPE<BYTE ,SIZE_OF_TYPE<WORD>>>>::ID ,data) ;
+		for (auto &&i : _RANGE_ (0 ,_COUNTOF_ (DEF<decltype (r3x.mP1)>)))
+			write (r3x.mP1[r2x.mP1[i]]) ;
 	}
 
 	inline ByteWriter &operator<< (const WORD &data) {
@@ -497,10 +508,10 @@ public:
 
 	void write (const CHAR &data) {
 		const auto r1x = CHAR (0X00010203) ;
-		auto &r2x = _CAST_ (ARGV<BYTE[_SIZEOF_ (CHAR)]>::ID ,r1x) ;
-		auto &r3x = _CAST_ (ARGV<BYTE[_SIZEOF_ (CHAR)]>::ID ,data) ;
-		for (auto &&i : _RANGE_ (0 ,_COUNTOF_ (DEF<decltype (r3x)>)))
-			write (r3x[r2x[i]]) ;
+		const auto r2x = _BITWISE_CAST_ (ARGV<PACK<ARRAY_BIND_TYPE<BYTE ,SIZE_OF_TYPE<CHAR>>>>::ID ,r1x) ;
+		const auto r3x = _BITWISE_CAST_ (ARGV<PACK<ARRAY_BIND_TYPE<BYTE ,SIZE_OF_TYPE<CHAR>>>>::ID ,data) ;
+		for (auto &&i : _RANGE_ (0 ,_COUNTOF_ (DEF<decltype (r3x.mP1)>)))
+			write (r3x.mP1[r2x.mP1[i]]) ;
 	}
 
 	inline ByteWriter &operator<< (const CHAR &data) {
@@ -510,10 +521,10 @@ public:
 
 	void write (const DATA &data) {
 		const auto r1x = DATA (0X0001020304050607) ;
-		auto &r2x = _CAST_ (ARGV<BYTE[_SIZEOF_ (DATA)]>::ID ,r1x) ;
-		auto &r3x = _CAST_ (ARGV<BYTE[_SIZEOF_ (DATA)]>::ID ,data) ;
-		for (auto &&i : _RANGE_ (0 ,_COUNTOF_ (DEF<decltype (r3x)>)))
-			write (r3x[r2x[i]]) ;
+		const auto r2x = _BITWISE_CAST_ (ARGV<PACK<ARRAY_BIND_TYPE<BYTE ,SIZE_OF_TYPE<DATA>>>>::ID ,r1x) ;
+		const auto r3x = _BITWISE_CAST_ (ARGV<PACK<ARRAY_BIND_TYPE<BYTE ,SIZE_OF_TYPE<DATA>>>>::ID ,data) ;
+		for (auto &&i : _RANGE_ (0 ,_COUNTOF_ (DEF<decltype (r3x.mP1)>)))
+			write (r3x.mP1[r2x.mP1[i]]) ;
 	}
 
 	inline ByteWriter &operator<< (const DATA &data) {
@@ -522,7 +533,7 @@ public:
 	}
 
 	void write (const BOOL &data) {
-		const auto r1x = _CAST_ (ARGV<U::BYTE_BASE_TYPE<BOOL>>::ID ,data) ;
+		const auto r1x = _BITWISE_CAST_ (ARGV<U::BYTE_BASE_TYPE<BOOL>>::ID ,data) ;
 		write (r1x) ;
 	}
 
@@ -536,7 +547,7 @@ public:
 	inline ByteWriter &operator<< (const PTR<const NONE> &) = delete ;
 
 	void write (const VAR32 &data) {
-		const auto r1x = _CAST_ (ARGV<U::BYTE_BASE_TYPE<VAR32>>::ID ,data) ;
+		const auto r1x = _BITWISE_CAST_ (ARGV<U::BYTE_BASE_TYPE<VAR32>>::ID ,data) ;
 		write (r1x) ;
 	}
 
@@ -546,7 +557,7 @@ public:
 	}
 
 	void write (const VAR64 &data) {
-		const auto r1x = _CAST_ (ARGV<U::BYTE_BASE_TYPE<VAR64>>::ID ,data) ;
+		const auto r1x = _BITWISE_CAST_ (ARGV<U::BYTE_BASE_TYPE<VAR64>>::ID ,data) ;
 		write (r1x) ;
 	}
 
@@ -556,7 +567,7 @@ public:
 	}
 
 	void write (const VAL32 &data) {
-		const auto r1x = _CAST_ (ARGV<U::BYTE_BASE_TYPE<VAL32>>::ID ,data) ;
+		const auto r1x = _BITWISE_CAST_ (ARGV<U::BYTE_BASE_TYPE<VAL32>>::ID ,data) ;
 		write (r1x) ;
 	}
 
@@ -566,7 +577,7 @@ public:
 	}
 
 	void write (const VAL64 &data) {
-		const auto r1x = _CAST_ (ARGV<U::BYTE_BASE_TYPE<VAL64>>::ID ,data) ;
+		const auto r1x = _BITWISE_CAST_ (ARGV<U::BYTE_BASE_TYPE<VAL64>>::ID ,data) ;
 		write (r1x) ;
 	}
 
@@ -699,8 +710,8 @@ public:
 
 template <class REAL>
 template <class BASE>
-class ByteWriter<REAL>::Private::Attribute
-	:private Proxy {
+class ByteWriter<REAL>::Private::Attribute :
+	delegate private Proxy {
 private:
 	PhanRef<BASE> mBase ;
 
@@ -721,31 +732,36 @@ public:
 } ;
 
 template <class REAL>
-inline void ByteWriter<REAL>::CLS (const ARGVF<ARGC<1>> &) {}
+inline void ByteWriter<REAL>::CLS (const ARGV<ARGVP<ARGC<1>>> &) {}
 
 template <class REAL>
-inline void ByteWriter<REAL>::GAP (const ARGVF<ARGC<3>> &) {}
+inline void ByteWriter<REAL>::GAP (const ARGV<ARGVP<ARGC<3>>> &) {}
 
 template <class REAL>
-inline void ByteWriter<REAL>::EOS (const ARGVF<ARGC<4>> &) {}
+inline void ByteWriter<REAL>::EOS (const ARGV<ARGVP<ARGC<4>>> &) {}
 
 template <class REAL>
 class TextReader {
-	_STATIC_ASSERT_ (IS_STR_XYZ_HELP<REAL>::compile ()) ;
-
 public:
-	class Binder
-		:public Interface {
+	class Binder :
+		delegate public Interface {
 	public:
 		virtual void friend_read (TextReader &reader) = 0 ;
 	} ;
 
-	static DEF<void (const ARGVF<ARGC<1>> &)> CLS ;
-	static DEF<void (const ARGVF<ARGC<2>> &)> BOM ;
-	static DEF<void (const ARGVF<ARGC<3>> &)> GAP ;
-	static DEF<void (const ARGVF<ARGC<4>> &)> EOS ;
+	static DEF<void (const ARGV<ARGVP<ARGC<1>>> &)> CLS ;
+	static DEF<void (const ARGV<ARGVP<ARGC<2>>> &)> BOM ;
+	static DEF<void (const ARGV<ARGVP<ARGC<3>>> &)> GAP ;
+	static DEF<void (const ARGV<ARGVP<ARGC<4>>> &)> EOS ;
 
 private:
+	_STATIC_ASSERT_ (IS_STR_XYZ_HELP<REAL>::compile ()) ;
+
+	struct Private {
+		template <class>
+		class Attribute ;
+	} ;
+
 	struct HEAP_PACK {
 		BOOL mEndianFlag ;
 		BOOL mEscapeFlag ;
@@ -753,11 +769,6 @@ private:
 		HashSet<REAL> mEscapeMappingSet ;
 		Deque<PACK<REAL ,FLAG>> mSpace ;
 		HashSet<REAL> mSpaceMappingSet ;
-	} ;
-
-	struct Private {
-		template <class>
-		class Attribute ;
 	} ;
 
 private:
@@ -784,8 +795,7 @@ public:
 
 	template <class _RET = REMOVE_CVR_TYPE<typename Private::template Attribute<TextReader>>>
 	_RET attr () leftvalue {
-		struct Dependent ;
-		using R1X = typename DEPENDENT_TYPE<Private ,Dependent>::template Attribute<TextReader> ;
+		using R1X = typename DEPENDENT_TYPE<Private ,struct ANONYMOUS>::template Attribute<TextReader> ;
 		return R1X (PhanRef<TextReader>::make (DEREF[this])) ;
 	}
 
@@ -818,7 +828,7 @@ public:
 		mWrite = write_ ;
 	}
 
-	TextReader share () leftvalue {
+	TextReader share () const {
 		TextReader ret ;
 		ret.mHeap = mHeap ;
 		ret.mStream = PhanBuffer<const REAL>::make (mStream) ;
@@ -1214,7 +1224,7 @@ private:
 			DEREF[this] = rax.share () ;
 			rax.read (top) ;
 		}
-		auto rbx = ARRAY3<VAR64> {0 ,0 ,0} ;
+		auto rbx = ARRAY3<VAR64> ({0 ,0 ,0}) ;
 		if switch_once (TRUE) {
 			if (!r1x.varify_number_item (top))
 				discard ;
@@ -1340,8 +1350,8 @@ private:
 
 template <class REAL>
 template <class BASE>
-class TextReader<REAL>::Private::Attribute
-	:private Proxy {
+class TextReader<REAL>::Private::Attribute :
+	delegate private Proxy {
 private:
 	PhanRef<BASE> mBase ;
 
@@ -1365,8 +1375,8 @@ public:
 		if (!mBase->mHeap->mEndianFlag)
 			return item ;
 		U::BYTE_BASE_TYPE<REAL> ret ;
-		auto &r1x = _CAST_ (ARGV<BYTE[_SIZEOF_ (REAL)]>::ID ,item) ;
-		ByteReader<BYTE> (PhanBuffer<const BYTE>::make (r1x)) >> ret ;
+		const auto r1x = _BITWISE_CAST_ (ARGV<PACK<ARRAY_BIND_TYPE<BYTE ,SIZE_OF_TYPE<REAL>>>>::ID ,item) ;
+		ByteReader<BYTE> (PhanBuffer<const BYTE>::make (r1x.mP1)) >> ret ;
 		return _MOVE_ (_CAST_ (ARGV<REAL>::ID ,ret)) ;
 	}
 
@@ -1464,44 +1474,44 @@ public:
 } ;
 
 template <class REAL>
-inline void TextReader<REAL>::CLS (const ARGVF<ARGC<1>> &) {}
+inline void TextReader<REAL>::CLS (const ARGV<ARGVP<ARGC<1>>> &) {}
 
 template <class REAL>
-inline void TextReader<REAL>::BOM (const ARGVF<ARGC<2>> &) {}
+inline void TextReader<REAL>::BOM (const ARGV<ARGVP<ARGC<2>>> &) {}
 
 template <class REAL>
-inline void TextReader<REAL>::GAP (const ARGVF<ARGC<3>> &) {}
+inline void TextReader<REAL>::GAP (const ARGV<ARGVP<ARGC<3>>> &) {}
 
 template <class REAL>
-inline void TextReader<REAL>::EOS (const ARGVF<ARGC<4>> &) {}
+inline void TextReader<REAL>::EOS (const ARGV<ARGVP<ARGC<4>>> &) {}
 
 template <class REAL>
 class TextWriter {
-	_STATIC_ASSERT_ (IS_STR_XYZ_HELP<REAL>::compile ()) ;
-
 public:
-	class Binder
-		:public Interface {
+	class Binder :
+		delegate public Interface {
 	public:
 		virtual void friend_write (TextWriter &writer) const = 0 ;
 	} ;
 
-	static DEF<void (const ARGVF<ARGC<1>> &)> CLS ;
-	static DEF<void (const ARGVF<ARGC<2>> &)> BOM ;
-	static DEF<void (const ARGVF<ARGC<3>> &)> GAP ;
-	static DEF<void (const ARGVF<ARGC<4>> &)> EOS ;
+	static DEF<void (const ARGV<ARGVP<ARGC<1>>> &)> CLS ;
+	static DEF<void (const ARGV<ARGVP<ARGC<2>>> &)> BOM ;
+	static DEF<void (const ARGV<ARGVP<ARGC<3>>> &)> GAP ;
+	static DEF<void (const ARGV<ARGVP<ARGC<4>>> &)> EOS ;
 
 private:
+	_STATIC_ASSERT_ (IS_STR_XYZ_HELP<REAL>::compile ()) ;
+
+	struct Private {
+		template <class>
+		class Attribute ;
+	} ;
+
 	struct HEAP_PACK {
 		SharedRef<FixedBuffer<REAL>> mBuffer ;
 		BOOL mEscapeFlag ;
 		Deque<REAL> mEscape ;
 		HashSet<REAL> mEscapeMappingSet ;
-	} ;
-
-	struct Private {
-		template <class>
-		class Attribute ;
 	} ;
 
 private:
@@ -1536,8 +1546,7 @@ public:
 
 	template <class _RET = REMOVE_CVR_TYPE<typename Private::template Attribute<TextWriter>>>
 	_RET attr () leftvalue {
-		struct Dependent ;
-		using R1X = typename DEPENDENT_TYPE<Private ,Dependent>::template Attribute<TextWriter> ;
+		using R1X = typename DEPENDENT_TYPE<Private ,struct ANONYMOUS>::template Attribute<TextWriter> ;
 		return R1X (PhanRef<TextWriter>::make (DEREF[this])) ;
 	}
 
@@ -1570,7 +1579,7 @@ public:
 		mWrite = write_ ;
 	}
 
-	TextWriter share () leftvalue {
+	TextWriter share () const {
 		TextWriter ret ;
 		ret.mHeap = mHeap ;
 		ret.mStream = PhanBuffer<REAL>::make (mStream) ;
@@ -1638,9 +1647,10 @@ public:
 	void write (const VAR64 &data) {
 		auto rax = Buffer<REAL ,ARGC<128>> () ;
 		INDEX iw = rax.size () ;
-		compute_write_number (data ,PhanBuffer<REAL>::make (rax) ,iw) ;
-		const auto r1x = PhanBuffer<const REAL>::make (PTRTOARR[DEPTR[rax.self[iw]]] ,(rax.size () - iw)) ;
-		write (r1x) ;
+		const auto r1x = PhanBuffer<REAL>::make (rax) ;
+		compute_write_number (data ,r1x ,iw) ;
+		const auto r2x = PhanBuffer<const REAL>::make (PTRTOARR[DEPTR[rax.self[iw]]] ,(rax.size () - iw)) ;
+		write (r2x) ;
 	}
 
 	inline TextWriter &operator<< (const VAR64 &data) {
@@ -1680,9 +1690,10 @@ public:
 			auto rax = Buffer<REAL ,ARGC<256>> () ;
 			INDEX iw = rax.size () ;
 			const auto r2x = r1x.varify_val32_precision () ;
-			compute_write_number (data ,r2x ,PhanBuffer<REAL>::make (rax) ,iw) ;
-			const auto r3x = PhanBuffer<const REAL>::make (PTRTOARR[DEPTR[rax.self[iw]]] ,(rax.size () - iw)) ;
-			write (r3x) ;
+			const auto r3x = PhanBuffer<REAL>::make (rax) ;
+			compute_write_number (data ,r2x ,r3x ,iw) ;
+			const auto r4x = PhanBuffer<const REAL>::make (PTRTOARR[DEPTR[rax.self[iw]]] ,(rax.size () - iw)) ;
+			write (r4x) ;
 		}
 	}
 
@@ -1723,9 +1734,10 @@ public:
 			auto rax = Buffer<REAL ,ARGC<256>> () ;
 			INDEX iw = rax.size () ;
 			const auto r2x = r1x.varify_val64_precision () ;
-			compute_write_number (data ,r2x ,PhanBuffer<REAL>::make (rax) ,iw) ;
-			const auto r3x = PhanBuffer<const REAL>::make (PTRTOARR[DEPTR[rax.self[iw]]] ,(rax.size () - iw)) ;
-			write (r3x) ;
+			const auto r3x = PhanBuffer<REAL>::make (rax) ;
+			compute_write_number (data ,r2x ,r3x ,iw) ;
+			const auto r4x = PhanBuffer<const REAL>::make (PTRTOARR[DEPTR[rax.self[iw]]] ,(rax.size () - iw)) ;
+			write (r4x) ;
 		}
 	}
 
@@ -2062,8 +2074,8 @@ private:
 
 template <class REAL>
 template <class BASE>
-class TextWriter<REAL>::Private::Attribute
-	:private Proxy {
+class TextWriter<REAL>::Private::Attribute :
+	delegate private Proxy {
 private:
 	PhanRef<BASE> mBase ;
 
@@ -2149,27 +2161,27 @@ public:
 } ;
 
 template <class REAL>
-inline void TextWriter<REAL>::CLS (const ARGVF<ARGC<1>> &) {}
+inline void TextWriter<REAL>::CLS (const ARGV<ARGVP<ARGC<1>>> &) {}
 
 template <class REAL>
-inline void TextWriter<REAL>::BOM (const ARGVF<ARGC<2>> &) {}
+inline void TextWriter<REAL>::BOM (const ARGV<ARGVP<ARGC<2>>> &) {}
 
 template <class REAL>
-inline void TextWriter<REAL>::GAP (const ARGVF<ARGC<3>> &) {}
+inline void TextWriter<REAL>::GAP (const ARGV<ARGVP<ARGC<3>>> &) {}
 
 template <class REAL>
-inline void TextWriter<REAL>::EOS (const ARGVF<ARGC<4>> &) {}
+inline void TextWriter<REAL>::EOS (const ARGV<ARGVP<ARGC<4>>> &) {}
 
 class RegularReader {
 public:
-	static DEF<void (const ARGVF<ARGC<1>> &)> HINT_IDENTIFIER ;
-	static DEF<void (const ARGVF<ARGC<2>> &)> HINT_VALUE ;
-	static DEF<void (const ARGVF<ARGC<3>> &)> HINT_STRING ;
-	static DEF<void (const ARGVF<ARGC<4>> &)> HINT_WORD_GAP ;
-	static DEF<void (const ARGVF<ARGC<5>> &)> HINT_WORD_GAP_ENDLINE ;
-	static DEF<void (const ARGVF<ARGC<6>> &)> SKIP_GAP ;
-	static DEF<void (const ARGVF<ARGC<7>> &)> SKIP_GAP_SPACE ;
-	static DEF<void (const ARGVF<ARGC<8>> &)> SKIP_GAP_ENDLINE ;
+	static DEF<void (const ARGV<ARGVP<ARGC<1>>> &)> HINT_IDENTIFIER ;
+	static DEF<void (const ARGV<ARGVP<ARGC<2>>> &)> HINT_VALUE ;
+	static DEF<void (const ARGV<ARGVP<ARGC<3>>> &)> HINT_STRING ;
+	static DEF<void (const ARGV<ARGVP<ARGC<4>>> &)> HINT_WORD_GAP ;
+	static DEF<void (const ARGV<ARGVP<ARGC<5>>> &)> HINT_WORD_GAP_ENDLINE ;
+	static DEF<void (const ARGV<ARGVP<ARGC<6>>> &)> SKIP_GAP ;
+	static DEF<void (const ARGV<ARGVP<ARGC<7>>> &)> SKIP_GAP_SPACE ;
+	static DEF<void (const ARGV<ARGVP<ARGC<8>>> &)> SKIP_GAP_ENDLINE ;
 
 private:
 	struct HEAP_PACK {
@@ -2225,7 +2237,7 @@ public:
 		mHintNextTextSize = 0 ;
 	}
 
-	RegularReader share () leftvalue {
+	RegularReader share () const {
 		RegularReader ret ;
 		ret.mHeap = SharedRef<HEAP_PACK>::make () ;
 		ret.mHeap->mReader = mReader->share () ;
@@ -2529,19 +2541,19 @@ public:
 	}
 } ;
 
-inline void RegularReader::HINT_IDENTIFIER (const ARGVF<ARGC<1>> &) {}
+inline void RegularReader::HINT_IDENTIFIER (const ARGV<ARGVP<ARGC<1>>> &) {}
 
-inline void RegularReader::HINT_VALUE (const ARGVF<ARGC<2>> &) {}
+inline void RegularReader::HINT_VALUE (const ARGV<ARGVP<ARGC<2>>> &) {}
 
-inline void RegularReader::HINT_STRING (const ARGVF<ARGC<3>> &) {}
+inline void RegularReader::HINT_STRING (const ARGV<ARGVP<ARGC<3>>> &) {}
 
-inline void RegularReader::HINT_WORD_GAP (const ARGVF<ARGC<4>> &) {}
+inline void RegularReader::HINT_WORD_GAP (const ARGV<ARGVP<ARGC<4>>> &) {}
 
-inline void RegularReader::HINT_WORD_GAP_ENDLINE (const ARGVF<ARGC<5>> &) {}
+inline void RegularReader::HINT_WORD_GAP_ENDLINE (const ARGV<ARGVP<ARGC<5>>> &) {}
 
-inline void RegularReader::SKIP_GAP (const ARGVF<ARGC<6>> &) {}
+inline void RegularReader::SKIP_GAP (const ARGV<ARGVP<ARGC<6>>> &) {}
 
-inline void RegularReader::SKIP_GAP_SPACE (const ARGVF<ARGC<7>> &) {}
+inline void RegularReader::SKIP_GAP_SPACE (const ARGV<ARGVP<ARGC<7>>> &) {}
 
-inline void RegularReader::SKIP_GAP_ENDLINE (const ARGVF<ARGC<8>> &) {}
+inline void RegularReader::SKIP_GAP_ENDLINE (const ARGV<ARGVP<ARGC<8>>> &) {}
 } ;

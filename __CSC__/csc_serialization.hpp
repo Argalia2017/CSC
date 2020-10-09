@@ -7,14 +7,15 @@
 #include "csc.hpp"
 #include "csc_core.hpp"
 #include "csc_basic.hpp"
+#include "csc_extend.hpp"
 #include "csc_array.hpp"
 #include "csc_math.hpp"
 #include "csc_stream.hpp"
 #include "csc_string.hpp"
 
 namespace CSC {
-class SerializationStaticProc
-	:private Wrapped<> {
+class SerializationStaticProc :
+	delegate private Wrapped<> {
 public:
 	imports const String<STRU8> &static_empty_string () ;
 } ;
@@ -34,6 +35,14 @@ static constexpr auto NODE_CLAZZ_FINAL = EFLAG (6) ;
 
 class XmlParser {
 private:
+	struct Private {
+		class RecursiveCounter ;
+
+		class InitializeX1Lambda ;
+
+		class InitializeX2Lambda ;
+	} ;
+
 	struct NODE_PACK {
 		String<STRU8> mName ;
 		Deque<String<STRU8>> mAttribute ;
@@ -43,14 +52,6 @@ private:
 		INDEX mParent ;
 		INDEX mBrother ;
 		INDEX mChild ;
-	} ;
-
-	struct Private {
-		class RecursiveCounter ;
-
-		class InitializeX1Lambda ;
-
-		class InitializeX2Lambda ;
 	} ;
 
 private:
@@ -428,8 +429,8 @@ private:
 	imports void initialize (XmlParser &this_ ,const Array<XmlParser> &sequence) ;
 } ;
 
-class XmlParser::Private::RecursiveCounter
-	:private Wrapped<LENGTH> {
+class XmlParser::Private::RecursiveCounter :
+	delegate private Wrapped<LENGTH> {
 private:
 	using Wrapped<LENGTH>::mSelf ;
 
@@ -444,8 +445,8 @@ public:
 	}
 } ;
 
-class XmlParser::Private::InitializeX1Lambda
-	:private Proxy {
+class XmlParser::Private::InitializeX1Lambda :
+	delegate private Proxy {
 private:
 	XmlParser &mContext ;
 
@@ -463,8 +464,11 @@ private:
 	INDEX mRoot ;
 
 public:
-	explicit InitializeX1Lambda (XmlParser &context_ ,PhanBuffer<const STRU8> &&data)
-		: mContext (context_) ,mTextReader (_MOVE_ (data)) {}
+	implicit InitializeX1Lambda () = delete ;
+
+	explicit InitializeX1Lambda (const DEF<decltype (ARGVP0)> & ,XmlParser &context_ ,PhanBuffer<const STRU8> &&data) :
+		delegate mContext (context_) ,
+		delegate mTextReader (_MOVE_ (data)) {}
 
 	inline void operator() () {
 		prepare () ;
@@ -630,9 +634,11 @@ private:
 				const auto r3x = mNodeTree[curr].mMemberSet.length () ;
 				mNodeTree[curr].mMemberSet.add (r3x ,mLatestIndex) ;
 				mNodeTree[curr].mObjectSet.add (mNodeTree[mLatestIndex].mName ,mLatestIndex) ;
-				auto &r4x = _SWITCH_ (
-					(ix == VAR_NONE) ? ix :
-					mNodeTree[iy].mBrother) ;
+				auto &r4x = _CALL_ ([&] () {
+					if (ix == VAR_NONE)
+						return _BYREF_ (ix) ;
+					return _BYREF_ (mNodeTree[iy].mBrother) ;
+				}).self ;
 				r4x = mLatestIndex ;
 				iy = mLatestIndex ;
 			}
@@ -690,8 +696,8 @@ private:
 	}
 } ;
 
-class XmlParser::Private::InitializeX2Lambda
-	:private Proxy {
+class XmlParser::Private::InitializeX2Lambda :
+	delegate private Proxy {
 private:
 	struct FOUND_NODE {
 		String<STRU8> mName ;
@@ -732,8 +738,16 @@ private:
 	STACK_NODE mTempNode ;
 
 public:
-	explicit InitializeX2Lambda (XmlParser &context_ ,const Array<XmlParser> &sequence)
-		: mContext (context_) ,mSequence (sequence) ,mClazzString (_PCSTRU8_ ("type")) ,mTableClazzString (_PCSTRU8_ ("table")) ,mObjectClazzString (_PCSTRU8_ ("object")) ,mArrayClazzString (_PCSTRU8_ ("array")) ,mFinalClazzString (_PCSTRU8_ ("final")) {}
+	implicit InitializeX2Lambda () = delete ;
+
+	explicit InitializeX2Lambda (const DEF<decltype (ARGVP0)> & ,XmlParser &context_ ,const Array<XmlParser> &sequence) :
+		delegate mContext (context_) ,
+		delegate mSequence (sequence) ,
+		delegate mClazzString (_PCSTRU8_ ("type")) ,
+		delegate mTableClazzString (_PCSTRU8_ ("table")) ,
+		delegate mObjectClazzString (_PCSTRU8_ ("object")) ,
+		delegate mArrayClazzString (_PCSTRU8_ ("array")) ,
+		delegate mFinalClazzString (_PCSTRU8_ ("final")) {}
 
 	inline void operator() () {
 		prepare () ;
@@ -980,31 +994,29 @@ private:
 } ;
 
 inline exports void XmlParser::initialize (XmlParser &this_ ,const PhanBuffer<const STRU8> &data) {
-	struct Dependent ;
-	using R1X = typename DEPENDENT_TYPE<Private ,Dependent>::InitializeX1Lambda ;
-	_CALL_TRY_ (R1X (this_ ,PhanBuffer<const STRU8>::make (data))) ;
+	using R1X = typename DEPENDENT_TYPE<Private ,struct ANONYMOUS>::InitializeX1Lambda ;
+	_CALL_TRY_ (R1X (ARGVP0 ,this_ ,PhanBuffer<const STRU8>::make (data))) ;
 }
 
 inline exports void XmlParser::initialize (XmlParser &this_ ,const Array<XmlParser> &sequence) {
-	struct Dependent ;
-	using R1X = typename DEPENDENT_TYPE<Private ,Dependent>::InitializeX2Lambda ;
-	_CALL_TRY_ (R1X (this_ ,sequence)) ;
+	using R1X = typename DEPENDENT_TYPE<Private ,struct ANONYMOUS>::InitializeX2Lambda ;
+	_CALL_TRY_ (R1X (ARGVP0 ,this_ ,sequence)) ;
 }
 
 class JsonParser {
 private:
+	struct Private {
+		class RecursiveCounter ;
+
+		class InitializeLambda ;
+	} ;
+
 	struct NODE_PACK {
 		AnyRef<> mValue ;
 		EFLAG mClazz ;
 		INDEX mParent ;
 		INDEX mBrother ;
 		INDEX mChild ;
-	} ;
-
-	struct Private {
-		class RecursiveCounter ;
-
-		class InitializeLambda ;
 	} ;
 
 private:
@@ -1394,8 +1406,8 @@ private:
 	imports void initialize (JsonParser &this_ ,const PhanBuffer<const STRU8> &data) ;
 } ;
 
-class JsonParser::Private::RecursiveCounter
-	:private Wrapped<LENGTH> {
+class JsonParser::Private::RecursiveCounter :
+	delegate private Wrapped<LENGTH> {
 private:
 	using Wrapped<LENGTH>::mSelf ;
 
@@ -1410,8 +1422,8 @@ public:
 	}
 } ;
 
-class JsonParser::Private::InitializeLambda
-	:private Proxy {
+class JsonParser::Private::InitializeLambda :
+	delegate private Proxy {
 private:
 	JsonParser &mContext ;
 
@@ -1428,8 +1440,11 @@ private:
 	INDEX mRoot ;
 
 public:
-	explicit InitializeLambda (JsonParser &context_ ,PhanBuffer<const STRU8> &&data)
-		: mContext (context_) ,mTextReader (_MOVE_ (data)) {}
+	implicit InitializeLambda () = delete ;
+
+	explicit InitializeLambda (const DEF<decltype (ARGVP0)> & ,JsonParser &context_ ,PhanBuffer<const STRU8> &&data) :
+		delegate mContext (context_) ,
+		delegate mTextReader (_MOVE_ (data)) {}
 
 	inline void operator() () {
 		prepare () ;
@@ -1607,9 +1622,11 @@ private:
 			auto &r1x = mNodeTree[curr].mValue.rebind (ARGV<SoftSet<INDEX>>::ID).self ;
 			const auto r2x = r1x.length () ;
 			r1x.add (r2x ,mLatestIndex) ;
-			auto &r3x = _SWITCH_ (
-				(ix == VAR_NONE) ? ix :
-				mNodeTree[iy].mBrother) ;
+			auto &r3x = _CALL_ ([&] () {
+				if (ix == VAR_NONE)
+					return _BYREF_ (ix) ;
+				return _BYREF_ (mNodeTree[iy].mBrother) ;
+			}).self ;
 			r3x = mLatestIndex ;
 			iy = mLatestIndex ;
 			mRis >> RegularReader::SKIP_GAP ;
@@ -1661,10 +1678,12 @@ private:
 		INDEX iy = VAR_NONE ;
 		while (TRUE) {
 			update_shift_e7 (curr) ;
-			auto &r1x = _SWITCH_ (
-				(ix == VAR_NONE) ? ix :
-				mNodeTree[iy].mBrother) ;
-			r1x = mLatestIndex ;
+			const auto r1x = _CALL_ ([&] () {
+				if (ix == VAR_NONE)
+					return _BYREF_ (ix) ;
+				return _BYREF_ (mNodeTree[iy].mBrother) ;
+			}) ;
+			r1x.self = mLatestIndex ;
 			iy = mLatestIndex ;
 			mRis >> RegularReader::SKIP_GAP ;
 			if (mRis[0] != STRU8 (','))
@@ -1735,9 +1754,8 @@ private:
 } ;
 
 inline exports void JsonParser::initialize (JsonParser &this_ ,const PhanBuffer<const STRU8> &data) {
-	struct Dependent ;
-	using R1X = typename DEPENDENT_TYPE<Private ,Dependent>::InitializeLambda ;
-	_CALL_TRY_ (R1X (this_ ,PhanBuffer<const STRU8>::make (data))) ;
+	using R1X = typename DEPENDENT_TYPE<Private ,struct ANONYMOUS>::InitializeLambda ;
+	_CALL_TRY_ (R1X (ARGVP0 ,this_ ,PhanBuffer<const STRU8>::make (data))) ;
 }
 
 class CommandParser {
@@ -1753,7 +1771,7 @@ private:
 	ArrayList<String<STRU8>> mCommand ;
 
 public:
-	implicit CommandParser () = delete ;
+	implicit CommandParser () = default ;
 
 	explicit CommandParser (const PhanBuffer<const STRU8> &data) {
 		initialize (DEREF[this] ,data) ;
@@ -1764,7 +1782,7 @@ public:
 			String<STRU8> ret = String<STRU8>::make () ;
 			auto rax = TextWriter<STRU8> (ret.raw ()) ;
 			for (auto &&i : _RANGE_ (1 ,LENGTH (argc))) {
-				rax << StringProc::cvt_as_u8s (PTRTOARR[argv[i]]) ;
+				rax << StringProc::cvt_as_u8s (String<STRA> (PTRTOARR[argv[i]])) ;
 				rax << _PCSTRU8_ (" ") ;
 			}
 			rax << TextWriter<STRU8>::EOS ;
@@ -1858,8 +1876,8 @@ private:
 	imports void initialize (CommandParser &this_ ,const PhanBuffer<const STRU8> &data) ;
 } ;
 
-class CommandParser::Private::InitializeLambda
-	:private Proxy {
+class CommandParser::Private::InitializeLambda :
+	delegate private Proxy {
 private:
 	CommandParser &mContext ;
 
@@ -1873,8 +1891,11 @@ private:
 	ArrayList<String<STRU8>> mCommand ;
 
 public:
-	explicit InitializeLambda (CommandParser &context_ ,PhanBuffer<const STRU8> &&data)
-		: mContext (context_) ,mTextReader (PhanBuffer<const STRU8>::make (data)) {}
+	implicit InitializeLambda () = delete ;
+
+	explicit InitializeLambda (const DEF<decltype (ARGVP0)> & ,CommandParser &context_ ,PhanBuffer<const STRU8> &&data) :
+		delegate mContext (context_) ,
+		delegate mTextReader (PhanBuffer<const STRU8>::make (data)) {}
 
 	inline void operator() () {
 		prepare () ;
@@ -2025,8 +2046,7 @@ private:
 } ;
 
 inline exports void CommandParser::initialize (CommandParser &this_ ,const PhanBuffer<const STRU8> &data) {
-	struct Dependent ;
-	using R1X = typename DEPENDENT_TYPE<Private ,Dependent>::InitializeLambda ;
-	_CALL_TRY_ (R1X (this_ ,PhanBuffer<const STRU8>::make (data))) ;
+	using R1X = typename DEPENDENT_TYPE<Private ,struct ANONYMOUS>::InitializeLambda ;
+	_CALL_TRY_ (R1X (ARGVP0 ,this_ ,PhanBuffer<const STRU8>::make (data))) ;
 }
 } ;

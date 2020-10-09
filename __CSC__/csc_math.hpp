@@ -10,8 +10,8 @@
 #include "csc_array.hpp"
 
 namespace CSC {
-class MathProc
-	:private Wrapped<> {
+class MathProc :
+	delegate private Wrapped<> {
 public:
 	template <class _ARG1>
 	imports REMOVE_CVR_TYPE<_ARG1> square (const _ARG1 &val) ;
@@ -420,7 +420,7 @@ inline exports REMOVE_CVR_TYPE<_ARG1> MathProc::maxof (const _ARG1 &list_one ,co
 
 template <class _ARG1>
 inline exports ARRAY2<_ARG1> MathProc::sort (const _ARG1 &list_one ,const _ARG1 &list_two) {
-	ARRAY2<_ARG1> ret = ARRAY2<_ARG1> {list_one ,list_two} ;
+	ARRAY2<_ARG1> ret = ARRAY2<_ARG1> ({list_one ,list_two}) ;
 	if (!(ret[0] <= ret[1]))
 		_SWAP_ (ret[0] ,ret[1]) ;
 	return _MOVE_ (ret) ;
@@ -428,7 +428,7 @@ inline exports ARRAY2<_ARG1> MathProc::sort (const _ARG1 &list_one ,const _ARG1 
 
 template <class _ARG1>
 inline exports ARRAY3<_ARG1> MathProc::sort (const _ARG1 &list_one ,const _ARG1 &list_two ,const _ARG1 &list_three) {
-	ARRAY3<_ARG1> ret = ARRAY3<_ARG1> {list_one ,list_two ,list_three} ;
+	ARRAY3<_ARG1> ret = ARRAY3<_ARG1> ({list_one ,list_two ,list_three}) ;
 	if (!(ret[0] <= ret[1]))
 		_SWAP_ (ret[0] ,ret[1]) ;
 	if (!(ret[0] <= ret[2]))
@@ -438,8 +438,8 @@ inline exports ARRAY3<_ARG1> MathProc::sort (const _ARG1 &list_one ,const _ARG1 
 	return _MOVE_ (ret) ;
 }
 
-class MathStaticProc
-	:private Wrapped<> {
+class MathStaticProc :
+	delegate private Wrapped<> {
 public:
 	imports ARRAY3<DATA> static_ieee754_encode_part (const ARRAY3<VAR64> &sne2) ;
 
@@ -451,8 +451,10 @@ public:
 } ;
 
 inline exports ARRAY3<DATA> MathStaticProc::static_ieee754_encode_part (const ARRAY3<VAR64> &sne2) {
-	const auto r1x = _CAST_ (ARGV<ARRAY3<DATA>>::ID ,sne2) ;
-	ARRAY3<DATA> ret = r1x ;
+	ARRAY3<DATA> ret ;
+	ret[0] = _BITWISE_CAST_ (ARGV<DATA>::ID ,sne2[0]) ;
+	ret[1] = _BITWISE_CAST_ (ARGV<DATA>::ID ,sne2[1]) ;
+	ret[2] = _BITWISE_CAST_ (ARGV<DATA>::ID ,sne2[2]) ;
 	while (TRUE) {
 		if (ret[0] == 0)
 			break ;
@@ -484,7 +486,7 @@ inline exports ARRAY3<DATA> MathStaticProc::static_ieee754_encode_part (const AR
 }
 
 inline exports BOOL MathProc::is_nan (const VAL32 &x) {
-	const auto r1x = _CAST_ (ARGV<CHAR>::ID ,x) ;
+	const auto r1x = _BITWISE_CAST_ (ARGV<CHAR>::ID ,x) ;
 	if ((r1x & CHAR (0X7F800000)) != CHAR (0X7F800000))
 		return FALSE ;
 	if ((r1x & CHAR (0X007FFFFF)) == 0)
@@ -493,7 +495,7 @@ inline exports BOOL MathProc::is_nan (const VAL32 &x) {
 }
 
 inline exports BOOL MathProc::is_nan (const VAL64 &x) {
-	const auto r1x = _CAST_ (ARGV<DATA>::ID ,x) ;
+	const auto r1x = _BITWISE_CAST_ (ARGV<DATA>::ID ,x) ;
 	if ((r1x & DATA (0X7FF0000000000000)) != DATA (0X7FF0000000000000))
 		return FALSE ;
 	if ((r1x & DATA (0X000FFFFFFFFFFFFF)) == 0)
@@ -502,7 +504,7 @@ inline exports BOOL MathProc::is_nan (const VAL64 &x) {
 }
 
 inline exports BOOL MathProc::is_infinite (const VAL32 &x) {
-	const auto r1x = _CAST_ (ARGV<CHAR>::ID ,x) ;
+	const auto r1x = _BITWISE_CAST_ (ARGV<CHAR>::ID ,x) ;
 	if ((r1x & CHAR (0X7F800000)) != CHAR (0X7F800000))
 		return FALSE ;
 	if ((r1x & CHAR (0X007FFFFF)) != 0)
@@ -511,7 +513,7 @@ inline exports BOOL MathProc::is_infinite (const VAL32 &x) {
 }
 
 inline exports BOOL MathProc::is_infinite (const VAL64 &x) {
-	const auto r1x = _CAST_ (ARGV<DATA>::ID ,x) ;
+	const auto r1x = _BITWISE_CAST_ (ARGV<DATA>::ID ,x) ;
 	if ((r1x & DATA (0X7FF0000000000000)) != DATA (0X7FF0000000000000))
 		return FALSE ;
 	if ((r1x & DATA (0X000FFFFFFFFFFFFF)) != 0)
@@ -532,7 +534,7 @@ inline exports VAL64 MathProc::ieee754_encode (const ARRAY3<VAR64> &sne2) {
 
 inline exports ARRAY3<VAR64> MathProc::ieee754_decode (const VAL64 &ieee754) {
 	ARRAY3<DATA> ret ;
-	const auto r1x = _CAST_ (ARGV<DATA>::ID ,ieee754) ;
+	const auto r1x = _BITWISE_CAST_ (ARGV<DATA>::ID ,ieee754) ;
 	ret[0] = r1x & DATA (0X000FFFFFFFFFFFFF) ;
 	const auto r2x = DATA (r1x & DATA (0X7FF0000000000000)) ;
 	if (r2x != 0)
@@ -570,8 +572,10 @@ inline exports VAL64 MathStaticProc::static_taylor_exp (const VAL64 &lnx ,const 
 }
 
 inline exports ARRAY3<VAR64> MathStaticProc::static_ieee754_e2_e10_part (const ARRAY3<VAR64> &sne2) {
-	const auto r1x = _CAST_ (ARGV<ARRAY3<DATA>>::ID ,sne2) ;
-	ARRAY3<DATA> ret = r1x ;
+	ARRAY3<DATA> ret ;
+	ret[0] = _BITWISE_CAST_ (ARGV<DATA>::ID ,sne2[0]) ;
+	ret[1] = _BITWISE_CAST_ (ARGV<DATA>::ID ,sne2[1]) ;
+	ret[2] = _BITWISE_CAST_ (ARGV<DATA>::ID ,sne2[2]) ;
 	while (TRUE) {
 		if (ret[0] == 0)
 			break ;
@@ -614,8 +618,10 @@ inline exports ARRAY3<VAR64> MathProc::ieee754_e2_e10 (const ARRAY3<VAR64> &sne2
 }
 
 inline exports ARRAY3<VAR64> MathStaticProc::static_ieee754_e10_e2_part (const ARRAY3<VAR64> &sne10) {
-	const auto r1x = _CAST_ (ARGV<ARRAY3<DATA>>::ID ,sne10) ;
-	ARRAY3<DATA> ret = r1x ;
+	ARRAY3<DATA> ret ;
+	ret[0] = _BITWISE_CAST_ (ARGV<DATA>::ID ,sne10[0]) ;
+	ret[1] = _BITWISE_CAST_ (ARGV<DATA>::ID ,sne10[1]) ;
+	ret[2] = _BITWISE_CAST_ (ARGV<DATA>::ID ,sne10[2]) ;
 	while (TRUE) {
 		if (ret[0] == 0)
 			break ;

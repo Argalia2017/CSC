@@ -10,8 +10,8 @@
 
 namespace CSC {
 template <class BASE>
-class ArrayIterator
-	:private Proxy {
+class ArrayIterator :
+	delegate private Proxy {
 private:
 	using ITEM = DEF<decltype (_NULL_ (ARGV<BASE>::ID).get (_NULL_ (ARGV<const INDEX>::ID)))> ;
 
@@ -42,8 +42,8 @@ public:
 	}
 } ;
 
-class SortInvokeProc
-	:private Wrapped<> {
+class SortInvokeProc :
+	delegate private Wrapped<> {
 public:
 	template <class _ARG1 ,class _ARG2>
 	imports void invoke (const _ARG1 &array_ ,_ARG2 &out ,const INDEX &lb ,const INDEX &rb) {
@@ -140,13 +140,13 @@ private:
 public:
 	implicit Array () = default ;
 
-	explicit Array (const LENGTH &len)
-		:Array (ARGVP0 ,len) {
+	explicit Array (const LENGTH &len) :
+		delegate Array (ARGVP0 ,len) {
 		_STATIC_WARNING_ ("noop") ;
 	}
 
-	implicit Array (const api::initializer_list<ITEM> &that)
-		: Array (that.size ()) {
+	explicit Array (const api::initializer_list<ITEM> &that) :
+		delegate Array (that.size ()) {
 		_DEBUG_ASSERT_ (size () == LENGTH (that.size ())) ;
 		INDEX iw = 0 ;
 		for (auto &&i : that)
@@ -269,8 +269,8 @@ public:
 	}
 
 private:
-	explicit Array (const DEF<decltype (ARGVP0)> & ,const LENGTH &len)
-		:mArray (len) {}
+	explicit Array (const DEF<decltype (ARGVP0)> & ,const LENGTH &len) :
+		delegate mArray (len) {}
 } ;
 
 template <class ITEM>
@@ -323,13 +323,13 @@ public:
 		clear () ;
 	}
 
-	explicit String (const LENGTH &len)
-		:String (ARGVP0 ,reserve_size (len)) {
+	explicit String (const LENGTH &len) :
+		delegate String (ARGVP0 ,reserve_size (len)) {
 		clear () ;
 	}
 
-	implicit String (const api::initializer_list<ITEM> &that)
-		: String (that.size ()) {
+	explicit String (const api::initializer_list<ITEM> &that) :
+		delegate String (that.size ()) {
 		_DEBUG_ASSERT_ (size () == LENGTH (that.size ())) ;
 		INDEX iw = 0 ;
 		for (auto &&i : that)
@@ -338,13 +338,13 @@ public:
 		_DEBUG_ASSERT_ (iw == mString.size ()) ;
 	}
 
-	implicit String (const ARR<ITEM> &that)
-		:String (plain_string_length (that)) {
+	explicit String (const ARR<ITEM> &that) :
+		delegate String (plain_string_length (DEPTR[that])) {
 		BasicProc::mem_copy (mString.self ,that ,size ()) ;
 	}
 
-	implicit String (const Plain<ITEM> &that)
-		: String (that.size ()) {
+	implicit String (const Plain<ITEM> &that) :
+		delegate String (that.size ()) {
 		BasicProc::mem_copy (mString.self ,that.self ,size ()) ;
 	}
 
@@ -526,10 +526,6 @@ public:
 		return concat (that) ;
 	}
 
-	inline String operator- (const String &that) const {
-		return that.concat (DEREF[this]) ;
-	}
-
 	void concatto (const String &that) {
 		auto fax = TRUE ;
 		if switch_once (fax) {
@@ -591,8 +587,7 @@ public:
 
 	template <class... _ARGS>
 	imports String make (const _ARGS &...initval) {
-		struct Dependent ;
-		using R1X = DEPENDENT_TYPE<TextWriter<ITEM> ,Dependent> ;
+		using R1X = DEPENDENT_TYPE<TextWriter<ITEM> ,struct ANONYMOUS> ;
 		_STATIC_ASSERT_ (IS_SAME_HELP<SIZE ,SAUTO>::compile ()) ;
 		String ret = String (DEFAULT_LONGSTRING_SIZE::compile ()) ;
 		auto rax = R1X (ret.raw ()) ;
@@ -602,16 +597,18 @@ public:
 	}
 
 private:
-	explicit String (const DEF<decltype (ARGVP0)> & ,const LENGTH &len)
-		:mString (len) {}
+	explicit String (const DEF<decltype (ARGVP0)> & ,const LENGTH &len) :
+		delegate mString (len) {}
 
 	imports LENGTH reserve_size (const LENGTH &len) {
 		return len + _EBOOL_ (len > 0) ;
 	}
 
-	imports LENGTH plain_string_length (const ARR<ITEM> &val) {
+	imports LENGTH plain_string_length (const PTR<const ARR<ITEM>> &val) {
 		using R1X = U::CONSTEXPR_INCREASE<DEFAULT_HUGESTRING_SIZE> ;
-		LENGTH ret = BasicProc::mem_chr (val ,R1X::compile () ,ITEM (0)) ;
+		if (val == NULL)
+			return 0 ;
+		LENGTH ret = BasicProc::mem_chr (DEREF[val] ,R1X::compile () ,ITEM (0)) ;
 		_DYNAMIC_ASSERT_ (ret >= 0 && ret <= DEFAULT_HUGESTRING_SIZE::compile ()) ;
 		return _MOVE_ (ret) ;
 	}
@@ -635,13 +632,13 @@ public:
 		clear () ;
 	}
 
-	explicit Deque (const LENGTH &len)
-		:Deque (ARGVP0 ,reserve_size (len)) {
+	explicit Deque (const LENGTH &len) :
+		delegate Deque (ARGVP0 ,reserve_size (len)) {
 		clear () ;
 	}
 
-	implicit Deque (const api::initializer_list<ITEM> &that)
-		: Deque (that.size ()) {
+	explicit Deque (const api::initializer_list<ITEM> &that) :
+		delegate Deque (that.size ()) {
 		for (auto &&i : that)
 			add (i) ;
 	}
@@ -886,8 +883,8 @@ public:
 	}
 
 private:
-	explicit Deque (const DEF<decltype (ARGVP0)> & ,const LENGTH &len)
-		:mDeque (len) {}
+	explicit Deque (const DEF<decltype (ARGVP0)> & ,const LENGTH &len) :
+		delegate mDeque (len) {}
 
 	imports LENGTH reserve_size (const LENGTH &len) {
 		return len + _EBOOL_ (len > 0) ;
@@ -923,13 +920,13 @@ private:
 			BasicProc::mem_move (PTRTOARR[DEPTR[rax.self[ix]]] ,PTRTOARR[DEPTR[mDeque.self[mRead]]] ,(mDeque.size () - mRead)) ;
 			mRead = ix ;
 		}
-		mDeque.swap (rax) ;
+		mDeque.expand_swap (rax) ;
 	}
 
 	void update_emplace () {
 		if (mRead != mWrite)
 			return ;
-		auto rax = mDeque.expand (mDeque.expand_size ()) ;
+		auto rax = mDeque.expand (expand_size ()) ;
 		auto fax = TRUE ;
 		if switch_once (fax) {
 			if (mRead != 0)
@@ -943,7 +940,13 @@ private:
 			BasicProc::mem_move (PTRTOARR[DEPTR[rax.self[ix]]] ,PTRTOARR[DEPTR[mDeque.self[mRead]]] ,(mDeque.size () - mRead)) ;
 			mRead = ix ;
 		}
-		mDeque.swap (rax) ;
+		mDeque.expand_swap (rax) ;
+	}
+
+	LENGTH expand_size () const {
+		const auto r1x = LENGTH (mDeque.size () * MATH_SQRT2) ;
+		const auto r2x = mDeque.size () + DEFAULT_RECURSIVE_SIZE::compile () ;
+		return _MAX_ (r1x ,r2x) ;
 	}
 } ;
 
@@ -970,13 +973,13 @@ public:
 		clear () ;
 	}
 
-	explicit Priority (const LENGTH &len)
-		:Priority (ARGVP0 ,reserve_size (len)) {
+	explicit Priority (const LENGTH &len) :
+		delegate Priority (ARGVP0 ,reserve_size (len)) {
 		clear () ;
 	}
 
-	implicit Priority (const api::initializer_list<ITEM> &that)
-		: Priority (that.size ()) {
+	explicit Priority (const api::initializer_list<ITEM> &that) :
+		delegate Priority (that.size ()) {
 		for (auto &&i : that)
 			add (i) ;
 	}
@@ -1176,8 +1179,8 @@ public:
 	}
 
 private:
-	explicit Priority (const DEF<decltype (ARGVP0)> & ,const LENGTH &len)
-		:mPriority (len) {}
+	explicit Priority (const DEF<decltype (ARGVP0)> & ,const LENGTH &len) :
+		delegate mPriority (len) {}
 
 	imports LENGTH reserve_size (const LENGTH &len) {
 		return len + _EBOOL_ (len > 0) ;
@@ -1191,15 +1194,21 @@ private:
 			return ;
 		auto rax = mPriority.expand (mPriority.size () + r3x) ;
 		BasicProc::mem_move (rax.self ,mPriority.self ,mPriority.size ()) ;
-		mPriority.swap (rax) ;
+		mPriority.expand_swap (rax) ;
 	}
 
 	void update_emplace () {
 		if (mWrite < mPriority.size ())
 			return ;
-		auto rax = mPriority.expand (mPriority.expand_size ()) ;
+		auto rax = mPriority.expand (expand_size ()) ;
 		BasicProc::mem_move (rax.self ,mPriority.self ,mPriority.size ()) ;
-		mPriority.swap (rax) ;
+		mPriority.expand_swap (rax) ;
+	}
+
+	LENGTH expand_size () const {
+		const auto r1x = LENGTH (mPriority.size () * MATH_SQRT2) ;
+		const auto r2x = mPriority.size () + DEFAULT_RECURSIVE_SIZE::compile () ;
+		return _MAX_ (r1x ,r2x) ;
 	}
 
 	INDEX parent (INDEX curr) const {
@@ -1236,9 +1245,11 @@ private:
 			if (rax.mItem > mPriority[iy].mItem)
 				jx = iy ;
 			INDEX iz = right_child (ix) ;
-			auto &r1x = _SWITCH_ (
-				(jx != ix) ? mPriority[jx].mItem :
-				rax.mItem) ;
+			auto &r1x = _CALL_ ([&] () {
+				if (jx != ix)
+					return _BYREF_ (mPriority[jx].mItem) ;
+				return _BYREF_ (rax.mItem) ;
+			}).self ;
 			if switch_once (TRUE) {
 				if (iz >= mWrite)
 					discard ;
@@ -1266,9 +1277,11 @@ private:
 			if (mPriority[r1x].mItem > mPriority[out[iy]].mItem)
 				jx = iy ;
 			INDEX iz = right_child (ix) ;
-			auto &r2x = _SWITCH_ (
-				(jx != ix) ? mPriority[out[jx]].mItem :
-				mPriority[r1x].mItem) ;
+			auto &r2x = _CALL_ ([&] () {
+				if (jx != ix)
+					return _BYREF_ (mPriority[out[jx]].mItem) ;
+				return _BYREF_ (mPriority[r1x].mItem) ;
+			}).self ;
 			if switch_once (TRUE) {
 				if (iz >= len)
 					discard ;
@@ -1297,8 +1310,10 @@ private:
 		INDEX mRight ;
 
 		template <class... _ARGS>
-		explicit NODE_PACK (const DEF<decltype (ARGVP0)> & ,_ARGS &&...initval)
-			:mItem (_FORWARD_ (ARGV<_ARGS &&>::ID ,initval)...) ,mLeft (VAR_NONE) ,mRight (VAR_NONE) {}
+		explicit NODE_PACK (const DEF<decltype (ARGVP0)> & ,_ARGS &&...initval) :
+			delegate mItem (_FORWARD_ (ARGV<_ARGS &&>::ID ,initval)...) ,
+			delegate mLeft (VAR_NONE) ,
+			delegate mRight (VAR_NONE) {}
 	} ;
 
 private:
@@ -1311,13 +1326,13 @@ public:
 		clear () ;
 	}
 
-	explicit List (const LENGTH &len)
-		:List (ARGVP0 ,len) {
+	explicit List (const LENGTH &len) :
+		delegate List (ARGVP0 ,len) {
 		clear () ;
 	}
 
-	implicit List (const api::initializer_list<ITEM> &that)
-		: List (that.size ()) {
+	explicit List (const api::initializer_list<ITEM> &that) :
+		delegate List (that.size ()) {
 		for (auto &&i : that)
 			add (i) ;
 	}
@@ -1452,9 +1467,11 @@ public:
 	void add (const REMOVE_CONST_TYPE<ITEM> &item) {
 		INDEX ix = mList.alloc (ARGVP0 ,_MOVE_ (item)) ;
 		mList[ix].mLeft = mLast ;
-		auto &r1x = _SWITCH_ (
-			(mLast != VAR_NONE) ? mList[mLast].mRight :
-			mFirst) ;
+		auto &r1x = _CALL_ ([&] () {
+			if (mLast != VAR_NONE)
+				return _BYREF_ (mList[mLast].mRight) ;
+			return _BYREF_ (mFirst) ;
+		}).self ;
 		r1x = ix ;
 		mLast = ix ;
 	}
@@ -1467,9 +1484,11 @@ public:
 	void add (REMOVE_CONST_TYPE<ITEM> &&item) {
 		INDEX ix = mList.alloc (ARGVP0 ,_MOVE_ (item)) ;
 		mList[ix].mLeft = mLast ;
-		auto &r1x = _SWITCH_ (
-			(mLast != VAR_NONE) ? mList[mLast].mRight :
-			mFirst) ;
+		auto &r1x = _CALL_ ([&] () {
+			if (mLast != VAR_NONE)
+				return _BYREF_ (mList[mLast].mRight) ;
+			return _BYREF_ (mFirst) ;
+		}).self ;
 		r1x = ix ;
 		mLast = ix ;
 	}
@@ -1490,9 +1509,11 @@ public:
 		_DEBUG_ASSERT_ (!empty ()) ;
 		INDEX ix = mFirst ;
 		mFirst = mList[ix].mRight ;
-		auto &r1x = _SWITCH_ (
-			(mFirst != VAR_NONE) ? mList[mFirst].mLeft :
-			mLast) ;
+		auto &r1x = _CALL_ ([&] () {
+			if (mFirst != VAR_NONE)
+				return _BYREF_ (mList[mFirst].mLeft) ;
+			return _BYREF_ (mLast) ;
+		}).self ;
 		r1x = VAR_NONE ;
 		mList.free (ix) ;
 	}
@@ -1502,9 +1523,11 @@ public:
 		INDEX ix = mFirst ;
 		item = _MOVE_ (mList[ix].mItem) ;
 		mFirst = mList[ix].mRight ;
-		auto &r1x = _SWITCH_ (
-			(mFirst != VAR_NONE) ? mList[mFirst].mLeft :
-			mLast) ;
+		auto &r1x = _CALL_ ([&] () {
+			if (mFirst != VAR_NONE)
+				return _BYREF_ (mList[mFirst].mLeft) ;
+			return _BYREF_ (mLast) ;
+		}).self ;
 		r1x = VAR_NONE ;
 		mList.free (ix) ;
 	}
@@ -1517,9 +1540,11 @@ public:
 	void push (const REMOVE_CONST_TYPE<ITEM> &item) {
 		INDEX ix = mList.alloc (ARGVP0 ,_MOVE_ (item)) ;
 		mList[ix].mRight = mFirst ;
-		auto &r1x = _SWITCH_ (
-			(mFirst != VAR_NONE) ? mList[mFirst].mLeft :
-			mLast) ;
+		auto &r1x = _CALL_ ([&] () {
+			if (mFirst != VAR_NONE)
+				return _BYREF_ (mList[mFirst].mLeft) ;
+			return _BYREF_ (mLast) ;
+		}).self ;
 		r1x = ix ;
 		mFirst = ix ;
 	}
@@ -1527,9 +1552,11 @@ public:
 	void push (REMOVE_CONST_TYPE<ITEM> &&item) {
 		INDEX ix = mList.alloc (ARGVP0 ,_MOVE_ (item)) ;
 		mList[ix].mRight = mFirst ;
-		auto &r1x = _SWITCH_ (
-			(mFirst != VAR_NONE) ? mList[mFirst].mLeft :
-			mLast) ;
+		auto &r1x = _CALL_ ([&] () {
+			if (mFirst != VAR_NONE)
+				return _BYREF_ (mList[mFirst].mLeft) ;
+			return _BYREF_ (mLast) ;
+		}).self ;
 		r1x = ix ;
 		mFirst = ix ;
 	}
@@ -1538,9 +1565,11 @@ public:
 		_DEBUG_ASSERT_ (!empty ()) ;
 		INDEX ix = mLast ;
 		mLast = mList[ix].mLeft ;
-		auto &r1x = _SWITCH_ (
-			(mLast != VAR_NONE) ? mList[mLast].mRight :
-			mFirst) ;
+		auto &r1x = _CALL_ ([&] () {
+			if (mLast != VAR_NONE)
+				return _BYREF_ (mList[mLast].mRight) ;
+			return _BYREF_ (mFirst) ;
+		}).self ;
 		r1x = VAR_NONE ;
 		mList.free (ix) ;
 	}
@@ -1558,9 +1587,11 @@ public:
 	INDEX insert () {
 		INDEX ret = mList.alloc (ARGVP0) ;
 		mList[ret].mLeft = mLast ;
-		auto &r1x = _SWITCH_ (
-			(mLast != VAR_NONE) ? mList[mLast].mRight :
-			mFirst) ;
+		auto &r1x = _CALL_ ([&] () {
+			if (mLast != VAR_NONE)
+				return _BYREF_ (mList[mLast].mRight) ;
+			return _BYREF_ (mFirst) ;
+		}).self ;
 		r1x = ret ;
 		mLast = ret ;
 		return _MOVE_ (ret) ;
@@ -1590,14 +1621,18 @@ public:
 	void splice_before (const INDEX &index ,const INDEX &last) {
 		prev_next (last) = mList[last].mRight ;
 		next_prev (last) = mList[last].mLeft ;
-		auto &r1x = _SWITCH_ (
-			(index != VAR_NONE) ? mList[index].mLeft :
-			mLast) ;
+		auto &r1x = _CALL_ ([&] () {
+			if (index != VAR_NONE)
+				return _BYREF_ (mList[index].mLeft) ;
+			return _BYREF_ (mLast) ;
+		}).self ;
 		mList[last].mLeft = r1x ;
 		mList[last].mRight = index ;
-		auto &r2x = _SWITCH_ (
-			(r1x != VAR_NONE) ? mList[r1x].mRight :
-			mFirst) ;
+		auto &r2x = _CALL_ ([&] () {
+			if (r1x != VAR_NONE)
+				return _BYREF_ (mList[r1x].mRight) ;
+			return _BYREF_ (mFirst) ;
+		}).self ;
 		r2x = last ;
 		r1x = last ;
 	}
@@ -1605,14 +1640,18 @@ public:
 	void splice_after (const INDEX &index ,const INDEX &last) {
 		prev_next (last) = mList[last].mRight ;
 		next_prev (last) = mList[last].mLeft ;
-		auto &r1x = _SWITCH_ (
-			(index != VAR_NONE) ? mList[index].mRight :
-			mFirst) ;
+		auto &r1x = _CALL_ ([&] () {
+			if (index != VAR_NONE)
+				return _BYREF_ (mList[index].mRight) ;
+			return _BYREF_ (mFirst) ;
+		}).self ;
 		mList[last].mLeft = index ;
 		mList[last].mRight = r1x ;
-		auto &r2x = _SWITCH_ (
-			(r1x != VAR_NONE) ? mList[r1x].mLeft :
-			mLast) ;
+		auto &r2x = _CALL_ ([&] () {
+			if (r1x != VAR_NONE)
+				return _BYREF_ (mList[r1x].mLeft) ;
+			return _BYREF_ (mLast) ;
+		}).self ;
 		r2x = last ;
 		r1x = last ;
 	}
@@ -1649,8 +1688,8 @@ public:
 	}
 
 private:
-	explicit List (const DEF<decltype (ARGVP0)> & ,const LENGTH &len)
-		:mList (len) {}
+	explicit List (const DEF<decltype (ARGVP0)> & ,const LENGTH &len) :
+		delegate mList (len) {}
 
 	INDEX &prev_next (const INDEX &curr) leftvalue {
 		if (mList[curr].mLeft == VAR_NONE)
@@ -1676,8 +1715,9 @@ private:
 		INDEX mIndex ;
 
 		template <class... _ARGS>
-		explicit NODE_PACK (const DEF<decltype (ARGVP0)> & ,_ARGS &&...initval)
-			:mItem (_FORWARD_ (ARGV<_ARGS &&>::ID ,initval)...) ,mIndex (VAR_NONE) {}
+		explicit NODE_PACK (const DEF<decltype (ARGVP0)> & ,_ARGS &&...initval) :
+			delegate mItem (_FORWARD_ (ARGV<_ARGS &&>::ID ,initval)...) ,
+			delegate mIndex (VAR_NONE) {}
 	} ;
 
 private:
@@ -1690,13 +1730,13 @@ public:
 		clear () ;
 	}
 
-	explicit ArrayList (LENGTH len)
-		:ArrayList (ARGVP0 ,len) {
+	explicit ArrayList (LENGTH len) :
+		delegate ArrayList (ARGVP0 ,len) {
 		clear () ;
 	}
 
-	implicit ArrayList (const api::initializer_list<ITEM> &that)
-		: ArrayList (that.size ()) {
+	explicit ArrayList (const api::initializer_list<ITEM> &that) :
+		delegate ArrayList (that.size ()) {
 		for (auto &&i : that)
 			add (i) ;
 	}
@@ -1916,12 +1956,13 @@ public:
 			mRange[i] = VAR_NONE ;
 		}
 		_DEBUG_ASSERT_ (iw == rax.size ()) ;
-		mRange.swap (rax) ;
+		mRange.expand_swap (rax) ;
 	}
 
 private:
-	explicit ArrayList (const DEF<decltype (ARGVP0)> & ,const LENGTH &len)
-		:mList (len) ,mRange (len) {}
+	explicit ArrayList (const DEF<decltype (ARGVP0)> & ,const LENGTH &len) :
+		delegate mList (len) ,
+		delegate mRange (len) {}
 
 	INDEX next_free_one () {
 		_DEBUG_ASSERT_ (mRange.size () > 0) ;
@@ -1955,7 +1996,7 @@ private:
 		if switch_once (TRUE) {
 			auto rax = mRange.expand (mList.size ()) ;
 			BasicProc::mem_fill (rax.self ,rax.size () ,VAR_NONE) ;
-			mRange.swap (rax) ;
+			mRange.expand_swap (rax) ;
 		}
 		for (auto &&i : _RANGE_ (0 ,mList.size ())) {
 			if (i == curr)
@@ -1968,20 +2009,6 @@ private:
 } ;
 
 namespace U {
-template <class UNIT>
-struct CONSTEXPR_CEIL8_SIZE_SWITCH_CASE1 {
-	imports constexpr UNIT invoke (const UNIT &len) {
-		return len ;
-	}
-} ;
-
-template <class UNIT>
-struct CONSTEXPR_CEIL8_SIZE_SWITCH_CASE2 {
-	imports constexpr UNIT invoke (const UNIT &len) {
-		return (len + 7) / 8 ;
-	}
-} ;
-
 template <class _ARG1>
 struct CONSTEXPR_CEIL8_SIZE {
 	imports constexpr VAR compile () {
@@ -2014,18 +2041,18 @@ private:
 	LENGTH mWidth ;
 
 public:
-	implicit BitSet ()
-		:BitSet (ARGVP0) {
+	implicit BitSet () :
+		delegate BitSet (ARGVP0) {
 		clear () ;
 	}
 
-	explicit BitSet (const LENGTH &len)
-		:BitSet (ARGVP0 ,ceil8_size (len) ,forward_width (len)) {
+	explicit BitSet (const LENGTH &len) :
+		delegate BitSet (ARGVP0 ,ceil8_size (len) ,forward_width (len)) {
 		clear () ;
 	}
 
-	explicit BitSet (const Array<INDEX> &range_ ,const LENGTH &len)
-		:BitSet (len) {
+	explicit BitSet (const Array<INDEX> &range_ ,const LENGTH &len) :
+		delegate BitSet (len) {
 		for (auto &&i : range_)
 			add (i) ;
 	}
@@ -2092,23 +2119,24 @@ public:
 		return VAR_NONE ;
 	}
 
-	template <class _RET = REMOVE_CVR_TYPE<typename Private::template ArrayRange<const BitSet>>>
-	ArrayIterator<const _RET> begin () const leftvalue {
-		auto &r1x = _CAST_ (ARGV<const _RET>::ID ,DEREF[this]) ;
-		return ArrayIterator<const _RET> (PhanRef<const _RET>::make (r1x) ,ibegin ()) ;
+	template <class _RET = REMOVE_CVR_TYPE<ArrayIterator<const DEF<typename Private::template ArrayRange<const BitSet>>>>>
+	_RET begin () const leftvalue {
+		using R1X = typename DEPENDENT_TYPE<Private ,struct ANONYMOUS>::template ArrayRange<const BitSet> ;
+		auto &r1x = _CAST_ (ARGV<const R1X>::ID ,DEREF[this]) ;
+		return ArrayIterator<const R1X> (PhanRef<const R1X>::make (r1x) ,ibegin ()) ;
 	}
 
-	template <class _RET = REMOVE_CVR_TYPE<typename Private::template ArrayRange<const BitSet>>>
-	ArrayIterator<const _RET> end () const leftvalue {
-		auto &r1x = _CAST_ (ARGV<const _RET>::ID ,DEREF[this]) ;
-		return ArrayIterator<const _RET> (PhanRef<const _RET>::make (r1x) ,iend ()) ;
+	template <class _RET = REMOVE_CVR_TYPE<ArrayIterator<const DEF<typename Private::template ArrayRange<const BitSet>>>>>
+	_RET end () const leftvalue {
+		using R1X = typename DEPENDENT_TYPE<Private ,struct ANONYMOUS>::template ArrayRange<const BitSet> ;
+		auto &r1x = _CAST_ (ARGV<const R1X>::ID ,DEREF[this]) ;
+		return ArrayIterator<const R1X> (PhanRef<const R1X>::make (r1x) ,iend ()) ;
 	}
 
 	//@info: 'Bit &&' convert to 'BOOL' implicitly while 'const Bit &' convert to 'VAR' implicitly
 	template <class _RET = REMOVE_CVR_TYPE<typename Private::template Bit<BitSet>>>
 	_RET get (const INDEX &index) leftvalue {
-		struct Dependent ;
-		using R1X = typename DEPENDENT_TYPE<Private ,Dependent>::template Bit<BitSet> ;
+		using R1X = typename DEPENDENT_TYPE<Private ,struct ANONYMOUS>::template Bit<BitSet> ;
 		_DEBUG_ASSERT_ (index >= 0 && index < mWidth) ;
 		return R1X (PhanRef<BitSet>::make (DEREF[this]) ,index) ;
 	}
@@ -2121,8 +2149,7 @@ public:
 	//@info: 'Bit &&' convert to 'BOOL' implicitly while 'const Bit &' convert to 'VAR' implicitly
 	template <class _RET = REMOVE_CVR_TYPE<typename Private::template Bit<const BitSet>>>
 	_RET get (const INDEX &index) const leftvalue {
-		struct Dependent ;
-		using R1X = typename DEPENDENT_TYPE<Private ,Dependent>::template Bit<const BitSet> ;
+		using R1X = typename DEPENDENT_TYPE<Private ,struct ANONYMOUS>::template Bit<const BitSet> ;
 		_DEBUG_ASSERT_ (index >= 0 && index < mWidth) ;
 		return R1X (PhanRef<const BitSet>::make (DEREF[this]) ,index) ;
 	}
@@ -2133,17 +2160,19 @@ public:
 	}
 
 	INDEX at (const DEF<typename Private::template Bit<BitSet>> &item) const {
-		struct Dependent ;
-		using R1X = typename DEPENDENT_TYPE<Private ,Dependent>::template Bit<BitSet> ;
+		using R1X = typename DEPENDENT_TYPE<Private ,struct ANONYMOUS>::template Bit<BitSet> ;
 		auto &r1x = _FORWARD_ (ARGV<R1X>::ID ,item) ;
-		return r1x ;
+		if (DEPTR[r1x.mBase.self] != this)
+			return VAR_NONE ;
+		return r1x.mIndex ;
 	}
 
 	INDEX at (const DEF<typename Private::template Bit<const BitSet>> &item) const {
-		struct Dependent ;
-		using R1X = typename DEPENDENT_TYPE<Private ,Dependent>::template Bit<const BitSet> ;
+		using R1X = typename DEPENDENT_TYPE<Private ,struct ANONYMOUS>::template Bit<const BitSet> ;
 		auto &r1x = _FORWARD_ (ARGV<R1X>::ID ,item) ;
-		return r1x ;
+		if (DEPTR[r1x.mBase.self] != this)
+			return VAR_NONE ;
+		return r1x.mIndex ;
 	}
 
 	Array<INDEX> range () const {
@@ -2345,8 +2374,9 @@ private:
 		mWidth = _MAX_ (r1x ,r2x) ;
 	}
 
-	explicit BitSet (const DEF<decltype (ARGVP0)> & ,const LENGTH &len ,const LENGTH &width)
-		:mSet (len) ,mWidth (width) {}
+	explicit BitSet (const DEF<decltype (ARGVP0)> & ,const LENGTH &len ,const LENGTH &width) :
+		delegate mSet (len) ,
+		delegate mWidth (width) {}
 
 	imports LENGTH ceil8_size (const LENGTH &len) {
 		if (len < 0)
@@ -2362,9 +2392,10 @@ private:
 
 template <class SIZE>
 template <class BASE>
-class BitSet<SIZE>::Private::Bit
-	:private Proxy {
+class BitSet<SIZE>::Private::Bit :
+	delegate private Proxy {
 private:
+	friend BitSet ;
 	PhanRef<BASE> mBase ;
 	INDEX mIndex ;
 
@@ -2379,12 +2410,17 @@ public:
 	inline implicit operator BOOL () rightvalue {
 		const auto r1x = BYTE (BYTE (0X01) << (mIndex % 8)) ;
 		const auto r2x = BYTE (mBase->mSet[mIndex / 8] & r1x) ;
-		if (r2x == 0)
-			return FALSE ;
-		return TRUE ;
+		return BOOL (r2x != 0) ;
 	}
 
-	inline implicit operator BOOL () const leftvalue = delete ;
+#ifdef __CSC_COMPILER_GNUC__
+	//@error: fuck g++4.8
+	inline BOOL operator! () const {
+		const auto r1x = BYTE (BYTE (0X01) << (mIndex % 8)) ;
+		const auto r2x = BYTE (mBase->mSet[mIndex / 8] & r1x) ;
+		return !BOOL (r2x != 0) ;
+	}
+#endif
 
 	inline void operator= (const BOOL &that) rightvalue {
 		const auto r1x = BYTE (BYTE (0X01) << (mIndex % 8)) ;
@@ -2402,8 +2438,8 @@ public:
 
 template <class SIZE>
 template <class BASE>
-class BitSet<SIZE>::Private::ArrayRange
-	:private Wrapped<BASE> {
+class BitSet<SIZE>::Private::ArrayRange :
+	delegate private Wrapped<BASE> {
 private:
 	using Wrapped<BASE>::mSelf ;
 
@@ -2432,8 +2468,13 @@ private:
 		INDEX mRight ;
 
 		template <class... _ARGS>
-		explicit NODE_PACK (const DEF<decltype (ARGVP0)> & ,_ARGS &&...initval)
-			:mItem (_FORWARD_ (ARGV<_ARGS &&>::ID ,initval)...) ,mMap (VAR_NONE) ,mRed (FALSE) ,mUp (VAR_NONE) ,mLeft (VAR_NONE) ,mRight (VAR_NONE) {}
+		explicit NODE_PACK (const DEF<decltype (ARGVP0)> & ,_ARGS &&...initval) :
+			delegate mItem (_FORWARD_ (ARGV<_ARGS &&>::ID ,initval)...) ,
+			delegate mMap (VAR_NONE) ,
+			delegate mRed (FALSE) ,
+			delegate mUp (VAR_NONE) ,
+			delegate mLeft (VAR_NONE) ,
+			delegate mRight (VAR_NONE) {}
 	} ;
 
 private:
@@ -2446,13 +2487,13 @@ public:
 		clear () ;
 	}
 
-	explicit Set (const LENGTH &len)
-		:Set (ARGVP0 ,len) {
+	explicit Set (const LENGTH &len) :
+		delegate Set (ARGVP0 ,len) {
 		clear () ;
 	}
 
-	implicit Set (const api::initializer_list<ITEM> &that)
-		: Set (that.size ()) {
+	explicit Set (const api::initializer_list<ITEM> &that) :
+		delegate Set (that.size ()) {
 		for (auto &&i : that)
 			add (i) ;
 	}
@@ -2662,9 +2703,11 @@ public:
 			if (!r1x)
 				if (!(item > mSet[ret].mItem))
 					break ;
-			auto &r2x = _SWITCH_ (
-				r1x ? mSet[ret].mLeft :
-				mSet[ret].mRight) ;
+			auto &r2x = _CALL_ ([&] () {
+				if (r1x)
+					return _BYREF_ (mSet[ret].mLeft) ;
+				return _BYREF_ (mSet[ret].mRight) ;
+			}).self ;
 			ret = r2x ;
 		}
 		return _MOVE_ (ret) ;
@@ -2682,8 +2725,8 @@ public:
 	}
 
 private:
-	explicit Set (const DEF<decltype (ARGVP0)> & ,const LENGTH &len)
-		:mSet (len) {}
+	explicit Set (const DEF<decltype (ARGVP0)> & ,const LENGTH &len) :
+		delegate mSet (len) {}
 
 	void update_emplace (const INDEX &curr ,const INDEX &last) {
 		auto fax = TRUE ;
@@ -2694,9 +2737,11 @@ private:
 		}
 		if switch_once (fax) {
 			mSet[last].mUp = curr ;
-			auto &r1x = _SWITCH_ (
-				(mSet[last].mItem < mSet[curr].mItem) ? mSet[curr].mLeft :
-				mSet[curr].mRight) ;
+			auto &r1x = _CALL_ ([&] () {
+				if (mSet[last].mItem < mSet[curr].mItem)
+					return _BYREF_ (mSet[curr].mLeft) ;
+				return _BYREF_ (mSet[curr].mRight) ;
+			}).self ;
 			update_emplace (r1x ,last) ;
 			r1x = mTop ;
 			mTop = curr ;
@@ -2977,19 +3022,27 @@ private:
 			return ;
 		auto rax = INDEX () ;
 		auto &r1x = prev_next (index2) ;
-		auto &r2x = _SWITCH_ (
-			(mSet[index2].mLeft != VAR_NONE) ? mSet[mSet[index2].mLeft].mUp :
-			rax) ;
-		auto &r3x = _SWITCH_ (
-			(mSet[index2].mRight != VAR_NONE) ? mSet[mSet[index2].mRight].mUp :
-			rax) ;
+		auto &r2x = _CALL_ ([&] () {
+			if (mSet[index2].mLeft != VAR_NONE)
+				return _BYREF_ (mSet[mSet[index2].mLeft].mUp) ;
+			return _BYREF_ (rax) ;
+		}).self ;
+		auto &r3x = _CALL_ ([&] () {
+			if (mSet[index2].mRight != VAR_NONE)
+				return _BYREF_ (mSet[mSet[index2].mRight].mUp) ;
+			return _BYREF_ (rax) ;
+		}).self ;
 		auto &r4x = prev_next (index1) ;
-		auto &r5x = _SWITCH_ (
-			(mSet[index1].mLeft != VAR_NONE) ? mSet[mSet[index1].mLeft].mUp :
-			rax) ;
-		auto &r6x = _SWITCH_ (
-			(mSet[index1].mRight != VAR_NONE) ? mSet[mSet[index1].mRight].mUp :
-			rax) ;
+		auto &r5x = _CALL_ ([&] () {
+			if (mSet[index1].mLeft != VAR_NONE)
+				return _BYREF_ (mSet[mSet[index1].mLeft].mUp) ;
+			return _BYREF_ (rax) ;
+		}).self ;
+		auto &r6x = _CALL_ ([&] () {
+			if (mSet[index1].mRight != VAR_NONE)
+				return _BYREF_ (mSet[mSet[index1].mRight].mUp) ;
+			return _BYREF_ (rax) ;
+		}).self ;
 		r1x = index1 ;
 		r2x = index1 ;
 		r3x = index1 ;
@@ -3026,8 +3079,11 @@ private:
 		INDEX mNext ;
 
 		template <class... _ARGS>
-		explicit NODE_PACK (const DEF<decltype (ARGVP0)> & ,_ARGS &&...initval)
-			:mItem (_FORWARD_ (ARGV<_ARGS &&>::ID ,initval)...) ,mMap (VAR_NONE) ,mHash (0) ,mNext (VAR_NONE) {}
+		explicit NODE_PACK (const DEF<decltype (ARGVP0)> & ,_ARGS &&...initval) :
+			delegate mItem (_FORWARD_ (ARGV<_ARGS &&>::ID ,initval)...) ,
+			delegate mMap (VAR_NONE) ,
+			delegate mHash (0) ,
+			delegate mNext (VAR_NONE) {}
 	} ;
 
 private:
@@ -3040,13 +3096,13 @@ public:
 		clear () ;
 	}
 
-	explicit HashSet (const LENGTH &len)
-		:HashSet (ARGVP0 ,len) {
+	explicit HashSet (const LENGTH &len) :
+		delegate HashSet (ARGVP0 ,len) {
 		clear () ;
 	}
 
-	implicit HashSet (const api::initializer_list<ITEM> &that)
-		: HashSet (that.size ()) {
+	explicit HashSet (const api::initializer_list<ITEM> &that) :
+		delegate HashSet (that.size ()) {
 		for (auto &&i : that)
 			add (i) ;
 	}
@@ -3229,8 +3285,9 @@ public:
 	}
 
 private:
-	explicit HashSet (const DEF<decltype (ARGVP0)> & ,const LENGTH &len)
-		:mSet (len) ,mRange (len) {}
+	explicit HashSet (const DEF<decltype (ARGVP0)> & ,const LENGTH &len) :
+		delegate mSet (len) ,
+		delegate mRange (len) {}
 
 	void update_range (const INDEX &curr) {
 		if (mRange.size () == mSet.size ())
@@ -3238,7 +3295,7 @@ private:
 		if switch_once (TRUE) {
 			auto rax = mRange.expand (mSet.size ()) ;
 			BasicProc::mem_fill (rax.self ,rax.size () ,VAR_NONE) ;
-			mRange.swap (rax) ;
+			mRange.expand_swap (rax) ;
 		}
 		for (auto &&i : _RANGE_ (0 ,mSet.size ())) {
 			if (i == curr)
@@ -3289,8 +3346,13 @@ private:
 		INDEX mNext ;
 
 		template <class... _ARGS>
-		explicit NODE_PACK (const DEF<decltype (ARGVP0)> & ,_ARGS &&...initval)
-			:mItem (_FORWARD_ (ARGV<_ARGS &&>::ID ,initval)...) ,mMap (VAR_NONE) ,mWeight (0) ,mLeft (VAR_NONE) ,mRight (VAR_NONE) ,mNext (VAR_NONE) {}
+		explicit NODE_PACK (const DEF<decltype (ARGVP0)> & ,_ARGS &&...initval) :
+			delegate mItem (_FORWARD_ (ARGV<_ARGS &&>::ID ,initval)...) ,
+			delegate mMap (VAR_NONE) ,
+			delegate mWeight (0) ,
+			delegate mLeft (VAR_NONE) ,
+			delegate mRight (VAR_NONE) ,
+			delegate mNext (VAR_NONE) {}
 	} ;
 
 	struct HEAP_PACK {
@@ -3338,7 +3400,7 @@ public:
 		return mLength ;
 	}
 
-	SoftSet share () leftvalue {
+	SoftSet share () const {
 		SoftSet ret ;
 		ret.mHeap = mHeap ;
 		ret.mSet = PhanRef<Allocator<NODE_PACK ,SIZE>>::make (ret.mHeap->mBuffer.self) ;
@@ -3430,9 +3492,11 @@ public:
 			ix = mSet->alloc (ARGVP0 ,_MOVE_ (item)) ;
 			mSet.self[ix].mMap = map_ ;
 			mSet.self[ix].mWeight = 1 ;
-			auto &r1x = _SWITCH_ (
-				(mLast != VAR_NONE) ? mSet.self[mLast].mNext :
-				mFirst) ;
+			auto &r1x = _CALL_ ([&] () {
+				if (mLast != VAR_NONE)
+					return _BYREF_ (mSet.self[mLast].mNext) ;
+				return _BYREF_ (mFirst) ;
+			}).self ;
 			r1x = ix ;
 			mLast = ix ;
 			mLength++ ;
@@ -3460,9 +3524,11 @@ public:
 			ix = mSet->alloc (ARGVP0 ,_MOVE_ (item)) ;
 			mSet.self[ix].mMap = map_ ;
 			mSet.self[ix].mWeight = 1 ;
-			auto &r1x = _SWITCH_ (
-				(mLast != VAR_NONE) ? mSet.self[mLast].mNext :
-				mFirst) ;
+			auto &r1x = _CALL_ ([&] () {
+				if (mLast != VAR_NONE)
+					return _BYREF_ (mSet.self[mLast].mNext) ;
+				return _BYREF_ (mFirst) ;
+			}).self ;
 			r1x = ix ;
 			mLast = ix ;
 			mLength++ ;
@@ -3533,9 +3599,11 @@ public:
 			if (!r1x)
 				if (!(item > mSet.self[ret].mItem))
 					break ;
-			auto &r2x = _SWITCH_ (
-				r1x ? mSet.self[ret].mLeft :
-				mSet.self[ret].mRight) ;
+			auto &r2x = _CALL_ ([&] () {
+				if (r1x)
+					return _BYREF_ (mSet.self[ret].mLeft) ;
+				return _BYREF_ (mSet.self[ret].mRight) ;
+			}).self ;
 			ret = r2x ;
 		}
 		return _MOVE_ (ret) ;

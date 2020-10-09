@@ -159,6 +159,11 @@
 #endif
 #define implicit
 
+#ifdef delegate
+#error "∑(っ°Д° ;)っ : defined 'delegate'"
+#endif
+#define delegate
+
 #ifdef leftvalue
 #error "∑(っ°Д° ;)っ : defined 'leftvalue'"
 #endif
@@ -193,6 +198,7 @@
 #ifdef __CSC__
 #pragma push_macro ("self")
 #pragma push_macro ("implicit")
+#pragma push_macro ("delegate")
 #pragma push_macro ("leftvalue")
 #pragma push_macro ("rightvalue")
 #pragma push_macro ("imports")
@@ -201,6 +207,7 @@
 #pragma push_macro ("discard")
 #undef self
 #undef implicit
+#undef delegate
 #undef leftvalue
 #undef rightvalue
 #undef imports
@@ -224,6 +231,7 @@
 #ifdef __CSC__
 #pragma pop_macro ("self")
 #pragma pop_macro ("implicit")
+#pragma pop_macro ("delegate")
 #pragma pop_macro ("leftvalue")
 #pragma pop_macro ("rightvalue")
 #pragma pop_macro ("imports")
@@ -333,11 +341,11 @@ namespace CSC {
 #endif
 
 #ifdef __CSC_COMPILER_GNUC__
-#define _DYNAMIC_ASSERT_(...) do { struct ARGVPL ; if ((_UNW_ (__VA_ARGS__))) break ; CSC::Exception (CSC::Plain<CSC::STR> (CSC::ARGV<ARGVPL>::ID ,"dynamic_assert failed : " _STR_ (__VA_ARGS__) " : at " ,M_FUNC ," in " ,M_FILE ," ," ,M_LINE)).raise () ; } while (FALSE)
+#define _DYNAMIC_ASSERT_(...) do { struct Dependent ; if ((_UNW_ (__VA_ARGS__))) break ; CSC::Exception (CSC::Plain<CSC::STR> (CSC::ARGV<Dependent>::ID ,"dynamic_assert failed : " _STR_ (__VA_ARGS__) " : at " ,M_FUNC ," in " ,M_FILE ," ," ,M_LINE)).raise () ; } while (FALSE)
 #endif
 
 #ifdef __CSC_COMPILER_CLANG__
-#define _DYNAMIC_ASSERT_(...) do { struct ARGVPL ; if ((_UNW_ (__VA_ARGS__))) break ; CSC::Exception (CSC::Plain<CSC::STR> (CSC::ARGV<ARGVPL>::ID ,"dynamic_assert failed : " _STR_ (__VA_ARGS__) " : at " ,M_FUNC ," in " ,M_FILE ," ," ,M_LINE)).raise () ; } while (FALSE)
+#define _DYNAMIC_ASSERT_(...) do { struct Dependent ; if ((_UNW_ (__VA_ARGS__))) break ; CSC::Exception (CSC::Plain<CSC::STR> (CSC::ARGV<Dependent>::ID ,"dynamic_assert failed : " _STR_ (__VA_ARGS__) " : at " ,M_FUNC ," in " ,M_FILE ," ," ,M_LINE)).raise () ; } while (FALSE)
 #endif
 
 #ifndef __CSC_DEBUG__
@@ -351,7 +359,7 @@ namespace CSC {
 #endif
 
 #ifdef __CSC_UNITTEST__
-#define _UNITTEST_WATCH_(...) do { struct ARGVPL ; CSC::GlobalWatch::done (CSC::ARGV<ARGVPL>::ID ,_PCSTR_ (_STR_ (__VA_ARGS__)) ,(_UNW_ (__VA_ARGS__))) ; } while (FALSE)
+#define _UNITTEST_WATCH_(...) do { struct Dependent ; CSC::GlobalWatch::done (CSC::ARGV<Dependent>::ID ,_PCSTR_ (_STR_ (__VA_ARGS__)) ,(_UNW_ (__VA_ARGS__))) ; } while (FALSE)
 #endif
 
 #ifndef _UNITTEST_WATCH_

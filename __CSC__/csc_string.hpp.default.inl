@@ -7,6 +7,7 @@
 #ifdef __CSC__
 #pragma push_macro ("self")
 #pragma push_macro ("implicit")
+#pragma push_macro ("delegate")
 #pragma push_macro ("leftvalue")
 #pragma push_macro ("rightvalue")
 #pragma push_macro ("imports")
@@ -15,6 +16,7 @@
 #pragma push_macro ("discard")
 #undef self
 #undef implicit
+#undef delegate
 #undef leftvalue
 #undef rightvalue
 #undef imports
@@ -33,6 +35,7 @@
 #ifdef __CSC__
 #pragma pop_macro ("self")
 #pragma pop_macro ("implicit")
+#pragma pop_macro ("delegate")
 #pragma pop_macro ("leftvalue")
 #pragma pop_macro ("rightvalue")
 #pragma pop_macro ("imports")
@@ -69,8 +72,8 @@ using ::_wcstombs_s_l ;
 #endif
 } ;
 
-class LocaleStaticProc
-	:private Wrapped<> {
+class LocaleStaticProc :
+	delegate private Wrapped<> {
 public:
 #ifdef __CSC_COMPILER_MSVC__
 	imports const UniqueRef<_locale_t> &static_locale_page () ;
@@ -82,7 +85,7 @@ public:
 } ;
 
 #ifdef __CSC_COMPILER_MSVC__
-inline exports const UniqueRef<_locale_t> &LocaleStaticProc::static_locale_page () {
+exports const UniqueRef<_locale_t> &LocaleStaticProc::static_locale_page () {
 	return _CACHE_ ([&] () {
 		return UniqueRef<_locale_t> ([&] (_locale_t &me) {
 			me = api::_create_locale (LC_CTYPE ,_PCSTRA_ ("")) ;
@@ -95,7 +98,7 @@ inline exports const UniqueRef<_locale_t> &LocaleStaticProc::static_locale_page 
 #endif
 
 #ifdef __CSC_COMPILER_MSVC__
-inline exports String<STRW> LocaleStaticProc::static_locale_cvt_lastows (const String<STRA> &val) {
+exports String<STRW> LocaleStaticProc::static_locale_cvt_lastows (const String<STRA> &val) {
 	auto &r1x = LocaleStaticProc::static_locale_page () ;
 	String<STRW> ret = String<STRW> (val.length () + 1) ;
 	_DEBUG_ASSERT_ (ret.size () < VAR32_MAX) ;
@@ -110,7 +113,7 @@ inline exports String<STRW> LocaleStaticProc::static_locale_cvt_lastows (const S
 #endif
 
 #ifndef __CSC_COMPILER_MSVC__
-inline exports String<STRW> LocaleStaticProc::static_locale_cvt_lastows (const String<STRA> &val) {
+exports String<STRW> LocaleStaticProc::static_locale_cvt_lastows (const String<STRA> &val) {
 	String<STRW> ret = String<STRW> (val.length () + 1) ;
 	_DEBUG_ASSERT_ (ret.size () < VAR32_MAX) ;
 	if switch_once (TRUE) {
@@ -124,7 +127,7 @@ inline exports String<STRW> LocaleStaticProc::static_locale_cvt_lastows (const S
 #endif
 
 #ifdef __CSC_COMPILER_MSVC__
-inline exports String<STRA> LocaleStaticProc::static_locale_cvt_wstolas (const String<STRW> &val) {
+exports String<STRA> LocaleStaticProc::static_locale_cvt_wstolas (const String<STRW> &val) {
 	auto &r1x = LocaleStaticProc::static_locale_page () ;
 	String<STRA> ret = String<STRA> ((val.length () + 1) * _SIZEOF_ (STRW)) ;
 	_DEBUG_ASSERT_ (ret.size () < VAR32_MAX) ;
@@ -139,7 +142,7 @@ inline exports String<STRA> LocaleStaticProc::static_locale_cvt_wstolas (const S
 #endif
 
 #ifndef __CSC_COMPILER_MSVC__
-inline exports String<STRA> LocaleStaticProc::static_locale_cvt_wstolas (const String<STRW> &val) {
+exports String<STRA> LocaleStaticProc::static_locale_cvt_wstolas (const String<STRW> &val) {
 	String<STRA> ret = String<STRA> ((val.length () + 1) * _SIZEOF_ (STRW)) ;
 	_DEBUG_ASSERT_ (ret.size () < VAR32_MAX) ;
 	if switch_once (TRUE) {
@@ -152,7 +155,7 @@ inline exports String<STRA> LocaleStaticProc::static_locale_cvt_wstolas (const S
 }
 #endif
 
-inline exports String<STRW> StringProc::cvt_as_ws (const String<STRA> &val) {
+exports String<STRW> StringProc::cvt_as_ws (const String<STRA> &val) {
 	//@warn: not thread-safe due to internel storage
 	const auto r1x = api::setlocale (LC_CTYPE ,NULL) ;
 	_DEBUG_ASSERT_ (r1x != NULL) ;
@@ -169,7 +172,7 @@ inline exports String<STRW> StringProc::cvt_as_ws (const String<STRA> &val) {
 	return LocaleStaticProc::static_locale_cvt_lastows (val) ;
 }
 
-inline exports String<STRA> StringProc::cvt_ws_as (const String<STRW> &val) {
+exports String<STRA> StringProc::cvt_ws_as (const String<STRW> &val) {
 	//@warn: not thread-safe due to internel storage
 	const auto r1x = api::setlocale (LC_CTYPE ,NULL) ;
 	_DEBUG_ASSERT_ (r1x != NULL) ;
@@ -186,14 +189,13 @@ inline exports String<STRA> StringProc::cvt_ws_as (const String<STRW> &val) {
 	return LocaleStaticProc::static_locale_cvt_wstolas (val) ;
 }
 
-#ifdef __CSC_EXTEND__
-class RegexMatcher::Private::Implement
-	:public Abstract {
+class RegexMatcher::Private::Implement :
+	delegate public Abstract {
 private:
 	AutoRef<api::regex> mRegex ;
 
 public:
-	implicit Implement () = delete ;
+	implicit Implement () = default ;
 
 	explicit Implement (const String<STRU8> &reg) {
 		const auto r1x = StringProc::cvt_u8s_uas (reg) ;
@@ -244,13 +246,12 @@ public:
 		const auto r5x = api::regex_replace (r3x ,mRegex.self ,r4x) ;
 		if (r5x.empty ())
 			return String<STRU8> () ;
-		return StringProc::cvt_uas_u8s (PTRTOARR[r5x.c_str ()]) ;
+		return StringProc::cvt_uas_u8s (String<STRA> (PTRTOARR[r5x.c_str ()])) ;
 	}
 } ;
 
-inline exports RegexMatcher::RegexMatcher (const String<STRU8> &reg) {
-	using R1X = typename Private::Implement ;
+exports RegexMatcher::RegexMatcher (const String<STRU8> &reg) {
+	using R1X = DEPENDENT_TYPE<Private ,struct ANONYMOUS>::Implement ;
 	mThis = StrongRef<R1X>::make (reg) ;
 }
-#endif
 } ;

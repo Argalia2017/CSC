@@ -7,6 +7,7 @@
 #ifdef __CSC__
 #pragma push_macro ("self")
 #pragma push_macro ("implicit")
+#pragma push_macro ("delegate")
 #pragma push_macro ("leftvalue")
 #pragma push_macro ("rightvalue")
 #pragma push_macro ("imports")
@@ -15,6 +16,7 @@
 #pragma push_macro ("discard")
 #undef self
 #undef implicit
+#undef delegate
 #undef leftvalue
 #undef rightvalue
 #undef imports
@@ -34,6 +36,7 @@
 #ifdef __CSC__
 #pragma pop_macro ("self")
 #pragma pop_macro ("implicit")
+#pragma pop_macro ("delegate")
 #pragma pop_macro ("leftvalue")
 #pragma pop_macro ("rightvalue")
 #pragma pop_macro ("imports")
@@ -55,8 +58,8 @@ using ::free ;
 using ::backtrace_symbols ;
 } ;
 
-class ConsoleService::Private::Implement
-	:public ConsoleService::Abstract {
+class ConsoleService::Private::Implement :
+	delegate public ConsoleService::Abstract {
 private:
 	TextWriter<STR> mConWriter ;
 	TextWriter<STR> mLogWriter ;
@@ -302,10 +305,9 @@ public:
 	}
 
 	void log (const Plain<STR> &tag ,const PhanBuffer<const STR> &msg) {
-		struct Dependent ;
-		using R1X = typename DEPENDENT_TYPE<Private ,Dependent>::template ImplBinder<PhanBuffer<const STR>> ;
+		using R1X = typename DEPENDENT_TYPE<Private ,struct ANONYMOUS>::template ImplBinder<PhanBuffer<const STR>> ;
 		const auto r1x = PhanBuffer<const STR>::make (tag.self ,tag.size ()) ;
-		log (r1x ,R1X (msg)) ;
+		log (r1x ,R1X (ARGVP0 ,msg)) ;
 	}
 
 	void log (const PhanBuffer<const STR> &tag ,const Binder &msg) override {
@@ -416,34 +418,30 @@ private:
 	}
 } ;
 
-inline exports ConsoleService::ConsoleService (const ARGVF<Singleton<ConsoleService>> &) {
-	using R1X = typename Private::Implement ;
+exports ConsoleService::ConsoleService (const ARGVF<Singleton<ConsoleService>> &) {
+	using R1X = typename DEPENDENT_TYPE<Private ,struct ANONYMOUS>::Implement ;
 	mThis = StrongRef<R1X>::make () ;
 }
 
-class DebuggerService::Private::Implement
-	:public DebuggerService::Abstract {
+class DebuggerService::Private::Implement :
+	delegate public DebuggerService::Abstract {
 public:
 	implicit Implement () = default ;
 
 	void abort_once_invoked_exit (const BOOL &flag) override {
 		_DEBUG_ASSERT_ (flag) ;
-		const auto r1x = Function<void ()> ([] () noexcept {
+		api::atexit ([] () noexcept {
 			GlobalRuntime::process_abort () ;
 		}) ;
-		const auto r2x = Function<void (VAR32)> ([] (VAR32) noexcept {
+		api::signal (SIGFPE ,[] (VAR32) noexcept {
 			GlobalRuntime::process_abort () ;
 		}) ;
-		const auto r3x = Function<void (VAR32)> ([] (VAR32) noexcept {
+		api::signal (SIGILL ,[] (VAR32) noexcept {
 			GlobalRuntime::process_abort () ;
 		}) ;
-		const auto r4x = Function<void (VAR32)> ([] (VAR32) noexcept {
+		api::signal (SIGSEGV ,[] (VAR32) noexcept {
 			GlobalRuntime::process_abort () ;
 		}) ;
-		api::atexit (DEPTR[r1x.self]) ;
-		api::signal (SIGFPE ,DEPTR[r2x.self]) ;
-		api::signal (SIGILL ,DEPTR[r3x.self]) ;
-		api::signal (SIGSEGV ,DEPTR[r4x.self]) ;
 	}
 
 	void output_memory_leaks_report (const BOOL &flag) override {
@@ -465,13 +463,11 @@ public:
 		_DEBUG_ASSERT_ (list.length () < VAR32_MAX) ;
 		const auto r1x = _CALL_ ([&] () {
 			Array<PTR<NONE>> ret = Array<PTR<NONE>> (list.length ()) ;
-			for (auto &&i : _RANGE_ (0 ,ret.length ())) {
-				const auto r2x = _UNSAFE_POINTER_CAST_ (ARGV<NONE>::ID ,list[i]) ;
-				ret[i] = r2x ;
-			}
+			for (auto &&i : _RANGE_ (0 ,ret.length ()))
+				ret[i] = _UNSAFE_POINTER_ (list[i]) ;
 			return _MOVE_ (ret) ;
 		}) ;
-		const auto r3x = UniqueRef<PTR<PTR<STRA>>> ([&] (PTR<PTR<STRA>> &me) {
+		const auto r2x = UniqueRef<PTR<PTR<STRA>>> ([&] (PTR<PTR<STRA>> &me) {
 			me = api::backtrace_symbols (r1x.raw ().self ,VAR32 (r1x.length ())) ;
 		} ,[&] (PTR<PTR<STRA>> &me) {
 			if (me == NULL)
@@ -480,16 +476,16 @@ public:
 		}) ;
 		Array<String<STR>> ret = Array<String<STR>> (list.size ()) ;
 		for (auto &&i : _RANGE_ (0 ,list.length ())) {
-			const auto r4x = StringProc::build_hexs (ARGV<STR>::ID ,DATA (list[i])) ;
-			const auto r5x = StringProc::parse_strs (String<STRA> (PTRTOARR[PTRTOARR[r3x.self][i]])) ;
-			ret[i] = String<STR>::make (_PCSTR_ ("[") ,r4x ,_PCSTR_ ("] : ") ,r5x) ;
+			const auto r3x = StringProc::build_hexs (ARGV<STR>::ID ,DATA (list[i])) ;
+			const auto r4x = StringProc::parse_strs (String<STRA> (PTRTOARR[PTRTOARR[r2x.self][i]])) ;
+			ret[i] = String<STR>::make (_PCSTR_ ("[") ,r3x ,_PCSTR_ ("] : ") ,r4x) ;
 		}
 		return _MOVE_ (ret) ;
 	}
 } ;
 
-inline exports DebuggerService::DebuggerService (const ARGVF<Singleton<DebuggerService>> &) {
-	using R1X = typename Private::Implement ;
+exports DebuggerService::DebuggerService (const ARGVF<Singleton<DebuggerService>> &) {
+	using R1X = typename DEPENDENT_TYPE<Private ,struct ANONYMOUS>::Implement ;
 	mThis = StrongRef<R1X>::make () ;
 }
 } ;

@@ -2,6 +2,7 @@
 
 #define self
 #define implicit
+#define delegate
 #define imports
 #define exports
 #define leftvalue

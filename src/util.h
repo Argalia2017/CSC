@@ -6,10 +6,10 @@
 #include <csc_extend.hpp>
 #include <csc_array.hpp>
 #include <csc_math.hpp>
-#include <csc_functional.hpp>
 #include <csc_images.hpp>
 #include <csc_geometry.hpp>
 #include <csc_algorithm.hpp>
+#include <csc_functional.hpp>
 #include <csc_stream.hpp>
 #include <csc_string.hpp>
 #include <csc_serialization.hpp>
@@ -90,44 +90,3 @@ inline exports PTR<NONE> GlobalStaticEngine::unique_compare_exchange (const PTR<
 namespace UNITTEST {
 using namespace CSC ;
 } ;
-
-#ifdef __CSC_COMPILER_GNUC__
-#ifdef __CSC_MATH__
-#include <csc_math.hpp.default.inl>
-#endif
-
-#ifdef __CSC_STRING__
-#include <csc_string.hpp.default.inl>
-#include <csc_string.hpp.gbk.inl>
-#endif
-
-#ifdef __CSC_RUNTIME__
-#include <csc_runtime.hpp.default.inl>
-#endif
-
-#ifdef __CSC_FILESYSTEM__
-#ifdef __CSC_SYSTEM_WINDOWS__
-#include <csc_filesystem.hpp.windows.inl>
-#endif
-
-#ifdef __CSC_SYSTEM_LINUX__
-#include <csc_filesystem.hpp.linux.inl>
-#endif
-#endif
-
-#ifdef __CSC_NETWORK__
-#ifdef __CSC_SYSTEM_WINDOWS__
-#include <csc_network.hpp.windows.inl>
-#endif
-#endif
-
-#ifdef __CSC_DEBUGGER__
-#ifdef __CSC_SYSTEM_WINDOWS__
-#include <csc_debugger.hpp.windows.inl>
-#endif
-
-#ifdef __CSC_SYSTEM_LINUX__
-#include <csc_debugger.hpp.linux.inl>
-#endif
-#endif
-#endif
