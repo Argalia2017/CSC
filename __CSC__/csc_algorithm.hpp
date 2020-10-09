@@ -7,6 +7,7 @@
 #include "csc.hpp"
 #include "csc_core.hpp"
 #include "csc_basic.hpp"
+#include "csc_extend.hpp"
 #include "csc_array.hpp"
 #include "csc_math.hpp"
 #include "csc_images.hpp"
@@ -245,7 +246,7 @@ private:
 	Array<REAL> mPattern ;
 
 public:
-	implicit KMPAlgorithm () = delete ;
+	implicit KMPAlgorithm () = default ;
 
 	explicit KMPAlgorithm (const PhanBuffer<const REAL> &pattern) {
 		mNext = Array<INDEX> (pattern.size ()) ;
@@ -324,7 +325,7 @@ private:
 	INDEX mRoot ;
 
 public:
-	implicit DijstraAlgorithm () = delete ;
+	implicit DijstraAlgorithm () = default ;
 
 	explicit DijstraAlgorithm (const Bitmap<REAL> &adjacency ,const INDEX &root_) {
 		_DEBUG_ASSERT_ (adjacency.cx () == adjacency.cy ()) ;
@@ -348,9 +349,8 @@ public:
 
 private:
 	void initialize (const Bitmap<REAL> &adjacency ,const INDEX &root_) {
-		struct Dependent ;
-		using R1X = typename DEPENDENT_TYPE<Private ,Dependent>::InitializeLambda ;
-		_CALL_TRY_ (R1X (DEREF[this] ,adjacency ,root_)) ;
+		using R1X = typename DEPENDENT_TYPE<Private ,struct ANONYMOUS>::InitializeLambda ;
+		_CALL_TRY_ (R1X (ARGVP0 ,DEREF[this] ,adjacency ,root_)) ;
 	}
 
 	Deque<INDEX> query_path_depth (const INDEX &index) const {
@@ -367,8 +367,8 @@ private:
 } ;
 
 template <class REAL>
-class DijstraAlgorithm<REAL>::Private::InitializeLambda
-	:private Proxy {
+class DijstraAlgorithm<REAL>::Private::InitializeLambda :
+	delegate private Proxy {
 private:
 	DijstraAlgorithm &mContext ;
 	const Bitmap<REAL> &mAdjacency ;
@@ -381,8 +381,12 @@ private:
 	BitSet<> mYVisit ;
 
 public:
-	explicit InitializeLambda (DijstraAlgorithm &context_ ,const Bitmap<REAL> &adjancency ,const INDEX &root_)
-		: mContext (context_) ,mAdjacency (adjancency) ,mRoot (root_) {}
+	implicit InitializeLambda () = delete ;
+
+	explicit InitializeLambda (const DEF<decltype (ARGVP0)> & ,DijstraAlgorithm &context_ ,const Bitmap<REAL> &adjancency ,const INDEX &root_) :
+		delegate mContext (context_) ,
+		delegate mAdjacency (adjancency) ,
+		delegate mRoot (root_) {}
 
 	inline void operator() () {
 		prepare () ;
@@ -451,7 +455,7 @@ private:
 	Deque<BitSet<>> mCluster ;
 
 public:
-	implicit KMeansAlgorithm () = delete ;
+	implicit KMeansAlgorithm () = default ;
 
 	explicit KMeansAlgorithm (const Set<REAL> &dataset ,const Function<REAL (const REAL & ,const REAL &)> &distance ,const Array<REAL> &center) {
 		_DEBUG_ASSERT_ (dataset.length () >= 2) ;
@@ -465,15 +469,14 @@ public:
 
 private:
 	void initialize (const Set<REAL> &dataset ,const Function<REAL (const REAL & ,const REAL &)> &distance ,const Array<REAL> &center) {
-		struct Dependent ;
-		using R1X = typename DEPENDENT_TYPE<Private ,Dependent>::InitializeLambda ;
-		_CALL_TRY_ (R1X (DEREF[this] ,dataset ,distance ,center)) ;
+		using R1X = typename DEPENDENT_TYPE<Private ,struct ANONYMOUS>::InitializeLambda ;
+		_CALL_TRY_ (R1X (ARGVP0 ,DEREF[this] ,dataset ,distance ,center)) ;
 	}
 } ;
 
 template <class REAL>
-class KMeansAlgorithm<REAL>::Private::InitializeLambda
-	:private Proxy {
+class KMeansAlgorithm<REAL>::Private::InitializeLambda :
+	delegate private Proxy {
 private:
 	KMeansAlgorithm &mContext ;
 	const Set<REAL> &mDataSet ;
@@ -489,8 +492,15 @@ private:
 	ARRAY3<REAL> mConvergence ;
 
 public:
-	explicit InitializeLambda (KMeansAlgorithm &context_ ,const Set<REAL> &dataset ,const Function<REAL (const REAL & ,const REAL &)> &distance ,const Array<REAL> &center)
-		: mContext (context_) ,mDistanceFunc (distance) ,mDataSet (dataset) ,mCenter (center) ,mTolerance (1E-6) ,mInfinity (VAL_INF) {}
+	implicit InitializeLambda () = delete ;
+
+	explicit InitializeLambda (const DEF<decltype (ARGVP0)> & ,KMeansAlgorithm &context_ ,const Set<REAL> &dataset ,const Function<REAL (const REAL & ,const REAL &)> &distance ,const Array<REAL> &center) :
+		delegate mContext (context_) ,
+		delegate mDistanceFunc (distance) ,
+		delegate mDataSet (dataset) ,
+		delegate mCenter (center) ,
+		delegate mTolerance (1E-6) ,
+		delegate mInfinity (VAL_INF) {}
 
 	inline void operator() () {
 		prepare () ;
@@ -611,7 +621,7 @@ private:
 	Array<ARRAY2<INDEX>> mMatch ;
 
 public:
-	implicit KMHungarianAlgorithm () = delete ;
+	implicit KMHungarianAlgorithm () = default ;
 
 	explicit KMHungarianAlgorithm (const Bitmap<REAL> &adjacency) {
 		initialize (adjacency) ;
@@ -627,15 +637,14 @@ public:
 
 private:
 	void initialize (const Bitmap<REAL> &adjacency) {
-		struct Dependent ;
-		using R1X = typename DEPENDENT_TYPE<Private ,Dependent>::InitializeLambda ;
-		_CALL_TRY_ (R1X (DEREF[this] ,adjacency)) ;
+		using R1X = typename DEPENDENT_TYPE<Private ,struct ANONYMOUS>::InitializeLambda ;
+		_CALL_TRY_ (R1X (ARGVP0 ,DEREF[this] ,adjacency)) ;
 	}
 } ;
 
 template <class REAL>
-class KMHungarianAlgorithm<REAL>::Private::InitializeLambda
-	:private Proxy {
+class KMHungarianAlgorithm<REAL>::Private::InitializeLambda :
+	delegate private Proxy {
 private:
 	KMHungarianAlgorithm &mContext ;
 	const Bitmap<REAL> &mAdjacency ;
@@ -654,8 +663,13 @@ private:
 	EFLAG mTempState ;
 
 public:
-	explicit InitializeLambda (KMHungarianAlgorithm &context_ ,const Bitmap<REAL> &adjacency)
-		: mContext (context_) ,mAdjacency (adjacency) ,mTolerance (1E-6) ,mInfinity (VAL_INF) {}
+	implicit InitializeLambda () = delete ;
+
+	explicit InitializeLambda (const DEF<decltype (ARGVP0)> & ,KMHungarianAlgorithm &context_ ,const Bitmap<REAL> &adjacency) :
+		delegate mContext (context_) ,
+		delegate mAdjacency (adjacency) ,
+		delegate mTolerance (1E-6) ,
+		delegate mInfinity (VAL_INF) {}
 
 	inline void operator() () {
 		prepare () ;
@@ -695,65 +709,67 @@ private:
 		}
 	}
 
-	void update_lack_weight_e0 (const INDEX &y) {
-		//@info: $0
-		mLackWeight[0] = 0 ;
-		mLackWeight[1] = +mInfinity ;
-		//@info: $1
-		auto rax = FALSE ;
-		update_lack_weight_e7 (y ,rax) ;
-		//@info: $18
-		if (rax) {
-			//@info: $19
-			mLackWeight[0] = 0 ;
-			mLackWeight[1] = +mInfinity ;
-		}
-		//@info: $20
-	}
-
-	void update_lack_weight_e7 (const INDEX &stack_y ,BOOL &stack_ret) {
-		//@info: $7
-		if (stack_y == VAR_NONE) {
-			//@info: $2
-			stack_ret = TRUE ;
-			//@info: $17
-			return ;
-		}
-		//@info: $3
-		mYVisit[stack_y] = TRUE ;
-		auto stack_x = VAR_ZERO ;
-		//@info: $4
-		while (stack_x < mAdjacency.cx ()) {
-			//@info: $5
-			if (!mXVisit[stack_x]) {
-				//@info: $6
-				mLackWeight[0] = mYWeight[stack_y] + mXWeight[stack_x] - mAdjacency[stack_y][stack_x] ;
-				//@info: $9
-				if (mLackWeight[0] < mTolerance) {
-					//@info: $8
-					mXVisit[stack_x] = TRUE ;
-					update_lack_weight_e7 (mXYLink[stack_x] ,stack_ret) ;
-					//@info: $10
-					if (stack_ret) {
-						//@info: $11
-						mXYLink[stack_x] = stack_y ;
-						stack_ret = TRUE ;
-						//@info: $17
-						return ;
-					}
-				} else {
-					//@info: $14
-					mLackWeight[1] = MathProc::minof (mLackWeight[1] ,mLackWeight[0]) ;
-				}
-			}
-			//@info: $15
-			stack_x++ ;
-		}
-		//@info: $16
-		stack_ret = FALSE ;
-		//@info: $17
-		return ;
-	}
+/*
+*	void update_lack_weight_e0 (const INDEX &y) {
+*		//@info: $0
+*		mLackWeight[0] = 0 ;
+*		mLackWeight[1] = +mInfinity ;
+*		//@info: $1
+*		auto rax = FALSE ;
+*		update_lack_weight_e7 (y ,rax) ;
+*		//@info: $18
+*		if (rax) {
+*			//@info: $19
+*			mLackWeight[0] = 0 ;
+*			mLackWeight[1] = +mInfinity ;
+*		}
+*		//@info: $20
+*	}
+*
+*	void update_lack_weight_e7 (const INDEX &stack_y ,BOOL &stack_ret) {
+*		//@info: $7
+*		if (stack_y == VAR_NONE) {
+*			//@info: $2
+*			stack_ret = TRUE ;
+*			//@info: $17
+*			return ;
+*		}
+*		//@info: $3
+*		mYVisit[stack_y] = TRUE ;
+*		auto stack_x = VAR_ZERO ;
+*		//@info: $4
+*		while (stack_x < mAdjacency.cx ()) {
+*			//@info: $5
+*			if (!mXVisit[stack_x]) {
+*				//@info: $6
+*				mLackWeight[0] = mYWeight[stack_y] + mXWeight[stack_x] - mAdjacency[stack_y][stack_x] ;
+*				//@info: $9
+*				if (mLackWeight[0] < mTolerance) {
+*					//@info: $8
+*					mXVisit[stack_x] = TRUE ;
+*					update_lack_weight_e7 (mXYLink[stack_x] ,stack_ret) ;
+*					//@info: $10
+*					if (stack_ret) {
+*						//@info: $11
+*						mXYLink[stack_x] = stack_y ;
+*						stack_ret = TRUE ;
+*						//@info: $17
+*						return ;
+*					}
+*				} else {
+*					//@info: $14
+*					mLackWeight[1] = MathProc::minof (mLackWeight[1] ,mLackWeight[0]) ;
+*				}
+*			}
+*			//@info: $15
+*			stack_x++ ;
+*		}
+*		//@info: $16
+*		stack_ret = FALSE ;
+*		//@info: $17
+*		return ;
+*	}
+*/
 
 	void update_lack_weight (const INDEX &y) {
 		static constexpr auto M_STATE = PACK<EFLAG[22]> ({
@@ -780,7 +796,7 @@ private:
 				if (!(mTempState == M_STATE.mP1[1]))
 					discard ;
 				mTempRet = FALSE ;
-				mTempStack.add (ARRAY2<INDEX> {0 ,y}) ;
+				mTempStack.add (ARRAY2<INDEX> ({0 ,y})) ;
 				mTempState = M_STATE.mP1[7] ;
 			}
 			if switch_once (fax) {
@@ -799,17 +815,21 @@ private:
 			if switch_once (fax) {
 				if (!(mTempState == M_STATE.mP1[4]))
 					discard ;
-				auto &r1x = _SWITCH_ (
-					(mTempStack[ix][0] < mAdjacency.cx ()) ? M_STATE.mP1[5] :
-					M_STATE.mP1[16]) ;
+				auto &r1x = _CALL_ ([&] () {
+					if (mTempStack[ix][0] < mAdjacency.cx ())
+						return _BYREF_ (M_STATE.mP1[5]) ;
+					return _BYREF_ (M_STATE.mP1[16]) ;
+				}).self ;
 				mTempState = r1x ;
 			}
 			if switch_once (fax) {
 				if (!(mTempState == M_STATE.mP1[5]))
 					discard ;
-				auto &r2x = _SWITCH_ (
-					(mXVisit[mTempStack[ix][0]]) ? M_STATE.mP1[15] :
-					M_STATE.mP1[6]) ;
+				auto &r2x = _CALL_ ([&] () {
+					if (mXVisit[mTempStack[ix][0]])
+						return _BYREF_ (M_STATE.mP1[15]) ;
+					return _BYREF_ (M_STATE.mP1[6]) ;
+				}).self ;
 				mTempState = r2x ;
 			}
 			if switch_once (fax) {
@@ -822,33 +842,39 @@ private:
 				if (!(mTempState == M_STATE.mP1[7]))
 					discard ;
 				ix = mTempStack.tail () ;
-				auto &r3x = _SWITCH_ (
-					(mTempStack[ix][1] == VAR_NONE) ? M_STATE.mP1[2] :
-					M_STATE.mP1[3]) ;
+				auto &r3x = _CALL_ ([&] () {
+					if (mTempStack[ix][1] == VAR_NONE)
+						return _BYREF_ (M_STATE.mP1[2]) ;
+					return _BYREF_ (M_STATE.mP1[3]) ;
+				}).self ;
 				mTempState = r3x ;
 			}
 			if switch_once (fax) {
 				if (!(mTempState == M_STATE.mP1[8]))
 					discard ;
 				mXVisit[mTempStack[ix][0]] = TRUE ;
-				mTempStack.add (ARRAY2<INDEX> {0 ,mXYLink[mTempStack[ix][0]]}) ;
+				mTempStack.add (ARRAY2<INDEX> ({0 ,mXYLink[mTempStack[ix][0]]})) ;
 				mTempState = M_STATE.mP1[7] ;
 			}
 			if switch_once (fax) {
 				if (!(mTempState == M_STATE.mP1[9]))
 					discard ;
-				auto &r4x = _SWITCH_ (
-					(mLackWeight[0] < mTolerance) ? M_STATE.mP1[8] :
-					M_STATE.mP1[14]) ;
+				auto &r4x = _CALL_ ([&] () {
+					if (mLackWeight[0] < mTolerance)
+						return _BYREF_ (M_STATE.mP1[8]) ;
+					return _BYREF_ (M_STATE.mP1[14]) ;
+				}).self ;
 				mTempState = r4x ;
 			}
 			if switch_once (fax) {
 				if (!(mTempState == M_STATE.mP1[10]))
 					discard ;
 				ix = mTempStack.tail () ;
-				auto &r5x = _SWITCH_ (
-					mTempRet ? M_STATE.mP1[11] :
-					M_STATE.mP1[15]) ;
+				auto &r5x = _CALL_ ([&] () {
+					if (mTempRet)
+						return _BYREF_ (M_STATE.mP1[11]) ;
+					return _BYREF_ (M_STATE.mP1[15]) ;
+				}).self ;
 				mTempState = r5x ;
 			}
 			if switch_once (fax) {
@@ -880,17 +906,21 @@ private:
 				if (!(mTempState == M_STATE.mP1[17]))
 					discard ;
 				mTempStack.pop () ;
-				auto &r6x = _SWITCH_ (
-					(mTempStack.length () > 0) ? M_STATE.mP1[10] :
-					M_STATE.mP1[18]) ;
+				auto &r6x = _CALL_ ([&] () {
+					if (mTempStack.length () > 0)
+						return _BYREF_ (M_STATE.mP1[10]) ;
+					return _BYREF_ (M_STATE.mP1[18]) ;
+				}).self ;
 				mTempState = r6x ;
 			}
 			if switch_once (fax) {
 				if (!(mTempState == M_STATE.mP1[18]))
 					discard ;
-				auto &r7x = _SWITCH_ (
-					mTempRet ? M_STATE.mP1[19] :
-					M_STATE.mP1[20]) ;
+				auto &r7x = _CALL_ ([&] () {
+					if (mTempRet)
+						return _BYREF_ (M_STATE.mP1[19]) ;
+					return _BYREF_ (M_STATE.mP1[20]) ;
+				}).self ;
 				mTempState = r7x ;
 			}
 			if switch_once (fax) {
@@ -955,7 +985,7 @@ private:
 	REAL mDXLoss ;
 
 public:
-	implicit BFGSAlgorithm () = delete ;
+	implicit BFGSAlgorithm () = default ;
 
 	explicit BFGSAlgorithm (const Function<REAL (const Array<REAL> &)> &loss ,const Function<void (const Array<REAL> & ,Array<REAL> &)> &gradient ,const Array<REAL> &fdx) {
 		initialize (loss ,gradient ,fdx) ;
@@ -971,15 +1001,14 @@ public:
 
 private:
 	void initialize (const Function<REAL (const Array<REAL> &)> &loss ,const Array<REAL> &fdx) {
-		struct Dependent ;
-		using R1X = typename DEPENDENT_TYPE<Private ,Dependent>::InitializeLambda ;
-		_CALL_TRY_ (R1X (DEREF[this] ,loss ,fdx)) ;
+		using R1X = typename DEPENDENT_TYPE<Private ,struct ANONYMOUS>::InitializeLambda ;
+		_CALL_TRY_ (R1X (ARGVP0 ,DEREF[this] ,loss ,fdx)) ;
 	}
 } ;
 
 template <class REAL>
-class BFGSAlgorithm<REAL>::Private::InitializeLambda
-	:private Proxy {
+class BFGSAlgorithm<REAL>::Private::InitializeLambda :
+	delegate private Proxy {
 private:
 	BFGSAlgorithm &mContext ;
 	const Function<REAL (const Array<REAL> &)> &mLossFunc ;
@@ -1004,8 +1033,18 @@ private:
 	Array<REAL> mSX ;
 
 public:
-	explicit InitializeLambda (BFGSAlgorithm &context_ ,const Function<REAL (const Array<REAL> &)> &loss ,const Function<void (const Array<REAL> & ,Array<REAL> &)> &gradient ,const Array<REAL> &fdx)
-		: mContext (context_) ,mLossFunc (loss) ,mGradientProc (gradient) ,mFDX (fdx) ,mTolerance (1E-6) ,mDXLambdaFirst (1000) ,mDXLambdaPower (0.618) ,mDXLambdaC1 (1E-4) ,mDXLambdaC2 (0.9) {}
+	implicit InitializeLambda () = delete ;
+
+	explicit InitializeLambda (const DEF<decltype (ARGVP0)> & ,BFGSAlgorithm &context_ ,const Function<REAL (const Array<REAL> &)> &loss ,const Function<void (const Array<REAL> & ,Array<REAL> &)> &gradient ,const Array<REAL> &fdx) :
+		delegate mContext (context_) ,
+		delegate mLossFunc (loss) ,
+		delegate mGradientProc (gradient) ,
+		delegate mFDX (fdx) ,
+		delegate mTolerance (1E-6) ,
+		delegate mDXLambdaFirst (1000) ,
+		delegate mDXLambdaPower (0.618) ,
+		delegate mDXLambdaC1 (1E-4) ,
+		delegate mDXLambdaC2 (0.9) {}
 
 	inline void operator() () {
 		prepare () ;
@@ -1083,9 +1122,11 @@ private:
 		if switch_once (fax) {
 			if (!(mDXLoss[0] >= mDXLoss[2]))
 				discard ;
-			auto &r2x = _SWITCH_ (
-				(mDXLoss[2] > REAL (0)) ? mDXLoss[2] :
-				mDXLoss[1]) ;
+			auto &r2x = _CALL_ ([&] () {
+				if (mDXLoss[2] > REAL (0))
+					return _BYREF_ (mDXLoss[2]) ;
+				return _BYREF_ (mDXLoss[1]) ;
+			}).self ;
 			mDXLoss[0] = r2x ;
 			_SWAP_ (mDX ,mIX) ;
 			compute_gradient_of_loss (mDX ,mIG ,mSX) ;
@@ -1166,15 +1207,15 @@ private:
 template <class REAL>
 class KDTreeAlgorithm {
 private:
+	struct Private {
+		class InitializeLambda ;
+	} ;
+
 	struct NODE_PACK {
 		REAL mKey ;
 		INDEX mLeaf ;
 		INDEX mLeft ;
 		INDEX mRight ;
-	} ;
-
-	struct Private {
-		class InitializeLambda ;
 	} ;
 
 private:
@@ -1185,7 +1226,7 @@ private:
 	INDEX mRoot ;
 
 public:
-	implicit KDTreeAlgorithm () = delete ;
+	implicit KDTreeAlgorithm () = default ;
 
 	explicit KDTreeAlgorithm (const Array<ARRAY3<REAL>> &vertex) {
 		_DEBUG_ASSERT_ (vertex.length () > 0) ;
@@ -1221,14 +1262,13 @@ public:
 
 private:
 	void initialize (const Array<ARRAY3<REAL>> &vertex) {
-		struct Dependent ;
-		using R1X = typename DEPENDENT_TYPE<Private ,Dependent>::InitializeLambda ;
-		_CALL_TRY_ (R1X (DEREF[this] ,vertex)) ;
+		using R1X = typename DEPENDENT_TYPE<Private ,struct ANONYMOUS>::InitializeLambda ;
+		_CALL_TRY_ (R1X (ARGVP0 ,DEREF[this] ,vertex)) ;
 	}
 
 	REAL distance_of_point (const ARRAY3<REAL> &a ,const ARRAY3<REAL> &b) const {
-		const auto r1x = Vector<REAL> {a ,REAL (0)} ;
-		const auto r2x = Vector<REAL> {b ,REAL (0)} ;
+		const auto r1x = Vector<REAL> (a ,REAL (0)) ;
+		const auto r2x = Vector<REAL> (b ,REAL (0)) ;
 		return (r1x - r2x).magnitude () ;
 	}
 
@@ -1313,8 +1353,8 @@ private:
 } ;
 
 template <class REAL>
-class KDTreeAlgorithm<REAL>::Private::InitializeLambda
-	:private Proxy {
+class KDTreeAlgorithm<REAL>::Private::InitializeLambda :
+	delegate private Proxy {
 private:
 	KDTreeAlgorithm &mContext ;
 	const Array<ARRAY3<REAL>> &mVertex ;
@@ -1329,8 +1369,11 @@ private:
 	Array<INDEX> mTempOrder ;
 
 public:
-	explicit InitializeLambda (KDTreeAlgorithm &context_ ,const Array<ARRAY3<REAL>> &vertex)
-		: mContext (context_) ,mVertex (vertex) {}
+	implicit InitializeLambda () = delete ;
+
+	explicit InitializeLambda (const DEF<decltype (ARGVP0)> & ,KDTreeAlgorithm &context_ ,const Array<ARRAY3<REAL>> &vertex) :
+		delegate mContext (context_) ,
+		delegate mVertex (vertex) {}
 
 	inline void operator() () {
 		prepare () ;
@@ -1340,7 +1383,7 @@ public:
 
 private:
 	void prepare () {
-		mNextRot = ARRAY3<INDEX> {1 ,2 ,0} ;
+		mNextRot = ARRAY3<INDEX> ({1 ,2 ,0}) ;
 		for (auto &&i : _RANGE_ (0 ,mOrder.length ())) {
 			const auto r1x = stack_of_order (i) ;
 			mOrder[i] = r1x.range_sort () ;
@@ -1420,7 +1463,7 @@ private:
 		INDEX iw = 0 ;
 		for (auto &&i : _RANGE_ (lb ,rb + 1))
 			temp_order[iw++] = mOrder[n_rot][i] ;
-		const auto r1x = ARRAY2<INDEX> {0 ,iw} ;
+		const auto r1x = ARRAY2<INDEX> ({0 ,iw}) ;
 		for (auto &&i : _RANGE_ (r1x[0] ,r1x[1]))
 			order_[n_rot][lb + i] = temp_order[i] ;
 	}
@@ -1446,7 +1489,7 @@ private:
 	REAL mMaxFlow ;
 
 public:
-	implicit MaxFlowAlgorithm () = delete ;
+	implicit MaxFlowAlgorithm () = default ;
 
 	explicit MaxFlowAlgorithm (const Bitmap<REAL> &adjacency ,const INDEX &source ,const INDEX &sink) {
 		_DEBUG_ASSERT_ (adjacency.cx () == adjacency.cy ()) ;
@@ -1464,15 +1507,14 @@ public:
 
 private:
 	void initialize (const Bitmap<REAL> &adjacency ,const INDEX &source ,const INDEX &sink) {
-		struct Dependent ;
-		using R1X = typename DEPENDENT_TYPE<Private ,Dependent>::InitializeLambda ;
-		_CALL_TRY_ (R1X (DEREF[this] ,adjacency ,source ,sink)) ;
+		using R1X = typename DEPENDENT_TYPE<Private ,struct ANONYMOUS>::InitializeLambda ;
+		_CALL_TRY_ (R1X (ARGVP0 ,DEREF[this] ,adjacency ,source ,sink)) ;
 	}
 } ;
 
 template <class REAL>
-class MaxFlowAlgorithm<REAL>::Private::InitializeLambda
-	:private Proxy {
+class MaxFlowAlgorithm<REAL>::Private::InitializeLambda :
+	delegate private Proxy {
 private:
 	MaxFlowAlgorithm &mContext ;
 	const Bitmap<REAL> &mAdjacency ;
@@ -1486,8 +1528,13 @@ private:
 	Deque<INDEX> mTempQueue ;
 
 public:
-	explicit InitializeLambda (MaxFlowAlgorithm &context_ ,const Bitmap<REAL> &adjacency ,const INDEX &source ,const INDEX &sink)
-		: mContext (context_) ,mAdjacency (adjacency) ,mSource (source) ,mSink (sink) {}
+	implicit InitializeLambda () = delete ;
+
+	explicit InitializeLambda (const DEF<decltype (ARGVP0)> & ,MaxFlowAlgorithm &context_ ,const Bitmap<REAL> &adjacency ,const INDEX &source ,const INDEX &sink) :
+		delegate mContext (context_) ,
+		delegate mAdjacency (adjacency) ,
+		delegate mSource (source) ,
+		delegate mSink (sink) {}
 
 	inline void operator() () {
 		prepare () ;

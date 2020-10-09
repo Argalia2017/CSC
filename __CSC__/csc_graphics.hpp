@@ -68,9 +68,9 @@ private:
 
 public:
 	implicit Camera () {
-		const auto r1x = Vector<REAL> {REAL (0) ,REAL (0) ,REAL (1) ,REAL (1)} ;
-		const auto r2x = Vector<REAL> {REAL (0) ,REAL (0) ,REAL (0) ,REAL (1)} ;
-		const auto r3x = Vector<REAL> {REAL (0) ,REAL (1) ,REAL (0) ,REAL (0)} ;
+		const auto r1x = Vector<REAL> (REAL (0) ,REAL (0) ,REAL (1) ,REAL (1)) ;
+		const auto r2x = Vector<REAL> (REAL (0) ,REAL (0) ,REAL (0) ,REAL (1)) ;
+		const auto r3x = Vector<REAL> (REAL (0) ,REAL (1) ,REAL (0) ,REAL (0)) ;
 		lookat (r1x ,r2x ,r3x) ;
 		perspective (REAL (90) ,REAL (1) ,REAL (1) ,REAL (1000)) ;
 	}
@@ -206,7 +206,7 @@ public:
 
 private:
 	void update_view_matrix () {
-		const auto r1x = Vector<REAL> {-mEyeP[0] ,-mEyeP[1] ,-mEyeP[2] ,REAL (0)} ;
+		const auto r1x = Vector<REAL> (-mEyeP[0] ,-mEyeP[1] ,-mEyeP[2] ,REAL (0)) ;
 		mViewMatrix[0][0] = mEyeU[0] ;
 		mViewMatrix[0][1] = -mEyeU[1] ;
 		mViewMatrix[0][2] = -mEyeU[2] ;
@@ -226,201 +226,164 @@ private:
 	}
 } ;
 
-class AbstractSprite ;
+class GLSprite ;
 
-class AbstractShader {
-public:
-	class Abstract
-		:public Interface {
+class GLShader {
+private:
+	struct Private {
+		class Implement ;
+	} ;
+
+	class Abstract :
+		delegate public Interface {
 	public:
-		virtual void compute_load_data (AnyRef<> &holder ,const PhanBuffer<const BYTE> &vs ,const PhanBuffer<const BYTE> &fs) const = 0 ;
-		virtual void compute_active_pipeline (AnyRef<> &holder) const = 0 ;
-		virtual void compute_uniform_find (AnyRef<> &holder ,const String<STR> &name ,INDEX &index) const = 0 ;
-		virtual void compute_uniform_write (AnyRef<> &holder ,const INDEX &index ,const VAR32 &data) const = 0 ;
-		virtual void compute_uniform_write (AnyRef<> &holder ,const INDEX &index ,const VAR64 &data) const = 0 ;
-		virtual void compute_uniform_write (AnyRef<> &holder ,const INDEX &index ,const VAL32 &data) const = 0 ;
-		virtual void compute_uniform_write (AnyRef<> &holder ,const INDEX &index ,const VAL64 &data) const = 0 ;
-		virtual void compute_uniform_write (AnyRef<> &holder ,const INDEX &index ,const Vector<VAL32> &data) const = 0 ;
-		virtual void compute_uniform_write (AnyRef<> &holder ,const INDEX &index ,const Vector<VAL64> &data) const = 0 ;
-		virtual void compute_uniform_write (AnyRef<> &holder ,const INDEX &index ,const Matrix<VAL32> &data) const = 0 ;
-		virtual void compute_uniform_write (AnyRef<> &holder ,const INDEX &index ,const Matrix<VAL64> &data) const = 0 ;
-		virtual void compute_sprite_load_data (AnyRef<> &holder ,const Mesh &mesh) const = 0 ;
-		virtual void compute_sprite_active_texture (AnyRef<> &holder ,const INDEX &texture) const = 0 ;
-		virtual void compute_sprite_draw (AnyRef<> &holder) const = 0 ;
+		virtual void load_data (const PhanBuffer<const BYTE> &vs ,const PhanBuffer<const BYTE> &fs) = 0 ;
+		virtual void active_pipeline () = 0 ;
+		virtual void uniform_find (const String<STR> &name ,INDEX &index) = 0 ;
+		virtual void uniform_write (const INDEX &index ,const VAR32 &data) = 0 ;
+		virtual void uniform_write (const INDEX &index ,const VAR64 &data) = 0 ;
+		virtual void uniform_write (const INDEX &index ,const VAL32 &data) = 0 ;
+		virtual void uniform_write (const INDEX &index ,const VAL64 &data) = 0 ;
+		virtual void uniform_write (const INDEX &index ,const Vector<VAL32> &data) = 0 ;
+		virtual void uniform_write (const INDEX &index ,const Vector<VAL64> &data) = 0 ;
+		virtual void uniform_write (const INDEX &index ,const Matrix<VAL32> &data) = 0 ;
+		virtual void uniform_write (const INDEX &index ,const Matrix<VAL64> &data) = 0 ;
 	} ;
 
 private:
-	PhanRef<const Abstract> mAbstract ;
-	AnyRef<> mHolder ;
+	StrongRef<Abstract> mThis ;
 	Set<String<STR>> mUniformMappingSet ;
 
 public:
-	implicit AbstractShader () = default ;
-
-	explicit AbstractShader (PhanRef<const Abstract> &&abstract_) {
-		mAbstract = _MOVE_ (abstract_) ;
-	}
-
-	BOOL exist () const {
-		if (!mAbstract.exist ())
-			return FALSE ;
-		if (!mHolder.exist ())
-			return FALSE ;
-		return TRUE ;
-	}
+	implicit GLShader () ;
 
 	void load_data (const PhanBuffer<const BYTE> &vs ,const PhanBuffer<const BYTE> &fs) {
-		_DEBUG_ASSERT_ (mAbstract.exist ()) ;
-		mAbstract->compute_load_data (mHolder ,vs ,fs) ;
+		return mThis->load_data (vs ,fs) ;
 	}
 
 	void active_pipeline () {
-		_DEBUG_ASSERT_ (exist ()) ;
-		mAbstract->compute_active_pipeline (mHolder) ;
+		return mThis->active_pipeline () ;
 	}
 
 	void uniform (const String<STR> &name ,const VAR32 &data) {
-		_DEBUG_ASSERT_ (exist ()) ;
 		INDEX ix = mUniformMappingSet.map (name) ;
 		if switch_once (TRUE) {
 			if (ix != VAR_NONE)
 				discard ;
-			mAbstract->compute_uniform_find (mHolder ,name ,ix) ;
+			mThis->uniform_find (name ,ix) ;
 			mUniformMappingSet.add (name ,ix) ;
 		}
-		mAbstract->compute_uniform_write (mHolder ,ix ,data) ;
+		mThis->uniform_write (ix ,data) ;
 	}
 
 	void uniform (const String<STR> &name ,const VAR64 &data) {
-		_DEBUG_ASSERT_ (exist ()) ;
 		INDEX ix = mUniformMappingSet.map (name) ;
 		if switch_once (TRUE) {
 			if (ix != VAR_NONE)
 				discard ;
-			mAbstract->compute_uniform_find (mHolder ,name ,ix) ;
+			mThis->uniform_find (name ,ix) ;
 			mUniformMappingSet.add (name ,ix) ;
 		}
-		mAbstract->compute_uniform_write (mHolder ,ix ,data) ;
+		mThis->uniform_write (ix ,data) ;
 	}
 
 	void uniform (const String<STR> &name ,const VAL32 &data) {
-		_DEBUG_ASSERT_ (exist ()) ;
 		INDEX ix = mUniformMappingSet.map (name) ;
 		if switch_once (TRUE) {
 			if (ix != VAR_NONE)
 				discard ;
-			mAbstract->compute_uniform_find (mHolder ,name ,ix) ;
+			mThis->uniform_find (name ,ix) ;
 			mUniformMappingSet.add (name ,ix) ;
 		}
-		mAbstract->compute_uniform_write (mHolder ,ix ,data) ;
+		mThis->uniform_write (ix ,data) ;
 	}
 
 	void uniform (const String<STR> &name ,const VAL64 &data) {
-		_DEBUG_ASSERT_ (exist ()) ;
 		INDEX ix = mUniformMappingSet.map (name) ;
 		if switch_once (TRUE) {
 			if (ix != VAR_NONE)
 				discard ;
-			mAbstract->compute_uniform_find (mHolder ,name ,ix) ;
+			mThis->uniform_find (name ,ix) ;
 			mUniformMappingSet.add (name ,ix) ;
 		}
-		mAbstract->compute_uniform_write (mHolder ,ix ,data) ;
+		mThis->uniform_write (ix ,data) ;
 	}
 
 	void uniform (const String<STR> &name ,const Vector<VAL32> &data) {
-		_DEBUG_ASSERT_ (exist ()) ;
 		INDEX ix = mUniformMappingSet.map (name) ;
 		if switch_once (TRUE) {
 			if (ix != VAR_NONE)
 				discard ;
-			mAbstract->compute_uniform_find (mHolder ,name ,ix) ;
+			mThis->uniform_find (name ,ix) ;
 			mUniformMappingSet.add (name ,ix) ;
 		}
-		mAbstract->compute_uniform_write (mHolder ,ix ,data) ;
+		mThis->uniform_write (ix ,data) ;
 	}
 
 	void uniform (const String<STR> &name ,const Vector<VAL64> &data) {
-		_DEBUG_ASSERT_ (exist ()) ;
 		INDEX ix = mUniformMappingSet.map (name) ;
 		if switch_once (TRUE) {
 			if (ix != VAR_NONE)
 				discard ;
-			mAbstract->compute_uniform_find (mHolder ,name ,ix) ;
+			mThis->uniform_find (name ,ix) ;
 			mUniformMappingSet.add (name ,ix) ;
 		}
-		mAbstract->compute_uniform_write (mHolder ,ix ,data) ;
+		mThis->uniform_write (ix ,data) ;
 	}
 
 	void uniform (const String<STR> &name ,const Matrix<VAL32> &data) {
-		_DEBUG_ASSERT_ (exist ()) ;
 		INDEX ix = mUniformMappingSet.map (name) ;
 		if switch_once (TRUE) {
 			if (ix != VAR_NONE)
 				discard ;
-			mAbstract->compute_uniform_find (mHolder ,name ,ix) ;
+			mThis->uniform_find (name ,ix) ;
 			mUniformMappingSet.add (name ,ix) ;
 		}
-		mAbstract->compute_uniform_write (mHolder ,ix ,data) ;
+		mThis->uniform_write (ix ,data) ;
 	}
 
 	void uniform (const String<STR> &name ,const Matrix<VAL64> &data) {
-		_DEBUG_ASSERT_ (exist ()) ;
 		INDEX ix = mUniformMappingSet.map (name) ;
 		if switch_once (TRUE) {
 			if (ix != VAR_NONE)
 				discard ;
-			mAbstract->compute_uniform_find (mHolder ,name ,ix) ;
+			mThis->uniform_find (name ,ix) ;
 			mUniformMappingSet.add (name ,ix) ;
 		}
-		mAbstract->compute_uniform_write (mHolder ,ix ,data) ;
-	}
-
-	template <class _RET = REMOVE_CVR_TYPE<AbstractSprite>>
-	_RET create_sprite () {
-		struct Dependent ;
-		using R1X = DEPENDENT_TYPE<AbstractSprite ,Dependent> ;
-		return R1X (mAbstract) ;
+		mThis->uniform_write (ix ,data) ;
 	}
 } ;
 
-class AbstractSprite {
-public:
-	using Abstract = typename AbstractShader::Abstract ;
+class GLSprite {
+private:
+	struct Private {
+		class Implement ;
+	} ;
+
+	class Abstract :
+		delegate public Interface {
+	public:
+		virtual void load_data (const Mesh &mesh) = 0 ;
+		virtual void active_texture (const INDEX &texture) = 0 ;
+		virtual void draw () = 0 ;
+	} ;
 
 private:
-	PhanRef<const Abstract> mAbstract ;
-	AnyRef<> mHolder ;
+	StrongRef<Abstract> mThis ;
 
 public:
-	implicit AbstractSprite () = delete ;
-
-	explicit AbstractSprite (PhanRef<const Abstract> &&abstract_) {
-		mAbstract = _MOVE_ (abstract_) ;
-	}
-
-	BOOL exist () const {
-		if (!mAbstract.exist ())
-			return FALSE ;
-		if (!mHolder.exist ())
-			return FALSE ;
-		return TRUE ;
-	}
+	implicit GLSprite () ;
 
 	void load_data (const Mesh &mesh) {
-		_DEBUG_ASSERT_ (mAbstract.exist ()) ;
-		mAbstract->compute_sprite_load_data (mHolder ,mesh) ;
+		return mThis->load_data (mesh) ;
 	}
 
 	void active_texture (const INDEX &texture) {
-		if (!exist ())
-			return ;
-		mAbstract->compute_sprite_active_texture (mHolder ,texture) ;
+		return mThis->active_texture (texture) ;
 	}
 
 	void draw () {
-		if (!exist ())
-			return ;
-		mAbstract->compute_sprite_draw (mHolder) ;
+		return mThis->draw () ;
 	}
 } ;
 } ;

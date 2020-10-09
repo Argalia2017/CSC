@@ -19,8 +19,8 @@ namespace CSC {
 using DEFAULT_FILEPATH_SIZE = ARGC<1023> ;
 using DEFAULT_DIRECTORY_SIZE = ARGC<65536> ;
 
-class FileSystemProc
-	:private Wrapped<> {
+class FileSystemProc :
+	delegate private Wrapped<> {
 public:
 	imports AutoBuffer<BYTE> load_file (const String<STR> &file) ;
 
@@ -75,8 +75,8 @@ private:
 		class Implement ;
 	} ;
 
-	class Abstract
-		:public Interface {
+	class Abstract :
+		delegate public Interface {
 	public:
 		virtual void read (const PhanBuffer<BYTE> &data) = 0 ;
 		virtual void write (const PhanBuffer<const BYTE> &data) = 0 ;
@@ -87,7 +87,7 @@ private:
 	StrongRef<Abstract> mThis ;
 
 public:
-	implicit StreamLoader () = delete ;
+	implicit StreamLoader () = default ;
 
 	explicit StreamLoader (const String<STR> &file) ;
 
@@ -120,8 +120,8 @@ private:
 		class Implement ;
 	} ;
 
-	class Abstract
-		:public Interface {
+	class Abstract :
+		delegate public Interface {
 	public:
 		virtual PhanBuffer<BYTE> watch () leftvalue = 0 ;
 		virtual PhanBuffer<const BYTE> watch () const leftvalue = 0 ;
@@ -132,7 +132,7 @@ private:
 	StrongRef<Abstract> mThis ;
 
 public:
-	implicit BufferLoader () = delete ;
+	implicit BufferLoader () = default ;
 
 	explicit BufferLoader (const String<STR> &file) ;
 
@@ -155,15 +155,15 @@ public:
 	}
 } ;
 
-class FileSystemService
-	:private Proxy {
+class FileSystemService :
+	delegate private Proxy {
 private:
 	struct Private {
 		class Implement ;
 	} ;
 
-	class Abstract
-		:public Interface {
+	class Abstract :
+		delegate public Interface {
 	public:
 		virtual void startup () = 0 ;
 		virtual void shutdown () = 0 ;
@@ -171,7 +171,7 @@ private:
 
 private:
 	friend Singleton<FileSystemService> ;
-	Monostate<RecursiveMutex> mMutex ;
+	Mutable<RecursiveMutex> mMutex ;
 	StrongRef<Abstract> mThis ;
 
 public:

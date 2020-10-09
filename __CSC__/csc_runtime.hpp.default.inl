@@ -7,6 +7,7 @@
 #ifdef __CSC__
 #pragma push_macro ("self")
 #pragma push_macro ("implicit")
+#pragma push_macro ("delegate")
 #pragma push_macro ("leftvalue")
 #pragma push_macro ("rightvalue")
 #pragma push_macro ("imports")
@@ -15,6 +16,7 @@
 #pragma push_macro ("discard")
 #undef self
 #undef implicit
+#undef delegate
 #undef leftvalue
 #undef rightvalue
 #undef imports
@@ -60,6 +62,7 @@
 #ifdef __CSC__
 #pragma pop_macro ("self")
 #pragma pop_macro ("implicit")
+#pragma pop_macro ("delegate")
 #pragma pop_macro ("leftvalue")
 #pragma pop_macro ("rightvalue")
 #pragma pop_macro ("imports")
@@ -124,13 +127,13 @@ using ::getsid ;
 #endif
 } ;
 
-class Duration::Private::Implement
-	:public Abstract {
+class Duration::Private::Implement :
+	delegate public Abstract {
 private:
 	api::system_clock::duration mDuration ;
 
 public:
-	implicit Implement () = delete ;
+	implicit Implement () = default ;
 
 	explicit Implement (const LENGTH &milliseconds_) {
 		const auto r1x = api::milliseconds (milliseconds_) ;
@@ -156,8 +159,8 @@ public:
 		return mDuration ;
 	}
 
-	const Implement &native () const override {
-		return DEREF[this] ;
+	Reference native () const override {
+		return SafeReference<const Implement> (DEREF[this]) ;
 	}
 
 	LENGTH hours () const override {
@@ -203,24 +206,24 @@ public:
 	}
 } ;
 
-inline exports Duration::Duration (const LENGTH &milliseconds_) {
-	using R1X = typename Private::Implement ;
+exports Duration::Duration (const LENGTH &milliseconds_) {
+	using R1X = typename DEPENDENT_TYPE<Private ,struct ANONYMOUS>::Implement ;
 	mThis = StrongRef<R1X>::make (milliseconds_) ;
 }
 
 template <class _ARG1 ,class>
-inline exports Duration::Duration (_ARG1 &&time_) {
-	using R1X = typename Private::Implement ;
+exports Duration::Duration (_ARG1 &&time_) {
+	using R1X = typename DEPENDENT_TYPE<Private ,struct ANONYMOUS>::Implement ;
 	mThis = StrongRef<R1X>::make (_FORWARD_ (ARGV<_ARG1 &&>::ID ,time_)) ;
 }
 
-class TimePoint::Private::Implement
-	:public Abstract {
+class TimePoint::Private::Implement :
+	delegate public Abstract {
 private:
 	api::system_clock::time_point mTimePoint ;
 
 public:
-	implicit Implement () = delete ;
+	implicit Implement () = default ;
 
 	explicit Implement (const ARRAY8<LENGTH> &time_) {
 		auto rax = api::tm () ;
@@ -245,8 +248,8 @@ public:
 		mTimePoint = api::time_point_cast<api::system_clock::duration> (time_) ;
 	}
 
-	const Implement &native () const override {
-		return DEREF[this] ;
+	Reference native () const override {
+		return SafeReference<const Implement> (DEREF[this]) ;
 	}
 
 	const api::system_clock::time_point &get_mTimePoint () const leftvalue {
@@ -310,25 +313,25 @@ public:
 } ;
 
 template <class _ARG1 ,class>
-inline exports TimePoint::TimePoint (_ARG1 &&time_) {
-	using R1X = typename Private::Implement ;
+exports TimePoint::TimePoint (_ARG1 &&time_) {
+	using R1X = typename DEPENDENT_TYPE<Private ,struct ANONYMOUS>::Implement ;
 	mThis = StrongRef<R1X>::make (_FORWARD_ (ARGV<_ARG1 &&>::ID ,time_)) ;
 }
 
-class Mutex::Private::Implement
-	:public Abstract {
+class Mutex::Private::Implement :
+	delegate public Abstract {
 private:
 	api::mutex mMutex ;
 
 public:
 	implicit Implement () = default ;
 
-	Implement &native () override {
-		return DEREF[this] ;
+	Reference native () override {
+		return SafeReference<Implement> (DEREF[this]) ;
 	}
 
-	const Implement &native () const override {
-		return DEREF[this] ;
+	Reference native () const override {
+		return SafeReference<const Implement> (DEREF[this]) ;
 	}
 
 	api::mutex &get_mMutex () leftvalue {
@@ -348,25 +351,25 @@ public:
 	}
 } ;
 
-inline exports Mutex::Mutex () {
-	using R1X = typename Private::Implement ;
+exports Mutex::Mutex () {
+	using R1X = DEPENDENT_TYPE<Private ,struct ANONYMOUS>::Implement ;
 	mThis = StrongRef<R1X>::make () ;
 }
 
-class RecursiveMutex::Private::Implement
-	:public Abstract {
+class RecursiveMutex::Private::Implement :
+	delegate public Abstract {
 private:
 	api::recursive_mutex mMutex ;
 
 public:
 	implicit Implement () = default ;
 
-	Implement &native () override {
-		return DEREF[this] ;
+	Reference native () override {
+		return SafeReference<Implement> (DEREF[this]) ;
 	}
 
-	const Implement &native () const override {
-		return DEREF[this] ;
+	Reference native () const override {
+		return SafeReference<const Implement> (DEREF[this]) ;
 	}
 
 	api::recursive_mutex &get_mMutex () leftvalue {
@@ -386,25 +389,25 @@ public:
 	}
 } ;
 
-inline exports RecursiveMutex::RecursiveMutex () {
-	using R1X = typename Private::Implement ;
+exports RecursiveMutex::RecursiveMutex () {
+	using R1X = DEPENDENT_TYPE<Private ,struct ANONYMOUS>::Implement ;
 	mThis = StrongRef<R1X>::make () ;
 }
 
-class ConditionLock::Private::Implement
-	:public Abstract {
+class ConditionLock::Private::Implement :
+	delegate public Abstract {
 private:
 	api::condition_variable mConditionLock ;
 
 public:
 	implicit Implement () = default ;
 
-	Implement &native () override {
-		return DEREF[this] ;
+	Reference native () override {
+		return SafeReference<Implement> (DEREF[this]) ;
 	}
 
-	const Implement &native () const override {
-		return DEREF[this] ;
+	Reference native () const override {
+		return SafeReference<const Implement> (DEREF[this]) ;
 	}
 
 	api::condition_variable &get_mConditionLock () leftvalue {
@@ -412,20 +415,20 @@ public:
 	}
 } ;
 
-inline exports ConditionLock::ConditionLock () {
-	using R1X = typename Private::Implement ;
+exports ConditionLock::ConditionLock () {
+	using R1X = DEPENDENT_TYPE<Private ,struct ANONYMOUS>::Implement ;
 	mThis = StrongRef<R1X>::make () ;
 }
 
-class UniqueLock::Private::Implement
-	:public Abstract {
+class UniqueLock::Private::Implement :
+	delegate public Abstract {
 private:
 	PhanRef<Mutex> mMutex ;
 	PhanRef<ConditionLock> mConditionLock ;
 	api::unique_lock<api::mutex> mUniqueLock ;
 
 public:
-	implicit Implement () = delete ;
+	implicit Implement () = default ;
 
 	explicit Implement (PhanRef<Mutex> &&mutex_ ,PhanRef<ConditionLock> &&condition_lock) {
 		mMutex = _MOVE_ (mutex_) ;
@@ -458,19 +461,19 @@ public:
 	}
 } ;
 
-inline exports UniqueLock::UniqueLock (PhanRef<Mutex> &&mutex_ ,PhanRef<ConditionLock> &&condition_lock) {
-	using R1X = typename Private::Implement ;
+exports UniqueLock::UniqueLock (PhanRef<Mutex> &&mutex_ ,PhanRef<ConditionLock> &&condition_lock) {
+	using R1X = DEPENDENT_TYPE<Private ,struct ANONYMOUS>::Implement ;
 	mThis = StrongRef<R1X>::make (_MOVE_ (mutex_) ,_MOVE_ (condition_lock)) ;
 }
 
-class Thread::Private::Implement
-	:public Abstract {
+class Thread::Private::Implement :
+	delegate public Abstract {
 private:
 	StrongRef<Binder> mRunnable ;
 	api::thread mThread ;
 
 public:
-	implicit Implement () = delete ;
+	implicit Implement () = default ;
 
 	explicit Implement (const StrongRef<Binder> &runnable) {
 		mRunnable = runnable.share () ;
@@ -482,66 +485,66 @@ public:
 	}
 } ;
 
-inline exports Thread::Thread (const StrongRef<Binder> &runnable) {
-	using R1X = typename Private::Implement ;
+exports Thread::Thread (const StrongRef<Binder> &runnable) {
+	using R1X = DEPENDENT_TYPE<Private ,struct ANONYMOUS>::Implement ;
 	mThis = StrongRef<R1X>::make (runnable) ;
 }
 
-inline exports TimePoint GlobalRuntime::clock_now () {
+exports TimePoint GlobalRuntime::clock_now () {
 	const auto r1x = api::system_clock::now () ;
 	return TimePoint (r1x) ;
 }
 
-inline exports TimePoint GlobalRuntime::clock_epoch () {
+exports TimePoint GlobalRuntime::clock_epoch () {
 	const auto r1x = api::system_clock::duration::zero () ;
 	const auto r2x = api::system_clock::time_point (r1x) ;
 	return TimePoint (r2x) ;
 }
 
 #ifdef __CSC_SYSTEM_WINDOWS__
-inline exports FLAG GlobalRuntime::thread_tid () {
+exports FLAG GlobalRuntime::thread_tid () {
 	return FLAG (api::GetCurrentThreadId ()) ;
 }
 #endif
 
 #ifdef __CSC_SYSTEM_LINUX__
-inline exports FLAG GlobalRuntime::thread_tid () {
+exports FLAG GlobalRuntime::thread_tid () {
 	return FLAG (syscall (SYS_gettid)) ;
 }
 #endif
 
-inline exports void GlobalRuntime::thread_sleep (const Duration &time_) {
+exports void GlobalRuntime::thread_sleep (const Duration &time_) {
 	auto &r1x = time_.native ().get_mDuration () ;
 	api::sleep_for (r1x) ;
 }
 
-inline exports void GlobalRuntime::thread_sleep (const TimePoint &time_) {
+exports void GlobalRuntime::thread_sleep (const TimePoint &time_) {
 	auto &r1x = time_.native ().get_mTimePoint () ;
 	api::sleep_until (r1x) ;
 }
 
-inline exports void GlobalRuntime::thread_yield () {
+exports void GlobalRuntime::thread_yield () {
 	api::yield () ;
 }
 
-inline exports LENGTH GlobalRuntime::thread_concurrency () {
+exports LENGTH GlobalRuntime::thread_concurrency () {
 	return LENGTH (api::thread::hardware_concurrency ()) ;
 }
 
-inline exports void GlobalRuntime::thread_fence () {
+exports void GlobalRuntime::thread_fence () {
 	api::atomic_thread_fence (api::memory_order::memory_order_seq_cst) ;
 }
 
-inline exports void GlobalRuntime::locale_init (const Plain<STRA> &locale_) {
+exports void GlobalRuntime::locale_init (const Plain<STRA> &locale_) {
 	api::setlocale (LC_ALL ,locale_.self) ;
 }
 
 #ifdef __CSC_SYSTEM_WINDOWS__
-inline exports FLAG GlobalRuntime::process_pid () {
+exports FLAG GlobalRuntime::process_pid () {
 	return FLAG (api::GetCurrentProcessId ()) ;
 }
 
-inline exports Buffer<BYTE ,ARGC<128>> GlobalRuntime::process_info (const FLAG &pid) {
+exports Buffer<BYTE ,ARGC<128>> GlobalRuntime::process_info (const FLAG &pid) {
 	Buffer<BYTE ,ARGC<128>> ret ;
 	auto rax = ByteWriter<BYTE> (PhanBuffer<BYTE>::make (ret)) ;
 	if switch_once (TRUE) {
@@ -572,7 +575,7 @@ inline exports Buffer<BYTE ,ARGC<128>> GlobalRuntime::process_info (const FLAG &
 	return _MOVE_ (ret) ;
 }
 
-inline exports FLAG GlobalRuntime::process_info_pid (const PhanBuffer<const STRU8> &info) {
+exports FLAG GlobalRuntime::process_info_pid (const PhanBuffer<const STRU8> &info) {
 	_DEBUG_ASSERT_ (info.size () == 128) ;
 	auto rax = ByteReader<BYTE> (PhanBuffer<const BYTE>::make (info)) ;
 	const auto r1x = rax.read (ARGV<VAR64>::ID) ;
@@ -582,11 +585,11 @@ inline exports FLAG GlobalRuntime::process_info_pid (const PhanBuffer<const STRU
 #endif
 
 #ifdef __CSC_SYSTEM_LINUX__
-inline exports FLAG GlobalRuntime::process_pid () {
+exports FLAG GlobalRuntime::process_pid () {
 	return FLAG (syscall (SYS_getpid)) ;
 }
 
-inline exports Buffer<BYTE ,ARGC<128>> GlobalRuntime::process_info (const FLAG &pid) {
+exports Buffer<BYTE ,ARGC<128>> GlobalRuntime::process_info (const FLAG &pid) {
 	Buffer<BYTE ,ARGC<128>> ret ;
 	auto rax = ByteWriter<BYTE> (PhanBuffer<BYTE>::make (ret)) ;
 	if switch_once (TRUE) {
@@ -607,7 +610,7 @@ inline exports Buffer<BYTE ,ARGC<128>> GlobalRuntime::process_info (const FLAG &
 	return _MOVE_ (ret) ;
 }
 
-inline exports FLAG GlobalRuntime::process_info_pid (const PhanBuffer<const STRU8> &info) {
+exports FLAG GlobalRuntime::process_info_pid (const PhanBuffer<const STRU8> &info) {
 	_DEBUG_ASSERT_ (info.size () == 128) ;
 	auto rax = ByteReader<BYTE> (PhanBuffer<const BYTE>::make (info)) ;
 	const auto r1x = rax.read (ARGV<VAR64>::ID) ;
@@ -617,30 +620,30 @@ inline exports FLAG GlobalRuntime::process_info_pid (const PhanBuffer<const STRU
 #endif
 
 #ifndef __CSC_COMPILER_GNUC__
-inline exports void GlobalRuntime::process_exit[[noreturn]] () {
+exports void GlobalRuntime::process_exit[[noreturn]] () {
 	api::quick_exit (EXIT_FAILURE) ;
 }
 #endif
 
 #ifdef __CSC_COMPILER_GNUC__
-inline exports void GlobalRuntime::process_exit[[noreturn]] () {
+exports void GlobalRuntime::process_exit[[noreturn]] () {
 	//@error: fuck g++4.8
 	api::exit (EXIT_FAILURE) ;
 }
 #endif
 
-inline exports void GlobalRuntime::process_abort[[noreturn]] () {
+exports void GlobalRuntime::process_abort[[noreturn]] () {
 	api::terminate () ;
 }
 
-inline exports FLAG GlobalRuntime::system_exec (const String<STR> &cmd) {
+exports FLAG GlobalRuntime::system_exec (const String<STR> &cmd) {
 	const auto r1x = StringProc::build_strs (ARGV<STRA>::ID ,cmd) ;
 	const auto r2x = api::system (r1x.raw ().self) ;
 	return FLAG (r2x) ;
 }
 
-class RandomService::Private::Implement
-	:public RandomService::Abstract {
+class RandomService::Private::Implement :
+	delegate public RandomService::Abstract {
 private:
 	AutoRef<api::random_device> mRandomSeed ;
 	AutoRef<api::mt19937> mRandomDevice ;
@@ -651,16 +654,17 @@ public:
 		mRandomDevice = AutoRef<api::mt19937>::make (CHAR (mRandomSeed.self ())) ;
 	}
 
-	VAR entropy () const override {
-		return VAR (mRandomSeed->entropy ()) ;
+	VAR32 entropy () const override {
+		return VAR32 (mRandomSeed->entropy ()) ;
 	}
 
-	void reset_seed (const VAR &seed_) override {
+	void reset_seed (const VAR32 &seed_) override {
 		mRandomDevice = AutoRef<api::mt19937>::make (CHAR (seed_)) ;
 	}
 
-	VAR random_value () override {
-		return VAR (mRandomDevice.self ()) ;
+	VAR32 random_value () override {
+		const auto r1x = CHAR (mRandomDevice.self ()) ;
+		return VAR32 (r1x) & VAR32_MAX ;
 	}
 
 	void random_skip (const LENGTH &len) override {
@@ -671,8 +675,8 @@ public:
 	}
 } ;
 
-inline exports RandomService::RandomService (const ARGVF<Singleton<RandomService>> &) {
-	using R1X = typename Private::Implement ;
+exports RandomService::RandomService (const ARGVF<Singleton<RandomService>> &) {
+	using R1X = DEPENDENT_TYPE<Private ,struct ANONYMOUS>::Implement ;
 	mThis = StrongRef<R1X>::make () ;
 }
 } ;

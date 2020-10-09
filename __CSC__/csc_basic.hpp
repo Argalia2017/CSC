@@ -8,8 +8,8 @@
 #include "csc_core.hpp"
 
 namespace CSC {
-class BasicProc
-	:private Wrapped<> {
+class BasicProc :
+	delegate private Wrapped<> {
 public:
 	template <class _ARG1>
 	imports BOOL mem_equal (const ARR<_ARG1> &src1 ,const ARR<_ARG1> &src2 ,const LENGTH &len) ;
@@ -45,8 +45,8 @@ public:
 	imports void mem_fill (ARR<_ARG1> &dst ,const LENGTH &len ,const _ARG1 &val) ;
 } ;
 
-class EqualInvokeProc
-	:private Wrapped<> {
+class EqualInvokeProc :
+	delegate private Wrapped<> {
 public:
 	template <class _ARG1>
 	imports FLAG invoke (const _ARG1 &lhs ,const _ARG1 &rhs) {
@@ -89,8 +89,8 @@ inline exports BOOL BasicProc::mem_equal (const ARR<_ARG1> &src1 ,const ARR<_ARG
 #endif
 }
 
-class ComprInvokeProc
-	:private Wrapped<> {
+class ComprInvokeProc :
+	delegate private Wrapped<> {
 public:
 	template <class _ARG1>
 	imports FLAG invoke (const _ARG1 &lhs ,const _ARG1 &rhs) {
@@ -138,8 +138,8 @@ inline exports FLAG BasicProc::mem_compr (const ARR<_ARG1> &src1 ,const ARR<_ARG
 #endif
 }
 
-class HashInvokeProc
-	:private Wrapped<> {
+class HashInvokeProc :
+	delegate private Wrapped<> {
 public:
 	template <class _ARG1>
 	imports FLAG invoke (const _ARG1 &lhs) {
@@ -161,7 +161,7 @@ private:
 
 	template <class _ARG1 ,class = ENABLE_TYPE<IS_XYZ_HELP<_ARG1>>>
 	imports FLAG template_hash (const _ARG1 &lhs ,const DEF<decltype (ARGVP1)> &) {
-		auto &r1x = _CAST_ (ARGV<BYTE_BASE_TYPE<_ARG1>>::ID ,lhs) ;
+		const auto r1x = _BITWISE_CAST_ (ARGV<BYTE_BASE_TYPE<_ARG1>>::ID ,lhs) ;
 		return FLAG (r1x) ;
 	}
 } ;
@@ -212,8 +212,8 @@ inline exports FLAG BasicProc::mem_hash (const ARR<_ARG1> &src ,const LENGTH &le
 }
 #endif
 
-class CRC32StaticProc
-	:private Wrapped<> {
+class CRC32StaticProc :
+	delegate private Wrapped<> {
 public:
 	imports CHAR static_mem_crc32_table_each (const CHAR &val) ;
 
@@ -400,20 +400,23 @@ inline exports void BasicProc::mem_fill (ARR<_ARG1> &dst ,const LENGTH &len ,con
 template <class UNIT ,class CONT>
 class ScopedPtr final {
 private:
+	PTR<NONE> mOrigin ;
 	PTR<UNIT> mPointer ;
 
 public:
 	implicit ScopedPtr () = delete ;
 
-	explicit ScopedPtr (const PTR<UNIT> &pointer)
-		:ScopedPtr (ARGVP0) {
+	explicit ScopedPtr (const PTR<NONE> &origin ,const PTR<UNIT> &pointer) :
+		delegate ScopedPtr (ARGVP0) {
+		mOrigin = origin ;
 		mPointer = pointer ;
 	}
 
 	implicit ~ScopedPtr () noexcept {
 		if (mPointer == NULL)
 			return ;
-		CONT::free (mPointer) ;
+		CONT::free (mOrigin) ;
+		mOrigin = NULL ;
 		mPointer = NULL ;
 	}
 
@@ -422,6 +425,7 @@ public:
 	inline ScopedPtr &operator= (const ScopedPtr &) = delete ;
 
 	implicit ScopedPtr (ScopedPtr &&that) noexcept {
+		_SWAP_ (mOrigin ,that.mOrigin) ;
 		_SWAP_ (mPointer ,that.mPointer) ;
 	}
 
@@ -447,17 +451,18 @@ public:
 	inline implicit operator PTR<UNIT> () const leftvalue = delete ;
 
 	inline void operator= (const DEF<decltype (NULL)> &) leftvalue noexcept {
+		mOrigin = NULL ;
 		mPointer = NULL ;
 	}
 
 private:
-	explicit ScopedPtr (const DEF<decltype (ARGVP0)> &) noexcept
-		:mPointer (NULL) {}
+	explicit ScopedPtr (const DEF<decltype (ARGVP0)> &) noexcept :
+		delegate mPointer (NULL) {}
 } ;
 
 template <class UNIT>
-class ScopedGuard final
-	:private Proxy {
+class ScopedGuard final :
+	delegate private Proxy {
 private:
 	PTR<UNIT> mPointer ;
 
@@ -465,8 +470,8 @@ public:
 	implicit ScopedGuard () = delete ;
 
 	template <class _ARG1>
-	explicit ScopedGuard (_ARG1 &address)
-		:ScopedGuard (ARGVP0) {
+	explicit ScopedGuard (_ARG1 &address) :
+		delegate ScopedGuard (ARGVP0) {
 		auto &r1x = _FORWARD_ (ARGV<UNIT>::ID ,address) ;
 		r1x.lock () ;
 		mPointer = DEPTR[r1x] ;
@@ -492,13 +497,13 @@ public:
 	inline ScopedGuard &operator= (ScopedGuard &&) = delete ;
 
 private:
-	explicit ScopedGuard (const DEF<decltype (ARGVP0)> &) noexcept
-		:mPointer (NULL) {}
+	explicit ScopedGuard (const DEF<decltype (ARGVP0)> &) noexcept :
+		delegate mPointer (NULL) {}
 } ;
 
 template <class UNIT>
-class ScopedBuild final
-	:private Proxy {
+class ScopedBuild final :
+	delegate private Proxy {
 private:
 	PTR<const PTR<TEMP<UNIT>>> mPointer ;
 	LENGTH mSize ;
@@ -507,8 +512,8 @@ public:
 	implicit ScopedBuild () = delete ;
 
 	template <class _ARG1 ,class... _ARGS>
-	explicit ScopedBuild (_ARG1 &address ,_ARGS &&...initval)
-		:ScopedBuild (ARGVP0) {
+	explicit ScopedBuild (_ARG1 &address ,_ARGS &&...initval) :
+		delegate ScopedBuild (ARGVP0) {
 		auto &r1x = _FORWARD_ (ARGV<PTR<TEMP<UNIT>>>::ID ,address) ;
 		if (r1x == NULL)
 			return ;
@@ -520,7 +525,7 @@ public:
 	implicit ~ScopedBuild () noexcept {
 		if (mPointer == NULL)
 			return ;
-		const auto r1x = _COPY_ (DEREF[mPointer]) ;
+		const auto r1x = DEREF[mPointer] ;
 		if (r1x == NULL)
 			return ;
 		if switch_once (TRUE) {
@@ -541,13 +546,14 @@ public:
 	inline ScopedBuild &operator= (ScopedBuild &&) = delete ;
 
 private:
-	explicit ScopedBuild (const DEF<decltype (ARGVP0)> &) noexcept
-		:mPointer (NULL) ,mSize (0) {}
+	explicit ScopedBuild (const DEF<decltype (ARGVP0)> &) noexcept :
+		delegate mPointer (NULL) ,
+		delegate mSize (0) {}
 } ;
 
 template <class UNIT>
-class ScopedBuild<ARR<UNIT>> final
-	:private Proxy {
+class ScopedBuild<ARR<UNIT>> final :
+	delegate private Proxy {
 private:
 	PTR<const PTR<ARR<TEMP<UNIT>>>> mPointer ;
 	LENGTH mSize ;
@@ -556,8 +562,8 @@ public:
 	implicit ScopedBuild () = delete ;
 
 	template <class _ARG1>
-	explicit ScopedBuild (_ARG1 &address ,const LENGTH &len)
-		:ScopedBuild (ARGVP0) {
+	explicit ScopedBuild (_ARG1 &address ,const LENGTH &len) :
+		delegate ScopedBuild (ARGVP0) {
 		auto &r1x = _FORWARD_ (ARGV<PTR<ARR<TEMP<UNIT>>>>::ID ,address) ;
 		if (r1x == NULL)
 			return ;
@@ -571,8 +577,8 @@ public:
 	}
 
 	template <class _ARG1>
-	explicit ScopedBuild (_ARG1 &address ,const ARR<UNIT> &src ,const LENGTH &len)
-		:ScopedBuild (ARGVP0) {
+	explicit ScopedBuild (_ARG1 &address ,const ARR<UNIT> &src ,const LENGTH &len) :
+		delegate ScopedBuild (ARGVP0) {
 		auto &r1x = _FORWARD_ (ARGV<PTR<ARR<TEMP<UNIT>>>>::ID ,address) ;
 		if (r1x == NULL)
 			return ;
@@ -588,7 +594,7 @@ public:
 	implicit ~ScopedBuild () noexcept {
 		if (mPointer == NULL)
 			return ;
-		const auto r1x = _COPY_ (DEREF[mPointer]) ;
+		const auto r1x = DEREF[mPointer] ;
 		if (r1x == NULL)
 			return ;
 		while (TRUE) {
@@ -609,12 +615,13 @@ public:
 	inline ScopedBuild &operator= (ScopedBuild &&) = delete ;
 
 private:
-	explicit ScopedBuild (const DEF<decltype (ARGVP0)> &) noexcept
-		:mPointer (NULL) ,mSize (0) {}
+	explicit ScopedBuild (const DEF<decltype (ARGVP0)> &) noexcept :
+		delegate mPointer (NULL) ,
+		delegate mSize (0) {}
 } ;
 
-class GlobalHeap
-	:private Wrapped<> {
+class GlobalHeap :
+	delegate private Wrapped<> {
 public:
 	template <class _ARG1>
 	imports ScopedPtr<_ARG1 ,GlobalHeap> alloc (const ARGVF<_ARG1> &) {
@@ -623,8 +630,8 @@ public:
 		const auto r1x = operator new (_SIZEOF_ (_ARG1) ,api::nothrow) ;
 		_DYNAMIC_ASSERT_ (r1x != NULL) ;
 		const auto r2x = _POINTER_CAST_ (ARGV<_ARG1>::ID ,r1x) ;
-		_DYNAMIC_ASSERT_ (_ADDRESS_ (r2x) % _ALIGNOF_ (_ARG1) == 0) ;
-		return ScopedPtr<_ARG1 ,GlobalHeap> (r2x) ;
+		_DYNAMIC_ASSERT_ (r2x != NULL) ;
+		return ScopedPtr<_ARG1 ,GlobalHeap> (r1x ,r2x) ;
 	}
 
 	template <class _ARG1>
@@ -637,17 +644,17 @@ public:
 		const auto r2x = operator new (r1x ,api::nothrow) ;
 		_DYNAMIC_ASSERT_ (r2x != NULL) ;
 		const auto r3x = _POINTER_CAST_ (ARGV<ARR<_ARG1>>::ID ,r2x) ;
-		_DYNAMIC_ASSERT_ (_ADDRESS_ (r3x) % _ALIGNOF_ (_ARG1) == 0) ;
-		return ScopedPtr<ARR<_ARG1> ,GlobalHeap> (r3x) ;
+		_DYNAMIC_ASSERT_ (r3x != NULL) ;
+		return ScopedPtr<ARR<_ARG1> ,GlobalHeap> (r2x ,r3x) ;
 	}
 
 	template <class _ARG1>
 	imports void free (const PTR<_ARG1> &address) noexcept {
+		_STATIC_ASSERT_ (IS_SAME_HELP<_ARG1 ,NONE>::compile ()) ;
 		if (address == NULL)
 			return ;
-		//@error: address may be different from what alloc returned
-		const auto r1x = _FORWARD_ (ARGV<PTR<NONE>>::ID ,address) ;
-		operator delete (r1x ,api::nothrow) ;
+		//@error: 'operator delete' may be dismatch with 'operator new'
+		operator delete (address ,api::nothrow) ;
 	}
 } ;
 
@@ -656,35 +663,33 @@ class AutoRef ;
 
 template <class UNIT>
 class AutoRef<SPECIALIZATION<UNIT ,ARGC<FALSE>>> {
-	_STATIC_ASSERT_ (IS_COMPLETE_HELP<UNIT>::compile ()) ;
-
 protected:
-	class Holder
-		:public Interface {
-	public:
-		virtual UNIT &deref () leftvalue = 0 ;
-	} ;
+	_STATIC_ASSERT_ (IS_COMPLETE_HELP<UNIT ,struct ANONYMOUS>::compile ()) ;
 
 	struct Private {
 		class PureHolder ;
 	} ;
 
+	class Holder :
+		delegate public Interface {
+	public:
+		virtual Reference reference () = 0 ;
+		virtual void destroy () noexcept = 0 ;
+	} ;
+
 protected:
-	PTR<NONE> mOrigin ;
 	PTR<Holder> mPointer ;
 
 protected:
-	implicit AutoRef ()
-		:AutoRef (ARGVP0) {
+	implicit AutoRef () :
+		delegate AutoRef (ARGVP0) {
 		_STATIC_WARNING_ ("noop") ;
 	}
 
 	implicit ~AutoRef () noexcept {
 		if (mPointer == NULL)
 			return ;
-		DEREF[mPointer].~Holder () ;
-		GlobalHeap::free (mOrigin) ;
-		mOrigin = NULL ;
+		DEREF[mPointer].destroy () ;
 		mPointer = NULL ;
 	}
 
@@ -692,9 +697,8 @@ protected:
 
 	inline AutoRef &operator= (const AutoRef &) = delete ;
 
-	implicit AutoRef (AutoRef &&that) noexcept
-		:AutoRef (ARGVP0) {
-		_SWAP_ (mOrigin ,that.mOrigin) ;
+	implicit AutoRef (AutoRef &&that) noexcept :
+		delegate AutoRef (ARGVP0) {
 		_SWAP_ (mPointer ,that.mPointer) ;
 	}
 
@@ -709,72 +713,77 @@ protected:
 	}
 
 protected:
-	explicit AutoRef (const DEF<decltype (ARGVP0)> &) noexcept
-		:mOrigin (NULL) ,mPointer (NULL) {}
+	explicit AutoRef (const DEF<decltype (ARGVP0)> &) noexcept :
+		delegate mPointer (NULL) {}
 } ;
 
 template <class UNIT>
-class AutoRef<SPECIALIZATION<UNIT ,ARGC<FALSE>>>::Private::PureHolder
-	:public Holder {
+class AutoRef<SPECIALIZATION<UNIT ,ARGC<FALSE>>>::Private::PureHolder :
+	delegate public Holder {
 private:
 	REMOVE_CVR_TYPE<UNIT> mValue ;
 
 public:
-	template <class... _ARGS>
-	explicit PureHolder (_ARGS &&...initval)
-		:mValue (_FORWARD_ (ARGV<_ARGS &&>::ID ,initval)...) {}
+	implicit PureHolder () = delete ;
 
-	UNIT &deref () leftvalue override {
-		return mValue ;
+	template <class... _ARGS>
+	explicit PureHolder (const DEF<decltype (ARGVP0)> & ,_ARGS &&...initval) :
+		delegate mValue (_FORWARD_ (ARGV<_ARGS &&>::ID ,initval)...) {}
+
+	Reference reference () override {
+		return SafeReference<UNIT> (mValue) ;
+	}
+
+	void destroy () noexcept override {
+		const auto r1x = _FORWARD_ (ARGV<PTR<NONE>>::ID ,this) ;
+		DEREF[this].~PureHolder () ;
+		GlobalHeap::free (r1x) ;
 	}
 } ;
 
 template <class UNIT>
 class AutoRef<SPECIALIZATION<UNIT ,ARGC<TRUE>>> {
-	_STATIC_ASSERT_ (IS_COMPLETE_HELP<UNIT>::compile ()) ;
-
 protected:
-	class Holder
-		:public Interface {
-	public:
-		virtual UNIT &deref () leftvalue = 0 ;
-	} ;
+	_STATIC_ASSERT_ (IS_COMPLETE_HELP<UNIT ,struct ANONYMOUS>::compile ()) ;
 
 	struct Private {
 		class PureHolder ;
 	} ;
 
+	class Holder :
+		delegate public Interface {
+	public:
+		virtual Reference reference () = 0 ;
+		virtual void destroy () noexcept = 0 ;
+	} ;
+
 protected:
-	PTR<NONE> mOrigin ;
 	PTR<Holder> mPointer ;
 
 protected:
-	implicit AutoRef ()
-		:AutoRef (ARGVP0) {
+	implicit AutoRef () :
+		delegate AutoRef (ARGVP0) {
 		_STATIC_WARNING_ ("noop") ;
 	}
 
 	implicit ~AutoRef () noexcept {
 		if (mPointer == NULL)
 			return ;
-		DEREF[mPointer].~Holder () ;
-		GlobalHeap::free (mOrigin) ;
-		mOrigin = NULL ;
+		DEREF[mPointer].destroy () ;
 		mPointer = NULL ;
 	}
 
-	implicit AutoRef (const AutoRef &that)
-		:AutoRef (ARGVP0) {
-		struct Dependent ;
-		using R1X = typename DEPENDENT_TYPE<Private ,Dependent>::PureHolder ;
+	implicit AutoRef (const AutoRef &that) :
+		delegate AutoRef (ARGVP0) {
+		using R1X = typename DEPENDENT_TYPE<Private ,struct ANONYMOUS>::PureHolder ;
 		if (that.mPointer == NULL)
 			return ;
 		auto rax = GlobalHeap::alloc (ARGV<TEMP<R1X>>::ID) ;
-		auto &r1x = _FORWARD_ (ARGV<const UNIT>::ID ,DEREF[that.mPointer].deref ()) ;
-		ScopedBuild<R1X> ANONYMOUS (rax ,r1x) ;
-		const auto r2x = _POINTER_CAST_ (ARGV<R1X>::ID ,rax.self) ;
-		mOrigin = rax.self ;
-		mPointer = r2x ;
+		const auto r1x = DEREF[that.mPointer].reference () ;
+		const auto r2x = SafeReference<const UNIT> (r1x) ;
+		ScopedBuild<R1X> ANONYMOUS (rax ,ARGVP0 ,r2x.self) ;
+		auto &r3x = _CAST_ (ARGV<R1X>::ID ,DEREF[rax.self]) ;
+		mPointer = DEPTR[r3x] ;
 		rax = NULL ;
 	}
 
@@ -788,9 +797,8 @@ protected:
 		return DEREF[this] ;
 	}
 
-	implicit AutoRef (AutoRef &&that) noexcept
-		:AutoRef (ARGVP0) {
-		_SWAP_ (mOrigin ,that.mOrigin) ;
+	implicit AutoRef (AutoRef &&that) noexcept :
+		delegate AutoRef (ARGVP0) {
 		_SWAP_ (mPointer ,that.mPointer) ;
 	}
 
@@ -805,36 +813,43 @@ protected:
 	}
 
 protected:
-	explicit AutoRef (const DEF<decltype (ARGVP0)> &) noexcept
-		:mOrigin (NULL) ,mPointer (NULL) {}
+	explicit AutoRef (const DEF<decltype (ARGVP0)> &) noexcept :
+		delegate mPointer (NULL) {}
 } ;
 
 template <class UNIT>
-class AutoRef<SPECIALIZATION<UNIT ,ARGC<TRUE>>>::Private::PureHolder
-	:public Holder {
+class AutoRef<SPECIALIZATION<UNIT ,ARGC<TRUE>>>::Private::PureHolder :
+	delegate public Holder {
 private:
 	REMOVE_CVR_TYPE<UNIT> mValue ;
 
 public:
-	template <class... _ARGS>
-	explicit PureHolder (_ARGS &&...initval)
-		:mValue (_FORWARD_ (ARGV<_ARGS &&>::ID ,initval)...) {}
+	implicit PureHolder () = delete ;
 
-	UNIT &deref () leftvalue override {
-		return mValue ;
+	template <class... _ARGS>
+	explicit PureHolder (const DEF<decltype (ARGVP0)> & ,_ARGS &&...initval) :
+		delegate mValue (_FORWARD_ (ARGV<_ARGS &&>::ID ,initval)...) {}
+
+	Reference reference () override {
+		return SafeReference<UNIT> (mValue) ;
+	}
+
+	void destroy () noexcept override {
+		const auto r1x = _FORWARD_ (ARGV<PTR<NONE>>::ID ,this) ;
+		DEREF[this].~PureHolder () ;
+		GlobalHeap::free (r1x) ;
 	}
 } ;
 
 template <class UNIT>
-class AutoRef final
-	:private AutoRef<SPECIALIZATION<UNIT ,ARGC_TYPE<IS_COPY_CONSTRUCTIBLE_HELP<UNIT>>>> {
+class AutoRef final :
+	delegate private AutoRef<SPECIALIZATION<UNIT ,ARGC_TYPE<IS_COPY_CONSTRUCTIBLE_HELP<UNIT>>>> {
 private:
 	using SPECIALIZATION_BASE = AutoRef<SPECIALIZATION<UNIT ,ARGC_TYPE<IS_COPY_CONSTRUCTIBLE_HELP<UNIT>>>> ;
-	using Holder = typename SPECIALIZATION_BASE::Holder ;
+	using Private = typename SPECIALIZATION_BASE::Private ;
 
 private:
 	friend SPECIALIZATION_BASE ;
-	using SPECIALIZATION_BASE::mOrigin ;
 	using SPECIALIZATION_BASE::mPointer ;
 
 public:
@@ -848,7 +863,8 @@ public:
 
 	UNIT &to () leftvalue {
 		_DEBUG_ASSERT_ (exist ()) ;
-		return DEREF[mPointer].deref () ;
+		const auto r1x = DEREF[mPointer].reference () ;
+		return SafeReference<UNIT> (r1x) ;
 	}
 
 	inline PTR<UNIT> operator-> () leftvalue {
@@ -861,7 +877,8 @@ public:
 
 	const UNIT &to () const leftvalue {
 		_DEBUG_ASSERT_ (exist ()) ;
-		return DEREF[mPointer].deref () ;
+		const auto r1x = DEREF[mPointer].reference () ;
+		return SafeReference<const UNIT> (r1x) ;
 	}
 
 	inline PTR<const UNIT> operator-> () const leftvalue {
@@ -874,13 +891,12 @@ public:
 
 	template <class... _ARGS>
 	imports AutoRef make (_ARGS &&...initval) {
-		using R1X = typename SPECIALIZATION_BASE::Private::PureHolder ;
+		using R1X = typename DEPENDENT_TYPE<Private ,struct ANONYMOUS>::PureHolder ;
 		AutoRef ret ;
 		auto rax = GlobalHeap::alloc (ARGV<TEMP<R1X>>::ID) ;
-		ScopedBuild<R1X> ANONYMOUS (rax ,_FORWARD_ (ARGV<_ARGS &&>::ID ,initval)...) ;
-		const auto r1x = _POINTER_CAST_ (ARGV<R1X>::ID ,rax.self) ;
-		ret.mOrigin = rax.self ;
-		ret.mPointer = r1x ;
+		ScopedBuild<R1X> ANONYMOUS (rax ,ARGVP0 ,_FORWARD_ (ARGV<_ARGS &&>::ID ,initval)...) ;
+		auto &r1x = _CAST_ (ARGV<R1X>::ID ,DEREF[rax.self]) ;
+		ret.mPointer = DEPTR[r1x] ;
 		rax = NULL ;
 		return _MOVE_ (ret) ;
 	}
@@ -888,28 +904,30 @@ public:
 
 template <class UNIT>
 class SharedRef final {
-	_STATIC_ASSERT_ (IS_COMPLETE_HELP<UNIT>::compile ()) ;
-
 private:
-	class Holder
-		:public Interface {
-	public:
-		virtual UNIT &deref () leftvalue = 0 ;
-		virtual LENGTH increase () = 0 ;
-		virtual LENGTH decrease () = 0 ;
-	} ;
+	_STATIC_ASSERT_ (IS_COMPLETE_HELP<UNIT ,struct ANONYMOUS>::compile ()) ;
 
 	struct Private {
 		class PureHolder ;
+
+		class KeepHolder ;
+	} ;
+
+	class Holder :
+		delegate public Interface {
+	public:
+		virtual Reference reference () = 0 ;
+		virtual LENGTH increase () = 0 ;
+		virtual LENGTH decrease () = 0 ;
+		virtual void destroy () noexcept = 0 ;
 	} ;
 
 private:
-	PTR<NONE> mOrigin ;
 	PTR<Holder> mPointer ;
 
 public:
-	implicit SharedRef ()
-		:SharedRef (ARGVP0) {
+	implicit SharedRef () :
+		delegate SharedRef (ARGVP0) {
 		_STATIC_WARNING_ ("noop") ;
 	}
 
@@ -920,17 +938,14 @@ public:
 			const auto r1x = DEREF[mPointer].decrease () ;
 			if (r1x > 0)
 				discard ;
-			DEREF[mPointer].~Holder () ;
-			GlobalHeap::free (mOrigin) ;
+			DEREF[mPointer].destroy () ;
 		}
-		mOrigin = NULL ;
 		mPointer = NULL ;
 	}
 
-	implicit SharedRef (const SharedRef &that)
-		:SharedRef (ARGVP0) {
+	implicit SharedRef (const SharedRef &that) :
+		delegate SharedRef (ARGVP0) {
 		aquire (that.mPointer) ;
-		mOrigin = that.mOrigin ;
 		mPointer = that.mPointer ;
 	}
 
@@ -944,9 +959,8 @@ public:
 		return DEREF[this] ;
 	}
 
-	implicit SharedRef (SharedRef &&that) noexcept
-		:SharedRef (ARGVP0) {
-		_SWAP_ (mOrigin ,that.mOrigin) ;
+	implicit SharedRef (SharedRef &&that) noexcept :
+		delegate SharedRef (ARGVP0) {
 		_SWAP_ (mPointer ,that.mPointer) ;
 	}
 
@@ -968,7 +982,8 @@ public:
 
 	UNIT &to () const leftvalue {
 		_DEBUG_ASSERT_ (exist ()) ;
-		return DEREF[mPointer].deref () ;
+		const auto r1x = DEREF[mPointer].reference () ;
+		return SafeReference<UNIT> (r1x) ;
 	}
 
 	inline PTR<UNIT> operator-> () const leftvalue {
@@ -979,24 +994,34 @@ public:
 		return self ;
 	}
 
-	template <class... _ARGS>
-	imports SharedRef make (_ARGS &&...initval) {
-		struct Dependent ;
-		using R1X = typename DEPENDENT_TYPE<Private ,Dependent>::PureHolder ;
+	imports SharedRef keep (UNIT &me) {
+		using R1X = typename DEPENDENT_TYPE<Private ,struct ANONYMOUS>::KeepHolder ;
 		SharedRef ret ;
 		auto rax = GlobalHeap::alloc (ARGV<TEMP<R1X>>::ID) ;
-		ScopedBuild<R1X> ANONYMOUS (rax ,_FORWARD_ (ARGV<_ARGS &&>::ID ,initval)...) ;
-		const auto r1x = _POINTER_CAST_ (ARGV<R1X>::ID ,rax.self) ;
-		aquire (r1x) ;
-		ret.mOrigin = rax.self ;
-		ret.mPointer = r1x ;
+		ScopedBuild<R1X> ANONYMOUS (rax ,ARGVP0 ,DEPTR[me]) ;
+		auto &r1x = _CAST_ (ARGV<R1X>::ID ,DEREF[rax.self]) ;
+		aquire (DEPTR[r1x]) ;
+		ret.mPointer = DEPTR[r1x] ;
+		rax = NULL ;
+		return _MOVE_ (ret) ;
+	}
+
+	template <class... _ARGS>
+	imports SharedRef make (_ARGS &&...initval) {
+		using R1X = typename DEPENDENT_TYPE<Private ,struct ANONYMOUS>::PureHolder ;
+		SharedRef ret ;
+		auto rax = GlobalHeap::alloc (ARGV<TEMP<R1X>>::ID) ;
+		ScopedBuild<R1X> ANONYMOUS (rax ,ARGVP0 ,_FORWARD_ (ARGV<_ARGS &&>::ID ,initval)...) ;
+		auto &r1x = _CAST_ (ARGV<R1X>::ID ,DEREF[rax.self]) ;
+		aquire (DEPTR[r1x]) ;
+		ret.mPointer = DEPTR[r1x] ;
 		rax = NULL ;
 		return _MOVE_ (ret) ;
 	}
 
 private:
-	explicit SharedRef (const DEF<decltype (ARGVP0)> &) noexcept
-		:mOrigin (NULL) ,mPointer (NULL) {}
+	explicit SharedRef (const DEF<decltype (ARGVP0)> &) noexcept :
+		delegate mPointer (NULL) {}
 
 	imports void aquire (const PTR<Holder> &pointer) {
 		if (pointer == NULL)
@@ -1008,19 +1033,22 @@ private:
 } ;
 
 template <class UNIT>
-class SharedRef<UNIT>::Private::PureHolder
-	:public Holder {
+class SharedRef<UNIT>::Private::PureHolder :
+	delegate public Holder {
 private:
 	REMOVE_CVR_TYPE<UNIT> mValue ;
 	LENGTH mCounter ;
 
 public:
-	template <class... _ARGS>
-	explicit PureHolder (_ARGS &&...initval)
-		:mValue (_FORWARD_ (ARGV<_ARGS &&>::ID ,initval)...) ,mCounter (0) {}
+	implicit PureHolder () = delete ;
 
-	UNIT &deref () leftvalue override {
-		return mValue ;
+	template <class... _ARGS>
+	explicit PureHolder (const DEF<decltype (ARGVP0)> & ,_ARGS &&...initval) :
+		delegate mValue (_FORWARD_ (ARGV<_ARGS &&>::ID ,initval)...) ,
+		delegate mCounter (0) {}
+
+	Reference reference () override {
+		return SafeReference<UNIT> (mValue) ;
 	}
 
 	LENGTH increase () override {
@@ -1030,6 +1058,47 @@ public:
 	LENGTH decrease () override {
 		return --mCounter ;
 	}
+
+	void destroy () noexcept override {
+		const auto r1x = _FORWARD_ (ARGV<PTR<NONE>>::ID ,this) ;
+		DEREF[this].~PureHolder () ;
+		GlobalHeap::free (r1x) ;
+	}
+} ;
+
+template <class UNIT>
+class SharedRef<UNIT>::Private::KeepHolder :
+	delegate public Holder {
+private:
+	PTR<UNIT> mPointer ;
+	LENGTH mCounter ;
+
+public:
+	implicit KeepHolder () = delete ;
+
+	template <class... _ARGS>
+	explicit KeepHolder (const DEF<decltype (ARGVP0)> & ,const PTR<UNIT> &pointer) :
+		delegate mPointer (pointer) ,
+		delegate mCounter (0) {}
+
+	Reference reference () override {
+		_DYNAMIC_ASSERT_ (mPointer != NULL) ;
+		return SafeReference<UNIT> (DEREF[mPointer]) ;
+	}
+
+	LENGTH increase () override {
+		return ++mCounter ;
+	}
+
+	LENGTH decrease () override {
+		return --mCounter ;
+	}
+
+	void destroy () noexcept override {
+		const auto r1x = _FORWARD_ (ARGV<PTR<NONE>>::ID ,this) ;
+		DEREF[this].~KeepHolder () ;
+		GlobalHeap::free (r1x) ;
+	}
 } ;
 
 template <class UNIT = NONE>
@@ -1038,39 +1107,37 @@ class AnyRef ;
 template <>
 class AnyRef<NONE> final {
 private:
-	class Holder
-		:public Interface {
+	class Holder :
+		delegate public Interface {
 	public:
-		virtual TYPEABI type_abi () const = 0 ;
 		virtual FLAG type_mid () const = 0 ;
-		virtual PTR<NONE> type_address () = 0 ;
-		virtual PTR<const NONE> type_address () const = 0 ;
+		virtual TYPEABI type_abi () const = 0 ;
+		virtual Reference reference () = 0 ;
+		virtual AnyRef<> clone () const = 0 ;
+		virtual void destroy () noexcept = 0 ;
 	} ;
 
 private:
 	template <class>
 	friend class AnyRef ;
-	PTR<NONE> mOrigin ;
 	PTR<Holder> mPointer ;
 
 public:
-	implicit AnyRef ()
-		:AnyRef (ARGVP0) {
+	implicit AnyRef () :
+		delegate AnyRef (ARGVP0) {
 		_STATIC_WARNING_ ("noop") ;
 	}
 
 	template <class _ARG1>
-	implicit AnyRef (AnyRef<_ARG1> &&that)
-		: AnyRef (_MOVE_ (that.rebind (ARGV<NONE>::ID))) {
+	implicit AnyRef (AnyRef<_ARG1> &&that) :
+		delegate AnyRef (_MOVE_ (that.rebind (ARGV<NONE>::ID))) {
 		_STATIC_WARNING_ ("noop") ;
 	}
 
 	implicit ~AnyRef () noexcept {
 		if (mPointer == NULL)
 			return ;
-		DEREF[mPointer].~Holder () ;
-		GlobalHeap::free (mOrigin) ;
-		mOrigin = NULL ;
+		DEREF[mPointer].destroy () ;
 		mPointer = NULL ;
 	}
 
@@ -1078,9 +1145,8 @@ public:
 
 	inline AnyRef &operator= (const AnyRef &) = delete ;
 
-	implicit AnyRef (AnyRef &&that) noexcept
-		:AnyRef (ARGVP0) {
-		_SWAP_ (mOrigin ,that.mOrigin) ;
+	implicit AnyRef (AnyRef &&that) noexcept :
+		delegate AnyRef (ARGVP0) {
 		_SWAP_ (mPointer ,that.mPointer) ;
 	}
 
@@ -1108,6 +1174,11 @@ public:
 		if (mPointer == NULL)
 			return FALSE ;
 		return TRUE ;
+	}
+
+	FLAG type_mid () const {
+		_DEBUG_ASSERT_ (exist ()) ;
+		return DEREF[mPointer].type_mid () ;
 	}
 
 	TYPEABI type_abi () const {
@@ -1115,60 +1186,61 @@ public:
 		return DEREF[mPointer].type_abi () ;
 	}
 
-	FLAG type_mid () const {
+	PTR<NONE> fast_pointer () {
 		_DEBUG_ASSERT_ (exist ()) ;
-		return DEREF[mPointer].type_mid () ;
+		const auto r1x = DEREF[mPointer].reference () ;
+		return r1x.fast_pointer () ;
 	}
 
-	PTR<NONE> type_address () {
+	PTR<const NONE> fast_pointer () const {
 		_DEBUG_ASSERT_ (exist ()) ;
-		return DEREF[mPointer].type_address () ;
+		const auto r1x = DEREF[mPointer].reference () ;
+		return r1x.fast_pointer () ;
 	}
 
-	PTR<const NONE> type_address () const {
-		_DEBUG_ASSERT_ (exist ()) ;
-		return DEREF[mPointer].type_address () ;
+	AnyRef clone () const {
+		if (exist ())
+			return AnyRef () ;
+		AnyRef ret = DEREF[mPointer].clone () ;
+		_DYNAMIC_ASSERT_ (ret.exist ()) ;
+		return _MOVE_ (ret) ;
 	}
 
 private:
-	explicit AnyRef (const DEF<decltype (ARGVP0)> &) noexcept
-		:mOrigin (NULL) ,mPointer (NULL) {}
+	explicit AnyRef (const DEF<decltype (ARGVP0)> &) noexcept :
+		delegate mPointer (NULL) {}
 } ;
 
 template <class UNIT>
 class AnyRef final {
-	_STATIC_ASSERT_ (IS_COMPLETE_HELP<UNIT>::compile ()) ;
-
 private:
-	using Holder = typename AnyRef<NONE>::Holder ;
+	_STATIC_ASSERT_ (IS_COMPLETE_HELP<UNIT ,struct ANONYMOUS>::compile ()) ;
 
 	struct Private {
-		template <class>
-		class ImplHolder ;
+		class PureHolder ;
 	} ;
 
+	using Holder = typename AnyRef<NONE>::Holder ;
+
 private:
-	PTR<NONE> mOrigin ;
 	PTR<Holder> mPointer ;
 
 public:
-	implicit AnyRef ()
-		:AnyRef (ARGVP0) {
+	implicit AnyRef () :
+		delegate AnyRef (ARGVP0) {
 		_STATIC_WARNING_ ("noop") ;
 	}
 
 	template <class _ARG1>
-	implicit AnyRef (AnyRef<_ARG1> &&that)
-		: AnyRef (_MOVE_ (that.rebind (ARGV<UNIT>::ID))) {
+	implicit AnyRef (AnyRef<_ARG1> &&that) :
+		delegate AnyRef (_MOVE_ (that.rebind (ARGV<UNIT>::ID))) {
 		_STATIC_WARNING_ ("noop") ;
 	}
 
 	implicit ~AnyRef () noexcept {
 		if (mPointer == NULL)
 			return ;
-		DEREF[mPointer].~Holder () ;
-		GlobalHeap::free (mOrigin) ;
-		mOrigin = NULL ;
+		DEREF[mPointer].destroy () ;
 		mPointer = NULL ;
 	}
 
@@ -1176,9 +1248,8 @@ public:
 
 	inline AnyRef &operator= (const AnyRef &) = delete ;
 
-	implicit AnyRef (AnyRef &&that) noexcept
-		:AnyRef (ARGVP0) {
-		_SWAP_ (mOrigin ,that.mOrigin) ;
+	implicit AnyRef (AnyRef &&that) noexcept :
+		delegate AnyRef (ARGVP0) {
 		_SWAP_ (mPointer ,that.mPointer) ;
 	}
 
@@ -1208,32 +1279,32 @@ public:
 		return TRUE ;
 	}
 
-	LENGTH type_abi () const {
-		_DEBUG_ASSERT_ (exist ()) ;
-		return DEREF[mPointer].type_abi () ;
-	}
-
 	FLAG type_mid () const {
 		_DEBUG_ASSERT_ (exist ()) ;
 		return DEREF[mPointer].type_mid () ;
 	}
 
-	PTR<NONE> type_address () {
+	TYPEABI type_abi () const {
 		_DEBUG_ASSERT_ (exist ()) ;
-		return DEREF[mPointer].type_address () ;
+		return DEREF[mPointer].type_abi () ;
 	}
 
-	PTR<const NONE> type_address () const {
+	PTR<NONE> fast_pointer () {
 		_DEBUG_ASSERT_ (exist ()) ;
-		return DEREF[mPointer].type_address () ;
+		const auto r1x = DEREF[mPointer].reference () ;
+		return r1x.fast_pointer () ;
+	}
+
+	PTR<const NONE> fast_pointer () const {
+		_DEBUG_ASSERT_ (exist ()) ;
+		const auto r1x = DEREF[mPointer].reference () ;
+		return r1x.fast_pointer () ;
 	}
 
 	UNIT &to () leftvalue {
-		struct Dependent ;
-		_DEBUG_ASSERT_ (type_mid () == _TYPEMID_ (ARGV<UNIT>::ID)) ;
-		const auto r1x = DEREF[mPointer].type_address () ;
-		const auto r2x = _POINTER_CAST_ (ARGV<UNIT>::ID ,r1x) ;
-		return DEREF[r2x] ;
+		_DEBUG_ASSERT_ (exist ()) ;
+		const auto r1x = DEREF[mPointer].reference () ;
+		return SafeReference<UNIT> (r1x) ;
 	}
 
 	inline PTR<UNIT> operator-> () leftvalue {
@@ -1245,11 +1316,9 @@ public:
 	}
 
 	const UNIT &to () const leftvalue {
-		struct Dependent ;
-		_DEBUG_ASSERT_ (type_mid () == _TYPEMID_ (ARGV<UNIT>::ID)) ;
-		const auto r1x = DEREF[mPointer].type_address () ;
-		const auto r2x = _POINTER_CAST_ (ARGV<UNIT>::ID ,r1x) ;
-		return DEREF[r2x] ;
+		_DEBUG_ASSERT_ (exist ()) ;
+		const auto r1x = DEREF[mPointer].reference () ;
+		return SafeReference<const UNIT> (r1x) ;
 	}
 
 	inline PTR<const UNIT> operator-> () const leftvalue {
@@ -1260,51 +1329,82 @@ public:
 		return self ;
 	}
 
+	AnyRef clone () const {
+		if (exist ())
+			return AnyRef () ;
+		AnyRef ret = DEREF[mPointer].clone () ;
+		_DYNAMIC_ASSERT_ (ret.exist ()) ;
+		return _MOVE_ (ret) ;
+	}
+
 	template <class... _ARGS>
 	imports AnyRef make (_ARGS &&...initval) {
-		struct Dependent ;
-		using R1X = typename DEPENDENT_TYPE<Private ,Dependent>::template ImplHolder<UNIT> ;
+		using R1X = typename DEPENDENT_TYPE<Private ,struct ANONYMOUS>::PureHolder ;
 		AnyRef ret ;
 		auto rax = GlobalHeap::alloc (ARGV<TEMP<R1X>>::ID) ;
-		ScopedBuild<R1X> ANONYMOUS (rax ,_FORWARD_ (ARGV<_ARGS &&>::ID ,initval)...) ;
-		const auto r1x = _POINTER_CAST_ (ARGV<R1X>::ID ,rax.self) ;
-		ret.mOrigin = rax.self ;
-		ret.mPointer = r1x ;
+		ScopedBuild<R1X> ANONYMOUS (rax ,ARGVP0 ,_FORWARD_ (ARGV<_ARGS &&>::ID ,initval)...) ;
+		auto &r1x = _CAST_ (ARGV<R1X>::ID ,DEREF[rax.self]) ;
+		ret.mPointer = DEPTR[r1x] ;
 		rax = NULL ;
 		return _MOVE_ (ret) ;
 	}
 
 private:
-	explicit AnyRef (const DEF<decltype (ARGVP0)> &) noexcept
-		:mOrigin (NULL) ,mPointer (NULL) {}
+	explicit AnyRef (const DEF<decltype (ARGVP0)> &) noexcept :
+		delegate mPointer (NULL) {}
 } ;
 
 template <class UNIT>
-template <class UNIT_>
-class AnyRef<UNIT>::Private::ImplHolder
-	:public Holder {
+class AnyRef<UNIT>::Private::PureHolder :
+	delegate public Holder {
 private:
-	UNIT_ mValue ;
+	REMOVE_CVR_TYPE<UNIT> mValue ;
 
 public:
-	template <class... _ARGS>
-	explicit ImplHolder (_ARGS &&...initval)
-		:mValue (_FORWARD_ (ARGV<_ARGS &&>::ID ,initval)...) {}
+	implicit PureHolder () = delete ;
 
-	TYPEABI type_abi () const override {
-		return _TYPEABI_ (ARGV<UNIT_>::ID) ;
-	}
+	template <class... _ARGS>
+	explicit PureHolder (const DEF<decltype (ARGVP0)> & ,_ARGS &&...initval) :
+		delegate mValue (_FORWARD_ (ARGV<_ARGS &&>::ID ,initval)...) {}
 
 	FLAG type_mid () const override {
-		return _TYPEMID_ (ARGV<UNIT_>::ID) ;
+		return _TYPEMID_ (ARGV<UNIT>::ID) ;
 	}
 
-	PTR<NONE> type_address () override {
-		return DEPTR[mValue] ;
+	TYPEABI type_abi () const override {
+		return _TYPEABI_ (ARGV<UNIT>::ID) ;
 	}
 
-	PTR<const NONE> type_address () const override {
-		return DEPTR[mValue] ;
+	Reference reference () override {
+		return SafeReference<UNIT> (mValue) ;
+	}
+
+	AnyRef<> clone () const override {
+		return template_clone (ARGV<UNIT>::ID ,ARGVPX) ;
+	}
+
+	void destroy () noexcept override {
+		const auto r1x = _FORWARD_ (ARGV<PTR<NONE>>::ID ,this) ;
+		DEREF[this].~PureHolder () ;
+		GlobalHeap::free (r1x) ;
+	}
+
+private:
+	template <class _ARG1 ,class = ENABLE_TYPE<IS_COPY_CONSTRUCTIBLE_HELP<_ARG1>>>
+	AnyRef<_ARG1> template_clone (const ARGVF<_ARG1> & ,const DEF<decltype (ARGVP2)> &) const {
+		_STATIC_ASSERT_ (IS_SAME_HELP<_ARG1 ,UNIT>::compile ()) ;
+		AnyRef<_ARG1> ret ;
+		auto rax = GlobalHeap::alloc (ARGV<TEMP<PureHolder>>::ID) ;
+		ScopedBuild<PureHolder> ANONYMOUS (rax ,ARGVP0 ,_FORWARD_ (ARGV<const _ARG1 &>::ID ,mValue)) ;
+		auto &r1x = _CAST_ (ARGV<PureHolder>::ID ,DEREF[rax.self]) ;
+		ret.mPointer = DEPTR[r1x] ;
+		rax = NULL ;
+		return _MOVE_ (ret) ;
+	}
+
+	template <class _ARG1>
+	AnyRef<_ARG1> template_clone (const ARGVF<_ARG1> & ,const DEF<decltype (ARGVP1)> &) const {
+		return AnyRef<_ARG1> () ;
 	}
 } ;
 
@@ -1317,44 +1417,41 @@ class UniqueRef ;
 template <>
 class UniqueRef<NONE> final {
 private:
-	class Holder
-		:public Interface {
-	public:
-		virtual void release () = 0 ;
-	} ;
-
 	struct Private {
 		template <class>
 		class ImplHolder ;
 	} ;
 
+	class Holder :
+		delegate public Interface {
+	public:
+		virtual void release () = 0 ;
+		virtual void destroy () noexcept = 0 ;
+	} ;
+
 private:
-	PTR<NONE> mOrigin ;
 	PTR<Holder> mPointer ;
 
 public:
-	implicit UniqueRef ()
-		:UniqueRef (ARGVP0) {
+	implicit UniqueRef () :
+		delegate UniqueRef (ARGVP0) {
 		_STATIC_WARNING_ ("noop") ;
 	}
 
 	template <class _ARG1 ,class _ARG2 ,class = ENABLE_TYPE<U::CONSTEXPR_NOT<IS_PLACEHOLDER_HELP<_ARG1>>>>
-	explicit UniqueRef (const _ARG1 &constructor ,_ARG2 &&destructor)
-		: UniqueRef (ARGVP0) {
-		struct Dependent ;
-		using R1X = DEF<void ()> ;
-		using R2X = typename DEPENDENT_TYPE<Private ,Dependent>::template ImplHolder<PTR<R1X>> ;
-		using R3X = DEPENDENT_TYPE<Function<R1X> ,Dependent> ;
+	explicit UniqueRef (const _ARG1 &constructor ,_ARG2 &&destructor) :
+		delegate UniqueRef (ARGVP0) {
+		using R1X = DEPENDENT_TYPE<Function<void ()> ,struct ANONYMOUS> ;
+		using R2X = typename DEPENDENT_TYPE<Private ,struct ANONYMOUS>::template ImplHolder<R1X> ;
 		_STATIC_ASSERT_ (IS_VOID_HELP<RESULT_OF_TYPE<_ARG1 ,ARGVS<>>>::compile ()) ;
 		_STATIC_ASSERT_ (U::CONSTEXPR_NOT<IS_REFERENCE_HELP<_ARG2>>::compile ()) ;
 		_STATIC_ASSERT_ (IS_VOID_HELP<RESULT_OF_TYPE<_ARG2 ,ARGVS<>>>::compile ()) ;
 		auto rax = GlobalHeap::alloc (ARGV<TEMP<R2X>>::ID) ;
-		const auto r1x = R3X (_FORWARD_ (ARGV<_ARG2 &&>::ID ,destructor)) ;
-		ScopedBuild<R2X> ANONYMOUS (rax ,DEPTR[r1x.self]) ;
-		const auto r2x = _POINTER_CAST_ (ARGV<R2X>::ID ,rax.self) ;
+		auto rbx = R1X (_FORWARD_ (ARGV<_ARG2 &&>::ID ,destructor)) ;
+		ScopedBuild<R2X> ANONYMOUS (rax ,ARGVP0 ,_MOVE_ (rbx)) ;
+		auto &r1x = _CAST_ (ARGV<R2X>::ID ,DEREF[rax.self]) ;
 		constructor () ;
-		mOrigin = rax.self ;
-		mPointer = r2x ;
+		mPointer = DEPTR[r1x] ;
 		rax = NULL ;
 	}
 
@@ -1366,9 +1463,7 @@ public:
 		} ,[&] () {
 			_DEBUG_ASSERT_ (FALSE) ;
 		}) ;
-		DEREF[mPointer].~Holder () ;
-		GlobalHeap::free (mOrigin) ;
-		mOrigin = NULL ;
+		DEREF[mPointer].destroy () ;
 		mPointer = NULL ;
 	}
 
@@ -1376,9 +1471,8 @@ public:
 
 	inline UniqueRef &operator= (const UniqueRef &) = delete ;
 
-	implicit UniqueRef (UniqueRef &&that) noexcept
-		:UniqueRef (ARGVP0) {
-		_SWAP_ (mOrigin ,that.mOrigin) ;
+	implicit UniqueRef (UniqueRef &&that) noexcept :
+		delegate UniqueRef (ARGVP0) {
 		_SWAP_ (mPointer ,that.mPointer) ;
 	}
 
@@ -1399,70 +1493,77 @@ public:
 	}
 
 private:
-	explicit UniqueRef (const DEF<decltype (ARGVP0)> &) noexcept
-		:mOrigin (NULL) ,mPointer (NULL) {}
+	explicit UniqueRef (const DEF<decltype (ARGVP0)> &) noexcept :
+		delegate mPointer (NULL) {}
 } ;
 
 template <class UNIT_>
-class UniqueRef<>::Private::ImplHolder
-	:public Holder {
+class UniqueRef<>::Private::ImplHolder :
+	delegate public Holder {
 private:
 	UNIT_ mFunctor ;
 
 public:
+	implicit ImplHolder () = delete ;
+
 	template <class... _ARGS>
-	explicit ImplHolder (_ARGS &&...initval)
-		:mFunctor (_FORWARD_ (ARGV<_ARGS &&>::ID ,initval)...) {}
+	explicit ImplHolder (const DEF<decltype (ARGVP0)> & ,_ARGS &&...initval) :
+		delegate mFunctor (_FORWARD_ (ARGV<_ARGS &&>::ID ,initval)...) {}
 
 	void release () override {
 		mFunctor () ;
+	}
+
+	void destroy () noexcept override {
+		const auto r1x = _FORWARD_ (ARGV<PTR<NONE>>::ID ,this) ;
+		DEREF[this].~ImplHolder () ;
+		GlobalHeap::free (r1x) ;
 	}
 } ;
 
 template <class UNIT>
 class UniqueRef final {
-	_STATIC_ASSERT_ (IS_COMPLETE_HELP<UNIT>::compile ()) ;
-
 private:
-	class Holder
-		:public Interface {
-	public:
-		virtual UNIT &deref () leftvalue = 0 ;
-		virtual void release () = 0 ;
-	} ;
+	_STATIC_ASSERT_ (IS_COMPLETE_HELP<UNIT ,struct ANONYMOUS>::compile ()) ;
 
 	struct Private {
 		template <class>
 		class ImplHolder ;
 	} ;
 
+	class Holder :
+		delegate public Interface {
+	public:
+		virtual Reference reference () = 0 ;
+		virtual void release () = 0 ;
+		virtual void destroy () noexcept = 0 ;
+	} ;
+
 private:
-	PTR<NONE> mOrigin ;
 	PTR<Holder> mPointer ;
 
 public:
-	implicit UniqueRef ()
-		:UniqueRef (ARGVP0) {
+	implicit UniqueRef () :
+		delegate UniqueRef (ARGVP0) {
 		_STATIC_WARNING_ ("noop") ;
 	}
 
 	template <class _ARG1 ,class _ARG2 ,class = ENABLE_TYPE<U::CONSTEXPR_NOT<IS_PLACEHOLDER_HELP<_ARG1>>>>
-	explicit UniqueRef (const _ARG1 &constructor ,_ARG2 &&destructor)
-		: UniqueRef (ARGVP0) {
-		struct Dependent ;
-		using R1X = DEF<void (UNIT &)> ;
-		using R2X = typename DEPENDENT_TYPE<Private ,Dependent>::template ImplHolder<PTR<R1X>> ;
-		using R3X = DEPENDENT_TYPE<Function<R1X> ,Dependent> ;
+	explicit UniqueRef (const _ARG1 &constructor ,_ARG2 &&destructor) :
+		delegate UniqueRef (ARGVP0) {
+		using R1X = DEPENDENT_TYPE<Function<void (UNIT &)> ,struct ANONYMOUS> ;
+		using R2X = typename DEPENDENT_TYPE<Private ,struct ANONYMOUS>::template ImplHolder<R1X> ;
 		_STATIC_ASSERT_ (IS_VOID_HELP<RESULT_OF_TYPE<_ARG1 ,ARGVS<UNIT &>>>::compile ()) ;
 		_STATIC_ASSERT_ (U::CONSTEXPR_NOT<IS_REFERENCE_HELP<_ARG2>>::compile ()) ;
 		_STATIC_ASSERT_ (IS_VOID_HELP<RESULT_OF_TYPE<_ARG2 ,ARGVS<UNIT &>>>::compile ()) ;
 		auto rax = GlobalHeap::alloc (ARGV<TEMP<R2X>>::ID) ;
-		const auto r1x = R3X (_FORWARD_ (ARGV<_ARG2 &&>::ID ,destructor)) ;
-		ScopedBuild<R2X> ANONYMOUS (rax ,DEPTR[r1x.self]) ;
-		const auto r2x = _POINTER_CAST_ (ARGV<R2X>::ID ,rax.self) ;
-		constructor (DEREF[r2x].deref ()) ;
-		mOrigin = rax.self ;
-		mPointer = r2x ;
+		auto rbx = R1X (_FORWARD_ (ARGV<_ARG2 &&>::ID ,destructor)) ;
+		ScopedBuild<R2X> ANONYMOUS (rax ,ARGVP0 ,_MOVE_ (rbx)) ;
+		auto &r1x = _CAST_ (ARGV<R2X>::ID ,DEREF[rax.self]) ;
+		const auto r2x = r1x.reference () ;
+		const auto r3x = SafeReference<UNIT> (r2x) ;
+		constructor (r3x) ;
+		mPointer = DEPTR[r1x] ;
 		rax = NULL ;
 	}
 
@@ -1474,9 +1575,7 @@ public:
 		} ,[&] () {
 			_DEBUG_ASSERT_ (FALSE) ;
 		}) ;
-		DEREF[mPointer].~Holder () ;
-		GlobalHeap::free (mOrigin) ;
-		mOrigin = NULL ;
+		DEREF[mPointer].destroy () ;
 		mPointer = NULL ;
 	}
 
@@ -1484,9 +1583,8 @@ public:
 
 	inline UniqueRef &operator= (const UniqueRef &) = delete ;
 
-	implicit UniqueRef (UniqueRef &&that) noexcept
-		: UniqueRef (ARGVP0) {
-		_SWAP_ (mOrigin ,that.mOrigin) ;
+	implicit UniqueRef (UniqueRef &&that) noexcept :
+		delegate UniqueRef (ARGVP0) {
 		_SWAP_ (mPointer ,that.mPointer) ;
 	}
 
@@ -1508,7 +1606,8 @@ public:
 
 	const UNIT &to () const leftvalue {
 		_DEBUG_ASSERT_ (exist ()) ;
-		return DEREF[mPointer].deref () ;
+		const auto r1x = DEREF[mPointer].reference () ;
+		return SafeReference<const UNIT> (r1x) ;
 	}
 
 	inline PTR<const UNIT> operator-> () const leftvalue {
@@ -1521,60 +1620,69 @@ public:
 
 	template <class... _ARGS>
 	imports UniqueRef make (_ARGS &&...initval) {
-		struct Dependent ;
-		using R1X = DEF<void (UNIT &)> ;
-		using R2X = typename DEPENDENT_TYPE<Private ,Dependent>::template ImplHolder<PTR<R1X>> ;
-		using R3X = DEPENDENT_TYPE<Function<R1X> ,Dependent> ;
+		using R1X = DEPENDENT_TYPE<Function<void (UNIT &)> ,struct ANONYMOUS> ;
+		using R2X = typename DEPENDENT_TYPE<Private ,struct ANONYMOUS>::template ImplHolder<R1X> ;
 		UniqueRef ret ;
 		auto rax = GlobalHeap::alloc (ARGV<TEMP<R2X>>::ID) ;
-		const auto r1x = R3X ([] (UNIT &) {}) ;
-		ScopedBuild<R2X> ANONYMOUS (rax ,DEPTR[r1x.self]) ;
-		const auto r2x = _POINTER_CAST_ (ARGV<R2X>::ID ,rax.self) ;
-		auto &r3x = DEREF[r2x].deref () ;
-		r3x = UNIT (_FORWARD_ (ARGV<_ARGS &&>::ID ,initval)...) ;
-		ret.mOrigin = rax.self ;
-		ret.mPointer = r2x ;
+		auto rbx = R1X ([] (UNIT &) {
+			_STATIC_WARNING_ ("noop") ;
+		}) ;
+		ScopedBuild<R2X> ANONYMOUS (rax ,ARGVP0 ,_MOVE_ (rbx)) ;
+		auto &r1x = _CAST_ (ARGV<R2X>::ID ,DEREF[rax.self]) ;
+		const auto r2x = r1x.reference () ;
+		const auto r3x = SafeReference<UNIT> (r2x) ;
+		r3x.self = UNIT (_FORWARD_ (ARGV<_ARGS &&>::ID ,initval)...) ;
+		ret.mPointer = DEPTR[r1x] ;
 		rax = NULL ;
 		return _MOVE_ (ret) ;
 	}
 
 private:
-	explicit UniqueRef (const DEF<decltype (ARGVP0)> &) noexcept
-		:mOrigin (NULL) ,mPointer (NULL) {}
+	explicit UniqueRef (const DEF<decltype (ARGVP0)> &) noexcept :
+		delegate mPointer (NULL) {}
 } ;
 
 template <class UNIT>
 template <class UNIT_>
-class UniqueRef<UNIT>::Private::ImplHolder
-	:public Holder {
+class UniqueRef<UNIT>::Private::ImplHolder :
+	delegate public Holder {
 private:
 	REMOVE_CVR_TYPE<UNIT> mValue ;
 	UNIT_ mFunctor ;
 
 public:
-	template <class... _ARGS>
-	explicit ImplHolder (_ARGS &&...initval)
-		:mFunctor (_FORWARD_ (ARGV<_ARGS &&>::ID ,initval)...) {}
+	implicit ImplHolder () = delete ;
 
-	UNIT &deref () leftvalue override {
-		return mValue ;
+	template <class... _ARGS>
+	explicit ImplHolder (const DEF<decltype (ARGVP0)> & ,_ARGS &&...initval) :
+		delegate mFunctor (_FORWARD_ (ARGV<_ARGS &&>::ID ,initval)...) {}
+
+	Reference reference () override {
+		return SafeReference<UNIT> (mValue) ;
 	}
 
 	void release () override {
 		mFunctor (mValue) ;
 	}
+
+	void destroy () noexcept override {
+		const auto r1x = _FORWARD_ (ARGV<PTR<NONE>>::ID ,this) ;
+		DEREF[this].~ImplHolder () ;
+		GlobalHeap::free (r1x) ;
+	}
 } ;
 
 template <class UNIT>
 class PhanRef final {
-	_STATIC_ASSERT_ (IS_COMPLETE_HELP<UNIT>::compile ()) ;
+private:
+	_STATIC_ASSERT_ (IS_COMPLETE_HELP<UNIT ,struct ANONYMOUS>::compile ()) ;
 
 private:
 	PTR<UNIT> mPointer ;
 
 public:
-	implicit PhanRef ()
-		:PhanRef (ARGVP0) {
+	implicit PhanRef () :
+		delegate PhanRef (ARGVP0) {
 		_STATIC_WARNING_ ("noop") ;
 	}
 
@@ -1588,8 +1696,8 @@ public:
 
 	inline PhanRef &operator= (const PhanRef &) = delete ;
 
-	implicit PhanRef (PhanRef &&that) noexcept
-		:PhanRef (ARGVP0) {
+	implicit PhanRef (PhanRef &&that) noexcept :
+		delegate PhanRef (ARGVP0) {
 		_SWAP_ (mPointer ,that.mPointer) ;
 	}
 
@@ -1639,29 +1747,29 @@ public:
 	}
 
 private:
-	explicit PhanRef (const DEF<decltype (ARGVP0)> &) noexcept
-		:mPointer (NULL) {}
+	explicit PhanRef (const DEF<decltype (ARGVP0)> &) noexcept :
+		delegate mPointer (NULL) {}
 } ;
 
 template <class>
 class Function ;
 
-class FunctorInvokeProc
-	:public Wrapped<> {
+class FunctorDecayProc :
+	delegate public Wrapped<> {
 public:
 	template <class _ARG1 ,class _ARG2>
 	imports PTR<_ARG1> invoke (const ARGVF<_ARG1> & ,_ARG2 &functor) {
-		return template_functor (ARGV<_ARG1>::ID ,functor ,ARGVPX) ;
+		return template_decay (ARGV<_ARG1>::ID ,functor ,ARGVPX) ;
 	}
 
 private:
 	template <class _ARG1 ,class _ARG2 ,class = ENABLE_TYPE<IS_CONVERTIBLE_HELP<_ARG2 ,PTR<_ARG1>>>>
-	imports PTR<_ARG1> template_functor (const ARGVF<_ARG1> & ,_ARG2 &functor ,const DEF<decltype (ARGVP2)> &) {
+	imports PTR<_ARG1> template_decay (const ARGVF<_ARG1> & ,_ARG2 &functor ,const DEF<decltype (ARGVP2)> &) {
 		return _FORWARD_ (ARGV<PTR<_ARG1>>::ID ,functor) ;
 	}
 
 	template <class _ARG1 ,class _ARG2>
-	imports PTR<_ARG1> template_functor (const ARGVF<_ARG1> & ,_ARG2 &functor ,const DEF<decltype (ARGVP1)> &) {
+	imports PTR<_ARG1> template_decay (const ARGVF<_ARG1> & ,_ARG2 &functor ,const DEF<decltype (ARGVP1)> &) {
 		return NULL ;
 	}
 } ;
@@ -1669,12 +1777,6 @@ private:
 template <class UNIT1 ,class... UNITS>
 class Function<UNIT1 (UNITS...)> final {
 private:
-	class Holder
-		:public Interface {
-	public:
-		virtual UNIT1 invoke (FORWARD_TRAITS_TYPE<UNITS> &&...funcval) const = 0 ;
-	} ;
-
 	struct Private {
 		template <class>
 		class ImplHolder ;
@@ -1683,103 +1785,101 @@ private:
 		class MemPtrHolder ;
 	} ;
 
+	class Holder :
+		delegate public Interface {
+	public:
+		virtual Reference reference () = 0 ;
+		virtual UNIT1 invoke (FORWARD_TRAITS_TYPE<UNITS> &&...funcval) const = 0 ;
+		virtual void destroy () noexcept = 0 ;
+	} ;
+
 private:
-	PTR<NONE> mOrigin ;
 	PTR<Holder> mPointer ;
-	PTR<UNIT1 (UNITS...)> mFunctor ;
+	PTR<UNIT1 (UNITS...)> mFunction ;
 
 public:
-	implicit Function ()
-		:Function (ARGVP0) {
+	implicit Function () :
+		delegate Function (ARGVP0) {
 		_STATIC_WARNING_ ("noop") ;
 	}
 
-	implicit Function (const DEF<UNIT1 (UNITS...)> &that)
-		: Function (ARGVP0) {
-		mFunctor = DEPTR[that] ;
+	explicit Function (const DEF<UNIT1 (UNITS...)> &that) :
+		delegate Function (ARGVP0) {
+		mFunction = DEPTR[that] ;
 	}
 
 	template <class _ARG1 ,class = ENABLE_TYPE<U::CONSTEXPR_AND<U::CONSTEXPR_NOT<IS_PLACEHOLDER_HELP<_ARG1>> ,U::CONSTEXPR_NOT<IS_SAME_HELP<REMOVE_CVR_TYPE<_ARG1> ,Function>>>>>
-	implicit Function (_ARG1 &&that)
-		: Function (ARGVP0) {
-		struct Dependent ;
-		using R1X = typename DEPENDENT_TYPE<Private ,Dependent>::template ImplHolder<REMOVE_REFERENCE_TYPE<_ARG1>> ;
+	explicit Function (_ARG1 &&that) :
+		delegate Function (ARGVP0) {
+		using R1X = typename DEPENDENT_TYPE<Private ,struct ANONYMOUS>::template ImplHolder<REMOVE_REFERENCE_TYPE<_ARG1>> ;
 		_STATIC_ASSERT_ (IS_SAME_HELP<RESULT_OF_TYPE<_ARG1 ,ARGVS<UNITS...>> ,UNIT1>::compile ()) ;
 		auto rax = GlobalHeap::alloc (ARGV<TEMP<R1X>>::ID) ;
-		ScopedBuild<R1X> ANONYMOUS (rax ,_FORWARD_ (ARGV<_ARG1 &&>::ID ,that)) ;
-		const auto r1x = _POINTER_CAST_ (ARGV<R1X>::ID ,rax.self) ;
-		mOrigin = rax.self ;
-		mPointer = r1x ;
-		mFunctor = FunctorInvokeProc::invoke (ARGV<UNIT1 (UNITS...)>::ID ,DEREF[r1x].deref ()) ;
+		ScopedBuild<R1X> ANONYMOUS (rax ,ARGVP0 ,_FORWARD_ (ARGV<_ARG1 &&>::ID ,that)) ;
+		auto &r1x = _CAST_ (ARGV<R1X>::ID ,DEREF[rax.self]) ;
+		const auto r2x = r1x.reference () ;
+		const auto r3x = SafeReference<REMOVE_REFERENCE_TYPE<_ARG1>> (r2x) ;
+		mPointer = DEPTR[r1x] ;
+		mFunction = FunctorDecayProc::invoke (ARGV<UNIT1 (UNITS...)>::ID ,r3x.self) ;
 		rax = NULL ;
 	}
 
 	template <class _ARG1>
-	explicit Function (PhanRef<_ARG1> &&context_ ,const MEMPTR<DEF<UNIT1 (UNITS...)> ,_ARG1> &functor)
-		:Function (ARGVP0) {
-		struct Dependent ;
-		using R1X = typename DEPENDENT_TYPE<Private ,Dependent>::template MemPtrHolder<_ARG1 ,ARGC<1>> ;
+	explicit Function (PhanRef<_ARG1> &&context_ ,const MEMPTR<DEF<UNIT1 (UNITS...)> ,_ARG1> &functor) :
+		delegate Function (ARGVP0) {
+		using R1X = typename DEPENDENT_TYPE<Private ,struct ANONYMOUS>::template MemPtrHolder<_ARG1 ,ARGC<1>> ;
 		auto rax = GlobalHeap::alloc (ARGV<TEMP<R1X>>::ID) ;
-		ScopedBuild<R1X> ANONYMOUS (rax ,functor ,_MOVE_ (context_)) ;
-		const auto r1x = _POINTER_CAST_ (ARGV<R1X>::ID ,rax.self) ;
-		mOrigin = rax.self ;
-		mPointer = r1x ;
-		mFunctor = NULL ;
+		ScopedBuild<R1X> ANONYMOUS (rax ,ARGVP0 ,functor ,_MOVE_ (context_)) ;
+		auto &r1x = _CAST_ (ARGV<R1X>::ID ,DEREF[rax.self]) ;
+		mPointer = DEPTR[r1x] ;
+		mFunction = NULL ;
 		rax = NULL ;
 	}
 
 	template <class _ARG1>
-	explicit Function (PhanRef<const _ARG1> &&context_ ,const MEMPTR<DEF<UNIT1 (UNITS...) const> ,_ARG1> &functor)
-		:Function (ARGVP0) {
-		struct Dependent ;
-		using R1X = typename DEPENDENT_TYPE<Private ,Dependent>::template MemPtrHolder<_ARG1 ,ARGC<2>> ;
+	explicit Function (PhanRef<const _ARG1> &&context_ ,const MEMPTR<DEF<UNIT1 (UNITS...) const> ,_ARG1> &functor) :
+		delegate Function (ARGVP0) {
+		using R1X = typename DEPENDENT_TYPE<Private ,struct ANONYMOUS>::template MemPtrHolder<_ARG1 ,ARGC<2>> ;
 		auto rax = GlobalHeap::alloc (ARGV<TEMP<R1X>>::ID) ;
-		ScopedBuild<R1X> ANONYMOUS (rax ,functor ,_MOVE_ (context_)) ;
-		const auto r1x = _POINTER_CAST_ (ARGV<R1X>::ID ,rax.self) ;
-		mOrigin = rax.self ;
-		mPointer = r1x ;
-		mFunctor = NULL ;
+		ScopedBuild<R1X> ANONYMOUS (rax ,ARGVP0 ,functor ,_MOVE_ (context_)) ;
+		auto &r1x = _CAST_ (ARGV<R1X>::ID ,DEREF[rax.self]) ;
+		mPointer = DEPTR[r1x] ;
+		mFunction = NULL ;
 		rax = NULL ;
 	}
 
 	template <class _ARG1 ,class _ARG2 ,class = ENABLE_TYPE<U::CONSTEXPR_NOT<IS_FUNCTION_HELP<_ARG2>>>>
-	explicit Function (PhanRef<_ARG1> &&context_ ,const MEMPTR<_ARG2 ,_ARG1> &functor)
-		:Function (ARGVP0) {
-		struct Dependent ;
-		using R1X = typename DEPENDENT_TYPE<Private ,Dependent>::template MemPtrHolder<_ARG1 ,ARGC<3>> ;
+	explicit Function (PhanRef<_ARG1> &&context_ ,const MEMPTR<_ARG2 ,_ARG1> &functor) :
+		delegate Function (ARGVP0) {
+		using R1X = typename DEPENDENT_TYPE<Private ,struct ANONYMOUS>::template MemPtrHolder<_ARG1 ,ARGC<3>> ;
 		auto rax = GlobalHeap::alloc (ARGV<TEMP<R1X>>::ID) ;
-		ScopedBuild<R1X> ANONYMOUS (rax ,functor ,_MOVE_ (context_)) ;
-		const auto r1x = _POINTER_CAST_ (ARGV<R1X>::ID ,rax.self) ;
-		mOrigin = rax.self ;
-		mPointer = r1x ;
-		mFunctor = NULL ;
+		ScopedBuild<R1X> ANONYMOUS (rax ,ARGVP0 ,functor ,_MOVE_ (context_)) ;
+		auto &r1x = _CAST_ (ARGV<R1X>::ID ,DEREF[rax.self]) ;
+		mPointer = DEPTR[r1x] ;
+		mFunction = NULL ;
 		rax = NULL ;
 	}
 
 	implicit ~Function () noexcept {
 		if (mPointer == NULL)
-			if (mFunctor == NULL)
+			if (mFunction == NULL)
 				return ;
 		if switch_once (TRUE) {
 			if (mPointer == NULL)
 				discard ;
-			DEREF[mPointer].~Holder () ;
-			GlobalHeap::free (mOrigin) ;
+			DEREF[mPointer].destroy () ;
 		}
-		mOrigin = NULL ;
 		mPointer = NULL ;
-		mFunctor = NULL ;
+		mFunction = NULL ;
 	}
 
 	implicit Function (const Function &) = delete ;
 
 	inline Function &operator= (const Function &) = delete ;
 
-	implicit Function (Function &&that) noexcept
-		:Function (ARGVP0) {
-		_SWAP_ (mOrigin ,that.mOrigin) ;
+	implicit Function (Function &&that) noexcept :
+		delegate Function (ARGVP0) {
 		_SWAP_ (mPointer ,that.mPointer) ;
-		_SWAP_ (mFunctor ,that.mFunctor) ;
+		_SWAP_ (mFunction ,that.mFunction) ;
 	}
 
 	inline Function &operator= (Function &&that) noexcept {
@@ -1794,14 +1894,14 @@ public:
 
 	BOOL exist () const {
 		if (mPointer == NULL)
-			if (mFunctor == NULL)
+			if (mFunction == NULL)
 				return FALSE ;
 		return TRUE ;
 	}
 
 	const DEF<UNIT1 (UNITS...)> &to () const leftvalue {
-		_DEBUG_ASSERT_ (mFunctor != NULL) ;
-		return DEREF[mFunctor] ;
+		_DEBUG_ASSERT_ (mFunction != NULL) ;
+		return DEREF[mFunction] ;
 	}
 
 	inline implicit operator const DEF<UNIT1 (UNITS...)> & () const leftvalue {
@@ -1812,8 +1912,8 @@ public:
 
 	UNIT1 invoke (FORWARD_TRAITS_TYPE<UNITS> &&...funcval) const {
 		_DEBUG_ASSERT_ (exist ()) ;
-		if (mFunctor != NULL)
-			return mFunctor (_FORWARD_ (ARGV<FORWARD_TRAITS_TYPE<UNITS> &&>::ID ,funcval)...) ;
+		if (mFunction != NULL)
+			return mFunction (_FORWARD_ (ARGV<FORWARD_TRAITS_TYPE<UNITS> &&>::ID ,funcval)...) ;
 		return DEREF[mPointer].invoke (_FORWARD_ (ARGV<FORWARD_TRAITS_TYPE<UNITS> &&>::ID ,funcval)...) ;
 	}
 
@@ -1821,61 +1921,59 @@ public:
 		return invoke (_FORWARD_ (ARGV<FORWARD_TRAITS_TYPE<UNITS> &&>::ID ,funcval)...) ;
 	}
 
-	template <class... _ARGS>
-	imports Function make (const DEF<UNIT1 (UNITS... ,_ARGS...)> &functor ,const REMOVE_CVR_TYPE<_ARGS> &...parameter) {
-		struct Dependent ;
-		using R1X = typename DEPENDENT_TYPE<Private ,Dependent>::template ImplHolder<UNIT1 (UNITS... ,_ARGS...)> ;
-		Function ret ;
-		auto rax = GlobalHeap::alloc (ARGV<TEMP<R1X>>::ID) ;
-		ScopedBuild<R1X> ANONYMOUS (rax ,functor ,parameter...) ;
-		const auto r1x = _POINTER_CAST_ (ARGV<R1X>::ID ,rax.self) ;
-		ret.mOrigin = rax.self ;
-		ret.mPointer = r1x ;
-		ret.mFunctor = NULL ;
-		rax = NULL ;
-		return _MOVE_ (ret) ;
-	}
-
 private:
-	explicit Function (const DEF<decltype (ARGVP0)> &) noexcept
-		:mOrigin (NULL) ,mPointer (NULL) ,mFunctor (NULL) {}
+	explicit Function (const DEF<decltype (ARGVP0)> &) noexcept :
+		delegate mPointer (NULL) ,
+		delegate mFunction (NULL) {}
 } ;
 
 template <class UNIT1 ,class... UNITS>
 template <class UNIT_>
-class Function<UNIT1 (UNITS...)>::Private::ImplHolder
-	:public Holder {
+class Function<UNIT1 (UNITS...)>::Private::ImplHolder :
+	delegate public Holder {
+private:
 	_STATIC_ASSERT_ (IS_SAME_HELP<RESULT_OF_TYPE<UNIT_ ,ARGVS<UNITS...>> ,UNIT1>::compile ()) ;
 
 private:
 	UNIT_ mFunctor ;
 
 public:
-	template <class... _ARGS>
-	explicit ImplHolder (_ARGS &&...initval)
-		:mFunctor (_FORWARD_ (ARGV<_ARGS &&>::ID ,initval)...) {}
+	implicit ImplHolder () = delete ;
 
-	UNIT_ &deref () leftvalue {
-		return mFunctor ;
+	template <class... _ARGS>
+	explicit ImplHolder (const DEF<decltype (ARGVP0)> & ,_ARGS &&...initval) :
+		delegate mFunctor (_FORWARD_ (ARGV<_ARGS &&>::ID ,initval)...) {}
+
+	Reference reference () override {
+		return SafeReference<UNIT_> (mFunctor) ;
 	}
 
 	UNIT1 invoke (FORWARD_TRAITS_TYPE<UNITS> &&...funcval) const override {
 		return mFunctor (_FORWARD_ (ARGV<FORWARD_TRAITS_TYPE<UNITS> &&>::ID ,funcval)...) ;
 	}
+
+	void destroy () noexcept override {
+		const auto r1x = _FORWARD_ (ARGV<PTR<NONE>>::ID ,this) ;
+		DEREF[this].~ImplHolder () ;
+		GlobalHeap::free (r1x) ;
+	}
 } ;
 
 template <class UNIT1 ,class... UNITS>
 template <class UNIT_>
-class Function<UNIT1 (UNITS...)>::Private::MemPtrHolder<UNIT_ ,ARGC<1>>
-	:public Holder {
+class Function<UNIT1 (UNITS...)>::Private::MemPtrHolder<UNIT_ ,ARGC<1>> :
+	delegate public Holder {
 private:
 	MEMPTR<DEF<UNIT1 (UNITS...)> ,UNIT_> mFunctor ;
 	PhanRef<UNIT_> mContext ;
 
 public:
+	implicit MemPtrHolder () = delete ;
+
 	template <class... _ARGS>
-	explicit MemPtrHolder (PhanRef<UNIT_> &&context_ ,_ARGS &&...initval)
-		:mFunctor (_FORWARD_ (ARGV<_ARGS &&>::ID ,initval)...) ,mContext (_MOVE_ (context_)) {}
+	explicit MemPtrHolder (const DEF<decltype (ARGVP0)> & ,PhanRef<UNIT_> &&context_ ,_ARGS &&...initval) :
+		delegate mFunctor (_FORWARD_ (ARGV<_ARGS &&>::ID ,initval)...) ,
+		delegate mContext (_MOVE_ (context_)) {}
 
 	UNIT1 invoke (FORWARD_TRAITS_TYPE<UNITS> &&...funcval) const override {
 		auto &r1x = mContext.self ;
@@ -1885,16 +1983,19 @@ public:
 
 template <class UNIT1 ,class... UNITS>
 template <class UNIT_>
-class Function<UNIT1 (UNITS...)>::Private::MemPtrHolder<UNIT_ ,ARGC<2>>
-	:public Holder {
+class Function<UNIT1 (UNITS...)>::Private::MemPtrHolder<UNIT_ ,ARGC<2>> :
+	delegate public Holder {
 private:
 	MEMPTR<DEF<UNIT1 (UNITS...) const> ,UNIT_> mFunctor ;
 	PhanRef<const UNIT_> mContext ;
 
 public:
+	implicit MemPtrHolder () = delete ;
+
 	template <class... _ARGS>
-	explicit MemPtrHolder (PhanRef<const UNIT_> &&context_ ,_ARGS &&...initval)
-		:mFunctor (_FORWARD_ (ARGV<_ARGS &&>::ID ,initval)...) ,mContext (_MOVE_ (context_)) {}
+	explicit MemPtrHolder (const DEF<decltype (ARGVP0)> & ,PhanRef<const UNIT_> &&context_ ,_ARGS &&...initval) :
+		delegate mFunctor (_FORWARD_ (ARGV<_ARGS &&>::ID ,initval)...) ,
+		delegate mContext (_MOVE_ (context_)) {}
 
 	UNIT1 invoke (FORWARD_TRAITS_TYPE<UNITS> &&...funcval) const override {
 		auto &r1x = mContext.self ;
@@ -1904,8 +2005,9 @@ public:
 
 template <class UNIT1 ,class... UNITS>
 template <class UNIT_>
-class Function<UNIT1 (UNITS...)>::Private::MemPtrHolder<UNIT_ ,ARGC<3>>
-	:public Holder {
+class Function<UNIT1 (UNITS...)>::Private::MemPtrHolder<UNIT_ ,ARGC<3>> :
+	delegate public Holder {
+private:
 	_STATIC_ASSERT_ (_CAPACITYOF_ (ARGVS<UNITS...>) == 0) ;
 
 private:
@@ -1913,9 +2015,12 @@ private:
 	PhanRef<UNIT_> mContext ;
 
 public:
+	implicit MemPtrHolder () = delete ;
+
 	template <class... _ARGS>
-	explicit MemPtrHolder (PhanRef<UNIT_> &&context_ ,_ARGS &&...initval)
-		:mFunctor (_FORWARD_ (ARGV<_ARGS &&>::ID ,initval)...) ,mContext (_MOVE_ (context_)) {}
+	explicit MemPtrHolder (const DEF<decltype (ARGVP0)> & ,PhanRef<UNIT_> &&context_ ,_ARGS &&...initval) :
+		delegate mFunctor (_FORWARD_ (ARGV<_ARGS &&>::ID ,initval)...) ,
+		delegate mContext (_MOVE_ (context_)) {}
 
 	UNIT1 invoke (FORWARD_TRAITS_TYPE<UNITS> &&...funcval) const override {
 		auto &r1x = mContext.self ;
@@ -1934,10 +2039,10 @@ using SMPHAN = ARGC<(-5)> ;
 
 template <class UNIT ,class SIZE>
 class Buffer {
-	_STATIC_ASSERT_ (U::CONSTEXPR_COMPR_GT<SIZE ,ZERO>::compile ()) ;
-	_STATIC_ASSERT_ (IS_COMPLETE_HELP<UNIT>::compile ()) ;
-
 private:
+	_STATIC_ASSERT_ (U::CONSTEXPR_COMPR_GT<SIZE ,ZERO>::compile ()) ;
+	_STATIC_ASSERT_ (IS_COMPLETE_HELP<UNIT ,struct ANONYMOUS>::compile ()) ;
+
 	using BUFFER = ARRAY_BIND_TYPE<REMOVE_CVR_TYPE<UNIT> ,SIZE> ;
 
 private:
@@ -1955,13 +2060,13 @@ public:
 		_DEBUG_ASSERT_ (len >= 0 && len <= SIZE::compile ()) ;
 	}
 
-	implicit Buffer (const BUFFER &that)
-		:Buffer (_MOVE_ (_CAST_ (ARGV<Buffer>::ID ,that))) {
+	implicit Buffer (const BUFFER &that) :
+		delegate Buffer (_MOVE_ (_CAST_ (ARGV<Buffer>::ID ,that))) {
 		_STATIC_WARNING_ ("noop") ;
 	}
 
-	implicit Buffer (BUFFER &&that)
-		: Buffer (_MOVE_ (_CAST_ (ARGV<Buffer>::ID ,that))) {
+	implicit Buffer (BUFFER &&that) :
+		delegate Buffer (_MOVE_ (_CAST_ (ARGV<Buffer>::ID ,that))) {
 		_STATIC_WARNING_ ("noop") ;
 	}
 
@@ -2046,56 +2151,74 @@ public:
 		return BOOL (compr (that) <= 0) ;
 	}
 
-	LENGTH expand_size () const {
-		return 0 ;
-	}
-
 	Buffer expand (const LENGTH &len) const {
 		_DEBUG_ASSERT_ (FALSE) ;
 		return Buffer () ;
 	}
 
-	void swap (Buffer &that) {
+	void expand_swap (Buffer &that) {
 		BasicProc::mem_swap (PTRTOARR[mBuffer] ,PTRTOARR[that.mBuffer] ,SIZE::compile ()) ;
 	}
 } ;
 
 template <class UNIT>
 class Buffer<UNIT ,SFIXED> final {
-	_STATIC_ASSERT_ (IS_COMPLETE_HELP<UNIT>::compile ()) ;
+private:
+	_STATIC_ASSERT_ (IS_COMPLETE_HELP<UNIT ,struct ANONYMOUS>::compile ()) ;
+
+	struct Private {
+		class PureHolder ;
+	} ;
+
+	class Holder :
+		delegate public Interface {
+	public:
+		virtual void soft_destroy () noexcept = 0 ;
+		virtual void destroy () noexcept = 0 ;
+	} ;
 
 private:
-	PTR<NONE> mOrigin ;
+	template <class ,class>
+	friend class Buffer ;
+	PTR<Holder> mPointer ;
 	PTR<ARR<UNIT>> mBuffer ;
 	LENGTH mSize ;
 
 public:
-	implicit Buffer ()
-		:Buffer (ARGVP0) {
+	implicit Buffer () :
+		delegate Buffer (ARGVP0) {
 		_STATIC_WARNING_ ("noop") ;
 	}
 
-	explicit Buffer (const LENGTH &len)
-		:Buffer (ARGVP0) {
+	explicit Buffer (const LENGTH &len) :
+		delegate Buffer (ARGVP0) {
+		using R1X = typename DEPENDENT_TYPE<Private ,struct ANONYMOUS>::PureHolder ;
 		if (len == 0)
 			return ;
 		_DEBUG_ASSERT_ (len > 0) ;
 		auto rax = GlobalHeap::alloc (ARGV<TEMP<UNIT>>::ID ,len) ;
 		ScopedBuild<ARR<UNIT>> ANONYMOUS (rax ,len) ;
-		mOrigin = rax.self ;
-		const auto r1x = _POINTER_CAST_ (ARGV<ARR<UNIT>>::ID ,rax.self) ;
-		mBuffer = r1x ;
+		auto &r1x = _CAST_ (ARGV<ARR<UNIT>>::ID ,DEREF[rax.self]) ;
+		auto rbx = GlobalHeap::alloc (ARGV<TEMP<R1X>>::ID) ;
+		ScopedBuild<R1X> ANONYMOUS (rbx ,ARGVP0 ,rax.self ,DEPTR[r1x] ,len) ;
+		auto &r2x = _CAST_ (ARGV<R1X>::ID ,DEREF[rbx.self]) ;
+		mPointer = DEPTR[r2x] ;
+		mBuffer = DEPTR[r1x] ;
 		mSize = len ;
+		rbx = NULL ;
 		rax = NULL ;
 	}
 
 	implicit ~Buffer () noexcept {
 		if (mBuffer == NULL)
 			return ;
-		for (auto &&i : _RANGE_ (0 ,mSize))
-			DEREF[mBuffer][i].~UNIT () ;
-		GlobalHeap::free (mOrigin) ;
-		mOrigin = NULL ;
+		if switch_once (TRUE) {
+			if (mPointer == NULL)
+				return ;
+			DEREF[mPointer].soft_destroy () ;
+			DEREF[mPointer].destroy () ;
+		}
+		mPointer = NULL ;
 		mBuffer = NULL ;
 		mSize = 0 ;
 	}
@@ -2201,71 +2324,109 @@ public:
 		return BOOL (compr (that) <= 0) ;
 	}
 
-	LENGTH expand_size () const {
-		return 0 ;
-	}
-
 	Buffer<UNIT ,SAUTO> expand (const LENGTH &len) const {
 		_DYNAMIC_ASSERT_ (FALSE) ;
 		return Buffer<UNIT ,SAUTO> () ;
 	}
 
-	void swap (Buffer<UNIT ,SAUTO> &that) {
+	void expand_swap (Buffer<UNIT ,SAUTO> &that) {
 		_DYNAMIC_ASSERT_ (FALSE) ;
 	}
 
-	void swap (Buffer &that) {
-		_DYNAMIC_ASSERT_ (mSize == that.mSize) ;
-		BasicProc::mem_swap (PTRTOARR[mBuffer] ,PTRTOARR[that.mBuffer] ,mSize) ;
-	}
-
 private:
-	explicit Buffer (const DEF<decltype (ARGVP0)> &) noexcept
-		:mOrigin (NULL) ,mBuffer (NULL) ,mSize (0) {}
+	explicit Buffer (const DEF<decltype (ARGVP0)> &) noexcept :
+		delegate mPointer (NULL) ,
+		delegate mBuffer (NULL) ,
+		delegate mSize (0) {}
 } ;
 
 template <class UNIT>
 using FixedBuffer = CAST_TRAITS_TYPE<Buffer<REMOVE_CVR_TYPE<UNIT> ,SFIXED> ,UNIT> ;
 
 template <class UNIT>
-class Buffer<UNIT ,SAUTO> ;
-
-template <class UNIT>
-class Buffer<SPECIALIZATION<UNIT ,ARGC<FALSE>> ,SAUTO> {
-	_STATIC_ASSERT_ (IS_COMPLETE_HELP<UNIT>::compile ()) ;
-
-protected:
+class Buffer<UNIT ,SFIXED>::Private::PureHolder :
+	delegate public Holder {
+private:
 	PTR<NONE> mOrigin ;
 	PTR<ARR<UNIT>> mBuffer ;
 	LENGTH mSize ;
 
+public:
+	implicit PureHolder () = delete ;
+
+	explicit PureHolder (const DEF<decltype (ARGVP0)> & ,const PTR<NONE> &origin ,const PTR<ARR<UNIT>> &buffer ,const LENGTH &size_) :
+		delegate mOrigin (origin) ,
+		delegate mBuffer (buffer) ,
+		delegate mSize (size_) {}
+
+	void soft_destroy () noexcept override {
+		const auto r1x = mOrigin ;
+		for (auto &&i : _RANGE_ (0 ,mSize))
+			DEREF[mBuffer][i].~UNIT () ;
+		GlobalHeap::free (r1x) ;
+		mOrigin = NULL ;
+		mBuffer = NULL ;
+		mSize = 0 ;
+	}
+
+	void destroy () noexcept override {
+		const auto r1x = _FORWARD_ (ARGV<PTR<NONE>>::ID ,this) ;
+		DEREF[this].~PureHolder () ;
+		GlobalHeap::free (r1x) ;
+	}
+} ;
+
+template <class UNIT>
+class Buffer<UNIT ,SAUTO> ;
+
+template <class UNIT>
+class Buffer<SPECIALIZATION<UNIT ,ARGC<FALSE>> ,SAUTO> {
 protected:
-	implicit Buffer ()
-		:Buffer (ARGVP0) {
+	_STATIC_ASSERT_ (IS_COMPLETE_HELP<UNIT ,struct ANONYMOUS>::compile ()) ;
+
+	using Holder = typename Buffer<UNIT ,SFIXED>::Holder ;
+	using Private = typename Buffer<UNIT ,SFIXED>::Private ;
+
+protected:
+	PTR<Holder> mPointer ;
+	PTR<ARR<UNIT>> mBuffer ;
+	LENGTH mSize ;
+
+protected:
+	implicit Buffer () :
+		delegate Buffer (ARGVP0) {
 		_STATIC_WARNING_ ("noop") ;
 	}
 
-	explicit Buffer (const LENGTH &len)
-		:Buffer (ARGVP0) {
+	explicit Buffer (const LENGTH &len) :
+		delegate Buffer (ARGVP0) {
+		using R1X = typename DEPENDENT_TYPE<Private ,struct ANONYMOUS>::PureHolder ;
 		if (len == 0)
 			return ;
 		_DEBUG_ASSERT_ (len > 0) ;
 		auto rax = GlobalHeap::alloc (ARGV<TEMP<UNIT>>::ID ,len) ;
 		ScopedBuild<ARR<UNIT>> ANONYMOUS (rax ,len) ;
-		mOrigin = rax.self ;
-		const auto r1x = _POINTER_CAST_ (ARGV<ARR<UNIT>>::ID ,rax.self) ;
-		mBuffer = r1x ;
+		auto &r1x = _CAST_ (ARGV<ARR<UNIT>>::ID ,DEREF[rax.self]) ;
+		auto rbx = GlobalHeap::alloc (ARGV<TEMP<R1X>>::ID) ;
+		ScopedBuild<R1X> ANONYMOUS (rbx ,ARGVP0 ,rax.self ,DEPTR[r1x] ,len) ;
+		auto &r2x = _CAST_ (ARGV<R1X>::ID ,DEREF[rbx.self]) ;
+		mPointer = DEPTR[r2x] ;
+		mBuffer = DEPTR[r1x] ;
 		mSize = len ;
+		rbx = NULL ;
 		rax = NULL ;
 	}
 
 	implicit ~Buffer () noexcept {
 		if (mBuffer == NULL)
 			return ;
-		for (auto &&i : _RANGE_ (0 ,mSize))
-			DEREF[mBuffer][i].~UNIT () ;
-		GlobalHeap::free (mOrigin) ;
-		mOrigin = NULL ;
+		if switch_once (TRUE) {
+			if (mPointer == NULL)
+				return ;
+			DEREF[mPointer].soft_destroy () ;
+			DEREF[mPointer].destroy () ;
+		}
+		mPointer = NULL ;
 		mBuffer = NULL ;
 		mSize = 0 ;
 	}
@@ -2274,9 +2435,9 @@ protected:
 
 	inline Buffer &operator= (const Buffer &) = delete ;
 
-	implicit Buffer (Buffer &&that) noexcept
-		:Buffer (ARGVP0) {
-		_SWAP_ (mOrigin ,that.mOrigin) ;
+	implicit Buffer (Buffer &&that) noexcept :
+		delegate Buffer (ARGVP0) {
+		_SWAP_ (mPointer ,that.mPointer) ;
 		_SWAP_ (mBuffer ,that.mBuffer) ;
 		_SWAP_ (mSize ,that.mSize) ;
 	}
@@ -2292,60 +2453,80 @@ protected:
 	}
 
 protected:
-	explicit Buffer (const DEF<decltype (ARGVP0)> &) noexcept
-		:mOrigin (NULL) ,mBuffer (NULL) ,mSize (0) {}
+	explicit Buffer (const DEF<decltype (ARGVP0)> &) noexcept :
+		delegate mPointer (NULL) ,
+		delegate mBuffer (NULL) ,
+		delegate mSize (0) {}
 } ;
 
 template <class UNIT>
 class Buffer<SPECIALIZATION<UNIT ,ARGC<TRUE>> ,SAUTO> {
-	_STATIC_ASSERT_ (IS_COMPLETE_HELP<UNIT>::compile ()) ;
+protected:
+	_STATIC_ASSERT_ (IS_COMPLETE_HELP<UNIT ,struct ANONYMOUS>::compile ()) ;
+
+	using Holder = typename Buffer<UNIT ,SFIXED>::Holder ;
+	using Private = typename Buffer<UNIT ,SFIXED>::Private ;
 
 protected:
-	PTR<NONE> mOrigin ;
+	PTR<Holder> mPointer ;
 	PTR<ARR<UNIT>> mBuffer ;
 	LENGTH mSize ;
 
 protected:
-	implicit Buffer ()
-		:Buffer (ARGVP0) {
+	implicit Buffer () :
+		delegate Buffer (ARGVP0) {
 		_STATIC_WARNING_ ("noop") ;
 	}
 
-	explicit Buffer (const LENGTH &len)
-		:Buffer (ARGVP0) {
+	explicit Buffer (const LENGTH &len) :
+		delegate Buffer (ARGVP0) {
+		using R1X = typename DEPENDENT_TYPE<Private ,struct ANONYMOUS>::PureHolder ;
 		if (len == 0)
 			return ;
 		_DEBUG_ASSERT_ (len > 0) ;
 		auto rax = GlobalHeap::alloc (ARGV<TEMP<UNIT>>::ID ,len) ;
 		ScopedBuild<ARR<UNIT>> ANONYMOUS (rax ,len) ;
-		mOrigin = rax.self ;
-		const auto r1x = _POINTER_CAST_ (ARGV<ARR<UNIT>>::ID ,rax.self) ;
-		mBuffer = r1x ;
+		auto &r1x = _CAST_ (ARGV<ARR<UNIT>>::ID ,DEREF[rax.self]) ;
+		auto rbx = GlobalHeap::alloc (ARGV<TEMP<R1X>>::ID) ;
+		ScopedBuild<R1X> ANONYMOUS (rbx ,ARGVP0 ,rax.self ,DEPTR[r1x] ,len) ;
+		auto &r2x = _CAST_ (ARGV<R1X>::ID ,DEREF[rbx.self]) ;
+		mPointer = DEPTR[r2x] ;
+		mBuffer = DEPTR[r1x] ;
 		mSize = len ;
+		rbx = NULL ;
 		rax = NULL ;
 	}
 
 	implicit ~Buffer () noexcept {
 		if (mBuffer == NULL)
 			return ;
-		for (auto &&i : _RANGE_ (0 ,mSize))
-			DEREF[mBuffer][i].~UNIT () ;
-		GlobalHeap::free (mOrigin) ;
-		mOrigin = NULL ;
+		if switch_once (TRUE) {
+			if (mPointer == NULL)
+				return ;
+			DEREF[mPointer].soft_destroy () ;
+			DEREF[mPointer].destroy () ;
+		}
+		mPointer = NULL ;
 		mBuffer = NULL ;
 		mSize = 0 ;
 	}
 
-	implicit Buffer (const Buffer &that)
-		:Buffer (ARGVP0) {
-		if (that.mBuffer == NULL)
+	implicit Buffer (const Buffer &that) :
+		delegate Buffer (ARGVP0) {
+		using R1X = typename DEPENDENT_TYPE<Private ,struct ANONYMOUS>::PureHolder ;
+		if (that.mSize == 0)
 			return ;
+		_DEBUG_ASSERT_ (that.mSize > 0) ;
 		auto rax = GlobalHeap::alloc (ARGV<TEMP<UNIT>>::ID ,that.mSize) ;
 		ScopedBuild<ARR<UNIT>> ANONYMOUS (rax ,DEREF[that.mBuffer] ,that.mSize) ;
-		mOrigin = rax.self ;
-		const auto r1x = _POINTER_CAST_ (ARGV<ARR<UNIT>>::ID ,rax.self) ;
-		mBuffer = r1x ;
+		auto &r1x = _CAST_ (ARGV<ARR<UNIT>>::ID ,DEREF[rax.self]) ;
+		auto rbx = GlobalHeap::alloc (ARGV<TEMP<R1X>>::ID) ;
+		ScopedBuild<R1X> ANONYMOUS (rbx ,ARGVP0 ,rax.self ,DEPTR[r1x] ,that.mSize) ;
+		auto &r2x = _CAST_ (ARGV<R1X>::ID ,DEREF[rbx.self]) ;
+		mPointer = DEPTR[r2x] ;
+		mBuffer = DEPTR[r1x] ;
 		mSize = that.mSize ;
+		rbx = NULL ;
 		rax = NULL ;
 	}
 
@@ -2359,9 +2540,9 @@ protected:
 		return DEREF[this] ;
 	}
 
-	implicit Buffer (Buffer &&that) noexcept
-		:Buffer (ARGVP0) {
-		_SWAP_ (mOrigin ,that.mOrigin) ;
+	implicit Buffer (Buffer &&that) noexcept :
+		delegate Buffer (ARGVP0) {
+		_SWAP_ (mPointer ,that.mPointer) ;
 		_SWAP_ (mBuffer ,that.mBuffer) ;
 		_SWAP_ (mSize ,that.mSize) ;
 	}
@@ -2377,27 +2558,29 @@ protected:
 	}
 
 protected:
-	explicit Buffer (const DEF<decltype (ARGVP0)> &) noexcept
-		:mOrigin (NULL) ,mBuffer (NULL) ,mSize (0) {}
+	explicit Buffer (const DEF<decltype (ARGVP0)> &) noexcept :
+		delegate mPointer (NULL) ,
+		delegate mBuffer (NULL) ,
+		delegate mSize (0) {}
 } ;
 
 template <class UNIT>
-class Buffer<UNIT ,SAUTO> final
-	:private Buffer<SPECIALIZATION<UNIT ,ARGC_TYPE<IS_COPY_CONSTRUCTIBLE_HELP<UNIT>>> ,SAUTO> {
+class Buffer<UNIT ,SAUTO> final :
+	delegate private Buffer<SPECIALIZATION<UNIT ,ARGC_TYPE<IS_COPY_CONSTRUCTIBLE_HELP<UNIT>>> ,SAUTO> {
 private:
 	using SPECIALIZATION_BASE = Buffer<SPECIALIZATION<UNIT ,ARGC_TYPE<IS_COPY_CONSTRUCTIBLE_HELP<UNIT>>> ,SAUTO> ;
 
 private:
 	friend SPECIALIZATION_BASE ;
-	using SPECIALIZATION_BASE::mOrigin ;
+	using SPECIALIZATION_BASE::mPointer ;
 	using SPECIALIZATION_BASE::mBuffer ;
 	using SPECIALIZATION_BASE::mSize ;
 
 public:
 	implicit Buffer () = default ;
 
-	explicit Buffer (const LENGTH &len)
-		:SPECIALIZATION_BASE (len) {
+	explicit Buffer (const LENGTH &len) :
+		delegate SPECIALIZATION_BASE (len) {
 		_STATIC_WARNING_ ("noop") ;
 	}
 
@@ -2494,18 +2677,12 @@ public:
 		return BOOL (compr (that) <= 0) ;
 	}
 
-	LENGTH expand_size () const {
-		const auto r1x = LENGTH (mSize * MATH_SQRT2) ;
-		const auto r2x = mSize + DEFAULT_RECURSIVE_SIZE::compile () ;
-		return _MAX_ (r1x ,r2x) ;
-	}
-
 	Buffer expand (const LENGTH &len) const {
 		return Buffer (len) ;
 	}
 
-	void swap (Buffer &that) {
-		_SWAP_ (mOrigin ,that.mOrigin) ;
+	void expand_swap (Buffer &that) {
+		_SWAP_ (mPointer ,that.mPointer) ;
 		_SWAP_ (mBuffer ,that.mBuffer) ;
 		_SWAP_ (mSize ,that.mSize) ;
 	}
@@ -2516,27 +2693,31 @@ using AutoBuffer = CAST_TRAITS_TYPE<Buffer<REMOVE_CVR_TYPE<UNIT> ,SAUTO> ,UNIT> 
 
 template <class UNIT>
 class Buffer<UNIT ,SCPHAN> final {
-	_STATIC_ASSERT_ (IS_COMPLETE_HELP<UNIT>::compile ()) ;
+private:
+	_STATIC_ASSERT_ (IS_COMPLETE_HELP<UNIT ,struct ANONYMOUS>::compile ()) ;
+
+	using Holder = typename Buffer<UNIT ,SFIXED>::Holder ;
 
 private:
-	PTR<NONE> mOrigin ;
+	PTR<Holder> mPointer ;
 	PTR<const ARR<UNIT>> mBuffer ;
 	LENGTH mSize ;
 
 public:
-	implicit Buffer ()
-		:Buffer (ARGVP0) {
+	implicit Buffer () :
+		delegate Buffer (ARGVP0) {
 		_STATIC_WARNING_ ("noop") ;
 	}
 
-	explicit Buffer (const LENGTH &len)
-		:Buffer (ARGVP0) {
+	explicit Buffer (const LENGTH &len) :
+		delegate Buffer (ARGVP0) {
 		_DEBUG_ASSERT_ (len == 0) ;
 	}
 
 	implicit ~Buffer () noexcept {
 		if (mBuffer == NULL)
 			return ;
+		_DEBUG_ASSERT_ (mPointer == NULL) ;
 		mBuffer = NULL ;
 		mSize = 0 ;
 	}
@@ -2545,8 +2726,9 @@ public:
 
 	inline Buffer &operator= (const Buffer &) = delete ;
 
-	implicit Buffer (Buffer &&that) noexcept
-		:Buffer (ARGVP0) {
+	implicit Buffer (Buffer &&that) noexcept :
+		delegate Buffer (ARGVP0) {
+		_SWAP_ (mPointer ,that.mPointer) ;
 		_SWAP_ (mBuffer ,that.mBuffer) ;
 		_SWAP_ (mSize ,that.mSize) ;
 	}
@@ -2640,16 +2822,13 @@ public:
 		return BOOL (compr (that) <= 0) ;
 	}
 
-	LENGTH expand_size () const {
-		return 0 ;
-	}
-
 	Buffer expand (const LENGTH &len) const {
 		_DEBUG_ASSERT_ (FALSE) ;
 		return Buffer () ;
 	}
 
-	void swap (Buffer &that) {
+	void expand_swap (Buffer &that) {
+		_SWAP_ (mPointer ,that.mPointer) ;
 		_SWAP_ (mBuffer ,that.mBuffer) ;
 		_SWAP_ (mSize ,that.mSize) ;
 	}
@@ -2669,20 +2848,21 @@ public:
 		return make (val.self ,val.size ()) ;
 	}
 
-	template <class _ARG1 ,class _ARG2 ,class = ENABLE_TYPE<U::CONSTEXPR_AND<IS_SAME_HELP<UNIT ,BYTE> ,U::CONSTEXPR_NOT<IS_SAME_HELP<_ARG1 ,BYTE>>>>>
+	template <class _ARG1 ,class _ARG2 ,class = ENABLE_TYPE<U::CONSTEXPR_AND<IS_SAME_HELP<UNIT ,BYTE> ,IS_XYZ_HELP<_ARG1> ,U::CONSTEXPR_NOT<IS_SAME_HELP<_ARG1 ,BYTE>>>>>
 	imports Buffer make (const Buffer<_ARG1 ,_ARG2> &val) {
-		_STATIC_ASSERT_ (IS_SAFE_ALIASING_HELP<ARR<BYTE> ,ARR<_ARG1>>::compile ()) ;
-		const auto r1x = _POINTER_CAST_ (ARGV<ARR<BYTE>>::ID ,DEPTR[val.self]) ;
+		const auto r1x = _POINTER_CAST_ (ARGV<ARR<UNIT>>::ID ,DEPTR[val.self]) ;
 		const auto r2x = val.size () * _SIZEOF_ (_ARG1) ;
 		return make (DEREF[r1x] ,r2x) ;
 	}
 
 private:
-	explicit Buffer (const DEF<decltype (ARGVP0)> &) noexcept
-		:mOrigin (NULL) ,mBuffer (NULL) ,mSize (0) {}
+	explicit Buffer (const DEF<decltype (ARGVP0)> &) noexcept :
+		delegate mPointer (NULL) ,
+		delegate mBuffer (NULL) ,
+		delegate mSize (0) {}
 
-	explicit Buffer (const DEF<decltype (ARGVP0)> & ,const PTR<const ARR<UNIT>> &buffer ,const LENGTH &size_)
-		: Buffer (ARGVP0) {
+	explicit Buffer (const DEF<decltype (ARGVP0)> & ,const PTR<const ARR<UNIT>> &buffer ,const LENGTH &size_) :
+		delegate Buffer (ARGVP0) {
 		if (size_ == 0)
 			return ;
 		_DEBUG_ASSERT_ (size_ > 0) ;
@@ -2693,27 +2873,31 @@ private:
 
 template <class UNIT>
 class Buffer<UNIT ,SMPHAN> final {
-	_STATIC_ASSERT_ (IS_COMPLETE_HELP<UNIT>::compile ()) ;
+private:
+	_STATIC_ASSERT_ (IS_COMPLETE_HELP<UNIT ,struct ANONYMOUS>::compile ()) ;
+
+	using Holder = typename Buffer<UNIT ,SFIXED>::Holder ;
 
 private:
-	PTR<NONE> mOrigin ;
+	PTR<Holder> mPointer ;
 	PTR<ARR<UNIT>> mBuffer ;
 	LENGTH mSize ;
 
 public:
-	implicit Buffer ()
-		:Buffer (ARGVP0) {
+	implicit Buffer () :
+		delegate Buffer (ARGVP0) {
 		_STATIC_WARNING_ ("noop") ;
 	}
 
-	explicit Buffer (const LENGTH &len)
-		:Buffer (ARGVP0) {
+	explicit Buffer (const LENGTH &len) :
+		delegate Buffer (ARGVP0) {
 		_DEBUG_ASSERT_ (len == 0) ;
 	}
 
 	implicit ~Buffer () noexcept {
 		if (mBuffer == NULL)
 			return ;
+		_DEBUG_ASSERT_ (mPointer == NULL) ;
 		mBuffer = NULL ;
 		mSize = 0 ;
 	}
@@ -2722,8 +2906,9 @@ public:
 
 	inline Buffer &operator= (const Buffer &) = delete ;
 
-	implicit Buffer (Buffer &&that) noexcept
-		:Buffer (ARGVP0) {
+	implicit Buffer (Buffer &&that) noexcept :
+		delegate Buffer (ARGVP0) {
+		_SWAP_ (mPointer ,that.mPointer) ;
 		_SWAP_ (mBuffer ,that.mBuffer) ;
 		_SWAP_ (mSize ,that.mSize) ;
 	}
@@ -2817,16 +3002,13 @@ public:
 		return BOOL (compr (that) <= 0) ;
 	}
 
-	LENGTH expand_size () const {
-		return 0 ;
-	}
-
 	Buffer expand (const LENGTH &len) const {
 		_DEBUG_ASSERT_ (FALSE) ;
 		return Buffer () ;
 	}
 
-	void swap (Buffer &that) {
+	void expand_swap (Buffer &that) {
+		_SWAP_ (mPointer ,that.mPointer) ;
 		_SWAP_ (mBuffer ,that.mBuffer) ;
 		_SWAP_ (mSize ,that.mSize) ;
 	}
@@ -2850,28 +3032,28 @@ public:
 		return make (val.self ,val.size ()) ;
 	}
 
-	template <class _ARG1 ,class _ARG2 ,class = ENABLE_TYPE<U::CONSTEXPR_AND<IS_SAME_HELP<UNIT ,BYTE> ,U::CONSTEXPR_NOT<IS_SAME_HELP<_ARG1 ,BYTE>>>>>
+	template <class _ARG1 ,class _ARG2 ,class = ENABLE_TYPE<U::CONSTEXPR_AND<IS_SAME_HELP<UNIT ,BYTE> ,IS_XYZ_HELP<_ARG1> ,U::CONSTEXPR_NOT<IS_SAME_HELP<_ARG1 ,BYTE>>>>>
 	imports Buffer make (Buffer<_ARG1 ,_ARG2> &val) {
-		_STATIC_ASSERT_ (IS_SAFE_ALIASING_HELP<ARR<BYTE> ,ARR<_ARG1>>::compile ()) ;
-		const auto r1x = _POINTER_CAST_ (ARGV<ARR<BYTE>>::ID ,DEPTR[val.self]) ;
+		const auto r1x = _POINTER_CAST_ (ARGV<ARR<UNIT>>::ID ,DEPTR[val.self]) ;
 		const auto r2x = val.size () * _SIZEOF_ (_ARG1) ;
 		return make (DEREF[r1x] ,r2x) ;
 	}
 
-	template <class _ARG1 ,class = ENABLE_TYPE<U::CONSTEXPR_AND<IS_SAME_HELP<UNIT ,BYTE> ,U::CONSTEXPR_NOT<IS_SAME_HELP<_ARG1 ,BYTE>>>>>
+	template <class _ARG1 ,class = ENABLE_TYPE<U::CONSTEXPR_AND<IS_SAME_HELP<UNIT ,BYTE> ,IS_XYZ_HELP<_ARG1> ,U::CONSTEXPR_NOT<IS_SAME_HELP<_ARG1 ,BYTE>>>>>
 	imports Buffer make (const Buffer<_ARG1 ,SMPHAN> &val) {
-		_STATIC_ASSERT_ (IS_SAFE_ALIASING_HELP<ARR<BYTE> ,ARR<_ARG1>>::compile ()) ;
-		const auto r1x = _POINTER_CAST_ (ARGV<ARR<BYTE>>::ID ,DEPTR[val.self]) ;
+		const auto r1x = _POINTER_CAST_ (ARGV<ARR<UNIT>>::ID ,DEPTR[val.self]) ;
 		const auto r2x = val.size () * _SIZEOF_ (_ARG1) ;
 		return make (DEREF[r1x] ,r2x) ;
 	}
 
 private:
-	explicit Buffer (const DEF<decltype (ARGVP0)> &) noexcept
-		:mOrigin (NULL) ,mBuffer (NULL) ,mSize (0) {}
+	explicit Buffer (const DEF<decltype (ARGVP0)> &) noexcept :
+		delegate mPointer (NULL) ,
+		delegate mBuffer (NULL) ,
+		delegate mSize (0) {}
 
-	explicit Buffer (const DEF<decltype (ARGVP0)> & ,const PTR<ARR<UNIT>> &buffer ,const LENGTH &size_)
-		: Buffer (ARGVP0) {
+	explicit Buffer (const DEF<decltype (ARGVP0)> & ,const PTR<ARR<UNIT>> &buffer ,const LENGTH &size_) :
+		delegate Buffer (ARGVP0) {
 		if (size_ == 0)
 			return ;
 		_DEBUG_ASSERT_ (size_ > 0) ;
@@ -2888,10 +3070,6 @@ class Allocator ;
 
 template <class UNIT ,class SIZE>
 class Allocator<SPECIALIZATION<UNIT ,ARGC<FALSE> ,ARGC<FALSE>> ,SIZE> {
-#pragma push_macro ("spec")
-#undef spec
-#define spec m_spec ()
-
 protected:
 	using SPECIALIZATION_THIS = Allocator<UNIT ,SIZE> ;
 
@@ -2908,14 +3086,14 @@ protected:
 	INDEX mFree ;
 
 protected:
-	implicit Allocator ()
-		:Allocator (ARGVP0 ,0) {
-		spec.update_reserve (mSize ,mFree) ;
+	implicit Allocator () :
+		delegate Allocator (ARGVP0 ,0) {
+		m_spec ().update_reserve (mSize ,mFree) ;
 	}
 
-	explicit Allocator (const LENGTH &len)
-		:Allocator (ARGVP0 ,len) {
-		spec.update_reserve (mSize ,mFree) ;
+	explicit Allocator (const LENGTH &len) :
+		delegate Allocator (ARGVP0 ,len) {
+		m_spec ().update_reserve (mSize ,mFree) ;
 	}
 
 	implicit ~Allocator () noexcept {
@@ -2945,26 +3123,23 @@ protected:
 	inline Allocator &operator= (Allocator &&) = delete ;
 
 protected:
-	explicit Allocator (const DEF<decltype (ARGVP0)> & ,const LENGTH &len)
-		:mAllocator (len) ,mSize (0) ,mLength (0) ,mFree (VAR_NONE) {}
+	explicit Allocator (const DEF<decltype (ARGVP0)> & ,const LENGTH &len) :
+		delegate mAllocator (len) ,
+		delegate mSize (0) ,
+		delegate mLength (0) ,
+		delegate mFree (VAR_NONE) {}
 
 	inline SPECIALIZATION_THIS &m_spec () leftvalue {
-		return static_cast<SPECIALIZATION_THIS &> (DEREF[this]) ;
+		return _CAST_ (ARGV<SPECIALIZATION_THIS>::ID ,DEREF[this]) ;
 	}
 
 	inline const SPECIALIZATION_THIS &m_spec () const leftvalue {
-		return static_cast<const SPECIALIZATION_THIS &> (DEREF[this]) ;
+		return _CAST_ (ARGV<SPECIALIZATION_THIS>::ID ,DEREF[this]) ;
 	}
-
-#pragma pop_macro ("spec")
 } ;
 
 template <class UNIT ,class SIZE>
 class Allocator<SPECIALIZATION<UNIT ,ARGC<FALSE> ,ARGC<TRUE>> ,SIZE> {
-#pragma push_macro ("spec")
-#undef spec
-#define spec m_spec ()
-
 protected:
 	using SPECIALIZATION_THIS = Allocator<UNIT ,SIZE> ;
 
@@ -2981,14 +3156,14 @@ protected:
 	INDEX mFree ;
 
 protected:
-	implicit Allocator ()
-		:Allocator (ARGVP0 ,0) {
-		spec.update_reserve (mSize ,mFree) ;
+	implicit Allocator () :
+		delegate Allocator (ARGVP0 ,0) {
+		m_spec ().update_reserve (mSize ,mFree) ;
 	}
 
-	explicit Allocator (const LENGTH &len)
-		:Allocator (ARGVP0 ,len) {
-		spec.update_reserve (mSize ,mFree) ;
+	explicit Allocator (const LENGTH &len) :
+		delegate Allocator (ARGVP0 ,len) {
+		m_spec ().update_reserve (mSize ,mFree) ;
 	}
 
 	implicit ~Allocator () noexcept {
@@ -3013,8 +3188,8 @@ protected:
 
 	inline Allocator &operator= (const Allocator &) = delete ;
 
-	implicit Allocator (Allocator &&that) noexcept
-		:Allocator (ARGVP0 ,_MOVE_ (that.mAllocator)) {
+	implicit Allocator (Allocator &&that) noexcept :
+		delegate Allocator (ARGVP0 ,_MOVE_ (that.mAllocator)) {
 		using R1X = IS_TRIVIAL_HELP<UNIT> ;
 		if (mAllocator.size () != that.mAllocator.size ())
 			_SWAP_ (mSize ,that.mSize) ;
@@ -3047,29 +3222,29 @@ protected:
 	}
 
 private:
-	explicit Allocator (const DEF<decltype (ARGVP0)> & ,const LENGTH &len)
-		:mAllocator (len) ,mSize (0) ,mLength (0) ,mFree (VAR_NONE) {}
+	explicit Allocator (const DEF<decltype (ARGVP0)> & ,const LENGTH &len) :
+		delegate mAllocator (len) ,
+		delegate mSize (0) ,
+		delegate mLength (0) ,
+		delegate mFree (VAR_NONE) {}
 
-	explicit Allocator (const DEF<decltype (ARGVP0)> & ,Buffer<NODE_PACK ,SIZE> &&allocator_)
-		:mAllocator (_MOVE_ (allocator_)) ,mSize (0) ,mLength (0) ,mFree (VAR_NONE) {}
+	explicit Allocator (const DEF<decltype (ARGVP0)> & ,Buffer<NODE_PACK ,SIZE> &&allocator_) :
+		delegate mAllocator (_MOVE_ (allocator_)) ,
+		delegate mSize (0) ,
+		delegate mLength (0) ,
+		delegate mFree (VAR_NONE) {}
 
 	inline SPECIALIZATION_THIS &m_spec () leftvalue {
-		return static_cast<SPECIALIZATION_THIS &> (DEREF[this]) ;
+		return _CAST_ (ARGV<SPECIALIZATION_THIS>::ID ,DEREF[this]) ;
 	}
 
 	inline const SPECIALIZATION_THIS &m_spec () const leftvalue {
-		return static_cast<const SPECIALIZATION_THIS &> (DEREF[this]) ;
+		return _CAST_ (ARGV<SPECIALIZATION_THIS>::ID ,DEREF[this]) ;
 	}
-
-#pragma pop_macro ("spec")
 } ;
 
 template <class UNIT ,class SIZE>
 class Allocator<SPECIALIZATION<UNIT ,ARGC<TRUE> ,ARGC<TRUE>> ,SIZE> {
-#pragma push_macro ("spec")
-#undef spec
-#define spec m_spec ()
-
 protected:
 	using SPECIALIZATION_THIS = Allocator<UNIT ,SIZE> ;
 
@@ -3086,14 +3261,14 @@ protected:
 	INDEX mFree ;
 
 protected:
-	implicit Allocator ()
-		:Allocator (ARGVP0 ,0) {
-		spec.update_reserve (mSize ,mFree) ;
+	implicit Allocator () :
+		delegate Allocator (ARGVP0 ,0) {
+		m_spec ().update_reserve (mSize ,mFree) ;
 	}
 
-	explicit Allocator (const LENGTH &len)
-		:Allocator (ARGVP0 ,len) {
-		spec.update_reserve (mSize ,mFree) ;
+	explicit Allocator (const LENGTH &len) :
+		delegate Allocator (ARGVP0 ,len) {
+		m_spec ().update_reserve (mSize ,mFree) ;
 	}
 
 	implicit ~Allocator () noexcept {
@@ -3114,8 +3289,8 @@ protected:
 		mFree = VAR_NONE ;
 	}
 
-	implicit Allocator (const Allocator &that)
-		:Allocator (ARGVP0 ,_MOVE_ (that.mAllocator)) {
+	implicit Allocator (const Allocator &that) :
+		delegate Allocator (ARGVP0 ,_MOVE_ (that.mAllocator)) {
 		using R1X = IS_TRIVIAL_HELP<UNIT> ;
 		if (mAllocator.size () != that.mAllocator.size ())
 			mSize = that.mSize ;
@@ -3147,8 +3322,8 @@ protected:
 		return DEREF[this] ;
 	}
 
-	implicit Allocator (Allocator &&that) noexcept
-		:Allocator (ARGVP0 ,_MOVE_ (that.mAllocator)) {
+	implicit Allocator (Allocator &&that) noexcept :
+		delegate Allocator (ARGVP0 ,_MOVE_ (that.mAllocator)) {
 		using R1X = IS_TRIVIAL_HELP<UNIT> ;
 		if (mAllocator.size () != that.mAllocator.size ())
 			_SWAP_ (mSize ,that.mSize) ;
@@ -3181,32 +3356,39 @@ protected:
 	}
 
 protected:
-	explicit Allocator (const DEF<decltype (ARGVP0)> & ,const LENGTH &len)
-		:mAllocator (len) ,mSize (0) ,mLength (0) ,mFree (VAR_NONE) {}
+	explicit Allocator (const DEF<decltype (ARGVP0)> & ,const LENGTH &len) :
+		delegate mAllocator (len) ,
+		delegate mSize (0) ,
+		delegate mLength (0) ,
+		delegate mFree (VAR_NONE) {}
 
-	explicit Allocator (const DEF<decltype (ARGVP0)> & ,const Buffer<NODE_PACK ,SIZE> &allocator_)
-		:mAllocator (_MOVE_ (allocator_)) ,mSize (0) ,mLength (0) ,mFree (VAR_NONE) {}
+	explicit Allocator (const DEF<decltype (ARGVP0)> & ,const Buffer<NODE_PACK ,SIZE> &allocator_) :
+		delegate mAllocator (_MOVE_ (allocator_)) ,
+		delegate mSize (0) ,
+		delegate mLength (0) ,
+		delegate mFree (VAR_NONE) {}
 
-	explicit Allocator (const DEF<decltype (ARGVP0)> & ,Buffer<NODE_PACK ,SIZE> &&allocator_)
-		:mAllocator (_MOVE_ (allocator_)) ,mSize (0) ,mLength (0) ,mFree (VAR_NONE) {}
+	explicit Allocator (const DEF<decltype (ARGVP0)> & ,Buffer<NODE_PACK ,SIZE> &&allocator_) :
+		delegate mAllocator (_MOVE_ (allocator_)) ,
+		delegate mSize (0) ,
+		delegate mLength (0) ,
+		delegate mFree (VAR_NONE) {}
 
 	inline SPECIALIZATION_THIS &m_spec () leftvalue {
-		return static_cast<SPECIALIZATION_THIS &> (DEREF[this]) ;
+		return _CAST_ (ARGV<SPECIALIZATION_THIS>::ID ,DEREF[this]) ;
 	}
 
 	inline const SPECIALIZATION_THIS &m_spec () const leftvalue {
-		return static_cast<const SPECIALIZATION_THIS &> (DEREF[this]) ;
+		return _CAST_ (ARGV<SPECIALIZATION_THIS>::ID ,DEREF[this]) ;
 	}
-
-#pragma pop_macro ("spec")
 } ;
 
 template <class UNIT ,class SIZE>
-class Allocator final
-	:private Allocator<SPECIALIZATION<UNIT ,ARGC_TYPE<IS_COPY_CONSTRUCTIBLE_HELP<Buffer<UNIT ,SIZE>>> ,ARGC_TYPE<IS_MOVE_CONSTRUCTIBLE_HELP<Buffer<UNIT ,SIZE>>>> ,SIZE> {
-
+class Allocator final :
+	delegate private Allocator<SPECIALIZATION<UNIT ,ARGC_TYPE<IS_COPY_CONSTRUCTIBLE_HELP<Buffer<UNIT ,SIZE>>> ,ARGC_TYPE<IS_MOVE_CONSTRUCTIBLE_HELP<Buffer<UNIT ,SIZE>>>> ,SIZE> {
 private:
 	using SPECIALIZATION_BASE = Allocator<SPECIALIZATION<UNIT ,ARGC_TYPE<IS_COPY_CONSTRUCTIBLE_HELP<Buffer<UNIT ,SIZE>>> ,ARGC_TYPE<IS_MOVE_CONSTRUCTIBLE_HELP<Buffer<UNIT ,SIZE>>>> ,SIZE> ;
+	using NODE_PACK = typename SPECIALIZATION_BASE::NODE_PACK ;
 
 private:
 	friend SPECIALIZATION_BASE ;
@@ -3218,8 +3400,8 @@ private:
 public:
 	implicit Allocator () = default ;
 
-	explicit Allocator (const LENGTH &len)
-		:SPECIALIZATION_BASE (len) {
+	explicit Allocator (const LENGTH &len) :
+		delegate SPECIALIZATION_BASE (len) {
 		_STATIC_WARNING_ ("noop") ;
 	}
 
@@ -3271,8 +3453,7 @@ public:
 	}
 
 	INDEX at (const UNIT &item) const {
-		using R1X = typename SPECIALIZATION_BASE::NODE_PACK ;
-		auto &r1x = _OFFSET_ (&R1X::mValue ,_CAST_ (ARGV<TEMP<UNIT>>::ID ,item)) ;
+		auto &r1x = _OFFSET_ (&NODE_PACK::mValue ,_CAST_ (ARGV<TEMP<UNIT>>::ID ,item)) ;
 		INDEX ret = mAllocator.at (r1x) ;
 		if (!used (ret))
 			ret = VAR_NONE ;
@@ -3287,14 +3468,14 @@ public:
 		if switch_once (fax) {
 			if (mFree != VAR_NONE)
 				discard ;
-			auto rax = mAllocator.expand (mAllocator.expand_size ()) ;
+			auto rax = mAllocator.expand (expand_size ()) ;
 			ret = mSize ;
 			_CREATE_ (DEPTR[rax[ret].mValue] ,_FORWARD_ (ARGV<_ARGS &&>::ID ,initval)...) ;
 			for (auto &&i : _RANGE_ (0 ,mSize)) {
 				_CREATE_ (DEPTR[rax[i].mValue] ,_MOVE_ (_CAST_ (ARGV<UNIT>::ID ,mAllocator[i].mValue))) ;
 				rax[i].mNext = VAR_USED ;
 			}
-			mAllocator.swap (rax) ;
+			mAllocator.expand_swap (rax) ;
 			update_reserve (mSize ,mFree) ;
 		}
 		if switch_once (fax) {
@@ -3330,7 +3511,7 @@ public:
 				_CREATE_ (DEPTR[rax[i].mValue] ,_MOVE_ (_CAST_ (ARGV<UNIT>::ID ,mAllocator[i].mValue))) ;
 			rax[i].mNext = mAllocator[i].mNext ;
 		}
-		mAllocator.swap (rax) ;
+		mAllocator.expand_swap (rax) ;
 		update_reserve (mSize ,mFree) ;
 	}
 
@@ -3346,7 +3527,7 @@ public:
 			_CREATE_ (DEPTR[rax[i].mValue] ,_MOVE_ (_CAST_ (ARGV<UNIT>::ID ,mAllocator[i].mValue))) ;
 			rax[i].mNext = VAR_USED ;
 		}
-		mAllocator.swap (rax) ;
+		mAllocator.expand_swap (rax) ;
 		update_reserve (r1x ,VAR_NONE) ;
 	}
 
@@ -3360,6 +3541,12 @@ private:
 		}
 		mSize = mAllocator.size () ;
 		mFree = ix ;
+	}
+
+	LENGTH expand_size () const {
+		const auto r1x = LENGTH (mSize * MATH_SQRT2) ;
+		const auto r2x = mSize + DEFAULT_RECURSIVE_SIZE::compile () ;
+		return _MAX_ (r1x ,r2x) ;
 	}
 
 	LENGTH shrink_size () const {

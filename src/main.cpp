@@ -57,8 +57,11 @@ exports int main () noexcept {
 #ifdef __CSC_IMAGES__
 #ifdef __CSC_PLATFORM_X64__
 #ifdef __CSC_COMPILER_MSVC__
+#ifdef OPENCV
 #include <csc_images.hpp.opencv.inl>
+#else
 #include <csc_images.hpp.freeimage.inl>
+#endif
 #endif
 #endif
 #endif

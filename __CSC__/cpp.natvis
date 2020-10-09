@@ -13,7 +13,7 @@
 
   <Type Name="CSC::TEMP&lt;*&gt;">
     <Expand>
-      <ExpandedItem>*($T1*)&amp;unused</ExpandedItem>
+      <ExpandedItem>*($T1*)&amp;mUnused</ExpandedItem>
     </Expand>
   </Type>
 
@@ -60,7 +60,7 @@
     <Expand>
       <Item Name="[size]">sizeof(mBuffer)/sizeof(mBuffer[0])</Item>
       <ArrayItems>
-        <Size>sizeof(mBuffer)/sizeof(mBuffer[0])&lt;10?sizeof(mBuffer)/sizeof(mBuffer[0]):10</Size>
+        <Size>sizeof(mBuffer)/sizeof(mBuffer[0])</Size>
         <ValuePointer>&amp;mBuffer[0]</ValuePointer>
       </ArrayItems>
     </Expand>
@@ -71,8 +71,8 @@
     <Expand>
       <Item Name="[size]">mSize</Item>
       <ArrayItems>
-        <Size>mSize&lt;10?mSize:10</Size>
-        <ValuePointer>&amp;*mBuffer[0]</ValuePointer>
+        <Size>mSize</Size>
+        <ValuePointer>&amp;(*mBuffer)[0]</ValuePointer>
       </ArrayItems>
     </Expand>
   </Type>
@@ -82,8 +82,8 @@
     <Expand>
       <Item Name="[size]">mSize</Item>
       <ArrayItems>
-        <Size>mSize&lt;10?mSize:10</Size>
-        <ValuePointer>&amp;*mBuffer[0]</ValuePointer>
+        <Size>mSize</Size>
+        <ValuePointer>&amp;(*mBuffer)[0]</ValuePointer>
       </ArrayItems>
     </Expand>
   </Type>
@@ -93,8 +93,8 @@
     <Expand>
       <Item Name="[size]">mSize</Item>
       <ArrayItems>
-        <Size>mSize&lt;10?mSize:10</Size>
-        <ValuePointer>&amp;*mBuffer[0]</ValuePointer>
+        <Size>mSize</Size>
+        <ValuePointer>&amp;(*mBuffer)[0]</ValuePointer>
       </ArrayItems>
     </Expand>
   </Type>
@@ -104,8 +104,8 @@
     <Expand>
       <Item Name="[size]">mSize</Item>
       <ArrayItems>
-        <Size>mSize&lt;10?mSize:10</Size>
-        <ValuePointer>&amp;*mBuffer[0]</ValuePointer>
+        <Size>mSize</Size>
+        <ValuePointer>&amp;(*mBuffer)[0]</ValuePointer>
       </ArrayItems>
     </Expand>
   </Type>
@@ -115,8 +115,8 @@
     <Expand>
       <Item Name="[size]">mSize</Item>
       <ArrayItems>
-        <Size>mSize&lt;10?mSize:10</Size>
-        <ValuePointer>&amp;*mBuffer[0]</ValuePointer>
+        <Size>mSize</Size>
+        <ValuePointer>&amp;(*mBuffer)[0]</ValuePointer>
       </ArrayItems>
     </Expand>
   </Type>
@@ -127,7 +127,7 @@
       <Item Name="[size]">mSize</Item>
       <Item Name="[length]">mLength</Item>
       <ArrayItems>
-        <Size>sizeof(mAllocator.mBuffer)/sizeof(mAllocator.mBuffer[0])&lt;10?sizeof(mAllocator.mBuffer)/sizeof(mAllocator.mBuffer[0]):10</Size>
+        <Size>sizeof(mAllocator.mBuffer)/sizeof(mAllocator.mBuffer[0])</Size>
         <ValuePointer>&amp;mAllocator.mBuffer[0]</ValuePointer>
       </ArrayItems>
     </Expand>
@@ -139,7 +139,7 @@
       <Item Name="[size]">mSize</Item>
       <Item Name="[length]">mLength</Item>
       <ArrayItems>
-        <Size>mSize&lt;10?mSize:10</Size>
+        <Size>mSize</Size>
         <ValuePointer>&amp;(*mAllocator.mBuffer)[0]</ValuePointer>
       </ArrayItems>
     </Expand>
@@ -151,7 +151,7 @@
       <Item Name="[size]">mSize</Item>
       <Item Name="[length]">mLength</Item>
       <ArrayItems>
-        <Size>mSize&lt;10?mSize:10</Size>
+        <Size>mSize</Size>
         <ValuePointer>&amp;(*mAllocator.mBuffer)[0]</ValuePointer>
       </ArrayItems>
     </Expand>
@@ -169,10 +169,15 @@
     </Expand>
   </Type>
 
+  <Type Name="CSC::WeakRef">
+    <Expand>
+      <ExpandedItem>(CSC::WeakRef::Holder*)*(unsigned __int64 *)&amp;mPointer.mValue.mValue._My_val</ExpandedItem>
+    </Expand>
+  </Type>
 
   <Type Name="CSC::StrongRef&lt;*&gt;">
     <Expand>
-      <ExpandedItem>*mFastPointer</ExpandedItem>
+      <ExpandedItem>(CSC::WeakRef::Holder*)*(unsigned __int64 *)&amp;mPointer.mValue.mValue._My_val</ExpandedItem>
     </Expand>
   </Type>
 
@@ -196,6 +201,7 @@
 
   <Type Name="CSC::String&lt;char,CSC::ARGC&lt;*&gt; &gt;">
     <DisplayString>{{ {&amp;(*mString.mBuffer)[0],s} }}</DisplayString>
+    <StringView>&amp;(*mString.mBuffer)[0],s</StringView>
     <Expand>
       <ExpandedItem>mString</ExpandedItem>
     </Expand>
@@ -204,6 +210,7 @@
 
   <Type Name="CSC::String&lt;wchar_t,CSC::ARGC&lt;*&gt; &gt;">
     <DisplayString>{{ {&amp;(*mString.mBuffer)[0],su} }}</DisplayString>
+    <StringView>&amp;(*mString.mBuffer)[0],su</StringView>
     <Expand>
       <ExpandedItem>mString</ExpandedItem>
     </Expand>
@@ -212,6 +219,7 @@
 
   <Type Name="CSC::String&lt;unsigned char,CSC::ARGC&lt;*&gt; &gt;">
     <DisplayString>{{ {&amp;(*mString.mBuffer)[0],s8} }}</DisplayString>
+    <StringView>&amp;(*mString.mBuffer)[0],s8</StringView>
     <Expand>
       <ExpandedItem>mString</ExpandedItem>
     </Expand>
@@ -219,6 +227,7 @@
 
   <Type Name="CSC::String&lt;char16_t,CSC::ARGC&lt;*&gt; &gt;">
     <DisplayString>{{ {&amp;(*mString.mBuffer)[0],su} }}</DisplayString>
+    <StringView>&amp;(*mString.mBuffer)[0],su</StringView>
     <Expand>
       <ExpandedItem>mString</ExpandedItem>
     </Expand>
@@ -227,6 +236,7 @@
 
   <Type Name="CSC::String&lt;char32_t,CSC::ARGC&lt;*&gt; &gt;">
     <DisplayString>{{ {&amp;(*mString.mBuffer)[0],s32} }}</DisplayString>
+    <StringView>&amp;(*mString.mBuffer)[0],s32</StringView>
     <Expand>
       <ExpandedItem>mString</ExpandedItem>
     </Expand>
@@ -235,8 +245,8 @@
 
   <Type Name="CSC::Deque&lt;*,CSC::ARGC&lt;*&gt; &gt;">
     <Expand>
-      <Item Name="[mRead]">mRead</Item>
-      <Item Name="[mWrite]">mWrite</Item>
+      <Item Name="[read]">mRead</Item>
+      <Item Name="[write]">mWrite</Item>
       <ExpandedItem>mDeque</ExpandedItem>
     </Expand>
   </Type>
@@ -244,7 +254,7 @@
 
   <Type Name="CSC::Priority&lt;*,*,CSC::ARGC&lt;*&gt; &gt;">
     <Expand>
-      <Item Name="[mWrite]">mWrite</Item>
+      <Item Name="[write]">mWrite</Item>
       <ExpandedItem>mPriority</ExpandedItem>
     </Expand>
   </Type>
@@ -252,8 +262,8 @@
 
   <Type Name="CSC::List&lt;*,CSC::ARGC&lt;*&gt; &gt;">
     <Expand>
-      <Item Name="[mFirst]">mFirst</Item>
-      <Item Name="[mLast]">mLast</Item>
+      <Item Name="[first]">mFirst</Item>
+      <Item Name="[last]">mLast</Item>
       <ExpandedItem>mList</ExpandedItem>
     </Expand>
   </Type>
@@ -261,15 +271,18 @@
 
   <Type Name="CSC::ArrayList&lt;*,CSC::ARGC&lt;*&gt; &gt;">
     <Expand>
-      <Item Name="[mRange]">mRange</Item>
-      <ExpandedItem>mList</ExpandedItem>
+      <Item Name="[range]">mRange</Item>
+      <IndexListItems>
+        <Size>mList.mLength</Size>
+        <ValueNode>mList[mRange[$i]]</ValueNode>
+      </IndexListItems>
     </Expand>
   </Type>
 
 
   <Type Name="CSC::BitSet&lt;CSC::ARGC&lt;*&gt; &gt;">
     <Expand>
-      <Item Name="[mWidth]">mWidth</Item>
+      <Item Name="[width]">mWidth</Item>
       <ExpandedItem>mSet</ExpandedItem>
     </Expand>
   </Type>
@@ -277,7 +290,7 @@
 
   <Type Name="CSC::Set&lt;*,CSC::ARGC&lt;*&gt; &gt;">
     <Expand>
-      <Item Name="[mRoot]">mRoot</Item>
+      <Item Name="[root]">mRoot</Item>
       <ExpandedItem>mSet</ExpandedItem>
     </Expand>
   </Type>
@@ -285,7 +298,7 @@
 
   <Type Name="CSC::HashSet&lt;*,CSC::ARGC&lt;*&gt; &gt;">
     <Expand>
-      <Item Name="[mRange]">mRange</Item>
+      <Item Name="[range]">mRange</Item>
       <ExpandedItem>mSet</ExpandedItem>
     </Expand>
   </Type>
@@ -293,11 +306,11 @@
 
   <Type Name="CSC::SoftSet&lt;*,CSC::ARGC&lt;*&gt; &gt;">
     <Expand>
-      <Item Name="[mHeap]">mHeap</Item>
-      <Item Name="[mLength]">mLength</Item>
-      <Item Name="[mFirst]">mFirst</Item>
-      <Item Name="[mLast]">mLast</Item>
-      <Item Name="[mRoot]">mRoot</Item>
+      <Item Name="[heap]">mHeap</Item>
+      <Item Name="[length]">mLength</Item>
+      <Item Name="[first]">mFirst</Item>
+      <Item Name="[last]">mLast</Item>
+      <Item Name="[root]">mRoot</Item>
       <ExpandedItem>*mSet.mPointer</ExpandedItem>
     </Expand>
   </Type>

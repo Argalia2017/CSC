@@ -18,6 +18,12 @@ namespace CSC {
 template <class ITEM>
 class CalcThread {
 private:
+	struct Private {
+		class ThreadBinder ;
+
+		class ThreadCounter ;
+	} ;
+
 	struct THIS_PACK {
 		Mutex mThreadMutex ;
 		ConditionLock mThreadConditionLock ;
@@ -33,12 +39,6 @@ private:
 	struct THREAD_PACK {
 		SharedRef<THIS_PACK> mThis ;
 		UniqueRef<SharedRef<THIS_PACK>> mKeep ;
-	} ;
-
-	struct Private {
-		class ThreadBinder ;
-
-		class ThreadCounter ;
 	} ;
 
 private:
@@ -168,8 +168,7 @@ public:
 	}
 
 	void start (const LENGTH &count ,Function<ITEM ()> &&proc) const {
-		struct Dependent ;
-		using R1X = typename DEPENDENT_TYPE<Private ,Dependent>::ThreadBinder ;
+		using R1X = typename DEPENDENT_TYPE<Private ,struct ANONYMOUS>::ThreadBinder ;
 		_DEBUG_ASSERT_ (count > 0) ;
 		_DEBUG_ASSERT_ (proc.exist ()) ;
 		auto rax = mThis.share () ;
@@ -251,8 +250,7 @@ private:
 	}
 
 	imports void static_execute (THIS_PACK &this_ ,const INDEX &tid) {
-		struct Dependent ;
-		using R1X = typename DEPENDENT_TYPE<Private ,Dependent>::ThreadCounter ;
+		using R1X = typename DEPENDENT_TYPE<Private ,struct ANONYMOUS>::ThreadCounter ;
 		ScopedGuard<R1X> ANONYMOUS (_CAST_ (ARGV<R1X>::ID ,this_)) ;
 		auto rax = Optional<ITEM>::nullopt () ;
 		while (TRUE) {
@@ -331,8 +329,8 @@ private:
 } ;
 
 template <class ITEM>
-class CalcThread<ITEM>::Private::ThreadBinder
-	:public Thread::Binder {
+class CalcThread<ITEM>::Private::ThreadBinder :
+	delegate public Thread::Binder {
 private:
 	PhanRef<THIS_PACK> mThis ;
 	INDEX mThreadID ;
@@ -355,8 +353,8 @@ public:
 } ;
 
 template <class ITEM>
-class CalcThread<ITEM>::Private::ThreadCounter
-	:private Wrapped<THIS_PACK> {
+class CalcThread<ITEM>::Private::ThreadCounter :
+	delegate private Wrapped<THIS_PACK> {
 private:
 	using Wrapped<THIS_PACK>::mSelf ;
 
@@ -375,6 +373,12 @@ public:
 template <class ITEM>
 class WorkThread {
 private:
+	struct Private {
+		class ThreadBinder ;
+
+		class ThreadCounter ;
+	} ;
+
 	struct THIS_PACK {
 		Mutex mThreadMutex ;
 		ConditionLock mThreadConditionLock ;
@@ -390,12 +394,6 @@ private:
 	struct THREAD_PACK {
 		SharedRef<THIS_PACK> mThis ;
 		UniqueRef<SharedRef<THIS_PACK>> mKeep ;
-	} ;
-
-	struct Private {
-		class ThreadBinder ;
-
-		class ThreadCounter ;
 	} ;
 
 private:
@@ -557,8 +555,7 @@ public:
 	}
 
 	void start (const LENGTH &count ,Function<void (const ITEM &)> &&proc) const {
-		struct Dependent ;
-		using R1X = typename DEPENDENT_TYPE<Private ,Dependent>::ThreadBinder ;
+		using R1X = typename DEPENDENT_TYPE<Private ,struct ANONYMOUS>::ThreadBinder ;
 		_DEBUG_ASSERT_ (count > 0) ;
 		_DEBUG_ASSERT_ (proc.exist ()) ;
 		auto rax = mThis.share () ;
@@ -670,8 +667,7 @@ private:
 	}
 
 	imports void static_execute (THIS_PACK &this_ ,const INDEX &tid) {
-		struct Dependent ;
-		using R1X = typename DEPENDENT_TYPE<Private ,Dependent>::ThreadCounter ;
+		using R1X = typename DEPENDENT_TYPE<Private ,struct ANONYMOUS>::ThreadCounter ;
 		ScopedGuard<R1X> ANONYMOUS (_CAST_ (ARGV<R1X>::ID ,this_)) ;
 		auto rax = List<ITEM> () ;
 		while (TRUE) {
@@ -692,7 +688,6 @@ private:
 	}
 
 	imports void static_poll (THIS_PACK &this_ ,const INDEX &tid ,List<ITEM> &list) {
-		struct Dependent ;
 		auto rax = this_.mThreadConditionLock.watch (PhanRef<Mutex>::make (this_.mThreadMutex)) ;
 		_DEBUG_ASSERT_ (this_.mThreadFlag.exist ()) ;
 		rax.notify () ;
@@ -727,8 +722,8 @@ private:
 } ;
 
 template <class ITEM>
-class WorkThread<ITEM>::Private::ThreadBinder
-	:public Thread::Binder {
+class WorkThread<ITEM>::Private::ThreadBinder :
+	delegate public Thread::Binder {
 private:
 	PhanRef<THIS_PACK> mThis ;
 	INDEX mThreadID ;
@@ -751,8 +746,8 @@ public:
 } ;
 
 template <class ITEM>
-class WorkThread<ITEM>::Private::ThreadCounter
-	:private Wrapped<THIS_PACK> {
+class WorkThread<ITEM>::Private::ThreadCounter :
+	delegate private Wrapped<THIS_PACK> {
 private:
 	using Wrapped<THIS_PACK>::mSelf ;
 
@@ -774,6 +769,12 @@ class Future ;
 template <class ITEM>
 class Promise {
 private:
+	struct Private {
+		class ThreadBinder ;
+
+		class ThreadCounter ;
+	} ;
+
 	struct THIS_PACK {
 		Mutex mThreadMutex ;
 		ConditionLock mThreadConditionLock ;
@@ -789,12 +790,6 @@ private:
 	struct THREAD_PACK {
 		SharedRef<THIS_PACK> mThis ;
 		UniqueRef<SharedRef<THIS_PACK>> mKeep ;
-	} ;
-
-	struct Private {
-		class ThreadBinder ;
-
-		class ThreadCounter ;
 	} ;
 
 private:
@@ -815,8 +810,7 @@ public:
 
 	template <class _RET = REMOVE_CVR_TYPE<Future<ITEM>>>
 	_RET future () const {
-		struct Dependent ;
-		using R1X = DEPENDENT_TYPE<Future<ITEM> ,Dependent> ;
+		using R1X = DEPENDENT_TYPE<Future<ITEM> ,struct ANONYMOUS> ;
 		return R1X (mThis) ;
 	}
 
@@ -853,8 +847,7 @@ public:
 	}
 
 	void start (Function<ITEM ()> &&proc) const {
-		struct Dependent ;
-		using R1X = typename DEPENDENT_TYPE<Private ,Dependent>::ThreadBinder ;
+		using R1X = typename DEPENDENT_TYPE<Private ,struct ANONYMOUS>::ThreadBinder ;
 		_DEBUG_ASSERT_ (proc.exist ()) ;
 		auto rax = mThis.share () ;
 		auto &r1x = rax->mThis.self ;
@@ -923,8 +916,7 @@ private:
 	}
 
 	imports void static_execute (THIS_PACK &this_) {
-		struct Dependent ;
-		using R1X = typename DEPENDENT_TYPE<Private ,Dependent>::ThreadCounter ;
+		using R1X = typename DEPENDENT_TYPE<Private ,struct ANONYMOUS>::ThreadCounter ;
 		ScopedGuard<R1X> ANONYMOUS (_CAST_ (ARGV<R1X>::ID ,this_)) ;
 		auto rax = Optional<ITEM>::nullopt () ;
 		try {
@@ -986,8 +978,8 @@ private:
 } ;
 
 template <class ITEM>
-class Promise<ITEM>::Private::ThreadBinder
-	:public Thread::Binder {
+class Promise<ITEM>::Private::ThreadBinder :
+	delegate public Thread::Binder {
 private:
 	PhanRef<THIS_PACK> mThis ;
 
@@ -1008,8 +1000,8 @@ public:
 } ;
 
 template <class ITEM>
-class Promise<ITEM>::Private::ThreadCounter
-	:private Wrapped<THIS_PACK> {
+class Promise<ITEM>::Private::ThreadCounter :
+	delegate private Wrapped<THIS_PACK> {
 private:
 	using Wrapped<THIS_PACK>::mSelf ;
 
@@ -1034,10 +1026,10 @@ private:
 	StrongRef<THREAD_PACK> mThis ;
 
 public:
-	implicit Future () = delete ;
+	implicit Future () = default ;
 
 	explicit Future (const StrongRef<THREAD_PACK> &this_) {
-		mThis = this_.share () ;
+		mThis = this_ ;
 	}
 
 	BOOL ready () const {

@@ -7,6 +7,7 @@
 #ifdef __CSC__
 #pragma push_macro ("self")
 #pragma push_macro ("implicit")
+#pragma push_macro ("delegate")
 #pragma push_macro ("leftvalue")
 #pragma push_macro ("rightvalue")
 #pragma push_macro ("imports")
@@ -15,6 +16,7 @@
 #pragma push_macro ("discard")
 #undef self
 #undef implicit
+#undef delegate
 #undef leftvalue
 #undef rightvalue
 #undef imports
@@ -52,6 +54,7 @@
 #ifdef __CSC__
 #pragma pop_macro ("self")
 #pragma pop_macro ("implicit")
+#pragma pop_macro ("delegate")
 #pragma pop_macro ("leftvalue")
 #pragma pop_macro ("rightvalue")
 #pragma pop_macro ("imports")
@@ -69,21 +72,24 @@ using ::mysql_close ;
 using ::mysql_error ;
 } ;
 
-class AbstractDatabase_Engine_MYSQL
-	:public AbstractDatabase::Abstract {
+class SQLDatabase::Private::Implement :
+	delegate public SQLDatabase::Abstract {
 private:
 	using NATIVE_THIS = UniqueRef<api::MYSQL> ;
 
-public:
-	implicit AbstractDatabase_Engine_MYSQL () = default ;
+private:
+	UniqueRef<api::MYSQL> mHolder ;
 
-	void compute_load_data (AnyRef<> &holder) const override {
+public:
+	implicit Implement () = default ;
+
+	void load_data () override {
 		auto rax = UniqueRef<api::MYSQL> ([&] (api::MYSQL &me) {
 			api::mysql_init (DEPTR[me]) ;
 		} ,[] (api::MYSQL &me) {
 			api::mysql_close (DEPTR[me]) ;
 		}) ;
-		holder = AnyRef<NATIVE_THIS>::make (_MOVE_ (rax)) ;
+		mHolder = _MOVE_ (rax) ;
 	}
 
 private:
@@ -92,4 +98,9 @@ private:
 		_DYNAMIC_ASSERT_ (r1x == NULL) ;
 	}
 } ;
+
+exports SQLDatabase::SQLDatabase () {
+	using R1X = typename DEPENDENT_TYPE<Private ,struct ANONYMOUS>::Implement ;
+	mThis = StrongRef<R1X>::make () ;
+}
 } ;

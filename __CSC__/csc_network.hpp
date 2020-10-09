@@ -24,8 +24,8 @@ private:
 		class Implement ;
 	} ;
 
-	class Abstract
-		:public Interface {
+	class Abstract :
+		delegate public Interface {
 	public:
 		virtual String<STRU8> sock_name () const = 0 ;
 		virtual String<STRU8> peer_sock_name () const = 0 ;
@@ -42,7 +42,7 @@ private:
 	StrongRef<Abstract> mThis ;
 
 public:
-	implicit TCPSocket () = delete ;
+	implicit TCPSocket () = default ;
 
 	explicit TCPSocket (const String<STRU8> &ip_addr) ;
 
@@ -56,9 +56,7 @@ public:
 
 	template <class _RET = REMOVE_CVR_TYPE<TCPListener>>
 	_RET listener () {
-		struct Dependent ;
-		using R1X = DEPENDENT_TYPE<TCPListener ,Dependent> ;
-		_DEBUG_ASSERT_ (mThis.exist ()) ;
+		using R1X = DEPENDENT_TYPE<TCPListener ,struct ANONYMOUS> ;
 		return R1X (mThis) ;
 	}
 
@@ -120,20 +118,22 @@ private:
 		class Implement ;
 	} ;
 
-	class Abstract
-		:public Interface {
+	class Abstract :
+		delegate public Interface {
 	public:
 		virtual void wait_linker () = 0 ;
 		virtual void accept () = 0 ;
 	} ;
 
+	using TCPSocketImplement = typename TCPSocket::Private::Implement ;
+
 private:
 	StrongRef<Abstract> mThis ;
 
 public:
-	implicit TCPListener () = delete ;
+	implicit TCPListener () = default ;
 
-	explicit TCPListener (const StrongRef<TCPSocket::Private::Implement> &socket_) ;
+	explicit TCPListener (const StrongRef<TCPSocketImplement> &socket_) ;
 
 	void wait_linker () {
 		return mThis->wait_linker () ;
@@ -150,8 +150,8 @@ private:
 		class Implement ;
 	} ;
 
-	class Abstract
-		:public Interface {
+	class Abstract :
+		delegate public Interface {
 	public:
 		virtual String<STRU8> sock_name () const = 0 ;
 		virtual String<STRU8> peer_sock_name () const = 0 ;
@@ -166,7 +166,7 @@ private:
 	StrongRef<Abstract> mThis ;
 
 public:
-	implicit UDPSocket () = delete ;
+	implicit UDPSocket () = default ;
 
 	explicit UDPSocket (const String<STRU8> &ip_addr) ;
 
@@ -221,15 +221,15 @@ public:
 	}
 } ;
 
-class NetworkService
-	:private Proxy {
+class NetworkService :
+	delegate private Proxy {
 private:
 	struct Private {
 		class Implement ;
 	} ;
 
-	class Abstract
-		:public Interface {
+	class Abstract :
+		delegate public Interface {
 	public:
 		virtual void startup () = 0 ;
 		virtual void shutdown () = 0 ;
@@ -241,7 +241,7 @@ private:
 
 private:
 	friend Singleton<NetworkService> ;
-	Monostate<RecursiveMutex> mMutex ;
+	Mutable<RecursiveMutex> mMutex ;
 	StrongRef<Abstract> mThis ;
 
 public:

@@ -7,6 +7,7 @@
 #ifdef __CSC__
 #pragma push_macro ("self")
 #pragma push_macro ("implicit")
+#pragma push_macro ("delegate")
 #pragma push_macro ("leftvalue")
 #pragma push_macro ("rightvalue")
 #pragma push_macro ("imports")
@@ -15,6 +16,7 @@
 #pragma push_macro ("discard")
 #undef self
 #undef implicit
+#undef delegate
 #undef leftvalue
 #undef rightvalue
 #undef imports
@@ -57,6 +59,7 @@
 #ifdef __CSC__
 #pragma pop_macro ("self")
 #pragma pop_macro ("implicit")
+#pragma pop_macro ("delegate")
 #pragma pop_macro ("leftvalue")
 #pragma pop_macro ("rightvalue")
 #pragma pop_macro ("imports")
@@ -88,8 +91,8 @@ using ::SymInitialize ;
 using ::SymCleanup ;
 } ;
 
-class ConsoleService::Private::Implement
-	:public ConsoleService::Abstract {
+class ConsoleService::Private::Implement :
+	delegate public ConsoleService::Abstract {
 private:
 	TextWriter<STR> mConWriter ;
 	TextWriter<STR> mLogWriter ;
@@ -258,10 +261,9 @@ public:
 	}
 
 	void log (const Plain<STR> &tag ,const PhanBuffer<const STR> &msg) {
-		struct Dependent ;
-		using R1X = typename DEPENDENT_TYPE<Private ,Dependent>::template ImplBinder<PhanBuffer<const STR>> ;
+		using R1X = typename DEPENDENT_TYPE<Private ,struct ANONYMOUS>::template ImplBinder<PhanBuffer<const STR>> ;
 		const auto r1x = PhanBuffer<const STR>::make (tag.self ,tag.size ()) ;
-		log (r1x ,R1X (msg)) ;
+		log (r1x ,R1X (ARGVP0 ,msg)) ;
 	}
 
 	void log (const PhanBuffer<const STR> &tag ,const Binder &msg) override {
@@ -387,13 +389,13 @@ private:
 	}
 } ;
 
-inline exports ConsoleService::ConsoleService (const ARGVF<Singleton<ConsoleService>> &) {
-	using R1X = typename Private::Implement ;
+exports ConsoleService::ConsoleService (const ARGVF<Singleton<ConsoleService>> &) {
+	using R1X = typename DEPENDENT_TYPE<Private ,struct ANONYMOUS>::Implement ;
 	mThis = StrongRef<R1X>::make () ;
 }
 
-class DebuggerService::Private::Implement
-	:public DebuggerService::Abstract {
+class DebuggerService::Private::Implement :
+	delegate public DebuggerService::Abstract {
 private:
 	UniqueRef<HANDLE> mSymbolFromAddress ;
 
@@ -406,22 +408,18 @@ public:
 #pragma warning (disable :5039)
 #endif
 		_DEBUG_ASSERT_ (flag) ;
-		const auto r1x = Function<void ()> ([] () noexcept {
+		api::atexit ([] () noexcept {
 			GlobalRuntime::process_abort () ;
 		}) ;
-		const auto r2x = Function<void (VAR32)> ([] (VAR32) noexcept {
+		api::signal (SIGFPE ,[] (VAR32) noexcept {
 			GlobalRuntime::process_abort () ;
 		}) ;
-		const auto r3x = Function<void (VAR32)> ([] (VAR32) noexcept {
+		api::signal (SIGILL ,[] (VAR32) noexcept {
 			GlobalRuntime::process_abort () ;
 		}) ;
-		const auto r4x = Function<void (VAR32)> ([] (VAR32) noexcept {
+		api::signal (SIGSEGV ,[] (VAR32) noexcept {
 			GlobalRuntime::process_abort () ;
 		}) ;
-		api::atexit (DEPTR[r1x.self]) ;
-		api::signal (SIGFPE ,DEPTR[r2x.self]) ;
-		api::signal (SIGILL ,DEPTR[r3x.self]) ;
-		api::signal (SIGSEGV ,DEPTR[r4x.self]) ;
 #ifdef __CSC_COMPILER_MSVC__
 #pragma warning (pop)
 #endif
@@ -458,7 +456,7 @@ public:
 			auto rax = AutoBuffer<BYTE> (r1x) ;
 			const auto r2x = _ADDRESS_ (DEPTR[rax.self]) ;
 			const auto r3x = _ALIGNAS_ (r2x ,_ALIGNOF_ (api::SYMBOL_INFO)) ;
-			const auto r4x = _UNSAFE_POINTER_CAST_ (ARGV<api::SYMBOL_INFO>::ID ,r3x) ;
+			const auto r4x = _POINTER_CAST_ (ARGV<api::SYMBOL_INFO>::ID ,_UNSAFE_POINTER_ (r3x)) ;
 			DEREF[r4x].SizeOfStruct = VARY (_SIZEOF_ (api::SYMBOL_INFO)) ;
 			DEREF[r4x].MaxNameLen = VARY (DEFAULT_FILEPATH_SIZE::compile ()) ;
 			for (auto &&i : _RANGE_ (0 ,list.length ())) {
@@ -498,8 +496,8 @@ private:
 	}
 } ;
 
-inline exports DebuggerService::DebuggerService (const ARGVF<Singleton<DebuggerService>> &) {
-	using R1X = typename Private::Implement ;
+exports DebuggerService::DebuggerService (const ARGVF<Singleton<DebuggerService>> &) {
+	using R1X = typename DEPENDENT_TYPE<Private ,struct ANONYMOUS>::Implement ;
 	mThis = StrongRef<R1X>::make () ;
 }
 } ;

@@ -7,6 +7,7 @@
 #include "csc.hpp"
 #include "csc_core.hpp"
 #include "csc_basic.hpp"
+#include "csc_extend.hpp"
 #include "csc_array.hpp"
 #include "csc_math.hpp"
 #include "csc_stream.hpp"
@@ -14,8 +15,10 @@
 namespace CSC {
 class TimePoint ;
 
-class StringProc
-	:private Wrapped<> {
+using IPV4_ADDRESS = PACK<WORD ,CHAR> ;
+
+class StringProc :
+	delegate private Wrapped<> {
 public:
 	imports String<STRU16> cvt_u8s_u16s (const String<STRU8> &val) ;
 
@@ -139,10 +142,10 @@ public:
 	imports String<_ARG1> build_base64u8s (const ARGVF<_ARG1> & ,const String<STRU8> &stru) ;
 
 	template <class _ARG1>
-	imports PACK<WORD ,CHAR> parse_ipv4s (const String<_ARG1> &stri) ;
+	imports IPV4_ADDRESS parse_ipv4s (const String<_ARG1> &stri) ;
 
 	template <class _ARG1>
-	imports String<_ARG1> build_ipv4s (const ARGVF<_ARG1> & ,const PACK<WORD ,CHAR> &stru) ;
+	imports String<_ARG1> build_ipv4s (const ARGVF<_ARG1> & ,const IPV4_ADDRESS &stru) ;
 
 	template <class _ARG1 ,class _RET = REMOVE_CVR_TYPE<TimePoint>>
 	imports _RET parse_dates (const String<_ARG1> &stri) ;
@@ -163,8 +166,8 @@ public:
 	imports String<_ARG1> build_times (const ARGVF<_ARG1> & ,const TimePoint &stru) ;
 } ;
 
-class StringConvertInvokeProc
-	:private Wrapped<> {
+class StringConvertInvokeProc :
+	delegate private Wrapped<> {
 public:
 	imports String<STRU8> invoke (const ARGVF<String<STRU8>> & ,const String<STRU8> &val) {
 		return _COPY_ (val) ;
@@ -812,8 +815,8 @@ inline exports String<STRA> StringProc::cvt_u8s_uas (String<STRU8> &&val) {
 	return _MOVE_ (_CAST_ (ARGV<String<STRA>>::ID ,ret)) ;
 }
 
-class GBKSStaticProc
-	:private Wrapped<> {
+class GBKSStaticProc :
+	delegate private Wrapped<> {
 public:
 	imports PhanBuffer<const DEF<STRUW[2]>> static_gbks_ws_table () ;
 
@@ -1082,15 +1085,15 @@ inline exports String<_ARG1> StringProc::build_strs (const ARGVF<_ARG1> & ,const
 	return StringConvertInvokeProc::invoke (ARGV<String<_ARG1>>::ID ,stru) ;
 }
 
-#ifdef __CSC_EXTEND__
 class RegexMatcher {
 private:
 	struct Private {
 		class Implement ;
 	} ;
 
-	struct Abstract
-		:public Interface {
+	class Abstract :
+		delegate public Interface {
+	public:
 		virtual BOOL match (const String<STRU8> &expr) const = 0 ;
 		virtual Deque<ARRAY2<INDEX>> search (const String<STRU8> &expr) const = 0 ;
 		virtual String<STRU8> replace (const String<STRU8> &expr ,const String<STRU8> &rep) const = 0 ;
@@ -1100,7 +1103,7 @@ private:
 	StrongRef<Abstract> mThis ;
 
 public:
-	implicit RegexMatcher () = delete ;
+	implicit RegexMatcher () = default ;
 
 	explicit RegexMatcher (const String<STRU8> &reg) ;
 
@@ -1116,7 +1119,6 @@ public:
 		return mThis->replace (expr ,rep) ;
 	}
 } ;
-#endif
 
 template <class _ARG1>
 inline exports DATA StringProc::parse_hexs (const String<_ARG1> &stri) {
@@ -1127,7 +1129,7 @@ inline exports DATA StringProc::parse_hexs (const String<_ARG1> &stri) {
 	_DYNAMIC_ASSERT_ (rbx == _ARG1 ('0')) ;
 	rax >> rbx ;
 	_DYNAMIC_ASSERT_ (rbx == _ARG1 ('X')) ;
-	const auto r1x = ARRAY2<_ARG1> {_ARG1 ('0') ,(_ARG1 ('A' - 10))} ;
+	const auto r1x = ARRAY2<_ARG1> ({_ARG1 ('0') ,(_ARG1 ('A' - 10))}) ;
 	auto rcx = VAR_ZERO ;
 	while (TRUE) {
 		rax >> rbx ;
@@ -1137,9 +1139,11 @@ inline exports DATA StringProc::parse_hexs (const String<_ARG1> &stri) {
 		const auto r2x = BOOL (rbx >= _ARG1 ('0') && rbx <= _ARG1 ('9')) ;
 		const auto r3x = BOOL (rbx >= _ARG1 ('A') && rbx <= _ARG1 ('F')) ;
 		_DYNAMIC_ASSERT_ (r2x || r3x) ;
-		auto &r4x = _SWITCH_ (
-			r2x ? r1x[0] :
-			r1x[1]) ;
+		auto &r4x = _CALL_ ([&] () {
+			if (r2x)
+				return _BYREF_ (r1x[0]) ;
+			return _BYREF_ (r1x[1]) ;
+		}).self ;
 		ret = (ret << 4) | DATA (rbx - r4x) ;
 	}
 	_DYNAMIC_ASSERT_ (rcx == 2 || rcx == 4 || rcx == 8 || rcx == 16) ;
@@ -1153,13 +1157,15 @@ inline exports String<_ARG1> StringProc::build_hexs (const ARGVF<_ARG1> & ,const
 	auto rax = TextWriter<_ARG1> (ret.raw ()) ;
 	rax << _ARG1 ('0') ;
 	rax << _ARG1 ('X') ;
-	const auto r1x = ARRAY2<_ARG1> {_ARG1 ('0') ,(_ARG1 ('A' - 10))} ;
+	const auto r1x = ARRAY2<_ARG1> ({_ARG1 ('0') ,(_ARG1 ('A' - 10))}) ;
 	const auto r2x = _SIZEOF_ (BYTE) * 8 - 4 ;
 	for (auto &&i : _RANGE_ (0 ,_SIZEOF_ (BYTE) * 2)) {
 		const auto r3x = BYTE (BYTE (stru >> (r2x - i * 4)) & BYTE (0X0F)) ;
-		auto &r4x = _SWITCH_ (
-			(r3x < DATA (10)) ? r1x[0] :
-			r1x[1]) ;
+		auto &r4x = _CALL_ ([&] () {
+			if (r3x < DATA (10))
+				return _BYREF_ (r1x[0]) ;
+			return _BYREF_ (r1x[1]) ;
+		}).self ;
 		rax << _ARG1 (r4x + r3x) ;
 	}
 	rax << TextWriter<_ARG1>::EOS ;
@@ -1172,13 +1178,15 @@ inline exports String<_ARG1> StringProc::build_hexs (const ARGVF<_ARG1> & ,const
 	auto rax = TextWriter<_ARG1> (ret.raw ()) ;
 	rax << _ARG1 ('0') ;
 	rax << _ARG1 ('X') ;
-	const auto r1x = ARRAY2<_ARG1> {_ARG1 ('0') ,(_ARG1 ('A' - 10))} ;
+	const auto r1x = ARRAY2<_ARG1> ({_ARG1 ('0') ,(_ARG1 ('A' - 10))}) ;
 	const auto r2x = _SIZEOF_ (WORD) * 8 - 4 ;
 	for (auto &&i : _RANGE_ (0 ,_SIZEOF_ (WORD) * 2)) {
 		const auto r3x = WORD (WORD (stru >> (r2x - i * 4)) & WORD (0X0F)) ;
-		auto &r4x = _SWITCH_ (
-			(r3x < DATA (10)) ? r1x[0] :
-			r1x[1]) ;
+		auto &r4x = _CALL_ ([&] () {
+			if (r3x < DATA (10))
+				return _BYREF_ (r1x[0]) ;
+			return _BYREF_ (r1x[1]) ;
+		}).self ;
 		rax << _ARG1 (r4x + r3x) ;
 	}
 	rax << TextWriter<_ARG1>::EOS ;
@@ -1191,13 +1199,15 @@ inline exports String<_ARG1> StringProc::build_hexs (const ARGVF<_ARG1> & ,const
 	auto rax = TextWriter<_ARG1> (ret.raw ()) ;
 	rax << _ARG1 ('0') ;
 	rax << _ARG1 ('X') ;
-	const auto r1x = ARRAY2<_ARG1> {_ARG1 ('0') ,(_ARG1 ('A' - 10))} ;
+	const auto r1x = ARRAY2<_ARG1> ({_ARG1 ('0') ,(_ARG1 ('A' - 10))}) ;
 	const auto r2x = _SIZEOF_ (CHAR) * 8 - 4 ;
 	for (auto &&i : _RANGE_ (0 ,_SIZEOF_ (CHAR) * 2)) {
 		const auto r3x = CHAR (CHAR (stru >> (r2x - i * 4)) & CHAR (0X0F)) ;
-		auto &r4x = _SWITCH_ (
-			(r3x < DATA (10)) ? r1x[0] :
-			r1x[1]) ;
+		auto &r4x = _CALL_ ([&] () {
+			if (r3x < DATA (10))
+				return _BYREF_ (r1x[0]) ;
+			return _BYREF_ (r1x[1]) ;
+		}).self ;
 		rax << _ARG1 (r4x + r3x) ;
 	}
 	rax << TextWriter<_ARG1>::EOS ;
@@ -1210,13 +1220,15 @@ inline exports String<_ARG1> StringProc::build_hexs (const ARGVF<_ARG1> & ,const
 	auto rax = TextWriter<_ARG1> (ret.raw ()) ;
 	rax << _ARG1 ('0') ;
 	rax << _ARG1 ('X') ;
-	const auto r1x = ARRAY2<_ARG1> {_ARG1 ('0') ,(_ARG1 ('A' - 10))} ;
+	const auto r1x = ARRAY2<_ARG1> ({_ARG1 ('0') ,(_ARG1 ('A' - 10))}) ;
 	const auto r2x = _SIZEOF_ (DATA) * 8 - 4 ;
 	for (auto &&i : _RANGE_ (0 ,_SIZEOF_ (DATA) * 2)) {
 		const auto r3x = DATA (DATA (stru >> (r2x - i * 4)) & DATA (0X0F)) ;
-		auto &r4x = _SWITCH_ (
-			(r3x < DATA (10)) ? r1x[0] :
-			r1x[1]) ;
+		auto &r4x = _CALL_ ([&] () {
+			if (r3x < DATA (10))
+				return _BYREF_ (r1x[0]) ;
+			return _BYREF_ (r1x[1]) ;
+		}).self ;
 		rax << _ARG1 (r4x + r3x) ;
 	}
 	rax << TextWriter<_ARG1>::EOS ;
@@ -1328,9 +1340,11 @@ inline exports String<STRU8> StringProc::parse_base64u8s (const String<_ARG1> &s
 		if (rax == VAR_NONE)
 			continue ;
 		const auto r2x = LENGTH (i) - 32 ;
-		auto &r3x = _SWITCH_ (
-			(r2x >= 0 && r2x < _COUNTOF_ (DEF<decltype (M_BASE64.mP1)>)) ? M_BASE64.mP1[r2x] :
-			M_BASE64.mP1[0]) ;
+		auto &r3x = _CALL_ ([&] () {
+			if (r2x >= 0 && r2x < _COUNTOF_ (DEF<decltype (M_BASE64.mP1)>))
+				return _BYREF_ (M_BASE64.mP1[r2x]) ;
+			return _BYREF_ (M_BASE64.mP1[0]) ;
+		}).self ;
 		auto fax = TRUE ;
 		if switch_once (fax) {
 			if (!(rax == 0))
@@ -1403,8 +1417,8 @@ inline exports String<STRU8> StringProc::parse_base64u8s (const String<_ARG1> &s
 }
 
 template <class _ARG1>
-inline exports PACK<WORD ,CHAR> StringProc::parse_ipv4s (const String<_ARG1> &stri) {
-	PACK<WORD ,CHAR> ret ;
+inline exports IPV4_ADDRESS StringProc::parse_ipv4s (const String<_ARG1> &stri) {
+	IPV4_ADDRESS ret ;
 	auto rax = TextReader<_ARG1> (stri.raw ()) ;
 	auto rbx = _ARG1 () ;
 	auto rcx = VAR () ;
@@ -1426,7 +1440,7 @@ inline exports PACK<WORD ,CHAR> StringProc::parse_ipv4s (const String<_ARG1> &st
 	rax >> rcx ;
 	_DYNAMIC_ASSERT_ (rcx >= 0 && rcx < 256) ;
 	const auto r4x = BYTE (rcx) ;
-	const auto r5x = PACK<BYTE[_SIZEOF_ (CHAR)]> {r1x ,r2x ,r3x ,r4x} ;
+	const auto r5x = PACK<ARRAY_BIND_TYPE<BYTE ,SIZE_OF_TYPE<CHAR>>> {r1x ,r2x ,r3x ,r4x} ;
 	ByteReader<BYTE> (PhanBuffer<const BYTE>::make (r5x.mP1)) >> ret.mP2 ;
 	ret.mP1 = 0 ;
 	rax.share () >> rbx ;
@@ -1443,9 +1457,9 @@ inline exports PACK<WORD ,CHAR> StringProc::parse_ipv4s (const String<_ARG1> &st
 }
 
 template <class _ARG1>
-inline exports String<_ARG1> StringProc::build_ipv4s (const ARGVF<_ARG1> & ,const PACK<WORD ,CHAR> &stru) {
+inline exports String<_ARG1> StringProc::build_ipv4s (const ARGVF<_ARG1> & ,const IPV4_ADDRESS &stru) {
 	String<_ARG1> ret = String<_ARG1> (63) ;
-	auto rax = PACK<BYTE[_SIZEOF_ (CHAR)]> () ;
+	auto rax = PACK<ARRAY_BIND_TYPE<BYTE ,SIZE_OF_TYPE<CHAR>>> () ;
 	ByteWriter<BYTE> (PhanBuffer<BYTE>::make (rax.mP1)) << stru.mP2 ;
 	auto rbx = TextWriter<_ARG1> (ret.raw ()) ;
 	rbx << VAR (rax.mP1[0]) ;
@@ -1467,8 +1481,7 @@ inline exports String<_ARG1> StringProc::build_ipv4s (const ARGVF<_ARG1> & ,cons
 
 template <class _ARG1 ,class _RET>
 inline exports _RET StringProc::parse_dates (const String<_ARG1> &stri) {
-	struct Dependent ;
-	using R1X = DEPENDENT_TYPE<TimePoint ,Dependent> ;
+	using R1X = DEPENDENT_TYPE<TimePoint ,struct ANONYMOUS> ;
 	const auto r1x = _CALL_ ([&] () {
 		ARRAY8<LENGTH> ret ;
 		ret.fill (0) ;
@@ -1496,10 +1509,10 @@ inline exports _RET StringProc::parse_dates (const String<_ARG1> &stri) {
 
 template <class _ARG1>
 inline exports String<_ARG1> StringProc::build_dates (const ARGVF<_ARG1> & ,const TimePoint &stru) {
-	struct Dependent ;
+	using R1X = DEPENDENT_TYPE<TimePoint ,struct ANONYMOUS> ;
 	String<STR> ret = String<STR> (31) ;
 	auto rax = TextWriter<STR> (ret.raw ()) ;
-	auto &r1x = _FORWARD_ (ARGV<DEPENDENT_TYPE<TimePoint ,Dependent>>::ID ,stru) ;
+	auto &r1x = _FORWARD_ (ARGV<R1X>::ID ,stru) ;
 	const auto r2x = r1x.calendar () ;
 	rax << r2x[0] ;
 	rax << STR ('-') ;
@@ -1516,8 +1529,7 @@ inline exports String<_ARG1> StringProc::build_dates (const ARGVF<_ARG1> & ,cons
 
 template <class _ARG1 ,class _RET>
 inline exports _RET StringProc::parse_hours (const String<_ARG1> &stri) {
-	struct Dependent ;
-	using R1X = DEPENDENT_TYPE<TimePoint ,Dependent> ;
+	using R1X = DEPENDENT_TYPE<TimePoint ,struct ANONYMOUS> ;
 	const auto r1x = _CALL_ ([&] () {
 		ARRAY8<LENGTH> ret ;
 		ret.fill (0) ;
@@ -1545,10 +1557,10 @@ inline exports _RET StringProc::parse_hours (const String<_ARG1> &stri) {
 
 template <class _ARG1>
 inline exports String<_ARG1> StringProc::build_hours (const ARGVF<_ARG1> & ,const TimePoint &stru) {
-	struct Dependent ;
+	using R1X = DEPENDENT_TYPE<TimePoint ,struct ANONYMOUS> ;
 	String<STR> ret = String<STR> (31) ;
 	auto rax = TextWriter<STR> (ret.raw ()) ;
-	auto &r1x = _FORWARD_ (ARGV<DEPENDENT_TYPE<TimePoint ,Dependent>>::ID ,stru) ;
+	auto &r1x = _FORWARD_ (ARGV<R1X>::ID ,stru) ;
 	const auto r2x = r1x.calendar () ;
 	if (r2x[5] < 10)
 		rax << STR ('0') ;
@@ -1567,8 +1579,7 @@ inline exports String<_ARG1> StringProc::build_hours (const ARGVF<_ARG1> & ,cons
 
 template <class _ARG1 ,class _RET>
 inline exports _RET StringProc::parse_times (const String<_ARG1> &stri) {
-	struct Dependent ;
-	using R1X = DEPENDENT_TYPE<TimePoint ,Dependent> ;
+	using R1X = DEPENDENT_TYPE<TimePoint ,struct ANONYMOUS> ;
 	const auto r1x = _CALL_ ([&] () {
 		ARRAY8<VAR32> ret ;
 		ret.fill (0) ;
@@ -1611,10 +1622,10 @@ inline exports _RET StringProc::parse_times (const String<_ARG1> &stri) {
 
 template <class _ARG1>
 inline exports String<_ARG1> StringProc::build_times (const ARGVF<_ARG1> & ,const TimePoint &stru) {
-	struct Dependent ;
+	using R1X = DEPENDENT_TYPE<TimePoint ,struct ANONYMOUS> ;
 	String<STR> ret = String<STR> (63) ;
 	auto rax = TextWriter<STR> (ret.raw ()) ;
-	auto &r1x = _FORWARD_ (ARGV<DEPENDENT_TYPE<TimePoint ,Dependent>>::ID ,stru) ;
+	auto &r1x = _FORWARD_ (ARGV<R1X>::ID ,stru) ;
 	const auto r2x = r1x.calendar () ;
 	rax << r2x[0] ;
 	rax << STR ('-') ;

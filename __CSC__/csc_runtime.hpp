@@ -15,6 +15,7 @@
 
 namespace CSC {
 class TimePoint ;
+
 class GlobalRuntime ;
 
 class Duration {
@@ -23,10 +24,10 @@ private:
 		class Implement ;
 	} ;
 
-	class Abstract
-		:public Interface {
+	class Abstract :
+		delegate public Interface {
 	public:
-		virtual const DEF<typename Private::Implement> &native () const = 0 ;
+		virtual Reference native () const = 0 ;
 		virtual LENGTH hours () const = 0 ;
 		virtual LENGTH minutes () const = 0 ;
 		virtual LENGTH seconds () const = 0 ;
@@ -48,8 +49,24 @@ public:
 	template <class _ARG1 ,class = ENABLE_TYPE<U::CONSTEXPR_AND<U::CONSTEXPR_NOT<IS_PLACEHOLDER_HELP<_ARG1>> ,U::CONSTEXPR_NOT<IS_SAME_HELP<REMOVE_CVR_TYPE<_ARG1> ,Duration>>>>>
 	explicit Duration (_ARG1 &&time_) ;
 
-	const DEF<typename Private::Implement> &native () const leftvalue {
-		return mThis->native () ;
+	implicit Duration (const Duration &that) {
+		mThis = that.mThis.share () ;
+	}
+
+	inline Duration &operator= (const Duration &that) {
+		if switch_once (TRUE) {
+			if (this == DEPTR[that])
+				discard ;
+			DEREF[this].~Duration () ;
+			new (this) Duration (_MOVE_ (that)) ;
+		}
+		return DEREF[this] ;
+	}
+
+	template <class _RET = REMOVE_CVR_TYPE<typename Private::Implement>>
+	const _RET &native () const leftvalue {
+		const auto r1x = mThis->native () ;
+		return SafeReference<const _RET> (r1x) ;
 	}
 
 	LENGTH hours () const {
@@ -99,10 +116,10 @@ private:
 		class Implement ;
 	} ;
 
-	class Abstract
-		:public Interface {
+	class Abstract :
+		delegate public Interface {
 	public:
-		virtual const DEF<typename Private::Implement> &native () const = 0 ;
+		virtual Reference native () const = 0 ;
 		virtual ARRAY8<LENGTH> calendar () const = 0 ;
 		virtual TimePoint add (const Duration &that) const = 0 ;
 		virtual Duration sub (const TimePoint &that) const = 0 ;
@@ -117,8 +134,24 @@ public:
 	template <class _ARG1 ,class = ENABLE_TYPE<U::CONSTEXPR_AND<U::CONSTEXPR_NOT<IS_PLACEHOLDER_HELP<_ARG1>> ,U::CONSTEXPR_NOT<IS_SAME_HELP<REMOVE_CVR_TYPE<_ARG1> ,TimePoint>>>>>
 	explicit TimePoint (_ARG1 &&time_) ;
 
-	const DEF<typename Private::Implement> &native () const leftvalue {
-		return mThis->native () ;
+	implicit TimePoint (const TimePoint &that) {
+		mThis = that.mThis.share () ;
+	}
+
+	inline TimePoint &operator= (const TimePoint &that) {
+		if switch_once (TRUE) {
+			if (this == DEPTR[that])
+				discard ;
+			DEREF[this].~TimePoint () ;
+			new (this) TimePoint (_MOVE_ (that)) ;
+		}
+		return DEREF[this] ;
+	}
+
+	template <class _RET = REMOVE_CVR_TYPE<typename Private::Implement>>
+	const _RET &native () const leftvalue {
+		const auto r1x = mThis->native () ;
+		return SafeReference<const _RET> (r1x) ;
 	}
 
 	ARRAY8<LENGTH> calendar () const {
@@ -148,11 +181,11 @@ private:
 		class Implement ;
 	} ;
 
-	class Abstract
-		:public Interface {
+	class Abstract :
+		delegate public Interface {
 	public:
-		virtual DEF<typename Private::Implement> &native () = 0 ;
-		virtual const DEF<typename Private::Implement> &native () const = 0 ;
+		virtual Reference native () = 0 ;
+		virtual Reference native () const = 0 ;
 		virtual void lock () = 0 ;
 		virtual BOOL try_lock () = 0 ;
 		virtual void unlock () = 0 ;
@@ -164,12 +197,16 @@ private:
 public:
 	implicit Mutex () ;
 
-	DEF<typename Private::Implement> &native () leftvalue {
-		return mThis->native () ;
+	template <class _RET = REMOVE_CVR_TYPE<typename Private::Implement>>
+	_RET &native () leftvalue {
+		const auto r1x = mThis->native () ;
+		return SafeReference<_RET> (r1x) ;
 	}
 
-	const DEF<typename Private::Implement> &native () const leftvalue {
-		return mThis->native () ;
+	template <class _RET = REMOVE_CVR_TYPE<typename Private::Implement>>
+	const _RET &native () const leftvalue {
+		const auto r1x = mThis->native () ;
+		return SafeReference<const _RET> (r1x) ;
 	}
 
 	void lock () {
@@ -191,11 +228,11 @@ private:
 		class Implement ;
 	} ;
 
-	class Abstract
-		:public Interface {
+	class Abstract :
+		delegate public Interface {
 	public:
-		virtual DEF<typename Private::Implement> &native () = 0 ;
-		virtual const DEF<typename Private::Implement> &native () const = 0 ;
+		virtual Reference native () = 0 ;
+		virtual Reference native () const = 0 ;
 		virtual void lock () = 0 ;
 		virtual BOOL try_lock () = 0 ;
 		virtual void unlock () = 0 ;
@@ -207,12 +244,16 @@ private:
 public:
 	implicit RecursiveMutex () ;
 
-	DEF<typename Private::Implement> &native () leftvalue {
-		return mThis->native () ;
+	template <class _RET = REMOVE_CVR_TYPE<typename Private::Implement>>
+	_RET &native () leftvalue {
+		const auto r1x = mThis->native () ;
+		return SafeReference<_RET> (r1x) ;
 	}
 
-	const DEF<typename Private::Implement> &native () const leftvalue {
-		return mThis->native () ;
+	template <class _RET = REMOVE_CVR_TYPE<typename Private::Implement>>
+	const _RET &native () const leftvalue {
+		const auto r1x = mThis->native () ;
+		return SafeReference<const _RET> (r1x) ;
 	}
 
 	void lock () {
@@ -236,11 +277,11 @@ private:
 		class Implement ;
 	} ;
 
-	class Abstract
-		:public Interface {
+	class Abstract :
+		delegate public Interface {
 	public:
-		virtual DEF<typename Private::Implement> &native () = 0 ;
-		virtual const DEF<typename Private::Implement> &native () const = 0 ;
+		virtual Reference native () = 0 ;
+		virtual Reference native () const = 0 ;
 	} ;
 
 private:
@@ -249,18 +290,21 @@ private:
 public:
 	implicit ConditionLock () ;
 
-	DEF<typename Private::Implement> &native () leftvalue {
-		return mThis->native () ;
+	template <class _RET = REMOVE_CVR_TYPE<typename Private::Implement>>
+	_RET &native () leftvalue {
+		const auto r1x = mThis->native () ;
+		return SafeReference<_RET> (r1x) ;
 	}
 
-	const DEF<typename Private::Implement> &native () const leftvalue {
-		return mThis->native () ;
+	template <class _RET = REMOVE_CVR_TYPE<typename Private::Implement>>
+	const _RET &native () const leftvalue {
+		const auto r1x = mThis->native () ;
+		return SafeReference<const _RET> (r1x) ;
 	}
 
 	template <class _RET = REMOVE_CVR_TYPE<UniqueLock>>
 	_RET watch (PhanRef<Mutex> &&mutex_) leftvalue {
-		struct Dependent ;
-		using R1X = DEPENDENT_TYPE<UniqueLock ,Dependent> ;
+		using R1X = DEPENDENT_TYPE<UniqueLock ,struct ANONYMOUS> ;
 		return R1X (_MOVE_ (mutex_) ,PhanRef<ConditionLock>::make (DEREF[this])) ;
 	}
 } ;
@@ -271,8 +315,8 @@ private:
 		class Implement ;
 	} ;
 
-	class Abstract
-		:public Interface {
+	class Abstract :
+		delegate public Interface {
 	public:
 		virtual void wait () = 0 ;
 		virtual void wait (const Duration &time_) = 0 ;
@@ -285,7 +329,7 @@ private:
 	StrongRef<Abstract> mThis ;
 
 public:
-	implicit UniqueLock () = delete ;
+	implicit UniqueLock () = default ;
 
 	explicit UniqueLock (PhanRef<Mutex> &&mutex_ ,PhanRef<ConditionLock> &&condition_lock) ;
 
@@ -312,8 +356,8 @@ public:
 
 class Thread {
 public:
-	class Binder
-		:public Interface {
+	class Binder :
+		delegate public Interface {
 	public:
 		virtual void execute () = 0 ;
 	} ;
@@ -325,8 +369,8 @@ private:
 		class Implement ;
 	} ;
 
-	class Abstract
-		:public Interface {
+	class Abstract :
+		delegate public Interface {
 	public:
 		virtual void join () = 0 ;
 	} ;
@@ -335,7 +379,7 @@ private:
 	StrongRef<Abstract> mThis ;
 
 public:
-	implicit Thread () = delete ;
+	implicit Thread () = default ;
 
 	explicit Thread (const StrongRef<Binder> &runnable) ;
 
@@ -360,8 +404,8 @@ public:
 	}
 } ;
 
-class GlobalRuntime
-	:private Wrapped<> {
+class GlobalRuntime :
+	delegate private Wrapped<> {
 public:
 	imports TimePoint clock_now () ;
 
@@ -394,8 +438,8 @@ public:
 	imports FLAG system_exec (const String<STR> &cmd) ;
 } ;
 
-class TypeNameInvokeProc
-	:private Wrapped<> {
+class TypeNameInvokeProc :
+	delegate private Wrapped<> {
 private:
 	struct TYPENAME {
 		String<STR> mName ;
@@ -414,14 +458,10 @@ private:
 #ifdef __CSC_COMPILER_MSVC__
 	template <class _RET>
 	imports TYPENAME typeid_name_from_func () {
-		auto &r1x = _CACHE_ ([&] () {
-			return _PCSTR_ ("struct CSC::TypeNameInvokeProc::TYPENAME __cdecl CSC::TypeNameInvokeProc::typeid_name_from_func<") ;
-		}) ;
-		auto &r2x = _CACHE_ ([&] () {
-			return _PCSTR_ (">(void)") ;
-		}) ;
+		const auto r1x = _PCSTR_ ("struct CSC::TypeNameInvokeProc::TYPENAME __cdecl CSC::TypeNameInvokeProc::typeid_name_from_func<") ;
+		const auto r2x = _PCSTR_ (">(void)") ;
 		TYPENAME ret ;
-		ret.mName = StringProc::parse_strs (String<STRA> (M_FUNC)) ;
+		ret.mName = StringProc::parse_strs (String<STRA> (PTRTOARR[M_FUNC])) ;
 		const auto r3x = r1x.size () ;
 		const auto r4x = ret.mName.length () - 1 - r2x.size () ;
 		ret.mName = ret.mName.segment (r3x ,r4x) ;
@@ -432,14 +472,10 @@ private:
 #ifdef __CSC_COMPILER_GNUC__
 	template <class _RET>
 	imports TYPENAME typeid_name_from_func () {
-		auto &r1x = _CACHE_ ([&] () {
-			return _PCSTR_ ("static CSC::TypeNameInvokeProc::TYPENAME CSC::TypeNameInvokeProc::typeid_name_from_func() [with _RET = ") ;
-		}) ;
-		auto &r2x = _CACHE_ ([&] () {
-			return _PCSTR_ ("]") ;
-		}) ;
+		const auto r1x = _PCSTR_ ("static CSC::TypeNameInvokeProc::TYPENAME CSC::TypeNameInvokeProc::typeid_name_from_func() [with _RET = ") ;
+		const auto r2x = _PCSTR_ ("]") ;
 		TYPENAME ret ;
-		ret.mName = StringProc::parse_strs (String<STRA> (M_FUNC)) ;
+		ret.mName = StringProc::parse_strs (String<STRA> (PTRTOARR[M_FUNC])) ;
 		const auto r3x = r1x.size () ;
 		const auto r4x = ret.mName.length () - 1 - r2x.size () ;
 		ret.mName = ret.mName.segment (r3x ,r4x) ;
@@ -450,14 +486,10 @@ private:
 #ifdef __CSC_COMPILER_CLANG__
 	template <class _RET>
 	imports TYPENAME typeid_name_from_func () {
-		auto &r1x = _CACHE_ ([&] () {
-			return _PCSTR_ ("static CSC::TypeNameInvokeProc::TYPENAME CSC::TypeNameInvokeProc::typeid_name_from_func() [_RET = ") ;
-		}) ;
-		auto &r2x = _CACHE_ ([&] () {
-			return _PCSTR_ ("]") ;
-		}) ;
+		const auto r1x = _PCSTR_ ("static CSC::TypeNameInvokeProc::TYPENAME CSC::TypeNameInvokeProc::typeid_name_from_func() [_RET = ") ;
+		const auto r2x = _PCSTR_ ("]") ;
 		TYPENAME ret ;
-		ret.mName = StringProc::parse_strs (String<STRA> (M_FUNC)) ;
+		ret.mName = StringProc::parse_strs (String<STRA> (PTRTOARR[M_FUNC])) ;
 		const auto r3x = r1x.size () ;
 		const auto r4x = ret.mName.length () - 1 - r2x.size () ;
 		ret.mName = ret.mName.segment (r3x ,r4x) ;
@@ -618,10 +650,6 @@ private:
 		writer << _PCSTR_ ("DATA") ;
 	}
 
-	imports void template_write_typename_id (TextWriter<STR> &writer ,const ARGVF<MEGA> & ,const DEF<decltype (ARGVP3)> &) {
-		writer << _PCSTR_ ("MEGA") ;
-	}
-
 	imports void template_write_typename_id (TextWriter<STR> &writer ,const ARGVF<STRA> & ,const DEF<decltype (ARGVP3)> &) {
 		writer << _PCSTR_ ("STRA") ;
 	}
@@ -691,8 +719,8 @@ private:
 template <class>
 class GlobalStatic ;
 
-class GlobalStaticEngine
-	:private Wrapped<> {
+class GlobalStaticEngine :
+	delegate private Wrapped<> {
 private:
 	struct VARXX_NODE {
 		FLAG mGUID ;
@@ -722,9 +750,9 @@ public:
 	imports PTR<NONE> unique_compare_exchange (const PTR<NONE> &expect ,const PTR<NONE> &data) ;
 
 private:
-	imports THIS_PACK &static_unique () {
+	imports const StrongRef<THIS_PACK> &cache_unique () {
 		using R1X = REMOVE_POINTER_TYPE<decltype (_NULL_ (ARGV<WeakRef>::ID).intrusive ())> ;
-		auto &r1x = _CACHE_ ([&] () {
+		return _CACHE_ ([&] () {
 			_STATIC_WARNING_ ("mark") ;
 			auto rax = unique_compare_exchange (NULL ,NULL) ;
 			auto rbx = StrongRef<THIS_PACK> () ;
@@ -741,9 +769,12 @@ private:
 			const auto r4x = _POINTER_CAST_ (ARGV<R1X>::ID ,rax) ;
 			return WeakRef (r4x).strong (ARGV<THIS_PACK>::ID) ;
 		}) ;
-		auto rcx = r1x.share () ;
-		_DYNAMIC_ASSERT_ (rcx.exist ()) ;
-		return rcx.self ;
+	}
+
+	imports THIS_PACK &static_unique () {
+		auto rax = cache_unique ().share () ;
+		_DYNAMIC_ASSERT_ (rax.exist ()) ;
+		return rax.self ;
 	}
 
 	imports PTR<VARXX_NODE> static_new_node (THIS_PACK &this_ ,const FLAG &guid) {
@@ -800,8 +831,9 @@ private:
 } ;
 
 template <class GUID>
-class GlobalStatic
-	:private Wrapped<> {
+class GlobalStatic :
+	delegate private Wrapped<> {
+private:
 	_STATIC_ASSERT_ (U::CONSTEXPR_COMPR_GT<GUID ,ZERO>::compile ()) ;
 
 public:
@@ -853,8 +885,8 @@ public:
 } ;
 
 template <class UNIT>
-class GlobalStatic<Singleton<UNIT>>
-	:private Wrapped<> {
+class GlobalStatic<Singleton<UNIT>> :
+	delegate private Wrapped<> {
 private:
 	struct THIS_PACK {
 		Singleton<UNIT> mValue ;
@@ -862,8 +894,15 @@ private:
 
 public:
 	imports Singleton<UNIT> &unique () {
+		auto rax = cache_unique ().share () ;
+		_DYNAMIC_ASSERT_ (rax.exist ()) ;
+		return rax->mValue ;
+	}
+
+private:
+	imports const StrongRef<THIS_PACK> &cache_unique () {
 		using R1X = REMOVE_POINTER_TYPE<decltype (_NULL_ (ARGV<WeakRef>::ID).intrusive ())> ;
-		auto &r1x = _CACHE_ ([&] () {
+		return _CACHE_ ([&] () {
 			auto &r2x = GlobalStaticEngine::static_unique () ;
 			ScopedGuard<Mutex> ANONYMOUS (r2x.mNodeMutex) ;
 			const auto r3x = TypeNameInvokeProc::invoke (ARGV<Singleton<UNIT>>::ID) ;
@@ -882,9 +921,6 @@ public:
 			const auto r5x = _POINTER_CAST_ (ARGV<R1X>::ID ,DEREF[rax].mValue) ;
 			return WeakRef (r5x).strong (ARGV<THIS_PACK>::ID) ;
 		}) ;
-		auto rcx = r1x.share () ;
-		_DYNAMIC_ASSERT_ (rcx.exist ()) ;
-		return rcx->mValue ;
 	}
 } ;
 
@@ -899,25 +935,25 @@ public:
 } ;
 #endif
 
-class RandomService
-	:private Proxy {
+class RandomService :
+	delegate private Proxy {
 private:
 	struct Private {
 		class Implement ;
 	} ;
 
-	class Abstract
-		:public Interface {
+	class Abstract :
+		delegate public Interface {
 	public:
-		virtual VAR entropy () const = 0 ;
-		virtual void reset_seed (const VAR &seed_) = 0 ;
-		virtual VAR random_value () = 0 ;
+		virtual VAR32 entropy () const = 0 ;
+		virtual void reset_seed (const VAR32 &seed_) = 0 ;
+		virtual VAR32 random_value () = 0 ;
 		virtual void random_skip (const LENGTH &len) = 0 ;
 	} ;
 
 private:
 	friend Singleton<RandomService> ;
-	Monostate<RecursiveMutex> mMutex ;
+	Mutable<RecursiveMutex> mMutex ;
 	StrongRef<Abstract> mThis ;
 
 public:
@@ -925,32 +961,33 @@ public:
 
 	VAR entropy () const {
 		ScopedGuard<RecursiveMutex> ANONYMOUS (mMutex) ;
-		return mThis->entropy () ;
+		return VAR (mThis->entropy ()) ;
 	}
 
 	void reset_seed (const VAR &seed_) {
 		ScopedGuard<RecursiveMutex> ANONYMOUS (mMutex) ;
-		return mThis->reset_seed (seed_) ;
+		return mThis->reset_seed (VAR32 (seed_)) ;
 	}
 
 	VAR random_value (const VAR &lb ,const VAR &rb) {
 		ScopedGuard<RecursiveMutex> ANONYMOUS (mMutex) ;
-		_DEBUG_ASSERT_ (lb <= rb) ;
-		const auto r1x = rb - lb + 1 ;
-		const auto r2x = MathProc::maxof (r1x ,VAR (1)) ;
-		const auto r3x = mThis->random_value () ;
-		return r3x % r2x + lb ;
+		const auto r1x = VAR64 (rb) - VAR64 (lb) ;
+		_DEBUG_ASSERT_ (r1x >= 0 && r1x <= VAR64 (VAR32_MAX)) ;
+		const auto r2x = r1x + 1 ;
+		const auto r3x = VAR64 (mThis->random_value ()) ;
+		return VAR (r3x % r2x + lb) ;
 	}
 
 	Array<VAR> random_value (const VAR &lb ,const VAR &rb ,const LENGTH &len) {
 		ScopedGuard<RecursiveMutex> ANONYMOUS (mMutex) ;
 		_DEBUG_ASSERT_ (lb <= rb) ;
 		Array<VAR> ret = Array<VAR> (len) ;
-		const auto r1x = rb - lb + 1 ;
-		const auto r2x = MathProc::maxof (r1x ,VAR (1)) ;
+		const auto r1x = VAR64 (rb) - VAR64 (lb) ;
+		_DEBUG_ASSERT_ (r1x >= 0 && r1x <= VAR64 (VAR32_MAX)) ;
+		const auto r2x = r1x + 1 ;
 		for (auto &&i : _RANGE_ (0 ,ret.length ())) {
-			const auto r3x = mThis->random_value () ;
-			ret[i] = r3x % r2x + lb ;
+			const auto r3x = VAR64 (mThis->random_value ()) ;
+			ret[i] = VAR (r3x % r2x + lb) ;
 		}
 		return _MOVE_ (ret) ;
 	}
@@ -991,10 +1028,16 @@ public:
 		}
 	}
 
+	CSC::BOOL random_draw (const VAL &possibility) {
+		const auto r1x = random_value (0 ,10000) ;
+		const auto r2x = VAL (r1x) * MathProc::inverse (VAL (10000)) ;
+		if (r2x < possibility)
+			return TRUE ;
+		return FALSE ;
+	}
+
 	String<STR> random_uuid () {
-		auto &r1x = _CACHE_ ([&] () {
-			return _PCSTR_ ("00000000-0000-0000-000000000000") ;
-		}) ;
+		const auto r1x = _PCSTR_ ("00000000-0000-0000-000000000000") ;
 		String<STR> ret = String<STR> (r1x.size ()) ;
 		INDEX iw = 0 ;
 		const auto r2x = random_value (0 ,35 ,28) ;
@@ -1020,11 +1063,6 @@ public:
 		if (iw < ret.size ())
 			ret[iw] = 0 ;
 		return _MOVE_ (ret) ;
-	}
-
-	void random_skip (const LENGTH &len) {
-		ScopedGuard<RecursiveMutex> ANONYMOUS (mMutex) ;
-		return mThis->random_skip (len) ;
 	}
 
 private:

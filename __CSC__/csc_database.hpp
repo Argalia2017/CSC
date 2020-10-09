@@ -17,31 +17,22 @@
 #include "csc_network.hpp"
 
 namespace CSC {
-class AbstractDatabase {
+class SQLDatabase {
 private:
-	class Abstract
-		:public Interface {
+	struct Private {
+		class Implement ;
+	} ;
+
+	class Abstract :
+		delegate public Interface {
 	public:
-		virtual void compute_load_data (AnyRef<> &holder) const = 0 ;
+		virtual void load_data () = 0 ;
 	} ;
 
 private:
-	PhanRef<const Abstract> mAbstract ;
-	AnyRef<> mHolder ;
+	StrongRef<Abstract> mThis ;
 
 public:
-	implicit AbstractDatabase () = default ;
-
-	explicit AbstractDatabase (PhanRef<const Abstract> &&abstract_) {
-		mAbstract = _MOVE_ (abstract_) ;
-	}
-
-	BOOL exist () const {
-		if (!mAbstract.exist ())
-			return FALSE ;
-		if (!mHolder.exist ())
-			return FALSE ;
-		return TRUE ;
-	}
+	implicit SQLDatabase () ;
 } ;
 } ;
