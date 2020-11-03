@@ -49,18 +49,10 @@ public:
 	template <class _ARG1 ,class = ENABLE_TYPE<U::CONSTEXPR_AND<U::CONSTEXPR_NOT<IS_PLACEHOLDER_HELP<_ARG1>> ,U::CONSTEXPR_NOT<IS_SAME_HELP<REMOVE_CVR_TYPE<_ARG1> ,Duration>>>>>
 	explicit Duration (_ARG1 &&time_) ;
 
-	implicit Duration (const Duration &that) {
-		mThis = that.mThis.share () ;
-	}
-
-	inline Duration &operator= (const Duration &that) {
-		if switch_once (TRUE) {
-			if (this == DEPTR[that])
-				discard ;
-			DEREF[this].~Duration () ;
-			new (this) Duration (_MOVE_ (that)) ;
-		}
-		return DEREF[this] ;
+	Duration share () const {
+		Duration ret ;
+		ret.mThis = mThis.share () ;
+		return _MOVE_ (ret) ;
 	}
 
 	template <class _RET = REMOVE_CVR_TYPE<typename Private::Implement>>
@@ -134,18 +126,10 @@ public:
 	template <class _ARG1 ,class = ENABLE_TYPE<U::CONSTEXPR_AND<U::CONSTEXPR_NOT<IS_PLACEHOLDER_HELP<_ARG1>> ,U::CONSTEXPR_NOT<IS_SAME_HELP<REMOVE_CVR_TYPE<_ARG1> ,TimePoint>>>>>
 	explicit TimePoint (_ARG1 &&time_) ;
 
-	implicit TimePoint (const TimePoint &that) {
-		mThis = that.mThis.share () ;
-	}
-
-	inline TimePoint &operator= (const TimePoint &that) {
-		if switch_once (TRUE) {
-			if (this == DEPTR[that])
-				discard ;
-			DEREF[this].~TimePoint () ;
-			new (this) TimePoint (_MOVE_ (that)) ;
-		}
-		return DEREF[this] ;
+	TimePoint share () const {
+		TimePoint ret ;
+		ret.mThis = mThis.share () ;
+		return _MOVE_ (ret) ;
 	}
 
 	template <class _RET = REMOVE_CVR_TYPE<typename Private::Implement>>
@@ -303,7 +287,7 @@ public:
 	}
 
 	template <class _RET = REMOVE_CVR_TYPE<UniqueLock>>
-	_RET watch (PhanRef<Mutex> &&mutex_) leftvalue {
+	_RET watch (REMOVE_CONST_TYPE<PhanRef<Mutex>> &&mutex_) leftvalue {
 		using R1X = DEPENDENT_TYPE<UniqueLock ,struct ANONYMOUS> ;
 		return R1X (_MOVE_ (mutex_) ,PhanRef<ConditionLock>::make (DEREF[this])) ;
 	}
@@ -395,7 +379,7 @@ private:
 public:
 	implicit Runnable () = delete ;
 
-	explicit Runnable (PhanRef<Binder> &&binder) {
+	explicit Runnable (REMOVE_CONST_TYPE<PhanRef<Binder>> &&binder) {
 		mBinder = _MOVE_ (binder) ;
 	}
 
@@ -514,7 +498,7 @@ private:
 
 	template <class _ARG1>
 	imports void template_write_typename_cv (TextWriter<STR> &writer ,const ARGVF<_ARG1> & ,const DEF<decltype (ARGVP1)> &) {
-		_STATIC_WARNING_ ("noop") ;
+		_NOOP_ () ;
 	}
 
 	template <class _ARG1 ,class = ENABLE_TYPE<IS_LVALUE_REFERENCE_HELP<_ARG1>>>
@@ -529,7 +513,7 @@ private:
 
 	template <class _ARG1>
 	imports void template_write_typename_ref (TextWriter<STR> &writer ,const ARGVF<_ARG1> & ,const DEF<decltype (ARGVP1)> &) {
-		_STATIC_WARNING_ ("noop") ;
+		_NOOP_ () ;
 	}
 
 	template <class _ARG1 ,class = ENABLE_TYPE<IS_POINTER_HELP<_ARG1>>>
@@ -698,7 +682,7 @@ private:
 	}
 
 	imports void template_write_typename_y (TextWriter<STR> &writer ,const ARGVF<ARGVS<>> &) {
-		_STATIC_WARNING_ ("noop") ;
+		_NOOP_ () ;
 	}
 
 	template <class _ARG1>
@@ -929,8 +913,7 @@ template <class CONT>
 class Coroutine {
 public:
 	implicit Coroutine () {
-		_STATIC_WARNING_ ("unimplemented") ;
-		_DYNAMIC_ASSERT_ (FALSE) ;
+		_UNIMPLEMENTED_ () ;
 	}
 } ;
 #endif
@@ -996,7 +979,7 @@ public:
 		return random_shuffle (count ,range_ ,BitSet<> (range_)) ;
 	}
 
-	BitSet<> random_shuffle (const LENGTH &count ,const LENGTH &range_ ,BitSet<> &&res) {
+	BitSet<> random_shuffle (const LENGTH &count ,const LENGTH &range_ ,REMOVE_CONST_TYPE<BitSet<>> &&res) {
 		_DEBUG_ASSERT_ (count >= 0 && count < range_) ;
 		_DEBUG_ASSERT_ (res.size () == range_) ;
 		BitSet<> ret = _MOVE_ (res) ;
@@ -1028,12 +1011,16 @@ public:
 		}
 	}
 
-	CSC::BOOL random_draw (const VAL &possibility) {
+	CSC::BOOL random_draw (const VAL32 &possibility) {
 		const auto r1x = random_value (0 ,10000) ;
-		const auto r2x = VAL (r1x) * MathProc::inverse (VAL (10000)) ;
+		const auto r2x = VAL32 (r1x) * MathProc::inverse (VAL32 (10000)) ;
 		if (r2x < possibility)
 			return TRUE ;
 		return FALSE ;
+	}
+
+	CSC::BOOL random_draw (const VAL64 &possibility) {
+		return random_draw (VAL32 (possibility)) ;
 	}
 
 	String<STR> random_uuid () {

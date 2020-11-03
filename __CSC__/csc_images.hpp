@@ -81,7 +81,7 @@ private:
 public:
 	implicit Iterator () = delete ;
 
-	explicit Iterator (PhanRef<const ArrayRange> &&base ,const INDEX &index ,const Array<LENGTH ,SIZE> &item) {
+	explicit Iterator (REMOVE_CONST_TYPE<PhanRef<const ArrayRange>> &&base ,const INDEX &index ,const Array<LENGTH ,SIZE> &item) {
 		mBase = _MOVE_ (base) ;
 		mIndex = index ;
 		mItem = item ;
@@ -147,7 +147,7 @@ public:
 
 	explicit Bitmap (const LENGTH &cx_ ,const LENGTH &cy_) :
 		delegate Bitmap (cx_ ,cy_ ,cx_ ,0) {
-		_STATIC_WARNING_ ("noop") ;
+		_NOOP_ () ;
 	}
 
 	explicit Bitmap (const LENGTH &cx_ ,const LENGTH &cy_ ,const LENGTH &cw_ ,const LENGTH &ck_) {
@@ -167,7 +167,7 @@ public:
 		reset () ;
 	}
 
-	explicit Bitmap (PhanBuffer<UNIT> &&image) {
+	explicit Bitmap (REMOVE_CONST_TYPE<PhanBuffer<UNIT>> &&image) {
 		mHeap = SharedRef<HEAP_PACK>::make () ;
 		mHeap->mWidth[0] = mImage.size () ;
 		mHeap->mWidth[1] = 1 ;
@@ -618,7 +618,7 @@ private:
 public:
 	implicit Row () = delete ;
 
-	explicit Row (PhanRef<BASE> &&base ,const INDEX &y) {
+	explicit Row (REMOVE_CONST_TYPE<PhanRef<BASE>> &&base ,const INDEX &y) {
 		mBase = _MOVE_ (base) ;
 		mY = y ;
 	}
@@ -633,8 +633,7 @@ template <class ITEM>
 class Graph {
 public:
 	implicit Graph () {
-		_STATIC_WARNING_ ("unimplemented") ;
-		_DYNAMIC_ASSERT_ (FALSE) ;
+		_UNIMPLEMENTED_ () ;
 	}
 } ;
 #endif
@@ -837,7 +836,7 @@ private:
 public:
 	implicit Row () = delete ;
 
-	explicit Row (PhanRef<BASE> &&base ,const INDEX &y) {
+	explicit Row (REMOVE_CONST_TYPE<PhanRef<BASE>> &&base ,const INDEX &y) {
 		mBase = _MOVE_ (base) ;
 		mY = y ;
 	}
@@ -857,7 +856,7 @@ private:
 public:
 	implicit NativeProxy () = delete ;
 
-	explicit NativeProxy (PhanRef<Image> &&base) {
+	explicit NativeProxy (REMOVE_CONST_TYPE<PhanRef<Image>> &&base) {
 		mKeep = UniqueRef<PhanRef<Image>> ([&] (PhanRef<Image> &me) {
 			me = _MOVE_ (base) ;
 		} ,[] (PhanRef<Image> &me) {

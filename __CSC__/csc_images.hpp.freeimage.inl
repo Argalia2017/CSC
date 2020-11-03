@@ -122,7 +122,7 @@ public:
 
 	void load_data (const LENGTH &cx_ ,const LENGTH &cy_) override {
 		const auto r1x = cx_ * cy_ * 3 ;
-		_STATIC_UNUSED_ (r1x) ;
+		_NOOP_ (r1x) ;
 		_DEBUG_ASSERT_ (r1x >= 0 && r1x < VAR32_MAX) ;
 		auto rax = UniqueRef<HFIBITMAP> ([&] (HFIBITMAP &me) {
 			me = api::FreeImage_Allocate (VAR32 (cx_) ,VAR32 (cy_) ,VAR32 (_SIZEOF_ (COLOR_BGR))) ;
@@ -248,7 +248,7 @@ public:
 
 	void load_data (const LENGTH &cx_ ,const LENGTH &cy_) override {
 		const auto r1x = cx_ * cy_ * 3 ;
-		_STATIC_UNUSED_ (r1x) ;
+		_NOOP_ (r1x) ;
 		_DEBUG_ASSERT_ (r1x >= 0 && r1x < VAR32_MAX) ;
 		auto rax = UniqueRef<HFIBITMAP> ([&] (HFIBITMAP &me) {
 			me = api::FreeImage_Allocate (VAR32 (cx_) ,VAR32 (cy_) ,VAR32 (_SIZEOF_ (COLOR_BGRA))) ;

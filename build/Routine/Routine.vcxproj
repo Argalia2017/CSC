@@ -68,6 +68,9 @@
     <None Include="..\..\..\..\..\Depends\__CSC__\csc_runtime.hpp.default.inl" />
     <None Include="..\..\..\..\..\Depends\__CSC__\csc_string.hpp.default.inl" />
     <None Include="..\..\..\..\..\Depends\__CSC__\csc_string.hpp.gbk.inl" />
+    <None Include="..\..\src\rust\rust.rs" />
+    <None Include="..\..\src\rust\rust_basic.rs" />
+    <None Include="..\..\src\rust\rust_core.rs" />
   </ItemGroup>
   <ItemGroup>
     <Natvis Include="..\..\..\..\..\Depends\__CSC__\cpp.natvis" />

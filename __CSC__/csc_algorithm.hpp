@@ -90,6 +90,21 @@ public:
 		mTable[ix].mWidth += mTable[iy].mWidth ;
 	}
 
+	BitSet<> filter (const INDEX &index) {
+		const auto r1x = map_of_closure () ;
+		const auto r2x = lead (index) ;
+		BitSet<> ret = BitSet<> (mTable.size ()) ;
+		for (auto &&i : _RANGE_ (0 ,mTable.length ())) {
+			if (mTable[i].mUp == VAR_NONE)
+				continue ;
+			INDEX ix = lead (i) ;
+			if (ix != r2x)
+				continue ;
+			ret[i] = TRUE ;
+		}
+		return _MOVE_ (ret) ;
+	}
+
 	Array<BitSet<>> closure () {
 		const auto r1x = map_of_closure () ;
 		Array<BitSet<>> ret = Array<BitSet<>> (r1x.length ()) ;
@@ -500,7 +515,7 @@ public:
 		delegate mDataSet (dataset) ,
 		delegate mCenter (center) ,
 		delegate mTolerance (1E-6) ,
-		delegate mInfinity (VAL_INF) {}
+		delegate mInfinity (VAL64_INF) {}
 
 	inline void operator() () {
 		prepare () ;
@@ -669,7 +684,7 @@ public:
 		delegate mContext (context_) ,
 		delegate mAdjacency (adjacency) ,
 		delegate mTolerance (1E-6) ,
-		delegate mInfinity (VAL_INF) {}
+		delegate mInfinity (VAL64_INF) {}
 
 	inline void operator() () {
 		prepare () ;

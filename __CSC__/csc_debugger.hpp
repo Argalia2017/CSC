@@ -192,7 +192,7 @@ public:
 
 private:
 	void template_write (TextWriter<STR> &writer ,const Tuple<> &binder) const {
-		_STATIC_WARNING_ ("noop") ;
+		_NOOP_ () ;
 	}
 
 	template <class... _ARGS>

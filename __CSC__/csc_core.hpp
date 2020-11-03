@@ -93,32 +93,10 @@ static constexpr auto VAL32_MAX = VAL32 (3.402823466E+38) ;
 static constexpr auto VAL32_MIN = VAL32 (1.175494351E-38) ;
 static constexpr auto VAL32_EPS = VAL32 (1.192092896E-07) ;
 static constexpr auto VAL32_INF = api::numeric_limits<VAL32>::infinity () ;
-static constexpr auto VAL32_NAN = api::numeric_limits<VAL32>::quiet_NaN () ;
 static constexpr auto VAL64_MAX = VAL64 (1.7976931348623158E+308) ;
 static constexpr auto VAL64_MIN = VAL64 (2.2250738585072014E-308) ;
 static constexpr auto VAL64_EPS = VAL64 (2.2204460492503131E-016) ;
 static constexpr auto VAL64_INF = api::numeric_limits<VAL64>::infinity () ;
-static constexpr auto VAL64_NAN = api::numeric_limits<VAL64>::quiet_NaN () ;
-
-#ifdef __CSC_CONFIG_VAL32__
-using VAL = VAL32 ;
-
-static constexpr auto VAL_MAX = VAL32_MAX ;
-static constexpr auto VAL_MIN = VAL32_MIN ;
-static constexpr auto VAL_EPS = VAL32_EPS ;
-static constexpr auto VAL_INF = VAL32_INF ;
-static constexpr auto VAL_NAN = VAL32_NAN ;
-#endif
-
-#ifdef __CSC_CONFIG_VAL64__
-using VAL = VAL64 ;
-
-static constexpr auto VAL_MAX = VAL64_MAX ;
-static constexpr auto VAL_MIN = VAL64_MIN ;
-static constexpr auto VAL_EPS = VAL64_EPS ;
-static constexpr auto VAL_INF = VAL64_INF ;
-static constexpr auto VAL_NAN = VAL64_NAN ;
-#endif
 
 using VALX = long double ;
 
@@ -147,6 +125,9 @@ using ARR = DEF<UNIT[]> ;
 template <class UNIT>
 using ARR = DEF<UNIT[0]> ;
 #endif
+
+template <class _ARG1>
+using Ref = DEF<_ARG1 &&> ;
 
 using BYTE = api::uint8_t ;
 using WORD = api::uint16_t ;
@@ -1531,6 +1512,15 @@ using U::CAST_TRAITS_TYPE ;
 using U::IS_ALL_SAME_HELP ;
 using U::IS_ANY_SAME_HELP ;
 
+template <class _ARG1>
+using XRef = DEF<REMOVE_CVR_TYPE<_ARG1> &> ;
+
+template <class _ARG1>
+using CRef = DEF<const REMOVE_CVR_TYPE<_ARG1> &> ;
+
+template <class _ARG1>
+using PRef = DEF<REMOVE_CVR_TYPE<_ARG1> &&> ;
+
 namespace U {
 template <class _ARG1 ,class _ARG2>
 struct CONSTEXPR_MAX {
@@ -1563,7 +1553,7 @@ struct CONSTEXPR_RANGE_CHECK {
 
 template <>
 class ARGV<ARGVP<ZERO>> {
-	_STATIC_WARNING_ ("noop") ;
+private:
 } ;
 
 template <class UNIT>
@@ -1586,7 +1576,7 @@ static constexpr auto ARGVP9 = ARGV<ARGVP<ARGC<9>>> {} ;
 static constexpr auto ARGVPX = ARGV<ARGVP<ARGC<10>>> {} ;
 
 namespace U {
-struct OPERATOR_FOR_ONCE {
+struct OPERATOR_SWITCH_ONCE {
 	inline BOOL operator() (const BOOL &) const {
 		return FALSE ;
 	}
@@ -1598,7 +1588,7 @@ struct OPERATOR_FOR_ONCE {
 } ;
 } ;
 
-static constexpr auto FOR_ONCE = U::OPERATOR_FOR_ONCE {} ;
+static constexpr auto SWITCH_ONCE = U::OPERATOR_SWITCH_ONCE {} ;
 
 namespace U {
 struct OPERATOR_DEREF {
@@ -1634,6 +1624,15 @@ struct OPERATOR_PTRTOARR {
 } ;
 
 static constexpr auto PTRTOARR = U::OPERATOR_PTRTOARR {} ;
+
+inline void _NOOP_ () {
+	_STATIC_ASSERT_ (TRUE) ;
+}
+
+template <class _ARG1>
+inline void _NOOP_ (_ARG1 &) {
+	_STATIC_ASSERT_ (TRUE) ;
+}
 
 template <class _ARG1>
 inline _ARG1 &_NULL_ (const ARGVF<_ARG1> &) {
@@ -1694,16 +1693,6 @@ inline void _ZERO_ (_ARG1 &object) {
 }
 
 template <class _ARG1>
-inline REMOVE_CVR_TYPE<_ARG1> _COPY_ (const _ARG1 &object) {
-	return object ;
-}
-
-template <class _ARG1>
-inline REMOVE_REFERENCE_TYPE<_ARG1> &&_MOVE_ (_ARG1 &&object) {
-	return static_cast<REMOVE_REFERENCE_TYPE<_ARG1> &&> (object) ;
-}
-
-template <class _ARG1>
 inline _ARG1 &_FORWARD_ (const ARGVF<_ARG1> & ,REMOVE_CVR_TYPE<_ARG1> &object) {
 	return static_cast<_ARG1 &> (object) ;
 }
@@ -1722,6 +1711,16 @@ template <class _ARG1>
 inline _ARG1 &&_FORWARD_ (const ARGVF<_ARG1> & ,REMOVE_CVR_TYPE<_ARG1> &&object) {
 	_STATIC_ASSERT_ (U::CONSTEXPR_NOT<IS_LVALUE_REFERENCE_HELP<_ARG1>>::compile ()) ;
 	return static_cast<_ARG1 &&> (object) ;
+}
+
+template <class _ARG1>
+inline REMOVE_CVR_TYPE<_ARG1> _COPY_ (const _ARG1 &object) {
+	return object ;
+}
+
+template <class _ARG1>
+inline REMOVE_REFERENCE_TYPE<_ARG1> &&_MOVE_ (_ARG1 &&object) {
+	return static_cast<REMOVE_REFERENCE_TYPE<_ARG1> &&> (object) ;
 }
 
 template <class _ARG1>
@@ -1775,6 +1774,26 @@ inline void _CREATE_ (const PTR<TEMP<_ARG1>> &address ,_ARGS &&...initval) {
 	_ZERO_ (DEREF[address]) ;
 	auto &r1x = _CAST_ (ARGV<_ARG1>::ID ,DEREF[address]) ;
 	new (DEPTR[r1x]) _ARG1 (_FORWARD_ (ARGV<_ARGS &&>::ID ,initval)...) ;
+}
+
+template <class _ARG1>
+inline void _RECREATE_ (const PTR<_ARG1> &address ,const REMOVE_CONST_TYPE<_ARG1> &that) {
+	_STATIC_ASSERT_ (IS_COPY_CONSTRUCTIBLE_HELP<_ARG1>::compile ()) ;
+	_STATIC_ASSERT_ (U::CONSTEXPR_NOT<IS_ARRAY_HELP<_ARG1>>::compile ()) ;
+	if (address == NULL)
+		return ;
+	DEREF[address].~_ARG1 () ;
+	new (address) _ARG1 (_MOVE_ (that)) ;
+}
+
+template <class _ARG1>
+inline void _RECREATE_ (const PTR<_ARG1> &address ,REMOVE_CONST_TYPE<_ARG1> &&that) {
+	_STATIC_ASSERT_ (IS_MOVE_CONSTRUCTIBLE_HELP<_ARG1>::compile ()) ;
+	_STATIC_ASSERT_ (U::CONSTEXPR_NOT<IS_ARRAY_HELP<_ARG1>>::compile ()) ;
+	if (address == NULL)
+		return ;
+	DEREF[address].~_ARG1 () ;
+	new (address) _ARG1 (_MOVE_ (that)) ;
 }
 
 template <class _ARG1>
@@ -2071,18 +2090,20 @@ public:
 } ;
 
 template <class>
-class TypeInfoBase ;
+class Class ;
 
 template <class _ARG1>
 inline FLAG _TYPEMID_ (const ARGVF<_ARG1> &) {
-	using R1X = DEPENDENT_TYPE<TypeInfoBase<REMOVE_CVR_TYPE<_ARG1>> ,struct ANONYMOUS> ;
-	return R1X ().type_mid () ;
+	using R1X = DEPENDENT_TYPE<Class<REMOVE_CVR_TYPE<_ARG1>> ,struct ANONYMOUS> ;
+	const auto r1x = R1X () ;
+	return r1x.type_mid () ;
 }
 
 template <class _ARG1>
 inline TYPEABI _TYPEABI_ (const ARGVF<_ARG1> &) {
-	using R1X = DEPENDENT_TYPE<TypeInfoBase<REMOVE_CVR_TYPE<_ARG1>> ,struct ANONYMOUS> ;
-	return R1X ().type_abi () ;
+	using R1X = DEPENDENT_TYPE<Class<REMOVE_CVR_TYPE<_ARG1>> ,struct ANONYMOUS> ;
+	const auto r1x = R1X () ;
+	return r1x.type_abi () ;
 }
 
 template <class UNIT = NONE>
@@ -2279,7 +2300,7 @@ public:
 	template <class _ARG1 ,class... _ARGS>
 	explicit Plain (const ARGVF<_ARG1> & ,const _ARGS &...text) :
 		delegate Plain (cache_text (ARGV<_ARG1>::ID ,text...)) {
-		_STATIC_WARNING_ ("noop") ;
+		_NOOP_ () ;
 	}
 
 	LENGTH size () const {
@@ -2287,7 +2308,6 @@ public:
 	}
 
 	const ARR<REAL> &to () const leftvalue {
-		_STATIC_WARNING_ ("mark") ;
 		return DEREF[mPlain] ;
 	}
 
@@ -2368,12 +2388,27 @@ private:
 } ;
 
 template <class UNIT>
-class TypeInfoBase :
-	delegate private TypeInfo {
+class Class final :
+	delegate public TypeInfo {
 private:
 	_STATIC_ASSERT_ (IS_SAME_HELP<REMOVE_CVR_TYPE<UNIT> ,UNIT>::compile ()) ;
 
 public:
+	implicit Class () = default ;
+
+	implicit Class (const Class &that) noexcept {
+		_NOOP_ () ;
+	}
+
+	inline Class &operator= (const Class &that) leftvalue noexcept {
+		if switch_once (TRUE) {
+			if (this == DEPTR[that])
+				discard ;
+			_RECREATE_ (this ,_MOVE_ (that)) ;
+		}
+		return DEREF[this] ;
+	}
+
 	FLAG type_mid () const override {
 		return _CAST_ (ARGV<FLAG>::ID ,DEREF[this]) ;
 	}
@@ -2401,13 +2436,18 @@ public:
 		mWhat = DEPTR[what_.self] ;
 	}
 
-	implicit Exception (const Exception &) = default ;
+	implicit Exception (const Exception &that) noexcept {
+		mWhat = that.mWhat ;
+	}
 
-	inline Exception &operator= (const Exception &) = default ;
-
-	implicit Exception (Exception &&) = default ;
-
-	inline Exception &operator= (Exception &&) = default ;
+	inline Exception &operator= (const Exception &that) leftvalue noexcept {
+		if switch_once (TRUE) {
+			if (this == DEPTR[that])
+				discard ;
+			_RECREATE_ (this ,_MOVE_ (that)) ;
+		}
+		return DEREF[this] ;
+	}
 
 	const ARR<STR> &what () const leftvalue {
 		return DEREF[mWhat] ;
@@ -2417,6 +2457,10 @@ public:
 		throw DEREF[this] ;
 	}
 } ;
+
+inline void _UNIMPLEMENTED_ () {
+	_DYNAMIC_ASSERT_ (FALSE) ;
+}
 
 template <class _ARG1>
 inline RESULT_OF_TYPE<_ARG1 ,ARGVS<>> _CALL_ (const _ARG1 &proc) {
@@ -2438,7 +2482,7 @@ inline void _CALL_TRY_ (_ARG1 &&proc_one ,_ARGS &&...proc_rest) {
 		proc_one () ;
 		return ;
 	} catch (const Exception &e) {
-		_STATIC_UNUSED_ (e) ;
+		_NOOP_ (e) ;
 	} catch (...) {
 		_DYNAMIC_ASSERT_ (FALSE) ;
 	}

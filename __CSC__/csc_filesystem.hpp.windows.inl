@@ -757,11 +757,11 @@ public:
 	implicit Implement () = default ;
 
 	void startup () override {
-		_STATIC_WARNING_ ("noop") ;
+		_NOOP_ () ;
 	}
 
 	void shutdown () override {
-		_STATIC_WARNING_ ("noop") ;
+		_NOOP_ () ;
 	}
 } ;
 

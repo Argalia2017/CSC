@@ -43,7 +43,7 @@ public:
 		mName = NULL ;
 		mAddress = NULL ;
 		mWatch = Function<void (UNIT &)> ([] (UNIT &) {
-			_STATIC_WARNING_ ("noop") ;
+			_NOOP_ () ;
 		}) ;
 	} ;
 } ;
@@ -59,8 +59,7 @@ private:
 
 public:
 	implicit Integer () {
-		_STATIC_WARNING_ ("unimplemented") ;
-		_DYNAMIC_ASSERT_ (FALSE) ;
+		_UNIMPLEMENTED_ () ;
 	}
 } ;
 #endif
@@ -179,12 +178,11 @@ public:
 		that.m_fake ().friend_copy (DEPTR[mVariant]) ;
 	}
 
-	inline Variant &operator= (const Variant &that) {
+	inline Variant &operator= (const Variant &that) leftvalue {
 		if switch_once (TRUE) {
 			if (this == DEPTR[that])
 				discard ;
-			DEREF[this].~Variant () ;
-			new (this) Variant (_MOVE_ (that)) ;
+			_RECREATE_ (this ,_MOVE_ (that)) ;
 		}
 		return DEREF[this] ;
 	}
@@ -196,12 +194,11 @@ public:
 		that.m_fake ().friend_move (DEPTR[mVariant]) ;
 	}
 
-	inline Variant &operator= (Variant &&that) noexcept {
+	inline Variant &operator= (Variant &&that) leftvalue noexcept {
 		if switch_once (TRUE) {
 			if (this == DEPTR[that])
 				discard ;
-			DEREF[this].~Variant () ;
-			new (this) Variant (_MOVE_ (that)) ;
+			_RECREATE_ (this ,_MOVE_ (that)) ;
 		}
 		return DEREF[this] ;
 	}
@@ -288,7 +285,7 @@ private:
 
 	template <class... _ARGS>
 	void template_construct (const INDEX &index ,const ARGVF<ARGVS<>> & ,_ARGS &&...initval) {
-		_STATIC_WARNING_ ("noop") ;
+		_NOOP_ () ;
 	}
 
 	template <class _ARG1 ,class... _ARGS>
@@ -549,7 +546,8 @@ template <class... UNITS>
 using TupleBinder = Tuple<UNITS &...> ;
 
 template <class UNIT>
-class Atomic {
+class Atomic :
+	delegate Proxy {
 private:
 	_STATIC_ASSERT_ (IS_BYTE_XYZ_HELP<UNIT>::compile ()) ;
 
@@ -630,7 +628,7 @@ public:
 	explicit AtomicVar (const VAR &that) {
 		const auto r1x = _BITWISE_CAST_ (ARGV<BASE_TYPE>::ID ,that) ;
 		const auto r2x = mValue.compare_exchange (0 ,r1x) ;
-		_STATIC_UNUSED_ (r2x) ;
+		_NOOP_ (r2x) ;
 		_DEBUG_ASSERT_ (r2x == r1x) ;
 	}
 
@@ -682,7 +680,7 @@ public:
 		const auto r1x = _ADDRESS_ (that) ;
 		const auto r2x = _BITWISE_CAST_ (ARGV<BASE_TYPE>::ID ,r1x) ;
 		const auto r3x = mValue.compare_exchange (0 ,r2x) ;
-		_STATIC_UNUSED_ (r3x) ;
+		_NOOP_ (r3x) ;
 		_DEBUG_ASSERT_ (r3x == r2x) ;
 	}
 
@@ -785,7 +783,7 @@ private:
 public:
 	implicit WeakRef () :
 		delegate WeakRef (ARGVP0) {
-		_STATIC_WARNING_ ("noop") ;
+		_NOOP_ () ;
 	}
 
 	explicit WeakRef (const PTR<Holder> &pointer) :
@@ -813,12 +811,11 @@ public:
 	implicit WeakRef (const WeakRef &that) :
 		delegate WeakRef (that.share ()) {}
 
-	inline WeakRef &operator= (const WeakRef &that) {
+	inline WeakRef &operator= (const WeakRef &that) leftvalue {
 		if switch_once (TRUE) {
 			if (this == DEPTR[that])
 				discard ;
-			DEREF[this].~WeakRef () ;
-			new (this) WeakRef (_MOVE_ (that)) ;
+			_RECREATE_ (this ,_MOVE_ (that)) ;
 		}
 		return DEREF[this] ;
 	}
@@ -835,12 +832,11 @@ public:
 		release (r3x) ;
 	}
 
-	inline WeakRef &operator= (WeakRef &&that) noexcept {
+	inline WeakRef &operator= (WeakRef &&that) leftvalue noexcept {
 		if switch_once (TRUE) {
 			if (this == DEPTR[that])
 				discard ;
-			DEREF[this].~WeakRef () ;
-			new (this) WeakRef (_MOVE_ (that)) ;
+			_RECREATE_ (this ,_MOVE_ (that)) ;
 		}
 		return DEREF[this] ;
 	}
@@ -951,13 +947,13 @@ private:
 public:
 	void lock () const {
 		const auto r1x = mSelf.self.increase () ;
-		_STATIC_UNUSED_ (r1x) ;
+		_NOOP_ (r1x) ;
 		_DEBUG_ASSERT_ (r1x >= 1) ;
 	}
 
 	void unlock () const {
 		const auto r1x = mSelf.self.decrease () ;
-		_STATIC_UNUSED_ (r1x) ;
+		_NOOP_ (r1x) ;
 		_DEBUG_ASSERT_ (r1x >= 0) ;
 	}
 } ;
@@ -990,12 +986,12 @@ public:
 
 	void weak_aquire () override {
 		const auto r1x = mWeakCounter.increase () ;
-		_STATIC_UNUSED_ (r1x) ;
+		_NOOP_ (r1x) ;
 		_DEBUG_ASSERT_ (r1x >= 1) ;
 		if (r1x > 1)
 			return ;
 		const auto r2x = DEREF[mStrongPointer].mSoftCounter.increase () ;
-		_STATIC_UNUSED_ (r2x) ;
+		_NOOP_ (r2x) ;
 		_DEBUG_ASSERT_ (r2x >= 1) ;
 	}
 
@@ -1018,7 +1014,7 @@ public:
 		if (r1x < 0)
 			return ;
 		const auto r2x = DEREF[mStrongPointer].mStrongCounter.increase () ;
-		_STATIC_UNUSED_ (r2x) ;
+		_NOOP_ (r2x) ;
 		_DEBUG_ASSERT_ (r2x >= 1) ;
 		if (r2x > 1)
 			return ;
@@ -1041,7 +1037,7 @@ public:
 	}
 
 	void wait_yield () override {
-		_STATIC_WARNING_ () ;
+		_NOOP_ () ;
 	}
 
 	void soft_destroy () noexcept override {
@@ -1052,7 +1048,7 @@ public:
 	}
 
 	void destroy () noexcept override {
-		const auto r1x = _FORWARD_ (ARGV<PTR<NONE>>::ID ,this) ;
+		const auto r1x = _POINTER_CAST_ (ARGV<NONE>::ID ,this) ;
 		DEREF[this].~ImplHolder () ;
 		GlobalHeap::free (r1x) ;
 	}
@@ -1072,7 +1068,7 @@ private:
 public:
 	implicit StrongRef () :
 		delegate StrongRef (ARGVP0) {
-		_STATIC_WARNING_ ("noop") ;
+		_NOOP_ () ;
 	}
 
 	explicit StrongRef (const PTR<Holder> &pointer) :
@@ -1090,12 +1086,12 @@ public:
 	template <class _ARG1 ,class = ENABLE_TYPE<IS_BASE_OF_HELP<UNIT ,_ARG1>>>
 	implicit StrongRef (const StrongRef<_ARG1> &that) :
 		delegate StrongRef (that.recast (ARGV<UNIT>::ID)) {
-		_STATIC_WARNING_ ("noop") ;
+		_NOOP_ () ;
 	}
 
 	implicit StrongRef (const WeakRef &that) :
 		delegate StrongRef (that.strong (ARGV<UNIT>::ID)) {
-		_STATIC_WARNING_ ("noop") ;
+		_NOOP_ () ;
 	}
 
 	implicit ~StrongRef () noexcept {
@@ -1121,12 +1117,11 @@ public:
 		release (r3x) ;
 	}
 
-	inline StrongRef &operator= (StrongRef &&that) noexcept {
+	inline StrongRef &operator= (StrongRef &&that) leftvalue noexcept {
 		if switch_once (TRUE) {
 			if (this == DEPTR[that])
 				discard ;
-			DEREF[this].~StrongRef () ;
-			new (this) StrongRef (_MOVE_ (that)) ;
+			_RECREATE_ (this ,_MOVE_ (that)) ;
 		}
 		return DEREF[this] ;
 	}
@@ -1792,7 +1787,7 @@ public:
 	}
 
 	void clean () noexcept override {
-		_STATIC_WARNING_ ("noop") ;
+		_NOOP_ () ;
 	}
 
 	void soft_destroy () noexcept override {
@@ -1945,7 +1940,7 @@ public:
 	}
 
 	template <class _RET = REMOVE_CVR_TYPE<typename Private::Member>>
-	inline _RET operator() (PhanRef<CONT> &&context_) const {
+	inline _RET operator() (REMOVE_CONST_TYPE<PhanRef<CONT>> &&context_) const {
 		using R1X = typename DEPENDENT_TYPE<Private ,struct ANONYMOUS>::Member ;
 		return R1X (PhanRef<const Serializer>::make (DEREF[this]) ,_MOVE_ (context_)) ;
 	}
@@ -1961,7 +1956,7 @@ private:
 public:
 	implicit Member () = delete ;
 
-	explicit Member (PhanRef<const Serializer> &&base ,PhanRef<CONT> &&context_) {
+	explicit Member (REMOVE_CONST_TYPE<PhanRef<const Serializer>> &&base ,REMOVE_CONST_TYPE<PhanRef<CONT>> &&context_) {
 		mBase = _MOVE_ (base) ;
 		mContext = _MOVE_ (context_) ;
 	}
@@ -1979,7 +1974,7 @@ public:
 	implicit ImplHolder () = delete ;
 
 	explicit ImplHolder (const ARGVF<ARGVS<UNITS_...>> &) {
-		_STATIC_WARNING_ ("noop") ;
+		_NOOP_ () ;
 	}
 
 	void compute_visit (UNIT &visitor ,CONT &context_) const override {
@@ -1988,7 +1983,7 @@ public:
 
 private:
 	void template_visit (UNIT &visitor ,CONT &context_ ,const ARGVF<ARGVS<>> &) const {
-		_STATIC_WARNING_ ("noop") ;
+		_NOOP_ () ;
 	}
 
 	template <class _ARG1>

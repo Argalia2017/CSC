@@ -167,10 +167,6 @@ public:
 	template <class _ARG1>
 	imports ARRAY3<_ARG1> sort (const _ARG1 &list_one ,const _ARG1 &list_two ,const _ARG1 &list_three) ;
 
-	imports BOOL is_nan (const VAL32 &x) ;
-
-	imports BOOL is_nan (const VAL64 &x) ;
-
 	imports BOOL is_infinite (const VAL32 &x) ;
 
 	imports BOOL is_infinite (const VAL64 &x) ;
@@ -485,30 +481,13 @@ inline exports ARRAY3<DATA> MathStaticProc::static_ieee754_encode_part (const AR
 	return _MOVE_ (ret) ;
 }
 
-inline exports BOOL MathProc::is_nan (const VAL32 &x) {
-	const auto r1x = _BITWISE_CAST_ (ARGV<CHAR>::ID ,x) ;
-	if ((r1x & CHAR (0X7F800000)) != CHAR (0X7F800000))
-		return FALSE ;
-	if ((r1x & CHAR (0X007FFFFF)) == 0)
-		return FALSE ;
-	return TRUE ;
-}
-
-inline exports BOOL MathProc::is_nan (const VAL64 &x) {
-	const auto r1x = _BITWISE_CAST_ (ARGV<DATA>::ID ,x) ;
-	if ((r1x & DATA (0X7FF0000000000000)) != DATA (0X7FF0000000000000))
-		return FALSE ;
-	if ((r1x & DATA (0X000FFFFFFFFFFFFF)) == 0)
-		return FALSE ;
-	return TRUE ;
-}
-
 inline exports BOOL MathProc::is_infinite (const VAL32 &x) {
 	const auto r1x = _BITWISE_CAST_ (ARGV<CHAR>::ID ,x) ;
 	if ((r1x & CHAR (0X7F800000)) != CHAR (0X7F800000))
 		return FALSE ;
+	//@error: nan is a deprecated magic number
 	if ((r1x & CHAR (0X007FFFFF)) != 0)
-		return FALSE ;
+		return TRUE ;
 	return TRUE ;
 }
 
@@ -516,8 +495,9 @@ inline exports BOOL MathProc::is_infinite (const VAL64 &x) {
 	const auto r1x = _BITWISE_CAST_ (ARGV<DATA>::ID ,x) ;
 	if ((r1x & DATA (0X7FF0000000000000)) != DATA (0X7FF0000000000000))
 		return FALSE ;
+	//@error: nan is a deprecated magic number
 	if ((r1x & DATA (0X000FFFFFFFFFFFFF)) != 0)
-		return FALSE ;
+		return TRUE ;
 	return TRUE ;
 }
 
