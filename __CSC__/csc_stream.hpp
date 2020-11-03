@@ -50,7 +50,7 @@ public:
 		reset () ;
 	}
 
-	explicit ByteReader (PhanBuffer<const REAL> &&stream) {
+	explicit ByteReader (REMOVE_CONST_TYPE<PhanBuffer<const REAL>> &&stream) {
 		mHeap = SharedRef<HEAP_PACK>::make () ;
 		mStream = _MOVE_ (stream) ;
 		reset () ;
@@ -304,7 +304,7 @@ public:
 	}
 
 	void scans () {
-		_STATIC_WARNING_ ("noop") ;
+		_NOOP_ () ;
 	}
 
 	template <class _ARG1 ,class... _ARGS>
@@ -367,7 +367,7 @@ private:
 public:
 	implicit Attribute () = delete ;
 
-	explicit Attribute (PhanRef<BASE> &&base) {
+	explicit Attribute (REMOVE_CONST_TYPE<PhanRef<BASE>> &&base) {
 		mBase = _MOVE_ (base) ;
 	}
 
@@ -425,7 +425,7 @@ public:
 		reset () ;
 	}
 
-	explicit ByteWriter (PhanBuffer<REAL> &&stream) {
+	explicit ByteWriter (REMOVE_CONST_TYPE<PhanBuffer<REAL>> &&stream) {
 		mHeap = SharedRef<HEAP_PACK>::make () ;
 		mStream = _MOVE_ (stream) ;
 		reset () ;
@@ -661,7 +661,7 @@ public:
 	}
 
 	void prints () {
-		_STATIC_WARNING_ ("noop") ;
+		_NOOP_ () ;
 	}
 
 	template <class _ARG1 ,class... _ARGS>
@@ -696,7 +696,7 @@ public:
 		const auto r1x = attr () ;
 		auto rax = share () ;
 		for (auto &&i : _RANGE_ (0 ,rax.size () - rax.length ())) {
-			_STATIC_UNUSED_ (i) ;
+			_NOOP_ (i) ;
 			rax << r1x.varify_ending_item () ;
 		}
 		DEREF[this] = rax.share () ;
@@ -718,7 +718,7 @@ private:
 public:
 	implicit Attribute () = delete ;
 
-	explicit Attribute (PhanRef<BASE> &&base) {
+	explicit Attribute (REMOVE_CONST_TYPE<PhanRef<BASE>> &&base) {
 		mBase = _MOVE_ (base) ;
 	}
 
@@ -784,7 +784,7 @@ public:
 		reset () ;
 	}
 
-	explicit TextReader (PhanBuffer<const REAL> &&stream) {
+	explicit TextReader (REMOVE_CONST_TYPE<PhanBuffer<const REAL>> &&stream) {
 		const auto r1x = attr () ;
 		mHeap = SharedRef<HEAP_PACK>::make () ;
 		r1x.enable_endian (FALSE) ;
@@ -972,8 +972,6 @@ public:
 		if switch_once (TRUE) {
 			if (MathProc::is_infinite (r1x))
 				discard ;
-			if (MathProc::is_nan (r1x))
-				discard ;
 			_DYNAMIC_ASSERT_ (r1x >= VAL32_MIN && r1x <= VAL32_MAX) ;
 		}
 		data = VAL32 (r1x) ;
@@ -1021,7 +1019,8 @@ public:
 			_DYNAMIC_ASSERT_ (rax == REAL ('a')) ;
 			read (rax) ;
 			_DYNAMIC_ASSERT_ (rax == REAL ('n')) ;
-			data = VAL64_NAN ;
+			//@error: nan is a deprecated magic number
+			data = 0 ;
 		}
 		if switch_once (fax) {
 			if (!(rax == REAL ('N')))
@@ -1030,7 +1029,8 @@ public:
 			_DYNAMIC_ASSERT_ (rax == REAL ('A')) ;
 			read (rax) ;
 			_DYNAMIC_ASSERT_ (rax == REAL ('N')) ;
-			data = VAL64_NAN ;
+			//@error: nan is a deprecated magic number
+			data = 0 ;
 		}
 		if switch_once (fax) {
 			const auto r3x = r1x.varify_number_item (rax) ;
@@ -1120,7 +1120,7 @@ public:
 	}
 
 	void scans () {
-		_STATIC_WARNING_ ("noop") ;
+		_NOOP_ () ;
 	}
 
 	template <class _ARG1 ,class... _ARGS>
@@ -1291,7 +1291,7 @@ private:
 
 	template <class _ARG1>
 	void template_read_bom (const ARGVF<_ARG1> &) {
-		_STATIC_WARNING_ ("noop") ;
+		_NOOP_ () ;
 	}
 
 	void template_read_bom (const ARGVF<STRU8> &) {
@@ -1358,7 +1358,7 @@ private:
 public:
 	implicit Attribute () = delete ;
 
-	explicit Attribute (PhanRef<BASE> &&base) {
+	explicit Attribute (REMOVE_CONST_TYPE<PhanRef<BASE>> &&base) {
 		mBase = _MOVE_ (base) ;
 	}
 
@@ -1527,7 +1527,7 @@ public:
 		reset () ;
 	}
 
-	explicit TextWriter (PhanBuffer<REAL> &&stream) {
+	explicit TextWriter (REMOVE_CONST_TYPE<PhanBuffer<REAL>> &&stream) {
 		const auto r1x = attr () ;
 		mHeap = SharedRef<HEAP_PACK>::make () ;
 		r1x.enable_escape (FALSE) ;
@@ -1659,41 +1659,42 @@ public:
 	}
 
 	void write (const VAL32 &data) {
+		static constexpr auto M_PINF = PACK<REAL[4]> ({
+			REAL ('+') ,REAL ('i') ,REAL ('n') ,REAL ('f')}) ;
+		static constexpr auto M_MINF = PACK<REAL[4]> ({
+			REAL ('-') ,REAL ('i') ,REAL ('n') ,REAL ('f')}) ;
 		static constexpr auto M_NAN = PACK<REAL[3]> ({
 			REAL ('n') ,REAL ('a') ,REAL ('n')}) ;
-		static constexpr auto M_INF = PACK<REAL[4]> ({
-			REAL ('+') ,REAL ('i') ,REAL ('n') ,REAL ('f')}) ;
-		static constexpr auto M_SINF = PACK<REAL[4]> ({
-			REAL ('-') ,REAL ('i') ,REAL ('n') ,REAL ('f')}) ;
 		const auto r1x = attr () ;
+		const auto r2x = MathProc::is_infinite (data) ;
 		auto fax = TRUE ;
 		if switch_once (fax) {
-			if (!MathProc::is_nan (data))
+			if (!r2x)
+				discard ;
+			if (!(data > 0))
+				discard ;
+			write (PhanBuffer<const REAL>::make (M_PINF.mP1)) ;
+		}
+		if switch_once (fax) {
+			if (!r2x)
+				discard ;
+			if (!(data < 0))
+				discard ;
+			write (PhanBuffer<const REAL>::make (M_MINF.mP1)) ;
+		}
+		if switch_once (fax) {
+			if (!r2x)
 				discard ;
 			write (PhanBuffer<const REAL>::make (M_NAN.mP1)) ;
 		}
 		if switch_once (fax) {
-			if (!MathProc::is_infinite (data))
-				discard ;
-			if (!(data > 0))
-				discard ;
-			write (PhanBuffer<const REAL>::make (M_INF.mP1)) ;
-		}
-		if switch_once (fax) {
-			if (!MathProc::is_infinite (data))
-				discard ;
-			if (!(data < 0))
-				discard ;
-			write (PhanBuffer<const REAL>::make (M_SINF.mP1)) ;
-		}
-		if switch_once (fax) {
 			auto rax = Buffer<REAL ,ARGC<256>> () ;
 			INDEX iw = rax.size () ;
-			const auto r2x = r1x.varify_val32_precision () ;
-			const auto r3x = PhanBuffer<REAL>::make (rax) ;
-			compute_write_number (data ,r2x ,r3x ,iw) ;
-			const auto r4x = PhanBuffer<const REAL>::make (PTRTOARR[DEPTR[rax.self[iw]]] ,(rax.size () - iw)) ;
-			write (r4x) ;
+			const auto r3x = r1x.varify_val32_precision () ;
+			const auto r4x = PhanBuffer<REAL>::make (rax) ;
+			compute_write_number (data ,r3x ,r4x ,iw) ;
+			const auto r5x = PhanBuffer<const REAL>::make (PTRTOARR[DEPTR[rax.self[iw]]] ,(rax.size () - iw)) ;
+			write (r5x) ;
 		}
 	}
 
@@ -1703,41 +1704,42 @@ public:
 	}
 
 	void write (const VAL64 &data) {
+		static constexpr auto M_PINF = PACK<REAL[4]> ({
+			REAL ('+') ,REAL ('i') ,REAL ('n') ,REAL ('f')}) ;
+		static constexpr auto M_MINF = PACK<REAL[4]> ({
+			REAL ('-') ,REAL ('i') ,REAL ('n') ,REAL ('f')}) ;
 		static constexpr auto M_NAN = PACK<REAL[3]> ({
 			REAL ('n') ,REAL ('a') ,REAL ('n')}) ;
-		static constexpr auto M_INF = PACK<REAL[4]> ({
-			REAL ('+') ,REAL ('i') ,REAL ('n') ,REAL ('f')}) ;
-		static constexpr auto M_SINF = PACK<REAL[4]> ({
-			REAL ('-') ,REAL ('i') ,REAL ('n') ,REAL ('f')}) ;
 		const auto r1x = attr () ;
+		const auto r2x = MathProc::is_infinite (data) ;
 		auto fax = TRUE ;
 		if switch_once (fax) {
-			if (!MathProc::is_nan (data))
+			if (!r2x)
+				discard ;
+			if (!(data > 0))
+				discard ;
+			write (PhanBuffer<const REAL>::make (M_PINF.mP1)) ;
+		}
+		if switch_once (fax) {
+			if (!r2x)
+				discard ;
+			if (!(data < 0))
+				discard ;
+			write (PhanBuffer<const REAL>::make (M_MINF.mP1)) ;
+		}
+		if switch_once (fax) {
+			if (!r2x)
 				discard ;
 			write (PhanBuffer<const REAL>::make (M_NAN.mP1)) ;
 		}
 		if switch_once (fax) {
-			if (!MathProc::is_infinite (data))
-				discard ;
-			if (!(data > 0))
-				discard ;
-			write (PhanBuffer<const REAL>::make (M_INF.mP1)) ;
-		}
-		if switch_once (fax) {
-			if (!MathProc::is_infinite (data))
-				discard ;
-			if (!(data < 0))
-				discard ;
-			write (PhanBuffer<const REAL>::make (M_SINF.mP1)) ;
-		}
-		if switch_once (fax) {
 			auto rax = Buffer<REAL ,ARGC<256>> () ;
 			INDEX iw = rax.size () ;
-			const auto r2x = r1x.varify_val64_precision () ;
-			const auto r3x = PhanBuffer<REAL>::make (rax) ;
-			compute_write_number (data ,r2x ,r3x ,iw) ;
-			const auto r4x = PhanBuffer<const REAL>::make (PTRTOARR[DEPTR[rax.self[iw]]] ,(rax.size () - iw)) ;
-			write (r4x) ;
+			const auto r3x = r1x.varify_val64_precision () ;
+			const auto r4x = PhanBuffer<REAL>::make (rax) ;
+			compute_write_number (data ,r3x ,r4x ,iw) ;
+			const auto r5x = PhanBuffer<const REAL>::make (PTRTOARR[DEPTR[rax.self[iw]]] ,(rax.size () - iw)) ;
+			write (r5x) ;
 		}
 	}
 
@@ -1813,7 +1815,7 @@ public:
 	}
 
 	void prints () {
-		_STATIC_WARNING_ ("noop") ;
+		_NOOP_ () ;
 	}
 
 	template <class _ARG1 ,class... _ARGS>
@@ -1908,7 +1910,7 @@ private:
 		if switch_once (TRUE) {
 			const auto r4x = r3x - precision ;
 			for (auto &&i : _RANGE_ (0 ,r4x - 1)) {
-				_STATIC_UNUSED_ (i) ;
+				_NOOP_ (i) ;
 				rax[0] /= r1x.varify_radix () ;
 				rax[1]++ ;
 			}
@@ -1936,12 +1938,12 @@ private:
 			out[--iw] = REAL ('e') ;
 			const auto r7x = MathProc::maxof ((r5x - 1 - precision) ,VAR_ZERO) ;
 			for (auto &&i : _RANGE_ (0 ,r7x)) {
-				_STATIC_UNUSED_ (i) ;
+				_NOOP_ (i) ;
 				rax[0] /= r1x.varify_radix () ;
 			}
 			INDEX ix = iw - 1 ;
 			for (auto &&i : _RANGE_ (r7x ,r5x - 1)) {
-				_STATIC_UNUSED_ (i) ;
+				_NOOP_ (i) ;
 				out[--iw] = r1x.convert_number_w (rax[0] % r1x.varify_radix ()) ;
 				iw += _EBOOL_ (out[ix] == r1x.convert_number_w (0)) ;
 				rax[0] /= r1x.varify_radix () ;
@@ -1956,11 +1958,11 @@ private:
 			if (!(rax[1] >= 0))
 				discard ;
 			for (auto &&i : _RANGE_ (0 ,LENGTH (rax[1]))) {
-				_STATIC_UNUSED_ (i) ;
+				_NOOP_ (i) ;
 				out[--iw] = r1x.convert_number_w (0) ;
 			}
 			for (auto &&i : _RANGE_ (0 ,r5x)) {
-				_STATIC_UNUSED_ (i) ;
+				_NOOP_ (i) ;
 				out[--iw] = r1x.convert_number_w (rax[0] % r1x.varify_radix ()) ;
 				rax[0] /= r1x.varify_radix () ;
 			}
@@ -1973,12 +1975,12 @@ private:
 				discard ;
 			const auto r8x = MathProc::maxof (LENGTH (-rax[1] - precision) ,VAR_ZERO) ;
 			for (auto &&i : _RANGE_ (0 ,r8x)) {
-				_STATIC_UNUSED_ (i) ;
+				_NOOP_ (i) ;
 				rax[0] /= r1x.varify_radix () ;
 			}
 			INDEX ix = iw - 1 ;
 			for (auto &&i : _RANGE_ (r8x ,LENGTH (-rax[1]))) {
-				_STATIC_UNUSED_ (i) ;
+				_NOOP_ (i) ;
 				out[--iw] = r1x.convert_number_w (rax[0] % r1x.varify_radix ()) ;
 				iw += _EBOOL_ (out[ix] == r1x.convert_number_w (0)) ;
 				rax[0] /= r1x.varify_radix () ;
@@ -1986,7 +1988,7 @@ private:
 			out[--iw] = REAL ('.') ;
 			iw += _EBOOL_ (out[ix] == REAL ('.')) ;
 			for (auto &&i : _RANGE_ (0 ,LENGTH (r5x + rax[1]))) {
-				_STATIC_UNUSED_ (i) ;
+				_NOOP_ (i) ;
 				out[--iw] = r1x.convert_number_w (rax[0] % r1x.varify_radix ()) ;
 				rax[0] /= r1x.varify_radix () ;
 			}
@@ -1999,19 +2001,19 @@ private:
 				discard ;
 			const auto r9x = MathProc::maxof (LENGTH (-rax[1] - precision) ,VAR_ZERO) ;
 			for (auto &&i : _RANGE_ (0 ,r9x)) {
-				_STATIC_UNUSED_ (i) ;
+				_NOOP_ (i) ;
 				rax[0] /= r1x.varify_radix () ;
 			}
 			INDEX ix = iw - 1 ;
 			for (auto &&i : _RANGE_ (r9x ,r5x)) {
-				_STATIC_UNUSED_ (i) ;
+				_NOOP_ (i) ;
 				out[--iw] = r1x.convert_number_w (rax[0] % r1x.varify_radix ()) ;
 				iw += _EBOOL_ (out[ix] == r1x.convert_number_w (0)) ;
 				rax[0] /= r1x.varify_radix () ;
 			}
 			const auto r10x = MathProc::maxof (r9x ,r5x) ;
 			for (auto &&i : _RANGE_ (r10x ,LENGTH (-rax[1]))) {
-				_STATIC_UNUSED_ (i) ;
+				_NOOP_ (i) ;
 				out[--iw] = r1x.convert_number_w (0) ;
 				iw += _EBOOL_ (out[ix] == r1x.convert_number_w (0)) ;
 			}
@@ -2038,7 +2040,7 @@ private:
 
 	template <class _ARG1>
 	void template_write_bom (const ARGVF<_ARG1> &) {
-		_STATIC_WARNING_ ("noop") ;
+		_NOOP_ () ;
 	}
 
 	void template_write_bom (const ARGVF<STRU8> &) {
@@ -2082,7 +2084,7 @@ private:
 public:
 	implicit Attribute () = delete ;
 
-	explicit Attribute (PhanRef<BASE> &&base) {
+	explicit Attribute (REMOVE_CONST_TYPE<PhanRef<BASE>> &&base) {
 		mBase = _MOVE_ (base) ;
 	}
 
@@ -2201,7 +2203,7 @@ public:
 		mHintNextTextSize = 0 ;
 	}
 
-	explicit RegularReader (PhanRef<TextReader<STRU8>> &&reader ,const LENGTH &ll_len) {
+	explicit RegularReader (REMOVE_CONST_TYPE<PhanRef<TextReader<STRU8>>> &&reader ,const LENGTH &ll_len) {
 		mReader = _MOVE_ (reader) ;
 		const auto r1x = mReader->attr () ;
 		r1x.modify_space (STRU8 (' ') ,1) ;
@@ -2229,7 +2231,7 @@ public:
 		mReader.self >> TextReader<STRU8>::BOM ;
 		mCache = Deque<STRU8> (ll_len) ;
 		for (auto &&i : _RANGE_ (0 ,ll_len)) {
-			_STATIC_UNUSED_ (i) ;
+			_NOOP_ (i) ;
 			INDEX ix = mCache.insert () ;
 			mReader.self >> mCache[ix] ;
 		}

@@ -334,7 +334,7 @@ public:
 			return ;
 		api::printf (_PCSTR_ ("press any key to continue...\n")) ;
 		const auto r1x = api::getchar () ;
-		_STATIC_UNUSED_ (r1x) ;
+		_NOOP_ (r1x) ;
 	}
 
 	void clear () override {
@@ -370,7 +370,7 @@ private:
 	}
 
 	void write_debugger () {
-		_STATIC_WARNING_ ("noop") ;
+		_NOOP_ () ;
 	}
 
 	void write_log_file () {
@@ -446,8 +446,7 @@ public:
 
 	void output_memory_leaks_report (const BOOL &flag) override {
 		_DEBUG_ASSERT_ (flag) ;
-		_STATIC_WARNING_ ("unimplemented") ;
-		_DYNAMIC_ASSERT_ (FALSE) ;
+		_UNIMPLEMENTED_ () ;
 	}
 
 	Array<LENGTH> captrue_stack_trace () override {

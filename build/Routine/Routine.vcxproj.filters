@@ -74,6 +74,9 @@
     <Filter Include="unittest">
       <UniqueIdentifier>{000e62c6-12e0-48db-9e97-8c9331ef3a16}</UniqueIdentifier>
     </Filter>
+    <Filter Include="rust">
+      <UniqueIdentifier>{b7119b5e-e95b-406e-97af-77b7e5e4ff99}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\..\..\..\Depends\__CSC__\cpp.hint" />
@@ -115,6 +118,15 @@
     </None>
     <None Include="..\..\..\..\..\Depends\__CSC__\csc_string.hpp.gbk.inl">
       <Filter>csc</Filter>
+    </None>
+    <None Include="..\..\src\rust\rust.rs">
+      <Filter>rust</Filter>
+    </None>
+    <None Include="..\..\src\rust\rust_basic.rs">
+      <Filter>rust</Filter>
+    </None>
+    <None Include="..\..\src\rust\rust_core.rs">
+      <Filter>rust</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>

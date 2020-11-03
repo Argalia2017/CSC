@@ -42,8 +42,6 @@
 #define __CSC_PLATFORM_ARM__
 #elif defined (_M_ARM64) || defined (__aarch64__)
 #define __CSC_PLATFORM_ARM64__
-#elif defined (_M_IA64) || defined (__ia64__)
-#define __CSC_PLATFORM_IA64__
 #else
 #error "∑(っ°Д° ;)っ : unsupported"
 #endif
@@ -60,13 +58,10 @@
 
 #ifdef _WIN64
 #define __CSC_CONFIG_VAR64__
-#define __CSC_CONFIG_VAL64__
 #elif defined _WIN32
 #define __CSC_CONFIG_VAR32__
-#define __CSC_CONFIG_VAL32__
 #else
 #define __CSC_CONFIG_VAR64__
-#define __CSC_CONFIG_VAL64__
 #endif
 
 #ifdef _UNICODE
@@ -320,8 +315,6 @@ namespace CSC {
 
 #define _STATIC_WARNING_(...)
 
-#define _STATIC_UNUSED_(...) (void) _UNW_ (__VA_ARGS__) ;
-
 #ifdef __CSC_DEBUG__
 #ifdef __CSC_COMPILER_MSVC__
 #define _DEBUG_ASSERT_(...) do { if ((_UNW_ (__VA_ARGS__))) break ; __debugbreak () ; } while (FALSE)
@@ -368,7 +361,7 @@ namespace CSC {
 
 #define ANONYMOUS _CAT_ (_anonymous_ ,__LINE__)
 
-#define _SWITCH_ONCE_(arg) (arg) goto ANONYMOUS ; while (CSC::FOR_ONCE (arg)) ANONYMOUS:
+#define _SWITCH_ONCE_(arg) (arg) goto ANONYMOUS ; while (CSC::SWITCH_ONCE (arg)) ANONYMOUS:
 
 #ifdef FALSE
 #undef FALSE

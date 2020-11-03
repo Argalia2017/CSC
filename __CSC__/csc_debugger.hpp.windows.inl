@@ -300,14 +300,14 @@ public:
 		api::FlashWindow (r1x ,TRUE) ;
 		api::SetConsoleTextAttribute (mConsole ,(FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE)) ;
 		const auto r2x = api::system (_PCSTRA_ ("pause")) ;
-		_STATIC_UNUSED_ (r2x) ;
+		_NOOP_ (r2x) ;
 	}
 
 	void clear () override {
 		if (!mConsole.exist ())
 			return ;
 		const auto r1x = api::system (_PCSTRA_ ("cls")) ;
-		_STATIC_UNUSED_ (r1x) ;
+		_NOOP_ (r1x) ;
 	}
 
 private:
@@ -323,7 +323,7 @@ private:
 		mConsole = UniqueRef<HANDLE> ([&] (HANDLE &me) {
 			me = api::GetStdHandle (STD_OUTPUT_HANDLE) ;
 		} ,[] (HANDLE &me) {
-			_STATIC_WARNING_ ("noop") ;
+			_NOOP_ () ;
 		}) ;
 	}
 
@@ -428,11 +428,11 @@ public:
 	void output_memory_leaks_report (const BOOL &flag) override {
 		_DEBUG_ASSERT_ (flag) ;
 		const auto r1x = _CrtSetDbgFlag (_CRTDBG_REPORT_FLAG) ;
-		_STATIC_UNUSED_ (r1x) ;
+		_NOOP_ (r1x) ;
 		const auto r2x = VAR32 (r1x | _CRTDBG_LEAK_CHECK_DF) ;
-		_STATIC_UNUSED_ (r2x) ;
+		_NOOP_ (r2x) ;
 		const auto r3x = _CrtSetDbgFlag (r2x) ;
-		_STATIC_UNUSED_ (r3x) ;
+		_NOOP_ (r3x) ;
 	}
 
 	Array<LENGTH> captrue_stack_trace () override {

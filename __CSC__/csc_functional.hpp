@@ -39,29 +39,15 @@ private:
 	} ;
 
 private:
-	StrongRef<THIS_PACK> mThis ;
+	SharedRef<THIS_PACK> mThis ;
 
 public:
 	implicit Operand () = default ;
 
 	template <class _ARG1 ,class = ENABLE_TYPE<U::CONSTEXPR_AND<U::CONSTEXPR_NOT<IS_PLACEHOLDER_HELP<_ARG1>> ,U::CONSTEXPR_NOT<IS_SAME_HELP<REMOVE_CVR_TYPE<_ARG1> ,Operand>>>>>
 	implicit Operand (_ARG1 &&that) {
-		mThis = StrongRef<THIS_PACK>::make () ;
+		mThis = SharedRef<THIS_PACK>::make () ;
 		mThis->mHolder = AnyRef<REMOVE_CVR_TYPE<_ARG1>>::make (_FORWARD_ (ARGV<_ARG1 &&>::ID ,that)) ;
-	}
-
-	implicit Operand (const Operand &that) {
-		mThis = that.mThis.share () ;
-	}
-
-	inline Operand &operator= (const Operand &that) {
-		if switch_once (TRUE) {
-			if (this == DEPTR[that])
-				discard ;
-			DEREF[this].~Operand () ;
-			new (this) Operand (_MOVE_ (that)) ;
-		}
-		return DEREF[this] ;
 	}
 
 	BOOL exist () const {
@@ -151,8 +137,13 @@ private:
 		virtual Operand invoke (const LexicalNode &node ,const Operand & ,const Operand & ,const Operand & ,const Operand & ,const Operand & ,const Operand & ,const Operand & ,const Operand & ,const Operand &) const = 0 ;
 	} ;
 
+	struct THIS_PACK {
+		AnyRef<> mHolder ;
+		PTR<Holder> mPointer ;
+	} ;
+
 private:
-	StrongRef<Holder> mThis ;
+	SharedRef<THIS_PACK> mThis ;
 
 public:
 	implicit Operator () = default ;
@@ -163,35 +154,23 @@ public:
 		using R2X = REPEAT_PARAMS_TYPE<CAPACITY_OF_TYPE<FUNCTION_PARAMS_TYPE<R1X>> ,Operand> ;
 		_STATIC_ASSERT_ (U::CONSTEXPR_NOT<IS_REFERENCE_HELP<_ARG1>>::compile ()) ;
 		using R3X = typename DEPENDENT_TYPE<Private ,struct ANONYMOUS>::template ImplHolder<R1X ,R2X> ;
+		mThis = SharedRef<THIS_PACK>::make () ;
 		auto rax = Function<R1X> (_FORWARD_ (ARGV<_ARG1 &&>::ID ,that)) ;
-		mThis = StrongRef<R3X>::make (ARGVP0 ,_MOVE_ (rax)) ;
-	}
-
-	implicit Operator (const Operator &that) {
-		mThis = that.mThis.share () ;
-	}
-
-	inline Operator &operator= (const Operator &that) {
-		if switch_once (TRUE) {
-			if (this == DEPTR[that])
-				discard ;
-			DEREF[this].~Operator () ;
-			new (this) Operator (_MOVE_ (that)) ;
-		}
-		return DEREF[this] ;
+		mThis->mHolder = AnyRef<R3X>::make (ARGVP0 ,_MOVE_ (rax)) ;
+		mThis->mPointer = DEPTR[mThis->mHolder.rebind (ARGV<R3X>::ID).self] ;
 	}
 
 	LENGTH rank () const {
 		if (!mThis.exist ())
 			return VAR_NONE ;
-		return mThis->rank () ;
+		return mThis->mPointer->rank () ;
 	}
 
 	template <class... _ARGS>
 	Operand invoke (const LexicalNode &node ,const _ARGS &...funcval) const {
 		_STATIC_ASSERT_ (_CAPACITYOF_ (ARGVS<_ARGS...>) <= 9) ;
 		_DYNAMIC_ASSERT_ (mThis.exist ()) ;
-		return mThis->invoke (node ,funcval...) ;
+		return mThis->mPointer->invoke (node ,funcval...) ;
 	}
 
 	template <class... _ARGS>
@@ -364,18 +343,62 @@ using RETR_FUNC_TYPE = typename RETR_FUNC<CAPACITY_OF_TYPE<FUNCTION_PARAMS_TYPE<
 
 class LexicalNode {
 private:
+	struct NODE_PACK {
+		Operand mOperand ;
+		Operator mOperator ;
+		LENGTH mRank ;
+		LENGTH mDepth ;
+		INDEX mCurr ;
+		ARRAY3<INDEX> mChild ;
+	} ;
+
+private:
 	template <class ,class>
 	friend class Expression ;
-	Operand mOperand ;
-	Operator mOperator ;
-	ARRAY3<StrongRef<LexicalNode>> mChild ;
-	LENGTH mRank ;
-	LENGTH mDepth ;
+	SharedRef<List<NODE_PACK>> mTree ;
+	INDEX mCurr ;
 
 public:
-	implicit LexicalNode () {
-		mRank = VAR_NONE ;
-		mDepth = 0 ;
+	implicit LexicalNode () = default ;
+
+	explicit LexicalNode (const SharedRef<List<NODE_PACK>> &tree) {
+		mTree = tree ;
+		mCurr = mTree->insert () ;
+		mTree.self[mCurr].mCurr = mCurr ;
+		mTree.self[mCurr].mRank = VAR_NONE ;
+		mTree.self[mCurr].mDepth = VAR_NONE ;
+	}
+
+	explicit LexicalNode (const SharedRef<List<NODE_PACK>> &tree ,const INDEX &curr) {
+		_DEBUG_ASSERT_ (tree.self[curr].mCurr == curr) ;
+		mTree = tree ;
+		mCurr = curr ;
+	}
+
+	NODE_PACK &to () leftvalue {
+		_DYNAMIC_ASSERT_ (mTree.exist ()) ;
+		return mTree.self[mCurr] ;
+	}
+
+	inline implicit operator NODE_PACK & () leftvalue {
+		return self ;
+	}
+
+	inline PTR<NODE_PACK> operator-> () leftvalue {
+		_DYNAMIC_ASSERT_ (mTree.exist ()) ;
+		return DEPTR[self] ;
+	}
+
+	const NODE_PACK &to () const leftvalue {
+		return mTree.self[mCurr] ;
+	}
+
+	inline implicit operator const NODE_PACK & () const leftvalue {
+		return self ;
+	}
+
+	inline PTR<const NODE_PACK> operator-> () const leftvalue {
+		return DEPTR[self] ;
 	}
 } ;
 
@@ -409,39 +432,23 @@ protected:
 protected:
 	template <class ,class>
 	friend class Expression ;
-	StrongRef<LexicalNode> mThis ;
+	LexicalNode mThis ;
 
-protected:
+public:
 	implicit Expression () :
 		delegate Expression (ARGVP0) {
-		_STATIC_WARNING_ ("noop") ;
+		_NOOP_ () ;
 	}
 
-	explicit Expression (const StrongRef<LexicalNode> &node) {
+	explicit Expression (const LexicalNode &node) {
 		_DYNAMIC_ASSERT_ (node->mRank == RANK_SIZE::compile ()) ;
 		mThis = node ;
 	}
 
-	implicit Expression (const Expression &that) {
-		mThis = that.mThis.share () ;
-	}
-
-	inline Expression &operator= (const Expression &that) {
-		if switch_once (TRUE) {
-			if (this == DEPTR[that])
-				discard ;
-			DEREF[this].~Expression () ;
-			new (this) Expression (_MOVE_ (that)) ;
-		}
-		return DEREF[this] ;
-	}
-
 	const RETR &invoke (const UNITS &...funcval) const leftvalue {
-		_DYNAMIC_ASSERT_ (mThis.exist ()) ;
-		auto rax = mThis.share () ;
-		_DYNAMIC_ASSERT_ (rax->mOperator.rank () == RANK_SIZE::compile ()) ;
-		rax->mOperand = rax->mOperator (rax.self ,funcval...) ;
-		return rax->mOperand.as (ARGV<RETR>::ID) ;
+		_DYNAMIC_ASSERT_ (mThis->mOperator.rank () == RANK_SIZE::compile ()) ;
+		mThis->mOperand = mThis->mOperator (mThis.self ,funcval...) ;
+		return mThis->mOperand.as (ARGV<RETR>::ID) ;
 	}
 
 	template <class _RET = REMOVE_CVR_TYPE<Expression<RANK ,RETR>>>
@@ -460,14 +467,15 @@ protected:
 	template <class _RET = REMOVE_CVR_TYPE<Expression<RANK0 ,Expression<RANK ,RETR>>>>
 	_RET fold () const {
 		Expression<RANK0 ,Expression<RANK ,RETR>> ret ;
+		ret.mThis = LexicalNode (mThis.mTree) ;
 		ret.mThis->mOperator = Operator ([] (const LexicalNode &node) {
 			using R1X = U::RANK_FUNC_TYPE<CAPACITY_OF_TYPE<ARGVS<>>> ;
 			_STATIC_ASSERT_ (IS_SAME_HELP<RANK0 ,R1X>::compile ()) ;
-			const auto r1x = Expression<RANK ,RETR> (node.mChild[0]) ;
+			const auto r1x = Expression<RANK ,RETR> (LexicalNode (node.mTree ,node->mChild[0])) ;
 			_STATIC_ASSERT_ (IS_SAME_HELP<DEF<decltype (r1x)> ,Expression<RANK ,RETR>>::compile ()) ;
 			return Operand (r1x) ;
 		}) ;
-		ret.mThis->mChild[0] = mThis.share () ;
+		ret.mThis->mChild[0] = mThis->mCurr ;
 		ret.mThis->mDepth = MathProc::maxof (mThis->mDepth) + 1 ;
 		return _MOVE_ (ret) ;
 	}
@@ -491,8 +499,11 @@ protected:
 
 protected:
 	explicit Expression (const DEF<decltype (ARGVP0)> &) {
-		mThis = StrongRef<LexicalNode>::make () ;
-		mThis->mRank = RANK_SIZE::compile () ;
+		using R1X = typename LexicalNode::NODE_PACK ;
+		const auto r1x = SharedRef<List<R1X>>::make () ;
+		mThis = LexicalNode (r1x) ;
+		mThis.mTree.self[mThis.mCurr].mRank = RANK_SIZE::compile () ;
+		mThis.mTree.self[mThis.mCurr].mDepth = 0 ;
 	}
 
 	template <class _ARG1 ,class _ARG2 ,class... _ARGS>
@@ -513,15 +524,16 @@ protected:
 	template <class _RET = REMOVE_CVR_TYPE<Expression<RANK ,RETR>>>
 	_RET template_flip () const {
 		Expression<RANK ,RETR> ret ;
+		ret.mThis = LexicalNode (mThis.mTree) ;
 		_STATIC_ASSERT_ (IS_SAME_HELP<RANK ,U::RANK_FUNC_TYPE<CAPACITY_OF_TYPE<ARGVS<UNITS...>>>>::compile ()) ;
 		ret.mThis->mOperator = Operator ([] (const LexicalNode &node ,const UNITS &...ins) {
-			const auto r1x = Expression<RANK ,RETR> (node.mChild[0]) ;
+			const auto r1x = Expression<RANK ,RETR> (LexicalNode (node.mTree ,node->mChild[0])) ;
 			const auto r2x = TupleBinder<const UNITS...> (ins...) ;
 			auto &r3x = r1x.template_flip_invoke (ARGV<ARGVS<const UNITS...>>::ID ,r2x) ;
-			_STATIC_UNUSED_ (r3x) ;
+			_NOOP_ (r3x) ;
 			return r1x.mThis->mOperand ;
 		}) ;
-		ret.mThis->mChild[0] = mThis.share () ;
+		ret.mThis->mChild[0] = mThis->mCurr ;
 		ret.mThis->mDepth = MathProc::maxof (mThis->mDepth) + 1 ;
 		return _MOVE_ (ret) ;
 	}
@@ -534,16 +546,17 @@ protected:
 	template <class _ARG1 ,class _ARG2 ,class... _ARGS ,class _RET = REMOVE_CVR_TYPE<Expression<_ARG1 ,RETR>>>
 	_RET template_flips (const ARGVF<_ARG1> & ,const ARGVF<_ARG2> & ,const ARGVF<ARGVS<_ARGS...>> &) const {
 		Expression<_ARG1 ,RETR> ret ;
+		ret.mThis = LexicalNode (mThis.mTree) ;
 		ret.mThis->mOperator = Operator ([] (const LexicalNode &node ,const _ARGS &...ins) {
 			using R1X = U::RANK_FUNC_TYPE<CAPACITY_OF_TYPE<ARGVS<_ARGS...>>> ;
 			_STATIC_ASSERT_ (IS_SAME_HELP<_ARG1 ,R1X>::compile ()) ;
-			const auto r1x = Expression<RANK ,RETR> (node.mChild[0]) ;
+			const auto r1x = Expression<RANK ,RETR> (LexicalNode (node.mTree ,node->mChild[0])) ;
 			const auto r2x = TupleBinder<const _ARGS...> (ins...) ;
 			auto &r3x = r1x.template_flips_patch (r2x ,ARGV<_ARG2>::ID) ;
-			_STATIC_UNUSED_ (r3x) ;
+			_NOOP_ (r3x) ;
 			return r1x.mThis->mOperand ;
 		}) ;
-		ret.mThis->mChild[0] = mThis.share () ;
+		ret.mThis->mChild[0] = mThis->mCurr ;
 		ret.mThis->mDepth = MathProc::maxof (mThis->mDepth) + 1 ;
 		return _MOVE_ (ret) ;
 	}
@@ -556,16 +569,17 @@ protected:
 	template <class _ARG1 ,class _RET = REMOVE_CVR_TYPE<Expression<RANK1 ,U::RETR_FUNC_TYPE<_ARG1>>>>
 	_RET template_curry (const ARGVF<_ARG1> &) const {
 		Expression<RANK1 ,U::RETR_FUNC_TYPE<_ARG1>> ret ;
+		ret.mThis = LexicalNode (mThis.mTree) ;
 		ret.mThis->mOperator = Operator ([] (const LexicalNode &node ,const Operand &in1) {
 			using R2X = U::RANK_FUNC_TYPE<CAPACITY_OF_TYPE<ARGVS<Operand>>> ;
 			_STATIC_ASSERT_ (IS_SAME_HELP<RANK1 ,R2X>::compile ()) ;
-			const auto r1x = Expression<_ARG1 ,RETR> (node.mChild[0]) ;
+			const auto r1x = Expression<_ARG1 ,RETR> (LexicalNode (node.mTree ,node->mChild[0])) ;
 			const auto r2x = Expression<RANK0> (in1) ;
 			const auto r3x = r1x.bind (r2x).curry () ;
 			_STATIC_ASSERT_ (IS_SAME_HELP<DEF<decltype (r3x)> ,U::RETR_FUNC_TYPE<_ARG1>>::compile ()) ;
 			return Operand (r3x) ;
 		}) ;
-		ret.mThis->mChild[0] = mThis.share () ;
+		ret.mThis->mChild[0] = mThis->mCurr ;
 		ret.mThis->mDepth = MathProc::maxof (mThis->mDepth) + 1 ;
 		return _MOVE_ (ret) ;
 	}
@@ -593,18 +607,19 @@ protected:
 	template <class _ARG1 ,class _ARG2 ,class _ARG3 ,class... _ARGS ,class _RET = REMOVE_CVR_TYPE<Expression<_ARG1 ,RETR>>>
 	_RET template_bind (const ARGVF<_ARG1> & ,const Expression<_ARG2 ,_ARG3> &that ,const ARGVF<ARGVS<_ARGS...>> &) const {
 		Expression<_ARG1 ,RETR> ret ;
+		ret.mThis = LexicalNode (mThis.mTree) ;
 		ret.mThis->mOperator = Operator ([] (const LexicalNode &node ,const _ARGS &...ins) {
 			using R1X = U::RANK_FUNC_TYPE<CAPACITY_OF_TYPE<ARGVS<_ARGS...>>> ;
 			_STATIC_ASSERT_ (IS_SAME_HELP<_ARG1 ,R1X>::compile ()) ;
-			const auto r1x = Expression<RANK ,RETR> (node.mChild[0]) ;
-			const auto r2x = Expression<_ARG2 ,_ARG3> (node.mChild[1]) ;
+			const auto r1x = Expression<RANK ,RETR> (LexicalNode (node.mTree ,node->mChild[0])) ;
+			const auto r2x = Expression<_ARG2 ,_ARG3> (LexicalNode (node.mTree ,node->mChild[1])) ;
 			const auto r3x = TupleBinder<const _ARGS...> (ins...) ;
 			auto &r4x = r1x.template_bind_patch (r2x ,r3x ,ARGV<FUNCTION_PARAMS_TYPE<_ARG2>>::ID) ;
-			_STATIC_UNUSED_ (r4x) ;
+			_NOOP_ (r4x) ;
 			return r1x.mThis->mOperand ;
 		}) ;
-		ret.mThis->mChild[0] = mThis.share () ;
-		ret.mThis->mChild[1] = that.mThis.share () ;
+		ret.mThis->mChild[0] = mThis->mCurr ;
+		ret.mThis->mChild[1] = that.mThis->mCurr ;
 		ret.mThis->mDepth = MathProc::maxof (mThis->mDepth ,that.mThis->mDepth) + 1 ;
 		return _MOVE_ (ret) ;
 	}
@@ -625,19 +640,20 @@ protected:
 	template <class _ARG1 ,class _ARG2 ,class _ARG3 ,class... _ARGS ,class _RET = REMOVE_CVR_TYPE<Expression<_ARG1 ,Expression<_ARG2 ,RETR>>>>
 	_RET template_link (const ARGVF<_ARG1> & ,const Expression<RANK0 ,Expression<_ARG2 ,_ARG3>> &that ,const ARGVF<ARGVS<_ARGS...>> &) const {
 		Expression<_ARG1 ,Expression<_ARG2 ,RETR>> ret ;
+		ret.mThis = LexicalNode (mThis.mTree) ;
 		ret.mThis->mOperator = Operator ([] (const LexicalNode &node ,const _ARGS &...ins) {
 			using R1X = U::RANK_FUNC_TYPE<CAPACITY_OF_TYPE<ARGVS<_ARGS...>>> ;
 			_STATIC_ASSERT_ (IS_SAME_HELP<_ARG1 ,R1X>::compile ()) ;
-			const auto r1x = Expression<RANK ,RETR> (node.mChild[0]) ;
-			const auto r2x = Expression<RANK0 ,Expression<_ARG2 ,_ARG3>> (node.mChild[1]) ;
+			const auto r1x = Expression<RANK ,RETR> (LexicalNode (node.mTree ,node->mChild[0])) ;
+			const auto r2x = Expression<RANK0 ,Expression<_ARG2 ,_ARG3>> (LexicalNode (node.mTree ,node->mChild[1])) ;
 			const auto r3x = r1x.template_flip () ;
 			const auto r4x = r1x.template_link_patch (r3x ,Expression<RANK0> (ins)...) ;
 			const auto r5x = r4x.bind (r2x.invoke ()) ;
 			_STATIC_ASSERT_ (IS_SAME_HELP<DEF<decltype (r5x)> ,Expression<_ARG2 ,RETR>>::compile ()) ;
 			return Operand (r5x) ;
 		}) ;
-		ret.mThis->mChild[0] = mThis.share () ;
-		ret.mThis->mChild[1] = that.mThis.share () ;
+		ret.mThis->mChild[0] = mThis->mCurr ;
+		ret.mThis->mChild[1] = that.mThis->mCurr ;
 		ret.mThis->mDepth = MathProc::maxof (mThis->mDepth ,that.mThis->mDepth) + 1 ;
 		return _MOVE_ (ret) ;
 
@@ -674,23 +690,21 @@ public:
 		mThis->mDepth = 1 ;
 	}
 
-	explicit Expression (const StrongRef<LexicalNode> &node) :
+	explicit Expression (const LexicalNode &node) :
 		delegate SPECIALIZATION_BASE (node) {
-		_STATIC_WARNING_ ("noop") ;
+		_NOOP_ () ;
 	}
 
 	const RETR &invoke () const leftvalue {
-		_DYNAMIC_ASSERT_ (mThis.exist ()) ;
 		if switch_once (TRUE) {
 			if (mThis->mOperator.rank () == VAR_NONE)
 				discard ;
-			auto rax = mThis.share () ;
-			_DYNAMIC_ASSERT_ (rax->mOperator.rank () == 0) ;
-			const auto r1x = _MOVE_ (rax->mOperator) ;
-			rax->mOperand = r1x (rax.self) ;
-			rax->mChild[0] = StrongRef<LexicalNode> () ;
-			rax->mChild[1] = StrongRef<LexicalNode> () ;
-			rax->mChild[2] = StrongRef<LexicalNode> () ;
+			_DYNAMIC_ASSERT_ (mThis->mOperator.rank () == 0) ;
+			const auto r1x = _MOVE_ (mThis->mOperator) ;
+			mThis->mOperand = r1x (mThis.self) ;
+			mThis->mChild[0] = LexicalNode () ;
+			mThis->mChild[1] = LexicalNode () ;
+			mThis->mChild[2] = LexicalNode () ;
 		}
 		return mThis->mOperand.as (ARGV<RETR>::ID) ;
 	}
@@ -725,9 +739,9 @@ public:
 		mThis->mDepth = 1 ;
 	}
 
-	explicit Expression (const StrongRef<LexicalNode> &node) :
+	explicit Expression (const LexicalNode &node) :
 		delegate SPECIALIZATION_BASE (node) {
-		_STATIC_WARNING_ ("noop") ;
+		_NOOP_ () ;
 	}
 
 	using SPECIALIZATION_BASE::invoke ;
@@ -783,9 +797,9 @@ public:
 		mThis->mDepth = 1 ;
 	}
 
-	explicit Expression (const StrongRef<LexicalNode> &node) :
+	explicit Expression (const LexicalNode &node) :
 		delegate SPECIALIZATION_BASE (node) {
-		_STATIC_WARNING_ ("noop") ;
+		_NOOP_ () ;
 	}
 
 	using SPECIALIZATION_BASE::invoke ;

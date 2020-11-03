@@ -109,12 +109,6 @@ public:
 	imports String<_ARG1> build_val64s (const ARGVF<_ARG1> & ,const VAL64 &stru) ;
 
 	template <class _ARG1>
-	imports VAL parse_vals (const String<_ARG1> &stri) ;
-
-	template <class _ARG1>
-	imports String<_ARG1> build_vals (const ARGVF<_ARG1> & ,const VAL &stru) ;
-
-	template <class _ARG1>
 	imports String<STR> parse_strs (const String<_ARG1> &stri) ;
 
 	template <class _ARG1>
@@ -779,7 +773,7 @@ inline exports String<STRU8> StringProc::cvt_uas_u8s (const String<STRA> &val) {
 	_STATIC_ASSERT_ (IS_SAME_HELP<STRUA ,STRU8>::compile ()) ;
 	String<STRU8> ret = _MOVE_ (_CAST_ (ARGV<String<STRUA>>::ID ,val)) ;
 	for (auto &&i : ret) {
-		_STATIC_UNUSED_ (i) ;
+		_NOOP_ (i) ;
 		_DEBUG_ASSERT_ (i <= STRUA (0X7F)) ;
 	}
 	return _MOVE_ (ret) ;
@@ -789,27 +783,27 @@ inline exports String<STRU8> StringProc::cvt_uas_u8s (String<STRA> &&val) {
 	_STATIC_ASSERT_ (IS_SAME_HELP<STRUA ,STRU8>::compile ()) ;
 	String<STRU8> ret = _MOVE_ (_CAST_ (ARGV<String<STRUA>>::ID ,val)) ;
 	for (auto &&i : ret) {
-		_STATIC_UNUSED_ (i) ;
+		_NOOP_ (i) ;
 		_DEBUG_ASSERT_ (i <= STRUA (0X7F)) ;
 	}
 	return _MOVE_ (ret) ;
 }
 
-inline exports String<STRA> StringProc::cvt_u8s_uas (const String<STRU8> &val) {
+inline exports String<STRA> StringProc::cvt_u8s_uas (const REMOVE_CONST_TYPE<String<STRU8>> &val) {
 	_STATIC_ASSERT_ (IS_SAME_HELP<STRUA ,STRU8>::compile ()) ;
 	String<STRUA> ret = _MOVE_ (val) ;
 	for (auto &&i : ret) {
-		_STATIC_UNUSED_ (i) ;
+		_NOOP_ (i) ;
 		_DEBUG_ASSERT_ (i <= STRUA (0X7F)) ;
 	}
 	return _MOVE_ (_CAST_ (ARGV<String<STRA>>::ID ,ret)) ;
 }
 
-inline exports String<STRA> StringProc::cvt_u8s_uas (String<STRU8> &&val) {
+inline exports String<STRA> StringProc::cvt_u8s_uas (REMOVE_CONST_TYPE<String<STRU8>> &&val) {
 	_STATIC_ASSERT_ (IS_SAME_HELP<STRUA ,STRU8>::compile ()) ;
 	String<STRUA> ret = _MOVE_ (val) ;
 	for (auto &&i : ret) {
-		_STATIC_UNUSED_ (i) ;
+		_NOOP_ (i) ;
 		_DEBUG_ASSERT_ (i <= STRUA (0X7F)) ;
 	}
 	return _MOVE_ (_CAST_ (ARGV<String<STRA>>::ID ,ret)) ;
@@ -1053,22 +1047,6 @@ inline exports VAL64 StringProc::parse_val64s (const String<_ARG1> &stri) {
 
 template <class _ARG1>
 inline exports String<_ARG1> StringProc::build_val64s (const ARGVF<_ARG1> & ,const VAL64 &stru) {
-	String<_ARG1> ret = String<_ARG1> (127) ;
-	auto rax = TextWriter<_ARG1> (ret.raw ()) ;
-	rax << stru << TextWriter<_ARG1>::EOS ;
-	return _MOVE_ (ret) ;
-}
-
-template <class _ARG1>
-inline exports VAL StringProc::parse_vals (const String<_ARG1> &stri) {
-	VAL ret ;
-	auto rax = TextReader<_ARG1> (stri.raw ()) ;
-	rax >> ret >> TextReader<_ARG1>::EOS ;
-	return _MOVE_ (ret) ;
-}
-
-template <class _ARG1>
-inline exports String<_ARG1> StringProc::build_vals (const ARGVF<_ARG1> & ,const VAL &stru) {
 	String<_ARG1> ret = String<_ARG1> (127) ;
 	auto rax = TextWriter<_ARG1> (ret.raw ()) ;
 	rax << stru << TextWriter<_ARG1>::EOS ;

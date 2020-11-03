@@ -196,7 +196,7 @@ public:
 
 	void load_data (const LENGTH &cx_ ,const LENGTH &cy_) override {
 		const auto r1x = cx_ * cy_ * _SIZEOF_ (COLOR_BGR) ;
-		_STATIC_UNUSED_ (r1x) ;
+		_NOOP_ (r1x) ;
 		_DEBUG_ASSERT_ (r1x >= 0 && r1x < VAR32_MAX) ;
 		auto rax = api::Mat (api::Mat::zeros (VAR32 (cy_) ,VAR32 (cx_) ,CV_8UC3)) ;
 		_DYNAMIC_ASSERT_ (!rax.empty ()) ;
@@ -290,7 +290,7 @@ public:
 
 	void load_data (const LENGTH &cx_ ,const LENGTH &cy_) override {
 		const auto r1x = cx_ * cy_ * _SIZEOF_ (COLOR_BGRA) ;
-		_STATIC_UNUSED_ (r1x) ;
+		_NOOP_ (r1x) ;
 		_DEBUG_ASSERT_ (r1x >= 0 && r1x < VAR32_MAX) ;
 		auto rax = api::Mat (api::Mat::zeros (VAR32 (cy_) ,VAR32 (cx_) ,CV_8UC4)) ;
 		_DYNAMIC_ASSERT_ (!rax.empty ()) ;
@@ -384,7 +384,7 @@ public:
 
 	void load_data (const LENGTH &cx_ ,const LENGTH &cy_) override {
 		const auto r1x = cx_ * cy_ * _SIZEOF_ (COLOR_GRAY) ;
-		_STATIC_UNUSED_ (r1x) ;
+		_NOOP_ (r1x) ;
 		_DEBUG_ASSERT_ (r1x >= 0 && r1x < VAR32_MAX) ;
 		auto rax = api::Mat (api::Mat::zeros (VAR32 (cy_) ,VAR32 (cx_) ,CV_8UC1)) ;
 		_DYNAMIC_ASSERT_ (!rax.empty ()) ;
@@ -478,7 +478,7 @@ public:
 
 	void load_data (const LENGTH &cx_ ,const LENGTH &cy_) override {
 		const auto r1x = cx_ * cy_ * _SIZEOF_ (COLOR_GRAY32) ;
-		_STATIC_UNUSED_ (r1x) ;
+		_NOOP_ (r1x) ;
 		_DEBUG_ASSERT_ (r1x >= 0 && r1x < VAR32_MAX) ;
 		auto rax = api::Mat (api::Mat::zeros (VAR32 (cy_) ,VAR32 (cx_) ,CV_32FC1)) ;
 		_DYNAMIC_ASSERT_ (!rax.empty ()) ;
@@ -572,7 +572,7 @@ public:
 
 	void load_data (const LENGTH &cx_ ,const LENGTH &cy_) override {
 		const auto r1x = cx_ * cy_ * _SIZEOF_ (COLOR_GRAY64) ;
-		_STATIC_UNUSED_ (r1x) ;
+		_NOOP_ (r1x) ;
 		_DEBUG_ASSERT_ (r1x >= 0 && r1x < VAR32_MAX) ;
 		auto rax = api::Mat (api::Mat::zeros (VAR32 (cy_) ,VAR32 (cx_) ,CV_64FC1)) ;
 		_DYNAMIC_ASSERT_ (!rax.empty ()) ;

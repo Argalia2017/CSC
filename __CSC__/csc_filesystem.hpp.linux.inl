@@ -119,8 +119,7 @@ exports void FileSystemProc::save_file (const String<STR> &file ,const PhanBuffe
 }
 
 exports PhanBuffer<const BYTE> FileSystemProc::load_assert_file (const FLAG &resource) {
-	_STATIC_WARNING_ ("unimplemented") ;
-	_DYNAMIC_ASSERT_ (FALSE) ;
+	_UNIMPLEMENTED_ () ;
 	return PhanBuffer<const BYTE> () ;
 }
 
@@ -168,7 +167,7 @@ exports void FileSystemProc::erase_file (const String<STR> &file) {
 	if (r2x)
 		return ;
 	const auto r3x = api::unlink (r1x.raw ().self) ;
-	_STATIC_UNUSED_ (r3x) ;
+	_NOOP_ (r3x) ;
 }
 
 exports void FileSystemProc::copy_file (const String<STR> &dst_file ,const String<STR> &src_file) {
@@ -185,7 +184,7 @@ exports void FileSystemProc::move_file (const String<STR> &dst_file ,const Strin
 	const auto r3x = FileSystemProc::find_file (dst_file) ;
 	_DYNAMIC_ASSERT_ (!r3x) ;
 	const auto r4x = api::rename (r1x.raw ().self ,r2x.raw ().self) ;
-	_STATIC_UNUSED_ (r4x) ;
+	_NOOP_ (r4x) ;
 }
 
 exports void FileSystemProc::link_file (const String<STR> &dst_file ,const String<STR> &src_file) {
@@ -194,7 +193,7 @@ exports void FileSystemProc::link_file (const String<STR> &dst_file ,const Strin
 	const auto r3x = FileSystemProc::find_file (dst_file) ;
 	_DYNAMIC_ASSERT_ (!r3x) ;
 	const auto r4x = api::link (r1x.raw ().self ,r2x.raw ().self) ;
-	_STATIC_UNUSED_ (r4x) ;
+	_NOOP_ (r4x) ;
 }
 
 exports BOOL FileSystemProc::identical_file (const String<STR> &file1 ,const String<STR> &file2) {
@@ -481,12 +480,12 @@ exports void FileSystemProc::build_directory (const String<STR> &dire) {
 exports void FileSystemProc::erase_directory (const String<STR> &dire) {
 	const auto r1x = StringProc::build_strs (ARGV<STRA>::ID ,dire) ;
 	const auto r2x = api::rmdir (r1x.raw ().self) ;
-	_STATIC_UNUSED_ (r2x) ;
+	_NOOP_ (r2x) ;
 	const auto r3x = FileSystemStaticProc::static_find_juntion (r1x) ;
 	if (!r3x)
 		return ;
 	const auto r4x = api::unlink (r1x.raw ().self) ;
-	_STATIC_UNUSED_ (r4x) ;
+	_NOOP_ (r4x) ;
 }
 
 //@warn: recursive call with junction (symbolic and link) may cause endless loop
@@ -607,7 +606,7 @@ public:
 	}
 
 	void flush () override {
-		_STATIC_WARNING_ ("noop") ;
+		_NOOP_ () ;
 	}
 } ;
 
@@ -622,44 +621,37 @@ public:
 	implicit Implement () = default ;
 
 	explicit Implement (const String<STR> &file) {
-		_STATIC_WARNING_ ("unimplemented") ;
-		_DYNAMIC_ASSERT_ (FALSE) ;
+		_UNIMPLEMENTED_ () ;
 	}
 
 	explicit Implement (const String<STR> &file ,const LENGTH &file_len) {
 		_DEBUG_ASSERT_ (file_len >= 0 && file_len < VAR32_MAX) ;
-		_STATIC_WARNING_ ("unimplemented") ;
-		_DYNAMIC_ASSERT_ (FALSE) ;
+		_UNIMPLEMENTED_ () ;
 	}
 
 	explicit Implement (const String<STR> &file ,const BOOL &cache) {
 		_DEBUG_ASSERT_ (cache) ;
-		_STATIC_WARNING_ ("unimplemented") ;
-		_DYNAMIC_ASSERT_ (FALSE) ;
+		_UNIMPLEMENTED_ () ;
 	}
 
 	explicit Implement (const String<STR> &file ,const LENGTH &file_len ,const BOOL &cache) {
 		_DEBUG_ASSERT_ (file_len >= 0 && file_len < VAR32_MAX) ;
 		_DEBUG_ASSERT_ (cache) ;
-		_STATIC_WARNING_ ("unimplemented") ;
-		_DYNAMIC_ASSERT_ (FALSE) ;
+		_UNIMPLEMENTED_ () ;
 	}
 
 	PhanBuffer<BYTE> watch () leftvalue override {
-		_STATIC_WARNING_ ("unimplemented") ;
-		_DYNAMIC_ASSERT_ (FALSE) ;
+		_UNIMPLEMENTED_ () ;
 		return PhanBuffer<BYTE> () ;
 	}
 
 	PhanBuffer<const BYTE> watch () const leftvalue override {
-		_STATIC_WARNING_ ("unimplemented") ;
-		_DYNAMIC_ASSERT_ (FALSE) ;
+		_UNIMPLEMENTED_ () ;
 		return PhanBuffer<const BYTE> () ;
 	}
 
 	void flush () override {
-		_STATIC_WARNING_ ("unimplemented") ;
-		_DYNAMIC_ASSERT_ (FALSE) ;
+		_UNIMPLEMENTED_ () ;
 	}
 } ;
 
@@ -689,11 +681,11 @@ public:
 	implicit Implement () = default ;
 
 	void startup () override {
-		_STATIC_WARNING_ ("noop") ;
+		_NOOP_ () ;
 	}
 
 	void shutdown () override {
-		_STATIC_WARNING_ ("noop") ;
+		_NOOP_ () ;
 	}
 } ;
 

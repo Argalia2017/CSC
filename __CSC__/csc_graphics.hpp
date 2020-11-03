@@ -47,7 +47,7 @@ public:
 		mElement.appand (element_) ;
 	}
 
-	void add_texture (Bitmap<COLOR_BGR> &&texture_) {
+	void add_texture (REMOVE_CONST_TYPE<Bitmap<COLOR_BGR>> &&texture_) {
 		mTexture = Array<Bitmap<COLOR_BGR>> (1) ;
 		mTexture[0] = _MOVE_ (texture_) ;
 	}

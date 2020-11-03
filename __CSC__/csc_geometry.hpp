@@ -34,7 +34,7 @@ public:
 
 	explicit Vector (const ARRAY3<REAL> &xyz_ ,const REAL &w) :
 		delegate Vector (xyz_[0] ,xyz_[1] ,xyz_[2] ,w) {
-		_STATIC_WARNING_ ("noop") ;
+		_NOOP_ () ;
 	}
 
 	ARRAY3<REAL> xyz () const {
@@ -1036,7 +1036,7 @@ private:
 public:
 	implicit Row () = delete ;
 
-	explicit Row (PhanRef<BASE> &&base ,const INDEX &y) {
+	explicit Row (REMOVE_CONST_TYPE<PhanRef<BASE>> &&base ,const INDEX &y) {
 		mBase = _MOVE_ (base) ;
 		mY = y ;
 	}

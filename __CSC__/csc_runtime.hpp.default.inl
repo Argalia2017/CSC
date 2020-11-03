@@ -118,6 +118,7 @@ using ::GetCurrentProcessId ;
 using ::OpenProcess ;
 using ::CloseHandle ;
 using ::GetProcessTimes ;
+using ::ProcessIdToSessionId ;
 #endif
 
 #ifdef __CSC_SYSTEM_LINUX__
@@ -430,7 +431,7 @@ private:
 public:
 	implicit Implement () = default ;
 
-	explicit Implement (PhanRef<Mutex> &&mutex_ ,PhanRef<ConditionLock> &&condition_lock) {
+	explicit Implement (REMOVE_CONST_TYPE<PhanRef<Mutex>> &&mutex_ ,REMOVE_CONST_TYPE<PhanRef<ConditionLock>> &&condition_lock) {
 		mMutex = _MOVE_ (mutex_) ;
 		mConditionLock = _MOVE_ (condition_lock) ;
 		mUniqueLock = api::unique_lock<api::mutex> (mMutex->native ().get_mMutex ()) ;
@@ -461,7 +462,7 @@ public:
 	}
 } ;
 
-exports UniqueLock::UniqueLock (PhanRef<Mutex> &&mutex_ ,PhanRef<ConditionLock> &&condition_lock) {
+exports UniqueLock::UniqueLock (REMOVE_CONST_TYPE<PhanRef<Mutex>> &&mutex_ ,REMOVE_CONST_TYPE<PhanRef<ConditionLock>> &&condition_lock) {
 	using R1X = DEPENDENT_TYPE<Private ,struct ANONYMOUS>::Implement ;
 	mThis = StrongRef<R1X>::make (_MOVE_ (mutex_) ,_MOVE_ (condition_lock)) ;
 }
@@ -561,14 +562,17 @@ exports Buffer<BYTE ,ARGC<128>> GlobalRuntime::process_info (const FLAG &pid) {
 		rax << ByteWriter<BYTE>::GAP ;
 		rax << _PCSTRU8_ ("windows") ;
 		rax << ByteWriter<BYTE>::GAP ;
-		auto rbx = ARRAY4<FILETIME> () ;
-		_ZERO_ (rbx[0]) ;
-		_ZERO_ (rbx[1]) ;
-		_ZERO_ (rbx[2]) ;
-		_ZERO_ (rbx[3]) ;
-		api::GetProcessTimes (r1x ,DEPTR[rbx[0]] ,DEPTR[rbx[1]] ,DEPTR[rbx[2]] ,DEPTR[rbx[3]]) ;
-		const auto r2x = DATA ((DATA (rbx[0].dwHighDateTime) << 32) | DATA (rbx[0].dwLowDateTime)) ;
-		rax << VAR64 (r2x) ;
+		const auto r2x = _CALL_ ([&] () {
+			ARRAY4<FILETIME> ret ;
+			_ZERO_ (ret[0]) ;
+			_ZERO_ (ret[1]) ;
+			_ZERO_ (ret[2]) ;
+			_ZERO_ (ret[3]) ;
+			api::GetProcessTimes (r1x ,DEPTR[ret[0]] ,DEPTR[ret[1]] ,DEPTR[ret[2]] ,DEPTR[ret[3]]) ;
+			return _MOVE_ (ret) ;
+		}) ;
+		const auto r3x = DATA ((DATA (r2x[0].dwHighDateTime) << 32) | DATA (r2x[0].dwLowDateTime)) ;
+		rax << VAR64 (r3x) ;
 		rax << ByteWriter<BYTE>::GAP ;
 	}
 	rax << ByteWriter<BYTE>::EOS ;

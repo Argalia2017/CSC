@@ -466,7 +466,7 @@ private:
 public:
 	implicit InitializeX1Lambda () = delete ;
 
-	explicit InitializeX1Lambda (const DEF<decltype (ARGVP0)> & ,XmlParser &context_ ,PhanBuffer<const STRU8> &&data) :
+	explicit InitializeX1Lambda (const DEF<decltype (ARGVP0)> & ,XmlParser &context_ ,REMOVE_CONST_TYPE<PhanBuffer<const STRU8>> &&data) :
 		delegate mContext (context_) ,
 		delegate mTextReader (_MOVE_ (data)) {}
 
@@ -1442,7 +1442,7 @@ private:
 public:
 	implicit InitializeLambda () = delete ;
 
-	explicit InitializeLambda (const DEF<decltype (ARGVP0)> & ,JsonParser &context_ ,PhanBuffer<const STRU8> &&data) :
+	explicit InitializeLambda (const DEF<decltype (ARGVP0)> & ,JsonParser &context_ ,REMOVE_CONST_TYPE<PhanBuffer<const STRU8>> &&data) :
 		delegate mContext (context_) ,
 		delegate mTextReader (_MOVE_ (data)) {}
 
@@ -1730,7 +1730,7 @@ private:
 
 	//@info: $11->${eps}
 	void update_shift_e11 () {
-		_STATIC_WARNING_ ("noop") ;
+		_NOOP_ () ;
 	}
 
 	//@info: $12->${end}
@@ -2028,7 +2028,7 @@ private:
 
 	//@info: $8->${eps}
 	void update_shift_e8 () {
-		_STATIC_WARNING_ ("noop") ;
+		_NOOP_ () ;
 	}
 
 	//@info: $9->${end}
