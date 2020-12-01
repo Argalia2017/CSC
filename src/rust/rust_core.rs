@@ -39,14 +39,14 @@ using VAR = VAR_HELP::VAR ;
 static constant VAR_MAX = VAR_HELP::VAR_MAX ;
 static constant VAR_MIN = VAR_HELP::VAR_MIN ;
 
+using INDEX = VAR ;
+using LENGTH = VAR ;
+using FLAG = VAR ;
+
 static constant USED = VAR (-2) ;
 static constant NONE = VAR (-1) ;
 static constant ZERO = VAR (+0) ;
 static constant IDEN = VAR (+1) ;
-
-using INDEX = VAR ;
-using LENGTH = VAR ;
-using FLAG = VAR ;
 
 using FLOAT32 = float32 ;
 using FLOAT64 = float64 ;
@@ -98,19 +98,17 @@ using STR = STR_HELP::STR ;
 
 static constant NULL = null ;
 
-using ENUM_NONE = enum (-1) ;
-using ENUM_ZERO = enum (+0) ;
-using ENUM_IDEN = enum (+1) ;
+using ENUM_NONE = enum (NONE) ;
+using ENUM_ZERO = enum (ZERO) ;
+using ENUM_IDEN = enum (IDEN) ;
 
 using ALIGNOF<UNIT> = enum (rust::alignof (UNIT)) ;
 using SIZEOF<UNIT> = enum (rust::sizeof (UNIT)) ;
 using COUNTOF<UNIT> = enum (rust::countof (UNIT)) ;
 
-using DEF<UNIT> = UNIT ;
-
 using CALL<UNIT> = UNIT::RET ;
 
-trait ENUM_CHECK_HELP<ARG1> {
+trait ENUM_UNWRAP_HELP<ARG1> {
 	require (IS_ENUM<EXPR>) ;
 
 	using RET = ARG1 ;
@@ -144,25 +142,25 @@ trait ENUM_ANY_HELP<ARGS> {
 	using RET = ENUM_OR<R1X ,R2X> ;
 } ;
 
-using ENUM_CHECK<EXPR> = CALL<ENUM_CHECK_HELP<EXPR>> ;
-using ENUM_AND<EXPR1 ,EXPR2> = enum (ENUM_CHECK<EXPR1>::value && ENUM_CHECK<EXPR2>::value) ;
-using ENUM_OR<EXPR1 ,EXPR2> = enum (ENUM_CHECK<EXPR1>::value || ENUM_CHECK<EXPR2>::value) ;
+using ENUM_UNWRAP<EXPR> = CALL<ENUM_UNWRAP_HELP<EXPR>> ;
+using ENUM_AND<EXPR1 ,EXPR2> = enum (ENUM_UNWRAP<EXPR1>::value && ENUM_UNWRAP<EXPR2>::value) ;
+using ENUM_OR<EXPR1 ,EXPR2> = enum (ENUM_UNWRAP<EXPR1>::value || ENUM_UNWRAP<EXPR2>::value) ;
 using ENUM_ALL<...> = CALL<ENUM_ALL_HELP<type<...>>> ;
 using ENUM_ANY<...> = CALL<ENUM_ANY_HELP<type<...>>> ;
-using ENUM_NOT<EXPR> = enum (!ENUM_CHECK<EXPR>::value) ;
-using ENUM_EQ<EXPR1 ,EXPR2> = enum (ENUM_CHECK<EXPR1>::value == ENUM_CHECK<EXPR2>::value) ;
+using ENUM_NOT<EXPR> = enum (not ENUM_UNWRAP<EXPR>::value) ;
+using ENUM_EQ<EXPR1 ,EXPR2> = enum (ENUM_UNWRAP<EXPR1>::value == ENUM_UNWRAP<EXPR2>::value) ;
 using ENUM_NOT_EQ<EXPR1 ,EXPR2> = ENUM_NOT<ENUM_EQ<EXPR1 ,EXPR2>> ;
-using ENUM_COMPR<EXPR1 ,EXPR2> = enum (ENUM_CHECK<EXPR1>::value <=> ENUM_CHECK<EXPR2>::value) ;
+using ENUM_COMPR<EXPR1 ,EXPR2> = enum (ENUM_UNWRAP<EXPR1>::value <=> ENUM_UNWRAP<EXPR2>::value) ;
 using ENUM_LT<EXPR1 ,EXPR2> = enum (ENUM_COMPR<EXPR1 ,EXPR2>::value < ZERO) ;
 using ENUM_GT<EXPR1 ,EXPR2> = enum (ENUM_COMPR<EXPR1 ,EXPR2>::value > ZERO) ;
 using ENUM_LT_EQ<EXPR1 ,EXPR2> = enum (ENUM_COMPR<EXPR1 ,EXPR2>::value <= ZERO) ;
 using ENUM_GT_EQ<EXPR1 ,EXPR2> = enum (ENUM_COMPR<EXPR1 ,EXPR2>::value >= ZERO) ;
 using ENUM_BETWEEN<EXPR ,BEGIN ,END> = ENUM_AND<ENUM_GT_EQ<EXPR ,BEGIN> ,ENUM_LT<EXPR ,END>> ;
-using ENUM_ADD<EXPR1 ,EXPR2> = enum (ENUM_CHECK<EXPR1>::value + ENUM_CHECK<EXPR2>::value) ;
-using ENUM_SUB<EXPR1 ,EXPR2> = enum (ENUM_CHECK<EXPR1>::value - ENUM_CHECK<EXPR2>::value) ;
-using ENUM_MUL<EXPR1 ,EXPR2> = enum (ENUM_CHECK<EXPR1>::value * ENUM_CHECK<EXPR2>::value) ;
-using ENUM_DIV<EXPR1 ,EXPR2> = enum (ENUM_CHECK<EXPR1>::value / ENUM_CHECK<EXPR2>::value) ;
-using ENUM_MOD<EXPR1 ,EXPR2> = enum (ENUM_CHECK<EXPR1>::value % ENUM_CHECK<EXPR2>::value) ;
+using ENUM_ADD<EXPR1 ,EXPR2> = enum (ENUM_UNWRAP<EXPR1>::value + ENUM_UNWRAP<EXPR2>::value) ;
+using ENUM_SUB<EXPR1 ,EXPR2> = enum (ENUM_UNWRAP<EXPR1>::value - ENUM_UNWRAP<EXPR2>::value) ;
+using ENUM_MUL<EXPR1 ,EXPR2> = enum (ENUM_UNWRAP<EXPR1>::value * ENUM_UNWRAP<EXPR2>::value) ;
+using ENUM_DIV<EXPR1 ,EXPR2> = enum (ENUM_UNWRAP<EXPR1>::value / ENUM_UNWRAP<EXPR2>::value) ;
+using ENUM_MOD<EXPR1 ,EXPR2> = enum (ENUM_UNWRAP<EXPR1>::value % ENUM_UNWRAP<EXPR2>::value) ;
 using ENUM_INC<EXPR> = ENUM_ADD<EXPR ,ENUM_IDEN> ;
 using ENUM_DEC<EXPR> = ENUM_SUB<EXPR ,ENUM_IDEN> ;
 using ENUM_MAX<EXPR1 ,EXPR2> = CONDITIONAL<ENUM_GT_EQ<EXPR1 ,EXPR2> ,EXPR1 ,EXPR2> ;
@@ -177,10 +175,10 @@ trait PLACEHOLDER_HELP<ARG1> {
 trait PLACEHOLDER_HELP<ARG1> {
 	require (ENUM_GT<ARG1 ,ENUM_ZERO>) ;
 
-	using R1X = PLACEHOLDER_HELP<ENUM_DECREASE<ARG1>>::PLACEHOLDER ;
+	using R1X = PLACEHOLDER_HELP<ENUM_DEC<ARG1>>::PLACEHOLDER ;
 
 	class PLACEHOLDER {
-		public extend :R1X ;
+		public extend mSuper :R1X ;
 	} ;
 } ;
 
@@ -197,6 +195,22 @@ static constant P7 = PLACEHOLDER<enum (7)> () ;
 static constant P8 = PLACEHOLDER<enum (8)> () ;
 static constant P9 = PLACEHOLDER<enum (9)> () ;
 static constant PX = PLACEHOLDER<enum (10)> () ;
+
+using UNION<ALIGN ,SIZE> = CALL<UNION_HELP<ALIGN ,SIZE>> ;
+
+trait TEMP_HELP<UNIT> {
+	class TEMP {
+		public using REMOVE_TEMP_TYPE = UNIT ;
+
+		variable mStorage :UNION<ALIGNOF<UNIT> ,SIZEOF<UNIT>> ;
+	} ;	
+
+	implement TEMP {
+		function new = () => default ;
+	} ;
+} ;
+
+using TEMP<UNIT> = TEMP_HELP<UNIT>::TEMP ;
 
 trait CONDITIONAL_HELP<ARG1 ,ARG2 ,ARG3> {
 	require (ARG1) ;
@@ -274,19 +288,25 @@ using TYPE_FIRST<ALL> = ALL::FIRST_TYPE ;
 using TYPE_SECOND<ALL> = ALL::SECOND_TYPE ;
 using TYPE_FIRST_REST<ALL> = ALL::FIRST_REST_TYPE ;
 using TYPE_SECOND_REST<ALL> = ALL::SECOND_REST_TYPE ;
+using TYPE_LAST<ALL> = ALL::LAST_TYPE ;
+using TYPE_SLAST<ALL> = ALL::SLAST_TYPE ;
+using TYPE_REST_LAST<ALL> = ALL::REST_LAST_TYPE ;
+using TYPE_REST_SLAST<ALL> = ALL::REST_SLAST_TYPE ;
 using TYPE_CAT<UNIT1 ,UNIT2> = type<UNIT1... ,UNIT2...> ;
-
-using TYPE_PICK<ALL ,POS> = TYPE_PICK_HELP<ALL ,POS> ;
-using TYPE_FIND<ALL ,KEY> = TYPE_FIND_HELP<ALL ,KEY> ;
-using TYPE_REPEAT<UNIT ,SIZE> = TYPE_REPEAT_HELP<UNIT ,SIZE> ;
+using TYPE_UNWRAP<ALL> = CALL<TYPE_UNWRAP_HELP<ALL>>
+using TYPE_PICK<ALL ,POS> = CALL<TYPE_PICK_HELP<ALL ,POS>> ;
+using TYPE_FIND<ALL ,KEY> = CALL<TYPE_FIND_HELP<ALL ,KEY>> ;
+using TYPE_REPEAT<UNIT ,SIZE> = CALL<TYPE_REPEAT_HELP<UNIT ,SIZE>> ;
 
 using IS_STRUCT<UNIT> = enum (rust::is_struct (UNIT)) ;
-using REFLECT_STRUCT<UNIT> = CALL<rust::REFLECT_STRUCT_HELP<UNIT>> ;
+using REFLECT_STRUCT<UNIT> = rust::reflct_struct (UNIT) ;
 using STRUCT_BIND<PARAMS> = [...:PARAMS] ;
 
+using IS_ALGEBRA<UNIT> = enum (rust::is_algebra (UNIT)) ;
+
 using IS_FUNCTION<UNIT> = enum (rust::is_function (UNIT)) ;
-using REMOVE_FUNCTION<UNIT> = CALL<rust::REMOVE_FUNCTION_HELP<UNIT>> ;
-using REFLECT_FUNCTION<UNIT> = CALL<rust::REFLECT_FUNCTION_HELP<UNIT>> ;
+using REFLECT_FUNCTION<UNIT> = rust::reflect_function (UNIT) ;
+using REMOVE_FUNCTION<UNIT> = TYPE_UNWRAP<TYPE_FIRST<REFLECT_FUNCTION<UNIT>>> ;
 using FUNCTION_BIND<RETURN ,PARAMS> = (...:PARAMS) :RETURN ;
 
 using IS_TRIVIAL<UNIT> = enum (rust::is_trivial (UNIT)) ;
@@ -301,107 +321,153 @@ using IS_IMPLEMENT<BASE ,DERIVED> = enum (rust::is_implement (BASE ,DERIVED)) ;
 
 using IS_PLACEHOLDER<UNIT> = IS_EXTEND<PLACEHOLDER<ZERO> ,UNIT> ;
 
-using IS_TEMP<UNIT> = concept (UNIT as class TEMP) ;
-using REMOVE_TEMP<UNIT> = rust::REMOVE_TEMP_HELP<UNIT> ;
+trait IS_TEMP_HELP<ARG1 ,ARG2> {
+	using RET = ARG1::REMOVE_TEMP_TYPE ;
+} ;
+
+trait IS_TEMP_HELP<ARG1 ,ARG2> {
+	require (ENUM_EQ<ARG2 ,ENUM_ZERO>) ;
+
+	using RET = CALL<IS_TEMP_HELP<ARG1 ,ENUM_IDEN>> ;
+} ;
+
+trait IS_TEMP_HELP<ARG1 ,ARG2> {
+	require (ENUM_EQ<ARG2 ,ENUM_IDEN>) ;
+
+	using RET = ENUM_ZERO ;
+} ;
+
+using IS_TEMP<UNIT> = CALL<IS_TEMP_HELP<UNIT ,ENUM_ZERO>> ;
+using REMOVE_TEMP<UNIT> = UNIT::REMOVE_TEMP_TYPE ;
+
+trait BYTE_TRAIT_HELP<ARG1 ,ARG2> {
+	require (ENUM_EQ<ARG1 ,ALIGNOF<BYTE>>) ;
+	require (ENUM_EQ<ARG2 ,SIZEOF<BYTE>>) ;
+
+	using RET = BYTE ;
+} ;
+
+trait BYTE_TRAIT_HELP<ARG1 ,ARG2> {
+	require (ENUM_EQ<ARG1 ,ALIGNOF<WORD>>) ;
+	require (ENUM_EQ<ARG2 ,SIZEOF<WORD>>) ;
+
+	using RET = WORD ;
+} ;
+
+trait BYTE_TRAIT_HELP<ARG1 ,ARG2> {
+	require (ENUM_EQ<ARG1 ,ALIGNOF<CHAR>>) ;
+	require (ENUM_EQ<ARG2 ,SIZEOF<CHAR>>) ;
+
+	using RET = CHAR ;
+} ;
+
+trait BYTE_TRAIT_HELP<ARG1 ,ARG2> {
+	require (ENUM_EQ<ARG1 ,ALIGNOF<FEAT>>) ;
+	require (ENUM_EQ<ARG2 ,SIZEOF<FEAT>>) ;
+
+	using RET = FEAT ;
+} ;
 
 using BYTE_TRAIT<UNIT> = CALL<BYTE_TRAIT_HELP<UNIT>> ;
 
-define _ASSERT_(...) switch { if (...) discard ; Exception ("assert failed : " ++ rust::literal (...) ++ " : at " ++ rust::function_name ++ " in " ++ rust::file_name ++ " ," ++ rust::line_name).raise () ; }
-
-function noop = () => {
-	_ASSERT_ (TRUE) ;
+static function noop = () => {
+	rust::assert (TRUE) ;
 } ;
 
-function unimplemented = () => {
-	_ASSERT_ (FALSE) ;
+static function unimplemented = () => {
+	rust::assert (FALSE) ;
 } ;
 
-function address = (obj) => {
-	##???##
+static function bad = (id) => {
+	using R1X = type (id) ;
+	constant r1x :() :auto = NULL ;
+	assert (FALSE) ;
+	return R1X (r1x) ;
 } ;
 
-function alignas = (base :LENGTH ,align :LENGTH) => {
-	return base + (align - base % align) % align ;
+static function address = (obj) => rust::address (obj) ;
+
+static function alignas = (base :LENGTH ,align :LENGTH) => base + (align - base % align) % align;
+
+static function between = (obj :INDEX ,begin :INDEX ,end :INDEX) => obj >= begin && obj < end ;
+
+trait FORWARD_HELP<ARG1> {
+	require (IS_CLASS<ARG1>) ;
+	require (IS_SHAREABLE<ARG1>) ;
+	require (IS_CLONEABLE<ARG1>) ;
+
+	function forward = (obj :ARG1) => {
+		if (rust::is_variable (obj))
+			return obj.share () ;
+		if (rust::is_constant (obj))
+			return obj.clone () ;
+		return bad (type<ARG1>::id) ;
+	} ;
 } ;
 
-function load = (id1 ,owner ,addr :LENGTH) => {
-	using R1X = type (id1) ;
-	using R2X = type (owner) ;
-	require (IS_FUNCTION<R2X>) ;
-	##???##
+trait FORWARD_HELP<ARG1> {
+	require (IS_CLASS<ARG1>) ;
+	require (ENUM_NOT<IS_SHAREABLE<ARG1>>) ;
+	require (IS_CLONEABLE<ARG1>) ;
+
+	function forward = (obj :ARG1) => obj.clone () ;
 } ;
 
-function swap = (obj1 ,obj2) => {
-	using R1X = type (obj1) ;
-	using R2X = type (obj2) ;
-	require (IS_SAME<R1X ,R2X>) ;
-	##???##
+trait FORWARD_HELP<ARG1> {
+	require (ENUM_NOT<IS_CLASS<ARG1>>) ;
+
+	function forward = (obj :ARG1) => obj ;
 } ;
 
-function hash = (...) => HASH_HELP<type (...)>::hash (...) ;
+static function forward = (obj) => FORWARD_HELP<type (obj)>::forward (obj) ;
 
-function between = (obj :INDEX ,begin :INDEX ,end :INDEX) => {
-	return obj >= begin && obj < end ;
+static function copy = (obj) => {
+	constant r1x = forward (obj) ;
+	obj = r1x ;
+	return r1x ;
 } ;
 
-function min = (obj1 ,obj2) => {
+static function swap = (obj1 ,obj2) => {
+	variable rax = forward (obj1) ;
+	variable rbx = forward (obj2) ;
+	obj1 = forward (rbx) ;
+	obj2 = forward (rax) ;
+} ;
+
+trait HASH_HELP<ARGS> {
+	require (ENUM_EQ<COUNTOF<ARGS> ,ZERO>) ;
+
+	static function hash = () => FLAG (-3750763034362895579) ;
+} ;
+
+trait HASH_HELP<ARGS> {
+	require (ENUM_GT<COUNTOF<ARGS> ,ZERO>) ;
+
+	static function hash = (... ,last) => {
+		constant r1x = HASH_HELP<TYPE_REST_LAST<ARGS>>::hash (...) ;
+		constant r2x = FLAG (FEAT (r1x) ^ FEAT (last)) ;
+		return r2x * FLAG (1099511628211) ;
+	} ;
+} ;
+
+static function hash = (...) => {
+	constant r1x = HASH_HELP<type (...)>::hash (...) ;
+	if (r1x >= 0)
+		return r1x ;
+	return -r1x - 1 ;
+} ;
+
+static function min = (obj1 ,obj2) => {
 	if (obj1 <= obj2)
 		return obj1 ;
 	return obj2 ;
 } ;
 
-function max = (obj1 ,obj2) => {
+static function max = (obj1 ,obj2) => {
 	if (obj1 >= obj2)
 		return obj1 ;
 	return obj2 ;
 } ;
-
-trait SYNTAX_HELP<UNIT> {
-	class Syntax {
-		constant mPointer :PTR<UNIT> ;
-	} ;
-
-	implement Syntax {
-		function new = () => delete ;
-
-		function new = (that :UNIT) => {
-			mPointer = PTR<UNIT> => that ;
-		} ;
-	} ;
-
-	implement Syntax :Wrapped<UNIT> {
-		function to = () => mPointer ;
-	} ;
-} ;
-
-using Syntax<UNIT> = SYNTAX_HELP<UNIT>::Syntax ;
-
-using UNION<ALIGN ,SIZE> = UNION_HELP<ALIGN ,SIZE>::UNION ;
-
-trait TEMP_HELP<UNIT> {
-	class TEMP {
-		variable mStorage :UNION<ALIGNOF<UNIT> ,SIZEOF<UNIT>> ;
-	} ;	
-
-	implement TEMP {
-		function new = () => default ;
-
-		function new = (that) => {
-			using R1X = type (that) ;
-			using R2X = type (NULL) ;
-			require (IS_SAME<R1X ,R2X>) ;
-			mStorage = UNION<ALIGNOF<UNIT> ,SIZEOF<UNIT>> => zeroize ;
-		} ;
-
-		function swap = mutable (that :TEMP) => {
-			variable rax = mStorage ;
-			mStorage = that.mStorage ;
-			that.mStorage = rax ;
-		} ;
-	} ;
-} ;
-
-using TEMP<UNIT> = TEMP_HELP<UNIT>::TEMP ;
 
 trait SLICE_HELP<REAL> {
 	class Slice {
@@ -409,7 +475,7 @@ trait SLICE_HELP<REAL> {
 		class ImplHolder ;
 		class ConcatHolder ;
 
-		constant mPointer :PTR<Holder> ;
+		constant mPointer :(:(:Holder) :auto) :auto ;
 	} ;
 
 	interface Slice::Holder {
@@ -418,10 +484,10 @@ trait SLICE_HELP<REAL> {
 	} ;
 
 	trait SLICE_IMPLHOLDER_HELP<WRAP> {
-		class Slice::ImplHolder {
-			require (IS_STRUCT<WRAP>) ;
+		require (IS_STRUCT<WRAP>) ;
 
-			constant mTuple :PTR<WRAP> ;
+		class Slice::ImplHolder {
+			constant mTuple :WRAP ;
 			constant mSize :LENGTH ;
 			constant mHashCode :FLAG ;
 		} ;
@@ -429,10 +495,10 @@ trait SLICE_HELP<REAL> {
 		implement Slice::ImplHolder {
 			function new = () => delete ;
 
-			function new = (that :PTR<WRAP>) => {
-				mTuple = that ;
-				mSize = mTuple->count () ;
-				mHashCode = mTuple->hashcode () ;
+			function new = (that :WRAP) => {
+				mTuple = forward (that) ;
+				mSize = mTuple.count () ;
+				mHashCode = mTuple.hashcode () ;
 			} ;
 		} ;
 
@@ -441,7 +507,7 @@ trait SLICE_HELP<REAL> {
 
 			function hashcode = () => mHashCode ;
 
-			function get = (index :INDEX) => mTuple->[index] ;
+			function get = (index :INDEX) => mTuple.get (index) ;
 		} ;
 	} ;
 
@@ -457,11 +523,14 @@ trait SLICE_HELP<REAL> {
 		function new = () => delete ;
 
 		function new = (head :Slice ,tail :Slice) => {
-			mHead = head ;
-			mTail = tail ;
-			mHeadSize = head.size () ;
-			mSize = mHeadSize + tail.size () ;
-			mHashCode = hash (mHead->hashcode () ,mTail->hashcode ()) ;
+			mHead = forward (head) ;
+			mTail = forward (tail) ;
+			mHeadSize = mHead.size () ;
+			mSize = mHeadSize + mTail.size () ;
+			constant r3x = (x :Holder) :auto => x.hashcode () ;
+			constant r1x = FLAG (mHead.mPointer->r3x ()) ;
+			constant r2x = FLAG (mTail.mPointer->r3x ()) ;
+			mHashCode = hash (r1x ,r2x) ;
 		} ;
 	} ;
 
@@ -472,8 +541,8 @@ trait SLICE_HELP<REAL> {
 
 		function get = (index :INDEX) => {
 			if (index < mHeadSize)
-				return mHead.[index] ;
-			return mTail.[index - mHeadSize] ;
+				return mHead.get (index) ;
+			return mTail.get (index - mHeadSize) ;
 		} ;
 	} ;
 
@@ -482,38 +551,35 @@ trait SLICE_HELP<REAL> {
 			mPointer = NULL ;
 		} ;
 		
-		function new = (id1 ,that) => {
+		function new = (id ,that) => {
 			using R1X = type (that) ;
-			using R2X = REMOVE_FUNCTION<R1X> ;
-			constant r1x = PTR<R2X> => that ;
-			static constant M_HOLDER = SLICE_IMPLHOLDER_HELP<R2X>::ImplHolder (r1x) ;
-			mPointer = PTR<Holder> => M_HOLDER ;
+			register r1x = SLICE_IMPLHOLDER_HELP<R1X>::ImplHolder (that) ;
+			static constant M_HOLDER = (rc :(:Holder) :auto) => rc (r1x) ;
+			mPointer = M_HOLDER ;
 		} ;
 		
-		function new = (id1 ,head :Slice ,tail :Slice) => {
-			static constant M_HOLDER = ConcatHolder (head ,tail) ;
-			mPointer = PTR<Holder> => M_HOLDER ;
+		function new = (id ,head :Slice ,tail :Slice) => {
+			register r1x = ConcatHolder (head ,tail) ;
+			static constant M_HOLDER = (rc :(:Holder) :auto) => rc (r1x) ;
+			mPointer = M_HOLDER ;
 		} ;
 
 		function size = () => {
 			if (mPointer == NULL)
 				return ZERO ;
-			return mPointer->size () ;
+			constant r1x = (x :Holder) :auto => x.size () ;
+			return LENGTH (mPointer->r1x ()) ;
 		} ;
-	} ;
-
-	implement Slice :Getable {
+		
 		function get = (index :INDEX) => {
-			_ASSERT_ (between (index ,0 ,size ())) ;
-			return mPointer->get (index) ;
+			rust::assert (between (index ,0 ,size ())) ;
+			register r2x = index ;
+			constant r1x = (x :Holder) :auto => x.get (r2x) ;
+			return REAL (mPointer->r1x ()) ;
 		} ;
-	} ;
-	
-	implement Slice :Concatable {	
+		
 		function concat = (that :Slice) => Slice (P0 ,this ,that) ;
-	} ;
-
-	implement Slice :Equalable<Slice> {
+		
 		function equal = (that :Slice) => {
 			if (size () != that.size ())
 				return FALSE ;
@@ -525,9 +591,7 @@ trait SLICE_HELP<REAL> {
 			}
 			return TRUE ;
 		} ;
-	} ;
-
-	implement Slice :Comprable<Slice> {
+		
 		function compr = (that :Slice) => {
 			constant r1x = min (size () ,that.size ()) ;
 			for (i in range (0 ,r1x)) {
@@ -550,7 +614,7 @@ class Class {
 	class Reflection ;
 	class ImplHolder ;
 
-	constant mPointer :PTR<Holder> ;
+	constant mPointer :(:(:Holder) :auto) :auto ;
 } ;
 
 interface Class::Holder {
@@ -558,15 +622,6 @@ interface Class::Holder {
 	function type_align = () :LENGTH => virtual ;
 	function type_size = () :LENGTH => virtual ;
 	function type_name = () :Slice<STR> => virtual ;
-	function reflect = () :PTR<Reflection> => virtual ;
-} ;
-
-class Class::Reflection {
-	public constant mType :Class ;
-	public constant mOffset :LENGTH ;
-	public constant mMember :Slice<STR> ;
-	public constant mPrev :PTR<Reflection> ;
-	public constant mNext :PTR<Reflection> ;
 } ;
 
 trait CLASS_IMPLHOLDER_HELP<WRAP> {
@@ -580,14 +635,8 @@ trait CLASS_IMPLHOLDER_HELP<WRAP> {
 		function type_size = () => SIZEOF<WRAP>::value ;
 
 		function type_name = () => {
-			constant r1x = () => {} ;
-			using R1X = type (r1x) ;
-			return Slice<STR> (type<R1X>::value ,rust::func_name) ;
-		} ;
-
-		function reflect = () => {
-			##???##
-			return PTR<Reflection> (NULL) ;
+			class Dependent ;
+			return Slice<STR> (type<Dependent>::id ,rust::nameof (WRAP)) ;
 		} ;
 	} ;
 } ;
@@ -595,22 +644,33 @@ trait CLASS_IMPLHOLDER_HELP<WRAP> {
 implement Class {
 	function new = () => delete ;
 
-	function new = (id1) => {
-		using R1X = type (id1) ;
-		static constant M_HOLDER = CLASS_IMPLHOLDER_HELP<R1X>::ImplHolder () ;
-		mPointer = PTR<Holder> => M_HOLDER ;
+	function new = (id) => {
+		using R1X = type (id) ;
+		register r1x = CLASS_IMPLHOLDER_HELP<R1X>::ImplHolder () ;
+		static constant M_HOLDER = (rc :(:Holder) :auto) => rc (r1x) ;
+		mPointer = M_HOLDER ;
 	} ;
 	
-	function type_hash = () => mPointer->type_hash () ;
+	function type_hash = () => {
+		constant r1x = (x :Holder) :auto => x.type_hash () ;
+		return FLAG (mPointer->r1x ()) ;
+	} ;
 
-	function type_align = () => mPointer->type_align () ;
+	function type_align = () => {
+		constant r1x = (x :Holder) :auto => x.type_align () ;
+		return LENGTH (mPointer->r1x ()) ;
+	} ;
 
-	function type_size = () => mPointer->type_size () ;
+	function type_size = () => {
+		constant r1x = (x :Holder) :auto => x.type_size () ;
+		return LENGTH (mPointer->r1x ()) ;
+	} ;
 
-	function type_name = () => mPointer->type_name () ;
-} ;
-
-implement Class :Equalable<Slice> {
+	function type_name = () => {
+		constant r1x = (x :Holder) :auto => x.type_name () ;
+		return Slice<STR> (mPointer->r1x ()) ;
+	} ;
+	
 	function equal = (that :Class) => {
 		if (type_hash () != that.type_hash ())
 			return FALSE ;
@@ -618,17 +678,9 @@ implement Class :Equalable<Slice> {
 			return FALSE ;
 		return TRUE ;
 	} ;
-} ;
-
-implement Class :Comprable<Slice> {
+	
 	function compr = (that :Class) => {
-		constant r1x = type_hash () <=> that.type_hash () ;
-		if (r1x != ZERO)
-			return r1x ;
-		constant r2x = type_name () <=> that.type_name () ;
-		if (r2x != ZERO)
-			return r2x ;
-		return ZERO ;
+		return type_name () <=> that.type_name () ;
 	} ;
 } ;
 
@@ -640,7 +692,7 @@ implement Exception {
 	function new = () => default ;
 
 	function new = (that :Slice<STR>) => {
-		mWhat = that ;
+		mWhat = forward (that) ;
 	} ;
 
 	function what = () => mWhat ;
@@ -650,34 +702,30 @@ implement Exception {
 	} ;
 } ;
 
-interface Iteratable {
-	function ibegin = () :INDEX => virtual ;
-	function iend = () :INDEX => virtual ;
-	function inext = (index :INDEX) :INDEX => virtual ;
-} ;
-
 class Iterator {
-	constant mArray :PTR<Iteratable> ;
+	constant mBegin :INDEX ;
 	constant mEnd :INDEX ;
+	constant mNext :(:INDEX) :INDEX ;
 	variable mIndex :INDEX ;
 } ;
 
 implement Iterator {
 	function new = () => delete ;
 
-	function new = (array :PTR<Iteratable>) => {
-		mArray = array ;
-		mIndex = mArray->ibegin () ;
-		mEnd = mArray->iend () ;
+	function new = (begin :INDEX ,end :INDEX ,next :(:INDEX) :INDEX) => {
+		mBegin = begin ;
+		mEnd = end ;
+		mNext = next ;
+		mIndex = mBegin ;
 	} ;
 } ;
 
 implement Iterator {
-	function next = mutable () => {
-		mIndex = mArray->inext (mIndex) ;
-	} ;
-
 	function good = () => mIndex != mEnd ;
+
+	function next = mutable () => {
+		mIndex = mNext (mIndex) ;
+	} ;
 
 	function get = () => mIndex ;
 } ;
@@ -685,72 +733,20 @@ implement Iterator {
 class RangeIterator {
 	constant mBegin :INDEX ;
 	constant mEnd :INDEX ;
+	constant mNext :(:INDEX) :INDEX ;
 } ;
 
 implement RangeIterator {
 	function new = () => delete ;
 
 	function new = (begin :INDEX ,end :INDEX) => {
+		static constant M_NEXT = (x :INDEX) => x + 1 ;
 		mBegin = begin ;
 		mEnd = max (begin ,end) ;
+		mNext = M_NEXT ;
 	} ;
+
+	function range_for = () => Iterator (mBegin ,mEnd ,mNext) ;
 } ;
 
-implement RangeIterator :Iteratable {
-	function ibegin = () => mBegin ;
-
-	function iend = () => mEnd ;
-
-	function inext = (index :INDEX) => index + 1 ;
-} ;
-
-function range = (begin :INDEX ,end :INDEX) => RangeIterator (begin ,end) ;
-
-class Reference {
-	public constant mPointer :() ;
-} ;
-
-implement Reference {
-	function new = () => {
-		mPointer = NULL ;
-	} ;
-
-	function new = (that) => {
-		mPointer = that.mPointer ;
-	} ;
-} ;
-
-trait SAFEREFERENCE_HELP<UNIT> {
-	class SafeReference {
-		constant mPointer :PTR<UNIT> ;
-	} ;
-
-	implement SafeReference {
-		function new = () => delete ;
-
-		trait NEW_HELP<ARG1> {
-			require (IS_SAME<ARG1 ,PTR<UNIT>>) ;
-			
-			function new = (that :PTR<UNIT>) => {
-				mPointer = that ;
-			} ;
-		} ;
-
-		trait NEW_HELP<ARG1> {
-			require (IS_SAME<ARG1 ,Reference>) ;
-
-			function new = (that :Reference) => {
-				_ASSERT_ (that.mPointer != NULL) ;
-				mPointer = that.mPointer ;
-			} ;
-		} ;
-
-		function new = (that) => NEW_HELP<type (that)>::new (that) ;
-	} ;
-
-	implement SafeReference :Wrapped<UNIT> {
-		function to = () => mPointer ;
-	} ;
-} ;
-
-using SafeReference<UNIT> = SAFEREFERENCE_HELP<UNIT>::SafeReference ;
+static function range = (begin :INDEX ,end :INDEX) => RangeIterator (begin ,end) ;

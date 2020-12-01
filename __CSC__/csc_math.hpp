@@ -266,9 +266,7 @@ template <class _ARG1>
 inline exports REMOVE_CVR_TYPE<_ARG1> MathProc::sign (const _ARG1 &x) {
 	if (x < _ARG1 (0))
 		return _ARG1 (-1) ;
-	if (x > _ARG1 (0))
-		return _ARG1 (+1) ;
-	return _ARG1 (0) ;
+	return _ARG1 (+1) ;
 }
 
 template <class _ARG1>
