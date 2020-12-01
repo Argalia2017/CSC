@@ -681,14 +681,15 @@ public:
 		const auto r6x = r4x.mul (Vector<REAL>::axis_y ()) ;
 		const auto r7x = r4x.mul (Vector<REAL>::axis_z ()) ;
 		const auto r8x = r4x.mul (Vector<REAL>::axis_w ()) ;
-		const auto r9x = MathProc::sign ((r5x ^ r6x) * r7x) * MathProc::inverse (r8x[3]) ;
-		const auto r10x = r5x.magnitude () * r9x ;
-		const auto r11x = r6x.magnitude () * r9x ;
-		const auto r12x = r7x.magnitude () * r9x ;
-		ret[1] = Matrix::make_diag (r10x ,r11x ,r12x ,REAL (1)) ;
+		const auto r9x = (r5x ^ r6x) * r7x ;
+		const auto r10x = MathProc::sign (r9x) * MathProc::inverse (r8x[3]) ;
+		const auto r11x = r5x.magnitude () * r10x ;
+		const auto r12x = r6x.magnitude () * r10x ;
+		const auto r13x = r7x.magnitude () * r10x ;
+		ret[1] = Matrix::make_diag (r11x ,r12x ,r13x ,REAL (1)) ;
 		ret[2] = Matrix::make_view (r5x ,r6x) ;
-		const auto r13x = r8x.projection () ;
-		ret[3] = Matrix::make_translation (r13x[0] ,r13x[1] ,r13x[2]) ;
+		const auto r14x = r8x.projection () ;
+		ret[3] = Matrix::make_translation (r14x[0] ,r14x[1] ,r14x[2]) ;
 		return _MOVE_ (ret) ;
 	}
 

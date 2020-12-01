@@ -1,104 +1,110 @@
 ﻿
-module rust ;
+module rust
 
 ## keyword
 
 # module
 # import
+# export
 
 # trait
 # using
-
 # require
 # macro
 
-# bool ;
-# true ;
-# false ;
+# bool
+# true
+# false
 # int8
 # int16
-# int32 ;
-# int64 ;
-# float32 ;
-# float64 ;
-# infinity ;
-# byte8 ;
-# byte16 ;
-# byte32 ;
-# byte64 ;
-# stra ;
-# stru8 ;
-# stru16 ;
-# stru32 ;
-# null ;
+# int32
+# int64
+# float32
+# float64
+# infinity
+# byte8
+# byte16
+# byte32
+# byte64
+# byte128
+# byte256
+# byte512
+# stra
+# stru8
+# stru16
+# stru32
+# null
 
-# enum ;
-# type ;
+# enum
+# type
+# auto
 
-# static
-# constant
-# variable
-# register
-
-# local
-# syntax
+# mutable
+# pure
 # function
 # default
 # delete
 # virtual
-# zeroize
+
+# algebra
+# later
+# watch
 
 # class
 # extend
 # interface
 # implement
-# new
-# delete
 # private
 # public
 
-# define
+# static
+# constant
+# variable
+# register
+# volatile
 
-# if ;
-# for ;
-# in ;
-# continue ;
-# while ;
-# break ;
-# switch ;
-# discard ;
+# if
+# not
+# for
+# in
+# continue
+# while
+# break
+# switch
+# discard
+# sync
 
-# throw ;
-# catch ;
-# later ;
+# throw
+# catch
 
-# await ;
-# yield ;
+# await
+# yield
 
-##
-
-## internel
-
-# literal ;
-
-# alignof ;
-# sizeof ;
-# countof ;
+# alignof
+# sizeof
+# countof
+# nameof
 
 # is_same
 # is_enum
 # is_type
 # is_struct
-# reflect_struct
 # is_function
-# reflect_function
-# is_interface
+# is_pure
+# is_algebra
 # is_trivial
+# is_interface
 # is_class
 # is_constructible
 # is_shareable
 # is_cloneable
 # is_extend
 # is_implement
+
+# reflect_struct
+# reflect_function
+
+# assert
+# address
 
 ##
