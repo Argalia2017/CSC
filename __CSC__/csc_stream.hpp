@@ -857,8 +857,8 @@ public:
 				if (!r2x)
 					discard ;
 				_DYNAMIC_ASSERT_ (mRead < mWrite) ;
-				data = r1x.convert_endian (mStream[mRead]) ;
-				data = r1x.convert_escape_r (data) ;
+				const auto r3x = r1x.convert_endian (mStream[mRead]) ;
+				data = r1x.convert_escape_r (r3x) ;
 				mRead++ ;
 			}
 		}
@@ -2223,10 +2223,8 @@ public:
 		r1x.modify_escape_r (STRU8 ('\"') ,STRU8 ('\"')) ;
 		r1x.modify_escape_r (STRU8 ('/') ,STRU8 ('/')) ;
 		r1x.modify_escape_r (STRU8 ('\\') ,STRU8 ('\\')) ;
-		r1x.modify_escape_r (STRU8 ('u') ,STRU8 ('u')) ;
-		r1x.modify_escape_r (STRU8 ('x') ,STRU8 ('x')) ;
 		_STATIC_WARNING_ ("mark") ;
-		//@info: disable default escape-str convertion
+		//@warn: \\x and \\u is not supported yet
 		r1x.enable_escape (FALSE) ;
 		mReader.self >> TextReader<STRU8>::BOM ;
 		mCache = Deque<STRU8> (ll_len) ;
@@ -2558,4 +2556,78 @@ inline void RegularReader::SKIP_GAP (const ARGV<ARGVP<ARGC<6>>> &) {}
 inline void RegularReader::SKIP_GAP_SPACE (const ARGV<ARGVP<ARGC<7>>> &) {}
 
 inline void RegularReader::SKIP_GAP_ENDLINE (const ARGV<ARGVP<ARGC<8>>> &) {}
+
+template <class REAL>
+class TextRepeater :
+	delegate public TextWriter<REAL>::Binder {
+private:
+	LENGTH mMaxDepth ;
+	String<REAL> mGapText ;
+	String<REAL> mCommaText ;
+	LENGTH mCounter ;
+	SharedRef<LENGTH> mTightCounter ;
+	SharedRef<Deque<CSC::BOOL>> mFirst ;
+
+public:
+	implicit TextRepeater () = delete ;
+
+	explicit TextRepeater (const String<REAL> &gap_text ,const String<REAL> &comma_text) {
+		mMaxDepth = DEFAULT_RECURSIVE_SIZE::compile () ;
+		mGapText = gap_text ;
+		mCommaText = comma_text ;
+		mCounter = 0 ;
+		mTightCounter = SharedRef<LENGTH>::make () ;
+		mFirst = SharedRef<Deque<CSC::BOOL>>::make (mMaxDepth * 2) ;
+		mFirst->add (TRUE) ;
+	}
+
+	void friend_write (TextWriter<REAL> &writer) const override {
+		auto fax = TRUE ;
+		if switch_once (fax) {
+			if (!(mCounter > mTightCounter.self))
+				discard ;
+			if (!mFirst.self[mFirst->tail ()])
+				writer << mCommaText ;
+			mFirst->pop () ;
+			mFirst->add (FALSE) ;
+		}
+		if switch_once (fax) {
+			if (!(mCounter == mTightCounter.self))
+				discard ;
+			if (!mFirst.self[mFirst->tail ()])
+				discard ;
+			mTightCounter.self = mMaxDepth ;
+			mFirst->pop () ;
+			mFirst->add (FALSE) ;
+		}
+		if switch_once (fax) {
+			writer << TextWriter<REAL>::GAP ;
+			if (!mFirst.self[mFirst->tail ()])
+				writer << mCommaText ;
+			mFirst->pop () ;
+			mFirst->add (FALSE) ;
+			for (auto &&i : _RANGE_ (0 ,mCounter)) {
+				_NOOP_ (i) ;
+				writer << mGapText ;
+			}
+		}
+	}
+
+	void tight () {
+		mTightCounter.self = mCounter ;
+	}
+
+	void lock () {
+		_DYNAMIC_ASSERT_ (mCounter < mMaxDepth) ;
+		mCounter++ ;
+		mFirst->add (TRUE) ;
+	}
+
+	void unlock () {
+		mFirst->pop () ;
+		mFirst->pop () ;
+		mFirst->add (TRUE) ;
+		mCounter-- ;
+	}
+} ;
 } ;

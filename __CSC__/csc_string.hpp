@@ -130,10 +130,16 @@ public:
 	imports String<_ARG1> build_hexs (const ARGVF<_ARG1> & ,const DATA &stru) ;
 
 	template <class _ARG1>
-	imports String<STRU8> parse_base64u8s (const String<_ARG1> &stri) ;
+	imports String<STRU8> parse_escapes (const String<_ARG1> &stri) ;
 
 	template <class _ARG1>
-	imports String<_ARG1> build_base64u8s (const ARGVF<_ARG1> & ,const String<STRU8> &stru) ;
+	imports String<_ARG1> build_escapes (const ARGVF<_ARG1> & ,const String<STRU8> &stru) ;
+
+	template <class _ARG1>
+	imports String<STRU8> parse_base64s (const String<_ARG1> &stri) ;
+
+	template <class _ARG1>
+	imports String<_ARG1> build_base64s (const ARGVF<_ARG1> & ,const String<STRU8> &stru) ;
 
 	template <class _ARG1>
 	imports IPV4_ADDRESS parse_ipv4s (const String<_ARG1> &stri) ;
@@ -509,7 +515,7 @@ inline exports String<STRU32> StringProc::cvt_u8s_u32s (const String<STRU8> &val
 			rax = 5 ;
 		}
 		if switch_once (fax) {
-			if (!(rax == 0))
+			if (!(rax == 1))
 				discard ;
 			if (!(i <= STRU8 (0XBF)))
 				discard ;
@@ -791,22 +797,12 @@ inline exports String<STRU8> StringProc::cvt_uas_u8s (String<STRA> &&val) {
 
 inline exports String<STRA> StringProc::cvt_u8s_uas (const REMOVE_CONST_TYPE<String<STRU8>> &val) {
 	_STATIC_ASSERT_ (IS_SAME_HELP<STRUA ,STRU8>::compile ()) ;
-	String<STRUA> ret = _MOVE_ (val) ;
-	for (auto &&i : ret) {
-		_NOOP_ (i) ;
-		_DEBUG_ASSERT_ (i <= STRUA (0X7F)) ;
-	}
-	return _MOVE_ (_CAST_ (ARGV<String<STRA>>::ID ,ret)) ;
+	return _MOVE_ (_CAST_ (ARGV<String<STRA>>::ID ,val)) ;
 }
 
 inline exports String<STRA> StringProc::cvt_u8s_uas (REMOVE_CONST_TYPE<String<STRU8>> &&val) {
 	_STATIC_ASSERT_ (IS_SAME_HELP<STRUA ,STRU8>::compile ()) ;
-	String<STRUA> ret = _MOVE_ (val) ;
-	for (auto &&i : ret) {
-		_NOOP_ (i) ;
-		_DEBUG_ASSERT_ (i <= STRUA (0X7F)) ;
-	}
-	return _MOVE_ (_CAST_ (ARGV<String<STRA>>::ID ,ret)) ;
+	return _MOVE_ (_CAST_ (ARGV<String<STRA>>::ID ,val)) ;
 }
 
 class GBKSStaticProc :
@@ -1214,7 +1210,50 @@ inline exports String<_ARG1> StringProc::build_hexs (const ARGVF<_ARG1> & ,const
 }
 
 template <class _ARG1>
-inline exports String<_ARG1> StringProc::build_base64u8s (const ARGVF<_ARG1> & ,const String<STRU8> &stru) {
+inline exports String<STRU8> StringProc::parse_escapes (const String<_ARG1> &stri) {
+	const auto r1x = StringConvertInvokeProc::invoke (ARGV<String<STRU8>>::ID ,stri) ;
+	auto rax = TextReader<STRU8> (r1x.raw ()) ;
+	const auto r2x = rax.attr () ;
+	r2x.modify_escape_r (STRU8 ('t') ,STRU8 ('\t')) ;
+	r2x.modify_escape_r (STRU8 ('v') ,STRU8 ('\v')) ;
+	r2x.modify_escape_r (STRU8 ('b') ,STRU8 ('\b')) ;
+	r2x.modify_escape_r (STRU8 ('r') ,STRU8 ('\r')) ;
+	r2x.modify_escape_r (STRU8 ('n') ,STRU8 ('\n')) ;
+	r2x.modify_escape_r (STRU8 ('f') ,STRU8 ('\f')) ;
+	r2x.modify_escape_r (STRU8 ('\'') ,STRU8 ('\'')) ;
+	r2x.modify_escape_r (STRU8 ('\"') ,STRU8 ('\"')) ;
+	r2x.modify_escape_r (STRU8 ('/') ,STRU8 ('/')) ;
+	r2x.modify_escape_r (STRU8 ('\\') ,STRU8 ('\\')) ;
+	String<STRU8> ret ;
+	rax >> ret ;
+	return _MOVE_ (ret) ;
+}
+
+template <class _ARG1>
+inline exports String<_ARG1> StringProc::build_escapes (const ARGVF<_ARG1> & ,const String<STRU8> &stru) {
+	const auto r1x = _CALL_ ([&] () {
+		String<STRU8> ret = String<STRU8> (stru.length ()) ;
+		auto rax = TextWriter<STRU8> (ret.raw ()) ;
+		const auto r2x = rax.attr () ;
+		r2x.modify_escape_w (STRU8 ('t') ,STRU8 ('\t')) ;
+		r2x.modify_escape_w (STRU8 ('v') ,STRU8 ('\v')) ;
+		r2x.modify_escape_w (STRU8 ('b') ,STRU8 ('\b')) ;
+		r2x.modify_escape_w (STRU8 ('r') ,STRU8 ('\r')) ;
+		r2x.modify_escape_w (STRU8 ('n') ,STRU8 ('\n')) ;
+		r2x.modify_escape_w (STRU8 ('f') ,STRU8 ('\f')) ;
+		r2x.modify_escape_w (STRU8 ('\'') ,STRU8 ('\'')) ;
+		r2x.modify_escape_w (STRU8 ('\"') ,STRU8 ('\"')) ;
+		r2x.modify_escape_w (STRU8 ('/') ,STRU8 ('/')) ;
+		r2x.modify_escape_w (STRU8 ('\\') ,STRU8 ('\\')) ;
+		rax << stru ;
+		rax << TextWriter<STRU8>::EOS ;
+		return _MOVE_ (ret) ;
+	}) ;
+	return StringConvertInvokeProc::invoke (ARGV<String<_ARG1>>::ID ,r1x) ;
+}
+
+template <class _ARG1>
+inline exports String<_ARG1> StringProc::build_base64s (const ARGVF<_ARG1> & ,const String<STRU8> &stru) {
 	static constexpr auto M_BASE64 = PACK<STRU8[65]> ({
 		'A' ,'B' ,'C' ,'D' ,'E' ,'F' ,'G' ,'H' ,
 		'I' ,'J' ,'K' ,'L' ,'M' ,'N' ,'O' ,'P' ,
@@ -1295,7 +1334,7 @@ inline exports String<_ARG1> StringProc::build_base64u8s (const ARGVF<_ARG1> & ,
 }
 
 template <class _ARG1>
-inline exports String<STRU8> StringProc::parse_base64u8s (const String<_ARG1> &stri) {
+inline exports String<STRU8> StringProc::parse_base64s (const String<_ARG1> &stri) {
 	static constexpr auto M_BASE64 = PACK<INDEX[96]> ({
 		-1 ,-1 ,-1 ,-1 ,-1 ,-1 ,-1 ,-1 ,
 		-1 ,-1 ,-1 ,62 ,-1 ,-1 ,-1 ,63 ,

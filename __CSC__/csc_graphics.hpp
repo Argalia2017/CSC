@@ -18,14 +18,18 @@
 #include "csc_thread.hpp"
 
 namespace CSC {
-class Mesh {
+class GLPoint {} ;
+
+class GLLine {} ;
+
+class GLMesh {
 private:
 	Set<ARRAY3<VAL32>> mVertexSet ;
 	Deque<ARRAY3<INDEX>> mElement ;
 	Array<Bitmap<COLOR_BGR>> mTexture ;
 
 public:
-	implicit Mesh () = default ;
+	implicit GLMesh () = default ;
 
 	const Set<ARRAY3<VAL32>> &vertex () const leftvalue {
 		return mVertexSet ;
@@ -54,7 +58,7 @@ public:
 } ;
 
 template <class REAL>
-class Camera {
+class GLCamera {
 private:
 	Vector<REAL> mEyeU ;
 	Vector<REAL> mEyeV ;
@@ -67,7 +71,7 @@ private:
 	Matrix<REAL> mProjectionMatrix ;
 
 public:
-	implicit Camera () {
+	implicit GLCamera () {
 		const auto r1x = Vector<REAL> (REAL (0) ,REAL (0) ,REAL (1) ,REAL (1)) ;
 		const auto r2x = Vector<REAL> (REAL (0) ,REAL (0) ,REAL (0) ,REAL (1)) ;
 		const auto r3x = Vector<REAL> (REAL (0) ,REAL (1) ,REAL (0) ,REAL (0)) ;
@@ -363,7 +367,7 @@ private:
 	class Abstract :
 		delegate public Interface {
 	public:
-		virtual void load_data (const Mesh &mesh) = 0 ;
+		virtual void load_data (const GLMesh &mesh) = 0 ;
 		virtual void active_texture (const INDEX &texture) = 0 ;
 		virtual void draw () = 0 ;
 	} ;
@@ -374,7 +378,7 @@ private:
 public:
 	implicit GLSprite () ;
 
-	void load_data (const Mesh &mesh) {
+	void load_data (const GLMesh &mesh) {
 		return mThis->load_data (mesh) ;
 	}
 

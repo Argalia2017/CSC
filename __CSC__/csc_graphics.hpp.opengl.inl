@@ -314,7 +314,7 @@ private:
 public:
 	implicit Implement () = default ;
 
-	void load_data (const Mesh &mesh) override {
+	void load_data (const GLMesh &mesh) override {
 		auto rax = AutoRef<THIS_PACK>::make () ;
 		rax->mVAO = UniqueRef<CHAR> ([&] (CHAR &me) {
 			api::glGenVertexArrays (1 ,DEPTR[me]) ;
