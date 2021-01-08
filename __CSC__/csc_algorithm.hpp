@@ -254,6 +254,290 @@ private:
 	}
 } ;
 
+class BDDTable {
+private:
+	using SHORTER = INDEX ;
+
+	struct NODE_PACK {
+		SHORTER mLeft ;
+		SHORTER mRight ;
+	} ;
+
+	using MAX_BDD_SIZE = ARGC<64> ;
+
+private:
+	Deque<NODE_PACK> mTable ;
+	LENGTH mWidth ;
+	LENGTH mBDDSize ;
+	SHORTER mRoot ;
+	SHORTER mTLeaf ;
+	SHORTER mFLeaf ;
+	BitSet<> mFilterResult ;
+	BitSet<MAX_BDD_SIZE> mFilterCode ;
+	CSC::BOOL mOptFlag ;
+	BitSet<> mOptVisit ;
+	BitSet<> mOptClean ;
+	Array<LENGTH> mOptOrder ;
+
+public:
+	implicit BDDTable () = default ;
+
+	explicit BDDTable (const LENGTH &width) {
+		_DEBUG_ASSERT_ (width > 0) ;
+		_DEBUG_ASSERT_ (width <= VAR32_MAX) ;
+		mWidth = width ;
+		const auto r1x = LENGTH (MathProc::log (VAL64 (mWidth)) * MathProc::inverse (VAL64 (MATH_LN2))) ;
+		const auto r2x = LENGTH (DATA (1) << DATA (r1x)) ;
+		mBDDSize = r1x + _EBOOL_ (r2x < mWidth) ;
+		_DEBUG_ASSERT_ (mBDDSize <= MAX_BDD_SIZE::compile ()) ;
+		const auto r4x = 2 + MathProc::minof (MathProc::square (mWidth) ,LENGTH (1024)) ;
+		mTable = Deque<NODE_PACK> (r4x) ;
+		mTLeaf = SHORTER (mTable.insert ()) ;
+		mTable[mTLeaf].mLeft = mTLeaf ;
+		mTable[mTLeaf].mRight = mTLeaf ;
+		mFLeaf = SHORTER (mTable.insert ()) ;
+		mTable[mFLeaf].mLeft = mFLeaf ;
+		mTable[mFLeaf].mRight = mFLeaf ;
+		mRoot = mFLeaf ;
+		mOptFlag = FALSE ;
+	}
+
+	void joint (const INDEX &index1 ,const INDEX &index2) {
+		link (index1 ,index2) ;
+		link (index2 ,index1) ;
+	}
+
+	void link (const INDEX &index1 ,const INDEX &index2) {
+		_DEBUG_ASSERT_ (index1 >= 0 && index1 < mWidth) ;
+		_DEBUG_ASSERT_ (index2 >= 0 && index2 < mWidth) ;
+		_DEBUG_ASSERT_ (!mOptFlag) ;
+		const auto r1x = encode (index1 ,index2) ;
+		INDEX ix = mRoot ;
+		INDEX jx = 0 ;
+		INDEX iy = VAR_NONE ;
+		while (TRUE) {
+			if (jx >= r1x.size ())
+				break ;
+			if switch_once (TRUE) {
+				if (iy != VAR_NONE)
+					discard ;
+				iy = mTable.insert () ;
+				mTable[iy].mLeft = mFLeaf ;
+				mTable[iy].mRight = mFLeaf ;
+			}
+			auto &r2x = _CALL_ ([&] () {
+				if (ix == mFLeaf)
+					return _BYREF_ (mRoot) ;
+				if (!r1x[jx])
+					return _BYREF_ (mTable[ix].mLeft) ;
+				return _BYREF_ (mTable[ix].mRight) ;
+			}).self ;
+			auto fax = TRUE ;
+			if switch_once (fax) {
+				if (r2x == mFLeaf)
+					discard ;
+				ix = r2x ;
+			}
+			if switch_once (fax) {
+				if (jx + 1 >= r1x.size ())
+					discard ;
+				_DYNAMIC_ASSERT_ (iy <= VAR32_MAX) ;
+				r2x = SHORTER (iy) ;
+				iy = VAR_NONE ;
+				ix = r2x ;
+			}
+			if switch_once (fax) {
+				r2x = mTLeaf ;
+				ix = r2x ;
+			}
+			jx++ ;
+		}
+		if switch_once (TRUE) {
+			if (iy == VAR_NONE)
+				discard ;
+			mTable.pop () ;
+		}
+	}
+
+	CSC::BOOL neighbor (const INDEX &index1 ,const INDEX &index2) const {
+		_DEBUG_ASSERT_ (index1 >= 0 && index1 < mWidth) ;
+		_DEBUG_ASSERT_ (index2 >= 0 && index2 < mWidth) ;
+		_DEBUG_ASSERT_ (mOptFlag) ;
+		const auto r1x = encode (index1 ,index2) ;
+		INDEX ix = mRoot ;
+		INDEX jx = 0 ;
+		while (TRUE) {
+			if (ix == mFLeaf)
+				break ;
+			if (jx >= r1x.size ())
+				break ;
+			auto &r2x = _CALL_ ([&] () {
+				if (!r1x[jx])
+					return _BYREF_ (mTable[ix].mLeft) ;
+				return _BYREF_ (mTable[ix].mRight) ;
+			}).self ;
+			ix = r2x ;
+			jx++ ;
+		}
+		if (ix != mTLeaf)
+			return FALSE ;
+		return TRUE ;
+	}
+
+	BitSet<> filter (const INDEX &index) {
+		_DEBUG_ASSERT_ (index >= 0 && index < mWidth) ;
+		_DEBUG_ASSERT_ (mOptFlag) ;
+		const auto r1x = encode (index) ;
+		INDEX ix = mRoot ;
+		INDEX jx = 0 ;
+		while (TRUE) {
+			if (ix == mFLeaf)
+				break ;
+			if (jx >= r1x.size ())
+				break ;
+			auto &r2x = _CALL_ ([&] () {
+				if (!r1x[jx])
+					return _BYREF_ (mTable[ix].mLeft) ;
+				return _BYREF_ (mTable[ix].mRight) ;
+			}).self ;
+			ix = r2x ;
+			jx++ ;
+		}
+		mFilterResult = BitSet<> (mWidth) ;
+		mFilterCode.clear () ;
+		filter_scan (0 ,ix) ;
+		return _MOVE_ (mFilterResult) ;
+	}
+
+	void optimize () {
+		if (mOptFlag)
+			return ;
+		mOptVisit = BitSet<> (mTable.size ()) ;
+		mOptClean = BitSet<> (mTable.size ()) ;
+		mOptVisit[mFLeaf] = TRUE ;
+		mOptClean[mTLeaf] = TRUE ;
+		optimize_scan (mRoot) ;
+		const auto r10x = mTable.length () - mOptClean.length () + 1 ;
+		_DYNAMIC_ASSERT_ (r10x - 1 <= VAR32_MAX) ;
+		auto rax = Deque<NODE_PACK> (r10x) ;
+		const auto r1x = _CALL_ ([&] () {
+			Array<SHORTER> ret = Array<SHORTER> (mTable.size ()) ;
+			ret.fill (mFLeaf) ;
+			for (auto &&i : mOptVisit) {
+				if (mOptClean[i])
+					continue ;
+				ret[i] = SHORTER (rax.insert ()) ;
+			}
+			const auto r2x = SHORTER (rax.insert ()) ;
+			for (auto &&i : mOptClean)
+				ret[i] = r2x ;
+			return _MOVE_ (ret) ;
+		}) ;
+		if switch_once (TRUE) {
+			rax[r1x[mTLeaf]].mLeft = r1x[mTLeaf] ;
+			rax[r1x[mTLeaf]].mRight = r1x[mTLeaf] ;
+		}
+		for (auto &&i : mOptVisit) {
+			if (mOptClean[i])
+				continue ;
+			INDEX ix = r1x[i] ;
+			rax[ix].mLeft = r1x[mTable[i].mLeft] ;
+			rax[ix].mRight = r1x[mTable[i].mRight] ;
+		}
+		mTable = _MOVE_ (rax) ;
+		mOptFlag = TRUE ;
+		mOptVisit = BitSet<> () ;
+		mOptClean = BitSet<> () ;
+	}
+
+private:
+	BitSet<MAX_BDD_SIZE> encode (const INDEX &index) const {
+		BitSet<MAX_BDD_SIZE> ret = BitSet<MAX_BDD_SIZE> (mBDDSize) ;
+		auto rax = DATA (index) ;
+		for (auto &&i : _RANGE_ (0 ,mBDDSize)) {
+			INDEX ix = mBDDSize + ~i ;
+			const auto r1x = DATA (rax & 1) ;
+			ret[ix] = CSC::BOOL (r1x != 0) ;
+			rax = rax >> 1 ;
+		}
+		return _MOVE_ (ret) ;
+	}
+
+	BitSet<MAX_BDD_SIZE> encode (const INDEX &index1 ,const INDEX &index2) const {
+		const auto r10x = mBDDSize * 2 ;
+		BitSet<MAX_BDD_SIZE> ret = BitSet<MAX_BDD_SIZE> (r10x) ;
+		if switch_once (TRUE) {
+			auto rax = DATA (index1) ;
+			for (auto &&i : _RANGE_ (0 ,mBDDSize)) {
+				INDEX ix = mBDDSize + ~i ;
+				const auto r1x = DATA (rax & 1) ;
+				ret[ix] = CSC::BOOL (r1x != 0) ;
+				rax = DATA (rax >> 1) ;
+			}
+		}
+		if switch_once (TRUE) {
+			auto rax = DATA (index2) ;
+			for (auto &&i : _RANGE_ (0 ,mBDDSize)) {
+				INDEX ix = r10x + ~i ;
+				const auto r1x = DATA (rax & 1) ;
+				ret[ix] = CSC::BOOL (r1x != 0) ;
+				rax = DATA (rax >> 1) ;
+			}
+		}
+		return _MOVE_ (ret) ;
+	}
+
+	INDEX decode (const BitSet<MAX_BDD_SIZE> &code) const {
+		auto rax = DATA (0) ;
+		for (auto &&i : _RANGE_ (0 ,mBDDSize)) {
+			const auto r1x = CSC::BOOL (code[i]) ;
+			const auto r2x = DATA (DATA (r1x) & 1) ;
+			rax = DATA (rax << 1) ;
+			rax = DATA (rax | r2x) ;
+		}
+		return INDEX (rax) ;
+	}
+
+	void filter_scan (const INDEX &depth ,const INDEX &curr) {
+		auto fax = TRUE ;
+		if switch_once (fax) {
+			if (curr != mTLeaf)
+				discard ;
+			for (auto &&i : _RANGE_ (depth ,mBDDSize))
+				mFilterCode[i] = FALSE ;
+			INDEX ix = decode (mFilterCode) ;
+			const auto r1x = LENGTH (DATA (1) << DATA (mBDDSize - depth)) ;
+			for (auto &&i : _RANGE_ (0 ,r1x)) {
+				INDEX iy = ix + i ;
+				mFilterResult[iy] = TRUE ;
+			}
+		}
+		if switch_once (fax) {
+			if (curr != mFLeaf)
+				discard ;
+			mFilterCode[depth] = FALSE ;
+			filter_scan (depth + 1 ,mTable[curr].mLeft) ;
+			mFilterCode[depth] = TRUE ;
+			filter_scan (depth + 1 ,mTable[curr].mRight) ;
+		}
+	}
+
+	void optimize_scan (const INDEX &curr) {
+		if (mOptVisit[curr])
+			return ;
+		mOptVisit[curr] = TRUE ;
+		optimize_scan (mTable[curr].mLeft) ;
+		optimize_scan (mTable[curr].mRight) ;
+		if (!mOptClean[mTable[curr].mLeft])
+			return ;
+		if (!mOptClean[mTable[curr].mRight])
+			return ;
+		mTable[curr].mLeft = SHORTER (curr) ;
+		mTable[curr].mRight = SHORTER (curr) ;
+		mOptClean[curr] = TRUE ;
+	}
+} ;
+
 template <class REAL>
 class KMPAlgorithm {
 private:
