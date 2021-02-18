@@ -1,0 +1,18 @@
+#pragma inject_default_hints
+
+#define internel_unwind_impl
+#define unwind
+
+#define internel_not_impl
+#define not
+
+#define internel_require_impl
+#define require
+
+#define internel_enumof_impl
+#define enumof
+
+#define internel_typeof_impl
+#define typeof
+
+#define typeas
