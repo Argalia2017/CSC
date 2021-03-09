@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #ifndef __CSC__
 #define __CSC__
@@ -6,10 +6,10 @@
 
 #ifdef _DEBUG
 #define __CSC_DEBUG__
-#endif
-
-#ifdef _UNITTEST
+#elif defined _UNITTEST
 #define __CSC_UNITTEST__
+#else
+#define __CSC_RELEASE__
 #endif
 
 #ifdef __clang__
@@ -19,7 +19,7 @@
 #elif defined _MSC_VER
 #define __CSC_COMPILER_MSVC__
 #else
-#error "��(�á㧥�� ;)�� : unsupported"
+#error "∑(っ°Д° ;)っ : unsupported"
 #endif
 
 #if defined (linux) || defined (__linux) || defined (__linux__)
@@ -27,7 +27,7 @@
 #elif defined (WIN32) || defined (_WIN32) || defined (__WIN32__)
 #define __CSC_SYSTEM_WINDOWS__
 #else
-#error "��(�á㧥�� ;)�� : unsupported"
+#error "∑(っ°Д° ;)っ : unsupported"
 #endif
 
 #if defined (_M_IX86) || defined (__i386__) || defined (__i386)
@@ -39,7 +39,7 @@
 #elif defined (_M_ARM64) || defined (__aarch64__)
 #define __CSC_PLATFORM_ARM64__
 #else
-#error "��(�á㧥�� ;)�� : unsupported"
+#error "∑(っ°Д° ;)っ : unsupported"
 #endif
 
 #ifdef _WINEXE
@@ -65,7 +65,7 @@
 #elif defined _MBCS
 #define __CSC_CONFIG_STRA__
 #else
-#define __CSC_CONFIG_STRA__
+#define __CSC_CONFIG_STRU8__
 #endif
 
 #ifdef __CSC_COMPILER_MSVC__
@@ -98,11 +98,18 @@
 #pragma warning (disable :5045) //@info: warning C5045: Compiler will insert Spectre mitigation for memory load if /Qspectre switch specified
 #endif
 
+#ifdef __CSC_COMPILER_GNUC__
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wattributes"
+#endif
+
 #include "begin.hh"
 #include <cstdint>
 #include <cstddef>
+#include <ciso646>
 #include <limits>
 #include <type_traits>
+#include <utility>
 #include <new>
 #include <exception>
 #include "end.hh"
@@ -114,29 +121,124 @@
 #endif
 
 namespace CSC {
-/*
-*	MIT License
-*
-*	Copyright (c) 2018 csc-std
-*
-*	Permission is hereby granted, free of charge, to any person obtaining a copy
-*	of this software and associated documentation files (the "Software"), to deal
-*	in the Software without restriction, including without limitation the rights
-*	to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-*	copies of the Software, and to permit persons to whom the Software is
-*	furnished to do so, subject to the following conditions:
-*
-*	The above copyright notice and this permission notice shall be included in all
-*	copies or substantial portions of the Software.
-*
-*	THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-*	IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-*	FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-*	AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-*	LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-*	OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-*	SOFTWARE.
-*/
+
+#ifdef self
+#error "∑(っ°Д° ;)っ : already defined"
+#endif
+#define self to ()
+
+#ifdef implicit
+#error "∑(っ°Д° ;)っ : already defined"
+#endif
+#define implicit
+
+#ifdef imports
+#error "∑(っ°Д° ;)っ : already defined"
+#endif
+#define imports static
+
+#ifdef exports
+#error "∑(っ°Д° ;)っ : already defined"
+#endif
+#define exports
+
+#ifdef leftvalue
+#error "∑(っ°Д° ;)っ : already defined"
+#endif
+#define leftvalue &
+
+#ifdef rightvalue
+#error "∑(っ°Д° ;)っ : already defined"
+#endif
+#define rightvalue &&
+
+#ifdef delegate
+#error "∑(っ°Д° ;)っ : already defined"
+#endif
+#define delegate
+
+#ifdef unwind
+#error "∑(っ°Д° ;)っ : already defined"
+#endif
+#define internel_unwind(...) __VA_ARGS__
+#define unwind internel_unwind
+
+#ifdef stringize
+#error "∑(っ°Д° ;)っ : already defined"
+#endif
+#define internel_stringize(...) #__VA_ARGS__
+#define stringize internel_stringize
+
+#ifdef ifnot
+#error "∑(っ°Д° ;)っ : already defined"
+#endif
+#define internel_ifnot(...) (!(unwind (__VA_ARGS__)))
+#define ifnot internel_ifnot
+
+#ifdef require
+#error "∑(っ°Д° ;)っ : already defined"
+#endif
+#define internel_require(...) static_assert ((unwind (__VA_ARGS__)::value) ,"static assert failed : " stringize (__VA_ARGS__)) ;
+#define require internel_require
+
+#ifdef enumof
+#error "∑(っ°Д° ;)っ : already defined"
+#endif
+#define internel_enumof(...) CSC::U::ENUMAS<CSC::U::ENUMID<(unwind (__VA_ARGS__))>>
+#define enumof internel_enumof
+
+#ifdef typeof
+#error "∑(っ°Д° ;)っ : already defined"
+#endif
+#define internel_typeof(...) CSC::REMOVE_REF<decltype (unwind (__VA_ARGS__))>
+#define typeof internel_typeof
+
+#ifdef typeas
+#error "∑(っ°Д° ;)っ : already defined"
+#endif
+#define typeas CSC::U::TYPEAS
+
+#ifdef trait
+#error "∑(っ°Д° ;)っ : already defined"
+#endif
+#define trait struct
+
+#ifdef interface
+#error "∑(っ°Д° ;)っ : already defined"
+#endif
+#define interface struct
+
+#ifdef assert
+#error "∑(っ°Д° ;)っ : already defined"
+#endif
+#ifdef __CSC_DEBUG__
+#define internel_assert(...) do { if ifnot (unwind (__VA_ARGS__)) break ; CSC::abort () ; } while (false)
+#define assert internel_assert
+#endif
+#ifdef __CSC_UNITTEST__
+#define internel_assert(...) do { if ifnot (unwind (__VA_ARGS__)) break ; CSC::abort () ; } while (false)
+#define assert internel_assert
+#endif
+#ifdef __CSC_RELEASE__
+#define internel_assert(...)
+#define assert internel_assert
+#endif
+
+#ifdef anonymous
+#error "∑(っ°Д° ;)っ : already defined"
+#endif
+#define anonymous internel_anonymous_ ## __LINE__
+
+#ifdef ifswitch
+#error "∑(っ°Д° ;)っ : already defined"
+#endif
+#define internel_ifswitch(...) (unwind (__VA_ARGS__)) goto anonymous ; while (false) anonymous:
+#define ifswitch internel_ifswitch
+
+#ifdef discard
+#error "∑(っ°Д° ;)っ : already defined"
+#endif
+#define discard break
 
 #ifdef TRUE
 #undef TRUE
@@ -149,23 +251,4 @@ namespace CSC {
 #ifdef NULL
 #undef NULL
 #endif
-
-#define infinity std::numeric_limits<SINGLE>::infinity ()
-
-#define internel_unwind_impl(...) __VA_ARGS__
-#define unwind internel_unwind_impl
-
-#define internel_not_impl(...) (!(unwind (__VA_ARGS__)))
-#define not internel_not_impl
-
-#define internel_require_impl(...) static_assert ((unwind (__VA_ARGS__)::value) ,"error") ;
-#define require internel_require_impl
-
-#define internel_enumof_impl(...) CSC::detail::INTERNEL_ENUM<(unwind (__VA_ARGS__))>
-#define enumof internel_enumof_impl
-
-#define internel_typeof_impl(...) CSC::detail::INTERNEL_TYPE<(unwind (__VA_ARGS__))>
-#define typeof internel_typeof_impl
-
-#define typeas CSC::detail::INTERNEL_TYPE
 } ;

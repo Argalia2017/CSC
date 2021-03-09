@@ -1,11 +1,18 @@
-#ifdef __CSC__
+﻿#ifdef __CSC__
 #pragma pop_macro ("self")
 #pragma pop_macro ("implicit")
-#pragma pop_macro ("delegate")
-#pragma pop_macro ("leftvalue")
-#pragma pop_macro ("rightvalue")
 #pragma pop_macro ("imports")
 #pragma pop_macro ("exports")
+#pragma pop_macro ("leftvalue")
+#pragma pop_macro ("rightvalue")
+#pragma pop_macro ("delegate")
+#pragma pop_macro ("enumof")
+#pragma pop_macro ("typeof")
+#pragma pop_macro ("typeas")
+#pragma pop_macro ("trait")
+#pragma pop_macro ("interface")
+#pragma pop_macro ("assert")
+#pragma pop_macro ("anonymous")
 #pragma pop_macro ("switch_once")
 #pragma pop_macro ("discard")
 #endif
