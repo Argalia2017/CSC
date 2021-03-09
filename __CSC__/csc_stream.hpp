@@ -2576,7 +2576,7 @@ public:
 		mGapText = gap_text ;
 		mCommaText = comma_text ;
 		mCounter = 0 ;
-		mTightCounter = SharedRef<LENGTH>::make () ;
+		mTightCounter = SharedRef<LENGTH>::make (mMaxDepth) ;
 		mFirst = SharedRef<Deque<CSC::BOOL>>::make (mMaxDepth * 2) ;
 		mFirst->add (TRUE) ;
 	}

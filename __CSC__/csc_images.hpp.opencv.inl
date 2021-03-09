@@ -150,15 +150,14 @@ using std::vector ;
 using cv::Mat ;
 using cv::_InputArray ;
 using cv::IMREAD_COLOR ;
-using cv::IMREAD_UNCHANGED ;
-using cv::IMREAD_GRAYSCALE ;
-using cv::IMREAD_REDUCED_GRAYSCALE_4 ;
-using cv::IMREAD_REDUCED_GRAYSCALE_8 ;
+using cv::COLOR_BGR2BGRA ;
+using cv::COLOR_BGR2GRAY ;
 
 using cv::imread ;
 using cv::imwrite ;
 using cv::imencode ;
 using cv::imdecode ;
+using cv::cvtColor ;
 } ;
 
 template <>
@@ -303,6 +302,9 @@ public:
 		const auto r1x = api::_InputArray (data.self ,VAR32 (data.size ())) ;
 		auto rax = api::imdecode (r1x ,api::IMREAD_COLOR) ;
 		_DYNAMIC_ASSERT_ (!rax.empty ()) ;
+		auto rbx = cv::Mat () ;
+		api::cvtColor (rax ,rbx ,api::COLOR_BGR2BGRA) ;
+		rbx.convertTo (rax ,CV_8UC4) ;
 		_DYNAMIC_ASSERT_ (rax.type () == CV_8UC4) ;
 		mHolder = _MOVE_ (rax) ;
 	}
@@ -326,6 +328,9 @@ public:
 		const auto r1x = StringProc::build_strs (ARGV<STRA>::ID ,file) ;
 		auto rax = api::imread (r1x.raw ().self ,api::IMREAD_COLOR) ;
 		_DYNAMIC_ASSERT_ (!rax.empty ()) ;
+		auto rbx = cv::Mat () ;
+		api::cvtColor (rax ,rbx ,api::COLOR_BGR2BGRA) ;
+		rbx.convertTo (rax ,CV_8UC4) ;
 		_DYNAMIC_ASSERT_ (rax.type () == CV_8UC4) ;
 		mHolder = _MOVE_ (rax) ;
 	}
@@ -397,6 +402,9 @@ public:
 		const auto r1x = api::_InputArray (data.self ,VAR32 (data.size ())) ;
 		auto rax = api::imdecode (r1x ,api::IMREAD_COLOR) ;
 		_DYNAMIC_ASSERT_ (!rax.empty ()) ;
+		auto rbx = cv::Mat () ;
+		api::cvtColor (rax ,rbx ,api::COLOR_BGR2GRAY) ;
+		rbx.convertTo (rax ,CV_8UC1) ;
 		_DYNAMIC_ASSERT_ (rax.type () == CV_8UC1) ;
 		mHolder = _MOVE_ (rax) ;
 	}
@@ -420,6 +428,9 @@ public:
 		const auto r1x = StringProc::build_strs (ARGV<STRA>::ID ,file) ;
 		auto rax = api::imread (r1x.raw ().self ,api::IMREAD_COLOR) ;
 		_DYNAMIC_ASSERT_ (!rax.empty ()) ;
+		auto rbx = cv::Mat () ;
+		api::cvtColor (rax ,rbx ,api::COLOR_BGR2GRAY) ;
+		rbx.convertTo (rax ,CV_8UC1) ;
 		_DYNAMIC_ASSERT_ (rax.type () == CV_8UC1) ;
 		mHolder = _MOVE_ (rax) ;
 	}
@@ -491,6 +502,9 @@ public:
 		const auto r1x = api::_InputArray (data.self ,VAR32 (data.size ())) ;
 		auto rax = api::imdecode (r1x ,api::IMREAD_COLOR) ;
 		_DYNAMIC_ASSERT_ (!rax.empty ()) ;
+		auto rbx = cv::Mat () ;
+		api::cvtColor (rax ,rbx ,api::COLOR_BGR2GRAY) ;
+		rbx.convertTo (rax ,CV_32FC1) ;
 		_DYNAMIC_ASSERT_ (rax.type () == CV_32FC1) ;
 		mHolder = _MOVE_ (rax) ;
 	}
@@ -514,6 +528,9 @@ public:
 		const auto r1x = StringProc::build_strs (ARGV<STRA>::ID ,file) ;
 		auto rax = api::imread (r1x.raw ().self ,api::IMREAD_COLOR) ;
 		_DYNAMIC_ASSERT_ (!rax.empty ()) ;
+		auto rbx = cv::Mat () ;
+		api::cvtColor (rax ,rbx ,api::COLOR_BGR2GRAY) ;
+		rbx.convertTo (rax ,CV_32FC1) ;
 		_DYNAMIC_ASSERT_ (rax.type () == CV_32FC1) ;
 		mHolder = _MOVE_ (rax) ;
 	}
@@ -585,6 +602,9 @@ public:
 		const auto r1x = api::_InputArray (data.self ,VAR32 (data.size ())) ;
 		auto rax = api::imdecode (r1x ,api::IMREAD_COLOR) ;
 		_DYNAMIC_ASSERT_ (!rax.empty ()) ;
+		auto rbx = cv::Mat () ;
+		api::cvtColor (rax ,rbx ,api::COLOR_BGR2GRAY) ;
+		rbx.convertTo (rax ,CV_64FC1) ;
 		_DYNAMIC_ASSERT_ (rax.type () == CV_64FC1) ;
 		mHolder = _MOVE_ (rax) ;
 	}
@@ -608,6 +628,9 @@ public:
 		const auto r1x = StringProc::build_strs (ARGV<STRA>::ID ,file) ;
 		auto rax = api::imread (r1x.raw ().self ,api::IMREAD_COLOR) ;
 		_DYNAMIC_ASSERT_ (!rax.empty ()) ;
+		auto rbx = cv::Mat () ;
+		api::cvtColor (rax ,rbx ,api::COLOR_BGR2GRAY) ;
+		rbx.convertTo (rax ,CV_64FC1) ;
 		_DYNAMIC_ASSERT_ (rax.type () == CV_64FC1) ;
 		mHolder = _MOVE_ (rax) ;
 	}

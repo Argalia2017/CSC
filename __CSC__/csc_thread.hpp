@@ -714,22 +714,25 @@ private:
 		using R1X = typename DEPENDENT_TYPE<Private ,struct ANONYMOUS>::ThreadCounter ;
 		_DYNAMIC_ASSERT_ (this_.mThreadFlag->fetch ()) ;
 		ScopedGuard<R1X> ANONYMOUS (_CAST_ (ARGV<R1X>::ID ,this_)) ;
-		auto rax = Optional<ITEM>::nullopt () ;
+		auto rax = List<ITEM> () ;
 		while (TRUE) {
-			rax = static_poll (this_ ,tid) ;
+			if (rax.empty ())
+				static_poll (this_ ,tid ,rax) ;
+			INDEX ix = rax.head () ;
 			try {
 				//@warn: 'mThreadProc' is not protected by 'mThreadMutex'
-				this_.mThreadProc (rax.self) ;
+				this_.mThreadProc (rax[ix]) ;
 			} catch (const Exception &e) {
 				static_rethrow (this_ ,e) ;
 			} catch (...) {
 				const auto r1x = Exception (_PCSTR_ ("unknown C++ exception")) ;
 				static_rethrow (this_ ,r1x) ;
 			}
+			rax.remove (ix) ;
 		}
 	}
 
-	imports ITEM static_poll (THIS_PACK &this_ ,const INDEX &tid) {
+	imports void static_poll (THIS_PACK &this_ ,const INDEX &tid ,List<ITEM> &list) {
 		auto rax = this_.mThreadConditionLock.watch (PhanRef<Mutex>::make (this_.mThreadMutex)) ;
 		rax.notify () ;
 		this_.mThreadPendingSet.add (tid) ;
@@ -742,10 +745,14 @@ private:
 		}
 		_DYNAMIC_ASSERT_ (this_.mThreadFlag->fetch ()) ;
 		rax.notify () ;
-		ITEM ret = _MOVE_ (this_.mItemQueue.self[this_.mItemQueue->head ()]) ;
-		this_.mItemQueue->take () ;
+		const auto r1x = this_.mThreadPendingSet.length () + this_.mThreadPendingSet.size () ;
+		const auto r2x = (this_.mItemQueue->length () + r1x - 1) / r1x ;
+		for (auto &&i : _RANGE_ (0 ,r2x)) {
+			_NOOP_ (i) ;
+			list.add (_MOVE_ (this_.mItemQueue.self[this_.mItemQueue->head ()])) ;
+			this_.mItemQueue->take () ;
+		}
 		this_.mThreadPendingSet.erase (tid) ;
-		return _MOVE_ (ret) ;
 	}
 
 	imports void static_rethrow (THIS_PACK &this_ ,const Exception &e) {

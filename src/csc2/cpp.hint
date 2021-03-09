@@ -1,18 +1,17 @@
-#pragma inject_default_hints
+﻿#pragma inject_default_hints
 
-#define internel_unwind_impl
-#define unwind
-
-#define internel_not_impl
-#define not
-
-#define internel_require_impl
-#define require
-
-#define internel_enumof_impl
+#define self
+#define implicit
+#define imports
+#define exports
+#define leftvalue
+#define rightvalue
+#define delegate
 #define enumof
-
-#define internel_typeof_impl
 #define typeof
-
 #define typeas
+#define trait
+#define interface
+#define assert
+#define anonymous
+#define switch_once
