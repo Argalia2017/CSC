@@ -43,11 +43,11 @@
     <ClInclude Include="..\..\..\..\..\Depends\__CSC__\csc_stream.hpp" />
     <ClInclude Include="..\..\..\..\..\Depends\__CSC__\csc_string.hpp" />
     <ClInclude Include="..\..\..\..\..\Depends\__CSC__\csc_thread.hpp" />
-    <ClInclude Include="..\..\src\csc2\begin.hh" />
+    <ClInclude Include="..\..\src\csc2\begin.h" />
     <ClInclude Include="..\..\src\csc2\csc.hpp" />
     <ClInclude Include="..\..\src\csc2\csc_basic.hpp" />
     <ClInclude Include="..\..\src\csc2\csc_core.hpp" />
-    <ClInclude Include="..\..\src\csc2\end.hh" />
+    <ClInclude Include="..\..\src\csc2\end.h" />
     <ClInclude Include="..\..\src\util.h" />
   </ItemGroup>
   <ItemGroup>
@@ -66,9 +66,7 @@
     <None Include="..\..\..\..\..\Depends\__CSC__\csc_string.hpp.default.inl" />
     <None Include="..\..\..\..\..\Depends\__CSC__\csc_string.hpp.gbk.inl" />
     <None Include="..\..\src\csc2\cpp.hint" />
-    <None Include="..\..\src\rust\rust.rs" />
-    <None Include="..\..\src\rust\rust_basic.rs" />
-    <None Include="..\..\src\rust\rust_core.rs" />
+    <None Include="..\..\src\csc2\csc_core.hpp.inl" />
   </ItemGroup>
   <ItemGroup>
     <Natvis Include="..\..\..\..\..\Depends\__CSC__\cpp.natvis" />
