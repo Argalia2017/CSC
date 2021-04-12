@@ -66,19 +66,19 @@
     <ClInclude Include="..\..\..\..\..\Depends\__CSC__\csc_thread.hpp">
       <Filter>csc</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\csc2\begin.hh">
-      <Filter>csc2</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\csc2\csc.hpp">
       <Filter>csc2</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\csc2\csc_core.hpp">
       <Filter>csc2</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\csc2\end.hh">
+    <ClInclude Include="..\..\src\csc2\csc_basic.hpp">
       <Filter>csc2</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\csc2\csc_basic.hpp">
+    <ClInclude Include="..\..\src\csc2\begin.h">
+      <Filter>csc2</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\csc2\end.h">
       <Filter>csc2</Filter>
     </ClInclude>
   </ItemGroup>
@@ -88,9 +88,6 @@
     </Filter>
     <Filter Include="unittest">
       <UniqueIdentifier>{000e62c6-12e0-48db-9e97-8c9331ef3a16}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="rust">
-      <UniqueIdentifier>{c90659e8-7062-47ff-b8aa-f4f86f2f2572}</UniqueIdentifier>
     </Filter>
     <Filter Include="csc2">
       <UniqueIdentifier>{39dd61d7-1230-4b66-96d6-a7e28319a439}</UniqueIdentifier>
@@ -137,17 +134,11 @@
     <None Include="..\..\..\..\..\Depends\__CSC__\csc_string.hpp.gbk.inl">
       <Filter>csc</Filter>
     </None>
-    <None Include="..\..\src\rust\rust.rs">
-      <Filter>rust</Filter>
-    </None>
-    <None Include="..\..\src\rust\rust_core.rs">
-      <Filter>rust</Filter>
-    </None>
     <None Include="..\..\src\csc2\cpp.hint">
       <Filter>csc2</Filter>
     </None>
-    <None Include="..\..\src\rust\rust_basic.rs">
-      <Filter>rust</Filter>
+    <None Include="..\..\src\csc2\csc_core.hpp.inl">
+      <Filter>csc2</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>

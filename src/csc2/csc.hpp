@@ -103,7 +103,7 @@
 #pragma GCC diagnostic ignored "-Wattributes"
 #endif
 
-#include "begin.hh"
+#include "begin.h"
 #include <cstdint>
 #include <cstddef>
 #include <ciso646>
@@ -112,7 +112,7 @@
 #include <utility>
 #include <new>
 #include <exception>
-#include "end.hh"
+#include "end.h"
 
 #ifdef _HAS_CXX17
 #if _HAS_CXX17
@@ -121,7 +121,6 @@
 #endif
 
 namespace CSC {
-
 #ifdef self
 #error "∑(っ°Д° ;)っ : already defined"
 #endif
@@ -151,11 +150,6 @@ namespace CSC {
 #error "∑(っ°Д° ;)っ : already defined"
 #endif
 #define rightvalue &&
-
-#ifdef delegate
-#error "∑(っ°Д° ;)っ : already defined"
-#endif
-#define delegate
 
 #ifdef unwind
 #error "∑(っ°Д° ;)っ : already defined"
@@ -190,7 +184,7 @@ namespace CSC {
 #ifdef typeof
 #error "∑(っ°Д° ;)っ : already defined"
 #endif
-#define internel_typeof(...) CSC::REMOVE_REF<decltype (unwind (__VA_ARGS__))>
+#define internel_typeof(...) CSC::REMOVE_ALL<decltype (unwind (__VA_ARGS__))>
 #define typeof internel_typeof
 
 #ifdef typeas
@@ -203,25 +197,33 @@ namespace CSC {
 #endif
 #define trait struct
 
-#ifdef interface
-#error "∑(っ°Д° ;)っ : already defined"
-#endif
-#define interface struct
-
 #ifdef assert
 #error "∑(っ°Д° ;)っ : already defined"
 #endif
 #ifdef __CSC_DEBUG__
-#define internel_assert(...) do { if ifnot (unwind (__VA_ARGS__)) break ; CSC::abort () ; } while (false)
+#define internel_assert(...) do { if (unwind (__VA_ARGS__)) break ; CSC::abort () ; } while (false)
 #define assert internel_assert
 #endif
 #ifdef __CSC_UNITTEST__
-#define internel_assert(...) do { if ifnot (unwind (__VA_ARGS__)) break ; CSC::abort () ; } while (false)
+#define internel_assert(...) do { if (unwind (__VA_ARGS__)) break ; CSC::abort () ; } while (false)
 #define assert internel_assert
 #endif
 #ifdef __CSC_RELEASE__
 #define internel_assert(...)
 #define assert internel_assert
+#endif
+
+#ifdef line_here
+#error "∑(っ°Д° ;)っ : already defined"
+#endif
+#ifdef __CSC_COMPILER_MSVC__
+#define line_here "at " ,__FUNCSIG__ ," in " ,__FILE__ ," ," ,stringize (__LINE__)
+#endif
+#ifdef __CSC_COMPILER_GNUC__
+#define line_here "at " ,__PRETTY_FUNCTION__ ," in " ,__FILE__ ," ," ,stringize (__LINE__)
+#endif
+#ifdef __CSC_COMPILER_CLANG__
+#define line_here "at " ,__PRETTY_FUNCTION__ ," in " ,__FILE__ ," ," ,stringize (__LINE__)
 #endif
 
 #ifdef anonymous
