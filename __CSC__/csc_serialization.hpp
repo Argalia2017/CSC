@@ -127,13 +127,13 @@ public:
 				discard ;
 			for (auto &&i : mHeap.self[mIndex].mMemberSet) {
 				const auto r1x = mHeap.self[mIndex].mMemberSet.at (i) ;
-				if (rax.length () >= rax.size ())
+				if (rax.length () >= fixed_len)
 					continue ;
 				INDEX ix = rax.insert () ;
 				rax[ix] = XmlParser (mHeap ,mHeap.self[mIndex].mMemberSet.map_get (r1x)) ;
 			}
 		}
-		Array<XmlParser> ret = Array<XmlParser> (rax.length ()) ;
+		Array<XmlParser> ret = Array<XmlParser> (fixed_len) ;
 		for (auto &&i : _RANGE_ (0 ,rax.length ())) {
 			INDEX ix = rax.access (i) ;
 			ret[i] = _MOVE_ (rax[ix]) ;
@@ -1119,13 +1119,13 @@ public:
 			auto &r1x = mHeap.self[mIndex].mValue.rebind (ARGV<SoftSet<INDEX>>::ID).self ;
 			for (auto &&i : r1x) {
 				const auto r2x = r1x.at (i) ;
-				if (rax.length () >= rax.size ())
+				if (rax.length () >= fixed_len)
 					continue ;
 				INDEX ix = rax.insert () ;
 				rax[ix] = JsonParser (mHeap ,r1x.map_get (r2x)) ;
 			}
 		}
-		Array<JsonParser> ret = Array<JsonParser> (rax.length ()) ;
+		Array<JsonParser> ret = Array<JsonParser> (fixed_len) ;
 		for (auto &&i : _RANGE_ (0 ,rax.length ())) {
 			INDEX ix = rax.access (i) ;
 			ret[i] = _MOVE_ (rax[ix]) ;

@@ -23,17 +23,17 @@ private:
 
 public:
 	template <class ARG1>
-	imports auto alloc (CREF<ARG1> id)
+	imports auto alloc (CREF<ARG1> nid)
 		->UNSAFE_PTR<REMOVE_ALL<ARG1>> {
-		using R1X = typeof (id) ;
+		using R1X = typeof (nid) ;
 		require (IS_TRIVIAL<R1X>) ;
-		const auto r3x = property (slot_array ()) ;
-		const auto r4x = property (block_array ()) ;
-		INDEX ix = alloc (SIZEOF<R1X>::value ,ALIGNOF<R1X>::value) ;
+		const auto r3x = unsafe_pointer[slot_array ()] ;
+		const auto r4x = unsafe_pointer[block_array ()] ;
+		INDEX ix = alloc (SIZEOF<R1X>::compile () ,ALIGNOF<R1X>::compile ()) ;
 		assert (ix != NONE) ;
 		INDEX jx = property[r3x][ix].mBlock ;
-		const auto r2x = address (property[r4x][jx]) + SIZEOF<BLOCK>::value ;
-		const auto r5x = alignto (r2x ,ALIGNOF<R1X>::value) ;
+		const auto r2x = address (property[r4x][jx]) + SIZEOF<BLOCK>::compile () ;
+		const auto r5x = alignax (r2x ,ALIGNOF<R1X>::compile ()) ;
 		unsafe_barrier () ;
 		return reinterpret_cast<UNSAFE_PTR<R1X>> (r5x) ;
 	}
@@ -42,15 +42,15 @@ public:
 		->INDEX {
 		assert (size_len > ZERO) ;
 		assert (align_len > ZERO) ;
-		const auto r3x = property (slot_array ()) ;
-		const auto r4x = property (block_array ()) ;
+		const auto r3x = unsafe_pointer[slot_array ()] ;
+		const auto r4x = unsafe_pointer[block_array ()] ;
 		INDEX ix = empry_slot (property[r3x]) ;
 		INDEX iy = ix + 1 ;
 		assert (between (ix ,0 ,SLOT_SIZE)) ;
 		assert (between (iy ,0 ,SLOT_SIZE)) ;
-		const auto r10x = align_len - ALIGNOF<BLOCK>::value ;
+		const auto r10x = align_len - ALIGNOF<BLOCK>::compile () ;
 		const auto r12x = size_len + max (r10x ,ZERO) ;
-		const auto r13x = (r12x + SIZEOF<BLOCK>::value - 1) / SIZEOF<BLOCK>::value ;
+		const auto r13x = (r12x + SIZEOF<BLOCK>::compile () - 1) / SIZEOF<BLOCK>::compile () ;
 		property[r3x][ix].mBlockSize += property[r3x][iy].mBlockSize ;
 		property[r3x][iy].mBlockSize = 0 ;
 		property[r3x][iy].mBlock = NONE ;
@@ -67,15 +67,15 @@ public:
 	}
 
 	imports void popup () {
-		const auto r3x = property (slot_array ()) ;
+		const auto r3x = unsafe_pointer[slot_array ()] ;
 		INDEX ix = empry_slot (property[r3x]) ;
 		assert (between (ix ,0 ,SLOT_SIZE)) ;
 		property[r3x][ix].mUsed = TRUE ;
 	}
 
 	imports void free (CREF<LENGTH> addr) {
-		const auto r3x = property (slot_array ()) ;
-		const auto r4x = property (block_array ()) ;
+		const auto r3x = unsafe_pointer[slot_array ()] ;
+		const auto r4x = unsafe_pointer[block_array ()] ;
 		INDEX ix = empry_slot (property[r3x]) ;
 		INDEX iy = ix - 1 ;
 		assert (between (ix ,0 ,SLOT_SIZE)) ;
@@ -84,8 +84,8 @@ public:
 		assert (jx != NONE) ;
 		assert (property[r4x][jx].mBlockCheck1 == BLOCK_CHECK) ;
 		assert (property[r4x][jx].mBlockCheck2 == BLOCK_CHECK) ;
-		const auto r10x = address (property[r4x][jx]) + SIZEOF<BLOCK>::value ;
-		const auto r11x = r10x + (property[r3x][ix].mBlockSize - 1) * SIZEOF<BLOCK>::value ;
+		const auto r10x = address (property[r4x][jx]) + SIZEOF<BLOCK>::compile () ;
+		const auto r11x = r10x + (property[r3x][ix].mBlockSize - 1) * SIZEOF<BLOCK>::compile () ;
 		assert (between (addr ,r10x ,r11x)) ;
 		property[r3x][iy].mUsed = FALSE ;
 		property[r3x][iy].mBlockSize += property[r3x][ix].mBlockSize ;
@@ -105,7 +105,7 @@ private:
 		PACK<BLOCK[BLOCK_SIZE]> ret ;
 		ret.mP1[0].mBlockCheck1 = BLOCK_CHECK ;
 		ret.mP1[0].mBlockCheck2 = BLOCK_CHECK ;
-		return forward (ret) ;
+		return forward[ret] ;
 	}
 
 	imports auto slot_array ()
@@ -123,7 +123,7 @@ private:
 		ret.mP1[0].mUsed = FALSE ;
 		ret.mP1[0].mBlockSize = BLOCK_SIZE ;
 		ret.mP1[0].mBlock = 0 ;
-		return forward (ret) ;
+		return forward[ret] ;
 	}
 
 	imports auto empry_slot (CREF<SLOT[SLOT_SIZE]> array_)
@@ -137,8 +137,7 @@ private:
 } ;
 
 template <class UNIT1>
-class ANY_IMPLHOLDER_HELP<UNIT1>::ImplHolder :
-	public Holder {
+class ANY_IMPLHOLDER_HELP<UNIT1>::ImplHolder :public Holder {
 private:
 	using AnyHeap = typename DETAIL::AnyHeap ;
 
@@ -148,29 +147,20 @@ private:
 public:
 	implicit ImplHolder () = delete ;
 
-	explicit ImplHolder (RREF<UNIT1> that) :
-		mValue (forward (that)) {}
+	explicit ImplHolder (RREF<UNIT1> that) :mValue (forward[that]) {}
 
 	void destroy () override {
 		auto &&thiz = property[this] ;
 		auto rax = TEMP<ImplHolder> () ;
 		unsafe_zeroize (rax) ;
 		swap (rax ,unsafe_deptr[thiz]) ;
+		AnyHeap::free (address (thiz)) ;
 		unsafe_destroy (rax) ;
 		unsafe_barrier () ;
-		AnyHeap::free (address (thiz)) ;
 	}
 
 	LENGTH unsafe_addr () override {
 		return address (mValue) ;
-	}
-
-	LENGTH type_size () const override {
-		return SIZEOF<ImplHolder>::value ;
-	}
-
-	LENGTH type_align () const override {
-		return ALIGNOF<ImplHolder>::value ;
 	}
 
 	FLAG type_cabi () const override {
@@ -185,28 +175,26 @@ exports auto ANY_IMPLHOLDER_HELP<UNIT1>::EXTERN::create (RREF<UNIT1> that)
 	using R2X = typename ANY_IMPLHOLDER_HELP<R1X>::ImplHolder ;
 	using R3X = typename DETAIL::AnyHeap ;
 	const auto r1x = R3X::alloc (typeas<TEMP<R2X>>::id) ;
-	unsafe_create (property[r1x] ,forward (that)) ;
+	unsafe_create (property[r1x] ,forward[that]) ;
 	R3X::popup () ;
-	return property (unsafe_deref[property[r1x]]) ;
+	return unsafe_pointer (unsafe_deref[property[r1x]]) ;
 } ;
 } ;
 
 namespace U {
 template <class UNIT1 ,class UNTI2>
-class BOX_IMPLHOLDER_HELP<UNIT1 ,UNTI2>::ImplHolder :
-	public Holder {
+class BOX_IMPLHOLDER_HELP<UNIT1 ,UNTI2>::ImplHolder :public Holder {
 private:
 	UNTI2 mValue ;
 
 public:
 	implicit ImplHolder () = delete ;
 
-	explicit ImplHolder (RREF<UNTI2> that) :
-		mValue (forward (that)) {}
+	explicit ImplHolder (RREF<UNTI2> that) :mValue (forward[that]) {}
 
 	void destroy () override {
 		auto &&thiz = property[this] ;
-		delete property (thiz) ;
+		delete unsafe_pointer (thiz) ;
 	}
 
 	VREF<UNIT1> to () leftvalue override {
@@ -221,14 +209,13 @@ public:
 template <class UNIT1 ,class UNIT2>
 exports auto BOX_IMPLHOLDER_HELP<UNIT1 ,UNIT2>::EXTERN::create (RREF<UNIT2> that)
 ->UNSAFE_PTR<Holder> {
-	return new ImplHolder (forward (that)) ;
+	return new ImplHolder (forward[that]) ;
 } ;
 } ;
 
 namespace U {
 template <class UNIT1>
-class RC_IMPLHOLDER_HELP<UNIT1>::ImplHolder :
-	public Holder {
+class RC_IMPLHOLDER_HELP<UNIT1>::ImplHolder :public Holder {
 private:
 	UNIT1 mValue ;
 	LENGTH mCounter ;
@@ -236,13 +223,12 @@ private:
 public:
 	implicit ImplHolder () = delete ;
 
-	explicit ImplHolder (RREF<UNIT1> that) :
-		mValue (forward (that)) ,
+	explicit ImplHolder (RREF<UNIT1> that) :mValue (forward[that]) ,
 		mCounter (ZERO) {}
 
 	void destroy () override {
 		auto &&thiz = property[this] ;
-		delete property (thiz) ;
+		delete unsafe_pointer (thiz) ;
 	}
 
 	CREF<UNIT1> to () const leftvalue override {
@@ -263,7 +249,7 @@ public:
 template <class UNIT1>
 exports auto RC_IMPLHOLDER_HELP<UNIT1>::EXTERN::create (RREF<UNIT1> that)
 ->UNSAFE_PTR<Holder> {
-	return new ImplHolder (forward (that)) ;
+	return new ImplHolder (forward[that]) ;
 } ;
 } ;
 } ;

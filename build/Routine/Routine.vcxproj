@@ -23,26 +23,6 @@
     <ClCompile Include="..\..\src\test.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\..\..\..\Depends\__CSC__\csc.hpp" />
-    <ClInclude Include="..\..\..\..\..\Depends\__CSC__\csc_algorithm.hpp" />
-    <ClInclude Include="..\..\..\..\..\Depends\__CSC__\csc_array.hpp" />
-    <ClInclude Include="..\..\..\..\..\Depends\__CSC__\csc_basic.hpp" />
-    <ClInclude Include="..\..\..\..\..\Depends\__CSC__\csc_core.hpp" />
-    <ClInclude Include="..\..\..\..\..\Depends\__CSC__\csc_database.hpp" />
-    <ClInclude Include="..\..\..\..\..\Depends\__CSC__\csc_debugger.hpp" />
-    <ClInclude Include="..\..\..\..\..\Depends\__CSC__\csc_extend.hpp" />
-    <ClInclude Include="..\..\..\..\..\Depends\__CSC__\csc_filesystem.hpp" />
-    <ClInclude Include="..\..\..\..\..\Depends\__CSC__\csc_functional.hpp" />
-    <ClInclude Include="..\..\..\..\..\Depends\__CSC__\csc_geometry.hpp" />
-    <ClInclude Include="..\..\..\..\..\Depends\__CSC__\csc_graphics.hpp" />
-    <ClInclude Include="..\..\..\..\..\Depends\__CSC__\csc_images.hpp" />
-    <ClInclude Include="..\..\..\..\..\Depends\__CSC__\csc_math.hpp" />
-    <ClInclude Include="..\..\..\..\..\Depends\__CSC__\csc_network.hpp" />
-    <ClInclude Include="..\..\..\..\..\Depends\__CSC__\csc_runtime.hpp" />
-    <ClInclude Include="..\..\..\..\..\Depends\__CSC__\csc_serialization.hpp" />
-    <ClInclude Include="..\..\..\..\..\Depends\__CSC__\csc_stream.hpp" />
-    <ClInclude Include="..\..\..\..\..\Depends\__CSC__\csc_string.hpp" />
-    <ClInclude Include="..\..\..\..\..\Depends\__CSC__\csc_thread.hpp" />
     <ClInclude Include="..\..\src\csc2\begin.h" />
     <ClInclude Include="..\..\src\csc2\csc.hpp" />
     <ClInclude Include="..\..\src\csc2\csc_basic.hpp" />
@@ -51,25 +31,10 @@
     <ClInclude Include="..\..\src\util.h" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\..\..\..\..\Depends\__CSC__\cpp.hint" />
-    <None Include="..\..\..\..\..\Depends\__CSC__\csc_database.hpp.mysql.inl" />
-    <None Include="..\..\..\..\..\Depends\__CSC__\csc_debugger.hpp.linux.inl" />
-    <None Include="..\..\..\..\..\Depends\__CSC__\csc_debugger.hpp.windows.inl" />
-    <None Include="..\..\..\..\..\Depends\__CSC__\csc_filesystem.hpp.linux.inl" />
-    <None Include="..\..\..\..\..\Depends\__CSC__\csc_filesystem.hpp.windows.inl" />
-    <None Include="..\..\..\..\..\Depends\__CSC__\csc_graphics.hpp.opengl.inl" />
-    <None Include="..\..\..\..\..\Depends\__CSC__\csc_images.hpp.freeimage.inl" />
-    <None Include="..\..\..\..\..\Depends\__CSC__\csc_images.hpp.opencv.inl" />
-    <None Include="..\..\..\..\..\Depends\__CSC__\csc_math.hpp.default.inl" />
-    <None Include="..\..\..\..\..\Depends\__CSC__\csc_network.hpp.windows.inl" />
-    <None Include="..\..\..\..\..\Depends\__CSC__\csc_runtime.hpp.default.inl" />
-    <None Include="..\..\..\..\..\Depends\__CSC__\csc_string.hpp.default.inl" />
-    <None Include="..\..\..\..\..\Depends\__CSC__\csc_string.hpp.gbk.inl" />
     <None Include="..\..\src\csc2\cpp.hint" />
     <None Include="..\..\src\csc2\csc_core.hpp.inl" />
   </ItemGroup>
   <ItemGroup>
-    <Natvis Include="..\..\..\..\..\Depends\__CSC__\cpp.natvis" />
     <Natvis Include="..\..\src\csc2\cpp.natvis" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
