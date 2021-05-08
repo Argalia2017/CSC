@@ -6,66 +6,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\util.h" />
-    <ClInclude Include="..\..\..\..\..\Depends\__CSC__\csc.hpp">
-      <Filter>csc</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\Depends\__CSC__\csc_algorithm.hpp">
-      <Filter>csc</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\Depends\__CSC__\csc_array.hpp">
-      <Filter>csc</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\Depends\__CSC__\csc_basic.hpp">
-      <Filter>csc</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\Depends\__CSC__\csc_core.hpp">
-      <Filter>csc</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\Depends\__CSC__\csc_database.hpp">
-      <Filter>csc</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\Depends\__CSC__\csc_debugger.hpp">
-      <Filter>csc</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\Depends\__CSC__\csc_extend.hpp">
-      <Filter>csc</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\Depends\__CSC__\csc_filesystem.hpp">
-      <Filter>csc</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\Depends\__CSC__\csc_functional.hpp">
-      <Filter>csc</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\Depends\__CSC__\csc_geometry.hpp">
-      <Filter>csc</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\Depends\__CSC__\csc_graphics.hpp">
-      <Filter>csc</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\Depends\__CSC__\csc_images.hpp">
-      <Filter>csc</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\Depends\__CSC__\csc_math.hpp">
-      <Filter>csc</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\Depends\__CSC__\csc_network.hpp">
-      <Filter>csc</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\Depends\__CSC__\csc_runtime.hpp">
-      <Filter>csc</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\Depends\__CSC__\csc_serialization.hpp">
-      <Filter>csc</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\Depends\__CSC__\csc_stream.hpp">
-      <Filter>csc</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\Depends\__CSC__\csc_string.hpp">
-      <Filter>csc</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\Depends\__CSC__\csc_thread.hpp">
-      <Filter>csc</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\csc2\csc.hpp">
       <Filter>csc2</Filter>
     </ClInclude>
@@ -83,9 +23,6 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <Filter Include="csc">
-      <UniqueIdentifier>{48129fcc-f916-42f3-8b1c-fc2b27bbd072}</UniqueIdentifier>
-    </Filter>
     <Filter Include="unittest">
       <UniqueIdentifier>{000e62c6-12e0-48db-9e97-8c9331ef3a16}</UniqueIdentifier>
     </Filter>
@@ -94,46 +31,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\..\..\..\..\Depends\__CSC__\cpp.hint" />
-    <None Include="..\..\..\..\..\Depends\__CSC__\csc_database.hpp.mysql.inl">
-      <Filter>csc</Filter>
-    </None>
-    <None Include="..\..\..\..\..\Depends\__CSC__\csc_debugger.hpp.linux.inl">
-      <Filter>csc</Filter>
-    </None>
-    <None Include="..\..\..\..\..\Depends\__CSC__\csc_debugger.hpp.windows.inl">
-      <Filter>csc</Filter>
-    </None>
-    <None Include="..\..\..\..\..\Depends\__CSC__\csc_filesystem.hpp.linux.inl">
-      <Filter>csc</Filter>
-    </None>
-    <None Include="..\..\..\..\..\Depends\__CSC__\csc_filesystem.hpp.windows.inl">
-      <Filter>csc</Filter>
-    </None>
-    <None Include="..\..\..\..\..\Depends\__CSC__\csc_graphics.hpp.opengl.inl">
-      <Filter>csc</Filter>
-    </None>
-    <None Include="..\..\..\..\..\Depends\__CSC__\csc_images.hpp.freeimage.inl">
-      <Filter>csc</Filter>
-    </None>
-    <None Include="..\..\..\..\..\Depends\__CSC__\csc_images.hpp.opencv.inl">
-      <Filter>csc</Filter>
-    </None>
-    <None Include="..\..\..\..\..\Depends\__CSC__\csc_math.hpp.default.inl">
-      <Filter>csc</Filter>
-    </None>
-    <None Include="..\..\..\..\..\Depends\__CSC__\csc_network.hpp.windows.inl">
-      <Filter>csc</Filter>
-    </None>
-    <None Include="..\..\..\..\..\Depends\__CSC__\csc_runtime.hpp.default.inl">
-      <Filter>csc</Filter>
-    </None>
-    <None Include="..\..\..\..\..\Depends\__CSC__\csc_string.hpp.default.inl">
-      <Filter>csc</Filter>
-    </None>
-    <None Include="..\..\..\..\..\Depends\__CSC__\csc_string.hpp.gbk.inl">
-      <Filter>csc</Filter>
-    </None>
     <None Include="..\..\src\csc2\cpp.hint">
       <Filter>csc2</Filter>
     </None>
@@ -142,7 +39,6 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <Natvis Include="..\..\..\..\..\Depends\__CSC__\cpp.natvis" />
     <Natvis Include="..\..\src\csc2\cpp.natvis">
       <Filter>csc2</Filter>
     </Natvis>

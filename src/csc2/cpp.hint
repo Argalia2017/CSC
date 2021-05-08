@@ -6,8 +6,6 @@
 #define exports
 #define leftvalue
 #define rightvalue
-#define delegate
-#define enumof
 #define typeof
 #define typeas
 #define trait

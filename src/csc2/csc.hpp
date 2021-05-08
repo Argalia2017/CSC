@@ -106,7 +106,6 @@
 #include "begin.h"
 #include <cstdint>
 #include <cstddef>
-#include <ciso646>
 #include <limits>
 #include <type_traits>
 #include <utility>
@@ -154,38 +153,32 @@ namespace CSC {
 #ifdef unwind
 #error "∑(っ°Д° ;)っ : already defined"
 #endif
-#define internel_unwind(...) __VA_ARGS__
-#define unwind internel_unwind
+#define _macro_unwind_(...) __VA_ARGS__
+#define unwind _macro_unwind_
 
 #ifdef stringize
 #error "∑(っ°Д° ;)っ : already defined"
 #endif
-#define internel_stringize(...) #__VA_ARGS__
-#define stringize internel_stringize
+#define _macro_stringize_(...) #__VA_ARGS__
+#define stringize _macro_stringize_
 
 #ifdef ifnot
 #error "∑(っ°Д° ;)っ : already defined"
 #endif
-#define internel_ifnot(...) (!(unwind (__VA_ARGS__)))
-#define ifnot internel_ifnot
+#define _macro_ifnot_(...) (!(unwind (__VA_ARGS__)))
+#define ifnot _macro_ifnot_
 
 #ifdef require
 #error "∑(っ°Д° ;)っ : already defined"
 #endif
-#define internel_require(...) static_assert ((unwind (__VA_ARGS__)::value) ,"static assert failed : " stringize (__VA_ARGS__)) ;
-#define require internel_require
-
-#ifdef enumof
-#error "∑(っ°Д° ;)っ : already defined"
-#endif
-#define internel_enumof(...) CSC::U::ENUMAS<CSC::U::ENUMID<(unwind (__VA_ARGS__))>>
-#define enumof internel_enumof
+#define _macro_require_(...) static_assert ((unwind (__VA_ARGS__)::compile ()) ,"static assert failed : " stringize (__VA_ARGS__)) ;
+#define require _macro_require_
 
 #ifdef typeof
 #error "∑(っ°Д° ;)っ : already defined"
 #endif
-#define internel_typeof(...) CSC::REMOVE_ALL<decltype (unwind (__VA_ARGS__))>
-#define typeof internel_typeof
+#define _macro_typeof_(...) CSC::REMOVE_ALL<decltype (unwind (__VA_ARGS__))>
+#define typeof _macro_typeof_
 
 #ifdef typeas
 #error "∑(っ°Д° ;)っ : already defined"
@@ -201,41 +194,44 @@ namespace CSC {
 #error "∑(っ°Д° ;)っ : already defined"
 #endif
 #ifdef __CSC_DEBUG__
-#define internel_assert(...) do { if (unwind (__VA_ARGS__)) break ; CSC::abort () ; } while (false)
-#define assert internel_assert
+#define _macro_assert_(...) do { if (unwind (__VA_ARGS__)) break ; CSC::abort () ; } while (false)
+#define assert _macro_assert_
 #endif
 #ifdef __CSC_UNITTEST__
-#define internel_assert(...) do { if (unwind (__VA_ARGS__)) break ; CSC::abort () ; } while (false)
-#define assert internel_assert
+#define _macro_assert_(...) do { if (unwind (__VA_ARGS__)) break ; CSC::abort () ; } while (false)
+#define assert _macro_assert_
 #endif
 #ifdef __CSC_RELEASE__
-#define internel_assert(...)
-#define assert internel_assert
+#define _macro_assert_(...)
+#define assert _macro_assert_
 #endif
 
-#ifdef line_here
+#ifdef dynamic_assert
 #error "∑(っ°Д° ;)っ : already defined"
 #endif
 #ifdef __CSC_COMPILER_MSVC__
-#define line_here "at " ,__FUNCSIG__ ," in " ,__FILE__ ," ," ,stringize (__LINE__)
+#define _macro_dynamic_assert_(...) do { if (unwind (__VA_ARGS__)) break ; CSC::Exception ("at " __FUNCSIG__ " in " __FILE__ " ," stringize (__LINE__)).raise () ; } while (false)
+#define dynamic_assert _macro_dynamic_assert_
 #endif
 #ifdef __CSC_COMPILER_GNUC__
-#define line_here "at " ,__PRETTY_FUNCTION__ ," in " ,__FILE__ ," ," ,stringize (__LINE__)
+#define _macro_dynamic_assert_(...) do { if (unwind (__VA_ARGS__)) break ; CSC::Exception ("at " ,__PRETTY_FUNCTION__ ," in " __FILE__ " ," stringize (__LINE__)).raise () ; } while (false)
+#define dynamic_assert _macro_dynamic_assert_
 #endif
 #ifdef __CSC_COMPILER_CLANG__
-#define line_here "at " ,__PRETTY_FUNCTION__ ," in " ,__FILE__ ," ," ,stringize (__LINE__)
+#define _macro_dynamic_assert_(...) do { if (unwind (__VA_ARGS__)) break ; CSC::Exception ("at " ,__PRETTY_FUNCTION__ ," in " __FILE__ " ," stringize (__LINE__)).raise () ; } while (false)
+#define dynamic_assert _macro_dynamic_assert_
 #endif
 
 #ifdef anonymous
 #error "∑(っ°Д° ;)っ : already defined"
 #endif
-#define anonymous internel_anonymous_ ## __LINE__
+#define anonymous _anonymous__ ## __LINE__
 
 #ifdef ifswitch
 #error "∑(っ°Д° ;)っ : already defined"
 #endif
-#define internel_ifswitch(...) (unwind (__VA_ARGS__)) goto anonymous ; while (false) anonymous:
-#define ifswitch internel_ifswitch
+#define _macro_ifswitch_(...) (unwind (__VA_ARGS__)) goto anonymous ; while (false) anonymous:
+#define ifswitch _macro_ifswitch_
 
 #ifdef discard
 #error "∑(っ°Д° ;)っ : already defined"
