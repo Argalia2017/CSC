@@ -19,23 +19,19 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\src\csc2\csc.hpp" />
+    <ClCompile Include="..\..\src\csc2\csc_core.hpp" />
     <ClCompile Include="..\..\src\main.cpp" />
     <ClCompile Include="..\..\src\test.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\csc2\begin.h" />
-    <ClInclude Include="..\..\src\csc2\csc.hpp" />
     <ClInclude Include="..\..\src\csc2\csc_basic.hpp" />
-    <ClInclude Include="..\..\src\csc2\csc_core.hpp" />
     <ClInclude Include="..\..\src\csc2\end.h" />
     <ClInclude Include="..\..\src\util.h" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\..\src\csc2\cpp.hint" />
     <None Include="..\..\src\csc2\csc_core.hpp.inl" />
-  </ItemGroup>
-  <ItemGroup>
-    <Natvis Include="..\..\src\csc2\cpp.natvis" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>

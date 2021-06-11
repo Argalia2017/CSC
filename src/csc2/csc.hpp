@@ -65,7 +65,7 @@
 #elif defined _MBCS
 #define __CSC_CONFIG_STRA__
 #else
-#define __CSC_CONFIG_STRU8__
+#define __CSC_CONFIG_STRA__
 #endif
 
 #ifdef __CSC_COMPILER_MSVC__
@@ -98,155 +98,299 @@
 #pragma warning (disable :5045) //@info: warning C5045: Compiler will insert Spectre mitigation for memory load if /Qspectre switch specified
 #endif
 
-#ifdef __CSC_COMPILER_GNUC__
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wattributes"
-#endif
-
 #include "begin.h"
-#include <cstdint>
 #include <cstddef>
+#include <cstdint>
 #include <limits>
 #include <type_traits>
-#include <utility>
+#include <initializer_list>
+#include <cassert>
 #include <new>
 #include <exception>
+#include <typeinfo>
+#include <utility>
+#include <cstdlib>
 #include "end.h"
 
-#ifdef _HAS_CXX17
-#if _HAS_CXX17
-#define __CSC_CXX_LATEST__
+#ifndef __macro_unwind
+#define __macro_unwind(...) __VA_ARGS__
 #endif
+
+#ifndef __macro_stringize
+#define __macro_stringize(...) #__VA_ARGS__
+#endif
+
+#ifndef __macro_requires
+#define __macro_requires(...) static_assert (CSC::ENUM_CHECK<__macro_unwind (__VA_ARGS__)>::value ,"static_assert failed : " __macro_stringize (__VA_ARGS__))
+#endif
+
+#ifndef __macro_assert
+#ifdef __CSC_DEBUG__
+#define __macro_assert(...) CSC::debug_assert (__macro_unwind (__VA_ARGS__))
+#endif
+
+#ifdef __CSC_UNITTEST__
+#define __macro_assert(...) CSC::unittest_assert (__macro_unwind (__VA_ARGS__))
+#endif
+
+#ifdef __CSC_RELEASE__
+#define __macro_assert(...)
+#endif
+#endif
+
+#ifndef __macro_ifnot
+#define __macro_ifnot(...) (!(__macro_unwind (__VA_ARGS__)))
+#endif
+
+#ifndef __macro_ifswitch
+#define __macro_ifswitch(...) (true) goto anonymous ; while (false) anonymous:
+#endif
+
+#ifndef __macro_typeof
+#define __macro_typeof(...) CSC::REMOVE_ALL<decltype (__macro_unwind (__VA_ARGS__))>
 #endif
 
 namespace CSC {
-#ifdef self
-#error "∑(っ°Д° ;)っ : already defined"
-#endif
-#define self to ()
+template <class...>
+struct TYPEAS ;
 
-#ifdef implicit
-#error "∑(っ°Д° ;)っ : already defined"
-#endif
-#define implicit
+namespace U {
+template <class>
+struct ALLID {} ;
+} ;
 
-#ifdef imports
-#error "∑(っ°Д° ;)っ : already defined"
-#endif
-#define imports static
+template <class UNIT1>
+struct TYPEAS<UNIT1> {
+	static constexpr auto id = U::ALLID<UNIT1> () ;
+} ;
 
-#ifdef exports
-#error "∑(っ°Д° ;)っ : already defined"
-#endif
-#define exports
+using ALWAYS = void ;
 
-#ifdef leftvalue
-#error "∑(っ°Д° ;)っ : already defined"
-#endif
-#define leftvalue &
+namespace U {
+template <class...>
+trait REMOVE_REF_HELP ;
 
-#ifdef rightvalue
-#error "∑(っ°Д° ;)っ : already defined"
-#endif
-#define rightvalue &&
+template <class UNIT1>
+trait REMOVE_REF_HELP<UNIT1 ,ALWAYS> {
+	using RET = UNIT1 ;
+} ;
 
-#ifdef unwind
-#error "∑(っ°Д° ;)っ : already defined"
-#endif
-#define _macro_unwind_(...) __VA_ARGS__
-#define unwind _macro_unwind_
+template <class UNIT1>
+trait REMOVE_REF_HELP<UNIT1 & ,ALWAYS> {
+	using RET = UNIT1 ;
+} ;
 
-#ifdef stringize
-#error "∑(っ°Д° ;)っ : already defined"
-#endif
-#define _macro_stringize_(...) #__VA_ARGS__
-#define stringize _macro_stringize_
+template <class UNIT1>
+trait REMOVE_REF_HELP<UNIT1 && ,ALWAYS> {
+	using RET = UNIT1 ;
+} ;
 
-#ifdef ifnot
-#error "∑(っ°Д° ;)っ : already defined"
-#endif
-#define _macro_ifnot_(...) (!(unwind (__VA_ARGS__)))
-#define ifnot _macro_ifnot_
+template <class UNIT1>
+trait REMOVE_REF_HELP<const UNIT1 ,ALWAYS> {
+	using RET = UNIT1 ;
+} ;
 
-#ifdef require
-#error "∑(っ°Д° ;)っ : already defined"
-#endif
-#define _macro_require_(...) static_assert ((unwind (__VA_ARGS__)::compile ()) ,"static assert failed : " stringize (__VA_ARGS__)) ;
-#define require _macro_require_
+template <class UNIT1>
+trait REMOVE_REF_HELP<const UNIT1 & ,ALWAYS> {
+	using RET = UNIT1 ;
+} ;
 
-#ifdef typeof
-#error "∑(っ°Д° ;)っ : already defined"
-#endif
-#define _macro_typeof_(...) CSC::REMOVE_ALL<decltype (unwind (__VA_ARGS__))>
-#define typeof _macro_typeof_
+template <class UNIT1>
+trait REMOVE_REF_HELP<const UNIT1 && ,ALWAYS> {
+	using RET = UNIT1 ;
+} ;
+} ;
 
-#ifdef typeas
-#error "∑(っ°Д° ;)っ : already defined"
-#endif
-#define typeas CSC::U::TYPEAS
+template <class UNIT1>
+using REMOVE_REF = typename U::REMOVE_REF_HELP<UNIT1 ,ALWAYS>::RET ;
 
-#ifdef trait
-#error "∑(っ°Д° ;)っ : already defined"
-#endif
-#define trait struct
+namespace U {
+template <class...>
+trait REMOVE_ALL_HELP ;
 
-#ifdef assert
-#error "∑(っ°Д° ;)っ : already defined"
-#endif
+template <class UNIT1>
+trait REMOVE_ALL_HELP<UNIT1 ,ALWAYS> {
+	using RET = UNIT1 ;
+} ;
+
+template <class UNIT1>
+trait REMOVE_ALL_HELP<ALLID<UNIT1> ,ALWAYS> {
+	using RET = UNIT1 ;
+} ;
+} ;
+
+template <class UNIT1>
+using REMOVE_ALL = typename U::REMOVE_ALL_HELP<REMOVE_REF<UNIT1> ,ALWAYS>::RET ;
+
+template <class UNIT1 ,UNIT1 UNIT2>
+struct ENUMAS {
+	static constexpr auto value = UNIT2 ;
+} ;
+
+using ENUM_TRUE = ENUMAS<bool ,true> ;
+
+using ENUM_FALSE = ENUMAS<bool ,false> ;
+
+template <class UNIT1>
+using ENUM_BOOL = ENUMAS<bool ,bool (UNIT1::value)> ;
+
+namespace U {
+template <class...>
+trait ENUM_NOT_HELP ;
+
+template <>
+trait ENUM_NOT_HELP<ENUM_TRUE ,ALWAYS> {
+	using RET = ENUM_FALSE ;
+} ;
+
+template <>
+trait ENUM_NOT_HELP<ENUM_FALSE ,ALWAYS> {
+	using RET = ENUM_TRUE ;
+} ;
+} ;
+
+template <class UNIT1>
+using ENUM_NOT = typename U::ENUM_NOT_HELP<UNIT1 ,ALWAYS>::RET ;
+
+namespace U {
+template <class...>
+trait REQUIRE_HELP ;
+
+template <class UNIT1>
+trait REQUIRE_HELP<UNIT1 ,ENUM_TRUE ,ALWAYS> {
+	using RET = void ;
+} ;
+} ;
+
+template <class UNIT1>
+using REQUIRE = typename U::REQUIRE_HELP<UNIT1 ,ENUM_BOOL<UNIT1> ,ALWAYS>::RET ;
+
+namespace U {
+template <class...>
+trait DEPENDENT_HELP ;
+
+template <class UNIT1 ,class UNIT2>
+trait DEPENDENT_HELP<UNIT1 ,UNIT2 ,ALWAYS> {
+	using RET = UNIT1 ;
+} ;
+} ;
+
+template <class UNIT1 ,class UNIT2 = void>
+using DEPENDENT = typename U::DEPENDENT_HELP<UNIT1 ,UNIT2 ,ALWAYS>::RET ;
+
+namespace U {
 #ifdef __CSC_DEBUG__
-#define _macro_assert_(...) do { if (unwind (__VA_ARGS__)) break ; CSC::abort () ; } while (false)
-#define assert _macro_assert_
+struct MACRO_DEBUG :public ENUM_TRUE {} ;
+#else
+struct MACRO_DEBUG :public ENUM_FALSE {} ;
 #endif
+
 #ifdef __CSC_UNITTEST__
-#define _macro_assert_(...) do { if (unwind (__VA_ARGS__)) break ; CSC::abort () ; } while (false)
-#define assert _macro_assert_
+struct MACRO_UNITTEST :public ENUM_TRUE {} ;
+#else
+struct MACRO_UNITTEST :public ENUM_FALSE {} ;
 #endif
+
 #ifdef __CSC_RELEASE__
-#define _macro_assert_(...)
-#define assert _macro_assert_
+struct MACRO_RELEASE :public ENUM_TRUE {} ;
+#else
+struct MACRO_RELEASE :public ENUM_FALSE {} ;
 #endif
 
-#ifdef dynamic_assert
-#error "∑(っ°Д° ;)っ : already defined"
-#endif
 #ifdef __CSC_COMPILER_MSVC__
-#define _macro_dynamic_assert_(...) do { if (unwind (__VA_ARGS__)) break ; CSC::Exception ("at " __FUNCSIG__ " in " __FILE__ " ," stringize (__LINE__)).raise () ; } while (false)
-#define dynamic_assert _macro_dynamic_assert_
+struct MACRO_COMPILER_MSVC :public ENUM_TRUE {} ;
+#else
+struct MACRO_COMPILER_MSVC :public ENUM_FALSE {} ;
 #endif
+
 #ifdef __CSC_COMPILER_GNUC__
-#define _macro_dynamic_assert_(...) do { if (unwind (__VA_ARGS__)) break ; CSC::Exception ("at " ,__PRETTY_FUNCTION__ ," in " __FILE__ " ," stringize (__LINE__)).raise () ; } while (false)
-#define dynamic_assert _macro_dynamic_assert_
+struct MACRO_COMPILER_GNUC :public ENUM_TRUE {} ;
+#else
+struct MACRO_COMPILER_GNUC :public ENUM_FALSE {} ;
 #endif
+
 #ifdef __CSC_COMPILER_CLANG__
-#define _macro_dynamic_assert_(...) do { if (unwind (__VA_ARGS__)) break ; CSC::Exception ("at " ,__PRETTY_FUNCTION__ ," in " __FILE__ " ," stringize (__LINE__)).raise () ; } while (false)
-#define dynamic_assert _macro_dynamic_assert_
+struct MACRO_COMPILER_CLANG :public ENUM_TRUE {} ;
+#else
+struct MACRO_COMPILER_CLANG :public ENUM_FALSE {} ;
 #endif
 
-#ifdef anonymous
-#error "∑(っ°Д° ;)っ : already defined"
-#endif
-#define anonymous _anonymous__ ## __LINE__
-
-#ifdef ifswitch
-#error "∑(っ°Д° ;)っ : already defined"
-#endif
-#define _macro_ifswitch_(...) (unwind (__VA_ARGS__)) goto anonymous ; while (false) anonymous:
-#define ifswitch _macro_ifswitch_
-
-#ifdef discard
-#error "∑(っ°Д° ;)っ : already defined"
-#endif
-#define discard break
-
-#ifdef TRUE
-#undef TRUE
+#ifdef __CSC_SYSTEM_WINDOWS__
+struct MACRO_SYSTEM_WINDOWS :public ENUM_TRUE {} ;
+#else
+struct MACRO_SYSTEM_WINDOWS :public ENUM_FALSE {} ;
 #endif
 
-#ifdef FALSE
-#undef FALSE
+#ifdef __CSC_SYSTEM_LINUX__
+struct MACRO_SYSTEM_LINUX :public ENUM_TRUE {} ;
+#else
+struct MACRO_SYSTEM_LINUX :public ENUM_FALSE {} ;
 #endif
 
-#ifdef NULL
-#undef NULL
+#ifdef __CSC_PLATFORM_X86__
+struct MACRO_PLATFORM_X86 :public ENUM_TRUE {} ;
+#else
+struct MACRO_PLATFORM_X86 :public ENUM_FALSE {} ;
 #endif
+
+#ifdef __CSC_PLATFORM_X64__
+struct MACRO_PLATFORM_X64 :public ENUM_TRUE {} ;
+#else
+struct MACRO_PLATFORM_X64 :public ENUM_FALSE {} ;
+#endif
+
+#ifdef __CSC_PLATFORM_ARM__
+struct MACRO_PLATFORM_ARM :public ENUM_TRUE {} ;
+#else
+struct MACRO_PLATFORM_ARM :public ENUM_FALSE {} ;
+#endif
+
+#ifdef __CSC_PLATFORM_ARM64__
+struct MACRO_PLATFORM_ARM64 :public ENUM_TRUE {} ;
+#else
+struct MACRO_PLATFORM_ARM64 :public ENUM_FALSE {} ;
+#endif
+
+#ifdef __CSC_TARGET_EXE__
+struct MACRO_TARGET_EXE :public ENUM_TRUE {} ;
+#else
+struct MACRO_TARGET_EXE :public ENUM_FALSE {} ;
+#endif
+
+#ifdef __CSC_TARGET_DLL__
+struct MACRO_TARGET_DLL :public ENUM_TRUE {} ;
+#else
+struct MACRO_TARGET_DLL :public ENUM_FALSE {} ;
+#endif
+
+#ifdef __CSC_TARGET_LIB__
+struct MACRO_TARGET_LIB :public ENUM_TRUE {} ;
+#else
+struct MACRO_TARGET_LIB :public ENUM_FALSE {} ;
+#endif
+
+#ifdef __CSC_CONFIG_VAR32__
+struct MACRO_CONFIG_VAR32 :public ENUM_TRUE {} ;
+#else
+struct MACRO_CONFIG_VAR32 :public ENUM_FALSE {} ;
+#endif
+
+#ifdef __CSC_CONFIG_VAR64__
+struct MACRO_CONFIG_VAR64 :public ENUM_TRUE {} ;
+#else
+struct MACRO_CONFIG_VAR64 :public ENUM_FALSE {} ;
+#endif
+
+#ifdef __CSC_CONFIG_STRA__
+struct MACRO_CONFIG_STRA :public ENUM_TRUE {} ;
+#else
+struct MACRO_CONFIG_STRA :public ENUM_FALSE {} ;
+#endif
+
+#ifdef __CSC_CONFIG_STRW__
+struct MACRO_CONFIG_STRW :public ENUM_TRUE {} ;
+#else
+struct MACRO_CONFIG_STRW :public ENUM_FALSE {} ;
+#endif
+} ;
 } ;

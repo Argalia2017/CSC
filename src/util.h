@@ -70,8 +70,8 @@ using namespace Microsoft::VisualStudio::CppUnitTestFramework ;
 #define TEST_METHOD(arg) void arg () const
 #endif
 
-#if defined (__CSC_TARGET_EXE__) || defined (__CSC_TARGET_DLL__)
 namespace CSC {
+#ifdef __CSC_TARGET_EXE__
 inline exports PTR<NONE> GlobalStaticEngine::unique_compare_exchange (const PTR<NONE> &expect ,const PTR<NONE> &data) {
 	PTR<NONE> ret = NULL ;
 	_CALL_TRY_ ([&] () {
@@ -84,8 +84,23 @@ inline exports PTR<NONE> GlobalStaticEngine::unique_compare_exchange (const PTR<
 	}) ;
 	return _MOVE_ (ret) ;
 }
-} ;
 #endif
+
+#ifdef __CSC_TARGET_DLL__
+inline exports PTR<NONE> GlobalStaticEngine::unique_compare_exchange (const PTR<NONE> &expect ,const PTR<NONE> &data) {
+	PTR<NONE> ret = NULL ;
+	_CALL_TRY_ ([&] () {
+		auto &r1x = _CACHE_ ([&] () {
+			return SharedRef<AtomicPtr>::make () ;
+		}) ;
+		ret = r1x->compare_exchange (expect ,data) ;
+	} ,[&] () {
+		ret = NULL ;
+	}) ;
+	return _MOVE_ (ret) ;
+}
+#endif
+} ;
 
 namespace UNITTEST {
 using namespace CSC ;
