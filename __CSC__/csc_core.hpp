@@ -90,11 +90,13 @@ using VAL32 = float ;
 using VAL64 = double ;
 
 static constexpr auto VAL32_MAX = VAL32 (3.402823466E+38) ;
-static constexpr auto VAL32_MIN = VAL32 (1.175494351E-38) ;
+static constexpr auto VAL32_MIN = VAL32 (-3.402823466E+38) ;
+static constexpr auto VAL32_LOW = VAL32 (1.175494351E-38) ;
 static constexpr auto VAL32_EPS = VAL32 (1.192092896E-07) ;
 static constexpr auto VAL32_INF = api::numeric_limits<VAL32>::infinity () ;
 static constexpr auto VAL64_MAX = VAL64 (1.7976931348623158E+308) ;
-static constexpr auto VAL64_MIN = VAL64 (2.2250738585072014E-308) ;
+static constexpr auto VAL64_MIN = VAL64 (-1.7976931348623158E+308) ;
+static constexpr auto VAL64_LOW = VAL64 (2.2250738585072014E-308) ;
 static constexpr auto VAL64_EPS = VAL64 (2.2204460492503131E-016) ;
 static constexpr auto VAL64_INF = api::numeric_limits<VAL64>::infinity () ;
 

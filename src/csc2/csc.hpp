@@ -112,25 +112,34 @@
 #include <cstdlib>
 #include "end.h"
 
-#ifndef __macro_unwind
-#define __macro_unwind(...) __VA_ARGS__
+#ifdef _HAS_CXX17
+#if _HAS_CXX17
+#define __CSC_CXX_LATEST__
+#endif
+#endif
+
+#ifdef __CSC_COMPILER_GNUC__
+namespace std {
+using ::max_align_t ;
+} ;
 #endif
 
 #ifndef __macro_stringize
-#define __macro_stringize(...) #__VA_ARGS__
+#define __macro_stringize_impl(...) #__VA_ARGS__
+#define __macro_stringize(...) __macro_stringize_impl (__VA_ARGS__)
 #endif
 
 #ifndef __macro_requires
-#define __macro_requires(...) static_assert (CSC::ENUM_CHECK<__macro_unwind (__VA_ARGS__)>::value ,"static_assert failed : " __macro_stringize (__VA_ARGS__))
+#define __macro_requires(...) static_assert (CSC::ENUM_CHECK<__VA_ARGS__>::value ,"static_assert failed : " __macro_stringize (__VA_ARGS__))
 #endif
 
 #ifndef __macro_assert
 #ifdef __CSC_DEBUG__
-#define __macro_assert(...) CSC::debug_assert (__macro_unwind (__VA_ARGS__))
+#define __macro_assert(...) CSC::debug_assert (__VA_ARGS__)
 #endif
 
 #ifdef __CSC_UNITTEST__
-#define __macro_assert(...) CSC::unittest_assert (__macro_unwind (__VA_ARGS__))
+#define __macro_assert(...) CSC::unittest_assert (__VA_ARGS__)
 #endif
 
 #ifdef __CSC_RELEASE__
@@ -138,33 +147,74 @@
 #endif
 #endif
 
+#ifndef __macro_anonymous
+#define __macro_anonymous_impl_impl(A) __anonymous_##A
+#define __macro_anonymous_impl(A) __macro_anonymous_impl_impl(A)
+#define __macro_anonymous __macro_anonymous_impl (__LINE__)
+#endif
+
 #ifndef __macro_ifnot
-#define __macro_ifnot(...) (!(__macro_unwind (__VA_ARGS__)))
+#define __macro_ifnot(...) (!(__VA_ARGS__))
 #endif
 
 #ifndef __macro_ifswitch
-#define __macro_ifswitch(...) (true) goto anonymous ; while (false) anonymous:
+#define __macro_ifswitch(...) (__VA_ARGS__) switch (true) case true:
 #endif
 
 #ifndef __macro_typeof
-#define __macro_typeof(...) CSC::REMOVE_ALL<decltype (__macro_unwind (__VA_ARGS__))>
+#define __macro_typeof(...) CSC::REMOVE_ALL<decltype (__VA_ARGS__)>
 #endif
 
 namespace CSC {
+template <class...>
+struct ENUMAS ;
+
+namespace U {
+template <int>
+struct ENUMID ;
+} ;
+
+template <class UNIT1 ,int UNIT2>
+struct ENUMAS<UNIT1 ,U::ENUMID<UNIT2>> {
+	static constexpr auto value = UNIT1 (UNIT2) ;
+} ;
+
+using ENUM_TRUE = ENUMAS<bool ,U::ENUMID<true>> ;
+
+using ENUM_FALSE = ENUMAS<bool ,U::ENUMID<false>> ;
+
 template <class...>
 struct TYPEAS ;
 
 namespace U {
 template <class>
-struct ALLID {} ;
+struct TYPEID {} ;
 } ;
 
 template <class UNIT1>
 struct TYPEAS<UNIT1> {
-	static constexpr auto id = U::ALLID<UNIT1> () ;
+	static constexpr auto id = U::TYPEID<UNIT1> () ;
 } ;
 
 using ALWAYS = void ;
+
+namespace U {
+template <class...>
+trait ENUM_NOT_HELP ;
+
+template <>
+trait ENUM_NOT_HELP<ENUM_FALSE ,ALWAYS> {
+	using RET = ENUM_TRUE ;
+} ;
+
+template <>
+trait ENUM_NOT_HELP<ENUM_TRUE ,ALWAYS> {
+	using RET = ENUM_FALSE ;
+} ;
+} ;
+
+template <class UNIT1>
+using ENUM_NOT = typename U::ENUM_NOT_HELP<UNIT1 ,ALWAYS>::RET ;
 
 namespace U {
 template <class...>
@@ -214,7 +264,7 @@ trait REMOVE_ALL_HELP<UNIT1 ,ALWAYS> {
 } ;
 
 template <class UNIT1>
-trait REMOVE_ALL_HELP<ALLID<UNIT1> ,ALWAYS> {
+trait REMOVE_ALL_HELP<TYPEID<UNIT1> ,ALWAYS> {
 	using RET = UNIT1 ;
 } ;
 } ;
@@ -222,48 +272,18 @@ trait REMOVE_ALL_HELP<ALLID<UNIT1> ,ALWAYS> {
 template <class UNIT1>
 using REMOVE_ALL = typename U::REMOVE_ALL_HELP<REMOVE_REF<UNIT1> ,ALWAYS>::RET ;
 
-template <class UNIT1 ,UNIT1 UNIT2>
-struct ENUMAS {
-	static constexpr auto value = UNIT2 ;
-} ;
-
-using ENUM_TRUE = ENUMAS<bool ,true> ;
-
-using ENUM_FALSE = ENUMAS<bool ,false> ;
-
-template <class UNIT1>
-using ENUM_BOOL = ENUMAS<bool ,bool (UNIT1::value)> ;
-
-namespace U {
-template <class...>
-trait ENUM_NOT_HELP ;
-
-template <>
-trait ENUM_NOT_HELP<ENUM_TRUE ,ALWAYS> {
-	using RET = ENUM_FALSE ;
-} ;
-
-template <>
-trait ENUM_NOT_HELP<ENUM_FALSE ,ALWAYS> {
-	using RET = ENUM_TRUE ;
-} ;
-} ;
-
-template <class UNIT1>
-using ENUM_NOT = typename U::ENUM_NOT_HELP<UNIT1 ,ALWAYS>::RET ;
-
 namespace U {
 template <class...>
 trait REQUIRE_HELP ;
 
-template <class UNIT1>
-trait REQUIRE_HELP<UNIT1 ,ENUM_TRUE ,ALWAYS> {
+template <>
+trait REQUIRE_HELP<ENUM_TRUE ,ALWAYS> {
 	using RET = void ;
 } ;
 } ;
 
 template <class UNIT1>
-using REQUIRE = typename U::REQUIRE_HELP<UNIT1 ,ENUM_BOOL<UNIT1> ,ALWAYS>::RET ;
+using REQUIRE = typename U::REQUIRE_HELP<UNIT1 ,ALWAYS>::RET ;
 
 namespace U {
 template <class...>
@@ -280,117 +300,155 @@ using DEPENDENT = typename U::DEPENDENT_HELP<UNIT1 ,UNIT2 ,ALWAYS>::RET ;
 
 namespace U {
 #ifdef __CSC_DEBUG__
-struct MACRO_DEBUG :public ENUM_TRUE {} ;
+template <class UNIT1>
+using MACRO_DEBUG = DEPENDENT<ENUM_TRUE ,DEPENDENT<struct anonymous ,UNIT1>> ;
 #else
-struct MACRO_DEBUG :public ENUM_FALSE {} ;
+template <class UNIT1>
+using MACRO_DEBUG = DEPENDENT<ENUM_FALSE ,DEPENDENT<struct anonymous ,UNIT1>> ;
 #endif
 
 #ifdef __CSC_UNITTEST__
-struct MACRO_UNITTEST :public ENUM_TRUE {} ;
+template <class UNIT1>
+using MACRO_UNITTEST = DEPENDENT<ENUM_TRUE ,DEPENDENT<struct anonymous ,UNIT1>> ;
 #else
-struct MACRO_UNITTEST :public ENUM_FALSE {} ;
+template <class UNIT1>
+using MACRO_UNITTEST = DEPENDENT<ENUM_FALSE ,DEPENDENT<struct anonymous ,UNIT1>> ;
 #endif
 
 #ifdef __CSC_RELEASE__
-struct MACRO_RELEASE :public ENUM_TRUE {} ;
+template <class UNIT1>
+using MACRO_RELEASE = DEPENDENT<ENUM_TRUE ,DEPENDENT<struct anonymous ,UNIT1>> ;
 #else
-struct MACRO_RELEASE :public ENUM_FALSE {} ;
+template <class UNIT1>
+using MACRO_RELEASE = DEPENDENT<ENUM_FALSE ,DEPENDENT<struct anonymous ,UNIT1>> ;
 #endif
 
 #ifdef __CSC_COMPILER_MSVC__
-struct MACRO_COMPILER_MSVC :public ENUM_TRUE {} ;
+template <class UNIT1>
+using MACRO_COMPILER_MSVC = DEPENDENT<ENUM_TRUE ,DEPENDENT<struct anonymous ,UNIT1>> ;
 #else
-struct MACRO_COMPILER_MSVC :public ENUM_FALSE {} ;
+template <class UNIT1>
+using MACRO_COMPILER_MSVC = DEPENDENT<ENUM_FALSE ,DEPENDENT<struct anonymous ,UNIT1>> ;
 #endif
 
 #ifdef __CSC_COMPILER_GNUC__
-struct MACRO_COMPILER_GNUC :public ENUM_TRUE {} ;
+template <class UNIT1>
+using MACRO_COMPILER_GNUC = DEPENDENT<ENUM_TRUE ,DEPENDENT<struct anonymous ,UNIT1>> ;
 #else
-struct MACRO_COMPILER_GNUC :public ENUM_FALSE {} ;
+template <class UNIT1>
+using MACRO_COMPILER_GNUC = DEPENDENT<ENUM_FALSE ,DEPENDENT<struct anonymous ,UNIT1>> ;
 #endif
 
 #ifdef __CSC_COMPILER_CLANG__
-struct MACRO_COMPILER_CLANG :public ENUM_TRUE {} ;
+template <class UNIT1>
+using MACRO_COMPILER_CLANG = DEPENDENT<ENUM_TRUE ,DEPENDENT<struct anonymous ,UNIT1>> ;
 #else
-struct MACRO_COMPILER_CLANG :public ENUM_FALSE {} ;
+template <class UNIT1>
+using MACRO_COMPILER_CLANG = DEPENDENT<ENUM_FALSE ,DEPENDENT<struct anonymous ,UNIT1>> ;
 #endif
 
 #ifdef __CSC_SYSTEM_WINDOWS__
-struct MACRO_SYSTEM_WINDOWS :public ENUM_TRUE {} ;
+template <class UNIT1>
+using MACRO_SYSTEM_WINDOWS = DEPENDENT<ENUM_TRUE ,DEPENDENT<struct anonymous ,UNIT1>> ;
 #else
-struct MACRO_SYSTEM_WINDOWS :public ENUM_FALSE {} ;
+template <class UNIT1>
+using MACRO_SYSTEM_WINDOWS = DEPENDENT<ENUM_FALSE ,DEPENDENT<struct anonymous ,UNIT1>> ;
 #endif
 
 #ifdef __CSC_SYSTEM_LINUX__
-struct MACRO_SYSTEM_LINUX :public ENUM_TRUE {} ;
+template <class UNIT1>
+using MACRO_SYSTEM_LINUX = DEPENDENT<ENUM_TRUE ,DEPENDENT<struct anonymous ,UNIT1>> ;
 #else
-struct MACRO_SYSTEM_LINUX :public ENUM_FALSE {} ;
+template <class UNIT1>
+using MACRO_SYSTEM_LINUX = DEPENDENT<ENUM_FALSE ,DEPENDENT<struct anonymous ,UNIT1>> ;
 #endif
 
 #ifdef __CSC_PLATFORM_X86__
-struct MACRO_PLATFORM_X86 :public ENUM_TRUE {} ;
+template <class UNIT1>
+using MACRO_PLATFORM_X86 = DEPENDENT<ENUM_TRUE ,DEPENDENT<struct anonymous ,UNIT1>> ;
 #else
-struct MACRO_PLATFORM_X86 :public ENUM_FALSE {} ;
+template <class UNIT1>
+using MACRO_PLATFORM_X86 = DEPENDENT<ENUM_FALSE ,DEPENDENT<struct anonymous ,UNIT1>> ;
 #endif
 
 #ifdef __CSC_PLATFORM_X64__
-struct MACRO_PLATFORM_X64 :public ENUM_TRUE {} ;
+template <class UNIT1>
+using MACRO_PLATFORM_X64 = DEPENDENT<ENUM_TRUE ,DEPENDENT<struct anonymous ,UNIT1>> ;
 #else
-struct MACRO_PLATFORM_X64 :public ENUM_FALSE {} ;
+template <class UNIT1>
+using MACRO_PLATFORM_X64 = DEPENDENT<ENUM_FALSE ,DEPENDENT<struct anonymous ,UNIT1>> ;
 #endif
 
 #ifdef __CSC_PLATFORM_ARM__
-struct MACRO_PLATFORM_ARM :public ENUM_TRUE {} ;
+template <class UNIT1>
+using MACRO_PLATFORM_ARM = DEPENDENT<ENUM_TRUE ,DEPENDENT<struct anonymous ,UNIT1>> ;
 #else
-struct MACRO_PLATFORM_ARM :public ENUM_FALSE {} ;
+template <class UNIT1>
+using MACRO_PLATFORM_ARM = DEPENDENT<ENUM_FALSE ,DEPENDENT<struct anonymous ,UNIT1>> ;
 #endif
 
 #ifdef __CSC_PLATFORM_ARM64__
-struct MACRO_PLATFORM_ARM64 :public ENUM_TRUE {} ;
+template <class UNIT1>
+using MACRO_PLATFORM_ARM64 = DEPENDENT<ENUM_TRUE ,DEPENDENT<struct anonymous ,UNIT1>> ;
 #else
-struct MACRO_PLATFORM_ARM64 :public ENUM_FALSE {} ;
+template <class UNIT1>
+using MACRO_PLATFORM_ARM64 = DEPENDENT<ENUM_FALSE ,DEPENDENT<struct anonymous ,UNIT1>> ;
 #endif
 
 #ifdef __CSC_TARGET_EXE__
-struct MACRO_TARGET_EXE :public ENUM_TRUE {} ;
+template <class UNIT1>
+using MACRO_TARGET_EXE = DEPENDENT<ENUM_TRUE ,DEPENDENT<struct anonymous ,UNIT1>> ;
 #else
-struct MACRO_TARGET_EXE :public ENUM_FALSE {} ;
+template <class UNIT1>
+using MACRO_TARGET_EXE = DEPENDENT<ENUM_FALSE ,DEPENDENT<struct anonymous ,UNIT1>> ;
 #endif
 
 #ifdef __CSC_TARGET_DLL__
-struct MACRO_TARGET_DLL :public ENUM_TRUE {} ;
+template <class UNIT1>
+using MACRO_TARGET_DLL = DEPENDENT<ENUM_TRUE ,DEPENDENT<struct anonymous ,UNIT1>> ;
 #else
-struct MACRO_TARGET_DLL :public ENUM_FALSE {} ;
+template <class UNIT1>
+using MACRO_TARGET_DLL = DEPENDENT<ENUM_FALSE ,DEPENDENT<struct anonymous ,UNIT1>> ;
 #endif
 
 #ifdef __CSC_TARGET_LIB__
-struct MACRO_TARGET_LIB :public ENUM_TRUE {} ;
+template <class UNIT1>
+using MACRO_TARGET_LIB = DEPENDENT<ENUM_TRUE ,DEPENDENT<struct anonymous ,UNIT1>> ;
 #else
-struct MACRO_TARGET_LIB :public ENUM_FALSE {} ;
+template <class UNIT1>
+using MACRO_TARGET_LIB = DEPENDENT<ENUM_FALSE ,DEPENDENT<struct anonymous ,UNIT1>> ;
 #endif
 
 #ifdef __CSC_CONFIG_VAR32__
-struct MACRO_CONFIG_VAR32 :public ENUM_TRUE {} ;
+template <class UNIT1>
+using MACRO_CONFIG_VAR32 = DEPENDENT<ENUM_TRUE ,DEPENDENT<struct anonymous ,UNIT1>> ;
 #else
-struct MACRO_CONFIG_VAR32 :public ENUM_FALSE {} ;
+template <class UNIT1>
+using MACRO_CONFIG_VAR32 = DEPENDENT<ENUM_FALSE ,DEPENDENT<struct anonymous ,UNIT1>> ;
 #endif
 
 #ifdef __CSC_CONFIG_VAR64__
-struct MACRO_CONFIG_VAR64 :public ENUM_TRUE {} ;
+template <class UNIT1>
+using MACRO_CONFIG_VAR64 = DEPENDENT<ENUM_TRUE ,DEPENDENT<struct anonymous ,UNIT1>> ;
 #else
-struct MACRO_CONFIG_VAR64 :public ENUM_FALSE {} ;
+template <class UNIT1>
+using MACRO_CONFIG_VAR64 = DEPENDENT<ENUM_FALSE ,DEPENDENT<struct anonymous ,UNIT1>> ;
 #endif
 
 #ifdef __CSC_CONFIG_STRA__
-struct MACRO_CONFIG_STRA :public ENUM_TRUE {} ;
+template <class UNIT1>
+using MACRO_CONFIG_STRA = DEPENDENT<ENUM_TRUE ,DEPENDENT<struct anonymous ,UNIT1>> ;
 #else
-struct MACRO_CONFIG_STRA :public ENUM_FALSE {} ;
+template <class UNIT1>
+using MACRO_CONFIG_STRA = DEPENDENT<ENUM_FALSE ,DEPENDENT<struct anonymous ,UNIT1>> ;
 #endif
 
 #ifdef __CSC_CONFIG_STRW__
-struct MACRO_CONFIG_STRW :public ENUM_TRUE {} ;
+template <class UNIT1>
+using MACRO_CONFIG_STRW = DEPENDENT<ENUM_TRUE ,DEPENDENT<struct anonymous ,UNIT1>> ;
 #else
-struct MACRO_CONFIG_STRW :public ENUM_FALSE {} ;
+template <class UNIT1>
+using MACRO_CONFIG_STRW = DEPENDENT<ENUM_FALSE ,DEPENDENT<struct anonymous ,UNIT1>> ;
 #endif
 } ;
 } ;

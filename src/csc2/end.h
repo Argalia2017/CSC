@@ -1,28 +1,4 @@
 
-#ifdef requires
-#undef requires
-#endif
-#define requires __macro_requires
-
-#ifdef assert
-#undef assert
-#endif
-#define assert __macro_assert
-
-#ifdef ifnot
-#undef ifnot
-#endif
-#define ifnot __macro_ifnot
-
-#ifdef ifswitch
-#undef ifswitch
-#endif
-#define ifswitch __macro_ifswitch
-
-#ifdef discard
-#undef discard
-#endif
-#define discard break
 
 #ifdef implicit
 #undef implicit
@@ -59,20 +35,40 @@
 #endif
 #define trait struct
 
-#ifdef typeof
-#undef typeof
+#ifdef require
+#undef require
 #endif
-#define typeof __macro_typeof
+#define require __macro_requires
 
-#ifdef throws
-#undef throws
+#ifdef assert
+#undef assert
 #endif
-#define throws __macro_throws
+#define assert __macro_assert
 
 #ifdef anonymous
 #undef anonymous
 #endif
-#define anonymous __anonymous ## __LINE__
+#define anonymous __macro_anonymous
+
+#ifdef ifnot
+#undef ifnot
+#endif
+#define ifnot __macro_ifnot
+
+#ifdef ifswitch
+#undef ifswitch
+#endif
+#define ifswitch __macro_ifswitch
+
+#ifdef discard
+#undef discard
+#endif
+#define discard break
+
+#ifdef typeof
+#undef typeof
+#endif
+#define typeof __macro_typeof
 
 #ifdef TRUE
 #undef TRUE
