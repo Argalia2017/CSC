@@ -923,54 +923,33 @@ struct FUNCTION_address {
 
 static constexpr auto address = FUNCTION_address () ;
 
-namespace U {
-template <class...>
-trait FUNCTION_unsafe_cast_impl_HELP ;
-
-template <class UNIT1>
-trait FUNCTION_unsafe_cast_impl_HELP<UNIT1 ,ALWAYS> {
-	struct FUNCTION_unsafe_cast_impl {
-		template <class ARG1 ,class = ENABLE<IS_VARIABLE<ARG1>>>
-		inline VREF<UNIT1> operator() (XREF<ARG1> arg1) const noexcept {
-			using R1X = REMOVE_ALL<ARG1> ;
-			using R2X = UNIT1 ;
-			require (IS_TEMP<R1X>) ;
-			require (IS_TEMP<R2X>) ;
-			using R3X = CONDITIONAL<IS_SAME<R2X ,TEMP<void>> ,BYTE ,R2X> ;
-			using R4X = CONDITIONAL<IS_SAME<R1X ,TEMP<void>> ,R3X ,R1X> ;
-			require (ENUM_COMPR_LTEQ<SIZE_OF<R3X> ,SIZE_OF<R4X>>) ;
-			require (ENUM_COMPR_LTEQ<ALIGN_OF<R3X> ,ALIGN_OF<R4X>>) ;
-			assert (address (arg1) % ALIGN_OF<R3X>::value == 0) ;
-			return reinterpret_cast<VREF<R2X>> (arg1) ;
-		}
-
-		template <class ARG1 ,class = ENABLE<IS_CONSTANT<ARG1>>>
-		inline CREF<UNIT1> operator() (XREF<ARG1> arg1) const noexcept {
-			using R1X = REMOVE_ALL<ARG1> ;
-			using R2X = UNIT1 ;
-			require (IS_TEMP<R1X>) ;
-			require (IS_TEMP<R2X>) ;
-			using R3X = CONDITIONAL<IS_SAME<R2X ,TEMP<void>> ,BYTE ,R2X> ;
-			using R4X = CONDITIONAL<IS_SAME<R1X ,TEMP<void>> ,R3X ,R1X> ;
-			require (ENUM_COMPR_LTEQ<SIZE_OF<R3X> ,SIZE_OF<R4X>>) ;
-			require (ENUM_COMPR_LTEQ<ALIGN_OF<R3X> ,ALIGN_OF<R4X>>) ;
-			assert (address (arg1) % ALIGN_OF<R3X>::value == 0) ;
-			return reinterpret_cast<CREF<R2X>> (arg1) ;
-		}
-	} ;
-} ;
-} ;
-
-template <class UNIT1>
-using FUNCTION_unsafe_cast_impl = typename U::FUNCTION_unsafe_cast_impl_HELP<UNIT1 ,ALWAYS>::FUNCTION_unsafe_cast_impl ;
-
 struct FUNCTION_unsafe_cast {
-	template <class ARG1>
-	inline CREF<FUNCTION_unsafe_cast_impl<REMOVE_ALL<ARG1>>> operator[] (XREF<ARG1> id) const noexcept {
-		using R1X = REMOVE_ALL<ARG1> ;
+	template <class ARG1 ,class ARG2 ,class = ENABLE<IS_VARIABLE<ARG2>>>
+	inline VREF<REMOVE_ALL<ARG1>> operator() (XREF<ARG1> id ,XREF<ARG2> arg1) const noexcept {
+		using R2X = REMOVE_ALL<ARG1> ;
+		using R1X = REMOVE_ALL<ARG2> ;
 		require (IS_TEMP<R1X>) ;
-		static constexpr auto M_INVOKE = FUNCTION_unsafe_cast_impl<R1X> () ;
-		return M_INVOKE ;
+		require (IS_TEMP<R2X>) ;
+		using R3X = CONDITIONAL<IS_SAME<R2X ,TEMP<void>> ,BYTE ,R2X> ;
+		using R4X = CONDITIONAL<IS_SAME<R1X ,TEMP<void>> ,R3X ,R1X> ;
+		require (ENUM_COMPR_LTEQ<SIZE_OF<R3X> ,SIZE_OF<R4X>>) ;
+		require (ENUM_COMPR_LTEQ<ALIGN_OF<R3X> ,ALIGN_OF<R4X>>) ;
+		assert (address (arg1) % ALIGN_OF<R3X>::value == 0) ;
+		return reinterpret_cast<VREF<R2X>> (arg1) ;
+	}
+
+	template <class ARG1 ,class ARG2 ,class = ENABLE<IS_CONSTANT<ARG2>>>
+	inline CREF<REMOVE_ALL<ARG1>> operator() (XREF<ARG1> id ,XREF<ARG2> arg1) const noexcept {
+		using R2X = REMOVE_ALL<ARG1> ;
+		using R1X = REMOVE_ALL<ARG2> ;
+		require (IS_TEMP<R1X>) ;
+		require (IS_TEMP<R2X>) ;
+		using R3X = CONDITIONAL<IS_SAME<R2X ,TEMP<void>> ,BYTE ,R2X> ;
+		using R4X = CONDITIONAL<IS_SAME<R1X ,TEMP<void>> ,R3X ,R1X> ;
+		require (ENUM_COMPR_LTEQ<SIZE_OF<R3X> ,SIZE_OF<R4X>>) ;
+		require (ENUM_COMPR_LTEQ<ALIGN_OF<R3X> ,ALIGN_OF<R4X>>) ;
+		assert (address (arg1) % ALIGN_OF<R3X>::value == 0) ;
+		return reinterpret_cast<CREF<R2X>> (arg1) ;
 	}
 } ;
 
@@ -1293,8 +1272,7 @@ struct FUNCTION_operator_hash {
 static constexpr auto operator_hash = FUNCTION_operator_hash () ;
 
 struct FUNCTION_abs {
-	template <class ARG1>
-	inline REMOVE_ALL<ARG1> operator() (XREF<ARG1> arg1) const {
+	inline LENGTH operator() (CREF<LENGTH> arg1) const {
 		if (arg1 >= 0)
 			return arg1 ;
 		return -arg1 ;
@@ -1304,11 +1282,7 @@ struct FUNCTION_abs {
 static constexpr auto abs = FUNCTION_abs () ;
 
 struct FUNCTION_min {
-	template <class ARG1 ,class ARG2>
-	inline REMOVE_ALL<ARG1> operator() (XREF<ARG1> arg1 ,XREF<ARG2> arg2) const {
-		using R1X = REMOVE_ALL<ARG1> ;
-		using R2X = REMOVE_ALL<ARG2> ;
-		require (IS_SAME<R1X ,R2X>) ;
+	inline LENGTH operator() (CREF<LENGTH> arg1 ,CREF<LENGTH> arg2) const {
 		if (arg1 <= arg2)
 			return arg1 ;
 		return arg2 ;
@@ -1318,11 +1292,7 @@ struct FUNCTION_min {
 static constexpr auto min = FUNCTION_min () ;
 
 struct FUNCTION_max {
-	template <class ARG1 ,class ARG2>
-	inline REMOVE_ALL<ARG1> operator() (XREF<ARG1> arg1 ,XREF<ARG2> arg2) const {
-		using R1X = REMOVE_ALL<ARG1> ;
-		using R2X = REMOVE_ALL<ARG2> ;
-		require (IS_SAME<R1X ,R2X>) ;
+	inline LENGTH operator() (CREF<LENGTH> arg1 ,CREF<LENGTH> arg2) const {
 		if (arg1 >= arg2)
 			return arg1 ;
 		return arg2 ;
@@ -1488,7 +1458,7 @@ trait CABI_HELP ;
 
 template <class UNIT1>
 trait CABI_HELP<UNIT1 ,ALWAYS> {
-	struct CABI :public Interface {} ;
+	struct CABI implement Interface {} ;
 } ;
 } ;
 
@@ -1630,7 +1600,7 @@ trait BOX_IMPLHOLDER_HELP ;
 
 template <class UNIT1>
 trait BOX_HELP<UNIT1 ,REQUIRE<IS_INTERFACE<UNIT1>>> {
-	struct BoxHolder :public Interface {
+	struct BoxHolder implement Interface {
 		virtual void initialize (CREF<TEMP<void>> value_) = 0 ;
 		virtual void destroy () = 0 ;
 		virtual VREF<UNIT1> at () leftvalue = 0 ;
@@ -1660,7 +1630,7 @@ trait BOX_HELP<UNIT1 ,REQUIRE<IS_INTERFACE<UNIT1>>> {
 			Box ret ;
 			ret.mPointer = R2X::create () ;
 			const auto r1x = recreate (TYPEAS<R1X>::id ,forward[TYPEAS<ARGS>::id] (objs)...) ;
-			ret.mPointer->initialize (unsafe_cast[TYPEAS<TEMP<void>>::id] (r1x)) ;
+			ret.mPointer->initialize (unsafe_cast (TYPEAS<TEMP<void>>::id ,r1x)) ;
 			return move (ret) ;
 		}
 
@@ -1732,7 +1702,7 @@ template <class UNIT1 ,class UNIT2>
 trait BOX_IMPLHOLDER_HELP<UNIT1 ,UNIT2 ,ALWAYS> {
 	using Holder = typename BOX_HELP<UNIT1 ,ALWAYS>::BoxHolder ;
 
-	class ImplHolder :public Holder {
+	class ImplHolder implement Holder {
 	private:
 		LENGTH mOrigin ;
 		BOOL mExist ;
@@ -1742,22 +1712,22 @@ trait BOX_IMPLHOLDER_HELP<UNIT1 ,UNIT2 ,ALWAYS> {
 		implicit ImplHolder () = default ;
 
 		imports PTR<VREF<Holder>> create () {
-			const auto r4x = max (ALIGN_OF<ImplHolder>::value - ALIGN_OF<std::max_align_t>::value ,ZERO) ;
-			const auto r1x = r4x + SIZE_OF<ImplHolder>::value ;
-			const auto r2x = LENGTH (operator new (r1x ,std::nothrow)) ;
-			assert (r2x != ZERO) ;
-			const auto r3x = alignto (r2x ,ALIGN_OF<ImplHolder>::value) ;
-			auto &&ret = unsafe_deref (unsafe_cast[TYPEAS<TEMP<ImplHolder>>::id] (unsafe_pointer (r3x))) ;
+			const auto r1x = max (ALIGN_OF<ImplHolder>::value - ALIGN_OF<std::max_align_t>::value ,ZERO) ;
+			const auto r2x = r1x + SIZE_OF<ImplHolder>::value ;
+			const auto r3x = LENGTH (operator new (r2x ,std::nothrow)) ;
+			assert (r3x != ZERO) ;
+			const auto r4x = alignto (r3x ,ALIGN_OF<ImplHolder>::value) ;
+			auto &&ret = unsafe_deref (unsafe_cast (TYPEAS<TEMP<ImplHolder>>::id ,unsafe_pointer (r4x))) ;
 			CSC::create (unsafe_deptr (ret)) ;
 			barrier () ;
-			ret.mOrigin = r2x ;
+			ret.mOrigin = r3x ;
 			ret.mExist = FALSE ;
 			return &ret ;
 		}
-		
+
 		void initialize (CREF<TEMP<void>> value_) override {
 			assert (ifnot (mExist)) ;
-			mValue = unsafe_cast[TYPEAS<TEMP<UNIT2>>::id] (value_) ;
+			mValue = unsafe_cast (TYPEAS<TEMP<UNIT2>>::id ,value_) ;
 			mExist = TRUE ;
 		}
 
@@ -1796,7 +1766,7 @@ trait RC_PUREHOLDER_HELP ;
 
 template <class UNIT1>
 trait RC_HELP<UNIT1 ,ALWAYS> {
-	struct RCHolder :public Interface {
+	struct RCHolder implement Interface {
 		virtual void initialize (CREF<TEMP<void>> value_) = 0 ;
 		virtual void destroy () = 0 ;
 		virtual CREF<UNIT1> at () const leftvalue = 0 ;
@@ -1828,7 +1798,7 @@ trait RC_HELP<UNIT1 ,ALWAYS> {
 			RC ret ;
 			ret.mPointer = R2X::create () ;
 			const auto r1x = recreate (TYPEAS<R1X>::id ,forward[TYPEAS<ARGS>::id] (objs)...) ;
-			ret.mPointer->initialize (unsafe_cast[TYPEAS<TEMP<void>>::id] (r1x)) ;
+			ret.mPointer->initialize (unsafe_cast (TYPEAS<TEMP<void>>::id ,r1x)) ;
 			const auto r2x = ret.mPointer->increase () ;
 			assert (r2x == 1) ;
 			return move (ret) ;
@@ -1908,7 +1878,7 @@ template <class UNIT1 ,class UNIT2>
 trait RC_IMPLHOLDER_HELP<UNIT1 ,UNIT2 ,ALWAYS> {
 	using Holder = typename RC_HELP<UNIT1 ,ALWAYS>::RCHolder ;
 
-	class ImplHolder :public Holder {
+	class ImplHolder implement Holder {
 	private:
 		LENGTH mOrigin ;
 		LENGTH mCounter ;
@@ -1919,15 +1889,15 @@ trait RC_IMPLHOLDER_HELP<UNIT1 ,UNIT2 ,ALWAYS> {
 		implicit ImplHolder () = default ;
 
 		imports PTR<VREF<Holder>> create () {
-			const auto r4x = max (ALIGN_OF<ImplHolder>::value - ALIGN_OF<std::max_align_t>::value ,ZERO) ;
-			const auto r1x = r4x + SIZE_OF<ImplHolder>::value ;
-			const auto r2x = LENGTH (operator new (r1x ,std::nothrow)) ;
-			assert (r2x != ZERO) ;
-			const auto r3x = alignto (r2x ,ALIGN_OF<ImplHolder>::value) ;
-			auto &&ret = unsafe_deref (unsafe_cast[TYPEAS<TEMP<ImplHolder>>::id] (unsafe_pointer (r3x))) ;
+			const auto r1x = max (ALIGN_OF<ImplHolder>::value - ALIGN_OF<std::max_align_t>::value ,ZERO) ;
+			const auto r2x = r1x + SIZE_OF<ImplHolder>::value ;
+			const auto r3x = LENGTH (operator new (r2x ,std::nothrow)) ;
+			assert (r3x != ZERO) ;
+			const auto r4x = alignto (r3x ,ALIGN_OF<ImplHolder>::value) ;
+			auto &&ret = unsafe_deref (unsafe_cast (TYPEAS<TEMP<ImplHolder>>::id ,unsafe_pointer (r4x))) ;
 			CSC::create (unsafe_deptr (ret)) ;
 			barrier () ;
-			ret.mOrigin = r2x ;
+			ret.mOrigin = r3x ;
 			ret.mCounter = 0 ;
 			ret.mExist = FALSE ;
 			return &ret ;
@@ -1935,7 +1905,7 @@ trait RC_IMPLHOLDER_HELP<UNIT1 ,UNIT2 ,ALWAYS> {
 
 		void initialize (CREF<TEMP<void>> value_) override {
 			assert (ifnot (mExist)) ;
-			mValue = unsafe_cast[TYPEAS<TEMP<UNIT2>>::id] (value_) ;
+			mValue = unsafe_cast (TYPEAS<TEMP<UNIT2>>::id ,value_) ;
 			mExist = TRUE ;
 		}
 
@@ -1972,7 +1942,7 @@ template <class UNIT1 ,class UNIT2 ,class UUID>
 trait RC_PUREHOLDER_HELP<UNIT1 ,UNIT2 ,UUID ,ALWAYS> {
 	using Holder = typename RC_HELP<UNIT1 ,ALWAYS>::RCHolder ;
 
-	class PureHolder :public Holder {
+	class PureHolder implement Holder {
 	private:
 		BOOL mExist ;
 		TEMP<UNIT2> mValue ;
@@ -1990,7 +1960,7 @@ trait RC_PUREHOLDER_HELP<UNIT1 ,UNIT2 ,UUID ,ALWAYS> {
 
 		void initialize (CREF<TEMP<void>> value_) override {
 			assert (ifnot (mExist)) ;
-			mValue = unsafe_cast[TYPEAS<TEMP<UNIT2>>::id] (value_) ;
+			mValue = unsafe_cast (TYPEAS<TEMP<UNIT2>>::id ,value_) ;
 			mExist = TRUE ;
 		}
 
@@ -2032,14 +2002,14 @@ trait AUTO_IMPLHOLDER_HELP ;
 
 template <>
 trait AUTO_HELP<ALWAYS> {
-	struct AutoHolder :public Interface {
+	struct AutoHolder implement Interface {
 		virtual void initialize (CREF<TEMP<void>> value_) = 0 ;
 		virtual void friend_swap (VREF<TEMP<void>> value_) = 0 ;
 		virtual void destroy () = 0 ;
 		virtual FLAG type_cabi () const = 0 ;
 	} ;
 
-	class AutoFakeHolder :public AutoHolder {
+	class AutoFakeHolder implement AutoHolder {
 	private:
 		using AUTO_MAX_SIZE = ENUMAS<VAR ,U::ENUMID<(+4096)>> ;
 		using AUTO_MAX_ALIGN = ALIGN_OF<MEGA> ;
@@ -2070,11 +2040,11 @@ trait AUTO_HELP<ALWAYS> {
 		implicit Auto (XREF<ARG1> that) noexcept :Auto (PH0 ,PH0) {
 			using R1X = REMOVE_ALL<ARG1> ;
 			using R2X = typename AUTO_IMPLHOLDER_HELP<R1X ,ALWAYS>::ImplHolder ;
-			const auto r1x = R2X::create (unsafe_cast[TYPEAS<TEMP<R2X>>::id] (mValue)) ;
+			const auto r1x = R2X::create (unsafe_cast (TYPEAS<TEMP<R2X>>::id ,mValue)) ;
 			assert (address (r1x) == address (m_fake ())) ;
 			mExist = TRUE ;
 			const auto r2x = recreate (TYPEAS<R1X>::id ,forward[TYPEAS<ARG1>::id] (that)) ;
-			m_fake ().initialize (unsafe_cast[TYPEAS<TEMP<void>>::id] (r2x)) ;
+			m_fake ().initialize (unsafe_cast (TYPEAS<TEMP<void>>::id ,r2x)) ;
 		}
 
 		implicit ~Auto () noexcept {
@@ -2103,7 +2073,7 @@ trait AUTO_HELP<ALWAYS> {
 			const auto r2x = operator_cabi (id) ;
 			assert (r1x == r2x) ;
 			R1X ret ;
-			m_fake ().friend_swap (unsafe_cast[TYPEAS<TEMP<void>>::id] (unsafe_deptr (ret))) ;
+			m_fake ().friend_swap (unsafe_cast (TYPEAS<TEMP<void>>::id ,unsafe_deptr (ret))) ;
 			barrier () ;
 			return move (ret) ;
 		}
@@ -2124,7 +2094,7 @@ template <class UNIT1>
 trait AUTO_IMPLHOLDER_HELP<UNIT1 ,ALWAYS> {
 	using Holder = typename AUTO_HELP<ALWAYS>::AutoHolder ;
 
-	class ImplHolder :public Holder {
+	class ImplHolder implement Holder {
 	private:
 		BOOL mExist ;
 		TEMP<UNIT1> mValue ;
@@ -2142,13 +2112,13 @@ trait AUTO_IMPLHOLDER_HELP<UNIT1 ,ALWAYS> {
 
 		void initialize (CREF<TEMP<void>> value_) override {
 			assert (ifnot (mExist)) ;
-			mValue = unsafe_cast[TYPEAS<TEMP<UNIT1>>::id] (value_) ;
+			mValue = unsafe_cast (TYPEAS<TEMP<UNIT1>>::id ,value_) ;
 			mExist = TRUE ;
 		}
-		
+
 		void friend_swap (VREF<TEMP<void>> value_) override {
 			assert (mExist) ;
-			swap (mValue ,unsafe_cast[TYPEAS<TEMP<UNIT1>>::id] (value_)) ;
+			swap (mValue ,unsafe_cast (TYPEAS<TEMP<UNIT1>>::id ,value_)) ;
 		}
 
 		void destroy () override {
@@ -2180,7 +2150,7 @@ trait SLICE_IMPLHOLDER_HELP ;
 
 template <class UNIT1>
 trait SLICE_HELP<UNIT1 ,REQUIRE<IS_STR<UNIT1>>> {
-	struct SliceHolder :public Interface {
+	struct SliceHolder implement Interface {
 		virtual LENGTH size () const = 0 ;
 		virtual LENGTH addr () const = 0 ;
 		virtual CREF<UNIT1> at (CREF<INDEX> index) const leftvalue = 0 ;
@@ -2291,7 +2261,7 @@ template <class UNIT1 ,class SIZE>
 trait SLICE_IMPLHOLDER_HELP<UNIT1 ,SIZE ,ALWAYS> {
 	using Holder = typename SLICE_HELP<UNIT1 ,ALWAYS>::SliceHolder ;
 
-	class ImplHolder :public Holder {
+	class ImplHolder implement Holder {
 	private:
 		DEF<UNIT1[SIZE::value]> mSlice ;
 
@@ -2515,7 +2485,7 @@ trait CLAZZ_IMPLHOLDER_HELP ;
 
 template <>
 trait CLAZZ_HELP<ALWAYS> {
-	struct ClazzHolder :public Interface {
+	struct ClazzHolder implement Interface {
 		virtual LENGTH type_size () const = 0 ;
 		virtual LENGTH type_align () const = 0 ;
 		virtual FLAG type_cabi () const = 0 ;
@@ -2613,7 +2583,7 @@ template <class UUID>
 trait CLAZZ_IMPLHOLDER_HELP<UUID ,ALWAYS> {
 	using Holder = typename CLAZZ_HELP<ALWAYS>::ClazzHolder ;
 
-	class ImplHolder :public Holder {
+	class ImplHolder implement Holder {
 	public:
 		implicit ImplHolder () = default ;
 
@@ -2647,7 +2617,7 @@ trait EXCEPTION_IMPLHOLDER_HELP ;
 
 template <>
 trait EXCEPTION_HELP<ALWAYS> {
-	struct ExceptionHolder :public Interface {
+	struct ExceptionHolder implement Interface {
 		virtual CREF<Slice<STR>> what () const leftvalue = 0 ;
 	} ;
 
@@ -2697,7 +2667,7 @@ template <class UNIT1>
 trait EXCEPTION_IMPLHOLDER_HELP<UNIT1 ,ALWAYS> {
 	using Holder = typename EXCEPTION_HELP<ALWAYS>::ExceptionHolder ;
 
-	class ImplHolder :public Holder {
+	class ImplHolder implement Holder {
 	private:
 		Slice<STR> mWhat ;
 
@@ -2721,7 +2691,7 @@ trait WATCH_HELP ;
 
 template <class UNIT1>
 trait WATCH_HELP<UNIT1 ,ALWAYS> {
-	struct WATCH :public Interface {
+	struct WATCH implement Interface {
 		Slice<STR> mName ;
 		PTR<CREF<UNIT1>> mPointer ;
 		Clazz mClazz ;

@@ -102,12 +102,6 @@ static constexpr auto VAL64_INF = api::numeric_limits<VAL64>::infinity () ;
 
 using VALX = long double ;
 
-static constexpr auto MATH_E = VALX (2.71828182845904523536) ;
-static constexpr auto MATH_PI = VALX (3.14159265358979323846) ;
-static constexpr auto MATH_SQRT2 = VALX (1.41421356237309504880) ;
-static constexpr auto MATH_LN2 = VALX (0.693147180559945309417) ;
-static constexpr auto MATH_LN10 = VALX (2.30258509299404568402) ;
-
 template <class UNIT>
 using DEF = UNIT ;
 

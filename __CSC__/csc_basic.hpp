@@ -3520,7 +3520,7 @@ private:
 	}
 
 	LENGTH expand_size () const {
-		const auto r1x = LENGTH (mSize * MATH_SQRT2) ;
+		const auto r1x = LENGTH (mSize * 2) ;
 		const auto r2x = mSize + DEFAULT_RECURSIVE_SIZE::compile () ;
 		return _MAX_ (r1x ,r2x) ;
 	}

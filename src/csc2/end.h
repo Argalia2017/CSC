@@ -35,6 +35,11 @@
 #endif
 #define trait struct
 
+#ifdef implement
+#undef implement
+#endif
+#define implement :public
+
 #ifdef require
 #undef require
 #endif

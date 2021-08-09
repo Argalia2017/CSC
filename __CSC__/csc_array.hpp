@@ -944,7 +944,7 @@ private:
 	}
 
 	LENGTH expand_size () const {
-		const auto r1x = LENGTH (mDeque.size () * MATH_SQRT2) ;
+		const auto r1x = LENGTH (mDeque.size () * 2) ;
 		const auto r2x = mDeque.size () + DEFAULT_RECURSIVE_SIZE::compile () ;
 		return _MAX_ (r1x ,r2x) ;
 	}
@@ -1206,7 +1206,7 @@ private:
 	}
 
 	LENGTH expand_size () const {
-		const auto r1x = LENGTH (mPriority.size () * MATH_SQRT2) ;
+		const auto r1x = LENGTH (mPriority.size () * 2) ;
 		const auto r2x = mPriority.size () + DEFAULT_RECURSIVE_SIZE::compile () ;
 		return _MAX_ (r1x ,r2x) ;
 	}

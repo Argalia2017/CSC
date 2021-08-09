@@ -358,10 +358,16 @@ static function between = (curr :INDEX ,begin :INDEX ,end :INDEX) :BOOL => {
 	return TRUE ;
 } ;
 
-trait HASHCODE_HELP<> {
+trait HASHCODE_HELP<PARAMS> {
 	require (IS_SAME<FLAG ,VAR32>) ;
+	require (ENUM_EQ_ZERO<COUNT_OF<PARAMS>>) ;
 
 	static function hashcode = () :FLAG => FLAG (-2128831035) ;
+} ;
+
+trait HASHCODE_HELP<PARAMS> {
+	require (IS_SAME<FLAG ,VAR32>) ;
+	require (ENUM_EQUAL<COUNT_OF<PARAMS> ,enum (2)>) ;
 
 	static function hashcode = (now :FLAG ,inc :FLAG) :FLAG => {
 		using R2X = BYTE_BASE<FLAG> ;
@@ -372,10 +378,16 @@ trait HASHCODE_HELP<> {
 	} ;
 } ;
 
-trait HASHCODE_HELP<> {
+trait HASHCODE_HELP<PARAMS> {
 	require (IS_SAME<FLAG ,VAR64>) ;
+	require (ENUM_EQ_ZERO<COUNT_OF<PARAMS>>) ;
 
 	static function hashcode = () :FLAG => FLAG (-3750763034362895579) ;
+} ;
+
+trait HASHCODE_HELP<PARAMS> {
+	require (IS_SAME<FLAG ,VAR64>) ;
+	require (ENUM_EQUAL<COUNT_OF<PARAMS> ,enum (2)>) ;
 
 	static function hashcode = (now :FLAG ,inc :FLAG) :FLAG => {
 		using R2X = BYTE_BASE<FLAG> ;
@@ -386,9 +398,7 @@ trait HASHCODE_HELP<> {
 	} ;
 } ;
 
-static function hashcode = () :FLAG => HASHCODE_HELP<>::hashcode () ;
-
-static function hashcode = (now :FLAG ,inc :FLAG) :FLAG => HASHCODE_HELP<>::hashcode (now ,inc) ;
+static function hashcode = (params...) :FLAG => HASHCODE_HELP<type (params)>::hashcode (params...) ;
 
 trait RANGE_ITERATOR_HELP<> {
 	class RangeIterator {
