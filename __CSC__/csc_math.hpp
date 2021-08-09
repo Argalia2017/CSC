@@ -10,6 +10,13 @@
 #include "csc_array.hpp"
 
 namespace CSC {
+static constexpr auto MATH_E = VALX (2.71828182845904523536) ;
+static constexpr auto MATH_PI = VALX (3.14159265358979323846) ;
+static constexpr auto MATH_SQRT2 = VALX (1.41421356237309504880) ;
+static constexpr auto MATH_SQRT3 = VALX (1.73205080756887729353) ;
+static constexpr auto MATH_LN2 = VALX (0.693147180559945309417) ;
+static constexpr auto MATH_LN10 = VALX (2.30258509299404568402) ;
+
 class MathProc :
 	delegate private Wrapped<> {
 public:
@@ -105,6 +112,9 @@ public:
 
 	template <class _ARG1>
 	imports REMOVE_CVR_TYPE<_ARG1> sign (const _ARG1 &x) ;
+
+	template <class _ARG1>
+	imports REMOVE_CVR_TYPE<_ARG1> step (const _ARG1 &x) ;
 
 	template <class _ARG1>
 	imports REMOVE_CVR_TYPE<_ARG1> inverse (const _ARG1 &x ,const _ARG1 &y) ;
@@ -266,6 +276,13 @@ template <class _ARG1>
 inline exports REMOVE_CVR_TYPE<_ARG1> MathProc::sign (const _ARG1 &x) {
 	if (x < _ARG1 (0))
 		return _ARG1 (-1) ;
+	return _ARG1 (+1) ;
+}
+
+template <class _ARG1>
+inline exports REMOVE_CVR_TYPE<_ARG1> MathProc::step (const _ARG1 &x) {
+	if (x < _ARG1 (0))
+		return _ARG1 (0) ;
 	return _ARG1 (+1) ;
 }
 
