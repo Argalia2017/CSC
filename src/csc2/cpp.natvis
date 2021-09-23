@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AutoVisualizer xmlns="http://schemas.microsoft.com/vstudio/debugger/natvis/2010">
+
+
+  <!--"https://docs.microsoft.com/en-us/visualstudio/debugger/create-custom-views-of-native-objects?view=vs-2017#BKMK_Why_create_visualizations_"-->
+  <!--"https://docs.microsoft.com/en-us/visualstudio/debugger/format-specifiers-in-cpp?view=vs-2017#BKMK_Visual_Studio_2012_format_specifiers"-->
+  <!--"https://docs.microsoft.com/en-us/visualstudio/debugger/pseudovariables?view=vs-2017"-->
+  <!--"https://docs.microsoft.com/en-us/visualstudio/debugger/context-operator-cpp?view=vs-2017"-->
+
+
+  <!--csc_core.hpp-->
+
+
+  <Type Name="CSC::Interface" Inheritable="false" />
+
+
+  <Type Name="CSC::U::TEMPID&lt;*&gt;">
+    <Expand>
+      <Item Name="[value]">*(($T1*)&amp;mStorage)</Item>
+      <ExpandedItem>(($T1*)&amp;mStorage)</ExpandedItem>
+    </Expand>
+  </Type>
+
+
+  <Type Name="CSC::U::CELL_HELP&lt;*&gt;::Cell">
+    <Expand>
+      <ExpandedItem>mValue</ExpandedItem>
+    </Expand>
+  </Type>
+
+
+  <Type Name="CSC::U::BOX_HELP&lt;*&gt;::Box">
+    <Expand>
+      <ExpandedItem>mPointer</ExpandedItem>
+    </Expand>
+  </Type>
+
+
+  <Type Name="CSC::U::BOX_IMPLHOLDER_HELP&lt;*&gt;::ImplHolder">
+    <Expand>
+      <ExpandedItem>mValue</ExpandedItem>
+    </Expand>
+  </Type>
+
+
+  <Type Name="CSC::U::RC_HELP&lt;*&gt;::RC">
+    <Expand>
+      <ExpandedItem>mPointer</ExpandedItem>
+    </Expand>
+  </Type>
+
+
+  <Type Name="CSC::U::RC_IMPLHOLDER_HELP&lt;*&gt;::ImplHolder">
+    <Expand>
+      <ExpandedItem>mValue</ExpandedItem>
+    </Expand>
+  </Type>
+
+
+  <Type Name="CSC::U::RC_PUREHOLDER_HELP&lt;*&gt;::PureHolder">
+    <Expand>
+      <ExpandedItem>mValue</ExpandedItem>
+    </Expand>
+  </Type>
+
+
+  <Type Name="CSC::U::SLICE_HELP&lt;*&gt;::Slice">
+    <Expand>
+      <ExpandedItem>mThis</ExpandedItem>
+    </Expand>
+  </Type>
+
+
+  <Type Name="CSC::U::SLICE_IMPLHOLDER_HELP&lt;char,*&gt;::ImplHolder">
+    <DisplayString>{{ {&amp;mSlice[0],s} }}</DisplayString>
+    <StringView>&amp;mSlice[0],s</StringView>
+  </Type>
+
+
+  <Type Name="CSC::U::SLICE_IMPLHOLDER_HELP&lt;wchar_t,*&gt;::ImplHolder">
+    <DisplayString>{{ {&amp;mSlice[0],su} }}</DisplayString>
+    <StringView>&amp;mSlice[0],su</StringView>
+  </Type>
+
+
+  <Type Name="CSC::U::SLICE_IMPLHOLDER_HELP&lt;unsigned char,*&gt;::ImplHolder">
+    <DisplayString>{{ {&amp;mSlice[0],s8} }}</DisplayString>
+    <StringView>&amp;mSlice[0],s8</StringView>
+  </Type>
+
+
+  <Type Name="CSC::U::SLICE_IMPLHOLDER_HELP&lt;char16_t,*&gt;::ImplHolder">
+    <DisplayString>{{ {&amp;mSlice[0],su} }}</DisplayString>
+    <StringView>&amp;mSlice[0],su</StringView>
+  </Type>
+
+
+  <Type Name="CSC::U::SLICE_IMPLHOLDER_HELP&lt;char32_t,*&gt;::ImplHolder">
+    <DisplayString>{{ {&amp;mSlice[0],s32} }}</DisplayString>
+    <StringView>&amp;mSlice[0],s32</StringView>
+  </Type>
+
+
+  <Type Name="CSC::U::CLAZZ_HELP&lt;*&gt;::Clazz">
+    <Expand>
+      <ExpandedItem>mThis</ExpandedItem>
+    </Expand>
+  </Type>
+
+
+  <Type Name="CSC::U::CLAZZ_IMPLHOLDER_HELP&lt;*&gt;::ImplHolder">
+    <DisplayString>{{ {CSC::LENGTH (this),x} }}</DisplayString>
+  </Type>
+
+
+  <Type Name="CSC::U::EXCEPTION_HELP&lt;*&gt;::Exception">
+    <Expand>
+      <ExpandedItem>mThis</ExpandedItem>
+    </Expand>
+  </Type>
+
+
+  <Type Name="CSC::U::EXCEPTION_IMPLHOLDER_HELP&lt;*&gt;::ImplHolder">
+    <Expand>
+      <ExpandedItem>mWhat</ExpandedItem>
+    </Expand>
+  </Type>
+
+  <Type Name="CSC::U::WATCH_HELP&lt;*&gt;::WATCH">
+    <Expand>
+      <Item Name="[name]">mName</Item>
+      <Item Name="[value]">*(($T1*)mAddress)</Item>
+      <ExpandedItem>(($T1*)mAddress)</ExpandedItem>
+    </Expand>
+  </Type>
+
+
+  <!--csc_basic.hpp-->
+
+
+  <Type Name="CSC::U::FUNCTION_HELP&lt;*&gt;::Function">
+    <Expand>
+      <ExpandedItem>mThis</ExpandedItem>
+    </Expand>
+  </Type>
+
+
+</AutoVisualizer>

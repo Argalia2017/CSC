@@ -110,6 +110,7 @@
 #include <typeinfo>
 #include <utility>
 #include <cstdlib>
+#include <atomic>
 #include "end.h"
 
 #ifdef _HAS_CXX17
@@ -133,13 +134,23 @@ using ::max_align_t ;
 #define __macro_requires(...) static_assert (CSC::ENUM_CHECK<__VA_ARGS__>::value ,"static_assert failed : " __macro_stringize (__VA_ARGS__))
 #endif
 
+#ifndef __macro_anonymous
+#define __macro_anonymous_impl_impl(A) __anonymous_##A
+#define __macro_anonymous_impl(A) __macro_anonymous_impl_impl(A)
+#define __macro_anonymous __macro_anonymous_impl (__LINE__)
+#endif
+
+#ifndef __macro_slice
+#define __macro_slice(...) CSC::Slice<CSC::STR> (CSC::TYPEAS<struct anonymous>::id ,__VA_ARGS__)
+#endif
+
 #ifndef __macro_assert
 #ifdef __CSC_DEBUG__
-#define __macro_assert(...) CSC::debug_assert (__VA_ARGS__)
+#define __macro_assert(...) do { if (__VA_ARGS__) break ; CSC::debug_break () ; } while (false)
 #endif
 
 #ifdef __CSC_UNITTEST__
-#define __macro_assert(...) CSC::unittest_assert (__VA_ARGS__)
+#define __macro_assert(...) do { if (__VA_ARGS__) break ; CSC::debug_break () ; } while (false)
 #endif
 
 #ifdef __CSC_RELEASE__
@@ -147,10 +158,22 @@ using ::max_align_t ;
 #endif
 #endif
 
-#ifndef __macro_anonymous
-#define __macro_anonymous_impl_impl(A) __anonymous_##A
-#define __macro_anonymous_impl(A) __macro_anonymous_impl_impl(A)
-#define __macro_anonymous __macro_anonymous_impl (__LINE__)
+#ifndef __macro_dynamic_assert
+#ifdef __CSC_COMPILER_MSVC__
+#define __macro_dynamic_assert(...) do { if (__VA_ARGS__) break ; CSC::Exception (CSC::TYPEAS<struct anonymous>::id ,slice ("dynamic_assert failed : " __macro_stringize (__VA_ARGS__) " : at " __FUNCSIG__ " in " __FILE__ " ," __macro_stringize (__LINE__))).raise () ; } while (false)
+#endif
+
+#ifdef __CSC_COMPILER_GNUC__
+#define __macro_dynamic_assert(...) do { if (__VA_ARGS__) break ; CSC::Exception (CSC::TYPEAS<struct anonymous>::id ,slice ("dynamic_assert failed : " __macro_stringize (__VA_ARGS__) " : at " ,__PRETTY_FUNCTION__ ," in " __FILE__ " ," __macro_stringize (__LINE__))).raise () ; } while (false)
+#endif
+
+#ifdef __CSC_COMPILER_CLANG__
+#define __macro_dynamic_assert(...) do { if (__VA_ARGS__) break ; CSC::Exception (CSC::TYPEAS<struct anonymous>::id ,slice ("dynamic_assert failed : " __macro_stringize (__VA_ARGS__) " : at " ,__PRETTY_FUNCTION__ ," in " __FILE__ " ," __macro_stringize (__LINE__))).raise () ; } while (false)
+#endif
+#endif
+
+#ifndef __macro_dynamic_watch
+#define __macro_dynamic_watch(...) do { CSC::debug_watch (slice (__macro_stringize (__VA_ARGS__)) ,(__VA_ARGS__)) ; } while (false)
 #endif
 
 #ifndef __macro_ifnot
@@ -169,15 +192,29 @@ namespace CSC {
 template <class...>
 struct ENUMAS ;
 
+#ifdef __CSC_CONFIG_VAR32__
 namespace U {
-template <int>
+template <int32_t>
 struct ENUMID ;
 } ;
 
-template <class UNIT1 ,int UNIT2>
+template <class UNIT1 ,int32_t UNIT2>
 struct ENUMAS<UNIT1 ,U::ENUMID<UNIT2>> {
 	static constexpr auto value = UNIT1 (UNIT2) ;
 } ;
+#endif
+
+#ifdef __CSC_CONFIG_VAR64__
+namespace U {
+template <int64_t>
+struct ENUMID ;
+} ;
+
+template <class UNIT1 ,int64_t UNIT2>
+struct ENUMAS<UNIT1 ,U::ENUMID<UNIT2>> {
+	static constexpr auto value = UNIT1 (UNIT2) ;
+} ;
+#endif
 
 using ENUM_TRUE = ENUMAS<bool ,U::ENUMID<true>> ;
 
@@ -450,5 +487,15 @@ using MACRO_CONFIG_STRW = DEPENDENT<ENUM_TRUE ,DEPENDENT<struct anonymous ,UNIT1
 template <class UNIT1>
 using MACRO_CONFIG_STRW = DEPENDENT<ENUM_FALSE ,DEPENDENT<struct anonymous ,UNIT1>> ;
 #endif
+} ;
+
+namespace U {
+enum class __char8_t :unsigned char ;
+} ;
+
+namespace U {
+struct __int128_t {
+	alignas (128) char mUnused[128] ;
+} ;
 } ;
 } ;

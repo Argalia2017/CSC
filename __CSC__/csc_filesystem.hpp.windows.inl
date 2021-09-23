@@ -67,7 +67,11 @@ exports AutoBuffer<BYTE> FileSystemProc::load_file (const String<STR> &file) {
 		api::CloseHandle (me) ;
 	}) ;
 	const auto r2x = LENGTH (api::GetFileSize (r1x.self ,NULL)) ;
-	_DYNAMIC_ASSERT_ (r2x >= 0 && r2x < VAR32_MAX) ;
+#ifdef __CSC_CONFIG_VAR32__
+	_DYNAMIC_ASSERT_ (r2x >= 0 && r2x < VAR32 (VAR32_MAX)) ;
+#else
+	_DYNAMIC_ASSERT_ (r2x >= 0 && r2x < VAR64 (VAR32_MAX) * 2) ;
+#endif
 	AutoBuffer<BYTE> ret = AutoBuffer<BYTE> (r2x) ;
 	auto rax = VARY () ;
 	rax = VARY (0) ;
@@ -95,7 +99,11 @@ exports void FileSystemProc::load_file (const String<STR> &file ,const PhanBuffe
 }
 
 exports void FileSystemProc::save_file (const String<STR> &file ,const PhanBuffer<const BYTE> &data) {
-	_DEBUG_ASSERT_ (data.size () < VAR32_MAX) ;
+#ifdef __CSC_CONFIG_VAR32__
+	_DEBUG_ASSERT_ (data.size () < VAR32 (VAR32_MAX)) ;
+#else
+	_DEBUG_ASSERT_ (data.size () < VAR64 (VAR32_MAX) * 2) ;
+#endif
 	const auto r1x = UniqueRef<api::HANDLE> ([&] (api::HANDLE &me) {
 		me = api::CreateFile (file.raw ().self ,GENERIC_WRITE ,0 ,NULL ,CREATE_ALWAYS ,FILE_ATTRIBUTE_NORMAL ,NULL) ;
 		if (me == INVALID_HANDLE_VALUE)

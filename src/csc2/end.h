@@ -1,88 +1,30 @@
 
 
-#ifdef implicit
-#undef implicit
-#endif
+#include "begin.h"
+
 #define implicit
-
-#ifdef exports
-#undef exports
-#endif
 #define exports
-
-#ifdef imports
-#undef imports
-#endif
 #define imports static
-
-#ifdef leftvalue
-#undef leftvalue
-#endif
 #define leftvalue &
-
-#ifdef rightvalue
-#undef rightvalue
-#endif
 #define rightvalue &&
-
-#ifdef self
-#undef self
-#endif
 #define self to ()
-
-#ifdef trait
-#undef trait
-#endif
 #define trait struct
-
-#ifdef implement
-#undef implement
-#endif
+#define extend :public
 #define implement :public
-
-#ifdef require
-#undef require
-#endif
 #define require __macro_requires
-
-#ifdef assert
-#undef assert
-#endif
-#define assert __macro_assert
-
-#ifdef anonymous
-#undef anonymous
-#endif
 #define anonymous __macro_anonymous
-
-#ifdef ifnot
-#undef ifnot
-#endif
+#define slice __macro_slice
+#define assert __macro_assert
+#define dynamic_assert __macro_dynamic_assert
+#define dynamic_watch __macro_dynamic_watch
 #define ifnot __macro_ifnot
-
-#ifdef ifswitch
-#undef ifswitch
-#endif
 #define ifswitch __macro_ifswitch
-
-#ifdef discard
-#undef discard
-#endif
 #define discard break
-
-#ifdef typeof
-#undef typeof
-#endif
 #define typeof __macro_typeof
 
-#ifdef TRUE
+#pragma push_macro ("TRUE")
 #undef TRUE
-#endif
-
-#ifdef FALSE
+#pragma push_macro ("FALSE")
 #undef FALSE
-#endif
-
-#ifdef NULL
+#pragma push_macro ("NULL")
 #undef NULL
-#endif
