@@ -79,7 +79,11 @@ exports AutoBuffer<BYTE> FileSystemProc::load_file (const String<STR> &file) {
 		api::close (me) ;
 	}) ;
 	const auto r3x = LENGTH (api::lseek (r2x.self ,0 ,SEEK_END)) ;
-	_DYNAMIC_ASSERT_ (r3x >= 0 && r3x < VAR32_MAX) ;
+#ifdef __CSC_CONFIG_VAR32__
+	_DYNAMIC_ASSERT_ (r3x >= 0 && r3x < VAR32 (VAR32_MAX)) ;
+#else
+	_DYNAMIC_ASSERT_ (r3x >= 0 && r3x < VAR64 (VAR32_MAX) * 2) ;
+#endif
 	api::lseek (r2x.self ,0 ,SEEK_SET) ;
 	AutoBuffer<BYTE> ret = AutoBuffer<BYTE> (r3x) ;
 	const auto r4x = LENGTH (api::read (r2x.self ,ret.self ,VAR32 (r3x))) ;
@@ -104,8 +108,12 @@ exports void FileSystemProc::load_file (const String<STR> &file ,const PhanBuffe
 }
 
 exports void FileSystemProc::save_file (const String<STR> &file ,const PhanBuffer<const BYTE> &data) {
+#ifdef __CSC_CONFIG_VAR32__
+	_DEBUG_ASSERT_ (data.size () < VAR32 (VAR32_MAX)) ;
+#else
+	_DEBUG_ASSERT_ (data.size () < VAR64 (VAR32_MAX) * 2) ;
+#endif
 	const auto r1x = StringProc::build_strs (ARGV<STRA>::ID ,file) ;
-	_DEBUG_ASSERT_ (data.size () < VAR32_MAX) ;
 	const auto r2x = UniqueRef<VAR32> ([&] (VAR32 &me) {
 		const auto r3x = VAR32 (O_CREAT | O_WRONLY | O_TRUNC) ;
 		const auto r4x = VAR32 (S_IRWXU | S_IRWXG | S_IRWXO) ;
