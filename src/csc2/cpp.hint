@@ -7,8 +7,8 @@
 #define rightvalue
 #define self
 #define trait
-#define extend
 #define implement
+#define extend
 #define require
 #define assert
 #define anonymous

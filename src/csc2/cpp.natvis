@@ -11,6 +11,29 @@
   <!--csc_core.hpp-->
 
 
+  <Type Name="CSC::U::csc_int128_t" Inheritable="false">
+    <DisplayString>{{ {*(long long*)&amp;mUnused[0],x} {*(long long*)&amp;mUnused[4],x} }}</DisplayString>
+    <Expand>
+      <Item Name="[0]">mUnused[0],x</Item>
+      <Item Name="[1]">mUnused[1],x</Item>
+      <Item Name="[2]">mUnused[2],x</Item>
+      <Item Name="[3]">mUnused[3],x</Item>
+      <Item Name="[4]">mUnused[4],x</Item>
+      <Item Name="[5]">mUnused[5],x</Item>
+      <Item Name="[6]">mUnused[6],x</Item>
+      <Item Name="[7]">mUnused[7],x</Item>
+      <Item Name="[8]">mUnused[8],x</Item>
+      <Item Name="[9]">mUnused[9],x</Item>
+      <Item Name="[A]">mUnused[10],x</Item>
+      <Item Name="[B]">mUnused[11],x</Item>
+      <Item Name="[C]">mUnused[12],x</Item>
+      <Item Name="[D]">mUnused[13],x</Item>
+      <Item Name="[E]">mUnused[14],x</Item>
+      <Item Name="[F]">mUnused[15],x</Item>
+    </Expand>
+  </Type>
+
+
   <Type Name="CSC::Interface" Inheritable="false" />
 
 
@@ -22,6 +45,24 @@
   </Type>
 
 
+  <Type Name="CSC::U::BOX_HELP&lt;*&gt;::Box">
+    <Expand>
+      <ExpandedItem>mValue</ExpandedItem>
+    </Expand>
+  </Type>
+
+
+  <Type Name="CSC::U::BOX_HELP&lt;*&gt;::Box" Priority="MediumLow">
+    <Expand>
+      <Item Name="[size]">mSize</Item>
+      <ArrayItems>
+        <Size>mSize</Size>
+        <ValuePointer>(ITEM*)&amp;mArray</ValuePointer>
+      </ArrayItems>
+    </Expand>
+  </Type>
+
+
   <Type Name="CSC::U::CELL_HELP&lt;*&gt;::Cell">
     <Expand>
       <ExpandedItem>mValue</ExpandedItem>
@@ -29,35 +70,57 @@
   </Type>
 
 
-  <Type Name="CSC::U::BOX_HELP&lt;*&gt;::Box">
+  <Type Name="CSC::U::VREF_HELP&lt;*&gt;::VRef">
     <Expand>
-      <ExpandedItem>mPointer</ExpandedItem>
+      <ExpandedItem>(Holder*)mHolder</ExpandedItem>
     </Expand>
   </Type>
 
 
-  <Type Name="CSC::U::BOX_IMPLHOLDER_HELP&lt;*&gt;::ImplHolder">
-    <Expand>
-      <ExpandedItem>mValue</ExpandedItem>
-    </Expand>
-  </Type>
-
-
-  <Type Name="CSC::U::RC_HELP&lt;*&gt;::RC">
-    <Expand>
-      <ExpandedItem>mPointer</ExpandedItem>
-    </Expand>
-  </Type>
-
-
-  <Type Name="CSC::U::RC_IMPLHOLDER_HELP&lt;*&gt;::ImplHolder">
+  <Type Name="CSC::U::VREF_IMPLHOLDER_HELP&lt;*&gt;::ImplHolder">
     <Expand>
       <ExpandedItem>mValue</ExpandedItem>
     </Expand>
   </Type>
 
 
-  <Type Name="CSC::U::RC_PUREHOLDER_HELP&lt;*&gt;::PureHolder">
+  <Type Name="CSC::U::VREF_IMPLHOLDER_HELP&lt;*&gt;::ImplHolder" Priority="MediumLow">
+    <Expand>
+      <Item Name="[size]">mSize</Item>
+      <ArrayItems>
+        <Size>mSize</Size>
+        <ValuePointer>(ITEM*)((long long)(this)+sizeof(RealHolder)-sizeof(ITEM))</ValuePointer>
+      </ArrayItems>
+    </Expand>
+  </Type>
+
+
+  <Type Name="CSC::U::CREF_HELP&lt;*&gt;::CRef">
+    <Expand>
+      <ExpandedItem>(Holder*)mHolder</ExpandedItem>
+    </Expand>
+  </Type>
+
+
+  <Type Name="CSC::U::CREF_IMPLHOLDER_HELP&lt;*&gt;::ImplHolder">
+    <Expand>
+      <ExpandedItem>mValue</ExpandedItem>
+    </Expand>
+  </Type>
+
+
+  <Type Name="CSC::U::CREF_IMPLHOLDER_HELP&lt;*&gt;::ImplHolder" Priority="MediumLow">
+    <Expand>
+      <Item Name="[size]">mSize</Item>
+      <ArrayItems>
+        <Size>mSize</Size>
+        <ValuePointer>(ITEM*)((long long)(this)+sizeof(RealHolder)-sizeof(ITEM))</ValuePointer>
+      </ArrayItems>
+    </Expand>
+  </Type>
+
+
+  <Type Name="CSC::U::CREF_PUREHOLDER_HELP&lt;*&gt;::PureHolder">
     <Expand>
       <ExpandedItem>mValue</ExpandedItem>
     </Expand>
@@ -138,9 +201,78 @@
   <!--csc_basic.hpp-->
 
 
+  <Type Name="CSC::U::OPTIONAL_HELP&lt;*&gt;::Optional">
+    <Expand>
+      <ExpandedItem>mThis</ExpandedItem>
+    </Expand>
+  </Type>
+
+
+  <Type Name="CSC::U::ANYREF_HELP&lt;*&gt;::AnyRef">
+    <Expand>
+      <ExpandedItem>mThis</ExpandedItem>
+    </Expand>
+  </Type>
+
+
+  <Type Name="CSC::U::ANYREF_IMPLHOLDER_HELP&lt;*&gt;::ImplHolder">
+    <Expand>
+      <ExpandedItem>mValue</ExpandedItem>
+    </Expand>
+  </Type>
+
+
+  <Type Name="CSC::U::TUPLE_HELP&lt;*&gt;::Tuple">
+    <Expand>
+      <Item Name="[one]">mOne</Item>
+      <Item Name="[rest]">mRest</Item>
+    </Expand>
+  </Type>
+
+
   <Type Name="CSC::U::FUNCTION_HELP&lt;*&gt;::Function">
     <Expand>
       <ExpandedItem>mThis</ExpandedItem>
+    </Expand>
+  </Type>
+
+
+  <Type Name="CSC::U::BUFFER_HELP&lt;*&gt;::Buffer" Priority="MediumLow">
+    <Expand>
+      <Item Name="[size]">$T2::value</Item>
+      <ArrayItems>
+        <Size>10</Size>
+        <ValuePointer>($T1*)&amp;mBuffer.mArray</ValuePointer>
+      </ArrayItems>
+      <Item Name="[+]">mBuffer</Item>
+    </Expand>
+  </Type>
+
+
+  <Type Name="CSC::U::BUFFER_HELP&lt;*&gt;::Buffer">
+    <Expand>
+      <Item Name="[size]">mSize</Item>
+      <ArrayItems>
+        <Size>10</Size>
+        <ValuePointer>($T1*)mBuffer.mPointer</ValuePointer>
+      </ArrayItems>
+      <Item Name="[+]">mBuffer</Item>
+    </Expand>
+  </Type>
+
+
+  <Type Name="CSC::U::ALLOCATOR_HELP&lt;*&gt;::NODE">
+    <Expand>
+      <ExpandedItem Condition="mNext==-2">mItem</ExpandedItem>
+    </Expand>
+  </Type>
+  
+
+  <Type Name="CSC::U::ALLOCATOR_HELP&lt;*&gt;::Allocator">
+    <Expand>
+      <Item Name="[size]">mSize</Item>
+      <Item Name="[length]">mLength</Item>
+      <ExpandedItem>mAllocator</ExpandedItem>
     </Expand>
   </Type>
 

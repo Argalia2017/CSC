@@ -9,8 +9,8 @@
 #define rightvalue &&
 #define self to ()
 #define trait struct
-#define extend :public
 #define implement :public
+#define extend :private
 #define require __macro_requires
 #define anonymous __macro_anonymous
 #define slice __macro_slice
@@ -21,6 +21,8 @@
 #define ifswitch __macro_ifswitch
 #define discard break
 #define typeof __macro_typeof
+
+#define __HAS_NULL
 
 #pragma push_macro ("TRUE")
 #undef TRUE

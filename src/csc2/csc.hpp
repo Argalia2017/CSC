@@ -53,11 +53,11 @@
 #endif
 
 #ifdef _WIN64
-#define __CSC_CONFIG_VAR64__
+#define __CSC_CONFIG_VAL64__
 #elif defined _WIN32
-#define __CSC_CONFIG_VAR32__
+#define __CSC_CONFIG_VAL32__
 #else
-#define __CSC_CONFIG_VAR64__
+#define __CSC_CONFIG_VAL64__
 #endif
 
 #ifdef _UNICODE
@@ -73,7 +73,9 @@
 #pragma warning (disable :4065) //@info: warning C4065: switch statement contains 'default' but no 'case' labels
 #pragma warning (disable :4619) //@info: warning C4619: #pragma warning: there is no warning number 'xxx'
 #pragma warning (disable :4100) //@info: warning C4100: 'xxx': unreferenced formal parameter
+#pragma warning (disable :4127) //@info: warning C4127: conditional expression is constant
 #pragma warning (disable :4180) //@info: warning C4180: qualifier applied to function type has no meaning; ignored
+#pragma warning (disable :4310) //@info: warning C4310: cast truncates constant value
 #pragma warning (disable :4365) //@info: warning C4365: 'xxx': conversion from 'xxx' to 'xxx', signed/unsigned mismatch
 #pragma warning (disable :4371) //@info: warning C4371: 'xxx': layout of class may have changed from a previous version of the compiler due to better packing of member 'xxx'
 #pragma warning (disable :4435) //@info: warning C4435: 'xxx': Object layout under /vd2 will change due to virtual base 'xxx'
@@ -101,6 +103,7 @@
 #include "begin.h"
 #include <cstddef>
 #include <cstdint>
+#include <cfloat>
 #include <limits>
 #include <type_traits>
 #include <initializer_list>
@@ -115,14 +118,8 @@
 
 #ifdef _HAS_CXX17
 #if _HAS_CXX17
-#define __CSC_CXX_LATEST__
+#define __CSC_STD_LATEST__
 #endif
-#endif
-
-#ifdef __CSC_COMPILER_GNUC__
-namespace std {
-using ::max_align_t ;
-} ;
 #endif
 
 #ifndef __macro_stringize
@@ -146,11 +143,11 @@ using ::max_align_t ;
 
 #ifndef __macro_assert
 #ifdef __CSC_DEBUG__
-#define __macro_assert(...) do { if (__VA_ARGS__) break ; CSC::debug_break () ; } while (false)
+#define __macro_assert(...) do { if (__VA_ARGS__) break ; CSC::unsafe_break () ; } while (false)
 #endif
 
 #ifdef __CSC_UNITTEST__
-#define __macro_assert(...) do { if (__VA_ARGS__) break ; CSC::debug_break () ; } while (false)
+#define __macro_assert(...) do { if (__VA_ARGS__) break ; CSC::unsafe_break () ; } while (false)
 #endif
 
 #ifdef __CSC_RELEASE__
@@ -173,11 +170,11 @@ using ::max_align_t ;
 #endif
 
 #ifndef __macro_dynamic_watch
-#define __macro_dynamic_watch(...) do { CSC::debug_watch (slice (__macro_stringize (__VA_ARGS__)) ,(__VA_ARGS__)) ; } while (false)
+#define __macro_dynamic_watch(...) do { CSC::unsafe_watch (slice (__macro_stringize (__VA_ARGS__)) ,__VA_ARGS__) ; } while (false)
 #endif
 
 #ifndef __macro_ifnot
-#define __macro_ifnot(...) (!(__VA_ARGS__))
+#define __macro_ifnot(...) ((__VA_ARGS__) == false)
 #endif
 
 #ifndef __macro_ifswitch
@@ -189,31 +186,44 @@ using ::max_align_t ;
 #endif
 
 namespace CSC {
+template <class UNIT1>
+using DEF = UNIT1 ;
+
 template <class...>
 struct ENUMAS ;
 
-#ifdef __CSC_CONFIG_VAR32__
+#ifdef __CSC_CONFIG_VAL32__
 namespace U {
-template <int32_t>
+template <std::int32_t>
 struct ENUMID ;
 } ;
 
-template <class UNIT1 ,int32_t UNIT2>
+template <class UNIT1 ,std::int32_t UNIT2>
 struct ENUMAS<UNIT1 ,U::ENUMID<UNIT2>> {
-	static constexpr auto value = UNIT1 (UNIT2) ;
+	static constexpr UNIT1 value = UNIT1 (UNIT2) ;
 } ;
+
+#ifdef __CSC_COMPILER_GNUC__
+template <class UNIT1 ,std::int32_t UNIT2>
+constexpr UNIT1 ENUMAS<UNIT1 ,U::ENUMID<UNIT2>>::value ;
+#endif
 #endif
 
-#ifdef __CSC_CONFIG_VAR64__
+#ifdef __CSC_CONFIG_VAL64__
 namespace U {
-template <int64_t>
+template <std::int64_t>
 struct ENUMID ;
 } ;
 
-template <class UNIT1 ,int64_t UNIT2>
+template <class UNIT1 ,std::int64_t UNIT2>
 struct ENUMAS<UNIT1 ,U::ENUMID<UNIT2>> {
-	static constexpr auto value = UNIT1 (UNIT2) ;
+	static constexpr UNIT1 value = UNIT1 (UNIT2) ;
 } ;
+
+#ifdef __CSC_COMPILER_GNUC__
+template <class UNIT1 ,std::int64_t UNIT2>
+constexpr UNIT1 ENUMAS<UNIT1 ,U::ENUMID<UNIT2>>::value ;
+#endif
 #endif
 
 using ENUM_TRUE = ENUMAS<bool ,U::ENUMID<true>> ;
@@ -230,10 +240,15 @@ struct TYPEID {} ;
 
 template <class UNIT1>
 struct TYPEAS<UNIT1> {
-	static constexpr auto id = U::TYPEID<UNIT1> () ;
+	static constexpr U::TYPEID<UNIT1> id = U::TYPEID<UNIT1> () ;
 } ;
 
-using ALWAYS = void ;
+#ifdef __CSC_COMPILER_GNUC__
+template <class UNIT1>
+constexpr U::TYPEID<UNIT1> TYPEAS<UNIT1>::id ;
+#endif
+
+struct ALWAYS ;
 
 namespace U {
 template <class...>
@@ -263,27 +278,27 @@ trait REMOVE_REF_HELP<UNIT1 ,ALWAYS> {
 } ;
 
 template <class UNIT1>
-trait REMOVE_REF_HELP<UNIT1 & ,ALWAYS> {
+trait REMOVE_REF_HELP<DEF<UNIT1 &> ,ALWAYS> {
 	using RET = UNIT1 ;
 } ;
 
 template <class UNIT1>
-trait REMOVE_REF_HELP<UNIT1 && ,ALWAYS> {
+trait REMOVE_REF_HELP<DEF<UNIT1 &&> ,ALWAYS> {
 	using RET = UNIT1 ;
 } ;
 
 template <class UNIT1>
-trait REMOVE_REF_HELP<const UNIT1 ,ALWAYS> {
+trait REMOVE_REF_HELP<DEF<const UNIT1> ,ALWAYS> {
 	using RET = UNIT1 ;
 } ;
 
 template <class UNIT1>
-trait REMOVE_REF_HELP<const UNIT1 & ,ALWAYS> {
+trait REMOVE_REF_HELP<DEF<const UNIT1 &> ,ALWAYS> {
 	using RET = UNIT1 ;
 } ;
 
 template <class UNIT1>
-trait REMOVE_REF_HELP<const UNIT1 && ,ALWAYS> {
+trait REMOVE_REF_HELP<DEF<const UNIT1 &&> ,ALWAYS> {
 	using RET = UNIT1 ;
 } ;
 } ;
@@ -315,7 +330,7 @@ trait REQUIRE_HELP ;
 
 template <>
 trait REQUIRE_HELP<ENUM_TRUE ,ALWAYS> {
-	using RET = void ;
+	using RET = ALWAYS ;
 } ;
 } ;
 
@@ -332,7 +347,7 @@ trait DEPENDENT_HELP<UNIT1 ,UNIT2 ,ALWAYS> {
 } ;
 } ;
 
-template <class UNIT1 ,class UNIT2 = void>
+template <class UNIT1 ,class UNIT2>
 using DEPENDENT = typename U::DEPENDENT_HELP<UNIT1 ,UNIT2 ,ALWAYS>::RET ;
 
 namespace U {
@@ -456,20 +471,20 @@ template <class UNIT1>
 using MACRO_TARGET_LIB = DEPENDENT<ENUM_FALSE ,DEPENDENT<struct anonymous ,UNIT1>> ;
 #endif
 
-#ifdef __CSC_CONFIG_VAR32__
+#ifdef __CSC_CONFIG_VAL32__
 template <class UNIT1>
-using MACRO_CONFIG_VAR32 = DEPENDENT<ENUM_TRUE ,DEPENDENT<struct anonymous ,UNIT1>> ;
+using MACRO_CONFIG_VAL32 = DEPENDENT<ENUM_TRUE ,DEPENDENT<struct anonymous ,UNIT1>> ;
 #else
 template <class UNIT1>
-using MACRO_CONFIG_VAR32 = DEPENDENT<ENUM_FALSE ,DEPENDENT<struct anonymous ,UNIT1>> ;
+using MACRO_CONFIG_VAL32 = DEPENDENT<ENUM_FALSE ,DEPENDENT<struct anonymous ,UNIT1>> ;
 #endif
 
-#ifdef __CSC_CONFIG_VAR64__
+#ifdef __CSC_CONFIG_VAL64__
 template <class UNIT1>
-using MACRO_CONFIG_VAR64 = DEPENDENT<ENUM_TRUE ,DEPENDENT<struct anonymous ,UNIT1>> ;
+using MACRO_CONFIG_VAL64 = DEPENDENT<ENUM_TRUE ,DEPENDENT<struct anonymous ,UNIT1>> ;
 #else
 template <class UNIT1>
-using MACRO_CONFIG_VAR64 = DEPENDENT<ENUM_FALSE ,DEPENDENT<struct anonymous ,UNIT1>> ;
+using MACRO_CONFIG_VAL64 = DEPENDENT<ENUM_FALSE ,DEPENDENT<struct anonymous ,UNIT1>> ;
 #endif
 
 #ifdef __CSC_CONFIG_STRA__
@@ -487,15 +502,44 @@ using MACRO_CONFIG_STRW = DEPENDENT<ENUM_TRUE ,DEPENDENT<struct anonymous ,UNIT1
 template <class UNIT1>
 using MACRO_CONFIG_STRW = DEPENDENT<ENUM_FALSE ,DEPENDENT<struct anonymous ,UNIT1>> ;
 #endif
+
+#ifdef __CSC_STD_LATEST__
+template <class UNIT1>
+using MACRO_STD_BASIC = DEPENDENT<ENUM_TRUE ,DEPENDENT<struct anonymous ,UNIT1>> ;
+#else
+template <class UNIT1>
+using MACRO_STD_BASIC = DEPENDENT<ENUM_FALSE ,DEPENDENT<struct anonymous ,UNIT1>> ;
+#endif
+
+#ifdef __CSC_STD_LATEST__
+template <class UNIT1>
+using MACRO_STD_LATEST = DEPENDENT<ENUM_TRUE ,DEPENDENT<struct anonymous ,UNIT1>> ;
+#else
+template <class UNIT1>
+using MACRO_STD_LATEST = DEPENDENT<ENUM_FALSE ,DEPENDENT<struct anonymous ,UNIT1>> ;
+#endif
 } ;
 
 namespace U {
-enum class __char8_t :unsigned char ;
+enum class csc_char8_t :unsigned char ;
 } ;
 
 namespace U {
-struct __int128_t {
-	alignas (128) char mUnused[128] ;
+struct csc_int128_t {
+	alignas (128) unsigned char mUnused[128] ;
 } ;
 } ;
 } ;
+
+#ifdef __CSC_COMPILER_GNUC__
+namespace std {
+using ::max_align_t ;
+} ;
+#endif
+
+#ifndef __CSC_STD_LATEST__
+namespace std {
+template <class...>
+struct is_nothrow_invocable ;
+} ;
+#endif
