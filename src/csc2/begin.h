@@ -7,8 +7,8 @@
 #undef rightvalue
 #undef self
 #undef trait
-#undef extend
 #undef implement
+#undef extend
 #undef require
 #undef anonymous
 #undef slice
@@ -20,8 +20,10 @@
 #undef discard
 #undef typeof
 
-#ifdef self
+#ifdef __HAS_NULL
 #pragma pop_macro ("TRUE")
 #pragma pop_macro ("FALSE")
 #pragma pop_macro ("NULL")
+
+#undef __HAS_NULL
 #endif

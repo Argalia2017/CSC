@@ -26,6 +26,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\csc2\begin.h" />
+    <ClInclude Include="..\..\src\csc2\csc_array.hpp" />
     <ClInclude Include="..\..\src\csc2\csc_basic.hpp" />
     <ClInclude Include="..\..\src\csc2\end.h" />
     <ClInclude Include="..\..\src\util.h" />

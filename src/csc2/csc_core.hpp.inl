@@ -5,52 +5,48 @@
 
 namespace CSC {
 namespace U {
-template <class UNIT1>
-exports void FUNCTION_debug_break_HELP<UNIT1 ,REQUIRE<MACRO_COMPILER_MSVC<UNIT1>>>::FUNCTION_debug_break::
-extern_invoke () {
 #ifdef __CSC_COMPILER_MSVC__
+template <>
+exports void FUNCTION_unsafe_break_HELP<void ,ALWAYS>::FUNCTION_unsafe_break::extern_invoke () {
 	__debugbreak () ;
-#endif
 }
+#endif
 
-template <class UNIT1>
-exports void FUNCTION_debug_break_HELP<UNIT1 ,REQUIRE<MACRO_COMPILER_GNUC<UNIT1>>>::FUNCTION_debug_break::
-extern_invoke () {
 #ifdef __CSC_COMPILER_GNUC__
+template <>
+exports void FUNCTION_unsafe_break_HELP<void ,ALWAYS>::FUNCTION_unsafe_break::extern_invoke () {
 	__builtin_trap () ;
-#endif
 }
+#endif
 
-template <class UNIT1>
-exports void FUNCTION_debug_break_HELP<UNIT1 ,REQUIRE<MACRO_COMPILER_CLANG<UNIT1>>>::FUNCTION_debug_break::
-extern_invoke () {
 #ifdef __CSC_COMPILER_CLANG__
+template <>
+exports void FUNCTION_unsafe_break_HELP<void ,ALWAYS>::FUNCTION_unsafe_break::extern_invoke () {
 	std::abort () ;
-#endif
 }
+#endif
 } ;
 
 namespace U {
-template <class UNIT1>
-exports void FUNCTION_barrier_HELP<UNIT1 ,REQUIRE<MACRO_COMPILER_MSVC<UNIT1>>>::FUNCTION_barrier::
-extern_invoke () {
+#ifdef __CSC_COMPILER_MSVC__
+template <>
+exports void FUNCTION_barrier_HELP<void ,ALWAYS>::FUNCTION_barrier::extern_invoke () {
 	noop () ;
 }
+#endif
 
-template <class UNIT1>
-exports void FUNCTION_barrier_HELP<UNIT1 ,REQUIRE<MACRO_COMPILER_GNUC<UNIT1>>>::FUNCTION_barrier::
-extern_invoke () {
 #ifdef __CSC_COMPILER_GNUC__
+template <>
+exports void FUNCTION_barrier_HELP<void ,ALWAYS>::FUNCTION_barrier::extern_invoke () {
 	asm volatile ("" ::: "memory") ;
-#endif
 }
+#endif
 
-template <class UNIT1>
-exports void FUNCTION_barrier_HELP<UNIT1 ,REQUIRE<MACRO_COMPILER_CLANG<UNIT1>>>::FUNCTION_barrier::
-extern_invoke () {
 #ifdef __CSC_COMPILER_CLANG__
+template <>
+exports void FUNCTION_barrier_HELP<void ,ALWAYS>::FUNCTION_barrier::extern_invoke () {
 	asm volatile ("" ::: "memory") ;
-#endif
 }
+#endif
 } ;
 } ;
