@@ -1,0 +1,24 @@
+
+
+#define implicit
+#define exports
+#define imports static
+#define leftvalue &
+#define rightvalue &&
+#define thiz (*this)
+#define self m_self ()
+#define fake m_fake ()
+#define attr m_attr ()
+#define trait struct
+#define implement :public
+#define extend :private
+#define require(...)
+#define anonymous anonymous
+#define slice(...)
+#define assert(...)
+#define dynamic_assert(...)
+#define dynamic_watch(...)
+#define ifnot(...)
+#define ifswitch(...)
+#define discard break
+#define typeof(...)

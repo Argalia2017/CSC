@@ -3,43 +3,105 @@
   <ItemGroup>
     <ClCompile Include="..\..\src\main.cpp" />
     <ClCompile Include="..\..\src\test.cpp" />
-    <ClCompile Include="..\..\src\csc2\csc_core.hpp">
-      <Filter>csc2</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\csc2\csc.hpp">
-      <Filter>csc2</Filter>
-    </ClCompile>
+    <ClCompile Include="..\..\src\inl.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\util.h" />
-    <ClInclude Include="..\..\src\csc2\end.h">
-      <Filter>csc2</Filter>
+    <ClInclude Include="..\..\src\csc\begin.h">
+      <Filter>csc</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\csc2\begin.h">
-      <Filter>csc2</Filter>
+    <ClInclude Include="..\..\src\csc\csc.hpp">
+      <Filter>csc</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\csc2\csc_basic.hpp">
-      <Filter>csc2</Filter>
+    <ClInclude Include="..\..\src\csc\csc_algorithm.hpp">
+      <Filter>csc</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\csc2\csc_array.hpp">
-      <Filter>csc2</Filter>
+    <ClInclude Include="..\..\src\csc\csc_array.hpp">
+      <Filter>csc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\csc\csc_basic.hpp">
+      <Filter>csc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\csc\csc_core.hpp">
+      <Filter>csc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\csc\csc_debugger.hpp">
+      <Filter>csc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\csc\csc_filesystem.hpp">
+      <Filter>csc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\csc\csc_functional.hpp">
+      <Filter>csc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\csc\csc_geometry.hpp">
+      <Filter>csc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\csc\csc_image.hpp">
+      <Filter>csc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\csc\csc_math.hpp">
+      <Filter>csc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\csc\csc_runtime.hpp">
+      <Filter>csc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\csc\csc_stream.hpp">
+      <Filter>csc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\csc\end.h">
+      <Filter>csc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\csc\csc_serialization.hpp">
+      <Filter>csc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\csc\csc_string.hpp">
+      <Filter>csc</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="unittest">
       <UniqueIdentifier>{000e62c6-12e0-48db-9e97-8c9331ef3a16}</UniqueIdentifier>
     </Filter>
-    <Filter Include="csc2">
+    <Filter Include="csc">
       <UniqueIdentifier>{39dd61d7-1230-4b66-96d6-a7e28319a439}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\..\src\csc2\csc_core.hpp.inl">
-      <Filter>csc2</Filter>
+    <None Include="..\..\src\csc\cpp.hint">
+      <Filter>csc</Filter>
     </None>
-    <None Include="..\..\src\csc2\cpp.hint" />
+    <None Include="..\..\src\csc\csc_runtime.hpp.default.inl">
+      <Filter>csc</Filter>
+    </None>
+    <None Include="..\..\src\csc\csc_filesystem.hpp.linux.inl">
+      <Filter>csc</Filter>
+    </None>
+    <None Include="..\..\src\csc\csc_filesystem.hpp.windows.inl">
+      <Filter>csc</Filter>
+    </None>
+    <None Include="..\..\src\csc\csc_math.hpp.default.inl">
+      <Filter>csc</Filter>
+    </None>
+    <None Include="..\..\src\csc\csc_string.hpp.default.inl">
+      <Filter>csc</Filter>
+    </None>
+    <None Include="..\..\src\csc\csc_debugger.hpp.linux.inl">
+      <Filter>csc</Filter>
+    </None>
+    <None Include="..\..\src\csc\csc_debugger.hpp.windows.inl">
+      <Filter>csc</Filter>
+    </None>
+    <None Include="..\..\src\csc\csc_string.hpp.gbk.inl">
+      <Filter>csc</Filter>
+    </None>
+    <None Include="..\..\src\csc\csc_core.hpp.default.inl">
+      <Filter>csc</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
-    <Natvis Include="..\..\src\csc2\cpp.natvis" />
+    <Natvis Include="..\..\src\csc\cpp.natvis">
+      <Filter>csc</Filter>
+    </Natvis>
   </ItemGroup>
 </Project>
