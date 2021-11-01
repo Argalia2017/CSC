@@ -1,0 +1,377 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AutoVisualizer xmlns="http://schemas.microsoft.com/vstudio/debugger/natvis/2010">
+
+  <!--"https://docs.microsoft.com/en-us/visualstudio/debugger/create-custom-views-of-native-objects?view=vs-2017#BKMK_Why_create_visualizations_"-->
+  <!--"https://docs.microsoft.com/en-us/visualstudio/debugger/format-specifiers-in-cpp?view=vs-2017#BKMK_Visual_Studio_2012_format_specifiers"-->
+  <!--"https://docs.microsoft.com/en-us/visualstudio/debugger/pseudovariables?view=vs-2017"-->
+  <!--"https://docs.microsoft.com/en-us/visualstudio/debugger/context-operator-cpp?view=vs-2017"-->
+
+  <Type Name="CSC::CORE::Interface" Inheritable="false" />
+
+  <Type Name="CSC::CORE::TEMPID&lt;*&gt;">
+    <Expand>
+      <ExpandedItem>(($T1*)&amp;mStorage)</ExpandedItem>
+    </Expand>
+  </Type>
+
+  <Type Name="CSC::CORE::BOX_HELP&lt;*&gt;::Box">
+    <Expand>
+      <ExpandedItem>mValue</ExpandedItem>
+    </Expand>
+  </Type>
+
+  <Type Name="CSC::CORE::BOX_HELP&lt;*&gt;::Box" Priority="MediumLow">
+    <Expand>
+      <Item Name="[size]">SIZE::value</Item>
+      <ArrayItems>
+        <Size>SIZE::value</Size>
+        <ValuePointer>(ITEM*)&amp;mArray</ValuePointer>
+      </ArrayItems>
+    </Expand>
+  </Type>
+  
+  <Type Name="CSC::CORE::CELL_HELP&lt;*&gt;::Cell">
+    <Expand>
+      <ExpandedItem>mValue</ExpandedItem>
+    </Expand>
+  </Type>
+
+  <Type Name="CSC::CORE::VREF_HELP&lt;*&gt;::VRef">
+    <Expand>
+      <ExpandedItem>(Holder*)mHolder</ExpandedItem>
+    </Expand>
+  </Type>
+
+  <Type Name="CSC::CORE::VREF_IMPLHOLDER_HELP&lt;*&gt;::ImplHolder">
+    <Expand>
+      <ExpandedItem>mValue</ExpandedItem>
+    </Expand>
+  </Type>
+
+  <Type Name="CSC::CORE::VREF_IMPLHOLDER_HELP&lt;*&gt;::ImplHolder" Priority="MediumLow">
+    <Expand>
+      <Item Name="[size]">mSize</Item>
+      <ArrayItems>
+        <Size>mSize</Size>
+        <ValuePointer>(ITEM*)((char*)(this)+sizeof(RealHolder)-sizeof(ITEM))</ValuePointer>
+      </ArrayItems>
+    </Expand>
+  </Type>
+
+  <Type Name="CSC::CORE::CREF_HELP&lt;*&gt;::CRef">
+    <Expand>
+      <ExpandedItem>(Holder*)mHolder</ExpandedItem>
+    </Expand>
+  </Type>
+
+  <Type Name="CSC::CORE::CREF_IMPLHOLDER_HELP&lt;*&gt;::ImplHolder">
+    <Expand>
+      <ExpandedItem>mValue</ExpandedItem>
+    </Expand>
+  </Type>
+
+  <Type Name="CSC::CORE::CREF_IMPLHOLDER_HELP&lt;*&gt;::ImplHolder" Priority="MediumLow">
+    <Expand>
+      <Item Name="[size]">mSize</Item>
+      <ArrayItems>
+        <Size>mSize</Size>
+        <ValuePointer>(ITEM*)((char*)(this)+sizeof(RealHolder)-sizeof(ITEM))</ValuePointer>
+      </ArrayItems>
+    </Expand>
+  </Type>
+
+  <Type Name="CSC::CORE::CREF_PUREHOLDER_HELP&lt;*&gt;::PureHolder">
+    <Expand>
+      <ExpandedItem>mValue</ExpandedItem>
+    </Expand>
+  </Type>
+
+  <Type Name="CSC::CORE::SLICE_HELP&lt;*&gt;::Slice">
+    <Expand>
+      <ExpandedItem>mThis</ExpandedItem>
+    </Expand>
+  </Type>
+
+  <Type Name="CSC::CORE::SLICE_IMPLHOLDER_HELP&lt;char,*&gt;::ImplHolder">
+    <DisplayString>{{ {&amp;mSlice[0],s} }}</DisplayString>
+    <StringView>&amp;mSlice[0],s</StringView>
+  </Type>
+
+  <Type Name="CSC::CORE::SLICE_IMPLHOLDER_HELP&lt;wchar_t,*&gt;::ImplHolder">
+    <DisplayString>{{ {&amp;mSlice[0],su} }}</DisplayString>
+    <StringView>&amp;mSlice[0],su</StringView>
+  </Type>
+
+  <Type Name="CSC::CORE::SLICE_IMPLHOLDER_HELP&lt;enum CSC::U::csc_char8_t,*&gt;::ImplHolder">
+    <DisplayString>{{ {&amp;mSlice[0],s8} }}</DisplayString>
+    <StringView>&amp;mSlice[0],s8</StringView>
+  </Type>
+
+  <Type Name="CSC::CORE::SLICE_IMPLHOLDER_HELP&lt;char16_t,*&gt;::ImplHolder">
+    <DisplayString>{{ {&amp;mSlice[0],su} }}</DisplayString>
+    <StringView>&amp;mSlice[0],su</StringView>
+  </Type>
+
+  <Type Name="CSC::CORE::SLICE_IMPLHOLDER_HELP&lt;char32_t,*&gt;::ImplHolder">
+    <DisplayString>{{ {&amp;mSlice[0],s32} }}</DisplayString>
+    <StringView>&amp;mSlice[0],s32</StringView>
+  </Type>
+
+  <Type Name="CSC::CORE::CLAZZ_HELP&lt;*&gt;::Clazz">
+    <Expand>
+      <ExpandedItem>mThis</ExpandedItem>
+    </Expand>
+  </Type>
+
+  <Type Name="CSC::CORE::CLAZZ_IMPLHOLDER_HELP&lt;*&gt;::ImplHolder">
+    <DisplayString>{{ {CSC::CORE::DATA (this),x} }}</DisplayString>
+  </Type>
+
+  <Type Name="CSC::CORE::EXCEPTION_HELP&lt;*&gt;::Exception">
+    <Expand>
+      <ExpandedItem>mThis</ExpandedItem>
+    </Expand>
+  </Type>
+
+  <Type Name="CSC::CORE::EXCEPTION_IMPLHOLDER_HELP&lt;*&gt;::ImplHolder">
+    <Expand>
+      <ExpandedItem>mWhat</ExpandedItem>
+    </Expand>
+  </Type>
+
+  <Type Name="CSC::CORE::WATCH_HELP&lt;*&gt;::WATCH">
+    <Expand>
+      <Item Name="[name]">mName</Item>
+      <Item Name="[value]">*(($T1*)mAddress)</Item>
+    </Expand>
+  </Type>
+
+  <Type Name="CSC::BASIC::OPTIONAL_HELP&lt;*&gt;::Optional">
+    <Expand>
+      <ExpandedItem>mThis</ExpandedItem>
+    </Expand>
+  </Type>
+
+  <Type Name="CSC::BASIC::ANYREF_HELP&lt;*&gt;::AnyRef">
+    <Expand>
+      <ExpandedItem>mThis</ExpandedItem>
+    </Expand>
+  </Type>
+
+  <Type Name="CSC::BASIC::ANYREF_IMPLHOLDER_HELP&lt;*&gt;::ImplHolder">
+    <Expand>
+      <ExpandedItem>mValue</ExpandedItem>
+    </Expand>
+  </Type>
+
+  <Type Name="CSC::BASIC::TUPLE_HELP&lt;*&gt;::Tuple">
+    <Expand>
+      <Item Name="[one]">mOne</Item>
+      <Item Name="[rest]">mRest</Item>
+    </Expand>
+  </Type>
+
+  <Type Name="CSC::BASIC::FUNCTION_HELP&lt;*&gt;::Function">
+    <Expand>
+      <ExpandedItem>mThis</ExpandedItem>
+    </Expand>
+  </Type>
+
+  <Type Name="CSC::BASIC::BUFFER_HELP&lt;*&gt;::Buffer" Priority="MediumLow">
+    <Expand>
+      <Item Name="[size]">$T2::value</Item>
+      <ArrayItems Condition="$T2::value&gt;=10">
+        <Size>10</Size>
+        <ValuePointer>($T1*)&amp;mBuffer.mArray</ValuePointer>
+      </ArrayItems>
+      <ArrayItems Condition="$T2::value&lt;10">
+        <Size>$T2::value</Size>
+        <ValuePointer>($T1*)&amp;mBuffer.mArray</ValuePointer>
+      </ArrayItems>
+      <Item Name="[+]">mBuffer</Item>
+    </Expand>
+  </Type>
+
+  <Type Name="CSC::BASIC::BUFFER_HELP&lt;*&gt;::Buffer">
+    <Expand>
+      <Item Name="[size]">mSize</Item>
+      <ArrayItems Condition="mSize&gt;=10">
+        <Size>10</Size>
+        <ValuePointer>($T1*)mBuffer.mPointer</ValuePointer>
+      </ArrayItems>
+      <ArrayItems Condition="mSize&lt;10">
+        <Size>mSize</Size>
+        <ValuePointer>($T1*)mBuffer.mPointer</ValuePointer>
+      </ArrayItems>
+      <Item Name="[+]">mBuffer</Item>
+    </Expand>
+  </Type>
+
+  <Type Name="CSC::BASIC::ALLOCATOR_HELP&lt;*&gt;::Allocator">
+    <Expand>
+      <Item Name="[length]">mLength</Item>
+      <ExpandedItem>mAllocator</ExpandedItem>
+    </Expand>
+  </Type>
+
+  <Type Name="CSC::BASIC::ALLOCATOR_DEFAULT_HELP&lt;*&gt;::NODE">
+    <Expand>
+      <ExpandedItem Condition="mNext==-2">mItem</ExpandedItem>
+    </Expand>
+  </Type>
+
+  <Type Name="CSC::ARRAY::ARRAY_HELP&lt;*&gt;::Array">
+    <Expand>
+      <ExpandedItem>mArray</ExpandedItem>
+    </Expand>
+  </Type>
+
+  <Type Name="CSC::ARRAY::STRING_HELP&lt;char,*&gt;::String">
+    <DisplayString>{{ {(char*)mString.mBuffer.mPointer,s} }}</DisplayString>
+    <StringView>(char*)mString.mBuffer.mPointer,s</StringView>
+    <Expand>
+      <ExpandedItem>mString</ExpandedItem>
+    </Expand>
+  </Type>
+
+  <Type Name="CSC::ARRAY::STRING_HELP&lt;wchar_t,*&gt;::String">
+    <DisplayString>{{ {(wchar_t*)mString.mBuffer.mPointer,su} }}</DisplayString>
+    <StringView>(wchar_t*)mString.mBuffer.mPointer,su</StringView>
+    <Expand>
+      <ExpandedItem>mString</ExpandedItem>
+    </Expand>
+  </Type>
+
+  <Type Name="CSC::ARRAY::STRING_HELP&lt;enum CSC::U::csc_char8_t,*&gt;::String">
+    <DisplayString>{{ {(char*)mString.mBuffer.mPointer,s8} }}</DisplayString>
+    <StringView>(char*)mString.mBuffer.mPointer,s8</StringView>
+    <Expand>
+      <ExpandedItem>mString</ExpandedItem>
+    </Expand>
+  </Type>
+
+  <Type Name="CSC::ARRAY::STRING_HELP&lt;char16_t,*&gt;::String">
+    <DisplayString>{{ {(char16_t*)mString.mBuffer.mPointer,su} }}</DisplayString>
+    <StringView>(char16_t*)mString.mBuffer.mPointer,su</StringView>
+    <Expand>
+      <ExpandedItem>mString</ExpandedItem>
+    </Expand>
+  </Type>
+
+  <Type Name="CSC::ARRAY::STRING_HELP&lt;char32_t,*&gt;::String">
+    <DisplayString>{{ {(char32_t*)mString.mBuffer.mPointer,s32} }}</DisplayString>
+    <StringView>(char32_t*)mString.mBuffer.mPointer,s32</StringView>
+    <Expand>
+      <ExpandedItem>mString</ExpandedItem>
+    </Expand>
+  </Type>
+
+  <Type Name="CSC::ARRAY::DEQUE_HELP&lt;*&gt;::Deque">
+    <Expand>
+      <Item Name="[read]">mRead</Item>
+      <Item Name="[write]">mWrite</Item>
+      <ExpandedItem>mDeque</ExpandedItem>
+    </Expand>
+  </Type>
+
+  <Type Name="CSC::ARRAY::DEQUE_HELP&lt;*&gt;::NODE">
+    <Expand>
+      <ExpandedItem>mItem</ExpandedItem>
+    </Expand>
+  </Type>
+
+  <Type Name="CSC::ARRAY::PRIORITY_HELP&lt;*&gt;::Priority">
+    <Expand>
+      <Item Name="[write]">mWrite</Item>
+      <ExpandedItem>mPriority</ExpandedItem>
+    </Expand>
+  </Type>
+
+  <Type Name="CSC::ARRAY::PRIORITY_HELP&lt;*&gt;::NODE">
+    <Expand>
+      <Item Name="[key]">mItem</Item>
+      <Item Name="[map]">mMap</Item>
+    </Expand>
+  </Type>
+
+  <Type Name="CSC::ARRAY::LIST_HELP&lt;*&gt;::List">
+    <Expand>
+      <Item Name="[first]">mFirst</Item>
+      <Item Name="[last]">mLast</Item>
+      <ExpandedItem>mList</ExpandedItem>
+    </Expand>
+  </Type>
+
+  <Type Name="CSC::ARRAY::LIST_HELP&lt;*&gt;::NODE">
+    <Expand>
+      <ExpandedItem>mItem</ExpandedItem>
+    </Expand>
+  </Type>
+
+  <Type Name="CSC::ARRAY::ARRAYLIST_HELP&lt;*&gt;::ArrayList">
+    <Expand>
+      <Item Name="[range]">mRange</Item>
+      <ExpandedItem>mList</ExpandedItem>
+    </Expand>
+  </Type>
+
+  <Type Name="CSC::ARRAY::ARRAYLIST_HELP&lt;*&gt;::NODE">
+    <Expand>
+      <ExpandedItem>mItem</ExpandedItem>
+    </Expand>
+  </Type>
+
+  <Type Name="CSC::ARRAY::BITSET_HELP&lt;*&gt;::BitSet">
+    <Expand>
+      <Item Name="[width]">mWidth</Item>
+      <ExpandedItem>mSet</ExpandedItem>
+    </Expand>
+  </Type>
+
+  <Type Name="CSC::ARRAY::SET_HELP&lt;*&gt;::Set">
+    <Expand>
+      <Item Name="[root]">mRoot</Item>
+      <ExpandedItem>mSet</ExpandedItem>
+    </Expand>
+  </Type>
+
+  <Type Name="CSC::ARRAY::SET_HELP&lt;*&gt;::NODE">
+    <Expand>
+      <Item Name="[key]">mItem</Item>
+      <Item Name="[map]">mMap</Item>
+    </Expand>
+  </Type>
+
+  <Type Name="CSC::ARRAY::HASHSET_HELP&lt;*&gt;::HashSet">
+    <Expand>
+      <Item Name="[range]">mRange</Item>
+      <ExpandedItem>mSet</ExpandedItem>
+    </Expand>
+  </Type>
+
+  <Type Name="CSC::ARRAY::HASHSET_HELP&lt;*&gt;::NODE">
+    <Expand>
+      <Item Name="[key]">mItem</Item>
+      <Item Name="[map]">mMap</Item>
+    </Expand>
+  </Type>
+
+  <Type Name="CSC::GEOMETRY::VECTOR_HELP&lt;*&gt;::Vector">
+    <Expand>
+      <ArrayItems>
+        <Size>1</Size>
+        <ValuePointer>($T1(*)[4])&amp;mVector.mBuffer.mArray</ValuePointer>
+      </ArrayItems>
+    </Expand>
+  </Type>
+
+  <Type Name="CSC::GEOMETRY::MATRIX_HELP&lt;*&gt;::Matrix">
+    <Expand>
+      <ArrayItems>
+        <Size>4</Size>
+        <ValuePointer>($T1(*)[4])&amp;mMatrix.mBuffer.mArray</ValuePointer>
+      </ArrayItems>
+    </Expand>
+  </Type>
+
+</AutoVisualizer>
