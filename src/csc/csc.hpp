@@ -5,11 +5,11 @@
 #endif
 
 #ifdef _DEBUG
-#define __CSC_DEBUG__
+#define __CSC_VER_DEBUG__
 #elif defined _UNITTEST
-#define __CSC_UNITTEST__
+#define __CSC_VER_UNITTEST__
 #else
-#define __CSC_RELEASE__
+#define __CSC_VER_RELEASE__
 #endif
 
 #ifdef __clang__
@@ -68,6 +68,23 @@
 #define __CSC_CONFIG_STRA__
 #endif
 
+#define __CSC_CXX_LITE__
+
+#ifdef __CSC_CXX_LITE__
+#ifdef _MSVC_LANG
+#if _MSVC_LANG >= 201703L
+#define __CSC_CXX_LATEST__
+#endif
+#else
+#if __cplusplus >= 201703L
+#define __CSC_CXX_LATEST__
+#elif __cplusplus >= 201103L
+#else
+#error "∑(っ°Д° ;)っ : unsupported"
+#endif
+#endif
+#endif
+
 #ifdef __CSC_COMPILER_MSVC__
 #pragma warning (disable :4068) //@info: warning C4068: unknown pragma
 #pragma warning (disable :4100) //@info: warning C4100: 'xxx': unreferenced formal parameter
@@ -87,42 +104,73 @@
 #pragma warning (disable :4624) //@info: warning C4624: 'xxx': destructor was implicitly defined as deleted
 #pragma warning (disable :4625) //@info: warning C4625: 'xxx': copy constructor was implicitly defined as deleted
 #pragma warning (disable :4626) //@info: warning C4626: 'xxx': assignment operator was implicitly defined as deleted
+#pragma warning (disable :4643) //@info: warning C4643: Forward declaring 'initializer_list' in namespace std is not permitted by the C++ Standard.
 #pragma warning (disable :4668) //@info: warning C4668: 'xxx' is not defined as a preprocessor macro, replacing with '0' for '#if/#elif'
 #pragma warning (disable :4710) //@info: warning C4710: 'xxx': function not inlined
 #pragma warning (disable :4711) //@info: warning C4711: function 'xxx' selected for automatic inline expansion
+#pragma warning (disable :4717) //@info: warning C4717: 'xxx': recursive on all control paths, function will cause runtime stack overflow
 #pragma warning (disable :4774) //@info: warning C4774: 'xxx' : format string expected in argument xxx is not a string literal
 #pragma warning (disable :4820) //@info: warning C4820: 'xxx': 'xxx' bytes padding added after data member 'xxx'
 #pragma warning (disable :5026) //@info: warning C5026: 'xxx': move constructor was implicitly defined as deleted
 #pragma warning (disable :5027) //@info: warning C5027: 'xxx': move assignment operator was implicitly defined as deleted
-#pragma warning (disable :5039) //@info: warning C5039: 'xxx': pointer or reference to potentially throwing function passed to extern C function under -EHc. Undefined behavior may occur if this function throws an exception.
+#pragma warning (disable :5039) //@info: warning C5039: 'xxx': pointer or reference to potentially throwing function passed to extern C function under -EHc. Undefined behavior may occur if this function dynamic_assert an exception.
 #pragma warning (disable :5045) //@info: warning C5045: Compiler will insert Spectre mitigation for memory load if /Qspectre switch specified
 #endif
 
+#ifdef __CSC_COMPILER_GNUC__
+#pragma GCC diagnostic ignored "-Wunknown-pragmas"
+#pragma GCC diagnostic ignored "-Wattributes"
+#pragma GCC diagnostic ignored "-Wunused-function"
+#endif
+
+#ifdef __CSC_COMPILER_CLANG__
+#pragma clang diagnostic ignored "-Wunknown-pragmas"
+#pragma clang diagnostic ignored "-Wc++11-narrowing"
+#pragma clang diagnostic ignored "-Wunused-parameter"
+#endif
+
 #include "begin.h"
+#ifdef __CSC_CXX_LITE__
+#include "lite.h"
+#endif
+
+#ifndef __CSC_CXX_LITE__
 #include <limits>
-#include <type_traits>
 #include <initializer_list>
+#include <type_traits>
+#endif
 #include "end.h"
 
-#ifdef _HAS_CXX17
-#if _HAS_CXX17
-#define __CSC_STD_LATEST__
+#ifndef __macro_exports
+#ifdef __CSC_COMPILER_MSVC__
+#define __macro_exports
+#endif
+
+#ifdef __CSC_COMPILER_GNUC__
+#define __macro_exports __attribute__ ((visibility ("default")))
+#endif
+
+#ifdef __CSC_COMPILER_CLANG__
+#define __macro_exports __attribute__ ((visibility ("default")))
 #endif
 #endif
 
-#ifndef __macro_stringize
-#define __macro_stringize_impl(...) #__VA_ARGS__
-#define __macro_stringize(...) __macro_stringize_impl (__VA_ARGS__)
+#ifndef __macro_str
+#define __macro_str_impl(...) #__VA_ARGS__
+#define __macro_str(...) __macro_str_impl (__VA_ARGS__)
+#endif
+
+#ifndef __macro_cat
+#define __macro_cat_impl(A ,B) A##B
+#define __macro_cat(A ,B) __macro_cat_impl (A ,B)
 #endif
 
 #ifndef __macro_requires
-#define __macro_requires(...) static_assert (CSC::CORE::ENUM_CHECK<__VA_ARGS__>::value ,"static_assert failed : " __macro_stringize (__VA_ARGS__))
+#define __macro_requires(...) static_assert (CSC::CORE::ENUM_CHECK<__VA_ARGS__>::value ,"static_assert failed : " __macro_str (__VA_ARGS__))
 #endif
 
 #ifndef __macro_anonymous
-#define __macro_anonymous_impl_impl(A) __anonymous_##A
-#define __macro_anonymous_impl(A) __macro_anonymous_impl_impl(A)
-#define __macro_anonymous __macro_anonymous_impl (__LINE__)
+#define __macro_anonymous __macro_cat (__anonymous_ ,__LINE__)
 #endif
 
 #ifndef __macro_slice
@@ -130,35 +178,59 @@
 #endif
 
 #ifndef __macro_assert
-#ifdef __CSC_DEBUG__
+#ifdef __CSC_VER_DEBUG__
 #define __macro_assert(...) do { if (__VA_ARGS__) break ; CSC::CORE::unsafe_break () ; } while (false)
 #endif
 
-#ifdef __CSC_UNITTEST__
+#ifdef __CSC_VER_UNITTEST__
 #define __macro_assert(...) do { if (__VA_ARGS__) break ; CSC::CORE::unsafe_abort () ; } while (false)
 #endif
 
-#ifdef __CSC_RELEASE__
+#ifdef __CSC_VER_RELEASE__
 #define __macro_assert(...)
 #endif
 #endif
 
 #ifndef __macro_dynamic_assert
 #ifdef __CSC_COMPILER_MSVC__
-#define __macro_dynamic_assert(...) do { if (__VA_ARGS__) break ; CSC::CORE::Exception (CSC::U::TYPEAS<struct anonymous>::id ,slice ("dynamic_assert failed : " __macro_stringize (__VA_ARGS__) " : at " __FUNCSIG__ " in " __FILE__ " ," __macro_stringize (__LINE__))).raise () ; } while (false)
+#define __macro_dynamic_assert(...) do { if (__VA_ARGS__) break ; CSC::CORE::Exception (CSC::U::TYPEAS<struct anonymous>::id ,slice ("dynamic_assert failed : " __macro_str (__VA_ARGS__) " : at " __FUNCSIG__ " in " __FILE__ " ," __macro_str (__LINE__))).raise () ; } while (false)
 #endif
 
 #ifdef __CSC_COMPILER_GNUC__
-#define __macro_dynamic_assert(...) do { if (__VA_ARGS__) break ; CSC::CORE::Exception (CSC::U::TYPEAS<struct anonymous>::id ,slice ("dynamic_assert failed : " __macro_stringize (__VA_ARGS__) " : at " ,__PRETTY_FUNCTION__ ," in " __FILE__ " ," __macro_stringize (__LINE__))).raise () ; } while (false)
+#define __macro_dynamic_assert(...) do { if (__VA_ARGS__) break ; CSC::CORE::Exception (CSC::U::TYPEAS<struct anonymous>::id ,slice ("dynamic_assert failed : " __macro_str (__VA_ARGS__) " : at " ,__PRETTY_FUNCTION__ ," in " __FILE__ " ," __macro_str (__LINE__))).raise () ; } while (false)
 #endif
 
 #ifdef __CSC_COMPILER_CLANG__
-#define __macro_dynamic_assert(...) do { if (__VA_ARGS__) break ; CSC::CORE::Exception (CSC::U::TYPEAS<struct anonymous>::id ,slice ("dynamic_assert failed : " __macro_stringize (__VA_ARGS__) " : at " ,__PRETTY_FUNCTION__ ," in " __FILE__ " ," __macro_stringize (__LINE__))).raise () ; } while (false)
+#define __macro_dynamic_assert(...) do { if (__VA_ARGS__) break ; CSC::CORE::Exception (CSC::U::TYPEAS<struct anonymous>::id ,slice ("dynamic_assert failed : " __macro_str (__VA_ARGS__) " : at " ,__PRETTY_FUNCTION__ ," in " __FILE__ " ," __macro_str (__LINE__))).raise () ; } while (false)
 #endif
 #endif
 
-#ifndef __macro_dynamic_watch
-#define __macro_dynamic_watch(...) do { CSC::CORE::unsafe_watch (slice (__macro_stringize (__VA_ARGS__)) ,__VA_ARGS__) ; } while (false)
+#ifndef __macro_unittest_watch
+#ifdef __CSC_VER_DEBUG__
+#define __macro_unittest_watch(...) do { CSC::CORE::unsafe_watch (CSC::U::TYPEAS<struct anonymous>::id ,slice (__macro_str (__VA_ARGS__)) ,__VA_ARGS__) ; } while (false)
+#endif
+
+#ifdef __CSC_VER_UNITTEST__
+#define __macro_unittest_watch(...) do { CSC::CORE::unsafe_watch (CSC::U::TYPEAS<struct anonymous>::id ,slice (__macro_str (__VA_ARGS__)) ,__VA_ARGS__) ; } while (false)
+#endif
+
+#ifdef __CSC_VER_RELEASE__
+#define __macro_unittest_watch(...)
+#endif
+#endif
+
+#ifndef __macro_forceinline
+#ifdef __CSC_COMPILER_MSVC__
+#define __macro_forceinline __forceinline
+#endif
+
+#ifdef __CSC_COMPILER_GNUC__
+#define __macro_forceinline __attribute__ ((always_inline))
+#endif
+
+#ifdef __CSC_COMPILER_CLANG__
+#define __macro_forceinline __attribute__ ((always_inline))
+#endif
 #endif
 
 #ifndef __macro_ifnot
@@ -166,7 +238,7 @@
 #endif
 
 #ifndef __macro_ifswitch
-#define __macro_ifswitch(...) (__VA_ARGS__) goto anonymous ; while (CSC::CORE::unsafe_switch (__VA_ARGS__)) anonymous:
+#define __macro_ifswitch(A) (A) goto anonymous ; while (CSC::CORE::unsafe_switch (A)) anonymous:
 #endif
 
 #ifndef __macro_typeof
@@ -174,23 +246,39 @@
 #endif
 
 #ifdef __CSC_COMPILER_MSVC__
-#ifndef __CSC_STD_LATEST__
+#ifndef __CSC_CXX_LATEST__
 #define nodiscard
 #endif
 #endif
 
 namespace CSC {
 namespace U {
+template <class UNIT1>
+using DEF = UNIT1 ;
+
 using csc_bool_t = bool ;
 
 using csc_int32_t = int ;
+using csc_int32_64_t = long ;
 using csc_int64_t = long long ;
 
 using csc_float32_t = float ;
 using csc_float64_t = double ;
 using csc_float128_t = long double ;
 
+#ifdef __CSC_CXX_LITE__
+struct FUNCTION_infinity {
+	inline constexpr operator csc_float32_t () const noexcept {
+		return (__builtin_huge_valf ()) ;
+	}
+} ;
+
+static constexpr auto infinity = FUNCTION_infinity () ;
+#endif
+
+#ifndef __CSC_CXX_LITE__
 static constexpr auto infinity = std::numeric_limits<csc_float32_t>::infinity () ;
+#endif
 
 using csc_char_t = char ;
 using csc_wchar_t = wchar_t ;
@@ -203,46 +291,49 @@ using csc_char32_t = char32_t ;
 using csc_byte8_t = unsigned char ;
 using csc_byte16_t = unsigned short ;
 using csc_byte32_t = unsigned int ;
+using csc_byte32_64_t = unsigned long ;
 using csc_byte64_t = unsigned long long ;
 
 struct csc_byte128_t {
-	alignas (128) csc_byte8_t __unused[128] ;
+	alignas (128) DEF<csc_byte8_t[128]> __unused ;
 } ;
 
-template <class UNIT1>
-using csc_initializer_list = std::initializer_list<UNIT1> ;
+#ifdef __CSC_SYSTEM_WINDOWS__
+#ifdef __CSC_CONFIG_VAL32__
+using csc_ptrdiff_t = csc_int32_t ;
+using csc_size_t = csc_byte32_t ;
+#endif
+
+#ifdef __CSC_CONFIG_VAL64__
+using csc_ptrdiff_t = csc_int64_t ;
+using csc_size_t = csc_byte64_t ;
+#endif
+#endif
+
+#ifdef __CSC_SYSTEM_LINUX__
+using csc_ptrdiff_t = csc_int32_64_t ;
+using csc_size_t = csc_byte32_64_t ;
+#endif
 
 template <class...>
 struct ENUMAS ;
 
-#ifdef __CSC_CONFIG_VAL32__
-template <csc_int32_t>
+template <csc_size_t>
 struct ENUMID ;
 
-template <class UNIT1 ,csc_int32_t UNIT2>
+template <class UNIT1 ,csc_size_t UNIT2>
 struct ENUMAS<UNIT1 ,ENUMID<UNIT2>> {
 	static constexpr UNIT1 value = UNIT1 (UNIT2) ;
 } ;
 
 #ifdef __CSC_COMPILER_GNUC__
-template <class UNIT1 ,csc_int32_t UNIT2>
+template <class UNIT1 ,csc_size_t UNIT2>
 constexpr UNIT1 ENUMAS<UNIT1 ,ENUMID<UNIT2>>::value ;
 #endif
-#endif
 
-#ifdef __CSC_CONFIG_VAL64__
-template <csc_int64_t>
-struct ENUMID ;
-
-template <class UNIT1 ,csc_int64_t UNIT2>
-struct ENUMAS<UNIT1 ,ENUMID<UNIT2>> {
-	static constexpr UNIT1 value = UNIT1 (UNIT2) ;
-} ;
-
-#ifdef __CSC_COMPILER_GNUC__
-template <class UNIT1 ,csc_int64_t UNIT2>
+#ifdef __CSC_COMPILER_CLANG__
+template <class UNIT1 ,csc_size_t UNIT2>
 constexpr UNIT1 ENUMAS<UNIT1 ,ENUMID<UNIT2>>::value ;
-#endif
 #endif
 
 using ENUM_TRUE = ENUMAS<csc_bool_t ,ENUMID<true>> ;
@@ -265,32 +356,37 @@ template <class UNIT1>
 constexpr TYPEID<UNIT1> TYPEAS<UNIT1>::id ;
 #endif
 
+#ifdef __CSC_COMPILER_CLANG__
+template <class UNIT1>
+constexpr TYPEID<UNIT1> TYPEAS<UNIT1>::id ;
+#endif
+
 #ifdef __CSC_COMPILER_MSVC__
 template <class UNIT1 ,class UNIT2>
 struct TEMPID {
-	static constexpr auto M_SIZE = sizeof (UNIT1) ;
-	static constexpr auto M_ALIGN = alignof (UNIT1) ;
+	static constexpr auto M_SIZE = sizeof (UNIT2) ;
+	static constexpr auto M_ALIGN = alignof (UNIT2) ;
 
-	alignas (M_ALIGN) csc_byte8_t __unused[M_SIZE] ;
+	alignas (M_ALIGN) DEF<csc_byte8_t[M_SIZE]> __unused ;
 } ;
 #endif
 
 #ifdef __CSC_COMPILER_GNUC__
 template <class UNIT1 ,class UNIT2>
 struct TEMPID {
-	static constexpr auto M_SIZE = sizeof (UNIT1) ;
+	static constexpr auto M_SIZE = sizeof (UNIT2) ;
 
-	alignas (UNIT1) csc_byte8_t __unused[M_SIZE] ;
+	alignas (UNIT2) DEF<csc_byte8_t[M_SIZE]> __unused ;
 } ;
 #endif
 
 #ifdef __CSC_COMPILER_CLANG__
 template <class UNIT1 ,class UNIT2>
 struct TEMPID {
-	static constexpr auto M_SIZE = sizeof (UNIT1) ;
-	static constexpr auto M_ALIGN = alignof (UNIT1) ;
+	static constexpr auto M_SIZE = sizeof (UNIT2) ;
+	static constexpr auto M_ALIGN = alignof (UNIT2) ;
 
-	alignas (M_ALIGN) csc_byte8_t __unused[M_SIZE] ;
+	alignas (M_ALIGN) DEF<csc_byte8_t[M_SIZE]> __unused ;
 } ;
 #endif
 
@@ -314,9 +410,6 @@ trait ENUM_NOT_HELP<ENUM_TRUE ,ALWAYS> {
 
 template <class UNIT1>
 using ENUM_NOT = typename ENUM_NOT_HELP<UNIT1 ,ALWAYS>::RET ;
-
-template <class UNIT1>
-using DEF = UNIT1 ;
 
 template <class...>
 trait REMOVE_REF_HELP ;
@@ -404,70 +497,172 @@ trait DEPENDENT_HELP<UNIT1 ,UNIT2 ,ALWAYS> {
 template <class UNIT1 ,class UNIT2>
 using DEPENDENT = typename DEPENDENT_HELP<UNIT1 ,UNIT2 ,ALWAYS>::RET ;
 
+#ifdef __CSC_CXX_LITE__
+template <class UNIT1>
+using csc_initializer_list = std::initializer_list<UNIT1> ;
+#endif
+
+#ifndef __CSC_CXX_LITE__
+template <class UNIT1>
+using csc_initializer_list = std::initializer_list<UNIT1> ;
+#endif
+
+#ifdef __CSC_CXX_LITE__
+template <class UNIT1>
+using csc_is_enum = ENUMAS<csc_bool_t ,ENUMID<(__is_enum (UNIT1))>> ;
+#endif
+
+#ifndef __CSC_CXX_LITE__
 template <class UNIT1>
 using csc_is_enum = ENUMAS<csc_bool_t ,ENUMID<(std::is_enum<UNIT1>::value)>> ;
+#endif
 
+#ifdef __CSC_CXX_LITE__
+template <class UNIT1>
+using csc_is_class = ENUMAS<csc_bool_t ,ENUMID<(__is_class (UNIT1))>> ;
+#endif
+
+#ifndef __CSC_CXX_LITE__
 template <class UNIT1>
 using csc_is_class = ENUMAS<csc_bool_t ,ENUMID<(std::is_class<UNIT1>::value)>> ;
+#endif
 
+#ifdef __CSC_CXX_LITE__
+template <class UNIT1>
+using csc_is_nothrow_constructible = ENUMAS<csc_bool_t ,ENUMID<(__is_nothrow_constructible (UNIT1))>> ;
+#endif
+
+#ifndef __CSC_CXX_LITE__
 template <class UNIT1>
 using csc_is_nothrow_constructible = ENUMAS<csc_bool_t ,ENUMID<(std::is_nothrow_constructible<UNIT1>::value)>> ;
+#endif
 
+#ifdef __CSC_CXX_LITE__
+template <class UNIT1>
+using csc_is_nothrow_destructible = ENUMAS<csc_bool_t ,ENUMID<(__is_nothrow_destructible (UNIT1))>> ;
+#endif
+
+#ifndef __CSC_CXX_LITE__
 template <class UNIT1>
 using csc_is_nothrow_destructible = ENUMAS<csc_bool_t ,ENUMID<(std::is_nothrow_destructible<UNIT1>::value)>> ;
+#endif
 
+#ifdef __CSC_CXX_LITE__
+template <class UNIT1>
+using csc_is_copy_constructible = ENUMAS<csc_bool_t ,ENUMID<(__is_constructible (UNIT1 ,CREF<UNIT1>))>> ;
+#endif
+
+#ifndef __CSC_CXX_LITE__
 template <class UNIT1>
 using csc_is_copy_constructible = ENUMAS<csc_bool_t ,ENUMID<(std::is_copy_constructible<UNIT1>::value)>> ;
+#endif
 
+#ifdef __CSC_CXX_LITE__
+template <class UNIT1>
+using csc_is_copy_assignable = ENUMAS<csc_bool_t ,ENUMID<(__is_assignable (VREF<UNIT1> ,CREF<UNIT1>))>> ;
+#endif
+
+#ifndef __CSC_CXX_LITE__
 template <class UNIT1>
 using csc_is_copy_assignable = ENUMAS<csc_bool_t ,ENUMID<(std::is_copy_assignable<UNIT1>::value)>> ;
+#endif
 
+#ifdef __CSC_CXX_LITE__
+template <class UNIT1>
+using csc_is_nothrow_move_constructible = ENUMAS<csc_bool_t ,ENUMID<(__is_nothrow_constructible (UNIT1 ,RREF<UNIT1>))>> ;
+#endif
+
+#ifndef __CSC_CXX_LITE__
 template <class UNIT1>
 using csc_is_nothrow_move_constructible = ENUMAS<csc_bool_t ,ENUMID<(std::is_nothrow_move_constructible<UNIT1>::value)>> ;
+#endif
 
+#ifdef __CSC_CXX_LITE__
+template <class UNIT1>
+using csc_is_nothrow_move_assignable = ENUMAS<csc_bool_t ,ENUMID<(__is_nothrow_assignable (VREF<UNIT1> ,RREF<UNIT1>))>> ;
+#endif
+
+#ifndef __CSC_CXX_LITE__
 template <class UNIT1>
 using csc_is_nothrow_move_assignable = ENUMAS<csc_bool_t ,ENUMID<(std::is_nothrow_move_assignable<UNIT1>::value)>> ;
+#endif
 
+#ifdef __CSC_CXX_LITE__
+template <class UNIT1>
+using csc_is_trivial = ENUMAS<csc_bool_t ,ENUMID<(__is_trivial (UNIT1))>> ;
+#endif
+
+#ifndef __CSC_CXX_LITE__
 template <class UNIT1>
 using csc_is_trivial = ENUMAS<csc_bool_t ,ENUMID<(std::is_trivial<UNIT1>::value)>> ;
+#endif
 
+#ifdef __CSC_CXX_LITE__
+template <class UNIT1>
+using csc_is_abstract = ENUMAS<csc_bool_t ,ENUMID<(__is_abstract (UNIT1))>> ;
+#endif
+
+#ifndef __CSC_CXX_LITE__
 template <class UNIT1>
 using csc_is_abstract = ENUMAS<csc_bool_t ,ENUMID<(std::is_abstract<UNIT1>::value)>> ;
+#endif
 
+#ifdef __CSC_CXX_LITE__
+template <class FROM ,class TO>
+using csc_is_base_of = ENUMAS<csc_bool_t ,ENUMID<(__is_base_of (FROM ,TO))>> ;
+#endif
+
+#ifndef __CSC_CXX_LITE__
 template <class FROM ,class TO>
 using csc_is_base_of = ENUMAS<csc_bool_t ,ENUMID<(std::is_base_of<FROM ,TO>::value)>> ;
+#endif
 
+#ifdef __CSC_CXX_LITE__
+template <class FROM ,class TO>
+using csc_is_convertible = ENUMAS<csc_bool_t ,ENUMID<(__is_convertible_to (FROM ,TO))>> ;
+#endif
+
+#ifndef __CSC_CXX_LITE__
 template <class FROM ,class TO>
 using csc_is_convertible = ENUMAS<csc_bool_t ,ENUMID<(std::is_convertible<FROM ,TO>::value)>> ;
-
-#ifdef __CSC_DEBUG__
-template <class UNIT1>
-using MACRO_DEBUG = DEPENDENT<ENUM_TRUE ,DEPENDENT<struct anonymous ,UNIT1>> ;
-#else
-template <class UNIT1>
-using MACRO_DEBUG = DEPENDENT<ENUM_FALSE ,DEPENDENT<struct anonymous ,UNIT1>> ;
 #endif
 
-#ifdef __CSC_UNITTEST__
+#ifdef __CSC_VER_DEBUG__
 template <class UNIT1>
-using MACRO_UNITTEST = DEPENDENT<ENUM_TRUE ,DEPENDENT<struct anonymous ,UNIT1>> ;
-#else
-template <class UNIT1>
-using MACRO_UNITTEST = DEPENDENT<ENUM_FALSE ,DEPENDENT<struct anonymous ,UNIT1>> ;
+using MACRO_VER_DEBUG = DEPENDENT<ENUM_TRUE ,DEPENDENT<struct anonymous ,UNIT1>> ;
 #endif
 
-#ifdef __CSC_RELEASE__
+#ifndef __CSC_VER_DEBUG__
 template <class UNIT1>
-using MACRO_RELEASE = DEPENDENT<ENUM_TRUE ,DEPENDENT<struct anonymous ,UNIT1>> ;
-#else
+using MACRO_VER_DEBUG = DEPENDENT<ENUM_FALSE ,DEPENDENT<struct anonymous ,UNIT1>> ;
+#endif
+
+#ifdef __CSC_VER_UNITTEST__
 template <class UNIT1>
-using MACRO_RELEASE = DEPENDENT<ENUM_FALSE ,DEPENDENT<struct anonymous ,UNIT1>> ;
+using MACRO_VER_UNITTEST = DEPENDENT<ENUM_TRUE ,DEPENDENT<struct anonymous ,UNIT1>> ;
+#endif
+
+#ifndef __CSC_VER_UNITTEST__
+template <class UNIT1>
+using MACRO_VER_UNITTEST = DEPENDENT<ENUM_FALSE ,DEPENDENT<struct anonymous ,UNIT1>> ;
+#endif
+
+#ifdef __CSC_VER_RELEASE__
+template <class UNIT1>
+using MACRO_VER_RELEASE = DEPENDENT<ENUM_TRUE ,DEPENDENT<struct anonymous ,UNIT1>> ;
+#endif
+
+#ifndef __CSC_VER_RELEASE__
+template <class UNIT1>
+using MACRO_VER_RELEASE = DEPENDENT<ENUM_FALSE ,DEPENDENT<struct anonymous ,UNIT1>> ;
 #endif
 
 #ifdef __CSC_COMPILER_MSVC__
 template <class UNIT1>
 using MACRO_COMPILER_MSVC = DEPENDENT<ENUM_TRUE ,DEPENDENT<struct anonymous ,UNIT1>> ;
-#else
+#endif
+
+#ifndef __CSC_COMPILER_MSVC__
 template <class UNIT1>
 using MACRO_COMPILER_MSVC = DEPENDENT<ENUM_FALSE ,DEPENDENT<struct anonymous ,UNIT1>> ;
 #endif
@@ -475,7 +670,9 @@ using MACRO_COMPILER_MSVC = DEPENDENT<ENUM_FALSE ,DEPENDENT<struct anonymous ,UN
 #ifdef __CSC_COMPILER_GNUC__
 template <class UNIT1>
 using MACRO_COMPILER_GNUC = DEPENDENT<ENUM_TRUE ,DEPENDENT<struct anonymous ,UNIT1>> ;
-#else
+#endif
+
+#ifndef __CSC_COMPILER_GNUC__
 template <class UNIT1>
 using MACRO_COMPILER_GNUC = DEPENDENT<ENUM_FALSE ,DEPENDENT<struct anonymous ,UNIT1>> ;
 #endif
@@ -483,7 +680,9 @@ using MACRO_COMPILER_GNUC = DEPENDENT<ENUM_FALSE ,DEPENDENT<struct anonymous ,UN
 #ifdef __CSC_COMPILER_CLANG__
 template <class UNIT1>
 using MACRO_COMPILER_CLANG = DEPENDENT<ENUM_TRUE ,DEPENDENT<struct anonymous ,UNIT1>> ;
-#else
+#endif
+
+#ifndef __CSC_COMPILER_CLANG__
 template <class UNIT1>
 using MACRO_COMPILER_CLANG = DEPENDENT<ENUM_FALSE ,DEPENDENT<struct anonymous ,UNIT1>> ;
 #endif
@@ -491,7 +690,9 @@ using MACRO_COMPILER_CLANG = DEPENDENT<ENUM_FALSE ,DEPENDENT<struct anonymous ,U
 #ifdef __CSC_SYSTEM_WINDOWS__
 template <class UNIT1>
 using MACRO_SYSTEM_WINDOWS = DEPENDENT<ENUM_TRUE ,DEPENDENT<struct anonymous ,UNIT1>> ;
-#else
+#endif
+
+#ifndef __CSC_SYSTEM_WINDOWS__
 template <class UNIT1>
 using MACRO_SYSTEM_WINDOWS = DEPENDENT<ENUM_FALSE ,DEPENDENT<struct anonymous ,UNIT1>> ;
 #endif
@@ -499,7 +700,9 @@ using MACRO_SYSTEM_WINDOWS = DEPENDENT<ENUM_FALSE ,DEPENDENT<struct anonymous ,U
 #ifdef __CSC_SYSTEM_LINUX__
 template <class UNIT1>
 using MACRO_SYSTEM_LINUX = DEPENDENT<ENUM_TRUE ,DEPENDENT<struct anonymous ,UNIT1>> ;
-#else
+#endif
+
+#ifndef __CSC_SYSTEM_LINUX__
 template <class UNIT1>
 using MACRO_SYSTEM_LINUX = DEPENDENT<ENUM_FALSE ,DEPENDENT<struct anonymous ,UNIT1>> ;
 #endif
@@ -507,7 +710,9 @@ using MACRO_SYSTEM_LINUX = DEPENDENT<ENUM_FALSE ,DEPENDENT<struct anonymous ,UNI
 #ifdef __CSC_PLATFORM_X86__
 template <class UNIT1>
 using MACRO_PLATFORM_X86 = DEPENDENT<ENUM_TRUE ,DEPENDENT<struct anonymous ,UNIT1>> ;
-#else
+#endif
+
+#ifndef __CSC_PLATFORM_X86__
 template <class UNIT1>
 using MACRO_PLATFORM_X86 = DEPENDENT<ENUM_FALSE ,DEPENDENT<struct anonymous ,UNIT1>> ;
 #endif
@@ -515,7 +720,9 @@ using MACRO_PLATFORM_X86 = DEPENDENT<ENUM_FALSE ,DEPENDENT<struct anonymous ,UNI
 #ifdef __CSC_PLATFORM_X64__
 template <class UNIT1>
 using MACRO_PLATFORM_X64 = DEPENDENT<ENUM_TRUE ,DEPENDENT<struct anonymous ,UNIT1>> ;
-#else
+#endif
+
+#ifndef __CSC_PLATFORM_X64__
 template <class UNIT1>
 using MACRO_PLATFORM_X64 = DEPENDENT<ENUM_FALSE ,DEPENDENT<struct anonymous ,UNIT1>> ;
 #endif
@@ -523,7 +730,9 @@ using MACRO_PLATFORM_X64 = DEPENDENT<ENUM_FALSE ,DEPENDENT<struct anonymous ,UNI
 #ifdef __CSC_PLATFORM_ARM__
 template <class UNIT1>
 using MACRO_PLATFORM_ARM = DEPENDENT<ENUM_TRUE ,DEPENDENT<struct anonymous ,UNIT1>> ;
-#else
+#endif
+
+#ifndef __CSC_PLATFORM_ARM__
 template <class UNIT1>
 using MACRO_PLATFORM_ARM = DEPENDENT<ENUM_FALSE ,DEPENDENT<struct anonymous ,UNIT1>> ;
 #endif
@@ -531,7 +740,9 @@ using MACRO_PLATFORM_ARM = DEPENDENT<ENUM_FALSE ,DEPENDENT<struct anonymous ,UNI
 #ifdef __CSC_PLATFORM_ARM64__
 template <class UNIT1>
 using MACRO_PLATFORM_ARM64 = DEPENDENT<ENUM_TRUE ,DEPENDENT<struct anonymous ,UNIT1>> ;
-#else
+#endif
+
+#ifndef __CSC_PLATFORM_ARM64__
 template <class UNIT1>
 using MACRO_PLATFORM_ARM64 = DEPENDENT<ENUM_FALSE ,DEPENDENT<struct anonymous ,UNIT1>> ;
 #endif
@@ -539,7 +750,9 @@ using MACRO_PLATFORM_ARM64 = DEPENDENT<ENUM_FALSE ,DEPENDENT<struct anonymous ,U
 #ifdef __CSC_TARGET_EXE__
 template <class UNIT1>
 using MACRO_TARGET_EXE = DEPENDENT<ENUM_TRUE ,DEPENDENT<struct anonymous ,UNIT1>> ;
-#else
+#endif
+
+#ifndef __CSC_TARGET_EXE__
 template <class UNIT1>
 using MACRO_TARGET_EXE = DEPENDENT<ENUM_FALSE ,DEPENDENT<struct anonymous ,UNIT1>> ;
 #endif
@@ -547,7 +760,9 @@ using MACRO_TARGET_EXE = DEPENDENT<ENUM_FALSE ,DEPENDENT<struct anonymous ,UNIT1
 #ifdef __CSC_TARGET_DLL__
 template <class UNIT1>
 using MACRO_TARGET_DLL = DEPENDENT<ENUM_TRUE ,DEPENDENT<struct anonymous ,UNIT1>> ;
-#else
+#endif
+
+#ifndef __CSC_TARGET_DLL__
 template <class UNIT1>
 using MACRO_TARGET_DLL = DEPENDENT<ENUM_FALSE ,DEPENDENT<struct anonymous ,UNIT1>> ;
 #endif
@@ -555,7 +770,9 @@ using MACRO_TARGET_DLL = DEPENDENT<ENUM_FALSE ,DEPENDENT<struct anonymous ,UNIT1
 #ifdef __CSC_TARGET_LIB__
 template <class UNIT1>
 using MACRO_TARGET_LIB = DEPENDENT<ENUM_TRUE ,DEPENDENT<struct anonymous ,UNIT1>> ;
-#else
+#endif
+
+#ifndef __CSC_TARGET_LIB__
 template <class UNIT1>
 using MACRO_TARGET_LIB = DEPENDENT<ENUM_FALSE ,DEPENDENT<struct anonymous ,UNIT1>> ;
 #endif
@@ -563,7 +780,9 @@ using MACRO_TARGET_LIB = DEPENDENT<ENUM_FALSE ,DEPENDENT<struct anonymous ,UNIT1
 #ifdef __CSC_CONFIG_VAL32__
 template <class UNIT1>
 using MACRO_CONFIG_VAL32 = DEPENDENT<ENUM_TRUE ,DEPENDENT<struct anonymous ,UNIT1>> ;
-#else
+#endif
+
+#ifndef __CSC_CONFIG_VAL32__
 template <class UNIT1>
 using MACRO_CONFIG_VAL32 = DEPENDENT<ENUM_FALSE ,DEPENDENT<struct anonymous ,UNIT1>> ;
 #endif
@@ -571,7 +790,9 @@ using MACRO_CONFIG_VAL32 = DEPENDENT<ENUM_FALSE ,DEPENDENT<struct anonymous ,UNI
 #ifdef __CSC_CONFIG_VAL64__
 template <class UNIT1>
 using MACRO_CONFIG_VAL64 = DEPENDENT<ENUM_TRUE ,DEPENDENT<struct anonymous ,UNIT1>> ;
-#else
+#endif
+
+#ifndef __CSC_CONFIG_VAL64__
 template <class UNIT1>
 using MACRO_CONFIG_VAL64 = DEPENDENT<ENUM_FALSE ,DEPENDENT<struct anonymous ,UNIT1>> ;
 #endif
@@ -579,7 +800,9 @@ using MACRO_CONFIG_VAL64 = DEPENDENT<ENUM_FALSE ,DEPENDENT<struct anonymous ,UNI
 #ifdef __CSC_CONFIG_STRA__
 template <class UNIT1>
 using MACRO_CONFIG_STRA = DEPENDENT<ENUM_TRUE ,DEPENDENT<struct anonymous ,UNIT1>> ;
-#else
+#endif
+
+#ifndef __CSC_CONFIG_STRA__
 template <class UNIT1>
 using MACRO_CONFIG_STRA = DEPENDENT<ENUM_FALSE ,DEPENDENT<struct anonymous ,UNIT1>> ;
 #endif
@@ -587,15 +810,19 @@ using MACRO_CONFIG_STRA = DEPENDENT<ENUM_FALSE ,DEPENDENT<struct anonymous ,UNIT
 #ifdef __CSC_CONFIG_STRW__
 template <class UNIT1>
 using MACRO_CONFIG_STRW = DEPENDENT<ENUM_TRUE ,DEPENDENT<struct anonymous ,UNIT1>> ;
-#else
+#endif
+
+#ifndef __CSC_CONFIG_STRW__
 template <class UNIT1>
 using MACRO_CONFIG_STRW = DEPENDENT<ENUM_FALSE ,DEPENDENT<struct anonymous ,UNIT1>> ;
 #endif
 
-#ifdef __CSC_STD_LATEST__
+#ifdef __CSC_CXX_LATEST__
 template <class UNIT1>
 using MACRO_STD_LATEST = DEPENDENT<ENUM_TRUE ,DEPENDENT<struct anonymous ,UNIT1>> ;
-#else
+#endif
+
+#ifndef __CSC_CXX_LATEST__
 template <class UNIT1>
 using MACRO_STD_LATEST = DEPENDENT<ENUM_FALSE ,DEPENDENT<struct anonymous ,UNIT1>> ;
 #endif
@@ -603,7 +830,7 @@ using MACRO_STD_LATEST = DEPENDENT<ENUM_FALSE ,DEPENDENT<struct anonymous ,UNIT1
 } ;
 
 template <class ARG1 ,class ARG2>
-inline CSC::U::DEF<void *> operator new (CSC::U::csc_byte64_t ,CSC::U::XREF<CSC::U::TEMPID<ARG1 ,ARG2> &> thiz_) noexcept {
+inline CSC::U::DEF<void *> operator new (CSC::U::csc_size_t ,CSC::U::XREF<CSC::U::TEMPID<ARG1 ,ARG2> &> thiz_) noexcept {
 	return (&thiz_) ;
 }
 

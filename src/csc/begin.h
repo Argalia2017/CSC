@@ -17,7 +17,8 @@
 #undef slice
 #undef assert
 #undef dynamic_assert
-#undef dynamic_watch
+#undef forceinline
+#undef unittest_watch
 #undef ifnot
 #undef ifswitch
 #undef discard

@@ -16,24 +16,17 @@ template <class...>
 trait BYTEREADER_HELP ;
 
 template <class...>
-trait BYTEREADER_HOLDER_HELP ;
+trait BYTEREADER_SUPER_HELP ;
 
 template <class...>
-trait BYTEREADER_DEFAULT_HELP ;
-
-template <class UNIT1>
-trait BYTEREADER_HOLDER_HELP<UNIT1 ,ALWAYS> {
-	using ByteReader = typename DEPENDENT<BYTEREADER_HELP<ALWAYS> ,UNIT1>::ByteReader ;
-
-	struct Binder implement Interface {
-		virtual void friend_read (VREF<ByteReader> reader) = 0 ;
-	} ;
-} ;
+trait BYTEREADER_BINDER_HELP ;
 
 template <>
-trait BYTEREADER_DEFAULT_HELP<ALWAYS> {
+trait BYTEREADER_SUPER_HELP<ALWAYS> {
 	class Attribute {
 	public:
+		implicit Attribute () = default ;
+
 		BYTE ending_item () const {
 			return BYTE (0X00) ;
 		}
@@ -41,8 +34,8 @@ trait BYTEREADER_DEFAULT_HELP<ALWAYS> {
 		BOOL is_big_endian () const {
 			return memorize ([&] () {
 				const auto r1x = WORD (0X00FF) ;
-				const auto r2x = bitwise (TYPEAS<PACK<ARR<BYTE ,SIZE_OF<WORD>>>>::id ,r1x) ;
-				if (r2x.mP1[0] != BYTE (0X00))
+				const auto r2x = Box<ARR<BYTE ,SIZE_OF<WORD>>>::make (r1x) ;
+				if (r2x.self[0] != BYTE (0X00))
 					return FALSE ;
 				return TRUE ;
 			}) ;
@@ -52,7 +45,10 @@ trait BYTEREADER_DEFAULT_HELP<ALWAYS> {
 
 template <>
 trait BYTEREADER_HELP<ALWAYS> {
-	using Attribute = typename BYTEREADER_DEFAULT_HELP<ALWAYS>::Attribute ;
+	using Attribute = typename BYTEREADER_SUPER_HELP<ALWAYS>::Attribute ;
+
+	template <class ARG1>
+	using MACRO_Binder = typename DEPENDENT<BYTEREADER_BINDER_HELP<ALWAYS> ,ARG1>::Binder ;
 
 	class ByteReader {
 	private:
@@ -77,8 +73,9 @@ trait BYTEREADER_HELP<ALWAYS> {
 			return mAttribute.self ;
 		}
 
-		CREF<RegBuffer<BYTE>> raw () const leftvalue {
-			return RegBuffer<BYTE>::from (mStream) ;
+		CREF<RegBuffer<BYTE>> raw (RREF<ConBuffer<BYTE>> where_ = ConBuffer<BYTE> ()) const leftvalue {
+			auto rax = CRef<ARR<BYTE>>::reference (mStream.self) ;
+			return RegBuffer<BYTE>::from (where_ ,move (rax) ,mStream.size ()) ;
 		}
 
 		void reset () {
@@ -105,7 +102,7 @@ trait BYTEREADER_HELP<ALWAYS> {
 		}
 
 		template <class ARG1>
-		REMOVE_ALL<ARG1> poll (XREF<ARG1> id) {
+		REMOVE_ALL<ARG1> poll (XREF<ARG1> id) leftvalue {
 			using R1X = REMOVE_ALL<ARG1> ;
 			R1X ret ;
 			read (ret) ;
@@ -123,14 +120,14 @@ trait BYTEREADER_HELP<ALWAYS> {
 		}
 
 		void read (VREF<BYTE> item) {
-			auto rax = TRUE ;
-			if ifswitch (rax) {
+			auto eax = TRUE ;
+			if ifswitch (eax) {
 				if (mRead >= mWrite)
 					discard ;
 				item = mStream[mRead] ;
 				mRead++ ;
 			}
-			if ifswitch (rax) {
+			if ifswitch (eax) {
 				item = attr.ending_item () ;
 			}
 		}
@@ -141,22 +138,22 @@ trait BYTEREADER_HELP<ALWAYS> {
 		}
 
 		void read (VREF<WORD> item) {
-			auto rax = TRUE ;
-			if ifswitch (rax) {
+			auto eax = TRUE ;
+			if ifswitch (eax) {
 				if ifnot (attr.is_big_endian ())
 					discard ;
-				auto rbx = PACK<ARR<BYTE ,SIZE_OF<WORD>>> () ;
+				auto rax = Box<ARR<BYTE ,SIZE_OF<WORD>>>::make () ;
 				for (auto &&i : iter (0 ,SIZE_OF<WORD>::value))
-					read (rbx.mP1[i]) ;
-				item = bitwise (TYPEAS<WORD>::id ,rbx) ;
+					read (rax.self[i]) ;
+				item = bitwise (TYPEAS<WORD>::id ,rax.self) ;
 			}
-			if ifswitch (rax) {
-				auto rbx = PACK<ARR<BYTE ,SIZE_OF<WORD>>> () ;
+			if ifswitch (eax) {
+				auto rax = Box<ARR<BYTE ,SIZE_OF<WORD>>>::make () ;
 				for (auto &&i : iter (0 ,SIZE_OF<WORD>::value)) {
 					INDEX ix = SIZE_OF<WORD>::value - 1 - i ;
-					read (rbx.mP1[ix]) ;
+					read (rax.self[ix]) ;
 				}
-				item = bitwise (TYPEAS<WORD>::id ,rbx) ;
+				item = bitwise (TYPEAS<WORD>::id ,rax.self) ;
 			}
 		}
 
@@ -166,22 +163,22 @@ trait BYTEREADER_HELP<ALWAYS> {
 		}
 
 		void read (VREF<CHAR> item) {
-			auto rax = TRUE ;
-			if ifswitch (rax) {
+			auto eax = TRUE ;
+			if ifswitch (eax) {
 				if ifnot (attr.is_big_endian ())
 					discard ;
-				auto rbx = PACK<ARR<BYTE ,SIZE_OF<CHAR>>> () ;
+				auto rax = Box<ARR<BYTE ,SIZE_OF<CHAR>>>::make () ;
 				for (auto &&i : iter (0 ,SIZE_OF<CHAR>::value))
-					read (rbx.mP1[i]) ;
-				item = bitwise (TYPEAS<CHAR>::id ,rbx) ;
+					read (rax.self[i]) ;
+				item = bitwise (TYPEAS<CHAR>::id ,rax.self) ;
 			}
-			if ifswitch (rax) {
-				auto rbx = PACK<ARR<BYTE ,SIZE_OF<CHAR>>> () ;
+			if ifswitch (eax) {
+				auto rax = Box<ARR<BYTE ,SIZE_OF<CHAR>>>::make () ;
 				for (auto &&i : iter (0 ,SIZE_OF<CHAR>::value)) {
 					INDEX ix = SIZE_OF<CHAR>::value - 1 - i ;
-					read (rbx.mP1[ix]) ;
+					read (rax.self[ix]) ;
 				}
-				item = bitwise (TYPEAS<CHAR>::id ,rbx) ;
+				item = bitwise (TYPEAS<CHAR>::id ,rax.self) ;
 			}
 		}
 
@@ -191,22 +188,22 @@ trait BYTEREADER_HELP<ALWAYS> {
 		}
 
 		void read (VREF<DATA> item) {
-			auto rax = TRUE ;
-			if ifswitch (rax) {
+			auto eax = TRUE ;
+			if ifswitch (eax) {
 				if ifnot (attr.is_big_endian ())
 					discard ;
-				auto rbx = PACK<ARR<BYTE ,SIZE_OF<DATA>>> () ;
+				auto rax = Box<ARR<BYTE ,SIZE_OF<DATA>>>::make () ;
 				for (auto &&i : iter (0 ,SIZE_OF<DATA>::value))
-					read (rbx.mP1[i]) ;
-				item = bitwise (TYPEAS<DATA>::id ,rbx) ;
+					read (rax.self[i]) ;
+				item = bitwise (TYPEAS<DATA>::id ,rax.self) ;
 			}
-			if ifswitch (rax) {
-				auto rbx = PACK<ARR<BYTE ,SIZE_OF<DATA>>> () ;
+			if ifswitch (eax) {
+				auto rax = Box<ARR<BYTE ,SIZE_OF<DATA>>>::make () ;
 				for (auto &&i : iter (0 ,SIZE_OF<DATA>::value)) {
 					INDEX ix = SIZE_OF<DATA>::value - 1 - i ;
-					read (rbx.mP1[ix]) ;
+					read (rax.self[ix]) ;
 				}
-				item = bitwise (TYPEAS<DATA>::id ,rbx) ;
+				item = bitwise (TYPEAS<DATA>::id ,rax.self) ;
 			}
 		}
 
@@ -336,15 +333,24 @@ trait BYTEREADER_HELP<ALWAYS> {
 		}
 
 		template <class ARG1 = void>
-		void read (VREF<typename DEPENDENT<BYTEREADER_HOLDER_HELP<void ,ALWAYS> ,ARG1>::Binder> item) {
+		void read (VREF<MACRO_Binder<ARG1>> item) {
 			item.friend_read (thiz) ;
 		}
 
 		template <class ARG1 = void>
-		inline VREF<ByteReader> operator>> (VREF<typename DEPENDENT<BYTEREADER_HOLDER_HELP<void ,ALWAYS> ,ARG1>::Binder> item) {
+		inline VREF<ByteReader> operator>> (VREF<MACRO_Binder<ARG1>> item) {
 			read (item) ;
 			return thiz ;
 		}
+	} ;
+} ;
+
+template <>
+trait BYTEREADER_BINDER_HELP<ALWAYS> {
+	using ByteReader = typename BYTEREADER_HELP<ALWAYS>::ByteReader ;
+
+	struct Binder implement Interface {
+		virtual void friend_read (VREF<ByteReader> reader) = 0 ;
 	} ;
 } ;
 
@@ -354,13 +360,13 @@ template <class...>
 trait BYTEWRITER_HELP ;
 
 template <class...>
-trait BYTEWRITER_HOLDER_HELP ;
+trait BYTEWRITER_BINDER_HELP ;
 
 template <class...>
-trait BYTEWRITER_DEFAULT_HELP ;
+trait BYTEWRITER_SUPER_HELP ;
 
 template <class UNIT1>
-trait BYTEWRITER_HOLDER_HELP<UNIT1 ,ALWAYS> {
+trait BYTEWRITER_BINDER_HELP<UNIT1 ,ALWAYS> {
 	using ByteWriter = typename DEPENDENT<BYTEWRITER_HELP<ALWAYS> ,UNIT1>::ByteWriter ;
 
 	struct Binder implement Interface {
@@ -369,14 +375,16 @@ trait BYTEWRITER_HOLDER_HELP<UNIT1 ,ALWAYS> {
 } ;
 
 template <>
-trait BYTEWRITER_DEFAULT_HELP<ALWAYS> {
+trait BYTEWRITER_SUPER_HELP<ALWAYS> {
 	class Attribute {
 	public:
+		implicit Attribute () = default ;
+
 		BOOL is_big_endian () const {
 			return memorize ([&] () {
 				const auto r1x = WORD (0X00FF) ;
-				const auto r2x = bitwise (TYPEAS<PACK<ARR<BYTE ,SIZE_OF<WORD>>>>::id ,r1x) ;
-				if (r2x.mP1[0] != BYTE (0X00))
+				const auto r2x = Box<ARR<BYTE ,SIZE_OF<WORD>>>::make (r1x) ;
+				if (r2x.self[0] != BYTE (0X00))
 					return FALSE ;
 				return TRUE ;
 			}) ;
@@ -386,7 +394,10 @@ trait BYTEWRITER_DEFAULT_HELP<ALWAYS> {
 
 template <>
 trait BYTEWRITER_HELP<ALWAYS> {
-	using Attribute = typename BYTEWRITER_DEFAULT_HELP<ALWAYS>::Attribute ;
+	using Attribute = typename BYTEWRITER_SUPER_HELP<ALWAYS>::Attribute ;
+
+	template <class ARG1>
+	using MACRO_Binder = typename DEPENDENT<BYTEWRITER_BINDER_HELP<ALWAYS> ,ARG1>::Binder ;
 
 	class ByteWriter {
 	private:
@@ -411,8 +422,9 @@ trait BYTEWRITER_HELP<ALWAYS> {
 			return mAttribute.self ;
 		}
 
-		CREF<RegBuffer<BYTE>> raw () const leftvalue {
-			return RegBuffer<BYTE>::from (mStream) ;
+		CREF<RegBuffer<BYTE>> raw (RREF<ConBuffer<BYTE>> where_ = ConBuffer<BYTE> ()) const leftvalue {
+			auto rax = CRef<ARR<BYTE>>::reference (mStream.self) ;
+			return RegBuffer<BYTE>::from (where_ ,move (rax) ,mStream.size ()) ;
 		}
 
 		void reset () {
@@ -463,19 +475,19 @@ trait BYTEWRITER_HELP<ALWAYS> {
 		}
 
 		void write (CREF<WORD> item) {
-			auto rax = TRUE ;
-			if ifswitch (rax) {
+			auto eax = TRUE ;
+			if ifswitch (eax) {
 				if ifnot (attr.is_big_endian ())
 					discard ;
-				const auto r1x = bitwise (TYPEAS<PACK<ARR<BYTE ,SIZE_OF<WORD>>>>::id ,item) ;
+				const auto r1x = Box<ARR<BYTE ,SIZE_OF<WORD>>>::make (item) ;
 				for (auto &&i : iter (0 ,SIZE_OF<WORD>::value))
-					write (r1x.mP1[i]) ;
+					write (r1x.self[i]) ;
 			}
-			if ifswitch (rax) {
-				const auto r2x = bitwise (TYPEAS<PACK<ARR<BYTE ,SIZE_OF<WORD>>>>::id ,item) ;
+			if ifswitch (eax) {
+				const auto r2x = Box<ARR<BYTE ,SIZE_OF<WORD>>>::make (item) ;
 				for (auto &&i : iter (0 ,SIZE_OF<WORD>::value)) {
 					INDEX ix = SIZE_OF<WORD>::value - 1 - i ;
-					write (r2x.mP1[ix]) ;
+					write (r2x.self[ix]) ;
 				}
 			}
 		}
@@ -486,19 +498,19 @@ trait BYTEWRITER_HELP<ALWAYS> {
 		}
 
 		void write (CREF<CHAR> item) {
-			auto rax = TRUE ;
-			if ifswitch (rax) {
+			auto eax = TRUE ;
+			if ifswitch (eax) {
 				if ifnot (attr.is_big_endian ())
 					discard ;
-				const auto r1x = bitwise (TYPEAS<PACK<ARR<BYTE ,SIZE_OF<CHAR>>>>::id ,item) ;
+				const auto r1x = Box<ARR<BYTE ,SIZE_OF<CHAR>>>::make (item) ;
 				for (auto &&i : iter (0 ,SIZE_OF<CHAR>::value))
-					write (r1x.mP1[i]) ;
+					write (r1x.self[i]) ;
 			}
-			if ifswitch (rax) {
-				const auto r2x = bitwise (TYPEAS<PACK<ARR<BYTE ,SIZE_OF<CHAR>>>>::id ,item) ;
+			if ifswitch (eax) {
+				const auto r2x = Box<ARR<BYTE ,SIZE_OF<CHAR>>>::make (item) ;
 				for (auto &&i : iter (0 ,SIZE_OF<CHAR>::value)) {
 					INDEX ix = SIZE_OF<CHAR>::value - 1 - i ;
-					write (r2x.mP1[ix]) ;
+					write (r2x.self[ix]) ;
 				}
 			}
 		}
@@ -509,19 +521,19 @@ trait BYTEWRITER_HELP<ALWAYS> {
 		}
 
 		void write (CREF<DATA> item) {
-			auto rax = TRUE ;
-			if ifswitch (rax) {
+			auto eax = TRUE ;
+			if ifswitch (eax) {
 				if ifnot (attr.is_big_endian ())
 					discard ;
-				const auto r1x = bitwise (TYPEAS<PACK<ARR<BYTE ,SIZE_OF<DATA>>>>::id ,item) ;
+				const auto r1x = Box<ARR<BYTE ,SIZE_OF<DATA>>>::make (item) ;
 				for (auto &&i : iter (0 ,SIZE_OF<DATA>::value))
-					write (r1x.mP1[i]) ;
+					write (r1x.self[i]) ;
 			}
-			if ifswitch (rax) {
-				const auto r2x = bitwise (TYPEAS<PACK<ARR<BYTE ,SIZE_OF<DATA>>>>::id ,item) ;
+			if ifswitch (eax) {
+				const auto r2x = Box<ARR<BYTE ,SIZE_OF<DATA>>>::make (item) ;
 				for (auto &&i : iter (0 ,SIZE_OF<DATA>::value)) {
 					INDEX ix = SIZE_OF<DATA>::value - 1 - i ;
-					write (r2x.mP1[ix]) ;
+					write (r2x.self[ix]) ;
 				}
 			}
 		}
@@ -632,12 +644,12 @@ trait BYTEWRITER_HELP<ALWAYS> {
 		}
 
 		template <class ARG1 = void>
-		void write (VREF<typename DEPENDENT<BYTEWRITER_HOLDER_HELP<void ,ALWAYS> ,ARG1>::Binder> item) {
+		void write (VREF<MACRO_Binder<ARG1>> item) {
 			item.friend_write (thiz) ;
 		}
 
 		template <class ARG1 = void>
-		inline VREF<ByteWriter> operator<< (VREF<typename DEPENDENT<BYTEWRITER_HOLDER_HELP<void ,ALWAYS> ,ARG1>::Binder> item) {
+		inline VREF<ByteWriter> operator<< (VREF<MACRO_Binder<ARG1>> item) {
 			write (item) ;
 			return thiz ;
 		}
@@ -650,24 +662,17 @@ template <class...>
 trait TEXTREADER_HELP ;
 
 template <class...>
-trait TEXTREADER_HOLDER_HELP ;
+trait TEXTREADER_SUPER_HELP ;
 
 template <class...>
-trait TEXTREADER_DEFAULT_HELP ;
-
-template <class UNIT1>
-trait TEXTREADER_HOLDER_HELP<UNIT1 ,ALWAYS> {
-	using TextReader = typename DEPENDENT<TEXTREADER_HELP<ALWAYS> ,UNIT1>::TextReader ;
-
-	struct Binder implement Interface {
-		virtual void friend_read (VREF<TextReader> reader) = 0 ;
-	} ;
-} ;
+trait TEXTREADER_BINDER_HELP ;
 
 template <class ITEM>
-trait TEXTREADER_DEFAULT_HELP<ITEM ,REQUIRE<IS_STR<ITEM>>> {
+trait TEXTREADER_SUPER_HELP<ITEM ,REQUIRE<IS_STR<ITEM>>> {
 	class Attribute {
 	public:
+		implicit Attribute () = default ;
+
 		ITEM ending_item () const {
 			return ITEM (0) ;
 		}
@@ -702,7 +707,7 @@ trait TEXTREADER_DEFAULT_HELP<ITEM ,REQUIRE<IS_STR<ITEM>>> {
 			return 19 ;
 		}
 
-		LENGTH float_exp10_max () const {
+		LENGTH float_precision () const {
 			return 1024 ;
 		}
 	} ;
@@ -710,7 +715,11 @@ trait TEXTREADER_DEFAULT_HELP<ITEM ,REQUIRE<IS_STR<ITEM>>> {
 
 template <class ITEM>
 trait TEXTREADER_HELP<ITEM ,REQUIRE<IS_STR<ITEM>>> {
-	using Attribute = typename TEXTREADER_DEFAULT_HELP<ITEM ,ALWAYS>::Attribute ;
+	using NOTATION = typename FLOATPROC_HELP<ALWAYS>::NOTATION ;
+	using Attribute = typename TEXTREADER_SUPER_HELP<ITEM ,ALWAYS>::Attribute ;
+
+	template <class ARG1>
+	using MACRO_Binder = typename DEPENDENT<TEXTREADER_BINDER_HELP<ITEM ,ALWAYS> ,ARG1>::Binder ;
 
 	class TextReader {
 	private:
@@ -734,8 +743,9 @@ trait TEXTREADER_HELP<ITEM ,REQUIRE<IS_STR<ITEM>>> {
 			return mAttribute.self ;
 		}
 
-		CREF<RegBuffer<BYTE>> raw () const leftvalue {
-			return RegBuffer<BYTE>::from (mStream) ;
+		CREF<RegBuffer<ITEM>> raw (RREF<ConBuffer<ITEM>> where_ = ConBuffer<ITEM> ()) const leftvalue {
+			auto rax = CRef<ARR<ITEM>>::reference (mStream.self) ;
+			return RegBuffer<ITEM>::from (where_ ,move (rax) ,mStream.size ()) ;
 		}
 
 		void reset () {
@@ -762,7 +772,7 @@ trait TEXTREADER_HELP<ITEM ,REQUIRE<IS_STR<ITEM>>> {
 		}
 
 		template <class ARG1>
-		REMOVE_ALL<ARG1> poll (XREF<ARG1> id) {
+		REMOVE_ALL<ARG1> poll (XREF<ARG1> id) leftvalue {
 			using R1X = REMOVE_ALL<ARG1> ;
 			R1X ret ;
 			read (ret) ;
@@ -780,14 +790,14 @@ trait TEXTREADER_HELP<ITEM ,REQUIRE<IS_STR<ITEM>>> {
 		}
 
 		void read (VREF<ITEM> item) {
-			auto rax = TRUE ;
-			if ifswitch (rax) {
+			auto eax = TRUE ;
+			if ifswitch (eax) {
 				if (mRead >= mWrite)
 					discard ;
 				item = mStream[mRead] ;
 				mRead++ ;
 			}
-			if ifswitch (rax) {
+			if ifswitch (eax) {
 				item = attr.ending_item () ;
 			}
 		}
@@ -800,8 +810,8 @@ trait TEXTREADER_HELP<ITEM ,REQUIRE<IS_STR<ITEM>>> {
 		void read (VREF<BOOL> item) {
 			auto rax = ITEM () ;
 			read (rax) ;
-			auto rbx = TRUE ;
-			if ifswitch (rbx) {
+			auto eax = TRUE ;
+			if ifswitch (eax) {
 				if (rax != ITEM ('t'))
 					discard ;
 				read (rax) ;
@@ -812,7 +822,7 @@ trait TEXTREADER_HELP<ITEM ,REQUIRE<IS_STR<ITEM>>> {
 				dynamic_assert (rax == ITEM ('e')) ;
 				item = TRUE ;
 			}
-			if ifswitch (rbx) {
+			if ifswitch (eax) {
 				if (rax != ITEM ('f'))
 					discard ;
 				read (rax) ;
@@ -825,7 +835,7 @@ trait TEXTREADER_HELP<ITEM ,REQUIRE<IS_STR<ITEM>>> {
 				dynamic_assert (rax == ITEM ('e')) ;
 				item = FALSE ;
 			}
-			if ifswitch (rbx) {
+			if ifswitch (eax) {
 				if (rax != ITEM ('T'))
 					discard ;
 				read (rax) ;
@@ -836,7 +846,7 @@ trait TEXTREADER_HELP<ITEM ,REQUIRE<IS_STR<ITEM>>> {
 				dynamic_assert (rax == ITEM ('E')) ;
 				item = TRUE ;
 			}
-			if ifswitch (rbx) {
+			if ifswitch (eax) {
 				if (rax != ITEM ('F'))
 					discard ;
 				read (rax) ;
@@ -849,7 +859,7 @@ trait TEXTREADER_HELP<ITEM ,REQUIRE<IS_STR<ITEM>>> {
 				dynamic_assert (rax == ITEM ('E')) ;
 				item = FALSE ;
 			}
-			if ifswitch (rbx) {
+			if ifswitch (eax) {
 				dynamic_assert (FALSE) ;
 			}
 		}
@@ -874,15 +884,41 @@ trait TEXTREADER_HELP<ITEM ,REQUIRE<IS_STR<ITEM>>> {
 		void read (VREF<VAL64> item) {
 			auto rax = ITEM () ;
 			read (rax) ;
-			const auto r1x = rax == ITEM ('-') ;
+			const auto r1x = BOOL (rax == ITEM ('-')) ;
 			if ifswitch (TRUE) {
 				if (rax != ITEM ('-'))
 					if (rax != ITEM ('+'))
 						discard ;
 				read (rax) ;
 			}
-			dynamic_assert (attr.is_number (rax)) ;
-			read_value (item ,rax) ;
+			auto eax = TRUE ;
+			if ifswitch (eax) {
+				if (rax != ITEM ('a'))
+					discard ;
+				read (rax) ;
+				dynamic_assert (rax == ITEM ('b')) ;
+				read (rax) ;
+				dynamic_assert (rax == ITEM ('s')) ;
+				item = VAL64_ABS ;
+			}
+			if ifswitch (eax) {
+				if (rax != ITEM ('A'))
+					discard ;
+				read (rax) ;
+				dynamic_assert (rax == ITEM ('B')) ;
+				read (rax) ;
+				dynamic_assert (rax == ITEM ('S')) ;
+				item = VAL64_ABS ;
+			}
+			if ifswitch (eax) {
+				dynamic_assert (attr.is_number (rax)) ;
+				auto rbx = NOTATION () ;
+				rbx.mRadix = 10 ;
+				rbx.mSign = FALSE ;
+				rbx.mPrecision = 0 ;
+				read_value (rbx ,rax) ;
+				item = rbx.mMantissa ;
+			}
 			if ifswitch (TRUE) {
 				if ifnot (r1x)
 					discard ;
@@ -910,15 +946,15 @@ trait TEXTREADER_HELP<ITEM ,REQUIRE<IS_STR<ITEM>>> {
 		void read (VREF<DOUBLE> item) {
 			auto rax = ITEM () ;
 			read (rax) ;
-			const auto r1x = rax == ITEM ('-') ;
+			const auto r1x = BOOL (rax == ITEM ('-')) ;
 			if ifswitch (TRUE) {
 				if (rax != ITEM ('-'))
 					if (rax != ITEM ('+'))
 						discard ;
 				read (rax) ;
 			}
-			auto rbx = TRUE ;
-			if ifswitch (rbx) {
+			auto eax = TRUE ;
+			if ifswitch (eax) {
 				if (rax != ITEM ('i'))
 					discard ;
 				read (rax) ;
@@ -927,7 +963,7 @@ trait TEXTREADER_HELP<ITEM ,REQUIRE<IS_STR<ITEM>>> {
 				dynamic_assert (rax == ITEM ('f')) ;
 				item = DOUBLE_INF ;
 			}
-			if ifswitch (rbx) {
+			if ifswitch (eax) {
 				if (rax != ITEM ('I'))
 					discard ;
 				read (rax) ;
@@ -936,12 +972,15 @@ trait TEXTREADER_HELP<ITEM ,REQUIRE<IS_STR<ITEM>>> {
 				dynamic_assert (rax == ITEM ('F')) ;
 				item = DOUBLE_INF ;
 			}
-			if ifswitch (rbx) {
+			if ifswitch (eax) {
 				dynamic_assert (attr.is_number (rax)) ;
-				auto rcx = ARRAY3<VAL64> () ;
-				read_float (rcx ,rax) ;
-				rcx = FloatProc::instance ().exp2_from_exp10 (rcx) ;
-				item = FloatProc::instance ().encode (rcx) ;
+				auto rbx = NOTATION () ;
+				rbx.mRadix = 10 ;
+				rbx.mSign = FALSE ;
+				rbx.mPrecision = 0 ;
+				read_float (rbx ,rax) ;
+				rbx = FloatProc::exp2_from_exp10 (rbx) ;
+				item = FloatProc::encode (rbx) ;
 			}
 			if ifswitch (TRUE) {
 				if ifnot (r1x)
@@ -1027,67 +1066,70 @@ trait TEXTREADER_HELP<ITEM ,REQUIRE<IS_STR<ITEM>>> {
 			return thiz ;
 		}
 
+		void read (CREF<Slice<ITEM>> item) {
+			auto rax = ITEM () ;
+			for (auto &&i : iter (0 ,item.size ())) {
+				read (rax) ;
+				dynamic_assert (rax == item[i]) ;
+			}
+		}
+
+		inline VREF<TextReader> operator>> (CREF<Slice<ITEM>> item) {
+			read (item) ;
+			return thiz ;
+		}
+
 		template <class ARG1 = void>
-		void read (VREF<typename DEPENDENT<TEXTREADER_HOLDER_HELP<void ,ALWAYS> ,ARG1>::Binder> item) {
+		void read (VREF<MACRO_Binder<ARG1>> item) {
 			item.friend_read (thiz) ;
 		}
 
 		template <class ARG1 = void>
-		inline VREF<TextReader> operator>> (VREF<typename DEPENDENT<TEXTREADER_HOLDER_HELP<void ,ALWAYS> ,ARG1>::Binder> item) {
+		inline VREF<TextReader> operator>> (VREF<MACRO_Binder<ARG1>> item) {
 			read (item) ;
 			return thiz ;
 		}
 
 	private:
-		void read_value (VREF<VAL64> item ,VREF<ITEM> top) {
-			auto rax = attr.value_precision () ;
-			item = attr.hex_from_str (top) ;
-			rax-- ;
-			while (TRUE) {
-				backup () ;
-				read (top) ;
-				if ifnot (attr.is_number (top))
-					break ;
-				if (rax <= 0)
-					break ;
-				item *= 10 ;
-				item += attr.hex_from_str (top) ;
-				rax-- ;
-			}
-			dynamic_assert (rax > 0) ;
-			recover () ;
-		}
-
-		void read_float (VREF<ARRAY3<VAL64>> fexp10 ,VREF<ITEM> top) {
-			auto rax = attr.value_precision () ;
-			const auto r1x = rax - attr.float_exp10_max () ;
-			fexp10[0] = attr.hex_from_str (top) ;
-			fexp10[1] = 0 ;
-			fexp10[2] = 1 ;
-			rax-- ;
+		void read_value (VREF<NOTATION> fexp10 ,VREF<ITEM> top) {
+			assert (fexp10.mRadix == 10) ;
+			const auto r100x = attr.value_precision () ;
+			const auto r101x = attr.float_precision () ;
+			fexp10.mMantissa = attr.hex_from_str (top) ;
+			fexp10.mPrecision++ ;
+			fexp10.mExponent = 0 ;
 			if ifswitch (TRUE) {
 				while (TRUE) {
 					backup () ;
 					read (top) ;
 					if ifnot (attr.is_number (top))
 						break ;
-					if (rax <= 0)
+					if (fexp10.mPrecision > r100x)
 						break ;
-					fexp10[0] *= 10 ;
-					fexp10[0] += attr.hex_from_str (top) ;
-					rax-- ;
+					fexp10.mMantissa *= 10 ;
+					fexp10.mMantissa += attr.hex_from_str (top) ;
+					fexp10.mPrecision++ ;
 				}
 				while (TRUE) {
 					if ifnot (attr.is_number (top))
 						break ;
-					if (rax <= r1x)
+					if (fexp10.mPrecision > r101x)
 						break ;
-					fexp10[1]++ ;
-					rax-- ;
+					fexp10.mExponent++ ;
+					fexp10.mPrecision++ ;
 					backup () ;
 					read (top) ;
 				}
 			}
+			dynamic_assert (fexp10.mPrecision <= r100x) ;
+			recover () ;
+		}
+
+		void read_float (VREF<NOTATION> fexp10 ,VREF<ITEM> top) {
+			assert (fexp10.mRadix == 10) ;
+			const auto r101x = attr.float_precision () ;
+			read_value (fexp10 ,top) ;
+			read (top) ;
 			if ifswitch (TRUE) {
 				if (top != ITEM ('.'))
 					discard ;
@@ -1097,12 +1139,12 @@ trait TEXTREADER_HELP<ITEM ,REQUIRE<IS_STR<ITEM>>> {
 					read (top) ;
 					if ifnot (attr.is_number (top))
 						break ;
-					if (rax <= 0)
+					if (fexp10 > r101x)
 						break ;
-					fexp10[0] *= 10 ;
-					fexp10[0] += attr.hex_from_str (top) ;
-					fexp10[1]-- ;
-					rax-- ;
+					fexp10.mMantissa *= 10 ;
+					fexp10.mMantissa += attr.hex_from_str (top) ;
+					fexp10.mExponent-- ;
+					fexp10.mPrecision++ ;
 				}
 				while (TRUE) {
 					if ifnot (attr.is_number (top))
@@ -1120,37 +1162,42 @@ trait TEXTREADER_HELP<ITEM ,REQUIRE<IS_STR<ITEM>>> {
 				dynamic_assert (attr.is_number (top)) ;
 				auto rbx = ZERO ;
 				read_value (rbx ,top) ;
-				dynamic_assert (MathProc::abs (rbx) < attr.float_exp10_max ()) ;
-				fexp10[1] += rbx ;
-				dynamic_assert (MathProc::abs (fexp10[1]) < attr.float_exp10_max ()) ;
+				dynamic_assert (MathProc::abs (rbx) < attr.float_precision ()) ;
+				fexp10.mExponent += rbx ;
+				dynamic_assert (MathProc::abs (fexp10.mExponent) < attr.float_precision ()) ;
 			}
 			recover () ;
 		}
 	} ;
 } ;
 
-template <class...>
-trait TEXTWRITER_HELP ;
-
-template <class...>
-trait TEXTWRITER_HOLDER_HELP ;
-
-template <class...>
-trait TEXTWRITER_DEFAULT_HELP ;
-
-template <class UNIT1>
-trait TEXTWRITER_HOLDER_HELP<UNIT1 ,ALWAYS> {
-	using TextWriter = typename DEPENDENT<TEXTWRITER_HELP<ALWAYS> ,UNIT1>::TextWriter ;
+template <class ITEM>
+trait TEXTREADER_BINDER_HELP<ITEM ,ALWAYS> {
+	using TextReader = typename TEXTREADER_HELP<ITEM ,ALWAYS>::TextReader ;
 
 	struct Binder implement Interface {
-		virtual void friend_write (VREF<TextWriter> writer) = 0 ;
+		virtual void friend_read (VREF<TextReader> reader) = 0 ;
 	} ;
 } ;
 
 template <class ITEM>
-trait TEXTWRITER_DEFAULT_HELP<ITEM ,REQUIRE<IS_STR<ITEM>>> {
+using TextReader = typename TEXTREADER_HELP<ITEM ,ALWAYS>::TextReader ;
+
+template <class...>
+trait TEXTWRITER_HELP ;
+
+template <class...>
+trait TEXTWRITER_SUPER_HELP ;
+
+template <class...>
+trait TEXTWRITER_BINDER_HELP ;
+
+template <class ITEM>
+trait TEXTWRITER_SUPER_HELP<ITEM ,REQUIRE<IS_STR<ITEM>>> {
 	class Attribute {
 	public:
+		implicit Attribute () = default ;
+
 		ITEM ending_item () const {
 			return ITEM (0) ;
 		}
@@ -1169,21 +1216,21 @@ trait TEXTWRITER_DEFAULT_HELP<ITEM ,REQUIRE<IS_STR<ITEM>>> {
 			return bad (TYPEAS<ITEM>::id) ;
 		}
 
-		LENGTH value_precision () const {
-			return 19 ;
-		}
-
 		LENGTH float_precision () const {
-			return 13 ;
+			return 15 ;
 		}
 	} ;
 } ;
 
 template <class ITEM>
 trait TEXTWRITER_HELP<ITEM ,REQUIRE<IS_STR<ITEM>>> {
-	using Attribute = typename TEXTWRITER_DEFAULT_HELP<ITEM ,ALWAYS>::Attribute ;
+	using NOTATION = typename FLOATPROC_HELP<ALWAYS>::NOTATION ;
+	using Attribute = typename TEXTWRITER_SUPER_HELP<ITEM ,ALWAYS>::Attribute ;
 
-	using NUMBER_SIZE = ENUMAS<VAL ,ENUMID<(64)>> ;
+	template <class ARG1>
+	using MACRO_Binder = typename DEPENDENT<TEXTWRITER_BINDER_HELP<ITEM ,ALWAYS> ,ARG1>::Binder ;
+
+	using NUMBER_SIZE = ENUMAS<VAL ,ENUMID<64>> ;
 
 	class TextWriter {
 	private:
@@ -1208,8 +1255,9 @@ trait TEXTWRITER_HELP<ITEM ,REQUIRE<IS_STR<ITEM>>> {
 			return mAttribute.self ;
 		}
 
-		CREF<RegBuffer<BYTE>> raw () const leftvalue {
-			return RegBuffer<BYTE>::from (mStream) ;
+		CREF<RegBuffer<ITEM>> raw (RREF<ConBuffer<ITEM>> where_ = ConBuffer<ITEM> ()) const leftvalue {
+			auto rax = CRef<ARR<ITEM>>::reference (mStream.self) ;
+			return RegBuffer<ITEM>::from (where_ ,move (rax) ,mStream.size ()) ;
 		}
 
 		void reset () {
@@ -1260,8 +1308,8 @@ trait TEXTWRITER_HELP<ITEM ,REQUIRE<IS_STR<ITEM>>> {
 		}
 
 		void write (CREF<BOOL> item) {
-			auto rax = TRUE ;
-			if ifswitch (rax) {
+			auto eax = TRUE ;
+			if ifswitch (eax) {
 				if ifnot (item)
 					discard ;
 				write (attr.lower_upper_cast (ITEM ('t'))) ;
@@ -1269,7 +1317,7 @@ trait TEXTWRITER_HELP<ITEM ,REQUIRE<IS_STR<ITEM>>> {
 				write (attr.lower_upper_cast (ITEM ('u'))) ;
 				write (attr.lower_upper_cast (ITEM ('e'))) ;
 			}
-			if ifswitch (rax) {
+			if ifswitch (eax) {
 				write (attr.lower_upper_cast (ITEM ('f'))) ;
 				write (attr.lower_upper_cast (ITEM ('a'))) ;
 				write (attr.lower_upper_cast (ITEM ('l'))) ;
@@ -1298,12 +1346,27 @@ trait TEXTWRITER_HELP<ITEM ,REQUIRE<IS_STR<ITEM>>> {
 					discard ;
 				write (ITEM ('-')) ;
 			}
-			auto rbx = BoxBuffer<ITEM ,NUMBER_SIZE> (0) ;
-			INDEX ix = rbx.size () ;
-			auto rcx = MathProc::abs (item) ;
-			write_value (rcx ,rbx ,ix) ;
-			for (auto &&i : iter (ix ,rbx.size ()))
-				write (rbx[i]) ;
+			auto eax = TRUE ;
+			if ifswitch (eax) {
+				if (item != VAL64_ABS)
+					discard ;
+				write (attr.lower_upper_cast (ITEM ('a'))) ;
+				write (attr.lower_upper_cast (ITEM ('b'))) ;
+				write (attr.lower_upper_cast (ITEM ('s'))) ;
+			}
+			if ifswitch (eax) {
+				auto rbx = BoxBuffer<ITEM ,NUMBER_SIZE> (0) ;
+				INDEX ix = rbx.size () ;
+				auto rcx = NOTATION () ;
+				rcx.mRadix = 10 ;
+				rcx.mSign = FALSE ;
+				rcx.mPrecision = 0 ;
+				rcx.mMantissa = MathProc::abs (item) ;
+				rcx.mExponent = 0 ;
+				write_value (rcx ,rbx ,ix) ;
+				for (auto &&i : iter (ix ,rbx.size ()))
+					write (rbx[i]) ;
+			}
 		}
 
 		inline VREF<TextWriter> operator<< (CREF<VAL64> item) {
@@ -1326,19 +1389,19 @@ trait TEXTWRITER_HELP<ITEM ,REQUIRE<IS_STR<ITEM>>> {
 					discard ;
 				write (ITEM ('-')) ;
 			}
-			auto rax = TRUE ;
-			if ifswitch (rax) {
+			auto eax = TRUE ;
+			if ifswitch (eax) {
 				if ifnot (MathProc::is_infinity (item))
 					discard ;
 				write (attr.lower_upper_cast (ITEM ('i'))) ;
 				write (attr.lower_upper_cast (ITEM ('n'))) ;
 				write (attr.lower_upper_cast (ITEM ('f'))) ;
 			}
-			if ifswitch (rax) {
+			if ifswitch (eax) {
 				auto rbx = BoxBuffer<ITEM ,NUMBER_SIZE> (0) ;
 				INDEX ix = rbx.size () ;
-				auto rcx = FloatProc::instance ().decode (MathProc::abs (item)) ;
-				rcx = FloatProc::instance ().exp10_from_exp2 (rcx) ;
+				auto rcx = FloatProc::decode (MathProc::abs (item)) ;
+				rcx = FloatProc::exp10_from_exp2 (rcx) ;
 				write_float (rcx ,rbx ,ix) ;
 				for (auto &&i : iter (ix ,rbx.size ()))
 					write (rbx[i]) ;
@@ -1410,55 +1473,97 @@ trait TEXTWRITER_HELP<ITEM ,REQUIRE<IS_STR<ITEM>>> {
 			return thiz ;
 		}
 
+		void write (CREF<Slice<ITEM>> item) {
+			auto rax = ITEM () ;
+			for (auto &&i : iter (0 ,item.size ()))
+				write (item[i]) ;
+		}
+
+		inline VREF<TextWriter> operator<< (CREF<Slice<ITEM>> item) {
+			read (item) ;
+			return thiz ;
+		}
+
 		template <class ARG1 = void>
-		void write (VREF<typename DEPENDENT<TEXTREADER_HOLDER_HELP<void ,ALWAYS> ,ARG1>::Binder> item) {
+		void write (VREF<MACRO_Binder<ARG1>> item) {
 			item.friend_write (thiz) ;
 		}
 
 		template <class ARG1 = void>
-		inline VREF<TextWriter> operator<< (VREF<typename DEPENDENT<TEXTREADER_HOLDER_HELP<void ,ALWAYS> ,ARG1>::Binder> item) {
+		inline VREF<TextWriter> operator<< (VREF<MACRO_Binder<ARG1>> item) {
 			write (item) ;
 			return thiz ;
 		}
 
 	private:
-		void write_value (VREF<VAL64> item ,VREF<BoxBuffer<ITEM ,NUMBER_SIZE>> out ,VREF<INDEX> iw) {
-			while (TRUE) {
-				if (item == 0)
-					break ;
-				iw-- ;
-				out.mP1[iw] = attr.str_from_hex (item % 10) ;
-				item /= 10 ;
-			}
-		}
-
-		void write_float (VREF<ARRAY3<VAL64>> item ,VREF<BoxBuffer<ITEM ,NUMBER_SIZE>> out ,VREF<INDEX> iw) {
-			if ifswitch (TRUE) {
-				const auto r1x = vlog10 (item[0]) ;
-				const auto r2x = r1x - attr.float_precision () ;
-				for (auto &&i : iter (0 ,r2x - 1)) {
-					noop (i) ;
-					item[0] /= 10 ;
-					item[1]++ ;
-				}
-				if (r2x <= 0)
-					discard ;
-				item[0] = MathProc::round (item[0] ,10) / 10 ;
-				item[1]++ ;
-			}
-			const auto r3x = vlog10 (item[0]) ;
-			auto rax = TRUE ;
-			if ifswitch (rax) {
+		void write_value (VREF<NOTATION> fexp10 ,VREF<BoxBuffer<ITEM ,NUMBER_SIZE>> out ,VREF<INDEX> iw) {
+			assert (fexp10.mRadix == 10) ;
+			assert (fexp10.mExponent == 0) ;
+			fexp10.mPrecision = vlog10 (fexp10.mMantissa) ;
+			const auto r30x = fexp10.mPrecision ;
+			const auto r31x = LENGTH (fexp10.mExponent) ;
+			auto eax = TRUE ;
+			if ifswitch (eax) {
 				//@info: case '0'
-				if (item[0] != 0)
+				if (fexp10.mMantissa != 0)
 					discard ;
 				iw-- ;
 				out[iw] = ITEM ('0') ;
 			}
-			if ifswitch (rax) {
+			if ifswitch (eax) {
+				//@info: case 'xxx'
+				for (auto &&i : iter (0 ,r30x)) {
+					noop (i) ;
+					iw-- ;
+					out[iw] = attr.str_from_hex (fexp10.mMantissa % 10) ;
+					fexp10.mMantissa /= 10 ;
+					fexp10.mExponent++ ;
+					fexp10.mPrecision-- ;
+				}
+			}
+		}
+
+		void write_float (VREF<NOTATION> fexp10 ,VREF<BoxBuffer<ITEM ,NUMBER_SIZE>> out ,VREF<INDEX> iw) {
+			assert (fexp10.mRadix == 10) ;
+			fexp10.mPrecision = vlog10 (fexp10.mMantissa) ;
+			const auto r101x = attr.float_precision () ;
+			if ifswitch (TRUE) {
+				if (fexp10.mPrecision == 0)
+					discard ;
+				while (TRUE) {
+					if (fexp10.mMantissa % 10 != 0)
+						break ;
+					fexp10.mMantissa /= 10 ;
+					fexp10.mExponent++ ;
+					fexp10.mPrecision-- ;
+				}
+				const auto r2x = fexp10.mPrecision - r101x ;
+				for (auto &&i : iter (0 ,r2x - 1)) {
+					noop (i) ;
+					fexp10.mMantissa /= 10 ;
+					fexp10.mExponent++ ;
+					fexp10.mPrecision-- ;
+				}
+				if (r2x <= 0)
+					discard ;
+				fexp10.mMantissa = MathProc::round (fexp10.mMantissa ,VAL64 (10)) / 10 ;
+				fexp10.mExponent++ ;
+				fexp10.mPrecision-- ;
+			}
+			const auto r30x = fexp10.mPrecision ;
+			const auto r31x = LENGTH (fexp10.mExponent) ;
+			auto eax = TRUE ;
+			if ifswitch (eax) {
+				//@info: case '0'
+				if (fexp10.mMantissa != 0)
+					discard ;
+				iw-- ;
+				out[iw] = ITEM ('0') ;
+			}
+			if ifswitch (eax) {
 				//@info: case 'x.xxxExxx'
-				const auto r4x = r3x - 1 + item[1] ;
-				if (MathProc::abs (r4x) < attr.float_precision ())
+				const auto r4x = r30x - 1 + r31x ;
+				if (MathProc::abs (r4x) < r101x)
 					discard ;
 				write_value (r4x ,out ,iw) ;
 				if ifswitch (TRUE) {
@@ -1469,92 +1574,110 @@ trait TEXTWRITER_HELP<ITEM ,REQUIRE<IS_STR<ITEM>>> {
 				}
 				iw-- ;
 				out[iw] = ITEM ('e') ;
-				const auto r5x = vmax (LENGTH (r3x - 1 - attr.float_precision ()) ,ZERO) ;
+				const auto r5x = vmax (LENGTH (r30x - 1 - r101x) ,ZERO) ;
 				for (auto &&i : iter (0 ,r5x)) {
 					noop (i) ;
-					item[0] /= 10 ;
+					fexp10.mMantissa /= 10 ;
+					fexp10.mExponent++ ;
+					fexp10.mPrecision-- ;
 				}
 				INDEX ix = iw - 1 ;
-				for (auto &&i : iter (r5x ,r3x - 1)) {
+				for (auto &&i : iter (r5x ,r30x - 1)) {
 					noop (i) ;
 					iw-- ;
-					out[iw] = attr.str_from_hex (item[0] % 10) ;
+					out[iw] = attr.str_from_hex (fexp10.mMantissa % 10) ;
 					iw += LENGTH (out[ix] == ITEM ('0')) ;
-					item[0] /= 10 ;
+					fexp10.mMantissa /= 10 ;
+					fexp10.mExponent++ ;
+					fexp10.mPrecision-- ;
 				}
 				iw-- ;
 				out[iw] = ITEM ('.') ;
 				iw += LENGTH (out[ix] == ITEM ('.')) ;
 				iw-- ;
-				out[iw] = attr.str_from_hex (item[0] % 10) ;
-				item[0] /= 10 ;
+				out[iw] = attr.str_from_hex (fexp10.mMantissa % 10) ;
+				fexp10.mMantissa /= 10 ;
+				fexp10.mExponent++ ;
+				fexp10.mPrecision-- ;
 			}
-			if ifswitch (rax) {
+			if ifswitch (eax) {
 				//@info: case 'xxx000'
-				if (item[1] < 0)
+				if (r31x < 0)
 					discard ;
-				for (auto &&i : iter (0 ,LENGTH (item[1]))) {
+				for (auto &&i : iter (0 ,r31x)) {
 					noop (i) ;
 					iw-- ;
 					out[iw] = ITEM ('0') ;
 				}
-				for (auto &&i : iter (0 ,r3x)) {
+				for (auto &&i : iter (0 ,r30x)) {
 					noop (i) ;
 					iw-- ;
-					out[iw] = attr.str_from_hex (item[0] % 10) ;
-					item[0] /= 10 ;
+					out[iw] = attr.str_from_hex (fexp10.mMantissa % 10) ;
+					fexp10.mMantissa /= 10 ;
+					fexp10.mExponent++ ;
+					fexp10.mPrecision-- ;
 				}
 			}
-			if ifswitch (rax) {
+			if ifswitch (eax) {
 				//@info: case 'xxx.xxx'
-				if (item[1] < 1 - r3x)
+				if (r31x < 1 - r30x)
 					discard ;
-				if (item[1] >= 0)
+				if (r31x >= 0)
 					discard ;
-				const auto r6x = vmax (LENGTH (-item[1] - attr.float_precision ()) ,ZERO) ;
+				const auto r6x = vmax (LENGTH (-r31x - r101x) ,ZERO) ;
 				for (auto &&i : iter (0 ,r6x)) {
 					noop (i) ;
-					item[0] /= 10 ;
+					fexp10.mMantissa /= 10 ;
+					fexp10.mExponent++ ;
+					fexp10.mPrecision-- ;
 				}
 				INDEX ix = iw - 1 ;
-				for (auto &&i : iter (r6x ,LENGTH (-item[1]))) {
+				for (auto &&i : iter (r6x ,-r31x)) {
 					noop (i) ;
 					iw-- ;
-					out[iw] = attr.str_from_hex (item[0] % 10) ;
+					out[iw] = attr.str_from_hex (fexp10.mMantissa % 10) ;
 					iw += LENGTH (out[ix] == ITEM ('0')) ;
-					item[0] /= 10 ;
+					fexp10.mMantissa /= 10 ;
+					fexp10.mExponent++ ;
+					fexp10.mPrecision-- ;
 				}
 				iw-- ;
 				out[iw] = ITEM ('.') ;
 				iw += LENGTH (out[ix] == ITEM ('.')) ;
-				for (auto &&i : iter (0 ,LENGTH (r3x + item[1]))) {
+				for (auto &&i : iter (0 ,r30x + r31x)) {
 					noop (i) ;
 					iw-- ;
-					out[iw] = attr.str_from_hex (item[0] % 10) ;
-					item[0] /= 10 ;
+					out[iw] = attr.str_from_hex (fexp10.mMantissa % 10) ;
+					fexp10.mMantissa /= 10 ;
+					fexp10.mExponent++ ;
+					fexp10.mPrecision-- ;
 				}
 			}
-			if ifswitch (rax) {
+			if ifswitch (eax) {
 				//@info: case '0.000xxx'
-				if (item[1] >= 1 - r3x)
+				if (r31x >= 1 - r30x)
 					discard ;
-				if (item[1] >= 0)
+				if (r31x >= 0)
 					discard ;
-				const auto r7x = vmax (LENGTH (-item[1] - attr.float_precision ()) ,ZERO) ;
+				const auto r7x = vmax (LENGTH (-r31x - r101x) ,ZERO) ;
 				for (auto &&i : iter (0 ,r7x)) {
 					noop (i) ;
-					item[0] /= 10 ;
+					fexp10.mMantissa /= 10 ;
+					fexp10.mExponent++ ;
+					fexp10.mPrecision-- ;
 				}
 				INDEX ix = iw - 1 ;
-				for (auto &&i : iter (r7x ,r3x)) {
+				for (auto &&i : iter (r7x ,r30x)) {
 					noop (i) ;
 					iw-- ;
-					out[iw] = attr.str_from_hex (item[0] % 10) ;
+					out[iw] = attr.str_from_hex (fexp10.mMantissa % 10) ;
 					iw += LENGTH (out[ix] == ITEM ('0')) ;
-					item[0] /= 10 ;
+					fexp10.mMantissa /= 10 ;
+					fexp10.mExponent++ ;
+					fexp10.mPrecision-- ;
 				}
-				const auto r8x = vmax (r7x ,r3x) ;
-				for (auto &&i : iter (r8x ,LENGTH (-item[1]))) {
+				const auto r8x = vmax (r7x ,r30x) ;
+				for (auto &&i : iter (r8x ,-r31x)) {
 					noop (i) ;
 					iw-- ;
 					out[iw] = ITEM ('0') ;
@@ -1570,9 +1693,9 @@ trait TEXTWRITER_HELP<ITEM ,REQUIRE<IS_STR<ITEM>>> {
 
 		LENGTH vlog10 (CREF<VAL64> x) const {
 			LENGTH ret = 0 ;
-			auto rax = MathProc::abs (x) ;
+			auto rax = x ;
 			while (TRUE) {
-				if (rax <= 0)
+				if (rax == 0)
 					break ;
 				ret++ ;
 				rax /= 10 ;
@@ -1582,6 +1705,17 @@ trait TEXTWRITER_HELP<ITEM ,REQUIRE<IS_STR<ITEM>>> {
 	} ;
 } ;
 
+template <class ITEM>
+trait TEXTWRITER_BINDER_HELP<ITEM ,ALWAYS> {
+	using TextWriter = typename TEXTWRITER_HELP<ITEM ,ALWAYS>::TextWriter ;
+
+	struct Binder implement Interface {
+		virtual void friend_write (VREF<TextWriter> writer) = 0 ;
+	} ;
+} ;
+
+template <class ITEM>
+using TextWriter = typename TEXTWRITER_HELP<ITEM ,ALWAYS>::TextWriter ;
 } ;
 } ;
 

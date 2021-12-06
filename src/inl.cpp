@@ -29,14 +29,15 @@
 #include "csc/csc_math.hpp.default.inl"
 #include "csc/csc_string.hpp.default.inl"
 #include "csc/csc_string.hpp.gbk.inl"
-#include "csc/csc_runtime.hpp.default.inl"
 
 #ifdef __CSC_SYSTEM_WINDOWS__
+#include "csc/csc_runtime.hpp.windows.inl"
 #include "csc/csc_filesystem.hpp.windows.inl"
 #include "csc/csc_debugger.hpp.windows.inl"
 #endif
 
 #ifdef __CSC_SYSTEM_LINUX__
+#include "csc/csc_runtime.hpp.linux.inl"
 #include "csc/csc_filesystem.hpp.linux.inl"
 #include "csc/csc_debugger.hpp.linux.inl"
 #endif

@@ -46,7 +46,7 @@ trait DISJOINT_HELP<ALWAYS> {
 			mTable.fill (r1x) ;
 		}
 
-		INDEX lead (CREF<INDEX> index) {
+		INDEX lead (CREF<INDEX> index) leftvalue {
 			INDEX ret = index ;
 			if ifswitch (TRUE) {
 				if (mTable[ret].mUp != NONE)
@@ -72,7 +72,7 @@ trait DISJOINT_HELP<ALWAYS> {
 			mTable[ix].mWidth += mTable[iy].mWidth ;
 		}
 
-		BitSet<> filter (CREF<INDEX> index) {
+		BitSet<> filter (CREF<INDEX> index) leftvalue {
 			const auto r1x = map_of_closure () ;
 			const auto r2x = lead (index) ;
 			BitSet<> ret = BitSet<> (mTable.size ()) ;
@@ -87,7 +87,7 @@ trait DISJOINT_HELP<ALWAYS> {
 			return move (ret) ;
 		}
 
-		Array<BitSet<>> closure () {
+		Array<BitSet<>> closure () leftvalue {
 			const auto r1x = map_of_closure () ;
 			Array<BitSet<>> ret = Array<BitSet<>> (r1x.length ()) ;
 			for (auto &&i : ret.iter ())
@@ -158,8 +158,7 @@ trait MSTREE_HELP<ALWAYS> {
 
 		void clear () {
 			mTree.clear () ;
-			for (auto &&i : mHead.iter ())
-				mHead[i] = NONE ;
+			mHead.fill (NONE) ;
 		}
 
 		void link (CREF<INDEX> from_ ,CREF<INDEX> to_) {
@@ -219,30 +218,27 @@ trait MSTREE_HELP<ALWAYS> {
 		}
 
 		void update_insert (VREF<INDEX> curr ,CREF<INDEX> last) {
-			INDEX ix = curr ;
-			auto rax = TRUE ;
-			if ifswitch (rax) {
-				if (ix == NONE)
+			INDEX ix = last ;
+			if ifswitch (TRUE) {
+				if (curr == NONE)
 					discard ;
+				ix = curr ;
 				mTree[ix].mWeight++ ;
 				const auto r1x = operator_compr (mTree[last].mTo ,mTree[ix].mTo) ;
 				assert (r1x != ZERO) ;
-				auto rbx = TRUE ;
-				if ifswitch (rbx) {
+				auto eax = TRUE ;
+				if ifswitch (eax) {
 					if (r1x > ZERO)
 						discard ;
 					update_insert (mTree[ix].mLeft ,last) ;
 					update_insert_left (ix) ;
 				}
-				if ifswitch (rbx) {
+				if ifswitch (eax) {
 					update_insert (mTree[ix].mRight ,last) ;
 					update_insert_right (ix) ;
 				}
-				curr = ix ;
 			}
-			if ifswitch (rax) {
-				curr = last ;
-			}
+			curr = ix ;
 		}
 
 		void update_insert_left (VREF<INDEX> curr) {

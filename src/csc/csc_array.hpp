@@ -13,10 +13,8 @@ namespace ARRAY {
 template <class...>
 trait ARRAY_ITERATOR_HELP ;
 
-template <class UNIT1>
-trait ARRAY_ITERATOR_HELP<UNIT1 ,REQUIRE<IS_CLASS<UNIT1>>> {
-	using ITEM = typeof (bad (TYPEAS<CREF<UNIT1>>::id).at (bad (TYPEAS<INDEX>::id))) ;
-
+template <class UNIT1 ,class UNIT2>
+trait ARRAY_ITERATOR_HELP<UNIT1 ,UNIT2 ,ALWAYS> {
 	class Iterator {
 	private:
 		CRef<UNIT1> mBase ;
@@ -54,21 +52,16 @@ trait ARRAY_ITERATOR_HELP<UNIT1 ,REQUIRE<IS_CLASS<UNIT1>>> {
 			return good () ;
 		}
 
-		CREF<INDEX> at () const leftvalue {
-			return mCurr ;
+		CREF<UNIT2> at () const leftvalue {
+			return mBase->at (mCurr) ;
 		}
 
-		inline CREF<INDEX> operator* () const leftvalue {
+		inline CREF<UNIT2> operator* () const leftvalue {
 			return at () ;
 		}
 
 		void next () {
-			if ifswitch (TRUE) {
-				mCurr = mBase->inext (mCurr) ;
-				if (mCurr != mBegin)
-					discard ;
-				mCurr = mEnd ;
-			}
+			mCurr = mBase->inext (mCurr) ;
 		}
 
 		inline void operator++ () {
@@ -77,8 +70,43 @@ trait ARRAY_ITERATOR_HELP<UNIT1 ,REQUIRE<IS_CLASS<UNIT1>>> {
 	} ;
 } ;
 
+template <class UNTI1 ,class UNIT2>
+using ArrayIterator = typename ARRAY_ITERATOR_HELP<UNTI1 ,UNIT2 ,ALWAYS>::Iterator ;
+
+template <class...>
+trait ARRAYRANGE_HELP ;
+
+template <class UNIT1>
+trait ARRAYRANGE_HELP<UNIT1 ,ALWAYS> {
+	class ArrayRange extend Proxy {
+	private:
+		UNIT1 mBase ;
+
+	public:
+		imports CREF<ArrayRange> from (CREF<UNIT1> that) {
+			return unsafe_deref (unsafe_cast (TYPEAS<TEMP<ArrayRange>>::id ,unsafe_deptr (that))) ;
+		}
+
+		INDEX ibegin () const {
+			return mBase.ibegin () ;
+		}
+
+		INDEX iend () const {
+			return mBase.iend () ;
+		}
+
+		INDEX inext (CREF<INDEX> index) const {
+			return mBase.inext (index) ;
+		}
+
+		CREF<INDEX> at (CREF<INDEX> index) const leftvalue {
+			return index ;
+		}
+	} ;
+} ;
+
 template <class UNTI1>
-using ArrayIterator = typename ARRAY_ITERATOR_HELP<UNTI1 ,ALWAYS>::Iterator ;
+using ArrayRange = typename ARRAYRANGE_HELP<UNTI1 ,ALWAYS>::ArrayRange ;
 
 template <class...>
 trait ARRAY_HELP ;
@@ -126,17 +154,32 @@ trait ARRAY_HELP<ITEM ,SIZE ,ALWAYS> {
 			return size () ;
 		}
 
-		VREF<RegBuffer<ITEM>> raw () leftvalue {
-			return RegBuffer<ITEM>::from (mArray) ;
+		VREF<RegBuffer<ITEM>> raw (RREF<VarBuffer<ITEM>> where_ = VarBuffer<ITEM> ()) leftvalue {
+			auto rax = VRef<ARR<ITEM>>::reference (mArray.self) ;
+			return RegBuffer<ITEM>::from (where_ ,move (rax) ,mArray.size ()) ;
 		}
 
-		CREF<RegBuffer<ITEM>> raw () const leftvalue {
-			return RegBuffer<ITEM>::from (mArray) ;
+		CREF<RegBuffer<ITEM>> raw (RREF<ConBuffer<ITEM>> where_ = ConBuffer<ITEM> ()) const leftvalue {
+			auto rax = CRef<ARR<ITEM>>::reference (mArray.self) ;
+			return RegBuffer<ITEM>::from (where_ ,move (rax) ,mArray.size ()) ;
 		}
 
 		void fill (CREF<ITEM> obj) {
 			for (auto &&i : CORE::iter (0 ,size ()))
 				mArray[i] = obj ;
+		}
+
+		ArrayIterator<Array ,ITEM> begin () const leftvalue {
+			return ArrayIterator<Array ,ITEM> (CRef<Array>::reference (thiz)) ;
+		}
+
+		ArrayIterator<Array ,ITEM> end () const leftvalue {
+			return ArrayIterator<Array ,ITEM> (CRef<Array>::reference (thiz)) ;
+		}
+
+		ArrayIterator<ArrayRange<Array> ,INDEX> iter () const leftvalue {
+			auto &&tmp = ArrayRange<Array>::from (thiz) ;
+			return ArrayIterator<ArrayRange<Array> ,INDEX> (CRef<ArrayRange<Array>>::reference (tmp)) ;
 		}
 
 		INDEX ibegin () const {
@@ -149,12 +192,6 @@ trait ARRAY_HELP<ITEM ,SIZE ,ALWAYS> {
 
 		INDEX inext (CREF<INDEX> index) const {
 			return index + 1 ;
-		}
-
-		template <class ARG1 = void>
-		ArrayIterator<DEPENDENT<Array ,ARG1>> iter () const leftvalue {
-			using R1X = DEPENDENT<Array ,ARG1> ;
-			return ArrayIterator<R1X> (CRef<R1X>::reference (thiz)) ;
 		}
 
 		VREF<ITEM> at (CREF<INDEX> index) leftvalue {
@@ -211,7 +248,7 @@ trait ARRAY_HELP<ITEM ,SIZE ,ALWAYS> {
 	} ;
 } ;
 
-template <class ITEM ,class SIZE = VARBUFFER>
+template <class ITEM ,class SIZE = VARIABLE>
 using Array = typename ARRAY_HELP<ITEM ,SIZE ,ALWAYS>::Array ;
 
 template <class ITEM>
@@ -240,7 +277,7 @@ template <class ITEM ,class SIZE>
 trait STRING_HELP<ITEM ,SIZE ,ALWAYS> {
 	using RESERVE_SIZE = ENUM_ADD<SIZE ,CONDITIONAL<ENUM_GT_ZERO<SIZE> ,ENUM_IDEN ,ENUM_ZERO>> ;
 
-	using STRING_BUFFER_SIZE = ENUMAS<VAL ,ENUMID<(8192)>> ;
+	using STRING_BUFFER_SIZE = ENUMAS<VAL ,ENUMID<8192>> ;
 
 	class String {
 	private:
@@ -255,10 +292,15 @@ trait STRING_HELP<ITEM ,SIZE ,ALWAYS> {
 		template <class ARG1 = void ,class = ENABLE<IS_STR<DEPENDENT<ITEM ,ARG1>>>>
 		implicit String (CREF<Slice<DEPENDENT<ITEM ,ARG1>>> that) {
 			mString = Buffer<ITEM ,RESERVE_SIZE> (reserve_size (that.size ())) ;
-			clear () ;
 			INDEX ix = 0 ;
 			for (auto &&i : CORE::iter (0 ,that.size ())) {
 				mString[ix] = that[i] ;
+				ix++ ;
+			}
+			while (TRUE) {
+				if (ix >= mString.size ())
+					break ;
+				mString[ix] = ITEM (0) ;
 				ix++ ;
 			}
 		}
@@ -270,20 +312,23 @@ trait STRING_HELP<ITEM ,SIZE ,ALWAYS> {
 
 		explicit String (CREF<csc_initializer_list<ITEM>> that) {
 			mString = Buffer<ITEM ,RESERVE_SIZE> (reserve_size (LENGTH (that.size ()))) ;
-			clear () ;
 			INDEX ix = 0 ;
 			for (auto &&i : that) {
 				mString[ix] = move (i) ;
+				ix++ ;
+			}
+			while (TRUE) {
+				if (ix >= mString.size ())
+					break ;
+				mString[ix] = ITEM (0) ;
 				ix++ ;
 			}
 		}
 
 		template <class...ARG1>
 		imports String make (XREF<ARG1>...objs) {
-			//using R1X = TextWriter<ITEM> ;
 			String ret = String (STRING_BUFFER_SIZE::value) ;
-			//auto rax = R1X (ret.raw ()) ;
-			//rax.prints (objs...) ;
+			unimplemented () ;
 			return move (ret) ;
 		}
 
@@ -303,12 +348,14 @@ trait STRING_HELP<ITEM ,SIZE ,ALWAYS> {
 			return size () ;
 		}
 
-		VREF<RegBuffer<ITEM>> raw () leftvalue {
-			return RegBuffer<ITEM>::from (mString) ;
+		VREF<RegBuffer<ITEM>> raw (RREF<VarBuffer<ITEM>> where_ = VarBuffer<ITEM> ()) leftvalue {
+			auto rax = VRef<ARR<ITEM>>::reference (mString.self) ;
+			return RegBuffer<ITEM>::from (where_ ,move (rax) ,mString.size ()) ;
 		}
 
-		CREF<RegBuffer<ITEM>> raw () const leftvalue {
-			return RegBuffer<ITEM>::from (mString) ;
+		CREF<RegBuffer<ITEM>> raw (RREF<ConBuffer<ITEM>> where_ = ConBuffer<ITEM> ()) const leftvalue {
+			auto rax = CRef<ARR<ITEM>>::reference (mString.self) ;
+			return RegBuffer<ITEM>::from (where_ ,move (rax) ,mString.size ()) ;
 		}
 
 		void clear () {
@@ -321,6 +368,19 @@ trait STRING_HELP<ITEM ,SIZE ,ALWAYS> {
 				mString[i] = obj ;
 		}
 
+		ArrayIterator<String ,ITEM> begin () const leftvalue {
+			return ArrayIterator<String ,ITEM> (CRef<String>::reference (thiz)) ;
+		}
+
+		ArrayIterator<String ,ITEM> end () const leftvalue {
+			return ArrayIterator<String ,ITEM> (CRef<String>::reference (thiz)) ;
+		}
+
+		ArrayIterator<ArrayRange<String> ,INDEX> iter () const leftvalue {
+			auto &&tmp = ArrayRange<String>::from (thiz) ;
+			return ArrayIterator<ArrayRange<String> ,INDEX> (CRef<ArrayRange<String>>::reference (tmp)) ;
+		}
+
 		INDEX ibegin () const {
 			return ZERO ;
 		}
@@ -331,12 +391,6 @@ trait STRING_HELP<ITEM ,SIZE ,ALWAYS> {
 
 		INDEX inext (CREF<INDEX> index) const {
 			return index + 1 ;
-		}
-
-		template <class ARG1 = void>
-		ArrayIterator<DEPENDENT<String ,ARG1>> iter () const leftvalue {
-			using R1X = DEPENDENT<String ,ARG1> ;
-			return ArrayIterator<R1X> (CRef<R1X>::reference (thiz)) ;
 		}
 
 		VREF<ITEM> at (CREF<INDEX> index) leftvalue {
@@ -460,7 +514,7 @@ trait STRING_HELP<ITEM ,SIZE ,ALWAYS> {
 	} ;
 } ;
 
-template <class ITEM ,class SIZE = VARBUFFER>
+template <class ITEM ,class SIZE = VARIABLE>
 using String = typename STRING_HELP<ITEM ,SIZE ,ALWAYS>::String ;
 
 template <class...>
@@ -476,7 +530,7 @@ trait SORTPROC_HELP<UNIT1 ,ALWAYS> {
 			}) ;
 		}
 
-		void sort (CREF<UNIT1> array_ ,VREF<Array<INDEX>> range_ ,CREF<INDEX> begin_ ,CREF<INDEX> end_) const {
+		imports void sort (CREF<UNIT1> array_ ,VREF<Array<INDEX>> range_ ,CREF<INDEX> begin_ ,CREF<INDEX> end_) {
 			const auto r1x = end_ - begin_ ;
 			if (r1x <= 1)
 				return ;
@@ -484,7 +538,7 @@ trait SORTPROC_HELP<UNIT1 ,ALWAYS> {
 			INDEX iy = end_ - 1 ;
 			assert (vbetween (ix ,0 ,range_.size ())) ;
 			assert (vbetween (iy ,0 ,range_.size ())) ;
-			quick_sort (array_ ,range_ ,ix ,iy ,r1x) ;
+			instance ().quick_sort (array_ ,range_ ,ix ,iy ,r1x) ;
 		}
 
 	private:
@@ -619,6 +673,19 @@ trait DEQUE_HELP<ITEM ,SIZE ,REQUIRE<IS_DEFAULT<ITEM>>> {
 			mWrite = 0 ;
 		}
 
+		ArrayIterator<Deque ,ITEM> begin () const leftvalue {
+			return ArrayIterator<Deque ,ITEM> (CRef<Deque>::reference (thiz)) ;
+		}
+
+		ArrayIterator<Deque ,ITEM> end () const leftvalue {
+			return ArrayIterator<Deque ,ITEM> (CRef<Deque>::reference (thiz)) ;
+		}
+
+		ArrayIterator<ArrayRange<Deque> ,INDEX> iter () const leftvalue {
+			auto &&tmp = ArrayRange<Deque>::from (thiz) ;
+			return ArrayIterator<ArrayRange<Deque> ,INDEX> (CRef<ArrayRange<Deque>>::reference (tmp)) ;
+		}
+
 		INDEX ibegin () const {
 			if (mDeque.size () == 0)
 				return ZERO ;
@@ -633,12 +700,6 @@ trait DEQUE_HELP<ITEM ,SIZE ,REQUIRE<IS_DEFAULT<ITEM>>> {
 
 		INDEX inext (CREF<INDEX> index) const {
 			return (index + 1) % mDeque.size () ;
-		}
-
-		template <class ARG1 = void>
-		ArrayIterator<DEPENDENT<Deque ,ARG1>> iter () const leftvalue {
-			using R1X = DEPENDENT<Deque ,ARG1> ;
-			return ArrayIterator<R1X> (CRef<R1X>::reference (thiz)) ;
 		}
 
 		VREF<ITEM> at (CREF<INDEX> index) leftvalue {
@@ -676,7 +737,7 @@ trait DEQUE_HELP<ITEM ,SIZE ,REQUIRE<IS_DEFAULT<ITEM>>> {
 
 		Array<INDEX> range_sort () const {
 			Array<INDEX> ret = range () ;
-			SortProc<Deque>::instance ().sort (thiz ,ret ,0 ,ret.length () - 1) ;
+			SortProc<Deque>::sort (thiz ,ret ,0 ,ret.length () - 1) ;
 			return move (ret) ;
 		}
 
@@ -703,7 +764,8 @@ trait DEQUE_HELP<ITEM ,SIZE ,REQUIRE<IS_DEFAULT<ITEM>>> {
 
 		void add (RREF<ITEM> item) {
 			update_resize () ;
-			mDeque[mWrite].mItem = move (item) ;
+			INDEX ix = mWrite ;
+			mDeque[ix].mItem = move (item) ;
 			mWrite = (mWrite + 1) % mDeque.size () ;
 			update_resize () ;
 		}
@@ -715,13 +777,16 @@ trait DEQUE_HELP<ITEM ,SIZE ,REQUIRE<IS_DEFAULT<ITEM>>> {
 
 		void take () {
 			assert (ifnot (empty ())) ;
-			mDeque[mRead].mItem = ITEM () ;
+			INDEX ix = mRead ;
+			auto rax = move (mDeque[ix].mItem) ;
+			noop (rax) ;
 			mRead = (mRead + 1) % mDeque.size () ;
 		}
 
 		void take (VREF<ITEM> item) {
 			assert (ifnot (empty ())) ;
-			item = move (mDeque[mRead].mItem) ;
+			INDEX ix = mRead ;
+			item = move (mDeque[ix].mItem) ;
 			mRead = (mRead + 1) % mDeque.size () ;
 		}
 
@@ -745,7 +810,15 @@ trait DEQUE_HELP<ITEM ,SIZE ,REQUIRE<IS_DEFAULT<ITEM>>> {
 		void pop () {
 			assert (ifnot (empty ())) ;
 			INDEX ix = (mWrite - 1 + mDeque.size ()) % mDeque.size () ;
-			mDeque[ix].mItem = ITEM () ;
+			auto rax = move (mDeque[ix].mItem) ;
+			noop (rax) ;
+			mWrite = ix ;
+		}
+
+		void pop (VREF<ITEM> item) {
+			assert (ifnot (empty ())) ;
+			INDEX ix = (mWrite - 1 + mDeque.size ()) % mDeque.size () ;
+			item = move (mDeque[ix].mItem) ;
 			mWrite = ix ;
 		}
 
@@ -761,7 +834,7 @@ trait DEQUE_HELP<ITEM ,SIZE ,REQUIRE<IS_DEFAULT<ITEM>>> {
 			return (mWrite - 1 + mDeque.size ()) % mDeque.size () ;
 		}
 
-		INDEX insert () {
+		INDEX insert () leftvalue {
 			update_resize () ;
 			INDEX ret = mWrite ;
 			mWrite = (mWrite + 1) % mDeque.size () ;
@@ -810,7 +883,7 @@ trait DEQUE_HELP<ITEM ,SIZE ,REQUIRE<IS_DEFAULT<ITEM>>> {
 	} ;
 } ;
 
-template <class ITEM ,class SIZE = VARBUFFER>
+template <class ITEM ,class SIZE = VARIABLE>
 using Deque = typename DEQUE_HELP<ITEM ,SIZE ,ALWAYS>::Deque ;
 
 template <class...>
@@ -864,6 +937,19 @@ trait PRIORITY_HELP<ITEM ,SIZE ,REQUIRE<IS_DEFAULT<ITEM>>> {
 			mWrite = 0 ;
 		}
 
+		ArrayIterator<Priority ,ITEM> begin () const leftvalue {
+			return ArrayIterator<Priority ,ITEM> (CRef<Priority>::reference (thiz)) ;
+		}
+
+		ArrayIterator<Priority ,ITEM> end () const leftvalue {
+			return ArrayIterator<Priority ,ITEM> (CRef<Priority>::reference (thiz)) ;
+		}
+
+		ArrayIterator<ArrayRange<Priority> ,INDEX> iter () const leftvalue {
+			auto &&tmp = ArrayRange<Priority>::from (thiz) ;
+			return ArrayIterator<ArrayRange<Priority> ,INDEX> (CRef<ArrayRange<Priority>>::reference (tmp)) ;
+		}
+
 		INDEX ibegin () const {
 			if (mPriority.size () == 0)
 				return ZERO ;
@@ -878,12 +964,6 @@ trait PRIORITY_HELP<ITEM ,SIZE ,REQUIRE<IS_DEFAULT<ITEM>>> {
 
 		INDEX inext (CREF<INDEX> index) const {
 			return index + 1 ;
-		}
-
-		template <class ARG1 = void>
-		ArrayIterator<DEPENDENT<Priority ,ARG1>> iter () const leftvalue {
-			using R1X = DEPENDENT<Priority ,ARG1> ;
-			return ArrayIterator<R1X> (CRef<R1X>::reference (thiz)) ;
 		}
 
 		CREF<ITEM> at (CREF<INDEX> index) const leftvalue {
@@ -923,13 +1003,13 @@ trait PRIORITY_HELP<ITEM ,SIZE ,REQUIRE<IS_DEFAULT<ITEM>>> {
 		Array<INDEX> range_sort () const {
 			Array<INDEX> ret = range () ;
 			if ifswitch (TRUE) {
-				INDEX ix = ret.length () ;
+				INDEX ix = ret.length () - 1 ;
 				while (TRUE) {
-					ix-- ;
-					if (ix < 1)
+					if (ix < 0)
 						break ;
 					swap (ret[0] ,ret[ix]) ;
 					compute_order (ret ,ix) ;
+					ix-- ;
 				}
 			}
 			const auto r1x = ret.size () ;
@@ -994,8 +1074,8 @@ trait PRIORITY_HELP<ITEM ,SIZE ,REQUIRE<IS_DEFAULT<ITEM>>> {
 
 		void take (VREF<ITEM> item) {
 			assert (ifnot (empty ())) ;
-			item = move (mPriority[0].mItem) ;
 			INDEX ix = mWrite - 1 ;
+			item = move (mPriority[0].mItem) ;
 			mPriority[0] = move (mPriority[ix]) ;
 			mWrite = ix ;
 			update_insert (0) ;
@@ -1138,7 +1218,7 @@ trait PRIORITY_HELP<ITEM ,SIZE ,REQUIRE<IS_DEFAULT<ITEM>>> {
 	} ;
 } ;
 
-template <class ITEM ,class SIZE = VARBUFFER>
+template <class ITEM ,class SIZE = VARIABLE>
 using Priority = typename PRIORITY_HELP<ITEM ,SIZE ,ALWAYS>::Priority ;
 
 template <class...>
@@ -1190,6 +1270,19 @@ trait LIST_HELP<ITEM ,SIZE ,ALWAYS> {
 			mLast = NONE ;
 		}
 
+		ArrayIterator<List ,ITEM> begin () const leftvalue {
+			return ArrayIterator<List ,ITEM> (CRef<List>::reference (thiz)) ;
+		}
+
+		ArrayIterator<List ,ITEM> end () const leftvalue {
+			return ArrayIterator<List ,ITEM> (CRef<List>::reference (thiz)) ;
+		}
+
+		ArrayIterator<ArrayRange<List> ,INDEX> iter () const leftvalue {
+			auto &&tmp = ArrayRange<List>::from (thiz) ;
+			return ArrayIterator<ArrayRange<List> ,INDEX> (CRef<ArrayRange<List>>::reference (tmp)) ;
+		}
+
 		INDEX ibegin () const {
 			return mFirst ;
 		}
@@ -1200,12 +1293,6 @@ trait LIST_HELP<ITEM ,SIZE ,ALWAYS> {
 
 		INDEX inext (CREF<INDEX> index) const {
 			return mList[index].mNext ;
-		}
-
-		template <class ARG1 = void>
-		ArrayIterator<DEPENDENT<List ,ARG1>> iter () const leftvalue {
-			using R1X = DEPENDENT<List ,ARG1> ;
-			return ArrayIterator<R1X> (CRef<R1X>::reference (thiz)) ;
 		}
 
 		VREF<ITEM> at (CREF<INDEX> index) leftvalue {
@@ -1241,7 +1328,7 @@ trait LIST_HELP<ITEM ,SIZE ,ALWAYS> {
 
 		Array<INDEX> range_sort () const {
 			Array<INDEX> ret = range () ;
-			SortProc<List>::instance ().sort (thiz ,ret ,0 ,ret.length () - 1) ;
+			SortProc<List>::sort (thiz ,ret ,0 ,ret.length () - 1) ;
 			return move (ret) ;
 		}
 
@@ -1321,6 +1408,15 @@ trait LIST_HELP<ITEM ,SIZE ,ALWAYS> {
 			mList.free (ix) ;
 		}
 
+		void pop (VREF<ITEM> item) {
+			assert (ifnot (empty ())) ;
+			INDEX ix = mLast ;
+			item = move (mList[ix].mItem.self) ;
+			mLast = mList[ix].mPrev ;
+			curr_next (mLast ,NONE) ;
+			mList.free (ix) ;
+		}
+
 		INDEX head () const {
 			if (empty ())
 				return NONE ;
@@ -1333,7 +1429,7 @@ trait LIST_HELP<ITEM ,SIZE ,ALWAYS> {
 			return mLast ;
 		}
 
-		INDEX insert () {
+		INDEX insert () leftvalue {
 			auto rax = Box<ITEM>::make () ;
 			INDEX ret = mList.alloc () ;
 			mList[ret].mItem = move (rax) ;
@@ -1341,6 +1437,17 @@ trait LIST_HELP<ITEM ,SIZE ,ALWAYS> {
 			mList[ret].mNext = NONE ;
 			curr_next (mLast ,ret) ;
 			mLast = ret ;
+			return move (ret) ;
+		}
+
+		INDEX insert (CREF<INDEX> index) leftvalue {
+			auto rax = Box<ITEM>::make () ;
+			INDEX ret = mList.alloc () ;
+			mList[ret].mItem = move (rax) ;
+			mList[ret].mPrev = mList[index].mPrev ;
+			mList[ret].mNext = index ;
+			mList[index].mPrev = ret ;
+			curr_next (mList[index].mPrev ,ret) ;
 			return move (ret) ;
 		}
 
@@ -1391,32 +1498,32 @@ trait LIST_HELP<ITEM ,SIZE ,ALWAYS> {
 
 	private:
 		void curr_next (CREF<INDEX> curr ,CREF<INDEX> next) {
-			auto rax = TRUE ;
-			if ifswitch (rax) {
+			auto eax = TRUE ;
+			if ifswitch (eax) {
 				if (curr != NONE)
 					discard ;
 				mFirst = next ;
 			}
-			if ifswitch (rax) {
+			if ifswitch (eax) {
 				mList[curr].mNext = next ;
 			}
 		}
 
 		void curr_prev (CREF<INDEX> curr ,CREF<INDEX> prev) {
-			auto rax = TRUE ;
-			if ifswitch (rax) {
+			auto eax = TRUE ;
+			if ifswitch (eax) {
 				if (curr != NONE)
 					discard ;
 				mLast = prev ;
 			}
-			if ifswitch (rax) {
+			if ifswitch (eax) {
 				mList[curr].mPrev = prev ;
 			}
 		}
 	} ;
 } ;
 
-template <class ITEM ,class SIZE = VARBUFFER>
+template <class ITEM ,class SIZE = VARIABLE>
 using List = typename LIST_HELP<ITEM ,SIZE ,ALWAYS>::List ;
 
 template <class...>
@@ -1468,6 +1575,19 @@ trait ARRAYLIST_HELP<ITEM ,SIZE ,ALWAYS> {
 			mFree = 0 ;
 		}
 
+		ArrayIterator<ArrayList ,ITEM> begin () const leftvalue {
+			return ArrayIterator<ArrayList ,ITEM> (CRef<ArrayList>::reference (thiz)) ;
+		}
+
+		ArrayIterator<ArrayList ,ITEM> end () const leftvalue {
+			return ArrayIterator<ArrayList ,ITEM> (CRef<ArrayList>::reference (thiz)) ;
+		}
+
+		ArrayIterator<ArrayRange<ArrayList> ,INDEX> iter () const leftvalue {
+			auto &&tmp = ArrayRange<ArrayList>::from (thiz) ;
+			return ArrayIterator<ArrayRange<ArrayList> ,INDEX> (CRef<ArrayRange<ArrayList>>::reference (tmp)) ;
+		}
+
 		INDEX ibegin () const {
 			for (auto &&i : CORE::iter (0 ,mRange.size ())) {
 				if (mRange[i] != NONE)
@@ -1487,12 +1607,6 @@ trait ARRAYLIST_HELP<ITEM ,SIZE ,ALWAYS> {
 					return i ;
 			}
 			return NONE ;
-		}
-
-		template <class ARG1 = void>
-		ArrayIterator<DEPENDENT<ArrayList ,ARG1>> iter () const leftvalue {
-			using R1X = DEPENDENT<ArrayList ,ARG1> ;
-			return ArrayIterator<R1X> (CRef<R1X>::reference (thiz)) ;
 		}
 
 		VREF<ITEM> at (CREF<INDEX> index) leftvalue {
@@ -1528,7 +1642,7 @@ trait ARRAYLIST_HELP<ITEM ,SIZE ,ALWAYS> {
 
 		Array<INDEX> range_sort () const {
 			Array<INDEX> ret = range () ;
-			SortProc<ArrayList>::instance ().sort (thiz ,ret ,0 ,ret.length () - 1) ;
+			SortProc<ArrayList>::sort (thiz ,ret ,0 ,ret.length () - 1) ;
 			return move (ret) ;
 		}
 
@@ -1550,7 +1664,7 @@ trait ARRAYLIST_HELP<ITEM ,SIZE ,ALWAYS> {
 			INDEX ix = mList.alloc () ;
 			update_range (ix) ;
 			mList[ix].mItem = move (rax) ;
-			INDEX jx = next_free_one () ;
+			INDEX jx = find_next_free () ;
 			mRange[jx] = ix ;
 		}
 
@@ -1559,17 +1673,17 @@ trait ARRAYLIST_HELP<ITEM ,SIZE ,ALWAYS> {
 			return thiz ;
 		}
 
-		INDEX insert () {
+		INDEX insert () leftvalue {
 			auto rax = Box<ITEM>::make () ;
 			INDEX ret = mList.alloc () ;
 			update_range (ret) ;
 			mList[ret].mItem = move (rax) ;
-			INDEX jx = next_free_one () ;
+			INDEX jx = find_next_free () ;
 			mRange[jx] = ret ;
 			return move (ret) ;
 		}
 
-		INDEX insert (CREF<INDEX> index) {
+		INDEX insert (CREF<INDEX> index) leftvalue {
 			if ifswitch (TRUE) {
 				if (mRange[index] != NONE)
 					discard ;
@@ -1621,7 +1735,7 @@ trait ARRAYLIST_HELP<ITEM ,SIZE ,ALWAYS> {
 		}
 
 	private:
-		INDEX next_free_one () {
+		INDEX find_next_free () leftvalue {
 			assert (mRange.size () > 0) ;
 			const auto r1x = mFree % mRange.size () ;
 			mFree = r1x ;
@@ -1654,7 +1768,7 @@ trait ARRAYLIST_HELP<ITEM ,SIZE ,ALWAYS> {
 	} ;
 } ;
 
-template <class ITEM ,class SIZE = VARBUFFER>
+template <class ITEM ,class SIZE = VARIABLE>
 using ArrayList = typename ARRAYLIST_HELP<ITEM ,SIZE ,ALWAYS>::ArrayList ;
 
 template <class...>
@@ -1712,9 +1826,53 @@ using BitProxy = typename BITPROXY_HELP<XREF<UNIT1> ,REMOVE_REF<UNIT1> ,ALWAYS>:
 template <class...>
 trait BITSET_HELP ;
 
+template <class...>
+trait BITSET_BYTECACHE_HELP ;
+
+template <>
+trait BITSET_BYTECACHE_HELP<ALWAYS> {
+	using SIZE = ENUMAS<VAL ,ENUMID<256>> ;
+
+	class ByteCache {
+	private:
+		BoxBuffer<LENGTH ,SIZE> mCache ;
+
+	public:
+		imports CREF<ByteCache> instance () {
+			return memorize ([&] () {
+				ByteCache ret ;
+				ret.mCache = BoxBuffer<LENGTH ,SIZE> ({
+					0 ,1 ,1 ,2 ,1 ,2 ,2 ,3 ,1 ,2 ,2 ,3 ,2 ,3 ,3 ,4 ,
+					1 ,2 ,2 ,3 ,2 ,3 ,3 ,4 ,2 ,3 ,3 ,4 ,3 ,4 ,4 ,5 ,
+					1 ,2 ,2 ,3 ,2 ,3 ,3 ,4 ,2 ,3 ,3 ,4 ,3 ,4 ,4 ,5 ,
+					2 ,3 ,3 ,4 ,3 ,4 ,4 ,5 ,3 ,4 ,4 ,5 ,4 ,5 ,5 ,6 ,
+					1 ,2 ,2 ,3 ,2 ,3 ,3 ,4 ,2 ,3 ,3 ,4 ,3 ,4 ,4 ,5 ,
+					2 ,3 ,3 ,4 ,3 ,4 ,4 ,5 ,3 ,4 ,4 ,5 ,4 ,5 ,5 ,6 ,
+					2 ,3 ,3 ,4 ,3 ,4 ,4 ,5 ,3 ,4 ,4 ,5 ,4 ,5 ,5 ,6 ,
+					3 ,4 ,4 ,5 ,4 ,5 ,5 ,6 ,4 ,5 ,5 ,6 ,5 ,6 ,6 ,7 ,
+					1 ,2 ,2 ,3 ,2 ,3 ,3 ,4 ,2 ,3 ,3 ,4 ,3 ,4 ,4 ,5 ,
+					2 ,3 ,3 ,4 ,3 ,4 ,4 ,5 ,3 ,4 ,4 ,5 ,4 ,5 ,5 ,6 ,
+					2 ,3 ,3 ,4 ,3 ,4 ,4 ,5 ,3 ,4 ,4 ,5 ,4 ,5 ,5 ,6 ,
+					3 ,4 ,4 ,5 ,4 ,5 ,5 ,6 ,4 ,5 ,5 ,6 ,5 ,6 ,6 ,7 ,
+					2 ,3 ,3 ,4 ,3 ,4 ,4 ,5 ,3 ,4 ,4 ,5 ,4 ,5 ,5 ,6 ,
+					3 ,4 ,4 ,5 ,4 ,5 ,5 ,6 ,4 ,5 ,5 ,6 ,5 ,6 ,6 ,7 ,
+					3 ,4 ,4 ,5 ,4 ,5 ,5 ,6 ,4 ,5 ,5 ,6 ,5 ,6 ,6 ,7 ,
+					4 ,5 ,5 ,6 ,5 ,6 ,6 ,7 ,5 ,6 ,6 ,7 ,6 ,7 ,7 ,8}) ;
+				return move (ret) ;
+			}) ;
+		}
+
+		inline LENGTH operator[] (CREF<BYTE> k) const {
+			const auto r1x = INDEX (k) ;
+			return mCache[r1x] ;
+		}
+	} ;
+} ;
+
 template <class SIZE>
 trait BITSET_HELP<SIZE ,ALWAYS> {
 	using RESERVE_SIZE = CONDITIONAL<ENUM_GT_ZERO<SIZE> ,ENUM_MOD<ENUM_ADD<SIZE ,RANK7> ,RANK8> ,SIZE> ;
+	using ITEM = INDEX ;
 
 	class BitSet {
 	private:
@@ -1740,8 +1898,8 @@ trait BITSET_HELP<SIZE ,ALWAYS> {
 			mSet = Buffer<BYTE ,RESERVE_SIZE> (reserve_size (size_)) ;
 			mWidth = size_ ;
 			clear () ;
-			for (auto &&i : item.iter ())
-				add (item[i]) ;
+			for (auto &&i : item)
+				add (i) ;
 		}
 
 		LENGTH size () const {
@@ -1751,35 +1909,16 @@ trait BITSET_HELP<SIZE ,ALWAYS> {
 		}
 
 		LENGTH length () const {
-			using R1X = ENUMAS<VAL ,ENUMID<(256)>> ;
-			auto &&tmp = memorize ([&] () {
-				return BoxBuffer<INDEX ,R1X> ({
-					0 ,1 ,1 ,2 ,1 ,2 ,2 ,3 ,1 ,2 ,2 ,3 ,2 ,3 ,3 ,4 ,
-					1 ,2 ,2 ,3 ,2 ,3 ,3 ,4 ,2 ,3 ,3 ,4 ,3 ,4 ,4 ,5 ,
-					1 ,2 ,2 ,3 ,2 ,3 ,3 ,4 ,2 ,3 ,3 ,4 ,3 ,4 ,4 ,5 ,
-					2 ,3 ,3 ,4 ,3 ,4 ,4 ,5 ,3 ,4 ,4 ,5 ,4 ,5 ,5 ,6 ,
-					1 ,2 ,2 ,3 ,2 ,3 ,3 ,4 ,2 ,3 ,3 ,4 ,3 ,4 ,4 ,5 ,
-					2 ,3 ,3 ,4 ,3 ,4 ,4 ,5 ,3 ,4 ,4 ,5 ,4 ,5 ,5 ,6 ,
-					2 ,3 ,3 ,4 ,3 ,4 ,4 ,5 ,3 ,4 ,4 ,5 ,4 ,5 ,5 ,6 ,
-					3 ,4 ,4 ,5 ,4 ,5 ,5 ,6 ,4 ,5 ,5 ,6 ,5 ,6 ,6 ,7 ,
-					1 ,2 ,2 ,3 ,2 ,3 ,3 ,4 ,2 ,3 ,3 ,4 ,3 ,4 ,4 ,5 ,
-					2 ,3 ,3 ,4 ,3 ,4 ,4 ,5 ,3 ,4 ,4 ,5 ,4 ,5 ,5 ,6 ,
-					2 ,3 ,3 ,4 ,3 ,4 ,4 ,5 ,3 ,4 ,4 ,5 ,4 ,5 ,5 ,6 ,
-					3 ,4 ,4 ,5 ,4 ,5 ,5 ,6 ,4 ,5 ,5 ,6 ,5 ,6 ,6 ,7 ,
-					2 ,3 ,3 ,4 ,3 ,4 ,4 ,5 ,3 ,4 ,4 ,5 ,4 ,5 ,5 ,6 ,
-					3 ,4 ,4 ,5 ,4 ,5 ,5 ,6 ,4 ,5 ,5 ,6 ,5 ,6 ,6 ,7 ,
-					3 ,4 ,4 ,5 ,4 ,5 ,5 ,6 ,4 ,5 ,5 ,6 ,5 ,6 ,6 ,7 ,
-					4 ,5 ,5 ,6 ,5 ,6 ,6 ,7 ,5 ,6 ,6 ,7 ,6 ,7 ,7 ,8}) ;
-			}) ;
+			using R1X = typename BITSET_BYTECACHE_HELP<ALWAYS>::ByteCache ;
 			LENGTH ret = 0 ;
 			for (auto &&i : CORE::iter (0 ,mSet.size ()))
-				ret += tmp.self[mSet[i]] ;
+				ret += R1X::instance ()[mSet[i]] ;
 			if ifswitch (TRUE) {
 				if (mWidth % 8 == 0)
 					discard ;
 				const auto r1x = BYTE (0X01) << (mWidth % 8) ;
 				const auto r2x = mSet[mWidth / 8] & ~BYTE (INDEX (r1x) - 1) ;
-				ret -= tmp.self[INDEX (r2x)] ;
+				ret -= R1X::instance ()[r2x] ;
 			}
 			return move (ret) ;
 		}
@@ -1791,6 +1930,19 @@ trait BITSET_HELP<SIZE ,ALWAYS> {
 		void fill (CREF<BYTE> item) {
 			for (auto &&i : CORE::iter (0 ,mSet.size ()))
 				mSet[i] = item ;
+		}
+
+		ArrayIterator<BitSet ,ITEM> begin () const leftvalue {
+			return ArrayIterator<BitSet ,ITEM> (CRef<BitSet>::reference (thiz)) ;
+		}
+
+		ArrayIterator<BitSet ,ITEM> end () const leftvalue {
+			return ArrayIterator<BitSet ,ITEM> (CRef<BitSet>::reference (thiz)) ;
+		}
+
+		ArrayIterator<ArrayRange<BitSet> ,INDEX> iter () const leftvalue {
+			auto &&tmp = ArrayRange<BitSet>::from (thiz) ;
+			return ArrayIterator<ArrayRange<BitSet> ,INDEX> (CRef<ArrayRange<BitSet>>::reference (tmp)) ;
 		}
 
 		INDEX ibegin () const {
@@ -1814,13 +1966,7 @@ trait BITSET_HELP<SIZE ,ALWAYS> {
 			return NONE ;
 		}
 
-		template <class ARG1 = void>
-		ArrayIterator<DEPENDENT<BitSet ,ARG1>> iter () const leftvalue {
-			using R1X = DEPENDENT<BitSet ,ARG1> ;
-			return ArrayIterator<R1X> (CRef<R1X>::reference (thiz)) ;
-		}
-
-		CREF<INDEX> at (CREF<INDEX> index) const leftvalue {
+		CREF<ITEM> at (CREF<INDEX> index) const leftvalue {
 			return index ;
 		}
 
@@ -1835,13 +1981,13 @@ trait BITSET_HELP<SIZE ,ALWAYS> {
 		}
 
 		void set (CREF<INDEX> index ,CREF<BOOL> map_) {
-			auto rax = TRUE ;
-			if ifswitch (rax) {
+			auto eax = TRUE ;
+			if ifswitch (eax) {
 				if ifnot (map_)
 					discard ;
 				add (index) ;
 			}
-			if ifswitch (rax) {
+			if ifswitch (eax) {
 				erase (index) ;
 			}
 		}
@@ -2065,7 +2211,7 @@ trait BITSET_HELP<SIZE ,ALWAYS> {
 	} ;
 } ;
 
-template <class SIZE = VARBUFFER>
+template <class SIZE = VARIABLE>
 using BitSet = typename BITSET_HELP<SIZE ,ALWAYS>::BitSet ;
 
 template <class...>
@@ -2081,6 +2227,11 @@ trait SET_HELP<ITEM ,SIZE ,ALWAYS> {
 		INDEX mUp ;
 		INDEX mLeft ;
 		INDEX mRight ;
+	} ;
+
+	struct CHILD {
+		INDEX mUp ;
+		BOOL mLR ;
 	} ;
 
 	class Set {
@@ -2121,6 +2272,19 @@ trait SET_HELP<ITEM ,SIZE ,ALWAYS> {
 			mTop = NONE ;
 		}
 
+		ArrayIterator<Set ,ITEM> begin () const leftvalue {
+			return ArrayIterator<Set ,ITEM> (CRef<Set>::reference (thiz)) ;
+		}
+
+		ArrayIterator<Set ,ITEM> end () const leftvalue {
+			return ArrayIterator<Set ,ITEM> (CRef<Set>::reference (thiz)) ;
+		}
+
+		ArrayIterator<ArrayRange<Set> ,INDEX> iter () const leftvalue {
+			auto &&tmp = ArrayRange<Set>::from (thiz) ;
+			return ArrayIterator<ArrayRange<Set> ,INDEX> (CRef<ArrayRange<Set>>::reference (tmp)) ;
+		}
+
 		INDEX ibegin () const {
 			for (auto &&i : CORE::iter (0 ,size ())) {
 				if (mSet.used (i))
@@ -2140,12 +2304,6 @@ trait SET_HELP<ITEM ,SIZE ,ALWAYS> {
 					return i ;
 			}
 			return NONE ;
-		}
-
-		template <class ARG1 = void>
-		ArrayIterator<DEPENDENT<Set ,ARG1>> iter () const leftvalue {
-			using R1X = DEPENDENT<Set ,ARG1> ;
-			return ArrayIterator<R1X> (CRef<R1X>::reference (thiz)) ;
 		}
 
 		CREF<ITEM> at (CREF<INDEX> index) const leftvalue {
@@ -2353,14 +2511,14 @@ trait SET_HELP<ITEM ,SIZE ,ALWAYS> {
 				}) ;
 				rax = r2x ;
 				const auto r3x = invoke ([&] () {
-					if ifnot (rax.mP2)
-						return mSet[rax.mP1].mLeft ;
-					return mSet[rax.mP1].mRight ;
+					if ifnot (rax.mLR)
+						return mSet[rax.mUp].mLeft ;
+					return mSet[rax.mUp].mRight ;
 				}) ;
 				ix = r3x ;
 			}
-			mSet[curr].mUp = rax.mP1 ;
-			mSet[curr].mLR = rax.mP2 ;
+			mSet[curr].mUp = rax.mUp ;
+			mSet[curr].mLR = rax.mLR ;
 			mSet[curr].mLeft = NONE ;
 			mSet[curr].mRight = NONE ;
 			curr_next (parent (curr) ,curr) ;
@@ -2375,14 +2533,14 @@ trait SET_HELP<ITEM ,SIZE ,ALWAYS> {
 				if ifnot (mSet[iy].mRed)
 					break ;
 				INDEX iz = mSet[iy].mUp ;
-				auto rax = TRUE ;
-				if ifswitch (rax) {
+				auto eax = TRUE ;
+				if ifswitch (eax) {
 					if (iy != mSet[iz].mLeft)
 						discard ;
 					update_insert_left (ix) ;
 					ix = mTop ;
 				}
-				if ifswitch (rax) {
+				if ifswitch (eax) {
 					if (iy != mSet[iz].mRight)
 						discard ;
 					update_insert_right (ix) ;
@@ -2397,8 +2555,8 @@ trait SET_HELP<ITEM ,SIZE ,ALWAYS> {
 			INDEX ix = mSet[curr].mUp ;
 			INDEX iy = mSet[ix].mUp ;
 			INDEX iz = mSet[iy].mRight ;
-			auto rax = TRUE ;
-			if ifswitch (rax) {
+			auto eax = TRUE ;
+			if ifswitch (eax) {
 				if (iz == NONE)
 					discard ;
 				if ifnot (mSet[iz].mRed)
@@ -2408,7 +2566,7 @@ trait SET_HELP<ITEM ,SIZE ,ALWAYS> {
 				mSet[iy].mRed = TRUE ;
 				mTop = iy ;
 			}
-			if ifswitch (rax) {
+			if ifswitch (eax) {
 				if (curr != mSet[ix].mRight)
 					discard ;
 				rotate_left (mSet[iy].mLeft) ;
@@ -2417,7 +2575,7 @@ trait SET_HELP<ITEM ,SIZE ,ALWAYS> {
 				rotate_right (iy) ;
 				mTop = ix ;
 			}
-			if ifswitch (rax) {
+			if ifswitch (eax) {
 				if (curr != mSet[ix].mLeft)
 					discard ;
 				mSet[ix].mRed = FALSE ;
@@ -2431,8 +2589,8 @@ trait SET_HELP<ITEM ,SIZE ,ALWAYS> {
 			INDEX ix = mSet[curr].mUp ;
 			INDEX iy = mSet[ix].mUp ;
 			INDEX iz = mSet[iy].mLeft ;
-			auto rax = TRUE ;
-			if ifswitch (rax) {
+			auto eax = TRUE ;
+			if ifswitch (eax) {
 				if (iz == NONE)
 					discard ;
 				if ifnot (mSet[iz].mRed)
@@ -2442,7 +2600,7 @@ trait SET_HELP<ITEM ,SIZE ,ALWAYS> {
 				mSet[iy].mRed = TRUE ;
 				mTop = iy ;
 			}
-			if ifswitch (rax) {
+			if ifswitch (eax) {
 				if (curr != mSet[ix].mLeft)
 					discard ;
 				rotate_right (mSet[iy].mRight) ;
@@ -2451,7 +2609,7 @@ trait SET_HELP<ITEM ,SIZE ,ALWAYS> {
 				rotate_left (iy) ;
 				mTop = ix ;
 			}
-			if ifswitch (rax) {
+			if ifswitch (eax) {
 				if (curr != mSet[ix].mRight)
 					discard ;
 				mSet[ix].mRed = FALSE ;
@@ -2470,14 +2628,14 @@ trait SET_HELP<ITEM ,SIZE ,ALWAYS> {
 				if (ix != NONE)
 					if (mSet[ix].mRed)
 						break ;
-				auto rax = TRUE ;
-				if ifswitch (rax) {
+				auto eax = TRUE ;
+				if ifswitch (eax) {
 					if ifnot (ix == mSet[iy].mLeft)
 						discard ;
 					update_remove_left (iy) ;
 					ix = mTop ;
 				}
-				if ifswitch (rax) {
+				if ifswitch (eax) {
 					if ifnot (ix == mSet[iy].mRight)
 						discard ;
 					update_remove_right (iy) ;
@@ -2502,8 +2660,8 @@ trait SET_HELP<ITEM ,SIZE ,ALWAYS> {
 			}
 			INDEX jx = mSet[ix].mLeft ;
 			INDEX jy = mSet[ix].mRight ;
-			auto rax = TRUE ;
-			if ifswitch (rax) {
+			auto eax = TRUE ;
+			if ifswitch (eax) {
 				if (jx != NONE)
 					if (mSet[jx].mRed)
 						discard ;
@@ -2513,7 +2671,7 @@ trait SET_HELP<ITEM ,SIZE ,ALWAYS> {
 				mSet[ix].mRed = TRUE ;
 				mTop = curr ;
 			}
-			if ifswitch (rax) {
+			if ifswitch (eax) {
 				if (jy != NONE)
 					if (mSet[jy].mRed)
 						discard ;
@@ -2529,7 +2687,7 @@ trait SET_HELP<ITEM ,SIZE ,ALWAYS> {
 				rotate_left (curr) ;
 				mTop = mRoot ;
 			}
-			if ifswitch (rax) {
+			if ifswitch (eax) {
 				mSet[ix].mRed = mSet[curr].mRed ;
 				mSet[curr].mRed = FALSE ;
 				mSet[jy].mRed = FALSE ;
@@ -2550,8 +2708,8 @@ trait SET_HELP<ITEM ,SIZE ,ALWAYS> {
 			}
 			INDEX jx = mSet[ix].mRight ;
 			INDEX jy = mSet[ix].mLeft ;
-			auto rax = TRUE ;
-			if ifswitch (rax) {
+			auto eax = TRUE ;
+			if ifswitch (eax) {
 				if (jx != NONE)
 					if (mSet[jx].mRed)
 						discard ;
@@ -2561,7 +2719,7 @@ trait SET_HELP<ITEM ,SIZE ,ALWAYS> {
 				mSet[ix].mRed = TRUE ;
 				mTop = curr ;
 			}
-			if ifswitch (rax) {
+			if ifswitch (eax) {
 				if (jy != NONE)
 					if (mSet[jy].mRed)
 						discard ;
@@ -2577,7 +2735,7 @@ trait SET_HELP<ITEM ,SIZE ,ALWAYS> {
 				rotate_right (curr) ;
 				mTop = mRoot ;
 			}
-			if ifswitch (rax) {
+			if ifswitch (eax) {
 				mSet[ix].mRed = mSet[curr].mRed ;
 				mSet[curr].mRed = FALSE ;
 				mSet[jy].mRed = FALSE ;
@@ -2610,50 +2768,50 @@ trait SET_HELP<ITEM ,SIZE ,ALWAYS> {
 			curr_next (parent (ix) ,ix) ;
 		}
 
-		PACK<INDEX ,BOOL> parent (CREF<INDEX> curr) {
-			PACK<INDEX ,BOOL> ret ;
-			ret.mP1 = mSet[curr].mUp ;
-			ret.mP2 = mSet[curr].mLR ;
+		CHILD parent (CREF<INDEX> curr) const {
+			CHILD ret ;
+			ret.mUp = mSet[curr].mUp ;
+			ret.mLR = mSet[curr].mLR ;
 			return move (ret) ;
 		}
 
-		PACK<INDEX ,BOOL> left_child (CREF<INDEX> curr) {
-			PACK<INDEX ,BOOL> ret ;
-			ret.mP1 = curr ;
-			ret.mP2 = FALSE ;
+		CHILD left_child (CREF<INDEX> curr) const {
+			CHILD ret ;
+			ret.mUp = curr ;
+			ret.mLR = FALSE ;
 			return move (ret) ;
 		}
 
-		PACK<INDEX ,BOOL> right_child (CREF<INDEX> curr) {
-			PACK<INDEX ,BOOL> ret ;
-			ret.mP1 = curr ;
-			ret.mP2 = TRUE ;
+		CHILD right_child (CREF<INDEX> curr) const {
+			CHILD ret ;
+			ret.mUp = curr ;
+			ret.mLR = TRUE ;
 			return move (ret) ;
 		}
 
-		void curr_next (CREF<PACK<INDEX ,BOOL>> up ,CREF<INDEX> next) {
-			auto rax = TRUE ;
-			if ifswitch (rax) {
-				if (up.mP1 != NONE)
+		void curr_next (CREF<CHILD> up ,CREF<INDEX> next) {
+			auto eax = TRUE ;
+			if ifswitch (eax) {
+				if (up.mUp != NONE)
 					discard ;
 				mRoot = next ;
 			}
-			if ifswitch (rax) {
-				if (up.mP2)
+			if ifswitch (eax) {
+				if (up.mLR)
 					discard ;
-				mSet[up.mP1].mLeft = next ;
+				mSet[up.mUp].mLeft = next ;
 			}
-			if ifswitch (rax) {
-				mSet[up.mP1].mRight = next ;
+			if ifswitch (eax) {
+				mSet[up.mUp].mRight = next ;
 			}
 		}
 
-		void curr_prev (CREF<INDEX> curr ,CREF<PACK<INDEX ,BOOL>> up) {
+		void curr_prev (CREF<INDEX> curr ,CREF<CHILD> up) {
 			if ifswitch (TRUE) {
 				if (curr == NONE)
 					discard ;
-				mSet[curr].mUp = up.mP1 ;
-				mSet[curr].mLR = up.mP2 ;
+				mSet[curr].mUp = up.mUp ;
+				mSet[curr].mLR = up.mLR ;
 			}
 		}
 
@@ -2703,7 +2861,7 @@ trait SET_HELP<ITEM ,SIZE ,ALWAYS> {
 	} ;
 } ;
 
-template <class ITEM ,class SIZE = VARBUFFER>
+template <class ITEM ,class SIZE = VARIABLE>
 using Set = typename SET_HELP<ITEM ,SIZE ,ALWAYS>::Set ;
 
 template <class...>
@@ -2756,6 +2914,19 @@ trait HASHSET_HELP<ITEM ,SIZE ,ALWAYS> {
 				mRange[i] = NONE ;
 		}
 
+		ArrayIterator<HashSet ,ITEM> begin () const leftvalue {
+			return ArrayIterator<HashSet ,ITEM> (CRef<HashSet>::reference (thiz)) ;
+		}
+
+		ArrayIterator<HashSet ,ITEM> end () const leftvalue {
+			return ArrayIterator<HashSet ,ITEM> (CRef<HashSet>::reference (thiz)) ;
+		}
+
+		ArrayIterator<ArrayRange<HashSet> ,INDEX> iter () const leftvalue {
+			auto &&tmp = ArrayRange<HashSet>::from (thiz) ;
+			return ArrayIterator<ArrayRange<HashSet> ,INDEX> (CRef<ArrayRange<HashSet>>::reference (tmp)) ;
+		}
+
 		INDEX ibegin () const {
 			for (auto &&i : CORE::iter (0 ,size ())) {
 				if (mSet.used (i))
@@ -2775,12 +2946,6 @@ trait HASHSET_HELP<ITEM ,SIZE ,ALWAYS> {
 					return i ;
 			}
 			return NONE ;
-		}
-
-		template <class ARG1 = void>
-		ArrayIterator<DEPENDENT<HashSet ,ARG1>> iter () const leftvalue {
-			using R1X = DEPENDENT<HashSet ,ARG1> ;
-			return ArrayIterator<R1X> (CRef<R1X>::reference (thiz)) ;
 		}
 
 		CREF<ITEM> at (CREF<INDEX> index) const leftvalue {
@@ -2916,14 +3081,14 @@ trait HASHSET_HELP<ITEM ,SIZE ,ALWAYS> {
 		}
 
 		void curr_next (CREF<INDEX> curr ,CREF<INDEX> next) {
-			auto rax = TRUE ;
-			if ifswitch (rax) {
+			auto eax = TRUE ;
+			if ifswitch (eax) {
 				if (curr != NONE)
 					discard ;
 				INDEX ix = mSet[curr].mHash % mRange.size () ;
 				mRange[ix] = next ;
 			}
-			if ifswitch (rax) {
+			if ifswitch (eax) {
 				mSet[curr].mNext = next ;
 			}
 		}
@@ -2938,7 +3103,7 @@ trait HASHSET_HELP<ITEM ,SIZE ,ALWAYS> {
 	} ;
 } ;
 
-template <class ITEM ,class SIZE = VARBUFFER>
+template <class ITEM ,class SIZE = VARIABLE>
 using HashSet = typename HASHSET_HELP<ITEM ,SIZE ,ALWAYS>::HashSet ;
 } ;
 } ;
