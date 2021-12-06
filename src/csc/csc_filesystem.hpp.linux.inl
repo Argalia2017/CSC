@@ -10,6 +10,10 @@
 #include "csc_runtime.hpp"
 #include "csc_filesystem.hpp"
 
+#ifndef __CSC_SYSTEM_LINUX__
+#error "б╞(д├бузебу ;)д├
+#endif
+
 namespace CSC {
 namespace DEBUGGER {
 } ;

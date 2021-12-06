@@ -32,7 +32,7 @@ trait IMAGE_ITERATOR_HELP<RANK ,ALWAYS> {
 			mWidth = width_ ;
 			mIndex.fill (0) ;
 			const auto r1x = template_acc_of (PHX ,TYPEAS<ENUM_ZERO>::id) ;
-			mGood = r1x > 0 ;
+			mGood = BOOL (r1x > 0) ;
 		}
 
 		Iterator begin () const {
@@ -106,10 +106,8 @@ using ImageIterator = typename IMAGE_ITERATOR_HELP<RANK ,ALWAYS>::Iterator ;
 template <class...>
 trait ROWPROXY_HELP ;
 
-template <class UNIT1 ,class UNIT2>
-trait ROWPROXY_HELP<UNIT1 ,UNIT2 ,REQUIRE<IS_VARIABLE<UNIT1>>> {
-	using ITEM = typeof (bad (TYPEAS<CREF<UNIT2>>::id).at (bad (TYPEAS<INDEX>::id) ,bad (TYPEAS<INDEX>::id))) ;
-
+template <class UNIT1 ,class UNIT2 ,class UNIT3>
+trait ROWPROXY_HELP<UNIT1 ,UNIT2 ,UNIT3 ,REQUIRE<IS_VARIABLE<UNIT1>>> {
 	class RowProxy {
 	private:
 		VRef<UNIT2> mBase ;
@@ -123,16 +121,14 @@ trait ROWPROXY_HELP<UNIT1 ,UNIT2 ,REQUIRE<IS_VARIABLE<UNIT1>>> {
 			mY = y ;
 		}
 
-		inline VREF<ITEM> operator[] (CREF<INDEX> x) rightvalue {
+		inline VREF<UNIT3> operator[] (CREF<INDEX> x) rightvalue {
 			return mBase->at (x ,mY) ;
 		}
 	} ;
 } ;
 
-template <class UNIT1 ,class UNIT2>
-trait ROWPROXY_HELP<UNIT1 ,UNIT2 ,REQUIRE<IS_CONSTANT<UNIT1>>> {
-	using ITEM = typeof (bad (TYPEAS<CREF<UNIT2>>::id).at (bad (TYPEAS<INDEX>::id) ,bad (TYPEAS<INDEX>::id))) ;
-
+template <class UNIT1 ,class UNIT2 ,class UNIT3>
+trait ROWPROXY_HELP<UNIT1 ,UNIT2 ,UNIT3 ,REQUIRE<IS_CONSTANT<UNIT1>>> {
 	class RowProxy {
 	private:
 		CRef<UNIT2> mBase ;
@@ -146,14 +142,14 @@ trait ROWPROXY_HELP<UNIT1 ,UNIT2 ,REQUIRE<IS_CONSTANT<UNIT1>>> {
 			mY = y ;
 		}
 
-		inline CREF<ITEM> operator[] (CREF<INDEX> x) rightvalue {
+		inline CREF<UNIT3> operator[] (CREF<INDEX> x) rightvalue {
 			return mBase->at (x ,mY) ;
 		}
 	} ;
 } ;
 
-template <class UNIT1>
-using RowProxy = typename ROWPROXY_HELP<XREF<UNIT1> ,REMOVE_REF<UNIT1> ,ALWAYS>::RowProxy ;
+template <class UNIT1 ,class UNIT2>
+using RowProxy = typename ROWPROXY_HELP<XREF<UNIT1> ,REMOVE_REF<UNIT1> ,UNIT2 ,ALWAYS>::RowProxy ;
 
 template <class...>
 trait IMAGE_HELP ;
@@ -222,12 +218,14 @@ trait IMAGE_HELP<ITEM ,SIZE ,ALWAYS> {
 			return mCK ;
 		}
 
-		VREF<RegBuffer<ITEM>> raw () leftvalue {
-			return RegBuffer<ITEM>::from (mImage) ;
+		VREF<RegBuffer<ITEM>> raw (RREF<VarBuffer<ITEM>> where_ = VarBuffer<ITEM> ()) leftvalue {
+			auto rax = VRef<ARR<ITEM>>::reference (mImage.self) ;
+			return RegBuffer<ITEM>::from (where_ ,move (rax) ,mImage.size ()) ;
 		}
 
-		CREF<RegBuffer<ITEM>> raw () const leftvalue {
-			return RegBuffer<ITEM>::from (mImage) ;
+		CREF<RegBuffer<ITEM>> raw (RREF<ConBuffer<ITEM>> where_ = ConBuffer<ITEM> ()) const leftvalue {
+			auto rax = CRef<ARR<ITEM>>::reference (mImage.self) ;
+			return RegBuffer<ITEM>::from (where_ ,move (rax) ,mImage.size ()) ;
 		}
 
 		void reset () {
@@ -272,10 +270,8 @@ trait IMAGE_HELP<ITEM ,SIZE ,ALWAYS> {
 			return mImage[y * mCW + x + mCK] ;
 		}
 
-		template <class ARG1 = void>
-		inline RowProxy<VREF<DEPENDENT<Image ,ARG1>>> operator[] (CREF<INDEX> y) leftvalue {
-			using R1X = DEPENDENT<Image ,ARG1> ;
-			return RowProxy<VREF<R1X>> (VRef<R1X>::reference (thiz) ,y) ;
+		inline RowProxy<VREF<Image> ,ITEM> operator[] (CREF<INDEX> y) leftvalue {
+			return RowProxy<VREF<Image> ,ITEM> (VRef<Image>::reference (thiz) ,y) ;
 		}
 
 		CREF<ITEM> at (CREF<ARRAY2<INDEX>> pair) const leftvalue {
@@ -292,10 +288,8 @@ trait IMAGE_HELP<ITEM ,SIZE ,ALWAYS> {
 			return mImage[y * mCW + x + mCK] ;
 		}
 
-		template <class ARG1 = void>
-		inline RowProxy<CREF<DEPENDENT<Image ,ARG1>>> operator[] (CREF<INDEX> y) const leftvalue {
-			using R1X = DEPENDENT<Image ,ARG1> ;
-			return RowProxy<CREF<R1X>> (CRef<R1X>::reference (thiz) ,y) ;
+		inline RowProxy<CREF<Image> ,ITEM> operator[] (CREF<INDEX> y) const leftvalue {
+			return RowProxy<CREF<Image> ,ITEM> (CRef<Image>::reference (thiz) ,y) ;
 		}
 
 		BOOL equal (CREF<Image> that) const {
@@ -564,7 +558,7 @@ trait IMAGE_HELP<ITEM ,SIZE ,ALWAYS> {
 	} ;
 } ;
 
-template <class ITEM ,class SIZE = VARBUFFER>
+template <class ITEM ,class SIZE = VARIABLE>
 using Image = typename IMAGE_HELP<ITEM ,SIZE ,ALWAYS>::Image ;
 } ;
 } ;

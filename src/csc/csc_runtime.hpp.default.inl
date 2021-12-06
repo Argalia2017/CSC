@@ -20,59 +20,8 @@
 #include <random>
 #include "end.h"
 
-#ifdef __CSC_SYSTEM_WINDOWS__
-#ifndef _INC_WINDOWS
-#error "б╞(д├бузебу ;)д├ : require 'Windows.h'"
-#endif
-#endif
-
-#ifdef __CSC_SYSTEM_LINUX__
-#include <unistd.h>
-#include <sys/syscall.h>
-#endif
-
 namespace CSC {
 namespace RUNTIME {
-template <class...>
-trait TIMEPOINT_IMPLHOLDER_HELP ;
-
-template <>
-trait TIMEPOINT_IMPLHOLDER_HELP<ALWAYS> {
-	using Holder = typename TIMEPOINT_HELP<ALWAYS>::Holder ;
-	using TIMEPOINT = std::chrono::system_clock::time_point ;
-	using TIMEDURATION = std::chrono::system_clock::duration ;
-
-	struct NODE {
-		TIMEPOINT mData ;
-	} ;
-
-	class ImplHolder implement Holder {
-	private:
-		NODE mTimePoint ;
-	
-	public:
-		implicit ImplHolder () = default ;
-
-		void init_now () override {
-			mTimePoint.mData = std::chrono::system_clock::now () ;
-		}
-
-		void init_epoch () override {
-			const auto r1x = TIMEDURATION (0) ;
-			mTimePoint.mData = TIMEPOINT (r1x) ;
-		}
-
-		Auto native () const override {
-			return CRef<NODE>::reference (mTimePoint) ;
-		}
-	} ;
-} ;
-
-exports auto TIMEPOINT_HELP<ALWAYS>::FUNCTION_make::extern_invoke () -> VRef<Holder> {
-	using R1X = typename TIMEPOINT_IMPLHOLDER_HELP<ALWAYS>::ImplHolder ;
-	return VRef<R1X>::make () ;
-} ;
-
 template <class...>
 trait TIMEDURATION_IMPLHOLDER_HELP ;
 
@@ -83,72 +32,154 @@ trait TIMEDURATION_IMPLHOLDER_HELP<ALWAYS> {
 	using TIMEDURATION = std::chrono::system_clock::duration ;
 
 	struct NODE {
-		TIMEDURATION mData ;
+		TIMEDURATION mTimeDuration ;
 	} ;
 
 	class ImplHolder implement Holder {
 	private:
-		NODE mDuration ;
+		NODE mNode ;
 
 	public:
 		implicit ImplHolder () = default ;
 
 		void init_zero () override {
-			mDuration.mData = TIMEDURATION (0) ;
+			mNode.mTimeDuration = TIMEDURATION (0) ;
 		}
 
 		Auto native () const override {
-			return CRef<NODE>::reference (mDuration) ;
+			return CRef<NODE>::reference (mNode) ;
 		}
 
 		LENGTH hours () const override {
-			const auto r1x = std::chrono::duration_cast<std::chrono::hours> (mDuration.mData) ;
+			const auto r1x = std::chrono::duration_cast<std::chrono::hours> (mNode.mTimeDuration) ;
 			return LENGTH (r1x.count ()) ;
 		}
 
 		LENGTH minutes () const override {
-			const auto r1x = std::chrono::duration_cast<std::chrono::minutes> (mDuration.mData) ;
+			const auto r1x = std::chrono::duration_cast<std::chrono::minutes> (mNode.mTimeDuration) ;
 			return LENGTH (r1x.count ()) ;
 		}
 
 		LENGTH seconds () const override {
-			const auto r1x = std::chrono::duration_cast<std::chrono::seconds> (mDuration.mData) ;
+			const auto r1x = std::chrono::duration_cast<std::chrono::seconds> (mNode.mTimeDuration) ;
 			return LENGTH (r1x.count ()) ;
 		}
 
 		LENGTH milliseconds () const override {
-			const auto r1x = std::chrono::duration_cast<std::chrono::milliseconds> (mDuration.mData) ;
+			const auto r1x = std::chrono::duration_cast<std::chrono::milliseconds> (mNode.mTimeDuration) ;
 			return LENGTH (r1x.count ()) ;
 		}
 
 		LENGTH microseconds () const override {
-			const auto r1x = std::chrono::duration_cast<std::chrono::microseconds> (mDuration.mData) ;
+			const auto r1x = std::chrono::duration_cast<std::chrono::microseconds> (mNode.mTimeDuration) ;
 			return LENGTH (r1x.count ()) ;
 		}
 
 		LENGTH nanoseconds () const override {
-			const auto r1x = std::chrono::duration_cast<std::chrono::nanoseconds> (mDuration.mData) ;
+			const auto r1x = std::chrono::duration_cast<std::chrono::nanoseconds> (mNode.mTimeDuration) ;
 			return LENGTH (r1x.count ()) ;
 		}
 
 		void add_from (CREF<Holder> a ,CREF<Holder> b) override {
 			auto &&tmp_a = keep[TYPEAS<CREF<ImplHolder>>::id] (a) ;
 			auto &&tmp_b = keep[TYPEAS<CREF<ImplHolder>>::id] (b) ;
-			mDuration.mData = tmp_a.mDuration.mData + tmp_b.mDuration.mData ;
+			mNode.mTimeDuration = tmp_a.mNode.mTimeDuration + tmp_b.mNode.mTimeDuration ;
 		}
 
 		void sub_from (CREF<Holder> a ,CREF<Holder> b) override {
 			auto &&tmp_a = keep[TYPEAS<CREF<ImplHolder>>::id] (a) ;
 			auto &&tmp_b = keep[TYPEAS<CREF<ImplHolder>>::id] (b) ;
-			mDuration.mData = tmp_a.mDuration.mData - tmp_b.mDuration.mData ;
+			mNode.mTimeDuration = tmp_a.mNode.mTimeDuration - tmp_b.mNode.mTimeDuration ;
 		}
 	} ;
 } ;
 
-exports auto TIMEDURATION_HELP<ALWAYS>::FUNCTION_make::extern_invoke () -> VRef<Holder> {
+exports auto TIMEDURATION_HELP<ALWAYS>::FUNCTION_link::invoke () -> VRef<Holder> {
 	using R1X = typename TIMEDURATION_IMPLHOLDER_HELP<ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
 } ;
+
+template <class...>
+trait TIMEPOINT_IMPLHOLDER_HELP ;
+
+template <>
+trait TIMEPOINT_IMPLHOLDER_HELP<ALWAYS> {
+	using Holder = typename TIMEPOINT_HELP<ALWAYS>::Holder ;
+	using TIMEPOINT = std::chrono::system_clock::time_point ;
+	using TIMEDURATION = std::chrono::system_clock::duration ;
+
+	struct NODE {
+		TIMEPOINT mTimePoint ;
+	} ;
+
+	class ImplHolder implement Holder {
+	private:
+		NODE mNode ;
+
+	public:
+		implicit ImplHolder () = default ;
+
+		void init_now () override {
+			mNode.mTimePoint = std::chrono::system_clock::now () ;
+		}
+
+		void init_epoch () override {
+			const auto r1x = TIMEDURATION (0) ;
+			mNode.mTimePoint = TIMEPOINT (r1x) ;
+		}
+
+		Auto native () const override {
+			return CRef<NODE>::reference (mNode) ;
+		}
+
+		void add_from (CREF<Holder> a ,CREF<TimeDuration> b) override {
+			using R1X = typename TIMEDURATION_IMPLHOLDER_HELP<ALWAYS>::NODE ;
+			auto &&tmp_a = keep[TYPEAS<CREF<ImplHolder>>::id] (a) ;
+			auto &&tmp_b = b.native ().as (TYPEAS<CRef<R1X>>::id).self ;
+			mNode.mTimePoint = tmp_a.mNode.mTimePoint + tmp_b.mTimeDuration ;
+		}
+
+		void sub_from (CREF<Holder> a ,CREF<TimeDuration> b) override {
+			using R1X = typename TIMEDURATION_IMPLHOLDER_HELP<ALWAYS>::NODE ;
+			auto &&tmp_a = keep[TYPEAS<CREF<ImplHolder>>::id] (a) ;
+			auto &&tmp_b = b.native ().as (TYPEAS<CRef<R1X>>::id).self ;
+			mNode.mTimePoint = tmp_a.mNode.mTimePoint - tmp_b.mTimeDuration ;
+		}
+	} ;
+} ;
+
+exports auto TIMEPOINT_HELP<ALWAYS>::FUNCTION_link::invoke () -> VRef<Holder> {
+	using R1X = typename TIMEPOINT_IMPLHOLDER_HELP<ALWAYS>::ImplHolder ;
+	return VRef<R1X>::make () ;
+} ;
+
+template <class...>
+trait MUTEXLOCKER_HELP ;
+
+template <>
+trait MUTEXLOCKER_HELP<ALWAYS> {
+	using RECURSIVEMUTEX = std::recursive_mutex ;
+
+	class MutexLocker extend Proxy {
+	private:
+		RECURSIVEMUTEX mBase ;
+
+	public:
+		imports VREF<MutexLocker> from (VREF<RECURSIVEMUTEX> that) {
+			return unsafe_deref (unsafe_cast (TYPEAS<TEMP<MutexLocker>>::id ,unsafe_deptr (that))) ;
+		}
+
+		void enter () {
+			noop () ;
+		}
+
+		void leave () {
+			mBase.unlock () ;
+		}
+	} ;
+} ;
+
+using MutexLocker = typename MUTEXLOCKER_HELP<ALWAYS>::MutexLocker ;
 
 template <class...>
 trait MUTEX_IMPLHOLDER_HELP ;
@@ -156,40 +187,93 @@ trait MUTEX_IMPLHOLDER_HELP ;
 template <>
 trait MUTEX_IMPLHOLDER_HELP<ALWAYS> {
 	using Holder = typename MUTEX_HELP<ALWAYS>::Holder ;
+	using MUTEX = std::mutex ;
+	using RECURSIVEMUTEX = std::recursive_mutex ;
+	using CONDITIONNALMUTEX = std::condition_variable ;
 
 	struct NODE {
-		INDEX mIndex ;
+		Box<MUTEX> mMutex ;
+		Box<RECURSIVEMUTEX> mRecursive ;
+		Box<CONDITIONNALMUTEX> mConditional ;
 	} ;
 
 	class ImplHolder implement Holder {
 	private:
-		NODE mMutex ;
+		SharedRef<NODE> mNode ;
 
 	public:
 		implicit ImplHolder () {
-			mMutex.mIndex = NONE ;
+			mNode = SharedRef<NODE>::make () ;
+		}
+
+		void init_mutex () override {
+			mNode->mMutex = Box<MUTEX>::make () ;
+		}
+
+		void init_recursive_mutex () override {
+			mNode->mRecursive = Box<RECURSIVEMUTEX>::make () ;
+		}
+
+		void init_conditional_mutex () override {
+			mNode->mMutex = Box<MUTEX>::make () ;
+			mNode->mConditional = Box<CONDITIONNALMUTEX>::make () ;
 		}
 
 		Auto native () const override {
-			return CRef<NODE>::reference (mMutex) ;
+			return CRef<NODE>::reference (mNode) ;
 		}
 
 		void enter () const override {
-			//mMutex->lock () ;
+			auto eax = TRUE ;
+			if ifswitch (eax) {
+				if (mNode->mMutex == NULL)
+					discard ;
+				mNode->mMutex->lock () ;
+			}
+			if ifswitch (eax) {
+				if (mNode->mRecursive == NULL)
+					discard ;
+				mNode->mRecursive->lock () ;
+			}
 		}
 
-		BOOL try_enter () const override {
-			//return mMutex->try_lock () ;
-			return FALSE ;
+		AnyRef<> try_enter () const leftvalue override {
+			AnyRef<> ret ;
+			if ifswitch (TRUE) {
+				if (mNode->mRecursive == NULL)
+					discard ;
+				const auto r1x = mNode->mRecursive->try_lock () ;
+				if ifnot (r1x)
+					discard ;
+				auto rax = Scope<VREF<MutexLocker>> (MutexLocker::from (mNode->mRecursive.self)) ;
+				ret = AnyRef<Scope<VREF<MutexLocker>>>::make (move (rax)) ;
+			}
+			return move (ret) ;
 		}
 
 		void leave () const override {
-			//mMutex->unlock () ;
+			auto eax = TRUE ;
+			if ifswitch (eax) {
+				if (mNode->mMutex == NULL)
+					discard ;
+				mNode->mMutex->unlock () ;
+			}
+			if ifswitch (eax) {
+				if (mNode->mRecursive == NULL)
+					discard ;
+				mNode->mRecursive->unlock () ;
+			}
+		}
+
+		void notify () const override {
+			if (mNode->mConditional == NULL)
+				return ;
+			mNode->mConditional->notify_all () ;
 		}
 	} ;
 } ;
 
-exports auto MUTEX_HELP<ALWAYS>::FUNCTION_make::extern_invoke () -> VRef<Holder> {
+exports auto MUTEX_HELP<ALWAYS>::FUNCTION_link::invoke () -> VRef<Holder> {
 	using R1X = typename MUTEX_IMPLHOLDER_HELP<ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
 } ;
@@ -200,257 +284,64 @@ trait CONDITIONALLOCK_IMPLHOLDER_HELP ;
 template <>
 trait CONDITIONALLOCK_IMPLHOLDER_HELP<ALWAYS> {
 	using Holder = typename CONDITIONALLOCK_HELP<ALWAYS>::Holder ;
+	using MUTEX = typename MUTEX_IMPLHOLDER_HELP<ALWAYS>::MUTEX ;
+	using MUTEXNODE = typename MUTEX_IMPLHOLDER_HELP<ALWAYS>::NODE ;
+	using CONDITIONALLOCK = std::unique_lock<MUTEX> ;
 
 	struct NODE {
-		INDEX mIndex ;
+		SharedRef<MUTEXNODE> mMutexNode ;
+		CONDITIONALLOCK mLock ;
 	} ;
 
 	class ImplHolder implement Holder {
 	private:
-		NODE mConditionalLock ;
+		NODE mNode ;
 
 	public:
-		implicit ImplHolder () {
-			mConditionalLock.mIndex = NONE ;
+		implicit ImplHolder () = default ;
+
+		void init_lock (CREF<Mutex> mutex_) {
+			//@mark
+			mNode.mMutexNode = mutex_.native ().as (TYPEAS<SharedRef<MUTEXNODE>>::id) ;
+			assert (mNode.mMutexNode.exist ()) ;
+			mNode.mLock = CONDITIONALLOCK (mNode.mMutexNode->mMutex) ;
 		}
 
 		Auto native () const override {
-			return CRef<NODE>::reference (mConditionalLock) ;
-		}
-	} ;
-} ;
-
-exports auto CONDITIONALLOCK_HELP<ALWAYS>::FUNCTION_make::extern_invoke () -> VRef<Holder> {
-	using R1X = typename CONDITIONALLOCK_IMPLHOLDER_HELP<ALWAYS>::ImplHolder ;
-	return VRef<R1X>::make () ;
-} ;
-
-template <class...>
-trait FUNCTION_current_thread_id_HELP ;
-
-template <class UNIT1>
-trait FUNCTION_current_thread_id_HELP<UNIT1 ,REQUIRE<MACRO_SYSTEM_WINDOWS<UNIT1>>> {
-#ifdef __CSC_SYSTEM_WINDOWS__
-	struct FUNCTION_current_thread_id {
-		inline FLAG operator() () const {
-			return FLAG (GetCurrentThreadId ()) ;
-		}
-	} ;
-#endif
-} ;
-
-template <class UNIT1>
-trait FUNCTION_current_thread_id_HELP<UNIT1 ,REQUIRE<MACRO_SYSTEM_LINUX<UNIT1>>> {
-#ifdef __CSC_SYSTEM_LINUX__
-	struct FUNCTION_current_thread_id {
-		inline FLAG operator() () const {
-			return FLAG (syscall (SYS_gettid)) ;
-		}
-	} ;
-#endif
-} ;
-
-struct FUNCTION_current_thread_id {
-	inline LENGTH operator() () const {
-		using R1X = typename FUNCTION_current_thread_id_HELP<void ,ALWAYS>::FUNCTION_current_thread_id ;
-		static constexpr auto M_INVOKE = R1X () ;
-		return M_INVOKE () ;
-	}
-} ;
-
-static constexpr auto current_thread_id = FUNCTION_current_thread_id () ;
-
-template <class...>
-trait THREAD_IMPLHOLDER_HELP ;
-
-template <>
-trait THREAD_IMPLHOLDER_HELP<ALWAYS> {
-	using Holder = typename THREAD_HELP<ALWAYS>::Holder ;
-
-	struct NODE {
-		BOOL mCurrent ;
-	} ;
-
-	class ImplHolder implement Holder {
-	private:
-		NODE mThread ;
-
-	public:
-		implicit ImplHolder () {
-			mThread.mCurrent = FALSE ;
+			return CRef<NODE>::reference (mNode) ;
 		}
 
-		void init_current () override {
-			mThread.mCurrent = TRUE ;
+		void wait () override {
+			mNode.mMutexNode->mConditional->wait (mNode.mLock) ;
 		}
 
-		Auto native () const override {
-			return CRef<NODE>::reference (mThread) ;
-		}
-
-		FLAG thread_id () const override {
-			FLAG ret = ZERO ;
-			if ifswitch (TRUE) {
-				if ifnot (mThread.mCurrent)
-					discard ;
-				ret = current_thread_id () ;
-			}
-			return move (ret) ;
-		}
-
-		void sleep (CREF<TimePoint> time_) override {
-			using R1X = typename TIMEPOINT_IMPLHOLDER_HELP<ALWAYS>::NODE ;
-			const auto r1x = time_.native ().as (TYPEAS<VRef<R1X>>::id) ;
-			std::this_thread::sleep_until (r1x->mData) ;
-		}
-
-		void sleep (CREF<TimeDuration> time_) override {
+		void wait (CREF<TimeDuration> time_) override {
 			using R1X = typename TIMEDURATION_IMPLHOLDER_HELP<ALWAYS>::NODE ;
-			const auto r1x = time_.native ().as (TYPEAS<VRef<R1X>>::id) ;
-			std::this_thread::sleep_for (r1x->mData) ;
+			auto &&tmp = time_.native ().as (TYPEAS<R1X>::id).mTimeDuration ;
+			mNode.mMutexNode->mConditional->wait_for (mNode.mLock ,tmp) ;
+		}
+
+		void wait (CREF<TimePoint> time_) override {
+			using R1X = typename TIMEPOINT_IMPLHOLDER_HELP<ALWAYS>::NODE ;
+			auto &&tmp = time_.native ().as (TYPEAS<R1X>::id).mTimePoint ;
+			mNode.mMutexNode->mConditional->wait_until (mNode.mLock ,tmp) ;
+		}
+
+		void notify () override {
+			mNode.mMutexNode->mConditional->notify_all () ;
 		}
 
 		void yield () override {
-			std::this_thread::yield () ;
+			using R1X = typename TIMEDURATION_IMPLHOLDER_HELP<ALWAYS>::NODE ;
+			mNode.mMutexNode->mConditional->notify_all () ;
+			auto &&tmp = TimeDuration::zero ().native ().as (TYPEAS<R1X>::id).mTimeDuration ;
+			mNode.mMutexNode->mConditional->wait_for (mNode.mLock ,tmp) ;
 		}
 	} ;
 } ;
 
-exports auto THREAD_HELP<ALWAYS>::FUNCTION_make::extern_invoke () -> VRef<Holder> {
-	using R1X = typename THREAD_IMPLHOLDER_HELP<ALWAYS>::ImplHolder ;
-	return VRef<R1X>::make () ;
-} ;
-
-template <class...>
-trait FUNCTION_current_process_id_HELP ;
-
-template <class UNIT1>
-trait FUNCTION_current_process_id_HELP<UNIT1 ,REQUIRE<MACRO_SYSTEM_WINDOWS<UNIT1>>> {
-#ifdef __CSC_SYSTEM_WINDOWS__
-	struct FUNCTION_current_process_id {
-		inline FLAG operator() () const {
-			return FLAG (GetCurrentProcessId ()) ;
-		}
-	} ;
-#endif
-} ;
-
-template <class UNIT1>
-trait FUNCTION_current_process_id_HELP<UNIT1 ,REQUIRE<MACRO_SYSTEM_LINUX<UNIT1>>> {
-#ifdef __CSC_SYSTEM_LINUX__
-	struct FUNCTION_current_process_id {
-		inline FLAG operator() () const {
-			return FLAG (syscall (SYS_getpid)) ;
-		}
-	} ;
-#endif
-} ;
-
-struct FUNCTION_current_process_id {
-	inline LENGTH operator() () const {
-		using R1X = typename FUNCTION_current_process_id_HELP<void ,ALWAYS>::FUNCTION_current_process_id ;
-		static constexpr auto M_INVOKE = R1X () ;
-		return M_INVOKE () ;
-	}
-} ;
-
-static constexpr auto current_process_id = FUNCTION_current_process_id () ;
-
-template <class...>
-trait PROCESS_IMPLHOLDER_HELP ;
-
-template <>
-trait PROCESS_IMPLHOLDER_HELP<ALWAYS> {
-	using Holder = typename PROCESS_HELP<ALWAYS>::Holder ;
-
-	struct NODE {
-		BOOL mCurrent ;
-	} ;
-
-	class ImplHolder implement Holder {
-	private:
-		NODE mProcess ;
-
-	public:
-		implicit ImplHolder () {
-			mProcess.mCurrent = FALSE ;
-		}
-
-		void init_current () override {
-			mProcess.mCurrent = TRUE ;
-		}
-
-		void init_process_info (CREF<PROCESS_INFO> info) override {
-			mProcess.mCurrent = TRUE ;
-		}
-
-		Auto native () const override {
-			return CRef<NODE>::reference (mProcess) ;
-		}
-
-		FLAG process_id () const override {
-			FLAG ret = ZERO ;
-			if ifswitch (TRUE) {
-				if ifnot (mProcess.mCurrent)
-					discard ;
-				ret = current_process_id () ;
-			}
-			return move (ret) ;
-		}
-
-		PROCESS_INFO process_info () const override {
-			PROCESS_INFO ret ;
-			//
-			return move (ret) ;
-		}
-
-		void process_exit () override {
-			std::exit (EXIT_FAILURE) ;
-		}
-
-		void process_abort () override {
-			std::terminate () ;
-		}
-	} ;
-} ;
-
-exports auto PROCESS_HELP<ALWAYS>::FUNCTION_make::extern_invoke () -> VRef<Holder> {
-	using R1X = typename PROCESS_IMPLHOLDER_HELP<ALWAYS>::ImplHolder ;
-	return VRef<R1X>::make () ;
-} ;
-
-template <class...>
-trait MODULE_IMPLHOLDER_HELP ;
-
-template <>
-trait MODULE_IMPLHOLDER_HELP<ALWAYS> {
-	using Holder = typename MODULE_HELP<ALWAYS>::Holder ;
-
-	struct NODE {
-		BOOL mCurrent ;
-	} ;
-
-	class ImplHolder implement Holder {
-	private:
-		NODE mModule ;
-
-	public:
-		implicit ImplHolder () {
-			mModule.mCurrent = FALSE ;
-		}
-
-		void init_current () override {
-			mModule.mCurrent = TRUE ;
-		}
-
-		Auto native () const override {
-			return CRef<NODE>::reference (mModule) ;
-		}
-	} ;
-} ;
-
-exports auto MODULE_HELP<ALWAYS>::FUNCTION_make::extern_invoke () -> VRef<Holder> {
-	using R1X = typename MODULE_IMPLHOLDER_HELP<ALWAYS>::ImplHolder ;
+exports auto CONDITIONALLOCK_HELP<ALWAYS>::FUNCTION_link::invoke () -> VRef<Holder> {
+	using R1X = typename CONDITIONALLOCK_IMPLHOLDER_HELP<ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
 } ;
 
@@ -462,33 +353,36 @@ trait SYSTEM_IMPLHOLDER_HELP<ALWAYS> {
 	using Holder = typename SYSTEM_HELP<ALWAYS>::Holder ;
 
 	struct NODE {
-		String<STR> mLocale ;
+		Cell<String<STR>> mLocale ;
 	} ;
 
 	class ImplHolder implement Holder {
 	private:
-		NODE mSystem ;
+		NODE mNode ;
 
 	public:
-		implicit ImplHolder () {
-			mSystem.mLocale = slice ("C") ;
+		implicit ImplHolder () = default ;
+
+		String<STR> get_locale () const {
+			return mNode.mLocale.fetch () ;
 		}
 
-		Auto native () const override {
-			return CRef<NODE>::reference (mSystem) ;
+		void set_locale (CREF<String<STR>> name) const override {
+			mNode.mLocale.store (name) ;
 		}
 
-		void set_locale (CREF<String<STR>> name) override {
-			mSystem.mLocale = name ;
+		void execute (CREF<String<STR>> command) const override {
+			unimplemented () ;
 		}
 
-		void execute (CREF<String<STR>> command) override {
-			//std::system () ;
+		CREF<String<STR>> working_path () const override {
+			unimplemented () ;
+			return bad (TYPEAS<String<STR>>::id) ;
 		}
 	} ;
 } ;
 
-exports auto SYSTEM_HELP<ALWAYS>::FUNCTION_make::extern_invoke () -> VRef<Holder> {
+exports auto SYSTEM_HELP<ALWAYS>::FUNCTION_link::invoke () -> VRef<Holder> {
 	using R1X = typename SYSTEM_IMPLHOLDER_HELP<ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
 } ;
@@ -499,27 +393,49 @@ trait RANDOM_IMPLHOLDER_HELP ;
 template <>
 trait RANDOM_IMPLHOLDER_HELP<ALWAYS> {
 	using Holder = typename RANDOM_HELP<ALWAYS>::Holder ;
+	using RANDOM = std::mt19937_64 ;
 
 	struct NODE {
-		std::mt19937_64 mData ;
+		DATA mSeed ;
+		RANDOM mRandom ;
 	} ;
 
 	class ImplHolder implement Holder {
 	private:
-		NODE mRandom ;
+		NODE mNode ;
 
 	public:
-		implicit ImplHolder () {
-			mRandom.mData = std::mt19937_64 () ;
+		implicit ImplHolder () = default ;
+
+		void init_new () override {
+			const auto r1x = DATA (invoke (std::random_device ())) ;
+			reset_seed (r1x) ;
 		}
 
 		Auto native () const override {
-			return CRef<NODE>::reference (mRandom) ;
+			return CRef<NODE>::reference (mNode) ;
+		}
+
+		void reset_seed (CREF<DATA> seed) override {
+			mNode.mSeed = seed ;
+			mNode.mRandom = RANDOM (csc_byte64_t (mNode.mSeed)) ;
+		}
+
+		DATA random_byte () override {
+			return DATA (mNode.mRandom ()) ;
+		}
+
+		void random_skip (CREF<LENGTH> size_) override {
+			for (auto &&i : iter (0 ,size_)) {
+				noop (i) ;
+				const auto r1x = DATA (mNode.mRandom ()) ;
+				noop () ;
+			}
 		}
 	} ;
 } ;
 
-exports auto RANDOM_HELP<ALWAYS>::FUNCTION_make::extern_invoke () -> VRef<Holder> {
+exports auto RANDOM_HELP<ALWAYS>::FUNCTION_link::invoke () -> VRef<Holder> {
 	using R1X = typename RANDOM_IMPLHOLDER_HELP<ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
 } ;

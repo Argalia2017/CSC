@@ -2,10 +2,10 @@
 
 cd %~dp0%/../src
 
-set dst=D:/Depends/__CSC__
+set dst=D:\Depends\__CSC__\csc
 mkdir %dst%
 call :dircls "%dst%"
-set src=csc2
+set src=csc
 for /f "tokens=*" %%i in ('dir /b "%src%"') do (
 	call :copyf "%src%/%%i" "%dst%/%%i")
 

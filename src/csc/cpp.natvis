@@ -6,11 +6,9 @@
   <!--"https://docs.microsoft.com/en-us/visualstudio/debugger/pseudovariables?view=vs-2017"-->
   <!--"https://docs.microsoft.com/en-us/visualstudio/debugger/context-operator-cpp?view=vs-2017"-->
 
-  <Type Name="CSC::CORE::Interface" Inheritable="false" />
-
-  <Type Name="CSC::CORE::TEMPID&lt;*&gt;">
+  <Type Name="CSC::U::TEMPID&lt;*&gt;">
     <Expand>
-      <ExpandedItem>(($T1*)&amp;mStorage)</ExpandedItem>
+      <ExpandedItem>(($T1*)&amp;__unused)</ExpandedItem>
     </Expand>
   </Type>
 
@@ -38,6 +36,12 @@
 
   <Type Name="CSC::CORE::VREF_HELP&lt;*&gt;::VRef">
     <Expand>
+      <ExpandedItem>($T1*)mPointer</ExpandedItem>
+    </Expand>
+  </Type>
+
+  <Type Name="CSC::CORE::VREF_HELP&lt;*&gt;::VRef" Priority="MediumLow">
+    <Expand>
       <ExpandedItem>(Holder*)mHolder</ExpandedItem>
     </Expand>
   </Type>
@@ -59,6 +63,12 @@
   </Type>
 
   <Type Name="CSC::CORE::CREF_HELP&lt;*&gt;::CRef">
+    <Expand>
+      <ExpandedItem>($T1*)mPointer</ExpandedItem>
+    </Expand>
+  </Type>
+
+  <Type Name="CSC::CORE::CREF_HELP&lt;*&gt;::CRef" Priority="MediumLow">
     <Expand>
       <ExpandedItem>(Holder*)mHolder</ExpandedItem>
     </Expand>
@@ -95,26 +105,41 @@
   <Type Name="CSC::CORE::SLICE_IMPLHOLDER_HELP&lt;char,*&gt;::ImplHolder">
     <DisplayString>{{ {&amp;mSlice[0],s} }}</DisplayString>
     <StringView>&amp;mSlice[0],s</StringView>
+    <Expand>
+      <Item Name="[view]">&amp;mSlice[0],s</Item>
+    </Expand>
   </Type>
 
   <Type Name="CSC::CORE::SLICE_IMPLHOLDER_HELP&lt;wchar_t,*&gt;::ImplHolder">
     <DisplayString>{{ {&amp;mSlice[0],su} }}</DisplayString>
     <StringView>&amp;mSlice[0],su</StringView>
+    <Expand>
+      <Item Name="[view]">&amp;mSlice[0],su</Item>
+    </Expand>
   </Type>
 
   <Type Name="CSC::CORE::SLICE_IMPLHOLDER_HELP&lt;enum CSC::U::csc_char8_t,*&gt;::ImplHolder">
     <DisplayString>{{ {&amp;mSlice[0],s8} }}</DisplayString>
     <StringView>&amp;mSlice[0],s8</StringView>
+    <Expand>
+      <Item Name="[view]">&amp;mSlice[0],s8</Item>
+    </Expand>
   </Type>
 
   <Type Name="CSC::CORE::SLICE_IMPLHOLDER_HELP&lt;char16_t,*&gt;::ImplHolder">
     <DisplayString>{{ {&amp;mSlice[0],su} }}</DisplayString>
     <StringView>&amp;mSlice[0],su</StringView>
+    <Expand>
+      <Item Name="[view]">&amp;mSlice[0],su</Item>
+    </Expand>
   </Type>
 
   <Type Name="CSC::CORE::SLICE_IMPLHOLDER_HELP&lt;char32_t,*&gt;::ImplHolder">
     <DisplayString>{{ {&amp;mSlice[0],s32} }}</DisplayString>
     <StringView>&amp;mSlice[0],s32</StringView>
+    <Expand>
+      <Item Name="[view]">&amp;mSlice[0],s32</Item>
+    </Expand>
   </Type>
 
   <Type Name="CSC::CORE::CLAZZ_HELP&lt;*&gt;::Clazz">
@@ -124,7 +149,7 @@
   </Type>
 
   <Type Name="CSC::CORE::CLAZZ_IMPLHOLDER_HELP&lt;*&gt;::ImplHolder">
-    <DisplayString>{{ {CSC::CORE::DATA (this),x} }}</DisplayString>
+    <DisplayString>{{ {(CSC::U::csc_ptrdiff_t) (this),x} }}</DisplayString>
   </Type>
 
   <Type Name="CSC::CORE::EXCEPTION_HELP&lt;*&gt;::Exception">
@@ -142,7 +167,7 @@
   <Type Name="CSC::CORE::WATCH_HELP&lt;*&gt;::WATCH">
     <Expand>
       <Item Name="[name]">mName</Item>
-      <Item Name="[value]">*(($T1*)mAddress)</Item>
+      <ExpandedItem>(($T1*)mAddress)</ExpandedItem>
     </Expand>
   </Type>
 
@@ -159,6 +184,30 @@
   </Type>
 
   <Type Name="CSC::BASIC::ANYREF_IMPLHOLDER_HELP&lt;*&gt;::ImplHolder">
+    <Expand>
+      <ExpandedItem>mValue</ExpandedItem>
+    </Expand>
+  </Type>
+  
+  <Type Name="CSC::BASIC::SHAREDREF_HELP&lt;*&gt;::SharedRef">
+    <Expand>
+      <ExpandedItem>mThis</ExpandedItem>
+    </Expand>
+  </Type>
+
+  <Type Name="CSC::BASIC::SHAREDREF_IMPLHOLDER_HELP&lt;*&gt;::ImplHolder">
+    <Expand>
+      <ExpandedItem>mValue</ExpandedItem>
+    </Expand>
+  </Type>
+
+  <Type Name="CSC::BASIC::UNIQUEREF_HELP&lt;*&gt;::UniqueRef">
+    <Expand>
+      <ExpandedItem>mThis</ExpandedItem>
+    </Expand>
+  </Type>
+
+  <Type Name="CSC::BASIC::UNIQUEREF_IMPLHOLDER_HELP&lt;*&gt;::ImplHolder">
     <Expand>
       <ExpandedItem>mValue</ExpandedItem>
     </Expand>
@@ -217,6 +266,31 @@
   <Type Name="CSC::BASIC::ALLOCATOR_DEFAULT_HELP&lt;*&gt;::NODE">
     <Expand>
       <ExpandedItem Condition="mNext==-2">mItem</ExpandedItem>
+    </Expand>
+  </Type>
+
+  <Type Name="CSC::BASIC::LATER_HELP&lt;*&gt;::Later">
+    <Expand>
+      <ExpandedItem>mThis</ExpandedItem>
+    </Expand>
+  </Type>
+
+  <Type Name="CSC::BASIC::LATER_HELP&lt;*&gt;::LATER">
+    <Expand>
+      <Item Name="[index]">mIndex</Item>
+      <ExpandedItem>mHeap</ExpandedItem>
+    </Expand>
+  </Type>
+
+  <Type Name="CSC::BASIC::LATER_HELP&lt;*&gt;::HEAP">
+    <Expand>
+      <ExpandedItem>mList</ExpandedItem>
+    </Expand>
+  </Type>
+
+  <Type Name="CSC::BASIC::LATER_HELP&lt;*&gt;::NODE">
+    <Expand>
+      <Item Name="[tag]" Condition="mPrev!=-2">mTag</Item>
     </Expand>
   </Type>
 

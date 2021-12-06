@@ -17,7 +17,8 @@
 #define slice(...)
 #define assert(...)
 #define dynamic_assert(...)
-#define dynamic_watch(...)
+#define forceinline
+#define unittest_watch(...)
 #define ifnot(...)
 #define ifswitch(...)
 #define discard break
