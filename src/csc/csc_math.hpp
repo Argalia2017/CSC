@@ -24,8 +24,8 @@ static constexpr auto MATH_INVSQRT2PI = TRIPLE (0.39894228040143267794) ;
 template <class...>
 trait MATHPROC_HELP ;
 
-template <>
-trait MATHPROC_HELP<ALWAYS> {
+template <class DEPEND>
+trait MATHPROC_HELP<DEPEND ,ALWAYS> {
 	struct Holder implement Interface {
 		virtual BOOL is_infinity (CREF<SINGLE> x) const = 0 ;
 		virtual BOOL is_infinity (CREF<DOUBLE> x) const = 0 ;
@@ -256,7 +256,7 @@ trait MATHPROC_HELP<ALWAYS> {
 	} ;
 } ;
 
-using MathProc = typename MATHPROC_HELP<ALWAYS>::MathProc ;
+using MathProc = typename MATHPROC_HELP<DEPEND ,ALWAYS>::MathProc ;
 
 struct FUNCTION_choose {
 	template <class ARG1 ,class...ARG2>
@@ -400,9 +400,9 @@ struct FUNCTION_clamp {
 		using R3X = REMOVE_ALL<ARG3> ;
 		require (IS_SAME<R1X ,R2X>) ;
 		require (IS_SAME<R1X ,R3X>) ;
-		if (x <= lb)
+		if (operator_compr (x ,lb) <= ZERO)
 			return lb ;
-		if (x >= rb)
+		if (operator_compr (x ,rb) >= ZERO)
 			return rb ;
 		return x ;
 	}
@@ -410,11 +410,68 @@ struct FUNCTION_clamp {
 
 static constexpr auto clamp = FUNCTION_clamp () ;
 
+struct FUNCTION_sort_of {
+	template <class ARG1>
+	inline Array<REMOVE_ALL<ARG1> ,RANK1> operator() (XREF<ARG1> x1) const {
+		using R1X = REMOVE_ALL<ARG1> ;
+		Array<R1X ,RANK1> ret ;
+		ret[0] = forward[TYPEAS<ARG1>::id] (x1) ;
+		return move (ret) ;
+	}
+
+	template <class ARG1 ,class ARG2>
+	inline Array<REMOVE_ALL<ARG1> ,RANK2> operator() (XREF<ARG1> x1 ,XREF<ARG2> x2) const {
+		using R1X = REMOVE_ALL<ARG1> ;
+		using R2X = REMOVE_ALL<ARG2> ;
+		require (IS_SAME<R1X ,R2X>) ;
+		Array<R1X ,RANK2> ret ;
+		ret[0] = forward[TYPEAS<ARG1>::id] (x1) ;
+		ret[1] = forward[TYPEAS<ARG1>::id] (x2) ;
+		if ifswitch (TRUE) {
+			if (operator_compr (ret[0] ,ret[1]) <= ZERO)
+				discard ;
+			swap (ret[0] ,ret[1]) ;
+		}
+		return move (ret) ;
+	}
+
+	template <class ARG1 ,class ARG2 ,class ARG3>
+	inline Array<REMOVE_ALL<ARG1> ,RANK3> operator() (XREF<ARG1> x1 ,XREF<ARG2> x2 ,XREF<ARG3> x3) const {
+		using R1X = REMOVE_ALL<ARG1> ;
+		using R2X = REMOVE_ALL<ARG2> ;
+		using R3X = REMOVE_ALL<ARG3> ;
+		require (IS_SAME<R1X ,R2X>) ;
+		require (IS_SAME<R1X ,R3X>) ;
+		Array<R1X ,RANK3> ret ;
+		ret[0] = forward[TYPEAS<ARG1>::id] (x1) ;
+		ret[1] = forward[TYPEAS<ARG1>::id] (x2) ;
+		ret[2] = forward[TYPEAS<ARG1>::id] (x3) ;
+		if ifswitch (TRUE) {
+			if (operator_compr (ret[0] ,ret[1]) <= ZERO)
+				discard ;
+			swap (ret[0] ,ret[1]) ;
+		}
+		if ifswitch (TRUE) {
+			if (operator_compr (ret[0] ,ret[2]) <= ZERO)
+				discard ;
+			swap (ret[0] ,ret[2]) ;
+		}
+		if ifswitch (TRUE) {
+			if (operator_compr (ret[1] ,ret[2]) <= ZERO)
+				discard ;
+			swap (ret[1] ,ret[2]) ;
+		}
+		return move (ret) ;
+	}
+} ;
+
+static constexpr auto sort_of = FUNCTION_sort_of () ;
+
 template <class...>
 trait FLOATPROC_HELP ;
 
-template <>
-trait FLOATPROC_HELP<ALWAYS> {
+template <class DEPEND>
+trait FLOATPROC_HELP<DEPEND ,ALWAYS> {
 	struct NOTATION {
 		FLAG mRadix ;
 		BOOL mSign ;
@@ -465,7 +522,7 @@ trait FLOATPROC_HELP<ALWAYS> {
 	} ;
 } ;
 
-using FloatProc = typename FLOATPROC_HELP<ALWAYS>::FloatProc ;
+using FloatProc = typename FLOATPROC_HELP<DEPEND ,ALWAYS>::FloatProc ;
 } ;
 } ;
 

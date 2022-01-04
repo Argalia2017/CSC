@@ -3,6 +3,7 @@
 #ifdef __CSC_SYSTEM_WINDOWS__
 #ifdef __CSC_COMPILER_MSVC__
 #pragma warning (push)
+#pragma warning (disable :4091)
 #pragma warning (disable :4996)
 #pragma warning (disable :5039)
 #endif
@@ -16,6 +17,9 @@
 #endif
 
 #include <Windows.h>
+#include <crtdbg.h>
+#include <signal.h>
+#include <DbgHelp.h>
 #ifdef __CSC_COMPILER_MSVC__
 #pragma warning (pop)
 #endif
@@ -41,3 +45,16 @@
 #include "csc/csc_filesystem.hpp.linux.inl"
 #include "csc/csc_debugger.hpp.linux.inl"
 #endif
+
+namespace UNITTEST {
+exports void DumpMemoryLeaksAtExit () {
+#ifdef __CSC_COMPILER_MSVC__
+	const auto r1x = _CrtSetDbgFlag (_CRTDBG_REPORT_FLAG) ;
+	noop (r1x) ;
+	const auto r2x = CSC::VAL32 (r1x | _CRTDBG_LEAK_CHECK_DF) ;
+	noop (r2x) ;
+	const auto r3x = _CrtSetDbgFlag (r2x) ;
+	noop (r3x) ;
+#endif
+}
+} ;

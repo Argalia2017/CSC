@@ -47,7 +47,7 @@ trait VECTOR_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 	using SUPER = typename VECTOR_SUPER_HELP<ITEM ,ALWAYS>::Vector ;
 
 	template <class ARG1>
-	using MACRO_Matrix = typename DEPENDENT<MATRIX_HELP<ITEM> ,ARG1>::Matrix ;
+	using MACRO_Matrix = typename DEPENDENT<MATRIX_HELP<ITEM ,ALWAYS> ,ARG1>::Matrix ;
 
 	class Vector extend SUPER {
 	private:
@@ -407,7 +407,7 @@ trait QUATERNION_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 	using SUPER = typename QUATERNION_SUPER_HELP<ITEM ,ALWAYS>::Quaternion ;
 
 	template <class ARG1>
-	using MACRO_Matrix = typename DEPENDENT<MATRIX_HELP<ITEM> ,ARG1>::Matrix ;
+	using MACRO_Matrix = typename DEPENDENT<MATRIX_HELP<ITEM ,ALWAYS> ,ARG1>::Matrix ;
 
 	class Quaternion {
 	private:
@@ -813,8 +813,9 @@ trait MATRIX_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 			return mMatrix[y * 4 + x] ;
 		}
 
-		inline RowProxy<VREF<Matrix> ,ITEM> operator[] (CREF<INDEX> y) leftvalue {
-			return RowProxy<VREF<Matrix> ,ITEM> (VRef<Matrix>::reference (thiz) ,y) ;
+		inline forceinline VREF<RowProxy<Matrix ,ITEM>> operator[] (CREF<INDEX> y) leftvalue {
+			auto rax = TEMP<RowProxy<Matrix ,ITEM>> () ;
+			return RowProxy<Matrix ,ITEM>::from (rax ,thiz ,y) ;
 		}
 
 		CREF<ITEM> at (CREF<INDEX> x ,CREF<INDEX> y) const leftvalue {
@@ -823,8 +824,9 @@ trait MATRIX_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 			return mMatrix[y * 4 + x] ;
 		}
 
-		inline RowProxy<CREF<Matrix> ,ITEM> operator[] (CREF<INDEX> y) const leftvalue {
-			return RowProxy<CREF<Matrix> ,ITEM> (CRef<Matrix>::reference (thiz) ,y) ;
+		inline forceinline CREF<RowProxy<Matrix ,ITEM>> operator[] (CREF<INDEX> y) const leftvalue {
+			auto rax = TEMP<RowProxy<Matrix ,ITEM>> () ;
+			return RowProxy<Matrix ,ITEM>::from (rax ,thiz ,y) ;
 		}
 
 		BOOL equal (CREF<Matrix> that) const {
@@ -1047,7 +1049,7 @@ trait MATRIX_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 		Matrix inverse () const {
 			Matrix ret ;
 			const auto r1x = MathProc::inverse (det ()) ;
-			dynamic_assert (r1x != ITEM (0)) ;
+			assume (r1x != ITEM (0)) ;
 			for (auto &&i : iter (0 ,4)) {
 				INDEX ix = LENGTH (i == 0) ;
 				INDEX iy = ix + 1 + LENGTH (i == 1) ;

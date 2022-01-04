@@ -19,8 +19,44 @@ namespace DEBUGGER {
 template <class...>
 trait CONSOLE_HELP ;
 
-template <>
-trait CONSOLE_HELP<ALWAYS> {
+template <class...>
+trait CONSOLE_MESSAGE_HELP ;
+
+template <class UNIT1>
+trait CONSOLE_MESSAGE_HELP<UNIT1 ,ALWAYS> {
+	using Binder = typename TEXTWRITER_BINDER_HELP<STR ,ALWAYS>::Binder ;
+
+	class Message implement Binder {
+	private:
+		CRef<UNIT1> mMessage ;
+
+	public:
+		implicit Message () = delete ;
+
+		explicit Message (CREF<UNIT1> message) {
+			//@mark
+			mMessage = CRef<UNIT1>::reference (message) ;
+		}
+
+		void friend_write (VREF<TextWriter<STR>> writer) const override {
+			template_write (writer ,mMessage.self) ;
+		}
+
+	private:
+		imports void template_write (VREF<TextWriter<STR>> writer ,CREF<Tuple<>> message) {
+			noop () ;
+		}
+
+		template <class ARG1>
+		imports void template_write (VREF<TextWriter<STR>> writer ,XREF<ARG1> message) {
+			writer << message.first_one ().self ;
+			template_write (writer ,message.first_rest ()) ;
+		}
+	} ;
+} ;
+
+template <class DEPEND>
+trait CONSOLE_HELP<DEPEND ,ALWAYS> {
 	using Binder = typename TEXTWRITER_BINDER_HELP<STR ,ALWAYS>::Binder ;
 
 	struct Holder implement Interface {
@@ -48,14 +84,14 @@ trait CONSOLE_HELP<ALWAYS> {
 	
 	class Console {
 	private:
-		Box<Mutex> mMutex ;
+		Mutex mMutex ;
 		VRef<Holder> mThis ;
 
 	public:
 		imports CREF<Console> instance () {
 			return memorize ([&] () {
 				Console ret ;
-				ret.mMutex = Box<Mutex>::make (Mutex::make_recursive_mutex ()) ;
+				ret.mMutex = Mutex::make_recursive_mutex () ;
 				ret.mThis = FUNCTION_link::invoke () ;
 				return move (ret) ;
 			}) ;
@@ -78,51 +114,72 @@ trait CONSOLE_HELP<ALWAYS> {
 
 		template <class...ARGS>
 		void print (XREF<ARGS>...msg) const {
-			//using R1X = typename DEPENDENT_TYPE<Private ,struct ANONYMOUS>::template ImplBinder<_ARGS...> ;
-			//Scope<CREF<Mutex>> anonymous (mMutex) ;
-			//return mThis->print (R1X (ARGVP0 ,msg...)) ;
+			using R1X = TupleBinder<XREF<ARGS>...> ;
+			using R2X = typename CONSOLE_MESSAGE_HELP<R1X>::Message ;
+			Scope<CREF<Mutex>> anonymous (mMutex) ;
+			auto rax = TEMP<R1X> () ;
+			const auto r1x = R2X (R1X::from (rax ,msg...)) ;
+			print (r1x) ;
 		}
 
 		template <class...ARGS>
 		void fatal (XREF<ARGS>...msg) const {
-			//using R1X = typename DEPENDENT_TYPE<Private ,struct ANONYMOUS>::template ImplBinder<_ARGS...> ;
-			//Scope<CREF<Mutex>> anonymous (mMutex) ;
-			//return mThis->fatal (R1X (ARGVP0 ,msg...)) ;
+			using R1X = TupleBinder<XREF<ARGS>...> ;
+			using R2X = typename CONSOLE_MESSAGE_HELP<R1X>::Message ;
+			Scope<CREF<Mutex>> anonymous (mMutex) ;
+			auto rax = TEMP<R1X> () ;
+			const auto r1x = R2X (R1X::from (rax ,msg...)) ;
+			fatal (r1x) ;
 		}
 
 		template <class...ARGS>
 		void error (XREF<ARGS>...msg) const {
-			//using R1X = typename DEPENDENT_TYPE<Private ,struct ANONYMOUS>::template ImplBinder<_ARGS...> ;
-			//Scope<CREF<Mutex>> anonymous (mMutex) ;
-			//return mThis->error (R1X (ARGVP0 ,msg...)) ;
+			using R1X = TupleBinder<XREF<ARGS>...> ;
+			using R2X = typename CONSOLE_MESSAGE_HELP<R1X>::Message ;
+			Scope<CREF<Mutex>> anonymous (mMutex) ;
+			auto rax = TEMP<R1X> () ;
+			const auto r1x = R2X (R1X::from (rax ,msg...)) ;
+			error (r1x) ;
 		}
 
 		template <class...ARGS>
 		void warn (XREF<ARGS>...msg) const {
-			//using R1X = typename DEPENDENT_TYPE<Private ,struct ANONYMOUS>::template ImplBinder<_ARGS...> ;
-			//Scope<CREF<Mutex>> anonymous (mMutex) ;
-			//return mThis->warn (R1X (ARGVP0 ,msg...)) ;
+			using R1X = TupleBinder<XREF<ARGS>...> ;
+			using R2X = typename CONSOLE_MESSAGE_HELP<R1X>::Message ;
+			Scope<CREF<Mutex>> anonymous (mMutex) ;
+			auto rax = TEMP<R1X> () ;
+			const auto r1x = R2X (R1X::from (rax ,msg...)) ;
+			warn (r1x) ;
 		}
 
 		template <class...ARGS>
 		void info (XREF<ARGS>...msg) const {
-			//using R1X = typename DEPENDENT_TYPE<Private ,struct ANONYMOUS>::template ImplBinder<_ARGS...> ;
-			//Scope<CREF<Mutex>> anonymous (mMutex) ;
-			//return mThis->info (R1X (ARGVP0 ,msg...)) ;
+			using R1X = TupleBinder<XREF<ARGS>...> ;
+			using R2X = typename CONSOLE_MESSAGE_HELP<R1X>::Message ;
+			Scope<CREF<Mutex>> anonymous (mMutex) ;
+			auto rax = TEMP<R1X> () ;
+			const auto r1x = R2X (R1X::from (rax ,msg...)) ;
+			info (r1x) ;
 		}
 
 		template <class...ARGS>
 		void debug (XREF<ARGS>...msg) const {
-			//using R1X = typename DEPENDENT_TYPE<Private ,struct ANONYMOUS>::template ImplBinder<_ARGS...> ;
-			//Scope<CREF<Mutex>> anonymous (mMutex) ;
-			//return mThis->debug (R1X (ARGVP0 ,msg...)) ;
+			using R1X = TupleBinder<XREF<ARGS>...> ;
+			using R2X = typename CONSOLE_MESSAGE_HELP<R1X>::Message ;
+			Scope<CREF<Mutex>> anonymous (mMutex) ;
+			auto rax = TEMP<R1X> () ;
+			const auto r1x = R2X (R1X::from (rax ,msg...)) ;
+			debug (r1x) ;
 		}
 
 		template <class...ARGS>
 		void verbose (XREF<ARGS>...msg) const {
-			//using R1X = typename DEPENDENT_TYPE<Private ,struct ANONYMOUS>::template ImplBinder<_ARGS...> ;
-			//Scope<CREF<Mutex>> anonymous (mMutex) ;
-			//return mThis->verbose (R1X (ARGVP0 ,msg...)) ;
+			using R1X = TupleBinder<XREF<ARGS>...> ;
+			using R2X = typename CONSOLE_MESSAGE_HELP<R1X>::Message ;
+			Scope<CREF<Mutex>> anonymous (mMutex) ;
+			auto rax = TEMP<R1X> () ;
+			const auto r1x = R2X (R1X::from (rax ,msg...)) ;
+			verbose (r1x) ;
 		}
 
 		void attach_log (CREF<String<STR>> file) const {

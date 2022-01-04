@@ -26,8 +26,8 @@ static constexpr auto VAL64_ABS = VAL64_MIN - 1 ;
 template <class...>
 trait VAL_HELP ;
 
-template <class UNIT1>
-trait VAL_HELP<UNIT1 ,REQUIRE<MACRO_CONFIG_VAL32<UNIT1>>> {
+template <class DEPEND>
+trait VAL_HELP<DEPEND ,REQUIRE<MACRO_CONFIG_VAL32<DEPEND>>> {
 	using VAL = VAL32 ;
 
 	static constexpr auto VAL_MAX = VAL32_MAX ;
@@ -35,8 +35,8 @@ trait VAL_HELP<UNIT1 ,REQUIRE<MACRO_CONFIG_VAL32<UNIT1>>> {
 	static constexpr auto VAL_ABS = VAL32_ABS ;
 } ;
 
-template <class UNIT1>
-trait VAL_HELP<UNIT1 ,REQUIRE<MACRO_CONFIG_VAL64<UNIT1>>> {
+template <class DEPEND>
+trait VAL_HELP<DEPEND ,REQUIRE<MACRO_CONFIG_VAL64<DEPEND>>> {
 	using VAL = VAL64 ;
 
 	static constexpr auto VAL_MAX = VAL64_MAX ;
@@ -44,11 +44,11 @@ trait VAL_HELP<UNIT1 ,REQUIRE<MACRO_CONFIG_VAL64<UNIT1>>> {
 	static constexpr auto VAL_ABS = VAL64_ABS ;
 } ;
 
-using VAL = typename VAL_HELP<void ,ALWAYS>::VAL ;
+using VAL = typename VAL_HELP<DEPEND ,ALWAYS>::VAL ;
 
-static constexpr auto VAL_MAX = VAL_HELP<void ,ALWAYS>::VAL_MAX ;
-static constexpr auto VAL_MIN = VAL_HELP<void ,ALWAYS>::VAL_MIN ;
-static constexpr auto VAL_ABS = VAL_HELP<void ,ALWAYS>::VAL_ABS ;
+static constexpr auto VAL_MAX = VAL_HELP<DEPEND ,ALWAYS>::VAL_MAX ;
+static constexpr auto VAL_MIN = VAL_HELP<DEPEND ,ALWAYS>::VAL_MIN ;
+static constexpr auto VAL_ABS = VAL_HELP<DEPEND ,ALWAYS>::VAL_ABS ;
 
 static constexpr auto ZERO = VAL (+0) ;
 static constexpr auto IDEN = VAL (+1) ;
@@ -73,27 +73,6 @@ static constexpr auto DOUBLE_MIN = -DOUBLE_MAX ;
 static constexpr auto DOUBLE_LOW = DOUBLE (2.2250738585072014E-308) ;
 static constexpr auto DOUBLE_EPS = DOUBLE (2.2204460492503131E-016) ;
 static constexpr auto DOUBLE_INF = DOUBLE (infinity) ;
-
-using STRA = csc_char_t ;
-using STRW = csc_wchar_t ;
-using STRU8 = csc_char8_t ;
-using STRU16 = csc_char16_t ;
-using STRU32 = csc_char32_t ;
-
-template <class...>
-trait STR_HELP ;
-
-template <class UNIT1>
-trait STR_HELP<UNIT1 ,REQUIRE<MACRO_CONFIG_STRA<UNIT1>>> {
-	using STR = STRA ;
-} ;
-
-template <class UNIT1>
-trait STR_HELP<UNIT1 ,REQUIRE<MACRO_CONFIG_STRW<UNIT1>>> {
-	using STR = STRW ;
-} ;
-
-using STR = typename STR_HELP<void ,ALWAYS>::STR ;
 
 enum class BYTE :csc_byte8_t ;
 enum class WORD :csc_byte16_t ;
@@ -232,6 +211,27 @@ inline constexpr DATA operator<< (CREF<DATA> thiz_ ,CREF<LENGTH> scale) {
 inline constexpr DATA operator>> (CREF<DATA> thiz_ ,CREF<LENGTH> scale) {
 	return DATA (csc_byte64_t (thiz_) >> scale) ;
 }
+
+using STRA = csc_char_t ;
+using STRW = csc_wchar_t ;
+using STRU8 = csc_char8_t ;
+using STRU16 = csc_char16_t ;
+using STRU32 = csc_char32_t ;
+
+template <class...>
+trait STR_HELP ;
+
+template <class DEPEND>
+trait STR_HELP<DEPEND ,REQUIRE<MACRO_CONFIG_STRA<DEPEND>>> {
+	using STR = STRA ;
+} ;
+
+template <class DEPEND>
+trait STR_HELP<DEPEND ,REQUIRE<MACRO_CONFIG_STRW<DEPEND>>> {
+	using STR = STRW ;
+} ;
+
+using STR = typename STR_HELP<DEPEND ,ALWAYS>::STR ;
 
 static constexpr auto NULL = nullptr ;
 
@@ -470,7 +470,13 @@ template <class UNIT1>
 using TYPE_SECOND_ONE = typename REFLECT_TYPE_HELP<UNIT1 ,ALWAYS>::SECOND_ONE ;
 
 template <class UNIT1>
+using TYPE_SECOND_REST = typename REFLECT_TYPE_HELP<UNIT1 ,ALWAYS>::SECOND_REST ;
+
+template <class UNIT1>
 using TYPE_THIRD_ONE = typename REFLECT_TYPE_HELP<UNIT1 ,ALWAYS>::THIRD_ONE ;
+
+template <class UNIT1>
+using TYPE_THIRD_REST = typename REFLECT_TYPE_HELP<UNIT1 ,ALWAYS>::THIRD_REST ;
 
 template <class UNIT1>
 using TYPE_UNWIND = ENABLE<ENUM_EQ_IDEN<COUNT_OF<UNIT1>> ,TYPE_FIRST_ONE<UNIT1>> ;
@@ -549,8 +555,8 @@ trait ENUM_ALL_HELP<UNIT1 ,REQUIRE<ENUM_EQ_ZERO<COUNT_OF<UNIT1>>>> {
 template <class UNIT1>
 trait ENUM_ALL_HELP<UNIT1 ,REQUIRE<ENUM_GT_ZERO<COUNT_OF<UNIT1>>>> {
 	using R1X = TYPE_FIRST_ONE<UNIT1> ;
-	using R3X = typename ENUM_ALL_HELP<TYPE_FIRST_REST<UNIT1> ,ALWAYS>::RET ;
-	using RET = CONDITIONAL<R1X ,R3X ,ENUM_FALSE> ;
+	using R2X = typename ENUM_ALL_HELP<TYPE_FIRST_REST<UNIT1> ,ALWAYS>::RET ;
+	using RET = CONDITIONAL<R1X ,R2X ,ENUM_FALSE> ;
 } ;
 
 template <class...UNIT1>
@@ -567,8 +573,8 @@ trait ENUM_ANY_HELP<UNIT1 ,REQUIRE<ENUM_EQ_ZERO<COUNT_OF<UNIT1>>>> {
 template <class UNIT1>
 trait ENUM_ANY_HELP<UNIT1 ,REQUIRE<ENUM_GT_ZERO<COUNT_OF<UNIT1>>>> {
 	using R1X = TYPE_FIRST_ONE<UNIT1> ;
-	using R3X = typename ENUM_ANY_HELP<TYPE_FIRST_REST<UNIT1> ,ALWAYS>::RET ;
-	using RET = CONDITIONAL<R1X ,ENUM_TRUE ,R3X> ;
+	using R2X = typename ENUM_ANY_HELP<TYPE_FIRST_REST<UNIT1> ,ALWAYS>::RET ;
+	using RET = CONDITIONAL<R1X ,ENUM_TRUE ,R2X> ;
 } ;
 
 template <class...UNIT1>
@@ -585,8 +591,8 @@ trait ENUM_SUM_HELP<UNIT1 ,REQUIRE<ENUM_EQ_ZERO<COUNT_OF<UNIT1>>>> {
 template <class UNIT1>
 trait ENUM_SUM_HELP<UNIT1 ,REQUIRE<ENUM_GT_ZERO<COUNT_OF<UNIT1>>>> {
 	using R1X = TYPE_FIRST_ONE<UNIT1> ;
-	using R3X = typename ENUM_SUM_HELP<TYPE_FIRST_REST<UNIT1> ,ALWAYS>::RET ;
-	using RET = ENUM_ADD<R1X ,R3X> ;
+	using R2X = typename ENUM_SUM_HELP<TYPE_FIRST_REST<UNIT1> ,ALWAYS>::RET ;
+	using RET = ENUM_ADD<R1X ,R2X> ;
 } ;
 
 template <class...UNIT1>
@@ -711,17 +717,17 @@ template <class...>
 trait REFLECT_REF_HELP ;
 
 template <class UNIT1 ,class UNIT2>
-trait REFLECT_REF_HELP<UNIT1 ,UNIT2 ,REQUIRE<IS_SAME<UNIT1 ,VREF<UNIT1>>>> {
+trait REFLECT_REF_HELP<UNIT1 ,UNIT2 ,REQUIRE<IS_SAME<UNIT1 ,VREF<UNIT2>>>> {
 	using RET = VARIABLE ;
 } ;
 
 template <class UNIT1 ,class UNIT2>
-trait REFLECT_REF_HELP<UNIT1 ,UNIT2 ,REQUIRE<IS_SAME<UNIT1 ,CREF<UNIT1>>>> {
+trait REFLECT_REF_HELP<UNIT1 ,UNIT2 ,REQUIRE<IS_SAME<UNIT1 ,CREF<UNIT2>>>> {
 	using RET = CONSTANT ;
 } ;
 
 template <class UNIT1 ,class UNIT2>
-trait REFLECT_REF_HELP<UNIT1 ,UNIT2 ,REQUIRE<IS_SAME<UNIT1 ,RREF<UNIT1>>>> {
+trait REFLECT_REF_HELP<UNIT1 ,UNIT2 ,REQUIRE<IS_SAME<UNIT1 ,RREF<UNIT2>>>> {
 	using RET = REGISTER ;
 } ;
 
@@ -917,8 +923,12 @@ trait IS_TRIVIAL_HELP ;
 
 template <class UNIT1>
 trait IS_TRIVIAL_HELP<UNIT1 ,ALWAYS> {
-	using R1X = csc_is_trivial<UNIT1> ;
-	using RET = ENUM_ANY<R1X> ;
+	using R1X = csc_is_nothrow_constructible<UNIT1> ;
+	using R2X = csc_is_nothrow_destructible<UNIT1> ;
+	using R3X = csc_is_nothrow_move_constructible<UNIT1> ;
+	using R4X = csc_is_nothrow_move_assignable<UNIT1> ;
+	using R5X = csc_is_trivial<UNIT1> ;
+	using RET = ENUM_ALL<R1X ,R2X ,R3X ,R4X ,R5X> ;
 } ;
 
 template <class UNIT1>
@@ -1015,18 +1025,18 @@ using BYTE_BASE = typename BYTE_BASE_HELP<SIZE ,ALIGN ,ALWAYS>::RET ;
 template <class...>
 trait GCC_FLAG_BYTE_HELP ;
 
-template <class UNIT1>
-trait GCC_FLAG_BYTE_HELP<UNIT1 ,REQUIRE<MACRO_CONFIG_VAL32<UNIT1>>> {
+template <class DEPEND>
+trait GCC_FLAG_BYTE_HELP<DEPEND ,REQUIRE<MACRO_CONFIG_VAL32<DEPEND>>> {
 	using RET = CHAR ;
 } ;
 
-template <class UNIT1>
-trait GCC_FLAG_BYTE_HELP<UNIT1 ,REQUIRE<MACRO_CONFIG_VAL64<UNIT1>>> {
+template <class DEPEND>
+trait GCC_FLAG_BYTE_HELP<DEPEND ,REQUIRE<MACRO_CONFIG_VAL64<DEPEND>>> {
 	using RET = DATA ;
 } ;
 
 //@info: g++4.8 is too useless
-using GCC_FLAG_BYTE = typename GCC_FLAG_BYTE_HELP<void ,ALWAYS>::RET ;
+using GCC_FLAG_BYTE = typename GCC_FLAG_BYTE_HELP<DEPEND ,ALWAYS>::RET ;
 
 template <class...>
 trait TEXT_BASE_HELP ;
@@ -1124,11 +1134,43 @@ using IS_TEMP = IS_SAME<UNIT1 ,TEMP<REMOVE_TEMP<UNIT1>>> ;
 template <class UNIT1>
 using ENUM_ABS = CONDITIONAL<ENUM_COMPR_GTEQ<UNIT1 ,ENUM_ZERO> ,UNIT1 ,ENUM_MINUS<UNIT1>> ;
 
-template <class UNIT1 ,class UNIT2>
-using ENUM_MIN = CONDITIONAL<ENUM_COMPR_LTEQ<UNIT1 ,UNIT2> ,UNIT1 ,UNIT2> ;
+template <class...>
+trait ENUM_MIN_HELP ;
 
-template <class UNIT1 ,class UNIT2>
-using ENUM_MAX = CONDITIONAL<ENUM_COMPR_GTEQ<UNIT1 ,UNIT2> ,UNIT1 ,UNIT2> ;
+template <class UNIT1>
+trait ENUM_MIN_HELP<UNIT1 ,REQUIRE<ENUM_EQ_IDEN<COUNT_OF<UNIT1>>>> {
+	using RET = TYPE_FIRST_ONE<UNIT1> ;
+} ;
+
+template <class UNIT1>
+trait ENUM_MIN_HELP<UNIT1 ,REQUIRE<ENUM_GT_IDEN<COUNT_OF<UNIT1>>>> {
+	using R1X = TYPE_FIRST_ONE<UNIT1> ;
+	using R2X = typename ENUM_MIN_HELP<TYPE_FIRST_REST<UNIT1> ,ALWAYS>::RET ;
+	using R3X = ENUM_COMPR_LTEQ<R1X ,R2X> ;
+	using RET = CONDITIONAL<R3X ,R1X ,R2X> ;
+} ;
+
+template <class...UNIT1>
+using ENUM_MIN = typename ENUM_MIN_HELP<TYPEAS<UNIT1...> ,ALWAYS>::RET ;
+
+template <class...>
+trait ENUM_MAX_HELP ;
+
+template <class UNIT1>
+trait ENUM_MAX_HELP<UNIT1 ,REQUIRE<ENUM_EQ_IDEN<COUNT_OF<UNIT1>>>> {
+	using RET = TYPE_FIRST_ONE<UNIT1> ;
+} ;
+
+template <class UNIT1>
+trait ENUM_MAX_HELP<UNIT1 ,REQUIRE<ENUM_GT_IDEN<COUNT_OF<UNIT1>>>> {
+	using R1X = TYPE_FIRST_ONE<UNIT1> ;
+	using R2X = typename ENUM_MAX_HELP<TYPE_FIRST_REST<UNIT1> ,ALWAYS>::RET ;
+	using R3X = ENUM_COMPR_GTEQ<R1X ,R2X> ;
+	using RET = CONDITIONAL<R3X ,R1X ,R2X> ;
+} ;
+
+template <class...UNIT1>
+using ENUM_MAX = typename ENUM_MAX_HELP<TYPEAS<UNIT1...> ,ALWAYS>::RET ;
 
 template <class CURR ,class BEGIN ,class END>
 using ENUM_BETWEEN = ENUM_ALL<
@@ -1164,7 +1206,7 @@ static constexpr auto unsafe_switch = FUNCTION_unsafe_switch () ;
 struct FUNCTION_unsafe_barrier {
 	imports void invoke () ;
 
-	forceinline void operator() () const noexcept {
+	inline void operator() () const noexcept {
 		return invoke () ;
 	}
 } ;
@@ -1174,7 +1216,7 @@ static constexpr auto unsafe_barrier = FUNCTION_unsafe_barrier () ;
 struct FUNCTION_unsafe_break {
 	imports void invoke () ;
 
-	forceinline void operator() () const noexcept {
+	inline void operator() () const noexcept {
 		return invoke () ;
 	}
 } ;
@@ -1184,7 +1226,7 @@ static constexpr auto unsafe_break = FUNCTION_unsafe_break () ;
 struct FUNCTION_unsafe_abort {
 	imports void invoke () ;
 
-	forceinline void operator() () const noexcept {
+	inline void operator() () const noexcept {
 		return invoke () ;
 	}
 } ;
@@ -1247,11 +1289,11 @@ trait FUNCTION_unsafe_cast_HELP<UNIT1 ,UNIT2 ,REQUIRE<ENUM_ALL<
 			using R2X = UNIT2 ;
 			require (IS_TEMP<R1X>) ;
 			require (IS_TEMP<R2X>) ;
-			using R3X = CONDITIONAL<IS_SAME<R1X ,TEMP<void>> ,R2X ,R1X> ;
-			using R4X = CONDITIONAL<IS_SAME<R2X ,TEMP<void>> ,R3X ,R2X> ;
-			using R5X = CONDITIONAL<IS_SAME<R1X ,TEMP<void>> ,R4X ,R1X> ;
-			require (ENUM_EQUAL<SIZE_OF<R5X> ,SIZE_OF<R4X>>) ;
-			require (ENUM_COMPR_LTEQ<ALIGN_OF<R5X> ,ALIGN_OF<R4X>>) ;
+			using R3X = ENUM_ANY<IS_SAME<R1X ,TEMP<void>> ,IS_SAME<R2X ,TEMP<void>>> ;
+			using R4X = CONDITIONAL<R3X ,BYTE ,R1X> ;
+			using R5X = CONDITIONAL<R3X ,BYTE ,R2X> ;
+			require (ENUM_EQUAL<SIZE_OF<R4X> ,SIZE_OF<R5X>>) ;
+			require (ENUM_COMPR_LTEQ<ALIGN_OF<R4X> ,ALIGN_OF<R5X>>) ;
 			return reinterpret_cast<VREF<R1X>> (obj) ;
 		}
 
@@ -1260,11 +1302,11 @@ trait FUNCTION_unsafe_cast_HELP<UNIT1 ,UNIT2 ,REQUIRE<ENUM_ALL<
 			using R2X = UNIT2 ;
 			require (IS_TEMP<R1X>) ;
 			require (IS_TEMP<R2X>) ;
-			using R3X = CONDITIONAL<IS_SAME<R1X ,TEMP<void>> ,R2X ,R1X> ;
-			using R4X = CONDITIONAL<IS_SAME<R2X ,TEMP<void>> ,R3X ,R2X> ;
-			using R5X = CONDITIONAL<IS_SAME<R1X ,TEMP<void>> ,R4X ,R1X> ;
-			require (ENUM_EQUAL<SIZE_OF<R5X> ,SIZE_OF<R4X>>) ;
-			require (ENUM_COMPR_LTEQ<ALIGN_OF<R5X> ,ALIGN_OF<R4X>>) ;
+			using R3X = ENUM_ANY<IS_SAME<R1X ,TEMP<void>> ,IS_SAME<R2X ,TEMP<void>>> ;
+			using R4X = CONDITIONAL<R3X ,BYTE ,R1X> ;
+			using R5X = CONDITIONAL<R3X ,BYTE ,R2X> ;
+			require (ENUM_EQUAL<SIZE_OF<R4X> ,SIZE_OF<R5X>>) ;
+			require (ENUM_COMPR_LTEQ<ALIGN_OF<R4X> ,ALIGN_OF<R5X>>) ;
 			return reinterpret_cast<CREF<R1X>> (obj) ;
 		}
 	} ;
@@ -1282,9 +1324,7 @@ trait FUNCTION_unsafe_cast_HELP<UNIT1 ,UNIT2 ,REQUIRE<ENUM_ALL<
 			require (IS_TEMP<R3X>) ;
 			require (IS_TEMP<R2X>) ;
 			using R4X = ARR<REMOVE_TEMP<R3X> ,ARRAY_SIZE<R1X>> ;
-			using R6X = CONDITIONAL<IS_ARRAY<REMOVE_TEMP<R2X>> ,REMOVE_TEMP<R2X> ,ARR<R2X>> ;
-			using R5X = ARR<REMOVE_TEMP<R3X> ,ARRAY_SIZE<R6X>> ;
-			require (ENUM_ANY<IS_SAME<R2X ,TEMP<void>> ,IS_SAME<R2X ,TEMP<R4X>> ,IS_SAME<R2X ,TEMP<R5X>>>) ;
+			require (ENUM_ANY<IS_SAME<R2X ,TEMP<void>> ,IS_SAME<R2X ,TEMP<R4X>>>) ;
 			return reinterpret_cast<VREF<R1X>> (obj) ;
 		}
 
@@ -1295,9 +1335,7 @@ trait FUNCTION_unsafe_cast_HELP<UNIT1 ,UNIT2 ,REQUIRE<ENUM_ALL<
 			require (IS_TEMP<R3X>) ;
 			require (IS_TEMP<R2X>) ;
 			using R4X = ARR<REMOVE_TEMP<R3X> ,ARRAY_SIZE<R1X>> ;
-			using R6X = CONDITIONAL<IS_ARRAY<REMOVE_TEMP<R2X>> ,REMOVE_TEMP<R2X> ,ARR<R2X>> ;
-			using R5X = ARR<REMOVE_TEMP<R3X> ,ARRAY_SIZE<R6X>> ;
-			require (ENUM_ANY<IS_SAME<R2X ,TEMP<void>> ,IS_SAME<R2X ,TEMP<R4X>> ,IS_SAME<R2X ,TEMP<R5X>>>) ;
+			require (ENUM_ANY<IS_SAME<R2X ,TEMP<void>> ,IS_SAME<R2X ,TEMP<R4X>>>) ;
 			return reinterpret_cast<CREF<R1X>> (obj) ;
 		}
 	} ;
@@ -1315,9 +1353,7 @@ trait FUNCTION_unsafe_cast_HELP<UNIT1 ,UNIT2 ,REQUIRE<ENUM_ALL<
 			require (IS_TEMP<R1X>) ;
 			require (IS_TEMP<R3X>) ;
 			using R4X = ARR<REMOVE_TEMP<R3X> ,ARRAY_SIZE<R2X>> ;
-			using R6X = CONDITIONAL<IS_ARRAY<REMOVE_TEMP<R1X>> ,REMOVE_TEMP<R1X> ,ARR<R1X>> ;
-			using R5X = ARR<REMOVE_TEMP<R3X> ,ARRAY_SIZE<R6X>> ;
-			require (ENUM_ANY<IS_SAME<R1X ,TEMP<void>> ,IS_SAME<R1X ,TEMP<R4X>> ,IS_SAME<R1X ,TEMP<R5X>>>) ;
+			require (ENUM_ANY<IS_SAME<R1X ,TEMP<void>> ,IS_SAME<R1X ,TEMP<R4X>>>) ;
 			return reinterpret_cast<VREF<R1X>> (obj) ;
 		}
 
@@ -1328,9 +1364,7 @@ trait FUNCTION_unsafe_cast_HELP<UNIT1 ,UNIT2 ,REQUIRE<ENUM_ALL<
 			require (IS_TEMP<R1X>) ;
 			require (IS_TEMP<R3X>) ;
 			using R4X = ARR<REMOVE_TEMP<R3X> ,ARRAY_SIZE<R2X>> ;
-			using R6X = CONDITIONAL<IS_ARRAY<REMOVE_TEMP<R1X>> ,REMOVE_TEMP<R1X> ,ARR<R1X>> ;
-			using R5X = ARR<REMOVE_TEMP<R3X> ,ARRAY_SIZE<R6X>> ;
-			require (ENUM_ANY<IS_SAME<R1X ,TEMP<void>> ,IS_SAME<R1X ,TEMP<R4X>> ,IS_SAME<R1X ,TEMP<R5X>>>) ;
+			require (ENUM_ANY<IS_SAME<R1X ,TEMP<void>> ,IS_SAME<R1X ,TEMP<R4X>>>) ;
 			return reinterpret_cast<CREF<R1X>> (obj) ;
 		}
 	} ;
@@ -1349,7 +1383,8 @@ trait FUNCTION_unsafe_cast_HELP<UNIT1 ,UNIT2 ,REQUIRE<ENUM_ALL<
 			require (IS_TEMP<R3X>) ;
 			require (IS_TEMP<R4X>) ;
 			require (ENUM_EQUAL<ARRAY_SIZE<R1X> ,ARRAY_SIZE<R2X>>) ;
-			require (ENUM_ANY<IS_SAME<R3X ,TEMP<R4X>> ,IS_SAME<TEMP<R3X> ,R4X>>) ;
+			require (ENUM_EQUAL<SIZE_OF<R3X> ,SIZE_OF<R4X>>) ;
+			require (ENUM_COMPR_LTEQ<ALIGN_OF<R3X> ,ALIGN_OF<R4X>>) ;
 			return reinterpret_cast<VREF<R1X>> (obj) ;
 		}
 
@@ -1361,7 +1396,8 @@ trait FUNCTION_unsafe_cast_HELP<UNIT1 ,UNIT2 ,REQUIRE<ENUM_ALL<
 			require (IS_TEMP<R3X>) ;
 			require (IS_TEMP<R4X>) ;
 			require (ENUM_EQUAL<ARRAY_SIZE<R1X> ,ARRAY_SIZE<R2X>>) ;
-			require (ENUM_ANY<IS_SAME<R3X ,TEMP<R4X>> ,IS_SAME<TEMP<R3X> ,R4X>>) ;
+			require (ENUM_EQUAL<SIZE_OF<R3X> ,SIZE_OF<R4X>>) ;
+			require (ENUM_COMPR_LTEQ<ALIGN_OF<R3X> ,ALIGN_OF<R4X>>) ;
 			return reinterpret_cast<CREF<R1X>> (obj) ;
 		}
 	} ;
@@ -1557,7 +1593,7 @@ static constexpr auto unsafe_destroy = FUNCTION_unsafe_destroy () ;
 struct FUNCTION_unsafe_align {
 	imports LENGTH invoke () ;
 
-	forceinline LENGTH operator() () const {
+	inline LENGTH operator() () const {
 		return invoke () ;
 	}
 } ;
@@ -1567,7 +1603,7 @@ static constexpr auto unsafe_align = FUNCTION_unsafe_align () ;
 struct FUNCTION_unsafe_usage {
 	imports LENGTH invoke () ;
 
-	forceinline LENGTH operator() () const {
+	inline LENGTH operator() () const {
 		return invoke () ;
 	}
 } ;
@@ -1575,9 +1611,9 @@ struct FUNCTION_unsafe_usage {
 static constexpr auto unsafe_usage = FUNCTION_unsafe_usage () ;
 
 struct FUNCTION_unsafe_alloc {
-	imports FLAG invoke (CREF<LENGTH> size_) ;
+	imports FLAG invoke[[nodiscard]] (CREF<LENGTH> size_) ;
 
-	forceinline FLAG operator()[[nodiscard]] (CREF<LENGTH> size_) const {
+	inline FLAG operator()[[nodiscard]] (CREF<LENGTH> size_) const {
 		return invoke (size_) ;
 	}
 } ;
@@ -1587,7 +1623,7 @@ static constexpr auto unsafe_alloc = FUNCTION_unsafe_alloc () ;
 struct FUNCTION_unsafe_free {
 	imports void invoke (CREF<LENGTH> addr_) ;
 
-	forceinline void operator() (CREF<LENGTH> addr_) const {
+	inline void operator() (CREF<LENGTH> addr_) const {
 		return invoke (addr_) ;
 	}
 } ;
@@ -1599,7 +1635,9 @@ struct FUNCTION_bitwise {
 	inline BYTE_BASE<SIZE_OF<REMOVE_ALL<ARG1>> ,ALIGN_OF<REMOVE_ALL<ARG1>>> operator() (XREF<ARG1> obj) const noexcept {
 		using R1X = REMOVE_ALL<ARG1> ;
 		using R2X = BYTE_BASE<SIZE_OF<R1X> ,ALIGN_OF<R1X>> ;
-		return unsafe_deref (unsafe_cast (TYPEAS<TEMP<R2X>>::id ,unsafe_deptr (obj))) ;
+		R2X ret ;
+		ret = unsafe_deref (unsafe_cast (TYPEAS<TEMP<R2X>>::id ,unsafe_deptr (obj))) ;
+		return move (ret) ;
 	}
 
 	template <class ARG1 ,class ARG2>
@@ -1717,23 +1755,27 @@ struct FUNCTION_operator_cabi {
 static constexpr auto operator_cabi = FUNCTION_operator_cabi () ;
 
 template <class...>
-trait RANGE_ITERATOR_HELP ;
+trait INDEX_ITERATOR_HELP ;
 
-template <>
-trait RANGE_ITERATOR_HELP<ALWAYS> {
+template <class DEPEND>
+trait INDEX_ITERATOR_HELP<DEPEND ,ALWAYS> {
 	class Iterator {
 	private:
 		INDEX mBegin ;
-		INDEX mEnd ;
 		INDEX mCurr ;
+		INDEX mEnd ;
 
 	public:
 		implicit Iterator () = delete ;
 
 		explicit Iterator (CREF<INDEX> begin_ ,CREF<INDEX> end_) {
 			mBegin = begin_ ;
-			mEnd = vmax (begin_ ,end_) ;
 			mCurr = begin_ ;
+			mEnd = vmax (begin_ ,end_) ;
+		}
+
+		LENGTH length () const {
+			return mEnd - mBegin ;
 		}
 
 		Iterator begin () const {
@@ -1774,11 +1816,11 @@ trait RANGE_ITERATOR_HELP<ALWAYS> {
 	} ;
 } ;
 
-using RangeIterator = typename RANGE_ITERATOR_HELP<ALWAYS>::Iterator ;
+using IndexIterator = typename INDEX_ITERATOR_HELP<DEPEND ,ALWAYS>::Iterator ;
 
 struct FUNCTION_iter {
-	inline RangeIterator operator() (CREF<INDEX> begin_ ,CREF<INDEX> end_) const {
-		return RangeIterator (begin_ ,end_) ;
+	inline IndexIterator operator() (CREF<INDEX> begin_ ,CREF<INDEX> end_) const {
+		return IndexIterator (begin_ ,end_) ;
 	}
 } ;
 
@@ -1915,8 +1957,8 @@ static constexpr auto operator_compr = FUNCTION_operator_compr () ;
 template <class...>
 trait FUNCTION_hashcode_HELP ;
 
-template <class UNIT1>
-trait FUNCTION_hashcode_HELP<UNIT1 ,REQUIRE<MACRO_CONFIG_VAL32<UNIT1>>> {
+template <class DEPEND>
+trait FUNCTION_hashcode_HELP<DEPEND ,REQUIRE<MACRO_CONFIG_VAL32<DEPEND>>> {
 	struct FUNCTION_hashcode {
 		inline FLAG operator() () const {
 			return FLAG (-2128831035) ;
@@ -1932,8 +1974,8 @@ trait FUNCTION_hashcode_HELP<UNIT1 ,REQUIRE<MACRO_CONFIG_VAL32<UNIT1>>> {
 	} ;
 } ;
 
-template <class UNIT1>
-trait FUNCTION_hashcode_HELP<UNIT1 ,REQUIRE<MACRO_CONFIG_VAL64<UNIT1>>> {
+template <class DEPEND>
+trait FUNCTION_hashcode_HELP<DEPEND ,REQUIRE<MACRO_CONFIG_VAL64<DEPEND>>> {
 	struct FUNCTION_hashcode {
 		inline FLAG operator() () const {
 			return FLAG (-3750763034362895579) ;
@@ -1951,13 +1993,13 @@ trait FUNCTION_hashcode_HELP<UNIT1 ,REQUIRE<MACRO_CONFIG_VAL64<UNIT1>>> {
 
 struct FUNCTION_hashcode {
 	inline FLAG operator() () const {
-		using R1X = typename FUNCTION_hashcode_HELP<void ,ALWAYS>::FUNCTION_hashcode ;
+		using R1X = typename FUNCTION_hashcode_HELP<DEPEND ,ALWAYS>::FUNCTION_hashcode ;
 		static constexpr auto M_INVOKE = R1X () ;
 		return M_INVOKE () ;
 	}
 
 	inline FLAG operator() (CREF<FLAG> now ,CREF<FLAG> inc) const {
-		using R1X = typename FUNCTION_hashcode_HELP<void ,ALWAYS>::FUNCTION_hashcode ;
+		using R1X = typename FUNCTION_hashcode_HELP<DEPEND ,ALWAYS>::FUNCTION_hashcode ;
 		static constexpr auto M_INVOKE = R1X () ;
 		return M_INVOKE (now ,inc) ;
 	}
@@ -2046,9 +2088,7 @@ trait BOX_HELP<UNIT1 ,REQUIRE<ENUM_ALL<
 		TEMP<UNIT1> mValue ;
 
 	public:
-		implicit Box () noexcept {
-			unsafe_create (mValue) ;
-		}
+		implicit Box () = default ;
 
 		implicit Box (CREF<typeof (NULL)>) :Box () {
 			noop () ;
@@ -2059,10 +2099,6 @@ trait BOX_HELP<UNIT1 ,REQUIRE<ENUM_ALL<
 			Box ret ;
 			ret.fake = UNIT1 (forward[TYPEAS<ARG1>::id] (objs)...) ;
 			return move (ret) ;
-		}
-
-		implicit ~Box () noexcept {
-			unsafe_destroy (mValue) ;
 		}
 
 		implicit Box (CREF<Box>) = delete ;
@@ -2242,18 +2278,16 @@ trait BOX_HELP<UNIT1 ,REQUIRE<ENUM_ALL<
 	using SIZE = ARRAY_SIZE<UNIT1> ;
 	require (ENUM_GT_ZERO<SIZE>) ;
 
-	struct NODE {
+	struct WRAP {
 		ARR<ITEM ,SIZE> mValue ;
 	} ;
 
 	class Box final {
 	private:
-		TEMP<NODE> mArray ;
+		TEMP<WRAP> mArray ;
 
 	public:
-		implicit Box () noexcept {
-			unsafe_create (mArray) ;
-		}
+		implicit Box () = default ;
 
 		implicit Box (CREF<typeof (NULL)>) :Box () {
 			noop () ;
@@ -2262,12 +2296,8 @@ trait BOX_HELP<UNIT1 ,REQUIRE<ENUM_ALL<
 		template <class...ARG1>
 		imports Box make (XREF<ARG1>...objs) {
 			Box ret ;
-			ret.fake = NODE (translation (forward[TYPEAS<ARG1>::id] (objs))...) ;
+			ret.fake = WRAP (translation (forward[TYPEAS<ARG1>::id] (objs))...) ;
 			return move (ret) ;
-		}
-
-		implicit ~Box () noexcept {
-			unsafe_destroy (mArray) ;
 		}
 
 		implicit Box (CREF<Box>) = delete ;
@@ -2326,27 +2356,30 @@ trait BOX_HELP<UNIT1 ,REQUIRE<ENUM_ALL<
 		}
 
 	private:
-		VREF<NODE> m_fake () leftvalue {
+		VREF<WRAP> m_fake () leftvalue {
 			return unsafe_deref (mArray) ;
 		}
 
-		CREF<NODE> m_fake () const leftvalue {
+		CREF<WRAP> m_fake () const leftvalue {
 			return unsafe_deref (mArray) ;
 		}
 
-		template <class ARG1 ,class = ENABLE<ENUM_ALL<IS_SAME<ITEM ,BYTE> ,IS_BASIC<REMOVE_ALL<ARG1>>>>>
-		imports NODE translation (XREF<ARG1> obj) {
-			return bitwise (TYPEAS<NODE>::id ,obj) ;
+		imports CREF<WRAP> translation (CREF<WRAP> obj) {
+			return forward[TYPEAS<CREF<WRAP>>::id] (obj) ;
 		}
 
-		imports CREF<NODE> translation (CREF<UNIT1> obj) {
-			auto &&tmp = unsafe_deref (unsafe_cast (TYPEAS<TEMP<NODE>>::id ,unsafe_deptr (obj))) ;
-			return move (tmp) ;
+		imports RREF<WRAP> translation (RREF<WRAP> obj) {
+			return forward[TYPEAS<RREF<WRAP>>::id] (obj) ;
 		}
 
-		imports RREF<NODE> translation (RREF<UNIT1> obj) {
-			auto &&tmp = unsafe_deref (unsafe_cast (TYPEAS<TEMP<NODE>>::id ,unsafe_deptr (obj))) ;
-			return move (tmp) ;
+		imports CREF<WRAP> translation (CREF<UNIT1> obj) {
+			auto &&tmp = unsafe_deref (unsafe_cast (TYPEAS<TEMP<WRAP>>::id ,unsafe_deptr (obj))) ;
+			return forward[TYPEAS<CREF<WRAP>>::id] (tmp) ;
+		}
+
+		imports RREF<WRAP> translation (RREF<UNIT1> obj) {
+			auto &&tmp = unsafe_deref (unsafe_cast (TYPEAS<TEMP<WRAP>>::id ,unsafe_deptr (obj))) ;
+			return forward[TYPEAS<RREF<WRAP>>::id] (tmp) ;
 		}
 	} ;
 } ;
@@ -2359,13 +2392,13 @@ trait BOX_HELP<UNIT1 ,REQUIRE<ENUM_ALL<
 	using SIZE = ARRAY_SIZE<UNIT1> ;
 	require (ENUM_GT_ZERO<SIZE>) ;
 
-	struct NODE {
+	struct WRAP {
 		ARR<ITEM ,SIZE> mValue ;
 	} ;
 
 	class Box final {
 	private:
-		TEMP<NODE> mArray ;
+		TEMP<WRAP> mArray ;
 		BOOL mExist ;
 
 	public:
@@ -2381,7 +2414,7 @@ trait BOX_HELP<UNIT1 ,REQUIRE<ENUM_ALL<
 		imports Box make (XREF<ARG1>...objs) {
 			Box ret ;
 			zeroize (ret.mArray) ;
-			new (ret.mArray) NODE (translation (forward[TYPEAS<ARG1>::id] (objs))...) ;
+			new (ret.mArray) WRAP (translation (forward[TYPEAS<ARG1>::id] (objs))...) ;
 			unsafe_barrier () ;
 			ret.mExist = TRUE ;
 			return move (ret) ;
@@ -2452,22 +2485,30 @@ trait BOX_HELP<UNIT1 ,REQUIRE<ENUM_ALL<
 		}
 
 	private:
-		VREF<NODE> m_fake () leftvalue {
+		VREF<WRAP> m_fake () leftvalue {
 			return unsafe_deref (mArray) ;
 		}
 
-		CREF<NODE> m_fake () const leftvalue {
+		CREF<WRAP> m_fake () const leftvalue {
 			return unsafe_deref (mArray) ;
 		}
 
-		imports CREF<NODE> translation (CREF<UNIT1> obj) {
-			auto &&tmp = unsafe_deref (unsafe_cast (TYPEAS<TEMP<NODE>>::id ,unsafe_deptr (obj))) ;
-			return move (tmp) ;
+		imports CREF<WRAP> translation (CREF<WRAP> obj) {
+			return forward[TYPEAS<CREF<WRAP>>::id] (obj) ;
 		}
 
-		imports RREF<NODE> translation (RREF<UNIT1> obj) {
-			auto &&tmp = unsafe_deref (unsafe_cast (TYPEAS<TEMP<NODE>>::id ,unsafe_deptr (obj))) ;
-			return move (tmp) ;
+		imports RREF<WRAP> translation (RREF<WRAP> obj) {
+			return forward[TYPEAS<RREF<WRAP>>::id] (obj) ;
+		}
+
+		imports CREF<WRAP> translation (CREF<UNIT1> obj) {
+			auto &&tmp = unsafe_deref (unsafe_cast (TYPEAS<TEMP<WRAP>>::id ,unsafe_deptr (obj))) ;
+			return forward[TYPEAS<CREF<WRAP>>::id] (tmp) ;
+		}
+
+		imports RREF<WRAP> translation (RREF<UNIT1> obj) {
+			auto &&tmp = unsafe_deref (unsafe_cast (TYPEAS<TEMP<WRAP>>::id ,unsafe_deptr (obj))) ;
+			return forward[TYPEAS<RREF<WRAP>>::id] (tmp) ;
 		}
 	} ;
 } ;
@@ -2490,10 +2531,6 @@ trait CELL_HELP<UNIT1 ,ALWAYS> {
 	public:
 		implicit Cell () noexcept {
 			mExist = FALSE ;
-		}
-
-		implicit Cell (CREF<typeof (NULL)>) :Cell () {
-			noop () ;
 		}
 
 		template <class...ARG1>
@@ -2537,14 +2574,6 @@ trait CELL_HELP<UNIT1 ,ALWAYS> {
 
 		BOOL exist () const {
 			return mExist ;
-		}
-
-		inline BOOL operator== (CREF<typeof (NULL)>) const {
-			return ifnot (exist ()) ;
-		}
-
-		inline BOOL operator!= (CREF<typeof (NULL)>) const {
-			return exist () ;
 		}
 
 		UNIT1 fetch () const {
@@ -2627,26 +2656,26 @@ trait VREF_HOLDER_HELP ;
 template <class...>
 trait VREF_IMPLHOLDER_HELP ;
 
-template <>
-trait VREF_HOLDER_HELP<ALWAYS> {
+template <class DEPEND>
+trait VREF_HOLDER_HELP<DEPEND ,ALWAYS> {
 	struct Holder implement Interface {
 		virtual void initialize (VREF<TEMP<void>> that) = 0 ;
 		virtual void finalize () = 0 ;
 		virtual void destroy () = 0 ;
 		virtual FLAG addr () const = 0 ;
-		virtual LENGTH increase () leftvalue = 0 ;
-		virtual LENGTH decrease () leftvalue = 0 ;
-		virtual LENGTH lock () leftvalue = 0 ;
+		virtual LENGTH increase () = 0 ;
+		virtual LENGTH decrease () = 0 ;
+		virtual LENGTH lock () = 0 ;
 		virtual void unlock () = 0 ;
 	} ;
 } ;
 
 template <class UNIT1>
 trait VREF_HELP<UNIT1 ,ALWAYS> {
-	using Holder = typename VREF_HOLDER_HELP<ALWAYS>::Holder ;
+	using Holder = typename VREF_HOLDER_HELP<DEPEND ,ALWAYS>::Holder ;
 
-	template <class ARG1 ,class ARG2>
-	using MACRO_VRef = typename DEPENDENT<VREF_HELP<ARG1 ,ALWAYS> ,ARG2>::VRef ;
+	template <class ARG1>
+	using MACRO_VRef = typename DEPENDENT<VREF_HELP<REMOVE_ALL<ARG1> ,ALWAYS> ,ARG1>::VRef ;
 
 	template <class ARG1>
 	using MACRO_CRef = typename DEPENDENT<CREF_HELP<UNIT1 ,ALWAYS> ,ARG1>::CRef ;
@@ -2690,10 +2719,10 @@ trait VREF_HELP<UNIT1 ,ALWAYS> {
 			if ifswitch (TRUE) {
 				const auto r2x = ret.fake.increase () ;
 				assert (r2x == IDEN) ;
-				const auto r3x = ret.fake.lock () ;
-				assert (r3x == NONE) ;
 				auto rax = Box<R3X>::make (forward[TYPEAS<ARG1>::id] (objs)...) ;
 				ret.fake.initialize (unsafe_cast (TYPEAS<TEMP<void>>::id ,unsafe_deptr (rax))) ;
+				const auto r3x = ret.fake.lock () ;
+				assert (r3x == NONE) ;
 			}
 			if ifswitch (TRUE) {
 				ret.mPointer = ret.fake.addr () ;
@@ -2772,10 +2801,10 @@ trait VREF_HELP<UNIT1 ,ALWAYS> {
 		}
 
 		template <class ARG1>
-		MACRO_VRef<REMOVE_ALL<ARG1> ,ARG1> rebind (XREF<ARG1> id) rightvalue {
+		MACRO_VRef<ARG1> rebind (XREF<ARG1> id) rightvalue {
 			using R1X = REMOVE_ALL<ARG1> ;
 			require (IS_EXTEND<R1X ,UNIT1>) ;
-			MACRO_VRef<R1X ,ARG1> ret ;
+			MACRO_VRef<ARG1> ret ;
 			const auto r1x = invoke ([&] () {
 				if (mPointer == ZERO)
 					return ZERO ;
@@ -2789,7 +2818,7 @@ trait VREF_HELP<UNIT1 ,ALWAYS> {
 		}
 
 		template <class ARG1 = void>
-		MACRO_CRef<ARG1> unlock () leftvalue {
+		MACRO_CRef<ARG1> unlock () {
 			MACRO_CRef<ARG1> ret ;
 			if ifswitch (TRUE) {
 				if ifnot (exist ())
@@ -2850,10 +2879,10 @@ trait VREF_IMPLHOLDER_HELP<UNIT1 ,REQUIRE<IS_OBJECT<UNIT1>>> {
 
 		template <class...ARG1>
 		imports LENGTH dynamic_size (XREF<ARG1>...objs) {
-			const auto r5x = unsafe_align () ;
-			const auto r1x = vmax (ALIGN_OF<ImplHolder>::value - r5x ,ZERO) ;
-			const auto r2x = r1x + SIZE_OF<ImplHolder>::value ;
-			return r2x ;
+			const auto r1x = unsafe_align () ;
+			const auto r2x = vmax (ALIGN_OF<ImplHolder>::value - r1x ,ZERO) ;
+			const auto r3x = r2x + SIZE_OF<ImplHolder>::value ;
+			return r3x ;
 		}
 
 		void initialize (VREF<TEMP<void>> that) override {
@@ -2878,21 +2907,21 @@ trait VREF_IMPLHOLDER_HELP<UNIT1 ,REQUIRE<IS_OBJECT<UNIT1>>> {
 			return address (mValue) ;
 		}
 
-		LENGTH increase () leftvalue override {
+		LENGTH increase () override {
 			if (mCounter == NONE)
 				return NONE ;
 			mCounter++ ;
 			return mCounter ;
 		}
 
-		LENGTH decrease () leftvalue override {
+		LENGTH decrease () override {
 			if (mCounter == NONE)
 				return NONE ;
 			mCounter-- ;
 			return mCounter ;
 		}
 
-		LENGTH lock () leftvalue override {
+		LENGTH lock () override {
 			if ifswitch (TRUE) {
 				if (mCounter != IDEN)
 					discard ;
@@ -2955,11 +2984,11 @@ trait VREF_IMPLHOLDER_HELP<UNIT1 ,REQUIRE<IS_ARRAY<UNIT1>>> {
 			require (IS_VALUE<R2X>) ;
 			const auto r1x = LENGTH (objs...) ;
 			assert (r1x > 0) ;
-			const auto r5x = unsafe_align () ;
-			const auto r2x = vmax (ALIGN_OF<RealHolder>::value - r5x ,ZERO) ;
-			const auto r3x = vmax (r1x - 1 ,ZERO) ;
-			const auto r4x = r2x + SIZE_OF<RealHolder>::value + SIZE_OF<ITEM>::value * r3x ;
-			return r4x ;
+			const auto r2x = unsafe_align () ;
+			const auto r3x = vmax (ALIGN_OF<RealHolder>::value - r2x ,ZERO) ;
+			const auto r4x = vmax (r1x - 1 ,ZERO) ;
+			const auto r5x = r3x + SIZE_OF<RealHolder>::value + SIZE_OF<ITEM>::value * r4x ;
+			return r5x ;
 		}
 
 		void initialize (VREF<TEMP<void>> that) override {
@@ -2968,8 +2997,6 @@ trait VREF_IMPLHOLDER_HELP<UNIT1 ,REQUIRE<IS_ARRAY<UNIT1>>> {
 			if ifswitch (TRUE) {
 				if ifnot (IS_TRIVIAL<ITEM>::value)
 					discard ;
-				for (auto &&i : iter (0 ,r1x))
-					zeroize (tmp[i]) ;
 				mSize = r1x ;
 			}
 			while (TRUE) {
@@ -3017,21 +3044,21 @@ trait VREF_IMPLHOLDER_HELP<UNIT1 ,REQUIRE<IS_ARRAY<UNIT1>>> {
 			return unsafe_pointer (r1x) ;
 		}
 
-		LENGTH increase () leftvalue override {
+		LENGTH increase () override {
 			if (mCounter == NONE)
 				return NONE ;
 			mCounter++ ;
 			return mCounter ;
 		}
 
-		LENGTH decrease () leftvalue override {
+		LENGTH decrease () override {
 			if (mCounter == NONE)
 				return NONE ;
 			mCounter-- ;
 			return mCounter ;
 		}
 
-		LENGTH lock () leftvalue override {
+		LENGTH lock () override {
 			if ifswitch (TRUE) {
 				if (mCounter != IDEN)
 					discard ;
@@ -3064,13 +3091,13 @@ trait CREF_PUREHOLDER_HELP ;
 
 template <class UNIT1>
 trait CREF_HELP<UNIT1 ,ALWAYS> {
-	using Holder = typename VREF_HOLDER_HELP<ALWAYS>::Holder ;
+	using Holder = typename VREF_HOLDER_HELP<DEPEND ,ALWAYS>::Holder ;
 
 	template <class ARG1>
 	using MACRO_VRef = typename DEPENDENT<VREF_HELP<UNIT1 ,ALWAYS> ,ARG1>::VRef ;
 
-	template <class ARG1 ,class ARG2>
-	using MACRO_CRef = typename DEPENDENT<CREF_HELP<ARG1 ,ALWAYS> ,ARG2>::CRef ;
+	template <class ARG1>
+	using MACRO_CRef = typename DEPENDENT<CREF_HELP<REMOVE_ALL<ARG1> ,ALWAYS> ,ARG1>::CRef ;
 
 	class CRef final {
 	private:
@@ -3226,10 +3253,10 @@ trait CREF_HELP<UNIT1 ,ALWAYS> {
 		}
 
 		template <class ARG1>
-		MACRO_CRef<REMOVE_ALL<ARG1> ,ARG1> rebind (XREF<ARG1> id) rightvalue {
+		MACRO_CRef<ARG1> rebind (XREF<ARG1> id) rightvalue {
 			using R1X = REMOVE_ALL<ARG1> ;
 			require (IS_EXTEND<R1X ,UNIT1>) ;
-			MACRO_CRef<R1X ,ARG1> ret ;
+			MACRO_CRef<ARG1> ret ;
 			const auto r1x = invoke ([&] () {
 				if (mPointer == ZERO)
 					return ZERO ;
@@ -3243,7 +3270,7 @@ trait CREF_HELP<UNIT1 ,ALWAYS> {
 		}
 
 		template <class ARG1 = void>
-		MACRO_VRef<ARG1> lock () leftvalue {
+		MACRO_VRef<ARG1> lock () {
 			MACRO_VRef<ARG1> ret ;
 			if ifswitch (TRUE) {
 				if ifnot (exist ())
@@ -3339,17 +3366,17 @@ trait CREF_PUREHOLDER_HELP<UNIT1 ,REQUIRE<IS_OBJECT<UNIT1>>> {
 			return address (mValue) ;
 		}
 
-		LENGTH increase () leftvalue override {
+		LENGTH increase () override {
 			mCounter++ ;
 			return mCounter ;
 		}
 
-		LENGTH decrease () leftvalue override {
+		LENGTH decrease () override {
 			mCounter-- ;
 			return mCounter ;
 		}
 
-		LENGTH lock () leftvalue override {
+		LENGTH lock () override {
 			return mCounter ;
 		}
 
@@ -3371,8 +3398,8 @@ trait AUTO_HOLDER_HELP ;
 template <class...>
 trait AUTO_PUREHOLDER_HELP ;
 
-template <>
-trait AUTO_HOLDER_HELP<ALWAYS> {
+template <class DEPEND>
+trait AUTO_HOLDER_HELP<DEPEND ,ALWAYS> {
 	struct Holder implement Interface {
 		virtual void initialize (VREF<TEMP<void>> that) = 0 ;
 		virtual void finalize () = 0 ;
@@ -3397,10 +3424,10 @@ trait AUTO_HOLDER_HELP<ALWAYS> {
 	} ;
 } ;
 
-template <>
-trait AUTO_HELP<ALWAYS> {
-	using Holder = typename AUTO_HOLDER_HELP<ALWAYS>::Holder ;
-	using FakeHolder = typename AUTO_HOLDER_HELP<ALWAYS>::FakeHolder ;
+template <class DEPEND>
+trait AUTO_HELP<DEPEND ,ALWAYS> {
+	using Holder = typename AUTO_HOLDER_HELP<DEPEND ,ALWAYS>::Holder ;
+	using FakeHolder = typename AUTO_HOLDER_HELP<DEPEND ,ALWAYS>::FakeHolder ;
 
 	class Auto final {
 	private:
@@ -3458,6 +3485,10 @@ trait AUTO_HELP<ALWAYS> {
 			return thiz ;
 		}
 
+		BOOL exist () const {
+			return mExist ;
+		}
+
 		template <class ARG1>
 		REMOVE_ALL<ARG1> as (XREF<ARG1> id) rightvalue noexcept {
 			using R1X = REMOVE_ALL<ARG1> ;
@@ -3481,7 +3512,7 @@ trait AUTO_HELP<ALWAYS> {
 
 template <class UNIT1>
 trait AUTO_PUREHOLDER_HELP<UNIT1 ,REQUIRE<IS_OBJECT<UNIT1>>> {
-	using Holder = typename AUTO_HELP<ALWAYS>::Holder ;
+	using Holder = typename AUTO_HELP<DEPEND ,ALWAYS>::Holder ;
 
 	class PureHolder implement Holder {
 	private:
@@ -3525,7 +3556,7 @@ trait AUTO_PUREHOLDER_HELP<UNIT1 ,REQUIRE<IS_OBJECT<UNIT1>>> {
 	} ;
 } ;
 
-using Auto = typename AUTO_HELP<ALWAYS>::Auto ;
+using Auto = typename AUTO_HELP<DEPEND ,ALWAYS>::Auto ;
 
 template <class...>
 trait SLICE_HELP ;
@@ -3537,11 +3568,13 @@ template <class ITEM>
 trait SLICE_HELP<ITEM ,REQUIRE<IS_STR<ITEM>>> {
 	struct Holder implement Interface {
 		virtual LENGTH size () const = 0 ;
-		virtual CREF<ARR<ITEM>> m_self () const leftvalue = 0 ;
-		virtual CREF<ITEM> at (CREF<INDEX> index) const leftvalue = 0 ;
+		virtual ITEM at (CREF<INDEX> index) const = 0 ;
 	} ;
 
 	using SLICE_MAX_SIZE = ENUMAS<VAL ,ENUMID<4096>> ;
+
+	template <class ARG1>
+	using MACRO_Slice = typename DEPENDENT<SLICE_HELP<ARG1 ,ALWAYS> ,ARG1>::Slice ;
 
 	class Slice {
 	private:
@@ -3577,22 +3610,12 @@ trait SLICE_HELP<ITEM ,REQUIRE<IS_STR<ITEM>>> {
 			return mThis->size () ;
 		}
 
-		CREF<ARR<ITEM>> m_self () const leftvalue {
-			if (mThis == NULL)
-				return unsafe_array (TYPEAS<ITEM>::id) ;
-			return mThis->m_self () ;
-		}
-
-		inline implicit operator CREF<ARR<ITEM>> () const leftvalue {
-			return self ;
-		}
-
-		CREF<ITEM> at (CREF<INDEX> index) const leftvalue {
+		ITEM at (CREF<INDEX> index) const {
 			assert (vbetween (index ,0 ,size ())) ;
 			return mThis->at (index) ;
 		}
 
-		inline CREF<ITEM> operator[] (CREF<INDEX> index) const leftvalue {
+		inline ITEM operator[] (CREF<INDEX> index) const {
 			return at (index) ;
 		}
 
@@ -3674,12 +3697,7 @@ trait SLICE_IMPLHOLDER_HELP<ITEM ,SIZE ,ALWAYS> {
 			return mSize ;
 		}
 
-		CREF<ARR<ITEM>> m_self () const leftvalue override {
-			auto &&tmp = unsafe_cast (TYPEAS<ARR<TEMP<ITEM>>>::id ,unsafe_deptr (mSlice.self)) ;
-			return unsafe_deref (unsafe_cast (TYPEAS<TEMP<ARR<ITEM>>>::id ,tmp)) ;
-		}
-
-		CREF<ITEM> at (CREF<INDEX> index) const leftvalue override {
+		ITEM at (CREF<INDEX> index) const override {
 			return mSlice.self[index] ;
 		}
 
@@ -3687,23 +3705,24 @@ trait SLICE_IMPLHOLDER_HELP<ITEM ,SIZE ,ALWAYS> {
 		void template_write (CREF<INDEX> pos) {
 			assert (pos < SIZE::value) ;
 			mSize = pos ;
-			mSlice.self[pos] = ITEM (0) ;
+			mSlice.self[pos] = STRA (0) ;
 		}
 
 		template <class ARG1 ,class...ARG2>
 		void template_write (CREF<INDEX> pos ,XREF<ARG1> text1 ,XREF<ARG2>...texts) {
 			using R1X = REMOVE_ALL<ARG1> ;
 			require (IS_STR<ARRAY_ITEM<R1X>>) ;
+			require (ENUM_COMPR_LTEQ<SIZE_OF<ARRAY_ITEM<R1X>> ,SIZE_OF<ITEM>>) ;
 			using R2X = ENUM_DEC<ARRAY_SIZE<R1X>> ;
 			assert (pos + R2X::value < SIZE::value) ;
 			INDEX ix = 0 ;
 			while (TRUE) {
 				if (ix >= R2X::value)
 					break ;
-				const auto r1x = ITEM (text1[ix]) ;
-				if (r1x == ITEM (0))
+				const auto r1x = INDEX (text1[ix]) ;
+				if (r1x == INDEX (0))
 					break ;
-				mSlice.self[pos + ix] = r1x ;
+				mSlice.self[pos + ix] = ITEM (r1x) ;
 				ix++ ;
 			}
 			template_write (pos + ix ,texts...) ;
@@ -3927,8 +3946,8 @@ trait CLAZZ_HELP ;
 template <class...>
 trait CLAZZ_IMPLHOLDER_HELP ;
 
-template <>
-trait CLAZZ_HELP<ALWAYS> {
+template <class DEPEND>
+trait CLAZZ_HELP<DEPEND ,ALWAYS> {
 	struct Holder implement Interface {
 		virtual LENGTH type_size () const = 0 ;
 		virtual LENGTH type_align () const = 0 ;
@@ -4026,7 +4045,7 @@ trait CLAZZ_HELP<ALWAYS> {
 
 template <class UUID>
 trait CLAZZ_IMPLHOLDER_HELP<UUID ,ALWAYS> {
-	using Holder = typename CLAZZ_HELP<ALWAYS>::Holder ;
+	using Holder = typename CLAZZ_HELP<DEPEND ,ALWAYS>::Holder ;
 
 	class ImplHolder implement Holder {
 	public:
@@ -4050,7 +4069,7 @@ trait CLAZZ_IMPLHOLDER_HELP<UUID ,ALWAYS> {
 	} ;
 } ;
 
-using Clazz = typename CLAZZ_HELP<ALWAYS>::Clazz ;
+using Clazz = typename CLAZZ_HELP<DEPEND ,ALWAYS>::Clazz ;
 
 template <class...>
 trait WATCH_HELP ;
@@ -4066,7 +4085,7 @@ trait WATCH_HELP<UUID ,ALWAYS> {
 
 struct FUNCTION_unsafe_watch {
 	template <class ARG1 ,class ARG2 ,class = ENABLE<ENUM_ANY<IS_VARIABLE<ARG2> ,IS_CONSTANT<ARG2>>>>
-	forceinline void operator() (XREF<ARG1> id ,CREF<Slice<STR>> name ,XREF<ARG2> expr) const {
+	inline forceinline void operator() (XREF<ARG1> id ,CREF<Slice<STR>> name ,XREF<ARG2> expr) const {
 		using R1X = REMOVE_ALL<ARG1> ;
 		using R2X = REMOVE_ALL<ARG2> ;
 		using R3X = typename WATCH_HELP<R1X ,ALWAYS>::WATCH ;
@@ -4083,24 +4102,16 @@ template <class...>
 trait EXCEPTION_HELP ;
 
 template <class...>
-trait EXCEPTION_HOLDER_HELP ;
-
-template <class...>
 trait EXCEPTION_SUPER_HELP ;
 
 template <class...>
 trait EXCEPTION_IMPLHOLDER_HELP ;
 
-template <>
-trait EXCEPTION_HOLDER_HELP<ALWAYS> {
+template <class DEPEND>
+trait EXCEPTION_SUPER_HELP<DEPEND ,ALWAYS> {
 	struct Holder implement Interface {
 		virtual Slice<STR> what () const = 0 ;
 	} ;
-} ;
-
-template <>
-trait EXCEPTION_SUPER_HELP<ALWAYS> {
-	using Holder = typename EXCEPTION_HOLDER_HELP<ALWAYS>::Holder ;
 
 	class Exception {
 	private:
@@ -4126,10 +4137,10 @@ trait EXCEPTION_SUPER_HELP<ALWAYS> {
 	} ;
 } ;
 
-template <>
-trait EXCEPTION_HELP<ALWAYS> {
-	using Holder = typename EXCEPTION_HOLDER_HELP<ALWAYS>::Holder ;
-	using SUPER = typename EXCEPTION_SUPER_HELP<ALWAYS>::Exception ;
+template <class DEPEND>
+trait EXCEPTION_HELP<DEPEND ,ALWAYS> {
+	using Holder = typename EXCEPTION_SUPER_HELP<DEPEND ,ALWAYS>::Holder ;
+	using SUPER = typename EXCEPTION_SUPER_HELP<DEPEND ,ALWAYS>::Exception ;
 
 	class Exception extend SUPER {
 	private:
@@ -4165,7 +4176,7 @@ trait EXCEPTION_HELP<ALWAYS> {
 
 template <class UUID>
 trait EXCEPTION_IMPLHOLDER_HELP<UUID ,ALWAYS> {
-	using Holder = typename EXCEPTION_HELP<ALWAYS>::Holder ;
+	using Holder = typename EXCEPTION_HELP<DEPEND ,ALWAYS>::Holder ;
 
 	class ImplHolder implement Holder {
 	private:
@@ -4184,7 +4195,7 @@ trait EXCEPTION_IMPLHOLDER_HELP<UUID ,ALWAYS> {
 	} ;
 } ;
 
-using Exception = typename EXCEPTION_HELP<ALWAYS>::Exception ;
+using Exception = typename EXCEPTION_HELP<DEPEND ,ALWAYS>::Exception ;
 
 struct FUNCTION_try_invoke {
 	template <class ARG1>
@@ -4203,7 +4214,7 @@ struct FUNCTION_try_invoke {
 		} catch (CREF<Exception> e) {
 			noop (e) ;
 		} catch (...) {
-			dynamic_assert (FALSE) ;
+			assume (FALSE) ;
 		}
 		return thiz (procs...) ;
 	}
@@ -4212,8 +4223,8 @@ struct FUNCTION_try_invoke {
 static constexpr auto try_invoke = FUNCTION_try_invoke () ;
 
 struct FUNCTION_unimplemented {
-	inline void operator() () const {
-		dynamic_assert (FALSE) ;
+	inline forceinline void operator() () const {
+		assume (FALSE) ;
 	}
 } ;
 

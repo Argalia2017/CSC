@@ -8,7 +8,6 @@
 #undef thiz
 #undef self
 #undef fake
-#undef attr
 #undef trait
 #undef implement
 #undef extend
@@ -16,9 +15,10 @@
 #undef anonymous
 #undef slice
 #undef assert
-#undef dynamic_assert
-#undef forceinline
+#undef assume
 #undef unittest_watch
+#undef noinline
+#undef forceinline
 #undef ifnot
 #undef ifswitch
 #undef discard

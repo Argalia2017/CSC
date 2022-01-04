@@ -1,10 +1,8 @@
 #pragma once
 
-#include "csc.hpp"
-#include "csc_core.hpp"
-#include "csc_basic.hpp"
-#include "csc_array.hpp"
-#include "csc_math.hpp"
+#ifndef __CSC_CORE__
+#error "б╞(д├бузебу ;)д├ : require 'csc_core.hpp'"
+#endif
 
 #include "begin.h"
 #include <cstddef>
@@ -24,8 +22,8 @@ namespace CORE {
 template <class...>
 trait FUNCTION_unsafe_barrier_HELP ;
 
-template <class UNIT1>
-trait FUNCTION_unsafe_barrier_HELP<UNIT1 ,REQUIRE<MACRO_COMPILER_MSVC<UNIT1>>> {
+template <class DEPEND>
+trait FUNCTION_unsafe_barrier_HELP<DEPEND ,REQUIRE<MACRO_COMPILER_MSVC<DEPEND>>> {
 	struct FUNCTION_unsafe_barrier {
 		inline void operator() () const noexcept {
 			noop () ;
@@ -33,8 +31,8 @@ trait FUNCTION_unsafe_barrier_HELP<UNIT1 ,REQUIRE<MACRO_COMPILER_MSVC<UNIT1>>> {
 	} ;
 } ;
 
-template <class UNIT1>
-trait FUNCTION_unsafe_barrier_HELP<UNIT1 ,REQUIRE<MACRO_COMPILER_GNUC<UNIT1>>> {
+template <class DEPEND>
+trait FUNCTION_unsafe_barrier_HELP<DEPEND ,REQUIRE<MACRO_COMPILER_GNUC<DEPEND>>> {
 #ifdef __CSC_COMPILER_GNUC__
 	struct FUNCTION_unsafe_barrier {
 		inline void operator() () const noexcept {
@@ -44,8 +42,8 @@ trait FUNCTION_unsafe_barrier_HELP<UNIT1 ,REQUIRE<MACRO_COMPILER_GNUC<UNIT1>>> {
 #endif
 } ;
 
-template <class UNIT1>
-trait FUNCTION_unsafe_barrier_HELP<UNIT1 ,REQUIRE<MACRO_COMPILER_CLANG<UNIT1>>> {
+template <class DEPEND>
+trait FUNCTION_unsafe_barrier_HELP<DEPEND ,REQUIRE<MACRO_COMPILER_CLANG<DEPEND>>> {
 #ifdef __CSC_COMPILER_CLANG__
 	struct FUNCTION_unsafe_barrier {
 		inline void operator() () const noexcept {
@@ -56,7 +54,7 @@ trait FUNCTION_unsafe_barrier_HELP<UNIT1 ,REQUIRE<MACRO_COMPILER_CLANG<UNIT1>>> 
 } ;
 
 exports void FUNCTION_unsafe_barrier::invoke () {
-	using R1X = typename FUNCTION_unsafe_barrier_HELP<void ,ALWAYS>::FUNCTION_unsafe_barrier ;
+	using R1X = typename FUNCTION_unsafe_barrier_HELP<DEPEND ,ALWAYS>::FUNCTION_unsafe_barrier ;
 	static constexpr auto M_INVOKE = R1X () ;
 	return M_INVOKE () ;
 } ;
@@ -64,33 +62,33 @@ exports void FUNCTION_unsafe_barrier::invoke () {
 template <class...>
 trait FUNCTION_unsafe_break_HELP ;
 
-template <class UNIT1>
-trait FUNCTION_unsafe_break_HELP<UNIT1 ,REQUIRE<MACRO_COMPILER_MSVC<UNIT1>>> {
+template <class DEPEND>
+trait FUNCTION_unsafe_break_HELP<DEPEND ,REQUIRE<MACRO_COMPILER_MSVC<DEPEND>>> {
 #ifdef __CSC_COMPILER_MSVC__
 	struct FUNCTION_unsafe_break {
-		forceinline void operator() () const noexcept {
+		inline void operator() () const noexcept {
 			__debugbreak () ;
 		}
 	} ;
 #endif
 } ;
 
-template <class UNIT1>
-trait FUNCTION_unsafe_break_HELP<UNIT1 ,REQUIRE<MACRO_COMPILER_GNUC<UNIT1>>> {
+template <class DEPEND>
+trait FUNCTION_unsafe_break_HELP<DEPEND ,REQUIRE<MACRO_COMPILER_GNUC<DEPEND>>> {
 #ifdef __CSC_COMPILER_GNUC__
 	struct FUNCTION_unsafe_break {
-		forceinline void operator() () const noexcept {
+		inline void operator() () const noexcept {
 			__builtin_trap () ;
 		}
 	} ;
 #endif
 } ;
 
-template <class UNIT1>
-trait FUNCTION_unsafe_break_HELP<UNIT1 ,REQUIRE<MACRO_COMPILER_CLANG<UNIT1>>> {
+template <class DEPEND>
+trait FUNCTION_unsafe_break_HELP<DEPEND ,REQUIRE<MACRO_COMPILER_CLANG<DEPEND>>> {
 #ifdef __CSC_COMPILER_CLANG__
 	struct FUNCTION_unsafe_break {
-		forceinline void operator() () const noexcept {
+		inline void operator() () const noexcept {
 			__builtin_trap () ;
 		}
 	} ;
@@ -98,7 +96,7 @@ trait FUNCTION_unsafe_break_HELP<UNIT1 ,REQUIRE<MACRO_COMPILER_CLANG<UNIT1>>> {
 } ;
 
 exports void FUNCTION_unsafe_break::invoke () {
-	using R1X = typename FUNCTION_unsafe_break_HELP<void ,ALWAYS>::FUNCTION_unsafe_break ;
+	using R1X = typename FUNCTION_unsafe_break_HELP<DEPEND ,ALWAYS>::FUNCTION_unsafe_break ;
 	static constexpr auto M_INVOKE = R1X () ;
 	return M_INVOKE () ;
 } ;
@@ -110,29 +108,27 @@ exports void FUNCTION_unsafe_abort::invoke () {
 template <class...>
 trait FUNCTION_current_usage_size_HELP ;
 
-template <class UNIT1>
-trait FUNCTION_current_usage_size_HELP<UNIT1 ,REQUIRE<MACRO_SYSTEM_WINDOWS<UNIT1>>> {
+template <class DEPEND>
+trait FUNCTION_current_usage_size_HELP<DEPEND ,REQUIRE<MACRO_SYSTEM_WINDOWS<DEPEND>>> {
 #ifdef __CSC_SYSTEM_WINDOWS__
 	struct FUNCTION_current_usage_size {
 		inline LENGTH operator() (CREF<FLAG> addr_) const {
 			if (addr_ == ZERO)
 				return ZERO ;
-			const auto r1x = &unsafe_pointer (addr_) ;
-			return LENGTH (_msize (r1x)) ;
+			return LENGTH (_msize ((&unsafe_pointer (addr_)))) ;
 		}
 	} ;
 #endif
 } ;
 
-template <class UNIT1>
-trait FUNCTION_current_usage_size_HELP<UNIT1 ,REQUIRE<MACRO_SYSTEM_LINUX<UNIT1>>> {
+template <class DEPEND>
+trait FUNCTION_current_usage_size_HELP<DEPEND ,REQUIRE<MACRO_SYSTEM_LINUX<DEPEND>>> {
 #ifdef __CSC_SYSTEM_LINUX__
 	struct FUNCTION_current_usage_size {
 		inline LENGTH operator() (CREF<FLAG> addr_) const {
 			if (addr_ == ZERO)
 				return ZERO ;
-			const auto r1x = &unsafe_pointer (addr_) ;
-			return LENGTH (malloc_usable_size (r1x)) ;
+			return LENGTH (malloc_usable_size ((&unsafe_pointer (addr_)))) ;
 		}
 	} ;
 #endif
@@ -141,8 +137,8 @@ trait FUNCTION_current_usage_size_HELP<UNIT1 ,REQUIRE<MACRO_SYSTEM_LINUX<UNIT1>>
 template <class...>
 trait HEAPPROC_IMPLHOLDER_HELP ;
 
-template <>
-trait HEAPPROC_IMPLHOLDER_HELP<ALWAYS> {
+template <class DEPEND>
+trait HEAPPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	class ImplHolder {
 	private:
 		Box<std::atomic<LENGTH>> mUsageSize ;
@@ -171,7 +167,7 @@ trait HEAPPROC_IMPLHOLDER_HELP<ALWAYS> {
 			if ifswitch (TRUE) {
 				if (ret != ZERO)
 					discard ;
-				dynamic_assert (FALSE) ;
+				assume (FALSE) ;
 				return ZERO ;
 			}
 			const auto r1x = current_usage_size (ret) ;
@@ -182,13 +178,12 @@ trait HEAPPROC_IMPLHOLDER_HELP<ALWAYS> {
 		void free (CREF<LENGTH> addr_) {
 			const auto r1x = current_usage_size (addr_) ;
 			mUsageSize->fetch_sub (r1x) ;
-			const auto r2x = &unsafe_pointer (addr_) ;
-			operator delete (r2x ,std::nothrow) ;
+			operator delete ((&unsafe_pointer (addr_)) ,std::nothrow) ;
 		}
 
 	private:
 		LENGTH current_usage_size (CREF<FLAG> addr_) const {
-			using R1X = typename FUNCTION_current_usage_size_HELP<void ,ALWAYS>::FUNCTION_current_usage_size ;
+			using R1X = typename FUNCTION_current_usage_size_HELP<DEPEND ,ALWAYS>::FUNCTION_current_usage_size ;
 			static constexpr auto M_INVOKE = R1X () ;
 			return M_INVOKE (addr_) ;
 		}
@@ -196,22 +191,22 @@ trait HEAPPROC_IMPLHOLDER_HELP<ALWAYS> {
 } ;
 
 exports LENGTH FUNCTION_unsafe_align::invoke () {
-	using R1X = typename HEAPPROC_IMPLHOLDER_HELP<ALWAYS>::ImplHolder ;
+	using R1X = typename HEAPPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	return R1X::instance ().align () ;
 }
 
 exports LENGTH FUNCTION_unsafe_usage::invoke () {
-	using R1X = typename HEAPPROC_IMPLHOLDER_HELP<ALWAYS>::ImplHolder ;
+	using R1X = typename HEAPPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	return R1X::instance ().usage () ;
 }
 
-exports FLAG FUNCTION_unsafe_alloc::invoke (CREF<LENGTH> size_) {
-	using R1X = typename HEAPPROC_IMPLHOLDER_HELP<ALWAYS>::ImplHolder ;
+exports FLAG FUNCTION_unsafe_alloc::invoke[[nodiscard]] (CREF<LENGTH> size_) {
+	using R1X = typename HEAPPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	return R1X::instance ().alloc (size_) ;
 }
 
 exports void FUNCTION_unsafe_free::invoke (CREF<LENGTH> addr_) {
-	using R1X = typename HEAPPROC_IMPLHOLDER_HELP<ALWAYS>::ImplHolder ;
+	using R1X = typename HEAPPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	return R1X::instance ().free (addr_) ;
 }
 } ;
