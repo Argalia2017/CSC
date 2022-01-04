@@ -17,8 +17,8 @@ namespace RUNTIME {
 template <class...>
 trait TIMEDURATION_HELP ;
 
-template <>
-trait TIMEDURATION_HELP<ALWAYS> {
+template <class DEPEND>
+trait TIMEDURATION_HELP<DEPEND ,ALWAYS> {
 	struct Holder implement Interface {
 		virtual void init_zero () = 0 ;
 		virtual Auto native () const = 0 ;
@@ -112,13 +112,13 @@ trait TIMEDURATION_HELP<ALWAYS> {
 	} ;
 } ;
 
-using TimeDuration = typename TIMEDURATION_HELP<ALWAYS>::TimeDuration ;
+using TimeDuration = typename TIMEDURATION_HELP<DEPEND ,ALWAYS>::TimeDuration ;
 
 template <class...>
 trait TIMEPOINT_HELP ;
 
-template <>
-trait TIMEPOINT_HELP<ALWAYS> {
+template <class DEPEND>
+trait TIMEPOINT_HELP<DEPEND ,ALWAYS> {
 	struct Holder implement Interface {
 		virtual void init_now () = 0 ;
 		virtual void init_epoch () = 0 ;
@@ -190,22 +190,21 @@ trait TIMEPOINT_HELP<ALWAYS> {
 	} ;
 } ;
 
-using TimePoint = typename TIMEPOINT_HELP<ALWAYS>::TimePoint ;
+using TimePoint = typename TIMEPOINT_HELP<DEPEND ,ALWAYS>::TimePoint ;
 
 template <class...>
 trait MUTEX_HELP ;
 
-template <>
-trait MUTEX_HELP<ALWAYS> {
+template <class DEPEND>
+trait MUTEX_HELP<DEPEND ,ALWAYS> {
 	struct Holder implement Interface {
 		virtual void init_mutex () = 0 ;
 		virtual void init_recursive_mutex () = 0 ;
 		virtual void init_conditional_mutex () = 0 ;
 		virtual Auto native () const = 0 ;
 		virtual void enter () const = 0 ;
-		virtual AnyRef<> try_enter () const leftvalue = 0 ;
+		virtual Auto try_enter () const = 0 ;
 		virtual void leave () const = 0 ;
-		virtual void notify () const = 0 ;
 	} ;
 
 	struct FUNCTION_link {
@@ -248,27 +247,23 @@ trait MUTEX_HELP<ALWAYS> {
 			return mThis->enter () ;
 		}
 
-		AnyRef<> try_enter () const leftvalue {
+		Auto try_enter () const {
 			return mThis->try_enter () ;
 		}
 
 		void leave () const {
 			return mThis->leave () ;
 		}
-
-		void notify () const {
-			return mThis->notify () ;
-		}
 	} ;
 } ;
 
-using Mutex = typename MUTEX_HELP<ALWAYS>::Mutex ;
+using Mutex = typename MUTEX_HELP<DEPEND ,ALWAYS>::Mutex ;
 
 template <class...>
 trait CONDITIONALLOCK_HELP ;
 
-template <>
-trait CONDITIONALLOCK_HELP<ALWAYS> {
+template <class DEPEND>
+trait CONDITIONALLOCK_HELP<DEPEND ,ALWAYS> {
 	struct Holder implement Interface {
 		virtual void init_lock (CREF<Mutex> mutex_) = 0 ;
 		virtual Auto native () const = 0 ;
@@ -323,13 +318,13 @@ trait CONDITIONALLOCK_HELP<ALWAYS> {
 	} ;
 } ;
 
-using ConditionalLock = typename CONDITIONALLOCK_HELP<ALWAYS>::ConditionalLock ;
+using ConditionalLock = typename CONDITIONALLOCK_HELP<DEPEND ,ALWAYS>::ConditionalLock ;
 
 template <class...>
 trait THREAD_HELP ;
 
-template <>
-trait THREAD_HELP<ALWAYS> {
+template <class DEPEND>
+trait THREAD_HELP<DEPEND ,ALWAYS> {
 	struct Holder implement Interface {
 		virtual void init_current () = 0 ;
 		virtual void init_new () = 0 ;
@@ -392,15 +387,15 @@ trait THREAD_HELP<ALWAYS> {
 	} ;
 } ;
 
-using Thread = typename THREAD_HELP<ALWAYS>::Thread ;
+using Thread = typename THREAD_HELP<DEPEND ,ALWAYS>::Thread ;
 
 using PROCESS_SNAPSHOT = BoxBuffer<BYTE ,ENUMAS<VAL ,ENUMID<128>>> ;
 
 template <class...>
 trait PROCESS_HELP ;
 
-template <>
-trait PROCESS_HELP<ALWAYS> {
+template <class DEPEND>
+trait PROCESS_HELP<DEPEND ,ALWAYS> {
 	struct Holder implement Interface {
 		virtual void init_current () = 0 ;
 		virtual void init_snapshot (CREF<PROCESS_SNAPSHOT> info) = 0 ;
@@ -458,13 +453,13 @@ trait PROCESS_HELP<ALWAYS> {
 	} ;
 } ;
 
-using Process = typename PROCESS_HELP<ALWAYS>::Process ;
+using Process = typename PROCESS_HELP<DEPEND ,ALWAYS>::Process ;
 
 template <class...>
 trait MODULE_HELP ;
 
-template <>
-trait MODULE_HELP<ALWAYS> {
+template <class DEPEND>
+trait MODULE_HELP<DEPEND ,ALWAYS> {
 	struct Holder implement Interface {
 		virtual void init_current () = 0 ;
 		virtual void init_new () = 0 ;
@@ -528,13 +523,13 @@ trait MODULE_HELP<ALWAYS> {
 	} ;
 } ;
 
-using Module = typename MODULE_HELP<ALWAYS>::Module ;
+using Module = typename MODULE_HELP<DEPEND ,ALWAYS>::Module ;
 
 template <class...>
 trait SYSTEM_HELP ;
 
-template <>
-trait SYSTEM_HELP<ALWAYS> {
+template <class DEPEND>
+trait SYSTEM_HELP<DEPEND ,ALWAYS> {
 	struct Holder implement Interface {
 		virtual String<STR> get_locale () const = 0 ;
 		virtual void set_locale (CREF<String<STR>> name) const = 0 ;
@@ -548,23 +543,24 @@ trait SYSTEM_HELP<ALWAYS> {
 
 	class System {
 	private:
-		Box<Mutex> mMutex ;
+		Mutex mMutex ;
 		VRef<Holder> mThis ;
 
 	public:
 		imports CREF<System> instance () {
 			return memorize ([&] () {
 				System ret ;
+				ret.mMutex = Mutex::make_recursive_mutex () ;
 				ret.mThis = FUNCTION_link::invoke () ;
 				return move (ret) ;
 			}) ;
 		}
-		
+
 		String<STR> get_locale () const {
 			Scope<CREF<Mutex>> anonymous (mMutex) ;
 			return mThis->get_locale () ;
 		}
-		
+
 		void set_locale (CREF<String<STR>> name) const {
 			Scope<CREF<Mutex>> anonymous (mMutex) ;
 			return mThis->set_locale (name) ;
@@ -574,7 +570,7 @@ trait SYSTEM_HELP<ALWAYS> {
 			Scope<CREF<Mutex>> anonymous (mMutex) ;
 			return mThis->execute (command) ;
 		}
-		
+
 		CREF<String<STR>> working_path () const {
 			Scope<CREF<Mutex>> anonymous (mMutex) ;
 			return mThis->working_path () ;
@@ -582,13 +578,13 @@ trait SYSTEM_HELP<ALWAYS> {
 	} ;
 } ;
 
-using System = typename SYSTEM_HELP<ALWAYS>::System ;
+using System = typename SYSTEM_HELP<DEPEND ,ALWAYS>::System ;
 
 template <class...>
 trait RANDOM_HELP ;
 
-template <>
-trait RANDOM_HELP<ALWAYS> {
+template <class DEPEND>
+trait RANDOM_HELP<DEPEND ,ALWAYS> {
 	struct Holder implement Interface {
 		virtual void init_new () = 0 ;
 		virtual Auto native () const = 0 ;
@@ -618,11 +614,11 @@ trait RANDOM_HELP<ALWAYS> {
 		Auto native () const {
 			return mThis->native () ;
 		}
-		
+
 		void reset_seed (CREF<DATA> seed) {
 			return mThis->reset_seed (seed) ;
 		}
-		
+
 		DATA random_byte () {
 			return mThis->random_byte () ;
 		}
@@ -633,7 +629,7 @@ trait RANDOM_HELP<ALWAYS> {
 				ret[i] = mThis->random_byte () ;
 			return move (ret) ;
 		}
-		
+
 		void random_skip (CREF<LENGTH> size_) {
 			return mThis->random_skip (size_) ;
 		}
@@ -713,7 +709,7 @@ trait RANDOM_HELP<ALWAYS> {
 	} ;
 } ;
 
-using Random = typename RANDOM_HELP<ALWAYS>::Random ;
+using Random = typename RANDOM_HELP<DEPEND ,ALWAYS>::Random ;
 } ;
 } ;
 

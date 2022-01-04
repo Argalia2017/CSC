@@ -21,8 +21,8 @@ namespace FUNCTIONAL {
 template <class...>
 trait SYNTAXTREE_HELP ;
 
-template <>
-trait SYNTAXTREE_HELP<ALWAYS> {
+template <class DEPEND>
+trait SYNTAXTREE_HELP<DEPEND ,ALWAYS> {
 	using SYNTEAXTREE_LINK_MIN_SIZE = ENUMAS<VAL ,ENUMID<32>> ;
 
 	struct NODE {
@@ -47,7 +47,6 @@ trait SYNTAXTREE_HELP<ALWAYS> {
 
 	class SyntaxTree {
 	private:
-		Box<Mutex> mMutex ;
 		List<NODE> mTreeList ;
 		Set<INDEX> mTreeCABISet ;
 		Deque<INDEX> mTreeStack ;
@@ -60,7 +59,6 @@ trait SYNTAXTREE_HELP<ALWAYS> {
 
 	public:
 		implicit SyntaxTree () {
-			mMutex = Box<Mutex>::make (Mutex::make_recursive_mutex ()) ;
 			INDEX ix = mTreeList.insert () ;
 			mTreeList[ix].mCABI = 0 ;
 			mTreeList[ix].mName = slice ("") ;
@@ -81,34 +79,31 @@ trait SYNTAXTREE_HELP<ALWAYS> {
 		}
 
 		void mark_as_function () {
-			Scope<CREF<Mutex>> anonymous (mMutex) ;
 			INDEX ix = curr_node () ;
-			dynamic_assert (ix != root_node ()) ;
-			dynamic_assert (ifnot (mTreeList[ix].mOnceActor.exist ())) ;
-			dynamic_assert (ifnot (mTreeList[ix].mActor.exist ())) ;
-			dynamic_assert (ifnot (mTreeList[ix].mPlaying)) ;
+			assume (ix != root_node ()) ;
+			assume (ifnot (mTreeList[ix].mOnceActor.exist ())) ;
+			assume (ifnot (mTreeList[ix].mActor.exist ())) ;
+			assume (ifnot (mTreeList[ix].mPlaying)) ;
 			mTreeList[ix].mIsFunction = TRUE ;
 		}
 
 		void mark_as_iteration () {
-			Scope<CREF<Mutex>> anonymous (mMutex) ;
 			INDEX ix = curr_node () ;
-			dynamic_assert (ix != root_node ()) ;
-			dynamic_assert (ifnot (mTreeList[ix].mOnceActor.exist ())) ;
-			dynamic_assert (ifnot (mTreeList[ix].mActor.exist ())) ;
-			dynamic_assert (ifnot (mTreeList[ix].mPlaying)) ;
+			assume (ix != root_node ()) ;
+			assume (ifnot (mTreeList[ix].mOnceActor.exist ())) ;
+			assume (ifnot (mTreeList[ix].mActor.exist ())) ;
+			assume (ifnot (mTreeList[ix].mPlaying)) ;
 			mTreeList[ix].mIsIteration = TRUE ;
 		}
 
 		template <class ARG1>
 		void maybe (XREF<ARG1> id) {
-			Scope<CREF<Mutex>> anonymous (mMutex) ;
 			INDEX ix = curr_node () ;
-			dynamic_assert (ifnot (mTreeList[ix].mOnceActor.exist ())) ;
-			dynamic_assert (ifnot (mTreeList[ix].mActor.exist ())) ;
-			dynamic_assert (ifnot (mTreeList[ix].mPlaying)) ;
+			assume (ifnot (mTreeList[ix].mOnceActor.exist ())) ;
+			assume (ifnot (mTreeList[ix].mActor.exist ())) ;
+			assume (ifnot (mTreeList[ix].mPlaying)) ;
 			INDEX iy = insert_node (TYPEAS<ARG1>::id) ;
-			dynamic_assert (ix != iy) ;
+			assume (ix != iy) ;
 			if ifswitch (TRUE) {
 				mTreeList[iy].mParent.add (ix) ;
 				mTreeList[ix].mMaybe.add (iy) ;
@@ -117,8 +112,8 @@ trait SYNTAXTREE_HELP<ALWAYS> {
 			if ifswitch (TRUE) {
 				if (mTreeList[iy].mValue.exist ())
 					discard ;
-				dynamic_assert (ifnot (mTreeList[iy].mOncePlayed)) ;
-				dynamic_assert (ifnot (mTreeList[iy].mPlayed)) ;
+				assume (ifnot (mTreeList[iy].mOncePlayed)) ;
+				assume (ifnot (mTreeList[iy].mPlayed)) ;
 				mTreeStack.add (iy) ;
 				mTreeList[iy].mValue = AnyRef<ARG1>::make (thiz) ;
 				mTreeStack.pop () ;
@@ -127,28 +122,26 @@ trait SYNTAXTREE_HELP<ALWAYS> {
 
 		template <class ARG1>
 		CREF<REMOVE_ALL<ARG1>> value (XREF<ARG1> id) leftvalue {
-			Scope<CREF<Mutex>> anonymous (mMutex) ;
 			INDEX ix = curr_node () ;
-			dynamic_assert (ifnot (mTreeList[ix].mActor.exist ())) ;
-			dynamic_assert (ifnot (mTreeList[ix].mOncePlayed)) ;
+			assume (ifnot (mTreeList[ix].mActor.exist ())) ;
+			assume (ifnot (mTreeList[ix].mOncePlayed)) ;
 			INDEX iy = insert_node (TYPEAS<ARG1>::id) ;
-			dynamic_assert (ix != iy) ;
+			assume (ix != iy) ;
 			if ifswitch (TRUE) {
-				if (!mTreeList[ix].mPlaying)
+				if ifnot (mTreeList[ix].mPlaying)
 					discard ;
-				dynamic_assert (mTreeList[ix].mMaybe.find (iy) != NONE) ;
+				assume (mTreeList[ix].mMaybe.find (iy) != NONE) ;
 			}
 			if ifswitch (TRUE) {
 				mTreeList[iy].mParent.add (ix) ;
 				mTreeList[ix].mChild.add (iy) ;
-				mTreeList[ix].mMaybe.erase (iy) ;
 				track_depth (iy ,ix) ;
 			}
 			if ifswitch (TRUE) {
 				if (mTreeList[iy].mValue.exist ())
 					discard ;
-				dynamic_assert (ifnot (mTreeList[iy].mOncePlayed)) ;
-				dynamic_assert (ifnot (mTreeList[iy].mPlayed)) ;
+				assume (ifnot (mTreeList[iy].mOncePlayed)) ;
+				assume (ifnot (mTreeList[iy].mPlayed)) ;
 				mTreeStack.add (iy) ;
 				mTreeList[iy].mValue = AnyRef<ARG1>::make (thiz) ;
 				mTreeStack.pop () ;
@@ -157,41 +150,38 @@ trait SYNTAXTREE_HELP<ALWAYS> {
 		}
 
 		void once (RREF<Function<void>> actor) {
-			Scope<CREF<Mutex>> anonymous (mMutex) ;
 			INDEX ix = curr_node () ;
-			dynamic_assert (ix != root_node ()) ;
-			dynamic_assert (ifnot (mTreeList[ix].mOnceActor.exist ())) ;
-			dynamic_assert (ifnot (mTreeList[ix].mActor.exist ())) ;
-			dynamic_assert (ifnot (mTreeList[ix].mPlaying)) ;
-			dynamic_assert (ifnot (mTreeList[ix].mIsFunction)) ;
-			dynamic_assert (ifnot (mTreeList[ix].mIsIteration)) ;
+			assume (ix != root_node ()) ;
+			assume (ifnot (mTreeList[ix].mOnceActor.exist ())) ;
+			assume (ifnot (mTreeList[ix].mActor.exist ())) ;
+			assume (ifnot (mTreeList[ix].mPlaying)) ;
+			assume (ifnot (mTreeList[ix].mIsFunction)) ;
+			assume (ifnot (mTreeList[ix].mIsIteration)) ;
 			mTreeList[ix].mOnceActor = move (actor) ;
 		}
 
 		void then (RREF<Function<void>> actor) {
-			Scope<CREF<Mutex>> anonymous (mMutex) ;
 			INDEX ix = curr_node () ;
-			dynamic_assert (ix != root_node ()) ;
-			dynamic_assert (ifnot (mTreeList[ix].mActor.exist ())) ;
-			dynamic_assert (ifnot (mTreeList[ix].mOncePlayed)) ;
+			assume (ix != root_node ()) ;
+			assume (ifnot (mTreeList[ix].mActor.exist ())) ;
+			assume (ifnot (mTreeList[ix].mOncePlayed)) ;
 			mTreeList[ix].mActor = move (actor) ;
 		}
 
 		template <class ARG1>
 		void undo (CREF<ARG1> id) {
-			Scope<CREF<Mutex>> anonymous (mMutex) ;
 			INDEX ix = curr_node () ;
-			dynamic_assert (ix != root_node ()) ;
-			dynamic_assert (ifnot (mTreeList[ix].mActor.exist ())) ;
-			dynamic_assert (ifnot (mTreeList[ix].mOncePlayed)) ;
+			assume (ix != root_node ()) ;
+			assume (ifnot (mTreeList[ix].mActor.exist ())) ;
+			assume (ifnot (mTreeList[ix].mOncePlayed)) ;
 			INDEX iy = insert_node (TYPEAS<ARG1>::id) ;
-			dynamic_assert (ix != iy) ;
-			dynamic_assert (mTreeList[iy].mIsIteration) ;
+			assume (ix != iy) ;
+			assume (mTreeList[iy].mIsIteration) ;
 			if ifswitch (TRUE) {
 				if (ix == root_node ())
 					discard ;
-				dynamic_assert (mTreeList[ix].mPlaying) ;
-				dynamic_assert (mTreeList[ix].mMaybe.find (iy) != NONE) ;
+				assume (mTreeList[ix].mPlaying) ;
+				assume (mTreeList[ix].mMaybe.find (iy) != NONE) ;
 			}
 			mUndoQueue.clear () ;
 			mUndoQueue.add (iy) ;
@@ -201,7 +191,7 @@ trait SYNTAXTREE_HELP<ALWAYS> {
 				INDEX jx = mUndoQueue[mUndoQueue.head ()] ;
 				mUndoQueue.take () ;
 				if ifswitch (TRUE) {
-					if (!mTreeList[jx].mPlayed)
+					if ifnot (mTreeList[jx].mPlayed)
 						discard ;
 					for (auto &&i : mTreeList[jx].mParent)
 						mUndoQueue.add (i) ;
@@ -211,7 +201,6 @@ trait SYNTAXTREE_HELP<ALWAYS> {
 		}
 
 		void play () {
-			Scope<CREF<Mutex>> anonymous (mMutex) ;
 			mCleanQueue.clear () ;
 			INDEX ix = curr_node () ;
 			const auto r1x = mTreeList[ix].mDepth ;
@@ -226,9 +215,9 @@ trait SYNTAXTREE_HELP<ALWAYS> {
 				if ifswitch (eax) {
 					if (mTreeList[jx].mOncePlayed)
 						discard ;
-					dynamic_assert (mTreeList[jx].mValue.exist ()) ;
+					assume (mTreeList[jx].mValue.exist ()) ;
 					if ifswitch (TRUE) {
-						if (!mTreeList[jx].mOnceActor.exist ())
+						if ifnot (mTreeList[jx].mOnceActor.exist ())
 							discard ;
 						mTreeStack.add (jx) ;
 						mTreeList[jx].mOnceActor () ;
@@ -249,9 +238,9 @@ trait SYNTAXTREE_HELP<ALWAYS> {
 				if ifswitch (eax) {
 					if (mTreeList[jx].mPlayed)
 						discard ;
-					dynamic_assert (mTreeList[jx].mValue.exist ()) ;
+					assume (mTreeList[jx].mValue.exist ()) ;
 					if ifswitch (TRUE) {
-						if (!mTreeList[jx].mActor.exist ())
+						if ifnot (mTreeList[jx].mActor.exist ())
 							discard ;
 						mTreeStack.add (jx) ;
 						mTreeList[jx].mActor () ;
@@ -280,9 +269,8 @@ trait SYNTAXTREE_HELP<ALWAYS> {
 		}
 
 		void clean () {
-			Scope<CREF<Mutex>> anonymous (mMutex) ;
 			INDEX ix = curr_node () ;
-			dynamic_assert (ix == root_node ()) ;
+			assume (ix == root_node ()) ;
 			mEnableClean = TRUE ;
 			mCleanQueue.clear () ;
 			for (auto &&i : mTreeList.iter ()) {
@@ -298,12 +286,8 @@ trait SYNTAXTREE_HELP<ALWAYS> {
 	private:
 		template <class ARG1>
 		INDEX insert_node (XREF<ARG1> id) {
-			const auto r1x = operator_cabi (TYPEAS<ARG1>::id) ;
-			const auto r2x = invoke ([&] () {
-				String<STR> ret ;
-				unimplemented () ;
-				return move (ret) ;
-			}) ;
+			const auto r1x = operator_cabi (id) ;
+			const auto r2x = operator_name (id) ;
 			INDEX ret = mTreeCABISet.map (r1x) ;
 			if ifswitch (TRUE) {
 				if (ret != NONE)
@@ -362,7 +346,7 @@ trait SYNTAXTREE_HELP<ALWAYS> {
 					}
 					mTreeList[ix].mDepth = max_of (mTreeList[ix].mDepth ,r5x) ;
 					if ifswitch (TRUE) {
-						if (!mTreeList[ix].mPlaying)
+						if ifnot (mTreeList[ix].mPlaying)
 							discard ;
 						const auto r6x = ARRAY2X (mTreeList[ix].mOrder ,-mTreeList[ix].mDepth) ;
 						mPlayPriority.add (r6x ,ix) ;
@@ -405,14 +389,14 @@ trait SYNTAXTREE_HELP<ALWAYS> {
 		}
 
 		void play_clean () {
-			if (!mEnableClean)
+			if ifnot (mEnableClean)
 				return ;
 			while (TRUE) {
 				if (mCleanQueue.empty ())
 					break ;
 				INDEX jx = mCleanQueue[mCleanQueue.head ()] ;
 				mCleanQueue.take () ;
-				dynamic_assert (ifnot (mTreeList[jx].mPlaying)) ;
+				assume (ifnot (mTreeList[jx].mPlaying)) ;
 				if ifswitch (TRUE) {
 					for (auto &&i : mTreeList[jx].mChild) {
 						mTreeList[i].mParent.erase (jx) ;
@@ -432,84 +416,17 @@ trait SYNTAXTREE_HELP<ALWAYS> {
 template <class...>
 trait OPERAND_HELP ;
 
+template <class DEPEND>
+trait OPERAND_HELP<DEPEND ,ALWAYS> {
+	class Operand ;
+} ;
+
 template <class...>
 trait OPERANDLIST_HELP ;
 
-template <class...>
-trait EXPRESSION_HELP ;
-
-template <class...>
-trait EXPRESSION_SUPER_HELP ;
-
-template <>
-trait EXPRESSION_SUPER_HELP<ALWAYS> {
-	struct NODE {
-
-	} ;
-
-	class Expression {
-	private:
-		template <class...>
-		friend trait EXPRESSION_HELP ;
-
-	private:
-		CRef<NODE> mThis ;
-
-	public:
-		implicit Expression () = default ;
-	} ;
-} ;
-
-template <class RANK>
-trait EXPRESSION_HELP<RANK ,REQUIRE<ENUM_EQUAL<RANK ,RANK0>>> {
-	using SUPER = typename EXPRESSION_SUPER_HELP<ALWAYS>::Expression ;
-
-	class Expression extend SUPER {
-	private:
-		using SUPER::mThis ;
-
-	public:
-		implicit Expression () = default ;
-	} ;
-} ;
-
-template <class RANK>
-trait EXPRESSION_HELP<RANK ,REQUIRE<ENUM_EQUAL<RANK ,RANK1>>> {
-	using SUPER = typename EXPRESSION_SUPER_HELP<ALWAYS>::Expression ;
-
-	class Expression extend SUPER {
-	private:
-		using SUPER::mThis ;
-
-	public:
-		implicit Expression () = default ;
-	} ;
-} ;
-
-template <class RANK>
-trait EXPRESSION_HELP<RANK ,REQUIRE<ENUM_EQUAL<RANK ,RANK2>>> {
-	using SUPER = typename EXPRESSION_SUPER_HELP<ALWAYS>::Expression ;
-
-	class Expression extend SUPER {
-	private:
-		using SUPER::mThis ;
-
-	public:
-		implicit Expression () = default ;
-	} ;
-} ;
-
-template <class RANK>
-trait EXPRESSION_HELP<RANK ,REQUIRE<ENUM_COMPR_GT<RANK ,RANK3>>> {
-	using SUPER = typename EXPRESSION_SUPER_HELP<ALWAYS>::Expression ;
-
-	class Expression extend SUPER {
-	private:
-		using SUPER::mThis ;
-
-	public:
-		implicit Expression () = default ;
-	} ;
+template <class DEPEND>
+trait OPERANDLIST_HELP<DEPEND ,ALWAYS> {
+	class OperandList ;
 } ;
 } ;
 } ;

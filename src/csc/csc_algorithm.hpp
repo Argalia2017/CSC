@@ -17,8 +17,8 @@ namespace ALGORITHM {
 template <class...>
 trait DISJOINT_HELP ;
 
-template <>
-trait DISJOINT_HELP<ALWAYS> {
+template <class DEPEND>
+trait DISJOINT_HELP<DEPEND ,ALWAYS> {
 	struct NODE {
 		INDEX mUp ;
 		LENGTH mWidth ;
@@ -46,7 +46,7 @@ trait DISJOINT_HELP<ALWAYS> {
 			mTable.fill (r1x) ;
 		}
 
-		INDEX lead (CREF<INDEX> index) leftvalue {
+		INDEX lead (CREF<INDEX> index) {
 			INDEX ret = index ;
 			if ifswitch (TRUE) {
 				if (mTable[ret].mUp != NONE)
@@ -72,7 +72,7 @@ trait DISJOINT_HELP<ALWAYS> {
 			mTable[ix].mWidth += mTable[iy].mWidth ;
 		}
 
-		BitSet<> filter (CREF<INDEX> index) leftvalue {
+		BitSet<> filter (CREF<INDEX> index) {
 			const auto r1x = map_of_closure () ;
 			const auto r2x = lead (index) ;
 			BitSet<> ret = BitSet<> (mTable.size ()) ;
@@ -87,7 +87,22 @@ trait DISJOINT_HELP<ALWAYS> {
 			return move (ret) ;
 		}
 
-		Array<BitSet<>> closure () leftvalue {
+		Array<INDEX> linkage () {
+			Array<INDEX> ret = Array<INDEX> (mTable.size ()) ;
+			ret.fill (NONE) ;
+			for (auto &&i : mTable.iter ()) {
+				if (mTable[i].mUp == NONE)
+					continue ;
+				INDEX ix = lead (i) ;
+				if (ix == i)
+					continue ;
+				ret[i] = ret[ix] ;
+				ret[ix] = i ;
+			}
+			return move (ret) ;
+		}
+
+		Array<BitSet<>> closure () {
 			const auto r1x = map_of_closure () ;
 			Array<BitSet<>> ret = Array<BitSet<>> (r1x.length ()) ;
 			for (auto &&i : ret.iter ())
@@ -128,13 +143,13 @@ trait DISJOINT_HELP<ALWAYS> {
 	} ;
 } ;
 
-using Disjoint = typename DISJOINT_HELP<ALWAYS>::Disjoint ;
+using Disjoint = typename DISJOINT_HELP<DEPEND ,ALWAYS>::Disjoint ;
 
 template <class...>
 trait MSTREE_HELP ;
 
-template <>
-trait MSTREE_HELP<ALWAYS> {
+template <class DEPEND>
+trait MSTREE_HELP<DEPEND ,ALWAYS> {
 	struct NODE {
 		INDEX mTo ;
 		LENGTH mWeight ;
@@ -326,7 +341,115 @@ trait MSTREE_HELP<ALWAYS> {
 	} ;
 } ;
 
-using MSTree = typename MSTREE_HELP<ALWAYS>::MSTree ;
+using MSTree = typename MSTREE_HELP<DEPEND ,ALWAYS>::MSTree ;
+
+template <class...>
+trait SEGMENTSET_HELP ;
+
+template <class DEPEND>
+trait SEGMENTSET_HELP<DEPEND ,ALWAYS> {
+	using FLOAT = SINGLE ;
+
+	class SegmentTable {
+	private:
+		FLOAT mTolerance ;
+		Set<FLOAT> mSegmentSet ;
+		Array<INDEX> mSegmentSetRange ;
+		Array<INDEX> mSegmentSetOrder ;
+		BitSet<> mRealLeft ;
+		BitSet<> mRealRight ;
+		BitSet<> mReal ;
+
+	public:
+		implicit SegmentTable () {
+			mTolerance = FLOAT (SINGLE_EPS) ;
+		}
+
+		void add (CREF<FLOAT> lb ,CREF<FLOAT> rb) {
+			INDEX ix = insert (lb) ;
+			INDEX iy = insert (rb) ;
+			const auto r1x = sort_of (mSegmentSetOrder[ix] ,mSegmentSetOrder[iy]) ;
+			for (auto &&i : iter (r1x[0] ,r1x[1])) {
+				mReal[i] = TRUE ;
+				mRealLeft[mSegmentSetRange[i]] = TRUE ;
+				mRealRight[mSegmentSetRange[i + 1]] = TRUE ;
+			}
+		}
+
+		void erase (CREF<FLOAT> lb ,CREF<FLOAT> rb) {
+			INDEX ix = insert (lb) ;
+			INDEX iy = insert (rb) ;
+			const auto r1x = sort_of (mSegmentSetOrder[ix] ,mSegmentSetOrder[iy]) ;
+			for (auto &&i : iter (r1x[0] ,r1x[1])) {
+				mReal[i] = FALSE ;
+				mRealLeft[mSegmentSetRange[i]] = FALSE ;
+				mRealRight[mSegmentSetRange[i + 1]] = FALSE ;
+			}
+		}
+
+		FLOAT percent (CREF<FLOAT> lb ,CREF<FLOAT> rb) {
+			INDEX ix = insert (lb) ;
+			INDEX iy = insert (rb) ;
+			FLOAT ret = FLOAT (0) ;
+			const auto r1x = sort_of (mSegmentSetOrder[ix] ,mSegmentSetOrder[iy]) ;
+			for (auto &&i : iter (r1x[0] ,r1x[1])) {
+				if ifnot (mReal[i])
+					continue ;
+				ret += mSegmentSet[mSegmentSetRange[i]] - mSegmentSet[mSegmentSetRange[i + 1]] ;
+			}
+			const auto r2x = mSegmentSet[ix] - mSegmentSet[iy] ;
+			ret *= MathProc::inverse (r2x) ;
+			return move (ret) ;
+		}
+
+	private:
+		INDEX insert (CREF<FLOAT> point) {
+			const auto r1x = MathProc::round (point ,mTolerance) ;
+			INDEX ret = mSegmentSet.find (r1x) ;
+			if ifswitch (TRUE) {
+				if (ret != NONE)
+					discard ;
+				mSegmentSet.add (r1x) ;
+				update_range () ;
+				ret = mSegmentSet.find (r1x) ;
+			}
+			return move (ret) ;
+		}
+
+		void update_range () {
+			if ifswitch (TRUE) {
+				if (mSegmentSetOrder.size () == mSegmentSet.size ())
+					discard ;
+				mSegmentSetOrder = Array<INDEX> (mSegmentSet.size ()) ;
+				mSegmentSetOrder.fill (NONE) ;
+			}
+			mSegmentSetRange = mSegmentSet.range_sort () ;
+			for (auto &&i : iter (0 ,mSegmentSetRange.length ()))
+				mSegmentSetOrder[mSegmentSetRange[i]] = i ;
+			if ifswitch (TRUE) {
+				if (mRealLeft.size () == mSegmentSet.size ())
+					discard ;
+				const auto r1x = Array<INDEX>::make_range (mRealLeft.iter ()) ;
+				mRealLeft = BitSet<> (mSegmentSet.size () ,r1x) ;
+			}
+			if ifswitch (TRUE) {
+				if (mRealRight.size () == mSegmentSet.size ())
+					discard ;
+				const auto r2x = Array<INDEX>::make_range (mRealRight.iter ()) ;
+				mRealRight = BitSet<> (mSegmentSet.size () ,r2x) ;
+			}
+			mReal = BitSet<> (mSegmentSetRange.size ()) ;
+			for (auto &&i : iter (0 ,mSegmentSetRange.length () - 1)) {
+				if ifnot (mRealLeft[mSegmentSetRange[i]])
+					if ifnot (mRealRight[mSegmentSetRange[i + 1]])
+						continue ;
+				mReal[i] = TRUE ;
+				mRealLeft[mSegmentSetRange[i]] = TRUE ;
+				mRealRight[mSegmentSetRange[i + 1]] = TRUE ;
+			}
+		}
+	} ;
+} ;
 } ;
 } ;
 

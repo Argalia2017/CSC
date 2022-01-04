@@ -10,7 +10,6 @@
 #define thiz (*this)
 #define self m_self ()
 #define fake m_fake ()
-#define attr m_attr ()
 #define trait struct
 #define implement :public
 #define extend :private
@@ -18,8 +17,9 @@
 #define anonymous __macro_anonymous
 #define slice __macro_slice
 #define assert __macro_assert
-#define dynamic_assert __macro_dynamic_assert
+#define assume __macro_assume
 #define unittest_watch __macro_unittest_watch
+#define avoidinline __macro_avoidinline
 #define forceinline __macro_forceinline
 #define ifnot __macro_ifnot
 #define ifswitch __macro_ifswitch

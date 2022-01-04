@@ -8,7 +8,6 @@
 #define thiz (*this)
 #define self m_self ()
 #define fake m_fake ()
-#define attr m_attr ()
 #define trait struct
 #define implement :public
 #define extend :private
@@ -16,9 +15,9 @@
 #define anonymous anonymous
 #define slice(...)
 #define assert(...)
-#define dynamic_assert(...)
-#define forceinline
+#define assume(...)
 #define unittest_watch(...)
+#define forceinline
 #define ifnot(...)
 #define ifswitch(...)
 #define discard break

@@ -1,10 +1,8 @@
 ﻿#pragma once
 
-#include "csc.hpp"
-#include "csc_core.hpp"
-#include "csc_basic.hpp"
-#include "csc_array.hpp"
-#include "csc_math.hpp"
+#ifndef __CSC_MATH__
+#error "∑(っ°Д° ;)っ : require 'csc_math.hpp'"
+#endif
 
 #include "begin.h"
 #include <cmath>
@@ -15,9 +13,9 @@ namespace MATH {
 template <class...>
 trait MATHPROC_IMPLHOLDER_HELP ;
 
-template <>
-trait MATHPROC_IMPLHOLDER_HELP<ALWAYS> {
-	using Holder = typename MATHPROC_HELP<ALWAYS>::Holder ;
+template <class DEPEND>
+trait MATHPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
+	using Holder = typename MATHPROC_HELP<DEPEND ,ALWAYS>::Holder ;
 
 	class ImplHolder implement Holder {
 	public:
@@ -199,8 +197,9 @@ trait MATHPROC_IMPLHOLDER_HELP<ALWAYS> {
 	} ;
 } ;
 
-exports auto MATHPROC_HELP<ALWAYS>::FUNCTION_link::invoke () -> VRef<Holder> {
-	using R1X = typename MATHPROC_IMPLHOLDER_HELP<ALWAYS>::ImplHolder ;
+template <>
+exports auto MATHPROC_HELP<DEPEND ,ALWAYS>::FUNCTION_link::invoke () -> VRef<Holder> {
+	using R1X = typename MATHPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
 } ;
 
@@ -210,11 +209,11 @@ trait FLOATPROC_IMPLHOLDER_HELP ;
 template <class...>
 trait FLOATPROC_KROSHCACHE_HELP ;
 
-template <>
-trait FLOATPROC_KROSHCACHE_HELP<ALWAYS> {
-	using NOTATION = typename FLOATPROC_HELP<ALWAYS>::NOTATION ;
+template <class DEPEND>
+trait FLOATPROC_KROSHCACHE_HELP<DEPEND ,ALWAYS> {
+	using NOTATION = typename FLOATPROC_HELP<DEPEND ,ALWAYS>::NOTATION ;
 	using SIZE = ENUMAS<VAL ,ENUMID<687>> ;
-	using OFFSET = ENUMAS<VAL ,ENUMID<343>> ;
+	using INDEX_OFFSET = ENUMAS<VAL ,ENUMID<343>> ;
 
 	class KroshCache {
 	private:
@@ -694,7 +693,7 @@ trait FLOATPROC_KROSHCACHE_HELP<ALWAYS> {
 			ret.mRadix = 2 ;
 			ret.mSign = FALSE ;
 			ret.mPrecision = 0 ;
-			const auto r1x = OFFSET::value + INDEX (k) ;
+			const auto r1x = INDEX_OFFSET::value + INDEX (k) ;
 			ret.mMantissa = VAL64 (mMCache[r1x]) ;
 			ret.mExponent = VAL64 (mECache[r1x]) ;
 			return move (ret) ;
@@ -702,10 +701,10 @@ trait FLOATPROC_KROSHCACHE_HELP<ALWAYS> {
 	} ;
 } ;
 
-template <>
-trait FLOATPROC_IMPLHOLDER_HELP<ALWAYS> {
-	using NOTATION = typename FLOATPROC_HELP<ALWAYS>::NOTATION ;
-	using Holder = typename FLOATPROC_HELP<ALWAYS>::Holder ;
+template <class DEPEND>
+trait FLOATPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
+	using NOTATION = typename FLOATPROC_HELP<DEPEND ,ALWAYS>::NOTATION ;
+	using Holder = typename FLOATPROC_HELP<DEPEND ,ALWAYS>::Holder ;
 
 	class ImplHolder implement Holder {
 	public:
@@ -814,7 +813,7 @@ trait FLOATPROC_IMPLHOLDER_HELP<ALWAYS> {
 		}
 
 		NOTATION exp2_from_exp10 (CREF<NOTATION> fexp10) const override {
-			using R1X = typename FLOATPROC_KROSHCACHE_HELP<ALWAYS>::KroshCache ;
+			using R1X = typename FLOATPROC_KROSHCACHE_HELP<DEPEND ,ALWAYS>::KroshCache ;
 			assert (fexp10.mRadix == 10) ;
 			const auto r1x = invoke ([&] () {
 				NOTATION ret ;
@@ -854,8 +853,9 @@ trait FLOATPROC_IMPLHOLDER_HELP<ALWAYS> {
 	} ;
 } ;
 
-exports auto FLOATPROC_HELP<ALWAYS>::FUNCTION_link::invoke () -> VRef<Holder> {
-	using R1X = typename FLOATPROC_IMPLHOLDER_HELP<ALWAYS>::ImplHolder ;
+template <>
+exports auto FLOATPROC_HELP<DEPEND ,ALWAYS>::FUNCTION_link::invoke () -> VRef<Holder> {
+	using R1X = typename FLOATPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
 } ;
 } ;

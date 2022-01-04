@@ -21,8 +21,10 @@ trait DIRECTORY_HELP ;
 template <class...>
 trait FILE_HELP ;
 
-template <>
-trait FILE_HELP<ALWAYS> {
+template <class DEPEND>
+trait FILE_HELP<DEPEND ,ALWAYS> {
+	using FILE_NAME_SIZE = ENUMAS<VAL ,ENUMID<1023>> ;
+
 	struct Holder implement Interface {
 		virtual void init_file (CREF<String<STR>> file) = 0 ;
 		virtual Auto native () const = 0 ;
@@ -30,9 +32,9 @@ trait FILE_HELP<ALWAYS> {
 		virtual String<STR> name () const = 0 ;
 		virtual String<STR> full_name () const = 0 ;
 		virtual VarBuffer<BYTE> load () const = 0 ;
-		virtual void load (VREF<RegBuffer<BYTE>> data) const = 0 ;
-		virtual void save (CREF<RegBuffer<BYTE>> data) const = 0 ;
-		virtual CREF<RegBuffer<BYTE>> load_assert (VREF<ConBuffer<BYTE>> data) const = 0 ;
+		virtual void load (VREF<RegBuffer<BYTE>> item) const = 0 ;
+		virtual void save (CREF<RegBuffer<BYTE>> item) const = 0 ;
+		virtual CREF<RegBuffer<BYTE>> load_assert (CREF<FLAG> uuid) const = 0 ;
 		virtual BOOL find () const = 0 ;
 		virtual void erase () const = 0 ;
 		virtual void copy_from (CREF<Holder> that) const = 0 ;
@@ -79,16 +81,16 @@ trait FILE_HELP<ALWAYS> {
 			return mThis->load () ;
 		}
 
-		void load (VREF<RegBuffer<BYTE>> data) const {
-			return mThis->load (data) ;
+		void load (VREF<RegBuffer<BYTE>> item) const {
+			return mThis->load (item) ;
 		}
 
-		void save (CREF<RegBuffer<BYTE>> data) const {
-			return mThis->save (data) ;
+		void save (CREF<RegBuffer<BYTE>> item) const {
+			return mThis->save (item) ;
 		}
 
-		CREF<RegBuffer<BYTE>> load_assert (RREF<ConBuffer<BYTE>> where_ = ConBuffer<BYTE> ()) {
-			return mThis->load_assert (where_) ;
+		CREF<RegBuffer<BYTE>> load_assert (CREF<FLAG> uuid) const {
+			return mThis->load_assert (uuid) ;
 		}
 
 		BOOL find () const {
@@ -117,13 +119,15 @@ trait FILE_HELP<ALWAYS> {
 	} ;
 } ;
 
-using File = typename FILE_HELP<ALWAYS>::File ;
+using File = typename FILE_HELP<DEPEND ,ALWAYS>::File ;
 
 template <class...>
 trait DIRECTORY_HELP ;
 
-template <>
-trait DIRECTORY_HELP<ALWAYS> {
+template <class DEPEND>
+trait DIRECTORY_HELP<DEPEND ,ALWAYS> {
+	using DIRECTORY_CHILD_SIZE = ENUMAS<VAL ,ENUMID<65536>> ;
+
 	struct Holder implement Interface {
 		virtual void init_file (CREF<String<STR>> file) = 0 ;
 		virtual Auto native () const = 0 ;
@@ -237,28 +241,27 @@ trait DIRECTORY_HELP<ALWAYS> {
 	} ;
 } ;
 
-using Directory = typename DIRECTORY_HELP<ALWAYS>::Directory ;
+using Directory = typename DIRECTORY_HELP<DEPEND ,ALWAYS>::Directory ;
 
 template <class...>
 trait STREAMLOADER_HELP ;
 
-template <>
-trait STREAMLOADER_HELP<ALWAYS> {
-	class StreamLoader {} ;
+template <class DEPEND>
+trait STREAMLOADER_HELP<DEPEND ,ALWAYS> {
+	class StreamLoader ;
 } ;
 
-using StreamLoader = typename STREAMLOADER_HELP<ALWAYS>::StreamLoader ;
+using StreamLoader = typename STREAMLOADER_HELP<DEPEND ,ALWAYS>::StreamLoader ;
 
 template <class...>
 trait BUFFERLOADER_HELP ;
 
-template <>
-trait BUFFERLOADER_HELP<ALWAYS> {
-	class BufferLoader {} ;
+template <class DEPEND>
+trait BUFFERLOADER_HELP<DEPEND ,ALWAYS> {
+	class BufferLoader ;
 } ;
 
-using BufferLoader = typename BUFFERLOADER_HELP<ALWAYS>::BufferLoader ;
-
+using BufferLoader = typename BUFFERLOADER_HELP<DEPEND ,ALWAYS>::BufferLoader ;
 } ;
 } ;
 

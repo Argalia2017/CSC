@@ -1,11 +1,8 @@
 #pragma once
-#include "csc.hpp"
-#include "csc_core.hpp"
-#include "csc_basic.hpp"
-#include "csc_array.hpp"
-#include "csc_math.hpp"
-#include "csc_stream.hpp"
-#include "csc_string.hpp"
+
+#ifndef __CSC_RUNTIME__
+#error "б╞(д├бузебу ;)д├ : require 'csc_runtime.hpp'"
+#endif
 
 #include "begin.h"
 #include <cstdio>
@@ -25,139 +22,141 @@ namespace RUNTIME {
 template <class...>
 trait TIMEDURATION_IMPLHOLDER_HELP ;
 
-template <>
-trait TIMEDURATION_IMPLHOLDER_HELP<ALWAYS> {
-	using Holder = typename TIMEDURATION_HELP<ALWAYS>::Holder ;
+template <class DEPEND>
+trait TIMEDURATION_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
+	using Holder = typename TIMEDURATION_HELP<DEPEND ,ALWAYS>::Holder ;
 	using TIMEPOINT = std::chrono::system_clock::time_point ;
 	using TIMEDURATION = std::chrono::system_clock::duration ;
 
-	struct NODE {
+	struct HEAP {
 		TIMEDURATION mTimeDuration ;
 	} ;
 
 	class ImplHolder implement Holder {
 	private:
-		NODE mNode ;
+		HEAP mHeap ;
 
 	public:
 		implicit ImplHolder () = default ;
 
 		void init_zero () override {
-			mNode.mTimeDuration = TIMEDURATION (0) ;
+			mHeap.mTimeDuration = TIMEDURATION (0) ;
 		}
 
 		Auto native () const override {
-			return CRef<NODE>::reference (mNode) ;
+			return CRef<HEAP>::reference (mHeap) ;
 		}
 
 		LENGTH hours () const override {
-			const auto r1x = std::chrono::duration_cast<std::chrono::hours> (mNode.mTimeDuration) ;
+			const auto r1x = std::chrono::duration_cast<std::chrono::hours> (mHeap.mTimeDuration) ;
 			return LENGTH (r1x.count ()) ;
 		}
 
 		LENGTH minutes () const override {
-			const auto r1x = std::chrono::duration_cast<std::chrono::minutes> (mNode.mTimeDuration) ;
+			const auto r1x = std::chrono::duration_cast<std::chrono::minutes> (mHeap.mTimeDuration) ;
 			return LENGTH (r1x.count ()) ;
 		}
 
 		LENGTH seconds () const override {
-			const auto r1x = std::chrono::duration_cast<std::chrono::seconds> (mNode.mTimeDuration) ;
+			const auto r1x = std::chrono::duration_cast<std::chrono::seconds> (mHeap.mTimeDuration) ;
 			return LENGTH (r1x.count ()) ;
 		}
 
 		LENGTH milliseconds () const override {
-			const auto r1x = std::chrono::duration_cast<std::chrono::milliseconds> (mNode.mTimeDuration) ;
+			const auto r1x = std::chrono::duration_cast<std::chrono::milliseconds> (mHeap.mTimeDuration) ;
 			return LENGTH (r1x.count ()) ;
 		}
 
 		LENGTH microseconds () const override {
-			const auto r1x = std::chrono::duration_cast<std::chrono::microseconds> (mNode.mTimeDuration) ;
+			const auto r1x = std::chrono::duration_cast<std::chrono::microseconds> (mHeap.mTimeDuration) ;
 			return LENGTH (r1x.count ()) ;
 		}
 
 		LENGTH nanoseconds () const override {
-			const auto r1x = std::chrono::duration_cast<std::chrono::nanoseconds> (mNode.mTimeDuration) ;
+			const auto r1x = std::chrono::duration_cast<std::chrono::nanoseconds> (mHeap.mTimeDuration) ;
 			return LENGTH (r1x.count ()) ;
 		}
 
 		void add_from (CREF<Holder> a ,CREF<Holder> b) override {
-			auto &&tmp_a = keep[TYPEAS<CREF<ImplHolder>>::id] (a) ;
-			auto &&tmp_b = keep[TYPEAS<CREF<ImplHolder>>::id] (b) ;
-			mNode.mTimeDuration = tmp_a.mNode.mTimeDuration + tmp_b.mNode.mTimeDuration ;
+			auto &&tmp_a = a.native ().as (TYPEAS<CRef<HEAP>>::id).self ;
+			auto &&tmp_b = b.native ().as (TYPEAS<CRef<HEAP>>::id).self ;
+			mHeap.mTimeDuration = tmp_a.mTimeDuration + tmp_b.mTimeDuration ;
 		}
 
 		void sub_from (CREF<Holder> a ,CREF<Holder> b) override {
-			auto &&tmp_a = keep[TYPEAS<CREF<ImplHolder>>::id] (a) ;
-			auto &&tmp_b = keep[TYPEAS<CREF<ImplHolder>>::id] (b) ;
-			mNode.mTimeDuration = tmp_a.mNode.mTimeDuration - tmp_b.mNode.mTimeDuration ;
+			auto &&tmp_a = a.native ().as (TYPEAS<CRef<HEAP>>::id).self ;
+			auto &&tmp_b = b.native ().as (TYPEAS<CRef<HEAP>>::id).self ;
+			mHeap.mTimeDuration = tmp_a.mTimeDuration - tmp_b.mTimeDuration ;
 		}
 	} ;
 } ;
 
-exports auto TIMEDURATION_HELP<ALWAYS>::FUNCTION_link::invoke () -> VRef<Holder> {
-	using R1X = typename TIMEDURATION_IMPLHOLDER_HELP<ALWAYS>::ImplHolder ;
+template <>
+exports auto TIMEDURATION_HELP<DEPEND ,ALWAYS>::FUNCTION_link::invoke () -> VRef<Holder> {
+	using R1X = typename TIMEDURATION_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
 } ;
 
 template <class...>
 trait TIMEPOINT_IMPLHOLDER_HELP ;
 
-template <>
-trait TIMEPOINT_IMPLHOLDER_HELP<ALWAYS> {
-	using Holder = typename TIMEPOINT_HELP<ALWAYS>::Holder ;
+template <class DEPEND>
+trait TIMEPOINT_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
+	using Holder = typename TIMEPOINT_HELP<DEPEND ,ALWAYS>::Holder ;
 	using TIMEPOINT = std::chrono::system_clock::time_point ;
 	using TIMEDURATION = std::chrono::system_clock::duration ;
 
-	struct NODE {
+	struct HEAP {
 		TIMEPOINT mTimePoint ;
 	} ;
 
 	class ImplHolder implement Holder {
 	private:
-		NODE mNode ;
+		HEAP mHeap ;
 
 	public:
 		implicit ImplHolder () = default ;
 
 		void init_now () override {
-			mNode.mTimePoint = std::chrono::system_clock::now () ;
+			mHeap.mTimePoint = std::chrono::system_clock::now () ;
 		}
 
 		void init_epoch () override {
 			const auto r1x = TIMEDURATION (0) ;
-			mNode.mTimePoint = TIMEPOINT (r1x) ;
+			mHeap.mTimePoint = TIMEPOINT (r1x) ;
 		}
 
 		Auto native () const override {
-			return CRef<NODE>::reference (mNode) ;
+			return CRef<HEAP>::reference (mHeap) ;
 		}
 
 		void add_from (CREF<Holder> a ,CREF<TimeDuration> b) override {
-			using R1X = typename TIMEDURATION_IMPLHOLDER_HELP<ALWAYS>::NODE ;
-			auto &&tmp_a = keep[TYPEAS<CREF<ImplHolder>>::id] (a) ;
+			using R1X = typename TIMEDURATION_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::HEAP ;
+			auto &&tmp_a = b.native ().as (TYPEAS<CRef<HEAP>>::id).self ;
 			auto &&tmp_b = b.native ().as (TYPEAS<CRef<R1X>>::id).self ;
-			mNode.mTimePoint = tmp_a.mNode.mTimePoint + tmp_b.mTimeDuration ;
+			mHeap.mTimePoint = tmp_a.mTimePoint + tmp_b.mTimeDuration ;
 		}
 
 		void sub_from (CREF<Holder> a ,CREF<TimeDuration> b) override {
-			using R1X = typename TIMEDURATION_IMPLHOLDER_HELP<ALWAYS>::NODE ;
-			auto &&tmp_a = keep[TYPEAS<CREF<ImplHolder>>::id] (a) ;
+			using R1X = typename TIMEDURATION_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::HEAP ;
+			auto &&tmp_a = b.native ().as (TYPEAS<CRef<HEAP>>::id).self ;
 			auto &&tmp_b = b.native ().as (TYPEAS<CRef<R1X>>::id).self ;
-			mNode.mTimePoint = tmp_a.mNode.mTimePoint - tmp_b.mTimeDuration ;
+			mHeap.mTimePoint = tmp_a.mTimePoint - tmp_b.mTimeDuration ;
 		}
 	} ;
 } ;
 
-exports auto TIMEPOINT_HELP<ALWAYS>::FUNCTION_link::invoke () -> VRef<Holder> {
-	using R1X = typename TIMEPOINT_IMPLHOLDER_HELP<ALWAYS>::ImplHolder ;
+template <>
+exports auto TIMEPOINT_HELP<DEPEND ,ALWAYS>::FUNCTION_link::invoke () -> VRef<Holder> {
+	using R1X = typename TIMEPOINT_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
 } ;
 
 template <class...>
 trait MUTEXLOCKER_HELP ;
 
-template <>
-trait MUTEXLOCKER_HELP<ALWAYS> {
+template <class DEPEND>
+trait MUTEXLOCKER_HELP<DEPEND ,ALWAYS> {
 	using RECURSIVEMUTEX = std::recursive_mutex ;
 
 	class MutexLocker extend Proxy {
@@ -179,19 +178,19 @@ trait MUTEXLOCKER_HELP<ALWAYS> {
 	} ;
 } ;
 
-using MutexLocker = typename MUTEXLOCKER_HELP<ALWAYS>::MutexLocker ;
+using MutexLocker = typename MUTEXLOCKER_HELP<DEPEND ,ALWAYS>::MutexLocker ;
 
 template <class...>
 trait MUTEX_IMPLHOLDER_HELP ;
 
-template <>
-trait MUTEX_IMPLHOLDER_HELP<ALWAYS> {
-	using Holder = typename MUTEX_HELP<ALWAYS>::Holder ;
+template <class DEPEND>
+trait MUTEX_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
+	using Holder = typename MUTEX_HELP<DEPEND ,ALWAYS>::Holder ;
 	using MUTEX = std::mutex ;
 	using RECURSIVEMUTEX = std::recursive_mutex ;
 	using CONDITIONNALMUTEX = std::condition_variable ;
 
-	struct NODE {
+	struct HEAP {
 		Box<MUTEX> mMutex ;
 		Box<RECURSIVEMUTEX> mRecursive ;
 		Box<CONDITIONNALMUTEX> mConditional ;
@@ -199,176 +198,174 @@ trait MUTEX_IMPLHOLDER_HELP<ALWAYS> {
 
 	class ImplHolder implement Holder {
 	private:
-		SharedRef<NODE> mNode ;
+		SharedRef<HEAP> mHeap ;
 
 	public:
 		implicit ImplHolder () {
-			mNode = SharedRef<NODE>::make () ;
+			mHeap = SharedRef<HEAP>::make () ;
 		}
 
 		void init_mutex () override {
-			mNode->mMutex = Box<MUTEX>::make () ;
+			mHeap->mMutex = Box<MUTEX>::make () ;
 		}
 
 		void init_recursive_mutex () override {
-			mNode->mRecursive = Box<RECURSIVEMUTEX>::make () ;
+			mHeap->mRecursive = Box<RECURSIVEMUTEX>::make () ;
 		}
 
 		void init_conditional_mutex () override {
-			mNode->mMutex = Box<MUTEX>::make () ;
-			mNode->mConditional = Box<CONDITIONNALMUTEX>::make () ;
+			mHeap->mMutex = Box<MUTEX>::make () ;
+			mHeap->mConditional = Box<CONDITIONNALMUTEX>::make () ;
 		}
 
 		Auto native () const override {
-			return CRef<NODE>::reference (mNode) ;
+			return CRef<SharedRef<HEAP>>::reference (mHeap) ;
 		}
 
 		void enter () const override {
 			auto eax = TRUE ;
 			if ifswitch (eax) {
-				if (mNode->mMutex == NULL)
+				if (mHeap->mMutex == NULL)
 					discard ;
-				mNode->mMutex->lock () ;
+				mHeap->mMutex->lock () ;
 			}
 			if ifswitch (eax) {
-				if (mNode->mRecursive == NULL)
+				if (mHeap->mRecursive == NULL)
 					discard ;
-				mNode->mRecursive->lock () ;
+				mHeap->mRecursive->lock () ;
 			}
 		}
 
-		AnyRef<> try_enter () const leftvalue override {
-			AnyRef<> ret ;
+		Auto try_enter () const override {
 			if ifswitch (TRUE) {
-				if (mNode->mRecursive == NULL)
+				if (mHeap->mRecursive == NULL)
 					discard ;
-				const auto r1x = mNode->mRecursive->try_lock () ;
+				const auto r1x = mHeap->mRecursive->try_lock () ;
 				if ifnot (r1x)
 					discard ;
-				auto rax = Scope<VREF<MutexLocker>> (MutexLocker::from (mNode->mRecursive.self)) ;
-				ret = AnyRef<Scope<VREF<MutexLocker>>>::make (move (rax)) ;
+				auto rax = Scope<VREF<MutexLocker>> (MutexLocker::from (mHeap->mRecursive.self)) ;
+				return Auto (move (rax)) ;
 			}
-			return move (ret) ;
+			return Auto () ;
 		}
 
 		void leave () const override {
 			auto eax = TRUE ;
 			if ifswitch (eax) {
-				if (mNode->mMutex == NULL)
+				if (mHeap->mMutex == NULL)
 					discard ;
-				mNode->mMutex->unlock () ;
+				mHeap->mMutex->unlock () ;
 			}
 			if ifswitch (eax) {
-				if (mNode->mRecursive == NULL)
+				if (mHeap->mRecursive == NULL)
 					discard ;
-				mNode->mRecursive->unlock () ;
+				mHeap->mRecursive->unlock () ;
 			}
-		}
-
-		void notify () const override {
-			if (mNode->mConditional == NULL)
-				return ;
-			mNode->mConditional->notify_all () ;
 		}
 	} ;
 } ;
 
-exports auto MUTEX_HELP<ALWAYS>::FUNCTION_link::invoke () -> VRef<Holder> {
-	using R1X = typename MUTEX_IMPLHOLDER_HELP<ALWAYS>::ImplHolder ;
+template <>
+exports auto MUTEX_HELP<DEPEND ,ALWAYS>::FUNCTION_link::invoke () -> VRef<Holder> {
+	using R1X = typename MUTEX_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
 } ;
 
 template <class...>
 trait CONDITIONALLOCK_IMPLHOLDER_HELP ;
 
-template <>
-trait CONDITIONALLOCK_IMPLHOLDER_HELP<ALWAYS> {
-	using Holder = typename CONDITIONALLOCK_HELP<ALWAYS>::Holder ;
-	using MUTEX = typename MUTEX_IMPLHOLDER_HELP<ALWAYS>::MUTEX ;
-	using MUTEXNODE = typename MUTEX_IMPLHOLDER_HELP<ALWAYS>::NODE ;
+template <class DEPEND>
+trait CONDITIONALLOCK_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
+	using Holder = typename CONDITIONALLOCK_HELP<DEPEND ,ALWAYS>::Holder ;
+	using MUTEX = typename MUTEX_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::MUTEX ;
+	using MUTEXHEAP = typename MUTEX_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::HEAP ;
 	using CONDITIONALLOCK = std::unique_lock<MUTEX> ;
 
-	struct NODE {
-		SharedRef<MUTEXNODE> mMutexNode ;
+	struct HEAP {
+		SharedRef<MUTEXHEAP> mMutexNode ;
 		CONDITIONALLOCK mLock ;
 	} ;
 
 	class ImplHolder implement Holder {
 	private:
-		NODE mNode ;
+		HEAP mHeap ;
 
 	public:
 		implicit ImplHolder () = default ;
 
-		void init_lock (CREF<Mutex> mutex_) {
+		void init_lock (CREF<Mutex> mutex_) override {
 			//@mark
-			mNode.mMutexNode = mutex_.native ().as (TYPEAS<SharedRef<MUTEXNODE>>::id) ;
-			assert (mNode.mMutexNode.exist ()) ;
-			mNode.mLock = CONDITIONALLOCK (mNode.mMutexNode->mMutex) ;
+			mHeap.mMutexNode = mutex_.native ().as (TYPEAS<CRef<SharedRef<HEAP>>>::id).self ;
+			assert (mHeap.mMutexNode.exist ()) ;
+			assert (mHeap.mMutexNode->mConditional.exist ()) ;
+			mHeap.mLock = CONDITIONALLOCK (mHeap.mMutexNode->mMutex) ;
 		}
 
 		Auto native () const override {
-			return CRef<NODE>::reference (mNode) ;
+			return CRef<HEAP>::reference (mHeap) ;
 		}
 
 		void wait () override {
-			mNode.mMutexNode->mConditional->wait (mNode.mLock) ;
+			mHeap.mMutexNode->mConditional->wait (mHeap.mLock) ;
 		}
 
 		void wait (CREF<TimeDuration> time_) override {
-			using R1X = typename TIMEDURATION_IMPLHOLDER_HELP<ALWAYS>::NODE ;
-			auto &&tmp = time_.native ().as (TYPEAS<R1X>::id).mTimeDuration ;
-			mNode.mMutexNode->mConditional->wait_for (mNode.mLock ,tmp) ;
+			using R1X = typename TIMEDURATION_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::HEAP ;
+			auto &&tmp = time_.native ().as (TYPEAS<CRef<R1X>>::id).self ;
+			mHeap.mMutexNode->mConditional->wait_for (mHeap.mLock ,tmp.mTimeDuration) ;
 		}
 
 		void wait (CREF<TimePoint> time_) override {
-			using R1X = typename TIMEPOINT_IMPLHOLDER_HELP<ALWAYS>::NODE ;
-			auto &&tmp = time_.native ().as (TYPEAS<R1X>::id).mTimePoint ;
-			mNode.mMutexNode->mConditional->wait_until (mNode.mLock ,tmp) ;
+			using R1X = typename TIMEPOINT_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::HEAP ;
+			auto &&tmp = time_.native ().as (TYPEAS<CRef<R1X>>::id).self ;
+			mHeap.mMutexNode->mConditional->wait_until (mHeap.mLock ,tmp.mTimePoint) ;
 		}
 
 		void notify () override {
-			mNode.mMutexNode->mConditional->notify_all () ;
+			mHeap.mMutexNode->mConditional->notify_all () ;
 		}
 
 		void yield () override {
-			using R1X = typename TIMEDURATION_IMPLHOLDER_HELP<ALWAYS>::NODE ;
-			mNode.mMutexNode->mConditional->notify_all () ;
-			auto &&tmp = TimeDuration::zero ().native ().as (TYPEAS<R1X>::id).mTimeDuration ;
-			mNode.mMutexNode->mConditional->wait_for (mNode.mLock ,tmp) ;
+			using R1X = typename TIMEDURATION_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::HEAP ;
+			mHeap.mMutexNode->mConditional->notify_all () ;
+			auto &&tmp = TimeDuration::zero ().native ().as (TYPEAS<CRef<R1X>>::id).self ;
+			mHeap.mMutexNode->mConditional->wait_for (mHeap.mLock ,tmp.mTimeDuration) ;
 		}
 	} ;
 } ;
 
-exports auto CONDITIONALLOCK_HELP<ALWAYS>::FUNCTION_link::invoke () -> VRef<Holder> {
-	using R1X = typename CONDITIONALLOCK_IMPLHOLDER_HELP<ALWAYS>::ImplHolder ;
+template <>
+exports auto CONDITIONALLOCK_HELP<DEPEND ,ALWAYS>::FUNCTION_link::invoke () -> VRef<Holder> {
+	using R1X = typename CONDITIONALLOCK_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
 } ;
 
 template <class...>
 trait SYSTEM_IMPLHOLDER_HELP ;
 
-template <>
-trait SYSTEM_IMPLHOLDER_HELP<ALWAYS> {
-	using Holder = typename SYSTEM_HELP<ALWAYS>::Holder ;
+template <class DEPEND>
+trait SYSTEM_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
+	using Holder = typename SYSTEM_HELP<DEPEND ,ALWAYS>::Holder ;
 
-	struct NODE {
+	struct HEAP {
 		Cell<String<STR>> mLocale ;
 	} ;
 
 	class ImplHolder implement Holder {
 	private:
-		NODE mNode ;
+		HEAP mHeap ;
 
 	public:
-		implicit ImplHolder () = default ;
+		implicit ImplHolder () {
+			mHeap.mLocale.initialize (slice ("C")) ;
+		}
 
-		String<STR> get_locale () const {
-			return mNode.mLocale.fetch () ;
+		String<STR> get_locale () const override {
+			return mHeap.mLocale.fetch () ;
 		}
 
 		void set_locale (CREF<String<STR>> name) const override {
-			mNode.mLocale.store (name) ;
+			mHeap.mLocale.store (name) ;
 		}
 
 		void execute (CREF<String<STR>> command) const override {
@@ -382,27 +379,28 @@ trait SYSTEM_IMPLHOLDER_HELP<ALWAYS> {
 	} ;
 } ;
 
-exports auto SYSTEM_HELP<ALWAYS>::FUNCTION_link::invoke () -> VRef<Holder> {
-	using R1X = typename SYSTEM_IMPLHOLDER_HELP<ALWAYS>::ImplHolder ;
+template <>
+exports auto SYSTEM_HELP<DEPEND ,ALWAYS>::FUNCTION_link::invoke () -> VRef<Holder> {
+	using R1X = typename SYSTEM_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
 } ;
 
 template <class...>
 trait RANDOM_IMPLHOLDER_HELP ;
 
-template <>
-trait RANDOM_IMPLHOLDER_HELP<ALWAYS> {
-	using Holder = typename RANDOM_HELP<ALWAYS>::Holder ;
+template <class DEPEND>
+trait RANDOM_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
+	using Holder = typename RANDOM_HELP<DEPEND ,ALWAYS>::Holder ;
 	using RANDOM = std::mt19937_64 ;
 
-	struct NODE {
+	struct HEAP {
 		DATA mSeed ;
 		RANDOM mRandom ;
 	} ;
 
 	class ImplHolder implement Holder {
 	private:
-		NODE mNode ;
+		HEAP mHeap ;
 
 	public:
 		implicit ImplHolder () = default ;
@@ -413,30 +411,31 @@ trait RANDOM_IMPLHOLDER_HELP<ALWAYS> {
 		}
 
 		Auto native () const override {
-			return CRef<NODE>::reference (mNode) ;
+			return CRef<HEAP>::reference (mHeap) ;
 		}
 
 		void reset_seed (CREF<DATA> seed) override {
-			mNode.mSeed = seed ;
-			mNode.mRandom = RANDOM (csc_byte64_t (mNode.mSeed)) ;
+			mHeap.mSeed = seed ;
+			mHeap.mRandom = RANDOM (csc_byte64_t (mHeap.mSeed)) ;
 		}
 
 		DATA random_byte () override {
-			return DATA (mNode.mRandom ()) ;
+			return DATA (mHeap.mRandom ()) ;
 		}
 
 		void random_skip (CREF<LENGTH> size_) override {
 			for (auto &&i : iter (0 ,size_)) {
 				noop (i) ;
-				const auto r1x = DATA (mNode.mRandom ()) ;
-				noop () ;
+				const auto r1x = DATA (mHeap.mRandom ()) ;
+				noop (r1x) ;
 			}
 		}
 	} ;
 } ;
 
-exports auto RANDOM_HELP<ALWAYS>::FUNCTION_link::invoke () -> VRef<Holder> {
-	using R1X = typename RANDOM_IMPLHOLDER_HELP<ALWAYS>::ImplHolder ;
+template <>
+exports auto RANDOM_HELP<DEPEND ,ALWAYS>::FUNCTION_link::invoke () -> VRef<Holder> {
+	using R1X = typename RANDOM_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
 } ;
 } ;

@@ -113,7 +113,7 @@
 #pragma warning (disable :4820) //@info: warning C4820: 'xxx': 'xxx' bytes padding added after data member 'xxx'
 #pragma warning (disable :5026) //@info: warning C5026: 'xxx': move constructor was implicitly defined as deleted
 #pragma warning (disable :5027) //@info: warning C5027: 'xxx': move assignment operator was implicitly defined as deleted
-#pragma warning (disable :5039) //@info: warning C5039: 'xxx': pointer or reference to potentially throwing function passed to extern C function under -EHc. Undefined behavior may occur if this function dynamic_assert an exception.
+#pragma warning (disable :5039) //@info: warning C5039: 'xxx': pointer or reference to potentially throwing function passed to extern C function under -EHc. Undefined behavior may occur if this function assume an exception.
 #pragma warning (disable :5045) //@info: warning C5045: Compiler will insert Spectre mitigation for memory load if /Qspectre switch specified
 #endif
 
@@ -191,17 +191,17 @@
 #endif
 #endif
 
-#ifndef __macro_dynamic_assert
+#ifndef __macro_assume
 #ifdef __CSC_COMPILER_MSVC__
-#define __macro_dynamic_assert(...) do { if (__VA_ARGS__) break ; CSC::CORE::Exception (CSC::U::TYPEAS<struct anonymous>::id ,slice ("dynamic_assert failed : " __macro_str (__VA_ARGS__) " : at " __FUNCSIG__ " in " __FILE__ " ," __macro_str (__LINE__))).raise () ; } while (false)
+#define __macro_assume(...) do { if (__VA_ARGS__) break ; CSC::CORE::Exception (CSC::U::TYPEAS<struct anonymous>::id ,slice ("assume failed : " __macro_str (__VA_ARGS__) " : at " __FUNCSIG__ " in " __FILE__ " ," __macro_str (__LINE__))).raise () ; } while (false)
 #endif
 
 #ifdef __CSC_COMPILER_GNUC__
-#define __macro_dynamic_assert(...) do { if (__VA_ARGS__) break ; CSC::CORE::Exception (CSC::U::TYPEAS<struct anonymous>::id ,slice ("dynamic_assert failed : " __macro_str (__VA_ARGS__) " : at " ,__PRETTY_FUNCTION__ ," in " __FILE__ " ," __macro_str (__LINE__))).raise () ; } while (false)
+#define __macro_assume(...) do { if (__VA_ARGS__) break ; CSC::CORE::Exception (CSC::U::TYPEAS<struct anonymous>::id ,slice ("assume failed : " __macro_str (__VA_ARGS__) " : at " ,__PRETTY_FUNCTION__ ," in " __FILE__ " ," __macro_str (__LINE__))).raise () ; } while (false)
 #endif
 
 #ifdef __CSC_COMPILER_CLANG__
-#define __macro_dynamic_assert(...) do { if (__VA_ARGS__) break ; CSC::CORE::Exception (CSC::U::TYPEAS<struct anonymous>::id ,slice ("dynamic_assert failed : " __macro_str (__VA_ARGS__) " : at " ,__PRETTY_FUNCTION__ ," in " __FILE__ " ," __macro_str (__LINE__))).raise () ; } while (false)
+#define __macro_assume(...) do { if (__VA_ARGS__) break ; CSC::CORE::Exception (CSC::U::TYPEAS<struct anonymous>::id ,slice ("assume failed : " __macro_str (__VA_ARGS__) " : at " ,__PRETTY_FUNCTION__ ," in " __FILE__ " ," __macro_str (__LINE__))).raise () ; } while (false)
 #endif
 #endif
 
@@ -221,14 +221,17 @@
 
 #ifndef __macro_forceinline
 #ifdef __CSC_COMPILER_MSVC__
+#define __macro_avoidinline __declspec (noinline)
 #define __macro_forceinline __forceinline
 #endif
 
 #ifdef __CSC_COMPILER_GNUC__
+#define __macro_avoidinline __attribute__ ((noinline))
 #define __macro_forceinline __attribute__ ((always_inline))
 #endif
 
 #ifdef __CSC_COMPILER_CLANG__
+#define __macro_avoidinline __attribute__ ((noinline))
 #define __macro_forceinline __attribute__ ((always_inline))
 #endif
 #endif
@@ -283,8 +286,7 @@ static constexpr auto infinity = std::numeric_limits<csc_float32_t>::infinity ()
 using csc_char_t = char ;
 using csc_wchar_t = wchar_t ;
 
-enum class csc_char8_t :unsigned char ;
-
+using csc_char8_t = unsigned char ;
 using csc_char16_t = char16_t ;
 using csc_char32_t = char32_t ;
 
@@ -314,6 +316,8 @@ using csc_size_t = csc_byte64_t ;
 using csc_ptrdiff_t = csc_int32_64_t ;
 using csc_size_t = csc_byte32_64_t ;
 #endif
+
+using csc_pointer_t = void * ;
 
 template <class...>
 struct ENUMAS ;
@@ -393,6 +397,7 @@ struct TEMPID {
 template <class UNIT1>
 struct TEMPID<UNIT1 ,void> ;
 
+struct DEPEND ;
 struct ALWAYS ;
 
 template <class...>
@@ -830,12 +835,12 @@ using MACRO_STD_LATEST = DEPENDENT<ENUM_FALSE ,DEPENDENT<struct anonymous ,UNIT1
 } ;
 
 template <class ARG1 ,class ARG2>
-inline CSC::U::DEF<void *> operator new (CSC::U::csc_size_t ,CSC::U::XREF<CSC::U::TEMPID<ARG1 ,ARG2> &> thiz_) noexcept {
+inline CSC::U::csc_pointer_t operator new (CSC::U::csc_size_t ,CSC::U::XREF<CSC::U::TEMPID<ARG1 ,ARG2> &> thiz_) noexcept {
 	return (&thiz_) ;
 }
 
 template <class ARG1 ,class ARG2>
-inline void operator delete (CSC::U::DEF<void *> ,CSC::U::XREF<CSC::U::TEMPID<ARG1 ,ARG2> &> thiz_) noexcept {
+inline void operator delete (CSC::U::csc_pointer_t ,CSC::U::XREF<CSC::U::TEMPID<ARG1 ,ARG2> &> thiz_) noexcept {
 	return ;
 }
 
