@@ -27,14 +27,8 @@ trait MATHPROC_HELP ;
 template <class DEPEND>
 trait MATHPROC_HELP<DEPEND ,ALWAYS> {
 	struct Holder implement Interface {
-		virtual BOOL is_infinity (CREF<SINGLE> x) const = 0 ;
-		virtual BOOL is_infinity (CREF<DOUBLE> x) const = 0 ;
-		virtual SINGLE sign (CREF<SINGLE> x) const = 0 ;
-		virtual DOUBLE sign (CREF<DOUBLE> x) const = 0 ;
-		virtual SINGLE step (CREF<SINGLE> x) const = 0 ;
-		virtual DOUBLE step (CREF<DOUBLE> x) const = 0 ;
-		virtual SINGLE abs (CREF<SINGLE> x) const = 0 ;
-		virtual DOUBLE abs (CREF<DOUBLE> x) const = 0 ;
+		virtual BOOL infinite (CREF<SINGLE> x) const = 0 ;
+		virtual BOOL infinite (CREF<DOUBLE> x) const = 0 ;
 		virtual SINGLE inverse (CREF<SINGLE> x) const = 0 ;
 		virtual DOUBLE inverse (CREF<DOUBLE> x) const = 0 ;
 		virtual SINGLE floor (CREF<SINGLE> x ,CREF<SINGLE> y) const = 0 ;
@@ -46,8 +40,8 @@ trait MATHPROC_HELP<DEPEND ,ALWAYS> {
 		virtual DOUBLE exp (CREF<DOUBLE> x) const = 0 ;
 		virtual DOUBLE log (CREF<DOUBLE> x) const = 0 ;
 		virtual DOUBLE pow (CREF<DOUBLE> x ,CREF<DOUBLE> y) const = 0 ;
-		virtual DOUBLE cndf (CREF<DOUBLE> x) const = 0 ;
-		virtual DOUBLE pndf (CREF<DOUBLE> x) const = 0 ;
+		virtual DOUBLE ncdf (CREF<DOUBLE> x) const = 0 ;
+		virtual DOUBLE npdf (CREF<DOUBLE> x) const = 0 ;
 		virtual DOUBLE sin (CREF<DOUBLE> x) const = 0 ;
 		virtual DOUBLE cos (CREF<DOUBLE> x) const = 0 ;
 		virtual DOUBLE tan (CREF<DOUBLE> x) const = 0 ;
@@ -74,31 +68,37 @@ trait MATHPROC_HELP<DEPEND ,ALWAYS> {
 		}
 
 		template <class ARG1>
-		imports REMOVE_ALL<ARG1> is_infinity (XREF<ARG1> x) {
+		imports REMOVE_ALL<ARG1> infinite (XREF<ARG1> x) {
 			using R1X = REMOVE_ALL<ARG1> ;
 			require (IS_FLOAT<R1X>) ;
-			return instance ().mThis->is_infinity (x) ;
+			return instance ().mThis->infinite (x) ;
 		}
 
 		template <class ARG1>
 		imports REMOVE_ALL<ARG1> sign (XREF<ARG1> x) {
 			using R1X = REMOVE_ALL<ARG1> ;
-			require (IS_FLOAT<R1X>) ;
-			return instance ().mThis->sign (x) ;
+			require (IS_SCALAR<R1X>) ;
+			if (x >= 0)
+				return SINGLE (1) ;
+			return SINGLE (-1) ;
 		}
 
 		template <class ARG1>
 		imports REMOVE_ALL<ARG1> step (XREF<ARG1> x) {
 			using R1X = REMOVE_ALL<ARG1> ;
-			require (IS_FLOAT<R1X>) ;
-			return instance ().mThis->step (x) ;
+			require (IS_SCALAR<R1X>) ;
+			if (x >= 0)
+				return SINGLE (1) ;
+			return SINGLE (0) ;
 		}
 
 		template <class ARG1>
 		imports REMOVE_ALL<ARG1> abs (XREF<ARG1> x) {
 			using R1X = REMOVE_ALL<ARG1> ;
-			require (IS_FLOAT<R1X>) ;
-			return instance ().mThis->abs (x) ;
+			require (IS_SCALAR<R1X>) ;
+			if (x >= 0)
+				return x ;
+			return -x ;
 		}
 
 		template <class ARG1>
@@ -148,7 +148,7 @@ trait MATHPROC_HELP<DEPEND ,ALWAYS> {
 		template <class ARG1>
 		imports REMOVE_ALL<ARG1> square (XREF<ARG1> x) {
 			using R1X = REMOVE_ALL<ARG1> ;
-			require (IS_FLOAT<R1X>) ;
+			require (IS_SCALAR<R1X>) ;
 			return x * x ;
 		}
 
@@ -162,7 +162,7 @@ trait MATHPROC_HELP<DEPEND ,ALWAYS> {
 		template <class ARG1>
 		imports REMOVE_ALL<ARG1> cube (XREF<ARG1> x) {
 			using R1X = REMOVE_ALL<ARG1> ;
-			require (IS_FLOAT<R1X>) ;
+			require (IS_SCALAR<R1X>) ;
 			return x * x * x ;
 		}
 
@@ -197,17 +197,17 @@ trait MATHPROC_HELP<DEPEND ,ALWAYS> {
 		}
 
 		template <class ARG1>
-		imports REMOVE_ALL<ARG1> cndf (XREF<ARG1> x) {
+		imports REMOVE_ALL<ARG1> ncdf (XREF<ARG1> x) {
 			using R1X = REMOVE_ALL<ARG1> ;
 			require (IS_FLOAT<R1X>) ;
-			return R1X (instance ().mThis->cndf (DOUBLE (x))) ;
+			return R1X (instance ().mThis->ncdf (DOUBLE (x))) ;
 		}
 
 		template <class ARG1>
-		imports REMOVE_ALL<ARG1> pndf (XREF<ARG1> x) {
+		imports REMOVE_ALL<ARG1> npdf (XREF<ARG1> x) {
 			using R1X = REMOVE_ALL<ARG1> ;
 			require (IS_FLOAT<R1X>) ;
-			return R1X (instance ().mThis->pndf (DOUBLE (x))) ;
+			return R1X (instance ().mThis->npdf (DOUBLE (x))) ;
 		}
 
 		template <class ARG1>
@@ -284,8 +284,8 @@ static constexpr auto choose = FUNCTION_choose () ;
 
 struct FUNCTION_min_of {
 	template <class ARG1>
-	inline REMOVE_ALL<ARG1> operator() (XREF<ARG1> x) const {
-		return x ;
+	inline REMOVE_ALL<ARG1> operator() (XREF<ARG1> x1) const {
+		return forward[TYPEAS<ARG1>::id] (x1) ;
 	}
 
 	template <class ARG1 ,class ARG2 ,class...ARG3>
@@ -295,8 +295,8 @@ struct FUNCTION_min_of {
 		require (IS_SAME<R1X ,R2X>) ;
 		const auto r1x = operator_compr (x1 ,x2) ;
 		if (r1x <= ZERO)
-			return thiz (x1 ,xn...) ;
-		return thiz (x2 ,xn...) ;
+			return thiz (forward[TYPEAS<ARG1>::id] (x1) ,forward[TYPEAS<ARG3>::id] (xn)...) ;
+		return thiz (forward[TYPEAS<ARG2>::id] (x2) ,forward[TYPEAS<ARG3>::id] (xn)...) ;
 	}
 } ;
 
@@ -304,8 +304,8 @@ static constexpr auto min_of = FUNCTION_min_of () ;
 
 struct FUNCTION_max_of {
 	template <class ARG1>
-	inline REMOVE_ALL<ARG1> operator() (XREF<ARG1> x) const {
-		return x ;
+	inline REMOVE_ALL<ARG1> operator() (XREF<ARG1> x1) const {
+		return forward[TYPEAS<ARG1>::id] (x1) ;
 	}
 
 	template <class ARG1 ,class ARG2 ,class...ARG3>
@@ -315,8 +315,8 @@ struct FUNCTION_max_of {
 		require (IS_SAME<R1X ,R2X>) ;
 		const auto r1x = operator_compr (x1 ,x2) ;
 		if (r1x >= ZERO)
-			return thiz (x1 ,xn...) ;
-		return thiz (x2 ,xn...) ;
+			return thiz (forward[TYPEAS<ARG1>::id] (x1) ,forward[TYPEAS<ARG3>::id] (xn)...) ;
+		return thiz (forward[TYPEAS<ARG2>::id] (x2) ,forward[TYPEAS<ARG3>::id] (xn)...) ;
 	}
 } ;
 

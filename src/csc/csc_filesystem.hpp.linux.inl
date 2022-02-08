@@ -1,14 +1,14 @@
-#pragma once
+ï»¿#pragma once
 
 #ifndef __CSC_FILESYSTEM__
-#error "¡Æ(¤Ã¡ã§¥¡ã ;)¤Ã : require 'csc_filesystem.hpp'"
+#error "âˆ‘(ã£Â°Ğ”Â° ;)ã£ : require 'csc_filesystem.hpp'"
 #endif
 
 #ifndef __CSC_SYSTEM_LINUX__
-#error "¡Æ(¤Ã¡ã§¥¡ã ;)¤Ã
+#error "âˆ‘(ã£Â°Ğ”Â° ;)ã£ : bad include"
 #endif
 
 namespace CSC {
-namespace DEBUGGER {
+namespace FILESYSTEM {
 } ;
 } ;

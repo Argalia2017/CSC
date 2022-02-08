@@ -21,7 +21,7 @@ trait MATHPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	public:
 		implicit ImplHolder () = default ;
 
-		BOOL is_infinity (CREF<SINGLE> x) const override {
+		BOOL infinite (CREF<SINGLE> x) const override {
 			const auto r1x = bitwise (x) ;
 			if ((r1x & CHAR (0X7F800000)) != CHAR (0X7F800000))
 				return FALSE ;
@@ -31,7 +31,7 @@ trait MATHPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			return TRUE ;
 		}
 
-		BOOL is_infinity (CREF<DOUBLE> x) const override {
+		BOOL infinite (CREF<DOUBLE> x) const override {
 			const auto r1x = bitwise (x) ;
 			if ((r1x & DATA (0X7FF0000000000000)) != DATA (0X7FF0000000000000))
 				return FALSE ;
@@ -39,50 +39,6 @@ trait MATHPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			if ((r1x & DATA (0X000FFFFFFFFFFFFF)) != DATA (0X00))
 				return TRUE ;
 			return TRUE ;
-		}
-
-		SINGLE sign (CREF<SINGLE> x) const override {
-			const auto r1x = bitwise (x) ;
-			if ((r1x & CHAR (0X80000000)) == CHAR (0X00))
-				return SINGLE (1) ;
-			return SINGLE (-1) ;
-		}
-
-		DOUBLE sign (CREF<DOUBLE> x) const override {
-			const auto r1x = bitwise (x) ;
-			if ((r1x & DATA (0X8000000000000000)) == DATA (0X00))
-				return DOUBLE (1) ;
-			return DOUBLE (-1) ;
-		}
-
-		SINGLE step (CREF<SINGLE> x) const override {
-			const auto r1x = bitwise (x) ;
-			if ((r1x & CHAR (0X80000000)) == CHAR (0X00))
-				return SINGLE (1) ;
-			return SINGLE (0) ;
-		}
-
-		DOUBLE step (CREF<DOUBLE> x) const override {
-			const auto r1x = bitwise (x) ;
-			if ((r1x & DATA (0X8000000000000000)) == DATA (0X00))
-				return DOUBLE (1) ;
-			return DOUBLE (0) ;
-		}
-
-		SINGLE abs (CREF<SINGLE> x) const override {
-			const auto r1x = bitwise (x) ;
-			if ((r1x & CHAR (0X80000000)) == CHAR (0X00))
-				return x ;
-			const auto r2x = r1x & ~CHAR (0X80000000) ;
-			return bitwise (TYPEAS<SINGLE>::id ,r2x) ;
-		}
-
-		DOUBLE abs (CREF<DOUBLE> x) const override {
-			const auto r1x = bitwise (x) ;
-			if ((r1x & DATA (0X8000000000000000)) == DATA (0X00))
-				return x ;
-			const auto r2x = r1x & ~DATA (0X8000000000000000) ;
-			return bitwise (TYPEAS<DOUBLE>::id ,r2x) ;
 		}
 
 		SINGLE inverse (CREF<SINGLE> x) const override {
@@ -161,12 +117,12 @@ trait MATHPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			return std::pow (x ,y) ;
 		}
 
-		DOUBLE cndf (CREF<DOUBLE> x) const override {
+		DOUBLE ncdf (CREF<DOUBLE> x) const override {
 			const auto r1x = x * MathProc::inverse (DOUBLE (MATH_SQRT2)) ;
 			return std::erf (r1x) * DOUBLE (MATH_INV2) + DOUBLE (MATH_INV2) ;
 		}
 
-		DOUBLE pndf (CREF<DOUBLE> x) const override {
+		DOUBLE npdf (CREF<DOUBLE> x) const override {
 			const auto r1x = -MathProc::square (x) * DOUBLE (MATH_INV2) ;
 			return exp (r1x) * DOUBLE (MATH_INVSQRT2PI) ;
 		}
@@ -750,7 +706,7 @@ trait FLOATPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			const auto r3x = (DATA (rax.mExponent) << 52) & DATA (0X7FF0000000000000) ;
 			const auto r4x = DATA (rax.mMantissa) & DATA (0X000FFFFFFFFFFFFF) ;
 			const auto r5x = r2x | r3x | r4x ;
-			return bitwise (TYPEAS<DOUBLE>::id ,r5x) ;
+			return bitwise[TYPEAS<DOUBLE>::id] (r5x) ;
 		}
 
 		NOTATION decode (CREF<DOUBLE> float_) const override {

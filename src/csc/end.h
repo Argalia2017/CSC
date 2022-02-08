@@ -27,7 +27,7 @@
 #define typeof __macro_typeof
 
 #ifdef NULL
-#define __HAS_NULL
+#define __CSC_HAS_NULL
 
 #pragma push_macro ("TRUE")
 #undef TRUE

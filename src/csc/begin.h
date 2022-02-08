@@ -24,10 +24,10 @@
 #undef discard
 #undef typeof
 
-#ifdef __HAS_NULL
+#ifdef __CSC_HAS_NULL
 #pragma pop_macro ("TRUE")
 #pragma pop_macro ("FALSE")
 #pragma pop_macro ("NULL")
 
-#undef __HAS_NULL
+#undef __CSC_HAS_NULL
 #endif

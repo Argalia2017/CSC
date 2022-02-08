@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #ifndef __CSC_DEBUGGER__
 #define __CSC_DEBUGGER__
@@ -28,18 +28,17 @@ trait CONSOLE_MESSAGE_HELP<UNIT1 ,ALWAYS> {
 
 	class Message implement Binder {
 	private:
-		CRef<UNIT1> mMessage ;
+		VRef<UNIT1> mMessage ;
 
 	public:
 		implicit Message () = delete ;
 
-		explicit Message (CREF<UNIT1> message) {
-			//@mark
-			mMessage = CRef<UNIT1>::reference (message) ;
+		explicit Message (RREF<VRef<UNIT1>> message) {
+			mMessage = move (message) ;
 		}
 
 		void friend_write (VREF<TextWriter<STR>> writer) const override {
-			template_write (writer ,mMessage.self) ;
+			template_write (writer ,mMessage) ;
 		}
 
 	private:
@@ -49,7 +48,7 @@ trait CONSOLE_MESSAGE_HELP<UNIT1 ,ALWAYS> {
 
 		template <class ARG1>
 		imports void template_write (VREF<TextWriter<STR>> writer ,XREF<ARG1> message) {
-			writer << message.first_one ().self ;
+			writer << message.first_one () ;
 			template_write (writer ,message.first_rest ()) ;
 		}
 	} ;
@@ -70,8 +69,7 @@ trait CONSOLE_HELP<DEPEND ,ALWAYS> {
 		virtual void info (CREF<Binder> msg) const = 0 ;
 		virtual void debug (CREF<Binder> msg) const = 0 ;
 		virtual void verbose (CREF<Binder> msg) const = 0 ;
-		virtual void attach_log (CREF<String<STR>> file) const = 0 ;
-		virtual void log (CREF<RegBuffer<STR>> tag ,CREF<Binder> msg) const = 0 ;
+		virtual void link (CREF<String<STR>> file_) const = 0 ;
 		virtual void show () const = 0 ;
 		virtual void hide () const = 0 ;
 		virtual void pause () const = 0 ;
@@ -81,7 +79,7 @@ trait CONSOLE_HELP<DEPEND ,ALWAYS> {
 	struct FUNCTION_link {
 		imports VRef<Holder> invoke () ;
 	} ;
-	
+
 	class Console {
 	private:
 		Mutex mMutex ;
@@ -91,7 +89,7 @@ trait CONSOLE_HELP<DEPEND ,ALWAYS> {
 		imports CREF<Console> instance () {
 			return memorize ([&] () {
 				Console ret ;
-				ret.mMutex = Mutex::make_recursive_mutex () ;
+				ret.mMutex = Mutex::make_recursive () ;
 				ret.mThis = FUNCTION_link::invoke () ;
 				return move (ret) ;
 			}) ;
@@ -118,7 +116,7 @@ trait CONSOLE_HELP<DEPEND ,ALWAYS> {
 			using R2X = typename CONSOLE_MESSAGE_HELP<R1X>::Message ;
 			Scope<CREF<Mutex>> anonymous (mMutex) ;
 			auto rax = TEMP<R1X> () ;
-			const auto r1x = R2X (R1X::from (rax ,msg...)) ;
+			const auto r1x = R2X (R1X::from (msg...)) ;
 			print (r1x) ;
 		}
 
@@ -128,7 +126,7 @@ trait CONSOLE_HELP<DEPEND ,ALWAYS> {
 			using R2X = typename CONSOLE_MESSAGE_HELP<R1X>::Message ;
 			Scope<CREF<Mutex>> anonymous (mMutex) ;
 			auto rax = TEMP<R1X> () ;
-			const auto r1x = R2X (R1X::from (rax ,msg...)) ;
+			const auto r1x = R2X (R1X::from (msg...)) ;
 			fatal (r1x) ;
 		}
 
@@ -138,7 +136,7 @@ trait CONSOLE_HELP<DEPEND ,ALWAYS> {
 			using R2X = typename CONSOLE_MESSAGE_HELP<R1X>::Message ;
 			Scope<CREF<Mutex>> anonymous (mMutex) ;
 			auto rax = TEMP<R1X> () ;
-			const auto r1x = R2X (R1X::from (rax ,msg...)) ;
+			const auto r1x = R2X (R1X::from (msg...)) ;
 			error (r1x) ;
 		}
 
@@ -148,7 +146,7 @@ trait CONSOLE_HELP<DEPEND ,ALWAYS> {
 			using R2X = typename CONSOLE_MESSAGE_HELP<R1X>::Message ;
 			Scope<CREF<Mutex>> anonymous (mMutex) ;
 			auto rax = TEMP<R1X> () ;
-			const auto r1x = R2X (R1X::from (rax ,msg...)) ;
+			const auto r1x = R2X (R1X::from (msg...)) ;
 			warn (r1x) ;
 		}
 
@@ -158,7 +156,7 @@ trait CONSOLE_HELP<DEPEND ,ALWAYS> {
 			using R2X = typename CONSOLE_MESSAGE_HELP<R1X>::Message ;
 			Scope<CREF<Mutex>> anonymous (mMutex) ;
 			auto rax = TEMP<R1X> () ;
-			const auto r1x = R2X (R1X::from (rax ,msg...)) ;
+			const auto r1x = R2X (R1X::from (msg...)) ;
 			info (r1x) ;
 		}
 
@@ -168,7 +166,7 @@ trait CONSOLE_HELP<DEPEND ,ALWAYS> {
 			using R2X = typename CONSOLE_MESSAGE_HELP<R1X>::Message ;
 			Scope<CREF<Mutex>> anonymous (mMutex) ;
 			auto rax = TEMP<R1X> () ;
-			const auto r1x = R2X (R1X::from (rax ,msg...)) ;
+			const auto r1x = R2X (R1X::from (msg...)) ;
 			debug (r1x) ;
 		}
 
@@ -178,13 +176,13 @@ trait CONSOLE_HELP<DEPEND ,ALWAYS> {
 			using R2X = typename CONSOLE_MESSAGE_HELP<R1X>::Message ;
 			Scope<CREF<Mutex>> anonymous (mMutex) ;
 			auto rax = TEMP<R1X> () ;
-			const auto r1x = R2X (R1X::from (rax ,msg...)) ;
+			const auto r1x = R2X (R1X::from (msg...)) ;
 			verbose (r1x) ;
 		}
 
-		void attach_log (CREF<String<STR>> file) const {
+		void link (CREF<String<STR>> file_) const {
 			Scope<CREF<Mutex>> anonymous (mMutex) ;
-			return mThis->attach_log (file) ;
+			return mThis->link (file_) ;
 		}
 
 		void show () const {
@@ -208,6 +206,8 @@ trait CONSOLE_HELP<DEPEND ,ALWAYS> {
 		}
 	} ;
 } ;
+
+using Console = typename CONSOLE_HELP<DEPEND ,ALWAYS>::Console ;
 } ;
 } ;
 

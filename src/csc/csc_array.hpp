@@ -9,6 +9,13 @@
 #include "csc_basic.hpp"
 
 namespace CSC {
+namespace STREAM {
+template <class...>
+trait TEXTWRITER_HELP ;
+} ;
+} ;
+
+namespace CSC {
 namespace ARRAY {
 template <class...>
 trait ARRAY_ITERATOR_HELP ;
@@ -25,9 +32,8 @@ trait ARRAY_ITERATOR_HELP<UNIT1 ,UNIT2 ,ALWAYS> {
 	public:
 		implicit Iterator () = delete ;
 
-		explicit Iterator (CREF<UNIT1> array_) {
-			//@mark
-			mArray = CRef<UNIT1>::reference (array_) ;
+		explicit Iterator (RREF<CRef<UNIT1>> array_) {
+			mArray = move (array_) ;
 			mBegin = mArray->ibegin () ;
 			mEnd = mArray->iend () ;
 			mCurr = mBegin ;
@@ -89,7 +95,7 @@ trait ARRAYRANGE_HELP<UNIT1 ,ALWAYS> {
 
 	public:
 		imports CREF<ArrayRange> from (CREF<UNIT1> that) {
-			return unsafe_deref (unsafe_cast (TYPEAS<TEMP<ArrayRange>>::id ,unsafe_deptr (that))) ;
+			return unsafe_deref (unsafe_cast[TYPEAS<TEMP<ArrayRange>>::id] (unsafe_deptr (that))) ;
 		}
 
 		LENGTH length () const {
@@ -145,7 +151,7 @@ trait ARRAY_HELP<ITEM ,SIZE ,ALWAYS> {
 		}
 
 		template <class ARG1>
-		imports Array make_range (XREF<ARG1> range_) {
+		imports Array make (XREF<ARG1> range_) {
 			Array ret = Array (range_.length ()) ;
 			INDEX ix = 0 ;
 			for (auto &&i : range_) {
@@ -163,14 +169,12 @@ trait ARRAY_HELP<ITEM ,SIZE ,ALWAYS> {
 			return size () ;
 		}
 
-		forceinline VREF<RegBuffer<ITEM>> raw () leftvalue {
-			auto rax = TEMP<RegBuffer<ITEM>> () ;
-			return RegBuffer<ITEM>::from (rax ,mArray ,0 ,mArray.size ()) ;
+		VRef<RegBuffer<ITEM>> raw () leftvalue {
+			return RegBuffer<ITEM>::from (mArray.self ,0 ,size ()) ;
 		}
 
-		forceinline CREF<RegBuffer<ITEM>> raw () const leftvalue {
-			auto rax = TEMP<RegBuffer<ITEM>> () ;
-			return RegBuffer<ITEM>::from (rax ,mArray ,0 ,mArray.size ()) ;
+		CRef<RegBuffer<ITEM>> raw () const leftvalue {
+			return RegBuffer<ITEM>::from (mArray.self ,0 ,length ()) ;
 		}
 
 		void fill (CREF<ITEM> item) {
@@ -182,54 +186,17 @@ trait ARRAY_HELP<ITEM ,SIZE ,ALWAYS> {
 				mArray[i] = item ;
 		}
 
-		INDEX find (CREF<ITEM> item) const {
-			return find (item ,0 ,length () ,TRUE) ;
-		}
-
-		INDEX find (CREF<ITEM> item ,CREF<INDEX> begin_ ,CREF<INDEX> end_ ,CREF<BOOL> forward_) const {
-			INDEX ret = NONE ;
-			if ifswitch (TRUE) {
-				if ifnot (forward_)
-					discard ;
-				ret = begin_ ;
-				while (TRUE) {
-					if (ret >= end_)
-						break ;
-					if (operator_equal (mArray[ret] ,item))
-						break ;
-					ret++ ;
-				}
-				if ifnot (ret >= end_)
-					discard ;
-				ret = NONE ;
-			}
-			if ifswitch (TRUE) {
-				ret = end_ ;
-				while (TRUE) {
-					if (ret < begin_)
-						break ;
-					if (operator_equal (mArray[ret] ,item))
-						break ;
-					ret-- ;
-				}
-				if ifnot (ret < begin_)
-					discard ;
-				ret = NONE ;
-			}
-			return move (ret) ;
-		}
-
 		ArrayIterator<Array ,ITEM> begin () const leftvalue {
-			return ArrayIterator<Array ,ITEM> (thiz) ;
+			return ArrayIterator<Array ,ITEM> (CRef<Array>::reference (thiz)) ;
 		}
 
 		ArrayIterator<Array ,ITEM> end () const leftvalue {
-			return ArrayIterator<Array ,ITEM> (thiz) ;
+			return ArrayIterator<Array ,ITEM> (CRef<Array>::reference (thiz)) ;
 		}
 
 		ArrayIterator<ArrayRange<Array> ,INDEX> iter () const leftvalue {
 			auto &&tmp = ArrayRange<Array>::from (thiz) ;
-			return ArrayIterator<ArrayRange<Array> ,INDEX> (tmp) ;
+			return ArrayIterator<ArrayRange<Array> ,INDEX> (CRef<ArrayRange<Array>>::reference (tmp)) ;
 		}
 
 		INDEX ibegin () const {
@@ -294,6 +261,43 @@ trait ARRAY_HELP<ITEM ,SIZE ,ALWAYS> {
 
 		FLAG hash () const {
 			return operator_hash (mArray) ;
+		}
+
+		INDEX find (CREF<ITEM> item) const {
+			return find (item ,0 ,length () ,TRUE) ;
+		}
+
+		INDEX find (CREF<ITEM> item ,CREF<INDEX> begin_ ,CREF<INDEX> end_ ,CREF<BOOL> forward_) const {
+			INDEX ret = NONE ;
+			if ifswitch (TRUE) {
+				if ifnot (forward_)
+					discard ;
+				ret = begin_ ;
+				while (TRUE) {
+					if (ret >= end_)
+						break ;
+					if (operator_equal (mArray[ret] ,item))
+						break ;
+					ret++ ;
+				}
+				if ifnot (ret >= end_)
+					discard ;
+				ret = NONE ;
+			}
+			if ifswitch (TRUE) {
+				ret = end_ ;
+				while (TRUE) {
+					if (ret < begin_)
+						break ;
+					if (operator_equal (mArray[ret] ,item))
+						break ;
+					ret-- ;
+				}
+				if ifnot (ret < begin_)
+					discard ;
+				ret = NONE ;
+			}
+			return move (ret) ;
 		}
 	} ;
 } ;
@@ -382,9 +386,11 @@ trait STRING_HELP<ITEM ,SIZE ,ALWAYS> {
 		}
 
 		template <class...ARG1>
-		imports String make_print (XREF<ARG1>...objs) {
+		imports String make (XREF<ARG1>...objs) {
+			using R1X = typename DEPENDENT<STREAM::TEXTWRITER_HELP<ITEM ,ALWAYS> ,TYPEAS<ARG1...>>::TextWriter ;
 			String ret = String (STRING_BUFFER_SIZE::value) ;
-			unimplemented () ;
+			auto rax = R1X (ret.raw ()) ;
+			rax.prints (objs...) ;
 			return move (ret) ;
 		}
 
@@ -404,14 +410,12 @@ trait STRING_HELP<ITEM ,SIZE ,ALWAYS> {
 			return size () ;
 		}
 
-		forceinline VREF<RegBuffer<ITEM>> raw () leftvalue {
-			auto rax = TEMP<RegBuffer<ITEM>> () ;
-			return RegBuffer<ITEM>::from (rax ,mString ,0 ,mString.size ()) ;
+		VRef<RegBuffer<ITEM>> raw () leftvalue {
+			return RegBuffer<ITEM>::from (mString.self ,0 ,size ()) ;
 		}
 
-		forceinline CREF<RegBuffer<ITEM>> raw () const leftvalue {
-			auto rax = TEMP<RegBuffer<ITEM>> () ;
-			return RegBuffer<ITEM>::from (rax ,mString ,0 ,mString.size ()) ;
+		CRef<RegBuffer<ITEM>> raw () const leftvalue {
+			return RegBuffer<ITEM>::from (mString.self ,0 ,length ()) ;
 		}
 
 		void clear () {
@@ -428,54 +432,17 @@ trait STRING_HELP<ITEM ,SIZE ,ALWAYS> {
 				mString[i] = item ;
 		}
 
-		INDEX find (CREF<ITEM> item) const {
-			return find (item ,0 ,length () ,TRUE) ;
-		}
-
-		INDEX find (CREF<ITEM> item ,CREF<INDEX> begin_ ,CREF<INDEX> end_ ,CREF<BOOL> forward_) const {
-			INDEX ret = NONE ;
-			if ifswitch (TRUE) {
-				if ifnot (forward_)
-					discard ;
-				ret = begin_ ;
-				while (TRUE) {
-					if (ret >= end_)
-						break ;
-					if (operator_equal (mString[ret] ,item))
-						break ;
-					ret++ ;
-				}
-				if ifnot (ret >= end_)
-					discard ;
-				ret = NONE ;
-			}
-			if ifswitch (TRUE) {
-				ret = end_ ;
-				while (TRUE) {
-					if (ret < begin_)
-						break ;
-					if (operator_equal (mString[ret] ,item))
-						break ;
-					ret-- ;
-				}
-				if ifnot (ret < begin_)
-					discard ;
-				ret = NONE ;
-			}
-			return move (ret) ;
-		}
-
 		ArrayIterator<String ,ITEM> begin () const leftvalue {
-			return ArrayIterator<String ,ITEM> (thiz) ;
+			return ArrayIterator<String ,ITEM> (CRef<String>::reference (thiz)) ;
 		}
 
 		ArrayIterator<String ,ITEM> end () const leftvalue {
-			return ArrayIterator<String ,ITEM> (thiz) ;
+			return ArrayIterator<String ,ITEM> (CRef<String>::reference (thiz)) ;
 		}
 
 		ArrayIterator<ArrayRange<String> ,INDEX> iter () const leftvalue {
 			auto &&tmp = ArrayRange<String>::from (thiz) ;
-			return ArrayIterator<ArrayRange<String> ,INDEX> (tmp) ;
+			return ArrayIterator<ArrayRange<String> ,INDEX> (CRef<ArrayRange<String>>::reference (tmp)) ;
 		}
 
 		INDEX ibegin () const {
@@ -598,6 +565,43 @@ trait STRING_HELP<ITEM ,SIZE ,ALWAYS> {
 
 		inline String operator+ (CREF<String> that) const {
 			return concat (that) ;
+		}
+
+		INDEX find (CREF<ITEM> item) const {
+			return find (item ,0 ,length () ,TRUE) ;
+		}
+
+		INDEX find (CREF<ITEM> item ,CREF<INDEX> begin_ ,CREF<INDEX> end_ ,CREF<BOOL> forward_) const {
+			INDEX ret = NONE ;
+			if ifswitch (TRUE) {
+				if ifnot (forward_)
+					discard ;
+				ret = begin_ ;
+				while (TRUE) {
+					if (ret >= end_)
+						break ;
+					if (operator_equal (mString[ret] ,item))
+						break ;
+					ret++ ;
+				}
+				if ifnot (ret >= end_)
+					discard ;
+				ret = NONE ;
+			}
+			if ifswitch (TRUE) {
+				ret = end_ ;
+				while (TRUE) {
+					if (ret < begin_)
+						break ;
+					if (operator_equal (mString[ret] ,item))
+						break ;
+					ret-- ;
+				}
+				if ifnot (ret < begin_)
+					discard ;
+				ret = NONE ;
+			}
+			return move (ret) ;
 		}
 
 	private:
@@ -723,46 +727,42 @@ trait DEQUE_HELP ;
 
 template <class ITEM ,class SIZE>
 trait DEQUE_HELP<ITEM ,SIZE ,REQUIRE<IS_DEFAULT<ITEM>>> {
-	using RESERVE_SIZE = ENUM_ADD<SIZE ,CONDITIONAL<ENUM_GT_ZERO<SIZE> ,ENUM_IDEN ,ENUM_ZERO>> ;
-
 	struct NODE {
 		ITEM mItem ;
 	} ;
 
 	class Deque {
 	private:
-		Buffer<NODE ,RESERVE_SIZE> mDeque ;
+		Buffer<NODE ,SIZE> mDeque ;
 		INDEX mRead ;
 		INDEX mWrite ;
 
 	public:
 		implicit Deque () {
-			mDeque = Buffer<NODE ,RESERVE_SIZE> (0) ;
+			mDeque = Buffer<NODE ,SIZE> (0) ;
 			clear () ;
 		}
 
 		explicit Deque (CREF<LENGTH> size_) {
-			mDeque = Buffer<NODE ,RESERVE_SIZE> (reserve_size (size_)) ;
+			mDeque = Buffer<NODE ,SIZE> (size_) ;
 			clear () ;
 		}
 
 		explicit Deque (CREF<csc_initializer_list<ITEM>> that) {
-			mDeque = Buffer<ITEM ,RESERVE_SIZE> (reserve_size (LENGTH (that.size ()))) ;
+			mDeque = Buffer<ITEM ,SIZE> (LENGTH (that.size ())) ;
 			clear () ;
 			for (auto &&i : that)
 				add (move (i)) ;
 		}
 
 		LENGTH size () const {
-			if (mDeque.size () == 0)
-				return ZERO ;
-			return mDeque.size () - 1 ;
+			return mDeque.size () ;
 		}
 
 		LENGTH length () const {
 			if (mDeque.size () == 0)
 				return ZERO ;
-			return (mWrite - mRead + mDeque.size ()) % mDeque.size () ;
+			return mWrite - mRead ;
 		}
 
 		void clear () {
@@ -771,16 +771,16 @@ trait DEQUE_HELP<ITEM ,SIZE ,REQUIRE<IS_DEFAULT<ITEM>>> {
 		}
 
 		ArrayIterator<Deque ,ITEM> begin () const leftvalue {
-			return ArrayIterator<Deque ,ITEM> (thiz) ;
+			return ArrayIterator<Deque ,ITEM> (CRef<Deque>::reference (thiz)) ;
 		}
 
 		ArrayIterator<Deque ,ITEM> end () const leftvalue {
-			return ArrayIterator<Deque ,ITEM> (thiz) ;
+			return ArrayIterator<Deque ,ITEM> (CRef<Deque>::reference (thiz)) ;
 		}
 
 		ArrayIterator<ArrayRange<Deque> ,INDEX> iter () const leftvalue {
 			auto &&tmp = ArrayRange<Deque>::from (thiz) ;
-			return ArrayIterator<ArrayRange<Deque> ,INDEX> (tmp) ;
+			return ArrayIterator<ArrayRange<Deque> ,INDEX> (CRef<ArrayRange<Deque>>::reference (tmp)) ;
 		}
 
 		INDEX ibegin () const {
@@ -792,7 +792,7 @@ trait DEQUE_HELP<ITEM ,SIZE ,REQUIRE<IS_DEFAULT<ITEM>>> {
 		INDEX iend () const {
 			if (mDeque.size () == 0)
 				return ZERO ;
-			return mWrite ;
+			return mWrite % mDeque.size () ;
 		}
 
 		INDEX inext (CREF<INDEX> index) const {
@@ -818,21 +818,21 @@ trait DEQUE_HELP<ITEM ,SIZE ,REQUIRE<IS_DEFAULT<ITEM>>> {
 		}
 
 		Array<INDEX> range_sort () const {
-			Array<INDEX> ret = Array<INDEX>::make_range (iter ()) ;
+			Array<INDEX> ret = Array<INDEX>::make (iter ()) ;
 			SortProc<Deque>::sort (thiz ,ret ,0 ,ret.length () - 1) ;
 			return move (ret) ;
 		}
 
 		BOOL empty () const {
+			if (mDeque.size () == 0)
+				return TRUE ;
 			return mRead == mWrite ;
 		}
 
 		BOOL full () const {
 			if (mDeque.size () == 0)
 				return TRUE ;
-			if (mRead != (mWrite + 1) % mDeque.size ())
-				return FALSE ;
-			return TRUE ;
+			return mWrite - mRead >= mDeque.size () ;
 		}
 
 		void add (CREF<ITEM> item) {
@@ -845,11 +845,11 @@ trait DEQUE_HELP<ITEM ,SIZE ,REQUIRE<IS_DEFAULT<ITEM>>> {
 		}
 
 		void add (RREF<ITEM> item) {
+			auto rax = Box<ITEM>::make (move (item)) ;
 			update_resize () ;
-			INDEX ix = mWrite ;
-			mDeque[ix].mItem = move (item) ;
-			mWrite = (mWrite + 1) % mDeque.size () ;
-			update_resize () ;
+			INDEX ix = mWrite % mDeque.size () ;
+			mDeque[ix].mItem = move (rax.self) ;
+			mWrite++ ;
 		}
 
 		inline VREF<Deque> operator<< (RREF<ITEM> item) {
@@ -859,17 +859,16 @@ trait DEQUE_HELP<ITEM ,SIZE ,REQUIRE<IS_DEFAULT<ITEM>>> {
 
 		void take () {
 			assert (ifnot (empty ())) ;
-			INDEX ix = mRead ;
-			auto rax = move (mDeque[ix].mItem) ;
-			noop (rax) ;
-			mRead = (mRead + 1) % mDeque.size () ;
+			mRead++ ;
+			confirm_index () ;
 		}
 
 		void take (VREF<ITEM> item) {
 			assert (ifnot (empty ())) ;
 			INDEX ix = mRead ;
 			item = move (mDeque[ix].mItem) ;
-			mRead = (mRead + 1) % mDeque.size () ;
+			mRead++ ;
+			confirm_index () ;
 		}
 
 		inline VREF<Deque> operator>> (VREF<ITEM> item) {
@@ -882,24 +881,23 @@ trait DEQUE_HELP<ITEM ,SIZE ,REQUIRE<IS_DEFAULT<ITEM>>> {
 		}
 
 		void push (RREF<ITEM> item) {
+			auto rax = Box<ITEM>::make (move (item)) ;
 			update_resize () ;
 			INDEX ix = (mRead - 1 + mDeque.size ()) % mDeque.size () ;
-			mDeque[ix].mItem = move (item) ;
+			mDeque[ix].mItem = move (rax.self) ;
 			mRead = ix ;
-			update_resize () ;
+			confirm_index () ;
 		}
 
 		void pop () {
 			assert (ifnot (empty ())) ;
-			INDEX ix = (mWrite - 1 + mDeque.size ()) % mDeque.size () ;
-			auto rax = move (mDeque[ix].mItem) ;
-			noop (rax) ;
+			INDEX ix = (mWrite - 1) % mDeque.size () ;
 			mWrite = ix ;
 		}
 
 		void pop (VREF<ITEM> item) {
 			assert (ifnot (empty ())) ;
-			INDEX ix = (mWrite - 1 + mDeque.size ()) % mDeque.size () ;
+			INDEX ix = (mWrite - 1) % mDeque.size () ;
 			item = move (mDeque[ix].mItem) ;
 			mWrite = ix ;
 		}
@@ -913,7 +911,7 @@ trait DEQUE_HELP<ITEM ,SIZE ,REQUIRE<IS_DEFAULT<ITEM>>> {
 		INDEX tail () const {
 			if (empty ())
 				return NONE ;
-			return (mWrite - 1 + mDeque.size ()) % mDeque.size () ;
+			return (mWrite - 1) % mDeque.size () ;
 		}
 
 		INDEX access (CREF<INDEX> nth) const {
@@ -925,48 +923,42 @@ trait DEQUE_HELP<ITEM ,SIZE ,REQUIRE<IS_DEFAULT<ITEM>>> {
 
 		INDEX insert () {
 			update_resize () ;
-			INDEX ret = mWrite ;
-			mWrite = (mWrite + 1) % mDeque.size () ;
-			update_resize () ;
+			INDEX ret = mWrite % mDeque.size () ;
+			mWrite++ ;
 			return move (ret) ;
 		}
 
 	private:
-		LENGTH reserve_size (CREF<LENGTH> size_) const {
-			return size_ + LENGTH (size_ > 0) ;
-		}
-
 		INDEX ensure_index (CREF<INDEX> index) const {
-			if (mRead >= mWrite)
-				return vbetween (index ,mRead ,mWrite) ;
-			if (vbetween (index ,0 ,mWrite))
-				return TRUE ;
-			if (vbetween (index ,mRead ,mDeque.size ()))
-				return TRUE ;
-			return FALSE ;
+			const auto r1x = mRead + (index - mRead + mDeque.size ()) % mDeque.size () ;
+			return vbetween (index ,mRead ,mWrite) ;
 		}
 
-		LENGTH resize_size () const {
-			using R1X = typename ALLOCATOR_HELP<NODE ,RESERVE_SIZE ,ALWAYS>::ALLOCATOR_POW ;
-			using R2X = typename ALLOCATOR_HELP<NODE ,RESERVE_SIZE ,ALWAYS>::ALLOCATOR_MIN_SIZE ;
-			return vmax (mDeque.size () * R1X::value ,R2X::value) ;
+		void confirm_index () {
+			if (mRead <= mWrite)
+				return ;
+			mWrite += mDeque.size () ;
 		}
 
 		void update_resize () {
-			if (mDeque.size () > 0)
-				if (mRead != mWrite)
-					return ;
+			using R1X = typename ALLOCATOR_HELP<NODE ,SIZE ,ALWAYS>::ALLOCATOR_POW ;
+			using R2X = typename ALLOCATOR_HELP<NODE ,SIZE ,ALWAYS>::ALLOCATOR_MIN_SIZE ;
+			if (length () < size ())
+				return ;
 			const auto r1x = mDeque.size () ;
-			mDeque.resize (resize_size ()) ;
-			const auto r2x = mDeque.size () ;
+			const auto r2x = vmax (r1x * R1X::value ,R2X::value) ;
+			mDeque.resize (r2x) ;
+			const auto r3x = mDeque.size () ;
 			if ifswitch (TRUE) {
-				if (mRead <= mWrite)
+				if (mRead == 0)
 					discard ;
-				for (auto &&i : CORE::iter (mWrite ,r1x)) {
+				for (auto &&i : CORE::iter (0 ,r1x - mRead)) {
 					INDEX ix = r1x - 1 - i ;
-					INDEX iy = r2x - 1 - i ;
+					INDEX iy = r3x - 1 - i ;
 					mDeque[iy].mItem = move (mDeque[ix].mItem) ;
 				}
+				mRead += r3x - r1x ;
+				mWrite = mRead + r1x ;
 			}
 		}
 	} ;
@@ -980,8 +972,6 @@ trait PRIORITY_HELP ;
 
 template <class ITEM ,class SIZE>
 trait PRIORITY_HELP<ITEM ,SIZE ,REQUIRE<IS_DEFAULT<ITEM>>> {
-	using RESERVE_SIZE = ENUM_ADD<SIZE ,CONDITIONAL<ENUM_GT_ZERO<SIZE> ,ENUM_IDEN ,ENUM_ZERO>> ;
-
 	struct NODE {
 		ITEM mItem ;
 		INDEX mMap ;
@@ -989,31 +979,30 @@ trait PRIORITY_HELP<ITEM ,SIZE ,REQUIRE<IS_DEFAULT<ITEM>>> {
 
 	class Priority {
 	private:
-		Buffer<NODE ,RESERVE_SIZE> mPriority ;
+		Buffer<NODE ,SIZE> mPriority ;
+		INDEX mRead ;
 		INDEX mWrite ;
 
 	public:
 		implicit Priority () {
-			mPriority = Buffer<NODE ,RESERVE_SIZE> (0) ;
+			mPriority = Buffer<NODE ,SIZE> (0) ;
 			clear () ;
 		}
 
 		explicit Priority (CREF<LENGTH> size_) {
-			mPriority = Buffer<NODE ,RESERVE_SIZE> (reserve_size (size_)) ;
+			mPriority = Buffer<NODE ,SIZE> (size_) ;
 			clear () ;
 		}
 
 		explicit Priority (CREF<csc_initializer_list<ITEM>> that) {
-			mPriority = Buffer<ITEM ,RESERVE_SIZE> (reserve_size (LENGTH (that.size ()))) ;
+			mPriority = Buffer<ITEM ,SIZE> (LENGTH (that.size ())) ;
 			clear () ;
 			for (auto &&i : that)
 				add (move (i)) ;
 		}
 
 		LENGTH size () const {
-			if (mPriority.size () == 0)
-				return ZERO ;
-			return mPriority.size () - 1 ;
+			return mPriority.size () ;
 		}
 
 		LENGTH length () const {
@@ -1023,26 +1012,27 @@ trait PRIORITY_HELP<ITEM ,SIZE ,REQUIRE<IS_DEFAULT<ITEM>>> {
 		}
 
 		void clear () {
+			mRead = 0 ;
 			mWrite = 0 ;
 		}
 
 		ArrayIterator<Priority ,ITEM> begin () const leftvalue {
-			return ArrayIterator<Priority ,ITEM> (thiz) ;
+			return ArrayIterator<Priority ,ITEM> (CRef<Priority>::reference (thiz)) ;
 		}
 
 		ArrayIterator<Priority ,ITEM> end () const leftvalue {
-			return ArrayIterator<Priority ,ITEM> (thiz) ;
+			return ArrayIterator<Priority ,ITEM> (CRef<Priority>::reference (thiz)) ;
 		}
 
 		ArrayIterator<ArrayRange<Priority> ,INDEX> iter () const leftvalue {
 			auto &&tmp = ArrayRange<Priority>::from (thiz) ;
-			return ArrayIterator<ArrayRange<Priority> ,INDEX> (tmp) ;
+			return ArrayIterator<ArrayRange<Priority> ,INDEX> (CRef<ArrayRange<Priority>>::reference (tmp)) ;
 		}
 
 		INDEX ibegin () const {
 			if (mPriority.size () == 0)
 				return ZERO ;
-			return ZERO ;
+			return 0 ;
 		}
 
 		INDEX iend () const {
@@ -1075,7 +1065,7 @@ trait PRIORITY_HELP<ITEM ,SIZE ,REQUIRE<IS_DEFAULT<ITEM>>> {
 		}
 
 		Array<INDEX> range_sort () const {
-			Array<INDEX> ret = Array<INDEX>::make_range (iter ()) ;
+			Array<INDEX> ret = Array<INDEX>::make (iter ()) ;
 			if ifswitch (TRUE) {
 				INDEX ix = ret.length () - 1 ;
 				while (TRUE) {
@@ -1095,15 +1085,15 @@ trait PRIORITY_HELP<ITEM ,SIZE ,REQUIRE<IS_DEFAULT<ITEM>>> {
 		}
 
 		BOOL empty () const {
-			return mWrite == ZERO ;
+			if (mPriority.size () == 0)
+				return TRUE ;
+			return mWrite == 0 ;
 		}
 
 		BOOL full () const {
 			if (mPriority.size () == 0)
 				return TRUE ;
-			if (mWrite < mPriority.size () - 1)
-				return FALSE ;
-			return TRUE ;
+			return mWrite >= mPriority.size () ;
 		}
 
 		void add (CREF<ITEM> item) {
@@ -1129,13 +1119,13 @@ trait PRIORITY_HELP<ITEM ,SIZE ,REQUIRE<IS_DEFAULT<ITEM>>> {
 		}
 
 		void add (RREF<ITEM> item ,CREF<INDEX> map_) {
+			auto rax = Box<ITEM>::make (move (item)) ;
 			update_resize () ;
 			INDEX ix = mWrite ;
-			mPriority[ix].mItem = move (item) ;
+			mPriority[ix].mItem = move (rax.self) ;
 			mPriority[ix].mMap = map_ ;
 			mWrite++ ;
 			update_insert (ix) ;
-			update_resize () ;
 		}
 
 		void take () {
@@ -1163,7 +1153,7 @@ trait PRIORITY_HELP<ITEM ,SIZE ,REQUIRE<IS_DEFAULT<ITEM>>> {
 		INDEX head () const {
 			if (empty ())
 				return NONE ;
-			return ZERO ;
+			return 0 ;
 		}
 
 		void remove (CREF<INDEX> index) {
@@ -1175,25 +1165,18 @@ trait PRIORITY_HELP<ITEM ,SIZE ,REQUIRE<IS_DEFAULT<ITEM>>> {
 		}
 
 	private:
-		LENGTH reserve_size (CREF<LENGTH> size_) const {
-			return size_ + LENGTH (size_ > 0) ;
-		}
-
 		INDEX ensure_index (CREF<INDEX> index) const {
 			return vbetween (index ,0 ,mWrite) ;
 		}
 
-		LENGTH resize_size () const {
-			using R1X = typename ALLOCATOR_HELP<NODE ,RESERVE_SIZE ,ALWAYS>::ALLOCATOR_POW ;
-			using R2X = typename ALLOCATOR_HELP<NODE ,RESERVE_SIZE ,ALWAYS>::ALLOCATOR_MIN_SIZE ;
-			return vmax (mPriority.size () * R1X::value ,R2X::value) ;
-		}
-
 		void update_resize () {
-			if (mPriority.size () > 0)
-				if (mWrite < mPriority.size ())
-					return ;
-			mPriority.resize (resize_size ()) ;
+			using R1X = typename ALLOCATOR_HELP<NODE ,SIZE ,ALWAYS>::ALLOCATOR_POW ;
+			using R2X = typename ALLOCATOR_HELP<NODE ,SIZE ,ALWAYS>::ALLOCATOR_MIN_SIZE ;
+			if (length () < size ())
+				return ;
+			const auto r1x = mPriority.size () ;
+			const auto r2x = vmax (r1x * R1X::value ,R2X::value) ;
+			mPriority.resize (r2x) ;
 		}
 
 		INDEX parent (CREF<INDEX> curr) const {
@@ -1344,17 +1327,25 @@ trait LIST_HELP<ITEM ,SIZE ,ALWAYS> {
 			mLast = NONE ;
 		}
 
+		void reserve (CREF<LENGTH> size_) {
+			const auto r1x = size_ - (mList.size () - mList.length () ()) ;
+			if (r1x <= 0)
+				return ;
+			const auto r2x = r1x + mList.size () ;
+			mList.resize (r2x) ;
+		}
+
 		ArrayIterator<List ,ITEM> begin () const leftvalue {
-			return ArrayIterator<List ,ITEM> (thiz) ;
+			return ArrayIterator<List ,ITEM> (CRef<List>::reference (thiz)) ;
 		}
 
 		ArrayIterator<List ,ITEM> end () const leftvalue {
-			return ArrayIterator<List ,ITEM> (thiz) ;
+			return ArrayIterator<List ,ITEM> (CRef<List>::reference (thiz)) ;
 		}
 
 		ArrayIterator<ArrayRange<List> ,INDEX> iter () const leftvalue {
 			auto &&tmp = ArrayRange<List>::from (thiz) ;
-			return ArrayIterator<ArrayRange<List> ,INDEX> (tmp) ;
+			return ArrayIterator<ArrayRange<List> ,INDEX> (CRef<ArrayRange<List>>::reference (tmp)) ;
 		}
 
 		INDEX ibegin () const {
@@ -1386,7 +1377,7 @@ trait LIST_HELP<ITEM ,SIZE ,ALWAYS> {
 		}
 
 		Array<INDEX> range_sort () const {
-			Array<INDEX> ret = Array<INDEX>::make_range (iter ()) ;
+			Array<INDEX> ret = Array<INDEX>::make (iter ()) ;
 			SortProc<List>::sort (thiz ,ret ,0 ,ret.length () - 1) ;
 			return move (ret) ;
 		}
@@ -1634,17 +1625,25 @@ trait ARRAYLIST_HELP<ITEM ,SIZE ,ALWAYS> {
 			mFree = 0 ;
 		}
 
+		void reserve (CREF<LENGTH> size_) {
+			const auto r1x = size_ - (mList.size () - mList.length () ()) ;
+			if (r1x <= 0)
+				return ;
+			const auto r2x = r1x + mList.size () ;
+			mList.resize (r2x) ;
+		}
+
 		ArrayIterator<ArrayList ,ITEM> begin () const leftvalue {
-			return ArrayIterator<ArrayList ,ITEM> (thiz) ;
+			return ArrayIterator<ArrayList ,ITEM> (CRef<ArrayList>::reference (thiz)) ;
 		}
 
 		ArrayIterator<ArrayList ,ITEM> end () const leftvalue {
-			return ArrayIterator<ArrayList ,ITEM> (thiz) ;
+			return ArrayIterator<ArrayList ,ITEM> (CRef<ArrayList>::reference (thiz)) ;
 		}
 
 		ArrayIterator<ArrayRange<ArrayList> ,INDEX> iter () const leftvalue {
 			auto &&tmp = ArrayRange<ArrayList>::from (thiz) ;
-			return ArrayIterator<ArrayRange<ArrayList> ,INDEX> (tmp) ;
+			return ArrayIterator<ArrayRange<ArrayList> ,INDEX> (CRef<ArrayRange<ArrayList>>::reference (tmp)) ;
 		}
 
 		INDEX ibegin () const {
@@ -1685,7 +1684,7 @@ trait ARRAYLIST_HELP<ITEM ,SIZE ,ALWAYS> {
 		}
 
 		Array<INDEX> range_sort () const {
-			Array<INDEX> ret = Array<INDEX>::make_range (iter ()) ;
+			Array<INDEX> ret = Array<INDEX>::make (iter ()) ;
 			SortProc<ArrayList>::sort (thiz ,ret ,0 ,ret.length () - 1) ;
 			return move (ret) ;
 		}
@@ -1819,49 +1818,57 @@ template <class...>
 trait BITPROXY_HELP ;
 
 template <class UNIT1>
-trait BITPROXY_HELP<UNIT1 ,ALWAYS> {
-	struct WRAP {
-		VRef<UNIT1> mArray ;
-		INDEX mY ;
-	} ;
+trait BITPROXY_HELP<UNIT1 ,REQUIRE<IS_VARIABLE<UNIT1>>> {
+	using BASE = VRef<REMOVE_REF<UNIT1>> ;
 
-	struct WRAP_CRef {
-		CRef<UNIT1> mArray ;
-		INDEX mY ;
-	} ;
-
-	class BitProxy extend Proxy {
+	class BitProxy {
 	private:
-		WRAP mBase ;
+		BASE mArray ;
+		INDEX mY ;
 
 	public:
-		imports VREF<BitProxy> from (VREF<TEMP<BitProxy>> where_ ,VREF<UNIT1> array_ ,CREF<INDEX> y) {
-			zeroize (where_) ;
-			auto &&tmp = unsafe_deref (unsafe_cast (TYPEAS<TEMP<WRAP>>::id ,where_)) ;
-			tmp.mArray = VRef<UNIT1>::reference (array_) ;
-			tmp.mY = y ;
-			return unsafe_deref (unsafe_cast (TYPEAS<TEMP<BitProxy>>::id ,unsafe_deptr (tmp))) ;
+		implicit BitProxy () = delete ;
+
+		explicit BitProxy (RREF<BASE> array_ ,CREF<INDEX> y) {
+			mArray = move (array_) ;
+			mY = y ;
 		}
 
-		imports CREF<BitProxy> from (VREF<TEMP<BitProxy>> where_ ,CREF<UNIT1> array_ ,CREF<INDEX> y) {
-			zeroize (where_) ;
-			auto &&tmp = unsafe_deref (unsafe_cast (TYPEAS<TEMP<WRAP_CRef>>::id ,where_)) ;
-			tmp.mArray = CRef<UNIT1>::reference (array_) ;
-			tmp.mY = y ;
-			return unsafe_deref (unsafe_cast (TYPEAS<TEMP<BitProxy>>::id ,unsafe_deptr (tmp))) ;
+		inline implicit operator BOOL () rightvalue {
+			return mArray->get (mY) ;
 		}
 
-		inline implicit operator BOOL () const {
-			return mBase.mArray->get (mBase.mY) ;
-		}
-
-		inline void operator= (CREF<BOOL> that) {
-			mBase.mArray->set (mBase.mY ,that) ;
+		inline void operator= (CREF<BOOL> that) rightvalue {
+			mArray->set (mY ,that) ;
 		}
 	} ;
 } ;
+
 template <class UNIT1>
-using BitProxy = typename BITPROXY_HELP<UNIT1 ,ALWAYS>::BitProxy ;
+trait BITPROXY_HELP<UNIT1 ,REQUIRE<IS_CONSTANT<UNIT1>>> {
+	using BASE = CRef<REMOVE_REF<UNIT1>> ;
+
+	class BitProxy {
+	private:
+		BASE mArray ;
+		INDEX mY ;
+
+	public:
+		implicit BitProxy () = delete ;
+
+		explicit BitProxy (RREF<BASE> array_ ,CREF<INDEX> y) {
+			mArray = move (array_) ;
+			mY = y ;
+		}
+
+		inline implicit operator BOOL () rightvalue {
+			return mArray->get (mY) ;
+		}
+	} ;
+} ;
+
+template <class UNIT1>
+using BitProxy = typename BITPROXY_HELP<XREF<UNIT1> ,ALWAYS>::BitProxy ;
 
 template <class...>
 trait BITSET_HELP ;
@@ -1968,7 +1975,7 @@ trait BITSET_HELP<SIZE ,ALWAYS> {
 		}
 
 		void fill (CREF<BYTE> item) {
-			fill (item ,0 ,size ()) ;
+			fill (item ,0 ,mSet.size () * 8) ;
 		}
 
 		void fill (CREF<BYTE> item ,CREF<INDEX> begin_ ,CREF<INDEX> end_) {
@@ -1981,16 +1988,16 @@ trait BITSET_HELP<SIZE ,ALWAYS> {
 		}
 
 		ArrayIterator<BitSet ,ITEM> begin () const leftvalue {
-			return ArrayIterator<BitSet ,ITEM> (thiz) ;
+			return ArrayIterator<BitSet ,ITEM> (CRef<BitSet>::reference (thiz)) ;
 		}
 
 		ArrayIterator<BitSet ,ITEM> end () const leftvalue {
-			return ArrayIterator<BitSet ,ITEM> (thiz) ;
+			return ArrayIterator<BitSet ,ITEM> (CRef<BitSet>::reference (thiz)) ;
 		}
 
 		ArrayIterator<ArrayRange<BitSet> ,INDEX> iter () const leftvalue {
 			auto &&tmp = ArrayRange<BitSet>::from (thiz) ;
-			return ArrayIterator<ArrayRange<BitSet> ,INDEX> (tmp) ;
+			return ArrayIterator<ArrayRange<BitSet> ,INDEX> (CRef<ArrayRange<BitSet>>::reference (tmp)) ;
 		}
 
 		INDEX ibegin () const {
@@ -2040,14 +2047,12 @@ trait BITSET_HELP<SIZE ,ALWAYS> {
 			}
 		}
 
-		inline forceinline VREF<BitProxy<BitSet>> operator[] (CREF<INDEX> index) leftvalue {
-			auto rax = TEMP<BitProxy<BitSet>> () ;
-			return BitProxy<BitSet>::from (rax ,thiz ,index) ;
+		inline BitProxy<VREF<BitSet>> operator[] (CREF<INDEX> index) leftvalue {
+			return BitProxy<VREF<BitSet>> (VRef<BitSet>::reference (thiz) ,index) ;
 		}
 
-		inline forceinline CREF<BitProxy<BitSet>> operator[] (CREF<INDEX> index) const leftvalue {
-			auto rax = TEMP<BitProxy<BitSet>> () ;
-			return BitProxy<BitSet>::from (rax ,thiz ,index) ;
+		inline BitProxy<CREF<BitSet>> operator[] (CREF<INDEX> index) const leftvalue {
+			return BitProxy<CREF<BitSet>> (CRef<BitSet>::reference (thiz) ,index) ;
 		}
 
 		void add (CREF<INDEX> index) {
@@ -2235,8 +2240,6 @@ trait BITSET_HELP<SIZE ,ALWAYS> {
 
 	private:
 		LENGTH reserve_size (CREF<LENGTH> size_) const {
-			if (size_ <= 0)
-				return size_ ;
 			return (size_ + 7) / 8 ;
 		}
 
@@ -2307,17 +2310,25 @@ trait SET_HELP<ITEM ,SIZE ,ALWAYS> {
 			mTop = NONE ;
 		}
 
+		void reserve (CREF<LENGTH> size_) {
+			const auto r1x = size_ - (mSet.size () - mSet.length () ()) ;
+			if (r1x <= 0)
+				return ;
+			const auto r2x = r1x + mSet.size () ;
+			mSet.resize (r2x) ;
+		}
+
 		ArrayIterator<Set ,ITEM> begin () const leftvalue {
-			return ArrayIterator<Set ,ITEM> (thiz) ;
+			return ArrayIterator<Set ,ITEM> (CRef<Set>::reference (thiz)) ;
 		}
 
 		ArrayIterator<Set ,ITEM> end () const leftvalue {
-			return ArrayIterator<Set ,ITEM> (thiz) ;
+			return ArrayIterator<Set ,ITEM> (CRef<Set>::reference (thiz)) ;
 		}
 
 		ArrayIterator<ArrayRange<Set> ,INDEX> iter () const leftvalue {
 			auto &&tmp = ArrayRange<Set>::from (thiz) ;
-			return ArrayIterator<ArrayRange<Set> ,INDEX> (tmp) ;
+			return ArrayIterator<ArrayRange<Set> ,INDEX> (CRef<ArrayRange<Set>>::reference (tmp)) ;
 		}
 
 		INDEX ibegin () const {
@@ -2934,17 +2945,25 @@ trait HASHSET_HELP<ITEM ,SIZE ,ALWAYS> {
 				mRange[i] = NONE ;
 		}
 
+		void reserve (CREF<LENGTH> size_) {
+			const auto r1x = size_ - (mSet.size () - mSet.length () ()) ;
+			if (r1x <= 0)
+				return ;
+			const auto r2x = r1x + mSet.size () ;
+			mSet.resize (r2x) ;
+		}
+
 		ArrayIterator<HashSet ,ITEM> begin () const leftvalue {
-			return ArrayIterator<HashSet ,ITEM> (thiz) ;
+			return ArrayIterator<HashSet ,ITEM> (CRef<HashSet>::reference (thiz)) ;
 		}
 
 		ArrayIterator<HashSet ,ITEM> end () const leftvalue {
-			return ArrayIterator<HashSet ,ITEM> (thiz) ;
+			return ArrayIterator<HashSet ,ITEM> (CRef<HashSet>::reference (thiz)) ;
 		}
 
 		ArrayIterator<ArrayRange<HashSet> ,INDEX> iter () const leftvalue {
 			auto &&tmp = ArrayRange<HashSet>::from (thiz) ;
-			return ArrayIterator<ArrayRange<HashSet> ,INDEX> (tmp) ;
+			return ArrayIterator<ArrayRange<HashSet> ,INDEX> (CRef<ArrayRange<HashSet>>::reference (tmp)) ;
 		}
 
 		INDEX ibegin () const {
@@ -3133,17 +3152,22 @@ trait SOFTSET_HELP<ITEM ,SIZE ,ALWAYS> {
 		INDEX mFirst ;
 
 	public:
-		implicit SoftSet () = delete ;
+		implicit SoftSet () {
+			mLength = 0 ;
+			mRoot = NONE ;
+			mFirst = NONE ;
+		}
 
 		explicit SoftSet (CREF<LENGTH> size_) {
 			mSet = SharedRef<Allocator<NODE ,SIZE>>::make (size_) ;
-			clear () ;
+			mLength = 0 ;
+			mRoot = NONE ;
+			mFirst = NONE ;
 		}
 
 		SoftSet share () const {
 			SoftSet ret ;
 			ret.mSet = mSet ;
-			ret.clear () ;
 			return move (ret) ;
 		}
 
@@ -3159,23 +3183,17 @@ trait SOFTSET_HELP<ITEM ,SIZE ,ALWAYS> {
 			return mLength ;
 		}
 
-		void clear () {
-			mLength = 0 ;
-			mRoot = NONE ;
-			mFirst = NONE ;
-		}
-
 		ArrayIterator<SoftSet ,ITEM> begin () const leftvalue {
-			return ArrayIterator<SoftSet ,ITEM> (thiz) ;
+			return ArrayIterator<SoftSet ,ITEM> (CRef<SoftSet>::reference (thiz)) ;
 		}
 
 		ArrayIterator<SoftSet ,ITEM> end () const leftvalue {
-			return ArrayIterator<SoftSet ,ITEM> (thiz) ;
+			return ArrayIterator<SoftSet ,ITEM> (CRef<SoftSet>::reference (thiz)) ;
 		}
 
 		ArrayIterator<ArrayRange<SoftSet> ,INDEX> iter () const leftvalue {
 			auto &&tmp = ArrayRange<SoftSet>::from (thiz) ;
-			return ArrayIterator<ArrayRange<SoftSet> ,INDEX> (tmp) ;
+			return ArrayIterator<ArrayRange<SoftSet> ,INDEX> (CRef<ArrayRange<SoftSet>>::reference (tmp)) ;
 		}
 
 		INDEX ibegin () const {
@@ -3234,7 +3252,7 @@ trait SOFTSET_HELP<ITEM ,SIZE ,ALWAYS> {
 			if ifswitch (TRUE) {
 				if (ix != NONE)
 					discard ;
-				ix = mSet.alloc () ;
+				ix = mSet->alloc () ;
 				mSet.self[ix].mItem = move (rax) ;
 				mSet.self[ix].mMap = map_ ;
 				mSet.self[ix].mWeight = 1 ;
@@ -3279,7 +3297,7 @@ trait SOFTSET_HELP<ITEM ,SIZE ,ALWAYS> {
 					discard ;
 				ix = curr ;
 				mSet.self[ix].mWeight++ ;
-				const auto r1x = operator_compr (mSet.self[mFirst].mTo ,mSet.self[ix].mTo) ;
+				const auto r1x = operator_compr (mSet.self[mFirst].mItem ,mSet.self[ix].mItem) ;
 				assert (r1x != ZERO) ;
 				auto eax = TRUE ;
 				if ifswitch (eax) {

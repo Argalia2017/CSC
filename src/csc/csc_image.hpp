@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #ifndef __CSC_IMAGE__
 #define __CSC_IMAGE__
@@ -22,22 +22,22 @@ trait IMAGE_ITERATOR_HELP<RANK ,ALWAYS> {
 	class Iterator {
 	private:
 		Array<LENGTH ,RANK> mWidth ;
-		LENGTH mLength ;
+		LENGTH mSize ;
 		Array<INDEX ,RANK> mItem ;
 		BOOL mGood ;
 
 	public:
 		implicit Iterator () = delete ;
 
-		explicit Iterator (CREF<Array<LENGTH ,RANK>> width_ ,CREF<LENGTH> length_) {
+		explicit Iterator (CREF<Array<LENGTH ,RANK>> width_) {
 			mWidth = width_ ;
-			mLength = template_acc_of (PHX ,TYPEAS<ENUM_ZERO>::id) ;
+			mSize = template_acc_of (PHX ,TYPEAS<ENUM_ZERO>::id) ;
 			mItem.fill (0) ;
-			mGood = BOOL (mLength > 0) ;
+			mGood = BOOL (mSize > 0) ;
 		}
 
-		LENGTH length () const {
-			return mLength ;
+		LENGTH size () const {
+			return mSize ;
 		}
 
 		Iterator begin () const {
@@ -112,50 +112,53 @@ template <class...>
 trait ROWPROXY_HELP ;
 
 template <class UNIT1 ,class UNIT2>
-trait ROWPROXY_HELP<UNIT1 ,UNIT2 ,ALWAYS> {
-	struct WRAP {
-		VRef<UNIT1> mImage ;
-		INDEX mY ;
-	} ;
+trait ROWPROXY_HELP<UNIT1 ,UNIT2 ,REQUIRE<IS_VARIABLE<UNIT1>>> {
+	using BASE = VRef<REMOVE_REF<UNIT1>> ;
 
-	struct WRAP_CRef {
-		CRef<UNIT1> mImage ;
-		INDEX mY ;
-	} ;
-
-	class RowProxy extend Proxy {
+	class RowProxy {
 	private:
-		WRAP mBase ;
+		BASE mImage ;
+		INDEX mY ;
 
 	public:
-		imports VREF<RowProxy> from (VREF<TEMP<RowProxy>> where_ ,VREF<UNIT1> image ,CREF<INDEX> y) {
-			zeroize (where_) ;
-			auto &&tmp = unsafe_deref (unsafe_cast (TYPEAS<TEMP<WRAP>>::id ,where_)) ;
-			tmp.mImage = VRef<UNIT1>::reference (image) ;
-			tmp.mY = y ;
-			return unsafe_deref (unsafe_cast (TYPEAS<TEMP<RowProxy>>::id ,unsafe_deptr (tmp))) ;
+		implicit RowProxy () = delete ;
+
+		explicit RowProxy (RREF<BASE> image ,CREF<INDEX> y) {
+			mImage = move (image) ;
+			mY = y ;
 		}
 
-		imports CREF<RowProxy> from (VREF<TEMP<RowProxy>> where_ ,CREF<UNIT1> image ,CREF<INDEX> y) {
-			zeroize (where_) ;
-			auto &&tmp = unsafe_deref (unsafe_cast (TYPEAS<TEMP<WRAP_CRef>>::id ,where_)) ;
-			tmp.mImage = CRef<UNIT1>::reference (image) ;
-			tmp.mY = y ;
-			return unsafe_deref (unsafe_cast (TYPEAS<TEMP<RowProxy>>::id ,unsafe_deptr (tmp))) ;
-		}
-
-		inline VREF<UNIT2> operator[] (CREF<INDEX> x) leftvalue {
-			return mBase.mImage->at (x ,mBase.mY) ;
-		}
-
-		inline CREF<UNIT2> operator[] (CREF<INDEX> x) const leftvalue {
-			return mBase.mImage->at (x ,mBase.mY) ;
+		inline VREF<UNIT2> operator[] (CREF<INDEX> x) rightvalue {
+			return mImage->at (x ,mY) ;
 		}
 	} ;
 } ;
 
 template <class UNIT1 ,class UNIT2>
-using RowProxy = typename ROWPROXY_HELP<UNIT1 ,UNIT2 ,ALWAYS>::RowProxy ;
+trait ROWPROXY_HELP<UNIT1 ,UNIT2 ,REQUIRE<IS_CONSTANT<UNIT1>>> {
+	using BASE = CRef<REMOVE_REF<UNIT1>> ;
+
+	class RowProxy {
+	private:
+		BASE mImage ;
+		INDEX mY ;
+
+	public:
+		implicit RowProxy () = delete ;
+
+		explicit RowProxy (RREF<BASE> image ,CREF<INDEX> y) {
+			mImage = move (image) ;
+			mY = y ;
+		}
+
+		inline CREF<UNIT2> operator[] (CREF<INDEX> x) rightvalue {
+			return mImage->at (x ,mY) ;
+		}
+	} ;
+} ;
+
+template <class UNIT1 ,class UNIT2>
+using RowProxy = typename ROWPROXY_HELP<XREF<UNIT1> ,UNIT2 ,ALWAYS>::RowProxy ;
 
 template <class...>
 trait IMAGE_HELP ;
@@ -173,21 +176,30 @@ trait IMAGE_HELP<ITEM ,SIZE ,ALWAYS> {
 	public:
 		implicit Image () {
 			mImage = Buffer<ITEM ,SIZE> (0) ;
-			reset () ;
+			mCX = 0 ;
+			mCY = 0 ;
+			mCW = 0 ;
+			mCK = 0 ;
 		}
 
 		explicit Image (CREF<ARRAY2<LENGTH>> width_) {
 			const auto r1x = width_[0] ;
 			const auto r2x = width_[1] ;
 			mImage = Buffer<ITEM ,SIZE> (r1x * r2x) ;
-			reset (r1x ,r2x ,r1x ,0) ;
+			mCX = r1x ;
+			mCY = r2x ;
+			mCW = r1x ;
+			mCK = 0 ;
 		}
 
 		explicit Image (CREF<LENGTH> cx_ ,CREF<LENGTH> cy_) {
 			const auto r1x = cx_ ;
 			const auto r2x = cy_ ;
 			mImage = Buffer<ITEM ,SIZE> (r1x * r2x) ;
-			reset (r1x ,r2x ,r1x ,0) ;
+			mCX = r1x ;
+			mCY = r2x ;
+			mCW = r1x ;
+			mCK = 0 ;
 		}
 
 		LENGTH size () const {
@@ -199,9 +211,14 @@ trait IMAGE_HELP<ITEM ,SIZE ,ALWAYS> {
 		}
 
 		ARRAY2<LENGTH> width () const {
-			if (mImage.size () == 0)
-				return ARRAY2<LENGTH> ({0 ,0}) ;
-			return ARRAY2<LENGTH> ({mCX ,mCY}) ;
+			ARRAY2<LENGTH> ret ;
+			if ifswitch (TRUE) {
+				if (mImage.size () == 0)
+					discard ;
+				ret[0] = mCX ;
+				ret[1] = mCY ;
+			}
+			return move (ret) ;
 		}
 
 		LENGTH cx () const {
@@ -228,35 +245,6 @@ trait IMAGE_HELP<ITEM ,SIZE ,ALWAYS> {
 			return mCK ;
 		}
 
-		forceinline VREF<RegBuffer<ITEM>> raw () leftvalue {
-			auto rax = TEMP<RegBuffer<ITEM>> () ;
-			return RegBuffer<ITEM>::from (rax ,mImage ,0 ,mImage.size ()) ;
-		}
-
-		forceinline CREF<RegBuffer<ITEM>> raw () const leftvalue {
-			auto rax = TEMP<RegBuffer<ITEM>> () ;
-			return RegBuffer<ITEM>::from (rax ,mImage ,0 ,mImage.size ()) ;
-		}
-
-		void reset () {
-			mCX = mImage.size () ;
-			mCY = 1 ;
-			mCW = mImage.size () ;
-			mCK = 0 ;
-		}
-
-		void reset (CREF<LENGTH> cx_ ,CREF<LENGTH> cy_ ,CREF<LENGTH> cw_ ,CREF<LENGTH> ck_) {
-			assert (cx_ >= 0) ;
-			assert (cy_ >= 0) ;
-			assert (cx_ <= cw_) ;
-			assert (ck_ >= 0) ;
-			assert (cy_ * cw_ + ck_ <= size ()) ;
-			mCX = cx_ ;
-			mCY = cy_ ;
-			mCW = cw_ ;
-			mCK = ck_ ;
-		}
-
 		void fill (CREF<ITEM> item) {
 			fill (item ,0 ,size ()) ;
 		}
@@ -267,7 +255,13 @@ trait IMAGE_HELP<ITEM ,SIZE ,ALWAYS> {
 		}
 
 		ImageIterator<RANK2> iter () const {
-			return ImageIterator<RANK2> (width ()) ;
+			const auto r1x = invoke ([&] () {
+				ARRAY2<LENGTH> ret ;
+				ret[0] = mCY ;
+				ret[1] = mCX ;
+				return move (ret) ;
+			}) ;
+			return ImageIterator<RANK2> (r1x) ;
 		}
 
 		VREF<ITEM> at (CREF<ARRAY2<INDEX>> pair) leftvalue {
@@ -284,9 +278,8 @@ trait IMAGE_HELP<ITEM ,SIZE ,ALWAYS> {
 			return mImage[y * mCW + x + mCK] ;
 		}
 
-		inline forceinline VREF<RowProxy<Image ,ITEM>> operator[] (CREF<INDEX> y) leftvalue {
-			auto rax = TEMP<RowProxy<Image ,ITEM>> () ;
-			return RowProxy<Image ,ITEM>::from (rax ,thiz ,y) ;
+		inline RowProxy<VREF<Image> ,ITEM> operator[] (CREF<INDEX> y) leftvalue {
+			return RowProxy<VREF<Image> ,ITEM> (VRef<Image>::reference (thiz) ,y) ;
 		}
 
 		CREF<ITEM> at (CREF<ARRAY2<INDEX>> pair) const leftvalue {
@@ -303,9 +296,8 @@ trait IMAGE_HELP<ITEM ,SIZE ,ALWAYS> {
 			return mImage[y * mCW + x + mCK] ;
 		}
 
-		inline forceinline CREF<RowProxy<Image ,ITEM>> operator[] (CREF<INDEX> y) const leftvalue {
-			auto rax = TEMP<RowProxy<Image ,ITEM>> () ;
-			return RowProxy<Image ,ITEM>::from (rax ,thiz ,y) ;
+		inline RowProxy<CREF<Image> ,ITEM> operator[] (CREF<INDEX> y) const leftvalue {
+			return RowProxy<CREF<Image> ,ITEM> (CRef<Image>::reference (thiz) ,y) ;
 		}
 
 		BOOL equal (CREF<Image> that) const {

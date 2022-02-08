@@ -1,11 +1,11 @@
-#pragma once
+ï»¿#pragma once
 
 #ifndef __CSC_DEBUGGER__
-#error "¡Æ(¤Ã¡ã§¥¡ã ;)¤Ã : require 'csc_debugger.hpp'"
+#error "âˆ‘(ã£Â°Ğ”Â° ;)ã£ : require 'csc_debugger.hpp'"
 #endif
 
 #ifndef __CSC_SYSTEM_LINUX__
-#error "¡Æ(¤Ã¡ã§¥¡ã ;)¤Ã
+#error "âˆ‘(ã£Â°Ğ”Â° ;)ã£ : bad include"
 #endif
 
 namespace CSC {

@@ -70,14 +70,14 @@
 
 #define __CSC_CXX_LITE__
 
-#ifdef __CSC_CXX_LITE__
+#ifndef __CSC_CXX_LITE__
 #ifdef _MSVC_LANG
 #if _MSVC_LANG >= 201703L
-#define __CSC_CXX_LATEST__
+#define __CSC_CXX_FULL__
 #endif
 #else
 #if __cplusplus >= 201703L
-#define __CSC_CXX_LATEST__
+#define __CSC_CXX_FULL__
 #elif __cplusplus >= 201103L
 #else
 #error "∑(っ°Д° ;)っ : unsupported"
@@ -106,6 +106,7 @@
 #pragma warning (disable :4626) //@info: warning C4626: 'xxx': assignment operator was implicitly defined as deleted
 #pragma warning (disable :4643) //@info: warning C4643: Forward declaring 'initializer_list' in namespace std is not permitted by the C++ Standard.
 #pragma warning (disable :4668) //@info: warning C4668: 'xxx' is not defined as a preprocessor macro, replacing with '0' for '#if/#elif'
+#pragma warning (disable :4702) //@info: warning C4702: unreachable code
 #pragma warning (disable :4710) //@info: warning C4710: 'xxx': function not inlined
 #pragma warning (disable :4711) //@info: warning C4711: function 'xxx' selected for automatic inline expansion
 #pragma warning (disable :4717) //@info: warning C4717: 'xxx': recursive on all control paths, function will cause runtime stack overflow
@@ -138,6 +139,7 @@
 #include <limits>
 #include <initializer_list>
 #include <type_traits>
+#include <new>
 #endif
 #include "end.h"
 
@@ -174,7 +176,13 @@
 #endif
 
 #ifndef __macro_slice
+#ifdef __CSC_CONFIG_STRA__
 #define __macro_slice(...) CSC::CORE::Slice<CSC::CORE::STR> (CSC::U::TYPEAS<struct anonymous>::id ,__VA_ARGS__)
+#endif
+
+#ifdef __CSC_CONFIG_STRW__
+#define __macro_slice(...) CSC::CORE::Slice<CSC::CORE::STR> (CSC::U::TYPEAS<struct anonymous>::id ,__macro_cat (L ,__VA_ARGS__))
+#endif
 #endif
 
 #ifndef __macro_assert
@@ -197,11 +205,11 @@
 #endif
 
 #ifdef __CSC_COMPILER_GNUC__
-#define __macro_assume(...) do { if (__VA_ARGS__) break ; CSC::CORE::Exception (CSC::U::TYPEAS<struct anonymous>::id ,slice ("assume failed : " __macro_str (__VA_ARGS__) " : at " ,__PRETTY_FUNCTION__ ," in " __FILE__ " ," __macro_str (__LINE__))).raise () ; } while (false)
+#define __macro_assume(...) do { if (__VA_ARGS__) break ; CSC::CORE::Exception (CSC::U::TYPEAS<struct anonymous>::id ,CSC::CORE::Slice<CSC::CORE::STR> (CSC::U::TYPEAS<struct anonymous>::id ,"assume failed : " __macro_str (__VA_ARGS__) " : at " ,__PRETTY_FUNCTION__ ," in " __FILE__ " ," __macro_str (__LINE__))).raise () ; } while (false)
 #endif
 
 #ifdef __CSC_COMPILER_CLANG__
-#define __macro_assume(...) do { if (__VA_ARGS__) break ; CSC::CORE::Exception (CSC::U::TYPEAS<struct anonymous>::id ,slice ("assume failed : " __macro_str (__VA_ARGS__) " : at " ,__PRETTY_FUNCTION__ ," in " __FILE__ " ," __macro_str (__LINE__))).raise () ; } while (false)
+#define __macro_assume(...) do { if (__VA_ARGS__) break ; CSC::CORE::Exception (CSC::U::TYPEAS<struct anonymous>::id ,CSC::CORE::Slice<CSC::CORE::STR> (CSC::U::TYPEAS<struct anonymous>::id ,"assume failed : " __macro_str (__VA_ARGS__) " : at " ,__PRETTY_FUNCTION__ ," in " __FILE__ " ," __macro_str (__LINE__))).raise () ; } while (false)
 #endif
 #endif
 
@@ -237,7 +245,7 @@
 #endif
 
 #ifndef __macro_ifnot
-#define __macro_ifnot(...) ((__VA_ARGS__) == false)
+#define __macro_ifnot(...) (bool (__VA_ARGS__) == false)
 #endif
 
 #ifndef __macro_ifswitch
@@ -249,8 +257,17 @@
 #endif
 
 #ifdef __CSC_COMPILER_MSVC__
-#ifndef __CSC_CXX_LATEST__
+#ifndef __CSC_CXX_FULL__
 #define nodiscard
+#endif
+#endif
+
+#ifdef __CSC_COMPILER_GNUC__
+#if __GNUC__ <= 6L
+namespace std {
+template <class T>
+struct is_trivially_constructible :integral_constant<bool ,__has_trivial_constructor (T)> {} ;
+} ;
 #endif
 #endif
 
@@ -275,13 +292,17 @@ struct FUNCTION_infinity {
 		return (__builtin_huge_valf ()) ;
 	}
 } ;
-
-static constexpr auto infinity = FUNCTION_infinity () ;
 #endif
 
 #ifndef __CSC_CXX_LITE__
-static constexpr auto infinity = std::numeric_limits<csc_float32_t>::infinity () ;
+struct FUNCTION_infinity {
+	inline constexpr operator csc_float32_t () const noexcept {
+		return std::numeric_limits<csc_float32_t>::infinity () ;
+	}
+} ;
 #endif
+
+static constexpr auto infinity = FUNCTION_infinity () ;
 
 using csc_char_t = char ;
 using csc_wchar_t = wchar_t ;
@@ -317,7 +338,7 @@ using csc_ptrdiff_t = csc_int32_64_t ;
 using csc_size_t = csc_byte32_64_t ;
 #endif
 
-using csc_pointer_t = void * ;
+using csc_pointer_t = DEF<void *> ;
 
 template <class...>
 struct ENUMAS ;
@@ -330,6 +351,7 @@ struct ENUMAS<UNIT1 ,ENUMID<UNIT2>> {
 	static constexpr UNIT1 value = UNIT1 (UNIT2) ;
 } ;
 
+#ifndef __CSC_CXX_FULL__
 #ifdef __CSC_COMPILER_GNUC__
 template <class UNIT1 ,csc_size_t UNIT2>
 constexpr UNIT1 ENUMAS<UNIT1 ,ENUMID<UNIT2>>::value ;
@@ -338,6 +360,7 @@ constexpr UNIT1 ENUMAS<UNIT1 ,ENUMID<UNIT2>>::value ;
 #ifdef __CSC_COMPILER_CLANG__
 template <class UNIT1 ,csc_size_t UNIT2>
 constexpr UNIT1 ENUMAS<UNIT1 ,ENUMID<UNIT2>>::value ;
+#endif
 #endif
 
 using ENUM_TRUE = ENUMAS<csc_bool_t ,ENUMID<true>> ;
@@ -355,6 +378,7 @@ struct TYPEAS<UNIT1> {
 	static constexpr TYPEID<UNIT1> id = TYPEID<UNIT1> () ;
 } ;
 
+#ifndef __CSC_CXX_FULL__
 #ifdef __CSC_COMPILER_GNUC__
 template <class UNIT1>
 constexpr TYPEID<UNIT1> TYPEAS<UNIT1>::id ;
@@ -363,6 +387,7 @@ constexpr TYPEID<UNIT1> TYPEAS<UNIT1>::id ;
 #ifdef __CSC_COMPILER_CLANG__
 template <class UNIT1>
 constexpr TYPEID<UNIT1> TYPEAS<UNIT1>::id ;
+#endif
 #endif
 
 #ifdef __CSC_COMPILER_MSVC__
@@ -512,6 +537,98 @@ template <class UNIT1>
 using csc_initializer_list = std::initializer_list<UNIT1> ;
 #endif
 
+struct csc_slice_t {
+	DEF<const char *> mBegin ;
+	DEF<const char *> mEnd ;
+} ;
+
+struct FUNCTION_slice_t {
+	template <class ARG1>
+	inline csc_slice_t operator() (XREF<ARG1> obj) const {
+		auto rax = csc_slice_t () ;
+		rax.mBegin = obj ;
+		rax.mEnd = obj + sizeof (obj) ;
+		return rax ;
+	}
+} ;
+
+#ifdef __CSC_COMPILER_MSVC__
+struct FUNCTION_internel_name {
+	template <class T>
+	imports csc_slice_t __cdecl invoke () {
+		static constexpr auto M_INVOKE = FUNCTION_slice_t () ;
+		auto rax = M_INVOKE (__FUNCSIG__) ;
+		rax.mBegin += sizeof ("struct CSC::U::csc_slice_t __cdecl CSC::U::FUNCTION_internel_name::invoke<") - 1 ;
+		rax.mEnd -= sizeof (">(void)") ;
+		return rax ;
+	}
+
+	template <class ARG1>
+	inline csc_slice_t operator() (XREF<ARG1> id) const {
+		using R1X = REMOVE_ALL<ARG1> ;
+		return invoke<R1X> () ;
+	}
+} ;
+#endif
+
+#ifdef __CSC_COMPILER_GNUC__
+struct FUNCTION_internel_name {
+	template <class T>
+	imports csc_slice_t __cdecl invoke () {
+		static constexpr auto M_INVOKE = FUNCTION_slice_t () ;
+		auto rax = M_INVOKE (__PRETTY_FUNCTION__) ;
+		rax.mBegin += sizeof ("static CSC::U::csc_slice_t CSC::U::FUNCTION_internel_name::invoke() [with T = ") ;
+		rax.mEnd -= sizeof ("]") ;
+		return rax ;
+	}
+
+	template <class ARG1>
+	inline csc_slice_t operator() (XREF<ARG1> id) const {
+		using R1X = REMOVE_ALL<ARG1> ;
+		return invoke<R1X> () ;
+	}
+} ;
+#endif
+
+#ifdef __CSC_COMPILER_CLANG__
+struct FUNCTION_internel_name {
+	template <class T>
+	imports csc_slice_t __cdecl invoke () {
+		static constexpr auto M_INVOKE = FUNCTION_slice_t () ;
+		auto rax = M_INVOKE (__PRETTY_FUNCTION__) ;
+		rax.mBegin += sizeof ("static CSC::U::csc_slice_t CSC::U::FUNCTION_internel_name::invoke() [T = ") ;
+		rax.mEnd -= sizeof ("]") ;
+		return rax ;
+	}
+
+	template <class ARG1>
+	inline csc_slice_t operator() (XREF<ARG1> id) const {
+		using R1X = REMOVE_ALL<ARG1> ;
+		return invoke<R1X> () ;
+	}
+} ;
+#endif
+
+static constexpr auto internel_name = FUNCTION_internel_name () ;
+
+struct FUNCTION_internel_time {
+	template <class T>
+	imports csc_slice_t __cdecl invoke () {
+		static constexpr auto M_INVOKE = FUNCTION_slice_t () ;
+		auto rax = M_INVOKE (__DATE__ " " __TIME__) ;
+		rax.mEnd -= sizeof ("") ;
+		return rax ;
+	}
+
+	template <class ARG1>
+	inline csc_slice_t operator() (XREF<ARG1> id) const {
+		using R1X = REMOVE_ALL<ARG1> ;
+		return invoke<R1X> () ;
+	}
+} ;
+
+static constexpr auto internel_time = FUNCTION_internel_time () ;
+
 #ifdef __CSC_CXX_LITE__
 template <class UNIT1>
 using csc_is_enum = ENUMAS<csc_bool_t ,ENUMID<(__is_enum (UNIT1))>> ;
@@ -594,12 +711,22 @@ using csc_is_nothrow_move_assignable = ENUMAS<csc_bool_t ,ENUMID<(std::is_nothro
 
 #ifdef __CSC_CXX_LITE__
 template <class UNIT1>
-using csc_is_trivial = ENUMAS<csc_bool_t ,ENUMID<(__is_trivial (UNIT1))>> ;
+using csc_is_trivial_constructible = ENUMAS<csc_bool_t ,ENUMID<(__is_trivially_constructible (UNIT1))>> ;
 #endif
 
 #ifndef __CSC_CXX_LITE__
 template <class UNIT1>
-using csc_is_trivial = ENUMAS<csc_bool_t ,ENUMID<(std::is_trivial<UNIT1>::value)>> ;
+using csc_is_trivial_constructible = ENUMAS<csc_bool_t ,ENUMID<(std::is_trivially_constructible<UNIT1>::value)>> ;
+#endif
+
+#ifdef __CSC_CXX_LITE__
+template <class UNIT1>
+using csc_is_trivial_destructible = ENUMAS<csc_bool_t ,ENUMID<(__is_trivially_destructible (UNIT1))>> ;
+#endif
+
+#ifndef __CSC_CXX_LITE__
+template <class UNIT1>
+using csc_is_trivial_destructible = ENUMAS<csc_bool_t ,ENUMID<(std::is_trivially_destructible<UNIT1>::value)>> ;
 #endif
 
 #ifdef __CSC_CXX_LITE__
@@ -822,27 +949,27 @@ template <class UNIT1>
 using MACRO_CONFIG_STRW = DEPENDENT<ENUM_FALSE ,DEPENDENT<struct anonymous ,UNIT1>> ;
 #endif
 
-#ifdef __CSC_CXX_LATEST__
+#ifdef __CSC_CXX_LITE__
 template <class UNIT1>
-using MACRO_STD_LATEST = DEPENDENT<ENUM_TRUE ,DEPENDENT<struct anonymous ,UNIT1>> ;
+using MACRO_CXX_LITE = DEPENDENT<ENUM_TRUE ,DEPENDENT<struct anonymous ,UNIT1>> ;
 #endif
 
-#ifndef __CSC_CXX_LATEST__
+#ifndef __CSC_CXX_LITE__
 template <class UNIT1>
-using MACRO_STD_LATEST = DEPENDENT<ENUM_FALSE ,DEPENDENT<struct anonymous ,UNIT1>> ;
+using MACRO_CXX_LITE = DEPENDENT<ENUM_FALSE ,DEPENDENT<struct anonymous ,UNIT1>> ;
+#endif
+
+#ifdef __CSC_CXX_FULL__
+template <class UNIT1>
+using MACRO_CXX_FULL = DEPENDENT<ENUM_TRUE ,DEPENDENT<struct anonymous ,UNIT1>> ;
+#endif
+
+#ifndef __CSC_CXX_FULL__
+template <class UNIT1>
+using MACRO_CXX_FULL = DEPENDENT<ENUM_FALSE ,DEPENDENT<struct anonymous ,UNIT1>> ;
 #endif
 } ;
 } ;
-
-template <class ARG1 ,class ARG2>
-inline CSC::U::csc_pointer_t operator new (CSC::U::csc_size_t ,CSC::U::XREF<CSC::U::TEMPID<ARG1 ,ARG2> &> thiz_) noexcept {
-	return (&thiz_) ;
-}
-
-template <class ARG1 ,class ARG2>
-inline void operator delete (CSC::U::csc_pointer_t ,CSC::U::XREF<CSC::U::TEMPID<ARG1 ,ARG2> &> thiz_) noexcept {
-	return ;
-}
 
 namespace CSC {
 using namespace U ;
