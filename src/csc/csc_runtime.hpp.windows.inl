@@ -1,21 +1,74 @@
-#pragma once
+Ôªø#pragma once
 
 #ifndef __CSC_RUNTIME__
-#error "°∆(§√°„ß•°„ ;)§√ : require 'csc_runtime.hpp'"
+#error "‚àë(„Å£¬∞–î¬∞ ;)„Å£ : require 'csc_runtime.hpp'"
 #endif
 
 #ifndef __CSC_SYSTEM_WINDOWS__
-#error "°∆(§√°„ß•°„ ;)§√
+#error "‚àë(„Å£¬∞–î¬∞ ;)„Å£ : bad include"
 #endif
 
 #include "csc_runtime.hpp.default.inl"
 
 #ifndef _INC_WINDOWS
-#error "°∆(§√°„ß•°„ ;)§√ : require 'Windows.h'"
+#error "‚àë(„Å£¬∞–î¬∞ ;)„Å£ : require 'Windows.h'"
 #endif
 
 namespace CSC {
 namespace RUNTIME {
+template <class...>
+trait RUNTIMEPROC_IMPLHOLDER_HELP ;
+
+template <class DEPEND>
+trait RUNTIMEPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
+	using Holder = typename RUNTIMEPROC_HELP<DEPEND ,ALWAYS>::Holder ;
+
+	class ImplHolder implement Holder {
+	public:
+		LENGTH thread_concurrency () const override {
+			return LENGTH (std::thread::hardware_concurrency ()) ;
+		}
+
+		FLAG thread_uid () const override {
+			return FLAG (GetCurrentThreadId ()) ;
+		}
+
+		void thread_sleep (CREF<TimeDuration> time_) const override {
+			using R1X = typename TIMEDURATION_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::HEAP ;
+			auto &&tmp = time_.native ().as (TYPEAS<CRef<R1X>>::id).self ;
+			std::this_thread::sleep_for (tmp.mTimeDuration) ;
+		}
+
+		void thread_sleep (CREF<TimePoint> time_) const override {
+			using R1X = typename TIMEPOINT_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::HEAP ;
+			auto &&tmp = time_.native ().as (TYPEAS<CRef<R1X>>::id).self ;
+			std::this_thread::sleep_until (tmp.mTimePoint) ;
+		}
+
+		void thread_yield () const override {
+			std::this_thread::yield () ;
+		}
+
+		FLAG process_uid () const override {
+			return FLAG (GetCurrentProcessId ()) ;
+		}
+
+		void process_exit () const override {
+			std::exit (EXIT_FAILURE) ;
+		}
+
+		void process_abort () const override {
+			unsafe_abort () ;
+		}
+	} ;
+} ;
+
+template <>
+exports auto RUNTIMEPROC_HELP<DEPEND ,ALWAYS>::FUNCTION_link::invoke () -> VRef<Holder> {
+	using R1X = typename RUNTIMEPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
+	return VRef<R1X>::make () ;
+} ;
+
 template <class...>
 trait THREAD_IMPLHOLDER_HELP ;
 
@@ -25,55 +78,44 @@ trait THREAD_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	using THREADBLOCK = std::thread ;
 
 	struct HEAP {
-		BOOL mCurrent ;
 		Mutex mThreadMutex ;
-		VRef<BOOL> mThreadFlag ;
+		Cell<BOOL> mThreadFlag ;
 		Function<void> mThreadProc ;
 		THREADBLOCK mThreadBlock ;
 	} ;
 
-	struct WRAP {
-		SharedRef<HEAP> mHeap ;
-	} ;
-
 	class ImplHolder implement Holder {
 	private:
-		SharedRef<HEAP> mHeap ;
-		UniqueRef<WRAP> mThis ;
+		HEAP mHeap ;
+		UniqueRef<VRef<HEAP>> mCleaner ;
 
 	public:
 		implicit ImplHolder () {
-			mHeap = SharedRef<HEAP>::make () ;
-			mHeap->mCurrent = FALSE ;
-			mHeap->mThreadMutex = Mutex::make_conditional_mutex () ;
-			mThis = UniqueRef<WRAP> ([&] (VREF<WRAP> me) {
-				me.mHeap = mHeap ;
-			} ,[] (VREF<WRAP> me) {
-				wait_for_terminate (me.mHeap.self) ;
+			mHeap.mThreadMutex = Mutex::make_conditional () ;
+			mCleaner = UniqueRef<VRef<HEAP>> ([&] (VREF<VRef<HEAP>> me) {
+				me = VRef<HEAP>::reference (mHeap) ;
+			} ,[] (VREF<VRef<HEAP>> me) {
+				terminate (me.self) ;
 			}) ;
 		}
 
-		void init_current () override {
-			mHeap->mCurrent = TRUE ;
-		}
-
 		void init_new () override {
-			mHeap->mThreadBlock = THREADBLOCK ([&] () {
+			mHeap.mThreadBlock = THREADBLOCK ([&] () {
 				try_invoke ([&] () {
-					auto rax = ConditionalLock::make_lock (mHeap->mThreadMutex) ;
-					mHeap->mThreadFlag.self = VRef<BOOL>::make (TRUE) ;
+					auto rax = ConditionalLock (mHeap.mThreadMutex) ;
+					mHeap.mThreadFlag = Cell<BOOL>::make (TRUE) ;
 					while (TRUE) {
 						while (TRUE) {
-							if (mHeap->mThreadProc.exist ())
+							if (mHeap.mThreadProc.exist ())
 								break ;
-							if ifnot (mHeap->mThreadFlag.self)
+							if ifnot (mHeap.mThreadFlag.fetch ())
 								break ;
 							rax.wait () ;
 						}
-						if ifnot (mHeap->mThreadFlag.self)
+						if ifnot (mHeap.mThreadFlag.fetch ())
 							break ;
-						mHeap->mThreadProc () ;
-						mHeap->mThreadProc = Function<void> () ;
+						mHeap.mThreadProc () ;
+						mHeap.mThreadProc = Function<void> () ;
 						rax.notify () ;
 					}
 				} ,[&] () {
@@ -82,77 +124,29 @@ trait THREAD_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			}) ;
 		}
 
-		Auto native () const override {
-			return CRef<HEAP>::reference (mHeap) ;
-		}
-
-		FLAG thread_id () const override {
-			FLAG ret = ZERO ;
-			auto eax = TRUE ;
-			if ifswitch (eax) {
-				if ifnot (mHeap->mCurrent)
-					discard ;
-				ret = FLAG (GetCurrentThreadId ()) ;
-			}
-			if ifswitch (eax) {
-				unimplemented () ;
-			}
-			return move (ret) ;
+		FLAG thread_uid () const override {
+			unimplemented () ;
+			return bad (TYPEAS<FLAG>::id) ;
 		}
 
 		void execute (RREF<Function<void>> proc) override {
-			assert (ifnot (mHeap->mCurrent)) ;
-			wait_for_terminate (mHeap) ;
+			terminate (mHeap) ;
 			if ifswitch (TRUE) {
-				auto rax = ConditionalLock::make_lock (mHeap->mThreadMutex) ;
-				mHeap->mThreadProc = move (proc) ;
+				auto rax = ConditionalLock (mHeap.mThreadMutex) ;
+				mHeap.mThreadProc = move (proc) ;
 				rax.notify () ;
 			}
 		}
 
-		void sleep (CREF<TimeDuration> time_) override {
-			using R1X = typename TIMEDURATION_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::HEAP ;
-			auto &&tmp = time_.native ().as (TYPEAS<CRef<R1X>>::id).self ;
-			auto eax = TRUE ;
-			if ifswitch (eax) {
-				if ifnot (mHeap->mCurrent)
-					discard ;
-				std::this_thread::sleep_for (tmp.mTimeDuration) ;
-			}
-			if ifswitch (eax) {
-				unimplemented () ;
-			}
-		}
-
-		void sleep (CREF<TimePoint> time_) override {
-			using R1X = typename TIMEPOINT_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::HEAP ;
-			auto &&tmp = time_.native ().as (TYPEAS<CRef<R1X>>::id).self ;
-			auto eax = TRUE ;
-			if ifswitch (eax) {
-				if ifnot (mHeap->mCurrent)
-					discard ;
-				std::this_thread::sleep_until (tmp.mTimePoint) ;
-			}
-			if ifswitch (eax) {
-				unimplemented () ;
-			}
-		}
-
-		void yield () override {
-			auto eax = TRUE ;
-			if ifswitch (eax) {
-				std::this_thread::yield () ;
-			}
-			if ifswitch (eax) {
-				unimplemented () ;
-			}
+		void join () override {
+			terminate (mHeap) ;
 		}
 
 	private:
-		imports void wait_for_terminate (VREF<HEAP> me) {
+		imports void terminate (VREF<HEAP> me) {
 			if ifswitch (TRUE) {
-				auto rax = ConditionalLock::make_lock (me.mThreadMutex) ;
-				me.mThreadFlag.self = FALSE ;
+				auto rax = ConditionalLock (me.mThreadMutex) ;
+				me.mThreadFlag.store (FALSE) ;
 				rax.notify () ;
 			}
 			me.mThreadBlock.join () ;
@@ -175,9 +169,10 @@ trait PROCESS_IMPLHOLDER_HELP ;
 template <class DEPEND>
 trait PROCESS_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	using Holder = typename PROCESS_HELP<DEPEND ,ALWAYS>::Holder ;
+	using SNAPSHOT = typename PROCESS_HELP<DEPEND ,ALWAYS>::SNAPSHOT ;
 
 	struct HEAP {
-		BOOL mCurrent ;
+
 	} ;
 
 	class ImplHolder implement Holder {
@@ -186,63 +181,27 @@ trait PROCESS_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 
 	public:
 		implicit ImplHolder () {
-			mHeap.mCurrent = FALSE ;
+			noop () ;
 		}
 
-		void init_current () override {
-			mHeap.mCurrent = TRUE ;
-		}
-
-		void init_snapshot (CREF<PROCESS_SNAPSHOT> info) override {
+		void init_snapshot (CREF<SNAPSHOT> snapshot_) override {
 			unimplemented () ;
 		}
 
-		Auto native () const override {
-			return CRef<HEAP>::reference (mHeap) ;
+		FLAG process_uid () const override {
+			unimplemented () ;
+			return bad (TYPEAS<FLAG>::id) ;
 		}
 
-		FLAG process_id () const override {
-			FLAG ret = ZERO ;
-			auto eax = TRUE ;
-			if ifswitch (eax) {
-				if ifnot (mHeap.mCurrent)
-					discard ;
-				ret = FLAG (GetCurrentProcessId ()) ;
-			}
-			if ifswitch (eax) {
-				unimplemented () ;
-			}
-			return move (ret) ;
-		}
-
-		PROCESS_SNAPSHOT process_snapshot () const override {
-			PROCESS_SNAPSHOT ret ;
+		SNAPSHOT snapshot () const override {
+			SNAPSHOT ret ;
 			unimplemented () ;
 			return move (ret) ;
 		}
 
-		void process_exit () override {
-			auto eax = TRUE ;
-			if ifswitch (eax) {
-				if ifnot (mHeap.mCurrent)
-					discard ;
-				std::exit (EXIT_FAILURE) ;
-			}
-			if ifswitch (eax) {
-				unimplemented () ;
-			}
-		}
-
-		void process_abort () override {
-			auto eax = TRUE ;
-			if ifswitch (eax) {
-				if ifnot (mHeap.mCurrent)
-					discard ;
-				unsafe_abort () ;
-			}
-			if ifswitch (eax) {
-				unimplemented () ;
-			}
+		BOOL alive () const override {
+			unimplemented () ;
+			return TRUE ;
 		}
 	} ;
 } ;
@@ -259,10 +218,8 @@ trait MODULE_IMPLHOLDER_HELP ;
 template <class DEPEND>
 trait MODULE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	using Holder = typename MODULE_HELP<DEPEND ,ALWAYS>::Holder ;
-	using HMODULE = ::HMODULE ;
 
 	struct HEAP {
-		BOOL mCurrent ;
 		UniqueRef<HMODULE> mHandle ;
 		String<STR> mErrorBuffer ;
 		String<STR> mError ;
@@ -274,44 +231,35 @@ trait MODULE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 
 	public:
 		implicit ImplHolder () {
-			mHeap.mCurrent = FALSE ;
-		}
-
-		void init_current () override {
-			mHeap.mCurrent = TRUE ;
+			noop () ;
 		}
 
 		void init_new () override {
 			noop () ;
 		}
 
-		Auto native () const override {
-			return CRef<HEAP>::reference (mHeap) ;
-		}
-
 		CREF<String<STR>> path () const override {
 			unimplemented () ;
-			return bad (TYPEAS<String<STR>>::id) ;
+			return bad (TYPEAS<CREF<String<STR>>>::id) ;
 		}
 
 		CREF<String<STR>> name () const override {
 			unimplemented () ;
-			return bad (TYPEAS<String<STR>>::id) ;
+			return bad (TYPEAS<CREF<String<STR>>>::id) ;
 		}
 
-		void open (CREF<String<STR>> file) override {
-			assert (ifnot (mHeap.mCurrent)) ;
-			const auto r1x = parse_file_name (file) ;
+		void open (CREF<String<STR>> file_) override {
+			const auto r1x = File (file_).name () ;
 			mHeap.mHandle = UniqueRef<HMODULE> ([&] (VREF<HMODULE> me) {
-				me = GetModuleHandle (r1x.raw ().self) ;
+				me = GetModuleHandle ((&r1x[0])) ;
 				if (me != NULL)
 					return ;
-				me = LoadLibrary (file.raw ().self) ;
+				me = LoadLibrary ((&r1x[0])) ;
 				if (me != NULL)
 					return ;
 				const auto r2x = FLAG (GetLastError ()) ;
 				format_dllerror (r2x) ;
-				mHeap.mError = String<STR>::make_print (slice ("Error = ") ,r2x ,slice (" : ") ,mHeap.mErrorBuffer) ;
+				mHeap.mError = String<STR>::make (slice ("Error = ") ,r2x ,slice (" : ") ,mHeap.mErrorBuffer) ;
 				assume (FALSE) ;
 			} ,[] (VREF<HMODULE> me) {
 				noop () ;
@@ -319,44 +267,38 @@ trait MODULE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		void close () override {
-			assert (ifnot (mHeap.mCurrent)) ;
 			mHeap.mHandle = UniqueRef<HMODULE> () ;
 		}
-		
+
 		CREF<String<STR>> error () const leftvalue override {
 			return mHeap.mError ;
 		}
 
 		FLAG link (CREF<String<STR>> name) override {
-			assert (ifnot (mHeap.mCurrent)) ;
 			assert (mHeap.mHandle.exist ()) ;
-			FLAG ret = FLAG (GetProcAddress (mHeap.mHandle ,name.raw ().self)) ;
+			const auto r1x = string_cvt[TYPEAS<TYPEAS<STRA ,STR>>::id] (name) ;
+			FLAG ret = FLAG (GetProcAddress (mHeap.mHandle ,(&r1x[0]))) ;
 			if ifswitch (TRUE) {
 				if (ret != ZERO)
 					discard ;
 				const auto r2x = FLAG (GetLastError ()) ;
 				format_dllerror (r2x) ;
-				mHeap.mError = String<STR>::make_print (slice ("Error = ") ,r2x ,slice (" : ") ,mHeap.mErrorBuffer) ;
+				mHeap.mError = String<STR>::make (slice ("Error = ") ,r2x ,slice (" : ") ,mHeap.mErrorBuffer) ;
 				assume (FALSE) ;
 			}
 			return move (ret) ;
 		}
 
 	private:
-		imports String<STR> parse_file_name (CREF<String<STR>> file) {
-			String<STR> ret = String<STR>::make_print () ;
-			unimplemented () ;
-			return move (ret) ;
-		}
-
 		void format_dllerror (CREF<FLAG> code) {
 			if ifswitch (TRUE) {
 				if (mHeap.mErrorBuffer.size () > 0)
 					discard ;
-				mHeap.mErrorBuffer = String<STR>::make_print () ;
+				mHeap.mErrorBuffer = String<STR>::make () ;
 			}
-			const auto r3x = DWORD (MAKELANGID (LANG_NEUTRAL ,SUBLANG_DEFAULT)) ;
-			FormatMessage (FORMAT_MESSAGE_FROM_SYSTEM ,NULL ,DWORD (code) ,r3x ,mHeap.mErrorBuffer.raw ().self ,DWORD (mHeap.mErrorBuffer.size ()) ,NULL) ;
+			const auto r1x = DWORD (MAKELANGID (LANG_NEUTRAL ,SUBLANG_DEFAULT)) ;
+			const auto r3x = mHeap.mErrorBuffer.size () ;
+			FormatMessage (FORMAT_MESSAGE_FROM_SYSTEM ,NULL ,DWORD (code) ,r1x ,(&mHeap.mErrorBuffer[0]) ,DWORD (r3x) ,NULL) ;
 		}
 	} ;
 } ;

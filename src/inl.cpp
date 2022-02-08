@@ -1,4 +1,4 @@
-#include "util.h"
+﻿#include "util.h"
 
 #ifdef __CSC_SYSTEM_WINDOWS__
 #ifdef __CSC_COMPILER_MSVC__

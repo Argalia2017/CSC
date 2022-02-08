@@ -396,7 +396,7 @@ trait QUATERNION_SUPER_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 
 	public:
 		implicit Quaternion () noexcept {
-			mQuaternion = BoxBuffer<ITEM ,SIZE>::make (0) ;
+			mQuaternion = BoxBuffer<ITEM ,SIZE> (0) ;
 		}
 	} ;
 } ;
@@ -409,7 +409,7 @@ trait QUATERNION_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 	template <class ARG1>
 	using MACRO_Matrix = typename DEPENDENT<MATRIX_HELP<ITEM ,ALWAYS> ,ARG1>::Matrix ;
 
-	class Quaternion {
+	class Quaternion extend SUPER {
 	private:
 		using SUPER::mQuaternion ;
 
@@ -431,61 +431,60 @@ trait QUATERNION_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 
 		template <class ARG1 = void>
 		explicit Quaternion (CREF<MACRO_Matrix<ARG1>> that) {
-			const auto r1x = that.decompose () ;
-			const auto r2x = r1x[2] ;
-			const auto r3x = invoke ([&] () {
+			const auto r1x = that.decompose ().mRotation ;
+			const auto r2x = invoke ([&] () {
 				ARRAY4<ITEM> ret ;
-				ret[0] = ITEM (1) + r2x[0][0] + r2x[1][1] + r2x[2][2] ;
-				ret[1] = ITEM (1) + r2x[0][0] - r2x[1][1] - r2x[2][2] ;
-				ret[2] = ITEM (1) - r2x[0][0] + r2x[1][1] - r2x[2][2] ;
-				ret[3] = ITEM (1) - r2x[0][0] - r2x[1][1] + r2x[2][2] ;
+				ret[0] = ITEM (1) + r1x[0][0] + r1x[1][1] + r1x[2][2] ;
+				ret[1] = ITEM (1) + r1x[0][0] - r1x[1][1] - r1x[2][2] ;
+				ret[2] = ITEM (1) - r1x[0][0] + r1x[1][1] - r1x[2][2] ;
+				ret[3] = ITEM (1) - r1x[0][0] - r1x[1][1] + r1x[2][2] ;
 				return move (ret) ;
 			}) ;
-			const auto r4x = invoke ([&] () {
+			const auto r3x = invoke ([&] () {
 				INDEX ret = NONE ;
 				auto rax = ITEM () ;
 				for (auto &&i : iter (0 ,4)) {
 					if (ret != NONE)
-						if (rax >= r3x[i])
+						if (rax >= r2x[i])
 							continue ;
 					ret = i ;
-					rax = r3x[i] ;
+					rax = r2x[i] ;
 				}
 				return move (ret) ;
 			}) ;
-			const auto r5x = MathProc::inverse (ITEM (2) * MathProc::sqrt (r3x[r4x])) ;
+			const auto r4x = MathProc::inverse (ITEM (2) * MathProc::sqrt (r2x[r3x])) ;
 			auto eax = TRUE ;
 			if ifswitch (eax) {
-				if ifnot (r4x == 0)
+				if ifnot (r3x == 0)
 					discard ;
-				mQuaternion[0] = (r2x[2][1] - r2x[1][2]) * r5x ;
-				mQuaternion[1] = (r2x[0][2] - r2x[2][0]) * r5x ;
-				mQuaternion[2] = (r2x[1][0] - r2x[0][1]) * r5x ;
-				mQuaternion[3] = r3x[0] * r5x ;
+				mQuaternion[0] = (r1x[2][1] - r1x[1][2]) * r4x ;
+				mQuaternion[1] = (r1x[0][2] - r1x[2][0]) * r4x ;
+				mQuaternion[2] = (r1x[1][0] - r1x[0][1]) * r4x ;
+				mQuaternion[3] = r2x[0] * r4x ;
 			}
 			if ifswitch (eax) {
-				if ifnot (r4x == 1)
+				if ifnot (r3x == 1)
 					discard ;
-				mQuaternion[0] = r3x[1] * r5x ;
-				mQuaternion[1] = (r2x[1][0] + r2x[0][1]) * r5x ;
-				mQuaternion[2] = (r2x[0][2] + r2x[2][0]) * r5x ;
-				mQuaternion[3] = (r2x[2][1] - r2x[1][2]) * r5x ;
+				mQuaternion[0] = r2x[1] * r4x ;
+				mQuaternion[1] = (r1x[1][0] + r1x[0][1]) * r4x ;
+				mQuaternion[2] = (r1x[0][2] + r1x[2][0]) * r4x ;
+				mQuaternion[3] = (r1x[2][1] - r1x[1][2]) * r4x ;
 			}
 			if ifswitch (eax) {
-				if ifnot (r4x == 2)
+				if ifnot (r3x == 2)
 					discard ;
-				mQuaternion[0] = (r2x[1][0] + r2x[0][1]) * r5x ;
-				mQuaternion[1] = r3x[2] * r5x ;
-				mQuaternion[2] = (r2x[2][1] + r2x[1][2]) * r5x ;
-				mQuaternion[3] = (r2x[0][2] - r2x[2][0]) * r5x ;
+				mQuaternion[0] = (r1x[1][0] + r1x[0][1]) * r4x ;
+				mQuaternion[1] = r2x[2] * r4x ;
+				mQuaternion[2] = (r1x[2][1] + r1x[1][2]) * r4x ;
+				mQuaternion[3] = (r1x[0][2] - r1x[2][0]) * r4x ;
 			}
 			if ifswitch (eax) {
-				if ifnot (r4x == 3)
+				if ifnot (r3x == 3)
 					discard ;
-				mQuaternion[0] = (r2x[0][2] + r2x[2][0]) * r5x ;
-				mQuaternion[1] = (r2x[2][1] + r2x[1][2]) * r5x ;
-				mQuaternion[2] = r3x[3] * r5x ;
-				mQuaternion[3] = (r2x[1][0] - r2x[0][1]) * r5x ;
+				mQuaternion[0] = (r1x[0][2] + r1x[2][0]) * r4x ;
+				mQuaternion[1] = (r1x[2][1] + r1x[1][2]) * r4x ;
+				mQuaternion[2] = r2x[3] * r4x ;
+				mQuaternion[3] = (r1x[1][0] - r1x[0][1]) * r4x ;
 			}
 			update () ;
 		}
@@ -521,8 +520,8 @@ trait QUATERNION_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 	private:
 		void update () {
 			const auto r1x = MathProc::square (mQuaternion[0]) + MathProc::square (mQuaternion[1]) + MathProc::square (mQuaternion[2]) + MathProc::square (mQuaternion[3]) ;
-			const auto r2x = MathProc::sqrt (r2x) ;
-			const auto r3x = MathProc::inverse (r3x) ;
+			const auto r2x = MathProc::sqrt (r1x) ;
+			const auto r3x = MathProc::inverse (r2x) ;
 			mQuaternion[0] *= r3x ;
 			mQuaternion[1] *= r3x ;
 			mQuaternion[2] *= r3x ;
@@ -536,6 +535,9 @@ using Quaternion = typename QUATERNION_HELP<ITEM ,ALWAYS>::Quaternion ;
 
 template <class...>
 trait MATRIX_HELP ;
+
+template <class...>
+trait MATRIX_BINDER_HELP ;
 
 template <class...>
 trait MATRIX_SUPER_HELP ;
@@ -559,12 +561,28 @@ trait MATRIX_SUPER_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 	} ;
 } ;
 
+
+template <class ITEM>
+trait MATRIX_BINDER_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
+	using Matrix = typename MATRIX_HELP<ITEM ,ALWAYS>::Matrix ;
+
+	struct DECOMPOSE {
+		Matrix mTranslation ;
+		Matrix mRotation ;
+		Matrix mScale ;
+		Matrix mShear ;
+	} ;
+} ;
+
 template <class ITEM>
 trait MATRIX_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 	using SIZE = typename MATRIX_SUPER_HELP<ITEM ,ALWAYS>::SIZE ;
 	using SUPER = typename MATRIX_SUPER_HELP<ITEM ,ALWAYS>::Matrix ;
 
 	using SINGULAR_MAX_ITERATION = ENUMAS<VAL ,ENUMID<1024>> ;
+
+	template <class ARG1>
+	using MACRO_DECOMPOSE = typename DEPENDENT<MATRIX_BINDER_HELP<ITEM ,ALWAYS> ,ARG1>::DECOMPOSE ;
 
 	class Matrix extend SUPER {
 	private:
@@ -813,9 +831,8 @@ trait MATRIX_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 			return mMatrix[y * 4 + x] ;
 		}
 
-		inline forceinline VREF<RowProxy<Matrix ,ITEM>> operator[] (CREF<INDEX> y) leftvalue {
-			auto rax = TEMP<RowProxy<Matrix ,ITEM>> () ;
-			return RowProxy<Matrix ,ITEM>::from (rax ,thiz ,y) ;
+		inline RowProxy<VREF<Matrix> ,ITEM> operator[] (CREF<INDEX> y) leftvalue {
+			return RowProxy<VREF<Matrix> ,ITEM> (VRef<Matrix>::reference (thiz) ,y) ;
 		}
 
 		CREF<ITEM> at (CREF<INDEX> x ,CREF<INDEX> y) const leftvalue {
@@ -824,9 +841,8 @@ trait MATRIX_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 			return mMatrix[y * 4 + x] ;
 		}
 
-		inline forceinline CREF<RowProxy<Matrix ,ITEM>> operator[] (CREF<INDEX> y) const leftvalue {
-			auto rax = TEMP<RowProxy<Matrix ,ITEM>> () ;
-			return RowProxy<Matrix ,ITEM>::from (rax ,thiz ,y) ;
+		inline RowProxy<CREF<Matrix> ,ITEM> operator[] (CREF<INDEX> y) const leftvalue {
+			return RowProxy<CREF<Matrix> ,ITEM> (CRef<Matrix>::reference (thiz) ,y) ;
 		}
 
 		BOOL equal (CREF<Matrix> that) const {
@@ -1092,15 +1108,15 @@ trait MATRIX_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 			return move (ret) ;
 		}
 
-		//@info: 3-translation * 2-rotation * 1-scale * 0-shear
-		ARRAY4<Matrix> decompose () const {
+		template <class ARG1 = void>
+		MACRO_DECOMPOSE<ARG1> decompose () const {
 			assert (is_affine_matrix ()) ;
-			ARRAY4<Matrix> ret ;
+			MACRO_DECOMPOSE<ARG1> ret ;
 			const auto r1x = thiz * Vector<ITEM>::axis_x () ;
 			const auto r2x = thiz * Vector<ITEM>::axis_y () ;
 			const auto r3x = thiz * Vector<ITEM>::axis_z () ;
-			ret[0] = make_shear (r1x ,r2x ,r3x) ;
-			const auto r4x = thiz * ret[0].inverse () ;
+			ret.mShear = make_shear (r1x ,r2x ,r3x) ;
+			const auto r4x = thiz * ret.mShear.inverse () ;
 			const auto r5x = r4x * Vector<ITEM>::axis_x () ;
 			const auto r6x = r4x * Vector<ITEM>::axis_y () ;
 			const auto r7x = r4x * Vector<ITEM>::axis_z () ;
@@ -1110,10 +1126,10 @@ trait MATRIX_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 			const auto r11x = r5x.magnitude () * r10x ;
 			const auto r12x = r6x.magnitude () * r10x ;
 			const auto r13x = r7x.magnitude () * r10x ;
-			ret[1] = make_diag (r11x ,r12x ,r13x ,ITEM (1)) ;
-			ret[2] = make_view (r5x ,r6x) ;
+			ret.mScale = make_diag (r11x ,r12x ,r13x ,ITEM (1)) ;
+			ret.mRotation = make_view (r5x ,r6x) ;
 			const auto r14x = r8x.projection () ;
-			ret[3] = make_translation (r14x[0] ,r14x[1] ,r14x[2]) ;
+			ret.mTranslation = make_translation (r14x[0] ,r14x[1] ,r14x[2]) ;
 			return move (ret) ;
 		}
 
@@ -1167,7 +1183,7 @@ trait MATRIX_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 		}
 
 		Matrix singular_value () const {
-			const auto r3x = invoke ([&] () {
+			const auto r1x = invoke ([&] () {
 				ARRAY4<ITEM> ret ;
 				INDEX ix = 0 ;
 				ret[0] = ITEM (0) ;
@@ -1175,18 +1191,18 @@ trait MATRIX_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 				ret[2] = ITEM (0) ;
 				ret[3] = ITEM (0) ;
 				for (auto &&i : iter (0 ,4)) {
-					const auto r1x = invoke ([&] () {
-						const auto r2x = MathProc::abs (at (i ,i)) ;
-						if (MathProc::inverse (r2x) == ITEM (0))
+					const auto r2x = invoke ([&] () {
+						const auto r3x = MathProc::abs (at (i ,i)) ;
+						if (MathProc::inverse (r3x) == ITEM (0))
 							return ITEM (0) ;
-						return MathProc::sqrt (r2x) ;
+						return MathProc::sqrt (r3x) ;
 					}) ;
 					const auto r4x = invoke ([&] () {
 						for (auto &&j : iter (0 ,ix)) {
-							const auto r6x = MathProc::abs (r1x - ret[j]) ;
-							if (MathProc::inverse (r6x) == ITEM (0))
+							const auto r5x = MathProc::abs (r2x - ret[j]) ;
+							if (MathProc::inverse (r5x) == ITEM (0))
 								return NONE ;
-							if (r1x > ret[j])
+							if (r2x > ret[j])
 								return j ;
 						}
 						return ix ;
@@ -1198,12 +1214,12 @@ trait MATRIX_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 						INDEX jy = jx + 1 ;
 						ret[jy] = ret[jx] ;
 					}
-					ret[r4x] = r1x ;
+					ret[r4x] = r2x ;
 					ix++ ;
 				}
 				return move (ret) ;
 			}) ;
-			return make_diag (r3x[0] ,r3x[1] ,r3x[2] ,r3x[3]) ;
+			return make_diag (r1x[0] ,r1x[1] ,r1x[2] ,r1x[3]) ;
 		}
 
 		INDEX find_abs_max_diag (CREF<INDEX> x) const {
@@ -1232,32 +1248,32 @@ trait MATRIX_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 				const auto r1x = ret[1].find_abs_rot () ;
 				INDEX ix = r1x[0] ;
 				INDEX iy = r1x[1] ;
-				const auto r10x = ret[1].at (ix ,iy) ;
-				const auto r11x = ret[1].at (iy ,ix) ;
-				const auto r12x = ret[1].at (ix ,ix) ;
-				const auto r13x = ret[1].at (iy ,iy) ;
-				if (MathProc::inverse (r10x) == ITEM (0))
+				const auto r2x = ret[1].at (ix ,iy) ;
+				const auto r3x = ret[1].at (iy ,ix) ;
+				const auto r4x = ret[1].at (ix ,ix) ;
+				const auto r5x = ret[1].at (iy ,iy) ;
+				if (MathProc::inverse (r2x) == ITEM (0))
 					break ;
-				const auto r2x = r12x - r13x ;
-				const auto r3x = MathProc::square (r2x) + ITEM (4) * r10x * r11x ;
-				assert (r3x >= ITEM (0)) ;
-				const auto r20x = -MathProc::inverse (ITEM (2) * r10x) ;
-				const auto r21x = MathProc::sign (r20x) ;
-				const auto r4x = (-r2x + r21x * MathProc::sqrt (r3x)) * r20x ;
-				assert (r4x >= ITEM (0)) ;
-				const auto r8x = MathProc::inverse (ITEM (1) + MathProc::square (r4x)) ;
-				const auto r5x = MathProc::sqrt (r8x) ;
-				const auto r6x = r5x * r4x ;
-				const auto r7x = invoke ([&] () {
+				const auto r6x = r4x - r5x ;
+				const auto r7x = MathProc::square (r6x) + ITEM (4) * r2x * r3x ;
+				assert (r7x >= ITEM (0)) ;
+				const auto r8x = -MathProc::inverse (ITEM (2) * r2x) ;
+				const auto r9x = MathProc::sign (r8x) ;
+				const auto r10x = (-r6x + r9x * MathProc::sqrt (r7x)) * r8x ;
+				assert (r10x >= ITEM (0)) ;
+				const auto r11x = MathProc::inverse (ITEM (1) + MathProc::square (r10x)) ;
+				const auto r12x = MathProc::sqrt (r11x) ;
+				const auto r13x = r12x * r10x ;
+				const auto r14x = invoke ([&] () {
 					Matrix ret = identity () ;
-					ret.at (ix ,iy) = -r6x ;
-					ret.at (iy ,ix) = r6x ;
-					ret.at (ix ,ix) = r5x ;
-					ret.at (iy ,iy) = r5x ;
+					ret.at (ix ,iy) = -r13x ;
+					ret.at (iy ,ix) = r13x ;
+					ret.at (ix ,ix) = r12x ;
+					ret.at (iy ,iy) = r12x ;
 					return move (ret) ;
 				}) ;
-				ret[0] = ret[0] * r7x ;
-				ret[1] = r7x.transpose () * ret[1] * r7x ;
+				ret[0] = ret[0] * r14x ;
+				ret[1] = r14x.transpose () * ret[1] * r14x ;
 				ret[1].at (ix ,iy) = ITEM (0) ;
 			}
 			return move (ret) ;

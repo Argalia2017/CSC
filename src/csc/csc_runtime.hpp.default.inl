@@ -1,13 +1,14 @@
-#pragma once
+Ôªø#pragma once
 
 #ifndef __CSC_RUNTIME__
-#error "°∆(§√°„ß•°„ ;)§√ : require 'csc_runtime.hpp'"
+#error "‚àë(„Å£¬∞–î¬∞ ;)„Å£ : require 'csc_runtime.hpp'"
 #endif
 
 #include "begin.h"
 #include <cstdio>
 #include <cstdlib>
 #include <exception>
+#include <ctime>
 #include <chrono>
 #include <mutex>
 #include <condition_variable>
@@ -39,8 +40,11 @@ trait TIMEDURATION_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	public:
 		implicit ImplHolder () = default ;
 
-		void init_zero () override {
-			mHeap.mTimeDuration = TIMEDURATION (0) ;
+		void init_second (CREF<LENGTH> milliseconds_ ,CREF<LENGTH> nanoseconds_) override {
+			const auto r1x = std::chrono::milliseconds (milliseconds_) ;
+			const auto r2x = std::chrono::nanoseconds (milliseconds_) ;
+			const auto r3x = r1x + r2x ;
+			mHeap.mTimeDuration = std::chrono::duration_cast<std::chrono::system_clock::duration> (r3x) ;
 		}
 
 		Auto native () const override {
@@ -98,11 +102,53 @@ exports auto TIMEDURATION_HELP<DEPEND ,ALWAYS>::FUNCTION_link::invoke () -> VRef
 } ;
 
 template <class...>
+trait FUNCTION_calendar_from_timepoint_HELP ;
+
+template <class DEPEND>
+trait FUNCTION_calendar_from_timepoint_HELP<DEPEND ,REQUIRE<MACRO_SYSTEM_WINDOWS<DEPEND>>> {
+#ifdef __CSC_SYSTEM_WINDOWS__
+	struct FUNCTION_calendar_from_timepoint {
+		inline std::tm operator() (CREF<std::time_t> time_) const {
+			std::tm ret ;
+			zeroize (ret) ;
+			localtime_s ((&ret) ,(&time_)) ;
+			return move (ret) ;
+		}
+	} ;
+#endif
+} ;
+
+template <class DEPEND>
+trait FUNCTION_calendar_from_timepoint_HELP<DEPEND ,REQUIRE<MACRO_SYSTEM_LINUX<DEPEND>>> {
+#ifdef __CSC_SYSTEM_LINUX__
+	struct FUNCTION_calendar_from_timepoint {
+		inline std::tm operator() (CREF<std::time_t> time_) const {
+			std::tm ret ;
+			const auto r1x = std::localtime ((&time_)) ;
+			ret = (*r1x) ;
+			return move (ret) ;
+		}
+	} ;
+#endif
+} ;
+
+struct FUNCTION_calendar_from_timepoint {
+	inline std::tm operator() (CREF<std::time_t> time_) const {
+		using R1X = typename FUNCTION_calendar_from_timepoint_HELP<DEPEND ,ALWAYS>::FUNCTION_calendar_from_timepoint ;
+		static constexpr auto M_INVOKE = R1X () ;
+		return M_INVOKE (time_) ;
+	}
+} ;
+
+static constexpr auto calendar_from_timepoint = FUNCTION_calendar_from_timepoint () ;
+
+template <class...>
 trait TIMEPOINT_IMPLHOLDER_HELP ;
 
 template <class DEPEND>
 trait TIMEPOINT_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	using Holder = typename TIMEPOINT_HELP<DEPEND ,ALWAYS>::Holder ;
+	using CALENDAR = typename TIMEPOINT_HELP<DEPEND ,ALWAYS>::CALENDAR ;
 	using TIMEPOINT = std::chrono::system_clock::time_point ;
 	using TIMEDURATION = std::chrono::system_clock::duration ;
 
@@ -126,6 +172,25 @@ trait TIMEPOINT_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			mHeap.mTimePoint = TIMEPOINT (r1x) ;
 		}
 
+		void init_calendar (CREF<CALENDAR> calendar_) override {
+			auto rax = std::tm () ;
+			zeroize (rax) ;
+			const auto r1x = calendar_.mYear - 1900 ;
+			rax.tm_year = VAL32 (r1x * LENGTH (r1x > 0)) ;
+			const auto r2x = calendar_.mMonth ;
+			rax.tm_mon = VAL32 (r2x * LENGTH (r2x > 0)) ;
+			rax.tm_mday = VAL32 (calendar_.mDay) ;
+			const auto r3x = calendar_.mWDay - 1 ;
+			rax.tm_wday = VAL32 (r3x * LENGTH (r3x > 0)) ;
+			const auto r4x = calendar_.mYDay - 1 ;
+			rax.tm_yday = VAL32 (r4x * LENGTH (r4x > 0)) ;
+			rax.tm_hour = VAL32 (calendar_.mHour) ;
+			rax.tm_min = VAL32 (calendar_.mMinute) ;
+			rax.tm_sec = VAL32 (calendar_.mSecond) ;
+			const auto r5x = std::mktime ((&rax)) ;
+			mHeap.mTimePoint = std::chrono::system_clock::from_time_t (r5x) ;
+		}
+
 		Auto native () const override {
 			return CRef<HEAP>::reference (mHeap) ;
 		}
@@ -142,6 +207,21 @@ trait TIMEPOINT_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			auto &&tmp_a = b.native ().as (TYPEAS<CRef<HEAP>>::id).self ;
 			auto &&tmp_b = b.native ().as (TYPEAS<CRef<R1X>>::id).self ;
 			mHeap.mTimePoint = tmp_a.mTimePoint - tmp_b.mTimeDuration ;
+		}
+
+		CALENDAR calendar () const override {
+			CALENDAR ret ;
+			const auto r1x = std::time_t (std::chrono::system_clock::to_time_t (mHeap.mTimePoint)) ;
+			const auto r2x = calendar_from_timepoint (r1x) ;
+			ret.mYear = r2x.tm_year + 1900 ;
+			ret.mMonth = r2x.tm_mon + 1 ;
+			ret.mDay = r2x.tm_mday ;
+			ret.mWDay = r2x.tm_wday + 1 ;
+			ret.mYDay = r2x.tm_yday + 1 ;
+			ret.mHour = r2x.tm_hour ;
+			ret.mMinute = r2x.tm_min ;
+			ret.mSecond = r2x.tm_sec ;
+			return move (ret) ;
 		}
 	} ;
 } ;
@@ -165,7 +245,7 @@ trait MUTEXLOCKER_HELP<DEPEND ,ALWAYS> {
 
 	public:
 		imports VREF<MutexLocker> from (VREF<RECURSIVEMUTEX> that) {
-			return unsafe_deref (unsafe_cast (TYPEAS<TEMP<MutexLocker>>::id ,unsafe_deptr (that))) ;
+			return unsafe_deref (unsafe_cast[TYPEAS<TEMP<MutexLocker>>::id] (unsafe_deptr (that))) ;
 		}
 
 		void enter () {
@@ -205,15 +285,15 @@ trait MUTEX_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			mHeap = SharedRef<HEAP>::make () ;
 		}
 
-		void init_mutex () override {
+		void init_new () override {
 			mHeap->mMutex = Box<MUTEX>::make () ;
 		}
 
-		void init_recursive_mutex () override {
+		void init_recursive () override {
 			mHeap->mRecursive = Box<RECURSIVEMUTEX>::make () ;
 		}
 
-		void init_conditional_mutex () override {
+		void init_conditional () override {
 			mHeap->mMutex = Box<MUTEX>::make () ;
 			mHeap->mConditional = Box<CONDITIONNALMUTEX>::make () ;
 		}
@@ -282,7 +362,7 @@ trait CONDITIONALLOCK_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	using CONDITIONALLOCK = std::unique_lock<MUTEX> ;
 
 	struct HEAP {
-		SharedRef<MUTEXHEAP> mMutexNode ;
+		SharedRef<MUTEXHEAP> mMutex ;
 		CONDITIONALLOCK mLock ;
 	} ;
 
@@ -295,41 +375,37 @@ trait CONDITIONALLOCK_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 
 		void init_lock (CREF<Mutex> mutex_) override {
 			//@mark
-			mHeap.mMutexNode = mutex_.native ().as (TYPEAS<CRef<SharedRef<HEAP>>>::id).self ;
-			assert (mHeap.mMutexNode.exist ()) ;
-			assert (mHeap.mMutexNode->mConditional.exist ()) ;
-			mHeap.mLock = CONDITIONALLOCK (mHeap.mMutexNode->mMutex) ;
-		}
-
-		Auto native () const override {
-			return CRef<HEAP>::reference (mHeap) ;
+			mHeap.mMutex = mutex_.native ().as (TYPEAS<SharedRef<MUTEXHEAP>>::id) ;
+			assert (mHeap.mMutex.exist ()) ;
+			assert (mHeap.mMutex->mConditional.exist ()) ;
+			mHeap.mLock = CONDITIONALLOCK (mHeap.mMutex->mMutex) ;
 		}
 
 		void wait () override {
-			mHeap.mMutexNode->mConditional->wait (mHeap.mLock) ;
+			mHeap.mMutex->mConditional->wait (mHeap.mLock) ;
 		}
 
 		void wait (CREF<TimeDuration> time_) override {
 			using R1X = typename TIMEDURATION_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::HEAP ;
 			auto &&tmp = time_.native ().as (TYPEAS<CRef<R1X>>::id).self ;
-			mHeap.mMutexNode->mConditional->wait_for (mHeap.mLock ,tmp.mTimeDuration) ;
+			mHeap.mMutex->mConditional->wait_for (mHeap.mLock ,tmp.mTimeDuration) ;
 		}
 
 		void wait (CREF<TimePoint> time_) override {
 			using R1X = typename TIMEPOINT_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::HEAP ;
 			auto &&tmp = time_.native ().as (TYPEAS<CRef<R1X>>::id).self ;
-			mHeap.mMutexNode->mConditional->wait_until (mHeap.mLock ,tmp.mTimePoint) ;
+			mHeap.mMutex->mConditional->wait_until (mHeap.mLock ,tmp.mTimePoint) ;
 		}
 
 		void notify () override {
-			mHeap.mMutexNode->mConditional->notify_all () ;
+			mHeap.mMutex->mConditional->notify_all () ;
 		}
 
 		void yield () override {
 			using R1X = typename TIMEDURATION_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::HEAP ;
-			mHeap.mMutexNode->mConditional->notify_all () ;
+			mHeap.mMutex->mConditional->notify_all () ;
 			auto &&tmp = TimeDuration::zero ().native ().as (TYPEAS<CRef<R1X>>::id).self ;
-			mHeap.mMutexNode->mConditional->wait_for (mHeap.mLock ,tmp.mTimeDuration) ;
+			mHeap.mMutex->mConditional->wait_for (mHeap.mLock ,tmp.mTimeDuration) ;
 		}
 	} ;
 } ;
@@ -357,7 +433,7 @@ trait SYSTEM_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 
 	public:
 		implicit ImplHolder () {
-			mHeap.mLocale.initialize (slice ("C")) ;
+			mHeap.mLocale.init (slice ("C")) ;
 		}
 
 		String<STR> get_locale () const override {
@@ -369,7 +445,8 @@ trait SYSTEM_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		void execute (CREF<String<STR>> command) const override {
-			unimplemented () ;
+			const auto r1x = string_cvt[TYPEAS<TYPEAS<STRA ,STR>>::id] (command) ;
+			std::system ((&r1x[0])) ;
 		}
 
 		CREF<String<STR>> working_path () const override {
@@ -400,35 +477,29 @@ trait RANDOM_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 
 	class ImplHolder implement Holder {
 	private:
-		HEAP mHeap ;
+		SharedRef<HEAP> mHeap ;
 
 	public:
-		implicit ImplHolder () = default ;
+		implicit ImplHolder () {
+			mHeap = SharedRef<HEAP>::make () ;
+		}
 
-		void init_new () override {
+		void init_device () override {
 			const auto r1x = DATA (invoke (std::random_device ())) ;
-			reset_seed (r1x) ;
+			init_seed (r1x) ;
 		}
 
-		Auto native () const override {
-			return CRef<HEAP>::reference (mHeap) ;
+		void init_seed (CREF<DATA> seed_) override {
+			mHeap->mSeed = seed_ ;
+			mHeap->mRandom = RANDOM (csc_byte64_t (mHeap->mSeed)) ;
 		}
 
-		void reset_seed (CREF<DATA> seed) override {
-			mHeap.mSeed = seed ;
-			mHeap.mRandom = RANDOM (csc_byte64_t (mHeap.mSeed)) ;
+		DATA seed () const override {
+			return mHeap->mSeed ;
 		}
 
-		DATA random_byte () override {
-			return DATA (mHeap.mRandom ()) ;
-		}
-
-		void random_skip (CREF<LENGTH> size_) override {
-			for (auto &&i : iter (0 ,size_)) {
-				noop (i) ;
-				const auto r1x = DATA (mHeap.mRandom ()) ;
-				noop (r1x) ;
-			}
+		DATA random_byte () const override {
+			return DATA (mHeap->mRandom ()) ;
 		}
 	} ;
 } ;

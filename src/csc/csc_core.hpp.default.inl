@@ -1,7 +1,7 @@
-#pragma once
+Ôªø#pragma once
 
 #ifndef __CSC_CORE__
-#error "°∆(§√°„ß•°„ ;)§√ : require 'csc_core.hpp'"
+#error "‚àë(„Å£¬∞–î¬∞ ;)„Å£ : require 'csc_core.hpp'"
 #endif
 
 #include "begin.h"
@@ -9,6 +9,7 @@
 #include <new>
 #include <exception>
 #include <atomic>
+#include <stdarg.h>
 #include "end.h"
 
 #ifdef __CSC_COMPILER_GNUC__
@@ -25,7 +26,7 @@ trait FUNCTION_unsafe_barrier_HELP ;
 template <class DEPEND>
 trait FUNCTION_unsafe_barrier_HELP<DEPEND ,REQUIRE<MACRO_COMPILER_MSVC<DEPEND>>> {
 	struct FUNCTION_unsafe_barrier {
-		inline void operator() () const noexcept {
+		inline forceinline void operator() () const noexcept {
 			noop () ;
 		}
 	} ;
@@ -35,7 +36,7 @@ template <class DEPEND>
 trait FUNCTION_unsafe_barrier_HELP<DEPEND ,REQUIRE<MACRO_COMPILER_GNUC<DEPEND>>> {
 #ifdef __CSC_COMPILER_GNUC__
 	struct FUNCTION_unsafe_barrier {
-		inline void operator() () const noexcept {
+		inline forceinline void operator() () const noexcept {
 			asm volatile ("" ::: "memory") ;
 		}
 	} ;
@@ -46,7 +47,7 @@ template <class DEPEND>
 trait FUNCTION_unsafe_barrier_HELP<DEPEND ,REQUIRE<MACRO_COMPILER_CLANG<DEPEND>>> {
 #ifdef __CSC_COMPILER_CLANG__
 	struct FUNCTION_unsafe_barrier {
-		inline void operator() () const noexcept {
+		inline forceinline void operator() () const noexcept {
 			asm volatile ("" ::: "memory") ;
 		}
 	} ;
@@ -66,7 +67,7 @@ template <class DEPEND>
 trait FUNCTION_unsafe_break_HELP<DEPEND ,REQUIRE<MACRO_COMPILER_MSVC<DEPEND>>> {
 #ifdef __CSC_COMPILER_MSVC__
 	struct FUNCTION_unsafe_break {
-		inline void operator() () const noexcept {
+		inline forceinline void operator() () const noexcept {
 			__debugbreak () ;
 		}
 	} ;
@@ -77,7 +78,7 @@ template <class DEPEND>
 trait FUNCTION_unsafe_break_HELP<DEPEND ,REQUIRE<MACRO_COMPILER_GNUC<DEPEND>>> {
 #ifdef __CSC_COMPILER_GNUC__
 	struct FUNCTION_unsafe_break {
-		inline void operator() () const noexcept {
+		inline forceinline void operator() () const noexcept {
 			__builtin_trap () ;
 		}
 	} ;
@@ -88,7 +89,7 @@ template <class DEPEND>
 trait FUNCTION_unsafe_break_HELP<DEPEND ,REQUIRE<MACRO_COMPILER_CLANG<DEPEND>>> {
 #ifdef __CSC_COMPILER_CLANG__
 	struct FUNCTION_unsafe_break {
-		inline void operator() () const noexcept {
+		inline forceinline void operator() () const noexcept {
 			__builtin_trap () ;
 		}
 	} ;
@@ -134,6 +135,16 @@ trait FUNCTION_current_usage_size_HELP<DEPEND ,REQUIRE<MACRO_SYSTEM_LINUX<DEPEND
 #endif
 } ;
 
+struct FUNCTION_current_usage_size {
+	inline LENGTH operator() (CREF<FLAG> addr_) const {
+		using R1X = typename FUNCTION_current_usage_size_HELP<DEPEND ,ALWAYS>::FUNCTION_current_usage_size ;
+		static constexpr auto M_INVOKE = R1X () ;
+		return M_INVOKE (addr_) ;
+	}
+} ;
+
+static constexpr auto current_usage_size = FUNCTION_current_usage_size () ;
+
 template <class...>
 trait HEAPPROC_IMPLHOLDER_HELP ;
 
@@ -168,7 +179,6 @@ trait HEAPPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				if (ret != ZERO)
 					discard ;
 				assume (FALSE) ;
-				return ZERO ;
 			}
 			const auto r1x = current_usage_size (ret) ;
 			mUsageSize->fetch_add (r1x) ;
@@ -179,13 +189,6 @@ trait HEAPPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			const auto r1x = current_usage_size (addr_) ;
 			mUsageSize->fetch_sub (r1x) ;
 			operator delete ((&unsafe_pointer (addr_)) ,std::nothrow) ;
-		}
-
-	private:
-		LENGTH current_usage_size (CREF<FLAG> addr_) const {
-			using R1X = typename FUNCTION_current_usage_size_HELP<DEPEND ,ALWAYS>::FUNCTION_current_usage_size ;
-			static constexpr auto M_INVOKE = R1X () ;
-			return M_INVOKE (addr_) ;
 		}
 	} ;
 } ;

@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #ifndef __CSC_FILESYSTEM__
 #define __CSC_FILESYSTEM__
@@ -23,10 +23,10 @@ trait FILE_HELP ;
 
 template <class DEPEND>
 trait FILE_HELP<DEPEND ,ALWAYS> {
-	using FILE_NAME_SIZE = ENUMAS<VAL ,ENUMID<1023>> ;
+	using FILE_NAME_SSIZE = ENUMAS<VAL ,ENUMID<1023>> ;
 
 	struct Holder implement Interface {
-		virtual void init_file (CREF<String<STR>> file) = 0 ;
+		virtual void init_file (CREF<String<STR>> file_) = 0 ;
 		virtual Auto native () const = 0 ;
 		virtual String<STR> path () const = 0 ;
 		virtual String<STR> name () const = 0 ;
@@ -34,7 +34,7 @@ trait FILE_HELP<DEPEND ,ALWAYS> {
 		virtual VarBuffer<BYTE> load () const = 0 ;
 		virtual void load (VREF<RegBuffer<BYTE>> item) const = 0 ;
 		virtual void save (CREF<RegBuffer<BYTE>> item) const = 0 ;
-		virtual CREF<RegBuffer<BYTE>> load_assert (CREF<FLAG> uuid) const = 0 ;
+		virtual CRef<RegBuffer<BYTE>> load_asset (CREF<FLAG> uuid) const = 0 ;
 		virtual BOOL find () const = 0 ;
 		virtual void erase () const = 0 ;
 		virtual void copy_from (CREF<Holder> that) const = 0 ;
@@ -54,11 +54,9 @@ trait FILE_HELP<DEPEND ,ALWAYS> {
 	public:
 		implicit File () = default ;
 
-		imports File make_file (CREF<String<STR>> file) {
-			File ret ;
-			ret.mThis = FUNCTION_link::invoke () ;
-			ret.mThis->init_file (file) ;
-			return move (ret) ;
+		explicit File (CREF<String<STR>> file_) {
+			mThis = FUNCTION_link::invoke () ;
+			mThis->init_file (file_) ;
 		}
 
 		Auto native () const {
@@ -89,8 +87,8 @@ trait FILE_HELP<DEPEND ,ALWAYS> {
 			return mThis->save (item) ;
 		}
 
-		CREF<RegBuffer<BYTE>> load_assert (CREF<FLAG> uuid) const {
-			return mThis->load_assert (uuid) ;
+		CRef<RegBuffer<BYTE>> load_asset (CREF<FLAG> uuid) const {
+			return mThis->load_asset (uuid) ;
 		}
 
 		BOOL find () const {
@@ -129,7 +127,7 @@ trait DIRECTORY_HELP<DEPEND ,ALWAYS> {
 	using DIRECTORY_CHILD_SIZE = ENUMAS<VAL ,ENUMID<65536>> ;
 
 	struct Holder implement Interface {
-		virtual void init_file (CREF<String<STR>> file) = 0 ;
+		virtual void init_file (CREF<String<STR>> file_) = 0 ;
 		virtual Auto native () const = 0 ;
 		virtual String<STR> path () const = 0 ;
 		virtual String<STR> name () const = 0 ;
@@ -137,9 +135,8 @@ trait DIRECTORY_HELP<DEPEND ,ALWAYS> {
 		virtual LENGTH depth () const = 0 ;
 		virtual void parent_from (CREF<Holder> a) = 0 ;
 		virtual void brother_from (CREF<Holder> a) = 0 ;
-		virtual void child_from (CREF<Holder> a ,CREF<String<STR>> file) = 0 ;
-		virtual LENGTH child_size () const = 0 ;
-		virtual void child_from (CREF<Holder> a ,CREF<INDEX> index) = 0 ;
+		virtual void child_from (CREF<Holder> a) = 0 ;
+		virtual void child_from (CREF<Holder> a ,CREF<String<STR>> file_) = 0 ;
 		virtual BOOL find () const = 0 ;
 		virtual BOOL lock () const = 0 ;
 		virtual void build () const = 0 ;
@@ -158,11 +155,9 @@ trait DIRECTORY_HELP<DEPEND ,ALWAYS> {
 	public:
 		implicit Directory () = default ;
 
-		imports Directory make_file (CREF<String<STR>> file) {
-			Directory ret ;
-			ret.mThis = FUNCTION_link::invoke () ;
-			ret.mThis->init_file (file) ;
-			return move (ret) ;
+		explicit Directory (CREF<String<STR>> file_) {
+			mThis = FUNCTION_link::invoke () ;
+			mThis->init_file (file_) ;
 		}
 
 		Auto native () const {
@@ -180,7 +175,7 @@ trait DIRECTORY_HELP<DEPEND ,ALWAYS> {
 		String<STR> full_name () const {
 			return mThis->full_name () ;
 		}
-		
+
 		LENGTH depth () const {
 			return mThis->depth () ;
 		}
@@ -199,22 +194,35 @@ trait DIRECTORY_HELP<DEPEND ,ALWAYS> {
 			return move (ret) ;
 		}
 
-		Directory child (CREF<String<STR>> file) const {
+		Directory child () const {
 			Directory ret ;
 			ret.mThis = FUNCTION_link::invoke () ;
-			ret.mThis->child_from (mThis ,file) ;
+			ret.mThis->child_from (mThis) ;
 			return move (ret) ;
 		}
 
-		File file () const {
-			return File::make_file (full_name ()) ;
+		Directory child (CREF<String<STR>> file_) const {
+			Directory ret ;
+			ret.mThis = FUNCTION_link::invoke () ;
+			ret.mThis->child_from (mThis ,file_) ;
+			return move (ret) ;
 		}
 
-		Array<Directory> load () const {
-			Array<Directory> ret = Array<Directory> (mThis->child_size ()) ;
-			for (auto &&i : ret.iter ()) {
-				ret[i].mThis = FUNCTION_link::invoke () ;
-				ret[i].mThis->child_from (mThis ,i) ;
+		File as_file () const {
+			return File (full_name ()) ;
+		}
+
+		ArrayList<Directory> load () const {
+			ArrayList<Directory> ret ;
+			auto rax = Directory () ;
+			rax.mThis = FUNCTION_link::invoke () ;
+			rax.mThis->child_from (mThis) ;
+			while (TRUE) {
+				if ifnot (rax.mThis->find ())
+					break ;
+				ret.add (move (rax)) ;
+				rax.mThis = FUNCTION_link::invoke () ;
+				rax.mThis->brother_from (mThis) ;
 			}
 			return move (ret) ;
 		}

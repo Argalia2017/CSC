@@ -1,52 +1,21 @@
-#pragma once
+Ôªø#pragma once
 
 #ifndef __CSC_FILESYSTEM__
-#error "°∆(§√°„ß•°„ ;)§√ : require 'csc_filesystem.hpp'"
+#error "‚àë(„Å£¬∞–î¬∞ ;)„Å£ : require 'csc_filesystem.hpp'"
 #endif
 
 #ifndef __CSC_SYSTEM_WINDOWS__
-#error "°∆(§√°„ß•°„ ;)§√
+#error "‚àë(„Å£¬∞–î¬∞ ;)„Å£ : bad include"
 #endif
 
 namespace CSC {
-namespace DEBUGGER {
-template <class...>
-trait FUNCTION_file_max_size_HELP ;
-
-template <class DEPEND>
-trait FUNCTION_file_max_size_HELP<DEPEND ,REQUIRE<MACRO_CONFIG_VAL32<DEPEND>>> {
-	struct FUNCTION_file_max_size {
-		inline LENGTH operator() () const {
-			return LENGTH (VAL32_MAX) ;
-		}
-	} ;
-} ;
-
-template <class DEPEND>
-trait FUNCTION_file_max_size_HELP<DEPEND ,REQUIRE<MACRO_CONFIG_VAL64<DEPEND>>> {
-	struct FUNCTION_file_max_size {
-		inline LENGTH operator() () const {
-			return LENGTH (VAL32_MAX) * 2 ;
-		}
-	} ;
-} ;
-
-struct FUNCTION_file_max_size {
-	inline LENGTH operator() () const {
-		using R1X = typename FUNCTION_file_max_size_HELP<DEPEND ,ALWAYS>::FUNCTION_file_max_size ;
-		static constexpr auto M_INVOKE = R1X () ;
-		return M_INVOKE () ;
-	} ;
-} ;
-
-static constexpr auto file_max_size = FUNCTION_file_max_size () ;
-
+namespace FILESYSTEM {
 template <class...>
 trait FILE_IMPLHOLDER_HELP ;
 
 template <class DEPEND>
 trait FILE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
-	using FILE_NAME_SIZE = typename FILE_HELP<DEPEND ,ALWAYS>::FILE_NAME_SIZE ;
+	using FILE_NAME_SSIZE = typename FILE_HELP<DEPEND ,ALWAYS>::FILE_NAME_SSIZE ;
 	using FILE_RETRY_TIMES = RANK2 ;
 	using Holder = typename FILE_HELP<DEPEND ,ALWAYS>::Holder ;
 
@@ -59,16 +28,16 @@ trait FILE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		HEAP mHeap ;
 
 	public:
-		void init_file (CREF<String<STR>> file) {
-			mHeap.mFile = move (file) ;
+		void init_file (CREF<String<STR>> file_) override {
+			mHeap.mFile = move (file_) ;
 		}
 
-		Auto native () const {
+		Auto native () const override {
 			return CRef<HEAP>::reference (mHeap) ;
 		}
 
-		String<STR> path () const {
-			String<STR> ret = String<STR> (FILE_NAME_SIZE::value) ;
+		String<STR> path () const override {
+			String<STR> ret = String<STR> (FILE_NAME_SSIZE::value) ;
 			const auto r1x = mHeap.mFile.length () ;
 			const auto r2x = mHeap.mFile.find (STR ('\\') ,0 ,r1x ,FALSE) ;
 			const auto r3x = mHeap.mFile.find (STR ('/') ,0 ,r1x ,FALSE) ;
@@ -78,8 +47,8 @@ trait FILE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			return move (ret) ;
 		}
 
-		String<STR> name () const {
-			String<STR> ret = String<STR> (FILE_NAME_SIZE::value) ;
+		String<STR> name () const override {
+			String<STR> ret = String<STR> (FILE_NAME_SSIZE::value) ;
 			const auto r1x = mHeap.mFile.length () ;
 			const auto r2x = mHeap.mFile.find (STR ('\\') ,0 ,r1x ,FALSE) ;
 			const auto r3x = mHeap.mFile.find (STR ('/') ,0 ,r1x ,FALSE) ;
@@ -91,22 +60,22 @@ trait FILE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			return move (ret) ;
 		}
 
-		String<STR> full_name () const {
+		String<STR> full_name () const override {
 			return mHeap.mFile ;
 		}
 
-		VarBuffer<BYTE> load () const {
-			const auto r1x = UniqueRef<HANDLE> ([&] (HANDLE &me) {
-				me = CreateFile (mHeap.mFile.raw ().self ,GENERIC_READ ,FILE_SHARE_READ ,NULL ,OPEN_EXISTING ,FILE_ATTRIBUTE_NORMAL ,NULL) ;
+		VarBuffer<BYTE> load () const override {
+			const auto r1x = UniqueRef<HANDLE> ([&] (VREF<HANDLE> me) {
+				me = CreateFile ((&mHeap.mFile[0]) ,GENERIC_READ ,FILE_SHARE_READ ,NULL ,OPEN_EXISTING ,FILE_ATTRIBUTE_NORMAL ,NULL) ;
 				if (me == INVALID_HANDLE_VALUE)
 					me = NULL ;
 				assume (me != NULL) ;
-			} ,[] (HANDLE &me) {
+			} ,[] (VREF<HANDLE> me) {
 				CloseHandle (me) ;
 			}) ;
 			const auto r2x = LENGTH (GetFileSize (r1x.self ,NULL)) ;
 			assume (r2x >= 0) ;
-			assume (r2x <= file_max_size ()) ;
+			assume (r2x <= VAL32_MAX) ;
 			VarBuffer<BYTE> ret = VarBuffer<BYTE> (r2x) ;
 			auto rax = DWORD () ;
 			auto rbx = r2x ;
@@ -123,13 +92,13 @@ trait FILE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			return move (ret) ;
 		}
 
-		void load (VREF<RegBuffer<BYTE>> item) const {
-			const auto r1x = UniqueRef<HANDLE> ([&] (HANDLE &me) {
-				me = CreateFile (mHeap.mFile.raw ().self ,GENERIC_READ ,FILE_SHARE_READ ,NULL ,OPEN_EXISTING ,FILE_ATTRIBUTE_NORMAL ,NULL) ;
+		void load (VREF<RegBuffer<BYTE>> item) const override {
+			const auto r1x = UniqueRef<HANDLE> ([&] (VREF<HANDLE> me) {
+				me = CreateFile ((&mHeap.mFile[0]) ,GENERIC_READ ,FILE_SHARE_READ ,NULL ,OPEN_EXISTING ,FILE_ATTRIBUTE_NORMAL ,NULL) ;
 				if (me == INVALID_HANDLE_VALUE)
 					me = NULL ;
 				assume (me != NULL) ;
-			} ,[] (HANDLE &me) {
+			} ,[] (VREF<HANDLE> me) {
 				CloseHandle (me) ;
 			}) ;
 			const auto r2x = LENGTH (GetFileSize (r1x.self ,NULL)) ;
@@ -150,10 +119,10 @@ trait FILE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				item[i] = BYTE (0X00) ;
 		}
 
-		void save (CREF<RegBuffer<BYTE>> item) const {
-			assume (item.size () <= file_max_size ()) ;
+		void save (CREF<RegBuffer<BYTE>> item) const override {
+			assume (item.size () <= VAL32_MAX) ;
 			const auto r1x = UniqueRef<HANDLE> ([&] (VREF<HANDLE> me) {
-				me = CreateFile (mHeap.mFile.raw ().self ,GENERIC_WRITE ,0 ,NULL ,CREATE_ALWAYS ,FILE_ATTRIBUTE_NORMAL ,NULL) ;
+				me = CreateFile ((&mHeap.mFile[0]) ,GENERIC_WRITE ,0 ,NULL ,CREATE_ALWAYS ,FILE_ATTRIBUTE_NORMAL ,NULL) ;
 				if (me == INVALID_HANDLE_VALUE)
 					me = NULL ;
 				assume (me != NULL) ;
@@ -175,7 +144,7 @@ trait FILE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			assume (rbx == 0) ;
 		}
 
-		CREF<RegBuffer<BYTE>> load_assert (CREF<FLAG> uuid) const {
+		CRef<RegBuffer<BYTE>> load_asset (CREF<FLAG> uuid) const override {
 			const auto r1x = FindResource (NULL ,MAKEINTRESOURCE (uuid) ,TEXT ("BIN")) ;
 			assume (r1x != NULL) ;
 			const auto r2x = LoadResource (NULL ,r1x) ;
@@ -184,12 +153,13 @@ trait FILE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			assume (r3x != ZERO) ;
 			const auto r4x = LENGTH (SizeofResource (NULL ,r1x)) ;
 			assume (r4x >= 0) ;
-			unimplemented () ;
-			return bad (TYPEAS<CREF<RegBuffer<BYTE>>>::id) ;
+			auto &&tmp_a = unsafe_deref (unsafe_cast[TYPEAS<TEMP<BYTE>>::id] (unsafe_pointer (r3x))) ;
+			auto &&tmp_b = keep[TYPEAS<CREF<ARR<BYTE>>>::id] (unsafe_array (tmp_a)) ;
+			return RegBuffer<BYTE>::from (tmp_b ,0 ,r4x) ;
 		}
 
-		BOOL find () const {
-			const auto r1x = GetFileAttributes (mHeap.mFile.raw ().self) ;
+		BOOL find () const override {
+			const auto r1x = GetFileAttributes ((&mHeap.mFile[0])) ;
 			if (r1x == INVALID_FILE_ATTRIBUTES)
 				return FALSE ;
 			if (CSC::CHAR (r1x & FILE_ATTRIBUTE_DIRECTORY) != CSC::CHAR (0X00))
@@ -197,40 +167,40 @@ trait FILE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			return TRUE ;
 		}
 
-		void erase () const {
-			DeleteFile (mHeap.mFile.raw ().self) ;
+		void erase () const override {
+			DeleteFile ((&mHeap.mFile[0])) ;
 		}
 
-		void copy_from (CREF<Holder> that) const {
+		void copy_from (CREF<Holder> that) const override {
 			using R1X = typename FILE_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::HEAP ;
 			auto &&tmp = that.native ().as (TYPEAS<CRef<R1X>>::id).self ;
 			const auto r1x = find () ;
 			assume (ifnot (r1x)) ;
-			CopyFile (tmp.mFile.raw ().self ,mHeap.mFile.raw ().self ,TRUE) ;
+			CopyFile ((&tmp.mFile[0]) ,(&mHeap.mFile[0]) ,TRUE) ;
 		}
 
-		void move_from (CREF<Holder> that) const {
+		void move_from (CREF<Holder> that) const override {
 			using R1X = typename FILE_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::HEAP ;
 			auto &&tmp = that.native ().as (TYPEAS<CRef<R1X>>::id).self ;
 			const auto r1x = find () ;
 			assume (ifnot (r1x)) ;
-			MoveFile (tmp.mFile.raw ().self ,mHeap.mFile.raw ().self) ;
+			MoveFile ((&tmp.mFile[0]) ,(&mHeap.mFile[0])) ;
 		}
 
-		void link_from (CREF<Holder> that) const {
+		void link_from (CREF<Holder> that) const override {
 			using R1X = typename FILE_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::HEAP ;
 			auto &&tmp = that.native ().as (TYPEAS<CRef<R1X>>::id).self ;
 			const auto r1x = find () ;
 			assume (ifnot (r1x)) ;
-			CreateHardLink (mHeap.mFile.raw ().self ,tmp.mFile.raw ().self ,NULL) ;
+			CreateHardLink ((&mHeap.mFile[0]) ,(&tmp.mFile[0]) ,NULL) ;
 		}
 
-		BOOL identical (CREF<Holder> that) const {
+		BOOL identical (CREF<Holder> that) const override {
 			using R1X = typename FILE_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::HEAP ;
 			auto &&tmp = that.native ().as (TYPEAS<CRef<R1X>>::id).self ;
 			auto rax = ARRAY2<BY_HANDLE_FILE_INFORMATION> () ;
 			const auto r1x = UniqueRef<HANDLE> ([&] (VREF<HANDLE> me) {
-				me = CreateFile (mHeap.mFile.raw ().self ,GENERIC_READ ,FILE_SHARE_READ ,NULL ,OPEN_EXISTING ,FILE_ATTRIBUTE_NORMAL ,NULL) ;
+				me = CreateFile ((&mHeap.mFile[0]) ,GENERIC_READ ,FILE_SHARE_READ ,NULL ,OPEN_EXISTING ,FILE_ATTRIBUTE_NORMAL ,NULL) ;
 				if (me == INVALID_HANDLE_VALUE)
 					me = NULL ;
 			} ,[] (VREF<HANDLE> me) {
@@ -245,7 +215,7 @@ trait FILE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			if (rax[0].nNumberOfLinks == 0)
 				return FALSE ;
 			const auto r3x = UniqueRef<HANDLE> ([&] (VREF<HANDLE> me) {
-				me = CreateFile (tmp.mFile.raw ().self ,GENERIC_READ ,FILE_SHARE_READ ,NULL ,OPEN_EXISTING ,FILE_ATTRIBUTE_NORMAL ,NULL) ;
+				me = CreateFile ((&tmp.mFile[0]) ,GENERIC_READ ,FILE_SHARE_READ ,NULL ,OPEN_EXISTING ,FILE_ATTRIBUTE_NORMAL ,NULL) ;
 				if (me == INVALID_HANDLE_VALUE)
 					me = NULL ;
 			} ,[] (VREF<HANDLE> me) {
@@ -270,17 +240,23 @@ trait FILE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	} ;
 } ;
 
+template <>
+exports auto FILE_HELP<DEPEND ,ALWAYS>::FUNCTION_link::invoke () -> VRef<Holder> {
+	using R1X = typename FILE_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
+	return VRef<R1X>::make () ;
+} ;
+
 template <class...>
 trait DIRECTORY_IMPLHOLDER_HELP ;
 
 template <class DEPEND>
 trait DIRECTORY_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
-	using FILE_NAME_SIZE = typename FILE_HELP<DEPEND ,ALWAYS>::FILE_NAME_SIZE ;
-	using Holder = typename FILE_HELP<DEPEND ,ALWAYS>::Holder ;
+	using FILE_NAME_SSIZE = typename FILE_HELP<DEPEND ,ALWAYS>::FILE_NAME_SSIZE ;
+	using Holder = typename DIRECTORY_HELP<DEPEND ,ALWAYS>::Holder ;
 
 	struct HEAP {
 		String<STR> mFile ;
-		Cell<CRef<Array<INDEX>>> mQuote ;
+		ArrayList<INDEX> mQuote ;
 	} ;
 
 	class ImplHolder implement Holder {
@@ -288,39 +264,35 @@ trait DIRECTORY_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		HEAP mHeap ;
 
 	public:
-		void init_file (CREF<String<STR>> file) {
-			mHeap.mFile = move (file) ;
-			mHeap.mQuote.initialize () ;
+		void init_file (CREF<String<STR>> file_) override {
+			mHeap.mFile = move (file_) ;
+			update_quote () ;
 		}
 
-		Auto native () const {
+		Auto native () const override {
 			return CRef<HEAP>::reference (mHeap) ;
 		}
 
-		String<STR> path () const {
-			String<STR> ret = String<STR> (FILE_NAME_SIZE::value) ;
-			update_quote () ;
-			const auto r1x = mHeap.mQuote.fetch () ;
+		String<STR> path () const override {
+			String<STR> ret = String<STR> (FILE_NAME_SSIZE::value) ;
 			const auto r2x = invoke ([&] () {
-				if (r1x->length () == 0)
+				if (mHeap.mQuote.length () == 0)
 					return ZERO ;
-				return r1x.self[r1x->length () - 1] ;
+				return mHeap.mQuote[mHeap.mQuote.length () - 1] ;
 			}) ;
 			for (auto &&i : iter (0 ,r2x))
 				ret[i] = mHeap.mFile[i] ;
 			return move (ret) ;
 		}
 
-		String<STR> name () const {
-			String<STR> ret = String<STR> (FILE_NAME_SIZE::value) ;
-			update_quote () ;
-			const auto r1x = mHeap.mQuote.fetch () ;
+		String<STR> name () const override {
+			String<STR> ret = String<STR> (FILE_NAME_SSIZE::value) ;
 			const auto r2x = invoke ([&] () {
-				if (r1x->length () < 2)
+				if (mHeap.mQuote.length () < 2)
 					return ZERO ;
-				return r1x.self[r1x->length () - 2] + 1 ;
+				return mHeap.mQuote[mHeap.mQuote.length () - 2] + 1 ;
 			}) ;
-			const auto r3x = r1x.self[r1x->length () - 1] ;
+			const auto r3x = mHeap.mQuote[mHeap.mQuote.length () - 1] ;
 			for (auto &&i : iter (r2x ,r3x)) {
 				INDEX ix = i - r2x ;
 				ret[ix] = mHeap.mFile[i] ;
@@ -328,39 +300,36 @@ trait DIRECTORY_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			return move (ret) ;
 		}
 
-		String<STR> full_name () const {
+		String<STR> full_name () const override {
 			unimplemented () ;
 			return bad (TYPEAS<String<STR>>::id) ;
 		}
 
-		LENGTH depth () const {
+		LENGTH depth () const override {
 			unimplemented () ;
 			return bad (TYPEAS<LENGTH>::id) ;
 		}
 
-		void parent_from (CREF<Holder> a) {
+		void parent_from (CREF<Holder> a) override {
 			unimplemented () ;
 		}
 
-		void brother_from (CREF<Holder> a) {
+		void brother_from (CREF<Holder> a) override {
 			unimplemented () ;
 		}
 
-		void child_from (CREF<Holder> a ,CREF<String<STR>> file) {
+		void child_from (CREF<Holder> a) override {
 			unimplemented () ;
 		}
 
-		LENGTH child_size () const {
-			unimplemented () ;
-			return ZERO ;
-		}
-
-		void child_from (CREF<Holder> a ,CREF<INDEX> index) {
+		void child_from (CREF<Holder> a ,CREF<String<STR>> file_) override {
 			unimplemented () ;
 		}
 
-		BOOL find () const {
-			const auto r1x = GetFileAttributes (mHeap.mFile.raw ().self) ;
+		BOOL find () const override {
+			if (mHeap.mFile.empty ())
+				return FALSE ;
+			const auto r1x = GetFileAttributes ((&mHeap.mFile[0])) ;
 			if (r1x == INVALID_FILE_ATTRIBUTES)
 				return FALSE ;
 			if (CSC::CHAR (r1x & FILE_ATTRIBUTE_DIRECTORY) == CSC::CHAR (0X00))
@@ -368,66 +337,49 @@ trait DIRECTORY_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			return TRUE ;
 		}
 
-		BOOL lock () const {
+		BOOL lock () const override {
 			unimplemented () ;
 			return bad (TYPEAS<BOOL>::id) ;
 		}
 
-		void build () const {
+		void build () const override {
 			unimplemented () ;
 		}
 
-		void erase () const {
-			RemoveDirectory (mHeap.mFile.raw ().self) ;
+		void erase () const override {
+			RemoveDirectory ((&mHeap.mFile[0])) ;
 		}
 
-		void clear () const {
+		void clear () const override {
 			unimplemented () ;
 		}
 
 	private:
-		void update_quote () const {
-			if (mHeap.mQuote.exist ())
-				return ;
+		void update_quote () {
 			const auto r1x = mHeap.mFile.length () ;
-			const auto r2x = invoke ([&] () {
-				LENGTH ret = 0 ;
-				INDEX ix = 0 ;
-				while (TRUE) {
-					if (ix >= r1x)
-						break ;
-					if ifswitch (TRUE) {
-						if (mHeap.mFile[ix] != STR ('\\'))
-							if (mHeap.mFile[ix] != STR ('/'))
-								discard ;
-						ret++ ;
-					}
-					ix++ ;
-				}
-				return move (ret) ;
-			}) ;
-			auto rax = Array<INDEX> (r2x + 1) ;
+			mHeap.mQuote = ArrayList<INDEX> (mHeap.mFile.length ()) ;
 			INDEX ix = 0 ;
-			INDEX jx = 0 ;
 			while (TRUE) {
 				if (ix >= r1x)
-					break ;
-				if (jx >= r2x)
 					break ;
 				if ifswitch (TRUE) {
 					if (mHeap.mFile[ix] != STR ('\\'))
 						if (mHeap.mFile[ix] != STR ('/'))
 							discard ;
-					rax[jx] = ix ;
-					jx++ ;
+					mHeap.mQuote.add (ix) ;
 				}
 				ix++ ;
 			}
-			assert (ix == r2x) ;
-			rax[r2x] = r1x ;
-			mHeap.mQuote.store (CRef<Array<INDEX>>::make (move (rax))) ;
+			mHeap.mQuote.add (r1x) ;
+			mHeap.mQuote.remap () ;
 		}
 	} ;
+} ;
+
+template <>
+exports auto DIRECTORY_HELP<DEPEND ,ALWAYS>::FUNCTION_link::invoke () -> VRef<Holder> {
+	using R1X = typename DIRECTORY_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
+	return VRef<R1X>::make () ;
 } ;
 } ;
 } ;

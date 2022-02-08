@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <AutoVisualizer xmlns="http://schemas.microsoft.com/vstudio/debugger/natvis/2010">
 
   <!--"https://docs.microsoft.com/en-us/visualstudio/debugger/create-custom-views-of-native-objects?view=vs-2017#BKMK_Why_create_visualizations_"-->
@@ -14,7 +14,7 @@
 
   <Type Name="CSC::CORE::BOX_HELP&lt;*&gt;::Box">
     <Expand>
-      <ExpandedItem>mValue</ExpandedItem>
+      <ExpandedItem>&amp;mValue</ExpandedItem>
     </Expand>
   </Type>
 
@@ -30,7 +30,7 @@
   
   <Type Name="CSC::CORE::CELL_HELP&lt;*&gt;::Cell">
     <Expand>
-      <ExpandedItem>mValue</ExpandedItem>
+      <ExpandedItem>&amp;mValue</ExpandedItem>
     </Expand>
   </Type>
 
@@ -40,7 +40,7 @@
     </Expand>
   </Type>
 
-  <Type Name="CSC::CORE::VREF_HELP&lt;*&gt;::VRef" Priority="MediumLow">
+  <Type Name="CSC::CORE::VREF_HELP&lt;*&gt;::VRef" Priority="Low">
     <Expand>
       <ExpandedItem>(Holder*)mHolder</ExpandedItem>
     </Expand>
@@ -48,7 +48,7 @@
 
   <Type Name="CSC::CORE::VREF_IMPLHOLDER_HELP&lt;*&gt;::ImplHolder">
     <Expand>
-      <ExpandedItem>mValue</ExpandedItem>
+      <ExpandedItem>&amp;mValue</ExpandedItem>
     </Expand>
   </Type>
 
@@ -68,7 +68,7 @@
     </Expand>
   </Type>
 
-  <Type Name="CSC::CORE::CREF_HELP&lt;*&gt;::CRef" Priority="MediumLow">
+  <Type Name="CSC::CORE::CREF_HELP&lt;*&gt;::CRef" Priority="Low">
     <Expand>
       <ExpandedItem>(Holder*)mHolder</ExpandedItem>
     </Expand>
@@ -76,7 +76,7 @@
 
   <Type Name="CSC::CORE::CREF_IMPLHOLDER_HELP&lt;*&gt;::ImplHolder">
     <Expand>
-      <ExpandedItem>mValue</ExpandedItem>
+      <ExpandedItem>&amp;mValue</ExpandedItem>
     </Expand>
   </Type>
 
@@ -92,13 +92,13 @@
 
   <Type Name="CSC::CORE::CREF_PUREHOLDER_HELP&lt;*&gt;::PureHolder">
     <Expand>
-      <ExpandedItem>mValue</ExpandedItem>
+      <ExpandedItem>&amp;mValue</ExpandedItem>
     </Expand>
   </Type>
 
   <Type Name="CSC::CORE::SLICE_HELP&lt;*&gt;::Slice">
     <Expand>
-      <ExpandedItem>mThis</ExpandedItem>
+      <ExpandedItem>&amp;mThis</ExpandedItem>
     </Expand>
   </Type>
 
@@ -144,7 +144,7 @@
 
   <Type Name="CSC::CORE::CLAZZ_HELP&lt;*&gt;::Clazz">
     <Expand>
-      <ExpandedItem>mThis</ExpandedItem>
+      <ExpandedItem>&amp;mThis</ExpandedItem>
     </Expand>
   </Type>
 
@@ -154,13 +154,13 @@
 
   <Type Name="CSC::CORE::EXCEPTION_HELP&lt;*&gt;::Exception">
     <Expand>
-      <ExpandedItem>mThis</ExpandedItem>
+      <ExpandedItem>&amp;mThis</ExpandedItem>
     </Expand>
   </Type>
 
   <Type Name="CSC::CORE::EXCEPTION_IMPLHOLDER_HELP&lt;*&gt;::ImplHolder">
     <Expand>
-      <ExpandedItem>mWhat</ExpandedItem>
+      <ExpandedItem>&amp;mWhat</ExpandedItem>
     </Expand>
   </Type>
 
@@ -173,71 +173,55 @@
 
   <Type Name="CSC::BASIC::OPTIONAL_HELP&lt;*&gt;::Optional">
     <Expand>
-      <ExpandedItem>mThis</ExpandedItem>
+      <ExpandedItem>&amp;mThis</ExpandedItem>
     </Expand>
   </Type>
 
-  <Type Name="CSC::BASIC::ANYREF_HELP&lt;*&gt;::AnyRef">
+  <Type Name="CSC::BASIC::AUTOREF_HELP&lt;*&gt;::AutoRef">
     <Expand>
-      <ExpandedItem>mThis</ExpandedItem>
+      <ExpandedItem>&amp;mThis</ExpandedItem>
     </Expand>
   </Type>
 
-  <Type Name="CSC::BASIC::ANYREF_IMPLHOLDER_HELP&lt;*&gt;::ImplHolder">
+  <Type Name="CSC::BASIC::AUTOREF_IMPLHOLDER_HELP&lt;*&gt;::ImplHolder">
     <Expand>
-      <ExpandedItem>mValue</ExpandedItem>
+      <ExpandedItem>&amp;mValue</ExpandedItem>
     </Expand>
   </Type>
   
   <Type Name="CSC::BASIC::SHAREDREF_HELP&lt;*&gt;::SharedRef">
     <Expand>
-      <ExpandedItem>mThis</ExpandedItem>
+      <ExpandedItem>&amp;mThis</ExpandedItem>
     </Expand>
   </Type>
 
   <Type Name="CSC::BASIC::SHAREDREF_IMPLHOLDER_HELP&lt;*&gt;::ImplHolder">
     <Expand>
-      <ExpandedItem>mValue</ExpandedItem>
+      <ExpandedItem>&amp;mValue</ExpandedItem>
     </Expand>
   </Type>
 
   <Type Name="CSC::BASIC::UNIQUEREF_HELP&lt;*&gt;::UniqueRef">
     <Expand>
-      <ExpandedItem>mThis</ExpandedItem>
+      <ExpandedItem>&amp;mThis</ExpandedItem>
     </Expand>
   </Type>
 
   <Type Name="CSC::BASIC::UNIQUEREF_IMPLHOLDER_HELP&lt;*&gt;::ImplHolder">
     <Expand>
-      <ExpandedItem>mValue</ExpandedItem>
+      <ExpandedItem>&amp;mValue</ExpandedItem>
     </Expand>
   </Type>
 
   <Type Name="CSC::BASIC::TUPLE_HELP&lt;*&gt;::Tuple">
     <Expand>
-      <Item Name="[one]">mOne</Item>
-      <Item Name="[rest]">mRest</Item>
+      <ExpandedItem>&amp;mTuple</ExpandedItem>
     </Expand>
   </Type>
 
   <Type Name="CSC::BASIC::FUNCTION_HELP&lt;*&gt;::Function">
     <Expand>
-      <ExpandedItem>mThis</ExpandedItem>
-    </Expand>
-  </Type>
-
-  <Type Name="CSC::BASIC::BUFFER_HELP&lt;*&gt;::Buffer" Priority="MediumLow">
-    <Expand>
-      <Item Name="[size]">$T2::value</Item>
-      <ArrayItems Condition="$T2::value&gt;=10">
-        <Size>10</Size>
-        <ValuePointer>($T1*)&amp;mBuffer.mArray</ValuePointer>
-      </ArrayItems>
-      <ArrayItems Condition="$T2::value&lt;10">
-        <Size>$T2::value</Size>
-        <ValuePointer>($T1*)&amp;mBuffer.mArray</ValuePointer>
-      </ArrayItems>
-      <Item Name="[+]">mBuffer</Item>
+      <ExpandedItem>&amp;mThis</ExpandedItem>
     </Expand>
   </Type>
 
@@ -256,35 +240,50 @@
     </Expand>
   </Type>
 
+  <Type Name="CSC::BASIC::BUFFER_HELP&lt;*&gt;::Buffer" Priority="MediumLow">
+    <Expand>
+      <Item Name="[size]">$T2::value</Item>
+      <ArrayItems Condition="$T2::value&gt;=10">
+        <Size>10</Size>
+        <ValuePointer>($T1*)&amp;mBuffer.mArray</ValuePointer>
+      </ArrayItems>
+      <ArrayItems Condition="$T2::value&lt;10">
+        <Size>$T2::value</Size>
+        <ValuePointer>($T1*)&amp;mBuffer.mArray</ValuePointer>
+      </ArrayItems>
+      <Item Name="[+]">mBuffer</Item>
+    </Expand>
+  </Type>
+
   <Type Name="CSC::BASIC::ALLOCATOR_HELP&lt;*&gt;::Allocator">
     <Expand>
       <Item Name="[length]">mLength</Item>
-      <ExpandedItem>mAllocator</ExpandedItem>
+      <ExpandedItem>&amp;mAllocator</ExpandedItem>
     </Expand>
   </Type>
 
   <Type Name="CSC::BASIC::ALLOCATOR_DEFAULT_HELP&lt;*&gt;::NODE">
     <Expand>
-      <ExpandedItem Condition="mNext==-2">mItem</ExpandedItem>
+      <ExpandedItem Condition="mNext==-2">&amp;mItem</ExpandedItem>
     </Expand>
   </Type>
 
   <Type Name="CSC::BASIC::LATER_HELP&lt;*&gt;::Later">
     <Expand>
-      <ExpandedItem>mThis</ExpandedItem>
+      <ExpandedItem>&amp;mThis</ExpandedItem>
     </Expand>
   </Type>
 
   <Type Name="CSC::BASIC::LATER_HELP&lt;*&gt;::LATER">
     <Expand>
       <Item Name="[index]">mIndex</Item>
-      <ExpandedItem>mHeap</ExpandedItem>
+      <ExpandedItem>&amp;mHeap</ExpandedItem>
     </Expand>
   </Type>
 
   <Type Name="CSC::BASIC::LATER_HELP&lt;*&gt;::HEAP">
     <Expand>
-      <ExpandedItem>mList</ExpandedItem>
+      <ExpandedItem>&amp;mList</ExpandedItem>
     </Expand>
   </Type>
 
@@ -296,7 +295,7 @@
 
   <Type Name="CSC::ARRAY::ARRAY_HELP&lt;*&gt;::Array">
     <Expand>
-      <ExpandedItem>mArray</ExpandedItem>
+      <ExpandedItem>&amp;mArray</ExpandedItem>
     </Expand>
   </Type>
 
@@ -304,7 +303,7 @@
     <DisplayString>{{ {(char*)mString.mBuffer.mPointer,s} }}</DisplayString>
     <StringView>(char*)mString.mBuffer.mPointer,s</StringView>
     <Expand>
-      <ExpandedItem>mString</ExpandedItem>
+      <ExpandedItem>&amp;mString</ExpandedItem>
     </Expand>
   </Type>
 
@@ -312,7 +311,7 @@
     <DisplayString>{{ {(wchar_t*)mString.mBuffer.mPointer,su} }}</DisplayString>
     <StringView>(wchar_t*)mString.mBuffer.mPointer,su</StringView>
     <Expand>
-      <ExpandedItem>mString</ExpandedItem>
+      <ExpandedItem>&amp;mString</ExpandedItem>
     </Expand>
   </Type>
 
@@ -320,7 +319,7 @@
     <DisplayString>{{ {(char*)mString.mBuffer.mPointer,s8} }}</DisplayString>
     <StringView>(char*)mString.mBuffer.mPointer,s8</StringView>
     <Expand>
-      <ExpandedItem>mString</ExpandedItem>
+      <ExpandedItem>&amp;mString</ExpandedItem>
     </Expand>
   </Type>
 
@@ -328,7 +327,7 @@
     <DisplayString>{{ {(char16_t*)mString.mBuffer.mPointer,su} }}</DisplayString>
     <StringView>(char16_t*)mString.mBuffer.mPointer,su</StringView>
     <Expand>
-      <ExpandedItem>mString</ExpandedItem>
+      <ExpandedItem>&amp;mString</ExpandedItem>
     </Expand>
   </Type>
 
@@ -336,7 +335,7 @@
     <DisplayString>{{ {(char32_t*)mString.mBuffer.mPointer,s32} }}</DisplayString>
     <StringView>(char32_t*)mString.mBuffer.mPointer,s32</StringView>
     <Expand>
-      <ExpandedItem>mString</ExpandedItem>
+      <ExpandedItem>&amp;mString</ExpandedItem>
     </Expand>
   </Type>
 
@@ -344,20 +343,20 @@
     <Expand>
       <Item Name="[read]">mRead</Item>
       <Item Name="[write]">mWrite</Item>
-      <ExpandedItem>mDeque</ExpandedItem>
+      <ExpandedItem>&amp;mDeque</ExpandedItem>
     </Expand>
   </Type>
 
   <Type Name="CSC::ARRAY::DEQUE_HELP&lt;*&gt;::NODE">
     <Expand>
-      <ExpandedItem>mItem</ExpandedItem>
+      <ExpandedItem>&amp;mItem</ExpandedItem>
     </Expand>
   </Type>
 
   <Type Name="CSC::ARRAY::PRIORITY_HELP&lt;*&gt;::Priority">
     <Expand>
       <Item Name="[write]">mWrite</Item>
-      <ExpandedItem>mPriority</ExpandedItem>
+      <ExpandedItem>&amp;mPriority</ExpandedItem>
     </Expand>
   </Type>
 
@@ -372,40 +371,40 @@
     <Expand>
       <Item Name="[first]">mFirst</Item>
       <Item Name="[last]">mLast</Item>
-      <ExpandedItem>mList</ExpandedItem>
+      <ExpandedItem>&amp;mList</ExpandedItem>
     </Expand>
   </Type>
 
   <Type Name="CSC::ARRAY::LIST_HELP&lt;*&gt;::NODE">
     <Expand>
-      <ExpandedItem>mItem</ExpandedItem>
+      <ExpandedItem>&amp;mItem</ExpandedItem>
     </Expand>
   </Type>
 
   <Type Name="CSC::ARRAY::ARRAYLIST_HELP&lt;*&gt;::ArrayList">
     <Expand>
       <Item Name="[range]">mRange</Item>
-      <ExpandedItem>mList</ExpandedItem>
+      <ExpandedItem>&amp;mList</ExpandedItem>
     </Expand>
   </Type>
 
   <Type Name="CSC::ARRAY::ARRAYLIST_HELP&lt;*&gt;::NODE">
     <Expand>
-      <ExpandedItem>mItem</ExpandedItem>
+      <ExpandedItem>&amp;mItem</ExpandedItem>
     </Expand>
   </Type>
 
   <Type Name="CSC::ARRAY::BITSET_HELP&lt;*&gt;::BitSet">
     <Expand>
       <Item Name="[width]">mWidth</Item>
-      <ExpandedItem>mSet</ExpandedItem>
+      <ExpandedItem>&amp;mSet</ExpandedItem>
     </Expand>
   </Type>
 
   <Type Name="CSC::ARRAY::SET_HELP&lt;*&gt;::Set">
     <Expand>
       <Item Name="[root]">mRoot</Item>
-      <ExpandedItem>mSet</ExpandedItem>
+      <ExpandedItem>&amp;mSet</ExpandedItem>
     </Expand>
   </Type>
 
@@ -419,7 +418,7 @@
   <Type Name="CSC::ARRAY::HASHSET_HELP&lt;*&gt;::HashSet">
     <Expand>
       <Item Name="[range]">mRange</Item>
-      <ExpandedItem>mSet</ExpandedItem>
+      <ExpandedItem>&amp;mSet</ExpandedItem>
     </Expand>
   </Type>
 

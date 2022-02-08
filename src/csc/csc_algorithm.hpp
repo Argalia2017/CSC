@@ -15,6 +15,81 @@
 namespace CSC {
 namespace ALGORITHM {
 template <class...>
+trait MARKED_HELP ;
+
+template <class ITEM ,class MARK>
+trait MARKED_HELP<ITEM ,MARK ,ALWAYS> {
+	class Marked {
+	public:
+		ITEM mItem ;
+		MARK mMark ;
+
+	public:
+		implicit Marked () = default ;
+
+		explicit Marked (CREF<ITEM> item) {
+			assign (move (item) ,NONE) ;
+		}
+
+		explicit Marked (RREF<ITEM> item) {
+			assign (move (item) ,NONE) ;
+		}
+
+		explicit Marked (CREF<ITEM> item ,CREF<MARK> mark) {
+			assign (move (item) ,mark) ;
+		}
+
+		explicit Marked (RREF<ITEM> item ,CREF<MARK> mark) {
+			assign (move (item) ,mark) ;
+		}
+
+		void assign (RREF<ITEM> item ,CREF<MARK> mark) {
+			mItem = move (item) ;
+			mMark = mark ;
+		}
+
+		BOOL equal (CREF<Marked> that) const {
+			return operator_equal (mItem ,that.mItem) ;
+		}
+
+		inline BOOL operator== (CREF<Marked> that) const {
+			return equal (that) ;
+		}
+
+		inline BOOL operator!= (CREF<Marked> that) const {
+			return ifnot (equal (that)) ;
+		}
+
+		FLAG compr (CREF<Marked> that) const {
+			return operator_compr (mItem ,that.mItem) ;
+		}
+
+		inline BOOL operator< (CREF<Marked> that) const {
+			return compr (that) < ZERO ;
+		}
+
+		inline BOOL operator<= (CREF<Marked> that) const {
+			return compr (that) <= ZERO ;
+		}
+
+		inline BOOL operator> (CREF<Marked> that) const {
+			return compr (that) > ZERO ;
+		}
+
+		inline BOOL operator>= (CREF<Marked> that) const {
+			return compr (that) >= ZERO ;
+		}
+
+		FLAG hash () const {
+			return operator_hash (mItem) ;
+		}
+	} ;
+} ;
+
+template <class ITEM ,class MARK>
+using Marked = typename MARKED_HELP<ITEM ,MARK ,ALWAYS>::Marked ;
+
+template <class...>
 trait DISJOINT_HELP ;
 
 template <class DEPEND>
@@ -429,13 +504,13 @@ trait SEGMENTSET_HELP<DEPEND ,ALWAYS> {
 			if ifswitch (TRUE) {
 				if (mRealLeft.size () == mSegmentSet.size ())
 					discard ;
-				const auto r1x = Array<INDEX>::make_range (mRealLeft.iter ()) ;
+				const auto r1x = Array<INDEX>::make (mRealLeft.iter ()) ;
 				mRealLeft = BitSet<> (mSegmentSet.size () ,r1x) ;
 			}
 			if ifswitch (TRUE) {
 				if (mRealRight.size () == mSegmentSet.size ())
 					discard ;
-				const auto r2x = Array<INDEX>::make_range (mRealRight.iter ()) ;
+				const auto r2x = Array<INDEX>::make (mRealRight.iter ()) ;
 				mRealRight = BitSet<> (mSegmentSet.size () ,r2x) ;
 			}
 			mReal = BitSet<> (mSegmentSetRange.size ()) ;

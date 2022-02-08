@@ -1,7 +1,7 @@
-#pragma once
+ï»¿#pragma once
 
 #ifndef __CSC_STRING__
-#error "¡Æ(¤Ã¡ã§¥¡ã ;)¤Ã : require 'csc_string.hpp'"
+#error "âˆ‘(ã£Â°Ğ”Â° ;)ã£ : require 'csc_string.hpp'"
 #endif
 
 namespace CSC {
