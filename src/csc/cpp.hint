@@ -16,7 +16,7 @@
 #define slice(...)
 #define assert(...)
 #define assume(...)
-#define unittest_watch(...)
+#define unittest(...)
 #define forceinline
 #define ifnot(...)
 #define ifswitch(...)

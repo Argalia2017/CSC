@@ -10,6 +10,7 @@
 #include <exception>
 #include <atomic>
 #include <stdarg.h>
+#include <malloc.h>
 #include "end.h"
 
 #ifdef __CSC_COMPILER_GNUC__
@@ -19,89 +20,6 @@ using ::max_align_t ;
 #endif
 
 namespace CSC {
-namespace CORE {
-template <class...>
-trait FUNCTION_unsafe_barrier_HELP ;
-
-template <class DEPEND>
-trait FUNCTION_unsafe_barrier_HELP<DEPEND ,REQUIRE<MACRO_COMPILER_MSVC<DEPEND>>> {
-	struct FUNCTION_unsafe_barrier {
-		inline forceinline void operator() () const noexcept {
-			noop () ;
-		}
-	} ;
-} ;
-
-template <class DEPEND>
-trait FUNCTION_unsafe_barrier_HELP<DEPEND ,REQUIRE<MACRO_COMPILER_GNUC<DEPEND>>> {
-#ifdef __CSC_COMPILER_GNUC__
-	struct FUNCTION_unsafe_barrier {
-		inline forceinline void operator() () const noexcept {
-			asm volatile ("" ::: "memory") ;
-		}
-	} ;
-#endif
-} ;
-
-template <class DEPEND>
-trait FUNCTION_unsafe_barrier_HELP<DEPEND ,REQUIRE<MACRO_COMPILER_CLANG<DEPEND>>> {
-#ifdef __CSC_COMPILER_CLANG__
-	struct FUNCTION_unsafe_barrier {
-		inline forceinline void operator() () const noexcept {
-			asm volatile ("" ::: "memory") ;
-		}
-	} ;
-#endif
-} ;
-
-exports void FUNCTION_unsafe_barrier::invoke () {
-	using R1X = typename FUNCTION_unsafe_barrier_HELP<DEPEND ,ALWAYS>::FUNCTION_unsafe_barrier ;
-	static constexpr auto M_INVOKE = R1X () ;
-	return M_INVOKE () ;
-} ;
-
-template <class...>
-trait FUNCTION_unsafe_break_HELP ;
-
-template <class DEPEND>
-trait FUNCTION_unsafe_break_HELP<DEPEND ,REQUIRE<MACRO_COMPILER_MSVC<DEPEND>>> {
-#ifdef __CSC_COMPILER_MSVC__
-	struct FUNCTION_unsafe_break {
-		inline forceinline void operator() () const noexcept {
-			__debugbreak () ;
-		}
-	} ;
-#endif
-} ;
-
-template <class DEPEND>
-trait FUNCTION_unsafe_break_HELP<DEPEND ,REQUIRE<MACRO_COMPILER_GNUC<DEPEND>>> {
-#ifdef __CSC_COMPILER_GNUC__
-	struct FUNCTION_unsafe_break {
-		inline forceinline void operator() () const noexcept {
-			__builtin_trap () ;
-		}
-	} ;
-#endif
-} ;
-
-template <class DEPEND>
-trait FUNCTION_unsafe_break_HELP<DEPEND ,REQUIRE<MACRO_COMPILER_CLANG<DEPEND>>> {
-#ifdef __CSC_COMPILER_CLANG__
-	struct FUNCTION_unsafe_break {
-		inline forceinline void operator() () const noexcept {
-			__builtin_trap () ;
-		}
-	} ;
-#endif
-} ;
-
-exports void FUNCTION_unsafe_break::invoke () {
-	using R1X = typename FUNCTION_unsafe_break_HELP<DEPEND ,ALWAYS>::FUNCTION_unsafe_break ;
-	static constexpr auto M_INVOKE = R1X () ;
-	return M_INVOKE () ;
-} ;
-
 exports void FUNCTION_unsafe_abort::invoke () {
 	std::terminate () ;
 }
@@ -145,35 +63,29 @@ struct FUNCTION_current_usage_size {
 
 static constexpr auto current_usage_size = FUNCTION_current_usage_size () ;
 
-template <class...>
-trait HEAPPROC_IMPLHOLDER_HELP ;
-
 template <class DEPEND>
 trait HEAPPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
-	class ImplHolder {
-	private:
-		Box<std::atomic<LENGTH>> mUsageSize ;
+	using Holder = typename HEAPPROC_HELP<DEPEND ,ALWAYS>::Holder ;
+
+	class ImplHolder implement Holder {
+	protected:
+		std::atomic<LENGTH> mUsageSize ;
 
 	public:
-		imports VREF<ImplHolder> instance () {
-			static auto mInstance = invoke ([&] () {
-				ImplHolder ret ;
-				ret.mUsageSize = Box<std::atomic<LENGTH>>::make (0) ;
-				return move (ret) ;
-			}) ;
-			return mInstance ;
+		implicit ImplHolder () {
+			mUsageSize.store (0) ;
 		}
 
-		LENGTH align () const {
+		LENGTH align () const override {
 			return ALIGN_OF<std::max_align_t>::value ;
 		}
 
-		LENGTH usage () const {
-			LENGTH ret = mUsageSize->load () ;
+		LENGTH usage () const override {
+			LENGTH ret = fake.load () ;
 			return move (ret) ;
 		}
 
-		FLAG alloc[[nodiscard]] (CREF<LENGTH> size_) {
+		FLAG alloc (CREF<LENGTH> size_) const override {
 			FLAG ret = FLAG (operator new (size_ ,std::nothrow)) ;
 			if ifswitch (TRUE) {
 				if (ret != ZERO)
@@ -181,36 +93,29 @@ trait HEAPPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				assume (FALSE) ;
 			}
 			const auto r1x = current_usage_size (ret) ;
-			mUsageSize->fetch_add (r1x) ;
+			fake.fetch_add (r1x) ;
 			return move (ret) ;
 		}
 
-		void free (CREF<LENGTH> addr_) {
+		void free (CREF<FLAG> addr_) const override {
 			const auto r1x = current_usage_size (addr_) ;
-			mUsageSize->fetch_sub (r1x) ;
+			fake.fetch_sub (r1x) ;
 			operator delete ((&unsafe_pointer (addr_)) ,std::nothrow) ;
+		}
+
+	private:
+		VREF<std::atomic<LENGTH>> m_fake () const leftvalue {
+			const auto r1x = address (mUsageSize) ;
+			return unsafe_deref (unsafe_cast[TYPEAS<TEMP<std::atomic<LENGTH>>>::id] (unsafe_pointer (r1x))) ;
 		}
 	} ;
 } ;
 
-exports LENGTH FUNCTION_unsafe_align::invoke () {
+template <>
+exports auto HEAPPROC_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () -> Box<FakeHolder> {
 	using R1X = typename HEAPPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
-	return R1X::instance ().align () ;
+	Box<FakeHolder> ret ;
+	ret.acquire (TYPEAS<R1X>::id) ;
+	return move (ret) ;
 }
-
-exports LENGTH FUNCTION_unsafe_usage::invoke () {
-	using R1X = typename HEAPPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
-	return R1X::instance ().usage () ;
-}
-
-exports FLAG FUNCTION_unsafe_alloc::invoke[[nodiscard]] (CREF<LENGTH> size_) {
-	using R1X = typename HEAPPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
-	return R1X::instance ().alloc (size_) ;
-}
-
-exports void FUNCTION_unsafe_free::invoke (CREF<LENGTH> addr_) {
-	using R1X = typename HEAPPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
-	return R1X::instance ().free (addr_) ;
-}
-} ;
 } ;

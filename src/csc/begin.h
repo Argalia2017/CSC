@@ -16,7 +16,7 @@
 #undef slice
 #undef assert
 #undef assume
-#undef unittest_watch
+#undef unittest
 #undef noinline
 #undef forceinline
 #undef ifnot
@@ -24,10 +24,10 @@
 #undef discard
 #undef typeof
 
-#ifdef __CSC_HAS_NULL
+#ifdef use_define_has_null
 #pragma pop_macro ("TRUE")
 #pragma pop_macro ("FALSE")
 #pragma pop_macro ("NULL")
 
-#undef __CSC_HAS_NULL
+#undef use_define_has_null
 #endif

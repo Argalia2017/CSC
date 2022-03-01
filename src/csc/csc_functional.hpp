@@ -15,9 +15,9 @@
 #include "csc_stream.hpp"
 #include "csc_string.hpp"
 #include "csc_runtime.hpp"
+#include "csc_thread.hpp"
 
 namespace CSC {
-namespace FUNCTIONAL {
 template <class...>
 trait SYNTAXTREE_HELP ;
 
@@ -28,7 +28,6 @@ trait SYNTAXTREE_HELP<DEPEND ,ALWAYS> {
 	struct NODE {
 		String<STR> mName ;
 		FLAG mCABI ;
-		FLAG mThread ;
 		AutoRef<> mValue ;
 		Function<void> mOnceActor ;
 		Function<void> mActor ;
@@ -37,10 +36,12 @@ trait SYNTAXTREE_HELP<DEPEND ,ALWAYS> {
 		BOOL mPlaying ;
 		BOOL mOncePlayed ;
 		BOOL mPlayed ;
+		LENGTH mLifetime ;
 		Set<INDEX> mParent ;
 		Set<INDEX> mChild ;
 		Set<INDEX> mMaybe ;
-		VRef<INDEX> mLater ;
+		Set<INDEX> mDepend ;
+		INDEX mLater ;
 		LENGTH mOrder ;
 		LENGTH mDepth ;
 		LENGTH mUsage ;
@@ -49,265 +50,255 @@ trait SYNTAXTREE_HELP<DEPEND ,ALWAYS> {
 	using ARRAY2X = Tuple<INDEX ,INDEX> ;
 
 	class SyntaxTree {
-	private:
-		List<NODE> mTreeList ;
-		Set<ARRAY2X> mTreeCABISet ;
-		VRef<LENGTH> mThreadGenerator ;
+	protected:
+		List<NODE> mTree ;
+		Set<FLAG> mTreeCABISet ;
+		CRef<BOOL> mEnableClean ;
 		Deque<INDEX> mTreeStack ;
 		Priority<ARRAY2X> mPlayPriority ;
 		Deque<ARRAY2X> mDepthStack ;
-		CRef<BOOL> mEnableClean ;
 		Deque<INDEX> mCleanQueue ;
-		Deque<INDEX> mUndoQueue ;
 		Deque<INDEX> mScanQueue ;
 
 	public:
 		implicit SyntaxTree () {
-			INDEX ix = mTreeList.insert () ;
-			mTreeList[ix].mName = slice ("") ;
-			mTreeList[ix].mCABI = 0 ;
-			mTreeList[ix].mThread = 0 ;
-			mTreeList[ix].mValue = AutoRef<> () ;
-			mTreeList[ix].mOnceActor = Function<void> () ;
-			mTreeList[ix].mActor = Function<void> () ;
-			mTreeList[ix].mIsFunction = FALSE ;
-			mTreeList[ix].mIsIteration = FALSE ;
-			mTreeList[ix].mPlaying = FALSE ;
-			mTreeList[ix].mOncePlayed = FALSE ;
-			mTreeList[ix].mPlayed = FALSE ;
-			mTreeList[ix].mParent = Set<INDEX> (SYNTEAXTREE_LINK_MIN_SIZE::value) ;
-			mTreeList[ix].mChild = Set<INDEX> (SYNTEAXTREE_LINK_MIN_SIZE::value) ;
-			mTreeList[ix].mMaybe = Set<INDEX> (SYNTEAXTREE_LINK_MIN_SIZE::value) ;
-			mTreeList[ix].mLater = NULL ;
-			mTreeList[ix].mOrder = 0 ;
-			mTreeList[ix].mDepth = 0 ;
-			mTreeList[ix].mUsage = 0 ;
+			INDEX ix = mTree.insert () ;
+			mTree[ix].mName = slice ("") ;
+			mTree[ix].mCABI = 0 ;
+			mTree[ix].mIsFunction = FALSE ;
+			mTree[ix].mIsIteration = FALSE ;
+			mTree[ix].mPlaying = FALSE ;
+			mTree[ix].mOncePlayed = FALSE ;
+			mTree[ix].mPlayed = FALSE ;
+			mTree[ix].mLifetime = 1 ;
+			mTree[ix].mParent = Set<INDEX> (SYNTEAXTREE_LINK_MIN_SIZE::value) ;
+			mTree[ix].mChild = Set<INDEX> (SYNTEAXTREE_LINK_MIN_SIZE::value) ;
+			mTree[ix].mMaybe = Set<INDEX> (SYNTEAXTREE_LINK_MIN_SIZE::value) ;
+			mTree[ix].mLater = NONE ;
+			mTree[ix].mOrder = 0 ;
+			mTree[ix].mDepth = 0 ;
+			mTree[ix].mUsage = 0 ;
 			mTreeStack.add (ix) ;
-		}
-
-		SyntaxTree thread () {
-			SyntaxTree ret ;
-			if ifswitch (TRUE) {
-				if (mThreadGenerator != NULL)
-					discard ;
-				mThreadGenerator = VRef<LENGTH>::make (0) ;
-			}
-			INDEX ix = ret.root_node () ;
-			ret.mTreeList[ix].mThread = mThreadGenerator.self ;
-			mThreadGenerator.self++ ;
-			return move (ret) ;
 		}
 
 		void mark_as_function () {
 			INDEX ix = curr_node () ;
 			assume (ix != root_node ()) ;
-			assume (ifnot (mTreeList[ix].mOnceActor.exist ())) ;
-			assume (ifnot (mTreeList[ix].mActor.exist ())) ;
-			assume (ifnot (mTreeList[ix].mPlaying)) ;
-			mTreeList[ix].mIsFunction = TRUE ;
+			assume (ifnot (mTree[ix].mOnceActor.exist ())) ;
+			assume (ifnot (mTree[ix].mActor.exist ())) ;
+			assume (ifnot (mTree[ix].mPlaying)) ;
+			mTree[ix].mIsFunction = TRUE ;
 		}
 
 		void mark_as_iteration () {
 			INDEX ix = curr_node () ;
 			assume (ix != root_node ()) ;
-			assume (ifnot (mTreeList[ix].mOnceActor.exist ())) ;
-			assume (ifnot (mTreeList[ix].mActor.exist ())) ;
-			assume (ifnot (mTreeList[ix].mPlaying)) ;
-			mTreeList[ix].mIsIteration = TRUE ;
-		}
-
-		template <class ARG1>
-		void later (XREF<ARG1> id) {
-			INDEX ix = curr_node () ;
-			assume (ifnot (mTreeList[ix].mOnceActor.exist ())) ;
-			assume (ifnot (mTreeList[ix].mActor.exist ())) ;
-			assume (ifnot (mTreeList[ix].mPlaying)) ;
-			assume (mTreeList[ix].mIsIteration) ;
-			INDEX iy = insert_node (TYPEAS<ARG1>::id ,ix) ;
-			assume (ix != iy) ;
-			mTreeList[iy].mLater = VRef<INDEX>::make (ix) ;
+			assume (ifnot (mTree[ix].mOnceActor.exist ())) ;
+			assume (ifnot (mTree[ix].mActor.exist ())) ;
+			assume (ifnot (mTree[ix].mPlaying)) ;
+			mTree[ix].mIsIteration = TRUE ;
 		}
 
 		template <class ARG1>
 		void maybe (XREF<ARG1> id) {
+			using R1X = REMOVE_ALL<ARG1> ;
 			INDEX ix = curr_node () ;
-			assume (ifnot (mTreeList[ix].mOnceActor.exist ())) ;
-			assume (ifnot (mTreeList[ix].mActor.exist ())) ;
-			assume (ifnot (mTreeList[ix].mPlaying)) ;
-			INDEX iy = insert_node (TYPEAS<ARG1>::id ,ix) ;
+			assume (ifnot (mTree[ix].mOnceActor.exist ())) ;
+			assume (ifnot (mTree[ix].mActor.exist ())) ;
+			assume (ifnot (mTree[ix].mPlaying)) ;
+			INDEX iy = insert_node (TYPEAS<R1X>::id) ;
 			assume (ix != iy) ;
 			if ifswitch (TRUE) {
-				mTreeList[iy].mParent.add (ix) ;
-				mTreeList[ix].mMaybe.add (iy) ;
+				mTree[iy].mParent.add (ix) ;
+				mTree[ix].mMaybe.add (iy) ;
 				track_depth (iy ,ix) ;
 			}
 			if ifswitch (TRUE) {
-				if (mTreeList[iy].mValue.exist ())
+				if (mTree[iy].mValue.exist ())
 					discard ;
-				assume (ifnot (mTreeList[iy].mOncePlayed)) ;
-				assume (ifnot (mTreeList[iy].mPlayed)) ;
+				assume (ifnot (mTree[iy].mOncePlayed)) ;
+				assume (ifnot (mTree[iy].mPlayed)) ;
 				mTreeStack.add (iy) ;
-				mTreeList[iy].mValue = AutoRef<ARG1>::make (thiz) ;
+				auto rax = AutoRef<Box<R1X>>::make () ;
+				//@warn: mValue depend on it's address
+				rax->acquire (TYPEAS<R1X>::id ,thiz) ;
+				mTree[iy].mValue = move (rax) ;
 				mTreeStack.pop () ;
 			}
 		}
 
 		template <class ARG1>
 		CREF<REMOVE_ALL<ARG1>> value (XREF<ARG1> id) leftvalue {
+			using R1X = REMOVE_ALL<ARG1> ;
 			INDEX ix = curr_node () ;
-			assume (ifnot (mTreeList[ix].mActor.exist ())) ;
-			assume (ifnot (mTreeList[ix].mOncePlayed)) ;
-			INDEX iy = insert_node (TYPEAS<ARG1>::id ,ix) ;
+			assume (ifnot (mTree[ix].mActor.exist ())) ;
+			assume (ifnot (mTree[ix].mOncePlayed)) ;
+			INDEX iy = insert_node (TYPEAS<R1X>::id) ;
 			assume (ix != iy) ;
 			if ifswitch (TRUE) {
-				if ifnot (mTreeList[ix].mPlaying)
+				if ifnot (mTree[ix].mPlaying)
 					discard ;
-				assume (mTreeList[ix].mMaybe.find (iy) != NONE) ;
-				if ifnot (mTreeList[iy].mIsIteration)
-					discard ;
-				mTreeList[ix].mIsIteration = TRUE ;
+				assume (mTree[iy].mParent.find (ix) != NONE) ;
+				assume (mTree[ix].mMaybe.find (iy) != NONE) ;
 			}
 			if ifswitch (TRUE) {
-				mTreeList[iy].mParent.add (ix) ;
-				mTreeList[ix].mChild.add (iy) ;
+				mTree[iy].mParent.add (ix) ;
+				mTree[ix].mChild.add (iy) ;
 				track_depth (iy ,ix) ;
 			}
 			if ifswitch (TRUE) {
-				if (mTreeList[iy].mValue.exist ())
+				if (mTree[iy].mValue.exist ())
 					discard ;
-				assume (ifnot (mTreeList[iy].mOncePlayed)) ;
-				assume (ifnot (mTreeList[iy].mPlayed)) ;
+				assume (ifnot (mTree[iy].mOncePlayed)) ;
+				assume (ifnot (mTree[iy].mPlayed)) ;
 				mTreeStack.add (iy) ;
-				mTreeList[iy].mValue = AutoRef<ARG1>::make (thiz) ;
+				auto rax = AutoRef<Box<R1X>>::make () ;
+				//@warn: mValue depend on it's address
+				rax->acquire (TYPEAS<R1X>::id ,thiz) ;
+				mTree[iy].mValue = move (rax) ;
 				mTreeStack.pop () ;
 			}
-			return mTreeList[iy].mValue.rebind (TYPEAS<ARG1>::id).self ;
+			return AutoRef<Box<R1X>>::from (mTree[iy].mValue)->self ;
 		}
 
 		void once (RREF<Function<void>> actor) {
 			INDEX ix = curr_node () ;
 			assume (ix != root_node ()) ;
-			assume (ifnot (mTreeList[ix].mOnceActor.exist ())) ;
-			assume (ifnot (mTreeList[ix].mActor.exist ())) ;
-			assume (ifnot (mTreeList[ix].mPlaying)) ;
-			assume (ifnot (mTreeList[ix].mIsFunction)) ;
-			assume (ifnot (mTreeList[ix].mIsIteration)) ;
-			mTreeList[ix].mOnceActor = move (actor) ;
+			assume (ifnot (mTree[ix].mOnceActor.exist ())) ;
+			assume (ifnot (mTree[ix].mActor.exist ())) ;
+			assume (ifnot (mTree[ix].mPlaying)) ;
+			assume (ifnot (mTree[ix].mIsFunction)) ;
+			mTree[ix].mOnceActor = move (actor) ;
 		}
 
 		void then (RREF<Function<void>> actor) {
 			INDEX ix = curr_node () ;
 			assume (ix != root_node ()) ;
-			assume (ifnot (mTreeList[ix].mActor.exist ())) ;
-			assume (ifnot (mTreeList[ix].mOncePlayed)) ;
-			mTreeList[ix].mActor = move (actor) ;
+			assume (ifnot (mTree[ix].mActor.exist ())) ;
+			assume (ifnot (mTree[ix].mOncePlayed)) ;
+			assume (ifnot (mTree[ix].mIsIteration)) ;
+			mTree[ix].mActor = move (actor) ;
+		}
+
+		template <class ARG1>
+		void later (XREF<ARG1> id) {
+			using R1X = REMOVE_ALL<ARG1> ;
+			INDEX ix = curr_node () ;
+			assume (ifnot (mTree[ix].mActor.exist ())) ;
+			assume (ifnot (mTree[ix].mOncePlayed)) ;
+			assume (mTree[ix].mIsIteration) ;
+			INDEX iy = insert_node (TYPEAS<R1X>::id) ;
+			assume (ix != iy) ;
+			assume (mTree[iy].mLater == NONE) ;
+			const auto r1x = mTree[ix].mValue.clazz () ;
+			const auto r2x = mTree[iy].mValue.clazz () ;
+			assume (r1x.type_size () == r2x.type_size ()) ;
+			assume (r1x.type_align () == r2x.type_align ()) ;
+			mTree[iy].mLater = ix ;
+			auto &&tmp_a = unsafe_deref (unsafe_cast[TYPEAS<TEMP<AutoRef<R1X>>>::id] (unsafe_deptr (mTree[ix].mValue))) ;
+			auto &&tmp_b = unsafe_deref (unsafe_cast[TYPEAS<TEMP<AutoRef<R1X>>>::id] (unsafe_deptr (mTree[iy].mValue))) ;
+			mTree[ix].mActor = Function<void> ([&] () {
+				swap (tmp_a.self ,tmp_b.self) ;
+			}) ;
 		}
 
 		template <class ARG1>
 		void undo (XREF<ARG1> id) {
+			using R1X = REMOVE_ALL<ARG1> ;
 			INDEX ix = curr_node () ;
-			assume (ix != root_node ()) ;
-			assume (ifnot (mTreeList[ix].mActor.exist ())) ;
-			assume (ifnot (mTreeList[ix].mOncePlayed)) ;
-			INDEX iy = insert_node (TYPEAS<ARG1>::id ,ix) ;
+			assume (ix == root_node ()) ;
+			assume (ifnot (mTree[ix].mActor.exist ())) ;
+			assume (ifnot (mTree[ix].mOncePlayed)) ;
+			INDEX iy = insert_node (TYPEAS<R1X>::id) ;
 			assume (ix != iy) ;
-			assume (mTreeList[iy].mIsIteration) ;
-			if ifswitch (TRUE) {
-				if (ix == root_node ())
-					discard ;
-				assume (mTreeList[ix].mPlaying) ;
-				assume (mTreeList[ix].mMaybe.find (iy) != NONE) ;
-			}
-			if ifnot (mTreeList[iy].mPlayed)
-				return ;
-			mUndoQueue.clear () ;
-			mUndoQueue.add (iy) ;
-			while (TRUE) {
-				if (mUndoQueue.empty ())
-					break ;
-				INDEX jx = mUndoQueue[mUndoQueue.head ()] ;
-				mUndoQueue.take () ;
-				if ifswitch (TRUE) {
-					for (auto &&i : mTreeList[jx].mParent) {
-						if ifnot (mTreeList[i].mPlayed)
-							continue ;
-						mUndoQueue.add (i) ;
-					}
-					mTreeList[jx].mPlayed = FALSE ;
-
-				}
+			assume (mTree[iy].mIsIteration) ;
+			undo_scan (iy) ;
+			for (auto &&i : mTree[iy].mDepend) {
+				mTree[i].mPlayed = FALSE ;
+				mTree[i].mLifetime = mTree[i].mParent.length () ;
 			}
 		}
 
 		void play () {
-			mCleanQueue.clear () ;
 			INDEX ix = curr_node () ;
-			const auto r1x = mTreeList[ix].mDepth ;
+			const auto r1x = mTree[ix].mDepth ;
 			play_scan (ix) ;
 			while (TRUE) {
 				if (mPlayPriority.empty ())
 					break ;
 				INDEX jx = mPlayPriority.get (mPlayPriority.head ()) ;
-				if (mTreeList[jx].mDepth <= r1x)
+				if (mTree[jx].mDepth <= r1x)
 					break ;
 				auto eax = TRUE ;
 				if ifswitch (eax) {
-					if (mTreeList[jx].mOncePlayed)
+					if (mTree[jx].mOncePlayed)
 						discard ;
-					assume (mTreeList[jx].mValue.exist ()) ;
+					assume (mTree[jx].mValue.exist ()) ;
 					if ifswitch (TRUE) {
-						if ifnot (mTreeList[jx].mOnceActor.exist ())
+						if ifnot (mTree[jx].mOnceActor.exist ())
 							discard ;
-						const auto r2x = unsafe_usage () ;
+						const auto r2x = HeapProc::instance ().usage () ;
 						mTreeStack.add (jx) ;
-						mTreeList[jx].mOnceActor () ;
+						mTree[jx].mOnceActor () ;
 						mTreeStack.pop () ;
-						const auto r3x = unsafe_usage () ;
-						mTreeList[jx].mUsage += r3x - r2x ;
+						const auto r3x = HeapProc::instance ().usage () ;
+						mTree[jx].mUsage += r3x - r2x ;
 					}
-					mTreeList[jx].mOncePlayed = TRUE ;
-					for (auto &&i : mTreeList[jx].mMaybe) {
-						if (mTreeList[jx].mChild.find (i) != NONE)
+					mTree[jx].mOncePlayed = TRUE ;
+					for (auto &&i : mTree[jx].mMaybe) {
+						if (mTree[jx].mChild.find (i) != NONE)
 							continue ;
-						mTreeList[i].mParent.erase (jx) ;
-						if (mTreeList[i].mParent.length () > 0)
+						mTree[i].mLifetime-- ;
+						if (mTree[i].mLifetime > 0)
 							continue ;
 						mCleanQueue.add (i) ;
 					}
-					mTreeList[jx].mMaybe.clear () ;
 					play_scan (jx) ;
-				}
-				if ifswitch (eax) {
-					if (mTreeList[jx].mPlayed)
+					if ifnot (mTree[jx].mIsIteration)
 						discard ;
-					assume (mTreeList[jx].mValue.exist ()) ;
+					mTree[jx].mPlayed = TRUE ;
+					mTree[jx].mLifetime = mTree[jx].mParent.length () ;
 					if ifswitch (TRUE) {
-						if ifnot (mTreeList[jx].mActor.exist ())
+						if (mTree[jx].mIsFunction)
 							discard ;
-						const auto r4x = unsafe_usage () ;
-						mTreeStack.add (jx) ;
-						mTreeList[jx].mActor () ;
-						mTreeStack.pop () ;
-						const auto r5x = unsafe_usage () ;
-						mTreeList[jx].mUsage += r5x - r4x ;
-					}
-					mTreeList[jx].mPlayed = TRUE ;
-					if ifswitch (TRUE) {
-						if (mTreeList[jx].mIsFunction)
-							discard ;
-						for (auto &&i : mTreeList[jx].mChild) {
-							mTreeList[i].mParent.erase (jx) ;
-							if (mTreeList[i].mParent.length () > 0)
+						for (auto &&i : mTree[jx].mChild) {
+							mTree[i].mLifetime-- ;
+							if (mTree[i].mLifetime > 0)
 								continue ;
 							mCleanQueue.add (i) ;
 						}
-						mTreeList[jx].mChild.clear () ;
-						mTreeList[jx].mActor = Function<void> () ;
+					}
+				}
+				if ifswitch (eax) {
+					if (mTree[jx].mPlayed)
+						discard ;
+					assume (mTree[jx].mValue.exist ()) ;
+					if ifswitch (TRUE) {
+						if ifnot (mTree[jx].mActor.exist ())
+							discard ;
+						const auto r4x = HeapProc::instance ().usage () ;
+						mTreeStack.add (jx) ;
+						mTree[jx].mActor () ;
+						mTreeStack.pop () ;
+						const auto r5x = HeapProc::instance ().usage () ;
+						mTree[jx].mUsage += r5x - r4x ;
+					}
+					mTree[jx].mPlayed = TRUE ;
+					mTree[jx].mLifetime = mTree[jx].mParent.length () ;
+					if ifswitch (TRUE) {
+						if (mTree[jx].mIsFunction)
+							discard ;
+						for (auto &&i : mTree[jx].mChild) {
+							mTree[i].mLifetime-- ;
+							if (mTree[i].mLifetime > 0)
+								continue ;
+							mCleanQueue.add (i) ;
+						}
 					}
 				}
 				if ifswitch (eax) {
 					mPlayPriority.take () ;
-					mTreeList[jx].mPlaying = FALSE ;
+					mTree[jx].mPlaying = FALSE ;
 					play_clean () ;
 				}
 			}
@@ -318,10 +309,8 @@ trait SYNTAXTREE_HELP<DEPEND ,ALWAYS> {
 			assume (ix == root_node ()) ;
 			mEnableClean = CRef<BOOL>::make (TRUE) ;
 			mCleanQueue.clear () ;
-			for (auto &&i : mTreeList.iter ()) {
-				if (i == ix)
-					continue ;
-				if (mTreeList[i].mParent.length () > 0)
+			for (auto &&i : mTree.iter ()) {
+				if (mTree[i].mLifetime > 0)
 					continue ;
 				mCleanQueue.add (i) ;
 			}
@@ -330,34 +319,30 @@ trait SYNTAXTREE_HELP<DEPEND ,ALWAYS> {
 
 	private:
 		template <class ARG1>
-		INDEX insert_node (XREF<ARG1> id ,CREF<INDEX> prev) {
+		INDEX insert_node (XREF<ARG1> id) {
 			const auto r1x = operator_cabi (id) ;
-			const auto r2x = ARRAY2X (r1x ,mTreeList[prev].mThread) ;
-			INDEX ret = mTreeCABISet.map (r2x) ;
+			INDEX ret = mTreeCABISet.map (r1x) ;
 			if ifswitch (TRUE) {
 				if (ret != NONE)
 					discard ;
-				ret = mTreeList.insert () ;
-				mTreeCABISet.add (r2x ,ret) ;
-				mTreeList[ret].mName = operator_name (id) ;
-				mTreeList[ret].mCABI = r1x ;
-				mTreeList[ret].mThread = mTreeList[prev].mThread ;
-				mTreeList[ret].mValue = AutoRef<> () ;
-				mTreeList[ret].mOnceActor = Function<void> () ;
-				mTreeList[ret].mActor = Function<void> () ;
-				mTreeList[ret].mIsFunction = FALSE ;
-				mTreeList[ret].mIsIteration = FALSE ;
-				mTreeList[ret].mPlaying = FALSE ;
-				mTreeList[ret].mOncePlayed = FALSE ;
-				mTreeList[ret].mPlayed = FALSE ;
-				mTreeList[ret].mParent = Set<INDEX> (SYNTEAXTREE_LINK_MIN_SIZE::value) ;
-				mTreeList[ret].mChild = Set<INDEX> (SYNTEAXTREE_LINK_MIN_SIZE::value) ;
-				mTreeList[ret].mMaybe = Set<INDEX> (SYNTEAXTREE_LINK_MIN_SIZE::value) ;
-				mTreeList[ret].mLater = NULL ;
+				ret = mTree.insert () ;
+				mTreeCABISet.add (r1x ,ret) ;
+				mTree[ret].mName = operator_name (id) ;
+				mTree[ret].mCABI = r1x ;
+				mTree[ret].mIsFunction = FALSE ;
+				mTree[ret].mIsIteration = FALSE ;
+				mTree[ret].mPlaying = FALSE ;
+				mTree[ret].mOncePlayed = FALSE ;
+				mTree[ret].mPlayed = FALSE ;
+				mTree[ret].mLifetime = 1 ;
+				mTree[ret].mParent = Set<INDEX> (SYNTEAXTREE_LINK_MIN_SIZE::value) ;
+				mTree[ret].mChild = Set<INDEX> (SYNTEAXTREE_LINK_MIN_SIZE::value) ;
+				mTree[ret].mMaybe = Set<INDEX> (SYNTEAXTREE_LINK_MIN_SIZE::value) ;
+				mTree[ret].mLater = NONE ;
 				INDEX ix = root_node () ;
-				mTreeList[ret].mOrder = mTreeList[ix].mChild.length () ;
-				mTreeList[ret].mDepth = 1 ;
-				mTreeList[ret].mUsage = 0 ;
+				mTree[ret].mOrder = mTree[ix].mChild.length () ;
+				mTree[ret].mDepth = 1 ;
+				mTree[ret].mUsage = 0 ;
 			}
 			return move (ret) ;
 		}
@@ -382,29 +367,29 @@ trait SYNTAXTREE_HELP<DEPEND ,ALWAYS> {
 				INDEX iy = r2x.pick (TYPEAS<RANK1>::id) ;
 				mDepthStack.pop () ;
 				if ifswitch (TRUE) {
-					const auto r3x = mTreeList[iy].mOrder ;
-					const auto r4x = mTreeList[iy].mDepth + 1 ;
-					if (mTreeList[ix].mOrder <= r3x)
-						if (mTreeList[ix].mDepth >= r4x)
+					const auto r3x = mTree[iy].mOrder ;
+					const auto r4x = mTree[iy].mDepth + 1 ;
+					if (mTree[ix].mOrder <= r3x)
+						if (mTree[ix].mDepth >= r4x)
 							discard ;
 					if ifswitch (TRUE) {
 						if (iy == root_node ())
 							discard ;
-						mTreeList[ix].mOrder = min_of (mTreeList[ix].mOrder ,r3x) ;
+						mTree[ix].mOrder = min_of (mTree[ix].mOrder ,r3x) ;
 					}
-					mTreeList[ix].mDepth = max_of (mTreeList[ix].mDepth ,r4x) ;
+					mTree[ix].mDepth = max_of (mTree[ix].mDepth ,r4x) ;
 					if ifswitch (TRUE) {
-						if ifnot (mTreeList[ix].mPlaying)
+						if ifnot (mTree[ix].mPlaying)
 							discard ;
-						const auto r5x = ARRAY2X (mTreeList[ix].mOrder ,-mTreeList[ix].mDepth) ;
+						const auto r5x = ARRAY2X (mTree[ix].mOrder ,-mTree[ix].mDepth) ;
 						mPlayPriority.add (r5x ,ix) ;
 					}
-					for (auto &&i : mTreeList[ix].mChild) {
+					for (auto &&i : mTree[ix].mChild) {
 						assume (i != curr) ;
 						const auto r6x = ARRAY2X (i ,ix) ;
 						mDepthStack.add (r6x) ;
 					}
-					for (auto &&i : mTreeList[ix].mMaybe) {
+					for (auto &&i : mTree[ix].mMaybe) {
 						assume (i != curr) ;
 						const auto r7x = ARRAY2X (i ,ix) ;
 						mDepthStack.add (r7x) ;
@@ -415,10 +400,10 @@ trait SYNTAXTREE_HELP<DEPEND ,ALWAYS> {
 
 		void play_scan (CREF<INDEX> curr) {
 			mScanQueue.clear () ;
-			for (auto &&i : mTreeList[curr].mChild) {
-				if (mTreeList[i].mPlaying)
+			for (auto &&i : mTree[curr].mChild) {
+				if (mTree[i].mPlaying)
 					continue ;
-				if (mTreeList[i].mPlayed)
+				if (mTree[i].mPlayed)
 					continue ;
 				mScanQueue.add (i) ;
 			}
@@ -427,22 +412,44 @@ trait SYNTAXTREE_HELP<DEPEND ,ALWAYS> {
 					break ;
 				INDEX jx = mScanQueue[mScanQueue.head ()] ;
 				mScanQueue.take () ;
-				if ifswitch (TRUE) {
-					const auto r1x = ARRAY2X (mTreeList[jx].mOrder ,-mTreeList[jx].mDepth) ;
-					mPlayPriority.add (r1x ,jx) ;
-					for (auto &&i : mTreeList[jx].mChild) {
-						if (mTreeList[i].mPlaying)
-							continue ;
-						if (mTreeList[i].mPlayed)
-							continue ;
-						mScanQueue.add (i) ;
-					}
-					mTreeList[jx].mPlaying = TRUE ;
+				const auto r1x = ARRAY2X (mTree[jx].mOrder ,-mTree[jx].mDepth) ;
+				mPlayPriority.add (r1x ,jx) ;
+				for (auto &&i : mTree[jx].mChild) {
+					if (mTree[i].mPlaying)
+						continue ;
+					if (mTree[i].mPlayed)
+						continue ;
+					mScanQueue.add (i) ;
 				}
+				mTree[jx].mPlaying = TRUE ;
+			}
+		}
+
+		void undo_scan (CREF<INDEX> curr) {
+			if ifnot (mTree[curr].mPlayed)
+				return ;
+			if (mTree[curr].mDepend.size () > 0)
+				return ;
+			mScanQueue.clear () ;
+			mScanQueue.add (curr) ;
+			mTree[curr].mDepend = Set<INDEX> (SYNTEAXTREE_LINK_MIN_SIZE::value) ;
+			while (TRUE) {
+				if (mScanQueue.empty ())
+					break ;
+				INDEX jx = mScanQueue[mScanQueue.head ()] ;
+				mScanQueue.take () ;
+				for (auto &&i : mTree[jx].mParent) {
+					if ifnot (mTree[i].mPlayed)
+						continue ;
+					mScanQueue.add (i) ;
+				}
+				mTree[curr].mDepend.add (jx) ;
 			}
 		}
 
 		void play_clean () {
+			if (mEnableClean == NULL)
+				return ;
 			if ifnot (mEnableClean.self)
 				return ;
 			while (TRUE) {
@@ -450,43 +457,19 @@ trait SYNTAXTREE_HELP<DEPEND ,ALWAYS> {
 					break ;
 				INDEX jx = mCleanQueue[mCleanQueue.head ()] ;
 				mCleanQueue.take () ;
-				assume (ifnot (mTreeList[jx].mPlaying)) ;
-				if ifswitch (TRUE) {
-					for (auto &&i : mTreeList[jx].mChild) {
-						mTreeList[i].mParent.erase (jx) ;
-						if (mTreeList[i].mParent.length () > 0)
-							continue ;
-						mCleanQueue.add (i) ;
-					}
-					mTreeList[jx].mChild.clear () ;
-					mTreeList[jx].mActor = Function<void> () ;
+				assume (ifnot (mTree[jx].mPlaying)) ;
+				for (auto &&i : mTree[jx].mChild) {
+					mTree[i].mLifetime-- ;
+					if (mTree[i].mLifetime > 0)
+						continue ;
+					mCleanQueue.add (i) ;
 				}
-				mTreeList[jx].mValue = AutoRef<> () ;
+				mTree[jx].mActor = Function<void> () ;
+				mTree[jx].mValue = AutoRef<> () ;
 			}
 		}
 	} ;
 } ;
 
 using SyntaxTree = typename SYNTAXTREE_HELP<DEPEND ,ALWAYS>::SyntaxTree ;
-
-template <class...>
-trait OPERAND_HELP ;
-
-template <class DEPEND>
-trait OPERAND_HELP<DEPEND ,ALWAYS> {
-	class Operand ;
-} ;
-
-template <class...>
-trait OPERANDLIST_HELP ;
-
-template <class DEPEND>
-trait OPERANDLIST_HELP<DEPEND ,ALWAYS> {
-	class OperandList ;
-} ;
-} ;
-} ;
-
-namespace CSC {
-using namespace FUNCTIONAL ;
 } ;

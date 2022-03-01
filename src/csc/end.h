@@ -18,7 +18,7 @@
 #define slice __macro_slice
 #define assert __macro_assert
 #define assume __macro_assume
-#define unittest_watch __macro_unittest_watch
+#define unittest __macro_unittest
 #define avoidinline __macro_avoidinline
 #define forceinline __macro_forceinline
 #define ifnot __macro_ifnot
@@ -27,7 +27,7 @@
 #define typeof __macro_typeof
 
 #ifdef NULL
-#define __CSC_HAS_NULL
+#define use_define_has_null
 
 #pragma push_macro ("TRUE")
 #undef TRUE

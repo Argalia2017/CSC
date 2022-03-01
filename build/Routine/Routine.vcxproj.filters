@@ -58,7 +58,10 @@
     <ClInclude Include="..\..\src\csc\csc_string.hpp">
       <Filter>csc</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\csc\lite.h">
+    <ClInclude Include="..\..\src\csc\compiler.h">
+      <Filter>csc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\csc\csc_thread.hpp">
       <Filter>csc</Filter>
     </ClInclude>
   </ItemGroup>
@@ -95,9 +98,6 @@
     <None Include="..\..\src\csc\csc_debugger.hpp.windows.inl">
       <Filter>csc</Filter>
     </None>
-    <None Include="..\..\src\csc\csc_string.hpp.gbk.inl">
-      <Filter>csc</Filter>
-    </None>
     <None Include="..\..\src\csc\csc_core.hpp.default.inl">
       <Filter>csc</Filter>
     </None>
@@ -105,6 +105,9 @@
       <Filter>csc</Filter>
     </None>
     <None Include="..\..\src\csc\csc_runtime.hpp.windows.inl">
+      <Filter>csc</Filter>
+    </None>
+    <None Include="..\..\src\csc\csc_string.hpp.gbks.inl">
       <Filter>csc</Filter>
     </None>
   </ItemGroup>

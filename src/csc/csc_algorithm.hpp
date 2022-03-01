@@ -13,82 +13,6 @@
 #include "csc_geometry.hpp"
 
 namespace CSC {
-namespace ALGORITHM {
-template <class...>
-trait MARKED_HELP ;
-
-template <class ITEM ,class MARK>
-trait MARKED_HELP<ITEM ,MARK ,ALWAYS> {
-	class Marked {
-	public:
-		ITEM mItem ;
-		MARK mMark ;
-
-	public:
-		implicit Marked () = default ;
-
-		explicit Marked (CREF<ITEM> item) {
-			assign (move (item) ,NONE) ;
-		}
-
-		explicit Marked (RREF<ITEM> item) {
-			assign (move (item) ,NONE) ;
-		}
-
-		explicit Marked (CREF<ITEM> item ,CREF<MARK> mark) {
-			assign (move (item) ,mark) ;
-		}
-
-		explicit Marked (RREF<ITEM> item ,CREF<MARK> mark) {
-			assign (move (item) ,mark) ;
-		}
-
-		void assign (RREF<ITEM> item ,CREF<MARK> mark) {
-			mItem = move (item) ;
-			mMark = mark ;
-		}
-
-		BOOL equal (CREF<Marked> that) const {
-			return operator_equal (mItem ,that.mItem) ;
-		}
-
-		inline BOOL operator== (CREF<Marked> that) const {
-			return equal (that) ;
-		}
-
-		inline BOOL operator!= (CREF<Marked> that) const {
-			return ifnot (equal (that)) ;
-		}
-
-		FLAG compr (CREF<Marked> that) const {
-			return operator_compr (mItem ,that.mItem) ;
-		}
-
-		inline BOOL operator< (CREF<Marked> that) const {
-			return compr (that) < ZERO ;
-		}
-
-		inline BOOL operator<= (CREF<Marked> that) const {
-			return compr (that) <= ZERO ;
-		}
-
-		inline BOOL operator> (CREF<Marked> that) const {
-			return compr (that) > ZERO ;
-		}
-
-		inline BOOL operator>= (CREF<Marked> that) const {
-			return compr (that) >= ZERO ;
-		}
-
-		FLAG hash () const {
-			return operator_hash (mItem) ;
-		}
-	} ;
-} ;
-
-template <class ITEM ,class MARK>
-using Marked = typename MARKED_HELP<ITEM ,MARK ,ALWAYS>::Marked ;
-
 template <class...>
 trait DISJOINT_HELP ;
 
@@ -100,7 +24,7 @@ trait DISJOINT_HELP<DEPEND ,ALWAYS> {
 	} ;
 
 	class Disjoint {
-	private:
+	protected:
 		Array<NODE> mTable ;
 
 	public:
@@ -233,8 +157,8 @@ trait MSTREE_HELP<DEPEND ,ALWAYS> {
 	} ;
 
 	class MSTree {
-	private:
-		ArrayList<NODE> mTree ;
+	protected:
+		List<NODE> mTree ;
 		Array<INDEX> mHead ;
 
 	public:
@@ -252,7 +176,7 @@ trait MSTREE_HELP<DEPEND ,ALWAYS> {
 		}
 
 		void link (CREF<INDEX> from_ ,CREF<INDEX> to_) {
-			INDEX ix = find (from_ ,to_) ;
+			INDEX ix = find (mHead[from_] ,to_) ;
 			if ifswitch (TRUE) {
 				if (ix != NONE)
 					discard ;
@@ -403,15 +327,13 @@ trait MSTREE_HELP<DEPEND ,ALWAYS> {
 			return mTree[curr].mWeight ;
 		}
 
-		void compute_order (CREF<INDEX> curr ,VREF<Array<INDEX>> range_ ,VREF<INDEX> write_) const {
+		void compute_order (CREF<INDEX> curr ,VREF<Array<INDEX>> range_ ,VREF<INDEX> iw) const {
 			if (curr == NONE)
 				return ;
-			INDEX ix = write_ ;
-			compute_order (mTree[curr].mLeft ,range_ ,ix) ;
-			range_[ix] = curr ;
-			ix++ ;
-			compute_order (mTree[curr].mRight ,range_ ,ix) ;
-			write_ = ix ;
+			compute_order (mTree[curr].mLeft ,range_ ,iw) ;
+			range_[iw] = curr ;
+			iw++ ;
+			compute_order (mTree[curr].mRight ,range_ ,iw) ;
 		}
 	} ;
 } ;
@@ -426,7 +348,7 @@ trait SEGMENTSET_HELP<DEPEND ,ALWAYS> {
 	using FLOAT = SINGLE ;
 
 	class SegmentTable {
-	private:
+	protected:
 		FLOAT mTolerance ;
 		Set<FLOAT> mSegmentSet ;
 		Array<INDEX> mSegmentSetRange ;
@@ -525,9 +447,4 @@ trait SEGMENTSET_HELP<DEPEND ,ALWAYS> {
 		}
 	} ;
 } ;
-} ;
-} ;
-
-namespace CSC {
-using namespace ALGORITHM ;
 } ;
