@@ -12,65 +12,62 @@
 #include "csc_stream.hpp"
 
 namespace CSC {
-namespace STRING {
 template <class...>
 trait STRINGPROC_HELP ;
+
+template <class...>
+trait STRINGPROC_IMPLHOLDER_HELP ;
 
 template <class DEPEND>
 trait STRINGPROC_HELP<DEPEND ,ALWAYS> {
 	struct Holder implement Interface {
-		virtual BOOL is_ansi_string (CREF<String<STRA>> obj) const = 0 ;
-		virtual BOOL is_ansi_string (CREF<String<STRW>> obj) const = 0 ;
-		virtual String<STRW> ansi_string_cvt (CREF<String<STRA>> obj) const = 0 ;
 		virtual String<STRA> ansi_string_cvt (CREF<String<STRW>> obj) const = 0 ;
+		virtual String<STRW> ansi_string_cvt (CREF<String<STRA>> obj) const = 0 ;
+		virtual String<STRA> gbks_string_cvt (CREF<String<STRW>> obj) const = 0 ;
+		virtual String<STRW> gbks_string_cvt (CREF<String<STRA>> obj) const = 0 ;
 		virtual String<STRA> locale_string_cvt (CREF<String<STRW>> obj) const = 0 ;
 		virtual String<STRW> locale_string_cvt (CREF<String<STRA>> obj) const = 0 ;
 	} ;
 
+	struct FUNCTION_extern {
+		imports VRef<Holder> invoke () ;
+	} ;
+
 	class StringProc {
+	protected:
+		VRef<Holder> mThis ;
+
 	public:
 		imports CREF<StringProc> instance () {
 			return memorize ([&] () {
-				return StringProc () ;
+				StringProc ret ;
+				ret.mThis = FUNCTION_extern::invoke () ;
+				return move (ret) ;
 			}) ;
 		}
 
-		imports BOOL is_ansi_string (CREF<String<STRA>> obj) {
-			return instance ().template_is_ansi_string (obj) ;
-		}
-
-		imports BOOL is_ansi_string (CREF<String<STRW>> obj) {
-			return instance ().template_is_ansi_string (obj) ;
-		}
-
 		imports String<STRW> ansi_string_cvt (CREF<String<STRA>> obj) {
-			String<STRW> ret = String<STRW> (obj.length ()) ;
-			INDEX ix = 0 ;
-			for (auto &&i : obj) {
-				ret[ix] = STRW (i) ;
-				ix++ ;
-			}
-			return move (ret) ;
+			return instance ().mThis->ansi_string_cvt (obj) ;
 		}
 
 		imports String<STRA> ansi_string_cvt (CREF<String<STRW>> obj) {
-			String<STRA> ret = String<STRA> (obj.length ()) ;
-			INDEX ix = 0 ;
-			for (auto &&i : obj) {
-				ret[ix] = STRA (i) ;
-				ix++ ;
-			}
-			return move (ret) ;
+			return instance ().mThis->ansi_string_cvt (obj) ;
 		}
 
-	private:
-		template <class ARG1>
-		BOOL template_is_ansi_string (XREF<ARG1> obj) const {
-			for (auto &&i : obj.iter ()) {
-				if (STRU32 (i) >= STRU32 (128))
-					return FALSE ;
-			}
-			return TRUE ;
+		imports String<STRW> gbks_string_cvt (CREF<String<STRA>> obj) {
+			return instance ().mThis->gbks_string_cvt (obj) ;
+		}
+
+		imports String<STRA> gbks_string_cvt (CREF<String<STRW>> obj) {
+			return instance ().mThis->gbks_string_cvt (obj) ;
+		}
+
+		imports String<STRW> locale_string_cvt (CREF<String<STRA>> obj) {
+			return instance ().mThis->locale_string_cvt (obj) ;
+		}
+
+		imports String<STRA> locale_string_cvt (CREF<String<STRW>> obj) {
+			return instance ().mThis->locale_string_cvt (obj) ;
 		}
 	} ;
 } ;
@@ -98,7 +95,7 @@ trait FUNCTION_string_parse_impl_HELP<UNIT1 ,UNIT2 ,REQUIRE<IS_SAME<UNIT1 ,BOOL>
 
 template <class UNIT1 ,class UNIT2>
 trait FUNCTION_string_build_impl_HELP<UNIT1 ,UNIT2 ,REQUIRE<IS_SAME<UNIT2 ,BOOL>>> {
-	struct FUNCTION_string_parse_impl {
+	struct FUNCTION_string_build_impl {
 		inline String<UNIT1> operator() (CREF<BOOL> obj) const {
 			String<UNIT1> ret = String<UNIT1> (64) ;
 			auto rax = TextWriter<UNIT1> (ret.raw ()) ;
@@ -124,7 +121,7 @@ trait FUNCTION_string_parse_impl_HELP<UNIT1 ,UNIT2 ,REQUIRE<IS_SAME<UNIT1 ,VAL32
 
 template <class UNIT1 ,class UNIT2>
 trait FUNCTION_string_build_impl_HELP<UNIT1 ,UNIT2 ,REQUIRE<IS_SAME<UNIT2 ,VAL32>>> {
-	struct FUNCTION_string_parse_impl {
+	struct FUNCTION_string_build_impl {
 		inline String<UNIT1> operator() (CREF<VAL32> obj) const {
 			String<UNIT1> ret = String<UNIT1> (64) ;
 			auto rax = TextWriter<UNIT1> (ret.raw ()) ;
@@ -150,7 +147,7 @@ trait FUNCTION_string_parse_impl_HELP<UNIT1 ,UNIT2 ,REQUIRE<IS_SAME<UNIT1 ,VAL64
 
 template <class UNIT1 ,class UNIT2>
 trait FUNCTION_string_build_impl_HELP<UNIT1 ,UNIT2 ,REQUIRE<IS_SAME<UNIT2 ,VAL64>>> {
-	struct FUNCTION_string_parse_impl {
+	struct FUNCTION_string_build_impl {
 		inline String<UNIT1> operator() (CREF<VAL64> obj) const {
 			String<UNIT1> ret = String<UNIT1> (64) ;
 			auto rax = TextWriter<UNIT1> (ret.raw ()) ;
@@ -176,7 +173,7 @@ trait FUNCTION_string_parse_impl_HELP<UNIT1 ,UNIT2 ,REQUIRE<IS_SAME<UNIT1 ,SINGL
 
 template <class UNIT1 ,class UNIT2>
 trait FUNCTION_string_build_impl_HELP<UNIT1 ,UNIT2 ,REQUIRE<IS_SAME<UNIT2 ,SINGLE>>> {
-	struct FUNCTION_string_parse_impl {
+	struct FUNCTION_string_build_impl {
 		inline String<UNIT1> operator() (CREF<SINGLE> obj) const {
 			String<UNIT1> ret = String<UNIT1> (64) ;
 			auto rax = TextWriter<UNIT1> (ret.raw ()) ;
@@ -202,7 +199,7 @@ trait FUNCTION_string_parse_impl_HELP<UNIT1 ,UNIT2 ,REQUIRE<IS_SAME<UNIT1 ,DOUBL
 
 template <class UNIT1 ,class UNIT2>
 trait FUNCTION_string_build_impl_HELP<UNIT1 ,UNIT2 ,REQUIRE<IS_SAME<UNIT2 ,DOUBLE>>> {
-	struct FUNCTION_string_parse_impl {
+	struct FUNCTION_string_build_impl {
 		inline String<UNIT1> operator() (CREF<DOUBLE> obj) const {
 			String<UNIT1> ret = String<UNIT1> (64) ;
 			auto rax = TextWriter<UNIT1> (ret.raw ()) ;
@@ -228,7 +225,7 @@ trait FUNCTION_string_parse_impl_HELP<UNIT1 ,UNIT2 ,REQUIRE<IS_SAME<UNIT1 ,BYTE>
 
 template <class UNIT1 ,class UNIT2>
 trait FUNCTION_string_build_impl_HELP<UNIT1 ,UNIT2 ,REQUIRE<IS_SAME<UNIT2 ,BYTE>>> {
-	struct FUNCTION_string_parse_impl {
+	struct FUNCTION_string_build_impl {
 		inline String<UNIT1> operator() (CREF<BYTE> obj) const {
 			String<UNIT1> ret = String<UNIT1> (64) ;
 			auto rax = TextWriter<UNIT1> (ret.raw ()) ;
@@ -254,7 +251,7 @@ trait FUNCTION_string_parse_impl_HELP<UNIT1 ,UNIT2 ,REQUIRE<IS_SAME<UNIT1 ,WORD>
 
 template <class UNIT1 ,class UNIT2>
 trait FUNCTION_string_build_impl_HELP<UNIT1 ,UNIT2 ,REQUIRE<IS_SAME<UNIT2 ,WORD>>> {
-	struct FUNCTION_string_parse_impl {
+	struct FUNCTION_string_build_impl {
 		inline String<UNIT1> operator() (CREF<WORD> obj) const {
 			String<UNIT1> ret = String<UNIT1> (64) ;
 			auto rax = TextWriter<UNIT1> (ret.raw ()) ;
@@ -280,7 +277,7 @@ trait FUNCTION_string_parse_impl_HELP<UNIT1 ,UNIT2 ,REQUIRE<IS_SAME<UNIT1 ,CHAR>
 
 template <class UNIT1 ,class UNIT2>
 trait FUNCTION_string_build_impl_HELP<UNIT1 ,UNIT2 ,REQUIRE<IS_SAME<UNIT2 ,CHAR>>> {
-	struct FUNCTION_string_parse_impl {
+	struct FUNCTION_string_build_impl {
 		inline String<UNIT1> operator() (CREF<CHAR> obj) const {
 			String<UNIT1> ret = String<UNIT1> (64) ;
 			auto rax = TextWriter<UNIT1> (ret.raw ()) ;
@@ -306,7 +303,7 @@ trait FUNCTION_string_parse_impl_HELP<UNIT1 ,UNIT2 ,REQUIRE<IS_SAME<UNIT1 ,DATA>
 
 template <class UNIT1 ,class UNIT2>
 trait FUNCTION_string_build_impl_HELP<UNIT1 ,UNIT2 ,REQUIRE<IS_SAME<UNIT2 ,DATA>>> {
-	struct FUNCTION_string_parse_impl {
+	struct FUNCTION_string_build_impl {
 		inline String<UNIT1> operator() (CREF<DATA> obj) const {
 			String<UNIT1> ret = String<UNIT1> (64) ;
 			auto rax = TextWriter<UNIT1> (ret.raw ()) ;
@@ -318,7 +315,7 @@ trait FUNCTION_string_build_impl_HELP<UNIT1 ,UNIT2 ,REQUIRE<IS_SAME<UNIT2 ,DATA>
 } ;
 
 template <class UNIT1 ,class UNIT2>
-using FUNCTION_string_parse_impl = typename FUNCTION_string_parse_impl_HELP<UNIT1 ,UNIT2 ,REQUIRE<IS_SAME<UNIT1 ,UNIT1>>>::FUNCTION_string_parse_impl ;
+using FUNCTION_string_parse_impl = typename FUNCTION_string_parse_impl_HELP<UNIT1 ,UNIT2 ,ALWAYS>::FUNCTION_string_parse_impl ;
 
 template <class...>
 trait FUNCTION_string_parse_HELP ;
@@ -343,7 +340,7 @@ using FUNCTION_string_parse = typename FUNCTION_string_parse_HELP<DEPEND ,ALWAYS
 static constexpr auto string_parse = FUNCTION_string_parse () ;
 
 template <class UNIT1 ,class UNIT2>
-using FUNCTION_string_build_impl = typename FUNCTION_string_build_impl_HELP<UNIT1 ,UNIT2 ,REQUIRE<IS_SAME<UNIT2 ,UNIT2>>>::FUNCTION_string_build_impl ;
+using FUNCTION_string_build_impl = typename FUNCTION_string_build_impl_HELP<UNIT1 ,UNIT2 ,ALWAYS>::FUNCTION_string_build_impl ;
 
 template <class...>
 trait FUNCTION_string_build_HELP ;
@@ -387,10 +384,7 @@ trait FUNCTION_string_cvt_impl_HELP<UNIT1 ,UNIT2 ,REQUIRE<ENUM_ALL<
 	IS_SAME<UNIT2 ,STRW>>>> {
 	struct FUNCTION_string_cvt_impl {
 		inline String<STRA> operator() (CREF<String<STRW>> obj) const {
-			if (StringProc::is_ansi_string (obj))
-				return StringProc::ansi_string_cvt (obj) ;
-			unimplemented () ;
-			return bad (TYPEAS<String<STRA>>::id) ;
+			return StringProc::locale_string_cvt (obj) ;
 		}
 	} ;
 } ;
@@ -446,10 +440,7 @@ trait FUNCTION_string_cvt_impl_HELP<UNIT1 ,UNIT2 ,REQUIRE<ENUM_ALL<
 	IS_SAME<UNIT2 ,STRA>>>> {
 	struct FUNCTION_string_cvt_impl {
 		inline String<STRW> operator() (CREF<String<STRA>> obj) const {
-			if (StringProc::is_ansi_string (obj))
-				return StringProc::ansi_string_cvt (obj) ;
-			unimplemented () ;
-			return bad (TYPEAS<String<STRW>>::id) ;
+			return StringProc::locale_string_cvt (obj) ;
 		}
 	} ;
 } ;
@@ -1158,9 +1149,4 @@ trait FUNCTION_string_cvt_HELP<DEPEND ,ALWAYS> {
 using FUNCTION_string_cvt = typename FUNCTION_string_cvt_HELP<DEPEND ,ALWAYS>::FUNCTION_string_cvt ;
 
 static constexpr auto string_cvt = FUNCTION_string_cvt () ;
-} ;
-} ;
-
-namespace CSC {
-using namespace STRING ;
 } ;

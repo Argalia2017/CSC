@@ -10,7 +10,6 @@
 #include "csc_array.hpp"
 
 namespace CSC {
-namespace MATH {
 static constexpr auto MATH_INV2 = TRIPLE (0.5) ;
 static constexpr auto MATH_INV3 = TRIPLE (0.33333333333333333333) ;
 static constexpr auto MATH_E = TRIPLE (2.71828182845904523536) ;
@@ -23,6 +22,9 @@ static constexpr auto MATH_INVSQRT2PI = TRIPLE (0.39894228040143267794) ;
 
 template <class...>
 trait MATHPROC_HELP ;
+
+template <class...>
+trait MATHPROC_IMPLHOLDER_HELP ;
 
 template <class DEPEND>
 trait MATHPROC_HELP<DEPEND ,ALWAYS> {
@@ -50,19 +52,19 @@ trait MATHPROC_HELP<DEPEND ,ALWAYS> {
 		virtual DOUBLE arctan (CREF<DOUBLE> x ,CREF<DOUBLE> y) const = 0 ;
 	} ;
 
-	struct FUNCTION_link {
+	struct FUNCTION_extern {
 		imports VRef<Holder> invoke () ;
 	} ;
 
 	class MathProc {
-	private:
+	protected:
 		VRef<Holder> mThis ;
 
 	public:
 		imports CREF<MathProc> instance () {
 			return memorize ([&] () {
 				MathProc ret ;
-				ret.mThis = FUNCTION_link::invoke () ;
+				ret.mThis = FUNCTION_extern::invoke () ;
 				return move (ret) ;
 			}) ;
 		}
@@ -187,6 +189,21 @@ trait MATHPROC_HELP<DEPEND ,ALWAYS> {
 			return R1X (instance ().mThis->log (DOUBLE (x))) ;
 		}
 
+		template <class ARG1>
+		imports REMOVE_ALL<ARG1> log10v (XREF<ARG1> x) {
+			using R1X = REMOVE_ALL<ARG1> ;
+			require (IS_VALUE<R1X>) ;
+			LENGTH ret = 0 ;
+			auto rax = x ;
+			while (TRUE) {
+				if (rax == 0)
+					break ;
+				ret++ ;
+				rax /= 10 ;
+			}
+			return move (ret) ;
+		}
+
 		template <class ARG1 ,class ARG2>
 		imports REMOVE_ALL<ARG1> pow (XREF<ARG1> x ,XREF<ARG2> y) {
 			using R1X = REMOVE_ALL<ARG1> ;
@@ -252,6 +269,13 @@ trait MATHPROC_HELP<DEPEND ,ALWAYS> {
 			require (IS_FLOAT<R1X>) ;
 			require (IS_SAME<R1X ,R2X>) ;
 			return R1X (instance ().mThis->arctan (DOUBLE (x) ,DOUBLE (y))) ;
+		}
+
+		template <class ARG1>
+		imports REMOVE_ALL<ARG1> radian_angle (XREF<ARG1> x) {
+			using R1X = REMOVE_ALL<ARG1> ;
+			require (IS_FLOAT<R1X>) ;
+			return R1X (x / R1X (180) * R1X (MATH_PI)) ;
 		}
 	} ;
 } ;
@@ -470,13 +494,16 @@ static constexpr auto sort_of = FUNCTION_sort_of () ;
 template <class...>
 trait FLOATPROC_HELP ;
 
+template <class...>
+trait FLOATPROC_IMPLHOLDER_HELP ;
+
 template <class DEPEND>
 trait FLOATPROC_HELP<DEPEND ,ALWAYS> {
 	struct NOTATION {
 		FLAG mRadix ;
 		BOOL mSign ;
-		LENGTH mPrecision ;
 		VAL64 mMantissa ;
+		VAL64 mPrecision ;
 		VAL64 mExponent ;
 	} ;
 
@@ -487,19 +514,19 @@ trait FLOATPROC_HELP<DEPEND ,ALWAYS> {
 		virtual NOTATION exp10_from_exp2 (CREF<NOTATION> fexp2) const = 0 ;
 	} ;
 
-	struct FUNCTION_link {
+	struct FUNCTION_extern {
 		imports VRef<Holder> invoke () ;
 	} ;
 
 	class FloatProc {
-	private:
+	protected:
 		VRef<Holder> mThis ;
 
 	public:
 		imports CREF<FloatProc> instance () {
 			return memorize ([&] () {
 				FloatProc ret ;
-				ret.mThis = FUNCTION_link::invoke () ;
+				ret.mThis = FUNCTION_extern::invoke () ;
 				return move (ret) ;
 			}) ;
 		}
@@ -523,9 +550,4 @@ trait FLOATPROC_HELP<DEPEND ,ALWAYS> {
 } ;
 
 using FloatProc = typename FLOATPROC_HELP<DEPEND ,ALWAYS>::FloatProc ;
-} ;
-} ;
-
-namespace CSC {
-using namespace MATH ;
 } ;

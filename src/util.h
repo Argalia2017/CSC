@@ -12,6 +12,7 @@
 #include "csc/csc_string.hpp"
 #include "csc/csc_serialization.hpp"
 #include "csc/csc_runtime.hpp"
+#include "csc/csc_thread.hpp"
 #include "csc/csc_functional.hpp"
 #include "csc/csc_filesystem.hpp"
 #include "csc/csc_debugger.hpp"

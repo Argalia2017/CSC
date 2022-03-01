@@ -40,8 +40,9 @@
     <ClInclude Include="..\..\src\csc\csc_serialization.hpp" />
     <ClInclude Include="..\..\src\csc\csc_stream.hpp" />
     <ClInclude Include="..\..\src\csc\csc_string.hpp" />
+    <ClInclude Include="..\..\src\csc\csc_thread.hpp" />
     <ClInclude Include="..\..\src\csc\end.h" />
-    <ClInclude Include="..\..\src\csc\lite.h" />
+    <ClInclude Include="..\..\src\csc\compiler.h" />
     <ClInclude Include="..\..\src\util.h" />
   </ItemGroup>
   <ItemGroup>
@@ -56,7 +57,7 @@
     <None Include="..\..\src\csc\csc_runtime.hpp.linux.inl" />
     <None Include="..\..\src\csc\csc_runtime.hpp.windows.inl" />
     <None Include="..\..\src\csc\csc_string.hpp.default.inl" />
-    <None Include="..\..\src\csc\csc_string.hpp.gbk.inl" />
+    <None Include="..\..\src\csc\csc_string.hpp.gbks.inl" />
   </ItemGroup>
   <ItemGroup>
     <Natvis Include="..\..\src\csc\cpp.natvis" />

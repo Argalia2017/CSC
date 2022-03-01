@@ -11,40 +11,39 @@
 #include "csc_math.hpp"
 
 namespace CSC {
-namespace IMAGE {
 template <class...>
-trait IMAGE_ITERATOR_HELP ;
+trait IMAGEITERATOR_HELP ;
 
 template <class RANK>
-trait IMAGE_ITERATOR_HELP<RANK ,ALWAYS> {
+trait IMAGEITERATOR_HELP<RANK ,ALWAYS> {
 	require (ENUM_GT_ZERO<RANK>) ;
 
-	class Iterator {
-	private:
+	class ImageIterator {
+	protected:
 		Array<LENGTH ,RANK> mWidth ;
 		LENGTH mSize ;
 		Array<INDEX ,RANK> mItem ;
 		BOOL mGood ;
 
 	public:
-		implicit Iterator () = delete ;
+		implicit ImageIterator () = delete ;
 
-		explicit Iterator (CREF<Array<LENGTH ,RANK>> width_) {
+		explicit ImageIterator (CREF<Array<LENGTH ,RANK>> width_) {
 			mWidth = width_ ;
 			mSize = template_acc_of (PHX ,TYPEAS<ENUM_ZERO>::id) ;
 			mItem.fill (0) ;
 			mGood = BOOL (mSize > 0) ;
 		}
 
-		LENGTH size () const {
+		LENGTH length () const {
 			return mSize ;
 		}
 
-		Iterator begin () const {
+		ImageIterator begin () const {
 			return thiz ;
 		}
 
-		Iterator end () const {
+		ImageIterator end () const {
 			return thiz ;
 		}
 
@@ -52,11 +51,11 @@ trait IMAGE_ITERATOR_HELP<RANK ,ALWAYS> {
 			return mGood ;
 		}
 
-		inline BOOL operator== (CREF<Iterator>) const {
+		inline BOOL operator== (CREF<ImageIterator>) const {
 			return ifnot (good ()) ;
 		}
 
-		inline BOOL operator!= (CREF<Iterator>) const {
+		inline BOOL operator!= (CREF<ImageIterator>) const {
 			return good () ;
 		}
 
@@ -106,59 +105,55 @@ trait IMAGE_ITERATOR_HELP<RANK ,ALWAYS> {
 } ;
 
 template <class RANK>
-using ImageIterator = typename IMAGE_ITERATOR_HELP<RANK ,ALWAYS>::Iterator ;
+using ImageIterator = typename IMAGEITERATOR_HELP<RANK ,ALWAYS>::ImageIterator ;
 
 template <class...>
 trait ROWPROXY_HELP ;
 
-template <class UNIT1 ,class UNIT2>
-trait ROWPROXY_HELP<UNIT1 ,UNIT2 ,REQUIRE<IS_VARIABLE<UNIT1>>> {
-	using BASE = VRef<REMOVE_REF<UNIT1>> ;
-
+template <class UNIT1 ,class UNIT2 ,class UNIT3>
+trait ROWPROXY_HELP<UNIT1 ,UNIT2 ,UNIT3 ,REQUIRE<IS_VARIABLE<UNIT1>>> {
 	class RowProxy {
-	private:
-		BASE mImage ;
+	protected:
+		VRef<UNIT2> mImage ;
 		INDEX mY ;
 
 	public:
 		implicit RowProxy () = delete ;
 
-		explicit RowProxy (RREF<BASE> image ,CREF<INDEX> y) {
+		explicit RowProxy (RREF<VRef<UNIT2>> image ,CREF<INDEX> y) {
 			mImage = move (image) ;
 			mY = y ;
 		}
 
-		inline VREF<UNIT2> operator[] (CREF<INDEX> x) rightvalue {
+		inline VREF<UNIT3> operator[] (CREF<INDEX> x) rightvalue {
 			return mImage->at (x ,mY) ;
 		}
 	} ;
 } ;
 
-template <class UNIT1 ,class UNIT2>
-trait ROWPROXY_HELP<UNIT1 ,UNIT2 ,REQUIRE<IS_CONSTANT<UNIT1>>> {
-	using BASE = CRef<REMOVE_REF<UNIT1>> ;
-
+template <class UNIT1 ,class UNIT2 ,class UNIT3>
+trait ROWPROXY_HELP<UNIT1 ,UNIT2 ,UNIT3 ,REQUIRE<IS_CONSTANT<UNIT1>>> {
 	class RowProxy {
-	private:
-		BASE mImage ;
+	protected:
+		CRef<UNIT2> mImage ;
 		INDEX mY ;
 
 	public:
 		implicit RowProxy () = delete ;
 
-		explicit RowProxy (RREF<BASE> image ,CREF<INDEX> y) {
+		explicit RowProxy (RREF<CRef<UNIT2>> image ,CREF<INDEX> y) {
 			mImage = move (image) ;
 			mY = y ;
 		}
 
-		inline CREF<UNIT2> operator[] (CREF<INDEX> x) rightvalue {
+		inline CREF<UNIT3> operator[] (CREF<INDEX> x) rightvalue {
 			return mImage->at (x ,mY) ;
 		}
 	} ;
 } ;
 
-template <class UNIT1 ,class UNIT2>
-using RowProxy = typename ROWPROXY_HELP<XREF<UNIT1> ,UNIT2 ,ALWAYS>::RowProxy ;
+template <class UNIT1 ,class UNIT3>
+using RowProxy = typename ROWPROXY_HELP<XREF<UNIT1> ,REMOVE_REF<UNIT1> ,UNIT3 ,ALWAYS>::RowProxy ;
 
 template <class...>
 trait IMAGE_HELP ;
@@ -166,7 +161,7 @@ trait IMAGE_HELP ;
 template <class ITEM ,class SIZE>
 trait IMAGE_HELP<ITEM ,SIZE ,ALWAYS> {
 	class Image {
-	private:
+	protected:
 		Buffer<ITEM ,SIZE> mImage ;
 		INDEX mCX ;
 		INDEX mCY ;
@@ -212,12 +207,8 @@ trait IMAGE_HELP<ITEM ,SIZE ,ALWAYS> {
 
 		ARRAY2<LENGTH> width () const {
 			ARRAY2<LENGTH> ret ;
-			if ifswitch (TRUE) {
-				if (mImage.size () == 0)
-					discard ;
-				ret[0] = mCX ;
-				ret[1] = mCY ;
-			}
+			ret[0] = cx () ;
+			ret[1] = cy () ;
 			return move (ret) ;
 		}
 
@@ -250,26 +241,20 @@ trait IMAGE_HELP<ITEM ,SIZE ,ALWAYS> {
 		}
 
 		void fill (CREF<ITEM> item ,CREF<INDEX> begin_ ,CREF<INDEX> end_) {
-			for (auto &&i : CORE::iter (begin_ ,end_))
+			for (auto &&i : CSC::iter (begin_ ,end_))
 				mImage[i] = item ;
 		}
 
 		ImageIterator<RANK2> iter () const {
-			const auto r1x = invoke ([&] () {
-				ARRAY2<LENGTH> ret ;
-				ret[0] = mCY ;
-				ret[1] = mCX ;
-				return move (ret) ;
-			}) ;
-			return ImageIterator<RANK2> (r1x) ;
+			return ImageIterator<RANK2> (width ()) ;
 		}
 
-		VREF<ITEM> at (CREF<ARRAY2<INDEX>> pair) leftvalue {
-			return at (pair[0] ,pair[1]) ;
+		VREF<ITEM> at (CREF<ARRAY2<INDEX>> xy) leftvalue {
+			return at (xy[0] ,xy[1]) ;
 		}
 
-		inline VREF<ITEM> operator[] (CREF<ARRAY2<INDEX>> pair) leftvalue {
-			return at (pair) ;
+		inline VREF<ITEM> operator[] (CREF<ARRAY2<INDEX>> xy) leftvalue {
+			return at (xy) ;
 		}
 
 		VREF<ITEM> at (CREF<INDEX> x ,CREF<INDEX> y) leftvalue {
@@ -282,12 +267,12 @@ trait IMAGE_HELP<ITEM ,SIZE ,ALWAYS> {
 			return RowProxy<VREF<Image> ,ITEM> (VRef<Image>::reference (thiz) ,y) ;
 		}
 
-		CREF<ITEM> at (CREF<ARRAY2<INDEX>> pair) const leftvalue {
-			return at (pair[0] ,pair[1]) ;
+		CREF<ITEM> at (CREF<ARRAY2<INDEX>> xy) const leftvalue {
+			return at (xy[0] ,xy[1]) ;
 		}
 
-		inline CREF<ITEM> operator[] (CREF<ARRAY2<INDEX>> pair) const leftvalue {
-			return at (pair) ;
+		inline CREF<ITEM> operator[] (CREF<ARRAY2<INDEX>> xy) const leftvalue {
+			return at (xy) ;
 		}
 
 		CREF<ITEM> at (CREF<INDEX> x ,CREF<INDEX> y) const leftvalue {
@@ -563,14 +548,30 @@ trait IMAGE_HELP<ITEM ,SIZE ,ALWAYS> {
 		inline Image operator~ () const {
 			return bnot () ;
 		}
+
+		Image transpose () const {
+			Image ret = Image (mCY ,mCX) ;
+			for (auto &&i : iter ())
+				ret.at (i[1] ,i[0]) = at (i) ;
+			return move (ret) ;
+		}
+
+		Image matrix_product (CREF<Image> that) const {
+			Image ret = Image (that.mCX ,mCY) ;
+			for (auto &&i : ret.iter ()) {
+				const auto r1x = invoke ([&] () {
+					ITEM ret ;
+					for (auto &&j : iter (0 ,mCX))
+						ret += at (j ,i[1]) * that.at (i[0] ,j) ;
+					return move (ret) ;
+				}) ;
+				ret.at (i) = r1x ;
+			}
+			return move (ret) ;
+		}
 	} ;
 } ;
 
 template <class ITEM ,class SIZE = VARIABLE>
 using Image = typename IMAGE_HELP<ITEM ,SIZE ,ALWAYS>::Image ;
-} ;
-} ;
-
-namespace CSC {
-using namespace IMAGE ;
 } ;

@@ -4,21 +4,19 @@
 #error "∑(っ°Д° ;)っ : require 'csc_runtime.hpp'"
 #endif
 
+#ifndef __CSC_FILESYSTEM__
+#error "∑(っ°Д° ;)っ : require 'csc_filesystem.hpp'"
+#endif
+
 #ifndef __CSC_SYSTEM_WINDOWS__
 #error "∑(っ°Д° ;)っ : bad include"
 #endif
-
-#include "csc_runtime.hpp.default.inl"
 
 #ifndef _INC_WINDOWS
 #error "∑(っ°Д° ;)っ : require 'Windows.h'"
 #endif
 
 namespace CSC {
-namespace RUNTIME {
-template <class...>
-trait RUNTIMEPROC_IMPLHOLDER_HELP ;
-
 template <class DEPEND>
 trait RUNTIMEPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	using Holder = typename RUNTIMEPROC_HELP<DEPEND ,ALWAYS>::Holder ;
@@ -34,15 +32,15 @@ trait RUNTIMEPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		void thread_sleep (CREF<TimeDuration> time_) const override {
-			using R1X = typename TIMEDURATION_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::HEAP ;
-			auto &&tmp = time_.native ().as (TYPEAS<CRef<R1X>>::id).self ;
-			std::this_thread::sleep_for (tmp.mTimeDuration) ;
+			using R1X = typename TIMEDURATION_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
+			const auto r1x = time_.native ().poll (TYPEAS<CRef<R1X>>::id) ;
+			std::this_thread::sleep_for (r1x->get_mTimeDuration ()) ;
 		}
 
 		void thread_sleep (CREF<TimePoint> time_) const override {
-			using R1X = typename TIMEPOINT_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::HEAP ;
-			auto &&tmp = time_.native ().as (TYPEAS<CRef<R1X>>::id).self ;
-			std::this_thread::sleep_until (tmp.mTimePoint) ;
+			using R1X = typename TIMEPOINT_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
+			const auto r1x = time_.native ().poll (TYPEAS<CRef<R1X>>::id) ;
+			std::this_thread::sleep_until (r1x->get_mTimePoint ()) ;
 		}
 
 		void thread_yield () const override {
@@ -60,197 +58,183 @@ trait RUNTIMEPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		void process_abort () const override {
 			unsafe_abort () ;
 		}
+
+		String<STR> working_path () const override {
+			String<STR> ret = String<STR>::make () ;
+			GetCurrentDirectory (DWORD (ret.size ()) ,(&ret[0])) ;
+			if ifswitch (TRUE) {
+				const auto r1x = ret.length () ;
+				if (r1x < 1)
+					discard ;
+				if (ret[r1x - 1] == STR ('\\'))
+					discard ;
+				if (ret[r1x - 1] == STR ('/'))
+					discard ;
+				ret[r1x] = STR ('\\') ;
+			}
+			return move (ret) ;
+		}
+
+		String<STR> module_path () const override {
+			return memorize ([&] () {
+				String<STR> ret = String<STR>::make () ;
+				GetModuleFileName (NULL ,(&ret[0]) ,DWORD (ret.size ())) ;
+				ret = Directory (ret).path () ;
+				return move (ret) ;
+			}) ;
+		}
+
+		String<STR> module_name () const override {
+			return memorize ([&] () {
+				String<STR> ret = String<STR>::make () ;
+				GetModuleFileName (NULL ,(&ret[0]) ,DWORD (ret.size ())) ;
+				ret = Directory (ret).name () ;
+				return move (ret) ;
+			}) ;
+		}
 	} ;
 } ;
 
 template <>
-exports auto RUNTIMEPROC_HELP<DEPEND ,ALWAYS>::FUNCTION_link::invoke () -> VRef<Holder> {
+exports auto RUNTIMEPROC_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () -> VRef<Holder> {
 	using R1X = typename RUNTIMEPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
-} ;
-
-template <class...>
-trait THREAD_IMPLHOLDER_HELP ;
-
-template <class DEPEND>
-trait THREAD_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
-	using Holder = typename THREAD_HELP<DEPEND ,ALWAYS>::Holder ;
-	using THREADBLOCK = std::thread ;
-
-	struct HEAP {
-		Mutex mThreadMutex ;
-		Cell<BOOL> mThreadFlag ;
-		Function<void> mThreadProc ;
-		THREADBLOCK mThreadBlock ;
-	} ;
-
-	class ImplHolder implement Holder {
-	private:
-		HEAP mHeap ;
-		UniqueRef<VRef<HEAP>> mCleaner ;
-
-	public:
-		implicit ImplHolder () {
-			mHeap.mThreadMutex = Mutex::make_conditional () ;
-			mCleaner = UniqueRef<VRef<HEAP>> ([&] (VREF<VRef<HEAP>> me) {
-				me = VRef<HEAP>::reference (mHeap) ;
-			} ,[] (VREF<VRef<HEAP>> me) {
-				terminate (me.self) ;
-			}) ;
-		}
-
-		void init_new () override {
-			mHeap.mThreadBlock = THREADBLOCK ([&] () {
-				try_invoke ([&] () {
-					auto rax = ConditionalLock (mHeap.mThreadMutex) ;
-					mHeap.mThreadFlag = Cell<BOOL>::make (TRUE) ;
-					while (TRUE) {
-						while (TRUE) {
-							if (mHeap.mThreadProc.exist ())
-								break ;
-							if ifnot (mHeap.mThreadFlag.fetch ())
-								break ;
-							rax.wait () ;
-						}
-						if ifnot (mHeap.mThreadFlag.fetch ())
-							break ;
-						mHeap.mThreadProc () ;
-						mHeap.mThreadProc = Function<void> () ;
-						rax.notify () ;
-					}
-				} ,[&] () {
-					noop () ;
-				}) ;
-			}) ;
-		}
-
-		FLAG thread_uid () const override {
-			unimplemented () ;
-			return bad (TYPEAS<FLAG>::id) ;
-		}
-
-		void execute (RREF<Function<void>> proc) override {
-			terminate (mHeap) ;
-			if ifswitch (TRUE) {
-				auto rax = ConditionalLock (mHeap.mThreadMutex) ;
-				mHeap.mThreadProc = move (proc) ;
-				rax.notify () ;
-			}
-		}
-
-		void join () override {
-			terminate (mHeap) ;
-		}
-
-	private:
-		imports void terminate (VREF<HEAP> me) {
-			if ifswitch (TRUE) {
-				auto rax = ConditionalLock (me.mThreadMutex) ;
-				me.mThreadFlag.store (FALSE) ;
-				rax.notify () ;
-			}
-			me.mThreadBlock.join () ;
-			me.mThreadFlag = NULL ;
-			me.mThreadProc = Function<void> () ;
-			me.mThreadBlock = THREADBLOCK () ;
-		}
-	} ;
-} ;
-
-template <>
-exports auto THREAD_HELP<DEPEND ,ALWAYS>::FUNCTION_link::invoke () -> VRef<Holder> {
-	using R1X = typename THREAD_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
-	return VRef<R1X>::make () ;
-} ;
-
-template <class...>
-trait PROCESS_IMPLHOLDER_HELP ;
+}
 
 template <class DEPEND>
 trait PROCESS_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	using Holder = typename PROCESS_HELP<DEPEND ,ALWAYS>::Holder ;
 	using SNAPSHOT = typename PROCESS_HELP<DEPEND ,ALWAYS>::SNAPSHOT ;
 
-	struct HEAP {
-
-	} ;
-
 	class ImplHolder implement Holder {
-	private:
-		HEAP mHeap ;
+	protected:
+		FLAG mUID ;
+		SNAPSHOT mSnapshot ;
 
 	public:
 		implicit ImplHolder () {
-			noop () ;
+			mUID = ZERO ;
+		}
+
+		void init_current () override {
+			mUID = RuntimeProc::process_uid () ;
+			auto rax = ByteWriter (RegBuffer<BYTE>::from (mSnapshot ,0 ,mSnapshot.size ())) ;
+			if ifswitch (TRUE) {
+				const auto r1x = UniqueRef<HANDLE> ([&] (VREF<HANDLE> me) {
+					me = OpenProcess (PROCESS_QUERY_INFORMATION ,FALSE ,DWORD (mUID)) ;
+				} ,[] (VREF<HANDLE> me) {
+					if (me == NULL)
+						return ;
+					CloseHandle (me) ;
+				}) ;
+				if (r1x.self == NULL)
+					discard ;
+				rax << ByteWriter::GAP ;
+				rax << VAL64 (mUID) ;
+				rax << ByteWriter::GAP ;
+				rax << slice ("windows") ;
+				rax << ByteWriter::GAP ;
+				const auto r2x = process_code (r1x ,mUID) ;
+				rax << r2x ;
+				rax << ByteWriter::GAP ;
+				const auto r3x = process_time (r1x ,mUID) ;
+				rax << r3x ;
+			}
+			rax << ByteWriter::GAP ;
+			rax << ByteWriter::EOS ;
+		}
+
+		DATA process_code (CREF<HANDLE> handle ,CREF<FLAG> uid) {
+			const auto r1x = invoke ([&] () {
+				DWORD ret ;
+				if ifswitch (TRUE) {
+					const auto r2x = GetExitCodeProcess (handle ,(&ret)) ;
+					if (r2x != ZERO)
+						discard ;
+					ret = 0 ;
+				}
+				return move (ret) ;
+			}) ;
+			return DATA (r1x) ;
+		}
+
+		DATA process_time (CREF<HANDLE> handle ,CREF<FLAG> uid) {
+			const auto r1x = invoke ([&] () {
+				ARRAY4<FILETIME> ret ;
+				zeroize (ret[0]) ;
+				zeroize (ret[1]) ;
+				zeroize (ret[2]) ;
+				zeroize (ret[3]) ;
+				GetProcessTimes (handle ,(&ret[0]) ,(&ret[1]) ,(&ret[2]) ,(&ret[3])) ;
+				return move (ret) ;
+			}) ;
+			const auto r2x = (DATA (r1x[0].dwHighDateTime) << 32) | DATA (r1x[0].dwLowDateTime) ;
+			return DATA (r2x) ;
 		}
 
 		void init_snapshot (CREF<SNAPSHOT> snapshot_) override {
-			unimplemented () ;
+			mSnapshot = snapshot_ ;
+			auto &&tmp = keep[TYPEAS<CREF<SNAPSHOT>>::id] (snapshot_) ;
+			auto rax = ByteReader (RegBuffer<BYTE>::from (tmp ,0 ,tmp.size ())) ;
+			rax >> ByteReader::GAP ;
+			const auto r1x = rax.poll (TYPEAS<VAL64>::id) ;
+			assume (r1x != ZERO) ;
+			assume (r1x >= VAL32_MIN) ;
+			assume (r1x <= VAL32_MAX) ;
+			mUID = FLAG (r1x) ;
+		}
+
+		Auto native () const leftvalue override {
+			return CRef<ImplHolder>::reference (thiz) ;
 		}
 
 		FLAG process_uid () const override {
-			unimplemented () ;
-			return bad (TYPEAS<FLAG>::id) ;
+			return mUID ;
 		}
 
-		SNAPSHOT snapshot () const override {
-			SNAPSHOT ret ;
-			unimplemented () ;
-			return move (ret) ;
+		CREF<SNAPSHOT> snapshot () const override {
+			return mSnapshot ;
 		}
 
-		BOOL alive () const override {
-			unimplemented () ;
-			return TRUE ;
+		BOOL equal (CREF<Holder> a) const override {
+			const auto r1x = a.native ().poll (TYPEAS<CRef<ImplHolder>>::id) ;
+			if (mUID != r1x->mUID)
+				return FALSE ;
+			return mSnapshot == r1x->mSnapshot ;
 		}
 	} ;
 } ;
 
 template <>
-exports auto PROCESS_HELP<DEPEND ,ALWAYS>::FUNCTION_link::invoke () -> VRef<Holder> {
+exports auto PROCESS_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () -> VRef<Holder> {
 	using R1X = typename PROCESS_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
-} ;
-
-template <class...>
-trait MODULE_IMPLHOLDER_HELP ;
+}
 
 template <class DEPEND>
 trait MODULE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	using Holder = typename MODULE_HELP<DEPEND ,ALWAYS>::Holder ;
 
-	struct HEAP {
-		UniqueRef<HMODULE> mHandle ;
+	class ImplHolder implement Holder {
+	protected:
+		UniqueRef<HMODULE> mModule ;
 		String<STR> mErrorBuffer ;
 		String<STR> mError ;
-	} ;
-
-	class ImplHolder implement Holder {
-	private:
-		HEAP mHeap ;
 
 	public:
-		implicit ImplHolder () {
-			noop () ;
-		}
+		implicit ImplHolder () = default ;
 
 		void init_new () override {
 			noop () ;
 		}
 
-		CREF<String<STR>> path () const override {
-			unimplemented () ;
-			return bad (TYPEAS<CREF<String<STR>>>::id) ;
-		}
-
-		CREF<String<STR>> name () const override {
-			unimplemented () ;
-			return bad (TYPEAS<CREF<String<STR>>>::id) ;
+		CREF<String<STR>> error () const leftvalue override {
+			return mError ;
 		}
 
 		void open (CREF<String<STR>> file_) override {
-			const auto r1x = File (file_).name () ;
-			mHeap.mHandle = UniqueRef<HMODULE> ([&] (VREF<HMODULE> me) {
+			const auto r1x = Directory (file_).name () ;
+			mModule = UniqueRef<HMODULE> ([&] (VREF<HMODULE> me) {
 				me = GetModuleHandle ((&r1x[0])) ;
 				if (me != NULL)
 					return ;
@@ -259,7 +243,7 @@ trait MODULE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 					return ;
 				const auto r2x = FLAG (GetLastError ()) ;
 				format_dllerror (r2x) ;
-				mHeap.mError = String<STR>::make (slice ("Error = ") ,r2x ,slice (" : ") ,mHeap.mErrorBuffer) ;
+				mError = String<STR>::make (slice ("Error = ") ,r2x ,slice (" : ") ,mErrorBuffer) ;
 				assume (FALSE) ;
 			} ,[] (VREF<HMODULE> me) {
 				noop () ;
@@ -267,46 +251,40 @@ trait MODULE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		void close () override {
-			mHeap.mHandle = UniqueRef<HMODULE> () ;
-		}
-
-		CREF<String<STR>> error () const leftvalue override {
-			return mHeap.mError ;
+			mModule = UniqueRef<HMODULE> () ;
 		}
 
 		FLAG link (CREF<String<STR>> name) override {
-			assert (mHeap.mHandle.exist ()) ;
+			assert (mModule.exist ()) ;
 			const auto r1x = string_cvt[TYPEAS<TYPEAS<STRA ,STR>>::id] (name) ;
-			FLAG ret = FLAG (GetProcAddress (mHeap.mHandle ,(&r1x[0]))) ;
+			FLAG ret = FLAG (GetProcAddress (mModule ,(&r1x[0]))) ;
 			if ifswitch (TRUE) {
 				if (ret != ZERO)
 					discard ;
 				const auto r2x = FLAG (GetLastError ()) ;
 				format_dllerror (r2x) ;
-				mHeap.mError = String<STR>::make (slice ("Error = ") ,r2x ,slice (" : ") ,mHeap.mErrorBuffer) ;
+				mError = String<STR>::make (slice ("Error = ") ,r2x ,slice (" : ") ,mErrorBuffer) ;
 				assume (FALSE) ;
 			}
 			return move (ret) ;
 		}
 
-	private:
 		void format_dllerror (CREF<FLAG> code) {
 			if ifswitch (TRUE) {
-				if (mHeap.mErrorBuffer.size () > 0)
+				if (mErrorBuffer.size () > 0)
 					discard ;
-				mHeap.mErrorBuffer = String<STR>::make () ;
+				mErrorBuffer = String<STR>::make () ;
 			}
 			const auto r1x = DWORD (MAKELANGID (LANG_NEUTRAL ,SUBLANG_DEFAULT)) ;
-			const auto r3x = mHeap.mErrorBuffer.size () ;
-			FormatMessage (FORMAT_MESSAGE_FROM_SYSTEM ,NULL ,DWORD (code) ,r1x ,(&mHeap.mErrorBuffer[0]) ,DWORD (r3x) ,NULL) ;
+			const auto r2x = mErrorBuffer.size () ;
+			FormatMessage (FORMAT_MESSAGE_FROM_SYSTEM ,NULL ,DWORD (code) ,r1x ,(&mErrorBuffer[0]) ,DWORD (r2x) ,NULL) ;
 		}
 	} ;
 } ;
 
 template <>
-exports auto MODULE_HELP<DEPEND ,ALWAYS>::FUNCTION_link::invoke () -> VRef<Holder> {
+exports auto MODULE_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () -> VRef<Holder> {
 	using R1X = typename MODULE_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
-} ;
-} ;
+}
 } ;
