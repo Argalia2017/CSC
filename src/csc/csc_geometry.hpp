@@ -5,6 +5,7 @@
 #endif
 
 #include "csc.hpp"
+#include "csc_type.hpp"
 #include "csc_core.hpp"
 #include "csc_basic.hpp"
 #include "csc_array.hpp"
@@ -107,11 +108,7 @@ trait VECTOR_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 		}
 
 		BOOL equal (CREF<Vector> that) const {
-			for (auto &&i : iter (0 ,SIZE::value)) {
-				if ifnot (operator_equal (mVector[i] ,that.mVector[i]))
-					return FALSE ;
-			}
-			return TRUE ;
+			return operator_equal (mVector ,that.mVector) ;
 		}
 
 		inline BOOL operator== (CREF<Vector> that) const {
@@ -123,12 +120,7 @@ trait VECTOR_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 		}
 
 		FLAG compr (CREF<Vector> that) const {
-			for (auto &&i : iter (0 ,SIZE::value)) {
-				const auto r1x = operator_compr (mVector[i] ,that.mVector[i]) ;
-				if (r1x != ZERO)
-					return r1x ;
-			}
-			return ZERO ;
+			return operator_compr (mVector ,that.mVector) ;
 		}
 
 		inline BOOL operator< (CREF<Vector> that) const {
@@ -148,12 +140,7 @@ trait VECTOR_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 		}
 
 		FLAG hash () const {
-			FLAG ret = hashcode () ;
-			for (auto &&i : iter (0 ,SIZE::value)) {
-				const auto r1x = operator_hash (mVector[i]) ;
-				ret = hashcode (ret ,r1x) ;
-			}
-			return move (ret) ;
+			return operator_hash (mVector) ;
 		}
 
 		Vector add (CREF<Vector> that) const {
@@ -470,6 +457,42 @@ trait QUATERNION_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 			return at (y) ;
 		}
 
+		BOOL equal (CREF<Quaternion> that) const {
+			return operator_equal (mQuaternion ,that.mQuaternion) ;
+		}
+
+		inline BOOL operator== (CREF<Quaternion> that) const {
+			return equal (that) ;
+		}
+
+		inline BOOL operator!= (CREF<Quaternion> that) const {
+			return ifnot (equal (that)) ;
+		}
+
+		FLAG compr (CREF<Quaternion> that) const {
+			return operator_compr (mQuaternion ,that.mQuaternion) ;
+		}
+
+		inline BOOL operator< (CREF<Quaternion> that) const {
+			return compr (that) < ZERO ;
+		}
+
+		inline BOOL operator<= (CREF<Quaternion> that) const {
+			return compr (that) <= ZERO ;
+		}
+
+		inline BOOL operator> (CREF<Quaternion> that) const {
+			return compr (that) > ZERO ;
+		}
+
+		inline BOOL operator>= (CREF<Quaternion> that) const {
+			return compr (that) >= ZERO ;
+		}
+
+		FLAG hash () const {
+			return operator_hash (mQuaternion) ;
+		}
+
 	private:
 		void update_normalize () {
 			const auto r1x = MathProc::square (mQuaternion[0]) + MathProc::square (mQuaternion[1]) + MathProc::square (mQuaternion[2]) + MathProc::square (mQuaternion[3]) ;
@@ -565,6 +588,15 @@ trait MATRIX_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 			return Matrix (r10x ,r11x ,r12x ,r13x) ;
 		}
 
+		imports Matrix make_rotation (CREF<Vector<ITEM>> vx ,CREF<Vector<ITEM>> vy) {
+			const auto r1x = vx.normalize () ;
+			const auto r2x = vy.normalize () ;
+			const auto r3x = (r1x ^ r2x).normalize () ;
+			const auto r4x = (r3x ^ r1x).normalize () ;
+			const auto r5x = Vector<ITEM>::axis_w () ;
+			return Matrix (r1x ,r4x ,r3x ,r5x) ;
+		}
+
 		imports Matrix make_rotation (CREF<Vector<ITEM>> normal ,CREF<ITEM> angle) {
 			Matrix ret ;
 			const auto r1x = normal.normalize () ;
@@ -590,23 +622,23 @@ trait MATRIX_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 			return move (ret) ;
 		}
 
-		imports Matrix make_rotation (CREF<Quaternion<ITEM>> q) {
+		imports Matrix make_rotation (CREF<Quaternion<ITEM>> quat) {
 			Matrix ret ;
-			const auto r1x = q[0] * ITEM (2) ;
-			const auto r2x = q[1] * ITEM (2) ;
-			const auto r3x = q[2] * ITEM (2) ;
-			const auto r4x = q[3] * ITEM (2) ;
-			ret.at (0 ,0) = ITEM (1) - q[1] * r2x - q[2] * r3x ;
-			ret.at (1 ,0) = q[0] * r2x - q[2] * r4x ;
-			ret.at (2 ,0) = q[0] * r3x + q[1] * r4x ;
+			const auto r1x = quat[0] * ITEM (2) ;
+			const auto r2x = quat[1] * ITEM (2) ;
+			const auto r3x = quat[2] * ITEM (2) ;
+			const auto r4x = quat[3] * ITEM (2) ;
+			ret.at (0 ,0) = ITEM (1) - quat[1] * r2x - quat[2] * r3x ;
+			ret.at (1 ,0) = quat[0] * r2x - quat[2] * r4x ;
+			ret.at (2 ,0) = quat[0] * r3x + quat[1] * r4x ;
 			ret.at (3 ,0) = ITEM (0) ;
-			ret.at (0 ,1) = q[0] * r2x + q[2] * r4x ;
-			ret.at (1 ,1) = ITEM (1) - q[0] * r1x - q[2] * r3x ;
-			ret.at (2 ,1) = q[1] * r3x - q[0] * r4x ;
+			ret.at (0 ,1) = quat[0] * r2x + quat[2] * r4x ;
+			ret.at (1 ,1) = ITEM (1) - quat[0] * r1x - quat[2] * r3x ;
+			ret.at (2 ,1) = quat[1] * r3x - quat[0] * r4x ;
 			ret.at (3 ,1) = ITEM (0) ;
-			ret.at (0 ,2) = q[0] * r3x - q[1] * r4x ;
-			ret.at (1 ,2) = q[1] * r3x + q[0] * r4x ;
-			ret.at (2 ,2) = ITEM (1) - q[0] * r1x - q[1] * r2x ;
+			ret.at (0 ,2) = quat[0] * r3x - quat[1] * r4x ;
+			ret.at (1 ,2) = quat[1] * r3x + quat[0] * r4x ;
+			ret.at (2 ,2) = ITEM (1) - quat[0] * r1x - quat[1] * r2x ;
 			ret.at (3 ,2) = ITEM (0) ;
 			ret.at (0 ,3) = ITEM (0) ;
 			ret.at (1 ,3) = ITEM (0) ;
@@ -623,22 +655,13 @@ trait MATRIX_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 			return Matrix (r1x ,r2x ,r3x ,r4x) ;
 		}
 
-		imports Matrix make_view (CREF<Vector<ITEM>> vx ,CREF<Vector<ITEM>> vy) {
-			const auto r1x = vx.normalize () ;
-			const auto r2x = vy.normalize () ;
-			const auto r3x = (r1x ^ r2x).normalize () ;
-			const auto r4x = (r3x ^ r1x).normalize () ;
-			const auto r5x = Vector<ITEM>::axis_w () ;
-			return Matrix (r1x ,r4x ,r3x ,r5x) ;
-		}
-
 		imports Matrix make_view_xy (CREF<Vector<ITEM>> vx ,CREF<Vector<ITEM>> vy) {
 			const auto r1x = Vector<ITEM>::axis_x () ;
 			const auto r2x = Vector<ITEM>::axis_y () ;
 			const auto r3x = Vector<ITEM>::axis_z () ;
 			const auto r4x = Vector<ITEM>::axis_w () ;
 			const auto r5x = Matrix (r1x ,r2x ,r3x ,r4x) ;
-			return make_view (vx ,vy) * r5x ;
+			return make_rotation (vx ,vy) * r5x ;
 		}
 
 		imports Matrix make_view_zx (CREF<Vector<ITEM>> vz ,CREF<Vector<ITEM>> vx) {
@@ -647,7 +670,7 @@ trait MATRIX_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 			const auto r3x = Vector<ITEM>::axis_x () ;
 			const auto r4x = Vector<ITEM>::axis_w () ;
 			const auto r5x = Matrix (r1x ,r2x ,r3x ,r4x) ;
-			return make_view (vz ,vx) * r5x ;
+			return make_rotation (vz ,vx) * r5x ;
 		}
 
 		imports Matrix make_view_yz (CREF<Vector<ITEM>> vy ,CREF<Vector<ITEM>> vz) {
@@ -656,7 +679,7 @@ trait MATRIX_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 			const auto r3x = Vector<ITEM>::axis_y () ;
 			const auto r4x = Vector<ITEM>::axis_w () ;
 			const auto r5x = Matrix (r1x ,r2x ,r3x ,r4x) ;
-			return make_view (vy ,vz) * r5x ;
+			return make_rotation (vy ,vz) * r5x ;
 		}
 
 		imports Matrix make_view_yx (CREF<Vector<ITEM>> vy ,CREF<Vector<ITEM>> vx) {
@@ -665,7 +688,7 @@ trait MATRIX_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 			const auto r3x = -Vector<ITEM>::axis_z () ;
 			const auto r4x = Vector<ITEM>::axis_w () ;
 			const auto r5x = Matrix (r1x ,r2x ,r3x ,r4x) ;
-			return make_view (vy ,vx) * r5x ;
+			return make_rotation (vy ,vx) * r5x ;
 		}
 
 		imports Matrix make_view_xz (CREF<Vector<ITEM>> vx ,CREF<Vector<ITEM>> vz) {
@@ -674,7 +697,7 @@ trait MATRIX_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 			const auto r3x = Vector<ITEM>::axis_y () ;
 			const auto r4x = Vector<ITEM>::axis_w () ;
 			const auto r5x = Matrix (r1x ,r2x ,r3x ,r4x) ;
-			return make_view (vx ,vz) * r5x ;
+			return make_rotation (vx ,vz) * r5x ;
 		}
 
 		imports Matrix make_view_zy (CREF<Vector<ITEM>> vz ,CREF<Vector<ITEM>> vy) {
@@ -683,7 +706,7 @@ trait MATRIX_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 			const auto r3x = Vector<ITEM>::axis_x () ;
 			const auto r4x = Vector<ITEM>::axis_w () ;
 			const auto r5x = Matrix (r1x ,r2x ,r3x ,r4x) ;
-			return make_view (vz ,vy) * r5x ;
+			return make_rotation (vz ,vy) * r5x ;
 		}
 
 		imports Matrix make_perspective (CREF<ITEM> fx ,CREF<ITEM> fy ,CREF<ITEM> wx ,CREF<ITEM> wy) {
@@ -763,12 +786,9 @@ trait MATRIX_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 			return RowProxy<CREF<Matrix> ,ITEM> (CRef<Matrix>::reference (thiz) ,y) ;
 		}
 
+
 		BOOL equal (CREF<Matrix> that) const {
-			for (auto &&i : iter (0 ,SIZE::value)) {
-				if ifnot (operator_equal (mMatrix[i] ,that.mMatrix[i]))
-					return FALSE ;
-			}
-			return TRUE ;
+			return operator_equal (mMatrix ,that.mMatrix) ;
 		}
 
 		inline BOOL operator== (CREF<Matrix> that) const {
@@ -780,12 +800,7 @@ trait MATRIX_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 		}
 
 		FLAG compr (CREF<Matrix> that) const {
-			for (auto &&i : iter (0 ,SIZE::value)) {
-				const auto r1x = operator_compr (mMatrix[i] ,that.mMatrix[i]) ;
-				if (r1x != ZERO)
-					return r1x ;
-			}
-			return ZERO ;
+			return operator_compr (mMatrix ,that.mMatrix) ;
 		}
 
 		inline BOOL operator< (CREF<Matrix> that) const {
@@ -805,12 +820,7 @@ trait MATRIX_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 		}
 
 		FLAG hash () const {
-			FLAG ret = hashcode () ;
-			for (auto &&i : iter (0 ,SIZE::value)) {
-				const auto r1x = operator_hash (mMatrix[i]) ;
-				ret = hashcode (ret ,r1x) ;
-			}
-			return move (ret) ;
+			return operator_hash (mMatrix) ;
 		}
 
 		Matrix add (CREF<Matrix> that) const {
@@ -1045,7 +1055,7 @@ trait MATRIX_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 			const auto r12x = r6x.magnitude () * r10x ;
 			const auto r13x = r7x.magnitude () * r10x ;
 			ret.mScale = make_diag (r11x ,r12x ,r13x ,ITEM (1)) ;
-			ret.mRotation = make_view (r5x ,r6x) ;
+			ret.mRotation = make_rotation (r5x ,r6x) ;
 			const auto r14x = r8x.projection () ;
 			ret.mTranslation = make_translation (r14x[0] ,r14x[1] ,r14x[2]) ;
 			return move (ret) ;
@@ -1110,6 +1120,73 @@ trait MATRIX_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 		Matrix mS ;
 		Matrix mV ;
 	} ;
+
+	class DiagMatrix implement Matrix {
+	public:
+		implicit DiagMatrix () = delete ;
+
+		explicit DiagMatrix (CREF<ITEM> x ,CREF<ITEM> y ,CREF<ITEM> z ,CREF<ITEM> w) :Matrix (Matrix::make_diag (x ,y ,z ,w)) {}
+	} ;
+
+	class ShearMatrix implement Matrix {
+	public:
+		implicit ShearMatrix () = delete ;
+
+		explicit ShearMatrix (CREF<Vector<ITEM>> vx ,CREF<Vector<ITEM>> vy ,CREF<Vector<ITEM>> vz) :Matrix (Matrix::make_shear (vx ,vy ,vz)) {}
+	} ;
+
+	class RotationMatrix implement Matrix {
+	public:
+		implicit RotationMatrix () = delete ;
+
+		explicit RotationMatrix (CREF<Vector<ITEM>> vx ,CREF<Vector<ITEM>> vy) :Matrix (Matrix::make_rotation (vx ,vy)) {}
+
+		explicit RotationMatrix (CREF<Vector<ITEM>> normal ,CREF<ITEM> angle) :Matrix (Matrix::make_rotation (normal ,angle)) {}
+
+		explicit RotationMatrix (CREF<Quaternion<ITEM>> quat) :Matrix (Matrix::make_rotation (quat)) {}
+	} ;
+
+	class TranslationMatrix implement Matrix {
+	public:
+		implicit TranslationMatrix () = delete ;
+
+		explicit TranslationMatrix (CREF<ITEM> tx ,CREF<ITEM> ty ,CREF<ITEM> tz) :Matrix (Matrix::make_translation (tx ,ty ,tz)) {}
+	} ;
+
+	class PerspectiveMatrix implement Matrix {
+	public:
+		implicit PerspectiveMatrix () = delete ;
+
+		explicit PerspectiveMatrix (CREF<ITEM> fx ,CREF<ITEM> fy ,CREF<ITEM> wx ,CREF<ITEM> wy) :Matrix (Matrix::make_perspective (fx ,fy ,wx ,wy)) {}
+	} ;
+
+	class ProjectionMatrix implement Matrix {
+	public:
+		implicit ProjectionMatrix () = delete ;
+
+		explicit ProjectionMatrix (CREF<Vector<ITEM>> normal ,CREF<ITEM> center ,CREF<Vector<ITEM>> light) :Matrix (Matrix::make_projection (normal ,center ,light)) {}
+	} ;
+
+	class CrossProductMatrix implement Matrix {
+	public:
+		implicit CrossProductMatrix () = delete ;
+
+		explicit CrossProductMatrix (CREF<Vector<ITEM>> vx) :Matrix (Matrix::make_cross_product (vx)) {}
+	} ;
+
+	class SymmetryMatrix implement Matrix {
+	public:
+		implicit SymmetryMatrix () = delete ;
+
+		explicit SymmetryMatrix (CREF<Vector<ITEM>> vx ,CREF<Vector<ITEM>> vy) :Matrix (Matrix::make_symmetry (vx ,vy)) {}
+	} ;
+
+	class ReflectionMatrix implement Matrix {
+	public:
+		implicit ReflectionMatrix () = delete ;
+
+		explicit ReflectionMatrix (CREF<Vector<ITEM>> normal) :Matrix (Matrix::make_reflection (normal)) {}
+	} ;
 } ;
 
 template <class ITEM>
@@ -1137,6 +1214,18 @@ trait MATRIX_SINGULAR_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 
 		explicit Singular (CREF<Matrix> a) {
 			mA = a ;
+		}
+
+		Matrix matrix_u () const {
+			return mU ;
+		}
+
+		Matrix matrix_s () const {
+			return mS ;
+		}
+
+		Matrix matrix_v () const {
+			return mV ;
 		}
 
 		void generate () {
@@ -1236,18 +1325,6 @@ trait MATRIX_SINGULAR_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 				}
 			}
 			mU = Matrix (mVV[0] ,mVV[1] ,mVV[2] ,mVV[3]) ;
-		}
-
-		Matrix matrix_u () const {
-			return Matrix (move (mU)) ;
-		}
-
-		Matrix matrix_s () const {
-			return Matrix (move (mS)) ;
-		}
-
-		Matrix matrix_v () const {
-			return Matrix (move (mV)) ;
 		}
 
 		void update_QR () {
@@ -1358,4 +1435,22 @@ trait MATRIX_SINGULAR_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 
 template <class ITEM>
 using Matrix = typename MATRIX_HELP<ITEM ,ALWAYS>::Matrix ;
+template <class ITEM>
+using DiagMatrix = typename MATRIX_HELP<ITEM ,ALWAYS>::DiagMatrix ;
+template <class ITEM>
+using ShearMatrix = typename MATRIX_HELP<ITEM ,ALWAYS>::ShearMatrix ;
+template <class ITEM>
+using RotationMatrix = typename MATRIX_HELP<ITEM ,ALWAYS>::RotationMatrix ;
+template <class ITEM>
+using TranslationMatrix = typename MATRIX_HELP<ITEM ,ALWAYS>::TranslationMatrix ;
+template <class ITEM>
+using PerspectiveMatrix = typename MATRIX_HELP<ITEM ,ALWAYS>::PerspectiveMatrix ;
+template <class ITEM>
+using ProjectionMatrix = typename MATRIX_HELP<ITEM ,ALWAYS>::ProjectionMatrix ;
+template <class ITEM>
+using CrossProductMatrix = typename MATRIX_HELP<ITEM ,ALWAYS>::CrossProductMatrix ;
+template <class ITEM>
+using SymmetryMatrix = typename MATRIX_HELP<ITEM ,ALWAYS>::SymmetryMatrix ;
+template <class ITEM>
+using ReflectionMatrix = typename MATRIX_HELP<ITEM ,ALWAYS>::ReflectionMatrix ;
 } ;

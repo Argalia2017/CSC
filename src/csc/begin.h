@@ -13,6 +13,7 @@
 #undef extend
 #undef require
 #undef anonymous
+#undef where
 #undef slice
 #undef assert
 #undef assume
@@ -28,6 +29,5 @@
 #pragma pop_macro ("TRUE")
 #pragma pop_macro ("FALSE")
 #pragma pop_macro ("NULL")
-
 #undef use_define_has_null
 #endif

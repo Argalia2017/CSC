@@ -5,6 +5,7 @@
 #endif
 
 #include "csc.hpp"
+#include "csc_type.hpp"
 #include "csc_core.hpp"
 #include "csc_basic.hpp"
 #include "csc_array.hpp"
@@ -30,7 +31,7 @@ trait CONSOLE_HELP<DEPEND ,ALWAYS> {
 	using Binder = typename TEXTWRITER_HELP<STR ,ALWAYS>::Binder ;
 
 	struct Holder implement Interface {
-		virtual void init_device () = 0 ;
+		virtual void initialize () = 0 ;
 		virtual void enable_option (CREF<FLAG> option) const = 0 ;
 		virtual void disable_option (CREF<FLAG> option) const = 0 ;
 		virtual void print (CREF<Binder> msg) const = 0 ;
@@ -59,125 +60,125 @@ trait CONSOLE_HELP<DEPEND ,ALWAYS> {
 	using OPTION_NO_INFO = RANK5 ;
 	using OPTION_NO_DEBUG = RANK6 ;
 	using OPTION_NO_VERBOSE = RANK7 ;
+	using OPTION_SIZE = ENUMAS<VAL ,ENUMID<32>> ;
 
 	class Console {
 	protected:
-		Mutex mMutex ;
+		RecursiveMutex mMutex ;
 		VRef<Holder> mThis ;
 
 	public:
 		imports CREF<Console> instance () {
 			return memorize ([&] () {
 				Console ret ;
-				ret.mMutex = Mutex::make_recursive () ;
 				ret.mThis = FUNCTION_extern::invoke () ;
-				ret.mThis->init_device () ;
+				ret.mThis->initialize () ;
 				return move (ret) ;
 			}) ;
 		}
 
 		void enable_option (CREF<FLAG> option) const {
-			Scope<CREF<Mutex>> anonymous (mMutex) ;
+			Scope<Mutex> anonymous (mMutex) ;
 			return mThis->enable_option (option) ;
 		}
 
 		void disable_option (CREF<FLAG> option) const {
-			Scope<CREF<Mutex>> anonymous (mMutex) ;
+			Scope<Mutex> anonymous (mMutex) ;
 			return mThis->disable_option (option) ;
 		}
 
 		template <class...ARG1>
-		void print (XREF<ARG1>...msg) const {
-			using R1X = Tuple<CRef<REMOVE_REF<ARG1>>...> ;
+		void print (CREF<ARG1>...msg) const {
+			using R1X = Tuple<CRef<ARG1>...> ;
 			using R2X = typename DEPENDENT<CONSOLE_MESSAGE_HELP<R1X ,ALWAYS> ,DEPEND>::Message ;
-			Scope<CREF<Mutex>> anonymous (mMutex) ;
-			const auto r1x = R1X (CRef<REMOVE_REF<ARG1>>::reference (msg)...) ;
+			Scope<Mutex> anonymous (mMutex) ;
+			const auto r1x = R1X (CRef<ARG1>::reference (msg)...) ;
 			const auto r2x = R2X (CRef<R1X>::reference (r1x)) ;
 			return mThis->print (r2x) ;
 		}
 
 		template <class...ARG1>
-		void fatal (XREF<ARG1>...msg) const {
+		void fatal (CREF<ARG1>...msg) const {
 			using R1X = Tuple<CRef<ARG1>...> ;
 			using R2X = typename DEPENDENT<CONSOLE_MESSAGE_HELP<R1X ,ALWAYS> ,DEPEND>::Message ;
-			Scope<CREF<Mutex>> anonymous (mMutex) ;
-			const auto r1x = R1X (CRef<REMOVE_REF<ARG1>>::reference (msg)...) ;
+			Scope<Mutex> anonymous (mMutex) ;
+			const auto r1x = R1X (CRef<ARG1>::reference (msg)...) ;
 			const auto r2x = R2X (CRef<R1X>::reference (r1x)) ;
 			return mThis->fatal (r2x) ;
 		}
 
 		template <class...ARG1>
-		void error (XREF<ARG1>...msg) const {
+		void error (CREF<ARG1>...msg) const {
 			using R1X = Tuple<CRef<ARG1>...> ;
 			using R2X = typename DEPENDENT<CONSOLE_MESSAGE_HELP<R1X ,ALWAYS> ,DEPEND>::Message ;
-			Scope<CREF<Mutex>> anonymous (mMutex) ;
-			const auto r1x = R1X (CRef<REMOVE_REF<ARG1>>::reference (msg)...) ;
+			Scope<Mutex> anonymous (mMutex) ;
+			const auto r1x = R1X (CRef<ARG1>::reference (msg)...) ;
 			const auto r2x = R2X (CRef<R1X>::reference (r1x)) ;
 			return mThis->error (r2x) ;
 		}
 
 		template <class...ARG1>
-		void warn (XREF<ARG1>...msg) const {
+		void warn (CREF<ARG1>...msg) const {
 			using R1X = Tuple<CRef<ARG1>...> ;
 			using R2X = typename DEPENDENT<CONSOLE_MESSAGE_HELP<R1X ,ALWAYS> ,DEPEND>::Message ;
-			Scope<CREF<Mutex>> anonymous (mMutex) ;
-			const auto r1x = R1X (CRef<REMOVE_REF<ARG1>>::reference (msg)...) ;
+			Scope<Mutex> anonymous (mMutex) ;
+			const auto r1x = R1X (CRef<ARG1>::reference (msg)...) ;
 			const auto r2x = R2X (CRef<R1X>::reference (r1x)) ;
 			return mThis->warn (r2x) ;
 		}
 
 		template <class...ARG1>
-		void info (XREF<ARG1>...msg) const {
+		void info (CREF<ARG1>...msg) const {
 			using R1X = Tuple<CRef<ARG1>...> ;
 			using R2X = typename DEPENDENT<CONSOLE_MESSAGE_HELP<R1X ,ALWAYS> ,DEPEND>::Message ;
-			Scope<CREF<Mutex>> anonymous (mMutex) ;
-			const auto r1x = R1X (CRef<REMOVE_REF<ARG1>>::reference (msg)...) ;
+			Scope<Mutex> anonymous (mMutex) ;
+			const auto r1x = R1X (CRef<ARG1>::reference (msg)...) ;
 			const auto r2x = R2X (CRef<R1X>::reference (r1x)) ;
 			return mThis->info (r2x) ;
 		}
 
 		template <class...ARG1>
-		void debug (XREF<ARG1>...msg) const {
+		void debug (CREF<ARG1>...msg) const {
 			using R1X = Tuple<CRef<ARG1>...> ;
 			using R2X = typename DEPENDENT<CONSOLE_MESSAGE_HELP<R1X ,ALWAYS> ,DEPEND>::Message ;
-			Scope<CREF<Mutex>> anonymous (mMutex) ;
-			const auto r1x = R1X (CRef<REMOVE_REF<ARG1>>::reference (msg)...) ;
+			Scope<Mutex> anonymous (mMutex) ;
+			const auto r1x = R1X (CRef<ARG1>::reference (msg)...) ;
 			const auto r2x = R2X (CRef<R1X>::reference (r1x)) ;
 			return mThis->debug (r2x) ;
 		}
 
 		template <class...ARG1>
-		void verbose (XREF<ARG1>...msg) const {
+		void verbose (CREF<ARG1>...msg) const {
 			using R1X = Tuple<CRef<ARG1>...> ;
 			using R2X = typename DEPENDENT<CONSOLE_MESSAGE_HELP<R1X ,ALWAYS> ,DEPEND>::Message ;
-			Scope<CREF<Mutex>> anonymous (mMutex) ;
-			const auto r1x = R1X (CRef<REMOVE_REF<ARG1>>::reference (msg)...) ;
+			Scope<Mutex> anonymous (mMutex) ;
+			const auto r1x = R1X (CRef<ARG1>::reference (msg)...) ;
 			const auto r2x = R2X (CRef<R1X>::reference (r1x)) ;
 			return mThis->verbose (r2x) ;
 		}
 
 		void link (CREF<String<STR>> dire_) const {
-			Scope<CREF<Mutex>> anonymous (mMutex) ;
+			Scope<Mutex> anonymous (mMutex) ;
 			return mThis->link (dire_) ;
 		}
 
 		void open () const {
-			Scope<CREF<Mutex>> anonymous (mMutex) ;
+			Scope<Mutex> anonymous (mMutex) ;
 			return mThis->open () ;
 		}
 
 		void close () const {
-			Scope<CREF<Mutex>> anonymous (mMutex) ;
+			Scope<Mutex> anonymous (mMutex) ;
 			return mThis->close () ;
 		}
 
 		void pause () const {
-			Scope<CREF<Mutex>> anonymous (mMutex) ;
+			Scope<Mutex> anonymous (mMutex) ;
 			return mThis->pause () ;
 		}
 
 		void clear () const {
-			Scope<CREF<Mutex>> anonymous (mMutex) ;
+			Scope<Mutex> anonymous (mMutex) ;
 			return mThis->clear () ;
 		}
 	} ;
@@ -208,7 +209,7 @@ trait CONSOLE_MESSAGE_HELP<UNIT1 ,ALWAYS> {
 		}
 
 		template <class ARG1>
-		void template_write (VREF<TextWriter<STR>> writer ,XREF<ARG1> message) const {
+		void template_write (VREF<TextWriter<STR>> writer ,CREF<ARG1> message) const {
 			writer << message.one ().self ;
 			template_write (writer ,message.rest ()) ;
 		}
@@ -226,7 +227,7 @@ trait REPORTER_IMPLHOLDER_HELP ;
 template <class DEPEND>
 trait REPORTER_HELP<DEPEND ,ALWAYS> {
 	struct Holder implement Interface {
-		virtual void init_device () = 0 ;
+		virtual void initialize () = 0 ;
 		virtual void detect_memory_leaks () const = 0 ;
 		virtual void detect_crash_signal () const = 0 ;
 		virtual Array<FLAG> captrue_stack_trace () const = 0 ;
@@ -239,16 +240,15 @@ trait REPORTER_HELP<DEPEND ,ALWAYS> {
 
 	class Reporter {
 	protected:
-		Mutex mMutex ;
+		RecursiveMutex mMutex ;
 		VRef<Holder> mThis ;
 
 	public:
 		imports CREF<Reporter> instance () {
 			return memorize ([&] () {
 				Reporter ret ;
-				ret.mMutex = Mutex::make_recursive () ;
 				ret.mThis = FUNCTION_extern::invoke () ;
-				ret.mThis->init_device () ;
+				ret.mThis->initialize () ;
 				return move (ret) ;
 			}) ;
 		}

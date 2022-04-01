@@ -10,6 +10,7 @@
 
 #include "begin.h"
 #include <cstdlib>
+#include <cstring>
 #include <clocale>
 #include <string>
 #include <regex>
@@ -24,6 +25,7 @@ trait FUNCTION_system_string_cvt_HELP<DEPEND ,REQUIRE<MACRO_COMPILER_MSVC<DEPEND
 #ifdef __CSC_COMPILER_MSVC__
 	struct FUNCTION_system_string_cvt {
 		inline String<STRA> operator() (CREF<String<STRW>> obj) const {
+			assert (ifnot (obj.empty ())) ;
 			String<STRA> ret = String<STRA> (obj.length () * 2) ;
 			const auto r1x = system_page () ;
 			const auto r2x = _wcstombs_s_l (NULL ,(&ret[0]) ,VAL32 (ret.size ()) ,(&obj[0]) ,_TRUNCATE ,r1x.self) ;
@@ -32,6 +34,7 @@ trait FUNCTION_system_string_cvt_HELP<DEPEND ,REQUIRE<MACRO_COMPILER_MSVC<DEPEND
 		}
 
 		inline String<STRW> operator() (CREF<String<STRA>> obj) const {
+			assert (ifnot (obj.empty ())) ;
 			const auto r1x = system_page () ;
 			String<STRW> ret = String<STRW> (obj.length ()) ;
 			const auto r2x = _mbstowcs_s_l (NULL ,(&ret[0]) ,VAL32 (ret.size ()) ,(&obj[0]) ,_TRUNCATE ,r1x.self) ;
@@ -59,6 +62,7 @@ trait FUNCTION_system_string_cvt_HELP<DEPEND ,REQUIRE<MACRO_COMPILER_GNUC<DEPEND
 #ifdef __CSC_COMPILER_GNUC__
 	struct FUNCTION_system_string_cvt {
 		inline String<STRA> operator() (CREF<String<STRW>> obj) const {
+			assert (ifnot (obj.empty ())) ;
 			String<STRA> ret = String<STRA> (obj.length () * 2) ;
 			std::setlocale (LC_CTYPE ,"") ;
 			const auto r1x = std::wcstombs ((&ret[0]) ,(&obj[0]) ,VAL32 (ret.size ())) ;
@@ -67,6 +71,7 @@ trait FUNCTION_system_string_cvt_HELP<DEPEND ,REQUIRE<MACRO_COMPILER_GNUC<DEPEND
 		}
 
 		inline String<STRW> operator() (CREF<String<STRA>> obj) const {
+			assert (ifnot (obj.empty ())) ;
 			String<STRW> ret = String<STRW> (obj.length ()) ;
 			std::setlocale (LC_CTYPE ,"") ;
 			const auto r1x = std::mbstowcs ((&ret[0]) ,(&obj[0]) ,VAL32 (ret.size ())) ;
@@ -82,6 +87,7 @@ trait FUNCTION_system_string_cvt_HELP<DEPEND ,REQUIRE<MACRO_COMPILER_CLANG<DEPEN
 #ifdef __CSC_COMPILER_CLANG__
 	struct FUNCTION_system_string_cvt {
 		inline String<STRA> operator() (CREF<String<STRW>> obj) const {
+			assert (ifnot (obj.empty ())) ;
 			String<STRA> ret = String<STRA> (obj.length () * 2) ;
 			std::setlocale (LC_CTYPE ,"") ;
 			auto rax = std::size_t (0) ;
@@ -91,6 +97,7 @@ trait FUNCTION_system_string_cvt_HELP<DEPEND ,REQUIRE<MACRO_COMPILER_CLANG<DEPEN
 		}
 
 		inline String<STRW> operator() (CREF<String<STRA>> obj) const {
+			assert (ifnot (obj.empty ())) ;
 			String<STRW> ret = String<STRW> (obj.length ()) ;
 			std::setlocale (LC_CTYPE ,"") ;
 			auto rax = std::size_t (0) ;
@@ -207,14 +214,18 @@ trait STRINGPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 
 		String<STRA> system_string_cvt (CREF<String<STRW>> obj) const {
 			using R1X = typename FUNCTION_system_string_cvt_HELP<DEPEND ,ALWAYS>::FUNCTION_system_string_cvt ;
-			static constexpr auto M_INVOKE = R1X () ;
-			return M_INVOKE (obj) ;
+			if (obj.empty ())
+				return String<STRA> () ;
+			const auto r1x = R1X () ;
+			return r1x (obj) ;
 		}
 
 		String<STRW> system_string_cvt (CREF<String<STRA>> obj) const {
 			using R1X = typename FUNCTION_system_string_cvt_HELP<DEPEND ,ALWAYS>::FUNCTION_system_string_cvt ;
-			static constexpr auto M_INVOKE = R1X () ;
-			return M_INVOKE (obj) ;
+			if (obj.empty ())
+				return String<STRW> () ;
+			const auto r1x = R1X () ;
+			return r1x (obj) ;
 		}
 	} ;
 } ;

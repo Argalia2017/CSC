@@ -29,7 +29,7 @@ trait STRINGPROC_GBKSCACHE_HELP<DEPEND ,ALWAYS> {
 				GBKSCache ret ;
 				ret.mGBKSCache = BoxBuffer<STRUW ,SIZE> (M_GBKSCAHCE) ;
 				ret.mUTFSCache = BoxBuffer<STRUW ,SIZE> (M_UTFSCACHE) ;
-				ret.init_set () ;
+				ret.update_set () ;
 				return move (ret) ;
 			}) ;
 		}
@@ -50,7 +50,7 @@ trait STRINGPROC_GBKSCACHE_HELP<DEPEND ,ALWAYS> {
 		}
 
 	private:
-		void init_set () {
+		void update_set () {
 			mGBKSCacheSet = HashSet<STRUW> (mGBKSCache.size ()) ;
 			for (auto &&i : iter (0 ,mGBKSCache.size ()))
 				mGBKSCacheSet.add (mGBKSCache[i] ,i) ;

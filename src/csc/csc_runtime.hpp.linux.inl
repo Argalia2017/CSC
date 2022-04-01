@@ -13,9 +13,28 @@
 #endif
 
 #include "begin.h"
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <exception>
+#include <ctime>
+#include <chrono>
+#include <mutex>
+#include <condition_variable>
+#include <atomic>
+#include <thread>
+#include <locale>
+#include <random>
+#include "end.h"
+
+#include "begin.h"
 #include <unistd.h>
 #include <dlfcn.h>
 #include <sys/syscall.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <sys/file.h>
+#include <sys/mman.h>
 #include "end.h"
 
 namespace CSC {
@@ -25,6 +44,8 @@ trait RUNTIMEPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 
 	class ImplHolder implement Holder {
 	public:
+		implicit ImplHolder () = default ;
+
 		LENGTH thread_concurrency () const override {
 			return LENGTH (std::thread::hardware_concurrency ()) ;
 		}
@@ -131,81 +152,93 @@ trait PROCESS_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		SNAPSHOT mSnapshot ;
 
 	public:
-		implicit ImplHolder () {
-			mUID = ZERO ;
-		}
+		implicit ImplHolder () = default ;
 
-		void init_current () override {
-			mUID = RuntimeProc::process_uid () ;
-			auto rax = ByteWriter (RegBuffer<BYTE>::from (mSnapshot ,0 ,mSnapshot.size ())) ;
+		void initialize (CREF<FLAG> uid) override {
+			mUID = uid ;
+			auto rax = VarBuffer<BYTE> (128) ;
+			auto rbx = ByteWriter (RegBuffer<BYTE>::from (rax ,0 ,rax.size ())) ;
 			if ifswitch (TRUE) {
-				const auto r1x = File (String<STR>::make (slice ("/proc/") ,mUID ,slice ("/stat"))) ;
-				if ifnot (r1x.find ())
+				const auto r1x = String<STR>::make (slice ("/proc/") ,mUID ,slice ("/stat")) ;
+				const auto r2x = load_proc_file (r1x) ;
+				if (r2x.empty ())
 					discard ;
-				rax << ByteWriter::GAP ;
-				rax << VAL64 (mUID) ;
-				rax << ByteWriter::GAP ;
-				rax << slice ("linux") ;
-				rax << ByteWriter::GAP ;
-				const auto r2x = process_code (r1x ,mUID) ;
-				rax << r2x ;
-				rax << ByteWriter::GAP ;
-				const auto r3x = process_time (r1x ,mUID) ;
-				rax << r3x ;
+				rbx << ByteWriter::GAP ;
+				rbx << VAL64 (mUID) ;
+				rbx << ByteWriter::GAP ;
+				rbx << slice ("linux") ;
+				rbx << ByteWriter::GAP ;
+				const auto r3x = process_code (r2x ,mUID) ;
+				rbx << r3x ;
+				rbx << ByteWriter::GAP ;
+				const auto r4x = process_time (r2x ,mUID) ;
+				rbx << r4x ;
 			}
-			rax << ByteWriter::GAP ;
-			rax << ByteWriter::EOS ;
+			rbx << ByteWriter::GAP ;
+			rbx << ByteWriter::EOS ;
+			mSnapshot = SNAPSHOT (move (rax)) ;
 		}
 
-		DATA process_code (CREF<File> handle ,CREF<FLAG> uid) {
+		String<STRU8> load_proc_file (CREF<String<STR>> file_) const {
+			String<STRU8> ret = String<STRU8>::make () ;
+			auto rax = StreamFile (file_) ;
+			const auto r1x = rax.link (TRUE ,FALSE) ;
+			assume (r1x) ;
+			auto rbx = RegBuffer<BYTE>::from (unsafe_array (ret[0]) ,0 ,ret.size ()) ;
+			const auto r2x = rax.read (rbx) ;
+			ret[r2x] = 0 ;
+			return move (ret) ;
+		}
+
+		DATA process_code (CREF<String<STRU8>> info ,CREF<FLAG> uid) const {
 			return DATA (getpgid (pid_t (uid))) ;
 		}
 
-		DATA process_time (CREF<File> handle ,CREF<FLAG> uid) {
-			const auto r1x = handle.load () ;
-			auto rax = TextReader<STRU8> (RegBuffer<BYTE>::from (r1x ,0 ,r1x.size ())) ;
+		DATA process_time (CREF<String<STRU8>> info ,CREF<FLAG> uid) const {
+			auto rax = TextReader<STRU8> (info.raw ()) ;
+			auto rbx = String<STRU8>::make () ;
 			rax >> TextReader<STRU8>::GAP ;
-			const auto r2x = rax.poll (TYPEAS<VAL64>::id) ;
-			assume (r2x == uid) ;
+			rax >> rbx ;
+			const auto r1x = string_parse[TYPEAS<TYPEAS<VAL64 ,STRU8>>::id] (rbx) ;
+			assume (r1x == uid) ;
 			rax >> TextReader<STRU8>::GAP ;
 			rax >> slice ("(") ;
 			while (TRUE) {
-				if (rax.length () >= r1x.size ())
+				const auto r2x = rax.poll (TYPEAS<STRU8>::id) ;
+				if (r2x == STRU8 ('\0'))
 					break ;
-				const auto r3x = rax.poll (TYPEAS<STRU8>::id) ;
-				if (r3x == STRU8 (')'))
+				if (r2x == STRU8 (')'))
 					break ;
-				assume (r3x != STRU8 ('(')) ;
+				assume (r2x != STRU8 ('(')) ;
 			}
 			rax >> TextReader<STRU8>::GAP ;
-			const auto r4x = rax.poll (TYPEAS<STRU8>::id) ;
-			noop (r4x) ;
+			rax >> rbx ;
+			assume (rbx.length () == 1) ;
 			for (auto &&i : iter (0 ,18)) {
 				noop (i) ;
 				rax >> TextReader<STRU8>::GAP ;
-				const auto r5x = rax.poll (TYPEAS<VAL64>::id) ;
-				noop (r5x) ;
+				rax >> rbx ;
 			}
 			rax >> TextReader<STRU8>::GAP ;
-			const auto r6x = rax.poll (TYPEAS<VAL64>::id) ;
+			rax >> rbx ;
+			const auto r3x = string_parse[TYPEAS<TYPEAS<VAL64 ,STRU8>>::id] (rbx) ;
 			for (auto &&i : iter (19 ,49)) {
 				noop (i) ;
 				rax >> TextReader<STRU8>::GAP ;
-				const auto r7x = rax.poll (TYPEAS<VAL64>::id) ;
-				noop (r7x) ;
+				rax >> rbx ;
 			}
+			rax >> TextReader<STRU8>::GAP ;
 			rax >> TextReader<STRU8>::EOS ;
-			return DATA (r6x) ;
+			return DATA (r3x) ;
 		}
 
-		void init_snapshot (CREF<SNAPSHOT> snapshot_) override {
+		void initialize (CREF<SNAPSHOT> snapshot_) override {
 			mSnapshot = snapshot_ ;
 			auto &&tmp = keep[TYPEAS<CREF<SNAPSHOT>>::id] (mSnapshot) ;
 			auto rax = ByteReader (RegBuffer<BYTE>::from (tmp ,0 ,tmp.size ())) ;
 			rax >> ByteReader::GAP ;
 			const auto r1x = rax.poll (TYPEAS<VAL64>::id) ;
-			assume (r1x != ZERO) ;
-			assume (r1x >= VAL32_MIN) ;
+			assume (r1x > 0) ;
 			assume (r1x <= VAL32_MAX) ;
 			mUID = FLAG (r1x) ;
 		}
@@ -221,13 +254,6 @@ trait PROCESS_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		CREF<SNAPSHOT> snapshot () const override {
 			return mSnapshot ;
 		}
-
-		BOOL equal (CREF<Holder> a) const override {
-			const auto r1x = a.native ().poll (TYPEAS<CRef<ImplHolder>>::id) ;
-			if (mUID != r1x->mUID)
-				return FALSE ;
-			return mSnapshot == r1x->mSnapshot ;
-		}
 	} ;
 } ;
 
@@ -240,51 +266,48 @@ exports auto PROCESS_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () -> VRef<Ho
 template <class DEPEND>
 trait MODULE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	using Holder = typename MODULE_HELP<DEPEND ,ALWAYS>::Holder ;
-	using HMODULE = csc_pointer_t ;
+
+	using HANDLE = csc_pointer_t ;
 
 	class ImplHolder implement Holder {
 	protected:
-		UniqueRef<HMODULE> mModule ;
+		UniqueRef<HANDLE> mModule ;
 		String<STR> mErrorBuffer ;
 		String<STR> mError ;
 
 	public:
 		implicit ImplHolder () = default ;
 
-		void init_new () override {
-			noop () ;
+		void initialize (CREF<String<STR>> file_) override {
+			const auto r1x = Directory (file_).name () ;
+			const auto r2x = string_cvt[TYPEAS<TYPEAS<STRA ,STR>>::id] (r1x) ;
+			assert (ifnot (r2x.empty ())) ;
+			mErrorBuffer = String<STR>::make () ;
+			mModule = UniqueRef<HANDLE> ([&] (VREF<HANDLE> me) {
+				const auto r3x = VAL32 (RTLD_NOW | RTLD_LOCAL | RTLD_DEEPBIND | RTLD_NODELETE) ;
+				const auto r4x = VAL32 (r3x | RTLD_NOLOAD) ;
+				me = dlopen ((&r2x[0]) ,r4x) ;
+				if (me != NULL)
+					return ;
+				me = dlopen ((&r2x[0]) ,r3x) ;
+				if (me != NULL)
+					return ;
+				const auto r5x = FLAG (errno) ;
+				format_dllerror () ;
+				mError = String<STR>::make (slice ("Error = ") ,r5x ,slice (" : ") ,mErrorBuffer) ;
+				assume (FALSE) ;
+			} ,[] (VREF<HANDLE> me) {
+				noop () ;
+			}) ;
 		}
 
 		CREF<String<STR>> error () const leftvalue override {
 			return mError ;
 		}
 
-		void open (CREF<String<STR>> file_) override {
-			const auto r1x = string_cvt[TYPEAS<TYPEAS<STRA ,STR>>::id] (file_) ;
-			mModule = UniqueRef<HMODULE> ([&] (VREF<HMODULE> me) {
-				const auto r2x = VAL32 (RTLD_NOW | RTLD_LOCAL | RTLD_DEEPBIND | RTLD_NODELETE) ;
-				const auto r3x = VAL32 (RTLD_NOLOAD | r2x) ;
-				me = dlopen ((&r1x[0]) ,r3x) ;
-				if (me != NULL)
-					return ;
-				me = dlopen ((&r1x[0]) ,r2x) ;
-				if (me != NULL)
-					return ;
-				const auto r4x = FLAG (errno) ;
-				format_dllerror () ;
-				mError = String<STR>::make (slice ("Error = ") ,r4x ,slice (" : ") ,mErrorBuffer) ;
-				assume (FALSE) ;
-			} ,[] (VREF<HMODULE> me) {
-				noop () ;
-			}) ;
-		}
-
-		void close () override {
-			mModule = UniqueRef<HMODULE> () ;
-		}
-
 		FLAG link (CREF<String<STR>> name) override {
-			assume (mModule.exist ()) ;
+			assert (mModule.exist ()) ;
+			assert (ifnot (name.empty ())) ;
 			const auto r1x = string_cvt[TYPEAS<TYPEAS<STRA ,STR>>::id] (name) ;
 			FLAG ret = FLAG (dlsym (mModule ,(&r1x[0]))) ;
 			if ifswitch (TRUE) {
@@ -299,24 +322,11 @@ trait MODULE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		void format_dllerror () {
-			if ifswitch (TRUE) {
-				if (mErrorBuffer.size () > 0)
-					discard ;
-				mErrorBuffer = String<STR>::make () ;
-			}
-			const auto r1x = dlerror () ;
-			assume (r1x != NULL) ;
-			auto &&tmp = unsafe_array ((*r1x)) ;
-			INDEX ix = 0 ;
-			while (TRUE) {
-				if (ix >= mErrorBuffer.size ())
-					break ;
-				if (tmp[ix] == 0)
-					break ;
-				mErrorBuffer[ix] = STR (tmp[ix]) ;
-				ix++ ;
-			}
-			mErrorBuffer[ix] = 0 ;
+			const auto r1x = FLAG (dlerror ()) ;
+			assume (r1x != ZERO) ;
+			auto &&tmp = keep[TYPEAS<CREF<STRA>>::id] (unsafe_deref (unsafe_cast[TYPEAS<TEMP<STRA>>::id] (unsafe_pointer (r1x)))) ;
+			mErrorBuffer.clear () ;
+			BufferProc::buf_slice (mErrorBuffer ,unsafe_array (tmp) ,mErrorBuffer.size ()) ;
 		}
 	} ;
 } ;
@@ -324,6 +334,145 @@ trait MODULE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 template <>
 exports auto MODULE_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () -> VRef<Holder> {
 	using R1X = typename MODULE_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
+	return VRef<R1X>::make () ;
+}
+
+template <class DEPEND>
+trait SINGLETON_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
+	using Holder = typename SINGLETON_HOLDER_HELP<DEPEND ,ALWAYS>::Holder ;
+
+	using HFILE = csc_int32_t ;
+	using HANDLE = csc_pointer_t ;
+
+	struct HEAP {
+		RecursiveMutex mMutex ;
+		Set<Slice<STR>> mAddressSet ;
+	} ;
+
+	struct PIPE {
+		DATA mReserve1 ;
+		DATA mAddress1 ;
+		DATA mReserve2 ;
+		DATA mAddress2 ;
+		DATA mReserve3 ;
+	} ;
+
+	class ImplHolder implement Holder {
+	protected:
+		String<STRA> mName ;
+		UniqueRef<String<STRA>> mPipe ;
+		SharedRef<HEAP> mHeap ;
+
+	public:
+		implicit ImplHolder () = default ;
+
+		void initialize () override {
+			mName = String<STRA>::make (slice ("CSC_Singleton_") ,RuntimeProc::process_uid ()) ;
+			auto rax = PIPE () ;
+			try_invoke ([&] () {
+				init_pipe () ;
+				rax = load_pipe () ;
+			} ,[&] () {
+				rax = load_pipe () ;
+			} ,[&] () {
+				save_pipe () ;
+				rax = load_pipe () ;
+			} ,[&] () {
+				zeroize (rax) ;
+			}) ;
+			const auto r1x = FLAG (rax.mAddress1) ;
+			assume (r1x != ZERO) ;
+			mHeap = unsafe_deref (unsafe_cast[TYPEAS<TEMP<SharedRef<HEAP>>>::id] (unsafe_pointer (r1x))) ;
+			assume (mHeap.available ()) ;
+		}
+
+		void init_pipe () {
+			if (mPipe.exist ())
+				return ;
+			mPipe = UniqueRef<String<STRA>> ([&] (VREF<String<STRA>> me) {
+				me = mName ;
+				const auto r1x = UniqueRef<HFILE> ([&] (VREF<HFILE> me) {
+					const auto r2x = VAL32 (O_CREAT | O_RDWR | O_EXCL) ;
+					const auto r3x = VAL32 (S_IRWXU | S_IRWXG | S_IRWXO) ;
+					me = shm_open ((&mName[0]) ,r2x ,r3x) ;
+					assume (me != NONE) ;
+				} ,[] (VREF<HFILE> me) {
+					noop () ;
+				}) ;
+				const auto r4x = ftruncate (r1x ,SIZE_OF<PIPE>::value) ;
+				assume (r4x == 0) ;
+			} ,[] (VREF<String<STRA>> me) {
+				shm_unlink ((&me[0])) ;
+			}) ;
+			mHeap = SharedRef<HEAP>::make () ;
+		}
+
+		PIPE load_pipe () const {
+			const auto r1x = UniqueRef<HFILE> ([&] (VREF<HFILE> me) {
+				me = shm_open ((&mName[0]) ,O_RDONLY ,0) ;
+				assume (me != NONE) ;
+			} ,[] (VREF<HFILE> me) {
+				noop () ;
+			}) ;
+			const auto r2x = UniqueRef<HANDLE> ([&] (VREF<HANDLE> me) {
+				me = mmap (NULL ,SIZE_OF<PIPE>::value ,PROT_READ ,MAP_SHARED ,r1x ,0) ;
+				replace (me ,MAP_FAILED ,NULL) ;
+				assume (me != NULL) ;
+			} ,[] (VREF<HANDLE> me) {
+				munmap (me ,SIZE_OF<PIPE>::value) ;
+			}) ;
+			PIPE ret ;
+			zeroize (ret) ;
+			std::memcpy ((&ret) ,r2x ,SIZE_OF<PIPE>::value) ;
+			assume (ret.mReserve1 == DATA (0X1122334455667788)) ;
+			assume (ret.mReserve3 == DATA (0X1122334455667788)) ;
+			assume (ret.mReserve2 == DATA (0XAAAABBBBCCCCDDDD)) ;
+			assume (ret.mAddress1 == ret.mAddress2) ;
+			return move (ret) ;
+		}
+
+		void save_pipe () const {
+			const auto r1x = UniqueRef<HFILE> ([&] (VREF<HFILE> me) {
+				me = shm_open ((&mName[0]) ,O_RDWR ,0) ;
+				assume (me != NONE) ;
+			} ,[] (VREF<HFILE> me) {
+				noop () ;
+			}) ;
+			const auto r2x = UniqueRef<HANDLE> ([&] (VREF<HANDLE> me) {
+				me = mmap (NULL ,SIZE_OF<PIPE>::value ,PROT_WRITE ,MAP_SHARED ,r1x ,0) ;
+				replace (me ,MAP_FAILED ,NULL) ;
+				assume (me != NULL) ;
+			} ,[] (VREF<HANDLE> me) {
+				munmap (me ,SIZE_OF<PIPE>::value) ;
+			}) ;
+			auto rax = PIPE () ;
+			rax.mReserve1 = DATA (0X1122334455667788) ;
+			rax.mAddress1 = DATA (address (mHeap)) ;
+			rax.mReserve2 = DATA (0XAAAABBBBCCCCDDDD) ;
+			rax.mAddress2 = DATA (address (mHeap)) ;
+			rax.mReserve3 = DATA (0X1122334455667788) ;
+			std::memcpy (r2x ,(&rax) ,SIZE_OF<PIPE>::value) ;
+		}
+
+		void add (CREF<Slice<STR>> name ,CREF<FLAG> addr_) const override {
+			Scope<Mutex> anonymous (mHeap->mMutex) ;
+			assert (addr_ != ZERO) ;
+			assert (addr_ != NONE) ;
+			mHeap->mAddressSet.add (name ,addr_) ;
+		}
+
+		FLAG map (CREF<Slice<STR>> name) const override {
+			Scope<Mutex> anonymous (mHeap->mMutex) ;
+			FLAG ret = mHeap->mAddressSet.map (name) ;
+			replace (ret ,NONE ,ZERO) ;
+			return move (ret) ;
+		}
+	} ;
+} ;
+
+template <>
+exports auto SINGLETON_HOLDER_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () -> VRef<Holder> {
+	using R1X = typename SINGLETON_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
 }
 } ;

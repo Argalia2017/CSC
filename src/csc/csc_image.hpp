@@ -5,6 +5,7 @@
 #endif
 
 #include "csc.hpp"
+#include "csc_type.hpp"
 #include "csc_core.hpp"
 #include "csc_basic.hpp"
 #include "csc_array.hpp"
@@ -76,29 +77,31 @@ trait IMAGEITERATOR_HELP<RANK ,ALWAYS> {
 		}
 
 	private:
-		template <class ARG1 ,class = ENABLE<ENUM_GT_ZERO<ENUM_SUB<RANK ,REMOVE_ALL<ARG1>>>>>
-		LENGTH template_acc_of (CREF<typeof (PH2)> ,XREF<ARG1> id) const {
+		template <class ARG1 ,class = REQUIRE<ENUM_GT_ZERO<ENUM_SUB<RANK ,REMOVE_ALL<ARG1>>>>>
+		LENGTH template_acc_of (CREF<typeof (PH2)> ,CREF<ARG1> id) const {
 			using R1X = REMOVE_ALL<ARG1> ;
-			return mWidth[ENUM_CHECK<R1X>::value] * template_acc_of (PHX ,TYPEAS<ENUM_INC<R1X>>::id) ;
+			INDEX ix = ENUM_CHECK<R1X>::value ;
+			return mWidth[ix] * template_acc_of (PHX ,TYPEAS<ENUM_INC<R1X>>::id) ;
 		}
 
-		template <class ARG1 ,class = ENABLE<ENUM_EQ_ZERO<ENUM_SUB<RANK ,REMOVE_ALL<ARG1>>>>>
-		LENGTH template_acc_of (CREF<typeof (PH1)> ,XREF<ARG1> id) const {
+		template <class ARG1 ,class = REQUIRE<ENUM_EQ_ZERO<ENUM_SUB<RANK ,REMOVE_ALL<ARG1>>>>>
+		LENGTH template_acc_of (CREF<typeof (PH1)> ,CREF<ARG1> id) const {
 			return IDEN ;
 		}
 
-		template <class ARG1 ,class = ENABLE<ENUM_GT_ZERO<ENUM_SUB<RANK ,REMOVE_ALL<ARG1>>>>>
-		void template_next (CREF<typeof (PH2)> ,XREF<ARG1> id) {
+		template <class ARG1 ,class = REQUIRE<ENUM_GT_ZERO<ENUM_SUB<RANK ,REMOVE_ALL<ARG1>>>>>
+		void template_next (CREF<typeof (PH2)> ,CREF<ARG1> id) {
 			using R1X = REMOVE_ALL<ARG1> ;
-			mItem[ENUM_CHECK<R1X>::value]++ ;
-			if (mItem[ENUM_CHECK<R1X>::value] < mWidth[ENUM_CHECK<R1X>::value])
+			INDEX ix = ENUM_CHECK<R1X>::value ;
+			mItem[ix]++ ;
+			if (mItem[ix] < mWidth[ix])
 				return ;
-			mItem[ENUM_CHECK<R1X>::value] = 0 ;
+			mItem[ix] = 0 ;
 			template_next (PHX ,TYPEAS<ENUM_INC<R1X>>::id) ;
 		}
 
-		template <class ARG1 ,class = ENABLE<ENUM_EQ_ZERO<ENUM_SUB<RANK ,REMOVE_ALL<ARG1>>>>>
-		void template_next (CREF<typeof (PH1)> ,XREF<ARG1> id) {
+		template <class ARG1 ,class = REQUIRE<ENUM_EQ_ZERO<ENUM_SUB<RANK ,REMOVE_ALL<ARG1>>>>>
+		void template_next (CREF<typeof (PH1)> ,CREF<ARG1> id) {
 			mGood = FALSE ;
 		}
 	} ;
@@ -237,12 +240,7 @@ trait IMAGE_HELP<ITEM ,SIZE ,ALWAYS> {
 		}
 
 		void fill (CREF<ITEM> item) {
-			fill (item ,0 ,size ()) ;
-		}
-
-		void fill (CREF<ITEM> item ,CREF<INDEX> begin_ ,CREF<INDEX> end_) {
-			for (auto &&i : CSC::iter (begin_ ,end_))
-				mImage[i] = item ;
+			BufferProc::buf_fill (mImage ,item ,0 ,size ()) ;
 		}
 
 		ImageIterator<RANK2> iter () const {

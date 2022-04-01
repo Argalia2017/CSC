@@ -18,11 +18,9 @@
 #include <Windows.h>
 #endif
 
-#ifdef __CSC_SYSTEM_LINUX__
-#ifdef __CSC_CONFIG_STRA__
-#define TEXT(...) __VA_ARGS__
-#elif defined __CSC_CONFIG_STRW__
-#define TEXT(...) __macro_cat (L ,__VA_ARGS__)
+#ifdef __CSC_SYSTEM_WINDOWS__
+#ifdef __CSC_COMPILER_GNUC__
+#define no_comment_lib_dbghelp
 #endif
 #endif
 

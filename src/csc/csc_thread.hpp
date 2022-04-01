@@ -5,6 +5,7 @@
 #endif
 
 #include "csc.hpp"
+#include "csc_type.hpp"
 #include "csc_core.hpp"
 #include "csc_basic.hpp"
 #include "csc_array.hpp"
@@ -25,6 +26,7 @@ trait WORKTHREAD_HELP<DEPEND ,ALWAYS> {
 	using Binder = typename THREAD_HELP<DEPEND ,ALWAYS>::Binder ;
 
 	struct Holder implement Binder {
+		virtual void initialize () = 0 ;
 		virtual void set_thread_size (CREF<LENGTH> size_) = 0 ;
 		virtual void set_queue_size (CREF<LENGTH> size_) = 0 ;
 		virtual void start (RREF<Function<void ,TYPEAS<CREF<INDEX>>>> proc) = 0 ;
@@ -42,6 +44,7 @@ trait WORKTHREAD_HELP<DEPEND ,ALWAYS> {
 		implicit WorkThread () {
 			using R1X = typename WORKTHREAD_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 			mThis = VRef<R1X>::make () ;
+			mThis->initialize () ;
 		}
 
 		void set_thread_size (CREF<LENGTH> size_) {
@@ -80,23 +83,24 @@ trait WORKTHREAD_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 
 	class ImplHolder implement Holder {
 	protected:
-		Mutex mThreadMutex ;
+		ConditionalMutex mThreadMutex ;
 		VRef<BOOL> mThreadFlag ;
 		Array<Thread> mThread ;
 		Set<FLAG> mThreadPoll ;
 		Array<List<INDEX>> mThreadQueue ;
 		Function<void ,TYPEAS<CREF<INDEX>>> mThreadProc ;
 		List<INDEX> mItemQueue ;
-		Scope<VREF<ImplHolder>> mHandle ;
+		Scope<ImplHolder> mHandle ;
 
 	public:
-		implicit ImplHolder () {
-			mThreadMutex = Mutex::make_conditional () ;
-			mHandle = Scope<VREF<ImplHolder>> (thiz) ;
+		implicit ImplHolder () = default ;
+
+		void initialize () override {
+			mHandle = Scope<ImplHolder> (thiz) ;
 		}
 
 		void set_thread_size (CREF<LENGTH> size_) override {
-			Scope<CREF<Mutex>> anonymous (mThreadMutex) ;
+			Scope<Mutex> anonymous (mThreadMutex) ;
 			assume (mThreadFlag == NULL) ;
 			mThread = Array<Thread> (size_) ;
 			mThreadPoll = Set<FLAG> (size_) ;
@@ -104,8 +108,8 @@ trait WORKTHREAD_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		void set_queue_size (CREF<LENGTH> size_) override {
-			Scope<CREF<Mutex>> anonymous (mThreadMutex) ;
-			assume (mItemQueue.size () == 0) ;
+			Scope<Mutex> anonymous (mThreadMutex) ;
+			assume (mThreadFlag == NULL) ;
 			auto rax = List<INDEX> (size_) ;
 			for (auto &&i : mItemQueue.iter ())
 				rax.add (mItemQueue[i]) ;
@@ -113,12 +117,22 @@ trait WORKTHREAD_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		void start (RREF<Function<void ,TYPEAS<CREF<INDEX>>>> proc) override {
-			Scope<CREF<Mutex>> anonymous (mThreadMutex) ;
+			Scope<Mutex> anonymous (mThreadMutex) ;
 			assume (mThreadFlag == NULL) ;
+			if ifswitch (TRUE) {
+				if (mThread.size () > 0)
+					discard ;
+				const auto r1x = RuntimeProc::thread_concurrency () ;
+				mThread = Array<Thread> (r1x) ;
+				mThreadPoll = Set<FLAG> (r1x) ;
+				mThreadQueue = Array<List<INDEX>> (r1x) ;
+			}
 			mThreadFlag = VRef<BOOL>::make (TRUE) ;
 			mThreadProc = move (proc) ;
-			for (auto &&i : mThread.iter ())
-				mThread[i].start (VRef<ImplHolder>::reference (thiz) ,i) ;
+			for (auto &&i : mThread.iter ()) {
+				mThread[i] = Thread (VRef<ImplHolder>::reference (thiz) ,i) ;
+				mThread[i].start () ;
+			}
 		}
 
 		void execute (CREF<INDEX> slot) override {
@@ -139,6 +153,7 @@ trait WORKTHREAD_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 
 		void poll (CREF<INDEX> slot) {
 			auto rax = ConditionalLock (mThreadMutex) ;
+			assume (mThreadFlag != NULL) ;
 			while (TRUE) {
 				if ifnot (mThreadFlag.self)
 					break ;
@@ -149,15 +164,15 @@ trait WORKTHREAD_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			}
 			mThreadPoll.erase (slot) ;
 			assume (mThreadFlag.self) ;
-			const auto r1x = min_of (mItemQueue.size () ,mThread.size ()) ;
-			const auto r2x = max_of (mItemQueue.size () / 2 ,r1x) ;
+			const auto r1x = MathProc::min_of (mItemQueue.size () ,mThread.size ()) ;
+			const auto r2x = MathProc::max_of (mItemQueue.size () / 2 ,r1x) ;
 			if ifswitch (TRUE) {
 				if (mThreadQueue[slot].size () > 0)
 					discard ;
 				const auto r3x = r2x / mThread.size () ;
 				mThreadQueue[slot] = List<INDEX> (r3x) ;
 			}
-			const auto r4x = max_of (r2x / mThreadPoll.length () ,LENGTH (1)) ;
+			const auto r4x = MathProc::max_of (r2x / mThreadPoll.length () ,LENGTH (1)) ;
 			for (auto &&i : iter (0 ,r4x)) {
 				noop (i) ;
 				INDEX ix = mItemQueue.head () ;
@@ -169,6 +184,7 @@ trait WORKTHREAD_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 
 		void post (CREF<INDEX> item) override {
 			auto rax = ConditionalLock (mThreadMutex) ;
+			assume (mThreadFlag != NULL) ;
 			while (TRUE) {
 				if ifnot (mThreadFlag.self)
 					break ;
@@ -183,6 +199,7 @@ trait WORKTHREAD_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 
 		void post_all (CREF<Array<INDEX>> item) override {
 			auto rax = ConditionalLock (mThreadMutex) ;
+			assume (mThreadFlag != NULL) ;
 			assume (mThreadFlag.self) ;
 			const auto r1x = mItemQueue.length () + item.length () ;
 			auto eax = TRUE ;
@@ -205,6 +222,7 @@ trait WORKTHREAD_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 
 		void join () override {
 			auto rax = ConditionalLock (mThreadMutex) ;
+			assume (mThreadFlag != NULL) ;
 			while (TRUE) {
 				if ifnot (mThreadFlag.self)
 					break ;
@@ -216,7 +234,7 @@ trait WORKTHREAD_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		void stop () override {
-			mHandle = Scope<VREF<ImplHolder>> () ;
+			mHandle = Scope<ImplHolder> () ;
 		}
 
 		void enter () {
@@ -269,6 +287,7 @@ trait PROMISE_HELP<ITEM ,ALWAYS> {
 	using Binder = typename THREAD_HELP<DEPEND ,ALWAYS>::Binder ;
 
 	struct Holder implement Binder {
+		virtual void initialize () const = 0 ;
 		virtual void start () const = 0 ;
 		virtual void start (RREF<Function<ITEM>> proc) const = 0 ;
 		virtual void post (RREF<ITEM> item) const = 0 ;
@@ -292,6 +311,7 @@ trait PROMISE_HELP<ITEM ,ALWAYS> {
 		implicit Promise () {
 			using R1X = typename PROMISE_IMPLHOLDER_HELP<ITEM ,ALWAYS>::ImplHolder ;
 			mThis = VRef<R1X>::make () ;
+			mThis->initialize () ;
 		}
 
 		template <class ARG1 = DEPEND>
@@ -335,23 +355,24 @@ trait PROMISE_IMPLHOLDER_HELP<ITEM ,ALWAYS> {
 
 	class ImplHolder implement Holder {
 	protected:
-		Mutex mThreadMutex ;
+		ConditionalMutex mThreadMutex ;
 		VRef<BOOL> mThreadFlag ;
 		VRef<Thread> mThread ;
 		Function<ITEM> mThreadProc ;
 		Function<void ,TYPEAS<VREF<ITEM>>> mCallbackProc ;
 		VRef<ITEM> mItem ;
 		VRef<Exception> mException ;
-		Scope<VREF<ImplHolder>> mHandle ;
+		Scope<ImplHolder> mHandle ;
 
 	public:
-		implicit ImplHolder () {
-			mThreadMutex = Mutex::make_conditional () ;
-			mHandle = Cell<Scope<VREF<ImplHolder>>>::make (thiz) ;
+		implicit ImplHolder () = default ;
+
+		void initialize () override {
+			mHandle = Scope<ImplHolder> (thiz) ;
 		}
 
 		void start () override {
-			Scope<CREF<Mutex>> anonymous (mThreadMutex) ;
+			Scope<Mutex> anonymous (mThreadMutex) ;
 			assume (mThreadFlag == NULL) ;
 			mThreadFlag = VRef<BOOL>::make (TRUE) ;
 			mThread = NULL ;
@@ -362,15 +383,15 @@ trait PROMISE_IMPLHOLDER_HELP<ITEM ,ALWAYS> {
 		}
 
 		void start (RREF<Function<ITEM>> proc) override {
-			Scope<CREF<Mutex>> anonymous (mThreadMutex) ;
+			Scope<Mutex> anonymous (mThreadMutex) ;
 			assume (mThreadFlag == NULL) ;
 			mThreadFlag = VRef<BOOL>::make (TRUE) ;
-			mThread = VRef<Thread>::make () ;
 			mThreadProc = move (proc) ;
 			mCallbackProc = Function<void ,TYPEAS<VREF<ITEM>>> () ;
 			mItem = NULL ;
 			mException = NULL ;
-			mThread->start (VRef<ImplHolder>::reference (thiz) ,0) ;
+			mThread = VRef<Thread>::make (VRef<ImplHolder>::reference (thiz) ,0) ;
+			mThread->start () ;
 		}
 
 		void execute (CREF<INDEX> slot) override {
@@ -380,7 +401,7 @@ trait PROMISE_IMPLHOLDER_HELP<ITEM ,ALWAYS> {
 			} catch (CREF<Exception> e) {
 				rethrow (e) ;
 			} catch (...) {
-				rethrow (Exception (TYPEAS<struct anonymous>::id ,slice ("unknown C++ exception"))) ;
+				rethrow (Exception (TYPEAS<where>::id ,slice ("unknown C++ exception"))) ;
 			}
 			if ifswitch (TRUE) {
 				if ifnot (rax.exist ())
@@ -391,7 +412,7 @@ trait PROMISE_IMPLHOLDER_HELP<ITEM ,ALWAYS> {
 		}
 
 		void post (RREF<ITEM> item) override {
-			Scope<CREF<Mutex>> anonymous (mThreadMutex) ;
+			Scope<Mutex> anonymous (mThreadMutex) ;
 			assume (mThreadFlag.self) ;
 			assume (mItem == NULL) ;
 			assume (mException == NULL) ;
@@ -399,7 +420,7 @@ trait PROMISE_IMPLHOLDER_HELP<ITEM ,ALWAYS> {
 		}
 
 		void rethrow (CREF<Exception> e) override {
-			Scope<CREF<Mutex>> anonymous (mThreadMutex) ;
+			Scope<Mutex> anonymous (mThreadMutex) ;
 			assume (mThreadFlag.self) ;
 			assume (mException == NULL) ;
 			mItem = NULL ;
@@ -421,7 +442,7 @@ trait PROMISE_IMPLHOLDER_HELP<ITEM ,ALWAYS> {
 		}
 
 		BOOL ready () {
-			Scope<CREF<Mutex>> anonymous (mThreadMutex) ;
+			Scope<Mutex> anonymous (mThreadMutex) ;
 			if (mThreadFlag == NULL)
 				return TRUE ;
 			if ifnot (mThreadFlag.self)
@@ -476,7 +497,7 @@ trait PROMISE_IMPLHOLDER_HELP<ITEM ,ALWAYS> {
 		}
 
 		void then (RREF<Function<void ,TYPEAS<VREF<ITEM>>>> proc) override {
-			Scope<CREF<Mutex>> anonymous (mThreadMutex) ;
+			Scope<Mutex> anonymous (mThreadMutex) ;
 			mCallbackProc = move (proc) ;
 			if (mThreadFlag.self)
 				return ;
@@ -488,7 +509,7 @@ trait PROMISE_IMPLHOLDER_HELP<ITEM ,ALWAYS> {
 		}
 
 		void stop () override {
-			mHandle.store (NULL) ;
+			mHandle = Scope<ImplHolder> () ;
 		}
 
 		void enter () {
@@ -526,7 +547,7 @@ trait FUTURE_HELP<ITEM ,ALWAYS> {
 		VRef<Holder> mThis ;
 
 	public:
-		implicit Future () = delete ;
+		implicit Future () = default ;
 
 		explicit Future (RREF<VRef<Holder>> that) {
 			mThis = move (that) ;
@@ -554,8 +575,17 @@ trait FUTURE_HELP<ITEM ,ALWAYS> {
 			return mThis->then (move (proc)) ;
 		}
 	} ;
+
+	class AsyncFuture implement Future {
+	public:
+		implicit AsyncFuture () = delete ;
+
+		explicit AsyncFuture (RREF<Function<ITEM>> proc) :Future (Future::make_async (move (proc))) {}
+	} ;
 } ;
 
 template <class ITEM>
 using Future = typename FUTURE_HELP<ITEM ,ALWAYS>::Future ;
+template <class ITEM>
+using AsyncFuture = typename FUTURE_HELP<ITEM ,ALWAYS>::AsyncFuture ;
 } ;
