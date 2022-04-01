@@ -5,6 +5,7 @@
 #endif
 
 #include "csc.hpp"
+#include "csc_type.hpp"
 #include "csc_core.hpp"
 #include "csc_basic.hpp"
 #include "csc_array.hpp"
@@ -331,8 +332,7 @@ trait MSTREE_HELP<DEPEND ,ALWAYS> {
 			if (curr == NONE)
 				return ;
 			compute_order (mTree[curr].mLeft ,range_ ,iw) ;
-			range_[iw] = curr ;
-			iw++ ;
+			range_[iw++] = curr ;
 			compute_order (mTree[curr].mRight ,range_ ,iw) ;
 		}
 	} ;
@@ -365,7 +365,7 @@ trait SEGMENTSET_HELP<DEPEND ,ALWAYS> {
 		void add (CREF<FLOAT> lb ,CREF<FLOAT> rb) {
 			INDEX ix = insert (lb) ;
 			INDEX iy = insert (rb) ;
-			const auto r1x = sort_of (mSegmentSetOrder[ix] ,mSegmentSetOrder[iy]) ;
+			const auto r1x = MathProc::sort_of (mSegmentSetOrder[ix] ,mSegmentSetOrder[iy]) ;
 			for (auto &&i : iter (r1x[0] ,r1x[1])) {
 				mReal[i] = TRUE ;
 				mRealLeft[mSegmentSetRange[i]] = TRUE ;
@@ -376,7 +376,7 @@ trait SEGMENTSET_HELP<DEPEND ,ALWAYS> {
 		void erase (CREF<FLOAT> lb ,CREF<FLOAT> rb) {
 			INDEX ix = insert (lb) ;
 			INDEX iy = insert (rb) ;
-			const auto r1x = sort_of (mSegmentSetOrder[ix] ,mSegmentSetOrder[iy]) ;
+			const auto r1x = MathProc::sort_of (mSegmentSetOrder[ix] ,mSegmentSetOrder[iy]) ;
 			for (auto &&i : iter (r1x[0] ,r1x[1])) {
 				mReal[i] = FALSE ;
 				mRealLeft[mSegmentSetRange[i]] = FALSE ;
@@ -388,7 +388,7 @@ trait SEGMENTSET_HELP<DEPEND ,ALWAYS> {
 			INDEX ix = insert (lb) ;
 			INDEX iy = insert (rb) ;
 			FLOAT ret = FLOAT (0) ;
-			const auto r1x = sort_of (mSegmentSetOrder[ix] ,mSegmentSetOrder[iy]) ;
+			const auto r1x = MathProc::sort_of (mSegmentSetOrder[ix] ,mSegmentSetOrder[iy]) ;
 			for (auto &&i : iter (r1x[0] ,r1x[1])) {
 				if ifnot (mReal[i])
 					continue ;
@@ -421,7 +421,7 @@ trait SEGMENTSET_HELP<DEPEND ,ALWAYS> {
 				mSegmentSetOrder.fill (NONE) ;
 			}
 			mSegmentSetRange = mSegmentSet.range_sort () ;
-			for (auto &&i : iter (0 ,mSegmentSetRange.length ()))
+			for (auto &&i : mSegmentSetRange.iter ())
 				mSegmentSetOrder[mSegmentSetRange[i]] = i ;
 			if ifswitch (TRUE) {
 				if (mRealLeft.size () == mSegmentSet.size ())

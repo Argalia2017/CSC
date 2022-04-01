@@ -21,7 +21,8 @@ trait CONSOLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	using Binder = typename CONSOLE_HELP<DEPEND ,ALWAYS>::Binder ;
 	using Holder = typename CONSOLE_HELP<DEPEND ,ALWAYS>::Holder ;
 
-	using CONSOLE_BUFFER_DEF_SIZE = ENUMAS<VAL ,ENUMID<8388608>> ;
+	using HANDLE = csc_pointer_t ;
+	using CONSOLE_BUFFER_SSIZE = ENUMAS<VAL ,ENUMID<8388607>> ;
 
 	using OPTION_DEFAULT = typename CONSOLE_HELP<DEPEND ,ALWAYS>::OPTION_DEFAULT ;
 	using OPTION_NO_PRINT = typename CONSOLE_HELP<DEPEND ,ALWAYS>::OPTION_NO_PRINT ;
@@ -31,14 +32,15 @@ trait CONSOLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	using OPTION_NO_INFO = typename CONSOLE_HELP<DEPEND ,ALWAYS>::OPTION_NO_INFO ;
 	using OPTION_NO_DEBUG = typename CONSOLE_HELP<DEPEND ,ALWAYS>::OPTION_NO_DEBUG ;
 	using OPTION_NO_VERBOSE = typename CONSOLE_HELP<DEPEND ,ALWAYS>::OPTION_NO_VERBOSE ;
+	using OPTION_SIZE = typename CONSOLE_HELP<DEPEND ,ALWAYS>::OPTION_SIZE ;
 
 	struct HEAP {
-		VarBuffer<STR> mConBuffer ;
+		String<STR> mConBuffer ;
 		TextWriter<STR> mConWriter ;
-		VarBuffer<STR> mLogBuffer ;
-		TextWriter<STR> mLogWriter ;
-		Set<FLAG> mOption ;
-		UniqueRef<VAL32> mConsole ;
+		String<STRU8> mLogBuffer ;
+		TextWriter<STRU8> mLogWriter ;
+		BitSet<OPTION_SIZE> mOption ;
+		UniqueRef<HANDLE> mConsole ;
 		String<STR> mLogFile ;
 		String<STR> mOldLogFile ;
 		VRef<StreamFile> mLogStreamFile ;
@@ -49,19 +51,18 @@ trait CONSOLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		SharedRef<HEAP> mHeap ;
 
 	public:
-		implicit ImplHolder () {
-			mHeap = SharedRef<HEAP>::make () ;
-		}
+		implicit ImplHolder () = default ;
 
-		void init_device () override {
-			set_buffer_size (CONSOLE_BUFFER_DEF_SIZE::value) ;
+		void initialize () override {
+			mHeap = SharedRef<HEAP>::make () ;
+			set_buffer_size (CONSOLE_BUFFER_SSIZE::value) ;
 		}
 
 		void set_buffer_size (CREF<LENGTH> size_) const {
-			mHeap->mConBuffer = VarBuffer<STR> (size_) ;
-			mHeap->mConWriter = TextWriter<STR> (RegBuffer<STR>::from (mHeap->mConBuffer ,0 ,mHeap->mConBuffer.size ())) ;
-			mHeap->mLogBuffer = VarBuffer<STR> (size_) ;
-			mHeap->mLogWriter = TextWriter<STR> (RegBuffer<STR>::from (mHeap->mLogBuffer ,0 ,mHeap->mLogBuffer.size ())) ;
+			mHeap->mConBuffer = String<STR> (size_) ;
+			mHeap->mConWriter = TextWriter<STR> (mHeap->mConBuffer.raw ()) ;
+			mHeap->mLogBuffer = String<STRU8> (size_) ;
+			mHeap->mLogWriter = TextWriter<STRU8> (mHeap->mLogBuffer.raw ()) ;
 		}
 
 		void enable_option (CREF<FLAG> option) const override {
@@ -81,106 +82,71 @@ trait CONSOLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		void print (CREF<Binder> msg) const override {
-			if (mHeap->mOption.find (OPTION_NO_PRINT::value) != NONE)
+			if (mHeap->mOption[OPTION_NO_PRINT::value])
 				return ;
 			write_con_buffer (msg) ;
 			attach_console () ;
-			const auto r1x = invoke ([&] () {
-				String<STRA> ret = String<STRA> (mHeap->mConWriter.length () - 1) ;
-				for (auto &&i : iter (0 ,ret.size ()))
-					ret[i] = STRA (mHeap->mConBuffer[i]) ;
-				return move (ret) ;
-			}) ;
+			const auto r1x = string_cvt[TYPEAS<TYPEAS<STRA ,STR>>::id] (mHeap->mConBuffer) ;
 			printf ("%s\n" ,(&r1x[0])) ;
 			log (slice ("PRINT")) ;
 		}
 
 		void fatal (CREF<Binder> msg) const override {
-			if (mHeap->mOption.find (OPTION_NO_FATAL::value) != NONE)
+			if (mHeap->mOption[OPTION_NO_FATAL::value])
 				return ;
 			write_con_buffer (msg) ;
 			attach_console () ;
-			const auto r1x = invoke ([&] () {
-				String<STRA> ret = String<STRA> (mHeap->mConWriter.length () - 1) ;
-				for (auto &&i : iter (0 ,ret.size ()))
-					ret[i] = STRA (mHeap->mConBuffer[i]) ;
-				return move (ret) ;
-			}) ;
+			const auto r1x = string_cvt[TYPEAS<TYPEAS<STRA ,STR>>::id] (mHeap->mConBuffer) ;
 			printf ("\033[1;34m%s\033[0m\n" ,(&r1x[0])) ;
 			log (slice ("FATAL")) ;
 		}
 
 		void error (CREF<Binder> msg) const override {
-			if (mHeap->mOption.find (OPTION_NO_ERROR::value) != NONE)
+			if (mHeap->mOption[OPTION_NO_ERROR::value])
 				return ;
 			write_con_buffer (msg) ;
 			attach_console () ;
-			const auto r1x = invoke ([&] () {
-				String<STRA> ret = String<STRA> (mHeap->mConWriter.length () - 1) ;
-				for (auto &&i : iter (0 ,ret.size ()))
-					ret[i] = STRA (mHeap->mConBuffer[i]) ;
-				return move (ret) ;
-			}) ;
+			const auto r1x = string_cvt[TYPEAS<TYPEAS<STRA ,STR>>::id] (mHeap->mConBuffer) ;
 			printf ("\033[1;31m%s\033[0m\n" ,(&r1x[0])) ;
 			log (slice ("ERROR")) ;
 		}
 
 		void warn (CREF<Binder> msg) const override {
-			if (mHeap->mOption.find (OPTION_NO_WARN::value) != NONE)
+			if (mHeap->mOption[OPTION_NO_WARN::value])
 				return ;
 			write_con_buffer (msg) ;
 			attach_console () ;
-			const auto r1x = invoke ([&] () {
-				String<STRA> ret = String<STRA> (mHeap->mConWriter.length () - 1) ;
-				for (auto &&i : iter (0 ,ret.size ()))
-					ret[i] = STRA (mHeap->mConBuffer[i]) ;
-				return move (ret) ;
-			}) ;
+			const auto r1x = string_cvt[TYPEAS<TYPEAS<STRA ,STR>>::id] (mHeap->mConBuffer) ;
 			printf ("\033[1;33m%s\033[0m\n" ,(&r1x[0])) ;
 			log (slice ("WARN")) ;
 		}
 
 		void info (CREF<Binder> msg) const override {
-			if (mHeap->mOption.find (OPTION_NO_INFO::value) != NONE)
+			if (mHeap->mOption[OPTION_NO_INFO::value])
 				return ;
 			write_con_buffer (msg) ;
 			attach_console () ;
-			const auto r1x = invoke ([&] () {
-				String<STRA> ret = String<STRA> (mHeap->mConWriter.length () - 1) ;
-				for (auto &&i : iter (0 ,ret.size ()))
-					ret[i] = STRA (mHeap->mConBuffer[i]) ;
-				return move (ret) ;
-			}) ;
+			const auto r1x = string_cvt[TYPEAS<TYPEAS<STRA ,STR>>::id] (mHeap->mConBuffer) ;
 			printf ("\033[1;32m%s\033[0m\n" ,(&r1x[0])) ;
 			log (slice ("INFO")) ;
 		}
 
 		void debug (CREF<Binder> msg) const override {
-			if (mHeap->mOption.find (OPTION_NO_DEBUG::value) != NONE)
+			if (mHeap->mOption[OPTION_NO_DEBUG::value])
 				return ;
 			write_con_buffer (msg) ;
 			attach_console () ;
-			const auto r1x = invoke ([&] () {
-				String<STRA> ret = String<STRA> (mHeap->mConWriter.length () - 1) ;
-				for (auto &&i : iter (0 ,ret.size ()))
-					ret[i] = STRA (mHeap->mConBuffer[i]) ;
-				return move (ret) ;
-			}) ;
+			const auto r1x = string_cvt[TYPEAS<TYPEAS<STRA ,STR>>::id] (mHeap->mConBuffer) ;
 			printf ("\033[1;36m%s\033[0m\n" ,(&r1x[0])) ;
 			log (slice ("DEBUG")) ;
 		}
 
 		void verbose (CREF<Binder> msg) const override {
-			if (mHeap->mOption.find (OPTION_NO_VERBOSE::value) != NONE)
+			if (mHeap->mOption[OPTION_NO_VERBOSE::value])
 				return ;
 			write_con_buffer (msg) ;
 			attach_console () ;
-			const auto r1x = invoke ([&] () {
-				String<STRA> ret = String<STRA> (mHeap->mConWriter.length () - 1) ;
-				for (auto &&i : iter (0 ,ret.size ()))
-					ret[i] = STRA (mHeap->mConBuffer[i]) ;
-				return move (ret) ;
-			}) ;
+			const auto r1x = string_cvt[TYPEAS<TYPEAS<STRA ,STR>>::id] (mHeap->mConBuffer) ;
 			printf ("\033[1;37m%s\033[0m\n" ,(&r1x[0])) ;
 			log (slice ("VERBOSE")) ;
 		}
@@ -194,7 +160,7 @@ trait CONSOLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		void attach_console () const {
 			if (mHeap->mConsole.exist ())
 				return ;
-			mHeap->mConsole = UniqueRef<VAL32>::make (0) ;
+			mHeap->mConsole = UniqueRef<HANDLE>::make (NULL) ;
 		}
 
 		void link (CREF<String<STR>> dire_) const override {
@@ -203,8 +169,8 @@ trait CONSOLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				if (dire_.empty ())
 					discard ;
 				const auto r1x = Directory (dire_).absolute () ;
-				mHeap->mLogFile = String<STR>::make (r1x ,slice ("console.log")) ;
-				mHeap->mOldLogFile = String<STR>::make (r1x ,slice ("console.old.log")) ;
+				mHeap->mLogFile = String<STR>::make (r1x ,STR ('/') ,slice ("console.log")) ;
+				mHeap->mOldLogFile = String<STR>::make (r1x ,STR ('/') ,slice ("console.old.log")) ;
 			}
 			if ifswitch (eax) {
 				mHeap->mLogFile = String<STR> () ;
@@ -215,58 +181,49 @@ trait CONSOLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		void log (CREF<Slice<STR>> tag) const {
 			if (mHeap->mLogFile.empty ())
 				return ;
-			//write_log_buffer (tag) ;
-			//const auto r1x = RegBuffer<BYTE_BASE<STR>>::from (mHeap->mLogBuffer ,0 ,mHeap->mLogWriter.length () - 1) ;
-			//try_invoke ([&] () {
-			//	if (mHeap->mLogStreamFile == NULL)
-			//		return ;
-			//	mHeap->mLogStreamFile->write (r1x) ;
-			//} ,[&] () {
-			//	mHeap->mLogStreamFile = NULL ;
-			//}) ;
-			//try_invoke ([&] () {
-			//	if (mHeap->mLogStreamFile != NULL)
-			//		return ;
-			//	attach_log_file () ;
-			//	mHeap->mLogStreamFile->write (r1x) ;
-			//} ,[&] () {
-			//	mHeap->mLogStreamFile = NULL ;
-			//}) ;
-			//if ifswitch (TRUE) {
-			//	if (mHeap->mLogStreamFile == NULL)
-			//		discard ;
-			//	mHeap->mLogStreamFile->flush () ;
-			//}
+			write_log_buffer (tag) ;
+			const auto r1x = RegBuffer<BYTE>::from (unsafe_array (mHeap->mLogBuffer[0]) ,0 ,mHeap->mLogWriter.length () - 1) ;
+			try_invoke ([&] () {
+				if (mHeap->mLogStreamFile == NULL)
+					return ;
+				const auto r2x = mHeap->mLogStreamFile->write (r1x) ;
+				assume (r2x == r1x->size ()) ;
+			} ,[&] () {
+				mHeap->mLogStreamFile = NULL ;
+			}) ;
+			try_invoke ([&] () {
+				if (mHeap->mLogStreamFile != NULL)
+					return ;
+				attach_log_file () ;
+				const auto r3x = mHeap->mLogStreamFile->write (r1x) ;
+				assume (r3x == r1x->size ()) ;
+			} ,[&] () {
+				mHeap->mLogStreamFile = NULL ;
+			}) ;
+			if ifswitch (TRUE) {
+				if (mHeap->mLogStreamFile == NULL)
+					discard ;
+				mHeap->mLogStreamFile->flush () ;
+			}
 		}
 
 		void write_log_buffer (CREF<Slice<STR>> tag) const {
-			mHeap->mLogWriter << TextWriter<STR>::CLS ;
+			mHeap->mLogWriter << TextWriter<STRU8>::CLS ;
 			mHeap->mLogWriter << slice ("[") ;
-			const auto r1x = TimePoint::make_now () ;
+			const auto r1x = NowTimePoint () ;
 			const auto r2x = r1x.calendar () ;
-			write_log_buffer_time (r2x.mHour ,2) ;
+			mHeap->mLogWriter << AlignedString<STRU8> (r2x.mHour ,2) ;
 			mHeap->mLogWriter << slice (":") ;
-			write_log_buffer_time (r2x.mMinute ,2) ;
+			mHeap->mLogWriter << AlignedString<STRU8> (r2x.mMinute ,2) ;
 			mHeap->mLogWriter << slice (":") ;
-			write_log_buffer_time (r2x.mSecond ,2) ;
+			mHeap->mLogWriter << AlignedString<STRU8> (r2x.mSecond ,2) ;
 			mHeap->mLogWriter << slice ("][") ;
 			mHeap->mLogWriter << tag ;
 			mHeap->mLogWriter << slice ("] : ") ;
-			const auto r3x = RegBuffer<STR>::from (mHeap->mConBuffer ,0 ,mHeap->mConWriter.length () - 1) ;
-			for (auto &&i : iter (0 ,r3x->size ()))
-				mHeap->mLogWriter << r3x.self[i] ;
-			mHeap->mLogWriter << TextWriter<STR>::GAP ;
-			mHeap->mLogWriter << TextWriter<STR>::EOS ;
-		}
-
-		void write_log_buffer_time (CREF<LENGTH> count ,CREF<LENGTH> align_) const {
-			const auto r1x = align_ - MathProc::log10v (count) ;
-			assume (r1x >= 0) ;
-			for (auto &&i : iter (0 ,r1x)) {
-				noop (i) ;
-				mHeap->mLogWriter << slice ("0") ;
-			}
-			mHeap->mLogWriter << count ;
+			const auto r3x = string_cvt[TYPEAS<TYPEAS<STRU8 ,STR>>::id] (mHeap->mConBuffer) ;
+			mHeap->mLogWriter << r3x ;
+			mHeap->mLogWriter << TextWriter<STRU8>::GAP ;
+			mHeap->mLogWriter << TextWriter<STRU8>::EOS ;
 		}
 
 		void attach_log_file () const {
@@ -274,27 +231,35 @@ trait CONSOLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			const auto r2x = File (mHeap->mOldLogFile) ;
 			r2x.erase () ;
 			r2x.move_from (r1x) ;
-			//mHeap->mLogStreamFile = VRef<StreamFile>::make (mHeap->mLogFile ,FALSE) ;
-			//const auto r3x = String<STR>::make (TextWriter<STR>::BOM) ;
-			//const auto r4x = RegBuffer<BYTE_BASE<STR>>::from (unsafe_array (r3x[0]) ,0 ,r3x.length ()) ;
-			//mHeap->mLogStreamFile->write (r4x) ;
+			mHeap->mLogStreamFile = VRef<StreamFile>::make (mHeap->mLogFile) ;
+			const auto r3x = mHeap->mLogStreamFile->link (TRUE ,TRUE) ;
+			assume (r3x) ;
+			const auto r4x = String<STRU8>::make (TextWriter<STRU8>::BOM) ;
+			const auto r5x = RegBuffer<BYTE>::from (unsafe_array (r4x[0]) ,0 ,r4x.length ()) ;
+			const auto r6x = mHeap->mLogStreamFile->write (r5x) ;
+			assume (r6x == r5x->size ()) ;
 		}
 
 		void open () const override {
-			if (mHeap->mConsole.exist ())
-				if (mHeap->mConsole.self != ZERO)
-					return ;
-			mHeap->mConsole = UniqueRef<VAL32>::make (IDEN) ;
+			if (is_open ())
+				return ;
+			mHeap->mConsole = UniqueRef<HANDLE>::make (stdout) ;
+		}
+
+		BOOL is_open () const {
+			if ifnot (mHeap->mConsole.exist ())
+				return FALSE ;
+			if (mHeap->mConsole.self == NULL)
+				return FALSE ;
+			return TRUE ;
 		}
 
 		void close () const override {
-			mHeap->mConsole = UniqueRef<VAL32> () ;
+			mHeap->mConsole = UniqueRef<HANDLE> () ;
 		}
 
 		void pause () const override {
-			if (mHeap->mConsole.exist ())
-				return ;
-			if (mHeap->mConsole.self == ZERO)
+			if ifnot (is_open ())
 				return ;
 			printf ("press any key to continue...\n") ;
 			const auto r1x = getchar () ;
@@ -302,9 +267,7 @@ trait CONSOLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		void clear () const override {
-			if (mHeap->mConsole.exist ())
-				return ;
-			if (mHeap->mConsole.self == ZERO)
+			if ifnot (is_open ())
 				return ;
 			const auto r1x = std::system ("clear") ;
 			noop (r1x) ;
@@ -322,11 +285,13 @@ template <class DEPEND>
 trait REPORTER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	using Holder = typename REPORTER_HELP<DEPEND ,ALWAYS>::Holder ;
 
+	using HSYMB = DEF<STRA **> ;
 	using STACK_MAX_DEPTH = ENUMAS<VAL ,ENUMID<256>> ;
 	using FUNCTION_NAME_MAX_SIZE = ENUMAS<VAL ,ENUMID<1024>> ;
 
 	struct HEAP {
 		UniqueRef<> mCrashSignal ;
+		String<STR> mNameBuffer ;
 	} ;
 
 	class ImplHolder implement Holder {
@@ -334,12 +299,11 @@ trait REPORTER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		SharedRef<HEAP> mHeap ;
 
 	public:
-		implicit ImplHolder () {
-			mHeap = SharedRef<HEAP>::make () ;
-		}
+		implicit ImplHolder () = default ;
 
-		void init_device () override {
-			noop () ;
+		void initialize () override {
+			mHeap = SharedRef<HEAP>::make () ;
+			mHeap->mNameBuffer = String<STR>::make () ;
 		}
 
 		void detect_memory_leaks () const override {
@@ -349,17 +313,21 @@ trait REPORTER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		void detect_crash_signal () const override {
 			mHeap->mCrashSignal = UniqueRef<> ([&] () {
 				const auto r1x = signal (SIGINT ,crash_handle_sigint) ;
-				assume (r1x == SIG_DFL) ;
+				noop (r1x) ;
 				const auto r2x = signal (SIGILL ,crash_handle_sigill) ;
-				assume (r2x == SIG_DFL) ;
+				noop (r2x) ;
 				const auto r3x = signal (SIGABRT ,crash_handle_sigabrt) ;
-				assume (r3x == SIG_DFL) ;
+				noop (r3x) ;
 				const auto r4x = signal (SIGFPE ,crash_handle_sigfpe) ;
-				assume (r4x == SIG_DFL) ;
+				noop (r4x) ;
 				const auto r5x = signal (SIGSEGV ,crash_handle_sigsegv) ;
-				assume (r5x == SIG_DFL) ;
+				noop (r5x) ;
 				const auto r6x = signal (SIGTERM ,crash_handle_sigterm) ;
-				assume (r6x == SIG_DFL) ;
+				noop (r6x) ;
+				const auto r7x = signal (SIGTERM ,crash_handle_sigbus) ;
+				noop (r7x) ;
+				const auto r8x = signal (SIGTERM ,crash_handle_sigsys) ;
+				noop (r8x) ;
 			} ,[] () {
 				signal (SIGINT ,SIG_DFL) ;
 				signal (SIGILL ,SIG_DFL) ;
@@ -367,43 +335,93 @@ trait REPORTER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				signal (SIGFPE ,SIG_DFL) ;
 				signal (SIGSEGV ,SIG_DFL) ;
 				signal (SIGTERM ,SIG_DFL) ;
+				//@info: Historical signals specified by POSIX
+				signal (SIGBUS ,SIG_DFL) ;
+				signal (SIGSYS ,SIG_DFL) ;
 			}) ;
 		}
 
-		imports void crash_handle_sigint (int) {
-			Console::instance ().error (slice ("Interrupt Fault")) ;
+		imports void crash_handle_sigint (VAL32) {
+			Singleton<Console>::instance ().print () ;
+			Singleton<Console>::instance ().error (slice ("Interrupt Fault")) ;
+			Singleton<Console>::instance ().error (slice ("errno = ") ,FLAG (errno)) ;
+			crash_stack_trace () ;
 			signal (SIGINT ,SIG_DFL) ;
 			raise (SIGINT) ;
 		}
 
-		imports void crash_handle_sigill (int) {
-			Console::instance ().error (slice ("Illegal Fault")) ;
+		imports void crash_handle_sigill (VAL32) {
+			Singleton<Console>::instance ().print () ;
+			Singleton<Console>::instance ().error (slice ("Illegal Fault")) ;
+			Singleton<Console>::instance ().error (slice ("errno = ") ,FLAG (errno)) ;
+			crash_stack_trace () ;
 			signal (SIGILL ,SIG_DFL) ;
 			raise (SIGILL) ;
 		}
 
-		imports void crash_handle_sigabrt (int) {
-			Console::instance ().error (slice ("Abort Fault")) ;
+		imports void crash_handle_sigabrt (VAL32) {
+			Singleton<Console>::instance ().print () ;
+			Singleton<Console>::instance ().error (slice ("Abort Fault")) ;
+			Singleton<Console>::instance ().error (slice ("errno = ") ,FLAG (errno)) ;
+			crash_stack_trace () ;
 			signal (SIGABRT ,SIG_DFL) ;
 			raise (SIGABRT) ;
 		}
 
-		imports void crash_handle_sigfpe (int) {
-			Console::instance ().error (slice ("Float Fault")) ;
+		imports void crash_handle_sigfpe (VAL32) {
+			Singleton<Console>::instance ().print () ;
+			Singleton<Console>::instance ().error (slice ("Float Fault")) ;
+			Singleton<Console>::instance ().error (slice ("errno = ") ,FLAG (errno)) ;
+			crash_stack_trace () ;
 			signal (SIGFPE ,SIG_DFL) ;
 			raise (SIGFPE) ;
 		}
 
-		imports void crash_handle_sigsegv (int) {
-			Console::instance ().error (slice ("Segmentation Fault")) ;
+		imports void crash_handle_sigsegv (VAL32) {
+			Singleton<Console>::instance ().print () ;
+			Singleton<Console>::instance ().error (slice ("Segmentation Fault")) ;
+			Singleton<Console>::instance ().error (slice ("errno = ") ,FLAG (errno)) ;
+			crash_stack_trace () ;
 			signal (SIGSEGV ,SIG_DFL) ;
 			raise (SIGSEGV) ;
 		}
 
-		imports void crash_handle_sigterm (int) {
-			Console::instance ().error (slice ("Termination Fault")) ;
+		imports void crash_handle_sigterm (VAL32) {
+			Singleton<Console>::instance ().print () ;
+			Singleton<Console>::instance ().error (slice ("Termination Fault")) ;
+			Singleton<Console>::instance ().error (slice ("errno = ") ,FLAG (errno)) ;
+			crash_stack_trace () ;
 			signal (SIGTERM ,SIG_DFL) ;
 			raise (SIGTERM) ;
+		}
+
+		imports void crash_handle_sigbus (VAL32) {
+			Singleton<Console>::instance ().print () ;
+			Singleton<Console>::instance ().error (slice ("Bus Fault")) ;
+			Singleton<Console>::instance ().error (slice ("errno = ") ,FLAG (errno)) ;
+			crash_stack_trace () ;
+			signal (SIGBUS ,SIG_DFL) ;
+			raise (SIGBUS) ;
+		}
+
+		imports void crash_handle_sigsys (VAL32) {
+			Singleton<Console>::instance ().print () ;
+			Singleton<Console>::instance ().error (slice ("System Call Fault")) ;
+			Singleton<Console>::instance ().error (slice ("errno = ") ,FLAG (errno)) ;
+			crash_stack_trace () ;
+			signal (SIGSYS ,SIG_DFL) ;
+			raise (SIGSYS) ;
+		}
+
+		imports void crash_stack_trace () {
+			Singleton<Console>::instance ().print () ;
+			const auto r1x = Singleton<Reporter>::instance ().captrue_stack_trace () ;
+			Singleton<Console>::instance ().fatal (slice ("stack trace")) ;
+			for (auto &&i : r1x.iter ()) {
+				const auto r2x = Singleton<Reporter>::instance ().symbol_from_address (r1x[i]) ;
+				Singleton<Console>::instance ().debug (slice ("#[") ,i ,slice ("] = ") ,r2x) ;
+			}
+			Singleton<Console>::instance ().print () ;
 		}
 
 		Array<FLAG> captrue_stack_trace () const override {
@@ -416,38 +434,28 @@ trait REPORTER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		String<STR> symbol_from_address (CREF<FLAG> addr_) const override {
-			using R1X = DEF<STRA **> ;
 			String<STR> ret ;
 			const auto r1x = csc_pointer_t (addr_) ;
 			auto eax = TRUE ;
 			if ifswitch (eax) {
-				const auto r2x = UniqueRef<R1X> ([&] (VREF<R1X> me) {
+				const auto r2x = UniqueRef<HSYMB> ([&] (VREF<HSYMB> me) {
 					me = backtrace_symbols ((&r1x) ,VAL32 (1)) ;
-				} ,[] (VREF<R1X> me) {
+				} ,[] (VREF<HSYMB> me) {
 					if (me == NULL)
 						return ;
 					free (me) ;
 				}) ;
-				if (r2x == NULL)
+				if (r2x.self == NULL)
 					discard ;
-				auto &&tmp = (*r2x.self) ;
+				auto &&tmp = unsafe_array ((**r2x.self)) ;
+				mHeap->mNameBuffer.clear () ;
+				BufferProc::buf_slice (mHeap->mNameBuffer ,tmp ,mHeap->mNameBuffer.size ()) ;
 				const auto r3x = string_build[TYPEAS<TYPEAS<STR ,DATA>>::id] (DATA (addr_)) ;
-				const auto r4x = invoke ([&] () {
-					String<STR> ret = String<STR>::make () ;
-					INDEX ix = 0 ;
-					while (TRUE) {
-						if (tmp[ix] == 0)
-							break ;
-						ret[ix] = STR (tmp[ix]) ;
-						ix++ ;
-					}
-					return move (ret) ;
-				}) ;
-				ret = String<STR>::make (slice ("[") ,r3x ,slice ("] : ") ,r4x) ;
+				ret = String<STR>::make (slice ("[") ,r3x ,slice ("] : ") ,mHeap->mNameBuffer) ;
 			}
 			if ifswitch (eax) {
-				const auto r5x = string_build[TYPEAS<TYPEAS<STR ,DATA>>::id] (DATA (addr_)) ;
-				ret = String<STR>::make (slice ("[") ,r5x ,slice ("] : ") ,slice ("null")) ;
+				const auto r4x = string_build[TYPEAS<TYPEAS<STR ,DATA>>::id] (DATA (addr_)) ;
+				ret = String<STR>::make (slice ("[") ,r4x ,slice ("] : ") ,slice ("null")) ;
 			}
 			return move (ret) ;
 		}

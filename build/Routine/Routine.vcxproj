@@ -41,8 +41,8 @@
     <ClInclude Include="..\..\src\csc\csc_stream.hpp" />
     <ClInclude Include="..\..\src\csc\csc_string.hpp" />
     <ClInclude Include="..\..\src\csc\csc_thread.hpp" />
+    <ClInclude Include="..\..\src\csc\csc_type.hpp" />
     <ClInclude Include="..\..\src\csc\end.h" />
-    <ClInclude Include="..\..\src\csc\compiler.h" />
     <ClInclude Include="..\..\src\util.h" />
   </ItemGroup>
   <ItemGroup>
@@ -165,6 +165,7 @@
       <BrowseInformation>true</BrowseInformation>
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <EnableModules>true</EnableModules>
+      <AdditionalOptions>/bigobj %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <AdditionalLibraryDirectories>$(VCInstallDir)UnitTest\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
@@ -210,6 +211,7 @@
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <EnableModules>true</EnableModules>
+      <AdditionalOptions>/bigobj %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <AdditionalLibraryDirectories>$(VCInstallDir)UnitTest\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>

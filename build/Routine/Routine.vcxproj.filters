@@ -58,17 +58,14 @@
     <ClInclude Include="..\..\src\csc\csc_string.hpp">
       <Filter>csc</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\csc\compiler.h">
+    <ClInclude Include="..\..\src\csc\csc_thread.hpp">
       <Filter>csc</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\csc\csc_thread.hpp">
+    <ClInclude Include="..\..\src\csc\csc_type.hpp">
       <Filter>csc</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <Filter Include="unittest">
-      <UniqueIdentifier>{000e62c6-12e0-48db-9e97-8c9331ef3a16}</UniqueIdentifier>
-    </Filter>
     <Filter Include="csc">
       <UniqueIdentifier>{39dd61d7-1230-4b66-96d6-a7e28319a439}</UniqueIdentifier>
     </Filter>

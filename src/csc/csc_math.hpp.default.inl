@@ -19,20 +19,20 @@ trait MATHPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 
 		BOOL infinite (CREF<SINGLE> x) const override {
 			const auto r1x = bitwise (x) ;
-			if ((r1x & CHAR (0X7F800000)) != CHAR (0X7F800000))
+			if ifnot (BitProc::all_bit (r1x ,CHAR (0X7F800000)))
 				return FALSE ;
-			//@warn: nan is a deprecated magic number
-			if ((r1x & CHAR (0X007FFFFF)) != CHAR (0X00))
+			//@warn: treat as infinity
+			if (BitProc::get_bit (r1x ,CHAR (0X007FFFFF)))
 				return TRUE ;
 			return TRUE ;
 		}
 
 		BOOL infinite (CREF<DOUBLE> x) const override {
 			const auto r1x = bitwise (x) ;
-			if ((r1x & DATA (0X7FF0000000000000)) != DATA (0X7FF0000000000000))
+			if ifnot (BitProc::all_bit (r1x ,DATA (0X7FF0000000000000)))
 				return FALSE ;
-			//@warn: nan is a deprecated magic number
-			if ((r1x & DATA (0X000FFFFFFFFFFFFF)) != DATA (0X00))
+			//@warn: treat as infinity
+			if (BitProc::get_bit (r1x ,DATA (0X000FFFFFFFFFFFFF)))
 				return TRUE ;
 			return TRUE ;
 		}
@@ -161,6 +161,7 @@ trait FLOATPROC_KROSHCACHE_HELP ;
 template <class DEPEND>
 trait FLOATPROC_KROSHCACHE_HELP<DEPEND ,ALWAYS> {
 	using NOTATION = typename FLOATPROC_HELP<DEPEND ,ALWAYS>::NOTATION ;
+
 	using SIZE = ENUMAS<VAL ,ENUMID<687>> ;
 	using INDEX_OFFSET = ENUMAS<VAL ,ENUMID<343>> ;
 
@@ -668,13 +669,13 @@ trait FLOATPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				if (rax.mMantissa == 0)
 					discard ;
 				while (TRUE) {
-					if ((DATA (rax.mMantissa) & ~DATA (0X001FFFFFFFFFFFFF)) == DATA (0X00))
+					if ifnot (BitProc::get_bit (DATA (rax.mMantissa) ,DATA (0XFFE0000000000000)))
 						break ;
 					rax.mMantissa = VAL64 (DATA (rax.mMantissa) >> 1) ;
 					rax.mExponent++ ;
 				}
 				while (TRUE) {
-					if ((DATA (rax.mMantissa) & ~DATA (0X000FFFFFFFFFFFFF)) != DATA (0X00))
+					if (BitProc::get_bit (DATA (rax.mMantissa) ,DATA (0XFFF0000000000000)))
 						break ;
 					rax.mMantissa = VAL64 (DATA (rax.mMantissa) << 1) ;
 					rax.mExponent-- ;
@@ -708,10 +709,9 @@ trait FLOATPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			NOTATION ret ;
 			ret.mRadix = 2 ;
 			const auto r1x = bitwise (float_) ;
-			const auto r2x = r1x & DATA (0X8000000000000000) ;
 			const auto r3x = r1x & DATA (0X7FF0000000000000) ;
 			const auto r4x = r1x & DATA (0X000FFFFFFFFFFFFF) ;
-			ret.mSign = BOOL (r2x != DATA (0X00)) ;
+			ret.mSign = BitProc::get_bit (r1x ,DATA (0X8000000000000000)) ;
 			ret.mMantissa = VAL64 (r4x) ;
 			ret.mPrecision = 0 ;
 			if ifswitch (TRUE) {
@@ -730,7 +730,7 @@ trait FLOATPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				if (ret.mMantissa == 0)
 					discard ;
 				while (TRUE) {
-					if ((DATA (ret.mMantissa) & DATA (0X0000000000000001)) != DATA (0X00))
+					if (BitProc::get_bit (DATA (ret.mMantissa) ,DATA (0X0000000000000001)))
 						break ;
 					ret.mMantissa = VAL64 (DATA (ret.mMantissa) >> 1) ;
 					ret.mExponent++ ;
@@ -744,8 +744,8 @@ trait FLOATPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			ret.mRadix = 2 ;
 			ret.mSign = FALSE ;
 			const auto r1x = LENGTH (32) ;
-			const auto r2x = DATA (VAL64 (DATA (0X01) << r1x) - 1) ;
-			const auto r3x = DATA (0X01) << (r1x - 1) ;
+			const auto r2x = DATA (VAL64 (BitProc::nth_bit (r1x)) - 1) ;
+			const auto r3x = BitProc::nth_bit (r1x - 1) ;
 			const auto r4x = VAL64 (DATA (a.mMantissa) >> r1x) ;
 			const auto r5x = VAL64 (DATA (a.mMantissa) & r2x) ;
 			const auto r6x = VAL64 (DATA (b.mMantissa) >> r1x) ;
@@ -774,7 +774,7 @@ trait FLOATPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				ret.mPrecision = 0 ;
 				ret.mExponent = 0 ;
 				while (TRUE) {
-					if ((DATA (ret.mMantissa) & ~DATA (0X7FFFFFFFFFFFFFFF)) != DATA (0X00))
+					if (BitProc::get_bit (DATA (ret.mMantissa) ,DATA (0X8000000000000000)))
 						break ;
 					ret.mMantissa = VAL64 (DATA (ret.mMantissa) << 1) ;
 					ret.mExponent-- ;
@@ -794,7 +794,7 @@ trait FLOATPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			ret.mPrecision = 0 ;
 			const auto r1x = DOUBLE (MATH_LN2 / MATH_LN10) * DOUBLE (fexp2.mExponent) ;
 			const auto r2x = MathProc::floor (r1x ,DOUBLE (1)) ;
-			//@mark
+			//@error: lose precision
 			const auto r3x = DOUBLE (fexp2.mMantissa) * MathProc::exp (DOUBLE (MATH_LN10) * (r1x - r2x)) ;
 			const auto r4x = MathProc::round (r3x ,DOUBLE (1)) ;
 			ret.mMantissa = VAL64 (r4x) ;

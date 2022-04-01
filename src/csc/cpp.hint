@@ -2,17 +2,18 @@
 
 #define implicit
 #define exports
-#define imports static
-#define leftvalue &
-#define rightvalue &&
-#define thiz (*this)
-#define self m_self ()
-#define fake m_fake ()
-#define trait struct
-#define implement :public
-#define extend :private
+#define imports
+#define leftvalue
+#define rightvalue
+#define thiz
+#define self
+#define fake
+#define trait
+#define implement
+#define extend
 #define require(...)
-#define anonymous anonymous
+#define anonymous
+#define where
 #define slice(...)
 #define assert(...)
 #define assume(...)
@@ -20,5 +21,5 @@
 #define forceinline
 #define ifnot(...)
 #define ifswitch(...)
-#define discard break
+#define discard
 #define typeof(...)

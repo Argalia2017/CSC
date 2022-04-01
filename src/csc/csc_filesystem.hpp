@@ -5,6 +5,7 @@
 #endif
 
 #include "csc.hpp"
+#include "csc_type.hpp"
 #include "csc_core.hpp"
 #include "csc_basic.hpp"
 #include "csc_array.hpp"
@@ -22,17 +23,15 @@ trait FILE_IMPLHOLDER_HELP ;
 
 template <class DEPEND>
 trait FILE_HELP<DEPEND ,ALWAYS> {
-	using FILE_NAME_SSIZE = ENUMAS<VAL ,ENUMID<1023>> ;
-
 	struct Holder implement Interface {
-		virtual void init_file (CREF<String<STR>> file_) = 0 ;
+		virtual void initialize (CREF<String<STR>> file_) = 0 ;
 		virtual Auto native () const leftvalue = 0 ;
-		virtual LENGTH file_size () const = 0 ;
+		virtual VAL64 length () const = 0 ;
 		virtual VarBuffer<BYTE> load () const = 0 ;
 		virtual void load (VREF<RegBuffer<BYTE>> item) const = 0 ;
 		virtual void save (CREF<RegBuffer<BYTE>> item) const = 0 ;
 		virtual CRef<RegBuffer<BYTE>> load_asset () const = 0 ;
-		virtual BOOL find () const = 0 ;
+		virtual BOOL available () const = 0 ;
 		virtual void erase () const = 0 ;
 		virtual void copy_from (CREF<Holder> that) const = 0 ;
 		virtual void move_from (CREF<Holder> that) const = 0 ;
@@ -53,7 +52,7 @@ trait FILE_HELP<DEPEND ,ALWAYS> {
 
 		explicit File (CREF<String<STR>> file_) {
 			mThis = FUNCTION_extern::invoke () ;
-			mThis->init_file (file_) ;
+			mThis->initialize (file_) ;
 		}
 
 		Auto native () const leftvalue {
@@ -88,12 +87,12 @@ trait FILE_HELP<DEPEND ,ALWAYS> {
 			return mThis->load_asset () ;
 		}
 
-		BOOL find () const {
-			return mThis->find () ;
+		BOOL available () const {
+			return mThis->available () ;
 		}
 
-		LENGTH file_size () const {
-			return mThis->file_size () ;
+		VAL64 length () const {
+			return mThis->length () ;
 		}
 
 		void erase () const {
@@ -105,7 +104,7 @@ trait FILE_HELP<DEPEND ,ALWAYS> {
 		}
 
 		void move_from (CREF<File> that) const {
-			return mThis->copy_from (that.mThis) ;
+			return mThis->move_from (that.mThis) ;
 		}
 
 		void link_from (CREF<File> that) const {
@@ -133,17 +132,23 @@ template <class DEPEND>
 trait DIRECTORY_HELP<DEPEND ,ALWAYS> {
 	using DIRECTORY_CHILD_SIZE = ENUMAS<VAL ,ENUMID<65536>> ;
 
+	struct CHILD {
+		String<STR> mFile ;
+		BOOL mIsFile ;
+		BOOL mIsDire ;
+		BOOL mIsLink ;
+	} ;
+
 	struct Holder implement Interface {
-		virtual void init_dire (CREF<String<STR>> dire_) = 0 ;
+		virtual void initialize (CREF<String<STR>> dire_) = 0 ;
 		virtual Auto native () const leftvalue = 0 ;
 		virtual String<STR> path () const = 0 ;
 		virtual String<STR> name () const = 0 ;
-		virtual String<STR> absolute () const = 0 ;
 		virtual LENGTH depth () const = 0 ;
-		virtual void parent_from (CREF<Holder> a) = 0 ;
-		virtual void brother_from (CREF<Holder> a) = 0 ;
-		virtual void child_from (CREF<Holder> a) = 0 ;
-		virtual BOOL find () const = 0 ;
+		virtual String<STR> absolute () const = 0 ;
+		virtual ArrayList<CHILD> load () const = 0 ;
+		virtual void fresh () const = 0 ;
+		virtual BOOL available () const = 0 ;
 		virtual BOOL lock () const = 0 ;
 		virtual void build () const = 0 ;
 		virtual void erase () const = 0 ;
@@ -163,7 +168,7 @@ trait DIRECTORY_HELP<DEPEND ,ALWAYS> {
 
 		explicit Directory (CREF<String<STR>> dire_) {
 			mThis = FUNCTION_extern::invoke () ;
-			mThis->init_dire (dire_) ;
+			mThis->initialize (dire_) ;
 		}
 
 		Auto native () const leftvalue {
@@ -178,52 +183,24 @@ trait DIRECTORY_HELP<DEPEND ,ALWAYS> {
 			return mThis->name () ;
 		}
 
-		String<STR> absolute () const {
-			return mThis->absolute () ;
-		}
-
 		LENGTH depth () const {
 			return mThis->depth () ;
 		}
 
-		Directory parent () const {
-			Directory ret ;
-			ret.mThis = FUNCTION_extern::invoke () ;
-			ret.mThis->parent_from (mThis) ;
-			return move (ret) ;
+		String<STR> absolute () const {
+			return mThis->absolute () ;
 		}
 
-		Directory brother () const {
-			Directory ret ;
-			ret.mThis = FUNCTION_extern::invoke () ;
-			ret.mThis->brother_from (mThis) ;
-			return move (ret) ;
+		ArrayList<CHILD> load () const {
+			return mThis->load () ;
 		}
 
-		Directory child () const {
-			Directory ret ;
-			ret.mThis = FUNCTION_extern::invoke () ;
-			ret.mThis->child_from (mThis) ;
-			return move (ret) ;
+		void fresh () const {
+			return mThis->fresh () ;
 		}
 
-		ArrayList<Directory> load () const {
-			ArrayList<Directory> ret ;
-			auto rax = Directory () ;
-			rax.mThis = FUNCTION_extern::invoke () ;
-			rax.mThis->child_from (mThis) ;
-			while (TRUE) {
-				if ifnot (rax.mThis->find ())
-					break ;
-				ret.add (move (rax)) ;
-				rax.mThis = FUNCTION_extern::invoke () ;
-				rax.mThis->brother_from (mThis) ;
-			}
-			return move (ret) ;
-		}
-
-		BOOL find () const {
-			return mThis->find () ;
+		BOOL available () const {
+			return mThis->available () ;
 		}
 
 		BOOL lock () const {
@@ -244,26 +221,6 @@ trait DIRECTORY_HELP<DEPEND ,ALWAYS> {
 	} ;
 } ;
 
-template <class DEPEND>
-trait DIRECTORY_DECOUPLE_HELP<DEPEND ,ALWAYS> {
-	using SUPER = typename TEXTREADER_IMPLHOLDER_HELP<STR ,ALWAYS>::ImplAttribute ;
-
-	class ImplAttribute implement SUPER {
-	public:
-		BOOL is_space (CREF<STR> str) const override {
-			if (str == STR ('\\'))
-				return TRUE ;
-			if (str == STR ('/'))
-				return TRUE ;
-			return FALSE ;
-		}
-
-		BOOL is_endline_space (CREF<STR> str) const override {
-			return FALSE ;
-		}
-	} ;
-} ;
-
 using Directory = typename DIRECTORY_HELP<DEPEND ,ALWAYS>::Directory ;
 
 template <class...>
@@ -275,16 +232,13 @@ trait STREAMFILE_IMPLHOLDER_HELP ;
 template <class DEPEND>
 trait STREAMFILE_HELP<DEPEND ,ALWAYS> {
 	struct Holder implement Interface {
-		virtual void init_read (CREF<String<STR>> file_) const = 0 ;
-		virtual void init_write (CREF<String<STR>> file_) const = 0 ;
-		virtual LENGTH size () const = 0 ;
-		virtual LENGTH length () const = 0 ;
-		virtual void reset () = 0 ;
-		virtual void reset (CREF<INDEX> read_ ,CREF<INDEX> write_) = 0 ;
-		virtual void backup () = 0 ;
-		virtual void recover () = 0 ;
-		virtual void read (VREF<RegBuffer<BYTE>> item) = 0 ;
-		virtual void write (CREF<RegBuffer<BYTE>> item) = 0 ;
+		virtual void initialize (CREF<String<STR>> file_) = 0 ;
+		virtual void open () = 0 ;
+		virtual void create () = 0 ;
+		virtual void open_create () = 0 ;
+		virtual void close () = 0 ;
+		virtual LENGTH read (VREF<RegBuffer<BYTE>> item) = 0 ;
+		virtual LENGTH write (CREF<RegBuffer<BYTE>> item) = 0 ;
 		virtual void flush () = 0 ;
 	} ;
 
@@ -299,121 +253,162 @@ trait STREAMFILE_HELP<DEPEND ,ALWAYS> {
 	public:
 		implicit StreamFile () = default ;
 
-		explicit StreamFile (CREF<String<STR>> file_ ,CREF<BOOL> readonly) {
+		explicit StreamFile (CREF<String<STR>> file_) {
+			mThis = FUNCTION_extern::invoke () ;
+			mThis->initialize (file_) ;
+		}
+
+		BOOL link (CREF<BOOL> readable ,CREF<BOOL> writable) {
+			BOOL ret = FALSE ;
 			auto eax = TRUE ;
 			if ifswitch (eax) {
-				if ifnot (readonly)
+				if ifnot (readable)
 					discard ;
-				mThis = FUNCTION_extern::invoke () ;
-				mThis->init_read (file_) ;
+				if (writable)
+					discard ;
+				mThis->open () ;
+				ret = TRUE ;
 			}
 			if ifswitch (eax) {
-				mThis = FUNCTION_extern::invoke () ;
-				mThis->init_write (file_) ;
+				if (readable)
+					discard ;
+				if ifnot (writable)
+					discard ;
+				mThis->create () ;
+				ret = TRUE ;
 			}
+			if ifswitch (eax) {
+				if ifnot (readable)
+					discard ;
+				if ifnot (writable)
+					discard ;
+				try_invoke ([&] () {
+					mThis->open () ;
+				} ,[&] () {
+					mThis->create () ;
+				} ,[&] () {
+					noop () ;
+				}) ;
+				mThis->close () ;
+				mThis->open_create () ;
+				ret = TRUE ;
+			}
+			return move (ret) ;
 		}
 
-		LENGTH size () const {
-			return mThis->size () ;
-		}
-
-		LENGTH length () const {
-			return mThis->length () ;
-		}
-
-		void reset () {
-			return mThis->reset () ;
-		}
-
-		void reset (CREF<INDEX> read_ ,CREF<INDEX> write_) {
-			return mThis->reset (read_ ,write_) ;
-		}
-
-		void backup () {
-			return mThis->backup () ;
-		}
-
-		void recover () {
-			return mThis->recover () ;
-		}
-		
-		void read (VREF<RegBuffer<BYTE>> item) {
+		LENGTH read (VREF<RegBuffer<BYTE>> item) {
 			return mThis->read (item) ;
 		}
 
-		void read (VREF<VarBuffer<BYTE>> item) const {
+		LENGTH read (VREF<VarBuffer<BYTE>> item) {
 			return read (RegBuffer<BYTE>::from (item)) ;
 		}
 
-		void read (VREF<RegBuffer<WORD>> item) {
-			unimplemented () ;
+		LENGTH read (VREF<RegBuffer<WORD>> item) {
+			using R1X = SIZE_OF<WORD> ;
+			if (item.size () == 0)
+				return ZERO ;
+			auto &&tmp = unsafe_deref (unsafe_cast[TYPEAS<TEMP<ARR<BYTE ,R1X>>>::id] (unsafe_deptr (item[0]))) ;
+			auto rax = RegBuffer<BYTE>::from (unsafe_array (tmp[0]) ,0 ,item.size () * R1X::value) ;
+			LENGTH ret = read (rax) ;
+			unsafe_barrier () ;
+			return move (ret) ;
 		}
 
-		void read (VREF<VarBuffer<WORD>> item) const {
+		LENGTH read (VREF<VarBuffer<WORD>> item) {
 			return read (RegBuffer<WORD>::from (item)) ;
 		}
 
-		void read (VREF<RegBuffer<CHAR>> item) {
-			unimplemented () ;
+		LENGTH read (VREF<RegBuffer<CHAR>> item) {
+			using R1X = SIZE_OF<CHAR> ;
+			if (item.size () == 0)
+				return ZERO ;
+			auto &&tmp = unsafe_deref (unsafe_cast[TYPEAS<TEMP<ARR<BYTE ,R1X>>>::id] (unsafe_deptr (item[0]))) ;
+			auto rax = RegBuffer<BYTE>::from (unsafe_array (tmp[0]) ,0 ,item.size () * R1X::value) ;
+			LENGTH ret = read (rax) ;
+			unsafe_barrier () ;
+			return move (ret) ;
 		}
 
-		void read (VREF<VarBuffer<CHAR>> item) const {
+		LENGTH read (VREF<VarBuffer<CHAR>> item) {
 			return read (RegBuffer<CHAR>::from (item)) ;
 		}
 
-		void read (VREF<RegBuffer<DATA>> item) {
-			unimplemented () ;
+		LENGTH read (VREF<RegBuffer<DATA>> item) {
+			using R1X = SIZE_OF<DATA> ;
+			if (item.size () == 0)
+				return ZERO ;
+			auto &&tmp = unsafe_deref (unsafe_cast[TYPEAS<TEMP<ARR<BYTE ,R1X>>>::id] (unsafe_deptr (item[0]))) ;
+			auto rax = RegBuffer<BYTE>::from (unsafe_array (tmp[0]) ,0 ,item.size () * R1X::value) ;
+			LENGTH ret = read (rax) ;
+			unsafe_barrier () ;
+			return move (ret) ;
 		}
 
-		void read (VREF<VarBuffer<DATA>> item) const {
+		LENGTH read (VREF<VarBuffer<DATA>> item) {
 			return read (RegBuffer<DATA>::from (item)) ;
 		}
 
-		void write (CREF<RegBuffer<BYTE>> item) {
+		LENGTH write (CREF<RegBuffer<BYTE>> item) {
 			return mThis->write (item) ;
 		}
 
-		void write (CREF<VarBuffer<BYTE>> item) const {
+		LENGTH write (CREF<VarBuffer<BYTE>> item) {
 			return write (RegBuffer<BYTE>::from (item)) ;
 		}
 
-		void write (CREF<ConBuffer<BYTE>> item) const {
+		LENGTH write (CREF<ConBuffer<BYTE>> item) {
 			return write (RegBuffer<BYTE>::from (item)) ;
 		}
 
-		void write (CREF<RegBuffer<WORD>> item) {
-			unimplemented () ;
+		LENGTH write (CREF<RegBuffer<WORD>> item) {
+			using R1X = SIZE_OF<WORD> ;
+			if (item.size () == 0)
+				return ZERO ;
+			auto &&tmp = unsafe_deref (unsafe_cast[TYPEAS<TEMP<ARR<BYTE ,R1X>>>::id] (unsafe_deptr (item[0]))) ;
+			auto rax = RegBuffer<BYTE>::from (unsafe_array (tmp[0]) ,0 ,item.size () * R1X::value) ;
+			return write (rax) ;
 		}
 
-		void write (CREF<VarBuffer<WORD>> item) const {
+		LENGTH write (CREF<VarBuffer<WORD>> item) {
 			return write (RegBuffer<WORD>::from (item)) ;
 		}
 
-		void write (CREF<ConBuffer<WORD>> item) const {
+		LENGTH write (CREF<ConBuffer<WORD>> item) {
 			return write (RegBuffer<WORD>::from (item)) ;
 		}
 
-		void write (CREF<RegBuffer<CHAR>> item) {
-			unimplemented () ;
+		LENGTH write (CREF<RegBuffer<CHAR>> item) {
+			using R1X = SIZE_OF<CHAR> ;
+			if (item.size () == 0)
+				return ZERO ;
+			auto &&tmp = unsafe_deref (unsafe_cast[TYPEAS<TEMP<ARR<BYTE ,R1X>>>::id] (unsafe_deptr (item[0]))) ;
+			auto rax = RegBuffer<BYTE>::from (unsafe_array (tmp[0]) ,0 ,item.size () * R1X::value) ;
+			return write (rax) ;
 		}
 
-		void write (CREF<VarBuffer<CHAR>> item) const {
+		LENGTH write (CREF<VarBuffer<CHAR>> item) {
 			return write (RegBuffer<CHAR>::from (item)) ;
 		}
 
-		void write (CREF<ConBuffer<CHAR>> item) const {
+		LENGTH write (CREF<ConBuffer<CHAR>> item) {
 			return write (RegBuffer<CHAR>::from (item)) ;
 		}
 
-		void write (CREF<RegBuffer<DATA>> item) {
-			unimplemented () ;
+		LENGTH write (CREF<RegBuffer<DATA>> item) {
+			using R1X = SIZE_OF<DATA> ;
+			if (item.size () == 0)
+				return ZERO ;
+			auto &&tmp = unsafe_deref (unsafe_cast[TYPEAS<TEMP<ARR<BYTE ,R1X>>>::id] (unsafe_deptr (item[0]))) ;
+			auto rax = RegBuffer<BYTE>::from (unsafe_array (tmp[0]) ,0 ,item.size () * R1X::value) ;
+			return write (rax) ;
 		}
 
-		void write (CREF<VarBuffer<DATA>> item) const {
+		LENGTH write (CREF<VarBuffer<DATA>> item) {
 			return write (RegBuffer<DATA>::from (item)) ;
 		}
 
-		void write (CREF<ConBuffer<DATA>> item) const {
+		LENGTH write (CREF<ConBuffer<DATA>> item) {
 			return write (RegBuffer<DATA>::from (item)) ;
 		}
 
@@ -429,25 +424,41 @@ template <class...>
 trait BUFFERFILE_HELP ;
 
 template <class...>
+trait BUFFERFILE_HOLDER_HELP ;
+
+template <class...>
 trait BUFFERFILE_IMPLHOLDER_HELP ;
 
-template <class ITEM>
-trait BUFFERFILE_HELP<ITEM ,REQUIRE<IS_TRIVIAL<ITEM>>> {
-	using BUFFER = DEPENDENT<ARR<BYTE> ,ITEM> ;
+template <class DEPEND>
+trait BUFFERFILE_HOLDER_HELP<DEPEND ,ALWAYS> {
+	using CHUNK_PAGE_SIZE = ENUMAS<VAL ,ENUMID<4194304>> ;
+	using HEADER_SIZE = ENUMAS<VAL ,ENUMID<65536>> ;
 
 	struct Holder implement Interface {
-		virtual void init_read (CREF<String<STR>> file_) const = 0 ;
-		virtual void init_write (CREF<String<STR>> file_) const = 0 ;
-		virtual LENGTH size () const = 0 ;
-		virtual void read (CREF<INDEX> index ,VREF<BUFFER> buffer ,CREF<LENGTH> size_) = 0 ;
-		virtual void write (CREF<INDEX> index ,CREF<BUFFER> buffer ,CREF<LENGTH> size_) = 0 ;
-		virtual void resize (CREF<LENGTH> size_) = 0 ;
+		virtual void initialize (CREF<String<STR>> file_ ,CREF<Clazz> clazz) = 0 ;
+		virtual void set_cache_size (CREF<LENGTH> size_) = 0 ;
+		virtual void open () = 0 ;
+		virtual void create () = 0 ;
+		virtual void open_create () = 0 ;
+		virtual void close () = 0 ;
+		virtual VAL64 length () const = 0 ;
+		virtual VAL64 insert (CREF<VAL64> size_) = 0 ;
+		virtual void get (CREF<VAL64> index ,VREF<RegBuffer<BYTE>> item) = 0 ;
+		virtual void set (CREF<VAL64> index ,CREF<RegBuffer<BYTE>> item) = 0 ;
 		virtual void flush () = 0 ;
 	} ;
 
 	struct FUNCTION_extern {
 		imports VRef<Holder> invoke () ;
 	} ;
+} ;
+
+template <class ITEM>
+trait BUFFERFILE_HELP<ITEM ,REQUIRE<IS_TRIVIAL<ITEM>>> {
+	using Holder = typename BUFFERFILE_HOLDER_HELP<DEPEND ,ALWAYS>::Holder ;
+	using FUNCTION_extern = typename BUFFERFILE_HOLDER_HELP<DEPEND ,ALWAYS>::FUNCTION_extern ;
+
+	using SIZE = SIZE_OF<ITEM> ;
 
 	class BufferFile {
 	protected:
@@ -456,41 +467,74 @@ trait BUFFERFILE_HELP<ITEM ,REQUIRE<IS_TRIVIAL<ITEM>>> {
 	public:
 		implicit BufferFile () = default ;
 
-		explicit BufferFile (CREF<String<STR>> file_ ,CREF<BOOL> readonly) {
+		explicit BufferFile (CREF<String<STR>> file_) {
+			mThis = FUNCTION_extern::invoke () ;
+			mThis->initialize (file_ ,Clazz (TYPEAS<ITEM>::id)) ;
+		}
+
+		void set_cache_size (CREF<LENGTH> size_) {
+			return mThis->set_cache_size (size_) ;
+		}
+
+		BOOL link (CREF<BOOL> readable ,CREF<BOOL> writable) {
+			BOOL ret = FALSE ;
 			auto eax = TRUE ;
 			if ifswitch (eax) {
-				if ifnot (readonly)
+				if ifnot (readable)
 					discard ;
-				mThis = FUNCTION_extern::invoke () ;
-				mThis->init_read (file_) ;
+				if (writable)
+					discard ;
+				mThis->open () ;
+				ret = TRUE ;
 			}
 			if ifswitch (eax) {
-				mThis = FUNCTION_extern::invoke () ;
-				mThis->init_write (file_) ;
+				if (readable)
+					discard ;
+				if ifnot (writable)
+					discard ;
+				mThis->create () ;
+				ret = TRUE ;
 			}
+			if ifswitch (eax) {
+				if ifnot (readable)
+					discard ;
+				if ifnot (writable)
+					discard ;
+				try_invoke ([&] () {
+					mThis->open () ;
+				} ,[&] () {
+					mThis->create () ;
+				} ,[&] () {
+					noop () ;
+				}) ;
+				mThis->close () ;
+				mThis->open_create () ;
+				ret = TRUE ;
+			}
+			return move (ret) ;
 		}
 
-		LENGTH size () const {
-			return mThis->size () ;
+		VAL64 length () const {
+			return mThis->length () ;
 		}
 
-		ITEM get (CREF<INDEX> index) {
-			using R1X = SIZE_OF<ITEM> ;
+		VAL64 insert (CREF<VAL64> size_) {
+			return mThis->insert (size_) ;
+		}
+
+		ITEM get (CREF<VAL64> index) {
 			ITEM ret ;
-			auto &&tmp = unsafe_deref (unsafe_cast[TYPEAS<TEMP<ARR<BYTE ,R1X>>>::id] (unsafe_deptr (ret))) ;
-			mThis->read (index ,unsafe_array (tmp[0]) ,R1X::value) ;
+			auto &&tmp = unsafe_deref (unsafe_cast[TYPEAS<TEMP<ARR<BYTE ,SIZE>>>::id] (unsafe_deptr (ret))) ;
+			auto rax = RegBuffer<BYTE>::from (unsafe_array (tmp[0]) ,0 ,SIZE::value) ;
+			mThis->get (index ,rax) ;
 			unsafe_barrier () ;
 			return move (ret) ;
 		}
 
-		void set (CREF<INDEX> index ,CREF<ITEM> item) {
-			using R1X = SIZE_OF<ITEM> ;
-			auto &&tmp = unsafe_deref (unsafe_cast[TYPEAS<TEMP<ARR<BYTE ,R1X>>>::id] (unsafe_deptr (item))) ;
-			mThis->write (index ,unsafe_array (tmp[0]) ,R1X::value) ;
-		}
-
-		void resize (CREF<INDEX> size_) {
-			return mThis->resize (size_) ;
+		void set (CREF<VAL64> index ,CREF<ITEM> item) {
+			auto &&tmp = unsafe_deref (unsafe_cast[TYPEAS<TEMP<ARR<BYTE ,SIZE>>>::id] (unsafe_deptr (item))) ;
+			auto rax = RegBuffer<BYTE>::from (unsafe_array (tmp[0]) ,0 ,SIZE::value) ;
+			mThis->set (index ,rax) ;
 		}
 
 		void flush () {

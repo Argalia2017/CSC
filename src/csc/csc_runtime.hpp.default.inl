@@ -7,6 +7,7 @@
 #include "begin.h"
 #include <cstdio>
 #include <cstdlib>
+#include <cstring>
 #include <exception>
 #include <ctime>
 #include <chrono>
@@ -19,9 +20,43 @@
 #include "end.h"
 
 namespace CSC {
+template <class...>
+trait FUNCTION_calendar_from_timepoint_HELP ;
+
+template <class DEPEND>
+trait FUNCTION_calendar_from_timepoint_HELP<DEPEND ,REQUIRE<MACRO_SYSTEM_WINDOWS<DEPEND>>> {
+#ifdef __CSC_SYSTEM_WINDOWS__
+	struct FUNCTION_calendar_from_timepoint {
+		inline std::tm operator() (CREF<std::time_t> time_) const {
+			std::tm ret ;
+			zeroize (ret) ;
+			localtime_s ((&ret) ,(&time_)) ;
+			return move (ret) ;
+		}
+	} ;
+#endif
+} ;
+
+template <class DEPEND>
+trait FUNCTION_calendar_from_timepoint_HELP<DEPEND ,REQUIRE<MACRO_SYSTEM_LINUX<DEPEND>>> {
+#ifdef __CSC_SYSTEM_LINUX__
+	struct FUNCTION_calendar_from_timepoint {
+		inline std::tm operator() (CREF<std::time_t> time_) const {
+			std::tm ret ;
+			const auto r1x = FLAG (std::localtime ((&time_))) ;
+			auto &&tmp = unsafe_deref (unsafe_cast[TYPEAS<TEMP<std::tm>>::id] (unsafe_pointer (r1x))) ;
+			ret = tmp ;
+			return move (ret) ;
+		}
+	} ;
+#endif
+} ;
+
 template <class DEPEND>
 trait TIMEDURATION_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	using Holder = typename TIMEDURATION_HELP<DEPEND ,ALWAYS>::Holder ;
+	using CALENDAR = typename TIMEPOINT_HELP<DEPEND ,ALWAYS>::CALENDAR ;
+
 	using TIMEPOINT = std::chrono::system_clock::time_point ;
 	using TIMEDURATION = std::chrono::system_clock::duration ;
 
@@ -32,19 +67,52 @@ trait TIMEDURATION_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	public:
 		implicit ImplHolder () = default ;
 
-		void init_second (CREF<LENGTH> milliseconds_ ,CREF<LENGTH> nanoseconds_) override {
+		void init_now () override {
+			const auto r1x = std::chrono::system_clock::now () ;
+			mTimeDuration = r1x.time_since_epoch () ;
+		}
+
+		void init_epoch () override {
+			mTimeDuration = TIMEDURATION (0) ;
+		}
+
+		void initialize (CREF<LENGTH> milliseconds_ ,CREF<LENGTH> nanoseconds_) override {
 			const auto r1x = std::chrono::milliseconds (milliseconds_) ;
 			const auto r2x = std::chrono::nanoseconds (milliseconds_) ;
 			const auto r3x = r1x + r2x ;
 			mTimeDuration = std::chrono::duration_cast<std::chrono::system_clock::duration> (r3x) ;
 		}
 
+		void initialize (CREF<CALENDAR> calendar_) override {
+			auto rax = std::tm () ;
+			zeroize (rax) ;
+			const auto r1x = calendar_.mYear - 1900 ;
+			rax.tm_year = VAL32 (r1x * LENGTH (r1x > 0)) ;
+			const auto r2x = calendar_.mMonth ;
+			rax.tm_mon = VAL32 (r2x * LENGTH (r2x > 0)) ;
+			rax.tm_mday = VAL32 (calendar_.mDay) ;
+			const auto r3x = calendar_.mWDay - 1 ;
+			rax.tm_wday = VAL32 (r3x * LENGTH (r3x > 0)) ;
+			const auto r4x = calendar_.mYDay - 1 ;
+			rax.tm_yday = VAL32 (r4x * LENGTH (r4x > 0)) ;
+			rax.tm_hour = VAL32 (calendar_.mHour) ;
+			rax.tm_min = VAL32 (calendar_.mMinute) ;
+			rax.tm_sec = VAL32 (calendar_.mSecond) ;
+			const auto r5x = std::mktime ((&rax)) ;
+			const auto r6x = std::chrono::system_clock::from_time_t (r5x) ;
+			mTimeDuration = r6x.time_since_epoch () ;
+		}
+
 		Auto native () const leftvalue override {
 			return CRef<ImplHolder>::reference (thiz) ;
 		}
 
-		CREF<TIMEDURATION> get_mTimeDuration () const leftvalue {
+		TIMEDURATION get_mTimeDuration () const leftvalue {
 			return mTimeDuration ;
+		}
+
+		TIMEPOINT get_mTimePoint () const leftvalue {
+			return TIMEPOINT (mTimeDuration) ;
 		}
 
 		LENGTH hours () const override {
@@ -88,136 +156,34 @@ trait TIMEDURATION_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			const auto r2x = a.native ().poll (TYPEAS<CRef<ImplHolder>>::id) ;
 			mTimeDuration = r1x->get_mTimeDuration () - r2x->get_mTimeDuration () ;
 		}
+
+		CALENDAR calendar () const override {
+			CALENDAR ret ;
+			const auto r1x = TIMEPOINT (mTimeDuration) ;
+			const auto r2x = std::time_t (std::chrono::system_clock::to_time_t (r1x)) ;
+			const auto r3x = calendar_from_timepoint (r2x) ;
+			ret.mYear = r3x.tm_year + 1900 ;
+			ret.mMonth = r3x.tm_mon + 1 ;
+			ret.mDay = r3x.tm_mday ;
+			ret.mWDay = r3x.tm_wday + 1 ;
+			ret.mYDay = r3x.tm_yday + 1 ;
+			ret.mHour = r3x.tm_hour ;
+			ret.mMinute = r3x.tm_min ;
+			ret.mSecond = r3x.tm_sec ;
+			return move (ret) ;
+		}
+
+		std::tm calendar_from_timepoint (CREF<std::time_t> time_) const {
+			using R1X = typename FUNCTION_calendar_from_timepoint_HELP<DEPEND ,ALWAYS>::FUNCTION_calendar_from_timepoint ;
+			const auto r1x = R1X () ;
+			return r1x (time_) ;
+		}
 	} ;
 } ;
 
 template <>
 exports auto TIMEDURATION_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () -> VRef<Holder> {
 	using R1X = typename TIMEDURATION_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
-	return VRef<R1X>::make () ;
-}
-
-template <class...>
-trait FUNCTION_calendar_from_timepoint_HELP ;
-
-template <class DEPEND>
-trait FUNCTION_calendar_from_timepoint_HELP<DEPEND ,REQUIRE<MACRO_SYSTEM_WINDOWS<DEPEND>>> {
-#ifdef __CSC_SYSTEM_WINDOWS__
-	struct FUNCTION_calendar_from_timepoint {
-		inline std::tm operator() (CREF<std::time_t> time_) const {
-			std::tm ret ;
-			zeroize (ret) ;
-			localtime_s ((&ret) ,(&time_)) ;
-			return move (ret) ;
-		}
-	} ;
-#endif
-} ;
-
-template <class DEPEND>
-trait FUNCTION_calendar_from_timepoint_HELP<DEPEND ,REQUIRE<MACRO_SYSTEM_LINUX<DEPEND>>> {
-#ifdef __CSC_SYSTEM_LINUX__
-	struct FUNCTION_calendar_from_timepoint {
-		inline std::tm operator() (CREF<std::time_t> time_) const {
-			std::tm ret ;
-			const auto r1x = std::localtime ((&time_)) ;
-			ret = (*r1x) ;
-			return move (ret) ;
-		}
-	} ;
-#endif
-} ;
-
-template <class DEPEND>
-trait TIMEPOINT_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
-	using Holder = typename TIMEPOINT_HELP<DEPEND ,ALWAYS>::Holder ;
-	using CALENDAR = typename TIMEPOINT_HELP<DEPEND ,ALWAYS>::CALENDAR ;
-	using TIMEPOINT = std::chrono::system_clock::time_point ;
-	using TIMEDURATION = std::chrono::system_clock::duration ;
-
-	class ImplHolder implement Holder {
-	protected:
-		TIMEPOINT mTimePoint ;
-
-	public:
-		implicit ImplHolder () = default ;
-
-		void init_now () override {
-			mTimePoint = std::chrono::system_clock::now () ;
-		}
-
-		void init_epoch () override {
-			const auto r1x = TIMEDURATION (0) ;
-			mTimePoint = TIMEPOINT (r1x) ;
-		}
-
-		void init_calendar (CREF<CALENDAR> calendar_) override {
-			auto rax = std::tm () ;
-			zeroize (rax) ;
-			const auto r1x = calendar_.mYear - 1900 ;
-			rax.tm_year = VAL32 (r1x * LENGTH (r1x > 0)) ;
-			const auto r2x = calendar_.mMonth ;
-			rax.tm_mon = VAL32 (r2x * LENGTH (r2x > 0)) ;
-			rax.tm_mday = VAL32 (calendar_.mDay) ;
-			const auto r3x = calendar_.mWDay - 1 ;
-			rax.tm_wday = VAL32 (r3x * LENGTH (r3x > 0)) ;
-			const auto r4x = calendar_.mYDay - 1 ;
-			rax.tm_yday = VAL32 (r4x * LENGTH (r4x > 0)) ;
-			rax.tm_hour = VAL32 (calendar_.mHour) ;
-			rax.tm_min = VAL32 (calendar_.mMinute) ;
-			rax.tm_sec = VAL32 (calendar_.mSecond) ;
-			const auto r5x = std::mktime ((&rax)) ;
-			mTimePoint = std::chrono::system_clock::from_time_t (r5x) ;
-		}
-
-		Auto native () const leftvalue override {
-			return CRef<ImplHolder>::reference (thiz) ;
-		}
-
-		CREF<TIMEPOINT> get_mTimePoint () const leftvalue {
-			return mTimePoint ;
-		}
-
-		void add_from (CREF<Holder> a ,CREF<TimeDuration> b) override {
-			using R1X = typename TIMEDURATION_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
-			const auto r1x = a.native ().poll (TYPEAS<CRef<ImplHolder>>::id) ;
-			const auto r2x = b.native ().poll (TYPEAS<CRef<R1X>>::id) ;
-			mTimePoint = r1x->get_mTimePoint () + r2x->get_mTimeDuration () ;
-		}
-
-		void sub_from (CREF<Holder> a ,CREF<TimeDuration> b) override {
-			using R1X = typename TIMEDURATION_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
-			const auto r1x = a.native ().poll (TYPEAS<CRef<ImplHolder>>::id) ;
-			const auto r2x = b.native ().poll (TYPEAS<CRef<R1X>>::id) ;
-			mTimePoint = r1x->get_mTimePoint () - r2x->get_mTimeDuration () ;
-		}
-
-		CALENDAR calendar () const override {
-			CALENDAR ret ;
-			const auto r1x = std::time_t (std::chrono::system_clock::to_time_t (mTimePoint)) ;
-			const auto r2x = calendar_from_timepoint (r1x) ;
-			ret.mYear = r2x.tm_year + 1900 ;
-			ret.mMonth = r2x.tm_mon + 1 ;
-			ret.mDay = r2x.tm_mday ;
-			ret.mWDay = r2x.tm_wday + 1 ;
-			ret.mYDay = r2x.tm_yday + 1 ;
-			ret.mHour = r2x.tm_hour ;
-			ret.mMinute = r2x.tm_min ;
-			ret.mSecond = r2x.tm_sec ;
-			return move (ret) ;
-		}
-
-		std::tm calendar_from_timepoint (CREF<std::time_t> time_) const {
-			using R1X = typename FUNCTION_calendar_from_timepoint_HELP<DEPEND ,ALWAYS>::FUNCTION_calendar_from_timepoint ;
-			static constexpr auto M_INVOKE = R1X () ;
-			return M_INVOKE (time_) ;
-		}
-	} ;
-} ;
-
-template <>
-exports auto TIMEPOINT_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () -> VRef<Holder> {
-	using R1X = typename TIMEPOINT_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
 }
 
@@ -236,7 +202,7 @@ trait ATOMIC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	public:
 		implicit ImplHolder () = default ;
 
-		void init_new () override {
+		void initialize () override {
 			mHeap = SharedRef<HEAP>::make () ;
 			mHeap->mAtomic.store (0) ;
 		}
@@ -294,19 +260,20 @@ trait MUTEX_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		SharedRef<HEAP> mHeap ;
 
 	public:
-		implicit ImplHolder () {
-			mHeap = SharedRef<HEAP>::make () ;
-		}
+		implicit ImplHolder () = default ;
 
-		void init_mutex () override {
+		void init_scope () override {
+			mHeap = SharedRef<HEAP>::make () ;
 			mHeap->mMutex = Box<std::mutex>::make () ;
 		}
 
 		void init_recursive () override {
+			mHeap = SharedRef<HEAP>::make () ;
 			mHeap->mRecursive = Box<std::recursive_mutex>::make () ;
 		}
 
 		void init_conditional () override {
+			mHeap = SharedRef<HEAP>::make () ;
 			mHeap->mMutex = Box<std::mutex>::make () ;
 			mHeap->mConditional = Box<std::condition_variable>::make () ;
 		}
@@ -315,7 +282,8 @@ trait MUTEX_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			return CRef<ImplHolder>::reference (thiz) ;
 		}
 
-		CREF<SharedRef<HEAP>> get_mHeap () const leftvalue {
+		SharedRef<HEAP> condition_lock (VREF<std::unique_lock<std::mutex>> locker) const leftvalue {
+			locker = std::unique_lock<std::mutex> (mHeap->mMutex) ;
 			return mHeap ;
 		}
 
@@ -368,12 +336,11 @@ trait CONDITIONALLOCK_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	public:
 		implicit ImplHolder () = default ;
 
-		void init_lock (CREF<Mutex> mutex_) override {
+		void initialize (CREF<Mutex> mutex_) override {
 			using R1X = typename MUTEX_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 			const auto r1x = mutex_.native ().poll (TYPEAS<CRef<R1X>>::id) ;
-			auto &&tmp = r1x->get_mHeap () ;
-			mLock = std::unique_lock<std::mutex> (tmp->mMutex) ;
-			mHeap = tmp ;
+			//@error: not thread safe when deconstruct
+			mHeap = r1x->condition_lock (mLock) ;
 			assert (mHeap->mConditional.exist ()) ;
 		}
 
@@ -388,7 +355,7 @@ trait CONDITIONALLOCK_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		void wait (CREF<TimePoint> time_) override {
-			using R1X = typename TIMEPOINT_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
+			using R1X = typename TIMEDURATION_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 			const auto r1x = time_.native ().poll (TYPEAS<CRef<R1X>>::id) ;
 			mHeap->mConditional->wait_until (mLock ,r1x->get_mTimePoint ()) ;
 		}
@@ -415,6 +382,71 @@ exports auto CONDITIONALLOCK_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->
 }
 
 template <class DEPEND>
+trait THREAD_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
+	using Holder = typename THREAD_HELP<DEPEND ,ALWAYS>::Holder ;
+	using Binder = typename THREAD_HELP<DEPEND ,ALWAYS>::Binder ;
+
+	class ImplHolder implement Holder {
+	protected:
+		FLAG mUID ;
+		INDEX mIndex ;
+		VRef<Binder> mBinder ;
+		VRef<std::thread> mBlock ;
+		Scope<ImplHolder> mHandle ;
+
+	public:
+		implicit ImplHolder () = default ;
+
+		void initialize (RREF<VRef<Binder>> binder ,CREF<INDEX> index) override {
+			mUID = ZERO ;
+			mIndex = index ;
+			mBinder = move (binder) ;
+			mHandle = Scope<ImplHolder> (thiz) ;
+		}
+
+		FLAG thread_uid () const override {
+			return mUID ;
+		}
+
+		void start () override {
+			assume (mBlock == NULL) ;
+			mBlock = VRef<std::thread>::make ([&] () {
+				try_invoke ([&] () {
+					mUID = RuntimeProc::thread_uid () ;
+					mBinder->execute (mIndex) ;
+				} ,[&] () {
+					noop () ;
+				}) ;
+			}) ;
+		}
+
+		void stop () override {
+			if ifswitch (TRUE) {
+				if (mBlock == NULL)
+					discard ;
+				mBlock->join () ;
+				mBlock = NULL ;
+				mUID = ZERO ;
+			}
+		}
+
+		void enter () {
+			noop () ;
+		}
+
+		void leave () {
+			assume (mBlock == NULL) ;
+		}
+	} ;
+} ;
+
+template <>
+exports auto THREAD_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () -> VRef<Holder> {
+	using R1X = typename THREAD_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
+	return VRef<R1X>::make () ;
+}
+
+template <class DEPEND>
 trait SYSTEM_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	using Holder = typename SYSTEM_HELP<DEPEND ,ALWAYS>::Holder ;
 
@@ -426,7 +458,7 @@ trait SYSTEM_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	public:
 		implicit ImplHolder () = default ;
 
-		void init_device () override {
+		void initialize () override {
 			mLocale = Cell<String<STR>>::make (slice ("C")) ;
 			mWorkingPath = RuntimeProc::working_path () ;
 		}
@@ -440,6 +472,8 @@ trait SYSTEM_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		void execute (CREF<String<STR>> command) const override {
+			if (command.empty ())
+				return ;
 			const auto r1x = string_cvt[TYPEAS<TYPEAS<STRA ,STR>>::id] (command) ;
 			const auto r2x = std::system ((&r1x[0])) ;
 			noop (r2x) ;
@@ -458,63 +492,6 @@ exports auto SYSTEM_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () -> VRef<Hol
 }
 
 template <class DEPEND>
-trait THREAD_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
-	using Holder = typename THREAD_HELP<DEPEND ,ALWAYS>::Holder ;
-	using Binder = typename THREAD_HELP<DEPEND ,ALWAYS>::Binder ;
-
-	class ImplHolder implement Holder {
-	protected:
-		FLAG mUID ;
-		INDEX mIndex ;
-		VRef<Binder> mBinder ;
-		VRef<std::thread> mBlock ;
-
-	public:
-		implicit ImplHolder () = default ;
-
-		void init_new () override {
-			mUID = ZERO ;
-			mIndex = NONE ;
-		}
-
-		FLAG thread_uid () const override {
-			return mUID ;
-		}
-
-		void start (RREF<VRef<Binder>> binder ,CREF<INDEX> index) override {
-			assume (mBlock != NULL) ;
-			mBinder = move (binder) ;
-			mIndex = index ;
-			mBlock = VRef<std::thread>::make ([&] () {
-				try_invoke ([&] () {
-					mUID = RuntimeProc::thread_uid () ;
-					mBinder->execute (mIndex) ;
-				} ,[&] () {
-					noop () ;
-				}) ;
-			}) ;
-		}
-
-		void stop () override {
-			if ifswitch (TRUE) {
-				if (mBlock == NULL)
-					discard ;
-				mBlock->join () ;
-				mBlock = NULL ;
-				mBinder = NULL ;
-				mUID = ZERO ;
-			}
-		}
-	} ;
-} ;
-
-template <>
-exports auto THREAD_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () -> VRef<Holder> {
-	using R1X = typename THREAD_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
-	return VRef<R1X>::make () ;
-}
-
-template <class DEPEND>
 trait RANDOM_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	using Holder = typename RANDOM_HELP<DEPEND ,ALWAYS>::Holder ;
 
@@ -528,16 +505,16 @@ trait RANDOM_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		SharedRef<HEAP> mHeap ;
 
 	public:
-		implicit ImplHolder () {
+		implicit ImplHolder () = default ;
+
+		void initialize () override {
 			mHeap = SharedRef<HEAP>::make () ;
+			mHeap->mSeed = DATA (std::random_device () ()) ;
+			mHeap->mRandom = std::mt19937_64 (csc_byte64_t (mHeap->mSeed)) ;
 		}
 
-		void init_device () override {
-			const auto r1x = DATA (invoke (std::random_device ())) ;
-			init_seed (r1x) ;
-		}
-
-		void init_seed (CREF<DATA> seed_) override {
+		void initialize (CREF<DATA> seed_) override {
+			mHeap = SharedRef<HEAP>::make () ;
 			mHeap->mSeed = seed_ ;
 			mHeap->mRandom = std::mt19937_64 (csc_byte64_t (mHeap->mSeed)) ;
 		}

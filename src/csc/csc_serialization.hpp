@@ -5,6 +5,7 @@
 #endif
 
 #include "csc.hpp"
+#include "csc_type.hpp"
 #include "csc_core.hpp"
 #include "csc_basic.hpp"
 #include "csc_array.hpp"
@@ -56,10 +57,9 @@ trait XMLPARSER_HELP<DEPEND ,ALWAYS> {
 
 		imports XmlParser make (CREF<RegBuffer<STRU8>> item) {
 			using R1X = typename XMLPARSER_SERIALIZATION_HELP<DEPEND ,ALWAYS>::Serialization ;
-			auto rax = TextReader<STRU8> (RegBuffer<STRU8>::from (item ,0 ,item.size ())) ;
-			auto rbx = R1X (move (rax)) ;
-			rbx.generate () ;
-			return rbx.poll () ;
+			auto rax = R1X (RegBuffer<STRU8>::from (item ,0 ,item.size ())) ;
+			rax.generate () ;
+			return rax.poll_root () ;
 		}
 
 		imports XmlParser make (CREF<VarBuffer<STRU8>> item) {
@@ -72,10 +72,9 @@ trait XMLPARSER_HELP<DEPEND ,ALWAYS> {
 
 		imports XmlParser make (CREF<RegBuffer<BYTE>> item) {
 			using R1X = typename XMLPARSER_SERIALIZATION_HELP<DEPEND ,ALWAYS>::Serialization ;
-			auto rax = TextReader<STRU8> (RegBuffer<STRU8>::from (item ,0 ,item.size ())) ;
-			auto rbx = R1X (move (rax)) ;
-			rbx.generate () ;
-			return rbx.poll () ;
+			auto rax = R1X (RegBuffer<STRU8>::from (item ,0 ,item.size ())) ;
+			rax.generate () ;
+			return rax.poll_root () ;
 		}
 
 		imports XmlParser make (CREF<VarBuffer<BYTE>> item) {
@@ -90,7 +89,7 @@ trait XMLPARSER_HELP<DEPEND ,ALWAYS> {
 			using R1X = typename XMLPARSER_COMBINATION_HELP<DEPEND ,ALWAYS>::Combination ;
 			auto rax = R1X (sequence) ;
 			rax.generate () ;
-			return rax.poll () ;
+			return rax.poll_root () ;
 		}
 
 		BOOL exist () const {
@@ -230,7 +229,7 @@ trait XMLPARSER_HELP<DEPEND ,ALWAYS> {
 			return attribute (string_cvt[TYPEAS<TYPEAS<STRU8 ,STRU32>>::id] (tag)) ;
 		}
 
-		CREF<String<STRU8>> value () const leftvalue {
+		CREF<String<STRU8>> fetch () const leftvalue {
 			assume (exist ()) ;
 			assume (mHeap->mTree[mIndex].mArraySet.size () == 0) ;
 			assume (mHeap->mTree[mIndex].mObjectSet.size () == 0) ;
@@ -240,75 +239,73 @@ trait XMLPARSER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		template <class ARG1 ,class ARG2>
-		REMOVE_ALL<ARG1> value (XREF<ARG1> def ,XREF<ARG2> cvt) const {
-			using R1X = REMOVE_ALL<ARG1> ;
+		ARG1 fetch (CREF<ARG1> def ,CREF<ARG2> cvt) const {
+			using R1X = ARG1 ;
 			auto rax = Optional<R1X> () ;
 			try_invoke ([&] () {
-				rax = Optional<R1X>::make (cvt (value ())) ;
+				rax = Optional<R1X>::make (cvt (fetch ())) ;
 			} ,[&] () {
-				rax = Optional<R1X>::make (forward[TYPEAS<ARG1>::id] (def)) ;
+				rax = Optional<R1X>::make (def) ;
 			} ,[&] () {
 				noop () ;
 			}) ;
 			return rax.poll () ;
 		}
 
-		BOOL value (CREF<BOOL> def) const {
-			return value (def ,string_parse[TYPEAS<TYPEAS<BOOL ,STRU8>>::id]) ;
+		BOOL fetch (CREF<BOOL> def) const {
+			return fetch (def ,string_parse[TYPEAS<TYPEAS<BOOL ,STRU8>>::id]) ;
 		}
 
-		csc_pointer_t value (CREF<csc_pointer_t>) const = delete ;
-
-		VAL32 value (CREF<VAL32> def) const {
-			return value (def ,string_parse[TYPEAS<TYPEAS<VAL32 ,STRU8>>::id]) ;
+		VAL32 fetch (CREF<VAL32> def) const {
+			return fetch (def ,string_parse[TYPEAS<TYPEAS<VAL32 ,STRU8>>::id]) ;
 		}
 
-		VAL64 value (CREF<VAL64> def) const {
-			return value (def ,string_parse[TYPEAS<TYPEAS<VAL64 ,STRU8>>::id]) ;
+		VAL64 fetch (CREF<VAL64> def) const {
+			return fetch (def ,string_parse[TYPEAS<TYPEAS<VAL64 ,STRU8>>::id]) ;
 		}
 
-		SINGLE value (CREF<SINGLE> def) const {
-			return value (def ,string_parse[TYPEAS<TYPEAS<SINGLE ,STRU8>>::id]) ;
+		SINGLE fetch (CREF<SINGLE> def) const {
+			return fetch (def ,string_parse[TYPEAS<TYPEAS<SINGLE ,STRU8>>::id]) ;
 		}
 
-		DOUBLE value (CREF<DOUBLE> def) const {
-			return value (def ,string_parse[TYPEAS<TYPEAS<DOUBLE ,STRU8>>::id]) ;
+		DOUBLE fetch (CREF<DOUBLE> def) const {
+			return fetch (def ,string_parse[TYPEAS<TYPEAS<DOUBLE ,STRU8>>::id]) ;
 		}
 
-		BYTE value (CREF<BYTE> def) const {
-			return value (def ,string_parse[TYPEAS<TYPEAS<BYTE ,STRU8>>::id]) ;
+		BYTE fetch (CREF<BYTE> def) const {
+			return fetch (def ,string_parse[TYPEAS<TYPEAS<BYTE ,STRU8>>::id]) ;
 		}
 
-		WORD value (CREF<WORD> def) const {
-			return value (def ,string_parse[TYPEAS<TYPEAS<WORD ,STRU8>>::id]) ;
+		WORD fetch (CREF<WORD> def) const {
+			return fetch (def ,string_parse[TYPEAS<TYPEAS<WORD ,STRU8>>::id]) ;
 		}
 
-		CHAR value (CREF<CHAR> def) const {
-			return value (def ,string_parse[TYPEAS<TYPEAS<CHAR ,STRU8>>::id]) ;
+		CHAR fetch (CREF<CHAR> def) const {
+			return fetch (def ,string_parse[TYPEAS<TYPEAS<CHAR ,STRU8>>::id]) ;
 		}
 
-		DATA value (CREF<DATA> def) const {
-			return value (def ,string_parse[TYPEAS<TYPEAS<DATA ,STRU8>>::id]) ;
+		DATA fetch (CREF<DATA> def) const {
+			return fetch (def ,string_parse[TYPEAS<TYPEAS<DATA ,STRU8>>::id]) ;
 		}
 
-		String<STRA> value (CREF<String<STRA>> def) const {
-			return value (def ,string_cvt[TYPEAS<TYPEAS<STRA ,STRU8>>::id]) ;
+		String<STRA> fetch (CREF<String<STRA>> def) const {
+			return fetch (def ,string_cvt[TYPEAS<TYPEAS<STRA ,STRU8>>::id]) ;
 		}
 
-		String<STRW> value (CREF<String<STRW>> def) const {
-			return value (def ,string_cvt[TYPEAS<TYPEAS<STRW ,STRU8>>::id]) ;
+		String<STRW> fetch (CREF<String<STRW>> def) const {
+			return fetch (def ,string_cvt[TYPEAS<TYPEAS<STRW ,STRU8>>::id]) ;
 		}
 
-		String<STRU8> value (CREF<String<STRU8>> def) const {
-			return value (def ,string_cvt[TYPEAS<TYPEAS<STRU8 ,STRU8>>::id]) ;
+		String<STRU8> fetch (CREF<String<STRU8>> def) const {
+			return fetch (def ,string_cvt[TYPEAS<TYPEAS<STRU8 ,STRU8>>::id]) ;
 		}
 
-		String<STRU16> value (CREF<String<STRU16>> def) const {
-			return value (def ,string_cvt[TYPEAS<TYPEAS<STRU16 ,STRU8>>::id]) ;
+		String<STRU16> fetch (CREF<String<STRU16>> def) const {
+			return fetch (def ,string_cvt[TYPEAS<TYPEAS<STRU16 ,STRU8>>::id]) ;
 		}
 
-		String<STRU32> value (CREF<String<STRU32>> def) const {
-			return value (def ,string_cvt[TYPEAS<TYPEAS<STRU32 ,STRU8>>::id]) ;
+		String<STRU32> fetch (CREF<String<STRU32>> def) const {
+			return fetch (def ,string_cvt[TYPEAS<TYPEAS<STRU32 ,STRU8>>::id]) ;
 		}
 	} ;
 } ;
@@ -337,13 +334,13 @@ trait XMLPARSER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 	public:
 		implicit Serialization () = delete ;
 
-		explicit Serialization (RREF<TextReader<STRU8>> stream) {
+		explicit Serialization (RREF<CRef<RegBuffer<STRU8>>> stream) {
 			mRecursiveCounter = 0 ;
-			mTextReader = move (stream) ;
+			mTextReader = TextReader<STRU8> (move (stream)) ;
 			mReader = RegularReader (VRef<TextReader<STRU8>>::reference (mTextReader) ,3) ;
 		}
 
-		XmlParser poll () {
+		XmlParser poll_root () {
 			auto &&tmp = keep[TYPEAS<VREF<XmlParser>>::id] (thiz) ;
 			auto rax = HEAP () ;
 			const auto r1x = shrink_order () ;
@@ -467,7 +464,7 @@ trait XMLPARSER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 
 		//@info: $5-><$1 $4 />|<$1 $4 > $7 </$1 >
 		void update_shift_e5 (CREF<INDEX> curr) {
-			Scope<VREF<ScopeCounter>> anonymous (ScopeCounter::from (mRecursiveCounter)) ;
+			Scope<ScopeCounter> anonymous (ScopeCounter::from (mRecursiveCounter)) ;
 			assume (mRecursiveCounter < COUNTER_MAX_DEPTH::value) ;
 			mReader >> slice ("<") ;
 			INDEX ix = mTree.insert () ;
@@ -520,7 +517,7 @@ trait XMLPARSER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 
 		//@info: $7->${eps}|$5 $7|$6 $7
 		void update_shift_e7 (CREF<INDEX> curr) {
-			Scope<VREF<ScopeCounter>> anonymous (ScopeCounter::from (mRecursiveCounter)) ;
+			Scope<ScopeCounter> anonymous (ScopeCounter::from (mRecursiveCounter)) ;
 			assume (mRecursiveCounter < COUNTER_MAX_DEPTH::value) ;
 			INDEX ix = NONE ;
 			INDEX iy = NONE ;
@@ -670,7 +667,7 @@ trait XMLPARSER_COMBINATION_HELP<DEPEND ,ALWAYS> {
 			mTree[mRoot].mBrother = NONE ;
 		}
 
-		XmlParser poll () {
+		XmlParser poll_root () {
 			auto &&tmp = keep[TYPEAS<VREF<XmlParser>>::id] (thiz) ;
 			auto rax = HEAP () ;
 			const auto r1x = shrink_order () ;
@@ -956,10 +953,9 @@ trait JSONPARSER_HELP<DEPEND ,ALWAYS> {
 
 		imports JsonParser make (CREF<RegBuffer<STRU8>> item) {
 			using R1X = typename JSONPARSER_SERIALIZATION_HELP<DEPEND ,ALWAYS>::Serialization ;
-			auto rax = TextReader<STRU8> (RegBuffer<STRU8>::from (item ,0 ,item.size ())) ;
-			auto rbx = R1X (move (rax)) ;
-			rbx.generate () ;
-			return rbx.poll () ;
+			auto rax = R1X (RegBuffer<STRU8>::from (item ,0 ,item.size ())) ;
+			rax.generate () ;
+			return rax.poll_root () ;
 		}
 
 		imports JsonParser make (CREF<VarBuffer<STRU8>> item) {
@@ -972,10 +968,9 @@ trait JSONPARSER_HELP<DEPEND ,ALWAYS> {
 
 		imports JsonParser make (CREF<RegBuffer<BYTE>> item) {
 			using R1X = typename JSONPARSER_SERIALIZATION_HELP<DEPEND ,ALWAYS>::Serialization ;
-			auto rax = TextReader<STRU8> (RegBuffer<STRU8>::from (item ,0 ,item.size ())) ;
-			auto rbx = R1X (move (rax)) ;
-			rbx.generate () ;
-			return rbx.poll () ;
+			auto rax = R1X (RegBuffer<STRU8>::from (item ,0 ,item.size ())) ;
+			rax.generate () ;
+			return rax.poll_root () ;
 		}
 
 		imports JsonParser make (CREF<VarBuffer<BYTE>> item) {
@@ -997,21 +992,15 @@ trait JSONPARSER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		BOOL string_type () const {
-			if (mHeap->mTree[mIndex].mClazz != NODE_CLAZZ_STRING::value)
-				return FALSE ;
-			return TRUE ;
+			return mHeap->mTree[mIndex].mClazz == NODE_CLAZZ_STRING::value ;
 		}
 
 		BOOL array_type () const {
-			if (mHeap->mTree[mIndex].mClazz != NODE_CLAZZ_ARRAY::value)
-				return FALSE ;
-			return TRUE ;
+			return mHeap->mTree[mIndex].mClazz == NODE_CLAZZ_ARRAY::value ;
 		}
 
 		BOOL object_type () const {
-			if (mHeap->mTree[mIndex].mClazz != NODE_CLAZZ_OBJECT::value)
-				return FALSE ;
-			return TRUE ;
+			return mHeap->mTree[mIndex].mClazz == NODE_CLAZZ_OBJECT::value ;
 		}
 
 		JsonParser root () const {
@@ -1117,82 +1106,80 @@ trait JSONPARSER_HELP<DEPEND ,ALWAYS> {
 			return ifnot (equal (that)) ;
 		}
 
-		CREF<String<STRU8>> value () const leftvalue {
+		CREF<String<STRU8>> fetch () const leftvalue {
 			assume (exist ()) ;
 			assume (string_type ()) ;
 			return mHeap->mTree[mIndex].mValue ;
 		}
 
 		template <class ARG1 ,class ARG2>
-		REMOVE_ALL<ARG1> value (XREF<ARG1> def ,XREF<ARG2> cvt) const {
-			using R1X = REMOVE_ALL<ARG1> ;
+		ARG1 fetch (CREF<ARG1> def ,CREF<ARG2> cvt) const {
+			using R1X = ARG1 ;
 			auto rax = Optional<R1X> () ;
 			try_invoke ([&] () {
-				rax = Optional<R1X>::make (cvt (value ())) ;
+				rax = Optional<R1X>::make (cvt (fetch ())) ;
 			} ,[&] () {
-				rax = Optional<R1X>::make (forward[TYPEAS<ARG1>::id] (def)) ;
+				rax = Optional<R1X>::make (def) ;
 			} ,[&] () {
 				noop () ;
 			}) ;
 			return rax.poll () ;
 		}
 
-		BOOL value (CREF<BOOL> def) const {
-			return value (def ,string_parse[TYPEAS<TYPEAS<BOOL ,STRU8>>::id]) ;
+		BOOL fetch (CREF<BOOL> def) const {
+			return fetch (def ,string_parse[TYPEAS<TYPEAS<BOOL ,STRU8>>::id]) ;
 		}
 
-		csc_pointer_t value (CREF<csc_pointer_t>) const = delete ;
-
-		VAL32 value (CREF<VAL32> def) const {
-			return value (def ,string_parse[TYPEAS<TYPEAS<VAL32 ,STRU8>>::id]) ;
+		VAL32 fetch (CREF<VAL32> def) const {
+			return fetch (def ,string_parse[TYPEAS<TYPEAS<VAL32 ,STRU8>>::id]) ;
 		}
 
-		VAL64 value (CREF<VAL64> def) const {
-			return value (def ,string_parse[TYPEAS<TYPEAS<VAL64 ,STRU8>>::id]) ;
+		VAL64 fetch (CREF<VAL64> def) const {
+			return fetch (def ,string_parse[TYPEAS<TYPEAS<VAL64 ,STRU8>>::id]) ;
 		}
 
-		SINGLE value (CREF<SINGLE> def) const {
-			return value (def ,string_parse[TYPEAS<TYPEAS<SINGLE ,STRU8>>::id]) ;
+		SINGLE fetch (CREF<SINGLE> def) const {
+			return fetch (def ,string_parse[TYPEAS<TYPEAS<SINGLE ,STRU8>>::id]) ;
 		}
 
-		DOUBLE value (CREF<DOUBLE> def) const {
-			return value (def ,string_parse[TYPEAS<TYPEAS<DOUBLE ,STRU8>>::id]) ;
+		DOUBLE fetch (CREF<DOUBLE> def) const {
+			return fetch (def ,string_parse[TYPEAS<TYPEAS<DOUBLE ,STRU8>>::id]) ;
 		}
 
-		BYTE value (CREF<BYTE> def) const {
-			return value (def ,string_parse[TYPEAS<TYPEAS<BYTE ,STRU8>>::id]) ;
+		BYTE fetch (CREF<BYTE> def) const {
+			return fetch (def ,string_parse[TYPEAS<TYPEAS<BYTE ,STRU8>>::id]) ;
 		}
 
-		WORD value (CREF<WORD> def) const {
-			return value (def ,string_parse[TYPEAS<TYPEAS<WORD ,STRU8>>::id]) ;
+		WORD fetch (CREF<WORD> def) const {
+			return fetch (def ,string_parse[TYPEAS<TYPEAS<WORD ,STRU8>>::id]) ;
 		}
 
-		CHAR value (CREF<CHAR> def) const {
-			return value (def ,string_parse[TYPEAS<TYPEAS<CHAR ,STRU8>>::id]) ;
+		CHAR fetch (CREF<CHAR> def) const {
+			return fetch (def ,string_parse[TYPEAS<TYPEAS<CHAR ,STRU8>>::id]) ;
 		}
 
-		DATA value (CREF<DATA> def) const {
-			return value (def ,string_parse[TYPEAS<TYPEAS<DATA ,STRU8>>::id]) ;
+		DATA fetch (CREF<DATA> def) const {
+			return fetch (def ,string_parse[TYPEAS<TYPEAS<DATA ,STRU8>>::id]) ;
 		}
 
-		String<STRA> value (CREF<String<STRA>> def) const {
-			return value (def ,string_cvt[TYPEAS<TYPEAS<STRA ,STRU8>>::id]) ;
+		String<STRA> fetch (CREF<String<STRA>> def) const {
+			return fetch (def ,string_cvt[TYPEAS<TYPEAS<STRA ,STRU8>>::id]) ;
 		}
 
-		String<STRW> value (CREF<String<STRW>> def) const {
-			return value (def ,string_cvt[TYPEAS<TYPEAS<STRW ,STRU8>>::id]) ;
+		String<STRW> fetch (CREF<String<STRW>> def) const {
+			return fetch (def ,string_cvt[TYPEAS<TYPEAS<STRW ,STRU8>>::id]) ;
 		}
 
-		String<STRU8> value (CREF<String<STRU8>> def) const {
-			return value (def ,string_cvt[TYPEAS<TYPEAS<STRU8 ,STRU8>>::id]) ;
+		String<STRU8> fetch (CREF<String<STRU8>> def) const {
+			return fetch (def ,string_cvt[TYPEAS<TYPEAS<STRU8 ,STRU8>>::id]) ;
 		}
 
-		String<STRU16> value (CREF<String<STRU16>> def) const {
-			return value (def ,string_cvt[TYPEAS<TYPEAS<STRU16 ,STRU8>>::id]) ;
+		String<STRU16> fetch (CREF<String<STRU16>> def) const {
+			return fetch (def ,string_cvt[TYPEAS<TYPEAS<STRU16 ,STRU8>>::id]) ;
 		}
 
-		String<STRU32> value (CREF<String<STRU32>> def) const {
-			return value (def ,string_cvt[TYPEAS<TYPEAS<STRU32 ,STRU8>>::id]) ;
+		String<STRU32> fetch (CREF<String<STRU32>> def) const {
+			return fetch (def ,string_cvt[TYPEAS<TYPEAS<STRU32 ,STRU8>>::id]) ;
 		}
 	} ;
 } ;
@@ -1225,13 +1212,13 @@ trait JSONPARSER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 	public:
 		implicit Serialization () = delete ;
 
-		explicit Serialization (RREF<TextReader<STRU8>> stream) {
+		explicit Serialization (RREF<CRef<RegBuffer<STRU8>>> stream) {
 			mRecursiveCounter = 0 ;
-			mTextReader = move (stream) ;
+			mTextReader = TextReader<STRU8> (move (stream)) ;
 			mReader = RegularReader (VRef<TextReader<STRU8>>::reference (mTextReader) ,3) ;
 		}
 
-		JsonParser poll () {
+		JsonParser poll_root () {
 			auto &&tmp = keep[TYPEAS<VREF<XmlParser>>::id] (thiz) ;
 			auto rax = HEAP () ;
 			const auto r1x = shrink_order () ;
@@ -1353,7 +1340,7 @@ trait JSONPARSER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 
 		//@info: $4->$1|$2|$2x|$3|$6|$9
 		void update_shift_e4 (CREF<INDEX> curr) {
-			Scope<VREF<ScopeCounter>> anonymous (ScopeCounter::from (mRecursiveCounter)) ;
+			Scope<ScopeCounter> anonymous (ScopeCounter::from (mRecursiveCounter)) ;
 			assume (mRecursiveCounter < COUNTER_MAX_DEPTH::value) ;
 			INDEX ix = NONE ;
 			auto eax = TRUE ;
@@ -1470,7 +1457,7 @@ trait JSONPARSER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 
 		//@info: $6->[ ]|[ $5 ]
 		void update_shift_e6 (CREF<INDEX> curr) {
-			Scope<VREF<ScopeCounter>> anonymous (ScopeCounter::from (mRecursiveCounter)) ;
+			Scope<ScopeCounter> anonymous (ScopeCounter::from (mRecursiveCounter)) ;
 			assume (mRecursiveCounter < COUNTER_MAX_DEPTH::value) ;
 			mReader >> slice ("[") ;
 			INDEX ix = mTree.insert () ;
@@ -1529,7 +1516,7 @@ trait JSONPARSER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 
 		//@info: $9->{ }|{ $8 }
 		void update_shift_e9 (CREF<INDEX> curr) {
-			Scope<VREF<ScopeCounter>> anonymous (ScopeCounter::from (mRecursiveCounter)) ;
+			Scope<ScopeCounter> anonymous (ScopeCounter::from (mRecursiveCounter)) ;
 			assume (mRecursiveCounter < COUNTER_MAX_DEPTH::value) ;
 			mReader >> slice ("{") ;
 			INDEX ix = mTree.insert () ;

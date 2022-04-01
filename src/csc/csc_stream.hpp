@@ -5,6 +5,7 @@
 #endif
 
 #include "csc.hpp"
+#include "csc_type.hpp"
 #include "csc_core.hpp"
 #include "csc_basic.hpp"
 #include "csc_array.hpp"
@@ -41,7 +42,7 @@ trait BYTEREADER_HELP<DEPEND ,ALWAYS> {
 		implicit ByteReader () = default ;
 
 		explicit ByteReader (RREF<CRef<RegBuffer<BYTE>>> stream) {
-			using R1X = typename BYTEREADER_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplAttribute ;
+			using R1X = typename BYTEREADER_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 			set_attr (TYPEAS<R1X>::id) ;
 			mStream = move (stream) ;
 			reset () ;
@@ -53,12 +54,10 @@ trait BYTEREADER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		template <class ARG1>
-		void set_attr (XREF<ARG1> id) {
+		void set_attr (CREF<ARG1> id) {
 			using R1X = REMOVE_ALL<ARG1> ;
 			require (IS_EXTEND<Attribute ,R1X>) ;
-			mAttr = CRef<R1X>::memorize ([&] () {
-				return R1X () ;
-			}) ;
+			mAttr = CRef<R1X>::make () ;
 		}
 
 		LENGTH size () const {
@@ -93,7 +92,7 @@ trait BYTEREADER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		template <class ARG1>
-		REMOVE_ALL<ARG1> poll (XREF<ARG1> id) {
+		REMOVE_ALL<ARG1> poll (CREF<ARG1> id) {
 			using R1X = REMOVE_ALL<ARG1> ;
 			R1X ret ;
 			read (ret) ;
@@ -105,7 +104,7 @@ trait BYTEREADER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		template <class ARG1 ,class...ARG2>
-		void scans (XREF<ARG1> item1 ,XREF<ARG2>...item2) {
+		void scans (VREF<ARG1> item1 ,VREF<ARG2>...item2) {
 			read (item1) ;
 			scans (item2...) ;
 		}
@@ -407,9 +406,7 @@ trait BYTEREADER_HELP<DEPEND ,ALWAYS> {
 			return thiz ;
 		}
 
-		imports void CLS (CREF<PlaceHolder<RANK1>>) {
-			noop () ;
-		}
+		imports void CLS (CREF<PlaceHolder<RANK1>>) {}
 
 		void read (CREF<typeof (CLS)> item) {
 			reset () ;
@@ -420,9 +417,7 @@ trait BYTEREADER_HELP<DEPEND ,ALWAYS> {
 			return thiz ;
 		}
 
-		imports void GAP (CREF<PlaceHolder<RANK3>>) {
-			noop () ;
-		}
+		imports void GAP (CREF<PlaceHolder<RANK3>>) {}
 
 		void read (CREF<typeof (GAP)> item) {
 			const auto r1x = mAttr->space_item () ;
@@ -438,9 +433,7 @@ trait BYTEREADER_HELP<DEPEND ,ALWAYS> {
 			return thiz ;
 		}
 
-		imports void EOS (CREF<PlaceHolder<RANK4>>) {
-			noop () ;
-		}
+		imports void EOS (CREF<PlaceHolder<RANK4>>) {}
 
 		void read (CREF<typeof (EOS)> item) {
 			const auto r1x = mAttr->ending_item () ;
@@ -467,8 +460,10 @@ template <class DEPEND>
 trait BYTEREADER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	using Attribute = typename BYTEREADER_HELP<DEPEND ,ALWAYS>::Attribute ;
 
-	class ImplAttribute implement Attribute {
+	class ImplHolder implement Attribute {
 	public:
+		implicit ImplHolder () = default ;
+
 		BYTE ending_item () const override {
 			return BYTE (0X00) ;
 		}
@@ -522,7 +517,7 @@ trait BYTEWRITER_HELP<DEPEND ,ALWAYS> {
 		implicit ByteWriter () = default ;
 
 		explicit ByteWriter (RREF<VRef<RegBuffer<BYTE>>> stream) {
-			using R1X = typename BYTEWRITER_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplAttribute ;
+			using R1X = typename BYTEWRITER_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 			set_attr (TYPEAS<R1X>::id) ;
 			mStream = move (stream) ;
 			reset () ;
@@ -534,12 +529,10 @@ trait BYTEWRITER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		template <class ARG1>
-		void set_attr (XREF<ARG1> id) {
+		void set_attr (CREF<ARG1> id) {
 			using R1X = REMOVE_ALL<ARG1> ;
 			require (IS_EXTEND<Attribute ,R1X>) ;
-			mAttr = CRef<R1X>::memorize ([&] () {
-				return R1X () ;
-			}) ;
+			mAttr = CRef<R1X>::make () ;
 		}
 
 		LENGTH size () const {
@@ -578,7 +571,7 @@ trait BYTEWRITER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		template <class ARG1 ,class...ARG2>
-		void prints (XREF<ARG1> item1 ,XREF<ARG2>...item2) {
+		void prints (CREF<ARG1> item1 ,CREF<ARG2>...item2) {
 			write (item1) ;
 			prints (item2...) ;
 		}
@@ -676,9 +669,9 @@ trait BYTEWRITER_HELP<DEPEND ,ALWAYS> {
 			return thiz ;
 		}
 
-		csc_pointer_t write (CREF<csc_pointer_t>) = delete ;
+		void write (CREF<const void *>) = delete ;
 
-		inline VREF<ByteWriter> operator<< (CREF<csc_pointer_t>) = delete ;
+		inline VREF<ByteWriter> operator<< (CREF<const void *>) = delete ;
 
 		void write (CREF<VAL32> item) {
 			const auto r1x = bitwise (item) ;
@@ -837,9 +830,7 @@ trait BYTEWRITER_HELP<DEPEND ,ALWAYS> {
 			return thiz ;
 		}
 
-		imports void CLS (CREF<PlaceHolder<RANK1>>) {
-			noop () ;
-		}
+		imports void CLS (CREF<PlaceHolder<RANK1>>) {}
 
 		void write (CREF<typeof (CLS)>) {
 			reset () ;
@@ -850,9 +841,7 @@ trait BYTEWRITER_HELP<DEPEND ,ALWAYS> {
 			return thiz ;
 		}
 
-		imports void GAP (CREF<PlaceHolder<RANK3>>) {
-			noop () ;
-		}
+		imports void GAP (CREF<PlaceHolder<RANK3>>) {}
 
 		void write (CREF<typeof (GAP)> item) {
 			const auto r1x = mAttr->space_item () ;
@@ -865,9 +854,7 @@ trait BYTEWRITER_HELP<DEPEND ,ALWAYS> {
 			return thiz ;
 		}
 
-		imports void EOS (CREF<PlaceHolder<RANK4>>) {
-			noop () ;
-		}
+		imports void EOS (CREF<PlaceHolder<RANK4>>) {}
 
 		void write (CREF<typeof (EOS)> item) {
 			const auto r1x = mAttr->ending_item () ;
@@ -892,8 +879,10 @@ template <class DEPEND>
 trait BYTEWRITER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	using Attribute = typename BYTEWRITER_HELP<DEPEND ,ALWAYS>::Attribute ;
 
-	class ImplAttribute implement Attribute {
+	class ImplHolder implement Attribute {
 	public:
+		implicit ImplHolder () = default ;
+
 		BYTE ending_item () const override {
 			return BYTE (0X00) ;
 		}
@@ -924,7 +913,7 @@ template <class...>
 trait TEXTREADER_IMPLHOLDER_HELP ;
 
 template <class ITEM>
-trait TEXTREADER_HELP<ITEM ,REQUIRE<IS_STR<ITEM>>> {
+trait TEXTREADER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 	struct Attribute implement Interface {
 		virtual ITEM ending_item () const = 0 ;
 		virtual BOOL is_space (CREF<ITEM> str) const = 0 ;
@@ -958,7 +947,7 @@ trait TEXTREADER_HELP<ITEM ,REQUIRE<IS_STR<ITEM>>> {
 		implicit TextReader () = default ;
 
 		explicit TextReader (RREF<CRef<RegBuffer<ITEM>>> stream) {
-			using R1X = typename TEXTREADER_IMPLHOLDER_HELP<ITEM ,ALWAYS>::ImplAttribute ;
+			using R1X = typename TEXTREADER_IMPLHOLDER_HELP<ITEM ,ALWAYS>::ImplHolder ;
 			set_attr (TYPEAS<R1X>::id) ;
 			mStream = move (stream) ;
 			reset () ;
@@ -970,12 +959,10 @@ trait TEXTREADER_HELP<ITEM ,REQUIRE<IS_STR<ITEM>>> {
 		}
 
 		template <class ARG1>
-		void set_attr (XREF<ARG1> id) {
+		void set_attr (CREF<ARG1> id) {
 			using R1X = REMOVE_ALL<ARG1> ;
 			require (IS_EXTEND<Attribute ,R1X>) ;
-			mAttr = CRef<R1X>::memorize ([&] () {
-				return R1X () ;
-			}) ;
+			mAttr = CRef<R1X>::make () ;
 		}
 
 		LENGTH size () const {
@@ -1010,7 +997,7 @@ trait TEXTREADER_HELP<ITEM ,REQUIRE<IS_STR<ITEM>>> {
 		}
 
 		template <class ARG1>
-		REMOVE_ALL<ARG1> poll (XREF<ARG1> id) {
+		REMOVE_ALL<ARG1> poll (CREF<ARG1> id) {
 			using R1X = REMOVE_ALL<ARG1> ;
 			R1X ret ;
 			read (ret) ;
@@ -1022,7 +1009,7 @@ trait TEXTREADER_HELP<ITEM ,REQUIRE<IS_STR<ITEM>>> {
 		}
 
 		template <class ARG1 ,class...ARG2>
-		void scans (XREF<ARG1> item1 ,XREF<ARG2>...item2) {
+		void scans (VREF<ARG1> item1 ,VREF<ARG2>...item2) {
 			read (item1) ;
 			scans (item2...) ;
 		}
@@ -1144,7 +1131,7 @@ trait TEXTREADER_HELP<ITEM ,REQUIRE<IS_STR<ITEM>>> {
 					discard ;
 				item = -item ;
 			}
-			read_back (rax) ;
+			push_back (rax) ;
 		}
 
 		inline VREF<TextReader> operator>> (VREF<VAL64> item) {
@@ -1208,7 +1195,7 @@ trait TEXTREADER_HELP<ITEM ,REQUIRE<IS_STR<ITEM>>> {
 					discard ;
 				item = -item ;
 			}
-			read_back (rax) ;
+			push_back (rax) ;
 		}
 
 		inline VREF<TextReader> operator>> (VREF<DOUBLE> item) {
@@ -1360,9 +1347,7 @@ trait TEXTREADER_HELP<ITEM ,REQUIRE<IS_STR<ITEM>>> {
 			return thiz ;
 		}
 
-		imports void CLS (CREF<PlaceHolder<RANK1>>) {
-			noop () ;
-		}
+		imports void CLS (CREF<PlaceHolder<RANK1>>) {}
 
 		void read (CREF<typeof (CLS)>) {
 			reset () ;
@@ -1373,12 +1358,10 @@ trait TEXTREADER_HELP<ITEM ,REQUIRE<IS_STR<ITEM>>> {
 			return thiz ;
 		}
 
-		imports void BOM (CREF<PlaceHolder<RANK2>>) {
-			noop () ;
-		}
+		imports void BOM (CREF<PlaceHolder<RANK2>>) {}
 
 		void read (CREF<typeof (BOM)>) {
-			reset () ;
+			template_bom (PHX ,TYPEAS<ITEM>::id) ;
 		}
 
 		inline VREF<TextReader> operator>> (CREF<typeof (BOM)> item) {
@@ -1386,9 +1369,7 @@ trait TEXTREADER_HELP<ITEM ,REQUIRE<IS_STR<ITEM>>> {
 			return thiz ;
 		}
 
-		imports void GAP (CREF<PlaceHolder<RANK3>>) {
-			noop () ;
-		}
+		imports void GAP (CREF<PlaceHolder<RANK3>>) {}
 
 		void read (CREF<typeof (GAP)> item) {
 			const auto r1x = next_not_space_size () ;
@@ -1400,9 +1381,7 @@ trait TEXTREADER_HELP<ITEM ,REQUIRE<IS_STR<ITEM>>> {
 			return thiz ;
 		}
 
-		imports void EOS (CREF<PlaceHolder<RANK4>>) {
-			noop () ;
-		}
+		imports void EOS (CREF<PlaceHolder<RANK4>>) {}
 
 		void read (CREF<typeof (EOS)> item) {
 			const auto r1x = mAttr->ending_item () ;
@@ -1529,17 +1508,54 @@ trait TEXTREADER_HELP<ITEM ,REQUIRE<IS_STR<ITEM>>> {
 			}
 		}
 
-		void read_back (CREF<ITEM> top) {
+		void push_back (CREF<ITEM> top) {
 			if ifswitch (TRUE) {
 				mRead-- ;
 				if (mRead < mStream->size () - 1)
 					discard ;
 				if (top != mAttr->ending_item ())
 					discard ;
-				if (top != mStream.self[mRead])
-					discard ;
 				mRead++ ;
 			}
+		}
+
+		template <class ARG1 ,class = REQUIRE<IS_SAME<REMOVE_ALL<ARG1> ,STRA>>>
+		void template_bom (CREF<typeof (PH5)> ,CREF<ARG1> id) {
+			noop () ;
+		}
+
+		template <class ARG1 ,class = REQUIRE<IS_SAME<REMOVE_ALL<ARG1> ,STRW>>>
+		void template_bom (CREF<typeof (PH4)> ,CREF<ARG1> id) {
+			template_bom (PHX ,TYPEAS<STRUW>::id) ;
+		}
+
+		template <class ARG1 ,class = REQUIRE<IS_SAME<REMOVE_ALL<ARG1> ,STRU8>>>
+		void template_bom (CREF<typeof (PH3)> ,CREF<ARG1> id) {
+			auto rax = ITEM () ;
+			read (rax) ;
+			assume (rax == ITEM (0XEF)) ;
+			read (rax) ;
+			assume (rax == ITEM (0XBB)) ;
+			read (rax) ;
+			assume (rax == ITEM (0XBF)) ;
+		}
+
+		template <class ARG1 ,class = REQUIRE<IS_SAME<REMOVE_ALL<ARG1> ,STRU16>>>
+		void template_bom (CREF<typeof (PH2)> ,CREF<ARG1> id) {
+			auto rax = ITEM () ;
+			read (rax) ;
+			assume (rax == ITEM (0XFEFF)) ;
+			read (rax) ;
+			assume (rax == ITEM (0XFFFE)) ;
+		}
+
+		template <class ARG1 ,class = REQUIRE<IS_SAME<REMOVE_ALL<ARG1> ,STRU32>>>
+		void template_bom (CREF<typeof (PH1)> ,CREF<ARG1> id) {
+			auto rax = ITEM () ;
+			read (rax) ;
+			assume (rax == ITEM (0X0000FEFF)) ;
+			read (rax) ;
+			assume (rax == ITEM (0XFFFE0000)) ;
 		}
 	} ;
 
@@ -1549,19 +1565,19 @@ trait TEXTREADER_HELP<ITEM ,REQUIRE<IS_STR<ITEM>>> {
 } ;
 
 template <class ITEM>
-trait TEXTREADER_IMPLHOLDER_HELP<ITEM ,REQUIRE<IS_STR<ITEM>>> {
+trait TEXTREADER_IMPLHOLDER_HELP<ITEM ,ALWAYS> {
 	using Attribute = typename TEXTREADER_HELP<ITEM ,ALWAYS>::Attribute ;
 
 	using SPACE_CLAZZ_WORD = RANK1 ;
 	using SPACE_CLAZZ_ENDLINE = RANK2 ;
 
-	class ImplAttribute implement Attribute {
+	class ImplHolder implement Attribute {
 	protected:
 		HashSet<ITEM> mSpaceSet ;
 		HashSet<ITEM> mEscapeSet ;
 
 	public:
-		implicit ImplAttribute () {
+		implicit ImplHolder () {
 			mSpaceSet.add (ITEM (' ') ,SPACE_CLAZZ_WORD::value) ;
 			mSpaceSet.add (ITEM ('\t') ,SPACE_CLAZZ_WORD::value) ;
 			mSpaceSet.add (ITEM ('\b') ,SPACE_CLAZZ_WORD::value) ;
@@ -1614,7 +1630,7 @@ trait TEXTREADER_IMPLHOLDER_HELP<ITEM ,REQUIRE<IS_STR<ITEM>>> {
 		Optional<ITEM> escape_cast (CREF<ITEM> str) const override {
 			INDEX ix = mEscapeSet.map (str) ;
 			if (ix == NONE)
-				return Optional<ITEM>::zero () ;
+				return LENGTH (1) ;
 			return Optional<ITEM>::make (ITEM (ix)) ;
 		}
 
@@ -1673,8 +1689,11 @@ trait TEXTWRITER_HELP ;
 template <class...>
 trait TEXTWRITER_IMPLHOLDER_HELP ;
 
+template <class...>
+trait TEXTWRITER_WRITEVALUE_HELP ;
+
 template <class ITEM>
-trait TEXTWRITER_HELP<ITEM ,REQUIRE<IS_STR<ITEM>>> {
+trait TEXTWRITER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 	struct Attribute implement Interface {
 		virtual ITEM ending_item () const = 0 ;
 		virtual BOOL is_space (CREF<ITEM> str) const = 0 ;
@@ -1691,8 +1710,6 @@ trait TEXTWRITER_HELP<ITEM ,REQUIRE<IS_STR<ITEM>>> {
 	template <class ARG1>
 	using MACRO_Binder = typename DEPENDENT<TEXTWRITER_HELP<ITEM ,ALWAYS> ,ARG1>::Binder ;
 
-	using NUMBER_SIZE = ENUMAS<VAL ,ENUMID<64>> ;
-
 	class TextWriter {
 	protected:
 		CRef<Attribute> mAttr ;
@@ -1706,7 +1723,7 @@ trait TEXTWRITER_HELP<ITEM ,REQUIRE<IS_STR<ITEM>>> {
 		implicit TextWriter () = default ;
 
 		explicit TextWriter (RREF<VRef<RegBuffer<ITEM>>> stream) {
-			using R1X = typename TEXTWRITER_IMPLHOLDER_HELP<ITEM ,ALWAYS>::ImplAttribute ;
+			using R1X = typename TEXTWRITER_IMPLHOLDER_HELP<ITEM ,ALWAYS>::ImplHolder ;
 			set_attr (TYPEAS<R1X>::id) ;
 			mStream = move (stream) ;
 			reset () ;
@@ -1718,12 +1735,10 @@ trait TEXTWRITER_HELP<ITEM ,REQUIRE<IS_STR<ITEM>>> {
 		}
 
 		template <class ARG1>
-		void set_attr (XREF<ARG1> id) {
+		void set_attr (CREF<ARG1> id) {
 			using R1X = REMOVE_ALL<ARG1> ;
 			require (IS_EXTEND<Attribute ,R1X>) ;
-			mAttr = CRef<R1X>::memorize ([&] () {
-				return R1X () ;
-			}) ;
+			mAttr = CRef<R1X>::make () ;
 		}
 
 		LENGTH size () const {
@@ -1762,7 +1777,7 @@ trait TEXTWRITER_HELP<ITEM ,REQUIRE<IS_STR<ITEM>>> {
 		}
 
 		template <class ARG1 ,class...ARG2>
-		void prints (XREF<ARG1> item1 ,XREF<ARG2>...item2) {
+		void prints (CREF<ARG1> item1 ,CREF<ARG2>...item2) {
 			write (item1) ;
 			prints (item2...) ;
 		}
@@ -1805,9 +1820,9 @@ trait TEXTWRITER_HELP<ITEM ,REQUIRE<IS_STR<ITEM>>> {
 			return thiz ;
 		}
 
-		csc_pointer_t write (CREF<csc_pointer_t>) = delete ;
+		void write (CREF<const void *>) = delete ;
 
-		inline VREF<TextWriter> operator<< (CREF<csc_pointer_t>) = delete ;
+		inline VREF<TextWriter> operator<< (CREF<const void *>) = delete ;
 
 		void write (CREF<VAL32> item) {
 			write (VAL64 (item)) ;
@@ -1819,6 +1834,7 @@ trait TEXTWRITER_HELP<ITEM ,REQUIRE<IS_STR<ITEM>>> {
 		}
 
 		void write (CREF<VAL64> item) {
+			using R1X = typename TEXTWRITER_WRITEVALUE_HELP<ITEM ,ALWAYS>::WriteValue ;
 			if ifswitch (TRUE) {
 				if (item >= 0)
 					discard ;
@@ -1833,17 +1849,18 @@ trait TEXTWRITER_HELP<ITEM ,REQUIRE<IS_STR<ITEM>>> {
 				write (mAttr->lower_upper_cast (ITEM ('s'))) ;
 			}
 			if ifswitch (eax) {
-				auto rbx = BoxBuffer<ITEM ,NUMBER_SIZE> (0) ;
-				INDEX ix = rbx.size () ;
-				auto rcx = NOTATION () ;
-				rcx.mRadix = 10 ;
-				rcx.mSign = FALSE ;
-				rcx.mPrecision = 0 ;
-				rcx.mMantissa = MathProc::abs (item) ;
-				rcx.mExponent = 0 ;
-				write_value (rcx ,rbx ,ix) ;
-				for (auto &&i : iter (ix ,rbx.size ()))
-					write (rbx[i]) ;
+				const auto r1x = invoke ([&] () {
+					NOTATION ret ;
+					ret.mRadix = 10 ;
+					ret.mSign = FALSE ;
+					ret.mPrecision = 0 ;
+					ret.mMantissa = MathProc::abs (item) ;
+					ret.mExponent = 0 ;
+					return move (ret) ;
+				}) ;
+				auto rax = R1X (mAttr ,r1x) ;
+				rax.write_value () ;
+				write (rax) ;
 			}
 		}
 
@@ -1862,6 +1879,7 @@ trait TEXTWRITER_HELP<ITEM ,REQUIRE<IS_STR<ITEM>>> {
 		}
 
 		void write (CREF<DOUBLE> item) {
+			using R1X = typename TEXTWRITER_WRITEVALUE_HELP<ITEM ,ALWAYS>::WriteValue ;
 			if ifswitch (TRUE) {
 				if (item > 0)
 					discard ;
@@ -1876,13 +1894,11 @@ trait TEXTWRITER_HELP<ITEM ,REQUIRE<IS_STR<ITEM>>> {
 				write (mAttr->lower_upper_cast (ITEM ('f'))) ;
 			}
 			if ifswitch (eax) {
-				auto rbx = BoxBuffer<ITEM ,NUMBER_SIZE> (0) ;
-				INDEX ix = rbx.size () ;
-				auto rcx = FloatProc::decode (MathProc::abs (item)) ;
-				rcx = FloatProc::exp10_from_exp2 (rcx) ;
-				write_float (rcx ,rbx ,ix) ;
-				for (auto &&i : iter (ix ,rbx.size ()))
-					write (rbx[i]) ;
+				const auto r1x = FloatProc::decode (MathProc::abs (item)) ;
+				const auto r2x = FloatProc::exp10_from_exp2 (r1x) ;
+				auto rax = R1X (mAttr ,r2x) ;
+				rax.write_float () ;
+				write (rax) ;
 			}
 		}
 
@@ -1895,10 +1911,10 @@ trait TEXTWRITER_HELP<ITEM ,REQUIRE<IS_STR<ITEM>>> {
 			write (ITEM ('0')) ;
 			write (ITEM ('X')) ;
 			for (auto &&i : iter (0 ,SIZE_OF<BYTE>::value)) {
-				INDEX ix = SIZE_OF<BYTE>::value - 1 - i ;
-				const auto r1x = INDEX ((item >> (8 * ix + 4)) & BYTE (0XFF)) ;
+				INDEX ix = (SIZE_OF<BYTE>::value - 1 - i) * 8 ;
+				const auto r1x = INDEX ((item >> (ix + 4)) & BYTE (0X0F)) ;
 				write (mAttr->str_from_hex (r1x)) ;
-				const auto r2x = INDEX ((item >> (8 * ix + 0)) & BYTE (0XFF)) ;
+				const auto r2x = INDEX ((item >> (ix + 0)) & BYTE (0X0F)) ;
 				write (mAttr->str_from_hex (r2x)) ;
 			}
 		}
@@ -1912,10 +1928,10 @@ trait TEXTWRITER_HELP<ITEM ,REQUIRE<IS_STR<ITEM>>> {
 			write (ITEM ('0')) ;
 			write (ITEM ('X')) ;
 			for (auto &&i : iter (0 ,SIZE_OF<WORD>::value)) {
-				INDEX ix = SIZE_OF<WORD>::value - 1 - i ;
-				const auto r1x = INDEX ((item >> (8 * ix + 4)) & WORD (0XFF)) ;
+				INDEX ix = (SIZE_OF<WORD>::value - 1 - i) * 8 ;
+				const auto r1x = INDEX ((item >> (ix + 4)) & WORD (0X0F)) ;
 				write (mAttr->str_from_hex (r1x)) ;
-				const auto r2x = INDEX ((item >> (8 * ix + 0)) & WORD (0XFF)) ;
+				const auto r2x = INDEX ((item >> (ix + 0)) & WORD (0X0F)) ;
 				write (mAttr->str_from_hex (r2x)) ;
 			}
 		}
@@ -1929,10 +1945,10 @@ trait TEXTWRITER_HELP<ITEM ,REQUIRE<IS_STR<ITEM>>> {
 			write (ITEM ('0')) ;
 			write (ITEM ('X')) ;
 			for (auto &&i : iter (0 ,SIZE_OF<CHAR>::value)) {
-				INDEX ix = SIZE_OF<CHAR>::value - 1 - i ;
-				const auto r1x = INDEX ((item >> (8 * ix + 4)) & CHAR (0XFF)) ;
+				INDEX ix = (SIZE_OF<CHAR>::value - 1 - i) * 8 ;
+				const auto r1x = INDEX ((item >> (ix + 4)) & CHAR (0X0F)) ;
 				write (mAttr->str_from_hex (r1x)) ;
-				const auto r2x = INDEX ((item >> (8 * ix + 0)) & CHAR (0XFF)) ;
+				const auto r2x = INDEX ((item >> (ix + 0)) & CHAR (0X0F)) ;
 				write (mAttr->str_from_hex (r2x)) ;
 			}
 		}
@@ -1946,10 +1962,10 @@ trait TEXTWRITER_HELP<ITEM ,REQUIRE<IS_STR<ITEM>>> {
 			write (ITEM ('0')) ;
 			write (ITEM ('X')) ;
 			for (auto &&i : iter (0 ,SIZE_OF<DATA>::value)) {
-				INDEX ix = SIZE_OF<DATA>::value - 1 - i ;
-				const auto r1x = INDEX ((item >> (8 * ix + 4)) & DATA (0XFF)) ;
+				INDEX ix = (SIZE_OF<DATA>::value - 1 - i) * 8 ;
+				const auto r1x = INDEX ((item >> (ix + 4)) & DATA (0X0F)) ;
 				write (mAttr->str_from_hex (r1x)) ;
-				const auto r2x = INDEX ((item >> (8 * ix + 0)) & DATA (0XFF)) ;
+				const auto r2x = INDEX ((item >> (ix + 0)) & DATA (0X0F)) ;
 				write (mAttr->str_from_hex (r2x)) ;
 			}
 		}
@@ -2006,9 +2022,7 @@ trait TEXTWRITER_HELP<ITEM ,REQUIRE<IS_STR<ITEM>>> {
 			return thiz ;
 		}
 
-		imports void CLS (CREF<PlaceHolder<RANK1>>) {
-			noop () ;
-		}
+		imports void CLS (CREF<PlaceHolder<RANK1>>) {}
 
 		void write (CREF<typeof (CLS)>) {
 			reset () ;
@@ -2019,12 +2033,10 @@ trait TEXTWRITER_HELP<ITEM ,REQUIRE<IS_STR<ITEM>>> {
 			return thiz ;
 		}
 
-		imports void BOM (CREF<PlaceHolder<RANK2>>) {
-			noop () ;
-		}
+		imports void BOM (CREF<PlaceHolder<RANK2>>) {}
 
 		void write (CREF<typeof (BOM)>) {
-			reset () ;
+			template_bom (PHX ,TYPEAS<ITEM>::id) ;
 		}
 
 		inline VREF<TextWriter> operator<< (CREF<typeof (BOM)> item) {
@@ -2032,9 +2044,7 @@ trait TEXTWRITER_HELP<ITEM ,REQUIRE<IS_STR<ITEM>>> {
 			return thiz ;
 		}
 
-		imports void GAP (CREF<PlaceHolder<RANK3>>) {
-			noop () ;
-		}
+		imports void GAP (CREF<PlaceHolder<RANK3>>) {}
 
 		void write (CREF<typeof (GAP)> item) {
 			write (ITEM ('\r')) ;
@@ -2046,9 +2056,7 @@ trait TEXTWRITER_HELP<ITEM ,REQUIRE<IS_STR<ITEM>>> {
 			return thiz ;
 		}
 
-		imports void EOS (CREF<PlaceHolder<RANK4>>) {
-			noop () ;
-		}
+		imports void EOS (CREF<PlaceHolder<RANK4>>) {}
 
 		void write (CREF<typeof (EOS)> item) {
 			const auto r1x = mAttr->ending_item () ;
@@ -2061,197 +2069,33 @@ trait TEXTWRITER_HELP<ITEM ,REQUIRE<IS_STR<ITEM>>> {
 		}
 
 	private:
-		void write_value (VREF<NOTATION> fexp10 ,VREF<BoxBuffer<ITEM ,NUMBER_SIZE>> out ,VREF<INDEX> iw) {
-			assert (fexp10.mRadix == 10) ;
-			fexp10.mPrecision = MathProc::log10v (fexp10.mMantissa) ;
-			const auto r1x = fexp10.mPrecision ;
-			auto eax = TRUE ;
-			if ifswitch (eax) {
-				//@info: case '0'
-				if (fexp10.mMantissa != 0)
-					discard ;
-				iw-- ;
-				out[iw] = ITEM ('0') ;
-			}
-			if ifswitch (eax) {
-				//@info: case 'xxx'
-				for (auto &&i : iter (0 ,r1x)) {
-					noop (i) ;
-					iw-- ;
-					out[iw] = mAttr->str_from_hex (fexp10.mMantissa % 10) ;
-					fexp10.mMantissa /= 10 ;
-					fexp10.mExponent++ ;
-					fexp10.mPrecision-- ;
-				}
-			}
+		template <class ARG1 ,class = REQUIRE<IS_SAME<REMOVE_ALL<ARG1> ,STRA>>>
+		void template_bom (CREF<typeof (PH5)> ,CREF<ARG1> id) {
+			noop () ;
 		}
 
-		void write_float (VREF<NOTATION> fexp10 ,VREF<BoxBuffer<ITEM ,NUMBER_SIZE>> out ,VREF<INDEX> iw) {
-			assert (fexp10.mRadix == 10) ;
-			fexp10.mPrecision = MathProc::log10v (fexp10.mMantissa) ;
-			const auto r1x = mAttr->float_precision () ;
-			if ifswitch (TRUE) {
-				if (fexp10.mPrecision == 0)
-					discard ;
-				while (TRUE) {
-					if (fexp10.mMantissa % 10 != 0)
-						break ;
-					fexp10.mMantissa /= 10 ;
-					fexp10.mExponent++ ;
-					fexp10.mPrecision-- ;
-				}
-				const auto r2x = fexp10.mPrecision - r1x ;
-				for (auto &&i : iter (0 ,r2x - 1)) {
-					noop (i) ;
-					fexp10.mMantissa /= 10 ;
-					fexp10.mExponent++ ;
-					fexp10.mPrecision-- ;
-				}
-				if (r2x <= 0)
-					discard ;
-				fexp10.mMantissa = valign (fexp10.mMantissa - 4 ,VAL64 (10)) ;
-				fexp10.mExponent++ ;
-				fexp10.mPrecision-- ;
-			}
-			const auto r3x = fexp10.mPrecision ;
-			const auto r4x = LENGTH (fexp10.mExponent) ;
-			auto eax = TRUE ;
-			if ifswitch (eax) {
-				//@info: case '0'
-				if (fexp10.mMantissa != 0)
-					discard ;
-				iw-- ;
-				out[iw] = ITEM ('0') ;
-			}
-			if ifswitch (eax) {
-				//@info: case 'x.xxxExxx'
-				const auto r5x = r3x - 1 + r4x ;
-				if (MathProc::abs (r5x) < r1x)
-					discard ;
-				write_value (fexp10 ,out ,iw) ;
-				if ifswitch (TRUE) {
-					if (r5x <= 0)
-						discard ;
-					iw-- ;
-					out[iw] = ITEM ('+') ;
-				}
-				iw-- ;
-				out[iw] = mAttr->lower_upper_cast (ITEM ('e')) ;
-				const auto r6x = vmax (LENGTH (r3x - 1 - r1x) ,ZERO) ;
-				for (auto &&i : iter (0 ,r6x)) {
-					noop (i) ;
-					fexp10.mMantissa /= 10 ;
-					fexp10.mExponent++ ;
-					fexp10.mPrecision-- ;
-				}
-				INDEX ix = iw - 1 ;
-				for (auto &&i : iter (r6x ,r3x - 1)) {
-					noop (i) ;
-					iw-- ;
-					out[iw] = mAttr->str_from_hex (fexp10.mMantissa % 10) ;
-					iw += LENGTH (out[ix] == ITEM ('0')) ;
-					fexp10.mMantissa /= 10 ;
-					fexp10.mExponent++ ;
-					fexp10.mPrecision-- ;
-				}
-				iw-- ;
-				out[iw] = ITEM ('.') ;
-				iw += LENGTH (out[ix] == ITEM ('.')) ;
-				iw-- ;
-				out[iw] = mAttr->str_from_hex (fexp10.mMantissa % 10) ;
-				fexp10.mMantissa /= 10 ;
-				fexp10.mExponent++ ;
-				fexp10.mPrecision-- ;
-			}
-			if ifswitch (eax) {
-				//@info: case 'xxx000'
-				if (r4x < 0)
-					discard ;
-				for (auto &&i : iter (0 ,r4x)) {
-					noop (i) ;
-					iw-- ;
-					out[iw] = ITEM ('0') ;
-				}
-				for (auto &&i : iter (0 ,r3x)) {
-					noop (i) ;
-					iw-- ;
-					out[iw] = mAttr->str_from_hex (fexp10.mMantissa % 10) ;
-					fexp10.mMantissa /= 10 ;
-					fexp10.mExponent++ ;
-					fexp10.mPrecision-- ;
-				}
-			}
-			if ifswitch (eax) {
-				//@info: case 'xxx.xxx'
-				if (r4x < 1 - r3x)
-					discard ;
-				if (r4x >= 0)
-					discard ;
-				const auto r7x = vmax (LENGTH (-r4x - r1x) ,ZERO) ;
-				for (auto &&i : iter (0 ,r7x)) {
-					noop (i) ;
-					fexp10.mMantissa /= 10 ;
-					fexp10.mExponent++ ;
-					fexp10.mPrecision-- ;
-				}
-				INDEX ix = iw - 1 ;
-				for (auto &&i : iter (r7x ,-r4x)) {
-					noop (i) ;
-					iw-- ;
-					out[iw] = mAttr->str_from_hex (fexp10.mMantissa % 10) ;
-					iw += LENGTH (out[ix] == ITEM ('0')) ;
-					fexp10.mMantissa /= 10 ;
-					fexp10.mExponent++ ;
-					fexp10.mPrecision-- ;
-				}
-				iw-- ;
-				out[iw] = ITEM ('.') ;
-				iw += LENGTH (out[ix] == ITEM ('.')) ;
-				for (auto &&i : iter (0 ,r3x + r4x)) {
-					noop (i) ;
-					iw-- ;
-					out[iw] = mAttr->str_from_hex (fexp10.mMantissa % 10) ;
-					fexp10.mMantissa /= 10 ;
-					fexp10.mExponent++ ;
-					fexp10.mPrecision-- ;
-				}
-			}
-			if ifswitch (eax) {
-				//@info: case '0.000xxx'
-				if (r4x >= 1 - r3x)
-					discard ;
-				if (r4x >= 0)
-					discard ;
-				const auto r8x = vmax (LENGTH (-r4x - r1x) ,ZERO) ;
-				for (auto &&i : iter (0 ,r8x)) {
-					noop (i) ;
-					fexp10.mMantissa /= 10 ;
-					fexp10.mExponent++ ;
-					fexp10.mPrecision-- ;
-				}
-				INDEX ix = iw - 1 ;
-				for (auto &&i : iter (r8x ,r3x)) {
-					noop (i) ;
-					iw-- ;
-					out[iw] = mAttr->str_from_hex (fexp10.mMantissa % 10) ;
-					iw += LENGTH (out[ix] == ITEM ('0')) ;
-					fexp10.mMantissa /= 10 ;
-					fexp10.mExponent++ ;
-					fexp10.mPrecision-- ;
-				}
-				const auto r9x = vmax (r8x ,r3x) ;
-				for (auto &&i : iter (r9x ,-r4x)) {
-					noop (i) ;
-					iw-- ;
-					out[iw] = ITEM ('0') ;
-					iw += LENGTH (out[ix] == ITEM ('0')) ;
-				}
-				iw-- ;
-				out[iw] = ITEM ('.') ;
-				iw += LENGTH (out[ix] == ITEM ('.')) ;
-				iw-- ;
-				out[iw] = ITEM ('0') ;
-			}
+		template <class ARG1 ,class = REQUIRE<IS_SAME<REMOVE_ALL<ARG1> ,STRW>>>
+		void template_bom (CREF<typeof (PH4)> ,CREF<ARG1> id) {
+			template_bom (PHX ,TYPEAS<STRUW>::id) ;
+		}
+
+		template <class ARG1 ,class = REQUIRE<IS_SAME<REMOVE_ALL<ARG1> ,STRU8>>>
+		void template_bom (CREF<typeof (PH3)> ,CREF<ARG1> id) {
+			write (ITEM (0XEF)) ;
+			write (ITEM (0XBB)) ;
+			write (ITEM (0XBF)) ;
+		}
+
+		template <class ARG1 ,class = REQUIRE<IS_SAME<REMOVE_ALL<ARG1> ,STRU16>>>
+		void template_bom (CREF<typeof (PH2)> ,CREF<ARG1> id) {
+			write (ITEM (0XFEFF)) ;
+			write (ITEM (0XFFFE)) ;
+		}
+
+		template <class ARG1 ,class = REQUIRE<IS_SAME<REMOVE_ALL<ARG1> ,STRU32>>>
+		void template_bom (CREF<typeof (PH1)> ,CREF<ARG1> id) {
+			write (ITEM (0X0000FEFF)) ;
+			write (ITEM (0XFFFE0000)) ;
 		}
 	} ;
 
@@ -2261,15 +2105,15 @@ trait TEXTWRITER_HELP<ITEM ,REQUIRE<IS_STR<ITEM>>> {
 } ;
 
 template <class ITEM>
-trait TEXTWRITER_IMPLHOLDER_HELP<ITEM ,REQUIRE<IS_STR<ITEM>>> {
+trait TEXTWRITER_IMPLHOLDER_HELP<ITEM ,ALWAYS> {
 	using Attribute = typename TEXTWRITER_HELP<ITEM ,ALWAYS>::Attribute ;
 
-	class ImplAttribute implement Attribute {
+	class ImplHolder implement Attribute {
 	protected:
 		HashSet<ITEM> mEscapeSet ;
 
 	public:
-		implicit ImplAttribute () {
+		implicit ImplHolder () {
 			mEscapeSet.add (ITEM ('\\') ,INDEX ('\\')) ;
 			mEscapeSet.add (ITEM ('/') ,INDEX ('/')) ;
 			mEscapeSet.add (ITEM ('\t') ,INDEX ('t')) ;
@@ -2315,12 +2159,238 @@ trait TEXTWRITER_IMPLHOLDER_HELP<ITEM ,REQUIRE<IS_STR<ITEM>>> {
 		Optional<ITEM> escape_cast (CREF<ITEM> str) const override {
 			INDEX ix = mEscapeSet.map (str) ;
 			if (ix == NONE)
-				return Optional<ITEM>::zero () ;
+				return LENGTH (1) ;
 			return Optional<ITEM>::make (ITEM (ix)) ;
 		}
 
 		LENGTH float_precision () const override {
 			return 15 ;
+		}
+	} ;
+} ;
+
+template <class ITEM>
+trait TEXTWRITER_WRITEVALUE_HELP<ITEM ,ALWAYS> {
+	using Attribute = typename TEXTWRITER_HELP<ITEM ,ALWAYS>::Attribute ;
+	using Binder = typename TEXTWRITER_HELP<ITEM ,ALWAYS>::Binder ;
+	using TextWriter = typename TEXTWRITER_HELP<ITEM ,ALWAYS>::TextWriter ;
+
+	using NOTATION = typename FLOATPROC_HELP<DEPEND ,ALWAYS>::NOTATION ;
+	using NUMBER_SIZE = ENUMAS<VAL ,ENUMID<64>> ;
+
+	class WriteValue implement Binder {
+	protected:
+		CRef<Attribute> mAttr ;
+		NOTATION mValue ;
+		BoxBuffer<ITEM ,NUMBER_SIZE> mBuffer ;
+		INDEX mWrite ;
+
+	public:
+		implicit WriteValue () = delete ;
+
+		explicit WriteValue (CREF<CRef<Attribute>> attr_ ,CREF<NOTATION> value_) {
+			assert (value_.mRadix == 10) ;
+			mAttr = attr_ ;
+			mValue = value_ ;
+			mValue.mPrecision = 1 + MathProc::log10v (mValue.mMantissa) ;
+			mWrite = mBuffer.size () ;
+		}
+
+		void friend_write (VREF<TextWriter> writer) const override {
+			for (auto &&i : iter (mWrite ,mBuffer.size ()))
+				writer.write (mBuffer[i]) ;
+		}
+
+		void write_value () {
+			const auto r1x = mValue.mPrecision ;
+			auto eax = TRUE ;
+			if ifswitch (eax) {
+				//@info: case '0'
+				if (mValue.mMantissa != 0)
+					discard ;
+				mWrite-- ;
+				mBuffer[mWrite] = ITEM ('0') ;
+			}
+			if ifswitch (eax) {
+				//@info: case 'xxx'
+				for (auto &&i : iter (0 ,r1x)) {
+					noop (i) ;
+					mWrite-- ;
+					mBuffer[mWrite] = mAttr->str_from_hex (mValue.mMantissa % 10) ;
+					mValue.mMantissa /= 10 ;
+					mValue.mExponent++ ;
+					mValue.mPrecision-- ;
+				}
+			}
+		}
+
+		void write_float () {
+			const auto r1x = mAttr->float_precision () ;
+			if ifswitch (TRUE) {
+				if (mValue.mPrecision == 0)
+					discard ;
+				while (TRUE) {
+					if (mValue.mMantissa == 0)
+						break ;
+					if (mValue.mMantissa % 10 != 0)
+						break ;
+					mValue.mMantissa /= 10 ;
+					mValue.mExponent++ ;
+					mValue.mPrecision-- ;
+				}
+				const auto r2x = mValue.mPrecision - r1x ;
+				for (auto &&i : iter (0 ,r2x - 1)) {
+					noop (i) ;
+					mValue.mMantissa /= 10 ;
+					mValue.mExponent++ ;
+					mValue.mPrecision-- ;
+				}
+				if (r2x <= 0)
+					discard ;
+				mValue.mMantissa += MathProc::step (mValue.mMantissa - 5) * 5 ;
+				mValue.mMantissa /= 10 ;
+				mValue.mExponent++ ;
+				mValue.mPrecision-- ;
+			}
+			const auto r3x = mValue.mPrecision ;
+			const auto r4x = LENGTH (mValue.mExponent) ;
+			auto eax = TRUE ;
+			if ifswitch (eax) {
+				//@info: case '0'
+				if (mValue.mMantissa != 0)
+					discard ;
+				mWrite-- ;
+				mBuffer[mWrite] = ITEM ('0') ;
+			}
+			if ifswitch (eax) {
+				//@info: case 'x.xxxExxx'
+				const auto r5x = r3x - 1 + r4x ;
+				if (MathProc::abs (r5x) < r1x)
+					discard ;
+				write_value () ;
+				if ifswitch (TRUE) {
+					if (r5x <= 0)
+						discard ;
+					mWrite-- ;
+					mBuffer[mWrite] = ITEM ('+') ;
+				}
+				mWrite-- ;
+				mBuffer[mWrite] = mAttr->lower_upper_cast (ITEM ('e')) ;
+				const auto r6x = vmax (LENGTH (r3x - 1 - r1x) ,ZERO) ;
+				for (auto &&i : iter (0 ,r6x)) {
+					noop (i) ;
+					mValue.mMantissa /= 10 ;
+					mValue.mExponent++ ;
+					mValue.mPrecision-- ;
+				}
+				INDEX ix = mWrite - 1 ;
+				for (auto &&i : iter (r6x ,r3x - 1)) {
+					noop (i) ;
+					mWrite-- ;
+					mBuffer[mWrite] = mAttr->str_from_hex (mValue.mMantissa % 10) ;
+					mWrite += LENGTH (mBuffer[ix] == ITEM ('0')) ;
+					mValue.mMantissa /= 10 ;
+					mValue.mExponent++ ;
+					mValue.mPrecision-- ;
+				}
+				mWrite-- ;
+				mBuffer[mWrite] = ITEM ('.') ;
+				mWrite += LENGTH (mBuffer[ix] == ITEM ('.')) ;
+				mWrite-- ;
+				mBuffer[mWrite] = mAttr->str_from_hex (mValue.mMantissa % 10) ;
+				mValue.mMantissa /= 10 ;
+				mValue.mExponent++ ;
+				mValue.mPrecision-- ;
+			}
+			if ifswitch (eax) {
+				//@info: case 'xxx000'
+				if (r4x < 0)
+					discard ;
+				for (auto &&i : iter (0 ,r4x)) {
+					noop (i) ;
+					mWrite-- ;
+					mBuffer[mWrite] = ITEM ('0') ;
+				}
+				for (auto &&i : iter (0 ,r3x)) {
+					noop (i) ;
+					mWrite-- ;
+					mBuffer[mWrite] = mAttr->str_from_hex (mValue.mMantissa % 10) ;
+					mValue.mMantissa /= 10 ;
+					mValue.mExponent++ ;
+					mValue.mPrecision-- ;
+				}
+			}
+			if ifswitch (eax) {
+				//@info: case 'xxx.xxx'
+				if (r4x < 1 - r3x)
+					discard ;
+				if (r4x >= 0)
+					discard ;
+				const auto r7x = vmax (LENGTH (-r4x - r1x) ,ZERO) ;
+				for (auto &&i : iter (0 ,r7x)) {
+					noop (i) ;
+					mValue.mMantissa /= 10 ;
+					mValue.mExponent++ ;
+					mValue.mPrecision-- ;
+				}
+				INDEX ix = mWrite - 1 ;
+				for (auto &&i : iter (r7x ,-r4x)) {
+					noop (i) ;
+					mWrite-- ;
+					mBuffer[mWrite] = mAttr->str_from_hex (mValue.mMantissa % 10) ;
+					mWrite += LENGTH (mBuffer[ix] == ITEM ('0')) ;
+					mValue.mMantissa /= 10 ;
+					mValue.mExponent++ ;
+					mValue.mPrecision-- ;
+				}
+				mWrite-- ;
+				mBuffer[mWrite] = ITEM ('.') ;
+				mWrite += LENGTH (mBuffer[ix] == ITEM ('.')) ;
+				for (auto &&i : iter (0 ,r3x + r4x)) {
+					noop (i) ;
+					mWrite-- ;
+					mBuffer[mWrite] = mAttr->str_from_hex (mValue.mMantissa % 10) ;
+					mValue.mMantissa /= 10 ;
+					mValue.mExponent++ ;
+					mValue.mPrecision-- ;
+				}
+			}
+			if ifswitch (eax) {
+				//@info: case '0.000xxx'
+				if (r4x >= 1 - r3x)
+					discard ;
+				if (r4x >= 0)
+					discard ;
+				const auto r8x = vmax (LENGTH (-r4x - r1x) ,ZERO) ;
+				for (auto &&i : iter (0 ,r8x)) {
+					noop (i) ;
+					mValue.mMantissa /= 10 ;
+					mValue.mExponent++ ;
+					mValue.mPrecision-- ;
+				}
+				INDEX ix = mWrite - 1 ;
+				for (auto &&i : iter (r8x ,r3x)) {
+					noop (i) ;
+					mWrite-- ;
+					mBuffer[mWrite] = mAttr->str_from_hex (mValue.mMantissa % 10) ;
+					mWrite += LENGTH (mBuffer[ix] == ITEM ('0')) ;
+					mValue.mMantissa /= 10 ;
+					mValue.mExponent++ ;
+					mValue.mPrecision-- ;
+				}
+				const auto r9x = vmax (r8x ,r3x) ;
+				for (auto &&i : iter (r9x ,-r4x)) {
+					noop (i) ;
+					mWrite-- ;
+					mBuffer[mWrite] = ITEM ('0') ;
+					mWrite += LENGTH (mBuffer[ix] == ITEM ('0')) ;
+				}
+				mWrite-- ;
+				mBuffer[mWrite] = ITEM ('.') ;
+				mWrite += LENGTH (mBuffer[ix] == ITEM ('.')) ;
+				mWrite-- ;
+				mBuffer[mWrite] = ITEM ('0') ;
+			}
 		}
 	} ;
 } ;
@@ -2332,156 +2402,6 @@ template <class ITEM>
 trait STRING_TEXTWRITER_HELP<ITEM ,ALWAYS> {
 	using TextWriter = CSC::TextWriter<ITEM> ;
 } ;
-
-template <class...>
-trait REGULARSTRING_HELP ;
-
-template <class ITEM>
-trait REGULARSTRING_HELP<ITEM ,ALWAYS> {
-	class EscapeString extend Proxy {
-	protected:
-		String<ITEM> mBase ;
-
-	public:
-		imports CREF<EscapeString> from (CREF<String<ITEM>> that) {
-			return unsafe_deref (unsafe_cast[TYPEAS<TEMP<EscapeString>>::id] (unsafe_deptr (that))) ;
-		}
-
-		inline friend VREF<TextWriter<ITEM>> operator<< (VREF<TextWriter<ITEM>> wos ,CREF<EscapeString> thiz_) {
-			const auto r1x = wos.get_attr () ;
-			wos << ITEM ('\"') ;
-			for (auto &&i : thiz_.mBase) {
-				auto eax = TRUE ;
-				if ifswitch (eax) {
-					const auto r2x = r1x->escape_cast (i) ;
-					if ifnot (r2x.exist ())
-						discard ;
-					wos << ITEM ('\\') ;
-					wos << r2x.self ;
-				}
-				if ifswitch (eax) {
-					wos << i ;
-				}
-			}
-			wos << ITEM ('\"') ;
-			return wos ;
-		}
-	} ;
-} ;
-
-template <class ITEM>
-using EscapeString = typename REGULARSTRING_HELP<ITEM ,ALWAYS>::EscapeString ;
-
-template <class...>
-trait REPEATSTRING_HELP ;
-
-template <class ITEM>
-trait REPEATSTRING_HELP<ITEM ,ALWAYS> {
-	using Binder = typename TEXTWRITER_HELP<ITEM ,ALWAYS>::Binder ;
-	using COUNTER_MAX_DEPTH = ENUMAS<VAL ,ENUMID<256>> ;
-
-	class RepeatString implement Binder {
-	protected:
-		String<ITEM> mGapText ;
-		String<ITEM> mCommaText ;
-		LENGTH mCounter ;
-		Cell<LENGTH> mTightCounter ;
-		Deque<Cell<BOOL>> mFirst ;
-
-	public:
-		implicit RepeatString () = delete ;
-
-		explicit RepeatString (CREF<Slice<STRA>> gap_text ,CREF<Slice<STRA>> comma_text) {
-			mGapText = String<ITEM> (gap_text.size ()) ;
-			for (auto &&i : iter (0 ,gap_text.size ())) {
-				vbetween (INDEX (gap_text[i]) ,0 ,128) ;
-				mGapText[i] = ITEM (gap_text[i]) ;
-			}
-			mCommaText = String<ITEM> (comma_text.size ()) ;
-			for (auto &&i : iter (0 ,comma_text.size ())) {
-				vbetween (INDEX (comma_text[i]) ,0 ,128) ;
-				mCommaText[i] = ITEM (comma_text[i]) ;
-			}
-			mCounter = 0 ;
-			mTightCounter = Cell<LENGTH>::make (COUNTER_MAX_DEPTH::value) ;
-			mFirst = Deque<Cell<BOOL>> (COUNTER_MAX_DEPTH::value * 2) ;
-			mFirst.add (Cell<BOOL>::make (TRUE)) ;
-		}
-
-		explicit RepeatString (CREF<Slice<STRW>> gap_text ,CREF<Slice<STRW>> comma_text) {
-			mGapText = String<ITEM> (gap_text.size ()) ;
-			for (auto &&i : iter (0 ,gap_text.size ())) {
-				vbetween (INDEX (gap_text[i]) ,0 ,128) ;
-				mGapText[i] = ITEM (gap_text[i]) ;
-			}
-			mCommaText = String<ITEM> (comma_text.size ()) ;
-			for (auto &&i : iter (0 ,comma_text.size ())) {
-				vbetween (INDEX (comma_text[i]) ,0 ,128) ;
-				mCommaText[i] = ITEM (comma_text[i]) ;
-			}
-			mCounter = 0 ;
-			mTightCounter = Cell<LENGTH>::make (COUNTER_MAX_DEPTH::value) ;
-			mFirst = Deque<Cell<BOOL>> (COUNTER_MAX_DEPTH::value * 2) ;
-			mFirst.add (Cell<BOOL>::make (TRUE)) ;
-		}
-
-		void friend_write (VREF<TextWriter<ITEM>> writer) const override {
-			INDEX ix = mFirst.tail () ;
-			auto eax = TRUE ;
-			if ifswitch (eax) {
-				if ifnot (mCounter > mTightCounter.fetch ())
-					discard ;
-				if ifswitch (TRUE) {
-					if (mFirst[ix].fetch ())
-						discard ;
-					writer << mCommaText ;
-				}
-				mFirst[ix].store (FALSE) ;
-			}
-			if ifswitch (eax) {
-				if (mCounter != mTightCounter.fetch ())
-					discard ;
-				if ifnot (mFirst[ix].fetch ())
-					discard ;
-				mTightCounter.store (COUNTER_MAX_DEPTH::value) ;
-				mFirst[ix].store (FALSE) ;
-			}
-			if ifswitch (eax) {
-				writer << TextWriter<ITEM>::GAP ;
-				if ifswitch (TRUE) {
-					if (mFirst[ix].fetch ())
-						discard ;
-					writer << mCommaText ;
-				}
-				mFirst[ix].store (FALSE) ;
-				for (auto &&i : iter (0 ,mCounter)) {
-					noop (i) ;
-					writer << mGapText ;
-				}
-			}
-		}
-
-		void tight () {
-			mTightCounter.store (mCounter) ;
-		}
-
-		void enter () {
-			assume (mCounter < COUNTER_MAX_DEPTH::value) ;
-			mCounter++ ;
-			mFirst.add (Cell<BOOL>::make (TRUE)) ;
-		}
-
-		void leave () {
-			mFirst.pop () ;
-			INDEX ix = mFirst.tail () ;
-			mFirst[ix].store (TRUE) ;
-			mCounter-- ;
-		}
-	} ;
-} ;
-
-template <class ITEM>
-using RepeatString = typename REPEATSTRING_HELP<ITEM ,ALWAYS>::RepeatString ;
 
 template <class...>
 trait REGULARREADER_HELP ;
@@ -2540,7 +2460,7 @@ trait REGULARREADER_HELP<DEPEND ,ALWAYS> {
 			mCache.add (r1x) ;
 		}
 
-		inline void operator++ (int) {
+		inline void operator++ (csc_int32_t) {
 			read () ;
 		}
 
@@ -2570,9 +2490,7 @@ trait REGULARREADER_HELP<DEPEND ,ALWAYS> {
 			return thiz ;
 		}
 
-		imports void HINT_IDENTIFIER (CREF<PlaceHolder<RANK1>>) {
-			noop () ;
-		}
+		imports void HINT_IDENTIFIER (CREF<PlaceHolder<RANK1>>) {}
 
 		void read (CREF<typeof (HINT_IDENTIFIER)>) {
 			mHintString = FALSE ;
@@ -2607,9 +2525,7 @@ trait REGULARREADER_HELP<DEPEND ,ALWAYS> {
 			return thiz ;
 		}
 
-		imports void HINT_SCALAR (CREF<PlaceHolder<RANK2>>) {
-			noop () ;
-		}
+		imports void HINT_SCALAR (CREF<PlaceHolder<RANK2>>) {}
 
 		void read (CREF<typeof (HINT_SCALAR)>) {
 			mHintString = FALSE ;
@@ -2680,9 +2596,7 @@ trait REGULARREADER_HELP<DEPEND ,ALWAYS> {
 			return thiz ;
 		}
 
-		imports void HINT_STRING (CREF<PlaceHolder<RANK3>>) {
-			noop () ;
-		}
+		imports void HINT_STRING (CREF<PlaceHolder<RANK3>>) {}
 
 		void read (CREF<typeof (HINT_STRING)>) {
 			mHintString = TRUE ;
@@ -2720,9 +2634,7 @@ trait REGULARREADER_HELP<DEPEND ,ALWAYS> {
 			return thiz ;
 		}
 
-		imports void HINT_WORD_SPACE (CREF<PlaceHolder<RANK4>>) {
-			noop () ;
-		}
+		imports void HINT_WORD_SPACE (CREF<PlaceHolder<RANK4>>) {}
 
 		void read (CREF<typeof (HINT_WORD_SPACE)>) {
 			mHintString = FALSE ;
@@ -2746,9 +2658,7 @@ trait REGULARREADER_HELP<DEPEND ,ALWAYS> {
 			return thiz ;
 		}
 
-		imports void HINT_WORD_ENDLINE (CREF<PlaceHolder<RANK5>>) {
-			noop () ;
-		}
+		imports void HINT_WORD_ENDLINE (CREF<PlaceHolder<RANK5>>) {}
 
 		void read (CREF<typeof (HINT_WORD_ENDLINE)>) {
 			mHintString = FALSE ;
@@ -2772,9 +2682,7 @@ trait REGULARREADER_HELP<DEPEND ,ALWAYS> {
 			return thiz ;
 		}
 
-		imports void SKIP_SPACE (CREF<PlaceHolder<RANK6>>) {
-			noop () ;
-		}
+		imports void SKIP_SPACE (CREF<PlaceHolder<RANK6>>) {}
 
 		void read (CREF<typeof (SKIP_SPACE)>) {
 			const auto r1x = mReader->get_attr () ;
@@ -2790,9 +2698,7 @@ trait REGULARREADER_HELP<DEPEND ,ALWAYS> {
 			return thiz ;
 		}
 
-		imports void SKIP_SPACE_WORD (CREF<PlaceHolder<RANK7>>) {
-			noop () ;
-		}
+		imports void SKIP_SPACE_WORD (CREF<PlaceHolder<RANK7>>) {}
 
 		void read (CREF<typeof (SKIP_SPACE_WORD)>) {
 			const auto r1x = mReader->get_attr () ;
@@ -2812,9 +2718,7 @@ trait REGULARREADER_HELP<DEPEND ,ALWAYS> {
 			return thiz ;
 		}
 
-		imports void SKIP_SPACE_ENDLINE (CREF<PlaceHolder<RANK8>>) {
-			noop () ;
-		}
+		imports void SKIP_SPACE_ENDLINE (CREF<PlaceHolder<RANK8>>) {}
 
 		void read (CREF<typeof (SKIP_SPACE_ENDLINE)>) {
 			const auto r1x = mReader->get_attr () ;

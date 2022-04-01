@@ -15,6 +15,7 @@
 #define extend :private
 #define require __macro_requires
 #define anonymous __macro_anonymous
+#define where __macro_where
 #define slice __macro_slice
 #define assert __macro_assert
 #define assume __macro_assume
@@ -28,7 +29,6 @@
 
 #ifdef NULL
 #define use_define_has_null
-
 #pragma push_macro ("TRUE")
 #undef TRUE
 #pragma push_macro ("FALSE")

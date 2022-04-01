@@ -16,6 +16,21 @@
 #error "∑(っ°Д° ;)っ : require 'Windows.h'"
 #endif
 
+#include "begin.h"
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <exception>
+#include <ctime>
+#include <chrono>
+#include <mutex>
+#include <condition_variable>
+#include <atomic>
+#include <thread>
+#include <locale>
+#include <random>
+#include "end.h"
+
 namespace CSC {
 template <class DEPEND>
 trait RUNTIMEPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
@@ -23,6 +38,8 @@ trait RUNTIMEPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 
 	class ImplHolder implement Holder {
 	public:
+		implicit ImplHolder () = default ;
+
 		LENGTH thread_concurrency () const override {
 			return LENGTH (std::thread::hardware_concurrency ()) ;
 		}
@@ -38,7 +55,7 @@ trait RUNTIMEPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		void thread_sleep (CREF<TimePoint> time_) const override {
-			using R1X = typename TIMEPOINT_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
+			using R1X = typename TIMEDURATION_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 			const auto r1x = time_.native ().poll (TYPEAS<CRef<R1X>>::id) ;
 			std::this_thread::sleep_until (r1x->get_mTimePoint ()) ;
 		}
@@ -112,13 +129,12 @@ trait PROCESS_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		SNAPSHOT mSnapshot ;
 
 	public:
-		implicit ImplHolder () {
-			mUID = ZERO ;
-		}
+		implicit ImplHolder () = default ;
 
-		void init_current () override {
-			mUID = RuntimeProc::process_uid () ;
-			auto rax = ByteWriter (RegBuffer<BYTE>::from (mSnapshot ,0 ,mSnapshot.size ())) ;
+		void initialize (CREF<FLAG> uid) override {
+			mUID = uid ;
+			auto rax = VarBuffer<BYTE> (128) ;
+			auto rbx = ByteWriter (RegBuffer<BYTE>::from (rax ,0 ,rax.size ())) ;
 			if ifswitch (TRUE) {
 				const auto r1x = UniqueRef<HANDLE> ([&] (VREF<HANDLE> me) {
 					me = OpenProcess (PROCESS_QUERY_INFORMATION ,FALSE ,DWORD (mUID)) ;
@@ -129,22 +145,23 @@ trait PROCESS_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				}) ;
 				if (r1x.self == NULL)
 					discard ;
-				rax << ByteWriter::GAP ;
-				rax << VAL64 (mUID) ;
-				rax << ByteWriter::GAP ;
-				rax << slice ("windows") ;
-				rax << ByteWriter::GAP ;
+				rbx << ByteWriter::GAP ;
+				rbx << VAL64 (mUID) ;
+				rbx << ByteWriter::GAP ;
+				rbx << slice ("windows") ;
+				rbx << ByteWriter::GAP ;
 				const auto r2x = process_code (r1x ,mUID) ;
-				rax << r2x ;
-				rax << ByteWriter::GAP ;
+				rbx << r2x ;
+				rbx << ByteWriter::GAP ;
 				const auto r3x = process_time (r1x ,mUID) ;
-				rax << r3x ;
+				rbx << r3x ;
 			}
-			rax << ByteWriter::GAP ;
-			rax << ByteWriter::EOS ;
+			rbx << ByteWriter::GAP ;
+			rbx << ByteWriter::EOS ;
+			mSnapshot = SNAPSHOT (move (rax)) ;
 		}
 
-		DATA process_code (CREF<HANDLE> handle ,CREF<FLAG> uid) {
+		DATA process_code (CREF<HANDLE> handle ,CREF<FLAG> uid) const {
 			const auto r1x = invoke ([&] () {
 				DWORD ret ;
 				if ifswitch (TRUE) {
@@ -158,7 +175,7 @@ trait PROCESS_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			return DATA (r1x) ;
 		}
 
-		DATA process_time (CREF<HANDLE> handle ,CREF<FLAG> uid) {
+		DATA process_time (CREF<HANDLE> handle ,CREF<FLAG> uid) const {
 			const auto r1x = invoke ([&] () {
 				ARRAY4<FILETIME> ret ;
 				zeroize (ret[0]) ;
@@ -168,18 +185,16 @@ trait PROCESS_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				GetProcessTimes (handle ,(&ret[0]) ,(&ret[1]) ,(&ret[2]) ,(&ret[3])) ;
 				return move (ret) ;
 			}) ;
-			const auto r2x = (DATA (r1x[0].dwHighDateTime) << 32) | DATA (r1x[0].dwLowDateTime) ;
-			return DATA (r2x) ;
+			return BitProc::up_bit (CHAR (r1x[0].dwHighDateTime) ,CHAR (r1x[0].dwLowDateTime)) ;
 		}
 
-		void init_snapshot (CREF<SNAPSHOT> snapshot_) override {
+		void initialize (CREF<SNAPSHOT> snapshot_) override {
 			mSnapshot = snapshot_ ;
 			auto &&tmp = keep[TYPEAS<CREF<SNAPSHOT>>::id] (snapshot_) ;
 			auto rax = ByteReader (RegBuffer<BYTE>::from (tmp ,0 ,tmp.size ())) ;
 			rax >> ByteReader::GAP ;
 			const auto r1x = rax.poll (TYPEAS<VAL64>::id) ;
-			assume (r1x != ZERO) ;
-			assume (r1x >= VAL32_MIN) ;
+			assume (r1x > 0) ;
 			assume (r1x <= VAL32_MAX) ;
 			mUID = FLAG (r1x) ;
 		}
@@ -194,13 +209,6 @@ trait PROCESS_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 
 		CREF<SNAPSHOT> snapshot () const override {
 			return mSnapshot ;
-		}
-
-		BOOL equal (CREF<Holder> a) const override {
-			const auto r1x = a.native ().poll (TYPEAS<CRef<ImplHolder>>::id) ;
-			if (mUID != r1x->mUID)
-				return FALSE ;
-			return mSnapshot == r1x->mSnapshot ;
 		}
 	} ;
 } ;
@@ -224,16 +232,10 @@ trait MODULE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	public:
 		implicit ImplHolder () = default ;
 
-		void init_new () override {
-			noop () ;
-		}
-
-		CREF<String<STR>> error () const leftvalue override {
-			return mError ;
-		}
-
-		void open (CREF<String<STR>> file_) override {
+		void initialize (CREF<String<STR>> file_) override {
 			const auto r1x = Directory (file_).name () ;
+			assert (ifnot (r1x.empty ())) ;
+			mErrorBuffer = String<STR>::make () ;
 			mModule = UniqueRef<HMODULE> ([&] (VREF<HMODULE> me) {
 				me = GetModuleHandle ((&r1x[0])) ;
 				if (me != NULL)
@@ -250,12 +252,13 @@ trait MODULE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			}) ;
 		}
 
-		void close () override {
-			mModule = UniqueRef<HMODULE> () ;
+		CREF<String<STR>> error () const leftvalue override {
+			return mError ;
 		}
 
 		FLAG link (CREF<String<STR>> name) override {
 			assert (mModule.exist ()) ;
+			assert (ifnot (name.empty ())) ;
 			const auto r1x = string_cvt[TYPEAS<TYPEAS<STRA ,STR>>::id] (name) ;
 			FLAG ret = FLAG (GetProcAddress (mModule ,(&r1x[0]))) ;
 			if ifswitch (TRUE) {
@@ -270,14 +273,8 @@ trait MODULE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		void format_dllerror (CREF<FLAG> code) {
-			if ifswitch (TRUE) {
-				if (mErrorBuffer.size () > 0)
-					discard ;
-				mErrorBuffer = String<STR>::make () ;
-			}
 			const auto r1x = DWORD (MAKELANGID (LANG_NEUTRAL ,SUBLANG_DEFAULT)) ;
-			const auto r2x = mErrorBuffer.size () ;
-			FormatMessage (FORMAT_MESSAGE_FROM_SYSTEM ,NULL ,DWORD (code) ,r1x ,(&mErrorBuffer[0]) ,DWORD (r2x) ,NULL) ;
+			FormatMessage (FORMAT_MESSAGE_FROM_SYSTEM ,NULL ,DWORD (code) ,r1x ,(&mErrorBuffer[0]) ,DWORD (mErrorBuffer.size ()) ,NULL) ;
 		}
 	} ;
 } ;
@@ -285,6 +282,131 @@ trait MODULE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 template <>
 exports auto MODULE_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () -> VRef<Holder> {
 	using R1X = typename MODULE_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
+	return VRef<R1X>::make () ;
+}
+
+template <class DEPEND>
+trait SINGLETON_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
+	using Holder = typename SINGLETON_HOLDER_HELP<DEPEND ,ALWAYS>::Holder ;
+
+	struct HEAP {
+		RecursiveMutex mMutex ;
+		Set<Slice<STR>> mAddressSet ;
+	} ;
+
+	struct PIPE {
+		DATA mReserve1 ;
+		DATA mAddress1 ;
+		DATA mReserve2 ;
+		DATA mAddress2 ;
+		DATA mReserve3 ;
+	} ;
+
+	class ImplHolder implement Holder {
+	protected:
+		String<STR> mName ;
+		UniqueRef<HANDLE> mPipe ;
+		SharedRef<HEAP> mHeap ;
+
+	public:
+		implicit ImplHolder () = default ;
+
+		void initialize () override {
+			mName = String<STR>::make (slice ("CSC_Singleton_") ,RuntimeProc::process_uid ()) ;
+			auto rax = PIPE () ;
+			try_invoke ([&] () {
+				init_pipe () ;
+				rax = load_pipe () ;
+			} ,[&] () {
+				rax = load_pipe () ;
+			} ,[&] () {
+				save_pipe () ;
+				rax = load_pipe () ;
+			} ,[&] () {
+				zeroize (rax) ;
+			}) ;
+			const auto r1x = FLAG (rax.mAddress1) ;
+			assume (r1x != ZERO) ;
+			mHeap = unsafe_deref (unsafe_cast[TYPEAS<TEMP<SharedRef<HEAP>>>::id] (unsafe_pointer (r1x))) ;
+			assume (mHeap.available ()) ;
+		}
+
+		void init_pipe () {
+			if (mPipe.exist ())
+				return ;
+			mPipe = UniqueRef<HANDLE> ([&] (VREF<HANDLE> me) {
+				me = CreateFileMapping (INVALID_HANDLE_VALUE ,NULL ,PAGE_READWRITE ,0 ,DWORD (SIZE_OF<PIPE>::value) ,(&mName[0])) ;
+				assume (me != NULL) ;
+			} ,[] (VREF<HANDLE> me) {
+				CloseHandle (me) ;
+			}) ;
+			mHeap = SharedRef<HEAP>::make () ;
+		}
+
+		PIPE load_pipe () const {
+			const auto r1x = UniqueRef<HANDLE> ([&] (VREF<HANDLE> me) {
+				me = OpenFileMapping (FILE_MAP_READ ,FALSE ,(&mName[0])) ;
+				assume (me != NULL) ;
+			} ,[] (VREF<HANDLE> me) {
+				CloseHandle (me) ;
+			}) ;
+			const auto r2x = UniqueRef<HANDLE> ([&] (VREF<HANDLE> me) {
+				me = MapViewOfFile (r1x ,FILE_MAP_READ ,0 ,0 ,SIZE_OF<PIPE>::value) ;
+				assume (me != NULL) ;
+			} ,[] (VREF<HANDLE> me) {
+				UnmapViewOfFile (me) ;
+			}) ;
+			PIPE ret ;
+			zeroize (ret) ;
+			std::memcpy ((&ret) ,r2x ,SIZE_OF<PIPE>::value) ;
+			assume (ret.mReserve1 == DATA (0X1122334455667788)) ;
+			assume (ret.mReserve3 == DATA (0X1122334455667788)) ;
+			assume (ret.mReserve2 == DATA (0XAAAABBBBCCCCDDDD)) ;
+			assume (ret.mAddress1 == ret.mAddress2) ;
+			return move (ret) ;
+		}
+
+		void save_pipe () const {
+			const auto r1x = UniqueRef<HANDLE> ([&] (VREF<HANDLE> me) {
+				me = OpenFileMapping (FILE_MAP_WRITE ,FALSE ,(&mName[0])) ;
+				assume (me != NULL) ;
+			} ,[] (VREF<HANDLE> me) {
+				CloseHandle (me) ;
+			}) ;
+			const auto r2x = UniqueRef<HANDLE> ([&] (VREF<HANDLE> me) {
+				me = MapViewOfFile (r1x ,FILE_MAP_WRITE ,0 ,0 ,SIZE_OF<PIPE>::value) ;
+				assume (me != NULL) ;
+			} ,[] (VREF<HANDLE> me) {
+				UnmapViewOfFile (me) ;
+			}) ;
+			auto rax = PIPE () ;
+			rax.mReserve1 = DATA (0X1122334455667788) ;
+			rax.mAddress1 = DATA (address (mHeap)) ;
+			rax.mReserve2 = DATA (0XAAAABBBBCCCCDDDD) ;
+			rax.mAddress2 = DATA (address (mHeap)) ;
+			rax.mReserve3 = DATA (0X1122334455667788) ;
+			std::memcpy (r2x ,(&rax) ,SIZE_OF<PIPE>::value) ;
+		}
+
+		void add (CREF<Slice<STR>> name ,CREF<FLAG> addr_) const override {
+			Scope<Mutex> anonymous (mHeap->mMutex) ;
+			assert (addr_ != ZERO) ;
+			assert (addr_ != NONE) ;
+			mHeap->mAddressSet.add (name ,addr_) ;
+		}
+
+		FLAG map (CREF<Slice<STR>> name) const override {
+			Scope<Mutex> anonymous (mHeap->mMutex) ;
+			FLAG ret = mHeap->mAddressSet.map (name) ;
+			replace (ret ,NONE ,ZERO) ;
+			return move (ret) ;
+		}
+	} ;
+} ;
+
+template <>
+exports auto SINGLETON_HOLDER_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () -> VRef<Holder> {
+	using R1X = typename SINGLETON_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
 }
 } ;
