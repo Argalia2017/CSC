@@ -7,6 +7,9 @@
 #undef rightvalue
 #undef thiz
 #undef self
+#undef mP1st
+#undef mP2nd
+#undef mP3rd
 #undef fake
 #undef trait
 #undef implement

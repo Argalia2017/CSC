@@ -62,26 +62,47 @@ trait HEAPPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		std::atomic<LENGTH> mUsageSize ;
 	} ;
 
+	class PureHolder extend Proxy {
+	private:
+		HEAP mBase ;
+
+	public:
+		imports VREF<PureHolder> from (VREF<HEAP> that) {
+			return unsafe_deref (unsafe_cast[TYPEAS<TEMP<PureHolder>>::id] (unsafe_deptr (that))) ;
+		}
+
+		void enter () {
+			mBase.mUsageSize.store (0) ;
+		}
+
+		void leave () {
+			noop () ;
+		}
+	} ;
+
 	class ImplHolder implement Holder {
 	protected:
+		Scope<PureHolder> mHandle ;
 		FLAG mPointer ;
 
 	public:
 		implicit ImplHolder () = default ;
 
 		void initialize () override {
-			static auto mInstance = Box<HEAP>::make () ;
-			mInstance->mUsageSize.store (0) ;
-			mPointer = address (mInstance.self) ;
-		}
-
-		LENGTH align () const override {
-			return ALIGN_OF<std::max_align_t>::value ;
+			auto &&tmp = memorize ([&] () {
+				return Box<HEAP>::make () ;
+			}) ;
+			mPointer = address (tmp.self) ;
+			mHandle = Scope<PureHolder> (PureHolder::from (fake)) ;
 		}
 
 		LENGTH usage_size () const override {
 			LENGTH ret = fake.mUsageSize.load () ;
 			return move (ret) ;
+		}
+
+		LENGTH usage_align () const override {
+			return ALIGN_OF<std::max_align_t>::value ;
 		}
 
 		FLAG alloc (CREF<LENGTH> size_) const override {
@@ -106,7 +127,7 @@ trait HEAPPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			operator delete (r1x ,std::nothrow) ;
 		}
 
-		VREF<HEAP> m_fake () const leftvalue {
+		VREF<HEAP> fake_m () const leftvalue {
 			return unsafe_deref (unsafe_cast[TYPEAS<TEMP<HEAP>>::id] (unsafe_pointer (mPointer))) ;
 		}
 
@@ -129,7 +150,7 @@ exports auto HEAPPROC_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () -> Box<Fa
 template <class DEPEND>
 trait STATICHEAPPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	using Holder = typename STATICHEAPPROC_HELP<DEPEND ,ALWAYS>::Holder ;
-	using CHUNK_PAGE_SIZE = ENUMAS<VAL ,ENUMID<65536>> ;
+	using PAGE_SIZE = ENUMAS<VAL ,ENUMID<65536>> ;
 	using CHUNK_SIZE = ENUMAS<VAL ,ENUMID<1024>> ;
 
 	struct NODE {
@@ -144,22 +165,44 @@ trait STATICHEAPPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		ARR<NODE ,CHUNK_SIZE> mChunk ;
 	} ;
 
+	class PureHolder extend Proxy {
+	private:
+		HEAP mBase ;
+
+	public:
+		imports VREF<PureHolder> from (VREF<HEAP> that) {
+			return unsafe_deref (unsafe_cast[TYPEAS<TEMP<PureHolder>>::id] (unsafe_deptr (that))) ;
+		}
+
+		void enter () {
+			for (auto &&i : iter (0 ,CHUNK_SIZE::value))
+				mBase.mChunk[i].mOrigin = ZERO ;
+		}
+
+		void leave () {
+			for (auto &&i : iter (0 ,CHUNK_SIZE::value)) {
+				if (mBase.mChunk[i].mOrigin == ZERO)
+					continue ;
+				HeapProc::instance ().free (mBase.mChunk[i].mOrigin) ;
+				mBase.mChunk[i].mOrigin = ZERO ;
+			}
+		}
+	} ;
+
 	class ImplHolder implement Holder {
 	protected:
+		Scope<PureHolder> mHandle ;
 		FLAG mPointer ;
 
 	public:
 		implicit ImplHolder () = default ;
 
 		void initialize () override {
-			static auto mInstance = Box<HEAP>::make () ;
-			for (auto &&i : iter (0 ,CHUNK_SIZE::value))
-				mInstance->mChunk[i].mOrigin = ZERO ;
-			mPointer = address (mInstance.self) ;
-		}
-
-		LENGTH align () const override {
-			return LENGTH (1) ;
+			auto &&tmp = memorize ([&] () {
+				return Box<HEAP>::make () ;
+			}) ;
+			mPointer = address (tmp.self) ;
+			mHandle = Scope<PureHolder> (PureHolder::from (fake)) ;
 		}
 
 		LENGTH usage_size () const override {
@@ -173,6 +216,10 @@ trait STATICHEAPPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			return move (ret) ;
 		}
 
+		LENGTH usage_align () const override {
+			return LENGTH (1) ;
+		}
+
 		FLAG alloc (CREF<LENGTH> size_) const override {
 			std::lock_guard<std::mutex> anonymous (fake.mMutex) ;
 			INDEX ix = find_alloc_chunk (size_) ;
@@ -180,9 +227,9 @@ trait STATICHEAPPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			if ifswitch (TRUE) {
 				if (fake.mChunk[ix].mOrigin != ZERO)
 					discard ;
-				fake.mChunk[ix].mOrigin = HeapProc::instance ().alloc (CHUNK_PAGE_SIZE::value) ;
+				fake.mChunk[ix].mOrigin = HeapProc::instance ().alloc (PAGE_SIZE::value) ;
 				fake.mChunk[ix].mCounter = 0 ;
-				fake.mChunk[ix].mSize = CHUNK_PAGE_SIZE::value ;
+				fake.mChunk[ix].mSize = PAGE_SIZE::value ;
 				fake.mChunk[ix].mRest = fake.mChunk[ix].mSize ;
 			}
 			const auto r1x = fake.mChunk[ix].mSize - fake.mChunk[ix].mRest ;
@@ -231,7 +278,7 @@ trait STATICHEAPPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			return NONE ;
 		}
 
-		VREF<HEAP> m_fake () const leftvalue {
+		VREF<HEAP> fake_m () const leftvalue {
 			return unsafe_deref (unsafe_cast[TYPEAS<TEMP<HEAP>>::id] (unsafe_pointer (mPointer))) ;
 		}
 	} ;

@@ -695,7 +695,7 @@ struct Interface {
 	virtual ~Interface () = default ;
 	implicit Interface (CREF<Interface>) = delete ;
 	inline VREF<Interface> operator= (CREF<Interface>) = delete ;
-	//@warn: fuck clang5.0
+	//@fatal: fuck clang5.0
 	implicit Interface (Interface &&) = default ;
 	inline VREF<Interface> operator= (Interface &&) = default ;
 } ;
@@ -705,14 +705,14 @@ trait PLACEHOLDER_HELP ;
 
 template <class RANK>
 trait PLACEHOLDER_HELP<RANK ,REQUIRE<ENUM_EQ_ZERO<RANK>>> {
-	class PlaceHolder {} ;
+	struct PlaceHolder {} ;
 } ;
 
 template <class RANK>
 trait PLACEHOLDER_HELP<RANK ,REQUIRE<ENUM_GT_ZERO<RANK>>> {
 	using SUPER = typename PLACEHOLDER_HELP<ENUM_DEC<RANK> ,ALWAYS>::PlaceHolder ;
 
-	class PlaceHolder implement SUPER {} ;
+	struct PlaceHolder implement SUPER {} ;
 } ;
 
 template <class RANK>
@@ -1020,11 +1020,13 @@ trait ARR_HELP ;
 
 template <class ITEM ,class SIZE>
 trait ARR_HELP<ITEM ,SIZE ,REQUIRE<ENUM_EQ_ZERO<SIZE>>> {
+	require (ENUM_NOT<IS_ARRAY<ITEM>>) ;
 	using RET = DEF<ITEM[]> ;
 } ;
 
 template <class ITEM ,class SIZE>
 trait ARR_HELP<ITEM ,SIZE ,REQUIRE<ENUM_GT_ZERO<SIZE>>> {
+	require (ENUM_NOT<IS_ARRAY<ITEM>>) ;
 	static constexpr auto value = VAL (SIZE::value) ;
 
 	using RET = DEF<ITEM[value]> ;
@@ -1154,6 +1156,28 @@ using IS_EXTEND = typename IS_EXTEND_HELP<FROM ,TO ,ALWAYS>::RET ;
 
 template <class UNIT1>
 using IS_PLACEHOLDER = IS_EXTEND<UNIT1 ,DEF<typeof (PH0)>> ;
+
+template <class...>
+trait TOGETHER_HELP ;
+
+template <class PARAMS>
+trait TOGETHER_HELP<PARAMS ,REQUIRE<ENUM_EQ_IDEN<COUNT_OF<PARAMS>>>> {
+	using R1X = TYPE_FIRST_ONE<PARAMS> ;
+
+	struct Together implement R1X {} ;
+} ;
+
+template <class PARAMS>
+trait TOGETHER_HELP<PARAMS ,REQUIRE<ENUM_GT_IDEN<COUNT_OF<PARAMS>>>> {
+	using R1X = TYPE_FIRST_ONE<PARAMS> ;
+	using R2X = TYPE_FIRST_REST<PARAMS> ;
+	using SUPER = typename TOGETHER_HELP<R2X ,ALWAYS>::Together ;
+
+	struct Together implement R1X ,SUPER {} ;
+} ;
+
+template <class...PARAMS>
+using Together = typename TOGETHER_HELP<TYPEAS<PARAMS...> ,ALWAYS>::Together ;
 
 template <class...>
 trait IS_CONVERTIBLE_HELP ;

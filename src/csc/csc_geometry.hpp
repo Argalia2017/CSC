@@ -33,8 +33,9 @@ trait VECTOR_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 	public:
 		implicit Vector () = default ;
 
-		implicit Vector (RREF<BoxBuffer<ITEM ,SIZE>> that) {
-			mVector = move (that) ;
+		template <class ARG1 ,class = REQUIRE<IS_SAME<ARG1 ,ARR<ITEM ,SIZE>>>>
+		implicit Vector (CREF<ARG1> that) {
+			mVector = that ;
 		}
 
 		explicit Vector (CREF<ARRAY3<ITEM>> xyz ,CREF<ITEM> w) {
@@ -356,8 +357,9 @@ trait QUATERNION_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 	public:
 		implicit Quaternion () = default ;
 
-		implicit Quaternion (RREF<BoxBuffer<ITEM ,SIZE>> that) {
-			mQuaternion = move (that) ;
+		template <class ARG1 ,class = REQUIRE<IS_SAME<ARG1 ,ARR<ITEM ,SIZE>>>>
+		implicit Quaternion (CREF<ARG1> that) {
+			mQuaternion = that ;
 			update_normalize () ;
 		}
 
@@ -393,8 +395,8 @@ trait QUATERNION_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 				return move (ret) ;
 			}) ;
 			const auto r4x = MathProc::inverse (ITEM (2) * MathProc::sqrt (r2x[r3x])) ;
-			auto eax = TRUE ;
-			if ifswitch (eax) {
+			auto rxx = TRUE ;
+			if ifswitch (rxx) {
 				if ifnot (r3x == 0)
 					discard ;
 				mQuaternion[0] = (r1x.at (1 ,2) - r1x.at (2 ,1)) * r4x ;
@@ -402,7 +404,7 @@ trait QUATERNION_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 				mQuaternion[2] = (r1x.at (0 ,1) - r1x.at (1 ,0)) * r4x ;
 				mQuaternion[3] = r2x[0] * r4x ;
 			}
-			if ifswitch (eax) {
+			if ifswitch (rxx) {
 				if ifnot (r3x == 1)
 					discard ;
 				mQuaternion[0] = r2x[1] * r4x ;
@@ -410,7 +412,7 @@ trait QUATERNION_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 				mQuaternion[2] = (r1x.at (2 ,0) + r1x.at (0 ,2)) * r4x ;
 				mQuaternion[3] = (r1x.at (1 ,2) - r1x.at (2 ,1)) * r4x ;
 			}
-			if ifswitch (eax) {
+			if ifswitch (rxx) {
 				if ifnot (r3x == 2)
 					discard ;
 				mQuaternion[0] = (r1x.at (0 ,1) + r1x.at (1 ,0)) * r4x ;
@@ -418,7 +420,7 @@ trait QUATERNION_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 				mQuaternion[2] = (r1x.at (1 ,2) + r1x.at (2 ,1)) * r4x ;
 				mQuaternion[3] = (r1x.at (2 ,0) - r1x.at (0 ,2)) * r4x ;
 			}
-			if ifswitch (eax) {
+			if ifswitch (rxx) {
 				if ifnot (r3x == 3)
 					discard ;
 				mQuaternion[0] = (r1x.at (2 ,0) + r1x.at (0 ,2)) * r4x ;
@@ -532,8 +534,9 @@ trait MATRIX_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 	public:
 		implicit Matrix () = default ;
 
-		implicit Matrix (RREF<BoxBuffer<ITEM ,SIZE>> that) {
-			mMatrix = move (that) ;
+		template <class ARG1 ,class = REQUIRE<IS_SAME<ARG1 ,ARR<ITEM ,SIZE>>>>
+		implicit Matrix (CREF<ARG1> that) {
+			mMatrix = that ;
 		}
 
 		explicit Matrix (CREF<Vector<ITEM>> vx ,CREF<Vector<ITEM>> vy ,CREF<Vector<ITEM>> vz ,CREF<Vector<ITEM>> vw) {
@@ -1195,9 +1198,9 @@ trait MATRIX_SINGULAR_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 	using Vector = typename VECTOR_HELP<ITEM ,ALWAYS>::Vector ;
 	using Matrix = typename MATRIX_HELP<ITEM ,ALWAYS>::Matrix ;
 
-	using SINGULAR_MAX_ITERATION = ENUMAS<VAL ,ENUMID<1024>> ;
+	using MAX_ITERATION = ENUMAS<VAL ,ENUMID<1024>> ;
 
-	class Singular extend Matrix {
+	class Singular {
 	protected:
 		Matrix mA ;
 		Matrix mB ;
@@ -1330,7 +1333,7 @@ trait MATRIX_SINGULAR_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 		void update_QR () {
 			INDEX jx = 0 ;
 			while (TRUE) {
-				if (jx >= SINGULAR_MAX_ITERATION::value)
+				if (jx >= MAX_ITERATION::value)
 					break ;
 				jx++ ;
 				const auto r1x = find_abs_rot (mQ) ;

@@ -91,14 +91,16 @@ trait RUNTIMEPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				rax.clear () ;
 			}
 			if ifswitch (TRUE) {
-				const auto r2x = rax.length () ;
-				if (r2x < 1)
+				INDEX ix = rax.length () - 1 ;
+				if (ix < 0)
 					discard ;
-				if (rax[r2x - 1] == STRA ('\\'))
+				if (rax[ix] == STRA ('\\'))
 					discard ;
-				if (rax[r2x - 1] == STRA ('/'))
+				if (rax[ix] == STRA ('/'))
 					discard ;
-				rax[r2x] = STRA ('/') ;
+				rax[ix] = STRA ('/') ;
+				ix++ ;
+				rax[ix] = 0 ;
 			}
 			return string_cvt[TYPEAS<TYPEAS<STR ,STRA>>::id] (rax) ;
 		}
@@ -196,7 +198,7 @@ trait PROCESS_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 
 		DATA process_time (CREF<String<STRU8>> info ,CREF<FLAG> uid) const {
 			auto rax = TextReader<STRU8> (info.raw ()) ;
-			auto rbx = String<STRU8>::make () ;
+			auto rbx = String<STRU8> () ;
 			rax >> TextReader<STRU8>::GAP ;
 			rax >> rbx ;
 			const auto r1x = string_parse[TYPEAS<TYPEAS<VAL64 ,STRU8>>::id] (rbx) ;
@@ -325,7 +327,6 @@ trait MODULE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			const auto r1x = FLAG (dlerror ()) ;
 			assume (r1x != ZERO) ;
 			auto &&tmp = keep[TYPEAS<CREF<STRA>>::id] (unsafe_deref (unsafe_cast[TYPEAS<TEMP<STRA>>::id] (unsafe_pointer (r1x)))) ;
-			mErrorBuffer.clear () ;
 			BufferProc::buf_slice (mErrorBuffer ,unsafe_array (tmp) ,mErrorBuffer.size ()) ;
 		}
 	} ;

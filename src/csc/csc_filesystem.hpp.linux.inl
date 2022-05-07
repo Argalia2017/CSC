@@ -22,8 +22,8 @@ namespace CSC {
 template <class DEPEND>
 trait FILE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	using Holder = typename FILE_HELP<DEPEND ,ALWAYS>::Holder ;
+	using RETRY_TIMES = typename FILE_HELP<DEPEND ,ALWAYS>::RETRY_TIMES ;
 
-	using FILE_RETRY_TIMES = RANK2 ;
 	using HFILE = csc_int32_t ;
 	using STAT_INFO = DEF<struct stat> ;
 
@@ -36,7 +36,16 @@ trait FILE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 
 		void initialize (CREF<String<STR>> file_) override {
 			mFile = string_cvt[TYPEAS<TYPEAS<STRA ,STR>>::id] (file_) ;
-			assume (ifnot (mFile.empty ())) ;
+			if ifswitch (TRUE) {
+				const auto r1x = mFile.length () ;
+				assume (r1x > 0) ;
+				INDEX ix = r1x - 1 ;
+				if (mFile[ix] != STRA ('\\'))
+					if (mFile[ix] != STRA ('/'))
+						discard ;
+				assume (mFile[ix] != STRA ('\\')) ;
+				assume (mFile[ix] != STRA ('\\')) ;
+			}
 		}
 
 		Auto native () const leftvalue override {
@@ -55,7 +64,7 @@ trait FILE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			const auto r3x = LENGTH (r2x) ;
 			VarBuffer<BYTE> ret = VarBuffer<BYTE> (r3x) ;
 			auto rax = r3x ;
-			for (auto &&i : iter (0 ,FILE_RETRY_TIMES::value)) {
+			for (auto &&i : iter (0 ,RETRY_TIMES::value)) {
 				noop (i) ;
 				if (rax == 0)
 					break ;
@@ -79,7 +88,7 @@ trait FILE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			assume (r2x <= VAL32_MAX) ;
 			const auto r3x = MathProc::min_of (LENGTH (r2x) ,item.size ()) ;
 			auto rax = r3x ;
-			for (auto &&i : iter (0 ,FILE_RETRY_TIMES::value)) {
+			for (auto &&i : iter (0 ,RETRY_TIMES::value)) {
 				noop (i) ;
 				if (rax == 0)
 					break ;
@@ -102,7 +111,7 @@ trait FILE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			}) ;
 			const auto r4x = item.size () ;
 			auto rax = r4x ;
-			for (auto &&i : iter (0 ,FILE_RETRY_TIMES::value)) {
+			for (auto &&i : iter (0 ,RETRY_TIMES::value)) {
 				noop (i) ;
 				if (rax == 0)
 					break ;
@@ -272,6 +281,7 @@ template <class DEPEND>
 trait DIRECTORY_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	using Holder = typename DIRECTORY_HELP<DEPEND ,ALWAYS>::Holder ;
 	using CHILD = typename DIRECTORY_HELP<DEPEND ,ALWAYS>::CHILD ;
+	using CHILD_MAX_SIZE = typename DIRECTORY_HELP<DEPEND ,ALWAYS>::CHILD_MAX_SIZE ;
 
 	using HDIRE = DEF<DIR *> ;
 	using STAT_INFO = DEF<struct stat> ;
@@ -288,10 +298,18 @@ trait DIRECTORY_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 
 		void initialize (CREF<String<STR>> dire_) override {
 			mDire = move (dire_) ;
-			mDireA = string_cvt[TYPEAS<TYPEAS<STRA ,STR>>::id] (mDire) ;
-			assume (ifnot (mDire.empty ())) ;
 			mPath = Cell<CRef<ArrayList<String<STR>>>>::make () ;
 			mChild = Cell<CRef<ArrayList<CHILD>>>::make () ;
+			if ifswitch (TRUE) {
+				const auto r1x = mDire.length () ;
+				assume (r1x > 0) ;
+				INDEX ix = r1x - 1 ;
+				if (mDire[ix] != STR ('\\'))
+					if (mDire[ix] != STR ('/'))
+						discard ;
+				mDire[ix] = 0 ;
+			}
+			mDireA = string_cvt[TYPEAS<TYPEAS<STRA ,STR>>::id] (mDire) ;
 		}
 
 		Auto native () const leftvalue override {
@@ -373,8 +391,8 @@ trait DIRECTORY_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		BOOL lock () const override {
 			const auto r1x = String<STR>::make (mDire ,STR ('\\') ,slice (".lockdirectory")) ;
 			const auto r2x = CurrentProcess () ;
-			auto eax = TRUE ;
-			if ifswitch (eax) {
+			auto rxx = TRUE ;
+			if ifswitch (rxx) {
 				const auto r3x = File (r1x) ;
 				if ifnot (r3x.available ())
 					discard ;
@@ -385,7 +403,7 @@ trait DIRECTORY_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 					discard ;
 				return r5x.snapshot () == r2x.snapshot () ;
 			}
-			if ifswitch (eax) {
+			if ifswitch (rxx) {
 				const auto r7x = r2x.snapshot () ;
 				auto &&tmp = lock_handle (r1x ,r7x) ;
 				return tmp->available () ;
@@ -432,28 +450,51 @@ trait DIRECTORY_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		void erase () const override {
-			rmdir ((&mDireA[0])) ;
-			if ifnot (available ())
-				return ;
-			unlink ((&mDireA[0])) ;
+			if ifswitch (TRUE) {
+				rmdir ((&mDireA[0])) ;
+				if ifnot (available ())
+					discard ;
+				unlink ((&mDireA[0])) ;
+			}
+			fresh () ;
 		}
 
 		void clear () const override {
-			update_child () ;
-			const auto r1x = mChild.fetch () ;
-			for (auto &&i : r1x.self) {
-				if ifnot (i.mIsFile)
-					continue ;
-				const auto r2x = File (i.mFile) ;
-				r2x.erase () ;
+			auto rax = Deque<String<STR>> (CHILD_MAX_SIZE::value) ;
+			auto rbx = ImplHolder () ;
+			rbx.mPath = Cell<CRef<ArrayList<String<STR>>>>::make () ;
+			rbx.mChild = Cell<CRef<ArrayList<CHILD>>>::make () ;
+			rax.add (mDire) ;
+			while (TRUE) {
+				if (rax.empty ())
+					break ;
+				rax.take (rbx.mDire) ;
+				rbx.fresh () ;
+				rbx.update_child () ;
+				const auto r1x = rbx.mChild.fetch () ;
+				for (auto &&i : r1x.self) {
+					if ifnot (i.mIsFile)
+						continue ;
+					const auto r2x = File (i.mFile) ;
+					r2x.erase () ;
+				}
+				for (auto &&i : r1x.self) {
+					if ifnot (i.mIsDire)
+						continue ;
+					if ifnot (i.mIsLink)
+						continue ;
+					const auto r3x = Directory (i.mFile) ;
+					r3x.erase () ;
+				}
+				for (auto &&i : r1x.self) {
+					if ifnot (i.mIsDire)
+						continue ;
+					if (i.mIsLink)
+						continue ;
+					rax.add (i.mFile) ;
+				}
 			}
-			for (auto &&i : r1x.self) {
-				if ifnot (i.mIsDire)
-					continue ;
-				const auto r3x = Directory (i.mFile) ;
-				r3x.clear () ;
-				r3x.erase () ;
-			}
+			fresh () ;
 		}
 
 	private:
@@ -471,8 +512,8 @@ trait DIRECTORY_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 						discard ;
 				const auto r2x = RuntimeProc::working_path () ;
 				auto rbx = r1x (r2x) ;
-				for (auto &&i : rax.iter ())
-					rbx.add (move (rax[i])) ;
+				for (auto &&i : rax)
+					rbx.add (move (i)) ;
 				rax = move (rbx) ;
 				rax.remap () ;
 			}
@@ -482,15 +523,15 @@ trait DIRECTORY_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 					for (auto &&i : rax.iter ()) {
 						if (rax[i] == slice ("."))
 							continue ;
-						auto eax = TRUE ;
-						if ifswitch (eax) {
+						auto rxx = TRUE ;
+						if ifswitch (rxx) {
 							if (ret.empty ())
 								discard ;
 							if ifnot (rax[i] == slice (".."))
 								discard ;
 							ret.pop () ;
 						}
-						if ifswitch (eax) {
+						if ifswitch (rxx) {
 							ret.add (i) ;
 						}
 					}
@@ -515,7 +556,7 @@ trait DIRECTORY_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		void update_child () const {
 			if (mChild.fetch () != NULL)
 				return ;
-			auto rax = ArrayList<CHILD> () ;
+			auto rax = ArrayList<CHILD> (CHILD_MAX_SIZE::value) ;
 			auto rbx = String<STR>::make () ;
 			rbx += mDire ;
 			rbx += slice ("\\") ;
@@ -533,7 +574,6 @@ trait DIRECTORY_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				if (r3x == NULL)
 					break ;
 				if ifswitch (TRUE) {
-					rdx.clear () ;
 					BufferProc::buf_slice (rdx ,r3x->d_name ,rdx.size ()) ;
 					if (rdx == slice ("."))
 						discard ;
@@ -542,6 +582,7 @@ trait DIRECTORY_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 					rbx += rdx ;
 					const auto r4x = BitProc::get_bit (CHAR (r3x->d_type) ,DT_DIR) ;
 					const auto r5x = BitProc::get_bit (CHAR (r3x->d_type) ,DT_LNK) ;
+					assume (rax.length () < rax.size ()) ;
 					INDEX ix = rax.insert () ;
 					rax[ix].mFile = rbx ;
 					rax[ix].mIsFile = ifnot (r4x) ;
@@ -695,7 +736,7 @@ exports auto STREAMFILE_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () -> VRef
 template <class DEPEND>
 trait BUFFERFILE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	using Holder = typename BUFFERFILE_HOLDER_HELP<DEPEND ,ALWAYS>::Holder ;
-	using CHUNK_PAGE_SIZE = typename BUFFERFILE_HOLDER_HELP<DEPEND ,ALWAYS>::CHUNK_PAGE_SIZE ;
+	using PAGE_SIZE = typename BUFFERFILE_HOLDER_HELP<DEPEND ,ALWAYS>::PAGE_SIZE ;
 	using HEADER_SIZE = typename BUFFERFILE_HOLDER_HELP<DEPEND ,ALWAYS>::HEADER_SIZE ;
 
 	using HFILE = csc_int32_t ;
@@ -856,7 +897,7 @@ trait BUFFERFILE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			assume (mHeader->mItemCount >= 0) ;
 			rax >> ByteReader::GAP ;
 			rax >> mHeader->mChunkPageSize ;
-			assume (mHeader->mChunkPageSize == CHUNK_PAGE_SIZE::value) ;
+			assume (mHeader->mChunkPageSize == PAGE_SIZE::value) ;
 			rax >> ByteReader::GAP ;
 			rax >> mHeader->mChunkItemSize ;
 			const auto r3x = mHeader->mChunkPageSize / mHeader->mItemSize ;
@@ -886,7 +927,7 @@ trait BUFFERFILE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				mHeader->mItemSize = mItemClazz.type_size () ;
 				mHeader->mItemAlign = mItemClazz.type_align () ;
 				mHeader->mItemCount = 0 ;
-				mHeader->mChunkPageSize = CHUNK_PAGE_SIZE::value ;
+				mHeader->mChunkPageSize = PAGE_SIZE::value ;
 				mHeader->mChunkItemSize = mHeader->mChunkPageSize / mHeader->mItemSize ;
 				mHeader->mChunkSize = 0 ;
 			}
@@ -1005,13 +1046,11 @@ trait BUFFERFILE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				mCacheList[ret].mBuffer = UniqueRef<Tuple<HANDLE ,LENGTH>> ([&] (VREF<Tuple<HANDLE ,LENGTH>> me) {
 					const auto r2x = mmap64 (NULL ,size_ ,mFileMapFlag ,MAP_SHARED ,mPipe ,offset) ;
 					assume (r2x != MAP_FAILED) ;
-					me.pick (TYPEAS<RANK0>::id) = r2x ;
-					me.pick (TYPEAS<RANK1>::id) = size_ ;
+					me.mP1st = r2x ;
+					me.mP2nd = size_ ;
 				} ,[] (VREF<Tuple<HANDLE ,LENGTH>> me) {
-					const auto r3x = me.pick (TYPEAS<RANK0>::id) ;
-					const auto r4x = me.pick (TYPEAS<RANK1>::id) ;
-					msync (r3x ,r4x ,MS_SYNC) ;
-					munmap (r3x ,r4x) ;
+					msync (me.mP1st ,me.mP2nd ,MS_SYNC) ;
+					munmap (me.mP1st ,me.mP2nd) ;
 				}) ; ;
 			}
 			mCacheList[ret].mCacheTime = mCacheTimer ;

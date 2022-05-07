@@ -18,13 +18,9 @@
     </Expand>
   </Type>
 
-  <Type Name="CSC::BOX_HELP&lt;*&gt;::Box" Priority="MediumLow">
+  <Type Name="CSC::BOX_HELP&lt;*&gt;::HEAP">
     <Expand>
-      <Item Name="[size]">SIZE::value</Item>
-      <ArrayItems>
-        <Size>SIZE::value</Size>
-        <ValuePointer>(ITEM*)&amp;mArray</ValuePointer>
-      </ArrayItems>
+      <ExpandedItem>mArray</ExpandedItem>
     </Expand>
   </Type>
   
@@ -57,7 +53,7 @@
       <Item Name="[size]">mSize</Item>
       <ArrayItems>
         <Size>mSize</Size>
-        <ValuePointer>(ITEM*)((char*)(this)+sizeof(RealHolder)-sizeof(ITEM))</ValuePointer>
+        <ValuePointer>&amp;((RealHolder*)this)->mArray</ValuePointer>
       </ArrayItems>
     </Expand>
   </Type>
@@ -85,7 +81,7 @@
       <Item Name="[size]">mSize</Item>
       <ArrayItems>
         <Size>mSize</Size>
-        <ValuePointer>(ITEM*)((char*)(this)+sizeof(RealHolder)-sizeof(ITEM))</ValuePointer>
+        <ValuePointer>&amp;((RealHolder*)this)->mArray</ValuePointer>
       </ArrayItems>
     </Expand>
   </Type>
@@ -102,29 +98,29 @@
     </Expand>
   </Type>
 
-  <Type Name="CSC::BOX_HELP&lt;CSC::SLICE_IMPLHOLDER_HELP&lt;char,*&gt;::NODE [*],CSC::ALWAYS&gt;::ITEM">
+  <Type Name="CSC::SLICE_IMPLHOLDER_HELP&lt;char,*&gt;::NODE">
     <DisplayString>{{ {mPointer,s} }}</DisplayString>
     <StringView>mPointer,s</StringView>
   </Type>
 
-  <Type Name="CSC::BOX_HELP&lt;CSC::SLICE_IMPLHOLDER_HELP&lt;wchar_t,*&gt;::NODE [*],CSC::ALWAYS&gt;::ITEM">
+  <Type Name="CSC::SLICE_IMPLHOLDER_HELP&lt;wchar_t,*&gt;::NODE">
     <DisplayString>{{ {mPointer,su} }}</DisplayString>
     <StringView Condition="mAlign==1">mPointer,s8</StringView>
     <StringView Condition="mAlign==2">mPointer,su</StringView>
   </Type>
 
-  <Type Name="CSC::BOX_HELP&lt;CSC::SLICE_IMPLHOLDER_HELP&lt;char8_t,*&gt;::NODE [*],CSC::ALWAYS&gt;::ITEM">
+  <Type Name="CSC::SLICE_IMPLHOLDER_HELP&lt;char8_t,*&gt;::NODE">
     <DisplayString>{{ {mPointer,s8} }}</DisplayString>
     <StringView>mPointer,s8</StringView>
   </Type>
 
-  <Type Name="CSC::BOX_HELP&lt;CSC::SLICE_IMPLHOLDER_HELP&lt;char16_t,*&gt;::NODE [*],CSC::ALWAYS&gt;::ITEM">
+  <Type Name="CSC::SLICE_IMPLHOLDER_HELP&lt;char16_t,*&gt;::NODE">
     <DisplayString>{{ {mPointer,su} }}</DisplayString>
     <StringView Condition="mAlign==1">mPointer,s8</StringView>
     <StringView Condition="mAlign==2">mPointer,su</StringView>
   </Type>
 
-  <Type Name="CSC::BOX_HELP&lt;CSC::SLICE_IMPLHOLDER_HELP&lt;char32_t,*&gt;::NODE [*],CSC::ALWAYS&gt;::ITEM">
+  <Type Name="CSC::SLICE_IMPLHOLDER_HELP&lt;char32_t,*&gt;::NODE">
     <DisplayString>{{ {mPointer,s32} }}</DisplayString>
     <StringView Condition="mAlign==1">mPointer,s8</StringView>
     <StringView Condition="mAlign==4">mPointer,s32</StringView>
@@ -233,11 +229,11 @@
       <Item Name="[size]">$T2::value</Item>
       <ArrayItems Condition="$T2::value&gt;=10">
         <Size>10</Size>
-        <ValuePointer>($T1*)&amp;mBuffer.mArray</ValuePointer>
+        <ValuePointer>($T1*)&amp;mBuffer.mValue</ValuePointer>
       </ArrayItems>
       <ArrayItems Condition="$T2::value&lt;10">
         <Size>$T2::value</Size>
-        <ValuePointer>($T1*)&amp;mBuffer.mArray</ValuePointer>
+        <ValuePointer>($T1*)&amp;mBuffer.mValue</ValuePointer>
       </ArrayItems>
       <Item Name="[+]">mBuffer</Item>
     </Expand>
@@ -289,7 +285,7 @@
 
   <Type Name="CSC::STRING_HELP&lt;char,*&gt;::String">
     <DisplayString>{{ {mString.mBuffer.mPointer,s} }}</DisplayString>
-    <StringView>(mString.mBuffer.mPointer,s</StringView>
+    <StringView>mString.mBuffer.mPointer,s</StringView>
     <Expand>
       <ExpandedItem>&amp;mString</ExpandedItem>
     </Expand>

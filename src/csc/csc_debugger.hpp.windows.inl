@@ -99,13 +99,13 @@ trait CONSOLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		void enable_option (CREF<FLAG> option) const override {
-			auto eax = TRUE ;
-			if ifswitch (eax) {
+			auto rxx = TRUE ;
+			if ifswitch (rxx) {
 				if (option != OPTION_DEFAULT::value)
 					discard ;
 				mHeap->mOption.clear () ;
 			}
-			if ifswitch (eax) {
+			if ifswitch (rxx) {
 				mHeap->mOption.add (option) ;
 			}
 		}
@@ -236,15 +236,15 @@ trait CONSOLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		void link (CREF<String<STR>> dire_) const override {
-			auto eax = TRUE ;
-			if ifswitch (eax) {
+			auto rxx = TRUE ;
+			if ifswitch (rxx) {
 				if (dire_.empty ())
 					discard ;
 				const auto r1x = Directory (dire_).absolute () ;
 				mHeap->mLogFile = String<STR>::make (r1x ,STR ('\\') ,slice ("console.log")) ;
 				mHeap->mOldLogFile = String<STR>::make (r1x ,STR ('\\') ,slice ("console.old.log")) ;
 			}
-			if ifswitch (eax) {
+			if ifswitch (rxx) {
 				mHeap->mLogFile = String<STR> () ;
 				mHeap->mOldLogFile = String<STR> () ;
 			}
@@ -254,12 +254,12 @@ trait CONSOLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			if (mHeap->mLogFile.empty ())
 				return ;
 			write_log_buffer (tag) ;
-			const auto r1x = RegBuffer<BYTE>::from (unsafe_array (mHeap->mLogBuffer[0]) ,0 ,mHeap->mLogWriter.length () - 1) ;
+			auto rax = RegBuffer<BYTE>::from (unsafe_array (mHeap->mLogBuffer[0]) ,0 ,mHeap->mLogWriter.length () - 1) ;
 			try_invoke ([&] () {
 				if (mHeap->mLogStreamFile == NULL)
 					return ;
-				const auto r2x = mHeap->mLogStreamFile->write (r1x) ;
-				assume (r2x == r1x->size ()) ;
+				const auto r1x = mHeap->mLogStreamFile->write (rax) ;
+				assume (r1x == rax->size ()) ;
 			} ,[&] () {
 				mHeap->mLogStreamFile = NULL ;
 			}) ;
@@ -267,8 +267,8 @@ trait CONSOLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				if (mHeap->mLogStreamFile != NULL)
 					return ;
 				attach_log_file () ;
-				const auto r3x = mHeap->mLogStreamFile->write (r1x) ;
-				assume (r3x == r1x->size ()) ;
+				const auto r2x = mHeap->mLogStreamFile->write (rax) ;
+				assume (r2x == rax->size ()) ;
 			} ,[&] () {
 				mHeap->mLogStreamFile = NULL ;
 			}) ;
@@ -284,11 +284,11 @@ trait CONSOLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			mHeap->mLogWriter << slice ("[") ;
 			const auto r1x = NowTimePoint () ;
 			const auto r2x = r1x.calendar () ;
-			mHeap->mLogWriter << AlignedString<STRU8> (r2x.mHour ,2) ;
+			mHeap->mLogWriter << AlignedString (r2x.mHour ,2) ;
 			mHeap->mLogWriter << slice (":") ;
-			mHeap->mLogWriter << AlignedString<STRU8> (r2x.mMinute ,2) ;
+			mHeap->mLogWriter << AlignedString (r2x.mMinute ,2) ;
 			mHeap->mLogWriter << slice (":") ;
-			mHeap->mLogWriter << AlignedString<STRU8> (r2x.mSecond ,2) ;
+			mHeap->mLogWriter << AlignedString (r2x.mSecond ,2) ;
 			mHeap->mLogWriter << slice ("][") ;
 			mHeap->mLogWriter << tag ;
 			mHeap->mLogWriter << slice ("] : ") ;
@@ -307,9 +307,9 @@ trait CONSOLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			const auto r3x = mHeap->mLogStreamFile->link (TRUE ,TRUE) ;
 			assume (r3x) ;
 			const auto r4x = String<STRU8>::make (TextWriter<STRU8>::BOM) ;
-			const auto r5x = RegBuffer<BYTE>::from (unsafe_array (r4x[0]) ,0 ,r4x.length ()) ;
-			const auto r6x = mHeap->mLogStreamFile->write (r5x) ;
-			assume (r6x == r5x->size ()) ;
+			auto rax = RegBuffer<BYTE>::from (unsafe_array (r4x[0]) ,0 ,r4x.length ()) ;
+			const auto r5x = mHeap->mLogStreamFile->write (rax) ;
+			assume (r5x == rax->size ()) ;
 		}
 
 		void open () const override {
@@ -507,8 +507,8 @@ trait REPORTER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 
 		String<STR> symbol_from_address (CREF<FLAG> addr_) const override {
 			String<STR> ret ;
-			auto eax = TRUE ;
-			if ifswitch (eax) {
+			auto rxx = TRUE ;
+			if ifswitch (rxx) {
 				attach_symbol () ;
 				if ifnot (mHeap->mSymbolFromAddress.exist ())
 					discard ;
@@ -519,11 +519,10 @@ trait REPORTER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				if ifnot (r1x)
 					discard ;
 				const auto r2x = string_build[TYPEAS<TYPEAS<STR ,DATA>>::id] (DATA (addr_)) ;
-				mHeap->mNameBuffer.clear () ;
 				BufferProc::buf_slice (mHeap->mNameBuffer ,rax->mFirst.Name ,mHeap->mNameBuffer.size ()) ;
 				ret = String<STR>::make (slice ("[") ,r2x ,slice ("] : ") ,mHeap->mNameBuffer) ;
 			}
-			if ifswitch (eax) {
+			if ifswitch (rxx) {
 				const auto r3x = string_build[TYPEAS<TYPEAS<STR ,DATA>>::id] (DATA (addr_)) ;
 				ret = String<STR>::make (slice ("[") ,r3x ,slice ("] : ") ,slice ("null")) ;
 			}
