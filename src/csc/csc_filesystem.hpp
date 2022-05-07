@@ -23,6 +23,8 @@ trait FILE_IMPLHOLDER_HELP ;
 
 template <class DEPEND>
 trait FILE_HELP<DEPEND ,ALWAYS> {
+	using RETRY_TIMES = RANK2 ;
+
 	struct Holder implement Interface {
 		virtual void initialize (CREF<String<STR>> file_) = 0 ;
 		virtual Auto native () const leftvalue = 0 ;
@@ -130,7 +132,7 @@ trait DIRECTORY_IMPLHOLDER_HELP ;
 
 template <class DEPEND>
 trait DIRECTORY_HELP<DEPEND ,ALWAYS> {
-	using DIRECTORY_CHILD_SIZE = ENUMAS<VAL ,ENUMID<65536>> ;
+	using CHILD_MAX_SIZE = ENUMAS<VAL ,ENUMID<65536>> ;
 
 	struct CHILD {
 		String<STR> mFile ;
@@ -260,8 +262,8 @@ trait STREAMFILE_HELP<DEPEND ,ALWAYS> {
 
 		BOOL link (CREF<BOOL> readable ,CREF<BOOL> writable) {
 			BOOL ret = FALSE ;
-			auto eax = TRUE ;
-			if ifswitch (eax) {
+			auto rxx = TRUE ;
+			if ifswitch (rxx) {
 				if ifnot (readable)
 					discard ;
 				if (writable)
@@ -269,7 +271,7 @@ trait STREAMFILE_HELP<DEPEND ,ALWAYS> {
 				mThis->open () ;
 				ret = TRUE ;
 			}
-			if ifswitch (eax) {
+			if ifswitch (rxx) {
 				if (readable)
 					discard ;
 				if ifnot (writable)
@@ -277,7 +279,7 @@ trait STREAMFILE_HELP<DEPEND ,ALWAYS> {
 				mThis->create () ;
 				ret = TRUE ;
 			}
-			if ifswitch (eax) {
+			if ifswitch (rxx) {
 				if ifnot (readable)
 					discard ;
 				if ifnot (writable)
@@ -311,6 +313,7 @@ trait STREAMFILE_HELP<DEPEND ,ALWAYS> {
 			auto &&tmp = unsafe_deref (unsafe_cast[TYPEAS<TEMP<ARR<BYTE ,R1X>>>::id] (unsafe_deptr (item[0]))) ;
 			auto rax = RegBuffer<BYTE>::from (unsafe_array (tmp[0]) ,0 ,item.size () * R1X::value) ;
 			LENGTH ret = read (rax) ;
+			ret /= R1X::value ;
 			unsafe_barrier () ;
 			return move (ret) ;
 		}
@@ -326,6 +329,7 @@ trait STREAMFILE_HELP<DEPEND ,ALWAYS> {
 			auto &&tmp = unsafe_deref (unsafe_cast[TYPEAS<TEMP<ARR<BYTE ,R1X>>>::id] (unsafe_deptr (item[0]))) ;
 			auto rax = RegBuffer<BYTE>::from (unsafe_array (tmp[0]) ,0 ,item.size () * R1X::value) ;
 			LENGTH ret = read (rax) ;
+			ret /= R1X::value ;
 			unsafe_barrier () ;
 			return move (ret) ;
 		}
@@ -341,6 +345,7 @@ trait STREAMFILE_HELP<DEPEND ,ALWAYS> {
 			auto &&tmp = unsafe_deref (unsafe_cast[TYPEAS<TEMP<ARR<BYTE ,R1X>>>::id] (unsafe_deptr (item[0]))) ;
 			auto rax = RegBuffer<BYTE>::from (unsafe_array (tmp[0]) ,0 ,item.size () * R1X::value) ;
 			LENGTH ret = read (rax) ;
+			ret /= R1X::value ;
 			unsafe_barrier () ;
 			return move (ret) ;
 		}
@@ -367,7 +372,9 @@ trait STREAMFILE_HELP<DEPEND ,ALWAYS> {
 				return ZERO ;
 			auto &&tmp = unsafe_deref (unsafe_cast[TYPEAS<TEMP<ARR<BYTE ,R1X>>>::id] (unsafe_deptr (item[0]))) ;
 			auto rax = RegBuffer<BYTE>::from (unsafe_array (tmp[0]) ,0 ,item.size () * R1X::value) ;
-			return write (rax) ;
+			LENGTH ret = write (rax) ;
+			ret /= R1X::value ;
+			return move (ret) ;
 		}
 
 		LENGTH write (CREF<VarBuffer<WORD>> item) {
@@ -384,7 +391,9 @@ trait STREAMFILE_HELP<DEPEND ,ALWAYS> {
 				return ZERO ;
 			auto &&tmp = unsafe_deref (unsafe_cast[TYPEAS<TEMP<ARR<BYTE ,R1X>>>::id] (unsafe_deptr (item[0]))) ;
 			auto rax = RegBuffer<BYTE>::from (unsafe_array (tmp[0]) ,0 ,item.size () * R1X::value) ;
-			return write (rax) ;
+			LENGTH ret = write (rax) ;
+			ret /= R1X::value ;
+			return move (ret) ;
 		}
 
 		LENGTH write (CREF<VarBuffer<CHAR>> item) {
@@ -401,7 +410,9 @@ trait STREAMFILE_HELP<DEPEND ,ALWAYS> {
 				return ZERO ;
 			auto &&tmp = unsafe_deref (unsafe_cast[TYPEAS<TEMP<ARR<BYTE ,R1X>>>::id] (unsafe_deptr (item[0]))) ;
 			auto rax = RegBuffer<BYTE>::from (unsafe_array (tmp[0]) ,0 ,item.size () * R1X::value) ;
-			return write (rax) ;
+			LENGTH ret = write (rax) ;
+			ret /= R1X::value ;
+			return move (ret) ;
 		}
 
 		LENGTH write (CREF<VarBuffer<DATA>> item) {
@@ -431,7 +442,7 @@ trait BUFFERFILE_IMPLHOLDER_HELP ;
 
 template <class DEPEND>
 trait BUFFERFILE_HOLDER_HELP<DEPEND ,ALWAYS> {
-	using CHUNK_PAGE_SIZE = ENUMAS<VAL ,ENUMID<4194304>> ;
+	using PAGE_SIZE = ENUMAS<VAL ,ENUMID<4194304>> ;
 	using HEADER_SIZE = ENUMAS<VAL ,ENUMID<65536>> ;
 
 	struct Holder implement Interface {
@@ -478,8 +489,8 @@ trait BUFFERFILE_HELP<ITEM ,REQUIRE<IS_TRIVIAL<ITEM>>> {
 
 		BOOL link (CREF<BOOL> readable ,CREF<BOOL> writable) {
 			BOOL ret = FALSE ;
-			auto eax = TRUE ;
-			if ifswitch (eax) {
+			auto rxx = TRUE ;
+			if ifswitch (rxx) {
 				if ifnot (readable)
 					discard ;
 				if (writable)
@@ -487,7 +498,7 @@ trait BUFFERFILE_HELP<ITEM ,REQUIRE<IS_TRIVIAL<ITEM>>> {
 				mThis->open () ;
 				ret = TRUE ;
 			}
-			if ifswitch (eax) {
+			if ifswitch (rxx) {
 				if (readable)
 					discard ;
 				if ifnot (writable)
@@ -495,7 +506,7 @@ trait BUFFERFILE_HELP<ITEM ,REQUIRE<IS_TRIVIAL<ITEM>>> {
 				mThis->create () ;
 				ret = TRUE ;
 			}
-			if ifswitch (eax) {
+			if ifswitch (rxx) {
 				if ifnot (readable)
 					discard ;
 				if ifnot (writable)

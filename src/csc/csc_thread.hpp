@@ -31,8 +31,10 @@ trait WORKTHREAD_HELP<DEPEND ,ALWAYS> {
 		virtual void set_queue_size (CREF<LENGTH> size_) = 0 ;
 		virtual void start (RREF<Function<void ,TYPEAS<CREF<INDEX>>>> proc) = 0 ;
 		virtual void post (CREF<INDEX> item) = 0 ;
+		virtual BOOL post (CREF<INDEX> item ,CREF<TimeDuration> interval ,CREF<Function<BOOL>> predicate) = 0 ;
 		virtual void post_all (CREF<Array<INDEX>> item) = 0 ;
 		virtual void join () = 0 ;
+		virtual BOOL join (CREF<TimeDuration> interval ,CREF<Function<BOOL>> predicate) = 0 ;
 		virtual void stop () = 0 ;
 	} ;
 
@@ -63,12 +65,20 @@ trait WORKTHREAD_HELP<DEPEND ,ALWAYS> {
 			return mThis->post (item) ;
 		}
 
+		BOOL post (CREF<INDEX> item ,CREF<TimeDuration> interval ,CREF<Function<BOOL>> predicate) {
+			return mThis->post (item ,interval ,predicate) ;
+		}
+
 		void post_all (CREF<Array<INDEX>> item) {
 			return mThis->post_all (item) ;
 		}
 
 		void join () {
 			return mThis->join () ;
+		}
+
+		BOOL join (CREF<TimeDuration> interval ,CREF<Function<BOOL>> predicate) {
+			return mThis->join (interval ,predicate) ;
 		}
 
 		void stop () {
@@ -97,6 +107,28 @@ trait WORKTHREAD_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 
 		void initialize () override {
 			mHandle = Scope<ImplHolder> (thiz) ;
+		}
+
+		void enter () {
+			noop () ;
+		}
+
+		void leave () {
+			if ifswitch (TRUE) {
+				auto rax = ConditionalLock (mThreadMutex) ;
+				if (mThreadFlag == NULL)
+					discard ;
+				mThreadFlag.self = FALSE ;
+				rax.notify () ;
+			}
+			for (auto &&i : mThread)
+				i.stop () ;
+			mThread = Array<Thread> () ;
+			mThreadProc = Function<void ,TYPEAS<CREF<INDEX>>> () ;
+			mThreadFlag = NULL ;
+			mThreadPoll = Set<FLAG> () ;
+			mThreadQueue = Array<List<INDEX>> () ;
+			mItemQueue = List<INDEX> () ;
 		}
 
 		void set_thread_size (CREF<LENGTH> size_) override {
@@ -197,24 +229,43 @@ trait WORKTHREAD_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			rax.notify () ;
 		}
 
+		BOOL post (CREF<INDEX> item ,CREF<TimeDuration> interval ,CREF<Function<BOOL>> predicate) override {
+			auto rax = ConditionalLock (mThreadMutex) ;
+			assume (mThreadFlag != NULL) ;
+			while (TRUE) {
+				if ifnot (mThreadFlag.self)
+					break ;
+				if ifnot (mItemQueue.full ())
+					break ;
+				const auto r1x = predicate () ;
+				if ifnot (r1x)
+					return FALSE ;
+				rax.wait (interval) ;
+			}
+			assume (mThreadFlag.self) ;
+			mItemQueue.add (item) ;
+			rax.notify () ;
+			return TRUE ;
+		}
+
 		void post_all (CREF<Array<INDEX>> item) override {
 			auto rax = ConditionalLock (mThreadMutex) ;
 			assume (mThreadFlag != NULL) ;
 			assume (mThreadFlag.self) ;
 			const auto r1x = mItemQueue.length () + item.length () ;
-			auto eax = TRUE ;
-			if ifswitch (eax) {
+			auto rxx = TRUE ;
+			if ifswitch (rxx) {
 				if (r1x >= mItemQueue.size ())
 					discard ;
-				for (auto &&i : item.iter ())
-					mItemQueue.add (item[i]) ;
+				for (auto &&i : item)
+					mItemQueue.add (i) ;
 			}
-			if ifswitch (eax) {
+			if ifswitch (rxx) {
 				auto rbx = List<INDEX> (r1x) ;
 				for (auto &&i : mItemQueue.iter ())
 					rbx.add (mItemQueue[i]) ;
-				for (auto &&i : item.iter ())
-					rbx.add (item[i]) ;
+				for (auto &&i : item)
+					rbx.add (i) ;
 				mItemQueue = move (rbx) ;
 			}
 			rax.notify () ;
@@ -233,30 +284,25 @@ trait WORKTHREAD_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			rax.notify () ;
 		}
 
+		BOOL join (CREF<TimeDuration> interval ,CREF<Function<BOOL>> predicate) override {
+			auto rax = ConditionalLock (mThreadMutex) ;
+			assume (mThreadFlag != NULL) ;
+			while (TRUE) {
+				if ifnot (mThreadFlag.self)
+					break ;
+				if (mThreadPoll.length () <= mThread.length ())
+					break ;
+				const auto r1x = predicate () ;
+				if ifnot (r1x)
+					return FALSE ;
+				rax.wait (interval) ;
+			}
+			rax.notify () ;
+			return TRUE ;
+		}
+
 		void stop () override {
 			mHandle = Scope<ImplHolder> () ;
-		}
-
-		void enter () {
-			noop () ;
-		}
-
-		void leave () {
-			if ifswitch (TRUE) {
-				auto rax = ConditionalLock (mThreadMutex) ;
-				if (mThreadFlag == NULL)
-					discard ;
-				mThreadFlag.self = FALSE ;
-				rax.notify () ;
-			}
-			for (auto &&i : mThread.iter ())
-				mThread[i].stop () ;
-			mThread = Array<Thread> () ;
-			mThreadProc = Function<void ,TYPEAS<CREF<INDEX>>> () ;
-			mThreadFlag = NULL ;
-			mThreadPoll = Set<FLAG> () ;
-			mThreadQueue = Array<List<INDEX>> () ;
-			mItemQueue = List<INDEX> () ;
 		}
 	} ;
 } ;
@@ -287,17 +333,17 @@ trait PROMISE_HELP<ITEM ,ALWAYS> {
 	using Binder = typename THREAD_HELP<DEPEND ,ALWAYS>::Binder ;
 
 	struct Holder implement Binder {
-		virtual void initialize () const = 0 ;
-		virtual void start () const = 0 ;
-		virtual void start (RREF<Function<ITEM>> proc) const = 0 ;
-		virtual void post (RREF<ITEM> item) const = 0 ;
-		virtual void rethrow (CREF<Exception> e) const = 0 ;
-		virtual void signal () const = 0 ;
-		virtual BOOL ready () const = 0 ;
-		virtual ITEM poll () const = 0 ;
-		virtual ITEM poll (CREF<TimeDuration> interval ,CREF<Function<BOOL>> predicate) const = 0 ;
-		virtual void then (RREF<Function<void ,TYPEAS<VREF<ITEM>>>> proc) const = 0 ;
-		virtual void stop () const = 0 ;
+		virtual void initialize () = 0 ;
+		virtual void start () = 0 ;
+		virtual void start (RREF<Function<ITEM>> proc) = 0 ;
+		virtual void post (RREF<ITEM> item) = 0 ;
+		virtual void rethrow (CREF<Exception> e) = 0 ;
+		virtual void signal () = 0 ;
+		virtual BOOL ready () = 0 ;
+		virtual ITEM poll () = 0 ;
+		virtual Optional<ITEM> poll (CREF<TimeDuration> interval ,CREF<Function<BOOL>> predicate) = 0 ;
+		virtual void then (RREF<Function<void ,TYPEAS<VREF<ITEM>>>> proc) = 0 ;
+		virtual void stop () = 0 ;
 	} ;
 
 	template <class ARG1>
@@ -357,7 +403,7 @@ trait PROMISE_IMPLHOLDER_HELP<ITEM ,ALWAYS> {
 	protected:
 		ConditionalMutex mThreadMutex ;
 		VRef<BOOL> mThreadFlag ;
-		VRef<Thread> mThread ;
+		Thread mThread ;
 		Function<ITEM> mThreadProc ;
 		Function<void ,TYPEAS<VREF<ITEM>>> mCallbackProc ;
 		VRef<ITEM> mItem ;
@@ -371,11 +417,32 @@ trait PROMISE_IMPLHOLDER_HELP<ITEM ,ALWAYS> {
 			mHandle = Scope<ImplHolder> (thiz) ;
 		}
 
+		void enter () {
+			noop () ;
+		}
+
+		void leave () {
+			if ifswitch (TRUE) {
+				auto rax = ConditionalLock (mThreadMutex) ;
+				if (mThreadFlag == NULL)
+					discard ;
+				mThreadFlag.self = FALSE ;
+				rax.notify () ;
+			}
+			mThread.stop () ;
+			mThread = Thread () ;
+			mThreadFlag = NULL ;
+			mThreadProc = Function<ITEM> () ;
+			mCallbackProc = Function<void ,TYPEAS<VREF<ITEM>>> () ;
+			mItem = NULL ;
+			mException = NULL ;
+		}
+
 		void start () override {
 			Scope<Mutex> anonymous (mThreadMutex) ;
 			assume (mThreadFlag == NULL) ;
 			mThreadFlag = VRef<BOOL>::make (TRUE) ;
-			mThread = NULL ;
+			mThread = Thread () ;
 			mThreadProc = Function<ITEM> () ;
 			mCallbackProc = Function<void ,TYPEAS<VREF<ITEM>>> () ;
 			mItem = NULL ;
@@ -390,8 +457,8 @@ trait PROMISE_IMPLHOLDER_HELP<ITEM ,ALWAYS> {
 			mCallbackProc = Function<void ,TYPEAS<VREF<ITEM>>> () ;
 			mItem = NULL ;
 			mException = NULL ;
-			mThread = VRef<Thread>::make (VRef<ImplHolder>::reference (thiz) ,0) ;
-			mThread->start () ;
+			mThread = Thread (VRef<ImplHolder>::reference (thiz) ,0) ;
+			mThread.start () ;
 		}
 
 		void execute (CREF<INDEX> slot) override {
@@ -413,6 +480,7 @@ trait PROMISE_IMPLHOLDER_HELP<ITEM ,ALWAYS> {
 
 		void post (RREF<ITEM> item) override {
 			Scope<Mutex> anonymous (mThreadMutex) ;
+			assume (mThreadFlag != NULL) ;
 			assume (mThreadFlag.self) ;
 			assume (mItem == NULL) ;
 			assume (mException == NULL) ;
@@ -421,6 +489,7 @@ trait PROMISE_IMPLHOLDER_HELP<ITEM ,ALWAYS> {
 
 		void rethrow (CREF<Exception> e) override {
 			Scope<Mutex> anonymous (mThreadMutex) ;
+			assume (mThreadFlag != NULL) ;
 			assume (mThreadFlag.self) ;
 			assume (mException == NULL) ;
 			mItem = NULL ;
@@ -429,6 +498,7 @@ trait PROMISE_IMPLHOLDER_HELP<ITEM ,ALWAYS> {
 
 		void signal () override {
 			auto rax = ConditionalLock (mThreadMutex) ;
+			assume (mThreadFlag != NULL) ;
 			assume (mThreadFlag.self) ;
 			mThreadFlag.self = FALSE ;
 			if ifswitch (TRUE) {
@@ -452,14 +522,12 @@ trait PROMISE_IMPLHOLDER_HELP<ITEM ,ALWAYS> {
 
 		ITEM poll () override {
 			auto rax = ConditionalLock (mThreadMutex) ;
+			assume (mThreadFlag != NULL) ;
 			while (TRUE) {
-				if (mThreadFlag == NULL)
-					break ;
 				if ifnot (mThreadFlag.self)
 					break ;
 				rax.wait () ;
 			}
-			assume (mThreadFlag.self) ;
 			if ifswitch (TRUE) {
 				if (mException == NULL)
 					discard ;
@@ -472,25 +540,24 @@ trait PROMISE_IMPLHOLDER_HELP<ITEM ,ALWAYS> {
 			return move (ret) ;
 		}
 
-		ITEM poll (CREF<TimeDuration> interval ,CREF<Function<BOOL>> predicate) override {
+		Optional<ITEM> poll (CREF<TimeDuration> interval ,CREF<Function<BOOL>> predicate) override {
 			auto rax = ConditionalLock (mThreadMutex) ;
+			assume (mThreadFlag != NULL) ;
 			while (TRUE) {
-				if (mThreadFlag == NULL)
-					break ;
 				if ifnot (mThreadFlag.self)
 					break ;
 				const auto r1x = predicate () ;
-				assume (r1x) ;
+				if ifnot (r1x)
+					return FLAG (1) ;
 				rax.wait (interval) ;
 			}
-			assume (mThreadFlag.self) ;
 			if ifswitch (TRUE) {
 				if (mException == NULL)
 					discard ;
 				mException->raise () ;
 			}
 			assume (mItem != NULL) ;
-			ITEM ret = move (mItem.self) ;
+			Optional<ITEM> ret = Optional<ITEM>::make (move (mItem.self)) ;
 			mItem = NULL ;
 			rax.notify () ;
 			return move (ret) ;
@@ -498,10 +565,11 @@ trait PROMISE_IMPLHOLDER_HELP<ITEM ,ALWAYS> {
 
 		void then (RREF<Function<void ,TYPEAS<VREF<ITEM>>>> proc) override {
 			Scope<Mutex> anonymous (mThreadMutex) ;
+			assume (mThreadFlag != NULL) ;
 			mCallbackProc = move (proc) ;
-			if (mThreadFlag.self)
-				return ;
 			if ifswitch (TRUE) {
+				if (mThreadFlag.self)
+					discard ;
 				if (mItem == NULL)
 					discard ;
 				mCallbackProc (mItem.self) ;
@@ -510,27 +578,6 @@ trait PROMISE_IMPLHOLDER_HELP<ITEM ,ALWAYS> {
 
 		void stop () override {
 			mHandle = Scope<ImplHolder> () ;
-		}
-
-		void enter () {
-			noop () ;
-		}
-
-		void leave () {
-			if ifswitch (TRUE) {
-				auto rax = ConditionalLock (mThreadMutex) ;
-				if (mThreadFlag == NULL)
-					discard ;
-				mThreadFlag.self = FALSE ;
-				rax.notify () ;
-			}
-			mThread->stop () ;
-			mThread = NULL ;
-			mThreadFlag = NULL ;
-			mThreadProc = Function<ITEM> () ;
-			mCallbackProc = Function<void ,TYPEAS<VREF<ITEM>>> () ;
-			mItem = NULL ;
-			mException = NULL ;
 		}
 	} ;
 } ;
@@ -567,7 +614,7 @@ trait FUTURE_HELP<ITEM ,ALWAYS> {
 			return mThis->poll () ;
 		}
 
-		ITEM poll (CREF<TimeDuration> interval ,CREF<Function<BOOL>> predicate) {
+		Optional<ITEM> poll (CREF<TimeDuration> interval ,CREF<Function<BOOL>> predicate) {
 			return mThis->poll (interval ,predicate) ;
 		}
 

@@ -80,14 +80,16 @@ trait RUNTIMEPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			String<STR> ret = String<STR>::make () ;
 			GetCurrentDirectory (DWORD (ret.size ()) ,(&ret[0])) ;
 			if ifswitch (TRUE) {
-				const auto r1x = ret.length () ;
-				if (r1x < 1)
+				INDEX ix = ret.length () - 1 ;
+				if (ix < 0)
 					discard ;
-				if (ret[r1x - 1] == STR ('\\'))
+				if (ret[ix] == STRA ('\\'))
 					discard ;
-				if (ret[r1x - 1] == STR ('/'))
+				if (ret[ix] == STRA ('/'))
 					discard ;
-				ret[r1x] = STR ('\\') ;
+				ret[ix] = STRA ('\\') ;
+				ix++ ;
+				ret[ix] = 0 ;
 			}
 			return move (ret) ;
 		}

@@ -59,7 +59,7 @@ trait XMLPARSER_HELP<DEPEND ,ALWAYS> {
 			using R1X = typename XMLPARSER_SERIALIZATION_HELP<DEPEND ,ALWAYS>::Serialization ;
 			auto rax = R1X (RegBuffer<STRU8>::from (item ,0 ,item.size ())) ;
 			rax.generate () ;
-			return rax.poll_root () ;
+			return rax.poll () ;
 		}
 
 		imports XmlParser make (CREF<VarBuffer<STRU8>> item) {
@@ -74,7 +74,7 @@ trait XMLPARSER_HELP<DEPEND ,ALWAYS> {
 			using R1X = typename XMLPARSER_SERIALIZATION_HELP<DEPEND ,ALWAYS>::Serialization ;
 			auto rax = R1X (RegBuffer<STRU8>::from (item ,0 ,item.size ())) ;
 			rax.generate () ;
-			return rax.poll_root () ;
+			return rax.poll () ;
 		}
 
 		imports XmlParser make (CREF<VarBuffer<BYTE>> item) {
@@ -89,7 +89,7 @@ trait XMLPARSER_HELP<DEPEND ,ALWAYS> {
 			using R1X = typename XMLPARSER_COMBINATION_HELP<DEPEND ,ALWAYS>::Combination ;
 			auto rax = R1X (sequence) ;
 			rax.generate () ;
-			return rax.poll_root () ;
+			return rax.poll () ;
 		}
 
 		BOOL exist () const {
@@ -124,12 +124,12 @@ trait XMLPARSER_HELP<DEPEND ,ALWAYS> {
 			return XmlParser (mHeap ,mHeap->mTree[mIndex].mChild) ;
 		}
 
-		XmlParser child (CREF<String<STRA>> name) const {
-			return child (string_cvt[TYPEAS<TYPEAS<STRU8 ,STRA>>::id] (name)) ;
+		XmlParser child (CREF<Slice<STRA>> name) const {
+			return child (String<STRU8>::make (name)) ;
 		}
 
-		XmlParser child (CREF<String<STRW>> name) const {
-			return child (string_cvt[TYPEAS<TYPEAS<STRU8 ,STRW>>::id] (name)) ;
+		XmlParser child (CREF<Slice<STRW>> name) const {
+			return child (String<STRU8>::make (name)) ;
 		}
 
 		XmlParser child (CREF<String<STRU8>> name) const {
@@ -204,12 +204,12 @@ trait XMLPARSER_HELP<DEPEND ,ALWAYS> {
 			return mHeap->mTree[mIndex].mName ;
 		}
 
-		CREF<String<STRU8>> attribute (CREF<String<STRA>> tag) const leftvalue {
-			return attribute (string_cvt[TYPEAS<TYPEAS<STRU8 ,STRA>>::id] (tag)) ;
+		CREF<String<STRU8>> attribute (CREF<Slice<STRA>> tag) const leftvalue {
+			return attribute (String<STRU8>::make (tag)) ;
 		}
 
-		CREF<String<STRU8>> attribute (CREF<String<STRW>> tag) const leftvalue {
-			return attribute (string_cvt[TYPEAS<TYPEAS<STRU8 ,STRW>>::id] (tag)) ;
+		CREF<String<STRU8>> attribute (CREF<Slice<STRW>> tag) const leftvalue {
+			return attribute (String<STRU8>::make (tag)) ;
 		}
 
 		CREF<String<STRU8>> attribute (CREF<String<STRU8>> tag) const leftvalue {
@@ -340,7 +340,7 @@ trait XMLPARSER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 			mReader = RegularReader (VRef<TextReader<STRU8>>::reference (mTextReader) ,3) ;
 		}
 
-		XmlParser poll_root () {
+		XmlParser poll () {
 			auto &&tmp = keep[TYPEAS<VREF<XmlParser>>::id] (thiz) ;
 			auto rax = HEAP () ;
 			const auto r1x = shrink_order () ;
@@ -477,8 +477,8 @@ trait XMLPARSER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 			mReader >> RegularReader::SKIP_SPACE ;
 			update_shift_e4 (ix) ;
 			mReader >> RegularReader::SKIP_SPACE ;
-			auto eax = TRUE ;
-			if ifswitch (eax) {
+			auto rxx = TRUE ;
+			if ifswitch (rxx) {
 				if (mReader[0] != STRU8 ('>'))
 					discard ;
 				mReader++ ;
@@ -494,7 +494,7 @@ trait XMLPARSER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 				mReader >> RegularReader::SKIP_SPACE ;
 				mReader >> slice (">") ;
 			}
-			if ifswitch (eax) {
+			if ifswitch (rxx) {
 				mReader >> slice ("/>") ;
 			}
 			mLastIndex = ix ;
@@ -527,26 +527,26 @@ trait XMLPARSER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 				if ifnot (r1x)
 					if ifnot (r2x)
 						break ;
-				auto eax = TRUE ;
-				if ifswitch (eax) {
+				auto rxx = TRUE ;
+				if ifswitch (rxx) {
 					if ifnot (r1x)
 						discard ;
 					update_shift_e6 () ;
 				}
-				if ifswitch (eax) {
+				if ifswitch (rxx) {
 					if ifnot (r2x)
 						discard ;
 					update_shift_e5 (curr) ;
 					const auto r3x = mTree[curr].mArraySet.length () ;
 					mTree[curr].mArraySet.add (r3x ,mLastIndex) ;
 					mTree[curr].mObjectSet.add (mTree[mLastIndex].mName ,mLastIndex) ;
-					auto ebx = TRUE ;
-					if ifswitch (ebx) {
+					auto ryx = TRUE ;
+					if ifswitch (ryx) {
 						if ifnot (ix == NONE)
 							discard ;
 						ix = mLastIndex ;
 					}
-					if ifswitch (ebx) {
+					if ifswitch (ryx) {
 						mTree[iy].mBrother = mLastIndex ;
 					}
 					iy = mLastIndex ;
@@ -667,7 +667,7 @@ trait XMLPARSER_COMBINATION_HELP<DEPEND ,ALWAYS> {
 			mTree[mRoot].mBrother = NONE ;
 		}
 
-		XmlParser poll_root () {
+		XmlParser poll () {
 			auto &&tmp = keep[TYPEAS<VREF<XmlParser>>::id] (thiz) ;
 			auto rax = HEAP () ;
 			const auto r1x = shrink_order () ;
@@ -697,7 +697,7 @@ trait XMLPARSER_COMBINATION_HELP<DEPEND ,ALWAYS> {
 			}
 			tmp.mHeap = CRef<HEAP>::make (move (rax)) ;
 			tmp.mIndex = 0 ;
-			return move (rax) ;
+			return move (tmp) ;
 		}
 
 		Array<INDEX> shrink_order () const {
@@ -736,13 +736,13 @@ trait XMLPARSER_COMBINATION_HELP<DEPEND ,ALWAYS> {
 					break ;
 				mNodeStack.pop (mTempNode) ;
 				for (auto &&i : mTempNode.mBaseNode) {
-					auto eax = TRUE ;
-					if ifswitch (eax) {
+					auto rxx = TRUE ;
+					if ifswitch (rxx) {
 						if (mTempNode.mClazz != NODE_CLAZZ_OBJECT::value)
 							discard ;
 						update_found_object_node (i) ;
 					}
-					if ifswitch (eax) {
+					if ifswitch (rxx) {
 						if (mTempNode.mClazz != NODE_CLAZZ_ARRAY::value)
 							discard ;
 						update_found_array_node (i) ;
@@ -868,11 +868,11 @@ trait XMLPARSER_COMBINATION_HELP<DEPEND ,ALWAYS> {
 
 		void update_merge_found_node (CREF<INDEX> curr) {
 			INDEX ix = NONE ;
-			for (auto &&i : mFoundNode.iter ()) {
+			for (auto &&i : mFoundNode) {
 				INDEX iy = ix ;
 				ix = mTree.insert () ;
-				mTree[ix].mName = move (mFoundNode[i].mName) ;
-				mTree[ix].mAttributeSet = move (mFoundNode[i].mAttributeSet) ;
+				mTree[ix].mName = move (i.mName) ;
+				mTree[ix].mAttributeSet = move (i.mAttributeSet) ;
 				mTree[ix].mParent = curr ;
 				if ifswitch (TRUE) {
 					INDEX jx = mTree[ix].mParent ;
@@ -897,8 +897,8 @@ trait XMLPARSER_COMBINATION_HELP<DEPEND ,ALWAYS> {
 					mTree[iy].mBrother = ix ;
 				}
 				INDEX jy = mNodeStack.insert () ;
-				mNodeStack[jy].mBaseNode = move (mFoundNode[i].mBaseNode) ;
-				mNodeStack[jy].mClazz = mFoundNode[i].mClazz ;
+				mNodeStack[jy].mBaseNode = move (i.mBaseNode) ;
+				mNodeStack[jy].mClazz = i.mClazz ;
 				mNodeStack[jy].mParent = ix ;
 			}
 			mFoundNodeSet.clear () ;
@@ -955,7 +955,7 @@ trait JSONPARSER_HELP<DEPEND ,ALWAYS> {
 			using R1X = typename JSONPARSER_SERIALIZATION_HELP<DEPEND ,ALWAYS>::Serialization ;
 			auto rax = R1X (RegBuffer<STRU8>::from (item ,0 ,item.size ())) ;
 			rax.generate () ;
-			return rax.poll_root () ;
+			return rax.poll () ;
 		}
 
 		imports JsonParser make (CREF<VarBuffer<STRU8>> item) {
@@ -970,7 +970,7 @@ trait JSONPARSER_HELP<DEPEND ,ALWAYS> {
 			using R1X = typename JSONPARSER_SERIALIZATION_HELP<DEPEND ,ALWAYS>::Serialization ;
 			auto rax = R1X (RegBuffer<STRU8>::from (item ,0 ,item.size ())) ;
 			rax.generate () ;
-			return rax.poll_root () ;
+			return rax.poll () ;
 		}
 
 		imports JsonParser make (CREF<VarBuffer<BYTE>> item) {
@@ -1027,12 +1027,12 @@ trait JSONPARSER_HELP<DEPEND ,ALWAYS> {
 			return JsonParser (mHeap ,mHeap->mTree[mIndex].mChild) ;
 		}
 
-		JsonParser child (CREF<String<STRA>> name) const {
-			return child (string_cvt[TYPEAS<TYPEAS<STRU8 ,STRA>>::id] (name)) ;
+		JsonParser child (CREF<Slice<STRA>> name) const {
+			return child (String<STRU8>::make (name)) ;
 		}
 
-		JsonParser child (CREF<String<STRW>> name) const {
-			return child (string_cvt[TYPEAS<TYPEAS<STRU8 ,STRW>>::id] (name)) ;
+		JsonParser child (CREF<Slice<STRW>> name) const {
+			return child (String<STRU8>::make (name)) ;
 		}
 
 		JsonParser child (CREF<String<STRU8>> name) const {
@@ -1197,7 +1197,7 @@ trait JSONPARSER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 	using NODE_CLAZZ_ARRAY = typename JSONPARSER_HELP<DEPEND ,ALWAYS>::NODE_CLAZZ_ARRAY ;
 	using NODE_CLAZZ_OBJECT = typename JSONPARSER_HELP<DEPEND ,ALWAYS>::NODE_CLAZZ_OBJECT ;
 
-	class Serialization {
+	class Serialization extend JsonParser {
 	protected:
 		LENGTH mRecursiveCounter ;
 		TextReader<STRU8> mTextReader ;
@@ -1218,8 +1218,8 @@ trait JSONPARSER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 			mReader = RegularReader (VRef<TextReader<STRU8>>::reference (mTextReader) ,3) ;
 		}
 
-		JsonParser poll_root () {
-			auto &&tmp = keep[TYPEAS<VREF<XmlParser>>::id] (thiz) ;
+		JsonParser poll () {
+			auto &&tmp = keep[TYPEAS<VREF<JsonParser>>::id] (thiz) ;
 			auto rax = HEAP () ;
 			const auto r1x = shrink_order () ;
 			rax.mTree = Array<NODE> (r1x.length ()) ;
@@ -1244,7 +1244,7 @@ trait JSONPARSER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 			}
 			tmp.mHeap = CRef<HEAP>::make (move (rax)) ;
 			tmp.mIndex = 0 ;
-			return move (rax) ;
+			return move (tmp) ;
 		}
 
 		Array<INDEX> shrink_order () const {
@@ -1297,32 +1297,32 @@ trait JSONPARSER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 
 		//@info: $2->true|TRUE|false|FALSE
 		void update_shift_e2 () {
-			auto eax = TRUE ;
-			if ifswitch (eax) {
+			auto rxx = TRUE ;
+			if ifswitch (rxx) {
 				if ifnot (mReader[0] == STRU8 ('t'))
 					discard ;
 				mReader >> slice ("true") ;
 				mLastString = slice ("true") ;
 			}
-			if ifswitch (eax) {
+			if ifswitch (rxx) {
 				if ifnot (mReader[0] == STRU8 ('T'))
 					discard ;
 				mReader >> slice ("TRUE") ;
 				mLastString = slice ("TRUE") ;
 			}
-			if ifswitch (eax) {
+			if ifswitch (rxx) {
 				if ifnot (mReader[0] == STRU8 ('f'))
 					discard ;
 				mReader >> slice ("false") ;
 				mLastString = slice ("false") ;
 			}
-			if ifswitch (eax) {
+			if ifswitch (rxx) {
 				if ifnot (mReader[0] == STRU8 ('F'))
 					discard ;
 				mReader >> slice ("FALSE") ;
 				mLastString = slice ("FALSE") ;
 			}
-			if ifswitch (eax) {
+			if ifswitch (rxx) {
 				assume (FALSE) ;
 			}
 		}
@@ -1343,8 +1343,8 @@ trait JSONPARSER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 			Scope<ScopeCounter> anonymous (ScopeCounter::from (mRecursiveCounter)) ;
 			assume (mRecursiveCounter < COUNTER_MAX_DEPTH::value) ;
 			INDEX ix = NONE ;
-			auto eax = TRUE ;
-			if ifswitch (eax) {
+			auto rxx = TRUE ;
+			if ifswitch (rxx) {
 				if ifnot (is_first_number ())
 					discard ;
 				ix = mTree.insert () ;
@@ -1355,7 +1355,7 @@ trait JSONPARSER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 				mTree[ix].mBrother = NONE ;
 				mTree[ix].mChild = NONE ;
 			}
-			if ifswitch (eax) {
+			if ifswitch (rxx) {
 				if ifnot (is_first_boolean ())
 					discard ;
 				ix = mTree.insert () ;
@@ -1366,7 +1366,7 @@ trait JSONPARSER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 				mTree[ix].mBrother = NONE ;
 				mTree[ix].mChild = NONE ;
 			}
-			if ifswitch (eax) {
+			if ifswitch (rxx) {
 				if ifnot (mReader[0] == STRU8 ('n'))
 					discard ;
 				ix = mTree.insert () ;
@@ -1376,7 +1376,7 @@ trait JSONPARSER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 				mTree[ix].mBrother = NONE ;
 				mTree[ix].mChild = NONE ;
 			}
-			if ifswitch (eax) {
+			if ifswitch (rxx) {
 				if ifnot (mReader[0] == STRU8 ('\"'))
 					discard ;
 				ix = mTree.insert () ;
@@ -1387,19 +1387,19 @@ trait JSONPARSER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 				mTree[ix].mBrother = NONE ;
 				mTree[ix].mChild = NONE ;
 			}
-			if ifswitch (eax) {
+			if ifswitch (rxx) {
 				if ifnot (mReader[0] == STRU8 ('['))
 					discard ;
 				update_shift_e6 (curr) ;
 				ix = mLastIndex ;
 			}
-			if ifswitch (eax) {
+			if ifswitch (rxx) {
 				if ifnot (mReader[0] == STRU8 ('{'))
 					discard ;
 				update_shift_e9 (curr) ;
 				ix = mLastIndex ;
 			}
-			if ifswitch (eax) {
+			if ifswitch (rxx) {
 				assume (FALSE) ;
 			}
 			mLastIndex = ix ;
@@ -1436,13 +1436,13 @@ trait JSONPARSER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 				update_shift_e4 (curr) ;
 				const auto r1x = mTree[curr].mArraySet.length () ;
 				mTree[curr].mArraySet.add (r1x ,mLastIndex) ;
-				auto eax = TRUE ;
-				if ifswitch (eax) {
+				auto rxx = TRUE ;
+				if ifswitch (rxx) {
 					if ifnot (ix == NONE)
 						discard ;
 					ix = mLastIndex ;
 				}
-				if ifswitch (eax) {
+				if ifswitch (rxx) {
 					mTree[iy].mBrother = mLastIndex ;
 				}
 				iy = mLastIndex ;
@@ -1495,13 +1495,13 @@ trait JSONPARSER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 			INDEX iy = NONE ;
 			while (TRUE) {
 				update_shift_e7 (curr) ;
-				auto eax = TRUE ;
-				if ifswitch (eax) {
+				auto rxx = TRUE ;
+				if ifswitch (rxx) {
 					if ifnot (ix == NONE)
 						discard ;
 					ix = mLastIndex ;
 				}
-				if ifswitch (eax) {
+				if ifswitch (rxx) {
 					mTree[iy].mBrother = mLastIndex ;
 				}
 				iy = mLastIndex ;

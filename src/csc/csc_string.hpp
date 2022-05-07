@@ -519,29 +519,32 @@ trait FUNCTION_string_cvt_impl_HELP<UNIT1 ,UNIT2 ,REQUIRE<ENUM_ALL<IS_SAME<UNIT1
 	struct FUNCTION_string_cvt_impl {
 		inline String<STRU8> operator() (CREF<String<STRU16>> obj) const {
 			String<STRU8> ret = String<STRU8> (obj.length () * 3) ;
-			INDEX iw = 0 ;
+			INDEX ix = 0 ;
 			auto rax = ZERO ;
 			auto rbx = STRU32 () ;
 			for (auto &&i : obj) {
 				if (rax == NONE)
 					continue ;
-				auto eax = TRUE ;
-				if ifswitch (eax) {
+				auto rxx = TRUE ;
+				if ifswitch (rxx) {
 					if ifnot (rax == 0)
 						discard ;
 					if ifnot (i <= STRU16 (0X007F))
 						discard ;
-					ret[iw++] = STRU8 (i) ;
+					ret[ix] = STRU8 (i) ;
+					ix++ ;
 				}
-				if ifswitch (eax) {
+				if ifswitch (rxx) {
 					if ifnot (rax == 0)
 						discard ;
 					if ifnot (i <= STRU16 (0X07FF))
 						discard ;
-					ret[iw++] = (STRU8 (i >> 6) & STRU8 (0X1F)) | STRU8 (0XC0) ;
-					ret[iw++] = (STRU8 (i) & STRU8 (0X3F)) | STRU8 (0X80) ;
+					ret[ix] = (STRU8 (i >> 6) & STRU8 (0X1F)) | STRU8 (0XC0) ;
+					ix++ ;
+					ret[ix] = (STRU8 (i) & STRU8 (0X3F)) | STRU8 (0X80) ;
+					ix++ ;
 				}
-				if ifswitch (eax) {
+				if ifswitch (rxx) {
 					if ifnot (rax == 0)
 						discard ;
 					if ifnot (i >= STRU16 (0XD800))
@@ -551,14 +554,17 @@ trait FUNCTION_string_cvt_impl_HELP<UNIT1 ,UNIT2 ,REQUIRE<ENUM_ALL<IS_SAME<UNIT1
 					rbx = STRU32 (i & STRU16 (0X03FF)) ;
 					rax = 1 ;
 				}
-				if ifswitch (eax) {
+				if ifswitch (rxx) {
 					if ifnot (rax == 0)
 						discard ;
-					ret[iw++] = (STRU8 (i >> 12) & STRU8 (0X0F)) | STRU8 (0XE0) ;
-					ret[iw++] = (STRU8 (i >> 6) & STRU8 (0X3F)) | STRU8 (0X80) ;
-					ret[iw++] = (STRU8 (i) & STRU8 (0X3F)) | STRU8 (0X80) ;
+					ret[ix] = (STRU8 (i >> 12) & STRU8 (0X0F)) | STRU8 (0XE0) ;
+					ix++ ;
+					ret[ix] = (STRU8 (i >> 6) & STRU8 (0X3F)) | STRU8 (0X80) ;
+					ix++ ;
+					ret[ix] = (STRU8 (i) & STRU8 (0X3F)) | STRU8 (0X80) ;
+					ix++ ;
 				}
-				if ifswitch (eax) {
+				if ifswitch (rxx) {
 					if ifnot (rax == 1)
 						discard ;
 					if ifnot (i >= STRU16 (0XDC00))
@@ -566,13 +572,17 @@ trait FUNCTION_string_cvt_impl_HELP<UNIT1 ,UNIT2 ,REQUIRE<ENUM_ALL<IS_SAME<UNIT1
 					if ifnot (i <= STRU16 (0XDFFF))
 						discard ;
 					rbx = STRU32 (((rbx << 10) | (i & STRU16 (0X03FF))) + STRU32 (0X00010000)) ;
-					ret[iw++] = (STRU8 (rbx >> 18) & STRU8 (0X07)) | STRU8 (0XF0) ;
-					ret[iw++] = (STRU8 (rbx >> 12) & STRU8 (0X3F)) | STRU8 (0X80) ;
-					ret[iw++] = (STRU8 (rbx >> 6) & STRU8 (0X3F)) | STRU8 (0X80) ;
-					ret[iw++] = (STRU8 (rbx) & STRU8 (0X3F)) | STRU8 (0X80) ;
+					ret[ix] = (STRU8 (rbx >> 18) & STRU8 (0X07)) | STRU8 (0XF0) ;
+					ix++ ;
+					ret[ix] = (STRU8 (rbx >> 12) & STRU8 (0X3F)) | STRU8 (0X80) ;
+					ix++ ;
+					ret[ix] = (STRU8 (rbx >> 6) & STRU8 (0X3F)) | STRU8 (0X80) ;
+					ix++ ;
+					ret[ix] = (STRU8 (rbx) & STRU8 (0X3F)) | STRU8 (0X80) ;
+					ix++ ;
 					rax = 0 ;
 				}
-				if ifswitch (eax) {
+				if ifswitch (rxx) {
 					ret.clear () ;
 					rax = NONE ;
 				}
@@ -580,8 +590,10 @@ trait FUNCTION_string_cvt_impl_HELP<UNIT1 ,UNIT2 ,REQUIRE<ENUM_ALL<IS_SAME<UNIT1
 			if ifswitch (TRUE) {
 				if (rax == 0)
 					discard ;
-				ret[iw++] = STRU8 ('?') ;
+				ret[ix] = STRU8 ('?') ;
+				ix++ ;
 			}
+			ret[ix] = 0 ;
 			return move (ret) ;
 		}
 	} ;
@@ -600,74 +612,96 @@ trait FUNCTION_string_cvt_impl_HELP<UNIT1 ,UNIT2 ,REQUIRE<ENUM_ALL<IS_SAME<UNIT1
 			*	6 bytes [0x4000000,0X7FFFFFFF] 1111110x 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx
 			*/
 			String<STRU8> ret = String<STRU8> (obj.length () * 6) ;
-			INDEX iw = 0 ;
+			INDEX ix = 0 ;
 			auto rax = ZERO ;
 			for (auto &&i : obj) {
 				if (rax == NONE)
 					continue ;
-				auto eax = TRUE ;
-				if ifswitch (eax) {
+				auto rxx = TRUE ;
+				if ifswitch (rxx) {
 					if ifnot (rax == 0)
 						discard ;
 					if ifnot (i <= STRU32 (0X0000007F))
 						discard ;
-					ret[iw++] = STRU8 (i) ;
+					ret[ix] = STRU8 (i) ;
+					ix++ ;
 				}
-				if ifswitch (eax) {
+				if ifswitch (rxx) {
 					if ifnot (rax == 0)
 						discard ;
 					if ifnot (i <= STRU32 (0X000007FF))
 						discard ;
-					ret[iw++] = (STRU8 (i >> 6) & STRU8 (0X1F)) | STRU8 (0XC0) ;
-					ret[iw++] = (STRU8 (i) & STRU8 (0X3F)) | STRU8 (0X80) ;
+					ret[ix] = (STRU8 (i >> 6) & STRU8 (0X1F)) | STRU8 (0XC0) ;
+					ix++ ;
+					ret[ix] = (STRU8 (i) & STRU8 (0X3F)) | STRU8 (0X80) ;
+					ix++ ;
 				}
-				if ifswitch (eax) {
+				if ifswitch (rxx) {
 					if ifnot (rax == 0)
 						discard ;
 					if ifnot (i <= STRU32 (0X0000FFFF))
 						discard ;
-					ret[iw++] = (STRU8 (i >> 12) & STRU8 (0X0F)) | STRU8 (0XE0) ;
-					ret[iw++] = (STRU8 (i >> 6) & STRU8 (0X3F)) | STRU8 (0X80) ;
-					ret[iw++] = (STRU8 (i) & STRU8 (0X3F)) | STRU8 (0X80) ;
+					ret[ix] = (STRU8 (i >> 12) & STRU8 (0X0F)) | STRU8 (0XE0) ;
+					ix++ ;
+					ret[ix] = (STRU8 (i >> 6) & STRU8 (0X3F)) | STRU8 (0X80) ;
+					ix++ ;
+					ret[ix] = (STRU8 (i) & STRU8 (0X3F)) | STRU8 (0X80) ;
+					ix++ ;
 				}
-				if ifswitch (eax) {
+				if ifswitch (rxx) {
 					if ifnot (rax == 0)
 						discard ;
 					if ifnot (i <= STRU32 (0X001FFFFF))
 						discard ;
-					ret[iw++] = (STRU8 (i >> 18) & STRU8 (0X07)) | STRU8 (0XF0) ;
-					ret[iw++] = (STRU8 (i >> 12) & STRU8 (0X3F)) | STRU8 (0X80) ;
-					ret[iw++] = (STRU8 (i >> 6) & STRU8 (0X3F)) | STRU8 (0X80) ;
-					ret[iw++] = (STRU8 (i) & STRU8 (0X3F)) | STRU8 (0X80) ;
+					ret[ix] = (STRU8 (i >> 18) & STRU8 (0X07)) | STRU8 (0XF0) ;
+					ix++ ;
+					ret[ix] = (STRU8 (i >> 12) & STRU8 (0X3F)) | STRU8 (0X80) ;
+					ix++ ;
+					ret[ix] = (STRU8 (i >> 6) & STRU8 (0X3F)) | STRU8 (0X80) ;
+					ix++ ;
+					ret[ix] = (STRU8 (i) & STRU8 (0X3F)) | STRU8 (0X80) ;
+					ix++ ;
 				}
-				if ifswitch (eax) {
+				if ifswitch (rxx) {
 					if ifnot (rax == 0)
 						discard ;
 					if ifnot (i <= STRU32 (0X03FFFFFF))
 						discard ;
-					ret[iw++] = (STRU8 (i >> 24) & STRU8 (0X03)) | STRU8 (0XF8) ;
-					ret[iw++] = (STRU8 (i >> 18) & STRU8 (0X3F)) | STRU8 (0X80) ;
-					ret[iw++] = (STRU8 (i >> 12) & STRU8 (0X3F)) | STRU8 (0X80) ;
-					ret[iw++] = (STRU8 (i >> 6) & STRU8 (0X3F)) | STRU8 (0X80) ;
-					ret[iw++] = (STRU8 (i) & STRU8 (0X3F)) | STRU8 (0X80) ;
+					ret[ix] = (STRU8 (i >> 24) & STRU8 (0X03)) | STRU8 (0XF8) ;
+					ix++ ;
+					ret[ix] = (STRU8 (i >> 18) & STRU8 (0X3F)) | STRU8 (0X80) ;
+					ix++ ;
+					ret[ix] = (STRU8 (i >> 12) & STRU8 (0X3F)) | STRU8 (0X80) ;
+					ix++ ;
+					ret[ix] = (STRU8 (i >> 6) & STRU8 (0X3F)) | STRU8 (0X80) ;
+					ix++ ;
+					ret[ix] = (STRU8 (i) & STRU8 (0X3F)) | STRU8 (0X80) ;
+					ix++ ;
 				}
-				if ifswitch (eax) {
+				if ifswitch (rxx) {
 					if ifnot (rax == 0)
 						discard ;
 					if ifnot (i <= STRU32 (0X7FFFFFFF))
 						discard ;
-					ret[iw++] = (STRU8 (i >> 30) & STRU8 (0X01)) | STRU8 (0XFC) ;
-					ret[iw++] = (STRU8 (i >> 24) & STRU8 (0X3F)) | STRU8 (0X80) ;
-					ret[iw++] = (STRU8 (i >> 18) & STRU8 (0X3F)) | STRU8 (0X80) ;
-					ret[iw++] = (STRU8 (i >> 12) & STRU8 (0X3F)) | STRU8 (0X80) ;
-					ret[iw++] = (STRU8 (i >> 6) & STRU8 (0X3F)) | STRU8 (0X80) ;
-					ret[iw++] = (STRU8 (i) & STRU8 (0X3F)) | STRU8 (0X80) ;
+					ret[ix] = (STRU8 (i >> 30) & STRU8 (0X01)) | STRU8 (0XFC) ;
+					ix++ ;
+					ret[ix] = (STRU8 (i >> 24) & STRU8 (0X3F)) | STRU8 (0X80) ;
+					ix++ ;
+					ret[ix] = (STRU8 (i >> 18) & STRU8 (0X3F)) | STRU8 (0X80) ;
+					ix++ ;
+					ret[ix] = (STRU8 (i >> 12) & STRU8 (0X3F)) | STRU8 (0X80) ;
+					ix++ ;
+					ret[ix] = (STRU8 (i >> 6) & STRU8 (0X3F)) | STRU8 (0X80) ;
+					ix++ ;
+					ret[ix] = (STRU8 (i) & STRU8 (0X3F)) | STRU8 (0X80) ;
+					ix++ ;
 				}
-				if ifswitch (eax) {
+				if ifswitch (rxx) {
 					ret.clear () ;
 					rax = NONE ;
 				}
 			}
+			ret[ix] = 0 ;
 			return move (ret) ;
 		}
 	} ;
@@ -703,21 +737,22 @@ trait FUNCTION_string_cvt_impl_HELP<UNIT1 ,UNIT2 ,REQUIRE<ENUM_ALL<IS_SAME<UNIT1
 	struct FUNCTION_string_cvt_impl {
 		inline String<STRU16> operator() (CREF<String<STRU8>> obj) const {
 			String<STRU16> ret = String<STRU16> (obj.length ()) ;
-			INDEX iw = 0 ;
+			INDEX ix = 0 ;
 			auto rax = ZERO ;
 			auto rbx = STRU32 () ;
 			for (auto &&i : obj) {
 				if (rax == NONE)
 					continue ;
-				auto eax = TRUE ;
-				if ifswitch (eax) {
+				auto rxx = TRUE ;
+				if ifswitch (rxx) {
 					if ifnot (rax == 0)
 						discard ;
 					if ifnot (i <= STRU8 (0X7F))
 						discard ;
-					ret[iw++] = STRU16 (i) ;
+					ret[ix] = STRU16 (i) ;
+					ix++ ;
 				}
-				if ifswitch (eax) {
+				if ifswitch (rxx) {
 					if ifnot (rax == 0)
 						discard ;
 					if ifnot (i <= STRU8 (0XDF))
@@ -725,7 +760,7 @@ trait FUNCTION_string_cvt_impl_HELP<UNIT1 ,UNIT2 ,REQUIRE<ENUM_ALL<IS_SAME<UNIT1
 					rbx = STRU32 (i & STRU8 (0X1F)) ;
 					rax = 1 ;
 				}
-				if ifswitch (eax) {
+				if ifswitch (rxx) {
 					if ifnot (rax == 0)
 						discard ;
 					if ifnot (i <= STRU8 (0XEF))
@@ -733,7 +768,7 @@ trait FUNCTION_string_cvt_impl_HELP<UNIT1 ,UNIT2 ,REQUIRE<ENUM_ALL<IS_SAME<UNIT1
 					rbx = STRU32 (i & STRU8 (0X0F)) ;
 					rax = 2 ;
 				}
-				if ifswitch (eax) {
+				if ifswitch (rxx) {
 					if ifnot (rax == 0)
 						discard ;
 					if ifnot (i <= STRU8 (0XF7))
@@ -741,7 +776,7 @@ trait FUNCTION_string_cvt_impl_HELP<UNIT1 ,UNIT2 ,REQUIRE<ENUM_ALL<IS_SAME<UNIT1
 					rbx = STRU32 (i & STRU8 (0X07)) ;
 					rax = 3 ;
 				}
-				if ifswitch (eax) {
+				if ifswitch (rxx) {
 					if ifnot (rax == 0)
 						discard ;
 					if ifnot (i <= STRU8 (0XFB))
@@ -749,7 +784,7 @@ trait FUNCTION_string_cvt_impl_HELP<UNIT1 ,UNIT2 ,REQUIRE<ENUM_ALL<IS_SAME<UNIT1
 					rbx = STRU32 (i & STRU8 (0X03)) ;
 					rax = 4 ;
 				}
-				if ifswitch (eax) {
+				if ifswitch (rxx) {
 					if ifnot (rax == 0)
 						discard ;
 					if ifnot (i <= STRU8 (0XFD))
@@ -757,7 +792,7 @@ trait FUNCTION_string_cvt_impl_HELP<UNIT1 ,UNIT2 ,REQUIRE<ENUM_ALL<IS_SAME<UNIT1
 					rbx = STRU32 (i & STRU8 (0X01)) ;
 					rax = 5 ;
 				}
-				if ifswitch (eax) {
+				if ifswitch (rxx) {
 					if ifnot (rax == 1)
 						discard ;
 					if ifnot (i <= STRU8 (0XBF))
@@ -765,7 +800,7 @@ trait FUNCTION_string_cvt_impl_HELP<UNIT1 ,UNIT2 ,REQUIRE<ENUM_ALL<IS_SAME<UNIT1
 					rbx = STRU32 ((rbx << 6) | (i & STRU8 (0X3F))) ;
 					rax = 10 ;
 				}
-				if ifswitch (eax) {
+				if ifswitch (rxx) {
 					if ifnot (vbetween (rax ,2 ,6))
 						discard ;
 					if ifnot (i <= STRU8 (0XBF))
@@ -773,40 +808,44 @@ trait FUNCTION_string_cvt_impl_HELP<UNIT1 ,UNIT2 ,REQUIRE<ENUM_ALL<IS_SAME<UNIT1
 					rbx = STRU32 ((rbx << 6) | (i & STRU8 (0X3F))) ;
 					rax-- ;
 				}
-				if ifswitch (eax) {
+				if ifswitch (rxx) {
 					ret.clear () ;
 					rax = NONE ;
 				}
 				if (rax < 10)
 					continue ;
-				auto ebx = TRUE ;
-				if ifswitch (ebx) {
+				auto ryx = TRUE ;
+				if ifswitch (ryx) {
 					if ifnot (rax == 10)
 						discard ;
 					if ifnot (rbx <= STRU32 (0X0000FFFF))
 						discard ;
-					ret[iw++] = STRU16 (rbx) ;
+					ret[ix] = STRU16 (rbx) ;
+					ix++ ;
 					rax = 0 ;
 				}
-				if ifswitch (ebx) {
+				if ifswitch (ryx) {
 					if ifnot (rax == 10)
 						discard ;
 					if ifnot (rbx <= STRU32 (0X0010FFFF))
 						discard ;
 					rbx = STRU32 (rbx - STRU32 (0X00010000)) ;
-					ret[iw++] = (STRU16 (rbx >> 10) & STRU16 (0X03FF)) | STRU16 (0XD800) ;
-					ret[iw++] = (STRU16 (rbx) & STRU16 (0X03FF)) | STRU16 (0XDC00) ;
+					ret[ix] = (STRU16 (rbx >> 10) & STRU16 (0X03FF)) | STRU16 (0XD800) ;
+					ix++ ;
+					ret[ix] = (STRU16 (rbx) & STRU16 (0X03FF)) | STRU16 (0XDC00) ;
+					ix++ ;
 					rax = 0 ;
 				}
-				if ifswitch (ebx) {
+				if ifswitch (ryx) {
 					if ifnot (rax == 10)
 						discard ;
 					if ifnot (rbx <= STRU32 (0X7FFFFFFF))
 						discard ;
-					ret[iw++] = STRU16 ('?') ;
+					ret[ix] = STRU16 ('?') ;
+					ix++ ;
 					rax = 0 ;
 				}
-				if ifswitch (ebx) {
+				if ifswitch (ryx) {
 					ret.clear () ;
 					rax = NONE ;
 				}
@@ -814,8 +853,10 @@ trait FUNCTION_string_cvt_impl_HELP<UNIT1 ,UNIT2 ,REQUIRE<ENUM_ALL<IS_SAME<UNIT1
 			if ifswitch (TRUE) {
 				if (rax == 0)
 					discard ;
-				ret[iw++] = STRU16 ('?') ;
+				ret[ix] = STRU16 ('?') ;
+				ix++ ;
 			}
+			ret[ix] = 0 ;
 			return move (ret) ;
 		}
 	} ;
@@ -839,39 +880,44 @@ trait FUNCTION_string_cvt_impl_HELP<UNIT1 ,UNIT2 ,REQUIRE<ENUM_ALL<IS_SAME<UNIT1
 			*	utf16-utf32 surrogate pairs [0X10000,0X10FFFF]-[0,0XFFFFF] 0000xxxx xxxxxxxx xxxxxxxx
 			*/
 			String<STRU16> ret = String<STRU16> (obj.length () * 2) ;
-			INDEX iw = 0 ;
+			INDEX ix = 0 ;
 			auto rax = ZERO ;
 			for (auto &&i : obj) {
 				if (rax == NONE)
 					continue ;
-				auto eax = TRUE ;
-				if ifswitch (eax) {
+				auto rxx = TRUE ;
+				if ifswitch (rxx) {
 					if ifnot (rax == 0)
 						discard ;
 					if ifnot (i <= STRU32 (0X0000FFFF))
 						discard ;
-					ret[iw++] = STRU16 (i) ;
+					ret[ix] = STRU16 (i) ;
+					ix++ ;
 				}
-				if ifswitch (eax) {
+				if ifswitch (rxx) {
 					if ifnot (rax == 0)
 						discard ;
 					if ifnot (i <= STRU32 (0X0010FFFF))
 						discard ;
-					ret[iw++] = (STRU16 ((i - STRU32 (0X00010000)) >> 10) & STRU16 (0X03FF)) | STRU16 (0XD800) ;
-					ret[iw++] = (STRU16 (i - STRU32 (0X00010000)) & STRU16 (0X03FF)) | STRU16 (0XDC00) ;
+					ret[ix] = (STRU16 ((i - STRU32 (0X00010000)) >> 10) & STRU16 (0X03FF)) | STRU16 (0XD800) ;
+					ix++ ;
+					ret[ix] = (STRU16 (i - STRU32 (0X00010000)) & STRU16 (0X03FF)) | STRU16 (0XDC00) ;
+					ix++ ;
 				}
-				if ifswitch (eax) {
+				if ifswitch (rxx) {
 					if ifnot (rax == 0)
 						discard ;
 					if ifnot (i <= STRU32 (0X7FFFFFFF))
 						discard ;
-					ret[iw++] = STRU16 ('?') ;
+					ret[ix] = STRU16 ('?') ;
+					ix++ ;
 				}
-				if ifswitch (eax) {
+				if ifswitch (rxx) {
 					ret.clear () ;
 					rax = NONE ;
 				}
 			}
+			ret[ix] = 0 ;
 			return move (ret) ;
 		}
 	} ;
@@ -915,21 +961,22 @@ trait FUNCTION_string_cvt_impl_HELP<UNIT1 ,UNIT2 ,REQUIRE<ENUM_ALL<IS_SAME<UNIT1
 			*	6 bytes [0x4000000,0X7FFFFFFF] 1111110x 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx
 			*/
 			String<STRU32> ret = String<STRU32> (obj.length ()) ;
-			INDEX iw = 0 ;
+			INDEX ix = 0 ;
 			auto rax = ZERO ;
 			auto rbx = STRU32 () ;
 			for (auto &&i : obj) {
 				if (rax == NONE)
 					continue ;
-				auto eax = TRUE ;
-				if ifswitch (eax) {
+				auto rxx = TRUE ;
+				if ifswitch (rxx) {
 					if ifnot (rax == 0)
 						discard ;
 					if ifnot (i <= STRU8 (0X7F))
 						discard ;
-					ret[iw++] = STRU32 (i) ;
+					ret[ix] = STRU32 (i) ;
+					ix++ ;
 				}
-				if ifswitch (eax) {
+				if ifswitch (rxx) {
 					if ifnot (rax == 0)
 						discard ;
 					if ifnot (i <= STRU8 (0XDF))
@@ -937,7 +984,7 @@ trait FUNCTION_string_cvt_impl_HELP<UNIT1 ,UNIT2 ,REQUIRE<ENUM_ALL<IS_SAME<UNIT1
 					rbx = STRU32 (i & STRU8 (0X1F)) ;
 					rax = 1 ;
 				}
-				if ifswitch (eax) {
+				if ifswitch (rxx) {
 					if ifnot (rax == 0)
 						discard ;
 					if ifnot (i <= STRU8 (0XEF))
@@ -945,7 +992,7 @@ trait FUNCTION_string_cvt_impl_HELP<UNIT1 ,UNIT2 ,REQUIRE<ENUM_ALL<IS_SAME<UNIT1
 					rbx = STRU32 (i & STRU8 (0X0F)) ;
 					rax = 2 ;
 				}
-				if ifswitch (eax) {
+				if ifswitch (rxx) {
 					if ifnot (rax == 0)
 						discard ;
 					if ifnot (i <= STRU8 (0XF7))
@@ -953,7 +1000,7 @@ trait FUNCTION_string_cvt_impl_HELP<UNIT1 ,UNIT2 ,REQUIRE<ENUM_ALL<IS_SAME<UNIT1
 					rbx = STRU32 (i & STRU8 (0X07)) ;
 					rax = 3 ;
 				}
-				if ifswitch (eax) {
+				if ifswitch (rxx) {
 					if ifnot (rax == 0)
 						discard ;
 					if ifnot (i <= STRU8 (0XFB))
@@ -961,7 +1008,7 @@ trait FUNCTION_string_cvt_impl_HELP<UNIT1 ,UNIT2 ,REQUIRE<ENUM_ALL<IS_SAME<UNIT1
 					rbx = STRU32 (i & STRU8 (0X03)) ;
 					rax = 4 ;
 				}
-				if ifswitch (eax) {
+				if ifswitch (rxx) {
 					if ifnot (rax == 0)
 						discard ;
 					if ifnot (i <= STRU8 (0XFD))
@@ -969,16 +1016,17 @@ trait FUNCTION_string_cvt_impl_HELP<UNIT1 ,UNIT2 ,REQUIRE<ENUM_ALL<IS_SAME<UNIT1
 					rbx = STRU32 (i & STRU8 (0X01)) ;
 					rax = 5 ;
 				}
-				if ifswitch (eax) {
+				if ifswitch (rxx) {
 					if ifnot (rax == 1)
 						discard ;
 					if ifnot (i <= STRU8 (0XBF))
 						discard ;
 					rbx = STRU32 ((rbx << 6) | (i & STRU8 (0X3F))) ;
-					ret[iw++] = rbx ;
+					ret[ix] = rbx ;
+					ix++ ;
 					rax = 0 ;
 				}
-				if ifswitch (eax) {
+				if ifswitch (rxx) {
 					if ifnot (vbetween (rax ,2 ,6))
 						discard ;
 					if ifnot (i <= STRU8 (0XBF))
@@ -986,7 +1034,7 @@ trait FUNCTION_string_cvt_impl_HELP<UNIT1 ,UNIT2 ,REQUIRE<ENUM_ALL<IS_SAME<UNIT1
 					rbx = STRU32 ((rbx << 6) | (i & STRU8 (0X3F))) ;
 					rax-- ;
 				}
-				if ifswitch (eax) {
+				if ifswitch (rxx) {
 					ret.clear () ;
 					rax = NONE ;
 				}
@@ -994,8 +1042,10 @@ trait FUNCTION_string_cvt_impl_HELP<UNIT1 ,UNIT2 ,REQUIRE<ENUM_ALL<IS_SAME<UNIT1
 			if ifswitch (TRUE) {
 				if (rax == 0)
 					discard ;
-				ret[iw++] = STRU32 ('?') ;
+				ret[ix] = STRU32 ('?') ;
+				ix++ ;
 			}
+			ret[ix] = 0 ;
 			return move (ret) ;
 		}
 	} ;
@@ -1010,21 +1060,22 @@ trait FUNCTION_string_cvt_impl_HELP<UNIT1 ,UNIT2 ,REQUIRE<ENUM_ALL<IS_SAME<UNIT1
 			*	utf16-utf32 surrogate pairs [0X10000,0X10FFFF]-[0,0XFFFFF] 0000xxxx xxxxxxxx xxxxxxxx
 			*/
 			String<STRU32> ret = String<STRU32> (obj.length ()) ;
-			INDEX iw = 0 ;
+			INDEX ix = 0 ;
 			auto rax = ZERO ;
 			auto rbx = STRU32 () ;
 			for (auto &&i : obj) {
 				if (rax == NONE)
 					continue ;
-				auto eax = TRUE ;
-				if ifswitch (eax) {
+				auto rxx = TRUE ;
+				if ifswitch (rxx) {
 					if ifnot (rax == 0)
 						discard ;
 					if ifnot (i <= STRU16 (0X07FF))
 						discard ;
-					ret[iw++] = STRU32 (i) ;
+					ret[ix] = STRU32 (i) ;
+					ix++ ;
 				}
-				if ifswitch (eax) {
+				if ifswitch (rxx) {
 					if ifnot (rax == 0)
 						discard ;
 					if ifnot (i >= STRU16 (0XD800))
@@ -1034,12 +1085,13 @@ trait FUNCTION_string_cvt_impl_HELP<UNIT1 ,UNIT2 ,REQUIRE<ENUM_ALL<IS_SAME<UNIT1
 					rbx = STRU32 (i & STRU16 (0X03FF)) ;
 					rax = 1 ;
 				}
-				if ifswitch (eax) {
+				if ifswitch (rxx) {
 					if ifnot (rax == 0)
 						discard ;
-					ret[iw++] = STRU32 (i) ;
+					ret[ix] = STRU32 (i) ;
+					ix++ ;
 				}
-				if ifswitch (eax) {
+				if ifswitch (rxx) {
 					if ifnot (rax == 1)
 						discard ;
 					if ifnot (i >= STRU16 (0XDC00))
@@ -1047,10 +1099,11 @@ trait FUNCTION_string_cvt_impl_HELP<UNIT1 ,UNIT2 ,REQUIRE<ENUM_ALL<IS_SAME<UNIT1
 					if ifnot (i <= STRU16 (0XDFFF))
 						discard ;
 					rbx = STRU32 (((rbx << 10) | (i & STRU16 (0X03FF))) + STRU32 (0X00010000)) ;
-					ret[iw++] = rbx ;
+					ret[ix] = rbx ;
+					ix++ ;
 					rax = 0 ;
 				}
-				if ifswitch (eax) {
+				if ifswitch (rxx) {
 					ret.clear () ;
 					rax = NONE ;
 				}
@@ -1058,8 +1111,10 @@ trait FUNCTION_string_cvt_impl_HELP<UNIT1 ,UNIT2 ,REQUIRE<ENUM_ALL<IS_SAME<UNIT1
 			if ifswitch (TRUE) {
 				if (rax == 0)
 					discard ;
-				ret[iw++] = STRU32 ('?') ;
+				ret[ix] = STRU32 ('?') ;
+				ix++ ;
 			}
+			ret[ix] = 0 ;
 			return move (ret) ;
 		}
 	} ;
@@ -1101,57 +1156,109 @@ static constexpr auto string_cvt = FUNCTION_string_cvt () ;
 template <class...>
 trait REGULARSTRING_HELP ;
 
-template <class ITEM>
-trait REGULARSTRING_HELP<ITEM ,ALWAYS> {
-	class EscapeString extend Proxy {
+template <class DEPEND>
+trait REGULARSTRING_HELP<DEPEND ,ALWAYS> {
+	using BinderA = typename TEXTWRITER_HELP<STRA ,ALWAYS>::Binder ;
+	using BinderW = typename TEXTWRITER_HELP<STRW ,ALWAYS>::Binder ;
+	using BinderU8 = typename TEXTWRITER_HELP<STRU8 ,ALWAYS>::Binder ;
+	using BinderU16 = typename TEXTWRITER_HELP<STRU16 ,ALWAYS>::Binder ;
+	using BinderU32 = typename TEXTWRITER_HELP<STRU32 ,ALWAYS>::Binder ;
+	using Binder = Together<BinderA ,BinderW ,BinderU8 ,BinderU16 ,BinderU32> ;
+
+	class EscapeString implement Binder {
 	protected:
-		String<ITEM> mBase ;
+		String<STRU32> mText ;
 
 	public:
-		imports CREF<EscapeString> from (CREF<String<ITEM>> that) {
-			return unsafe_deref (unsafe_cast[TYPEAS<TEMP<EscapeString>>::id] (unsafe_deptr (that))) ;
+		implicit EscapeString () = delete ;
+
+		explicit EscapeString (CREF<Slice<STR>> text) {
+			mText = String<STRU8>::make (text) ;
 		}
 
-		imports CREF<EscapeString> from (RREF<String<ITEM>>) = delete ;
+		explicit EscapeString (CREF<String<STRA>> text) {
+			mText = string_cvt[TYPEAS<TYPEAS<STRU32 ,STRA>>::id] (text) ;
+		}
 
-		inline friend VREF<TextWriter<ITEM>> operator<< (VREF<TextWriter<ITEM>> wos ,CREF<EscapeString> thiz_) {
-			const auto r1x = wos.get_attr () ;
-			wos << ITEM ('\"') ;
-			for (auto &&i : thiz_.mBase) {
-				auto eax = TRUE ;
-				if ifswitch (eax) {
-					const auto r2x = r1x->escape_cast (i) ;
+		explicit EscapeString (CREF<String<STRW>> text) {
+			mText = string_cvt[TYPEAS<TYPEAS<STRU32 ,STRW>>::id] (text) ;
+		}
+
+		explicit EscapeString (CREF<String<STRU8>> text) {
+			mText = string_cvt[TYPEAS<TYPEAS<STRU32 ,STRU8>>::id] (text) ;
+		}
+
+		explicit EscapeString (CREF<String<STRU16>> text) {
+			mText = string_cvt[TYPEAS<TYPEAS<STRU32 ,STRU16>>::id] (text) ;
+		}
+
+		explicit EscapeString (CREF<String<STRU32>> text) {
+			mText = string_cvt[TYPEAS<TYPEAS<STRU32 ,STRU32>>::id] (text) ;
+		}
+
+		void friend_write (VREF<TextWriter<STRA>> writer) const override {
+			template_write (TYPEAS<STRA>::id ,writer) ;
+		}
+
+		void friend_write (VREF<TextWriter<STRW>> writer) const override {
+			template_write (TYPEAS<STRW>::id ,writer) ;
+		}
+
+		void friend_write (VREF<TextWriter<STRU8>> writer) const override {
+			template_write (TYPEAS<STRU8>::id ,writer) ;
+		}
+
+		void friend_write (VREF<TextWriter<STRU16>> writer) const override {
+			template_write (TYPEAS<STRU16>::id ,writer) ;
+		}
+
+		void friend_write (VREF<TextWriter<STRU32>> writer) const override {
+			template_write (TYPEAS<STRU32>::id ,writer) ;
+		}
+
+		template <class ARG1 ,class ARG2>
+		void template_write (CREF<ARG1> id ,VREF<ARG2> writer) const {
+			using R1X = REMOVE_ALL<ARG1> ;
+			const auto r1x = writer.get_attr () ;
+			writer << R1X ('\"') ;
+			for (auto &&i : mText) {
+				auto rxx = TRUE ;
+				if ifswitch (rxx) {
+					const auto r2x = r1x->escape_cast (R1X (i)) ;
 					if ifnot (r2x.exist ())
 						discard ;
-					wos << ITEM ('\\') ;
-					wos << r2x.self ;
+					writer << R1X ('\\') ;
+					writer << r2x.self ;
 				}
-				if ifswitch (eax) {
-					wos << i ;
+				if ifswitch (rxx) {
+					writer << R1X (i) ;
 				}
 			}
-			wos << ITEM ('\"') ;
-			return wos ;
+			writer << R1X ('\"') ;
 		}
 	} ;
 } ;
 
-template <class ITEM>
-using EscapeString = typename REGULARSTRING_HELP<ITEM ,ALWAYS>::EscapeString ;
+using EscapeString = typename REGULARSTRING_HELP<DEPEND ,ALWAYS>::EscapeString ;
 
 template <class...>
 trait REPEATSTRING_HELP ;
 
-template <class ITEM>
-trait REPEATSTRING_HELP<ITEM ,ALWAYS> {
-	using Binder = typename TEXTWRITER_HELP<ITEM ,ALWAYS>::Binder ;
+template <class DEPEND>
+trait REPEATSTRING_HELP<DEPEND ,ALWAYS> {
+	using BinderA = typename TEXTWRITER_HELP<STRA ,ALWAYS>::Binder ;
+	using BinderW = typename TEXTWRITER_HELP<STRW ,ALWAYS>::Binder ;
+	using BinderU8 = typename TEXTWRITER_HELP<STRU8 ,ALWAYS>::Binder ;
+	using BinderU16 = typename TEXTWRITER_HELP<STRU16 ,ALWAYS>::Binder ;
+	using BinderU32 = typename TEXTWRITER_HELP<STRU32 ,ALWAYS>::Binder ;
+	using Binder = Together<BinderA ,BinderW ,BinderU8 ,BinderU16 ,BinderU32> ;
 
 	using COUNTER_MAX_DEPTH = ENUMAS<VAL ,ENUMID<256>> ;
 
 	class RepeatString implement Binder {
 	protected:
-		String<ITEM> mGapText ;
-		String<ITEM> mCommaText ;
+		String<STRU32> mGapText ;
+		String<STRU32> mCommaText ;
 		LENGTH mCounter ;
 		Cell<LENGTH> mTightCounter ;
 		Deque<Cell<BOOL>> mFirst ;
@@ -1159,54 +1266,86 @@ trait REPEATSTRING_HELP<ITEM ,ALWAYS> {
 	public:
 		implicit RepeatString () = delete ;
 
-		explicit RepeatString (CREF<Slice<STRA>> gap_text ,CREF<Slice<STRA>> comma_text) {
-			mGapText = String<ITEM> (gap_text.size ()) ;
-			for (auto &&i : iter (0 ,gap_text.size ())) {
-				vbetween (INDEX (gap_text[i]) ,0 ,128) ;
-				mGapText[i] = ITEM (gap_text[i]) ;
-			}
-			mCommaText = String<ITEM> (comma_text.size ()) ;
-			for (auto &&i : iter (0 ,comma_text.size ())) {
-				vbetween (INDEX (comma_text[i]) ,0 ,128) ;
-				mCommaText[i] = ITEM (comma_text[i]) ;
-			}
+		explicit RepeatString (CREF<Slice<STR>> gap_text ,CREF<Slice<STR>> comma_text) {
+			mGapText = String<STRU32>::make (gap_text) ;
+			mCommaText = String<STRU32>::make (comma_text) ;
+			initialize () ;
+		}
+
+		explicit RepeatString (CREF<String<STRA>> gap_text ,CREF<String<STRA>> comma_text) {
+			mGapText = string_cvt[TYPEAS<TYPEAS<STRU32 ,STRA>>::id] (gap_text) ;
+			mCommaText = string_cvt[TYPEAS<TYPEAS<STRU32 ,STRA>>::id] (comma_text) ;
+			initialize () ;
+		}
+
+		explicit RepeatString (CREF<String<STRW>> gap_text ,CREF<String<STRW>> comma_text) {
+			mGapText = string_cvt[TYPEAS<TYPEAS<STRU32 ,STRW>>::id] (gap_text) ;
+			mCommaText = string_cvt[TYPEAS<TYPEAS<STRU32 ,STRW>>::id] (comma_text) ;
+			initialize () ;
+		}
+
+		explicit RepeatString (CREF<String<STRU8>> gap_text ,CREF<String<STRU8>> comma_text) {
+			mGapText = string_cvt[TYPEAS<TYPEAS<STRU32 ,STRU8>>::id] (gap_text) ;
+			mCommaText = string_cvt[TYPEAS<TYPEAS<STRU32 ,STRU8>>::id] (comma_text) ;
+			initialize () ;
+		}
+
+		explicit RepeatString (CREF<String<STRU16>> gap_text ,CREF<String<STRU16>> comma_text) {
+			mGapText = string_cvt[TYPEAS<TYPEAS<STRU32 ,STRU16>>::id] (gap_text) ;
+			mCommaText = string_cvt[TYPEAS<TYPEAS<STRU32 ,STRU16>>::id] (comma_text) ;
+			initialize () ;
+		}
+
+		explicit RepeatString (CREF<String<STRU32>> gap_text ,CREF<String<STRU32>> comma_text) {
+			mGapText = string_cvt[TYPEAS<TYPEAS<STRU32 ,STRU32>>::id] (gap_text) ;
+			mCommaText = string_cvt[TYPEAS<TYPEAS<STRU32 ,STRU32>>::id] (comma_text) ;
+			initialize () ;
+		}
+
+		void initialize () {
 			mCounter = 0 ;
 			mTightCounter = Cell<LENGTH>::make (COUNTER_MAX_DEPTH::value) ;
 			mFirst = Deque<Cell<BOOL>> (COUNTER_MAX_DEPTH::value * 2) ;
 			mFirst.add (Cell<BOOL>::make (TRUE)) ;
 		}
 
-		explicit RepeatString (CREF<Slice<STRW>> gap_text ,CREF<Slice<STRW>> comma_text) {
-			mGapText = String<ITEM> (gap_text.size ()) ;
-			for (auto &&i : iter (0 ,gap_text.size ())) {
-				vbetween (INDEX (gap_text[i]) ,0 ,128) ;
-				mGapText[i] = ITEM (gap_text[i]) ;
-			}
-			mCommaText = String<ITEM> (comma_text.size ()) ;
-			for (auto &&i : iter (0 ,comma_text.size ())) {
-				vbetween (INDEX (comma_text[i]) ,0 ,128) ;
-				mCommaText[i] = ITEM (comma_text[i]) ;
-			}
-			mCounter = 0 ;
-			mTightCounter = Cell<LENGTH>::make (COUNTER_MAX_DEPTH::value) ;
-			mFirst = Deque<Cell<BOOL>> (COUNTER_MAX_DEPTH::value * 2) ;
-			mFirst.add (Cell<BOOL>::make (TRUE)) ;
+		void friend_write (VREF<TextWriter<STRA>> writer) const override {
+			template_write (TYPEAS<STRA>::id ,writer) ;
 		}
 
-		void friend_write (VREF<TextWriter<ITEM>> writer) const override {
+		void friend_write (VREF<TextWriter<STRW>> writer) const override {
+			template_write (TYPEAS<STRW>::id ,writer) ;
+		}
+
+		void friend_write (VREF<TextWriter<STRU8>> writer) const override {
+			template_write (TYPEAS<STRU8>::id ,writer) ;
+		}
+
+		void friend_write (VREF<TextWriter<STRU16>> writer) const override {
+			template_write (TYPEAS<STRU16>::id ,writer) ;
+		}
+
+		void friend_write (VREF<TextWriter<STRU32>> writer) const override {
+			template_write (TYPEAS<STRU32>::id ,writer) ;
+		}
+
+		template <class ARG1 ,class ARG2>
+		void template_write (CREF<ARG1> id ,VREF<ARG2> writer) const {
+			using R1X = REMOVE_ALL<ARG1> ;
 			INDEX ix = mFirst.tail () ;
-			auto eax = TRUE ;
-			if ifswitch (eax) {
+			auto rxx = TRUE ;
+			if ifswitch (rxx) {
 				if ifnot (mCounter > mTightCounter.fetch ())
 					discard ;
 				if ifswitch (TRUE) {
 					if (mFirst[ix].fetch ())
 						discard ;
-					writer << mCommaText ;
+					for (auto &&j : mCommaText)
+						writer << R1X (j) ;
 				}
 				mFirst[ix].store (FALSE) ;
 			}
-			if ifswitch (eax) {
+			if ifswitch (rxx) {
 				if (mCounter != mTightCounter.fetch ())
 					discard ;
 				if ifnot (mFirst[ix].fetch ())
@@ -1214,17 +1353,19 @@ trait REPEATSTRING_HELP<ITEM ,ALWAYS> {
 				mTightCounter.store (COUNTER_MAX_DEPTH::value) ;
 				mFirst[ix].store (FALSE) ;
 			}
-			if ifswitch (eax) {
-				writer << TextWriter<ITEM>::GAP ;
+			if ifswitch (rxx) {
+				writer << TextWriter<R1X>::GAP ;
 				if ifswitch (TRUE) {
 					if (mFirst[ix].fetch ())
 						discard ;
-					writer << mCommaText ;
+					for (auto &&j : mCommaText)
+						writer << R1X (j) ;
 				}
 				mFirst[ix].store (FALSE) ;
 				for (auto &&i : iter (0 ,mCounter)) {
 					noop (i) ;
-					writer << mGapText ;
+					for (auto &&j : mGapText)
+						writer << R1X (j) ;
 				}
 			}
 		}
@@ -1248,15 +1389,19 @@ trait REPEATSTRING_HELP<ITEM ,ALWAYS> {
 	} ;
 } ;
 
-template <class ITEM>
-using RepeatString = typename REPEATSTRING_HELP<ITEM ,ALWAYS>::RepeatString ;
+using RepeatString = typename REPEATSTRING_HELP<DEPEND ,ALWAYS>::RepeatString ;
 
 template <class...>
 trait ALIGNEDSTRING_HELP ;
 
-template <class ITEM>
-trait ALIGNEDSTRING_HELP<ITEM ,ALWAYS> {
-	using Binder = typename TEXTWRITER_HELP<ITEM ,ALWAYS>::Binder ;
+template <class DEPEND>
+trait ALIGNEDSTRING_HELP<DEPEND ,ALWAYS> {
+	using BinderA = typename TEXTWRITER_HELP<STRA ,ALWAYS>::Binder ;
+	using BinderW = typename TEXTWRITER_HELP<STRW ,ALWAYS>::Binder ;
+	using BinderU8 = typename TEXTWRITER_HELP<STRU8 ,ALWAYS>::Binder ;
+	using BinderU16 = typename TEXTWRITER_HELP<STRU16 ,ALWAYS>::Binder ;
+	using BinderU32 = typename TEXTWRITER_HELP<STRU32 ,ALWAYS>::Binder ;
+	using Binder = Together<BinderA ,BinderW ,BinderU8 ,BinderU16 ,BinderU32> ;
 
 	class AlignedString implement Binder {
 	protected:
@@ -1274,7 +1419,28 @@ trait ALIGNEDSTRING_HELP<ITEM ,ALWAYS> {
 			assume (mSpace >= 0) ;
 		}
 
-		void friend_write (VREF<TextWriter<ITEM>> writer) const override {
+		void friend_write (VREF<TextWriter<STRA>> writer) const override {
+			template_write (TYPEAS<STRA>::id ,writer) ;
+		}
+
+		void friend_write (VREF<TextWriter<STRW>> writer) const override {
+			template_write (TYPEAS<STRW>::id ,writer) ;
+		}
+
+		void friend_write (VREF<TextWriter<STRU8>> writer) const override {
+			template_write (TYPEAS<STRU8>::id ,writer) ;
+		}
+
+		void friend_write (VREF<TextWriter<STRU16>> writer) const override {
+			template_write (TYPEAS<STRU16>::id ,writer) ;
+		}
+
+		void friend_write (VREF<TextWriter<STRU32>> writer) const override {
+			template_write (TYPEAS<STRU32>::id ,writer) ;
+		}
+
+		template <class ARG1 ,class ARG2>
+		void template_write (CREF<ARG1> id ,VREF<ARG2> writer) const {
 			for (auto &&i : iter (0 ,mSpace)) {
 				noop (i) ;
 				writer << slice ("0") ;
@@ -1284,6 +1450,5 @@ trait ALIGNEDSTRING_HELP<ITEM ,ALWAYS> {
 	} ;
 } ;
 
-template <class ITEM>
-using AlignedString = typename ALIGNEDSTRING_HELP<ITEM ,ALWAYS>::AlignedString ;
+using AlignedString = typename ALIGNEDSTRING_HELP<DEPEND ,ALWAYS>::AlignedString ;
 } ;

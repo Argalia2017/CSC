@@ -288,13 +288,13 @@ trait MUTEX_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		void enter () const override {
-			auto eax = TRUE ;
-			if ifswitch (eax) {
+			auto rxx = TRUE ;
+			if ifswitch (rxx) {
 				if (mHeap->mMutex == NULL)
 					discard ;
 				mHeap->mMutex->lock () ;
 			}
-			if ifswitch (eax) {
+			if ifswitch (rxx) {
 				if (mHeap->mRecursive == NULL)
 					discard ;
 				mHeap->mRecursive->lock () ;
@@ -302,13 +302,13 @@ trait MUTEX_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		void leave () const override {
-			auto eax = TRUE ;
-			if ifswitch (eax) {
+			auto rxx = TRUE ;
+			if ifswitch (rxx) {
 				if (mHeap->mMutex == NULL)
 					discard ;
 				mHeap->mMutex->unlock () ;
 			}
-			if ifswitch (eax) {
+			if ifswitch (rxx) {
 				if (mHeap->mRecursive == NULL)
 					discard ;
 				mHeap->mRecursive->unlock () ;
@@ -332,6 +332,7 @@ trait CONDITIONALLOCK_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	protected:
 		SharedRef<HEAP> mHeap ;
 		std::unique_lock<std::mutex> mLock ;
+		Scope<ImplHolder> mHandle ;
 
 	public:
 		implicit ImplHolder () = default ;
@@ -339,9 +340,17 @@ trait CONDITIONALLOCK_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		void initialize (CREF<Mutex> mutex_) override {
 			using R1X = typename MUTEX_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 			const auto r1x = mutex_.native ().poll (TYPEAS<CRef<R1X>>::id) ;
-			//@error: not thread safe when deconstruct
 			mHeap = r1x->condition_lock (mLock) ;
+			mHandle = Scope<ImplHolder> (thiz) ;
+		}
+
+		void enter () {
 			assert (mHeap->mConditional.exist ()) ;
+		}
+
+		void leave () {
+			mHeap = SharedRef<HEAP> () ;
+			mLock = std::unique_lock<std::mutex> () ;
 		}
 
 		void wait () override {
@@ -404,6 +413,14 @@ trait THREAD_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			mHandle = Scope<ImplHolder> (thiz) ;
 		}
 
+		void enter () {
+			noop () ;
+		}
+
+		void leave () {
+			assume (mBlock == NULL) ;
+		}
+
 		FLAG thread_uid () const override {
 			return mUID ;
 		}
@@ -428,14 +445,6 @@ trait THREAD_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				mBlock = NULL ;
 				mUID = ZERO ;
 			}
-		}
-
-		void enter () {
-			noop () ;
-		}
-
-		void leave () {
-			assume (mBlock == NULL) ;
 		}
 	} ;
 } ;

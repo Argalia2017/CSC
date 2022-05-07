@@ -199,6 +199,10 @@ trait TIMEPOINT_HELP<DEPEND ,ALWAYS> {
 	using MACRO_TimeDuration = typename DEPENDENT<TIMEDURATION_HELP<DEPEND ,ALWAYS> ,ARG1>::TimeDuration ;
 
 	class TimePoint {
+	private:
+		template <class...>
+		friend trait TIMEDURATION_HELP ;
+
 	protected:
 		VRef<Holder> mThis ;
 
@@ -469,12 +473,12 @@ trait CONDITIONALLOCK_HELP<DEPEND ,ALWAYS> {
 		virtual void yield () = 0 ;
 	} ;
 
-	using CONDITIONALLOCK_MAX_SIZE = ENUMAS<VAL ,ENUMID<64>> ;
-	using CONDITIONALLOCK_MAX_ALIGN = ALIGN_OF<DATA> ;
+	using FAKE_MAX_SIZE = ENUMAS<VAL ,ENUMID<64>> ;
+	using FAKE_MAX_ALIGN = ALIGN_OF<DATA> ;
 
 	class FakeHolder implement Holder {
 	protected:
-		Storage<CONDITIONALLOCK_MAX_SIZE ,CONDITIONALLOCK_MAX_ALIGN> mStorage ;
+		Storage<FAKE_MAX_SIZE ,FAKE_MAX_ALIGN> mStorage ;
 
 	public:
 		void initialize (CREF<Mutex> mutex_) override ;
@@ -652,7 +656,7 @@ trait THREAD_HELP<DEPEND ,ALWAYS> {
 		}
 
 		void start () {
-			return mThis->execute () ;
+			return mThis->start () ;
 		}
 
 		void stop () {
@@ -952,29 +956,27 @@ trait RANDOM_HELP<DEPEND ,ALWAYS> {
 		Array<DATA> random_byte (CREF<LENGTH> size_) const {
 			Scope<Mutex> anonymous (mMutex) ;
 			Array<DATA> ret = Array<DATA> (size_) ;
-			for (auto &&i : ret.iter ())
-				ret[i] = mThis->random_byte () ;
+			for (auto &&i : ret)
+				i = mThis->random_byte () ;
 			return move (ret) ;
 		}
 
 		INDEX random_value (CREF<INDEX> lb ,CREF<INDEX> rb) const {
 			Scope<Mutex> anonymous (mMutex) ;
 			assert (lb <= rb) ;
-			const auto r1x = VAL64 (rb) - VAL64 (lb) ;
-			const auto r2x = r1x + 1 ;
-			const auto r3x = VAL64 (mThis->random_byte ()) ;
-			return INDEX (r3x % r2x + lb) ;
+			const auto r1x = VAL64 (rb) - VAL64 (lb) + 1 ;
+			const auto r2x = VAL64 (mThis->random_byte () & DATA (VAL64_MAX)) ;
+			return INDEX (r2x % r1x + lb) ;
 		}
 
 		Array<INDEX> random_value (CREF<INDEX> lb ,CREF<INDEX> rb ,CREF<LENGTH> size_) const {
 			Scope<Mutex> anonymous (mMutex) ;
 			assert (lb <= rb) ;
 			Array<INDEX> ret = Array<INDEX> (size_) ;
-			const auto r1x = VAL64 (rb) - VAL64 (lb) ;
-			const auto r2x = r1x + 1 ;
-			for (auto &&i : ret.iter ()) {
-				const auto r3x = VAL64 (mThis->random_byte ()) ;
-				ret[i] = INDEX (r3x % r2x + lb) ;
+			const auto r1x = VAL64 (rb) - VAL64 (lb) + 1 ;
+			for (auto &&i : ret) {
+				const auto r2x = VAL64 (mThis->random_byte () & DATA (VAL64_MAX)) ;
+				i = INDEX (r2x % r1x + lb) ;
 			}
 			return move (ret) ;
 		}
@@ -1007,15 +1009,15 @@ trait RANDOM_HELP<DEPEND ,ALWAYS> {
 			assert (count >= 0) ;
 			assert (count <= size_) ;
 			BitSet<> ret = BitSet<> (size_) ;
-			auto eax = TRUE ;
-			if ifswitch (eax) {
+			auto rxx = TRUE ;
+			if ifswitch (rxx) {
 				if (count >= size_ / 2)
 					discard ;
 				const auto r1x = random_shuffle (count ,size_) ;
 				for (auto &&i : iter (0 ,count))
 					ret.add (r1x[i]) ;
 			}
-			if ifswitch (eax) {
+			if ifswitch (rxx) {
 				const auto r2x = random_shuffle (size_ - count ,size_) ;
 				for (auto &&i : iter (size_ - count ,size_))
 					ret.add (r2x[i]) ;

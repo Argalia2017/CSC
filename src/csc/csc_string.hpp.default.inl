@@ -128,6 +128,7 @@ trait STRINGPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				ret[ix] = STRW (i) ;
 				ix++ ;
 			}
+			ret[ix] = 0 ;
 			return move (ret) ;
 		}
 
@@ -139,6 +140,7 @@ trait STRINGPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				ret[ix] = STRA (i) ;
 				ix++ ;
 			}
+			ret[ix] = 0 ;
 			return move (ret) ;
 		}
 
@@ -147,19 +149,20 @@ trait STRINGPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			String<STRA> ret = String<STRA> (obj.length () * 2) ;
 			INDEX ix = 0 ;
 			for (auto &&i : obj) {
-				auto eax = TRUE ;
-				if ifswitch (eax) {
+				auto rxx = TRUE ;
+				if ifswitch (rxx) {
 					const auto r1x = R1X::instance ().find_utfs (STRUW (i)) ;
 					if (r1x == NONE)
 						discard ;
-					ret[ix] = STRA (R1X::instance ()[r1x].pick (TYPEAS<RANK0>::id)) ;
+					ret[ix] = STRA (R1X::instance ()[r1x].mP1st) ;
 					ix++ ;
 				}
-				if ifswitch (eax) {
+				if ifswitch (rxx) {
 					ret[ix] = STRA ('?') ;
 					ix++ ;
 				}
 			}
+			ret[ix] = 0 ;
 			return move (ret) ;
 		}
 
@@ -168,19 +171,20 @@ trait STRINGPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			String<STRW> ret = String<STRW> (obj.length ()) ;
 			INDEX ix = 0 ;
 			for (auto &&i : obj) {
-				auto eax = TRUE ;
-				if ifswitch (eax) {
+				auto rxx = TRUE ;
+				if ifswitch (rxx) {
 					const auto r1x = R1X::instance ().find_utfs (STRUW (i)) ;
 					if (r1x == NONE)
 						discard ;
-					ret[ix] = STRW (R1X::instance ()[r1x].pick (TYPEAS<RANK1>::id)) ;
+					ret[ix] = STRW (R1X::instance ()[r1x].mP2nd) ;
 					ix++ ;
 				}
-				if ifswitch (eax) {
+				if ifswitch (rxx) {
 					ret[ix] = STRW ('?') ;
 					ix++ ;
 				}
 			}
+			ret[ix] = 0 ;
 			return move (ret) ;
 		}
 

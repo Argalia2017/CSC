@@ -8,8 +8,11 @@
 #define leftvalue &
 #define rightvalue &&
 #define thiz (*this)
-#define self m_self ()
-#define fake m_fake ()
+#define self self_m ()
+#define fake fake_m ()
+#define mP1st mP1st_m ()
+#define mP2nd mP2nd_m ()
+#define mP3rd mP3rd_m ()
 #define trait struct
 #define implement :public
 #define extend :private

@@ -68,7 +68,9 @@
 #define __CSC_CONFIG_STRA__
 #endif
 
+#ifdef _DEPRECATED
 #define __CSC_CXX_LITE__
+#endif
 
 #ifndef __CSC_CXX_LITE__
 #ifdef _MSVC_LANG
@@ -139,6 +141,7 @@
 #endif
 
 #ifdef __CSC_CXX_LITE__
+//@fatal: fuck initializer_list
 namespace std {
 template <class>
 class initializer_list ;
@@ -147,6 +150,7 @@ class initializer_list ;
 
 #ifdef __CSC_CXX_LITE__
 #ifdef __CSC_COMPILER_GNUC__
+//@fatal: fuck g++4.8
 #include <type_traits>
 #define __is_constructible(...) std::is_constructible<__VA_ARGS__>::value
 #define __is_assignable(...) std::is_assignable<__VA_ARGS__>::value
@@ -161,6 +165,7 @@ class initializer_list ;
 
 #ifdef __CSC_COMPILER_GNUC__
 #if __GLIBCXX__ <= 20140522L
+//@fatal: fuck g++4.8
 namespace std {
 template <class T>
 struct is_trivially_constructible :integral_constant<bool ,__has_trivial_constructor (T)> {} ;
@@ -235,12 +240,12 @@ struct is_trivially_constructible :integral_constant<bool ,__has_trivial_constru
 #endif
 
 #ifdef __CSC_COMPILER_GNUC__
-//@warn: fuck g++4.8
+//@fatal: fuck g++4.8
 #define __macro_assume(...) do { if (__VA_ARGS__) break ; CSC::Exception (CSC::TYPEAS<where>::id ,CSC::Slice<CSC::STR> (CSC::TYPEAS<where>::id ,"assume failed : " __macro_str (__VA_ARGS__) " : at " ,__PRETTY_FUNCTION__ ," in " __FILE__ " ," __macro_str (__LINE__))).raise () ; } while (false)
 #endif
 
 #ifdef __CSC_COMPILER_CLANG__
-	//@warn: fuck clang5.0
+//@fatal: fuck clang5.0
 #define __macro_assume(...) do { if (__VA_ARGS__) break ; CSC::Exception (CSC::TYPEAS<where>::id ,CSC::Slice<CSC::STR> (CSC::TYPEAS<where>::id ,"assume failed : " __macro_str (__VA_ARGS__) " : at " ,__PRETTY_FUNCTION__ ," in " __FILE__ " ," __macro_str (__LINE__))).raise () ; } while (false)
 #endif
 #endif
@@ -281,7 +286,7 @@ struct is_trivially_constructible :integral_constant<bool ,__has_trivial_constru
 #endif
 
 #ifndef __macro_ifswitch
-#define __macro_ifswitch(A) (A) goto anonymous ; while (CSC::unsafe_switch (A)) anonymous:
+#define __macro_ifswitch(A) (A) for (bool anonymous = true ; anonymous ; anonymous = CSC::unsafe_switch (A))
 #endif
 
 #ifndef __macro_typeof
@@ -335,6 +340,7 @@ struct csc_byte128_t {
 } ;
 
 using csc_pointer_t = DEF<void *> ;
+using csc_const_pointer_t = DEF<const void *> ;
 
 #ifdef __CSC_CXX_LITE__
 #ifdef __CSC_SYSTEM_WINDOWS__
@@ -378,7 +384,7 @@ struct ENUMID {} ;
 
 template <class UNIT1 ,csc_ptrdiff_t UNIT2>
 struct ENUMAS<UNIT1 ,ENUMID<UNIT2>> {
-	//@warn: fuck odr-use
+	//@fatal: fuck odr-use
 	static constexpr UNIT1 value = UNIT1 (UNIT2) ;
 } ;
 
@@ -399,7 +405,7 @@ struct TYPEID {} ;
 
 template <class UNIT1>
 struct TYPEAS<UNIT1> {
-	//@warn: fuck odr-use
+	//@fatal: fuck odr-use
 	static constexpr TYPEID<UNIT1> id = TYPEID<UNIT1> () ;
 } ;
 
