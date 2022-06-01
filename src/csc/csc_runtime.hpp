@@ -287,7 +287,8 @@ trait TIMEPOINT_HELP<DEPEND ,ALWAYS> {
 
 	class NowTimePoint implement TimePoint {
 	public:
-		implicit NowTimePoint () :TimePoint (TimePoint::make_now ()) {}
+		implicit NowTimePoint ()
+			:TimePoint (TimePoint::make_now ()) {}
 	} ;
 } ;
 
@@ -437,17 +438,20 @@ trait MUTEX_HELP<DEPEND ,ALWAYS> {
 
 	class ScopeMutex implement Mutex {
 	public:
-		implicit ScopeMutex () :Mutex (Mutex::make_mutex ()) {}
+		implicit ScopeMutex ()
+			:Mutex (Mutex::make_mutex ()) {}
 	} ;
 
 	class RecursiveMutex implement Mutex {
 	public:
-		implicit RecursiveMutex () :Mutex (Mutex::make_recursive ()) {}
+		implicit RecursiveMutex ()
+			:Mutex (Mutex::make_recursive ()) {}
 	} ;
 
 	class ConditionalMutex implement Mutex {
 	public:
-		implicit ConditionalMutex () :Mutex (Mutex::make_conditional ()) {}
+		implicit ConditionalMutex ()
+			:Mutex (Mutex::make_conditional ()) {}
 	} ;
 } ;
 
@@ -721,7 +725,8 @@ trait PROCESS_HELP<DEPEND ,ALWAYS> {
 
 	class CurrentProcess implement Process {
 	public:
-		implicit CurrentProcess () :Process (RuntimeProc::process_uid ()) {}
+		implicit CurrentProcess ()
+			:Process (RuntimeProc::process_uid ()) {}
 	} ;
 } ;
 
@@ -809,7 +814,7 @@ trait SINGLETON_HELP<UNIT1 ,ALWAYS> {
 				if ifswitch (TRUE) {
 					const auto r1x = unique () ;
 					assert (r1x.available ()) ;
-					const auto r2x = Clazz (TYPEAS<UNIT1>::id).type_name () ;
+					const auto r2x = Clazz (TYPEAS<UNIT1>::expr).type_name () ;
 					rax = r1x->mThis->map (r2x) ;
 					if (rax != ZERO)
 						discard ;
@@ -818,7 +823,7 @@ trait SINGLETON_HELP<UNIT1 ,ALWAYS> {
 					rax = r1x->mThis->map (r2x) ;
 				}
 				assume (rax != ZERO) ;
-				auto &&tmp = unsafe_deref (unsafe_cast[TYPEAS<TEMP<UNIT1>>::id] (unsafe_pointer (rax))) ;
+				auto &&tmp = unsafe_deref (unsafe_cast[TYPEAS<TEMP<UNIT1>>::expr] (unsafe_pointer (rax))) ;
 				return CRef<UNIT1>::reference (tmp) ;
 			}) ;
 		}

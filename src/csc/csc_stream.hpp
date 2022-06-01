@@ -43,16 +43,8 @@ trait BYTEREADER_HELP<DEPEND ,ALWAYS> {
 
 		explicit ByteReader (RREF<CRef<RegBuffer<BYTE>>> stream) {
 			using R1X = typename BYTEREADER_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
-			set_attr (TYPEAS<R1X>::id) ;
+			set_attr (TYPEAS<R1X>::expr) ;
 			mStream = move (stream) ;
-			reset () ;
-			backup () ;
-		}
-
-		explicit ByteReader (RREF<VRef<RegBuffer<BYTE>>> stream) {
-			using R1X = typename BYTEREADER_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
-			set_attr (TYPEAS<R1X>::id) ;
-			mStream = stream.as_cref () ;
 			reset () ;
 			backup () ;
 		}
@@ -62,10 +54,9 @@ trait BYTEREADER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		template <class ARG1>
-		void set_attr (CREF<ARG1> id) {
-			using R1X = REMOVE_ALL<ARG1> ;
-			require (IS_EXTEND<Attribute ,R1X>) ;
-			mAttr = CRef<R1X>::make () ;
+		void set_attr (CREF<TYPEID<ARG1>> id) {
+			require (IS_EXTEND<Attribute ,ARG1>) ;
+			mAttr = CRef<ARG1>::make () ;
 		}
 
 		LENGTH size () const {
@@ -100,9 +91,8 @@ trait BYTEREADER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		template <class ARG1>
-		REMOVE_ALL<ARG1> poll (CREF<ARG1> id) {
-			using R1X = REMOVE_ALL<ARG1> ;
-			R1X ret ;
+		ARG1 poll (CREF<TYPEID<ARG1>> id) {
+			ARG1 ret ;
 			read (ret) ;
 			return move (ret) ;
 		}
@@ -141,17 +131,17 @@ trait BYTEREADER_HELP<DEPEND ,ALWAYS> {
 				if ifnot (mAttr->is_big_endian ())
 					discard ;
 				auto rax = Box<ARR<BYTE ,SIZE_OF<WORD>>>::make () ;
-				for (auto &&i : iter (0 ,SIZE_OF<WORD>::value))
+				for (auto &&i : iter (0 ,SIZE_OF<WORD>::expr))
 					read (rax.self[i]) ;
-				item = bitwise[TYPEAS<WORD>::id] (rax.self) ;
+				item = bitwise[TYPEAS<WORD>::expr] (rax.self) ;
 			}
 			if ifswitch (rxx) {
 				auto rax = Box<ARR<BYTE ,SIZE_OF<WORD>>>::make () ;
-				for (auto &&i : iter (0 ,SIZE_OF<WORD>::value)) {
-					INDEX ix = SIZE_OF<WORD>::value - 1 - i ;
+				for (auto &&i : iter (0 ,SIZE_OF<WORD>::expr)) {
+					INDEX ix = SIZE_OF<WORD>::expr - 1 - i ;
 					read (rax.self[ix]) ;
 				}
-				item = bitwise[TYPEAS<WORD>::id] (rax.self) ;
+				item = bitwise[TYPEAS<WORD>::expr] (rax.self) ;
 			}
 		}
 
@@ -166,17 +156,17 @@ trait BYTEREADER_HELP<DEPEND ,ALWAYS> {
 				if ifnot (mAttr->is_big_endian ())
 					discard ;
 				auto rax = Box<ARR<BYTE ,SIZE_OF<CHAR>>>::make () ;
-				for (auto &&i : iter (0 ,SIZE_OF<CHAR>::value))
+				for (auto &&i : iter (0 ,SIZE_OF<CHAR>::expr))
 					read (rax.self[i]) ;
-				item = bitwise[TYPEAS<CHAR>::id] (rax.self) ;
+				item = bitwise[TYPEAS<CHAR>::expr] (rax.self) ;
 			}
 			if ifswitch (rxx) {
 				auto rax = Box<ARR<BYTE ,SIZE_OF<CHAR>>>::make () ;
-				for (auto &&i : iter (0 ,SIZE_OF<CHAR>::value)) {
-					INDEX ix = SIZE_OF<CHAR>::value - 1 - i ;
+				for (auto &&i : iter (0 ,SIZE_OF<CHAR>::expr)) {
+					INDEX ix = SIZE_OF<CHAR>::expr - 1 - i ;
 					read (rax.self[ix]) ;
 				}
-				item = bitwise[TYPEAS<CHAR>::id] (rax.self) ;
+				item = bitwise[TYPEAS<CHAR>::expr] (rax.self) ;
 			}
 		}
 
@@ -191,17 +181,17 @@ trait BYTEREADER_HELP<DEPEND ,ALWAYS> {
 				if ifnot (mAttr->is_big_endian ())
 					discard ;
 				auto rax = Box<ARR<BYTE ,SIZE_OF<DATA>>>::make () ;
-				for (auto &&i : iter (0 ,SIZE_OF<DATA>::value))
+				for (auto &&i : iter (0 ,SIZE_OF<DATA>::expr))
 					read (rax.self[i]) ;
-				item = bitwise[TYPEAS<DATA>::id] (rax.self) ;
+				item = bitwise[TYPEAS<DATA>::expr] (rax.self) ;
 			}
 			if ifswitch (rxx) {
 				auto rax = Box<ARR<BYTE ,SIZE_OF<DATA>>>::make () ;
-				for (auto &&i : iter (0 ,SIZE_OF<DATA>::value)) {
-					INDEX ix = SIZE_OF<DATA>::value - 1 - i ;
+				for (auto &&i : iter (0 ,SIZE_OF<DATA>::expr)) {
+					INDEX ix = SIZE_OF<DATA>::expr - 1 - i ;
 					read (rax.self[ix]) ;
 				}
-				item = bitwise[TYPEAS<DATA>::id] (rax.self) ;
+				item = bitwise[TYPEAS<DATA>::expr] (rax.self) ;
 			}
 		}
 
@@ -214,7 +204,7 @@ trait BYTEREADER_HELP<DEPEND ,ALWAYS> {
 			using R1X = BYTE_BASE<BOOL> ;
 			auto rax = R1X () ;
 			read (rax) ;
-			item = bitwise[TYPEAS<BOOL>::id] (rax) ;
+			item = bitwise[TYPEAS<BOOL>::expr] (rax) ;
 		}
 
 		inline VREF<ByteReader> operator>> (VREF<BOOL> item) {
@@ -226,7 +216,7 @@ trait BYTEREADER_HELP<DEPEND ,ALWAYS> {
 			using R1X = DEPENDENT<BYTE_BASE<VAL32> ,DEPEND> ;
 			auto rax = R1X () ;
 			read (rax) ;
-			item = bitwise[TYPEAS<VAL32>::id] (rax) ;
+			item = bitwise[TYPEAS<VAL32>::expr] (rax) ;
 		}
 
 		inline VREF<ByteReader> operator>> (VREF<VAL32> item) {
@@ -238,7 +228,7 @@ trait BYTEREADER_HELP<DEPEND ,ALWAYS> {
 			using R1X = DEPENDENT<BYTE_BASE<VAL64> ,DEPEND> ;
 			auto rax = R1X () ;
 			read (rax) ;
-			item = bitwise[TYPEAS<VAL64>::id] (rax) ;
+			item = bitwise[TYPEAS<VAL64>::expr] (rax) ;
 		}
 
 		inline VREF<ByteReader> operator>> (VREF<VAL64> item) {
@@ -250,7 +240,7 @@ trait BYTEREADER_HELP<DEPEND ,ALWAYS> {
 			using R1X = BYTE_BASE<SINGLE> ;
 			auto rax = R1X () ;
 			read (rax) ;
-			item = bitwise[TYPEAS<SINGLE>::id] (rax) ;
+			item = bitwise[TYPEAS<SINGLE>::expr] (rax) ;
 		}
 
 		inline VREF<ByteReader> operator>> (VREF<SINGLE> item) {
@@ -262,7 +252,7 @@ trait BYTEREADER_HELP<DEPEND ,ALWAYS> {
 			using R1X = BYTE_BASE<DOUBLE> ;
 			auto rax = R1X () ;
 			read (rax) ;
-			item = bitwise[TYPEAS<DOUBLE>::id] (rax) ;
+			item = bitwise[TYPEAS<DOUBLE>::expr] (rax) ;
 		}
 
 		inline VREF<ByteReader> operator>> (VREF<DOUBLE> item) {
@@ -270,7 +260,7 @@ trait BYTEREADER_HELP<DEPEND ,ALWAYS> {
 			return thiz ;
 		}
 
-		void read (CREF<Slice<STRA>> item) {
+		void read (CREF<Slice<STR>> item) {
 			auto rax = BYTE () ;
 			for (auto &&i : iter (0 ,item.size ())) {
 				vbetween (INDEX (item[i]) ,0 ,128) ;
@@ -279,28 +269,14 @@ trait BYTEREADER_HELP<DEPEND ,ALWAYS> {
 			}
 		}
 
-		inline VREF<ByteReader> operator>> (CREF<Slice<STRA>> item) {
-			read (item) ;
-			return thiz ;
-		}
-
-		void read (CREF<Slice<STRW>> item) {
-			auto rax = BYTE () ;
-			for (auto &&i : iter (0 ,item.size ())) {
-				vbetween (INDEX (item[i]) ,0 ,128) ;
-				read (rax) ;
-				assume (rax == BYTE (item[i])) ;
-			}
-		}
-
-		inline VREF<ByteReader> operator>> (CREF<Slice<STRW>> item) {
+		inline VREF<ByteReader> operator>> (CREF<Slice<STR>> item) {
 			read (item) ;
 			return thiz ;
 		}
 
 		void read (VREF<String<STRA>> item) {
 			using R1X = BYTE_BASE<STRA> ;
-			const auto r1x = poll (TYPEAS<VAL32>::id) ;
+			const auto r1x = poll (TYPEAS<VAL32>::expr) ;
 			if ifswitch (TRUE) {
 				if (item.size () >= r1x)
 					discard ;
@@ -310,8 +286,10 @@ trait BYTEREADER_HELP<DEPEND ,ALWAYS> {
 			auto rax = R1X () ;
 			for (auto &&i : iter (0 ,r1x)) {
 				read (rax) ;
-				item[i] = bitwise[TYPEAS<STRA>::id] (rax) ;
+				item[i] = bitwise[TYPEAS<STRA>::expr] (rax) ;
 			}
+			read (rax) ;
+			assume (rax == R1X (0X00)) ;
 		}
 
 		inline VREF<ByteReader> operator>> (VREF<String<STRA>> item) {
@@ -321,7 +299,7 @@ trait BYTEREADER_HELP<DEPEND ,ALWAYS> {
 
 		void read (VREF<String<STRW>> item) {
 			using R1X = BYTE_BASE<STRW> ;
-			const auto r1x = poll (TYPEAS<VAL32>::id) ;
+			const auto r1x = poll (TYPEAS<VAL32>::expr) ;
 			if ifswitch (TRUE) {
 				if (item.size () >= r1x)
 					discard ;
@@ -331,8 +309,10 @@ trait BYTEREADER_HELP<DEPEND ,ALWAYS> {
 			auto rax = R1X () ;
 			for (auto &&i : iter (0 ,r1x)) {
 				read (rax) ;
-				item[i] = bitwise[TYPEAS<STRW>::id] (rax) ;
+				item[i] = bitwise[TYPEAS<STRW>::expr] (rax) ;
 			}
+			read (rax) ;
+			assume (rax == R1X (0X00)) ;
 		}
 
 		inline VREF<ByteReader> operator>> (VREF<String<STRW>> item) {
@@ -342,7 +322,7 @@ trait BYTEREADER_HELP<DEPEND ,ALWAYS> {
 
 		void read (VREF<String<STRU8>> item) {
 			using R1X = BYTE_BASE<STRU8> ;
-			const auto r1x = poll (TYPEAS<VAL32>::id) ;
+			const auto r1x = poll (TYPEAS<VAL32>::expr) ;
 			if ifswitch (TRUE) {
 				if (item.size () >= r1x)
 					discard ;
@@ -352,8 +332,10 @@ trait BYTEREADER_HELP<DEPEND ,ALWAYS> {
 			auto rax = R1X () ;
 			for (auto &&i : iter (0 ,r1x)) {
 				read (rax) ;
-				item[i] = bitwise[TYPEAS<STRU8>::id] (rax) ;
+				item[i] = bitwise[TYPEAS<STRU8>::expr] (rax) ;
 			}
+			read (rax) ;
+			assume (rax == R1X (0X00)) ;
 		}
 
 		inline VREF<ByteReader> operator>> (VREF<String<STRU8>> item) {
@@ -363,7 +345,7 @@ trait BYTEREADER_HELP<DEPEND ,ALWAYS> {
 
 		void read (VREF<String<STRU16>> item) {
 			using R1X = BYTE_BASE<STRU16> ;
-			const auto r1x = poll (TYPEAS<VAL32>::id) ;
+			const auto r1x = poll (TYPEAS<VAL32>::expr) ;
 			if ifswitch (TRUE) {
 				if (item.size () >= r1x)
 					discard ;
@@ -373,8 +355,10 @@ trait BYTEREADER_HELP<DEPEND ,ALWAYS> {
 			auto rax = R1X () ;
 			for (auto &&i : iter (0 ,r1x)) {
 				read (rax) ;
-				item[i] = bitwise[TYPEAS<STRU16>::id] (rax) ;
+				item[i] = bitwise[TYPEAS<STRU16>::expr] (rax) ;
 			}
+			read (rax) ;
+			assume (rax == R1X (0X00)) ;
 		}
 
 		inline VREF<ByteReader> operator>> (VREF<String<STRU16>> item) {
@@ -384,7 +368,7 @@ trait BYTEREADER_HELP<DEPEND ,ALWAYS> {
 
 		void read (VREF<String<STRU32>> item) {
 			using R1X = BYTE_BASE<STRU32> ;
-			const auto r1x = poll (TYPEAS<VAL32>::id) ;
+			const auto r1x = poll (TYPEAS<VAL32>::expr) ;
 			if ifswitch (TRUE) {
 				if (item.size () >= r1x)
 					discard ;
@@ -394,8 +378,10 @@ trait BYTEREADER_HELP<DEPEND ,ALWAYS> {
 			auto rax = R1X () ;
 			for (auto &&i : iter (0 ,r1x)) {
 				read (rax) ;
-				item[i] = bitwise[TYPEAS<STRU32>::id] (rax) ;
+				item[i] = bitwise[TYPEAS<STRU32>::expr] (rax) ;
 			}
+			read (rax) ;
+			assume (rax == R1X (0X00)) ;
 		}
 
 		inline VREF<ByteReader> operator>> (VREF<String<STRU32>> item) {
@@ -481,10 +467,10 @@ trait BYTEREADER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		BOOL is_big_endian () const override {
-			using R1X = typename BOX_HELP<ARR<BYTE ,SIZE_OF<WORD>> ,ALWAYS>::HEAP ;
+			using R1X = Box<ARR<BYTE ,SIZE_OF<WORD>>> ;
 			return memorize ([&] () {
 				const auto r1x = WORD (0X00FF) ;
-				const auto r2x = Box<ARR<BYTE ,SIZE_OF<WORD>>>::make (bitwise[TYPEAS<R1X>::id] (r1x)) ;
+				const auto r2x = bitwise[TYPEAS<R1X>::expr] (r1x) ;
 				if (r2x.self[0] != BYTE (0X00))
 					return FALSE ;
 				return TRUE ;
@@ -526,7 +512,7 @@ trait BYTEWRITER_HELP<DEPEND ,ALWAYS> {
 
 		explicit ByteWriter (RREF<VRef<RegBuffer<BYTE>>> stream) {
 			using R1X = typename BYTEWRITER_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
-			set_attr (TYPEAS<R1X>::id) ;
+			set_attr (TYPEAS<R1X>::expr) ;
 			mStream = move (stream) ;
 			reset () ;
 			backup () ;
@@ -537,10 +523,9 @@ trait BYTEWRITER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		template <class ARG1>
-		void set_attr (CREF<ARG1> id) {
-			using R1X = REMOVE_ALL<ARG1> ;
-			require (IS_EXTEND<Attribute ,R1X>) ;
-			mAttr = CRef<R1X>::make () ;
+		void set_attr (CREF<TYPEID<ARG1>> id) {
+			require (IS_EXTEND<Attribute ,ARG1>) ;
+			mAttr = CRef<ARG1>::make () ;
 		}
 
 		LENGTH size () const {
@@ -599,18 +584,18 @@ trait BYTEWRITER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		void write (CREF<WORD> item) {
-			using R1X = typename BOX_HELP<ARR<BYTE ,SIZE_OF<WORD>> ,ALWAYS>::HEAP ;
-			const auto r1x = Box<ARR<BYTE ,SIZE_OF<WORD>>>::make (bitwise[TYPEAS<R1X>::id] (item)) ;
+			using R1X = Box<ARR<BYTE ,SIZE_OF<WORD>>> ;
+			const auto r1x = bitwise[TYPEAS<R1X>::expr] (item) ;
 			auto rxx = TRUE ;
 			if ifswitch (rxx) {
 				if ifnot (mAttr->is_big_endian ())
 					discard ;
-				for (auto &&i : iter (0 ,SIZE_OF<WORD>::value))
+				for (auto &&i : iter (0 ,SIZE_OF<WORD>::expr))
 					write (r1x.self[i]) ;
 			}
 			if ifswitch (rxx) {
-				for (auto &&i : iter (0 ,SIZE_OF<WORD>::value)) {
-					INDEX ix = SIZE_OF<WORD>::value - 1 - i ;
+				for (auto &&i : iter (0 ,SIZE_OF<WORD>::expr)) {
+					INDEX ix = SIZE_OF<WORD>::expr - 1 - i ;
 					write (r1x.self[ix]) ;
 				}
 			}
@@ -622,18 +607,18 @@ trait BYTEWRITER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		void write (CREF<CHAR> item) {
-			using R1X = typename BOX_HELP<ARR<BYTE ,SIZE_OF<CHAR>> ,ALWAYS>::HEAP ;
-			const auto r1x = Box<ARR<BYTE ,SIZE_OF<CHAR>>>::make (bitwise[TYPEAS<R1X>::id] (item)) ;
+			using R1X = Box<ARR<BYTE ,SIZE_OF<CHAR>>> ;
+			const auto r1x = bitwise[TYPEAS<R1X>::expr] (item) ;
 			auto rxx = TRUE ;
 			if ifswitch (rxx) {
 				if ifnot (mAttr->is_big_endian ())
 					discard ;
-				for (auto &&i : iter (0 ,SIZE_OF<CHAR>::value))
+				for (auto &&i : iter (0 ,SIZE_OF<CHAR>::expr))
 					write (r1x.self[i]) ;
 			}
 			if ifswitch (rxx) {
-				for (auto &&i : iter (0 ,SIZE_OF<CHAR>::value)) {
-					INDEX ix = SIZE_OF<CHAR>::value - 1 - i ;
+				for (auto &&i : iter (0 ,SIZE_OF<CHAR>::expr)) {
+					INDEX ix = SIZE_OF<CHAR>::expr - 1 - i ;
 					write (r1x.self[ix]) ;
 				}
 			}
@@ -645,18 +630,18 @@ trait BYTEWRITER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		void write (CREF<DATA> item) {
-			using R1X = typename BOX_HELP<ARR<BYTE ,SIZE_OF<DATA>> ,ALWAYS>::HEAP ;
-			const auto r1x = Box<ARR<BYTE ,SIZE_OF<DATA>>>::make (bitwise[TYPEAS<R1X>::id] (item)) ;
+			using R1X = Box<ARR<BYTE ,SIZE_OF<DATA>>> ;
+			const auto r1x = bitwise[TYPEAS<R1X>::expr] (item) ;
 			auto rxx = TRUE ;
 			if ifswitch (rxx) {
 				if ifnot (mAttr->is_big_endian ())
 					discard ;
-				for (auto &&i : iter (0 ,SIZE_OF<DATA>::value))
+				for (auto &&i : iter (0 ,SIZE_OF<DATA>::expr))
 					write (r1x.self[i]) ;
 			}
 			if ifswitch (rxx) {
-				for (auto &&i : iter (0 ,SIZE_OF<DATA>::value)) {
-					INDEX ix = SIZE_OF<DATA>::value - 1 - i ;
+				for (auto &&i : iter (0 ,SIZE_OF<DATA>::expr)) {
+					INDEX ix = SIZE_OF<DATA>::expr - 1 - i ;
 					write (r1x.self[ix]) ;
 				}
 			}
@@ -721,7 +706,7 @@ trait BYTEWRITER_HELP<DEPEND ,ALWAYS> {
 			return thiz ;
 		}
 
-		void write (CREF<Slice<STRA>> item) {
+		void write (CREF<Slice<STR>> item) {
 			for (auto &&i : iter (0 ,item.size ())) {
 				vbetween (INDEX (item[i]) ,0 ,128) ;
 				const auto r1x = BYTE (item[i]) ;
@@ -729,20 +714,7 @@ trait BYTEWRITER_HELP<DEPEND ,ALWAYS> {
 			}
 		}
 
-		inline VREF<ByteWriter> operator<< (CREF<Slice<STRA>> item) {
-			write (item) ;
-			return thiz ;
-		}
-
-		void write (CREF<Slice<STRW>> item) {
-			for (auto &&i : iter (0 ,item.size ())) {
-				vbetween (INDEX (item[i]) ,0 ,128) ;
-				const auto r1x = BYTE (item[i]) ;
-				write (r1x) ;
-			}
-		}
-
-		inline VREF<ByteWriter> operator<< (CREF<Slice<STRW>> item) {
+		inline VREF<ByteWriter> operator<< (CREF<Slice<STR>> item) {
 			write (item) ;
 			return thiz ;
 		}
@@ -755,7 +727,8 @@ trait BYTEWRITER_HELP<DEPEND ,ALWAYS> {
 				const auto r2x = bitwise (item[i]) ;
 				write (r2x) ;
 			}
-			write () ;
+			const auto r3x = bitwise (STRA (0)) ;
+			write (r3x) ;
 		}
 
 		inline VREF<ByteWriter> operator<< (CREF<String<STRA>> item) {
@@ -771,7 +744,8 @@ trait BYTEWRITER_HELP<DEPEND ,ALWAYS> {
 				const auto r2x = bitwise (item[i]) ;
 				write (r2x) ;
 			}
-			write () ;
+			const auto r3x = bitwise (STRW (0)) ;
+			write (r3x) ;
 		}
 
 		inline VREF<ByteWriter> operator<< (CREF<String<STRW>> item) {
@@ -787,7 +761,8 @@ trait BYTEWRITER_HELP<DEPEND ,ALWAYS> {
 				const auto r2x = bitwise (item[i]) ;
 				write (r2x) ;
 			}
-			write () ;
+			const auto r3x = bitwise (STRU8 (0)) ;
+			write (r3x) ;
 		}
 
 		inline VREF<ByteWriter> operator<< (CREF<String<STRU8>> item) {
@@ -803,7 +778,8 @@ trait BYTEWRITER_HELP<DEPEND ,ALWAYS> {
 				const auto r2x = bitwise (item[i]) ;
 				write (r2x) ;
 			}
-			write () ;
+			const auto r3x = bitwise (STRU16 (0)) ;
+			write (r3x) ;
 		}
 
 		inline VREF<ByteWriter> operator<< (CREF<String<STRU16>> item) {
@@ -819,7 +795,8 @@ trait BYTEWRITER_HELP<DEPEND ,ALWAYS> {
 				const auto r2x = bitwise (item[i]) ;
 				write (r2x) ;
 			}
-			write () ;
+			const auto r3x = bitwise (STRU32 (0)) ;
+			write (r3x) ;
 		}
 
 		inline VREF<ByteWriter> operator<< (CREF<String<STRU32>> item) {
@@ -900,10 +877,10 @@ trait BYTEWRITER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		BOOL is_big_endian () const override {
-			using R1X = typename BOX_HELP<ARR<BYTE ,SIZE_OF<WORD>> ,ALWAYS>::HEAP ;
+			using R1X = Box<ARR<BYTE ,SIZE_OF<WORD>>> ;
 			return memorize ([&] () {
 				const auto r1x = WORD (0X00FF) ;
-				const auto r2x = Box<ARR<BYTE ,SIZE_OF<WORD>>>::make (bitwise[TYPEAS<R1X>::id] (r1x)) ;
+				const auto r2x = bitwise[TYPEAS<R1X>::expr] (r1x) ;
 				if (r2x.self[0] != BYTE (0X00))
 					return FALSE ;
 				return TRUE ;
@@ -956,16 +933,8 @@ trait TEXTREADER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 
 		explicit TextReader (RREF<CRef<RegBuffer<ITEM>>> stream) {
 			using R1X = typename TEXTREADER_IMPLHOLDER_HELP<ITEM ,ALWAYS>::ImplHolder ;
-			set_attr (TYPEAS<R1X>::id) ;
+			set_attr (TYPEAS<R1X>::expr) ;
 			mStream = move (stream) ;
-			reset () ;
-			backup () ;
-		}
-
-		explicit TextReader (RREF<VRef<RegBuffer<ITEM>>> stream) {
-			using R1X = typename TEXTREADER_IMPLHOLDER_HELP<ITEM ,ALWAYS>::ImplHolder ;
-			set_attr (TYPEAS<R1X>::id) ;
-			mStream = stream.as_cref () ;
 			reset () ;
 			backup () ;
 		}
@@ -975,10 +944,9 @@ trait TEXTREADER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 		}
 
 		template <class ARG1>
-		void set_attr (CREF<ARG1> id) {
-			using R1X = REMOVE_ALL<ARG1> ;
-			require (IS_EXTEND<Attribute ,R1X>) ;
-			mAttr = CRef<R1X>::make () ;
+		void set_attr (CREF<TYPEID<ARG1>> id) {
+			require (IS_EXTEND<Attribute ,ARG1>) ;
+			mAttr = CRef<ARG1>::make () ;
 		}
 
 		LENGTH size () const {
@@ -1013,9 +981,8 @@ trait TEXTREADER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 		}
 
 		template <class ARG1>
-		REMOVE_ALL<ARG1> poll (CREF<ARG1> id) {
-			using R1X = REMOVE_ALL<ARG1> ;
-			R1X ret ;
+		ARG1 poll (CREF<TYPEID<ARG1>> id) {
+			ARG1 ret ;
 			read (ret) ;
 			return move (ret) ;
 		}
@@ -1111,7 +1078,7 @@ trait TEXTREADER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 		}
 
 		void read (VREF<VAL32> item) {
-			const auto r1x = read (TYPEAS<VAL64>::id) ;
+			const auto r1x = poll (TYPEAS<VAL64>::expr) ;
 			assume (r1x >= VAL32_MIN) ;
 			assume (r1x <= VAL32_MAX) ;
 			item = VAL32 (r1x) ;
@@ -1156,7 +1123,7 @@ trait TEXTREADER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 		}
 
 		void read (VREF<SINGLE> item) {
-			const auto r1x = read (TYPEAS<DOUBLE>::id) ;
+			const auto r1x = poll (TYPEAS<DOUBLE>::expr) ;
 			assume (r1x >= SINGLE_MIN) ;
 			assume (r1x <= SINGLE_MAX) ;
 			item = SINGLE (r1x) ;
@@ -1226,7 +1193,7 @@ trait TEXTREADER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 			read (rax) ;
 			assume (rax == ITEM ('X')) ;
 			item = BYTE (0X00) ;
-			for (auto &&i : iter (0 ,SIZE_OF<BYTE>::value)) {
+			for (auto &&i : iter (0 ,SIZE_OF<BYTE>::expr)) {
 				read (rax) ;
 				const auto r1x = BYTE (mAttr->hex_from_str (rax)) ;
 				item = (item << 4) | r1x ;
@@ -1248,7 +1215,7 @@ trait TEXTREADER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 			read (rax) ;
 			assume (rax == ITEM ('X')) ;
 			item = WORD (0X00) ;
-			for (auto &&i : iter (0 ,SIZE_OF<WORD>::value)) {
+			for (auto &&i : iter (0 ,SIZE_OF<WORD>::expr)) {
 				read (rax) ;
 				const auto r1x = WORD (mAttr->hex_from_str (rax)) ;
 				item = (item << 4) | r1x ;
@@ -1270,7 +1237,7 @@ trait TEXTREADER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 			read (rax) ;
 			assume (rax == ITEM ('X')) ;
 			item = CHAR (0X00) ;
-			for (auto &&i : iter (0 ,SIZE_OF<CHAR>::value)) {
+			for (auto &&i : iter (0 ,SIZE_OF<CHAR>::expr)) {
 				read (rax) ;
 				const auto r1x = CHAR (mAttr->hex_from_str (rax)) ;
 				item = (item << 4) | r1x ;
@@ -1292,7 +1259,7 @@ trait TEXTREADER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 			read (rax) ;
 			assume (rax == ITEM ('X')) ;
 			item = DATA (0X00) ;
-			for (auto &&i : iter (0 ,SIZE_OF<DATA>::value)) {
+			for (auto &&i : iter (0 ,SIZE_OF<DATA>::expr)) {
 				read (rax) ;
 				const auto r1x = DATA (mAttr->hex_from_str (rax)) ;
 				item = (item << 4) | r1x ;
@@ -1307,7 +1274,7 @@ trait TEXTREADER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 			return thiz ;
 		}
 
-		void read (CREF<Slice<STRA>> item) {
+		void read (CREF<Slice<STR>> item) {
 			auto rax = ITEM () ;
 			for (auto &&i : iter (0 ,item.size ())) {
 				vbetween (INDEX (item[i]) ,0 ,128) ;
@@ -1316,21 +1283,7 @@ trait TEXTREADER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 			}
 		}
 
-		inline VREF<TextReader> operator>> (CREF<Slice<STRA>> item) {
-			read (item) ;
-			return thiz ;
-		}
-
-		void read (CREF<Slice<STRW>> item) {
-			auto rax = ITEM () ;
-			for (auto &&i : iter (0 ,item.size ())) {
-				vbetween (INDEX (item[i]) ,0 ,128) ;
-				read (rax) ;
-				assume (rax == ITEM (item[i])) ;
-			}
-		}
-
-		inline VREF<TextReader> operator>> (CREF<Slice<STRW>> item) {
+		inline VREF<TextReader> operator>> (CREF<Slice<STR>> item) {
 			read (item) ;
 			return thiz ;
 		}
@@ -1377,7 +1330,7 @@ trait TEXTREADER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 		imports void BOM (CREF<PlaceHolder<RANK2>>) {}
 
 		void read (CREF<typeof (BOM)>) {
-			template_bom (PHX ,TYPEAS<ITEM>::id) ;
+			template_bom (PHX ,TYPEAS<ITEM>::expr) ;
 		}
 
 		inline VREF<TextReader> operator>> (CREF<typeof (BOM)> item) {
@@ -1495,7 +1448,7 @@ trait TEXTREADER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 					read (top) ;
 					if ifnot (mAttr->is_number (top))
 						break ;
-					if (fexp10 > r1x)
+					if (fexp10.mPrecision > r1x)
 						break ;
 					fexp10.mMantissa *= 10 ;
 					fexp10.mMantissa += mAttr->hex_from_str (top) ;
@@ -1516,10 +1469,13 @@ trait TEXTREADER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 						discard ;
 				read (top) ;
 				assume (mAttr->is_number (top)) ;
-				auto rbx = ZERO ;
+				auto rbx = NOTATION () ;
+				rbx.mRadix = 10 ;
+				rbx.mSign = FALSE ;
+				rbx.mPrecision = 0 ;
 				read_value (rbx ,top) ;
-				assume (MathProc::abs (rbx) < mAttr->float_precision ()) ;
-				fexp10.mExponent += rbx ;
+				assume (MathProc::abs (rbx.mMantissa) < mAttr->float_precision ()) ;
+				fexp10.mExponent += rbx.mMantissa ;
 				assume (MathProc::abs (fexp10.mExponent) < mAttr->float_precision ()) ;
 			}
 		}
@@ -1535,18 +1491,18 @@ trait TEXTREADER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 			}
 		}
 
-		template <class ARG1 ,class = REQUIRE<IS_SAME<REMOVE_ALL<ARG1> ,STRA>>>
-		void template_bom (CREF<typeof (PH5)> ,CREF<ARG1> id) {
+		template <class ARG1 ,class = REQUIRE<IS_SAME<ARG1 ,STRA>>>
+		void template_bom (CREF<typeof (PH5)> ,CREF<TYPEID<ARG1>> id) {
 			noop () ;
 		}
 
-		template <class ARG1 ,class = REQUIRE<IS_SAME<REMOVE_ALL<ARG1> ,STRW>>>
-		void template_bom (CREF<typeof (PH4)> ,CREF<ARG1> id) {
-			template_bom (PHX ,TYPEAS<STRUW>::id) ;
+		template <class ARG1 ,class = REQUIRE<IS_SAME<ARG1 ,STRW>>>
+		void template_bom (CREF<typeof (PH4)> ,CREF<TYPEID<ARG1>> id) {
+			template_bom (PHX ,TYPEAS<STRUW>::expr) ;
 		}
 
-		template <class ARG1 ,class = REQUIRE<IS_SAME<REMOVE_ALL<ARG1> ,STRU8>>>
-		void template_bom (CREF<typeof (PH3)> ,CREF<ARG1> id) {
+		template <class ARG1 ,class = REQUIRE<IS_SAME<ARG1 ,STRU8>>>
+		void template_bom (CREF<typeof (PH3)> ,CREF<TYPEID<ARG1>> id) {
 			auto rax = ITEM () ;
 			read (rax) ;
 			assume (rax == ITEM (0XEF)) ;
@@ -1556,8 +1512,8 @@ trait TEXTREADER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 			assume (rax == ITEM (0XBF)) ;
 		}
 
-		template <class ARG1 ,class = REQUIRE<IS_SAME<REMOVE_ALL<ARG1> ,STRU16>>>
-		void template_bom (CREF<typeof (PH2)> ,CREF<ARG1> id) {
+		template <class ARG1 ,class = REQUIRE<IS_SAME<ARG1 ,STRU16>>>
+		void template_bom (CREF<typeof (PH2)> ,CREF<TYPEID<ARG1>> id) {
 			auto rax = ITEM () ;
 			read (rax) ;
 			assume (rax == ITEM (0XFEFF)) ;
@@ -1565,8 +1521,8 @@ trait TEXTREADER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 			assume (rax == ITEM (0XFFFE)) ;
 		}
 
-		template <class ARG1 ,class = REQUIRE<IS_SAME<REMOVE_ALL<ARG1> ,STRU32>>>
-		void template_bom (CREF<typeof (PH1)> ,CREF<ARG1> id) {
+		template <class ARG1 ,class = REQUIRE<IS_SAME<ARG1 ,STRU32>>>
+		void template_bom (CREF<typeof (PH1)> ,CREF<TYPEID<ARG1>> id) {
 			auto rax = ITEM () ;
 			read (rax) ;
 			assume (rax == ITEM (0X0000FEFF)) ;
@@ -1581,7 +1537,7 @@ trait TEXTREADER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 } ;
 
 template <class ITEM>
-trait TEXTREADER_IMPLHOLDER_HELP<ITEM ,ALWAYS> {
+trait TEXTREADER_IMPLHOLDER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 	using Attribute = typename TEXTREADER_HELP<ITEM ,ALWAYS>::Attribute ;
 
 	using SPACE_CLAZZ_WORD = RANK1 ;
@@ -1594,12 +1550,12 @@ trait TEXTREADER_IMPLHOLDER_HELP<ITEM ,ALWAYS> {
 
 	public:
 		implicit ImplHolder () {
-			mSpaceSet.add (ITEM (' ') ,SPACE_CLAZZ_WORD::value) ;
-			mSpaceSet.add (ITEM ('\t') ,SPACE_CLAZZ_WORD::value) ;
-			mSpaceSet.add (ITEM ('\b') ,SPACE_CLAZZ_WORD::value) ;
-			mSpaceSet.add (ITEM ('\r') ,SPACE_CLAZZ_ENDLINE::value) ;
-			mSpaceSet.add (ITEM ('\n') ,SPACE_CLAZZ_ENDLINE::value) ;
-			mSpaceSet.add (ITEM ('\f') ,SPACE_CLAZZ_ENDLINE::value) ;
+			mSpaceSet.add (ITEM (' ') ,SPACE_CLAZZ_WORD::expr) ;
+			mSpaceSet.add (ITEM ('\t') ,SPACE_CLAZZ_WORD::expr) ;
+			mSpaceSet.add (ITEM ('\b') ,SPACE_CLAZZ_WORD::expr) ;
+			mSpaceSet.add (ITEM ('\r') ,SPACE_CLAZZ_ENDLINE::expr) ;
+			mSpaceSet.add (ITEM ('\n') ,SPACE_CLAZZ_ENDLINE::expr) ;
+			mSpaceSet.add (ITEM ('\f') ,SPACE_CLAZZ_ENDLINE::expr) ;
 			mEscapeSet.add (ITEM ('\\') ,INDEX ('\\')) ;
 			mEscapeSet.add (ITEM ('/') ,INDEX ('/')) ;
 			mEscapeSet.add (ITEM ('t') ,INDEX ('\t')) ;
@@ -1621,7 +1577,7 @@ trait TEXTREADER_IMPLHOLDER_HELP<ITEM ,ALWAYS> {
 		}
 
 		BOOL is_endline_space (CREF<ITEM> str) const override {
-			return mSpaceSet.map (str) != SPACE_CLAZZ_ENDLINE::value ;
+			return mSpaceSet.map (str) != SPACE_CLAZZ_ENDLINE::expr ;
 		}
 
 		BOOL is_word (CREF<ITEM> str) const override {
@@ -1671,7 +1627,7 @@ trait TEXTREADER_IMPLHOLDER_HELP<ITEM ,ALWAYS> {
 			if (is_hex_number (r1x))
 				return INDEX (r1x) - INDEX ('a') + 10 ;
 			assume (FALSE) ;
-			return bad (TYPEAS<ITEM>::id) ;
+			return bad (TYPEAS<ITEM>::expr) ;
 		}
 
 		BOOL is_control (CREF<ITEM> str) const override {
@@ -1740,7 +1696,7 @@ trait TEXTWRITER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 
 		explicit TextWriter (RREF<VRef<RegBuffer<ITEM>>> stream) {
 			using R1X = typename TEXTWRITER_IMPLHOLDER_HELP<ITEM ,ALWAYS>::ImplHolder ;
-			set_attr (TYPEAS<R1X>::id) ;
+			set_attr (TYPEAS<R1X>::expr) ;
 			mStream = move (stream) ;
 			reset () ;
 			backup () ;
@@ -1751,10 +1707,9 @@ trait TEXTWRITER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 		}
 
 		template <class ARG1>
-		void set_attr (CREF<ARG1> id) {
-			using R1X = REMOVE_ALL<ARG1> ;
-			require (IS_EXTEND<Attribute ,R1X>) ;
-			mAttr = CRef<R1X>::make () ;
+		void set_attr (CREF<TYPEID<ARG1>> id) {
+			require (IS_EXTEND<Attribute ,ARG1>) ;
+			mAttr = CRef<ARG1>::make () ;
 		}
 
 		LENGTH size () const {
@@ -1926,8 +1881,8 @@ trait TEXTWRITER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 		void write (CREF<BYTE> item) {
 			write (ITEM ('0')) ;
 			write (ITEM ('X')) ;
-			for (auto &&i : iter (0 ,SIZE_OF<BYTE>::value)) {
-				INDEX ix = (SIZE_OF<BYTE>::value - 1 - i) * 8 ;
+			for (auto &&i : iter (0 ,SIZE_OF<BYTE>::expr)) {
+				INDEX ix = (SIZE_OF<BYTE>::expr - 1 - i) * 8 ;
 				const auto r1x = INDEX ((item >> (ix + 4)) & BYTE (0X0F)) ;
 				write (mAttr->str_from_hex (r1x)) ;
 				const auto r2x = INDEX ((item >> (ix + 0)) & BYTE (0X0F)) ;
@@ -1943,8 +1898,8 @@ trait TEXTWRITER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 		void write (CREF<WORD> item) {
 			write (ITEM ('0')) ;
 			write (ITEM ('X')) ;
-			for (auto &&i : iter (0 ,SIZE_OF<WORD>::value)) {
-				INDEX ix = (SIZE_OF<WORD>::value - 1 - i) * 8 ;
+			for (auto &&i : iter (0 ,SIZE_OF<WORD>::expr)) {
+				INDEX ix = (SIZE_OF<WORD>::expr - 1 - i) * 8 ;
 				const auto r1x = INDEX ((item >> (ix + 4)) & WORD (0X0F)) ;
 				write (mAttr->str_from_hex (r1x)) ;
 				const auto r2x = INDEX ((item >> (ix + 0)) & WORD (0X0F)) ;
@@ -1960,8 +1915,8 @@ trait TEXTWRITER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 		void write (CREF<CHAR> item) {
 			write (ITEM ('0')) ;
 			write (ITEM ('X')) ;
-			for (auto &&i : iter (0 ,SIZE_OF<CHAR>::value)) {
-				INDEX ix = (SIZE_OF<CHAR>::value - 1 - i) * 8 ;
+			for (auto &&i : iter (0 ,SIZE_OF<CHAR>::expr)) {
+				INDEX ix = (SIZE_OF<CHAR>::expr - 1 - i) * 8 ;
 				const auto r1x = INDEX ((item >> (ix + 4)) & CHAR (0X0F)) ;
 				write (mAttr->str_from_hex (r1x)) ;
 				const auto r2x = INDEX ((item >> (ix + 0)) & CHAR (0X0F)) ;
@@ -1977,8 +1932,8 @@ trait TEXTWRITER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 		void write (CREF<DATA> item) {
 			write (ITEM ('0')) ;
 			write (ITEM ('X')) ;
-			for (auto &&i : iter (0 ,SIZE_OF<DATA>::value)) {
-				INDEX ix = (SIZE_OF<DATA>::value - 1 - i) * 8 ;
+			for (auto &&i : iter (0 ,SIZE_OF<DATA>::expr)) {
+				INDEX ix = (SIZE_OF<DATA>::expr - 1 - i) * 8 ;
 				const auto r1x = INDEX ((item >> (ix + 4)) & DATA (0X0F)) ;
 				write (mAttr->str_from_hex (r1x)) ;
 				const auto r2x = INDEX ((item >> (ix + 0)) & DATA (0X0F)) ;
@@ -1991,7 +1946,7 @@ trait TEXTWRITER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 			return thiz ;
 		}
 
-		void write (CREF<Slice<STRA>> item) {
+		void write (CREF<Slice<STR>> item) {
 			for (auto &&i : iter (0 ,item.size ())) {
 				vbetween (INDEX (item[i]) ,0 ,128) ;
 				const auto r1x = ITEM (item[i]) ;
@@ -1999,20 +1954,7 @@ trait TEXTWRITER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 			}
 		}
 
-		inline VREF<TextWriter> operator<< (CREF<Slice<STRA>> item) {
-			write (item) ;
-			return thiz ;
-		}
-
-		void write (CREF<Slice<STRW>> item) {
-			for (auto &&i : iter (0 ,item.size ())) {
-				vbetween (INDEX (item[i]) ,0 ,128) ;
-				const auto r1x = ITEM (item[i]) ;
-				write (r1x) ;
-			}
-		}
-
-		inline VREF<TextWriter> operator<< (CREF<Slice<STRW>> item) {
+		inline VREF<TextWriter> operator<< (CREF<Slice<STR>> item) {
 			write (item) ;
 			return thiz ;
 		}
@@ -2052,7 +1994,7 @@ trait TEXTWRITER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 		imports void BOM (CREF<PlaceHolder<RANK2>>) {}
 
 		void write (CREF<typeof (BOM)>) {
-			template_bom (PHX ,TYPEAS<ITEM>::id) ;
+			template_bom (PHX ,TYPEAS<ITEM>::expr) ;
 		}
 
 		inline VREF<TextWriter> operator<< (CREF<typeof (BOM)> item) {
@@ -2085,31 +2027,31 @@ trait TEXTWRITER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 		}
 
 	private:
-		template <class ARG1 ,class = REQUIRE<IS_SAME<REMOVE_ALL<ARG1> ,STRA>>>
-		void template_bom (CREF<typeof (PH5)> ,CREF<ARG1> id) {
+		template <class ARG1 ,class = REQUIRE<IS_SAME<ARG1 ,STRA>>>
+		void template_bom (CREF<typeof (PH5)> ,CREF<TYPEID<ARG1>> id) {
 			noop () ;
 		}
 
-		template <class ARG1 ,class = REQUIRE<IS_SAME<REMOVE_ALL<ARG1> ,STRW>>>
-		void template_bom (CREF<typeof (PH4)> ,CREF<ARG1> id) {
-			template_bom (PHX ,TYPEAS<STRUW>::id) ;
+		template <class ARG1 ,class = REQUIRE<IS_SAME<ARG1 ,STRW>>>
+		void template_bom (CREF<typeof (PH4)> ,CREF<TYPEID<ARG1>> id) {
+			template_bom (PHX ,TYPEAS<STRUW>::expr) ;
 		}
 
-		template <class ARG1 ,class = REQUIRE<IS_SAME<REMOVE_ALL<ARG1> ,STRU8>>>
-		void template_bom (CREF<typeof (PH3)> ,CREF<ARG1> id) {
+		template <class ARG1 ,class = REQUIRE<IS_SAME<ARG1 ,STRU8>>>
+		void template_bom (CREF<typeof (PH3)> ,CREF<TYPEID<ARG1>> id) {
 			write (ITEM (0XEF)) ;
 			write (ITEM (0XBB)) ;
 			write (ITEM (0XBF)) ;
 		}
 
-		template <class ARG1 ,class = REQUIRE<IS_SAME<REMOVE_ALL<ARG1> ,STRU16>>>
-		void template_bom (CREF<typeof (PH2)> ,CREF<ARG1> id) {
+		template <class ARG1 ,class = REQUIRE<IS_SAME<ARG1 ,STRU16>>>
+		void template_bom (CREF<typeof (PH2)> ,CREF<TYPEID<ARG1>> id) {
 			write (ITEM (0XFEFF)) ;
 			write (ITEM (0XFFFE)) ;
 		}
 
-		template <class ARG1 ,class = REQUIRE<IS_SAME<REMOVE_ALL<ARG1> ,STRU32>>>
-		void template_bom (CREF<typeof (PH1)> ,CREF<ARG1> id) {
+		template <class ARG1 ,class = REQUIRE<IS_SAME<ARG1 ,STRU32>>>
+		void template_bom (CREF<typeof (PH1)> ,CREF<TYPEID<ARG1>> id) {
 			write (ITEM (0X0000FEFF)) ;
 			write (ITEM (0XFFFE0000)) ;
 		}
@@ -2121,7 +2063,7 @@ trait TEXTWRITER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 } ;
 
 template <class ITEM>
-trait TEXTWRITER_IMPLHOLDER_HELP<ITEM ,ALWAYS> {
+trait TEXTWRITER_IMPLHOLDER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 	using Attribute = typename TEXTWRITER_HELP<ITEM ,ALWAYS>::Attribute ;
 
 	class ImplHolder implement Attribute {
@@ -2169,7 +2111,7 @@ trait TEXTWRITER_IMPLHOLDER_HELP<ITEM ,ALWAYS> {
 			if (is_hex_number (hex))
 				return ITEM (INDEX (r1x) + hex - 10) ;
 			assume (FALSE) ;
-			return bad (TYPEAS<ITEM>::id) ;
+			return bad (TYPEAS<ITEM>::expr) ;
 		}
 
 		Optional<ITEM> escape_cast (CREF<ITEM> str) const override {
@@ -2442,7 +2384,7 @@ trait REGULARREADER_HELP<DEPEND ,ALWAYS> {
 			mBackupCache = Deque<STRU8> (ll_size) ;
 			for (auto &&i : iter (0 ,ll_size)) {
 				noop (i) ;
-				const auto r1x = mReader->poll (TYPEAS<STRU8>::id) ;
+				const auto r1x = mReader->poll (TYPEAS<STRU8>::expr) ;
 				mCache.add (r1x) ;
 			}
 			mHintString = FALSE ;
@@ -2472,7 +2414,7 @@ trait REGULARREADER_HELP<DEPEND ,ALWAYS> {
 
 		void read () {
 			mCache.take () ;
-			const auto r1x = mReader->poll (TYPEAS<STRU8>::id) ;
+			const auto r1x = mReader->poll (TYPEAS<STRU8>::expr) ;
 			mCache.add (r1x) ;
 		}
 
@@ -2480,7 +2422,7 @@ trait REGULARREADER_HELP<DEPEND ,ALWAYS> {
 			read () ;
 		}
 
-		void read (CREF<Slice<STRA>> item) {
+		void read (CREF<Slice<STR>> item) {
 			for (auto &&i : iter (0 ,item.size ())) {
 				assert (vbetween (INDEX (item[i]) ,0 ,128)) ;
 				assume (thiz[0] == STRU8 (item[i])) ;
@@ -2488,20 +2430,7 @@ trait REGULARREADER_HELP<DEPEND ,ALWAYS> {
 			}
 		}
 
-		inline VREF<RegularReader> operator>> (CREF<Slice<STRA>> item) {
-			read (item) ;
-			return thiz ;
-		}
-
-		void read (CREF<Slice<STRW>> item) {
-			for (auto &&i : iter (0 ,item.size ())) {
-				assert (vbetween (INDEX (item[i]) ,0 ,128)) ;
-				assume (thiz[0] == STRU8 (item[i])) ;
-				thiz++ ;
-			}
-		}
-
-		inline VREF<RegularReader> operator>> (CREF<Slice<STRW>> item) {
+		inline VREF<RegularReader> operator>> (CREF<Slice<STR>> item) {
 			read (item) ;
 			return thiz ;
 		}
@@ -2778,7 +2707,7 @@ trait REGULARREADER_HELP<DEPEND ,ALWAYS> {
 					const auto r5x = BOOL (r4x == STRU8 ('\\')) ;
 					if ifnot (r5x)
 						discard ;
-					item[i] = r1x->escape_cast (thiz[0]) ;
+					item[i] = r1x->escape_cast (thiz[0]).poll () ;
 					thiz++ ;
 				}
 				if ifswitch (rxx) {

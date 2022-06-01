@@ -310,10 +310,9 @@ trait STREAMFILE_HELP<DEPEND ,ALWAYS> {
 			using R1X = SIZE_OF<WORD> ;
 			if (item.size () == 0)
 				return ZERO ;
-			auto &&tmp = unsafe_deref (unsafe_cast[TYPEAS<TEMP<ARR<BYTE ,R1X>>>::id] (unsafe_deptr (item[0]))) ;
-			auto rax = RegBuffer<BYTE>::from (unsafe_array (tmp[0]) ,0 ,item.size () * R1X::value) ;
-			LENGTH ret = read (rax) ;
-			ret /= R1X::value ;
+			auto &&tmp = unsafe_cast[TYPEAS<TEMP<void>>::expr] (unsafe_deptr (item[0])) ;
+			LENGTH ret = read (RegBuffer<BYTE>::from (tmp ,0 ,item.size () * R1X::expr)) ;
+			ret /= R1X::expr ;
 			unsafe_barrier () ;
 			return move (ret) ;
 		}
@@ -326,10 +325,9 @@ trait STREAMFILE_HELP<DEPEND ,ALWAYS> {
 			using R1X = SIZE_OF<CHAR> ;
 			if (item.size () == 0)
 				return ZERO ;
-			auto &&tmp = unsafe_deref (unsafe_cast[TYPEAS<TEMP<ARR<BYTE ,R1X>>>::id] (unsafe_deptr (item[0]))) ;
-			auto rax = RegBuffer<BYTE>::from (unsafe_array (tmp[0]) ,0 ,item.size () * R1X::value) ;
-			LENGTH ret = read (rax) ;
-			ret /= R1X::value ;
+			auto &&tmp = unsafe_cast[TYPEAS<TEMP<void>>::expr] (unsafe_deptr (item[0])) ;
+			LENGTH ret = read (RegBuffer<BYTE>::from (tmp ,0 ,item.size () * R1X::expr)) ;
+			ret /= R1X::expr ;
 			unsafe_barrier () ;
 			return move (ret) ;
 		}
@@ -342,10 +340,9 @@ trait STREAMFILE_HELP<DEPEND ,ALWAYS> {
 			using R1X = SIZE_OF<DATA> ;
 			if (item.size () == 0)
 				return ZERO ;
-			auto &&tmp = unsafe_deref (unsafe_cast[TYPEAS<TEMP<ARR<BYTE ,R1X>>>::id] (unsafe_deptr (item[0]))) ;
-			auto rax = RegBuffer<BYTE>::from (unsafe_array (tmp[0]) ,0 ,item.size () * R1X::value) ;
-			LENGTH ret = read (rax) ;
-			ret /= R1X::value ;
+			auto &&tmp = unsafe_cast[TYPEAS<TEMP<void>>::expr] (unsafe_deptr (item[0])) ;
+			LENGTH ret = read (RegBuffer<BYTE>::from (tmp ,0 ,item.size () * R1X::expr)) ;
+			ret /= R1X::expr ;
 			unsafe_barrier () ;
 			return move (ret) ;
 		}
@@ -370,10 +367,9 @@ trait STREAMFILE_HELP<DEPEND ,ALWAYS> {
 			using R1X = SIZE_OF<WORD> ;
 			if (item.size () == 0)
 				return ZERO ;
-			auto &&tmp = unsafe_deref (unsafe_cast[TYPEAS<TEMP<ARR<BYTE ,R1X>>>::id] (unsafe_deptr (item[0]))) ;
-			auto rax = RegBuffer<BYTE>::from (unsafe_array (tmp[0]) ,0 ,item.size () * R1X::value) ;
-			LENGTH ret = write (rax) ;
-			ret /= R1X::value ;
+			auto &&tmp = unsafe_cast[TYPEAS<TEMP<void>>::expr] (unsafe_deptr (item[0])) ;
+			LENGTH ret = write (RegBuffer<BYTE>::from (tmp ,0 ,item.size () * R1X::expr)) ;
+			ret /= R1X::expr ;
 			return move (ret) ;
 		}
 
@@ -389,10 +385,9 @@ trait STREAMFILE_HELP<DEPEND ,ALWAYS> {
 			using R1X = SIZE_OF<CHAR> ;
 			if (item.size () == 0)
 				return ZERO ;
-			auto &&tmp = unsafe_deref (unsafe_cast[TYPEAS<TEMP<ARR<BYTE ,R1X>>>::id] (unsafe_deptr (item[0]))) ;
-			auto rax = RegBuffer<BYTE>::from (unsafe_array (tmp[0]) ,0 ,item.size () * R1X::value) ;
-			LENGTH ret = write (rax) ;
-			ret /= R1X::value ;
+			auto &&tmp = unsafe_cast[TYPEAS<TEMP<void>>::expr] (unsafe_deptr (item[0])) ;
+			LENGTH ret = write (RegBuffer<BYTE>::from (tmp ,0 ,item.size () * R1X::expr)) ;
+			ret /= R1X::expr ;
 			return move (ret) ;
 		}
 
@@ -408,10 +403,9 @@ trait STREAMFILE_HELP<DEPEND ,ALWAYS> {
 			using R1X = SIZE_OF<DATA> ;
 			if (item.size () == 0)
 				return ZERO ;
-			auto &&tmp = unsafe_deref (unsafe_cast[TYPEAS<TEMP<ARR<BYTE ,R1X>>>::id] (unsafe_deptr (item[0]))) ;
-			auto rax = RegBuffer<BYTE>::from (unsafe_array (tmp[0]) ,0 ,item.size () * R1X::value) ;
-			LENGTH ret = write (rax) ;
-			ret /= R1X::value ;
+			auto &&tmp = unsafe_cast[TYPEAS<TEMP<void>>::expr] (unsafe_deptr (item[0])) ;
+			LENGTH ret = write (RegBuffer<BYTE>::from (tmp ,0 ,item.size () * R1X::expr)) ;
+			ret /= R1X::expr ;
 			return move (ret) ;
 		}
 
@@ -465,7 +459,7 @@ trait BUFFERFILE_HOLDER_HELP<DEPEND ,ALWAYS> {
 } ;
 
 template <class ITEM>
-trait BUFFERFILE_HELP<ITEM ,REQUIRE<IS_TRIVIAL<ITEM>>> {
+trait BUFFERFILE_HELP<ITEM ,ALWAYS> {
 	using Holder = typename BUFFERFILE_HOLDER_HELP<DEPEND ,ALWAYS>::Holder ;
 	using FUNCTION_extern = typename BUFFERFILE_HOLDER_HELP<DEPEND ,ALWAYS>::FUNCTION_extern ;
 
@@ -480,7 +474,7 @@ trait BUFFERFILE_HELP<ITEM ,REQUIRE<IS_TRIVIAL<ITEM>>> {
 
 		explicit BufferFile (CREF<String<STR>> file_) {
 			mThis = FUNCTION_extern::invoke () ;
-			mThis->initialize (file_ ,Clazz (TYPEAS<ITEM>::id)) ;
+			mThis->initialize (file_ ,Clazz (TYPEAS<ITEM>::expr)) ;
 		}
 
 		void set_cache_size (CREF<LENGTH> size_) {
@@ -535,17 +529,15 @@ trait BUFFERFILE_HELP<ITEM ,REQUIRE<IS_TRIVIAL<ITEM>>> {
 
 		ITEM get (CREF<VAL64> index) {
 			ITEM ret ;
-			auto &&tmp = unsafe_deref (unsafe_cast[TYPEAS<TEMP<ARR<BYTE ,SIZE>>>::id] (unsafe_deptr (ret))) ;
-			auto rax = RegBuffer<BYTE>::from (unsafe_array (tmp[0]) ,0 ,SIZE::value) ;
-			mThis->get (index ,rax) ;
+			auto &&tmp = unsafe_cast[TYPEAS<TEMP<void>>::expr] (unsafe_deptr (ret)) ;
+			mThis->get (index ,RegBuffer<BYTE>::from (tmp ,0 ,SIZE::expr)) ;
 			unsafe_barrier () ;
 			return move (ret) ;
 		}
 
 		void set (CREF<VAL64> index ,CREF<ITEM> item) {
-			auto &&tmp = unsafe_deref (unsafe_cast[TYPEAS<TEMP<ARR<BYTE ,SIZE>>>::id] (unsafe_deptr (item))) ;
-			auto rax = RegBuffer<BYTE>::from (unsafe_array (tmp[0]) ,0 ,SIZE::value) ;
-			mThis->set (index ,rax) ;
+			auto &&tmp = unsafe_cast[TYPEAS<TEMP<void>>::expr] (unsafe_deptr (item)) ;
+			mThis->set (index ,RegBuffer<BYTE>::from (tmp ,0 ,SIZE::expr)) ;
 		}
 
 		void flush () {

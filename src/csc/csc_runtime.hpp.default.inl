@@ -44,7 +44,7 @@ trait FUNCTION_calendar_from_timepoint_HELP<DEPEND ,REQUIRE<MACRO_SYSTEM_LINUX<D
 		inline std::tm operator() (CREF<std::time_t> time_) const {
 			std::tm ret ;
 			const auto r1x = FLAG (std::localtime ((&time_))) ;
-			auto &&tmp = unsafe_deref (unsafe_cast[TYPEAS<TEMP<std::tm>>::id] (unsafe_pointer (r1x))) ;
+			auto &&tmp = unsafe_deref (unsafe_cast[TYPEAS<TEMP<std::tm>>::expr] (unsafe_pointer (r1x))) ;
 			ret = tmp ;
 			return move (ret) ;
 		}
@@ -146,14 +146,14 @@ trait TIMEDURATION_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		void add_from (CREF<Holder> a ,CREF<Holder> b) override {
-			const auto r1x = a.native ().poll (TYPEAS<CRef<ImplHolder>>::id) ;
-			const auto r2x = a.native ().poll (TYPEAS<CRef<ImplHolder>>::id) ;
+			const auto r1x = a.native ().poll (TYPEAS<CRef<ImplHolder>>::expr) ;
+			const auto r2x = a.native ().poll (TYPEAS<CRef<ImplHolder>>::expr) ;
 			mTimeDuration = r1x->get_mTimeDuration () + r2x->get_mTimeDuration () ;
 		}
 
 		void sub_from (CREF<Holder> a ,CREF<Holder> b) override {
-			const auto r1x = a.native ().poll (TYPEAS<CRef<ImplHolder>>::id) ;
-			const auto r2x = a.native ().poll (TYPEAS<CRef<ImplHolder>>::id) ;
+			const auto r1x = a.native ().poll (TYPEAS<CRef<ImplHolder>>::expr) ;
+			const auto r2x = a.native ().poll (TYPEAS<CRef<ImplHolder>>::expr) ;
 			mTimeDuration = r1x->get_mTimeDuration () - r2x->get_mTimeDuration () ;
 		}
 
@@ -204,37 +204,36 @@ trait ATOMIC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 
 		void initialize () override {
 			mHeap = SharedRef<HEAP>::make () ;
-			mHeap->mAtomic.store (0) ;
+			mHeap->mAtomic.store (0 ,std::memory_order::memory_order_relaxed) ;
 		}
 
 		VAL fetch () const override {
-			return mHeap->mAtomic.load () ;
+			return mHeap->mAtomic.load (std::memory_order::memory_order_relaxed) ;
 		}
 
 		void store (CREF<VAL> obj) const override {
-			return mHeap->mAtomic.store (obj) ;
+			return mHeap->mAtomic.store (obj ,std::memory_order::memory_order_relaxed) ;
 		}
 
 		VAL exchange (CREF<VAL> obj) const override {
-			return mHeap->mAtomic.exchange (obj) ;
+			return mHeap->mAtomic.exchange (obj ,std::memory_order::memory_order_relaxed) ;
 		}
 
 		void replace (CREF<VAL> expect ,CREF<VAL> obj) const override {
 			auto rax = expect ;
-			const auto r1x = mHeap->mAtomic.compare_exchange_strong (rax ,obj) ;
-			noop (r1x) ;
+			mHeap->mAtomic.compare_exchange_strong (rax ,obj ,std::memory_order::memory_order_relaxed) ;
 		}
 
 		BOOL change (VREF<VAL> expect ,CREF<VAL> obj) const override {
-			return mHeap->mAtomic.compare_exchange_weak (expect ,obj) ;
+			return mHeap->mAtomic.compare_exchange_weak (expect ,obj ,std::memory_order::memory_order_relaxed) ;
 		}
 
 		VAL fetch_add (CREF<VAL> obj) const override {
-			return mHeap->mAtomic.fetch_add (obj) ;
+			return mHeap->mAtomic.fetch_add (obj ,std::memory_order::memory_order_relaxed) ;
 		}
 
 		VAL fetch_sub (CREF<VAL> obj) const override {
-			return mHeap->mAtomic.fetch_sub (obj) ;
+			return mHeap->mAtomic.fetch_sub (obj ,std::memory_order::memory_order_relaxed) ;
 		}
 	} ;
 } ;
@@ -252,7 +251,7 @@ trait MUTEX_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	struct HEAP {
 		Box<std::mutex> mMutex ;
 		Box<std::recursive_mutex> mRecursive ;
-		Box<std::condition_variable> mConditional ;
+		Box<std::condition_variable> mCondition ;
 	} ;
 
 	class ImplHolder implement Holder {
@@ -275,7 +274,7 @@ trait MUTEX_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		void init_conditional () override {
 			mHeap = SharedRef<HEAP>::make () ;
 			mHeap->mMutex = Box<std::mutex>::make () ;
-			mHeap->mConditional = Box<std::condition_variable>::make () ;
+			mHeap->mCondition = Box<std::condition_variable>::make () ;
 		}
 
 		Auto native () const leftvalue override {
@@ -339,13 +338,13 @@ trait CONDITIONALLOCK_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 
 		void initialize (CREF<Mutex> mutex_) override {
 			using R1X = typename MUTEX_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
-			const auto r1x = mutex_.native ().poll (TYPEAS<CRef<R1X>>::id) ;
+			const auto r1x = mutex_.native ().poll (TYPEAS<CRef<R1X>>::expr) ;
 			mHeap = r1x->condition_lock (mLock) ;
 			mHandle = Scope<ImplHolder> (thiz) ;
 		}
 
 		void enter () {
-			assert (mHeap->mConditional.exist ()) ;
+			assert (mHeap->mCondition.exist ()) ;
 		}
 
 		void leave () {
@@ -354,30 +353,30 @@ trait CONDITIONALLOCK_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		void wait () override {
-			mHeap->mConditional->wait (mLock) ;
+			mHeap->mCondition->wait (mLock) ;
 		}
 
 		void wait (CREF<TimeDuration> time_) override {
 			using R1X = typename TIMEDURATION_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
-			const auto r1x = time_.native ().poll (TYPEAS<CRef<R1X>>::id) ;
-			mHeap->mConditional->wait_for (mLock ,r1x->get_mTimeDuration ()) ;
+			const auto r1x = time_.native ().poll (TYPEAS<CRef<R1X>>::expr) ;
+			mHeap->mCondition->wait_for (mLock ,r1x->get_mTimeDuration ()) ;
 		}
 
 		void wait (CREF<TimePoint> time_) override {
 			using R1X = typename TIMEDURATION_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
-			const auto r1x = time_.native ().poll (TYPEAS<CRef<R1X>>::id) ;
-			mHeap->mConditional->wait_until (mLock ,r1x->get_mTimePoint ()) ;
+			const auto r1x = time_.native ().poll (TYPEAS<CRef<R1X>>::expr) ;
+			mHeap->mCondition->wait_until (mLock ,r1x->get_mTimePoint ()) ;
 		}
 
 		void notify () override {
-			mHeap->mConditional->notify_all () ;
+			mHeap->mCondition->notify_all () ;
 		}
 
 		void yield () override {
 			using R1X = typename TIMEDURATION_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
-			mHeap->mConditional->notify_all () ;
-			const auto r1x = TimeDuration::zero ().native ().poll (TYPEAS<CRef<R1X>>::id) ;
-			mHeap->mConditional->wait_for (mLock ,r1x->get_mTimeDuration ()) ;
+			mHeap->mCondition->notify_all () ;
+			const auto r1x = TimeDuration::zero ().native ().poll (TYPEAS<CRef<R1X>>::expr) ;
+			mHeap->mCondition->wait_for (mLock ,r1x->get_mTimeDuration ()) ;
 		}
 	} ;
 } ;
@@ -386,7 +385,7 @@ template <>
 exports auto CONDITIONALLOCK_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () -> Box<FakeHolder> {
 	using R1X = typename CONDITIONALLOCK_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	Box<FakeHolder> ret ;
-	ret.acquire (TYPEAS<R1X>::id) ;
+	ret.acquire (TYPEAS<R1X>::expr) ;
 	return move (ret) ;
 }
 
@@ -483,7 +482,7 @@ trait SYSTEM_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		void execute (CREF<String<STR>> command) const override {
 			if (command.empty ())
 				return ;
-			const auto r1x = string_cvt[TYPEAS<TYPEAS<STRA ,STR>>::id] (command) ;
+			const auto r1x = string_cvt[TYPEAS<TYPEAS<STRA ,STR>>::expr] (command) ;
 			const auto r2x = std::system ((&r1x[0])) ;
 			noop (r2x) ;
 		}

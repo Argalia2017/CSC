@@ -15,6 +15,126 @@
 
 namespace CSC {
 template <class...>
+trait SORTPROC_HELP ;
+
+template <class DEPEND>
+trait SORTPROC_HELP<DEPEND ,ALWAYS> {
+	using COMPARE = Function<BOOL ,TYPEAS<CREF<INDEX> ,CREF<INDEX>>> ;
+
+	struct Holder implement Interface {} ;
+
+	class SortProc {
+	protected:
+		VRef<Holder> mThis ;
+
+	public:
+		imports CREF<SortProc> instance () {
+			return memorize ([&] () {
+				SortProc ret ;
+				ret.mThis = NULL ;
+				return move (ret) ;
+			}) ;
+		}
+		template <class ARG1>
+		inline void operator() (CREF<ARG1> array_ ,VREF<Array<INDEX>> range_) const {
+			sort (array_ ,range_ ,0 ,range_.length ()) ;
+		}
+
+		template <class ARG1>
+		imports void sort (CREF<ARG1> array_ ,VREF<Array<INDEX>> range_ ,CREF<INDEX> begin_ ,CREF<INDEX> end_) {
+			const auto r1x = end_ - begin_ ;
+			if (r1x <= 1)
+				return ;
+			INDEX ix = begin_ ;
+			INDEX iy = end_ - 1 ;
+			assert (vbetween (ix ,0 ,range_.size ())) ;
+			assert (vbetween (iy ,0 ,range_.size ())) ;
+			const auto r2x = COMPARE ([&] (CREF<INDEX> a ,CREF<INDEX> b) {
+				return operator_compr (array_[a] ,array_[b]) ;
+			}) ;
+			quick_sort (r2x ,range_ ,ix ,iy ,r1x) ;
+		}
+
+	private:
+		imports void insert_sort (CREF<COMPARE> compare ,VREF<Array<INDEX>> range_ ,CREF<INDEX> lb ,CREF<INDEX> rb) {
+			for (auto &&i : iter (lb ,rb)) {
+				INDEX ix = i + 1 ;
+				INDEX iy = i ;
+				const auto r1x = range_[ix] ;
+				while (TRUE) {
+					if (iy < lb)
+						break ;
+					const auto r2x = compare (r1x ,range_[iy]) ;
+					if (r2x >= ZERO)
+						break ;
+					range_[ix] = range_[iy] ;
+					ix = iy ;
+					iy-- ;
+				}
+				range_[ix] = r1x ;
+			}
+		}
+
+		imports void quick_sort_partition (CREF<COMPARE> compare ,VREF<Array<INDEX>> range_ ,CREF<INDEX> lb ,CREF<INDEX> rb ,VREF<INDEX> mid_one) {
+			INDEX ix = lb ;
+			INDEX iy = rb ;
+			const auto r1x = range_[ix] ;
+			while (TRUE) {
+				while (TRUE) {
+					if (ix >= iy)
+						break ;
+					const auto r2x = compare (range_[iy] ,r1x) ;
+					if (r2x <= ZERO)
+						break ;
+					iy-- ;
+				}
+				if (ix >= iy)
+					break ;
+				range_[ix] = range_[iy] ;
+				ix++ ;
+				while (TRUE) {
+					if (ix >= iy)
+						break ;
+					const auto r3x = operator_compr (range_[ix] ,r1x) ;
+					if (r3x >= ZERO)
+						break ;
+					ix++ ;
+				}
+				if (ix >= iy)
+					break ;
+				range_[iy] = range_[ix] ;
+				iy-- ;
+			}
+			range_[ix] = r1x ;
+			mid_one = ix ;
+		}
+
+		imports void quick_sort (CREF<COMPARE> compare ,VREF<Array<INDEX>> range_ ,CREF<INDEX> lb ,CREF<INDEX> rb ,CREF<LENGTH> ideal) {
+			auto rax = ideal ;
+			INDEX ix = lb ;
+			INDEX iy = rb ;
+			while (TRUE) {
+				if (ix >= iy)
+					break ;
+				if (rax <= 0)
+					break ;
+				rax = rax / 2 + rax / 4 ;
+				INDEX jx = NONE ;
+				quick_sort_partition (compare ,range_ ,ix ,iy ,jx) ;
+				INDEX iz = jx - 1 ;
+				quick_sort (compare ,range_ ,ix ,iz ,rax) ;
+				ix = jx + 1 ;
+			}
+			if (ix >= iy)
+				return ;
+			insert_sort (compare ,range_ ,ix ,iy) ;
+		}
+	} ;
+} ;
+
+using SortProc = typename SORTPROC_HELP<DEPEND ,ALWAYS>::SortProc ;
+
+template <class...>
 trait DISJOINTTABLE_HELP ;
 
 template <class DEPEND>
@@ -157,41 +277,51 @@ template <class DEPEND>
 trait BINARYTABLE_HELP<DEPEND ,ALWAYS> {
 	struct NODE {
 		INDEX mTo ;
-		LENGTH mWeight ;
-		INDEX mLeft ;
-		INDEX mRight ;
+		INDEX mNext ;
+	} ;
+
+	struct HEAD {
+		INDEX mRoot ;
+		LENGTH mLength ;
 	} ;
 
 	class BinaryTable {
 	protected:
 		Allocator<NODE ,VARIABLE> mTable ;
-		Array<INDEX> mHead ;
+		Array<INDEX> mBinary ;
+		Array<HEAD> mHead ;
 
 	public:
 		implicit BinaryTable () = default ;
 
 		explicit BinaryTable (CREF<LENGTH> size_) {
 			mTable = Allocator<NODE ,VARIABLE> (size_) ;
-			mHead = Array<INDEX> (size_) ;
+			mBinary = Array<INDEX> () ;
+			mHead = Array<HEAD> (size_) ;
 			clear () ;
 		}
 
 		void clear () {
 			mTable.clear () ;
-			mHead.fill (NONE) ;
+			mBinary = Array<INDEX> () ;
+			for (auto &&i : mHead) {
+				i.mRoot = NONE ;
+				i.mLength = 0 ;
+			}
 		}
 
 		void link (CREF<INDEX> from_ ,CREF<INDEX> to_) {
-			INDEX ix = find (mHead[from_] ,to_) ;
+			assert (mBinary.size () == 0) ;
+			INDEX ix = from_ ;
+			INDEX jx = find_table (mHead[ix].mRoot ,to_) ;
 			if ifswitch (TRUE) {
-				if (ix != NONE)
+				if (jx != NONE)
 					discard ;
-				ix = mTable.insert () ;
-				mTable[ix].mTo = to_ ;
-				mTable[ix].mWeight = 1 ;
-				mTable[ix].mLeft = NONE ;
-				mTable[ix].mRight = NONE ;
-				update_insert (mHead[from_] ,ix) ;
+				jx = mTable.alloc () ;
+				mTable[jx].mTo = to_ ;
+				mTable[jx].mNext = mHead[ix].mRoot ;
+				mHead[ix].mRoot = jx ;
+				mHead[ix].mLength++ ;
 			}
 		}
 
@@ -203,143 +333,82 @@ trait BINARYTABLE_HELP<DEPEND ,ALWAYS> {
 		}
 
 		BOOL get (CREF<INDEX> from_ ,CREF<INDEX> to_) const {
-			INDEX ix = find (mHead[from_] ,to_) ;
-			if (ix == NONE)
-				return FALSE ;
-			return TRUE ;
+			assert (mTable.size () == 0) ;
+			INDEX ix = from_ ;
+			INDEX iy = to_ ;
+			if ifswitch (TRUE) {
+				if (mHead[ix].mLength < mHead[iy].mLength)
+					discard ;
+				swap (ix ,iy) ;
+			}
+			const auto r1x = mHead[ix].mRoot ;
+			const auto r2x = r1x + mHead[ix].mLength ;
+			INDEX jx = find_binary (r1x ,r2x ,iy) ;
+			return jx != NONE ;
 		}
 
 		Array<INDEX> filter (CREF<INDEX> from_) const {
-			const auto r1x = node_weight (mHead[from_]) ;
-			Array<INDEX> ret = Array<INDEX> (r1x) ;
-			INDEX ix = 0 ;
-			compute_order (mHead[from_] ,ret ,ix) ;
-			assert (ix == ret.length ()) ;
+			assert (mTable.size () == 0) ;
+			INDEX ix = from_ ;
+			Array<INDEX> ret = Array<INDEX> (mHead[ix].mLength) ;
+			INDEX jx = mHead[ix].mRoot ;
+			for (auto &&i : ret.iter ()) {
+				ret[i] = jx ;
+				jx = mTable[jx].mTo ;
+			}
 			return move (ret) ;
+		}
+
+		void optimize () {
+			mBinary = Array<INDEX> (mTable.length ()) ;
+			INDEX ix = 0 ;
+			for (auto &&i : mHead) {
+				INDEX jx = i.mRoot ;
+				i.mRoot = ix ;
+				while (TRUE) {
+					if (jx == NONE)
+						break ;
+					mBinary[ix] = mTable[jx].mTo ;
+					ix++ ;
+					jx = mTable[jx].mNext ;
+				}
+			}
+			mTable = Allocator<NODE ,VARIABLE> () ;
 		}
 
 	private:
-		INDEX find (CREF<INDEX> root ,CREF<INDEX> item) const {
-			INDEX ret = root ;
+		INDEX find_table (CREF<INDEX> root ,CREF<INDEX> to_) const {
+			INDEX jx = root ;
 			while (TRUE) {
-				if (ret == NONE)
+				if (jx == NONE)
 					break ;
-				const auto r1x = operator_compr (item ,mTable[ret].mTo) ;
-				if (r1x == ZERO)
-					break ;
-				const auto r2x = invoke ([&] () {
-					if (r1x < ZERO)
-						return mTable[ret].mLeft ;
-					return mTable[ret].mRight ;
-				}) ;
-				ret = r2x ;
+				if (mTable[jx].mTo == to_)
+					return jx ;
+				jx = mTable[jx].mNext ;
 			}
-			return move (ret) ;
+			return NONE ;
 		}
 
-		void update_insert (VREF<INDEX> curr ,CREF<INDEX> last) {
-			INDEX ix = last ;
-			if ifswitch (TRUE) {
-				if (curr == NONE)
-					discard ;
-				ix = curr ;
-				mTable[ix].mWeight++ ;
-				const auto r1x = operator_compr (mTable[last].mTo ,mTable[ix].mTo) ;
-				assert (r1x != ZERO) ;
+		INDEX find_binary (CREF<INDEX> begin_ ,CREF<INDEX> end_ ,CREF<INDEX> to_) const {
+			INDEX ix = begin_ ;
+			INDEX iy = end_ ;
+			while (TRUE) {
+				if (ix >= iy)
+					break ;
+				INDEX iz = (ix + iy) / 2 ;
 				auto rxx = TRUE ;
 				if ifswitch (rxx) {
-					if (r1x > ZERO)
+					if (to_ < mBinary[iz])
 						discard ;
-					update_insert (mTable[ix].mLeft ,last) ;
-					update_insert_left (ix) ;
+					ix = iz ;
 				}
 				if ifswitch (rxx) {
-					update_insert (mTable[ix].mRight ,last) ;
-					update_insert_right (ix) ;
+					iy = iz ;
 				}
 			}
-			curr = ix ;
-		}
-
-		void update_insert_left (VREF<INDEX> curr) {
-			INDEX ix = curr ;
-			if (mTable[ix].mLeft == NONE)
-				return ;
-			const auto r1x = node_weight (mTable[ix].mRight) ;
-			const auto r2x = node_weight (mTable[mTable[ix].mLeft].mLeft) ;
-			const auto r3x = node_weight (mTable[mTable[ix].mLeft].mRight) ;
-			if (r1x >= vmax (r2x ,r3x))
-				return ;
-			if ifswitch (TRUE) {
-				if (r1x < r2x)
-					discard ;
-				rotate_left (mTable[ix].mLeft) ;
-			}
-			rotate_right (ix) ;
-			update_insert_left (mTable[ix].mLeft) ;
-			update_insert_right (mTable[ix].mRight) ;
-			update_insert_left (ix) ;
-			update_insert_right (ix) ;
-			curr = ix ;
-		}
-
-		void update_insert_right (VREF<INDEX> curr) {
-			INDEX ix = curr ;
-			if (mTable[ix].mRight == NONE)
-				return ;
-			const auto r1x = node_weight (mTable[ix].mLeft) ;
-			const auto r2x = node_weight (mTable[mTable[ix].mRight].mRight) ;
-			const auto r3x = node_weight (mTable[mTable[ix].mRight].mLeft) ;
-			if (r1x >= vmax (r2x ,r3x))
-				return ;
-			if ifswitch (TRUE) {
-				if (r1x < r2x)
-					discard ;
-				rotate_right (mTable[ix].mRight) ;
-			}
-			rotate_left (ix) ;
-			update_insert_left (mTable[ix].mLeft) ;
-			update_insert_right (mTable[ix].mRight) ;
-			update_insert_left (ix) ;
-			update_insert_right (ix) ;
-			curr = ix ;
-		}
-
-		void rotate_left (VREF<INDEX> curr) {
-			INDEX ix = mTable[curr].mRight ;
-			mTable[curr].mRight = mTable[ix].mLeft ;
-			mTable[ix].mLeft = curr ;
-			mTable[ix].mWeight = mTable[curr].mWeight ;
-			const auto r1x = node_weight (mTable[curr].mLeft) ;
-			const auto r2x = node_weight (mTable[curr].mRight) ;
-			mTable[curr].mWeight = r1x + r2x + 1 ;
-			curr = ix ;
-		}
-
-		void rotate_right (VREF<INDEX> curr) {
-			INDEX ix = mTable[curr].mLeft ;
-			mTable[curr].mLeft = mTable[ix].mRight ;
-			mTable[ix].mRight = curr ;
-			mTable[ix].mWeight = mTable[curr].mWeight ;
-			const auto r1x = node_weight (mTable[curr].mLeft) ;
-			const auto r2x = node_weight (mTable[curr].mRight) ;
-			mTable[curr].mWeight = r1x + r2x + 1 ;
-			curr = ix ;
-		}
-
-		LENGTH node_weight (CREF<INDEX> curr) const {
-			if (curr == NONE)
-				return ZERO ;
-			return mTable[curr].mWeight ;
-		}
-
-		void compute_order (CREF<INDEX> curr ,VREF<Array<INDEX>> range_ ,VREF<INDEX> iw) const {
-			if (curr == NONE)
-				return ;
-			compute_order (mTable[curr].mLeft ,range_ ,iw) ;
-			range_[iw] = curr ;
-			iw++ ;
-			compute_order (mTable[curr].mRight ,range_ ,iw) ;
+			if (mBinary[ix] == to_)
+				return ix ;
+			return NONE ;
 		}
 	} ;
 } ;
@@ -351,7 +420,7 @@ trait SEGMENTTABLE_HELP ;
 
 template <class DEPEND>
 trait SEGMENTTABLE_HELP<DEPEND ,ALWAYS> {
-	using FLOAT = SINGLE ;
+	using FLOAT = DOUBLE ;
 
 	class SegmentTable {
 	protected:
@@ -430,7 +499,7 @@ trait SEGMENTTABLE_HELP<DEPEND ,ALWAYS> {
 				mTableOrder = Array<INDEX> (mTable.size ()) ;
 				mTableOrder.fill (NONE) ;
 			}
-			mTableRange = mTable.range_sort () ;
+			mTableRange = mTable.range (SortProc::instance ()) ;
 			for (auto &&i : mTableRange.iter ())
 				mTableOrder[mTableRange[i]] = i ;
 			if ifswitch (TRUE) {

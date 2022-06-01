@@ -72,33 +72,29 @@ trait MATHPROC_HELP<DEPEND ,ALWAYS> {
 
 		template <class ARG1>
 		imports ARG1 infinite (CREF<ARG1> x) {
-			using R1X = ARG1 ;
-			require (IS_FLOAT<R1X>) ;
+			require (IS_FLOAT<ARG1>) ;
 			return instance ().mThis->infinite (x) ;
 		}
 
 		template <class ARG1>
 		imports ARG1 sign (CREF<ARG1> x) {
-			using R1X = ARG1 ;
-			require (IS_SCALAR<R1X>) ;
+			require (IS_SCALAR<ARG1>) ;
 			if (x >= 0)
-				return R1X (1) ;
-			return R1X (-1) ;
+				return ARG1 (1) ;
+			return ARG1 (-1) ;
 		}
 
 		template <class ARG1>
 		imports ARG1 step (CREF<ARG1> x) {
-			using R1X = ARG1 ;
-			require (IS_SCALAR<R1X>) ;
+			require (IS_SCALAR<ARG1>) ;
 			if (x >= 0)
-				return R1X (1) ;
-			return R1X (0) ;
+				return ARG1 (1) ;
+			return ARG1 (0) ;
 		}
 
 		template <class ARG1>
 		imports ARG1 abs (CREF<ARG1> x) {
-			using R1X = ARG1 ;
-			require (IS_SCALAR<R1X>) ;
+			require (IS_SCALAR<ARG1>) ;
 			if (x >= 0)
 				return x ;
 			return -x ;
@@ -106,24 +102,20 @@ trait MATHPROC_HELP<DEPEND ,ALWAYS> {
 
 		template <class ARG1>
 		imports ARG1 inverse (CREF<ARG1> x) {
-			using R1X = ARG1 ;
-			require (IS_FLOAT<R1X>) ;
+			require (IS_FLOAT<ARG1>) ;
 			return instance ().mThis->inverse (x) ;
 		}
 
 		template <class ARG1>
 		imports ARG1 min_of (CREF<ARG1> x1) {
-			using R1X = ARG1 ;
-			require (IS_SCALAR<R1X>) ;
+			require (IS_SCALAR<ARG1>) ;
 			return x1 ;
 		}
 
 		template <class ARG1 ,class ARG2 ,class...ARG3>
 		imports ARG1 min_of (CREF<ARG1> x1 ,CREF<ARG2> x2 ,CREF<ARG3>...xn) {
-			using R1X = ARG1 ;
-			using R2X = ARG2 ;
-			require (IS_SCALAR<R1X>) ;
-			require (IS_SAME<R1X ,R2X>) ;
+			require (IS_SCALAR<ARG1>) ;
+			require (IS_SAME<ARG1 ,ARG2>) ;
 			if (x1 <= x2)
 				return min_of (x1 ,xn...) ;
 			return min_of (x2 ,xn...) ;
@@ -131,17 +123,14 @@ trait MATHPROC_HELP<DEPEND ,ALWAYS> {
 
 		template <class ARG1>
 		imports ARG1 max_of (CREF<ARG1> x1) {
-			using R1X = ARG1 ;
-			require (IS_SCALAR<R1X>) ;
+			require (IS_SCALAR<ARG1>) ;
 			return x1 ;
 		}
 
 		template <class ARG1 ,class ARG2 ,class...ARG3>
 		imports ARG1 max_of (CREF<ARG1> x1 ,CREF<ARG2> x2 ,CREF<ARG3>...xn) {
-			using R1X = ARG1 ;
-			using R2X = ARG2 ;
-			require (IS_SCALAR<R1X>) ;
-			require (IS_SAME<R1X ,R2X>) ;
+			require (IS_SCALAR<ARG1>) ;
+			require (IS_SAME<ARG1 ,ARG2>) ;
 			if (x1 >= x2)
 				return max_of (x1 ,xn...) ;
 			return max_of (x2 ,xn...) ;
@@ -153,8 +142,7 @@ trait MATHPROC_HELP<DEPEND ,ALWAYS> {
 
 		template <class ARG1 ,class...ARG3>
 		imports BOOL all_of (CREF<ARG1> x1 ,CREF<ARG3>...xn) {
-			using R1X = ARG1 ;
-			require (IS_BOOL<R1X>) ;
+			require (IS_BOOL<ARG1>) ;
 			if ifnot (x1)
 				return FALSE ;
 			return all_of (xn...) ;
@@ -166,8 +154,7 @@ trait MATHPROC_HELP<DEPEND ,ALWAYS> {
 
 		template <class ARG1 ,class...ARG3>
 		imports BOOL any_of (CREF<ARG1> x1 ,CREF<ARG3>...xn) {
-			using R1X = ARG1 ;
-			require (IS_BOOL<R1X>) ;
+			require (IS_BOOL<ARG1>) ;
 			if (x1)
 				return TRUE ;
 			return any_of (xn...) ;
@@ -175,50 +162,41 @@ trait MATHPROC_HELP<DEPEND ,ALWAYS> {
 
 		template <class ARG1>
 		imports ARG1 sum_of (CREF<ARG1> x) {
-			using R1X = ARG1 ;
-			require (IS_SCALAR<R1X>) ;
+			require (IS_SCALAR<ARG1>) ;
 			return x ;
 		}
 
 		template <class ARG1 ,class ARG2 ,class...ARG3>
 		imports ARG1 sum_of (CREF<ARG1> x1 ,CREF<ARG2> x2 ,CREF<ARG3>...xn) {
-			using R1X = ARG1 ;
-			using R2X = ARG2 ;
-			require (IS_SCALAR<R1X>) ;
-			require (IS_SAME<R1X ,R2X>) ;
+			require (IS_SCALAR<ARG1>) ;
+			require (IS_SAME<ARG1 ,ARG2>) ;
 			return sum_of (x1 + x2 ,xn...) ;
 		}
 
 		template <class ARG1>
 		imports ARG1 acc_of (CREF<ARG1> x) {
-			using R1X = ARG1 ;
-			require (IS_SCALAR<R1X>) ;
+			require (IS_SCALAR<ARG1>) ;
 			return x ;
 		}
 
 		template <class ARG1 ,class ARG2 ,class...ARG3>
 		imports ARG1 acc_of (CREF<ARG1> x1 ,CREF<ARG2> x2 ,CREF<ARG3>...xn) {
-			using R1X = ARG1 ;
-			using R2X = ARG2 ;
-			require (IS_SCALAR<R1X>) ;
-			require (IS_SAME<R1X ,R2X>) ;
+			require (IS_SCALAR<ARG1>) ;
+			require (IS_SAME<ARG1 ,ARG2>) ;
 			return acc_of (x1 * x2 ,xn...) ;
 		}
 
 		template <class ARG1>
 		imports Array<ARG1 ,RANK1> sort_of (CREF<ARG1> x1) {
-			using R1X = ARG1 ;
-			Array<R1X ,RANK1> ret ;
+			Array<ARG1 ,RANK1> ret ;
 			ret[0] = x1 ;
 			return move (ret) ;
 		}
 
 		template <class ARG1 ,class ARG2>
 		imports Array<ARG1 ,RANK2> sort_of (CREF<ARG1> x1 ,CREF<ARG2> x2) {
-			using R1X = ARG1 ;
-			using R2X = ARG2 ;
-			require (IS_SAME<R1X ,R2X>) ;
-			Array<R1X ,RANK2> ret ;
+			require (IS_SAME<ARG1 ,ARG2>) ;
+			Array<ARG1 ,RANK2> ret ;
 			ret[0] = x1 ;
 			ret[1] = x2 ;
 			if ifswitch (TRUE) {
@@ -231,12 +209,9 @@ trait MATHPROC_HELP<DEPEND ,ALWAYS> {
 
 		template <class ARG1 ,class ARG2 ,class ARG3>
 		imports Array<ARG1 ,RANK3> sort_of (CREF<ARG1> x1 ,CREF<ARG2> x2 ,CREF<ARG3> x3) {
-			using R1X = ARG1 ;
-			using R2X = ARG2 ;
-			using R3X = ARG3 ;
-			require (IS_SAME<R1X ,R2X>) ;
-			require (IS_SAME<R1X ,R3X>) ;
-			Array<R1X ,RANK3> ret ;
+			require (IS_SAME<ARG1 ,ARG2>) ;
+			require (IS_SAME<ARG1 ,ARG3>) ;
+			Array<ARG1 ,RANK3> ret ;
 			ret[0] = x1 ;
 			ret[1] = x2 ;
 			ret[2] = x3 ;
@@ -260,12 +235,9 @@ trait MATHPROC_HELP<DEPEND ,ALWAYS> {
 
 		template <class ARG1 ,class ARG2 ,class ARG3>
 		imports ARG1 clamp (CREF<ARG1> x ,CREF<ARG2> lb ,CREF<ARG3> rb) {
-			using R1X = ARG1 ;
-			using R2X = ARG2 ;
-			using R3X = ARG3 ;
-			require (IS_SCALAR<R1X>) ;
-			require (IS_SAME<R1X ,R2X>) ;
-			require (IS_SAME<R1X ,R3X>) ;
+			require (IS_SCALAR<ARG1>) ;
+			require (IS_SAME<ARG1 ,ARG2>) ;
+			require (IS_SAME<ARG1 ,ARG3>) ;
 			if (x <= lb)
 				return lb ;
 			if (x >= rb)
@@ -275,87 +247,72 @@ trait MATHPROC_HELP<DEPEND ,ALWAYS> {
 
 		template <class ARG1 ,class ARG2>
 		imports ARG1 floor (CREF<ARG1> x ,CREF<ARG2> y) {
-			using R1X = ARG1 ;
-			using R2X = ARG2 ;
-			require (IS_FLOAT<R1X>) ;
-			require (IS_SAME<R1X ,R2X>) ;
+			require (IS_FLOAT<ARG1>) ;
+			require (IS_SAME<ARG1 ,ARG2>) ;
 			return instance ().mThis->floor (x ,y) ;
 		}
 
 		template <class ARG1 ,class ARG2>
 		imports ARG1 ceil (CREF<ARG1> x ,CREF<ARG2> y) {
-			using R1X = ARG1 ;
-			using R2X = ARG2 ;
-			require (IS_FLOAT<R1X>) ;
-			require (IS_SAME<R1X ,R2X>) ;
+			require (IS_FLOAT<ARG1>) ;
+			require (IS_SAME<ARG1 ,ARG2>) ;
 			return instance ().mThis->ceil (x ,y) ;
 		}
 
 		template <class ARG1 ,class ARG2>
 		imports ARG1 round (CREF<ARG1> x ,CREF<ARG2> y) {
-			using R1X = ARG1 ;
-			using R2X = ARG2 ;
-			require (IS_FLOAT<R1X>) ;
-			require (IS_SAME<R1X ,R2X>) ;
-			const auto r1x = x + y * R1X (MATH_INV2) ;
+			require (IS_FLOAT<ARG1>) ;
+			require (IS_SAME<ARG1 ,ARG2>) ;
+			const auto r1x = x + y * ARG1 (MATH_INV2) ;
 			return floor (r1x ,y) ;
 		}
 
 		template <class ARG1 ,class ARG2>
 		imports ARG1 trunc (CREF<ARG1> x ,CREF<ARG2> y) {
-			using R1X = ARG1 ;
-			using R2X = ARG2 ;
-			require (IS_FLOAT<R1X>) ;
-			require (IS_SAME<R1X ,R2X>) ;
+			require (IS_FLOAT<ARG1>) ;
+			require (IS_SAME<ARG1 ,ARG2>) ;
 			return floor (abs (x) ,y) * sign (x) ;
 		}
 
 		template <class ARG1>
 		imports ARG1 square (CREF<ARG1> x) {
-			using R1X = ARG1 ;
-			require (IS_SCALAR<R1X>) ;
+			require (IS_SCALAR<ARG1>) ;
 			return x * x ;
 		}
 
 		template <class ARG1>
 		imports ARG1 sqrt (CREF<ARG1> x) {
-			using R1X = ARG1 ;
-			require (IS_FLOAT<R1X>) ;
-			return R1X (instance ().mThis->sqrt (DOUBLE (x))) ;
+			require (IS_FLOAT<ARG1>) ;
+			return ARG1 (instance ().mThis->sqrt (DOUBLE (x))) ;
 		}
 
 		template <class ARG1>
 		imports ARG1 cube (CREF<ARG1> x) {
-			using R1X = ARG1 ;
-			require (IS_SCALAR<R1X>) ;
+			require (IS_SCALAR<ARG1>) ;
 			return x * x * x ;
 		}
 
 		template <class ARG1>
 		imports ARG1 cbrt (CREF<ARG1> x) {
-			using R1X = ARG1 ;
-			require (IS_FLOAT<R1X>) ;
-			return R1X (instance ().mThis->cbrt (DOUBLE (x))) ;
+			require (IS_FLOAT<ARG1>) ;
+			return ARG1 (instance ().mThis->cbrt (DOUBLE (x))) ;
 		}
 
 		template <class ARG1>
 		imports ARG1 exp (CREF<ARG1> x) {
-			using R1X = ARG1 ;
-			require (IS_FLOAT<R1X>) ;
-			return R1X (instance ().mThis->exp (DOUBLE (x))) ;
+			require (IS_FLOAT<ARG1>) ;
+			return ARG1 (instance ().mThis->exp (DOUBLE (x))) ;
 		}
 
 		template <class ARG1>
 		imports ARG1 log (CREF<ARG1> x) {
-			using R1X = ARG1 ;
-			require (IS_FLOAT<R1X>) ;
-			return R1X (instance ().mThis->log (DOUBLE (x))) ;
+			require (IS_FLOAT<ARG1>) ;
+			return ARG1 (instance ().mThis->log (DOUBLE (x))) ;
 		}
 
 		template <class ARG1>
 		imports ARG1 log10v (CREF<ARG1> x) {
-			using R1X = ARG1 ;
-			require (IS_VALUE<R1X>) ;
+			require (IS_VALUE<ARG1>) ;
 			LENGTH ret = 0 ;
 			auto rax = x ;
 			while (TRUE) {
@@ -369,76 +326,64 @@ trait MATHPROC_HELP<DEPEND ,ALWAYS> {
 
 		template <class ARG1 ,class ARG2>
 		imports ARG1 pow (CREF<ARG1> x ,CREF<ARG2> y) {
-			using R1X = ARG1 ;
-			using R2X = ARG2 ;
-			require (IS_FLOAT<R1X>) ;
-			require (IS_SAME<R1X ,R2X>) ;
-			return R1X (instance ().mThis->pow (DOUBLE (x) ,DOUBLE (y))) ;
+			require (IS_FLOAT<ARG1>) ;
+			require (IS_SAME<ARG1 ,ARG2>) ;
+			return ARG1 (instance ().mThis->pow (DOUBLE (x) ,DOUBLE (y))) ;
 		}
 
 		template <class ARG1>
 		imports ARG1 ncdf (CREF<ARG1> x) {
-			using R1X = ARG1 ;
-			require (IS_FLOAT<R1X>) ;
-			return R1X (instance ().mThis->ncdf (DOUBLE (x))) ;
+			require (IS_FLOAT<ARG1>) ;
+			return ARG1 (instance ().mThis->ncdf (DOUBLE (x))) ;
 		}
 
 		template <class ARG1>
 		imports ARG1 npdf (CREF<ARG1> x) {
-			using R1X = ARG1 ;
-			require (IS_FLOAT<R1X>) ;
-			return R1X (instance ().mThis->npdf (DOUBLE (x))) ;
+			require (IS_FLOAT<ARG1>) ;
+			return ARG1 (instance ().mThis->npdf (DOUBLE (x))) ;
 		}
 
 		template <class ARG1>
 		imports ARG1 sin (CREF<ARG1> x) {
-			using R1X = ARG1 ;
-			require (IS_FLOAT<R1X>) ;
-			return R1X (instance ().mThis->sin (DOUBLE (x))) ;
+			require (IS_FLOAT<ARG1>) ;
+			return ARG1 (instance ().mThis->sin (DOUBLE (x))) ;
 		}
 
 		template <class ARG1>
 		imports ARG1 cos (CREF<ARG1> x) {
-			using R1X = ARG1 ;
-			require (IS_FLOAT<R1X>) ;
-			return R1X (instance ().mThis->cos (DOUBLE (x))) ;
+			require (IS_FLOAT<ARG1>) ;
+			return ARG1 (instance ().mThis->cos (DOUBLE (x))) ;
 		}
 
 		template <class ARG1>
 		imports ARG1 tan (CREF<ARG1> x) {
-			using R1X = ARG1 ;
-			require (IS_FLOAT<R1X>) ;
-			return R1X (instance ().mThis->tan (DOUBLE (x))) ;
+			require (IS_FLOAT<ARG1>) ;
+			return ARG1 (instance ().mThis->tan (DOUBLE (x))) ;
 		}
 
 		template <class ARG1>
 		imports ARG1 arcsin (CREF<ARG1> x) {
-			using R1X = ARG1 ;
-			require (IS_FLOAT<R1X>) ;
-			return R1X (instance ().mThis->arcsin (DOUBLE (x))) ;
+			require (IS_FLOAT<ARG1>) ;
+			return ARG1 (instance ().mThis->arcsin (DOUBLE (x))) ;
 		}
 
 		template <class ARG1>
 		imports ARG1 arccos (CREF<ARG1> x) {
-			using R1X = ARG1 ;
-			require (IS_FLOAT<R1X>) ;
-			return R1X (instance ().mThis->arccos (DOUBLE (x))) ;
+			require (IS_FLOAT<ARG1>) ;
+			return ARG1 (instance ().mThis->arccos (DOUBLE (x))) ;
 		}
 
 		template <class ARG1 ,class ARG2>
 		imports ARG1 arctan (CREF<ARG1> x ,CREF<ARG2> y) {
-			using R1X = ARG1 ;
-			using R2X = ARG2 ;
-			require (IS_FLOAT<R1X>) ;
-			require (IS_SAME<R1X ,R2X>) ;
-			return R1X (instance ().mThis->arctan (DOUBLE (x) ,DOUBLE (y))) ;
+			require (IS_FLOAT<ARG1>) ;
+			require (IS_SAME<ARG1 ,ARG2>) ;
+			return ARG1 (instance ().mThis->arctan (DOUBLE (x) ,DOUBLE (y))) ;
 		}
 
 		template <class ARG1>
 		imports ARG1 radian_angle (CREF<ARG1> x) {
-			using R1X = ARG1 ;
-			require (IS_FLOAT<R1X>) ;
-			return R1X (x / R1X (180) * R1X (MATH_PI)) ;
+			require (IS_FLOAT<ARG1>) ;
+			return ARG1 (x / ARG1 (180) * ARG1 (MATH_PI)) ;
 		}
 	} ;
 } ;
@@ -566,30 +511,26 @@ trait BITPROC_HELP<DEPEND ,ALWAYS> {
 
 		template <class ARG1 ,class ARG2>
 		imports BOOL get_bit (CREF<ARG1> obj1 ,CREF<ARG2> obj2) {
-			using R1X = ARG1 ;
-			require (IS_BIT<R1X>) ;
-			return (obj1 & R1X (obj2)) != R1X (0X00) ;
+			require (IS_BIT<ARG1>) ;
+			return (obj1 & ARG1 (obj2)) != ARG1 (0X00) ;
 		}
 
 		template <class ARG1 ,class ARG2>
 		imports BOOL all_bit (CREF<ARG1> obj1 ,CREF<ARG2> obj2) {
-			using R1X = ARG1 ;
-			require (IS_BIT<R1X>) ;
-			return (obj1 & R1X (obj2)) == R1X (obj2) ;
+			require (IS_BIT<ARG1>) ;
+			return (obj1 & ARG1 (obj2)) == ARG1 (obj2) ;
 		}
 
 		template <class ARG1 ,class ARG2>
 		imports void set_bit (CREF<ARG1> obj1 ,CREF<ARG2> obj2) {
-			using R1X = ARG1 ;
-			require (IS_BIT<R1X>) ;
-			obj1 |= R1X (obj2) ;
+			require (IS_BIT<ARG1>) ;
+			obj1 |= ARG1 (obj2) ;
 		}
 
 		template <class ARG1 ,class ARG2>
 		imports void erase_bit (CREF<ARG1> obj1 ,CREF<ARG2> obj2) {
-			using R1X = ARG1 ;
-			require (IS_BIT<R1X>) ;
-			obj1 &= ~R1X (obj2) ;
+			require (IS_BIT<ARG1>) ;
+			obj1 &= ~ARG1 (obj2) ;
 		}
 
 		imports DATA nth_bit (CREF<LENGTH> nth) {

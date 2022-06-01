@@ -5,16 +5,16 @@
   <!--"https://docs.microsoft.com/en-us/visualstudio/debugger/format-specifiers-in-cpp?view=vs-2017#BKMK_Visual_Studio_2012_format_specifiers"-->
   <!--"https://docs.microsoft.com/en-us/visualstudio/debugger/pseudovariables?view=vs-2017"-->
   <!--"https://docs.microsoft.com/en-us/visualstudio/debugger/context-operator-cpp?view=vs-2017"-->
-  
+
   <Type Name="CSC::TEMPAS&lt;*&gt;">
     <Expand>
-      <ExpandedItem>(($T1*)&amp;__unused)</ExpandedItem>
+      <ExpandedItem>($T1*)&amp;__unused</ExpandedItem>
     </Expand>
   </Type>
 
   <Type Name="CSC::BOX_HELP&lt;*&gt;::Box">
     <Expand>
-      <ExpandedItem>&amp;mValue</ExpandedItem>
+      <ExpandedItem>mValue</ExpandedItem>
     </Expand>
   </Type>
 
@@ -23,20 +23,20 @@
       <ExpandedItem>mArray</ExpandedItem>
     </Expand>
   </Type>
-  
+
   <Type Name="CSC::CELL_HELP&lt;*&gt;::Cell">
     <Expand>
-      <ExpandedItem>&amp;mValue</ExpandedItem>
+      <ExpandedItem>mValue</ExpandedItem>
     </Expand>
   </Type>
 
-  <Type Name="CSC::VREF_HELP&lt;*&gt;::VRef">
+  <Type Name="CSC::VREF_HELP&lt;*&gt;::VRef" Priority="Low">
     <Expand>
       <ExpandedItem>($T1*)mPointer</ExpandedItem>
     </Expand>
   </Type>
 
-  <Type Name="CSC::VREF_HELP&lt;*&gt;::VRef" Priority="Low">
+  <Type Name="CSC::VREF_HELP&lt;*&gt;::VRef">
     <Expand>
       <ExpandedItem>(Holder*)mHolder</ExpandedItem>
     </Expand>
@@ -44,11 +44,11 @@
 
   <Type Name="CSC::VREF_IMPLHOLDER_HELP&lt;*&gt;::ImplHolder">
     <Expand>
-      <ExpandedItem>&amp;mValue</ExpandedItem>
+      <ExpandedItem>mValue</ExpandedItem>
     </Expand>
   </Type>
 
-  <Type Name="CSC::VREF_IMPLHOLDER_HELP&lt;*&gt;::ImplHolder" Priority="MediumLow">
+  <Type Name="CSC::VREF_IMPLHOLDER_HELP&lt;*&gt;::ImplHolder" Priority="High">
     <Expand>
       <Item Name="[size]">mSize</Item>
       <ArrayItems>
@@ -58,13 +58,13 @@
     </Expand>
   </Type>
 
-  <Type Name="CSC::CREF_HELP&lt;*&gt;::CRef">
+  <Type Name="CSC::CREF_HELP&lt;*&gt;::CRef" Priority="Low">
     <Expand>
       <ExpandedItem>($T1*)mPointer</ExpandedItem>
     </Expand>
   </Type>
 
-  <Type Name="CSC::CREF_HELP&lt;*&gt;::CRef" Priority="Low">
+  <Type Name="CSC::CREF_HELP&lt;*&gt;::CRef">
     <Expand>
       <ExpandedItem>(Holder*)mHolder</ExpandedItem>
     </Expand>
@@ -72,11 +72,11 @@
 
   <Type Name="CSC::CREF_IMPLHOLDER_HELP&lt;*&gt;::ImplHolder">
     <Expand>
-      <ExpandedItem>&amp;mValue</ExpandedItem>
+      <ExpandedItem>mValue</ExpandedItem>
     </Expand>
   </Type>
 
-  <Type Name="CSC::CREF_IMPLHOLDER_HELP&lt;*&gt;::ImplHolder" Priority="MediumLow">
+  <Type Name="CSC::CREF_IMPLHOLDER_HELP&lt;*&gt;::ImplHolder" Priority="High">
     <Expand>
       <Item Name="[size]">mSize</Item>
       <ArrayItems>
@@ -88,7 +88,7 @@
 
   <Type Name="CSC::SLICE_HELP&lt;*&gt;::Slice">
     <Expand>
-      <ExpandedItem>&amp;mThis</ExpandedItem>
+      <ExpandedItem>mThis</ExpandedItem>
     </Expand>
   </Type>
 
@@ -98,29 +98,29 @@
     </Expand>
   </Type>
 
-  <Type Name="CSC::SLICE_IMPLHOLDER_HELP&lt;char,*&gt;::NODE">
+  <Type Name="CSC::SLICE_IMPLHOLDER_HELP&lt;char,*&gt;::NODE" Priority="High">
     <DisplayString>{{ {mPointer,s} }}</DisplayString>
     <StringView>mPointer,s</StringView>
   </Type>
 
-  <Type Name="CSC::SLICE_IMPLHOLDER_HELP&lt;wchar_t,*&gt;::NODE">
+  <Type Name="CSC::SLICE_IMPLHOLDER_HELP&lt;wchar_t,*&gt;::NODE" Priority="High">
     <DisplayString>{{ {mPointer,su} }}</DisplayString>
     <StringView Condition="mAlign==1">mPointer,s8</StringView>
     <StringView Condition="mAlign==2">mPointer,su</StringView>
   </Type>
 
-  <Type Name="CSC::SLICE_IMPLHOLDER_HELP&lt;char8_t,*&gt;::NODE">
+  <Type Name="CSC::SLICE_IMPLHOLDER_HELP&lt;unsigned char,*&gt;::NODE" Priority="High">
     <DisplayString>{{ {mPointer,s8} }}</DisplayString>
     <StringView>mPointer,s8</StringView>
   </Type>
 
-  <Type Name="CSC::SLICE_IMPLHOLDER_HELP&lt;char16_t,*&gt;::NODE">
+  <Type Name="CSC::SLICE_IMPLHOLDER_HELP&lt;char16_t,*&gt;::NODE" Priority="High">
     <DisplayString>{{ {mPointer,su} }}</DisplayString>
     <StringView Condition="mAlign==1">mPointer,s8</StringView>
     <StringView Condition="mAlign==2">mPointer,su</StringView>
   </Type>
 
-  <Type Name="CSC::SLICE_IMPLHOLDER_HELP&lt;char32_t,*&gt;::NODE">
+  <Type Name="CSC::SLICE_IMPLHOLDER_HELP&lt;char32_t,*&gt;::NODE" Priority="High">
     <DisplayString>{{ {mPointer,s32} }}</DisplayString>
     <StringView Condition="mAlign==1">mPointer,s8</StringView>
     <StringView Condition="mAlign==4">mPointer,s32</StringView>
@@ -128,7 +128,7 @@
 
   <Type Name="CSC::CLAZZ_HELP&lt;*&gt;::Clazz">
     <Expand>
-      <ExpandedItem>&amp;mThis</ExpandedItem>
+      <ExpandedItem>mThis</ExpandedItem>
     </Expand>
   </Type>
 
@@ -138,74 +138,74 @@
 
   <Type Name="CSC::EXCEPTION_HELP&lt;*&gt;::Exception">
     <Expand>
-      <ExpandedItem>&amp;mThis</ExpandedItem>
+      <ExpandedItem>mThis</ExpandedItem>
     </Expand>
   </Type>
 
   <Type Name="CSC::EXCEPTION_IMPLHOLDER_HELP&lt;*&gt;::ImplHolder">
     <Expand>
-      <ExpandedItem>&amp;mWhat</ExpandedItem>
+      <ExpandedItem>mWhat</ExpandedItem>
     </Expand>
   </Type>
 
   <Type Name="CSC::WATCH_HELP&lt;*&gt;::WATCH">
     <Expand>
       <Item Name="[name]">mName</Item>
-      <ExpandedItem>(($T1*)mAddress)</ExpandedItem>
+      <ExpandedItem>($T1*)mAddress</ExpandedItem>
     </Expand>
   </Type>
 
   <Type Name="CSC::OPTIONAL_HELP&lt;*&gt;::Optional">
     <Expand>
-      <ExpandedItem>&amp;mThis</ExpandedItem>
+      <ExpandedItem>mThis</ExpandedItem>
     </Expand>
   </Type>
 
   <Type Name="CSC::AUTOREF_HELP&lt;*&gt;::AutoRef">
     <Expand>
-      <ExpandedItem>&amp;mThis</ExpandedItem>
+      <ExpandedItem>mThis</ExpandedItem>
     </Expand>
   </Type>
 
   <Type Name="CSC::AUTOREF_IMPLHOLDER_HELP&lt;*&gt;::ImplHolder">
     <Expand>
-      <ExpandedItem>&amp;mValue</ExpandedItem>
+      <ExpandedItem>mValue</ExpandedItem>
     </Expand>
   </Type>
-  
+
   <Type Name="CSC::SHAREDREF_HELP&lt;*&gt;::SharedRef">
     <Expand>
-      <ExpandedItem>&amp;mThis</ExpandedItem>
+      <ExpandedItem>mThis</ExpandedItem>
     </Expand>
   </Type>
 
   <Type Name="CSC::SHAREDREF_IMPLHOLDER_HELP&lt;*&gt;::ImplHolder">
     <Expand>
-      <ExpandedItem>&amp;mValue</ExpandedItem>
+      <ExpandedItem>mValue</ExpandedItem>
     </Expand>
   </Type>
 
   <Type Name="CSC::UNIQUEREF_HELP&lt;*&gt;::UniqueRef">
     <Expand>
-      <ExpandedItem>&amp;mThis</ExpandedItem>
+      <ExpandedItem>mThis</ExpandedItem>
     </Expand>
   </Type>
 
   <Type Name="CSC::UNIQUEREF_IMPLHOLDER_HELP&lt;*&gt;::ImplHolder">
     <Expand>
-      <ExpandedItem>&amp;mValue</ExpandedItem>
+      <ExpandedItem>mValue</ExpandedItem>
     </Expand>
   </Type>
 
   <Type Name="CSC::TUPLE_HELP&lt;*&gt;::Tuple">
     <Expand>
-      <ExpandedItem>&amp;mTuple</ExpandedItem>
+      <ExpandedItem>mTuple</ExpandedItem>
     </Expand>
   </Type>
 
   <Type Name="CSC::FUNCTION_HELP&lt;*&gt;::Function">
     <Expand>
-      <ExpandedItem>&amp;mThis</ExpandedItem>
+      <ExpandedItem>mThis</ExpandedItem>
     </Expand>
   </Type>
 
@@ -224,15 +224,75 @@
     </Expand>
   </Type>
 
-  <Type Name="CSC::BUFFER_HELP&lt;*&gt;::Buffer" Priority="MediumLow">
+  <Type Name="CSC::BUFFER_HELP&lt;enum CSC::BYTE,*&gt;::Buffer" Priority="Low">
     <Expand>
-      <Item Name="[size]">$T2::value</Item>
-      <ArrayItems Condition="$T2::value&gt;=10">
+      <Item Name="[size]">mSize</Item>
+      <ArrayItems Condition="mSize&gt;=10">
+        <Size>10</Size>
+        <ValuePointer>(unsigned char*)mBuffer.mPointer</ValuePointer>
+      </ArrayItems>
+      <ArrayItems Condition="mSize&lt;10">
+        <Size>mSize</Size>
+        <ValuePointer>(unsigned char*)mBuffer.mPointer</ValuePointer>
+      </ArrayItems>
+      <Item Name="[+]">mBuffer</Item>
+    </Expand>
+  </Type>
+
+  <Type Name="CSC::BUFFER_HELP&lt;enum CSC::WORD,*&gt;::Buffer" Priority="Low">
+    <Expand>
+      <Item Name="[size]">mSize</Item>
+      <ArrayItems Condition="mSize&gt;=10">
+        <Size>10</Size>
+        <ValuePointer>(unsigned short*)mBuffer.mPointer</ValuePointer>
+      </ArrayItems>
+      <ArrayItems Condition="mSize&lt;10">
+        <Size>mSize</Size>
+        <ValuePointer>(unsigned short*)mBuffer.mPointer</ValuePointer>
+      </ArrayItems>
+      <Item Name="[+]">mBuffer</Item>
+    </Expand>
+  </Type>
+
+  <Type Name="CSC::BUFFER_HELP&lt;enum CSC::CHAR,*&gt;::Buffer" Priority="Low">
+    <Expand>
+      <Item Name="[size]">mSize</Item>
+      <ArrayItems Condition="mSize&gt;=10">
+        <Size>10</Size>
+        <ValuePointer>(unsigned int*)mBuffer.mPointer</ValuePointer>
+      </ArrayItems>
+      <ArrayItems Condition="mSize&lt;10">
+        <Size>mSize</Size>
+        <ValuePointer>(unsigned int*)mBuffer.mPointer</ValuePointer>
+      </ArrayItems>
+      <Item Name="[+]">mBuffer</Item>
+    </Expand>
+  </Type>
+
+  <Type Name="CSC::BUFFER_HELP&lt;enum CSC::DATA,*&gt;::Buffer" Priority="Low">
+    <Expand>
+      <Item Name="[size]">mSize</Item>
+      <ArrayItems Condition="mSize&gt;=10">
+        <Size>10</Size>
+        <ValuePointer>(unsigned long long*)mBuffer.mPointer</ValuePointer>
+      </ArrayItems>
+      <ArrayItems Condition="mSize&lt;10">
+        <Size>mSize</Size>
+        <ValuePointer>(unsigned long long*)mBuffer.mPointer</ValuePointer>
+      </ArrayItems>
+      <Item Name="[+]">mBuffer</Item>
+    </Expand>
+  </Type>
+
+  <Type Name="CSC::BUFFER_HELP&lt;*&gt;::Buffer" Priority="High">
+    <Expand>
+      <Item Name="[size]">$T2::expr_m()</Item>
+      <ArrayItems Condition="$T2::expr_m()&gt;=10">
         <Size>10</Size>
         <ValuePointer>($T1*)&amp;mBuffer.mValue</ValuePointer>
       </ArrayItems>
-      <ArrayItems Condition="$T2::value&lt;10">
-        <Size>$T2::value</Size>
+      <ArrayItems Condition="$T2::expr_m()&lt;10">
+        <Size>$T2::expr_m()</Size>
         <ValuePointer>($T1*)&amp;mBuffer.mValue</ValuePointer>
       </ArrayItems>
       <Item Name="[+]">mBuffer</Item>
@@ -242,32 +302,32 @@
   <Type Name="CSC::ALLOCATOR_HELP&lt;*&gt;::Allocator">
     <Expand>
       <Item Name="[length]">mLength</Item>
-      <ExpandedItem>&amp;mAllocator</ExpandedItem>
+      <ExpandedItem>mAllocator</ExpandedItem>
     </Expand>
   </Type>
 
   <Type Name="CSC::ALLOCATOR_HOLDER_HELP&lt;*&gt;::NODE">
     <Expand>
-      <ExpandedItem Condition="mNext==-2">&amp;mItem</ExpandedItem>
+      <ExpandedItem Condition="mNext==-2">mItem</ExpandedItem>
     </Expand>
   </Type>
 
   <Type Name="CSC::LATER_HELP&lt;*&gt;::Later">
     <Expand>
-      <ExpandedItem>&amp;mThis</ExpandedItem>
+      <ExpandedItem>mThis</ExpandedItem>
     </Expand>
   </Type>
 
   <Type Name="CSC::LATER_HELP&lt;*&gt;::LATER">
     <Expand>
       <Item Name="[index]">mIndex</Item>
-      <ExpandedItem>&amp;mHeap</ExpandedItem>
+      <ExpandedItem>mHeap</ExpandedItem>
     </Expand>
   </Type>
 
   <Type Name="CSC::LATER_HELP&lt;*&gt;::HEAP">
     <Expand>
-      <ExpandedItem>&amp;mList</ExpandedItem>
+      <ExpandedItem>mList</ExpandedItem>
     </Expand>
   </Type>
 
@@ -279,47 +339,53 @@
 
   <Type Name="CSC::ARRAY_HELP&lt;*&gt;::Array">
     <Expand>
-      <ExpandedItem>&amp;mArray</ExpandedItem>
+      <ExpandedItem>mArray</ExpandedItem>
     </Expand>
   </Type>
 
-  <Type Name="CSC::STRING_HELP&lt;char,*&gt;::String">
+  <Type Name="CSC::STRING_HELP&lt;*&gt;::String">
+    <Expand>
+      <ExpandedItem>mString</ExpandedItem>
+    </Expand>
+  </Type>
+
+  <Type Name="CSC::STRING_HELP&lt;char,*&gt;::String" Priority="High">
     <DisplayString>{{ {mString.mBuffer.mPointer,s} }}</DisplayString>
     <StringView>mString.mBuffer.mPointer,s</StringView>
     <Expand>
-      <ExpandedItem>&amp;mString</ExpandedItem>
+      <ExpandedItem>mString</ExpandedItem>
     </Expand>
   </Type>
 
-  <Type Name="CSC::STRING_HELP&lt;wchar_t,*&gt;::String">
+  <Type Name="CSC::STRING_HELP&lt;wchar_t,*&gt;::String" Priority="High">
     <DisplayString>{{ {mString.mBuffer.mPointer,su} }}</DisplayString>
     <StringView>mString.mBuffer.mPointer,su</StringView>
     <Expand>
-      <ExpandedItem>&amp;mString</ExpandedItem>
+      <ExpandedItem>mString</ExpandedItem>
     </Expand>
   </Type>
 
-  <Type Name="CSC::STRING_HELP&lt;unsigned char,*&gt;::String">
+  <Type Name="CSC::STRING_HELP&lt;unsigned char,*&gt;::String" Priority="High">
     <DisplayString>{{ {mString.mBuffer.mPointer,s8} }}</DisplayString>
     <StringView>mString.mBuffer.mPointer,s8</StringView>
     <Expand>
-      <ExpandedItem>&amp;mString</ExpandedItem>
+      <ExpandedItem>mString</ExpandedItem>
     </Expand>
   </Type>
 
-  <Type Name="CSC::STRING_HELP&lt;char16_t,*&gt;::String">
+  <Type Name="CSC::STRING_HELP&lt;char16_t,*&gt;::String" Priority="High">
     <DisplayString>{{ {mString.mBuffer.mPointer,su} }}</DisplayString>
     <StringView>mString.mBuffer.mPointer,su</StringView>
     <Expand>
-      <ExpandedItem>&amp;mString</ExpandedItem>
+      <ExpandedItem>mString</ExpandedItem>
     </Expand>
   </Type>
 
-  <Type Name="CSC::STRING_HELP&lt;char32_t,*&gt;::String">
+  <Type Name="CSC::STRING_HELP&lt;char32_t,*&gt;::String" Priority="High">
     <DisplayString>{{ {mString.mBuffer.mPointer,s32} }}</DisplayString>
     <StringView>mString.mBuffer.mPointer,s32</StringView>
     <Expand>
-      <ExpandedItem>&amp;mString</ExpandedItem>
+      <ExpandedItem>mString</ExpandedItem>
     </Expand>
   </Type>
 
@@ -327,20 +393,20 @@
     <Expand>
       <Item Name="[read]">mRead</Item>
       <Item Name="[write]">mWrite</Item>
-      <ExpandedItem>&amp;mDeque</ExpandedItem>
+      <ExpandedItem>mDeque</ExpandedItem>
     </Expand>
   </Type>
 
   <Type Name="CSC::DEQUE_HELP&lt;*&gt;::NODE">
     <Expand>
-      <ExpandedItem>&amp;mItem</ExpandedItem>
+      <ExpandedItem>mItem</ExpandedItem>
     </Expand>
   </Type>
 
   <Type Name="CSC::PRIORITY_HELP&lt;*&gt;::Priority">
     <Expand>
       <Item Name="[write]">mWrite</Item>
-      <ExpandedItem>&amp;mPriority</ExpandedItem>
+      <ExpandedItem>mPriority</ExpandedItem>
     </Expand>
   </Type>
 
@@ -355,40 +421,40 @@
     <Expand>
       <Item Name="[first]">mFirst</Item>
       <Item Name="[last]">mLast</Item>
-      <ExpandedItem>&amp;mList</ExpandedItem>
+      <ExpandedItem>mList</ExpandedItem>
     </Expand>
   </Type>
 
   <Type Name="CSC::LIST_HELP&lt;*&gt;::NODE">
     <Expand>
-      <ExpandedItem>&amp;mItem</ExpandedItem>
+      <ExpandedItem>mItem</ExpandedItem>
     </Expand>
   </Type>
 
   <Type Name="CSC::ARRAYLIST_HELP&lt;*&gt;::ArrayList">
     <Expand>
       <Item Name="[range]">mRange</Item>
-      <ExpandedItem>&amp;mList</ExpandedItem>
+      <ExpandedItem>mList</ExpandedItem>
     </Expand>
   </Type>
 
   <Type Name="CSC::ARRAYLIST_HELP&lt;*&gt;::NODE">
     <Expand>
-      <ExpandedItem>&amp;mItem</ExpandedItem>
+      <ExpandedItem>mItem</ExpandedItem>
     </Expand>
   </Type>
 
   <Type Name="CSC::BITSET_HELP&lt;*&gt;::BitSet">
     <Expand>
       <Item Name="[width]">mWidth</Item>
-      <ExpandedItem>&amp;mSet</ExpandedItem>
+      <ExpandedItem>mSet</ExpandedItem>
     </Expand>
   </Type>
 
   <Type Name="CSC::SET_HELP&lt;*&gt;::Set">
     <Expand>
       <Item Name="[root]">mRoot</Item>
-      <ExpandedItem>&amp;mSet</ExpandedItem>
+      <ExpandedItem>mSet</ExpandedItem>
     </Expand>
   </Type>
 
@@ -402,7 +468,7 @@
   <Type Name="CSC::HASHSET_HELP&lt;*&gt;::HashSet">
     <Expand>
       <Item Name="[range]">mRange</Item>
-      <ExpandedItem>&amp;mSet</ExpandedItem>
+      <ExpandedItem>mSet</ExpandedItem>
     </Expand>
   </Type>
 
@@ -417,7 +483,7 @@
     <Expand>
       <ArrayItems>
         <Size>1</Size>
-        <ValuePointer>($T1(*)[4])&amp;mVector.mBuffer.mArray</ValuePointer>
+        <ValuePointer>($T1(*)[4])&amp;mVector.mBuffer.mValue</ValuePointer>
       </ArrayItems>
     </Expand>
   </Type>
@@ -426,7 +492,7 @@
     <Expand>
       <ArrayItems>
         <Size>4</Size>
-        <ValuePointer>($T1(*)[4])&amp;mMatrix.mBuffer.mArray</ValuePointer>
+        <ValuePointer>($T1(*)[4])&amp;mMatrix.mBuffer.mValue</ValuePointer>
       </ArrayItems>
     </Expand>
   </Type>

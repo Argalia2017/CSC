@@ -55,7 +55,7 @@ trait CONSOLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 
 		void initialize () override {
 			mHeap = SharedRef<HEAP>::make () ;
-			set_buffer_size (CONSOLE_BUFFER_SSIZE::value) ;
+			set_buffer_size (CONSOLE_BUFFER_SSIZE::expr) ;
 		}
 
 		void set_buffer_size (CREF<LENGTH> size_) const {
@@ -68,7 +68,7 @@ trait CONSOLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		void enable_option (CREF<FLAG> option) const override {
 			auto rxx = TRUE ;
 			if ifswitch (rxx) {
-				if (option != OPTION_DEFAULT::value)
+				if (option != OPTION_DEFAULT::expr)
 					discard ;
 				mHeap->mOption.clear () ;
 			}
@@ -82,72 +82,93 @@ trait CONSOLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		void print (CREF<Binder> msg) const override {
-			if (mHeap->mOption[OPTION_NO_PRINT::value])
+			if (mHeap->mOption[OPTION_NO_PRINT::expr])
 				return ;
 			write_con_buffer (msg) ;
-			attach_console () ;
-			const auto r1x = string_cvt[TYPEAS<TYPEAS<STRA ,STR>>::id] (mHeap->mConBuffer) ;
-			printf ("%s\n" ,(&r1x[0])) ;
+			if ifswitch (TRUE) {
+				if ifnot (mHeap->mConsole.exist ())
+					discard ;
+				const auto r1x = string_cvt[TYPEAS<TYPEAS<STRA ,STR>>::expr] (mHeap->mConBuffer) ;
+				printf ("%s\n" ,(&r1x[0])) ;
+			}
 			log (slice ("PRINT")) ;
 		}
 
 		void fatal (CREF<Binder> msg) const override {
-			if (mHeap->mOption[OPTION_NO_FATAL::value])
+			if (mHeap->mOption[OPTION_NO_FATAL::expr])
 				return ;
 			write_con_buffer (msg) ;
-			attach_console () ;
-			const auto r1x = string_cvt[TYPEAS<TYPEAS<STRA ,STR>>::id] (mHeap->mConBuffer) ;
-			printf ("\033[1;34m%s\033[0m\n" ,(&r1x[0])) ;
+			if ifswitch (TRUE) {
+				if ifnot (mHeap->mConsole.exist ())
+					discard ;
+				const auto r1x = string_cvt[TYPEAS<TYPEAS<STRA ,STR>>::expr] (mHeap->mConBuffer) ;
+				printf ("\033[1;34m%s\033[0m\n" ,(&r1x[0])) ;
+			}
 			log (slice ("FATAL")) ;
 		}
 
 		void error (CREF<Binder> msg) const override {
-			if (mHeap->mOption[OPTION_NO_ERROR::value])
+			if (mHeap->mOption[OPTION_NO_ERROR::expr])
 				return ;
 			write_con_buffer (msg) ;
-			attach_console () ;
-			const auto r1x = string_cvt[TYPEAS<TYPEAS<STRA ,STR>>::id] (mHeap->mConBuffer) ;
-			printf ("\033[1;31m%s\033[0m\n" ,(&r1x[0])) ;
+			if ifswitch (TRUE) {
+				if ifnot (mHeap->mConsole.exist ())
+					discard ;
+				const auto r1x = string_cvt[TYPEAS<TYPEAS<STRA ,STR>>::expr] (mHeap->mConBuffer) ;
+				printf ("\033[1;31m%s\033[0m\n" ,(&r1x[0])) ;
+			}
 			log (slice ("ERROR")) ;
 		}
 
 		void warn (CREF<Binder> msg) const override {
-			if (mHeap->mOption[OPTION_NO_WARN::value])
+			if (mHeap->mOption[OPTION_NO_WARN::expr])
 				return ;
 			write_con_buffer (msg) ;
-			attach_console () ;
-			const auto r1x = string_cvt[TYPEAS<TYPEAS<STRA ,STR>>::id] (mHeap->mConBuffer) ;
-			printf ("\033[1;33m%s\033[0m\n" ,(&r1x[0])) ;
+			if ifswitch (TRUE) {
+				if ifnot (mHeap->mConsole.exist ())
+					discard ;
+				const auto r1x = string_cvt[TYPEAS<TYPEAS<STRA ,STR>>::expr] (mHeap->mConBuffer) ;
+				printf ("\033[1;33m%s\033[0m\n" ,(&r1x[0])) ;
+			}
 			log (slice ("WARN")) ;
 		}
 
 		void info (CREF<Binder> msg) const override {
-			if (mHeap->mOption[OPTION_NO_INFO::value])
+			if (mHeap->mOption[OPTION_NO_INFO::expr])
 				return ;
 			write_con_buffer (msg) ;
-			attach_console () ;
-			const auto r1x = string_cvt[TYPEAS<TYPEAS<STRA ,STR>>::id] (mHeap->mConBuffer) ;
-			printf ("\033[1;32m%s\033[0m\n" ,(&r1x[0])) ;
+			if ifswitch (TRUE) {
+				if ifnot (mHeap->mConsole.exist ())
+					discard ;
+				const auto r1x = string_cvt[TYPEAS<TYPEAS<STRA ,STR>>::expr] (mHeap->mConBuffer) ;
+				printf ("\033[1;32m%s\033[0m\n" ,(&r1x[0])) ;
+			}
 			log (slice ("INFO")) ;
 		}
 
 		void debug (CREF<Binder> msg) const override {
-			if (mHeap->mOption[OPTION_NO_DEBUG::value])
+			if (mHeap->mOption[OPTION_NO_DEBUG::expr])
 				return ;
 			write_con_buffer (msg) ;
-			attach_console () ;
-			const auto r1x = string_cvt[TYPEAS<TYPEAS<STRA ,STR>>::id] (mHeap->mConBuffer) ;
-			printf ("\033[1;36m%s\033[0m\n" ,(&r1x[0])) ;
+			if ifswitch (TRUE) {
+				if ifnot (mHeap->mConsole.exist ())
+					discard ;
+				const auto r1x = string_cvt[TYPEAS<TYPEAS<STRA ,STR>>::expr] (mHeap->mConBuffer) ;
+				printf ("\033[1;36m%s\033[0m\n" ,(&r1x[0])) ;
+			}
 			log (slice ("DEBUG")) ;
 		}
 
 		void verbose (CREF<Binder> msg) const override {
-			if (mHeap->mOption[OPTION_NO_VERBOSE::value])
+			if (mHeap->mOption[OPTION_NO_VERBOSE::expr])
 				return ;
 			write_con_buffer (msg) ;
-			attach_console () ;
-			const auto r1x = string_cvt[TYPEAS<TYPEAS<STRA ,STR>>::id] (mHeap->mConBuffer) ;
-			printf ("\033[1;37m%s\033[0m\n" ,(&r1x[0])) ;
+			if ifswitch (TRUE) {
+				if ifnot (mHeap->mConsole.exist ())
+					discard ;
+				const auto r1x = string_cvt[TYPEAS<TYPEAS<STRA ,STR>>::expr] (mHeap->mConBuffer) ;
+				printf ("\033[1;37m%s\033[0m\n" ,(&r1x[0])) ;
+			}
 			log (slice ("VERBOSE")) ;
 		}
 
@@ -155,12 +176,6 @@ trait CONSOLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			mHeap->mConWriter << TextWriter<STR>::CLS ;
 			mHeap->mConWriter << msg ;
 			mHeap->mConWriter << TextWriter<STR>::EOS ;
-		}
-
-		void attach_console () const {
-			if (mHeap->mConsole.exist ())
-				return ;
-			mHeap->mConsole = UniqueRef<HANDLE>::make (NULL) ;
 		}
 
 		void link (CREF<String<STR>> dire_) const override {
@@ -182,12 +197,13 @@ trait CONSOLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			if (mHeap->mLogFile.empty ())
 				return ;
 			write_log_buffer (tag) ;
-			auto rax = RegBuffer<BYTE>::from (unsafe_array (mHeap->mLogBuffer[0]) ,0 ,mHeap->mLogWriter.length () - 1) ;
+			const auto r1x = mHeap->mLogWriter.length () - 1 ;
+			auto &&tmp = unsafe_cast[TYPEAS<TEMP<void>>::expr] (unsafe_deptr (mHeap->mLogBuffer[0])) ;
 			try_invoke ([&] () {
 				if (mHeap->mLogStreamFile == NULL)
 					return ;
-				const auto r1x = mHeap->mLogStreamFile->write (rax) ;
-				assume (r1x == rax->size ()) ;
+				const auto r2x = mHeap->mLogStreamFile->write (RegBuffer<BYTE>::from (tmp ,0 ,r1x)) ;
+				assume (r2x == r1x) ;
 			} ,[&] () {
 				mHeap->mLogStreamFile = NULL ;
 			}) ;
@@ -195,8 +211,8 @@ trait CONSOLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				if (mHeap->mLogStreamFile != NULL)
 					return ;
 				attach_log_file () ;
-				const auto r2x = mHeap->mLogStreamFile->write (rax) ;
-				assume (r2x == rax->size ()) ;
+				const auto r3x = mHeap->mLogStreamFile->write (RegBuffer<BYTE>::from (tmp ,0 ,r1x)) ;
+				assume (r3x == r1x) ;
 			} ,[&] () {
 				mHeap->mLogStreamFile = NULL ;
 			}) ;
@@ -220,7 +236,7 @@ trait CONSOLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			mHeap->mLogWriter << slice ("][") ;
 			mHeap->mLogWriter << tag ;
 			mHeap->mLogWriter << slice ("] : ") ;
-			const auto r3x = string_cvt[TYPEAS<TYPEAS<STRU8 ,STR>>::id] (mHeap->mConBuffer) ;
+			const auto r3x = string_cvt[TYPEAS<TYPEAS<STRU8 ,STR>>::expr] (mHeap->mConBuffer) ;
 			mHeap->mLogWriter << r3x ;
 			mHeap->mLogWriter << TextWriter<STRU8>::GAP ;
 			mHeap->mLogWriter << TextWriter<STRU8>::EOS ;
@@ -235,9 +251,9 @@ trait CONSOLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			const auto r3x = mHeap->mLogStreamFile->link (TRUE ,TRUE) ;
 			assume (r3x) ;
 			const auto r4x = String<STRU8>::make (TextWriter<STRU8>::BOM) ;
-			auto rax = RegBuffer<BYTE>::from (unsafe_array (r4x[0]) ,0 ,r4x.length ()) ;
-			const auto r5x = mHeap->mLogStreamFile->write (rax) ;
-			assume (r5x == rax->size ()) ;
+			auto &&tmp = unsafe_cast[TYPEAS<TEMP<void>>::expr] (unsafe_deptr (r4x[0])) ;
+			const auto r5x = mHeap->mLogStreamFile->write (RegBuffer<BYTE>::from (tmp ,0 ,r4x.length ())) ;
+			assume (r5x == r4x.length ()) ;
 		}
 
 		void open () const override {
@@ -425,7 +441,7 @@ trait REPORTER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		Array<FLAG> captrue_stack_trace () const override {
-			auto rax = Array<csc_pointer_t> (STACK_MAX_DEPTH::value) ;
+			auto rax = Array<csc_pointer_t> (STACK_MAX_DEPTH::expr) ;
 			const auto r1x = LENGTH (backtrace ((&rax[0]) ,VAL32 (rax.size ()))) - 3 ;
 			Array<FLAG> ret = Array<FLAG> (r1x) ;
 			for (auto &&i : ret.iter ())
@@ -447,13 +463,13 @@ trait REPORTER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				}) ;
 				if (r2x.self == NULL)
 					discard ;
-				auto &&tmp = unsafe_array ((**r2x.self)) ;
-				BufferProc::buf_slice (mHeap->mNameBuffer ,tmp ,mHeap->mNameBuffer.size ()) ;
-				const auto r3x = string_build[TYPEAS<TYPEAS<STR ,DATA>>::id] (DATA (addr_)) ;
+				auto &&tmp = unsafe_cast[TYPEAS<TEMP<void>>::expr] (unsafe_deptr ((**r2x.self))) ;
+				BufferProc::buf_slice (mHeap->mNameBuffer ,RegBuffer<STRA>::from (tmp ,0 ,VAL32_MAX) ,mHeap->mNameBuffer.size ()) ;
+				const auto r3x = string_build[TYPEAS<TYPEAS<STR ,DATA>>::expr] (DATA (addr_)) ;
 				ret = String<STR>::make (slice ("[") ,r3x ,slice ("] : ") ,mHeap->mNameBuffer) ;
 			}
 			if ifswitch (rxx) {
-				const auto r4x = string_build[TYPEAS<TYPEAS<STR ,DATA>>::id] (DATA (addr_)) ;
+				const auto r4x = string_build[TYPEAS<TYPEAS<STR ,DATA>>::expr] (DATA (addr_)) ;
 				ret = String<STR>::make (slice ("[") ,r4x ,slice ("] : ") ,slice ("null")) ;
 			}
 			return move (ret) ;
