@@ -41,6 +41,10 @@ trait XMLPARSER_HELP<DEPEND ,ALWAYS> {
 	} ;
 
 	class XmlParser {
+	private:
+		template <class...>
+		friend trait XMLPARSER_COMBINATION_HELP ;
+
 	protected:
 		CRef<HEAP> mHeap ;
 		INDEX mIndex ;
@@ -57,7 +61,7 @@ trait XMLPARSER_HELP<DEPEND ,ALWAYS> {
 
 		imports XmlParser make (CREF<RegBuffer<STRU8>> item) {
 			using R1X = typename XMLPARSER_SERIALIZATION_HELP<DEPEND ,ALWAYS>::Serialization ;
-			auto rax = R1X (RegBuffer<STRU8>::from (item ,0 ,item.size ())) ;
+			auto rax = R1X (CRef<RegBuffer<STRU8>>::reference (item)) ;
 			rax.generate () ;
 			return rax.poll () ;
 		}
@@ -71,18 +75,15 @@ trait XMLPARSER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		imports XmlParser make (CREF<RegBuffer<BYTE>> item) {
-			using R1X = typename XMLPARSER_SERIALIZATION_HELP<DEPEND ,ALWAYS>::Serialization ;
-			auto rax = R1X (RegBuffer<STRU8>::from (item ,0 ,item.size ())) ;
-			rax.generate () ;
-			return rax.poll () ;
+			return make (RegBuffer<STRU8>::from (item)) ;
 		}
 
 		imports XmlParser make (CREF<VarBuffer<BYTE>> item) {
-			return make (RegBuffer<BYTE>::from (item)) ;
+			return make (RegBuffer<STRU8>::from (item)) ;
 		}
 
 		imports XmlParser make (CREF<ConBuffer<BYTE>> item) {
-			return make (RegBuffer<BYTE>::from (item)) ;
+			return make (RegBuffer<STRU8>::from (item)) ;
 		}
 
 		imports XmlParser make (CREF<Array<XmlParser>> sequence) {
@@ -124,11 +125,7 @@ trait XMLPARSER_HELP<DEPEND ,ALWAYS> {
 			return XmlParser (mHeap ,mHeap->mTree[mIndex].mChild) ;
 		}
 
-		XmlParser child (CREF<Slice<STRA>> name) const {
-			return child (String<STRU8>::make (name)) ;
-		}
-
-		XmlParser child (CREF<Slice<STRW>> name) const {
+		XmlParser child (CREF<Slice<STR>> name) const {
 			return child (String<STRU8>::make (name)) ;
 		}
 
@@ -137,14 +134,6 @@ trait XMLPARSER_HELP<DEPEND ,ALWAYS> {
 				return XmlParser (mHeap ,NONE) ;
 			INDEX ix = mHeap->mTree[mIndex].mObjectSet.map (name) ;
 			return XmlParser (mHeap ,ix) ;
-		}
-
-		XmlParser child (CREF<String<STRU16>> name) const {
-			return child (string_cvt[TYPEAS<TYPEAS<STRU8 ,STRU16>>::id] (name)) ;
-		}
-
-		XmlParser child (CREF<String<STRU32>> name) const {
-			return child (string_cvt[TYPEAS<TYPEAS<STRU8 ,STRU32>>::id] (name)) ;
 		}
 
 		Array<XmlParser> child_array () const {
@@ -204,11 +193,7 @@ trait XMLPARSER_HELP<DEPEND ,ALWAYS> {
 			return mHeap->mTree[mIndex].mName ;
 		}
 
-		CREF<String<STRU8>> attribute (CREF<Slice<STRA>> tag) const leftvalue {
-			return attribute (String<STRU8>::make (tag)) ;
-		}
-
-		CREF<String<STRU8>> attribute (CREF<Slice<STRW>> tag) const leftvalue {
+		CREF<String<STRU8>> attribute (CREF<Slice<STR>> tag) const leftvalue {
 			return attribute (String<STRU8>::make (tag)) ;
 		}
 
@@ -219,14 +204,6 @@ trait XMLPARSER_HELP<DEPEND ,ALWAYS> {
 			if (ix == NONE)
 				return String<STRU8>::zero () ;
 			return mHeap->mAttribute[ix] ;
-		}
-
-		CREF<String<STRU8>> attribute (CREF<String<STRU16>> tag) const leftvalue {
-			return attribute (string_cvt[TYPEAS<TYPEAS<STRU8 ,STRU16>>::id] (tag)) ;
-		}
-
-		CREF<String<STRU8>> attribute (CREF<String<STRU32>> tag) const leftvalue {
-			return attribute (string_cvt[TYPEAS<TYPEAS<STRU8 ,STRU32>>::id] (tag)) ;
 		}
 
 		CREF<String<STRU8>> fetch () const leftvalue {
@@ -240,12 +217,11 @@ trait XMLPARSER_HELP<DEPEND ,ALWAYS> {
 
 		template <class ARG1 ,class ARG2>
 		ARG1 fetch (CREF<ARG1> def ,CREF<ARG2> cvt) const {
-			using R1X = ARG1 ;
-			auto rax = Optional<R1X> () ;
+			auto rax = Optional<ARG1> () ;
 			try_invoke ([&] () {
-				rax = Optional<R1X>::make (cvt (fetch ())) ;
+				rax = Optional<ARG1>::make (cvt (fetch ())) ;
 			} ,[&] () {
-				rax = Optional<R1X>::make (def) ;
+				rax = Optional<ARG1>::make (def) ;
 			} ,[&] () {
 				noop () ;
 			}) ;
@@ -253,59 +229,59 @@ trait XMLPARSER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		BOOL fetch (CREF<BOOL> def) const {
-			return fetch (def ,string_parse[TYPEAS<TYPEAS<BOOL ,STRU8>>::id]) ;
+			return fetch (def ,string_parse[TYPEAS<TYPEAS<BOOL ,STRU8>>::expr]) ;
 		}
 
 		VAL32 fetch (CREF<VAL32> def) const {
-			return fetch (def ,string_parse[TYPEAS<TYPEAS<VAL32 ,STRU8>>::id]) ;
+			return fetch (def ,string_parse[TYPEAS<TYPEAS<VAL32 ,STRU8>>::expr]) ;
 		}
 
 		VAL64 fetch (CREF<VAL64> def) const {
-			return fetch (def ,string_parse[TYPEAS<TYPEAS<VAL64 ,STRU8>>::id]) ;
+			return fetch (def ,string_parse[TYPEAS<TYPEAS<VAL64 ,STRU8>>::expr]) ;
 		}
 
 		SINGLE fetch (CREF<SINGLE> def) const {
-			return fetch (def ,string_parse[TYPEAS<TYPEAS<SINGLE ,STRU8>>::id]) ;
+			return fetch (def ,string_parse[TYPEAS<TYPEAS<SINGLE ,STRU8>>::expr]) ;
 		}
 
 		DOUBLE fetch (CREF<DOUBLE> def) const {
-			return fetch (def ,string_parse[TYPEAS<TYPEAS<DOUBLE ,STRU8>>::id]) ;
+			return fetch (def ,string_parse[TYPEAS<TYPEAS<DOUBLE ,STRU8>>::expr]) ;
 		}
 
 		BYTE fetch (CREF<BYTE> def) const {
-			return fetch (def ,string_parse[TYPEAS<TYPEAS<BYTE ,STRU8>>::id]) ;
+			return fetch (def ,string_parse[TYPEAS<TYPEAS<BYTE ,STRU8>>::expr]) ;
 		}
 
 		WORD fetch (CREF<WORD> def) const {
-			return fetch (def ,string_parse[TYPEAS<TYPEAS<WORD ,STRU8>>::id]) ;
+			return fetch (def ,string_parse[TYPEAS<TYPEAS<WORD ,STRU8>>::expr]) ;
 		}
 
 		CHAR fetch (CREF<CHAR> def) const {
-			return fetch (def ,string_parse[TYPEAS<TYPEAS<CHAR ,STRU8>>::id]) ;
+			return fetch (def ,string_parse[TYPEAS<TYPEAS<CHAR ,STRU8>>::expr]) ;
 		}
 
 		DATA fetch (CREF<DATA> def) const {
-			return fetch (def ,string_parse[TYPEAS<TYPEAS<DATA ,STRU8>>::id]) ;
+			return fetch (def ,string_parse[TYPEAS<TYPEAS<DATA ,STRU8>>::expr]) ;
 		}
 
 		String<STRA> fetch (CREF<String<STRA>> def) const {
-			return fetch (def ,string_cvt[TYPEAS<TYPEAS<STRA ,STRU8>>::id]) ;
+			return fetch (def ,string_cvt[TYPEAS<TYPEAS<STRA ,STRU8>>::expr]) ;
 		}
 
 		String<STRW> fetch (CREF<String<STRW>> def) const {
-			return fetch (def ,string_cvt[TYPEAS<TYPEAS<STRW ,STRU8>>::id]) ;
+			return fetch (def ,string_cvt[TYPEAS<TYPEAS<STRW ,STRU8>>::expr]) ;
 		}
 
 		String<STRU8> fetch (CREF<String<STRU8>> def) const {
-			return fetch (def ,string_cvt[TYPEAS<TYPEAS<STRU8 ,STRU8>>::id]) ;
+			return fetch (def ,string_cvt[TYPEAS<TYPEAS<STRU8 ,STRU8>>::expr]) ;
 		}
 
 		String<STRU16> fetch (CREF<String<STRU16>> def) const {
-			return fetch (def ,string_cvt[TYPEAS<TYPEAS<STRU16 ,STRU8>>::id]) ;
+			return fetch (def ,string_cvt[TYPEAS<TYPEAS<STRU16 ,STRU8>>::expr]) ;
 		}
 
 		String<STRU32> fetch (CREF<String<STRU32>> def) const {
-			return fetch (def ,string_cvt[TYPEAS<TYPEAS<STRU32 ,STRU8>>::id]) ;
+			return fetch (def ,string_cvt[TYPEAS<TYPEAS<STRU32 ,STRU8>>::expr]) ;
 		}
 	} ;
 } ;
@@ -318,7 +294,7 @@ trait XMLPARSER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 
 	using COUNTER_MAX_DEPTH = ENUMAS<VAL ,ENUMID<256>> ;
 
-	class Serialization extend XmlParser {
+	class Serialization {
 	protected:
 		LENGTH mRecursiveCounter ;
 		TextReader<STRU8> mTextReader ;
@@ -341,7 +317,6 @@ trait XMLPARSER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 		}
 
 		XmlParser poll () {
-			auto &&tmp = keep[TYPEAS<VREF<XmlParser>>::id] (thiz) ;
 			auto rax = HEAP () ;
 			const auto r1x = shrink_order () ;
 			rax.mTree = Array<NODE> (r1x.length ()) ;
@@ -368,9 +343,8 @@ trait XMLPARSER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 				assume (vbetween (i ,0 ,rax.mAttribute.length ())) ;
 				rax.mAttribute[i] = move (mAttribute[i]) ;
 			}
-			tmp.mHeap = CRef<HEAP>::make (move (rax)) ;
-			tmp.mIndex = 0 ;
-			return move (tmp) ;
+			const auto r2x = CRef<HEAP>::make (move (rax)) ;
+			return XmlParser (r2x ,0) ;
 		}
 
 		Array<INDEX> shrink_order () const {
@@ -465,7 +439,7 @@ trait XMLPARSER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 		//@info: $5-><$1 $4 />|<$1 $4 > $7 </$1 >
 		void update_shift_e5 (CREF<INDEX> curr) {
 			Scope<ScopeCounter> anonymous (ScopeCounter::from (mRecursiveCounter)) ;
-			assume (mRecursiveCounter < COUNTER_MAX_DEPTH::value) ;
+			assume (mRecursiveCounter < COUNTER_MAX_DEPTH::expr) ;
 			mReader >> slice ("<") ;
 			INDEX ix = mTree.insert () ;
 			update_shift_e1 () ;
@@ -518,7 +492,7 @@ trait XMLPARSER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 		//@info: $7->${eps}|$5 $7|$6 $7
 		void update_shift_e7 (CREF<INDEX> curr) {
 			Scope<ScopeCounter> anonymous (ScopeCounter::from (mRecursiveCounter)) ;
-			assume (mRecursiveCounter < COUNTER_MAX_DEPTH::value) ;
+			assume (mRecursiveCounter < COUNTER_MAX_DEPTH::expr) ;
 			INDEX ix = NONE ;
 			INDEX iy = NONE ;
 			while (TRUE) {
@@ -631,7 +605,7 @@ trait XMLPARSER_COMBINATION_HELP<DEPEND ,ALWAYS> {
 		List<XmlParser> mBaseNode ;
 	} ;
 
-	class Combination extend XmlParser {
+	class Combination {
 	protected:
 		Array<XmlParser> mSequence ;
 		String<STRU8> mClazzString ;
@@ -655,10 +629,10 @@ trait XMLPARSER_COMBINATION_HELP<DEPEND ,ALWAYS> {
 
 		explicit Combination (CREF<Array<XmlParser>> sequence) {
 			mSequence = move (sequence) ;
-			mClazzString = string_cvt[TYPEAS<TYPEAS<STRU8 ,STR>>::id] (slice ("type")) ;
-			mObjectClazzString = string_cvt[TYPEAS<TYPEAS<STRU8 ,STR>>::id] (slice ("object")) ;
-			mArrayClazzString = string_cvt[TYPEAS<TYPEAS<STRU8 ,STR>>::id] (slice ("array")) ;
-			mFinalClazzString = string_cvt[TYPEAS<TYPEAS<STRU8 ,STR>>::id] (slice ("final")) ;
+			mClazzString = string_cvt[TYPEAS<TYPEAS<STRU8 ,STR>>::expr] (slice ("type")) ;
+			mObjectClazzString = string_cvt[TYPEAS<TYPEAS<STRU8 ,STR>>::expr] (slice ("object")) ;
+			mArrayClazzString = string_cvt[TYPEAS<TYPEAS<STRU8 ,STR>>::expr] (slice ("array")) ;
+			mFinalClazzString = string_cvt[TYPEAS<TYPEAS<STRU8 ,STR>>::expr] (slice ("final")) ;
 			mRoot = mTree.insert () ;
 			mTree[mRoot].mArraySet = mArraySet.share () ;
 			mTree[mRoot].mObjectSet = mObjectSet.share () ;
@@ -668,7 +642,6 @@ trait XMLPARSER_COMBINATION_HELP<DEPEND ,ALWAYS> {
 		}
 
 		XmlParser poll () {
-			auto &&tmp = keep[TYPEAS<VREF<XmlParser>>::id] (thiz) ;
 			auto rax = HEAP () ;
 			const auto r1x = shrink_order () ;
 			rax.mTree = Array<NODE> (r1x.length ()) ;
@@ -695,9 +668,8 @@ trait XMLPARSER_COMBINATION_HELP<DEPEND ,ALWAYS> {
 				assume (vbetween (i ,0 ,rax.mAttribute.length ())) ;
 				rax.mAttribute[i] = move (mAttribute[i]) ;
 			}
-			tmp.mHeap = CRef<HEAP>::make (move (rax)) ;
-			tmp.mIndex = 0 ;
-			return move (tmp) ;
+			const auto r2x = CRef<HEAP>::make (move (rax)) ;
+			return XmlParser (r2x ,0) ;
 		}
 
 		Array<INDEX> shrink_order () const {
@@ -720,13 +692,13 @@ trait XMLPARSER_COMBINATION_HELP<DEPEND ,ALWAYS> {
 		FLAG node_type (CREF<XmlParser> node) const {
 			auto &&tmp = node.attribute (mClazzString) ;
 			if (tmp == mObjectClazzString)
-				return NODE_CLAZZ_OBJECT::value ;
+				return NODE_CLAZZ_OBJECT::expr ;
 			if (tmp == mArrayClazzString)
-				return NODE_CLAZZ_ARRAY::value ;
+				return NODE_CLAZZ_ARRAY::expr ;
 			if (tmp == mFinalClazzString)
-				return NODE_CLAZZ_FINAL::value ;
+				return NODE_CLAZZ_FINAL::expr ;
 			assume (tmp.empty ()) ;
-			return NODE_CLAZZ_FINAL::value ;
+			return NODE_CLAZZ_FINAL::expr ;
 		}
 
 		void generate () {
@@ -738,12 +710,12 @@ trait XMLPARSER_COMBINATION_HELP<DEPEND ,ALWAYS> {
 				for (auto &&i : mTempNode.mBaseNode) {
 					auto rxx = TRUE ;
 					if ifswitch (rxx) {
-						if (mTempNode.mClazz != NODE_CLAZZ_OBJECT::value)
+						if (mTempNode.mClazz != NODE_CLAZZ_OBJECT::expr)
 							discard ;
 						update_found_object_node (i) ;
 					}
 					if ifswitch (rxx) {
-						if (mTempNode.mClazz != NODE_CLAZZ_ARRAY::value)
+						if (mTempNode.mClazz != NODE_CLAZZ_ARRAY::expr)
 							discard ;
 						update_found_array_node (i) ;
 					}
@@ -764,7 +736,7 @@ trait XMLPARSER_COMBINATION_HELP<DEPEND ,ALWAYS> {
 					continue ;
 				mNodeStack[jx].mBaseNode.add (i) ;
 			}
-			mNodeStack[jx].mClazz = NODE_CLAZZ_OBJECT::value ;
+			mNodeStack[jx].mClazz = NODE_CLAZZ_OBJECT::expr ;
 			mNodeStack[jx].mParent = mRoot ;
 		}
 
@@ -788,7 +760,7 @@ trait XMLPARSER_COMBINATION_HELP<DEPEND ,ALWAYS> {
 					if (ix == NONE)
 						discard ;
 					assume (mFoundNode[ix].mClazz == r2x) ;
-					assume (r2x != NODE_CLAZZ_FINAL::value) ;
+					assume (r2x != NODE_CLAZZ_FINAL::expr) ;
 				}
 				INDEX iy = ix ;
 				if ifswitch (TRUE) {
@@ -838,7 +810,7 @@ trait XMLPARSER_COMBINATION_HELP<DEPEND ,ALWAYS> {
 					if (ix == NONE)
 						discard ;
 					assume (mFoundNode[ix].mName == r1x) ;
-					assume (r2x != NODE_CLAZZ_FINAL::value) ;
+					assume (r2x != NODE_CLAZZ_FINAL::expr) ;
 				}
 				INDEX iy = mFoundNode.insert () ;
 				mFoundNodeSet.add (r1x ,iy) ;
@@ -953,7 +925,7 @@ trait JSONPARSER_HELP<DEPEND ,ALWAYS> {
 
 		imports JsonParser make (CREF<RegBuffer<STRU8>> item) {
 			using R1X = typename JSONPARSER_SERIALIZATION_HELP<DEPEND ,ALWAYS>::Serialization ;
-			auto rax = R1X (RegBuffer<STRU8>::from (item ,0 ,item.size ())) ;
+			auto rax = R1X (CRef<RegBuffer<STRU8>>::reference (item)) ;
 			rax.generate () ;
 			return rax.poll () ;
 		}
@@ -967,18 +939,15 @@ trait JSONPARSER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		imports JsonParser make (CREF<RegBuffer<BYTE>> item) {
-			using R1X = typename JSONPARSER_SERIALIZATION_HELP<DEPEND ,ALWAYS>::Serialization ;
-			auto rax = R1X (RegBuffer<STRU8>::from (item ,0 ,item.size ())) ;
-			rax.generate () ;
-			return rax.poll () ;
+			return make (RegBuffer<STRU8>::from (item)) ;
 		}
 
 		imports JsonParser make (CREF<VarBuffer<BYTE>> item) {
-			return make (RegBuffer<BYTE>::from (item)) ;
+			return make (RegBuffer<STRU8>::from (item)) ;
 		}
 
 		imports JsonParser make (CREF<ConBuffer<BYTE>> item) {
-			return make (RegBuffer<BYTE>::from (item)) ;
+			return make (RegBuffer<STRU8>::from (item)) ;
 		}
 
 		BOOL exist () const {
@@ -986,21 +955,21 @@ trait JSONPARSER_HELP<DEPEND ,ALWAYS> {
 				return FALSE ;
 			if (mIndex == NONE)
 				return FALSE ;
-			if (mHeap->mTree[mIndex].mClazz == NODE_CLAZZ_NULL::value)
+			if (mHeap->mTree[mIndex].mClazz == NODE_CLAZZ_NULL::expr)
 				return FALSE ;
 			return TRUE ;
 		}
 
 		BOOL string_type () const {
-			return mHeap->mTree[mIndex].mClazz == NODE_CLAZZ_STRING::value ;
+			return mHeap->mTree[mIndex].mClazz == NODE_CLAZZ_STRING::expr ;
 		}
 
 		BOOL array_type () const {
-			return mHeap->mTree[mIndex].mClazz == NODE_CLAZZ_ARRAY::value ;
+			return mHeap->mTree[mIndex].mClazz == NODE_CLAZZ_ARRAY::expr ;
 		}
 
 		BOOL object_type () const {
-			return mHeap->mTree[mIndex].mClazz == NODE_CLAZZ_OBJECT::value ;
+			return mHeap->mTree[mIndex].mClazz == NODE_CLAZZ_OBJECT::expr ;
 		}
 
 		JsonParser root () const {
@@ -1027,11 +996,7 @@ trait JSONPARSER_HELP<DEPEND ,ALWAYS> {
 			return JsonParser (mHeap ,mHeap->mTree[mIndex].mChild) ;
 		}
 
-		JsonParser child (CREF<Slice<STRA>> name) const {
-			return child (String<STRU8>::make (name)) ;
-		}
-
-		JsonParser child (CREF<Slice<STRW>> name) const {
+		JsonParser child (CREF<Slice<STR>> name) const {
 			return child (String<STRU8>::make (name)) ;
 		}
 
@@ -1042,14 +1007,6 @@ trait JSONPARSER_HELP<DEPEND ,ALWAYS> {
 				return JsonParser (mHeap ,NONE) ;
 			INDEX ix = mHeap->mTree[mIndex].mObjectSet.map (name) ;
 			return JsonParser (mHeap ,ix) ;
-		}
-
-		JsonParser child (CREF<String<STRU16>> name) const {
-			return child (string_cvt[TYPEAS<TYPEAS<STRU8 ,STRU16>>::id] (name)) ;
-		}
-
-		JsonParser child (CREF<String<STRU32>> name) const {
-			return child (string_cvt[TYPEAS<TYPEAS<STRU8 ,STRU32>>::id] (name)) ;
 		}
 
 		Array<JsonParser> child_array () const {
@@ -1114,12 +1071,11 @@ trait JSONPARSER_HELP<DEPEND ,ALWAYS> {
 
 		template <class ARG1 ,class ARG2>
 		ARG1 fetch (CREF<ARG1> def ,CREF<ARG2> cvt) const {
-			using R1X = ARG1 ;
-			auto rax = Optional<R1X> () ;
+			auto rax = Optional<ARG1> () ;
 			try_invoke ([&] () {
-				rax = Optional<R1X>::make (cvt (fetch ())) ;
+				rax = Optional<ARG1>::make (cvt (fetch ())) ;
 			} ,[&] () {
-				rax = Optional<R1X>::make (def) ;
+				rax = Optional<ARG1>::make (def) ;
 			} ,[&] () {
 				noop () ;
 			}) ;
@@ -1127,59 +1083,59 @@ trait JSONPARSER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		BOOL fetch (CREF<BOOL> def) const {
-			return fetch (def ,string_parse[TYPEAS<TYPEAS<BOOL ,STRU8>>::id]) ;
+			return fetch (def ,string_parse[TYPEAS<TYPEAS<BOOL ,STRU8>>::expr]) ;
 		}
 
 		VAL32 fetch (CREF<VAL32> def) const {
-			return fetch (def ,string_parse[TYPEAS<TYPEAS<VAL32 ,STRU8>>::id]) ;
+			return fetch (def ,string_parse[TYPEAS<TYPEAS<VAL32 ,STRU8>>::expr]) ;
 		}
 
 		VAL64 fetch (CREF<VAL64> def) const {
-			return fetch (def ,string_parse[TYPEAS<TYPEAS<VAL64 ,STRU8>>::id]) ;
+			return fetch (def ,string_parse[TYPEAS<TYPEAS<VAL64 ,STRU8>>::expr]) ;
 		}
 
 		SINGLE fetch (CREF<SINGLE> def) const {
-			return fetch (def ,string_parse[TYPEAS<TYPEAS<SINGLE ,STRU8>>::id]) ;
+			return fetch (def ,string_parse[TYPEAS<TYPEAS<SINGLE ,STRU8>>::expr]) ;
 		}
 
 		DOUBLE fetch (CREF<DOUBLE> def) const {
-			return fetch (def ,string_parse[TYPEAS<TYPEAS<DOUBLE ,STRU8>>::id]) ;
+			return fetch (def ,string_parse[TYPEAS<TYPEAS<DOUBLE ,STRU8>>::expr]) ;
 		}
 
 		BYTE fetch (CREF<BYTE> def) const {
-			return fetch (def ,string_parse[TYPEAS<TYPEAS<BYTE ,STRU8>>::id]) ;
+			return fetch (def ,string_parse[TYPEAS<TYPEAS<BYTE ,STRU8>>::expr]) ;
 		}
 
 		WORD fetch (CREF<WORD> def) const {
-			return fetch (def ,string_parse[TYPEAS<TYPEAS<WORD ,STRU8>>::id]) ;
+			return fetch (def ,string_parse[TYPEAS<TYPEAS<WORD ,STRU8>>::expr]) ;
 		}
 
 		CHAR fetch (CREF<CHAR> def) const {
-			return fetch (def ,string_parse[TYPEAS<TYPEAS<CHAR ,STRU8>>::id]) ;
+			return fetch (def ,string_parse[TYPEAS<TYPEAS<CHAR ,STRU8>>::expr]) ;
 		}
 
 		DATA fetch (CREF<DATA> def) const {
-			return fetch (def ,string_parse[TYPEAS<TYPEAS<DATA ,STRU8>>::id]) ;
+			return fetch (def ,string_parse[TYPEAS<TYPEAS<DATA ,STRU8>>::expr]) ;
 		}
 
 		String<STRA> fetch (CREF<String<STRA>> def) const {
-			return fetch (def ,string_cvt[TYPEAS<TYPEAS<STRA ,STRU8>>::id]) ;
+			return fetch (def ,string_cvt[TYPEAS<TYPEAS<STRA ,STRU8>>::expr]) ;
 		}
 
 		String<STRW> fetch (CREF<String<STRW>> def) const {
-			return fetch (def ,string_cvt[TYPEAS<TYPEAS<STRW ,STRU8>>::id]) ;
+			return fetch (def ,string_cvt[TYPEAS<TYPEAS<STRW ,STRU8>>::expr]) ;
 		}
 
 		String<STRU8> fetch (CREF<String<STRU8>> def) const {
-			return fetch (def ,string_cvt[TYPEAS<TYPEAS<STRU8 ,STRU8>>::id]) ;
+			return fetch (def ,string_cvt[TYPEAS<TYPEAS<STRU8 ,STRU8>>::expr]) ;
 		}
 
 		String<STRU16> fetch (CREF<String<STRU16>> def) const {
-			return fetch (def ,string_cvt[TYPEAS<TYPEAS<STRU16 ,STRU8>>::id]) ;
+			return fetch (def ,string_cvt[TYPEAS<TYPEAS<STRU16 ,STRU8>>::expr]) ;
 		}
 
 		String<STRU32> fetch (CREF<String<STRU32>> def) const {
-			return fetch (def ,string_cvt[TYPEAS<TYPEAS<STRU32 ,STRU8>>::id]) ;
+			return fetch (def ,string_cvt[TYPEAS<TYPEAS<STRU32 ,STRU8>>::expr]) ;
 		}
 	} ;
 } ;
@@ -1197,13 +1153,12 @@ trait JSONPARSER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 	using NODE_CLAZZ_ARRAY = typename JSONPARSER_HELP<DEPEND ,ALWAYS>::NODE_CLAZZ_ARRAY ;
 	using NODE_CLAZZ_OBJECT = typename JSONPARSER_HELP<DEPEND ,ALWAYS>::NODE_CLAZZ_OBJECT ;
 
-	class Serialization extend JsonParser {
+	class Serialization {
 	protected:
 		LENGTH mRecursiveCounter ;
 		TextReader<STRU8> mTextReader ;
 		RegularReader mReader ;
 		List<NODE> mTree ;
-		SoftSet<String<STRU8>> mAttributeSet ;
 		SoftSet<INDEX> mArraySet ;
 		SoftSet<String<STRU8>> mObjectSet ;
 		INDEX mLastIndex ;
@@ -1219,14 +1174,12 @@ trait JSONPARSER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 		}
 
 		JsonParser poll () {
-			auto &&tmp = keep[TYPEAS<VREF<JsonParser>>::id] (thiz) ;
 			auto rax = HEAP () ;
 			const auto r1x = shrink_order () ;
 			rax.mTree = Array<NODE> (r1x.length ()) ;
 			for (auto &&i : mTree.iter ()) {
 				INDEX ix = r1x[i] ;
-				rax.mTree[ix].mName = move (mTree[i].mName) ;
-				rax.mTree[ix].mAttributeSet = move (mTree[i].mAttributeSet) ;
+				rax.mTree[ix].mValue = move (mTree[i].mValue) ;
 				rax.mTree[ix].mArraySet = move (mTree[i].mArraySet) ;
 				for (auto &&j : rax.mTree[ix].mArraySet.iter ()) {
 					INDEX iy = r1x[rax.mTree[ix].mArraySet.get (j)] ;
@@ -1242,9 +1195,8 @@ trait JSONPARSER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 				rax.mTree[ix].mBrother = r1x[mTree[i].mBrother] ;
 				rax.mTree[ix].mChild = r1x[mTree[i].mChild] ;
 			}
-			tmp.mHeap = CRef<HEAP>::make (move (rax)) ;
-			tmp.mIndex = 0 ;
-			return move (tmp) ;
+			const auto r2x = CRef<HEAP>::make (move (rax)) ;
+			return JsonParser (r2x ,0) ;
 		}
 
 		Array<INDEX> shrink_order () const {
@@ -1302,25 +1254,25 @@ trait JSONPARSER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 				if ifnot (mReader[0] == STRU8 ('t'))
 					discard ;
 				mReader >> slice ("true") ;
-				mLastString = slice ("true") ;
+				mLastString = String<STRU8>::make (slice ("true")) ;
 			}
 			if ifswitch (rxx) {
 				if ifnot (mReader[0] == STRU8 ('T'))
 					discard ;
 				mReader >> slice ("TRUE") ;
-				mLastString = slice ("TRUE") ;
+				mLastString = String<STRU8>::make (slice ("TRUE")) ;
 			}
 			if ifswitch (rxx) {
 				if ifnot (mReader[0] == STRU8 ('f'))
 					discard ;
 				mReader >> slice ("false") ;
-				mLastString = slice ("false") ;
+				mLastString = String<STRU8>::make (slice ("false")) ;
 			}
 			if ifswitch (rxx) {
 				if ifnot (mReader[0] == STRU8 ('F'))
 					discard ;
 				mReader >> slice ("FALSE") ;
-				mLastString = slice ("FALSE") ;
+				mLastString = String<STRU8>::make (slice ("FALSE")) ;
 			}
 			if ifswitch (rxx) {
 				assume (FALSE) ;
@@ -1341,7 +1293,7 @@ trait JSONPARSER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 		//@info: $4->$1|$2|$2x|$3|$6|$9
 		void update_shift_e4 (CREF<INDEX> curr) {
 			Scope<ScopeCounter> anonymous (ScopeCounter::from (mRecursiveCounter)) ;
-			assume (mRecursiveCounter < COUNTER_MAX_DEPTH::value) ;
+			assume (mRecursiveCounter < COUNTER_MAX_DEPTH::expr) ;
 			INDEX ix = NONE ;
 			auto rxx = TRUE ;
 			if ifswitch (rxx) {
@@ -1350,7 +1302,7 @@ trait JSONPARSER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 				ix = mTree.insert () ;
 				update_shift_e1 () ;
 				mTree[ix].mValue = move (mLastString) ;
-				mTree[ix].mClazz = NODE_CLAZZ_STRING::value ;
+				mTree[ix].mClazz = NODE_CLAZZ_STRING::expr ;
 				mTree[ix].mParent = curr ;
 				mTree[ix].mBrother = NONE ;
 				mTree[ix].mChild = NONE ;
@@ -1361,7 +1313,7 @@ trait JSONPARSER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 				ix = mTree.insert () ;
 				update_shift_e2 () ;
 				mTree[ix].mValue = move (mLastString) ;
-				mTree[ix].mClazz = NODE_CLAZZ_STRING::value ;
+				mTree[ix].mClazz = NODE_CLAZZ_STRING::expr ;
 				mTree[ix].mParent = curr ;
 				mTree[ix].mBrother = NONE ;
 				mTree[ix].mChild = NONE ;
@@ -1371,7 +1323,7 @@ trait JSONPARSER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 					discard ;
 				ix = mTree.insert () ;
 				update_shift_e2x () ;
-				mTree[ix].mClazz = NODE_CLAZZ_NULL::value ;
+				mTree[ix].mClazz = NODE_CLAZZ_NULL::expr ;
 				mTree[ix].mParent = curr ;
 				mTree[ix].mBrother = NONE ;
 				mTree[ix].mChild = NONE ;
@@ -1382,7 +1334,7 @@ trait JSONPARSER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 				ix = mTree.insert () ;
 				update_shift_e3 () ;
 				mTree[ix].mValue = move (mLastString) ;
-				mTree[ix].mClazz = NODE_CLAZZ_STRING::value ;
+				mTree[ix].mClazz = NODE_CLAZZ_STRING::expr ;
 				mTree[ix].mParent = curr ;
 				mTree[ix].mBrother = NONE ;
 				mTree[ix].mChild = NONE ;
@@ -1458,11 +1410,11 @@ trait JSONPARSER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 		//@info: $6->[ ]|[ $5 ]
 		void update_shift_e6 (CREF<INDEX> curr) {
 			Scope<ScopeCounter> anonymous (ScopeCounter::from (mRecursiveCounter)) ;
-			assume (mRecursiveCounter < COUNTER_MAX_DEPTH::value) ;
+			assume (mRecursiveCounter < COUNTER_MAX_DEPTH::expr) ;
 			mReader >> slice ("[") ;
 			INDEX ix = mTree.insert () ;
 			mTree[ix].mArraySet = mArraySet.share () ;
-			mTree[ix].mClazz = NODE_CLAZZ_ARRAY::value ;
+			mTree[ix].mClazz = NODE_CLAZZ_ARRAY::expr ;
 			mTree[ix].mParent = curr ;
 			mTree[ix].mBrother = NONE ;
 			mTree[ix].mChild = NONE ;
@@ -1517,11 +1469,11 @@ trait JSONPARSER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 		//@info: $9->{ }|{ $8 }
 		void update_shift_e9 (CREF<INDEX> curr) {
 			Scope<ScopeCounter> anonymous (ScopeCounter::from (mRecursiveCounter)) ;
-			assume (mRecursiveCounter < COUNTER_MAX_DEPTH::value) ;
+			assume (mRecursiveCounter < COUNTER_MAX_DEPTH::expr) ;
 			mReader >> slice ("{") ;
 			INDEX ix = mTree.insert () ;
 			mTree[ix].mObjectSet = mObjectSet.share () ;
-			mTree[ix].mClazz = NODE_CLAZZ_OBJECT::value ;
+			mTree[ix].mClazz = NODE_CLAZZ_OBJECT::expr ;
 			mTree[ix].mParent = curr ;
 			mTree[ix].mBrother = NONE ;
 			mTree[ix].mChild = NONE ;

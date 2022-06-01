@@ -33,11 +33,6 @@ trait VECTOR_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 	public:
 		implicit Vector () = default ;
 
-		template <class ARG1 ,class = REQUIRE<IS_SAME<ARG1 ,ARR<ITEM ,SIZE>>>>
-		implicit Vector (CREF<ARG1> that) {
-			mVector = that ;
-		}
-
 		explicit Vector (CREF<ARRAY3<ITEM>> xyz ,CREF<ITEM> w) {
 			mVector[0] = xyz[0] ;
 			mVector[1] = xyz[1] ;
@@ -146,7 +141,7 @@ trait VECTOR_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 
 		Vector add (CREF<Vector> that) const {
 			Vector ret ;
-			for (auto &&i : iter (0 ,SIZE::value))
+			for (auto &&i : iter (0 ,SIZE::expr))
 				ret.mVector[i] = mVector[i] + that.mVector[i] ;
 			return move (ret) ;
 		}
@@ -156,7 +151,7 @@ trait VECTOR_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 		}
 
 		void addto (CREF<Vector> that) {
-			for (auto &&i : iter (0 ,SIZE::value))
+			for (auto &&i : iter (0 ,SIZE::expr))
 				mVector[i] += that.mVector[i] ;
 		}
 
@@ -166,7 +161,7 @@ trait VECTOR_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 
 		Vector sub (CREF<Vector> that) const {
 			Vector ret ;
-			for (auto &&i : iter (0 ,SIZE::value))
+			for (auto &&i : iter (0 ,SIZE::expr))
 				ret.mVector[i] = mVector[i] - that.mVector[i] ;
 			return move (ret) ;
 		}
@@ -176,7 +171,7 @@ trait VECTOR_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 		}
 
 		void subto (CREF<Vector> that) {
-			for (auto &&i : iter (0 ,SIZE::value))
+			for (auto &&i : iter (0 ,SIZE::expr))
 				mVector[i] -= that.mVector[i] ;
 		}
 
@@ -186,7 +181,7 @@ trait VECTOR_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 
 		Vector mul (CREF<ITEM> scale) const {
 			Vector ret ;
-			for (auto &&i : iter (0 ,SIZE::value))
+			for (auto &&i : iter (0 ,SIZE::expr))
 				ret.mVector[i] = mVector[i] * scale ;
 			return move (ret) ;
 		}
@@ -200,7 +195,7 @@ trait VECTOR_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 		}
 
 		void multo (CREF<ITEM> scale) {
-			for (auto &&i : iter (0 ,SIZE::value))
+			for (auto &&i : iter (0 ,SIZE::expr))
 				mVector[i] *= scale ;
 		}
 
@@ -210,7 +205,7 @@ trait VECTOR_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 
 		ITEM dot (CREF<Vector> that) const {
 			ITEM ret = ITEM (0) ;
-			for (auto &&i : iter (0 ,SIZE::value))
+			for (auto &&i : iter (0 ,SIZE::expr))
 				ret += mVector[i] * that.mVector[i] ;
 			return move (ret) ;
 		}
@@ -261,7 +256,7 @@ trait VECTOR_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 
 		Vector minus () const {
 			Vector ret ;
-			for (auto &&i : iter (0 ,SIZE::value))
+			for (auto &&i : iter (0 ,SIZE::expr))
 				ret.mVector[i] = -mVector[i] ;
 			return move (ret) ;
 		}
@@ -356,12 +351,6 @@ trait QUATERNION_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 
 	public:
 		implicit Quaternion () = default ;
-
-		template <class ARG1 ,class = REQUIRE<IS_SAME<ARG1 ,ARR<ITEM ,SIZE>>>>
-		implicit Quaternion (CREF<ARG1> that) {
-			mQuaternion = that ;
-			update_normalize () ;
-		}
 
 		explicit Quaternion (CREF<ITEM> x ,CREF<ITEM> y ,CREF<ITEM> z ,CREF<ITEM> w) {
 			mQuaternion[0] = x ;
@@ -533,11 +522,6 @@ trait MATRIX_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 
 	public:
 		implicit Matrix () = default ;
-
-		template <class ARG1 ,class = REQUIRE<IS_SAME<ARG1 ,ARR<ITEM ,SIZE>>>>
-		implicit Matrix (CREF<ARG1> that) {
-			mMatrix = that ;
-		}
 
 		explicit Matrix (CREF<Vector<ITEM>> vx ,CREF<Vector<ITEM>> vy ,CREF<Vector<ITEM>> vz ,CREF<Vector<ITEM>> vw) {
 			for (auto &&i : iter (0 ,4)) {
@@ -789,7 +773,6 @@ trait MATRIX_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 			return RowProxy<CREF<Matrix> ,ITEM> (CRef<Matrix>::reference (thiz) ,y) ;
 		}
 
-
 		BOOL equal (CREF<Matrix> that) const {
 			return operator_equal (mMatrix ,that.mMatrix) ;
 		}
@@ -828,7 +811,7 @@ trait MATRIX_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 
 		Matrix add (CREF<Matrix> that) const {
 			Matrix ret ;
-			for (auto &&i : iter (0 ,SIZE::value))
+			for (auto &&i : iter (0 ,SIZE::expr))
 				ret.mMatrix[i] = mMatrix[i] + that.mMatrix[i] ;
 			return move (ret) ;
 		}
@@ -838,7 +821,7 @@ trait MATRIX_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 		}
 
 		void addto (CREF<Matrix> that) {
-			for (auto &&i : iter (0 ,SIZE::value))
+			for (auto &&i : iter (0 ,SIZE::expr))
 				mMatrix[i] += that.mMatrix[i] ;
 		}
 
@@ -848,7 +831,7 @@ trait MATRIX_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 
 		Matrix sub (CREF<Matrix> that) const {
 			Matrix ret ;
-			for (auto &&i : iter (0 ,SIZE::value))
+			for (auto &&i : iter (0 ,SIZE::expr))
 				ret.mMatrix[i] = mMatrix[i] - that.mMatrix[i] ;
 			return move (ret) ;
 		}
@@ -858,7 +841,7 @@ trait MATRIX_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 		}
 
 		void subto (CREF<Matrix> that) {
-			for (auto &&i : iter (0 ,SIZE::value))
+			for (auto &&i : iter (0 ,SIZE::expr))
 				mMatrix[i] -= that.mMatrix[i] ;
 		}
 
@@ -868,7 +851,7 @@ trait MATRIX_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 
 		Matrix mul (CREF<ITEM> scale) const {
 			Matrix ret ;
-			for (auto &&i : iter (0 ,SIZE::value))
+			for (auto &&i : iter (0 ,SIZE::expr))
 				ret.mMatrix[i] = mMatrix[i] * scale ;
 			return move (ret) ;
 		}
@@ -882,7 +865,7 @@ trait MATRIX_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 		}
 
 		void multo (CREF<ITEM> scale) {
-			for (auto &&i : iter (0 ,SIZE::value))
+			for (auto &&i : iter (0 ,SIZE::expr))
 				mMatrix[i] *= scale ;
 		}
 
@@ -930,7 +913,7 @@ trait MATRIX_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 
 		Matrix minus () const {
 			Matrix ret ;
-			for (auto &&i : iter (0 ,SIZE::value))
+			for (auto &&i : iter (0 ,SIZE::expr))
 				ret.mMatrix[i] = -mMatrix[i] ;
 			return move (ret) ;
 		}
@@ -1078,7 +1061,7 @@ trait MATRIX_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 
 		Matrix pseudo_inverse () const {
 			Matrix ret ;
-			for (auto &&i : iter (0 ,SIZE::value))
+			for (auto &&i : iter (0 ,SIZE::expr))
 				ret.mMatrix[i] = MathProc::inverse (mMatrix[i]) ;
 			return move (ret) ;
 		}
@@ -1128,67 +1111,78 @@ trait MATRIX_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 	public:
 		implicit DiagMatrix () = delete ;
 
-		explicit DiagMatrix (CREF<ITEM> x ,CREF<ITEM> y ,CREF<ITEM> z ,CREF<ITEM> w) :Matrix (Matrix::make_diag (x ,y ,z ,w)) {}
+		explicit DiagMatrix (CREF<ITEM> x ,CREF<ITEM> y ,CREF<ITEM> z ,CREF<ITEM> w)
+			:DiagMatrix (Matrix::make_diag (x ,y ,z ,w)) {}
 	} ;
 
 	class ShearMatrix implement Matrix {
 	public:
 		implicit ShearMatrix () = delete ;
 
-		explicit ShearMatrix (CREF<Vector<ITEM>> vx ,CREF<Vector<ITEM>> vy ,CREF<Vector<ITEM>> vz) :Matrix (Matrix::make_shear (vx ,vy ,vz)) {}
+		explicit ShearMatrix (CREF<Vector<ITEM>> vx ,CREF<Vector<ITEM>> vy ,CREF<Vector<ITEM>> vz)
+			:ShearMatrix (Matrix::make_shear (vx ,vy ,vz)) {}
 	} ;
 
 	class RotationMatrix implement Matrix {
 	public:
 		implicit RotationMatrix () = delete ;
 
-		explicit RotationMatrix (CREF<Vector<ITEM>> vx ,CREF<Vector<ITEM>> vy) :Matrix (Matrix::make_rotation (vx ,vy)) {}
+		explicit RotationMatrix (CREF<Vector<ITEM>> vx ,CREF<Vector<ITEM>> vy)
+			:RotationMatrix (Matrix::make_rotation (vx ,vy)) {}
 
-		explicit RotationMatrix (CREF<Vector<ITEM>> normal ,CREF<ITEM> angle) :Matrix (Matrix::make_rotation (normal ,angle)) {}
+		explicit RotationMatrix (CREF<Vector<ITEM>> normal ,CREF<ITEM> angle)
+			:RotationMatrix (Matrix::make_rotation (normal ,angle)) {}
 
-		explicit RotationMatrix (CREF<Quaternion<ITEM>> quat) :Matrix (Matrix::make_rotation (quat)) {}
+		explicit RotationMatrix (CREF<Quaternion<ITEM>> quat)
+			:RotationMatrix (Matrix::make_rotation (quat)) {}
 	} ;
 
 	class TranslationMatrix implement Matrix {
 	public:
 		implicit TranslationMatrix () = delete ;
 
-		explicit TranslationMatrix (CREF<ITEM> tx ,CREF<ITEM> ty ,CREF<ITEM> tz) :Matrix (Matrix::make_translation (tx ,ty ,tz)) {}
+		explicit TranslationMatrix (CREF<ITEM> tx ,CREF<ITEM> ty ,CREF<ITEM> tz)
+			:TranslationMatrix (Matrix::make_translation (tx ,ty ,tz)) {}
 	} ;
 
 	class PerspectiveMatrix implement Matrix {
 	public:
 		implicit PerspectiveMatrix () = delete ;
 
-		explicit PerspectiveMatrix (CREF<ITEM> fx ,CREF<ITEM> fy ,CREF<ITEM> wx ,CREF<ITEM> wy) :Matrix (Matrix::make_perspective (fx ,fy ,wx ,wy)) {}
+		explicit PerspectiveMatrix (CREF<ITEM> fx ,CREF<ITEM> fy ,CREF<ITEM> wx ,CREF<ITEM> wy)
+			:PerspectiveMatrix (Matrix::make_perspective (fx ,fy ,wx ,wy)) {}
 	} ;
 
 	class ProjectionMatrix implement Matrix {
 	public:
 		implicit ProjectionMatrix () = delete ;
 
-		explicit ProjectionMatrix (CREF<Vector<ITEM>> normal ,CREF<ITEM> center ,CREF<Vector<ITEM>> light) :Matrix (Matrix::make_projection (normal ,center ,light)) {}
+		explicit ProjectionMatrix (CREF<Vector<ITEM>> normal ,CREF<ITEM> center ,CREF<Vector<ITEM>> light)
+			:ProjectionMatrix (Matrix::make_projection (normal ,center ,light)) {}
 	} ;
 
 	class CrossProductMatrix implement Matrix {
 	public:
 		implicit CrossProductMatrix () = delete ;
 
-		explicit CrossProductMatrix (CREF<Vector<ITEM>> vx) :Matrix (Matrix::make_cross_product (vx)) {}
+		explicit CrossProductMatrix (CREF<Vector<ITEM>> vx)
+			:CrossProductMatrix (Matrix::make_cross_product (vx)) {}
 	} ;
 
 	class SymmetryMatrix implement Matrix {
 	public:
 		implicit SymmetryMatrix () = delete ;
 
-		explicit SymmetryMatrix (CREF<Vector<ITEM>> vx ,CREF<Vector<ITEM>> vy) :Matrix (Matrix::make_symmetry (vx ,vy)) {}
+		explicit SymmetryMatrix (CREF<Vector<ITEM>> vx ,CREF<Vector<ITEM>> vy)
+			:SymmetryMatrix (Matrix::make_symmetry (vx ,vy)) {}
 	} ;
 
 	class ReflectionMatrix implement Matrix {
 	public:
 		implicit ReflectionMatrix () = delete ;
 
-		explicit ReflectionMatrix (CREF<Vector<ITEM>> normal) :Matrix (Matrix::make_reflection (normal)) {}
+		explicit ReflectionMatrix (CREF<Vector<ITEM>> normal)
+			:ReflectionMatrix (Matrix::make_reflection (normal)) {}
 	} ;
 } ;
 
@@ -1333,7 +1327,7 @@ trait MATRIX_SINGULAR_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 		void update_QR () {
 			INDEX jx = 0 ;
 			while (TRUE) {
-				if (jx >= MAX_ITERATION::value)
+				if (jx >= MAX_ITERATION::expr)
 					break ;
 				jx++ ;
 				const auto r1x = find_abs_rot (mQ) ;

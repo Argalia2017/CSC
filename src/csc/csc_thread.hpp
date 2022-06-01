@@ -361,7 +361,7 @@ trait PROMISE_HELP<ITEM ,ALWAYS> {
 		}
 
 		template <class ARG1 = DEPEND>
-		MACRO_Future<ARG1> future () {
+		MACRO_Future<ARG1> as_future () {
 			return MACRO_Future<ARG1> (move (mThis)) ;
 		}
 
@@ -468,7 +468,7 @@ trait PROMISE_IMPLHOLDER_HELP<ITEM ,ALWAYS> {
 			} catch (CREF<Exception> e) {
 				rethrow (e) ;
 			} catch (...) {
-				rethrow (Exception (TYPEAS<where>::id ,slice ("unknown C++ exception"))) ;
+				rethrow (Exception (TYPEAS<where>::expr ,slice ("unknown C++ exception"))) ;
 			}
 			if ifswitch (TRUE) {
 				if ifnot (rax.exist ())
@@ -511,7 +511,7 @@ trait PROMISE_IMPLHOLDER_HELP<ITEM ,ALWAYS> {
 			rax.notify () ;
 		}
 
-		BOOL ready () {
+		BOOL ready () override {
 			Scope<Mutex> anonymous (mThreadMutex) ;
 			if (mThreadFlag == NULL)
 				return TRUE ;
@@ -603,7 +603,7 @@ trait FUTURE_HELP<ITEM ,ALWAYS> {
 		imports Future make_async (RREF<Function<ITEM>> proc) {
 			auto rax = Promise<ITEM> () ;
 			rax.start (move (proc)) ;
-			return rax.future () ;
+			return rax.as_future () ;
 		}
 
 		BOOL ready () {
@@ -627,7 +627,8 @@ trait FUTURE_HELP<ITEM ,ALWAYS> {
 	public:
 		implicit AsyncFuture () = delete ;
 
-		explicit AsyncFuture (RREF<Function<ITEM>> proc) :Future (Future::make_async (move (proc))) {}
+		explicit AsyncFuture (RREF<Function<ITEM>> proc)
+			:AsyncFuture (Future::make_async (move (proc))) {}
 	} ;
 } ;
 

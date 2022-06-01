@@ -56,13 +56,13 @@ trait RUNTIMEPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 
 		void thread_sleep (CREF<TimeDuration> time_) const override {
 			using R1X = typename TIMEDURATION_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
-			const auto r1x = time_.native ().poll (TYPEAS<CRef<R1X>>::id) ;
+			const auto r1x = time_.native ().poll (TYPEAS<CRef<R1X>>::expr) ;
 			std::this_thread::sleep_for (r1x->get_mTimeDuration ()) ;
 		}
 
 		void thread_sleep (CREF<TimePoint> time_) const override {
 			using R1X = typename TIMEPOINT_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
-			const auto r1x = time_.native ().poll (TYPEAS<CRef<R1X>>::id) ;
+			const auto r1x = time_.native ().poll (TYPEAS<CRef<R1X>>::expr) ;
 			std::this_thread::sleep_until (r1x->get_mTimePoint ()) ;
 		}
 
@@ -102,7 +102,7 @@ trait RUNTIMEPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				ix++ ;
 				rax[ix] = 0 ;
 			}
-			return string_cvt[TYPEAS<TYPEAS<STR ,STRA>>::id] (rax) ;
+			return string_cvt[TYPEAS<TYPEAS<STR ,STRA>>::expr] (rax) ;
 		}
 
 		String<STR> module_path () const override {
@@ -114,7 +114,7 @@ trait RUNTIMEPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 						discard ;
 					rax.clear () ;
 				}
-				String<STR> ret = string_cvt[TYPEAS<TYPEAS<STR ,STRA>>::id] (rax) ;
+				String<STR> ret = string_cvt[TYPEAS<TYPEAS<STR ,STRA>>::expr] (rax) ;
 				ret = Directory (ret).path () ;
 				return move (ret) ;
 			}) ;
@@ -129,7 +129,7 @@ trait RUNTIMEPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 						discard ;
 					rax.clear () ;
 				}
-				String<STR> ret = string_cvt[TYPEAS<TYPEAS<STR ,STRA>>::id] (rax) ;
+				String<STR> ret = string_cvt[TYPEAS<TYPEAS<STR ,STRA>>::expr] (rax) ;
 				ret = Directory (ret).name () ;
 				return move (ret) ;
 			}) ;
@@ -159,7 +159,7 @@ trait PROCESS_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		void initialize (CREF<FLAG> uid) override {
 			mUID = uid ;
 			auto rax = VarBuffer<BYTE> (128) ;
-			auto rbx = ByteWriter (RegBuffer<BYTE>::from (rax ,0 ,rax.size ())) ;
+			auto rbx = ByteWriter (RegBuffer<BYTE>::from (rax).lift ()) ;
 			if ifswitch (TRUE) {
 				const auto r1x = String<STR>::make (slice ("/proc/") ,mUID ,slice ("/stat")) ;
 				const auto r2x = load_proc_file (r1x) ;
@@ -186,8 +186,7 @@ trait PROCESS_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			auto rax = StreamFile (file_) ;
 			const auto r1x = rax.link (TRUE ,FALSE) ;
 			assume (r1x) ;
-			auto rbx = RegBuffer<BYTE>::from (unsafe_array (ret[0]) ,0 ,ret.size ()) ;
-			const auto r2x = rax.read (rbx) ;
+			const auto r2x = rax.read (ret.raw ()) ;
 			ret[r2x] = 0 ;
 			return move (ret) ;
 		}
@@ -201,12 +200,12 @@ trait PROCESS_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			auto rbx = String<STRU8> () ;
 			rax >> TextReader<STRU8>::GAP ;
 			rax >> rbx ;
-			const auto r1x = string_parse[TYPEAS<TYPEAS<VAL64 ,STRU8>>::id] (rbx) ;
+			const auto r1x = string_parse[TYPEAS<TYPEAS<VAL64 ,STRU8>>::expr] (rbx) ;
 			assume (r1x == uid) ;
 			rax >> TextReader<STRU8>::GAP ;
 			rax >> slice ("(") ;
 			while (TRUE) {
-				const auto r2x = rax.poll (TYPEAS<STRU8>::id) ;
+				const auto r2x = rax.poll (TYPEAS<STRU8>::expr) ;
 				if (r2x == STRU8 ('\0'))
 					break ;
 				if (r2x == STRU8 (')'))
@@ -223,7 +222,7 @@ trait PROCESS_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			}
 			rax >> TextReader<STRU8>::GAP ;
 			rax >> rbx ;
-			const auto r3x = string_parse[TYPEAS<TYPEAS<VAL64 ,STRU8>>::id] (rbx) ;
+			const auto r3x = string_parse[TYPEAS<TYPEAS<VAL64 ,STRU8>>::expr] (rbx) ;
 			for (auto &&i : iter (19 ,49)) {
 				noop (i) ;
 				rax >> TextReader<STRU8>::GAP ;
@@ -236,10 +235,9 @@ trait PROCESS_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 
 		void initialize (CREF<SNAPSHOT> snapshot_) override {
 			mSnapshot = snapshot_ ;
-			auto &&tmp = keep[TYPEAS<CREF<SNAPSHOT>>::id] (mSnapshot) ;
-			auto rax = ByteReader (RegBuffer<BYTE>::from (tmp ,0 ,tmp.size ())) ;
+			auto rax = ByteReader (RegBuffer<BYTE>::from (mSnapshot).lift ()) ;
 			rax >> ByteReader::GAP ;
-			const auto r1x = rax.poll (TYPEAS<VAL64>::id) ;
+			const auto r1x = rax.poll (TYPEAS<VAL64>::expr) ;
 			assume (r1x > 0) ;
 			assume (r1x <= VAL32_MAX) ;
 			mUID = FLAG (r1x) ;
@@ -282,7 +280,7 @@ trait MODULE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 
 		void initialize (CREF<String<STR>> file_) override {
 			const auto r1x = Directory (file_).name () ;
-			const auto r2x = string_cvt[TYPEAS<TYPEAS<STRA ,STR>>::id] (r1x) ;
+			const auto r2x = string_cvt[TYPEAS<TYPEAS<STRA ,STR>>::expr] (r1x) ;
 			assert (ifnot (r2x.empty ())) ;
 			mErrorBuffer = String<STR>::make () ;
 			mModule = UniqueRef<HANDLE> ([&] (VREF<HANDLE> me) {
@@ -310,7 +308,7 @@ trait MODULE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		FLAG link (CREF<String<STR>> name) override {
 			assert (mModule.exist ()) ;
 			assert (ifnot (name.empty ())) ;
-			const auto r1x = string_cvt[TYPEAS<TYPEAS<STRA ,STR>>::id] (name) ;
+			const auto r1x = string_cvt[TYPEAS<TYPEAS<STRA ,STR>>::expr] (name) ;
 			FLAG ret = FLAG (dlsym (mModule ,(&r1x[0]))) ;
 			if ifswitch (TRUE) {
 				if (ret != ZERO)
@@ -326,8 +324,8 @@ trait MODULE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		void format_dllerror () {
 			const auto r1x = FLAG (dlerror ()) ;
 			assume (r1x != ZERO) ;
-			auto &&tmp = keep[TYPEAS<CREF<STRA>>::id] (unsafe_deref (unsafe_cast[TYPEAS<TEMP<STRA>>::id] (unsafe_pointer (r1x)))) ;
-			BufferProc::buf_slice (mErrorBuffer ,unsafe_array (tmp) ,mErrorBuffer.size ()) ;
+			auto &&tmp = keep[TYPEAS<CREF<TEMP<void>>>::expr] (unsafe_pointer (r1x)) ;
+			BufferProc::buf_slice (mErrorBuffer ,RegBuffer<STRA>::from (tmp ,0 ,VAL32_MAX) ,mErrorBuffer.size ()) ;
 		}
 	} ;
 } ;
@@ -383,7 +381,7 @@ trait SINGLETON_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			}) ;
 			const auto r1x = FLAG (rax.mAddress1) ;
 			assume (r1x != ZERO) ;
-			mHeap = unsafe_deref (unsafe_cast[TYPEAS<TEMP<SharedRef<HEAP>>>::id] (unsafe_pointer (r1x))) ;
+			mHeap = unsafe_deref (unsafe_cast[TYPEAS<TEMP<SharedRef<HEAP>>>::expr] (unsafe_pointer (r1x))) ;
 			assume (mHeap.available ()) ;
 		}
 
@@ -400,7 +398,7 @@ trait SINGLETON_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				} ,[] (VREF<HFILE> me) {
 					noop () ;
 				}) ;
-				const auto r4x = ftruncate (r1x ,SIZE_OF<PIPE>::value) ;
+				const auto r4x = ftruncate (r1x ,SIZE_OF<PIPE>::expr) ;
 				assume (r4x == 0) ;
 			} ,[] (VREF<String<STRA>> me) {
 				shm_unlink ((&me[0])) ;
@@ -416,15 +414,15 @@ trait SINGLETON_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				noop () ;
 			}) ;
 			const auto r2x = UniqueRef<HANDLE> ([&] (VREF<HANDLE> me) {
-				me = mmap (NULL ,SIZE_OF<PIPE>::value ,PROT_READ ,MAP_SHARED ,r1x ,0) ;
+				me = mmap (NULL ,SIZE_OF<PIPE>::expr ,PROT_READ ,MAP_SHARED ,r1x ,0) ;
 				replace (me ,MAP_FAILED ,NULL) ;
 				assume (me != NULL) ;
 			} ,[] (VREF<HANDLE> me) {
-				munmap (me ,SIZE_OF<PIPE>::value) ;
+				munmap (me ,SIZE_OF<PIPE>::expr) ;
 			}) ;
 			PIPE ret ;
 			zeroize (ret) ;
-			std::memcpy ((&ret) ,r2x ,SIZE_OF<PIPE>::value) ;
+			std::memcpy ((&ret) ,r2x ,SIZE_OF<PIPE>::expr) ;
 			assume (ret.mReserve1 == DATA (0X1122334455667788)) ;
 			assume (ret.mReserve3 == DATA (0X1122334455667788)) ;
 			assume (ret.mReserve2 == DATA (0XAAAABBBBCCCCDDDD)) ;
@@ -440,11 +438,11 @@ trait SINGLETON_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				noop () ;
 			}) ;
 			const auto r2x = UniqueRef<HANDLE> ([&] (VREF<HANDLE> me) {
-				me = mmap (NULL ,SIZE_OF<PIPE>::value ,PROT_WRITE ,MAP_SHARED ,r1x ,0) ;
+				me = mmap (NULL ,SIZE_OF<PIPE>::expr ,PROT_WRITE ,MAP_SHARED ,r1x ,0) ;
 				replace (me ,MAP_FAILED ,NULL) ;
 				assume (me != NULL) ;
 			} ,[] (VREF<HANDLE> me) {
-				munmap (me ,SIZE_OF<PIPE>::value) ;
+				munmap (me ,SIZE_OF<PIPE>::expr) ;
 			}) ;
 			auto rax = PIPE () ;
 			rax.mReserve1 = DATA (0X1122334455667788) ;
@@ -452,7 +450,7 @@ trait SINGLETON_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			rax.mReserve2 = DATA (0XAAAABBBBCCCCDDDD) ;
 			rax.mAddress2 = DATA (address (mHeap)) ;
 			rax.mReserve3 = DATA (0X1122334455667788) ;
-			std::memcpy (r2x ,(&rax) ,SIZE_OF<PIPE>::value) ;
+			std::memcpy (r2x ,(&rax) ,SIZE_OF<PIPE>::expr) ;
 		}
 
 		void add (CREF<Slice<STR>> name ,CREF<FLAG> addr_) const override {

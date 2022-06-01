@@ -644,7 +644,7 @@ trait FLOATPROC_KROSHCACHE_HELP<DEPEND ,ALWAYS> {
 			NOTATION ret ;
 			ret.mRadix = 2 ;
 			ret.mSign = FALSE ;
-			const auto r1x = INDEX_OFFSET::value + INDEX (k) ;
+			const auto r1x = INDEX_OFFSET::expr + INDEX (k) ;
 			ret.mMantissa = VAL64 (mMCache[r1x]) ;
 			ret.mPrecision = 0 ;
 			ret.mExponent = VAL64 (mECache[r1x]) ;
@@ -702,7 +702,7 @@ trait FLOATPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			const auto r3x = (DATA (rax.mExponent) << 52) & DATA (0X7FF0000000000000) ;
 			const auto r4x = DATA (rax.mMantissa) & DATA (0X000FFFFFFFFFFFFF) ;
 			const auto r5x = r2x | r3x | r4x ;
-			return bitwise[TYPEAS<DOUBLE>::id] (r5x) ;
+			return bitwise[TYPEAS<DOUBLE>::expr] (r5x) ;
 		}
 
 		NOTATION decode (CREF<DOUBLE> float_) const override {

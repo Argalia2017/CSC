@@ -325,10 +325,9 @@ template <class DEPEND>
 trait FUNCTION_string_parse_HELP<DEPEND ,ALWAYS> {
 	struct FUNCTION_string_parse {
 		template <class ARG1>
-		inline constexpr FUNCTION_string_parse_impl<TYPE_FIRST_ONE<REMOVE_ALL<ARG1>> ,TYPE_SECOND_ONE<REMOVE_ALL<ARG1>>> operator[] (CREF<ARG1> id) const noexcept {
-			using R1X = REMOVE_ALL<ARG1> ;
-			using R2X = TYPE_FIRST_ONE<R1X> ;
-			using R3X = TYPE_SECOND_ONE<R1X> ;
+		inline constexpr FUNCTION_string_parse_impl<TYPE_FIRST_ONE<ARG1> ,TYPE_SECOND_ONE<ARG1>> operator[] (CREF<TYPEID<ARG1>> id) const noexcept {
+			using R2X = TYPE_FIRST_ONE<ARG1> ;
+			using R3X = TYPE_SECOND_ONE<ARG1> ;
 			using R4X = FUNCTION_string_parse_impl<R2X ,R3X> ;
 			return R4X () ;
 		}
@@ -349,10 +348,9 @@ template <class DEPEND>
 trait FUNCTION_string_build_HELP<DEPEND ,ALWAYS> {
 	struct FUNCTION_string_build {
 		template <class ARG1>
-		inline constexpr FUNCTION_string_build_impl<TYPE_FIRST_ONE<REMOVE_ALL<ARG1>> ,TYPE_SECOND_ONE<REMOVE_ALL<ARG1>>> operator[] (CREF<ARG1> id) const noexcept {
-			using R1X = REMOVE_ALL<ARG1> ;
-			using R2X = TYPE_FIRST_ONE<R1X> ;
-			using R3X = TYPE_SECOND_ONE<R1X> ;
+		inline constexpr FUNCTION_string_build_impl<TYPE_FIRST_ONE<ARG1> ,TYPE_SECOND_ONE<ARG1>> operator[] (CREF<TYPEID<ARG1>> id) const noexcept {
+			using R2X = TYPE_FIRST_ONE<ARG1> ;
+			using R3X = TYPE_SECOND_ONE<ARG1> ;
 			using R4X = FUNCTION_string_build_impl<R2X ,R3X> ;
 			return R4X () ;
 		}
@@ -448,7 +446,7 @@ trait FUNCTION_string_cvt_impl_HELP<UNIT1 ,UNIT2 ,REQUIRE<ENUM_ALL<IS_SAME<UNIT1
 			using R1X = typename FUNCTION_string_cvt_impl_HELP<STRUW ,UNIT2 ,ALWAYS>::FUNCTION_string_cvt_impl ;
 			const auto r1x = R1X () ;
 			auto rax = r1x (obj) ;
-			auto &&tmp = unsafe_deref (unsafe_cast[TYPEAS<TEMP<String<STRW>>>::id] (unsafe_deptr (rax))) ;
+			auto &&tmp = unsafe_deref (unsafe_cast[TYPEAS<TEMP<String<STRW>>>::expr] (unsafe_deptr (rax))) ;
 			return move (tmp) ;
 		}
 	} ;
@@ -461,7 +459,7 @@ trait FUNCTION_string_cvt_impl_HELP<UNIT1 ,UNIT2 ,REQUIRE<ENUM_ALL<IS_SAME<UNIT1
 			using R1X = typename FUNCTION_string_cvt_impl_HELP<STRUW ,UNIT2 ,ALWAYS>::FUNCTION_string_cvt_impl ;
 			const auto r1x = R1X () ;
 			auto rax = r1x (obj) ;
-			auto &&tmp = unsafe_deref (unsafe_cast[TYPEAS<TEMP<String<STRW>>>::id] (unsafe_deptr (rax))) ;
+			auto &&tmp = unsafe_deref (unsafe_cast[TYPEAS<TEMP<String<STRW>>>::expr] (unsafe_deptr (rax))) ;
 			return move (tmp) ;
 		}
 	} ;
@@ -474,7 +472,7 @@ trait FUNCTION_string_cvt_impl_HELP<UNIT1 ,UNIT2 ,REQUIRE<ENUM_ALL<IS_SAME<UNIT1
 			using R1X = typename FUNCTION_string_cvt_impl_HELP<STRUW ,UNIT2 ,ALWAYS>::FUNCTION_string_cvt_impl ;
 			const auto r1x = R1X () ;
 			auto rax = r1x (obj) ;
-			auto &&tmp = unsafe_deref (unsafe_cast[TYPEAS<TEMP<String<STRW>>>::id] (unsafe_deptr (rax))) ;
+			auto &&tmp = unsafe_deref (unsafe_cast[TYPEAS<TEMP<String<STRW>>>::expr] (unsafe_deptr (rax))) ;
 			return move (tmp) ;
 		}
 	} ;
@@ -499,7 +497,7 @@ trait FUNCTION_string_cvt_impl_HELP<UNIT1 ,UNIT2 ,REQUIRE<ENUM_ALL<IS_SAME<UNIT1
 		inline String<STRU8> operator() (CREF<String<STRW>> obj) const {
 			using R1X = typename FUNCTION_string_cvt_impl_HELP<UNIT1 ,STRUW ,ALWAYS>::FUNCTION_string_cvt_impl ;
 			const auto r1x = R1X () ;
-			auto &&tmp = unsafe_deref (unsafe_cast[TYPEAS<TEMP<String<STRUW>>>::id] (unsafe_deptr (obj))) ;
+			auto &&tmp = unsafe_deref (unsafe_cast[TYPEAS<TEMP<String<STRUW>>>::expr] (unsafe_deptr (obj))) ;
 			return r1x (tmp) ;
 		}
 	} ;
@@ -726,7 +724,7 @@ trait FUNCTION_string_cvt_impl_HELP<UNIT1 ,UNIT2 ,REQUIRE<ENUM_ALL<IS_SAME<UNIT1
 		inline String<STRU16> operator() (CREF<String<STRW>> obj) const {
 			using R1X = typename FUNCTION_string_cvt_impl_HELP<UNIT1 ,STRUW ,ALWAYS>::FUNCTION_string_cvt_impl ;
 			const auto r1x = R1X () ;
-			auto &&tmp = unsafe_deref (unsafe_cast[TYPEAS<TEMP<String<STRUW>>>::id] (unsafe_deptr (obj))) ;
+			auto &&tmp = unsafe_deref (unsafe_cast[TYPEAS<TEMP<String<STRUW>>>::expr] (unsafe_deptr (obj))) ;
 			return r1x (tmp) ;
 		}
 	} ;
@@ -942,7 +940,7 @@ trait FUNCTION_string_cvt_impl_HELP<UNIT1 ,UNIT2 ,REQUIRE<ENUM_ALL<IS_SAME<UNIT1
 		inline String<STRU32> operator() (CREF<String<STRW>> obj) const {
 			using R1X = typename FUNCTION_string_cvt_impl_HELP<UNIT1 ,STRUW ,ALWAYS>::FUNCTION_string_cvt_impl ;
 			const auto r1x = R1X () ;
-			auto &&tmp = unsafe_deref (unsafe_cast[TYPEAS<TEMP<String<STRUW>>>::id] (unsafe_deptr (obj))) ;
+			auto &&tmp = unsafe_deref (unsafe_cast[TYPEAS<TEMP<String<STRUW>>>::expr] (unsafe_deptr (obj))) ;
 			return r1x (tmp) ;
 		}
 	} ;
@@ -1139,10 +1137,9 @@ template <class DEPEND>
 trait FUNCTION_string_cvt_HELP<DEPEND ,ALWAYS> {
 	struct FUNCTION_string_cvt {
 		template <class ARG1>
-		inline constexpr FUNCTION_string_cvt_impl<TYPE_FIRST_ONE<REMOVE_ALL<ARG1>> ,TYPE_SECOND_ONE<REMOVE_ALL<ARG1>>> operator[] (CREF<ARG1> id) const noexcept {
-			using R1X = REMOVE_ALL<ARG1> ;
-			using R2X = TYPE_FIRST_ONE<R1X> ;
-			using R3X = TYPE_SECOND_ONE<R1X> ;
+		inline constexpr FUNCTION_string_cvt_impl<TYPE_FIRST_ONE<ARG1> ,TYPE_SECOND_ONE<ARG1>> operator[] (CREF<TYPEID<ARG1>> id) const noexcept {
+			using R2X = TYPE_FIRST_ONE<ARG1> ;
+			using R3X = TYPE_SECOND_ONE<ARG1> ;
 			using R4X = FUNCTION_string_cvt_impl<R2X ,R3X> ;
 			return R4X () ;
 		}
@@ -1173,68 +1170,67 @@ trait REGULARSTRING_HELP<DEPEND ,ALWAYS> {
 		implicit EscapeString () = delete ;
 
 		explicit EscapeString (CREF<Slice<STR>> text) {
-			mText = String<STRU8>::make (text) ;
+			mText = String<STRU32>::make (text) ;
 		}
 
 		explicit EscapeString (CREF<String<STRA>> text) {
-			mText = string_cvt[TYPEAS<TYPEAS<STRU32 ,STRA>>::id] (text) ;
+			mText = string_cvt[TYPEAS<TYPEAS<STRU32 ,STRA>>::expr] (text) ;
 		}
 
 		explicit EscapeString (CREF<String<STRW>> text) {
-			mText = string_cvt[TYPEAS<TYPEAS<STRU32 ,STRW>>::id] (text) ;
+			mText = string_cvt[TYPEAS<TYPEAS<STRU32 ,STRW>>::expr] (text) ;
 		}
 
 		explicit EscapeString (CREF<String<STRU8>> text) {
-			mText = string_cvt[TYPEAS<TYPEAS<STRU32 ,STRU8>>::id] (text) ;
+			mText = string_cvt[TYPEAS<TYPEAS<STRU32 ,STRU8>>::expr] (text) ;
 		}
 
 		explicit EscapeString (CREF<String<STRU16>> text) {
-			mText = string_cvt[TYPEAS<TYPEAS<STRU32 ,STRU16>>::id] (text) ;
+			mText = string_cvt[TYPEAS<TYPEAS<STRU32 ,STRU16>>::expr] (text) ;
 		}
 
 		explicit EscapeString (CREF<String<STRU32>> text) {
-			mText = string_cvt[TYPEAS<TYPEAS<STRU32 ,STRU32>>::id] (text) ;
+			mText = string_cvt[TYPEAS<TYPEAS<STRU32 ,STRU32>>::expr] (text) ;
 		}
 
 		void friend_write (VREF<TextWriter<STRA>> writer) const override {
-			template_write (TYPEAS<STRA>::id ,writer) ;
+			template_write (TYPEAS<STRA>::expr ,writer) ;
 		}
 
 		void friend_write (VREF<TextWriter<STRW>> writer) const override {
-			template_write (TYPEAS<STRW>::id ,writer) ;
+			template_write (TYPEAS<STRW>::expr ,writer) ;
 		}
 
 		void friend_write (VREF<TextWriter<STRU8>> writer) const override {
-			template_write (TYPEAS<STRU8>::id ,writer) ;
+			template_write (TYPEAS<STRU8>::expr ,writer) ;
 		}
 
 		void friend_write (VREF<TextWriter<STRU16>> writer) const override {
-			template_write (TYPEAS<STRU16>::id ,writer) ;
+			template_write (TYPEAS<STRU16>::expr ,writer) ;
 		}
 
 		void friend_write (VREF<TextWriter<STRU32>> writer) const override {
-			template_write (TYPEAS<STRU32>::id ,writer) ;
+			template_write (TYPEAS<STRU32>::expr ,writer) ;
 		}
 
 		template <class ARG1 ,class ARG2>
-		void template_write (CREF<ARG1> id ,VREF<ARG2> writer) const {
-			using R1X = REMOVE_ALL<ARG1> ;
+		void template_write (CREF<TYPEID<ARG1>> id ,VREF<ARG2> writer) const {
 			const auto r1x = writer.get_attr () ;
-			writer << R1X ('\"') ;
+			writer << ARG1 ('\"') ;
 			for (auto &&i : mText) {
 				auto rxx = TRUE ;
 				if ifswitch (rxx) {
-					const auto r2x = r1x->escape_cast (R1X (i)) ;
+					const auto r2x = r1x->escape_cast (ARG1 (i)) ;
 					if ifnot (r2x.exist ())
 						discard ;
-					writer << R1X ('\\') ;
-					writer << r2x.self ;
+					writer << ARG1 ('\\') ;
+					writer << r2x.fetch () ;
 				}
 				if ifswitch (rxx) {
-					writer << R1X (i) ;
+					writer << ARG1 (i) ;
 				}
 			}
-			writer << R1X ('\"') ;
+			writer << ARG1 ('\"') ;
 		}
 	} ;
 } ;
@@ -1273,65 +1269,64 @@ trait REPEATSTRING_HELP<DEPEND ,ALWAYS> {
 		}
 
 		explicit RepeatString (CREF<String<STRA>> gap_text ,CREF<String<STRA>> comma_text) {
-			mGapText = string_cvt[TYPEAS<TYPEAS<STRU32 ,STRA>>::id] (gap_text) ;
-			mCommaText = string_cvt[TYPEAS<TYPEAS<STRU32 ,STRA>>::id] (comma_text) ;
+			mGapText = string_cvt[TYPEAS<TYPEAS<STRU32 ,STRA>>::expr] (gap_text) ;
+			mCommaText = string_cvt[TYPEAS<TYPEAS<STRU32 ,STRA>>::expr] (comma_text) ;
 			initialize () ;
 		}
 
 		explicit RepeatString (CREF<String<STRW>> gap_text ,CREF<String<STRW>> comma_text) {
-			mGapText = string_cvt[TYPEAS<TYPEAS<STRU32 ,STRW>>::id] (gap_text) ;
-			mCommaText = string_cvt[TYPEAS<TYPEAS<STRU32 ,STRW>>::id] (comma_text) ;
+			mGapText = string_cvt[TYPEAS<TYPEAS<STRU32 ,STRW>>::expr] (gap_text) ;
+			mCommaText = string_cvt[TYPEAS<TYPEAS<STRU32 ,STRW>>::expr] (comma_text) ;
 			initialize () ;
 		}
 
 		explicit RepeatString (CREF<String<STRU8>> gap_text ,CREF<String<STRU8>> comma_text) {
-			mGapText = string_cvt[TYPEAS<TYPEAS<STRU32 ,STRU8>>::id] (gap_text) ;
-			mCommaText = string_cvt[TYPEAS<TYPEAS<STRU32 ,STRU8>>::id] (comma_text) ;
+			mGapText = string_cvt[TYPEAS<TYPEAS<STRU32 ,STRU8>>::expr] (gap_text) ;
+			mCommaText = string_cvt[TYPEAS<TYPEAS<STRU32 ,STRU8>>::expr] (comma_text) ;
 			initialize () ;
 		}
 
 		explicit RepeatString (CREF<String<STRU16>> gap_text ,CREF<String<STRU16>> comma_text) {
-			mGapText = string_cvt[TYPEAS<TYPEAS<STRU32 ,STRU16>>::id] (gap_text) ;
-			mCommaText = string_cvt[TYPEAS<TYPEAS<STRU32 ,STRU16>>::id] (comma_text) ;
+			mGapText = string_cvt[TYPEAS<TYPEAS<STRU32 ,STRU16>>::expr] (gap_text) ;
+			mCommaText = string_cvt[TYPEAS<TYPEAS<STRU32 ,STRU16>>::expr] (comma_text) ;
 			initialize () ;
 		}
 
 		explicit RepeatString (CREF<String<STRU32>> gap_text ,CREF<String<STRU32>> comma_text) {
-			mGapText = string_cvt[TYPEAS<TYPEAS<STRU32 ,STRU32>>::id] (gap_text) ;
-			mCommaText = string_cvt[TYPEAS<TYPEAS<STRU32 ,STRU32>>::id] (comma_text) ;
+			mGapText = string_cvt[TYPEAS<TYPEAS<STRU32 ,STRU32>>::expr] (gap_text) ;
+			mCommaText = string_cvt[TYPEAS<TYPEAS<STRU32 ,STRU32>>::expr] (comma_text) ;
 			initialize () ;
 		}
 
 		void initialize () {
 			mCounter = 0 ;
-			mTightCounter = Cell<LENGTH>::make (COUNTER_MAX_DEPTH::value) ;
-			mFirst = Deque<Cell<BOOL>> (COUNTER_MAX_DEPTH::value * 2) ;
+			mTightCounter = Cell<LENGTH>::make (COUNTER_MAX_DEPTH::expr) ;
+			mFirst = Deque<Cell<BOOL>> (COUNTER_MAX_DEPTH::expr * 2) ;
 			mFirst.add (Cell<BOOL>::make (TRUE)) ;
 		}
 
 		void friend_write (VREF<TextWriter<STRA>> writer) const override {
-			template_write (TYPEAS<STRA>::id ,writer) ;
+			template_write (TYPEAS<STRA>::expr ,writer) ;
 		}
 
 		void friend_write (VREF<TextWriter<STRW>> writer) const override {
-			template_write (TYPEAS<STRW>::id ,writer) ;
+			template_write (TYPEAS<STRW>::expr ,writer) ;
 		}
 
 		void friend_write (VREF<TextWriter<STRU8>> writer) const override {
-			template_write (TYPEAS<STRU8>::id ,writer) ;
+			template_write (TYPEAS<STRU8>::expr ,writer) ;
 		}
 
 		void friend_write (VREF<TextWriter<STRU16>> writer) const override {
-			template_write (TYPEAS<STRU16>::id ,writer) ;
+			template_write (TYPEAS<STRU16>::expr ,writer) ;
 		}
 
 		void friend_write (VREF<TextWriter<STRU32>> writer) const override {
-			template_write (TYPEAS<STRU32>::id ,writer) ;
+			template_write (TYPEAS<STRU32>::expr ,writer) ;
 		}
 
 		template <class ARG1 ,class ARG2>
-		void template_write (CREF<ARG1> id ,VREF<ARG2> writer) const {
-			using R1X = REMOVE_ALL<ARG1> ;
+		void template_write (CREF<TYPEID<ARG1>> id ,VREF<ARG2> writer) const {
 			INDEX ix = mFirst.tail () ;
 			auto rxx = TRUE ;
 			if ifswitch (rxx) {
@@ -1341,7 +1336,7 @@ trait REPEATSTRING_HELP<DEPEND ,ALWAYS> {
 					if (mFirst[ix].fetch ())
 						discard ;
 					for (auto &&j : mCommaText)
-						writer << R1X (j) ;
+						writer << ARG1 (j) ;
 				}
 				mFirst[ix].store (FALSE) ;
 			}
@@ -1350,22 +1345,22 @@ trait REPEATSTRING_HELP<DEPEND ,ALWAYS> {
 					discard ;
 				if ifnot (mFirst[ix].fetch ())
 					discard ;
-				mTightCounter.store (COUNTER_MAX_DEPTH::value) ;
+				mTightCounter.store (COUNTER_MAX_DEPTH::expr) ;
 				mFirst[ix].store (FALSE) ;
 			}
 			if ifswitch (rxx) {
-				writer << TextWriter<R1X>::GAP ;
+				writer << TextWriter<ARG1>::GAP ;
 				if ifswitch (TRUE) {
 					if (mFirst[ix].fetch ())
 						discard ;
 					for (auto &&j : mCommaText)
-						writer << R1X (j) ;
+						writer << ARG1 (j) ;
 				}
 				mFirst[ix].store (FALSE) ;
 				for (auto &&i : iter (0 ,mCounter)) {
 					noop (i) ;
 					for (auto &&j : mGapText)
-						writer << R1X (j) ;
+						writer << ARG1 (j) ;
 				}
 			}
 		}
@@ -1375,7 +1370,7 @@ trait REPEATSTRING_HELP<DEPEND ,ALWAYS> {
 		}
 
 		void enter () {
-			assume (mCounter < COUNTER_MAX_DEPTH::value) ;
+			assume (mCounter < COUNTER_MAX_DEPTH::expr) ;
 			mCounter++ ;
 			mFirst.add (Cell<BOOL>::make (TRUE)) ;
 		}
@@ -1420,27 +1415,27 @@ trait ALIGNEDSTRING_HELP<DEPEND ,ALWAYS> {
 		}
 
 		void friend_write (VREF<TextWriter<STRA>> writer) const override {
-			template_write (TYPEAS<STRA>::id ,writer) ;
+			template_write (TYPEAS<STRA>::expr ,writer) ;
 		}
 
 		void friend_write (VREF<TextWriter<STRW>> writer) const override {
-			template_write (TYPEAS<STRW>::id ,writer) ;
+			template_write (TYPEAS<STRW>::expr ,writer) ;
 		}
 
 		void friend_write (VREF<TextWriter<STRU8>> writer) const override {
-			template_write (TYPEAS<STRU8>::id ,writer) ;
+			template_write (TYPEAS<STRU8>::expr ,writer) ;
 		}
 
 		void friend_write (VREF<TextWriter<STRU16>> writer) const override {
-			template_write (TYPEAS<STRU16>::id ,writer) ;
+			template_write (TYPEAS<STRU16>::expr ,writer) ;
 		}
 
 		void friend_write (VREF<TextWriter<STRU32>> writer) const override {
-			template_write (TYPEAS<STRU32>::id ,writer) ;
+			template_write (TYPEAS<STRU32>::expr ,writer) ;
 		}
 
 		template <class ARG1 ,class ARG2>
-		void template_write (CREF<ARG1> id ,VREF<ARG2> writer) const {
+		void template_write (CREF<TYPEID<ARG1>> id ,VREF<ARG2> writer) const {
 			for (auto &&i : iter (0 ,mSpace)) {
 				noop (i) ;
 				writer << slice ("0") ;

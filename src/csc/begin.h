@@ -7,10 +7,11 @@
 #undef rightvalue
 #undef thiz
 #undef self
+#undef fake
+#undef expr
 #undef mP1st
 #undef mP2nd
 #undef mP3rd
-#undef fake
 #undef trait
 #undef implement
 #undef extend

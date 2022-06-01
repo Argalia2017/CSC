@@ -10,6 +10,7 @@
 #define thiz (*this)
 #define self self_m ()
 #define fake fake_m ()
+#define expr expr_m ()
 #define mP1st mP1st_m ()
 #define mP2nd mP2nd_m ()
 #define mP3rd mP3rd_m ()

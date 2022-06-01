@@ -17,21 +17,7 @@ trait IMAGEITERATOR_HELP ;
 
 template <class RANK>
 trait IMAGEITERATOR_HELP<RANK ,ALWAYS> {
-	require (ENUM_EQUAL<RANK ,RANK2>) ;
-
-	class XYProxy extend Proxy {
-	private:
-		ARRAY2<INDEX> mXY ;
-
-	public:
-		CREF<INDEX> x () const {
-			return mXY[0] ;
-		}
-
-		CREF<INDEX> y () const {
-			return mXY[1] ;
-		}
-	} ;
+	require (ENUM_GT_ZERO<RANK>) ;
 
 	class ImageIterator {
 	protected:
@@ -45,7 +31,7 @@ trait IMAGEITERATOR_HELP<RANK ,ALWAYS> {
 
 		explicit ImageIterator (CREF<Array<LENGTH ,RANK>> width_) {
 			mWidth = width_ ;
-			mSize = template_acc_of (PHX ,TYPEAS<RANK>::id) ;
+			mSize = template_acc_of (PHX ,TYPEAS<RANK>::expr) ;
 			mItem.fill (0) ;
 			mGood = BOOL (mSize > 0) ;
 		}
@@ -74,16 +60,16 @@ trait IMAGEITERATOR_HELP<RANK ,ALWAYS> {
 			return good () ;
 		}
 
-		CREF<XYProxy> at () const leftvalue {
-			return unsafe_deref (unsafe_cast[TYPEAS<TEMP<XYProxy>>::id] (unsafe_deptr (mItem))) ;
+		CREF<Array<INDEX ,RANK>> at () const leftvalue {
+			return mItem ;
 		}
 
-		inline CREF<XYProxy> operator* () const leftvalue {
+		inline CREF<Array<INDEX ,RANK>> operator* () const leftvalue {
 			return at () ;
 		}
 
 		void next () {
-			template_next (PHX ,TYPEAS<RANK>::id) ;
+			template_next (PHX ,TYPEAS<RANK>::expr) ;
 		}
 
 		inline void operator++ () {
@@ -91,38 +77,33 @@ trait IMAGEITERATOR_HELP<RANK ,ALWAYS> {
 		}
 
 	private:
-		template <class ARG1 ,class = REQUIRE<ENUM_GT_ZERO<REMOVE_ALL<ARG1>>>>
-		LENGTH template_acc_of (CREF<typeof (PH2)> ,CREF<ARG1> id) const {
-			using R1X = REMOVE_ALL<ARG1> ;
-			INDEX ix = ENUM_SUB<RANK ,R1X>::value ;
-			return mWidth[ix] * template_acc_of (PHX ,TYPEAS<ENUM_DEC<R1X>>::id) ;
+		template <class ARG1 ,class = REQUIRE<ENUM_GT_ZERO<ARG1>>>
+		LENGTH template_acc_of (CREF<typeof (PH2)> ,CREF<TYPEID<ARG1>> id) const {
+			INDEX ix = ENUM_SUB<RANK ,ARG1>::expr ;
+			return mWidth[ix] * template_acc_of (PHX ,TYPEAS<ENUM_DEC<ARG1>>::expr) ;
 		}
 
-		template <class ARG1 ,class = REQUIRE<ENUM_EQ_ZERO<REMOVE_ALL<ARG1>>>>
-		LENGTH template_acc_of (CREF<typeof (PH1)> ,CREF<ARG1> id) const {
+		template <class ARG1 ,class = REQUIRE<ENUM_EQ_ZERO<ARG1>>>
+		LENGTH template_acc_of (CREF<typeof (PH1)> ,CREF<TYPEID<ARG1>> id) const {
 			return IDEN ;
 		}
 
-		template <class ARG1 ,class = REQUIRE<ENUM_GT_ZERO<REMOVE_ALL<ARG1>>>>
-		void template_next (CREF<typeof (PH2)> ,CREF<ARG1> id) {
-			using R1X = REMOVE_ALL<ARG1> ;
-			INDEX ix = ENUM_SUB<RANK ,R1X>::value ;
+		template <class ARG1 ,class = REQUIRE<ENUM_GT_ZERO<ARG1>>>
+		void template_next (CREF<typeof (PH2)> ,CREF<TYPEID<ARG1>> id) {
+			INDEX ix = ENUM_SUB<RANK ,ARG1>::expr ;
 			mItem[ix]++ ;
 			if (mItem[ix] < mWidth[ix])
 				return ;
 			mItem[ix] = 0 ;
-			template_next (PHX ,TYPEAS<ENUM_DEC<R1X>>::id) ;
+			template_next (PHX ,TYPEAS<ENUM_DEC<ARG1>>::expr) ;
 		}
 
-		template <class ARG1 ,class = REQUIRE<ENUM_EQ_ZERO<REMOVE_ALL<ARG1>>>>
-		void template_next (CREF<typeof (PH1)> ,CREF<ARG1> id) {
+		template <class ARG1 ,class = REQUIRE<ENUM_EQ_ZERO<ARG1>>>
+		void template_next (CREF<typeof (PH1)> ,CREF<TYPEID<ARG1>> id) {
 			mGood = FALSE ;
 		}
 	} ;
 } ;
-
-template <class RANK>
-using XYProxy = typename IMAGEITERATOR_HELP<RANK ,ALWAYS>::XYProxy ;
 
 template <class RANK>
 using ImageIterator = typename IMAGEITERATOR_HELP<RANK ,ALWAYS>::ImageIterator ;
@@ -273,11 +254,11 @@ trait IMAGE_HELP<ITEM ,SIZE ,ALWAYS> {
 			return ImageIterator<RANK2> (width ()) ;
 		}
 
-		VREF<ITEM> at (CREF<XYProxy<RANK2>> xy) leftvalue {
-			return at (xy.x () ,xy.y ()) ;
+		VREF<ITEM> at (CREF<ARRAY2<INDEX>> xy) leftvalue {
+			return at (xy[0] ,xy[1]) ;
 		}
 
-		inline VREF<ITEM> operator[] (CREF<XYProxy<RANK2>> xy) leftvalue {
+		inline VREF<ITEM> operator[] (CREF<ARRAY2<INDEX>> xy) leftvalue {
 			return at (xy) ;
 		}
 
@@ -291,11 +272,11 @@ trait IMAGE_HELP<ITEM ,SIZE ,ALWAYS> {
 			return RowProxy<VREF<Image> ,ITEM> (VRef<Image>::reference (thiz) ,y) ;
 		}
 
-		CREF<ITEM> at (CREF<XYProxy<RANK2>> xy) const leftvalue {
-			return at (xy.x () ,xy.y ()) ;
+		CREF<ITEM> at (CREF<ARRAY2<INDEX>> xy) const leftvalue {
+			return at (xy[0] ,xy[1]) ;
 		}
 
-		inline CREF<ITEM> operator[] (CREF<XYProxy<RANK2>> xy) const leftvalue {
+		inline CREF<ITEM> operator[] (CREF<ARRAY2<INDEX>> xy) const leftvalue {
 			return at (xy) ;
 		}
 
@@ -585,7 +566,7 @@ trait IMAGE_HELP<ITEM ,SIZE ,ALWAYS> {
 			for (auto &&i : ret.iter ()) {
 				const auto r1x = invoke ([&] () {
 					ITEM ret ;
-					for (auto &&j : iter (0 ,mCX))
+					for (auto &&j : CSC::iter (0 ,mCX))
 						ret += at (j ,i[1]) * that.at (i[0] ,j) ;
 					return move (ret) ;
 				}) ;

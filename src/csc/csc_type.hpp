@@ -321,7 +321,7 @@ trait ENUM_NOT_HELP ;
 
 template <class UNIT1>
 trait ENUM_NOT_HELP<UNIT1 ,ALWAYS> {
-	static constexpr auto value = ifnot (ENUM_CHECK<UNIT1>::value) ;
+	static constexpr auto value = ifnot (ENUM_CHECK<UNIT1>::expr) ;
 
 	using RET = ENUMAS<BOOL ,ENUMID<value>> ;
 } ;
@@ -350,7 +350,7 @@ trait ENUM_EQUAL_HELP ;
 
 template <class UNIT1 ,class UNIT2>
 trait ENUM_EQUAL_HELP<UNIT1 ,UNIT2 ,ALWAYS> {
-	static constexpr auto value = BOOL (ENUM_CHECK<UNIT1>::value == ENUM_CHECK<UNIT2>::value) ;
+	static constexpr auto value = BOOL (ENUM_CHECK<UNIT1>::expr == ENUM_CHECK<UNIT2>::expr) ;
 
 	using RET = ENUMAS<BOOL ,ENUMID<value>> ;
 } ;
@@ -366,7 +366,7 @@ trait ENUM_COMPR_LT_HELP ;
 
 template <class UNIT1 ,class UNIT2>
 trait ENUM_COMPR_LT_HELP<UNIT1 ,UNIT2 ,ALWAYS> {
-	static constexpr auto value = BOOL (ENUM_CHECK<UNIT1>::value < ENUM_CHECK<UNIT2>::value) ;
+	static constexpr auto value = BOOL (ENUM_CHECK<UNIT1>::expr < ENUM_CHECK<UNIT2>::expr) ;
 
 	using RET = ENUMAS<BOOL ,ENUMID<value>> ;
 } ;
@@ -391,7 +391,7 @@ trait ENUM_COMPR_HELP<UNIT1 ,UNIT2 ,ALWAYS> {
 	using R1X = ENUM_COMPR_LT<UNIT1 ,UNIT2> ;
 	using R2X = ENUM_COMPR_GT<UNIT1 ,UNIT2> ;
 	using R3X = CONDITIONAL<R1X ,ENUM_NONE ,CONDITIONAL<R2X ,ENUM_IDEN ,ENUM_ZERO>> ;
-	static constexpr auto value = R3X::value ;
+	static constexpr auto value = R3X::expr ;
 
 	using RET = ENUMAS<VAL ,ENUMID<value>> ;
 } ;
@@ -422,7 +422,7 @@ trait ENUM_ADD_HELP ;
 
 template <class UNIT1 ,class UNIT2>
 trait ENUM_ADD_HELP<UNIT1 ,UNIT2 ,ALWAYS> {
-	static constexpr auto value = ENUM_CHECK<UNIT1>::value + ENUM_CHECK<UNIT2>::value ;
+	static constexpr auto value = ENUM_CHECK<UNIT1>::expr + ENUM_CHECK<UNIT2>::expr ;
 
 	using RET = ENUMAS<VAL ,ENUMID<value>> ;
 } ;
@@ -435,7 +435,7 @@ trait ENUM_SUB_HELP ;
 
 template <class UNIT1 ,class UNIT2>
 trait ENUM_SUB_HELP<UNIT1 ,UNIT2 ,ALWAYS> {
-	static constexpr auto value = ENUM_CHECK<UNIT1>::value - ENUM_CHECK<UNIT2>::value ;
+	static constexpr auto value = ENUM_CHECK<UNIT1>::expr - ENUM_CHECK<UNIT2>::expr ;
 
 	using RET = ENUMAS<VAL ,ENUMID<value>> ;
 } ;
@@ -448,7 +448,7 @@ trait ENUM_MUL_HELP ;
 
 template <class UNIT1 ,class UNIT2>
 trait ENUM_MUL_HELP<UNIT1 ,UNIT2 ,ALWAYS> {
-	static constexpr auto value = ENUM_CHECK<UNIT1>::value * ENUM_CHECK<UNIT2>::value ;
+	static constexpr auto value = ENUM_CHECK<UNIT1>::expr * ENUM_CHECK<UNIT2>::expr ;
 
 	using RET = ENUMAS<VAL ,ENUMID<value>> ;
 } ;
@@ -461,7 +461,7 @@ trait ENUM_DIV_HELP ;
 
 template <class UNIT1 ,class UNIT2>
 trait ENUM_DIV_HELP<UNIT1 ,UNIT2 ,ALWAYS> {
-	static constexpr auto value = ENUM_CHECK<UNIT1>::value / ENUM_CHECK<UNIT2>::value ;
+	static constexpr auto value = ENUM_CHECK<UNIT1>::expr / ENUM_CHECK<UNIT2>::expr ;
 
 	using RET = ENUMAS<VAL ,ENUMID<value>> ;
 } ;
@@ -474,7 +474,7 @@ trait ENUM_MOD_HELP ;
 
 template <class UNIT1 ,class UNIT2>
 trait ENUM_MOD_HELP<UNIT1 ,UNIT2 ,ALWAYS> {
-	static constexpr auto value = ENUM_CHECK<UNIT1>::value % ENUM_CHECK<UNIT2>::value ;
+	static constexpr auto value = ENUM_CHECK<UNIT1>::expr % ENUM_CHECK<UNIT2>::expr ;
 
 	using RET = ENUMAS<VAL ,ENUMID<value>> ;
 } ;
@@ -813,7 +813,7 @@ template <class UNIT1>
 trait IS_VALUE_HELP<UNIT1 ,ALWAYS> {
 	using R1X = IS_SAME<UNIT1 ,VAL32> ;
 	using R2X = IS_SAME<UNIT1 ,VAL64> ;
-	static constexpr auto value = ENUM_ANY<R1X ,R2X>::value ;
+	static constexpr auto value = ENUM_ANY<R1X ,R2X>::expr ;
 
 	using RET = ENUMAS<BOOL ,ENUMID<value>> ;
 } ;
@@ -829,7 +829,7 @@ trait IS_FLOAT_HELP<UNIT1 ,ALWAYS> {
 	using R1X = IS_SAME<UNIT1 ,SINGLE> ;
 	using R2X = IS_SAME<UNIT1 ,DOUBLE> ;
 	using R3X = IS_SAME<UNIT1 ,TRIPLE> ;
-	static constexpr auto value = ENUM_ANY<R1X ,R2X ,R3X>::value ;
+	static constexpr auto value = ENUM_ANY<R1X ,R2X ,R3X>::expr ;
 
 	using RET = ENUMAS<BOOL ,ENUMID<value>> ;
 } ;
@@ -847,7 +847,7 @@ trait IS_TEXT_HELP<UNIT1 ,ALWAYS> {
 	using R3X = IS_SAME<UNIT1 ,STRU8> ;
 	using R4X = IS_SAME<UNIT1 ,STRU16> ;
 	using R5X = IS_SAME<UNIT1 ,STRU32> ;
-	static constexpr auto value = ENUM_ANY<R1X ,R2X ,R3X ,R4X ,R5X>::value ;
+	static constexpr auto value = ENUM_ANY<R1X ,R2X ,R3X ,R4X ,R5X>::expr ;
 
 	using RET = ENUMAS<BOOL ,ENUMID<value>> ;
 } ;
@@ -865,7 +865,7 @@ trait IS_BIT_HELP<UNIT1 ,ALWAYS> {
 	using R3X = IS_SAME<UNIT1 ,CHAR> ;
 	using R4X = IS_SAME<UNIT1 ,DATA> ;
 	using R5X = IS_SAME<UNIT1 ,HUGE> ;
-	static constexpr auto value = ENUM_ANY<R1X ,R2X ,R3X ,R4X ,R5X>::value ;
+	static constexpr auto value = ENUM_ANY<R1X ,R2X ,R3X ,R4X ,R5X>::expr ;
 
 	using RET = ENUMAS<BOOL ,ENUMID<value>> ;
 } ;
@@ -886,7 +886,7 @@ template <class UNIT1>
 trait IS_SCALAR_HELP<UNIT1 ,ALWAYS> {
 	using R1X = IS_VALUE<UNIT1> ;
 	using R2X = IS_FLOAT<UNIT1> ;
-	static constexpr auto value = ENUM_ANY<R1X ,R2X>::value ;
+	static constexpr auto value = ENUM_ANY<R1X ,R2X>::expr ;
 
 	using RET = ENUMAS<BOOL ,ENUMID<value>> ;
 } ;
@@ -905,7 +905,7 @@ trait IS_BASIC_HELP<UNIT1 ,ALWAYS> {
 	using R4X = IS_TEXT<UNIT1> ;
 	using R5X = IS_BIT<UNIT1> ;
 	using R6X = IS_NULL<UNIT1> ;
-	static constexpr auto value = ENUM_ANY<R1X ,R2X ,R3X ,R4X ,R5X ,R6X>::value ;
+	static constexpr auto value = ENUM_ANY<R1X ,R2X ,R3X ,R4X ,R5X ,R6X>::expr ;
 
 	using RET = ENUMAS<BOOL ,ENUMID<value>> ;
 } ;
@@ -1027,7 +1027,7 @@ trait ARR_HELP<ITEM ,SIZE ,REQUIRE<ENUM_EQ_ZERO<SIZE>>> {
 template <class ITEM ,class SIZE>
 trait ARR_HELP<ITEM ,SIZE ,REQUIRE<ENUM_GT_ZERO<SIZE>>> {
 	require (ENUM_NOT<IS_ARRAY<ITEM>>) ;
-	static constexpr auto value = VAL (SIZE::value) ;
+	static constexpr auto value = VAL (SIZE::expr) ;
 
 	using RET = DEF<ITEM[value]> ;
 } ;
@@ -1213,7 +1213,7 @@ trait IS_OBJECT_HELP<UNIT1 ,ALWAYS> {
 	using R1X = IS_BASIC<UNIT1> ;
 	using R2X = IS_POINTER<UNIT1> ;
 	using R3X = IS_CLASS<UNIT1> ;
-	static constexpr auto value = ENUM_ANY<R1X ,R2X ,R3X>::value ;
+	static constexpr auto value = ENUM_ANY<R1X ,R2X ,R3X>::expr ;
 
 	using RET = ENUMAS<BOOL ,ENUMID<value>> ;
 } ;
@@ -1417,7 +1417,7 @@ template <class CURR ,class BEGIN ,class END>
 trait ENUM_BETWEEN_HELP<CURR ,BEGIN ,END ,ALWAYS> {
 	using R1X = ENUM_COMPR_GTEQ<CURR ,BEGIN> ;
 	using R2X = ENUM_COMPR_LT<CURR ,END> ;
-	static constexpr auto value = ENUM_ALL<R1X ,R2X>::value ;
+	static constexpr auto value = ENUM_ALL<R1X ,R2X>::expr ;
 
 	using RET = ENUMAS<BOOL ,ENUMID<value>> ;
 } ;

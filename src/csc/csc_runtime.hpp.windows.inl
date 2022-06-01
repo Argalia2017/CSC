@@ -50,13 +50,13 @@ trait RUNTIMEPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 
 		void thread_sleep (CREF<TimeDuration> time_) const override {
 			using R1X = typename TIMEDURATION_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
-			const auto r1x = time_.native ().poll (TYPEAS<CRef<R1X>>::id) ;
+			const auto r1x = time_.native ().poll (TYPEAS<CRef<R1X>>::expr) ;
 			std::this_thread::sleep_for (r1x->get_mTimeDuration ()) ;
 		}
 
 		void thread_sleep (CREF<TimePoint> time_) const override {
 			using R1X = typename TIMEDURATION_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
-			const auto r1x = time_.native ().poll (TYPEAS<CRef<R1X>>::id) ;
+			const auto r1x = time_.native ().poll (TYPEAS<CRef<R1X>>::expr) ;
 			std::this_thread::sleep_until (r1x->get_mTimePoint ()) ;
 		}
 
@@ -136,7 +136,7 @@ trait PROCESS_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		void initialize (CREF<FLAG> uid) override {
 			mUID = uid ;
 			auto rax = VarBuffer<BYTE> (128) ;
-			auto rbx = ByteWriter (RegBuffer<BYTE>::from (rax ,0 ,rax.size ())) ;
+			auto rbx = ByteWriter (RegBuffer<BYTE>::from (rax).lift ()) ;
 			if ifswitch (TRUE) {
 				const auto r1x = UniqueRef<HANDLE> ([&] (VREF<HANDLE> me) {
 					me = OpenProcess (PROCESS_QUERY_INFORMATION ,FALSE ,DWORD (mUID)) ;
@@ -192,10 +192,9 @@ trait PROCESS_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 
 		void initialize (CREF<SNAPSHOT> snapshot_) override {
 			mSnapshot = snapshot_ ;
-			auto &&tmp = keep[TYPEAS<CREF<SNAPSHOT>>::id] (snapshot_) ;
-			auto rax = ByteReader (RegBuffer<BYTE>::from (tmp ,0 ,tmp.size ())) ;
+			auto rax = ByteReader (RegBuffer<BYTE>::from (mSnapshot).lift ()) ;
 			rax >> ByteReader::GAP ;
-			const auto r1x = rax.poll (TYPEAS<VAL64>::id) ;
+			const auto r1x = rax.poll (TYPEAS<VAL64>::expr) ;
 			assume (r1x > 0) ;
 			assume (r1x <= VAL32_MAX) ;
 			mUID = FLAG (r1x) ;
@@ -261,7 +260,7 @@ trait MODULE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		FLAG link (CREF<String<STR>> name) override {
 			assert (mModule.exist ()) ;
 			assert (ifnot (name.empty ())) ;
-			const auto r1x = string_cvt[TYPEAS<TYPEAS<STRA ,STR>>::id] (name) ;
+			const auto r1x = string_cvt[TYPEAS<TYPEAS<STRA ,STR>>::expr] (name) ;
 			FLAG ret = FLAG (GetProcAddress (mModule ,(&r1x[0]))) ;
 			if ifswitch (TRUE) {
 				if (ret != ZERO)
@@ -329,7 +328,7 @@ trait SINGLETON_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			}) ;
 			const auto r1x = FLAG (rax.mAddress1) ;
 			assume (r1x != ZERO) ;
-			mHeap = unsafe_deref (unsafe_cast[TYPEAS<TEMP<SharedRef<HEAP>>>::id] (unsafe_pointer (r1x))) ;
+			mHeap = unsafe_deref (unsafe_cast[TYPEAS<TEMP<SharedRef<HEAP>>>::expr] (unsafe_pointer (r1x))) ;
 			assume (mHeap.available ()) ;
 		}
 
@@ -337,7 +336,7 @@ trait SINGLETON_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			if (mPipe.exist ())
 				return ;
 			mPipe = UniqueRef<HANDLE> ([&] (VREF<HANDLE> me) {
-				me = CreateFileMapping (INVALID_HANDLE_VALUE ,NULL ,PAGE_READWRITE ,0 ,DWORD (SIZE_OF<PIPE>::value) ,(&mName[0])) ;
+				me = CreateFileMapping (INVALID_HANDLE_VALUE ,NULL ,PAGE_READWRITE ,0 ,DWORD (SIZE_OF<PIPE>::expr) ,(&mName[0])) ;
 				assume (me != NULL) ;
 			} ,[] (VREF<HANDLE> me) {
 				CloseHandle (me) ;
@@ -353,14 +352,14 @@ trait SINGLETON_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				CloseHandle (me) ;
 			}) ;
 			const auto r2x = UniqueRef<HANDLE> ([&] (VREF<HANDLE> me) {
-				me = MapViewOfFile (r1x ,FILE_MAP_READ ,0 ,0 ,SIZE_OF<PIPE>::value) ;
+				me = MapViewOfFile (r1x ,FILE_MAP_READ ,0 ,0 ,SIZE_OF<PIPE>::expr) ;
 				assume (me != NULL) ;
 			} ,[] (VREF<HANDLE> me) {
 				UnmapViewOfFile (me) ;
 			}) ;
 			PIPE ret ;
 			zeroize (ret) ;
-			std::memcpy ((&ret) ,r2x ,SIZE_OF<PIPE>::value) ;
+			std::memcpy ((&ret) ,r2x.self ,SIZE_OF<PIPE>::expr) ;
 			assume (ret.mReserve1 == DATA (0X1122334455667788)) ;
 			assume (ret.mReserve3 == DATA (0X1122334455667788)) ;
 			assume (ret.mReserve2 == DATA (0XAAAABBBBCCCCDDDD)) ;
@@ -376,7 +375,7 @@ trait SINGLETON_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				CloseHandle (me) ;
 			}) ;
 			const auto r2x = UniqueRef<HANDLE> ([&] (VREF<HANDLE> me) {
-				me = MapViewOfFile (r1x ,FILE_MAP_WRITE ,0 ,0 ,SIZE_OF<PIPE>::value) ;
+				me = MapViewOfFile (r1x ,FILE_MAP_WRITE ,0 ,0 ,SIZE_OF<PIPE>::expr) ;
 				assume (me != NULL) ;
 			} ,[] (VREF<HANDLE> me) {
 				UnmapViewOfFile (me) ;
@@ -387,7 +386,7 @@ trait SINGLETON_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			rax.mReserve2 = DATA (0XAAAABBBBCCCCDDDD) ;
 			rax.mAddress2 = DATA (address (mHeap)) ;
 			rax.mReserve3 = DATA (0X1122334455667788) ;
-			std::memcpy (r2x ,(&rax) ,SIZE_OF<PIPE>::value) ;
+			std::memcpy (r2x.self ,(&rax) ,SIZE_OF<PIPE>::expr) ;
 		}
 
 		void add (CREF<Slice<STR>> name ,CREF<FLAG> addr_) const override {

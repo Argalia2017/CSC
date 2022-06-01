@@ -21,8 +21,278 @@ using ::max_align_t ;
 #endif
 
 namespace CSC {
-exports void FUNCTION_unsafe_abort::invoke () {
-	std::terminate () ;
+template <class DEPEND>
+trait LINKAGE_PUREHOLDER_HELP<DEPEND ,ALWAYS> {
+	struct NODE {
+		FLAG mOrigin ;
+		FLAG mItem ;
+		Linkage mClazz ;
+		BOOL mGood ;
+		LENGTH mWeight ;
+		INDEX mLeft ;
+		INDEX mRight ;
+		INDEX mNext ;
+	} ;
+
+	class PureHolder {
+	protected:
+		std::atomic<LENGTH> mSpin ;
+		std::recursive_mutex mRecursive ;
+		INDEX mRoot ;
+		INDEX mFirst ;
+
+	public:
+		implicit PureHolder () {
+			mSpin.store (0) ;
+			mRoot = NONE ;
+			mFirst = NONE ;
+		}
+
+		void shared_enter () {
+			auto rax = ZERO ;
+			while (TRUE) {
+				rax = vmax (rax ,0) ;
+				const auto r1x = mSpin.compare_exchange_weak (rax ,rax + 1 ,std::memory_order::memory_order_relaxed) ;
+				if (r1x)
+					break ;
+				std::this_thread::yield () ;
+			}
+			std::atomic_thread_fence (std::memory_order::memory_order_acquire) ;
+		}
+
+		void shared_leave () {
+			mSpin.fetch_sub (1 ,std::memory_order::memory_order_relaxed) ;
+		}
+
+		void unique_enter () {
+			auto rax = ZERO ;
+			while (TRUE) {
+				rax = 0 ;
+				const auto r1x = mSpin.compare_exchange_weak (rax ,-1 ,std::memory_order::memory_order_relaxed) ;
+				if (r1x)
+					break ;
+				std::this_thread::yield () ;
+			}
+			std::atomic_thread_fence (std::memory_order::memory_order_acquire) ;
+		}
+
+		void unique_leave () {
+			mSpin.store (0 ,std::memory_order::memory_order_relaxed) ;
+			std::atomic_thread_fence (std::memory_order::memory_order_release) ;
+		}
+
+		FLAG linkage (CREF<TEMP<void>> func ,RREF<Linkage> clazz) {
+			using R1X = typename LINKAGE_PUREHOLDER_HELP<DEPEND ,ALWAYS>::SharedLock ;
+			using R2X = typename LINKAGE_PUREHOLDER_HELP<DEPEND ,ALWAYS>::UniqueLock ;
+			INDEX ix = NONE ;
+			const auto r1x = clazz.type_cabi () ;
+			if ifswitch (TRUE) {
+				Scope<R1X> anonymous (R1X::from (thiz)) ;
+				ix = find (r1x) ;
+				if (ix == NONE)
+					discard ;
+				if ifnot (fake[ix].mGood)
+					discard ;
+				const auto r2x = address (fake[ix]) + SIZE_OF<NODE>::expr ;
+				const auto r3x = valign (r2x ,clazz.type_align ()) ;
+				return r3x ;
+			}
+			if ifswitch (TRUE) {
+				if (ix != NONE)
+					discard ;
+				Scope<R2X> anonymous (R2X::from (thiz)) ;
+				const auto r4x = vmax (clazz.type_align () - ALIGN_OF<NODE>::expr ,ZERO) ;
+				const auto r5x = vmax (ALIGN_OF<NODE>::expr - 1 ,ZERO) ;
+				const auto r6x = r5x + SIZE_OF<NODE>::expr + r4x + clazz.type_size () ;
+				const auto r7x = FLAG (operator new (r6x ,std::nothrow)) ;
+				assume (r7x != ZERO) ;
+				ix = r7x / SIZE_OF<NODE>::expr ;
+				fake[ix].mOrigin = r7x ;
+				fake[ix].mNext = mFirst ;
+				fake[ix].mGood = FALSE ;
+				mFirst = ix ;
+				fake[ix].mItem = r1x ;
+				auto rax = Box<Linkage>::make (move (clazz)) ;
+				swap (fake[ix].mClazz ,rax.self) ;
+				rax.release () ;
+				fake[ix].mWeight = 1 ;
+				fake[ix].mLeft = NONE ;
+				fake[ix].mRight = NONE ;
+				update_insert (mRoot) ;
+			}
+			std::lock_guard<std::recursive_mutex> anonymous (mRecursive) ;
+			const auto r8x = address (fake[ix]) + SIZE_OF<NODE>::expr ;
+			const auto r9x = valign (r8x ,fake[ix].mClazz.type_align ()) ;
+			if ifswitch (TRUE) {
+				if (fake[ix].mGood)
+					discard ;
+				fake[ix].mClazz.create (unsafe_pointer (r9x) ,func) ;
+				fake[ix].mGood = TRUE ;
+			}
+			return r9x ;
+		}
+
+		VREF<ARR<NODE>> fake_m () const {
+			return unsafe_array (TYPEAS<NODE>::expr) ;
+		}
+
+		FLAG find (CREF<FLAG> item) const {
+			FLAG ret = mRoot ;
+			while (TRUE) {
+				if (ret == NONE)
+					break ;
+				const auto r1x = operator_compr (item ,fake[ret].mItem) ;
+				if (r1x == ZERO)
+					break ;
+				const auto r2x = invoke ([&] () {
+					if (r1x < ZERO)
+						return fake[ret].mLeft ;
+					return fake[ret].mRight ;
+				}) ;
+				ret = r2x ;
+			}
+			return move (ret) ;
+		}
+
+		void update_insert (VREF<INDEX> curr) {
+			INDEX ix = mFirst ;
+			if ifswitch (TRUE) {
+				if (curr == NONE)
+					discard ;
+				ix = curr ;
+				fake[ix].mWeight++ ;
+				const auto r1x = operator_compr (fake[mFirst].mItem ,fake[ix].mItem) ;
+				assert (r1x != ZERO) ;
+				auto rxx = TRUE ;
+				if ifswitch (rxx) {
+					if (r1x > ZERO)
+						discard ;
+					update_insert (fake[ix].mLeft) ;
+					update_insert_left (ix) ;
+				}
+				if ifswitch (rxx) {
+					update_insert (fake[ix].mRight) ;
+					update_insert_right (ix) ;
+				}
+			}
+			curr = ix ;
+		}
+
+		void update_insert_left (VREF<INDEX> curr) {
+			INDEX ix = curr ;
+			if (fake[ix].mLeft == NONE)
+				return ;
+			const auto r1x = node_weight (fake[ix].mRight) ;
+			const auto r2x = node_weight (fake[fake[ix].mLeft].mLeft) ;
+			const auto r3x = node_weight (fake[fake[ix].mLeft].mRight) ;
+			if (r1x >= vmax (r2x ,r3x))
+				return ;
+			if ifswitch (TRUE) {
+				if (r1x < r2x)
+					discard ;
+				rotate_left (fake[ix].mLeft) ;
+			}
+			rotate_right (ix) ;
+			update_insert_left (fake[ix].mLeft) ;
+			update_insert_right (fake[ix].mRight) ;
+			update_insert_left (ix) ;
+			update_insert_right (ix) ;
+			curr = ix ;
+		}
+
+		void update_insert_right (VREF<INDEX> curr) {
+			INDEX ix = curr ;
+			if (fake[ix].mRight == NONE)
+				return ;
+			const auto r1x = node_weight (fake[ix].mLeft) ;
+			const auto r2x = node_weight (fake[fake[ix].mRight].mRight) ;
+			const auto r3x = node_weight (fake[fake[ix].mRight].mLeft) ;
+			if (r1x >= vmax (r2x ,r3x))
+				return ;
+			if ifswitch (TRUE) {
+				if (r1x < r2x)
+					discard ;
+				rotate_right (fake[ix].mRight) ;
+			}
+			rotate_left (ix) ;
+			update_insert_left (fake[ix].mLeft) ;
+			update_insert_right (fake[ix].mRight) ;
+			update_insert_left (ix) ;
+			update_insert_right (ix) ;
+			curr = ix ;
+		}
+
+		void rotate_left (VREF<INDEX> curr) {
+			INDEX ix = fake[curr].mRight ;
+			fake[curr].mRight = fake[ix].mLeft ;
+			fake[ix].mLeft = curr ;
+			fake[ix].mWeight = fake[curr].mWeight ;
+			const auto r1x = node_weight (fake[curr].mLeft) ;
+			const auto r2x = node_weight (fake[curr].mRight) ;
+			fake[curr].mWeight = r1x + r2x + 1 ;
+			curr = ix ;
+		}
+
+		void rotate_right (VREF<INDEX> curr) {
+			INDEX ix = fake[curr].mLeft ;
+			fake[curr].mLeft = fake[ix].mRight ;
+			fake[ix].mRight = curr ;
+			fake[ix].mWeight = fake[curr].mWeight ;
+			const auto r1x = node_weight (fake[curr].mLeft) ;
+			const auto r2x = node_weight (fake[curr].mRight) ;
+			fake[curr].mWeight = r1x + r2x + 1 ;
+			curr = ix ;
+		}
+
+		LENGTH node_weight (CREF<INDEX> curr) const {
+			if (curr == NONE)
+				return ZERO ;
+			return fake[curr].mWeight ;
+		}
+	} ;
+
+	class SharedLock {
+	protected:
+		PureHolder mBase ;
+
+	public:
+		imports VREF<SharedLock> from (VREF<PureHolder> that) {
+			return unsafe_deref (unsafe_cast[TYPEAS<TEMP<SharedLock>>::expr] (unsafe_deptr (that))) ;
+		}
+
+		void enter () {
+			mBase.shared_enter () ;
+		}
+
+		void leave () {
+			mBase.shared_leave () ;
+		}
+	} ;
+
+	class UniqueLock {
+	protected:
+		PureHolder mBase ;
+
+	public:
+		imports VREF<UniqueLock> from (VREF<PureHolder> that) {
+			return unsafe_deref (unsafe_cast[TYPEAS<TEMP<UniqueLock>>::expr] (unsafe_deptr (that))) ;
+		}
+
+		void enter () {
+			mBase.unique_enter () ;
+		}
+
+		void leave () {
+			mBase.unique_leave () ;
+		}
+	} ;
+} ;
+
+template <>
+exports FLAG LINKAGE_HELP<DEPEND ,ALWAYS>::FUNCTION_linkage::invoke (CREF<TEMP<void>> func ,RREF<Linkage> clazz) {
+	using R1X = typename LINKAGE_PUREHOLDER_HELP<DEPEND ,ALWAYS>::PureHolder ;
+	static R1X mInstance ;
+	return mInstance.linkage (func ,move (clazz)) ;
 }
 
 template <class...>
@@ -57,32 +327,13 @@ trait FUNCTION_current_usage_size_HELP<DEPEND ,REQUIRE<MACRO_SYSTEM_LINUX<DEPEND
 template <class DEPEND>
 trait HEAPPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	using Holder = typename HEAPPROC_HELP<DEPEND ,ALWAYS>::Holder ;
-	
+
 	struct HEAP {
 		std::atomic<LENGTH> mUsageSize ;
 	} ;
 
-	class PureHolder extend Proxy {
-	private:
-		HEAP mBase ;
-
-	public:
-		imports VREF<PureHolder> from (VREF<HEAP> that) {
-			return unsafe_deref (unsafe_cast[TYPEAS<TEMP<PureHolder>>::id] (unsafe_deptr (that))) ;
-		}
-
-		void enter () {
-			mBase.mUsageSize.store (0) ;
-		}
-
-		void leave () {
-			noop () ;
-		}
-	} ;
-
 	class ImplHolder implement Holder {
 	protected:
-		Scope<PureHolder> mHandle ;
 		FLAG mPointer ;
 
 	public:
@@ -93,7 +344,7 @@ trait HEAPPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				return Box<HEAP>::make () ;
 			}) ;
 			mPointer = address (tmp.self) ;
-			mHandle = Scope<PureHolder> (PureHolder::from (fake)) ;
+			fake.mUsageSize.store (0) ;
 		}
 
 		LENGTH usage_size () const override {
@@ -101,8 +352,8 @@ trait HEAPPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			return move (ret) ;
 		}
 
-		LENGTH usage_align () const override {
-			return ALIGN_OF<std::max_align_t>::value ;
+		LENGTH basic_align () const override {
+			return ALIGN_OF<std::max_align_t>::expr ;
 		}
 
 		FLAG alloc (CREF<LENGTH> size_) const override {
@@ -128,7 +379,7 @@ trait HEAPPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		VREF<HEAP> fake_m () const leftvalue {
-			return unsafe_deref (unsafe_cast[TYPEAS<TEMP<HEAP>>::id] (unsafe_pointer (mPointer))) ;
+			return unsafe_deref (unsafe_cast[TYPEAS<TEMP<HEAP>>::expr] (unsafe_pointer (mPointer))) ;
 		}
 
 		LENGTH current_usage_size (CREF<csc_pointer_t> addr_) const {
@@ -143,152 +394,7 @@ template <>
 exports auto HEAPPROC_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () -> Box<FakeHolder> {
 	using R1X = typename HEAPPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	Box<FakeHolder> ret ;
-	ret.acquire (TYPEAS<R1X>::id) ;
-	return move (ret) ;
-}
-
-template <class DEPEND>
-trait STATICHEAPPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
-	using Holder = typename STATICHEAPPROC_HELP<DEPEND ,ALWAYS>::Holder ;
-	using PAGE_SIZE = ENUMAS<VAL ,ENUMID<65536>> ;
-	using CHUNK_SIZE = ENUMAS<VAL ,ENUMID<1024>> ;
-
-	struct NODE {
-		FLAG mOrigin ;
-		LENGTH mCounter ;
-		LENGTH mSize ;
-		LENGTH mRest ;
-	} ;
-
-	struct HEAP {
-		std::mutex mMutex ;
-		ARR<NODE ,CHUNK_SIZE> mChunk ;
-	} ;
-
-	class PureHolder extend Proxy {
-	private:
-		HEAP mBase ;
-
-	public:
-		imports VREF<PureHolder> from (VREF<HEAP> that) {
-			return unsafe_deref (unsafe_cast[TYPEAS<TEMP<PureHolder>>::id] (unsafe_deptr (that))) ;
-		}
-
-		void enter () {
-			for (auto &&i : iter (0 ,CHUNK_SIZE::value))
-				mBase.mChunk[i].mOrigin = ZERO ;
-		}
-
-		void leave () {
-			for (auto &&i : iter (0 ,CHUNK_SIZE::value)) {
-				if (mBase.mChunk[i].mOrigin == ZERO)
-					continue ;
-				HeapProc::instance ().free (mBase.mChunk[i].mOrigin) ;
-				mBase.mChunk[i].mOrigin = ZERO ;
-			}
-		}
-	} ;
-
-	class ImplHolder implement Holder {
-	protected:
-		Scope<PureHolder> mHandle ;
-		FLAG mPointer ;
-
-	public:
-		implicit ImplHolder () = default ;
-
-		void initialize () override {
-			auto &&tmp = memorize ([&] () {
-				return Box<HEAP>::make () ;
-			}) ;
-			mPointer = address (tmp.self) ;
-			mHandle = Scope<PureHolder> (PureHolder::from (fake)) ;
-		}
-
-		LENGTH usage_size () const override {
-			std::lock_guard<std::mutex> anonymous (fake.mMutex) ;
-			LENGTH ret = 0 ;
-			for (auto &&i : iter (0 ,CHUNK_SIZE::value)) {
-				if (fake.mChunk[i].mOrigin == ZERO)
-					continue ;
-				ret += fake.mChunk[i].mSize - fake.mChunk[i].mRest ;
-			}
-			return move (ret) ;
-		}
-
-		LENGTH usage_align () const override {
-			return LENGTH (1) ;
-		}
-
-		FLAG alloc (CREF<LENGTH> size_) const override {
-			std::lock_guard<std::mutex> anonymous (fake.mMutex) ;
-			INDEX ix = find_alloc_chunk (size_) ;
-			assume (ix != NONE) ;
-			if ifswitch (TRUE) {
-				if (fake.mChunk[ix].mOrigin != ZERO)
-					discard ;
-				fake.mChunk[ix].mOrigin = HeapProc::instance ().alloc (PAGE_SIZE::value) ;
-				fake.mChunk[ix].mCounter = 0 ;
-				fake.mChunk[ix].mSize = PAGE_SIZE::value ;
-				fake.mChunk[ix].mRest = fake.mChunk[ix].mSize ;
-			}
-			const auto r1x = fake.mChunk[ix].mSize - fake.mChunk[ix].mRest ;
-			FLAG ret = fake.mChunk[ix].mOrigin + r1x ;
-			fake.mChunk[ix].mCounter++ ;
-			fake.mChunk[ix].mRest -= size_ ;
-			return move (ret) ;
-		}
-
-		INDEX find_alloc_chunk (CREF<LENGTH> size_) const {
-			for (auto &&i : iter (0 ,CHUNK_SIZE::value)) {
-				if (fake.mChunk[i].mOrigin == ZERO)
-					continue ;
-				if (fake.mChunk[i].mRest >= size_)
-					return i ;
-			}
-			for (auto &&i : iter (0 ,CHUNK_SIZE::value)) {
-				if (fake.mChunk[i].mOrigin == ZERO)
-					return i ;
-			}
-			return NONE ;
-		}
-
-		void free (CREF<FLAG> addr_) const override {
-			if (addr_ == ZERO)
-				return ;
-			std::lock_guard<std::mutex> anonymous (fake.mMutex) ;
-			INDEX ix = find_free_chunk (addr_) ;
-			assert (ix != NONE) ;
-			assert (fake.mChunk[ix].mCounter > 0) ;
-			if ifswitch (TRUE) {
-				fake.mChunk[ix].mCounter-- ;
-				if (fake.mChunk[ix].mCounter > 0)
-					discard ;
-				fake.mChunk[ix].mRest = fake.mChunk[ix].mSize ;
-			}
-		}
-
-		INDEX find_free_chunk (CREF<FLAG> addr_) const {
-			for (auto &&i : iter (0 ,CHUNK_SIZE::value)) {
-				if (fake.mChunk[i].mOrigin == ZERO)
-					continue ;
-				if (vbetween (addr_ ,fake.mChunk[i].mOrigin ,fake.mChunk[i].mSize))
-					return i ;
-			}
-			return NONE ;
-		}
-
-		VREF<HEAP> fake_m () const leftvalue {
-			return unsafe_deref (unsafe_cast[TYPEAS<TEMP<HEAP>>::id] (unsafe_pointer (mPointer))) ;
-		}
-	} ;
-} ;
-
-template <>
-exports auto STATICHEAPPROC_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () -> Box<FakeHolder> {
-	using R1X = typename STATICHEAPPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
-	Box<FakeHolder> ret ;
-	ret.acquire (TYPEAS<R1X>::id) ;
+	ret.acquire (TYPEAS<R1X>::expr) ;
 	return move (ret) ;
 }
 } ;

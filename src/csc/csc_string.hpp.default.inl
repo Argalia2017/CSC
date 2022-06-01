@@ -43,15 +43,14 @@ trait FUNCTION_system_string_cvt_HELP<DEPEND ,REQUIRE<MACRO_COMPILER_MSVC<DEPEND
 		}
 
 		CRef<UniqueRef<_locale_t>> system_page () const {
-			return memorize ([&] () {
-				auto rax = UniqueRef<_locale_t> ([&] (VREF<_locale_t> me) {
+			return CRef<UniqueRef<_locale_t>>::reference (memorize ([&] () {
+				return UniqueRef<_locale_t> ([&] (VREF<_locale_t> me) {
 					me = _create_locale (LC_CTYPE ,"") ;
 					assume (me != NULL) ;
 				} ,[] (VREF<_locale_t> me) {
 					_free_locale (me) ;
 				}) ;
-				return CRef<UniqueRef<_locale_t>>::make (move (rax)) ;
-			}) ;
+			})) ;
 		}
 	} ;
 #endif

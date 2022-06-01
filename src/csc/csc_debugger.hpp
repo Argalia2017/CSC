@@ -90,7 +90,7 @@ trait CONSOLE_HELP<DEPEND ,ALWAYS> {
 		template <class...ARG1>
 		void print (CREF<ARG1>...msg) const {
 			using R1X = Tuple<CRef<ARG1>...> ;
-			using R2X = typename DEPENDENT<CONSOLE_MESSAGE_HELP<R1X ,ALWAYS> ,DEPEND>::Message ;
+			using R2X = typename CONSOLE_MESSAGE_HELP<R1X ,ALWAYS>::Message ;
 			Scope<Mutex> anonymous (mMutex) ;
 			const auto r1x = R1X (CRef<ARG1>::reference (msg)...) ;
 			const auto r2x = R2X (CRef<R1X>::reference (r1x)) ;
@@ -100,7 +100,7 @@ trait CONSOLE_HELP<DEPEND ,ALWAYS> {
 		template <class...ARG1>
 		void fatal (CREF<ARG1>...msg) const {
 			using R1X = Tuple<CRef<ARG1>...> ;
-			using R2X = typename DEPENDENT<CONSOLE_MESSAGE_HELP<R1X ,ALWAYS> ,DEPEND>::Message ;
+			using R2X = typename CONSOLE_MESSAGE_HELP<R1X ,ALWAYS>::Message ;
 			Scope<Mutex> anonymous (mMutex) ;
 			const auto r1x = R1X (CRef<ARG1>::reference (msg)...) ;
 			const auto r2x = R2X (CRef<R1X>::reference (r1x)) ;
@@ -110,7 +110,7 @@ trait CONSOLE_HELP<DEPEND ,ALWAYS> {
 		template <class...ARG1>
 		void error (CREF<ARG1>...msg) const {
 			using R1X = Tuple<CRef<ARG1>...> ;
-			using R2X = typename DEPENDENT<CONSOLE_MESSAGE_HELP<R1X ,ALWAYS> ,DEPEND>::Message ;
+			using R2X = typename CONSOLE_MESSAGE_HELP<R1X ,ALWAYS>::Message ;
 			Scope<Mutex> anonymous (mMutex) ;
 			const auto r1x = R1X (CRef<ARG1>::reference (msg)...) ;
 			const auto r2x = R2X (CRef<R1X>::reference (r1x)) ;
@@ -120,7 +120,7 @@ trait CONSOLE_HELP<DEPEND ,ALWAYS> {
 		template <class...ARG1>
 		void warn (CREF<ARG1>...msg) const {
 			using R1X = Tuple<CRef<ARG1>...> ;
-			using R2X = typename DEPENDENT<CONSOLE_MESSAGE_HELP<R1X ,ALWAYS> ,DEPEND>::Message ;
+			using R2X = typename CONSOLE_MESSAGE_HELP<R1X ,ALWAYS>::Message ;
 			Scope<Mutex> anonymous (mMutex) ;
 			const auto r1x = R1X (CRef<ARG1>::reference (msg)...) ;
 			const auto r2x = R2X (CRef<R1X>::reference (r1x)) ;
@@ -130,7 +130,7 @@ trait CONSOLE_HELP<DEPEND ,ALWAYS> {
 		template <class...ARG1>
 		void info (CREF<ARG1>...msg) const {
 			using R1X = Tuple<CRef<ARG1>...> ;
-			using R2X = typename DEPENDENT<CONSOLE_MESSAGE_HELP<R1X ,ALWAYS> ,DEPEND>::Message ;
+			using R2X = typename CONSOLE_MESSAGE_HELP<R1X ,ALWAYS>::Message ;
 			Scope<Mutex> anonymous (mMutex) ;
 			const auto r1x = R1X (CRef<ARG1>::reference (msg)...) ;
 			const auto r2x = R2X (CRef<R1X>::reference (r1x)) ;
@@ -140,7 +140,7 @@ trait CONSOLE_HELP<DEPEND ,ALWAYS> {
 		template <class...ARG1>
 		void debug (CREF<ARG1>...msg) const {
 			using R1X = Tuple<CRef<ARG1>...> ;
-			using R2X = typename DEPENDENT<CONSOLE_MESSAGE_HELP<R1X ,ALWAYS> ,DEPEND>::Message ;
+			using R2X = typename CONSOLE_MESSAGE_HELP<R1X ,ALWAYS>::Message ;
 			Scope<Mutex> anonymous (mMutex) ;
 			const auto r1x = R1X (CRef<ARG1>::reference (msg)...) ;
 			const auto r2x = R2X (CRef<R1X>::reference (r1x)) ;
@@ -150,7 +150,7 @@ trait CONSOLE_HELP<DEPEND ,ALWAYS> {
 		template <class...ARG1>
 		void verbose (CREF<ARG1>...msg) const {
 			using R1X = Tuple<CRef<ARG1>...> ;
-			using R2X = typename DEPENDENT<CONSOLE_MESSAGE_HELP<R1X ,ALWAYS> ,DEPEND>::Message ;
+			using R2X = typename CONSOLE_MESSAGE_HELP<R1X ,ALWAYS>::Message ;
 			Scope<Mutex> anonymous (mMutex) ;
 			const auto r1x = R1X (CRef<ARG1>::reference (msg)...) ;
 			const auto r2x = R2X (CRef<R1X>::reference (r1x)) ;

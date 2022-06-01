@@ -73,15 +73,20 @@ trait SYNTAXTREE_HELP<DEPEND ,ALWAYS> {
 			mTree[ix].mOncePlayed = FALSE ;
 			mTree[ix].mPlayed = FALSE ;
 			mTree[ix].mLifetime = 0 ;
-			mTree[ix].mParent = Set<INDEX> (LINK_MIN_SIZE::value) ;
-			mTree[ix].mChild = Set<INDEX> (LINK_MIN_SIZE::value) ;
-			mTree[ix].mDepend = Set<INDEX> (LINK_MIN_SIZE::value) ;
-			mTree[ix].mMaybe = Set<INDEX> (LINK_MIN_SIZE::value) ;
+			mTree[ix].mParent = Set<INDEX> (LINK_MIN_SIZE::expr) ;
+			mTree[ix].mChild = Set<INDEX> (LINK_MIN_SIZE::expr) ;
+			mTree[ix].mDepend = Set<INDEX> (LINK_MIN_SIZE::expr) ;
+			mTree[ix].mMaybe = Set<INDEX> (LINK_MIN_SIZE::expr) ;
 			mTree[ix].mOrder = 0 ;
 			mTree[ix].mDepth = 0 ;
 			mTree[ix].mMemoryUsage = 0 ;
 			mTree[ix].mTimeCost = 0 ;
 			mTreeStack.add (ix) ;
+		}
+
+		SyntaxTree branch () {
+			unimplemented () ;
+			return thiz ;
 		}
 
 		void mark_as_function () {
@@ -103,8 +108,7 @@ trait SYNTAXTREE_HELP<DEPEND ,ALWAYS> {
 		}
 
 		template <class ARG1>
-		void maybe (CREF<ARG1> id) {
-			using R1X = REMOVE_ALL<ARG1> ;
+		void maybe (CREF<TYPEID<ARG1>> id) {
 			INDEX ix = curr_node () ;
 			assume (ifnot (mTree[ix].mOnceActor.exist ())) ;
 			assume (ifnot (mTree[ix].mActor.exist ())) ;
@@ -122,7 +126,7 @@ trait SYNTAXTREE_HELP<DEPEND ,ALWAYS> {
 				assume (ifnot (mTree[iy].mOncePlayed)) ;
 				assume (ifnot (mTree[iy].mPlayed)) ;
 				mTreeStack.add (iy) ;
-				auto rax = AutoRef<Box<R1X>>::make () ;
+				auto rax = AutoRef<Box<ARG1>>::make () ;
 				//@warn: mValue depend on it's address
 				rax->acquire (id ,thiz) ;
 				mTree[iy].mValue = move (rax) ;
@@ -131,8 +135,7 @@ trait SYNTAXTREE_HELP<DEPEND ,ALWAYS> {
 		}
 
 		template <class ARG1>
-		CREF<REMOVE_ALL<ARG1>> stack (CREF<ARG1> id) leftvalue {
-			using R1X = REMOVE_ALL<ARG1> ;
+		CREF<ARG1> stack (CREF<TYPEID<ARG1>> id) leftvalue {
 			INDEX ix = curr_node () ;
 			assume (ifnot (mTree[ix].mActor.exist ())) ;
 			assume (ifnot (mTree[ix].mOncePlayed)) ;
@@ -155,7 +158,7 @@ trait SYNTAXTREE_HELP<DEPEND ,ALWAYS> {
 				assume (ifnot (mTree[iy].mOncePlayed)) ;
 				assume (ifnot (mTree[iy].mPlayed)) ;
 				mTreeStack.add (iy) ;
-				auto rax = AutoRef<Box<R1X>>::make () ;
+				auto rax = AutoRef<Box<ARG1>>::make () ;
 				//@warn: mValue depend on it's address
 				rax->acquire (id ,thiz) ;
 				mTree[iy].mValue = move (rax) ;
@@ -168,13 +171,14 @@ trait SYNTAXTREE_HELP<DEPEND ,ALWAYS> {
 					discard ;
 				mTree[ix].mIsIteration = TRUE ;
 			}
-			return AutoRef<Box<R1X>>::from (mTree[iy].mValue)->self ;
+			return AutoRef<Box<ARG1>>::from (mTree[iy].mValue)->self ;
 		}
 
 		template <class ARG1>
-		CREF<REMOVE_ALL<ARG1>> later (CREF<ARG1> id) leftvalue {
-			using R1X = CRef<REMOVE_ALL<ARG1>> ;
+		CREF<ARG1> later (CREF<TYPEID<ARG1>> id) leftvalue {
+			using R1X = CRef<ARG1> ;
 			INDEX ix = curr_node () ;
+			assume (ix != root_node ()) ;
 			assume (mTree[ix].mPlaying) ;
 			assume (mTree[ix].mIsIteration) ;
 			assume (mTree[ix].mLater.exist ()) ;
@@ -201,8 +205,9 @@ trait SYNTAXTREE_HELP<DEPEND ,ALWAYS> {
 		}
 
 		template <class ARG1>
-		void undo (CREF<ARG1> id) {
+		void undo (CREF<TYPEID<ARG1>> id) {
 			INDEX ix = curr_node () ;
+			assume (ix == root_node ()) ;
 			INDEX iy = insert_node (id) ;
 			assume (ix != iy) ;
 			assume (mTree[iy].mIsIteration) ;
@@ -216,15 +221,11 @@ trait SYNTAXTREE_HELP<DEPEND ,ALWAYS> {
 			}
 		}
 
-		template <class ARG1 ,class ARG2>
-		void redo (CREF<ARG1> id ,CREF<ARG2> obj) {
+		template <class...ARG1>
+		void redo (CREF<ARG1>...) {
 			INDEX ix = curr_node () ;
-			INDEX iy = insert_node (id) ;
-			assume (ifnot (mTree[iy].mPlayed)) ;
-			assume (ix != iy) ;
-			assume (mTree[iy].mIsIteration) ;
-			assume (mTree[ix].mDepth < mTree[iy].mDepth) ;
-			mTree[iy].mLater = AutoRef<CRef<ARG2>>::make (CRef<ARG2>::reference (obj)) ;
+			assume (ix == root_node ()) ;
+			unimplemented () ;
 		}
 
 		template <class ARG1 ,class ARG2>
@@ -232,6 +233,7 @@ trait SYNTAXTREE_HELP<DEPEND ,ALWAYS> {
 
 		void play () {
 			INDEX ix = curr_node () ;
+			assume (ix == root_node ()) ;
 			play_scan (ix) ;
 			while (TRUE) {
 				if (mPlayPriority.empty ())
@@ -327,7 +329,7 @@ trait SYNTAXTREE_HELP<DEPEND ,ALWAYS> {
 
 	private:
 		template <class ARG1>
-		INDEX insert_node (CREF<ARG1> id) {
+		INDEX insert_node (CREF<TYPEID<ARG1>> id) {
 			const auto r1x = Clazz (id) ;
 			const auto r2x = r1x.type_cabi () ;
 			INDEX ret = mTreeCABISet.map (r2x) ;
@@ -344,10 +346,10 @@ trait SYNTAXTREE_HELP<DEPEND ,ALWAYS> {
 				mTree[ret].mOncePlayed = FALSE ;
 				mTree[ret].mPlayed = FALSE ;
 				mTree[ret].mLifetime = 0 ;
-				mTree[ret].mParent = Set<INDEX> (LINK_MIN_SIZE::value) ;
-				mTree[ret].mChild = Set<INDEX> (LINK_MIN_SIZE::value) ;
-				mTree[ret].mDepend = Set<INDEX> (LINK_MIN_SIZE::value) ;
-				mTree[ret].mMaybe = Set<INDEX> (LINK_MIN_SIZE::value) ;
+				mTree[ret].mParent = Set<INDEX> (LINK_MIN_SIZE::expr) ;
+				mTree[ret].mChild = Set<INDEX> (LINK_MIN_SIZE::expr) ;
+				mTree[ret].mDepend = Set<INDEX> (LINK_MIN_SIZE::expr) ;
+				mTree[ret].mMaybe = Set<INDEX> (LINK_MIN_SIZE::expr) ;
 				INDEX ix = root_node () ;
 				mTree[ret].mOrder = mTree[ix].mChild.length () ;
 				mTree[ret].mDepth = 1 ;

@@ -52,7 +52,7 @@ trait FILE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			const auto r3x = LENGTH (r2x) ;
 			VarBuffer<BYTE> ret = VarBuffer<BYTE> (r3x) ;
 			auto rax = r3x ;
-			for (auto &&i : iter (0 ,RETRY_TIMES::value)) {
+			for (auto &&i : iter (0 ,RETRY_TIMES::expr)) {
 				noop (i) ;
 				if (rax == 0)
 					break ;
@@ -78,7 +78,7 @@ trait FILE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			assume (r2x <= VAL32_MAX) ;
 			const auto r3x = MathProc::min_of (LENGTH (r2x) ,item.size ()) ;
 			auto rax = r3x ;
-			for (auto &&i : iter (0 ,RETRY_TIMES::value)) {
+			for (auto &&i : iter (0 ,RETRY_TIMES::expr)) {
 				noop (i) ;
 				if (rax == 0)
 					break ;
@@ -101,7 +101,7 @@ trait FILE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			}) ;
 			const auto r2x = item.size () ;
 			auto rax = r2x ;
-			for (auto &&i : iter (0 ,RETRY_TIMES::value)) {
+			for (auto &&i : iter (0 ,RETRY_TIMES::expr)) {
 				noop (i) ;
 				if (rax == 0)
 					break ;
@@ -122,8 +122,8 @@ trait FILE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			assume (r3x != ZERO) ;
 			const auto r4x = LENGTH (SizeofResource (NULL ,r1x)) ;
 			assume (r4x >= 0) ;
-			auto &&tmp = keep[TYPEAS<CREF<BYTE>>::id] (unsafe_deref (unsafe_cast[TYPEAS<TEMP<BYTE>>::id] (unsafe_pointer (r3x)))) ;
-			return RegBuffer<BYTE>::from (unsafe_array (tmp) ,0 ,r4x) ;
+			auto &&tmp = keep[TYPEAS<CREF<TEMP<void>>>::expr] (unsafe_pointer (r3x)) ;
+			return RegBuffer<BYTE>::from (tmp ,0 ,r4x).lift () ;
 		}
 
 		BOOL available () const override {
@@ -162,28 +162,28 @@ trait FILE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		void copy_from (CREF<Holder> that) const override {
-			const auto r1x = that.native ().poll (TYPEAS<CRef<ImplHolder>>::id) ;
+			const auto r1x = that.native ().poll (TYPEAS<CRef<ImplHolder>>::expr) ;
 			const auto r2x = available () ;
 			assume (ifnot (r2x)) ;
 			CopyFile ((&r1x->mFile[0]) ,(&mFile[0]) ,TRUE) ;
 		}
 
 		void move_from (CREF<Holder> that) const override {
-			const auto r1x = that.native ().poll (TYPEAS<CRef<ImplHolder>>::id) ;
+			const auto r1x = that.native ().poll (TYPEAS<CRef<ImplHolder>>::expr) ;
 			const auto r2x = available () ;
 			assume (ifnot (r2x)) ;
 			MoveFile ((&r1x->mFile[0]) ,(&mFile[0])) ;
 		}
 
 		void link_from (CREF<Holder> that) const override {
-			const auto r1x = that.native ().poll (TYPEAS<CRef<ImplHolder>>::id) ;
+			const auto r1x = that.native ().poll (TYPEAS<CRef<ImplHolder>>::expr) ;
 			const auto r2x = available () ;
 			assume (ifnot (r2x)) ;
 			CreateHardLink ((&mFile[0]) ,(&r1x->mFile[0]) ,NULL) ;
 		}
 
 		BOOL identical (CREF<Holder> that) const override {
-			const auto r1x = that.native ().poll (TYPEAS<CRef<ImplHolder>>::id) ;
+			const auto r1x = that.native ().poll (TYPEAS<CRef<ImplHolder>>::expr) ;
 			auto rax = ARRAY2<BY_HANDLE_FILE_INFORMATION> () ;
 			const auto r2x = UniqueRef<HANDLE> ([&] (VREF<HANDLE> me) {
 				me = CreateFile ((&mFile[0]) ,GENERIC_READ ,FILE_SHARE_READ ,NULL ,OPEN_EXISTING ,FILE_ATTRIBUTE_NORMAL ,NULL) ;
@@ -255,7 +255,7 @@ trait DIRECTORY_DECOUPLE_HELP<DEPEND ,ALWAYS> {
 		inline ArrayList<String<STR>> operator() (CREF<String<STR>> dire) const {
 			ArrayList<String<STR>> ret ;
 			auto rax = TextReader<STR> (dire.raw ()) ;
-			rax.set_attr (TYPEAS<ImplHolder>::id) ;
+			rax.set_attr (TYPEAS<ImplHolder>::expr) ;
 			const auto r1x = rax.get_attr () ;
 			INDEX ix = ret.insert () ;
 			auto rbx = STR () ;
@@ -405,21 +405,21 @@ trait DIRECTORY_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			}
 			if ifswitch (rxx) {
 				const auto r7x = r2x.snapshot () ;
-				auto &&tmp = lock_handle (r1x ,r7x) ;
-				return tmp->available () ;
+				const auto r8x = lock_handle (r1x ,r7x) ;
+				return r8x->self.available () ;
 			}
 			return FALSE ;
 		}
 
-		CREF<UniqueRef<File>> lock_handle (CREF<String<STR>> file_ ,CREF<ConBuffer<BYTE>> snapshot_) const {
-			return memorize ([&] () {
+		CRef<UniqueRef<File>> lock_handle (CREF<String<STR>> file_ ,CREF<ConBuffer<BYTE>> snapshot_) const {
+			return CRef<UniqueRef<File>>::reference (memorize ([&] () {
 				return UniqueRef<File> ([&] (VREF<File> me) {
 					me = File (file_) ;
 					me.save (snapshot_) ;
 				} ,[] (VREF<File> me) {
 					me.erase () ;
 				}) ;
-			}) ;
+			})) ;
 		}
 
 		void build () const override {
@@ -454,7 +454,7 @@ trait DIRECTORY_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		void clear () const override {
-			auto rax = Deque<String<STR>> (CHILD_MAX_SIZE::value) ;
+			auto rax = Deque<String<STR>> (CHILD_MAX_SIZE::expr) ;
 			auto rbx = ImplHolder () ;
 			rbx.mPath = Cell<CRef<ArrayList<String<STR>>>>::make () ;
 			rbx.mChild = Cell<CRef<ArrayList<CHILD>>>::make () ;
@@ -550,7 +550,7 @@ trait DIRECTORY_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		void update_child () const {
 			if (mChild.fetch () != NULL)
 				return ;
-			auto rax = ArrayList<CHILD> (CHILD_MAX_SIZE::value) ;
+			auto rax = ArrayList<CHILD> (CHILD_MAX_SIZE::expr) ;
 			auto rbx = String<STR>::make () ;
 			rbx += mDire ;
 			rbx += slice ("\\") ;
@@ -824,7 +824,7 @@ trait BUFFERFILE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			} ,[] (VREF<HANDLE> me) {
 				CloseHandle (me) ;
 			}) ;
-			mFileSize = HEADER_SIZE::value ;
+			mFileSize = HEADER_SIZE::expr ;
 			const auto r2x = DWORD (BitProc::high_bit (DATA (mFileSize))) ;
 			const auto r3x = DWORD (BitProc::low_bit (DATA (mFileSize))) ;
 			mMapping = UniqueRef<HANDLE> ([&] (VREF<HANDLE> me) {
@@ -873,10 +873,10 @@ trait BUFFERFILE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		void read_header () {
 			assert (mHeader == NULL) ;
 			mHeader = VRef<HEADER>::make () ;
-			INDEX ix = load (0 ,HEADER_SIZE::value) ;
-			const auto r1x = FLAG (mCacheList[ix].mBuffer->pick (TYPEAS<RANK0>::id)) ;
-			auto &&tmp = keep[TYPEAS<CREF<BYTE>>::id] (unsafe_deref (unsafe_cast[TYPEAS<TEMP<BYTE>>::id] (unsafe_pointer (r1x)))) ;
-			auto rax = ByteReader (RegBuffer<BYTE>::from (unsafe_array (tmp) ,0 ,HEADER_SIZE::value)) ;
+			INDEX ix = load (0 ,HEADER_SIZE::expr) ;
+			const auto r1x = FLAG (mCacheList[ix].mBuffer->pick (TYPEAS<RANK0>::expr)) ;
+			auto &&tmp = keep[TYPEAS<CREF<TEMP<void>>>::expr] (unsafe_pointer (r1x)) ;
+			auto rax = ByteReader (RegBuffer<BYTE>::from (tmp ,0 ,HEADER_SIZE::expr).lift ()) ;
 			rax >> ByteReader::GAP ;
 			rax >> ByteReader::GAP ;
 			rax >> slice ("CSC_BufferFile") ;
@@ -891,7 +891,7 @@ trait BUFFERFILE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				rax.self[1] = BYTE (0X01) ;
 				rax.self[2] = BYTE (0X02) ;
 				rax.self[3] = BYTE (0X03) ;
-				return VAL64 (bitwise[TYPEAS<CHAR>::id] (rax.self)) ;
+				return VAL64 (bitwise[TYPEAS<CHAR>::expr] (rax.self)) ;
 			}) ;
 			assume (mHeader->mFileEndian == r2x) ;
 			rax >> ByteReader::GAP ;
@@ -905,7 +905,7 @@ trait BUFFERFILE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			assume (mHeader->mItemCount >= 0) ;
 			rax >> ByteReader::GAP ;
 			rax >> mHeader->mChunkPageSize ;
-			assume (mHeader->mChunkPageSize == PAGE_SIZE::value) ;
+			assume (mHeader->mChunkPageSize == PAGE_SIZE::expr) ;
 			rax >> ByteReader::GAP ;
 			rax >> mHeader->mChunkItemSize ;
 			const auto r3x = mHeader->mChunkPageSize / mHeader->mItemSize ;
@@ -929,20 +929,20 @@ trait BUFFERFILE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 					rax.self[1] = BYTE (0X01) ;
 					rax.self[2] = BYTE (0X02) ;
 					rax.self[3] = BYTE (0X03) ;
-					return VAL64 (bitwise[TYPEAS<CHAR>::id] (rax.self)) ;
+					return VAL64 (bitwise[TYPEAS<CHAR>::expr] (rax.self)) ;
 				}) ;
 				mHeader->mFileEndian = r1x ;
 				mHeader->mItemSize = mItemClazz.type_size () ;
 				mHeader->mItemAlign = mItemClazz.type_align () ;
 				mHeader->mItemCount = 0 ;
-				mHeader->mChunkPageSize = PAGE_SIZE::value ;
+				mHeader->mChunkPageSize = PAGE_SIZE::expr ;
 				mHeader->mChunkItemSize = mHeader->mChunkPageSize / mHeader->mItemSize ;
 				mHeader->mChunkSize = 0 ;
 			}
-			INDEX ix = load (0 ,HEADER_SIZE::value) ;
-			const auto r2x = FLAG (mCacheList[ix].mBuffer->pick (TYPEAS<RANK0>::id)) ;
-			auto &&tmp = unsafe_deref (unsafe_cast[TYPEAS<TEMP<BYTE>>::id] (unsafe_pointer (r2x))) ;
-			auto rax = ByteWriter (RegBuffer<BYTE>::from (unsafe_array (tmp) ,0 ,HEADER_SIZE::value)) ;
+			INDEX ix = load (0 ,HEADER_SIZE::expr) ;
+			const auto r2x = FLAG (mCacheList[ix].mBuffer->pick (TYPEAS<RANK0>::expr)) ;
+			auto &&tmp = unsafe_pointer (r2x) ;
+			auto rax = ByteWriter (RegBuffer<BYTE>::from (tmp ,0 ,HEADER_SIZE::expr).lift ()) ;
 			rax << ByteWriter::GAP ;
 			rax << ByteWriter::GAP ;
 			rax << slice ("CSC_BufferFile") ;
@@ -986,7 +986,7 @@ trait BUFFERFILE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			const auto r3x = MathProc::max_of (r2x - mHeader->mChunkSize ,VAL64 (ZERO)) ;
 			mHeader->mItemCount += size_ ;
 			mHeader->mChunkSize += r3x ;
-			mHeader->mFileSize = HEADER_SIZE::value + mHeader->mChunkSize * mHeader->mChunkPageSize ;
+			mHeader->mFileSize = HEADER_SIZE::expr + mHeader->mChunkSize * mHeader->mChunkPageSize ;
 			if ifswitch (TRUE) {
 				if (r3x == 0)
 					discard ;
@@ -1002,12 +1002,11 @@ trait BUFFERFILE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			assume (item.size () == mHeader->mItemSize) ;
 			const auto r1x = index / mHeader->mChunkItemSize ;
 			const auto r2x = index % mHeader->mChunkItemSize * mHeader->mItemSize ;
-			const auto r3x = HEADER_SIZE::value + r1x * mHeader->mChunkPageSize ;
+			const auto r3x = HEADER_SIZE::expr + r1x * mHeader->mChunkPageSize ;
 			INDEX ix = load (r3x ,mHeader->mChunkPageSize) ;
-			const auto r4x = r2x + FLAG (mCacheList[ix].mBuffer->pick (TYPEAS<RANK0>::id)) ;
-			auto &&tmp = unsafe_deref (unsafe_cast[TYPEAS<TEMP<BYTE>>::id] (unsafe_pointer (r4x))) ;
-			auto rax = RegBuffer<BYTE>::from (unsafe_array (tmp) ,0 ,mHeader->mItemSize) ;
-			BufferProc::buf_copy (item ,rax.self ,0 ,mHeader->mItemSize) ;
+			const auto r4x = r2x + FLAG (mCacheList[ix].mBuffer->pick (TYPEAS<RANK0>::expr)) ;
+			auto &&tmp = keep[TYPEAS<CREF<TEMP<void>>>::expr] (unsafe_pointer (r4x)) ;
+			BufferProc::buf_copy (item ,RegBuffer<BYTE>::from (tmp ,0 ,VAL32_MAX) ,0 ,mHeader->mItemSize) ;
 		}
 
 		void set (CREF<VAL64> index ,CREF<RegBuffer<BYTE>> item) override {
@@ -1016,12 +1015,11 @@ trait BUFFERFILE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			assume (item.size () == mHeader->mItemSize) ;
 			const auto r1x = index / mHeader->mChunkItemSize ;
 			const auto r2x = index % mHeader->mChunkItemSize * mHeader->mItemSize ;
-			const auto r3x = HEADER_SIZE::value + r1x * mHeader->mChunkPageSize ;
+			const auto r3x = HEADER_SIZE::expr + r1x * mHeader->mChunkPageSize ;
 			INDEX ix = load (r3x ,mHeader->mChunkPageSize) ;
-			const auto r4x = r2x + FLAG (mCacheList[ix].mBuffer->pick (TYPEAS<RANK0>::id)) ;
-			auto &&tmp = unsafe_deref (unsafe_cast[TYPEAS<TEMP<BYTE>>::id] (unsafe_pointer (r4x))) ;
-			auto rax = RegBuffer<BYTE>::from (unsafe_array (tmp) ,0 ,mHeader->mItemSize) ;
-			BufferProc::buf_copy (rax.self ,item ,0 ,mHeader->mItemSize) ;
+			const auto r4x = r2x + FLAG (mCacheList[ix].mBuffer->pick (TYPEAS<RANK0>::expr)) ;
+			auto &&tmp = unsafe_pointer (r4x) ;
+			BufferProc::buf_copy (RegBuffer<BYTE>::from (tmp ,0 ,VAL32_MAX) ,item ,0 ,mHeader->mItemSize) ;
 		}
 
 		INDEX load (CREF<VAL64> offset ,CREF<LENGTH> size_) {
