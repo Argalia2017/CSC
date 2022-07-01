@@ -40,6 +40,10 @@ trait RUNTIMEPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	public:
 		implicit ImplHolder () = default ;
 
+		void initialize () override {
+			noop () ;
+		}
+
 		LENGTH thread_concurrency () const override {
 			return LENGTH (std::thread::hardware_concurrency ()) ;
 		}
@@ -89,7 +93,7 @@ trait RUNTIMEPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 					discard ;
 				ret[ix] = STRA ('\\') ;
 				ix++ ;
-				ret[ix] = 0 ;
+				ret.trunc (ix) ;
 			}
 			return move (ret) ;
 		}
@@ -208,7 +212,7 @@ trait PROCESS_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			return mUID ;
 		}
 
-		CREF<SNAPSHOT> snapshot () const override {
+		SNAPSHOT snapshot () const override {
 			return mSnapshot ;
 		}
 	} ;
@@ -305,6 +309,7 @@ trait SINGLETON_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 
 	class ImplHolder implement Holder {
 	protected:
+		FLAG mUID ;
 		String<STR> mName ;
 		UniqueRef<HANDLE> mPipe ;
 		SharedRef<HEAP> mHeap ;
@@ -313,7 +318,8 @@ trait SINGLETON_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		implicit ImplHolder () = default ;
 
 		void initialize () override {
-			mName = String<STR>::make (slice ("CSC_Singleton_") ,RuntimeProc::process_uid ()) ;
+			mUID = RuntimeProc::process_uid () ;
+			mName = String<STR>::make (slice ("CSC_Singleton_") ,mUID) ;
 			auto rax = PIPE () ;
 			try_invoke ([&] () {
 				init_pipe () ;
@@ -328,7 +334,8 @@ trait SINGLETON_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			}) ;
 			const auto r1x = FLAG (rax.mAddress1) ;
 			assume (r1x != ZERO) ;
-			mHeap = unsafe_deref (unsafe_cast[TYPEAS<TEMP<SharedRef<HEAP>>>::expr] (unsafe_pointer (r1x))) ;
+			auto &&tmp = unsafe_deref (unsafe_cast[TYPEAS<TEMP<SharedRef<HEAP>>>::expr] (unsafe_pointer (r1x))) ;
+			mHeap = tmp ;
 			assume (mHeap.available ()) ;
 		}
 
@@ -360,9 +367,10 @@ trait SINGLETON_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			PIPE ret ;
 			zeroize (ret) ;
 			std::memcpy ((&ret) ,r2x.self ,SIZE_OF<PIPE>::expr) ;
+			const auto r3x = RuntimeProc::process_uid () ;
 			assume (ret.mReserve1 == DATA (0X1122334455667788)) ;
-			assume (ret.mReserve3 == DATA (0X1122334455667788)) ;
-			assume (ret.mReserve2 == DATA (0XAAAABBBBCCCCDDDD)) ;
+			assume (ret.mReserve3 == DATA (0XAAAABBBBCCCCDDDD)) ;
+			assume (ret.mReserve2 == DATA (mUID)) ;
 			assume (ret.mAddress1 == ret.mAddress2) ;
 			return move (ret) ;
 		}
@@ -383,17 +391,17 @@ trait SINGLETON_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			auto rax = PIPE () ;
 			rax.mReserve1 = DATA (0X1122334455667788) ;
 			rax.mAddress1 = DATA (address (mHeap)) ;
-			rax.mReserve2 = DATA (0XAAAABBBBCCCCDDDD) ;
+			rax.mReserve2 = DATA (mUID) ;
 			rax.mAddress2 = DATA (address (mHeap)) ;
-			rax.mReserve3 = DATA (0X1122334455667788) ;
+			rax.mReserve3 = DATA (0XAAAABBBBCCCCDDDD) ;
 			std::memcpy (r2x.self ,(&rax) ,SIZE_OF<PIPE>::expr) ;
 		}
 
-		void add (CREF<Slice<STR>> name ,CREF<FLAG> addr_) const override {
+		void add (CREF<Slice<STR>> name ,CREF<FLAG> addr) const override {
 			Scope<Mutex> anonymous (mHeap->mMutex) ;
-			assert (addr_ != ZERO) ;
-			assert (addr_ != NONE) ;
-			mHeap->mAddressSet.add (name ,addr_) ;
+			assert (addr != ZERO) ;
+			assert (addr != NONE) ;
+			mHeap->mAddressSet.add (name ,addr) ;
 		}
 
 		FLAG map (CREF<Slice<STR>> name) const override {

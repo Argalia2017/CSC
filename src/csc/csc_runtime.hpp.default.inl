@@ -44,8 +44,7 @@ trait FUNCTION_calendar_from_timepoint_HELP<DEPEND ,REQUIRE<MACRO_SYSTEM_LINUX<D
 		inline std::tm operator() (CREF<std::time_t> time_) const {
 			std::tm ret ;
 			const auto r1x = FLAG (std::localtime ((&time_))) ;
-			auto &&tmp = unsafe_deref (unsafe_cast[TYPEAS<TEMP<std::tm>>::expr] (unsafe_pointer (r1x))) ;
-			ret = tmp ;
+			ret = bitwise[TYPEAS<std::tm>::expr] (unsafe_pointer (r1x)) ;
 			return move (ret) ;
 		}
 	} ;
@@ -55,6 +54,7 @@ trait FUNCTION_calendar_from_timepoint_HELP<DEPEND ,REQUIRE<MACRO_SYSTEM_LINUX<D
 template <class DEPEND>
 trait TIMEDURATION_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	using Holder = typename TIMEDURATION_HELP<DEPEND ,ALWAYS>::Holder ;
+	using TimeDuration = typename TIMEDURATION_HELP<DEPEND ,ALWAYS>::TimeDuration ;
 	using CALENDAR = typename TIMEPOINT_HELP<DEPEND ,ALWAYS>::CALENDAR ;
 
 	using TIMEPOINT = std::chrono::system_clock::time_point ;
@@ -103,6 +103,19 @@ trait TIMEDURATION_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			mTimeDuration = r6x.time_since_epoch () ;
 		}
 
+		void initialize (CREF<TEMP<void>> duration_) {
+			auto rax = Box<TIMEDURATION> () ;
+			rax.acquire (duration_) ;
+			mTimeDuration = move (rax.self) ;
+		}
+
+		TimeDuration factory (CREF<TIMEDURATION> duration_) const {
+			auto rax = Box<TIMEDURATION>::make (duration_) ;
+			TimeDuration ret = TimeDuration (unsafe_cast[TYPEAS<TEMP<void>>::expr] (unsafe_deptr (rax.self))) ;
+			rax.release () ;
+			return move (ret) ;
+		}
+
 		Auto native () const leftvalue override {
 			return CRef<ImplHolder>::reference (thiz) ;
 		}
@@ -145,16 +158,16 @@ trait TIMEDURATION_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			return LENGTH (r1x.count ()) ;
 		}
 
-		void add_from (CREF<Holder> a ,CREF<Holder> b) override {
-			const auto r1x = a.native ().poll (TYPEAS<CRef<ImplHolder>>::expr) ;
-			const auto r2x = a.native ().poll (TYPEAS<CRef<ImplHolder>>::expr) ;
-			mTimeDuration = r1x->get_mTimeDuration () + r2x->get_mTimeDuration () ;
+		TimeDuration add (CREF<Holder> that) const override {
+			auto &&tmp = keep[TYPEAS<CREF<ImplHolder>>::expr] (that) ;
+			const auto r1x = mTimeDuration + tmp.mTimeDuration ;
+			return factory (r1x) ;
 		}
 
-		void sub_from (CREF<Holder> a ,CREF<Holder> b) override {
-			const auto r1x = a.native ().poll (TYPEAS<CRef<ImplHolder>>::expr) ;
-			const auto r2x = a.native ().poll (TYPEAS<CRef<ImplHolder>>::expr) ;
-			mTimeDuration = r1x->get_mTimeDuration () - r2x->get_mTimeDuration () ;
+		TimeDuration sub (CREF<Holder> that) const override {
+			auto &&tmp = keep[TYPEAS<CREF<ImplHolder>>::expr] (that) ;
+			const auto r1x = mTimeDuration - tmp.mTimeDuration ;
+			return factory (r1x) ;
 		}
 
 		CALENDAR calendar () const override {
@@ -225,7 +238,11 @@ trait ATOMIC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		BOOL change (VREF<VAL> expect ,CREF<VAL> obj) const override {
-			return mHeap->mAtomic.compare_exchange_weak (expect ,obj ,std::memory_order::memory_order_relaxed) ;
+			const auto r1x = mHeap->mAtomic.compare_exchange_weak (expect ,obj ,std::memory_order::memory_order_relaxed) ;
+			if (r1x)
+				return TRUE ;
+			std::this_thread::yield () ;
+			return FALSE ;
 		}
 
 		VAL fetch_add (CREF<VAL> obj) const override {
@@ -251,7 +268,8 @@ trait MUTEX_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	struct HEAP {
 		Box<std::mutex> mMutex ;
 		Box<std::recursive_mutex> mRecursive ;
-		Box<std::condition_variable> mCondition ;
+		Box<std::condition_variable> mConditional ;
+		LENGTH mCounter ;
 	} ;
 
 	class ImplHolder implement Holder {
@@ -261,11 +279,6 @@ trait MUTEX_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	public:
 		implicit ImplHolder () = default ;
 
-		void init_scope () override {
-			mHeap = SharedRef<HEAP>::make () ;
-			mHeap->mMutex = Box<std::mutex>::make () ;
-		}
-
 		void init_recursive () override {
 			mHeap = SharedRef<HEAP>::make () ;
 			mHeap->mRecursive = Box<std::recursive_mutex>::make () ;
@@ -274,14 +287,15 @@ trait MUTEX_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		void init_conditional () override {
 			mHeap = SharedRef<HEAP>::make () ;
 			mHeap->mMutex = Box<std::mutex>::make () ;
-			mHeap->mCondition = Box<std::condition_variable>::make () ;
+			mHeap->mConditional = Box<std::condition_variable>::make () ;
+			mHeap->mCounter = 0 ;
 		}
 
 		Auto native () const leftvalue override {
 			return CRef<ImplHolder>::reference (thiz) ;
 		}
 
-		SharedRef<HEAP> condition_lock (VREF<std::unique_lock<std::mutex>> locker) const leftvalue {
+		SharedRef<HEAP> conditional_lock (VREF<std::unique_lock<std::mutex>> locker) const leftvalue {
 			locker = std::unique_lock<std::mutex> (mHeap->mMutex) ;
 			return mHeap ;
 		}
@@ -289,28 +303,28 @@ trait MUTEX_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		void enter () const override {
 			auto rxx = TRUE ;
 			if ifswitch (rxx) {
-				if (mHeap->mMutex == NULL)
-					discard ;
-				mHeap->mMutex->lock () ;
-			}
-			if ifswitch (rxx) {
 				if (mHeap->mRecursive == NULL)
 					discard ;
 				mHeap->mRecursive->lock () ;
+			}
+			if ifswitch (rxx) {
+				if (mHeap->mMutex == NULL)
+					discard ;
+				mHeap->mMutex->lock () ;
 			}
 		}
 
 		void leave () const override {
 			auto rxx = TRUE ;
 			if ifswitch (rxx) {
-				if (mHeap->mMutex == NULL)
-					discard ;
-				mHeap->mMutex->unlock () ;
-			}
-			if ifswitch (rxx) {
 				if (mHeap->mRecursive == NULL)
 					discard ;
 				mHeap->mRecursive->unlock () ;
+			}
+			if ifswitch (rxx) {
+				if (mHeap->mMutex == NULL)
+					discard ;
+				mHeap->mMutex->unlock () ;
 			}
 		}
 	} ;
@@ -323,8 +337,8 @@ exports auto MUTEX_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () -> VRef<Hold
 }
 
 template <class DEPEND>
-trait CONDITIONALLOCK_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
-	using Holder = typename CONDITIONALLOCK_HELP<DEPEND ,ALWAYS>::Holder ;
+trait UNIQUELOCK_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
+	using Holder = typename UNIQUELOCK_HELP<DEPEND ,ALWAYS>::Holder ;
 	using HEAP = typename MUTEX_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::HEAP ;
 
 	class ImplHolder implement Holder {
@@ -339,12 +353,12 @@ trait CONDITIONALLOCK_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		void initialize (CREF<Mutex> mutex_) override {
 			using R1X = typename MUTEX_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 			const auto r1x = mutex_.native ().poll (TYPEAS<CRef<R1X>>::expr) ;
-			mHeap = r1x->condition_lock (mLock) ;
+			mHeap = r1x->conditional_lock (mLock) ;
 			mHandle = Scope<ImplHolder> (thiz) ;
 		}
 
 		void enter () {
-			assert (mHeap->mCondition.exist ()) ;
+			noop () ;
 		}
 
 		void leave () {
@@ -353,37 +367,102 @@ trait CONDITIONALLOCK_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		void wait () override {
-			mHeap->mCondition->wait (mLock) ;
+			mHeap->mConditional->wait (mLock) ;
 		}
 
 		void wait (CREF<TimeDuration> time_) override {
 			using R1X = typename TIMEDURATION_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 			const auto r1x = time_.native ().poll (TYPEAS<CRef<R1X>>::expr) ;
-			mHeap->mCondition->wait_for (mLock ,r1x->get_mTimeDuration ()) ;
+			mHeap->mConditional->wait_for (mLock ,r1x->get_mTimeDuration ()) ;
 		}
 
 		void wait (CREF<TimePoint> time_) override {
 			using R1X = typename TIMEDURATION_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 			const auto r1x = time_.native ().poll (TYPEAS<CRef<R1X>>::expr) ;
-			mHeap->mCondition->wait_until (mLock ,r1x->get_mTimePoint ()) ;
+			mHeap->mConditional->wait_until (mLock ,r1x->get_mTimePoint ()) ;
 		}
 
 		void notify () override {
-			mHeap->mCondition->notify_all () ;
+			mHeap->mConditional->notify_all () ;
 		}
 
 		void yield () override {
-			using R1X = typename TIMEDURATION_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
-			mHeap->mCondition->notify_all () ;
-			const auto r1x = TimeDuration::zero ().native ().poll (TYPEAS<CRef<R1X>>::expr) ;
-			mHeap->mCondition->wait_for (mLock ,r1x->get_mTimeDuration ()) ;
+			mHeap->mConditional->notify_all () ;
+			mLock = std::unique_lock<std::mutex> () ;
+			std::this_thread::yield () ;
+			mLock = std::unique_lock<std::mutex> (mHeap->mMutex) ;
 		}
 	} ;
 } ;
 
 template <>
-exports auto CONDITIONALLOCK_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () -> Box<FakeHolder> {
-	using R1X = typename CONDITIONALLOCK_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
+exports auto UNIQUELOCK_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () -> Box<FakeHolder> {
+	using R1X = typename UNIQUELOCK_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
+	Box<FakeHolder> ret ;
+	ret.acquire (TYPEAS<R1X>::expr) ;
+	return move (ret) ;
+}
+
+template <class DEPEND>
+trait SHAREDLOCK_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
+	using Holder = typename SHAREDLOCK_HELP<DEPEND ,ALWAYS>::Holder ;
+	using HEAP = typename MUTEX_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::HEAP ;
+
+	class ImplHolder implement Holder {
+	protected:
+		SharedRef<HEAP> mHeap ;
+		std::unique_lock<std::mutex> mLock ;
+		Scope<ImplHolder> mHandle ;
+
+	public:
+		implicit ImplHolder () = default ;
+
+		void initialize (CREF<Mutex> mutex_) override {
+			using R1X = typename MUTEX_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
+			const auto r1x = mutex_.native ().poll (TYPEAS<CRef<R1X>>::expr) ;
+			mHeap = r1x->conditional_lock (mLock) ;
+			mHandle = Scope<ImplHolder> (thiz) ;
+		}
+
+		void enter () {
+			auto rax = move (mLock) ;
+			while (TRUE) {
+				if (mHeap->mCounter >= 0)
+					break ;
+				mHeap->mConditional->wait (rax) ;
+			}
+			mHeap->mCounter++ ;
+		}
+
+		void leave () {
+			auto rax = std::unique_lock<std::mutex> (mHeap->mMutex) ;
+			mHeap->mCounter-- ;
+			mHeap->mConditional->notify_all () ;
+			if ifswitch (TRUE) {
+				if (mHeap->mCounter == 0)
+					discard ;
+				mHeap->mCounter = 0 ;
+			}
+			mHeap = SharedRef<HEAP> () ;
+		}
+
+		BOOL lock () const override {
+			auto rax = std::unique_lock<std::mutex> (mHeap->mMutex) ;
+			mHeap->mCounter-- ;
+			while (TRUE) {
+				if (mHeap->mCounter != 0)
+					break ;
+				mHeap->mConditional->wait (rax) ;
+			}
+			mHeap->mCounter = -1 ;
+			return TRUE ;
+		}
+	} ;
+} ;
+
+template <>
+exports auto SHAREDLOCK_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () -> Box<FakeHolder> {
+	using R1X = typename SHAREDLOCK_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	Box<FakeHolder> ret ;
 	ret.acquire (TYPEAS<R1X>::expr) ;
 	return move (ret) ;
@@ -475,8 +554,8 @@ trait SYSTEM_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			return mLocale.fetch () ;
 		}
 
-		void set_locale (RREF<String<STR>> name) const override {
-			mLocale.store (move (name)) ;
+		void set_locale (CREF<String<STR>> name) const override {
+			mLocale.store (name) ;
 		}
 
 		void execute (CREF<String<STR>> command) const override {
@@ -487,7 +566,7 @@ trait SYSTEM_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			noop (r2x) ;
 		}
 
-		CREF<String<STR>> working_path () const override {
+		String<STR> working_path () const override {
 			return mWorkingPath ;
 		}
 	} ;
@@ -533,6 +612,85 @@ trait RANDOM_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 
 		DATA random_byte () const override {
 			return DATA (mHeap->mRandom ()) ;
+		}
+
+		Array<DATA> random_byte (CREF<LENGTH> size_) const override {
+			Array<DATA> ret = Array<DATA> (size_) ;
+			for (auto &&i : ret)
+				i = random_byte () ;
+			return move (ret) ;
+		}
+
+		INDEX random_value (CREF<INDEX> lb ,CREF<INDEX> rb) const override {
+			assert (lb <= rb) ;
+			const auto r1x = VAL64 (rb) - VAL64 (lb) + 1 ;
+			const auto r2x = VAL64 (random_byte () & DATA (VAL64_MAX)) ;
+			return INDEX (r2x % r1x + lb) ;
+		}
+
+		Array<INDEX> random_value (CREF<INDEX> lb ,CREF<INDEX> rb ,CREF<LENGTH> size_) const override {
+			assert (lb <= rb) ;
+			Array<INDEX> ret = Array<INDEX> (size_) ;
+			const auto r1x = VAL64 (rb) - VAL64 (lb) + 1 ;
+			for (auto &&i : ret) {
+				const auto r2x = VAL64 (random_byte () & DATA (VAL64_MAX)) ;
+				i = INDEX (r2x % r1x + lb) ;
+			}
+			return move (ret) ;
+		}
+
+		Array<INDEX> random_shuffle (CREF<LENGTH> count ,CREF<LENGTH> size_) const override {
+			Array<INDEX> ret = Array<INDEX>::make (iter (0 ,size_)) ;
+			random_shuffle (count ,size_ ,ret) ;
+			return move (ret) ;
+		}
+
+		void random_shuffle (CREF<LENGTH> count ,CREF<LENGTH> size_ ,VREF<Array<INDEX>> range_) const override {
+			assert (count >= 0) ;
+			assert (count <= size_) ;
+			assert (range_.size () == size_) ;
+			const auto r1x = range_.size () - 1 ;
+			INDEX ix = 0 ;
+			while (TRUE) {
+				if (ix >= count)
+					break ;
+				INDEX iy = random_value (ix ,r1x) ;
+				swap (range_[ix] ,range_[iy]) ;
+				ix++ ;
+			}
+		}
+
+		BitSet<> random_pick (CREF<LENGTH> count ,CREF<LENGTH> size_) const override {
+			BitSet<> ret = BitSet<> (size_) ;
+			random_pick (count ,size_ ,ret) ;
+			return move (ret) ;
+		}
+
+		void random_pick (CREF<LENGTH> count ,CREF<LENGTH> size_ ,VREF<BitSet<>> range_) const override {
+			assert (count >= 0) ;
+			assert (count <= size_) ;
+			assert (range_.size () == size_) ;
+			auto rxx = TRUE ;
+			if ifswitch (rxx) {
+				if (count >= size_ / 2)
+					discard ;
+				const auto r1x = random_shuffle (count ,size_) ;
+				for (auto &&i : iter (0 ,count))
+					range_.add (r1x[i]) ;
+			}
+			if ifswitch (rxx) {
+				const auto r2x = random_shuffle (size_ - count ,size_) ;
+				for (auto &&i : iter (size_ - count ,size_))
+					range_.add (r2x[i]) ;
+			}
+		}
+
+		BOOL random_draw (CREF<DOUBLE> possibility) const override {
+			const auto r1x = random_value (0 ,10000) ;
+			const auto r2x = DOUBLE (r1x) * MathProc::inverse (DOUBLE (10000)) ;
+			if (r2x < possibility)
+				return TRUE ;
+			return FALSE ;
 		}
 	} ;
 } ;

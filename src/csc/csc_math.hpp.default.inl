@@ -17,8 +17,12 @@ trait MATHPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	public:
 		implicit ImplHolder () = default ;
 
-		BOOL infinite (CREF<SINGLE> x) const override {
-			const auto r1x = bitwise (x) ;
+		void initialize () override {
+			noop () ;
+		}
+
+		BOOL is_infinite (CREF<SINGLE> a) const override {
+			const auto r1x = bitwise (a) ;
 			if ifnot (BitProc::all_bit (r1x ,CHAR (0X7F800000)))
 				return FALSE ;
 			//@warn: treat as infinity
@@ -27,8 +31,8 @@ trait MATHPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			return TRUE ;
 		}
 
-		BOOL infinite (CREF<DOUBLE> x) const override {
-			const auto r1x = bitwise (x) ;
+		BOOL is_infinite (CREF<DOUBLE> a) const override {
+			const auto r1x = bitwise (a) ;
 			if ifnot (BitProc::all_bit (r1x ,DATA (0X7FF0000000000000)))
 				return FALSE ;
 			//@warn: treat as infinity
@@ -37,114 +41,114 @@ trait MATHPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			return TRUE ;
 		}
 
-		SINGLE inverse (CREF<SINGLE> x) const override {
-			if (MathProc::abs (x) < SINGLE_EPS)
+		SINGLE inverse (CREF<SINGLE> a) const override {
+			if (MathProc::abs (a) < SINGLE_EPS)
 				return SINGLE (0) ;
-			return SINGLE (1) / x ;
+			return SINGLE (1) / a ;
 		}
 
-		DOUBLE inverse (CREF<DOUBLE> x) const override {
-			if (MathProc::abs (x) < DOUBLE_EPS)
+		DOUBLE inverse (CREF<DOUBLE> a) const override {
+			if (MathProc::abs (a) < DOUBLE_EPS)
 				return DOUBLE (0) ;
-			return DOUBLE (1) / x ;
+			return DOUBLE (1) / a ;
 		}
 
-		SINGLE floor (CREF<SINGLE> x ,CREF<SINGLE> y) const override {
-			assert (y > 0) ;
-			const auto r1x = VAL64 (x * MathProc::inverse (y)) ;
-			const auto r2x = y * SINGLE (r1x) ;
-			if (x >= 0)
+		SINGLE floor (CREF<SINGLE> a ,CREF<SINGLE> b) const override {
+			assert (b > 0) ;
+			const auto r1x = VAL64 (a * MathProc::inverse (b)) ;
+			const auto r2x = b * SINGLE (r1x) ;
+			if (a >= 0)
 				return r2x ;
-			if (x >= r2x)
+			if (a >= r2x)
 				return r2x ;
-			return y * SINGLE (r1x - 1) ;
+			return b * SINGLE (r1x - 1) ;
 		}
 
-		DOUBLE floor (CREF<DOUBLE> x ,CREF<DOUBLE> y) const override {
-			assert (y > 0) ;
-			const auto r1x = VAL64 (x * MathProc::inverse (y)) ;
-			const auto r2x = y * DOUBLE (r1x) ;
-			if (x >= 0)
+		DOUBLE floor (CREF<DOUBLE> a ,CREF<DOUBLE> b) const override {
+			assert (b > 0) ;
+			const auto r1x = VAL64 (a * MathProc::inverse (b)) ;
+			const auto r2x = b * DOUBLE (r1x) ;
+			if (a >= 0)
 				return r2x ;
-			if (x >= r2x)
+			if (a >= r2x)
 				return r2x ;
-			return y * DOUBLE (r1x - 1) ;
+			return b * DOUBLE (r1x - 1) ;
 		}
 
-		SINGLE ceil (CREF<SINGLE> x ,CREF<SINGLE> y) const override {
-			assert (y > 0) ;
-			const auto r1x = VAL64 (x * MathProc::inverse (y)) ;
-			const auto r2x = y * SINGLE (r1x) ;
-			if (x <= 0)
+		SINGLE ceil (CREF<SINGLE> a ,CREF<SINGLE> b) const override {
+			assert (b > 0) ;
+			const auto r1x = VAL64 (a * MathProc::inverse (b)) ;
+			const auto r2x = b * SINGLE (r1x) ;
+			if (a <= 0)
 				return r2x ;
-			if (x <= r2x)
+			if (a <= r2x)
 				return r2x ;
-			return y * SINGLE (r1x + 1) ;
+			return b * SINGLE (r1x + 1) ;
 		}
 
-		DOUBLE ceil (CREF<DOUBLE> x ,CREF<DOUBLE> y) const override {
-			assert (y > 0) ;
-			const auto r1x = VAL64 (x * MathProc::inverse (y)) ;
-			const auto r2x = y * DOUBLE (r1x) ;
-			if (x <= 0)
+		DOUBLE ceil (CREF<DOUBLE> a ,CREF<DOUBLE> b) const override {
+			assert (b > 0) ;
+			const auto r1x = VAL64 (a * MathProc::inverse (b)) ;
+			const auto r2x = b * DOUBLE (r1x) ;
+			if (a <= 0)
 				return r2x ;
-			if (x <= r2x)
+			if (a <= r2x)
 				return r2x ;
-			return y * DOUBLE (r1x + 1) ;
+			return b * DOUBLE (r1x + 1) ;
 		}
 
-		DOUBLE sqrt (CREF<DOUBLE> x) const override {
-			return std::sqrt (x) ;
+		DOUBLE sqrt (CREF<DOUBLE> a) const override {
+			return std::sqrt (a) ;
 		}
 
-		DOUBLE cbrt (CREF<DOUBLE> x) const override {
-			return std::cbrt (x) ;
+		DOUBLE cbrt (CREF<DOUBLE> a) const override {
+			return std::cbrt (a) ;
 		}
 
-		DOUBLE exp (CREF<DOUBLE> x) const override {
-			return std::exp (x) ;
+		DOUBLE exp (CREF<DOUBLE> a) const override {
+			return std::exp (a) ;
 		}
 
-		DOUBLE log (CREF<DOUBLE> x) const override {
-			return std::log (x) ;
+		DOUBLE log (CREF<DOUBLE> a) const override {
+			return std::log (a) ;
 		}
 
-		DOUBLE pow (CREF<DOUBLE> x ,CREF<DOUBLE> y) const override {
-			return std::pow (x ,y) ;
+		DOUBLE pow (CREF<DOUBLE> a ,CREF<DOUBLE> b) const override {
+			return std::pow (a ,b) ;
 		}
 
-		DOUBLE ncdf (CREF<DOUBLE> x) const override {
-			const auto r1x = x * MathProc::inverse (DOUBLE (MATH_SQRT2)) ;
+		DOUBLE ncdf (CREF<DOUBLE> a) const override {
+			const auto r1x = a * MathProc::inverse (DOUBLE (MATH_SQRT2)) ;
 			return std::erf (r1x) * DOUBLE (MATH_INV2) + DOUBLE (MATH_INV2) ;
 		}
 
-		DOUBLE npdf (CREF<DOUBLE> x) const override {
-			const auto r1x = -MathProc::square (x) * DOUBLE (MATH_INV2) ;
+		DOUBLE npdf (CREF<DOUBLE> a) const override {
+			const auto r1x = -MathProc::square (a) * DOUBLE (MATH_INV2) ;
 			return exp (r1x) * DOUBLE (MATH_INVSQRT2PI) ;
 		}
 
-		DOUBLE sin (CREF<DOUBLE> x) const override {
-			return std::sin (x) ;
+		DOUBLE sin (CREF<DOUBLE> a) const override {
+			return std::sin (a) ;
 		}
 
-		DOUBLE cos (CREF<DOUBLE> x) const override {
-			return std::cos (x) ;
+		DOUBLE cos (CREF<DOUBLE> a) const override {
+			return std::cos (a) ;
 		}
 
-		DOUBLE tan (CREF<DOUBLE> x) const override {
-			return std::tan (x) ;
+		DOUBLE tan (CREF<DOUBLE> a) const override {
+			return std::tan (a) ;
 		}
 
-		DOUBLE arcsin (CREF<DOUBLE> x) const override {
-			return std::asin (x) ;
+		DOUBLE arcsin (CREF<DOUBLE> a) const override {
+			return std::asin (a) ;
 		}
 
-		DOUBLE arccos (CREF<DOUBLE> x) const override {
-			return std::acos (x) ;
+		DOUBLE arccos (CREF<DOUBLE> a) const override {
+			return std::acos (a) ;
 		}
 
-		DOUBLE arctan (CREF<DOUBLE> x ,CREF<DOUBLE> y) const override {
-			return std::atan2 (y ,x) ;
+		DOUBLE arctan (CREF<DOUBLE> a ,CREF<DOUBLE> b) const override {
+			return std::atan2 (b ,a) ;
 		}
 	} ;
 } ;
@@ -661,6 +665,10 @@ trait FLOATPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	class ImplHolder implement Holder {
 	public:
 		implicit ImplHolder () = default ;
+
+		void initialize () override {
+			noop () ;
+		}
 
 		DOUBLE encode (CREF<NOTATION> fexp2) const override {
 			assert (fexp2.mRadix == 2) ;

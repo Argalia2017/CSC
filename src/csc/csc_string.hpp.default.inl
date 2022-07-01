@@ -119,6 +119,10 @@ trait STRINGPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	public:
 		implicit ImplHolder () = default ;
 
+		void initialize () override {
+			noop () ;
+		}
+
 		String<STRW> ansi_string_cvt (CREF<String<STRA>> obj) const override {
 			String<STRW> ret = String<STRW> (obj.length ()) ;
 			INDEX ix = 0 ;
@@ -127,7 +131,7 @@ trait STRINGPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				ret[ix] = STRW (i) ;
 				ix++ ;
 			}
-			ret[ix] = 0 ;
+			ret.trunc (ix) ;
 			return move (ret) ;
 		}
 
@@ -139,7 +143,7 @@ trait STRINGPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				ret[ix] = STRA (i) ;
 				ix++ ;
 			}
-			ret[ix] = 0 ;
+			ret.trunc (ix) ;
 			return move (ret) ;
 		}
 
@@ -161,7 +165,7 @@ trait STRINGPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 					ix++ ;
 				}
 			}
-			ret[ix] = 0 ;
+			ret.trunc (ix) ;
 			return move (ret) ;
 		}
 
@@ -183,7 +187,7 @@ trait STRINGPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 					ix++ ;
 				}
 			}
-			ret[ix] = 0 ;
+			ret.trunc (ix) ;
 			return move (ret) ;
 		}
 

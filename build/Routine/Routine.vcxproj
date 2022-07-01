@@ -47,17 +47,22 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\src\csc\cpp.hint" />
+    <None Include="..\..\src\csc\csc_algorithm.hpp.default.inl" />
+    <None Include="..\..\src\csc\csc_basic.hpp.default.inl" />
     <None Include="..\..\src\csc\csc_core.hpp.default.inl" />
     <None Include="..\..\src\csc\csc_debugger.hpp.linux.inl" />
     <None Include="..\..\src\csc\csc_debugger.hpp.windows.inl" />
     <None Include="..\..\src\csc\csc_filesystem.hpp.linux.inl" />
     <None Include="..\..\src\csc\csc_filesystem.hpp.windows.inl" />
+    <None Include="..\..\src\csc\csc_functional.hpp.default.inl" />
     <None Include="..\..\src\csc\csc_math.hpp.default.inl" />
     <None Include="..\..\src\csc\csc_runtime.hpp.default.inl" />
     <None Include="..\..\src\csc\csc_runtime.hpp.linux.inl" />
     <None Include="..\..\src\csc\csc_runtime.hpp.windows.inl" />
+    <None Include="..\..\src\csc\csc_serialization.hpp.default.inl" />
     <None Include="..\..\src\csc\csc_string.hpp.default.inl" />
     <None Include="..\..\src\csc\csc_string.hpp.gbks.inl" />
+    <None Include="..\..\src\csc\csc_thread.hpp.default.inl" />
   </ItemGroup>
   <ItemGroup>
     <Natvis Include="..\..\src\csc\cpp.natvis" />

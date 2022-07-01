@@ -60,7 +60,6 @@ trait CONSOLE_HELP<DEPEND ,ALWAYS> {
 	using OPTION_NO_INFO = RANK5 ;
 	using OPTION_NO_DEBUG = RANK6 ;
 	using OPTION_NO_VERBOSE = RANK7 ;
-	using OPTION_SIZE = ENUMAS<VAL ,ENUMID<32>> ;
 
 	class Console {
 	protected:
@@ -200,18 +199,18 @@ trait CONSOLE_MESSAGE_HELP<UNIT1 ,ALWAYS> {
 		}
 
 		void friend_write (VREF<TextWriter<STR>> writer) const override {
-			template_write (writer ,mMessage.self) ;
+			template_write (PHX ,writer ,mMessage.self) ;
 		}
 
-	private:
-		void template_write (VREF<TextWriter<STR>> writer ,CREF<Tuple<>> message) const {
+		template <class ARG1 ,class = REQUIRE<IS_SAME<ARG1 ,Tuple<>>>>
+		void template_write (CREF<typeof (PH2)> ,VREF<TextWriter<STR>> writer ,CREF<ARG1> message) const {
 			noop () ;
 		}
 
 		template <class ARG1>
-		void template_write (VREF<TextWriter<STR>> writer ,CREF<ARG1> message) const {
+		void template_write (CREF<typeof (PH1)> ,VREF<TextWriter<STR>> writer ,CREF<ARG1> message) const {
 			writer << message.one ().self ;
-			template_write (writer ,message.rest ()) ;
+			template_write (PHX ,writer ,message.rest ()) ;
 		}
 	} ;
 } ;
@@ -231,9 +230,9 @@ trait REPORTER_HELP<DEPEND ,ALWAYS> {
 		virtual void detect_memory_leaks () const = 0 ;
 		virtual void detect_crash_signal () const = 0 ;
 		virtual Array<FLAG> captrue_stack_trace () const = 0 ;
-		virtual String<STR> symbol_from_address (CREF<FLAG> addr_) const = 0 ;
+		virtual String<STR> symbol_from_address (CREF<FLAG> addr) const = 0 ;
 	} ;
-	
+
 	struct FUNCTION_extern {
 		imports VRef<Holder> invoke () ;
 	} ;
@@ -265,8 +264,8 @@ trait REPORTER_HELP<DEPEND ,ALWAYS> {
 			return mThis->captrue_stack_trace () ;
 		}
 
-		String<STR> symbol_from_address (CREF<FLAG> addr_) const {
-			return mThis->symbol_from_address (addr_) ;
+		String<STR> symbol_from_address (CREF<FLAG> addr) const {
+			return mThis->symbol_from_address (addr) ;
 		}
 	} ;
 } ;

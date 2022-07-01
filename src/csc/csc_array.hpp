@@ -290,6 +290,11 @@ trait ARRAY_HELP<ITEM ,SIZE ,ALWAYS> {
 			return at (index) ;
 		}
 
+		INDEX access (CREF<ITEM> item) const {
+			unimplemented () ;
+			return NONE ;
+		}
+
 		BOOL equal (CREF<Array> that) const {
 			return operator_equal (mArray ,that.mArray) ;
 		}
@@ -362,7 +367,7 @@ trait STRING_HELP<ITEM ,SIZE ,ALWAYS> {
 	using BUFFER_SSIZE = ENUMAS<VAL ,ENUMID<8191>> ;
 
 	template <class ARG1 ,class = REQUIRE<IS_TEXT<DEPENDENT<ITEM ,ARG1>>>>
-	using MACRO_Slice = Slice<DEPENDENT<ITEM ,ARG1>> ;
+	using CRTP_Slice = Slice<DEPENDENT<ITEM ,ARG1>> ;
 
 	class String {
 	protected:
@@ -375,7 +380,7 @@ trait STRING_HELP<ITEM ,SIZE ,ALWAYS> {
 		}
 
 		template <class ARG1 = DEPEND>
-		implicit String (CREF<MACRO_Slice<ARG1>> that) {
+		implicit String (CREF<CRTP_Slice<ARG1>> that) {
 			mString = Buffer<ITEM ,RESERVE_SIZE> (reserve_size (that.size ())) ;
 			INDEX ix = 0 ;
 			for (auto &&i : CSC::iter (0 ,that.size ())) {
@@ -494,6 +499,7 @@ trait STRING_HELP<ITEM ,SIZE ,ALWAYS> {
 		}
 
 		VREF<ITEM> at (CREF<INDEX> index) leftvalue {
+			assert (vbetween (index ,0 ,size ())) ;
 			return mString[index] ;
 		}
 
@@ -502,11 +508,17 @@ trait STRING_HELP<ITEM ,SIZE ,ALWAYS> {
 		}
 
 		CREF<ITEM> at (CREF<INDEX> index) const leftvalue {
+			assert (vbetween (index ,0 ,size ())) ;
 			return mString[index] ;
 		}
 
 		inline CREF<ITEM> operator[] (CREF<INDEX> index) const leftvalue {
 			return at (index) ;
+		}
+
+		INDEX access (CREF<ITEM> item) const {
+			unimplemented () ;
+			return NONE ;
 		}
 
 		BOOL empty () const {
@@ -534,7 +546,7 @@ trait STRING_HELP<ITEM ,SIZE ,ALWAYS> {
 		}
 
 		template <class ARG1 = DEPEND>
-		BOOL equal (CREF<MACRO_Slice<ARG1>> that) const {
+		BOOL equal (CREF<CRTP_Slice<ARG1>> that) const {
 			const auto r1x = length () ;
 			const auto r2x = that.size () ;
 			if (r1x != r2x)
@@ -543,12 +555,12 @@ trait STRING_HELP<ITEM ,SIZE ,ALWAYS> {
 		}
 
 		template <class ARG1 = DEPEND>
-		inline BOOL operator== (CREF<MACRO_Slice<ARG1>> that) const {
+		inline BOOL operator== (CREF<CRTP_Slice<ARG1>> that) const {
 			return equal (that) ;
 		}
 
 		template <class ARG1 = DEPEND>
-		inline BOOL operator!= (CREF<MACRO_Slice<ARG1>> that) const {
+		inline BOOL operator!= (CREF<CRTP_Slice<ARG1>> that) const {
 			return ifnot (equal (that)) ;
 		}
 
@@ -599,7 +611,7 @@ trait STRING_HELP<ITEM ,SIZE ,ALWAYS> {
 		}
 
 		template <class ARG1 = DEPEND>
-		String concat (CREF<MACRO_Slice<ARG1>> that) const {
+		String concat (CREF<CRTP_Slice<ARG1>> that) const {
 			const auto r1x = length () ;
 			const auto r2x = that.size () ;
 			String ret = String (r1x + r2x) ;
@@ -614,7 +626,7 @@ trait STRING_HELP<ITEM ,SIZE ,ALWAYS> {
 		}
 
 		template <class ARG1 = DEPEND>
-		inline String operator+ (CREF<MACRO_Slice<ARG1>> that) const {
+		inline String operator+ (CREF<CRTP_Slice<ARG1>> that) const {
 			return concat (that) ;
 		}
 
@@ -642,7 +654,7 @@ trait STRING_HELP<ITEM ,SIZE ,ALWAYS> {
 		}
 
 		template <class ARG1 = DEPEND>
-		void concatto (CREF<MACRO_Slice<ARG1>> that) {
+		void concatto (CREF<CRTP_Slice<ARG1>> that) {
 			const auto r1x = length () ;
 			const auto r2x = that.size () ;
 			auto rxx = TRUE ;
@@ -662,7 +674,7 @@ trait STRING_HELP<ITEM ,SIZE ,ALWAYS> {
 		}
 
 		template <class ARG1 = DEPEND>
-		inline void operator+= (CREF<MACRO_Slice<ARG1>> that) {
+		inline void operator+= (CREF<CRTP_Slice<ARG1>> that) {
 			concatto (that) ;
 		}
 
@@ -679,6 +691,13 @@ trait STRING_HELP<ITEM ,SIZE ,ALWAYS> {
 			}
 			ret.mString[ix] = ITEM (0) ;
 			return move (ret) ;
+		}
+
+		void trunc (CREF<INDEX> index) {
+			INDEX ix = vmax (index ,ZERO) ;
+			if (ix >= size ())
+				return ;
+			mString[ix] = ITEM (0) ;
 		}
 
 	private:
@@ -801,6 +820,11 @@ trait DEQUE_HELP<ITEM ,SIZE ,ALWAYS> {
 
 		inline CREF<ITEM> operator[] (CREF<INDEX> index) const leftvalue {
 			return at (index) ;
+		}
+
+		INDEX access (CREF<ITEM> item) const {
+			unimplemented () ;
+			return NONE ;
 		}
 
 		template <class ARG1>
@@ -1030,6 +1054,11 @@ trait PRIORITY_HELP<ITEM ,SIZE ,ALWAYS> {
 
 		inline CREF<ITEM> operator[] (CREF<INDEX> index) const leftvalue {
 			return at (index) ;
+		}
+
+		INDEX access (CREF<ITEM> item) const {
+			unimplemented () ;
+			return NONE ;
 		}
 
 		INDEX get (CREF<INDEX> index) const {
@@ -1369,6 +1398,11 @@ trait LIST_HELP<ITEM ,SIZE ,ALWAYS> {
 			return at (index) ;
 		}
 
+		INDEX access (CREF<ITEM> item) const {
+			unimplemented () ;
+			return NONE ;
+		}
+
 		template <class ARG1>
 		Array<INDEX> range (CREF<ARG1> proc) const {
 			Array<INDEX> ret = Array<INDEX>::make (iter ()) ;
@@ -1684,6 +1718,11 @@ trait ARRAYLIST_HELP<ITEM ,SIZE ,ALWAYS> {
 			return at (index) ;
 		}
 
+		INDEX access (CREF<ITEM> item) const {
+			unimplemented () ;
+			return NONE ;
+		}
+
 		template <class ARG1>
 		Array<INDEX> range (CREF<ARG1> proc) const {
 			Array<INDEX> ret = Array<INDEX>::make (iter ()) ;
@@ -1911,7 +1950,7 @@ trait BITSET_HELP<SIZE ,ALWAYS> {
 		}
 
 		LENGTH length () const {
-			using R1X = typename DEPENDENT<BITSET_BYTELCACHE_HELP<DEPEND ,ALWAYS> ,SIZE>::ByteLCache ;
+			using R1X = typename BITSET_BYTELCACHE_HELP<DEPEND ,ALWAYS>::ByteLCache ;
 			LENGTH ret = 0 ;
 			for (auto &&i : CSC::iter (0 ,mSet.size ()))
 				ret += R1X::instance ()[mSet[i]] ;
@@ -2013,6 +2052,16 @@ trait BITSET_HELP<SIZE ,ALWAYS> {
 
 		inline BitProxy<CREF<BitSet>> operator[] (CREF<INDEX> index) const leftvalue {
 			return BitProxy<CREF<BitSet>> (CRef<BitSet>::reference (thiz) ,index) ;
+		}
+
+		INDEX access (CREF<BitProxy<VREF<BitSet>>> item) const {
+			unimplemented () ;
+			return NONE ;
+		}
+
+		INDEX access (CREF<BitProxy<CREF<BitSet>>> item) const {
+			unimplemented () ;
+			return NONE ;
 		}
 
 		void add (CREF<INDEX> index) {
@@ -2203,7 +2252,7 @@ trait BITSET_HELP<SIZE ,ALWAYS> {
 		}
 
 		INDEX find_first (CREF<BYTE> obj) const {
-			using R1X = typename DEPENDENT<BITSET_BYTEFCACHE_HELP<DEPEND ,ALWAYS> ,SIZE>::ByteFCache ;
+			using R1X = typename BITSET_BYTEFCACHE_HELP<DEPEND ,ALWAYS>::ByteFCache ;
 			const auto r1x = obj & BYTE (INDEX (~obj) + 1) ;
 			return R1X::instance ()[r1x] ;
 		}
@@ -2421,6 +2470,11 @@ trait SET_HELP<ITEM ,SIZE ,ALWAYS> {
 
 		inline CREF<ITEM> operator[] (CREF<INDEX> index) const leftvalue {
 			return at (index) ;
+		}
+
+		INDEX access (CREF<ITEM> item) const {
+			unimplemented () ;
+			return NONE ;
 		}
 
 		INDEX get (CREF<INDEX> index) const {
@@ -3064,6 +3118,11 @@ trait HASHSET_HELP<ITEM ,SIZE ,ALWAYS> {
 			return at (index) ;
 		}
 
+		INDEX access (CREF<ITEM> item) const {
+			unimplemented () ;
+			return NONE ;
+		}
+
 		INDEX get (CREF<INDEX> index) const {
 			return mSet[index].mMap ;
 		}
@@ -3287,6 +3346,11 @@ trait SOFTSET_HELP<ITEM ,ALWAYS> {
 
 		inline CREF<ITEM> operator[] (CREF<INDEX> index) const leftvalue {
 			return at (index) ;
+		}
+
+		INDEX access (CREF<ITEM> item) const {
+			unimplemented () ;
+			return NONE ;
 		}
 
 		INDEX get (CREF<INDEX> index) const {

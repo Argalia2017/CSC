@@ -132,8 +132,6 @@ trait DIRECTORY_IMPLHOLDER_HELP ;
 
 template <class DEPEND>
 trait DIRECTORY_HELP<DEPEND ,ALWAYS> {
-	using CHILD_MAX_SIZE = ENUMAS<VAL ,ENUMID<65536>> ;
-
 	struct CHILD {
 		String<STR> mFile ;
 		BOOL mIsFile ;
@@ -237,10 +235,17 @@ trait STREAMFILE_HELP<DEPEND ,ALWAYS> {
 		virtual void initialize (CREF<String<STR>> file_) = 0 ;
 		virtual void open () = 0 ;
 		virtual void create () = 0 ;
-		virtual void open_create () = 0 ;
+		virtual void append () = 0 ;
 		virtual void close () = 0 ;
+		virtual BOOL link (CREF<BOOL> readable ,CREF<BOOL> writable) = 0 ;
 		virtual LENGTH read (VREF<RegBuffer<BYTE>> item) = 0 ;
+		virtual LENGTH read (VREF<RegBuffer<WORD>> item) = 0 ;
+		virtual LENGTH read (VREF<RegBuffer<CHAR>> item) = 0 ;
+		virtual LENGTH read (VREF<RegBuffer<DATA>> item) = 0 ;
 		virtual LENGTH write (CREF<RegBuffer<BYTE>> item) = 0 ;
+		virtual LENGTH write (CREF<RegBuffer<WORD>> item) = 0 ;
+		virtual LENGTH write (CREF<RegBuffer<CHAR>> item) = 0 ;
+		virtual LENGTH write (CREF<RegBuffer<DATA>> item) = 0 ;
 		virtual void flush () = 0 ;
 	} ;
 
@@ -261,41 +266,7 @@ trait STREAMFILE_HELP<DEPEND ,ALWAYS> {
 		}
 
 		BOOL link (CREF<BOOL> readable ,CREF<BOOL> writable) {
-			BOOL ret = FALSE ;
-			auto rxx = TRUE ;
-			if ifswitch (rxx) {
-				if ifnot (readable)
-					discard ;
-				if (writable)
-					discard ;
-				mThis->open () ;
-				ret = TRUE ;
-			}
-			if ifswitch (rxx) {
-				if (readable)
-					discard ;
-				if ifnot (writable)
-					discard ;
-				mThis->create () ;
-				ret = TRUE ;
-			}
-			if ifswitch (rxx) {
-				if ifnot (readable)
-					discard ;
-				if ifnot (writable)
-					discard ;
-				try_invoke ([&] () {
-					mThis->open () ;
-				} ,[&] () {
-					mThis->create () ;
-				} ,[&] () {
-					noop () ;
-				}) ;
-				mThis->close () ;
-				mThis->open_create () ;
-				ret = TRUE ;
-			}
-			return move (ret) ;
+			return mThis->link (readable ,writable) ;
 		}
 
 		LENGTH read (VREF<RegBuffer<BYTE>> item) {
@@ -307,14 +278,7 @@ trait STREAMFILE_HELP<DEPEND ,ALWAYS> {
 		}
 
 		LENGTH read (VREF<RegBuffer<WORD>> item) {
-			using R1X = SIZE_OF<WORD> ;
-			if (item.size () == 0)
-				return ZERO ;
-			auto &&tmp = unsafe_cast[TYPEAS<TEMP<void>>::expr] (unsafe_deptr (item[0])) ;
-			LENGTH ret = read (RegBuffer<BYTE>::from (tmp ,0 ,item.size () * R1X::expr)) ;
-			ret /= R1X::expr ;
-			unsafe_barrier () ;
-			return move (ret) ;
+			return mThis->read (item) ;
 		}
 
 		LENGTH read (VREF<VarBuffer<WORD>> item) {
@@ -322,14 +286,7 @@ trait STREAMFILE_HELP<DEPEND ,ALWAYS> {
 		}
 
 		LENGTH read (VREF<RegBuffer<CHAR>> item) {
-			using R1X = SIZE_OF<CHAR> ;
-			if (item.size () == 0)
-				return ZERO ;
-			auto &&tmp = unsafe_cast[TYPEAS<TEMP<void>>::expr] (unsafe_deptr (item[0])) ;
-			LENGTH ret = read (RegBuffer<BYTE>::from (tmp ,0 ,item.size () * R1X::expr)) ;
-			ret /= R1X::expr ;
-			unsafe_barrier () ;
-			return move (ret) ;
+			return mThis->read (item) ;
 		}
 
 		LENGTH read (VREF<VarBuffer<CHAR>> item) {
@@ -337,14 +294,7 @@ trait STREAMFILE_HELP<DEPEND ,ALWAYS> {
 		}
 
 		LENGTH read (VREF<RegBuffer<DATA>> item) {
-			using R1X = SIZE_OF<DATA> ;
-			if (item.size () == 0)
-				return ZERO ;
-			auto &&tmp = unsafe_cast[TYPEAS<TEMP<void>>::expr] (unsafe_deptr (item[0])) ;
-			LENGTH ret = read (RegBuffer<BYTE>::from (tmp ,0 ,item.size () * R1X::expr)) ;
-			ret /= R1X::expr ;
-			unsafe_barrier () ;
-			return move (ret) ;
+			return mThis->read (item) ;
 		}
 
 		LENGTH read (VREF<VarBuffer<DATA>> item) {
@@ -364,13 +314,7 @@ trait STREAMFILE_HELP<DEPEND ,ALWAYS> {
 		}
 
 		LENGTH write (CREF<RegBuffer<WORD>> item) {
-			using R1X = SIZE_OF<WORD> ;
-			if (item.size () == 0)
-				return ZERO ;
-			auto &&tmp = unsafe_cast[TYPEAS<TEMP<void>>::expr] (unsafe_deptr (item[0])) ;
-			LENGTH ret = write (RegBuffer<BYTE>::from (tmp ,0 ,item.size () * R1X::expr)) ;
-			ret /= R1X::expr ;
-			return move (ret) ;
+			return mThis->write (item) ;
 		}
 
 		LENGTH write (CREF<VarBuffer<WORD>> item) {
@@ -382,13 +326,7 @@ trait STREAMFILE_HELP<DEPEND ,ALWAYS> {
 		}
 
 		LENGTH write (CREF<RegBuffer<CHAR>> item) {
-			using R1X = SIZE_OF<CHAR> ;
-			if (item.size () == 0)
-				return ZERO ;
-			auto &&tmp = unsafe_cast[TYPEAS<TEMP<void>>::expr] (unsafe_deptr (item[0])) ;
-			LENGTH ret = write (RegBuffer<BYTE>::from (tmp ,0 ,item.size () * R1X::expr)) ;
-			ret /= R1X::expr ;
-			return move (ret) ;
+			return mThis->write (item) ;
 		}
 
 		LENGTH write (CREF<VarBuffer<CHAR>> item) {
@@ -400,13 +338,7 @@ trait STREAMFILE_HELP<DEPEND ,ALWAYS> {
 		}
 
 		LENGTH write (CREF<RegBuffer<DATA>> item) {
-			using R1X = SIZE_OF<DATA> ;
-			if (item.size () == 0)
-				return ZERO ;
-			auto &&tmp = unsafe_cast[TYPEAS<TEMP<void>>::expr] (unsafe_deptr (item[0])) ;
-			LENGTH ret = write (RegBuffer<BYTE>::from (tmp ,0 ,item.size () * R1X::expr)) ;
-			ret /= R1X::expr ;
-			return move (ret) ;
+			return mThis->write (item) ;
 		}
 
 		LENGTH write (CREF<VarBuffer<DATA>> item) {
@@ -436,16 +368,14 @@ trait BUFFERFILE_IMPLHOLDER_HELP ;
 
 template <class DEPEND>
 trait BUFFERFILE_HOLDER_HELP<DEPEND ,ALWAYS> {
-	using PAGE_SIZE = ENUMAS<VAL ,ENUMID<4194304>> ;
-	using HEADER_SIZE = ENUMAS<VAL ,ENUMID<65536>> ;
-
 	struct Holder implement Interface {
 		virtual void initialize (CREF<String<STR>> file_ ,CREF<Clazz> clazz) = 0 ;
 		virtual void set_cache_size (CREF<LENGTH> size_) = 0 ;
 		virtual void open () = 0 ;
 		virtual void create () = 0 ;
-		virtual void open_create () = 0 ;
+		virtual void append () = 0 ;
 		virtual void close () = 0 ;
+		virtual BOOL link (CREF<BOOL> readable ,CREF<BOOL> writable) = 0 ;
 		virtual VAL64 length () const = 0 ;
 		virtual VAL64 insert (CREF<VAL64> size_) = 0 ;
 		virtual void get (CREF<VAL64> index ,VREF<RegBuffer<BYTE>> item) = 0 ;
@@ -482,41 +412,7 @@ trait BUFFERFILE_HELP<ITEM ,ALWAYS> {
 		}
 
 		BOOL link (CREF<BOOL> readable ,CREF<BOOL> writable) {
-			BOOL ret = FALSE ;
-			auto rxx = TRUE ;
-			if ifswitch (rxx) {
-				if ifnot (readable)
-					discard ;
-				if (writable)
-					discard ;
-				mThis->open () ;
-				ret = TRUE ;
-			}
-			if ifswitch (rxx) {
-				if (readable)
-					discard ;
-				if ifnot (writable)
-					discard ;
-				mThis->create () ;
-				ret = TRUE ;
-			}
-			if ifswitch (rxx) {
-				if ifnot (readable)
-					discard ;
-				if ifnot (writable)
-					discard ;
-				try_invoke ([&] () {
-					mThis->open () ;
-				} ,[&] () {
-					mThis->create () ;
-				} ,[&] () {
-					noop () ;
-				}) ;
-				mThis->close () ;
-				mThis->open_create () ;
-				ret = TRUE ;
-			}
-			return move (ret) ;
+			return mThis->link (readable ,writable) ;
 		}
 
 		VAL64 length () const {
@@ -538,6 +434,7 @@ trait BUFFERFILE_HELP<ITEM ,ALWAYS> {
 		void set (CREF<VAL64> index ,CREF<ITEM> item) {
 			auto &&tmp = unsafe_cast[TYPEAS<TEMP<void>>::expr] (unsafe_deptr (item)) ;
 			mThis->set (index ,RegBuffer<BYTE>::from (tmp ,0 ,SIZE::expr)) ;
+			unsafe_barrier () ;
 		}
 
 		void flush () {
