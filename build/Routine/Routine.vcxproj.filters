@@ -107,6 +107,21 @@
     <None Include="..\..\src\csc\csc_string.hpp.gbks.inl">
       <Filter>csc</Filter>
     </None>
+    <None Include="..\..\src\csc\csc_algorithm.hpp.default.inl">
+      <Filter>csc</Filter>
+    </None>
+    <None Include="..\..\src\csc\csc_basic.hpp.default.inl">
+      <Filter>csc</Filter>
+    </None>
+    <None Include="..\..\src\csc\csc_thread.hpp.default.inl">
+      <Filter>csc</Filter>
+    </None>
+    <None Include="..\..\src\csc\csc_functional.hpp.default.inl">
+      <Filter>csc</Filter>
+    </None>
+    <None Include="..\..\src\csc\csc_serialization.hpp.default.inl">
+      <Filter>csc</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Natvis Include="..\..\src\csc\cpp.natvis">

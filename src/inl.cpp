@@ -25,10 +25,15 @@
 #endif
 
 #include "csc/csc_core.hpp.default.inl"
+#include "csc/csc_basic.hpp.default.inl"
 #include "csc/csc_math.hpp.default.inl"
 #include "csc/csc_string.hpp.gbks.inl"
 #include "csc/csc_string.hpp.default.inl"
+#include "csc/csc_serialization.hpp.default.inl"
+#include "csc/csc_algorithm.hpp.default.inl"
+#include "csc/csc_functional.hpp.default.inl"
 #include "csc/csc_runtime.hpp.default.inl"
+#include "csc/csc_thread.hpp.default.inl"
 
 #ifdef __CSC_SYSTEM_WINDOWS__
 #include "csc/csc_runtime.hpp.windows.inl"

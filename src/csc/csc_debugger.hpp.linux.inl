@@ -32,7 +32,7 @@ trait CONSOLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	using OPTION_NO_INFO = typename CONSOLE_HELP<DEPEND ,ALWAYS>::OPTION_NO_INFO ;
 	using OPTION_NO_DEBUG = typename CONSOLE_HELP<DEPEND ,ALWAYS>::OPTION_NO_DEBUG ;
 	using OPTION_NO_VERBOSE = typename CONSOLE_HELP<DEPEND ,ALWAYS>::OPTION_NO_VERBOSE ;
-	using OPTION_SIZE = typename CONSOLE_HELP<DEPEND ,ALWAYS>::OPTION_SIZE ;
+	using OPTION_SIZE = ENUMAS<VAL ,ENUMID<32>> ;
 
 	struct HEAP {
 		String<STR> mConBuffer ;
@@ -449,9 +449,9 @@ trait REPORTER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			return move (ret) ;
 		}
 
-		String<STR> symbol_from_address (CREF<FLAG> addr_) const override {
+		String<STR> symbol_from_address (CREF<FLAG> addr) const override {
 			String<STR> ret ;
-			const auto r1x = csc_pointer_t (addr_) ;
+			const auto r1x = csc_pointer_t (addr) ;
 			auto rxx = TRUE ;
 			if ifswitch (rxx) {
 				const auto r2x = UniqueRef<HSYMB> ([&] (VREF<HSYMB> me) {
@@ -464,12 +464,13 @@ trait REPORTER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				if (r2x.self == NULL)
 					discard ;
 				auto &&tmp = unsafe_cast[TYPEAS<TEMP<void>>::expr] (unsafe_deptr ((**r2x.self))) ;
+				unsafe_barrier () ;
 				BufferProc::buf_slice (mHeap->mNameBuffer ,RegBuffer<STRA>::from (tmp ,0 ,VAL32_MAX) ,mHeap->mNameBuffer.size ()) ;
-				const auto r3x = string_build[TYPEAS<TYPEAS<STR ,DATA>>::expr] (DATA (addr_)) ;
+				const auto r3x = string_build[TYPEAS<TYPEAS<STR ,DATA>>::expr] (DATA (addr)) ;
 				ret = String<STR>::make (slice ("[") ,r3x ,slice ("] : ") ,mHeap->mNameBuffer) ;
 			}
 			if ifswitch (rxx) {
-				const auto r4x = string_build[TYPEAS<TYPEAS<STR ,DATA>>::expr] (DATA (addr_)) ;
+				const auto r4x = string_build[TYPEAS<TYPEAS<STR ,DATA>>::expr] (DATA (addr)) ;
 				ret = String<STR>::make (slice ("[") ,r4x ,slice ("] : ") ,slice ("null")) ;
 			}
 			return move (ret) ;

@@ -65,7 +65,7 @@ trait CONSOLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	using OPTION_NO_INFO = typename CONSOLE_HELP<DEPEND ,ALWAYS>::OPTION_NO_INFO ;
 	using OPTION_NO_DEBUG = typename CONSOLE_HELP<DEPEND ,ALWAYS>::OPTION_NO_DEBUG ;
 	using OPTION_NO_VERBOSE = typename CONSOLE_HELP<DEPEND ,ALWAYS>::OPTION_NO_VERBOSE ;
-	using OPTION_SIZE = typename CONSOLE_HELP<DEPEND ,ALWAYS>::OPTION_SIZE ;
+	using OPTION_SIZE = ENUMAS<VAL ,ENUMID<32>> ;
 
 	struct HEAP {
 		String<STR> mConBuffer ;
@@ -517,7 +517,7 @@ trait REPORTER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			return move (ret) ;
 		}
 
-		String<STR> symbol_from_address (CREF<FLAG> addr_) const override {
+		String<STR> symbol_from_address (CREF<FLAG> addr) const override {
 			String<STR> ret ;
 			auto rxx = TRUE ;
 			if ifswitch (rxx) {
@@ -527,15 +527,15 @@ trait REPORTER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				auto rax = Box<REAL_SYMBOL_INFO>::make () ;
 				rax->mFirst.SizeOfStruct = DWORD (SIZE_OF<SYMBOL_INFO>::expr) ;
 				rax->mFirst.MaxNameLen = DWORD (FUNCTION_NAME_SSIZE::expr) ;
-				const auto r1x = maybe_SymFromAddr (mHeap->mSymbolFromAddress ,DWORD64 (addr_) ,NULL ,(&rax->mFirst)) ;
+				const auto r1x = maybe_SymFromAddr (mHeap->mSymbolFromAddress ,DWORD64 (addr) ,NULL ,(&rax->mFirst)) ;
 				if ifnot (r1x)
 					discard ;
-				const auto r2x = string_build[TYPEAS<TYPEAS<STR ,DATA>>::expr] (DATA (addr_)) ;
+				const auto r2x = string_build[TYPEAS<TYPEAS<STR ,DATA>>::expr] (DATA (addr)) ;
 				BufferProc::buf_slice (mHeap->mNameBuffer ,rax->mFirst.Name ,mHeap->mNameBuffer.size ()) ;
 				ret = String<STR>::make (slice ("[") ,r2x ,slice ("] : ") ,mHeap->mNameBuffer) ;
 			}
 			if ifswitch (rxx) {
-				const auto r3x = string_build[TYPEAS<TYPEAS<STR ,DATA>>::expr] (DATA (addr_)) ;
+				const auto r3x = string_build[TYPEAS<TYPEAS<STR ,DATA>>::expr] (DATA (addr)) ;
 				ret = String<STR>::make (slice ("[") ,r3x ,slice ("] : ") ,slice ("null")) ;
 			}
 			return move (ret) ;

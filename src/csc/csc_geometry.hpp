@@ -24,7 +24,7 @@ trait VECTOR_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 	using SIZE = RANK4 ;
 
 	template <class ARG1>
-	using MACRO_Matrix = typename DEPENDENT<MATRIX_HELP<ITEM ,ALWAYS> ,ARG1>::Matrix ;
+	using CRTP_Matrix = typename DEPENDENT<MATRIX_HELP<ITEM ,ALWAYS> ,ARG1>::Matrix ;
 
 	class Vector {
 	protected:
@@ -215,7 +215,7 @@ trait VECTOR_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 		}
 
 		template <class ARG1 = DEPEND>
-		Vector mul (CREF<MACRO_Matrix<ARG1>> that) const {
+		Vector mul (CREF<CRTP_Matrix<ARG1>> that) const {
 			Vector ret ;
 			for (auto &&i : iter (0 ,4)) {
 				const auto r1x = at (0) * that.at (i ,0) ;
@@ -228,7 +228,7 @@ trait VECTOR_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 		}
 
 		template <class ARG1 = DEPEND>
-		inline Vector operator* (CREF<MACRO_Matrix<ARG1>> that) const {
+		inline Vector operator* (CREF<CRTP_Matrix<ARG1>> that) const {
 			return mul (that) ;
 		}
 
@@ -343,7 +343,7 @@ trait QUATERNION_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 	using SIZE = RANK4 ;
 
 	template <class ARG1>
-	using MACRO_Matrix = typename DEPENDENT<MATRIX_HELP<ITEM ,ALWAYS> ,ARG1>::Matrix ;
+	using CRTP_Matrix = typename DEPENDENT<MATRIX_HELP<ITEM ,ALWAYS> ,ARG1>::Matrix ;
 
 	class Quaternion {
 	protected:
@@ -361,7 +361,7 @@ trait QUATERNION_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 		}
 
 		template <class ARG1 = DEPEND>
-		explicit Quaternion (CREF<MACRO_Matrix<ARG1>> that) {
+		explicit Quaternion (CREF<CRTP_Matrix<ARG1>> that) {
 			const auto r1x = that.decompose ().mRotation ;
 			const auto r2x = invoke ([&] () {
 				ARRAY4<ITEM> ret ;
@@ -511,10 +511,20 @@ trait MATRIX_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 	using SIZE = ENUMAS<VAL ,ENUMID<16>> ;
 
 	template <class ARG1>
-	using MACRO_DECOMPOSE = typename DEPENDENT<MATRIX_HELP<ITEM ,ALWAYS> ,ARG1>::DECOMPOSE ;
+	using CRTP_Matrix = typename DEPENDENT<MATRIX_HELP<ITEM ,ALWAYS> ,ARG1>::Matrix ;
 
-	template <class ARG1>
-	using MACRO_SVD_DECOMPOSE = typename DEPENDENT<MATRIX_HELP<ITEM ,ALWAYS> ,ARG1>::SVD_DECOMPOSE ;
+	struct DECOMPOSE {
+		CRTP_Matrix<DEPEND> mTranslation ;
+		CRTP_Matrix<DEPEND> mRotation ;
+		CRTP_Matrix<DEPEND> mScale ;
+		CRTP_Matrix<DEPEND> mShear ;
+	} ;
+
+	struct SINGULAR {
+		CRTP_Matrix<DEPEND> mU ;
+		CRTP_Matrix<DEPEND> mS ;
+		CRTP_Matrix<DEPEND> mV ;
+	} ;
 
 	class Matrix {
 	protected:
@@ -1022,10 +1032,9 @@ trait MATRIX_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 			return move (ret) ;
 		}
 
-		template <class ARG1 = DEPEND>
-		MACRO_DECOMPOSE<ARG1> decompose () const {
+		DECOMPOSE decompose () const {
 			assert (is_affine_matrix ()) ;
-			MACRO_DECOMPOSE<ARG1> ret ;
+			DECOMPOSE ret ;
 			const auto r1x = thiz * Vector<ITEM>::axis_x () ;
 			const auto r2x = thiz * Vector<ITEM>::axis_y () ;
 			const auto r3x = thiz * Vector<ITEM>::axis_z () ;
@@ -1047,10 +1056,9 @@ trait MATRIX_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 			return move (ret) ;
 		}
 
-		template <class ARG1 = DEPEND>
-		MACRO_SVD_DECOMPOSE<ARG1> singular () const {
+		SINGULAR singular () const {
 			using R1X = typename MATRIX_SINGULAR_HELP<ITEM ,ALWAYS>::Singular ;
-			MACRO_SVD_DECOMPOSE<ARG1> ret ;
+			SINGULAR ret ;
 			auto rax = R1X (thiz) ;
 			rax.generate () ;
 			ret.mU = rax.matrix_u () ;
@@ -1094,25 +1102,12 @@ trait MATRIX_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 		}
 	} ;
 
-	struct DECOMPOSE {
-		Matrix mTranslation ;
-		Matrix mRotation ;
-		Matrix mScale ;
-		Matrix mShear ;
-	} ;
-
-	struct SVD_DECOMPOSE {
-		Matrix mU ;
-		Matrix mS ;
-		Matrix mV ;
-	} ;
-
 	class DiagMatrix implement Matrix {
 	public:
 		implicit DiagMatrix () = delete ;
 
 		explicit DiagMatrix (CREF<ITEM> x ,CREF<ITEM> y ,CREF<ITEM> z ,CREF<ITEM> w)
-			:DiagMatrix (Matrix::make_diag (x ,y ,z ,w)) {}
+			:Matrix (Matrix::make_diag (x ,y ,z ,w)) {}
 	} ;
 
 	class ShearMatrix implement Matrix {
@@ -1120,7 +1115,7 @@ trait MATRIX_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 		implicit ShearMatrix () = delete ;
 
 		explicit ShearMatrix (CREF<Vector<ITEM>> vx ,CREF<Vector<ITEM>> vy ,CREF<Vector<ITEM>> vz)
-			:ShearMatrix (Matrix::make_shear (vx ,vy ,vz)) {}
+			:Matrix (Matrix::make_shear (vx ,vy ,vz)) {}
 	} ;
 
 	class RotationMatrix implement Matrix {
@@ -1128,13 +1123,13 @@ trait MATRIX_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 		implicit RotationMatrix () = delete ;
 
 		explicit RotationMatrix (CREF<Vector<ITEM>> vx ,CREF<Vector<ITEM>> vy)
-			:RotationMatrix (Matrix::make_rotation (vx ,vy)) {}
+			:Matrix (Matrix::make_rotation (vx ,vy)) {}
 
 		explicit RotationMatrix (CREF<Vector<ITEM>> normal ,CREF<ITEM> angle)
-			:RotationMatrix (Matrix::make_rotation (normal ,angle)) {}
+			:Matrix (Matrix::make_rotation (normal ,angle)) {}
 
 		explicit RotationMatrix (CREF<Quaternion<ITEM>> quat)
-			:RotationMatrix (Matrix::make_rotation (quat)) {}
+			:Matrix (Matrix::make_rotation (quat)) {}
 	} ;
 
 	class TranslationMatrix implement Matrix {
@@ -1142,7 +1137,7 @@ trait MATRIX_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 		implicit TranslationMatrix () = delete ;
 
 		explicit TranslationMatrix (CREF<ITEM> tx ,CREF<ITEM> ty ,CREF<ITEM> tz)
-			:TranslationMatrix (Matrix::make_translation (tx ,ty ,tz)) {}
+			:Matrix (Matrix::make_translation (tx ,ty ,tz)) {}
 	} ;
 
 	class PerspectiveMatrix implement Matrix {
@@ -1150,7 +1145,7 @@ trait MATRIX_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 		implicit PerspectiveMatrix () = delete ;
 
 		explicit PerspectiveMatrix (CREF<ITEM> fx ,CREF<ITEM> fy ,CREF<ITEM> wx ,CREF<ITEM> wy)
-			:PerspectiveMatrix (Matrix::make_perspective (fx ,fy ,wx ,wy)) {}
+			:Matrix (Matrix::make_perspective (fx ,fy ,wx ,wy)) {}
 	} ;
 
 	class ProjectionMatrix implement Matrix {
@@ -1158,7 +1153,7 @@ trait MATRIX_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 		implicit ProjectionMatrix () = delete ;
 
 		explicit ProjectionMatrix (CREF<Vector<ITEM>> normal ,CREF<ITEM> center ,CREF<Vector<ITEM>> light)
-			:ProjectionMatrix (Matrix::make_projection (normal ,center ,light)) {}
+			:Matrix (Matrix::make_projection (normal ,center ,light)) {}
 	} ;
 
 	class CrossProductMatrix implement Matrix {
@@ -1166,7 +1161,7 @@ trait MATRIX_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 		implicit CrossProductMatrix () = delete ;
 
 		explicit CrossProductMatrix (CREF<Vector<ITEM>> vx)
-			:CrossProductMatrix (Matrix::make_cross_product (vx)) {}
+			:Matrix (Matrix::make_cross_product (vx)) {}
 	} ;
 
 	class SymmetryMatrix implement Matrix {
@@ -1174,7 +1169,7 @@ trait MATRIX_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 		implicit SymmetryMatrix () = delete ;
 
 		explicit SymmetryMatrix (CREF<Vector<ITEM>> vx ,CREF<Vector<ITEM>> vy)
-			:SymmetryMatrix (Matrix::make_symmetry (vx ,vy)) {}
+			:Matrix (Matrix::make_symmetry (vx ,vy)) {}
 	} ;
 
 	class ReflectionMatrix implement Matrix {
@@ -1182,7 +1177,7 @@ trait MATRIX_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 		implicit ReflectionMatrix () = delete ;
 
 		explicit ReflectionMatrix (CREF<Vector<ITEM>> normal)
-			:ReflectionMatrix (Matrix::make_reflection (normal)) {}
+			:Matrix (Matrix::make_reflection (normal)) {}
 	} ;
 } ;
 
@@ -1209,8 +1204,8 @@ trait MATRIX_SINGULAR_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 	public:
 		implicit Singular () = delete ;
 
-		explicit Singular (CREF<Matrix> a) {
-			mA = a ;
+		explicit Singular (CREF<Matrix> a_) {
+			mA = a_ ;
 		}
 
 		Matrix matrix_u () const {

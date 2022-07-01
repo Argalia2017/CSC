@@ -497,4 +497,16 @@
     </Expand>
   </Type>
 
+  <Type Name="CSC::PROMISE_HELP&lt;*&gt;::Promise">
+    <Expand>
+      <ExpandedItem>mThis</ExpandedItem>
+    </Expand>
+  </Type>
+
+  <Type Name="CSC::FUTURE_HELP&lt;*&gt;::Future">
+    <Expand>
+      <ExpandedItem>mThis</ExpandedItem>
+    </Expand>
+  </Type>
+
 </AutoVisualizer>

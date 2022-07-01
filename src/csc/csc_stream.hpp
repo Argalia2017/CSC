@@ -16,7 +16,7 @@ template <class...>
 trait BYTEREADER_HELP ;
 
 template <class...>
-trait BYTEREADER_IMPLHOLDER_HELP ;
+trait BYTEREADER_ATTRIBUTE_HELP ;
 
 template <class DEPEND>
 trait BYTEREADER_HELP<DEPEND ,ALWAYS> {
@@ -27,7 +27,11 @@ trait BYTEREADER_HELP<DEPEND ,ALWAYS> {
 	} ;
 
 	template <class ARG1>
-	using MACRO_Binder = typename DEPENDENT<BYTEREADER_HELP<DEPEND ,ALWAYS> ,ARG1>::Binder ;
+	using CRTP_ByteReader = typename DEPENDENT<BYTEREADER_HELP<DEPEND ,ALWAYS> ,ARG1>::ByteReader ;
+
+	struct Binder implement Interface {
+		virtual void friend_read (VREF<CRTP_ByteReader<DEPEND>> reader) = 0 ;
+	} ;
 
 	class ByteReader {
 	protected:
@@ -42,7 +46,7 @@ trait BYTEREADER_HELP<DEPEND ,ALWAYS> {
 		implicit ByteReader () = default ;
 
 		explicit ByteReader (RREF<CRef<RegBuffer<BYTE>>> stream) {
-			using R1X = typename BYTEREADER_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
+			using R1X = typename BYTEREADER_ATTRIBUTE_HELP<DEPEND ,ALWAYS>::Attribute ;
 			set_attr (TYPEAS<R1X>::expr) ;
 			mStream = move (stream) ;
 			reset () ;
@@ -130,18 +134,18 @@ trait BYTEREADER_HELP<DEPEND ,ALWAYS> {
 			if ifswitch (rxx) {
 				if ifnot (mAttr->is_big_endian ())
 					discard ;
-				auto rax = Box<ARR<BYTE ,SIZE_OF<WORD>>>::make () ;
+				auto rax = BoxBuffer<BYTE ,SIZE_OF<WORD>> () ;
 				for (auto &&i : iter (0 ,SIZE_OF<WORD>::expr))
-					read (rax.self[i]) ;
-				item = bitwise[TYPEAS<WORD>::expr] (rax.self) ;
+					read (rax[i]) ;
+				item = bitwise[TYPEAS<WORD>::expr] (rax) ;
 			}
 			if ifswitch (rxx) {
-				auto rax = Box<ARR<BYTE ,SIZE_OF<WORD>>>::make () ;
+				auto rax = BoxBuffer<BYTE ,SIZE_OF<WORD>> () ;
 				for (auto &&i : iter (0 ,SIZE_OF<WORD>::expr)) {
 					INDEX ix = SIZE_OF<WORD>::expr - 1 - i ;
-					read (rax.self[ix]) ;
+					read (rax[ix]) ;
 				}
-				item = bitwise[TYPEAS<WORD>::expr] (rax.self) ;
+				item = bitwise[TYPEAS<WORD>::expr] (rax) ;
 			}
 		}
 
@@ -155,18 +159,18 @@ trait BYTEREADER_HELP<DEPEND ,ALWAYS> {
 			if ifswitch (rxx) {
 				if ifnot (mAttr->is_big_endian ())
 					discard ;
-				auto rax = Box<ARR<BYTE ,SIZE_OF<CHAR>>>::make () ;
+				auto rax = BoxBuffer<BYTE ,SIZE_OF<CHAR>> () ;
 				for (auto &&i : iter (0 ,SIZE_OF<CHAR>::expr))
-					read (rax.self[i]) ;
-				item = bitwise[TYPEAS<CHAR>::expr] (rax.self) ;
+					read (rax[i]) ;
+				item = bitwise[TYPEAS<CHAR>::expr] (rax) ;
 			}
 			if ifswitch (rxx) {
-				auto rax = Box<ARR<BYTE ,SIZE_OF<CHAR>>>::make () ;
+				auto rax = BoxBuffer<BYTE ,SIZE_OF<CHAR>> () ;
 				for (auto &&i : iter (0 ,SIZE_OF<CHAR>::expr)) {
 					INDEX ix = SIZE_OF<CHAR>::expr - 1 - i ;
-					read (rax.self[ix]) ;
+					read (rax[ix]) ;
 				}
-				item = bitwise[TYPEAS<CHAR>::expr] (rax.self) ;
+				item = bitwise[TYPEAS<CHAR>::expr] (rax) ;
 			}
 		}
 
@@ -180,18 +184,18 @@ trait BYTEREADER_HELP<DEPEND ,ALWAYS> {
 			if ifswitch (rxx) {
 				if ifnot (mAttr->is_big_endian ())
 					discard ;
-				auto rax = Box<ARR<BYTE ,SIZE_OF<DATA>>>::make () ;
+				auto rax = BoxBuffer<BYTE ,SIZE_OF<DATA>> () ;
 				for (auto &&i : iter (0 ,SIZE_OF<DATA>::expr))
-					read (rax.self[i]) ;
-				item = bitwise[TYPEAS<DATA>::expr] (rax.self) ;
+					read (rax[i]) ;
+				item = bitwise[TYPEAS<DATA>::expr] (rax) ;
 			}
 			if ifswitch (rxx) {
-				auto rax = Box<ARR<BYTE ,SIZE_OF<DATA>>>::make () ;
+				auto rax = BoxBuffer<BYTE ,SIZE_OF<DATA>> () ;
 				for (auto &&i : iter (0 ,SIZE_OF<DATA>::expr)) {
 					INDEX ix = SIZE_OF<DATA>::expr - 1 - i ;
-					read (rax.self[ix]) ;
+					read (rax[ix]) ;
 				}
-				item = bitwise[TYPEAS<DATA>::expr] (rax.self) ;
+				item = bitwise[TYPEAS<DATA>::expr] (rax) ;
 			}
 		}
 
@@ -389,13 +393,11 @@ trait BYTEREADER_HELP<DEPEND ,ALWAYS> {
 			return thiz ;
 		}
 
-		template <class ARG1 = DEPEND>
-		void read (VREF<MACRO_Binder<ARG1>> item) {
+		void read (VREF<Binder> item) {
 			item.friend_read (thiz) ;
 		}
 
-		template <class ARG1 = DEPEND>
-		inline VREF<ByteReader> operator>> (VREF<MACRO_Binder<ARG1>> item) {
+		inline VREF<ByteReader> operator>> (VREF<Binder> item) {
 			read (item) ;
 			return thiz ;
 		}
@@ -444,19 +446,15 @@ trait BYTEREADER_HELP<DEPEND ,ALWAYS> {
 			return thiz ;
 		}
 	} ;
-
-	struct Binder implement Interface {
-		virtual void friend_read (VREF<ByteReader> reader) = 0 ;
-	} ;
 } ;
 
 template <class DEPEND>
-trait BYTEREADER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
-	using Attribute = typename BYTEREADER_HELP<DEPEND ,ALWAYS>::Attribute ;
+trait BYTEREADER_ATTRIBUTE_HELP<DEPEND ,ALWAYS> {
+	using SUPER = typename BYTEREADER_HELP<DEPEND ,ALWAYS>::Attribute ;
 
-	class ImplHolder implement Attribute {
+	class Attribute implement SUPER {
 	public:
-		implicit ImplHolder () = default ;
+		implicit Attribute () = default ;
 
 		BYTE ending_item () const override {
 			return BYTE (0X00) ;
@@ -467,11 +465,10 @@ trait BYTEREADER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		BOOL is_big_endian () const override {
-			using R1X = Box<ARR<BYTE ,SIZE_OF<WORD>>> ;
 			return memorize ([&] () {
 				const auto r1x = WORD (0X00FF) ;
-				const auto r2x = bitwise[TYPEAS<R1X>::expr] (r1x) ;
-				if (r2x.self[0] != BYTE (0X00))
+				const auto r2x = bitwise[TYPEAS<BoxBuffer<BYTE ,SIZE_OF<WORD>>>::expr] (r1x) ;
+				if (r2x[0] != BYTE (0X00))
 					return FALSE ;
 				return TRUE ;
 			}) ;
@@ -485,7 +482,7 @@ template <class...>
 trait BYTEWRITER_HELP ;
 
 template <class...>
-trait BYTEWRITER_IMPLHOLDER_HELP ;
+trait BYTEWRITER_ATTRIBUTE_HELP ;
 
 template <class DEPEND>
 trait BYTEWRITER_HELP<DEPEND ,ALWAYS> {
@@ -496,7 +493,11 @@ trait BYTEWRITER_HELP<DEPEND ,ALWAYS> {
 	} ;
 
 	template <class ARG1>
-	using MACRO_Binder = typename DEPENDENT<BYTEWRITER_HELP<DEPEND ,ALWAYS> ,ARG1>::Binder ;
+	using CRTP_ByteWriter = typename DEPENDENT<BYTEWRITER_HELP<DEPEND ,ALWAYS> ,ARG1>::ByteWriter ;
+	
+	struct Binder implement Interface {
+		virtual void friend_write (VREF<CRTP_ByteWriter<DEPEND>> writer) const = 0 ;
+	} ;
 
 	class ByteWriter {
 	protected:
@@ -511,7 +512,7 @@ trait BYTEWRITER_HELP<DEPEND ,ALWAYS> {
 		implicit ByteWriter () = default ;
 
 		explicit ByteWriter (RREF<VRef<RegBuffer<BYTE>>> stream) {
-			using R1X = typename BYTEWRITER_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
+			using R1X = typename BYTEWRITER_ATTRIBUTE_HELP<DEPEND ,ALWAYS>::Attribute ;
 			set_attr (TYPEAS<R1X>::expr) ;
 			mStream = move (stream) ;
 			reset () ;
@@ -584,19 +585,18 @@ trait BYTEWRITER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		void write (CREF<WORD> item) {
-			using R1X = Box<ARR<BYTE ,SIZE_OF<WORD>>> ;
-			const auto r1x = bitwise[TYPEAS<R1X>::expr] (item) ;
+			const auto r1x = bitwise[TYPEAS<BoxBuffer<BYTE ,SIZE_OF<WORD>>>::expr] (item) ;
 			auto rxx = TRUE ;
 			if ifswitch (rxx) {
 				if ifnot (mAttr->is_big_endian ())
 					discard ;
 				for (auto &&i : iter (0 ,SIZE_OF<WORD>::expr))
-					write (r1x.self[i]) ;
+					write (r1x[i]) ;
 			}
 			if ifswitch (rxx) {
 				for (auto &&i : iter (0 ,SIZE_OF<WORD>::expr)) {
 					INDEX ix = SIZE_OF<WORD>::expr - 1 - i ;
-					write (r1x.self[ix]) ;
+					write (r1x[ix]) ;
 				}
 			}
 		}
@@ -607,19 +607,18 @@ trait BYTEWRITER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		void write (CREF<CHAR> item) {
-			using R1X = Box<ARR<BYTE ,SIZE_OF<CHAR>>> ;
-			const auto r1x = bitwise[TYPEAS<R1X>::expr] (item) ;
+			const auto r1x = bitwise[TYPEAS<BoxBuffer<BYTE ,SIZE_OF<CHAR>>>::expr] (item) ;
 			auto rxx = TRUE ;
 			if ifswitch (rxx) {
 				if ifnot (mAttr->is_big_endian ())
 					discard ;
 				for (auto &&i : iter (0 ,SIZE_OF<CHAR>::expr))
-					write (r1x.self[i]) ;
+					write (r1x[i]) ;
 			}
 			if ifswitch (rxx) {
 				for (auto &&i : iter (0 ,SIZE_OF<CHAR>::expr)) {
 					INDEX ix = SIZE_OF<CHAR>::expr - 1 - i ;
-					write (r1x.self[ix]) ;
+					write (r1x[ix]) ;
 				}
 			}
 		}
@@ -630,19 +629,18 @@ trait BYTEWRITER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		void write (CREF<DATA> item) {
-			using R1X = Box<ARR<BYTE ,SIZE_OF<DATA>>> ;
-			const auto r1x = bitwise[TYPEAS<R1X>::expr] (item) ;
+			const auto r1x = bitwise[TYPEAS<BoxBuffer<BYTE ,SIZE_OF<DATA>>>::expr] (item) ;
 			auto rxx = TRUE ;
 			if ifswitch (rxx) {
 				if ifnot (mAttr->is_big_endian ())
 					discard ;
 				for (auto &&i : iter (0 ,SIZE_OF<DATA>::expr))
-					write (r1x.self[i]) ;
+					write (r1x[i]) ;
 			}
 			if ifswitch (rxx) {
 				for (auto &&i : iter (0 ,SIZE_OF<DATA>::expr)) {
 					INDEX ix = SIZE_OF<DATA>::expr - 1 - i ;
-					write (r1x.self[ix]) ;
+					write (r1x[ix]) ;
 				}
 			}
 		}
@@ -804,13 +802,11 @@ trait BYTEWRITER_HELP<DEPEND ,ALWAYS> {
 			return thiz ;
 		}
 
-		template <class ARG1 = DEPEND>
-		void write (CREF<MACRO_Binder<ARG1>> item) {
+		void write (CREF<Binder> item) {
 			item.friend_write (thiz) ;
 		}
 
-		template <class ARG1 = DEPEND>
-		inline VREF<ByteWriter> operator<< (CREF<MACRO_Binder<ARG1>> item) {
+		inline VREF<ByteWriter> operator<< (CREF<Binder> item) {
 			write (item) ;
 			return thiz ;
 		}
@@ -854,19 +850,15 @@ trait BYTEWRITER_HELP<DEPEND ,ALWAYS> {
 			return thiz ;
 		}
 	} ;
-
-	struct Binder implement Interface {
-		virtual void friend_write (VREF<ByteWriter> writer) const = 0 ;
-	} ;
 } ;
 
 template <class DEPEND>
-trait BYTEWRITER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
-	using Attribute = typename BYTEWRITER_HELP<DEPEND ,ALWAYS>::Attribute ;
+trait BYTEWRITER_ATTRIBUTE_HELP<DEPEND ,ALWAYS> {
+	using SUPER = typename BYTEWRITER_HELP<DEPEND ,ALWAYS>::Attribute ;
 
-	class ImplHolder implement Attribute {
+	class Attribute implement SUPER {
 	public:
-		implicit ImplHolder () = default ;
+		implicit Attribute () = default ;
 
 		BYTE ending_item () const override {
 			return BYTE (0X00) ;
@@ -877,11 +869,10 @@ trait BYTEWRITER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		BOOL is_big_endian () const override {
-			using R1X = Box<ARR<BYTE ,SIZE_OF<WORD>>> ;
 			return memorize ([&] () {
 				const auto r1x = WORD (0X00FF) ;
-				const auto r2x = bitwise[TYPEAS<R1X>::expr] (r1x) ;
-				if (r2x.self[0] != BYTE (0X00))
+				const auto r2x = bitwise[TYPEAS<BoxBuffer<BYTE ,SIZE_OF<WORD>>>::expr] (r1x) ;
+				if (r2x[0] != BYTE (0X00))
 					return FALSE ;
 				return TRUE ;
 			}) ;
@@ -895,7 +886,7 @@ template <class...>
 trait TEXTREADER_HELP ;
 
 template <class...>
-trait TEXTREADER_IMPLHOLDER_HELP ;
+trait TEXTREADER_ATTRIBUTE_HELP ;
 
 template <class ITEM>
 trait TEXTREADER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
@@ -917,7 +908,11 @@ trait TEXTREADER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 	using NOTATION = typename FLOATPROC_HELP<DEPEND ,ALWAYS>::NOTATION ;
 
 	template <class ARG1>
-	using MACRO_Binder = typename DEPENDENT<TEXTREADER_HELP<ITEM ,ALWAYS> ,ARG1>::Binder ;
+	using CRTP_TextReader = typename DEPENDENT<TEXTREADER_HELP<ITEM ,ALWAYS> ,ARG1>::TextReader ;
+
+	struct Binder implement Interface {
+		virtual void friend_read (VREF<CRTP_TextReader<DEPEND>> reader) = 0 ;
+	} ;
 
 	class TextReader {
 	protected:
@@ -932,7 +927,7 @@ trait TEXTREADER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 		implicit TextReader () = default ;
 
 		explicit TextReader (RREF<CRef<RegBuffer<ITEM>>> stream) {
-			using R1X = typename TEXTREADER_IMPLHOLDER_HELP<ITEM ,ALWAYS>::ImplHolder ;
+			using R1X = typename TEXTREADER_ATTRIBUTE_HELP<ITEM ,ALWAYS>::Attribute ;
 			set_attr (TYPEAS<R1X>::expr) ;
 			mStream = move (stream) ;
 			reset () ;
@@ -1194,6 +1189,7 @@ trait TEXTREADER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 			assume (rax == ITEM ('X')) ;
 			item = BYTE (0X00) ;
 			for (auto &&i : iter (0 ,SIZE_OF<BYTE>::expr)) {
+				noop (i) ;
 				read (rax) ;
 				const auto r1x = BYTE (mAttr->hex_from_str (rax)) ;
 				item = (item << 4) | r1x ;
@@ -1216,6 +1212,7 @@ trait TEXTREADER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 			assume (rax == ITEM ('X')) ;
 			item = WORD (0X00) ;
 			for (auto &&i : iter (0 ,SIZE_OF<WORD>::expr)) {
+				noop (i) ;
 				read (rax) ;
 				const auto r1x = WORD (mAttr->hex_from_str (rax)) ;
 				item = (item << 4) | r1x ;
@@ -1238,6 +1235,7 @@ trait TEXTREADER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 			assume (rax == ITEM ('X')) ;
 			item = CHAR (0X00) ;
 			for (auto &&i : iter (0 ,SIZE_OF<CHAR>::expr)) {
+				noop (i) ;
 				read (rax) ;
 				const auto r1x = CHAR (mAttr->hex_from_str (rax)) ;
 				item = (item << 4) | r1x ;
@@ -1260,6 +1258,7 @@ trait TEXTREADER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 			assume (rax == ITEM ('X')) ;
 			item = DATA (0X00) ;
 			for (auto &&i : iter (0 ,SIZE_OF<DATA>::expr)) {
+				noop (i) ;
 				read (rax) ;
 				const auto r1x = DATA (mAttr->hex_from_str (rax)) ;
 				item = (item << 4) | r1x ;
@@ -1305,13 +1304,11 @@ trait TEXTREADER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 			return thiz ;
 		}
 
-		template <class ARG1 = DEPEND>
-		void read (VREF<MACRO_Binder<ARG1>> item) {
+		void read (VREF<Binder> item) {
 			item.friend_read (thiz) ;
 		}
 
-		template <class ARG1 = DEPEND>
-		inline VREF<TextReader> operator>> (VREF<MACRO_Binder<ARG1>> item) {
+		inline VREF<TextReader> operator>> (VREF<Binder> item) {
 			read (item) ;
 			return thiz ;
 		}
@@ -1530,29 +1527,25 @@ trait TEXTREADER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 			assume (rax == ITEM (0XFFFE0000)) ;
 		}
 	} ;
-
-	struct Binder implement Interface {
-		virtual void friend_read (VREF<TextReader> reader) = 0 ;
-	} ;
 } ;
 
 template <class ITEM>
-trait TEXTREADER_IMPLHOLDER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
-	using Attribute = typename TEXTREADER_HELP<ITEM ,ALWAYS>::Attribute ;
+trait TEXTREADER_ATTRIBUTE_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
+	using SUPER = typename TEXTREADER_HELP<ITEM ,ALWAYS>::Attribute ;
 
-	using SPACE_CLAZZ_WORD = RANK1 ;
+	using SPACE_CLAZZ_SPACE = RANK1 ;
 	using SPACE_CLAZZ_ENDLINE = RANK2 ;
 
-	class ImplHolder implement Attribute {
+	class Attribute implement SUPER {
 	protected:
 		HashSet<ITEM> mSpaceSet ;
 		HashSet<ITEM> mEscapeSet ;
 
 	public:
-		implicit ImplHolder () {
-			mSpaceSet.add (ITEM (' ') ,SPACE_CLAZZ_WORD::expr) ;
-			mSpaceSet.add (ITEM ('\t') ,SPACE_CLAZZ_WORD::expr) ;
-			mSpaceSet.add (ITEM ('\b') ,SPACE_CLAZZ_WORD::expr) ;
+		implicit Attribute () {
+			mSpaceSet.add (ITEM (' ') ,SPACE_CLAZZ_SPACE::expr) ;
+			mSpaceSet.add (ITEM ('\t') ,SPACE_CLAZZ_SPACE::expr) ;
+			mSpaceSet.add (ITEM ('\b') ,SPACE_CLAZZ_SPACE::expr) ;
 			mSpaceSet.add (ITEM ('\r') ,SPACE_CLAZZ_ENDLINE::expr) ;
 			mSpaceSet.add (ITEM ('\n') ,SPACE_CLAZZ_ENDLINE::expr) ;
 			mSpaceSet.add (ITEM ('\f') ,SPACE_CLAZZ_ENDLINE::expr) ;
@@ -1659,7 +1652,7 @@ template <class...>
 trait TEXTWRITER_HELP ;
 
 template <class...>
-trait TEXTWRITER_IMPLHOLDER_HELP ;
+trait TEXTWRITER_ATTRIBUTE_HELP ;
 
 template <class...>
 trait TEXTWRITER_WRITEVALUE_HELP ;
@@ -1680,7 +1673,11 @@ trait TEXTWRITER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 	using NOTATION = typename FLOATPROC_HELP<DEPEND ,ALWAYS>::NOTATION ;
 
 	template <class ARG1>
-	using MACRO_Binder = typename DEPENDENT<TEXTWRITER_HELP<ITEM ,ALWAYS> ,ARG1>::Binder ;
+	using CRTP_TextWriter = typename DEPENDENT<TEXTWRITER_HELP<ITEM ,ALWAYS> ,ARG1>::TextWriter ;
+
+	struct Binder implement Interface {
+		virtual void friend_write (VREF<CRTP_TextWriter<DEPEND>> writer) const = 0 ;
+	} ;
 
 	class TextWriter {
 	protected:
@@ -1695,7 +1692,7 @@ trait TEXTWRITER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 		implicit TextWriter () = default ;
 
 		explicit TextWriter (RREF<VRef<RegBuffer<ITEM>>> stream) {
-			using R1X = typename TEXTWRITER_IMPLHOLDER_HELP<ITEM ,ALWAYS>::ImplHolder ;
+			using R1X = typename TEXTWRITER_ATTRIBUTE_HELP<ITEM ,ALWAYS>::Attribute ;
 			set_attr (TYPEAS<R1X>::expr) ;
 			mStream = move (stream) ;
 			reset () ;
@@ -1858,7 +1855,7 @@ trait TEXTWRITER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 			}
 			auto rxx = TRUE ;
 			if ifswitch (rxx) {
-				if ifnot (MathProc::infinite (item))
+				if ifnot (MathProc::is_infinite (item))
 					discard ;
 				write (mAttr->lower_upper_cast (ITEM ('i'))) ;
 				write (mAttr->lower_upper_cast (ITEM ('n'))) ;
@@ -1969,13 +1966,11 @@ trait TEXTWRITER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 			return thiz ;
 		}
 
-		template <class ARG1 = DEPEND>
-		void write (CREF<MACRO_Binder<ARG1>> item) {
+		void write (CREF<Binder> item) {
 			item.friend_write (thiz) ;
 		}
 
-		template <class ARG1 = DEPEND>
-		inline VREF<TextWriter> operator<< (CREF<MACRO_Binder<ARG1>> item) {
+		inline VREF<TextWriter> operator<< (CREF<Binder> item) {
 			write (item) ;
 			return thiz ;
 		}
@@ -2056,22 +2051,18 @@ trait TEXTWRITER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 			write (ITEM (0XFFFE0000)) ;
 		}
 	} ;
-
-	struct Binder implement Interface {
-		virtual void friend_write (VREF<TextWriter> writer) const = 0 ;
-	} ;
 } ;
 
 template <class ITEM>
-trait TEXTWRITER_IMPLHOLDER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
-	using Attribute = typename TEXTWRITER_HELP<ITEM ,ALWAYS>::Attribute ;
+trait TEXTWRITER_ATTRIBUTE_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
+	using SUPER = typename TEXTWRITER_HELP<ITEM ,ALWAYS>::Attribute ;
 
-	class ImplHolder implement Attribute {
+	class Attribute implement SUPER {
 	protected:
 		HashSet<ITEM> mEscapeSet ;
 
 	public:
-		implicit ImplHolder () {
+		implicit Attribute () {
 			mEscapeSet.add (ITEM ('\\') ,INDEX ('\\')) ;
 			mEscapeSet.add (ITEM ('/') ,INDEX ('/')) ;
 			mEscapeSet.add (ITEM ('\t') ,INDEX ('t')) ;
@@ -2150,7 +2141,7 @@ trait TEXTWRITER_WRITEVALUE_HELP<ITEM ,ALWAYS> {
 			assert (value_.mRadix == 10) ;
 			mAttr = attr_ ;
 			mValue = value_ ;
-			mValue.mPrecision = 1 + MathProc::log10v (mValue.mMantissa) ;
+			mValue.mPrecision = 1 + MathProc::vlog (mValue.mMantissa ,VAL64 (10)) ;
 			mWrite = mBuffer.size () ;
 		}
 

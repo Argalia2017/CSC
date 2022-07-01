@@ -232,11 +232,11 @@ exports auto FILE_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () -> VRef<Holde
 
 template <class DEPEND>
 trait DIRECTORY_DECOUPLE_HELP<DEPEND ,ALWAYS> {
-	using SUPER = typename TEXTREADER_IMPLHOLDER_HELP<STR ,ALWAYS>::ImplHolder ;
+	using SUPER = typename TEXTREADER_ATTRIBUTE_HELP<STR ,ALWAYS>::Attribute ;
 
-	class ImplHolder implement SUPER {
+	class Attribute implement SUPER {
 	public:
-		implicit ImplHolder () = default ;
+		implicit Attribute () = default ;
 
 		BOOL is_space (CREF<STR> str) const override {
 			if (str == STR ('\\'))
@@ -255,7 +255,7 @@ trait DIRECTORY_DECOUPLE_HELP<DEPEND ,ALWAYS> {
 		inline ArrayList<String<STR>> operator() (CREF<String<STR>> dire) const {
 			ArrayList<String<STR>> ret ;
 			auto rax = TextReader<STR> (dire.raw ()) ;
-			rax.set_attr (TYPEAS<ImplHolder>::expr) ;
+			rax.set_attr (TYPEAS<Attribute>::expr) ;
 			const auto r1x = rax.get_attr () ;
 			INDEX ix = ret.insert () ;
 			auto rbx = STR () ;
@@ -288,7 +288,7 @@ template <class DEPEND>
 trait DIRECTORY_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	using Holder = typename DIRECTORY_HELP<DEPEND ,ALWAYS>::Holder ;
 	using CHILD = typename DIRECTORY_HELP<DEPEND ,ALWAYS>::CHILD ;
-	using CHILD_MAX_SIZE = typename DIRECTORY_HELP<DEPEND ,ALWAYS>::CHILD_MAX_SIZE ;
+	using CHILD_MAX_SIZE = ENUMAS<VAL ,ENUMID<65536>> ;
 
 	class ImplHolder implement Holder {
 	protected:
@@ -310,7 +310,7 @@ trait DIRECTORY_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				if (mDire[ix] != STR ('\\'))
 					if (mDire[ix] != STR ('/'))
 						discard ;
-				mDire[ix] = 0 ;
+				mDire.trunc (ix) ;
 			}
 		}
 
@@ -491,7 +491,6 @@ trait DIRECTORY_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			fresh () ;
 		}
 
-	private:
 		void update_path () const {
 			using R1X = typename DIRECTORY_DECOUPLE_HELP<DEPEND ,ALWAYS>::FUNCTION_decouple_path ;
 			if (mPath.fetch () != NULL)
@@ -651,7 +650,7 @@ trait STREAMFILE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			mWrite = 0 ;
 		}
 
-		void open_create () override {
+		void append () override {
 			assert (ifnot (mReadPipe.exist ())) ;
 			assert (ifnot (mWritePipe.exist ())) ;
 			mReadPipe = UniqueRef<HANDLE> ([&] (VREF<HANDLE> me) {
@@ -687,6 +686,44 @@ trait STREAMFILE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			mWritePipe = UniqueRef<HANDLE> () ;
 		}
 
+		BOOL link (CREF<BOOL> readable ,CREF<BOOL> writable) override {
+			BOOL ret = FALSE ;
+			auto rxx = TRUE ;
+			if ifswitch (rxx) {
+				if ifnot (readable)
+					discard ;
+				if (writable)
+					discard ;
+				open () ;
+				ret = TRUE ;
+			}
+			if ifswitch (rxx) {
+				if (readable)
+					discard ;
+				if ifnot (writable)
+					discard ;
+				create () ;
+				ret = TRUE ;
+			}
+			if ifswitch (rxx) {
+				if ifnot (readable)
+					discard ;
+				if ifnot (writable)
+					discard ;
+				try_invoke ([&] () {
+					open () ;
+				} ,[&] () {
+					create () ;
+				} ,[&] () {
+					noop () ;
+				}) ;
+				close () ;
+				append () ;
+				ret = TRUE ;
+			}
+			return move (ret) ;
+		}
+
 		LENGTH read (VREF<RegBuffer<BYTE>> item) override {
 			assert (mReadPipe.exist ()) ;
 			assert (item.size () <= VAL32_MAX) ;
@@ -703,6 +740,39 @@ trait STREAMFILE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			}
 			mRead += r1x ;
 			return r1x - rax ;
+		}
+
+		LENGTH read (VREF<RegBuffer<WORD>> item) override {
+			using R1X = SIZE_OF<WORD> ;
+			if (item.size () == 0)
+				return ZERO ;
+			auto &&tmp = unsafe_cast[TYPEAS<TEMP<void>>::expr] (unsafe_deptr (item[0])) ;
+			LENGTH ret = read (RegBuffer<BYTE>::from (tmp ,0 ,item.size () * R1X::expr)) ;
+			ret /= R1X::expr ;
+			unsafe_barrier () ;
+			return move (ret) ;
+		}
+
+		LENGTH read (VREF<RegBuffer<CHAR>> item) override {
+			using R1X = SIZE_OF<CHAR> ;
+			if (item.size () == 0)
+				return ZERO ;
+			auto &&tmp = unsafe_cast[TYPEAS<TEMP<void>>::expr] (unsafe_deptr (item[0])) ;
+			LENGTH ret = read (RegBuffer<BYTE>::from (tmp ,0 ,item.size () * R1X::expr)) ;
+			ret /= R1X::expr ;
+			unsafe_barrier () ;
+			return move (ret) ;
+		}
+
+		LENGTH read (VREF<RegBuffer<DATA>> item) override {
+			using R1X = SIZE_OF<DATA> ;
+			if (item.size () == 0)
+				return ZERO ;
+			auto &&tmp = unsafe_cast[TYPEAS<TEMP<void>>::expr] (unsafe_deptr (item[0])) ;
+			LENGTH ret = read (RegBuffer<BYTE>::from (tmp ,0 ,item.size () * R1X::expr)) ;
+			ret /= R1X::expr ;
+			unsafe_barrier () ;
+			return move (ret) ;
 		}
 
 		LENGTH write (CREF<RegBuffer<BYTE>> item) override {
@@ -723,6 +793,39 @@ trait STREAMFILE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			return r1x - rax ;
 		}
 
+		LENGTH write (CREF<RegBuffer<WORD>> item) override {
+			using R1X = SIZE_OF<WORD> ;
+			if (item.size () == 0)
+				return ZERO ;
+			auto &&tmp = unsafe_cast[TYPEAS<TEMP<void>>::expr] (unsafe_deptr (item[0])) ;
+			LENGTH ret = write (RegBuffer<BYTE>::from (tmp ,0 ,item.size () * R1X::expr)) ;
+			ret /= R1X::expr ;
+			unsafe_barrier () ;
+			return move (ret) ;
+		}
+
+		LENGTH write (CREF<RegBuffer<CHAR>> item) override {
+			using R1X = SIZE_OF<CHAR> ;
+			if (item.size () == 0)
+				return ZERO ;
+			auto &&tmp = unsafe_cast[TYPEAS<TEMP<void>>::expr] (unsafe_deptr (item[0])) ;
+			LENGTH ret = write (RegBuffer<BYTE>::from (tmp ,0 ,item.size () * R1X::expr)) ;
+			ret /= R1X::expr ;
+			unsafe_barrier () ;
+			return move (ret) ;
+		}
+
+		LENGTH write (CREF<RegBuffer<DATA>> item) override {
+			using R1X = SIZE_OF<DATA> ;
+			if (item.size () == 0)
+				return ZERO ;
+			auto &&tmp = unsafe_cast[TYPEAS<TEMP<void>>::expr] (unsafe_deptr (item[0])) ;
+			LENGTH ret = write (RegBuffer<BYTE>::from (tmp ,0 ,item.size () * R1X::expr)) ;
+			ret /= R1X::expr ;
+			unsafe_barrier () ;
+			return move (ret) ;
+		}
+
 		void flush () override {
 			if ifnot (mWritePipe.exist ())
 				return ;
@@ -740,8 +843,8 @@ exports auto STREAMFILE_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () -> VRef
 template <class DEPEND>
 trait BUFFERFILE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	using Holder = typename BUFFERFILE_HOLDER_HELP<DEPEND ,ALWAYS>::Holder ;
-	using PAGE_SIZE = typename BUFFERFILE_HOLDER_HELP<DEPEND ,ALWAYS>::PAGE_SIZE ;
-	using HEADER_SIZE = typename BUFFERFILE_HOLDER_HELP<DEPEND ,ALWAYS>::HEADER_SIZE ;
+	using PAGE_SIZE = ENUMAS<VAL ,ENUMID<4194304>> ;
+	using HEADER_SIZE = ENUMAS<VAL ,ENUMID<65536>> ;
 
 	struct CHUNK {
 		VAL64 mOffset ;
@@ -837,7 +940,7 @@ trait BUFFERFILE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			write_header () ;
 		}
 
-		void open_create () override {
+		void append () override {
 			assert (ifnot (mPipe.exist ())) ;
 			assert (ifnot (mMapping.exist ())) ;
 			assume (mHeader != NULL) ;
@@ -885,14 +988,7 @@ trait BUFFERFILE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			assume (mHeader->mFileSize == mFileSize) ;
 			rax >> ByteReader::GAP ;
 			rax >> mHeader->mFileEndian ;
-			const auto r2x = invoke ([&] () {
-				auto rax = Box<ARR<BYTE ,RANK4>>::make () ;
-				rax.self[0] = BYTE (0X00) ;
-				rax.self[1] = BYTE (0X01) ;
-				rax.self[2] = BYTE (0X02) ;
-				rax.self[3] = BYTE (0X03) ;
-				return VAL64 (bitwise[TYPEAS<CHAR>::expr] (rax.self)) ;
-			}) ;
+			const auto r2x = file_endian () ;
 			assume (mHeader->mFileEndian == r2x) ;
 			rax >> ByteReader::GAP ;
 			rax >> mHeader->mItemSize ;
@@ -923,14 +1019,7 @@ trait BUFFERFILE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 					discard ;
 				mHeader = VRef<HEADER>::make () ;
 				mHeader->mFileSize = mFileSize ;
-				const auto r1x = invoke ([&] () {
-					auto rax = Box<ARR<BYTE ,RANK4>>::make () ;
-					rax.self[0] = BYTE (0X00) ;
-					rax.self[1] = BYTE (0X01) ;
-					rax.self[2] = BYTE (0X02) ;
-					rax.self[3] = BYTE (0X03) ;
-					return VAL64 (bitwise[TYPEAS<CHAR>::expr] (rax.self)) ;
-				}) ;
+				const auto r1x = file_endian () ;
 				mHeader->mFileEndian = r1x ;
 				mHeader->mItemSize = mItemClazz.type_size () ;
 				mHeader->mItemAlign = mItemClazz.type_align () ;
@@ -967,10 +1056,60 @@ trait BUFFERFILE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			flush () ;
 		}
 
+		VAL64 file_endian () const {
+			const auto r1x = invoke ([&] () {
+				auto rax = BoxBuffer<BYTE ,SIZE_OF<CHAR>> () ;
+				rax[0] = BYTE (0X00) ;
+				rax[1] = BYTE (0X01) ;
+				rax[2] = BYTE (0X02) ;
+				rax[3] = BYTE (0X03) ;
+				return bitwise[TYPEAS<CHAR>::expr] (rax) ;
+			}) ;
+			return VAL64 (r1x) ;
+		}
+
 		void close () override {
 			flush () ;
 			mMapping = UniqueRef<HANDLE> () ;
 			mPipe = UniqueRef<HANDLE> () ;
+		}
+
+		BOOL link (CREF<BOOL> readable ,CREF<BOOL> writable) override {
+			BOOL ret = FALSE ;
+			auto rxx = TRUE ;
+			if ifswitch (rxx) {
+				if ifnot (readable)
+					discard ;
+				if (writable)
+					discard ;
+				open () ;
+				ret = TRUE ;
+			}
+			if ifswitch (rxx) {
+				if (readable)
+					discard ;
+				if ifnot (writable)
+					discard ;
+				create () ;
+				ret = TRUE ;
+			}
+			if ifswitch (rxx) {
+				if ifnot (readable)
+					discard ;
+				if ifnot (writable)
+					discard ;
+				try_invoke ([&] () {
+					open () ;
+				} ,[&] () {
+					create () ;
+				} ,[&] () {
+					noop () ;
+				}) ;
+				close () ;
+				append () ;
+				ret = TRUE ;
+			}
+			return move (ret) ;
 		}
 
 		VAL64 length () const override {
@@ -991,7 +1130,7 @@ trait BUFFERFILE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				if (r3x == 0)
 					discard ;
 				close () ;
-				open_create () ;
+				append () ;
 			}
 			return r1x ;
 		}

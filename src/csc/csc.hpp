@@ -428,8 +428,8 @@ struct TEMPAS<UNIT1 ,UNIT2> {
 template <class UNIT1>
 struct TEMPAS<UNIT1 ,void> ;
 
-struct DEPEND ;
-struct ALWAYS ;
+using DEPEND = struct D ;
+using ALWAYS = struct A ;
 
 template <class...>
 trait REQUIRE_HELP ;
@@ -524,7 +524,7 @@ struct csc_text_t {
 	template <class ARG1>
 	explicit csc_text_t (CREF<ARG1> obj) {
 		mBegin = obj ;
-		mEnd = obj + sizeof (obj) ;
+		mEnd = obj + sizeof (obj) - 1 ;
 	}
 } ;
 
@@ -534,7 +534,7 @@ struct FUNCTION_internel_name {
 	imports csc_text_t __cdecl invoke () {
 		auto rax = csc_text_t (__FUNCSIG__) ;
 		rax.mBegin += sizeof ("struct CSC::csc_text_t __cdecl CSC::FUNCTION_internel_name::invoke<") - 1 ;
-		rax.mEnd -= sizeof (">(void)") ;
+		rax.mEnd -= sizeof (">(void)") - 1 ;
 		return rax ;
 	}
 
@@ -551,7 +551,7 @@ struct FUNCTION_internel_name {
 	imports __attribute__ ((cdecl)) csc_text_t invoke () {
 		auto rax = csc_text_t (__PRETTY_FUNCTION__) ;
 		rax.mBegin += sizeof ("static CSC::csc_text_t CSC::FUNCTION_internel_name::invoke() [with T = ") - 1 ;
-		rax.mEnd -= sizeof ("]") ;
+		rax.mEnd -= sizeof ("]") - 1 ;
 		return rax ;
 	}
 
@@ -568,7 +568,7 @@ struct FUNCTION_internel_name {
 	imports csc_text_t __cdecl invoke () {
 		auto rax = csc_text_t (__PRETTY_FUNCTION__) ;
 		rax.mBegin += sizeof ("static CSC::csc_text_t CSC::FUNCTION_internel_name::invoke() [T = ") - 1 ;
-		rax.mEnd -= sizeof ("]") ;
+		rax.mEnd -= sizeof ("]") - 1 ;
 		return rax ;
 	}
 

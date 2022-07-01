@@ -36,11 +36,18 @@ trait TIMEDURATION_HELP<DEPEND ,ALWAYS> {
 		LENGTH mSecond ;
 	} ;
 
+	template <class ARG1>
+	using CRTP_TimePoint = typename DEPENDENT<TIMEPOINT_HELP<DEPEND ,ALWAYS> ,ARG1>::TimePoint ;
+
+	template <class ARG1>
+	using CRTP_TimeDuration = typename DEPENDENT<TIMEDURATION_HELP<DEPEND ,ALWAYS> ,ARG1>::TimeDuration ;
+
 	struct Holder implement Interface {
 		virtual void init_now () = 0 ;
 		virtual void init_epoch () = 0 ;
 		virtual void initialize (CREF<LENGTH> milliseconds_ ,CREF<LENGTH> nanoseconds_) = 0 ;
 		virtual void initialize (CREF<CALENDAR> calendar_) = 0 ;
+		virtual void initialize (CREF<TEMP<void>> duration_) = 0 ;
 		virtual Auto native () const leftvalue = 0 ;
 		virtual LENGTH hours () const = 0 ;
 		virtual LENGTH minutes () const = 0 ;
@@ -49,16 +56,13 @@ trait TIMEDURATION_HELP<DEPEND ,ALWAYS> {
 		virtual LENGTH microseconds () const = 0 ;
 		virtual LENGTH nanoseconds () const = 0 ;
 		virtual CALENDAR calendar () const = 0 ;
-		virtual void add_from (CREF<Holder> a ,CREF<Holder> b) = 0 ;
-		virtual void sub_from (CREF<Holder> a ,CREF<Holder> b) = 0 ;
+		virtual CRTP_TimeDuration<DEPEND> add (CREF<Holder> that) const = 0 ;
+		virtual CRTP_TimeDuration<DEPEND> sub (CREF<Holder> that) const = 0 ;
 	} ;
 
 	struct FUNCTION_extern {
 		imports VRef<Holder> invoke () ;
 	} ;
-
-	template <class ARG1>
-	using MACRO_TimePoint = typename DEPENDENT<TIMEPOINT_HELP<DEPEND ,ALWAYS> ,ARG1>::TimePoint ;
 
 	class TimeDuration {
 	private:
@@ -81,8 +85,13 @@ trait TIMEDURATION_HELP<DEPEND ,ALWAYS> {
 			mThis->initialize (milliseconds_ ,nanoseconds_) ;
 		}
 
+		explicit TimeDuration (CREF<TEMP<void>> duration_) {
+			mThis = FUNCTION_extern::invoke () ;
+			mThis->initialize (duration_) ;
+		}
+
 		template <class ARG1 = DEPEND>
-		explicit TimeDuration (RREF<MACRO_TimePoint<ARG1>> that) {
+		explicit TimeDuration (RREF<CRTP_TimePoint<ARG1>> that) {
 			mThis = move (that.mThis) ;
 		}
 
@@ -124,10 +133,7 @@ trait TIMEDURATION_HELP<DEPEND ,ALWAYS> {
 		}
 
 		TimeDuration add (CREF<TimeDuration> that) const {
-			TimeDuration ret ;
-			ret.mThis = FUNCTION_extern::invoke () ;
-			ret.mThis->add_from (mThis ,that.mThis) ;
-			return move (ret) ;
+			return mThis->add (keep[TYPEAS<CREF<Holder>>::expr] (that.mThis)) ;
 		}
 
 		inline TimeDuration operator+ (CREF<TimeDuration> that) const {
@@ -139,10 +145,7 @@ trait TIMEDURATION_HELP<DEPEND ,ALWAYS> {
 		}
 
 		TimeDuration sub (CREF<TimeDuration> that) const {
-			TimeDuration ret ;
-			ret.mThis = FUNCTION_extern::invoke () ;
-			ret.mThis->sub_from (mThis ,that.mThis) ;
-			return move (ret) ;
+			return mThis->sub (keep[TYPEAS<CREF<Holder>>::expr] (that.mThis)) ;
 		}
 
 		inline TimeDuration operator- (CREF<TimeDuration> that) const {
@@ -154,28 +157,22 @@ trait TIMEDURATION_HELP<DEPEND ,ALWAYS> {
 		}
 
 		template <class ARG1 = DEPEND>
-		MACRO_TimePoint<ARG1> add (CREF<MACRO_TimePoint<ARG1>> that) const {
-			MACRO_TimePoint<ARG1> ret ;
-			ret.mThis = FUNCTION_extern::invoke () ;
-			ret.mThis->add_from (mThis ,that.mThis) ;
-			return move (ret) ;
+		CRTP_TimePoint<ARG1> add (CREF<CRTP_TimePoint<ARG1>> that) const {
+			return mThis->add (keep[TYPEAS<CREF<Holder>>::expr] (that.mThis)) ;
 		}
 
 		template <class ARG1 = DEPEND>
-		inline MACRO_TimePoint<ARG1> operator+ (CREF<MACRO_TimePoint<ARG1>> that) const {
+		inline CRTP_TimePoint<ARG1> operator+ (CREF<CRTP_TimePoint<ARG1>> that) const {
 			return add (that) ;
 		}
 
 		template <class ARG1 = DEPEND>
-		MACRO_TimePoint<ARG1> sub (CREF<MACRO_TimePoint<ARG1>> that) const {
-			MACRO_TimePoint<ARG1> ret ;
-			ret.mThis = FUNCTION_extern::invoke () ;
-			ret.mThis->sub_from (mThis ,that.mThis) ;
-			return move (ret) ;
+		CRTP_TimePoint<ARG1> sub (CREF<CRTP_TimePoint<ARG1>> that) const {
+			return mThis->sub (keep[TYPEAS<CREF<Holder>>::expr] (that.mThis)) ;
 		}
 
 		template <class ARG1 = DEPEND>
-		inline MACRO_TimePoint<ARG1> operator- (CREF<MACRO_TimePoint<ARG1>> that) const {
+		inline CRTP_TimePoint<ARG1> operator- (CREF<CRTP_TimePoint<ARG1>> that) const {
 			return sub (that) ;
 		}
 	} ;
@@ -196,7 +193,7 @@ trait TIMEPOINT_HELP<DEPEND ,ALWAYS> {
 	using FUNCTION_extern = typename TIMEDURATION_HELP<DEPEND ,ALWAYS>::FUNCTION_extern ;
 
 	template <class ARG1>
-	using MACRO_TimeDuration = typename DEPENDENT<TIMEDURATION_HELP<DEPEND ,ALWAYS> ,ARG1>::TimeDuration ;
+	using CRTP_TimeDuration = typename DEPENDENT<TIMEDURATION_HELP<DEPEND ,ALWAYS> ,ARG1>::TimeDuration ;
 
 	class TimePoint {
 	private:
@@ -215,7 +212,7 @@ trait TIMEPOINT_HELP<DEPEND ,ALWAYS> {
 		}
 
 		template <class ARG1 = DEPEND>
-		explicit TimePoint (RREF<MACRO_TimeDuration<ARG1>> that) {
+		explicit TimePoint (RREF<CRTP_TimeDuration<ARG1>> that) {
 			mThis = move (that.mThis) ;
 		}
 
@@ -240,10 +237,7 @@ trait TIMEPOINT_HELP<DEPEND ,ALWAYS> {
 		}
 
 		TimePoint add (CREF<TimeDuration> that) const {
-			TimePoint ret ;
-			ret.mThis = FUNCTION_extern::invoke () ;
-			ret.mThis->add_from (mThis ,that.mThis) ;
-			return move (ret) ;
+			return mThis->add (keep[TYPEAS<CREF<Holder>>::expr] (that.mThis)) ;
 		}
 
 		inline TimePoint operator+ (CREF<TimeDuration> that) const {
@@ -255,10 +249,7 @@ trait TIMEPOINT_HELP<DEPEND ,ALWAYS> {
 		}
 
 		TimePoint sub (CREF<TimeDuration> that) const {
-			TimePoint ret ;
-			ret.mThis = FUNCTION_extern::invoke () ;
-			ret.mThis->sub_from (mThis ,that.mThis) ;
-			return move (ret) ;
+			return mThis->sub (keep[TYPEAS<CREF<Holder>>::expr] (that.mThis)) ;
 		}
 
 		inline TimePoint operator- (CREF<TimeDuration> that) const {
@@ -270,10 +261,7 @@ trait TIMEPOINT_HELP<DEPEND ,ALWAYS> {
 		}
 
 		TimeDuration sub (CREF<TimePoint> that) const {
-			TimeDuration ret ;
-			ret.mThis = FUNCTION_extern::invoke () ;
-			ret.mThis->sub_from (mThis ,that.mThis) ;
-			return move (ret) ;
+			return mThis->sub (keep[TYPEAS<CREF<Holder>>::expr] (that.mThis)) ;
 		}
 
 		inline TimeDuration operator- (CREF<TimePoint> that) const {
@@ -379,7 +367,6 @@ trait MUTEX_IMPLHOLDER_HELP ;
 template <class DEPEND>
 trait MUTEX_HELP<DEPEND ,ALWAYS> {
 	struct Holder implement Interface {
-		virtual void init_scope () = 0 ;
 		virtual void init_recursive () = 0 ;
 		virtual void init_conditional () = 0 ;
 		virtual Auto native () const leftvalue = 0 ;
@@ -397,13 +384,6 @@ trait MUTEX_HELP<DEPEND ,ALWAYS> {
 
 	public:
 		implicit Mutex () = default ;
-
-		imports Mutex make_scope () {
-			Mutex ret ;
-			ret.mThis = FUNCTION_extern::invoke () ;
-			ret.mThis->init_scope () ;
-			return move (ret) ;
-		}
 
 		imports Mutex make_recursive () {
 			Mutex ret ;
@@ -436,12 +416,6 @@ trait MUTEX_HELP<DEPEND ,ALWAYS> {
 		}
 	} ;
 
-	class ScopeMutex implement Mutex {
-	public:
-		implicit ScopeMutex ()
-			:Mutex (Mutex::make_mutex ()) {}
-	} ;
-
 	class RecursiveMutex implement Mutex {
 	public:
 		implicit RecursiveMutex ()
@@ -456,18 +430,17 @@ trait MUTEX_HELP<DEPEND ,ALWAYS> {
 } ;
 
 using Mutex = typename MUTEX_HELP<DEPEND ,ALWAYS>::Mutex ;
-using ScopeMutex = typename MUTEX_HELP<DEPEND ,ALWAYS>::ScopeMutex ;
 using RecursiveMutex = typename MUTEX_HELP<DEPEND ,ALWAYS>::RecursiveMutex ;
 using ConditionalMutex = typename MUTEX_HELP<DEPEND ,ALWAYS>::ConditionalMutex ;
 
 template <class...>
-trait CONDITIONALLOCK_HELP ;
+trait UNIQUELOCK_HELP ;
 
 template <class...>
-trait CONDITIONALLOCK_IMPLHOLDER_HELP ;
+trait UNIQUELOCK_IMPLHOLDER_HELP ;
 
 template <class DEPEND>
-trait CONDITIONALLOCK_HELP<DEPEND ,ALWAYS> {
+trait UNIQUELOCK_HELP<DEPEND ,ALWAYS> {
 	struct Holder implement Interface {
 		virtual void initialize (CREF<Mutex> mutex_) = 0 ;
 		virtual void wait () = 0 ;
@@ -478,33 +451,25 @@ trait CONDITIONALLOCK_HELP<DEPEND ,ALWAYS> {
 	} ;
 
 	using FAKE_MAX_SIZE = ENUMAS<VAL ,ENUMID<64>> ;
-	using FAKE_MAX_ALIGN = ALIGN_OF<DATA> ;
+	using FAKE_MAX_ALIGN = RANK8 ;
 
 	class FakeHolder implement Holder {
 	protected:
 		Storage<FAKE_MAX_SIZE ,FAKE_MAX_ALIGN> mStorage ;
-
-	public:
-		void initialize (CREF<Mutex> mutex_) override ;
-		void wait () override ;
-		void wait (CREF<TimeDuration> time_) override ;
-		void wait (CREF<TimePoint> time_) override ;
-		void notify () override ;
-		void yield () override ;
 	} ;
 
 	struct FUNCTION_extern {
 		imports Box<FakeHolder> invoke () ;
 	} ;
 
-	class ConditionalLock {
+	class UniqueLock {
 	protected:
 		Box<FakeHolder> mThis ;
 
 	public:
-		implicit ConditionalLock () = delete ;
+		implicit UniqueLock () = delete ;
 
-		explicit ConditionalLock (CREF<Mutex> mutex_) {
+		explicit UniqueLock (CREF<Mutex> mutex_) {
 			mThis = FUNCTION_extern::invoke () ;
 			mThis->initialize (mutex_) ;
 		}
@@ -531,7 +496,52 @@ trait CONDITIONALLOCK_HELP<DEPEND ,ALWAYS> {
 	} ;
 } ;
 
-using ConditionalLock = typename CONDITIONALLOCK_HELP<DEPEND ,ALWAYS>::ConditionalLock ;
+using UniqueLock = typename UNIQUELOCK_HELP<DEPEND ,ALWAYS>::UniqueLock ;
+
+template <class...>
+trait SHAREDLOCK_HELP ;
+
+template <class...>
+trait SHAREDLOCK_IMPLHOLDER_HELP ;
+
+template <class DEPEND>
+trait SHAREDLOCK_HELP<DEPEND ,ALWAYS> {
+	struct Holder implement Interface {
+		virtual void initialize (CREF<Mutex> mutex_) = 0 ;
+		virtual BOOL lock () const = 0 ;
+	} ;
+
+	using FAKE_MAX_SIZE = ENUMAS<VAL ,ENUMID<64>> ;
+	using FAKE_MAX_ALIGN = RANK8 ;
+
+	class FakeHolder implement Holder {
+	protected:
+		Storage<FAKE_MAX_SIZE ,FAKE_MAX_ALIGN> mStorage ;
+	} ;
+
+	struct FUNCTION_extern {
+		imports Box<FakeHolder> invoke () ;
+	} ;
+
+	class SharedLock {
+	protected:
+		Box<FakeHolder> mThis ;
+
+	public:
+		implicit SharedLock () = delete ;
+
+		explicit SharedLock (CREF<Mutex> mutex_) {
+			mThis = FUNCTION_extern::invoke () ;
+			mThis->initialize (mutex_) ;
+		}
+
+		BOOL lock () const {
+			return mThis->lock () ;
+		}
+	} ;
+} ;
+
+using SharedLock = typename SHAREDLOCK_HELP<DEPEND ,ALWAYS>::SharedLock ;
 
 template <class...>
 trait RUNTIMEPROC_HELP ;
@@ -542,6 +552,7 @@ trait RUNTIMEPROC_IMPLHOLDER_HELP ;
 template <class DEPEND>
 trait RUNTIMEPROC_HELP<DEPEND ,ALWAYS> {
 	struct Holder implement Interface {
+		virtual void initialize () = 0 ;
 		virtual LENGTH thread_concurrency () const = 0 ;
 		virtual FLAG thread_uid () const = 0 ;
 		virtual void thread_sleep (CREF<TimePoint> time_) const = 0 ;
@@ -568,6 +579,7 @@ trait RUNTIMEPROC_HELP<DEPEND ,ALWAYS> {
 			return memorize ([&] () {
 				RuntimeProc ret ;
 				ret.mThis = FUNCTION_extern::invoke () ;
+				ret.mThis->initialize () ;
 				return move (ret) ;
 			}) ;
 		}
@@ -686,7 +698,7 @@ trait PROCESS_HELP<DEPEND ,ALWAYS> {
 		virtual void initialize (CREF<SNAPSHOT> snapshot_) = 0 ;
 		virtual Auto native () const leftvalue = 0 ;
 		virtual FLAG process_uid () const = 0 ;
-		virtual CREF<SNAPSHOT> snapshot () const = 0 ;
+		virtual SNAPSHOT snapshot () const = 0 ;
 	} ;
 
 	struct FUNCTION_extern {
@@ -718,7 +730,7 @@ trait PROCESS_HELP<DEPEND ,ALWAYS> {
 			return mThis->process_uid () ;
 		}
 
-		CREF<SNAPSHOT> snapshot () const {
+		SNAPSHOT snapshot () const {
 			return mThis->snapshot () ;
 		}
 	} ;
@@ -788,7 +800,7 @@ template <class DEPEND>
 trait SINGLETON_HOLDER_HELP<DEPEND ,ALWAYS> {
 	struct Holder implement Interface {
 		virtual void initialize () = 0 ;
-		virtual void add (CREF<Slice<STR>> name ,CREF<FLAG> addr_) const = 0 ;
+		virtual void add (CREF<Slice<STR>> name ,CREF<FLAG> addr) const = 0 ;
 		virtual FLAG map (CREF<Slice<STR>> name) const = 0 ;
 	} ;
 
@@ -854,9 +866,9 @@ trait SYSTEM_HELP<DEPEND ,ALWAYS> {
 	struct Holder implement Interface {
 		virtual void initialize () = 0 ;
 		virtual String<STR> get_locale () const = 0 ;
-		virtual void set_locale (RREF<String<STR>> name) const = 0 ;
+		virtual void set_locale (CREF<String<STR>> name) const = 0 ;
 		virtual void execute (CREF<String<STR>> command) const = 0 ;
-		virtual CREF<String<STR>> working_path () const = 0 ;
+		virtual String<STR> working_path () const = 0 ;
 	} ;
 
 	struct FUNCTION_extern {
@@ -884,12 +896,8 @@ trait SYSTEM_HELP<DEPEND ,ALWAYS> {
 		}
 
 		void set_locale (CREF<String<STR>> name) const {
-			set_locale (move (name)) ;
-		}
-
-		void set_locale (RREF<String<STR>> name) const {
 			Scope<Mutex> anonymous (mMutex) ;
-			return mThis->set_locale (move (name)) ;
+			return mThis->set_locale (name) ;
 		}
 
 		void execute (CREF<String<STR>> command) const {
@@ -897,7 +905,7 @@ trait SYSTEM_HELP<DEPEND ,ALWAYS> {
 			return mThis->execute (command) ;
 		}
 
-		CREF<String<STR>> working_path () const {
+		String<STR> working_path () const {
 			Scope<Mutex> anonymous (mMutex) ;
 			return mThis->working_path () ;
 		}
@@ -919,6 +927,14 @@ trait RANDOM_HELP<DEPEND ,ALWAYS> {
 		virtual void initialize (CREF<DATA> seed) = 0 ;
 		virtual DATA seed () const = 0 ;
 		virtual DATA random_byte () const = 0 ;
+		virtual Array<DATA> random_byte (CREF<LENGTH> size_) const = 0 ;
+		virtual INDEX random_value (CREF<INDEX> lb ,CREF<INDEX> rb) const = 0 ;
+		virtual Array<INDEX> random_value (CREF<INDEX> lb ,CREF<INDEX> rb ,CREF<LENGTH> size_) const = 0 ;
+		virtual Array<INDEX> random_shuffle (CREF<LENGTH> count ,CREF<LENGTH> size_) const = 0 ;
+		virtual void random_shuffle (CREF<LENGTH> count ,CREF<LENGTH> size_ ,VREF<Array<INDEX>> range_) const = 0 ;
+		virtual BitSet<> random_pick (CREF<LENGTH> count ,CREF<LENGTH> size_) const = 0 ;
+		virtual void random_pick (CREF<LENGTH> count ,CREF<LENGTH> size_ ,VREF<BitSet<>> range_) const = 0 ;
+		virtual BOOL random_draw (CREF<DOUBLE> possibility) const = 0 ;
 	} ;
 
 	struct FUNCTION_extern {
@@ -960,87 +976,47 @@ trait RANDOM_HELP<DEPEND ,ALWAYS> {
 
 		Array<DATA> random_byte (CREF<LENGTH> size_) const {
 			Scope<Mutex> anonymous (mMutex) ;
-			Array<DATA> ret = Array<DATA> (size_) ;
-			for (auto &&i : ret)
-				i = mThis->random_byte () ;
-			return move (ret) ;
+			return mThis->random_byte (size_) ;
 		}
 
 		INDEX random_value (CREF<INDEX> lb ,CREF<INDEX> rb) const {
 			Scope<Mutex> anonymous (mMutex) ;
-			assert (lb <= rb) ;
-			const auto r1x = VAL64 (rb) - VAL64 (lb) + 1 ;
-			const auto r2x = VAL64 (mThis->random_byte () & DATA (VAL64_MAX)) ;
-			return INDEX (r2x % r1x + lb) ;
+			return mThis->random_value (lb ,rb) ;
 		}
 
 		Array<INDEX> random_value (CREF<INDEX> lb ,CREF<INDEX> rb ,CREF<LENGTH> size_) const {
 			Scope<Mutex> anonymous (mMutex) ;
-			assert (lb <= rb) ;
-			Array<INDEX> ret = Array<INDEX> (size_) ;
-			const auto r1x = VAL64 (rb) - VAL64 (lb) + 1 ;
-			for (auto &&i : ret) {
-				const auto r2x = VAL64 (mThis->random_byte () & DATA (VAL64_MAX)) ;
-				i = INDEX (r2x % r1x + lb) ;
-			}
-			return move (ret) ;
+			return mThis->random_value (lb ,rb ,size_) ;
 		}
 
 		Array<INDEX> random_shuffle (CREF<LENGTH> count ,CREF<LENGTH> size_) const {
 			Scope<Mutex> anonymous (mMutex) ;
-			Array<INDEX> ret = Array<INDEX>::make (iter (0 ,size_)) ;
-			random_shuffle (count ,size_ ,ret) ;
-			return move (ret) ;
+			return mThis->random_shuffle (count ,size_) ;
 		}
 
-		void random_shuffle (CREF<LENGTH> count ,CREF<LENGTH> size_ ,VREF<Array<INDEX>> range) const {
+		void random_shuffle (CREF<LENGTH> count ,CREF<LENGTH> size_ ,VREF<Array<INDEX>> range_) const {
 			Scope<Mutex> anonymous (mMutex) ;
-			assert (count >= 0) ;
-			assert (count <= size_) ;
-			assert (range.size () == size_) ;
-			const auto r1x = range.size () - 1 ;
-			INDEX ix = 0 ;
-			while (TRUE) {
-				if (ix >= count)
-					break ;
-				INDEX iy = random_value (ix ,r1x) ;
-				swap (range[ix] ,range[iy]) ;
-				ix++ ;
-			}
+			return mThis->random_shuffle (count ,size_ ,range_) ;
 		}
 
 		BitSet<> random_pick (CREF<LENGTH> count ,CREF<LENGTH> size_) const {
 			Scope<Mutex> anonymous (mMutex) ;
-			assert (count >= 0) ;
-			assert (count <= size_) ;
-			BitSet<> ret = BitSet<> (size_) ;
-			auto rxx = TRUE ;
-			if ifswitch (rxx) {
-				if (count >= size_ / 2)
-					discard ;
-				const auto r1x = random_shuffle (count ,size_) ;
-				for (auto &&i : iter (0 ,count))
-					ret.add (r1x[i]) ;
-			}
-			if ifswitch (rxx) {
-				const auto r2x = random_shuffle (size_ - count ,size_) ;
-				for (auto &&i : iter (size_ - count ,size_))
-					ret.add (r2x[i]) ;
-			}
-			return move (ret) ;
+			return mThis->random_pick (count ,size_) ;
+		}
+
+		void random_pick (CREF<LENGTH> count ,CREF<LENGTH> size_ ,VREF<BitSet<>> range_) const {
+			Scope<Mutex> anonymous (mMutex) ;
+			return mThis->random_pick (count ,size_ ,range_) ;
 		}
 
 		BOOL random_draw (CREF<SINGLE> possibility) const {
 			Scope<Mutex> anonymous (mMutex) ;
-			const auto r1x = random_value (0 ,10000) ;
-			const auto r2x = SINGLE (r1x) * MathProc::inverse (SINGLE (10000)) ;
-			if (r2x < possibility)
-				return TRUE ;
-			return FALSE ;
+			return mThis->random_draw (possibility) ;
 		}
 
 		BOOL random_draw (CREF<DOUBLE> possibility) const {
-			return random_draw (SINGLE (possibility)) ;
+			Scope<Mutex> anonymous (mMutex) ;
+			return mThis->random_draw (possibility) ;
 		}
 	} ;
 } ;
