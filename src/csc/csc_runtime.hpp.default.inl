@@ -103,17 +103,10 @@ trait TIMEDURATION_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			mTimeDuration = r6x.time_since_epoch () ;
 		}
 
-		void initialize (CREF<TEMP<void>> duration_) {
-			auto rax = Box<TIMEDURATION> () ;
-			rax.acquire (duration_) ;
-			mTimeDuration = move (rax.self) ;
-		}
-
 		TimeDuration factory (CREF<TIMEDURATION> duration_) const {
-			auto rax = Box<TIMEDURATION>::make (duration_) ;
-			TimeDuration ret = TimeDuration (unsafe_cast[TYPEAS<TEMP<void>>::expr] (unsafe_deptr (rax.self))) ;
-			rax.release () ;
-			return move (ret) ;
+			auto rax = VRef<ImplHolder>::make () ;
+			rax->mTimeDuration = duration_ ;
+			return TimeDuration (move (rax)) ;
 		}
 
 		Auto native () const leftvalue override {
@@ -195,7 +188,7 @@ trait TIMEDURATION_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 } ;
 
 template <>
-exports auto TIMEDURATION_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () -> VRef<Holder> {
+exports auto TIMEDURATION_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
 	using R1X = typename TIMEDURATION_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
 }
@@ -232,13 +225,13 @@ trait ATOMIC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			return mHeap->mAtomic.exchange (obj ,std::memory_order::memory_order_relaxed) ;
 		}
 
-		void replace (CREF<VAL> expect ,CREF<VAL> obj) const override {
+		void replace (CREF<VAL> expect ,CREF<VAL> right) const override {
 			auto rax = expect ;
-			mHeap->mAtomic.compare_exchange_strong (rax ,obj ,std::memory_order::memory_order_relaxed) ;
+			mHeap->mAtomic.compare_exchange_strong (rax ,right ,std::memory_order::memory_order_relaxed) ;
 		}
 
-		BOOL change (VREF<VAL> expect ,CREF<VAL> obj) const override {
-			const auto r1x = mHeap->mAtomic.compare_exchange_weak (expect ,obj ,std::memory_order::memory_order_relaxed) ;
+		BOOL change (VREF<VAL> expect ,CREF<VAL> right) const override {
+			const auto r1x = mHeap->mAtomic.compare_exchange_weak (expect ,right ,std::memory_order::memory_order_relaxed) ;
 			if (r1x)
 				return TRUE ;
 			std::this_thread::yield () ;
@@ -256,7 +249,7 @@ trait ATOMIC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 } ;
 
 template <>
-exports auto ATOMIC_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () -> VRef<Holder> {
+exports auto ATOMIC_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
 	using R1X = typename ATOMIC_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
 }
@@ -331,7 +324,7 @@ trait MUTEX_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 } ;
 
 template <>
-exports auto MUTEX_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () -> VRef<Holder> {
+exports auto MUTEX_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
 	using R1X = typename MUTEX_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
 }
@@ -396,7 +389,7 @@ trait UNIQUELOCK_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 } ;
 
 template <>
-exports auto UNIQUELOCK_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () -> Box<FakeHolder> {
+exports auto UNIQUELOCK_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->Box<FakeHolder> {
 	using R1X = typename UNIQUELOCK_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	Box<FakeHolder> ret ;
 	ret.acquire (TYPEAS<R1X>::expr) ;
@@ -461,7 +454,7 @@ trait SHAREDLOCK_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 } ;
 
 template <>
-exports auto SHAREDLOCK_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () -> Box<FakeHolder> {
+exports auto SHAREDLOCK_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->Box<FakeHolder> {
 	using R1X = typename SHAREDLOCK_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	Box<FakeHolder> ret ;
 	ret.acquire (TYPEAS<R1X>::expr) ;
@@ -508,7 +501,7 @@ trait THREAD_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			mBlock = VRef<std::thread>::make ([&] () {
 				try_invoke ([&] () {
 					mUID = RuntimeProc::thread_uid () ;
-					mBinder->execute (mIndex) ;
+					mBinder->friend_execute (mIndex) ;
 				} ,[&] () {
 					noop () ;
 				}) ;
@@ -528,7 +521,7 @@ trait THREAD_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 } ;
 
 template <>
-exports auto THREAD_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () -> VRef<Holder> {
+exports auto THREAD_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
 	using R1X = typename THREAD_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
 }
@@ -573,7 +566,7 @@ trait SYSTEM_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 } ;
 
 template <>
-exports auto SYSTEM_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () -> VRef<Holder> {
+exports auto SYSTEM_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
 	using R1X = typename SYSTEM_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
 }
@@ -696,7 +689,7 @@ trait RANDOM_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 } ;
 
 template <>
-exports auto RANDOM_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () -> VRef<Holder> {
+exports auto RANDOM_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
 	using R1X = typename RANDOM_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
 }

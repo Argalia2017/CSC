@@ -41,8 +41,8 @@ trait FILE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	public:
 		implicit ImplHolder () = default ;
 
-		void initialize (CREF<String<STR>> file_) override {
-			mFile = string_cvt[TYPEAS<TYPEAS<STRA ,STR>>::expr] (file_) ;
+		void initialize (CREF<String<STR>> file) override {
+			mFile = string_cvt[TYPEAS<TYPEAS<STRA ,STR>>::expr] (file) ;
 			if ifswitch (TRUE) {
 				const auto r1x = mFile.length () ;
 				assume (r1x > 0) ;
@@ -53,10 +53,6 @@ trait FILE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				assume (mFile[ix] != STRA ('\\')) ;
 				assume (mFile[ix] != STRA ('\\')) ;
 			}
-		}
-
-		Auto native () const leftvalue override {
-			return CRef<ImplHolder>::reference (thiz) ;
 		}
 
 		VarBuffer<BYTE> load () const override {
@@ -178,40 +174,40 @@ trait FILE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		void copy_from (CREF<Holder> that) const override {
-			const auto r1x = that.native ().poll (TYPEAS<CRef<ImplHolder>>::expr) ;
-			assume (ifnot (r1x->available ())) ;
-			const auto r2x = load () ;
-			save (RegBuffer<BYTE>::from (r2x)) ;
+			auto &&tmp = keep[TYPEAS<CREF<ImplHolder>>::expr] (that) ;
+			assume (ifnot (tmp.available ())) ;
+			const auto r1x = tmp.load () ;
+			save (RegBuffer<BYTE>::from (r1x)) ;
 		}
 
 		void move_from (CREF<Holder> that) const override {
-			const auto r1x = that.native ().poll (TYPEAS<CRef<ImplHolder>>::expr) ;
-			const auto r2x = available () ;
-			assume (ifnot (r2x)) ;
-			const auto r3x = rename ((&r1x->mFile[0]) ,(&mFile[0])) ;
-			noop (r3x) ;
+			auto &&tmp = keep[TYPEAS<CREF<ImplHolder>>::expr] (that) ;
+			const auto r1x = available () ;
+			assume (ifnot (r1x)) ;
+			const auto r2x = rename ((&tmp.mFile[0]) ,(&mFile[0])) ;
+			noop (r2x) ;
 		}
 
 		void link_from (CREF<Holder> that) const override {
-			const auto r1x = that.native ().poll (TYPEAS<CRef<ImplHolder>>::expr) ;
-			const auto r2x = available () ;
-			assume (ifnot (r2x)) ;
-			const auto r3x = link ((&r1x->mFile[0]) ,(&mFile[0])) ;
-			noop (r3x) ;
+			auto &&tmp = keep[TYPEAS<CREF<ImplHolder>>::expr] (that) ;
+			const auto r1x = available () ;
+			assume (ifnot (r1x)) ;
+			const auto r2x = link ((&tmp.mFile[0]) ,(&mFile[0])) ;
+			noop (r2x) ;
 		}
 
 		BOOL identical (CREF<Holder> that) const override {
-			const auto r1x = that.native ().poll (TYPEAS<CRef<ImplHolder>>::expr) ;
+			auto &&tmp = keep[TYPEAS<CREF<ImplHolder>>::expr] (that) ;
 			auto rax = ARRAY2<STAT_INFO> () ;
 			zeroize (rax[0]) ;
-			const auto r2x = stat ((&mFile[0]) ,(&rax[0])) ;
-			if (r2x != 0)
+			const auto r1x = stat ((&mFile[0]) ,(&rax[0])) ;
+			if (r1x != 0)
 				return FALSE ;
 			if (rax[0].st_nlink == 0)
 				return FALSE ;
 			zeroize (rax[1]) ;
-			const auto r3x = stat ((&r1x->mFile[0]) ,(&rax[1])) ;
-			if (r3x != 0)
+			const auto r2x = stat ((&tmp.mFile[0]) ,(&rax[1])) ;
+			if (r2x != 0)
 				return FALSE ;
 			if (rax[1].st_nlink == 0)
 				return FALSE ;
@@ -225,7 +221,7 @@ trait FILE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 } ;
 
 template <>
-exports auto FILE_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () -> VRef<Holder> {
+exports auto FILE_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
 	using R1X = typename FILE_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
 }
@@ -303,8 +299,8 @@ trait DIRECTORY_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	public:
 		implicit ImplHolder () = default ;
 
-		void initialize (CREF<String<STR>> dire_) override {
-			mDire = move (dire_) ;
+		void initialize (CREF<String<STR>> dire) override {
+			mDire = move (dire) ;
 			mPath = Cell<CRef<ArrayList<String<STR>>>>::make () ;
 			mChild = Cell<CRef<ArrayList<CHILD>>>::make () ;
 			if ifswitch (TRUE) {
@@ -317,10 +313,6 @@ trait DIRECTORY_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				mDire.trunc (ix) ;
 			}
 			mDireA = string_cvt[TYPEAS<TYPEAS<STRA ,STR>>::expr] (mDire) ;
-		}
-
-		Auto native () const leftvalue override {
-			return CRef<ImplHolder>::reference (thiz) ;
 		}
 
 		String<STR> path () const override {
@@ -418,10 +410,10 @@ trait DIRECTORY_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			return FALSE ;
 		}
 
-		CRef<UniqueRef<File>> lock_handle (CREF<String<STR>> file_ ,CREF<ConBuffer<BYTE>> snapshot_) const {
+		CRef<UniqueRef<File>> lock_handle (CREF<String<STR>> file ,CREF<ConBuffer<BYTE>> snapshot_) const {
 			return CRef<UniqueRef<File>>::reference (memorize ([&] () {
 				return UniqueRef<File> ([&] (VREF<File> me) {
-					me = File (file_) ;
+					me = File (file) ;
 					me.save (snapshot_) ;
 				} ,[] (VREF<File> me) {
 					me.erase () ;
@@ -604,7 +596,7 @@ trait DIRECTORY_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 } ;
 
 template <>
-exports auto DIRECTORY_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () -> VRef<Holder> {
+exports auto DIRECTORY_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
 	using R1X = typename DIRECTORY_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
 }
@@ -626,8 +618,8 @@ trait STREAMFILE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	public:
 		implicit ImplHolder () = default ;
 
-		void initialize (CREF<String<STR>> file_) override {
-			mFile = string_cvt[TYPEAS<TYPEAS<STRA ,STR>>::expr] (file_) ;
+		void initialize (CREF<String<STR>> file) override {
+			mFile = string_cvt[TYPEAS<TYPEAS<STRA ,STR>>::expr] (file) ;
 			mRead = 0 ;
 			mWrite = 0 ;
 		}
@@ -838,7 +830,7 @@ trait STREAMFILE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 } ;
 
 template <>
-exports auto STREAMFILE_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () -> VRef<Holder> {
+exports auto STREAMFILE_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
 	using R1X = typename STREAMFILE_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
 }
@@ -885,8 +877,8 @@ trait BUFFERFILE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	public:
 		implicit ImplHolder () = default ;
 
-		void initialize (CREF<String<STR>> file_ ,CREF<Clazz> clazz) override {
-			mFile = string_cvt[TYPEAS<TYPEAS<STRA ,STR>>::expr] (file_) ;
+		void initialize (CREF<String<STR>> file ,CREF<Clazz> clazz) override {
+			mFile = string_cvt[TYPEAS<TYPEAS<STRA ,STR>>::expr] (file) ;
 			mItemClazz = clazz ;
 			mFileSize = 0 ;
 			mFileMapFlag = 0 ;
@@ -1024,6 +1016,7 @@ trait BUFFERFILE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				mHeader->mItemAlign = mItemClazz.type_align () ;
 				mHeader->mItemCount = 0 ;
 				mHeader->mChunkPageSize = PAGE_SIZE::expr ;
+				assume (mHeader->mChunkPageSize >= mHeader->mItemSize) ;
 				mHeader->mChunkItemSize = mHeader->mChunkPageSize / mHeader->mItemSize ;
 				mHeader->mChunkSize = 0 ;
 			}
@@ -1117,10 +1110,10 @@ trait BUFFERFILE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			return mHeader->mItemCount ;
 		}
 
-		VAL64 insert (CREF<VAL64> size_) override {
+		void resize (CREF<VAL64> size_) override {
 			assert (mPipe.exist ()) ;
 			const auto r1x = mHeader->mItemCount ;
-			const auto r2x = valign (mHeader->mItemCount + size_ ,mHeader->mChunkItemSize) / mHeader->mChunkItemSize ;
+			const auto r2x = valign (r1x + size_ ,mHeader->mChunkItemSize) / mHeader->mChunkItemSize ;
 			const auto r3x = MathProc::max_of (r2x - mHeader->mChunkSize ,VAL64 (ZERO)) ;
 			mHeader->mItemCount += size_ ;
 			mHeader->mChunkSize += r3x ;
@@ -1131,7 +1124,6 @@ trait BUFFERFILE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				close () ;
 				append () ;
 			}
-			return r1x ;
 		}
 
 		void get (CREF<VAL64> index ,VREF<RegBuffer<BYTE>> item) override {
@@ -1195,7 +1187,7 @@ trait BUFFERFILE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				} ,[] (VREF<Tuple<HANDLE ,LENGTH>> me) {
 					msync (me.mP1st ,me.mP2nd ,MS_SYNC) ;
 					munmap (me.mP1st ,me.mP2nd) ;
-				}) ; ;
+				}) ;
 			}
 			mCacheList[ret].mCacheTime = mCacheTimer ;
 			mCacheTimer++ ;
@@ -1214,7 +1206,7 @@ trait BUFFERFILE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 } ;
 
 template <>
-exports auto BUFFERFILE_HOLDER_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () -> VRef<Holder> {
+exports auto BUFFERFILE_HOLDER_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
 	using R1X = typename BUFFERFILE_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
 }

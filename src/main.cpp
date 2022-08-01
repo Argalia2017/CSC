@@ -108,7 +108,11 @@ struct G_mYa {
 
 	explicit G_mYa (VREF<SyntaxTree> me) {
 		me.then (Function<void> ([&] () {
-			mYa = Array<DOUBLE> ({26 ,54 ,22 ,90}) ;
+			mYa = Array<DOUBLE> (4) ;
+			mYa[0] = 26 ;
+			mYa[1] = 54 ;
+			mYa[2] = 22 ;
+			mYa[3] = 90 ;
 		})) ;
 	}
 } ;
@@ -162,7 +166,6 @@ struct G_mYn {
 	Array<DOUBLE> mYn ;
 
 	explicit G_mYn (VREF<SyntaxTree> me) {
-		me.mark_as_iteration () ;
 		auto &mXn = me.stack (TYPEAS<G_mXn>::expr).mXn ;
 		me.then (Function<void> ([&] () {
 			mYn = Array<DOUBLE> (mXn.length ()) ;
@@ -178,27 +181,18 @@ exports int main () {
 	Singleton<Reporter>::instance ().detect_crash_signal () ;
 	Singleton<Console>::instance ().open () ;
 	Singleton<Console>::instance ().link (slice (".")) ;
+	Singleton<Console>::instance ().info (slice ("start")) ;
 
-	auto rbx = AsyncFuture<int> (Function<int> ([&] () {
-		auto rax = SyntaxTree () ;
-		auto &mXn = rax.stack (TYPEAS<G_mXn>::expr).mXn ;
-		auto &mYn = rax.stack (TYPEAS<G_mYn>::expr).mYn ;
-		rax.play () ;
-		for (auto &&i : mXn.iter ()) {
-			Singleton<Console>::instance ().print (slice ("square (") ,mXn[i] ,slice (") = ") ,mYn[i]) ;
-		}
-		assume (FALSE) ;
-		return 0 ;
-	})) ;
-	
-	const auto r1x = TimeDuration (100) ;
-	while (TRUE) {
-		if (rbx.ready ())
-			break ;
-		RuntimeProc::thread_sleep (r1x) ;
+	auto rax = SyntaxTree () ;
+	auto &mXn = rax.stack (TYPEAS<G_mXn>::expr).mXn ;
+	auto &mYn = rax.stack (TYPEAS<G_mYn>::expr).mYn ;
+	rax.play () ;
+	for (auto &&i : mXn.iter ()) {
+		Singleton<Console>::instance ().print (slice ("square (") ,mXn[i] ,slice (") = ") ,mYn[i]) ;
 	}
 
-	assert (FALSE) ;
+	Singleton<Console>::instance ().pause () ;
+	unittest (rax) ;
 	return 0 ;
 }
 #endif

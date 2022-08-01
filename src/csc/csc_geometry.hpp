@@ -21,30 +21,30 @@ trait VECTOR_HELP ;
 
 template <class ITEM>
 trait VECTOR_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
-	using SIZE = RANK4 ;
+	using RANK = RANK4 ;
 
 	template <class ARG1>
 	using CRTP_Matrix = typename DEPENDENT<MATRIX_HELP<ITEM ,ALWAYS> ,ARG1>::Matrix ;
 
 	class Vector {
 	protected:
-		BoxBuffer<ITEM ,SIZE> mVector ;
+		BoxBuffer<ITEM ,RANK> mVector ;
 
 	public:
 		implicit Vector () = default ;
 
-		explicit Vector (CREF<ARRAY3<ITEM>> xyz ,CREF<ITEM> w) {
+		explicit Vector (CREF<ARRAY3<ITEM>> xyz ,CREF<ITEM> w_) {
 			mVector[0] = xyz[0] ;
 			mVector[1] = xyz[1] ;
 			mVector[2] = xyz[2] ;
-			mVector[3] = w ;
+			mVector[3] = w_ ;
 		}
 
-		explicit Vector (CREF<ITEM> x ,CREF<ITEM> y ,CREF<ITEM> z ,CREF<ITEM> w) {
-			mVector[0] = x ;
-			mVector[1] = y ;
-			mVector[2] = z ;
-			mVector[3] = w ;
+		explicit Vector (CREF<ITEM> x_ ,CREF<ITEM> y_ ,CREF<ITEM> z_ ,CREF<ITEM> w_) {
+			mVector[0] = x_ ;
+			mVector[1] = y_ ;
+			mVector[2] = z_ ;
+			mVector[3] = w_ ;
 		}
 
 		imports CREF<Vector> zero () {
@@ -85,22 +85,22 @@ trait VECTOR_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 			return move (ret) ;
 		}
 
-		VREF<ITEM> at (CREF<INDEX> y) leftvalue {
-			assert (vbetween (y ,0 ,4)) ;
-			return mVector[y] ;
+		VREF<ITEM> at (CREF<INDEX> y_) leftvalue {
+			assert (vbetween (y_ ,0 ,4)) ;
+			return mVector[y_] ;
 		}
 
-		inline VREF<ITEM> operator[] (CREF<INDEX> y) leftvalue {
-			return at (y) ;
+		inline VREF<ITEM> operator[] (CREF<INDEX> y_) leftvalue {
+			return at (y_) ;
 		}
 
-		CREF<ITEM> at (CREF<INDEX> y) const leftvalue {
-			assert (vbetween (y ,0 ,4)) ;
-			return mVector[y] ;
+		CREF<ITEM> at (CREF<INDEX> y_) const leftvalue {
+			assert (vbetween (y_ ,0 ,4)) ;
+			return mVector[y_] ;
 		}
 
-		inline CREF<ITEM> operator[] (CREF<INDEX> y) const leftvalue {
-			return at (y) ;
+		inline CREF<ITEM> operator[] (CREF<INDEX> y_) const leftvalue {
+			return at (y_) ;
 		}
 
 		BOOL equal (CREF<Vector> that) const {
@@ -141,7 +141,7 @@ trait VECTOR_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 
 		Vector add (CREF<Vector> that) const {
 			Vector ret ;
-			for (auto &&i : iter (0 ,SIZE::expr))
+			for (auto &&i : iter (0 ,RANK::expr))
 				ret.mVector[i] = mVector[i] + that.mVector[i] ;
 			return move (ret) ;
 		}
@@ -151,7 +151,7 @@ trait VECTOR_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 		}
 
 		void addto (CREF<Vector> that) {
-			for (auto &&i : iter (0 ,SIZE::expr))
+			for (auto &&i : iter (0 ,RANK::expr))
 				mVector[i] += that.mVector[i] ;
 		}
 
@@ -161,7 +161,7 @@ trait VECTOR_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 
 		Vector sub (CREF<Vector> that) const {
 			Vector ret ;
-			for (auto &&i : iter (0 ,SIZE::expr))
+			for (auto &&i : iter (0 ,RANK::expr))
 				ret.mVector[i] = mVector[i] - that.mVector[i] ;
 			return move (ret) ;
 		}
@@ -171,7 +171,7 @@ trait VECTOR_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 		}
 
 		void subto (CREF<Vector> that) {
-			for (auto &&i : iter (0 ,SIZE::expr))
+			for (auto &&i : iter (0 ,RANK::expr))
 				mVector[i] -= that.mVector[i] ;
 		}
 
@@ -181,7 +181,7 @@ trait VECTOR_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 
 		Vector mul (CREF<ITEM> scale) const {
 			Vector ret ;
-			for (auto &&i : iter (0 ,SIZE::expr))
+			for (auto &&i : iter (0 ,RANK::expr))
 				ret.mVector[i] = mVector[i] * scale ;
 			return move (ret) ;
 		}
@@ -195,7 +195,7 @@ trait VECTOR_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 		}
 
 		void multo (CREF<ITEM> scale) {
-			for (auto &&i : iter (0 ,SIZE::expr))
+			for (auto &&i : iter (0 ,RANK::expr))
 				mVector[i] *= scale ;
 		}
 
@@ -205,7 +205,7 @@ trait VECTOR_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 
 		ITEM dot (CREF<Vector> that) const {
 			ITEM ret = ITEM (0) ;
-			for (auto &&i : iter (0 ,SIZE::expr))
+			for (auto &&i : iter (0 ,RANK::expr))
 				ret += mVector[i] * that.mVector[i] ;
 			return move (ret) ;
 		}
@@ -256,7 +256,7 @@ trait VECTOR_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 
 		Vector minus () const {
 			Vector ret ;
-			for (auto &&i : iter (0 ,SIZE::expr))
+			for (auto &&i : iter (0 ,RANK::expr))
 				ret.mVector[i] = -mVector[i] ;
 			return move (ret) ;
 		}
@@ -340,23 +340,23 @@ trait QUATERNION_HELP ;
 
 template <class ITEM>
 trait QUATERNION_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
-	using SIZE = RANK4 ;
+	using RANK = RANK4 ;
 
 	template <class ARG1>
 	using CRTP_Matrix = typename DEPENDENT<MATRIX_HELP<ITEM ,ALWAYS> ,ARG1>::Matrix ;
 
 	class Quaternion {
 	protected:
-		BoxBuffer<ITEM ,SIZE> mQuaternion ;
+		BoxBuffer<ITEM ,RANK> mQuaternion ;
 
 	public:
 		implicit Quaternion () = default ;
 
-		explicit Quaternion (CREF<ITEM> x ,CREF<ITEM> y ,CREF<ITEM> z ,CREF<ITEM> w) {
-			mQuaternion[0] = x ;
-			mQuaternion[1] = y ;
-			mQuaternion[2] = z ;
-			mQuaternion[3] = w ;
+		explicit Quaternion (CREF<ITEM> x_ ,CREF<ITEM> y_ ,CREF<ITEM> z_ ,CREF<ITEM> w_) {
+			mQuaternion[0] = x_ ;
+			mQuaternion[1] = y_ ;
+			mQuaternion[2] = z_ ;
+			mQuaternion[3] = w_ ;
 			update_normalize () ;
 		}
 
@@ -439,13 +439,13 @@ trait QUATERNION_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 			return axis () * r1x ;
 		}
 
-		CREF<ITEM> at (CREF<INDEX> y) const leftvalue {
-			assert (vbetween (y ,0 ,4)) ;
-			return mQuaternion[y] ;
+		CREF<ITEM> at (CREF<INDEX> y_) const leftvalue {
+			assert (vbetween (y_ ,0 ,4)) ;
+			return mQuaternion[y_] ;
 		}
 
-		inline CREF<ITEM> operator[] (CREF<INDEX> y) const leftvalue {
-			return at (y) ;
+		inline CREF<ITEM> operator[] (CREF<INDEX> y_) const leftvalue {
+			return at (y_) ;
 		}
 
 		BOOL equal (CREF<Quaternion> that) const {
@@ -508,7 +508,7 @@ trait MATRIX_SINGULAR_HELP ;
 
 template <class ITEM>
 trait MATRIX_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
-	using SIZE = ENUMAS<VAL ,ENUMID<16>> ;
+	using RANK = ENUMAS<VAL ,ENUMID<16>> ;
 
 	template <class ARG1>
 	using CRTP_Matrix = typename DEPENDENT<MATRIX_HELP<ITEM ,ALWAYS> ,ARG1>::Matrix ;
@@ -528,7 +528,7 @@ trait MATRIX_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 
 	class Matrix {
 	protected:
-		BoxBuffer<ITEM ,SIZE> mMatrix ;
+		BoxBuffer<ITEM ,RANK> mMatrix ;
 
 	public:
 		implicit Matrix () = default ;
@@ -559,12 +559,12 @@ trait MATRIX_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 			}) ;
 		}
 
-		imports Matrix make_diag (CREF<ITEM> x ,CREF<ITEM> y ,CREF<ITEM> z ,CREF<ITEM> w) {
+		imports Matrix make_diag (CREF<ITEM> x_ ,CREF<ITEM> y_ ,CREF<ITEM> z_ ,CREF<ITEM> w_) {
 			Matrix ret = zero () ;
-			ret.at (0 ,0) = x ;
-			ret.at (1 ,1) = y ;
-			ret.at (2 ,2) = z ;
-			ret.at (3 ,3) = w ;
+			ret.at (0 ,0) = x_ ;
+			ret.at (1 ,1) = y_ ;
+			ret.at (2 ,2) = z_ ;
+			ret.at (3 ,3) = w_ ;
 			return move (ret) ;
 		}
 
@@ -763,24 +763,24 @@ trait MATRIX_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 			return identity () - make_symmetry (r1x ,r1x) * ITEM (2) ;
 		}
 
-		VREF<ITEM> at (CREF<INDEX> x ,CREF<INDEX> y) leftvalue {
-			assert (vbetween (x ,0 ,4)) ;
-			assert (vbetween (y ,0 ,4)) ;
-			return mMatrix[y * 4 + x] ;
+		VREF<ITEM> at (CREF<INDEX> x_ ,CREF<INDEX> y_) leftvalue {
+			assert (vbetween (x_ ,0 ,4)) ;
+			assert (vbetween (y_ ,0 ,4)) ;
+			return mMatrix[y_ * 4 + x_] ;
 		}
 
-		inline RowProxy<VREF<Matrix> ,ITEM> operator[] (CREF<INDEX> y) leftvalue {
-			return RowProxy<VREF<Matrix> ,ITEM> (VRef<Matrix>::reference (thiz) ,y) ;
+		inline RowProxy<VREF<Matrix> ,ITEM> operator[] (CREF<INDEX> y_) leftvalue {
+			return RowProxy<VREF<Matrix> ,ITEM> (VRef<Matrix>::reference (thiz) ,y_) ;
 		}
 
-		CREF<ITEM> at (CREF<INDEX> x ,CREF<INDEX> y) const leftvalue {
-			assert (vbetween (x ,0 ,4)) ;
-			assert (vbetween (y ,0 ,4)) ;
-			return mMatrix[y * 4 + x] ;
+		CREF<ITEM> at (CREF<INDEX> x_ ,CREF<INDEX> y_) const leftvalue {
+			assert (vbetween (x_ ,0 ,4)) ;
+			assert (vbetween (y_ ,0 ,4)) ;
+			return mMatrix[y_ * 4 + x_] ;
 		}
 
-		inline RowProxy<CREF<Matrix> ,ITEM> operator[] (CREF<INDEX> y) const leftvalue {
-			return RowProxy<CREF<Matrix> ,ITEM> (CRef<Matrix>::reference (thiz) ,y) ;
+		inline RowProxy<CREF<Matrix> ,ITEM> operator[] (CREF<INDEX> y_) const leftvalue {
+			return RowProxy<CREF<Matrix> ,ITEM> (CRef<Matrix>::reference (thiz) ,y_) ;
 		}
 
 		BOOL equal (CREF<Matrix> that) const {
@@ -821,7 +821,7 @@ trait MATRIX_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 
 		Matrix add (CREF<Matrix> that) const {
 			Matrix ret ;
-			for (auto &&i : iter (0 ,SIZE::expr))
+			for (auto &&i : iter (0 ,RANK::expr))
 				ret.mMatrix[i] = mMatrix[i] + that.mMatrix[i] ;
 			return move (ret) ;
 		}
@@ -831,7 +831,7 @@ trait MATRIX_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 		}
 
 		void addto (CREF<Matrix> that) {
-			for (auto &&i : iter (0 ,SIZE::expr))
+			for (auto &&i : iter (0 ,RANK::expr))
 				mMatrix[i] += that.mMatrix[i] ;
 		}
 
@@ -841,7 +841,7 @@ trait MATRIX_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 
 		Matrix sub (CREF<Matrix> that) const {
 			Matrix ret ;
-			for (auto &&i : iter (0 ,SIZE::expr))
+			for (auto &&i : iter (0 ,RANK::expr))
 				ret.mMatrix[i] = mMatrix[i] - that.mMatrix[i] ;
 			return move (ret) ;
 		}
@@ -851,7 +851,7 @@ trait MATRIX_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 		}
 
 		void subto (CREF<Matrix> that) {
-			for (auto &&i : iter (0 ,SIZE::expr))
+			for (auto &&i : iter (0 ,RANK::expr))
 				mMatrix[i] -= that.mMatrix[i] ;
 		}
 
@@ -861,7 +861,7 @@ trait MATRIX_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 
 		Matrix mul (CREF<ITEM> scale) const {
 			Matrix ret ;
-			for (auto &&i : iter (0 ,SIZE::expr))
+			for (auto &&i : iter (0 ,RANK::expr))
 				ret.mMatrix[i] = mMatrix[i] * scale ;
 			return move (ret) ;
 		}
@@ -875,7 +875,7 @@ trait MATRIX_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 		}
 
 		void multo (CREF<ITEM> scale) {
-			for (auto &&i : iter (0 ,SIZE::expr))
+			for (auto &&i : iter (0 ,RANK::expr))
 				mMatrix[i] *= scale ;
 		}
 
@@ -923,7 +923,7 @@ trait MATRIX_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 
 		Matrix minus () const {
 			Matrix ret ;
-			for (auto &&i : iter (0 ,SIZE::expr))
+			for (auto &&i : iter (0 ,RANK::expr))
 				ret.mMatrix[i] = -mMatrix[i] ;
 			return move (ret) ;
 		}
@@ -1069,7 +1069,7 @@ trait MATRIX_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 
 		Matrix pseudo_inverse () const {
 			Matrix ret ;
-			for (auto &&i : iter (0 ,SIZE::expr))
+			for (auto &&i : iter (0 ,RANK::expr))
 				ret.mMatrix[i] = MathProc::inverse (mMatrix[i]) ;
 			return move (ret) ;
 		}
@@ -1087,11 +1087,11 @@ trait MATRIX_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 			return TRUE ;
 		}
 
-		INDEX find_abs_max_row (CREF<INDEX> x) const {
+		INDEX find_abs_max_row (CREF<INDEX> x_) const {
 			INDEX ret = NONE ;
 			auto rax = ITEM () ;
-			for (auto &&i : iter (x ,4)) {
-				const auto r1x = MathProc::abs (at (x ,i)) ;
+			for (auto &&i : iter (x_ ,4)) {
+				const auto r1x = MathProc::abs (at (x_ ,i)) ;
 				if (ret != NONE)
 					if (rax >= r1x)
 						continue ;
@@ -1106,8 +1106,8 @@ trait MATRIX_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 	public:
 		implicit DiagMatrix () = delete ;
 
-		explicit DiagMatrix (CREF<ITEM> x ,CREF<ITEM> y ,CREF<ITEM> z ,CREF<ITEM> w)
-			:Matrix (Matrix::make_diag (x ,y ,z ,w)) {}
+		explicit DiagMatrix (CREF<ITEM> x_ ,CREF<ITEM> y_ ,CREF<ITEM> z_ ,CREF<ITEM> w_)
+			:Matrix (Matrix::make_diag (x_ ,y_ ,z_ ,w_)) {}
 	} ;
 
 	class ShearMatrix implement Matrix {
@@ -1183,7 +1183,7 @@ trait MATRIX_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 
 template <class ITEM>
 trait MATRIX_SINGULAR_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
-	using SIZE = typename MATRIX_HELP<ITEM ,ALWAYS>::SIZE ;
+	using RANK = typename MATRIX_HELP<ITEM ,ALWAYS>::RANK ;
 	using Vector = typename VECTOR_HELP<ITEM ,ALWAYS>::Vector ;
 	using Matrix = typename MATRIX_HELP<ITEM ,ALWAYS>::Matrix ;
 
@@ -1384,7 +1384,7 @@ trait MATRIX_SINGULAR_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 			}
 		}
 
-		ARRAY2<INDEX> find_abs_rot (CREF<Matrix> b) const {
+		ARRAY2<INDEX> find_abs_rot (CREF<Matrix> obj) const {
 			ARRAY2<INDEX> ret ;
 			ret[0] = NONE ;
 			ret[1] = NONE ;
@@ -1393,7 +1393,7 @@ trait MATRIX_SINGULAR_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 				for (auto &&j : iter (0 ,4)) {
 					if (i == j)
 						continue ;
-					const auto r1x = MathProc::abs (b.at (j ,i)) ;
+					const auto r1x = MathProc::abs (obj.at (j ,i)) ;
 					if (ret[0] != NONE)
 						if (rax >= r1x)
 							continue ;
@@ -1405,21 +1405,21 @@ trait MATRIX_SINGULAR_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 			return move (ret) ;
 		}
 
-		Matrix matrix_r (CREF<INDEX> x ,CREF<INDEX> y ,CREF<ITEM> sin_ ,CREF<ITEM> cos_) const {
+		Matrix matrix_r (CREF<INDEX> x_ ,CREF<INDEX> y_ ,CREF<ITEM> sin_ ,CREF<ITEM> cos_) const {
 			Matrix ret = Matrix::identity () ;
-			ret.at (x ,y) = -sin_ ;
-			ret.at (y ,x) = sin_ ;
-			ret.at (x ,x) = cos_ ;
-			ret.at (y ,y) = cos_ ;
+			ret.at (x_ ,y_) = -sin_ ;
+			ret.at (y_ ,x_) = sin_ ;
+			ret.at (x_ ,x_) = cos_ ;
+			ret.at (y_ ,y_) = cos_ ;
 			return move (ret) ;
 		}
 
-		Matrix matrix_sr (CREF<INDEX> x ,CREF<INDEX> y) const {
+		Matrix matrix_sr (CREF<INDEX> x_ ,CREF<INDEX> y_) const {
 			Matrix ret = Matrix::identity () ;
-			ret.at (x ,y) = ITEM (1) ;
-			ret.at (y ,x) = ITEM (1) ;
-			ret.at (x ,x) = ITEM (0) ;
-			ret.at (y ,y) = ITEM (0) ;
+			ret.at (x_ ,y_) = ITEM (1) ;
+			ret.at (y_ ,x_) = ITEM (1) ;
+			ret.at (x_ ,x_) = ITEM (0) ;
+			ret.at (y_ ,y_) = ITEM (0) ;
 			return move (ret) ;
 		}
 	} ;

@@ -6,46 +6,21 @@
 
 namespace CSC {
 template <class DEPEND>
-trait GENERIC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
-	using Holder = typename GENERIC_HELP<DEPEND ,ALWAYS>::Holder ;
+trait BUFFERPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
+	using Holder = typename BUFFERPROC_HELP<DEPEND ,ALWAYS>::Holder ;
 
 	class ImplHolder implement Holder {
-	protected:
-		FLAG mPointer ;
-		FLAG mQualifier ;
-
 	public:
-		implicit ImplHolder () = default ;
-
-		void initialize (CREF<FLAG> addr ,CREF<FLAG> qualifier) override {
-			mPointer = addr ;
-			mQualifier = qualifier ;
-		}
-
-		FLAG pointer () const override {
-			return mPointer ;
-		}
-
-		BOOL is_variable () const override {
-			return mQualifier == VARIABLE::expr ;
-		}
-
-		BOOL is_constant () const override {
-			return mQualifier == CONSTANT::expr ;
-		}
-
-		BOOL is_register () const override {
-			return mQualifier == REGISTER::expr ;
+		void initialize () override {
+			noop () ;
 		}
 	} ;
 } ;
 
 template <>
-exports auto GENERIC_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () -> Box<FakeHolder> {
-	using R1X = typename GENERIC_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
-	Box<FakeHolder> ret ;
-	ret.acquire (TYPEAS<R1X>::expr) ;
-	return move (ret) ;
+exports auto BUFFERPROC_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
+	using R1X = typename BUFFERPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
+	return VRef<R1X>::make () ;
 }
 
 template <class DEPEND>
@@ -142,7 +117,7 @@ trait LATER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			return TRUE ;
 		}
 
-		Auto invoke () const {
+		Auto invoke () const override {
 			return mLater->self.mHeap->mList[mLater->self.mIndex].mExpr () ;
 		}
 
@@ -195,7 +170,7 @@ trait LATER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 } ;
 
 template <>
-exports auto LATER_HOLDER_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () -> VRef<Holder> {
+exports auto LATER_HOLDER_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
 	using R1X = typename LATER_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
 }
@@ -203,6 +178,7 @@ exports auto LATER_HOLDER_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () -> VR
 template <class DEPEND>
 trait INTEGER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	using Holder = typename INTEGER_HELP<DEPEND ,ALWAYS>::Holder ;
+	using FakeHolder = typename INTEGER_HELP<DEPEND ,ALWAYS>::FakeHolder ;
 
 	class ImplHolder implement Holder {
 	protected:
@@ -227,17 +203,12 @@ trait INTEGER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			BufferProc::buf_fill (mInteger ,r4x ,r1x ,mInteger.size ()) ;
 		}
 
-		void initialize (CREF<TEMP<void>> integer_) override {
-			auto rax = Box<VarBuffer<BYTE>> () ;
-			rax.acquire (integer_) ;
-			mInteger = move (rax.self) ;
-		}
-
 		Integer factory (RREF<VarBuffer<BYTE>> that) const {
-			auto rax = Box<VarBuffer<BYTE>>::make (move (that)) ;
-			Integer ret = Integer (unsafe_cast[TYPEAS<TEMP<void>>::expr] (unsafe_deptr (rax.self))) ;
-			rax.release () ;
-			return move (ret) ;
+			auto rax = Box<FakeHolder> () ;
+			rax.acquire (TYPEAS<ImplHolder>::expr) ;
+			auto &&tmp = keep[TYPEAS<VREF<ImplHolder>>::expr] (keep[TYPEAS<VREF<Holder>>::expr] (rax.self)) ;
+			tmp.mInteger = move (that) ;
+			return Integer (move (rax)) ;
 		}
 
 		BOOL equal (CREF<Holder> that) const override {
@@ -365,7 +336,7 @@ trait INTEGER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 } ;
 
 template <>
-exports auto INTEGER_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () -> Box<FakeHolder> {
+exports auto INTEGER_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->Box<FakeHolder> {
 	using R1X = typename INTEGER_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	Box<FakeHolder> ret ;
 	ret.acquire (TYPEAS<R1X>::expr) ;

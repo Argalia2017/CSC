@@ -79,136 +79,136 @@ enum class CHAR :csc_byte32_t ;
 enum class DATA :csc_byte64_t ;
 using HUGE = csc_byte128_t ;
 
-inline constexpr BYTE operator| (CREF<BYTE> thiz_ ,CREF<BYTE> that) {
-	return BYTE (csc_byte8_t (thiz_) | csc_byte8_t (that)) ;
+inline constexpr BYTE operator| (CREF<BYTE> left ,CREF<BYTE> right) {
+	return BYTE (csc_byte8_t (left) | csc_byte8_t (right)) ;
 }
 
-inline void operator|= (VREF<BYTE> thiz_ ,CREF<BYTE> that) {
-	thiz_ = thiz_ | that ;
+inline void operator|= (VREF<BYTE> left ,CREF<BYTE> right) {
+	left = left | right ;
 }
 
-inline constexpr BYTE operator& (CREF<BYTE> thiz_ ,CREF<BYTE> that) {
-	return BYTE (csc_byte8_t (thiz_) & csc_byte8_t (that)) ;
+inline constexpr BYTE operator& (CREF<BYTE> left ,CREF<BYTE> right) {
+	return BYTE (csc_byte8_t (left) & csc_byte8_t (right)) ;
 }
 
-inline void operator&= (VREF<BYTE> thiz_ ,CREF<BYTE> that) {
-	thiz_ = thiz_ & that ;
+inline void operator&= (VREF<BYTE> left ,CREF<BYTE> right) {
+	left = left & right ;
 }
 
-inline constexpr BYTE operator^ (CREF<BYTE> thiz_ ,CREF<BYTE> that) {
-	return BYTE (csc_byte8_t (thiz_) ^ csc_byte8_t (that)) ;
+inline constexpr BYTE operator^ (CREF<BYTE> left ,CREF<BYTE> right) {
+	return BYTE (csc_byte8_t (left) ^ csc_byte8_t (right)) ;
 }
 
-inline void operator^= (VREF<BYTE> thiz_ ,CREF<BYTE> that) {
-	thiz_ = thiz_ ^ that ;
+inline void operator^= (VREF<BYTE> left ,CREF<BYTE> right) {
+	left = left ^ right ;
 }
 
-inline constexpr BYTE operator~ (CREF<BYTE> thiz_) {
-	return BYTE (~csc_byte8_t (thiz_)) ;
+inline constexpr BYTE operator~ (CREF<BYTE> left) {
+	return BYTE (~csc_byte8_t (left)) ;
 }
 
-inline constexpr BYTE operator<< (CREF<BYTE> thiz_ ,CREF<LENGTH> scale) {
-	return BYTE (csc_byte8_t (thiz_) << scale) ;
+inline constexpr BYTE operator<< (CREF<BYTE> left ,CREF<LENGTH> scale) {
+	return BYTE (csc_byte8_t (left) << scale) ;
 }
 
-inline constexpr BYTE operator>> (CREF<BYTE> thiz_ ,CREF<LENGTH> scale) {
-	return BYTE (csc_byte8_t (thiz_) >> scale) ;
+inline constexpr BYTE operator>> (CREF<BYTE> left ,CREF<LENGTH> scale) {
+	return BYTE (csc_byte8_t (left) >> scale) ;
 }
 
-inline constexpr WORD operator| (CREF<WORD> thiz_ ,CREF<WORD> that) {
-	return WORD (csc_byte16_t (thiz_) | csc_byte16_t (that)) ;
+inline constexpr WORD operator| (CREF<WORD> left ,CREF<WORD> right) {
+	return WORD (csc_byte16_t (left) | csc_byte16_t (right)) ;
 }
 
-inline void operator|= (VREF<WORD> thiz_ ,CREF<WORD> that) {
-	thiz_ = thiz_ | that ;
+inline void operator|= (VREF<WORD> left ,CREF<WORD> right) {
+	left = left | right ;
 }
 
-inline constexpr WORD operator& (CREF<WORD> thiz_ ,CREF<WORD> that) {
-	return WORD (csc_byte16_t (thiz_) & csc_byte16_t (that)) ;
+inline constexpr WORD operator& (CREF<WORD> left ,CREF<WORD> right) {
+	return WORD (csc_byte16_t (left) & csc_byte16_t (right)) ;
 }
 
-inline void operator&= (VREF<WORD> thiz_ ,CREF<WORD> that) {
-	thiz_ = thiz_ & that ;
+inline void operator&= (VREF<WORD> left ,CREF<WORD> right) {
+	left = left & right ;
 }
 
-inline constexpr WORD operator^ (CREF<WORD> thiz_ ,CREF<WORD> that) {
-	return WORD (csc_byte16_t (thiz_) ^ csc_byte16_t (that)) ;
+inline constexpr WORD operator^ (CREF<WORD> left ,CREF<WORD> right) {
+	return WORD (csc_byte16_t (left) ^ csc_byte16_t (right)) ;
 }
 
-inline constexpr WORD operator~ (CREF<WORD> thiz_) {
-	return WORD (~csc_byte16_t (thiz_)) ;
+inline constexpr WORD operator~ (CREF<WORD> left) {
+	return WORD (~csc_byte16_t (left)) ;
 }
 
-inline constexpr WORD operator<< (CREF<WORD> thiz_ ,CREF<LENGTH> scale) {
-	return WORD (csc_byte16_t (thiz_) << scale) ;
+inline constexpr WORD operator<< (CREF<WORD> left ,CREF<LENGTH> scale) {
+	return WORD (csc_byte16_t (left) << scale) ;
 }
 
-inline constexpr WORD operator>> (CREF<WORD> thiz_ ,CREF<LENGTH> scale) {
-	return WORD (csc_byte16_t (thiz_) >> scale) ;
+inline constexpr WORD operator>> (CREF<WORD> left ,CREF<LENGTH> scale) {
+	return WORD (csc_byte16_t (left) >> scale) ;
 }
 
-inline constexpr CHAR operator| (CREF<CHAR> thiz_ ,CREF<CHAR> that) {
-	return CHAR (csc_byte32_t (thiz_) | csc_byte32_t (that)) ;
+inline constexpr CHAR operator| (CREF<CHAR> left ,CREF<CHAR> right) {
+	return CHAR (csc_byte32_t (left) | csc_byte32_t (right)) ;
 }
 
-inline void operator|= (VREF<CHAR> thiz_ ,CREF<CHAR> that) {
-	thiz_ = thiz_ | that ;
+inline void operator|= (VREF<CHAR> left ,CREF<CHAR> right) {
+	left = left | right ;
 }
 
-inline constexpr CHAR operator& (CREF<CHAR> thiz_ ,CREF<CHAR> that) {
-	return CHAR (csc_byte32_t (thiz_) & csc_byte32_t (that)) ;
+inline constexpr CHAR operator& (CREF<CHAR> left ,CREF<CHAR> right) {
+	return CHAR (csc_byte32_t (left) & csc_byte32_t (right)) ;
 }
 
-inline void operator&= (VREF<CHAR> thiz_ ,CREF<CHAR> that) {
-	thiz_ = thiz_ & that ;
+inline void operator&= (VREF<CHAR> left ,CREF<CHAR> right) {
+	left = left & right ;
 }
 
-inline constexpr CHAR operator^ (CREF<CHAR> thiz_ ,CREF<CHAR> that) {
-	return CHAR (csc_byte32_t (thiz_) ^ csc_byte32_t (that)) ;
+inline constexpr CHAR operator^ (CREF<CHAR> left ,CREF<CHAR> right) {
+	return CHAR (csc_byte32_t (left) ^ csc_byte32_t (right)) ;
 }
 
-inline constexpr CHAR operator~ (CREF<CHAR> thiz_) {
-	return CHAR (~csc_byte32_t (thiz_)) ;
+inline constexpr CHAR operator~ (CREF<CHAR> left) {
+	return CHAR (~csc_byte32_t (left)) ;
 }
 
-inline constexpr CHAR operator<< (CREF<CHAR> thiz_ ,CREF<LENGTH> scale) {
-	return CHAR (csc_byte32_t (thiz_) << scale) ;
+inline constexpr CHAR operator<< (CREF<CHAR> left ,CREF<LENGTH> scale) {
+	return CHAR (csc_byte32_t (left) << scale) ;
 }
 
-inline constexpr CHAR operator>> (CREF<CHAR> thiz_ ,CREF<LENGTH> scale) {
-	return CHAR (csc_byte32_t (thiz_) >> scale) ;
+inline constexpr CHAR operator>> (CREF<CHAR> left ,CREF<LENGTH> scale) {
+	return CHAR (csc_byte32_t (left) >> scale) ;
 }
 
-inline constexpr DATA operator| (CREF<DATA> thiz_ ,CREF<DATA> that) {
-	return DATA (csc_byte64_t (thiz_) | csc_byte64_t (that)) ;
+inline constexpr DATA operator| (CREF<DATA> left ,CREF<DATA> right) {
+	return DATA (csc_byte64_t (left) | csc_byte64_t (right)) ;
 }
 
-inline void operator|= (VREF<DATA> thiz_ ,CREF<DATA> that) {
-	thiz_ = thiz_ | that ;
+inline void operator|= (VREF<DATA> left ,CREF<DATA> right) {
+	left = left | right ;
 }
 
-inline constexpr DATA operator& (CREF<DATA> thiz_ ,CREF<DATA> that) {
-	return DATA (csc_byte64_t (thiz_) & csc_byte64_t (that)) ;
+inline constexpr DATA operator& (CREF<DATA> left ,CREF<DATA> right) {
+	return DATA (csc_byte64_t (left) & csc_byte64_t (right)) ;
 }
 
-inline void operator&= (VREF<DATA> thiz_ ,CREF<DATA> that) {
-	thiz_ = thiz_ & that ;
+inline void operator&= (VREF<DATA> left ,CREF<DATA> right) {
+	left = left & right ;
 }
 
-inline constexpr DATA operator^ (CREF<DATA> thiz_ ,CREF<DATA> that) {
-	return DATA (csc_byte64_t (thiz_) ^ csc_byte64_t (that)) ;
+inline constexpr DATA operator^ (CREF<DATA> left ,CREF<DATA> right) {
+	return DATA (csc_byte64_t (left) ^ csc_byte64_t (right)) ;
 }
 
-inline constexpr DATA operator~ (CREF<DATA> thiz_) {
-	return DATA (~csc_byte64_t (thiz_)) ;
+inline constexpr DATA operator~ (CREF<DATA> left) {
+	return DATA (~csc_byte64_t (left)) ;
 }
 
-inline constexpr DATA operator<< (CREF<DATA> thiz_ ,CREF<LENGTH> scale) {
-	return DATA (csc_byte64_t (thiz_) << scale) ;
+inline constexpr DATA operator<< (CREF<DATA> left ,CREF<LENGTH> scale) {
+	return DATA (csc_byte64_t (left) << scale) ;
 }
 
-inline constexpr DATA operator>> (CREF<DATA> thiz_ ,CREF<LENGTH> scale) {
-	return DATA (csc_byte64_t (thiz_) >> scale) ;
+inline constexpr DATA operator>> (CREF<DATA> left ,CREF<LENGTH> scale) {
+	return DATA (csc_byte64_t (left) >> scale) ;
 }
 
 using STRA = csc_char_t ;
@@ -240,7 +240,6 @@ trait SIZE_OF_HELP ;
 template <class UNIT1>
 trait SIZE_OF_HELP<UNIT1 ,ALWAYS> {
 	static constexpr auto value = sizeof (UNIT1) ;
-
 	using RET = ENUMAS<VAL ,ENUMID<value>> ;
 } ;
 
@@ -253,7 +252,6 @@ trait ALIGN_OF_HELP ;
 template <class UNIT1>
 trait ALIGN_OF_HELP<UNIT1 ,ALWAYS> {
 	static constexpr auto value = alignof (UNIT1) ;
-
 	using RET = ENUMAS<VAL ,ENUMID<value>> ;
 } ;
 
@@ -266,7 +264,6 @@ trait COUNT_OF_HELP ;
 template <class...UNIT1>
 trait COUNT_OF_HELP<TYPEAS<UNIT1...> ,ALWAYS> {
 	static constexpr auto value = sizeof... (UNIT1) ;
-
 	using RET = ENUMAS<VAL ,ENUMID<value>> ;
 } ;
 
@@ -322,7 +319,6 @@ trait ENUM_NOT_HELP ;
 template <class UNIT1>
 trait ENUM_NOT_HELP<UNIT1 ,ALWAYS> {
 	static constexpr auto value = ifnot (ENUM_CHECK<UNIT1>::expr) ;
-
 	using RET = ENUMAS<BOOL ,ENUMID<value>> ;
 } ;
 
@@ -351,7 +347,6 @@ trait ENUM_EQUAL_HELP ;
 template <class UNIT1 ,class UNIT2>
 trait ENUM_EQUAL_HELP<UNIT1 ,UNIT2 ,ALWAYS> {
 	static constexpr auto value = BOOL (ENUM_CHECK<UNIT1>::expr == ENUM_CHECK<UNIT2>::expr) ;
-
 	using RET = ENUMAS<BOOL ,ENUMID<value>> ;
 } ;
 
@@ -367,7 +362,6 @@ trait ENUM_COMPR_LT_HELP ;
 template <class UNIT1 ,class UNIT2>
 trait ENUM_COMPR_LT_HELP<UNIT1 ,UNIT2 ,ALWAYS> {
 	static constexpr auto value = BOOL (ENUM_CHECK<UNIT1>::expr < ENUM_CHECK<UNIT2>::expr) ;
-
 	using RET = ENUMAS<BOOL ,ENUMID<value>> ;
 } ;
 
@@ -391,8 +385,8 @@ trait ENUM_COMPR_HELP<UNIT1 ,UNIT2 ,ALWAYS> {
 	using R1X = ENUM_COMPR_LT<UNIT1 ,UNIT2> ;
 	using R2X = ENUM_COMPR_GT<UNIT1 ,UNIT2> ;
 	using R3X = CONDITIONAL<R1X ,ENUM_NONE ,CONDITIONAL<R2X ,ENUM_IDEN ,ENUM_ZERO>> ;
-	static constexpr auto value = R3X::expr ;
 
+	static constexpr auto value = R3X::expr ;
 	using RET = ENUMAS<VAL ,ENUMID<value>> ;
 } ;
 
@@ -423,7 +417,6 @@ trait ENUM_ADD_HELP ;
 template <class UNIT1 ,class UNIT2>
 trait ENUM_ADD_HELP<UNIT1 ,UNIT2 ,ALWAYS> {
 	static constexpr auto value = ENUM_CHECK<UNIT1>::expr + ENUM_CHECK<UNIT2>::expr ;
-
 	using RET = ENUMAS<VAL ,ENUMID<value>> ;
 } ;
 
@@ -436,7 +429,6 @@ trait ENUM_SUB_HELP ;
 template <class UNIT1 ,class UNIT2>
 trait ENUM_SUB_HELP<UNIT1 ,UNIT2 ,ALWAYS> {
 	static constexpr auto value = ENUM_CHECK<UNIT1>::expr - ENUM_CHECK<UNIT2>::expr ;
-
 	using RET = ENUMAS<VAL ,ENUMID<value>> ;
 } ;
 
@@ -449,7 +441,6 @@ trait ENUM_MUL_HELP ;
 template <class UNIT1 ,class UNIT2>
 trait ENUM_MUL_HELP<UNIT1 ,UNIT2 ,ALWAYS> {
 	static constexpr auto value = ENUM_CHECK<UNIT1>::expr * ENUM_CHECK<UNIT2>::expr ;
-
 	using RET = ENUMAS<VAL ,ENUMID<value>> ;
 } ;
 
@@ -462,7 +453,6 @@ trait ENUM_DIV_HELP ;
 template <class UNIT1 ,class UNIT2>
 trait ENUM_DIV_HELP<UNIT1 ,UNIT2 ,ALWAYS> {
 	static constexpr auto value = ENUM_CHECK<UNIT1>::expr / ENUM_CHECK<UNIT2>::expr ;
-
 	using RET = ENUMAS<VAL ,ENUMID<value>> ;
 } ;
 
@@ -475,7 +465,6 @@ trait ENUM_MOD_HELP ;
 template <class UNIT1 ,class UNIT2>
 trait ENUM_MOD_HELP<UNIT1 ,UNIT2 ,ALWAYS> {
 	static constexpr auto value = ENUM_CHECK<UNIT1>::expr % ENUM_CHECK<UNIT2>::expr ;
-
 	using RET = ENUMAS<VAL ,ENUMID<value>> ;
 } ;
 
@@ -813,8 +802,8 @@ template <class UNIT1>
 trait IS_VALUE_HELP<UNIT1 ,ALWAYS> {
 	using R1X = IS_SAME<UNIT1 ,VAL32> ;
 	using R2X = IS_SAME<UNIT1 ,VAL64> ;
-	static constexpr auto value = ENUM_ANY<R1X ,R2X>::expr ;
 
+	static constexpr auto value = ENUM_ANY<R1X ,R2X>::expr ;
 	using RET = ENUMAS<BOOL ,ENUMID<value>> ;
 } ;
 
@@ -829,8 +818,8 @@ trait IS_FLOAT_HELP<UNIT1 ,ALWAYS> {
 	using R1X = IS_SAME<UNIT1 ,SINGLE> ;
 	using R2X = IS_SAME<UNIT1 ,DOUBLE> ;
 	using R3X = IS_SAME<UNIT1 ,TRIPLE> ;
-	static constexpr auto value = ENUM_ANY<R1X ,R2X ,R3X>::expr ;
 
+	static constexpr auto value = ENUM_ANY<R1X ,R2X ,R3X>::expr ;
 	using RET = ENUMAS<BOOL ,ENUMID<value>> ;
 } ;
 
@@ -847,8 +836,8 @@ trait IS_TEXT_HELP<UNIT1 ,ALWAYS> {
 	using R3X = IS_SAME<UNIT1 ,STRU8> ;
 	using R4X = IS_SAME<UNIT1 ,STRU16> ;
 	using R5X = IS_SAME<UNIT1 ,STRU32> ;
-	static constexpr auto value = ENUM_ANY<R1X ,R2X ,R3X ,R4X ,R5X>::expr ;
 
+	static constexpr auto value = ENUM_ANY<R1X ,R2X ,R3X ,R4X ,R5X>::expr ;
 	using RET = ENUMAS<BOOL ,ENUMID<value>> ;
 } ;
 
@@ -865,8 +854,8 @@ trait IS_BIT_HELP<UNIT1 ,ALWAYS> {
 	using R3X = IS_SAME<UNIT1 ,CHAR> ;
 	using R4X = IS_SAME<UNIT1 ,DATA> ;
 	using R5X = IS_SAME<UNIT1 ,HUGE> ;
-	static constexpr auto value = ENUM_ANY<R1X ,R2X ,R3X ,R4X ,R5X>::expr ;
 
+	static constexpr auto value = ENUM_ANY<R1X ,R2X ,R3X ,R4X ,R5X>::expr ;
 	using RET = ENUMAS<BOOL ,ENUMID<value>> ;
 } ;
 
@@ -886,8 +875,8 @@ template <class UNIT1>
 trait IS_SCALAR_HELP<UNIT1 ,ALWAYS> {
 	using R1X = IS_VALUE<UNIT1> ;
 	using R2X = IS_FLOAT<UNIT1> ;
-	static constexpr auto value = ENUM_ANY<R1X ,R2X>::expr ;
 
+	static constexpr auto value = ENUM_ANY<R1X ,R2X>::expr ;
 	using RET = ENUMAS<BOOL ,ENUMID<value>> ;
 } ;
 
@@ -905,8 +894,8 @@ trait IS_BASIC_HELP<UNIT1 ,ALWAYS> {
 	using R4X = IS_TEXT<UNIT1> ;
 	using R5X = IS_BIT<UNIT1> ;
 	using R6X = IS_NULL<UNIT1> ;
-	static constexpr auto value = ENUM_ANY<R1X ,R2X ,R3X ,R4X ,R5X ,R6X>::expr ;
 
+	static constexpr auto value = ENUM_ANY<R1X ,R2X ,R3X ,R4X ,R5X ,R6X>::expr ;
 	using RET = ENUMAS<BOOL ,ENUMID<value>> ;
 } ;
 
@@ -962,10 +951,12 @@ trait REFLECT_POINTER_HELP<DEF<UNIT1 *> ,ALWAYS> {
 } ;
 
 template <class UNIT1>
-using REFLECT_POINTER = typename REFLECT_POINTER_HELP<REMOVE_REF<UNIT1> ,ALWAYS>::RET ;
+trait REFLECT_POINTER_HELP<DEF<const UNIT1 *> ,ALWAYS> {
+	using RET = TYPEAS<UNIT1> ;
+} ;
 
 template <class UNIT1>
-using IS_POINTER = ENUM_NOT<IS_SAME<REFLECT_POINTER<UNIT1> ,TYPEAS<>>> ;
+using REFLECT_POINTER = typename REFLECT_POINTER_HELP<REMOVE_REF<UNIT1> ,ALWAYS>::RET ;
 
 template <class...>
 trait PTR_HELP ;
@@ -1027,8 +1018,8 @@ trait ARR_HELP<ITEM ,SIZE ,REQUIRE<ENUM_EQ_ZERO<SIZE>>> {
 template <class ITEM ,class SIZE>
 trait ARR_HELP<ITEM ,SIZE ,REQUIRE<ENUM_GT_ZERO<SIZE>>> {
 	require (ENUM_NOT<IS_ARRAY<ITEM>>) ;
-	static constexpr auto value = VAL (SIZE::expr) ;
 
+	static constexpr auto value = VAL (SIZE::expr) ;
 	using RET = DEF<ITEM[value]> ;
 } ;
 
@@ -1070,16 +1061,34 @@ template <class UNIT1>
 using FUNCTION_PARAMS = TYPE_SECOND_ONE<REFLECT_FUNCTION<UNIT1>> ;
 
 template <class...>
+trait IS_INTPTR_HELP ;
+
+template <class UNIT1>
+trait IS_INTPTR_HELP<UNIT1 ,ALWAYS> {
+	using R1X = MACRO_IS_INTCLASS<UNIT1> ;
+	using R2X = ENUM_NOT<IS_SAME<REFLECT_POINTER<UNIT1> ,TYPEAS<>>> ;
+	using R3X = IS_BASIC<UNIT1> ;
+
+	static constexpr auto value = ENUM_ALL<ENUM_ANY<R1X ,R2X> ,ENUM_NOT<ENUM_ANY<R3X>>>::expr ;
+	using RET = ENUMAS<BOOL ,ENUMID<value>> ;
+} ;
+
+template <class UNIT1>
+using IS_INTPTR = typename IS_INTPTR_HELP<UNIT1 ,ALWAYS>::RET ;
+
+template <class...>
 trait IS_CLASS_HELP ;
 
 template <class UNIT1>
 trait IS_CLASS_HELP<UNIT1 ,ALWAYS> {
-	using R1X = MACRO_IS_ENUMCLASS<UNIT1> ;
-	using R2X = MACRO_IS_CLASS<UNIT1> ;
+	using R1X = MACRO_IS_CLASS<UNIT1> ;
 	using R3X = IS_ENUM<UNIT1> ;
 	using R4X = IS_TYPE<UNIT1> ;
 	using R5X = IS_BASIC<UNIT1> ;
-	using RET = ENUM_ALL<ENUM_ANY<R1X ,R2X> ,ENUM_NOT<ENUM_ANY<R3X ,R4X ,R5X>>> ;
+	using R6X = IS_INTPTR<UNIT1> ;
+
+	static constexpr auto value = ENUM_ALL<R1X ,ENUM_NOT<ENUM_ANY<R3X ,R4X ,R5X ,R6X>>>::expr ;
+	using RET = ENUMAS<BOOL ,ENUMID<value>> ;
 } ;
 
 template <class UNIT1>
@@ -1094,7 +1103,9 @@ trait IS_DEFAULT_HELP<UNIT1 ,ALWAYS> {
 	using R2X = MACRO_IS_DESTRUCTIBLE<UNIT1> ;
 	using R3X = MACRO_IS_MOVE_CONSTRUCTIBLE<UNIT1> ;
 	using R4X = MACRO_IS_MOVE_ASSIGNABLE<UNIT1> ;
-	using RET = ENUM_ALL<R1X ,R2X ,R3X ,R4X> ;
+
+	static constexpr auto value = ENUM_ALL<R1X ,R2X ,R3X ,R4X>::expr ;
+	using RET = ENUMAS<BOOL ,ENUMID<value>> ;
 } ;
 
 template <class UNIT1>
@@ -1109,7 +1120,9 @@ trait IS_CLONEABLE_HELP<UNIT1 ,ALWAYS> {
 	using R2X = MACRO_IS_COPY_ASSIGNABLE<UNIT1> ;
 	using R3X = MACRO_IS_MOVE_CONSTRUCTIBLE<UNIT1> ;
 	using R4X = MACRO_IS_MOVE_ASSIGNABLE<UNIT1> ;
-	using RET = ENUM_ALL<R1X ,R2X ,R3X ,R4X> ;
+
+	static constexpr auto value = ENUM_ALL<R1X ,R2X ,R3X ,R4X>::expr ;
+	using RET = ENUMAS<BOOL ,ENUMID<value>> ;
 } ;
 
 template <class UNIT1>
@@ -1122,7 +1135,9 @@ template <class UNIT1>
 trait IS_TRIVIAL_HELP<UNIT1 ,ALWAYS> {
 	using R1X = MACRO_IS_TRIVIAL_CONSTRUCTIBLE<UNIT1> ;
 	using R2X = MACRO_IS_TRIVIAL_DESTRUCTIBLE<UNIT1> ;
-	using RET = ENUM_ALL<R1X ,R2X> ;
+
+	static constexpr auto value = ENUM_ALL<R1X ,R2X>::expr ;
+	using RET = ENUMAS<BOOL ,ENUMID<value>> ;
 } ;
 
 template <class UNIT1>
@@ -1135,7 +1150,9 @@ template <class UNIT1>
 trait IS_INTERFACE_HELP<UNIT1 ,REQUIRE<IS_CLASS<UNIT1>>> {
 	using R1X = MACRO_IS_INTERFACE<UNIT1> ;
 	using R2X = MACRO_IS_EXTEND<Interface ,UNIT1> ;
-	using RET = ENUM_ALL<R1X ,R2X> ;
+
+	static constexpr auto value = ENUM_ALL<R1X ,R2X>::expr ;
+	using RET = ENUMAS<BOOL ,ENUMID<value>> ;
 } ;
 
 template <class UNIT1>
@@ -1148,7 +1165,9 @@ template <class FROM ,class TO>
 trait IS_EXTEND_HELP<FROM ,TO ,ALWAYS> {
 	using R1X = IS_SAME<FROM ,TO> ;
 	using R2X = MACRO_IS_EXTEND<FROM ,TO> ;
-	using RET = ENUM_ANY<R1X ,R2X> ;
+
+	static constexpr auto value = ENUM_ANY<R1X ,R2X>::expr ;
+	using RET = ENUMAS<BOOL ,ENUMID<value>> ;
 } ;
 
 template <class FROM ,class TO>
@@ -1185,7 +1204,9 @@ trait IS_CONVERTIBLE_HELP ;
 template <class FROM ,class TO>
 trait IS_CONVERTIBLE_HELP<FROM ,TO ,ALWAYS> {
 	using R1X = MACRO_IS_CONVERTIBLE<FROM ,TO> ;
-	using RET = ENUM_ANY<R1X> ;
+
+	static constexpr auto value = ENUM_ANY<R1X>::expr ;
+	using RET = ENUMAS<BOOL ,ENUMID<value>> ;
 } ;
 
 template <class FROM ,class TO>
@@ -1211,10 +1232,10 @@ trait IS_OBJECT_HELP ;
 template <class UNIT1>
 trait IS_OBJECT_HELP<UNIT1 ,ALWAYS> {
 	using R1X = IS_BASIC<UNIT1> ;
-	using R2X = IS_POINTER<UNIT1> ;
+	using R2X = IS_INTPTR<UNIT1> ;
 	using R3X = IS_CLASS<UNIT1> ;
-	static constexpr auto value = ENUM_ANY<R1X ,R2X ,R3X>::expr ;
 
+	static constexpr auto value = ENUM_ANY<R1X ,R2X ,R3X>::expr ;
 	using RET = ENUMAS<BOOL ,ENUMID<value>> ;
 } ;
 
@@ -1417,8 +1438,8 @@ template <class CURR ,class BEGIN ,class END>
 trait ENUM_BETWEEN_HELP<CURR ,BEGIN ,END ,ALWAYS> {
 	using R1X = ENUM_COMPR_GTEQ<CURR ,BEGIN> ;
 	using R2X = ENUM_COMPR_LT<CURR ,END> ;
-	static constexpr auto value = ENUM_ALL<R1X ,R2X>::expr ;
 
+	static constexpr auto value = ENUM_ALL<R1X ,R2X>::expr ;
 	using RET = ENUMAS<BOOL ,ENUMID<value>> ;
 } ;
 

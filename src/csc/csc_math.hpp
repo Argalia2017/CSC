@@ -31,27 +31,72 @@ template <class DEPEND>
 trait MATHPROC_HELP<DEPEND ,ALWAYS> {
 	struct Holder implement Interface {
 		virtual void initialize () = 0 ;
-		virtual BOOL is_infinite (CREF<SINGLE> a) const = 0 ;
-		virtual BOOL is_infinite (CREF<DOUBLE> a) const = 0 ;
-		virtual SINGLE inverse (CREF<SINGLE> a) const = 0 ;
-		virtual DOUBLE inverse (CREF<DOUBLE> a) const = 0 ;
-		virtual SINGLE floor (CREF<SINGLE> a ,CREF<SINGLE> b) const = 0 ;
-		virtual DOUBLE floor (CREF<DOUBLE> a ,CREF<DOUBLE> b) const = 0 ;
-		virtual SINGLE ceil (CREF<SINGLE> a ,CREF<SINGLE> b) const = 0 ;
-		virtual DOUBLE ceil (CREF<DOUBLE> a ,CREF<DOUBLE> b) const = 0 ;
-		virtual DOUBLE sqrt (CREF<DOUBLE> a) const = 0 ;
-		virtual DOUBLE cbrt (CREF<DOUBLE> a) const = 0 ;
-		virtual DOUBLE exp (CREF<DOUBLE> a) const = 0 ;
-		virtual DOUBLE log (CREF<DOUBLE> a) const = 0 ;
-		virtual DOUBLE pow (CREF<DOUBLE> a ,CREF<DOUBLE> b) const = 0 ;
-		virtual DOUBLE ncdf (CREF<DOUBLE> a) const = 0 ;
-		virtual DOUBLE npdf (CREF<DOUBLE> a) const = 0 ;
-		virtual DOUBLE sin (CREF<DOUBLE> a) const = 0 ;
-		virtual DOUBLE cos (CREF<DOUBLE> a) const = 0 ;
-		virtual DOUBLE tan (CREF<DOUBLE> a) const = 0 ;
-		virtual DOUBLE arcsin (CREF<DOUBLE> a) const = 0 ;
-		virtual DOUBLE arccos (CREF<DOUBLE> a) const = 0 ;
-		virtual DOUBLE arctan (CREF<DOUBLE> a ,CREF<DOUBLE> b) const = 0 ;
+		virtual BOOL is_infinite (CREF<SINGLE> obj) const = 0 ;
+		virtual BOOL is_infinite (CREF<DOUBLE> obj) const = 0 ;
+		virtual VAL32 sign (CREF<VAL32> obj) const = 0 ;
+		virtual VAL64 sign (CREF<VAL64> obj) const = 0 ;
+		virtual SINGLE sign (CREF<SINGLE> obj) const = 0 ;
+		virtual DOUBLE sign (CREF<DOUBLE> obj) const = 0 ;
+		virtual VAL32 step (CREF<VAL32> obj) const = 0 ;
+		virtual VAL64 step (CREF<VAL64> obj) const = 0 ;
+		virtual SINGLE step (CREF<SINGLE> obj) const = 0 ;
+		virtual DOUBLE step (CREF<DOUBLE> obj) const = 0 ;
+		virtual VAL32 abs (CREF<VAL32> obj) const = 0 ;
+		virtual VAL64 abs (CREF<VAL64> obj) const = 0 ;
+		virtual SINGLE abs (CREF<SINGLE> obj) const = 0 ;
+		virtual DOUBLE abs (CREF<DOUBLE> obj) const = 0 ;
+		virtual SINGLE inverse (CREF<SINGLE> obj) const = 0 ;
+		virtual DOUBLE inverse (CREF<DOUBLE> obj) const = 0 ;
+		virtual VAL32 clamp (CREF<VAL32> curr ,CREF<VAL32> lb ,CREF<VAL32> rb) const = 0 ;
+		virtual VAL64 clamp (CREF<VAL64> curr ,CREF<VAL64> lb ,CREF<VAL64> rb) const = 0 ;
+		virtual SINGLE clamp (CREF<SINGLE> curr ,CREF<SINGLE> lb ,CREF<SINGLE> rb) const = 0 ;
+		virtual DOUBLE clamp (CREF<DOUBLE> curr ,CREF<DOUBLE> lb ,CREF<DOUBLE> rb) const = 0 ;
+		virtual SINGLE floor (CREF<SINGLE> curr ,CREF<SINGLE> base) const = 0 ;
+		virtual DOUBLE floor (CREF<DOUBLE> curr ,CREF<DOUBLE> base) const = 0 ;
+		virtual SINGLE ceil (CREF<SINGLE> curr ,CREF<SINGLE> base) const = 0 ;
+		virtual DOUBLE ceil (CREF<DOUBLE> curr ,CREF<DOUBLE> base) const = 0 ;
+		virtual SINGLE round (CREF<SINGLE> curr ,CREF<SINGLE> base) const = 0 ;
+		virtual DOUBLE round (CREF<DOUBLE> curr ,CREF<DOUBLE> base) const = 0 ;
+		virtual SINGLE trunc (CREF<SINGLE> curr ,CREF<SINGLE> base) const = 0 ;
+		virtual DOUBLE trunc (CREF<DOUBLE> curr ,CREF<DOUBLE> base) const = 0 ;
+		virtual VAL32 square (CREF<VAL32> obj) const = 0 ;
+		virtual VAL64 square (CREF<VAL64> obj) const = 0 ;
+		virtual SINGLE square (CREF<SINGLE> obj) const = 0 ;
+		virtual DOUBLE square (CREF<DOUBLE> obj) const = 0 ;
+		virtual SINGLE sqrt (CREF<SINGLE> obj) const = 0 ;
+		virtual DOUBLE sqrt (CREF<DOUBLE> obj) const = 0 ;
+		virtual VAL32 cube (CREF<VAL32> obj) const = 0 ;
+		virtual VAL64 cube (CREF<VAL64> obj) const = 0 ;
+		virtual SINGLE cube (CREF<SINGLE> obj) const = 0 ;
+		virtual DOUBLE cube (CREF<DOUBLE> obj) const = 0 ;
+		virtual SINGLE cbrt (CREF<SINGLE> obj) const = 0 ;
+		virtual DOUBLE cbrt (CREF<DOUBLE> obj) const = 0 ;
+		virtual SINGLE exp (CREF<SINGLE> obj) const = 0 ;
+		virtual DOUBLE exp (CREF<DOUBLE> obj) const = 0 ;
+		virtual SINGLE log (CREF<SINGLE> obj) const = 0 ;
+		virtual DOUBLE log (CREF<DOUBLE> obj) const = 0 ;
+		virtual VAL32 vlog (CREF<VAL32> curr ,CREF<VAL32> base) const = 0 ;
+		virtual VAL64 vlog (CREF<VAL64> curr ,CREF<VAL64> base) const = 0 ;
+		virtual SINGLE pow (CREF<SINGLE> curr ,CREF<SINGLE> exp_) const = 0 ;
+		virtual DOUBLE pow (CREF<DOUBLE> curr ,CREF<DOUBLE> exp_) const = 0 ;
+		virtual SINGLE ncdf (CREF<SINGLE> obj) const = 0 ;
+		virtual DOUBLE ncdf (CREF<DOUBLE> obj) const = 0 ;
+		virtual SINGLE npdf (CREF<SINGLE> obj) const = 0 ;
+		virtual DOUBLE npdf (CREF<DOUBLE> obj) const = 0 ;
+		virtual SINGLE sin (CREF<SINGLE> obj) const = 0 ;
+		virtual DOUBLE sin (CREF<DOUBLE> obj) const = 0 ;
+		virtual SINGLE cos (CREF<SINGLE> obj) const = 0 ;
+		virtual DOUBLE cos (CREF<DOUBLE> obj) const = 0 ;
+		virtual SINGLE tan (CREF<SINGLE> obj) const = 0 ;
+		virtual DOUBLE tan (CREF<DOUBLE> obj) const = 0 ;
+		virtual SINGLE arcsin (CREF<SINGLE> obj) const = 0 ;
+		virtual DOUBLE arcsin (CREF<DOUBLE> obj) const = 0 ;
+		virtual SINGLE arccos (CREF<SINGLE> obj) const = 0 ;
+		virtual DOUBLE arccos (CREF<DOUBLE> obj) const = 0 ;
+		virtual SINGLE arctan (CREF<SINGLE> x_ ,CREF<SINGLE> y_) const = 0 ;
+		virtual DOUBLE arctan (CREF<DOUBLE> x_ ,CREF<DOUBLE> y_) const = 0 ;
+		virtual SINGLE radian_angle (CREF<SINGLE> obj) const = 0 ;
+		virtual DOUBLE radian_angle (CREF<DOUBLE> obj) const = 0 ;
 	} ;
 
 	struct FUNCTION_extern {
@@ -73,69 +118,61 @@ trait MATHPROC_HELP<DEPEND ,ALWAYS> {
 		}
 
 		template <class ARG1>
-		imports ARG1 is_infinite (CREF<ARG1> a) {
+		imports ARG1 is_infinite (CREF<ARG1> obj) {
 			require (IS_FLOAT<ARG1>) ;
-			return instance ().mThis->is_infinite (a) ;
+			return instance ().mThis->is_infinite (obj) ;
 		}
 
 		template <class ARG1>
-		imports ARG1 sign (CREF<ARG1> a) {
+		imports ARG1 sign (CREF<ARG1> obj) {
 			require (IS_SCALAR<ARG1>) ;
-			if (a >= 0)
-				return ARG1 (1) ;
-			return ARG1 (-1) ;
+			return instance ().mThis->sign (obj) ;
 		}
 
 		template <class ARG1>
-		imports ARG1 step (CREF<ARG1> a) {
+		imports ARG1 step (CREF<ARG1> obj) {
 			require (IS_SCALAR<ARG1>) ;
-			if (a >= 0)
-				return ARG1 (1) ;
-			return ARG1 (0) ;
+			return instance ().mThis->step (obj) ;
 		}
 
 		template <class ARG1>
-		imports ARG1 abs (CREF<ARG1> a) {
+		imports ARG1 abs (CREF<ARG1> obj) {
 			require (IS_SCALAR<ARG1>) ;
-			if (a >= 0)
-				return a ;
-			return -a ;
+			return instance ().mThis->abs (obj) ;
 		}
 
 		template <class ARG1>
-		imports ARG1 inverse (CREF<ARG1> a) {
+		imports ARG1 inverse (CREF<ARG1> obj) {
 			require (IS_FLOAT<ARG1>) ;
-			return instance ().mThis->inverse (a) ;
+			return instance ().mThis->inverse (obj) ;
 		}
 
 		template <class ARG1>
-		imports ARG1 min_of (CREF<ARG1> a) {
+		imports ARG1 min_of (CREF<ARG1> obj) {
 			require (IS_SCALAR<ARG1>) ;
-			return a ;
+			return obj ;
 		}
 
-		template <class ARG1 ,class ARG2 ,class...ARG3>
-		imports ARG1 min_of (CREF<ARG1> a ,CREF<ARG2> b ,CREF<ARG3>...c) {
+		template <class ARG1 ,class...ARG2>
+		imports ARG1 min_of (CREF<ARG1> obj1 ,CREF<ARG1> obj2 ,CREF<ARG2>...obj3) {
 			require (IS_SCALAR<ARG1>) ;
-			require (IS_SAME<ARG1 ,ARG2>) ;
-			if (a <= b)
-				return min_of (a ,c...) ;
-			return min_of (b ,c...) ;
+			if (obj1 <= obj2)
+				return min_of (obj1 ,obj3...) ;
+			return min_of (obj2 ,obj3...) ;
 		}
 
 		template <class ARG1>
-		imports ARG1 max_of (CREF<ARG1> a) {
+		imports ARG1 max_of (CREF<ARG1> obj) {
 			require (IS_SCALAR<ARG1>) ;
-			return a ;
+			return obj ;
 		}
 
-		template <class ARG1 ,class ARG2 ,class...ARG3>
-		imports ARG1 max_of (CREF<ARG1> a ,CREF<ARG2> b ,CREF<ARG3>...c) {
+		template <class ARG1 ,class...ARG2>
+		imports ARG1 max_of (CREF<ARG1> obj1 ,CREF<ARG1> obj2 ,CREF<ARG2>...obj3) {
 			require (IS_SCALAR<ARG1>) ;
-			require (IS_SAME<ARG1 ,ARG2>) ;
-			if (a >= b)
-				return max_of (a ,c...) ;
-			return max_of (b ,c...) ;
+			if (obj1 >= obj2)
+				return max_of (obj1 ,obj3...) ;
+			return max_of (obj2 ,obj3...) ;
 		}
 
 		imports BOOL all_of () {
@@ -143,10 +180,10 @@ trait MATHPROC_HELP<DEPEND ,ALWAYS> {
 		}
 
 		template <class...ARG1>
-		imports BOOL all_of (CREF<BOOL> a ,CREF<ARG1>...b) {
-			if ifnot (a)
+		imports BOOL all_of (CREF<BOOL> obj1 ,CREF<ARG1>...obj2) {
+			if ifnot (obj1)
 				return FALSE ;
-			return all_of (b...) ;
+			return all_of (obj2...) ;
 		}
 
 		imports BOOL any_of () {
@@ -154,10 +191,10 @@ trait MATHPROC_HELP<DEPEND ,ALWAYS> {
 		}
 
 		template <class...ARG1>
-		imports BOOL any_of (CREF<BOOL> a ,CREF<ARG1>...b) {
-			if (a)
+		imports BOOL any_of (CREF<BOOL> obj1 ,CREF<ARG1>...obj2) {
+			if (obj1)
 				return TRUE ;
-			return any_of (b...) ;
+			return any_of (obj2...) ;
 		}
 
 		imports INDEX else_of () {
@@ -165,51 +202,48 @@ trait MATHPROC_HELP<DEPEND ,ALWAYS> {
 		}
 
 		template <class...ARG1>
-		imports INDEX else_of (CREF<BOOL> a ,CREF<ARG1>...b) {
-			if (a)
+		imports INDEX else_of (CREF<BOOL> obj1 ,CREF<ARG1>...obj2) {
+			if (obj1)
 				return ZERO ;
-			return 1 + else_of (b...) ;
+			return 1 + else_of (obj2...) ;
 		}
 
 		template <class ARG1>
-		imports ARG1 sum_of (CREF<ARG1> a) {
+		imports ARG1 sum_of (CREF<ARG1> obj) {
 			require (IS_SCALAR<ARG1>) ;
-			return a ;
+			return obj ;
 		}
 
-		template <class ARG1 ,class ARG2 ,class...ARG3>
-		imports ARG1 sum_of (CREF<ARG1> a ,CREF<ARG2> b ,CREF<ARG3>...c) {
+		template <class ARG1 ,class...ARG2>
+		imports ARG1 sum_of (CREF<ARG1> obj1 ,CREF<ARG1> obj2 ,CREF<ARG2>...obj3) {
 			require (IS_SCALAR<ARG1>) ;
-			require (IS_SAME<ARG1 ,ARG2>) ;
-			return sum_of (a + b ,c...) ;
-		}
-
-		template <class ARG1>
-		imports ARG1 acc_of (CREF<ARG1> a) {
-			require (IS_SCALAR<ARG1>) ;
-			return a ;
-		}
-
-		template <class ARG1 ,class ARG2 ,class...ARG3>
-		imports ARG1 acc_of (CREF<ARG1> a ,CREF<ARG2> b ,CREF<ARG3>...c) {
-			require (IS_SCALAR<ARG1>) ;
-			require (IS_SAME<ARG1 ,ARG2>) ;
-			return acc_of (a * b ,c...) ;
+			return sum_of (obj1 + obj2 ,obj3...) ;
 		}
 
 		template <class ARG1>
-		imports Array<ARG1 ,RANK1> sort_of (CREF<ARG1> a) {
+		imports ARG1 acc_of (CREF<ARG1> obj) {
+			require (IS_SCALAR<ARG1>) ;
+			return obj ;
+		}
+
+		template <class ARG1 ,class...ARG2>
+		imports ARG1 acc_of (CREF<ARG1> obj1 ,CREF<ARG1> obj2 ,CREF<ARG2>...obj3) {
+			require (IS_SCALAR<ARG1>) ;
+			return acc_of (obj1 * obj2 ,obj3...) ;
+		}
+
+		template <class ARG1>
+		imports Array<ARG1 ,RANK1> sort_of (CREF<ARG1> obj) {
 			Array<ARG1 ,RANK1> ret ;
-			ret[0] = a ;
+			ret[0] = obj ;
 			return move (ret) ;
 		}
 
-		template <class ARG1 ,class ARG2>
-		imports Array<ARG1 ,RANK2> sort_of (CREF<ARG1> a ,CREF<ARG2> b) {
-			require (IS_SAME<ARG1 ,ARG2>) ;
+		template <class ARG1>
+		imports Array<ARG1 ,RANK2> sort_of (CREF<ARG1> obj1 ,CREF<ARG1> obj2) {
 			Array<ARG1 ,RANK2> ret ;
-			ret[0] = a ;
-			ret[1] = b ;
+			ret[0] = obj1 ;
+			ret[1] = obj2 ;
 			if ifswitch (TRUE) {
 				if (operator_compr (ret[0] ,ret[1]) <= ZERO)
 					discard ;
@@ -218,14 +252,12 @@ trait MATHPROC_HELP<DEPEND ,ALWAYS> {
 			return move (ret) ;
 		}
 
-		template <class ARG1 ,class ARG2 ,class ARG3>
-		imports Array<ARG1 ,RANK3> sort_of (CREF<ARG1> a ,CREF<ARG2> b ,CREF<ARG3> c) {
-			require (IS_SAME<ARG1 ,ARG2>) ;
-			require (IS_SAME<ARG1 ,ARG3>) ;
+		template <class ARG1>
+		imports Array<ARG1 ,RANK3> sort_of (CREF<ARG1> obj1 ,CREF<ARG1> obj2 ,CREF<ARG1> obj3) {
 			Array<ARG1 ,RANK3> ret ;
-			ret[0] = a ;
-			ret[1] = b ;
-			ret[2] = c ;
+			ret[0] = obj1 ;
+			ret[1] = obj2 ;
+			ret[2] = obj3 ;
 			if ifswitch (TRUE) {
 				if (operator_compr (ret[0] ,ret[1]) <= ZERO)
 					discard ;
@@ -244,158 +276,136 @@ trait MATHPROC_HELP<DEPEND ,ALWAYS> {
 			return move (ret) ;
 		}
 
-		template <class ARG1 ,class ARG2 ,class ARG3>
-		imports ARG1 clamp (CREF<ARG1> a ,CREF<ARG2> lb ,CREF<ARG3> rb) {
+		template <class ARG1>
+		imports ARG1 clamp (CREF<ARG1> curr ,CREF<ARG1> lb ,CREF<ARG1> rb) {
 			require (IS_SCALAR<ARG1>) ;
-			require (IS_SAME<ARG1 ,ARG2>) ;
-			require (IS_SAME<ARG1 ,ARG3>) ;
-			if (a <= lb)
-				return lb ;
-			if (a >= rb)
-				return rb ;
-			return a ;
-		}
-
-		template <class ARG1 ,class ARG2>
-		imports ARG1 floor (CREF<ARG1> a ,CREF<ARG2> b) {
-			require (IS_FLOAT<ARG1>) ;
-			require (IS_SAME<ARG1 ,ARG2>) ;
-			return instance ().mThis->floor (a ,b) ;
-		}
-
-		template <class ARG1 ,class ARG2>
-		imports ARG1 ceil (CREF<ARG1> a ,CREF<ARG2> b) {
-			require (IS_FLOAT<ARG1>) ;
-			require (IS_SAME<ARG1 ,ARG2>) ;
-			return instance ().mThis->ceil (a ,b) ;
-		}
-
-		template <class ARG1 ,class ARG2>
-		imports ARG1 round (CREF<ARG1> a ,CREF<ARG2> b) {
-			require (IS_FLOAT<ARG1>) ;
-			require (IS_SAME<ARG1 ,ARG2>) ;
-			const auto r1x = a + b * ARG1 (MATH_INV2) ;
-			return floor (r1x ,b) ;
-		}
-
-		template <class ARG1 ,class ARG2>
-		imports ARG1 trunc (CREF<ARG1> a ,CREF<ARG2> b) {
-			require (IS_FLOAT<ARG1>) ;
-			require (IS_SAME<ARG1 ,ARG2>) ;
-			return floor (abs (a) ,b) * sign (a) ;
+			return instance ().mThis->floor (curr ,lb ,rb) ;
 		}
 
 		template <class ARG1>
-		imports ARG1 square (CREF<ARG1> a) {
+		imports ARG1 floor (CREF<ARG1> curr ,CREF<ARG1> base) {
+			require (IS_FLOAT<ARG1>) ;
+			return instance ().mThis->floor (curr ,base) ;
+		}
+
+		template <class ARG1>
+		imports ARG1 ceil (CREF<ARG1> curr ,CREF<ARG1> base) {
+			require (IS_FLOAT<ARG1>) ;
+			return instance ().mThis->ceil (curr ,base) ;
+		}
+
+		template <class ARG1>
+		imports ARG1 round (CREF<ARG1> curr ,CREF<ARG1> base) {
+			require (IS_FLOAT<ARG1>) ;
+			return instance ().mThis->round (curr ,base) ;
+		}
+
+		template <class ARG1>
+		imports ARG1 trunc (CREF<ARG1> curr ,CREF<ARG1> base) {
+			require (IS_FLOAT<ARG1>) ;
+			return instance ().mThis->trunc (curr ,base) ;
+		}
+
+		template <class ARG1>
+		imports ARG1 square (CREF<ARG1> obj) {
 			require (IS_SCALAR<ARG1>) ;
-			return a * a ;
+			return instance ().mThis->square (obj) ;
 		}
 
 		template <class ARG1>
-		imports ARG1 sqrt (CREF<ARG1> a) {
+		imports ARG1 sqrt (CREF<ARG1> obj) {
 			require (IS_FLOAT<ARG1>) ;
-			return ARG1 (instance ().mThis->sqrt (DOUBLE (a))) ;
+			return instance ().mThis->sqrt (obj) ;
 		}
 
 		template <class ARG1>
-		imports ARG1 cube (CREF<ARG1> a) {
+		imports ARG1 cube (CREF<ARG1> obj) {
 			require (IS_SCALAR<ARG1>) ;
-			return a * a * a ;
+			return instance ().mThis->cube (obj) ;
 		}
 
 		template <class ARG1>
-		imports ARG1 cbrt (CREF<ARG1> a) {
+		imports ARG1 cbrt (CREF<ARG1> obj) {
 			require (IS_FLOAT<ARG1>) ;
-			return ARG1 (instance ().mThis->cbrt (DOUBLE (a))) ;
+			return instance ().mThis->cbrt (obj) ;
 		}
 
 		template <class ARG1>
-		imports ARG1 exp (CREF<ARG1> a) {
+		imports ARG1 exp (CREF<ARG1> obj) {
 			require (IS_FLOAT<ARG1>) ;
-			return ARG1 (instance ().mThis->exp (DOUBLE (a))) ;
+			return instance ().mThis->exp (obj) ;
 		}
 
 		template <class ARG1>
-		imports ARG1 log (CREF<ARG1> a) {
+		imports ARG1 log (CREF<ARG1> obj) {
 			require (IS_FLOAT<ARG1>) ;
-			return ARG1 (instance ().mThis->log (DOUBLE (a))) ;
+			return instance ().mThis->log (obj) ;
 		}
 
-		template <class ARG1 ,class ARG2>
-		imports ARG1 vlog (CREF<ARG1> a ,CREF<ARG2> b) {
+		template <class ARG1>
+		imports ARG1 vlog (CREF<ARG1> curr ,CREF<ARG1> exp_) {
 			require (IS_VALUE<ARG1>) ;
-			require (IS_SAME<ARG1 ,ARG2>) ;
-			LENGTH ret = 0 ;
-			auto rax = a ;
-			while (TRUE) {
-				rax /= b ;
-				if (rax == 0)
-					break ;
-				ret++ ;
-			}
-			return move (ret) ;
-		}
-
-		template <class ARG1 ,class ARG2>
-		imports ARG1 pow (CREF<ARG1> a ,CREF<ARG2> b) {
-			require (IS_FLOAT<ARG1>) ;
-			require (IS_SAME<ARG1 ,ARG2>) ;
-			return ARG1 (instance ().mThis->pow (DOUBLE (a) ,DOUBLE (b))) ;
+			return instance ().mThis->vlog (curr ,exp_) ;
 		}
 
 		template <class ARG1>
-		imports ARG1 ncdf (CREF<ARG1> a) {
+		imports ARG1 pow (CREF<ARG1> curr ,CREF<ARG1> exp_) {
 			require (IS_FLOAT<ARG1>) ;
-			return ARG1 (instance ().mThis->ncdf (DOUBLE (a))) ;
+			return instance ().mThis->pow (curr ,exp_) ;
 		}
 
 		template <class ARG1>
-		imports ARG1 npdf (CREF<ARG1> a) {
+		imports ARG1 ncdf (CREF<ARG1> obj) {
 			require (IS_FLOAT<ARG1>) ;
-			return ARG1 (instance ().mThis->npdf (DOUBLE (a))) ;
+			return instance ().mThis->ncdf (obj) ;
 		}
 
 		template <class ARG1>
-		imports ARG1 sin (CREF<ARG1> a) {
+		imports ARG1 npdf (CREF<ARG1> obj) {
 			require (IS_FLOAT<ARG1>) ;
-			return ARG1 (instance ().mThis->sin (DOUBLE (a))) ;
+			return instance ().mThis->npdf (obj) ;
 		}
 
 		template <class ARG1>
-		imports ARG1 cos (CREF<ARG1> a) {
+		imports ARG1 sin (CREF<ARG1> obj) {
 			require (IS_FLOAT<ARG1>) ;
-			return ARG1 (instance ().mThis->cos (DOUBLE (a))) ;
+			return instance ().mThis->sin (obj) ;
 		}
 
 		template <class ARG1>
-		imports ARG1 tan (CREF<ARG1> a) {
+		imports ARG1 cos (CREF<ARG1> obj) {
 			require (IS_FLOAT<ARG1>) ;
-			return ARG1 (instance ().mThis->tan (DOUBLE (a))) ;
+			return instance ().mThis->cos (obj) ;
 		}
 
 		template <class ARG1>
-		imports ARG1 arcsin (CREF<ARG1> a) {
+		imports ARG1 tan (CREF<ARG1> obj) {
 			require (IS_FLOAT<ARG1>) ;
-			return ARG1 (instance ().mThis->arcsin (DOUBLE (a))) ;
+			return instance ().mThis->tan (obj) ;
 		}
 
 		template <class ARG1>
-		imports ARG1 arccos (CREF<ARG1> a) {
+		imports ARG1 arcsin (CREF<ARG1> obj) {
 			require (IS_FLOAT<ARG1>) ;
-			return ARG1 (instance ().mThis->arccos (DOUBLE (a))) ;
-		}
-
-		template <class ARG1 ,class ARG2>
-		imports ARG1 arctan (CREF<ARG1> a ,CREF<ARG2> b) {
-			require (IS_FLOAT<ARG1>) ;
-			require (IS_SAME<ARG1 ,ARG2>) ;
-			return ARG1 (instance ().mThis->arctan (DOUBLE (a) ,DOUBLE (b))) ;
+			return instance ().mThis->arcsin (obj) ;
 		}
 
 		template <class ARG1>
-		imports ARG1 radian_angle (CREF<ARG1> a) {
+		imports ARG1 arccos (CREF<ARG1> obj) {
 			require (IS_FLOAT<ARG1>) ;
-			return ARG1 (a / ARG1 (180) * ARG1 (MATH_PI)) ;
+			return instance ().mThis->arccos (obj) ;
+		}
+
+		template <class ARG1>
+		imports ARG1 arctan (CREF<ARG1> x_ ,CREF<ARG1> y_) {
+			require (IS_FLOAT<ARG1>) ;
+			return instance ().mThis->arctan (x_ ,y_) ;
+		}
+
+		template <class ARG1>
+		imports ARG1 radian_angle (CREF<ARG1> obj) {
+			require (IS_FLOAT<ARG1>) ;
+			return instance ().mThis->radian_angle (obj) ;
 		}
 	} ;
 } ;
@@ -472,7 +482,31 @@ trait BITPROC_IMPLHOLDER_HELP ;
 
 template <class DEPEND>
 trait BITPROC_HELP<DEPEND ,ALWAYS> {
-	struct Holder implement Interface {} ;
+	struct Holder implement Interface {
+		virtual void initialize () = 0 ;
+		virtual BYTE low_bit (CREF<WORD> obj) const = 0 ;
+		virtual WORD low_bit (CREF<CHAR> obj) const = 0 ;
+		virtual CHAR low_bit (CREF<DATA> obj) const = 0 ;
+		virtual BYTE high_bit (CREF<WORD> obj) const = 0 ;
+		virtual WORD high_bit (CREF<CHAR> obj) const = 0 ;
+		virtual CHAR high_bit (CREF<DATA> obj) const = 0 ;
+		virtual WORD up_bit (CREF<BYTE> high ,CREF<BYTE> low) const = 0 ;
+		virtual CHAR up_bit (CREF<WORD> high ,CREF<WORD> low) const = 0 ;
+		virtual DATA up_bit (CREF<CHAR> high ,CREF<CHAR> low) const = 0 ;
+		virtual BOOL get_bit (CREF<BYTE> base ,CREF<BYTE> mask) const = 0 ;
+		virtual BOOL get_bit (CREF<WORD> base ,CREF<WORD> mask) const = 0 ;
+		virtual BOOL get_bit (CREF<CHAR> base ,CREF<CHAR> mask) const = 0 ;
+		virtual BOOL get_bit (CREF<DATA> base ,CREF<DATA> mask) const = 0 ;
+		virtual BOOL all_bit (CREF<BYTE> base ,CREF<BYTE> mask) const = 0 ;
+		virtual BOOL all_bit (CREF<WORD> base ,CREF<WORD> mask) const = 0 ;
+		virtual BOOL all_bit (CREF<CHAR> base ,CREF<CHAR> mask) const = 0 ;
+		virtual BOOL all_bit (CREF<DATA> base ,CREF<DATA> mask) const = 0 ;
+		virtual DATA nth_bit (CREF<LENGTH> nth) const = 0 ;
+	} ;
+
+	struct FUNCTION_extern {
+		imports VRef<Holder> invoke () ;
+	} ;
 
 	class BitProc {
 	protected:
@@ -482,73 +516,62 @@ trait BITPROC_HELP<DEPEND ,ALWAYS> {
 		imports CREF<BitProc> instance () {
 			return memorize ([&] () {
 				BitProc ret ;
-				ret.mThis = NULL ;
+				ret.mThis = FUNCTION_extern::invoke () ;
+				ret.mThis->initialize () ;
 				return move (ret) ;
 			}) ;
 		}
 
 		imports BYTE low_bit (CREF<WORD> obj) {
-			return BYTE (obj) ;
-		}
-
-		imports BYTE high_bit (CREF<WORD> obj) {
-			return BYTE (obj >> 8) ;
-		}
-
-		imports WORD up_bit (CREF<BYTE> a ,CREF<BYTE> b) {
-			return (WORD (a) << 8) | WORD (b) ;
+			return instance ().mThis->low_bit (obj) ;
 		}
 
 		imports WORD low_bit (CREF<CHAR> obj) {
-			return WORD (obj) ;
-		}
-
-		imports WORD high_bit (CREF<CHAR> obj) {
-			return WORD (obj >> 16) ;
-		}
-
-		imports CHAR up_bit (CREF<WORD> a ,CREF<WORD> b) {
-			return (CHAR (a) << 16) | CHAR (b) ;
+			return instance ().mThis->low_bit (obj) ;
 		}
 
 		imports CHAR low_bit (CREF<DATA> obj) {
-			return CHAR (obj) ;
+			return instance ().mThis->low_bit (obj) ;
+		}
+
+		imports BYTE high_bit (CREF<WORD> obj) {
+			return instance ().mThis->high_bit (obj) ;
+		}
+
+		imports WORD high_bit (CREF<CHAR> obj) {
+			return instance ().mThis->high_bit (obj) ;
 		}
 
 		imports CHAR high_bit (CREF<DATA> obj) {
-			return CHAR (obj >> 32) ;
+			return instance ().mThis->high_bit (obj) ;
 		}
 
-		imports DATA up_bit (CREF<CHAR> a ,CREF<CHAR> b) {
-			return (DATA (a) << 32) | DATA (b) ;
+		imports WORD up_bit (CREF<BYTE> high ,CREF<BYTE> low) {
+			return instance ().mThis->up_bit (high ,low) ;
 		}
 
-		template <class ARG1 ,class ARG2>
-		imports BOOL get_bit (CREF<ARG1> a ,CREF<ARG2> b) {
-			require (IS_BIT<ARG1>) ;
-			return (a & ARG1 (b)) != ARG1 (0X00) ;
+		imports CHAR up_bit (CREF<WORD> high ,CREF<WORD> low) {
+			return instance ().mThis->up_bit (high ,low) ;
 		}
 
-		template <class ARG1 ,class ARG2>
-		imports BOOL all_bit (CREF<ARG1> a ,CREF<ARG2> b) {
-			require (IS_BIT<ARG1>) ;
-			return (a & ARG1 (b)) == ARG1 (b) ;
+		imports DATA up_bit (CREF<CHAR> high ,CREF<CHAR> low) {
+			return instance ().mThis->up_bit (high ,low) ;
 		}
 
 		template <class ARG1 ,class ARG2>
-		imports void set_bit (CREF<ARG1> a ,CREF<ARG2> b) {
+		imports BOOL get_bit (CREF<ARG1> base ,CREF<ARG2> mask) {
 			require (IS_BIT<ARG1>) ;
-			a |= ARG1 (b) ;
+			return instance ().mThis->get_bit (base ,ARG1 (mask)) ;
 		}
 
 		template <class ARG1 ,class ARG2>
-		imports void erase_bit (CREF<ARG1> a ,CREF<ARG2> b) {
+		imports BOOL all_bit (CREF<ARG1> base ,CREF<ARG2> mask) {
 			require (IS_BIT<ARG1>) ;
-			a &= ~ARG1 (b) ;
+			return instance ().mThis->all_bit (base ,ARG1 (mask)) ;
 		}
 
 		imports DATA nth_bit (CREF<LENGTH> nth) {
-			return DATA (0X01) << nth ;
+			return instance ().mThis->nth_bit (nth) ;
 		}
 	} ;
 } ;

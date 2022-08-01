@@ -20,14 +20,18 @@ trait SORTPROC_HELP ;
 template <class...>
 trait SORTPROC_IMPLHOLDER_HELP ;
 
+template <class...>
+trait SORTPROC_COMPARE_HELP ;
+
 template <class DEPEND>
 trait SORTPROC_HELP<DEPEND ,ALWAYS> {
-	using COMPARE = Function<FLAG ,TYPEAS<CREF<INDEX> ,CREF<INDEX>>> ;
+	struct Binder implement Interface {
+		virtual FLAG friend_compare (CREF<INDEX> index1 ,CREF<INDEX> index2) const = 0 ;
+	} ;
 
 	struct Holder implement Interface {
 		virtual void initialize () = 0 ;
-		virtual void insert_sort (CREF<COMPARE> compare ,VREF<Array<INDEX>> range_ ,CREF<INDEX> lb ,CREF<INDEX> rb) const = 0 ;
-		virtual void quick_sort (CREF<COMPARE> compare ,VREF<Array<INDEX>> range_ ,CREF<INDEX> lb ,CREF<INDEX> rb ,CREF<LENGTH> ideal) const = 0 ;
+		virtual void sort (CREF<Binder> op ,VREF<Array<INDEX>> range_ ,CREF<INDEX> begin_ ,CREF<INDEX> end_) const = 0 ;
 	} ;
 
 	struct FUNCTION_extern {
@@ -55,17 +59,30 @@ trait SORTPROC_HELP<DEPEND ,ALWAYS> {
 
 		template <class ARG1>
 		imports void sort (CREF<ARG1> array_ ,VREF<Array<INDEX>> range_ ,CREF<INDEX> begin_ ,CREF<INDEX> end_) {
-			const auto r1x = end_ - begin_ ;
-			if (r1x <= 1)
-				return ;
-			INDEX ix = begin_ ;
-			INDEX iy = end_ - 1 ;
-			assert (vbetween (ix ,0 ,range_.size ())) ;
-			assert (vbetween (iy ,0 ,range_.size ())) ;
-			const auto r2x = COMPARE ([&] (CREF<INDEX> a ,CREF<INDEX> b) {
-				return operator_compr (array_[a] ,array_[b]) ;
-			}) ;
-			instance ().mThis->quick_sort (r2x ,range_ ,ix ,iy ,r1x) ;
+			using R1X = typename SORTPROC_COMPARE_HELP<ARG1 ,ALWAYS>::Compare ;
+			auto rax = R1X (CRef<ARG1>::reference (array_)) ;
+			instance ().mThis->sort (rax ,range_ ,begin_ ,end_) ;
+		}
+	} ;
+} ;
+
+template <class UNIT1>
+trait SORTPROC_COMPARE_HELP<UNIT1 ,ALWAYS> {
+	using Binder = typename SORTPROC_HELP<DEPEND ,ALWAYS>::Binder ;
+
+	class Compare implement Binder {
+	protected:
+		CRef<UNIT1> mArray ;
+
+	public:
+		implicit Compare () = delete ;
+
+		explicit Compare (RREF<CRef<UNIT1>> array_) {
+			mArray = move (array_) ;
+		}
+
+		FLAG friend_compare (CREF<INDEX> index1 ,CREF<INDEX> index2) const override {
+			return operator_compr (mArray.self[index1] ,mArray.self[index2]) ;
 		}
 	} ;
 } ;

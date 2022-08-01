@@ -1155,9 +1155,26 @@ static constexpr auto string_cvt = FUNCTION_string_cvt () ;
 template <class...>
 trait ANYSTRING_HELP ;
 
+template <class...>
+trait ANYSTRING_IMPLHOLDER_HELP ;
+
 template <class DEPEND>
 trait ANYSTRING_HELP<DEPEND ,ALWAYS> {
-	class AnyString {
+	struct Holder implement Interface {
+		virtual void initialize (CREF<Slice<STR>> text) = 0 ;
+		virtual void initialize (CREF<String<STRA>> text) = 0 ;
+		virtual void initialize (CREF<String<STRW>> text) = 0 ;
+		virtual void initialize (CREF<String<STRU8>> text) = 0 ;
+		virtual void initialize (CREF<String<STRU16>> text) = 0 ;
+		virtual void initialize (CREF<String<STRU32>> text) = 0 ;
+		virtual CREF<String<STRA>> pick (CREF<TYPEID<STRA>> id) const leftvalue = 0 ;
+		virtual CREF<String<STRW>> pick (CREF<TYPEID<STRW>> id) const leftvalue = 0 ;
+		virtual CREF<String<STRU8>> pick (CREF<TYPEID<STRU8>> id) const leftvalue = 0 ;
+		virtual CREF<String<STRU16>> pick (CREF<TYPEID<STRU16>> id) const leftvalue = 0 ;
+		virtual CREF<String<STRU32>> pick (CREF<TYPEID<STRU32>> id) const leftvalue = 0 ;
+	} ;
+
+	class FakeHolder implement Holder {
 	protected:
 		Cell<CRef<String<STR>>> mText ;
 		Cell<CRef<String<STRA>>> mTextA ;
@@ -1165,124 +1182,67 @@ trait ANYSTRING_HELP<DEPEND ,ALWAYS> {
 		Cell<CRef<String<STRU8>>> mTextU8 ;
 		Cell<CRef<String<STRU16>>> mTextU16 ;
 		Cell<CRef<String<STRU32>>> mTextU32 ;
+	} ;
+
+	struct FUNCTION_extern {
+		imports Box<FakeHolder> invoke () ;
+	} ;
+
+	class AnyString {
+	protected:
+		Box<FakeHolder> mThis ;
 
 	public:
 		implicit AnyString () = default ;
 
 		explicit AnyString (CREF<Slice<STR>> text) {
-			mText = Cell<CRef<String<STR>>>::make () ;
-			auto rax = String<STR> (text) ;
-			mText.store (CRef<String<STR>>::make (move (rax))) ;
+			mThis = FUNCTION_extern::invoke () ;
+			mThis->initialize (text) ;
 		}
 
 		explicit AnyString (CREF<String<STRA>> text) {
-			mTextA = Cell<CRef<String<STR>>>::make () ;
-			auto rax = text ;
-			mTextA.store (CRef<String<STR>>::make (move (rax))) ;
-			mText = Cell<CRef<String<STR>>>::make () ;
-			auto rbx = string_cvt[TYPEAS<TYPEAS<STR ,STRA>>::expr] (text) ;
-			mText.store (CRef<String<STR>>::make (move (rax))) ;
+			mThis = FUNCTION_extern::invoke () ;
+			mThis->initialize (text) ;
 		}
 
 		explicit AnyString (CREF<String<STRW>> text) {
-			mTextW = Cell<CRef<String<STR>>>::make () ;
-			auto rax = text ;
-			mTextW.store (CRef<String<STR>>::make (move (rax))) ;
-			mText = Cell<CRef<String<STR>>>::make () ;
-			auto rbx = string_cvt[TYPEAS<TYPEAS<STR ,STRW>>::expr] (text) ;
-			mText.store (CRef<String<STR>>::make (move (rax))) ;
+			mThis = FUNCTION_extern::invoke () ;
+			mThis->initialize (text) ;
 		}
 
 		explicit AnyString (CREF<String<STRU8>> text) {
-			mTextU8 = Cell<CRef<String<STR>>>::make () ;
-			auto rax = text ;
-			mTextU8.store (CRef<String<STR>>::make (move (rax))) ;
-			mText = Cell<CRef<String<STR>>>::make () ;
-			auto rbx = string_cvt[TYPEAS<TYPEAS<STR ,STRU8>>::expr] (text) ;
-			mText.store (CRef<String<STR>>::make (move (rax))) ;
+			mThis = FUNCTION_extern::invoke () ;
+			mThis->initialize (text) ;
 		}
 
 		explicit AnyString (CREF<String<STRU16>> text) {
-			mTextU16 = Cell<CRef<String<STR>>>::make () ;
-			auto rax = text ;
-			mTextU16.store (CRef<String<STR>>::make (move (rax))) ;
-			mText = Cell<CRef<String<STR>>>::make () ;
-			auto rbx = string_cvt[TYPEAS<TYPEAS<STR ,STRU16>>::expr] (text) ;
-			mText.store (CRef<String<STR>>::make (move (rax))) ;
+			mThis = FUNCTION_extern::invoke () ;
+			mThis->initialize (text) ;
 		}
 
 		explicit AnyString (CREF<String<STRU32>> text) {
-			mTextU32 = Cell<CRef<String<STR>>>::make () ;
-			auto rax = text ;
-			mTextU32.store (CRef<String<STR>>::make (move (rax))) ;
-			mText = Cell<CRef<String<STR>>>::make () ;
-			auto rbx = string_cvt[TYPEAS<TYPEAS<STR ,STRU32>>::expr] (text) ;
-			mText.store (CRef<String<STR>>::make (move (rax))) ;
+			mThis = FUNCTION_extern::invoke () ;
+			mThis->initialize (text) ;
 		}
 
 		CREF<String<STRA>> pick (CREF<TYPEID<STRA>> id) const leftvalue {
-			if ifswitch (TRUE) {
-				if (mTextA.exist ())
-					discard ;
-				mTextA = Cell<CRef<String<STRA>>>::make () ;
-				const auto r1x = mText.fetch () ;
-				auto rax = string_cvt[TYPEAS<TYPEAS<STRA ,STR>>::expr] (r1x.self) ;
-				mTextA.store (CRef<String<STR>>::make (move (rax))) ;
-			}
-			const auto r2x = mTextA.fetch () ;
-			return r2x.self ;
+			return mThis->pick (id) ;
 		}
 
 		CREF<String<STRW>> pick (CREF<TYPEID<STRW>> id) const leftvalue {
-			if ifswitch (TRUE) {
-				if (mTextW.exist ())
-					discard ;
-				mTextW = Cell<CRef<String<STRW>>>::make () ;
-				const auto r1x = mText.fetch () ;
-				auto rax = string_cvt[TYPEAS<TYPEAS<STRW ,STR>>::expr] (r1x.self) ;
-				mTextW.store (CRef<String<STR>>::make (move (rax))) ;
-			}
-			const auto r2x = mTextW.fetch () ;
-			return r2x.self ;
+			return mThis->pick (id) ;
 		}
 
 		CREF<String<STRU8>> pick (CREF<TYPEID<STRU8>> id) const leftvalue {
-			if ifswitch (TRUE) {
-				if (mTextU8.exist ())
-					discard ;
-				mTextU8 = Cell<CRef<String<STRU8>>>::make () ;
-				const auto r1x = mText.fetch () ;
-				auto rax = string_cvt[TYPEAS<TYPEAS<STRU8 ,STR>>::expr] (r1x.self) ;
-				mTextU8.store (CRef<String<STR>>::make (move (rax))) ;
-			}
-			const auto r2x = mTextU8.fetch () ;
-			return r2x.self ;
+			return mThis->pick (id) ;
 		}
 
 		CREF<String<STRU16>> pick (CREF<TYPEID<STRU16>> id) const leftvalue {
-			if ifswitch (TRUE) {
-				if (mTextU16.exist ())
-					discard ;
-				mTextU16 = Cell<CRef<String<STRU16>>>::make () ;
-				const auto r1x = mText.fetch () ;
-				auto rax = string_cvt[TYPEAS<TYPEAS<STRU16 ,STR>>::expr] (r1x.self) ;
-				mTextU16.store (CRef<String<STR>>::make (move (rax))) ;
-			}
-			const auto r2x = mTextU16.fetch () ;
-			return r2x.self ;
+			return mThis->pick (id) ;
 		}
 
 		CREF<String<STRU32>> pick (CREF<TYPEID<STRU32>> id) const leftvalue {
-			if ifswitch (TRUE) {
-				if (mTextU32.exist ())
-					discard ;
-				mTextU32 = Cell<CRef<String<STRU32>>>::make () ;
-				const auto r1x = mText.fetch () ;
-				auto rax = string_cvt[TYPEAS<TYPEAS<STRU32 ,STR>>::expr] (r1x.self) ;
-				mTextU32.store (CRef<String<STR>>::make (move (rax))) ;
-			}
-			const auto r2x = mTextU32.fetch () ;
-			return r2x.self ;
+			return mThis->pick (id) ;
 		}
 	} ;
 } ;
@@ -1290,10 +1250,13 @@ trait ANYSTRING_HELP<DEPEND ,ALWAYS> {
 using AnyString = typename ANYSTRING_HELP<DEPEND ,ALWAYS>::AnyString ;
 
 template <class...>
-trait REGULARSTRING_HELP ;
+trait ESCAPESTRING_HELP ;
+
+template <class...>
+trait ESCAPESTRING_IMPLHOLDER_HELP ;
 
 template <class DEPEND>
-trait REGULARSTRING_HELP<DEPEND ,ALWAYS> {
+trait ESCAPESTRING_HELP<DEPEND ,ALWAYS> {
 	using BinderA = typename TEXTWRITER_HELP<STRA ,ALWAYS>::Binder ;
 	using BinderW = typename TEXTWRITER_HELP<STRW ,ALWAYS>::Binder ;
 	using BinderU8 = typename TEXTWRITER_HELP<STRU8 ,ALWAYS>::Binder ;
@@ -1301,83 +1264,90 @@ trait REGULARSTRING_HELP<DEPEND ,ALWAYS> {
 	using BinderU32 = typename TEXTWRITER_HELP<STRU32 ,ALWAYS>::Binder ;
 	using Binder = Together<BinderA ,BinderW ,BinderU8 ,BinderU16 ,BinderU32> ;
 
-	class EscapeString implement Binder {
+	struct Holder implement Interface {
+		virtual void initialize (RREF<AnyString> text) = 0 ;
+		virtual void write_text (VREF<TextWriter<STRA>> writer) const = 0 ;
+		virtual void write_text (VREF<TextWriter<STRW>> writer) const = 0 ;
+		virtual void write_text (VREF<TextWriter<STRU8>> writer) const = 0 ;
+		virtual void write_text (VREF<TextWriter<STRU16>> writer) const = 0 ;
+		virtual void write_text (VREF<TextWriter<STRU32>> writer) const = 0 ;
+	} ;
+
+	class FakeHolder implement Holder {
 	protected:
 		AnyString mText ;
+	} ;
+
+	struct FUNCTION_extern {
+		imports Box<FakeHolder> invoke () ;
+	} ;
+
+	class EscapeString implement Binder {
+	protected:
+		Box<FakeHolder> mThis ;
 
 	public:
-		implicit EscapeString () = delete ;
+		implicit EscapeString () = default ;
 
 		explicit EscapeString (CREF<Slice<STR>> text) {
-			mText = AnyString (text) ;
+			mThis = FUNCTION_extern::invoke () ;
+			mThis->initialize (AnyString (text)) ;
 		}
 
 		explicit EscapeString (CREF<String<STRA>> text) {
-			mText = AnyString (text) ;
+			mThis = FUNCTION_extern::invoke () ;
+			mThis->initialize (AnyString (text)) ;
 		}
 
 		explicit EscapeString (CREF<String<STRW>> text) {
-			mText = AnyString (text) ;
+			mThis = FUNCTION_extern::invoke () ;
+			mThis->initialize (AnyString (text)) ;
 		}
 
 		explicit EscapeString (CREF<String<STRU8>> text) {
-			mText = AnyString (text) ;
+			mThis = FUNCTION_extern::invoke () ;
+			mThis->initialize (AnyString (text)) ;
 		}
 
 		explicit EscapeString (CREF<String<STRU16>> text) {
-			mText = AnyString (text) ;
+			mThis = FUNCTION_extern::invoke () ;
+			mThis->initialize (AnyString (text)) ;
 		}
 
 		explicit EscapeString (CREF<String<STRU32>> text) {
-			mText = AnyString (text) ;
+			mThis = FUNCTION_extern::invoke () ;
+			mThis->initialize (AnyString (text)) ;
 		}
 
 		void friend_write (VREF<TextWriter<STRA>> writer) const override {
-			template_write (TYPEAS<STRA>::expr ,writer ,mText.pick (TYPEAS<STRA>::expr)) ;
+			return mThis->write_text (writer) ;
 		}
 
 		void friend_write (VREF<TextWriter<STRW>> writer) const override {
-			template_write (TYPEAS<STRW>::expr ,writer ,mText.pick (TYPEAS<STRW>::expr)) ;
+			return mThis->write_text (writer) ;
 		}
 
 		void friend_write (VREF<TextWriter<STRU8>> writer) const override {
-			template_write (TYPEAS<STRU8>::expr ,writer ,mText.pick (TYPEAS<STRU8>::expr)) ;
+			return mThis->write_text (writer) ;
 		}
 
 		void friend_write (VREF<TextWriter<STRU16>> writer) const override {
-			template_write (TYPEAS<STRU16>::expr ,writer ,mText.pick (TYPEAS<STRU16>::expr)) ;
+			return mThis->write_text (writer) ;
 		}
 
 		void friend_write (VREF<TextWriter<STRU32>> writer) const override {
-			template_write (TYPEAS<STRU32>::expr ,writer ,mText.pick (TYPEAS<STRU32>::expr)) ;
-		}
-
-		template <class ARG1 ,class ARG2 ,class ARG3>
-		void template_write (CREF<TYPEID<ARG1>> id ,VREF<ARG2> writer ,CREF<ARG3> text) const {
-			const auto r1x = writer.get_attr () ;
-			writer << ARG1 ('\"') ;
-			for (auto &&i : text) {
-				auto rxx = TRUE ;
-				if ifswitch (rxx) {
-					const auto r2x = r1x->escape_cast (i) ;
-					if ifnot (r2x.exist ())
-						discard ;
-					writer << ARG1 ('\\') ;
-					writer << r2x.fetch () ;
-				}
-				if ifswitch (rxx) {
-					writer << i ;
-				}
-			}
-			writer << ARG1 ('\"') ;
+			return mThis->write_text (writer) ;
 		}
 	} ;
 } ;
 
-using EscapeString = typename REGULARSTRING_HELP<DEPEND ,ALWAYS>::EscapeString ;
+using EscapeString = typename ESCAPESTRING_HELP<DEPEND ,ALWAYS>::EscapeString ;
 
 template <class...>
 trait REPEATSTRING_HELP ;
+
+template <class...>
+trait REPEATSTRING_IMPLHOLDER_HELP ;
 
 template <class DEPEND>
 trait REPEATSTRING_HELP<DEPEND ,ALWAYS> {
@@ -1388,137 +1358,100 @@ trait REPEATSTRING_HELP<DEPEND ,ALWAYS> {
 	using BinderU32 = typename TEXTWRITER_HELP<STRU32 ,ALWAYS>::Binder ;
 	using Binder = Together<BinderA ,BinderW ,BinderU8 ,BinderU16 ,BinderU32> ;
 
-	using COUNTER_MAX_DEPTH = ENUMAS<VAL ,ENUMID<256>> ;
+	struct Holder implement Interface {
+		virtual void initialize (RREF<AnyString> gap_text ,RREF<AnyString> comma_text) = 0 ;
+		virtual void write_text (VREF<TextWriter<STRA>> writer) const = 0 ;
+		virtual void write_text (VREF<TextWriter<STRW>> writer) const = 0 ;
+		virtual void write_text (VREF<TextWriter<STRU8>> writer) const = 0 ;
+		virtual void write_text (VREF<TextWriter<STRU16>> writer) const = 0 ;
+		virtual void write_text (VREF<TextWriter<STRU32>> writer) const = 0 ;
+		virtual void tight () = 0 ;
+		virtual void enter () = 0 ;
+		virtual void leave () = 0 ;
+	} ;
 
-	class RepeatString implement Binder {
+	class FakeHolder implement Interface {
 	protected:
 		AnyString mGapText ;
 		AnyString mCommaText ;
 		LENGTH mCounter ;
 		Cell<LENGTH> mTightCounter ;
 		Deque<Cell<BOOL>> mFirst ;
+	} ;
+
+	struct FUNCTION_extern {
+		imports Box<FakeHolder> invoke () ;
+	} ;
+
+	using COUNTER_MAX_DEPTH = ENUMAS<VAL ,ENUMID<256>> ;
+
+	class RepeatString implement Binder {
+	protected:
+		Box<FakeHolder> mThis ;
 
 	public:
-		implicit RepeatString () = delete ;
+		implicit RepeatString () = default ;
 
 		explicit RepeatString (CREF<Slice<STR>> gap_text ,CREF<Slice<STR>> comma_text) {
-			mGapText = AnyString (gap_text) ;
-			mCommaText = AnyString (comma_text) ;
-			initialize () ;
+			mThis = FUNCTION_extern::invoke () ;
+			mThis->initialize (AnyString (gap_text) ,AnyString (comma_text)) ;
 		}
 
 		explicit RepeatString (CREF<String<STRA>> gap_text ,CREF<String<STRA>> comma_text) {
-			mGapText = AnyString (gap_text) ;
-			mCommaText = AnyString (comma_text) ;
-			initialize () ;
+			mThis = FUNCTION_extern::invoke () ;
+			mThis->initialize (AnyString (gap_text) ,AnyString (comma_text)) ;
 		}
 
 		explicit RepeatString (CREF<String<STRW>> gap_text ,CREF<String<STRW>> comma_text) {
-			mGapText = AnyString (gap_text) ;
-			mCommaText = AnyString (comma_text) ;
-			initialize () ;
+			mThis = FUNCTION_extern::invoke () ;
+			mThis->initialize (AnyString (gap_text) ,AnyString (comma_text)) ;
 		}
 
 		explicit RepeatString (CREF<String<STRU8>> gap_text ,CREF<String<STRU8>> comma_text) {
-			mGapText = AnyString (gap_text) ;
-			mCommaText = AnyString (comma_text) ;
-			initialize () ;
+			mThis = FUNCTION_extern::invoke () ;
+			mThis->initialize (AnyString (gap_text) ,AnyString (comma_text)) ;
 		}
 
 		explicit RepeatString (CREF<String<STRU16>> gap_text ,CREF<String<STRU16>> comma_text) {
-			mGapText = AnyString (gap_text) ;
-			mCommaText = AnyString (comma_text) ;
-			initialize () ;
+			mThis = FUNCTION_extern::invoke () ;
+			mThis->initialize (AnyString (gap_text) ,AnyString (comma_text)) ;
 		}
 
 		explicit RepeatString (CREF<String<STRU32>> gap_text ,CREF<String<STRU32>> comma_text) {
-			mGapText = AnyString (gap_text) ;
-			mCommaText = AnyString (comma_text) ;
-			initialize () ;
-		}
-
-		void initialize () {
-			mCounter = 0 ;
-			mTightCounter = Cell<LENGTH>::make (COUNTER_MAX_DEPTH::expr) ;
-			mFirst = Deque<Cell<BOOL>> (COUNTER_MAX_DEPTH::expr * 2) ;
-			mFirst.add (Cell<BOOL>::make (TRUE)) ;
+			mThis = FUNCTION_extern::invoke () ;
+			mThis->initialize (AnyString (gap_text) ,AnyString (comma_text)) ;
 		}
 
 		void friend_write (VREF<TextWriter<STRA>> writer) const override {
-			template_write (TYPEAS<STRA>::expr ,writer ,mGapText.pick (TYPEAS<STRA>::expr) ,mCommaText.pick (TYPEAS<STRA>::expr)) ;
+			return mThis->write_text (writer) ;
 		}
 
 		void friend_write (VREF<TextWriter<STRW>> writer) const override {
-			template_write (TYPEAS<STRW>::expr ,writer ,mGapText.pick (TYPEAS<STRW>::expr) ,mCommaText.pick (TYPEAS<STRW>::expr)) ;
+			return mThis->write_text (writer) ;
 		}
 
 		void friend_write (VREF<TextWriter<STRU8>> writer) const override {
-			template_write (TYPEAS<STRU8>::expr ,writer ,mGapText.pick (TYPEAS<STRU8>::expr) ,mCommaText.pick (TYPEAS<STRU8>::expr)) ;
+			return mThis->write_text (writer) ;
 		}
 
 		void friend_write (VREF<TextWriter<STRU16>> writer) const override {
-			template_write (TYPEAS<STRU16>::expr ,writer ,mGapText.pick (TYPEAS<STRU16>::expr) ,mCommaText.pick (TYPEAS<STRU16>::expr)) ;
+			return mThis->write_text (writer) ;
 		}
 
 		void friend_write (VREF<TextWriter<STRU32>> writer) const override {
-			template_write (TYPEAS<STRU32>::expr ,writer ,mGapText.pick (TYPEAS<STRU32>::expr) ,mCommaText.pick (TYPEAS<STRU32>::expr)) ;
-		}
-
-		template <class ARG1 ,class ARG2 ,class ARG3 ,class ARG4>
-		void template_write (CREF<TYPEID<ARG1>> id ,VREF<ARG2> writer ,CREF<ARG3> gap_text ,CREF<ARG4> comma_text) const {
-			INDEX ix = mFirst.tail () ;
-			auto rxx = TRUE ;
-			if ifswitch (rxx) {
-				if ifnot (mCounter > mTightCounter.fetch ())
-					discard ;
-				if ifswitch (TRUE) {
-					if (mFirst[ix].fetch ())
-						discard ;
-					for (auto &&j : gap_text)
-						writer << j ;
-				}
-				mFirst[ix].store (FALSE) ;
-			}
-			if ifswitch (rxx) {
-				if (mCounter != mTightCounter.fetch ())
-					discard ;
-				if ifnot (mFirst[ix].fetch ())
-					discard ;
-				mTightCounter.store (COUNTER_MAX_DEPTH::expr) ;
-				mFirst[ix].store (FALSE) ;
-			}
-			if ifswitch (rxx) {
-				writer << TextWriter<ARG1>::GAP ;
-				if ifswitch (TRUE) {
-					if (mFirst[ix].fetch ())
-						discard ;
-					for (auto &&j : comma_text)
-						writer << j ;
-				}
-				mFirst[ix].store (FALSE) ;
-				for (auto &&i : iter (0 ,mCounter)) {
-					noop (i) ;
-					for (auto &&j : gap_text)
-						writer << j ;
-				}
-			}
+			return mThis->write_text (writer) ;
 		}
 
 		void tight () {
-			mTightCounter.store (mCounter) ;
+			return mThis->tight () ;
 		}
 
 		void enter () {
-			assume (mCounter < COUNTER_MAX_DEPTH::expr) ;
-			mCounter++ ;
-			mFirst.add (Cell<BOOL>::make (TRUE)) ;
+			return mThis->enter () ;
 		}
 
 		void leave () {
-			mFirst.pop () ;
-			INDEX ix = mFirst.tail () ;
-			mFirst[ix].store (TRUE) ;
-			mCounter-- ;
+			return mThis->leave () ;
 		}
 	} ;
 } ;
@@ -1527,6 +1460,9 @@ using RepeatString = typename REPEATSTRING_HELP<DEPEND ,ALWAYS>::RepeatString ;
 
 template <class...>
 trait ALIGNEDSTRING_HELP ;
+
+template <class...>
+trait ALIGNEDSTRING_IMPLHOLDER_HELP ;
 
 template <class DEPEND>
 trait ALIGNEDSTRING_HELP<DEPEND ,ALWAYS> {
@@ -1537,49 +1473,56 @@ trait ALIGNEDSTRING_HELP<DEPEND ,ALWAYS> {
 	using BinderU32 = typename TEXTWRITER_HELP<STRU32 ,ALWAYS>::Binder ;
 	using Binder = Together<BinderA ,BinderW ,BinderU8 ,BinderU16 ,BinderU32> ;
 
-	class AlignedString implement Binder {
+	struct Holder implement Interface {
+		virtual void initialize (CREF<VAL64> value_ ,CREF<LENGTH> align_) = 0 ;
+		virtual void write_text (VREF<TextWriter<STRA>> writer) const = 0 ;
+		virtual void write_text (VREF<TextWriter<STRW>> writer) const = 0 ;
+		virtual void write_text (VREF<TextWriter<STRU8>> writer) const = 0 ;
+		virtual void write_text (VREF<TextWriter<STRU16>> writer) const = 0 ;
+		virtual void write_text (VREF<TextWriter<STRU32>> writer) const = 0 ;
+	} ;
+
+	class FakeHolder implement Holder {
 	protected:
 		VAL64 mValue ;
 		LENGTH mAlign ;
 		LENGTH mSpace ;
+	} ;
+
+	struct FUNCTION_extern {
+		imports Box<FakeHolder> invoke () ;
+	} ;
+
+	class AlignedString implement Binder {
+	protected:
+		Box<FakeHolder> mThis ;
 
 	public:
-		implicit AlignedString () = delete ;
+		implicit AlignedString () = default ;
 
 		explicit AlignedString (CREF<VAL64> value_ ,CREF<LENGTH> align_) {
-			mValue = value_ ;
-			mAlign = align_ ;
-			mSpace = mAlign - 1 - MathProc::vlog (mValue ,VAL64 (10)) ;
-			assume (mSpace >= 0) ;
+			mThis = FUNCTION_extern::invoke () ;
+			mThis->initialize (value_ ,align_) ;
 		}
 
 		void friend_write (VREF<TextWriter<STRA>> writer) const override {
-			template_write (TYPEAS<STRA>::expr ,writer) ;
+			return mThis->write_text (writer) ;
 		}
 
 		void friend_write (VREF<TextWriter<STRW>> writer) const override {
-			template_write (TYPEAS<STRW>::expr ,writer) ;
+			return mThis->write_text (writer) ;
 		}
 
 		void friend_write (VREF<TextWriter<STRU8>> writer) const override {
-			template_write (TYPEAS<STRU8>::expr ,writer) ;
+			return mThis->write_text (writer) ;
 		}
 
 		void friend_write (VREF<TextWriter<STRU16>> writer) const override {
-			template_write (TYPEAS<STRU16>::expr ,writer) ;
+			return mThis->write_text (writer) ;
 		}
 
 		void friend_write (VREF<TextWriter<STRU32>> writer) const override {
-			template_write (TYPEAS<STRU32>::expr ,writer) ;
-		}
-
-		template <class ARG1 ,class ARG2>
-		void template_write (CREF<TYPEID<ARG1>> id ,VREF<ARG2> writer) const {
-			for (auto &&i : iter (0 ,mSpace)) {
-				noop (i) ;
-				writer << slice ("0") ;
-			}
-			writer << mValue ;
+			return mThis->write_text (writer) ;
 		}
 	} ;
 } ;

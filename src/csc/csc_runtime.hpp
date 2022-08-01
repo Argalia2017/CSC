@@ -47,7 +47,6 @@ trait TIMEDURATION_HELP<DEPEND ,ALWAYS> {
 		virtual void init_epoch () = 0 ;
 		virtual void initialize (CREF<LENGTH> milliseconds_ ,CREF<LENGTH> nanoseconds_) = 0 ;
 		virtual void initialize (CREF<CALENDAR> calendar_) = 0 ;
-		virtual void initialize (CREF<TEMP<void>> duration_) = 0 ;
 		virtual Auto native () const leftvalue = 0 ;
 		virtual LENGTH hours () const = 0 ;
 		virtual LENGTH minutes () const = 0 ;
@@ -85,9 +84,8 @@ trait TIMEDURATION_HELP<DEPEND ,ALWAYS> {
 			mThis->initialize (milliseconds_ ,nanoseconds_) ;
 		}
 
-		explicit TimeDuration (CREF<TEMP<void>> duration_) {
-			mThis = FUNCTION_extern::invoke () ;
-			mThis->initialize (duration_) ;
+		explicit TimeDuration (RREF<VRef<Holder>> that) {
+			mThis = move (that) ;
 		}
 
 		template <class ARG1 = DEPEND>
@@ -298,8 +296,8 @@ trait ATOMIC_HELP<DEPEND ,ALWAYS> {
 		virtual VAL fetch () const = 0 ;
 		virtual void store (CREF<VAL> obj) const = 0 ;
 		virtual VAL exchange (CREF<VAL> obj) const = 0 ;
-		virtual void replace (CREF<VAL> expect ,CREF<VAL> obj) const = 0 ;
-		virtual BOOL change (VREF<VAL> expect ,CREF<VAL> obj) const = 0 ;
+		virtual void replace (CREF<VAL> expect ,CREF<VAL> right) const = 0 ;
+		virtual BOOL change (VREF<VAL> expect ,CREF<VAL> right) const = 0 ;
 		virtual VAL fetch_add (CREF<VAL> obj) const = 0 ;
 		virtual VAL fetch_sub (CREF<VAL> obj) const = 0 ;
 	} ;
@@ -330,12 +328,12 @@ trait ATOMIC_HELP<DEPEND ,ALWAYS> {
 			return mThis->exchange (obj) ;
 		}
 
-		void replace (CREF<VAL> expect ,CREF<VAL> obj) const {
-			return mThis->replace (expect ,obj) ;
+		void replace (CREF<VAL> expect ,CREF<VAL> right) const {
+			return mThis->replace (expect ,right) ;
 		}
 
-		BOOL change (VREF<VAL> expect ,CREF<VAL> obj) const {
-			return mThis->change (expect ,obj) ;
+		BOOL change (VREF<VAL> expect ,CREF<VAL> right) const {
+			return mThis->change (expect ,right) ;
 		}
 
 		VAL fetch_add (CREF<VAL> obj) const {
@@ -467,7 +465,7 @@ trait UNIQUELOCK_HELP<DEPEND ,ALWAYS> {
 		Box<FakeHolder> mThis ;
 
 	public:
-		implicit UniqueLock () = delete ;
+		implicit UniqueLock () = default ;
 
 		explicit UniqueLock (CREF<Mutex> mutex_) {
 			mThis = FUNCTION_extern::invoke () ;
@@ -528,7 +526,7 @@ trait SHAREDLOCK_HELP<DEPEND ,ALWAYS> {
 		Box<FakeHolder> mThis ;
 
 	public:
-		implicit SharedLock () = delete ;
+		implicit SharedLock () = default ;
 
 		explicit SharedLock (CREF<Mutex> mutex_) {
 			mThis = FUNCTION_extern::invoke () ;
@@ -641,7 +639,7 @@ trait THREAD_IMPLHOLDER_HELP ;
 template <class DEPEND>
 trait THREAD_HELP<DEPEND ,ALWAYS> {
 	struct Binder implement Interface {
-		virtual void execute (CREF<INDEX> index) = 0 ;
+		virtual void friend_execute (CREF<INDEX> index) = 0 ;
 	} ;
 
 	struct Holder implement Interface {
@@ -696,7 +694,6 @@ trait PROCESS_HELP<DEPEND ,ALWAYS> {
 	struct Holder implement Interface {
 		virtual void initialize (CREF<FLAG> uid) = 0 ;
 		virtual void initialize (CREF<SNAPSHOT> snapshot_) = 0 ;
-		virtual Auto native () const leftvalue = 0 ;
 		virtual FLAG process_uid () const = 0 ;
 		virtual SNAPSHOT snapshot () const = 0 ;
 	} ;
@@ -720,10 +717,6 @@ trait PROCESS_HELP<DEPEND ,ALWAYS> {
 		explicit Process (CREF<SNAPSHOT> snapshot_) {
 			mThis = FUNCTION_extern::invoke () ;
 			mThis->initialize (snapshot_) ;
-		}
-
-		Auto native () const leftvalue {
-			return mThis->native () ;
 		}
 
 		FLAG process_uid () const {
@@ -754,7 +747,7 @@ trait MODULE_IMPLHOLDER_HELP ;
 template <class DEPEND>
 trait MODULE_HELP<DEPEND ,ALWAYS> {
 	struct Holder implement Interface {
-		virtual void initialize (CREF<String<STR>> file_) = 0 ;
+		virtual void initialize (CREF<String<STR>> file) = 0 ;
 		virtual CREF<String<STR>> error () const leftvalue = 0 ;
 		virtual FLAG link (CREF<String<STR>> name) = 0 ;
 	} ;
@@ -770,9 +763,9 @@ trait MODULE_HELP<DEPEND ,ALWAYS> {
 	public:
 		implicit Module () = default ;
 
-		explicit Module (CREF<String<STR>> file_) {
+		explicit Module (CREF<String<STR>> file) {
 			mThis = FUNCTION_extern::invoke () ;
-			mThis->initialize (file_) ;
+			mThis->initialize (file) ;
 		}
 
 		CREF<String<STR>> error () const leftvalue {
@@ -877,13 +870,14 @@ trait SYSTEM_HELP<DEPEND ,ALWAYS> {
 
 	class System {
 	protected:
-		RecursiveMutex mMutex ;
+		Mutex mMutex ;
 		VRef<Holder> mThis ;
 
 	public:
 		imports CREF<System> instance () {
 			return memorize ([&] () {
 				System ret ;
+				ret.mMutex = RecursiveMutex () ;
 				ret.mThis = FUNCTION_extern::invoke () ;
 				ret.mThis->initialize () ;
 				return move (ret) ;

@@ -331,7 +331,7 @@ using csc_byte32_t = unsigned int ;
 using csc_byte64_t = unsigned long long ;
 
 struct csc_byte128_t {
-	alignas (16) DEF<csc_byte8_t[16]> __unused ;
+	alignas (16) DEF<csc_byte8_t[16]> mUnused ;
 } ;
 
 using csc_char_t = char ;
@@ -422,7 +422,7 @@ struct TEMPAS ;
 
 template <class UNIT1 ,class UNIT2>
 struct TEMPAS<UNIT1 ,UNIT2> {
-	UNIT2 __unused ;
+	UNIT2 mUnused ;
 } ;
 
 template <class UNIT1>
@@ -531,16 +531,16 @@ struct csc_text_t {
 #ifdef __CSC_COMPILER_MSVC__
 struct FUNCTION_internel_name {
 	template <class T>
-	imports csc_text_t __cdecl invoke () {
+	imports csc_text_t __cdecl stupid () {
 		auto rax = csc_text_t (__FUNCSIG__) ;
-		rax.mBegin += sizeof ("struct CSC::csc_text_t __cdecl CSC::FUNCTION_internel_name::invoke<") - 1 ;
+		rax.mBegin += sizeof ("struct CSC::csc_text_t __cdecl CSC::FUNCTION_internel_name::stupid<") - 1 ;
 		rax.mEnd -= sizeof (">(void)") - 1 ;
 		return rax ;
 	}
 
 	template <class ARG1>
 	inline csc_text_t operator() (CREF<TYPEID<ARG1>> id) const {
-		return invoke<ARG1> () ;
+		return stupid<ARG1> () ;
 	}
 } ;
 #endif
@@ -548,16 +548,16 @@ struct FUNCTION_internel_name {
 #ifdef __CSC_COMPILER_GNUC__
 struct FUNCTION_internel_name {
 	template <class T>
-	imports __attribute__ ((cdecl)) csc_text_t invoke () {
+	imports __attribute__ ((cdecl)) csc_text_t stupid () {
 		auto rax = csc_text_t (__PRETTY_FUNCTION__) ;
-		rax.mBegin += sizeof ("static CSC::csc_text_t CSC::FUNCTION_internel_name::invoke() [with T = ") - 1 ;
+		rax.mBegin += sizeof ("static CSC::csc_text_t CSC::FUNCTION_internel_name::stupid() [with T = ") - 1 ;
 		rax.mEnd -= sizeof ("]") - 1 ;
 		return rax ;
 	}
 
 	template <class ARG1>
 	inline csc_text_t operator() (CREF<TYPEID<ARG1>> id) const {
-		return invoke<ARG1> () ;
+		return stupid<ARG1> () ;
 	}
 } ;
 #endif
@@ -565,16 +565,16 @@ struct FUNCTION_internel_name {
 #ifdef __CSC_COMPILER_CLANG__
 struct FUNCTION_internel_name {
 	template <class T>
-	imports csc_text_t __cdecl invoke () {
+	imports csc_text_t __cdecl stupid () {
 		auto rax = csc_text_t (__PRETTY_FUNCTION__) ;
-		rax.mBegin += sizeof ("static CSC::csc_text_t CSC::FUNCTION_internel_name::invoke() [T = ") - 1 ;
+		rax.mBegin += sizeof ("static CSC::csc_text_t CSC::FUNCTION_internel_name::stupid() [T = ") - 1 ;
 		rax.mEnd -= sizeof ("]") - 1 ;
 		return rax ;
 	}
 
 	template <class ARG1>
 	inline csc_text_t operator() (CREF<TYPEID<ARG1>> id) const {
-		return invoke<ARG1> () ;
+		return stupid<ARG1> () ;
 	}
 } ;
 #endif
@@ -791,12 +791,12 @@ using MACRO_CXX_FULL = DEPENDENT<ENUM_FALSE ,DEPENDENT<where ,DEPEND>> ;
 
 #ifdef __CSC_CXX_LITE__
 template <class UNIT1>
-using MACRO_IS_ENUMCLASS = ENUMAS<csc_bool_t ,ENUMID<(__is_enum (UNIT1))>> ;
+using MACRO_IS_INTCLASS = ENUMAS<csc_bool_t ,ENUMID<(__is_enum (UNIT1))>> ;
 #endif
 
 #ifndef __CSC_CXX_LITE__
 template <class UNIT1>
-using MACRO_IS_ENUMCLASS = ENUMAS<csc_bool_t ,ENUMID<(std::is_enum<UNIT1>::value)>> ;
+using MACRO_IS_INTCLASS = ENUMAS<csc_bool_t ,ENUMID<(std::is_enum<UNIT1>::value)>> ;
 #endif
 
 #ifdef __CSC_CXX_LITE__
@@ -919,53 +919,6 @@ template <class FROM ,class TO>
 using MACRO_IS_CONVERTIBLE = ENUMAS<csc_bool_t ,ENUMID<(std::is_convertible<FROM ,TO>::value)>> ;
 #endif
 } ;
-
-#ifdef __CSC_CXX_LITE__
-#ifdef __CSC_COMPILER_MSVC__
-#define _INITIALIZER_LIST_
-#endif
-
-#ifdef __CSC_COMPILER_GNUC__
-#define _INITIALIZER_LIST
-#endif
-
-#ifdef __CSC_COMPILER_CLANG__
-#define _INITIALIZER_LIST_
-#endif
-
-namespace std {
-template <class T>
-class initializer_list {
-private:
-	using ITERATOR = CSC::DEF<const T *> ;
-
-protected:
-	ITERATOR mBegin ;
-	ITERATOR mEnd ;
-
-public:
-	constexpr initializer_list () = default ;
-
-	constexpr initializer_list (ITERATOR begin_ ,ITERATOR end_) noexcept
-		:mBegin (begin_) ,mEnd (end_) {}
-
-	constexpr initializer_list (ITERATOR begin_ ,CSC::csc_size_t size_) noexcept
-		:mBegin (begin_) ,mEnd (mBegin + size_) {}
-
-	constexpr CSC::csc_size_t size () const noexcept {
-		return CSC::csc_size_t (mEnd - mBegin) ;
-	}
-
-	constexpr ITERATOR begin () const noexcept {
-		return mBegin ;
-	}
-
-	constexpr ITERATOR end () const noexcept {
-		return mEnd ;
-	}
-} ;
-} ;
-#endif
 
 #ifdef __CSC_CXX_LITE__
 template <class ARG1 ,class ARG2>

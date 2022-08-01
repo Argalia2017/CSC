@@ -119,7 +119,7 @@ trait RUNTIMEPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 } ;
 
 template <>
-exports auto RUNTIMEPROC_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () -> VRef<Holder> {
+exports auto RUNTIMEPROC_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
 	using R1X = typename RUNTIMEPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
 }
@@ -204,10 +204,6 @@ trait PROCESS_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			mUID = FLAG (r1x) ;
 		}
 
-		Auto native () const leftvalue override {
-			return CRef<ImplHolder>::reference (thiz) ;
-		}
-
 		FLAG process_uid () const override {
 			return mUID ;
 		}
@@ -219,7 +215,7 @@ trait PROCESS_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 } ;
 
 template <>
-exports auto PROCESS_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () -> VRef<Holder> {
+exports auto PROCESS_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
 	using R1X = typename PROCESS_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
 }
@@ -237,8 +233,8 @@ trait MODULE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	public:
 		implicit ImplHolder () = default ;
 
-		void initialize (CREF<String<STR>> file_) override {
-			const auto r1x = Directory (file_).name () ;
+		void initialize (CREF<String<STR>> file) override {
+			const auto r1x = Directory (file).name () ;
 			assert (ifnot (r1x.empty ())) ;
 			mErrorBuffer = String<STR>::make () ;
 			mModule = UniqueRef<HMODULE> ([&] (VREF<HMODULE> me) {
@@ -285,7 +281,7 @@ trait MODULE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 } ;
 
 template <>
-exports auto MODULE_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () -> VRef<Holder> {
+exports auto MODULE_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
 	using R1X = typename MODULE_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
 }
@@ -367,7 +363,7 @@ trait SINGLETON_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			PIPE ret ;
 			zeroize (ret) ;
 			std::memcpy ((&ret) ,r2x.self ,SIZE_OF<PIPE>::expr) ;
-			const auto r3x = RuntimeProc::process_uid () ;
+			unsafe_barrier () ;
 			assume (ret.mReserve1 == DATA (0X1122334455667788)) ;
 			assume (ret.mReserve3 == DATA (0XAAAABBBBCCCCDDDD)) ;
 			assume (ret.mReserve2 == DATA (mUID)) ;
@@ -395,6 +391,7 @@ trait SINGLETON_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			rax.mAddress2 = DATA (address (mHeap)) ;
 			rax.mReserve3 = DATA (0XAAAABBBBCCCCDDDD) ;
 			std::memcpy (r2x.self ,(&rax) ,SIZE_OF<PIPE>::expr) ;
+			unsafe_barrier () ;
 		}
 
 		void add (CREF<Slice<STR>> name ,CREF<FLAG> addr) const override {
@@ -414,7 +411,7 @@ trait SINGLETON_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 } ;
 
 template <>
-exports auto SINGLETON_HOLDER_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () -> VRef<Holder> {
+exports auto SINGLETON_HOLDER_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
 	using R1X = typename SINGLETON_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
 }

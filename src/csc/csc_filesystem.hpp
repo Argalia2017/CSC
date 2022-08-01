@@ -26,8 +26,7 @@ trait FILE_HELP<DEPEND ,ALWAYS> {
 	using RETRY_TIMES = RANK2 ;
 
 	struct Holder implement Interface {
-		virtual void initialize (CREF<String<STR>> file_) = 0 ;
-		virtual Auto native () const leftvalue = 0 ;
+		virtual void initialize (CREF<String<STR>> file) = 0 ;
 		virtual VAL64 length () const = 0 ;
 		virtual VarBuffer<BYTE> load () const = 0 ;
 		virtual void load (VREF<RegBuffer<BYTE>> item) const = 0 ;
@@ -52,13 +51,9 @@ trait FILE_HELP<DEPEND ,ALWAYS> {
 	public:
 		implicit File () = default ;
 
-		explicit File (CREF<String<STR>> file_) {
+		explicit File (CREF<String<STR>> file) {
 			mThis = FUNCTION_extern::invoke () ;
-			mThis->initialize (file_) ;
-		}
-
-		Auto native () const leftvalue {
-			return mThis->native () ;
+			mThis->initialize (file) ;
 		}
 
 		VarBuffer<BYTE> load () const {
@@ -140,8 +135,7 @@ trait DIRECTORY_HELP<DEPEND ,ALWAYS> {
 	} ;
 
 	struct Holder implement Interface {
-		virtual void initialize (CREF<String<STR>> dire_) = 0 ;
-		virtual Auto native () const leftvalue = 0 ;
+		virtual void initialize (CREF<String<STR>> dire) = 0 ;
 		virtual String<STR> path () const = 0 ;
 		virtual String<STR> name () const = 0 ;
 		virtual LENGTH depth () const = 0 ;
@@ -166,13 +160,9 @@ trait DIRECTORY_HELP<DEPEND ,ALWAYS> {
 	public:
 		implicit Directory () = default ;
 
-		explicit Directory (CREF<String<STR>> dire_) {
+		explicit Directory (CREF<String<STR>> dire) {
 			mThis = FUNCTION_extern::invoke () ;
-			mThis->initialize (dire_) ;
-		}
-
-		Auto native () const leftvalue {
-			return mThis->native () ;
+			mThis->initialize (dire) ;
 		}
 
 		String<STR> path () const {
@@ -232,7 +222,7 @@ trait STREAMFILE_IMPLHOLDER_HELP ;
 template <class DEPEND>
 trait STREAMFILE_HELP<DEPEND ,ALWAYS> {
 	struct Holder implement Interface {
-		virtual void initialize (CREF<String<STR>> file_) = 0 ;
+		virtual void initialize (CREF<String<STR>> file) = 0 ;
 		virtual void open () = 0 ;
 		virtual void create () = 0 ;
 		virtual void append () = 0 ;
@@ -260,9 +250,9 @@ trait STREAMFILE_HELP<DEPEND ,ALWAYS> {
 	public:
 		implicit StreamFile () = default ;
 
-		explicit StreamFile (CREF<String<STR>> file_) {
+		explicit StreamFile (CREF<String<STR>> file) {
 			mThis = FUNCTION_extern::invoke () ;
-			mThis->initialize (file_) ;
+			mThis->initialize (file) ;
 		}
 
 		BOOL link (CREF<BOOL> readable ,CREF<BOOL> writable) {
@@ -369,7 +359,7 @@ trait BUFFERFILE_IMPLHOLDER_HELP ;
 template <class DEPEND>
 trait BUFFERFILE_HOLDER_HELP<DEPEND ,ALWAYS> {
 	struct Holder implement Interface {
-		virtual void initialize (CREF<String<STR>> file_ ,CREF<Clazz> clazz) = 0 ;
+		virtual void initialize (CREF<String<STR>> file ,CREF<Clazz> clazz) = 0 ;
 		virtual void set_cache_size (CREF<LENGTH> size_) = 0 ;
 		virtual void open () = 0 ;
 		virtual void create () = 0 ;
@@ -377,7 +367,7 @@ trait BUFFERFILE_HOLDER_HELP<DEPEND ,ALWAYS> {
 		virtual void close () = 0 ;
 		virtual BOOL link (CREF<BOOL> readable ,CREF<BOOL> writable) = 0 ;
 		virtual VAL64 length () const = 0 ;
-		virtual VAL64 insert (CREF<VAL64> size_) = 0 ;
+		virtual void resize (CREF<VAL64> size_) = 0 ;
 		virtual void get (CREF<VAL64> index ,VREF<RegBuffer<BYTE>> item) = 0 ;
 		virtual void set (CREF<VAL64> index ,CREF<RegBuffer<BYTE>> item) = 0 ;
 		virtual void flush () = 0 ;
@@ -393,8 +383,6 @@ trait BUFFERFILE_HELP<ITEM ,ALWAYS> {
 	using Holder = typename BUFFERFILE_HOLDER_HELP<DEPEND ,ALWAYS>::Holder ;
 	using FUNCTION_extern = typename BUFFERFILE_HOLDER_HELP<DEPEND ,ALWAYS>::FUNCTION_extern ;
 
-	using SIZE = SIZE_OF<ITEM> ;
-
 	class BufferFile {
 	protected:
 		VRef<Holder> mThis ;
@@ -402,9 +390,10 @@ trait BUFFERFILE_HELP<ITEM ,ALWAYS> {
 	public:
 		implicit BufferFile () = default ;
 
-		explicit BufferFile (CREF<String<STR>> file_) {
+		explicit BufferFile (CREF<String<STR>> file) {
 			mThis = FUNCTION_extern::invoke () ;
-			mThis->initialize (file_ ,Clazz (TYPEAS<ITEM>::expr)) ;
+			const auto r1x = Clazz (TYPEAS<ITEM>::expr) ;
+			mThis->initialize (file ,r1x) ;
 		}
 
 		void set_cache_size (CREF<LENGTH> size_) {
@@ -419,21 +408,21 @@ trait BUFFERFILE_HELP<ITEM ,ALWAYS> {
 			return mThis->length () ;
 		}
 
-		VAL64 insert (CREF<VAL64> size_) {
-			return mThis->insert (size_) ;
+		void resize (CREF<VAL64> size_) {
+			return mThis->resize (size_) ;
 		}
 
 		ITEM get (CREF<VAL64> index) {
 			ITEM ret ;
 			auto &&tmp = unsafe_cast[TYPEAS<TEMP<void>>::expr] (unsafe_deptr (ret)) ;
-			mThis->get (index ,RegBuffer<BYTE>::from (tmp ,0 ,SIZE::expr)) ;
+			mThis->get (index ,RegBuffer<BYTE>::from (tmp ,0 ,SIZE_OF<ITEM>::expr)) ;
 			unsafe_barrier () ;
 			return move (ret) ;
 		}
 
 		void set (CREF<VAL64> index ,CREF<ITEM> item) {
 			auto &&tmp = unsafe_cast[TYPEAS<TEMP<void>>::expr] (unsafe_deptr (item)) ;
-			mThis->set (index ,RegBuffer<BYTE>::from (tmp ,0 ,SIZE::expr)) ;
+			mThis->set (index ,RegBuffer<BYTE>::from (tmp ,0 ,SIZE_OF<ITEM>::expr)) ;
 			unsafe_barrier () ;
 		}
 

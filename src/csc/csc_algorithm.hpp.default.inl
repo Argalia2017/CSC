@@ -7,7 +7,7 @@
 namespace CSC {
 template <class DEPEND>
 trait SORTPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
-	using COMPARE = typename SORTPROC_HELP<DEPEND ,ALWAYS>::COMPARE ;
+	using Binder = typename SORTPROC_HELP<DEPEND ,ALWAYS>::Binder ;
 	using Holder = typename SORTPROC_HELP<DEPEND ,ALWAYS>::Holder ;
 
 	class ImplHolder implement Holder {
@@ -18,7 +18,7 @@ trait SORTPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			noop () ;
 		}
 
-		void insert_sort (CREF<COMPARE> compare ,VREF<Array<INDEX>> range_ ,CREF<INDEX> lb ,CREF<INDEX> rb) const override {
+		void insert_sort (CREF<Binder> op ,VREF<Array<INDEX>> range_ ,CREF<INDEX> lb ,CREF<INDEX> rb) const {
 			for (auto &&i : iter (lb ,rb)) {
 				INDEX ix = i + 1 ;
 				INDEX iy = i ;
@@ -26,7 +26,7 @@ trait SORTPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				while (TRUE) {
 					if (iy < lb)
 						break ;
-					const auto r2x = compare (r1x ,range_[iy]) ;
+					const auto r2x = op.friend_compare (r1x ,range_[iy]) ;
 					if (r2x >= ZERO)
 						break ;
 					range_[ix] = range_[iy] ;
@@ -37,7 +37,7 @@ trait SORTPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			}
 		}
 
-		void quick_sort (CREF<COMPARE> compare ,VREF<Array<INDEX>> range_ ,CREF<INDEX> lb ,CREF<INDEX> rb ,CREF<LENGTH> ideal) const override {
+		void quick_sort (CREF<Binder> op ,VREF<Array<INDEX>> range_ ,CREF<INDEX> lb ,CREF<INDEX> rb ,CREF<LENGTH> ideal) const {
 			auto rax = ideal ;
 			INDEX ix = lb ;
 			INDEX iy = rb ;
@@ -48,17 +48,17 @@ trait SORTPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 					break ;
 				rax = rax / 2 + rax / 4 ;
 				INDEX jx = NONE ;
-				quick_sort_partition (compare ,range_ ,ix ,iy ,jx) ;
+				quick_sort_partition (op ,range_ ,ix ,iy ,jx) ;
 				INDEX iz = jx - 1 ;
-				quick_sort (compare ,range_ ,ix ,iz ,rax) ;
+				quick_sort (op ,range_ ,ix ,iz ,rax) ;
 				ix = jx + 1 ;
 			}
 			if (ix >= iy)
 				return ;
-			insert_sort (compare ,range_ ,ix ,iy) ;
+			insert_sort (op ,range_ ,ix ,iy) ;
 		}
 
-		void quick_sort_partition (CREF<COMPARE> compare ,VREF<Array<INDEX>> range_ ,CREF<INDEX> lb ,CREF<INDEX> rb ,VREF<INDEX> mid_one) const {
+		void quick_sort_partition (CREF<Binder> op ,VREF<Array<INDEX>> range_ ,CREF<INDEX> lb ,CREF<INDEX> rb ,VREF<INDEX> mid_one) const {
 			INDEX ix = lb ;
 			INDEX iy = rb ;
 			const auto r1x = range_[ix] ;
@@ -66,7 +66,7 @@ trait SORTPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				while (TRUE) {
 					if (ix >= iy)
 						break ;
-					const auto r2x = compare (range_[iy] ,r1x) ;
+					const auto r2x = op.friend_compare (range_[iy] ,r1x) ;
 					if (r2x <= ZERO)
 						break ;
 					iy-- ;
@@ -91,11 +91,22 @@ trait SORTPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			range_[ix] = r1x ;
 			mid_one = ix ;
 		}
+
+		void sort (CREF<Binder> op ,VREF<Array<INDEX>> range_ ,CREF<INDEX> begin_ ,CREF<INDEX> end_) const override {
+			const auto r1x = end_ - begin_ ;
+			if (r1x <= 1)
+				return ;
+			INDEX ix = begin_ ;
+			INDEX iy = end_ - 1 ;
+			assert (vbetween (ix ,0 ,range_.size ())) ;
+			assert (vbetween (iy ,0 ,range_.size ())) ;
+			quick_sort (op ,range_ ,ix ,iy ,r1x) ;
+		}
 	} ;
 } ;
 
 template <>
-exports auto SORTPROC_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () -> VRef<Holder> {
+exports auto SORTPROC_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
 	using R1X = typename SORTPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
 }
@@ -233,7 +244,7 @@ trait DISJOINTTABLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 } ;
 
 template <>
-exports auto DISJOINTTABLE_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () -> VRef<Holder> {
+exports auto DISJOINTTABLE_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
 	using R1X = typename DISJOINTTABLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
 }
@@ -378,7 +389,7 @@ trait BINARYTABLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 } ;
 
 template <>
-exports auto BINARYTABLE_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () -> VRef<Holder> {
+exports auto BINARYTABLE_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
 	using R1X = typename BINARYTABLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
 }
@@ -499,7 +510,7 @@ trait SEGMENTTABLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 } ;
 
 template <>
-exports auto SEGMENTTABLE_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () -> VRef<Holder> {
+exports auto SEGMENTTABLE_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
 	using R1X = typename SEGMENTTABLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
 }
