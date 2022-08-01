@@ -121,13 +121,13 @@ trait ROWPROXY_HELP<UNIT1 ,UNIT2 ,UNIT3 ,REQUIRE<IS_VARIABLE<UNIT1>>> {
 	public:
 		implicit RowProxy () = delete ;
 
-		explicit RowProxy (RREF<VRef<UNIT2>> image ,CREF<INDEX> y) {
+		explicit RowProxy (RREF<VRef<UNIT2>> image ,CREF<INDEX> y_) {
 			mImage = move (image) ;
-			mY = y ;
+			mY = y_ ;
 		}
 
-		inline VREF<UNIT3> operator[] (CREF<INDEX> x) rightvalue {
-			return mImage->at (x ,mY) ;
+		inline VREF<UNIT3> operator[] (CREF<INDEX> x_) rightvalue {
+			return mImage->at (x_ ,mY) ;
 		}
 	} ;
 } ;
@@ -142,13 +142,13 @@ trait ROWPROXY_HELP<UNIT1 ,UNIT2 ,UNIT3 ,REQUIRE<IS_CONSTANT<UNIT1>>> {
 	public:
 		implicit RowProxy () = delete ;
 
-		explicit RowProxy (RREF<CRef<UNIT2>> image ,CREF<INDEX> y) {
+		explicit RowProxy (RREF<CRef<UNIT2>> image ,CREF<INDEX> y_) {
 			mImage = move (image) ;
-			mY = y ;
+			mY = y_ ;
 		}
 
-		inline CREF<UNIT3> operator[] (CREF<INDEX> x) rightvalue {
-			return mImage->at (x ,mY) ;
+		inline CREF<UNIT3> operator[] (CREF<INDEX> x_) rightvalue {
+			return mImage->at (x_ ,mY) ;
 		}
 	} ;
 } ;
@@ -262,14 +262,14 @@ trait IMAGE_HELP<ITEM ,SIZE ,ALWAYS> {
 			return at (xy) ;
 		}
 
-		VREF<ITEM> at (CREF<INDEX> x ,CREF<INDEX> y) leftvalue {
-			assert (vbetween (x ,0 ,mCX)) ;
-			assert (vbetween (y ,0 ,mCY)) ;
-			return mImage[y * mCW + x + mCK] ;
+		VREF<ITEM> at (CREF<INDEX> x_ ,CREF<INDEX> y_) leftvalue {
+			assert (vbetween (x_ ,0 ,mCX)) ;
+			assert (vbetween (y_ ,0 ,mCY)) ;
+			return mImage[y_ * mCW + x_ + mCK] ;
 		}
 
-		inline RowProxy<VREF<Image> ,ITEM> operator[] (CREF<INDEX> y) leftvalue {
-			return RowProxy<VREF<Image> ,ITEM> (VRef<Image>::reference (thiz) ,y) ;
+		inline RowProxy<VREF<Image> ,ITEM> operator[] (CREF<INDEX> y_) leftvalue {
+			return RowProxy<VREF<Image> ,ITEM> (VRef<Image>::reference (thiz) ,y_) ;
 		}
 
 		CREF<ITEM> at (CREF<ARRAY2<INDEX>> xy) const leftvalue {
@@ -280,14 +280,14 @@ trait IMAGE_HELP<ITEM ,SIZE ,ALWAYS> {
 			return at (xy) ;
 		}
 
-		CREF<ITEM> at (CREF<INDEX> x ,CREF<INDEX> y) const leftvalue {
-			assert (vbetween (x ,0 ,mCX)) ;
-			assert (vbetween (y ,0 ,mCY)) ;
-			return mImage[y * mCW + x + mCK] ;
+		CREF<ITEM> at (CREF<INDEX> x_ ,CREF<INDEX> y_) const leftvalue {
+			assert (vbetween (x_ ,0 ,mCX)) ;
+			assert (vbetween (y_ ,0 ,mCY)) ;
+			return mImage[y_ * mCW + x_ + mCK] ;
 		}
 
-		inline RowProxy<CREF<Image> ,ITEM> operator[] (CREF<INDEX> y) const leftvalue {
-			return RowProxy<CREF<Image> ,ITEM> (CRef<Image>::reference (thiz) ,y) ;
+		inline RowProxy<CREF<Image> ,ITEM> operator[] (CREF<INDEX> y_) const leftvalue {
+			return RowProxy<CREF<Image> ,ITEM> (CRef<Image>::reference (thiz) ,y_) ;
 		}
 
 		BOOL equal (CREF<Image> that) const {
@@ -579,4 +579,12 @@ trait IMAGE_HELP<ITEM ,SIZE ,ALWAYS> {
 
 template <class ITEM ,class SIZE = VARIABLE>
 using Image = typename IMAGE_HELP<ITEM ,SIZE ,ALWAYS>::Image ;
+
+template <class...>
+trait SPARSE_HELP ;
+
+template <class ITEM ,class SIZE>
+trait SPARSE_HELP<ITEM ,SIZE ,ALWAYS> {
+	class Sparse ;
+} ;
 } ;

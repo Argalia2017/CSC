@@ -41,7 +41,7 @@ trait CONSOLE_HELP<DEPEND ,ALWAYS> {
 		virtual void info (CREF<Binder> msg) const = 0 ;
 		virtual void debug (CREF<Binder> msg) const = 0 ;
 		virtual void verbose (CREF<Binder> msg) const = 0 ;
-		virtual void link (CREF<String<STR>> dire_) const = 0 ;
+		virtual void link (CREF<String<STR>> dire) const = 0 ;
 		virtual void open () const = 0 ;
 		virtual void close () const = 0 ;
 		virtual void pause () const = 0 ;
@@ -63,13 +63,14 @@ trait CONSOLE_HELP<DEPEND ,ALWAYS> {
 
 	class Console {
 	protected:
-		RecursiveMutex mMutex ;
+		Mutex mMutex ;
 		VRef<Holder> mThis ;
 
 	public:
 		imports CREF<Console> instance () {
 			return memorize ([&] () {
 				Console ret ;
+				ret.mMutex = RecursiveMutex () ;
 				ret.mThis = FUNCTION_extern::invoke () ;
 				ret.mThis->initialize () ;
 				return move (ret) ;
@@ -88,77 +89,77 @@ trait CONSOLE_HELP<DEPEND ,ALWAYS> {
 
 		template <class...ARG1>
 		void print (CREF<ARG1>...msg) const {
-			using R1X = Tuple<CRef<ARG1>...> ;
-			using R2X = typename CONSOLE_MESSAGE_HELP<R1X ,ALWAYS>::Message ;
+			using R1X = typename CONSOLE_MESSAGE_HELP<TYPEAS<ARG1...> ,ALWAYS>::Message ;
 			Scope<Mutex> anonymous (mMutex) ;
-			const auto r1x = R1X (CRef<ARG1>::reference (msg)...) ;
-			const auto r2x = R2X (CRef<R1X>::reference (r1x)) ;
-			return mThis->print (r2x) ;
+			const auto r1x = bind (msg...) ;
+			using R2X = typeof (r1x) ;
+			auto rax = R1X (CRef<R2X>::reference (r1x)) ;
+			return mThis->print (rax) ;
 		}
 
 		template <class...ARG1>
 		void fatal (CREF<ARG1>...msg) const {
-			using R1X = Tuple<CRef<ARG1>...> ;
-			using R2X = typename CONSOLE_MESSAGE_HELP<R1X ,ALWAYS>::Message ;
+			using R1X = typename CONSOLE_MESSAGE_HELP<TYPEAS<ARG1...> ,ALWAYS>::Message ;
 			Scope<Mutex> anonymous (mMutex) ;
-			const auto r1x = R1X (CRef<ARG1>::reference (msg)...) ;
-			const auto r2x = R2X (CRef<R1X>::reference (r1x)) ;
-			return mThis->fatal (r2x) ;
+			const auto r1x = bind (msg...) ;
+			using R2X = typeof (r1x) ;
+			auto rax = R1X (CRef<R2X>::reference (r1x)) ;
+			return mThis->fatal (rax) ;
 		}
 
 		template <class...ARG1>
 		void error (CREF<ARG1>...msg) const {
-			using R1X = Tuple<CRef<ARG1>...> ;
-			using R2X = typename CONSOLE_MESSAGE_HELP<R1X ,ALWAYS>::Message ;
+			using R1X = typename CONSOLE_MESSAGE_HELP<TYPEAS<ARG1...> ,ALWAYS>::Message ;
 			Scope<Mutex> anonymous (mMutex) ;
-			const auto r1x = R1X (CRef<ARG1>::reference (msg)...) ;
-			const auto r2x = R2X (CRef<R1X>::reference (r1x)) ;
-			return mThis->error (r2x) ;
+			const auto r1x = bind (msg...) ;
+			using R2X = typeof (r1x) ;
+			auto rax = R1X (CRef<R2X>::reference (r1x)) ;
+			return mThis->error (rax) ;
 		}
 
 		template <class...ARG1>
 		void warn (CREF<ARG1>...msg) const {
-			using R1X = Tuple<CRef<ARG1>...> ;
-			using R2X = typename CONSOLE_MESSAGE_HELP<R1X ,ALWAYS>::Message ;
+			using R1X = typename CONSOLE_MESSAGE_HELP<TYPEAS<ARG1...> ,ALWAYS>::Message ;
 			Scope<Mutex> anonymous (mMutex) ;
-			const auto r1x = R1X (CRef<ARG1>::reference (msg)...) ;
-			const auto r2x = R2X (CRef<R1X>::reference (r1x)) ;
-			return mThis->warn (r2x) ;
+			const auto r1x = bind (msg...) ;
+			using R2X = typeof (r1x) ;
+			auto rax = R1X (CRef<R2X>::reference (r1x)) ;
+			return mThis->warn (rax) ;
 		}
 
 		template <class...ARG1>
 		void info (CREF<ARG1>...msg) const {
-			using R1X = Tuple<CRef<ARG1>...> ;
-			using R2X = typename CONSOLE_MESSAGE_HELP<R1X ,ALWAYS>::Message ;
+			using R1X = typename CONSOLE_MESSAGE_HELP<TYPEAS<ARG1...> ,ALWAYS>::Message ;
 			Scope<Mutex> anonymous (mMutex) ;
-			const auto r1x = R1X (CRef<ARG1>::reference (msg)...) ;
-			const auto r2x = R2X (CRef<R1X>::reference (r1x)) ;
-			return mThis->info (r2x) ;
+			const auto r1x = bind (msg...) ;
+			using R2X = typeof (r1x) ;
+			auto rax = R1X (CRef<R2X>::reference (r1x)) ;
+			return mThis->info (rax) ;
 		}
 
 		template <class...ARG1>
 		void debug (CREF<ARG1>...msg) const {
-			using R1X = Tuple<CRef<ARG1>...> ;
-			using R2X = typename CONSOLE_MESSAGE_HELP<R1X ,ALWAYS>::Message ;
+			using R1X = typename CONSOLE_MESSAGE_HELP<TYPEAS<ARG1...> ,ALWAYS>::Message ;
 			Scope<Mutex> anonymous (mMutex) ;
-			const auto r1x = R1X (CRef<ARG1>::reference (msg)...) ;
-			const auto r2x = R2X (CRef<R1X>::reference (r1x)) ;
-			return mThis->debug (r2x) ;
+			const auto r1x = bind (msg...) ;
+			using R2X = typeof (r1x) ;
+			auto rax = R1X (CRef<R2X>::reference (r1x)) ;
+			return mThis->debug (rax) ;
 		}
 
 		template <class...ARG1>
 		void verbose (CREF<ARG1>...msg) const {
-			using R1X = Tuple<CRef<ARG1>...> ;
-			using R2X = typename CONSOLE_MESSAGE_HELP<R1X ,ALWAYS>::Message ;
+			using R1X = typename CONSOLE_MESSAGE_HELP<TYPEAS<ARG1...> ,ALWAYS>::Message ;
 			Scope<Mutex> anonymous (mMutex) ;
-			const auto r1x = R1X (CRef<ARG1>::reference (msg)...) ;
-			const auto r2x = R2X (CRef<R1X>::reference (r1x)) ;
-			return mThis->verbose (r2x) ;
+			const auto r1x = bind (msg...) ;
+			using R2X = typeof (r1x) ;
+			auto rax = R1X (CRef<R2X>::reference (r1x)) ;
+			return mThis->verbose (rax) ;
 		}
 
-		void link (CREF<String<STR>> dire_) const {
+		void link (CREF<String<STR>> dire) const {
 			Scope<Mutex> anonymous (mMutex) ;
-			return mThis->link (dire_) ;
+			return mThis->link (dire) ;
 		}
 
 		void open () const {
@@ -183,34 +184,35 @@ trait CONSOLE_HELP<DEPEND ,ALWAYS> {
 	} ;
 } ;
 
-template <class UNIT1>
-trait CONSOLE_MESSAGE_HELP<UNIT1 ,ALWAYS> {
+template <class...UNIT1>
+trait CONSOLE_MESSAGE_HELP<TYPEAS<UNIT1...> ,ALWAYS> {
 	using Binder = typename TEXTWRITER_HELP<STR ,ALWAYS>::Binder ;
 
 	class Message implement Binder {
 	protected:
-		CRef<UNIT1> mMessage ;
+		CRef<BindParams<UNIT1...>> mMessage ;
 
 	public:
 		implicit Message () = delete ;
 
-		explicit Message (RREF<CRef<UNIT1>> message) {
+		explicit Message (RREF<CRef<BindParams<UNIT1...>>> message) {
 			mMessage = move (message) ;
 		}
 
 		void friend_write (VREF<TextWriter<STR>> writer) const override {
-			template_write (PHX ,writer ,mMessage.self) ;
+			mMessage.self ([&] (CREF<UNIT1>...obj) {
+				write_msg (writer ,obj...) ;
+			}) ;
 		}
 
-		template <class ARG1 ,class = REQUIRE<IS_SAME<ARG1 ,Tuple<>>>>
-		void template_write (CREF<typeof (PH2)> ,VREF<TextWriter<STR>> writer ,CREF<ARG1> message) const {
+		template <class ARG1 ,class...ARG2>
+		void write_msg (VREF<TextWriter<STR>> writer ,CREF<ARG1> params1 ,CREF<ARG2>...params2) const {
+			writer << params1 ;
+			write_msg (writer ,params2...) ;
+		}
+
+		void write_msg (VREF<TextWriter<STR>> writer) const {
 			noop () ;
-		}
-
-		template <class ARG1>
-		void template_write (CREF<typeof (PH1)> ,VREF<TextWriter<STR>> writer ,CREF<ARG1> message) const {
-			writer << message.one ().self ;
-			template_write (PHX ,writer ,message.rest ()) ;
 		}
 	} ;
 } ;
@@ -239,13 +241,14 @@ trait REPORTER_HELP<DEPEND ,ALWAYS> {
 
 	class Reporter {
 	protected:
-		RecursiveMutex mMutex ;
+		Mutex mMutex ;
 		VRef<Holder> mThis ;
 
 	public:
 		imports CREF<Reporter> instance () {
 			return memorize ([&] () {
 				Reporter ret ;
+				ret.mMutex = RecursiveMutex () ;
 				ret.mThis = FUNCTION_extern::invoke () ;
 				ret.mThis->initialize () ;
 				return move (ret) ;

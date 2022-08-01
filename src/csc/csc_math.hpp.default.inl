@@ -21,8 +21,8 @@ trait MATHPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			noop () ;
 		}
 
-		BOOL is_infinite (CREF<SINGLE> a) const override {
-			const auto r1x = bitwise (a) ;
+		BOOL is_infinite (CREF<SINGLE> obj) const override {
+			const auto r1x = bitwise (obj) ;
 			if ifnot (BitProc::all_bit (r1x ,CHAR (0X7F800000)))
 				return FALSE ;
 			//@warn: treat as infinity
@@ -31,8 +31,8 @@ trait MATHPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			return TRUE ;
 		}
 
-		BOOL is_infinite (CREF<DOUBLE> a) const override {
-			const auto r1x = bitwise (a) ;
+		BOOL is_infinite (CREF<DOUBLE> obj) const override {
+			const auto r1x = bitwise (obj) ;
 			if ifnot (BitProc::all_bit (r1x ,DATA (0X7FF0000000000000)))
 				return FALSE ;
 			//@warn: treat as infinity
@@ -41,120 +41,360 @@ trait MATHPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			return TRUE ;
 		}
 
-		SINGLE inverse (CREF<SINGLE> a) const override {
-			if (MathProc::abs (a) < SINGLE_EPS)
+		VAL32 sign (CREF<VAL32> obj) const override {
+			if (obj >= 0)
+				return VAL32 (1) ;
+			return VAL32 (-1) ;
+		}
+
+		VAL64 sign (CREF<VAL64> obj) const override {
+			if (obj >= 0)
+				return VAL64 (1) ;
+			return VAL64 (-1) ;
+		}
+
+		SINGLE sign (CREF<SINGLE> obj) const override {
+			if (obj >= 0)
+				return SINGLE (1) ;
+			return SINGLE (-1) ;
+		}
+
+		DOUBLE sign (CREF<DOUBLE> obj) const override {
+			if (obj >= 0)
+				return DOUBLE (1) ;
+			return DOUBLE (-1) ;
+		}
+
+		VAL32 step (CREF<VAL32> obj) const override {
+			if (obj >= 0)
+				return VAL32 (1) ;
+			return VAL32 (0) ;
+		}
+
+		VAL64 step (CREF<VAL64> obj) const override {
+			if (obj >= 0)
+				return VAL64 (1) ;
+			return VAL64 (0) ;
+		}
+
+		SINGLE step (CREF<SINGLE> obj) const override {
+			if (obj >= 0)
+				return SINGLE (1) ;
+			return SINGLE (0) ;
+		}
+
+		DOUBLE step (CREF<DOUBLE> obj) const override {
+			if (obj >= 0)
+				return DOUBLE (1) ;
+			return DOUBLE (0) ;
+		}
+
+		VAL32 abs (CREF<VAL32> obj) const override {
+			if (obj >= 0)
+				return obj ;
+			return -obj ;
+		}
+
+		VAL64 abs (CREF<VAL64> obj) const override {
+			if (obj >= 0)
+				return obj ;
+			return -obj ;
+		}
+
+		SINGLE abs (CREF<SINGLE> obj) const override {
+			if (obj >= 0)
+				return obj ;
+			return -obj ;
+		}
+
+		DOUBLE abs (CREF<DOUBLE> obj) const override {
+			if (obj >= 0)
+				return obj ;
+			return -obj ;
+		}
+
+		SINGLE inverse (CREF<SINGLE> obj) const override {
+			if (MathProc::abs (obj) < SINGLE_EPS)
 				return SINGLE (0) ;
-			return SINGLE (1) / a ;
+			return SINGLE (1) / obj ;
 		}
 
-		DOUBLE inverse (CREF<DOUBLE> a) const override {
-			if (MathProc::abs (a) < DOUBLE_EPS)
+		DOUBLE inverse (CREF<DOUBLE> obj) const override {
+			if (MathProc::abs (obj) < DOUBLE_EPS)
 				return DOUBLE (0) ;
-			return DOUBLE (1) / a ;
+			return DOUBLE (1) / obj ;
 		}
 
-		SINGLE floor (CREF<SINGLE> a ,CREF<SINGLE> b) const override {
-			assert (b > 0) ;
-			const auto r1x = VAL64 (a * MathProc::inverse (b)) ;
-			const auto r2x = b * SINGLE (r1x) ;
-			if (a >= 0)
+		VAL32 clamp (CREF<VAL32> curr ,CREF<VAL32> lb ,CREF<VAL32> rb) const override {
+			if (curr <= lb)
+				return lb ;
+			if (curr >= rb)
+				return rb ;
+			return curr ;
+		}
+
+		VAL64 clamp (CREF<VAL64> curr ,CREF<VAL64> lb ,CREF<VAL64> rb) const override {
+			if (curr <= lb)
+				return lb ;
+			if (curr >= rb)
+				return rb ;
+			return curr ;
+		}
+
+		SINGLE clamp (CREF<SINGLE> curr ,CREF<SINGLE> lb ,CREF<SINGLE> rb) const override {
+			if (curr <= lb)
+				return lb ;
+			if (curr >= rb)
+				return rb ;
+			return curr ;
+		}
+
+		DOUBLE clamp (CREF<DOUBLE> curr ,CREF<DOUBLE> lb ,CREF<DOUBLE> rb) const override {
+			if (curr <= lb)
+				return lb ;
+			if (curr >= rb)
+				return rb ;
+			return curr ;
+		}
+
+		SINGLE floor (CREF<SINGLE> curr ,CREF<SINGLE> base) const override {
+			assert (base > 0) ;
+			const auto r1x = VAL64 (curr * MathProc::inverse (base)) ;
+			const auto r2x = base * SINGLE (r1x) ;
+			if (curr >= 0)
 				return r2x ;
-			if (a >= r2x)
+			if (curr >= r2x)
 				return r2x ;
-			return b * SINGLE (r1x - 1) ;
+			return base * SINGLE (r1x - 1) ;
 		}
 
-		DOUBLE floor (CREF<DOUBLE> a ,CREF<DOUBLE> b) const override {
-			assert (b > 0) ;
-			const auto r1x = VAL64 (a * MathProc::inverse (b)) ;
-			const auto r2x = b * DOUBLE (r1x) ;
-			if (a >= 0)
+		DOUBLE floor (CREF<DOUBLE> curr ,CREF<DOUBLE> base) const override {
+			assert (base > 0) ;
+			const auto r1x = VAL64 (curr * MathProc::inverse (base)) ;
+			const auto r2x = base * DOUBLE (r1x) ;
+			if (curr >= 0)
 				return r2x ;
-			if (a >= r2x)
+			if (curr >= r2x)
 				return r2x ;
-			return b * DOUBLE (r1x - 1) ;
+			return base * DOUBLE (r1x - 1) ;
 		}
 
-		SINGLE ceil (CREF<SINGLE> a ,CREF<SINGLE> b) const override {
-			assert (b > 0) ;
-			const auto r1x = VAL64 (a * MathProc::inverse (b)) ;
-			const auto r2x = b * SINGLE (r1x) ;
-			if (a <= 0)
+		SINGLE ceil (CREF<SINGLE> curr ,CREF<SINGLE> base) const override {
+			assert (base > 0) ;
+			const auto r1x = VAL64 (curr * MathProc::inverse (base)) ;
+			const auto r2x = base * SINGLE (r1x) ;
+			if (curr <= 0)
 				return r2x ;
-			if (a <= r2x)
+			if (curr <= r2x)
 				return r2x ;
-			return b * SINGLE (r1x + 1) ;
+			return base * SINGLE (r1x + 1) ;
 		}
 
-		DOUBLE ceil (CREF<DOUBLE> a ,CREF<DOUBLE> b) const override {
-			assert (b > 0) ;
-			const auto r1x = VAL64 (a * MathProc::inverse (b)) ;
-			const auto r2x = b * DOUBLE (r1x) ;
-			if (a <= 0)
+		DOUBLE ceil (CREF<DOUBLE> curr ,CREF<DOUBLE> base) const override {
+			assert (base > 0) ;
+			const auto r1x = VAL64 (curr * MathProc::inverse (base)) ;
+			const auto r2x = base * DOUBLE (r1x) ;
+			if (curr <= 0)
 				return r2x ;
-			if (a <= r2x)
+			if (curr <= r2x)
 				return r2x ;
-			return b * DOUBLE (r1x + 1) ;
+			return base * DOUBLE (r1x + 1) ;
 		}
 
-		DOUBLE sqrt (CREF<DOUBLE> a) const override {
-			return std::sqrt (a) ;
+		SINGLE round (CREF<SINGLE> curr ,CREF<SINGLE> base) const override {
+			const auto r1x = curr + base * SINGLE (MATH_INV2) ;
+			return floor (r1x ,base) ;
 		}
 
-		DOUBLE cbrt (CREF<DOUBLE> a) const override {
-			return std::cbrt (a) ;
+		DOUBLE round (CREF<DOUBLE> curr ,CREF<DOUBLE> base) const override {
+			const auto r1x = curr + base * DOUBLE (MATH_INV2) ;
+			return floor (r1x ,base) ;
 		}
 
-		DOUBLE exp (CREF<DOUBLE> a) const override {
-			return std::exp (a) ;
+		SINGLE trunc (CREF<SINGLE> curr ,CREF<SINGLE> base) const override {
+			return floor (abs (curr) ,base) * sign (curr) ;
 		}
 
-		DOUBLE log (CREF<DOUBLE> a) const override {
-			return std::log (a) ;
+		DOUBLE trunc (CREF<DOUBLE> curr ,CREF<DOUBLE> base) const override {
+			return floor (abs (curr) ,base) * sign (curr) ;
 		}
 
-		DOUBLE pow (CREF<DOUBLE> a ,CREF<DOUBLE> b) const override {
-			return std::pow (a ,b) ;
+		VAL32 square (CREF<VAL32> obj) const override {
+			return obj * obj ;
 		}
 
-		DOUBLE ncdf (CREF<DOUBLE> a) const override {
-			const auto r1x = a * MathProc::inverse (DOUBLE (MATH_SQRT2)) ;
+		VAL64 square (CREF<VAL64> obj) const override {
+			return obj * obj ;
+		}
+
+		SINGLE square (CREF<SINGLE> obj) const override {
+			return obj * obj ;
+		}
+
+		DOUBLE square (CREF<DOUBLE> obj) const override {
+			return obj * obj ;
+		}
+
+		SINGLE sqrt (CREF<SINGLE> obj) const override {
+			return std::sqrt (obj) ;
+		}
+
+		DOUBLE sqrt (CREF<DOUBLE> obj) const override {
+			return std::sqrt (obj) ;
+		}
+
+		VAL32 cube (CREF<VAL32> obj) const override {
+			return obj * obj * obj ;
+		}
+
+		VAL64 cube (CREF<VAL64> obj) const override {
+			return obj * obj * obj ;
+		}
+
+		SINGLE cube (CREF<SINGLE> obj) const override {
+			return obj * obj * obj ;
+		}
+
+		DOUBLE cube (CREF<DOUBLE> obj) const override {
+			return obj * obj * obj ;
+		}
+
+		SINGLE cbrt (CREF<SINGLE> obj) const override {
+			return std::cbrt (obj) ;
+		}
+
+		DOUBLE cbrt (CREF<DOUBLE> obj) const override {
+			return std::cbrt (obj) ;
+		}
+
+		SINGLE exp (CREF<SINGLE> obj) const override {
+			return std::exp (obj) ;
+		}
+
+		DOUBLE exp (CREF<DOUBLE> obj) const override {
+			return std::exp (obj) ;
+		}
+
+		SINGLE log (CREF<SINGLE> obj) const override {
+			return std::log (obj) ;
+		}
+
+		DOUBLE log (CREF<DOUBLE> obj) const override {
+			return std::log (obj) ;
+		}
+
+		VAL32 vlog (CREF<VAL32> curr ,CREF<VAL32> base) const override {
+			VAL32 ret = 0 ;
+			auto rax = curr ;
+			while (TRUE) {
+				rax /= base ;
+				if (rax == 0)
+					break ;
+				ret++ ;
+			}
+			return move (ret) ;
+		}
+
+		VAL64 vlog (CREF<VAL64> curr ,CREF<VAL64> base) const override {
+			VAL64 ret = 0 ;
+			auto rax = curr ;
+			while (TRUE) {
+				rax /= base ;
+				if (rax == 0)
+					break ;
+				ret++ ;
+			}
+			return move (ret) ;
+		}
+
+		SINGLE pow (CREF<SINGLE> curr ,CREF<SINGLE> exp_) const override {
+			return std::pow (curr ,exp_) ;
+		}
+
+		DOUBLE pow (CREF<DOUBLE> curr ,CREF<DOUBLE> exp_) const override {
+			return std::pow (curr ,exp_) ;
+		}
+
+		SINGLE ncdf (CREF<SINGLE> obj) const override {
+			const auto r1x = obj * MathProc::inverse (SINGLE (MATH_SQRT2)) ;
+			return std::erf (r1x) * SINGLE (MATH_INV2) + SINGLE (MATH_INV2) ;
+		}
+
+		DOUBLE ncdf (CREF<DOUBLE> obj) const override {
+			const auto r1x = obj * MathProc::inverse (DOUBLE (MATH_SQRT2)) ;
 			return std::erf (r1x) * DOUBLE (MATH_INV2) + DOUBLE (MATH_INV2) ;
 		}
 
-		DOUBLE npdf (CREF<DOUBLE> a) const override {
-			const auto r1x = -MathProc::square (a) * DOUBLE (MATH_INV2) ;
+		SINGLE npdf (CREF<SINGLE> obj) const override {
+			const auto r1x = -MathProc::square (obj) * SINGLE (MATH_INV2) ;
+			return exp (r1x) * SINGLE (MATH_INVSQRT2PI) ;
+		}
+
+		DOUBLE npdf (CREF<DOUBLE> obj) const override {
+			const auto r1x = -MathProc::square (obj) * DOUBLE (MATH_INV2) ;
 			return exp (r1x) * DOUBLE (MATH_INVSQRT2PI) ;
 		}
 
-		DOUBLE sin (CREF<DOUBLE> a) const override {
-			return std::sin (a) ;
+		SINGLE sin (CREF<SINGLE> obj) const override {
+			return std::sin (obj) ;
 		}
 
-		DOUBLE cos (CREF<DOUBLE> a) const override {
-			return std::cos (a) ;
+		DOUBLE sin (CREF<DOUBLE> obj) const override {
+			return std::sin (obj) ;
 		}
 
-		DOUBLE tan (CREF<DOUBLE> a) const override {
-			return std::tan (a) ;
+		SINGLE cos (CREF<SINGLE> obj) const override {
+			return std::cos (obj) ;
 		}
 
-		DOUBLE arcsin (CREF<DOUBLE> a) const override {
-			return std::asin (a) ;
+		DOUBLE cos (CREF<DOUBLE> obj) const override {
+			return std::cos (obj) ;
 		}
 
-		DOUBLE arccos (CREF<DOUBLE> a) const override {
-			return std::acos (a) ;
+		SINGLE tan (CREF<SINGLE> obj) const override {
+			return std::tan (obj) ;
 		}
 
-		DOUBLE arctan (CREF<DOUBLE> a ,CREF<DOUBLE> b) const override {
-			return std::atan2 (b ,a) ;
+		DOUBLE tan (CREF<DOUBLE> obj) const override {
+			return std::tan (obj) ;
+		}
+
+		SINGLE arcsin (CREF<SINGLE> obj) const override {
+			return std::asin (obj) ;
+		}
+
+		DOUBLE arcsin (CREF<DOUBLE> obj) const override {
+			return std::asin (obj) ;
+		}
+
+		SINGLE arccos (CREF<SINGLE> obj) const override {
+			return std::acos (obj) ;
+		}
+
+		DOUBLE arccos (CREF<DOUBLE> obj) const override {
+			return std::acos (obj) ;
+		}
+
+		SINGLE arctan (CREF<SINGLE> x_ ,CREF<SINGLE> y_) const override {
+			return std::atan2 (y_ ,x_) ;
+		}
+
+		DOUBLE arctan (CREF<DOUBLE> x_ ,CREF<DOUBLE> y_) const override {
+			return std::atan2 (y_ ,x_) ;
+		}
+
+		SINGLE radian_angle (CREF<SINGLE> obj) const override {
+			return obj / SINGLE (180) * SINGLE (MATH_PI) ;
+		}
+
+		DOUBLE radian_angle (CREF<DOUBLE> obj) const override {
+			return obj / DOUBLE (180) * DOUBLE (MATH_PI) ;
 		}
 	} ;
 } ;
 
 template <>
-exports auto MATHPROC_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () -> VRef<Holder> {
+exports auto MATHPROC_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
 	using R1X = typename MATHPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
 }
@@ -713,10 +953,10 @@ trait FLOATPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			return bitwise[TYPEAS<DOUBLE>::expr] (r5x) ;
 		}
 
-		NOTATION decode (CREF<DOUBLE> float_) const override {
+		NOTATION decode (CREF<DOUBLE> obj) const override {
 			NOTATION ret ;
 			ret.mRadix = 2 ;
-			const auto r1x = bitwise (float_) ;
+			const auto r1x = bitwise (obj) ;
 			const auto r3x = r1x & DATA (0X7FF0000000000000) ;
 			const auto r4x = r1x & DATA (0X000FFFFFFFFFFFFF) ;
 			ret.mSign = BitProc::get_bit (r1x ,DATA (0X8000000000000000)) ;
@@ -747,17 +987,17 @@ trait FLOATPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			return move (ret) ;
 		}
 
-		NOTATION multiply_notation (CREF<NOTATION> a ,CREF<NOTATION> b) const {
+		NOTATION multiply_notation (CREF<NOTATION> left ,CREF<NOTATION> right) const {
 			NOTATION ret ;
 			ret.mRadix = 2 ;
 			ret.mSign = FALSE ;
 			const auto r1x = LENGTH (32) ;
 			const auto r2x = DATA (VAL64 (BitProc::nth_bit (r1x)) - 1) ;
 			const auto r3x = BitProc::nth_bit (r1x - 1) ;
-			const auto r4x = VAL64 (DATA (a.mMantissa) >> r1x) ;
-			const auto r5x = VAL64 (DATA (a.mMantissa) & r2x) ;
-			const auto r6x = VAL64 (DATA (b.mMantissa) >> r1x) ;
-			const auto r7x = VAL64 (DATA (b.mMantissa) & r2x) ;
+			const auto r4x = VAL64 (DATA (left.mMantissa) >> r1x) ;
+			const auto r5x = VAL64 (DATA (left.mMantissa) & r2x) ;
+			const auto r6x = VAL64 (DATA (right.mMantissa) >> r1x) ;
+			const auto r7x = VAL64 (DATA (right.mMantissa) & r2x) ;
 			const auto r8x = r4x * r6x ;
 			const auto r9x = VAL64 (DATA (r5x * r6x) >> r1x) ;
 			const auto r10x = VAL64 (DATA (r5x * r6x) & r2x) ;
@@ -767,7 +1007,7 @@ trait FLOATPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			const auto r14x = VAL64 (DATA (r13x + r10x + r12x + VAL64 (r3x)) >> r1x) ;
 			ret.mMantissa = r8x + r9x + r11x + r14x ;
 			ret.mPrecision = 0 ;
-			ret.mExponent = a.mExponent + b.mExponent + r1x * 2 ;
+			ret.mExponent = left.mExponent + right.mExponent + r1x * 2 ;
 			return move (ret) ;
 		}
 
@@ -814,8 +1054,98 @@ trait FLOATPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 } ;
 
 template <>
-exports auto FLOATPROC_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () -> VRef<Holder> {
+exports auto FLOATPROC_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
 	using R1X = typename FLOATPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
+	return VRef<R1X>::make () ;
+}
+
+template <class DEPEND>
+trait BITPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
+	using Holder = typename BITPROC_HELP<DEPEND ,ALWAYS>::Holder ;
+
+	class ImplHolder implement Holder {
+	public:
+		void initialize () override {
+			noop () ;
+		}
+
+		BYTE low_bit (CREF<WORD> obj) const override {
+			return BYTE (obj) ;
+		}
+
+		WORD low_bit (CREF<CHAR> obj) const override {
+			return WORD (obj) ;
+		}
+
+		CHAR low_bit (CREF<DATA> obj) const override {
+			return CHAR (obj) ;
+		}
+
+		BYTE high_bit (CREF<WORD> obj) const override {
+			return BYTE (obj >> 8) ;
+		}
+
+		WORD high_bit (CREF<CHAR> obj) const override {
+			return WORD (obj >> 16) ;
+		}
+
+		CHAR high_bit (CREF<DATA> obj) const override {
+			return CHAR (obj >> 32) ;
+		}
+
+		WORD up_bit (CREF<BYTE> high ,CREF<BYTE> low) const override {
+			return (WORD (high) << 8) | WORD (low) ;
+		}
+
+		CHAR up_bit (CREF<WORD> high ,CREF<WORD> low) const override {
+			return (CHAR (high) << 16) | CHAR (low) ;
+		}
+
+		DATA up_bit (CREF<CHAR> high ,CREF<CHAR> low) const override {
+			return (DATA (high) << 32) | DATA (low) ;
+		}
+
+		BOOL get_bit (CREF<BYTE> base ,CREF<BYTE> mask) const override {
+			return (base & mask) != BYTE (0X00) ;
+		}
+
+		BOOL get_bit (CREF<WORD> base ,CREF<WORD> mask) const override {
+			return (base & mask) != WORD (0X00) ;
+		}
+
+		BOOL get_bit (CREF<CHAR> base ,CREF<CHAR> mask) const override {
+			return (base & mask) != CHAR (0X00) ;
+		}
+
+		BOOL get_bit (CREF<DATA> base ,CREF<DATA> mask) const override {
+			return (base & mask) != DATA (0X00) ;
+		}
+
+		BOOL all_bit (CREF<BYTE> base ,CREF<BYTE> mask) const override {
+			return (base & mask) == mask ;
+		}
+
+		BOOL all_bit (CREF<WORD> base ,CREF<WORD> mask) const override {
+			return (base & mask) == mask ;
+		}
+
+		BOOL all_bit (CREF<CHAR> base ,CREF<CHAR> mask) const override {
+			return (base & mask) == mask ;
+		}
+
+		BOOL all_bit (CREF<DATA> base ,CREF<DATA> mask) const override {
+			return (base & mask) == mask ;
+		}
+
+		DATA nth_bit (CREF<LENGTH> nth) const override {
+			return DATA (0X01) << nth ;
+		}
+	} ;
+} ;
+
+template <>
+exports auto BITPROC_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
+	using R1X = typename BITPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
 }
 } ;

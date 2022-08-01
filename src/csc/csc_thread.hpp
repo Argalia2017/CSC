@@ -23,9 +23,7 @@ trait WORKTHREAD_IMPLHOLDER_HELP ;
 
 template <class DEPEND>
 trait WORKTHREAD_HELP<DEPEND ,ALWAYS> {
-	using Binder = typename THREAD_HELP<DEPEND ,ALWAYS>::Binder ;
-
-	struct Holder implement Binder {
+	struct Holder implement Interface {
 		virtual void initialize () = 0 ;
 		virtual void set_thread_size (CREF<LENGTH> size_) = 0 ;
 		virtual void set_queue_size (CREF<LENGTH> size_) = 0 ;
@@ -116,9 +114,7 @@ trait PROMISE_IMPLHOLDER_HELP ;
 
 template <class DEPEND>
 trait PROMISE_HOLDER_HELP<DEPEND ,ALWAYS> {
-	using Binder = typename THREAD_HELP<DEPEND ,ALWAYS>::Binder ;
-
-	struct Holder implement Binder {
+	struct Holder implement Interface {
 		virtual void initialize () = 0 ;
 		virtual void start () = 0 ;
 		virtual void start (RREF<Function<Auto>> proc) = 0 ;
@@ -128,7 +124,7 @@ trait PROMISE_HOLDER_HELP<DEPEND ,ALWAYS> {
 		virtual BOOL ready () = 0 ;
 		virtual Auto poll () = 0 ;
 		virtual Optional<Auto> poll (CREF<TimeDuration> interval ,CREF<Function<BOOL>> predicate) = 0 ;
-		virtual void then (RREF<Function<void ,TYPEAS<CREF<Generic>>>> proc) = 0 ;
+		virtual void then (RREF<Function<void ,TYPEAS<VREF<Auto>>>> proc) = 0 ;
 		virtual void stop () = 0 ;
 	} ;
 
@@ -139,7 +135,6 @@ trait PROMISE_HOLDER_HELP<DEPEND ,ALWAYS> {
 
 template <class ITEM>
 trait PROMISE_HELP<ITEM ,ALWAYS> {
-	using Binder = typename THREAD_HELP<DEPEND ,ALWAYS>::Binder ;
 	using Holder = typename PROMISE_HOLDER_HELP<DEPEND ,ALWAYS>::Holder ;
 	using FUNCTION_extern = typename PROMISE_HOLDER_HELP<DEPEND ,ALWAYS>::FUNCTION_extern ;
 
@@ -166,15 +161,17 @@ trait PROMISE_HELP<ITEM ,ALWAYS> {
 		}
 
 		void start (RREF<Function<ITEM>> proc) {
-			return mThis->start (proc.as_generic ()) ;
+			return mThis->start (proc.as_wrap ([] (CREF<Function<ITEM>> old) {
+				return Auto (old ()) ;
+			})) ;
 		}
 
 		void post (CREF<ITEM> item) {
-			return mThis->post (AutoRef<ITEM>::make (item)) ;
+			return mThis->post (move (item)) ;
 		}
 
 		void post (RREF<ITEM> item) {
-			return mThis->post (AutoRef<ITEM>::make (item)) ;
+			return mThis->post (move (item)) ;
 		}
 
 		void rethrow (CREF<Exception> e) {
@@ -232,7 +229,11 @@ trait FUTURE_HELP<ITEM ,ALWAYS> {
 		}
 
 		void then (RREF<Function<void ,TYPEAS<VREF<ITEM>>>> proc) {
-			return mThis->then (proc.as_generic ()) ;
+			return mThis->then (proc.as_wrap ([] (Function<void ,TYPEAS<VREF<ITEM>>> old ,VREF<Auto> item) {
+				auto rax = item.poll (TYPEAS<ITEM>::expr) ;
+				old (rax) ;
+				item = Auto (move (rax)) ;
+			})) ;
 		}
 	} ;
 

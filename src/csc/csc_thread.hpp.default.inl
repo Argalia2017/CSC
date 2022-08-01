@@ -8,9 +8,12 @@ namespace CSC {
 template <class DEPEND>
 trait WORKTHREAD_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	using Holder = typename WORKTHREAD_HELP<DEPEND ,ALWAYS>::Holder ;
+	using BinderT = typename THREAD_HELP<DEPEND ,ALWAYS>::Binder ;
+	using Binder = Together<Holder ,BinderT> ;
+
 	using THREAD_QUEUE_SIZE = ENUMAS<VAL ,ENUMID<131072>> ;
 
-	class ImplHolder implement Holder {
+	class ImplHolder implement Binder {
 	protected:
 		ConditionalMutex mThreadMutex ;
 		VRef<BOOL> mThreadFlag ;
@@ -93,7 +96,7 @@ trait WORKTHREAD_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			}
 		}
 
-		void execute (CREF<INDEX> slot) override {
+		void friend_execute (CREF<INDEX> slot) override {
 			while (TRUE) {
 				if ifswitch (TRUE) {
 					if ifnot (mThreadQueue[slot].empty ())
@@ -239,7 +242,8 @@ trait WORKTHREAD_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	} ;
 } ;
 
-exports auto WORKTHREAD_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () -> VRef<Holder> {
+template <>
+exports auto WORKTHREAD_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
 	using R1X = typename WORKTHREAD_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
 }
@@ -247,14 +251,16 @@ exports auto WORKTHREAD_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () -> VRef
 template <class DEPEND>
 trait PROMISE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	using Holder = typename PROMISE_HELP<DEPEND ,ALWAYS>::Holder ;
+	using BinderT = typename THREAD_HELP<DEPEND ,ALWAYS>::Binder ;
+	using Binder = Together<Holder ,BinderT> ;
 
-	class ImplHolder implement Holder {
+	class ImplHolder implement Binder {
 	protected:
 		ConditionalMutex mThreadMutex ;
 		VRef<BOOL> mThreadFlag ;
 		Thread mThread ;
 		Function<Auto> mThreadProc ;
-		Function<void ,TYPEAS<CREF<Generic>>> mCallbackProc ;
+		Function<void ,TYPEAS<VREF<Auto>>> mCallbackProc ;
 		VRef<Auto> mItem ;
 		VRef<Exception> mException ;
 		Scope<ImplHolder> mHandle ;
@@ -282,7 +288,7 @@ trait PROMISE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			mThread = Thread () ;
 			mThreadFlag = NULL ;
 			mThreadProc = Function<Auto> () ;
-			mCallbackProc = Function<void ,TYPEAS<CREF<Generic>>> () ;
+			mCallbackProc = Function<void ,TYPEAS<VREF<Auto>>> () ;
 			mItem = NULL ;
 			mException = NULL ;
 		}
@@ -293,7 +299,7 @@ trait PROMISE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			mThreadFlag = VRef<BOOL>::make (TRUE) ;
 			mThread = Thread () ;
 			mThreadProc = Function<Auto> () ;
-			mCallbackProc = Function<void ,TYPEAS<CREF<Generic>>> () ;
+			mCallbackProc = Function<void ,TYPEAS<VREF<Auto>>> () ;
 			mItem = NULL ;
 			mException = NULL ;
 		}
@@ -303,14 +309,14 @@ trait PROMISE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			assume (mThreadFlag == NULL) ;
 			mThreadFlag = VRef<BOOL>::make (TRUE) ;
 			mThreadProc = move (proc) ;
-			mCallbackProc = Function<void ,TYPEAS<CREF<Generic>>> () ;
+			mCallbackProc = Function<void ,TYPEAS<VREF<Auto>>> () ;
 			mItem = NULL ;
 			mException = NULL ;
 			mThread = Thread (VRef<ImplHolder>::reference (thiz) ,0) ;
 			mThread.start () ;
 		}
 
-		void execute (CREF<INDEX> slot) override {
+		void friend_execute (CREF<INDEX> slot) override {
 			auto rax = Optional<Auto> () ;
 			try {
 				rax = Optional<Auto>::make (mThreadProc ()) ;
@@ -355,7 +361,7 @@ trait PROMISE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 					discard ;
 				if ifnot (mCallbackProc.exist ())
 					discard ;
-				mCallbackProc (Generic (mItem.self)) ;
+				mCallbackProc (mItem.self) ;
 			}
 			rax.notify () ;
 		}
@@ -412,7 +418,7 @@ trait PROMISE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			return move (ret) ;
 		}
 
-		void then (RREF<Function<void ,TYPEAS<CREF<Generic>>>> proc) override {
+		void then (RREF<Function<void ,TYPEAS<VREF<Auto>>>> proc) override {
 			Scope<Mutex> anonymous (mThreadMutex) ;
 			assume (mThreadFlag != NULL) ;
 			mCallbackProc = move (proc) ;
@@ -421,7 +427,7 @@ trait PROMISE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 					discard ;
 				if (mItem == NULL)
 					discard ;
-				mCallbackProc (Generic (mItem.self)) ;
+				mCallbackProc (mItem.self) ;
 			}
 		}
 
@@ -432,7 +438,7 @@ trait PROMISE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 } ;
 
 template <>
-exports auto PROMISE_HOLDER_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () -> VRef<Holder> {
+exports auto PROMISE_HOLDER_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
 	using R1X = typename PROMISE_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
 }

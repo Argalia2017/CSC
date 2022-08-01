@@ -456,9 +456,7 @@ trait STRING_HELP<ITEM ,SIZE ,ALWAYS> {
 		void clear () {
 			if (mString.size () == 0)
 				return ;
-			INDEX ix = mString.size () - 1 ;
-			mString[0] = ITEM (0) ;
-			mString[ix] = ITEM (0) ;
+			fill (ITEM (0)) ;
 		}
 
 		void fill (CREF<ITEM> item) {
@@ -568,7 +566,7 @@ trait STRING_HELP<ITEM ,SIZE ,ALWAYS> {
 			const auto r1x = length () ;
 			const auto r2x = that.length () ;
 			const auto r3x = vmin (r1x ,r2x) + 1 ;
-			return BufferProc::buf_compr (mString ,that.mString ,0 ,r1x) ;
+			return BufferProc::buf_compr (mString ,that.mString ,0 ,r3x) ;
 		}
 
 		inline BOOL operator< (CREF<String> that) const {
@@ -717,28 +715,24 @@ trait DEQUE_HELP ;
 
 template <class ITEM ,class SIZE>
 trait DEQUE_HELP<ITEM ,SIZE ,ALWAYS> {
-	struct NODE {
-		ITEM mItem ;
-	} ;
-
 	class Deque {
 	protected:
-		Buffer<NODE ,SIZE> mDeque ;
+		Buffer<ITEM ,SIZE> mDeque ;
 		INDEX mRead ;
 		INDEX mWrite ;
 
 	public:
 		implicit Deque () {
-			mDeque = Buffer<NODE ,SIZE> (0) ;
+			mDeque = Buffer<ITEM ,SIZE> (0) ;
 			clear () ;
 		}
 
 		explicit Deque (CREF<LENGTH> size_) {
-			mDeque = Buffer<NODE ,SIZE> (size_) ;
+			mDeque = Buffer<ITEM ,SIZE> (size_) ;
 			clear () ;
 		}
 
-		explicit Deque (RREF<Buffer<NODE ,SIZE>> that) {
+		explicit Deque (RREF<Buffer<ITEM ,SIZE>> that) {
 			mDeque = move (that) ;
 			clear () ;
 		}
@@ -804,8 +798,9 @@ trait DEQUE_HELP<ITEM ,SIZE ,ALWAYS> {
 
 		VREF<ITEM> at (CREF<INDEX> index) leftvalue {
 			assert (vbetween (index ,0 ,mWrite - mRead)) ;
+			assert (mDeque.size () > 0) ;
 			INDEX ix = (index + mRead) % mDeque.size () ;
-			return mDeque[ix].mItem ;
+			return mDeque[ix] ;
 		}
 
 		inline VREF<ITEM> operator[] (CREF<INDEX> index) leftvalue {
@@ -814,8 +809,9 @@ trait DEQUE_HELP<ITEM ,SIZE ,ALWAYS> {
 
 		CREF<ITEM> at (CREF<INDEX> index) const leftvalue {
 			assert (vbetween (index ,0 ,mWrite - mRead)) ;
+			assert (mDeque.size () > 0) ;
 			INDEX ix = (index + mRead) % mDeque.size () ;
-			return mDeque[ix].mItem ;
+			return mDeque[ix] ;
 		}
 
 		inline CREF<ITEM> operator[] (CREF<INDEX> index) const leftvalue {
@@ -854,23 +850,13 @@ trait DEQUE_HELP<ITEM ,SIZE ,ALWAYS> {
 			add (move (item)) ;
 		}
 
-		inline VREF<Deque> operator<< (CREF<ITEM> item) {
-			add (move (item)) ;
-			return thiz ;
-		}
-
 		void add (RREF<ITEM> item) {
 			auto rax = move (item) ;
 			update_resize () ;
 			assume (mDeque.size () > 0) ;
 			INDEX ix = mWrite % mDeque.size () ;
-			mDeque[ix].mItem = move (rax) ;
+			mDeque[ix] = move (rax) ;
 			mWrite++ ;
-		}
-
-		inline VREF<Deque> operator<< (RREF<ITEM> item) {
-			add (move (item)) ;
-			return thiz ;
 		}
 
 		void take () {
@@ -882,14 +868,9 @@ trait DEQUE_HELP<ITEM ,SIZE ,ALWAYS> {
 		void take (VREF<ITEM> item) {
 			assert (ifnot (empty ())) ;
 			INDEX ix = mRead ;
-			item = move (mDeque[ix].mItem) ;
+			item = move (mDeque[ix]) ;
 			mRead++ ;
 			confirm_index () ;
-		}
-
-		inline VREF<Deque> operator>> (VREF<ITEM> item) {
-			take (item) ;
-			return thiz ;
 		}
 
 		void push (CREF<ITEM> item) {
@@ -900,7 +881,7 @@ trait DEQUE_HELP<ITEM ,SIZE ,ALWAYS> {
 			auto rax = move (item) ;
 			update_resize () ;
 			INDEX ix = (mRead - 1 + mDeque.size ()) % mDeque.size () ;
-			mDeque[ix].mItem = move (rax) ;
+			mDeque[ix] = move (rax) ;
 			mRead = ix ;
 			confirm_index () ;
 		}
@@ -914,7 +895,7 @@ trait DEQUE_HELP<ITEM ,SIZE ,ALWAYS> {
 		void pop (VREF<ITEM> item) {
 			assert (ifnot (empty ())) ;
 			INDEX ix = (mWrite - 1) % mDeque.size () ;
-			item = move (mDeque[ix].mItem) ;
+			item = move (mDeque[ix]) ;
 			mWrite = ix ;
 		}
 
@@ -938,8 +919,8 @@ trait DEQUE_HELP<ITEM ,SIZE ,ALWAYS> {
 		}
 
 		void update_resize () {
-			using R1X = typename ALLOCATOR_HELP<NODE ,SIZE ,ALWAYS>::RESIZE_POW ;
-			using R2X = typename ALLOCATOR_HELP<NODE ,SIZE ,ALWAYS>::RESIZE_MIN_SIZE ;
+			using R1X = typename ALLOCATOR_HELP<ITEM ,SIZE ,ALWAYS>::RESIZE_POW ;
+			using R2X = typename ALLOCATOR_HELP<ITEM ,SIZE ,ALWAYS>::RESIZE_MIN_SIZE ;
 			if (length () < size ())
 				return ;
 			const auto r1x = mDeque.size () ;
@@ -952,7 +933,7 @@ trait DEQUE_HELP<ITEM ,SIZE ,ALWAYS> {
 				for (auto &&i : CSC::iter (0 ,r1x - mRead)) {
 					INDEX ix = r1x - 1 - i ;
 					INDEX iy = r3x - 1 - i ;
-					mDeque[iy].mItem = move (mDeque[ix].mItem) ;
+					mDeque[iy] = move (mDeque[ix]) ;
 				}
 				mRead += r3x - r1x ;
 				mWrite = mRead + r1x ;
@@ -1113,22 +1094,12 @@ trait PRIORITY_HELP<ITEM ,SIZE ,ALWAYS> {
 			add (item ,NONE) ;
 		}
 
-		inline VREF<Priority> operator<< (CREF<ITEM> item) {
-			add (move (item)) ;
-			return thiz ;
-		}
-
 		void add (CREF<ITEM> item ,CREF<INDEX> map_) {
 			add (move (item) ,map_) ;
 		}
 
 		void add (RREF<ITEM> item) {
 			add (item ,NONE) ;
-		}
-
-		inline VREF<Priority> operator<< (RREF<ITEM> item) {
-			add (move (item)) ;
-			return thiz ;
 		}
 
 		void add (RREF<ITEM> item ,CREF<INDEX> map_) {
@@ -1156,11 +1127,6 @@ trait PRIORITY_HELP<ITEM ,SIZE ,ALWAYS> {
 			mPriority[0] = move (mPriority[ix]) ;
 			mWrite = ix ;
 			update_insert (0) ;
-		}
-
-		inline VREF<Priority> operator>> (VREF<ITEM> item) {
-			take (item) ;
-			return thiz ;
 		}
 
 		INDEX head () const {
@@ -1422,11 +1388,6 @@ trait LIST_HELP<ITEM ,SIZE ,ALWAYS> {
 			add (move (item)) ;
 		}
 
-		inline VREF<List> operator<< (CREF<ITEM> item) {
-			add (move (item)) ;
-			return thiz ;
-		}
-
 		void add (RREF<ITEM> item) {
 			auto rax = move (item) ;
 			INDEX ix = mList.alloc () ;
@@ -1435,11 +1396,6 @@ trait LIST_HELP<ITEM ,SIZE ,ALWAYS> {
 			mList[ix].mNext = NONE ;
 			curr_next (mLast ,ix) ;
 			mLast = ix ;
-		}
-
-		inline VREF<List> operator<< (RREF<ITEM> item) {
-			add (move (item)) ;
-			return thiz ;
 		}
 
 		void take () {
@@ -1457,11 +1413,6 @@ trait LIST_HELP<ITEM ,SIZE ,ALWAYS> {
 			mFirst = mList[ix].mNext ;
 			curr_prev (mFirst ,NONE) ;
 			mList.free (ix) ;
-		}
-
-		inline VREF<List> operator>> (VREF<ITEM> item) {
-			take (item) ;
-			return thiz ;
 		}
 
 		void push (CREF<ITEM> item) {
@@ -1738,11 +1689,6 @@ trait ARRAYLIST_HELP<ITEM ,SIZE ,ALWAYS> {
 			add (move (item)) ;
 		}
 
-		inline VREF<ArrayList> operator<< (CREF<ITEM> item) {
-			add (move (item)) ;
-			return thiz ;
-		}
-
 		void add (RREF<ITEM> item) {
 			auto rax = move (item) ;
 			INDEX ix = mList.alloc () ;
@@ -1750,11 +1696,6 @@ trait ARRAYLIST_HELP<ITEM ,SIZE ,ALWAYS> {
 			mList[ix].mItem = move (rax) ;
 			INDEX jx = find_next_free () ;
 			mRange[jx] = ix ;
-		}
-
-		inline VREF<ArrayList> operator<< (RREF<ITEM> item) {
-			add (move (item)) ;
-			return thiz ;
 		}
 
 		INDEX insert () {
@@ -1863,9 +1804,9 @@ trait BITPROXY_HELP<UNIT1 ,UNIT2 ,REQUIRE<IS_VARIABLE<UNIT1>>> {
 	public:
 		implicit BitProxy () = delete ;
 
-		explicit BitProxy (RREF<VRef<UNIT2>> array_ ,CREF<INDEX> y) {
+		explicit BitProxy (RREF<VRef<UNIT2>> array_ ,CREF<INDEX> y_) {
 			mArray = move (array_) ;
-			mY = y ;
+			mY = y_ ;
 		}
 
 		inline implicit operator BOOL () rightvalue {
@@ -1888,9 +1829,9 @@ trait BITPROXY_HELP<UNIT1 ,UNIT2 ,REQUIRE<IS_CONSTANT<UNIT1>>> {
 	public:
 		implicit BitProxy () = delete ;
 
-		explicit BitProxy (RREF<CRef<UNIT2>> array_ ,CREF<INDEX> y) {
+		explicit BitProxy (RREF<CRef<UNIT2>> array_ ,CREF<INDEX> y_) {
 			mArray = move (array_) ;
-			mY = y ;
+			mY = y_ ;
 		}
 
 		inline implicit operator BOOL () rightvalue {
@@ -1950,7 +1891,7 @@ trait BITSET_HELP<SIZE ,ALWAYS> {
 		}
 
 		LENGTH length () const {
-			using R1X = typename BITSET_BYTELCACHE_HELP<DEPEND ,ALWAYS>::ByteLCache ;
+			using R1X = typename DEPENDENT<BITSET_BYTELCACHE_HELP<DEPEND ,ALWAYS> ,SIZE>::ByteLCache ;
 			LENGTH ret = 0 ;
 			for (auto &&i : CSC::iter (0 ,mSet.size ()))
 				ret += R1X::instance ()[mSet[i]] ;
@@ -2069,11 +2010,6 @@ trait BITSET_HELP<SIZE ,ALWAYS> {
 			INDEX ix = index / 8 ;
 			const auto r1x = BYTE (0X01) << (index % 8) ;
 			mSet[ix] |= r1x ;
-		}
-
-		inline VREF<BitSet> operator<< (CREF<INDEX> item) {
-			add (item) ;
-			return thiz ;
 		}
 
 		void erase (CREF<INDEX> index) {
@@ -2252,7 +2188,7 @@ trait BITSET_HELP<SIZE ,ALWAYS> {
 		}
 
 		INDEX find_first (CREF<BYTE> obj) const {
-			using R1X = typename BITSET_BYTEFCACHE_HELP<DEPEND ,ALWAYS>::ByteFCache ;
+			using R1X = typename DEPENDENT<BITSET_BYTEFCACHE_HELP<DEPEND ,ALWAYS> ,SIZE>::ByteFCache ;
 			const auto r1x = obj & BYTE (INDEX (~obj) + 1) ;
 			return R1X::instance ()[r1x] ;
 		}
@@ -2511,22 +2447,12 @@ trait SET_HELP<ITEM ,SIZE ,ALWAYS> {
 			add (move (item) ,NONE) ;
 		}
 
-		inline VREF<Set> operator<< (CREF<ITEM> item) {
-			add (move (item)) ;
-			return thiz ;
-		}
-
 		void add (CREF<ITEM> item ,CREF<INDEX> map_) {
 			add (move (item) ,map_) ;
 		}
 
 		void add (RREF<ITEM> item) {
 			add (move (item) ,NONE) ;
-		}
-
-		inline VREF<Set> operator<< (RREF<ITEM> item) {
-			add (move (item)) ;
-			return thiz ;
 		}
 
 		void add (RREF<ITEM> item ,CREF<INDEX> map_) {
@@ -2555,11 +2481,6 @@ trait SET_HELP<ITEM ,SIZE ,ALWAYS> {
 			INDEX ix = head () ;
 			item = move (mSet[ix].mItem) ;
 			remove (ix) ;
-		}
-
-		inline VREF<Set> operator>> (VREF<ITEM> item) {
-			take (item) ;
-			return thiz ;
 		}
 
 		INDEX head () const {
@@ -3135,22 +3056,12 @@ trait HASHSET_HELP<ITEM ,SIZE ,ALWAYS> {
 			add (move (item) ,NONE) ;
 		}
 
-		inline VREF<HashSet> operator<< (CREF<ITEM> item) {
-			add (move (item)) ;
-			return thiz ;
-		}
-
 		void add (CREF<ITEM> item ,CREF<INDEX> map_) {
 			add (move (item) ,map_) ;
 		}
 
 		void add (RREF<ITEM> item) {
 			add (move (item) ,NONE) ;
-		}
-
-		inline VREF<HashSet> operator<< (RREF<ITEM> item) {
-			add (move (item)) ;
-			return thiz ;
 		}
 
 		void add (RREF<ITEM> item ,CREF<INDEX> map_) {
@@ -3365,22 +3276,12 @@ trait SOFTSET_HELP<ITEM ,ALWAYS> {
 			add (move (item) ,NONE) ;
 		}
 
-		inline VREF<SoftSet> operator<< (CREF<ITEM> item) {
-			add (move (item)) ;
-			return thiz ;
-		}
-
 		void add (CREF<ITEM> item ,CREF<INDEX> map_) {
 			add (move (item) ,map_) ;
 		}
 
 		void add (RREF<ITEM> item) {
 			add (move (item) ,NONE) ;
-		}
-
-		inline VREF<SoftSet> operator<< (RREF<ITEM> item) {
-			add (move (item)) ;
-			return thiz ;
 		}
 
 		void add (RREF<ITEM> item ,CREF<INDEX> map_) {

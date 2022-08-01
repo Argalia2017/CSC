@@ -32,7 +32,8 @@ trait XMLPARSER_HELP<DEPEND ,ALWAYS> {
 	using CRTP_XmlParser = typename DEPENDENT<XMLPARSER_HELP<DEPEND ,ALWAYS> ,ARG1>::XmlParser ;
 
 	struct Holder implement Interface {
-		virtual void initialize (CREF<TEMP<void>> heap ,CREF<INDEX> index) = 0 ;
+		virtual void initialize () = 0 ;
+		virtual void initialize (CREF<RegBuffer<STRU8>> stream) = 0 ;
 		virtual BOOL exist () const = 0 ;
 		virtual CRTP_XmlParser<DEPEND> clone () const = 0 ;
 		virtual CRTP_XmlParser<DEPEND> root () const = 0 ;
@@ -79,11 +80,16 @@ trait XMLPARSER_HELP<DEPEND ,ALWAYS> {
 	public:
 		implicit XmlParser () {
 			mThis = FUNCTION_extern::invoke () ;
+			mThis->initialize () ;
 		}
 
-		explicit XmlParser (CREF<TEMP<void>> heap ,CREF<INDEX> index) {
+		explicit XmlParser (RREF<Box<FakeHolder>> that) {
+			mThis = move (that) ;
+		}
+
+		explicit XmlParser (CREF<RegBuffer<STRU8>> that) {
 			mThis = FUNCTION_extern::invoke () ;
-			mThis->initialize (heap ,index) ;
+			mThis->initialize (that) ;
 		}
 
 		BOOL exist () const {
@@ -229,7 +235,8 @@ trait JSONPARSER_HELP<DEPEND ,ALWAYS> {
 	using CRTP_JsonParser = typename DEPENDENT<JSONPARSER_HELP<DEPEND ,ALWAYS> ,ARG1>::JsonParser ;
 
 	struct Holder implement Interface {
-		virtual void initialize (CREF<TEMP<void>> heap ,CREF<INDEX> index) = 0 ;
+		virtual void initialize () = 0 ;
+		virtual void initialize (CREF<RegBuffer<STRU8>> stream) = 0 ;
 		virtual BOOL exist () const = 0 ;
 		virtual BOOL string_type () const = 0 ;
 		virtual BOOL array_type () const = 0 ;
@@ -278,11 +285,16 @@ trait JSONPARSER_HELP<DEPEND ,ALWAYS> {
 	public:
 		implicit JsonParser () {
 			mThis = FUNCTION_extern::invoke () ;
+			mThis->initialize () ;
 		}
 
-		explicit JsonParser (CREF<TEMP<void>> heap ,CREF<INDEX> index) {
+		explicit JsonParser (RREF<Box<FakeHolder>> that) {
+			mThis = move (that) ;
+		}
+
+		explicit JsonParser (CREF<RegBuffer<STRU8>> that) {
 			mThis = FUNCTION_extern::invoke () ;
-			mThis->initialize (heap ,index) ;
+			mThis->initialize (that) ;
 		}
 
 		BOOL exist () const {
