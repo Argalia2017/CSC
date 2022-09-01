@@ -25,8 +25,8 @@ static constexpr auto VAL64_ABS = VAL64_MIN - 1 ;
 template <class...>
 trait VAL_HELP ;
 
-template <class DEPEND>
-trait VAL_HELP<DEPEND ,REQUIRE<MACRO_CONFIG_VAL32<DEPEND>>> {
+template <class MACRO>
+trait VAL_HELP<MACRO ,REQUIRE<MACRO_CONFIG_VAL32<MACRO>>> {
 	using VAL = VAL32 ;
 
 	static constexpr auto VAL_MAX = VAL32_MAX ;
@@ -34,8 +34,8 @@ trait VAL_HELP<DEPEND ,REQUIRE<MACRO_CONFIG_VAL32<DEPEND>>> {
 	static constexpr auto VAL_ABS = VAL32_ABS ;
 } ;
 
-template <class DEPEND>
-trait VAL_HELP<DEPEND ,REQUIRE<MACRO_CONFIG_VAL64<DEPEND>>> {
+template <class MACRO>
+trait VAL_HELP<MACRO ,REQUIRE<MACRO_CONFIG_VAL64<MACRO>>> {
 	using VAL = VAL64 ;
 
 	static constexpr auto VAL_MAX = VAL64_MAX ;
@@ -60,7 +60,6 @@ using FLAG = VAL ;
 
 using SINGLE = csc_float32_t ;
 using DOUBLE = csc_float64_t ;
-using TRIPLE = csc_float128_t ;
 
 static constexpr auto SINGLE_MAX = SINGLE (3.402823466E+38) ;
 static constexpr auto SINGLE_MIN = -SINGLE_MAX ;
@@ -77,7 +76,6 @@ enum class BYTE :csc_byte8_t ;
 enum class WORD :csc_byte16_t ;
 enum class CHAR :csc_byte32_t ;
 enum class DATA :csc_byte64_t ;
-using HUGE = csc_byte128_t ;
 
 inline constexpr BYTE operator| (CREF<BYTE> left ,CREF<BYTE> right) {
 	return BYTE (csc_byte8_t (left) | csc_byte8_t (right)) ;
@@ -220,13 +218,13 @@ using STRU32 = csc_char32_t ;
 template <class...>
 trait STR_HELP ;
 
-template <class DEPEND>
-trait STR_HELP<DEPEND ,REQUIRE<MACRO_CONFIG_STRA<DEPEND>>> {
+template <class MACRO>
+trait STR_HELP<MACRO ,REQUIRE<MACRO_CONFIG_STRA<MACRO>>> {
 	using STR = STRA ;
 } ;
 
-template <class DEPEND>
-trait STR_HELP<DEPEND ,REQUIRE<MACRO_CONFIG_STRW<DEPEND>>> {
+template <class MACRO>
+trait STR_HELP<MACRO ,REQUIRE<MACRO_CONFIG_STRW<MACRO>>> {
 	using STR = STRW ;
 } ;
 
@@ -817,9 +815,8 @@ template <class UNIT1>
 trait IS_FLOAT_HELP<UNIT1 ,ALWAYS> {
 	using R1X = IS_SAME<UNIT1 ,SINGLE> ;
 	using R2X = IS_SAME<UNIT1 ,DOUBLE> ;
-	using R3X = IS_SAME<UNIT1 ,TRIPLE> ;
 
-	static constexpr auto value = ENUM_ANY<R1X ,R2X ,R3X>::expr ;
+	static constexpr auto value = ENUM_ANY<R1X ,R2X>::expr ;
 	using RET = ENUMAS<BOOL ,ENUMID<value>> ;
 } ;
 
@@ -853,9 +850,8 @@ trait IS_BIT_HELP<UNIT1 ,ALWAYS> {
 	using R2X = IS_SAME<UNIT1 ,WORD> ;
 	using R3X = IS_SAME<UNIT1 ,CHAR> ;
 	using R4X = IS_SAME<UNIT1 ,DATA> ;
-	using R5X = IS_SAME<UNIT1 ,HUGE> ;
 
-	static constexpr auto value = ENUM_ANY<R1X ,R2X ,R3X ,R4X ,R5X>::expr ;
+	static constexpr auto value = ENUM_ANY<R1X ,R2X ,R3X ,R4X>::expr ;
 	using RET = ENUMAS<BOOL ,ENUMID<value>> ;
 } ;
 
@@ -1265,11 +1261,6 @@ trait BYTE_BASE_HELP<SIZE ,ALIGN ,REQUIRE<ENUM_ALL<ENUM_EQUAL<SIZE ,SIZE_OF<DATA
 	using RET = DATA ;
 } ;
 
-template <class SIZE ,class ALIGN>
-trait BYTE_BASE_HELP<SIZE ,ALIGN ,REQUIRE<ENUM_ALL<ENUM_EQUAL<SIZE ,SIZE_OF<HUGE>> ,ENUM_EQUAL<ALIGN ,ALIGN_OF<HUGE>>>>> {
-	using RET = HUGE ;
-} ;
-
 template <class UNIT1>
 using BYTE_BASE = typename BYTE_BASE_HELP<SIZE_OF<UNIT1> ,ALIGN_OF<UNIT1> ,ALWAYS>::RET ;
 
@@ -1324,13 +1315,6 @@ trait STORAGE_HELP<SIZE ,ALIGN ,REQUIRE<ENUM_EQUAL<ALIGN ,ALIGN_OF<CHAR>>>> {
 template <class SIZE ,class ALIGN>
 trait STORAGE_HELP<SIZE ,ALIGN ,REQUIRE<ENUM_EQUAL<ALIGN ,ALIGN_OF<DATA>>>> {
 	using R1X = DATA ;
-	using R2X = ENUM_DIV<ENUM_ADD<SIZE ,ENUM_DEC<ALIGN>> ,ALIGN> ;
-	using RET = ARR<R1X ,R2X> ;
-} ;
-
-template <class SIZE ,class ALIGN>
-trait STORAGE_HELP<SIZE ,ALIGN ,REQUIRE<ENUM_EQUAL<ALIGN ,ALIGN_OF<HUGE>>>> {
-	using R1X = HUGE ;
 	using R2X = ENUM_DIV<ENUM_ADD<SIZE ,ENUM_DEC<ALIGN>> ,ALIGN> ;
 	using RET = ARR<R1X ,R2X> ;
 } ;

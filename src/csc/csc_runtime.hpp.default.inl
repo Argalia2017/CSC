@@ -23,8 +23,8 @@ namespace CSC {
 template <class...>
 trait FUNCTION_calendar_from_timepoint_HELP ;
 
-template <class DEPEND>
-trait FUNCTION_calendar_from_timepoint_HELP<DEPEND ,REQUIRE<MACRO_SYSTEM_WINDOWS<DEPEND>>> {
+template <class MACRO>
+trait FUNCTION_calendar_from_timepoint_HELP<MACRO ,REQUIRE<MACRO_SYSTEM_WINDOWS<MACRO>>> {
 #ifdef __CSC_SYSTEM_WINDOWS__
 	struct FUNCTION_calendar_from_timepoint {
 		inline std::tm operator() (CREF<std::time_t> time_) const {
@@ -37,14 +37,15 @@ trait FUNCTION_calendar_from_timepoint_HELP<DEPEND ,REQUIRE<MACRO_SYSTEM_WINDOWS
 #endif
 } ;
 
-template <class DEPEND>
-trait FUNCTION_calendar_from_timepoint_HELP<DEPEND ,REQUIRE<MACRO_SYSTEM_LINUX<DEPEND>>> {
+template <class MACRO>
+trait FUNCTION_calendar_from_timepoint_HELP<MACRO ,REQUIRE<MACRO_SYSTEM_LINUX<MACRO>>> {
 #ifdef __CSC_SYSTEM_LINUX__
 	struct FUNCTION_calendar_from_timepoint {
 		inline std::tm operator() (CREF<std::time_t> time_) const {
 			std::tm ret ;
 			const auto r1x = FLAG (std::localtime ((&time_))) ;
-			ret = bitwise[TYPEAS<std::tm>::expr] (unsafe_pointer (r1x)) ;
+			auto &&tmp = unsafe_deref (unsafe_cast[TYPEAS<TEMP<std::tm>>::expr] (unsafe_pointer (r1x))) ;
+			ret = tmp ;
 			return move (ret) ;
 		}
 	} ;
@@ -187,7 +188,6 @@ trait TIMEDURATION_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	} ;
 } ;
 
-template <>
 exports auto TIMEDURATION_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
 	using R1X = typename TIMEDURATION_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
@@ -248,7 +248,6 @@ trait ATOMIC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	} ;
 } ;
 
-template <>
 exports auto ATOMIC_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
 	using R1X = typename ATOMIC_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
@@ -323,7 +322,6 @@ trait MUTEX_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	} ;
 } ;
 
-template <>
 exports auto MUTEX_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
 	using R1X = typename MUTEX_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
@@ -388,7 +386,6 @@ trait UNIQUELOCK_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	} ;
 } ;
 
-template <>
 exports auto UNIQUELOCK_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->Box<FakeHolder> {
 	using R1X = typename UNIQUELOCK_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	Box<FakeHolder> ret ;
@@ -453,7 +450,6 @@ trait SHAREDLOCK_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	} ;
 } ;
 
-template <>
 exports auto SHAREDLOCK_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->Box<FakeHolder> {
 	using R1X = typename SHAREDLOCK_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	Box<FakeHolder> ret ;
@@ -520,7 +516,6 @@ trait THREAD_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	} ;
 } ;
 
-template <>
 exports auto THREAD_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
 	using R1X = typename THREAD_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
@@ -551,12 +546,12 @@ trait SYSTEM_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			mLocale.store (name) ;
 		}
 
-		void execute (CREF<String<STR>> command) const override {
+		FLAG execute (CREF<String<STR>> command) const override {
 			if (command.empty ())
-				return ;
+				return NONE ;
 			const auto r1x = string_cvt[TYPEAS<TYPEAS<STRA ,STR>>::expr] (command) ;
 			const auto r2x = std::system ((&r1x[0])) ;
-			noop (r2x) ;
+			return FLAG (r2x) ;
 		}
 
 		String<STR> working_path () const override {
@@ -565,7 +560,6 @@ trait SYSTEM_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	} ;
 } ;
 
-template <>
 exports auto SYSTEM_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
 	using R1X = typename SYSTEM_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
@@ -688,7 +682,6 @@ trait RANDOM_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	} ;
 } ;
 
-template <>
 exports auto RANDOM_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
 	using R1X = typename RANDOM_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;

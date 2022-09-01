@@ -13,6 +13,58 @@
 
 namespace CSC {
 template <class...>
+trait BYTEATTRIBUTE_HELP ;
+
+template <class...>
+trait BYTEATTRIBUTE_IMPLHOLDER_HELP ;
+
+template <class DEPEND>
+trait BYTEATTRIBUTE_HELP<DEPEND ,ALWAYS> {
+	struct Holder implement Interface {
+		virtual void initialize () = 0 ;
+		virtual BYTE ending_item () const = 0 ;
+		virtual BYTE space_item () const = 0 ;
+		virtual BOOL is_big_endian () const = 0 ;
+	} ;
+
+	struct FUNCTION_extern {
+		imports VRef<Holder> invoke () ;
+	} ;
+
+	class ByteAttribute {
+	protected:
+		CRef<Holder> mThis ;
+
+	public:
+		implicit ByteAttribute () {
+			auto rax = FUNCTION_extern::invoke () ;
+			rax->initialize () ;
+			mThis = rax.as_cref () ;
+		}
+
+		template <class ARG1>
+		void derive (CREF<TYPEID<ARG1>> id) {
+			require (IS_EXTEND<Holder ,ARG1>) ;
+			mThis = CRef<ARG1>::make (move (mThis)) ;
+		}
+		
+		BYTE ending_item () const {
+			return mThis->ending_item () ;
+		}
+		
+		BYTE space_item () const {
+			return mThis->space_item () ;
+		}
+		
+		BOOL is_big_endian () const {
+			return mThis->is_big_endian () ;
+		}
+	} ;
+} ;
+
+using ByteAttribute = typename BYTEATTRIBUTE_HELP<DEPEND ,ALWAYS>::ByteAttribute ;
+
+template <class...>
 trait BYTEREADER_HELP ;
 
 template <class...>
@@ -23,23 +75,15 @@ trait BYTEREADER_ATTRIBUTE_HELP ;
 
 template <class DEPEND>
 trait BYTEREADER_HELP<DEPEND ,ALWAYS> {
-	struct Attribute implement Interface {
-		virtual BYTE ending_item () const = 0 ;
-		virtual BYTE space_item () const = 0 ;
-		virtual BOOL is_big_endian () const = 0 ;
-	} ;
-
-	template <class ARG1>
-	using CRTP_ByteReader = typename DEPENDENT<BYTEREADER_HELP<DEPEND ,ALWAYS> ,ARG1>::ByteReader ;
+	class ByteReader ;
 
 	struct Binder implement Interface {
-		virtual void friend_read (VREF<CRTP_ByteReader<DEPEND>> reader) = 0 ;
+		virtual void friend_read (VREF<ByteReader> reader) = 0 ;
 	} ;
 
 	struct Holder implement Interface {
 		virtual void initialize (RREF<CRef<RegBuffer<BYTE>>> stream) = 0 ;
-		virtual CRef<Attribute> get_attr () const = 0 ;
-		virtual void set_attr (RREF<CRef<Attribute>> attr_) = 0 ;
+		virtual VREF<ByteAttribute> attribute () leftvalue = 0 ;
 		virtual LENGTH size () const = 0 ;
 		virtual LENGTH length () const = 0 ;
 		virtual void reset () = 0 ;
@@ -87,17 +131,8 @@ trait BYTEREADER_HELP<DEPEND ,ALWAYS> {
 			mThis = move (that) ;
 		}
 
-		CRef<Attribute> get_attr () const {
-			return mThis->get_attr () ;
-		}
-
-		template <class ARG1>
-		void set_attr (CREF<TYPEID<ARG1>> id) {
-			require (IS_EXTEND<Attribute ,ARG1>) ;
-			auto &&tmp = memorize ([&] () {
-				return CRef<ARG1>::make () ;
-			}) ;
-			return mThis->set_attr (copy (tmp)) ;
+		VREF<ByteAttribute> attribute () leftvalue {
+			return mThis->attribute () ;
 		}
 
 		LENGTH size () const {
@@ -320,34 +355,6 @@ trait BYTEREADER_HELP<DEPEND ,ALWAYS> {
 	} ;
 } ;
 
-template <class DEPEND>
-trait BYTEREADER_ATTRIBUTE_HELP<DEPEND ,ALWAYS> {
-	using SUPER = typename BYTEREADER_HELP<DEPEND ,ALWAYS>::Attribute ;
-
-	class Attribute implement SUPER {
-	public:
-		implicit Attribute () = default ;
-
-		BYTE ending_item () const override {
-			return BYTE (0X00) ;
-		}
-
-		BYTE space_item () const override {
-			return BYTE (0XCC) ;
-		}
-
-		BOOL is_big_endian () const override {
-			return memorize ([&] () {
-				const auto r1x = WORD (0X00FF) ;
-				const auto r2x = bitwise[TYPEAS<BoxBuffer<BYTE ,SIZE_OF<WORD>>>::expr] (r1x) ;
-				if (r2x[0] != BYTE (0X00))
-					return FALSE ;
-				return TRUE ;
-			}) ;
-		}
-	} ;
-} ;
-
 using ByteReader = typename BYTEREADER_HELP<DEPEND ,ALWAYS>::ByteReader ;
 
 template <class...>
@@ -361,23 +368,15 @@ trait BYTEWRITER_ATTRIBUTE_HELP ;
 
 template <class DEPEND>
 trait BYTEWRITER_HELP<DEPEND ,ALWAYS> {
-	struct Attribute implement Interface {
-		virtual BYTE ending_item () const = 0 ;
-		virtual BYTE space_item () const = 0 ;
-		virtual BOOL is_big_endian () const = 0 ;
-	} ;
-
-	template <class ARG1>
-	using CRTP_ByteWriter = typename DEPENDENT<BYTEWRITER_HELP<DEPEND ,ALWAYS> ,ARG1>::ByteWriter ;
+	class ByteWriter ;
 
 	struct Binder implement Interface {
-		virtual void friend_write (VREF<CRTP_ByteWriter<DEPEND>> writer) const = 0 ;
+		virtual void friend_write (VREF<ByteWriter> writer) const = 0 ;
 	} ;
 
 	struct Holder implement Interface {
 		virtual void initialize (RREF<VRef<RegBuffer<BYTE>>> stream) = 0 ;
-		virtual CRef<Attribute> get_attr () const = 0 ;
-		virtual void set_attr (RREF<CRef<Attribute>> attr_) = 0 ;
+		virtual VREF<ByteAttribute> attribute () leftvalue = 0 ;
 		virtual LENGTH size () const = 0 ;
 		virtual LENGTH length () const = 0 ;
 		virtual void reset () = 0 ;
@@ -425,17 +424,8 @@ trait BYTEWRITER_HELP<DEPEND ,ALWAYS> {
 			mThis = move (that) ;
 		}
 
-		CRef<Attribute> get_attr () const {
-			return mThis->get_attr () ;
-		}
-
-		template <class ARG1>
-		void set_attr (CREF<TYPEID<ARG1>> id) {
-			require (IS_EXTEND<Attribute ,ARG1>) ;
-			auto &&tmp = memorize ([&] () {
-				return CRef<ARG1>::make () ;
-			}) ;
-			return mThis->set_attr (copy (tmp)) ;
+		VREF<ByteAttribute> attribute () leftvalue {
+			return mThis->attribute () ;
 		}
 
 		LENGTH size () const {
@@ -655,35 +645,110 @@ trait BYTEWRITER_HELP<DEPEND ,ALWAYS> {
 	} ;
 } ;
 
-template <class DEPEND>
-trait BYTEWRITER_ATTRIBUTE_HELP<DEPEND ,ALWAYS> {
-	using SUPER = typename BYTEWRITER_HELP<DEPEND ,ALWAYS>::Attribute ;
+using ByteWriter = typename BYTEWRITER_HELP<DEPEND ,ALWAYS>::ByteWriter ;
 
-	class Attribute implement SUPER {
+template <class...>
+trait TEXTATTRIBUTE_HELP ;
+
+template <class...>
+trait TEXTATTRIBUTE_IMPLHOLDER_HELP ;
+
+template <class ITEM>
+trait TEXTATTRIBUTE_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
+	struct Holder implement Interface {
+		virtual void initialize () = 0 ;
+		virtual ITEM ending_item () const = 0 ;
+		virtual BOOL is_space (CREF<ITEM> str) const = 0 ;
+		virtual BOOL is_endline_space (CREF<ITEM> str) const = 0 ;
+		virtual BOOL is_word (CREF<ITEM> str) const = 0 ;
+		virtual BOOL is_number (CREF<ITEM> str) const = 0 ;
+		virtual BOOL is_hex_number (CREF<ITEM> str) const = 0 ;
+		virtual INDEX hex_from_str (CREF<ITEM> str) const = 0 ;
+		virtual ITEM str_from_hex (CREF<INDEX> hex) const = 0 ;
+		virtual BOOL is_control (CREF<ITEM> str) const = 0 ;
+		virtual Optional<ITEM> escape_cast (CREF<ITEM> str) const = 0 ;
+		virtual LENGTH value_precision () const = 0 ;
+		virtual LENGTH float_precision () const = 0 ;
+		virtual LENGTH number_precision () const = 0 ;
+	} ;
+
+	struct FUNCTION_extern {
+		imports VRef<Holder> invoke () ;
+	} ;
+
+	class TextAttribute {
+	protected:
+		CRef<Holder> mThis ;
+
 	public:
-		implicit Attribute () = default ;
-
-		BYTE ending_item () const override {
-			return BYTE (0X00) ;
+		implicit TextAttribute () {
+			auto rax = FUNCTION_extern::invoke () ;
+			rax->initialize () ;
+			mThis = rax.as_cref () ;
 		}
 
-		BYTE space_item () const override {
-			return BYTE (0XCC) ;
+		template <class ARG1>
+		void derive (CREF<TYPEID<ARG1>> id) {
+			require (IS_EXTEND<Holder ,ARG1>) ;
+			mThis = CRef<ARG1>::make (move (mThis)) ;
 		}
 
-		BOOL is_big_endian () const override {
-			return memorize ([&] () {
-				const auto r1x = WORD (0X00FF) ;
-				const auto r2x = bitwise[TYPEAS<BoxBuffer<BYTE ,SIZE_OF<WORD>>>::expr] (r1x) ;
-				if (r2x[0] != BYTE (0X00))
-					return FALSE ;
-				return TRUE ;
-			}) ;
+		ITEM ending_item () const {
+			return mThis->ending_item () ;
+		}
+
+		BOOL is_space (CREF<ITEM> str) const {
+			return mThis->is_space (str) ;
+		}
+
+		BOOL is_endline_space (CREF<ITEM> str) const {
+			return mThis->is_endline_space (str) ;
+		}
+
+		BOOL is_word (CREF<ITEM> str) const {
+			return mThis->is_word (str) ;
+		}
+
+		BOOL is_number (CREF<ITEM> str) const {
+			return mThis->is_number (str) ;
+		}
+
+		BOOL is_hex_number (CREF<ITEM> str) const {
+			return mThis->is_hex_number (str) ;
+		}
+
+		INDEX hex_from_str (CREF<ITEM> str) const {
+			return mThis->hex_from_str (str) ;
+		}
+
+		ITEM str_from_hex (CREF<INDEX> hex) const {
+			return mThis->str_from_hex (hex) ;
+		}
+
+		BOOL is_control (CREF<ITEM> str) const {
+			return mThis->is_control (str) ;
+		}
+
+		Optional<ITEM> escape_cast (CREF<ITEM> str) const {
+			return mThis->escape_cast (str) ;
+		}
+
+		LENGTH value_precision () const {
+			return mThis->value_precision () ;
+		}
+
+		LENGTH float_precision () const {
+			return mThis->float_precision () ;
+		}
+
+		LENGTH number_precision () const {
+			return mThis->number_precision () ;
 		}
 	} ;
 } ;
 
-using ByteWriter = typename BYTEWRITER_HELP<DEPEND ,ALWAYS>::ByteWriter ;
+template <class ITEM>
+using TextAttribute = typename TEXTATTRIBUTE_HELP<ITEM ,ALWAYS>::TextAttribute ;
 
 template <class...>
 trait TEXTREADER_HELP ;
@@ -691,39 +756,19 @@ trait TEXTREADER_HELP ;
 template <class...>
 trait TEXTREADER_IMPLHOLDER_HELP ;
 
-template <class...>
-trait TEXTREADER_ATTRIBUTE_HELP ;
-
 template <class ITEM>
 trait TEXTREADER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
-	struct Attribute implement Interface {
-		virtual ITEM ending_item () const = 0 ;
-		virtual BOOL is_space (CREF<ITEM> str) const = 0 ;
-		virtual BOOL is_endline_space (CREF<ITEM> str) const = 0 ;
-		virtual BOOL is_word (CREF<ITEM> str) const = 0 ;
-		virtual ITEM lower_cast (CREF<ITEM> str) const = 0 ;
-		virtual Optional<ITEM> escape_cast (CREF<ITEM> str) const = 0 ;
-		virtual BOOL is_number (CREF<ITEM> str) const = 0 ;
-		virtual BOOL is_hex_number (CREF<ITEM> str) const = 0 ;
-		virtual INDEX hex_from_str (CREF<ITEM> str) const = 0 ;
-		virtual BOOL is_control (CREF<ITEM> str) const = 0 ;
-		virtual LENGTH value_precision () const = 0 ;
-		virtual LENGTH float_precision () const = 0 ;
-	} ;
+	class TextReader ;
 
 	using NOTATION = typename FLOATPROC_HELP<DEPEND ,ALWAYS>::NOTATION ;
 
-	template <class ARG1>
-	using CRTP_TextReader = typename DEPENDENT<TEXTREADER_HELP<ITEM ,ALWAYS> ,ARG1>::TextReader ;
-
 	struct Binder implement Interface {
-		virtual void friend_read (VREF<CRTP_TextReader<DEPEND>> reader) = 0 ;
+		virtual void friend_read (VREF<TextReader> reader) = 0 ;
 	} ;
 
 	struct Holder implement Interface {
 		virtual void initialize (RREF<CRef<RegBuffer<ITEM>>> stream) = 0 ;
-		virtual CRef<Attribute> get_attr () const = 0 ;
-		virtual void set_attr (RREF<CRef<Attribute>> attr_) = 0 ;
+		virtual VREF<TextAttribute<ITEM>> attribute () leftvalue = 0 ;
 		virtual LENGTH size () const = 0 ;
 		virtual LENGTH length () const = 0 ;
 		virtual void reset () = 0 ;
@@ -769,17 +814,8 @@ trait TEXTREADER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 			mThis = move (that) ;
 		}
 
-		CRef<Attribute> get_attr () const {
-			return mThis->get_attr () ;
-		}
-
-		template <class ARG1>
-		void set_attr (CREF<TYPEID<ARG1>> id) {
-			require (IS_EXTEND<Attribute ,ARG1>) ;
-			auto &&tmp = memorize ([&] () {
-				return CRef<ARG1>::make () ;
-			}) ;
-			return mThis->set_attr (copy (tmp)) ;
+		VREF<TextAttribute<ITEM>> attribute () leftvalue {
+			return mThis->attribute () ;
 		}
 
 		LENGTH size () const {
@@ -987,122 +1023,6 @@ trait TEXTREADER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 } ;
 
 template <class ITEM>
-trait TEXTREADER_ATTRIBUTE_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
-	using SUPER = typename TEXTREADER_HELP<ITEM ,ALWAYS>::Attribute ;
-
-	using SPACE_CLAZZ_SPACE = RANK1 ;
-	using SPACE_CLAZZ_ENDLINE = RANK2 ;
-
-	class Attribute implement SUPER {
-	protected:
-		HashSet<ITEM> mSpaceSet ;
-		HashSet<ITEM> mEscapeSet ;
-
-	public:
-		implicit Attribute () {
-			mSpaceSet.add (ITEM (' ') ,SPACE_CLAZZ_SPACE::expr) ;
-			mSpaceSet.add (ITEM ('\t') ,SPACE_CLAZZ_SPACE::expr) ;
-			mSpaceSet.add (ITEM ('\b') ,SPACE_CLAZZ_SPACE::expr) ;
-			mSpaceSet.add (ITEM ('\r') ,SPACE_CLAZZ_ENDLINE::expr) ;
-			mSpaceSet.add (ITEM ('\n') ,SPACE_CLAZZ_ENDLINE::expr) ;
-			mSpaceSet.add (ITEM ('\f') ,SPACE_CLAZZ_ENDLINE::expr) ;
-			mEscapeSet.add (ITEM ('\\') ,INDEX ('\\')) ;
-			mEscapeSet.add (ITEM ('/') ,INDEX ('/')) ;
-			mEscapeSet.add (ITEM ('t') ,INDEX ('\t')) ;
-			mEscapeSet.add (ITEM ('b') ,INDEX ('\b')) ;
-			mEscapeSet.add (ITEM ('r') ,INDEX ('\r')) ;
-			mEscapeSet.add (ITEM ('n') ,INDEX ('\n')) ;
-			mEscapeSet.add (ITEM ('f') ,INDEX ('\f')) ;
-			mEscapeSet.add (ITEM ('\'') ,INDEX ('\'')) ;
-			mEscapeSet.add (ITEM ('\"') ,INDEX ('\"')) ;
-			mEscapeSet.add (ITEM ('u') ,INDEX (7)) ;
-		}
-
-		ITEM ending_item () const override {
-			return ITEM (0) ;
-		}
-
-		BOOL is_space (CREF<ITEM> str) const override {
-			return mSpaceSet.find (str) != NONE ;
-		}
-
-		BOOL is_endline_space (CREF<ITEM> str) const override {
-			return mSpaceSet.map (str) != SPACE_CLAZZ_ENDLINE::expr ;
-		}
-
-		BOOL is_word (CREF<ITEM> str) const override {
-			if (str >= ITEM ('a'))
-				if (str <= ITEM ('z'))
-					return TRUE ;
-			if (str >= ITEM ('A'))
-				if (str <= ITEM ('Z'))
-					return TRUE ;
-			if (str == ITEM ('_'))
-				return TRUE ;
-			return FALSE ;
-		}
-
-		ITEM lower_cast (CREF<ITEM> str) const override {
-			if (str >= ITEM ('A'))
-				if (str <= ITEM ('F'))
-					return ITEM (INDEX (str) - INDEX ('A') + INDEX ('a')) ;
-			return str ;
-		}
-
-		Optional<ITEM> escape_cast (CREF<ITEM> str) const override {
-			INDEX ix = mEscapeSet.map (str) ;
-			if (ix == NONE)
-				return FLAG (1) ;
-			return Optional<ITEM>::make (ITEM (ix)) ;
-		}
-
-		BOOL is_number (CREF<ITEM> str) const override {
-			if (str >= ITEM ('0'))
-				if (str <= ITEM ('9'))
-					return TRUE ;
-			return FALSE ;
-		}
-
-		BOOL is_hex_number (CREF<ITEM> str) const override {
-			if (str >= ITEM ('a'))
-				if (str <= ITEM ('f'))
-					return TRUE ;
-			return FALSE ;
-		}
-
-		INDEX hex_from_str (CREF<ITEM> str) const override {
-			if (is_number (str))
-				return INDEX (str) - INDEX ('0') ;
-			const auto r1x = lower_cast (str) ;
-			if (is_hex_number (r1x))
-				return INDEX (r1x) - INDEX ('a') + 10 ;
-			assume (FALSE) ;
-			return bad (TYPEAS<ITEM>::expr) ;
-		}
-
-		BOOL is_control (CREF<ITEM> str) const override {
-			if (str == ITEM (127))
-				return TRUE ;
-			if (str <= ITEM (0))
-				return FALSE ;
-			if (str >= ITEM (32))
-				return FALSE ;
-			if (mSpaceSet.find (str) != NONE)
-				return FALSE ;
-			return TRUE ;
-		}
-
-		LENGTH value_precision () const override {
-			return 19 ;
-		}
-
-		LENGTH float_precision () const override {
-			return 1024 ;
-		}
-	} ;
-} ;
-
-template <class ITEM>
 using TextReader = typename TEXTREADER_HELP<ITEM ,ALWAYS>::TextReader ;
 
 template <class...>
@@ -1119,28 +1039,15 @@ trait TEXTWRITER_WRITEVALUE_HELP ;
 
 template <class ITEM>
 trait TEXTWRITER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
-	struct Attribute implement Interface {
-		virtual ITEM ending_item () const = 0 ;
-		virtual BOOL is_space (CREF<ITEM> str) const = 0 ;
-		virtual ITEM lower_upper_cast (CREF<ITEM> str) const = 0 ;
-		virtual BOOL is_number (CREF<INDEX> hex) const = 0 ;
-		virtual BOOL is_hex_number (CREF<INDEX> hex) const = 0 ;
-		virtual ITEM str_from_hex (CREF<INDEX> hex) const = 0 ;
-		virtual Optional<ITEM> escape_cast (CREF<ITEM> str) const = 0 ;
-		virtual LENGTH float_precision () const = 0 ;
-	} ;
-
-	template <class ARG1>
-	using CRTP_TextWriter = typename DEPENDENT<TEXTWRITER_HELP<ITEM ,ALWAYS> ,ARG1>::TextWriter ;
+	class TextWriter ;
 
 	struct Binder implement Interface {
-		virtual void friend_write (VREF<CRTP_TextWriter<DEPEND>> writer) const = 0 ;
+		virtual void friend_write (VREF<TextWriter> writer) const = 0 ;
 	} ;
 
 	struct Holder implement Interface {
 		virtual void initialize (RREF<VRef<RegBuffer<ITEM>>> stream) = 0 ;
-		virtual CRef<Attribute> get_attr () const = 0 ;
-		virtual void set_attr (RREF<CRef<Attribute>> attr_) = 0 ;
+		virtual VREF<TextAttribute<ITEM>> attribute () leftvalue = 0 ;
 		virtual LENGTH size () const = 0 ;
 		virtual LENGTH length () const = 0 ;
 		virtual void reset () = 0 ;
@@ -1186,17 +1093,8 @@ trait TEXTWRITER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 			mThis = move (that) ;
 		}
 
-		CRef<Attribute> get_attr () const {
-			return mThis->get_attr () ;
-		}
-
-		template <class ARG1>
-		void set_attr (CREF<TYPEID<ARG1>> id) {
-			require (IS_EXTEND<Attribute ,ARG1>) ;
-			auto &&tmp = memorize ([&] () {
-				return CRef<ARG1>::make () ;
-			}) ;
-			return mThis->set_attr (copy (tmp)) ;
+		VREF<TextAttribute<ITEM>> attribute () leftvalue {
+			return mThis->attribute () ;
 		}
 
 		LENGTH size () const {
@@ -1396,71 +1294,6 @@ trait TEXTWRITER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 		inline VREF<TextWriter> operator<< (CREF<typeof (EOS)> item) {
 			write (item) ;
 			return thiz ;
-		}
-	} ;
-} ;
-
-template <class ITEM>
-trait TEXTWRITER_ATTRIBUTE_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
-	using SUPER = typename TEXTWRITER_HELP<ITEM ,ALWAYS>::Attribute ;
-
-	class Attribute implement SUPER {
-	protected:
-		HashSet<ITEM> mEscapeSet ;
-
-	public:
-		implicit Attribute () {
-			mEscapeSet.add (ITEM ('\\') ,INDEX ('\\')) ;
-			mEscapeSet.add (ITEM ('/') ,INDEX ('/')) ;
-			mEscapeSet.add (ITEM ('\t') ,INDEX ('t')) ;
-			mEscapeSet.add (ITEM ('\b') ,INDEX ('b')) ;
-			mEscapeSet.add (ITEM ('\r') ,INDEX ('r')) ;
-			mEscapeSet.add (ITEM ('\n') ,INDEX ('n')) ;
-			mEscapeSet.add (ITEM ('\f') ,INDEX ('f')) ;
-			mEscapeSet.add (ITEM ('\'') ,INDEX ('\'')) ;
-			mEscapeSet.add (ITEM ('\"') ,INDEX ('\"')) ;
-			mEscapeSet.add (ITEM (7) ,INDEX ('u')) ;
-		}
-
-		ITEM ending_item () const override {
-			return ITEM (0) ;
-		}
-
-		BOOL is_space (CREF<ITEM> str) const override {
-			return FALSE ;
-		}
-
-		ITEM lower_upper_cast (CREF<ITEM> str) const override {
-			return str ;
-		}
-
-		BOOL is_number (CREF<INDEX> hex) const override {
-			return vbetween (hex ,0 ,10) ;
-		}
-
-		BOOL is_hex_number (CREF<INDEX> hex) const override {
-			return vbetween (hex ,10 ,16) ;
-		}
-
-		ITEM str_from_hex (CREF<INDEX> hex) const override {
-			if (is_number (hex))
-				return ITEM (INDEX ('0') + hex) ;
-			const auto r1x = lower_upper_cast (ITEM ('a')) ;
-			if (is_hex_number (hex))
-				return ITEM (INDEX (r1x) + hex - 10) ;
-			assume (FALSE) ;
-			return bad (TYPEAS<ITEM>::expr) ;
-		}
-
-		Optional<ITEM> escape_cast (CREF<ITEM> str) const override {
-			INDEX ix = mEscapeSet.map (str) ;
-			if (ix == NONE)
-				return FLAG (1) ;
-			return Optional<ITEM>::make (ITEM (ix)) ;
-		}
-
-		LENGTH float_precision () const override {
-			return 15 ;
 		}
 	} ;
 } ;

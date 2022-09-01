@@ -20,8 +20,8 @@ namespace CSC {
 template <class...>
 trait FUNCTION_system_string_cvt_HELP ;
 
-template <class DEPEND>
-trait FUNCTION_system_string_cvt_HELP<DEPEND ,REQUIRE<MACRO_COMPILER_MSVC<DEPEND>>> {
+template <class MACRO>
+trait FUNCTION_system_string_cvt_HELP<MACRO ,REQUIRE<MACRO_COMPILER_MSVC<MACRO>>> {
 #ifdef __CSC_COMPILER_MSVC__
 	struct FUNCTION_system_string_cvt {
 		inline String<STRA> operator() (CREF<String<STRW>> obj) const {
@@ -56,8 +56,8 @@ trait FUNCTION_system_string_cvt_HELP<DEPEND ,REQUIRE<MACRO_COMPILER_MSVC<DEPEND
 #endif
 } ;
 
-template <class DEPEND>
-trait FUNCTION_system_string_cvt_HELP<DEPEND ,REQUIRE<MACRO_COMPILER_GNUC<DEPEND>>> {
+template <class MACRO>
+trait FUNCTION_system_string_cvt_HELP<MACRO ,REQUIRE<MACRO_COMPILER_GNUC<MACRO>>> {
 #ifdef __CSC_COMPILER_GNUC__
 	struct FUNCTION_system_string_cvt {
 		inline String<STRA> operator() (CREF<String<STRW>> obj) const {
@@ -81,8 +81,8 @@ trait FUNCTION_system_string_cvt_HELP<DEPEND ,REQUIRE<MACRO_COMPILER_GNUC<DEPEND
 #endif
 } ;
 
-template <class DEPEND>
-trait FUNCTION_system_string_cvt_HELP<DEPEND ,REQUIRE<MACRO_COMPILER_CLANG<DEPEND>>> {
+template <class MACRO>
+trait FUNCTION_system_string_cvt_HELP<MACRO ,REQUIRE<MACRO_COMPILER_CLANG<MACRO>>> {
 #ifdef __CSC_COMPILER_CLANG__
 	struct FUNCTION_system_string_cvt {
 		inline String<STRA> operator() (CREF<String<STRW>> obj) const {
@@ -237,7 +237,6 @@ trait STRINGPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	} ;
 } ;
 
-template <>
 exports auto STRINGPROC_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
 	using R1X = typename STRINGPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
@@ -386,7 +385,6 @@ trait ANYSTRING_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	} ;
 } ;
 
-template <>
 exports auto ANYSTRING_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->Box<FakeHolder> {
 	using R1X = typename ANYSTRING_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	Box<FakeHolder> ret ;
@@ -434,12 +432,12 @@ trait ESCAPESTRING_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 
 		template <class ARG1 ,class ARG2>
 		void write_text_impl (VREF<ARG1> writer ,CREF<ARG2> text) const {
-			const auto r1x = writer.get_attr () ;
+			const auto r1x = writer.attribute () ;
 			writer << slice ("\"") ;
 			for (auto &&i : text) {
 				auto rxx = TRUE ;
 				if ifswitch (rxx) {
-					const auto r2x = r1x->escape_cast (i) ;
+					const auto r2x = r1x.escape_cast (i) ;
 					if ifnot (r2x.exist ())
 						discard ;
 					writer << slice ("\\") ;
@@ -454,7 +452,6 @@ trait ESCAPESTRING_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	} ;
 } ;
 
-template <>
 exports auto ESCAPESTRING_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->Box<FakeHolder> {
 	using R1X = typename ESCAPESTRING_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	Box<FakeHolder> ret ;
@@ -570,7 +567,6 @@ trait REPEATSTRING_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	} ;
 } ;
 
-template <>
 exports auto REPEATSTRING_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->Box<FakeHolder> {
 	using R1X = typename REPEATSTRING_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	Box<FakeHolder> ret ;
@@ -634,7 +630,6 @@ trait ALIGNEDSTRING_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	} ;
 } ;
 
-template <>
 exports auto ALIGNEDSTRING_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->Box<FakeHolder> {
 	using R1X = typename ALIGNEDSTRING_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	Box<FakeHolder> ret ;

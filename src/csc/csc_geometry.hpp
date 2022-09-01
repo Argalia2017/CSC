@@ -421,8 +421,8 @@ trait QUATERNION_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 		}
 
 		Vector<ITEM> axis () const {
-			const auto r1x = Vector<ITEM> (mQuaternion[0] ,mQuaternion[1] ,mQuaternion[2] ,ITEM (0)) ;
-			return r1x.normalize () * MathProc::sign (mQuaternion[3]) ;
+			const auto r1x = Vector<ITEM> (mQuaternion[0] ,mQuaternion[1] ,mQuaternion[2] ,ITEM (0)) * MathProc::sign (mQuaternion[3]) ;
+			return r1x.normalize () ;
 		}
 
 		ITEM angle () const {
@@ -508,22 +508,21 @@ trait MATRIX_SINGULAR_HELP ;
 
 template <class ITEM>
 trait MATRIX_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
+	class Matrix ;
+
 	using RANK = ENUMAS<VAL ,ENUMID<16>> ;
 
-	template <class ARG1>
-	using CRTP_Matrix = typename DEPENDENT<MATRIX_HELP<ITEM ,ALWAYS> ,ARG1>::Matrix ;
-
 	struct DECOMPOSE {
-		CRTP_Matrix<DEPEND> mTranslation ;
-		CRTP_Matrix<DEPEND> mRotation ;
-		CRTP_Matrix<DEPEND> mScale ;
-		CRTP_Matrix<DEPEND> mShear ;
+		Matrix mTranslation ;
+		Matrix mRotation ;
+		Matrix mScale ;
+		Matrix mShear ;
 	} ;
 
 	struct SINGULAR {
-		CRTP_Matrix<DEPEND> mU ;
-		CRTP_Matrix<DEPEND> mS ;
-		CRTP_Matrix<DEPEND> mV ;
+		Matrix mU ;
+		Matrix mS ;
+		Matrix mV ;
 	} ;
 
 	class Matrix {

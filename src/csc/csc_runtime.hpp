@@ -25,6 +25,8 @@ trait TIMEDURATION_IMPLHOLDER_HELP ;
 
 template <class DEPEND>
 trait TIMEDURATION_HELP<DEPEND ,ALWAYS> {
+	class TimeDuration ;
+
 	struct CALENDAR {
 		LENGTH mYear ;
 		LENGTH mMonth ;
@@ -39,9 +41,6 @@ trait TIMEDURATION_HELP<DEPEND ,ALWAYS> {
 	template <class ARG1>
 	using CRTP_TimePoint = typename DEPENDENT<TIMEPOINT_HELP<DEPEND ,ALWAYS> ,ARG1>::TimePoint ;
 
-	template <class ARG1>
-	using CRTP_TimeDuration = typename DEPENDENT<TIMEDURATION_HELP<DEPEND ,ALWAYS> ,ARG1>::TimeDuration ;
-
 	struct Holder implement Interface {
 		virtual void init_now () = 0 ;
 		virtual void init_epoch () = 0 ;
@@ -55,8 +54,8 @@ trait TIMEDURATION_HELP<DEPEND ,ALWAYS> {
 		virtual LENGTH microseconds () const = 0 ;
 		virtual LENGTH nanoseconds () const = 0 ;
 		virtual CALENDAR calendar () const = 0 ;
-		virtual CRTP_TimeDuration<DEPEND> add (CREF<Holder> that) const = 0 ;
-		virtual CRTP_TimeDuration<DEPEND> sub (CREF<Holder> that) const = 0 ;
+		virtual TimeDuration add (CREF<Holder> that) const = 0 ;
+		virtual TimeDuration sub (CREF<Holder> that) const = 0 ;
 	} ;
 
 	struct FUNCTION_extern {
@@ -181,9 +180,6 @@ using TimeDuration = typename TIMEDURATION_HELP<DEPEND ,ALWAYS>::TimeDuration ;
 template <class...>
 trait TIMEPOINT_HELP ;
 
-template <class...>
-trait TIMEPOINT_IMPLHOLDER_HELP ;
-
 template <class DEPEND>
 trait TIMEPOINT_HELP<DEPEND ,ALWAYS> {
 	using CALENDAR = typename TIMEDURATION_HELP<DEPEND ,ALWAYS>::CALENDAR ;
@@ -235,7 +231,7 @@ trait TIMEPOINT_HELP<DEPEND ,ALWAYS> {
 		}
 
 		TimePoint add (CREF<TimeDuration> that) const {
-			return mThis->add (keep[TYPEAS<CREF<Holder>>::expr] (that.mThis)) ;
+			return TimePoint (mThis->add (keep[TYPEAS<CREF<Holder>>::expr] (that.mThis))) ;
 		}
 
 		inline TimePoint operator+ (CREF<TimeDuration> that) const {
@@ -247,7 +243,7 @@ trait TIMEPOINT_HELP<DEPEND ,ALWAYS> {
 		}
 
 		TimePoint sub (CREF<TimeDuration> that) const {
-			return mThis->sub (keep[TYPEAS<CREF<Holder>>::expr] (that.mThis)) ;
+			return TimePoint (mThis->sub (keep[TYPEAS<CREF<Holder>>::expr] (that.mThis))) ;
 		}
 
 		inline TimePoint operator- (CREF<TimeDuration> that) const {
@@ -860,7 +856,7 @@ trait SYSTEM_HELP<DEPEND ,ALWAYS> {
 		virtual void initialize () = 0 ;
 		virtual String<STR> get_locale () const = 0 ;
 		virtual void set_locale (CREF<String<STR>> name) const = 0 ;
-		virtual void execute (CREF<String<STR>> command) const = 0 ;
+		virtual FLAG execute (CREF<String<STR>> command) const = 0 ;
 		virtual String<STR> working_path () const = 0 ;
 	} ;
 
@@ -894,7 +890,7 @@ trait SYSTEM_HELP<DEPEND ,ALWAYS> {
 			return mThis->set_locale (name) ;
 		}
 
-		void execute (CREF<String<STR>> command) const {
+		FLAG execute (CREF<String<STR>> command) const {
 			Scope<Mutex> anonymous (mMutex) ;
 			return mThis->execute (command) ;
 		}

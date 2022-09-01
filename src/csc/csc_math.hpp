@@ -279,7 +279,7 @@ trait MATHPROC_HELP<DEPEND ,ALWAYS> {
 		template <class ARG1>
 		imports ARG1 clamp (CREF<ARG1> curr ,CREF<ARG1> lb ,CREF<ARG1> rb) {
 			require (IS_SCALAR<ARG1>) ;
-			return instance ().mThis->floor (curr ,lb ,rb) ;
+			return instance ().mThis->clamp (curr ,lb ,rb) ;
 		}
 
 		template <class ARG1>

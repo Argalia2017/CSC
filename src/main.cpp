@@ -1,8 +1,12 @@
 ﻿#include "util.h"
 
-using namespace UNITTEST ;
+#ifdef __GNUC__
+#include <csc/begin.h>
+#include "inl.cpp"
+#include <csc/end.h>
+#endif
 
-exports void test_main () ;
+using namespace UNITTEST ;
 
 struct G_mY0 {
 	DOUBLE mY0 ;
@@ -177,7 +181,6 @@ struct G_mYn {
 
 #ifdef __CSC_TARGET_EXE__
 exports int main () {
-	Singleton<Reporter>::instance ().detect_memory_leaks () ;
 	Singleton<Reporter>::instance ().detect_crash_signal () ;
 	Singleton<Console>::instance ().open () ;
 	Singleton<Console>::instance ().link (slice (".")) ;

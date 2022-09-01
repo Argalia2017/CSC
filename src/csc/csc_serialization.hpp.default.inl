@@ -43,7 +43,7 @@ trait XMLPARSER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		void initialize (CREF<RegBuffer<STRU8>> stream) override {
-			using R1X = typename XMLPARSER_SERIALIZATION_HELP<DEPEND ,ALWAYS>::Serialization ;
+			using R1X = typename DEPENDENT<XMLPARSER_SERIALIZATION_HELP<DEPEND ,ALWAYS> ,DEPEND>::Serialization ;
 			auto rax = R1X (stream.lift ()) ;
 			rax.generate () ;
 			mHeap = CRef<HEAP>::make (rax.poll ()) ;
@@ -540,6 +540,9 @@ template <class DEPEND>
 trait XMLPARSER_COMBINATION_HELP<DEPEND ,ALWAYS> {
 	using NODE = typename XMLPARSER_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::NODE ;
 	using HEAP = typename XMLPARSER_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::HEAP ;
+	using Holder = typename XMLPARSER_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::Holder ;
+	using FakeHolder = typename XMLPARSER_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::FakeHolder ;
+	using ImplHolder = typename XMLPARSER_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	using XmlParser = typename XMLPARSER_HELP<DEPEND ,ALWAYS>::XmlParser ;
 
 	using NODE_CLAZZ_NULL = RANK0 ;
@@ -625,7 +628,16 @@ trait XMLPARSER_COMBINATION_HELP<DEPEND ,ALWAYS> {
 				rax.mAttribute[i] = move (mAttribute[i]) ;
 			}
 			const auto r2x = CRef<HEAP>::make (move (rax)) ;
-			return XmlParser (r2x ,0) ;
+			return factory (r2x) ;
+		}
+
+		XmlParser factory (CREF<CRef<HEAP>> heap) const {
+			auto rax = Box<FakeHolder> () ;
+			rax.acquire (TYPEAS<ImplHolder>::expr) ;
+			auto &&tmp = keep[TYPEAS<VREF<ImplHolder>>::expr] (keep[TYPEAS<VREF<Holder>>::expr] (rax.self)) ;
+			tmp.mHeap = heap ;
+			tmp.mIndex = 0 ;
+			return XmlParser (move (rax)) ;
 		}
 
 		Array<INDEX> shrink_order () const {
@@ -736,7 +748,8 @@ trait XMLPARSER_COMBINATION_HELP<DEPEND ,ALWAYS> {
 					mFoundNode[iy].mBaseNode.clear () ;
 				}
 				if ifswitch (TRUE) {
-					auto &&tmp = rax.mHeap->mTree[rax.mIndex].mAttributeSet ;
+					const auto r33x = to_ImplHolder (rax.mThis) ;
+					auto &&tmp = r33x->mHeap->mTree[r33x->mIndex].mAttributeSet ;
 					for (auto &&i : tmp.iter ()) {
 						INDEX jx = tmp.get (i) ;
 						INDEX jy = mFoundNode[ix].mAttributeSet.map (tmp[i]) ;
@@ -744,7 +757,7 @@ trait XMLPARSER_COMBINATION_HELP<DEPEND ,ALWAYS> {
 							if (jy != NONE)
 								discard ;
 							jy = mAttribute.insert () ;
-							mAttribute[jy] = rax.mHeap->mAttribute[jx] ;
+							mAttribute[jy] = r33x->mHeap->mAttribute[jx] ;
 							mFoundNode[ix].mAttributeSet.add (tmp[i] ,jy) ;
 						}
 					}
@@ -752,6 +765,10 @@ trait XMLPARSER_COMBINATION_HELP<DEPEND ,ALWAYS> {
 				mFoundNode[iy].mBaseNode.add (rax.child ()) ;
 				rax = rax.brother () ;
 			}
+		}
+
+		CRef<ImplHolder> to_ImplHolder (CREF<Holder> that) const {
+			return CRef<ImplHolder>::reference (keep[TYPEAS<CREF<ImplHolder>>::expr] (that)) ;
 		}
 
 		void update_found_array_node (CREF<XmlParser> node) {
@@ -774,11 +791,12 @@ trait XMLPARSER_COMBINATION_HELP<DEPEND ,ALWAYS> {
 				mFoundNode[iy].mClazz = r2x ;
 				mFoundNode[iy].mAttributeSet = mAttributeSet.share () ;
 				if ifswitch (TRUE) {
-					auto &&tmp = rax.mHeap->mTree[rax.mIndex].mAttributeSet ;
+					const auto r33x = to_ImplHolder (rax.mThis) ;
+					auto &&tmp = r33x->mHeap->mTree[r33x->mIndex].mAttributeSet ;
 					for (auto &&i : tmp.iter ()) {
 						INDEX jx = tmp.get (i) ;
 						INDEX jy = mAttribute.insert () ;
-						mAttribute[jy] = rax.mHeap->mAttribute[jx] ;
+						mAttribute[jy] = r33x->mHeap->mAttribute[jx] ;
 						mFoundNode[ix].mAttributeSet.add (tmp[i] ,jy) ;
 					}
 				}
@@ -835,7 +853,6 @@ trait XMLPARSER_COMBINATION_HELP<DEPEND ,ALWAYS> {
 	} ;
 } ;
 
-template <>
 exports auto XMLPARSER_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->Box<FakeHolder> {
 	using R1X = typename XMLPARSER_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	Box<FakeHolder> ret ;
@@ -881,7 +898,7 @@ trait JSONPARSER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		void initialize (CREF<RegBuffer<STRU8>> stream) override {
-			using R1X = typename JSONPARSER_SERIALIZATION_HELP<DEPEND ,ALWAYS>::Serialization ;
+			using R1X = typename DEPENDENT<JSONPARSER_SERIALIZATION_HELP<DEPEND ,ALWAYS> ,DEPEND>::Serialization ;
 			auto rax = R1X (stream.lift ()) ;
 			rax.generate () ;
 			mHeap = CRef<HEAP>::make (rax.poll ()) ;
@@ -1458,7 +1475,6 @@ trait JSONPARSER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 	} ;
 } ;
 
-template <>
 exports auto JSONPARSER_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->Box<FakeHolder> {
 	using R1X = typename JSONPARSER_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	Box<FakeHolder> ret ;
