@@ -6,15 +6,51 @@
 
 namespace CSC {
 template <class DEPEND>
+trait BYTEATTRIBUTE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
+	using Holder = typename BYTEATTRIBUTE_HELP<DEPEND ,ALWAYS>::Holder ;
+
+	class ImplHolder implement Holder {
+	public:
+		implicit ImplHolder () = default ;
+
+		void initialize () override {
+			noop () ;
+		}
+
+		BYTE ending_item () const override {
+			return BYTE (0X00) ;
+		}
+
+		BYTE space_item () const override {
+			return BYTE (0XCC) ;
+		}
+
+		BOOL is_big_endian () const override {
+			return memorize ([&] () {
+				const auto r1x = WORD (0X00FF) ;
+				const auto r2x = bitwise[TYPEAS<BoxBuffer<BYTE ,SIZE_OF<WORD>>>::expr] (r1x) ;
+				if (r2x[0] != BYTE (0X00))
+					return FALSE ;
+				return TRUE ;
+			}) ;
+		}
+	} ;
+} ;
+
+exports auto BYTEATTRIBUTE_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
+	using R1X = typename BYTEATTRIBUTE_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
+	return VRef<R1X>::make () ;
+}
+
+template <class DEPEND>
 trait BYTEREADER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
-	using Attribute = typename BYTEREADER_HELP<DEPEND ,ALWAYS>::Attribute ;
 	using Binder = typename BYTEREADER_HELP<DEPEND ,ALWAYS>::Binder ;
 	using Holder = typename BYTEREADER_HELP<DEPEND ,ALWAYS>::Holder ;
 	using ByteReader = typename BYTEREADER_HELP<DEPEND ,ALWAYS>::ByteReader ;
 
 	class ImplHolder implement Holder {
 	protected:
-		CRef<Attribute> mAttr ;
+		ByteAttribute mAttribute ;
 		CRef<RegBuffer<BYTE>> mStream ;
 		INDEX mRead ;
 		INDEX mWrite ;
@@ -25,22 +61,13 @@ trait BYTEREADER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		implicit ImplHolder () = default ;
 
 		void initialize (RREF<CRef<RegBuffer<BYTE>>> stream) override {
-			using R1X = typename BYTEREADER_ATTRIBUTE_HELP<DEPEND ,ALWAYS>::Attribute ;
-			auto &&tmp = memorize ([&] () {
-				return CRef<R1X>::make () ;
-			}) ;
-			set_attr (copy (tmp)) ;
 			mStream = move (stream) ;
 			reset () ;
 			backup () ;
 		}
 
-		CRef<Attribute> get_attr () const override {
-			return mAttr ;
-		}
-
-		void set_attr (RREF<CRef<Attribute>> attr_) override {
-			mAttr = move (attr_) ;
+		VREF<ByteAttribute> attribute () leftvalue override {
+			return mAttribute ;
 		}
 
 		LENGTH size () const override {
@@ -90,14 +117,14 @@ trait BYTEREADER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				mRead++ ;
 			}
 			if ifswitch (rxx) {
-				item = mAttr->ending_item () ;
+				item = mAttribute.ending_item () ;
 			}
 		}
 
 		void read (VREF<WORD> item) override {
 			auto rxx = TRUE ;
 			if ifswitch (rxx) {
-				if ifnot (mAttr->is_big_endian ())
+				if ifnot (mAttribute.is_big_endian ())
 					discard ;
 				auto rax = BoxBuffer<BYTE ,SIZE_OF<WORD>> () ;
 				for (auto &&i : iter (0 ,SIZE_OF<WORD>::expr))
@@ -117,7 +144,7 @@ trait BYTEREADER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		void read (VREF<CHAR> item) override {
 			auto rxx = TRUE ;
 			if ifswitch (rxx) {
-				if ifnot (mAttr->is_big_endian ())
+				if ifnot (mAttribute.is_big_endian ())
 					discard ;
 				auto rax = BoxBuffer<BYTE ,SIZE_OF<CHAR>> () ;
 				for (auto &&i : iter (0 ,SIZE_OF<CHAR>::expr))
@@ -137,7 +164,7 @@ trait BYTEREADER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		void read (VREF<DATA> item) override {
 			auto rxx = TRUE ;
 			if ifswitch (rxx) {
-				if ifnot (mAttr->is_big_endian ())
+				if ifnot (mAttribute.is_big_endian ())
 					discard ;
 				auto rax = BoxBuffer<BYTE ,SIZE_OF<DATA>> () ;
 				for (auto &&i : iter (0 ,SIZE_OF<DATA>::expr))
@@ -298,7 +325,7 @@ trait BYTEREADER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		void read_gap () override {
-			const auto r1x = mAttr->space_item () ;
+			const auto r1x = mAttribute.space_item () ;
 			auto rax = BYTE () ;
 			read (rax) ;
 			assume (rax == r1x) ;
@@ -307,7 +334,7 @@ trait BYTEREADER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		void read_eos () override {
-			const auto r1x = mAttr->ending_item () ;
+			const auto r1x = mAttribute.ending_item () ;
 			auto rax = BYTE () ;
 			for (auto &&i : iter (mRead ,mStream->size ())) {
 				noop (i) ;
@@ -318,7 +345,6 @@ trait BYTEREADER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	} ;
 } ;
 
-template <>
 exports auto BYTEREADER_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
 	using R1X = typename BYTEREADER_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
@@ -326,13 +352,12 @@ exports auto BYTEREADER_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<
 
 template <class DEPEND>
 trait BYTEWRITER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
-	using Attribute = typename BYTEWRITER_HELP<DEPEND ,ALWAYS>::Attribute ;
 	using Binder = typename BYTEWRITER_HELP<DEPEND ,ALWAYS>::Binder ;
 	using Holder = typename BYTEWRITER_HELP<DEPEND ,ALWAYS>::Holder ;
 
 	class ImplHolder implement Holder {
 	protected:
-		CRef<Attribute> mAttr ;
+		ByteAttribute mAttribute ;
 		VRef<RegBuffer<BYTE>> mStream ;
 		INDEX mRead ;
 		INDEX mWrite ;
@@ -343,22 +368,13 @@ trait BYTEWRITER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		implicit ImplHolder () = default ;
 
 		void initialize (RREF<VRef<RegBuffer<BYTE>>> stream) override {
-			using R1X = typename BYTEWRITER_ATTRIBUTE_HELP<DEPEND ,ALWAYS>::Attribute ;
-			auto &&tmp = memorize ([&] () {
-				return CRef<R1X>::make () ;
-			}) ;
-			set_attr (copy (tmp)) ;
 			mStream = move (stream) ;
 			reset () ;
 			backup () ;
 		}
 
-		CRef<Attribute> get_attr () const override {
-			return mAttr ;
-		}
-
-		void set_attr (RREF<CRef<Attribute>> attr_) override {
-			mAttr = move (attr_) ;
+		VREF<ByteAttribute> attribute () leftvalue override {
+			return mAttribute ;
 		}
 
 		LENGTH size () const override {
@@ -405,7 +421,7 @@ trait BYTEWRITER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			const auto r1x = bitwise[TYPEAS<BoxBuffer<BYTE ,SIZE_OF<WORD>>>::expr] (item) ;
 			auto rxx = TRUE ;
 			if ifswitch (rxx) {
-				if ifnot (mAttr->is_big_endian ())
+				if ifnot (mAttribute.is_big_endian ())
 					discard ;
 				for (auto &&i : iter (0 ,SIZE_OF<WORD>::expr))
 					write (r1x[i]) ;
@@ -422,7 +438,7 @@ trait BYTEWRITER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			const auto r1x = bitwise[TYPEAS<BoxBuffer<BYTE ,SIZE_OF<CHAR>>>::expr] (item) ;
 			auto rxx = TRUE ;
 			if ifswitch (rxx) {
-				if ifnot (mAttr->is_big_endian ())
+				if ifnot (mAttribute.is_big_endian ())
 					discard ;
 				for (auto &&i : iter (0 ,SIZE_OF<CHAR>::expr))
 					write (r1x[i]) ;
@@ -439,7 +455,7 @@ trait BYTEWRITER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			const auto r1x = bitwise[TYPEAS<BoxBuffer<BYTE ,SIZE_OF<DATA>>>::expr] (item) ;
 			auto rxx = TRUE ;
 			if ifswitch (rxx) {
-				if ifnot (mAttr->is_big_endian ())
+				if ifnot (mAttribute.is_big_endian ())
 					discard ;
 				for (auto &&i : iter (0 ,SIZE_OF<DATA>::expr))
 					write (r1x[i]) ;
@@ -555,13 +571,13 @@ trait BYTEWRITER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		void write_gap () override {
-			const auto r1x = mAttr->space_item () ;
+			const auto r1x = mAttribute.space_item () ;
 			write (r1x) ;
 			write (r1x) ;
 		}
 
 		void write_eos () override {
-			const auto r1x = mAttr->ending_item () ;
+			const auto r1x = mAttribute.ending_item () ;
 			for (auto &&i : iter (mWrite ,mStream->size ())) {
 				noop (i) ;
 				write (r1x) ;
@@ -570,15 +586,176 @@ trait BYTEWRITER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	} ;
 } ;
 
-template <>
 exports auto BYTEWRITER_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
 	using R1X = typename BYTEWRITER_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
 }
 
 template <class ITEM>
+trait TEXTATTRIBUTE_IMPLHOLDER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
+	using Holder = typename TEXTATTRIBUTE_HELP<ITEM ,ALWAYS>::Holder ;
+
+	using SPACE_CLAZZ_SPACE = RANK1 ;
+	using SPACE_CLAZZ_ENDLINE = RANK2 ;
+
+	class ImplHolder implement Holder {
+	protected:
+		HashSet<ITEM> mSpaceSet ;
+		HashSet<ITEM> mEscapeSet ;
+
+	public:
+		implicit ImplHolder () = default ;
+
+		void initialize () override {
+			mSpaceSet.add (ITEM (' ') ,SPACE_CLAZZ_SPACE::expr) ;
+			mSpaceSet.add (ITEM ('\t') ,SPACE_CLAZZ_SPACE::expr) ;
+			mSpaceSet.add (ITEM ('\b') ,SPACE_CLAZZ_SPACE::expr) ;
+			mSpaceSet.add (ITEM ('\r') ,SPACE_CLAZZ_ENDLINE::expr) ;
+			mSpaceSet.add (ITEM ('\n') ,SPACE_CLAZZ_ENDLINE::expr) ;
+			mSpaceSet.add (ITEM ('\f') ,SPACE_CLAZZ_ENDLINE::expr) ;
+			mEscapeSet.add (ITEM ('\\') ,INDEX ('\\')) ;
+			mEscapeSet.add (ITEM ('/') ,INDEX ('/')) ;
+			mEscapeSet.add (ITEM ('t') ,INDEX ('\t')) ;
+			mEscapeSet.add (ITEM ('b') ,INDEX ('\b')) ;
+			mEscapeSet.add (ITEM ('r') ,INDEX ('\r')) ;
+			mEscapeSet.add (ITEM ('n') ,INDEX ('\n')) ;
+			mEscapeSet.add (ITEM ('f') ,INDEX ('\f')) ;
+			mEscapeSet.add (ITEM ('\'') ,INDEX ('\'')) ;
+			mEscapeSet.add (ITEM ('\"') ,INDEX ('\"')) ;
+			mEscapeSet.add (ITEM ('u') ,INDEX (7)) ;
+		}
+
+		ITEM ending_item () const override {
+			return ITEM (0) ;
+		}
+
+		BOOL is_space (CREF<ITEM> str) const override {
+			return mSpaceSet.find (str) != NONE ;
+		}
+
+		BOOL is_endline_space (CREF<ITEM> str) const override {
+			return mSpaceSet.map (str) != SPACE_CLAZZ_ENDLINE::expr ;
+		}
+
+		BOOL is_word (CREF<ITEM> str) const override {
+			if (str >= ITEM ('a'))
+				if (str <= ITEM ('z'))
+					return TRUE ;
+			if (str >= ITEM ('A'))
+				if (str <= ITEM ('Z'))
+					return TRUE ;
+			if (str == ITEM ('_'))
+				return TRUE ;
+			return FALSE ;
+		}
+
+		ITEM lower_cast (CREF<ITEM> str) const {
+			if (str >= ITEM ('A'))
+				if (str <= ITEM ('Z'))
+					return ITEM (INDEX (str) - INDEX ('A') + INDEX ('a')) ;
+			return str ;
+		}
+
+		ITEM upper_cast (CREF<ITEM> str) const {
+			if (str >= ITEM ('a'))
+				if (str <= ITEM ('z'))
+					return ITEM (INDEX (str) - INDEX ('a') + INDEX ('A')) ;
+			return str ;
+		}
+
+		BOOL is_number (CREF<ITEM> str) const override {
+			if (str >= ITEM ('0'))
+				if (str <= ITEM ('9'))
+					return TRUE ;
+			return FALSE ;
+		}
+
+		BOOL is_hex_number (CREF<ITEM> str) const override {
+			if (str >= ITEM ('a'))
+				if (str <= ITEM ('f'))
+					return TRUE ;
+			return FALSE ;
+		}
+
+		INDEX hex_from_str (CREF<ITEM> str) const override {
+			if (is_number (str))
+				return INDEX (str) - INDEX ('0') ;
+			const auto r1x = lower_cast (str) ;
+			if (is_hex_number (r1x))
+				return INDEX (r1x) - INDEX ('a') + 10 ;
+			assume (FALSE) ;
+			return bad (TYPEAS<ITEM>::expr) ;
+		}
+
+		ITEM str_from_hex (CREF<INDEX> hex) const override {
+			if (vbetween (hex ,0 ,10))
+				return ITEM (INDEX ('0') + hex) ;
+			if (vbetween (hex ,10 ,16))
+				return ITEM (INDEX ('A') + hex - 10) ;
+			assume (FALSE) ;
+			return bad (TYPEAS<ITEM>::expr) ;
+		}
+
+		BOOL is_control (CREF<ITEM> str) const override {
+			if (str == ITEM (127))
+				return TRUE ;
+			if (str <= ITEM (0))
+				return FALSE ;
+			if (str >= ITEM (32))
+				return FALSE ;
+			if (mSpaceSet.find (str) != NONE)
+				return FALSE ;
+			return TRUE ;
+		}
+
+		Optional<ITEM> escape_cast (CREF<ITEM> str) const override {
+			INDEX ix = mEscapeSet.map (str) ;
+			if (ix == NONE)
+				return FLAG (1) ;
+			return Optional<ITEM>::make (ITEM (ix)) ;
+		}
+
+		LENGTH value_precision () const override {
+			return 19 ;
+		}
+
+		LENGTH float_precision () const override {
+			return 15 ;
+		}
+
+		LENGTH number_precision () const override {
+			return 1024 ;
+		}
+	} ;
+} ;
+
+exports auto TEXTATTRIBUTE_HELP<STRA ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
+	using R1X = typename TEXTATTRIBUTE_IMPLHOLDER_HELP<STRA ,ALWAYS>::ImplHolder ;
+	return VRef<R1X>::make () ;
+}
+
+exports auto TEXTATTRIBUTE_HELP<STRW ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
+	using R1X = typename TEXTATTRIBUTE_IMPLHOLDER_HELP<STRW ,ALWAYS>::ImplHolder ;
+	return VRef<R1X>::make () ;
+}
+
+exports auto TEXTATTRIBUTE_HELP<STRU8 ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
+	using R1X = typename TEXTATTRIBUTE_IMPLHOLDER_HELP<STRU8 ,ALWAYS>::ImplHolder ;
+	return VRef<R1X>::make () ;
+}
+
+exports auto TEXTATTRIBUTE_HELP<STRU16 ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
+	using R1X = typename TEXTATTRIBUTE_IMPLHOLDER_HELP<STRU16 ,ALWAYS>::ImplHolder ;
+	return VRef<R1X>::make () ;
+}
+
+exports auto TEXTATTRIBUTE_HELP<STRU32 ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
+	using R1X = typename TEXTATTRIBUTE_IMPLHOLDER_HELP<STRU32 ,ALWAYS>::ImplHolder ;
+	return VRef<R1X>::make () ;
+}
+
+template <class ITEM>
 trait TEXTREADER_IMPLHOLDER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
-	using Attribute = typename TEXTREADER_HELP<ITEM ,ALWAYS>::Attribute ;
 	using NOTATION = typename FLOATPROC_HELP<DEPEND ,ALWAYS>::NOTATION ;
 	using Binder = typename TEXTREADER_HELP<ITEM ,ALWAYS>::Binder ;
 	using Holder = typename TEXTREADER_HELP<ITEM ,ALWAYS>::Holder ;
@@ -586,7 +763,7 @@ trait TEXTREADER_IMPLHOLDER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 
 	class ImplHolder implement Holder {
 	protected:
-		CRef<Attribute> mAttr ;
+		TextAttribute<ITEM> mAttribute ;
 		CRef<RegBuffer<ITEM>> mStream ;
 		INDEX mRead ;
 		INDEX mWrite ;
@@ -597,22 +774,13 @@ trait TEXTREADER_IMPLHOLDER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 		implicit ImplHolder () = default ;
 
 		void initialize (RREF<CRef<RegBuffer<ITEM>>> stream) override {
-			using R1X = typename TEXTREADER_ATTRIBUTE_HELP<ITEM ,ALWAYS>::Attribute ;
-			auto &&tmp = memorize ([&] () {
-				return CRef<R1X>::make () ;
-			}) ;
-			set_attr (copy (tmp)) ;
 			mStream = move (stream) ;
 			reset () ;
 			backup () ;
 		}
 
-		CRef<Attribute> get_attr () const override {
-			return mAttr ;
-		}
-
-		void set_attr (RREF<CRef<Attribute>> attr_) override {
-			mAttr = move (attr_) ;
+		VREF<TextAttribute<ITEM>> attribute () leftvalue override {
+			return mAttribute ;
 		}
 
 		LENGTH size () const override {
@@ -662,7 +830,7 @@ trait TEXTREADER_IMPLHOLDER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 				mRead++ ;
 			}
 			if ifswitch (rxx) {
-				item = mAttr->ending_item () ;
+				item = mAttribute.ending_item () ;
 			}
 		}
 
@@ -742,7 +910,7 @@ trait TEXTREADER_IMPLHOLDER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 			}
 			auto rxx = TRUE ;
 			if ifswitch (rxx) {
-				assume (mAttr->is_number (rax)) ;
+				assume (mAttribute.is_number (rax)) ;
 				auto rbx = NOTATION () ;
 				rbx.mRadix = 10 ;
 				rbx.mSign = FALSE ;
@@ -760,28 +928,28 @@ trait TEXTREADER_IMPLHOLDER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 
 		void read_value (VREF<NOTATION> fexp10 ,VREF<ITEM> top) {
 			assert (fexp10.mRadix == 10) ;
-			const auto r1x = mAttr->value_precision () ;
-			const auto r2x = mAttr->float_precision () ;
-			fexp10.mMantissa = mAttr->hex_from_str (top) ;
+			const auto r1x = mAttribute.value_precision () ;
+			const auto r2x = mAttribute.number_precision () ;
+			fexp10.mMantissa = mAttribute.hex_from_str (top) ;
 			fexp10.mPrecision++ ;
 			fexp10.mExponent = 0 ;
 			if ifswitch (TRUE) {
 				while (TRUE) {
-					if (top == mAttr->ending_item ())
+					if (top == mAttribute.ending_item ())
 						break ;
 					read (top) ;
-					if ifnot (mAttr->is_number (top))
+					if ifnot (mAttribute.is_number (top))
 						break ;
 					if (fexp10.mPrecision > r1x)
 						break ;
 					fexp10.mMantissa *= 10 ;
-					fexp10.mMantissa += mAttr->hex_from_str (top) ;
+					fexp10.mMantissa += mAttribute.hex_from_str (top) ;
 					fexp10.mPrecision++ ;
 				}
 				while (TRUE) {
-					if (top == mAttr->ending_item ())
+					if (top == mAttribute.ending_item ())
 						break ;
-					if ifnot (mAttr->is_number (top))
+					if ifnot (mAttribute.is_number (top))
 						break ;
 					if (fexp10.mPrecision > r2x)
 						break ;
@@ -830,7 +998,7 @@ trait TEXTREADER_IMPLHOLDER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 				item = DOUBLE_INF ;
 			}
 			if ifswitch (rxx) {
-				assume (mAttr->is_number (rax)) ;
+				assume (mAttribute.is_number (rax)) ;
 				auto rbx = NOTATION () ;
 				rbx.mRadix = 10 ;
 				rbx.mSign = FALSE ;
@@ -849,29 +1017,29 @@ trait TEXTREADER_IMPLHOLDER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 
 		void read_float (VREF<NOTATION> fexp10 ,VREF<ITEM> top) {
 			assert (fexp10.mRadix == 10) ;
-			const auto r1x = mAttr->float_precision () ;
+			const auto r1x = mAttribute.number_precision () ;
 			read_value (fexp10 ,top) ;
 			if ifswitch (TRUE) {
 				if (top != ITEM ('.'))
 					discard ;
 				read (top) ;
 				while (TRUE) {
-					if (top == mAttr->ending_item ())
+					if (top == mAttribute.ending_item ())
 						break ;
 					read (top) ;
-					if ifnot (mAttr->is_number (top))
+					if ifnot (mAttribute.is_number (top))
 						break ;
 					if (fexp10.mPrecision > r1x)
 						break ;
 					fexp10.mMantissa *= 10 ;
-					fexp10.mMantissa += mAttr->hex_from_str (top) ;
+					fexp10.mMantissa += mAttribute.hex_from_str (top) ;
 					fexp10.mExponent-- ;
 					fexp10.mPrecision++ ;
 				}
 				while (TRUE) {
-					if (top == mAttr->ending_item ())
+					if (top == mAttribute.ending_item ())
 						break ;
-					if ifnot (mAttr->is_number (top))
+					if ifnot (mAttribute.is_number (top))
 						break ;
 					read (top) ;
 				}
@@ -881,15 +1049,15 @@ trait TEXTREADER_IMPLHOLDER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 					if (top != ITEM ('E'))
 						discard ;
 				read (top) ;
-				assume (mAttr->is_number (top)) ;
+				assume (mAttribute.is_number (top)) ;
 				auto rbx = NOTATION () ;
 				rbx.mRadix = 10 ;
 				rbx.mSign = FALSE ;
 				rbx.mPrecision = 0 ;
 				read_value (rbx ,top) ;
-				assume (MathProc::abs (rbx.mMantissa) < mAttr->float_precision ()) ;
+				assume (MathProc::abs (rbx.mMantissa) < r1x) ;
 				fexp10.mExponent += rbx.mMantissa ;
-				assume (MathProc::abs (fexp10.mExponent) < mAttr->float_precision ()) ;
+				assume (MathProc::abs (fexp10.mExponent) < r1x) ;
 			}
 		}
 
@@ -903,10 +1071,10 @@ trait TEXTREADER_IMPLHOLDER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 			for (auto &&i : iter (0 ,SIZE_OF<BYTE>::expr)) {
 				noop (i) ;
 				read (rax) ;
-				const auto r1x = BYTE (mAttr->hex_from_str (rax)) ;
+				const auto r1x = BYTE (mAttribute.hex_from_str (rax)) ;
 				item = (item << 4) | r1x ;
 				read (rax) ;
-				const auto r2x = BYTE (mAttr->hex_from_str (rax)) ;
+				const auto r2x = BYTE (mAttribute.hex_from_str (rax)) ;
 				item = (item << 4) | r2x ;
 			}
 		}
@@ -921,10 +1089,10 @@ trait TEXTREADER_IMPLHOLDER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 			for (auto &&i : iter (0 ,SIZE_OF<WORD>::expr)) {
 				noop (i) ;
 				read (rax) ;
-				const auto r1x = WORD (mAttr->hex_from_str (rax)) ;
+				const auto r1x = WORD (mAttribute.hex_from_str (rax)) ;
 				item = (item << 4) | r1x ;
 				read (rax) ;
-				const auto r2x = WORD (mAttr->hex_from_str (rax)) ;
+				const auto r2x = WORD (mAttribute.hex_from_str (rax)) ;
 				item = (item << 4) | r2x ;
 			}
 		}
@@ -939,10 +1107,10 @@ trait TEXTREADER_IMPLHOLDER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 			for (auto &&i : iter (0 ,SIZE_OF<CHAR>::expr)) {
 				noop (i) ;
 				read (rax) ;
-				const auto r1x = CHAR (mAttr->hex_from_str (rax)) ;
+				const auto r1x = CHAR (mAttribute.hex_from_str (rax)) ;
 				item = (item << 4) | r1x ;
 				read (rax) ;
-				const auto r2x = CHAR (mAttr->hex_from_str (rax)) ;
+				const auto r2x = CHAR (mAttribute.hex_from_str (rax)) ;
 				item = (item << 4) | r2x ;
 			}
 		}
@@ -957,10 +1125,10 @@ trait TEXTREADER_IMPLHOLDER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 			for (auto &&i : iter (0 ,SIZE_OF<DATA>::expr)) {
 				noop (i) ;
 				read (rax) ;
-				const auto r1x = DATA (mAttr->hex_from_str (rax)) ;
+				const auto r1x = DATA (mAttribute.hex_from_str (rax)) ;
 				item = (item << 4) | r1x ;
 				read (rax) ;
-				const auto r2x = DATA (mAttr->hex_from_str (rax)) ;
+				const auto r2x = DATA (mAttribute.hex_from_str (rax)) ;
 				item = (item << 4) | r2x ;
 			}
 		}
@@ -992,9 +1160,9 @@ trait TEXTREADER_IMPLHOLDER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 			const auto r1x = mRead ;
 			read (rax) ;
 			while (TRUE) {
-				if (rax == mAttr->ending_item ())
+				if (rax == mAttribute.ending_item ())
 					break ;
-				if (mAttr->is_space (rax))
+				if (mAttribute.is_space (rax))
 					break ;
 				ret++ ;
 				read (rax) ;
@@ -1088,9 +1256,9 @@ trait TEXTREADER_IMPLHOLDER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 			const auto r1x = mRead ;
 			read (rax) ;
 			while (TRUE) {
-				if (rax == mAttr->ending_item ())
+				if (rax == mAttribute.ending_item ())
 					break ;
-				if ifnot (mAttr->is_space (rax))
+				if ifnot (mAttribute.is_space (rax))
 					break ;
 				ret++ ;
 				read (rax) ;
@@ -1100,7 +1268,7 @@ trait TEXTREADER_IMPLHOLDER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 		}
 
 		void read_eos () override {
-			const auto r1x = mAttr->ending_item () ;
+			const auto r1x = mAttribute.ending_item () ;
 			auto rax = ITEM () ;
 			read (rax) ;
 			assume (rax == r1x) ;
@@ -1111,7 +1279,7 @@ trait TEXTREADER_IMPLHOLDER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 				mRead-- ;
 				if (mRead < mStream->size () - 1)
 					discard ;
-				if (top != mAttr->ending_item ())
+				if (top != mAttribute.ending_item ())
 					discard ;
 				mRead++ ;
 			}
@@ -1119,31 +1287,26 @@ trait TEXTREADER_IMPLHOLDER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 	} ;
 } ;
 
-template <>
 exports auto TEXTREADER_HELP<STRA ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
 	using R1X = typename TEXTREADER_IMPLHOLDER_HELP<STRA ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
 }
 
-template <>
 exports auto TEXTREADER_HELP<STRW ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
 	using R1X = typename TEXTREADER_IMPLHOLDER_HELP<STRW ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
 }
 
-template <>
 exports auto TEXTREADER_HELP<STRU8 ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
 	using R1X = typename TEXTREADER_IMPLHOLDER_HELP<STRU8 ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
 }
 
-template <>
 exports auto TEXTREADER_HELP<STRU16 ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
 	using R1X = typename TEXTREADER_IMPLHOLDER_HELP<STRU16 ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
 }
 
-template <>
 exports auto TEXTREADER_HELP<STRU32 ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
 	using R1X = typename TEXTREADER_IMPLHOLDER_HELP<STRU32 ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
@@ -1151,7 +1314,6 @@ exports auto TEXTREADER_HELP<STRU32 ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<
 
 template <class ITEM>
 trait TEXTWRITER_IMPLHOLDER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
-	using Attribute = typename TEXTWRITER_HELP<ITEM ,ALWAYS>::Attribute ;
 	using NOTATION = typename FLOATPROC_HELP<DEPEND ,ALWAYS>::NOTATION ;
 	using Binder = typename TEXTWRITER_HELP<ITEM ,ALWAYS>::Binder ;
 	using Holder = typename TEXTWRITER_HELP<ITEM ,ALWAYS>::Holder ;
@@ -1159,7 +1321,7 @@ trait TEXTWRITER_IMPLHOLDER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 
 	class ImplHolder implement Holder {
 	protected:
-		CRef<Attribute> mAttr ;
+		TextAttribute<ITEM> mAttribute ;
 		VRef<RegBuffer<ITEM>> mStream ;
 		INDEX mRead ;
 		INDEX mWrite ;
@@ -1170,22 +1332,13 @@ trait TEXTWRITER_IMPLHOLDER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 		implicit ImplHolder () = default ;
 
 		void initialize (RREF<VRef<RegBuffer<ITEM>>> stream) override {
-			using R1X = typename TEXTWRITER_ATTRIBUTE_HELP<ITEM ,ALWAYS>::Attribute ;
-			auto &&tmp = memorize ([&] () {
-				return CRef<R1X>::make () ;
-			}) ;
-			set_attr (copy (tmp)) ;
 			mStream = move (stream) ;
 			reset () ;
 			backup () ;
 		}
 
-		CRef<Attribute> get_attr () const override {
-			return mAttr ;
-		}
-
-		void set_attr (RREF<CRef<Attribute>> attr_) override {
-			mAttr = move (attr_) ;
+		VREF<TextAttribute<ITEM>> attribute () leftvalue override {
+			return mAttribute ;
 		}
 
 		LENGTH size () const override {
@@ -1233,17 +1386,17 @@ trait TEXTWRITER_IMPLHOLDER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 			if ifswitch (rxx) {
 				if ifnot (item)
 					discard ;
-				write (mAttr->lower_upper_cast (ITEM ('t'))) ;
-				write (mAttr->lower_upper_cast (ITEM ('r'))) ;
-				write (mAttr->lower_upper_cast (ITEM ('u'))) ;
-				write (mAttr->lower_upper_cast (ITEM ('e'))) ;
+				write (ITEM ('t')) ;
+				write (ITEM ('r')) ;
+				write (ITEM ('u')) ;
+				write (ITEM ('e')) ;
 			}
 			if ifswitch (rxx) {
-				write (mAttr->lower_upper_cast (ITEM ('f'))) ;
-				write (mAttr->lower_upper_cast (ITEM ('a'))) ;
-				write (mAttr->lower_upper_cast (ITEM ('l'))) ;
-				write (mAttr->lower_upper_cast (ITEM ('s'))) ;
-				write (mAttr->lower_upper_cast (ITEM ('e'))) ;
+				write (ITEM ('f')) ;
+				write (ITEM ('a')) ;
+				write (ITEM ('l')) ;
+				write (ITEM ('s')) ;
+				write (ITEM ('e')) ;
 			}
 		}
 
@@ -1262,9 +1415,9 @@ trait TEXTWRITER_IMPLHOLDER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 			if ifswitch (rxx) {
 				if (item != VAL64_ABS)
 					discard ;
-				write (mAttr->lower_upper_cast (ITEM ('a'))) ;
-				write (mAttr->lower_upper_cast (ITEM ('b'))) ;
-				write (mAttr->lower_upper_cast (ITEM ('s'))) ;
+				write (ITEM ('a')) ;
+				write (ITEM ('b')) ;
+				write (ITEM ('s')) ;
 			}
 			if ifswitch (rxx) {
 				const auto r1x = invoke ([&] () {
@@ -1276,7 +1429,7 @@ trait TEXTWRITER_IMPLHOLDER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 					ret.mExponent = 0 ;
 					return move (ret) ;
 				}) ;
-				auto rax = R1X (mAttr ,r1x) ;
+				auto rax = R1X (mAttribute ,r1x) ;
 				rax.write_value () ;
 				write (rax) ;
 			}
@@ -1297,14 +1450,14 @@ trait TEXTWRITER_IMPLHOLDER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 			if ifswitch (rxx) {
 				if ifnot (MathProc::is_infinite (item))
 					discard ;
-				write (mAttr->lower_upper_cast (ITEM ('i'))) ;
-				write (mAttr->lower_upper_cast (ITEM ('n'))) ;
-				write (mAttr->lower_upper_cast (ITEM ('f'))) ;
+				write (ITEM ('i')) ;
+				write (ITEM ('n')) ;
+				write (ITEM ('f')) ;
 			}
 			if ifswitch (rxx) {
 				const auto r1x = FloatProc::decode (MathProc::abs (item)) ;
 				const auto r2x = FloatProc::exp10_from_exp2 (r1x) ;
-				auto rax = R1X (mAttr ,r2x) ;
+				auto rax = R1X (mAttribute ,r2x) ;
 				rax.write_float () ;
 				write (rax) ;
 			}
@@ -1316,9 +1469,9 @@ trait TEXTWRITER_IMPLHOLDER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 			for (auto &&i : iter (0 ,SIZE_OF<BYTE>::expr)) {
 				INDEX ix = (SIZE_OF<BYTE>::expr - 1 - i) * 8 ;
 				const auto r1x = INDEX ((item >> (ix + 4)) & BYTE (0X0F)) ;
-				write (mAttr->str_from_hex (r1x)) ;
+				write (mAttribute.str_from_hex (r1x)) ;
 				const auto r2x = INDEX ((item >> (ix + 0)) & BYTE (0X0F)) ;
-				write (mAttr->str_from_hex (r2x)) ;
+				write (mAttribute.str_from_hex (r2x)) ;
 			}
 		}
 
@@ -1328,9 +1481,9 @@ trait TEXTWRITER_IMPLHOLDER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 			for (auto &&i : iter (0 ,SIZE_OF<WORD>::expr)) {
 				INDEX ix = (SIZE_OF<WORD>::expr - 1 - i) * 8 ;
 				const auto r1x = INDEX ((item >> (ix + 4)) & WORD (0X0F)) ;
-				write (mAttr->str_from_hex (r1x)) ;
+				write (mAttribute.str_from_hex (r1x)) ;
 				const auto r2x = INDEX ((item >> (ix + 0)) & WORD (0X0F)) ;
-				write (mAttr->str_from_hex (r2x)) ;
+				write (mAttribute.str_from_hex (r2x)) ;
 			}
 		}
 
@@ -1340,9 +1493,9 @@ trait TEXTWRITER_IMPLHOLDER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 			for (auto &&i : iter (0 ,SIZE_OF<CHAR>::expr)) {
 				INDEX ix = (SIZE_OF<CHAR>::expr - 1 - i) * 8 ;
 				const auto r1x = INDEX ((item >> (ix + 4)) & CHAR (0X0F)) ;
-				write (mAttr->str_from_hex (r1x)) ;
+				write (mAttribute.str_from_hex (r1x)) ;
 				const auto r2x = INDEX ((item >> (ix + 0)) & CHAR (0X0F)) ;
-				write (mAttr->str_from_hex (r2x)) ;
+				write (mAttribute.str_from_hex (r2x)) ;
 			}
 		}
 
@@ -1352,9 +1505,9 @@ trait TEXTWRITER_IMPLHOLDER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 			for (auto &&i : iter (0 ,SIZE_OF<DATA>::expr)) {
 				INDEX ix = (SIZE_OF<DATA>::expr - 1 - i) * 8 ;
 				const auto r1x = INDEX ((item >> (ix + 4)) & DATA (0X0F)) ;
-				write (mAttr->str_from_hex (r1x)) ;
+				write (mAttribute.str_from_hex (r1x)) ;
 				const auto r2x = INDEX ((item >> (ix + 0)) & DATA (0X0F)) ;
-				write (mAttr->str_from_hex (r2x)) ;
+				write (mAttribute.str_from_hex (r2x)) ;
 			}
 		}
 
@@ -1419,7 +1572,7 @@ trait TEXTWRITER_IMPLHOLDER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 		}
 
 		void write_eos () override {
-			const auto r1x = mAttr->ending_item () ;
+			const auto r1x = mAttribute.ending_item () ;
 			write (r1x) ;
 		}
 	} ;
@@ -1427,7 +1580,6 @@ trait TEXTWRITER_IMPLHOLDER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 
 template <class ITEM>
 trait TEXTWRITER_WRITEVALUE_HELP<ITEM ,ALWAYS> {
-	using Attribute = typename TEXTWRITER_HELP<ITEM ,ALWAYS>::Attribute ;
 	using Binder = typename TEXTWRITER_HELP<ITEM ,ALWAYS>::Binder ;
 	using TextWriter = typename TEXTWRITER_HELP<ITEM ,ALWAYS>::TextWriter ;
 
@@ -1436,7 +1588,7 @@ trait TEXTWRITER_WRITEVALUE_HELP<ITEM ,ALWAYS> {
 
 	class WriteValue implement Binder {
 	protected:
-		CRef<Attribute> mAttr ;
+		TextAttribute<ITEM> mAttribute ;
 		NOTATION mValue ;
 		BoxBuffer<ITEM ,NUMBER_SIZE> mBuffer ;
 		INDEX mWrite ;
@@ -1444,9 +1596,9 @@ trait TEXTWRITER_WRITEVALUE_HELP<ITEM ,ALWAYS> {
 	public:
 		implicit WriteValue () = delete ;
 
-		explicit WriteValue (CREF<CRef<Attribute>> attr_ ,CREF<NOTATION> value_) {
+		explicit WriteValue (CREF<TextAttribute<ITEM>> attribute_ ,CREF<NOTATION> value_) {
 			assert (value_.mRadix == 10) ;
-			mAttr = attr_ ;
+			mAttribute = attribute_ ;
 			mValue = value_ ;
 			mValue.mPrecision = 1 + MathProc::vlog (mValue.mMantissa ,VAL64 (10)) ;
 			mWrite = mBuffer.size () ;
@@ -1472,7 +1624,7 @@ trait TEXTWRITER_WRITEVALUE_HELP<ITEM ,ALWAYS> {
 				for (auto &&i : iter (0 ,r1x)) {
 					noop (i) ;
 					mWrite-- ;
-					mBuffer[mWrite] = mAttr->str_from_hex (mValue.mMantissa % 10) ;
+					mBuffer[mWrite] = mAttribute.str_from_hex (mValue.mMantissa % 10) ;
 					mValue.mMantissa /= 10 ;
 					mValue.mExponent++ ;
 					mValue.mPrecision-- ;
@@ -1481,7 +1633,7 @@ trait TEXTWRITER_WRITEVALUE_HELP<ITEM ,ALWAYS> {
 		}
 
 		void write_float () {
-			const auto r1x = mAttr->float_precision () ;
+			const auto r1x = mAttribute.float_precision () ;
 			if ifswitch (TRUE) {
 				if (mValue.mPrecision == 0)
 					discard ;
@@ -1531,7 +1683,7 @@ trait TEXTWRITER_WRITEVALUE_HELP<ITEM ,ALWAYS> {
 					mBuffer[mWrite] = ITEM ('+') ;
 				}
 				mWrite-- ;
-				mBuffer[mWrite] = mAttr->lower_upper_cast (ITEM ('e')) ;
+				mBuffer[mWrite] = ITEM ('e') ;
 				const auto r6x = vmax (LENGTH (r3x - 1 - r1x) ,ZERO) ;
 				for (auto &&i : iter (0 ,r6x)) {
 					noop (i) ;
@@ -1543,7 +1695,7 @@ trait TEXTWRITER_WRITEVALUE_HELP<ITEM ,ALWAYS> {
 				for (auto &&i : iter (r6x ,r3x - 1)) {
 					noop (i) ;
 					mWrite-- ;
-					mBuffer[mWrite] = mAttr->str_from_hex (mValue.mMantissa % 10) ;
+					mBuffer[mWrite] = mAttribute.str_from_hex (mValue.mMantissa % 10) ;
 					mWrite += LENGTH (mBuffer[ix] == ITEM ('0')) ;
 					mValue.mMantissa /= 10 ;
 					mValue.mExponent++ ;
@@ -1553,7 +1705,7 @@ trait TEXTWRITER_WRITEVALUE_HELP<ITEM ,ALWAYS> {
 				mBuffer[mWrite] = ITEM ('.') ;
 				mWrite += LENGTH (mBuffer[ix] == ITEM ('.')) ;
 				mWrite-- ;
-				mBuffer[mWrite] = mAttr->str_from_hex (mValue.mMantissa % 10) ;
+				mBuffer[mWrite] = mAttribute.str_from_hex (mValue.mMantissa % 10) ;
 				mValue.mMantissa /= 10 ;
 				mValue.mExponent++ ;
 				mValue.mPrecision-- ;
@@ -1570,7 +1722,7 @@ trait TEXTWRITER_WRITEVALUE_HELP<ITEM ,ALWAYS> {
 				for (auto &&i : iter (0 ,r3x)) {
 					noop (i) ;
 					mWrite-- ;
-					mBuffer[mWrite] = mAttr->str_from_hex (mValue.mMantissa % 10) ;
+					mBuffer[mWrite] = mAttribute.str_from_hex (mValue.mMantissa % 10) ;
 					mValue.mMantissa /= 10 ;
 					mValue.mExponent++ ;
 					mValue.mPrecision-- ;
@@ -1593,7 +1745,7 @@ trait TEXTWRITER_WRITEVALUE_HELP<ITEM ,ALWAYS> {
 				for (auto &&i : iter (r7x ,-r4x)) {
 					noop (i) ;
 					mWrite-- ;
-					mBuffer[mWrite] = mAttr->str_from_hex (mValue.mMantissa % 10) ;
+					mBuffer[mWrite] = mAttribute.str_from_hex (mValue.mMantissa % 10) ;
 					mWrite += LENGTH (mBuffer[ix] == ITEM ('0')) ;
 					mValue.mMantissa /= 10 ;
 					mValue.mExponent++ ;
@@ -1605,7 +1757,7 @@ trait TEXTWRITER_WRITEVALUE_HELP<ITEM ,ALWAYS> {
 				for (auto &&i : iter (0 ,r3x + r4x)) {
 					noop (i) ;
 					mWrite-- ;
-					mBuffer[mWrite] = mAttr->str_from_hex (mValue.mMantissa % 10) ;
+					mBuffer[mWrite] = mAttribute.str_from_hex (mValue.mMantissa % 10) ;
 					mValue.mMantissa /= 10 ;
 					mValue.mExponent++ ;
 					mValue.mPrecision-- ;
@@ -1628,7 +1780,7 @@ trait TEXTWRITER_WRITEVALUE_HELP<ITEM ,ALWAYS> {
 				for (auto &&i : iter (r8x ,r3x)) {
 					noop (i) ;
 					mWrite-- ;
-					mBuffer[mWrite] = mAttr->str_from_hex (mValue.mMantissa % 10) ;
+					mBuffer[mWrite] = mAttribute.str_from_hex (mValue.mMantissa % 10) ;
 					mWrite += LENGTH (mBuffer[ix] == ITEM ('0')) ;
 					mValue.mMantissa /= 10 ;
 					mValue.mExponent++ ;
@@ -1651,31 +1803,26 @@ trait TEXTWRITER_WRITEVALUE_HELP<ITEM ,ALWAYS> {
 	} ;
 } ;
 
-template <>
 exports auto TEXTWRITER_HELP<STRA ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
 	using R1X = typename TEXTWRITER_IMPLHOLDER_HELP<STRA ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
 }
 
-template <>
 exports auto TEXTWRITER_HELP<STRW ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
 	using R1X = typename TEXTWRITER_IMPLHOLDER_HELP<STRW ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
 }
 
-template <>
 exports auto TEXTWRITER_HELP<STRU8 ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
 	using R1X = typename TEXTWRITER_IMPLHOLDER_HELP<STRU8 ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
 }
 
-template <>
 exports auto TEXTWRITER_HELP<STRU16 ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
 	using R1X = typename TEXTWRITER_IMPLHOLDER_HELP<STRU16 ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
 }
 
-template <>
 exports auto TEXTWRITER_HELP<STRU32 ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
 	using R1X = typename TEXTWRITER_IMPLHOLDER_HELP<STRU32 ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
@@ -1745,17 +1892,17 @@ trait REGULARREADER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			mHintString = FALSE ;
 			mHintSize = 0 ;
 			backup () ;
-			const auto r1x = mReader->get_attr () ;
+			const auto r1x = mReader->attribute () ;
 			while (TRUE) {
 				if ifswitch (TRUE) {
 					if (mHintSize != 0)
 						discard ;
-					assume (r1x->is_word (mCache[0])) ;
+					assume (r1x.is_word (mCache[0])) ;
 				}
 				const auto r2x = invoke ([&] () {
-					if (r1x->is_word (mCache[0]))
+					if (r1x.is_word (mCache[0]))
 						return FALSE ;
-					if (r1x->is_number (mCache[0]))
+					if (r1x.is_number (mCache[0]))
 						return FALSE ;
 					if (mCache[0] == STRU8 ('-'))
 						return FALSE ;
@@ -1773,7 +1920,7 @@ trait REGULARREADER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			mHintString = FALSE ;
 			mHintSize = 0 ;
 			backup () ;
-			const auto r1x = mReader->get_attr () ;
+			const auto r1x = mReader->attribute () ;
 			if ifswitch (TRUE) {
 				if ifnot (mCache[0] == STRU8 ('+'))
 					if ifnot (mCache[0] == STRU8 ('-'))
@@ -1782,14 +1929,14 @@ trait REGULARREADER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				mHintSize++ ;
 			}
 			const auto r2x = mCache[0] ;
-			assume (r1x->is_number (r2x)) ;
+			assume (r1x.is_number (r2x)) ;
 			read () ;
 			mHintSize++ ;
 			if ifswitch (TRUE) {
 				if (r2x == STRU8 ('0'))
 					discard ;
 				while (TRUE) {
-					if ifnot (r1x->is_number (mCache[0]))
+					if ifnot (r1x.is_number (mCache[0]))
 						break ;
 					read () ;
 					mHintSize++ ;
@@ -1801,7 +1948,7 @@ trait REGULARREADER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				read () ;
 				mHintSize++ ;
 				while (TRUE) {
-					if ifnot (r1x->is_number (mCache[0]))
+					if ifnot (r1x.is_number (mCache[0]))
 						break ;
 					read () ;
 					mHintSize++ ;
@@ -1820,11 +1967,11 @@ trait REGULARREADER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 					read () ;
 					mHintSize++ ;
 				}
-				assume (r1x->is_number (mCache[0])) ;
+				assume (r1x.is_number (mCache[0])) ;
 				read () ;
 				mHintSize++ ;
 				while (TRUE) {
-					if ifnot (r1x->is_number (mCache[0]))
+					if ifnot (r1x.is_number (mCache[0]))
 						break ;
 					read () ;
 					mHintSize++ ;
@@ -1837,11 +1984,11 @@ trait REGULARREADER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			mHintString = TRUE ;
 			mHintSize = 0 ;
 			backup () ;
-			const auto r1x = mReader->get_attr () ;
+			const auto r1x = mReader->attribute () ;
 			assume (mCache[0] == STRU8 ('\"')) ;
 			read () ;
 			while (TRUE) {
-				if (mCache[0] == r1x->ending_item ())
+				if (mCache[0] == r1x.ending_item ())
 					break ;
 				if (mCache[0] == STRU8 ('\"'))
 					break ;
@@ -1855,7 +2002,7 @@ trait REGULARREADER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 					mHintSize++ ;
 				}
 				if ifswitch (rxx) {
-					assume (ifnot (r1x->is_control (r2x))) ;
+					assume (ifnot (r1x.is_control (r2x))) ;
 					mHintSize++ ;
 				}
 			}
@@ -1868,13 +2015,13 @@ trait REGULARREADER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			mHintString = FALSE ;
 			mHintSize = 0 ;
 			backup () ;
-			const auto r1x = mReader->get_attr () ;
+			const auto r1x = mReader->attribute () ;
 			while (TRUE) {
-				if (mCache[0] == r1x->ending_item ())
+				if (mCache[0] == r1x.ending_item ())
 					break ;
-				if (r1x->is_space (mCache[0]))
+				if (r1x.is_space (mCache[0]))
 					break ;
-				assume (ifnot (r1x->is_control (mCache[0]))) ;
+				assume (ifnot (r1x.is_control (mCache[0]))) ;
 				read () ;
 				mHintSize++ ;
 			}
@@ -1885,13 +2032,13 @@ trait REGULARREADER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			mHintString = FALSE ;
 			mHintSize = 0 ;
 			backup () ;
-			const auto r1x = mReader->get_attr () ;
+			const auto r1x = mReader->attribute () ;
 			while (TRUE) {
-				if (mCache[0] == r1x->ending_item ())
+				if (mCache[0] == r1x.ending_item ())
 					break ;
-				if (r1x->is_endline_space (mCache[0]))
+				if (r1x.is_endline_space (mCache[0]))
 					break ;
-				assume (ifnot (r1x->is_control (mCache[0]))) ;
+				assume (ifnot (r1x.is_control (mCache[0]))) ;
 				read () ;
 				mHintSize++ ;
 			}
@@ -1899,40 +2046,40 @@ trait REGULARREADER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		void read_skip_space () override {
-			const auto r1x = mReader->get_attr () ;
+			const auto r1x = mReader->attribute () ;
 			while (TRUE) {
-				if ifnot (r1x->is_space (mCache[0]))
+				if ifnot (r1x.is_space (mCache[0]))
 					break ;
 				read () ;
 			}
 		}
 
 		void read_skip_space_only () override {
-			const auto r1x = mReader->get_attr () ;
+			const auto r1x = mReader->attribute () ;
 			while (TRUE) {
-				if (mCache[0] == r1x->ending_item ())
+				if (mCache[0] == r1x.ending_item ())
 					break ;
-				if ifnot (r1x->is_space (mCache[0]))
+				if ifnot (r1x.is_space (mCache[0]))
 					break ;
-				if (r1x->is_endline_space (mCache[0]))
+				if (r1x.is_endline_space (mCache[0]))
 					break ;
 				read () ;
 			}
 		}
 
 		void read_skip_space_endline () override {
-			const auto r1x = mReader->get_attr () ;
+			const auto r1x = mReader->attribute () ;
 			while (TRUE) {
-				if (mCache[0] == r1x->ending_item ())
+				if (mCache[0] == r1x.ending_item ())
 					break ;
-				if ifnot (r1x->is_endline_space (mCache[0]))
+				if ifnot (r1x.is_endline_space (mCache[0]))
 					break ;
 				read () ;
 			}
 		}
 
 		void read (VREF<String<STRU8>> item) override {
-			const auto r1x = mReader->get_attr () ;
+			const auto r1x = mReader->attribute () ;
 			const auto r2x = mHintString ;
 			const auto r3x = mHintSize ;
 			mHintString = FALSE ;
@@ -1957,11 +2104,11 @@ trait REGULARREADER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 					const auto r5x = BOOL (r4x == STRU8 ('\\')) ;
 					if ifnot (r5x)
 						discard ;
-					item[i] = r1x->escape_cast (mCache[0]).poll () ;
+					item[i] = r1x.escape_cast (mCache[0]).poll () ;
 					read () ;
 				}
 				if ifswitch (rxx) {
-					assume (ifnot (r1x->is_control (r4x))) ;
+					assume (ifnot (r1x.is_control (r4x))) ;
 					item[i] = r4x ;
 				}
 			}
@@ -1975,7 +2122,6 @@ trait REGULARREADER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	} ;
 } ;
 
-template <>
 exports auto REGULARREADER_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
 	using R1X = typename REGULARREADER_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;

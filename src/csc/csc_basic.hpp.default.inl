@@ -17,7 +17,6 @@ trait BUFFERPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	} ;
 } ;
 
-template <>
 exports auto BUFFERPROC_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
 	using R1X = typename BUFFERPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
@@ -26,14 +25,12 @@ exports auto BUFFERPROC_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<
 template <class DEPEND>
 trait LATER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	using Holder = typename LATER_HOLDER_HELP<DEPEND ,ALWAYS>::Holder ;
-
 	using HEAP_SIZE = ENUMAS<VAL ,ENUMID<256>> ;
 
-	template <class ARG1>
-	using CRTP_HEAP = typename DEPENDENT<LATER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> ,ARG1>::HEAP ;
+	struct HEAP ;
 
 	struct OWNERSHIP {
-		VRef<CRTP_HEAP<DEPEND>> mHeap ;
+		VRef<HEAP> mHeap ;
 		INDEX mIndex ;
 	} ;
 
@@ -169,7 +166,6 @@ trait LATER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	} ;
 } ;
 
-template <>
 exports auto LATER_HOLDER_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
 	using R1X = typename LATER_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
@@ -335,7 +331,6 @@ trait INTEGER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	} ;
 } ;
 
-template <>
 exports auto INTEGER_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->Box<FakeHolder> {
 	using R1X = typename INTEGER_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	Box<FakeHolder> ret ;

@@ -37,17 +37,19 @@ static constexpr auto unsafe_switch = FUNCTION_unsafe_switch () ;
 template <class...>
 trait FUNCTION_unsafe_barrier_HELP ;
 
-template <class DEPEND>
-trait FUNCTION_unsafe_barrier_HELP<DEPEND ,REQUIRE<MACRO_COMPILER_MSVC<DEPEND>>> {
+template <class MACRO>
+trait FUNCTION_unsafe_barrier_HELP<MACRO ,REQUIRE<MACRO_COMPILER_MSVC<MACRO>>> {
+#ifdef __CSC_COMPILER_MSVC__
 	struct FUNCTION_unsafe_barrier {
 		inline void operator() () const noexcept {
 			noop () ;
 		}
 	} ;
+#endif
 } ;
 
-template <class DEPEND>
-trait FUNCTION_unsafe_barrier_HELP<DEPEND ,REQUIRE<MACRO_COMPILER_GNUC<DEPEND>>> {
+template <class MACRO>
+trait FUNCTION_unsafe_barrier_HELP<MACRO ,REQUIRE<MACRO_COMPILER_GNUC<MACRO>>> {
 #ifdef __CSC_COMPILER_GNUC__
 	struct FUNCTION_unsafe_barrier {
 		inline void operator() () const noexcept {
@@ -57,8 +59,8 @@ trait FUNCTION_unsafe_barrier_HELP<DEPEND ,REQUIRE<MACRO_COMPILER_GNUC<DEPEND>>>
 #endif
 } ;
 
-template <class DEPEND>
-trait FUNCTION_unsafe_barrier_HELP<DEPEND ,REQUIRE<MACRO_COMPILER_CLANG<DEPEND>>> {
+template <class MACRO>
+trait FUNCTION_unsafe_barrier_HELP<MACRO ,REQUIRE<MACRO_COMPILER_CLANG<MACRO>>> {
 #ifdef __CSC_COMPILER_CLANG__
 	struct FUNCTION_unsafe_barrier {
 		inline void operator() () const noexcept {
@@ -81,8 +83,8 @@ static constexpr auto unsafe_barrier = FUNCTION_unsafe_barrier () ;
 template <class...>
 trait FUNCTION_unsafe_break_HELP ;
 
-template <class DEPEND>
-trait FUNCTION_unsafe_break_HELP<DEPEND ,REQUIRE<MACRO_COMPILER_MSVC<DEPEND>>> {
+template <class MACRO>
+trait FUNCTION_unsafe_break_HELP<MACRO ,REQUIRE<MACRO_COMPILER_MSVC<MACRO>>> {
 #ifdef __CSC_COMPILER_MSVC__
 	struct FUNCTION_unsafe_break {
 		inline forceinline void operator() () const noexcept {
@@ -92,8 +94,8 @@ trait FUNCTION_unsafe_break_HELP<DEPEND ,REQUIRE<MACRO_COMPILER_MSVC<DEPEND>>> {
 #endif
 } ;
 
-template <class DEPEND>
-trait FUNCTION_unsafe_break_HELP<DEPEND ,REQUIRE<MACRO_COMPILER_GNUC<DEPEND>>> {
+template <class MACRO>
+trait FUNCTION_unsafe_break_HELP<MACRO ,REQUIRE<MACRO_COMPILER_GNUC<MACRO>>> {
 #ifdef __CSC_COMPILER_GNUC__
 	struct FUNCTION_unsafe_break {
 		inline forceinline void operator() () const noexcept {
@@ -103,8 +105,8 @@ trait FUNCTION_unsafe_break_HELP<DEPEND ,REQUIRE<MACRO_COMPILER_GNUC<DEPEND>>> {
 #endif
 } ;
 
-template <class DEPEND>
-trait FUNCTION_unsafe_break_HELP<DEPEND ,REQUIRE<MACRO_COMPILER_CLANG<DEPEND>>> {
+template <class MACRO>
+trait FUNCTION_unsafe_break_HELP<MACRO ,REQUIRE<MACRO_COMPILER_CLANG<MACRO>>> {
 #ifdef __CSC_COMPILER_CLANG__
 	struct FUNCTION_unsafe_break {
 		inline forceinline void operator() () const noexcept {
@@ -136,15 +138,15 @@ struct FUNCTION_unsafe_deref {
 	template <class ARG1>
 	inline VREF<TYPE_FIRST_ONE<REFLECT_TEMP<ARG1>>> operator() (VREF<ARG1> obj) const noexcept {
 		require (IS_TEMP<ARG1>) ;
-		using R2X = TYPE_FIRST_ONE<REFLECT_TEMP<ARG1>> ;
-		return reinterpret_cast<VREF<R2X>> (obj) ;
+		using R1X = TYPE_FIRST_ONE<REFLECT_TEMP<ARG1>> ;
+		return reinterpret_cast<VREF<R1X>> (obj) ;
 	}
 
 	template <class ARG1>
 	inline CREF<TYPE_FIRST_ONE<REFLECT_TEMP<ARG1>>> operator() (CREF<ARG1> obj) const noexcept {
 		require (IS_TEMP<ARG1>) ;
-		using R2X = TYPE_FIRST_ONE<REFLECT_TEMP<ARG1>> ;
-		return reinterpret_cast<CREF<R2X>> (obj) ;
+		using R1X = TYPE_FIRST_ONE<REFLECT_TEMP<ARG1>> ;
+		return reinterpret_cast<CREF<R1X>> (obj) ;
 	}
 
 	template <class ARG1>
@@ -463,17 +465,11 @@ trait TEMPLATE_bitwise_HELP<UNIT1 ,ALWAYS> {
 			using R2X = ARG1 ;
 			require (IS_TRIVIAL<R1X>) ;
 			require (ENUM_EQUAL<SIZE_OF<R1X> ,SIZE_OF<R2X>>) ;
-			auto &&tmp = unsafe_cast[TYPEAS<TEMP<Storage<SIZE_OF<UNIT1>>>>::expr] (unsafe_deptr (obj)) ;
-			return thiz (tmp) ;
-		}
-
-		inline UNIT1 operator() (CREF<TEMP<Storage<SIZE_OF<UNIT1>>>> obj) const noexcept {
-			using R1X = UNIT1 ;
-			require (IS_TRIVIAL<R1X>) ;
 			using R3X = Storage<SIZE_OF<R1X>> ;
-			R1X ret ;
+			UNIT1 ret ;
 			auto &&tmp = unsafe_cast[TYPEAS<TEMP<R3X>>::expr] (unsafe_deptr (ret)) ;
-			tmp = obj ;
+			const auto r1x = unsafe_cast[TYPEAS<TEMP<R3X>>::expr] (unsafe_deptr (obj)) ;
+			tmp = r1x ;
 			unsafe_barrier () ;
 			return move (ret) ;
 		}
@@ -512,7 +508,7 @@ static constexpr auto bad = FUNCTION_bad () ;
 
 struct FUNCTION_invoke {
 	template <class ARG1>
-	inline FUNCTION_RETURN<ARG1> operator() (CREF<ARG1> func) const {
+	inline FUNCTION_RETURN<ARG1> operator() (RREF<ARG1> func) const {
 		return func () ;
 	}
 } ;
@@ -763,14 +759,14 @@ struct FUNCTION_operator_compr {
 static constexpr auto operator_compr = FUNCTION_operator_compr () ;
 
 //@fatal: fuck g++4.8
-template <class DEPEND>
-using FLAG_BYTE_BASE = DEPENDENT<BYTE_BASE<FLAG> ,DEPEND> ;
+template <class MACRO>
+using FLAG_BYTE_BASE = DEPENDENT<BYTE_BASE<FLAG> ,MACRO> ;
 
 template <class...>
 trait FUNCTION_hashcode_HELP ;
 
-template <class DEPEND>
-trait FUNCTION_hashcode_HELP<DEPEND ,REQUIRE<MACRO_CONFIG_VAL32<DEPEND>>> {
+template <class MACRO>
+trait FUNCTION_hashcode_HELP<MACRO ,REQUIRE<MACRO_CONFIG_VAL32<MACRO>>> {
 	struct FUNCTION_hashcode {
 		inline FLAG operator() () const {
 			return FLAG (-2128831035) ;
@@ -786,8 +782,8 @@ trait FUNCTION_hashcode_HELP<DEPEND ,REQUIRE<MACRO_CONFIG_VAL32<DEPEND>>> {
 	} ;
 } ;
 
-template <class DEPEND>
-trait FUNCTION_hashcode_HELP<DEPEND ,REQUIRE<MACRO_CONFIG_VAL64<DEPEND>>> {
+template <class MACRO>
+trait FUNCTION_hashcode_HELP<MACRO ,REQUIRE<MACRO_CONFIG_VAL64<MACRO>>> {
 	struct FUNCTION_hashcode {
 		inline FLAG operator() () const {
 			return FLAG (-3750763034362895579) ;
@@ -892,59 +888,13 @@ trait CABI_HELP<UUID ,ALWAYS> {
 	struct CABI implement Interface {} ;
 } ;
 
-template <class...>
-trait FUNCTION_operator_cabi_HELP ;
-
-template <class UUID>
-trait FUNCTION_operator_cabi_HELP<UUID ,REQUIRE<MACRO_COMPILER_MSVC<UUID>>> {
-	struct FUNCTION_operator_cabi {
-		inline FLAG operator() () const noexcept {
-			using R1X = typename CABI_HELP<UUID ,ALWAYS>::CABI ;
-			const auto r1x = R1X () ;
-			const auto r2x = bitwise (keep[TYPEAS<CREF<Interface>>::expr] (r1x)) ;
-			return FLAG (r2x) ;
-		}
-	} ;
-} ;
-
-template <class UUID>
-trait FUNCTION_operator_cabi_HELP<UUID ,REQUIRE<MACRO_COMPILER_GNUC<UUID>>> {
-#ifdef __CSC_COMPILER_GNUC__
-#pragma GCC optimize off
-	struct FUNCTION_operator_cabi {
-		inline FLAG operator() () const noexcept {
-			using R1X = typename CABI_HELP<UUID ,ALWAYS>::CABI ;
-			const auto r1x = R1X () ;
-			const auto r2x = bitwise (keep[TYPEAS<CREF<Interface>>::expr] (r1x)) ;
-			return FLAG (r2x) ;
-		}
-	} ;
-#pragma GCC optimize on
-#endif
-} ;
-
-template <class UUID>
-trait FUNCTION_operator_cabi_HELP<UUID ,REQUIRE<MACRO_COMPILER_CLANG<UUID>>> {
-#ifdef __CSC_COMPILER_CLANG__
-#pragma clang optimize off
-	struct FUNCTION_operator_cabi {
-		inline FLAG operator() () const noexcept {
-			using R1X = typename CABI_HELP<UUID ,ALWAYS>::CABI ;
-			const auto r1x = R1X () ;
-			const auto r2x = bitwise (keep[TYPEAS<CREF<Interface>>::expr] (r1x)) ;
-			return FLAG (r2x) ;
-		}
-	} ;
-#pragma clang optimize on
-#endif
-} ;
-
 struct FUNCTION_operator_cabi {
 	template <class ARG1>
 	inline FLAG operator() (CREF<TYPEID<ARG1>> id) const noexcept {
-		using R1X = typename FUNCTION_operator_cabi_HELP<ARG1 ,ALWAYS>::FUNCTION_operator_cabi ;
+		using R1X = typename CABI_HELP<ARG1 ,ALWAYS>::CABI ;
 		const auto r1x = R1X () ;
-		return r1x () ;
+		const auto r2x = bitwise (keep[TYPEAS<CREF<Interface>>::expr] (r1x)) ;
+		return FLAG (r2x) ;
 	}
 } ;
 
@@ -1515,6 +1465,7 @@ trait CELL_HELP<UNIT1 ,ALWAYS> {
 			Cell ret ;
 			auto rax = Box<UNIT1>::make (forward[TYPEAS<ARG1>::expr] (obj)...) ;
 			ret.mValue = unsafe_deptr (rax.self) ;
+			unsafe_barrier () ;
 			rax.release () ;
 			ret.mExist = TRUE ;
 			return move (ret) ;
@@ -1636,6 +1587,8 @@ trait ABSTRACT_IMPLHOLDER_HELP ;
 
 template <class DEPEND>
 trait ABSTRACT_HELP<DEPEND ,ALWAYS> {
+	class Abstract ;
+
 	struct Holder implement Interface {
 		virtual LENGTH type_size () const = 0 ;
 		virtual LENGTH type_align () const = 0 ;
@@ -1646,11 +1599,8 @@ trait ABSTRACT_HELP<DEPEND ,ALWAYS> {
 
 	class FakeHolder implement Holder {} ;
 
-	template <class ARG1>
-	using CRTP_Abstract = typename DEPENDENT<ABSTRACT_HELP<DEPEND ,ALWAYS> ,ARG1>::Abstract ;
-
 	struct FUNCTION_linkage {
-		imports FLAG invoke (CREF<TEMP<void>> func ,RREF<CRTP_Abstract<DEPEND>> abst) ;
+		imports FLAG invoke (CREF<TEMP<void>> func ,RREF<Abstract> abst) ;
 	} ;
 
 	class Abstract {
@@ -1758,6 +1708,7 @@ trait ABSTRACT_IMPLHOLDER_HELP<UUID ,CREATOR ,REQUIRE<ENUM_NOT<IS_VOID<CREATOR>>
 			if ifswitch (TRUE) {
 				auto &&tmp = unsafe_cast[TYPEAS<TEMP<UUID>>::expr] (me) ;
 				tmp = unsafe_deptr (rax.self) ;
+				unsafe_barrier () ;
 				rax.release () ;
 			}
 		}
@@ -2223,9 +2174,6 @@ using VRef = typename VREF_HELP<UNIT1 ,ALWAYS>::VRef ;
 
 template <class...>
 trait CREF_HELP ;
-
-template <class...>
-trait CREF_IMPLHOLDER_HELP ;
 
 template <class UNIT1>
 trait CREF_HELP<UNIT1 ,REQUIRE<IS_OBJECT<UNIT1>>> {
@@ -2957,15 +2905,6 @@ trait FUNCTION_operator_name_HELP<UNIT1 ,REQUIRE<IS_SAME<UNIT1 ,DOUBLE>>> {
 } ;
 
 template <class UNIT1>
-trait FUNCTION_operator_name_HELP<UNIT1 ,REQUIRE<IS_SAME<UNIT1 ,TRIPLE>>> {
-	struct FUNCTION_operator_name {
-		inline Slice<STR> operator() (CREF<csc_text_t> text) const {
-			return slice ("TRIPLE") ;
-		}
-	} ;
-} ;
-
-template <class UNIT1>
 trait FUNCTION_operator_name_HELP<UNIT1 ,REQUIRE<IS_SAME<UNIT1 ,STRA>>> {
 	struct FUNCTION_operator_name {
 		inline Slice<STR> operator() (CREF<csc_text_t> text) const {
@@ -3042,15 +2981,6 @@ trait FUNCTION_operator_name_HELP<UNIT1 ,REQUIRE<IS_SAME<UNIT1 ,DATA>>> {
 	struct FUNCTION_operator_name {
 		inline Slice<STR> operator() (CREF<csc_text_t> text) const {
 			return slice ("DATA") ;
-		}
-	} ;
-} ;
-
-template <class UNIT1>
-trait FUNCTION_operator_name_HELP<UNIT1 ,REQUIRE<IS_SAME<UNIT1 ,HUGE>>> {
-	struct FUNCTION_operator_name {
-		inline Slice<STR> operator() (CREF<csc_text_t> text) const {
-			return slice ("HUGE") ;
 		}
 	} ;
 } ;
@@ -3247,8 +3177,8 @@ trait WATCH_HELP<UUID ,ALWAYS> {
 struct FUNCTION_unsafe_watch {
 	template <class ARG1 ,class ARG2>
 	inline forceinline void operator() (CREF<TYPEID<ARG1>> id ,CREF<Slice<STR>> name ,CREF<ARG2> expr_) const {
-		using R3X = typename WATCH_HELP<ARG2 ,ALWAYS>::WATCH ;
-		static R3X mInstance ;
+		using R1X = typename WATCH_HELP<ARG2 ,ALWAYS>::WATCH ;
+		static R1X mInstance ;
 		mInstance.mName = name ;
 		mInstance.mPointer = address (expr_) ;
 		mInstance.mClazz = Clazz (TYPEAS<ARG2>::expr) ;
@@ -3318,13 +3248,13 @@ using Exception = typename EXCEPTION_HELP<DEPEND ,ALWAYS>::Exception ;
 
 struct FUNCTION_try_invoke {
 	template <class ARG1>
-	inline void operator() (CREF<ARG1> proc1) const noexcept {
+	inline void operator() (RREF<ARG1> proc1) const noexcept {
 		require (IS_VOID<FUNCTION_RETURN<ARG1>>) ;
 		return proc1 () ;
 	}
 
 	template <class ARG1 ,class...ARG2>
-	inline void operator() (CREF<ARG1> proc1 ,CREF<ARG2>...proc2) const {
+	inline void operator() (RREF<ARG1> proc1 ,RREF<ARG2>...proc2) const {
 		require (IS_VOID<FUNCTION_RETURN<ARG1>>) ;
 		try {
 			return proc1 () ;
@@ -3333,7 +3263,7 @@ struct FUNCTION_try_invoke {
 		} catch (...) {
 			assert (FALSE) ;
 		}
-		return thiz (proc2...) ;
+		return thiz (forward[TYPEAS<ARG2>::expr] (proc2)...) ;
 	}
 } ;
 

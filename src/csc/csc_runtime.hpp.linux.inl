@@ -65,7 +65,7 @@ trait RUNTIMEPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		void thread_sleep (CREF<TimePoint> time_) const override {
-			using R1X = typename TIMEPOINT_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
+			using R1X = typename TIMEDURATION_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 			const auto r1x = time_.native ().poll (TYPEAS<CRef<R1X>>::expr) ;
 			std::this_thread::sleep_until (r1x->get_mTimePoint ()) ;
 		}
@@ -141,7 +141,6 @@ trait RUNTIMEPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	} ;
 } ;
 
-template <>
 exports auto RUNTIMEPROC_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
 	using R1X = typename RUNTIMEPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
@@ -190,7 +189,8 @@ trait PROCESS_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			auto rax = StreamFile (file) ;
 			const auto r1x = rax.link (TRUE ,FALSE) ;
 			assume (r1x) ;
-			const auto r2x = rax.read (ret.raw ()) ;
+			auto rbx = ret.raw () ;
+			const auto r2x = rax.read (RegBuffer<BYTE>::from (rbx)) ;
 			ret[r2x] = 0 ;
 			return move (ret) ;
 		}
@@ -257,7 +257,6 @@ trait PROCESS_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	} ;
 } ;
 
-template <>
 exports auto PROCESS_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
 	using R1X = typename PROCESS_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
@@ -330,7 +329,6 @@ trait MODULE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	} ;
 } ;
 
-template <>
 exports auto MODULE_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
 	using R1X = typename MODULE_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
@@ -423,9 +421,10 @@ trait SINGLETON_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			} ,[] (VREF<HANDLE> me) {
 				munmap (me ,SIZE_OF<PIPE>::expr) ;
 			}) ;
+			const auto r3x = FLAG (r2x.self) ;
+			auto &&tmp = unsafe_deref (unsafe_cast[TYPEAS<TEMP<PIPE>>::expr] (unsafe_pointer (r3x))) ;
 			PIPE ret ;
-			zeroize (ret) ;
-			std::memcpy ((&ret) ,r2x.self ,SIZE_OF<PIPE>::expr) ;
+			ret = tmp ;
 			unsafe_barrier () ;
 			assume (ret.mReserve1 == DATA (0X1122334455667788)) ;
 			assume (ret.mReserve3 == DATA (0XAAAABBBBCCCCDDDD)) ;
@@ -448,13 +447,15 @@ trait SINGLETON_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			} ,[] (VREF<HANDLE> me) {
 				munmap (me ,SIZE_OF<PIPE>::expr) ;
 			}) ;
+			const auto r3x = FLAG (r2x.self) ;
+			auto &&tmp = unsafe_deref (unsafe_cast[TYPEAS<TEMP<PIPE>>::expr] (unsafe_pointer (r3x))) ;
 			auto rax = PIPE () ;
 			rax.mReserve1 = DATA (0X1122334455667788) ;
 			rax.mAddress1 = DATA (address (mHeap)) ;
 			rax.mReserve2 = DATA (mUID) ;
 			rax.mAddress2 = DATA (address (mHeap)) ;
 			rax.mReserve3 = DATA (0XAAAABBBBCCCCDDDD) ;
-			std::memcpy (r2x.self ,(&rax) ,SIZE_OF<PIPE>::expr) ;
+			tmp = rax ;
 			unsafe_barrier () ;
 		}
 
@@ -474,7 +475,6 @@ trait SINGLETON_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	} ;
 } ;
 
-template <>
 exports auto SINGLETON_HOLDER_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
 	using R1X = typename SINGLETON_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;

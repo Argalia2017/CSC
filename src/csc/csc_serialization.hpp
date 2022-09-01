@@ -28,21 +28,20 @@ trait XMLPARSER_COMBINATION_HELP ;
 
 template <class DEPEND>
 trait XMLPARSER_HELP<DEPEND ,ALWAYS> {
-	template <class ARG1>
-	using CRTP_XmlParser = typename DEPENDENT<XMLPARSER_HELP<DEPEND ,ALWAYS> ,ARG1>::XmlParser ;
+	class XmlParser ;
 
 	struct Holder implement Interface {
 		virtual void initialize () = 0 ;
 		virtual void initialize (CREF<RegBuffer<STRU8>> stream) = 0 ;
 		virtual BOOL exist () const = 0 ;
-		virtual CRTP_XmlParser<DEPEND> clone () const = 0 ;
-		virtual CRTP_XmlParser<DEPEND> root () const = 0 ;
-		virtual CRTP_XmlParser<DEPEND> parent () const = 0 ;
-		virtual CRTP_XmlParser<DEPEND> brother () const = 0 ;
-		virtual CRTP_XmlParser<DEPEND> child () const = 0 ;
-		virtual CRTP_XmlParser<DEPEND> child (CREF<String<STRU8>> name) const = 0 ;
-		virtual Array<CRTP_XmlParser<DEPEND>> child_array () const = 0 ;
-		virtual Array<CRTP_XmlParser<DEPEND>> child_array (CREF<LENGTH> size_) const = 0 ;
+		virtual XmlParser clone () const = 0 ;
+		virtual XmlParser root () const = 0 ;
+		virtual XmlParser parent () const = 0 ;
+		virtual XmlParser brother () const = 0 ;
+		virtual XmlParser child () const = 0 ;
+		virtual XmlParser child (CREF<String<STRU8>> name) const = 0 ;
+		virtual Array<XmlParser> child_array () const = 0 ;
+		virtual Array<XmlParser> child_array (CREF<LENGTH> size_) const = 0 ;
 		virtual BOOL equal (CREF<Holder> that) const = 0 ;
 		virtual CREF<String<STRU8>> name () const leftvalue = 0 ;
 		virtual CREF<String<STRU8>> attribute (CREF<String<STRU8>> tag) const leftvalue = 0 ;
@@ -74,6 +73,10 @@ trait XMLPARSER_HELP<DEPEND ,ALWAYS> {
 	} ;
 
 	class XmlParser {
+	private:
+		template <class...>
+		friend trait XMLPARSER_COMBINATION_HELP ;
+
 	protected:
 		Box<FakeHolder> mThis ;
 
@@ -92,12 +95,30 @@ trait XMLPARSER_HELP<DEPEND ,ALWAYS> {
 			mThis->initialize (that) ;
 		}
 
-		BOOL exist () const {
-			return mThis->exist () ;
+		implicit XmlParser (CREF<XmlParser> that) {
+			swap (thiz ,that.mThis->clone ()) ;
 		}
 
-		XmlParser clone () const {
-			return mThis->clone () ;
+		inline VREF<XmlParser> operator= (CREF<XmlParser> that) {
+			if (address (thiz) == address (that))
+				return thiz ;
+			swap (thiz ,move (that)) ;
+			return thiz ;
+		}
+
+		implicit XmlParser (RREF<XmlParser> that) noexcept {
+			swap (thiz ,that) ;
+		}
+
+		inline VREF<XmlParser> operator= (RREF<XmlParser> that) noexcept {
+			if (address (thiz) == address (that))
+				return thiz ;
+			swap (thiz ,move (that)) ;
+			return thiz ;
+		}
+
+		BOOL exist () const {
+			return mThis->exist () ;
 		}
 
 		XmlParser root () const {
@@ -231,8 +252,7 @@ trait JSONPARSER_SERIALIZATION_HELP ;
 
 template <class DEPEND>
 trait JSONPARSER_HELP<DEPEND ,ALWAYS> {
-	template <class ARG1>
-	using CRTP_JsonParser = typename DEPENDENT<JSONPARSER_HELP<DEPEND ,ALWAYS> ,ARG1>::JsonParser ;
+	class JsonParser ;
 
 	struct Holder implement Interface {
 		virtual void initialize () = 0 ;
@@ -241,15 +261,15 @@ trait JSONPARSER_HELP<DEPEND ,ALWAYS> {
 		virtual BOOL string_type () const = 0 ;
 		virtual BOOL array_type () const = 0 ;
 		virtual BOOL object_type () const = 0 ;
-		virtual CRTP_JsonParser<DEPEND> clone () const = 0 ;
-		virtual CRTP_JsonParser<DEPEND> root () const = 0 ;
-		virtual CRTP_JsonParser<DEPEND> parent () const = 0 ;
-		virtual CRTP_JsonParser<DEPEND> brother () const = 0 ;
-		virtual CRTP_JsonParser<DEPEND> child () const = 0 ;
-		virtual CRTP_JsonParser<DEPEND> child (CREF<Slice<STR>> name) const = 0 ;
-		virtual CRTP_JsonParser<DEPEND> child (CREF<String<STRU8>> name) const = 0 ;
-		virtual Array<CRTP_JsonParser<DEPEND>> child_array () const = 0 ;
-		virtual Array<CRTP_JsonParser<DEPEND>> child_array (CREF<LENGTH> size_) const = 0 ;
+		virtual JsonParser clone () const = 0 ;
+		virtual JsonParser root () const = 0 ;
+		virtual JsonParser parent () const = 0 ;
+		virtual JsonParser brother () const = 0 ;
+		virtual JsonParser child () const = 0 ;
+		virtual JsonParser child (CREF<Slice<STR>> name) const = 0 ;
+		virtual JsonParser child (CREF<String<STRU8>> name) const = 0 ;
+		virtual Array<JsonParser> child_array () const = 0 ;
+		virtual Array<JsonParser> child_array (CREF<LENGTH> size_) const = 0 ;
 		virtual BOOL equal (CREF<Holder> that) const = 0 ;
 		virtual CREF<String<STRU8>> fetch () const leftvalue = 0 ;
 		virtual BOOL fetch (CREF<BOOL> def) const = 0 ;
@@ -297,6 +317,28 @@ trait JSONPARSER_HELP<DEPEND ,ALWAYS> {
 			mThis->initialize (that) ;
 		}
 
+		implicit JsonParser (CREF<JsonParser> that) {
+			swap (thiz ,that.mThis->clone ()) ;
+		}
+
+		inline VREF<JsonParser> operator= (CREF<JsonParser> that) {
+			if (address (thiz) == address (that))
+				return thiz ;
+			swap (thiz ,move (that)) ;
+			return thiz ;
+		}
+
+		implicit JsonParser (RREF<JsonParser> that) noexcept {
+			swap (thiz ,that) ;
+		}
+
+		inline VREF<JsonParser> operator= (RREF<JsonParser> that) noexcept {
+			if (address (thiz) == address (that))
+				return thiz ;
+			swap (thiz ,move (that)) ;
+			return thiz ;
+		}
+
 		BOOL exist () const {
 			return mThis->exist () ;
 		}
@@ -311,10 +353,6 @@ trait JSONPARSER_HELP<DEPEND ,ALWAYS> {
 
 		BOOL object_type () const {
 			return mThis->object_type () ;
-		}
-
-		JsonParser clone () const {
-			return mThis->clone () ;
 		}
 
 		JsonParser root () const {

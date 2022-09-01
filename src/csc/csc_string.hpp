@@ -1370,7 +1370,7 @@ trait REPEATSTRING_HELP<DEPEND ,ALWAYS> {
 		virtual void leave () = 0 ;
 	} ;
 
-	class FakeHolder implement Interface {
+	class FakeHolder implement Holder {
 	protected:
 		AnyString mGapText ;
 		AnyString mCommaText ;

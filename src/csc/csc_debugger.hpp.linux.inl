@@ -291,7 +291,6 @@ trait CONSOLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	} ;
 } ;
 
-template <>
 exports auto CONSOLE_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
 	using R1X = typename CONSOLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
@@ -451,9 +450,9 @@ trait REPORTER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 
 		String<STR> symbol_from_address (CREF<FLAG> addr) const override {
 			String<STR> ret ;
-			const auto r1x = csc_pointer_t (addr) ;
 			auto rxx = TRUE ;
 			if ifswitch (rxx) {
+				const auto r1x = csc_pointer_t (addr) ;
 				const auto r2x = UniqueRef<HSYMB> ([&] (VREF<HSYMB> me) {
 					me = backtrace_symbols ((&r1x) ,VAL32 (1)) ;
 				} ,[] (VREF<HSYMB> me) {
@@ -464,7 +463,6 @@ trait REPORTER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				if (r2x.self == NULL)
 					discard ;
 				auto &&tmp = unsafe_cast[TYPEAS<TEMP<void>>::expr] (unsafe_deptr ((**r2x.self))) ;
-				unsafe_barrier () ;
 				BufferProc::buf_slice (mHeap->mNameBuffer ,RegBuffer<STRA>::from (tmp ,0 ,VAL32_MAX) ,mHeap->mNameBuffer.size ()) ;
 				const auto r3x = string_build[TYPEAS<TYPEAS<STR ,DATA>>::expr] (DATA (addr)) ;
 				ret = String<STR>::make (slice ("[") ,r3x ,slice ("] : ") ,mHeap->mNameBuffer) ;
@@ -478,7 +476,6 @@ trait REPORTER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	} ;
 } ;
 
-template <>
 exports auto REPORTER_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
 	using R1X = typename REPORTER_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;

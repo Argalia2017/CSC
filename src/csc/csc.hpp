@@ -68,9 +68,7 @@
 #define __CSC_CONFIG_STRA__
 #endif
 
-#ifdef _DEPRECATED
 #define __CSC_CXX_LITE__
-#endif
 
 #ifndef __CSC_CXX_LITE__
 #ifdef _MSVC_LANG
@@ -305,7 +303,6 @@ using csc_int64_t = long long ;
 
 using csc_float32_t = float ;
 using csc_float64_t = double ;
-using csc_float128_t = long double ;
 
 #ifdef __CSC_CXX_LITE__
 struct FUNCTION_infinity {
@@ -329,10 +326,6 @@ using csc_byte8_t = unsigned char ;
 using csc_byte16_t = unsigned short ;
 using csc_byte32_t = unsigned int ;
 using csc_byte64_t = unsigned long long ;
-
-struct csc_byte128_t {
-	alignas (16) DEF<csc_byte8_t[16]> mUnused ;
-} ;
 
 using csc_char_t = char ;
 using csc_wchar_t = wchar_t ;
@@ -428,8 +421,8 @@ struct TEMPAS<UNIT1 ,UNIT2> {
 template <class UNIT1>
 struct TEMPAS<UNIT1 ,void> ;
 
-using DEPEND = struct D ;
-using ALWAYS = struct A ;
+struct DEPEND ;
+using ALWAYS = void ;
 
 template <class...>
 trait REQUIRE_HELP ;
@@ -580,213 +573,213 @@ struct FUNCTION_internel_name {
 #endif
 
 #ifdef __CSC_VER_DEBUG__
-template <class DEPEND>
-using MACRO_VER_DEBUG = DEPENDENT<ENUM_TRUE ,DEPENDENT<where ,DEPEND>> ;
+template <class MACRO>
+using MACRO_VER_DEBUG = DEPENDENT<ENUM_TRUE ,DEPENDENT<where ,MACRO>> ;
 #endif
 
 #ifndef __CSC_VER_DEBUG__
-template <class DEPEND>
-using MACRO_VER_DEBUG = DEPENDENT<ENUM_FALSE ,DEPENDENT<where ,DEPEND>> ;
+template <class MACRO>
+using MACRO_VER_DEBUG = DEPENDENT<ENUM_FALSE ,DEPENDENT<where ,MACRO>> ;
 #endif
 
 #ifdef __CSC_VER_UNITTEST__
-template <class DEPEND>
-using MACRO_VER_UNITTEST = DEPENDENT<ENUM_TRUE ,DEPENDENT<where ,DEPEND>> ;
+template <class MACRO>
+using MACRO_VER_UNITTEST = DEPENDENT<ENUM_TRUE ,DEPENDENT<where ,MACRO>> ;
 #endif
 
 #ifndef __CSC_VER_UNITTEST__
-template <class DEPEND>
-using MACRO_VER_UNITTEST = DEPENDENT<ENUM_FALSE ,DEPENDENT<where ,DEPEND>> ;
+template <class MACRO>
+using MACRO_VER_UNITTEST = DEPENDENT<ENUM_FALSE ,DEPENDENT<where ,MACRO>> ;
 #endif
 
 #ifdef __CSC_VER_RELEASE__
-template <class DEPEND>
-using MACRO_VER_RELEASE = DEPENDENT<ENUM_TRUE ,DEPENDENT<where ,DEPEND>> ;
+template <class MACRO>
+using MACRO_VER_RELEASE = DEPENDENT<ENUM_TRUE ,DEPENDENT<where ,MACRO>> ;
 #endif
 
 #ifndef __CSC_VER_RELEASE__
-template <class DEPEND>
-using MACRO_VER_RELEASE = DEPENDENT<ENUM_FALSE ,DEPENDENT<where ,DEPEND>> ;
+template <class MACRO>
+using MACRO_VER_RELEASE = DEPENDENT<ENUM_FALSE ,DEPENDENT<where ,MACRO>> ;
 #endif
 
 #ifdef __CSC_COMPILER_MSVC__
-template <class DEPEND>
-using MACRO_COMPILER_MSVC = DEPENDENT<ENUM_TRUE ,DEPENDENT<where ,DEPEND>> ;
+template <class MACRO>
+using MACRO_COMPILER_MSVC = DEPENDENT<ENUM_TRUE ,DEPENDENT<where ,MACRO>> ;
 #endif
 
 #ifndef __CSC_COMPILER_MSVC__
-template <class DEPEND>
-using MACRO_COMPILER_MSVC = DEPENDENT<ENUM_FALSE ,DEPENDENT<where ,DEPEND>> ;
+template <class MACRO>
+using MACRO_COMPILER_MSVC = DEPENDENT<ENUM_FALSE ,DEPENDENT<where ,MACRO>> ;
 #endif
 
 #ifdef __CSC_COMPILER_GNUC__
-template <class DEPEND>
-using MACRO_COMPILER_GNUC = DEPENDENT<ENUM_TRUE ,DEPENDENT<where ,DEPEND>> ;
+template <class MACRO>
+using MACRO_COMPILER_GNUC = DEPENDENT<ENUM_TRUE ,DEPENDENT<where ,MACRO>> ;
 #endif
 
 #ifndef __CSC_COMPILER_GNUC__
-template <class DEPEND>
-using MACRO_COMPILER_GNUC = DEPENDENT<ENUM_FALSE ,DEPENDENT<where ,DEPEND>> ;
+template <class MACRO>
+using MACRO_COMPILER_GNUC = DEPENDENT<ENUM_FALSE ,DEPENDENT<where ,MACRO>> ;
 #endif
 
 #ifdef __CSC_COMPILER_CLANG__
-template <class DEPEND>
-using MACRO_COMPILER_CLANG = DEPENDENT<ENUM_TRUE ,DEPENDENT<where ,DEPEND>> ;
+template <class MACRO>
+using MACRO_COMPILER_CLANG = DEPENDENT<ENUM_TRUE ,DEPENDENT<where ,MACRO>> ;
 #endif
 
 #ifndef __CSC_COMPILER_CLANG__
-template <class DEPEND>
-using MACRO_COMPILER_CLANG = DEPENDENT<ENUM_FALSE ,DEPENDENT<where ,DEPEND>> ;
+template <class MACRO>
+using MACRO_COMPILER_CLANG = DEPENDENT<ENUM_FALSE ,DEPENDENT<where ,MACRO>> ;
 #endif
 
 #ifdef __CSC_SYSTEM_WINDOWS__
-template <class DEPEND>
-using MACRO_SYSTEM_WINDOWS = DEPENDENT<ENUM_TRUE ,DEPENDENT<where ,DEPEND>> ;
+template <class MACRO>
+using MACRO_SYSTEM_WINDOWS = DEPENDENT<ENUM_TRUE ,DEPENDENT<where ,MACRO>> ;
 #endif
 
 #ifndef __CSC_SYSTEM_WINDOWS__
-template <class DEPEND>
-using MACRO_SYSTEM_WINDOWS = DEPENDENT<ENUM_FALSE ,DEPENDENT<where ,DEPEND>> ;
+template <class MACRO>
+using MACRO_SYSTEM_WINDOWS = DEPENDENT<ENUM_FALSE ,DEPENDENT<where ,MACRO>> ;
 #endif
 
 #ifdef __CSC_SYSTEM_LINUX__
-template <class DEPEND>
-using MACRO_SYSTEM_LINUX = DEPENDENT<ENUM_TRUE ,DEPENDENT<where ,DEPEND>> ;
+template <class MACRO>
+using MACRO_SYSTEM_LINUX = DEPENDENT<ENUM_TRUE ,DEPENDENT<where ,MACRO>> ;
 #endif
 
 #ifndef __CSC_SYSTEM_LINUX__
-template <class DEPEND>
-using MACRO_SYSTEM_LINUX = DEPENDENT<ENUM_FALSE ,DEPENDENT<where ,DEPEND>> ;
+template <class MACRO>
+using MACRO_SYSTEM_LINUX = DEPENDENT<ENUM_FALSE ,DEPENDENT<where ,MACRO>> ;
 #endif
 
 #ifdef __CSC_PLATFORM_X86__
-template <class DEPEND>
-using MACRO_PLATFORM_X86 = DEPENDENT<ENUM_TRUE ,DEPENDENT<where ,DEPEND>> ;
+template <class MACRO>
+using MACRO_PLATFORM_X86 = DEPENDENT<ENUM_TRUE ,DEPENDENT<where ,MACRO>> ;
 #endif
 
 #ifndef __CSC_PLATFORM_X86__
-template <class DEPEND>
-using MACRO_PLATFORM_X86 = DEPENDENT<ENUM_FALSE ,DEPENDENT<where ,DEPEND>> ;
+template <class MACRO>
+using MACRO_PLATFORM_X86 = DEPENDENT<ENUM_FALSE ,DEPENDENT<where ,MACRO>> ;
 #endif
 
 #ifdef __CSC_PLATFORM_X64__
-template <class DEPEND>
-using MACRO_PLATFORM_X64 = DEPENDENT<ENUM_TRUE ,DEPENDENT<where ,DEPEND>> ;
+template <class MACRO>
+using MACRO_PLATFORM_X64 = DEPENDENT<ENUM_TRUE ,DEPENDENT<where ,MACRO>> ;
 #endif
 
 #ifndef __CSC_PLATFORM_X64__
-template <class DEPEND>
-using MACRO_PLATFORM_X64 = DEPENDENT<ENUM_FALSE ,DEPENDENT<where ,DEPEND>> ;
+template <class MACRO>
+using MACRO_PLATFORM_X64 = DEPENDENT<ENUM_FALSE ,DEPENDENT<where ,MACRO>> ;
 #endif
 
 #ifdef __CSC_PLATFORM_ARM__
-template <class DEPEND>
-using MACRO_PLATFORM_ARM = DEPENDENT<ENUM_TRUE ,DEPENDENT<where ,DEPEND>> ;
+template <class MACRO>
+using MACRO_PLATFORM_ARM = DEPENDENT<ENUM_TRUE ,DEPENDENT<where ,MACRO>> ;
 #endif
 
 #ifndef __CSC_PLATFORM_ARM__
-template <class DEPEND>
-using MACRO_PLATFORM_ARM = DEPENDENT<ENUM_FALSE ,DEPENDENT<where ,DEPEND>> ;
+template <class MACRO>
+using MACRO_PLATFORM_ARM = DEPENDENT<ENUM_FALSE ,DEPENDENT<where ,MACRO>> ;
 #endif
 
 #ifdef __CSC_PLATFORM_ARM64__
-template <class DEPEND>
-using MACRO_PLATFORM_ARM64 = DEPENDENT<ENUM_TRUE ,DEPENDENT<where ,DEPEND>> ;
+template <class MACRO>
+using MACRO_PLATFORM_ARM64 = DEPENDENT<ENUM_TRUE ,DEPENDENT<where ,MACRO>> ;
 #endif
 
 #ifndef __CSC_PLATFORM_ARM64__
-template <class DEPEND>
-using MACRO_PLATFORM_ARM64 = DEPENDENT<ENUM_FALSE ,DEPENDENT<where ,DEPEND>> ;
+template <class MACRO>
+using MACRO_PLATFORM_ARM64 = DEPENDENT<ENUM_FALSE ,DEPENDENT<where ,MACRO>> ;
 #endif
 
 #ifdef __CSC_TARGET_EXE__
-template <class DEPEND>
-using MACRO_TARGET_EXE = DEPENDENT<ENUM_TRUE ,DEPENDENT<where ,DEPEND>> ;
+template <class MACRO>
+using MACRO_TARGET_EXE = DEPENDENT<ENUM_TRUE ,DEPENDENT<where ,MACRO>> ;
 #endif
 
 #ifndef __CSC_TARGET_EXE__
-template <class DEPEND>
-using MACRO_TARGET_EXE = DEPENDENT<ENUM_FALSE ,DEPENDENT<where ,DEPEND>> ;
+template <class MACRO>
+using MACRO_TARGET_EXE = DEPENDENT<ENUM_FALSE ,DEPENDENT<where ,MACRO>> ;
 #endif
 
 #ifdef __CSC_TARGET_DLL__
-template <class DEPEND>
-using MACRO_TARGET_DLL = DEPENDENT<ENUM_TRUE ,DEPENDENT<where ,DEPEND>> ;
+template <class MACRO>
+using MACRO_TARGET_DLL = DEPENDENT<ENUM_TRUE ,DEPENDENT<where ,MACRO>> ;
 #endif
 
 #ifndef __CSC_TARGET_DLL__
-template <class DEPEND>
-using MACRO_TARGET_DLL = DEPENDENT<ENUM_FALSE ,DEPENDENT<where ,DEPEND>> ;
+template <class MACRO>
+using MACRO_TARGET_DLL = DEPENDENT<ENUM_FALSE ,DEPENDENT<where ,MACRO>> ;
 #endif
 
 #ifdef __CSC_TARGET_LIB__
-template <class DEPEND>
-using MACRO_TARGET_LIB = DEPENDENT<ENUM_TRUE ,DEPENDENT<where ,DEPEND>> ;
+template <class MACRO>
+using MACRO_TARGET_LIB = DEPENDENT<ENUM_TRUE ,DEPENDENT<where ,MACRO>> ;
 #endif
 
 #ifndef __CSC_TARGET_LIB__
-template <class DEPEND>
-using MACRO_TARGET_LIB = DEPENDENT<ENUM_FALSE ,DEPENDENT<where ,DEPEND>> ;
+template <class MACRO>
+using MACRO_TARGET_LIB = DEPENDENT<ENUM_FALSE ,DEPENDENT<where ,MACRO>> ;
 #endif
 
 #ifdef __CSC_CONFIG_VAL32__
-template <class DEPEND>
-using MACRO_CONFIG_VAL32 = DEPENDENT<ENUM_TRUE ,DEPENDENT<where ,DEPEND>> ;
+template <class MACRO>
+using MACRO_CONFIG_VAL32 = DEPENDENT<ENUM_TRUE ,DEPENDENT<where ,MACRO>> ;
 #endif
 
 #ifndef __CSC_CONFIG_VAL32__
-template <class DEPEND>
-using MACRO_CONFIG_VAL32 = DEPENDENT<ENUM_FALSE ,DEPENDENT<where ,DEPEND>> ;
+template <class MACRO>
+using MACRO_CONFIG_VAL32 = DEPENDENT<ENUM_FALSE ,DEPENDENT<where ,MACRO>> ;
 #endif
 
 #ifdef __CSC_CONFIG_VAL64__
-template <class DEPEND>
-using MACRO_CONFIG_VAL64 = DEPENDENT<ENUM_TRUE ,DEPENDENT<where ,DEPEND>> ;
+template <class MACRO>
+using MACRO_CONFIG_VAL64 = DEPENDENT<ENUM_TRUE ,DEPENDENT<where ,MACRO>> ;
 #endif
 
 #ifndef __CSC_CONFIG_VAL64__
-template <class DEPEND>
-using MACRO_CONFIG_VAL64 = DEPENDENT<ENUM_FALSE ,DEPENDENT<where ,DEPEND>> ;
+template <class MACRO>
+using MACRO_CONFIG_VAL64 = DEPENDENT<ENUM_FALSE ,DEPENDENT<where ,MACRO>> ;
 #endif
 
 #ifdef __CSC_CONFIG_STRA__
-template <class DEPEND>
-using MACRO_CONFIG_STRA = DEPENDENT<ENUM_TRUE ,DEPENDENT<where ,DEPEND>> ;
+template <class MACRO>
+using MACRO_CONFIG_STRA = DEPENDENT<ENUM_TRUE ,DEPENDENT<where ,MACRO>> ;
 #endif
 
 #ifndef __CSC_CONFIG_STRA__
-template <class DEPEND>
-using MACRO_CONFIG_STRA = DEPENDENT<ENUM_FALSE ,DEPENDENT<where ,DEPEND>> ;
+template <class MACRO>
+using MACRO_CONFIG_STRA = DEPENDENT<ENUM_FALSE ,DEPENDENT<where ,MACRO>> ;
 #endif
 
 #ifdef __CSC_CONFIG_STRW__
-template <class DEPEND>
-using MACRO_CONFIG_STRW = DEPENDENT<ENUM_TRUE ,DEPENDENT<where ,DEPEND>> ;
+template <class MACRO>
+using MACRO_CONFIG_STRW = DEPENDENT<ENUM_TRUE ,DEPENDENT<where ,MACRO>> ;
 #endif
 
 #ifndef __CSC_CONFIG_STRW__
-template <class DEPEND>
-using MACRO_CONFIG_STRW = DEPENDENT<ENUM_FALSE ,DEPENDENT<where ,DEPEND>> ;
+template <class MACRO>
+using MACRO_CONFIG_STRW = DEPENDENT<ENUM_FALSE ,DEPENDENT<where ,MACRO>> ;
 #endif
 
 #ifdef __CSC_CXX_LITE__
-template <class DEPEND>
-using MACRO_CXX_LITE = DEPENDENT<ENUM_TRUE ,DEPENDENT<where ,DEPEND>> ;
+template <class MACRO>
+using MACRO_CXX_LITE = DEPENDENT<ENUM_TRUE ,DEPENDENT<where ,MACRO>> ;
 #endif
 
 #ifndef __CSC_CXX_LITE__
-template <class DEPEND>
-using MACRO_CXX_LITE = DEPENDENT<ENUM_FALSE ,DEPENDENT<where ,DEPEND>> ;
+template <class MACRO>
+using MACRO_CXX_LITE = DEPENDENT<ENUM_FALSE ,DEPENDENT<where ,MACRO>> ;
 #endif
 
 #ifdef __CSC_CXX_FULL__
-template <class DEPEND>
-using MACRO_CXX_FULL = DEPENDENT<ENUM_TRUE ,DEPENDENT<where ,DEPEND>> ;
+template <class MACRO>
+using MACRO_CXX_FULL = DEPENDENT<ENUM_TRUE ,DEPENDENT<where ,MACRO>> ;
 #endif
 
 #ifndef __CSC_CXX_FULL__
-template <class DEPEND>
-using MACRO_CXX_FULL = DEPENDENT<ENUM_FALSE ,DEPENDENT<where ,DEPEND>> ;
+template <class MACRO>
+using MACRO_CXX_FULL = DEPENDENT<ENUM_FALSE ,DEPENDENT<where ,MACRO>> ;
 #endif
 
 #ifdef __CSC_CXX_LITE__
@@ -930,4 +923,41 @@ template <class ARG1 ,class ARG2>
 inline constexpr void operator delete (CSC::csc_pointer_t ,CSC::DEF<CSC::TEMPAS<ARG1 ,ARG2> *> where_) noexcept {
 	return ;
 }
+#endif
+
+#ifdef __CSC_CXX_LITE__
+#ifdef __CSC_COMPILER_MSVC__
+#define _INITIALIZER_LIST_
+#endif
+
+namespace std {
+template <class T>
+class initializer_list {
+private:
+	using E = const T * ;
+
+protected:
+	E mBegin ;
+	E mEnd ;
+
+public:
+	constexpr initializer_list () noexcept :mBegin (0) ,mEnd (0) {}
+
+	constexpr initializer_list (E begin_ ,E end_) noexcept :mBegin (begin_) ,mEnd (end_) {}
+
+	constexpr initializer_list (E begin_ ,size_t size_) noexcept :mBegin (begin_) ,mEnd (mBegin + size_) {}
+
+	constexpr E begin () const noexcept {
+		return mBegin ;
+	}
+
+	constexpr E end () const noexcept {
+		return mEnd ;
+	}
+
+	constexpr size_t size () const noexcept {
+		return size_t (mEnd - mBegin) ;
+	}
+} ;
+} ;
 #endif

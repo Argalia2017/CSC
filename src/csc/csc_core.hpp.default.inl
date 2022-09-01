@@ -150,9 +150,6 @@ trait ABSTRACT_PUREHOLDER_HELP<DEPEND ,ALWAYS> {
 			using R2X = typename ABSTRACT_PUREHOLDER_HELP<DEPEND ,ALWAYS>::UniqueLock ;
 			INDEX ix = NONE ;
 			const auto r1x = abst.type_cabi () ;
-#ifdef __CSC_COMPILER_CLANG__
-			printf ("r1x = %d\n" ,r1x) ;
-#endif
 			if ifswitch (TRUE) {
 				Scope<R1X> anonymous (R1X::from (thiz)) ;
 				if (r1x < mMinCabi)
@@ -165,11 +162,6 @@ trait ABSTRACT_PUREHOLDER_HELP<DEPEND ,ALWAYS> {
 				if (ix == NONE)
 					discard ;
 				assert (fake[ix].mGood) ;
-#ifdef __CSC_COMPILER_CLANG__
-				const auto r13x = fake[ix].mAbstract.type_cabi () ;
-				printf ("r13x = %d\n" ,r13x) ;
-				assert (r13x == r1x) ;
-#endif
 				const auto r3x = address (fake[ix]) + SIZE_OF<NODE>::expr ;
 				const auto r4x = valign (r3x ,fake[ix].mAbstract.type_align ()) ;
 				return r4x ;
@@ -340,7 +332,6 @@ trait ABSTRACT_PUREHOLDER_HELP<DEPEND ,ALWAYS> {
 	} ;
 } ;
 
-template <>
 exports FLAG ABSTRACT_HELP<DEPEND ,ALWAYS>::FUNCTION_linkage::invoke (CREF<TEMP<void>> func ,RREF<Abstract> abst) {
 	using R1X = typename ABSTRACT_PUREHOLDER_HELP<DEPEND ,ALWAYS>::PureHolder ;
 	static R1X mInstance ;
@@ -350,27 +341,27 @@ exports FLAG ABSTRACT_HELP<DEPEND ,ALWAYS>::FUNCTION_linkage::invoke (CREF<TEMP<
 template <class...>
 trait FUNCTION_current_usage_size_HELP ;
 
-template <class DEPEND>
-trait FUNCTION_current_usage_size_HELP<DEPEND ,REQUIRE<MACRO_SYSTEM_WINDOWS<DEPEND>>> {
+template <class MACRO>
+trait FUNCTION_current_usage_size_HELP<MACRO ,REQUIRE<MACRO_SYSTEM_WINDOWS<MACRO>>> {
 #ifdef __CSC_SYSTEM_WINDOWS__
 	struct FUNCTION_current_usage_size {
-		inline LENGTH operator() (CREF<csc_pointer_t> addr) const {
-			if (addr == NULL)
+		inline LENGTH operator() (CREF<FLAG> addr) const {
+			if (addr == ZERO)
 				return ZERO ;
-			return LENGTH (_msize (addr)) ;
+			return LENGTH (_msize (csc_pointer_t (addr))) ;
 		}
 	} ;
 #endif
 } ;
 
-template <class DEPEND>
-trait FUNCTION_current_usage_size_HELP<DEPEND ,REQUIRE<MACRO_SYSTEM_LINUX<DEPEND>>> {
+template <class MACRO>
+trait FUNCTION_current_usage_size_HELP<MACRO ,REQUIRE<MACRO_SYSTEM_LINUX<MACRO>>> {
 #ifdef __CSC_SYSTEM_LINUX__
 	struct FUNCTION_current_usage_size {
-		inline LENGTH operator() (CREF<csc_pointer_t> addr) const {
+		inline LENGTH operator() (CREF<FLAG> addr) const {
 			if (addr == ZERO)
 				return ZERO ;
-			return LENGTH (malloc_usable_size (addr)) ;
+			return LENGTH (malloc_usable_size (csc_pointer_t (addr))) ;
 		}
 	} ;
 #endif
@@ -415,26 +406,24 @@ trait HEAPPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 					discard ;
 				assume (FALSE) ;
 			}
-			const auto r1x = csc_pointer_t (ret) ;
-			const auto r2x = current_usage_size (r1x) ;
-			fake.mUsageSize.fetch_add (r2x) ;
+			const auto r1x = current_usage_size (ret) ;
+			fake.mUsageSize.fetch_add (r1x) ;
 			return move (ret) ;
 		}
 
 		void free (CREF<FLAG> addr) const override {
 			if (addr == ZERO)
 				return ;
-			const auto r1x = csc_pointer_t (addr) ;
-			const auto r2x = current_usage_size (r1x) ;
-			fake.mUsageSize.fetch_sub (r2x) ;
-			operator delete (r1x ,std::nothrow) ;
+			const auto r1x = current_usage_size (addr) ;
+			fake.mUsageSize.fetch_sub (r1x) ;
+			operator delete (csc_pointer_t (addr) ,std::nothrow) ;
 		}
 
 		VREF<HEAP> fake_m () const leftvalue {
 			return unsafe_deref (unsafe_cast[TYPEAS<TEMP<HEAP>>::expr] (unsafe_pointer (mPointer))) ;
 		}
 
-		LENGTH current_usage_size (CREF<csc_pointer_t> addr) const {
+		LENGTH current_usage_size (CREF<FLAG> addr) const {
 			using R1X = typename FUNCTION_current_usage_size_HELP<DEPEND ,ALWAYS>::FUNCTION_current_usage_size ;
 			const auto r1x = R1X () ;
 			return r1x (addr) ;
@@ -442,7 +431,6 @@ trait HEAPPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	} ;
 } ;
 
-template <>
 exports auto HEAPPROC_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->Box<FakeHolder> {
 	using R1X = typename HEAPPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	Box<FakeHolder> ret ;
@@ -546,7 +534,6 @@ trait VREF_PUREHOLDER_HELP<DEPEND ,ALWAYS> {
 	} ;
 } ;
 
-template <>
 exports auto VREF_HOLDER_HELP<DEPEND ,ALWAYS>::FUNCTION_linkage::invoke (CREF<LENGTH> size_ ,CREF<LENGTH> align_) ->FLAG {
 	using R1X = typename VREF_PUREHOLDER_HELP<DEPEND ,ALWAYS>::PureHolder ;
 	return R1X::create (size_ ,align_) ;
@@ -590,7 +577,6 @@ trait AUTO_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	} ;
 } ;
 
-template <>
 exports auto AUTO_HOLDER_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->Box<FakeHolder> {
 	using R1X = typename AUTO_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	Box<FakeHolder> ret ;
@@ -703,31 +689,26 @@ trait SLICE_IMPLHOLDER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 	} ;
 } ;
 
-template <>
 exports auto SLICE_HELP<STRA ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
 	using R1X = typename SLICE_IMPLHOLDER_HELP<STRA ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
 }
 
-template <>
 exports auto SLICE_HELP<STRW ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
 	using R1X = typename SLICE_IMPLHOLDER_HELP<STRW ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
 }
 
-template <>
 exports auto SLICE_HELP<STRU8 ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
 	using R1X = typename SLICE_IMPLHOLDER_HELP<STRU8 ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
 }
 
-template <>
 exports auto SLICE_HELP<STRU16 ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
 	using R1X = typename SLICE_IMPLHOLDER_HELP<STRU16 ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
 }
 
-template <>
 exports auto SLICE_HELP<STRU32 ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
 	using R1X = typename SLICE_IMPLHOLDER_HELP<STRU32 ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
@@ -772,7 +753,6 @@ trait CLAZZ_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	} ;
 } ;
 
-template <>
 exports auto CLAZZ_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
 	using R1X = typename CLAZZ_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
@@ -799,7 +779,6 @@ trait EXCEPTION_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	} ;
 } ;
 
-template <>
 exports auto EXCEPTION_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
 	using R1X = typename EXCEPTION_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;

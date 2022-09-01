@@ -15,24 +15,29 @@ namespace CSC {
 template <class...>
 trait IMAGEITERATOR_HELP ;
 
-template <class RANK>
-trait IMAGEITERATOR_HELP<RANK ,ALWAYS> {
-	require (ENUM_GT_ZERO<RANK>) ;
+template <class DEPEND>
+trait IMAGEITERATOR_HELP<DEPEND ,ALWAYS> {
+	struct PIXEL {
+		INDEX x ;
+		INDEX y ;
+	} ;
 
 	class ImageIterator {
 	protected:
-		Array<LENGTH ,RANK> mWidth ;
+		Array<LENGTH ,RANK2> mWidth ;
 		LENGTH mSize ;
-		Array<INDEX ,RANK> mItem ;
+		PIXEL mPixel ;
 		BOOL mGood ;
 
 	public:
 		implicit ImageIterator () = delete ;
 
-		explicit ImageIterator (CREF<Array<LENGTH ,RANK>> width_) {
-			mWidth = width_ ;
-			mSize = template_acc_of (PHX ,TYPEAS<RANK>::expr) ;
-			mItem.fill (0) ;
+		explicit ImageIterator (CREF<LENGTH> cx_ ,CREF<LENGTH> cy_) {
+			mWidth[0] = cx_ ;
+			mWidth[1] = cy_ ;
+			mSize = mWidth[0] * mWidth[1] ;
+			mPixel.x = 0 ;
+			mPixel.y = 0 ;
 			mGood = BOOL (mSize > 0) ;
 		}
 
@@ -60,53 +65,34 @@ trait IMAGEITERATOR_HELP<RANK ,ALWAYS> {
 			return good () ;
 		}
 
-		CREF<Array<INDEX ,RANK>> at () const leftvalue {
-			return mItem ;
+		CREF<PIXEL> at () const leftvalue {
+			return mPixel ;
 		}
 
-		inline CREF<Array<INDEX ,RANK>> operator* () const leftvalue {
+		inline CREF<PIXEL> operator* () const leftvalue {
 			return at () ;
 		}
 
 		void next () {
-			template_next (PHX ,TYPEAS<RANK>::expr) ;
+			mPixel.x++ ;
+			if (mPixel.x < mWidth[0])
+				return ;
+			mPixel.x = 0 ;
+			mPixel.y++ ;
+			if (mPixel.y < mWidth[1])
+				return ;
+			mPixel.y = 0 ;
+			mGood = FALSE ;
 		}
 
 		inline void operator++ () {
 			next () ;
 		}
-
-	private:
-		template <class ARG1 ,class = REQUIRE<ENUM_GT_ZERO<ARG1>>>
-		LENGTH template_acc_of (CREF<typeof (PH2)> ,CREF<TYPEID<ARG1>> id) const {
-			INDEX ix = ENUM_SUB<RANK ,ARG1>::expr ;
-			return mWidth[ix] * template_acc_of (PHX ,TYPEAS<ENUM_DEC<ARG1>>::expr) ;
-		}
-
-		template <class ARG1 ,class = REQUIRE<ENUM_EQ_ZERO<ARG1>>>
-		LENGTH template_acc_of (CREF<typeof (PH1)> ,CREF<TYPEID<ARG1>> id) const {
-			return IDEN ;
-		}
-
-		template <class ARG1 ,class = REQUIRE<ENUM_GT_ZERO<ARG1>>>
-		void template_next (CREF<typeof (PH2)> ,CREF<TYPEID<ARG1>> id) {
-			INDEX ix = ENUM_SUB<RANK ,ARG1>::expr ;
-			mItem[ix]++ ;
-			if (mItem[ix] < mWidth[ix])
-				return ;
-			mItem[ix] = 0 ;
-			template_next (PHX ,TYPEAS<ENUM_DEC<ARG1>>::expr) ;
-		}
-
-		template <class ARG1 ,class = REQUIRE<ENUM_EQ_ZERO<ARG1>>>
-		void template_next (CREF<typeof (PH1)> ,CREF<TYPEID<ARG1>> id) {
-			mGood = FALSE ;
-		}
 	} ;
 } ;
 
-template <class RANK>
-using ImageIterator = typename IMAGEITERATOR_HELP<RANK ,ALWAYS>::ImageIterator ;
+using PIXEL = typename IMAGEITERATOR_HELP<DEPEND ,ALWAYS>::PIXEL ;
+using ImageIterator = typename IMAGEITERATOR_HELP<DEPEND ,ALWAYS>::ImageIterator ;
 
 template <class...>
 trait ROWPROXY_HELP ;
@@ -250,15 +236,15 @@ trait IMAGE_HELP<ITEM ,SIZE ,ALWAYS> {
 			BufferProc::buf_fill (mImage ,item ,0 ,size ()) ;
 		}
 
-		ImageIterator<RANK2> iter () const {
-			return ImageIterator<RANK2> (width ()) ;
+		ImageIterator iter () const {
+			return ImageIterator (cx () ,cy ()) ;
 		}
 
-		VREF<ITEM> at (CREF<ARRAY2<INDEX>> xy) leftvalue {
-			return at (xy[0] ,xy[1]) ;
+		VREF<ITEM> at (CREF<PIXEL> xy) leftvalue {
+			return at (xy.x ,xy.y) ;
 		}
 
-		inline VREF<ITEM> operator[] (CREF<ARRAY2<INDEX>> xy) leftvalue {
+		inline VREF<ITEM> operator[] (CREF<PIXEL> xy) leftvalue {
 			return at (xy) ;
 		}
 
@@ -272,11 +258,11 @@ trait IMAGE_HELP<ITEM ,SIZE ,ALWAYS> {
 			return RowProxy<VREF<Image> ,ITEM> (VRef<Image>::reference (thiz) ,y_) ;
 		}
 
-		CREF<ITEM> at (CREF<ARRAY2<INDEX>> xy) const leftvalue {
-			return at (xy[0] ,xy[1]) ;
+		CREF<ITEM> at (CREF<PIXEL> xy) const leftvalue {
+			return at (xy.x ,xy.y) ;
 		}
 
-		inline CREF<ITEM> operator[] (CREF<ARRAY2<INDEX>> xy) const leftvalue {
+		inline CREF<ITEM> operator[] (CREF<PIXEL> xy) const leftvalue {
 			return at (xy) ;
 		}
 
@@ -557,7 +543,7 @@ trait IMAGE_HELP<ITEM ,SIZE ,ALWAYS> {
 		Image transpose () const {
 			Image ret = Image (mCY ,mCX) ;
 			for (auto &&i : iter ())
-				ret.at (i[1] ,i[0]) = at (i) ;
+				ret.at (i.y ,i.x) = at (i) ;
 			return move (ret) ;
 		}
 
@@ -565,9 +551,9 @@ trait IMAGE_HELP<ITEM ,SIZE ,ALWAYS> {
 			Image ret = Image (that.mCX ,mCY) ;
 			for (auto &&i : ret.iter ()) {
 				const auto r1x = invoke ([&] () {
-					ITEM ret ;
+					ITEM ret = ITEM (0) ;
 					for (auto &&j : CSC::iter (0 ,mCX))
-						ret += at (j ,i[1]) * that.at (i[0] ,j) ;
+						ret += at (j ,i.y) * that.at (i.x ,j) ;
 					return move (ret) ;
 				}) ;
 				ret.at (i) = r1x ;

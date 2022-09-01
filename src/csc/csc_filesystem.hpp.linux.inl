@@ -220,7 +220,6 @@ trait FILE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	} ;
 } ;
 
-template <>
 exports auto FILE_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
 	using R1X = typename FILE_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
@@ -228,11 +227,26 @@ exports auto FILE_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder
 
 template <class DEPEND>
 trait DIRECTORY_DECOUPLE_HELP<DEPEND ,ALWAYS> {
-	using SUPER = typename TEXTREADER_IMPLHOLDER_HELP<STR ,ALWAYS>::Attribute ;
+	using Holder = typename TEXTATTRIBUTE_HELP<STR ,ALWAYS>::Holder ;
 
-	class Attribute implement SUPER {
+	class ImplHolder implement Holder {
+	protected:
+		CRef<Holder> mThis ;
+
 	public:
-		implicit Attribute () = default ;
+		implicit ImplHolder () = delete ;
+
+		explicit ImplHolder (RREF<CRef<Holder>> that) {
+			mThis = move (that) ;
+		}
+
+		void initialize () override {
+			noop () ;
+		}
+
+		STR ending_item () const override {
+			return mThis->ending_item () ;
+		}
 
 		BOOL is_space (CREF<STR> str) const override {
 			if (str == STR ('\\'))
@@ -245,20 +259,60 @@ trait DIRECTORY_DECOUPLE_HELP<DEPEND ,ALWAYS> {
 		BOOL is_endline_space (CREF<STR> str) const override {
 			return FALSE ;
 		}
+
+		BOOL is_word (CREF<STR> str) const override {
+			return mThis->is_word (str) ;
+		}
+
+		BOOL is_number (CREF<STR> str) const override {
+			return mThis->is_number (str) ;
+		}
+
+		BOOL is_hex_number (CREF<STR> str) const override {
+			return mThis->is_hex_number (str) ;
+		}
+
+		INDEX hex_from_str (CREF<STR> str) const override {
+			return mThis->hex_from_str (str) ;
+		}
+
+		STR str_from_hex (CREF<INDEX> hex) const override {
+			return mThis->str_from_hex (hex) ;
+		}
+
+		BOOL is_control (CREF<STR> str) const override {
+			return mThis->is_control (str) ;
+		}
+
+		Optional<STR> escape_cast (CREF<STR> str) const override {
+			return mThis->escape_cast (str) ;
+		}
+
+		LENGTH value_precision () const override {
+			return mThis->value_precision () ;
+		}
+
+		LENGTH float_precision () const override {
+			return mThis->float_precision () ;
+		}
+
+		LENGTH number_precision () const override {
+			return mThis->number_precision () ;
+		}
 	} ;
 
 	struct FUNCTION_decouple_path {
 		inline ArrayList<String<STR>> operator() (CREF<String<STR>> dire) const {
 			ArrayList<String<STR>> ret ;
 			auto rax = TextReader<STR> (dire.raw ()) ;
-			rax.set_attr (TYPEAS<Attribute>::expr) ;
-			const auto r1x = rax.get_attr () ;
+			rax.attribute ().derive (TYPEAS<ImplHolder>::expr) ;
+			const auto r1x = rax.attribute () ;
 			INDEX ix = ret.insert () ;
 			auto rbx = STR () ;
 			if ifswitch (TRUE) {
 				rax.backup () ;
 				rax >> rbx ;
-				if (r1x->is_space (rbx))
+				if (r1x.is_space (rbx))
 					discard ;
 				rax.recover () ;
 			}
@@ -268,14 +322,22 @@ trait DIRECTORY_DECOUPLE_HELP<DEPEND ,ALWAYS> {
 					break ;
 				ix = ret.insert () ;
 				rax >> rbx ;
-				if (rbx == r1x->ending_item ())
+				if (rbx == r1x.ending_item ())
 					break ;
-				assume (r1x->is_space (rbx)) ;
+				assume (r1x.is_space (rbx)) ;
 			}
 			rax >> TextReader<STR>::EOS ;
 			ret.remove (ix) ;
 			ret.remap () ;
 			return move (ret) ;
+		}
+
+		imports CRef<ImplHolder> text_attr () {
+			return memorize ([&] () {
+				auto rax = VRef<ImplHolder>::make () ;
+				rax->initialize () ;
+				return rax.as_cref () ;
+			}) ;
 		}
 	} ;
 } ;
@@ -595,7 +657,6 @@ trait DIRECTORY_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	} ;
 } ;
 
-template <>
 exports auto DIRECTORY_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
 	using R1X = typename DIRECTORY_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
@@ -829,7 +890,6 @@ trait STREAMFILE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	} ;
 } ;
 
-template <>
 exports auto STREAMFILE_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
 	using R1X = typename STREAMFILE_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
@@ -1205,7 +1265,6 @@ trait BUFFERFILE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	} ;
 } ;
 
-template <>
 exports auto BUFFERFILE_HOLDER_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
 	using R1X = typename BUFFERFILE_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;

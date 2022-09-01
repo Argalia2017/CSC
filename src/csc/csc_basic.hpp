@@ -433,6 +433,10 @@ trait TUPLE_HELP<PARAMS ,REQUIRE<ENUM_EQ_IDEN<COUNT_OF<PARAMS>>>> {
 			assign (forward[TYPEAS<ARG1>::expr] (obj)...) ;
 		}
 
+		void assign () {
+			noop () ;
+		}
+
 		void assign (CREF<FIRST_ONE> obj) {
 			one () = move (obj) ;
 		}
@@ -556,6 +560,10 @@ trait TUPLE_HELP<PARAMS ,REQUIRE<ENUM_GT_IDEN<COUNT_OF<PARAMS>>>> {
 		template <class...ARG1 ,class = REQUIRE<ENUM_NOT<ENUM_ANY<IS_SAME<ARG1 ,Tuple>...>>>>
 		explicit Tuple (XREF<ARG1>...obj) {
 			assign (forward[TYPEAS<ARG1>::expr] (obj)...) ;
+		}
+
+		void assign () {
+			noop () ;
 		}
 
 		template <class...ARG1>
@@ -1413,7 +1421,7 @@ trait UNIQUEREF_HELP<UNIT1 ,REQUIRE<ENUM_NOT<IS_VOID<UNIT1>>>> {
 			UniqueRef ret ;
 			ret.mThis = VRef<R2X>::make () ;
 			auto rax = Box<R1X>::make ([] (VREF<UNIT1>) {}) ;
-			assert (ifnot (rax.effective ())) ;
+			assert (ifnot (rax->effective ())) ;
 			ret.mThis->initialize (move (rax.self)) ;
 			ret.mPointer = ret.mThis->pointer () ;
 			auto &&tmp = unsafe_deref (unsafe_cast[TYPEAS<TEMP<Box<UNIT1>>>::expr] (unsafe_pointer (ret.mPointer))) ;
@@ -2736,21 +2744,20 @@ trait INTEGER_IMPLHOLDER_HELP ;
 
 template <class DEPEND>
 trait INTEGER_HELP<DEPEND ,ALWAYS> {
-	template <class ARG1>
-	using CRTP_Integer = typename DEPENDENT<INTEGER_HELP<DEPEND ,ALWAYS> ,ARG1>::Integer ;
+	class Integer ;
 
 	struct Holder implement Interface {
 		virtual void initialize (CREF<VAL64> value_ ,CREF<LENGTH> size_) = 0 ;
 		virtual BOOL equal (CREF<Holder> that) const = 0 ;
 		virtual FLAG compr (CREF<Holder> that) const = 0 ;
 		virtual FLAG hash () const = 0 ;
-		virtual CRTP_Integer<DEPEND> add (CREF<Holder> that) const = 0 ;
-		virtual CRTP_Integer<DEPEND> sub (CREF<Holder> that) const = 0 ;
-		virtual CRTP_Integer<DEPEND> mul (CREF<LENGTH> scale) const = 0 ;
-		virtual CRTP_Integer<DEPEND> div (CREF<LENGTH> scale) const = 0 ;
-		virtual CRTP_Integer<DEPEND> mod (CREF<LENGTH> scale) const = 0 ;
-		virtual CRTP_Integer<DEPEND> clone () const = 0 ;
-		virtual CRTP_Integer<DEPEND> minus () const = 0 ;
+		virtual Integer add (CREF<Holder> that) const = 0 ;
+		virtual Integer sub (CREF<Holder> that) const = 0 ;
+		virtual Integer mul (CREF<LENGTH> scale) const = 0 ;
+		virtual Integer div (CREF<LENGTH> scale) const = 0 ;
+		virtual Integer mod (CREF<LENGTH> scale) const = 0 ;
+		virtual Integer clone () const = 0 ;
+		virtual Integer minus () const = 0 ;
 		virtual void increase () = 0 ;
 		virtual void decrease () = 0 ;
 	} ;
@@ -2785,8 +2792,30 @@ trait INTEGER_HELP<DEPEND ,ALWAYS> {
 			mThis = move (that) ;
 		}
 
+		implicit Integer (CREF<Integer> that) {
+			swap (thiz ,that.mThis->clone ()) ;
+		}
+
+		inline VREF<Integer> operator= (CREF<Integer> that) {
+			if (address (thiz) == address (that))
+				return thiz ;
+			swap (thiz ,move (that)) ;
+			return thiz ;
+		}
+
+		implicit Integer (RREF<Integer> that) noexcept {
+			swap (thiz ,that) ;
+		}
+
+		inline VREF<Integer> operator= (RREF<Integer> that) noexcept {
+			if (address (thiz) == address (that))
+				return thiz ;
+			swap (thiz ,move (that)) ;
+			return thiz ;
+		}
+
 		BOOL equal (CREF<Integer> that) const {
-			return mThis->equal (that) ;
+			return mThis->equal (that.mThis) ;
 		}
 
 		inline BOOL operator== (CREF<Integer> that) const {
@@ -2798,7 +2827,7 @@ trait INTEGER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		FLAG compr (CREF<Integer> that) const {
-			return mThis->compr (that) ;
+			return mThis->compr (that.mThis) ;
 		}
 
 		inline BOOL operator< (CREF<Integer> that) const {
@@ -2881,12 +2910,8 @@ trait INTEGER_HELP<DEPEND ,ALWAYS> {
 			thiz = mod (scale) ;
 		}
 
-		Integer clone () const {
-			return mThis->clone () ;
-		}
-
 		inline Integer operator+ () const {
-			return clone () ;
+			return mThis->clone () ;
 		}
 
 		Integer minus () const {
