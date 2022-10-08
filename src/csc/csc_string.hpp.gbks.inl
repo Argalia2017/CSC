@@ -4,6 +4,8 @@
 #error "∑(っ°Д° ;)っ : require 'csc_string.hpp'"
 #endif
 
+#include "csc_string.hpp"
+
 namespace CSC {
 template <class...>
 trait STRINGPROC_GBKSCACHE_HELP ;

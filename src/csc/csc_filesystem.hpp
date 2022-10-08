@@ -120,9 +120,6 @@ template <class...>
 trait DIRECTORY_HELP ;
 
 template <class...>
-trait DIRECTORY_DECOUPLE_HELP ;
-
-template <class...>
 trait DIRECTORY_IMPLHOLDER_HELP ;
 
 template <class DEPEND>
@@ -415,15 +412,14 @@ trait BUFFERFILE_HELP<ITEM ,ALWAYS> {
 		ITEM get (CREF<VAL64> index) {
 			ITEM ret ;
 			auto &&tmp = unsafe_cast[TYPEAS<TEMP<void>>::expr] (unsafe_deptr (ret)) ;
-			mThis->get (index ,RegBuffer<BYTE>::from (tmp ,0 ,SIZE_OF<ITEM>::expr)) ;
-			unsafe_barrier () ;
+			mThis->get (index ,RegBuffer<BYTE>::make (tmp ,0 ,SIZE_OF<ITEM>::expr)) ;
+			unsafe_launder (ret) ;
 			return move (ret) ;
 		}
 
 		void set (CREF<VAL64> index ,CREF<ITEM> item) {
 			auto &&tmp = unsafe_cast[TYPEAS<TEMP<void>>::expr] (unsafe_deptr (item)) ;
-			mThis->set (index ,RegBuffer<BYTE>::from (tmp ,0 ,SIZE_OF<ITEM>::expr)) ;
-			unsafe_barrier () ;
+			mThis->set (index ,RegBuffer<BYTE>::make (tmp ,0 ,SIZE_OF<ITEM>::expr)) ;
 		}
 
 		void flush () {

@@ -92,8 +92,7 @@ trait CONSOLE_HELP<DEPEND ,ALWAYS> {
 			using R1X = typename CONSOLE_MESSAGE_HELP<TYPEAS<ARG1...> ,ALWAYS>::Message ;
 			Scope<Mutex> anonymous (mMutex) ;
 			const auto r1x = bind (msg...) ;
-			using R2X = typeof (r1x) ;
-			auto rax = R1X (CRef<R2X>::reference (r1x)) ;
+			auto rax = R1X (CRef<Capture<ARG1...>>::reference (r1x)) ;
 			return mThis->print (rax) ;
 		}
 
@@ -102,8 +101,7 @@ trait CONSOLE_HELP<DEPEND ,ALWAYS> {
 			using R1X = typename CONSOLE_MESSAGE_HELP<TYPEAS<ARG1...> ,ALWAYS>::Message ;
 			Scope<Mutex> anonymous (mMutex) ;
 			const auto r1x = bind (msg...) ;
-			using R2X = typeof (r1x) ;
-			auto rax = R1X (CRef<R2X>::reference (r1x)) ;
+			auto rax = R1X (CRef<Capture<ARG1...>>::reference (r1x)) ;
 			return mThis->fatal (rax) ;
 		}
 
@@ -112,8 +110,7 @@ trait CONSOLE_HELP<DEPEND ,ALWAYS> {
 			using R1X = typename CONSOLE_MESSAGE_HELP<TYPEAS<ARG1...> ,ALWAYS>::Message ;
 			Scope<Mutex> anonymous (mMutex) ;
 			const auto r1x = bind (msg...) ;
-			using R2X = typeof (r1x) ;
-			auto rax = R1X (CRef<R2X>::reference (r1x)) ;
+			auto rax = R1X (CRef<Capture<ARG1...>>::reference (r1x)) ;
 			return mThis->error (rax) ;
 		}
 
@@ -122,8 +119,7 @@ trait CONSOLE_HELP<DEPEND ,ALWAYS> {
 			using R1X = typename CONSOLE_MESSAGE_HELP<TYPEAS<ARG1...> ,ALWAYS>::Message ;
 			Scope<Mutex> anonymous (mMutex) ;
 			const auto r1x = bind (msg...) ;
-			using R2X = typeof (r1x) ;
-			auto rax = R1X (CRef<R2X>::reference (r1x)) ;
+			auto rax = R1X (CRef<Capture<ARG1...>>::reference (r1x)) ;
 			return mThis->warn (rax) ;
 		}
 
@@ -132,8 +128,7 @@ trait CONSOLE_HELP<DEPEND ,ALWAYS> {
 			using R1X = typename CONSOLE_MESSAGE_HELP<TYPEAS<ARG1...> ,ALWAYS>::Message ;
 			Scope<Mutex> anonymous (mMutex) ;
 			const auto r1x = bind (msg...) ;
-			using R2X = typeof (r1x) ;
-			auto rax = R1X (CRef<R2X>::reference (r1x)) ;
+			auto rax = R1X (CRef<Capture<ARG1...>>::reference (r1x)) ;
 			return mThis->info (rax) ;
 		}
 
@@ -142,8 +137,7 @@ trait CONSOLE_HELP<DEPEND ,ALWAYS> {
 			using R1X = typename CONSOLE_MESSAGE_HELP<TYPEAS<ARG1...> ,ALWAYS>::Message ;
 			Scope<Mutex> anonymous (mMutex) ;
 			const auto r1x = bind (msg...) ;
-			using R2X = typeof (r1x) ;
-			auto rax = R1X (CRef<R2X>::reference (r1x)) ;
+			auto rax = R1X (CRef<Capture<ARG1...>>::reference (r1x)) ;
 			return mThis->debug (rax) ;
 		}
 
@@ -152,8 +146,7 @@ trait CONSOLE_HELP<DEPEND ,ALWAYS> {
 			using R1X = typename CONSOLE_MESSAGE_HELP<TYPEAS<ARG1...> ,ALWAYS>::Message ;
 			Scope<Mutex> anonymous (mMutex) ;
 			const auto r1x = bind (msg...) ;
-			using R2X = typeof (r1x) ;
-			auto rax = R1X (CRef<R2X>::reference (r1x)) ;
+			auto rax = R1X (CRef<Capture<ARG1...>>::reference (r1x)) ;
 			return mThis->verbose (rax) ;
 		}
 
@@ -184,23 +177,23 @@ trait CONSOLE_HELP<DEPEND ,ALWAYS> {
 	} ;
 } ;
 
-template <class...UNIT1>
-trait CONSOLE_MESSAGE_HELP<TYPEAS<UNIT1...> ,ALWAYS> {
+template <class...UNIT>
+trait CONSOLE_MESSAGE_HELP<TYPEAS<UNIT...> ,ALWAYS> {
 	using Binder = typename TEXTWRITER_HELP<STR ,ALWAYS>::Binder ;
 
 	class Message implement Binder {
 	protected:
-		CRef<BindParams<UNIT1...>> mMessage ;
+		CRef<Capture<UNIT...>> mMessage ;
 
 	public:
 		implicit Message () = delete ;
 
-		explicit Message (RREF<CRef<BindParams<UNIT1...>>> message) {
+		explicit Message (RREF<CRef<Capture<UNIT...>>> message) {
 			mMessage = move (message) ;
 		}
 
 		void friend_write (VREF<TextWriter<STR>> writer) const override {
-			mMessage.self ([&] (CREF<UNIT1>...obj) {
+			mMessage.self ([&] (CREF<UNIT>...obj) {
 				write_msg (writer ,obj...) ;
 			}) ;
 		}

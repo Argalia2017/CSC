@@ -4,6 +4,8 @@
 #error "∑(っ°Д° ;)っ : require 'csc_functional.hpp'"
 #endif
 
+#include "csc_functional.hpp"
+
 namespace CSC {
 template <class DEPEND>
 trait SYNTAXTREE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
@@ -474,6 +476,7 @@ trait SYNTAXTREE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	} ;
 } ;
 
+template <>
 exports auto SYNTAXTREE_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
 	using R1X = typename SYNTAXTREE_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;

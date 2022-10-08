@@ -4,6 +4,8 @@
 #error "∑(っ°Д° ;)っ : require 'csc_math.hpp'"
 #endif
 
+#include "csc_math.hpp"
+
 #include "begin.h"
 #include <cmath>
 #include "end.h"
@@ -21,22 +23,22 @@ trait MATHPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			noop () ;
 		}
 
-		BOOL is_infinite (CREF<SINGLE> obj) const override {
+		BOOL is_inf (CREF<SINGLE> obj) const override {
 			const auto r1x = bitwise (obj) ;
 			if ifnot (BitProc::all_bit (r1x ,CHAR (0X7F800000)))
 				return FALSE ;
 			//@warn: treat as infinity
-			if (BitProc::get_bit (r1x ,CHAR (0X007FFFFF)))
+			if (BitProc::any_bit (r1x ,CHAR (0X007FFFFF)))
 				return TRUE ;
 			return TRUE ;
 		}
 
-		BOOL is_infinite (CREF<DOUBLE> obj) const override {
+		BOOL is_inf (CREF<DOUBLE> obj) const override {
 			const auto r1x = bitwise (obj) ;
 			if ifnot (BitProc::all_bit (r1x ,DATA (0X7FF0000000000000)))
 				return FALSE ;
 			//@warn: treat as infinity
-			if (BitProc::get_bit (r1x ,DATA (0X000FFFFFFFFFFFFF)))
+			if (BitProc::any_bit (r1x ,DATA (0X000FFFFFFFFFFFFF)))
 				return TRUE ;
 			return TRUE ;
 		}
@@ -393,6 +395,7 @@ trait MATHPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	} ;
 } ;
 
+template <>
 exports auto MATHPROC_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
 	using R1X = typename MATHPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
@@ -916,13 +919,13 @@ trait FLOATPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				if (rax.mMantissa == 0)
 					discard ;
 				while (TRUE) {
-					if ifnot (BitProc::get_bit (DATA (rax.mMantissa) ,DATA (0XFFE0000000000000)))
+					if ifnot (BitProc::any_bit (DATA (rax.mMantissa) ,DATA (0XFFE0000000000000)))
 						break ;
 					rax.mMantissa = VAL64 (DATA (rax.mMantissa) >> 1) ;
 					rax.mExponent++ ;
 				}
 				while (TRUE) {
-					if (BitProc::get_bit (DATA (rax.mMantissa) ,DATA (0XFFF0000000000000)))
+					if (BitProc::any_bit (DATA (rax.mMantissa) ,DATA (0XFFF0000000000000)))
 						break ;
 					rax.mMantissa = VAL64 (DATA (rax.mMantissa) << 1) ;
 					rax.mExponent-- ;
@@ -958,7 +961,7 @@ trait FLOATPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			const auto r1x = bitwise (obj) ;
 			const auto r3x = r1x & DATA (0X7FF0000000000000) ;
 			const auto r4x = r1x & DATA (0X000FFFFFFFFFFFFF) ;
-			ret.mSign = BitProc::get_bit (r1x ,DATA (0X8000000000000000)) ;
+			ret.mSign = BitProc::any_bit (r1x ,DATA (0X8000000000000000)) ;
 			ret.mMantissa = VAL64 (r4x) ;
 			ret.mPrecision = 0 ;
 			if ifswitch (TRUE) {
@@ -977,7 +980,7 @@ trait FLOATPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				if (ret.mMantissa == 0)
 					discard ;
 				while (TRUE) {
-					if (BitProc::get_bit (DATA (ret.mMantissa) ,DATA (0X0000000000000001)))
+					if (BitProc::any_bit (DATA (ret.mMantissa) ,DATA (0X0000000000000001)))
 						break ;
 					ret.mMantissa = VAL64 (DATA (ret.mMantissa) >> 1) ;
 					ret.mExponent++ ;
@@ -1021,7 +1024,7 @@ trait FLOATPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				ret.mPrecision = 0 ;
 				ret.mExponent = 0 ;
 				while (TRUE) {
-					if (BitProc::get_bit (DATA (ret.mMantissa) ,DATA (0X8000000000000000)))
+					if (BitProc::any_bit (DATA (ret.mMantissa) ,DATA (0X8000000000000000)))
 						break ;
 					ret.mMantissa = VAL64 (DATA (ret.mMantissa) << 1) ;
 					ret.mExponent-- ;
@@ -1052,6 +1055,7 @@ trait FLOATPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	} ;
 } ;
 
+template <>
 exports auto FLOATPROC_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
 	using R1X = typename FLOATPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
@@ -1103,19 +1107,19 @@ trait BITPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			return (DATA (high) << 32) | DATA (low) ;
 		}
 
-		BOOL get_bit (CREF<BYTE> base ,CREF<BYTE> mask) const override {
+		BOOL any_bit (CREF<BYTE> base ,CREF<BYTE> mask) const override {
 			return (base & mask) != BYTE (0X00) ;
 		}
 
-		BOOL get_bit (CREF<WORD> base ,CREF<WORD> mask) const override {
+		BOOL any_bit (CREF<WORD> base ,CREF<WORD> mask) const override {
 			return (base & mask) != WORD (0X00) ;
 		}
 
-		BOOL get_bit (CREF<CHAR> base ,CREF<CHAR> mask) const override {
+		BOOL any_bit (CREF<CHAR> base ,CREF<CHAR> mask) const override {
 			return (base & mask) != CHAR (0X00) ;
 		}
 
-		BOOL get_bit (CREF<DATA> base ,CREF<DATA> mask) const override {
+		BOOL any_bit (CREF<DATA> base ,CREF<DATA> mask) const override {
 			return (base & mask) != DATA (0X00) ;
 		}
 
@@ -1141,6 +1145,7 @@ trait BITPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	} ;
 } ;
 
+template <>
 exports auto BITPROC_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
 	using R1X = typename BITPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;

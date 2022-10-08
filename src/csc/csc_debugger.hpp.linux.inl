@@ -4,6 +4,8 @@
 #error "∑(っ°Д° ;)っ : require 'csc_debugger.hpp'"
 #endif
 
+#include "csc_debugger.hpp"
+
 #ifndef __CSC_SYSTEM_LINUX__
 #error "∑(っ°Д° ;)っ : bad include"
 #endif
@@ -60,9 +62,9 @@ trait CONSOLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 
 		void set_buffer_size (CREF<LENGTH> size_) const {
 			mHeap->mConBuffer = String<STR> (size_) ;
-			mHeap->mConWriter = TextWriter<STR> (mHeap->mConBuffer.raw ()) ;
+			mHeap->mConWriter = TextWriter<STR> (mHeap->mConBuffer.raw ().ref ()) ;
 			mHeap->mLogBuffer = String<STRU8> (size_) ;
-			mHeap->mLogWriter = TextWriter<STRU8> (mHeap->mLogBuffer.raw ()) ;
+			mHeap->mLogWriter = TextWriter<STRU8> (mHeap->mLogBuffer.raw ().ref ()) ;
 		}
 
 		void enable_option (CREF<FLAG> option) const override {
@@ -202,7 +204,7 @@ trait CONSOLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			try_invoke ([&] () {
 				if (mHeap->mLogStreamFile == NULL)
 					return ;
-				const auto r2x = mHeap->mLogStreamFile->write (RegBuffer<BYTE>::from (tmp ,0 ,r1x)) ;
+				const auto r2x = mHeap->mLogStreamFile->write (RegBuffer<BYTE>::make (tmp ,0 ,r1x)) ;
 				assume (r2x == r1x) ;
 			} ,[&] () {
 				mHeap->mLogStreamFile = NULL ;
@@ -211,7 +213,7 @@ trait CONSOLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				if (mHeap->mLogStreamFile != NULL)
 					return ;
 				attach_log_file () ;
-				const auto r3x = mHeap->mLogStreamFile->write (RegBuffer<BYTE>::from (tmp ,0 ,r1x)) ;
+				const auto r3x = mHeap->mLogStreamFile->write (RegBuffer<BYTE>::make (tmp ,0 ,r1x)) ;
 				assume (r3x == r1x) ;
 			} ,[&] () {
 				mHeap->mLogStreamFile = NULL ;
@@ -252,7 +254,7 @@ trait CONSOLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			assume (r3x) ;
 			const auto r4x = String<STRU8>::make (TextWriter<STRU8>::BOM) ;
 			auto &&tmp = unsafe_cast[TYPEAS<TEMP<void>>::expr] (unsafe_deptr (r4x[0])) ;
-			const auto r5x = mHeap->mLogStreamFile->write (RegBuffer<BYTE>::from (tmp ,0 ,r4x.length ())) ;
+			const auto r5x = mHeap->mLogStreamFile->write (RegBuffer<BYTE>::make (tmp ,0 ,r4x.length ())) ;
 			assume (r5x == r4x.length ()) ;
 		}
 
@@ -291,6 +293,7 @@ trait CONSOLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	} ;
 } ;
 
+template <>
 exports auto CONSOLE_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
 	using R1X = typename CONSOLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
@@ -463,7 +466,7 @@ trait REPORTER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				if (r2x.self == NULL)
 					discard ;
 				auto &&tmp = unsafe_cast[TYPEAS<TEMP<void>>::expr] (unsafe_deptr ((**r2x.self))) ;
-				BufferProc::buf_slice (mHeap->mNameBuffer ,RegBuffer<STRA>::from (tmp ,0 ,VAL32_MAX) ,mHeap->mNameBuffer.size ()) ;
+				BufferProc::buf_slice (mHeap->mNameBuffer ,RegBuffer<STRA>::make (tmp ,0 ,VAL32_MAX) ,mHeap->mNameBuffer.size ()) ;
 				const auto r3x = string_build[TYPEAS<TYPEAS<STR ,DATA>>::expr] (DATA (addr)) ;
 				ret = String<STR>::make (slice ("[") ,r3x ,slice ("] : ") ,mHeap->mNameBuffer) ;
 			}
@@ -476,6 +479,7 @@ trait REPORTER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	} ;
 } ;
 
+template <>
 exports auto REPORTER_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
 	using R1X = typename REPORTER_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;

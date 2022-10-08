@@ -4,6 +4,8 @@
 #error "∑(っ°Д° ;)っ : require 'csc_stream.hpp'"
 #endif
 
+#include "csc_stream.hpp"
+
 namespace CSC {
 template <class DEPEND>
 trait BYTEATTRIBUTE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
@@ -37,6 +39,7 @@ trait BYTEATTRIBUTE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	} ;
 } ;
 
+template <>
 exports auto BYTEATTRIBUTE_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
 	using R1X = typename BYTEATTRIBUTE_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
@@ -345,6 +348,7 @@ trait BYTEREADER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	} ;
 } ;
 
+template <>
 exports auto BYTEREADER_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
 	using R1X = typename BYTEREADER_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
@@ -586,6 +590,7 @@ trait BYTEWRITER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	} ;
 } ;
 
+template <>
 exports auto BYTEWRITER_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
 	using R1X = typename BYTEWRITER_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
@@ -729,26 +734,31 @@ trait TEXTATTRIBUTE_IMPLHOLDER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 	} ;
 } ;
 
+template <>
 exports auto TEXTATTRIBUTE_HELP<STRA ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
 	using R1X = typename TEXTATTRIBUTE_IMPLHOLDER_HELP<STRA ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
 }
 
+template <>
 exports auto TEXTATTRIBUTE_HELP<STRW ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
 	using R1X = typename TEXTATTRIBUTE_IMPLHOLDER_HELP<STRW ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
 }
 
+template <>
 exports auto TEXTATTRIBUTE_HELP<STRU8 ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
 	using R1X = typename TEXTATTRIBUTE_IMPLHOLDER_HELP<STRU8 ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
 }
 
+template <>
 exports auto TEXTATTRIBUTE_HELP<STRU16 ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
 	using R1X = typename TEXTATTRIBUTE_IMPLHOLDER_HELP<STRU16 ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
 }
 
+template <>
 exports auto TEXTATTRIBUTE_HELP<STRU32 ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
 	using R1X = typename TEXTATTRIBUTE_IMPLHOLDER_HELP<STRU32 ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
@@ -1181,21 +1191,18 @@ trait TEXTREADER_IMPLHOLDER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 		}
 
 		void read_bom () override {
-			template_bom (PHX ,TYPEAS<ITEM>::expr) ;
+			read_bom (TYPEAS<ITEM>::expr) ;
 		}
 
-		template <class ARG1 ,class = REQUIRE<IS_SAME<ARG1 ,STRA>>>
-		void template_bom (CREF<typeof (PH5)> ,CREF<TYPEID<ARG1>> id) {
+		void read_bom (CREF<TYPEID<STRA>> id) {
 			noop () ;
 		}
 
-		template <class ARG1 ,class = REQUIRE<IS_SAME<ARG1 ,STRW>>>
-		void template_bom (CREF<typeof (PH4)> ,CREF<TYPEID<ARG1>> id) {
-			template_bom (PHX ,TYPEAS<STRUW>::expr) ;
+		void read_bom (CREF<TYPEID<STRW>> id) {
+			read_bom (TYPEAS<STRUW>::expr) ;
 		}
 
-		template <class ARG1 ,class = REQUIRE<IS_SAME<ARG1 ,STRU8>>>
-		void template_bom (CREF<typeof (PH3)> ,CREF<TYPEID<ARG1>> id) {
+		void read_bom (CREF<TYPEID<STRU8>> id) {
 			auto rax = ITEM () ;
 			auto rbx = mRead ;
 			if ifswitch (TRUE) {
@@ -1213,8 +1220,7 @@ trait TEXTREADER_IMPLHOLDER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 			mRead = rbx ;
 		}
 
-		template <class ARG1 ,class = REQUIRE<IS_SAME<ARG1 ,STRU16>>>
-		void template_bom (CREF<typeof (PH2)> ,CREF<TYPEID<ARG1>> id) {
+		void read_bom (CREF<TYPEID<STRU16>> id) {
 			auto rax = ITEM () ;
 			auto rbx = mRead ;
 			if ifswitch (TRUE) {
@@ -1229,8 +1235,7 @@ trait TEXTREADER_IMPLHOLDER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 			mRead = rbx ;
 		}
 
-		template <class ARG1 ,class = REQUIRE<IS_SAME<ARG1 ,STRU32>>>
-		void template_bom (CREF<typeof (PH1)> ,CREF<TYPEID<ARG1>> id) {
+		void read_bom (CREF<TYPEID<STRU32>> id) {
 			auto rax = ITEM () ;
 			auto rbx = mRead ;
 			if ifswitch (TRUE) {
@@ -1287,26 +1292,31 @@ trait TEXTREADER_IMPLHOLDER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 	} ;
 } ;
 
+template <>
 exports auto TEXTREADER_HELP<STRA ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
 	using R1X = typename TEXTREADER_IMPLHOLDER_HELP<STRA ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
 }
 
+template <>
 exports auto TEXTREADER_HELP<STRW ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
 	using R1X = typename TEXTREADER_IMPLHOLDER_HELP<STRW ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
 }
 
+template <>
 exports auto TEXTREADER_HELP<STRU8 ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
 	using R1X = typename TEXTREADER_IMPLHOLDER_HELP<STRU8 ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
 }
 
+template <>
 exports auto TEXTREADER_HELP<STRU16 ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
 	using R1X = typename TEXTREADER_IMPLHOLDER_HELP<STRU16 ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
 }
 
+template <>
 exports auto TEXTREADER_HELP<STRU32 ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
 	using R1X = typename TEXTREADER_IMPLHOLDER_HELP<STRU32 ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
@@ -1448,7 +1458,7 @@ trait TEXTWRITER_IMPLHOLDER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 			}
 			auto rxx = TRUE ;
 			if ifswitch (rxx) {
-				if ifnot (MathProc::is_infinite (item))
+				if ifnot (MathProc::is_inf (item))
 					discard ;
 				write (ITEM ('i')) ;
 				write (ITEM ('n')) ;
@@ -1534,34 +1544,29 @@ trait TEXTWRITER_IMPLHOLDER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 		}
 
 		void write_bom () override {
-			template_bom (PHX ,TYPEAS<ITEM>::expr) ;
+			write_bom (TYPEAS<ITEM>::expr) ;
 		}
 
-		template <class ARG1 ,class = REQUIRE<IS_SAME<ARG1 ,STRA>>>
-		void template_bom (CREF<typeof (PH5)> ,CREF<TYPEID<ARG1>> id) {
+		void write_bom (CREF<TYPEID<STRA>> id) {
 			noop () ;
 		}
 
-		template <class ARG1 ,class = REQUIRE<IS_SAME<ARG1 ,STRW>>>
-		void template_bom (CREF<typeof (PH4)> ,CREF<TYPEID<ARG1>> id) {
-			template_bom (PHX ,TYPEAS<STRUW>::expr) ;
+		void write_bom (CREF<TYPEID<STRW>> id) {
+			write_bom (TYPEAS<STRUW>::expr) ;
 		}
 
-		template <class ARG1 ,class = REQUIRE<IS_SAME<ARG1 ,STRU8>>>
-		void template_bom (CREF<typeof (PH3)> ,CREF<TYPEID<ARG1>> id) {
+		void write_bom (CREF<TYPEID<STRU8>> id) {
 			write (ITEM (0XEF)) ;
 			write (ITEM (0XBB)) ;
 			write (ITEM (0XBF)) ;
 		}
 
-		template <class ARG1 ,class = REQUIRE<IS_SAME<ARG1 ,STRU16>>>
-		void template_bom (CREF<typeof (PH2)> ,CREF<TYPEID<ARG1>> id) {
+		void write_bom (CREF<TYPEID<STRU16>> id) {
 			write (ITEM (0XFEFF)) ;
 			write (ITEM (0XFFFE)) ;
 		}
 
-		template <class ARG1 ,class = REQUIRE<IS_SAME<ARG1 ,STRU32>>>
-		void template_bom (CREF<typeof (PH1)> ,CREF<TYPEID<ARG1>> id) {
+		void write_bom (CREF<TYPEID<STRU32>> id) {
 			write (ITEM (0X0000FEFF)) ;
 			write (ITEM (0XFFFE0000)) ;
 		}
@@ -1803,26 +1808,31 @@ trait TEXTWRITER_WRITEVALUE_HELP<ITEM ,ALWAYS> {
 	} ;
 } ;
 
+template <>
 exports auto TEXTWRITER_HELP<STRA ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
 	using R1X = typename TEXTWRITER_IMPLHOLDER_HELP<STRA ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
 }
 
+template <>
 exports auto TEXTWRITER_HELP<STRW ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
 	using R1X = typename TEXTWRITER_IMPLHOLDER_HELP<STRW ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
 }
 
+template <>
 exports auto TEXTWRITER_HELP<STRU8 ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
 	using R1X = typename TEXTWRITER_IMPLHOLDER_HELP<STRU8 ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
 }
 
+template <>
 exports auto TEXTWRITER_HELP<STRU16 ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
 	using R1X = typename TEXTWRITER_IMPLHOLDER_HELP<STRU16 ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
 }
 
+template <>
 exports auto TEXTWRITER_HELP<STRU32 ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
 	using R1X = typename TEXTWRITER_IMPLHOLDER_HELP<STRU32 ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
@@ -2122,6 +2132,7 @@ trait REGULARREADER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	} ;
 } ;
 
+template <>
 exports auto REGULARREADER_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
 	using R1X = typename REGULARREADER_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;

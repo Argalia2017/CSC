@@ -21,12 +21,13 @@ template <class...>
 trait TIMEPOINT_HELP ;
 
 template <class...>
+trait TIMEDURATION_HOLDER_HELP ;
+
+template <class...>
 trait TIMEDURATION_IMPLHOLDER_HELP ;
 
 template <class DEPEND>
-trait TIMEDURATION_HELP<DEPEND ,ALWAYS> {
-	class TimeDuration ;
-
+trait TIMEDURATION_HOLDER_HELP<DEPEND ,ALWAYS> {
 	struct CALENDAR {
 		LENGTH mYear ;
 		LENGTH mMonth ;
@@ -38,8 +39,7 @@ trait TIMEDURATION_HELP<DEPEND ,ALWAYS> {
 		LENGTH mSecond ;
 	} ;
 
-	template <class ARG1>
-	using CRTP_TimePoint = typename DEPENDENT<TIMEPOINT_HELP<DEPEND ,ALWAYS> ,ARG1>::TimePoint ;
+	using TimeDuration = typename TIMEDURATION_HELP<DEPEND ,ALWAYS>::TimeDuration ;
 
 	struct Holder implement Interface {
 		virtual void init_now () = 0 ;
@@ -61,6 +61,15 @@ trait TIMEDURATION_HELP<DEPEND ,ALWAYS> {
 	struct FUNCTION_extern {
 		imports VRef<Holder> invoke () ;
 	} ;
+} ;
+
+template <class DEPEND>
+trait TIMEDURATION_HELP<DEPEND ,ALWAYS> {
+	class TimeDuration ;
+	using CALENDAR = typename TIMEDURATION_HOLDER_HELP<DEPEND ,ALWAYS>::CALENDAR ;
+	using Holder = typename TIMEDURATION_HOLDER_HELP<DEPEND ,ALWAYS>::Holder ;
+	using FUNCTION_extern = typename TIMEDURATION_HOLDER_HELP<DEPEND ,ALWAYS>::FUNCTION_extern ;
+	using TimePoint = typename TIMEPOINT_HELP<DEPEND ,ALWAYS>::TimePoint ;
 
 	class TimeDuration {
 	private:
@@ -87,8 +96,7 @@ trait TIMEDURATION_HELP<DEPEND ,ALWAYS> {
 			mThis = move (that) ;
 		}
 
-		template <class ARG1 = DEPEND>
-		explicit TimeDuration (RREF<CRTP_TimePoint<ARG1>> that) {
+		explicit TimeDuration (RREF<TimePoint> that) {
 			mThis = move (that.mThis) ;
 		}
 
@@ -153,41 +161,35 @@ trait TIMEDURATION_HELP<DEPEND ,ALWAYS> {
 			thiz = sub (that) ;
 		}
 
-		template <class ARG1 = DEPEND>
-		CRTP_TimePoint<ARG1> add (CREF<CRTP_TimePoint<ARG1>> that) const {
+		TimePoint add (CREF<TimePoint> that) const {
 			return mThis->add (keep[TYPEAS<CREF<Holder>>::expr] (that.mThis)) ;
 		}
 
-		template <class ARG1 = DEPEND>
-		inline CRTP_TimePoint<ARG1> operator+ (CREF<CRTP_TimePoint<ARG1>> that) const {
+		inline TimePoint operator+ (CREF<TimePoint> that) const {
 			return add (that) ;
 		}
 
-		template <class ARG1 = DEPEND>
-		CRTP_TimePoint<ARG1> sub (CREF<CRTP_TimePoint<ARG1>> that) const {
+		TimePoint sub (CREF<TimePoint> that) const {
 			return mThis->sub (keep[TYPEAS<CREF<Holder>>::expr] (that.mThis)) ;
 		}
 
-		template <class ARG1 = DEPEND>
-		inline CRTP_TimePoint<ARG1> operator- (CREF<CRTP_TimePoint<ARG1>> that) const {
+		inline TimePoint operator- (CREF<TimePoint> that) const {
 			return sub (that) ;
 		}
 	} ;
 } ;
-
-using TimeDuration = typename TIMEDURATION_HELP<DEPEND ,ALWAYS>::TimeDuration ;
 
 template <class...>
 trait TIMEPOINT_HELP ;
 
 template <class DEPEND>
 trait TIMEPOINT_HELP<DEPEND ,ALWAYS> {
-	using CALENDAR = typename TIMEDURATION_HELP<DEPEND ,ALWAYS>::CALENDAR ;
-	using Holder = typename TIMEDURATION_HELP<DEPEND ,ALWAYS>::Holder ;
-	using FUNCTION_extern = typename TIMEDURATION_HELP<DEPEND ,ALWAYS>::FUNCTION_extern ;
+	class TimePoint ;
 
-	template <class ARG1>
-	using CRTP_TimeDuration = typename DEPENDENT<TIMEDURATION_HELP<DEPEND ,ALWAYS> ,ARG1>::TimeDuration ;
+	using CALENDAR = typename TIMEDURATION_HOLDER_HELP<DEPEND ,ALWAYS>::CALENDAR ;
+	using Holder = typename TIMEDURATION_HOLDER_HELP<DEPEND ,ALWAYS>::Holder ;
+	using FUNCTION_extern = typename TIMEDURATION_HOLDER_HELP<DEPEND ,ALWAYS>::FUNCTION_extern ;
+	using TimeDuration = typename TIMEDURATION_HELP<DEPEND ,ALWAYS>::TimeDuration ;
 
 	class TimePoint {
 	private:
@@ -205,8 +207,7 @@ trait TIMEPOINT_HELP<DEPEND ,ALWAYS> {
 			mThis->initialize (calendar_) ;
 		}
 
-		template <class ARG1 = DEPEND>
-		explicit TimePoint (RREF<CRTP_TimeDuration<ARG1>> that) {
+		explicit TimePoint (RREF<TimeDuration> that) {
 			mThis = move (that.mThis) ;
 		}
 
@@ -267,12 +268,14 @@ trait TIMEPOINT_HELP<DEPEND ,ALWAYS> {
 		}
 	} ;
 
-	class NowTimePoint implement TimePoint {
+	class NowTimePoint extend TimePoint {
 	public:
 		implicit NowTimePoint ()
 			:TimePoint (TimePoint::make_now ()) {}
 	} ;
 } ;
+
+using TimeDuration = typename TIMEDURATION_HELP<DEPEND ,ALWAYS>::TimeDuration ;
 
 using TimePoint = typename TIMEPOINT_HELP<DEPEND ,ALWAYS>::TimePoint ;
 using NowTimePoint = typename TIMEPOINT_HELP<DEPEND ,ALWAYS>::NowTimePoint ;
@@ -410,13 +413,13 @@ trait MUTEX_HELP<DEPEND ,ALWAYS> {
 		}
 	} ;
 
-	class RecursiveMutex implement Mutex {
+	class RecursiveMutex extend Mutex {
 	public:
 		implicit RecursiveMutex ()
 			:Mutex (Mutex::make_recursive ()) {}
 	} ;
 
-	class ConditionalMutex implement Mutex {
+	class ConditionalMutex extend Mutex {
 	public:
 		implicit ConditionalMutex ()
 			:Mutex (Mutex::make_conditional ()) {}
@@ -724,7 +727,7 @@ trait PROCESS_HELP<DEPEND ,ALWAYS> {
 		}
 	} ;
 
-	class CurrentProcess implement Process {
+	class CurrentProcess extend Process {
 	public:
 		implicit CurrentProcess ()
 			:Process (RuntimeProc::process_uid ()) {}
@@ -798,8 +801,8 @@ trait SINGLETON_HOLDER_HELP<DEPEND ,ALWAYS> {
 	} ;
 } ;
 
-template <class UNIT1>
-trait SINGLETON_HELP<UNIT1 ,ALWAYS> {
+template <class UNIT>
+trait SINGLETON_HELP<UNIT ,ALWAYS> {
 	using Holder = typename SINGLETON_HOLDER_HELP<DEPEND ,ALWAYS>::Holder ;
 	using FUNCTION_extern = typename SINGLETON_HOLDER_HELP<DEPEND ,ALWAYS>::FUNCTION_extern ;
 
@@ -809,23 +812,23 @@ trait SINGLETON_HELP<UNIT1 ,ALWAYS> {
 
 	class Singleton extend Proxy {
 	public:
-		imports CREF<UNIT1> instance () {
+		imports CREF<UNIT> instance () {
 			return memorize ([&] () {
 				auto rax = ZERO ;
 				if ifswitch (TRUE) {
 					const auto r1x = unique () ;
 					assert (r1x.available ()) ;
-					const auto r2x = Clazz (TYPEAS<UNIT1>::expr).type_name () ;
+					const auto r2x = Clazz (TYPEAS<UNIT>::expr).type_name () ;
 					rax = r1x->mThis->map (r2x) ;
 					if (rax != ZERO)
 						discard ;
-					const auto r3x = address (UNIT1::instance ()) ;
+					const auto r3x = address (UNIT::instance ()) ;
 					r1x->mThis->add (r2x ,r3x) ;
 					rax = r1x->mThis->map (r2x) ;
 				}
 				assume (rax != ZERO) ;
-				auto &&tmp = unsafe_deref (unsafe_cast[TYPEAS<TEMP<UNIT1>>::expr] (unsafe_pointer (rax))) ;
-				return CRef<UNIT1>::reference (tmp) ;
+				auto &&tmp = unsafe_deref (unsafe_cast[TYPEAS<TEMP<UNIT>>::expr] (unsafe_pointer (rax))) ;
+				return CRef<UNIT>::reference (tmp) ;
 			}) ;
 		}
 
@@ -841,8 +844,8 @@ trait SINGLETON_HELP<UNIT1 ,ALWAYS> {
 	} ;
 } ;
 
-template <class UNIT1>
-using Singleton = typename SINGLETON_HELP<UNIT1 ,ALWAYS>::Singleton ;
+template <class UNIT>
+using Singleton = typename SINGLETON_HELP<UNIT ,ALWAYS>::Singleton ;
 
 template <class...>
 trait SYSTEM_HELP ;

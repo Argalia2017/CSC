@@ -1,4 +1,13 @@
-﻿#include "util.h"
+﻿
+#ifdef __GNUC__
+#include <cstdio>
+#endif
+
+#ifdef __clang__
+#include <cstdio>
+#endif
+
+#include "util.h"
 
 #ifdef __GNUC__
 #include <csc/begin.h>
@@ -179,6 +188,8 @@ struct G_mYn {
 	}
 } ;
 
+exports void test_main () ;
+
 #ifdef __CSC_TARGET_EXE__
 exports int main () {
 	Singleton<Reporter>::instance ().detect_crash_signal () ;
@@ -186,16 +197,18 @@ exports int main () {
 	Singleton<Console>::instance ().link (slice (".")) ;
 	Singleton<Console>::instance ().info (slice ("start")) ;
 
-	auto rax = SyntaxTree () ;
-	auto &mXn = rax.stack (TYPEAS<G_mXn>::expr).mXn ;
-	auto &mYn = rax.stack (TYPEAS<G_mYn>::expr).mYn ;
-	rax.play () ;
-	for (auto &&i : mXn.iter ()) {
-		Singleton<Console>::instance ().print (slice ("square (") ,mXn[i] ,slice (") = ") ,mYn[i]) ;
-	}
+	//auto rax = SyntaxTree () ;
+	//auto &mXn = rax.stack (TYPEAS<G_mXn>::expr).mXn ;
+	//auto &mYn = rax.stack (TYPEAS<G_mYn>::expr).mYn ;
+	//rax.play () ;
+	//for (auto &&i : mXn.iter ()) {
+	//	Singleton<Console>::instance ().print (slice ("square (") ,mXn[i] ,slice (") = ") ,mYn[i]) ;
+	//}
+	//unittest (rax) ;
+
+	test_main () ;
 
 	Singleton<Console>::instance ().pause () ;
-	unittest (rax) ;
 	return 0 ;
 }
 #endif

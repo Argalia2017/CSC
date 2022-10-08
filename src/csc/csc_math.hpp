@@ -31,8 +31,8 @@ template <class DEPEND>
 trait MATHPROC_HELP<DEPEND ,ALWAYS> {
 	struct Holder implement Interface {
 		virtual void initialize () = 0 ;
-		virtual BOOL is_infinite (CREF<SINGLE> obj) const = 0 ;
-		virtual BOOL is_infinite (CREF<DOUBLE> obj) const = 0 ;
+		virtual BOOL is_inf (CREF<SINGLE> obj) const = 0 ;
+		virtual BOOL is_inf (CREF<DOUBLE> obj) const = 0 ;
 		virtual VAL32 sign (CREF<VAL32> obj) const = 0 ;
 		virtual VAL64 sign (CREF<VAL64> obj) const = 0 ;
 		virtual SINGLE sign (CREF<SINGLE> obj) const = 0 ;
@@ -118,9 +118,9 @@ trait MATHPROC_HELP<DEPEND ,ALWAYS> {
 		}
 
 		template <class ARG1>
-		imports ARG1 is_infinite (CREF<ARG1> obj) {
+		imports ARG1 is_inf (CREF<ARG1> obj) {
 			require (IS_FLOAT<ARG1>) ;
-			return instance ().mThis->is_infinite (obj) ;
+			return instance ().mThis->is_inf (obj) ;
 		}
 
 		template <class ARG1>
@@ -493,10 +493,10 @@ trait BITPROC_HELP<DEPEND ,ALWAYS> {
 		virtual WORD up_bit (CREF<BYTE> high ,CREF<BYTE> low) const = 0 ;
 		virtual CHAR up_bit (CREF<WORD> high ,CREF<WORD> low) const = 0 ;
 		virtual DATA up_bit (CREF<CHAR> high ,CREF<CHAR> low) const = 0 ;
-		virtual BOOL get_bit (CREF<BYTE> base ,CREF<BYTE> mask) const = 0 ;
-		virtual BOOL get_bit (CREF<WORD> base ,CREF<WORD> mask) const = 0 ;
-		virtual BOOL get_bit (CREF<CHAR> base ,CREF<CHAR> mask) const = 0 ;
-		virtual BOOL get_bit (CREF<DATA> base ,CREF<DATA> mask) const = 0 ;
+		virtual BOOL any_bit (CREF<BYTE> base ,CREF<BYTE> mask) const = 0 ;
+		virtual BOOL any_bit (CREF<WORD> base ,CREF<WORD> mask) const = 0 ;
+		virtual BOOL any_bit (CREF<CHAR> base ,CREF<CHAR> mask) const = 0 ;
+		virtual BOOL any_bit (CREF<DATA> base ,CREF<DATA> mask) const = 0 ;
 		virtual BOOL all_bit (CREF<BYTE> base ,CREF<BYTE> mask) const = 0 ;
 		virtual BOOL all_bit (CREF<WORD> base ,CREF<WORD> mask) const = 0 ;
 		virtual BOOL all_bit (CREF<CHAR> base ,CREF<CHAR> mask) const = 0 ;
@@ -559,9 +559,9 @@ trait BITPROC_HELP<DEPEND ,ALWAYS> {
 		}
 
 		template <class ARG1 ,class ARG2>
-		imports BOOL get_bit (CREF<ARG1> base ,CREF<ARG2> mask) {
+		imports BOOL any_bit (CREF<ARG1> base ,CREF<ARG2> mask) {
 			require (IS_BIT<ARG1>) ;
-			return instance ().mThis->get_bit (base ,ARG1 (mask)) ;
+			return instance ().mThis->any_bit (base ,ARG1 (mask)) ;
 		}
 
 		template <class ARG1 ,class ARG2>

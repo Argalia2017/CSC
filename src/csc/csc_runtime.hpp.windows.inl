@@ -8,6 +8,9 @@
 #error "∑(っ°Д° ;)っ : require 'csc_filesystem.hpp'"
 #endif
 
+#include "csc_runtime.hpp"
+#include "csc_filesystem.hpp"
+
 #ifndef __CSC_SYSTEM_WINDOWS__
 #error "∑(っ°Д° ;)っ : bad include"
 #endif
@@ -118,6 +121,7 @@ trait RUNTIMEPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	} ;
 } ;
 
+template <>
 exports auto RUNTIMEPROC_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
 	using R1X = typename RUNTIMEPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
@@ -139,7 +143,7 @@ trait PROCESS_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		void initialize (CREF<FLAG> uid) override {
 			mUID = uid ;
 			auto rax = VarBuffer<BYTE> (128) ;
-			auto rbx = ByteWriter (RegBuffer<BYTE>::from (rax).lift ()) ;
+			auto rbx = ByteWriter (RegBuffer<BYTE>::from (rax).ref ()) ;
 			if ifswitch (TRUE) {
 				const auto r1x = UniqueRef<HANDLE> ([&] (VREF<HANDLE> me) {
 					me = OpenProcess (PROCESS_QUERY_INFORMATION ,FALSE ,DWORD (mUID)) ;
@@ -195,7 +199,7 @@ trait PROCESS_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 
 		void initialize (CREF<SNAPSHOT> snapshot_) override {
 			mSnapshot = snapshot_ ;
-			auto rax = ByteReader (RegBuffer<BYTE>::from (mSnapshot).lift ()) ;
+			auto rax = ByteReader (RegBuffer<BYTE>::from (mSnapshot).ref ()) ;
 			rax >> ByteReader::GAP ;
 			const auto r1x = rax.poll (TYPEAS<VAL64>::expr) ;
 			assume (r1x > 0) ;
@@ -213,6 +217,7 @@ trait PROCESS_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	} ;
 } ;
 
+template <>
 exports auto PROCESS_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
 	using R1X = typename PROCESS_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
@@ -278,6 +283,7 @@ trait MODULE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	} ;
 } ;
 
+template <>
 exports auto MODULE_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
 	using R1X = typename MODULE_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
@@ -358,10 +364,9 @@ trait SINGLETON_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				UnmapViewOfFile (me) ;
 			}) ;
 			const auto r3x = FLAG (r2x.self) ;
-			auto &&tmp = unsafe_deref (unsafe_cast[TYPEAS<TEMP<PIPE>>::expr] (unsafe_pointer (r3x))) ;
 			PIPE ret ;
-			ret = tmp ;
-			unsafe_barrier () ;
+			unsafe_sync (unsafe_deptr (ret) ,unsafe_pointer (r3x)) ;
+			unsafe_launder (ret) ;
 			assume (ret.mReserve1 == DATA (0X1122334455667788)) ;
 			assume (ret.mReserve3 == DATA (0XAAAABBBBCCCCDDDD)) ;
 			assume (ret.mReserve2 == DATA (mUID)) ;
@@ -383,15 +388,13 @@ trait SINGLETON_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				UnmapViewOfFile (me) ;
 			}) ;
 			const auto r3x = FLAG (r2x.self) ;
-			auto &&tmp = unsafe_deref (unsafe_cast[TYPEAS<TEMP<PIPE>>::expr] (unsafe_pointer (r3x))) ;
 			auto rax = PIPE () ;
 			rax.mReserve1 = DATA (0X1122334455667788) ;
 			rax.mAddress1 = DATA (address (mHeap)) ;
 			rax.mReserve2 = DATA (mUID) ;
 			rax.mAddress2 = DATA (address (mHeap)) ;
 			rax.mReserve3 = DATA (0XAAAABBBBCCCCDDDD) ;
-			tmp = rax ;
-			unsafe_barrier () ;
+			unsafe_sync (unsafe_pointer (r3x) ,unsafe_deptr (rax)) ;
 		}
 
 		void add (CREF<Slice<STR>> name ,CREF<FLAG> addr) const override {
@@ -410,6 +413,7 @@ trait SINGLETON_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	} ;
 } ;
 
+template <>
 exports auto SINGLETON_HOLDER_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
 	using R1X = typename SINGLETON_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;

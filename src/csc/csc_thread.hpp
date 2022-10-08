@@ -135,11 +135,11 @@ trait PROMISE_HOLDER_HELP<DEPEND ,ALWAYS> {
 
 template <class ITEM>
 trait PROMISE_HELP<ITEM ,ALWAYS> {
+	class Promise ;
+
 	using Holder = typename PROMISE_HOLDER_HELP<DEPEND ,ALWAYS>::Holder ;
 	using FUNCTION_extern = typename PROMISE_HOLDER_HELP<DEPEND ,ALWAYS>::FUNCTION_extern ;
-
-	template <class ARG1>
-	using CRTP_Future = typename DEPENDENT<FUTURE_HELP<ITEM ,ALWAYS> ,ARG1>::Future ;
+	using Future = typename FUTURE_HELP<ITEM ,ALWAYS>::Future ;
 
 	class Promise {
 	protected:
@@ -151,9 +151,8 @@ trait PROMISE_HELP<ITEM ,ALWAYS> {
 			mThis->initialize () ;
 		}
 
-		template <class ARG1 = DEPEND>
-		CRTP_Future<ARG1> as_future () {
-			return CRTP_Future<ARG1> (move (mThis)) ;
+		Future as_future () {
+			return Future (move (mThis)) ;
 		}
 
 		void start () {
@@ -217,8 +216,7 @@ trait FUTURE_HELP<ITEM ,ALWAYS> {
 		}
 
 		ITEM poll () {
-			auto rax = mThis->poll () ;
-			return rax.poll (TYPEAS<ITEM>::expr) ;
+			return mThis->poll ().poll (TYPEAS<ITEM>::expr) ;
 		}
 
 		Optional<ITEM> poll (CREF<TimeDuration> interval ,CREF<Function<BOOL>> predicate) {
@@ -237,7 +235,7 @@ trait FUTURE_HELP<ITEM ,ALWAYS> {
 		}
 	} ;
 
-	class AsyncFuture implement Future {
+	class AsyncFuture extend Future {
 	public:
 		implicit AsyncFuture () = delete ;
 

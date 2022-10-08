@@ -4,6 +4,8 @@
 #error "∑(っ°Д° ;)っ : require 'csc_serialization.hpp'"
 #endif
 
+#include "csc_serialization.hpp"
+
 namespace CSC {
 template <class DEPEND>
 trait XMLPARSER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
@@ -44,7 +46,7 @@ trait XMLPARSER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 
 		void initialize (CREF<RegBuffer<STRU8>> stream) override {
 			using R1X = typename DEPENDENT<XMLPARSER_SERIALIZATION_HELP<DEPEND ,ALWAYS> ,DEPEND>::Serialization ;
-			auto rax = R1X (stream.lift ()) ;
+			auto rax = R1X (stream.ref ()) ;
 			rax.generate () ;
 			mHeap = CRef<HEAP>::make (rax.poll ()) ;
 			mIndex = 0 ;
@@ -67,10 +69,14 @@ trait XMLPARSER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			return TRUE ;
 		}
 
-		XmlParser clone () const override {
-			if ifnot (exist ())
-				return factory (NONE) ;
-			return factory (mIndex) ;
+		void friend_clone (VREF<XmlParser> that) const override {
+			if ifswitch (TRUE) {
+				if (exist ())
+					discard ;
+				that = factory (NONE) ;
+				return ;
+			}
+			that = factory (mIndex) ;
 		}
 
 		XmlParser root () const override {
@@ -135,16 +141,27 @@ trait XMLPARSER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				ret[i] = move (rax[r1x[i]]) ;
 			return move (ret) ;
 		}
-
+		
+		void merge (CREF<XmlParser> that) override {
+			using R1X = typename DEPENDENT<XMLPARSER_COMBINATION_HELP<DEPEND ,ALWAYS> ,DEPEND>::Combination ;
+			auto rax = R1X (factory (mIndex) ,that) ;
+			rax.generate () ;
+			mHeap = CRef<HEAP>::make (rax.poll ()) ;
+			mIndex = 0 ;
+		}
+		
 		BOOL equal (CREF<Holder> that) const override {
-			auto &&tmp = keep[TYPEAS<CREF<ImplHolder>>::expr] (that) ;
-			if (exist () != tmp.exist ())
+			return equal (keep[TYPEAS<CREF<ImplHolder>>::expr] (that)) ;
+		}
+
+		BOOL equal (CREF<ImplHolder> that) const {
+			if (exist () != that.exist ())
 				return FALSE ;
 			if ifnot (exist ())
 				return TRUE ;
-			if (address (mHeap->mTree) != address (tmp.mHeap->mTree))
+			if (address (mHeap->mTree) != address (that.mHeap->mTree))
 				return FALSE ;
-			if (mIndex != tmp.mIndex)
+			if (mIndex != that.mIndex)
 				return FALSE ;
 			return TRUE ;
 		}
@@ -586,8 +603,10 @@ trait XMLPARSER_COMBINATION_HELP<DEPEND ,ALWAYS> {
 	public:
 		implicit Combination () = delete ;
 
-		explicit Combination (CREF<Array<XmlParser>> sequence) {
-			mSequence = move (sequence) ;
+		explicit Combination (CREF<XmlParser> first ,CREF<XmlParser> second) {
+			mSequence = Array<XmlParser> (2) ;
+			mSequence[0] = first ;
+			mSequence[1] = second ;
 			mClazzString = string_cvt[TYPEAS<TYPEAS<STRU8 ,STR>>::expr] (slice ("type")) ;
 			mObjectClazzString = string_cvt[TYPEAS<TYPEAS<STRU8 ,STR>>::expr] (slice ("object")) ;
 			mArrayClazzString = string_cvt[TYPEAS<TYPEAS<STRU8 ,STR>>::expr] (slice ("array")) ;
@@ -600,35 +619,34 @@ trait XMLPARSER_COMBINATION_HELP<DEPEND ,ALWAYS> {
 			mTree[mRoot].mBrother = NONE ;
 		}
 
-		XmlParser poll () {
-			auto rax = HEAP () ;
+		HEAP poll () {
+			HEAP ret ;
 			const auto r1x = shrink_order () ;
-			rax.mTree = Array<NODE> (r1x.length ()) ;
+			ret.mTree = Array<NODE> (r1x.length ()) ;
 			for (auto &&i : mTree.iter ()) {
 				INDEX ix = r1x[i] ;
-				rax.mTree[ix].mName = move (mTree[i].mName) ;
-				rax.mTree[ix].mAttributeSet = move (mTree[i].mAttributeSet) ;
-				rax.mTree[ix].mArraySet = move (mTree[i].mArraySet) ;
-				for (auto &&j : rax.mTree[ix].mArraySet.iter ()) {
-					INDEX iy = r1x[rax.mTree[ix].mArraySet.get (j)] ;
-					rax.mTree[ix].mArraySet.set (j ,iy) ;
+				ret.mTree[ix].mName = move (mTree[i].mName) ;
+				ret.mTree[ix].mAttributeSet = move (mTree[i].mAttributeSet) ;
+				ret.mTree[ix].mArraySet = move (mTree[i].mArraySet) ;
+				for (auto &&j : ret.mTree[ix].mArraySet.iter ()) {
+					INDEX iy = r1x[ret.mTree[ix].mArraySet.get (j)] ;
+					ret.mTree[ix].mArraySet.set (j ,iy) ;
 				}
-				rax.mTree[ix].mObjectSet = move (mTree[i].mObjectSet) ;
-				for (auto &&j : rax.mTree[ix].mObjectSet.iter ()) {
-					INDEX iy = r1x[rax.mTree[ix].mObjectSet.get (j)] ;
-					rax.mTree[ix].mObjectSet.set (j ,iy) ;
+				ret.mTree[ix].mObjectSet = move (mTree[i].mObjectSet) ;
+				for (auto &&j : ret.mTree[ix].mObjectSet.iter ()) {
+					INDEX iy = r1x[ret.mTree[ix].mObjectSet.get (j)] ;
+					ret.mTree[ix].mObjectSet.set (j ,iy) ;
 				}
-				rax.mTree[ix].mParent = r1x[mTree[i].mParent] ;
-				rax.mTree[ix].mBrother = r1x[mTree[i].mBrother] ;
-				rax.mTree[ix].mChild = r1x[mTree[i].mChild] ;
+				ret.mTree[ix].mParent = r1x[mTree[i].mParent] ;
+				ret.mTree[ix].mBrother = r1x[mTree[i].mBrother] ;
+				ret.mTree[ix].mChild = r1x[mTree[i].mChild] ;
 			}
-			rax.mAttribute = Array<String<STRU8>> (mAttribute.length ()) ;
+			ret.mAttribute = Array<String<STRU8>> (mAttribute.length ()) ;
 			for (auto &&i : mAttribute.iter ()) {
-				assume (vbetween (i ,0 ,rax.mAttribute.length ())) ;
-				rax.mAttribute[i] = move (mAttribute[i]) ;
+				assume (vbetween (i ,0 ,ret.mAttribute.length ())) ;
+				ret.mAttribute[i] = move (mAttribute[i]) ;
 			}
-			const auto r2x = CRef<HEAP>::make (move (rax)) ;
-			return factory (r2x) ;
+			return move (ret) ;
 		}
 
 		XmlParser factory (CREF<CRef<HEAP>> heap) const {
@@ -748,8 +766,8 @@ trait XMLPARSER_COMBINATION_HELP<DEPEND ,ALWAYS> {
 					mFoundNode[iy].mBaseNode.clear () ;
 				}
 				if ifswitch (TRUE) {
-					const auto r33x = to_ImplHolder (rax.mThis) ;
-					auto &&tmp = r33x->mHeap->mTree[r33x->mIndex].mAttributeSet ;
+					const auto r3x = to_ImplHolder (rax.mThis) ;
+					auto &&tmp = r3x->mHeap->mTree[r3x->mIndex].mAttributeSet ;
 					for (auto &&i : tmp.iter ()) {
 						INDEX jx = tmp.get (i) ;
 						INDEX jy = mFoundNode[ix].mAttributeSet.map (tmp[i]) ;
@@ -757,7 +775,7 @@ trait XMLPARSER_COMBINATION_HELP<DEPEND ,ALWAYS> {
 							if (jy != NONE)
 								discard ;
 							jy = mAttribute.insert () ;
-							mAttribute[jy] = r33x->mHeap->mAttribute[jx] ;
+							mAttribute[jy] = r3x->mHeap->mAttribute[jx] ;
 							mFoundNode[ix].mAttributeSet.add (tmp[i] ,jy) ;
 						}
 					}
@@ -791,12 +809,12 @@ trait XMLPARSER_COMBINATION_HELP<DEPEND ,ALWAYS> {
 				mFoundNode[iy].mClazz = r2x ;
 				mFoundNode[iy].mAttributeSet = mAttributeSet.share () ;
 				if ifswitch (TRUE) {
-					const auto r33x = to_ImplHolder (rax.mThis) ;
-					auto &&tmp = r33x->mHeap->mTree[r33x->mIndex].mAttributeSet ;
+					const auto r3x = to_ImplHolder (rax.mThis) ;
+					auto &&tmp = r3x->mHeap->mTree[r3x->mIndex].mAttributeSet ;
 					for (auto &&i : tmp.iter ()) {
 						INDEX jx = tmp.get (i) ;
 						INDEX jy = mAttribute.insert () ;
-						mAttribute[jy] = r33x->mHeap->mAttribute[jx] ;
+						mAttribute[jy] = r3x->mHeap->mAttribute[jx] ;
 						mFoundNode[ix].mAttributeSet.add (tmp[i] ,jy) ;
 					}
 				}
@@ -853,6 +871,7 @@ trait XMLPARSER_COMBINATION_HELP<DEPEND ,ALWAYS> {
 	} ;
 } ;
 
+template <>
 exports auto XMLPARSER_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->Box<FakeHolder> {
 	using R1X = typename XMLPARSER_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	Box<FakeHolder> ret ;
@@ -899,7 +918,7 @@ trait JSONPARSER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 
 		void initialize (CREF<RegBuffer<STRU8>> stream) override {
 			using R1X = typename DEPENDENT<JSONPARSER_SERIALIZATION_HELP<DEPEND ,ALWAYS> ,DEPEND>::Serialization ;
-			auto rax = R1X (stream.lift ()) ;
+			auto rax = R1X (stream.ref ()) ;
 			rax.generate () ;
 			mHeap = CRef<HEAP>::make (rax.poll ()) ;
 			mIndex = 0 ;
@@ -936,10 +955,14 @@ trait JSONPARSER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			return mHeap->mTree[mIndex].mClazz == NODE_CLAZZ_OBJECT::expr ;
 		}
 
-		JsonParser clone () const override {
-			if ifnot (exist ())
-				return factory (NONE) ;
-			return factory (mIndex) ;
+		void friend_clone (VREF<JsonParser> that) const override {
+			if ifswitch (TRUE) {
+				if (exist ())
+					discard ;
+				that = factory (NONE) ;
+				return ;
+			}
+			that = factory (mIndex) ;
 		}
 
 		JsonParser root () const override {
@@ -1014,14 +1037,17 @@ trait JSONPARSER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		BOOL equal (CREF<Holder> that) const override {
-			auto &&tmp = keep[TYPEAS<CREF<ImplHolder>>::expr] (that) ;
-			if (exist () != tmp.exist ())
+			return equal (keep[TYPEAS<CREF<ImplHolder>>::expr] (that)) ;
+		}
+
+		BOOL equal (CREF<ImplHolder> that) const {
+			if (exist () != that.exist ())
 				return FALSE ;
 			if ifnot (exist ())
 				return TRUE ;
-			if (address (mHeap->mTree) != address (tmp.mHeap->mTree))
+			if (address (mHeap->mTree) != address (that.mHeap->mTree))
 				return FALSE ;
-			if (mIndex != tmp.mIndex)
+			if (mIndex != that.mIndex)
 				return FALSE ;
 			return TRUE ;
 		}
@@ -1475,6 +1501,7 @@ trait JSONPARSER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 	} ;
 } ;
 
+template <>
 exports auto JSONPARSER_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->Box<FakeHolder> {
 	using R1X = typename JSONPARSER_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	Box<FakeHolder> ret ;

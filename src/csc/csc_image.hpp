@@ -97,50 +97,50 @@ using ImageIterator = typename IMAGEITERATOR_HELP<DEPEND ,ALWAYS>::ImageIterator
 template <class...>
 trait ROWPROXY_HELP ;
 
-template <class UNIT1 ,class UNIT2 ,class UNIT3>
-trait ROWPROXY_HELP<UNIT1 ,UNIT2 ,UNIT3 ,REQUIRE<IS_VARIABLE<UNIT1>>> {
+template <class ATTR ,class UNIT ,class ITEM>
+trait ROWPROXY_HELP<ATTR ,UNIT ,ITEM ,REQUIRE<IS_SAME<ATTR ,VARIABLE>>> {
 	class RowProxy {
 	protected:
-		VRef<UNIT2> mImage ;
+		VRef<UNIT> mImage ;
 		INDEX mY ;
 
 	public:
 		implicit RowProxy () = delete ;
 
-		explicit RowProxy (RREF<VRef<UNIT2>> image ,CREF<INDEX> y_) {
+		explicit RowProxy (RREF<VRef<UNIT>> image ,CREF<INDEX> y_) {
 			mImage = move (image) ;
 			mY = y_ ;
 		}
 
-		inline VREF<UNIT3> operator[] (CREF<INDEX> x_) rightvalue {
+		inline VREF<ITEM> operator[] (CREF<INDEX> x_) rightvalue {
 			return mImage->at (x_ ,mY) ;
 		}
 	} ;
 } ;
 
-template <class UNIT1 ,class UNIT2 ,class UNIT3>
-trait ROWPROXY_HELP<UNIT1 ,UNIT2 ,UNIT3 ,REQUIRE<IS_CONSTANT<UNIT1>>> {
+template <class ATTR ,class UNIT ,class ITEM>
+trait ROWPROXY_HELP<ATTR ,UNIT ,ITEM ,REQUIRE<IS_SAME<ATTR ,CONSTANT>>> {
 	class RowProxy {
 	protected:
-		CRef<UNIT2> mImage ;
+		CRef<UNIT> mImage ;
 		INDEX mY ;
 
 	public:
 		implicit RowProxy () = delete ;
 
-		explicit RowProxy (RREF<CRef<UNIT2>> image ,CREF<INDEX> y_) {
+		explicit RowProxy (RREF<CRef<UNIT>> image ,CREF<INDEX> y_) {
 			mImage = move (image) ;
 			mY = y_ ;
 		}
 
-		inline CREF<UNIT3> operator[] (CREF<INDEX> x_) rightvalue {
+		inline CREF<ITEM> operator[] (CREF<INDEX> x_) rightvalue {
 			return mImage->at (x_ ,mY) ;
 		}
 	} ;
 } ;
 
-template <class UNIT1 ,class UNIT3>
-using RowProxy = typename ROWPROXY_HELP<XREF<UNIT1> ,REMOVE_REF<UNIT1> ,UNIT3 ,ALWAYS>::RowProxy ;
+template <class UNIT ,class ITEM>
+using RowProxy = typename ROWPROXY_HELP<REFLECT_REF<UNIT> ,REMOVE_REF<UNIT> ,ITEM ,ALWAYS>::RowProxy ;
 
 template <class...>
 trait IMAGE_HELP ;
@@ -547,7 +547,7 @@ trait IMAGE_HELP<ITEM ,SIZE ,ALWAYS> {
 			return move (ret) ;
 		}
 
-		Image matrix_product (CREF<Image> that) const {
+		Image product (CREF<Image> that) const {
 			Image ret = Image (that.mCX ,mCY) ;
 			for (auto &&i : ret.iter ()) {
 				const auto r1x = invoke ([&] () {

@@ -4,6 +4,8 @@
 #error "∑(っ°Д° ;)っ : require 'csc_algorithm.hpp'"
 #endif
 
+#include "csc_algorithm.hpp"
+
 namespace CSC {
 template <class DEPEND>
 trait SORTPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
@@ -105,6 +107,7 @@ trait SORTPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	} ;
 } ;
 
+template <>
 exports auto SORTPROC_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
 	using R1X = typename SORTPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
@@ -185,14 +188,13 @@ trait DISJOINTTABLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		BitSet<> filter (CREF<INDEX> index) override {
-			const auto r1x = map_of_closure () ;
-			const auto r2x = lead (index) ;
+			const auto r1x = lead (index) ;
 			BitSet<> ret = BitSet<> (mTable.size ()) ;
 			for (auto &&i : mTable.iter ()) {
 				if (mTable[i].mUp == NONE)
 					continue ;
 				INDEX ix = lead (i) ;
-				if (ix != r2x)
+				if (ix != r1x)
 					continue ;
 				ret.add (i) ;
 			}
@@ -242,6 +244,7 @@ trait DISJOINTTABLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	} ;
 } ;
 
+template <>
 exports auto DISJOINTTABLE_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
 	using R1X = typename DISJOINTTABLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
@@ -341,14 +344,21 @@ trait BINARYTABLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				if (ix >= iy)
 					break ;
 				INDEX iz = (ix + iy) / 2 ;
+				const auto r1x = operator_compr (to_ ,mJump[iz]) ;
 				auto rxx = TRUE ;
 				if ifswitch (rxx) {
-					if (to_ < mJump[iz])
+					if (r1x != 0)
 						discard ;
 					ix = iz ;
+					iy = iz ;
 				}
 				if ifswitch (rxx) {
-					iy = iz ;
+					if (r1x < 0)
+						discard ;
+					ix = iz + 1 ;
+				}
+				if ifswitch (rxx) {
+					iy = iz - 1 ;
 				}
 			}
 			if (mJump[ix] == to_)
@@ -386,6 +396,7 @@ trait BINARYTABLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	} ;
 } ;
 
+template <>
 exports auto BINARYTABLE_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
 	using R1X = typename BINARYTABLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
@@ -506,6 +517,7 @@ trait SEGMENTTABLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	} ;
 } ;
 
+template <>
 exports auto SEGMENTTABLE_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
 	using R1X = typename SEGMENTTABLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
