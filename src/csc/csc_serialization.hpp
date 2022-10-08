@@ -34,7 +34,7 @@ trait XMLPARSER_HELP<DEPEND ,ALWAYS> {
 		virtual void initialize () = 0 ;
 		virtual void initialize (CREF<RegBuffer<STRU8>> stream) = 0 ;
 		virtual BOOL exist () const = 0 ;
-		virtual XmlParser clone () const = 0 ;
+		virtual void friend_clone (VREF<XmlParser> that) const = 0 ;
 		virtual XmlParser root () const = 0 ;
 		virtual XmlParser parent () const = 0 ;
 		virtual XmlParser brother () const = 0 ;
@@ -42,6 +42,7 @@ trait XMLPARSER_HELP<DEPEND ,ALWAYS> {
 		virtual XmlParser child (CREF<String<STRU8>> name) const = 0 ;
 		virtual Array<XmlParser> child_array () const = 0 ;
 		virtual Array<XmlParser> child_array (CREF<LENGTH> size_) const = 0 ;
+		virtual void merge (CREF<XmlParser> that) = 0 ;
 		virtual BOOL equal (CREF<Holder> that) const = 0 ;
 		virtual CREF<String<STRU8>> name () const leftvalue = 0 ;
 		virtual CREF<String<STRU8>> attribute (CREF<String<STRU8>> tag) const leftvalue = 0 ;
@@ -96,7 +97,7 @@ trait XMLPARSER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		implicit XmlParser (CREF<XmlParser> that) {
-			swap (thiz ,that.mThis->clone ()) ;
+			that.mThis->friend_clone (thiz) ;
 		}
 
 		inline VREF<XmlParser> operator= (CREF<XmlParser> that) {
@@ -151,6 +152,10 @@ trait XMLPARSER_HELP<DEPEND ,ALWAYS> {
 
 		Array<XmlParser> child_array (CREF<LENGTH> size_) const {
 			return mThis->child_array () ;
+		}
+
+		void merge (CREF<XmlParser> that) {
+			return mThis->merge (that) ;
 		}
 
 		BOOL equal (CREF<XmlParser> that) const {
@@ -261,7 +266,7 @@ trait JSONPARSER_HELP<DEPEND ,ALWAYS> {
 		virtual BOOL string_type () const = 0 ;
 		virtual BOOL array_type () const = 0 ;
 		virtual BOOL object_type () const = 0 ;
-		virtual JsonParser clone () const = 0 ;
+		virtual void friend_clone (VREF<JsonParser> that) const = 0 ;
 		virtual JsonParser root () const = 0 ;
 		virtual JsonParser parent () const = 0 ;
 		virtual JsonParser brother () const = 0 ;
@@ -318,7 +323,7 @@ trait JSONPARSER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		implicit JsonParser (CREF<JsonParser> that) {
-			swap (thiz ,that.mThis->clone ()) ;
+			that.mThis->friend_clone (thiz) ;
 		}
 
 		inline VREF<JsonParser> operator= (CREF<JsonParser> that) {

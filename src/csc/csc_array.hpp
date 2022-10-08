@@ -13,11 +13,11 @@ namespace CSC {
 template <class...>
 trait ARRAYITERATOR_HELP ;
 
-template <class UNIT1 ,class UNIT2 ,class UNIT3>
-trait ARRAYITERATOR_HELP<UNIT1 ,UNIT2 ,UNIT3 ,REQUIRE<IS_VARIABLE<UNIT1>>> {
+template <class ATTR ,class UNIT ,class ITEM>
+trait ARRAYITERATOR_HELP<ATTR ,UNIT ,ITEM ,REQUIRE<IS_SAME<ATTR ,VARIABLE>>> {
 	class ArrayIterator {
 	protected:
-		VRef<UNIT2> mArray ;
+		VRef<UNIT> mArray ;
 		INDEX mBegin ;
 		INDEX mEnd ;
 		INDEX mCurr ;
@@ -25,7 +25,7 @@ trait ARRAYITERATOR_HELP<UNIT1 ,UNIT2 ,UNIT3 ,REQUIRE<IS_VARIABLE<UNIT1>>> {
 	public:
 		implicit ArrayIterator () = delete ;
 
-		explicit ArrayIterator (RREF<VRef<UNIT2>> array_) {
+		explicit ArrayIterator (RREF<VRef<UNIT>> array_) {
 			mArray = move (array_) ;
 			mBegin = mArray->ibegin () ;
 			mEnd = mArray->iend () ;
@@ -56,11 +56,11 @@ trait ARRAYITERATOR_HELP<UNIT1 ,UNIT2 ,UNIT3 ,REQUIRE<IS_VARIABLE<UNIT1>>> {
 			return good () ;
 		}
 
-		VREF<UNIT3> at () leftvalue {
+		VREF<ITEM> at () leftvalue {
 			return mArray->at (mCurr) ;
 		}
 
-		inline VREF<UNIT3> operator* () leftvalue {
+		inline VREF<ITEM> operator* () leftvalue {
 			return at () ;
 		}
 
@@ -74,11 +74,11 @@ trait ARRAYITERATOR_HELP<UNIT1 ,UNIT2 ,UNIT3 ,REQUIRE<IS_VARIABLE<UNIT1>>> {
 	} ;
 } ;
 
-template <class UNIT1 ,class UNIT2 ,class UNIT3>
-trait ARRAYITERATOR_HELP<UNIT1 ,UNIT2 ,UNIT3 ,REQUIRE<IS_CONSTANT<UNIT1>>> {
+template <class ATTR ,class UNIT ,class ITEM>
+trait ARRAYITERATOR_HELP<ATTR ,UNIT ,ITEM ,REQUIRE<IS_SAME<ATTR ,CONSTANT>>> {
 	class ArrayIterator {
 	protected:
-		CRef<UNIT2> mArray ;
+		CRef<UNIT> mArray ;
 		INDEX mBegin ;
 		INDEX mEnd ;
 		INDEX mCurr ;
@@ -86,7 +86,7 @@ trait ARRAYITERATOR_HELP<UNIT1 ,UNIT2 ,UNIT3 ,REQUIRE<IS_CONSTANT<UNIT1>>> {
 	public:
 		implicit ArrayIterator () = delete ;
 
-		explicit ArrayIterator (RREF<CRef<UNIT2>> array_) {
+		explicit ArrayIterator (RREF<CRef<UNIT>> array_) {
 			mArray = move (array_) ;
 			mBegin = mArray->ibegin () ;
 			mEnd = mArray->iend () ;
@@ -117,11 +117,11 @@ trait ARRAYITERATOR_HELP<UNIT1 ,UNIT2 ,UNIT3 ,REQUIRE<IS_CONSTANT<UNIT1>>> {
 			return good () ;
 		}
 
-		CREF<UNIT3> at () const leftvalue {
+		CREF<ITEM> at () const leftvalue {
 			return mArray->at (mCurr) ;
 		}
 
-		inline CREF<UNIT3> operator* () const leftvalue {
+		inline CREF<ITEM> operator* () const leftvalue {
 			return at () ;
 		}
 
@@ -135,24 +135,24 @@ trait ARRAYITERATOR_HELP<UNIT1 ,UNIT2 ,UNIT3 ,REQUIRE<IS_CONSTANT<UNIT1>>> {
 	} ;
 } ;
 
-template <class UNIT1 ,class UNIT2>
-using ArrayIterator = typename ARRAYITERATOR_HELP<XREF<UNIT1> ,REMOVE_REF<UNIT1> ,UNIT2 ,ALWAYS>::ArrayIterator ;
+template <class UNIT ,class ITEM>
+using ArrayIterator = typename ARRAYITERATOR_HELP<REFLECT_REF<UNIT> ,REMOVE_REF<UNIT> ,ITEM ,ALWAYS>::ArrayIterator ;
 
 template <class...>
 trait ARRAYRANGE_HELP ;
 
-template <class UNIT1>
-trait ARRAYRANGE_HELP<UNIT1 ,ALWAYS> {
+template <class UNIT>
+trait ARRAYRANGE_HELP<UNIT ,ALWAYS> {
 	class ArrayRange extend Proxy {
 	protected:
-		UNIT1 mBase ;
+		UNIT mBase ;
 
 	public:
-		imports CREF<ArrayRange> from (CREF<UNIT1> that) {
+		imports CREF<ArrayRange> from (CREF<UNIT> that) {
 			return unsafe_deref (unsafe_cast[TYPEAS<TEMP<ArrayRange>>::expr] (unsafe_deptr (that))) ;
 		}
 
-		imports CREF<ArrayRange> from (RREF<UNIT1>) = delete ;
+		imports CREF<ArrayRange> from (RREF<UNIT>) = delete ;
 
 		LENGTH length () const {
 			return mBase.length () ;
@@ -176,14 +176,16 @@ trait ARRAYRANGE_HELP<UNIT1 ,ALWAYS> {
 	} ;
 } ;
 
-template <class UNIT1>
-using ArrayRange = typename ARRAYRANGE_HELP<UNIT1 ,ALWAYS>::ArrayRange ;
+template <class UNIT>
+using ArrayRange = typename ARRAYRANGE_HELP<UNIT ,ALWAYS>::ArrayRange ;
 
 template <class...>
 trait ARRAY_HELP ;
 
 template <class ITEM ,class SIZE>
 trait ARRAY_HELP<ITEM ,SIZE ,ALWAYS> {
+	using UNNAMED = typename BUFFER_HELP<ITEM ,REGISTER ,ALWAYS>::UNNAMED ;
+
 	class Array {
 	protected:
 		Buffer<ITEM ,SIZE> mArray ;
@@ -229,12 +231,12 @@ trait ARRAY_HELP<ITEM ,SIZE ,ALWAYS> {
 			return size () ;
 		}
 
-		VRef<RegBuffer<ITEM>> raw () leftvalue {
-			return RegBuffer<ITEM>::from (mArray ,0 ,size ()).lift () ;
+		VREF<RegBuffer<ITEM>> raw (RREF<UNNAMED> unnamed = UNNAMED ()) leftvalue {
+			return RegBuffer<ITEM>::make (mArray ,0 ,size () ,move (unnamed)) ;
 		}
 
-		CRef<RegBuffer<ITEM>> raw () const leftvalue {
-			return RegBuffer<ITEM>::from (mArray ,0 ,length ()).lift () ;
+		CREF<RegBuffer<ITEM>> raw (RREF<UNNAMED> unnamed = UNNAMED ()) const leftvalue {
+			return RegBuffer<ITEM>::make (mArray ,0 ,length () ,move (unnamed)) ;
 		}
 
 		void fill (CREF<ITEM> item) {
@@ -366,8 +368,10 @@ trait STRING_HELP<ITEM ,SIZE ,ALWAYS> {
 	using RESERVE_SIZE = CONDITIONAL<ENUM_COMPR_GTEQ<SIZE ,ENUM_ZERO> ,ENUM_INC<SIZE> ,SIZE> ;
 	using BUFFER_SSIZE = ENUMAS<VAL ,ENUMID<8191>> ;
 
-	template <class ARG1 ,class = REQUIRE<IS_TEXT<DEPENDENT<ITEM ,ARG1>>>>
-	using CRTP_Slice = Slice<DEPENDENT<ITEM ,ARG1>> ;
+	using UNNAMED = typename BUFFER_HELP<ITEM ,REGISTER ,ALWAYS>::UNNAMED ;
+
+	template <class ARG1>
+	using BindSlice = Slice<DEPENDENT<ITEM ,ARG1>> ;
 
 	class String {
 	protected:
@@ -380,7 +384,7 @@ trait STRING_HELP<ITEM ,SIZE ,ALWAYS> {
 		}
 
 		template <class ARG1 = DEPEND>
-		implicit String (CREF<CRTP_Slice<ARG1>> that) {
+		implicit String (CREF<BindSlice<ARG1>> that) {
 			mString = Buffer<ITEM ,RESERVE_SIZE> (reserve_size (that.size ())) ;
 			INDEX ix = 0 ;
 			for (auto &&i : CSC::iter (0 ,that.size ())) {
@@ -423,7 +427,7 @@ trait STRING_HELP<ITEM ,SIZE ,ALWAYS> {
 		imports String make (CREF<ARG2>...obj) {
 			using R1X = typename DEPENDENT<STRING_TEXTWRITER_HELP<ITEM ,ALWAYS> ,ARG1>::TextWriter ;
 			String ret = String (BUFFER_SSIZE::expr) ;
-			auto rax = R1X (ret.raw ()) ;
+			auto rax = R1X (ret.raw ().ref ()) ;
 			rax.prints (obj...) ;
 			rax << R1X::EOS ;
 			return move (ret) ;
@@ -445,12 +449,12 @@ trait STRING_HELP<ITEM ,SIZE ,ALWAYS> {
 			return size () ;
 		}
 
-		VRef<RegBuffer<ITEM>> raw () leftvalue {
-			return RegBuffer<ITEM>::from (mString ,0 ,size ()).lift () ;
+		VREF<RegBuffer<ITEM>> raw (RREF<UNNAMED> unnamed = UNNAMED ()) leftvalue {
+			return RegBuffer<ITEM>::make (mString ,0 ,size () ,move (unnamed)) ;
 		}
 
-		CRef<RegBuffer<ITEM>> raw () const leftvalue {
-			return RegBuffer<ITEM>::from (mString ,0 ,length ()).lift () ;
+		CREF<RegBuffer<ITEM>> raw (RREF<UNNAMED> unnamed = UNNAMED ()) const leftvalue {
+			return RegBuffer<ITEM>::make (mString ,0 ,length () ,move (unnamed)) ;
 		}
 
 		void clear () {
@@ -544,7 +548,7 @@ trait STRING_HELP<ITEM ,SIZE ,ALWAYS> {
 		}
 
 		template <class ARG1 = DEPEND>
-		BOOL equal (CREF<CRTP_Slice<ARG1>> that) const {
+		BOOL equal (CREF<BindSlice<ARG1>> that) const {
 			const auto r1x = length () ;
 			const auto r2x = that.size () ;
 			if (r1x != r2x)
@@ -553,12 +557,12 @@ trait STRING_HELP<ITEM ,SIZE ,ALWAYS> {
 		}
 
 		template <class ARG1 = DEPEND>
-		inline BOOL operator== (CREF<CRTP_Slice<ARG1>> that) const {
+		inline BOOL operator== (CREF<BindSlice<ARG1>> that) const {
 			return equal (that) ;
 		}
 
 		template <class ARG1 = DEPEND>
-		inline BOOL operator!= (CREF<CRTP_Slice<ARG1>> that) const {
+		inline BOOL operator!= (CREF<BindSlice<ARG1>> that) const {
 			return ifnot (equal (that)) ;
 		}
 
@@ -609,7 +613,7 @@ trait STRING_HELP<ITEM ,SIZE ,ALWAYS> {
 		}
 
 		template <class ARG1 = DEPEND>
-		String concat (CREF<CRTP_Slice<ARG1>> that) const {
+		String concat (CREF<BindSlice<ARG1>> that) const {
 			const auto r1x = length () ;
 			const auto r2x = that.size () ;
 			String ret = String (r1x + r2x) ;
@@ -624,7 +628,7 @@ trait STRING_HELP<ITEM ,SIZE ,ALWAYS> {
 		}
 
 		template <class ARG1 = DEPEND>
-		inline String operator+ (CREF<CRTP_Slice<ARG1>> that) const {
+		inline String operator+ (CREF<BindSlice<ARG1>> that) const {
 			return concat (that) ;
 		}
 
@@ -652,7 +656,7 @@ trait STRING_HELP<ITEM ,SIZE ,ALWAYS> {
 		}
 
 		template <class ARG1 = DEPEND>
-		void concatto (CREF<CRTP_Slice<ARG1>> that) {
+		void concatto (CREF<BindSlice<ARG1>> that) {
 			const auto r1x = length () ;
 			const auto r2x = that.size () ;
 			auto rxx = TRUE ;
@@ -672,7 +676,7 @@ trait STRING_HELP<ITEM ,SIZE ,ALWAYS> {
 		}
 
 		template <class ARG1 = DEPEND>
-		inline void operator+= (CREF<CRTP_Slice<ARG1>> that) {
+		inline void operator+= (CREF<BindSlice<ARG1>> that) {
 			concatto (that) ;
 		}
 
@@ -1794,17 +1798,17 @@ using ArrayList = typename ARRAYLIST_HELP<ITEM ,SIZE ,ALWAYS>::ArrayList ;
 template <class...>
 trait BITPROXY_HELP ;
 
-template <class UNIT1 ,class UNIT2>
-trait BITPROXY_HELP<UNIT1 ,UNIT2 ,REQUIRE<IS_VARIABLE<UNIT1>>> {
+template <class ATTR ,class UNIT>
+trait BITPROXY_HELP<ATTR ,UNIT ,REQUIRE<IS_SAME<ATTR ,VARIABLE>>> {
 	class BitProxy {
 	protected:
-		VRef<UNIT2> mArray ;
+		VRef<UNIT> mArray ;
 		INDEX mY ;
 
 	public:
 		implicit BitProxy () = delete ;
 
-		explicit BitProxy (RREF<VRef<UNIT2>> array_ ,CREF<INDEX> y_) {
+		explicit BitProxy (RREF<VRef<UNIT>> array_ ,CREF<INDEX> y_) {
 			mArray = move (array_) ;
 			mY = y_ ;
 		}
@@ -1819,17 +1823,17 @@ trait BITPROXY_HELP<UNIT1 ,UNIT2 ,REQUIRE<IS_VARIABLE<UNIT1>>> {
 	} ;
 } ;
 
-template <class UNIT1 ,class UNIT2>
-trait BITPROXY_HELP<UNIT1 ,UNIT2 ,REQUIRE<IS_CONSTANT<UNIT1>>> {
+template <class ATTR ,class UNIT>
+trait BITPROXY_HELP<ATTR ,UNIT ,REQUIRE<IS_SAME<ATTR ,CONSTANT>>> {
 	class BitProxy {
 	protected:
-		CRef<UNIT2> mArray ;
+		CRef<UNIT> mArray ;
 		INDEX mY ;
 
 	public:
 		implicit BitProxy () = delete ;
 
-		explicit BitProxy (RREF<CRef<UNIT2>> array_ ,CREF<INDEX> y_) {
+		explicit BitProxy (RREF<CRef<UNIT>> array_ ,CREF<INDEX> y_) {
 			mArray = move (array_) ;
 			mY = y_ ;
 		}
@@ -1840,8 +1844,8 @@ trait BITPROXY_HELP<UNIT1 ,UNIT2 ,REQUIRE<IS_CONSTANT<UNIT1>>> {
 	} ;
 } ;
 
-template <class UNIT1>
-using BitProxy = typename BITPROXY_HELP<XREF<UNIT1> ,REMOVE_REF<UNIT1> ,ALWAYS>::BitProxy ;
+template <class UNIT>
+using BitProxy = typename BITPROXY_HELP<REFLECT_REF<UNIT> ,REMOVE_REF<UNIT> ,ALWAYS>::BitProxy ;
 
 template <class...>
 trait BITSET_HELP ;

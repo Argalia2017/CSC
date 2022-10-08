@@ -8,6 +8,9 @@
 #error "∑(っ°Д° ;)っ : require 'csc_runtime.hpp'"
 #endif
 
+#include "csc_string.hpp"
+#include "csc_runtime.hpp"
+
 #include "begin.h"
 #include <cstdlib>
 #include <cstring>
@@ -20,8 +23,8 @@ namespace CSC {
 template <class...>
 trait FUNCTION_system_string_cvt_HELP ;
 
-template <class MACRO>
-trait FUNCTION_system_string_cvt_HELP<MACRO ,REQUIRE<MACRO_COMPILER_MSVC<MACRO>>> {
+template <class DEPEND>
+trait FUNCTION_system_string_cvt_HELP<DEPEND ,REQUIRE<MACRO_COMPILER_MSVC<DEPEND>>> {
 #ifdef __CSC_COMPILER_MSVC__
 	struct FUNCTION_system_string_cvt {
 		inline String<STRA> operator() (CREF<String<STRW>> obj) const {
@@ -56,8 +59,8 @@ trait FUNCTION_system_string_cvt_HELP<MACRO ,REQUIRE<MACRO_COMPILER_MSVC<MACRO>>
 #endif
 } ;
 
-template <class MACRO>
-trait FUNCTION_system_string_cvt_HELP<MACRO ,REQUIRE<MACRO_COMPILER_GNUC<MACRO>>> {
+template <class DEPEND>
+trait FUNCTION_system_string_cvt_HELP<DEPEND ,REQUIRE<MACRO_COMPILER_GNUC<DEPEND>>> {
 #ifdef __CSC_COMPILER_GNUC__
 	struct FUNCTION_system_string_cvt {
 		inline String<STRA> operator() (CREF<String<STRW>> obj) const {
@@ -81,8 +84,8 @@ trait FUNCTION_system_string_cvt_HELP<MACRO ,REQUIRE<MACRO_COMPILER_GNUC<MACRO>>
 #endif
 } ;
 
-template <class MACRO>
-trait FUNCTION_system_string_cvt_HELP<MACRO ,REQUIRE<MACRO_COMPILER_CLANG<MACRO>>> {
+template <class DEPEND>
+trait FUNCTION_system_string_cvt_HELP<DEPEND ,REQUIRE<MACRO_COMPILER_CLANG<DEPEND>>> {
 #ifdef __CSC_COMPILER_CLANG__
 	struct FUNCTION_system_string_cvt {
 		inline String<STRA> operator() (CREF<String<STRW>> obj) const {
@@ -237,6 +240,7 @@ trait STRINGPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	} ;
 } ;
 
+template <>
 exports auto STRINGPROC_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
 	using R1X = typename STRINGPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
@@ -385,11 +389,10 @@ trait ANYSTRING_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	} ;
 } ;
 
-exports auto ANYSTRING_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->Box<FakeHolder> {
+template <>
+exports auto ANYSTRING_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
 	using R1X = typename ANYSTRING_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
-	Box<FakeHolder> ret ;
-	ret.acquire (TYPEAS<R1X>::expr) ;
-	return move (ret) ;
+	return VRef<R1X>::make () ;
 }
 
 template <class...>
@@ -452,19 +455,18 @@ trait ESCAPESTRING_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	} ;
 } ;
 
-exports auto ESCAPESTRING_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->Box<FakeHolder> {
+template <>
+exports auto ESCAPESTRING_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
 	using R1X = typename ESCAPESTRING_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
-	Box<FakeHolder> ret ;
-	ret.acquire (TYPEAS<R1X>::expr) ;
-	return move (ret) ;
+	return VRef<R1X>::make () ;
 }
 
 template <class...>
-trait REPEATSTRING_IMPLHOLDER_HELP ;
+trait COMMASTRING_IMPLHOLDER_HELP ;
 
 template <class DEPEND>
-trait REPEATSTRING_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
-	using Holder = typename REPEATSTRING_HELP<DEPEND ,ALWAYS>::Holder ;
+trait COMMASTRING_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
+	using Holder = typename COMMASTRING_HELP<DEPEND ,ALWAYS>::Holder ;
 
 	using COUNTER_MAX_DEPTH = ENUMAS<VAL ,ENUMID<256>> ;
 
@@ -567,11 +569,10 @@ trait REPEATSTRING_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	} ;
 } ;
 
-exports auto REPEATSTRING_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->Box<FakeHolder> {
-	using R1X = typename REPEATSTRING_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
-	Box<FakeHolder> ret ;
-	ret.acquire (TYPEAS<R1X>::expr) ;
-	return move (ret) ;
+template <>
+exports auto COMMASTRING_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
+	using R1X = typename COMMASTRING_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
+	return VRef<R1X>::make () ;
 }
 
 template <class...>
@@ -630,10 +631,9 @@ trait ALIGNEDSTRING_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	} ;
 } ;
 
-exports auto ALIGNEDSTRING_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->Box<FakeHolder> {
+template <>
+exports auto ALIGNEDSTRING_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
 	using R1X = typename ALIGNEDSTRING_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
-	Box<FakeHolder> ret ;
-	ret.acquire (TYPEAS<R1X>::expr) ;
-	return move (ret) ;
+	return VRef<R1X>::make () ;
 }
 } ;

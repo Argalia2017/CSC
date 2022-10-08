@@ -24,6 +24,13 @@
     </Expand>
   </Type>
 
+  <Type Name="CSC::BOX_HELP&lt;*&gt;::Box" Priority="High">
+    <DisplayString Condition="!mExist">NULL</DisplayString>
+    <Expand HideRawView="true">
+      <ExpandedItem Condition="mExist">mValue</ExpandedItem>
+    </Expand>
+  </Type>
+
   <Type Name="CSC::BOX_HELP&lt;*&gt;::HEAP">
     <Expand HideRawView="true">
       <ExpandedItem>mArray</ExpandedItem>
@@ -37,14 +44,14 @@
   </Type>
 
   <Type Name="CSC::VREF_HELP&lt;*&gt;::VRef">
-    <DisplayString Condition="mPointer==0">nullptr</DisplayString>
+    <DisplayString Condition="mPointer==0">NULL</DisplayString>
     <Expand HideRawView="true">
       <ExpandedItem Condition="mPointer!=0">($T1*)mPointer</ExpandedItem>
     </Expand>
   </Type>
 
   <Type Name="CSC::CREF_HELP&lt;*&gt;::CRef">
-    <DisplayString Condition="mPointer==0">nullptr</DisplayString>
+    <DisplayString Condition="mPointer==0">NULL</DisplayString>
     <Expand HideRawView="true">
       <ExpandedItem Condition="mPointer!=0">($T1*)mPointer</ExpandedItem>
     </Expand>
@@ -62,30 +69,30 @@
     </Expand>
   </Type>
 
-  <Type Name="CSC::SLICE_IMPLHOLDER_HELP&lt;char,*&gt;::NODE" Priority="High">
-    <DisplayString>{{ {mPointer,s} }}</DisplayString>
+  <Type Name="CSC::SLICE_IMPLHOLDER_HELP&lt;char,*&gt;::NODE">
+    <DisplayString>{mPointer,s}</DisplayString>
     <StringView>mPointer,s</StringView>
   </Type>
 
-  <Type Name="CSC::SLICE_IMPLHOLDER_HELP&lt;wchar_t,*&gt;::NODE" Priority="High">
-    <DisplayString>{{ {mPointer,su} }}</DisplayString>
+  <Type Name="CSC::SLICE_IMPLHOLDER_HELP&lt;wchar_t,*&gt;::NODE">
+    <DisplayString>{mPointer,su}</DisplayString>
     <StringView Condition="mAlign==1">mPointer,s8</StringView>
     <StringView Condition="mAlign==2">mPointer,su</StringView>
   </Type>
 
-  <Type Name="CSC::SLICE_IMPLHOLDER_HELP&lt;unsigned char,*&gt;::NODE" Priority="High">
-    <DisplayString>{{ {mPointer,s8} }}</DisplayString>
+  <Type Name="CSC::SLICE_IMPLHOLDER_HELP&lt;unsigned char,*&gt;::NODE">
+    <DisplayString>{mPointer,s8}</DisplayString>
     <StringView>mPointer,s8</StringView>
   </Type>
 
-  <Type Name="CSC::SLICE_IMPLHOLDER_HELP&lt;char16_t,*&gt;::NODE" Priority="High">
-    <DisplayString>{{ {mPointer,su} }}</DisplayString>
+  <Type Name="CSC::SLICE_IMPLHOLDER_HELP&lt;char16_t,*&gt;::NODE">
+    <DisplayString>{mPointer,su}</DisplayString>
     <StringView Condition="mAlign==1">mPointer,s8</StringView>
     <StringView Condition="mAlign==2">mPointer,su</StringView>
   </Type>
 
-  <Type Name="CSC::SLICE_IMPLHOLDER_HELP&lt;char32_t,*&gt;::NODE" Priority="High">
-    <DisplayString>{{ {mPointer,s32} }}</DisplayString>
+  <Type Name="CSC::SLICE_IMPLHOLDER_HELP&lt;char32_t,*&gt;::NODE">
+    <DisplayString>{mPointer,s32}</DisplayString>
     <StringView Condition="mAlign==1">mPointer,s8</StringView>
     <StringView Condition="mAlign==4">mPointer,s32</StringView>
   </Type>
@@ -97,7 +104,7 @@
   </Type>
 
   <Type Name="CSC::CLAZZ_IMPLHOLDER_HELP&lt;*&gt;::ImplHolder">
-    <DisplayString>{{ {mTypeCabi,x} }}</DisplayString>
+    <DisplayString>{mTypeCabi,x}</DisplayString>
   </Type>
 
   <Type Name="CSC::EXCEPTION_HELP&lt;*&gt;::Exception">
@@ -115,7 +122,7 @@
   <Type Name="CSC::WATCH_HELP&lt;*&gt;::WATCH">
     <Expand HideRawView="true">
       <Item Name="[name]">mName</Item>
-      <ExpandedItem Condition="mPointer!=0">($T1*)mPointer</ExpandedItem>
+      <Item Name="[value]" Condition="mPointer!=0">($T1*)mPointer</Item>
     </Expand>
   </Type>
 
@@ -212,6 +219,7 @@
   </Type>
 
   <Type Name="CSC::ALLOCATOR_HOLDER_HELP&lt;*&gt;::NODE">
+    <DisplayString Condition="mNext!=-2">NULL</DisplayString>
     <Expand HideRawView="true">
       <ExpandedItem Condition="mNext==-2">&amp;mItem</ExpandedItem>
     </Expand>
@@ -236,7 +244,7 @@
   </Type>
 
   <Type Name="CSC::STRING_HELP&lt;char,*&gt;::String" Priority="High">
-    <DisplayString>{{ {mString.mBuffer.mPointer,s} }}</DisplayString>
+    <DisplayString>{mString.mBuffer.mPointer,s}</DisplayString>
     <StringView>mString.mBuffer.mPointer,s</StringView>
     <Expand HideRawView="true">
       <ExpandedItem>mString</ExpandedItem>
@@ -244,7 +252,7 @@
   </Type>
 
   <Type Name="CSC::STRING_HELP&lt;wchar_t,*&gt;::String" Priority="High">
-    <DisplayString>{{ {mString.mBuffer.mPointer,su} }}</DisplayString>
+    <DisplayString>{mString.mBuffer.mPointer,su}</DisplayString>
     <StringView>mString.mBuffer.mPointer,su</StringView>
     <Expand HideRawView="true">
       <ExpandedItem>mString</ExpandedItem>
@@ -252,7 +260,7 @@
   </Type>
 
   <Type Name="CSC::STRING_HELP&lt;unsigned char,*&gt;::String" Priority="High">
-    <DisplayString>{{ {mString.mBuffer.mPointer,s8} }}</DisplayString>
+    <DisplayString>{mString.mBuffer.mPointer,s8}</DisplayString>
     <StringView>mString.mBuffer.mPointer,s8</StringView>
     <Expand HideRawView="true">
       <ExpandedItem>mString</ExpandedItem>
@@ -260,7 +268,7 @@
   </Type>
 
   <Type Name="CSC::STRING_HELP&lt;char16_t,*&gt;::String" Priority="High">
-    <DisplayString>{{ {mString.mBuffer.mPointer,su} }}</DisplayString>
+    <DisplayString>{mString.mBuffer.mPointer,su}</DisplayString>
     <StringView>mString.mBuffer.mPointer,su</StringView>
     <Expand HideRawView="true">
       <ExpandedItem>mString</ExpandedItem>
@@ -268,7 +276,7 @@
   </Type>
 
   <Type Name="CSC::STRING_HELP&lt;char32_t,*&gt;::String" Priority="High">
-    <DisplayString>{{ {mString.mBuffer.mPointer,s32} }}</DisplayString>
+    <DisplayString>{mString.mBuffer.mPointer,s32}</DisplayString>
     <StringView>mString.mBuffer.mPointer,s32</StringView>
     <Expand HideRawView="true">
       <ExpandedItem>mString</ExpandedItem>
@@ -320,7 +328,10 @@
   <Type Name="CSC::ARRAYLIST_HELP&lt;*&gt;::ArrayList">
     <Expand HideRawView="true">
       <Item Name="[range]">mRange</Item>
-      <ExpandedItem>mList</ExpandedItem>
+      <IndexListItems>
+        <Size>mList.mLength</Size>
+        <ValueNode>mList[mRange[$i]]</ValueNode>
+      </IndexListItems>
     </Expand>
   </Type>
 

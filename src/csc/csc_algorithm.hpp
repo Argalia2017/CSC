@@ -66,18 +66,18 @@ trait SORTPROC_HELP<DEPEND ,ALWAYS> {
 	} ;
 } ;
 
-template <class UNIT1>
-trait SORTPROC_COMPARE_HELP<UNIT1 ,ALWAYS> {
+template <class UNIT>
+trait SORTPROC_COMPARE_HELP<UNIT ,ALWAYS> {
 	using Binder = typename SORTPROC_HELP<DEPEND ,ALWAYS>::Binder ;
 
 	class Compare implement Binder {
 	protected:
-		CRef<UNIT1> mArray ;
+		CRef<UNIT> mArray ;
 
 	public:
 		implicit Compare () = delete ;
 
-		explicit Compare (RREF<CRef<UNIT1>> array_) {
+		explicit Compare (RREF<CRef<UNIT>> array_) {
 			mArray = move (array_) ;
 		}
 

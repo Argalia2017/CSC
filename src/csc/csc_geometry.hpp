@@ -21,10 +21,10 @@ trait VECTOR_HELP ;
 
 template <class ITEM>
 trait VECTOR_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
-	using RANK = RANK4 ;
+	class Vector ;
 
-	template <class ARG1>
-	using CRTP_Matrix = typename DEPENDENT<MATRIX_HELP<ITEM ,ALWAYS> ,ARG1>::Matrix ;
+	using Matrix = typename MATRIX_HELP<ITEM ,ALWAYS>::Matrix ;
+	using RANK = RANK4 ;
 
 	class Vector {
 	protected:
@@ -214,8 +214,7 @@ trait VECTOR_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 			return dot (that) ;
 		}
 
-		template <class ARG1 = DEPEND>
-		Vector mul (CREF<CRTP_Matrix<ARG1>> that) const {
+		Vector mul (CREF<Matrix> that) const {
 			Vector ret ;
 			for (auto &&i : iter (0 ,4)) {
 				const auto r1x = at (0) * that.at (i ,0) ;
@@ -227,8 +226,7 @@ trait VECTOR_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 			return move (ret) ;
 		}
 
-		template <class ARG1 = DEPEND>
-		inline Vector operator* (CREF<CRTP_Matrix<ARG1>> that) const {
+		inline Vector operator* (CREF<Matrix> that) const {
 			return mul (that) ;
 		}
 
@@ -340,10 +338,10 @@ trait QUATERNION_HELP ;
 
 template <class ITEM>
 trait QUATERNION_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
-	using RANK = RANK4 ;
+	class Quaternion ;
 
-	template <class ARG1>
-	using CRTP_Matrix = typename DEPENDENT<MATRIX_HELP<ITEM ,ALWAYS> ,ARG1>::Matrix ;
+	using Matrix = typename MATRIX_HELP<ITEM ,ALWAYS>::Matrix ;
+	using RANK = RANK4 ;
 
 	class Quaternion {
 	protected:
@@ -360,8 +358,7 @@ trait QUATERNION_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 			update_normalize () ;
 		}
 
-		template <class ARG1 = DEPEND>
-		explicit Quaternion (CREF<CRTP_Matrix<ARG1>> that) {
+		explicit Quaternion (CREF<Matrix> that) {
 			const auto r1x = that.decompose ().mRotation ;
 			const auto r2x = invoke ([&] () {
 				ARRAY4<ITEM> ret ;
@@ -508,22 +505,10 @@ trait MATRIX_SINGULAR_HELP ;
 
 template <class ITEM>
 trait MATRIX_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
-	class Matrix ;
+	struct DECOMPOSE ;
+	struct SINGULAR ;
 
 	using RANK = ENUMAS<VAL ,ENUMID<16>> ;
-
-	struct DECOMPOSE {
-		Matrix mTranslation ;
-		Matrix mRotation ;
-		Matrix mScale ;
-		Matrix mShear ;
-	} ;
-
-	struct SINGULAR {
-		Matrix mU ;
-		Matrix mS ;
-		Matrix mV ;
-	} ;
 
 	class Matrix {
 	protected:
@@ -1101,7 +1086,20 @@ trait MATRIX_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 		}
 	} ;
 
-	class DiagMatrix implement Matrix {
+	struct DECOMPOSE {
+		Matrix mTranslation ;
+		Matrix mRotation ;
+		Matrix mScale ;
+		Matrix mShear ;
+	} ;
+
+	struct SINGULAR {
+		Matrix mU ;
+		Matrix mS ;
+		Matrix mV ;
+	} ;
+
+	class DiagMatrix extend Matrix {
 	public:
 		implicit DiagMatrix () = delete ;
 
@@ -1109,7 +1107,7 @@ trait MATRIX_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 			:Matrix (Matrix::make_diag (x_ ,y_ ,z_ ,w_)) {}
 	} ;
 
-	class ShearMatrix implement Matrix {
+	class ShearMatrix extend Matrix {
 	public:
 		implicit ShearMatrix () = delete ;
 
@@ -1117,7 +1115,7 @@ trait MATRIX_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 			:Matrix (Matrix::make_shear (vx ,vy ,vz)) {}
 	} ;
 
-	class RotationMatrix implement Matrix {
+	class RotationMatrix extend Matrix {
 	public:
 		implicit RotationMatrix () = delete ;
 
@@ -1131,7 +1129,7 @@ trait MATRIX_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 			:Matrix (Matrix::make_rotation (quat)) {}
 	} ;
 
-	class TranslationMatrix implement Matrix {
+	class TranslationMatrix extend Matrix {
 	public:
 		implicit TranslationMatrix () = delete ;
 
@@ -1139,7 +1137,7 @@ trait MATRIX_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 			:Matrix (Matrix::make_translation (tx ,ty ,tz)) {}
 	} ;
 
-	class PerspectiveMatrix implement Matrix {
+	class PerspectiveMatrix extend Matrix {
 	public:
 		implicit PerspectiveMatrix () = delete ;
 
@@ -1147,7 +1145,7 @@ trait MATRIX_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 			:Matrix (Matrix::make_perspective (fx ,fy ,wx ,wy)) {}
 	} ;
 
-	class ProjectionMatrix implement Matrix {
+	class ProjectionMatrix extend Matrix {
 	public:
 		implicit ProjectionMatrix () = delete ;
 
@@ -1155,7 +1153,7 @@ trait MATRIX_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 			:Matrix (Matrix::make_projection (normal ,center ,light)) {}
 	} ;
 
-	class CrossProductMatrix implement Matrix {
+	class CrossProductMatrix extend Matrix {
 	public:
 		implicit CrossProductMatrix () = delete ;
 
@@ -1163,7 +1161,7 @@ trait MATRIX_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 			:Matrix (Matrix::make_cross_product (vx)) {}
 	} ;
 
-	class SymmetryMatrix implement Matrix {
+	class SymmetryMatrix extend Matrix {
 	public:
 		implicit SymmetryMatrix () = delete ;
 
@@ -1171,7 +1169,7 @@ trait MATRIX_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 			:Matrix (Matrix::make_symmetry (vx ,vy)) {}
 	} ;
 
-	class ReflectionMatrix implement Matrix {
+	class ReflectionMatrix extend Matrix {
 	public:
 		implicit ReflectionMatrix () = delete ;
 
@@ -1355,7 +1353,7 @@ trait MATRIX_SINGULAR_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 						discard ;
 					mQ.at (i ,i) = ITEM (0) ;
 				}
-				assume (mQ.at (i ,i) >= ITEM (0)) ;
+				mQ.at (i ,i) = MathProc::abs (mQ.at (i ,i)) ;
 				for (auto &&j : iter (0 ,4)) {
 					if (i == j)
 						continue ;

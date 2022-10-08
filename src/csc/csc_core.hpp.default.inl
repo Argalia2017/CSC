@@ -4,6 +4,8 @@
 #error "∑(っ°Д° ;)っ : require 'csc_core.hpp'"
 #endif
 
+#include "csc_core.hpp"
+
 #include "begin.h"
 #include <cstddef>
 #include <cstring>
@@ -68,9 +70,10 @@ trait ABSTRACT_PUREHOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		void leave () {
-			using R1X = typename ABSTRACT_PUREHOLDER_HELP<DEPEND ,ALWAYS>::UniqueLock ;
+			using R1X = typename ABSTRACT_PUREHOLDER_HELP<DEPEND ,ALWAYS>::UniqueMutex ;
+			using R3X = typename ABSTRACT_PUREHOLDER_HELP<DEPEND ,ALWAYS>::CallbackMutex ;
 			if ifswitch (TRUE) {
-				std::lock_guard<std::recursive_mutex> anonymous (mMutex) ;
+				Scope<R3X> anonymous (R3X::from (mMutex)) ;
 				while (TRUE) {
 					if (mFirst == NONE)
 						break ;
@@ -91,7 +94,7 @@ trait ABSTRACT_PUREHOLDER_HELP<DEPEND ,ALWAYS> {
 				}
 			}
 			if ifswitch (TRUE) {
-				Scope<R1X> anonymous (R1X::from (thiz)) ;
+				Scope<R1X> anonymous (R1X::from (mSpin)) ;
 				mTempOrigin = mOrigin ;
 				mOrigin = ZERO ;
 				while (TRUE) {
@@ -100,7 +103,9 @@ trait ABSTRACT_PUREHOLDER_HELP<DEPEND ,ALWAYS> {
 					INDEX ix = mTempFirst ;
 					mTempFirst = fake[ix].mNext ;
 					const auto r3x = fake[ix].mOrigin ;
-					unsafe_destroy (unsafe_deptr (fake[ix])) ;
+					auto rax = Box<NODE> () ;
+					auto &&tmp = unsafe_cast[TYPEAS<TEMP<void>>::expr] (unsafe_deptr (fake[ix])) ;
+					rax.acquire (tmp) ;
 					operator delete (csc_pointer_t (r3x)) ;
 				}
 				mSize = 0 ;
@@ -112,53 +117,22 @@ trait ABSTRACT_PUREHOLDER_HELP<DEPEND ,ALWAYS> {
 			}
 		}
 
-		void shared_enter () {
-			auto rax = ZERO ;
-			while (TRUE) {
-				rax = vmax (rax ,0) ;
-				const auto r1x = mSpin.compare_exchange_weak (rax ,rax + 1 ,std::memory_order::memory_order_relaxed) ;
-				if (r1x)
-					break ;
-				std::this_thread::yield () ;
-			}
-			std::atomic_thread_fence (std::memory_order::memory_order_acquire) ;
-		}
-
-		void shared_leave () {
-			mSpin.fetch_sub (1 ,std::memory_order::memory_order_relaxed) ;
-		}
-
-		void unique_enter () {
-			auto rax = ZERO ;
-			while (TRUE) {
-				rax = 0 ;
-				const auto r1x = mSpin.compare_exchange_weak (rax ,-1 ,std::memory_order::memory_order_relaxed) ;
-				if (r1x)
-					break ;
-				std::this_thread::yield () ;
-			}
-			std::atomic_thread_fence (std::memory_order::memory_order_acquire) ;
-		}
-
-		void unique_leave () {
-			mSpin.store (0 ,std::memory_order::memory_order_relaxed) ;
-			std::atomic_thread_fence (std::memory_order::memory_order_release) ;
-		}
-
 		FLAG linkage (CREF<TEMP<void>> func ,RREF<Abstract> abst) {
-			using R1X = typename ABSTRACT_PUREHOLDER_HELP<DEPEND ,ALWAYS>::SharedLock ;
-			using R2X = typename ABSTRACT_PUREHOLDER_HELP<DEPEND ,ALWAYS>::UniqueLock ;
+			using R1X = typename ABSTRACT_PUREHOLDER_HELP<DEPEND ,ALWAYS>::SharedMutex ;
+			using R2X = typename ABSTRACT_PUREHOLDER_HELP<DEPEND ,ALWAYS>::UniqueMutex ;
+			using R3X = typename ABSTRACT_PUREHOLDER_HELP<DEPEND ,ALWAYS>::CallbackMutex ;
 			INDEX ix = NONE ;
 			const auto r1x = abst.type_cabi () ;
+			assert (r1x % ALIGN_OF<FLAG>::expr == 0) ;
 			if ifswitch (TRUE) {
-				Scope<R1X> anonymous (R1X::from (thiz)) ;
+				Scope<R1X> anonymous (R1X::from (mSpin)) ;
 				if (r1x < mMinCabi)
 					discard ;
 				if (r1x > mMaxCabi)
 					discard ;
 				const auto r2x = mOrigin + (mRead + r1x - mMinCabi) % mSize ;
-				auto &&tmp = unsafe_deref (unsafe_cast[TYPEAS<TEMP<INDEX>>::expr] (unsafe_pointer (r2x))) ;
-				ix = tmp ;
+				unsafe_sync (unsafe_deptr (ix) ,unsafe_pointer (r2x)) ;
+				unsafe_launder (ix) ;
 				if (ix == NONE)
 					discard ;
 				assert (fake[ix].mGood) ;
@@ -169,7 +143,7 @@ trait ABSTRACT_PUREHOLDER_HELP<DEPEND ,ALWAYS> {
 			if ifswitch (TRUE) {
 				if (ix != NONE)
 					discard ;
-				Scope<R2X> anonymous (R2X::from (thiz)) ;
+				Scope<R2X> anonymous (R2X::from (mSpin)) ;
 				update_resize (r1x) ;
 				assert (mOrigin != ZERO) ;
 				const auto r5x = vmax (abst.type_align () - SIZE_OF<NODE>::expr ,ZERO) ;
@@ -179,16 +153,18 @@ trait ABSTRACT_PUREHOLDER_HELP<DEPEND ,ALWAYS> {
 				assume (r8x != ZERO) ;
 				const auto r9x = valign (r8x ,SIZE_OF<NODE>::expr) ;
 				ix = (r9x - mAlways) / SIZE_OF<NODE>::expr ;
-				unsafe_create (unsafe_deptr (fake[ix])) ;
+				auto rax = Box<NODE>::make () ;
+				unsafe_deptr (fake[ix]) = unsafe_deptr (rax.self) ;
+				unsafe_launder (fake[ix]) ;
+				rax.release () ;
 				fake[ix].mOrigin = r8x ;
 				fake[ix].mGood = FALSE ;
 				fake[ix].mNext = NONE ;
 				fake[ix].mAbstract = move (abst) ;
 				const auto r10x = mOrigin + (mRead + r1x - mMinCabi) % mSize ;
-				auto &&tmp = unsafe_deref (unsafe_cast[TYPEAS<TEMP<INDEX>>::expr] (unsafe_pointer (r10x))) ;
-				tmp = ix ;
+				unsafe_sync (unsafe_pointer (r10x) ,unsafe_deptr (ix)) ;
 			}
-			std::lock_guard<std::recursive_mutex> anonymous (mMutex) ;
+			Scope<R3X> anonymous (R3X::from (mMutex)) ;
 			const auto r11x = address (fake[ix]) + SIZE_OF<NODE>::expr ;
 			const auto r12x = valign (r11x ,fake[ix].mAbstract.type_align ()) ;
 			if ifswitch (TRUE) {
@@ -265,7 +241,6 @@ trait ABSTRACT_PUREHOLDER_HELP<DEPEND ,ALWAYS> {
 					const auto r12x = r11x - mRead ;
 					std::memcpy (csc_pointer_t (r9x) ,csc_pointer_t (r10x) ,r12x) ;
 					std::memset (csc_pointer_t (r9x + r12x) ,int (0XFF) ,r8x - r12x) ;
-					unsafe_barrier () ;
 				}
 				if ifswitch (ryx) {
 					const auto r13x = mSize - mRead ;
@@ -274,7 +249,6 @@ trait ABSTRACT_PUREHOLDER_HELP<DEPEND ,ALWAYS> {
 					std::memcpy (csc_pointer_t (r9x) ,csc_pointer_t (r10x) ,r13x) ;
 					std::memcpy (csc_pointer_t (r9x + r13x) ,csc_pointer_t (mOrigin + r14x) ,r15x) ;
 					std::memset (csc_pointer_t (r9x + r13x + r15x) ,int (0XFF) ,r8x - r13x - r15x) ;
-					unsafe_barrier () ;
 				}
 				const auto r16x = MathProc::max_of (mMinCabi - cabi ,ZERO) ;
 				mRead = r9x - mTempOrigin ;
@@ -295,43 +269,79 @@ trait ABSTRACT_PUREHOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 	} ;
 
-	class SharedLock extend Proxy {
+	class SharedMutex extend Proxy {
 	protected:
-		PureHolder mBase ;
+		std::atomic<LENGTH> mSpin ;
 
 	public:
-		imports VREF<SharedLock> from (VREF<PureHolder> that) {
-			return unsafe_deref (unsafe_cast[TYPEAS<TEMP<SharedLock>>::expr] (unsafe_deptr (that))) ;
+		imports VREF<SharedMutex> from (VREF<std::atomic<LENGTH>> that) {
+			return unsafe_deref (unsafe_cast[TYPEAS<TEMP<SharedMutex>>::expr] (unsafe_deptr (that))) ;
 		}
 
 		void enter () {
-			mBase.shared_enter () ;
+			auto rax = ZERO ;
+			while (TRUE) {
+				rax = vmax (rax ,0) ;
+				const auto r1x = mSpin.compare_exchange_weak (rax ,rax + 1 ,std::memory_order::memory_order_relaxed) ;
+				if (r1x)
+					break ;
+				std::this_thread::yield () ;
+			}
+			std::atomic_thread_fence (std::memory_order::memory_order_acquire) ;
 		}
 
 		void leave () {
-			mBase.shared_leave () ;
+			mSpin.fetch_sub (1 ,std::memory_order::memory_order_relaxed) ;
 		}
 	} ;
 
-	class UniqueLock extend Proxy {
+	class UniqueMutex extend Proxy {
 	protected:
-		PureHolder mBase ;
+		std::atomic<LENGTH> mSpin ;
 
 	public:
-		imports VREF<UniqueLock> from (VREF<PureHolder> that) {
-			return unsafe_deref (unsafe_cast[TYPEAS<TEMP<UniqueLock>>::expr] (unsafe_deptr (that))) ;
+		imports VREF<UniqueMutex> from (VREF<std::atomic<LENGTH>> that) {
+			return unsafe_deref (unsafe_cast[TYPEAS<TEMP<UniqueMutex>>::expr] (unsafe_deptr (that))) ;
 		}
 
 		void enter () {
-			mBase.unique_enter () ;
+			auto rax = ZERO ;
+			while (TRUE) {
+				rax = 0 ;
+				const auto r1x = mSpin.compare_exchange_weak (rax ,-1 ,std::memory_order::memory_order_relaxed) ;
+				if (r1x)
+					break ;
+				std::this_thread::yield () ;
+			}
+			std::atomic_thread_fence (std::memory_order::memory_order_acquire) ;
 		}
 
 		void leave () {
-			mBase.unique_leave () ;
+			mSpin.store (0 ,std::memory_order::memory_order_relaxed) ;
+			std::atomic_thread_fence (std::memory_order::memory_order_release) ;
+		}
+	} ;
+
+	class CallbackMutex extend Proxy {
+	protected:
+		std::recursive_mutex mMutex ;
+
+	public:
+		imports VREF<CallbackMutex> from (VREF<std::recursive_mutex> that) {
+			return unsafe_deref (unsafe_cast[TYPEAS<TEMP<CallbackMutex>>::expr] (unsafe_deptr (that))) ;
+		}
+
+		void enter () {
+			mMutex.lock () ;
+		}
+
+		void leave () {
+			mMutex.unlock () ;
 		}
 	} ;
 } ;
 
+template <>
 exports FLAG ABSTRACT_HELP<DEPEND ,ALWAYS>::FUNCTION_linkage::invoke (CREF<TEMP<void>> func ,RREF<Abstract> abst) {
 	using R1X = typename ABSTRACT_PUREHOLDER_HELP<DEPEND ,ALWAYS>::PureHolder ;
 	static R1X mInstance ;
@@ -341,8 +351,8 @@ exports FLAG ABSTRACT_HELP<DEPEND ,ALWAYS>::FUNCTION_linkage::invoke (CREF<TEMP<
 template <class...>
 trait FUNCTION_current_usage_size_HELP ;
 
-template <class MACRO>
-trait FUNCTION_current_usage_size_HELP<MACRO ,REQUIRE<MACRO_SYSTEM_WINDOWS<MACRO>>> {
+template <class DEPEND>
+trait FUNCTION_current_usage_size_HELP<DEPEND ,REQUIRE<MACRO_SYSTEM_WINDOWS<DEPEND>>> {
 #ifdef __CSC_SYSTEM_WINDOWS__
 	struct FUNCTION_current_usage_size {
 		inline LENGTH operator() (CREF<FLAG> addr) const {
@@ -354,8 +364,8 @@ trait FUNCTION_current_usage_size_HELP<MACRO ,REQUIRE<MACRO_SYSTEM_WINDOWS<MACRO
 #endif
 } ;
 
-template <class MACRO>
-trait FUNCTION_current_usage_size_HELP<MACRO ,REQUIRE<MACRO_SYSTEM_LINUX<MACRO>>> {
+template <class DEPEND>
+trait FUNCTION_current_usage_size_HELP<DEPEND ,REQUIRE<MACRO_SYSTEM_LINUX<DEPEND>>> {
 #ifdef __CSC_SYSTEM_LINUX__
 	struct FUNCTION_current_usage_size {
 		inline LENGTH operator() (CREF<FLAG> addr) const {
@@ -431,6 +441,7 @@ trait HEAPPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	} ;
 } ;
 
+template <>
 exports auto HEAPPROC_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->Box<FakeHolder> {
 	using R1X = typename HEAPPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	Box<FakeHolder> ret ;
@@ -456,8 +467,10 @@ trait VREF_PUREHOLDER_HELP<DEPEND ,ALWAYS> {
 			const auto r1x = dynamic_size (size_ ,align_) ;
 			const auto r2x = HeapProc::instance ().alloc (r1x) ;
 			const auto r3x = valign (r2x ,ALIGN_OF<PureHolder>::expr) ;
+			auto rax = Box<PureHolder>::make () ;
+			unsafe_sync (unsafe_pointer (r3x) ,unsafe_deptr (rax.self)) ;
+			rax.release () ;
 			auto &&tmp = unsafe_deref (unsafe_cast[TYPEAS<TEMP<PureHolder>>::expr] (unsafe_pointer (r3x))) ;
-			unsafe_create (unsafe_deptr (tmp)) ;
 			tmp.mOrigin = r2x ;
 			tmp.mCounter = 0 ;
 			tmp.mSize = 0 ;
@@ -481,14 +494,15 @@ trait VREF_PUREHOLDER_HELP<DEPEND ,ALWAYS> {
 			const auto r1x = mOrigin ;
 			if (r1x == ZERO)
 				return ;
-			unsafe_destroy (unsafe_deptr (thiz)) ;
+			auto rax = Box<PureHolder> () ;
+			auto &&tmp = unsafe_cast[TYPEAS<TEMP<void>>::expr] (unsafe_deptr (thiz)) ;
+			rax.acquire (tmp) ;
 			HeapProc::instance ().free (r1x) ;
 		}
 
 		void acquire (CREF<TEMP<void>> obj) override {
 			const auto r1x = pointer () + mSize * mAbstract.type_size () ;
 			std::memcpy (csc_pointer_t (r1x) ,(&obj) ,mAbstract.type_size ()) ;
-			unsafe_barrier () ;
 			mSize++ ;
 		}
 
@@ -534,6 +548,7 @@ trait VREF_PUREHOLDER_HELP<DEPEND ,ALWAYS> {
 	} ;
 } ;
 
+template <>
 exports auto VREF_HOLDER_HELP<DEPEND ,ALWAYS>::FUNCTION_linkage::invoke (CREF<LENGTH> size_ ,CREF<LENGTH> align_) ->FLAG {
 	using R1X = typename VREF_PUREHOLDER_HELP<DEPEND ,ALWAYS>::PureHolder ;
 	return R1X::create (size_ ,align_) ;
@@ -557,7 +572,6 @@ trait AUTO_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		void acquire (CREF<TEMP<void>> obj) override {
 			const auto r1x = pointer () ;
 			std::memcpy (csc_pointer_t (r1x) ,(&obj) ,mAbstract.type_size ()) ;
-			unsafe_barrier () ;
 		}
 
 		void release () override {
@@ -577,6 +591,7 @@ trait AUTO_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	} ;
 } ;
 
+template <>
 exports auto AUTO_HOLDER_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->Box<FakeHolder> {
 	using R1X = typename AUTO_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	Box<FakeHolder> ret ;
@@ -587,101 +602,92 @@ exports auto AUTO_HOLDER_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->Box<
 template <class ITEM>
 trait SLICE_IMPLHOLDER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 	using Holder = typename SLICE_HELP<ITEM ,ALWAYS>::Holder ;
-	using NODE = typename SLICE_HELP<ITEM ,ALWAYS>::NODE ;
 	using RANK = RANK3 ;
+
+	struct NODE {
+		FLAG mPointer ;
+		LENGTH mSize ;
+		LENGTH mAlign ;
+	} ;
 
 	class ImplHolder implement Holder {
 	protected:
-		LENGTH mSize ;
 		Box<ARR<NODE ,RANK>> mSlice ;
+		LENGTH mCount ;
 
 	public:
 		implicit ImplHolder () = default ;
 
-		void initialize (CREF<NODE> text1) override {
-			mSize = 0 ;
+		void initialize (CREF<csc_initializer_t<csc_text_t>> text) override {
+			assert (LENGTH (text.size ()) <= RANK::expr) ;
 			mSlice = Box<ARR<NODE ,RANK>>::make () ;
-			template_assign (PHX ,TYPEAS<RANK>::expr ,text1) ;
-		}
-
-		void initialize (CREF<NODE> text1 ,CREF<NODE> text2) override {
-			mSize = 0 ;
-			mSlice = Box<ARR<NODE ,RANK>>::make () ;
-			template_assign (PHX ,TYPEAS<RANK>::expr ,text1 ,text2) ;
-		}
-
-		void initialize (CREF<NODE> text1 ,CREF<NODE> text2 ,CREF<NODE> text3) override {
-			mSize = 0 ;
-			mSlice = Box<ARR<NODE ,RANK>>::make () ;
-			template_assign (PHX ,TYPEAS<RANK>::expr ,text1 ,text2 ,text3) ;
-		}
-
-		template <class ARG1 ,class...ARG3 ,class = REQUIRE<ENUM_GT_ZERO<ARG1>>>
-		void template_assign (CREF<typeof (PH2)> ,CREF<TYPEID<ARG1>> id ,CREF<NODE> text1 ,CREF<ARG3>...text2) {
-			if ifswitch (TRUE) {
-				if (text1.mAlign == 1)
-					discard ;
-				assert (text1.mAlign == ALIGN_OF<ITEM>::expr) ;
+			mCount = 0 ;
+			INDEX ix = 0 ;
+			for (auto &&i : text) {
+				if ifswitch (TRUE) {
+					if (i.mStep == 1)
+						discard ;
+					assert (i.mStep == ALIGN_OF<ITEM>::expr) ;
+				}
+				INDEX jx = i.mBegin ;
+				while (TRUE) {
+					if (jx >= i.mEnd)
+						break ;
+					const auto r2x = at_impl (i.mStep ,jx) ;
+					if (r2x == ITEM (0))
+						break ;
+					jx += i.mStep ;
+				}
+				mSlice.self[ix].mPointer = i.mBegin ;
+				mSlice.self[ix].mSize = (jx - i.mBegin) / i.mStep ;
+				mSlice.self[ix].mAlign = i.mStep ;
+				mCount += mSlice.self[ix].mSize ;
+				ix++ ;
 			}
-			INDEX jx = 0 ;
-			while (TRUE) {
-				if (jx >= text1.mCount)
-					break ;
-				const auto r1x = text1.mPointer + jx * text1.mAlign ;
-				const auto r2x = at_load (text1.mAlign ,r1x) ;
-				if (r2x == ITEM (0))
-					break ;
-				jx++ ;
-			}
-			INDEX ix = ENUM_SUB<RANK ,ARG1>::expr ;
-			mSlice.self[ix].mPointer = text1.mPointer ;
-			mSlice.self[ix].mAlign = text1.mAlign ;
-			mSlice.self[ix].mCount = jx ;
-			mSize += jx ;
-			template_assign (PHX ,TYPEAS<ENUM_DEC<ARG1>>::expr ,text2...) ;
-		}
-
-		template <class ARG1>
-		void template_assign (CREF<typeof (PH1)> ,CREF<TYPEID<ARG1>> id) {
-			noop () ;
 		}
 
 		LENGTH size () const override {
-			return mSize ;
+			return mCount ;
 		}
 
 		ITEM at (CREF<INDEX> index) const override {
 			INDEX ix = index ;
 			for (auto &&i : iter (0 ,RANK::expr)) {
 				if ifswitch (TRUE) {
-					if ifnot (vbetween (ix ,0 ,mSlice.self[i].mCount))
+					if ifnot (vbetween (ix ,0 ,mSlice.self[i].mSize))
 						discard ;
 					const auto r1x = mSlice.self[i].mPointer + ix * mSlice.self[i].mAlign ;
-					return at_load (mSlice.self[i].mAlign ,r1x) ;
+					return at_impl (mSlice.self[i].mAlign ,r1x) ;
 				}
-				ix -= mSlice.self[i].mCount ;
+				ix -= mSlice.self[i].mSize ;
 			}
 			return bad (TYPEAS<ITEM>::expr) ;
 		}
 
-		ITEM at_load (CREF<LENGTH> align_ ,CREF<FLAG> pointer) const {
+		ITEM at_impl (CREF<LENGTH> align_ ,CREF<FLAG> pointer) const {
 			if ifswitch (TRUE) {
 				if (align_ != ALIGN_OF<STRU8>::expr)
 					discard ;
-				auto &&tmp = unsafe_deref (unsafe_cast[TYPEAS<TEMP<STRU8>>::expr] (unsafe_pointer (pointer))) ;
-				return ITEM (tmp) ;
+				auto rax = STRU8 () ;
+				unsafe_sync (unsafe_deptr (rax) ,unsafe_pointer (pointer)) ;
+				unsafe_launder (rax) ;
+				return ITEM (rax) ;
 			}
 			if ifswitch (TRUE) {
 				if (align_ != ALIGN_OF<STRU16>::expr)
 					discard ;
-				auto &&tmp = unsafe_deref (unsafe_cast[TYPEAS<TEMP<STRU16>>::expr] (unsafe_pointer (pointer))) ;
-				return ITEM (tmp) ;
+				auto rax = STRU16 () ;
+				unsafe_sync (unsafe_deptr (rax) ,unsafe_pointer (pointer)) ;
+				unsafe_launder (rax) ;
+				return ITEM (rax) ;
 			}
 			if ifswitch (TRUE) {
 				if (align_ != ALIGN_OF<STRU32>::expr)
 					discard ;
-				auto &&tmp = unsafe_deref (unsafe_cast[TYPEAS<TEMP<STRU32>>::expr] (unsafe_pointer (pointer))) ;
-				return ITEM (tmp) ;
+				auto rax = STRU32 () ;
+				unsafe_sync (unsafe_deptr (rax) ,unsafe_pointer (pointer)) ;
+				unsafe_launder (rax) ;
+				return ITEM (rax) ;
 			}
 			assert (FALSE) ;
 			return ITEM (0) ;
@@ -689,26 +695,31 @@ trait SLICE_IMPLHOLDER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 	} ;
 } ;
 
+template <>
 exports auto SLICE_HELP<STRA ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
 	using R1X = typename SLICE_IMPLHOLDER_HELP<STRA ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
 }
 
+template <>
 exports auto SLICE_HELP<STRW ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
 	using R1X = typename SLICE_IMPLHOLDER_HELP<STRW ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
 }
 
+template <>
 exports auto SLICE_HELP<STRU8 ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
 	using R1X = typename SLICE_IMPLHOLDER_HELP<STRU8 ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
 }
 
+template <>
 exports auto SLICE_HELP<STRU16 ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
 	using R1X = typename SLICE_IMPLHOLDER_HELP<STRU16 ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
 }
 
+template <>
 exports auto SLICE_HELP<STRU32 ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
 	using R1X = typename SLICE_IMPLHOLDER_HELP<STRU32 ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
@@ -753,6 +764,7 @@ trait CLAZZ_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	} ;
 } ;
 
+template <>
 exports auto CLAZZ_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
 	using R1X = typename CLAZZ_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
@@ -779,6 +791,7 @@ trait EXCEPTION_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	} ;
 } ;
 
+template <>
 exports auto EXCEPTION_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
 	using R1X = typename EXCEPTION_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;

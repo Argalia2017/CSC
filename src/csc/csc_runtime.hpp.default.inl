@@ -4,6 +4,8 @@
 #error "∑(っ°Д° ;)っ : require 'csc_runtime.hpp'"
 #endif
 
+#include "csc_runtime.hpp"
+
 #include "begin.h"
 #include <cstdio>
 #include <cstdlib>
@@ -23,8 +25,8 @@ namespace CSC {
 template <class...>
 trait FUNCTION_calendar_from_timepoint_HELP ;
 
-template <class MACRO>
-trait FUNCTION_calendar_from_timepoint_HELP<MACRO ,REQUIRE<MACRO_SYSTEM_WINDOWS<MACRO>>> {
+template <class DEPEND>
+trait FUNCTION_calendar_from_timepoint_HELP<DEPEND ,REQUIRE<MACRO_SYSTEM_WINDOWS<DEPEND>>> {
 #ifdef __CSC_SYSTEM_WINDOWS__
 	struct FUNCTION_calendar_from_timepoint {
 		inline std::tm operator() (CREF<std::time_t> time_) const {
@@ -37,15 +39,15 @@ trait FUNCTION_calendar_from_timepoint_HELP<MACRO ,REQUIRE<MACRO_SYSTEM_WINDOWS<
 #endif
 } ;
 
-template <class MACRO>
-trait FUNCTION_calendar_from_timepoint_HELP<MACRO ,REQUIRE<MACRO_SYSTEM_LINUX<MACRO>>> {
+template <class DEPEND>
+trait FUNCTION_calendar_from_timepoint_HELP<DEPEND ,REQUIRE<MACRO_SYSTEM_LINUX<DEPEND>>> {
 #ifdef __CSC_SYSTEM_LINUX__
 	struct FUNCTION_calendar_from_timepoint {
 		inline std::tm operator() (CREF<std::time_t> time_) const {
 			std::tm ret ;
 			const auto r1x = FLAG (std::localtime ((&time_))) ;
-			auto &&tmp = unsafe_deref (unsafe_cast[TYPEAS<TEMP<std::tm>>::expr] (unsafe_pointer (r1x))) ;
-			ret = tmp ;
+			unsafe_sync (unsafe_deptr (ret) ,unsafe_pointer (r1x)) ;
+			unsafe_launder (ret) ;
 			return move (ret) ;
 		}
 	} ;
@@ -56,7 +58,7 @@ template <class DEPEND>
 trait TIMEDURATION_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	using Holder = typename TIMEDURATION_HELP<DEPEND ,ALWAYS>::Holder ;
 	using TimeDuration = typename TIMEDURATION_HELP<DEPEND ,ALWAYS>::TimeDuration ;
-	using CALENDAR = typename TIMEPOINT_HELP<DEPEND ,ALWAYS>::CALENDAR ;
+	using CALENDAR = typename TIMEDURATION_HELP<DEPEND ,ALWAYS>::CALENDAR ;
 
 	using TIMEPOINT = std::chrono::system_clock::time_point ;
 	using TIMEDURATION = std::chrono::system_clock::duration ;
@@ -153,14 +155,20 @@ trait TIMEDURATION_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		TimeDuration add (CREF<Holder> that) const override {
-			auto &&tmp = keep[TYPEAS<CREF<ImplHolder>>::expr] (that) ;
-			const auto r1x = mTimeDuration + tmp.mTimeDuration ;
+			return add (keep[TYPEAS<CREF<ImplHolder>>::expr] (that)) ;
+		}
+
+		TimeDuration add (CREF<ImplHolder> that) const {
+			const auto r1x = mTimeDuration + that.mTimeDuration ;
 			return factory (r1x) ;
 		}
 
 		TimeDuration sub (CREF<Holder> that) const override {
-			auto &&tmp = keep[TYPEAS<CREF<ImplHolder>>::expr] (that) ;
-			const auto r1x = mTimeDuration - tmp.mTimeDuration ;
+			return sub (keep[TYPEAS<CREF<ImplHolder>>::expr] (that)) ;
+		}
+
+		TimeDuration sub (CREF<ImplHolder> that) const {
+			const auto r1x = mTimeDuration - that.mTimeDuration ;
 			return factory (r1x) ;
 		}
 
@@ -188,7 +196,8 @@ trait TIMEDURATION_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	} ;
 } ;
 
-exports auto TIMEDURATION_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
+template <>
+exports auto TIMEDURATION_HOLDER_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
 	using R1X = typename TIMEDURATION_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
 }
@@ -248,6 +257,7 @@ trait ATOMIC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	} ;
 } ;
 
+template <>
 exports auto ATOMIC_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
 	using R1X = typename ATOMIC_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
@@ -322,6 +332,7 @@ trait MUTEX_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	} ;
 } ;
 
+template <>
 exports auto MUTEX_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
 	using R1X = typename MUTEX_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
@@ -386,6 +397,7 @@ trait UNIQUELOCK_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	} ;
 } ;
 
+template <>
 exports auto UNIQUELOCK_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->Box<FakeHolder> {
 	using R1X = typename UNIQUELOCK_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	Box<FakeHolder> ret ;
@@ -450,6 +462,7 @@ trait SHAREDLOCK_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	} ;
 } ;
 
+template <>
 exports auto SHAREDLOCK_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->Box<FakeHolder> {
 	using R1X = typename SHAREDLOCK_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	Box<FakeHolder> ret ;
@@ -516,6 +529,7 @@ trait THREAD_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	} ;
 } ;
 
+template <>
 exports auto THREAD_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
 	using R1X = typename THREAD_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
@@ -560,6 +574,7 @@ trait SYSTEM_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	} ;
 } ;
 
+template <>
 exports auto SYSTEM_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
 	using R1X = typename SYSTEM_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
@@ -682,6 +697,7 @@ trait RANDOM_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	} ;
 } ;
 
+template <>
 exports auto RANDOM_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
 	using R1X = typename RANDOM_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;

@@ -4,6 +4,8 @@
 #error "∑(っ°Д° ;)っ : require 'csc_basic.hpp'"
 #endif
 
+#include "csc_basic.hpp"
+
 namespace CSC {
 template <class DEPEND>
 trait BUFFERPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
@@ -17,6 +19,7 @@ trait BUFFERPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	} ;
 } ;
 
+template <>
 exports auto BUFFERPROC_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
 	using R1X = typename BUFFERPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
@@ -24,10 +27,10 @@ exports auto BUFFERPROC_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<
 
 template <class DEPEND>
 trait LATER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
+	struct HEAP ;
+
 	using Holder = typename LATER_HOLDER_HELP<DEPEND ,ALWAYS>::Holder ;
 	using HEAP_SIZE = ENUMAS<VAL ,ENUMID<256>> ;
-
-	struct HEAP ;
 
 	struct OWNERSHIP {
 		VRef<HEAP> mHeap ;
@@ -166,6 +169,7 @@ trait LATER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	} ;
 } ;
 
+template <>
 exports auto LATER_HOLDER_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
 	using R1X = typename LATER_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
@@ -208,15 +212,21 @@ trait INTEGER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		BOOL equal (CREF<Holder> that) const override {
-			auto &&tmp = keep[TYPEAS<CREF<ImplHolder>>::expr] (that) ;
-			assert (mInteger.size () == tmp.mInteger.size ()) ;
-			return BufferProc::buf_equal (mInteger ,tmp.mInteger ,0 ,mInteger.size ()) ;
+			return equal (keep[TYPEAS<CREF<ImplHolder>>::expr] (that)) ;
+		}
+
+		BOOL equal (CREF<ImplHolder> that) const {
+			assert (mInteger.size () == that.mInteger.size ()) ;
+			return BufferProc::buf_equal (mInteger ,that.mInteger ,0 ,mInteger.size ()) ;
 		}
 
 		FLAG compr (CREF<Holder> that) const override {
-			auto &&tmp = keep[TYPEAS<CREF<ImplHolder>>::expr] (that) ;
-			assert (mInteger.size () == tmp.mInteger.size ()) ;
-			return BufferProc::buf_compr (mInteger ,tmp.mInteger ,0 ,mInteger.size ()) ;
+			return compr (keep[TYPEAS<CREF<ImplHolder>>::expr] (that)) ;
+		}
+
+		FLAG compr (CREF<ImplHolder> that) const {
+			assert (mInteger.size () == that.mInteger.size ()) ;
+			return BufferProc::buf_compr (mInteger ,that.mInteger ,0 ,mInteger.size ()) ;
 		}
 
 		FLAG hash () const override {
@@ -224,12 +234,15 @@ trait INTEGER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		Integer add (CREF<Holder> that) const override {
-			auto &&tmp = keep[TYPEAS<CREF<ImplHolder>>::expr] (that) ;
-			assert (mInteger.size () == tmp.mInteger.size ()) ;
+			return add (keep[TYPEAS<CREF<ImplHolder>>::expr] (that)) ;
+		}
+
+		Integer add (CREF<ImplHolder> that) const {
+			assert (mInteger.size () == that.mInteger.size ()) ;
 			auto rbx = VarBuffer<BYTE> (mInteger.size ()) ;
 			auto rax = VAL64 (0) ;
 			for (auto &&i : iter (0 ,mInteger.size ())) {
-				const auto r1x = VAL64 (mInteger[i]) + VAL64 (tmp.mInteger[i]) + rax ;
+				const auto r1x = VAL64 (mInteger[i]) + VAL64 (that.mInteger[i]) + rax ;
 				const auto r2x = DATA (r1x) ;
 				rbx[i] = BYTE (r2x & DATA (0XFF)) ;
 				rax = VAL64 (r2x >> 8) ;
@@ -238,12 +251,15 @@ trait INTEGER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		Integer sub (CREF<Holder> that) const override {
-			auto &&tmp = keep[TYPEAS<CREF<ImplHolder>>::expr] (that) ;
-			assert (mInteger.size () == tmp.mInteger.size ()) ;
+			return sub (keep[TYPEAS<CREF<ImplHolder>>::expr] (that)) ;
+		}
+
+		Integer sub (CREF<ImplHolder> that) const {
+			assert (mInteger.size () == that.mInteger.size ()) ;
 			auto rbx = VarBuffer<BYTE> (mInteger.size ()) ;
 			auto rax = VAL64 (0) ;
 			for (auto &&i : iter (0 ,mInteger.size ())) {
-				const auto r1x = VAL64 (mInteger[i]) - VAL64 (tmp.mInteger[i]) - rax ;
+				const auto r1x = VAL64 (mInteger[i]) - VAL64 (that.mInteger[i]) - rax ;
 				const auto r2x = VAL64 (r1x < 0) ;
 				const auto r3x = r1x + VAL64 (256) * r2x ;
 				const auto r4x = DATA (r3x) ;
@@ -285,15 +301,27 @@ trait INTEGER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		Integer mod (CREF<LENGTH> scale) const override {
-			const auto r1x = clone () ;
-			return r1x - r1x / scale * scale ;
+			assert (scale >= VAL32_MIN) ;
+			assert (scale <= VAL32_MAX) ;
+			assert (scale != ZERO) ;
+			auto rbx = VarBuffer<BYTE> (mInteger.size ()) ;
+			auto rax = VAL64 (0) ;
+			for (auto &&i : iter (0 ,mInteger.size ())) {
+				const auto r1x = VAL64 (mInteger[i]) + rax ;
+				const auto r2x = r1x / VAL64 (scale) ;
+				const auto r3x = DATA (r2x) ;
+				rbx[i] = BYTE (r3x & DATA (0XFF)) ;
+				const auto r4x = r1x - r2x * VAL64 (scale) ;
+				rax = r4x * VAL64 (256) ;
+			}
+			return Integer (rax ,mInteger.size ()) ;
 		}
 
-		Integer clone () const override {
+		void friend_clone (VREF<Integer> that) const override {
 			auto rbx = VarBuffer<BYTE> (mInteger.size ()) ;
 			for (auto &&i : iter (0 ,mInteger.size ()))
 				rbx[i] = mInteger[i] ;
-			return factory (move (rbx)) ;
+			that = factory (move (rbx)) ;
 		}
 
 		Integer minus () const override {
@@ -331,6 +359,7 @@ trait INTEGER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	} ;
 } ;
 
+template <>
 exports auto INTEGER_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->Box<FakeHolder> {
 	using R1X = typename INTEGER_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	Box<FakeHolder> ret ;

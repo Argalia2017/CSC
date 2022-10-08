@@ -4,8 +4,7 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup>
     <_PropertySheetDisplayName>build.Release.x64</_PropertySheetDisplayName>
-    <IncludePath>D:\Depends\__CSC__;D:\Depends\include;$(IncludePath)</IncludePath>
-    <LibraryPath>D:\Depends\lib;$(LibraryPath)</LibraryPath>
+    <IncludePath>D:\Depends\__CSC__;$(IncludePath)</IncludePath>
     <OutDir>$(SolutionDir)lib\$(Configuration)\$(Platform)\</OutDir>
     <IntDir>$(SolutionDir)obj\$(ProjectName)\$(Configuration)\$(Platform)\</IntDir>
   </PropertyGroup>

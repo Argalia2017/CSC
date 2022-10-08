@@ -39,7 +39,7 @@ trait BYTEATTRIBUTE_HELP<DEPEND ,ALWAYS> {
 		implicit ByteAttribute () {
 			auto rax = FUNCTION_extern::invoke () ;
 			rax->initialize () ;
-			mThis = rax.as_cref () ;
+			mThis = rax.as_con () ;
 		}
 
 		template <class ARG1>
@@ -125,6 +125,11 @@ trait BYTEREADER_HELP<DEPEND ,ALWAYS> {
 		explicit ByteReader (RREF<CRef<RegBuffer<BYTE>>> stream) {
 			mThis = FUNCTION_extern::invoke () ;
 			mThis->initialize (move (stream)) ;
+		}
+
+		explicit ByteReader (RREF<VRef<RegBuffer<BYTE>>> stream) {
+			mThis = FUNCTION_extern::invoke () ;
+			mThis->initialize (stream.as_con ()) ;
 		}
 
 		explicit ByteReader (RREF<VRef<Holder>> that) {
@@ -684,7 +689,7 @@ trait TEXTATTRIBUTE_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 		implicit TextAttribute () {
 			auto rax = FUNCTION_extern::invoke () ;
 			rax->initialize () ;
-			mThis = rax.as_cref () ;
+			mThis = rax.as_con () ;
 		}
 
 		template <class ARG1>
@@ -808,6 +813,11 @@ trait TEXTREADER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 		explicit TextReader (RREF<CRef<RegBuffer<ITEM>>> stream) {
 			mThis = FUNCTION_extern::invoke () ;
 			mThis->initialize (move (stream)) ;
+		}
+
+		explicit TextReader (RREF<VRef<RegBuffer<ITEM>>> stream) {
+			mThis = FUNCTION_extern::invoke () ;
+			mThis->initialize (stream.as_con ()) ;
 		}
 
 		explicit TextReader (RREF<VRef<Holder>> that) {

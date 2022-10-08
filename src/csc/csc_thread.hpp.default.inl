@@ -4,16 +4,17 @@
 #error "∑(っ°Д° ;)っ : require 'csc_thread.hpp'"
 #endif
 
+#include "csc_thread.hpp"
+
 namespace CSC {
 template <class DEPEND>
 trait WORKTHREAD_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	using Holder = typename WORKTHREAD_HELP<DEPEND ,ALWAYS>::Holder ;
-	using BinderT = typename THREAD_HELP<DEPEND ,ALWAYS>::Binder ;
-	using Binder = Together<Holder ,BinderT> ;
+	using Binder = typename THREAD_HELP<DEPEND ,ALWAYS>::Binder ;
 
 	using THREAD_QUEUE_SIZE = ENUMAS<VAL ,ENUMID<131072>> ;
 
-	class ImplHolder implement Binder {
+	class ImplHolder implement Together<Holder ,Binder> {
 	protected:
 		ConditionalMutex mThreadMutex ;
 		VRef<BOOL> mThreadFlag ;
@@ -242,6 +243,7 @@ trait WORKTHREAD_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	} ;
 } ;
 
+template <>
 exports auto WORKTHREAD_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
 	using R1X = typename WORKTHREAD_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
@@ -250,10 +252,9 @@ exports auto WORKTHREAD_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<
 template <class DEPEND>
 trait PROMISE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	using Holder = typename PROMISE_HELP<DEPEND ,ALWAYS>::Holder ;
-	using BinderT = typename THREAD_HELP<DEPEND ,ALWAYS>::Binder ;
-	using Binder = Together<Holder ,BinderT> ;
+	using Binder = typename THREAD_HELP<DEPEND ,ALWAYS>::Binder ;
 
-	class ImplHolder implement Binder {
+	class ImplHolder implement Together<Holder ,Binder> {
 	protected:
 		ConditionalMutex mThreadMutex ;
 		VRef<BOOL> mThreadFlag ;
@@ -322,7 +323,7 @@ trait PROMISE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			} catch (CREF<Exception> e) {
 				rethrow (e) ;
 			} catch (...) {
-				rethrow (Exception (TYPEAS<where>::expr ,slice ("unknown C++ exception"))) ;
+				rethrow (Exception (slice ("unknown C++ exception"))) ;
 			}
 			if ifswitch (TRUE) {
 				if ifnot (rax.exist ())
@@ -436,6 +437,7 @@ trait PROMISE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	} ;
 } ;
 
+template <>
 exports auto PROMISE_HOLDER_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
 	using R1X = typename PROMISE_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
