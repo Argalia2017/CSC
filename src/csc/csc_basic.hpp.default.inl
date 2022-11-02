@@ -30,7 +30,7 @@ trait LATER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	struct HEAP ;
 
 	using Holder = typename LATER_HOLDER_HELP<DEPEND ,ALWAYS>::Holder ;
-	using HEAP_SIZE = ENUMAS<VAL ,ENUMID<256>> ;
+	using HEAP_SIZE = ENUMAS<VAL ,256> ;
 
 	struct OWNERSHIP {
 		VRef<HEAP> mHeap ;
@@ -57,8 +57,6 @@ trait LATER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		SharedRef<UniqueRef<OWNERSHIP>> mLater ;
 
 	public:
-		implicit ImplHolder () = default ;
-
 		void initialize (CREF<FLAG> tag) override {
 			const auto r1x = unique () ;
 			assert (r1x.available ()) ;
@@ -90,15 +88,15 @@ trait LATER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				me.mHeap->mFree = me.mHeap->mList[ix].mNext ;
 				me.mHeap->mList[ix].mPrev = me.mHeap->mLast ;
 				me.mHeap->mList[ix].mNext = NONE ;
-				curr_next (me.mHeap ,me.mHeap->mLast ,ix) ;
+				curr_next (me.mHeap.self ,me.mHeap->mLast ,ix) ;
 				me.mHeap->mLast = ix ;
 				me.mIndex = ix ;
 			} ,[] (VREF<OWNERSHIP> me) {
 				INDEX ix = me.mIndex ;
 				if (me.mHeap->mList[ix].mPrev == USED)
 					return ;
-				curr_next (me.mHeap ,me.mHeap->mList[ix].mPrev ,me.mHeap->mList[ix].mNext) ;
-				curr_prev (me.mHeap ,me.mHeap->mList[ix].mNext ,me.mHeap->mList[ix].mPrev) ;
+				curr_next (me.mHeap.self ,me.mHeap->mList[ix].mPrev ,me.mHeap->mList[ix].mNext) ;
+				curr_prev (me.mHeap.self ,me.mHeap->mList[ix].mNext ,me.mHeap->mList[ix].mPrev) ;
 				me.mHeap->mList[ix].mPrev = USED ;
 				me.mHeap->mList[ix].mNext = me.mHeap->mFree ;
 				me.mHeap->mFree = ix ;
@@ -144,25 +142,25 @@ trait LATER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		imports void curr_next (VREF<HEAP> heap ,CREF<INDEX> curr ,CREF<INDEX> next) {
-			auto rxx = TRUE ;
-			if ifswitch (rxx) {
+			auto act = TRUE ;
+			if ifswitch (act) {
 				if (curr == NONE)
 					discard ;
 				heap.mList[curr].mNext = next ;
 			}
-			if ifswitch (rxx) {
+			if ifswitch (act) {
 				heap.mFirst = next ;
 			}
 		}
 
 		imports void curr_prev (VREF<HEAP> heap ,CREF<INDEX> curr ,CREF<INDEX> prev) {
-			auto rxx = TRUE ;
-			if ifswitch (rxx) {
+			auto act = TRUE ;
+			if ifswitch (act) {
 				if (curr == NONE)
 					discard ;
 				heap.mList[curr].mPrev = prev ;
 			}
-			if ifswitch (rxx) {
+			if ifswitch (act) {
 				heap.mLast = prev ;
 			}
 		}
@@ -185,8 +183,6 @@ trait INTEGER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		VarBuffer<BYTE> mInteger ;
 
 	public:
-		implicit ImplHolder () = default ;
-
 		void initialize (CREF<VAL64> value_ ,CREF<LENGTH> size_) override {
 			mInteger = VarBuffer<BYTE> (size_) ;
 			const auto r1x = vmin (mInteger.size () ,SIZE_OF<VAL64>::expr) ;

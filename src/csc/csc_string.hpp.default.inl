@@ -120,8 +120,6 @@ trait STRINGPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 
 	class ImplHolder implement Holder {
 	public:
-		implicit ImplHolder () = default ;
-
 		void initialize () override {
 			noop () ;
 		}
@@ -155,15 +153,15 @@ trait STRINGPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			String<STRA> ret = String<STRA> (obj.length () * 2) ;
 			INDEX ix = 0 ;
 			for (auto &&i : obj) {
-				auto rxx = TRUE ;
-				if ifswitch (rxx) {
+				auto act = TRUE ;
+				if ifswitch (act) {
 					const auto r1x = R1X::instance ().find_utfs (STRUW (i)) ;
 					if (r1x == NONE)
 						discard ;
 					ret[ix] = STRA (R1X::instance ()[r1x].mP1st) ;
 					ix++ ;
 				}
-				if ifswitch (rxx) {
+				if ifswitch (act) {
 					ret[ix] = STRA ('?') ;
 					ix++ ;
 				}
@@ -177,15 +175,15 @@ trait STRINGPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			String<STRW> ret = String<STRW> (obj.length ()) ;
 			INDEX ix = 0 ;
 			for (auto &&i : obj) {
-				auto rxx = TRUE ;
-				if ifswitch (rxx) {
+				auto act = TRUE ;
+				if ifswitch (act) {
 					const auto r1x = R1X::instance ().find_utfs (STRUW (i)) ;
 					if (r1x == NONE)
 						discard ;
 					ret[ix] = STRW (R1X::instance ()[r1x].mP2nd) ;
 					ix++ ;
 				}
-				if ifswitch (rxx) {
+				if ifswitch (act) {
 					ret[ix] = STRW ('?') ;
 					ix++ ;
 				}
@@ -250,141 +248,98 @@ template <class DEPEND>
 trait ANYSTRING_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	using Holder = typename ANYSTRING_HELP<DEPEND ,ALWAYS>::Holder ;
 
+	struct HEAP {
+		String<STR> mText ;
+		String<STRA> mTextA ;
+		String<STRW> mTextW ;
+		String<STRU8> mTextU8 ;
+		String<STRU16> mTextU16 ;
+		String<STRU32> mTextU32 ;
+	} ;
+
 	class ImplHolder implement Holder {
 	protected:
-		Cell<CRef<String<STR>>> mText ;
-		Cell<CRef<String<STRA>>> mTextA ;
-		Cell<CRef<String<STRW>>> mTextW ;
-		Cell<CRef<String<STRU8>>> mTextU8 ;
-		Cell<CRef<String<STRU16>>> mTextU16 ;
-		Cell<CRef<String<STRU32>>> mTextU32 ;
+		SharedRef<HEAP> mHeap ;
 
 	public:
-		implicit ImplHolder () = default ;
-
 		void initialize (CREF<Slice<STR>> text) override {
-			mText = Cell<CRef<String<STR>>>::make () ;
-			mText.store (CRef<String<STR>>::make (text)) ;
+			mHeap = SharedRef<HEAP>::make () ;
+			mHeap->mText = text ;
 		}
 
 		void initialize (CREF<String<STRA>> text) override {
-			mText = Cell<CRef<String<STR>>>::make () ;
-			auto rax = string_cvt[TYPEAS<TYPEAS<STR ,STRA>>::expr] (text) ;
-			mText.store (CRef<String<STR>>::make (move (rax))) ;
-			mTextA = Cell<CRef<String<STRA>>>::make () ;
-			mTextA.store (CRef<String<STRA>>::make (text)) ;
-			mTextW = Cell<CRef<String<STRW>>>::make () ;
-			mTextU8 = Cell<CRef<String<STRU8>>>::make () ;
-			mTextU16 = Cell<CRef<String<STRU16>>>::make () ;
-			mTextU32 = Cell<CRef<String<STRU32>>>::make () ;
+			mHeap = SharedRef<HEAP>::make () ;
+			mHeap->mTextA = text ;
+			mHeap->mText = string_cvt[TYPEAS<STR ,STRA>::expr] (text) ;
 		}
 
 		void initialize (CREF<String<STRW>> text) override {
-			mText = Cell<CRef<String<STR>>>::make () ;
-			auto rax = string_cvt[TYPEAS<TYPEAS<STR ,STRW>>::expr] (text) ;
-			mText.store (CRef<String<STR>>::make (move (rax))) ;
-			mTextA = Cell<CRef<String<STRA>>>::make () ;
-			mTextW = Cell<CRef<String<STRW>>>::make () ;
-			mTextW.store (CRef<String<STRW>>::make (text)) ;
-			mTextU8 = Cell<CRef<String<STRU8>>>::make () ;
-			mTextU16 = Cell<CRef<String<STRU16>>>::make () ;
-			mTextU32 = Cell<CRef<String<STRU32>>>::make () ;
+			mHeap = SharedRef<HEAP>::make () ;
+			mHeap->mTextW = text ;
+			mHeap->mText = string_cvt[TYPEAS<STR ,STRW>::expr] (text) ;
 		}
 
 		void initialize (CREF<String<STRU8>> text) override {
-			mText = Cell<CRef<String<STR>>>::make () ;
-			auto rax = string_cvt[TYPEAS<TYPEAS<STR ,STRU8>>::expr] (text) ;
-			mText.store (CRef<String<STR>>::make (move (rax))) ;
-			mTextA = Cell<CRef<String<STRA>>>::make () ;
-			mTextW = Cell<CRef<String<STRW>>>::make () ;
-			mTextU8 = Cell<CRef<String<STRU8>>>::make () ;
-			mTextU8.store (CRef<String<STRU8>>::make (text)) ;
-			mTextU16 = Cell<CRef<String<STRU16>>>::make () ;
-			mTextU32 = Cell<CRef<String<STRU32>>>::make () ;
+			mHeap = SharedRef<HEAP>::make () ;
+			mHeap->mTextU8 = text ;
+			mHeap->mText = string_cvt[TYPEAS<STR ,STRU8>::expr] (text) ;
 		}
 
 		void initialize (CREF<String<STRU16>> text) override {
-			mText = Cell<CRef<String<STR>>>::make () ;
-			auto rax = string_cvt[TYPEAS<TYPEAS<STR ,STRU16>>::expr] (text) ;
-			mText.store (CRef<String<STR>>::make (move (rax))) ;
-			mTextA = Cell<CRef<String<STRA>>>::make () ;
-			mTextW = Cell<CRef<String<STRW>>>::make () ;
-			mTextU8 = Cell<CRef<String<STRU8>>>::make () ;
-			mTextU16 = Cell<CRef<String<STRU16>>>::make () ;
-			mTextU16.store (CRef<String<STRU16>>::make (text)) ;
-			mTextU32 = Cell<CRef<String<STRU32>>>::make () ;
+			mHeap = SharedRef<HEAP>::make () ;
+			mHeap->mTextU16 = text ;
+			mHeap->mText = string_cvt[TYPEAS<STR ,STRU16>::expr] (text) ;
 		}
 
 		void initialize (CREF<String<STRU32>> text) override {
-			mText = Cell<CRef<String<STR>>>::make () ;
-			auto rax = string_cvt[TYPEAS<TYPEAS<STR ,STRU32>>::expr] (text) ;
-			mText.store (CRef<String<STR>>::make (move (rax))) ;
-			mTextA = Cell<CRef<String<STRA>>>::make () ;
-			mTextW = Cell<CRef<String<STRW>>>::make () ;
-			mTextU8 = Cell<CRef<String<STRU8>>>::make () ;
-			mTextU16 = Cell<CRef<String<STRU16>>>::make () ;
-			mTextU32 = Cell<CRef<String<STRU32>>>::make () ;
-			mTextU32.store (CRef<String<STRU32>>::make (text)) ;
+			mHeap = SharedRef<HEAP>::make () ;
+			mHeap->mTextU32 = text ;
+			mHeap->mText = string_cvt[TYPEAS<STR ,STRU32>::expr] (text) ;
 		}
 
 		CREF<String<STRA>> pick (CREF<TYPEID<STRA>> id) const leftvalue override {
 			if ifswitch (TRUE) {
-				if (mTextA.fetch () == NULL)
+				if (mHeap->mTextA.size () > 0)
 					discard ;
-				const auto r1x = mText.fetch () ;
-				auto rax = string_cvt[TYPEAS<TYPEAS<STRA ,STR>>::expr] (r1x.self) ;
-				mTextA.store (CRef<String<STRA>>::make (move (rax))) ;
+				mHeap->mTextA = string_cvt[TYPEAS<STRA ,STR>::expr] (mHeap->mText) ;
 			}
-			const auto r2x = mTextA.fetch () ;
-			return r2x.self ;
+			return mHeap->mTextA ;
 		}
 
 		CREF<String<STRW>> pick (CREF<TYPEID<STRW>> id) const leftvalue override {
 			if ifswitch (TRUE) {
-				if (mTextW.fetch () == NULL)
+				if (mHeap->mTextW.size () > 0)
 					discard ;
-				const auto r1x = mText.fetch () ;
-				auto rax = string_cvt[TYPEAS<TYPEAS<STRW ,STR>>::expr] (r1x.self) ;
-				mTextW.store (CRef<String<STRW>>::make (move (rax))) ;
+				mHeap->mTextW = string_cvt[TYPEAS<STRW ,STR>::expr] (mHeap->mText) ;
 			}
-			const auto r2x = mTextW.fetch () ;
-			return r2x.self ;
+			return mHeap->mTextW ;
 		}
 
 		CREF<String<STRU8>> pick (CREF<TYPEID<STRU8>> id) const leftvalue override {
 			if ifswitch (TRUE) {
-				if (mTextU8.fetch () == NULL)
+				if (mHeap->mTextU8.size () > 0)
 					discard ;
-				const auto r1x = mText.fetch () ;
-				auto rax = string_cvt[TYPEAS<TYPEAS<STRU8 ,STR>>::expr] (r1x.self) ;
-				mTextU8.store (CRef<String<STRU8>>::make (move (rax))) ;
+				mHeap->mTextU8 = string_cvt[TYPEAS<STRU8 ,STR>::expr] (mHeap->mText) ;
 			}
-			const auto r2x = mTextU8.fetch () ;
-			return r2x.self ;
+			return mHeap->mTextU8 ;
 		}
 
 		CREF<String<STRU16>> pick (CREF<TYPEID<STRU16>> id) const leftvalue override {
 			if ifswitch (TRUE) {
-				if (mTextU16.fetch () == NULL)
+				if (mHeap->mTextU16.size () > 0)
 					discard ;
-				const auto r1x = mText.fetch () ;
-				auto rax = string_cvt[TYPEAS<TYPEAS<STRU16 ,STR>>::expr] (r1x.self) ;
-				mTextU16.store (CRef<String<STRU16>>::make (move (rax))) ;
+				mHeap->mTextU16 = string_cvt[TYPEAS<STRU16 ,STR>::expr] (mHeap->mText) ;
 			}
-			const auto r2x = mTextU16.fetch () ;
-			return r2x.self ;
+			return mHeap->mTextU16 ;
 		}
 
 		CREF<String<STRU32>> pick (CREF<TYPEID<STRU32>> id) const leftvalue override {
 			if ifswitch (TRUE) {
-				if (mTextU32.fetch () == NULL)
+				if (mHeap->mTextU32.size () > 0)
 					discard ;
-				const auto r1x = mText.fetch () ;
-				auto rax = string_cvt[TYPEAS<TYPEAS<STRU32 ,STR>>::expr] (r1x.self) ;
-				mTextU32.store (CRef<String<STRU32>>::make (move (rax))) ;
+				mHeap->mTextU32 = string_cvt[TYPEAS<STRU32 ,STR>::expr] (mHeap->mText) ;
 			}
-			const auto r2x = mTextU32.fetch () ;
-			return r2x.self ;
+			return mHeap->mTextU32 ;
 		}
 	} ;
 } ;
@@ -407,8 +362,6 @@ trait ESCAPESTRING_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		AnyString mText ;
 
 	public:
-		implicit ImplHolder () = default ;
-
 		void initialize (RREF<AnyString> text) override {
 			mText = move (text) ;
 		}
@@ -438,15 +391,15 @@ trait ESCAPESTRING_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			const auto r1x = writer.attribute () ;
 			writer << slice ("\"") ;
 			for (auto &&i : text) {
-				auto rxx = TRUE ;
-				if ifswitch (rxx) {
+				auto act = TRUE ;
+				if ifswitch (act) {
 					const auto r2x = r1x.escape_cast (i) ;
 					if ifnot (r2x.exist ())
 						discard ;
 					writer << slice ("\\") ;
 					writer << r2x.fetch () ;
 				}
-				if ifswitch (rxx) {
+				if ifswitch (act) {
 					writer << i ;
 				}
 			}
@@ -468,7 +421,7 @@ template <class DEPEND>
 trait COMMASTRING_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	using Holder = typename COMMASTRING_HELP<DEPEND ,ALWAYS>::Holder ;
 
-	using COUNTER_MAX_DEPTH = ENUMAS<VAL ,ENUMID<256>> ;
+	using COUNTER_MAX_DEPTH = ENUMAS<VAL ,256> ;
 
 	class ImplHolder implement Holder {
 	protected:
@@ -479,8 +432,6 @@ trait COMMASTRING_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		Deque<Cell<BOOL>> mFirst ;
 
 	public:
-		implicit ImplHolder () = default ;
-
 		void initialize (RREF<AnyString> gap_text ,RREF<AnyString> comma_text) override {
 			mGapText = move (gap_text) ;
 			mCommaText = move (comma_text) ;
@@ -513,8 +464,8 @@ trait COMMASTRING_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		template <class ARG1 ,class ARG2 ,class ARG3>
 		void write_text_impl (VREF<ARG1> writer ,CREF<ARG2> gap_text ,CREF<ARG3> comma_text) const {
 			INDEX ix = mFirst.tail () ;
-			auto rxx = TRUE ;
-			if ifswitch (rxx) {
+			auto act = TRUE ;
+			if ifswitch (act) {
 				if ifnot (mCounter > mTightCounter.fetch ())
 					discard ;
 				if ifswitch (TRUE) {
@@ -525,7 +476,7 @@ trait COMMASTRING_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				}
 				mFirst[ix].store (FALSE) ;
 			}
-			if ifswitch (rxx) {
+			if ifswitch (act) {
 				if (mCounter != mTightCounter.fetch ())
 					discard ;
 				if ifnot (mFirst[ix].fetch ())
@@ -533,8 +484,8 @@ trait COMMASTRING_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				mTightCounter.store (COUNTER_MAX_DEPTH::expr) ;
 				mFirst[ix].store (FALSE) ;
 			}
-			if ifswitch (rxx) {
-				writer << ARG1::GAP ;
+			if ifswitch (act) {
+				writer << GAP ;
 				if ifswitch (TRUE) {
 					if (mFirst[ix].fetch ())
 						discard ;
@@ -582,7 +533,7 @@ template <class DEPEND>
 trait ALIGNEDSTRING_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	using Holder = typename ALIGNEDSTRING_HELP<DEPEND ,ALWAYS>::Holder ;
 
-	using COUNTER_MAX_DEPTH = ENUMAS<VAL ,ENUMID<256>> ;
+	using COUNTER_MAX_DEPTH = ENUMAS<VAL ,256> ;
 
 	class ImplHolder implement Holder {
 	protected:
@@ -591,8 +542,6 @@ trait ALIGNEDSTRING_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		LENGTH mSpace ;
 
 	public:
-		implicit ImplHolder () = default ;
-
 		void initialize (CREF<VAL64> value_ ,CREF<LENGTH> align_) override {
 			mValue = value_ ;
 			mAlign = align_ ;

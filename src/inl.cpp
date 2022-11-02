@@ -1,5 +1,6 @@
 ﻿#include "util.h"
 
+#include "csc/begin.h"
 #ifdef __CSC_SYSTEM_WINDOWS__
 #ifdef __CSC_COMPILER_MSVC__
 #pragma warning (disable :4091)
@@ -17,6 +18,7 @@
 
 #include <Windows.h>
 #endif
+#include "csc/end.h"
 
 #ifdef __CSC_SYSTEM_WINDOWS__
 #ifdef __CSC_COMPILER_GNUC__

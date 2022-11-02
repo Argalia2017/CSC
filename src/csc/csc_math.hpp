@@ -47,6 +47,29 @@ trait MATHPROC_HELP<DEPEND ,ALWAYS> {
 		virtual DOUBLE abs (CREF<DOUBLE> obj) const = 0 ;
 		virtual SINGLE inverse (CREF<SINGLE> obj) const = 0 ;
 		virtual DOUBLE inverse (CREF<DOUBLE> obj) const = 0 ;
+		virtual VAL32 min_of (CREF<VAL32> obj1 ,CREF<Variadic<VAL32>> obj2) const = 0 ;
+		virtual VAL64 min_of (CREF<VAL64> obj1 ,CREF<Variadic<VAL64>> obj2) const = 0 ;
+		virtual SINGLE min_of (CREF<SINGLE> obj1 ,CREF<Variadic<SINGLE>> obj2) const = 0 ;
+		virtual DOUBLE min_of (CREF<DOUBLE> obj1 ,CREF<Variadic<DOUBLE>> obj2) const = 0 ;
+		virtual VAL32 max_of (CREF<VAL32> obj1 ,CREF<Variadic<VAL32>> obj2) const = 0 ;
+		virtual VAL64 max_of (CREF<VAL64> obj1 ,CREF<Variadic<VAL64>> obj2) const = 0 ;
+		virtual SINGLE max_of (CREF<SINGLE> obj1 ,CREF<Variadic<SINGLE>> obj2) const = 0 ;
+		virtual DOUBLE max_of (CREF<DOUBLE> obj1 ,CREF<Variadic<DOUBLE>> obj2) const = 0 ;
+		virtual BOOL all_of (CREF<Variadic<BOOL>> obj1) const = 0 ;
+		virtual BOOL any_of (CREF<Variadic<BOOL>> obj1) const = 0 ;
+		virtual INDEX else_of (CREF<Variadic<BOOL>> obj1) const = 0 ;
+		virtual VAL32 sum_of (CREF<VAL32> obj1 ,CREF<Variadic<VAL32>> obj2) const = 0 ;
+		virtual VAL64 sum_of (CREF<VAL64> obj1 ,CREF<Variadic<VAL64>> obj2) const = 0 ;
+		virtual SINGLE sum_of (CREF<SINGLE> obj1 ,CREF<Variadic<SINGLE>> obj2) const = 0 ;
+		virtual DOUBLE sum_of (CREF<DOUBLE> obj1 ,CREF<Variadic<DOUBLE>> obj2) const = 0 ;
+		virtual VAL32 acc_of (CREF<VAL32> obj1 ,CREF<Variadic<VAL32>> obj2) const = 0 ;
+		virtual VAL64 acc_of (CREF<VAL64> obj1 ,CREF<Variadic<VAL64>> obj2) const = 0 ;
+		virtual SINGLE acc_of (CREF<SINGLE> obj1 ,CREF<Variadic<SINGLE>> obj2) const = 0 ;
+		virtual DOUBLE acc_of (CREF<DOUBLE> obj1 ,CREF<Variadic<DOUBLE>> obj2) const = 0 ;
+		virtual Array<VAL32 ,RANK2> sort_of (CREF<VAL32> obj1 ,CREF<VAL32> obj2) const = 0 ;
+		virtual Array<VAL64 ,RANK2> sort_of (CREF<VAL64> obj1 ,CREF<VAL64> obj2) const = 0 ;
+		virtual Array<SINGLE ,RANK2> sort_of (CREF<SINGLE> obj1 ,CREF<SINGLE> obj2) const = 0 ;
+		virtual Array<DOUBLE ,RANK2> sort_of (CREF<DOUBLE> obj1 ,CREF<DOUBLE> obj2) const = 0 ;
 		virtual VAL32 clamp (CREF<VAL32> curr ,CREF<VAL32> lb ,CREF<VAL32> rb) const = 0 ;
 		virtual VAL64 clamp (CREF<VAL64> curr ,CREF<VAL64> lb ,CREF<VAL64> rb) const = 0 ;
 		virtual SINGLE clamp (CREF<SINGLE> curr ,CREF<SINGLE> lb ,CREF<SINGLE> rb) const = 0 ;
@@ -147,133 +170,56 @@ trait MATHPROC_HELP<DEPEND ,ALWAYS> {
 			return instance ().mThis->inverse (obj) ;
 		}
 
-		template <class ARG1>
-		imports ARG1 min_of (CREF<ARG1> obj) {
+		template <class ARG1 ,class...ARG2>
+		imports ARG1 min_of (CREF<ARG1> obj1 ,CREF<ARG2>...obj2) {
 			require (IS_SCALAR<ARG1>) ;
-			return obj ;
+			require (ENUM_ALL<IS_SAME<ARG1 ,ARG2>...>) ;
+			return instance ().mThis->min_of (obj1 ,capture (obj2...)) ;
 		}
 
 		template <class ARG1 ,class...ARG2>
-		imports ARG1 min_of (CREF<ARG1> obj1 ,CREF<ARG1> obj2 ,CREF<ARG2>...obj3) {
+		imports ARG1 max_of (CREF<ARG1> obj1 ,CREF<ARG2>...obj2) {
 			require (IS_SCALAR<ARG1>) ;
-			if (obj1 <= obj2)
-				return min_of (obj1 ,obj3...) ;
-			return min_of (obj2 ,obj3...) ;
-		}
-
-		template <class ARG1>
-		imports ARG1 max_of (CREF<ARG1> obj) {
-			require (IS_SCALAR<ARG1>) ;
-			return obj ;
-		}
-
-		template <class ARG1 ,class...ARG2>
-		imports ARG1 max_of (CREF<ARG1> obj1 ,CREF<ARG1> obj2 ,CREF<ARG2>...obj3) {
-			require (IS_SCALAR<ARG1>) ;
-			if (obj1 >= obj2)
-				return max_of (obj1 ,obj3...) ;
-			return max_of (obj2 ,obj3...) ;
-		}
-
-		imports BOOL all_of () {
-			return TRUE ;
+			require (ENUM_ALL<IS_SAME<ARG1 ,ARG2>...>) ;
+			return instance ().mThis->max_of (obj1 ,capture (obj2...)) ;
 		}
 
 		template <class...ARG1>
-		imports BOOL all_of (CREF<BOOL> obj1 ,CREF<ARG1>...obj2) {
-			if ifnot (obj1)
-				return FALSE ;
-			return all_of (obj2...) ;
-		}
-
-		imports BOOL any_of () {
-			return FALSE ;
+		imports BOOL all_of (CREF<ARG1>...obj1) {
+			require (ENUM_ALL<IS_SAME<BOOL ,ARG1>...>) ;
+			return instance ().mThis->all_of (capture (obj1...)) ;
 		}
 
 		template <class...ARG1>
-		imports BOOL any_of (CREF<BOOL> obj1 ,CREF<ARG1>...obj2) {
-			if (obj1)
-				return TRUE ;
-			return any_of (obj2...) ;
-		}
-
-		imports INDEX else_of () {
-			return ZERO ;
+		imports BOOL any_of (CREF<ARG1>...obj1) {
+			require (ENUM_ALL<IS_SAME<BOOL ,ARG1>...>) ;
+			return instance ().mThis->any_of (capture (obj1...)) ;
 		}
 
 		template <class...ARG1>
-		imports INDEX else_of (CREF<BOOL> obj1 ,CREF<ARG1>...obj2) {
-			if (obj1)
-				return ZERO ;
-			return 1 + else_of (obj2...) ;
-		}
-
-		template <class ARG1>
-		imports ARG1 sum_of (CREF<ARG1> obj) {
-			require (IS_SCALAR<ARG1>) ;
-			return obj ;
+		imports INDEX else_of (CREF<ARG1>...obj1) {
+			require (ENUM_ALL<IS_SAME<BOOL ,ARG1>...>) ;
+			return instance ().mThis->else_of (capture (obj1...)) ;
 		}
 
 		template <class ARG1 ,class...ARG2>
-		imports ARG1 sum_of (CREF<ARG1> obj1 ,CREF<ARG1> obj2 ,CREF<ARG2>...obj3) {
+		imports ARG1 sum_of (CREF<ARG1> obj1 ,CREF<ARG2>...obj2) {
 			require (IS_SCALAR<ARG1>) ;
-			return sum_of (obj1 + obj2 ,obj3...) ;
-		}
-
-		template <class ARG1>
-		imports ARG1 acc_of (CREF<ARG1> obj) {
-			require (IS_SCALAR<ARG1>) ;
-			return obj ;
+			require (ENUM_ALL<IS_SAME<ARG1 ,ARG2>...>) ;
+			return instance ().mThis->sum_of (obj1 ,capture (obj2...)) ;
 		}
 
 		template <class ARG1 ,class...ARG2>
-		imports ARG1 acc_of (CREF<ARG1> obj1 ,CREF<ARG1> obj2 ,CREF<ARG2>...obj3) {
+		imports ARG1 acc_of (CREF<ARG1> obj1 ,CREF<ARG2>...obj2) {
 			require (IS_SCALAR<ARG1>) ;
-			return acc_of (obj1 * obj2 ,obj3...) ;
-		}
-
-		template <class ARG1>
-		imports Array<ARG1 ,RANK1> sort_of (CREF<ARG1> obj) {
-			Array<ARG1 ,RANK1> ret ;
-			ret[0] = obj ;
-			return move (ret) ;
+			require (ENUM_ALL<IS_SAME<ARG1 ,ARG2>...>) ;
+			return instance ().mThis->sum_of (obj1 ,capture (obj2...)) ;
 		}
 
 		template <class ARG1>
 		imports Array<ARG1 ,RANK2> sort_of (CREF<ARG1> obj1 ,CREF<ARG1> obj2) {
-			Array<ARG1 ,RANK2> ret ;
-			ret[0] = obj1 ;
-			ret[1] = obj2 ;
-			if ifswitch (TRUE) {
-				if (operator_compr (ret[0] ,ret[1]) <= ZERO)
-					discard ;
-				swap (ret[0] ,ret[1]) ;
-			}
-			return move (ret) ;
-		}
-
-		template <class ARG1>
-		imports Array<ARG1 ,RANK3> sort_of (CREF<ARG1> obj1 ,CREF<ARG1> obj2 ,CREF<ARG1> obj3) {
-			Array<ARG1 ,RANK3> ret ;
-			ret[0] = obj1 ;
-			ret[1] = obj2 ;
-			ret[2] = obj3 ;
-			if ifswitch (TRUE) {
-				if (operator_compr (ret[0] ,ret[1]) <= ZERO)
-					discard ;
-				swap (ret[0] ,ret[1]) ;
-			}
-			if ifswitch (TRUE) {
-				if (operator_compr (ret[0] ,ret[2]) <= ZERO)
-					discard ;
-				swap (ret[0] ,ret[2]) ;
-			}
-			if ifswitch (TRUE) {
-				if (operator_compr (ret[1] ,ret[2]) <= ZERO)
-					discard ;
-				swap (ret[1] ,ret[2]) ;
-			}
-			return move (ret) ;
+			require (IS_SCALAR<ARG1>) ;
+			return instance ().mThis->sort_of (obj1 ,obj2) ;
 		}
 
 		template <class ARG1>

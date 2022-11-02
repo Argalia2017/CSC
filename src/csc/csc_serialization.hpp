@@ -159,7 +159,7 @@ trait XMLPARSER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		BOOL equal (CREF<XmlParser> that) const {
-			return mThis->equal (that.mThis) ;
+			return mThis->equal (that.mThis.self) ;
 		}
 
 		inline BOOL operator== (CREF<XmlParser> that) const {
@@ -186,7 +186,7 @@ trait XMLPARSER_HELP<DEPEND ,ALWAYS> {
 			return mThis->fetch () ;
 		}
 
-		BOOL fetch (CREF<BOOL> def) const {
+		BOOL fetch (CREF<BoolProxy> def) const {
 			return mThis->fetch (def) ;
 		}
 
@@ -393,7 +393,7 @@ trait JSONPARSER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		BOOL equal (CREF<JsonParser> that) const {
-			return mThis->equal (that.mThis) ;
+			return mThis->equal (that.mThis.self) ;
 		}
 
 		inline BOOL operator== (CREF<JsonParser> that) const {
@@ -408,7 +408,7 @@ trait JSONPARSER_HELP<DEPEND ,ALWAYS> {
 			return mThis->fetch () ;
 		}
 
-		BOOL fetch (CREF<BOOL> def) const {
+		BOOL fetch (CREF<BoolProxy> def) const {
 			return mThis->fetch (def) ;
 		}
 

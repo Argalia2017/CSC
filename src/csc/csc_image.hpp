@@ -65,12 +65,12 @@ trait IMAGEITERATOR_HELP<DEPEND ,ALWAYS> {
 			return good () ;
 		}
 
-		CREF<PIXEL> at () const leftvalue {
+		CREF<PIXEL> peek () const leftvalue {
 			return mPixel ;
 		}
 
 		inline CREF<PIXEL> operator* () const leftvalue {
-			return at () ;
+			return peek () ;
 		}
 
 		void next () {

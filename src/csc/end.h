@@ -16,7 +16,7 @@
 #define mP3rd mP3rd_m ()
 #define trait struct
 #define implement :public
-#define extend :public
+#define extend :private
 #define require __macro_requires
 #define anonymous __macro_anonymous
 #define where __macro_where

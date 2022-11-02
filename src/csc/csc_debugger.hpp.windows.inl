@@ -57,7 +57,7 @@ trait CONSOLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	using Binder = typename CONSOLE_HELP<DEPEND ,ALWAYS>::Binder ;
 	using Holder = typename CONSOLE_HELP<DEPEND ,ALWAYS>::Holder ;
 
-	using CONSOLE_BUFFER_SSIZE = ENUMAS<VAL ,ENUMID<8388607>> ;
+	using CONSOLE_BUFFER_SSIZE = ENUMAS<VAL ,8388607> ;
 
 	using OPTION_DEFAULT = typename CONSOLE_HELP<DEPEND ,ALWAYS>::OPTION_DEFAULT ;
 	using OPTION_NO_PRINT = typename CONSOLE_HELP<DEPEND ,ALWAYS>::OPTION_NO_PRINT ;
@@ -67,7 +67,7 @@ trait CONSOLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	using OPTION_NO_INFO = typename CONSOLE_HELP<DEPEND ,ALWAYS>::OPTION_NO_INFO ;
 	using OPTION_NO_DEBUG = typename CONSOLE_HELP<DEPEND ,ALWAYS>::OPTION_NO_DEBUG ;
 	using OPTION_NO_VERBOSE = typename CONSOLE_HELP<DEPEND ,ALWAYS>::OPTION_NO_VERBOSE ;
-	using OPTION_SIZE = ENUMAS<VAL ,ENUMID<32>> ;
+	using OPTION_SIZE = ENUMAS<VAL ,32> ;
 
 	struct HEAP {
 		String<STR> mConBuffer ;
@@ -86,8 +86,6 @@ trait CONSOLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		SharedRef<HEAP> mHeap ;
 
 	public:
-		implicit ImplHolder () = default ;
-
 		void initialize () override {
 			mHeap = SharedRef<HEAP>::make () ;
 			set_buffer_size (CONSOLE_BUFFER_SSIZE::expr) ;
@@ -95,19 +93,19 @@ trait CONSOLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 
 		void set_buffer_size (CREF<LENGTH> size_) const {
 			mHeap->mConBuffer = String<STR> (size_) ;
-			mHeap->mConWriter = TextWriter<STR> (mHeap->mConBuffer.raw ().ref ()) ;
+			mHeap->mConWriter = TextWriter<STR> (mHeap->mConBuffer.raw ().as_ref ()) ;
 			mHeap->mLogBuffer = String<STRU8> (size_) ;
-			mHeap->mLogWriter = TextWriter<STRU8> (mHeap->mLogBuffer.raw ().ref ()) ;
+			mHeap->mLogWriter = TextWriter<STRU8> (mHeap->mLogBuffer.raw ().as_ref ()) ;
 		}
 
 		void enable_option (CREF<FLAG> option) const override {
-			auto rxx = TRUE ;
-			if ifswitch (rxx) {
+			auto act = TRUE ;
+			if ifswitch (act) {
 				if (option != OPTION_DEFAULT::expr)
 					discard ;
 				mHeap->mOption.clear () ;
 			}
-			if ifswitch (rxx) {
+			if ifswitch (act) {
 				mHeap->mOption.add (option) ;
 			}
 		}
@@ -125,10 +123,10 @@ trait CONSOLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 					discard ;
 				const auto r1x = csc_byte16_t (FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE) ;
 				SetConsoleTextAttribute (mHeap->mConsole ,r1x) ;
-				auto rax = DWORD () ;
-				rax = DWORD (mHeap->mConWriter.length () - 1) ;
+				auto rax = csc_enum_t () ;
+				rax = csc_enum_t (mHeap->mConWriter.length () - 1) ;
 				WriteConsole (mHeap->mConsole ,(&mHeap->mConBuffer[0]) ,rax ,(&rax) ,NULL) ;
-				rax = DWORD (1) ;
+				rax = csc_enum_t (1) ;
 				WriteConsole (mHeap->mConsole ,TEXT ("\n") ,rax ,(&rax) ,NULL) ;
 			}
 			log (slice ("PRINT")) ;
@@ -143,10 +141,10 @@ trait CONSOLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 					discard ;
 				const auto r1x = csc_byte16_t (FOREGROUND_BLUE | FOREGROUND_INTENSITY) ;
 				SetConsoleTextAttribute (mHeap->mConsole ,r1x) ;
-				auto rax = DWORD () ;
-				rax = DWORD (mHeap->mConWriter.length () - 1) ;
+				auto rax = csc_enum_t () ;
+				rax = csc_enum_t (mHeap->mConWriter.length () - 1) ;
 				WriteConsole (mHeap->mConsole ,(&mHeap->mConBuffer[0]) ,rax ,(&rax) ,NULL) ;
-				rax = DWORD (1) ;
+				rax = csc_enum_t (1) ;
 				WriteConsole (mHeap->mConsole ,TEXT ("\n") ,rax ,(&rax) ,NULL) ;
 			}
 			log (slice ("FATAL")) ;
@@ -161,10 +159,10 @@ trait CONSOLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 					discard ;
 				const auto r1x = csc_byte16_t (FOREGROUND_RED | FOREGROUND_INTENSITY) ;
 				SetConsoleTextAttribute (mHeap->mConsole ,r1x) ;
-				auto rax = DWORD () ;
-				rax = DWORD (mHeap->mConWriter.length () - 1) ;
+				auto rax = csc_enum_t () ;
+				rax = csc_enum_t (mHeap->mConWriter.length () - 1) ;
 				WriteConsole (mHeap->mConsole ,(&mHeap->mConBuffer[0]) ,rax ,(&rax) ,NULL) ;
-				rax = DWORD (1) ;
+				rax = csc_enum_t (1) ;
 				WriteConsole (mHeap->mConsole ,TEXT ("\n") ,rax ,(&rax) ,NULL) ;
 			}
 			log (slice ("ERROR")) ;
@@ -179,10 +177,10 @@ trait CONSOLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 					discard ;
 				const auto r1x = csc_byte16_t (FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_INTENSITY) ;
 				SetConsoleTextAttribute (mHeap->mConsole ,r1x) ;
-				auto rax = DWORD () ;
-				rax = DWORD (mHeap->mConWriter.length () - 1) ;
+				auto rax = csc_enum_t () ;
+				rax = csc_enum_t (mHeap->mConWriter.length () - 1) ;
 				WriteConsole (mHeap->mConsole ,(&mHeap->mConBuffer[0]) ,rax ,(&rax) ,NULL) ;
-				rax = DWORD (1) ;
+				rax = csc_enum_t (1) ;
 				WriteConsole (mHeap->mConsole ,TEXT ("\n") ,rax ,(&rax) ,NULL) ;
 			}
 			log (slice ("WARN")) ;
@@ -197,10 +195,10 @@ trait CONSOLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 					discard ;
 				const auto r1x = csc_byte16_t (FOREGROUND_GREEN | FOREGROUND_INTENSITY) ;
 				SetConsoleTextAttribute (mHeap->mConsole ,r1x) ;
-				auto rax = DWORD () ;
-				rax = DWORD (mHeap->mConWriter.length () - 1) ;
+				auto rax = csc_enum_t () ;
+				rax = csc_enum_t (mHeap->mConWriter.length () - 1) ;
 				WriteConsole (mHeap->mConsole ,(&mHeap->mConBuffer[0]) ,rax ,(&rax) ,NULL) ;
-				rax = DWORD (1) ;
+				rax = csc_enum_t (1) ;
 				WriteConsole (mHeap->mConsole ,TEXT ("\n") ,rax ,(&rax) ,NULL) ;
 			}
 			log (slice ("INFO")) ;
@@ -215,10 +213,10 @@ trait CONSOLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 					discard ;
 				const auto r1x = csc_byte16_t (FOREGROUND_GREEN | FOREGROUND_BLUE | FOREGROUND_INTENSITY) ;
 				SetConsoleTextAttribute (mHeap->mConsole ,r1x) ;
-				auto rax = DWORD () ;
-				rax = DWORD (mHeap->mConWriter.length () - 1) ;
+				auto rax = csc_enum_t () ;
+				rax = csc_enum_t (mHeap->mConWriter.length () - 1) ;
 				WriteConsole (mHeap->mConsole ,(&mHeap->mConBuffer[0]) ,rax ,(&rax) ,NULL) ;
-				rax = DWORD (1) ;
+				rax = csc_enum_t (1) ;
 				WriteConsole (mHeap->mConsole ,TEXT ("\n") ,rax ,(&rax) ,NULL) ;
 			}
 			log (slice ("DEBUG")) ;
@@ -233,31 +231,31 @@ trait CONSOLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 					discard ;
 				const auto r1x = csc_byte16_t (FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE | FOREGROUND_INTENSITY) ;
 				SetConsoleTextAttribute (mHeap->mConsole ,r1x) ;
-				auto rax = DWORD () ;
-				rax = DWORD (mHeap->mConWriter.length () - 1) ;
+				auto rax = csc_enum_t () ;
+				rax = csc_enum_t (mHeap->mConWriter.length () - 1) ;
 				WriteConsole (mHeap->mConsole ,(&mHeap->mConBuffer[0]) ,rax ,(&rax) ,NULL) ;
-				rax = DWORD (1) ;
+				rax = csc_enum_t (1) ;
 				WriteConsole (mHeap->mConsole ,TEXT ("\n") ,rax ,(&rax) ,NULL) ;
 			}
 			log (slice ("VERBOSE")) ;
 		}
 
 		void write_con_buffer (CREF<Binder> msg) const {
-			mHeap->mConWriter << TextWriter<STR>::CLS ;
+			mHeap->mConWriter << CLS ;
 			mHeap->mConWriter << msg ;
-			mHeap->mConWriter << TextWriter<STR>::EOS ;
+			mHeap->mConWriter << EOS ;
 		}
 
 		void link (CREF<String<STR>> dire) const override {
-			auto rxx = TRUE ;
-			if ifswitch (rxx) {
+			auto act = TRUE ;
+			if ifswitch (act) {
 				if (dire.empty ())
 					discard ;
 				const auto r1x = Directory (dire).absolute () ;
 				mHeap->mLogFile = String<STR>::make (r1x ,STR ('\\') ,slice ("console.log")) ;
 				mHeap->mOldLogFile = String<STR>::make (r1x ,STR ('\\') ,slice ("console.old.log")) ;
 			}
-			if ifswitch (rxx) {
+			if ifswitch (act) {
 				mHeap->mLogFile = String<STR> () ;
 				mHeap->mOldLogFile = String<STR> () ;
 			}
@@ -294,7 +292,7 @@ trait CONSOLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		void write_log_buffer (CREF<Slice<STR>> tag) const {
-			mHeap->mLogWriter << TextWriter<STRU8>::CLS ;
+			mHeap->mLogWriter << CLS ;
 			mHeap->mLogWriter << slice ("[") ;
 			const auto r1x = NowTimePoint () ;
 			const auto r2x = r1x.calendar () ;
@@ -306,10 +304,10 @@ trait CONSOLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			mHeap->mLogWriter << slice ("][") ;
 			mHeap->mLogWriter << tag ;
 			mHeap->mLogWriter << slice ("] : ") ;
-			const auto r3x = string_cvt[TYPEAS<TYPEAS<STRU8 ,STR>>::expr] (mHeap->mConBuffer) ;
+			const auto r3x = string_cvt[TYPEAS<STRU8 ,STR>::expr] (mHeap->mConBuffer) ;
 			mHeap->mLogWriter << r3x ;
-			mHeap->mLogWriter << TextWriter<STRU8>::GAP ;
-			mHeap->mLogWriter << TextWriter<STRU8>::EOS ;
+			mHeap->mLogWriter << GAP ;
+			mHeap->mLogWriter << EOS ;
 		}
 
 		void attach_log_file () const {
@@ -320,7 +318,7 @@ trait CONSOLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			mHeap->mLogStreamFile = VRef<StreamFile>::make (mHeap->mLogFile) ;
 			const auto r3x = mHeap->mLogStreamFile->link (TRUE ,TRUE) ;
 			assume (r3x) ;
-			const auto r4x = String<STRU8>::make (TextWriter<STRU8>::BOM) ;
+			const auto r4x = String<STRU8>::make (BOM) ;
 			auto &&tmp = unsafe_cast[TYPEAS<TEMP<void>>::expr] (unsafe_deptr (r4x[0])) ;
 			const auto r5x = mHeap->mLogStreamFile->write (RegBuffer<BYTE>::make (tmp ,0 ,r4x.length ())) ;
 			assume (r5x == r4x.length ()) ;
@@ -386,12 +384,12 @@ template <class DEPEND>
 trait REPORTER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	using Holder = typename REPORTER_HELP<DEPEND ,ALWAYS>::Holder ;
 
-	using STACK_MAX_DEPTH = ENUMAS<VAL ,ENUMID<256>> ;
-	using FUNCTION_NAME_SSIZE = ENUMAS<VAL ,ENUMID<1023>> ;
+	using STACK_MAX_DEPTH = ENUMAS<VAL ,256> ;
+	using FUNCTION_NAME_SIZE = ENUMAS<VAL ,1024> ;
 
-	struct REAL_SYMBOL_INFO {
+	struct SYMBOL_INFO_EX {
 		SYMBOL_INFO mFirst ;
-		ARR<STRA ,FUNCTION_NAME_SSIZE> mSecond ;
+		Storage<FUNCTION_NAME_SIZE> mSecond ;
 	} ;
 
 	struct HEAP {
@@ -405,8 +403,6 @@ trait REPORTER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		SharedRef<HEAP> mHeap ;
 
 	public:
-		implicit ImplHolder () = default ;
-
 		void initialize () override {
 			mHeap = SharedRef<HEAP>::make () ;
 			mHeap->mNameBuffer = String<STR>::make () ;
@@ -445,7 +441,7 @@ trait REPORTER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			}) ;
 		}
 
-		imports void crash_handle_sigint (csc_int32_t) {
+		imports void crash_handle_sigint (VAL32) {
 			Singleton<Console>::instance ().print () ;
 			Singleton<Console>::instance ().error (slice ("Interrupt Fault")) ;
 			Singleton<Console>::instance ().error (slice ("errno = ") ,FLAG (errno)) ;
@@ -454,7 +450,7 @@ trait REPORTER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			raise (SIGINT) ;
 		}
 
-		imports void crash_handle_sigill (csc_int32_t) {
+		imports void crash_handle_sigill (VAL32) {
 			Singleton<Console>::instance ().print () ;
 			Singleton<Console>::instance ().error (slice ("Illegal Fault")) ;
 			Singleton<Console>::instance ().error (slice ("errno = ") ,FLAG (errno)) ;
@@ -463,7 +459,7 @@ trait REPORTER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			raise (SIGILL) ;
 		}
 
-		imports void crash_handle_sigabrt (csc_int32_t) {
+		imports void crash_handle_sigabrt (VAL32) {
 			Singleton<Console>::instance ().print () ;
 			Singleton<Console>::instance ().error (slice ("Abort Fault")) ;
 			Singleton<Console>::instance ().error (slice ("errno = ") ,FLAG (errno)) ;
@@ -472,7 +468,7 @@ trait REPORTER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			raise (SIGABRT) ;
 		}
 
-		imports void crash_handle_sigfpe (csc_int32_t) {
+		imports void crash_handle_sigfpe (VAL32) {
 			Singleton<Console>::instance ().print () ;
 			Singleton<Console>::instance ().error (slice ("Float Fault")) ;
 			Singleton<Console>::instance ().error (slice ("errno = ") ,FLAG (errno)) ;
@@ -481,7 +477,7 @@ trait REPORTER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			raise (SIGFPE) ;
 		}
 
-		imports void crash_handle_sigsegv (csc_int32_t) {
+		imports void crash_handle_sigsegv (VAL32) {
 			Singleton<Console>::instance ().print () ;
 			Singleton<Console>::instance ().error (slice ("Segmentation Fault")) ;
 			Singleton<Console>::instance ().error (slice ("errno = ") ,FLAG (errno)) ;
@@ -490,7 +486,7 @@ trait REPORTER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			raise (SIGSEGV) ;
 		}
 
-		imports void crash_handle_sigterm (csc_int32_t) {
+		imports void crash_handle_sigterm (VAL32) {
 			Singleton<Console>::instance ().print () ;
 			Singleton<Console>::instance ().error (slice ("Termination Fault")) ;
 			Singleton<Console>::instance ().error (slice ("errno = ") ,FLAG (errno)) ;
@@ -512,7 +508,7 @@ trait REPORTER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 
 		Array<FLAG> captrue_stack_trace () const override {
 			auto rax = Array<csc_pointer_t> (STACK_MAX_DEPTH::expr) ;
-			const auto r1x = LENGTH (CaptureStackBackTrace (3 ,DWORD (rax.size ()) ,(&rax[0]) ,NULL)) ;
+			const auto r1x = LENGTH (CaptureStackBackTrace (3 ,VAL32 (rax.size ()) ,(&rax[0]) ,NULL)) ;
 			Array<FLAG> ret = Array<FLAG> (r1x) ;
 			for (auto &&i : ret.iter ())
 				ret[i] = LENGTH (rax[i]) ;
@@ -521,23 +517,23 @@ trait REPORTER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 
 		String<STR> symbol_from_address (CREF<FLAG> addr) const override {
 			String<STR> ret ;
-			auto rxx = TRUE ;
-			if ifswitch (rxx) {
+			auto act = TRUE ;
+			if ifswitch (act) {
 				attach_symbol () ;
 				if ifnot (mHeap->mSymbolFromAddress.exist ())
 					discard ;
-				auto rax = Box<REAL_SYMBOL_INFO>::make () ;
-				rax->mFirst.SizeOfStruct = DWORD (SIZE_OF<SYMBOL_INFO>::expr) ;
-				rax->mFirst.MaxNameLen = DWORD (FUNCTION_NAME_SSIZE::expr) ;
+				auto rax = Box<SYMBOL_INFO_EX>::make () ;
+				rax->mFirst.SizeOfStruct = csc_enum_t (SIZE_OF<SYMBOL_INFO>::expr) ;
+				rax->mFirst.MaxNameLen = csc_enum_t (FUNCTION_NAME_SIZE::expr) ;
 				const auto r1x = maybe_SymFromAddr (mHeap->mSymbolFromAddress ,DWORD64 (addr) ,NULL ,(&rax->mFirst)) ;
 				if ifnot (r1x)
 					discard ;
-				const auto r2x = string_build[TYPEAS<TYPEAS<STR ,DATA>>::expr] (DATA (addr)) ;
+				const auto r2x = string_build[TYPEAS<STR ,DATA>::expr] (DATA (addr)) ;
 				BufferProc::buf_slice (mHeap->mNameBuffer ,rax->mFirst.Name ,mHeap->mNameBuffer.size ()) ;
 				ret = String<STR>::make (slice ("[") ,r2x ,slice ("] : ") ,mHeap->mNameBuffer) ;
 			}
-			if ifswitch (rxx) {
-				const auto r3x = string_build[TYPEAS<TYPEAS<STR ,DATA>>::expr] (DATA (addr)) ;
+			if ifswitch (act) {
+				const auto r3x = string_build[TYPEAS<STR ,DATA>::expr] (DATA (addr)) ;
 				ret = String<STR>::make (slice ("[") ,r3x ,slice ("] : ") ,slice ("null")) ;
 			}
 			return move (ret) ;

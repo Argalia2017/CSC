@@ -66,6 +66,7 @@ trait TIMEDURATION_HOLDER_HELP<DEPEND ,ALWAYS> {
 template <class DEPEND>
 trait TIMEDURATION_HELP<DEPEND ,ALWAYS> {
 	class TimeDuration ;
+
 	using CALENDAR = typename TIMEDURATION_HOLDER_HELP<DEPEND ,ALWAYS>::CALENDAR ;
 	using Holder = typename TIMEDURATION_HOLDER_HELP<DEPEND ,ALWAYS>::Holder ;
 	using FUNCTION_extern = typename TIMEDURATION_HOLDER_HELP<DEPEND ,ALWAYS>::FUNCTION_extern ;
@@ -100,15 +101,6 @@ trait TIMEDURATION_HELP<DEPEND ,ALWAYS> {
 			mThis = move (that.mThis) ;
 		}
 
-		imports CREF<TimeDuration> zero () {
-			return memorize ([&] () {
-				TimeDuration ret ;
-				ret.mThis = FUNCTION_extern::invoke () ;
-				ret.mThis->init_epoch () ;
-				return move (ret) ;
-			}) ;
-		}
-
 		Auto native () const leftvalue {
 			return mThis->native () ;
 		}
@@ -138,7 +130,7 @@ trait TIMEDURATION_HELP<DEPEND ,ALWAYS> {
 		}
 
 		TimeDuration add (CREF<TimeDuration> that) const {
-			return mThis->add (keep[TYPEAS<CREF<Holder>>::expr] (that.mThis)) ;
+			return mThis->add (keep[TYPEAS<CREF<Holder>>::expr] (that.mThis.self)) ;
 		}
 
 		inline TimeDuration operator+ (CREF<TimeDuration> that) const {
@@ -150,7 +142,7 @@ trait TIMEDURATION_HELP<DEPEND ,ALWAYS> {
 		}
 
 		TimeDuration sub (CREF<TimeDuration> that) const {
-			return mThis->sub (keep[TYPEAS<CREF<Holder>>::expr] (that.mThis)) ;
+			return mThis->sub (keep[TYPEAS<CREF<Holder>>::expr] (that.mThis.self)) ;
 		}
 
 		inline TimeDuration operator- (CREF<TimeDuration> that) const {
@@ -162,7 +154,7 @@ trait TIMEDURATION_HELP<DEPEND ,ALWAYS> {
 		}
 
 		TimePoint add (CREF<TimePoint> that) const {
-			return mThis->add (keep[TYPEAS<CREF<Holder>>::expr] (that.mThis)) ;
+			return mThis->add (keep[TYPEAS<CREF<Holder>>::expr] (that.mThis.self)) ;
 		}
 
 		inline TimePoint operator+ (CREF<TimePoint> that) const {
@@ -170,7 +162,7 @@ trait TIMEDURATION_HELP<DEPEND ,ALWAYS> {
 		}
 
 		TimePoint sub (CREF<TimePoint> that) const {
-			return mThis->sub (keep[TYPEAS<CREF<Holder>>::expr] (that.mThis)) ;
+			return mThis->sub (keep[TYPEAS<CREF<Holder>>::expr] (that.mThis.self)) ;
 		}
 
 		inline TimePoint operator- (CREF<TimePoint> that) const {
@@ -178,9 +170,6 @@ trait TIMEDURATION_HELP<DEPEND ,ALWAYS> {
 		}
 	} ;
 } ;
-
-template <class...>
-trait TIMEPOINT_HELP ;
 
 template <class DEPEND>
 trait TIMEPOINT_HELP<DEPEND ,ALWAYS> {
@@ -232,7 +221,7 @@ trait TIMEPOINT_HELP<DEPEND ,ALWAYS> {
 		}
 
 		TimePoint add (CREF<TimeDuration> that) const {
-			return TimePoint (mThis->add (keep[TYPEAS<CREF<Holder>>::expr] (that.mThis))) ;
+			return TimePoint (mThis->add (keep[TYPEAS<CREF<Holder>>::expr] (that.mThis.self))) ;
 		}
 
 		inline TimePoint operator+ (CREF<TimeDuration> that) const {
@@ -244,7 +233,7 @@ trait TIMEPOINT_HELP<DEPEND ,ALWAYS> {
 		}
 
 		TimePoint sub (CREF<TimeDuration> that) const {
-			return TimePoint (mThis->sub (keep[TYPEAS<CREF<Holder>>::expr] (that.mThis))) ;
+			return TimePoint (mThis->sub (keep[TYPEAS<CREF<Holder>>::expr] (that.mThis.self))) ;
 		}
 
 		inline TimePoint operator- (CREF<TimeDuration> that) const {
@@ -256,7 +245,7 @@ trait TIMEPOINT_HELP<DEPEND ,ALWAYS> {
 		}
 
 		TimeDuration sub (CREF<TimePoint> that) const {
-			return mThis->sub (keep[TYPEAS<CREF<Holder>>::expr] (that.mThis)) ;
+			return mThis->sub (keep[TYPEAS<CREF<Holder>>::expr] (that.mThis.self)) ;
 		}
 
 		inline TimeDuration operator- (CREF<TimePoint> that) const {
@@ -268,7 +257,7 @@ trait TIMEPOINT_HELP<DEPEND ,ALWAYS> {
 		}
 	} ;
 
-	class NowTimePoint extend TimePoint {
+	class NowTimePoint implement TimePoint {
 	public:
 		implicit NowTimePoint ()
 			:TimePoint (TimePoint::make_now ()) {}
@@ -413,13 +402,13 @@ trait MUTEX_HELP<DEPEND ,ALWAYS> {
 		}
 	} ;
 
-	class RecursiveMutex extend Mutex {
+	class RecursiveMutex implement Mutex {
 	public:
 		implicit RecursiveMutex ()
 			:Mutex (Mutex::make_recursive ()) {}
 	} ;
 
-	class ConditionalMutex extend Mutex {
+	class ConditionalMutex implement Mutex {
 	public:
 		implicit ConditionalMutex ()
 			:Mutex (Mutex::make_conditional ()) {}
@@ -447,7 +436,7 @@ trait UNIQUELOCK_HELP<DEPEND ,ALWAYS> {
 		virtual void yield () = 0 ;
 	} ;
 
-	using FAKE_MAX_SIZE = ENUMAS<VAL ,ENUMID<64>> ;
+	using FAKE_MAX_SIZE = ENUMAS<VAL ,64> ;
 	using FAKE_MAX_ALIGN = RANK8 ;
 
 	class FakeHolder implement Holder {
@@ -508,7 +497,7 @@ trait SHAREDLOCK_HELP<DEPEND ,ALWAYS> {
 		virtual BOOL lock () const = 0 ;
 	} ;
 
-	using FAKE_MAX_SIZE = ENUMAS<VAL ,ENUMID<64>> ;
+	using FAKE_MAX_SIZE = ENUMAS<VAL ,64> ;
 	using FAKE_MAX_ALIGN = RANK8 ;
 
 	class FakeHolder implement Holder {
@@ -681,6 +670,41 @@ trait THREAD_HELP<DEPEND ,ALWAYS> {
 using Thread = typename THREAD_HELP<DEPEND ,ALWAYS>::Thread ;
 
 template <class...>
+trait THREADLOCAL_HELP ;
+
+template <class...>
+trait THREADLOCAL_IMPLHOLDER_HELP ;
+
+template <class DEPEND>
+trait THREADLOCAL_HELP<DEPEND ,ALWAYS> {
+	struct Holder implement Interface {
+		virtual void initialize () = 0 ;
+		virtual INDEX local () = 0 ;
+	} ;
+
+	struct FUNCTION_extern {
+		imports VRef<Holder> invoke () ;
+	} ;
+
+	class ThreadLocal {
+	protected:
+		VRef<Holder> mThis ;
+
+	public:
+		implicit ThreadLocal () {
+			mThis = FUNCTION_extern::invoke () ;
+			mThis->initialize () ;
+		}
+
+		INDEX local () {
+			return mThis->local () ;
+		}
+	} ;
+} ;
+
+using ThreadLocal = typename THREADLOCAL_HELP<DEPEND ,ALWAYS>::ThreadLocal ;
+
+template <class...>
 trait PROCESS_HELP ;
 
 template <class...>
@@ -727,7 +751,7 @@ trait PROCESS_HELP<DEPEND ,ALWAYS> {
 		}
 	} ;
 
-	class CurrentProcess extend Process {
+	class CurrentProcess implement Process {
 	public:
 		implicit CurrentProcess ()
 			:Process (RuntimeProc::process_uid ()) {}
@@ -829,7 +853,7 @@ trait SINGLETON_HELP<UNIT ,ALWAYS> {
 				assume (rax != ZERO) ;
 				auto &&tmp = unsafe_deref (unsafe_cast[TYPEAS<TEMP<UNIT>>::expr] (unsafe_pointer (rax))) ;
 				return CRef<UNIT>::reference (tmp) ;
-			}) ;
+			}).self ;
 		}
 
 	private:

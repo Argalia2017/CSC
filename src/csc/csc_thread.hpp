@@ -117,14 +117,14 @@ trait PROMISE_HOLDER_HELP<DEPEND ,ALWAYS> {
 	struct Holder implement Interface {
 		virtual void initialize () = 0 ;
 		virtual void start () = 0 ;
-		virtual void start (RREF<Function<Auto>> proc) = 0 ;
-		virtual void post (RREF<Auto> item) = 0 ;
+		virtual void start (RREF<Function<AutoRef<>>> proc) = 0 ;
+		virtual void post (RREF<AutoRef<>> item) = 0 ;
 		virtual void rethrow (CREF<Exception> e) = 0 ;
 		virtual void signal () = 0 ;
 		virtual BOOL ready () = 0 ;
-		virtual Auto poll () = 0 ;
-		virtual Optional<Auto> poll (CREF<TimeDuration> interval ,CREF<Function<BOOL>> predicate) = 0 ;
-		virtual void then (RREF<Function<void ,TYPEAS<VREF<Auto>>>> proc) = 0 ;
+		virtual AutoRef<> poll () = 0 ;
+		virtual Cell<AutoRef<>> poll (CREF<TimeDuration> interval ,CREF<Function<BOOL>> predicate) = 0 ;
+		virtual void then (RREF<Function<void ,TYPEAS<VREF<AutoRef<>>>>> proc) = 0 ;
 		virtual void stop () = 0 ;
 	} ;
 
@@ -152,7 +152,9 @@ trait PROMISE_HELP<ITEM ,ALWAYS> {
 		}
 
 		Future as_future () {
-			return Future (move (mThis)) ;
+			Future ret ;
+			ret.mThis = move (mThis) ;
+			return move (ret) ;
 		}
 
 		void start () {
@@ -161,7 +163,7 @@ trait PROMISE_HELP<ITEM ,ALWAYS> {
 
 		void start (RREF<Function<ITEM>> proc) {
 			return mThis->start (proc.as_wrap ([] (CREF<Function<ITEM>> old) {
-				return Auto (old ()) ;
+				return AutoRef<ITEM>::make (old ()) ;
 			})) ;
 		}
 
@@ -188,25 +190,23 @@ trait PROMISE_HELP<ITEM ,ALWAYS> {
 } ;
 
 template <class ITEM>
-using Promise = typename PROMISE_HELP<ITEM ,ALWAYS>::Promise ;
-
-template <class ITEM>
 trait FUTURE_HELP<ITEM ,ALWAYS> {
 	using Holder = typename PROMISE_HELP<ITEM ,ALWAYS>::Holder ;
+	using Promise = typename PROMISE_HELP<ITEM ,ALWAYS>::Promise ;
 
 	class Future {
+	private:
+		template <class...>
+		friend trait PROMISE_HELP ;
+
 	protected:
 		VRef<Holder> mThis ;
 
 	public:
 		implicit Future () = default ;
 
-		explicit Future (RREF<VRef<Holder>> that) {
-			mThis = move (that) ;
-		}
-
 		imports Future make_async (RREF<Function<ITEM>> proc) {
-			auto rax = Promise<ITEM> () ;
+			auto rax = Promise () ;
 			rax.start (move (proc)) ;
 			return rax.as_future () ;
 		}
@@ -216,21 +216,21 @@ trait FUTURE_HELP<ITEM ,ALWAYS> {
 		}
 
 		ITEM poll () {
-			return mThis->poll ().poll (TYPEAS<ITEM>::expr) ;
+			auto rax = mThis->poll ().as_cast (TYPEAS<ITEM>::expr) ;
+			return move (rax.self) ;
 		}
 
-		Optional<ITEM> poll (CREF<TimeDuration> interval ,CREF<Function<BOOL>> predicate) {
+		Cell<ITEM> poll (CREF<TimeDuration> interval ,CREF<Function<BOOL>> predicate) {
 			auto rax = mThis->poll (interval ,predicate) ;
 			if ifnot (rax.exist ())
-				return Optional<ITEM> (rax.code ()) ;
-			return Optional<ITEM>::make (rax.poll (TYPEAS<ITEM>::expr)) ;
+				return rax.code () ;
+			auto rbx = rax.poll ().as_cast (TYPEAS<ITEM>::expr) ;
+			return Cell<ITEM>::make (move (rbx.self)) ;
 		}
 
 		void then (RREF<Function<void ,TYPEAS<VREF<ITEM>>>> proc) {
-			return mThis->then (proc.as_wrap ([] (Function<void ,TYPEAS<VREF<ITEM>>> old ,VREF<Auto> item) {
-				auto rax = item.poll (TYPEAS<ITEM>::expr) ;
-				old (rax) ;
-				item = Auto (move (rax)) ;
+			return mThis->then (proc.as_wrap ([] (Function<void ,TYPEAS<VREF<ITEM>>> old ,VREF<AutoRef<>> item) {
+				old (AutoRef<ITEM>::from (item).self) ;
 			})) ;
 		}
 	} ;
@@ -243,6 +243,9 @@ trait FUTURE_HELP<ITEM ,ALWAYS> {
 			:Future (Future::make_async (move (proc))) {}
 	} ;
 } ;
+
+template <class ITEM>
+using Promise = typename PROMISE_HELP<ITEM ,ALWAYS>::Promise ;
 
 template <class ITEM>
 using Future = typename FUTURE_HELP<ITEM ,ALWAYS>::Future ;
