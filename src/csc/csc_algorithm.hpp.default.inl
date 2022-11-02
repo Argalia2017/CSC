@@ -14,13 +14,11 @@ trait SORTPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 
 	class ImplHolder implement Holder {
 	public:
-		implicit ImplHolder () = default ;
-
 		void initialize () override {
 			noop () ;
 		}
 
-		void insert_sort (CREF<Binder> op ,VREF<Array<INDEX>> range_ ,CREF<INDEX> lb ,CREF<INDEX> rb) const {
+		void insert_sort (CREF<Binder> binder ,VREF<Array<INDEX>> range_ ,CREF<INDEX> lb ,CREF<INDEX> rb) const {
 			for (auto &&i : iter (lb ,rb)) {
 				INDEX ix = i + 1 ;
 				INDEX iy = i ;
@@ -28,7 +26,7 @@ trait SORTPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				while (TRUE) {
 					if (iy < lb)
 						break ;
-					const auto r2x = op.friend_compare (r1x ,range_[iy]) ;
+					const auto r2x = binder.friend_compare (r1x ,range_[iy]) ;
 					if (r2x >= ZERO)
 						break ;
 					range_[ix] = range_[iy] ;
@@ -39,7 +37,7 @@ trait SORTPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			}
 		}
 
-		void quick_sort (CREF<Binder> op ,VREF<Array<INDEX>> range_ ,CREF<INDEX> lb ,CREF<INDEX> rb ,CREF<LENGTH> ideal) const {
+		void quick_sort (CREF<Binder> binder ,VREF<Array<INDEX>> range_ ,CREF<INDEX> lb ,CREF<INDEX> rb ,CREF<LENGTH> ideal) const {
 			auto rax = ideal ;
 			INDEX ix = lb ;
 			INDEX iy = rb ;
@@ -50,17 +48,17 @@ trait SORTPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 					break ;
 				rax = rax / 2 + rax / 4 ;
 				INDEX jx = NONE ;
-				quick_sort_partition (op ,range_ ,ix ,iy ,jx) ;
+				quick_sort_partition (binder ,range_ ,ix ,iy ,jx) ;
 				INDEX iz = jx - 1 ;
-				quick_sort (op ,range_ ,ix ,iz ,rax) ;
+				quick_sort (binder ,range_ ,ix ,iz ,rax) ;
 				ix = jx + 1 ;
 			}
 			if (ix >= iy)
 				return ;
-			insert_sort (op ,range_ ,ix ,iy) ;
+			insert_sort (binder ,range_ ,ix ,iy) ;
 		}
 
-		void quick_sort_partition (CREF<Binder> op ,VREF<Array<INDEX>> range_ ,CREF<INDEX> lb ,CREF<INDEX> rb ,VREF<INDEX> mid_one) const {
+		void quick_sort_partition (CREF<Binder> binder ,VREF<Array<INDEX>> range_ ,CREF<INDEX> lb ,CREF<INDEX> rb ,VREF<INDEX> mid_one) const {
 			INDEX ix = lb ;
 			INDEX iy = rb ;
 			const auto r1x = range_[ix] ;
@@ -68,7 +66,7 @@ trait SORTPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				while (TRUE) {
 					if (ix >= iy)
 						break ;
-					const auto r2x = op.friend_compare (range_[iy] ,r1x) ;
+					const auto r2x = binder.friend_compare (range_[iy] ,r1x) ;
 					if (r2x <= ZERO)
 						break ;
 					iy-- ;
@@ -94,7 +92,7 @@ trait SORTPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			mid_one = ix ;
 		}
 
-		void sort (CREF<Binder> op ,VREF<Array<INDEX>> range_ ,CREF<INDEX> begin_ ,CREF<INDEX> end_) const override {
+		void sort (CREF<Binder> binder ,VREF<Array<INDEX>> range_ ,CREF<INDEX> begin_ ,CREF<INDEX> end_) const override {
 			const auto r1x = end_ - begin_ ;
 			if (r1x <= 1)
 				return ;
@@ -102,7 +100,7 @@ trait SORTPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			INDEX iy = end_ - 1 ;
 			assert (vbetween (ix ,0 ,range_.size ())) ;
 			assert (vbetween (iy ,0 ,range_.size ())) ;
-			quick_sort (op ,range_ ,ix ,iy ,r1x) ;
+			quick_sort (binder ,range_ ,ix ,iy ,r1x) ;
 		}
 	} ;
 } ;
@@ -127,8 +125,6 @@ trait DISJOINTTABLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		Array<NODE> mTable ;
 
 	public:
-		implicit ImplHolder () = default ;
-
 		void initialize (CREF<LENGTH> size_) override {
 			mTable = Array<NODE> (size_) ;
 			clear () ;
@@ -187,9 +183,9 @@ trait DISJOINTTABLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			mTable[ix].mWidth += mTable[iy].mWidth ;
 		}
 
-		BitSet<> filter (CREF<INDEX> index) override {
+		BitSet<> filter (CREF<INDEX> index ,RREF<BitSet<>> res) override {
+			BitSet<> ret = move (res) ;
 			const auto r1x = lead (index) ;
-			BitSet<> ret = BitSet<> (mTable.size ()) ;
 			for (auto &&i : mTable.iter ()) {
 				if (mTable[i].mUp == NONE)
 					continue ;
@@ -271,8 +267,6 @@ trait BINARYTABLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		Array<INDEX> mJump ;
 
 	public:
-		implicit ImplHolder () = default ;
-
 		void initialize (CREF<LENGTH> size_) override {
 			mTable = Allocator<NODE ,VARIABLE> (size_) ;
 			mBinary = Array<BINARY> (size_) ;
@@ -286,6 +280,10 @@ trait BINARYTABLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				i.mFirst = NONE ;
 				i.mLength = 0 ;
 			}
+		}
+
+		LENGTH count (CREF<INDEX> from_) const override {
+			return mBinary[from_].mLength ;
 		}
 
 		void link (CREF<INDEX> from_ ,CREF<INDEX> to_) override {
@@ -345,19 +343,19 @@ trait BINARYTABLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 					break ;
 				INDEX iz = (ix + iy) / 2 ;
 				const auto r1x = operator_compr (to_ ,mJump[iz]) ;
-				auto rxx = TRUE ;
-				if ifswitch (rxx) {
+				auto act = TRUE ;
+				if ifswitch (act) {
 					if (r1x != 0)
 						discard ;
 					ix = iz ;
 					iy = iz ;
 				}
-				if ifswitch (rxx) {
+				if ifswitch (act) {
 					if (r1x < 0)
 						discard ;
 					ix = iz + 1 ;
 				}
-				if ifswitch (rxx) {
+				if ifswitch (act) {
 					iy = iz - 1 ;
 				}
 			}
@@ -366,13 +364,13 @@ trait BINARYTABLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			return NONE ;
 		}
 
-		Array<INDEX> filter (CREF<INDEX> from_) const override {
+		BitSet<> filter (CREF<INDEX> from_ ,RREF<BitSet<>> res) const override {
 			assert (mTable.size () == 0) ;
+			BitSet<> ret = move (res) ;
 			INDEX ix = from_ ;
-			Array<INDEX> ret = Array<INDEX> (mBinary[ix].mLength) ;
 			for (auto &&i : ret.iter ()) {
 				INDEX jx = mBinary[ix].mFirst + i ;
-				ret[i] = mJump[jx] ;
+				ret[mJump[jx]] = TRUE ;
 			}
 			return move (ret) ;
 		}
@@ -418,8 +416,6 @@ trait SEGMENTTABLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		BitSet<> mReal ;
 
 	public:
-		implicit ImplHolder () = default ;
-
 		void initialize () override {
 			set_tolerance (FLOAT (SINGLE_EPS)) ;
 		}
@@ -459,7 +455,7 @@ trait SEGMENTTABLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				mTableOrder = Array<INDEX> (mTable.size ()) ;
 				mTableOrder.fill (NONE) ;
 			}
-			mTableRange = mTable.range (SortProc::instance ()) ;
+			mTableRange = mTable.range () ;
 			for (auto &&i : mTableRange.iter ())
 				mTableOrder[mTableRange[i]] = i ;
 			if ifswitch (TRUE) {

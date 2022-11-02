@@ -12,6 +12,11 @@
 #include "csc_math.hpp"
 
 namespace CSC {
+static constexpr auto CLS = TYPEAS<PlaceHolder<RANK1>>::expr ;
+static constexpr auto BOM = TYPEAS<PlaceHolder<RANK2>>::expr ;
+static constexpr auto GAP = TYPEAS<PlaceHolder<RANK3>>::expr ;
+static constexpr auto EOS = TYPEAS<PlaceHolder<RANK4>>::expr ;
+
 template <class...>
 trait BYTEATTRIBUTE_HELP ;
 
@@ -39,7 +44,7 @@ trait BYTEATTRIBUTE_HELP<DEPEND ,ALWAYS> {
 		implicit ByteAttribute () {
 			auto rax = FUNCTION_extern::invoke () ;
 			rax->initialize () ;
-			mThis = rax.as_con () ;
+			mThis = move (rax) ;
 		}
 
 		template <class ARG1>
@@ -69,9 +74,6 @@ trait BYTEREADER_HELP ;
 
 template <class...>
 trait BYTEREADER_IMPLHOLDER_HELP ;
-
-template <class...>
-trait BYTEREADER_ATTRIBUTE_HELP ;
 
 template <class DEPEND>
 trait BYTEREADER_HELP<DEPEND ,ALWAYS> {
@@ -129,7 +131,8 @@ trait BYTEREADER_HELP<DEPEND ,ALWAYS> {
 
 		explicit ByteReader (RREF<VRef<RegBuffer<BYTE>>> stream) {
 			mThis = FUNCTION_extern::invoke () ;
-			mThis->initialize (stream.as_con ()) ;
+			auto rax = CRef<RegBuffer<BYTE>> (move (stream)) ;
+			mThis->initialize (move (rax)) ;
 		}
 
 		explicit ByteReader (RREF<VRef<Holder>> that) {
@@ -317,15 +320,13 @@ trait BYTEREADER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		void read (VREF<Binder> item) {
-			return mThis->read (item) ;
+			return item.friend_read (thiz) ;
 		}
 
 		inline VREF<ByteReader> operator>> (VREF<Binder> item) {
 			read (item) ;
 			return thiz ;
 		}
-
-		imports void CLS (CREF<PlaceHolder<RANK1>>) {}
 
 		void read (CREF<typeof (CLS)> item) {
 			return mThis->read_cls () ;
@@ -336,8 +337,6 @@ trait BYTEREADER_HELP<DEPEND ,ALWAYS> {
 			return thiz ;
 		}
 
-		imports void GAP (CREF<PlaceHolder<RANK3>>) {}
-
 		void read (CREF<typeof (GAP)> item) {
 			return mThis->read_gap () ;
 		}
@@ -346,8 +345,6 @@ trait BYTEREADER_HELP<DEPEND ,ALWAYS> {
 			read (item) ;
 			return thiz ;
 		}
-
-		imports void EOS (CREF<PlaceHolder<RANK4>>) {}
 
 		void read (CREF<typeof (EOS)> item) {
 			return mThis->read_eos () ;
@@ -367,9 +364,6 @@ trait BYTEWRITER_HELP ;
 
 template <class...>
 trait BYTEWRITER_IMPLHOLDER_HELP ;
-
-template <class...>
-trait BYTEWRITER_ATTRIBUTE_HELP ;
 
 template <class DEPEND>
 trait BYTEWRITER_HELP<DEPEND ,ALWAYS> {
@@ -503,18 +497,14 @@ trait BYTEWRITER_HELP<DEPEND ,ALWAYS> {
 			return thiz ;
 		}
 
-		void write (CREF<BOOL> item) {
+		void write (CREF<BoolProxy> item) {
 			return mThis->write (item) ;
 		}
 
-		inline VREF<ByteWriter> operator<< (CREF<BOOL> item) {
+		inline VREF<ByteWriter> operator<< (CREF<BoolProxy> item) {
 			write (item) ;
 			return thiz ;
 		}
-
-		void write (CREF<csc_const_pointer_t>) = delete ;
-
-		inline VREF<ByteWriter> operator<< (CREF<csc_const_pointer_t>) = delete ;
 
 		void write (CREF<VAL32> item) {
 			return mThis->write (item) ;
@@ -607,15 +597,13 @@ trait BYTEWRITER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		void write (CREF<Binder> item) {
-			return mThis->write (item) ;
+			return item.friend_write (thiz) ;
 		}
 
 		inline VREF<ByteWriter> operator<< (CREF<Binder> item) {
 			write (item) ;
 			return thiz ;
 		}
-
-		imports void CLS (CREF<PlaceHolder<RANK1>>) {}
 
 		void write (CREF<typeof (CLS)>) {
 			return mThis->write_cls () ;
@@ -626,8 +614,6 @@ trait BYTEWRITER_HELP<DEPEND ,ALWAYS> {
 			return thiz ;
 		}
 
-		imports void GAP (CREF<PlaceHolder<RANK3>>) {}
-
 		void write (CREF<typeof (GAP)> item) {
 			return mThis->write_gap () ;
 		}
@@ -636,8 +622,6 @@ trait BYTEWRITER_HELP<DEPEND ,ALWAYS> {
 			write (item) ;
 			return thiz ;
 		}
-
-		imports void EOS (CREF<PlaceHolder<RANK4>>) {}
 
 		void write (CREF<typeof (EOS)> item) {
 			return mThis->write_eos () ;
@@ -671,7 +655,7 @@ trait TEXTATTRIBUTE_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 		virtual INDEX hex_from_str (CREF<ITEM> str) const = 0 ;
 		virtual ITEM str_from_hex (CREF<INDEX> hex) const = 0 ;
 		virtual BOOL is_control (CREF<ITEM> str) const = 0 ;
-		virtual Optional<ITEM> escape_cast (CREF<ITEM> str) const = 0 ;
+		virtual Cell<ITEM> escape_cast (CREF<ITEM> str) const = 0 ;
 		virtual LENGTH value_precision () const = 0 ;
 		virtual LENGTH float_precision () const = 0 ;
 		virtual LENGTH number_precision () const = 0 ;
@@ -689,7 +673,7 @@ trait TEXTATTRIBUTE_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 		implicit TextAttribute () {
 			auto rax = FUNCTION_extern::invoke () ;
 			rax->initialize () ;
-			mThis = rax.as_con () ;
+			mThis = move (rax) ;
 		}
 
 		template <class ARG1>
@@ -734,7 +718,7 @@ trait TEXTATTRIBUTE_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 			return mThis->is_control (str) ;
 		}
 
-		Optional<ITEM> escape_cast (CREF<ITEM> str) const {
+		Cell<ITEM> escape_cast (CREF<ITEM> str) const {
 			return mThis->escape_cast (str) ;
 		}
 
@@ -817,7 +801,8 @@ trait TEXTREADER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 
 		explicit TextReader (RREF<VRef<RegBuffer<ITEM>>> stream) {
 			mThis = FUNCTION_extern::invoke () ;
-			mThis->initialize (stream.as_con ()) ;
+			auto rax = CRef<RegBuffer<ITEM>> (move (stream)) ;
+			mThis->initialize (move (rax)) ;
 		}
 
 		explicit TextReader (RREF<VRef<Holder>> that) {
@@ -978,15 +963,13 @@ trait TEXTREADER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 		}
 
 		void read (VREF<Binder> item) {
-			return mThis->read (item) ;
+			return item.friend_read (thiz) ;
 		}
 
 		inline VREF<TextReader> operator>> (VREF<Binder> item) {
 			read (item) ;
 			return thiz ;
 		}
-
-		imports void CLS (CREF<PlaceHolder<RANK1>>) {}
 
 		void read (CREF<typeof (CLS)>) {
 			return mThis->read_cls () ;
@@ -997,8 +980,6 @@ trait TEXTREADER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 			return thiz ;
 		}
 
-		imports void BOM (CREF<PlaceHolder<RANK2>>) {}
-
 		void read (CREF<typeof (BOM)>) {
 			return mThis->read_bom () ;
 		}
@@ -1008,8 +989,6 @@ trait TEXTREADER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 			return thiz ;
 		}
 
-		imports void GAP (CREF<PlaceHolder<RANK3>>) {}
-
 		void read (CREF<typeof (GAP)> item) {
 			return mThis->read_gap () ;
 		}
@@ -1018,8 +997,6 @@ trait TEXTREADER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 			read (item) ;
 			return thiz ;
 		}
-
-		imports void EOS (CREF<PlaceHolder<RANK4>>) {}
 
 		void read (CREF<typeof (EOS)> item) {
 			return mThis->read_eos () ;
@@ -1040,9 +1017,6 @@ trait TEXTWRITER_HELP ;
 
 template <class...>
 trait TEXTWRITER_IMPLHOLDER_HELP ;
-
-template <class...>
-trait TEXTWRITER_ATTRIBUTE_HELP ;
 
 template <class...>
 trait TEXTWRITER_WRITEVALUE_HELP ;
@@ -1150,18 +1124,14 @@ trait TEXTWRITER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 			return thiz ;
 		}
 
-		void write (CREF<BOOL> item) {
+		void write (CREF<BoolProxy> item) {
 			return mThis->write (item) ;
 		}
 
-		inline VREF<TextWriter> operator<< (CREF<BOOL> item) {
+		inline VREF<TextWriter> operator<< (CREF<BoolProxy> item) {
 			write (item) ;
 			return thiz ;
 		}
-
-		void write (CREF<csc_const_pointer_t>) = delete ;
-
-		inline VREF<TextWriter> operator<< (CREF<csc_const_pointer_t>) = delete ;
 
 		void write (CREF<VAL32> item) {
 			return mThis->write (item) ;
@@ -1254,15 +1224,13 @@ trait TEXTWRITER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 		}
 
 		void write (CREF<Binder> item) {
-			return mThis->write (item) ;
+			return item.friend_write (thiz) ;
 		}
 
 		inline VREF<TextWriter> operator<< (CREF<Binder> item) {
 			write (item) ;
 			return thiz ;
 		}
-
-		imports void CLS (CREF<PlaceHolder<RANK1>>) {}
 
 		void write (CREF<typeof (CLS)>) {
 			return mThis->write_cls () ;
@@ -1273,8 +1241,6 @@ trait TEXTWRITER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 			return thiz ;
 		}
 
-		imports void BOM (CREF<PlaceHolder<RANK2>>) {}
-
 		void write (CREF<typeof (BOM)>) {
 			return mThis->write_bom () ;
 		}
@@ -1284,8 +1250,6 @@ trait TEXTWRITER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 			return thiz ;
 		}
 
-		imports void GAP (CREF<PlaceHolder<RANK3>>) {}
-
 		void write (CREF<typeof (GAP)> item) {
 			return mThis->write_gap () ;
 		}
@@ -1294,8 +1258,6 @@ trait TEXTWRITER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 			write (item) ;
 			return thiz ;
 		}
-
-		imports void EOS (CREF<PlaceHolder<RANK4>>) {}
 
 		void write (CREF<typeof (EOS)> item) {
 			return mThis->write_eos () ;
@@ -1314,7 +1276,18 @@ using TextWriter = typename TEXTWRITER_HELP<ITEM ,ALWAYS>::TextWriter ;
 template <class ITEM>
 trait STRING_TEXTWRITER_HELP<ITEM ,ALWAYS> {
 	using TextWriter = CSC::TextWriter<ITEM> ;
+
+	static constexpr auto EOS = CSC::EOS ;
 } ;
+
+static constexpr auto HINT_IDENTIFIER = TYPEAS<PlaceHolder<RANK1>>::expr ;
+static constexpr auto HINT_SCALAR = TYPEAS<PlaceHolder<RANK2>>::expr ;
+static constexpr auto HINT_STRING = TYPEAS<PlaceHolder<RANK3>>::expr ;
+static constexpr auto HINT_WORD_SPACE = TYPEAS<PlaceHolder<RANK4>>::expr ;
+static constexpr auto HINT_WORD_ENDLINE = TYPEAS<PlaceHolder<RANK5>>::expr ;
+static constexpr auto SKIP_SPACE = TYPEAS<PlaceHolder<RANK6>>::expr ;
+static constexpr auto SKIP_SPACE_ONLY = TYPEAS<PlaceHolder<RANK7>>::expr ;
+static constexpr auto SKIP_SPACE_ENDLINE = TYPEAS<PlaceHolder<RANK8>>::expr ;
 
 template <class...>
 trait REGULARREADER_HELP ;
@@ -1378,7 +1351,7 @@ trait REGULARREADER_HELP<DEPEND ,ALWAYS> {
 			return mThis->read () ;
 		}
 
-		inline void operator++ (csc_int32_t) {
+		inline void operator++ (VAL32) {
 			read () ;
 		}
 
@@ -1391,8 +1364,6 @@ trait REGULARREADER_HELP<DEPEND ,ALWAYS> {
 			return thiz ;
 		}
 
-		imports void HINT_IDENTIFIER (CREF<PlaceHolder<RANK1>>) {}
-
 		void read (CREF<typeof (HINT_IDENTIFIER)>) {
 			return mThis->read_hint_identifer () ;
 		}
@@ -1401,8 +1372,6 @@ trait REGULARREADER_HELP<DEPEND ,ALWAYS> {
 			read (item) ;
 			return thiz ;
 		}
-
-		imports void HINT_SCALAR (CREF<PlaceHolder<RANK2>>) {}
 
 		void read (CREF<typeof (HINT_SCALAR)>) {
 			return mThis->read_hint_scalar () ;
@@ -1413,8 +1382,6 @@ trait REGULARREADER_HELP<DEPEND ,ALWAYS> {
 			return thiz ;
 		}
 
-		imports void HINT_STRING (CREF<PlaceHolder<RANK3>>) {}
-
 		void read (CREF<typeof (HINT_STRING)>) {
 			return mThis->read_hint_string () ;
 		}
@@ -1423,8 +1390,6 @@ trait REGULARREADER_HELP<DEPEND ,ALWAYS> {
 			read (item) ;
 			return thiz ;
 		}
-
-		imports void HINT_WORD_SPACE (CREF<PlaceHolder<RANK4>>) {}
 
 		void read (CREF<typeof (HINT_WORD_SPACE)>) {
 			return mThis->read_hint_word_space () ;
@@ -1435,8 +1400,6 @@ trait REGULARREADER_HELP<DEPEND ,ALWAYS> {
 			return thiz ;
 		}
 
-		imports void HINT_WORD_ENDLINE (CREF<PlaceHolder<RANK5>>) {}
-
 		void read (CREF<typeof (HINT_WORD_ENDLINE)>) {
 			return mThis->read_hint_word_endline () ;
 		}
@@ -1445,8 +1408,6 @@ trait REGULARREADER_HELP<DEPEND ,ALWAYS> {
 			read (item) ;
 			return thiz ;
 		}
-
-		imports void SKIP_SPACE (CREF<PlaceHolder<RANK6>>) {}
 
 		void read (CREF<typeof (SKIP_SPACE)>) {
 			return mThis->read_skip_space () ;
@@ -1457,8 +1418,6 @@ trait REGULARREADER_HELP<DEPEND ,ALWAYS> {
 			return thiz ;
 		}
 
-		imports void SKIP_SPACE_ONLY (CREF<PlaceHolder<RANK7>>) {}
-
 		void read (CREF<typeof (SKIP_SPACE_ONLY)>) {
 			return mThis->read_skip_space_only () ;
 		}
@@ -1467,8 +1426,6 @@ trait REGULARREADER_HELP<DEPEND ,ALWAYS> {
 			read (item) ;
 			return thiz ;
 		}
-
-		imports void SKIP_SPACE_ENDLINE (CREF<PlaceHolder<RANK8>>) {}
 
 		void read (CREF<typeof (SKIP_SPACE_ENDLINE)>) {
 			return mThis->read_skip_space_endline () ;

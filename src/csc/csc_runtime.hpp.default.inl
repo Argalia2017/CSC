@@ -68,8 +68,6 @@ trait TIMEDURATION_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		TIMEDURATION mTimeDuration ;
 
 	public:
-		implicit ImplHolder () = default ;
-
 		void init_now () override {
 			const auto r1x = std::chrono::system_clock::now () ;
 			mTimeDuration = r1x.time_since_epoch () ;
@@ -215,8 +213,6 @@ trait ATOMIC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		SharedRef<HEAP> mHeap ;
 
 	public:
-		implicit ImplHolder () = default ;
-
 		void initialize () override {
 			mHeap = SharedRef<HEAP>::make () ;
 			mHeap->mAtomic.store (0 ,std::memory_order::memory_order_relaxed) ;
@@ -279,8 +275,6 @@ trait MUTEX_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		SharedRef<HEAP> mHeap ;
 
 	public:
-		implicit ImplHolder () = default ;
-
 		void init_recursive () override {
 			mHeap = SharedRef<HEAP>::make () ;
 			mHeap->mRecursive = Box<std::recursive_mutex>::make () ;
@@ -298,18 +292,18 @@ trait MUTEX_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		SharedRef<HEAP> conditional_lock (VREF<std::unique_lock<std::mutex>> locker) const leftvalue {
-			locker = std::unique_lock<std::mutex> (mHeap->mMutex) ;
+			locker = std::unique_lock<std::mutex> (mHeap->mMutex.self) ;
 			return mHeap ;
 		}
 
 		void enter () const override {
-			auto rxx = TRUE ;
-			if ifswitch (rxx) {
+			auto act = TRUE ;
+			if ifswitch (act) {
 				if (mHeap->mRecursive == NULL)
 					discard ;
 				mHeap->mRecursive->lock () ;
 			}
-			if ifswitch (rxx) {
+			if ifswitch (act) {
 				if (mHeap->mMutex == NULL)
 					discard ;
 				mHeap->mMutex->lock () ;
@@ -317,13 +311,13 @@ trait MUTEX_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		void leave () const override {
-			auto rxx = TRUE ;
-			if ifswitch (rxx) {
+			auto act = TRUE ;
+			if ifswitch (act) {
 				if (mHeap->mRecursive == NULL)
 					discard ;
 				mHeap->mRecursive->unlock () ;
 			}
-			if ifswitch (rxx) {
+			if ifswitch (act) {
 				if (mHeap->mMutex == NULL)
 					discard ;
 				mHeap->mMutex->unlock () ;
@@ -347,23 +341,15 @@ trait UNIQUELOCK_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	protected:
 		SharedRef<HEAP> mHeap ;
 		std::unique_lock<std::mutex> mLock ;
-		Scope<ImplHolder> mHandle ;
 
 	public:
-		implicit ImplHolder () = default ;
-
 		void initialize (CREF<Mutex> mutex_) override {
 			using R1X = typename MUTEX_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 			const auto r1x = mutex_.native ().poll (TYPEAS<CRef<R1X>>::expr) ;
 			mHeap = r1x->conditional_lock (mLock) ;
-			mHandle = Scope<ImplHolder> (thiz) ;
 		}
 
-		void enter () {
-			noop () ;
-		}
-
-		void leave () {
+		void finalize () override {
 			mHeap = SharedRef<HEAP> () ;
 			mLock = std::unique_lock<std::mutex> () ;
 		}
@@ -392,7 +378,7 @@ trait UNIQUELOCK_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			mHeap->mConditional->notify_all () ;
 			mLock = std::unique_lock<std::mutex> () ;
 			std::this_thread::yield () ;
-			mLock = std::unique_lock<std::mutex> (mHeap->mMutex) ;
+			mLock = std::unique_lock<std::mutex> (mHeap->mMutex.self) ;
 		}
 	} ;
 } ;
@@ -414,16 +400,19 @@ trait SHAREDLOCK_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	protected:
 		SharedRef<HEAP> mHeap ;
 		std::unique_lock<std::mutex> mLock ;
-		Scope<ImplHolder> mHandle ;
 
 	public:
-		implicit ImplHolder () = default ;
-
 		void initialize (CREF<Mutex> mutex_) override {
 			using R1X = typename MUTEX_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 			const auto r1x = mutex_.native ().poll (TYPEAS<CRef<R1X>>::expr) ;
 			mHeap = r1x->conditional_lock (mLock) ;
-			mHandle = Scope<ImplHolder> (thiz) ;
+			enter () ;
+		}
+
+		void finalize () override {
+			try_invoke ([&] () {
+				leave () ;
+			}) ;
 		}
 
 		void enter () {
@@ -437,7 +426,7 @@ trait SHAREDLOCK_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		void leave () {
-			auto rax = std::unique_lock<std::mutex> (mHeap->mMutex) ;
+			auto rax = std::unique_lock<std::mutex> (mHeap->mMutex.self) ;
 			mHeap->mCounter-- ;
 			mHeap->mConditional->notify_all () ;
 			if ifswitch (TRUE) {
@@ -449,7 +438,7 @@ trait SHAREDLOCK_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		BOOL lock () const override {
-			auto rax = std::unique_lock<std::mutex> (mHeap->mMutex) ;
+			auto rax = std::unique_lock<std::mutex> (mHeap->mMutex.self) ;
 			mHeap->mCounter-- ;
 			while (TRUE) {
 				if (mHeap->mCounter != 0)
@@ -481,24 +470,16 @@ trait THREAD_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		INDEX mIndex ;
 		VRef<Binder> mBinder ;
 		VRef<std::thread> mBlock ;
-		Scope<ImplHolder> mHandle ;
 
 	public:
-		implicit ImplHolder () = default ;
-
 		void initialize (RREF<VRef<Binder>> binder ,CREF<INDEX> index) override {
 			mUID = ZERO ;
 			mIndex = index ;
 			mBinder = move (binder) ;
-			mHandle = Scope<ImplHolder> (thiz) ;
 		}
 
-		void enter () {
-			noop () ;
-		}
-
-		void leave () {
-			assume (mBlock == NULL) ;
+		void finalize () override {
+			assert (mBlock == NULL) ;
 		}
 
 		FLAG thread_uid () const override {
@@ -545,8 +526,6 @@ trait SYSTEM_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		String<STR> mWorkingPath ;
 
 	public:
-		implicit ImplHolder () = default ;
-
 		void initialize () override {
 			mLocale = Cell<String<STR>>::make (slice ("C")) ;
 			mWorkingPath = RuntimeProc::working_path () ;
@@ -563,7 +542,7 @@ trait SYSTEM_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		FLAG execute (CREF<String<STR>> command) const override {
 			if (command.empty ())
 				return NONE ;
-			const auto r1x = string_cvt[TYPEAS<TYPEAS<STRA ,STR>>::expr] (command) ;
+			const auto r1x = string_cvt[TYPEAS<STRA ,STR>::expr] (command) ;
 			const auto r2x = std::system ((&r1x[0])) ;
 			return FLAG (r2x) ;
 		}
@@ -594,8 +573,6 @@ trait RANDOM_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		SharedRef<HEAP> mHeap ;
 
 	public:
-		implicit ImplHolder () = default ;
-
 		void initialize () override {
 			mHeap = SharedRef<HEAP>::make () ;
 			mHeap->mSeed = DATA (std::random_device () ()) ;
@@ -672,15 +649,15 @@ trait RANDOM_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			assert (count >= 0) ;
 			assert (count <= size_) ;
 			assert (range_.size () == size_) ;
-			auto rxx = TRUE ;
-			if ifswitch (rxx) {
+			auto act = TRUE ;
+			if ifswitch (act) {
 				if (count >= size_ / 2)
 					discard ;
 				const auto r1x = random_shuffle (count ,size_) ;
 				for (auto &&i : iter (0 ,count))
 					range_.add (r1x[i]) ;
 			}
-			if ifswitch (rxx) {
+			if ifswitch (act) {
 				const auto r2x = random_shuffle (size_ - count ,size_) ;
 				for (auto &&i : iter (size_ - count ,size_))
 					range_.add (r2x[i]) ;

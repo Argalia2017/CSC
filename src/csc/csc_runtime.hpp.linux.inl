@@ -47,8 +47,6 @@ trait RUNTIMEPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 
 	class ImplHolder implement Holder {
 	public:
-		implicit ImplHolder () = default ;
-
 		void initialize () override {
 			noop () ;
 		}
@@ -109,7 +107,7 @@ trait RUNTIMEPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				ix++ ;
 				rax.trunc (ix) ;
 			}
-			return string_cvt[TYPEAS<TYPEAS<STR ,STRA>>::expr] (rax) ;
+			return string_cvt[TYPEAS<STR ,STRA>::expr] (rax) ;
 		}
 
 		String<STR> module_path () const override {
@@ -121,7 +119,7 @@ trait RUNTIMEPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 						discard ;
 					rax.clear () ;
 				}
-				String<STR> ret = string_cvt[TYPEAS<TYPEAS<STR ,STRA>>::expr] (rax) ;
+				String<STR> ret = string_cvt[TYPEAS<STR ,STRA>::expr] (rax) ;
 				ret = Directory (ret).path () ;
 				return move (ret) ;
 			}) ;
@@ -136,7 +134,7 @@ trait RUNTIMEPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 						discard ;
 					rax.clear () ;
 				}
-				String<STR> ret = string_cvt[TYPEAS<TYPEAS<STR ,STRA>>::expr] (rax) ;
+				String<STR> ret = string_cvt[TYPEAS<STR ,STRA>::expr] (rax) ;
 				ret = Directory (ret).name () ;
 				return move (ret) ;
 			}) ;
@@ -161,30 +159,28 @@ trait PROCESS_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		SNAPSHOT mSnapshot ;
 
 	public:
-		implicit ImplHolder () = default ;
-
 		void initialize (CREF<FLAG> uid) override {
 			mUID = uid ;
 			auto rax = VarBuffer<BYTE> (128) ;
-			auto rbx = ByteWriter (RegBuffer<BYTE>::from (rax).ref ()) ;
+			auto rbx = ByteWriter (RegBuffer<BYTE>::from (rax).as_ref ()) ;
 			if ifswitch (TRUE) {
 				const auto r1x = String<STR>::make (slice ("/proc/") ,mUID ,slice ("/stat")) ;
 				const auto r2x = load_proc_file (r1x) ;
 				if (r2x.empty ())
 					discard ;
-				rbx << ByteWriter::GAP ;
+				rbx << GAP ;
 				rbx << VAL64 (mUID) ;
-				rbx << ByteWriter::GAP ;
+				rbx << GAP ;
 				rbx << slice ("linux") ;
-				rbx << ByteWriter::GAP ;
+				rbx << GAP ;
 				const auto r3x = process_code (r2x ,mUID) ;
 				rbx << r3x ;
-				rbx << ByteWriter::GAP ;
+				rbx << GAP ;
 				const auto r4x = process_time (r2x ,mUID) ;
 				rbx << r4x ;
 			}
-			rbx << ByteWriter::GAP ;
-			rbx << ByteWriter::EOS ;
+			rbx << GAP ;
+			rbx << EOS ;
 			mSnapshot = SNAPSHOT (move (rax)) ;
 		}
 
@@ -204,13 +200,13 @@ trait PROCESS_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		DATA process_time (CREF<String<STRU8>> info ,CREF<FLAG> uid) const {
-			auto rax = TextReader<STRU8> (info.raw ().ref ()) ;
+			auto rax = TextReader<STRU8> (info.raw ().as_ref ()) ;
 			auto rbx = String<STRU8> () ;
-			rax >> TextReader<STRU8>::GAP ;
+			rax >> GAP ;
 			rax >> rbx ;
-			const auto r1x = string_parse[TYPEAS<TYPEAS<VAL64 ,STRU8>>::expr] (rbx) ;
+			const auto r1x = string_parse[TYPEAS<VAL64 ,STRU8>::expr] (rbx) ;
 			assume (r1x == uid) ;
-			rax >> TextReader<STRU8>::GAP ;
+			rax >> GAP ;
 			rax >> slice ("(") ;
 			while (TRUE) {
 				const auto r2x = rax.poll (TYPEAS<STRU8>::expr) ;
@@ -220,31 +216,31 @@ trait PROCESS_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 					break ;
 				assume (r2x != STRU8 ('(')) ;
 			}
-			rax >> TextReader<STRU8>::GAP ;
+			rax >> GAP ;
 			rax >> rbx ;
 			assume (rbx.length () == 1) ;
 			for (auto &&i : iter (0 ,18)) {
 				noop (i) ;
-				rax >> TextReader<STRU8>::GAP ;
+				rax >> GAP ;
 				rax >> rbx ;
 			}
-			rax >> TextReader<STRU8>::GAP ;
+			rax >> GAP ;
 			rax >> rbx ;
-			const auto r3x = string_parse[TYPEAS<TYPEAS<VAL64 ,STRU8>>::expr] (rbx) ;
+			const auto r3x = string_parse[TYPEAS<VAL64 ,STRU8>::expr] (rbx) ;
 			for (auto &&i : iter (19 ,49)) {
 				noop (i) ;
-				rax >> TextReader<STRU8>::GAP ;
+				rax >> GAP ;
 				rax >> rbx ;
 			}
-			rax >> TextReader<STRU8>::GAP ;
-			rax >> TextReader<STRU8>::EOS ;
+			rax >> GAP ;
+			rax >> EOS ;
 			return DATA (r3x) ;
 		}
 
 		void initialize (CREF<SNAPSHOT> snapshot_) override {
 			mSnapshot = snapshot_ ;
-			auto rax = ByteReader (RegBuffer<BYTE>::from (mSnapshot).ref ()) ;
-			rax >> ByteReader::GAP ;
+			auto rax = ByteReader (RegBuffer<BYTE>::from (mSnapshot).as_ref ()) ;
+			rax >> GAP ;
 			const auto r1x = rax.poll (TYPEAS<VAL64>::expr) ;
 			assume (r1x > 0) ;
 			assume (r1x <= VAL32_MAX) ;
@@ -280,16 +276,14 @@ trait MODULE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		String<STR> mError ;
 
 	public:
-		implicit ImplHolder () = default ;
-
 		void initialize (CREF<String<STR>> file) override {
 			const auto r1x = Directory (file).name () ;
-			const auto r2x = string_cvt[TYPEAS<TYPEAS<STRA ,STR>>::expr] (r1x) ;
+			const auto r2x = string_cvt[TYPEAS<STRA ,STR>::expr] (r1x) ;
 			assert (ifnot (r2x.empty ())) ;
 			mErrorBuffer = String<STR>::make () ;
 			mModule = UniqueRef<HANDLE> ([&] (VREF<HANDLE> me) {
-				const auto r3x = VAL32 (RTLD_NOW | RTLD_LOCAL | RTLD_DEEPBIND | RTLD_NODELETE) ;
-				const auto r4x = VAL32 (r3x | RTLD_NOLOAD) ;
+				const auto r3x = csc_enum_t (RTLD_NOW | RTLD_LOCAL | RTLD_DEEPBIND | RTLD_NODELETE) ;
+				const auto r4x = csc_enum_t (r3x | RTLD_NOLOAD) ;
 				me = dlopen ((&r2x[0]) ,r4x) ;
 				if (me != NULL)
 					return ;
@@ -312,7 +306,7 @@ trait MODULE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		FLAG link (CREF<String<STR>> name) override {
 			assert (mModule.exist ()) ;
 			assert (ifnot (name.empty ())) ;
-			const auto r1x = string_cvt[TYPEAS<TYPEAS<STRA ,STR>>::expr] (name) ;
+			const auto r1x = string_cvt[TYPEAS<STRA ,STR>::expr] (name) ;
 			FLAG ret = FLAG (dlsym (mModule ,(&r1x[0]))) ;
 			if ifswitch (TRUE) {
 				if (ret != ZERO)
@@ -368,8 +362,6 @@ trait SINGLETON_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		SharedRef<HEAP> mHeap ;
 
 	public:
-		implicit ImplHolder () = default ;
-
 		void initialize () override {
 			mUID = RuntimeProc::process_uid () ;
 			mName = String<STRA>::make (slice ("CSC_Singleton_") ,mUID) ;
@@ -398,8 +390,8 @@ trait SINGLETON_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			mPipe = UniqueRef<String<STRA>> ([&] (VREF<String<STRA>> me) {
 				me = mName ;
 				const auto r1x = UniqueRef<HFILE> ([&] (VREF<HFILE> me) {
-					const auto r2x = VAL32 (O_CREAT | O_RDWR | O_EXCL) ;
-					const auto r3x = VAL32 (S_IRWXU | S_IRWXG | S_IRWXO) ;
+					const auto r2x = csc_enum_t (O_CREAT | O_RDWR | O_EXCL) ;
+					const auto r3x = csc_enum_t (S_IRWXU | S_IRWXG | S_IRWXO) ;
 					me = shm_open ((&mName[0]) ,r2x ,r3x) ;
 					assume (me != NONE) ;
 				} ,[] (VREF<HFILE> me) {

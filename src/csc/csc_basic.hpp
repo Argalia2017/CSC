@@ -10,92 +10,54 @@
 
 namespace CSC {
 template <class...>
-trait OPTIONAL_HELP ;
+trait CELL_HELP ;
 
 template <class...>
-trait OPTIONAL_HOLDER_HELP ;
+trait CELL_HOLDER_HELP ;
 
-template <class UNIT ,class ATTR>
-trait OPTIONAL_HOLDER_HELP<UNIT ,ATTR ,REQUIRE<ENUM_NOT<ATTR>>> {
-	class Optional {
+template <class UNIT>
+trait CELL_HOLDER_HELP<UNIT ,ALWAYS> {
+	class Cell {
 	protected:
 		Box<UNIT> mValue ;
+		BOOL mGood ;
 		FLAG mCode ;
 
 	public:
-		implicit Optional () noexcept {
+		implicit Cell () noexcept {
+			mGood = FALSE ;
 			mCode = ZERO ;
 		}
 	} ;
 } ;
 
-template <class UNIT ,class ATTR>
-trait OPTIONAL_HOLDER_HELP<UNIT ,ATTR ,REQUIRE<ATTR>> {
-	using SUPER = typename OPTIONAL_HOLDER_HELP<UNIT ,ENUM_FALSE ,ALWAYS>::Optional ;
-
-	class Optional extend SUPER {
-	protected:
-		using SUPER::mValue ;
-		using SUPER::mCode ;
-
-	public:
-		implicit Optional () = default ;
-
-		implicit Optional (CREF<Optional> that) {
-			mValue = Box<UNIT>::make (that.mValue.self) ;
-			mCode = that.mCode ;
-		}
-
-		inline VREF<Optional> operator= (CREF<Optional> that) {
-			if (address (thiz) == address (that))
-				return thiz ;
-			swap (thiz ,move (that)) ;
-			return thiz ;
-		}
-
-		implicit Optional (RREF<Optional> that) noexcept {
-			swap (thiz ,that) ;
-		}
-
-		inline VREF<Optional> operator= (RREF<Optional> that) noexcept {
-			if (address (thiz) == address (that))
-				return thiz ;
-			swap (thiz ,move (that)) ;
-			return thiz ;
-		}
-	} ;
-} ;
-
 template <class UNIT>
-trait OPTIONAL_HELP<UNIT ,ALWAYS> {
-	using SUPER = typename OPTIONAL_HOLDER_HELP<UNIT ,IS_CLONEABLE<UNIT> ,ALWAYS>::Optional ;
+trait CELL_HELP<UNIT ,ALWAYS> {
+	using SUPER = typename CELL_HOLDER_HELP<UNIT ,ALWAYS>::Cell ;
 
-	class Optional extend SUPER {
+	class Cell extend SUPER {
 	protected:
 		using SUPER::mValue ;
+		using SUPER::mGood ;
 		using SUPER::mCode ;
 
 	public:
-		implicit Optional () = default ;
+		implicit Cell () = default ;
 
-		implicit Optional (CREF<FLAG> that) {
+		implicit Cell (CREF<FLAG> that) {
 			mCode = that ;
 		}
 
 		template <class...ARG1>
-		imports Optional make (XREF<ARG1>...obj) {
-			Optional ret ;
+		imports Cell make (XREF<ARG1>...obj) {
+			Cell ret ;
 			ret.mValue = Box<UNIT>::make (forward[TYPEAS<ARG1>::expr] (obj)...) ;
-			ret.mCode = USED ;
+			ret.mGood = TRUE ;
 			return move (ret) ;
 		}
 
 		BOOL exist () const {
-			if (mValue == NULL)
-				return FALSE ;
-			if (mCode != USED)
-				return FALSE ;
-			return TRUE ;
+			return mGood ;
 		}
 
 		FLAG code () const {
@@ -104,83 +66,101 @@ trait OPTIONAL_HELP<UNIT ,ALWAYS> {
 
 		UNIT poll () {
 			assume (exist ()) ;
-			UNIT ret = move (mValue.self) ;
+			UNIT ret = move (fake) ;
 			mValue = NULL ;
-			mCode = USED ;
+			mGood = FALSE ;
 			return move (ret) ;
 		}
 
 		UNIT fetch () const {
+			require (IS_CLONEABLE<UNIT>) ;
 			assert (exist ()) ;
-			return mValue.self ;
+			return fake ;
 		}
 
 		UNIT fetch (CREF<UNIT> def) const {
+			require (IS_CLONEABLE<UNIT>) ;
 			if ifnot (exist ())
 				return move (def) ;
-			return mValue.self ;
+			return fake ;
 		}
 
 		UNIT fetch (RREF<UNIT> def) const {
+			require (IS_CLONEABLE<UNIT>) ;
 			if ifnot (exist ())
 				return move (def) ;
-			return mValue.self ;
+			return fake ;
 		}
 
-		BOOL equal (CREF<Optional> that) const {
-			const auto r1x = exist () ;
-			const auto r2x = that.exist () ;
-			if (r1x != r2x)
-				return FALSE ;
-			if ifnot (r1x)
+		void store (CREF<UNIT> obj) const {
+			require (IS_CLONEABLE<UNIT>) ;
+			assert (exist ()) ;
+			fake = obj ;
+		}
+
+		UNIT exchange (CREF<UNIT> obj) const {
+			require (IS_CLONEABLE<UNIT>) ;
+			assert (exist ()) ;
+			UNIT ret = fake ;
+			fake = obj ;
+			return move (ret) ;
+		}
+
+		void replace (CREF<UNIT> expect ,CREF<UNIT> right) const {
+			require (IS_CLONEABLE<UNIT>) ;
+			assert (exist ()) ;
+			if ifnot (operator_equal (fake ,expect))
+				return ;
+			fake = right ;
+		}
+
+		BOOL change (VREF<UNIT> expect ,CREF<UNIT> right) const {
+			require (IS_CLONEABLE<UNIT>) ;
+			assert (exist ()) ;
+			if ifswitch (TRUE) {
+				if ifnot (operator_equal (fake ,expect))
+					discard ;
+				fake = right ;
 				return TRUE ;
-			return operator_equal (mValue.self ,that.mValue.self) ;
+			}
+			expect = fake ;
+			return FALSE ;
 		}
 
-		inline BOOL operator== (CREF<Optional> that) const {
-			return equal (that) ;
+		UNIT fetch_add (CREF<UNIT> obj) const {
+			require (IS_SCALAR<UNIT>) ;
+			assert (exist ()) ;
+			UNIT ret = fake ;
+			fake += obj ;
+			return move (ret) ;
 		}
 
-		inline BOOL operator!= (CREF<Optional> that) const {
-			return ifnot (equal (that)) ;
+		UNIT fetch_sub (CREF<UNIT> obj) const {
+			require (IS_SCALAR<UNIT>) ;
+			assert (exist ()) ;
+			UNIT ret = fake ;
+			fake += obj ;
+			return move (ret) ;
 		}
 
-		FLAG compr (CREF<Optional> that) const {
-			const auto r1x = exist () ;
-			const auto r2x = that.exist () ;
-			if ifnot (r1x)
-				return operator_compr (r1x ,r2x) ;
-			if ifnot (r2x)
-				return operator_compr (r1x ,r2x) ;
-			return operator_compr (mValue.self ,that.mValue.self) ;
+		UNIT increase () const {
+			return fetch_add (UNIT (1)) + UNIT (1) ;
 		}
 
-		inline BOOL operator< (CREF<Optional> that) const {
-			return compr (that) < ZERO ;
+		UNIT decrease () const {
+			return fetch_sub (UNIT (1)) + UNIT (1) ;
 		}
 
-		inline BOOL operator<= (CREF<Optional> that) const {
-			return compr (that) <= ZERO ;
-		}
-
-		inline BOOL operator> (CREF<Optional> that) const {
-			return compr (that) > ZERO ;
-		}
-
-		inline BOOL operator>= (CREF<Optional> that) const {
-			return compr (that) >= ZERO ;
-		}
-
-		FLAG hash () const {
-			if ifnot (exist ())
-				return hashcode () ;
-			return operator_hash (mValue.self) ;
+	private:
+		VREF<UNIT> fake_m () const leftvalue {
+			const auto r1x = address (mValue.self) ;
+			return unsafe_deref (unsafe_cast[TYPEAS<TEMP<UNIT>>::expr] (unsafe_pointer (r1x))) ;
 		}
 	} ;
 } ;
 
 template <class UNIT>
-using Optional = typename OPTIONAL_HELP<UNIT ,ALWAYS>::Optional ;
+using Cell = typename CELL_HELP<UNIT ,ALWAYS>::Cell ;
 
 template <class...>
 trait BUFFERPROC_HELP ;
@@ -247,22 +227,10 @@ trait BUFFERPROC_HELP<DEPEND ,ALWAYS> {
 				dst[i] = src[i] ;
 		}
 
-		template <class ARG1>
-		imports void buf_move (VREF<ARG1> dst1 ,VREF<ARG1> dst2 ,CREF<INDEX> begin_ ,CREF<INDEX> end_) {
-			using R1X = typeof (dst1[0]) ;
-			auto rxx = TRUE ;
-			if ifswitch (rxx) {
-				if (IS_TRIVIAL<R1X>::expr)
-					discard ;
-				for (auto &&i : iter (begin_ ,end_))
-					swap (dst1[i] ,dst2[i]) ;
-			}
-			if ifswitch (rxx) {
-				for (auto &&i : iter (begin_ ,end_))
-					unsafe_deptr (dst1[i]) = unsafe_deptr (dst2[i]) ;
-				unsafe_launder (dst1) ;
-				unsafe_launder (dst2) ;
-			}
+		template <class ARG1 ,class ARG2>
+		imports void buf_swap (VREF<ARG1> dst1 ,VREF<ARG2> dst2 ,CREF<INDEX> begin_ ,CREF<INDEX> end_) {
+			for (auto &&i : iter (begin_ ,end_))
+				swap (dst1[i] ,dst2[i]) ;
 		}
 
 		template <class ARG1 ,class ARG2>
@@ -273,8 +241,8 @@ trait BUFFERPROC_HELP<DEPEND ,ALWAYS> {
 
 		template <class ARG1 ,class ARG2>
 		imports INDEX buf_find (CREF<ARG1> src ,CREF<ARG2> item ,CREF<INDEX> begin_ ,CREF<INDEX> end_ ,CREF<BOOL> forward_) {
-			auto rxx = TRUE ;
-			if ifswitch (rxx) {
+			auto act = TRUE ;
+			if ifswitch (act) {
 				if ifnot (forward_)
 					discard ;
 				for (auto &&i : iter (begin_ ,end_)) {
@@ -282,7 +250,7 @@ trait BUFFERPROC_HELP<DEPEND ,ALWAYS> {
 						return i ;
 				}
 			}
-			if ifswitch (rxx) {
+			if ifswitch (act) {
 				for (auto &&i : iter (0 ,end_ - begin_)) {
 					INDEX ix = end_ - 1 - i ;
 					if (operator_equal (src[ix] ,item))
@@ -326,26 +294,26 @@ trait FUNCTION_tuple_pick_HELP<PARAMS ,ALWAYS> {
 		}
 
 		template <class ARG1 ,class ARG2 ,class = REQUIRE<ENUM_GT_ZERO<ARG2>>>
-		forceinline VREF<TYPE_PICK<PARAMS ,ARG2>> template_pick (CREF<typeof (PH2)> ,VREF<ARG1> tuple ,CREF<TYPEID<ARG2>> id) const {
+		VREF<TYPE_PICK<PARAMS ,ARG2>> template_pick (CREF<typeof (PH2)> ,VREF<ARG1> tuple ,CREF<TYPEID<ARG2>> id) const {
 			using R1X = typename FUNCTION_tuple_pick_HELP<TYPE_FIRST_REST<PARAMS> ,ALWAYS>::FUNCTION_tuple_pick ;
 			const auto r1x = R1X () ;
 			return r1x (tuple.rest () ,TYPEAS<ENUM_DEC<ARG2>>::expr) ;
 		}
 
 		template <class ARG1 ,class ARG2 ,class = REQUIRE<ENUM_EQ_ZERO<ARG2>>>
-		forceinline VREF<TYPE_FIRST_ONE<PARAMS>> template_pick (CREF<typeof (PH1)> ,VREF<ARG1> tuple ,CREF<TYPEID<ARG2>> id) const {
+		VREF<TYPE_FIRST_ONE<PARAMS>> template_pick (CREF<typeof (PH1)> ,VREF<ARG1> tuple ,CREF<TYPEID<ARG2>> id) const {
 			return tuple.one () ;
 		}
 
 		template <class ARG1 ,class ARG2 ,class = REQUIRE<ENUM_GT_ZERO<ARG2>>>
-		forceinline CREF<TYPE_PICK<PARAMS ,ARG2>> template_pick (CREF<typeof (PH2)> ,CREF<ARG1> tuple ,CREF<TYPEID<ARG2>> id) const {
+		CREF<TYPE_PICK<PARAMS ,ARG2>> template_pick (CREF<typeof (PH2)> ,CREF<ARG1> tuple ,CREF<TYPEID<ARG2>> id) const {
 			using R1X = typename FUNCTION_tuple_pick_HELP<TYPE_FIRST_REST<PARAMS> ,ALWAYS>::FUNCTION_tuple_pick ;
 			const auto r1x = R1X () ;
 			return r1x (tuple.rest () ,TYPEAS<ENUM_DEC<ARG2>>::expr) ;
 		}
 
 		template <class ARG1 ,class ARG2 ,class = REQUIRE<ENUM_EQ_ZERO<ARG2>>>
-		forceinline CREF<TYPE_FIRST_ONE<PARAMS>> template_pick (CREF<typeof (PH1)> ,CREF<ARG1> tuple ,CREF<TYPEID<ARG2>> id) const {
+		CREF<TYPE_FIRST_ONE<PARAMS>> template_pick (CREF<typeof (PH1)> ,CREF<ARG1> tuple ,CREF<TYPEID<ARG2>> id) const {
 			return tuple.one () ;
 		}
 	} ;
@@ -541,14 +509,16 @@ trait TUPLE_HELP<PARAMS ,REQUIRE<ENUM_EQ_IDEN<COUNT_OF<PARAMS>>>> {
 } ;
 
 template <class PARAMS>
-trait TUPLE_HELP<PARAMS ,REQUIRE<ENUM_GT_IDEN<COUNT_OF<PARAMS>>>> {
+trait TUPLE_HELP<PARAMS ,REQUIRE<ENUM_EQUAL<COUNT_OF<PARAMS> ,RANK2>>> {
 	using FIRST_ONE = TYPE_FIRST_ONE<PARAMS> ;
 	using FIRST_REST = TYPE_FIRST_REST<PARAMS> ;
-	using FIRST_REST_TUPLE = typename TUPLE_HELP<FIRST_REST ,ALWAYS>::Tuple ;
+	using FIRST_REST_HEAP = typename TUPLE_HELP<FIRST_REST ,ALWAYS>::HEAP ;
+	using FIRST_REST_Tuple = typename TUPLE_HELP<FIRST_REST ,ALWAYS>::Tuple ;
+	using SECOND_ONE = TYPE_SECOND_ONE<PARAMS> ;
 
 	struct HEAP {
 		FIRST_ONE mOne ;
-		FIRST_REST_TUPLE mRest ;
+		FIRST_REST_HEAP mRest ;
 	} ;
 
 	class Tuple {
@@ -591,40 +561,180 @@ trait TUPLE_HELP<PARAMS ,REQUIRE<ENUM_GT_IDEN<COUNT_OF<PARAMS>>>> {
 			return mTuple.mOne ;
 		}
 
-		VREF<FIRST_REST_TUPLE> rest () leftvalue {
-			return mTuple.mRest ;
+		VREF<FIRST_REST_Tuple> rest () leftvalue {
+			return unsafe_deref (unsafe_cast[TYPEAS<TEMP<FIRST_REST_Tuple>>::expr] (unsafe_deptr (mTuple.mRest))) ;
 		}
 
-		CREF<FIRST_REST_TUPLE> rest () const leftvalue {
-			return mTuple.mRest ;
+		CREF<FIRST_REST_Tuple> rest () const leftvalue {
+			return unsafe_deref (unsafe_cast[TYPEAS<TEMP<FIRST_REST_Tuple>>::expr] (unsafe_deptr (mTuple.mRest))) ;
 		}
 
 		VREF<FIRST_ONE> mP1st_m () leftvalue {
-			return one () ;
+			return mTuple.mOne ;
 		}
 
 		CREF<FIRST_ONE> mP1st_m () const leftvalue {
-			return one () ;
+			return mTuple.mOne ;
 		}
 
-		template <class ARG1 = DEPEND>
-		VREF<TYPE_SECOND_ONE<DEPENDENT<PARAMS ,ARG1>>> mP2nd_m () leftvalue {
-			return rest ().one () ;
+		VREF<SECOND_ONE> mP2nd_m () leftvalue {
+			return mTuple.mRest.mOne ;
 		}
 
-		template <class ARG1 = DEPEND>
-		CREF<TYPE_SECOND_ONE<DEPENDENT<PARAMS ,ARG1>>> mP2nd_m () const leftvalue {
-			return rest ().one () ;
+		CREF<SECOND_ONE> mP2nd_m () const leftvalue {
+			return mTuple.mRest.mOne ;
 		}
 
-		template <class ARG1 = DEPEND>
-		VREF<TYPE_THIRD_ONE<DEPENDENT<PARAMS ,ARG1>>> mP3rd_m () leftvalue {
-			return rest ().rest ().one () ;
+		template <class ARG1>
+		VREF<TYPE_PICK<PARAMS ,ARG1>> pick (CREF<TYPEID<ARG1>> id) leftvalue {
+			require (ENUM_BETWEEN<ARG1 ,ENUM_ZERO ,COUNT_OF<PARAMS>>) ;
+			using R2X = typename FUNCTION_tuple_pick_HELP<PARAMS ,ALWAYS>::FUNCTION_tuple_pick ;
+			const auto r1x = R2X () ;
+			return r1x (thiz ,id) ;
 		}
 
-		template <class ARG1 = DEPEND>
-		CREF<TYPE_THIRD_ONE<DEPENDENT<PARAMS ,ARG1>>> mP3rd_m () const leftvalue {
-			return rest ().rest ().one () ;
+		template <class ARG1>
+		CREF<TYPE_PICK<PARAMS ,ARG1>> pick (CREF<TYPEID<ARG1>> id) const leftvalue {
+			require (ENUM_BETWEEN<ARG1 ,ENUM_ZERO ,COUNT_OF<PARAMS>>) ;
+			using R2X = typename FUNCTION_tuple_pick_HELP<PARAMS ,ALWAYS>::FUNCTION_tuple_pick ;
+			const auto r1x = R2X () ;
+			return r1x (thiz ,id) ;
+		}
+
+		BOOL equal (CREF<Tuple> that) const {
+			if ifnot (operator_equal (one () ,that.one ()))
+				return FALSE ;
+			if ifnot (operator_equal (rest () ,that.rest ()))
+				return FALSE ;
+			return TRUE ;
+		}
+
+		inline BOOL operator== (CREF<Tuple> that) const {
+			return equal (that) ;
+		}
+
+		inline BOOL operator!= (CREF<Tuple> that) const {
+			return ifnot (equal (that)) ;
+		}
+
+		FLAG compr (CREF<Tuple> that) const {
+			const auto r1x = operator_compr (one () ,that.one ()) ;
+			if (r1x != ZERO)
+				return r1x ;
+			const auto r2x = operator_compr (rest () ,that.rest ()) ;
+			if (r2x != ZERO)
+				return r2x ;
+			return ZERO ;
+		}
+
+		inline BOOL operator< (CREF<Tuple> that) const {
+			return compr (that) < ZERO ;
+		}
+
+		inline BOOL operator<= (CREF<Tuple> that) const {
+			return compr (that) <= ZERO ;
+		}
+
+		inline BOOL operator> (CREF<Tuple> that) const {
+			return compr (that) > ZERO ;
+		}
+
+		inline BOOL operator>= (CREF<Tuple> that) const {
+			return compr (that) >= ZERO ;
+		}
+
+		FLAG hash () const {
+			const auto r1x = operator_hash (one ()) ;
+			const auto r2x = operator_hash (rest ()) ;
+			return hashcode (r1x ,r2x) ;
+		}
+	} ;
+} ;
+
+template <class PARAMS>
+trait TUPLE_HELP<PARAMS ,REQUIRE<ENUM_COMPR_GT<COUNT_OF<PARAMS> ,RANK2>>> {
+	using FIRST_ONE = TYPE_FIRST_ONE<PARAMS> ;
+	using FIRST_REST = TYPE_FIRST_REST<PARAMS> ;
+	using FIRST_REST_HEAP = typename TUPLE_HELP<FIRST_REST ,ALWAYS>::HEAP ;
+	using FIRST_REST_Tuple = typename TUPLE_HELP<FIRST_REST ,ALWAYS>::Tuple ;
+	using SECOND_ONE = TYPE_SECOND_ONE<PARAMS> ;
+	using THIRD_ONE = TYPE_THIRD_ONE<PARAMS> ;
+
+	struct HEAP {
+		FIRST_ONE mOne ;
+		FIRST_REST_HEAP mRest ;
+	} ;
+
+	class Tuple {
+	protected:
+		HEAP mTuple ;
+
+	public:
+		implicit Tuple () = default ;
+
+		template <class...ARG1 ,class = REQUIRE<ENUM_NOT<ENUM_ANY<IS_SAME<ARG1 ,Tuple>...>>>>
+		explicit Tuple (XREF<ARG1>...obj) {
+			assign (forward[TYPEAS<ARG1>::expr] (obj)...) ;
+		}
+
+		void assign () {
+			noop () ;
+		}
+
+		template <class...ARG1>
+		void assign (CREF<FIRST_ONE> obj1 ,XREF<ARG1>...obj2) {
+			one () = move (obj1) ;
+			rest ().assign (forward[TYPEAS<ARG1>::expr] (obj2)...) ;
+		}
+
+		template <class...ARG1>
+		void assign (RREF<FIRST_ONE> obj1 ,XREF<ARG1>...obj2) {
+			one () = move (obj1) ;
+			rest ().assign (forward[TYPEAS<ARG1>::expr] (obj2)...) ;
+		}
+
+		LENGTH rank () const {
+			return COUNT_OF<PARAMS>::expr ;
+		}
+
+		VREF<FIRST_ONE> one () leftvalue {
+			return mTuple.mOne ;
+		}
+
+		CREF<FIRST_ONE> one () const leftvalue {
+			return mTuple.mOne ;
+		}
+
+		VREF<FIRST_REST_Tuple> rest () leftvalue {
+			return unsafe_deref (unsafe_cast[TYPEAS<TEMP<FIRST_REST_Tuple>>::expr] (unsafe_deptr (mTuple.mRest))) ;
+		}
+
+		CREF<FIRST_REST_Tuple> rest () const leftvalue {
+			return unsafe_deref (unsafe_cast[TYPEAS<TEMP<FIRST_REST_Tuple>>::expr] (unsafe_deptr (mTuple.mRest))) ;
+		}
+
+		VREF<FIRST_ONE> mP1st_m () leftvalue {
+			return mTuple.mOne ;
+		}
+
+		CREF<FIRST_ONE> mP1st_m () const leftvalue {
+			return mTuple.mOne ;
+		}
+
+		VREF<SECOND_ONE> mP2nd_m () leftvalue {
+			return mTuple.mRest.mOne ;
+		}
+
+		CREF<SECOND_ONE> mP2nd_m () const leftvalue {
+			return mTuple.mRest.mOne ;
+		}
+
+		VREF<SECOND_ONE> mP3rd_m () leftvalue {
+			return mTuple.mRest.mRest.mOne ;
+		}
+
+		CREF<SECOND_ONE> mP3rd_m () const leftvalue {
+			return mTuple.mRest.mRest.mOne ;
 		}
 
 		template <class ARG1>
@@ -703,7 +813,7 @@ template <class...>
 trait FUNCTION_WRAPPER_HELP ;
 
 template <class...>
-trait FUNCTION_IMPLHOLDER_HELP ;
+trait FUNCTION_PUREHOLDER_HELP ;
 
 template <class RETURN ,class...PARAM>
 trait FUNCTION_HELP<RETURN ,TYPEAS<PARAM...> ,ALWAYS> {
@@ -712,7 +822,6 @@ trait FUNCTION_HELP<RETURN ,TYPEAS<PARAM...> ,ALWAYS> {
 	struct Holder implement Interface {
 		virtual void initialize (RREF<Auto> value_) = 0 ;
 		virtual BOOL effective () const = 0 ;
-		virtual BOOL exception () const = 0 ;
 		virtual RETURN invoke (XREF<PARAM>...params) const = 0 ;
 	} ;
 
@@ -726,23 +835,22 @@ trait FUNCTION_HELP<RETURN ,TYPEAS<PARAM...> ,ALWAYS> {
 	public:
 		implicit Function () = default ;
 
-		template <class ARG1 ,class = REQUIRE<ENUM_NOT<IS_SAME<ARG1 ,Function>>>>
-		explicit Function (RREF<ARG1> that) {
-			require (IS_FUNCTION<ARG1>) ;
+		template <class ARG1 ,class = REQUIRE<ENUM_ALL<ENUM_NOT<IS_SAME<ARG1 ,Function>> ,IS_FUNCTION<ARG1>>>>
+		implicit Function (RREF<ARG1> that) {
 			require (IS_SAME<RETURN ,FUNCTION_RETURN<ARG1>>) ;
-			using R2X = typename FUNCTION_IMPLHOLDER_HELP<RETURN ,PARAMS ,ARG1 ,ALWAYS>::ImplHolder ;
-			auto rxx = TRUE ;
-			if ifswitch (rxx) {
+			using R2X = typename FUNCTION_PUREHOLDER_HELP<RETURN ,PARAMS ,ARG1 ,ALWAYS>::PureHolder ;
+			auto act = TRUE ;
+			if ifswitch (act) {
 				if (IS_EFFECTIVE<ARG1>::expr)
 					discard ;
 				auto rax = VRef<R2X>::make ().as_cast (TYPEAS<Holder>::expr) ;
 				rax->initialize (move (that)) ;
-				mThis = rax.as_con () ;
+				mThis = move (rax) ;
 			}
-			if ifswitch (rxx) {
+			if ifswitch (act) {
 				auto rax = VRef<R2X>::make ().as_cast (TYPEAS<Holder>::expr) ;
 				rax->initialize (move (that)) ;
-				mThis = rax.as_con () ;
+				mThis = move (rax) ;
 			}
 		}
 
@@ -758,12 +866,6 @@ trait FUNCTION_HELP<RETURN ,TYPEAS<PARAM...> ,ALWAYS> {
 			if ifnot (exist ())
 				return FALSE ;
 			return mThis->effective () ;
-		}
-
-		BOOL exception () const {
-			if ifnot (exist ())
-				return FALSE ;
-			return mThis->exception () ;
 		}
 
 		RETURN invoke (XREF<PARAM>...params) const {
@@ -786,28 +888,21 @@ trait FUNCTION_HELP<RETURN ,TYPEAS<PARAM...> ,ALWAYS> {
 } ;
 
 template <class RETURN ,class...PARAM ,class UNIT>
-trait FUNCTION_IMPLHOLDER_HELP<RETURN ,TYPEAS<PARAM...> ,UNIT ,ALWAYS> {
+trait FUNCTION_PUREHOLDER_HELP<RETURN ,TYPEAS<PARAM...> ,UNIT ,ALWAYS> {
 	using PARAMS = TYPEAS<PARAM...> ;
 	using Holder = typename FUNCTION_HELP<RETURN ,PARAMS ,ALWAYS>::Holder ;
 
-	class ImplHolder implement Holder {
+	class PureHolder implement Holder {
 	protected:
 		Box<UNIT> mValue ;
 
 	public:
-		implicit ImplHolder () = default ;
-
 		void initialize (RREF<Auto> value_) override {
 			mValue = Box<UNIT>::make (value_.poll (TYPEAS<UNIT>::expr)) ;
 		}
 
 		BOOL effective () const override {
 			return IS_EFFECTIVE<UNIT>::expr ;
-		}
-
-		BOOL exception () const override {
-			//@warn: always use exception
-			return TRUE ;
 		}
 
 		RETURN invoke (XREF<PARAM>...params) const override {
@@ -850,21 +945,21 @@ template <class DEPEND>
 trait SCOPEFINALLY_HELP<DEPEND ,ALWAYS> {
 	class ScopeFinally extend Proxy {
 	protected:
-		Function<void> mBase ;
+		Function<void> mThat ;
 
 	public:
-		imports CREF<ScopeFinally> from (CREF<Function<void>> that) {
+		imports CREF<ScopeFinally> from (LREF<Function<void>> that) {
 			return unsafe_deref (unsafe_cast[TYPEAS<TEMP<ScopeFinally>>::expr] (unsafe_deptr (that))) ;
 		}
 
 		imports CREF<ScopeFinally> from (RREF<Function<void>>) = delete ;
 
 		void enter () const {
-			assert (mBase.exist ()) ;
+			assert (mThat.exist ()) ;
 		}
 
 		void leave () const {
-			mBase.invoke () ;
+			mThat.invoke () ;
 		}
 	} ;
 } ;
@@ -878,7 +973,7 @@ template <class DEPEND>
 trait SCOPECOUNTER_HELP<DEPEND ,ALWAYS> {
 	class ScopeCounter extend Proxy {
 	protected:
-		LENGTH mBase ;
+		LENGTH mThat ;
 
 	public:
 		imports VREF<ScopeCounter> from (VREF<LENGTH> that) {
@@ -886,11 +981,11 @@ trait SCOPECOUNTER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		void enter () {
-			mBase++ ;
+			mThat++ ;
 		}
 
 		void leave () {
-			mBase-- ;
+			mThat-- ;
 		}
 	} ;
 } ;
@@ -904,7 +999,7 @@ template <class...>
 trait AUTOREF_HOLDER_HELP ;
 
 template <class...>
-trait AUTOREF_IMPLHOLDER_HELP ;
+trait AUTOREF_PUREHOLDER_HELP ;
 
 template <class DEPEND>
 trait AUTOREF_HOLDER_HELP<DEPEND ,ALWAYS> {
@@ -950,6 +1045,25 @@ trait AUTOREF_HELP<UNIT ,REQUIRE<IS_VOID<UNIT>>> {
 		implicit AutoRef (RREF<ARG1> that)
 			:AutoRef (forward[TYPEAS<AutoRef>::expr] (that.as_cast (TYPEAS<UNIT>::expr))) {}
 
+		template <class ARG1>
+		imports VREF<AutoRef> from (VREF<ARG1> that) {
+			require (IS_EXTEND<SUPER ,ARG1>) ;
+			auto &&tmp = unsafe_deref (unsafe_cast[TYPEAS<TEMP<AutoRef>>::expr] (unsafe_deptr (that))) ;
+			assert (tmp.available ()) ;
+			return keep[TYPEAS<VREF<AutoRef>>::expr] (tmp) ;
+		}
+
+		template <class ARG1>
+		imports CREF<AutoRef> from (LREF<ARG1> that) {
+			require (IS_EXTEND<SUPER ,ARG1>) ;
+			auto &&tmp = unsafe_deref (unsafe_cast[TYPEAS<TEMP<AutoRef>>::expr] (unsafe_deptr (that))) ;
+			assert (tmp.available ()) ;
+			return keep[TYPEAS<CREF<AutoRef>>::expr] (tmp) ;
+		}
+
+		template <class ARG1>
+		imports CREF<AutoRef> from (RREF<ARG1>) = delete ;
+
 		BOOL exist () const {
 			if (mThis == NULL)
 				return FALSE ;
@@ -957,6 +1071,7 @@ trait AUTOREF_HELP<UNIT ,REQUIRE<IS_VOID<UNIT>>> {
 		}
 
 		inline BOOL operator== (CREF<typeof (NULL)>) = delete ;
+
 		inline BOOL operator!= (CREF<typeof (NULL)>) = delete ;
 
 		BOOL available () const {
@@ -969,20 +1084,6 @@ trait AUTOREF_HELP<UNIT ,REQUIRE<IS_VOID<UNIT>>> {
 			if ifnot (exist ())
 				return Clazz () ;
 			return mThis->clazz () ;
-		}
-
-		template <class ARG1>
-		VREF<CastAutoRef<ARG1>> rebind (CREF<TYPEID<ARG1>> id) leftvalue {
-			auto &&tmp = unsafe_deref (unsafe_cast[TYPEAS<TEMP<CastAutoRef<ARG1>>>::expr] (unsafe_deptr (thiz))) ;
-			assert (tmp.available ()) ;
-			return tmp ;
-		}
-
-		template <class ARG1>
-		CREF<CastAutoRef<ARG1>> rebind (CREF<TYPEID<ARG1>> id) const leftvalue {
-			auto &&tmp = unsafe_deref (unsafe_cast[TYPEAS<TEMP<CastAutoRef<ARG1>>>::expr] (unsafe_deptr (thiz))) ;
-			assert (tmp.available ()) ;
-			return tmp ;
 		}
 
 		template <class ARG1>
@@ -1024,9 +1125,28 @@ trait AUTOREF_HELP<UNIT ,REQUIRE<ENUM_NOT<IS_VOID<UNIT>>>> {
 		implicit AutoRef (RREF<ARG1> that)
 			:AutoRef (forward[TYPEAS<AutoRef>::expr] (that.as_cast (TYPEAS<UNIT>::expr))) {}
 
+		template <class ARG1>
+		imports VREF<AutoRef> from (VREF<ARG1> that) {
+			require (IS_EXTEND<SUPER ,ARG1>) ;
+			auto &&tmp = unsafe_deref (unsafe_cast[TYPEAS<TEMP<AutoRef>>::expr] (unsafe_deptr (that))) ;
+			assert (tmp.available ()) ;
+			return keep[TYPEAS<VREF<AutoRef>>::expr] (tmp) ;
+		}
+
+		template <class ARG1>
+		imports CREF<AutoRef> from (LREF<ARG1> that) {
+			require (IS_EXTEND<SUPER ,ARG1>) ;
+			auto &&tmp = unsafe_deref (unsafe_cast[TYPEAS<TEMP<AutoRef>>::expr] (unsafe_deptr (that))) ;
+			assert (tmp.available ()) ;
+			return keep[TYPEAS<CREF<AutoRef>>::expr] (tmp) ;
+		}
+
+		template <class ARG1>
+		imports CREF<AutoRef> from (RREF<ARG1>) = delete ;
+
 		template <class...ARG1>
 		imports AutoRef make (XREF<ARG1>...obj) {
-			using R1X = typename AUTOREF_IMPLHOLDER_HELP<UNIT ,ALWAYS>::ImplHolder ;
+			using R1X = typename AUTOREF_PUREHOLDER_HELP<UNIT ,ALWAYS>::PureHolder ;
 			AutoRef ret ;
 			ret.mThis = VRef<R1X>::make () ;
 			ret.mThis->initialize () ;
@@ -1043,6 +1163,7 @@ trait AUTOREF_HELP<UNIT ,REQUIRE<ENUM_NOT<IS_VOID<UNIT>>>> {
 		}
 
 		inline BOOL operator== (CREF<typeof (NULL)>) = delete ;
+
 		inline BOOL operator!= (CREF<typeof (NULL)>) = delete ;
 
 		BOOL available () const {
@@ -1084,20 +1205,6 @@ trait AUTOREF_HELP<UNIT ,REQUIRE<ENUM_NOT<IS_VOID<UNIT>>>> {
 		}
 
 		template <class ARG1>
-		VREF<CastAutoRef<ARG1>> rebind (CREF<TYPEID<ARG1>> id) leftvalue {
-			auto &&tmp = unsafe_deref (unsafe_cast[TYPEAS<TEMP<CastAutoRef<ARG1>>>::expr] (unsafe_deptr (thiz))) ;
-			assert (tmp.available ()) ;
-			return tmp ;
-		}
-
-		template <class ARG1>
-		CREF<CastAutoRef<ARG1>> rebind (CREF<TYPEID<ARG1>> id) const leftvalue {
-			auto &&tmp = unsafe_deref (unsafe_cast[TYPEAS<TEMP<CastAutoRef<ARG1>>>::expr] (unsafe_deptr (thiz))) ;
-			assert (tmp.available ()) ;
-			return tmp ;
-		}
-
-		template <class ARG1>
 		CastAutoRef<ARG1> as_cast (CREF<TYPEID<ARG1>> id) {
 			CastAutoRef<ARG1> ret ;
 			if ifswitch (TRUE) {
@@ -1118,16 +1225,14 @@ trait AUTOREF_HELP<UNIT ,REQUIRE<ENUM_NOT<IS_VOID<UNIT>>>> {
 } ;
 
 template <class UNIT>
-trait AUTOREF_IMPLHOLDER_HELP<UNIT ,ALWAYS> {
+trait AUTOREF_PUREHOLDER_HELP<UNIT ,ALWAYS> {
 	using Holder = typename AUTOREF_HELP<UNIT ,ALWAYS>::Holder ;
 
-	class ImplHolder implement Holder {
+	class PureHolder implement Holder {
 	protected:
 		Box<UNIT> mValue ;
 
 	public:
-		implicit ImplHolder () = default ;
-
 		void initialize () override {
 			noop () ;
 		}
@@ -1152,7 +1257,7 @@ template <class...>
 trait SHAREDREF_HOLDER_HELP ;
 
 template <class...>
-trait SHAREDREF_IMPLHOLDER_HELP ;
+trait SHAREDREF_PUREHOLDER_HELP ;
 
 template <class DEPEND>
 trait SHAREDREF_HOLDER_HELP<DEPEND ,ALWAYS> {
@@ -1193,11 +1298,11 @@ trait SHAREDREF_HELP<UNIT ,ALWAYS> {
 
 		template <class...ARG1>
 		imports SharedRef make (XREF<ARG1>...obj) {
-			using R1X = typename SHAREDREF_IMPLHOLDER_HELP<UNIT ,ALWAYS>::ImplHolder ;
+			using R1X = typename SHAREDREF_PUREHOLDER_HELP<UNIT ,ALWAYS>::PureHolder ;
 			SharedRef ret ;
 			auto rax = VRef<R1X>::make ().as_cast (TYPEAS<Holder>::expr) ;
 			rax->initialize () ;
-			ret.mThis = rax.as_con () ;
+			ret.mThis = move (rax) ;
 			ret.mPointer = ret.mThis->pointer () ;
 			//@warn: depend on it's address
 			ret.fake.acquire (TYPEAS<UNIT>::expr ,forward[TYPEAS<ARG1>::expr] (obj)...) ;
@@ -1239,6 +1344,7 @@ trait SHAREDREF_HELP<UNIT ,ALWAYS> {
 		}
 
 		inline BOOL operator== (CREF<typeof (NULL)>) = delete ;
+
 		inline BOOL operator!= (CREF<typeof (NULL)>) = delete ;
 
 		BOOL available () const {
@@ -1275,17 +1381,15 @@ trait SHAREDREF_HELP<UNIT ,ALWAYS> {
 } ;
 
 template <class UNIT>
-trait SHAREDREF_IMPLHOLDER_HELP<UNIT ,ALWAYS> {
+trait SHAREDREF_PUREHOLDER_HELP<UNIT ,ALWAYS> {
 	using Holder = typename SHAREDREF_HELP<UNIT ,ALWAYS>::Holder ;
 
-	class ImplHolder implement Holder {
+	class PureHolder implement Holder {
 	protected:
-		LENGTH mCounter ;
+		VAL32 mCounter ;
 		Box<UNIT> mValue ;
 
 	public:
-		implicit ImplHolder () = default ;
-
 		void initialize () override {
 			mCounter = 0 ;
 		}
@@ -1299,12 +1403,12 @@ trait SHAREDREF_IMPLHOLDER_HELP<UNIT ,ALWAYS> {
 		}
 
 		void enter () override {
-			//@error: not thread-safe
+			//@warn: VAL32 as atomic
 			mCounter++ ;
 		}
 
 		void leave () override {
-			//@error: not thread-safe
+			//@warn: VAL32 as atomic
 			mCounter-- ;
 			if (mCounter > 0)
 				return ;
@@ -1364,11 +1468,11 @@ trait UNIQUEREF_HELP<UNIT ,REQUIRE<IS_VOID<UNIT>>> {
 		template <class ARG1 ,class ARG2>
 		explicit UniqueRef (RREF<ARG1> constructor ,RREF<ARG2> destructor) {
 			using R1X = Function<void> ;
-			using R2X = typename UNIQUEREF_IMPLHOLDER_HELP<UNIT ,ALWAYS>::ImplHolder ;
+			using R2X = typename UNIQUEREF_IMPLHOLDER_HELP<UNIT ,ALWAYS>::PureHolder ;
 			mThis = VRef<R2X>::make () ;
-			auto rax = Box<R1X>::make (move (destructor)) ;
-			assert (ifnot (rax->effective ())) ;
-			mThis->initialize (move (rax.self)) ;
+			auto rax = R1X (move (destructor)) ;
+			assert (ifnot (rax.effective ())) ;
+			mThis->initialize (move (rax)) ;
 			mPointer = mThis->pointer () ;
 			constructor () ;
 			mHandle = Scope<Holder> (mThis.self) ;
@@ -1381,6 +1485,7 @@ trait UNIQUEREF_HELP<UNIT ,REQUIRE<IS_VOID<UNIT>>> {
 		}
 
 		inline BOOL operator== (CREF<typeof (NULL)>) = delete ;
+
 		inline BOOL operator!= (CREF<typeof (NULL)>) = delete ;
 
 		BOOL available () const {
@@ -1408,11 +1513,11 @@ trait UNIQUEREF_HELP<UNIT ,REQUIRE<ENUM_NOT<IS_VOID<UNIT>>>> {
 		template <class ARG1 ,class ARG2>
 		explicit UniqueRef (RREF<ARG1> constructor ,RREF<ARG2> destructor) {
 			using R1X = Function<void ,TYPEAS<VREF<UNIT>>> ;
-			using R2X = typename UNIQUEREF_IMPLHOLDER_HELP<UNIT ,ALWAYS>::ImplHolder ;
+			using R2X = typename UNIQUEREF_IMPLHOLDER_HELP<UNIT ,ALWAYS>::PureHolder ;
 			mThis = VRef<R2X>::make () ;
-			auto rax = Box<R1X>::make (move (destructor)) ;
-			assert (ifnot (rax->effective ())) ;
-			mThis->initialize (move (rax.self)) ;
+			auto rax = R1X (move (destructor)) ;
+			assert (ifnot (rax.effective ())) ;
+			mThis->initialize (move (rax)) ;
 			mPointer = mThis->pointer () ;
 			//@warn: depend on it's address
 			fake.acquire (TYPEAS<UNIT>::expr) ;
@@ -1423,12 +1528,12 @@ trait UNIQUEREF_HELP<UNIT ,REQUIRE<ENUM_NOT<IS_VOID<UNIT>>>> {
 		template <class...ARG1>
 		imports UniqueRef make (XREF<ARG1>...obj) {
 			using R1X = Function<void ,TYPEAS<VREF<UNIT>>> ;
-			using R2X = typename UNIQUEREF_IMPLHOLDER_HELP<UNIT ,ALWAYS>::ImplHolder ;
+			using R2X = typename UNIQUEREF_IMPLHOLDER_HELP<UNIT ,ALWAYS>::PureHolder ;
 			UniqueRef ret ;
 			ret.mThis = VRef<R2X>::make () ;
-			auto rax = Box<R1X>::make ([] (VREF<UNIT>) {}) ;
-			assert (ifnot (rax->effective ())) ;
-			ret.mThis->initialize (move (rax.self)) ;
+			auto rax = R1X ([] (VREF<UNIT>) {}) ;
+			assert (ifnot (rax.effective ())) ;
+			ret.mThis->initialize (move (rax)) ;
 			ret.mPointer = ret.mThis->pointer () ;
 			//@warn: depend on it's address
 			ret.fake.acquire (TYPEAS<UNIT>::expr ,forward[TYPEAS<ARG1>::expr] (obj)...) ;
@@ -1443,6 +1548,7 @@ trait UNIQUEREF_HELP<UNIT ,REQUIRE<ENUM_NOT<IS_VOID<UNIT>>>> {
 		}
 
 		inline BOOL operator== (CREF<typeof (NULL)>) = delete ;
+
 		inline BOOL operator!= (CREF<typeof (NULL)>) = delete ;
 
 		BOOL available () const {
@@ -1474,19 +1580,17 @@ template <class UNIT>
 trait UNIQUEREF_IMPLHOLDER_HELP<UNIT ,REQUIRE<IS_VOID<UNIT>>> {
 	using Holder = typename UNIQUEREF_HELP<UNIT ,ALWAYS>::Holder ;
 
-	class ImplHolder implement Holder {
+	class PureHolder implement Holder {
 	protected:
 		Function<void> mDestructor ;
 
 	public:
-		implicit ImplHolder () = default ;
-
 		void initialize (RREF<Auto> destructor) override {
 			mDestructor = destructor.poll (TYPEAS<Function<void>>::expr) ;
 		}
 
 		FLAG pointer () const override {
-			return ZERO ;
+			return USED ;
 		}
 
 		void enter () override {
@@ -1503,14 +1607,12 @@ template <class UNIT>
 trait UNIQUEREF_IMPLHOLDER_HELP<UNIT ,REQUIRE<ENUM_NOT<IS_VOID<UNIT>>>> {
 	using Holder = typename UNIQUEREF_HELP<UNIT ,ALWAYS>::Holder ;
 
-	class ImplHolder implement Holder {
+	class PureHolder implement Holder {
 	protected:
 		Function<void ,TYPEAS<VREF<UNIT>>> mDestructor ;
 		Box<UNIT> mValue ;
 
 	public:
-		implicit ImplHolder () = default ;
-
 		void initialize (RREF<Auto> destructor) override {
 			mDestructor = destructor.poll (TYPEAS<Function<void ,TYPEAS<VREF<UNIT>>>>::expr) ;
 		}
@@ -1524,13 +1626,71 @@ trait UNIQUEREF_IMPLHOLDER_HELP<UNIT ,REQUIRE<ENUM_NOT<IS_VOID<UNIT>>>> {
 		}
 
 		void leave () override {
-			mDestructor (mValue) ;
+			mDestructor (mValue.self) ;
 		}
 	} ;
 } ;
 
 template <class UNIT = void>
 using UniqueRef = typename UNIQUEREF_HELP<UNIT ,ALWAYS>::UniqueRef ;
+
+template <class...>
+trait BOOLPROXY_HELP ;
+
+template <class DEPEND>
+trait BOOLPROXY_HELP<DEPEND ,ALWAYS> {
+	class BoolProxy {
+	protected:
+		LENGTH mBool ;
+
+	public:
+		implicit BoolProxy () = delete ;
+
+		implicit BoolProxy (CREF<BOOL> bool_) {
+			mBool = bool_ ;
+		}
+
+		template <class ARG1>
+		implicit BoolProxy (CREF<ARG1>) = delete ;
+
+		inline implicit operator BOOL () const {
+			return mBool ;
+		}
+	} ;
+} ;
+
+using BoolProxy = typename BOOLPROXY_HELP<DEPEND ,ALWAYS>::BoolProxy ;
+
+template <class...>
+trait SIZEPROXY_HELP ;
+
+template <class DEPEND>
+trait SIZEPROXY_HELP<DEPEND ,ALWAYS> {
+	class SizeProxy {
+	protected:
+		LENGTH mSize ;
+
+	public:
+		implicit SizeProxy () = delete ;
+
+		implicit SizeProxy (CREF<VAL32> size_) {
+			mSize = LENGTH (size_) ;
+		}
+
+		implicit SizeProxy (CREF<VAL64> size_) {
+			mSize = LENGTH (size_) ;
+		}
+
+		template <class ARG1>
+		implicit SizeProxy (CREF<ARG1>) = delete ;
+
+		inline implicit operator LENGTH () const {
+			return mSize ;
+		}
+	} ;
+} ;
+
+using SizeProxy = typename SIZEPROXY_HELP<DEPEND ,ALWAYS>::SizeProxy ;
 
 template <class...>
 trait BUFFER_HELP ;
@@ -1561,6 +1721,8 @@ trait BOXBUFFER_HOLDER_HELP<ITEM ,SIZE ,ATTR ,REQUIRE<ATTR>> {
 		implicit Buffer () = default ;
 
 		implicit Buffer (CREF<Buffer> that) {
+			if (that.mBuffer == NULL)
+				return ;
 			mBuffer = Box<ARR<ITEM ,SIZE>>::make (that.mBuffer.self) ;
 		}
 
@@ -1595,12 +1757,11 @@ trait BUFFER_HELP<ITEM ,SIZE ,REQUIRE<ENUM_GT_ZERO<SIZE>>> {
 	public:
 		implicit Buffer () = default ;
 
-		template <class ARG1 = DEPEND>
-		implicit Buffer (CREF<DEPENDENT<ARR<ITEM ,SIZE> ,ARG1>> that) {
-			mBuffer = Box<ARR<ITEM ,SIZE>>::make (keep[TYPEAS<CREF<ARR<ITEM ,SIZE>>>::expr] (that)) ;
+		implicit Buffer (CREF<ARR<ITEM ,SIZE>> that) {
+			mBuffer = Box<ARR<ITEM ,SIZE>>::make (that) ;
 		}
 
-		explicit Buffer (CREF<LENGTH> size_) {
+		explicit Buffer (CREF<SizeProxy> size_) {
 			assert (size_ >= 0) ;
 			assert (size_ <= SIZE::expr) ;
 			mBuffer = Box<ARR<ITEM ,SIZE>>::make () ;
@@ -1610,12 +1771,6 @@ trait BUFFER_HELP<ITEM ,SIZE ,REQUIRE<ENUM_GT_ZERO<SIZE>>> {
 			if (mBuffer == NULL)
 				return ZERO ;
 			return SIZE::expr ;
-		}
-
-		LENGTH align () const {
-			if (mBuffer == NULL)
-				return ZERO ;
-			return SIZE_OF<ITEM>::expr ;
 		}
 
 		VREF<ARR<ITEM>> self_m () leftvalue {
@@ -1665,7 +1820,7 @@ trait BUFFER_HELP<ITEM ,SIZE ,REQUIRE<ENUM_GT_ZERO<SIZE>>> {
 		BOOL equal (CREF<Buffer> that) const {
 			if (size () != that.size ())
 				return FALSE ;
-			return BufferProc::buf_equal (mBuffer.self ,that.mBuffer.self ,0 ,size ()) ;
+			return BufferProc::buf_equal (self ,that.self ,0 ,size ()) ;
 		}
 
 		inline BOOL operator== (CREF<Buffer> that) const {
@@ -1678,7 +1833,7 @@ trait BUFFER_HELP<ITEM ,SIZE ,REQUIRE<ENUM_GT_ZERO<SIZE>>> {
 
 		FLAG compr (CREF<Buffer> that) const {
 			const auto r1x = vmin (size () ,that.size ()) ;
-			return BufferProc::buf_compr (mBuffer.self ,that.mBuffer.self ,0 ,r1x) ;
+			return BufferProc::buf_compr (self ,that.self ,0 ,r1x) ;
 		}
 
 		inline BOOL operator< (CREF<Buffer> that) const {
@@ -1698,7 +1853,7 @@ trait BUFFER_HELP<ITEM ,SIZE ,REQUIRE<ENUM_GT_ZERO<SIZE>>> {
 		}
 
 		FLAG hash () const {
-			return BufferProc::buf_hash (mBuffer.self ,0 ,size ()) ;
+			return BufferProc::buf_hash (self ,0 ,size ()) ;
 		}
 	} ;
 } ;
@@ -1718,12 +1873,10 @@ trait VARBUFFER_HOLDER_HELP<ITEM ,ATTR ,REQUIRE<ENUM_NOT<ATTR>>> {
 	protected:
 		VRef<ARR<ITEM>> mBuffer ;
 		LENGTH mSize ;
-		LENGTH mAlign ;
 
 	public:
 		implicit Buffer () noexcept {
 			mSize = 0 ;
-			mAlign = 0 ;
 		}
 	} ;
 } ;
@@ -1736,7 +1889,6 @@ trait VARBUFFER_HOLDER_HELP<ITEM ,ATTR ,REQUIRE<ATTR>> {
 	protected:
 		using SUPER::mBuffer ;
 		using SUPER::mSize ;
-		using SUPER::mAlign ;
 
 	public:
 		implicit Buffer () = default ;
@@ -1747,7 +1899,6 @@ trait VARBUFFER_HOLDER_HELP<ITEM ,ATTR ,REQUIRE<ATTR>> {
 			mBuffer = VRef<ARR<ITEM>>::make (that.mSize) ;
 			BufferProc::buf_copy (mBuffer.self ,that.mBuffer.self ,0 ,that.mSize) ;
 			mSize = that.mSize ;
-			mAlign = that.mAlign ;
 		}
 
 		inline VREF<Buffer> operator= (CREF<Buffer> that) {
@@ -1788,34 +1939,27 @@ trait BUFFER_HELP<ITEM ,SIZE ,REQUIRE<IS_SAME<SIZE ,VARIABLE>>> {
 	protected:
 		using SUPER::mBuffer ;
 		using SUPER::mSize ;
-		using SUPER::mAlign ;
 
 	public:
 		implicit Buffer () = default ;
 
-		template <class ARG1 = DEPEND>
-		implicit Buffer (RREF<DEPENDENT<ConBuffer ,ARG1>> that)
-			:Buffer (that.as_var ()) {}
+		implicit Buffer (RREF<ConBuffer> that) {
+			mBuffer = move (that.mBuffer) ;
+			mSize = that.mSize ;
+		}
 
-		explicit Buffer (CREF<LENGTH> size_) {
+		explicit Buffer (CREF<SizeProxy> size_) {
 			assert (size_ >= 0) ;
 			if (size_ == 0)
 				return ;
 			mBuffer = VRef<ARR<ITEM>>::make (size_) ;
 			mSize = size_ ;
-			mAlign = SIZE_OF<ITEM>::expr ;
 		}
 
 		LENGTH size () const {
 			if (mBuffer == NULL)
 				return ZERO ;
 			return mSize ;
-		}
-
-		LENGTH align () const {
-			if (mBuffer == NULL)
-				return ZERO ;
-			return mAlign ;
 		}
 
 		VREF<ARR<ITEM>> self_m () leftvalue {
@@ -1859,37 +2003,34 @@ trait BUFFER_HELP<ITEM ,SIZE ,REQUIRE<IS_SAME<SIZE ,VARIABLE>>> {
 		void resize (CREF<LENGTH> size_) {
 			if (size_ == size ())
 				return ;
-			auto rxx = TRUE ;
-			if ifswitch (rxx) {
+			auto act = TRUE ;
+			if ifswitch (act) {
 				if (mBuffer == NULL)
 					discard ;
 				if (size_ == 0)
 					discard ;
 				auto rax = VRef<ARR<ITEM>>::make (size_) ;
 				const auto r1x = vmin (size_ ,mSize) ;
-				BufferProc::buf_move (rax.self ,mBuffer.self ,0 ,r1x) ;
+				BufferProc::buf_swap (rax.self ,mBuffer.self ,0 ,r1x) ;
 				mBuffer = move (rax) ;
 				mSize = size_ ;
-				mAlign = SIZE_OF<ITEM>::expr ;
 			}
-			if ifswitch (rxx) {
+			if ifswitch (act) {
 				if (size_ == 0)
 					discard ;
 				mBuffer = VRef<ARR<ITEM>>::make (size_) ;
 				mSize = size_ ;
-				mAlign = SIZE_OF<ITEM>::expr ;
 			}
-			if ifswitch (rxx) {
+			if ifswitch (act) {
 				mBuffer = NULL ;
 				mSize = 0 ;
-				mAlign = 0 ;
 			}
 		}
 
 		BOOL equal (CREF<Buffer> that) const {
 			if (size () != that.size ())
 				return FALSE ;
-			return BufferProc::buf_equal (mBuffer.self ,that.mBuffer.self ,0 ,size ()) ;
+			return BufferProc::buf_equal (self ,that.self ,0 ,size ()) ;
 		}
 
 		inline BOOL operator== (CREF<Buffer> that) const {
@@ -1902,7 +2043,7 @@ trait BUFFER_HELP<ITEM ,SIZE ,REQUIRE<IS_SAME<SIZE ,VARIABLE>>> {
 
 		FLAG compr (CREF<Buffer> that) const {
 			const auto r1x = vmin (size () ,that.size ()) ;
-			return BufferProc::buf_compr (mBuffer.self ,that.mBuffer.self ,0 ,r1x) ;
+			return BufferProc::buf_compr (self ,that.self ,0 ,r1x) ;
 		}
 
 		inline BOOL operator< (CREF<Buffer> that) const {
@@ -1922,15 +2063,7 @@ trait BUFFER_HELP<ITEM ,SIZE ,REQUIRE<IS_SAME<SIZE ,VARIABLE>>> {
 		}
 
 		FLAG hash () const {
-			return BufferProc::buf_hash (mBuffer.self ,0 ,size ()) ;
-		}
-
-		ConBuffer as_con () {
-			ConBuffer ret ;
-			ret.mBuffer = mBuffer.as_con () ;
-			ret.mSize = mSize ;
-			ret.mAlign = mAlign ;
-			return move (ret) ;
+			return BufferProc::buf_hash (self ,0 ,size ()) ;
 		}
 
 		template <class ARG1>
@@ -1941,7 +2074,6 @@ trait BUFFER_HELP<ITEM ,SIZE ,REQUIRE<IS_SAME<SIZE ,VARIABLE>>> {
 				auto &&tmp = unsafe_deref (unsafe_cast[TYPEAS<TEMP<VRef<ARR<ARG1>>>>::expr] (unsafe_deptr (mBuffer))) ;
 				ret.mBuffer = move (tmp) ;
 				ret.mSize = mSize ;
-				ret.mAlign = mAlign ;
 			}
 			return move (ret) ;
 		}
@@ -1960,12 +2092,10 @@ trait CONBUFFER_HOLDER_HELP<ITEM ,ALWAYS> {
 	protected:
 		CRef<ARR<ITEM>> mBuffer ;
 		LENGTH mSize ;
-		LENGTH mAlign ;
 
 	public:
 		implicit Buffer () noexcept {
 			mSize = 0 ;
-			mAlign = 0 ;
 		}
 	} ;
 } ;
@@ -1986,34 +2116,27 @@ trait BUFFER_HELP<ITEM ,SIZE ,REQUIRE<IS_SAME<SIZE ,CONSTANT>>> {
 	protected:
 		using SUPER::mBuffer ;
 		using SUPER::mSize ;
-		using SUPER::mAlign ;
 
 	public:
 		implicit Buffer () = default ;
 
-		template <class ARG1 = DEPEND>
-		implicit Buffer (RREF<DEPENDENT<VarBuffer ,ARG1>> that)
-			:Buffer (that.as_con ()) {}
+		implicit Buffer (RREF<VarBuffer> that) {
+			mBuffer = move (that.mBuffer) ;
+			mSize = that.mSize ;
+		}
 
-		explicit Buffer (CREF<LENGTH> size_) {
+		explicit Buffer (CREF<SizeProxy> size_) {
 			assert (size_ >= 0) ;
 			if (size_ == 0)
 				return ;
 			mBuffer = CRef<ARR<ITEM>>::make (size_) ;
 			mSize = size_ ;
-			mAlign = SIZE_OF<ITEM>::expr ;
 		}
 
 		LENGTH size () const {
 			if (mBuffer == NULL)
 				return ZERO ;
 			return mSize ;
-		}
-
-		LENGTH align () const {
-			if (mBuffer == NULL)
-				return ZERO ;
-			return mAlign ;
 		}
 
 		CREF<ARR<ITEM>> self_m () const leftvalue {
@@ -2038,13 +2161,13 @@ trait BUFFER_HELP<ITEM ,SIZE ,REQUIRE<IS_SAME<SIZE ,CONSTANT>>> {
 		void resize (CREF<LENGTH> size_) {
 			if (size_ == size ())
 				return ;
-			assert (FALSE) ;
+			assume (FALSE) ;
 		}
 
 		BOOL equal (CREF<Buffer> that) const {
 			if (size () != that.size ())
 				return FALSE ;
-			return BufferProc::buf_equal (mBuffer.self ,that.mBuffer.self ,0 ,size ()) ;
+			return BufferProc::buf_equal (self ,that.self ,0 ,size ()) ;
 		}
 
 		inline BOOL operator== (CREF<Buffer> that) const {
@@ -2057,7 +2180,7 @@ trait BUFFER_HELP<ITEM ,SIZE ,REQUIRE<IS_SAME<SIZE ,CONSTANT>>> {
 
 		FLAG compr (CREF<Buffer> that) const {
 			const auto r1x = vmin (size () ,that.size ()) ;
-			return BufferProc::buf_compr (mBuffer.self ,that.mBuffer.self ,0 ,r1x) ;
+			return BufferProc::buf_compr (self ,that.self ,0 ,r1x) ;
 		}
 
 		inline BOOL operator< (CREF<Buffer> that) const {
@@ -2077,15 +2200,7 @@ trait BUFFER_HELP<ITEM ,SIZE ,REQUIRE<IS_SAME<SIZE ,CONSTANT>>> {
 		}
 
 		FLAG hash () const {
-			return BufferProc::buf_hash (mBuffer.self ,0 ,size ()) ;
-		}
-
-		VarBuffer as_var () {
-			VarBuffer ret ;
-			ret.mBuffer = mBuffer.as_var () ;
-			ret.mSize = mSize ;
-			ret.mAlign = mAlign ;
-			return move (ret) ;
+			return BufferProc::buf_hash (self ,0 ,size ()) ;
 		}
 
 		template <class ARG1>
@@ -2096,7 +2211,6 @@ trait BUFFER_HELP<ITEM ,SIZE ,REQUIRE<IS_SAME<SIZE ,CONSTANT>>> {
 				auto &&tmp = unsafe_deref (unsafe_cast[TYPEAS<TEMP<CRef<ARR<ARG1>>>>::expr] (unsafe_deptr (mBuffer))) ;
 				ret.mBuffer = move (tmp) ;
 				ret.mSize = mSize ;
-				ret.mAlign = mAlign ;
 			}
 			return move (ret) ;
 		}
@@ -2108,26 +2222,27 @@ using ConBuffer = typename BUFFER_HELP<ITEM ,CONSTANT ,ALWAYS>::Buffer ;
 
 template <class ITEM ,class SIZE>
 trait BUFFER_HELP<ITEM ,SIZE ,REQUIRE<IS_SAME<SIZE ,REGISTER>>> {
-	struct UNNAMED ;
+	struct UNNAMED {
+		VarBuffer<ITEM> mUnnamed ;
+	} ;
 
 	class Buffer extend Proxy {
 	protected:
 		VRef<ARR<ITEM>> mBuffer ;
 		LENGTH mSize ;
-		LENGTH mAlign ;
 
 	public:
 		imports VREF<Buffer> from (VREF<VarBuffer<ITEM>> that) {
 			return unsafe_deref (unsafe_cast[TYPEAS<TEMP<Buffer>>::expr] (unsafe_deptr (that))) ;
 		}
 
-		imports CREF<Buffer> from (CREF<VarBuffer<ITEM>> that) {
+		imports CREF<Buffer> from (LREF<VarBuffer<ITEM>> that) {
 			return unsafe_deref (unsafe_cast[TYPEAS<TEMP<Buffer>>::expr] (unsafe_deptr (that))) ;
 		}
 
 		imports CREF<Buffer> from (RREF<VarBuffer<ITEM>>) = delete ;
 
-		imports CREF<Buffer> from (CREF<ConBuffer<ITEM>> that) {
+		imports CREF<Buffer> from (LREF<ConBuffer<ITEM>> that) {
 			return unsafe_deref (unsafe_cast[TYPEAS<TEMP<Buffer>>::expr] (unsafe_deptr (that))) ;
 		}
 
@@ -2148,17 +2263,16 @@ trait BUFFER_HELP<ITEM ,SIZE ,REQUIRE<IS_SAME<SIZE ,REGISTER>>> {
 					discard ;
 				tmp.mBuffer = VRef<ARR<ITEM>>::reference (unsafe_array (buffer[begin_])) ;
 				tmp.mSize = r1x ;
-				tmp.mAlign = SIZE_OF<ITEM>::expr ;
 			}
 			return from (tmp) ;
 		}
 
-		imports CREF<Buffer> make (CREF<TEMP<void>> buffer ,CREF<INDEX> begin_ ,CREF<INDEX> end_ ,RREF<UNNAMED> unnamed = UNNAMED ()) {
+		imports CREF<Buffer> make (LREF<TEMP<void>> buffer ,CREF<INDEX> begin_ ,CREF<INDEX> end_ ,RREF<UNNAMED> unnamed = UNNAMED ()) {
 			auto &&tmp = unsafe_deref (unsafe_cast[TYPEAS<TEMP<ARR<ITEM>>>::expr] (buffer)) ;
 			return make (tmp ,begin_ ,end_ ,move (unnamed)) ;
 		}
 
-		imports CREF<Buffer> make (CREF<ARR<ITEM>> buffer ,CREF<INDEX> begin_ ,CREF<INDEX> end_ ,RREF<UNNAMED> unnamed = UNNAMED ()) {
+		imports CREF<Buffer> make (LREF<ARR<ITEM>> buffer ,CREF<INDEX> begin_ ,CREF<INDEX> end_ ,RREF<UNNAMED> unnamed = UNNAMED ()) {
 			assert (begin_ >= 0) ;
 			assert (end_ >= 0) ;
 			auto &&tmp = unsafe_deref (unsafe_cast[TYPEAS<TEMP<ConBuffer<ITEM>>>::expr] (unsafe_deptr (unnamed))) ;
@@ -2168,32 +2282,29 @@ trait BUFFER_HELP<ITEM ,SIZE ,REQUIRE<IS_SAME<SIZE ,REGISTER>>> {
 					discard ;
 				tmp.mBuffer = CRef<ARR<ITEM>>::reference (unsafe_array (buffer[begin_])) ;
 				tmp.mSize = r1x ;
-				tmp.mAlign = SIZE_OF<ITEM>::expr ;
 			}
 			return from (tmp) ;
 		}
 
-		VRef<Buffer> ref () leftvalue {
+		VRef<Buffer> as_ref () leftvalue {
 			auto rax = VRef<VarBuffer<ITEM>>::make () ;
 			if ifswitch (TRUE) {
 				if (mBuffer == NULL)
 					discard ;
 				rax->mBuffer = VRef<ARR<ITEM>>::reference (mBuffer.self) ;
 				rax->mSize = mSize ;
-				rax->mAlign = SIZE_OF<ITEM>::expr ;
 			}
 			auto &&tmp = unsafe_deref (unsafe_cast[TYPEAS<TEMP<VRef<Buffer>>>::expr] (unsafe_deptr (rax))) ;
 			return move (tmp) ;
 		}
 
-		CRef<Buffer> ref () const leftvalue {
+		CRef<Buffer> as_ref () const leftvalue {
 			auto rax = VRef<ConBuffer<ITEM>>::make () ;
 			if ifswitch (TRUE) {
 				if (mBuffer == NULL)
 					discard ;
 				rax->mBuffer = CRef<ARR<ITEM>>::reference (mBuffer.self) ;
 				rax->mSize = mSize ;
-				rax->mAlign = mAlign ;
 			}
 			auto &&tmp = unsafe_deref (unsafe_cast[TYPEAS<TEMP<CRef<Buffer>>>::expr] (unsafe_deptr (rax))) ;
 			return move (tmp) ;
@@ -2203,12 +2314,6 @@ trait BUFFER_HELP<ITEM ,SIZE ,REQUIRE<IS_SAME<SIZE ,REGISTER>>> {
 			if (mBuffer == NULL)
 				return ZERO ;
 			return mSize ;
-		}
-
-		LENGTH align () const {
-			if (mBuffer == NULL)
-				return ZERO ;
-			return mAlign ;
 		}
 
 		VREF<ARR<ITEM>> self_m () leftvalue {
@@ -2258,7 +2363,7 @@ trait BUFFER_HELP<ITEM ,SIZE ,REQUIRE<IS_SAME<SIZE ,REGISTER>>> {
 		BOOL equal (CREF<Buffer> that) const {
 			if (size () != that.size ())
 				return FALSE ;
-			return BufferProc::buf_equal (mBuffer.self ,that.mBuffer.self ,0 ,size ()) ;
+			return BufferProc::buf_equal (self ,that.self ,0 ,size ()) ;
 		}
 
 		inline BOOL operator== (CREF<Buffer> that) const {
@@ -2271,7 +2376,7 @@ trait BUFFER_HELP<ITEM ,SIZE ,REQUIRE<IS_SAME<SIZE ,REGISTER>>> {
 
 		FLAG compr (CREF<Buffer> that) const {
 			const auto r1x = vmin (size () ,that.size ()) ;
-			return BufferProc::buf_compr (mBuffer.self ,that.mBuffer.self ,0 ,r1x) ;
+			return BufferProc::buf_compr (self ,that.self ,0 ,r1x) ;
 		}
 
 		inline BOOL operator< (CREF<Buffer> that) const {
@@ -2291,12 +2396,8 @@ trait BUFFER_HELP<ITEM ,SIZE ,REQUIRE<IS_SAME<SIZE ,REGISTER>>> {
 		}
 
 		FLAG hash () const {
-			return BufferProc::buf_hash (mBuffer.self ,0 ,size ()) ;
+			return BufferProc::buf_hash (self ,0 ,size ()) ;
 		}
-	} ;
-
-	struct UNNAMED {
-		VarBuffer<ITEM> mUnnamed ;
 	} ;
 } ;
 
@@ -2304,16 +2405,16 @@ template <class ITEM>
 using RegBuffer = typename BUFFER_HELP<ITEM ,REGISTER ,ALWAYS>::Buffer ;
 
 template <class...>
-trait DYNBUFFER_IMPLHOLDER_HELP ;
+trait FUNBUFFER_PUREHOLDER_HELP ;
 
 template <class ITEM ,class SIZE>
-trait BUFFER_HELP<ITEM ,SIZE ,REQUIRE<IS_SAME<SIZE ,DYNAMICS>>> {
+trait BUFFER_HELP<ITEM ,SIZE ,REQUIRE<IS_SAME<SIZE ,FUNCTION>>> {
 	struct Holder implement Interface {
 		virtual void initialize (RREF<Auto> value_) = 0 ;
 		virtual LENGTH size () const = 0 ;
-		virtual LENGTH align () const = 0 ;
 		virtual VREF<ITEM> at (CREF<INDEX> index) leftvalue = 0 ;
 		virtual CREF<ITEM> at (CREF<INDEX> index) const leftvalue = 0 ;
+		virtual void resize (CREF<LENGTH> size_) = 0 ;
 	} ;
 
 	class Buffer {
@@ -2323,24 +2424,21 @@ trait BUFFER_HELP<ITEM ,SIZE ,REQUIRE<IS_SAME<SIZE ,DYNAMICS>>> {
 	public:
 		implicit Buffer () = default ;
 
-		template <class ARG1 ,class = REQUIRE<ENUM_NOT<IS_SAME<ARG1 ,Buffer>>>>
-		explicit Buffer (RREF<ARG1> that) {
-			require (IS_CLASS<ARG1>) ;
-			using R1X = typename DYNBUFFER_IMPLHOLDER_HELP<ITEM ,ARG1 ,ALWAYS>::ImplHolder ;
+		template <class ARG1 ,class = REQUIRE<ENUM_ALL<ENUM_NOT<IS_SAME<ARG1 ,Buffer>> ,IS_CLASS<ARG1>>>>
+		implicit Buffer (RREF<ARG1> that) {
+			using R1X = typename FUNBUFFER_PUREHOLDER_HELP<ITEM ,ARG1 ,ALWAYS>::PureHolder ;
 			mThis = VRef<R1X>::make () ;
 			mThis->initialize (move (that)) ;
+		}
+
+		explicit Buffer (CREF<SizeProxy> size_) {
+			assert (size_ == 0) ;
 		}
 
 		LENGTH size () const {
 			if (mThis == NULL)
 				return ZERO ;
 			return mThis->size () ;
-		}
-
-		LENGTH align () const {
-			if (mThis == NULL)
-				return ZERO ;
-			return mThis->align () ;
 		}
 
 		VREF<ITEM> at (CREF<INDEX> index) leftvalue {
@@ -2364,7 +2462,7 @@ trait BUFFER_HELP<ITEM ,SIZE ,REQUIRE<IS_SAME<SIZE ,DYNAMICS>>> {
 		void resize (CREF<LENGTH> size_) {
 			if (size_ == size ())
 				return ;
-			assert (FALSE) ;
+			return mThis->resize (size_) ;
 		}
 
 		BOOL equal (CREF<Buffer> that) const {
@@ -2423,26 +2521,20 @@ trait BUFFER_HELP<ITEM ,SIZE ,REQUIRE<IS_SAME<SIZE ,DYNAMICS>>> {
 } ;
 
 template <class ITEM ,class UNIT>
-trait DYNBUFFER_IMPLHOLDER_HELP<ITEM ,UNIT ,ALWAYS> {
-	using Holder = typename BUFFER_HELP<ITEM ,DYNAMICS ,ALWAYS>::Holder ;
+trait FUNBUFFER_PUREHOLDER_HELP<ITEM ,UNIT ,ALWAYS> {
+	using Holder = typename BUFFER_HELP<ITEM ,FUNCTION ,ALWAYS>::Holder ;
 
-	class ImplHolder implement Holder {
+	class PureHolder implement Holder {
 	protected:
 		Box<UNIT> mValue ;
 
 	public:
-		implicit ImplHolder () = default ;
-
 		void initialize (RREF<Auto> value_) override {
 			mValue = Box<UNIT>::make (value_.poll (TYPEAS<UNIT>::expr)) ;
 		}
 
 		LENGTH size () const override {
 			return LENGTH (mValue->size ()) ;
-		}
-
-		LENGTH align () const override {
-			return SIZE_OF<ITEM>::expr ;
 		}
 
 		VREF<ITEM> at (CREF<INDEX> index) leftvalue override {
@@ -2452,11 +2544,15 @@ trait DYNBUFFER_IMPLHOLDER_HELP<ITEM ,UNIT ,ALWAYS> {
 		CREF<ITEM> at (CREF<INDEX> index) const leftvalue override {
 			return mValue.self[index] ;
 		}
+
+		void resize (CREF<LENGTH> size_) override {
+			assume (FALSE) ;
+		}
 	} ;
 } ;
 
 template <class ITEM>
-using DynBuffer = typename BUFFER_HELP<ITEM ,DYNAMICS ,ALWAYS>::Buffer ;
+using FunBuffer = typename BUFFER_HELP<ITEM ,FUNCTION ,ALWAYS>::Buffer ;
 
 template <class...>
 trait ALLOCATOR_HELP ;
@@ -2543,7 +2639,7 @@ trait ALLOCATOR_HELP<ITEM ,SIZE ,ALWAYS> {
 	using SUPER = typename ALLOCATOR_HOLDER_HELP<ITEM ,SIZE ,IS_CLONEABLE<ITEM> ,ALWAYS>::Allocator ;
 
 	using RESIZE_POW = RANK2 ;
-	using RESIZE_MIN_SIZE = ENUMAS<VAL ,ENUMID<256>> ;
+	using RESIZE_MIN_SIZE = ENUMAS<VAL ,256> ;
 
 	class Allocator extend SUPER {
 	protected:
@@ -2555,7 +2651,7 @@ trait ALLOCATOR_HELP<ITEM ,SIZE ,ALWAYS> {
 	public:
 		implicit Allocator () = default ;
 
-		explicit Allocator (CREF<LENGTH> size_) {
+		explicit Allocator (CREF<SizeProxy> size_) {
 			mAllocator = Buffer<NODE ,SIZE> (size_) ;
 		}
 
@@ -2575,10 +2671,6 @@ trait ALLOCATOR_HELP<ITEM ,SIZE ,ALWAYS> {
 			return mAllocator.size () ;
 		}
 
-		LENGTH align () const {
-			return mAllocator.align () ;
-		}
-
 		LENGTH length () const {
 			if (mAllocator.size () == 0)
 				return ZERO ;
@@ -2595,7 +2687,7 @@ trait ALLOCATOR_HELP<ITEM ,SIZE ,ALWAYS> {
 
 		VREF<ITEM> at (CREF<INDEX> index) leftvalue {
 			assert (used (index)) ;
-			return mAllocator[index].mItem ;
+			return mAllocator[index].mItem.self ;
 		}
 
 		inline VREF<ITEM> operator[] (CREF<INDEX> index) leftvalue {
@@ -2604,7 +2696,7 @@ trait ALLOCATOR_HELP<ITEM ,SIZE ,ALWAYS> {
 
 		CREF<ITEM> at (CREF<INDEX> index) const leftvalue {
 			assert (used (index)) ;
-			return mAllocator[index].mItem ;
+			return mAllocator[index].mItem.self ;
 		}
 
 		inline CREF<ITEM> operator[] (CREF<INDEX> index) const leftvalue {
@@ -2814,7 +2906,7 @@ trait INTEGER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		BOOL equal (CREF<Integer> that) const {
-			return mThis->equal (that.mThis) ;
+			return mThis->equal (that.mThis.self) ;
 		}
 
 		inline BOOL operator== (CREF<Integer> that) const {
@@ -2826,7 +2918,7 @@ trait INTEGER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		FLAG compr (CREF<Integer> that) const {
-			return mThis->compr (that.mThis) ;
+			return mThis->compr (that.mThis.self) ;
 		}
 
 		inline BOOL operator< (CREF<Integer> that) const {
@@ -2850,7 +2942,7 @@ trait INTEGER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		Integer add (CREF<Integer> that) const {
-			return mThis->add (keep[TYPEAS<CREF<Holder>>::expr] (that.mThis)) ;
+			return mThis->add (keep[TYPEAS<CREF<Holder>>::expr] (that.mThis.self)) ;
 		}
 
 		inline Integer operator+ (CREF<Integer> that) const {
@@ -2862,7 +2954,7 @@ trait INTEGER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		Integer sub (CREF<Integer> that) const {
-			return mThis->sub (keep[TYPEAS<CREF<Holder>>::expr] (that.mThis)) ;
+			return mThis->sub (keep[TYPEAS<CREF<Holder>>::expr] (that.mThis.self)) ;
 		}
 
 		inline Integer operator- (CREF<Integer> that) const {

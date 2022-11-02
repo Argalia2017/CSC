@@ -97,19 +97,19 @@ trait FILE_HELP<DEPEND ,ALWAYS> {
 		}
 
 		void copy_from (CREF<File> that) const {
-			return mThis->copy_from (that.mThis) ;
+			return mThis->copy_from (that.mThis.self) ;
 		}
 
 		void move_from (CREF<File> that) const {
-			return mThis->move_from (that.mThis) ;
+			return mThis->move_from (that.mThis.self) ;
 		}
 
 		void link_from (CREF<File> that) const {
-			return mThis->link_from (that.mThis) ;
+			return mThis->link_from (that.mThis.self) ;
 		}
 
 		BOOL identical (CREF<File> that) const {
-			return mThis->identical (that.mThis) ;
+			return mThis->identical (that.mThis.self) ;
 		}
 	} ;
 } ;
@@ -137,7 +137,7 @@ trait DIRECTORY_HELP<DEPEND ,ALWAYS> {
 		virtual String<STR> name () const = 0 ;
 		virtual LENGTH depth () const = 0 ;
 		virtual String<STR> absolute () const = 0 ;
-		virtual ArrayList<CHILD> load () const = 0 ;
+		virtual Array<CHILD> load () const = 0 ;
 		virtual void fresh () const = 0 ;
 		virtual BOOL available () const = 0 ;
 		virtual BOOL lock () const = 0 ;
@@ -178,7 +178,7 @@ trait DIRECTORY_HELP<DEPEND ,ALWAYS> {
 			return mThis->absolute () ;
 		}
 
-		ArrayList<CHILD> load () const {
+		Array<CHILD> load () const {
 			return mThis->load () ;
 		}
 

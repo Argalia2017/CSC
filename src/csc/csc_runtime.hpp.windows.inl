@@ -41,8 +41,6 @@ trait RUNTIMEPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 
 	class ImplHolder implement Holder {
 	public:
-		implicit ImplHolder () = default ;
-
 		void initialize () override {
 			noop () ;
 		}
@@ -85,7 +83,7 @@ trait RUNTIMEPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 
 		String<STR> working_path () const override {
 			String<STR> ret = String<STR>::make () ;
-			GetCurrentDirectory (DWORD (ret.size ()) ,(&ret[0])) ;
+			GetCurrentDirectory (VAL32 (ret.size ()) ,(&ret[0])) ;
 			if ifswitch (TRUE) {
 				INDEX ix = ret.length () - 1 ;
 				if (ix < 0)
@@ -104,7 +102,7 @@ trait RUNTIMEPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		String<STR> module_path () const override {
 			return memorize ([&] () {
 				String<STR> ret = String<STR>::make () ;
-				GetModuleFileName (NULL ,(&ret[0]) ,DWORD (ret.size ())) ;
+				GetModuleFileName (NULL ,(&ret[0]) ,VAL32 (ret.size ())) ;
 				ret = Directory (ret).path () ;
 				return move (ret) ;
 			}) ;
@@ -113,7 +111,7 @@ trait RUNTIMEPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		String<STR> module_name () const override {
 			return memorize ([&] () {
 				String<STR> ret = String<STR>::make () ;
-				GetModuleFileName (NULL ,(&ret[0]) ,DWORD (ret.size ())) ;
+				GetModuleFileName (NULL ,(&ret[0]) ,VAL32 (ret.size ())) ;
 				ret = Directory (ret).name () ;
 				return move (ret) ;
 			}) ;
@@ -128,6 +126,46 @@ exports auto RUNTIMEPROC_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->VRef
 }
 
 template <class DEPEND>
+trait THREADLOCAL_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
+	using Holder = typename THREADLOCAL_HELP<DEPEND ,ALWAYS>::Holder ;
+
+	class ImplHolder implement Holder {
+	protected:
+		UniqueRef<csc_enum_t> mTLSHandle ;
+		Atomic mCounter ;
+
+	public:
+		void initialize () override {
+			mTLSHandle = UniqueRef<csc_enum_t> ([&] (VREF<csc_enum_t> me) {
+				me = TlsAlloc () ;
+				assume (me != TLS_OUT_OF_INDEXES) ;
+			} ,[] (VREF<csc_enum_t> me) {
+				TlsFree (me) ;
+			}) ;
+			mCounter.store (0) ;
+		}
+
+		INDEX local () override {
+			INDEX ret = INDEX (TlsGetValue (mTLSHandle)) ;
+			if ifswitch (TRUE) {
+				if (ret != ZERO)
+					discard ;
+				ret = mCounter.increase () ;
+				TlsSetValue (mTLSHandle ,csc_pointer_t (ret)) ;
+			}
+			ret-- ;
+			return move (ret) ;
+		}
+	} ;
+} ;
+
+template <>
+exports auto THREADLOCAL_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
+	using R1X = typename THREADLOCAL_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
+	return VRef<R1X>::make () ;
+}
+
+template <class DEPEND>
 trait PROCESS_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	using Holder = typename PROCESS_HELP<DEPEND ,ALWAYS>::Holder ;
 	using SNAPSHOT = typename PROCESS_HELP<DEPEND ,ALWAYS>::SNAPSHOT ;
@@ -138,15 +176,13 @@ trait PROCESS_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		SNAPSHOT mSnapshot ;
 
 	public:
-		implicit ImplHolder () = default ;
-
 		void initialize (CREF<FLAG> uid) override {
 			mUID = uid ;
 			auto rax = VarBuffer<BYTE> (128) ;
-			auto rbx = ByteWriter (RegBuffer<BYTE>::from (rax).ref ()) ;
+			auto rbx = ByteWriter (RegBuffer<BYTE>::from (rax).as_ref ()) ;
 			if ifswitch (TRUE) {
 				const auto r1x = UniqueRef<HANDLE> ([&] (VREF<HANDLE> me) {
-					me = OpenProcess (PROCESS_QUERY_INFORMATION ,FALSE ,DWORD (mUID)) ;
+					me = OpenProcess (PROCESS_QUERY_INFORMATION ,FALSE ,csc_enum_t (mUID)) ;
 				} ,[] (VREF<HANDLE> me) {
 					if (me == NULL)
 						return ;
@@ -154,25 +190,25 @@ trait PROCESS_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				}) ;
 				if (r1x.self == NULL)
 					discard ;
-				rbx << ByteWriter::GAP ;
+				rbx << GAP ;
 				rbx << VAL64 (mUID) ;
-				rbx << ByteWriter::GAP ;
+				rbx << GAP ;
 				rbx << slice ("windows") ;
-				rbx << ByteWriter::GAP ;
+				rbx << GAP ;
 				const auto r2x = process_code (r1x ,mUID) ;
 				rbx << r2x ;
-				rbx << ByteWriter::GAP ;
+				rbx << GAP ;
 				const auto r3x = process_time (r1x ,mUID) ;
 				rbx << r3x ;
 			}
-			rbx << ByteWriter::GAP ;
-			rbx << ByteWriter::EOS ;
+			rbx << GAP ;
+			rbx << EOS ;
 			mSnapshot = SNAPSHOT (move (rax)) ;
 		}
 
 		DATA process_code (CREF<HANDLE> handle ,CREF<FLAG> uid) const {
 			const auto r1x = invoke ([&] () {
-				DWORD ret ;
+				csc_enum_t ret ;
 				if ifswitch (TRUE) {
 					const auto r2x = GetExitCodeProcess (handle ,(&ret)) ;
 					if (r2x != ZERO)
@@ -199,8 +235,8 @@ trait PROCESS_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 
 		void initialize (CREF<SNAPSHOT> snapshot_) override {
 			mSnapshot = snapshot_ ;
-			auto rax = ByteReader (RegBuffer<BYTE>::from (mSnapshot).ref ()) ;
-			rax >> ByteReader::GAP ;
+			auto rax = ByteReader (RegBuffer<BYTE>::from (mSnapshot).as_ref ()) ;
+			rax >> GAP ;
 			const auto r1x = rax.poll (TYPEAS<VAL64>::expr) ;
 			assume (r1x > 0) ;
 			assume (r1x <= VAL32_MAX) ;
@@ -234,8 +270,6 @@ trait MODULE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		String<STR> mError ;
 
 	public:
-		implicit ImplHolder () = default ;
-
 		void initialize (CREF<String<STR>> file) override {
 			const auto r1x = Directory (file).name () ;
 			assert (ifnot (r1x.empty ())) ;
@@ -247,9 +281,9 @@ trait MODULE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				me = LoadLibrary ((&r1x[0])) ;
 				if (me != NULL)
 					return ;
-				const auto r2x = FLAG (GetLastError ()) ;
+				const auto r2x = csc_enum_t (GetLastError ()) ;
 				format_dllerror (r2x) ;
-				mError = String<STR>::make (slice ("Error = ") ,r2x ,slice (" : ") ,mErrorBuffer) ;
+				mError = String<STR>::make (slice ("Error = ") ,FLAG (r2x) ,slice (" : ") ,mErrorBuffer) ;
 				assume (FALSE) ;
 			} ,[] (VREF<HMODULE> me) {
 				noop () ;
@@ -263,22 +297,22 @@ trait MODULE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		FLAG link (CREF<String<STR>> name) override {
 			assert (mModule.exist ()) ;
 			assert (ifnot (name.empty ())) ;
-			const auto r1x = string_cvt[TYPEAS<TYPEAS<STRA ,STR>>::expr] (name) ;
+			const auto r1x = string_cvt[TYPEAS<STRA ,STR>::expr] (name) ;
 			FLAG ret = FLAG (GetProcAddress (mModule ,(&r1x[0]))) ;
 			if ifswitch (TRUE) {
 				if (ret != ZERO)
 					discard ;
-				const auto r2x = FLAG (GetLastError ()) ;
+				const auto r2x = csc_enum_t (GetLastError ()) ;
 				format_dllerror (r2x) ;
-				mError = String<STR>::make (slice ("Error = ") ,r2x ,slice (" : ") ,mErrorBuffer) ;
+				mError = String<STR>::make (slice ("Error = ") ,FLAG (r2x) ,slice (" : ") ,mErrorBuffer) ;
 				assume (FALSE) ;
 			}
 			return move (ret) ;
 		}
 
-		void format_dllerror (CREF<FLAG> code) {
-			const auto r1x = DWORD (MAKELANGID (LANG_NEUTRAL ,SUBLANG_DEFAULT)) ;
-			FormatMessage (FORMAT_MESSAGE_FROM_SYSTEM ,NULL ,DWORD (code) ,r1x ,(&mErrorBuffer[0]) ,DWORD (mErrorBuffer.size ()) ,NULL) ;
+		void format_dllerror (CREF<csc_enum_t> code) {
+			const auto r1x = csc_enum_t (MAKELANGID (LANG_NEUTRAL ,SUBLANG_DEFAULT)) ;
+			FormatMessage (FORMAT_MESSAGE_FROM_SYSTEM ,NULL ,code ,r1x ,(&mErrorBuffer[0]) ,VAL32 (mErrorBuffer.size ()) ,NULL) ;
 		}
 	} ;
 } ;
@@ -314,8 +348,6 @@ trait SINGLETON_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		SharedRef<HEAP> mHeap ;
 
 	public:
-		implicit ImplHolder () = default ;
-
 		void initialize () override {
 			mUID = RuntimeProc::process_uid () ;
 			mName = String<STR>::make (slice ("CSC_Singleton_") ,mUID) ;
@@ -342,7 +374,7 @@ trait SINGLETON_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			if (mPipe.exist ())
 				return ;
 			mPipe = UniqueRef<HANDLE> ([&] (VREF<HANDLE> me) {
-				me = CreateFileMapping (INVALID_HANDLE_VALUE ,NULL ,PAGE_READWRITE ,0 ,DWORD (SIZE_OF<PIPE>::expr) ,(&mName[0])) ;
+				me = CreateFileMapping (INVALID_HANDLE_VALUE ,NULL ,PAGE_READWRITE ,0 ,VAL32 (SIZE_OF<PIPE>::expr) ,(&mName[0])) ;
 				assume (me != NULL) ;
 			} ,[] (VREF<HANDLE> me) {
 				CloseHandle (me) ;

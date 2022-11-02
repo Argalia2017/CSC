@@ -17,8 +17,6 @@ trait MATHPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 
 	class ImplHolder implement Holder {
 	public:
-		implicit ImplHolder () = default ;
-
 		void initialize () override {
 			noop () ;
 		}
@@ -125,6 +123,190 @@ trait MATHPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			if (MathProc::abs (obj) < DOUBLE_EPS)
 				return DOUBLE (0) ;
 			return DOUBLE (1) / obj ;
+		}
+
+		VAL32 min_of (CREF<VAL32> obj1 ,CREF<Variadic<VAL32>> obj2) const override {
+			if (obj2.empty ())
+				return obj1 ;
+			if (obj1 <= obj2.one ())
+				return min_of (obj1 ,obj2.rest ()) ;
+			return min_of (obj2.one () ,obj2.rest ()) ;
+		}
+
+		VAL64 min_of (CREF<VAL64> obj1 ,CREF<Variadic<VAL64>> obj2) const override {
+			if (obj2.empty ())
+				return obj1 ;
+			if (obj1 <= obj2.one ())
+				return min_of (obj1 ,obj2.rest ()) ;
+			return min_of (obj2.one () ,obj2.rest ()) ;
+		}
+
+		SINGLE min_of (CREF<SINGLE> obj1 ,CREF<Variadic<SINGLE>> obj2) const override {
+			if (obj2.empty ())
+				return obj1 ;
+			if (obj1 <= obj2.one ())
+				return min_of (obj1 ,obj2.rest ()) ;
+			return min_of (obj2.one () ,obj2.rest ()) ;
+		}
+
+		DOUBLE min_of (CREF<DOUBLE> obj1 ,CREF<Variadic<DOUBLE>> obj2) const override {
+			if (obj2.empty ())
+				return obj1 ;
+			if (obj1 <= obj2.one ())
+				return min_of (obj1 ,obj2.rest ()) ;
+			return min_of (obj2.one () ,obj2.rest ()) ;
+		}
+
+		VAL32 max_of (CREF<VAL32> obj1 ,CREF<Variadic<VAL32>> obj2) const override {
+			if (obj2.empty ())
+				return obj1 ;
+			if (obj1 >= obj2.one ())
+				return max_of (obj1 ,obj2.rest ()) ;
+			return max_of (obj2.one () ,obj2.rest ()) ;
+		}
+
+		VAL64 max_of (CREF<VAL64> obj1 ,CREF<Variadic<VAL64>> obj2) const override {
+			if (obj2.empty ())
+				return obj1 ;
+			if (obj1 >= obj2.one ())
+				return max_of (obj1 ,obj2.rest ()) ;
+			return max_of (obj2.one () ,obj2.rest ()) ;
+		}
+
+		SINGLE max_of (CREF<SINGLE> obj1 ,CREF<Variadic<SINGLE>> obj2) const override {
+			if (obj2.empty ())
+				return obj1 ;
+			if (obj1 >= obj2.one ())
+				return max_of (obj1 ,obj2.rest ()) ;
+			return max_of (obj2.one () ,obj2.rest ()) ;
+		}
+
+		DOUBLE max_of (CREF<DOUBLE> obj1 ,CREF<Variadic<DOUBLE>> obj2) const override {
+			if (obj2.empty ())
+				return obj1 ;
+			if (obj1 >= obj2.one ())
+				return max_of (obj1 ,obj2.rest ()) ;
+			return max_of (obj2.one () ,obj2.rest ()) ;
+		}
+
+		BOOL all_of (CREF<Variadic<BOOL>> obj1) const override {
+			if (obj1.empty ())
+				return TRUE ;
+			if ifnot (obj1.one ())
+				return FALSE ;
+			return all_of (obj1.rest ()) ;
+		}
+
+		BOOL any_of (CREF<Variadic<BOOL>> obj1) const override {
+			if (obj1.empty ())
+				return FALSE ;
+			if (obj1.one ())
+				return TRUE ;
+			return any_of (obj1.rest ()) ;
+		}
+
+		INDEX else_of (CREF<Variadic<BOOL>> obj1) const override {
+			if (obj1.empty ())
+				return ZERO ;
+			if (obj1.one ())
+				return ZERO ;
+			return 1 + else_of (obj1.rest ()) ;
+		}
+
+		VAL32 sum_of (CREF<VAL32> obj1 ,CREF<Variadic<VAL32>> obj2) const override {
+			if (obj2.empty ())
+				return obj1 ;
+			return sum_of (obj1 + obj2.one () ,obj2.rest ()) ;
+		}
+
+		VAL64 sum_of (CREF<VAL64> obj1 ,CREF<Variadic<VAL64>> obj2) const override {
+			if (obj2.empty ())
+				return obj1 ;
+			return sum_of (obj1 + obj2.one () ,obj2.rest ()) ;
+		}
+
+		SINGLE sum_of (CREF<SINGLE> obj1 ,CREF<Variadic<SINGLE>> obj2) const override {
+			if (obj2.empty ())
+				return obj1 ;
+			return sum_of (obj1 + obj2.one () ,obj2.rest ()) ;
+		}
+
+		DOUBLE sum_of (CREF<DOUBLE> obj1 ,CREF<Variadic<DOUBLE>> obj2) const override {
+			if (obj2.empty ())
+				return obj1 ;
+			return sum_of (obj1 + obj2.one () ,obj2.rest ()) ;
+		}
+
+		VAL32 acc_of (CREF<VAL32> obj1 ,CREF<Variadic<VAL32>> obj2) const override {
+			if (obj2.empty ())
+				return obj1 ;
+			return acc_of (obj1 * obj2.one () ,obj2.rest ()) ;
+		}
+
+		VAL64 acc_of (CREF<VAL64> obj1 ,CREF<Variadic<VAL64>> obj2) const override {
+			if (obj2.empty ())
+				return obj1 ;
+			return acc_of (obj1 * obj2.one () ,obj2.rest ()) ;
+		}
+
+		SINGLE acc_of (CREF<SINGLE> obj1 ,CREF<Variadic<SINGLE>> obj2) const override {
+			if (obj2.empty ())
+				return obj1 ;
+			return acc_of (obj1 * obj2.one () ,obj2.rest ()) ;
+		}
+
+		DOUBLE acc_of (CREF<DOUBLE> obj1 ,CREF<Variadic<DOUBLE>> obj2) const override {
+			if (obj2.empty ())
+				return obj1 ;
+			return acc_of (obj1 * obj2.one () ,obj2.rest ()) ;
+		}
+
+		Array<VAL32 ,RANK2> sort_of (CREF<VAL32> obj1 ,CREF<VAL32> obj2) const override {
+			Array<VAL32 ,RANK2> ret ;
+			ret[0] = obj1 ;
+			ret[1] = obj2 ;
+			if ifswitch (TRUE) {
+				if (ret[0] <= ret[1])
+					discard ;
+				swap (ret[0] ,ret[1]) ;
+			}
+			return move (ret) ;
+		}
+
+		Array<VAL64 ,RANK2> sort_of (CREF<VAL64> obj1 ,CREF<VAL64> obj2) const override {
+			Array<VAL64 ,RANK2> ret ;
+			ret[0] = obj1 ;
+			ret[1] = obj2 ;
+			if ifswitch (TRUE) {
+				if (ret[0] <= ret[1])
+					discard ;
+				swap (ret[0] ,ret[1]) ;
+			}
+			return move (ret) ;
+		}
+
+		Array<SINGLE ,RANK2> sort_of (CREF<SINGLE> obj1 ,CREF<SINGLE> obj2) const override {
+			Array<SINGLE ,RANK2> ret ;
+			ret[0] = obj1 ;
+			ret[1] = obj2 ;
+			if ifswitch (TRUE) {
+				if (ret[0] <= ret[1])
+					discard ;
+				swap (ret[0] ,ret[1]) ;
+			}
+			return move (ret) ;
+		}
+
+		Array<DOUBLE ,RANK2> sort_of (CREF<DOUBLE> obj1 ,CREF<DOUBLE> obj2) const override {
+			Array<DOUBLE ,RANK2> ret ;
+			ret[0] = obj1 ;
+			ret[1] = obj2 ;
+			if ifswitch (TRUE) {
+				if (ret[0] <= ret[1])
+					discard ;
+				swap (ret[0] ,ret[1]) ;
+			}
+			return move (ret) ;
 		}
 
 		VAL32 clamp (CREF<VAL32> curr ,CREF<VAL32> lb ,CREF<VAL32> rb) const override {
@@ -408,8 +590,8 @@ template <class DEPEND>
 trait FLOATPROC_KROSHCACHE_HELP<DEPEND ,ALWAYS> {
 	using NOTATION = typename FLOATPROC_HELP<DEPEND ,ALWAYS>::NOTATION ;
 
-	using SIZE = ENUMAS<VAL ,ENUMID<687>> ;
-	using INDEX_OFFSET = ENUMAS<VAL ,ENUMID<343>> ;
+	using SIZE = ENUMAS<VAL ,687> ;
+	using INDEX_OFFSET = ENUMAS<VAL ,343> ;
 
 	class KroshCache {
 	protected:
@@ -906,8 +1088,6 @@ trait FLOATPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 
 	class ImplHolder implement Holder {
 	public:
-		implicit ImplHolder () = default ;
-
 		void initialize () override {
 			noop () ;
 		}

@@ -24,7 +24,7 @@ template <class...>
 trait CONSOLE_IMPLHOLDER_HELP ;
 
 template <class...>
-trait CONSOLE_MESSAGE_HELP ;
+trait CONSOLE_IMPLBINDER_HELP ;
 
 template <class DEPEND>
 trait CONSOLE_HELP<DEPEND ,ALWAYS> {
@@ -89,63 +89,63 @@ trait CONSOLE_HELP<DEPEND ,ALWAYS> {
 
 		template <class...ARG1>
 		void print (CREF<ARG1>...msg) const {
-			using R1X = typename CONSOLE_MESSAGE_HELP<TYPEAS<ARG1...> ,ALWAYS>::Message ;
+			using R1X = typename CONSOLE_IMPLBINDER_HELP<TYPEAS<ARG1...> ,ALWAYS>::ImplBinder ;
 			Scope<Mutex> anonymous (mMutex) ;
-			const auto r1x = bind (msg...) ;
+			const auto r1x = capture (msg...) ;
 			auto rax = R1X (CRef<Capture<ARG1...>>::reference (r1x)) ;
 			return mThis->print (rax) ;
 		}
 
 		template <class...ARG1>
 		void fatal (CREF<ARG1>...msg) const {
-			using R1X = typename CONSOLE_MESSAGE_HELP<TYPEAS<ARG1...> ,ALWAYS>::Message ;
+			using R1X = typename CONSOLE_IMPLBINDER_HELP<TYPEAS<ARG1...> ,ALWAYS>::ImplBinder ;
 			Scope<Mutex> anonymous (mMutex) ;
-			const auto r1x = bind (msg...) ;
+			const auto r1x = capture (msg...) ;
 			auto rax = R1X (CRef<Capture<ARG1...>>::reference (r1x)) ;
 			return mThis->fatal (rax) ;
 		}
 
 		template <class...ARG1>
 		void error (CREF<ARG1>...msg) const {
-			using R1X = typename CONSOLE_MESSAGE_HELP<TYPEAS<ARG1...> ,ALWAYS>::Message ;
+			using R1X = typename CONSOLE_IMPLBINDER_HELP<TYPEAS<ARG1...> ,ALWAYS>::ImplBinder ;
 			Scope<Mutex> anonymous (mMutex) ;
-			const auto r1x = bind (msg...) ;
+			const auto r1x = capture (msg...) ;
 			auto rax = R1X (CRef<Capture<ARG1...>>::reference (r1x)) ;
 			return mThis->error (rax) ;
 		}
 
 		template <class...ARG1>
 		void warn (CREF<ARG1>...msg) const {
-			using R1X = typename CONSOLE_MESSAGE_HELP<TYPEAS<ARG1...> ,ALWAYS>::Message ;
+			using R1X = typename CONSOLE_IMPLBINDER_HELP<TYPEAS<ARG1...> ,ALWAYS>::ImplBinder ;
 			Scope<Mutex> anonymous (mMutex) ;
-			const auto r1x = bind (msg...) ;
+			const auto r1x = capture (msg...) ;
 			auto rax = R1X (CRef<Capture<ARG1...>>::reference (r1x)) ;
 			return mThis->warn (rax) ;
 		}
 
 		template <class...ARG1>
 		void info (CREF<ARG1>...msg) const {
-			using R1X = typename CONSOLE_MESSAGE_HELP<TYPEAS<ARG1...> ,ALWAYS>::Message ;
+			using R1X = typename CONSOLE_IMPLBINDER_HELP<TYPEAS<ARG1...> ,ALWAYS>::ImplBinder ;
 			Scope<Mutex> anonymous (mMutex) ;
-			const auto r1x = bind (msg...) ;
+			const auto r1x = capture (msg...) ;
 			auto rax = R1X (CRef<Capture<ARG1...>>::reference (r1x)) ;
 			return mThis->info (rax) ;
 		}
 
 		template <class...ARG1>
 		void debug (CREF<ARG1>...msg) const {
-			using R1X = typename CONSOLE_MESSAGE_HELP<TYPEAS<ARG1...> ,ALWAYS>::Message ;
+			using R1X = typename CONSOLE_IMPLBINDER_HELP<TYPEAS<ARG1...> ,ALWAYS>::ImplBinder ;
 			Scope<Mutex> anonymous (mMutex) ;
-			const auto r1x = bind (msg...) ;
+			const auto r1x = capture (msg...) ;
 			auto rax = R1X (CRef<Capture<ARG1...>>::reference (r1x)) ;
 			return mThis->debug (rax) ;
 		}
 
 		template <class...ARG1>
 		void verbose (CREF<ARG1>...msg) const {
-			using R1X = typename CONSOLE_MESSAGE_HELP<TYPEAS<ARG1...> ,ALWAYS>::Message ;
+			using R1X = typename CONSOLE_IMPLBINDER_HELP<TYPEAS<ARG1...> ,ALWAYS>::ImplBinder ;
 			Scope<Mutex> anonymous (mMutex) ;
-			const auto r1x = bind (msg...) ;
+			const auto r1x = capture (msg...) ;
 			auto rax = R1X (CRef<Capture<ARG1...>>::reference (r1x)) ;
 			return mThis->verbose (rax) ;
 		}
@@ -178,34 +178,24 @@ trait CONSOLE_HELP<DEPEND ,ALWAYS> {
 } ;
 
 template <class...UNIT>
-trait CONSOLE_MESSAGE_HELP<TYPEAS<UNIT...> ,ALWAYS> {
-	using Binder = typename TEXTWRITER_HELP<STR ,ALWAYS>::Binder ;
+trait CONSOLE_IMPLBINDER_HELP<TYPEAS<UNIT...> ,ALWAYS> {
+	using Binder = typename CONSOLE_HELP<DEPEND ,ALWAYS>::Binder ;
 
-	class Message implement Binder {
+	class ImplBinder implement Binder {
 	protected:
-		CRef<Capture<UNIT...>> mMessage ;
+		CRef<Capture<UNIT...>> mThat ;
 
 	public:
-		implicit Message () = delete ;
+		implicit ImplBinder () = delete ;
 
-		explicit Message (RREF<CRef<Capture<UNIT...>>> message) {
-			mMessage = move (message) ;
+		explicit ImplBinder (RREF<CRef<Capture<UNIT...>>> that) {
+			mThat = move (that) ;
 		}
 
 		void friend_write (VREF<TextWriter<STR>> writer) const override {
-			mMessage.self ([&] (CREF<UNIT>...obj) {
-				write_msg (writer ,obj...) ;
+			mThat.self ([&] (CREF<UNIT>...obj) {
+				writer.prints (obj...) ;
 			}) ;
-		}
-
-		template <class ARG1 ,class...ARG2>
-		void write_msg (VREF<TextWriter<STR>> writer ,CREF<ARG1> params1 ,CREF<ARG2>...params2) const {
-			writer << params1 ;
-			write_msg (writer ,params2...) ;
-		}
-
-		void write_msg (VREF<TextWriter<STR>> writer) const {
-			noop () ;
 		}
 	} ;
 } ;

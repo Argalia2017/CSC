@@ -88,9 +88,9 @@ trait TEMPLATE_string_parse_HELP<UNIT ,SIDE ,REQUIRE<IS_SAME<UNIT ,BOOL>>> {
 	struct TEMPLATE_string_parse {
 		inline BOOL operator() (CREF<String<SIDE>> obj) const {
 			BOOL ret ;
-			auto rax = TextReader<SIDE> (obj.raw ().ref ()) ;
+			auto rax = TextReader<SIDE> (obj.raw ().as_ref ()) ;
 			rax >> ret ;
-			rax >> TextReader<SIDE>::EOS ;
+			rax >> EOS ;
 			return move (ret) ;
 		}
 	} ;
@@ -101,9 +101,9 @@ trait TEMPLATE_string_build_HELP<UNIT ,SIDE ,REQUIRE<IS_SAME<SIDE ,BOOL>>> {
 	struct TEMPLATE_string_build {
 		inline String<UNIT> operator() (CREF<BOOL> obj) const {
 			String<UNIT> ret = String<UNIT> (64) ;
-			auto rax = TextWriter<UNIT> (ret.raw ().ref ()) ;
+			auto rax = TextWriter<UNIT> (ret.raw ().as_ref ()) ;
 			rax << obj ;
-			rax << TextWriter<UNIT>::EOS ;
+			rax << EOS ;
 			return move (ret) ;
 		}
 	} ;
@@ -114,9 +114,9 @@ trait TEMPLATE_string_parse_HELP<UNIT ,SIDE ,REQUIRE<IS_SAME<UNIT ,VAL32>>> {
 	struct TEMPLATE_string_parse {
 		inline VAL32 operator() (CREF<String<SIDE>> obj) const {
 			VAL32 ret ;
-			auto rax = TextReader<SIDE> (obj.raw ().ref ()) ;
+			auto rax = TextReader<SIDE> (obj.raw ().as_ref ()) ;
 			rax >> ret ;
-			rax >> TextReader<SIDE>::EOS ;
+			rax >> EOS ;
 			return move (ret) ;
 		}
 	} ;
@@ -127,9 +127,9 @@ trait TEMPLATE_string_build_HELP<UNIT ,SIDE ,REQUIRE<IS_SAME<SIDE ,VAL32>>> {
 	struct TEMPLATE_string_build {
 		inline String<UNIT> operator() (CREF<VAL32> obj) const {
 			String<UNIT> ret = String<UNIT> (64) ;
-			auto rax = TextWriter<UNIT> (ret.raw ().ref ()) ;
+			auto rax = TextWriter<UNIT> (ret.raw ().as_ref ()) ;
 			rax << obj ;
-			rax << TextWriter<UNIT>::EOS ;
+			rax << EOS ;
 			return move (ret) ;
 		}
 	} ;
@@ -140,9 +140,9 @@ trait TEMPLATE_string_parse_HELP<UNIT ,SIDE ,REQUIRE<IS_SAME<UNIT ,VAL64>>> {
 	struct TEMPLATE_string_parse {
 		inline VAL64 operator() (CREF<String<SIDE>> obj) const {
 			VAL64 ret ;
-			auto rax = TextReader<SIDE> (obj.raw ().ref ()) ;
+			auto rax = TextReader<SIDE> (obj.raw ().as_ref ()) ;
 			rax >> ret ;
-			rax >> TextReader<SIDE>::EOS ;
+			rax >> EOS ;
 			return move (ret) ;
 		}
 	} ;
@@ -153,9 +153,9 @@ trait TEMPLATE_string_build_HELP<UNIT ,SIDE ,REQUIRE<IS_SAME<SIDE ,VAL64>>> {
 	struct TEMPLATE_string_build {
 		inline String<UNIT> operator() (CREF<VAL64> obj) const {
 			String<UNIT> ret = String<UNIT> (64) ;
-			auto rax = TextWriter<UNIT> (ret.raw ().ref ()) ;
+			auto rax = TextWriter<UNIT> (ret.raw ().as_ref ()) ;
 			rax << obj ;
-			rax << TextWriter<UNIT>::EOS ;
+			rax << EOS ;
 			return move (ret) ;
 		}
 	} ;
@@ -166,9 +166,9 @@ trait TEMPLATE_string_parse_HELP<UNIT ,SIDE ,REQUIRE<IS_SAME<UNIT ,SINGLE>>> {
 	struct TEMPLATE_string_parse {
 		inline SINGLE operator() (CREF<String<SIDE>> obj) const {
 			SINGLE ret ;
-			auto rax = TextReader<SIDE> (obj.raw ().ref ()) ;
+			auto rax = TextReader<SIDE> (obj.raw ().as_ref ()) ;
 			rax >> ret ;
-			rax >> TextReader<SIDE>::EOS ;
+			rax >> EOS ;
 			return move (ret) ;
 		}
 	} ;
@@ -179,9 +179,9 @@ trait TEMPLATE_string_build_HELP<UNIT ,SIDE ,REQUIRE<IS_SAME<SIDE ,SINGLE>>> {
 	struct TEMPLATE_string_build {
 		inline String<UNIT> operator() (CREF<SINGLE> obj) const {
 			String<UNIT> ret = String<UNIT> (64) ;
-			auto rax = TextWriter<UNIT> (ret.raw ().ref ()) ;
+			auto rax = TextWriter<UNIT> (ret.raw ().as_ref ()) ;
 			rax << obj ;
-			rax << TextWriter<UNIT>::EOS ;
+			rax << EOS ;
 			return move (ret) ;
 		}
 	} ;
@@ -192,9 +192,9 @@ trait TEMPLATE_string_parse_HELP<UNIT ,SIDE ,REQUIRE<IS_SAME<UNIT ,DOUBLE>>> {
 	struct TEMPLATE_string_parse {
 		inline DOUBLE operator() (CREF<String<SIDE>> obj) const {
 			DOUBLE ret ;
-			auto rax = TextReader<SIDE> (obj.raw ().ref ()) ;
+			auto rax = TextReader<SIDE> (obj.raw ().as_ref ()) ;
 			rax >> ret ;
-			rax >> TextReader<SIDE>::EOS ;
+			rax >> EOS ;
 			return move (ret) ;
 		}
 	} ;
@@ -205,9 +205,9 @@ trait TEMPLATE_string_build_HELP<UNIT ,SIDE ,REQUIRE<IS_SAME<SIDE ,DOUBLE>>> {
 	struct TEMPLATE_string_build {
 		inline String<UNIT> operator() (CREF<DOUBLE> obj) const {
 			String<UNIT> ret = String<UNIT> (64) ;
-			auto rax = TextWriter<UNIT> (ret.raw ().ref ()) ;
+			auto rax = TextWriter<UNIT> (ret.raw ().as_ref ()) ;
 			rax << obj ;
-			rax << TextWriter<UNIT>::EOS ;
+			rax << EOS ;
 			return move (ret) ;
 		}
 	} ;
@@ -218,9 +218,9 @@ trait TEMPLATE_string_parse_HELP<UNIT ,SIDE ,REQUIRE<IS_SAME<UNIT ,BYTE>>> {
 	struct TEMPLATE_string_parse {
 		inline BYTE operator() (CREF<String<SIDE>> obj) const {
 			BYTE ret ;
-			auto rax = TextReader<SIDE> (obj.raw ().ref ()) ;
+			auto rax = TextReader<SIDE> (obj.raw ().as_ref ()) ;
 			rax >> ret ;
-			rax >> TextReader<SIDE>::EOS ;
+			rax >> EOS ;
 			return move (ret) ;
 		}
 	} ;
@@ -231,9 +231,9 @@ trait TEMPLATE_string_build_HELP<UNIT ,SIDE ,REQUIRE<IS_SAME<SIDE ,BYTE>>> {
 	struct TEMPLATE_string_build {
 		inline String<UNIT> operator() (CREF<BYTE> obj) const {
 			String<UNIT> ret = String<UNIT> (64) ;
-			auto rax = TextWriter<UNIT> (ret.raw ().ref ()) ;
+			auto rax = TextWriter<UNIT> (ret.raw ().as_ref ()) ;
 			rax << obj ;
-			rax << TextWriter<UNIT>::EOS ;
+			rax << EOS ;
 			return move (ret) ;
 		}
 	} ;
@@ -244,9 +244,9 @@ trait TEMPLATE_string_parse_HELP<UNIT ,SIDE ,REQUIRE<IS_SAME<UNIT ,WORD>>> {
 	struct TEMPLATE_string_parse {
 		inline WORD operator() (CREF<String<SIDE>> obj) const {
 			WORD ret ;
-			auto rax = TextReader<SIDE> (obj.raw ().ref ()) ;
+			auto rax = TextReader<SIDE> (obj.raw ().as_ref ()) ;
 			rax >> ret ;
-			rax >> TextReader<SIDE>::EOS ;
+			rax >> EOS ;
 			return move (ret) ;
 		}
 	} ;
@@ -257,9 +257,9 @@ trait TEMPLATE_string_build_HELP<UNIT ,SIDE ,REQUIRE<IS_SAME<SIDE ,WORD>>> {
 	struct TEMPLATE_string_build {
 		inline String<UNIT> operator() (CREF<WORD> obj) const {
 			String<UNIT> ret = String<UNIT> (64) ;
-			auto rax = TextWriter<UNIT> (ret.raw ().ref ()) ;
+			auto rax = TextWriter<UNIT> (ret.raw ().as_ref ()) ;
 			rax << obj ;
-			rax << TextWriter<UNIT>::EOS ;
+			rax << EOS ;
 			return move (ret) ;
 		}
 	} ;
@@ -270,9 +270,9 @@ trait TEMPLATE_string_parse_HELP<UNIT ,SIDE ,REQUIRE<IS_SAME<UNIT ,CHAR>>> {
 	struct TEMPLATE_string_parse {
 		inline CHAR operator() (CREF<String<SIDE>> obj) const {
 			CHAR ret ;
-			auto rax = TextReader<SIDE> (obj.raw ().ref ()) ;
+			auto rax = TextReader<SIDE> (obj.raw ().as_ref ()) ;
 			rax >> ret ;
-			rax >> TextReader<SIDE>::EOS ;
+			rax >> EOS ;
 			return move (ret) ;
 		}
 	} ;
@@ -283,9 +283,9 @@ trait TEMPLATE_string_build_HELP<UNIT ,SIDE ,REQUIRE<IS_SAME<SIDE ,CHAR>>> {
 	struct TEMPLATE_string_build {
 		inline String<UNIT> operator() (CREF<CHAR> obj) const {
 			String<UNIT> ret = String<UNIT> (64) ;
-			auto rax = TextWriter<UNIT> (ret.raw ().ref ()) ;
+			auto rax = TextWriter<UNIT> (ret.raw ().as_ref ()) ;
 			rax << obj ;
-			rax << TextWriter<UNIT>::EOS ;
+			rax << EOS ;
 			return move (ret) ;
 		}
 	} ;
@@ -296,9 +296,9 @@ trait TEMPLATE_string_parse_HELP<UNIT ,SIDE ,REQUIRE<IS_SAME<UNIT ,DATA>>> {
 	struct TEMPLATE_string_parse {
 		inline DATA operator() (CREF<String<SIDE>> obj) const {
 			DATA ret ;
-			auto rax = TextReader<SIDE> (obj.raw ().ref ()) ;
+			auto rax = TextReader<SIDE> (obj.raw ().as_ref ()) ;
 			rax >> ret ;
-			rax >> TextReader<SIDE>::EOS ;
+			rax >> EOS ;
 			return move (ret) ;
 		}
 	} ;
@@ -309,9 +309,9 @@ trait TEMPLATE_string_build_HELP<UNIT ,SIDE ,REQUIRE<IS_SAME<SIDE ,DATA>>> {
 	struct TEMPLATE_string_build {
 		inline String<UNIT> operator() (CREF<DATA> obj) const {
 			String<UNIT> ret = String<UNIT> (64) ;
-			auto rax = TextWriter<UNIT> (ret.raw ().ref ()) ;
+			auto rax = TextWriter<UNIT> (ret.raw ().as_ref ()) ;
 			rax << obj ;
-			rax << TextWriter<UNIT>::EOS ;
+			rax << EOS ;
 			return move (ret) ;
 		}
 	} ;
@@ -326,11 +326,9 @@ trait FUNCTION_string_parse_HELP ;
 template <class DEPEND>
 trait FUNCTION_string_parse_HELP<DEPEND ,ALWAYS> {
 	struct FUNCTION_string_parse {
-		template <class ARG1>
-		inline constexpr TEMPLATE_string_parse<TYPE_FIRST_ONE<ARG1> ,TYPE_SECOND_ONE<ARG1>> operator[] (CREF<TYPEID<ARG1>> id) const noexcept {
-			using R1X = TYPE_FIRST_ONE<ARG1> ;
-			using R2X = TYPE_SECOND_ONE<ARG1> ;
-			using R3X = TEMPLATE_string_parse<R1X ,R2X> ;
+		template <class ARG1 ,class ARG2>
+		inline constexpr TEMPLATE_string_parse<ARG1 ,ARG2> operator[] (CREF<TYPEID<ARG1 ,ARG2>> id) const noexcept {
+			using R3X = TEMPLATE_string_parse<ARG1 ,ARG2> ;
 			return R3X () ;
 		}
 	} ;
@@ -349,11 +347,9 @@ trait FUNCTION_string_build_HELP ;
 template <class DEPEND>
 trait FUNCTION_string_build_HELP<DEPEND ,ALWAYS> {
 	struct FUNCTION_string_build {
-		template <class ARG1>
-		inline constexpr TEMPLATE_string_build<TYPE_FIRST_ONE<ARG1> ,TYPE_SECOND_ONE<ARG1>> operator[] (CREF<TYPEID<ARG1>> id) const noexcept {
-			using R1X = TYPE_FIRST_ONE<ARG1> ;
-			using R2X = TYPE_SECOND_ONE<ARG1> ;
-			using R3X = TEMPLATE_string_build<R1X ,R2X> ;
+		template <class ARG1 ,class ARG2>
+		inline constexpr TEMPLATE_string_build<ARG1 ,ARG2> operator[] (CREF<TYPEID<ARG1 ,ARG2>> id) const noexcept {
+			using R3X = TEMPLATE_string_build<ARG1 ,ARG2> ;
 			return R3X () ;
 		}
 	} ;
@@ -525,8 +521,8 @@ trait TEMPLATE_string_cvt_HELP<UNIT ,SIDE ,REQUIRE<ENUM_ALL<IS_SAME<UNIT ,STRU8>
 			for (auto &&i : obj) {
 				if (rax == NONE)
 					continue ;
-				auto rxx = TRUE ;
-				if ifswitch (rxx) {
+				auto act = TRUE ;
+				if ifswitch (act) {
 					if ifnot (rax == 0)
 						discard ;
 					if ifnot (i <= STRU16 (0X007F))
@@ -534,7 +530,7 @@ trait TEMPLATE_string_cvt_HELP<UNIT ,SIDE ,REQUIRE<ENUM_ALL<IS_SAME<UNIT ,STRU8>
 					ret[ix] = STRU8 (i) ;
 					ix++ ;
 				}
-				if ifswitch (rxx) {
+				if ifswitch (act) {
 					if ifnot (rax == 0)
 						discard ;
 					if ifnot (i <= STRU16 (0X07FF))
@@ -544,7 +540,7 @@ trait TEMPLATE_string_cvt_HELP<UNIT ,SIDE ,REQUIRE<ENUM_ALL<IS_SAME<UNIT ,STRU8>
 					ret[ix] = (STRU8 (i) & STRU8 (0X3F)) | STRU8 (0X80) ;
 					ix++ ;
 				}
-				if ifswitch (rxx) {
+				if ifswitch (act) {
 					if ifnot (rax == 0)
 						discard ;
 					if ifnot (i >= STRU16 (0XD800))
@@ -554,7 +550,7 @@ trait TEMPLATE_string_cvt_HELP<UNIT ,SIDE ,REQUIRE<ENUM_ALL<IS_SAME<UNIT ,STRU8>
 					rbx = STRU32 (i & STRU16 (0X03FF)) ;
 					rax = 1 ;
 				}
-				if ifswitch (rxx) {
+				if ifswitch (act) {
 					if ifnot (rax == 0)
 						discard ;
 					ret[ix] = (STRU8 (i >> 12) & STRU8 (0X0F)) | STRU8 (0XE0) ;
@@ -564,7 +560,7 @@ trait TEMPLATE_string_cvt_HELP<UNIT ,SIDE ,REQUIRE<ENUM_ALL<IS_SAME<UNIT ,STRU8>
 					ret[ix] = (STRU8 (i) & STRU8 (0X3F)) | STRU8 (0X80) ;
 					ix++ ;
 				}
-				if ifswitch (rxx) {
+				if ifswitch (act) {
 					if ifnot (rax == 1)
 						discard ;
 					if ifnot (i >= STRU16 (0XDC00))
@@ -582,7 +578,7 @@ trait TEMPLATE_string_cvt_HELP<UNIT ,SIDE ,REQUIRE<ENUM_ALL<IS_SAME<UNIT ,STRU8>
 					ix++ ;
 					rax = 0 ;
 				}
-				if ifswitch (rxx) {
+				if ifswitch (act) {
 					ret.clear () ;
 					rax = NONE ;
 				}
@@ -617,8 +613,8 @@ trait TEMPLATE_string_cvt_HELP<UNIT ,SIDE ,REQUIRE<ENUM_ALL<IS_SAME<UNIT ,STRU8>
 			for (auto &&i : obj) {
 				if (rax == NONE)
 					continue ;
-				auto rxx = TRUE ;
-				if ifswitch (rxx) {
+				auto act = TRUE ;
+				if ifswitch (act) {
 					if ifnot (rax == 0)
 						discard ;
 					if ifnot (i <= STRU32 (0X0000007F))
@@ -626,7 +622,7 @@ trait TEMPLATE_string_cvt_HELP<UNIT ,SIDE ,REQUIRE<ENUM_ALL<IS_SAME<UNIT ,STRU8>
 					ret[ix] = STRU8 (i) ;
 					ix++ ;
 				}
-				if ifswitch (rxx) {
+				if ifswitch (act) {
 					if ifnot (rax == 0)
 						discard ;
 					if ifnot (i <= STRU32 (0X000007FF))
@@ -636,7 +632,7 @@ trait TEMPLATE_string_cvt_HELP<UNIT ,SIDE ,REQUIRE<ENUM_ALL<IS_SAME<UNIT ,STRU8>
 					ret[ix] = (STRU8 (i) & STRU8 (0X3F)) | STRU8 (0X80) ;
 					ix++ ;
 				}
-				if ifswitch (rxx) {
+				if ifswitch (act) {
 					if ifnot (rax == 0)
 						discard ;
 					if ifnot (i <= STRU32 (0X0000FFFF))
@@ -648,7 +644,7 @@ trait TEMPLATE_string_cvt_HELP<UNIT ,SIDE ,REQUIRE<ENUM_ALL<IS_SAME<UNIT ,STRU8>
 					ret[ix] = (STRU8 (i) & STRU8 (0X3F)) | STRU8 (0X80) ;
 					ix++ ;
 				}
-				if ifswitch (rxx) {
+				if ifswitch (act) {
 					if ifnot (rax == 0)
 						discard ;
 					if ifnot (i <= STRU32 (0X001FFFFF))
@@ -662,7 +658,7 @@ trait TEMPLATE_string_cvt_HELP<UNIT ,SIDE ,REQUIRE<ENUM_ALL<IS_SAME<UNIT ,STRU8>
 					ret[ix] = (STRU8 (i) & STRU8 (0X3F)) | STRU8 (0X80) ;
 					ix++ ;
 				}
-				if ifswitch (rxx) {
+				if ifswitch (act) {
 					if ifnot (rax == 0)
 						discard ;
 					if ifnot (i <= STRU32 (0X03FFFFFF))
@@ -678,7 +674,7 @@ trait TEMPLATE_string_cvt_HELP<UNIT ,SIDE ,REQUIRE<ENUM_ALL<IS_SAME<UNIT ,STRU8>
 					ret[ix] = (STRU8 (i) & STRU8 (0X3F)) | STRU8 (0X80) ;
 					ix++ ;
 				}
-				if ifswitch (rxx) {
+				if ifswitch (act) {
 					if ifnot (rax == 0)
 						discard ;
 					if ifnot (i <= STRU32 (0X7FFFFFFF))
@@ -696,7 +692,7 @@ trait TEMPLATE_string_cvt_HELP<UNIT ,SIDE ,REQUIRE<ENUM_ALL<IS_SAME<UNIT ,STRU8>
 					ret[ix] = (STRU8 (i) & STRU8 (0X3F)) | STRU8 (0X80) ;
 					ix++ ;
 				}
-				if ifswitch (rxx) {
+				if ifswitch (act) {
 					ret.clear () ;
 					rax = NONE ;
 				}
@@ -743,111 +739,109 @@ trait TEMPLATE_string_cvt_HELP<UNIT ,SIDE ,REQUIRE<ENUM_ALL<IS_SAME<UNIT ,STRU16
 			for (auto &&i : obj) {
 				if (rax == NONE)
 					continue ;
-				auto rxx = TRUE ;
-				if ifswitch (rxx) {
-					if ifnot (rax == 0)
-						discard ;
-					if ifnot (i <= STRU8 (0X7F))
-						discard ;
-					ret[ix] = STRU16 (i) ;
-					ix++ ;
+				if ifswitch (TRUE) {
+					auto act = TRUE ;
+					if ifswitch (act) {
+						if ifnot (rax == 0)
+							discard ;
+						if ifnot (i <= STRU8 (0X7F))
+							discard ;
+						ret[ix] = STRU16 (i) ;
+						ix++ ;
+					}
+					if ifswitch (act) {
+						if ifnot (rax == 0)
+							discard ;
+						if ifnot (i <= STRU8 (0XDF))
+							discard ;
+						rbx = STRU32 (i & STRU8 (0X1F)) ;
+						rax = 1 ;
+					}
+					if ifswitch (act) {
+						if ifnot (rax == 0)
+							discard ;
+						if ifnot (i <= STRU8 (0XEF))
+							discard ;
+						rbx = STRU32 (i & STRU8 (0X0F)) ;
+						rax = 2 ;
+					}
+					if ifswitch (act) {
+						if ifnot (rax == 0)
+							discard ;
+						if ifnot (i <= STRU8 (0XF7))
+							discard ;
+						rbx = STRU32 (i & STRU8 (0X07)) ;
+						rax = 3 ;
+					}
+					if ifswitch (act) {
+						if ifnot (rax == 0)
+							discard ;
+						if ifnot (i <= STRU8 (0XFB))
+							discard ;
+						rbx = STRU32 (i & STRU8 (0X03)) ;
+						rax = 4 ;
+					}
+					if ifswitch (act) {
+						if ifnot (rax == 0)
+							discard ;
+						if ifnot (i <= STRU8 (0XFD))
+							discard ;
+						rbx = STRU32 (i & STRU8 (0X01)) ;
+						rax = 5 ;
+					}
+					if ifswitch (act) {
+						if ifnot (rax == 1)
+							discard ;
+						if ifnot (i <= STRU8 (0XBF))
+							discard ;
+						rbx = STRU32 ((rbx << 6) | (i & STRU8 (0X3F))) ;
+						rax = 10 ;
+					}
+					if ifswitch (act) {
+						if ifnot (vbetween (rax ,2 ,6))
+							discard ;
+						if ifnot (i <= STRU8 (0XBF))
+							discard ;
+						rbx = STRU32 ((rbx << 6) | (i & STRU8 (0X3F))) ;
+						rax-- ;
+					}
+					if ifswitch (act) {
+						ret.clear () ;
+						rax = NONE ;
+					}
 				}
-				if ifswitch (rxx) {
-					if ifnot (rax == 0)
+				if ifswitch (TRUE) {
+					if (rax != 10)
 						discard ;
-					if ifnot (i <= STRU8 (0XDF))
-						discard ;
-					rbx = STRU32 (i & STRU8 (0X1F)) ;
-					rax = 1 ;
-				}
-				if ifswitch (rxx) {
-					if ifnot (rax == 0)
-						discard ;
-					if ifnot (i <= STRU8 (0XEF))
-						discard ;
-					rbx = STRU32 (i & STRU8 (0X0F)) ;
-					rax = 2 ;
-				}
-				if ifswitch (rxx) {
-					if ifnot (rax == 0)
-						discard ;
-					if ifnot (i <= STRU8 (0XF7))
-						discard ;
-					rbx = STRU32 (i & STRU8 (0X07)) ;
-					rax = 3 ;
-				}
-				if ifswitch (rxx) {
-					if ifnot (rax == 0)
-						discard ;
-					if ifnot (i <= STRU8 (0XFB))
-						discard ;
-					rbx = STRU32 (i & STRU8 (0X03)) ;
-					rax = 4 ;
-				}
-				if ifswitch (rxx) {
-					if ifnot (rax == 0)
-						discard ;
-					if ifnot (i <= STRU8 (0XFD))
-						discard ;
-					rbx = STRU32 (i & STRU8 (0X01)) ;
-					rax = 5 ;
-				}
-				if ifswitch (rxx) {
-					if ifnot (rax == 1)
-						discard ;
-					if ifnot (i <= STRU8 (0XBF))
-						discard ;
-					rbx = STRU32 ((rbx << 6) | (i & STRU8 (0X3F))) ;
-					rax = 10 ;
-				}
-				if ifswitch (rxx) {
-					if ifnot (vbetween (rax ,2 ,6))
-						discard ;
-					if ifnot (i <= STRU8 (0XBF))
-						discard ;
-					rbx = STRU32 ((rbx << 6) | (i & STRU8 (0X3F))) ;
-					rax-- ;
-				}
-				if ifswitch (rxx) {
-					ret.clear () ;
-					rax = NONE ;
-				}
-				if (rax < 10)
-					continue ;
-				auto ryx = TRUE ;
-				if ifswitch (ryx) {
-					if ifnot (rax == 10)
-						discard ;
-					if ifnot (rbx <= STRU32 (0X0000FFFF))
-						discard ;
-					ret[ix] = STRU16 (rbx) ;
-					ix++ ;
-					rax = 0 ;
-				}
-				if ifswitch (ryx) {
-					if ifnot (rax == 10)
-						discard ;
-					if ifnot (rbx <= STRU32 (0X0010FFFF))
-						discard ;
-					rbx = STRU32 (rbx - STRU32 (0X00010000)) ;
-					ret[ix] = (STRU16 (rbx >> 10) & STRU16 (0X03FF)) | STRU16 (0XD800) ;
-					ix++ ;
-					ret[ix] = (STRU16 (rbx) & STRU16 (0X03FF)) | STRU16 (0XDC00) ;
-					ix++ ;
-					rax = 0 ;
-				}
-				if ifswitch (ryx) {
-					if ifnot (rax == 10)
-						discard ;
-					if ifnot (rbx <= STRU32 (0X7FFFFFFF))
-						discard ;
-					ret[ix] = STRU16 ('?') ;
-					ix++ ;
-					rax = 0 ;
-				}
-				if ifswitch (ryx) {
-					ret.clear () ;
-					rax = NONE ;
+					auto act = TRUE ;
+					if ifswitch (act) {
+						if ifnot (rbx <= STRU32 (0X0000FFFF))
+							discard ;
+						ret[ix] = STRU16 (rbx) ;
+						ix++ ;
+						rax = 0 ;
+					}
+					if ifswitch (act) {
+						if ifnot (rbx <= STRU32 (0X0010FFFF))
+							discard ;
+						rbx = STRU32 (rbx - STRU32 (0X00010000)) ;
+						ret[ix] = (STRU16 (rbx >> 10) & STRU16 (0X03FF)) | STRU16 (0XD800) ;
+						ix++ ;
+						ret[ix] = (STRU16 (rbx) & STRU16 (0X03FF)) | STRU16 (0XDC00) ;
+						ix++ ;
+						rax = 0 ;
+					}
+					if ifswitch (act) {
+						if ifnot (rbx <= STRU32 (0X7FFFFFFF))
+							discard ;
+						ret[ix] = STRU16 ('?') ;
+						ix++ ;
+						rax = 0 ;
+					}
+					if ifswitch (act) {
+						ret.clear () ;
+						rax = NONE ;
+					}
 				}
 			}
 			if ifswitch (TRUE) {
@@ -885,8 +879,8 @@ trait TEMPLATE_string_cvt_HELP<UNIT ,SIDE ,REQUIRE<ENUM_ALL<IS_SAME<UNIT ,STRU16
 			for (auto &&i : obj) {
 				if (rax == NONE)
 					continue ;
-				auto rxx = TRUE ;
-				if ifswitch (rxx) {
+				auto act = TRUE ;
+				if ifswitch (act) {
 					if ifnot (rax == 0)
 						discard ;
 					if ifnot (i <= STRU32 (0X0000FFFF))
@@ -894,7 +888,7 @@ trait TEMPLATE_string_cvt_HELP<UNIT ,SIDE ,REQUIRE<ENUM_ALL<IS_SAME<UNIT ,STRU16
 					ret[ix] = STRU16 (i) ;
 					ix++ ;
 				}
-				if ifswitch (rxx) {
+				if ifswitch (act) {
 					if ifnot (rax == 0)
 						discard ;
 					if ifnot (i <= STRU32 (0X0010FFFF))
@@ -904,7 +898,7 @@ trait TEMPLATE_string_cvt_HELP<UNIT ,SIDE ,REQUIRE<ENUM_ALL<IS_SAME<UNIT ,STRU16
 					ret[ix] = (STRU16 (i - STRU32 (0X00010000)) & STRU16 (0X03FF)) | STRU16 (0XDC00) ;
 					ix++ ;
 				}
-				if ifswitch (rxx) {
+				if ifswitch (act) {
 					if ifnot (rax == 0)
 						discard ;
 					if ifnot (i <= STRU32 (0X7FFFFFFF))
@@ -912,7 +906,7 @@ trait TEMPLATE_string_cvt_HELP<UNIT ,SIDE ,REQUIRE<ENUM_ALL<IS_SAME<UNIT ,STRU16
 					ret[ix] = STRU16 ('?') ;
 					ix++ ;
 				}
-				if ifswitch (rxx) {
+				if ifswitch (act) {
 					ret.clear () ;
 					rax = NONE ;
 				}
@@ -967,8 +961,8 @@ trait TEMPLATE_string_cvt_HELP<UNIT ,SIDE ,REQUIRE<ENUM_ALL<IS_SAME<UNIT ,STRU32
 			for (auto &&i : obj) {
 				if (rax == NONE)
 					continue ;
-				auto rxx = TRUE ;
-				if ifswitch (rxx) {
+				auto act = TRUE ;
+				if ifswitch (act) {
 					if ifnot (rax == 0)
 						discard ;
 					if ifnot (i <= STRU8 (0X7F))
@@ -976,7 +970,7 @@ trait TEMPLATE_string_cvt_HELP<UNIT ,SIDE ,REQUIRE<ENUM_ALL<IS_SAME<UNIT ,STRU32
 					ret[ix] = STRU32 (i) ;
 					ix++ ;
 				}
-				if ifswitch (rxx) {
+				if ifswitch (act) {
 					if ifnot (rax == 0)
 						discard ;
 					if ifnot (i <= STRU8 (0XDF))
@@ -984,7 +978,7 @@ trait TEMPLATE_string_cvt_HELP<UNIT ,SIDE ,REQUIRE<ENUM_ALL<IS_SAME<UNIT ,STRU32
 					rbx = STRU32 (i & STRU8 (0X1F)) ;
 					rax = 1 ;
 				}
-				if ifswitch (rxx) {
+				if ifswitch (act) {
 					if ifnot (rax == 0)
 						discard ;
 					if ifnot (i <= STRU8 (0XEF))
@@ -992,7 +986,7 @@ trait TEMPLATE_string_cvt_HELP<UNIT ,SIDE ,REQUIRE<ENUM_ALL<IS_SAME<UNIT ,STRU32
 					rbx = STRU32 (i & STRU8 (0X0F)) ;
 					rax = 2 ;
 				}
-				if ifswitch (rxx) {
+				if ifswitch (act) {
 					if ifnot (rax == 0)
 						discard ;
 					if ifnot (i <= STRU8 (0XF7))
@@ -1000,7 +994,7 @@ trait TEMPLATE_string_cvt_HELP<UNIT ,SIDE ,REQUIRE<ENUM_ALL<IS_SAME<UNIT ,STRU32
 					rbx = STRU32 (i & STRU8 (0X07)) ;
 					rax = 3 ;
 				}
-				if ifswitch (rxx) {
+				if ifswitch (act) {
 					if ifnot (rax == 0)
 						discard ;
 					if ifnot (i <= STRU8 (0XFB))
@@ -1008,7 +1002,7 @@ trait TEMPLATE_string_cvt_HELP<UNIT ,SIDE ,REQUIRE<ENUM_ALL<IS_SAME<UNIT ,STRU32
 					rbx = STRU32 (i & STRU8 (0X03)) ;
 					rax = 4 ;
 				}
-				if ifswitch (rxx) {
+				if ifswitch (act) {
 					if ifnot (rax == 0)
 						discard ;
 					if ifnot (i <= STRU8 (0XFD))
@@ -1016,7 +1010,7 @@ trait TEMPLATE_string_cvt_HELP<UNIT ,SIDE ,REQUIRE<ENUM_ALL<IS_SAME<UNIT ,STRU32
 					rbx = STRU32 (i & STRU8 (0X01)) ;
 					rax = 5 ;
 				}
-				if ifswitch (rxx) {
+				if ifswitch (act) {
 					if ifnot (rax == 1)
 						discard ;
 					if ifnot (i <= STRU8 (0XBF))
@@ -1026,7 +1020,7 @@ trait TEMPLATE_string_cvt_HELP<UNIT ,SIDE ,REQUIRE<ENUM_ALL<IS_SAME<UNIT ,STRU32
 					ix++ ;
 					rax = 0 ;
 				}
-				if ifswitch (rxx) {
+				if ifswitch (act) {
 					if ifnot (vbetween (rax ,2 ,6))
 						discard ;
 					if ifnot (i <= STRU8 (0XBF))
@@ -1034,7 +1028,7 @@ trait TEMPLATE_string_cvt_HELP<UNIT ,SIDE ,REQUIRE<ENUM_ALL<IS_SAME<UNIT ,STRU32
 					rbx = STRU32 ((rbx << 6) | (i & STRU8 (0X3F))) ;
 					rax-- ;
 				}
-				if ifswitch (rxx) {
+				if ifswitch (act) {
 					ret.clear () ;
 					rax = NONE ;
 				}
@@ -1066,8 +1060,8 @@ trait TEMPLATE_string_cvt_HELP<UNIT ,SIDE ,REQUIRE<ENUM_ALL<IS_SAME<UNIT ,STRU32
 			for (auto &&i : obj) {
 				if (rax == NONE)
 					continue ;
-				auto rxx = TRUE ;
-				if ifswitch (rxx) {
+				auto act = TRUE ;
+				if ifswitch (act) {
 					if ifnot (rax == 0)
 						discard ;
 					if ifnot (i <= STRU16 (0X07FF))
@@ -1075,7 +1069,7 @@ trait TEMPLATE_string_cvt_HELP<UNIT ,SIDE ,REQUIRE<ENUM_ALL<IS_SAME<UNIT ,STRU32
 					ret[ix] = STRU32 (i) ;
 					ix++ ;
 				}
-				if ifswitch (rxx) {
+				if ifswitch (act) {
 					if ifnot (rax == 0)
 						discard ;
 					if ifnot (i >= STRU16 (0XD800))
@@ -1085,13 +1079,13 @@ trait TEMPLATE_string_cvt_HELP<UNIT ,SIDE ,REQUIRE<ENUM_ALL<IS_SAME<UNIT ,STRU32
 					rbx = STRU32 (i & STRU16 (0X03FF)) ;
 					rax = 1 ;
 				}
-				if ifswitch (rxx) {
+				if ifswitch (act) {
 					if ifnot (rax == 0)
 						discard ;
 					ret[ix] = STRU32 (i) ;
 					ix++ ;
 				}
-				if ifswitch (rxx) {
+				if ifswitch (act) {
 					if ifnot (rax == 1)
 						discard ;
 					if ifnot (i >= STRU16 (0XDC00))
@@ -1103,7 +1097,7 @@ trait TEMPLATE_string_cvt_HELP<UNIT ,SIDE ,REQUIRE<ENUM_ALL<IS_SAME<UNIT ,STRU32
 					ix++ ;
 					rax = 0 ;
 				}
-				if ifswitch (rxx) {
+				if ifswitch (act) {
 					ret.clear () ;
 					rax = NONE ;
 				}
@@ -1138,11 +1132,9 @@ trait FUNCTION_string_cvt_HELP ;
 template <class DEPEND>
 trait FUNCTION_string_cvt_HELP<DEPEND ,ALWAYS> {
 	struct FUNCTION_string_cvt {
-		template <class ARG1>
-		inline constexpr TEMPLATE_string_cvt<TYPE_FIRST_ONE<ARG1> ,TYPE_SECOND_ONE<ARG1>> operator[] (CREF<TYPEID<ARG1>> id) const noexcept {
-			using R1X = TYPE_FIRST_ONE<ARG1> ;
-			using R2X = TYPE_SECOND_ONE<ARG1> ;
-			using R3X = TEMPLATE_string_cvt<R1X ,R2X> ;
+		template <class ARG1 ,class ARG2>
+		inline constexpr TEMPLATE_string_cvt<ARG1 ,ARG2> operator[] (CREF<TYPEID<ARG1 ,ARG2>> id) const noexcept {
+			using R3X = TEMPLATE_string_cvt<ARG1 ,ARG2> ;
 			return R3X () ;
 		}
 	} ;
@@ -1359,7 +1351,7 @@ trait COMMASTRING_HELP<DEPEND ,ALWAYS> {
 		imports VRef<Holder> invoke () ;
 	} ;
 
-	using COUNTER_MAX_DEPTH = ENUMAS<VAL ,ENUMID<256>> ;
+	using COUNTER_MAX_DEPTH = ENUMAS<VAL ,256> ;
 
 	class CommaString implement Binder {
 	protected:

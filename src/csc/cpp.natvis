@@ -12,12 +12,6 @@
     </Expand>
   </Type>
 
-  <Type Name="CSC::ABSTRACT_HELP&lt;*&gt;::Abstract">
-    <Expand HideRawView="true">
-      <ExpandedItem>mThis</ExpandedItem>
-    </Expand>
-  </Type>
-
   <Type Name="CSC::BOX_HELP&lt;*&gt;::Box">
     <Expand HideRawView="true">
       <ExpandedItem>mValue</ExpandedItem>
@@ -25,8 +19,9 @@
   </Type>
 
   <Type Name="CSC::BOX_HELP&lt;*&gt;::Box" Priority="High">
-    <DisplayString Condition="!mExist">NULL</DisplayString>
+    <DisplayString Condition="!mExist">{{???}}</DisplayString>
     <Expand HideRawView="true">
+      <ExpandedItem Condition="!mExist">(int*)0</ExpandedItem>
       <ExpandedItem Condition="mExist">mValue</ExpandedItem>
     </Expand>
   </Type>
@@ -37,22 +32,18 @@
     </Expand>
   </Type>
 
-  <Type Name="CSC::CELL_HELP&lt;*&gt;::Cell">
-    <Expand HideRawView="true">
-      <ExpandedItem>mValue</ExpandedItem>
-    </Expand>
-  </Type>
-
   <Type Name="CSC::VREF_HELP&lt;*&gt;::VRef">
-    <DisplayString Condition="mPointer==0">NULL</DisplayString>
+    <DisplayString Condition="mPointer==0">{{???}}</DisplayString>
     <Expand HideRawView="true">
+      <ExpandedItem Condition="mPointer==0">(int*)0</ExpandedItem>
       <ExpandedItem Condition="mPointer!=0">($T1*)mPointer</ExpandedItem>
     </Expand>
   </Type>
 
   <Type Name="CSC::CREF_HELP&lt;*&gt;::CRef">
-    <DisplayString Condition="mPointer==0">NULL</DisplayString>
+    <DisplayString Condition="mPointer==0">{{???}}</DisplayString>
     <Expand HideRawView="true">
+      <ExpandedItem Condition="mPointer==0">(int*)0</ExpandedItem>
       <ExpandedItem Condition="mPointer!=0">($T1*)mPointer</ExpandedItem>
     </Expand>
   </Type>
@@ -122,11 +113,12 @@
   <Type Name="CSC::WATCH_HELP&lt;*&gt;::WATCH">
     <Expand HideRawView="true">
       <Item Name="[name]">mName</Item>
+      <Item Name="[value]" Condition="mPointer==0">(int*)0</Item>
       <Item Name="[value]" Condition="mPointer!=0">($T1*)mPointer</Item>
     </Expand>
   </Type>
 
-  <Type Name="CSC::OPTIONAL_HELP&lt;*&gt;::Optional">
+  <Type Name="CSC::CELL_HELP&lt;*&gt;::Cell">
     <Expand HideRawView="true">
       <Item Name="[code]">mCode</Item>
       <Item Name="[value]">mValue</Item>
@@ -139,9 +131,9 @@
     </Expand>
   </Type>
 
-  <Type Name="CSC::AUTOREF_IMPLHOLDER_HELP&lt;*&gt;::ImplHolder">
+  <Type Name="CSC::AUTOREF_PUREHOLDER_HELP&lt;*&gt;::PureHolder">
     <Expand HideRawView="true">
-      <Item Name="[value]">mValue</Item>
+      <ExpandedItem>mValue</ExpandedItem>
     </Expand>
   </Type>
 
@@ -151,9 +143,9 @@
     </Expand>
   </Type>
 
-  <Type Name="CSC::SHAREDREF_IMPLHOLDER_HELP&lt;*&gt;::ImplHolder">
+  <Type Name="CSC::SHAREDREF_PUREHOLDER_HELP&lt;*&gt;::PureHolder">
     <Expand HideRawView="true">
-      <Item Name="[value]">mValue</Item>
+      <ExpandedItem>mValue</ExpandedItem>
     </Expand>
   </Type>
 
@@ -163,9 +155,9 @@
     </Expand>
   </Type>
 
-  <Type Name="CSC::UNIQUEREF_IMPLHOLDER_HELP&lt;*&gt;::ImplHolder">
+  <Type Name="CSC::UNIQUEREF_PUREHOLDER_HELP&lt;*&gt;::PureHolder">
     <Expand HideRawView="true">
-      <Item Name="[value]">mValue</Item>
+      <ExpandedItem>mValue</ExpandedItem>
     </Expand>
   </Type>
 
@@ -181,7 +173,22 @@
     </Expand>
   </Type>
 
-  <Type Name="CSC::BUFFER_HELP&lt;*&gt;::Buffer">
+  <Type Name="CSC::BUFFER_HELP&lt;*,CSC::ENUMAS&lt;*,*&gt;,*&gt;::Buffer">
+    <Expand HideRawView="true">
+      <Item Name="[size]">$T3</Item>
+      <ArrayItems Condition="$T3&gt;=10">
+        <Size>10</Size>
+        <ValuePointer>($T1*)&amp;mBuffer</ValuePointer>
+      </ArrayItems>
+      <ArrayItems Condition="$T3&lt;10">
+        <Size>$T3</Size>
+        <ValuePointer>($T1*)&amp;mBuffer</ValuePointer>
+      </ArrayItems>
+      <Item Name="[+]">mBuffer</Item>
+    </Expand>
+  </Type>
+
+  <Type Name="CSC::BUFFER_HELP&lt;*,CSC::ENUMAS&lt;*,*&gt;,*&gt;::Buffer" Priority="High">
     <Expand HideRawView="true">
       <Item Name="[size]">mSize</Item>
       <ArrayItems Condition="mSize&gt;=10">
@@ -192,22 +199,28 @@
         <Size>mSize</Size>
         <ValuePointer>($T1*)mBuffer.mPointer</ValuePointer>
       </ArrayItems>
-      <Item Name="[+]">mBuffer</Item>
+      <Item Name="[+]">(CSC::VARBUFFER_HOLDER_HELP&lt;$T1,CSC::ENUMAS&lt;bool,0&gt;,$T4&gt;::Buffer*)this</Item>
     </Expand>
   </Type>
 
-  <Type Name="CSC::BUFFER_HELP&lt;*&gt;::Buffer" Priority="High">
+  <Type Name="CSC::VARBUFFER_HOLDER_HELP&lt;*&gt;::Buffer">
     <Expand HideRawView="true">
-      <Item Name="[size]">$T2::expr_m()</Item>
-      <ArrayItems Condition="$T2::expr_m()&gt;=10">
-        <Size>10</Size>
-        <ValuePointer>($T1*)&amp;mBuffer.mValue</ValuePointer>
+      <ArrayItems>
+        <Size>mSize</Size>
+        <ValuePointer>($T1*)mBuffer.mPointer</ValuePointer>
       </ArrayItems>
-      <ArrayItems Condition="$T2::expr_m()&lt;10">
-        <Size>$T2::expr_m()</Size>
-        <ValuePointer>($T1*)&amp;mBuffer.mValue</ValuePointer>
-      </ArrayItems>
-      <Item Name="[+]">mBuffer</Item>
+    </Expand>
+  </Type>
+
+  <Type Name="CSC::BUFFER_HELP&lt;*,CSC::ENUMAS&lt;*,*&gt;,*&gt;::Buffer" Priority="High">
+    <Expand HideRawView="true">
+      <ExpandedItem>mThis</ExpandedItem>
+    </Expand>
+  </Type>
+
+  <Type Name="CSC::FUNBUFFER_PUREHOLDER_HELP&lt;*,*&gt;::PureHolder">
+    <Expand HideRawView="true">
+      <ExpandedItem>mValue</ExpandedItem>
     </Expand>
   </Type>
 
@@ -219,8 +232,9 @@
   </Type>
 
   <Type Name="CSC::ALLOCATOR_HOLDER_HELP&lt;*&gt;::NODE">
-    <DisplayString Condition="mNext!=-2">NULL</DisplayString>
+    <DisplayString Condition="mNext!=-2">{{???}}</DisplayString>
     <Expand HideRawView="true">
+      <ExpandedItem Condition="mNext!=-2">(int*)0</ExpandedItem>
       <ExpandedItem Condition="mNext==-2">&amp;mItem</ExpandedItem>
     </Expand>
   </Type>
@@ -299,6 +313,7 @@
 
   <Type Name="CSC::PRIORITY_HELP&lt;*&gt;::Priority">
     <Expand HideRawView="true">
+      <Item Name="[read]">mRead</Item>
       <Item Name="[write]">mWrite</Item>
       <ExpandedItem>mPriority</ExpandedItem>
     </Expand>
@@ -380,7 +395,7 @@
     <Expand HideRawView="true">
       <ArrayItems>
         <Size>1</Size>
-        <ValuePointer>($T1(*)[4])&amp;mVector.mBuffer.mValue</ValuePointer>
+        <ValuePointer>($T1(*)[4])&amp;mVector.mBuffer</ValuePointer>
       </ArrayItems>
     </Expand>
   </Type>
@@ -389,7 +404,7 @@
     <Expand HideRawView="true">
       <ArrayItems>
         <Size>4</Size>
-        <ValuePointer>($T1(*)[4])&amp;mMatrix.mBuffer.mValue</ValuePointer>
+        <ValuePointer>($T1(*)[4])&amp;mMatrix.mBuffer</ValuePointer>
       </ArrayItems>
     </Expand>
   </Type>

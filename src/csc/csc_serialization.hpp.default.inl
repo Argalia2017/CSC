@@ -38,15 +38,13 @@ trait XMLPARSER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		INDEX mIndex ;
 
 	public:
-		implicit ImplHolder () = default ;
-
 		void initialize () override {
 			mIndex = NONE ;
 		}
 
 		void initialize (CREF<RegBuffer<STRU8>> stream) override {
 			using R1X = typename DEPENDENT<XMLPARSER_SERIALIZATION_HELP<DEPEND ,ALWAYS> ,DEPEND>::Serialization ;
-			auto rax = R1X (stream.ref ()) ;
+			auto rax = R1X (stream.as_ref ()) ;
 			rax.generate () ;
 			mHeap = CRef<HEAP>::make (rax.poll ()) ;
 			mIndex = 0 ;
@@ -190,68 +188,68 @@ trait XMLPARSER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		BOOL fetch (CREF<BOOL> def) const override {
-			return fetch_impl (def ,string_parse[TYPEAS<TYPEAS<BOOL ,STRU8>>::expr]) ;
+			return fetch_impl (def ,string_parse[TYPEAS<BOOL ,STRU8>::expr]) ;
 		}
 
 		VAL32 fetch (CREF<VAL32> def) const override {
-			return fetch_impl (def ,string_parse[TYPEAS<TYPEAS<VAL32 ,STRU8>>::expr]) ;
+			return fetch_impl (def ,string_parse[TYPEAS<VAL32 ,STRU8>::expr]) ;
 		}
 
 		VAL64 fetch (CREF<VAL64> def) const override {
-			return fetch_impl (def ,string_parse[TYPEAS<TYPEAS<VAL64 ,STRU8>>::expr]) ;
+			return fetch_impl (def ,string_parse[TYPEAS<VAL64 ,STRU8>::expr]) ;
 		}
 
 		SINGLE fetch (CREF<SINGLE> def) const override {
-			return fetch_impl (def ,string_parse[TYPEAS<TYPEAS<SINGLE ,STRU8>>::expr]) ;
+			return fetch_impl (def ,string_parse[TYPEAS<SINGLE ,STRU8>::expr]) ;
 		}
 
 		DOUBLE fetch (CREF<DOUBLE> def) const override {
-			return fetch_impl (def ,string_parse[TYPEAS<TYPEAS<DOUBLE ,STRU8>>::expr]) ;
+			return fetch_impl (def ,string_parse[TYPEAS<DOUBLE ,STRU8>::expr]) ;
 		}
 
 		BYTE fetch (CREF<BYTE> def) const override {
-			return fetch_impl (def ,string_parse[TYPEAS<TYPEAS<BYTE ,STRU8>>::expr]) ;
+			return fetch_impl (def ,string_parse[TYPEAS<BYTE ,STRU8>::expr]) ;
 		}
 
 		WORD fetch (CREF<WORD> def) const override {
-			return fetch_impl (def ,string_parse[TYPEAS<TYPEAS<WORD ,STRU8>>::expr]) ;
+			return fetch_impl (def ,string_parse[TYPEAS<WORD ,STRU8>::expr]) ;
 		}
 
 		CHAR fetch (CREF<CHAR> def) const override {
-			return fetch_impl (def ,string_parse[TYPEAS<TYPEAS<CHAR ,STRU8>>::expr]) ;
+			return fetch_impl (def ,string_parse[TYPEAS<CHAR ,STRU8>::expr]) ;
 		}
 
 		DATA fetch (CREF<DATA> def) const override {
-			return fetch_impl (def ,string_parse[TYPEAS<TYPEAS<DATA ,STRU8>>::expr]) ;
+			return fetch_impl (def ,string_parse[TYPEAS<DATA ,STRU8>::expr]) ;
 		}
 
 		String<STRA> fetch (CREF<String<STRA>> def) const override {
-			return fetch_impl (def ,string_cvt[TYPEAS<TYPEAS<STRA ,STRU8>>::expr]) ;
+			return fetch_impl (def ,string_cvt[TYPEAS<STRA ,STRU8>::expr]) ;
 		}
 
 		String<STRW> fetch (CREF<String<STRW>> def) const override {
-			return fetch_impl (def ,string_cvt[TYPEAS<TYPEAS<STRW ,STRU8>>::expr]) ;
+			return fetch_impl (def ,string_cvt[TYPEAS<STRW ,STRU8>::expr]) ;
 		}
 
 		String<STRU8> fetch (CREF<String<STRU8>> def) const override {
-			return fetch_impl (def ,string_cvt[TYPEAS<TYPEAS<STRU8 ,STRU8>>::expr]) ;
+			return fetch_impl (def ,string_cvt[TYPEAS<STRU8 ,STRU8>::expr]) ;
 		}
 
 		String<STRU16> fetch (CREF<String<STRU16>> def) const override {
-			return fetch_impl (def ,string_cvt[TYPEAS<TYPEAS<STRU16 ,STRU8>>::expr]) ;
+			return fetch_impl (def ,string_cvt[TYPEAS<STRU16 ,STRU8>::expr]) ;
 		}
 
 		String<STRU32> fetch (CREF<String<STRU32>> def) const override {
-			return fetch_impl (def ,string_cvt[TYPEAS<TYPEAS<STRU32 ,STRU8>>::expr]) ;
+			return fetch_impl (def ,string_cvt[TYPEAS<STRU32 ,STRU8>::expr]) ;
 		}
 
 		template <class ARG1 ,class ARG2>
 		ARG1 fetch_impl (CREF<ARG1> def ,CREF<ARG2> cvt) const {
-			auto rax = Optional<ARG1> () ;
+			auto rax = Cell<ARG1> () ;
 			try_invoke ([&] () {
-				rax = Optional<ARG1>::make (cvt (fetch ())) ;
+				rax = Cell<ARG1>::make (cvt (fetch ())) ;
 			} ,[&] () {
-				rax = Optional<ARG1>::make (def) ;
+				rax = Cell<ARG1>::make (def) ;
 			} ,[&] () {
 				noop () ;
 			}) ;
@@ -266,7 +264,7 @@ trait XMLPARSER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 	using HEAP = typename XMLPARSER_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::HEAP ;
 	using XmlParser = typename XMLPARSER_HELP<DEPEND ,ALWAYS>::XmlParser ;
 
-	using COUNTER_MAX_DEPTH = ENUMAS<VAL ,ENUMID<256>> ;
+	using COUNTER_MAX_DEPTH = ENUMAS<VAL ,256> ;
 
 	class Serialization {
 	protected:
@@ -350,7 +348,7 @@ trait XMLPARSER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 
 		void update_shift_e0 () {
 			update_shift_e8 () ;
-			mReader >> RegularReader::SKIP_SPACE ;
+			mReader >> SKIP_SPACE ;
 			INDEX ix = mTree.insert () ;
 			mTree[ix].mArraySet = mArraySet.share () ;
 			mTree[ix].mObjectSet = mObjectSet.share () ;
@@ -358,19 +356,19 @@ trait XMLPARSER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 			update_shift_e7 (ix) ;
 			mTree[ix].mChild = mLastIndex ;
 			mTree[ix].mBrother = NONE ;
-			mReader >> RegularReader::SKIP_SPACE ;
+			mReader >> SKIP_SPACE ;
 			update_shift_e9 () ;
 			mLastIndex = ix ;
 		}
 
 		//@info: $1->${identity}
 		void update_shift_e1 () {
-			mReader >> RegularReader::HINT_IDENTIFIER >> mLastString ;
+			mReader >> HINT_IDENTIFIER >> mLastString ;
 		}
 
 		//@info: $2->"${string}"
 		void update_shift_e2 () {
-			mReader >> RegularReader::HINT_STRING >> mLastString ;
+			mReader >> HINT_STRING >> mLastString ;
 		}
 
 		//@info: $3->$1 = $2
@@ -380,9 +378,9 @@ trait XMLPARSER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 			assume (ix == NONE) ;
 			ix = mAttribute.insert () ;
 			mTree[curr].mAttributeSet.add (move (mLastString) ,ix) ;
-			mReader >> RegularReader::SKIP_SPACE ;
+			mReader >> SKIP_SPACE ;
 			mReader >> slice ("=") ;
-			mReader >> RegularReader::SKIP_SPACE ;
+			mReader >> SKIP_SPACE ;
 			update_shift_e2 () ;
 			mAttribute[ix] = move (mLastString) ;
 		}
@@ -393,7 +391,7 @@ trait XMLPARSER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 				if ifnot (is_frist_identity ())
 					break ;
 				update_shift_e3 (curr) ;
-				mReader >> RegularReader::SKIP_SPACE ;
+				mReader >> SKIP_SPACE ;
 			}
 		}
 
@@ -421,27 +419,27 @@ trait XMLPARSER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 			mTree[ix].mParent = curr ;
 			mTree[ix].mBrother = NONE ;
 			mTree[ix].mChild = NONE ;
-			mReader >> RegularReader::SKIP_SPACE ;
+			mReader >> SKIP_SPACE ;
 			update_shift_e4 (ix) ;
-			mReader >> RegularReader::SKIP_SPACE ;
-			auto rxx = TRUE ;
-			if ifswitch (rxx) {
+			mReader >> SKIP_SPACE ;
+			auto act = TRUE ;
+			if ifswitch (act) {
 				if (mReader[0] != STRU8 ('>'))
 					discard ;
 				mReader++ ;
-				mReader >> RegularReader::SKIP_SPACE ;
+				mReader >> SKIP_SPACE ;
 				mTree[ix].mArraySet = mArraySet.share () ;
 				mTree[ix].mObjectSet = mObjectSet.share () ;
 				update_shift_e7 (ix) ;
 				mTree[ix].mChild = mLastIndex ;
-				mReader >> RegularReader::SKIP_SPACE ;
+				mReader >> SKIP_SPACE ;
 				mReader >> slice ("</") ;
 				update_shift_e1 () ;
 				assume (mTree[ix].mName == mLastString) ;
-				mReader >> RegularReader::SKIP_SPACE ;
+				mReader >> SKIP_SPACE ;
 				mReader >> slice (">") ;
 			}
-			if ifswitch (rxx) {
+			if ifswitch (act) {
 				mReader >> slice ("/>") ;
 			}
 			mLastIndex = ix ;
@@ -474,31 +472,35 @@ trait XMLPARSER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 				if ifnot (r1x)
 					if ifnot (r2x)
 						break ;
-				auto rxx = TRUE ;
-				if ifswitch (rxx) {
+				auto act = TRUE ;
+				if ifswitch (act) {
 					if ifnot (r1x)
 						discard ;
 					update_shift_e6 () ;
 				}
-				if ifswitch (rxx) {
+				if ifswitch (act) {
+					if ifnot (r2x)
+						discard ;
+					if (ix != NONE)
+						discard ;
+					update_shift_e5 (curr) ;
+					const auto r3x = mTree[curr].mArraySet.length () ;
+					mTree[curr].mArraySet.add (r3x ,mLastIndex) ;
+					mTree[curr].mObjectSet.add (mTree[mLastIndex].mName ,mLastIndex) ;
+					ix = mLastIndex ;
+					iy = mLastIndex ;
+				}
+				if ifswitch (act) {
 					if ifnot (r2x)
 						discard ;
 					update_shift_e5 (curr) ;
 					const auto r3x = mTree[curr].mArraySet.length () ;
 					mTree[curr].mArraySet.add (r3x ,mLastIndex) ;
 					mTree[curr].mObjectSet.add (mTree[mLastIndex].mName ,mLastIndex) ;
-					auto ryx = TRUE ;
-					if ifswitch (ryx) {
-						if ifnot (ix == NONE)
-							discard ;
-						ix = mLastIndex ;
-					}
-					if ifswitch (ryx) {
-						mTree[iy].mBrother = mLastIndex ;
-					}
+					mTree[iy].mBrother = mLastIndex ;
 					iy = mLastIndex ;
 				}
-				mReader >> RegularReader::SKIP_SPACE ;
+				mReader >> SKIP_SPACE ;
 			}
 			mLastIndex = ix ;
 		}
@@ -526,22 +528,22 @@ trait XMLPARSER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 			mReader++ ;
 			mReader++ ;
 			mReader >> slice ("xml") ;
-			mReader >> RegularReader::SKIP_SPACE ;
+			mReader >> SKIP_SPACE ;
 			mReader >> slice ("version") ;
-			mReader >> RegularReader::SKIP_SPACE ;
+			mReader >> SKIP_SPACE ;
 			mReader >> slice ("=") ;
-			mReader >> RegularReader::SKIP_SPACE ;
+			mReader >> SKIP_SPACE ;
 			mReader >> slice ("\"1.0\"") ;
-			mReader >> RegularReader::SKIP_SPACE ;
+			mReader >> SKIP_SPACE ;
 			if ifswitch (TRUE) {
 				if (mReader[0] == STRU8 ('?'))
 					discard ;
 				mReader >> slice ("encoding") ;
-				mReader >> RegularReader::SKIP_SPACE ;
+				mReader >> SKIP_SPACE ;
 				mReader >> slice ("=") ;
-				mReader >> RegularReader::SKIP_SPACE ;
+				mReader >> SKIP_SPACE ;
 				mReader >> slice ("\"utf-8\"") ;
-				mReader >> RegularReader::SKIP_SPACE ;
+				mReader >> SKIP_SPACE ;
 			}
 			mReader >> slice ("?>") ;
 		}
@@ -607,10 +609,10 @@ trait XMLPARSER_COMBINATION_HELP<DEPEND ,ALWAYS> {
 			mSequence = Array<XmlParser> (2) ;
 			mSequence[0] = first ;
 			mSequence[1] = second ;
-			mClazzString = string_cvt[TYPEAS<TYPEAS<STRU8 ,STR>>::expr] (slice ("type")) ;
-			mObjectClazzString = string_cvt[TYPEAS<TYPEAS<STRU8 ,STR>>::expr] (slice ("object")) ;
-			mArrayClazzString = string_cvt[TYPEAS<TYPEAS<STRU8 ,STR>>::expr] (slice ("array")) ;
-			mFinalClazzString = string_cvt[TYPEAS<TYPEAS<STRU8 ,STR>>::expr] (slice ("final")) ;
+			mClazzString = string_cvt[TYPEAS<STRU8 ,STR>::expr] (slice ("type")) ;
+			mObjectClazzString = string_cvt[TYPEAS<STRU8 ,STR>::expr] (slice ("object")) ;
+			mArrayClazzString = string_cvt[TYPEAS<STRU8 ,STR>::expr] (slice ("array")) ;
+			mFinalClazzString = string_cvt[TYPEAS<STRU8 ,STR>::expr] (slice ("final")) ;
 			mRoot = mTree.insert () ;
 			mTree[mRoot].mArraySet = mArraySet.share () ;
 			mTree[mRoot].mObjectSet = mObjectSet.share () ;
@@ -694,13 +696,13 @@ trait XMLPARSER_COMBINATION_HELP<DEPEND ,ALWAYS> {
 					break ;
 				mNodeStack.pop (mTempNode) ;
 				for (auto &&i : mTempNode.mBaseNode) {
-					auto rxx = TRUE ;
-					if ifswitch (rxx) {
+					auto act = TRUE ;
+					if ifswitch (act) {
 						if (mTempNode.mClazz != NODE_CLAZZ_OBJECT::expr)
 							discard ;
 						update_found_object_node (i) ;
 					}
-					if ifswitch (rxx) {
+					if ifswitch (act) {
 						if (mTempNode.mClazz != NODE_CLAZZ_ARRAY::expr)
 							discard ;
 						update_found_array_node (i) ;
@@ -766,27 +768,22 @@ trait XMLPARSER_COMBINATION_HELP<DEPEND ,ALWAYS> {
 					mFoundNode[iy].mBaseNode.clear () ;
 				}
 				if ifswitch (TRUE) {
-					const auto r3x = to_ImplHolder (rax.mThis) ;
-					auto &&tmp = r3x->mHeap->mTree[r3x->mIndex].mAttributeSet ;
-					for (auto &&i : tmp.iter ()) {
-						INDEX jx = tmp.get (i) ;
-						INDEX jy = mFoundNode[ix].mAttributeSet.map (tmp[i]) ;
+					auto &&tmp = down_cast (rax.mThis.self) ;
+					for (auto &&i : tmp.mHeap->mTree[tmp.mIndex].mAttributeSet.iter ()) {
+						INDEX jx = tmp.mHeap->mTree[tmp.mIndex].mAttributeSet.get (i) ;
+						INDEX jy = mFoundNode[ix].mAttributeSet.map (tmp.mHeap->mTree[tmp.mIndex].mAttributeSet[i]) ;
 						if ifswitch (TRUE) {
 							if (jy != NONE)
 								discard ;
 							jy = mAttribute.insert () ;
-							mAttribute[jy] = r3x->mHeap->mAttribute[jx] ;
-							mFoundNode[ix].mAttributeSet.add (tmp[i] ,jy) ;
+							mAttribute[jy] = tmp.mHeap->mAttribute[jx] ;
+							mFoundNode[ix].mAttributeSet.add (tmp.mHeap->mTree[tmp.mIndex].mAttributeSet[i] ,jy) ;
 						}
 					}
 				}
 				mFoundNode[iy].mBaseNode.add (rax.child ()) ;
 				rax = rax.brother () ;
 			}
-		}
-
-		CRef<ImplHolder> to_ImplHolder (CREF<Holder> that) const {
-			return CRef<ImplHolder>::reference (keep[TYPEAS<CREF<ImplHolder>>::expr] (that)) ;
 		}
 
 		void update_found_array_node (CREF<XmlParser> node) {
@@ -809,13 +806,12 @@ trait XMLPARSER_COMBINATION_HELP<DEPEND ,ALWAYS> {
 				mFoundNode[iy].mClazz = r2x ;
 				mFoundNode[iy].mAttributeSet = mAttributeSet.share () ;
 				if ifswitch (TRUE) {
-					const auto r3x = to_ImplHolder (rax.mThis) ;
-					auto &&tmp = r3x->mHeap->mTree[r3x->mIndex].mAttributeSet ;
-					for (auto &&i : tmp.iter ()) {
-						INDEX jx = tmp.get (i) ;
+					auto &&tmp = down_cast (rax.mThis.self) ;
+					for (auto &&i : tmp.mHeap->mTree[tmp.mIndex].mAttributeSet.iter ()) {
+						INDEX jx = tmp.mHeap->mTree[tmp.mIndex].mAttributeSet.get (i) ;
 						INDEX jy = mAttribute.insert () ;
-						mAttribute[jy] = r3x->mHeap->mAttribute[jx] ;
-						mFoundNode[ix].mAttributeSet.add (tmp[i] ,jy) ;
+						mAttribute[jy] = tmp.mHeap->mAttribute[jx] ;
+						mFoundNode[ix].mAttributeSet.add (tmp.mHeap->mTree[tmp.mIndex].mAttributeSet[i] ,jy) ;
 					}
 				}
 				if ifswitch (TRUE) {
@@ -828,6 +824,10 @@ trait XMLPARSER_COMBINATION_HELP<DEPEND ,ALWAYS> {
 				mFoundNode[iy].mBaseNode.add (rax.child ()) ;
 				rax = rax.brother () ;
 			}
+		}
+
+		CREF<ImplHolder> down_cast (CREF<Holder> that) const {
+			return keep[TYPEAS<CREF<ImplHolder>>::expr] (that) ;
 		}
 
 		void update_merge_found_node (CREF<INDEX> curr) {
@@ -910,15 +910,13 @@ trait JSONPARSER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		INDEX mIndex ;
 
 	public:
-		implicit ImplHolder () = default ;
-
 		void initialize () override {
 			mIndex = NONE ;
 		}
 
 		void initialize (CREF<RegBuffer<STRU8>> stream) override {
 			using R1X = typename DEPENDENT<JSONPARSER_SERIALIZATION_HELP<DEPEND ,ALWAYS> ,DEPEND>::Serialization ;
-			auto rax = R1X (stream.ref ()) ;
+			auto rax = R1X (stream.as_ref ()) ;
 			rax.generate () ;
 			mHeap = CRef<HEAP>::make (rax.poll ()) ;
 			mIndex = 0 ;
@@ -1059,68 +1057,68 @@ trait JSONPARSER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		BOOL fetch (CREF<BOOL> def) const override {
-			return fetch_impl (def ,string_parse[TYPEAS<TYPEAS<BOOL ,STRU8>>::expr]) ;
+			return fetch_impl (def ,string_parse[TYPEAS<BOOL ,STRU8>::expr]) ;
 		}
 
 		VAL32 fetch (CREF<VAL32> def) const override {
-			return fetch_impl (def ,string_parse[TYPEAS<TYPEAS<VAL32 ,STRU8>>::expr]) ;
+			return fetch_impl (def ,string_parse[TYPEAS<VAL32 ,STRU8>::expr]) ;
 		}
 
 		VAL64 fetch (CREF<VAL64> def) const override {
-			return fetch_impl (def ,string_parse[TYPEAS<TYPEAS<VAL64 ,STRU8>>::expr]) ;
+			return fetch_impl (def ,string_parse[TYPEAS<VAL64 ,STRU8>::expr]) ;
 		}
 
 		SINGLE fetch (CREF<SINGLE> def) const override {
-			return fetch_impl (def ,string_parse[TYPEAS<TYPEAS<SINGLE ,STRU8>>::expr]) ;
+			return fetch_impl (def ,string_parse[TYPEAS<SINGLE ,STRU8>::expr]) ;
 		}
 
 		DOUBLE fetch (CREF<DOUBLE> def) const override {
-			return fetch_impl (def ,string_parse[TYPEAS<TYPEAS<DOUBLE ,STRU8>>::expr]) ;
+			return fetch_impl (def ,string_parse[TYPEAS<DOUBLE ,STRU8>::expr]) ;
 		}
 
 		BYTE fetch (CREF<BYTE> def) const override {
-			return fetch_impl (def ,string_parse[TYPEAS<TYPEAS<BYTE ,STRU8>>::expr]) ;
+			return fetch_impl (def ,string_parse[TYPEAS<BYTE ,STRU8>::expr]) ;
 		}
 
 		WORD fetch (CREF<WORD> def) const override {
-			return fetch_impl (def ,string_parse[TYPEAS<TYPEAS<WORD ,STRU8>>::expr]) ;
+			return fetch_impl (def ,string_parse[TYPEAS<WORD ,STRU8>::expr]) ;
 		}
 
 		CHAR fetch (CREF<CHAR> def) const override {
-			return fetch_impl (def ,string_parse[TYPEAS<TYPEAS<CHAR ,STRU8>>::expr]) ;
+			return fetch_impl (def ,string_parse[TYPEAS<CHAR ,STRU8>::expr]) ;
 		}
 
 		DATA fetch (CREF<DATA> def) const override {
-			return fetch_impl (def ,string_parse[TYPEAS<TYPEAS<DATA ,STRU8>>::expr]) ;
+			return fetch_impl (def ,string_parse[TYPEAS<DATA ,STRU8>::expr]) ;
 		}
 
 		String<STRA> fetch (CREF<String<STRA>> def) const override {
-			return fetch_impl (def ,string_cvt[TYPEAS<TYPEAS<STRA ,STRU8>>::expr]) ;
+			return fetch_impl (def ,string_cvt[TYPEAS<STRA ,STRU8>::expr]) ;
 		}
 
 		String<STRW> fetch (CREF<String<STRW>> def) const override {
-			return fetch_impl (def ,string_cvt[TYPEAS<TYPEAS<STRW ,STRU8>>::expr]) ;
+			return fetch_impl (def ,string_cvt[TYPEAS<STRW ,STRU8>::expr]) ;
 		}
 
 		String<STRU8> fetch (CREF<String<STRU8>> def) const override {
-			return fetch_impl (def ,string_cvt[TYPEAS<TYPEAS<STRU8 ,STRU8>>::expr]) ;
+			return fetch_impl (def ,string_cvt[TYPEAS<STRU8 ,STRU8>::expr]) ;
 		}
 
 		String<STRU16> fetch (CREF<String<STRU16>> def) const override {
-			return fetch_impl (def ,string_cvt[TYPEAS<TYPEAS<STRU16 ,STRU8>>::expr]) ;
+			return fetch_impl (def ,string_cvt[TYPEAS<STRU16 ,STRU8>::expr]) ;
 		}
 
 		String<STRU32> fetch (CREF<String<STRU32>> def) const override {
-			return fetch_impl (def ,string_cvt[TYPEAS<TYPEAS<STRU32 ,STRU8>>::expr]) ;
+			return fetch_impl (def ,string_cvt[TYPEAS<STRU32 ,STRU8>::expr]) ;
 		}
 
 		template <class ARG1 ,class ARG2>
 		ARG1 fetch_impl (CREF<ARG1> def ,CREF<ARG2> cvt) const {
-			auto rax = Optional<ARG1> () ;
+			auto rax = Cell<ARG1> () ;
 			try_invoke ([&] () {
-				rax = Optional<ARG1>::make (cvt (fetch ())) ;
+				rax = Cell<ARG1>::make (cvt (fetch ())) ;
 			} ,[&] () {
-				rax = Optional<ARG1>::make (def) ;
+				rax = Cell<ARG1>::make (def) ;
 			} ,[&] () {
 				noop () ;
 			}) ;
@@ -1135,7 +1133,7 @@ trait JSONPARSER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 	using HEAP = typename JSONPARSER_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::HEAP ;
 	using JsonParser = typename JSONPARSER_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::JsonParser ;
 
-	using COUNTER_MAX_DEPTH = ENUMAS<VAL ,ENUMID<256>> ;
+	using COUNTER_MAX_DEPTH = ENUMAS<VAL ,256> ;
 
 	using NODE_CLAZZ_NULL = typename JSONPARSER_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::NODE_CLAZZ_NULL ;
 	using NODE_CLAZZ_STRING = typename JSONPARSER_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::NODE_CLAZZ_STRING ;
@@ -1222,47 +1220,47 @@ trait JSONPARSER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 		//@info: $0->$11 $10 $12
 		void update_shift_e0 () {
 			update_shift_e11 () ;
-			mReader >> RegularReader::SKIP_SPACE ;
+			mReader >> SKIP_SPACE ;
 			update_shift_e10 () ;
 			INDEX ix = mLastIndex ;
-			mReader >> RegularReader::SKIP_SPACE ;
+			mReader >> SKIP_SPACE ;
 			update_shift_e12 () ;
 			mLastIndex = ix ;
 		}
 
 		//@info: $1->${scalar}
 		void update_shift_e1 () {
-			mReader >> RegularReader::HINT_SCALAR >> mLastString ;
+			mReader >> HINT_SCALAR >> mLastString ;
 		}
 
 		//@info: $2->true|TRUE|false|FALSE
 		void update_shift_e2 () {
-			auto rxx = TRUE ;
-			if ifswitch (rxx) {
+			auto act = TRUE ;
+			if ifswitch (act) {
 				if ifnot (mReader[0] == STRU8 ('t'))
 					discard ;
 				mReader >> slice ("true") ;
 				mLastString = String<STRU8>::make (slice ("true")) ;
 			}
-			if ifswitch (rxx) {
+			if ifswitch (act) {
 				if ifnot (mReader[0] == STRU8 ('T'))
 					discard ;
 				mReader >> slice ("TRUE") ;
 				mLastString = String<STRU8>::make (slice ("TRUE")) ;
 			}
-			if ifswitch (rxx) {
+			if ifswitch (act) {
 				if ifnot (mReader[0] == STRU8 ('f'))
 					discard ;
 				mReader >> slice ("false") ;
 				mLastString = String<STRU8>::make (slice ("false")) ;
 			}
-			if ifswitch (rxx) {
+			if ifswitch (act) {
 				if ifnot (mReader[0] == STRU8 ('F'))
 					discard ;
 				mReader >> slice ("FALSE") ;
 				mLastString = String<STRU8>::make (slice ("FALSE")) ;
 			}
-			if ifswitch (rxx) {
+			if ifswitch (act) {
 				assume (FALSE) ;
 			}
 		}
@@ -1275,7 +1273,7 @@ trait JSONPARSER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 
 		//@info: $3->"${string}"
 		void update_shift_e3 () {
-			mReader >> RegularReader::HINT_STRING >> mLastString ;
+			mReader >> HINT_STRING >> mLastString ;
 		}
 
 		//@info: $4->$1|$2|$2x|$3|$6|$9
@@ -1283,8 +1281,8 @@ trait JSONPARSER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 			Scope<ScopeCounter> anonymous (ScopeCounter::from (mRecursiveCounter)) ;
 			assume (mRecursiveCounter < COUNTER_MAX_DEPTH::expr) ;
 			INDEX ix = NONE ;
-			auto rxx = TRUE ;
-			if ifswitch (rxx) {
+			auto act = TRUE ;
+			if ifswitch (act) {
 				if ifnot (is_first_number ())
 					discard ;
 				ix = mTree.insert () ;
@@ -1295,7 +1293,7 @@ trait JSONPARSER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 				mTree[ix].mBrother = NONE ;
 				mTree[ix].mChild = NONE ;
 			}
-			if ifswitch (rxx) {
+			if ifswitch (act) {
 				if ifnot (is_first_boolean ())
 					discard ;
 				ix = mTree.insert () ;
@@ -1306,7 +1304,7 @@ trait JSONPARSER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 				mTree[ix].mBrother = NONE ;
 				mTree[ix].mChild = NONE ;
 			}
-			if ifswitch (rxx) {
+			if ifswitch (act) {
 				if ifnot (mReader[0] == STRU8 ('n'))
 					discard ;
 				ix = mTree.insert () ;
@@ -1316,7 +1314,7 @@ trait JSONPARSER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 				mTree[ix].mBrother = NONE ;
 				mTree[ix].mChild = NONE ;
 			}
-			if ifswitch (rxx) {
+			if ifswitch (act) {
 				if ifnot (mReader[0] == STRU8 ('\"'))
 					discard ;
 				ix = mTree.insert () ;
@@ -1327,19 +1325,19 @@ trait JSONPARSER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 				mTree[ix].mBrother = NONE ;
 				mTree[ix].mChild = NONE ;
 			}
-			if ifswitch (rxx) {
+			if ifswitch (act) {
 				if ifnot (mReader[0] == STRU8 ('['))
 					discard ;
 				update_shift_e6 (curr) ;
 				ix = mLastIndex ;
 			}
-			if ifswitch (rxx) {
+			if ifswitch (act) {
 				if ifnot (mReader[0] == STRU8 ('{'))
 					discard ;
 				update_shift_e9 (curr) ;
 				ix = mLastIndex ;
 			}
-			if ifswitch (rxx) {
+			if ifswitch (act) {
 				assume (FALSE) ;
 			}
 			mLastIndex = ix ;
@@ -1376,21 +1374,21 @@ trait JSONPARSER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 				update_shift_e4 (curr) ;
 				const auto r1x = mTree[curr].mArraySet.length () ;
 				mTree[curr].mArraySet.add (r1x ,mLastIndex) ;
-				auto rxx = TRUE ;
-				if ifswitch (rxx) {
+				auto act = TRUE ;
+				if ifswitch (act) {
 					if ifnot (ix == NONE)
 						discard ;
 					ix = mLastIndex ;
 				}
-				if ifswitch (rxx) {
+				if ifswitch (act) {
 					mTree[iy].mBrother = mLastIndex ;
 				}
 				iy = mLastIndex ;
-				mReader >> RegularReader::SKIP_SPACE ;
+				mReader >> SKIP_SPACE ;
 				if (mReader[0] != STRU8 (','))
 					break ;
 				mReader++ ;
-				mReader >> RegularReader::SKIP_SPACE ;
+				mReader >> SKIP_SPACE ;
 			}
 			mLastIndex = ix ;
 		}
@@ -1406,13 +1404,13 @@ trait JSONPARSER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 			mTree[ix].mParent = curr ;
 			mTree[ix].mBrother = NONE ;
 			mTree[ix].mChild = NONE ;
-			mReader >> RegularReader::SKIP_SPACE ;
+			mReader >> SKIP_SPACE ;
 			if ifswitch (TRUE) {
 				if (mReader[0] == STRU8 (']'))
 					discard ;
 				update_shift_e5 (ix) ;
 				mTree[ix].mChild = mLastIndex ;
-				mReader >> RegularReader::SKIP_SPACE ;
+				mReader >> SKIP_SPACE ;
 			}
 			mReader >> slice ("]") ;
 			mLastIndex = ix ;
@@ -1422,9 +1420,9 @@ trait JSONPARSER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 		void update_shift_e7 (CREF<INDEX> curr) {
 			update_shift_e3 () ;
 			auto rax = move (mLastString) ;
-			mReader >> RegularReader::SKIP_SPACE ;
+			mReader >> SKIP_SPACE ;
 			mReader >> slice (":") ;
-			mReader >> RegularReader::SKIP_SPACE ;
+			mReader >> SKIP_SPACE ;
 			update_shift_e4 (curr) ;
 			mTree[curr].mObjectSet.add (move (rax) ,mLastIndex) ;
 		}
@@ -1435,21 +1433,21 @@ trait JSONPARSER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 			INDEX iy = NONE ;
 			while (TRUE) {
 				update_shift_e7 (curr) ;
-				auto rxx = TRUE ;
-				if ifswitch (rxx) {
+				auto act = TRUE ;
+				if ifswitch (act) {
 					if ifnot (ix == NONE)
 						discard ;
 					ix = mLastIndex ;
 				}
-				if ifswitch (rxx) {
+				if ifswitch (act) {
 					mTree[iy].mBrother = mLastIndex ;
 				}
 				iy = mLastIndex ;
-				mReader >> RegularReader::SKIP_SPACE ;
+				mReader >> SKIP_SPACE ;
 				if (mReader[0] != STRU8 (','))
 					break ;
 				mReader++ ;
-				mReader >> RegularReader::SKIP_SPACE ;
+				mReader >> SKIP_SPACE ;
 			}
 			mLastIndex = ix ;
 		}
@@ -1465,13 +1463,13 @@ trait JSONPARSER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 			mTree[ix].mParent = curr ;
 			mTree[ix].mBrother = NONE ;
 			mTree[ix].mChild = NONE ;
-			mReader >> RegularReader::SKIP_SPACE ;
+			mReader >> SKIP_SPACE ;
 			if ifswitch (TRUE) {
 				if (mReader[0] == STRU8 ('}'))
 					discard ;
 				update_shift_e8 (ix) ;
 				mTree[ix].mChild = mLastIndex ;
-				mReader >> RegularReader::SKIP_SPACE ;
+				mReader >> SKIP_SPACE ;
 			}
 			mReader >> slice ("}") ;
 			mLastIndex = ix ;

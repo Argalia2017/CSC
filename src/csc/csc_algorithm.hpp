@@ -21,7 +21,7 @@ template <class...>
 trait SORTPROC_IMPLHOLDER_HELP ;
 
 template <class...>
-trait SORTPROC_COMPARE_HELP ;
+trait SORTPROC_IMPLBINDER_HELP ;
 
 template <class DEPEND>
 trait SORTPROC_HELP<DEPEND ,ALWAYS> {
@@ -31,7 +31,7 @@ trait SORTPROC_HELP<DEPEND ,ALWAYS> {
 
 	struct Holder implement Interface {
 		virtual void initialize () = 0 ;
-		virtual void sort (CREF<Binder> op ,VREF<Array<INDEX>> range_ ,CREF<INDEX> begin_ ,CREF<INDEX> end_) const = 0 ;
+		virtual void sort (CREF<Binder> binder ,VREF<Array<INDEX>> range_ ,CREF<INDEX> begin_ ,CREF<INDEX> end_) const = 0 ;
 	} ;
 
 	struct FUNCTION_extern {
@@ -53,36 +53,38 @@ trait SORTPROC_HELP<DEPEND ,ALWAYS> {
 		}
 
 		template <class ARG1>
-		inline void operator() (CREF<ARG1> array_ ,VREF<Array<INDEX>> range_) const {
-			sort (array_ ,range_ ,0 ,range_.length ()) ;
+		inline Array<INDEX> operator() (CREF<ARG1> array_) const {
+			Array<INDEX> ret = Array<INDEX>::make (array_.iter ()) ;
+			sort (array_ ,ret ,0 ,ret.length ()) ;
+			return move (ret) ;
 		}
 
 		template <class ARG1>
 		imports void sort (CREF<ARG1> array_ ,VREF<Array<INDEX>> range_ ,CREF<INDEX> begin_ ,CREF<INDEX> end_) {
-			using R1X = typename SORTPROC_COMPARE_HELP<ARG1 ,ALWAYS>::Compare ;
+			using R1X = typename SORTPROC_IMPLBINDER_HELP<ARG1 ,ALWAYS>::ImplBinder ;
 			auto rax = R1X (CRef<ARG1>::reference (array_)) ;
-			instance ().mThis->sort (rax ,range_ ,begin_ ,end_) ;
+			return instance ().mThis->sort (rax ,range_ ,begin_ ,end_) ;
 		}
 	} ;
 } ;
 
 template <class UNIT>
-trait SORTPROC_COMPARE_HELP<UNIT ,ALWAYS> {
+trait SORTPROC_IMPLBINDER_HELP<UNIT ,ALWAYS> {
 	using Binder = typename SORTPROC_HELP<DEPEND ,ALWAYS>::Binder ;
 
-	class Compare implement Binder {
+	class ImplBinder implement Binder {
 	protected:
-		CRef<UNIT> mArray ;
+		CRef<UNIT> mThat ;
 
 	public:
-		implicit Compare () = delete ;
+		implicit ImplBinder () = delete ;
 
-		explicit Compare (RREF<CRef<UNIT>> array_) {
-			mArray = move (array_) ;
+		explicit ImplBinder (RREF<CRef<UNIT>> that) {
+			mThat = move (that) ;
 		}
 
 		FLAG friend_compare (CREF<INDEX> index1 ,CREF<INDEX> index2) const override {
-			return operator_compr (mArray.self[index1] ,mArray.self[index2]) ;
+			return operator_compr (mThat.self[index1] ,mThat.self[index2]) ;
 		}
 	} ;
 } ;
@@ -102,7 +104,7 @@ trait DISJOINTTABLE_HELP<DEPEND ,ALWAYS> {
 		virtual void clear () = 0 ;
 		virtual INDEX lead (CREF<INDEX> index) = 0 ;
 		virtual void joint (CREF<INDEX> index1 ,CREF<INDEX> index2) = 0 ;
-		virtual BitSet<> filter (CREF<INDEX> index) = 0 ;
+		virtual BitSet<> filter (CREF<INDEX> index ,RREF<BitSet<>> res) = 0 ;
 		virtual Array<INDEX> linkage () = 0 ;
 		virtual Array<BitSet<>> closure () = 0 ;
 	} ;
@@ -118,7 +120,7 @@ trait DISJOINTTABLE_HELP<DEPEND ,ALWAYS> {
 	public:
 		implicit DisjointTable () = default ;
 
-		explicit DisjointTable (CREF<LENGTH> size_) {
+		explicit DisjointTable (CREF<SizeProxy> size_) {
 			mThis = FUNCTION_extern::invoke () ;
 			mThis->initialize (size_) ;
 		}
@@ -135,8 +137,8 @@ trait DISJOINTTABLE_HELP<DEPEND ,ALWAYS> {
 			return mThis->joint (index1 ,index2) ;
 		}
 
-		BitSet<> filter (CREF<INDEX> index) {
-			return mThis->filter (index) ;
+		BitSet<> filter (CREF<INDEX> index ,RREF<BitSet<>> res) {
+			return mThis->filter (index ,move (res)) ;
 		}
 
 		Array<INDEX> linkage () {
@@ -162,10 +164,11 @@ trait BINARYTABLE_HELP<DEPEND ,ALWAYS> {
 	struct Holder implement Interface {
 		virtual void initialize (CREF<LENGTH> size_) = 0 ;
 		virtual void clear () = 0 ;
+		virtual LENGTH count (CREF<INDEX> from_) const = 0 ;
 		virtual void link (CREF<INDEX> from_ ,CREF<INDEX> to_) = 0 ;
 		virtual void joint (CREF<INDEX> from_ ,CREF<INDEX> to_) = 0 ;
 		virtual BOOL get (CREF<INDEX> from_ ,CREF<INDEX> to_) const = 0 ;
-		virtual Array<INDEX> filter (CREF<INDEX> from_) const = 0 ;
+		virtual BitSet<> filter (CREF<INDEX> from_ ,RREF<BitSet<>> res) const = 0 ;
 		virtual void optimize () = 0 ;
 	} ;
 
@@ -180,13 +183,17 @@ trait BINARYTABLE_HELP<DEPEND ,ALWAYS> {
 	public:
 		implicit BinaryTable () = default ;
 
-		explicit BinaryTable (CREF<LENGTH> size_) {
+		explicit BinaryTable (CREF<SizeProxy> size_) {
 			mThis = FUNCTION_extern::invoke () ;
 			mThis->initialize (size_) ;
 		}
 
 		void clear () {
 			return mThis->clear () ;
+		}
+
+		LENGTH count (CREF<INDEX> from_) const {
+			return mThis->count (from_) ;
 		}
 
 		void link (CREF<INDEX> from_ ,CREF<INDEX> to_) {
@@ -201,8 +208,8 @@ trait BINARYTABLE_HELP<DEPEND ,ALWAYS> {
 			return mThis->get (from_ ,to_) ;
 		}
 
-		Array<INDEX> filter (CREF<INDEX> from_) const {
-			return mThis->filter (from_) ;
+		BitSet<> filter (CREF<INDEX> from_ ,RREF<BitSet<>> res) const {
+			return mThis->filter (from_ ,move (res)) ;
 		}
 
 		void optimize () {

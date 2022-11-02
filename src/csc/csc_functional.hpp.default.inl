@@ -12,7 +12,7 @@ trait SYNTAXTREE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	using Binder = typename SYNTAXTREE_HELP<DEPEND ,ALWAYS>::Binder ;
 	using Holder = typename SYNTAXTREE_HELP<DEPEND ,ALWAYS>::Holder ;
 	using SyntaxTree = typename SYNTAXTREE_HELP<DEPEND ,ALWAYS>::SyntaxTree ;
-	using LINK_MIN_SIZE = ENUMAS<VAL ,ENUMID<32>> ;
+	using LINK_MIN_SIZE = ENUMAS<VAL ,32> ;
 
 	struct NODE {
 		String<STR> mName ;
@@ -52,8 +52,6 @@ trait SYNTAXTREE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		Deque<INDEX> mScanQueue ;
 
 	public:
-		implicit ImplHolder () = default ;
-
 		void initialize () override {
 			INDEX ix = mTree.insert () ;
 			mTree[ix].mName = slice ("") ;
@@ -131,7 +129,7 @@ trait SYNTAXTREE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			mTree[ix].mDepend.add (ix) ;
 		}
 
-		void maybe (CREF<Clazz> clazz ,VREF<Binder> op) override {
+		void maybe (CREF<Clazz> clazz ,CREF<Binder> binder ,VREF<SyntaxTree> tree) override {
 			INDEX ix = curr_node () ;
 			assume (ifnot (mTree[ix].mOnceActor.exist ())) ;
 			assume (ifnot (mTree[ix].mActor.exist ())) ;
@@ -151,12 +149,12 @@ trait SYNTAXTREE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				assume (ifnot (mTree[iy].mOncePlayed)) ;
 				assume (ifnot (mTree[iy].mPlayed)) ;
 				mTreeStack.add (iy) ;
-				mTree[iy].mValue = op.friend_create () ;
+				mTree[iy].mValue = binder.friend_create (tree) ;
 				mTreeStack.pop () ;
 			}
 		}
 
-		CREF<AutoRef<>> stack (CREF<Clazz> clazz ,VREF<Binder> op) leftvalue override {
+		CREF<AutoRef<>> stack (CREF<Clazz> clazz ,CREF<Binder> binder ,VREF<SyntaxTree> tree) leftvalue override {
 			INDEX ix = curr_node () ;
 			assume (ifnot (mTree[ix].mActor.exist ())) ;
 			assume (ifnot (mTree[ix].mOncePlayed)) ;
@@ -181,7 +179,7 @@ trait SYNTAXTREE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				assume (ifnot (mTree[iy].mOncePlayed)) ;
 				assume (ifnot (mTree[iy].mPlayed)) ;
 				mTreeStack.add (iy) ;
-				mTree[iy].mValue = op.friend_create () ;
+				mTree[iy].mValue = binder.friend_create (tree) ;
 				mTreeStack.pop () ;
 			}
 			if ifswitch (TRUE) {
@@ -325,8 +323,8 @@ trait SYNTAXTREE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				INDEX iy = mPlayPriority.get (mPlayPriority.head ()) ;
 				if (mTree[iy].mDepth <= mTree[ix].mDepth)
 					break ;
-				auto rxx = TRUE ;
-				if ifswitch (rxx) {
+				auto act = TRUE ;
+				if ifswitch (act) {
 					if (mTree[iy].mOncePlayed)
 						discard ;
 					assume (mTree[iy].mValue.exist ()) ;
@@ -356,7 +354,7 @@ trait SYNTAXTREE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 					mTree[iy].mMaybe.clear () ;
 					play_scan (iy) ;
 				}
-				if ifswitch (rxx) {
+				if ifswitch (act) {
 					if (mTree[iy].mPlayed)
 						discard ;
 					assume (mTree[iy].mValue.exist ()) ;
@@ -388,7 +386,7 @@ trait SYNTAXTREE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 						}
 					}
 				}
-				if ifswitch (rxx) {
+				if ifswitch (act) {
 					mPlayPriority.take () ;
 					mTree[iy].mPlaying = FALSE ;
 					play_clean () ;
