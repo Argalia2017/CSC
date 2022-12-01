@@ -92,6 +92,7 @@ trait RUNTIMEPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 					discard ;
 				if (ret[ix] == STRA ('/'))
 					discard ;
+				ix++ ;
 				ret[ix] = STRA ('\\') ;
 				ix++ ;
 				ret.trunc (ix) ;
@@ -230,7 +231,7 @@ trait PROCESS_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				GetProcessTimes (handle ,(&ret[0]) ,(&ret[1]) ,(&ret[2]) ,(&ret[3])) ;
 				return move (ret) ;
 			}) ;
-			return BitProc::up_bit (CHAR (r1x[0].dwHighDateTime) ,CHAR (r1x[0].dwLowDateTime)) ;
+			return BitProc::merge_bit (CHAR (r1x[0].dwHighDateTime) ,CHAR (r1x[0].dwLowDateTime)) ;
 		}
 
 		void initialize (CREF<SNAPSHOT> snapshot_) override {

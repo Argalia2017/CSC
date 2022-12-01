@@ -397,16 +397,16 @@ trait DIRECTORY_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 
 		String<STR> path () const override {
 			const auto r1x = mHeap->mDire.length () ;
-			const auto r2x = BufferProc::buf_find (mHeap->mDire ,STR ('\\') ,0 ,r1x ,FALSE) ;
-			const auto r3x = BufferProc::buf_find (mHeap->mDire ,STR ('/') ,0 ,r1x ,FALSE) ;
+			const auto r2x = BufferProc<STR>::buf_find_r (mHeap->mDire.raw () ,STR ('\\') ,0 ,r1x) ;
+			const auto r3x = BufferProc<STR>::buf_find_r (mHeap->mDire.raw () ,STR ('/') ,0 ,r1x) ;
 			const auto r4x = MathProc::max_of (r2x ,r3x ,ZERO) ;
 			return mHeap->mDire.segment (0 ,r4x) ;
 		}
 
 		String<STR> name () const override {
 			const auto r1x = mHeap->mDire.length () ;
-			const auto r2x = BufferProc::buf_find (mHeap->mDire ,STR ('\\') ,0 ,r1x ,FALSE) ;
-			const auto r3x = BufferProc::buf_find (mHeap->mDire ,STR ('/') ,0 ,r1x ,FALSE) ;
+			const auto r2x = BufferProc<STR>::buf_find_r (mHeap->mDire.raw () ,STR ('\\') ,0 ,r1x) ;
+			const auto r3x = BufferProc<STR>::buf_find_r (mHeap->mDire.raw () ,STR ('/') ,0 ,r1x) ;
 			const auto r4x = MathProc::max_of (r2x ,r3x) + 1 ;
 			return mHeap->mDire.segment (r4x ,r1x) ;
 		}
@@ -651,7 +651,7 @@ trait DIRECTORY_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				if (r3x == NULL)
 					break ;
 				if ifswitch (TRUE) {
-					BufferProc::buf_slice (rdx ,r3x->d_name ,rdx.size ()) ;
+					BufferProc<STR>::buf_slice (rdx.raw () ,unsafe_array (r3x->d_name[0]) ,rdx.size ()) ;
 					if (rdx == slice ("."))
 						discard ;
 					if (rdx == slice (".."))
@@ -1205,7 +1205,7 @@ trait BUFFERFILE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			const auto r3x = HEADER_SIZE::expr + r1x * mHeader->mChunkSize ;
 			INDEX ix = load (r3x ,mHeader->mChunkSize) ;
 			const auto r4x = r2x + FLAG (mCacheList[ix].mBuffer->pick (TYPEAS<RANK0>::expr)) ;
-			BufferProc::buf_copy (item ,RegBuffer<BYTE>::make (unsafe_pointer (r4x) ,0 ,VAL32_MAX) ,0 ,mHeader->mItemSize) ;
+			BufferProc<BYTE>::buf_copy (item ,RegBuffer<BYTE>::make (unsafe_pointer (r4x) ,0 ,VAL32_MAX) ,0 ,mHeader->mItemSize) ;
 		}
 
 		void set (CREF<VAL64> index ,CREF<RegBuffer<BYTE>> item) override {
@@ -1217,7 +1217,7 @@ trait BUFFERFILE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			const auto r3x = HEADER_SIZE::expr + r1x * mHeader->mChunkSize ;
 			INDEX ix = load (r3x ,mHeader->mChunkSize) ;
 			const auto r4x = r2x + FLAG (mCacheList[ix].mBuffer->pick (TYPEAS<RANK0>::expr)) ;
-			BufferProc::buf_copy (RegBuffer<BYTE>::make (unsafe_pointer (r4x) ,0 ,VAL32_MAX) ,item ,0 ,mHeader->mItemSize) ;
+			BufferProc<BYTE>::buf_copy (RegBuffer<BYTE>::make (unsafe_pointer (r4x) ,0 ,VAL32_MAX) ,item ,0 ,mHeader->mItemSize) ;
 		}
 
 		INDEX load (CREF<VAL64> offset ,CREF<LENGTH> size_) {

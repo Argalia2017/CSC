@@ -77,136 +77,136 @@ enum class WORD :csc_byte16_t ;
 enum class CHAR :csc_byte32_t ;
 enum class DATA :csc_byte64_t ;
 
-inline constexpr BYTE operator| (CREF<BYTE> left ,CREF<BYTE> right) {
-	return BYTE (csc_byte8_t (left) | csc_byte8_t (right)) ;
+inline constexpr BYTE operator| (CREF<BYTE> obj1 ,CREF<BYTE> obj2) noexcept {
+	return BYTE (csc_byte8_t (obj1) | csc_byte8_t (obj2)) ;
 }
 
-inline void operator|= (VREF<BYTE> left ,CREF<BYTE> right) {
-	left = left | right ;
+inline void operator|= (VREF<BYTE> obj1 ,CREF<BYTE> obj2) {
+	obj1 = obj1 | obj2 ;
 }
 
-inline constexpr BYTE operator& (CREF<BYTE> left ,CREF<BYTE> right) {
-	return BYTE (csc_byte8_t (left) & csc_byte8_t (right)) ;
+inline constexpr BYTE operator& (CREF<BYTE> obj1 ,CREF<BYTE> obj2) noexcept {
+	return BYTE (csc_byte8_t (obj1) & csc_byte8_t (obj2)) ;
 }
 
-inline void operator&= (VREF<BYTE> left ,CREF<BYTE> right) {
-	left = left & right ;
+inline void operator&= (VREF<BYTE> obj1 ,CREF<BYTE> obj2) {
+	obj1 = obj1 & obj2 ;
 }
 
-inline constexpr BYTE operator^ (CREF<BYTE> left ,CREF<BYTE> right) {
-	return BYTE (csc_byte8_t (left) ^ csc_byte8_t (right)) ;
+inline constexpr BYTE operator^ (CREF<BYTE> obj1 ,CREF<BYTE> obj2) noexcept {
+	return BYTE (csc_byte8_t (obj1) ^ csc_byte8_t (obj2)) ;
 }
 
-inline void operator^= (VREF<BYTE> left ,CREF<BYTE> right) {
-	left = left ^ right ;
+inline void operator^= (VREF<BYTE> obj1 ,CREF<BYTE> obj2) {
+	obj1 = obj1 ^ obj2 ;
 }
 
-inline constexpr BYTE operator~ (CREF<BYTE> left) {
-	return BYTE (~csc_byte8_t (left)) ;
+inline constexpr BYTE operator~ (CREF<BYTE> obj1) noexcept {
+	return BYTE (~csc_byte8_t (obj1)) ;
 }
 
-inline constexpr BYTE operator<< (CREF<BYTE> left ,CREF<LENGTH> scale) {
-	return BYTE (csc_byte8_t (left) << scale) ;
+inline constexpr BYTE operator<< (CREF<BYTE> obj1 ,CREF<LENGTH> obj2) noexcept {
+	return BYTE (csc_byte8_t (obj1) << obj2) ;
 }
 
-inline constexpr BYTE operator>> (CREF<BYTE> left ,CREF<LENGTH> scale) {
-	return BYTE (csc_byte8_t (left) >> scale) ;
+inline constexpr BYTE operator>> (CREF<BYTE> obj1 ,CREF<LENGTH> obj2) noexcept {
+	return BYTE (csc_byte8_t (obj1) >> obj2) ;
 }
 
-inline constexpr WORD operator| (CREF<WORD> left ,CREF<WORD> right) {
-	return WORD (csc_byte16_t (left) | csc_byte16_t (right)) ;
+inline constexpr WORD operator| (CREF<WORD> obj1 ,CREF<WORD> obj2) noexcept {
+	return WORD (csc_byte16_t (obj1) | csc_byte16_t (obj2)) ;
 }
 
-inline void operator|= (VREF<WORD> left ,CREF<WORD> right) {
-	left = left | right ;
+inline void operator|= (VREF<WORD> obj1 ,CREF<WORD> obj2) {
+	obj1 = obj1 | obj2 ;
 }
 
-inline constexpr WORD operator& (CREF<WORD> left ,CREF<WORD> right) {
-	return WORD (csc_byte16_t (left) & csc_byte16_t (right)) ;
+inline constexpr WORD operator& (CREF<WORD> obj1 ,CREF<WORD> obj2) noexcept {
+	return WORD (csc_byte16_t (obj1) & csc_byte16_t (obj2)) ;
 }
 
-inline void operator&= (VREF<WORD> left ,CREF<WORD> right) {
-	left = left & right ;
+inline void operator&= (VREF<WORD> obj1 ,CREF<WORD> obj2) {
+	obj1 = obj1 & obj2 ;
 }
 
-inline constexpr WORD operator^ (CREF<WORD> left ,CREF<WORD> right) {
-	return WORD (csc_byte16_t (left) ^ csc_byte16_t (right)) ;
+inline constexpr WORD operator^ (CREF<WORD> obj1 ,CREF<WORD> obj2) noexcept {
+	return WORD (csc_byte16_t (obj1) ^ csc_byte16_t (obj2)) ;
 }
 
-inline constexpr WORD operator~ (CREF<WORD> left) {
-	return WORD (~csc_byte16_t (left)) ;
+inline constexpr WORD operator~ (CREF<WORD> obj1) noexcept {
+	return WORD (~csc_byte16_t (obj1)) ;
 }
 
-inline constexpr WORD operator<< (CREF<WORD> left ,CREF<LENGTH> scale) {
-	return WORD (csc_byte16_t (left) << scale) ;
+inline constexpr WORD operator<< (CREF<WORD> obj1 ,CREF<LENGTH> obj2) noexcept {
+	return WORD (csc_byte16_t (obj1) << obj2) ;
 }
 
-inline constexpr WORD operator>> (CREF<WORD> left ,CREF<LENGTH> scale) {
-	return WORD (csc_byte16_t (left) >> scale) ;
+inline constexpr WORD operator>> (CREF<WORD> obj1 ,CREF<LENGTH> obj2) noexcept {
+	return WORD (csc_byte16_t (obj1) >> obj2) ;
 }
 
-inline constexpr CHAR operator| (CREF<CHAR> left ,CREF<CHAR> right) {
-	return CHAR (csc_byte32_t (left) | csc_byte32_t (right)) ;
+inline constexpr CHAR operator| (CREF<CHAR> obj1 ,CREF<CHAR> obj2) noexcept {
+	return CHAR (csc_byte32_t (obj1) | csc_byte32_t (obj2)) ;
 }
 
-inline void operator|= (VREF<CHAR> left ,CREF<CHAR> right) {
-	left = left | right ;
+inline void operator|= (VREF<CHAR> obj1 ,CREF<CHAR> obj2) {
+	obj1 = obj1 | obj2 ;
 }
 
-inline constexpr CHAR operator& (CREF<CHAR> left ,CREF<CHAR> right) {
-	return CHAR (csc_byte32_t (left) & csc_byte32_t (right)) ;
+inline constexpr CHAR operator& (CREF<CHAR> obj1 ,CREF<CHAR> obj2) noexcept {
+	return CHAR (csc_byte32_t (obj1) & csc_byte32_t (obj2)) ;
 }
 
-inline void operator&= (VREF<CHAR> left ,CREF<CHAR> right) {
-	left = left & right ;
+inline void operator&= (VREF<CHAR> obj1 ,CREF<CHAR> obj2) {
+	obj1 = obj1 & obj2 ;
 }
 
-inline constexpr CHAR operator^ (CREF<CHAR> left ,CREF<CHAR> right) {
-	return CHAR (csc_byte32_t (left) ^ csc_byte32_t (right)) ;
+inline constexpr CHAR operator^ (CREF<CHAR> obj1 ,CREF<CHAR> obj2) noexcept {
+	return CHAR (csc_byte32_t (obj1) ^ csc_byte32_t (obj2)) ;
 }
 
-inline constexpr CHAR operator~ (CREF<CHAR> left) {
-	return CHAR (~csc_byte32_t (left)) ;
+inline constexpr CHAR operator~ (CREF<CHAR> obj1) noexcept {
+	return CHAR (~csc_byte32_t (obj1)) ;
 }
 
-inline constexpr CHAR operator<< (CREF<CHAR> left ,CREF<LENGTH> scale) {
-	return CHAR (csc_byte32_t (left) << scale) ;
+inline constexpr CHAR operator<< (CREF<CHAR> obj1 ,CREF<LENGTH> obj2) noexcept {
+	return CHAR (csc_byte32_t (obj1) << obj2) ;
 }
 
-inline constexpr CHAR operator>> (CREF<CHAR> left ,CREF<LENGTH> scale) {
-	return CHAR (csc_byte32_t (left) >> scale) ;
+inline constexpr CHAR operator>> (CREF<CHAR> obj1 ,CREF<LENGTH> obj2) noexcept {
+	return CHAR (csc_byte32_t (obj1) >> obj2) ;
 }
 
-inline constexpr DATA operator| (CREF<DATA> left ,CREF<DATA> right) {
-	return DATA (csc_byte64_t (left) | csc_byte64_t (right)) ;
+inline constexpr DATA operator| (CREF<DATA> obj1 ,CREF<DATA> obj2) noexcept {
+	return DATA (csc_byte64_t (obj1) | csc_byte64_t (obj2)) ;
 }
 
-inline void operator|= (VREF<DATA> left ,CREF<DATA> right) {
-	left = left | right ;
+inline void operator|= (VREF<DATA> obj1 ,CREF<DATA> obj2) {
+	obj1 = obj1 | obj2 ;
 }
 
-inline constexpr DATA operator& (CREF<DATA> left ,CREF<DATA> right) {
-	return DATA (csc_byte64_t (left) & csc_byte64_t (right)) ;
+inline constexpr DATA operator& (CREF<DATA> obj1 ,CREF<DATA> obj2) noexcept {
+	return DATA (csc_byte64_t (obj1) & csc_byte64_t (obj2)) ;
 }
 
-inline void operator&= (VREF<DATA> left ,CREF<DATA> right) {
-	left = left & right ;
+inline void operator&= (VREF<DATA> obj1 ,CREF<DATA> obj2) {
+	obj1 = obj1 & obj2 ;
 }
 
-inline constexpr DATA operator^ (CREF<DATA> left ,CREF<DATA> right) {
-	return DATA (csc_byte64_t (left) ^ csc_byte64_t (right)) ;
+inline constexpr DATA operator^ (CREF<DATA> obj1 ,CREF<DATA> obj2) noexcept {
+	return DATA (csc_byte64_t (obj1) ^ csc_byte64_t (obj2)) ;
 }
 
-inline constexpr DATA operator~ (CREF<DATA> left) {
-	return DATA (~csc_byte64_t (left)) ;
+inline constexpr DATA operator~ (CREF<DATA> obj1) noexcept {
+	return DATA (~csc_byte64_t (obj1)) ;
 }
 
-inline constexpr DATA operator<< (CREF<DATA> left ,CREF<LENGTH> scale) {
-	return DATA (csc_byte64_t (left) << scale) ;
+inline constexpr DATA operator<< (CREF<DATA> obj1 ,CREF<LENGTH> obj2) noexcept {
+	return DATA (csc_byte64_t (obj1) << obj2) ;
 }
 
-inline constexpr DATA operator>> (CREF<DATA> left ,CREF<LENGTH> scale) {
-	return DATA (csc_byte64_t (left) >> scale) ;
+inline constexpr DATA operator>> (CREF<DATA> obj1 ,CREF<LENGTH> obj2) noexcept {
+	return DATA (csc_byte64_t (obj1) >> obj2) ;
 }
 
 using STRA = csc_char_t ;
@@ -584,15 +584,15 @@ using TYPE_REPEAT = typename TYPE_REPEAT_HELP<ITEM ,SIZE ,ALWAYS>::RET ;
 template <class...>
 trait TYPE_SENQUENCE_HELP ;
 
-template <class SIZE ,class NTH>
-trait TYPE_SENQUENCE_HELP<SIZE ,NTH ,REQUIRE<ENUM_EQ_ZERO<SIZE>>> {
+template <class SIZE ,class CURR>
+trait TYPE_SENQUENCE_HELP<SIZE ,CURR ,REQUIRE<ENUM_EQ_ZERO<SIZE>>> {
 	using RET = TYPEAS<> ;
 } ;
 
-template <class SIZE ,class NTH>
-trait TYPE_SENQUENCE_HELP<SIZE ,NTH ,REQUIRE<ENUM_GT_ZERO<SIZE>>> {
-	using R1X = typename TYPE_REPEAT_HELP<ENUM_DEC<SIZE> ,ENUM_INC<NTH> ,ALWAYS>::RET ;
-	using RET = TYPE_CAT<TYPEAS<NTH> ,R1X> ;
+template <class SIZE ,class CURR>
+trait TYPE_SENQUENCE_HELP<SIZE ,CURR ,REQUIRE<ENUM_GT_ZERO<SIZE>>> {
+	using R1X = typename TYPE_REPEAT_HELP<ENUM_DEC<SIZE> ,ENUM_INC<CURR> ,ALWAYS>::RET ;
+	using RET = TYPE_CAT<TYPEAS<CURR> ,R1X> ;
 } ;
 
 template <class SIZE>
@@ -601,18 +601,18 @@ using TYPE_SENQUENCE = typename TYPE_SENQUENCE_HELP<SIZE ,ENUM_ZERO ,ALWAYS>::RE
 template <class...>
 trait TYPE_PICK_HELP ;
 
-template <class UNIT ,class NTH>
-trait TYPE_PICK_HELP<UNIT ,NTH ,REQUIRE<ENUM_EQ_ZERO<NTH>>> {
+template <class UNIT ,class CURR>
+trait TYPE_PICK_HELP<UNIT ,CURR ,REQUIRE<ENUM_EQ_ZERO<CURR>>> {
 	using RET = TYPE_FIRST_ONE<UNIT> ;
 } ;
 
-template <class UNIT ,class NTH>
-trait TYPE_PICK_HELP<UNIT ,NTH ,REQUIRE<ENUM_GT_ZERO<NTH>>> {
-	using RET = typename TYPE_PICK_HELP<TYPE_FIRST_REST<UNIT> ,ENUM_DEC<NTH> ,ALWAYS>::RET ;
+template <class UNIT ,class CURR>
+trait TYPE_PICK_HELP<UNIT ,CURR ,REQUIRE<ENUM_GT_ZERO<CURR>>> {
+	using RET = typename TYPE_PICK_HELP<TYPE_FIRST_REST<UNIT> ,ENUM_DEC<CURR> ,ALWAYS>::RET ;
 } ;
 
-template <class UNIT ,class NTH>
-using TYPE_PICK = typename TYPE_PICK_HELP<UNIT ,NTH ,ALWAYS>::RET ;
+template <class UNIT ,class CURR>
+using TYPE_PICK = typename TYPE_PICK_HELP<UNIT ,CURR ,ALWAYS>::RET ;
 
 template <class...>
 trait ENUM_ALL_HELP ;
@@ -682,7 +682,7 @@ struct Interface {
 	virtual ~Interface () = default ;
 	implicit Interface (CREF<Interface>) = delete ;
 	inline VREF<Interface> operator= (CREF<Interface>) = delete ;
-	//@info: fuck clang5.0
+	//@info: fuck clang
 	implicit Interface (Interface &&) = default ;
 	inline VREF<Interface> operator= (Interface &&) = default ;
 	virtual void finalize () {}
@@ -897,18 +897,18 @@ using REFLECT_POINTER = typename REFLECT_POINTER_HELP<REMOVE_REF<UNIT> ,ALWAYS>:
 template <class...>
 trait PTR_HELP ;
 
-template <class ATTR ,class UNIT>
-trait PTR_HELP<ATTR ,UNIT ,REQUIRE<IS_SAME<ATTR ,VARIABLE>>> {
+template <class UNIT ,class COND>
+trait PTR_HELP<UNIT ,COND ,REQUIRE<IS_SAME<COND ,VARIABLE>>> {
 	using RET = DEF<const DEF<UNIT *>> ;
 } ;
 
-template <class ATTR ,class UNIT>
-trait PTR_HELP<ATTR ,UNIT ,REQUIRE<IS_SAME<ATTR ,CONSTANT>>> {
+template <class UNIT ,class COND>
+trait PTR_HELP<UNIT ,COND ,REQUIRE<IS_SAME<COND ,CONSTANT>>> {
 	using RET = DEF<const DEF<const UNIT *>> ;
 } ;
 
 template <class UNIT>
-using PTR = typename PTR_HELP<REFLECT_REF<UNIT> ,REMOVE_REF<UNIT> ,ALWAYS>::RET ;
+using PTR = typename PTR_HELP<REMOVE_REF<UNIT> ,REFLECT_REF<UNIT> ,ALWAYS>::RET ;
 
 template <class...>
 trait REFLECT_ARRAY_HELP ;
@@ -1097,17 +1097,17 @@ using IS_INTERFACE = typename IS_INTERFACE_HELP<UNIT ,ALWAYS>::RET ;
 template <class...>
 trait IS_EXTEND_HELP ;
 
-template <class FROM ,class TO>
-trait IS_EXTEND_HELP<FROM ,TO ,ALWAYS> {
-	using R1X = IS_SAME<FROM ,TO> ;
-	using R2X = MACRO_IS_EXTEND<FROM ,TO> ;
+template <class FROM ,class INTO>
+trait IS_EXTEND_HELP<FROM ,INTO ,ALWAYS> {
+	using R1X = IS_SAME<FROM ,INTO> ;
+	using R2X = MACRO_IS_EXTEND<FROM ,INTO> ;
 
 	static constexpr auto value = ENUM_ANY<R1X ,R2X>::expr ;
 	using RET = ENUMAS<BOOL ,value> ;
 } ;
 
-template <class FROM ,class TO>
-using IS_EXTEND = typename IS_EXTEND_HELP<FROM ,TO ,ALWAYS>::RET ;
+template <class FROM ,class INTO>
+using IS_EXTEND = typename IS_EXTEND_HELP<FROM ,INTO ,ALWAYS>::RET ;
 
 template <class UNIT>
 using IS_PLACEHOLDER = IS_EXTEND<UNIT ,DEF<typeof (PH0)>> ;
@@ -1138,16 +1138,16 @@ using Together = typename TOGETHER_HELP<TYPEAS<UNIT...> ,ALWAYS>::Together ;
 template <class...>
 trait IS_CONVERTIBLE_HELP ;
 
-template <class FROM ,class TO>
-trait IS_CONVERTIBLE_HELP<FROM ,TO ,ALWAYS> {
-	using R1X = MACRO_IS_CONVERTIBLE<FROM ,TO> ;
+template <class FROM ,class INTO>
+trait IS_CONVERTIBLE_HELP<FROM ,INTO ,ALWAYS> {
+	using R1X = MACRO_IS_CONVERTIBLE<FROM ,INTO> ;
 
 	static constexpr auto value = ENUM_ANY<R1X>::expr ;
 	using RET = ENUMAS<BOOL ,value> ;
 } ;
 
-template <class FROM ,class TO>
-using IS_CONVERTIBLE = typename IS_CONVERTIBLE_HELP<XREF<FROM> ,XREF<TO> ,ALWAYS>::RET ;
+template <class FROM ,class INTO>
+using IS_CONVERTIBLE = typename IS_CONVERTIBLE_HELP<XREF<FROM> ,XREF<INTO> ,ALWAYS>::RET ;
 
 template <class...>
 trait IS_EFFECTIVE_HELP ;
@@ -1363,17 +1363,17 @@ using ENUM_MAX = typename ENUM_MAX_HELP<TYPEAS<UNIT...> ,ALWAYS>::RET ;
 template <class...>
 trait ENUM_BETWEEN_HELP ;
 
-template <class NTH ,class BEGIN ,class END>
-trait ENUM_BETWEEN_HELP<NTH ,BEGIN ,END ,ALWAYS> {
-	using R1X = ENUM_COMPR_GTEQ<NTH ,BEGIN> ;
-	using R2X = ENUM_COMPR_LT<NTH ,END> ;
+template <class CURR ,class BEGIN ,class END>
+trait ENUM_BETWEEN_HELP<CURR ,BEGIN ,END ,ALWAYS> {
+	using R1X = ENUM_COMPR_GTEQ<CURR ,BEGIN> ;
+	using R2X = ENUM_COMPR_LT<CURR ,END> ;
 
 	static constexpr auto value = ENUM_ALL<R1X ,R2X>::expr ;
 	using RET = ENUMAS<BOOL ,value> ;
 } ;
 
-template <class NTH ,class BEGIN ,class END>
-using ENUM_BETWEEN = typename ENUM_BETWEEN_HELP<NTH ,BEGIN ,END ,ALWAYS>::RET ;
+template <class CURR ,class BEGIN ,class END>
+using ENUM_BETWEEN = typename ENUM_BETWEEN_HELP<CURR ,BEGIN ,END ,ALWAYS>::RET ;
 
 template <class...>
 trait ENUM_POW2_HELP ;

@@ -165,11 +165,11 @@ trait BINARYTABLE_HELP<DEPEND ,ALWAYS> {
 		virtual void initialize (CREF<LENGTH> size_) = 0 ;
 		virtual void clear () = 0 ;
 		virtual LENGTH count (CREF<INDEX> from_) const = 0 ;
-		virtual void link (CREF<INDEX> from_ ,CREF<INDEX> to_) = 0 ;
-		virtual void joint (CREF<INDEX> from_ ,CREF<INDEX> to_) = 0 ;
-		virtual BOOL get (CREF<INDEX> from_ ,CREF<INDEX> to_) const = 0 ;
+		virtual void link (CREF<INDEX> from_ ,CREF<INDEX> into_) = 0 ;
+		virtual void joint (CREF<INDEX> from_ ,CREF<INDEX> into_) = 0 ;
+		virtual BOOL get (CREF<INDEX> from_ ,CREF<INDEX> into_) const = 0 ;
 		virtual BitSet<> filter (CREF<INDEX> from_ ,RREF<BitSet<>> res) const = 0 ;
-		virtual void optimize () = 0 ;
+		virtual void remap () = 0 ;
 	} ;
 
 	struct FUNCTION_extern {
@@ -196,24 +196,24 @@ trait BINARYTABLE_HELP<DEPEND ,ALWAYS> {
 			return mThis->count (from_) ;
 		}
 
-		void link (CREF<INDEX> from_ ,CREF<INDEX> to_) {
-			return mThis->link (from_ ,to_) ;
+		void link (CREF<INDEX> from_ ,CREF<INDEX> into_) {
+			return mThis->link (from_ ,into_) ;
 		}
 
-		void joint (CREF<INDEX> from_ ,CREF<INDEX> to_) {
-			return mThis->joint (from_ ,to_) ;
+		void joint (CREF<INDEX> from_ ,CREF<INDEX> into_) {
+			return mThis->joint (from_ ,into_) ;
 		}
 
-		BOOL get (CREF<INDEX> from_ ,CREF<INDEX> to_) const {
-			return mThis->get (from_ ,to_) ;
+		BOOL get (CREF<INDEX> from_ ,CREF<INDEX> into_) const {
+			return mThis->get (from_ ,into_) ;
 		}
 
 		BitSet<> filter (CREF<INDEX> from_ ,RREF<BitSet<>> res) const {
 			return mThis->filter (from_ ,move (res)) ;
 		}
 
-		void optimize () {
-			return mThis->optimize () ;
+		void remap () {
+			return mThis->remap () ;
 		}
 	} ;
 } ;

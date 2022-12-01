@@ -97,8 +97,8 @@ using ImageIterator = typename IMAGEITERATOR_HELP<DEPEND ,ALWAYS>::ImageIterator
 template <class...>
 trait ROWPROXY_HELP ;
 
-template <class ATTR ,class UNIT ,class ITEM>
-trait ROWPROXY_HELP<ATTR ,UNIT ,ITEM ,REQUIRE<IS_SAME<ATTR ,VARIABLE>>> {
+template <class UNIT ,class ITEM ,class COND>
+trait ROWPROXY_HELP<UNIT ,ITEM ,COND ,REQUIRE<IS_SAME<COND ,VARIABLE>>> {
 	class RowProxy {
 	protected:
 		VRef<UNIT> mImage ;
@@ -118,8 +118,8 @@ trait ROWPROXY_HELP<ATTR ,UNIT ,ITEM ,REQUIRE<IS_SAME<ATTR ,VARIABLE>>> {
 	} ;
 } ;
 
-template <class ATTR ,class UNIT ,class ITEM>
-trait ROWPROXY_HELP<ATTR ,UNIT ,ITEM ,REQUIRE<IS_SAME<ATTR ,CONSTANT>>> {
+template <class UNIT ,class ITEM ,class COND>
+trait ROWPROXY_HELP<UNIT ,ITEM ,COND ,REQUIRE<IS_SAME<COND ,CONSTANT>>> {
 	class RowProxy {
 	protected:
 		CRef<UNIT> mImage ;
@@ -140,7 +140,7 @@ trait ROWPROXY_HELP<ATTR ,UNIT ,ITEM ,REQUIRE<IS_SAME<ATTR ,CONSTANT>>> {
 } ;
 
 template <class UNIT ,class ITEM>
-using RowProxy = typename ROWPROXY_HELP<REFLECT_REF<UNIT> ,REMOVE_REF<UNIT> ,ITEM ,ALWAYS>::RowProxy ;
+using RowProxy = typename ROWPROXY_HELP<REMOVE_REF<UNIT> ,ITEM ,REFLECT_REF<UNIT> ,ALWAYS>::RowProxy ;
 
 template <class...>
 trait IMAGE_HELP ;
@@ -233,7 +233,7 @@ trait IMAGE_HELP<ITEM ,SIZE ,ALWAYS> {
 		}
 
 		void fill (CREF<ITEM> item) {
-			BufferProc::buf_fill (mImage ,item ,0 ,size ()) ;
+			BufferProc<ITEM>::buf_fill (mImage ,item ,0 ,size ()) ;
 		}
 
 		ImageIterator iter () const {

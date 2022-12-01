@@ -449,7 +449,7 @@ trait XMLPARSER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 		void update_shift_e6 () {
 			mReader >> slice ("<!--") ;
 			while (TRUE) {
-				if (mReader[0] == STRU8 ('\0'))
+				if (mReader[0] == STRU8 (0))
 					break ;
 				if (mReader[0] == STRU8 ('-'))
 					if (mReader[1] == STRU8 ('-'))
@@ -550,7 +550,7 @@ trait XMLPARSER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 
 		//@info: $9->${end}
 		void update_shift_e9 () {
-			assume (mReader[0] == STRU8 ('\0')) ;
+			assume (mReader[0] == STRU8 (0)) ;
 		}
 	} ;
 } ;
@@ -769,20 +769,24 @@ trait XMLPARSER_COMBINATION_HELP<DEPEND ,ALWAYS> {
 				}
 				if ifswitch (TRUE) {
 					auto &&tmp = down_cast (rax.mThis.self) ;
-					for (auto &&i : tmp.mHeap->mTree[tmp.mIndex].mAttributeSet.iter ()) {
-						INDEX jx = tmp.mHeap->mTree[tmp.mIndex].mAttributeSet.get (i) ;
-						INDEX jy = mFoundNode[ix].mAttributeSet.map (tmp.mHeap->mTree[tmp.mIndex].mAttributeSet[i]) ;
-						if ifswitch (TRUE) {
-							if (jy != NONE)
-								discard ;
-							jy = mAttribute.insert () ;
-							mAttribute[jy] = tmp.mHeap->mAttribute[jx] ;
-							mFoundNode[ix].mAttributeSet.add (tmp.mHeap->mTree[tmp.mIndex].mAttributeSet[i] ,jy) ;
-						}
-					}
+					copy_object_attribute (ix ,tmp.mHeap->mTree[tmp.mIndex].mAttributeSet ,tmp.mHeap->mAttribute) ;
 				}
 				mFoundNode[iy].mBaseNode.add (rax.child ()) ;
 				rax = rax.brother () ;
+			}
+		}
+
+		void copy_object_attribute (CREF<INDEX> curr ,CREF<SoftSet<String<STRU8>>> set_ ,CREF<Array<String<STRU8>>> attribute) {
+			for (auto &&i : set_.iter ()) {
+				INDEX jx = set_.get (i) ;
+				INDEX jy = mFoundNode[curr].mAttributeSet.map (set_[i]) ;
+				if ifswitch (TRUE) {
+					if (jy != NONE)
+						discard ;
+					jy = mAttribute.insert () ;
+					mAttribute[jy] = attribute[jx] ;
+					mFoundNode[curr].mAttributeSet.add (set_[i] ,jy) ;
+				}
 			}
 		}
 
@@ -807,12 +811,7 @@ trait XMLPARSER_COMBINATION_HELP<DEPEND ,ALWAYS> {
 				mFoundNode[iy].mAttributeSet = mAttributeSet.share () ;
 				if ifswitch (TRUE) {
 					auto &&tmp = down_cast (rax.mThis.self) ;
-					for (auto &&i : tmp.mHeap->mTree[tmp.mIndex].mAttributeSet.iter ()) {
-						INDEX jx = tmp.mHeap->mTree[tmp.mIndex].mAttributeSet.get (i) ;
-						INDEX jy = mAttribute.insert () ;
-						mAttribute[jy] = tmp.mHeap->mAttribute[jx] ;
-						mFoundNode[ix].mAttributeSet.add (tmp.mHeap->mTree[tmp.mIndex].mAttributeSet[i] ,jy) ;
-					}
+					copy_array_attribute (ix ,tmp.mHeap->mTree[tmp.mIndex].mAttributeSet ,tmp.mHeap->mAttribute) ;
 				}
 				if ifswitch (TRUE) {
 					if ifnot (mBaseNodeQueue.empty ())
@@ -823,6 +822,15 @@ trait XMLPARSER_COMBINATION_HELP<DEPEND ,ALWAYS> {
 				mFoundNode[iy].mBaseNode.clear () ;
 				mFoundNode[iy].mBaseNode.add (rax.child ()) ;
 				rax = rax.brother () ;
+			}
+		}
+
+		void copy_array_attribute (CREF<INDEX> curr ,CREF<SoftSet<String<STRU8>>> set_ ,CREF<Array<String<STRU8>>> attribute) {
+			for (auto &&i : set_.iter ()) {
+				INDEX jx = set_.get (i) ;
+				INDEX jy = mAttribute.insert () ;
+				mAttribute[jy] = attribute[jx] ;
+				mFoundNode[curr].mAttributeSet.add (set_[i] ,jy) ;
 			}
 		}
 
@@ -1479,7 +1487,7 @@ trait JSONPARSER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 		void update_shift_e10 () {
 			INDEX ix = NONE ;
 			if ifswitch (TRUE) {
-				if (mReader[0] == STRU8 ('\0'))
+				if (mReader[0] == STRU8 (0))
 					discard ;
 				update_shift_e4 (NONE) ;
 				ix = mLastIndex ;
@@ -1494,7 +1502,7 @@ trait JSONPARSER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 
 		//@info: $12->${end}
 		void update_shift_e12 () {
-			assume (mReader[0] == STRU8 ('\0')) ;
+			assume (mReader[0] == STRU8 (0)) ;
 		}
 	} ;
 } ;

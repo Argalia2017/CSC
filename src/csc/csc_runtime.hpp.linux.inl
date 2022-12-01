@@ -103,6 +103,7 @@ trait RUNTIMEPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 					discard ;
 				if (rax[ix] == STRA ('/'))
 					discard ;
+				ix++ ;
 				rax[ix] = STRA ('/') ;
 				ix++ ;
 				rax.trunc (ix) ;
@@ -210,7 +211,7 @@ trait PROCESS_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			rax >> slice ("(") ;
 			while (TRUE) {
 				const auto r2x = rax.poll (TYPEAS<STRU8>::expr) ;
-				if (r2x == STRU8 ('\0'))
+				if (r2x == STRU8 (0))
 					break ;
 				if (r2x == STRU8 (')'))
 					break ;
@@ -323,7 +324,7 @@ trait MODULE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			const auto r1x = FLAG (dlerror ()) ;
 			assume (r1x != ZERO) ;
 			auto &&tmp = unsafe_pointer (r1x) ;
-			BufferProc::buf_slice (mErrorBuffer ,RegBuffer<STRA>::make (tmp ,0 ,VAL32_MAX) ,mErrorBuffer.size ()) ;
+			BufferProc<STR>::buf_slice (mErrorBuffer.raw () ,RegBuffer<STRA>::make (tmp ,0 ,VAL32_MAX) ,mErrorBuffer.size ()) ;
 		}
 	} ;
 } ;

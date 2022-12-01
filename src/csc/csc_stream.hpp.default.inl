@@ -232,7 +232,7 @@ trait BYTEREADER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 					discard ;
 				item = String<STRA> (r1x) ;
 			}
-			item.clear () ;
+			item.trunc (r1x) ;
 			auto rax = R1X () ;
 			for (auto &&i : iter (0 ,r1x)) {
 				read (rax) ;
@@ -250,7 +250,7 @@ trait BYTEREADER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 					discard ;
 				item = String<STRW> (r1x) ;
 			}
-			item.clear () ;
+			item.trunc (r1x) ;
 			auto rax = R1X () ;
 			for (auto &&i : iter (0 ,r1x)) {
 				read (rax) ;
@@ -268,7 +268,7 @@ trait BYTEREADER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 					discard ;
 				item = String<STRU8> (r1x) ;
 			}
-			item.clear () ;
+			item.trunc (r1x) ;
 			auto rax = R1X () ;
 			for (auto &&i : iter (0 ,r1x)) {
 				read (rax) ;
@@ -286,7 +286,7 @@ trait BYTEREADER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 					discard ;
 				item = String<STRU16> (r1x) ;
 			}
-			item.clear () ;
+			item.trunc (r1x) ;
 			auto rax = R1X () ;
 			for (auto &&i : iter (0 ,r1x)) {
 				read (rax) ;
@@ -304,7 +304,7 @@ trait BYTEREADER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 					discard ;
 				item = String<STRU32> (r1x) ;
 			}
-			item.clear () ;
+			item.trunc (r1x) ;
 			auto rax = R1X () ;
 			for (auto &&i : iter (0 ,r1x)) {
 				read (rax) ;
@@ -713,7 +713,7 @@ trait TEXTATTRIBUTE_IMPLHOLDER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 		}
 
 		LENGTH value_precision () const override {
-			return 19 ;
+			return 18 ;
 		}
 
 		LENGTH float_precision () const override {
@@ -721,7 +721,7 @@ trait TEXTATTRIBUTE_IMPLHOLDER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 		}
 
 		LENGTH number_precision () const override {
-			return 1024 ;
+			return 308 ;
 		}
 	} ;
 } ;
@@ -910,6 +910,24 @@ trait TEXTREADER_IMPLHOLDER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 			}
 			auto act = TRUE ;
 			if ifswitch (act) {
+				if (rax != ITEM ('a'))
+					discard ;
+				read (rax) ;
+				assume (rax == ITEM ('b')) ;
+				read (rax) ;
+				assume (rax == ITEM ('s')) ;
+				item = VAL64_ABS ;
+			}
+			if ifswitch (act) {
+				if (rax != ITEM ('A'))
+					discard ;
+				read (rax) ;
+				assume (rax == ITEM ('B')) ;
+				read (rax) ;
+				assume (rax == ITEM ('S')) ;
+				item = VAL64_ABS ;
+			}
+			if ifswitch (act) {
 				assume (mAttribute.is_number (rax)) ;
 				auto rbx = NOTATION () ;
 				rbx.mRadix = 10 ;
@@ -930,14 +948,13 @@ trait TEXTREADER_IMPLHOLDER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 			assert (fexp10.mRadix == 10) ;
 			const auto r1x = mAttribute.value_precision () ;
 			const auto r2x = mAttribute.number_precision () ;
-			fexp10.mMantissa = mAttribute.hex_from_str (top) ;
-			fexp10.mPrecision++ ;
+			fexp10.mMantissa = 0 ;
+			fexp10.mPrecision = 0 ;
 			fexp10.mExponent = 0 ;
 			if ifswitch (TRUE) {
 				while (TRUE) {
 					if (top == mAttribute.ending_item ())
 						break ;
-					read (top) ;
 					if ifnot (mAttribute.is_number (top))
 						break ;
 					if (fexp10.mPrecision > r1x)
@@ -945,6 +962,7 @@ trait TEXTREADER_IMPLHOLDER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 					fexp10.mMantissa *= 10 ;
 					fexp10.mMantissa += mAttribute.hex_from_str (top) ;
 					fexp10.mPrecision++ ;
+					read (top) ;
 				}
 				while (TRUE) {
 					if (top == mAttribute.ending_item ())
@@ -957,8 +975,8 @@ trait TEXTREADER_IMPLHOLDER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 					fexp10.mPrecision++ ;
 					read (top) ;
 				}
+				assume (fexp10.mPrecision <= r1x) ;
 			}
-			assume (fexp10.mPrecision <= r1x) ;
 		}
 
 		void read (VREF<SINGLE> item) override {
@@ -1004,7 +1022,7 @@ trait TEXTREADER_IMPLHOLDER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 				rbx.mSign = FALSE ;
 				rbx.mPrecision = 0 ;
 				read_float (rbx ,rax) ;
-				rbx = FloatProc::exp2_from_exp10 (rbx) ;
+				rbx = FloatProc::fexp2_from_fexp10 (rbx) ;
 				item = FloatProc::encode (rbx) ;
 			}
 			if ifswitch (TRUE) {
@@ -1017,7 +1035,8 @@ trait TEXTREADER_IMPLHOLDER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 
 		void read_float (VREF<NOTATION> fexp10 ,VREF<ITEM> top) {
 			assert (fexp10.mRadix == 10) ;
-			const auto r1x = mAttribute.number_precision () ;
+			const auto r1x = mAttribute.value_precision () ;
+			const auto r2x = mAttribute.number_precision () ;
 			read_value (fexp10 ,top) ;
 			if ifswitch (TRUE) {
 				if (top != ITEM ('.'))
@@ -1026,7 +1045,6 @@ trait TEXTREADER_IMPLHOLDER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 				while (TRUE) {
 					if (top == mAttribute.ending_item ())
 						break ;
-					read (top) ;
 					if ifnot (mAttribute.is_number (top))
 						break ;
 					if (fexp10.mPrecision > r1x)
@@ -1035,29 +1053,47 @@ trait TEXTREADER_IMPLHOLDER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 					fexp10.mMantissa += mAttribute.hex_from_str (top) ;
 					fexp10.mExponent-- ;
 					fexp10.mPrecision++ ;
+					read (top) ;
 				}
 				while (TRUE) {
 					if (top == mAttribute.ending_item ())
 						break ;
 					if ifnot (mAttribute.is_number (top))
 						break ;
+					if (fexp10.mPrecision > r2x)
+						break ;
+					fexp10.mPrecision++ ;
 					read (top) ;
 				}
+				assume (fexp10.mPrecision <= r2x) ;
 			}
 			if ifswitch (TRUE) {
 				if (top != ITEM ('e'))
 					if (top != ITEM ('E'))
 						discard ;
 				read (top) ;
+				const auto r3x = BOOL (top == ITEM ('-')) ;
+				if ifswitch (TRUE) {
+					if (top != ITEM ('-'))
+						if (top != ITEM ('+'))
+							discard ;
+					read (top) ;
+				}
 				assume (mAttribute.is_number (top)) ;
 				auto rbx = NOTATION () ;
 				rbx.mRadix = 10 ;
-				rbx.mSign = FALSE ;
+				rbx.mSign = r3x ;
 				rbx.mPrecision = 0 ;
 				read_value (rbx ,top) ;
-				assume (MathProc::abs (rbx.mMantissa) < r1x) ;
-				fexp10.mExponent += rbx.mMantissa ;
-				assume (MathProc::abs (fexp10.mExponent) < r1x) ;
+				assume (rbx.mExponent == 0) ;
+				const auto r4x = invoke ([&] () {
+					if (r3x)
+						return -rbx.mMantissa ;
+					return rbx.mMantissa ;
+				}) ;
+				assume (MathProc::abs (r4x) < r2x) ;
+				fexp10.mExponent += r4x ;
+				assume (MathProc::abs (fexp10.mExponent) < r2x) ;
 			}
 		}
 
@@ -1149,7 +1185,7 @@ trait TEXTREADER_IMPLHOLDER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 					discard ;
 				item = String<ITEM> (r1x) ;
 			}
-			item.clear () ;
+			item.trunc (r1x) ;
 			for (auto &&i : iter (0 ,r1x))
 				read (item[i]) ;
 		}
@@ -1440,7 +1476,7 @@ trait TEXTWRITER_IMPLHOLDER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 		void write (CREF<DOUBLE> item) override {
 			using R1X = typename TEXTWRITER_WRITEVALUE_HELP<ITEM ,ALWAYS>::WriteValue ;
 			if ifswitch (TRUE) {
-				if (item > 0)
+				if (item >= 0)
 					discard ;
 				write (ITEM ('-')) ;
 			}
@@ -1454,7 +1490,7 @@ trait TEXTWRITER_IMPLHOLDER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 			}
 			if ifswitch (act) {
 				const auto r1x = FloatProc::decode (MathProc::abs (item)) ;
-				const auto r2x = FloatProc::exp10_from_exp2 (r1x) ;
+				const auto r2x = FloatProc::fexp10_from_fexp2 (r1x) ;
 				auto rax = R1X (mAttribute ,r2x) ;
 				rax.write_float () ;
 				write (rax) ;
@@ -1623,6 +1659,12 @@ trait TEXTWRITER_WRITEVALUE_HELP<ITEM ,ALWAYS> {
 					mValue.mPrecision-- ;
 				}
 			}
+			if ifswitch (TRUE) {
+				if ifnot (mValue.mSign)
+					discard ;
+				mWrite-- ;
+				mBuffer[mWrite] = ITEM ('-') ;
+			}
 		}
 
 		void write_float () {
@@ -1668,24 +1710,24 @@ trait TEXTWRITER_WRITEVALUE_HELP<ITEM ,ALWAYS> {
 				const auto r5x = r3x - 1 + r4x ;
 				if (MathProc::abs (r5x) < r1x)
 					discard ;
+				const auto r6x = mValue ;
+				mValue.mSign = BOOL (r5x < 0) ;
+				mValue.mMantissa = MathProc::abs (r5x) ;
+				mValue.mPrecision = 1 + MathProc::vlog (mValue.mMantissa ,VAL64 (10)) ;
+				mValue.mExponent = 0 ;
 				write_value () ;
-				if ifswitch (TRUE) {
-					if (r5x <= 0)
-						discard ;
-					mWrite-- ;
-					mBuffer[mWrite] = ITEM ('+') ;
-				}
+				mValue = r6x ;
 				mWrite-- ;
-				mBuffer[mWrite] = ITEM ('e') ;
-				const auto r6x = vmax (LENGTH (r3x - 1 - r1x) ,ZERO) ;
-				for (auto &&i : iter (0 ,r6x)) {
+				mBuffer[mWrite] = ITEM ('E') ;
+				const auto r7x = vmax (LENGTH (r3x - 1 - r1x) ,ZERO) ;
+				for (auto &&i : iter (0 ,r7x)) {
 					noop (i) ;
 					mValue.mMantissa /= 10 ;
 					mValue.mExponent++ ;
 					mValue.mPrecision-- ;
 				}
 				INDEX ix = mWrite - 1 ;
-				for (auto &&i : iter (r6x ,r3x - 1)) {
+				for (auto &&i : iter (r7x ,r3x - 1)) {
 					noop (i) ;
 					mWrite-- ;
 					mBuffer[mWrite] = mAttribute.str_from_hex (mValue.mMantissa % 10) ;
@@ -1727,15 +1769,15 @@ trait TEXTWRITER_WRITEVALUE_HELP<ITEM ,ALWAYS> {
 					discard ;
 				if (r4x >= 0)
 					discard ;
-				const auto r7x = vmax (LENGTH (-r4x - r1x) ,ZERO) ;
-				for (auto &&i : iter (0 ,r7x)) {
+				const auto r8x = vmax (LENGTH (-r4x - r1x) ,ZERO) ;
+				for (auto &&i : iter (0 ,r8x)) {
 					noop (i) ;
 					mValue.mMantissa /= 10 ;
 					mValue.mExponent++ ;
 					mValue.mPrecision-- ;
 				}
 				INDEX ix = mWrite - 1 ;
-				for (auto &&i : iter (r7x ,-r4x)) {
+				for (auto &&i : iter (r8x ,-r4x)) {
 					noop (i) ;
 					mWrite-- ;
 					mBuffer[mWrite] = mAttribute.str_from_hex (mValue.mMantissa % 10) ;
@@ -1762,15 +1804,15 @@ trait TEXTWRITER_WRITEVALUE_HELP<ITEM ,ALWAYS> {
 					discard ;
 				if (r4x >= 0)
 					discard ;
-				const auto r8x = vmax (LENGTH (-r4x - r1x) ,ZERO) ;
-				for (auto &&i : iter (0 ,r8x)) {
+				const auto r9x = vmax (LENGTH (-r4x - r1x) ,ZERO) ;
+				for (auto &&i : iter (0 ,r9x)) {
 					noop (i) ;
 					mValue.mMantissa /= 10 ;
 					mValue.mExponent++ ;
 					mValue.mPrecision-- ;
 				}
 				INDEX ix = mWrite - 1 ;
-				for (auto &&i : iter (r8x ,r3x)) {
+				for (auto &&i : iter (r9x ,r3x)) {
 					noop (i) ;
 					mWrite-- ;
 					mBuffer[mWrite] = mAttribute.str_from_hex (mValue.mMantissa % 10) ;
@@ -1779,8 +1821,8 @@ trait TEXTWRITER_WRITEVALUE_HELP<ITEM ,ALWAYS> {
 					mValue.mExponent++ ;
 					mValue.mPrecision-- ;
 				}
-				const auto r9x = vmax (r8x ,r3x) ;
-				for (auto &&i : iter (r9x ,-r4x)) {
+				const auto r10x = vmax (r9x ,r3x) ;
+				for (auto &&i : iter (r10x ,-r4x)) {
 					noop (i) ;
 					mWrite-- ;
 					mBuffer[mWrite] = ITEM ('0') ;
@@ -2085,7 +2127,7 @@ trait REGULARREADER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 					discard ;
 				item = String<STRU8> (r3x) ;
 			}
-			item.clear () ;
+			item.trunc (r3x) ;
 			if ifswitch (TRUE) {
 				if ifnot (r2x)
 					discard ;

@@ -21,10 +21,10 @@ trait WORKTHREAD_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		Array<Thread> mThread ;
 		Set<FLAG> mThreadPoll ;
 		Array<Deque<INDEX>> mThreadQueue ;
-		Array<LENGTH> mThreadDCount ;
+		Array<LENGTH> mThreadLoadCount ;
 		Function<void ,TYPEAS<CREF<INDEX>>> mThreadProc ;
 		Deque<INDEX> mItemQueue ;
-		LENGTH mItemDCount ;
+		LENGTH mItemLoadCount ;
 
 	public:
 		void initialize () override {
@@ -43,7 +43,7 @@ trait WORKTHREAD_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			mThread = Array<Thread> (size_) ;
 			mThreadPoll = Set<FLAG> (size_) ;
 			mThreadQueue = Array<Deque<INDEX>> (size_) ;
-			mThreadDCount = Array<LENGTH> (size_) ;
+			mThreadLoadCount = Array<LENGTH> (size_) ;
 		}
 
 		void set_queue_size (CREF<LENGTH> size_) override {
@@ -65,10 +65,10 @@ trait WORKTHREAD_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				mThread = Array<Thread> (r1x) ;
 				mThreadPoll = Set<FLAG> (r1x) ;
 				mThreadQueue = Array<Deque<INDEX>> (r1x) ;
-				mThreadDCount = Array<LENGTH> (r1x) ;
+				mThreadLoadCount = Array<LENGTH> (r1x) ;
 			}
-			mThreadDCount.fill (0) ;
-			mItemDCount = 0 ;
+			mThreadLoadCount.fill (0) ;
+			mItemLoadCount = 0 ;
 			mThreadFlag = VRef<BOOL>::make (TRUE) ;
 			mThreadProc = move (proc) ;
 			for (auto &&i : mThread.iter ()) {
@@ -113,12 +113,12 @@ trait WORKTHREAD_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 					discard ;
 				mThreadQueue[slot] = Deque<INDEX> (THREAD_QUEUE_SIZE::expr) ;
 			}
-			mItemDCount -= mThreadDCount[slot] ;
-			const auto r1x = mItemQueue.length () + mItemDCount ;
-			const auto r2x = (r1x + mThread.size () - 1) / mThread.size () / 2 ;
+			mItemLoadCount -= mThreadLoadCount[slot] ;
+			const auto r1x = mItemQueue.length () + mItemLoadCount ;
+			const auto r2x = valign (r1x ,mThread.size ()) / mThread.size () / 2 ;
 			const auto r3x = MathProc::min_of (r2x ,mThreadQueue[slot].size () ,mItemQueue.length ()) ;
-			mThreadDCount[slot] = r3x ;
-			mItemDCount += mThreadDCount[slot] ;
+			mThreadLoadCount[slot] = r3x ;
+			mItemLoadCount += mThreadLoadCount[slot] ;
 			for (auto &&i : iter (0 ,r3x)) {
 				noop (i) ;
 				INDEX ix = mItemQueue.head () ;
@@ -232,7 +232,7 @@ trait WORKTHREAD_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			mThreadFlag = NULL ;
 			mThreadPoll = Set<FLAG> () ;
 			mThreadQueue = Array<Deque<INDEX>> () ;
-			mThreadDCount = Array<LENGTH> () ;
+			mThreadLoadCount = Array<LENGTH> () ;
 			mItemQueue = Deque<INDEX> () ;
 		}
 	} ;
