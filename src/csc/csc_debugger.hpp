@@ -33,7 +33,6 @@ trait CONSOLE_HELP<DEPEND ,ALWAYS> {
 	struct Holder implement Interface {
 		virtual void initialize () = 0 ;
 		virtual void enable_option (CREF<FLAG> option) const = 0 ;
-		virtual void disable_option (CREF<FLAG> option) const = 0 ;
 		virtual void print (CREF<Binder> msg) const = 0 ;
 		virtual void fatal (CREF<Binder> msg) const = 0 ;
 		virtual void error (CREF<Binder> msg) const = 0 ;
@@ -80,11 +79,6 @@ trait CONSOLE_HELP<DEPEND ,ALWAYS> {
 		void enable_option (CREF<FLAG> option) const {
 			Scope<Mutex> anonymous (mMutex) ;
 			return mThis->enable_option (option) ;
-		}
-
-		void disable_option (CREF<FLAG> option) const {
-			Scope<Mutex> anonymous (mMutex) ;
-			return mThis->disable_option (option) ;
 		}
 
 		template <class...ARG1>

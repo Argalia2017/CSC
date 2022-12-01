@@ -110,16 +110,12 @@ trait CONSOLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			}
 		}
 
-		void disable_option (CREF<FLAG> option) const override {
-			mHeap->mOption.erase (option) ;
-		}
-
 		void print (CREF<Binder> msg) const override {
 			if (mHeap->mOption[OPTION_NO_PRINT::expr])
 				return ;
 			write_con_buffer (msg) ;
 			if ifswitch (TRUE) {
-				if ifnot (mHeap->mConsole.exist ())
+				if ifnot (is_open ())
 					discard ;
 				const auto r1x = csc_byte16_t (FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE) ;
 				SetConsoleTextAttribute (mHeap->mConsole ,r1x) ;
@@ -137,7 +133,7 @@ trait CONSOLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				return ;
 			write_con_buffer (msg) ;
 			if ifswitch (TRUE) {
-				if ifnot (mHeap->mConsole.exist ())
+				if ifnot (is_open ())
 					discard ;
 				const auto r1x = csc_byte16_t (FOREGROUND_BLUE | FOREGROUND_INTENSITY) ;
 				SetConsoleTextAttribute (mHeap->mConsole ,r1x) ;
@@ -155,7 +151,7 @@ trait CONSOLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				return ;
 			write_con_buffer (msg) ;
 			if ifswitch (TRUE) {
-				if ifnot (mHeap->mConsole.exist ())
+				if ifnot (is_open ())
 					discard ;
 				const auto r1x = csc_byte16_t (FOREGROUND_RED | FOREGROUND_INTENSITY) ;
 				SetConsoleTextAttribute (mHeap->mConsole ,r1x) ;
@@ -173,7 +169,7 @@ trait CONSOLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				return ;
 			write_con_buffer (msg) ;
 			if ifswitch (TRUE) {
-				if ifnot (mHeap->mConsole.exist ())
+				if ifnot (is_open ())
 					discard ;
 				const auto r1x = csc_byte16_t (FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_INTENSITY) ;
 				SetConsoleTextAttribute (mHeap->mConsole ,r1x) ;
@@ -191,7 +187,7 @@ trait CONSOLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				return ;
 			write_con_buffer (msg) ;
 			if ifswitch (TRUE) {
-				if ifnot (mHeap->mConsole.exist ())
+				if ifnot (is_open ())
 					discard ;
 				const auto r1x = csc_byte16_t (FOREGROUND_GREEN | FOREGROUND_INTENSITY) ;
 				SetConsoleTextAttribute (mHeap->mConsole ,r1x) ;
@@ -209,7 +205,7 @@ trait CONSOLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				return ;
 			write_con_buffer (msg) ;
 			if ifswitch (TRUE) {
-				if ifnot (mHeap->mConsole.exist ())
+				if ifnot (is_open ())
 					discard ;
 				const auto r1x = csc_byte16_t (FOREGROUND_GREEN | FOREGROUND_BLUE | FOREGROUND_INTENSITY) ;
 				SetConsoleTextAttribute (mHeap->mConsole ,r1x) ;
@@ -227,7 +223,7 @@ trait CONSOLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				return ;
 			write_con_buffer (msg) ;
 			if ifswitch (TRUE) {
-				if ifnot (mHeap->mConsole.exist ())
+				if ifnot (is_open ())
 					discard ;
 				const auto r1x = csc_byte16_t (FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE | FOREGROUND_INTENSITY) ;
 				SetConsoleTextAttribute (mHeap->mConsole ,r1x) ;
@@ -325,6 +321,16 @@ trait CONSOLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		void open () const override {
+			if (is_open ())
+				return ;
+			mHeap->mConsole = UniqueRef<HANDLE> ([&] (VREF<HANDLE> me) {
+				const auto r1x = AttachConsole (ATTACH_PARENT_PROCESS) ;
+				if ifnot (r1x)
+					return ;
+				me = GetStdHandle (STD_OUTPUT_HANDLE) ;
+			} ,[] (VREF<HANDLE> me) {
+				noop () ;
+			}) ;
 			if (is_open ())
 				return ;
 			mHeap->mConsole = UniqueRef<HANDLE> ([&] (VREF<HANDLE> me) {
@@ -529,7 +535,7 @@ trait REPORTER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				if ifnot (r1x)
 					discard ;
 				const auto r2x = string_build[TYPEAS<STR ,DATA>::expr] (DATA (addr)) ;
-				BufferProc::buf_slice (mHeap->mNameBuffer ,rax->mFirst.Name ,mHeap->mNameBuffer.size ()) ;
+				BufferProc<STR>::buf_slice (mHeap->mNameBuffer.raw () ,unsafe_array (rax->mFirst.Name[0]) ,mHeap->mNameBuffer.size ()) ;
 				ret = String<STR>::make (slice ("[") ,r2x ,slice ("] : ") ,mHeap->mNameBuffer) ;
 			}
 			if ifswitch (act) {

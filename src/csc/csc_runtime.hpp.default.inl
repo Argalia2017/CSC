@@ -230,13 +230,13 @@ trait ATOMIC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			return mHeap->mAtomic.exchange (obj ,std::memory_order::memory_order_relaxed) ;
 		}
 
-		void replace (CREF<VAL> expect ,CREF<VAL> right) const override {
+		void replace (CREF<VAL> expect ,CREF<VAL> next) const override {
 			auto rax = expect ;
-			mHeap->mAtomic.compare_exchange_strong (rax ,right ,std::memory_order::memory_order_relaxed) ;
+			mHeap->mAtomic.compare_exchange_strong (rax ,next ,std::memory_order::memory_order_relaxed) ;
 		}
 
-		BOOL change (VREF<VAL> expect ,CREF<VAL> right) const override {
-			const auto r1x = mHeap->mAtomic.compare_exchange_weak (expect ,right ,std::memory_order::memory_order_relaxed) ;
+		BOOL change (VREF<VAL> expect ,CREF<VAL> next) const override {
+			const auto r1x = mHeap->mAtomic.compare_exchange_weak (expect ,next ,std::memory_order::memory_order_relaxed) ;
 			if (r1x)
 				return TRUE ;
 			std::this_thread::yield () ;

@@ -251,7 +251,7 @@ trait BINARYTABLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	using Holder = typename BINARYTABLE_HELP<DEPEND ,ALWAYS>::Holder ;
 
 	struct NODE {
-		INDEX mTo ;
+		INDEX mInto ;
 		INDEX mNext ;
 	} ;
 
@@ -276,54 +276,57 @@ trait BINARYTABLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		void clear () override {
 			mTable.clear () ;
 			mJump = Array<INDEX> () ;
-			for (auto &&i : mBinary) {
-				i.mFirst = NONE ;
-				i.mLength = 0 ;
-			}
+			const auto r1x = invoke ([&] () {
+				BINARY ret ;
+				ret.mFirst = NONE ;
+				ret.mLength = 0 ;
+				return move (ret) ;
+			}) ;
+			mBinary.fill (r1x) ;
 		}
 
 		LENGTH count (CREF<INDEX> from_) const override {
 			return mBinary[from_].mLength ;
 		}
 
-		void link (CREF<INDEX> from_ ,CREF<INDEX> to_) override {
+		void link (CREF<INDEX> from_ ,CREF<INDEX> into_) override {
 			assert (mJump.size () == 0) ;
 			INDEX ix = from_ ;
-			INDEX jx = find_table (mBinary[ix].mFirst ,to_) ;
+			INDEX jx = find_table (mBinary[ix].mFirst ,into_) ;
 			if ifswitch (TRUE) {
 				if (jx != NONE)
 					discard ;
 				jx = mTable.alloc () ;
-				mTable[jx].mTo = to_ ;
+				mTable[jx].mInto = into_ ;
 				mTable[jx].mNext = mBinary[ix].mFirst ;
 				mBinary[ix].mFirst = jx ;
 				mBinary[ix].mLength++ ;
 			}
 		}
 
-		INDEX find_table (CREF<INDEX> root ,CREF<INDEX> to_) const {
+		INDEX find_table (CREF<INDEX> root ,CREF<INDEX> into_) const {
 			INDEX jx = root ;
 			while (TRUE) {
 				if (jx == NONE)
 					break ;
-				if (mTable[jx].mTo == to_)
+				if (mTable[jx].mInto == into_)
 					return jx ;
 				jx = mTable[jx].mNext ;
 			}
 			return NONE ;
 		}
 
-		void joint (CREF<INDEX> from_ ,CREF<INDEX> to_) override {
-			if (from_ == to_)
+		void joint (CREF<INDEX> from_ ,CREF<INDEX> into_) override {
+			if (from_ == into_)
 				return ;
-			link (from_ ,to_) ;
-			link (to_ ,from_) ;
+			link (from_ ,into_) ;
+			link (into_ ,from_) ;
 		}
 
-		BOOL get (CREF<INDEX> from_ ,CREF<INDEX> to_) const override {
+		BOOL get (CREF<INDEX> from_ ,CREF<INDEX> into_) const override {
 			assert (mTable.size () == 0) ;
 			INDEX ix = from_ ;
-			INDEX iy = to_ ;
+			INDEX iy = into_ ;
 			if ifswitch (TRUE) {
 				if (mBinary[ix].mLength < mBinary[iy].mLength)
 					discard ;
@@ -335,14 +338,14 @@ trait BINARYTABLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			return jx != NONE ;
 		}
 
-		INDEX find_binary (CREF<INDEX> begin_ ,CREF<INDEX> end_ ,CREF<INDEX> to_) const {
+		INDEX find_binary (CREF<INDEX> begin_ ,CREF<INDEX> end_ ,CREF<INDEX> into_) const {
 			INDEX ix = begin_ ;
 			INDEX iy = end_ - 1 ;
 			while (TRUE) {
 				if (ix >= iy)
 					break ;
 				INDEX iz = (ix + iy) / 2 ;
-				const auto r1x = operator_compr (to_ ,mJump[iz]) ;
+				const auto r1x = operator_compr (into_ ,mJump[iz]) ;
 				auto act = TRUE ;
 				if ifswitch (act) {
 					if (r1x != 0)
@@ -359,7 +362,7 @@ trait BINARYTABLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 					iy = iz - 1 ;
 				}
 			}
-			if (mJump[ix] == to_)
+			if (mJump[ix] == into_)
 				return ix ;
 			return NONE ;
 		}
@@ -375,7 +378,7 @@ trait BINARYTABLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			return move (ret) ;
 		}
 
-		void optimize () override {
+		void remap () override {
 			mJump = Array<INDEX> (mTable.length ()) ;
 			INDEX ix = 0 ;
 			for (auto &&i : mBinary) {
@@ -384,7 +387,7 @@ trait BINARYTABLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				while (TRUE) {
 					if (jx == NONE)
 						break ;
-					mJump[ix] = mTable[jx].mTo ;
+					mJump[ix] = mTable[jx].mInto ;
 					ix++ ;
 					jx = mTable[jx].mNext ;
 				}

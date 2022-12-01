@@ -13,8 +13,8 @@ namespace CSC {
 template <class...>
 trait ARRAYITERATOR_HELP ;
 
-template <class ATTR ,class UNIT ,class ITEM>
-trait ARRAYITERATOR_HELP<ATTR ,UNIT ,ITEM ,REQUIRE<IS_SAME<ATTR ,VARIABLE>>> {
+template <class UNIT ,class ITEM ,class COND>
+trait ARRAYITERATOR_HELP<UNIT ,ITEM ,COND ,REQUIRE<IS_SAME<COND ,VARIABLE>>> {
 	class ArrayIterator {
 	protected:
 		VRef<UNIT> mArray ;
@@ -74,8 +74,8 @@ trait ARRAYITERATOR_HELP<ATTR ,UNIT ,ITEM ,REQUIRE<IS_SAME<ATTR ,VARIABLE>>> {
 	} ;
 } ;
 
-template <class ATTR ,class UNIT ,class ITEM>
-trait ARRAYITERATOR_HELP<ATTR ,UNIT ,ITEM ,REQUIRE<ENUM_ALL<IS_SAME<ATTR ,CONSTANT> ,ENUM_NOT<IS_VOID<ITEM>>>>> {
+template <class UNIT ,class ITEM ,class COND>
+trait ARRAYITERATOR_HELP<UNIT ,ITEM ,COND ,REQUIRE<ENUM_ALL<IS_SAME<COND ,CONSTANT> ,ENUM_NOT<IS_VOID<ITEM>>>>> {
 	class ArrayIterator {
 	protected:
 		CRef<UNIT> mArray ;
@@ -135,8 +135,8 @@ trait ARRAYITERATOR_HELP<ATTR ,UNIT ,ITEM ,REQUIRE<ENUM_ALL<IS_SAME<ATTR ,CONSTA
 	} ;
 } ;
 
-template <class ATTR ,class UNIT ,class ITEM>
-trait ARRAYITERATOR_HELP<ATTR ,UNIT ,ITEM ,REQUIRE<IS_VOID<ITEM>>> {
+template <class UNIT ,class ITEM ,class COND>
+trait ARRAYITERATOR_HELP<UNIT ,ITEM ,COND ,REQUIRE<IS_VOID<ITEM>>> {
 	class ArrayIterator {
 	protected:
 		CRef<UNIT> mArray ;
@@ -197,7 +197,7 @@ trait ARRAYITERATOR_HELP<ATTR ,UNIT ,ITEM ,REQUIRE<IS_VOID<ITEM>>> {
 } ;
 
 template <class UNIT ,class ITEM = void>
-using ArrayIterator = typename ARRAYITERATOR_HELP<REFLECT_REF<UNIT> ,REMOVE_REF<UNIT> ,ITEM ,ALWAYS>::ArrayIterator ;
+using ArrayIterator = typename ARRAYITERATOR_HELP<REMOVE_REF<UNIT> ,ITEM ,REFLECT_REF<UNIT> ,ALWAYS>::ArrayIterator ;
 
 template <class...>
 trait ARRAY_HELP ;
@@ -232,6 +232,19 @@ trait ARRAY_HELP<ITEM ,SIZE ,ALWAYS> {
 			}
 		}
 
+		explicit Array (CREF<Variadic<ITEM>> that) {
+			mArray = Buffer<ITEM ,SIZE> (that.rank ()) ;
+			INDEX ix = 0 ;
+			auto rax = that ;
+			while (TRUE) {
+				if (rax.empty ())
+					break ;
+				mArray[ix] = rax.one () ;
+				ix++ ;
+				rax = rax.rest () ;
+			}
+		}
+
 		template <class ARG1>
 		imports Array make (CREF<ARG1> range_) {
 			Array ret = Array (range_.length ()) ;
@@ -260,7 +273,7 @@ trait ARRAY_HELP<ITEM ,SIZE ,ALWAYS> {
 		}
 
 		void fill (CREF<ITEM> item) {
-			BufferProc::buf_fill (mArray ,item ,0 ,size ()) ;
+			BufferProc<ITEM>::buf_fill (mArray ,item ,0 ,size ()) ;
 		}
 
 		ArrayIterator<VREF<Array> ,ITEM> begin () leftvalue {
@@ -317,7 +330,9 @@ trait ARRAY_HELP<ITEM ,SIZE ,ALWAYS> {
 		}
 
 		BOOL equal (CREF<Array> that) const {
-			return operator_equal (mArray ,that.mArray) ;
+			if (size () != that.size ())
+				return FALSE ;
+			return BufferProc<ITEM>::buf_equal (mArray ,that.mArray ,0 ,size ()) ;
 		}
 
 		inline BOOL operator== (CREF<Array> that) const {
@@ -329,7 +344,8 @@ trait ARRAY_HELP<ITEM ,SIZE ,ALWAYS> {
 		}
 
 		FLAG compr (CREF<Array> that) const {
-			return operator_compr (mArray ,that.mArray) ;
+			const auto r1x = vmin (size () ,that.size ()) ;
+			return BufferProc<ITEM>::buf_compr (mArray ,that.mArray ,0 ,r1x) ;
 		}
 
 		inline BOOL operator< (CREF<Array> that) const {
@@ -349,7 +365,7 @@ trait ARRAY_HELP<ITEM ,SIZE ,ALWAYS> {
 		}
 
 		FLAG hash () const {
-			return operator_hash (mArray) ;
+			return BufferProc<ITEM>::buf_hash (mArray ,0 ,size ()) ;
 		}
 	} ;
 } ;
@@ -406,7 +422,7 @@ trait STRING_HELP<ITEM ,SIZE ,REQUIRE<IS_TEXT<ITEM>>> {
 				mString[ix] = ITEM (that[i]) ;
 				ix++ ;
 			}
-			mString[ix] = ITEM (0) ;
+			trunc (ix) ;
 		}
 
 		explicit String (CREF<SizeProxy> size_) {
@@ -426,7 +442,21 @@ trait STRING_HELP<ITEM ,SIZE ,REQUIRE<IS_TEXT<ITEM>>> {
 				mString[ix] = move (i) ;
 				ix++ ;
 			}
-			mString[ix] = ITEM (0) ;
+			trunc (ix) ;
+		}
+
+		explicit String (CREF<Variadic<ITEM>> that) {
+			mString = Buffer<ITEM ,RESERVE_SIZE> (reserve_size (that.rank ())) ;
+			INDEX ix = 0 ;
+			auto rax = that ;
+			while (TRUE) {
+				if (rax.empty ())
+					break ;
+				mString[ix] = rax.one () ;
+				ix++ ;
+				rax = rax.rest () ;
+			}
+			trunc (ix) ;
 		}
 
 		imports CREF<String> zero () {
@@ -459,7 +489,7 @@ trait STRING_HELP<ITEM ,SIZE ,REQUIRE<IS_TEXT<ITEM>>> {
 			if (mString.size () == 0)
 				return ZERO ;
 			for (auto &&i : CSC::iter (0 ,size ())) {
-				if (mString[i] == ITEM (0))
+				if (operator_equal (mString[i] ,ITEM (0)))
 					return i ;
 			}
 			return size () ;
@@ -474,13 +504,12 @@ trait STRING_HELP<ITEM ,SIZE ,REQUIRE<IS_TEXT<ITEM>>> {
 		}
 
 		void clear () {
-			if (mString.size () == 0)
-				return ;
-			fill (ITEM (0)) ;
+			trunc (0) ;
+			trunc (size ()) ;
 		}
 
 		void fill (CREF<ITEM> item) {
-			BufferProc::buf_fill (mString ,item ,0 ,size ()) ;
+			BufferProc<ITEM>::buf_fill (mString ,item ,0 ,size ()) ;
 		}
 
 		ArrayIterator<VREF<String> ,ITEM> begin () leftvalue {
@@ -551,7 +580,7 @@ trait STRING_HELP<ITEM ,SIZE ,REQUIRE<IS_TEXT<ITEM>>> {
 			const auto r2x = that.length () ;
 			if (r1x != r2x)
 				return FALSE ;
-			return BufferProc::buf_equal (mString ,that.mString ,0 ,r1x) ;
+			return BufferProc<ITEM>::buf_equal (mString ,that.mString ,0 ,r1x) ;
 		}
 
 		inline BOOL operator== (CREF<String> that) const {
@@ -567,7 +596,11 @@ trait STRING_HELP<ITEM ,SIZE ,REQUIRE<IS_TEXT<ITEM>>> {
 			const auto r2x = that.size () ;
 			if (r1x != r2x)
 				return FALSE ;
-			return BufferProc::buf_equal (mString ,that ,0 ,r1x) ;
+			for (auto &&i : CSC::iter (0 ,r1x)) {
+				if (mString[i] != that[i])
+					return FALSE ;
+			}
+			return TRUE ;
 		}
 
 		inline BOOL operator== (CREF<Slice<ITEM>> that) const {
@@ -582,7 +615,7 @@ trait STRING_HELP<ITEM ,SIZE ,REQUIRE<IS_TEXT<ITEM>>> {
 			const auto r1x = length () ;
 			const auto r2x = that.length () ;
 			const auto r3x = vmin (r1x ,r2x) + 1 ;
-			return BufferProc::buf_compr (mString ,that.mString ,0 ,r3x) ;
+			return BufferProc<ITEM>::buf_compr (mString ,that.mString ,0 ,r3x) ;
 		}
 
 		inline BOOL operator< (CREF<String> that) const {
@@ -603,20 +636,20 @@ trait STRING_HELP<ITEM ,SIZE ,REQUIRE<IS_TEXT<ITEM>>> {
 
 		FLAG hash () const {
 			const auto r1x = length () ;
-			return BufferProc::buf_hash (mString ,0 ,r1x) ;
+			return BufferProc<ITEM>::buf_hash (mString ,0 ,r1x) ;
 		}
 
 		String concat (CREF<String> that) const {
 			const auto r1x = length () ;
 			const auto r2x = that.length () ;
 			String ret = String (r1x + r2x) ;
-			BufferProc::buf_copy (ret.mString ,mString ,0 ,r1x) ;
+			BufferProc<ITEM>::buf_copy (ret.mString ,mString ,0 ,r1x) ;
 			INDEX ix = r1x ;
 			for (auto &&i : CSC::iter (0 ,r2x)) {
 				ret.mString[ix] = that.mString[i] ;
 				ix++ ;
 			}
-			ret.mString[ix] = ITEM (0) ;
+			ret.trunc (ix) ;
 			return move (ret) ;
 		}
 
@@ -628,13 +661,13 @@ trait STRING_HELP<ITEM ,SIZE ,REQUIRE<IS_TEXT<ITEM>>> {
 			const auto r1x = length () ;
 			const auto r2x = that.size () ;
 			String ret = String (r1x + r2x) ;
-			BufferProc::buf_copy (ret.mString ,mString ,0 ,r1x) ;
+			BufferProc<ITEM>::buf_copy (ret.mString ,mString ,0 ,r1x) ;
 			INDEX ix = r1x ;
 			for (auto &&i : CSC::iter (0 ,r2x)) {
 				ret.mString[ix] = that[i] ;
 				ix++ ;
 			}
-			ret.mString[ix] = ITEM (0) ;
+			ret.trunc (ix) ;
 			return move (ret) ;
 		}
 
@@ -654,7 +687,7 @@ trait STRING_HELP<ITEM ,SIZE ,REQUIRE<IS_TEXT<ITEM>>> {
 					mString[ix] = that.mString[i] ;
 					ix++ ;
 				}
-				mString[ix] = ITEM (0) ;
+				trunc (ix) ;
 			}
 			if ifswitch (act) {
 				thiz = concat (that) ;
@@ -677,7 +710,7 @@ trait STRING_HELP<ITEM ,SIZE ,REQUIRE<IS_TEXT<ITEM>>> {
 					mString[ix] = that[i] ;
 					ix++ ;
 				}
-				mString[ix] = ITEM (0) ;
+				trunc (ix) ;
 			}
 			if ifswitch (act) {
 				thiz = concat (that) ;
@@ -699,263 +732,13 @@ trait STRING_HELP<ITEM ,SIZE ,REQUIRE<IS_TEXT<ITEM>>> {
 				ret.mString[ix] = mString[i] ;
 				ix++ ;
 			}
-			ret.mString[ix] = ITEM (0) ;
+			ret.trunc (ix) ;
 			return move (ret) ;
 		}
 
 		void trunc (CREF<INDEX> index) {
 			INDEX ix = vmax (index ,ZERO) ;
-			if (ix >= size ())
-				return ;
-			mString[ix] = ITEM (0) ;
-		}
-
-	private:
-		LENGTH reserve_size (CREF<LENGTH> size_) const {
-			if (size_ < 0)
-				return size_ ;
-			return size_ + 1 ;
-		}
-	} ;
-} ;
-
-template <class ITEM ,class SIZE>
-trait STRING_HELP<ITEM ,SIZE ,REQUIRE<ENUM_NOT<IS_TEXT<ITEM>>>> {
-	using RESERVE_SIZE = CONDITIONAL<ENUM_COMPR_GTEQ<SIZE ,ENUM_ZERO> ,ENUM_INC<SIZE> ,SIZE> ;
-	using BUFFER_SSIZE = ENUMAS<VAL ,8191> ;
-
-	using UNNAMED = typename BUFFER_HELP<ITEM ,REGISTER ,ALWAYS>::UNNAMED ;
-
-	class String {
-	protected:
-		Buffer<ITEM ,RESERVE_SIZE> mString ;
-
-	public:
-		implicit String () {
-			mString = Buffer<ITEM ,RESERVE_SIZE> (0) ;
-			clear () ;
-		}
-
-		explicit String (CREF<SizeProxy> size_) {
-			mString = Buffer<ITEM ,RESERVE_SIZE> (reserve_size (size_)) ;
-			clear () ;
-		}
-
-		explicit String (RREF<Buffer<ITEM ,RESERVE_SIZE>> that) {
-			mString = move (that) ;
-			clear () ;
-		}
-
-		explicit String (CREF<csc_initializer_t<ITEM>> that) {
-			mString = Buffer<ITEM ,RESERVE_SIZE> (reserve_size (LENGTH (that.size ()))) ;
-			INDEX ix = 0 ;
-			for (auto &&i : that) {
-				mString[ix] = move (i) ;
-				ix++ ;
-			}
-			mString[ix] = ITEM (0) ;
-		}
-
-		LENGTH size () const {
-			if (mString.size () == 0)
-				return ZERO ;
-			return mString.size () - 1 ;
-		}
-
-		LENGTH length () const {
-			if (mString.size () == 0)
-				return ZERO ;
-			for (auto &&i : CSC::iter (0 ,size ())) {
-				if (mString[i] == ITEM (0))
-					return i ;
-			}
-			return size () ;
-		}
-
-		VREF<RegBuffer<ITEM>> raw (RREF<UNNAMED> unnamed = UNNAMED ()) leftvalue {
-			return RegBuffer<ITEM>::make (mString ,0 ,size () ,move (unnamed)) ;
-		}
-
-		CREF<RegBuffer<ITEM>> raw (RREF<UNNAMED> unnamed = UNNAMED ()) const leftvalue {
-			return RegBuffer<ITEM>::make (mString ,0 ,length () ,move (unnamed)) ;
-		}
-
-		void clear () {
-			if (mString.size () == 0)
-				return ;
-			fill (ITEM (0)) ;
-		}
-
-		void fill (CREF<ITEM> item) {
-			BufferProc::buf_fill (mString ,item ,0 ,size ()) ;
-		}
-
-		ArrayIterator<VREF<String> ,ITEM> begin () leftvalue {
-			return ArrayIterator<VREF<String> ,ITEM> (VRef<String>::reference (thiz)) ;
-		}
-
-		ArrayIterator<VREF<String> ,ITEM> end () leftvalue {
-			return ArrayIterator<VREF<String> ,ITEM> (VRef<String>::reference (thiz)) ;
-		}
-
-		ArrayIterator<CREF<String> ,ITEM> begin () const leftvalue {
-			return ArrayIterator<CREF<String> ,ITEM> (CRef<String>::reference (thiz)) ;
-		}
-
-		ArrayIterator<CREF<String> ,ITEM> end () const leftvalue {
-			return ArrayIterator<CREF<String> ,ITEM> (CRef<String>::reference (thiz)) ;
-		}
-
-		ArrayIterator<CREF<String>> iter () const leftvalue {
-			return ArrayIterator<CREF<String>> (CRef<String>::reference (thiz)) ;
-		}
-
-		INDEX ibegin () const {
-			return ZERO ;
-		}
-
-		INDEX iend () const {
-			return length () ;
-		}
-
-		INDEX inext (CREF<INDEX> index) const {
-			return index + 1 ;
-		}
-
-		VREF<ITEM> at (CREF<INDEX> index) leftvalue {
-			assert (vbetween (index ,0 ,size ())) ;
-			return mString[index] ;
-		}
-
-		inline VREF<ITEM> operator[] (CREF<INDEX> index) leftvalue {
-			return at (index) ;
-		}
-
-		CREF<ITEM> at (CREF<INDEX> index) const leftvalue {
-			assert (vbetween (index ,0 ,size ())) ;
-			return mString[index] ;
-		}
-
-		inline CREF<ITEM> operator[] (CREF<INDEX> index) const leftvalue {
-			return at (index) ;
-		}
-
-		INDEX access (CREF<ITEM> item) const {
-			unimplemented () ;
-			return NONE ;
-		}
-
-		BOOL empty () const {
-			if (mString.size () == 0)
-				return TRUE ;
-			if ifnot (operator_equal (mString[0] ,ITEM (0)))
-				return FALSE ;
-			return TRUE ;
-		}
-
-		BOOL equal (CREF<String> that) const {
-			const auto r1x = length () ;
-			const auto r2x = that.length () ;
-			if (r1x != r2x)
-				return FALSE ;
-			return BufferProc::buf_equal (mString ,that.mString ,0 ,r1x) ;
-		}
-
-		inline BOOL operator== (CREF<String> that) const {
-			return equal (that) ;
-		}
-
-		inline BOOL operator!= (CREF<String> that) const {
-			return ifnot (equal (that)) ;
-		}
-
-		FLAG compr (CREF<String> that) const {
-			const auto r1x = length () ;
-			const auto r2x = that.length () ;
-			const auto r3x = vmin (r1x ,r2x) + 1 ;
-			return BufferProc::buf_compr (mString ,that.mString ,0 ,r3x) ;
-		}
-
-		inline BOOL operator< (CREF<String> that) const {
-			return compr (that) < ZERO ;
-		}
-
-		inline BOOL operator<= (CREF<String> that) const {
-			return compr (that) <= ZERO ;
-		}
-
-		inline BOOL operator> (CREF<String> that) const {
-			return compr (that) > ZERO ;
-		}
-
-		inline BOOL operator>= (CREF<String> that) const {
-			return compr (that) >= ZERO ;
-		}
-
-		FLAG hash () const {
-			const auto r1x = length () ;
-			return BufferProc::buf_hash (mString ,0 ,r1x) ;
-		}
-
-		String concat (CREF<String> that) const {
-			const auto r1x = length () ;
-			const auto r2x = that.length () ;
-			String ret = String (r1x + r2x) ;
-			BufferProc::buf_copy (ret.mString ,mString ,0 ,r1x) ;
-			INDEX ix = r1x ;
-			for (auto &&i : CSC::iter (0 ,r2x)) {
-				ret.mString[ix] = that.mString[i] ;
-				ix++ ;
-			}
-			ret.mString[ix] = ITEM (0) ;
-			return move (ret) ;
-		}
-
-		inline String operator+ (CREF<String> that) const {
-			return concat (that) ;
-		}
-
-		void concatto (CREF<String> that) {
-			const auto r1x = length () ;
-			const auto r2x = that.length () ;
-			auto act = TRUE ;
-			if ifswitch (act) {
-				if (r1x + r2x >= size ())
-					discard ;
-				INDEX ix = r1x ;
-				for (auto &&i : CSC::iter (0 ,r2x)) {
-					mString[ix] = that.mString[i] ;
-					ix++ ;
-				}
-				mString[ix] = ITEM (0) ;
-			}
-			if ifswitch (act) {
-				thiz = concat (that) ;
-			}
-		}
-
-		inline void operator+= (CREF<String> that) {
-			concatto (that) ;
-		}
-
-		String segment (CREF<INDEX> begin_ ,CREF<INDEX> end_) const {
-			assert (vbetween (begin_ ,0 ,size ())) ;
-			assert (vbetween (end_ ,0 ,size () + 1)) ;
-			const auto r1x = end_ - begin_ ;
-			assert (r1x >= 0) ;
-			String ret = String (r1x) ;
-			INDEX ix = 0 ;
-			for (auto &&i : CSC::iter (begin_ ,end_)) {
-				ret.mString[ix] = mString[i] ;
-				ix++ ;
-			}
-			ret.mString[ix] = ITEM (0) ;
-			return move (ret) ;
-		}
-
-		void trunc (CREF<INDEX> index) {
-			INDEX ix = vmax (index ,ZERO) ;
-			if (ix >= size ())
+			if (ix >= mString.size ())
 				return ;
 			mString[ix] = ITEM (0) ;
 		}
@@ -1004,6 +787,18 @@ trait DEQUE_HELP<ITEM ,SIZE ,ALWAYS> {
 			clear () ;
 			for (auto &&i : that)
 				add (move (i)) ;
+		}
+
+		explicit Deque (CREF<Variadic<ITEM>> that) {
+			mDeque = Buffer<ITEM ,SIZE> (that.rank ()) ;
+			clear () ;
+			auto rax = that ;
+			while (TRUE) {
+				if (rax.empty ())
+					break ;
+				add (rax.one ()) ;
+				rax = rax.rest () ;
+			}
 		}
 
 		LENGTH size () const {
@@ -1239,6 +1034,18 @@ trait PRIORITY_HELP<ITEM ,SIZE ,ALWAYS> {
 			clear () ;
 			for (auto &&i : that)
 				add (move (i)) ;
+		}
+
+		explicit Priority (CREF<Variadic<ITEM>> that) {
+			mPriority = Buffer<ITEM ,SIZE> (that.rank ()) ;
+			clear () ;
+			auto rax = that ;
+			while (TRUE) {
+				if (rax.empty ())
+					break ;
+				add (rax.one ()) ;
+				rax = rax.rest () ;
+			}
 		}
 
 		LENGTH size () const {
@@ -1547,6 +1354,18 @@ trait LIST_HELP<ITEM ,SIZE ,ALWAYS> {
 				add (move (i)) ;
 		}
 
+		explicit List (CREF<Variadic<ITEM>> that) {
+			mList = Allocator<NODE ,SIZE> (that.rank ()) ;
+			clear () ;
+			auto rax = that ;
+			while (TRUE) {
+				if (rax.empty ())
+					break ;
+				add (rax.one ()) ;
+				rax = rax.rest () ;
+			}
+		}
+
 		LENGTH size () const {
 			return mList.size () ;
 		}
@@ -1835,6 +1654,18 @@ trait ARRAYLIST_HELP<ITEM ,SIZE ,ALWAYS> {
 				add (move (i)) ;
 		}
 
+		explicit ArrayList (CREF<Variadic<ITEM>> that) {
+			mList = Allocator<NODE ,SIZE> (that.rank ()) ;
+			clear () ;
+			auto rax = that ;
+			while (TRUE) {
+				if (rax.empty ())
+					break ;
+				add (rax.one ()) ;
+				rax = rax.rest () ;
+			}
+		}
+
 		LENGTH size () const {
 			return mList.size () ;
 		}
@@ -1845,7 +1676,7 @@ trait ARRAYLIST_HELP<ITEM ,SIZE ,ALWAYS> {
 
 		void clear () {
 			mList.clear () ;
-			BufferProc::buf_fill (mRange ,NONE ,0 ,mRange.size ()) ;
+			BufferProc<INDEX>::buf_fill (mRange ,NONE ,0 ,mRange.size ()) ;
 			mFree = 0 ;
 		}
 
@@ -2021,7 +1852,7 @@ trait ARRAYLIST_HELP<ITEM ,SIZE ,ALWAYS> {
 			if (r1x == mList.size ())
 				return ;
 			mRange.resize (mList.size ()) ;
-			BufferProc::buf_fill (mRange ,NONE ,r1x ,mRange.size ()) ;
+			BufferProc<INDEX>::buf_fill (mRange ,NONE ,r1x ,mRange.size ()) ;
 		}
 	} ;
 } ;
@@ -2032,54 +1863,54 @@ using ArrayList = typename ARRAYLIST_HELP<ITEM ,SIZE ,ALWAYS>::ArrayList ;
 template <class...>
 trait BITPROXY_HELP ;
 
-template <class ATTR ,class UNIT>
-trait BITPROXY_HELP<ATTR ,UNIT ,REQUIRE<IS_SAME<ATTR ,VARIABLE>>> {
+template <class UNIT ,class COND>
+trait BITPROXY_HELP<UNIT ,COND ,REQUIRE<IS_SAME<COND ,VARIABLE>>> {
 	class BitProxy {
 	protected:
-		VRef<UNIT> mArray ;
+		VRef<UNIT> mBitSet ;
 		INDEX mY ;
 
 	public:
 		implicit BitProxy () = delete ;
 
 		explicit BitProxy (RREF<VRef<UNIT>> array_ ,CREF<INDEX> y_) {
-			mArray = move (array_) ;
+			mBitSet = move (array_) ;
 			mY = y_ ;
 		}
 
 		inline implicit operator BOOL () rightvalue {
-			return mArray->get (mY) ;
+			return mBitSet->get (mY) ;
 		}
 
 		inline void operator= (CREF<BOOL> that) rightvalue {
-			mArray->set (mY ,that) ;
+			mBitSet->set (mY ,that) ;
 		}
 	} ;
 } ;
 
-template <class ATTR ,class UNIT>
-trait BITPROXY_HELP<ATTR ,UNIT ,REQUIRE<IS_SAME<ATTR ,CONSTANT>>> {
+template <class UNIT ,class COND>
+trait BITPROXY_HELP<UNIT ,COND ,REQUIRE<IS_SAME<COND ,CONSTANT>>> {
 	class BitProxy {
 	protected:
-		CRef<UNIT> mArray ;
+		CRef<UNIT> mBitSet ;
 		INDEX mY ;
 
 	public:
 		implicit BitProxy () = delete ;
 
 		explicit BitProxy (RREF<CRef<UNIT>> array_ ,CREF<INDEX> y_) {
-			mArray = move (array_) ;
+			mBitSet = move (array_) ;
 			mY = y_ ;
 		}
 
 		inline implicit operator BOOL () rightvalue {
-			return mArray->get (mY) ;
+			return mBitSet->get (mY) ;
 		}
 	} ;
 } ;
 
 template <class UNIT>
-using BitProxy = typename BITPROXY_HELP<REFLECT_REF<UNIT> ,REMOVE_REF<UNIT> ,ALWAYS>::BitProxy ;
+using BitProxy = typename BITPROXY_HELP<REMOVE_REF<UNIT> ,REFLECT_REF<UNIT> ,ALWAYS>::BitProxy ;
 
 template <class...>
 trait BITSET_HELP ;
@@ -2148,7 +1979,7 @@ trait BITSET_HELP<SIZE ,ALWAYS> {
 		}
 
 		void fill (CREF<BYTE> item) {
-			BufferProc::buf_fill (mSet ,item ,0 ,mSet.size ()) ;
+			BufferProc<BYTE>::buf_fill (mSet ,item ,0 ,mSet.size ()) ;
 		}
 
 		ArrayIterator<CREF<BitSet> ,ITEM> begin () const leftvalue {
@@ -2258,15 +2089,13 @@ trait BITSET_HELP<SIZE ,ALWAYS> {
 
 		BOOL equal (CREF<BitSet> that) const {
 			assert (size () == that.size ()) ;
-			INDEX ix = mSet.size () - 1 ;
-			if (ix < 0)
+			const auto r1x = mSet.size () - 1 ;
+			if (r1x < 0)
 				return TRUE ;
-			const auto r1x = BufferProc::buf_equal (mSet ,that.mSet ,0 ,ix) ;
-			if ifnot (r1x)
+			const auto r2x = BufferProc<BYTE>::buf_equal (mSet ,that.mSet ,0 ,r1x) ;
+			if ifnot (r2x)
 				return FALSE ;
-			const auto r2x = mSet[ix] & BYTE (mWidth % 8 - 1) ;
-			const auto r3x = that.mSet[ix] & BYTE (mWidth % 8 - 1) ;
-			if (r2x != r3x)
+			if (last_byte () != that.last_byte ())
 				return FALSE ;
 			return TRUE ;
 		}
@@ -2281,15 +2110,13 @@ trait BITSET_HELP<SIZE ,ALWAYS> {
 
 		FLAG compr (CREF<BitSet> that) const {
 			assert (size () == that.size ()) ;
-			INDEX ix = mSet.size () - 1 ;
-			if (ix < 0)
+			const auto r1x = mSet.size () - 1 ;
+			if (r1x < 0)
 				return ZERO ;
-			const auto r1x = BufferProc::buf_compr (mSet ,that.mSet ,0 ,ix) ;
-			if (r1x != ZERO)
-				return r1x ;
-			const auto r2x = mSet[ix] & BYTE (mWidth % 8 - 1) ;
-			const auto r3x = that.mSet[ix] & BYTE (mWidth % 8 - 1) ;
-			return operator_compr (r2x ,r3x) ;
+			const auto r2x = BufferProc<BYTE>::buf_compr (mSet ,that.mSet ,0 ,r1x) ;
+			if (r2x != ZERO)
+				return r2x ;
+			return operator_compr (last_byte () ,that.last_byte ()) ;
 		}
 
 		inline BOOL operator< (CREF<BitSet> that) const {
@@ -2309,13 +2136,12 @@ trait BITSET_HELP<SIZE ,ALWAYS> {
 		}
 
 		FLAG hash () const {
-			INDEX ix = mSet.size () - 1 ;
-			if (ix < 0)
+			const auto r1x = mSet.size () - 1 ;
+			if (r1x < 0)
 				return hashcode () ;
-			const auto r1x = BufferProc::buf_hash (mSet ,0 ,ix) ;
-			const auto r2x = mSet[ix] & BYTE (mWidth % 8 - 1) ;
-			const auto r3x = operator_hash (r2x) ;
-			return hashcode (r1x ,r3x) ;
+			const auto r2x = BufferProc<BYTE>::buf_hash (mSet ,0 ,r1x) ;
+			const auto r3x = operator_hash (last_byte ()) ;
+			return hashcode (r2x ,r3x) ;
 		}
 
 		BitSet band (CREF<BitSet> that) const {
@@ -2443,6 +2269,11 @@ trait BITSET_HELP<SIZE ,ALWAYS> {
 				iw++ ;
 			}
 			return NONE ;
+		}
+
+		BYTE last_byte () const {
+			INDEX ix = mSet.size () - 1 ;
+			return mSet[ix] & BYTE (mWidth % 8 - 1) ;
 		}
 	} ;
 } ;
@@ -2579,6 +2410,18 @@ trait SET_HELP<ITEM ,SIZE ,ALWAYS> {
 			clear () ;
 			for (auto &&i : that)
 				add (move (i)) ;
+		}
+
+		explicit Set (CREF<Variadic<ITEM>> that) {
+			mSet = Allocator<NODE ,SIZE> (that.rank ()) ;
+			clear () ;
+			auto rax = that ;
+			while (TRUE) {
+				if (rax.empty ())
+					break ;
+				add (rax.one ()) ;
+				rax = rax.rest () ;
+			}
 		}
 
 		LENGTH size () const {
@@ -3210,6 +3053,18 @@ trait HASHSET_HELP<ITEM ,SIZE ,ALWAYS> {
 				add (move (i)) ;
 		}
 
+		explicit HashSet (CREF<Variadic<ITEM>> that) {
+			mSet = Allocator<NODE ,SIZE> (that.rank ()) ;
+			clear () ;
+			auto rax = that ;
+			while (TRUE) {
+				if (rax.empty ())
+					break ;
+				add (rax.one ()) ;
+				rax = rax.rest () ;
+			}
+		}
+
 		LENGTH size () const {
 			return mSet.size () ;
 		}
@@ -3220,7 +3075,7 @@ trait HASHSET_HELP<ITEM ,SIZE ,ALWAYS> {
 
 		void clear () {
 			mSet.clear () ;
-			BufferProc::buf_fill (mRange ,NONE ,0 ,mRange.size ()) ;
+			BufferProc<INDEX>::buf_fill (mRange ,NONE ,0 ,mRange.size ()) ;
 		}
 
 		void reserve (CREF<LENGTH> size_) {
@@ -3357,7 +3212,7 @@ trait HASHSET_HELP<ITEM ,SIZE ,ALWAYS> {
 			if (r1x == mSet.size ())
 				return ;
 			mRange.resize (mSet.size ()) ;
-			BufferProc::buf_fill (mRange ,NONE ,0 ,mRange.size ()) ;
+			BufferProc<INDEX>::buf_fill (mRange ,NONE ,0 ,mRange.size ()) ;
 			for (auto &&i : CSC::iter (0 ,mSet.size ())) {
 				if (i == curr)
 					continue ;

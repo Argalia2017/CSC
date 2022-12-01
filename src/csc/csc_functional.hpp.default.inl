@@ -161,14 +161,14 @@ trait SYNTAXTREE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			INDEX iy = insert_node (clazz) ;
 			assume (ix != iy) ;
 			if ifswitch (TRUE) {
-				if ifnot (mTree[ix].mPlaying)
-					discard ;
-				assume (mTree[iy].mParent.find (ix) != NONE) ;
-				assume (mTree[ix].mMaybe.find (iy) != NONE) ;
-			}
-			if ifswitch (TRUE) {
 				if (mTree[ix].mChild.find (iy) != NONE)
 					discard ;
+				if ifswitch (TRUE) {
+					if ifnot (mTree[ix].mPlaying)
+						discard ;
+					assume (mTree[iy].mParent.find (ix) != NONE) ;
+					assume (mTree[ix].mMaybe.find (iy) != NONE) ;
+				}
 				mTree[iy].mParent.add (ix) ;
 				mTree[ix].mChild.add (iy) ;
 				depth_track (iy ,ix) ;
@@ -252,15 +252,6 @@ trait SYNTAXTREE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			}
 		}
 
-		CREF<AutoRef<>> later () leftvalue override {
-			INDEX ix = curr_node () ;
-			assume (ix != root_node ()) ;
-			assume (mTree[ix].mPlaying) ;
-			assume (mTree[ix].mIsIteration) ;
-			assume (mTree[ix].mLater.exist ()) ;
-			return mTree[ix].mLater ;
-		}
-
 		void once (RREF<Function<void>> actor) override {
 			INDEX ix = curr_node () ;
 			assume (ix != root_node ()) ;
@@ -268,7 +259,6 @@ trait SYNTAXTREE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			assume (ifnot (mTree[ix].mActor.exist ())) ;
 			assume (ifnot (mTree[ix].mPlaying)) ;
 			assume (ifnot (mTree[ix].mIsFunction)) ;
-			assume (ifnot (mTree[ix].mIsIteration)) ;
 			mTree[ix].mOnceActor = move (actor) ;
 		}
 
@@ -285,7 +275,6 @@ trait SYNTAXTREE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			assume (ifnot (mTree[ix].mActor.exist ())) ;
 			assume (ifnot (mTree[ix].mOncePlayed)) ;
 			assume (ifnot (mTree[ix].mIsFunction)) ;
-			assume (ifnot (mTree[ix].mIsIteration)) ;
 			INDEX iy = insert_node (clazz) ;
 			assume (ix != iy) ;
 			assume (mTree[iy].mIsIteration) ;
@@ -295,17 +284,26 @@ trait SYNTAXTREE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			for (auto &&i : mTree[iy].mDepend) {
 				if ifnot (mTree[i].mPlayed)
 					continue ;
+				mTree[i].mOncePlayed = FALSE ;
 				mTree[i].mPlayed = FALSE ;
 				mTree[i].mLifetime = 0 ;
 			}
 		}
 
-		VREF<AutoRef<>> redo (CREF<Clazz> clazz) leftvalue override {
+		CREF<AutoRef<>> later () leftvalue override {
+			INDEX ix = curr_node () ;
+			assume (ix != root_node ()) ;
+			assume (mTree[ix].mPlaying) ;
+			assume (mTree[ix].mIsIteration) ;
+			assume (mTree[ix].mLater.exist ()) ;
+			return mTree[ix].mLater ;
+		}
+
+		VREF<AutoRef<>> later (CREF<Clazz> clazz) leftvalue override {
 			INDEX ix = curr_node () ;
 			assume (ifnot (mTree[ix].mActor.exist ())) ;
 			assume (ifnot (mTree[ix].mOncePlayed)) ;
 			assume (ifnot (mTree[ix].mIsFunction)) ;
-			assume (ifnot (mTree[ix].mIsIteration)) ;
 			INDEX iy = insert_node (clazz) ;
 			assume (ifnot (mTree[iy].mPlayed)) ;
 			assume (ix != iy) ;

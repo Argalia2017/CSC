@@ -77,16 +77,12 @@ trait CONSOLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			}
 		}
 
-		void disable_option (CREF<FLAG> option) const override {
-			mHeap->mOption.erase (option) ;
-		}
-
 		void print (CREF<Binder> msg) const override {
 			if (mHeap->mOption[OPTION_NO_PRINT::expr])
 				return ;
 			write_con_buffer (msg) ;
 			if ifswitch (TRUE) {
-				if ifnot (mHeap->mConsole.exist ())
+				if ifnot (is_open ())
 					discard ;
 				const auto r1x = string_cvt[TYPEAS<STRA ,STR>::expr] (mHeap->mConBuffer) ;
 				printf ("%s\n" ,(&r1x[0])) ;
@@ -99,7 +95,7 @@ trait CONSOLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				return ;
 			write_con_buffer (msg) ;
 			if ifswitch (TRUE) {
-				if ifnot (mHeap->mConsole.exist ())
+				if ifnot (is_open ())
 					discard ;
 				const auto r1x = string_cvt[TYPEAS<STRA ,STR>::expr] (mHeap->mConBuffer) ;
 				printf ("\033[1;34m%s\033[0m\n" ,(&r1x[0])) ;
@@ -112,7 +108,7 @@ trait CONSOLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				return ;
 			write_con_buffer (msg) ;
 			if ifswitch (TRUE) {
-				if ifnot (mHeap->mConsole.exist ())
+				if ifnot (is_open ())
 					discard ;
 				const auto r1x = string_cvt[TYPEAS<STRA ,STR>::expr] (mHeap->mConBuffer) ;
 				printf ("\033[1;31m%s\033[0m\n" ,(&r1x[0])) ;
@@ -125,7 +121,7 @@ trait CONSOLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				return ;
 			write_con_buffer (msg) ;
 			if ifswitch (TRUE) {
-				if ifnot (mHeap->mConsole.exist ())
+				if ifnot (is_open ())
 					discard ;
 				const auto r1x = string_cvt[TYPEAS<STRA ,STR>::expr] (mHeap->mConBuffer) ;
 				printf ("\033[1;33m%s\033[0m\n" ,(&r1x[0])) ;
@@ -138,7 +134,7 @@ trait CONSOLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				return ;
 			write_con_buffer (msg) ;
 			if ifswitch (TRUE) {
-				if ifnot (mHeap->mConsole.exist ())
+				if ifnot (is_open ())
 					discard ;
 				const auto r1x = string_cvt[TYPEAS<STRA ,STR>::expr] (mHeap->mConBuffer) ;
 				printf ("\033[1;32m%s\033[0m\n" ,(&r1x[0])) ;
@@ -151,7 +147,7 @@ trait CONSOLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				return ;
 			write_con_buffer (msg) ;
 			if ifswitch (TRUE) {
-				if ifnot (mHeap->mConsole.exist ())
+				if ifnot (is_open ())
 					discard ;
 				const auto r1x = string_cvt[TYPEAS<STRA ,STR>::expr] (mHeap->mConBuffer) ;
 				printf ("\033[1;36m%s\033[0m\n" ,(&r1x[0])) ;
@@ -164,7 +160,7 @@ trait CONSOLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				return ;
 			write_con_buffer (msg) ;
 			if ifswitch (TRUE) {
-				if ifnot (mHeap->mConsole.exist ())
+				if ifnot (is_open ())
 					discard ;
 				const auto r1x = string_cvt[TYPEAS<STRA ,STR>::expr] (mHeap->mConBuffer) ;
 				printf ("\033[1;37m%s\033[0m\n" ,(&r1x[0])) ;
@@ -462,7 +458,7 @@ trait REPORTER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				if (r2x.self == NULL)
 					discard ;
 				auto &&tmp = unsafe_cast[TYPEAS<TEMP<void>>::expr] (unsafe_deptr ((**r2x.self))) ;
-				BufferProc::buf_slice (mHeap->mNameBuffer ,RegBuffer<STRA>::make (tmp ,0 ,VAL32_MAX) ,mHeap->mNameBuffer.size ()) ;
+				BufferProc<STR>::buf_slice (mHeap->mNameBuffer.raw () ,RegBuffer<STRA>::make (tmp ,0 ,VAL32_MAX) ,mHeap->mNameBuffer.size ()) ;
 				const auto r3x = string_build[TYPEAS<STR ,DATA>::expr] (DATA (addr)) ;
 				ret = String<STR>::make (slice ("[") ,r3x ,slice ("] : ") ,mHeap->mNameBuffer) ;
 			}

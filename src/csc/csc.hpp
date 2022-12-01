@@ -88,18 +88,16 @@
 #ifdef __CSC_COMPILER_MSVC__
 #pragma warning (disable :4068) //@info: warning C4068: unknown pragma
 #pragma warning (disable :4100) //@info: warning C4100: 'xxx': unreferenced formal parameter
-#pragma warning (disable :4180) //@info: warning C4180: qualifier applied to function type has no meaning; ignored
 #pragma warning (disable :4127) //@info: warning C4127: conditional expression is constant
 #pragma warning (disable :4324) //@info: warning C4324: 'xxx': structure was padded due to alignment specifier
-#pragma warning (disable :4371) //@info: warning C4371: 'xxx': layout of class may have changed from a previous version of the compiler due to better packing of member 'xxx'
 #pragma warning (disable :4365) //@info: warning C4365: 'xxx': conversion from 'xxx' to 'xxx', signed/unsigned mismatch
-#pragma warning (disable :4435) //@info: warning C4435: 'xxx': Object layout under /vd2 will change due to virtual base 'xxx'
+
+#pragma warning (disable :4459) //@info: warning C4459: declaration of 'xxx' hides global declaration
 #pragma warning (disable :4464) //@info: warning C4464: relative include path contains '..'
 #pragma warning (disable :4505) //@info: warning C4505: 'xxx': unreferenced local function has been removed
 #pragma warning (disable :4514) //@info: warning C4514: 'xxx': unreferenced inline function has been removed
 #pragma warning (disable :4571) //@info: warning C4571: Informational: catch(...) semantics changed since Visual C++ 7.1; structured exceptions (SEH) are no longer caught
 #pragma warning (disable :4574) //@info: warning C4574: 'xxx' is defined to be '0': did you mean to use '#if xxx'?
-#pragma warning (disable :4619) //@info: warning C4619: #pragma warning: there is no warning number 'xxx'
 #pragma warning (disable :4623) //@info: warning C4623: 'xxx': default constructor was implicitly defined as deleted
 #pragma warning (disable :4624) //@info: warning C4624: 'xxx': destructor was implicitly defined as deleted
 #pragma warning (disable :4625) //@info: warning C4625: 'xxx': copy constructor was implicitly defined as deleted
@@ -115,8 +113,6 @@
 #pragma warning (disable :4820) //@info: warning C4820: 'xxx': 'xxx' bytes padding added after data member 'xxx'
 #pragma warning (disable :5026) //@info: warning C5026: 'xxx': move constructor was implicitly defined as deleted
 #pragma warning (disable :5027) //@info: warning C5027: 'xxx': move assignment operator was implicitly defined as deleted
-#pragma warning (disable :5039) //@info: warning C5039: 'xxx': pointer or reference to potentially throwing function passed to extern C function under -EHc. Undefined behavior may occur if this function assume an exception.
-#pragma warning (disable :5045) //@info: warning C5045: Compiler will insert Spectre mitigation for memory load if /Qspectre switch specified
 #endif
 
 #ifdef __CSC_COMPILER_GNUC__
@@ -149,7 +145,7 @@ class initializer_list ;
 
 #ifdef __CSC_CXX_LITE__
 #ifdef __CSC_COMPILER_GNUC__
-//@fatal: fuck g++4.8
+//@fatal: fuck gnuc
 #include <type_traits>
 #define __is_constructible(...) std::is_constructible<__VA_ARGS__>::value
 #define __is_assignable(...) std::is_assignable<__VA_ARGS__>::value
@@ -164,7 +160,7 @@ class initializer_list ;
 
 #ifdef __CSC_COMPILER_GNUC__
 #if __GLIBCXX__ <= 20140522L
-//@fatal: fuck g++4.8
+//@fatal: fuck gnuc
 namespace std {
 template <class UNIT>
 struct is_trivially_constructible :integral_constant<bool ,__has_trivial_constructor (UNIT)> {} ;
@@ -239,12 +235,12 @@ struct is_trivially_constructible :integral_constant<bool ,__has_trivial_constru
 #endif
 
 #ifdef __CSC_COMPILER_GNUC__
-//@fatal: fuck g++4.8
+//@fatal: fuck gnuc
 #define __macro_assume(...) do { if (__VA_ARGS__) break ; CSC::Exception (CSC::Slice<CSC::STR> ("assume failed : " __macro_str (__VA_ARGS__) " : at " ,__PRETTY_FUNCTION__ ," in " __FILE__ " ," __macro_str (__LINE__))).raise () ; } while (false)
 #endif
 
 #ifdef __CSC_COMPILER_CLANG__
-//@fatal: fuck clang5.0
+//@fatal: fuck clang
 #define __macro_assume(...) do { if (__VA_ARGS__) break ; CSC::Exception (CSC::Slice<CSC::STR> ("assume failed : " __macro_str (__VA_ARGS__) " : at " ,__PRETTY_FUNCTION__ ," in " __FILE__ " ," __macro_str (__LINE__))).raise () ; } while (false)
 #endif
 #endif
@@ -835,23 +831,23 @@ using MACRO_IS_INTERFACE = ENUMAS<csc_bool_t ,(std::is_abstract<UNIT>::value)> ;
 #endif
 
 #ifdef __CSC_CXX_LITE__
-template <class FROM ,class TO>
-using MACRO_IS_EXTEND = ENUMAS<csc_bool_t ,(__is_base_of (FROM ,TO))> ;
+template <class FROM ,class INTO>
+using MACRO_IS_EXTEND = ENUMAS<csc_bool_t ,(__is_base_of (FROM ,INTO))> ;
 #endif
 
 #ifndef __CSC_CXX_LITE__
-template <class FROM ,class TO>
-using MACRO_IS_EXTEND = ENUMAS<csc_bool_t ,(std::is_base_of<FROM ,TO>::value)> ;
+template <class FROM ,class INTO>
+using MACRO_IS_EXTEND = ENUMAS<csc_bool_t ,(std::is_base_of<FROM ,INTO>::value)> ;
 #endif
 
 #ifdef __CSC_CXX_LITE__
-template <class FROM ,class TO>
-using MACRO_IS_CONVERTIBLE = ENUMAS<csc_bool_t ,(__is_convertible_to (FROM ,TO))> ;
+template <class FROM ,class INTO>
+using MACRO_IS_CONVERTIBLE = ENUMAS<csc_bool_t ,(__is_convertible_to (FROM ,INTO))> ;
 #endif
 
 #ifndef __CSC_CXX_LITE__
-template <class FROM ,class TO>
-using MACRO_IS_CONVERTIBLE = ENUMAS<csc_bool_t ,(std::is_convertible<FROM ,TO>::value)> ;
+template <class FROM ,class INTO>
+using MACRO_IS_CONVERTIBLE = ENUMAS<csc_bool_t ,(std::is_convertible<FROM ,INTO>::value)> ;
 #endif
 
 #ifdef __CSC_COMPILER_MSVC__
@@ -868,7 +864,7 @@ struct FUNCTION_internel_name {
 	}
 
 	template <class ARG1>
-	inline csc_text_t operator() (CREF<TYPEID<ARG1>> id) const {
+	inline csc_text_t operator() (CREF<TYPEID<ARG1>> id) const noexcept {
 		return invoke<ARG1> () ;
 	}
 } ;
@@ -888,7 +884,7 @@ struct FUNCTION_internel_name {
 	}
 
 	template <class ARG1>
-	inline csc_text_t operator() (CREF<TYPEID<ARG1>> id) const {
+	inline csc_text_t operator() (CREF<TYPEID<ARG1>> id) const noexcept {
 		return invoke<ARG1> () ;
 	}
 } ;
@@ -908,7 +904,7 @@ struct FUNCTION_internel_name {
 	}
 
 	template <class ARG1>
-	inline csc_text_t operator() (CREF<TYPEID<ARG1>> id) const {
+	inline csc_text_t operator() (CREF<TYPEID<ARG1>> id) const noexcept {
 		return invoke<ARG1> () ;
 	}
 } ;

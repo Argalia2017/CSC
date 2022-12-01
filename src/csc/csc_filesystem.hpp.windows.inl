@@ -147,7 +147,7 @@ trait FILE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		VAL64 file_size (CREF<HANDLE> handle) const {
 			auto rax = ARRAY2<csc_enum_t> () ;
 			rax[0] = GetFileSize (handle ,(&rax[1])) ;
-			const auto r1x = VAL64 (BitProc::up_bit (CHAR (rax[1]) ,CHAR (rax[0]))) ;
+			const auto r1x = VAL64 (BitProc::merge_bit (CHAR (rax[1]) ,CHAR (rax[0]))) ;
 			assume (r1x >= 0) ;
 			return r1x ;
 		}
@@ -392,16 +392,16 @@ trait DIRECTORY_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 
 		String<STR> path () const override {
 			const auto r1x = mHeap->mDire.length () ;
-			const auto r2x = BufferProc::buf_find (mHeap->mDire ,STR ('\\') ,0 ,r1x ,FALSE) ;
-			const auto r3x = BufferProc::buf_find (mHeap->mDire ,STR ('/') ,0 ,r1x ,FALSE) ;
+			const auto r2x = BufferProc<STR>::buf_find_r (mHeap->mDire.raw () ,STR ('\\') ,0 ,r1x) ;
+			const auto r3x = BufferProc<STR>::buf_find_r (mHeap->mDire.raw () ,STR ('/') ,0 ,r1x) ;
 			const auto r4x = MathProc::max_of (r2x ,r3x ,ZERO) ;
 			return mHeap->mDire.segment (0 ,r4x) ;
 		}
 
 		String<STR> name () const override {
 			const auto r1x = mHeap->mDire.length () ;
-			const auto r2x = BufferProc::buf_find (mHeap->mDire ,STR ('\\') ,0 ,r1x ,FALSE) ;
-			const auto r3x = BufferProc::buf_find (mHeap->mDire ,STR ('/') ,0 ,r1x ,FALSE) ;
+			const auto r2x = BufferProc<STR>::buf_find_r (mHeap->mDire.raw () ,STR ('\\') ,0 ,r1x) ;
+			const auto r3x = BufferProc<STR>::buf_find_r (mHeap->mDire.raw () ,STR ('/') ,0 ,r1x) ;
 			const auto r4x = MathProc::max_of (r2x ,r3x) + 1 ;
 			return mHeap->mDire.segment (r4x ,r1x) ;
 		}
@@ -642,7 +642,7 @@ trait DIRECTORY_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				if (rcx.cFileName[0] == 0)
 					break ;
 				if ifswitch (TRUE) {
-					BufferProc::buf_slice (rdx ,rcx.cFileName ,rdx.size ()) ;
+					BufferProc<STR>::buf_slice (rdx.raw () ,unsafe_array (rcx.cFileName[0]) ,rdx.size ()) ;
 					if (rdx == slice ("."))
 						discard ;
 					if (rdx == slice (".."))
@@ -745,7 +745,7 @@ trait STREAMFILE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			if ifswitch (TRUE) {
 				auto rax = LONG (0) ;
 				const auto r3x = SetFilePointer (mWritePipe ,0 ,(&rax) ,FILE_END) ;
-				const auto r4x = VAL64 (BitProc::up_bit (CHAR (rax) ,CHAR (r3x))) ;
+				const auto r4x = VAL64 (BitProc::merge_bit (CHAR (rax) ,CHAR (r3x))) ;
 				if (r4x <= 0)
 					return ;
 				mWrite += r4x ;
@@ -1034,7 +1034,7 @@ trait BUFFERFILE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		VAL64 file_size (CREF<HANDLE> handle) const {
 			auto rax = ARRAY2<csc_enum_t> () ;
 			rax[0] = GetFileSize (handle ,(&rax[1])) ;
-			const auto r1x = VAL64 (BitProc::up_bit (CHAR (rax[1]) ,CHAR (rax[0]))) ;
+			const auto r1x = VAL64 (BitProc::merge_bit (CHAR (rax[1]) ,CHAR (rax[0]))) ;
 			assume (r1x >= 0) ;
 			return r1x ;
 		}
@@ -1208,7 +1208,7 @@ trait BUFFERFILE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			const auto r3x = HEADER_SIZE::expr + r1x * mHeader->mChunkSize ;
 			INDEX ix = load (r3x ,mHeader->mChunkSize) ;
 			const auto r4x = r2x + FLAG (mCacheList[ix].mBuffer->pick (TYPEAS<RANK0>::expr)) ;
-			BufferProc::buf_copy (item ,RegBuffer<BYTE>::make (unsafe_pointer (r4x) ,0 ,VAL32_MAX) ,0 ,mHeader->mItemSize) ;
+			BufferProc<BYTE>::buf_copy (item ,RegBuffer<BYTE>::make (unsafe_pointer (r4x) ,0 ,VAL32_MAX) ,0 ,mHeader->mItemSize) ;
 		}
 
 		void set (CREF<VAL64> index ,CREF<RegBuffer<BYTE>> item) override {
@@ -1220,7 +1220,7 @@ trait BUFFERFILE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			const auto r3x = HEADER_SIZE::expr + r1x * mHeader->mChunkSize ;
 			INDEX ix = load (r3x ,mHeader->mChunkSize) ;
 			const auto r4x = r2x + FLAG (mCacheList[ix].mBuffer->pick (TYPEAS<RANK0>::expr)) ;
-			BufferProc::buf_copy (RegBuffer<BYTE>::make (unsafe_pointer (r4x) ,0 ,VAL32_MAX) ,item ,0 ,mHeader->mItemSize) ;
+			BufferProc<BYTE>::buf_copy (RegBuffer<BYTE>::make (unsafe_pointer (r4x) ,0 ,VAL32_MAX) ,item ,0 ,mHeader->mItemSize) ;
 		}
 
 		INDEX load (CREF<VAL64> offset ,CREF<LENGTH> size_) {

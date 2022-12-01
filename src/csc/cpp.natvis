@@ -212,6 +212,42 @@
     </Expand>
   </Type>
 
+  <Type Name="CSC::VARBUFFER_HOLDER_HELP&lt;enum CSC::BYTE,*&gt;::Buffer">
+    <Expand HideRawView="true">
+      <ArrayItems>
+        <Size>mSize</Size>
+        <ValuePointer>(unsigned __int8*)mBuffer.mPointer</ValuePointer>
+      </ArrayItems>
+    </Expand>
+  </Type>
+
+  <Type Name="CSC::VARBUFFER_HOLDER_HELP&lt;enum CSC::WORD,*&gt;::Buffer">
+    <Expand HideRawView="true">
+      <ArrayItems>
+        <Size>mSize</Size>
+        <ValuePointer>(unsigned __int16*)mBuffer.mPointer</ValuePointer>
+      </ArrayItems>
+    </Expand>
+  </Type>
+
+  <Type Name="CSC::VARBUFFER_HOLDER_HELP&lt;enum CSC::CHAR,*&gt;::Buffer">
+    <Expand HideRawView="true">
+      <ArrayItems>
+        <Size>mSize</Size>
+        <ValuePointer>(unsigned __int32*)mBuffer.mPointer</ValuePointer>
+      </ArrayItems>
+    </Expand>
+  </Type>
+
+  <Type Name="CSC::VARBUFFER_HOLDER_HELP&lt;enum CSC::DATA,*&gt;::Buffer">
+    <Expand HideRawView="true">
+      <ArrayItems>
+        <Size>mSize</Size>
+        <ValuePointer>(unsigned __int64*)mBuffer.mPointer</ValuePointer>
+      </ArrayItems>
+    </Expand>
+  </Type>
+
   <Type Name="CSC::BUFFER_HELP&lt;*,CSC::ENUMAS&lt;*,*&gt;,*&gt;::Buffer" Priority="High">
     <Expand HideRawView="true">
       <ExpandedItem>mThis</ExpandedItem>

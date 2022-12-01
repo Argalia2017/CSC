@@ -100,8 +100,8 @@ trait MATHPROC_HELP<DEPEND ,ALWAYS> {
 		virtual DOUBLE log (CREF<DOUBLE> obj) const = 0 ;
 		virtual VAL32 vlog (CREF<VAL32> curr ,CREF<VAL32> base) const = 0 ;
 		virtual VAL64 vlog (CREF<VAL64> curr ,CREF<VAL64> base) const = 0 ;
-		virtual SINGLE pow (CREF<SINGLE> curr ,CREF<SINGLE> exp_) const = 0 ;
-		virtual DOUBLE pow (CREF<DOUBLE> curr ,CREF<DOUBLE> exp_) const = 0 ;
+		virtual SINGLE pow (CREF<SINGLE> base ,CREF<SINGLE> exponent) const = 0 ;
+		virtual DOUBLE pow (CREF<DOUBLE> base ,CREF<DOUBLE> exponent) const = 0 ;
 		virtual SINGLE ncdf (CREF<SINGLE> obj) const = 0 ;
 		virtual DOUBLE ncdf (CREF<DOUBLE> obj) const = 0 ;
 		virtual SINGLE npdf (CREF<SINGLE> obj) const = 0 ;
@@ -116,8 +116,8 @@ trait MATHPROC_HELP<DEPEND ,ALWAYS> {
 		virtual DOUBLE arcsin (CREF<DOUBLE> obj) const = 0 ;
 		virtual SINGLE arccos (CREF<SINGLE> obj) const = 0 ;
 		virtual DOUBLE arccos (CREF<DOUBLE> obj) const = 0 ;
-		virtual SINGLE arctan (CREF<SINGLE> x_ ,CREF<SINGLE> y_) const = 0 ;
-		virtual DOUBLE arctan (CREF<DOUBLE> x_ ,CREF<DOUBLE> y_) const = 0 ;
+		virtual SINGLE arctan (CREF<SINGLE> fx ,CREF<SINGLE> fy) const = 0 ;
+		virtual DOUBLE arctan (CREF<DOUBLE> fx ,CREF<DOUBLE> fy) const = 0 ;
 		virtual SINGLE radian_angle (CREF<SINGLE> obj) const = 0 ;
 		virtual DOUBLE radian_angle (CREF<DOUBLE> obj) const = 0 ;
 	} ;
@@ -289,15 +289,15 @@ trait MATHPROC_HELP<DEPEND ,ALWAYS> {
 		}
 
 		template <class ARG1>
-		imports ARG1 vlog (CREF<ARG1> curr ,CREF<ARG1> exp_) {
+		imports ARG1 vlog (CREF<ARG1> curr ,CREF<ARG1> base) {
 			require (IS_VALUE<ARG1>) ;
-			return instance ().mThis->vlog (curr ,exp_) ;
+			return instance ().mThis->vlog (curr ,base) ;
 		}
 
 		template <class ARG1>
-		imports ARG1 pow (CREF<ARG1> curr ,CREF<ARG1> exp_) {
+		imports ARG1 pow (CREF<ARG1> base ,CREF<ARG1> exponent) {
 			require (IS_FLOAT<ARG1>) ;
-			return instance ().mThis->pow (curr ,exp_) ;
+			return instance ().mThis->pow (base ,exponent) ;
 		}
 
 		template <class ARG1>
@@ -343,9 +343,9 @@ trait MATHPROC_HELP<DEPEND ,ALWAYS> {
 		}
 
 		template <class ARG1>
-		imports ARG1 arctan (CREF<ARG1> x_ ,CREF<ARG1> y_) {
+		imports ARG1 arctan (CREF<ARG1> fx ,CREF<ARG1> fy) {
 			require (IS_FLOAT<ARG1>) ;
-			return instance ().mThis->arctan (x_ ,y_) ;
+			return instance ().mThis->arctan (fx ,fy) ;
 		}
 
 		template <class ARG1>
@@ -378,8 +378,8 @@ trait FLOATPROC_HELP<DEPEND ,ALWAYS> {
 		virtual void initialize () = 0 ;
 		virtual DOUBLE encode (CREF<NOTATION> fexp2) const = 0 ;
 		virtual NOTATION decode (CREF<DOUBLE> float_) const = 0 ;
-		virtual NOTATION exp2_from_exp10 (CREF<NOTATION> fexp10) const = 0 ;
-		virtual NOTATION exp10_from_exp2 (CREF<NOTATION> fexp2) const = 0 ;
+		virtual NOTATION fexp2_from_fexp10 (CREF<NOTATION> fexp10) const = 0 ;
+		virtual NOTATION fexp10_from_fexp2 (CREF<NOTATION> fexp2) const = 0 ;
 	} ;
 
 	struct FUNCTION_extern {
@@ -408,12 +408,12 @@ trait FLOATPROC_HELP<DEPEND ,ALWAYS> {
 			return instance ().mThis->decode (float_) ;
 		}
 
-		imports NOTATION exp2_from_exp10 (CREF<NOTATION> fexp10) {
-			return instance ().mThis->exp2_from_exp10 (fexp10) ;
+		imports NOTATION fexp2_from_fexp10 (CREF<NOTATION> fexp10) {
+			return instance ().mThis->fexp2_from_fexp10 (fexp10) ;
 		}
 
-		imports NOTATION exp10_from_exp2 (CREF<NOTATION> fexp2) {
-			return instance ().mThis->exp10_from_exp2 (fexp2) ;
+		imports NOTATION fexp10_from_fexp2 (CREF<NOTATION> fexp2) {
+			return instance ().mThis->fexp10_from_fexp2 (fexp2) ;
 		}
 	} ;
 } ;
@@ -436,9 +436,9 @@ trait BITPROC_HELP<DEPEND ,ALWAYS> {
 		virtual BYTE high_bit (CREF<WORD> obj) const = 0 ;
 		virtual WORD high_bit (CREF<CHAR> obj) const = 0 ;
 		virtual CHAR high_bit (CREF<DATA> obj) const = 0 ;
-		virtual WORD up_bit (CREF<BYTE> high ,CREF<BYTE> low) const = 0 ;
-		virtual CHAR up_bit (CREF<WORD> high ,CREF<WORD> low) const = 0 ;
-		virtual DATA up_bit (CREF<CHAR> high ,CREF<CHAR> low) const = 0 ;
+		virtual WORD merge_bit (CREF<BYTE> high ,CREF<BYTE> low) const = 0 ;
+		virtual CHAR merge_bit (CREF<WORD> high ,CREF<WORD> low) const = 0 ;
+		virtual DATA merge_bit (CREF<CHAR> high ,CREF<CHAR> low) const = 0 ;
 		virtual BOOL any_bit (CREF<BYTE> base ,CREF<BYTE> mask) const = 0 ;
 		virtual BOOL any_bit (CREF<WORD> base ,CREF<WORD> mask) const = 0 ;
 		virtual BOOL any_bit (CREF<CHAR> base ,CREF<CHAR> mask) const = 0 ;
@@ -447,7 +447,11 @@ trait BITPROC_HELP<DEPEND ,ALWAYS> {
 		virtual BOOL all_bit (CREF<WORD> base ,CREF<WORD> mask) const = 0 ;
 		virtual BOOL all_bit (CREF<CHAR> base ,CREF<CHAR> mask) const = 0 ;
 		virtual BOOL all_bit (CREF<DATA> base ,CREF<DATA> mask) const = 0 ;
-		virtual DATA nth_bit (CREF<LENGTH> nth) const = 0 ;
+		virtual DATA single_bit (CREF<LENGTH> nth) const = 0 ;
+		virtual INDEX find_bit (CREF<BYTE> obj) const = 0 ;
+		virtual INDEX find_bit (CREF<WORD> obj) const = 0 ;
+		virtual INDEX find_bit (CREF<CHAR> obj) const = 0 ;
+		virtual INDEX find_bit (CREF<DATA> obj) const = 0 ;
 	} ;
 
 	struct FUNCTION_extern {
@@ -492,16 +496,16 @@ trait BITPROC_HELP<DEPEND ,ALWAYS> {
 			return instance ().mThis->high_bit (obj) ;
 		}
 
-		imports WORD up_bit (CREF<BYTE> high ,CREF<BYTE> low) {
-			return instance ().mThis->up_bit (high ,low) ;
+		imports WORD merge_bit (CREF<BYTE> high ,CREF<BYTE> low) {
+			return instance ().mThis->merge_bit (high ,low) ;
 		}
 
-		imports CHAR up_bit (CREF<WORD> high ,CREF<WORD> low) {
-			return instance ().mThis->up_bit (high ,low) ;
+		imports CHAR merge_bit (CREF<WORD> high ,CREF<WORD> low) {
+			return instance ().mThis->merge_bit (high ,low) ;
 		}
 
-		imports DATA up_bit (CREF<CHAR> high ,CREF<CHAR> low) {
-			return instance ().mThis->up_bit (high ,low) ;
+		imports DATA merge_bit (CREF<CHAR> high ,CREF<CHAR> low) {
+			return instance ().mThis->merge_bit (high ,low) ;
 		}
 
 		template <class ARG1 ,class ARG2>
@@ -516,11 +520,246 @@ trait BITPROC_HELP<DEPEND ,ALWAYS> {
 			return instance ().mThis->all_bit (base ,ARG1 (mask)) ;
 		}
 
-		imports DATA nth_bit (CREF<LENGTH> nth) {
-			return instance ().mThis->nth_bit (nth) ;
+		imports DATA single_bit (CREF<LENGTH> nth) {
+			return instance ().mThis->single_bit (nth) ;
+		}
+
+		template <class ARG1>
+		imports INDEX find_bit (CREF<ARG1> obj) {
+			require (IS_BIT<ARG1>) ;
+			return instance ().mThis->find_bit (obj) ;
 		}
 	} ;
 } ;
 
 using BitProc = typename BITPROC_HELP<DEPEND ,ALWAYS>::BitProc ;
+
+template <class...>
+trait INTEGER_HELP ;
+
+template <class...>
+trait INTEGER_IMPLHOLDER_HELP ;
+
+template <class DEPEND>
+trait INTEGER_HELP<DEPEND ,ALWAYS> {
+	class Integer ;
+
+	struct Holder implement Interface {
+		virtual void initialize (CREF<LENGTH> size_ ,CREF<VAL64> value_) = 0 ;
+		virtual LENGTH precision () const = 0 ;
+		virtual VAL64 get () const = 0 ;
+		virtual void set (CREF<VAL64> value_) = 0 ;
+		virtual BOOL equal (CREF<Holder> that) const = 0 ;
+		virtual FLAG compr (CREF<Holder> that) const = 0 ;
+		virtual FLAG hash () const = 0 ;
+		virtual Integer add (CREF<Holder> that) const = 0 ;
+		virtual Integer sub (CREF<Holder> that) const = 0 ;
+		virtual Integer mul (CREF<Holder> that) const = 0 ;
+		virtual Integer mul (CREF<VAL64> scale) const = 0 ;
+		virtual Integer div (CREF<VAL64> scale) const = 0 ;
+		virtual Integer mod (CREF<VAL64> scale) const = 0 ;
+		virtual void friend_clone (VREF<Integer> that) const = 0 ;
+		virtual Integer minus () const = 0 ;
+		virtual void increase () = 0 ;
+		virtual void decrease () = 0 ;
+	} ;
+
+	class FakeHolder implement Holder {
+	protected:
+		VarBuffer<BYTE> mInteger ;
+	} ;
+
+	struct FUNCTION_extern {
+		imports Box<FakeHolder> invoke () ;
+	} ;
+
+	class Integer {
+	protected:
+		Box<FakeHolder> mThis ;
+
+	public:
+		implicit Integer () = default ;
+
+		explicit Integer (CREF<LENGTH> size_ ,CREF<VAL64> value_) {
+			mThis = FUNCTION_extern::invoke () ;
+			mThis->initialize (size_ ,value_) ;
+		}
+
+		explicit Integer (RREF<Box<FakeHolder>> that) {
+			mThis = move (that) ;
+		}
+
+		implicit Integer (CREF<Integer> that) {
+			that.mThis->friend_clone (thiz) ;
+		}
+
+		inline VREF<Integer> operator= (CREF<Integer> that) {
+			if (address (thiz) == address (that))
+				return thiz ;
+			swap (thiz ,move (that)) ;
+			return thiz ;
+		}
+
+		implicit Integer (RREF<Integer> that) noexcept {
+			swap (thiz ,that) ;
+		}
+
+		inline VREF<Integer> operator= (RREF<Integer> that) noexcept {
+			if (address (thiz) == address (that))
+				return thiz ;
+			swap (thiz ,move (that)) ;
+			return thiz ;
+		}
+
+		LENGTH precision () const {
+			return mThis->precision () ;
+		}
+
+		VAL64 get () const {
+			return mThis->get () ;
+		}
+
+		void set (CREF<VAL64> value_) {
+			return mThis->set (value_) ;
+		}
+
+		BOOL equal (CREF<Integer> that) const {
+			return mThis->equal (that.mThis.self) ;
+		}
+
+		inline BOOL operator== (CREF<Integer> that) const {
+			return equal (that) ;
+		}
+
+		inline BOOL operator!= (CREF<Integer> that) const {
+			return ifnot (equal (that)) ;
+		}
+
+		FLAG compr (CREF<Integer> that) const {
+			return mThis->compr (that.mThis.self) ;
+		}
+
+		inline BOOL operator< (CREF<Integer> that) const {
+			return compr (that) < ZERO ;
+		}
+
+		inline BOOL operator<= (CREF<Integer> that) const {
+			return compr (that) <= ZERO ;
+		}
+
+		inline BOOL operator> (CREF<Integer> that) const {
+			return compr (that) > ZERO ;
+		}
+
+		inline BOOL operator>= (CREF<Integer> that) const {
+			return compr (that) >= ZERO ;
+		}
+
+		FLAG hash () const {
+			return mThis->hash () ;
+		}
+
+		Integer add (CREF<Integer> that) const {
+			return mThis->add (keep[TYPEAS<CREF<Holder>>::expr] (that.mThis.self)) ;
+		}
+
+		inline Integer operator+ (CREF<Integer> that) const {
+			return add (that) ;
+		}
+
+		inline void operator+= (CREF<Integer> that) {
+			thiz = add (that) ;
+		}
+
+		Integer sub (CREF<Integer> that) const {
+			return mThis->sub (keep[TYPEAS<CREF<Holder>>::expr] (that.mThis.self)) ;
+		}
+
+		inline Integer operator- (CREF<Integer> that) const {
+			return sub (that) ;
+		}
+
+		inline void operator-= (CREF<Integer> that) {
+			thiz = sub (that) ;
+		}
+
+		Integer mul (CREF<Integer> that) const {
+			return mThis->mul (keep[TYPEAS<CREF<Holder>>::expr] (that.mThis.self)) ;
+		}
+
+		inline Integer operator* (CREF<Integer> that) const {
+			return mul (that) ;
+		}
+
+		inline void operator*= (CREF<Integer> that) {
+			thiz = mul (that) ;
+		}
+
+		Integer mul (CREF<VAL64> scale) const {
+			return mThis->mul (scale) ;
+		}
+
+		inline Integer operator* (CREF<VAL64> scale) const {
+			return mul (scale) ;
+		}
+
+		inline void operator*= (CREF<VAL64> scale) {
+			thiz = mul (scale) ;
+		}
+
+		Integer div (CREF<VAL64> scale) const {
+			return mThis->div (scale) ;
+		}
+
+		inline Integer operator/ (CREF<VAL64> scale) const {
+			return div (scale) ;
+		}
+
+		inline void operator/= (CREF<VAL64> scale) {
+			thiz = div (scale) ;
+		}
+
+		Integer mod (CREF<VAL64> scale) const {
+			return mThis->mod (scale) ;
+		}
+
+		inline Integer operator% (CREF<VAL64> scale) const {
+			return mod (scale) ;
+		}
+
+		inline void operator%= (CREF<VAL64> scale) {
+			thiz = mod (scale) ;
+		}
+
+		inline Integer operator+ () const {
+			return thiz ;
+		}
+
+		Integer minus () const {
+			return mThis->minus () ;
+		}
+
+		inline Integer operator- () const {
+			return minus () ;
+		}
+
+		void increase () {
+			return mThis->increase () ;
+		}
+
+		inline void operator++ (VAL32) {
+			increase () ;
+		}
+
+		void decrease () {
+			return mThis->decrease () ;
+		}
+
+		inline void operator-- (VAL32) {
+			decrease () ;
+		}
+	} ;
+} ;
+
+using Integer = typename INTEGER_HELP<DEPEND ,ALWAYS>::Integer ;
 } ;

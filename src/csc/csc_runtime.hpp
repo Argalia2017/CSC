@@ -284,8 +284,8 @@ trait ATOMIC_HELP<DEPEND ,ALWAYS> {
 		virtual VAL fetch () const = 0 ;
 		virtual void store (CREF<VAL> obj) const = 0 ;
 		virtual VAL exchange (CREF<VAL> obj) const = 0 ;
-		virtual void replace (CREF<VAL> expect ,CREF<VAL> right) const = 0 ;
-		virtual BOOL change (VREF<VAL> expect ,CREF<VAL> right) const = 0 ;
+		virtual void replace (CREF<VAL> expect ,CREF<VAL> next) const = 0 ;
+		virtual BOOL change (VREF<VAL> expect ,CREF<VAL> next) const = 0 ;
 		virtual VAL fetch_add (CREF<VAL> obj) const = 0 ;
 		virtual VAL fetch_sub (CREF<VAL> obj) const = 0 ;
 	} ;
@@ -316,12 +316,12 @@ trait ATOMIC_HELP<DEPEND ,ALWAYS> {
 			return mThis->exchange (obj) ;
 		}
 
-		void replace (CREF<VAL> expect ,CREF<VAL> right) const {
-			return mThis->replace (expect ,right) ;
+		void replace (CREF<VAL> expect ,CREF<VAL> next) const {
+			return mThis->replace (expect ,next) ;
 		}
 
-		BOOL change (VREF<VAL> expect ,CREF<VAL> right) const {
-			return mThis->change (expect ,right) ;
+		BOOL change (VREF<VAL> expect ,CREF<VAL> next) const {
+			return mThis->change (expect ,next) ;
 		}
 
 		VAL fetch_add (CREF<VAL> obj) const {

@@ -35,71 +35,6 @@ struct FUNCTION_unsafe_switch {
 static constexpr auto unsafe_switch = FUNCTION_unsafe_switch () ;
 
 template <class...>
-trait FUNCTION_unsafe_launder_HELP ;
-
-template <class DEPEND>
-trait FUNCTION_unsafe_launder_HELP<DEPEND ,REQUIRE<MACRO_COMPILER_MSVC<DEPEND>>> {
-#ifdef __CSC_COMPILER_MSVC__
-	struct FUNCTION_unsafe_launder {
-		inline void operator() (csc_pointer_t obj) const noexcept {
-			noop () ;
-		}
-	} ;
-#endif
-} ;
-
-template <class DEPEND>
-trait FUNCTION_unsafe_launder_HELP<DEPEND ,REQUIRE<MACRO_COMPILER_GNUC<DEPEND>>> {
-#ifdef __CSC_COMPILER_GNUC__
-#pragma GCC push_options
-#pragma GCC optimize ("O0")
-	struct Binder implement Interface {
-		virtual void friend_launder (CREF<csc_pointer_t> obj) const = 0 ;
-	} ;
-
-	class ImplBinder implement Binder {
-	public:
-		void friend_launder (CREF<csc_pointer_t> obj) const override {
-			noop () ;
-		}
-	} ;
-
-	struct FUNCTION_unsafe_launder {
-		inline void operator() (CREF<csc_pointer_t> obj) const noexcept {
-			//@fatal: fuck g++4.8
-			static ImplBinder mInstance ;
-			auto &&tmp = static_cast<CREF<Binder>> (mInstance) ;
-			tmp.friend_launder (obj) ;
-		}
-	} ;
-#pragma GCC pop_options
-#endif
-} ;
-
-template <class DEPEND>
-trait FUNCTION_unsafe_launder_HELP<DEPEND ,REQUIRE<MACRO_COMPILER_CLANG<DEPEND>>> {
-#ifdef __CSC_COMPILER_CLANG__
-	struct FUNCTION_unsafe_launder {
-		inline void operator() (CREF<csc_pointer_t> obj) const noexcept {
-			auto rax = obj ;
-			asm volatile ("" : "+r,m" (rax) :: "memory") ;
-		}
-	} ;
-#endif
-} ;
-
-struct FUNCTION_unsafe_launder {
-	template <class ARG1>
-	inline void operator() (VREF<ARG1> obj) const noexcept {
-		using R1X = typename FUNCTION_unsafe_launder_HELP<DEPEND ,ALWAYS>::FUNCTION_unsafe_launder ;
-		const auto r1x = R1X () ;
-		return r1x ((&obj)) ;
-	}
-} ;
-
-static constexpr auto unsafe_launder = FUNCTION_unsafe_launder () ;
-
-template <class...>
 trait FUNCTION_unsafe_break_HELP ;
 
 template <class DEPEND>
@@ -145,13 +80,114 @@ struct FUNCTION_unsafe_break {
 
 static constexpr auto unsafe_break = FUNCTION_unsafe_break () ;
 
+template <class...>
+trait FUNCTION_unsafe_abort_HELP ;
+
+template <class DEPEND>
+trait FUNCTION_unsafe_abort_HELP<DEPEND ,REQUIRE<MACRO_COMPILER_MSVC<DEPEND>>> {
+#ifdef __CSC_COMPILER_MSVC__
+	struct FUNCTION_unsafe_abort {
+		inline forceinline void operator() () const {
+			throw ;
+		}
+	} ;
+#endif
+} ;
+
+template <class DEPEND>
+trait FUNCTION_unsafe_abort_HELP<DEPEND ,REQUIRE<MACRO_COMPILER_GNUC<DEPEND>>> {
+#ifdef __CSC_COMPILER_GNUC__
+	struct FUNCTION_unsafe_abort {
+		inline forceinline void operator() () const {
+			throw ;
+		}
+	} ;
+#endif
+} ;
+
+template <class DEPEND>
+trait FUNCTION_unsafe_abort_HELP<DEPEND ,REQUIRE<MACRO_COMPILER_CLANG<DEPEND>>> {
+#ifdef __CSC_COMPILER_CLANG__
+	struct FUNCTION_unsafe_abort {
+		inline forceinline void operator() () const {
+			throw ;
+		}
+	} ;
+#endif
+} ;
+
 struct FUNCTION_unsafe_abort {
-	inline forceinline void operator() () const {
-		throw ;
+	inline forceinline void operator() () const noexcept {
+		using R1X = typename FUNCTION_unsafe_abort_HELP<DEPEND ,ALWAYS>::FUNCTION_unsafe_abort ;
+		const auto r1x = R1X () ;
+		return r1x () ;
 	}
 } ;
 
 static constexpr auto unsafe_abort = FUNCTION_unsafe_abort () ;
+
+template <class...>
+trait FUNCTION_unsafe_launder_HELP ;
+
+template <class DEPEND>
+trait FUNCTION_unsafe_launder_HELP<DEPEND ,REQUIRE<MACRO_COMPILER_MSVC<DEPEND>>> {
+#ifdef __CSC_COMPILER_MSVC__
+	struct FUNCTION_unsafe_launder {
+		inline void operator() (csc_pointer_t obj) const noexcept {
+			noop () ;
+		}
+	} ;
+#endif
+} ;
+
+template <class DEPEND>
+trait FUNCTION_unsafe_launder_HELP<DEPEND ,REQUIRE<MACRO_COMPILER_GNUC<DEPEND>>> {
+#ifdef __CSC_COMPILER_GNUC__
+	struct Binder implement Interface {
+		virtual void friend_launder (CREF<csc_pointer_t> obj) const = 0 ;
+	} ;
+
+	class ImplBinder implement Binder {
+	public:
+		void friend_launder (CREF<csc_pointer_t> obj) const override {
+			noop () ;
+		}
+	} ;
+
+	struct FUNCTION_unsafe_launder {
+		inline void operator() (CREF<csc_pointer_t> obj) const noexcept {
+			//@fatal: fuck gnuc
+			static ImplBinder mInstance ;
+			auto &&tmp = static_cast<CREF<Binder>> (mInstance) ;
+			tmp.friend_launder (obj) ;
+		}
+	} ;
+#endif
+} ;
+
+template <class DEPEND>
+trait FUNCTION_unsafe_launder_HELP<DEPEND ,REQUIRE<MACRO_COMPILER_CLANG<DEPEND>>> {
+#ifdef __CSC_COMPILER_CLANG__
+	struct FUNCTION_unsafe_launder {
+		inline void operator() (CREF<csc_pointer_t> obj) const noexcept {
+			//@info: fuck clang
+			auto rax = obj ;
+			asm volatile ("" : "+r,m" (rax) :: "memory") ;
+		}
+	} ;
+#endif
+} ;
+
+struct FUNCTION_unsafe_launder {
+	template <class ARG1>
+	inline void operator() (VREF<ARG1> obj) const noexcept {
+		using R1X = typename FUNCTION_unsafe_launder_HELP<DEPEND ,ALWAYS>::FUNCTION_unsafe_launder ;
+		const auto r1x = R1X () ;
+		return r1x ((&obj)) ;
+	}
+} ;
+
+static constexpr auto unsafe_launder = FUNCTION_unsafe_launder () ;
 
 struct FUNCTION_unsafe_deref {
 	template <class ARG1>
@@ -304,23 +340,23 @@ static constexpr auto unsafe_sync = FUNCTION_unsafe_sync () ;
 
 struct FUNCTION_swap {
 	template <class ARG1>
-	inline void operator() (VREF<ARG1> left ,VREF<ARG1> right) const noexcept {
+	inline void operator() (VREF<ARG1> obj1 ,VREF<ARG1> obj2) const noexcept {
 		//@warn: no class should depend on its address
-		const auto r1x = unsafe_deptr (left) ;
-		unsafe_deptr (left) = unsafe_deptr (right) ;
-		unsafe_deptr (right) = r1x ;
-		unsafe_launder (left) ;
-		unsafe_launder (right) ;
+		const auto r1x = unsafe_deptr (obj1) ;
+		unsafe_deptr (obj1) = unsafe_deptr (obj2) ;
+		unsafe_deptr (obj2) = r1x ;
+		unsafe_launder (obj1) ;
+		unsafe_launder (obj2) ;
 	}
 
 	template <class ARG1 ,class ARG2>
-	inline void operator() (VREF<ARG1> left ,RREF<ARG2> right) const noexcept {
-		thiz (left ,right) ;
+	inline void operator() (VREF<ARG1> obj1 ,RREF<ARG2> obj2) const noexcept {
+		thiz (obj1 ,obj2) ;
 	}
 
 	template <class ARG1 ,class ARG2>
-	inline void operator() (RREF<ARG1> left ,VREF<ARG2> right) const noexcept {
-		thiz (left ,right) ;
+	inline void operator() (RREF<ARG1> obj1 ,VREF<ARG2> obj2) const noexcept {
+		thiz (obj1 ,obj2) ;
 	}
 } ;
 
@@ -481,8 +517,9 @@ struct FUNCTION_invoke {
 static constexpr auto invoke = FUNCTION_invoke () ;
 
 struct FUNCTION_vabs {
-	inline VAL operator() (CREF<VAL> obj) const {
-		assert (obj != VAL_ABS) ;
+	inline VAL operator() (CREF<VAL> obj) const noexcept {
+		if (obj == VAL_ABS)
+			return 0 ;
 		if (obj >= 0)
 			return obj ;
 		return -obj ;
@@ -492,27 +529,27 @@ struct FUNCTION_vabs {
 static constexpr auto vabs = FUNCTION_vabs () ;
 
 struct FUNCTION_vmin {
-	inline VAL operator() (CREF<VAL> left ,CREF<VAL> right) const {
-		if (left <= right)
-			return left ;
-		return right ;
+	inline VAL operator() (CREF<VAL> obj1 ,CREF<VAL> obj2) const noexcept {
+		if (obj1 <= obj2)
+			return obj1 ;
+		return obj2 ;
 	}
 } ;
 
 static constexpr auto vmin = FUNCTION_vmin () ;
 
 struct FUNCTION_vmax {
-	inline VAL operator() (CREF<VAL> left ,CREF<VAL> right) const {
-		if (left >= right)
-			return left ;
-		return right ;
+	inline VAL operator() (CREF<VAL> obj1 ,CREF<VAL> obj2) const noexcept {
+		if (obj1 >= obj2)
+			return obj1 ;
+		return obj2 ;
 	}
 } ;
 
 static constexpr auto vmax = FUNCTION_vmax () ;
 
 struct FUNCTION_vbetween {
-	inline BOOL operator() (CREF<VAL> curr ,CREF<VAL> begin_ ,CREF<VAL> end_) const {
+	inline BOOL operator() (CREF<VAL> curr ,CREF<VAL> begin_ ,CREF<VAL> end_) const noexcept {
 		if (curr < begin_)
 			return FALSE ;
 		if (curr >= end_)
@@ -524,7 +561,7 @@ struct FUNCTION_vbetween {
 static constexpr auto vbetween = FUNCTION_vbetween () ;
 
 struct FUNCTION_valign {
-	inline VAL operator() (CREF<VAL> curr ,CREF<VAL> base) const {
+	inline VAL operator() (CREF<VAL> curr ,CREF<VAL> base) const noexcept {
 		assert (base > 0) ;
 		const auto r1x = curr / base * base ;
 		if (r1x == curr)
@@ -600,7 +637,7 @@ trait INDEXITERATOR_HELP<DEPEND ,ALWAYS> {
 using IndexIterator = typename INDEXITERATOR_HELP<DEPEND ,ALWAYS>::IndexIterator ;
 
 struct FUNCTION_iter {
-	inline IndexIterator operator() (CREF<INDEX> begin_ ,CREF<INDEX> end_) const {
+	inline IndexIterator operator() (CREF<INDEX> begin_ ,CREF<INDEX> end_) const noexcept {
 		return IndexIterator (begin_ ,end_) ;
 	}
 } ;
@@ -613,8 +650,8 @@ trait FUNCTION_operator_equal_HELP ;
 template <class UNIT>
 trait FUNCTION_operator_equal_HELP<UNIT ,REQUIRE<IS_BASIC<UNIT>>> {
 	struct FUNCTION_operator_equal {
-		inline BOOL operator() (CREF<UNIT> left ,CREF<UNIT> right) const {
-			return left == right ;
+		inline BOOL operator() (CREF<UNIT> obj1 ,CREF<UNIT> obj2) const noexcept {
+			return obj1 == obj2 ;
 		}
 	} ;
 } ;
@@ -622,8 +659,10 @@ trait FUNCTION_operator_equal_HELP<UNIT ,REQUIRE<IS_BASIC<UNIT>>> {
 template <class UNIT>
 trait FUNCTION_operator_equal_HELP<UNIT ,REQUIRE<IS_INTPTR<UNIT>>> {
 	struct FUNCTION_operator_equal {
-		inline BOOL operator() (CREF<UNIT> left ,CREF<UNIT> right) const {
-			return FLAG (left) == FLAG (right) ;
+		inline BOOL operator() (CREF<UNIT> obj1 ,CREF<UNIT> obj2) const noexcept {
+			using R1X = typename FUNCTION_operator_equal_HELP<FLAG ,ALWAYS>::FUNCTION_operator_equal ;
+			const auto r1x = R1X () ;
+			return r1x (FLAG (obj1) ,FLAG (obj2)) ;
 		}
 	} ;
 } ;
@@ -631,18 +670,18 @@ trait FUNCTION_operator_equal_HELP<UNIT ,REQUIRE<IS_INTPTR<UNIT>>> {
 template <class UNIT>
 trait FUNCTION_operator_equal_HELP<UNIT ,REQUIRE<IS_CLASS<UNIT>>> {
 	struct FUNCTION_operator_equal {
-		inline BOOL operator() (CREF<UNIT> left ,CREF<UNIT> right) const {
-			return left.equal (right) ;
+		inline BOOL operator() (CREF<UNIT> obj1 ,CREF<UNIT> obj2) const {
+			return obj1.equal (obj2) ;
 		}
 	} ;
 } ;
 
 struct FUNCTION_operator_equal {
 	template <class ARG1>
-	inline BOOL operator() (CREF<ARG1> left ,CREF<ARG1> right) const {
-		using R3X = typename FUNCTION_operator_equal_HELP<ARG1 ,ALWAYS>::FUNCTION_operator_equal ;
-		const auto r1x = R3X () ;
-		return r1x (left ,right) ;
+	inline BOOL operator() (CREF<ARG1> obj1 ,CREF<ARG1> obj2) const {
+		using R1X = typename FUNCTION_operator_equal_HELP<ARG1 ,ALWAYS>::FUNCTION_operator_equal ;
+		const auto r1x = R1X () ;
+		return r1x (obj1 ,obj2) ;
 	}
 } ;
 
@@ -654,10 +693,10 @@ trait FUNCTION_operator_compr_HELP ;
 template <class UNIT>
 trait FUNCTION_operator_compr_HELP<UNIT ,REQUIRE<IS_BASIC<UNIT>>> {
 	struct FUNCTION_operator_compr {
-		inline FLAG operator() (CREF<UNIT> left ,CREF<UNIT> right) const {
-			if (left < right)
+		inline FLAG operator() (CREF<UNIT> obj1 ,CREF<UNIT> obj2) const noexcept {
+			if (obj1 < obj2)
 				return NONE ;
-			if (right < left)
+			if (obj2 < obj1)
 				return IDEN ;
 			return ZERO ;
 		}
@@ -667,12 +706,10 @@ trait FUNCTION_operator_compr_HELP<UNIT ,REQUIRE<IS_BASIC<UNIT>>> {
 template <class UNIT>
 trait FUNCTION_operator_compr_HELP<UNIT ,REQUIRE<IS_INTPTR<UNIT>>> {
 	struct FUNCTION_operator_compr {
-		inline FLAG operator() (CREF<UNIT> left ,CREF<UNIT> right) const {
-			if (FLAG (left) < FLAG (right))
-				return NONE ;
-			if (FLAG (right) < FLAG (left))
-				return IDEN ;
-			return ZERO ;
+		inline FLAG operator() (CREF<UNIT> obj1 ,CREF<UNIT> obj2) const noexcept {
+			using R1X = typename FUNCTION_operator_compr_HELP<FLAG ,ALWAYS>::FUNCTION_operator_compr ;
+			const auto r1x = R1X () ;
+			return r1x (FLAG (obj1) ,FLAG (obj2)) ;
 		}
 	} ;
 } ;
@@ -680,18 +717,18 @@ trait FUNCTION_operator_compr_HELP<UNIT ,REQUIRE<IS_INTPTR<UNIT>>> {
 template <class UNIT>
 trait FUNCTION_operator_compr_HELP<UNIT ,REQUIRE<IS_CLASS<UNIT>>> {
 	struct FUNCTION_operator_compr {
-		inline FLAG operator() (CREF<UNIT> left ,CREF<UNIT> right) const {
-			return left.compr (right) ;
+		inline FLAG operator() (CREF<UNIT> obj1 ,CREF<UNIT> obj2) const {
+			return obj1.compr (obj2) ;
 		}
 	} ;
 } ;
 
 struct FUNCTION_operator_compr {
 	template <class ARG1>
-	inline FLAG operator() (CREF<ARG1> left ,CREF<ARG1> right) const {
+	inline FLAG operator() (CREF<ARG1> obj1 ,CREF<ARG1> obj2) const {
 		using R3X = typename FUNCTION_operator_compr_HELP<ARG1 ,ALWAYS>::FUNCTION_operator_compr ;
 		const auto r1x = R3X () ;
-		return r1x (left ,right) ;
+		return r1x (obj1 ,obj2) ;
 	}
 } ;
 
@@ -703,12 +740,12 @@ trait FUNCTION_hashcode_HELP ;
 template <class DEPEND>
 trait FUNCTION_hashcode_HELP<DEPEND ,REQUIRE<MACRO_CONFIG_VAL32<DEPEND>>> {
 	struct FUNCTION_hashcode {
-		inline FLAG operator() () const {
+		inline FLAG operator() () const noexcept {
 			return FLAG (-2128831035) ;
 		}
 
-		inline FLAG operator() (CREF<FLAG> now ,CREF<FLAG> inc) const {
-			//@fatal: fuck g++4.8
+		inline FLAG operator() (CREF<FLAG> now ,CREF<FLAG> inc) const noexcept {
+			//@fatal: fuck gnuc
 			using R1X = DEPENDENT<BYTE_BASE<FLAG> ,DEPEND> ;
 			const auto r1x = R1X (now) ^ R1X (inc) ;
 			const auto r2x = R1X (FLAG (r1x) * FLAG (16777619)) ;
@@ -721,12 +758,12 @@ trait FUNCTION_hashcode_HELP<DEPEND ,REQUIRE<MACRO_CONFIG_VAL32<DEPEND>>> {
 template <class DEPEND>
 trait FUNCTION_hashcode_HELP<DEPEND ,REQUIRE<MACRO_CONFIG_VAL64<DEPEND>>> {
 	struct FUNCTION_hashcode {
-		inline FLAG operator() () const {
+		inline FLAG operator() () const noexcept {
 			return FLAG (-3750763034362895579) ;
 		}
 
-		inline FLAG operator() (CREF<FLAG> now ,CREF<FLAG> inc) const {
-			//@fatal: fuck g++4.8
+		inline FLAG operator() (CREF<FLAG> now ,CREF<FLAG> inc) const noexcept {
+			//@fatal: fuck gnuc
 			using R1X = DEPENDENT<BYTE_BASE<FLAG> ,DEPEND> ;
 			const auto r1x = R1X (now) ^ R1X (inc) ;
 			const auto r2x = R1X (FLAG (r1x) * FLAG (1099511628211)) ;
@@ -737,13 +774,13 @@ trait FUNCTION_hashcode_HELP<DEPEND ,REQUIRE<MACRO_CONFIG_VAL64<DEPEND>>> {
 } ;
 
 struct FUNCTION_hashcode {
-	inline FLAG operator() () const {
+	inline FLAG operator() () const noexcept {
 		using R1X = typename FUNCTION_hashcode_HELP<DEPEND ,ALWAYS>::FUNCTION_hashcode ;
 		const auto r1x = R1X () ;
 		return r1x () ;
 	}
 
-	inline FLAG operator() (CREF<FLAG> now ,CREF<FLAG> inc) const {
+	inline FLAG operator() (CREF<FLAG> now ,CREF<FLAG> inc) const noexcept {
 		using R1X = typename FUNCTION_hashcode_HELP<DEPEND ,ALWAYS>::FUNCTION_hashcode ;
 		const auto r1x = R1X () ;
 		return r1x (now ,inc) ;
@@ -758,7 +795,7 @@ trait FUNCTION_operator_hash_HELP ;
 template <class UNIT>
 trait FUNCTION_operator_hash_HELP<UNIT ,REQUIRE<IS_BASIC<UNIT>>> {
 	struct FUNCTION_operator_hash {
-		inline FLAG operator() (CREF<UNIT> obj) const {
+		inline FLAG operator() (CREF<UNIT> obj) const noexcept {
 			using R1X = DEPENDENT<BYTE_BASE<FLAG> ,UNIT> ;
 			const auto r1x = R1X (bitwise (obj)) ;
 			const auto r2x = r1x & R1X (VAL_MAX) ;
@@ -770,11 +807,10 @@ trait FUNCTION_operator_hash_HELP<UNIT ,REQUIRE<IS_BASIC<UNIT>>> {
 template <class UNIT>
 trait FUNCTION_operator_hash_HELP<UNIT ,REQUIRE<IS_INTPTR<UNIT>>> {
 	struct FUNCTION_operator_hash {
-		inline FLAG operator() (CREF<UNIT> obj) const {
-			using R1X = DEPENDENT<BYTE_BASE<FLAG> ,UNIT> ;
-			const auto r1x = R1X (bitwise (FLAG (obj))) ;
-			const auto r2x = r1x & R1X (VAL_MAX) ;
-			return FLAG (r2x) ;
+		inline FLAG operator() (CREF<UNIT> obj) const noexcept {
+			using R1X = typename FUNCTION_operator_hash_HELP<FLAG ,ALWAYS>::FUNCTION_operator_hash ;
+			const auto r1x = R1X () ;
+			return r1x (FLAG (obj)) ;
 		}
 	} ;
 } ;
@@ -814,10 +850,10 @@ static constexpr auto operator_cabi = FUNCTION_operator_cabi () ;
 
 struct FUNCTION_replace {
 	template <class ARG1 ,class ARG2>
-	inline void operator() (VREF<ARG1> left ,CREF<ARG1> expect ,XREF<ARG2> right) const {
-		if ifnot (operator_equal (left ,expect))
+	inline void operator() (VREF<ARG1> curr ,CREF<ARG1> expect ,XREF<ARG2> next) const {
+		if ifnot (operator_equal (curr ,expect))
 			return ;
-		left = forward[TYPEAS<ARG2>::expr] (right) ;
+		curr = forward[TYPEAS<ARG2>::expr] (next) ;
 	}
 } ;
 
@@ -1275,20 +1311,20 @@ trait BOX_HELP<UNIT ,REQUIRE<ENUM_ALL<IS_TRIVIAL<UNIT> ,IS_ARRAY<UNIT>>>> {
 	} ;
 
 	struct FUNCTION_translation {
-		inline CREF<HEAP> operator() (CREF<HEAP> obj) const {
+		inline CREF<HEAP> operator() (CREF<HEAP> obj) const noexcept {
 			return keep[TYPEAS<CREF<HEAP>>::expr] (obj) ;
 		}
 
-		inline RREF<HEAP> operator() (RREF<HEAP> obj) const {
+		inline RREF<HEAP> operator() (RREF<HEAP> obj) const noexcept {
 			return keep[TYPEAS<RREF<HEAP>>::expr] (obj) ;
 		}
 
-		inline CREF<HEAP> operator() (CREF<UNIT> obj) const {
+		inline CREF<HEAP> operator() (CREF<UNIT> obj) const noexcept {
 			auto &&tmp = unsafe_deref (unsafe_cast[TYPEAS<TEMP<HEAP>>::expr] (unsafe_deptr (obj))) ;
 			return keep[TYPEAS<CREF<HEAP>>::expr] (tmp) ;
 		}
 
-		inline RREF<HEAP> operator() (RREF<UNIT> obj) const {
+		inline RREF<HEAP> operator() (RREF<UNIT> obj) const noexcept {
 			auto &&tmp = unsafe_deref (unsafe_cast[TYPEAS<TEMP<HEAP>>::expr] (unsafe_deptr (obj))) ;
 			return keep[TYPEAS<RREF<HEAP>>::expr] (tmp) ;
 		}
@@ -1404,20 +1440,20 @@ trait BOX_HELP<UNIT ,REQUIRE<ENUM_ALL<ENUM_NOT<IS_TRIVIAL<UNIT>> ,IS_ARRAY<UNIT>
 	} ;
 
 	struct FUNCTION_translation {
-		inline CREF<HEAP> operator() (CREF<HEAP> obj) const {
+		inline CREF<HEAP> operator() (CREF<HEAP> obj) const noexcept {
 			return keep[TYPEAS<CREF<HEAP>>::expr] (obj) ;
 		}
 
-		inline RREF<HEAP> operator() (RREF<HEAP> obj) const {
+		inline RREF<HEAP> operator() (RREF<HEAP> obj) const noexcept {
 			return keep[TYPEAS<RREF<HEAP>>::expr] (obj) ;
 		}
 
-		inline CREF<HEAP> operator() (CREF<UNIT> obj) const {
+		inline CREF<HEAP> operator() (CREF<UNIT> obj) const noexcept {
 			auto &&tmp = unsafe_deref (unsafe_cast[TYPEAS<TEMP<HEAP>>::expr] (unsafe_deptr (obj))) ;
 			return keep[TYPEAS<CREF<HEAP>>::expr] (tmp) ;
 		}
 
-		inline RREF<HEAP> operator() (RREF<UNIT> obj) const {
+		inline RREF<HEAP> operator() (RREF<UNIT> obj) const noexcept {
 			auto &&tmp = unsafe_deref (unsafe_cast[TYPEAS<TEMP<HEAP>>::expr] (unsafe_deptr (obj))) ;
 			return keep[TYPEAS<RREF<HEAP>>::expr] (tmp) ;
 		}
@@ -1437,7 +1473,7 @@ template <class DEPEND>
 trait UNKNOWN_HELP<DEPEND ,ALWAYS> {
 	struct Holder implement Interface {
 		virtual FLAG pointer () const = 0 ;
-		virtual void acquire (CREF<INDEX> index ,CREF<TEMP<void>> obj) = 0 ;
+		virtual void acquire (CREF<INDEX> index ,CREF<TEMP<void>> src) = 0 ;
 		virtual void destroy (CREF<INDEX> index) = 0 ;
 	} ;
 
@@ -1458,8 +1494,8 @@ trait UNKNOWN_HELP<DEPEND ,ALWAYS> {
 			return mThis->pointer () ;
 		}
 
-		void acquire (CREF<INDEX> index ,CREF<TEMP<void>> obj) {
-			return mThis->acquire (index ,obj) ;
+		void acquire (CREF<INDEX> index ,CREF<TEMP<void>> src) {
+			return mThis->acquire (index ,src) ;
 		}
 
 		void destroy (CREF<INDEX> index) {
@@ -1480,10 +1516,10 @@ trait UNKNOWN_PUREHOLDER_HELP<UNIT ,ALWAYS> {
 			return r2x ;
 		}
 
-		void acquire (CREF<INDEX> index ,CREF<TEMP<void>> obj) override {
+		void acquire (CREF<INDEX> index ,CREF<TEMP<void>> src) override {
 			const auto r1x = pointer () + index * SIZE_OF<UNIT>::expr ;
 			auto &&tmp = unsafe_cast[TYPEAS<TEMP<UNIT>>::expr] (unsafe_pointer (r1x)) ;
-			unsafe_sync (tmp ,obj) ;
+			unsafe_sync (tmp ,src) ;
 		}
 
 		void destroy (CREF<INDEX> index) override {
@@ -1645,6 +1681,7 @@ trait VREF_HELP<UNIT ,REQUIRE<IS_OBJECT<UNIT>>> {
 		friend trait VREF_HELP ;
 		template <class...>
 		friend trait CREF_HELP ;
+		using HELP = VREF_HELP ;
 
 	protected:
 		using SUPER::mHolder ;
@@ -1655,7 +1692,7 @@ trait VREF_HELP<UNIT ,REQUIRE<IS_OBJECT<UNIT>>> {
 
 		implicit VRef (CREF<typeof (NULL)>) {}
 
-		template <class ARG1 ,class = REQUIRE<ENUM_NOT<ENUM_ANY<IS_SAME<ARG1 ,VRef> ,IS_SAME<ARG1 ,CRef>>>>>
+		template <class ARG1 ,class = REQUIRE<ENUM_ALL<ENUM_NOT<IS_SAME<ARG1 ,VRef>> ,IS_SAME<ARG1 ,typename ARG1::HELP::VRef>>>>
 		implicit VRef (RREF<ARG1> that)
 			:VRef (forward[TYPEAS<VRef>::expr] (that.as_cast (TYPEAS<UNIT>::expr))) {}
 
@@ -1895,6 +1932,7 @@ trait CREF_HELP<UNIT ,REQUIRE<IS_OBJECT<UNIT>>> {
 		friend trait VREF_HELP ;
 		template <class...>
 		friend trait CREF_HELP ;
+		using HELP = CREF_HELP ;
 
 	protected:
 		using SUPER::mHolder ;
@@ -1905,7 +1943,7 @@ trait CREF_HELP<UNIT ,REQUIRE<IS_OBJECT<UNIT>>> {
 
 		implicit CRef (CREF<typeof (NULL)>) {}
 
-		template <class ARG1 ,class = REQUIRE<ENUM_NOT<ENUM_ANY<IS_SAME<ARG1 ,CRef> ,IS_SAME<ARG1 ,VRef>>>>>
+		template <class ARG1 ,class = REQUIRE<ENUM_ALL<ENUM_NOT<IS_SAME<ARG1 ,CRef>> ,IS_SAME<ARG1 ,typename ARG1::HELP::CRef>>>>
 		implicit CRef (RREF<ARG1> that)
 			:CRef (forward[TYPEAS<CRef>::expr] (that.as_cast (TYPEAS<UNIT>::expr))) {}
 
@@ -2316,8 +2354,8 @@ trait AUTO_HELP<DEPEND ,ALWAYS> {
 	public:
 		implicit Auto () = delete ;
 
-		template <class ARG1 ,class = REQUIRE<ENUM_NOT<IS_SAME<ARG1 ,Auto>>>>
-		implicit Auto (RREF<ARG1> that) noexcept {
+		template <class ARG1 ,class = REQUIRE<ENUM_ALL<ENUM_NOT<IS_SAME<ARG1 ,Auto>> ,IS_OBJECT<ARG1>>>>
+		implicit Auto (RREF<ARG1> that) {
 			require (IS_OBJECT<ARG1>) ;
 			require (ENUM_COMPR_LTEQ<SIZE_OF<ARG1> ,FAKE_MAX_SIZE>) ;
 			require (ENUM_COMPR_LTEQ<ALIGN_OF<ARG1> ,FAKE_MAX_ALIGN>) ;
@@ -2365,6 +2403,9 @@ using Auto = typename AUTO_HELP<DEPEND ,ALWAYS>::Auto ;
 template <class...>
 trait CAPTURE_HELP ;
 
+template <class...>
+trait VARIADIC_HELP ;
+
 template <class...UNIT>
 trait CAPTURE_HELP<TYPEAS<UNIT...> ,REQUIRE<ENUM_EQ_ZERO<COUNT_OF<TYPEAS<UNIT...>>>>> {
 	class Capture {
@@ -2387,8 +2428,10 @@ trait CAPTURE_HELP<TYPEAS<UNIT...> ,REQUIRE<ENUM_GT_ZERO<COUNT_OF<TYPEAS<UNIT...
 	using RANK = COUNT_OF<PARAMS> ;
 
 	class Capture {
-	public:
-		using VARIADIC_PARAMS = PARAMS ;
+	private:
+		template <class...>
+		friend trait VARIADIC_HELP ;
+		using HELP = CAPTURE_HELP ;
 
 	protected:
 		Box<ARR<FLAG ,RANK>> mCapture ;
@@ -2435,21 +2478,6 @@ trait CAPTURE_HELP<TYPEAS<UNIT...> ,REQUIRE<ENUM_GT_ZERO<COUNT_OF<TYPEAS<UNIT...
 	} ;
 } ;
 
-template <class...UNIT>
-using Capture = typename CAPTURE_HELP<TYPEAS<UNIT...> ,ALWAYS>::Capture ;
-
-struct FUNCTION_capture {
-	template <class...ARG1>
-	inline Capture<ARG1...> operator() (CREF<ARG1>...obj) const {
-		return Capture<ARG1...> (address (obj)...) ;
-	}
-} ;
-
-static constexpr auto capture = FUNCTION_capture () ;
-
-template <class...>
-trait VARIADIC_HELP ;
-
 template <class UNIT>
 trait VARIADIC_HELP<UNIT ,ALWAYS> {
 	class Variadic {
@@ -2460,11 +2488,11 @@ trait VARIADIC_HELP<UNIT ,ALWAYS> {
 	public:
 		implicit Variadic () = delete ;
 
-		template <class ARG1 ,class = REQUIRE<ENUM_NOT<IS_SAME<ARG1 ,Variadic>>>>
+		template <class ARG1 ,class = REQUIRE<ENUM_ALL<ENUM_NOT<IS_SAME<ARG1 ,Variadic>> ,IS_SAME<ARG1 ,typename ARG1::HELP::Capture>>>>
 		implicit Variadic (RREF<ARG1> that) {
-			using R1X = typename DEPENDENT<ARG1 ,DEPEND>::VARIADIC_PARAMS ;
-			using R2X = TYPE_REPEAT<UNIT ,COUNT_OF<R1X>> ;
-			require (IS_SAME<R1X ,R2X>) ;
+			using R1X = typename ARG1::HELP::PARAMS ;
+			using R3X = TYPE_REPEAT<UNIT ,COUNT_OF<R1X>> ;
+			require (IS_SAME<R1X ,R3X>) ;
 			mBegin = address (that) ;
 			mEnd = mBegin + ENUM_MUL<COUNT_OF<R1X> ,SIZE_OF<FLAG>>::expr ;
 		}
@@ -2490,8 +2518,20 @@ trait VARIADIC_HELP<UNIT ,ALWAYS> {
 	} ;
 } ;
 
+template <class...UNIT>
+using Capture = typename CAPTURE_HELP<TYPEAS<UNIT...> ,ALWAYS>::Capture ;
+
 template <class UNIT>
 using Variadic = typename VARIADIC_HELP<UNIT ,ALWAYS>::Variadic ;
+
+struct FUNCTION_capture {
+	template <class...ARG1>
+	inline Capture<ARG1...> operator() (CREF<ARG1>...obj) const noexcept {
+		return Capture<ARG1...> (address (obj)...) ;
+	}
+} ;
+
+static constexpr auto capture = FUNCTION_capture () ;
 
 template <class...>
 trait SLICE_HELP ;
@@ -2597,7 +2637,7 @@ trait SLICE_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 
 	struct FUNCTION_translation {
 		template <class ARG1>
-		inline csc_text_t operator() (CREF<ARG1> text) const {
+		inline csc_text_t operator() (CREF<ARG1> text) const noexcept {
 			require (IS_ARRAY<ARG1>) ;
 			csc_text_t ret ;
 			ret.mBegin = address (text) ;
@@ -2606,7 +2646,7 @@ trait SLICE_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 			return move (ret) ;
 		}
 
-		inline CREF<csc_text_t> operator() (CREF<csc_text_t> text) const {
+		inline CREF<csc_text_t> operator() (CREF<csc_text_t> text) const noexcept {
 			return text ;
 		}
 	} ;
@@ -2961,13 +3001,13 @@ trait EXCEPTION_HELP<DEPEND ,ALWAYS> {
 	public:
 		implicit Exception () = default ;
 
-		explicit Exception (CREF<Slice<STR>> what_) noexcept {
+		explicit Exception (CREF<Slice<STR>> what_) {
 			auto rax = FUNCTION_extern::invoke () ;
 			rax->initialize (what_) ;
 			mThis = move (rax) ;
 		}
 
-		Slice<STR> what () const noexcept {
+		Slice<STR> what () const {
 			if (mThis == NULL)
 				return Slice<STR> () ;
 			return mThis->what () ;

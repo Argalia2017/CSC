@@ -42,11 +42,11 @@ trait SYNTAXTREE_HELP<DEPEND ,ALWAYS> {
 		virtual void mark_as_iteration () = 0 ;
 		virtual void maybe (CREF<Clazz> clazz ,CREF<Binder> binder ,VREF<SyntaxTree> tree) = 0 ;
 		virtual CREF<AutoRef<>> stack (CREF<Clazz> clazz ,CREF<Binder> binder ,VREF<SyntaxTree> tree) leftvalue = 0 ;
-		virtual CREF<AutoRef<>> later () leftvalue = 0 ;
 		virtual void once (RREF<Function<void>> actor) = 0 ;
 		virtual void then (RREF<Function<void>> actor) = 0 ;
 		virtual void undo (CREF<Clazz> clazz) = 0 ;
-		virtual VREF<AutoRef<>> redo (CREF<Clazz> clazz) leftvalue = 0 ;
+		virtual CREF<AutoRef<>> later () leftvalue = 0 ;
+		virtual VREF<AutoRef<>> later (CREF<Clazz> clazz) leftvalue = 0 ;
 		virtual void play () = 0 ;
 		virtual void clean () = 0 ;
 	} ;
@@ -89,11 +89,6 @@ trait SYNTAXTREE_HELP<DEPEND ,ALWAYS> {
 			return AutoRef<ARG1>::from (mThis->stack (r1x ,rax ,thiz)).self ;
 		}
 
-		template <class ARG1>
-		CREF<ARG1> later (CREF<TYPEID<ARG1>> id) leftvalue {
-			return AutoRef<CRef<ARG1>>::from (mThis->later ())->self ;
-		}
-
 		void once (RREF<Function<void>> actor) {
 			return mThis->once (move (actor)) ;
 		}
@@ -108,10 +103,15 @@ trait SYNTAXTREE_HELP<DEPEND ,ALWAYS> {
 			return mThis->undo (r1x) ;
 		}
 
+		template <class ARG1>
+		CREF<ARG1> later (CREF<TYPEID<ARG1>> id) leftvalue {
+			return AutoRef<CRef<ARG1>>::from (mThis->later ())->self ;
+		}
+
 		template <class ARG1 ,class ARG2>
-		void redo (CREF<TYPEID<ARG1>> id ,LREF<ARG2> refer) {
+		void later (CREF<TYPEID<ARG1>> id ,LREF<ARG2> refer) {
 			const auto r1x = Clazz (id) ;
-			auto &&tmp = mThis->redo (r1x) ;
+			auto &&tmp = mThis->later (r1x) ;
 			auto rax = tmp.as_cast (TYPEAS<CRef<ARG2>>::expr) ;
 			if ifswitch (TRUE) {
 				if (rax.available ())
@@ -123,7 +123,7 @@ trait SYNTAXTREE_HELP<DEPEND ,ALWAYS> {
 		}
 
 		template <class ARG1 ,class ARG2>
-		void redo (CREF<TYPEID<ARG1>> ,RREF<ARG2>) = delete ;
+		void later (CREF<TYPEID<ARG1>> ,RREF<ARG2>) = delete ;
 
 		void play () {
 			return mThis->play () ;
