@@ -1,5 +1,4 @@
 ﻿
-
 #undef implicit
 #undef exports
 #undef imports
@@ -9,9 +8,9 @@
 #undef self
 #undef fake
 #undef expr
-#undef mP1st
-#undef mP2nd
-#undef mP3rd
+#undef m1st
+#undef m2nd
+#undef m3rd
 #undef trait
 #undef implement
 #undef extend

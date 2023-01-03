@@ -20,12 +20,6 @@ trait XMLPARSER_HELP ;
 template <class...>
 trait XMLPARSER_IMPLHOLDER_HELP ;
 
-template <class...>
-trait XMLPARSER_SERIALIZATION_HELP ;
-
-template <class...>
-trait XMLPARSER_COMBINATION_HELP ;
-
 template <class DEPEND>
 trait XMLPARSER_HELP<DEPEND ,ALWAYS> {
 	class XmlParser ;
@@ -33,8 +27,8 @@ trait XMLPARSER_HELP<DEPEND ,ALWAYS> {
 	struct Holder implement Interface {
 		virtual void initialize () = 0 ;
 		virtual void initialize (CREF<RegBuffer<STRU8>> stream) = 0 ;
-		virtual BOOL exist () const = 0 ;
-		virtual void friend_clone (VREF<XmlParser> that) const = 0 ;
+		virtual BOOL available () const = 0 ;
+		virtual XmlParser clone () const = 0 ;
 		virtual XmlParser root () const = 0 ;
 		virtual XmlParser parent () const = 0 ;
 		virtual XmlParser brother () const = 0 ;
@@ -42,7 +36,7 @@ trait XMLPARSER_HELP<DEPEND ,ALWAYS> {
 		virtual XmlParser child (CREF<String<STRU8>> name) const = 0 ;
 		virtual Array<XmlParser> child_array () const = 0 ;
 		virtual Array<XmlParser> child_array (CREF<LENGTH> size_) const = 0 ;
-		virtual void merge (CREF<XmlParser> that) = 0 ;
+		virtual XmlParser concat (CREF<XmlParser> that) const = 0 ;
 		virtual BOOL equal (CREF<Holder> that) const = 0 ;
 		virtual CREF<String<STRU8>> name () const leftvalue = 0 ;
 		virtual CREF<String<STRU8>> attribute (CREF<String<STRU8>> tag) const leftvalue = 0 ;
@@ -65,7 +59,7 @@ trait XMLPARSER_HELP<DEPEND ,ALWAYS> {
 
 	class FakeHolder implement Holder {
 	protected:
-		CRef<TEMP<void>> mHeap ;
+		CRef<Proxy> mHeap ;
 		INDEX mIndex ;
 	} ;
 
@@ -82,22 +76,26 @@ trait XMLPARSER_HELP<DEPEND ,ALWAYS> {
 		Box<FakeHolder> mThis ;
 
 	public:
-		implicit XmlParser () {
-			mThis = FUNCTION_extern::invoke () ;
-			mThis->initialize () ;
-		}
+		implicit XmlParser () = default ;
 
 		explicit XmlParser (RREF<Box<FakeHolder>> that) {
 			mThis = move (that) ;
 		}
 
-		explicit XmlParser (CREF<RegBuffer<STRU8>> that) {
+		explicit XmlParser (CREF<typeof (PH0)>) {
 			mThis = FUNCTION_extern::invoke () ;
-			mThis->initialize (that) ;
+			mThis->initialize () ;
+		}
+
+		explicit XmlParser (CREF<RegBuffer<STRU8>> stream) {
+			mThis = FUNCTION_extern::invoke () ;
+			mThis->initialize (stream) ;
 		}
 
 		implicit XmlParser (CREF<XmlParser> that) {
-			that.mThis->friend_clone (thiz) ;
+			if (that.mThis == NULL)
+				return ;
+			thiz = that.mThis->clone () ;
 		}
 
 		inline VREF<XmlParser> operator= (CREF<XmlParser> that) {
@@ -118,8 +116,8 @@ trait XMLPARSER_HELP<DEPEND ,ALWAYS> {
 			return thiz ;
 		}
 
-		BOOL exist () const {
-			return mThis->exist () ;
+		BOOL available () const {
+			return mThis->available () ;
 		}
 
 		XmlParser root () const {
@@ -139,7 +137,7 @@ trait XMLPARSER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		XmlParser child (CREF<Slice<STR>> name) const {
-			return child (String<STRU8>::make (name)) ;
+			return child (PrintString<STRU8>::make (name)) ;
 		}
 
 		XmlParser child (CREF<String<STRU8>> name) const {
@@ -154,10 +152,6 @@ trait XMLPARSER_HELP<DEPEND ,ALWAYS> {
 			return mThis->child_array () ;
 		}
 
-		void merge (CREF<XmlParser> that) {
-			return mThis->merge (that) ;
-		}
-
 		BOOL equal (CREF<XmlParser> that) const {
 			return mThis->equal (that.mThis.self) ;
 		}
@@ -170,12 +164,24 @@ trait XMLPARSER_HELP<DEPEND ,ALWAYS> {
 			return ifnot (equal (that)) ;
 		}
 
+		XmlParser concat (CREF<XmlParser> that) {
+			return mThis->concat (that) ;
+		}
+
+		inline XmlParser operator+ (CREF<XmlParser> that) const {
+			return concat (that) ;
+		}
+
+		inline void operator+= (CREF<XmlParser> that) {
+			thiz = concat (that) ;
+		}
+
 		CREF<String<STRU8>> name () const leftvalue {
 			return mThis->name () ;
 		}
 
 		CREF<String<STRU8>> attribute (CREF<Slice<STR>> tag) const leftvalue {
-			return attribute (String<STRU8>::make (tag)) ;
+			return attribute (PrintString<STRU8>::make (tag)) ;
 		}
 
 		CREF<String<STRU8>> attribute (CREF<String<STRU8>> tag) const leftvalue {
@@ -186,9 +192,11 @@ trait XMLPARSER_HELP<DEPEND ,ALWAYS> {
 			return mThis->fetch () ;
 		}
 
-		BOOL fetch (CREF<BoolProxy> def) const {
+		BOOL fetch (CREF<BOOL> def) const {
 			return mThis->fetch (def) ;
 		}
+
+		csc_pointer_t fetch (CREF<csc_pointer_t>) const = delete ;
 
 		VAL32 fetch (CREF<VAL32> def) const {
 			return mThis->fetch (def) ;
@@ -252,9 +260,6 @@ trait JSONPARSER_HELP ;
 template <class...>
 trait JSONPARSER_IMPLHOLDER_HELP ;
 
-template <class...>
-trait JSONPARSER_SERIALIZATION_HELP ;
-
 template <class DEPEND>
 trait JSONPARSER_HELP<DEPEND ,ALWAYS> {
 	class JsonParser ;
@@ -262,16 +267,15 @@ trait JSONPARSER_HELP<DEPEND ,ALWAYS> {
 	struct Holder implement Interface {
 		virtual void initialize () = 0 ;
 		virtual void initialize (CREF<RegBuffer<STRU8>> stream) = 0 ;
-		virtual BOOL exist () const = 0 ;
+		virtual BOOL available () const = 0 ;
 		virtual BOOL string_type () const = 0 ;
 		virtual BOOL array_type () const = 0 ;
 		virtual BOOL object_type () const = 0 ;
-		virtual void friend_clone (VREF<JsonParser> that) const = 0 ;
+		virtual JsonParser clone () const = 0 ;
 		virtual JsonParser root () const = 0 ;
 		virtual JsonParser parent () const = 0 ;
 		virtual JsonParser brother () const = 0 ;
 		virtual JsonParser child () const = 0 ;
-		virtual JsonParser child (CREF<Slice<STR>> name) const = 0 ;
 		virtual JsonParser child (CREF<String<STRU8>> name) const = 0 ;
 		virtual Array<JsonParser> child_array () const = 0 ;
 		virtual Array<JsonParser> child_array (CREF<LENGTH> size_) const = 0 ;
@@ -295,7 +299,7 @@ trait JSONPARSER_HELP<DEPEND ,ALWAYS> {
 
 	class FakeHolder implement Holder {
 	protected:
-		CRef<TEMP<void>> mHeap ;
+		CRef<Proxy> mHeap ;
 		INDEX mIndex ;
 	} ;
 
@@ -308,22 +312,26 @@ trait JSONPARSER_HELP<DEPEND ,ALWAYS> {
 		Box<FakeHolder> mThis ;
 
 	public:
-		implicit JsonParser () {
-			mThis = FUNCTION_extern::invoke () ;
-			mThis->initialize () ;
-		}
+		implicit JsonParser () = default ;
 
 		explicit JsonParser (RREF<Box<FakeHolder>> that) {
 			mThis = move (that) ;
 		}
 
-		explicit JsonParser (CREF<RegBuffer<STRU8>> that) {
+		explicit JsonParser (CREF<typeof (PH0)>) {
 			mThis = FUNCTION_extern::invoke () ;
-			mThis->initialize (that) ;
+			mThis->initialize () ;
+		}
+
+		explicit JsonParser (CREF<RegBuffer<STRU8>> stream) {
+			mThis = FUNCTION_extern::invoke () ;
+			mThis->initialize (stream) ;
 		}
 
 		implicit JsonParser (CREF<JsonParser> that) {
-			that.mThis->friend_clone (thiz) ;
+			if (that.mThis == NULL)
+				return ;
+			thiz = that.mThis->clone () ;
 		}
 
 		inline VREF<JsonParser> operator= (CREF<JsonParser> that) {
@@ -344,8 +352,8 @@ trait JSONPARSER_HELP<DEPEND ,ALWAYS> {
 			return thiz ;
 		}
 
-		BOOL exist () const {
-			return mThis->exist () ;
+		BOOL available () const {
+			return mThis->available () ;
 		}
 
 		BOOL string_type () const {
@@ -377,7 +385,7 @@ trait JSONPARSER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		JsonParser child (CREF<Slice<STR>> name) const {
-			return child (String<STRU8>::make (name)) ;
+			return child (PrintString<STRU8>::make (name)) ;
 		}
 
 		JsonParser child (CREF<String<STRU8>> name) const {
@@ -408,9 +416,11 @@ trait JSONPARSER_HELP<DEPEND ,ALWAYS> {
 			return mThis->fetch () ;
 		}
 
-		BOOL fetch (CREF<BoolProxy> def) const {
+		BOOL fetch (CREF<BOOL> def) const {
 			return mThis->fetch (def) ;
 		}
+
+		csc_pointer_t fetch (CREF<csc_pointer_t>) const = delete ;
 
 		VAL32 fetch (CREF<VAL32> def) const {
 			return mThis->fetch (def) ;
@@ -467,4 +477,181 @@ trait JSONPARSER_HELP<DEPEND ,ALWAYS> {
 } ;
 
 using JsonParser = typename JSONPARSER_HELP<DEPEND ,ALWAYS>::JsonParser ;
+
+template <class...>
+trait PLYREADER_HELP ;
+
+template <class...>
+trait PLYREADER_IMPLHOLDER_HELP ;
+
+template <class DEPEND>
+trait PLYREADER_HELP<DEPEND ,ALWAYS> {
+	struct Holder implement Interface {
+		virtual void initialize (CREF<RegBuffer<STRU8>> stream) = 0 ;
+		virtual INDEX find_element (CREF<String<STRU8>> name) const = 0 ;
+		virtual LENGTH element_size (CREF<INDEX> element) const = 0 ;
+		virtual INDEX find_property (CREF<INDEX> element ,CREF<String<STRU8>> name) const = 0 ;
+		virtual LENGTH property_size (CREF<INDEX> element ,CREF<INDEX> line ,CREF<INDEX> property) const = 0 ;
+		virtual void guide_new (CREF<INDEX> element) = 0 ;
+		virtual void guide_put (CREF<INDEX> property) = 0 ;
+		virtual void read (VREF<BOOL> item) = 0 ;
+		virtual void read (VREF<VAL32> item) = 0 ;
+		virtual void read (VREF<VAL64> item) = 0 ;
+		virtual void read (VREF<SINGLE> item) = 0 ;
+		virtual void read (VREF<DOUBLE> item) = 0 ;
+		virtual void read (VREF<BYTE> item) = 0 ;
+		virtual void read (VREF<WORD> item) = 0 ;
+		virtual void read (VREF<CHAR> item) = 0 ;
+		virtual void read (VREF<DATA> item) = 0 ;
+	} ;
+
+	struct FUNCTION_extern {
+		imports VRef<Holder> invoke () ;
+	} ;
+
+	class PlyReader {
+	protected:
+		VRef<Holder> mThis ;
+
+	public:
+		implicit PlyReader () = default ;
+
+		explicit PlyReader (CREF<RegBuffer<STRU8>> stream) {
+			mThis = FUNCTION_extern::invoke () ;
+			mThis->initialize (stream) ;
+		}
+
+		INDEX find_element (CREF<Slice<STR>> name) const {
+			return mThis->find_element (PrintString<STRU8>::make (name)) ;
+		}
+
+		INDEX find_element (CREF<String<STRU8>> name) const {
+			return mThis->find_element (name) ;
+		}
+
+		LENGTH element_size (CREF<INDEX> element) const {
+			return mThis->element_size (element) ;
+		}
+
+		INDEX find_property (CREF<INDEX> element ,CREF<Slice<STR>> name) const {
+			return mThis->find_property (element ,PrintString<STRU8>::make (name)) ;
+		}
+
+		INDEX find_property (CREF<INDEX> element ,CREF<String<STRU8>> name) const {
+			return mThis->find_property (element ,name) ;
+		}
+
+		LENGTH property_size (CREF<INDEX> element ,CREF<INDEX> line ,CREF<INDEX> property) const {
+			return mThis->property_size (element ,line ,property) ;
+		}
+
+		void guide_new (CREF<INDEX> element) {
+			return mThis->guide_new (element) ;
+		}
+
+		void guide_put (CREF<INDEX> property) {
+			return mThis->guide_put (property) ;
+		}
+
+		template <class ARG1>
+		ARG1 poll (CREF<TYPEID<ARG1>> id) {
+			ARG1 ret ;
+			read (ret) ;
+			return move (ret) ;
+		}
+
+		void scans () {
+			noop () ;
+		}
+
+		template <class ARG1 ,class...ARG2>
+		void scans (VREF<ARG1> item1 ,VREF<ARG2>...item2) {
+			read (item1) ;
+			scans (item2...) ;
+		}
+
+		void read (VREF<BOOL> item) {
+			return mThis->read (item) ;
+		}
+
+		inline VREF<PlyReader> operator>> (VREF<BOOL> item) {
+			read (item) ;
+			return thiz ;
+		}
+
+		void read (VREF<VAL32> item) {
+			return mThis->read (item) ;
+		}
+
+		inline VREF<PlyReader> operator>> (VREF<VAL32> item) {
+			read (item) ;
+			return thiz ;
+		}
+
+		void read (VREF<VAL64> item) {
+			return mThis->read (item) ;
+		}
+
+		inline VREF<PlyReader> operator>> (VREF<VAL64> item) {
+			read (item) ;
+			return thiz ;
+		}
+
+		void read (VREF<SINGLE> item) {
+			return mThis->read (item) ;
+		}
+
+		inline VREF<PlyReader> operator>> (VREF<SINGLE> item) {
+			read (item) ;
+			return thiz ;
+		}
+
+		void read (VREF<DOUBLE> item) {
+			return mThis->read (item) ;
+		}
+
+		inline VREF<PlyReader> operator>> (VREF<DOUBLE> item) {
+			read (item) ;
+			return thiz ;
+		}
+
+		void read (VREF<BYTE> item) {
+			return mThis->read (item) ;
+		}
+
+		inline VREF<PlyReader> operator>> (VREF<BYTE> item) {
+			read (item) ;
+			return thiz ;
+		}
+
+		void read (VREF<WORD> item) {
+			return mThis->read (item) ;
+		}
+
+		inline VREF<PlyReader> operator>> (VREF<WORD> item) {
+			read (item) ;
+			return thiz ;
+		}
+
+		void read (VREF<CHAR> item) {
+			return mThis->read (item) ;
+		}
+
+		inline VREF<PlyReader> operator>> (VREF<CHAR> item) {
+			read (item) ;
+			return thiz ;
+		}
+
+		void read (VREF<DATA> item) {
+			return mThis->read (item) ;
+		}
+
+		inline VREF<PlyReader> operator>> (VREF<DATA> item) {
+			read (item) ;
+			return thiz ;
+		}
+	} ;
+} ;
+
+using PlyReader = typename PLYREADER_HELP<DEPEND ,ALWAYS>::PlyReader ;
 } ;

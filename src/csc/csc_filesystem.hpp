@@ -220,11 +220,11 @@ template <class DEPEND>
 trait STREAMFILE_HELP<DEPEND ,ALWAYS> {
 	struct Holder implement Interface {
 		virtual void initialize (CREF<String<STR>> file) = 0 ;
-		virtual void open () = 0 ;
-		virtual void create () = 0 ;
-		virtual void append () = 0 ;
+		virtual void open_r () = 0 ;
+		virtual void open_w () = 0 ;
+		virtual void open_a () = 0 ;
 		virtual void close () = 0 ;
-		virtual BOOL link (CREF<BOOL> readable ,CREF<BOOL> writable) = 0 ;
+		virtual void open (CREF<BOOL> readable ,CREF<BOOL> writable) = 0 ;
 		virtual LENGTH read (VREF<RegBuffer<BYTE>> item) = 0 ;
 		virtual LENGTH read (VREF<RegBuffer<WORD>> item) = 0 ;
 		virtual LENGTH read (VREF<RegBuffer<CHAR>> item) = 0 ;
@@ -252,8 +252,8 @@ trait STREAMFILE_HELP<DEPEND ,ALWAYS> {
 			mThis->initialize (file) ;
 		}
 
-		BOOL link (CREF<BOOL> readable ,CREF<BOOL> writable) {
-			return mThis->link (readable ,writable) ;
+		void open (CREF<BOOL> readable ,CREF<BOOL> writable) {
+			return mThis->open (readable ,writable) ;
 		}
 
 		LENGTH read (VREF<RegBuffer<BYTE>> item) {
@@ -358,11 +358,11 @@ trait BUFFERFILE_HOLDER_HELP<DEPEND ,ALWAYS> {
 	struct Holder implement Interface {
 		virtual void initialize (CREF<String<STR>> file ,CREF<Clazz> clazz) = 0 ;
 		virtual void set_cache_size (CREF<LENGTH> size_) = 0 ;
-		virtual void open () = 0 ;
-		virtual void create () = 0 ;
-		virtual void append () = 0 ;
+		virtual void open_r () = 0 ;
+		virtual void open_w () = 0 ;
+		virtual void open_a () = 0 ;
 		virtual void close () = 0 ;
-		virtual BOOL link (CREF<BOOL> readable ,CREF<BOOL> writable) = 0 ;
+		virtual void open (CREF<BOOL> readable ,CREF<BOOL> writable) = 0 ;
 		virtual VAL64 length () const = 0 ;
 		virtual void resize (CREF<VAL64> size_) = 0 ;
 		virtual void get (CREF<VAL64> index ,VREF<RegBuffer<BYTE>> item) = 0 ;
@@ -388,8 +388,8 @@ trait BUFFERFILE_HELP<ITEM ,ALWAYS> {
 		implicit BufferFile () = default ;
 
 		explicit BufferFile (CREF<String<STR>> file) {
-			mThis = FUNCTION_extern::invoke () ;
 			const auto r1x = Clazz (TYPEAS<ITEM>::expr) ;
+			mThis = FUNCTION_extern::invoke () ;
 			mThis->initialize (file ,r1x) ;
 		}
 
@@ -397,8 +397,8 @@ trait BUFFERFILE_HELP<ITEM ,ALWAYS> {
 			return mThis->set_cache_size (size_) ;
 		}
 
-		BOOL link (CREF<BOOL> readable ,CREF<BOOL> writable) {
-			return mThis->link (readable ,writable) ;
+		void open (CREF<BOOL> readable ,CREF<BOOL> writable) {
+			return mThis->open (readable ,writable) ;
 		}
 
 		VAL64 length () const {
@@ -412,14 +412,14 @@ trait BUFFERFILE_HELP<ITEM ,ALWAYS> {
 		ITEM get (CREF<VAL64> index) {
 			ITEM ret ;
 			auto &&tmp = unsafe_cast[TYPEAS<TEMP<void>>::expr] (unsafe_deptr (ret)) ;
-			mThis->get (index ,RegBuffer<BYTE>::make (tmp ,0 ,SIZE_OF<ITEM>::expr)) ;
+			mThis->get (index ,RegBuffer<BYTE>::from (tmp ,0 ,SIZE_OF<ITEM>::expr)) ;
 			unsafe_launder (ret) ;
 			return move (ret) ;
 		}
 
 		void set (CREF<VAL64> index ,CREF<ITEM> item) {
 			auto &&tmp = unsafe_cast[TYPEAS<TEMP<void>>::expr] (unsafe_deptr (item)) ;
-			mThis->set (index ,RegBuffer<BYTE>::make (tmp ,0 ,SIZE_OF<ITEM>::expr)) ;
+			mThis->set (index ,RegBuffer<BYTE>::from (tmp ,0 ,SIZE_OF<ITEM>::expr)) ;
 		}
 
 		void flush () {

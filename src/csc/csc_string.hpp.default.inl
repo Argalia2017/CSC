@@ -11,13 +11,13 @@
 #include "csc_string.hpp"
 #include "csc_runtime.hpp"
 
-#include "begin.h"
+#include "csc_end.h"
 #include <cstdlib>
 #include <cstring>
 #include <clocale>
 #include <string>
 #include <regex>
-#include "end.h"
+#include "csc_begin.h"
 
 namespace CSC {
 template <class...>
@@ -29,7 +29,7 @@ trait FUNCTION_system_string_cvt_HELP<DEPEND ,REQUIRE<MACRO_COMPILER_MSVC<DEPEND
 	struct FUNCTION_system_string_cvt {
 		inline String<STRA> operator() (CREF<String<STRW>> obj) const {
 			assert (ifnot (obj.empty ())) ;
-			String<STRA> ret = String<STRA> (obj.length () * 2) ;
+			String<STRA> ret = String<STRA> (obj.length () * 2 + 1) ;
 			const auto r1x = system_page () ;
 			const auto r2x = _wcstombs_s_l (NULL ,(&ret[0]) ,VAL32 (ret.size ()) ,(&obj[0]) ,_TRUNCATE ,r1x.self) ;
 			assume (r2x == 0) ;
@@ -39,7 +39,7 @@ trait FUNCTION_system_string_cvt_HELP<DEPEND ,REQUIRE<MACRO_COMPILER_MSVC<DEPEND
 		inline String<STRW> operator() (CREF<String<STRA>> obj) const {
 			assert (ifnot (obj.empty ())) ;
 			const auto r1x = system_page () ;
-			String<STRW> ret = String<STRW> (obj.length ()) ;
+			String<STRW> ret = String<STRW> (obj.length () + 1) ;
 			const auto r2x = _mbstowcs_s_l (NULL ,(&ret[0]) ,VAL32 (ret.size ()) ,(&obj[0]) ,_TRUNCATE ,r1x.self) ;
 			assume (r2x == 0) ;
 			return move (ret) ;
@@ -65,7 +65,7 @@ trait FUNCTION_system_string_cvt_HELP<DEPEND ,REQUIRE<MACRO_COMPILER_GNUC<DEPEND
 	struct FUNCTION_system_string_cvt {
 		inline String<STRA> operator() (CREF<String<STRW>> obj) const {
 			assert (ifnot (obj.empty ())) ;
-			String<STRA> ret = String<STRA> (obj.length () * 2) ;
+			String<STRA> ret = String<STRA> (obj.length () * 2 + 1) ;
 			std::setlocale (LC_CTYPE ,"") ;
 			const auto r1x = std::wcstombs ((&ret[0]) ,(&obj[0]) ,VAL32 (ret.size ())) ;
 			assume (r1x == 0) ;
@@ -74,7 +74,7 @@ trait FUNCTION_system_string_cvt_HELP<DEPEND ,REQUIRE<MACRO_COMPILER_GNUC<DEPEND
 
 		inline String<STRW> operator() (CREF<String<STRA>> obj) const {
 			assert (ifnot (obj.empty ())) ;
-			String<STRW> ret = String<STRW> (obj.length ()) ;
+			String<STRW> ret = String<STRW> (obj.length () + 1) ;
 			std::setlocale (LC_CTYPE ,"") ;
 			const auto r1x = std::mbstowcs ((&ret[0]) ,(&obj[0]) ,VAL32 (ret.size ())) ;
 			assume (r1x == 0) ;
@@ -90,7 +90,7 @@ trait FUNCTION_system_string_cvt_HELP<DEPEND ,REQUIRE<MACRO_COMPILER_CLANG<DEPEN
 	struct FUNCTION_system_string_cvt {
 		inline String<STRA> operator() (CREF<String<STRW>> obj) const {
 			assert (ifnot (obj.empty ())) ;
-			String<STRA> ret = String<STRA> (obj.length () * 2) ;
+			String<STRA> ret = String<STRA> (obj.length () * 2 + 1) ;
 			std::setlocale (LC_CTYPE ,"") ;
 			auto rax = std::size_t (0) ;
 			const auto r1x = wcstombs_s ((&rax) ,(&ret[0]) ,VAL32 (ret.size ()) ,(&obj[0]) ,_TRUNCATE) ;
@@ -100,7 +100,7 @@ trait FUNCTION_system_string_cvt_HELP<DEPEND ,REQUIRE<MACRO_COMPILER_CLANG<DEPEN
 
 		inline String<STRW> operator() (CREF<String<STRA>> obj) const {
 			assert (ifnot (obj.empty ())) ;
-			String<STRW> ret = String<STRW> (obj.length ()) ;
+			String<STRW> ret = String<STRW> (obj.length () + 1) ;
 			std::setlocale (LC_CTYPE ,"") ;
 			auto rax = std::size_t (0) ;
 			const auto r1x = mbstowcs_s ((&rax) ,(&ret[0]) ,VAL32 (ret.size ()) ,(&obj[0]) ,_TRUNCATE) ;
@@ -128,7 +128,7 @@ trait STRINGPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			String<STRW> ret = String<STRW> (obj.length ()) ;
 			INDEX ix = 0 ;
 			for (auto &&i : obj) {
-				assert (vbetween (INDEX (i) ,0 ,128)) ;
+				assume (vbetween (INDEX (i) ,0 ,128)) ;
 				ret[ix] = STRW (i) ;
 				ix++ ;
 			}
@@ -140,7 +140,7 @@ trait STRINGPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			String<STRA> ret = String<STRA> (obj.length ()) ;
 			INDEX ix = 0 ;
 			for (auto &&i : obj) {
-				assert (vbetween (INDEX (i) ,0 ,128)) ;
+				assume (vbetween (INDEX (i) ,0 ,128)) ;
 				ret[ix] = STRA (i) ;
 				ix++ ;
 			}
@@ -149,7 +149,7 @@ trait STRINGPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		String<STRA> gbks_string_cvt (CREF<String<STRW>> obj) const override {
-			using R1X = typename STRINGPROC_GBKSCACHE_HELP<DEPEND ,ALWAYS>::GBKSCache ;
+			using R1X = typename DEPENDENT<STRINGPROC_GBKSCACHE_HELP<DEPEND ,ALWAYS> ,ALWAYS>::GBKSCache ;
 			String<STRA> ret = String<STRA> (obj.length () * 2) ;
 			INDEX ix = 0 ;
 			for (auto &&i : obj) {
@@ -158,7 +158,7 @@ trait STRINGPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 					const auto r1x = R1X::instance ().find_utfs (STRUW (i)) ;
 					if (r1x == NONE)
 						discard ;
-					ret[ix] = STRA (R1X::instance ()[r1x].mP1st) ;
+					ret[ix] = STRA (R1X::instance ()[r1x].m1st) ;
 					ix++ ;
 				}
 				if ifswitch (act) {
@@ -171,7 +171,7 @@ trait STRINGPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		String<STRW> gbks_string_cvt (CREF<String<STRA>> obj) const override {
-			using R1X = typename STRINGPROC_GBKSCACHE_HELP<DEPEND ,ALWAYS>::GBKSCache ;
+			using R1X = typename DEPENDENT<STRINGPROC_GBKSCACHE_HELP<DEPEND ,ALWAYS> ,DEPEND>::GBKSCache ;
 			String<STRW> ret = String<STRW> (obj.length ()) ;
 			INDEX ix = 0 ;
 			for (auto &&i : obj) {
@@ -180,7 +180,7 @@ trait STRINGPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 					const auto r1x = R1X::instance ().find_utfs (STRUW (i)) ;
 					if (r1x == NONE)
 						discard ;
-					ret[ix] = STRW (R1X::instance ()[r1x].mP2nd) ;
+					ret[ix] = STRW (R1X::instance ()[r1x].m2nd) ;
 					ix++ ;
 				}
 				if ifswitch (act) {
@@ -245,8 +245,8 @@ exports auto STRINGPROC_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<
 }
 
 template <class DEPEND>
-trait ANYSTRING_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
-	using Holder = typename ANYSTRING_HELP<DEPEND ,ALWAYS>::Holder ;
+trait TEXTSTRING_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
+	using Holder = typename TEXTSTRING_HELP<DEPEND ,ALWAYS>::Holder ;
 
 	struct HEAP {
 		String<STR> mText ;
@@ -345,13 +345,10 @@ trait ANYSTRING_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 } ;
 
 template <>
-exports auto ANYSTRING_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
-	using R1X = typename ANYSTRING_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
+exports auto TEXTSTRING_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
+	using R1X = typename TEXTSTRING_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
 }
-
-template <class...>
-trait ESCAPESTRING_IMPLHOLDER_HELP ;
 
 template <class DEPEND>
 trait ESCAPESTRING_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
@@ -359,10 +356,10 @@ trait ESCAPESTRING_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 
 	class ImplHolder implement Holder {
 	protected:
-		AnyString mText ;
+		TextString mText ;
 
 	public:
-		void initialize (RREF<AnyString> text) override {
+		void initialize (RREF<TextString> text) override {
 			mText = move (text) ;
 		}
 
@@ -394,7 +391,7 @@ trait ESCAPESTRING_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				auto act = TRUE ;
 				if ifswitch (act) {
 					const auto r2x = r1x.escape_cast (i) ;
-					if ifnot (r2x.exist ())
+					if ifnot (r2x.available ())
 						discard ;
 					writer << slice ("\\") ;
 					writer << r2x.fetch () ;
@@ -414,9 +411,6 @@ exports auto ESCAPESTRING_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->VRe
 	return VRef<R1X>::make () ;
 }
 
-template <class...>
-trait COMMASTRING_IMPLHOLDER_HELP ;
-
 template <class DEPEND>
 trait COMMASTRING_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	using Holder = typename COMMASTRING_HELP<DEPEND ,ALWAYS>::Holder ;
@@ -425,44 +419,46 @@ trait COMMASTRING_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 
 	class ImplHolder implement Holder {
 	protected:
-		AnyString mGapText ;
-		AnyString mCommaText ;
+		TextString mGapText ;
+		TextString mCommaText ;
+		TextString mFirstText ;
 		LENGTH mCounter ;
-		Cell<LENGTH> mTightCounter ;
-		Deque<Cell<BOOL>> mFirst ;
+		Optional<LENGTH> mTightCounter ;
+		Deque<Optional<BOOL>> mFirst ;
 
 	public:
-		void initialize (RREF<AnyString> gap_text ,RREF<AnyString> comma_text) override {
+		void initialize (RREF<TextString> gap_text ,RREF<TextString> comma_text ,RREF<TextString> first_text) override {
 			mGapText = move (gap_text) ;
 			mCommaText = move (comma_text) ;
+			mFirstText = move (first_text) ;
 			mCounter = 0 ;
-			mTightCounter = Cell<LENGTH>::make (COUNTER_MAX_DEPTH::expr) ;
-			mFirst = Deque<Cell<BOOL>> (COUNTER_MAX_DEPTH::expr * 2) ;
-			mFirst.add (Cell<BOOL>::make (TRUE)) ;
+			mTightCounter = Optional<LENGTH>::make (COUNTER_MAX_DEPTH::expr) ;
+			mFirst = Deque<Optional<BOOL>> (COUNTER_MAX_DEPTH::expr * 2) ;
+			mFirst.add (Optional<BOOL>::make (TRUE)) ;
 		}
 
 		void write_text (VREF<TextWriter<STRA>> writer) const override {
-			write_text_impl (writer ,mGapText.pick (TYPEAS<STRA>::expr) ,mCommaText.pick (TYPEAS<STRA>::expr)) ;
+			write_text_impl (writer ,mGapText.pick (TYPEAS<STRA>::expr) ,mCommaText.pick (TYPEAS<STRA>::expr) ,mFirstText.pick (TYPEAS<STRA>::expr)) ;
 		}
 
 		void write_text (VREF<TextWriter<STRW>> writer) const override {
-			write_text_impl (writer ,mGapText.pick (TYPEAS<STRW>::expr) ,mCommaText.pick (TYPEAS<STRW>::expr)) ;
+			write_text_impl (writer ,mGapText.pick (TYPEAS<STRW>::expr) ,mCommaText.pick (TYPEAS<STRW>::expr) ,mFirstText.pick (TYPEAS<STRW>::expr)) ;
 		}
 
 		void write_text (VREF<TextWriter<STRU8>> writer) const override {
-			write_text_impl (writer ,mGapText.pick (TYPEAS<STRU8>::expr) ,mCommaText.pick (TYPEAS<STRU8>::expr)) ;
+			write_text_impl (writer ,mGapText.pick (TYPEAS<STRU8>::expr) ,mCommaText.pick (TYPEAS<STRU8>::expr) ,mFirstText.pick (TYPEAS<STRU8>::expr)) ;
 		}
 
 		void write_text (VREF<TextWriter<STRU16>> writer) const override {
-			write_text_impl (writer ,mGapText.pick (TYPEAS<STRU16>::expr) ,mCommaText.pick (TYPEAS<STRU16>::expr)) ;
+			write_text_impl (writer ,mGapText.pick (TYPEAS<STRU16>::expr) ,mCommaText.pick (TYPEAS<STRU16>::expr) ,mFirstText.pick (TYPEAS<STRU16>::expr)) ;
 		}
 
 		void write_text (VREF<TextWriter<STRU32>> writer) const override {
-			write_text_impl (writer ,mGapText.pick (TYPEAS<STRU32>::expr) ,mCommaText.pick (TYPEAS<STRU32>::expr)) ;
+			write_text_impl (writer ,mGapText.pick (TYPEAS<STRU32>::expr) ,mCommaText.pick (TYPEAS<STRU32>::expr) ,mFirstText.pick (TYPEAS<STRU32>::expr)) ;
 		}
 
-		template <class ARG1 ,class ARG2 ,class ARG3>
-		void write_text_impl (VREF<ARG1> writer ,CREF<ARG2> gap_text ,CREF<ARG3> comma_text) const {
+		template <class ARG1 ,class ARG2>
+		void write_text_impl (VREF<ARG1> writer ,CREF<ARG2> gap_text ,CREF<ARG2> comma_text ,CREF<ARG2> first_text) const {
 			INDEX ix = mFirst.tail () ;
 			auto act = TRUE ;
 			if ifswitch (act) {
@@ -471,7 +467,7 @@ trait COMMASTRING_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				if ifswitch (TRUE) {
 					if (mFirst[ix].fetch ())
 						discard ;
-					for (auto &&j : gap_text)
+					for (auto &&j : comma_text)
 						writer << j ;
 				}
 				mFirst[ix].store (FALSE) ;
@@ -485,7 +481,8 @@ trait COMMASTRING_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				mFirst[ix].store (FALSE) ;
 			}
 			if ifswitch (act) {
-				writer << GAP ;
+				for (auto &&j : first_text)
+					writer << j ;
 				if ifswitch (TRUE) {
 					if (mFirst[ix].fetch ())
 						discard ;
@@ -508,7 +505,7 @@ trait COMMASTRING_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		void enter () override {
 			assume (mCounter < COUNTER_MAX_DEPTH::expr) ;
 			mCounter++ ;
-			mFirst.add (Cell<BOOL>::make (TRUE)) ;
+			mFirst.add (Optional<BOOL>::make (TRUE)) ;
 		}
 
 		void leave () override {
@@ -526,12 +523,9 @@ exports auto COMMASTRING_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->VRef
 	return VRef<R1X>::make () ;
 }
 
-template <class...>
-trait ALIGNEDSTRING_IMPLHOLDER_HELP ;
-
 template <class DEPEND>
-trait ALIGNEDSTRING_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
-	using Holder = typename ALIGNEDSTRING_HELP<DEPEND ,ALWAYS>::Holder ;
+trait VALUESTRING_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
+	using Holder = typename VALUESTRING_HELP<DEPEND ,ALWAYS>::Holder ;
 
 	using COUNTER_MAX_DEPTH = ENUMAS<VAL ,256> ;
 
@@ -581,8 +575,8 @@ trait ALIGNEDSTRING_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 } ;
 
 template <>
-exports auto ALIGNEDSTRING_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
-	using R1X = typename ALIGNEDSTRING_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
+exports auto VALUESTRING_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
+	using R1X = typename VALUESTRING_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
 }
 } ;

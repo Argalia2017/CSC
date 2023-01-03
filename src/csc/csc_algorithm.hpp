@@ -31,7 +31,7 @@ trait SORTPROC_HELP<DEPEND ,ALWAYS> {
 
 	struct Holder implement Interface {
 		virtual void initialize () = 0 ;
-		virtual void sort (CREF<Binder> binder ,VREF<Array<INDEX>> range_ ,CREF<INDEX> begin_ ,CREF<INDEX> end_) const = 0 ;
+		virtual void sort (CREF<Binder> array_ ,VREF<Array<INDEX>> range_ ,CREF<INDEX> begin_ ,CREF<INDEX> end_) const = 0 ;
 	} ;
 
 	struct FUNCTION_extern {
@@ -54,16 +54,15 @@ trait SORTPROC_HELP<DEPEND ,ALWAYS> {
 
 		template <class ARG1>
 		inline Array<INDEX> operator() (CREF<ARG1> array_) const {
-			Array<INDEX> ret = Array<INDEX>::make (array_.iter ()) ;
-			sort (array_ ,ret ,0 ,ret.length ()) ;
+			using R1X = typename DEPENDENT<SORTPROC_IMPLBINDER_HELP<ARG1 ,ALWAYS> ,DEPEND>::ImplBinder ;
+			auto rax = R1X (CRef<ARG1>::reference (array_)) ;
+			Array<INDEX> ret = IterArray<INDEX>::make (array_.iter ()) ;
+			sort (rax ,ret ,0 ,ret.length ()) ;
 			return move (ret) ;
 		}
 
-		template <class ARG1>
-		imports void sort (CREF<ARG1> array_ ,VREF<Array<INDEX>> range_ ,CREF<INDEX> begin_ ,CREF<INDEX> end_) {
-			using R1X = typename SORTPROC_IMPLBINDER_HELP<ARG1 ,ALWAYS>::ImplBinder ;
-			auto rax = R1X (CRef<ARG1>::reference (array_)) ;
-			return instance ().mThis->sort (rax ,range_ ,begin_ ,end_) ;
+		imports void sort (CREF<Binder> array_ ,VREF<Array<INDEX>> range_ ,CREF<INDEX> begin_ ,CREF<INDEX> end_) {
+			return instance ().mThis->sort (array_ ,range_ ,begin_ ,end_) ;
 		}
 	} ;
 } ;
@@ -104,7 +103,7 @@ trait DISJOINTTABLE_HELP<DEPEND ,ALWAYS> {
 		virtual void clear () = 0 ;
 		virtual INDEX lead (CREF<INDEX> index) = 0 ;
 		virtual void joint (CREF<INDEX> index1 ,CREF<INDEX> index2) = 0 ;
-		virtual BitSet<> filter (CREF<INDEX> index ,RREF<BitSet<>> res) = 0 ;
+		virtual BitSet<> filter (CREF<INDEX> index) = 0 ;
 		virtual Array<INDEX> linkage () = 0 ;
 		virtual Array<BitSet<>> closure () = 0 ;
 	} ;
@@ -137,8 +136,8 @@ trait DISJOINTTABLE_HELP<DEPEND ,ALWAYS> {
 			return mThis->joint (index1 ,index2) ;
 		}
 
-		BitSet<> filter (CREF<INDEX> index ,RREF<BitSet<>> res) {
-			return mThis->filter (index ,move (res)) ;
+		BitSet<> filter (CREF<INDEX> index) {
+			return mThis->filter (index) ;
 		}
 
 		Array<INDEX> linkage () {
@@ -168,7 +167,7 @@ trait BINARYTABLE_HELP<DEPEND ,ALWAYS> {
 		virtual void link (CREF<INDEX> from_ ,CREF<INDEX> into_) = 0 ;
 		virtual void joint (CREF<INDEX> from_ ,CREF<INDEX> into_) = 0 ;
 		virtual BOOL get (CREF<INDEX> from_ ,CREF<INDEX> into_) const = 0 ;
-		virtual BitSet<> filter (CREF<INDEX> from_ ,RREF<BitSet<>> res) const = 0 ;
+		virtual BitSet<> filter (CREF<INDEX> from_) const = 0 ;
 		virtual void remap () = 0 ;
 	} ;
 
@@ -208,8 +207,8 @@ trait BINARYTABLE_HELP<DEPEND ,ALWAYS> {
 			return mThis->get (from_ ,into_) ;
 		}
 
-		BitSet<> filter (CREF<INDEX> from_ ,RREF<BitSet<>> res) const {
-			return mThis->filter (from_ ,move (res)) ;
+		BitSet<> filter (CREF<INDEX> from_) const {
+			return mThis->filter (from_) ;
 		}
 
 		void remap () {
@@ -247,7 +246,9 @@ trait SEGMENTTABLE_HELP<DEPEND ,ALWAYS> {
 		VRef<Holder> mThis ;
 
 	public:
-		implicit SegmentTable () {
+		implicit SegmentTable () = default ;
+
+		explicit SegmentTable (CREF<typeof (PH0)>) {
 			mThis = FUNCTION_extern::invoke () ;
 			mThis->initialize () ;
 		}

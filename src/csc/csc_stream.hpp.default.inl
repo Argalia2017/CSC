@@ -60,6 +60,7 @@ trait BYTEREADER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 
 	public:
 		void initialize (RREF<CRef<RegBuffer<BYTE>>> stream) override {
+			mAttribute = ByteAttribute (PH0) ;
 			mStream = move (stream) ;
 			reset () ;
 			backup () ;
@@ -77,15 +78,19 @@ trait BYTEREADER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			return mRead ;
 		}
 
+		CREF<RegBuffer<BYTE>> raw (RREF<RegCaches<BYTE>> unnamed) const leftvalue override {
+			return RegBuffer<BYTE>::from (mStream.self ,0 ,length () ,move (unnamed)) ;
+		}
+
 		void reset () override {
 			mRead = 0 ;
 			mWrite = 0 ;
 		}
 
 		void reset (CREF<INDEX> read_ ,CREF<INDEX> write_) override {
-			assert (vbetween (read_ ,0 ,mStream->size ())) ;
-			assert (vbetween (write_ ,0 ,mStream->size ())) ;
-			assert (read_ <= write_) ;
+			assert (read_ >= 0) ;
+			assert (write_ >= 0) ;
+			assert (length () <= size ()) ;
 			mRead = read_ ;
 			mWrite = write_ ;
 		}
@@ -125,13 +130,13 @@ trait BYTEREADER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			if ifswitch (act) {
 				if ifnot (mAttribute.is_big_endian ())
 					discard ;
-				auto rax = BoxBuffer<BYTE ,SIZE_OF<WORD>> () ;
+				auto rax = BoxBuffer<BYTE ,SIZE_OF<WORD>> (0) ;
 				for (auto &&i : iter (0 ,SIZE_OF<WORD>::expr))
 					read (rax[i]) ;
 				item = bitwise[TYPEAS<WORD>::expr] (rax) ;
 			}
 			if ifswitch (act) {
-				auto rax = BoxBuffer<BYTE ,SIZE_OF<WORD>> () ;
+				auto rax = BoxBuffer<BYTE ,SIZE_OF<WORD>> (0) ;
 				for (auto &&i : iter (0 ,SIZE_OF<WORD>::expr)) {
 					INDEX ix = SIZE_OF<WORD>::expr - 1 - i ;
 					read (rax[ix]) ;
@@ -145,13 +150,13 @@ trait BYTEREADER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			if ifswitch (act) {
 				if ifnot (mAttribute.is_big_endian ())
 					discard ;
-				auto rax = BoxBuffer<BYTE ,SIZE_OF<CHAR>> () ;
+				auto rax = BoxBuffer<BYTE ,SIZE_OF<CHAR>> (0) ;
 				for (auto &&i : iter (0 ,SIZE_OF<CHAR>::expr))
 					read (rax[i]) ;
 				item = bitwise[TYPEAS<CHAR>::expr] (rax) ;
 			}
 			if ifswitch (act) {
-				auto rax = BoxBuffer<BYTE ,SIZE_OF<CHAR>> () ;
+				auto rax = BoxBuffer<BYTE ,SIZE_OF<CHAR>> (0) ;
 				for (auto &&i : iter (0 ,SIZE_OF<CHAR>::expr)) {
 					INDEX ix = SIZE_OF<CHAR>::expr - 1 - i ;
 					read (rax[ix]) ;
@@ -165,13 +170,13 @@ trait BYTEREADER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			if ifswitch (act) {
 				if ifnot (mAttribute.is_big_endian ())
 					discard ;
-				auto rax = BoxBuffer<BYTE ,SIZE_OF<DATA>> () ;
+				auto rax = BoxBuffer<BYTE ,SIZE_OF<DATA>> (0) ;
 				for (auto &&i : iter (0 ,SIZE_OF<DATA>::expr))
 					read (rax[i]) ;
 				item = bitwise[TYPEAS<DATA>::expr] (rax) ;
 			}
 			if ifswitch (act) {
-				auto rax = BoxBuffer<BYTE ,SIZE_OF<DATA>> () ;
+				auto rax = BoxBuffer<BYTE ,SIZE_OF<DATA>> (0) ;
 				for (auto &&i : iter (0 ,SIZE_OF<DATA>::expr)) {
 					INDEX ix = SIZE_OF<DATA>::expr - 1 - i ;
 					read (rax[ix]) ;
@@ -218,7 +223,7 @@ trait BYTEREADER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		void read (CREF<Slice<STR>> item) override {
 			auto rax = BYTE () ;
 			for (auto &&i : iter (0 ,item.size ())) {
-				vbetween (INDEX (item[i]) ,0 ,128) ;
+				assume (vbetween (INDEX (item[i]) ,0 ,128)) ;
 				read (rax) ;
 				assume (rax == BYTE (item[i])) ;
 			}
@@ -230,6 +235,7 @@ trait BYTEREADER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			if ifswitch (TRUE) {
 				if (item.size () >= r1x)
 					discard ;
+				assume (r1x <= VAL32_MAX) ;
 				item = String<STRA> (r1x) ;
 			}
 			item.trunc (r1x) ;
@@ -248,6 +254,7 @@ trait BYTEREADER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			if ifswitch (TRUE) {
 				if (item.size () >= r1x)
 					discard ;
+				assume (r1x <= VAL32_MAX) ;
 				item = String<STRW> (r1x) ;
 			}
 			item.trunc (r1x) ;
@@ -266,6 +273,7 @@ trait BYTEREADER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			if ifswitch (TRUE) {
 				if (item.size () >= r1x)
 					discard ;
+				assume (r1x <= VAL32_MAX) ;
 				item = String<STRU8> (r1x) ;
 			}
 			item.trunc (r1x) ;
@@ -284,6 +292,7 @@ trait BYTEREADER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			if ifswitch (TRUE) {
 				if (item.size () >= r1x)
 					discard ;
+				assume (r1x <= VAL32_MAX) ;
 				item = String<STRU16> (r1x) ;
 			}
 			item.trunc (r1x) ;
@@ -302,6 +311,7 @@ trait BYTEREADER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			if ifswitch (TRUE) {
 				if (item.size () >= r1x)
 					discard ;
+				assume (r1x <= VAL32_MAX) ;
 				item = String<STRU32> (r1x) ;
 			}
 			item.trunc (r1x) ;
@@ -354,6 +364,7 @@ template <class DEPEND>
 trait BYTEWRITER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	using Holder = typename BYTEWRITER_HELP<DEPEND ,ALWAYS>::Holder ;
 	using Binder = typename BYTEWRITER_HELP<DEPEND ,ALWAYS>::Binder ;
+	using ByteWriter = typename BYTEWRITER_HELP<DEPEND ,ALWAYS>::ByteWriter ;
 
 	class ImplHolder implement Holder {
 	protected:
@@ -366,6 +377,7 @@ trait BYTEWRITER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 
 	public:
 		void initialize (RREF<VRef<RegBuffer<BYTE>>> stream) override {
+			mAttribute = ByteAttribute (PH0) ;
 			mStream = move (stream) ;
 			reset () ;
 			backup () ;
@@ -383,15 +395,19 @@ trait BYTEWRITER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			return mWrite ;
 		}
 
+		CREF<RegBuffer<BYTE>> raw (RREF<RegCaches<BYTE>> unnamed) const leftvalue override {
+			return RegBuffer<BYTE>::from (mStream.self ,0 ,length () ,move (unnamed)) ;
+		}
+
 		void reset () override {
 			mRead = 0 ;
 			mWrite = 0 ;
 		}
 
 		void reset (CREF<INDEX> read_ ,CREF<INDEX> write_) override {
-			assert (vbetween (read_ ,0 ,mStream->size ())) ;
-			assert (vbetween (write_ ,0 ,mStream->size ())) ;
-			assert (read_ <= write_) ;
+			assert (read_ >= 0) ;
+			assert (write_ >= 0) ;
+			assert (length () <= size ()) ;
 			mRead = read_ ;
 			mWrite = write_ ;
 		}
@@ -493,7 +509,7 @@ trait BYTEWRITER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 
 		void write (CREF<Slice<STR>> item) override {
 			for (auto &&i : iter (0 ,item.size ())) {
-				vbetween (INDEX (item[i]) ,0 ,128) ;
+				assume (vbetween (INDEX (item[i]) ,0 ,128)) ;
 				const auto r1x = BYTE (item[i]) ;
 				write (r1x) ;
 			}
@@ -594,8 +610,8 @@ template <class ITEM>
 trait TEXTATTRIBUTE_IMPLHOLDER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 	using Holder = typename TEXTATTRIBUTE_HELP<ITEM ,ALWAYS>::Holder ;
 
-	using SPACE_CLAZZ_SPACE = RANK1 ;
-	using SPACE_CLAZZ_ENDLINE = RANK2 ;
+	using GAP_SPACE = RANK1 ;
+	using GAP_ENDLINE = RANK2 ;
 
 	class ImplHolder implement Holder {
 	protected:
@@ -604,12 +620,12 @@ trait TEXTATTRIBUTE_IMPLHOLDER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 
 	public:
 		void initialize () override {
-			mSpaceSet.add (ITEM (' ') ,SPACE_CLAZZ_SPACE::expr) ;
-			mSpaceSet.add (ITEM ('\t') ,SPACE_CLAZZ_SPACE::expr) ;
-			mSpaceSet.add (ITEM ('\b') ,SPACE_CLAZZ_SPACE::expr) ;
-			mSpaceSet.add (ITEM ('\r') ,SPACE_CLAZZ_ENDLINE::expr) ;
-			mSpaceSet.add (ITEM ('\n') ,SPACE_CLAZZ_ENDLINE::expr) ;
-			mSpaceSet.add (ITEM ('\f') ,SPACE_CLAZZ_ENDLINE::expr) ;
+			mSpaceSet.add (ITEM (' ') ,GAP_SPACE::expr) ;
+			mSpaceSet.add (ITEM ('\t') ,GAP_SPACE::expr) ;
+			mSpaceSet.add (ITEM ('\b') ,GAP_SPACE::expr) ;
+			mSpaceSet.add (ITEM ('\r') ,GAP_ENDLINE::expr) ;
+			mSpaceSet.add (ITEM ('\n') ,GAP_ENDLINE::expr) ;
+			mSpaceSet.add (ITEM ('\f') ,GAP_ENDLINE::expr) ;
 			mEscapeSet.add (ITEM ('\\') ,INDEX ('\\')) ;
 			mEscapeSet.add (ITEM ('/') ,INDEX ('/')) ;
 			mEscapeSet.add (ITEM ('t') ,INDEX ('\t')) ;
@@ -626,12 +642,16 @@ trait TEXTATTRIBUTE_IMPLHOLDER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 			return ITEM (0) ;
 		}
 
-		BOOL is_space (CREF<ITEM> str) const override {
+		BOOL is_gap (CREF<ITEM> str) const override {
 			return mSpaceSet.find (str) != NONE ;
 		}
 
-		BOOL is_endline_space (CREF<ITEM> str) const override {
-			return mSpaceSet.map (str) != SPACE_CLAZZ_ENDLINE::expr ;
+		BOOL is_gap_space (CREF<ITEM> str) const override {
+			return mSpaceSet.map (str) == GAP_SPACE::expr ;
+		}
+
+		BOOL is_gap_endline (CREF<ITEM> str) const override {
+			return mSpaceSet.map (str) == GAP_ENDLINE::expr ;
 		}
 
 		BOOL is_word (CREF<ITEM> str) const override {
@@ -705,11 +725,11 @@ trait TEXTATTRIBUTE_IMPLHOLDER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 			return TRUE ;
 		}
 
-		Cell<ITEM> escape_cast (CREF<ITEM> str) const override {
+		Optional<ITEM> escape_cast (CREF<ITEM> str) const override {
 			INDEX ix = mEscapeSet.map (str) ;
 			if (ix == NONE)
 				return FLAG (1) ;
-			return Cell<ITEM>::make (ITEM (ix)) ;
+			return Optional<ITEM>::make (ITEM (ix)) ;
 		}
 
 		LENGTH value_precision () const override {
@@ -774,6 +794,7 @@ trait TEXTREADER_IMPLHOLDER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 
 	public:
 		void initialize (RREF<CRef<RegBuffer<ITEM>>> stream) override {
+			mAttribute = TextAttribute<ITEM> (PH0) ;
 			mStream = move (stream) ;
 			reset () ;
 			backup () ;
@@ -791,15 +812,19 @@ trait TEXTREADER_IMPLHOLDER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 			return mRead ;
 		}
 
+		CREF<RegBuffer<ITEM>> raw (RREF<RegCaches<ITEM>> unnamed) const leftvalue override {
+			return RegBuffer<ITEM>::from (mStream.self ,0 ,length () ,move (unnamed)) ;
+		}
+
 		void reset () override {
 			mRead = 0 ;
 			mWrite = 0 ;
 		}
 
 		void reset (CREF<INDEX> read_ ,CREF<INDEX> write_) override {
-			assert (vbetween (read_ ,0 ,mStream->size ())) ;
-			assert (vbetween (write_ ,0 ,mStream->size ())) ;
-			assert (read_ <= write_) ;
+			assert (read_ >= 0) ;
+			assert (write_ >= 0) ;
+			assert (length () <= size ()) ;
 			mRead = read_ ;
 			mWrite = write_ ;
 		}
@@ -1172,7 +1197,7 @@ trait TEXTREADER_IMPLHOLDER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 		void read (CREF<Slice<STR>> item) override {
 			auto rax = ITEM () ;
 			for (auto &&i : iter (0 ,item.size ())) {
-				vbetween (INDEX (item[i]) ,0 ,128) ;
+				assume (vbetween (INDEX (item[i]) ,0 ,128)) ;
 				read (rax) ;
 				assume (rax == ITEM (item[i])) ;
 			}
@@ -1183,6 +1208,7 @@ trait TEXTREADER_IMPLHOLDER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 			if ifswitch (TRUE) {
 				if (item.size () >= r1x)
 					discard ;
+				assume (r1x <= VAL32_MAX) ;
 				item = String<ITEM> (r1x) ;
 			}
 			item.trunc (r1x) ;
@@ -1198,7 +1224,7 @@ trait TEXTREADER_IMPLHOLDER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 			while (TRUE) {
 				if (rax == mAttribute.ending_item ())
 					break ;
-				if (mAttribute.is_space (rax))
+				if (mAttribute.is_gap (rax))
 					break ;
 				ret++ ;
 				read (rax) ;
@@ -1289,7 +1315,7 @@ trait TEXTREADER_IMPLHOLDER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 			while (TRUE) {
 				if (rax == mAttribute.ending_item ())
 					break ;
-				if ifnot (mAttribute.is_space (rax))
+				if ifnot (mAttribute.is_gap (rax))
 					break ;
 				ret++ ;
 				read (rax) ;
@@ -1348,6 +1374,9 @@ exports auto TEXTREADER_HELP<STRU32 ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<
 	return VRef<R1X>::make () ;
 }
 
+template <class...>
+trait TEXTWRITER_WRITEVALUE_HELP ;
+
 template <class ITEM>
 trait TEXTWRITER_IMPLHOLDER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 	using NOTATION = typename FLOATPROC_HELP<DEPEND ,ALWAYS>::NOTATION ;
@@ -1366,6 +1395,7 @@ trait TEXTWRITER_IMPLHOLDER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 
 	public:
 		void initialize (RREF<VRef<RegBuffer<ITEM>>> stream) override {
+			mAttribute = TextAttribute<ITEM> (PH0) ;
 			mStream = move (stream) ;
 			reset () ;
 			backup () ;
@@ -1383,15 +1413,19 @@ trait TEXTWRITER_IMPLHOLDER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 			return mWrite ;
 		}
 
+		CREF<RegBuffer<ITEM>> raw (RREF<RegCaches<ITEM>> unnamed) const leftvalue override {
+			return RegBuffer<ITEM>::from (mStream.self ,0 ,length () ,move (unnamed)) ;
+		}
+
 		void reset () override {
 			mRead = 0 ;
 			mWrite = 0 ;
 		}
 
 		void reset (CREF<INDEX> read_ ,CREF<INDEX> write_) override {
-			assert (vbetween (read_ ,0 ,mStream->size ())) ;
-			assert (vbetween (write_ ,0 ,mStream->size ())) ;
-			assert (read_ <= write_) ;
+			assert (read_ >= 0) ;
+			assert (write_ >= 0) ;
+			assert (length () <= size ()) ;
 			mRead = read_ ;
 			mWrite = write_ ;
 		}
@@ -1439,7 +1473,7 @@ trait TEXTWRITER_IMPLHOLDER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 		}
 
 		void write (CREF<VAL64> item) override {
-			using R1X = typename TEXTWRITER_WRITEVALUE_HELP<ITEM ,ALWAYS>::WriteValue ;
+			using R1X = typename DEPENDENT<TEXTWRITER_WRITEVALUE_HELP<ITEM ,ALWAYS> ,DEPEND>::WriteValue ;
 			if ifswitch (TRUE) {
 				if (item >= 0)
 					discard ;
@@ -1474,7 +1508,7 @@ trait TEXTWRITER_IMPLHOLDER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 		}
 
 		void write (CREF<DOUBLE> item) override {
-			using R1X = typename TEXTWRITER_WRITEVALUE_HELP<ITEM ,ALWAYS>::WriteValue ;
+			using R1X = typename DEPENDENT<TEXTWRITER_WRITEVALUE_HELP<ITEM ,ALWAYS> ,DEPEND>::WriteValue ;
 			if ifswitch (TRUE) {
 				if (item >= 0)
 					discard ;
@@ -1547,13 +1581,15 @@ trait TEXTWRITER_IMPLHOLDER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 
 		void write (CREF<Slice<STR>> item) override {
 			for (auto &&i : iter (0 ,item.size ())) {
-				vbetween (INDEX (item[i]) ,0 ,128) ;
+				assume (vbetween (INDEX (item[i]) ,0 ,128)) ;
 				const auto r1x = ITEM (item[i]) ;
 				write (r1x) ;
 			}
 		}
 
 		void write (CREF<String<ITEM>> item) override {
+			const auto r1x = item.length () ;
+			assume (r1x <= VAL32_MAX) ;
 			for (auto &&i : item)
 				write (i) ;
 		}
@@ -1719,7 +1755,7 @@ trait TEXTWRITER_WRITEVALUE_HELP<ITEM ,ALWAYS> {
 				mValue = r6x ;
 				mWrite-- ;
 				mBuffer[mWrite] = ITEM ('E') ;
-				const auto r7x = vmax (LENGTH (r3x - 1 - r1x) ,ZERO) ;
+				const auto r7x = vmax (LENGTH (r3x - 1 - r1x) ,0) ;
 				for (auto &&i : iter (0 ,r7x)) {
 					noop (i) ;
 					mValue.mMantissa /= 10 ;
@@ -1769,7 +1805,7 @@ trait TEXTWRITER_WRITEVALUE_HELP<ITEM ,ALWAYS> {
 					discard ;
 				if (r4x >= 0)
 					discard ;
-				const auto r8x = vmax (LENGTH (-r4x - r1x) ,ZERO) ;
+				const auto r8x = vmax (LENGTH (-r4x - r1x) ,0) ;
 				for (auto &&i : iter (0 ,r8x)) {
 					noop (i) ;
 					mValue.mMantissa /= 10 ;
@@ -1804,7 +1840,7 @@ trait TEXTWRITER_WRITEVALUE_HELP<ITEM ,ALWAYS> {
 					discard ;
 				if (r4x >= 0)
 					discard ;
-				const auto r9x = vmax (LENGTH (-r4x - r1x) ,ZERO) ;
+				const auto r9x = vmax (LENGTH (-r4x - r1x) ,0) ;
 				for (auto &&i : iter (0 ,r9x)) {
 					noop (i) ;
 					mValue.mMantissa /= 10 ;
@@ -1900,14 +1936,14 @@ trait REGULARREADER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			return mCache[index] ;
 		}
 
-		void backup () override {
+		void backup () {
 			mBackupCache.clear () ;
 			for (auto &&i : mCache)
 				mBackupCache.add (i) ;
 			mReader->backup () ;
 		}
 
-		void recover () override {
+		void recover () {
 			mReader->recover () ;
 			swap (mBackupCache ,mCache) ;
 		}
@@ -2049,23 +2085,6 @@ trait REGULARREADER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			recover () ;
 		}
 
-		void read_hint_word_space () override {
-			mHintString = FALSE ;
-			mHintSize = 0 ;
-			backup () ;
-			const auto r1x = mReader->attribute () ;
-			while (TRUE) {
-				if (mCache[0] == r1x.ending_item ())
-					break ;
-				if (r1x.is_space (mCache[0]))
-					break ;
-				assume (ifnot (r1x.is_control (mCache[0]))) ;
-				read () ;
-				mHintSize++ ;
-			}
-			recover () ;
-		}
-
 		void read_hint_word_endline () override {
 			mHintString = FALSE ;
 			mHintSize = 0 ;
@@ -2074,7 +2093,7 @@ trait REGULARREADER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			while (TRUE) {
 				if (mCache[0] == r1x.ending_item ())
 					break ;
-				if (r1x.is_endline_space (mCache[0]))
+				if (r1x.is_gap_endline (mCache[0]))
 					break ;
 				assume (ifnot (r1x.is_control (mCache[0]))) ;
 				read () ;
@@ -2083,34 +2102,32 @@ trait REGULARREADER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			recover () ;
 		}
 
-		void read_skip_space () override {
+		void read_skip_gap () override {
 			const auto r1x = mReader->attribute () ;
 			while (TRUE) {
-				if ifnot (r1x.is_space (mCache[0]))
+				if ifnot (r1x.is_gap (mCache[0]))
 					break ;
 				read () ;
 			}
 		}
 
-		void read_skip_space_only () override {
+		void read_skip_gap_space () override {
 			const auto r1x = mReader->attribute () ;
 			while (TRUE) {
 				if (mCache[0] == r1x.ending_item ())
 					break ;
-				if ifnot (r1x.is_space (mCache[0]))
-					break ;
-				if (r1x.is_endline_space (mCache[0]))
+				if ifnot (r1x.is_gap_space (mCache[0]))
 					break ;
 				read () ;
 			}
 		}
 
-		void read_skip_space_endline () override {
+		void read_skip_gap_endline () override {
 			const auto r1x = mReader->attribute () ;
 			while (TRUE) {
 				if (mCache[0] == r1x.ending_item ())
 					break ;
-				if ifnot (r1x.is_endline_space (mCache[0]))
+				if ifnot (r1x.is_gap_endline (mCache[0]))
 					break ;
 				read () ;
 			}
@@ -2125,6 +2142,7 @@ trait REGULARREADER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			if ifswitch (TRUE) {
 				if (item.size () >= r3x)
 					discard ;
+				assume (r3x <= VAL32_MAX) ;
 				item = String<STRU8> (r3x) ;
 			}
 			item.trunc (r3x) ;

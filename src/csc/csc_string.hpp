@@ -88,7 +88,7 @@ trait TEMPLATE_string_parse_HELP<UNIT ,SIDE ,REQUIRE<IS_SAME<UNIT ,BOOL>>> {
 	struct TEMPLATE_string_parse {
 		inline BOOL operator() (CREF<String<SIDE>> obj) const {
 			BOOL ret ;
-			auto rax = TextReader<SIDE> (obj.raw ().as_ref ()) ;
+			auto rax = TextReader<SIDE> (obj.raw ().borrow ()) ;
 			rax >> ret ;
 			rax >> EOS ;
 			return move (ret) ;
@@ -101,7 +101,7 @@ trait TEMPLATE_string_build_HELP<UNIT ,SIDE ,REQUIRE<IS_SAME<SIDE ,BOOL>>> {
 	struct TEMPLATE_string_build {
 		inline String<UNIT> operator() (CREF<BOOL> obj) const {
 			String<UNIT> ret = String<UNIT> (64) ;
-			auto rax = TextWriter<UNIT> (ret.raw ().as_ref ()) ;
+			auto rax = TextWriter<UNIT> (ret.raw ().borrow ()) ;
 			rax << obj ;
 			rax << EOS ;
 			return move (ret) ;
@@ -114,7 +114,7 @@ trait TEMPLATE_string_parse_HELP<UNIT ,SIDE ,REQUIRE<IS_SAME<UNIT ,VAL32>>> {
 	struct TEMPLATE_string_parse {
 		inline VAL32 operator() (CREF<String<SIDE>> obj) const {
 			VAL32 ret ;
-			auto rax = TextReader<SIDE> (obj.raw ().as_ref ()) ;
+			auto rax = TextReader<SIDE> (obj.raw ().borrow ()) ;
 			rax >> ret ;
 			rax >> EOS ;
 			return move (ret) ;
@@ -127,7 +127,7 @@ trait TEMPLATE_string_build_HELP<UNIT ,SIDE ,REQUIRE<IS_SAME<SIDE ,VAL32>>> {
 	struct TEMPLATE_string_build {
 		inline String<UNIT> operator() (CREF<VAL32> obj) const {
 			String<UNIT> ret = String<UNIT> (64) ;
-			auto rax = TextWriter<UNIT> (ret.raw ().as_ref ()) ;
+			auto rax = TextWriter<UNIT> (ret.raw ().borrow ()) ;
 			rax << obj ;
 			rax << EOS ;
 			return move (ret) ;
@@ -140,7 +140,7 @@ trait TEMPLATE_string_parse_HELP<UNIT ,SIDE ,REQUIRE<IS_SAME<UNIT ,VAL64>>> {
 	struct TEMPLATE_string_parse {
 		inline VAL64 operator() (CREF<String<SIDE>> obj) const {
 			VAL64 ret ;
-			auto rax = TextReader<SIDE> (obj.raw ().as_ref ()) ;
+			auto rax = TextReader<SIDE> (obj.raw ().borrow ()) ;
 			rax >> ret ;
 			rax >> EOS ;
 			return move (ret) ;
@@ -153,7 +153,7 @@ trait TEMPLATE_string_build_HELP<UNIT ,SIDE ,REQUIRE<IS_SAME<SIDE ,VAL64>>> {
 	struct TEMPLATE_string_build {
 		inline String<UNIT> operator() (CREF<VAL64> obj) const {
 			String<UNIT> ret = String<UNIT> (64) ;
-			auto rax = TextWriter<UNIT> (ret.raw ().as_ref ()) ;
+			auto rax = TextWriter<UNIT> (ret.raw ().borrow ()) ;
 			rax << obj ;
 			rax << EOS ;
 			return move (ret) ;
@@ -166,7 +166,7 @@ trait TEMPLATE_string_parse_HELP<UNIT ,SIDE ,REQUIRE<IS_SAME<UNIT ,SINGLE>>> {
 	struct TEMPLATE_string_parse {
 		inline SINGLE operator() (CREF<String<SIDE>> obj) const {
 			SINGLE ret ;
-			auto rax = TextReader<SIDE> (obj.raw ().as_ref ()) ;
+			auto rax = TextReader<SIDE> (obj.raw ().borrow ()) ;
 			rax >> ret ;
 			rax >> EOS ;
 			return move (ret) ;
@@ -179,7 +179,7 @@ trait TEMPLATE_string_build_HELP<UNIT ,SIDE ,REQUIRE<IS_SAME<SIDE ,SINGLE>>> {
 	struct TEMPLATE_string_build {
 		inline String<UNIT> operator() (CREF<SINGLE> obj) const {
 			String<UNIT> ret = String<UNIT> (64) ;
-			auto rax = TextWriter<UNIT> (ret.raw ().as_ref ()) ;
+			auto rax = TextWriter<UNIT> (ret.raw ().borrow ()) ;
 			rax << obj ;
 			rax << EOS ;
 			return move (ret) ;
@@ -192,7 +192,7 @@ trait TEMPLATE_string_parse_HELP<UNIT ,SIDE ,REQUIRE<IS_SAME<UNIT ,DOUBLE>>> {
 	struct TEMPLATE_string_parse {
 		inline DOUBLE operator() (CREF<String<SIDE>> obj) const {
 			DOUBLE ret ;
-			auto rax = TextReader<SIDE> (obj.raw ().as_ref ()) ;
+			auto rax = TextReader<SIDE> (obj.raw ().borrow ()) ;
 			rax >> ret ;
 			rax >> EOS ;
 			return move (ret) ;
@@ -205,7 +205,7 @@ trait TEMPLATE_string_build_HELP<UNIT ,SIDE ,REQUIRE<IS_SAME<SIDE ,DOUBLE>>> {
 	struct TEMPLATE_string_build {
 		inline String<UNIT> operator() (CREF<DOUBLE> obj) const {
 			String<UNIT> ret = String<UNIT> (64) ;
-			auto rax = TextWriter<UNIT> (ret.raw ().as_ref ()) ;
+			auto rax = TextWriter<UNIT> (ret.raw ().borrow ()) ;
 			rax << obj ;
 			rax << EOS ;
 			return move (ret) ;
@@ -218,7 +218,7 @@ trait TEMPLATE_string_parse_HELP<UNIT ,SIDE ,REQUIRE<IS_SAME<UNIT ,BYTE>>> {
 	struct TEMPLATE_string_parse {
 		inline BYTE operator() (CREF<String<SIDE>> obj) const {
 			BYTE ret ;
-			auto rax = TextReader<SIDE> (obj.raw ().as_ref ()) ;
+			auto rax = TextReader<SIDE> (obj.raw ().borrow ()) ;
 			rax >> ret ;
 			rax >> EOS ;
 			return move (ret) ;
@@ -231,7 +231,7 @@ trait TEMPLATE_string_build_HELP<UNIT ,SIDE ,REQUIRE<IS_SAME<SIDE ,BYTE>>> {
 	struct TEMPLATE_string_build {
 		inline String<UNIT> operator() (CREF<BYTE> obj) const {
 			String<UNIT> ret = String<UNIT> (64) ;
-			auto rax = TextWriter<UNIT> (ret.raw ().as_ref ()) ;
+			auto rax = TextWriter<UNIT> (ret.raw ().borrow ()) ;
 			rax << obj ;
 			rax << EOS ;
 			return move (ret) ;
@@ -244,7 +244,7 @@ trait TEMPLATE_string_parse_HELP<UNIT ,SIDE ,REQUIRE<IS_SAME<UNIT ,WORD>>> {
 	struct TEMPLATE_string_parse {
 		inline WORD operator() (CREF<String<SIDE>> obj) const {
 			WORD ret ;
-			auto rax = TextReader<SIDE> (obj.raw ().as_ref ()) ;
+			auto rax = TextReader<SIDE> (obj.raw ().borrow ()) ;
 			rax >> ret ;
 			rax >> EOS ;
 			return move (ret) ;
@@ -257,7 +257,7 @@ trait TEMPLATE_string_build_HELP<UNIT ,SIDE ,REQUIRE<IS_SAME<SIDE ,WORD>>> {
 	struct TEMPLATE_string_build {
 		inline String<UNIT> operator() (CREF<WORD> obj) const {
 			String<UNIT> ret = String<UNIT> (64) ;
-			auto rax = TextWriter<UNIT> (ret.raw ().as_ref ()) ;
+			auto rax = TextWriter<UNIT> (ret.raw ().borrow ()) ;
 			rax << obj ;
 			rax << EOS ;
 			return move (ret) ;
@@ -270,7 +270,7 @@ trait TEMPLATE_string_parse_HELP<UNIT ,SIDE ,REQUIRE<IS_SAME<UNIT ,CHAR>>> {
 	struct TEMPLATE_string_parse {
 		inline CHAR operator() (CREF<String<SIDE>> obj) const {
 			CHAR ret ;
-			auto rax = TextReader<SIDE> (obj.raw ().as_ref ()) ;
+			auto rax = TextReader<SIDE> (obj.raw ().borrow ()) ;
 			rax >> ret ;
 			rax >> EOS ;
 			return move (ret) ;
@@ -283,7 +283,7 @@ trait TEMPLATE_string_build_HELP<UNIT ,SIDE ,REQUIRE<IS_SAME<SIDE ,CHAR>>> {
 	struct TEMPLATE_string_build {
 		inline String<UNIT> operator() (CREF<CHAR> obj) const {
 			String<UNIT> ret = String<UNIT> (64) ;
-			auto rax = TextWriter<UNIT> (ret.raw ().as_ref ()) ;
+			auto rax = TextWriter<UNIT> (ret.raw ().borrow ()) ;
 			rax << obj ;
 			rax << EOS ;
 			return move (ret) ;
@@ -296,7 +296,7 @@ trait TEMPLATE_string_parse_HELP<UNIT ,SIDE ,REQUIRE<IS_SAME<UNIT ,DATA>>> {
 	struct TEMPLATE_string_parse {
 		inline DATA operator() (CREF<String<SIDE>> obj) const {
 			DATA ret ;
-			auto rax = TextReader<SIDE> (obj.raw ().as_ref ()) ;
+			auto rax = TextReader<SIDE> (obj.raw ().borrow ()) ;
 			rax >> ret ;
 			rax >> EOS ;
 			return move (ret) ;
@@ -309,7 +309,7 @@ trait TEMPLATE_string_build_HELP<UNIT ,SIDE ,REQUIRE<IS_SAME<SIDE ,DATA>>> {
 	struct TEMPLATE_string_build {
 		inline String<UNIT> operator() (CREF<DATA> obj) const {
 			String<UNIT> ret = String<UNIT> (64) ;
-			auto rax = TextWriter<UNIT> (ret.raw ().as_ref ()) ;
+			auto rax = TextWriter<UNIT> (ret.raw ().borrow ()) ;
 			rax << obj ;
 			rax << EOS ;
 			return move (ret) ;
@@ -1145,13 +1145,13 @@ using FUNCTION_string_cvt = typename FUNCTION_string_cvt_HELP<DEPEND ,ALWAYS>::F
 static constexpr auto string_cvt = FUNCTION_string_cvt () ;
 
 template <class...>
-trait ANYSTRING_HELP ;
+trait TEXTSTRING_HELP ;
 
 template <class...>
-trait ANYSTRING_IMPLHOLDER_HELP ;
+trait TEXTSTRING_IMPLHOLDER_HELP ;
 
 template <class DEPEND>
-trait ANYSTRING_HELP<DEPEND ,ALWAYS> {
+trait TEXTSTRING_HELP<DEPEND ,ALWAYS> {
 	struct Holder implement Interface {
 		virtual void initialize (CREF<Slice<STR>> text) = 0 ;
 		virtual void initialize (CREF<String<STRA>> text) = 0 ;
@@ -1170,39 +1170,39 @@ trait ANYSTRING_HELP<DEPEND ,ALWAYS> {
 		imports VRef<Holder> invoke () ;
 	} ;
 
-	class AnyString {
+	class TextString {
 	protected:
 		VRef<Holder> mThis ;
 
 	public:
-		implicit AnyString () = default ;
+		implicit TextString () = default ;
 
-		explicit AnyString (CREF<Slice<STR>> text) {
+		explicit TextString (CREF<Slice<STR>> text) {
 			mThis = FUNCTION_extern::invoke () ;
 			mThis->initialize (text) ;
 		}
 
-		explicit AnyString (CREF<String<STRA>> text) {
+		explicit TextString (CREF<String<STRA>> text) {
 			mThis = FUNCTION_extern::invoke () ;
 			mThis->initialize (text) ;
 		}
 
-		explicit AnyString (CREF<String<STRW>> text) {
+		explicit TextString (CREF<String<STRW>> text) {
 			mThis = FUNCTION_extern::invoke () ;
 			mThis->initialize (text) ;
 		}
 
-		explicit AnyString (CREF<String<STRU8>> text) {
+		explicit TextString (CREF<String<STRU8>> text) {
 			mThis = FUNCTION_extern::invoke () ;
 			mThis->initialize (text) ;
 		}
 
-		explicit AnyString (CREF<String<STRU16>> text) {
+		explicit TextString (CREF<String<STRU16>> text) {
 			mThis = FUNCTION_extern::invoke () ;
 			mThis->initialize (text) ;
 		}
 
-		explicit AnyString (CREF<String<STRU32>> text) {
+		explicit TextString (CREF<String<STRU32>> text) {
 			mThis = FUNCTION_extern::invoke () ;
 			mThis->initialize (text) ;
 		}
@@ -1229,7 +1229,7 @@ trait ANYSTRING_HELP<DEPEND ,ALWAYS> {
 	} ;
 } ;
 
-using AnyString = typename ANYSTRING_HELP<DEPEND ,ALWAYS>::AnyString ;
+using TextString = typename TEXTSTRING_HELP<DEPEND ,ALWAYS>::TextString ;
 
 template <class...>
 trait ESCAPESTRING_HELP ;
@@ -1247,7 +1247,7 @@ trait ESCAPESTRING_HELP<DEPEND ,ALWAYS> {
 	using Binder = Together<BinderA ,BinderW ,BinderU8 ,BinderU16 ,BinderU32> ;
 
 	struct Holder implement Interface {
-		virtual void initialize (RREF<AnyString> text) = 0 ;
+		virtual void initialize (RREF<TextString> text) = 0 ;
 		virtual void write_text (VREF<TextWriter<STRA>> writer) const = 0 ;
 		virtual void write_text (VREF<TextWriter<STRW>> writer) const = 0 ;
 		virtual void write_text (VREF<TextWriter<STRU8>> writer) const = 0 ;
@@ -1268,32 +1268,32 @@ trait ESCAPESTRING_HELP<DEPEND ,ALWAYS> {
 
 		explicit EscapeString (CREF<Slice<STR>> text) {
 			mThis = FUNCTION_extern::invoke () ;
-			mThis->initialize (AnyString (text)) ;
+			mThis->initialize (TextString (text)) ;
 		}
 
 		explicit EscapeString (CREF<String<STRA>> text) {
 			mThis = FUNCTION_extern::invoke () ;
-			mThis->initialize (AnyString (text)) ;
+			mThis->initialize (TextString (text)) ;
 		}
 
 		explicit EscapeString (CREF<String<STRW>> text) {
 			mThis = FUNCTION_extern::invoke () ;
-			mThis->initialize (AnyString (text)) ;
+			mThis->initialize (TextString (text)) ;
 		}
 
 		explicit EscapeString (CREF<String<STRU8>> text) {
 			mThis = FUNCTION_extern::invoke () ;
-			mThis->initialize (AnyString (text)) ;
+			mThis->initialize (TextString (text)) ;
 		}
 
 		explicit EscapeString (CREF<String<STRU16>> text) {
 			mThis = FUNCTION_extern::invoke () ;
-			mThis->initialize (AnyString (text)) ;
+			mThis->initialize (TextString (text)) ;
 		}
 
 		explicit EscapeString (CREF<String<STRU32>> text) {
 			mThis = FUNCTION_extern::invoke () ;
-			mThis->initialize (AnyString (text)) ;
+			mThis->initialize (TextString (text)) ;
 		}
 
 		void friend_write (VREF<TextWriter<STRA>> writer) const override {
@@ -1336,7 +1336,7 @@ trait COMMASTRING_HELP<DEPEND ,ALWAYS> {
 	using Binder = Together<BinderA ,BinderW ,BinderU8 ,BinderU16 ,BinderU32> ;
 
 	struct Holder implement Interface {
-		virtual void initialize (RREF<AnyString> gap_text ,RREF<AnyString> comma_text) = 0 ;
+		virtual void initialize (RREF<TextString> gap_text ,RREF<TextString> comma_text ,RREF<TextString> first_text) = 0 ;
 		virtual void write_text (VREF<TextWriter<STRA>> writer) const = 0 ;
 		virtual void write_text (VREF<TextWriter<STRW>> writer) const = 0 ;
 		virtual void write_text (VREF<TextWriter<STRU8>> writer) const = 0 ;
@@ -1360,34 +1360,34 @@ trait COMMASTRING_HELP<DEPEND ,ALWAYS> {
 	public:
 		implicit CommaString () = default ;
 
-		explicit CommaString (CREF<Slice<STR>> gap_text ,CREF<Slice<STR>> comma_text) {
+		explicit CommaString (CREF<Slice<STR>> gap_text ,CREF<Slice<STR>> comma_text ,CREF<String<STR>> first_text) {
 			mThis = FUNCTION_extern::invoke () ;
-			mThis->initialize (AnyString (gap_text) ,AnyString (comma_text)) ;
+			mThis->initialize (TextString (gap_text) ,TextString (comma_text) ,TextString (first_text)) ;
 		}
 
-		explicit CommaString (CREF<String<STRA>> gap_text ,CREF<String<STRA>> comma_text) {
+		explicit CommaString (CREF<String<STRA>> gap_text ,CREF<String<STRA>> comma_text ,CREF<String<STRA>> first_text) {
 			mThis = FUNCTION_extern::invoke () ;
-			mThis->initialize (AnyString (gap_text) ,AnyString (comma_text)) ;
+			mThis->initialize (TextString (gap_text) ,TextString (comma_text) ,TextString (first_text)) ;
 		}
 
-		explicit CommaString (CREF<String<STRW>> gap_text ,CREF<String<STRW>> comma_text) {
+		explicit CommaString (CREF<String<STRW>> gap_text ,CREF<String<STRW>> comma_text ,CREF<String<STRW>> first_text) {
 			mThis = FUNCTION_extern::invoke () ;
-			mThis->initialize (AnyString (gap_text) ,AnyString (comma_text)) ;
+			mThis->initialize (TextString (gap_text) ,TextString (comma_text) ,TextString (first_text)) ;
 		}
 
-		explicit CommaString (CREF<String<STRU8>> gap_text ,CREF<String<STRU8>> comma_text) {
+		explicit CommaString (CREF<String<STRU8>> gap_text ,CREF<String<STRU8>> comma_text ,CREF<String<STRU8>> first_text) {
 			mThis = FUNCTION_extern::invoke () ;
-			mThis->initialize (AnyString (gap_text) ,AnyString (comma_text)) ;
+			mThis->initialize (TextString (gap_text) ,TextString (comma_text) ,TextString (first_text)) ;
 		}
 
-		explicit CommaString (CREF<String<STRU16>> gap_text ,CREF<String<STRU16>> comma_text) {
+		explicit CommaString (CREF<String<STRU16>> gap_text ,CREF<String<STRU16>> comma_text ,CREF<String<STRU16>> first_text) {
 			mThis = FUNCTION_extern::invoke () ;
-			mThis->initialize (AnyString (gap_text) ,AnyString (comma_text)) ;
+			mThis->initialize (TextString (gap_text) ,TextString (comma_text) ,TextString (first_text)) ;
 		}
 
-		explicit CommaString (CREF<String<STRU32>> gap_text ,CREF<String<STRU32>> comma_text) {
+		explicit CommaString (CREF<String<STRU32>> gap_text ,CREF<String<STRU32>> comma_text ,CREF<String<STRU32>> first_text) {
 			mThis = FUNCTION_extern::invoke () ;
-			mThis->initialize (AnyString (gap_text) ,AnyString (comma_text)) ;
+			mThis->initialize (TextString (gap_text) ,TextString (comma_text) ,TextString (first_text)) ;
 		}
 
 		void friend_write (VREF<TextWriter<STRA>> writer) const override {
@@ -1427,13 +1427,13 @@ trait COMMASTRING_HELP<DEPEND ,ALWAYS> {
 using CommaString = typename COMMASTRING_HELP<DEPEND ,ALWAYS>::CommaString ;
 
 template <class...>
-trait ALIGNEDSTRING_HELP ;
+trait VALUESTRING_HELP ;
 
 template <class...>
-trait ALIGNEDSTRING_IMPLHOLDER_HELP ;
+trait VALUESTRING_IMPLHOLDER_HELP ;
 
 template <class DEPEND>
-trait ALIGNEDSTRING_HELP<DEPEND ,ALWAYS> {
+trait VALUESTRING_HELP<DEPEND ,ALWAYS> {
 	using BinderA = typename TEXTWRITER_HELP<STRA ,ALWAYS>::Binder ;
 	using BinderW = typename TEXTWRITER_HELP<STRW ,ALWAYS>::Binder ;
 	using BinderU8 = typename TEXTWRITER_HELP<STRU8 ,ALWAYS>::Binder ;
@@ -1454,14 +1454,14 @@ trait ALIGNEDSTRING_HELP<DEPEND ,ALWAYS> {
 		imports VRef<Holder> invoke () ;
 	} ;
 
-	class AlignedString implement Binder {
+	class ValueString implement Binder {
 	protected:
 		VRef<Holder> mThis ;
 
 	public:
-		implicit AlignedString () = default ;
+		implicit ValueString () = default ;
 
-		explicit AlignedString (CREF<VAL64> value_ ,CREF<LENGTH> align_) {
+		explicit ValueString (CREF<VAL64> value_ ,CREF<LENGTH> align_) {
 			mThis = FUNCTION_extern::invoke () ;
 			mThis->initialize (value_ ,align_) ;
 		}
@@ -1488,5 +1488,5 @@ trait ALIGNEDSTRING_HELP<DEPEND ,ALWAYS> {
 	} ;
 } ;
 
-using AlignedString = typename ALIGNEDSTRING_HELP<DEPEND ,ALWAYS>::AlignedString ;
+using ValueString = typename VALUESTRING_HELP<DEPEND ,ALWAYS>::ValueString ;
 } ;

@@ -54,38 +54,32 @@
     </Expand>
   </Type>
 
-  <Type Name="CSC::SLICE_IMPLHOLDER_HELP&lt;*&gt;::ImplHolder">
-    <Expand HideRawView="true">
-      <ExpandedItem>mSlice</ExpandedItem>
-    </Expand>
+  <Type Name="CSC::SLICE_IMPLHOLDER_HELP&lt;char,*&gt;::ImplHolder">
+    <DisplayString>{mText.mBegin,s}</DisplayString>
+    <StringView>mText.mBegin,s</StringView>
   </Type>
 
-  <Type Name="CSC::SLICE_IMPLHOLDER_HELP&lt;char,*&gt;::NODE">
-    <DisplayString>{mPointer,s}</DisplayString>
-    <StringView>mPointer,s</StringView>
+  <Type Name="CSC::SLICE_IMPLHOLDER_HELP&lt;wchar_t,*&gt;::ImplHolder">
+    <DisplayString>{mText.mBegin,su}</DisplayString>
+    <StringView Condition="mAlign==1">mText.mBegin,s8</StringView>
+    <StringView Condition="mAlign==2">mText.mBegin,su</StringView>
   </Type>
 
-  <Type Name="CSC::SLICE_IMPLHOLDER_HELP&lt;wchar_t,*&gt;::NODE">
-    <DisplayString>{mPointer,su}</DisplayString>
-    <StringView Condition="mAlign==1">mPointer,s8</StringView>
-    <StringView Condition="mAlign==2">mPointer,su</StringView>
+  <Type Name="CSC::SLICE_IMPLHOLDER_HELP&lt;unsigned char,*&gt;::ImplHolder">
+    <DisplayString>{mText.mBegin,s8}</DisplayString>
+    <StringView>mText.mBegin,s8</StringView>
   </Type>
 
-  <Type Name="CSC::SLICE_IMPLHOLDER_HELP&lt;unsigned char,*&gt;::NODE">
-    <DisplayString>{mPointer,s8}</DisplayString>
-    <StringView>mPointer,s8</StringView>
+  <Type Name="CSC::SLICE_IMPLHOLDER_HELP&lt;char16_t,*&gt;::ImplHolder">
+    <DisplayString>{mText.mBegin,su}</DisplayString>
+    <StringView Condition="mAlign==1">mText.mBegin,s8</StringView>
+    <StringView Condition="mAlign==2">mText.mBegin,su</StringView>
   </Type>
 
-  <Type Name="CSC::SLICE_IMPLHOLDER_HELP&lt;char16_t,*&gt;::NODE">
-    <DisplayString>{mPointer,su}</DisplayString>
-    <StringView Condition="mAlign==1">mPointer,s8</StringView>
-    <StringView Condition="mAlign==2">mPointer,su</StringView>
-  </Type>
-
-  <Type Name="CSC::SLICE_IMPLHOLDER_HELP&lt;char32_t,*&gt;::NODE">
-    <DisplayString>{mPointer,s32}</DisplayString>
-    <StringView Condition="mAlign==1">mPointer,s8</StringView>
-    <StringView Condition="mAlign==4">mPointer,s32</StringView>
+  <Type Name="CSC::SLICE_IMPLHOLDER_HELP&lt;char32_t,*&gt;::ImplHolder">
+    <DisplayString>{mText.mBegin,s32}</DisplayString>
+    <StringView Condition="mAlign==1">mText.mBegin,s8</StringView>
+    <StringView Condition="mAlign==4">mText.mBegin,s32</StringView>
   </Type>
 
   <Type Name="CSC::CLAZZ_HELP&lt;*&gt;::Clazz">
@@ -118,7 +112,7 @@
     </Expand>
   </Type>
 
-  <Type Name="CSC::CELL_HELP&lt;*&gt;::Cell">
+  <Type Name="CSC::OPTIONAL_HELP&lt;*&gt;::Optional">
     <Expand HideRawView="true">
       <Item Name="[code]">mCode</Item>
       <Item Name="[value]">mValue</Item>
@@ -254,7 +248,7 @@
     </Expand>
   </Type>
 
-  <Type Name="CSC::FUNBUFFER_PUREHOLDER_HELP&lt;*,*&gt;::PureHolder">
+  <Type Name="CSC::PROBUFFER_PUREHOLDER_HELP&lt;*,*&gt;::PureHolder">
     <Expand HideRawView="true">
       <ExpandedItem>mValue</ExpandedItem>
     </Expand>

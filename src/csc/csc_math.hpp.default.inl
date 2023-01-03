@@ -6,9 +6,9 @@
 
 #include "csc_math.hpp"
 
-#include "begin.h"
+#include "csc_end.h"
 #include <cmath>
-#include "end.h"
+#include "csc_begin.h"
 
 namespace CSC {
 template <class DEPEND>
@@ -23,20 +23,20 @@ trait MATHPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 
 		BOOL is_inf (CREF<SINGLE> obj) const override {
 			const auto r1x = bitwise (obj) ;
-			if ifnot (BitProc::all_bit (r1x ,CHAR (0X7F800000)))
+			if ifnot (BitProc::bit_all (r1x ,CHAR (0X7F800000)))
 				return FALSE ;
 			//@warn: treat nan as inf
-			if (BitProc::any_bit (r1x ,CHAR (0X007FFFFF)))
+			if (BitProc::bit_any (r1x ,CHAR (0X007FFFFF)))
 				return TRUE ;
 			return TRUE ;
 		}
 
 		BOOL is_inf (CREF<DOUBLE> obj) const override {
 			const auto r1x = bitwise (obj) ;
-			if ifnot (BitProc::all_bit (r1x ,DATA (0X7FF0000000000000)))
+			if ifnot (BitProc::bit_all (r1x ,DATA (0X7FF0000000000000)))
 				return FALSE ;
 			//@warn: treat nan as inf
-			if (BitProc::any_bit (r1x ,DATA (0X000FFFFFFFFFFFFF)))
+			if (BitProc::bit_any (r1x ,DATA (0X000FFFFFFFFFFFFF)))
 				return TRUE ;
 			return TRUE ;
 		}
@@ -213,9 +213,9 @@ trait MATHPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 
 		INDEX else_of (CREF<Variadic<BOOL>> obj1) const override {
 			if (obj1.empty ())
-				return ZERO ;
+				return 0 ;
 			if (obj1.one ())
-				return ZERO ;
+				return 0 ;
 			return 1 + else_of (obj1.rest ()) ;
 		}
 
@@ -565,11 +565,11 @@ trait MATHPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			return std::acos (obj) ;
 		}
 
-		SINGLE arctan (CREF<SINGLE> fx ,CREF<SINGLE> fy) const override {
+		SINGLE arctan (CREF<SINGLE> fy ,CREF<SINGLE> fx) const override {
 			return std::atan2 (fy ,fx) ;
 		}
 
-		DOUBLE arctan (CREF<DOUBLE> fx ,CREF<DOUBLE> fy) const override {
+		DOUBLE arctan (CREF<DOUBLE> fy ,CREF<DOUBLE> fx) const override {
 			return std::atan2 (fy ,fx) ;
 		}
 
@@ -594,6 +594,249 @@ trait FLOATPROC_FEXP2CACHE_HELP ;
 
 template <class...>
 trait FLOATPROC_FEXP10CACHE_HELP ;
+
+template <class DEPEND>
+trait FLOATPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
+	using NOTATION = typename FLOATPROC_HELP<DEPEND ,ALWAYS>::NOTATION ;
+	using Holder = typename FLOATPROC_HELP<DEPEND ,ALWAYS>::Holder ;
+
+	class ImplHolder implement Holder {
+	public:
+		void initialize () override {
+			noop () ;
+		}
+
+		DOUBLE encode (CREF<NOTATION> fexp2) const override {
+			assert (fexp2.mRadix == 2) ;
+			auto rax = fexp2 ;
+			if ifswitch (TRUE) {
+				if (rax.mMantissa == 0)
+					discard ;
+				while (TRUE) {
+					if ifnot (BitProc::bit_any (DATA (rax.mMantissa) ,DATA (0XFFE0000000000000)))
+						break ;
+					rax.mMantissa = VAL64 (DATA (rax.mMantissa) >> 1) ;
+					rax.mExponent++ ;
+				}
+				while (TRUE) {
+					if (BitProc::bit_any (DATA (rax.mMantissa) ,DATA (0XFFF0000000000000)))
+						break ;
+					rax.mMantissa = VAL64 (DATA (rax.mMantissa) << 1) ;
+					rax.mExponent-- ;
+				}
+			}
+			if ifswitch (TRUE) {
+				const auto r1x = VAL64 (-1074) - rax.mExponent ;
+				if (r1x <= 0)
+					discard ;
+				rax.mMantissa = VAL64 (DATA (rax.mMantissa) >> r1x) ;
+				rax.mExponent = -1075 ;
+			}
+			rax.mExponent += 1075 ;
+			if ifswitch (TRUE) {
+				if (rax.mMantissa != 0)
+					discard ;
+				rax.mExponent = 0 ;
+			}
+			const auto r2x = invoke ([&] () {
+				if ifnot (fexp2.mSign)
+					return DATA (0X00) ;
+				return DATA (0X8000000000000000) ;
+			}) ;
+			const auto r3x = (DATA (rax.mExponent) << 52) & DATA (0X7FF0000000000000) ;
+			const auto r4x = DATA (rax.mMantissa) & DATA (0X000FFFFFFFFFFFFF) ;
+			const auto r5x = r2x | r3x | r4x ;
+			return bitwise[TYPEAS<DOUBLE>::expr] (r5x) ;
+		}
+
+		NOTATION decode (CREF<DOUBLE> obj) const override {
+			NOTATION ret ;
+			ret.mRadix = 2 ;
+			const auto r1x = bitwise (obj) ;
+			const auto r2x = r1x & DATA (0X7FF0000000000000) ;
+			const auto r3x = r1x & DATA (0X000FFFFFFFFFFFFF) ;
+			ret.mSign = BitProc::bit_any (r1x ,DATA (0X8000000000000000)) ;
+			ret.mMantissa = VAL64 (r3x) ;
+			ret.mPrecision = 0 ;
+			if ifswitch (TRUE) {
+				if (r2x == DATA (0X00))
+					discard ;
+				ret.mMantissa = VAL64 (DATA (ret.mMantissa) | DATA (0X0010000000000000)) ;
+			}
+			ret.mExponent = VAL64 (r2x >> 52) ;
+			ret.mExponent -= 1075 - LENGTH (r2x == DATA (0X00)) ;
+			if ifswitch (TRUE) {
+				if (ret.mMantissa != 0)
+					discard ;
+				ret.mExponent = 0 ;
+			}
+			if ifswitch (TRUE) {
+				if (ret.mMantissa == 0)
+					discard ;
+				while (TRUE) {
+					if (BitProc::bit_any (DATA (ret.mMantissa) ,DATA (0X0000000000000001)))
+						break ;
+					ret.mMantissa = VAL64 (DATA (ret.mMantissa) >> 1) ;
+					ret.mExponent++ ;
+				}
+			}
+			return move (ret) ;
+		}
+
+		NOTATION fexp2_multiply (CREF<NOTATION> obj1 ,CREF<NOTATION> obj2) const {
+			assert (obj1.mRadix == 2) ;
+			assert (obj2.mRadix == 2) ;
+			NOTATION ret ;
+			ret.mRadix = 2 ;
+			ret.mSign = MathProc::any_of (obj1.mSign ,obj2.mSign) ;
+			const auto r1x = LENGTH (32) ;
+			const auto r2x = DATA (VAL64 (BitProc::bit_single (r1x)) - 1) ;
+			const auto r3x = VAL64 (BitProc::bit_single (r1x - 1)) ;
+			const auto r4x = VAL64 (DATA (obj1.mMantissa) >> r1x) ;
+			const auto r5x = VAL64 (DATA (obj1.mMantissa) & r2x) ;
+			const auto r6x = VAL64 (DATA (obj2.mMantissa) >> r1x) ;
+			const auto r7x = VAL64 (DATA (obj2.mMantissa) & r2x) ;
+			const auto r8x = r4x * r6x ;
+			const auto r9x = r5x * r6x ;
+			const auto r10x = r4x * r7x ;
+			const auto r11x = r5x * r7x ;
+			//@warn: lose a part of precision
+			auto act = TRUE ;
+			if ifswitch (act) {
+				if (r8x == 0)
+					discard ;
+				const auto r12x = VAL64 (DATA (r9x) >> r1x) ;
+				const auto r13x = VAL64 (DATA (r9x) & r2x) ;
+				const auto r14x = VAL64 (DATA (r10x) >> r1x) ;
+				const auto r15x = VAL64 (DATA (r10x) & r2x) ;
+				const auto r16x = VAL64 (DATA (r11x) >> r1x) ;
+				const auto r17x = VAL64 (DATA (r13x + r15x + r16x + r3x) >> r1x) ;
+				ret.mMantissa = r8x + r12x + r14x + r17x ;
+				ret.mPrecision = 0 ;
+				ret.mExponent = obj1.mExponent + obj2.mExponent + r1x * 2 ;
+			}
+			if ifswitch (act) {
+				if (r9x == 0)
+					if (r10x == 0)
+						discard ;
+				const auto r18x = VAL64 (DATA (r11x + r3x) >> r1x) ;
+				ret.mMantissa = r9x + r10x + r18x ;
+				ret.mPrecision = 0 ;
+				ret.mExponent = obj1.mExponent + obj2.mExponent + r1x ;
+			}
+			if ifswitch (act) {
+				ret.mMantissa = r11x ;
+				ret.mPrecision = 0 ;
+				ret.mExponent = obj1.mExponent + obj2.mExponent ;
+			}
+			return move (ret) ;
+		}
+
+		NOTATION fexp2_from_fexp10 (CREF<NOTATION> fexp10) const override {
+			using R1X = typename DEPENDENT<FLOATPROC_FEXP2CACHE_HELP<DEPEND ,ALWAYS> ,DEPEND>::FEXP2Cache ;
+			assert (fexp10.mRadix == 10) ;
+			const auto r1x = invoke ([&] () {
+				NOTATION ret ;
+				ret.mRadix = 2 ;
+				ret.mSign = fexp10.mSign ;
+				ret.mMantissa = fexp10.mMantissa ;
+				ret.mPrecision = 0 ;
+				ret.mExponent = 0 ;
+				return move (ret) ;
+			}) ;
+			const auto r2x = R1X::instance ()[fexp10.mExponent] ;
+			const auto r3x = fexp2_multiply (r1x ,r2x) ;
+			return r3x ;
+		}
+
+		NOTATION fexp10_overflow (CREF<NOTATION> fexp10 ,CREF<VAL64> half) const {
+			NOTATION ret = fexp10 ;
+			if ifswitch (TRUE) {
+				if (ret.mMantissa >= 0)
+					discard ;
+				ret.mMantissa = VAL64 (DATA (ret.mMantissa) >> 1) ;
+				ret.mMantissa /= 5 ;
+				ret.mExponent++ ;
+			}
+			const auto r1x = MathProc::square (half) ;
+			while (TRUE) {
+				if (ret.mMantissa < r1x)
+					break ;
+				ret.mMantissa /= 10 ;
+				ret.mExponent++ ;
+			}
+			return move (ret) ;
+		}
+
+		NOTATION fexp10_multiply (CREF<NOTATION> obj1 ,CREF<NOTATION> obj2) const {
+			assert (obj1.mRadix == 10) ;
+			assert (obj2.mRadix == 10) ;
+			NOTATION ret ;
+			ret.mRadix = 10 ;
+			ret.mSign = MathProc::any_of (obj1.mSign ,obj2.mSign) ;
+			const auto r1x = LENGTH (9) ;
+			const auto r2x = VAL64 (1000000000) ;
+			const auto r3x = VAL64 (500000000) ;
+			const auto r4x = fexp10_overflow (obj1 ,r2x) ;
+			const auto r5x = fexp10_overflow (obj2 ,r2x) ;
+			const auto r6x = r4x.mMantissa / r2x ;
+			const auto r7x = r4x.mMantissa % r2x ;
+			const auto r8x = r5x.mMantissa / r2x ;
+			const auto r9x = r5x.mMantissa % r2x ;
+			const auto r10x = r6x * r8x ;
+			const auto r11x = r7x * r8x ;
+			const auto r12x = r6x * r9x ;
+			const auto r13x = r7x * r9x ;
+			//@warn: lose a part of precision
+			auto act = TRUE ;
+			if ifswitch (act) {
+				if (r10x == 0)
+					discard ;
+				const auto r14x = r11x / r2x ;
+				const auto r15x = r11x % r2x ;
+				const auto r16x = r12x / r2x ;
+				const auto r17x = r12x % r2x ;
+				const auto r18x = r13x / r2x ;
+				const auto r19x = (r15x + r17x + r18x + r3x) / r2x ;
+				ret.mMantissa = r10x + r14x + r16x + r19x ;
+				ret.mPrecision = 0 ;
+				ret.mExponent = r4x.mExponent + r5x.mExponent + r1x * 2 ;
+			}
+			if ifswitch (act) {
+				if (r11x == 0)
+					if (r12x == 0)
+						discard ;
+				const auto r20x = (r13x + r3x) / r2x ;
+				ret.mMantissa = r11x + r12x + r20x ;
+				ret.mPrecision = 0 ;
+				ret.mExponent = r4x.mExponent + r5x.mExponent + r1x ;
+			}
+			if ifswitch (act) {
+				ret.mMantissa = r13x ;
+				ret.mPrecision = 0 ;
+				ret.mExponent = r4x.mExponent + r5x.mExponent ;
+			}
+			return move (ret) ;
+		}
+
+		NOTATION fexp10_from_fexp2 (CREF<NOTATION> fexp2) const override {
+			using R1X = typename DEPENDENT<FLOATPROC_FEXP10CACHE_HELP<DEPEND ,ALWAYS> ,DEPEND>::FEXP10Cache ;
+			assert (fexp2.mRadix == 2) ;
+			const auto r1x = invoke ([&] () {
+				NOTATION ret ;
+				ret.mRadix = 10 ;
+				ret.mSign = fexp2.mSign ;
+				ret.mMantissa = fexp2.mMantissa ;
+				ret.mPrecision = 0 ;
+				ret.mExponent = 0 ;
+				return move (ret) ;
+			}) ;
+			const auto r2x = R1X::instance ()[fexp2.mExponent] ;
+			const auto r3x = fexp10_multiply (r1x ,r2x) ;
+			return r3x ;
+		}
+	} ;
+} ;
 
 template <class DEPEND>
 trait FLOATPROC_FEXP2CACHE_HELP<DEPEND ,ALWAYS> {
@@ -673,249 +916,6 @@ trait FLOATPROC_FEXP10CACHE_HELP<DEPEND ,ALWAYS> {
 	} ;
 } ;
 
-template <class DEPEND>
-trait FLOATPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
-	using NOTATION = typename FLOATPROC_HELP<DEPEND ,ALWAYS>::NOTATION ;
-	using Holder = typename FLOATPROC_HELP<DEPEND ,ALWAYS>::Holder ;
-
-	class ImplHolder implement Holder {
-	public:
-		void initialize () override {
-			noop () ;
-		}
-
-		DOUBLE encode (CREF<NOTATION> fexp2) const override {
-			assert (fexp2.mRadix == 2) ;
-			auto rax = fexp2 ;
-			if ifswitch (TRUE) {
-				if (rax.mMantissa == 0)
-					discard ;
-				while (TRUE) {
-					if ifnot (BitProc::any_bit (DATA (rax.mMantissa) ,DATA (0XFFE0000000000000)))
-						break ;
-					rax.mMantissa = VAL64 (DATA (rax.mMantissa) >> 1) ;
-					rax.mExponent++ ;
-				}
-				while (TRUE) {
-					if (BitProc::any_bit (DATA (rax.mMantissa) ,DATA (0XFFF0000000000000)))
-						break ;
-					rax.mMantissa = VAL64 (DATA (rax.mMantissa) << 1) ;
-					rax.mExponent-- ;
-				}
-			}
-			if ifswitch (TRUE) {
-				const auto r1x = VAL64 (-1074) - rax.mExponent ;
-				if (r1x <= 0)
-					discard ;
-				rax.mMantissa = VAL64 (DATA (rax.mMantissa) >> r1x) ;
-				rax.mExponent = -1075 ;
-			}
-			rax.mExponent += 1075 ;
-			if ifswitch (TRUE) {
-				if (rax.mMantissa != 0)
-					discard ;
-				rax.mExponent = 0 ;
-			}
-			const auto r2x = invoke ([&] () {
-				if ifnot (fexp2.mSign)
-					return DATA (0X00) ;
-				return DATA (0X8000000000000000) ;
-			}) ;
-			const auto r3x = (DATA (rax.mExponent) << 52) & DATA (0X7FF0000000000000) ;
-			const auto r4x = DATA (rax.mMantissa) & DATA (0X000FFFFFFFFFFFFF) ;
-			const auto r5x = r2x | r3x | r4x ;
-			return bitwise[TYPEAS<DOUBLE>::expr] (r5x) ;
-		}
-
-		NOTATION decode (CREF<DOUBLE> obj) const override {
-			NOTATION ret ;
-			ret.mRadix = 2 ;
-			const auto r1x = bitwise (obj) ;
-			const auto r2x = r1x & DATA (0X7FF0000000000000) ;
-			const auto r3x = r1x & DATA (0X000FFFFFFFFFFFFF) ;
-			ret.mSign = BitProc::any_bit (r1x ,DATA (0X8000000000000000)) ;
-			ret.mMantissa = VAL64 (r3x) ;
-			ret.mPrecision = 0 ;
-			if ifswitch (TRUE) {
-				if (r2x == DATA (0X00))
-					discard ;
-				ret.mMantissa = VAL64 (DATA (ret.mMantissa) | DATA (0X0010000000000000)) ;
-			}
-			ret.mExponent = VAL64 (r2x >> 52) ;
-			ret.mExponent -= 1075 - LENGTH (r2x == DATA (0X00)) ;
-			if ifswitch (TRUE) {
-				if (ret.mMantissa != 0)
-					discard ;
-				ret.mExponent = 0 ;
-			}
-			if ifswitch (TRUE) {
-				if (ret.mMantissa == 0)
-					discard ;
-				while (TRUE) {
-					if (BitProc::any_bit (DATA (ret.mMantissa) ,DATA (0X0000000000000001)))
-						break ;
-					ret.mMantissa = VAL64 (DATA (ret.mMantissa) >> 1) ;
-					ret.mExponent++ ;
-				}
-			}
-			return move (ret) ;
-		}
-
-		NOTATION fexp2_multiply (CREF<NOTATION> obj1 ,CREF<NOTATION> obj2) const {
-			assert (obj1.mRadix == 2) ;
-			assert (obj2.mRadix == 2) ;
-			NOTATION ret ;
-			ret.mRadix = 2 ;
-			ret.mSign = MathProc::any_of (obj1.mSign ,obj2.mSign) ;
-			const auto r1x = LENGTH (32) ;
-			const auto r2x = DATA (VAL64 (BitProc::single_bit (r1x)) - 1) ;
-			const auto r3x = VAL64 (BitProc::single_bit (r1x - 1)) ;
-			const auto r4x = VAL64 (DATA (obj1.mMantissa) >> r1x) ;
-			const auto r5x = VAL64 (DATA (obj1.mMantissa) & r2x) ;
-			const auto r6x = VAL64 (DATA (obj2.mMantissa) >> r1x) ;
-			const auto r7x = VAL64 (DATA (obj2.mMantissa) & r2x) ;
-			const auto r8x = r4x * r6x ;
-			const auto r9x = r5x * r6x ;
-			const auto r10x = r4x * r7x ;
-			const auto r11x = r5x * r7x ;
-			auto act = TRUE ;
-			if ifswitch (act) {
-				if (r8x == 0)
-					discard ;
-				const auto r12x = VAL64 (DATA (r9x) >> r1x) ;
-				const auto r13x = VAL64 (DATA (r9x) & r2x) ;
-				const auto r14x = VAL64 (DATA (r10x) >> r1x) ;
-				const auto r15x = VAL64 (DATA (r10x) & r2x) ;
-				const auto r16x = VAL64 (DATA (r11x) >> r1x) ;
-				const auto r17x = VAL64 (DATA (r13x + r15x + r16x + r3x) >> r1x) ;
-				ret.mMantissa = r8x + r12x + r14x + r17x ;
-				ret.mPrecision = 0 ;
-				ret.mExponent = obj1.mExponent + obj2.mExponent + r1x * 2 ;
-			}
-			if ifswitch (act) {
-				if (r9x == 0)
-					if (r10x == 0)
-						discard ;
-				const auto r18x = r5x * r7x ;
-				const auto r19x = VAL64 (DATA (r18x + r3x) >> r1x) ;
-				ret.mMantissa = r9x + r10x + r19x ;
-				ret.mPrecision = 0 ;
-				ret.mExponent = obj1.mExponent + obj2.mExponent + r1x ;
-			}
-			if ifswitch (act) {
-				ret.mMantissa = r11x ;
-				ret.mPrecision = 0 ;
-				ret.mExponent = obj1.mExponent + obj2.mExponent ;
-			}
-			return move (ret) ;
-		}
-
-		NOTATION fexp2_from_fexp10 (CREF<NOTATION> fexp10) const override {
-			using R1X = typename FLOATPROC_FEXP2CACHE_HELP<DEPEND ,ALWAYS>::FEXP2Cache ;
-			assert (fexp10.mRadix == 10) ;
-			const auto r1x = invoke ([&] () {
-				NOTATION ret ;
-				ret.mRadix = 2 ;
-				ret.mSign = fexp10.mSign ;
-				ret.mMantissa = fexp10.mMantissa ;
-				ret.mPrecision = 0 ;
-				ret.mExponent = 0 ;
-				return move (ret) ;
-			}) ;
-			const auto r2x = R1X::instance ()[fexp10.mExponent] ;
-			const auto r3x = fexp2_multiply (r1x ,r2x) ;
-			return r3x ;
-		}
-
-		NOTATION fexp10_overflow (CREF<NOTATION> fexp10 ,CREF<VAL64> half) const {
-			NOTATION ret = fexp10 ;
-			if ifswitch (TRUE) {
-				if (ret.mMantissa >= 0)
-					discard ;
-				ret.mMantissa = VAL64 (DATA (ret.mMantissa) >> 1) ;
-				ret.mMantissa /= 5 ;
-				ret.mExponent++ ;
-			}
-			const auto r1x = MathProc::square (half) ;
-			while (TRUE) {
-				if (ret.mMantissa < r1x)
-					break ;
-				ret.mMantissa /= 10 ;
-				ret.mExponent++ ;
-			}
-			return move (ret) ;
-		}
-
-		NOTATION fexp10_multiply (CREF<NOTATION> obj1 ,CREF<NOTATION> obj2) const {
-			assert (obj1.mRadix == 10) ;
-			assert (obj2.mRadix == 10) ;
-			NOTATION ret ;
-			ret.mRadix = 10 ;
-			ret.mSign = MathProc::any_of (obj1.mSign ,obj2.mSign) ;
-			const auto r1x = LENGTH (9) ;
-			const auto r2x = VAL64 (1000000000) ;
-			const auto r3x = VAL64 (500000000) ;
-			const auto r4x = fexp10_overflow (obj1 ,r2x) ;
-			const auto r5x = fexp10_overflow (obj2 ,r2x) ;
-			const auto r6x = r4x.mMantissa / r2x ;
-			const auto r7x = r4x.mMantissa % r2x ;
-			const auto r8x = r5x.mMantissa / r2x ;
-			const auto r9x = r5x.mMantissa % r2x ;
-			const auto r10x = r6x * r8x ;
-			const auto r11x = r7x * r8x ;
-			const auto r12x = r6x * r9x ;
-			const auto r13x = r7x * r9x ;
-			auto act = TRUE ;
-			if ifswitch (act) {
-				if (r10x == 0)
-					discard ;
-				const auto r14x = r11x / r2x ;
-				const auto r15x = r11x % r2x ;
-				const auto r16x = r12x / r2x ;
-				const auto r17x = r12x % r2x ;
-				const auto r18x = r13x / r2x ;
-				const auto r19x = (r15x + r17x + r18x + r3x) / r2x ;
-				ret.mMantissa = r10x + r14x + r16x + r19x ;
-				ret.mPrecision = 0 ;
-				ret.mExponent = r4x.mExponent + r5x.mExponent + r1x * 2 ;
-			}
-			if ifswitch (act) {
-				if (r11x == 0)
-					if (r12x == 0)
-						discard ;
-				const auto r20x = r7x * r9x ;
-				const auto r21x = (r20x + r3x) / r2x ;
-				ret.mMantissa = r11x + r12x + r21x ;
-				ret.mPrecision = 0 ;
-				ret.mExponent = r4x.mExponent + r5x.mExponent + r1x ;
-			}
-			if ifswitch (act) {
-				ret.mMantissa = r13x ;
-				ret.mPrecision = 0 ;
-				ret.mExponent = r4x.mExponent + r5x.mExponent ;
-			}
-			return move (ret) ;
-		}
-
-		NOTATION fexp10_from_fexp2 (CREF<NOTATION> fexp2) const override {
-			using R1X = typename FLOATPROC_FEXP10CACHE_HELP<DEPEND ,ALWAYS>::FEXP10Cache ;
-			assert (fexp2.mRadix == 2) ;
-			const auto r1x = invoke ([&] () {
-				NOTATION ret ;
-				ret.mRadix = 10 ;
-				ret.mSign = fexp2.mSign ;
-				ret.mMantissa = fexp2.mMantissa ;
-				ret.mPrecision = 0 ;
-				ret.mExponent = 0 ;
-				return move (ret) ;
-			}) ;
-			const auto r2x = R1X::instance ()[fexp2.mExponent] ;
-			const auto r3x = fexp10_multiply (r1x ,r2x) ;
-			return r3x ;
-		}
-	} ;
-} ;
-
 template <>
 exports auto FLOATPROC_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
 	using R1X = typename FLOATPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
@@ -932,79 +932,105 @@ trait BITPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			noop () ;
 		}
 
-		BYTE low_bit (CREF<WORD> obj) const override {
+		BYTE bit_low (CREF<WORD> obj) const override {
 			return BYTE (obj) ;
 		}
 
-		WORD low_bit (CREF<CHAR> obj) const override {
+		WORD bit_low (CREF<CHAR> obj) const override {
 			return WORD (obj) ;
 		}
 
-		CHAR low_bit (CREF<DATA> obj) const override {
+		CHAR bit_low (CREF<DATA> obj) const override {
 			return CHAR (obj) ;
 		}
 
-		BYTE high_bit (CREF<WORD> obj) const override {
+		BYTE bit_high (CREF<WORD> obj) const override {
 			return BYTE (obj >> 8) ;
 		}
 
-		WORD high_bit (CREF<CHAR> obj) const override {
+		WORD bit_high (CREF<CHAR> obj) const override {
 			return WORD (obj >> 16) ;
 		}
 
-		CHAR high_bit (CREF<DATA> obj) const override {
+		CHAR bit_high (CREF<DATA> obj) const override {
 			return CHAR (obj >> 32) ;
 		}
 
-		WORD merge_bit (CREF<BYTE> high ,CREF<BYTE> low) const override {
+		WORD bit_merge (CREF<BYTE> high ,CREF<BYTE> low) const override {
 			return (WORD (high) << 8) | WORD (low) ;
 		}
 
-		CHAR merge_bit (CREF<WORD> high ,CREF<WORD> low) const override {
+		CHAR bit_merge (CREF<WORD> high ,CREF<WORD> low) const override {
 			return (CHAR (high) << 16) | CHAR (low) ;
 		}
 
-		DATA merge_bit (CREF<CHAR> high ,CREF<CHAR> low) const override {
+		DATA bit_merge (CREF<CHAR> high ,CREF<CHAR> low) const override {
 			return (DATA (high) << 32) | DATA (low) ;
 		}
 
-		BOOL any_bit (CREF<BYTE> base ,CREF<BYTE> mask) const override {
+		BOOL bit_any (CREF<BYTE> base ,CREF<BYTE> mask) const override {
 			return (base & mask) != BYTE (0X00) ;
 		}
 
-		BOOL any_bit (CREF<WORD> base ,CREF<WORD> mask) const override {
+		BOOL bit_any (CREF<WORD> base ,CREF<WORD> mask) const override {
 			return (base & mask) != WORD (0X00) ;
 		}
 
-		BOOL any_bit (CREF<CHAR> base ,CREF<CHAR> mask) const override {
+		BOOL bit_any (CREF<CHAR> base ,CREF<CHAR> mask) const override {
 			return (base & mask) != CHAR (0X00) ;
 		}
 
-		BOOL any_bit (CREF<DATA> base ,CREF<DATA> mask) const override {
+		BOOL bit_any (CREF<DATA> base ,CREF<DATA> mask) const override {
 			return (base & mask) != DATA (0X00) ;
 		}
 
-		BOOL all_bit (CREF<BYTE> base ,CREF<BYTE> mask) const override {
+		BOOL bit_all (CREF<BYTE> base ,CREF<BYTE> mask) const override {
 			return (base & mask) == mask ;
 		}
 
-		BOOL all_bit (CREF<WORD> base ,CREF<WORD> mask) const override {
+		BOOL bit_all (CREF<WORD> base ,CREF<WORD> mask) const override {
 			return (base & mask) == mask ;
 		}
 
-		BOOL all_bit (CREF<CHAR> base ,CREF<CHAR> mask) const override {
+		BOOL bit_all (CREF<CHAR> base ,CREF<CHAR> mask) const override {
 			return (base & mask) == mask ;
 		}
 
-		BOOL all_bit (CREF<DATA> base ,CREF<DATA> mask) const override {
+		BOOL bit_all (CREF<DATA> base ,CREF<DATA> mask) const override {
 			return (base & mask) == mask ;
 		}
 
-		DATA single_bit (CREF<LENGTH> nth) const override {
+		DATA bit_single (CREF<LENGTH> nth) const override {
 			return DATA (0X01) << nth ;
 		}
 
-		INDEX find_bit (CREF<BYTE> obj) const override {
+		BYTE bit_reverse (CREF<BYTE> obj) const override {
+			return obj ;
+		}
+
+		WORD bit_reverse (CREF<WORD> obj) const override {
+			auto rax = bitwise[TYPEAS<BoxBuffer<BYTE ,SIZE_OF<WORD>>>::expr] (obj) ;
+			swap (rax[0] ,rax[1]) ;
+			return bitwise[TYPEAS<WORD>::expr] (rax) ;
+		}
+
+		CHAR bit_reverse (CREF<CHAR> obj) const override {
+			auto rax = bitwise[TYPEAS<BoxBuffer<BYTE ,SIZE_OF<CHAR>>>::expr] (obj) ;
+			swap (rax[0] ,rax[3]) ;
+			swap (rax[1] ,rax[2]) ;
+			return bitwise[TYPEAS<CHAR>::expr] (rax) ;
+		}
+
+		DATA bit_reverse (CREF<DATA> obj) const override {
+			auto rax = bitwise[TYPEAS<BoxBuffer<BYTE ,SIZE_OF<DATA>>>::expr] (obj) ;
+			swap (rax[0] ,rax[7]) ;
+			swap (rax[1] ,rax[6]) ;
+			swap (rax[2] ,rax[5]) ;
+			swap (rax[3] ,rax[4]) ;
+			return bitwise[TYPEAS<DATA>::expr] (rax) ;
+		}
+
+		INDEX bit_find (CREF<BYTE> obj) const override {
 			INDEX ret = NONE ;
 			auto rax = obj ;
 			while (TRUE) {
@@ -1016,7 +1042,7 @@ trait BITPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			return move (ret) ;
 		}
 
-		INDEX find_bit (CREF<WORD> obj) const override {
+		INDEX bit_find (CREF<WORD> obj) const override {
 			INDEX ret = NONE ;
 			auto rax = obj ;
 			while (TRUE) {
@@ -1028,7 +1054,7 @@ trait BITPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			return move (ret) ;
 		}
 
-		INDEX find_bit (CREF<CHAR> obj) const override {
+		INDEX bit_find (CREF<CHAR> obj) const override {
 			INDEX ret = NONE ;
 			auto rax = obj ;
 			while (TRUE) {
@@ -1040,7 +1066,7 @@ trait BITPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			return move (ret) ;
 		}
 
-		INDEX find_bit (CREF<DATA> obj) const override {
+		INDEX bit_find (CREF<DATA> obj) const override {
 			INDEX ret = NONE ;
 			auto rax = obj ;
 			while (TRUE) {
@@ -1097,7 +1123,7 @@ trait INTEGER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			if (r1x == NONE)
 				return 0 ;
 			const auto r2x = DATA (mInteger[r1x]) ;
-			const auto r3x = BitProc::find_bit (r2x) + 1 ;
+			const auto r3x = BitProc::bit_find (r2x) + 1 ;
 			const auto r4x = r1x * 8 + r3x ;
 			return r4x ;
 		}
@@ -1190,6 +1216,7 @@ trait INTEGER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		Integer mul (CREF<ImplHolder> that) const {
+			assert (mInteger.size () == that.mInteger.size ()) ;
 			auto rbx = VarBuffer<BYTE> (mInteger.size ()) ;
 			auto rax = VAL64 (0) ;
 			for (auto &&i : iter (0 ,mInteger.size ())) {
@@ -1219,9 +1246,9 @@ trait INTEGER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			while (TRUE) {
 				if (rax == 0)
 					break ;
-				const auto r3x = DATA (rax) ;
-				rbx[ix] = BYTE (r3x) ;
-				rax = VAL64 (r3x >> 8) ;
+				const auto r4x = DATA (rax) ;
+				rbx[ix] = BYTE (r4x) ;
+				rax = VAL64 (r4x >> 8) ;
 				ix++ ;
 			}
 			return factory (move (rbx)) ;
@@ -1263,11 +1290,11 @@ trait INTEGER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			return Integer (rax ,mInteger.size ()) ;
 		}
 
-		void friend_clone (VREF<Integer> that) const override {
+		Integer clone () const override {
 			auto rbx = VarBuffer<BYTE> (mInteger.size ()) ;
 			for (auto &&i : iter (0 ,mInteger.size ()))
 				rbx[i] = mInteger[i] ;
-			that = factory (move (rbx)) ;
+			return factory (move (rbx)) ;
 		}
 
 		Integer minus () const override {

@@ -41,10 +41,12 @@ trait BYTEATTRIBUTE_HELP<DEPEND ,ALWAYS> {
 		CRef<Holder> mThis ;
 
 	public:
-		implicit ByteAttribute () {
+		implicit ByteAttribute () = default ;
+
+		explicit ByteAttribute (CREF<typeof (PH0)>) {
 			auto rax = FUNCTION_extern::invoke () ;
 			rax->initialize () ;
-			mThis = move (rax) ;
+			mThis = rax.as_cref () ;
 		}
 
 		template <class ARG1>
@@ -52,15 +54,15 @@ trait BYTEATTRIBUTE_HELP<DEPEND ,ALWAYS> {
 			require (IS_EXTEND<Holder ,ARG1>) ;
 			mThis = CRef<ARG1>::make (move (mThis)) ;
 		}
-		
+
 		BYTE ending_item () const {
 			return mThis->ending_item () ;
 		}
-		
+
 		BYTE space_item () const {
 			return mThis->space_item () ;
 		}
-		
+
 		BOOL is_big_endian () const {
 			return mThis->is_big_endian () ;
 		}
@@ -88,6 +90,7 @@ trait BYTEREADER_HELP<DEPEND ,ALWAYS> {
 		virtual VREF<ByteAttribute> attribute () leftvalue = 0 ;
 		virtual LENGTH size () const = 0 ;
 		virtual LENGTH length () const = 0 ;
+		virtual CREF<RegBuffer<BYTE>> raw (RREF<RegCaches<BYTE>> unnamed) const leftvalue = 0 ;
 		virtual void reset () = 0 ;
 		virtual void reset (CREF<INDEX> read_ ,CREF<INDEX> write_) = 0 ;
 		virtual void backup () = 0 ;
@@ -124,20 +127,17 @@ trait BYTEREADER_HELP<DEPEND ,ALWAYS> {
 	public:
 		implicit ByteReader () = default ;
 
+		explicit ByteReader (RREF<VRef<Holder>> that) {
+			mThis = move (that) ;
+		}
+
 		explicit ByteReader (RREF<CRef<RegBuffer<BYTE>>> stream) {
 			mThis = FUNCTION_extern::invoke () ;
 			mThis->initialize (move (stream)) ;
 		}
 
-		explicit ByteReader (RREF<VRef<RegBuffer<BYTE>>> stream) {
-			mThis = FUNCTION_extern::invoke () ;
-			auto rax = CRef<RegBuffer<BYTE>> (move (stream)) ;
-			mThis->initialize (move (rax)) ;
-		}
-
-		explicit ByteReader (RREF<VRef<Holder>> that) {
-			mThis = move (that) ;
-		}
+		explicit ByteReader (RREF<VRef<RegBuffer<BYTE>>> stream)
+			:ByteReader (stream.as_cref ()) {}
 
 		VREF<ByteAttribute> attribute () leftvalue {
 			return mThis->attribute () ;
@@ -149,6 +149,10 @@ trait BYTEREADER_HELP<DEPEND ,ALWAYS> {
 
 		LENGTH length () const {
 			return mThis->length () ;
+		}
+
+		CREF<RegBuffer<BYTE>> raw (RREF<RegCaches<BYTE>> unnamed = RegCaches<BYTE> ()) const leftvalue {
+			return mThis->raw (move (unnamed)) ;
 		}
 
 		void reset () {
@@ -378,6 +382,7 @@ trait BYTEWRITER_HELP<DEPEND ,ALWAYS> {
 		virtual VREF<ByteAttribute> attribute () leftvalue = 0 ;
 		virtual LENGTH size () const = 0 ;
 		virtual LENGTH length () const = 0 ;
+		virtual CREF<RegBuffer<BYTE>> raw (RREF<RegCaches<BYTE>> unnamed) const leftvalue = 0 ;
 		virtual void reset () = 0 ;
 		virtual void reset (CREF<INDEX> read_ ,CREF<INDEX> write_) = 0 ;
 		virtual void backup () = 0 ;
@@ -414,13 +419,13 @@ trait BYTEWRITER_HELP<DEPEND ,ALWAYS> {
 	public:
 		implicit ByteWriter () = default ;
 
+		explicit ByteWriter (RREF<VRef<Holder>> that) {
+			mThis = move (that) ;
+		}
+
 		explicit ByteWriter (RREF<VRef<RegBuffer<BYTE>>> stream) {
 			mThis = FUNCTION_extern::invoke () ;
 			mThis->initialize (move (stream)) ;
-		}
-
-		explicit ByteWriter (RREF<VRef<Holder>> that) {
-			mThis = move (that) ;
 		}
 
 		VREF<ByteAttribute> attribute () leftvalue {
@@ -433,6 +438,10 @@ trait BYTEWRITER_HELP<DEPEND ,ALWAYS> {
 
 		LENGTH length () const {
 			return mThis->length () ;
+		}
+
+		CREF<RegBuffer<BYTE>> raw (RREF<RegCaches<BYTE>> unnamed = RegCaches<BYTE> ()) const leftvalue {
+			return mThis->raw (move (unnamed)) ;
 		}
 
 		void reset () {
@@ -497,14 +506,18 @@ trait BYTEWRITER_HELP<DEPEND ,ALWAYS> {
 			return thiz ;
 		}
 
-		void write (CREF<BoolProxy> item) {
+		void write (CREF<BOOL> item) {
 			return mThis->write (item) ;
 		}
 
-		inline VREF<ByteWriter> operator<< (CREF<BoolProxy> item) {
+		inline VREF<ByteWriter> operator<< (CREF<BOOL> item) {
 			write (item) ;
 			return thiz ;
 		}
+
+		void write (CREF<csc_pointer_t>) = delete ;
+
+		inline VREF<ByteWriter> operator<< (CREF<csc_pointer_t>) = delete ;
 
 		void write (CREF<VAL32> item) {
 			return mThis->write (item) ;
@@ -647,15 +660,16 @@ trait TEXTATTRIBUTE_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 	struct Holder implement Interface {
 		virtual void initialize () = 0 ;
 		virtual ITEM ending_item () const = 0 ;
-		virtual BOOL is_space (CREF<ITEM> str) const = 0 ;
-		virtual BOOL is_endline_space (CREF<ITEM> str) const = 0 ;
+		virtual BOOL is_gap (CREF<ITEM> str) const = 0 ;
+		virtual BOOL is_gap_space (CREF<ITEM> str) const = 0 ;
+		virtual BOOL is_gap_endline (CREF<ITEM> str) const = 0 ;
 		virtual BOOL is_word (CREF<ITEM> str) const = 0 ;
 		virtual BOOL is_number (CREF<ITEM> str) const = 0 ;
 		virtual BOOL is_hex_number (CREF<ITEM> str) const = 0 ;
 		virtual INDEX hex_from_str (CREF<ITEM> str) const = 0 ;
 		virtual ITEM str_from_hex (CREF<INDEX> hex) const = 0 ;
 		virtual BOOL is_control (CREF<ITEM> str) const = 0 ;
-		virtual Cell<ITEM> escape_cast (CREF<ITEM> str) const = 0 ;
+		virtual Optional<ITEM> escape_cast (CREF<ITEM> str) const = 0 ;
 		virtual LENGTH value_precision () const = 0 ;
 		virtual LENGTH float_precision () const = 0 ;
 		virtual LENGTH number_precision () const = 0 ;
@@ -670,10 +684,12 @@ trait TEXTATTRIBUTE_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 		CRef<Holder> mThis ;
 
 	public:
-		implicit TextAttribute () {
+		implicit TextAttribute () = default ;
+
+		explicit TextAttribute (CREF<typeof (PH0)>) {
 			auto rax = FUNCTION_extern::invoke () ;
 			rax->initialize () ;
-			mThis = move (rax) ;
+			mThis = rax.as_cref () ;
 		}
 
 		template <class ARG1>
@@ -686,12 +702,16 @@ trait TEXTATTRIBUTE_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 			return mThis->ending_item () ;
 		}
 
-		BOOL is_space (CREF<ITEM> str) const {
-			return mThis->is_space (str) ;
+		BOOL is_gap (CREF<ITEM> str) const {
+			return mThis->is_gap (str) ;
 		}
 
-		BOOL is_endline_space (CREF<ITEM> str) const {
-			return mThis->is_endline_space (str) ;
+		BOOL is_gap_space (CREF<ITEM> str) const {
+			return mThis->is_gap_space (str) ;
+		}
+
+		BOOL is_gap_endline (CREF<ITEM> str) const {
+			return mThis->is_gap_endline (str) ;
 		}
 
 		BOOL is_word (CREF<ITEM> str) const {
@@ -718,7 +738,7 @@ trait TEXTATTRIBUTE_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 			return mThis->is_control (str) ;
 		}
 
-		Cell<ITEM> escape_cast (CREF<ITEM> str) const {
+		Optional<ITEM> escape_cast (CREF<ITEM> str) const {
 			return mThis->escape_cast (str) ;
 		}
 
@@ -760,6 +780,7 @@ trait TEXTREADER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 		virtual VREF<TextAttribute<ITEM>> attribute () leftvalue = 0 ;
 		virtual LENGTH size () const = 0 ;
 		virtual LENGTH length () const = 0 ;
+		virtual CREF<RegBuffer<ITEM>> raw (RREF<RegCaches<ITEM>> unnamed) const leftvalue = 0 ;
 		virtual void reset () = 0 ;
 		virtual void reset (CREF<INDEX> read_ ,CREF<INDEX> write_) = 0 ;
 		virtual void backup () = 0 ;
@@ -794,20 +815,17 @@ trait TEXTREADER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 	public:
 		implicit TextReader () = default ;
 
+		explicit TextReader (RREF<VRef<Holder>> that) {
+			mThis = move (that) ;
+		}
+
 		explicit TextReader (RREF<CRef<RegBuffer<ITEM>>> stream) {
 			mThis = FUNCTION_extern::invoke () ;
 			mThis->initialize (move (stream)) ;
 		}
 
-		explicit TextReader (RREF<VRef<RegBuffer<ITEM>>> stream) {
-			mThis = FUNCTION_extern::invoke () ;
-			auto rax = CRef<RegBuffer<ITEM>> (move (stream)) ;
-			mThis->initialize (move (rax)) ;
-		}
-
-		explicit TextReader (RREF<VRef<Holder>> that) {
-			mThis = move (that) ;
-		}
+		explicit TextReader (RREF<VRef<RegBuffer<ITEM>>> stream)
+			:TextReader (stream.as_cref ()) {}
 
 		VREF<TextAttribute<ITEM>> attribute () leftvalue {
 			return mThis->attribute () ;
@@ -819,6 +837,10 @@ trait TEXTREADER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 
 		LENGTH length () const {
 			return mThis->length () ;
+		}
+
+		CREF<RegBuffer<ITEM>> raw (RREF<RegCaches<ITEM>> unnamed = RegCaches<ITEM> ()) const leftvalue {
+			return mThis->raw (move (unnamed)) ;
 		}
 
 		void reset () {
@@ -1018,9 +1040,6 @@ trait TEXTWRITER_HELP ;
 template <class...>
 trait TEXTWRITER_IMPLHOLDER_HELP ;
 
-template <class...>
-trait TEXTWRITER_WRITEVALUE_HELP ;
-
 template <class ITEM>
 trait TEXTWRITER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 	class TextWriter ;
@@ -1034,6 +1053,7 @@ trait TEXTWRITER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 		virtual VREF<TextAttribute<ITEM>> attribute () leftvalue = 0 ;
 		virtual LENGTH size () const = 0 ;
 		virtual LENGTH length () const = 0 ;
+		virtual CREF<RegBuffer<ITEM>> raw (RREF<RegCaches<ITEM>> unnamed) const leftvalue = 0 ;
 		virtual void reset () = 0 ;
 		virtual void reset (CREF<INDEX> read_ ,CREF<INDEX> write_) = 0 ;
 		virtual void backup () = 0 ;
@@ -1068,13 +1088,13 @@ trait TEXTWRITER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 	public:
 		implicit TextWriter () = default ;
 
+		explicit TextWriter (RREF<VRef<Holder>> that) {
+			mThis = move (that) ;
+		}
+
 		explicit TextWriter (RREF<VRef<RegBuffer<ITEM>>> stream) {
 			mThis = FUNCTION_extern::invoke () ;
 			mThis->initialize (move (stream)) ;
-		}
-
-		explicit TextWriter (RREF<VRef<Holder>> that) {
-			mThis = move (that) ;
 		}
 
 		VREF<TextAttribute<ITEM>> attribute () leftvalue {
@@ -1087,6 +1107,10 @@ trait TEXTWRITER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 
 		LENGTH length () const {
 			return mThis->length () ;
+		}
+
+		CREF<RegBuffer<ITEM>> raw (RREF<RegCaches<ITEM>> unnamed = RegCaches<ITEM> ()) const leftvalue {
+			return mThis->raw (move (unnamed)) ;
 		}
 
 		void reset () {
@@ -1124,14 +1148,18 @@ trait TEXTWRITER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 			return thiz ;
 		}
 
-		void write (CREF<BoolProxy> item) {
+		void write (CREF<BOOL> item) {
 			return mThis->write (item) ;
 		}
 
-		inline VREF<TextWriter> operator<< (CREF<BoolProxy> item) {
+		inline VREF<TextWriter> operator<< (CREF<BOOL> item) {
 			write (item) ;
 			return thiz ;
 		}
+
+		void write (CREF<csc_pointer_t>) = delete ;
+
+		inline VREF<ByteWriter> operator<< (CREF<csc_pointer_t>) = delete ;
 
 		void write (CREF<VAL32> item) {
 			return mThis->write (item) ;
@@ -1280,14 +1308,13 @@ trait STRING_TEXTWRITER_HELP<ITEM ,ALWAYS> {
 	static constexpr auto EOS = CSC::EOS ;
 } ;
 
-static constexpr auto HINT_IDENTIFIER = TYPEAS<PlaceHolder<RANK1>>::expr ;
-static constexpr auto HINT_SCALAR = TYPEAS<PlaceHolder<RANK2>>::expr ;
-static constexpr auto HINT_STRING = TYPEAS<PlaceHolder<RANK3>>::expr ;
-static constexpr auto HINT_WORD_SPACE = TYPEAS<PlaceHolder<RANK4>>::expr ;
-static constexpr auto HINT_WORD_ENDLINE = TYPEAS<PlaceHolder<RANK5>>::expr ;
-static constexpr auto SKIP_SPACE = TYPEAS<PlaceHolder<RANK6>>::expr ;
-static constexpr auto SKIP_SPACE_ONLY = TYPEAS<PlaceHolder<RANK7>>::expr ;
-static constexpr auto SKIP_SPACE_ENDLINE = TYPEAS<PlaceHolder<RANK8>>::expr ;
+static constexpr auto HINT_IDENTIFIER = TYPEAS<PlaceHolder<ENUMAS<VAL ,10>>>::expr ;
+static constexpr auto HINT_SCALAR = TYPEAS<PlaceHolder<ENUMAS<VAL ,11>>>::expr ;
+static constexpr auto HINT_STRING = TYPEAS<PlaceHolder<ENUMAS<VAL ,12>>>::expr ;
+static constexpr auto HINT_WORD_ENDLINE = TYPEAS<PlaceHolder<ENUMAS<VAL ,13>>>::expr ;
+static constexpr auto SKIP_GAP = TYPEAS<PlaceHolder<ENUMAS<VAL ,20>>>::expr ;
+static constexpr auto SKIP_GAP_SPACE = TYPEAS<PlaceHolder<ENUMAS<VAL ,21>>>::expr ;
+static constexpr auto SKIP_GAP_ENDLINE = TYPEAS<PlaceHolder<ENUMAS<VAL ,22>>>::expr ;
 
 template <class...>
 trait REGULARREADER_HELP ;
@@ -1300,18 +1327,15 @@ trait REGULARREADER_HELP<DEPEND ,ALWAYS> {
 	struct Holder implement Interface {
 		virtual void initialize (RREF<VRef<TextReader<STRU8>>> reader ,CREF<LENGTH> ll_size) = 0 ;
 		virtual CREF<STRU8> at (CREF<INDEX> index) const leftvalue = 0 ;
-		virtual void backup () = 0 ;
-		virtual void recover () = 0 ;
 		virtual void read () = 0 ;
 		virtual void read (CREF<Slice<STR>> item) = 0 ;
 		virtual void read_hint_identifer () = 0 ;
 		virtual void read_hint_scalar () = 0 ;
 		virtual void read_hint_string () = 0 ;
-		virtual void read_hint_word_space () = 0 ;
 		virtual void read_hint_word_endline () = 0 ;
-		virtual void read_skip_space () = 0 ;
-		virtual void read_skip_space_only () = 0 ;
-		virtual void read_skip_space_endline () = 0 ;
+		virtual void read_skip_gap () = 0 ;
+		virtual void read_skip_gap_space () = 0 ;
+		virtual void read_skip_gap_endline () = 0 ;
 		virtual void read (VREF<String<STRU8>> item) = 0 ;
 	} ;
 
@@ -1337,14 +1361,6 @@ trait REGULARREADER_HELP<DEPEND ,ALWAYS> {
 
 		inline CREF<STRU8> operator[] (CREF<INDEX> index) const leftvalue {
 			return at (index) ;
-		}
-
-		void backup () {
-			return mThis->backup () ;
-		}
-
-		void recover () {
-			return mThis->recover () ;
 		}
 
 		void read () {
@@ -1391,15 +1407,6 @@ trait REGULARREADER_HELP<DEPEND ,ALWAYS> {
 			return thiz ;
 		}
 
-		void read (CREF<typeof (HINT_WORD_SPACE)>) {
-			return mThis->read_hint_word_space () ;
-		}
-
-		inline VREF<RegularReader> operator>> (CREF<typeof (HINT_WORD_SPACE)> item) {
-			read (item) ;
-			return thiz ;
-		}
-
 		void read (CREF<typeof (HINT_WORD_ENDLINE)>) {
 			return mThis->read_hint_word_endline () ;
 		}
@@ -1409,29 +1416,29 @@ trait REGULARREADER_HELP<DEPEND ,ALWAYS> {
 			return thiz ;
 		}
 
-		void read (CREF<typeof (SKIP_SPACE)>) {
-			return mThis->read_skip_space () ;
+		void read (CREF<typeof (SKIP_GAP)>) {
+			return mThis->read_skip_gap () ;
 		}
 
-		inline VREF<RegularReader> operator>> (CREF<typeof (SKIP_SPACE)> item) {
+		inline VREF<RegularReader> operator>> (CREF<typeof (SKIP_GAP)> item) {
 			read (item) ;
 			return thiz ;
 		}
 
-		void read (CREF<typeof (SKIP_SPACE_ONLY)>) {
-			return mThis->read_skip_space_only () ;
+		void read (CREF<typeof (SKIP_GAP_SPACE)>) {
+			return mThis->read_skip_gap_space () ;
 		}
 
-		inline VREF<RegularReader> operator>> (CREF<typeof (SKIP_SPACE_ONLY)> item) {
+		inline VREF<RegularReader> operator>> (CREF<typeof (SKIP_GAP_SPACE)> item) {
 			read (item) ;
 			return thiz ;
 		}
 
-		void read (CREF<typeof (SKIP_SPACE_ENDLINE)>) {
-			return mThis->read_skip_space_endline () ;
+		void read (CREF<typeof (SKIP_GAP_ENDLINE)>) {
+			return mThis->read_skip_gap_endline () ;
 		}
 
-		inline VREF<RegularReader> operator>> (CREF<typeof (SKIP_SPACE_ENDLINE)> item) {
+		inline VREF<RegularReader> operator>> (CREF<typeof (SKIP_GAP_ENDLINE)> item) {
 			read (item) ;
 			return thiz ;
 		}
