@@ -24,7 +24,7 @@
     <ClCompile Include="..\..\src\test.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\src\csc\begin.h" />
+    <ClInclude Include="..\..\src\csc\csc_end.h" />
     <ClInclude Include="..\..\src\csc\csc.hpp" />
     <ClInclude Include="..\..\src\csc\csc_algorithm.hpp" />
     <ClInclude Include="..\..\src\csc\csc_array.hpp" />
@@ -42,7 +42,7 @@
     <ClInclude Include="..\..\src\csc\csc_string.hpp" />
     <ClInclude Include="..\..\src\csc\csc_thread.hpp" />
     <ClInclude Include="..\..\src\csc\csc_type.hpp" />
-    <ClInclude Include="..\..\src\csc\end.h" />
+    <ClInclude Include="..\..\src\csc\csc_begin.h" />
     <ClInclude Include="..\..\src\util.h" />
   </ItemGroup>
   <ItemGroup>

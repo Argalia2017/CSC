@@ -116,8 +116,8 @@ trait MATHPROC_HELP<DEPEND ,ALWAYS> {
 		virtual DOUBLE arcsin (CREF<DOUBLE> obj) const = 0 ;
 		virtual SINGLE arccos (CREF<SINGLE> obj) const = 0 ;
 		virtual DOUBLE arccos (CREF<DOUBLE> obj) const = 0 ;
-		virtual SINGLE arctan (CREF<SINGLE> fx ,CREF<SINGLE> fy) const = 0 ;
-		virtual DOUBLE arctan (CREF<DOUBLE> fx ,CREF<DOUBLE> fy) const = 0 ;
+		virtual SINGLE arctan (CREF<SINGLE> fy ,CREF<SINGLE> fx) const = 0 ;
+		virtual DOUBLE arctan (CREF<DOUBLE> fy ,CREF<DOUBLE> fx) const = 0 ;
 		virtual SINGLE radian_angle (CREF<SINGLE> obj) const = 0 ;
 		virtual DOUBLE radian_angle (CREF<DOUBLE> obj) const = 0 ;
 	} ;
@@ -343,9 +343,9 @@ trait MATHPROC_HELP<DEPEND ,ALWAYS> {
 		}
 
 		template <class ARG1>
-		imports ARG1 arctan (CREF<ARG1> fx ,CREF<ARG1> fy) {
+		imports ARG1 arctan (CREF<ARG1> fy ,CREF<ARG1> fx) {
 			require (IS_FLOAT<ARG1>) ;
-			return instance ().mThis->arctan (fx ,fy) ;
+			return instance ().mThis->arctan (fy ,fx) ;
 		}
 
 		template <class ARG1>
@@ -369,8 +369,9 @@ trait FLOATPROC_HELP<DEPEND ,ALWAYS> {
 	struct NOTATION {
 		FLAG mRadix ;
 		BOOL mSign ;
+		LENGTH mPrecision ;
 		VAL64 mMantissa ;
-		VAL64 mPrecision ;
+		VAL64 mDownflow ;
 		VAL64 mExponent ;
 	} ;
 
@@ -430,28 +431,32 @@ template <class DEPEND>
 trait BITPROC_HELP<DEPEND ,ALWAYS> {
 	struct Holder implement Interface {
 		virtual void initialize () = 0 ;
-		virtual BYTE low_bit (CREF<WORD> obj) const = 0 ;
-		virtual WORD low_bit (CREF<CHAR> obj) const = 0 ;
-		virtual CHAR low_bit (CREF<DATA> obj) const = 0 ;
-		virtual BYTE high_bit (CREF<WORD> obj) const = 0 ;
-		virtual WORD high_bit (CREF<CHAR> obj) const = 0 ;
-		virtual CHAR high_bit (CREF<DATA> obj) const = 0 ;
-		virtual WORD merge_bit (CREF<BYTE> high ,CREF<BYTE> low) const = 0 ;
-		virtual CHAR merge_bit (CREF<WORD> high ,CREF<WORD> low) const = 0 ;
-		virtual DATA merge_bit (CREF<CHAR> high ,CREF<CHAR> low) const = 0 ;
-		virtual BOOL any_bit (CREF<BYTE> base ,CREF<BYTE> mask) const = 0 ;
-		virtual BOOL any_bit (CREF<WORD> base ,CREF<WORD> mask) const = 0 ;
-		virtual BOOL any_bit (CREF<CHAR> base ,CREF<CHAR> mask) const = 0 ;
-		virtual BOOL any_bit (CREF<DATA> base ,CREF<DATA> mask) const = 0 ;
-		virtual BOOL all_bit (CREF<BYTE> base ,CREF<BYTE> mask) const = 0 ;
-		virtual BOOL all_bit (CREF<WORD> base ,CREF<WORD> mask) const = 0 ;
-		virtual BOOL all_bit (CREF<CHAR> base ,CREF<CHAR> mask) const = 0 ;
-		virtual BOOL all_bit (CREF<DATA> base ,CREF<DATA> mask) const = 0 ;
-		virtual DATA single_bit (CREF<LENGTH> nth) const = 0 ;
-		virtual INDEX find_bit (CREF<BYTE> obj) const = 0 ;
-		virtual INDEX find_bit (CREF<WORD> obj) const = 0 ;
-		virtual INDEX find_bit (CREF<CHAR> obj) const = 0 ;
-		virtual INDEX find_bit (CREF<DATA> obj) const = 0 ;
+		virtual BYTE bit_low (CREF<WORD> obj) const = 0 ;
+		virtual WORD bit_low (CREF<CHAR> obj) const = 0 ;
+		virtual CHAR bit_low (CREF<DATA> obj) const = 0 ;
+		virtual BYTE bit_high (CREF<WORD> obj) const = 0 ;
+		virtual WORD bit_high (CREF<CHAR> obj) const = 0 ;
+		virtual CHAR bit_high (CREF<DATA> obj) const = 0 ;
+		virtual WORD bit_merge (CREF<BYTE> high ,CREF<BYTE> low) const = 0 ;
+		virtual CHAR bit_merge (CREF<WORD> high ,CREF<WORD> low) const = 0 ;
+		virtual DATA bit_merge (CREF<CHAR> high ,CREF<CHAR> low) const = 0 ;
+		virtual BOOL bit_any (CREF<BYTE> base ,CREF<BYTE> mask) const = 0 ;
+		virtual BOOL bit_any (CREF<WORD> base ,CREF<WORD> mask) const = 0 ;
+		virtual BOOL bit_any (CREF<CHAR> base ,CREF<CHAR> mask) const = 0 ;
+		virtual BOOL bit_any (CREF<DATA> base ,CREF<DATA> mask) const = 0 ;
+		virtual BOOL bit_all (CREF<BYTE> base ,CREF<BYTE> mask) const = 0 ;
+		virtual BOOL bit_all (CREF<WORD> base ,CREF<WORD> mask) const = 0 ;
+		virtual BOOL bit_all (CREF<CHAR> base ,CREF<CHAR> mask) const = 0 ;
+		virtual BOOL bit_all (CREF<DATA> base ,CREF<DATA> mask) const = 0 ;
+		virtual DATA bit_single (CREF<LENGTH> nth) const = 0 ;
+		virtual BYTE bit_reverse (CREF<BYTE> obj) const = 0 ;
+		virtual WORD bit_reverse (CREF<WORD> obj) const = 0 ;
+		virtual CHAR bit_reverse (CREF<CHAR> obj) const = 0 ;
+		virtual DATA bit_reverse (CREF<DATA> obj) const = 0 ;
+		virtual INDEX bit_find (CREF<BYTE> obj) const = 0 ;
+		virtual INDEX bit_find (CREF<WORD> obj) const = 0 ;
+		virtual INDEX bit_find (CREF<CHAR> obj) const = 0 ;
+		virtual INDEX bit_find (CREF<DATA> obj) const = 0 ;
 	} ;
 
 	struct FUNCTION_extern {
@@ -472,62 +477,78 @@ trait BITPROC_HELP<DEPEND ,ALWAYS> {
 			}) ;
 		}
 
-		imports BYTE low_bit (CREF<WORD> obj) {
-			return instance ().mThis->low_bit (obj) ;
+		imports BYTE bit_low (CREF<WORD> obj) {
+			return instance ().mThis->bit_low (obj) ;
 		}
 
-		imports WORD low_bit (CREF<CHAR> obj) {
-			return instance ().mThis->low_bit (obj) ;
+		imports WORD bit_low (CREF<CHAR> obj) {
+			return instance ().mThis->bit_low (obj) ;
 		}
 
-		imports CHAR low_bit (CREF<DATA> obj) {
-			return instance ().mThis->low_bit (obj) ;
+		imports CHAR bit_low (CREF<DATA> obj) {
+			return instance ().mThis->bit_low (obj) ;
 		}
 
-		imports BYTE high_bit (CREF<WORD> obj) {
-			return instance ().mThis->high_bit (obj) ;
+		imports BYTE bit_high (CREF<WORD> obj) {
+			return instance ().mThis->bit_high (obj) ;
 		}
 
-		imports WORD high_bit (CREF<CHAR> obj) {
-			return instance ().mThis->high_bit (obj) ;
+		imports WORD bit_high (CREF<CHAR> obj) {
+			return instance ().mThis->bit_high (obj) ;
 		}
 
-		imports CHAR high_bit (CREF<DATA> obj) {
-			return instance ().mThis->high_bit (obj) ;
+		imports CHAR bit_high (CREF<DATA> obj) {
+			return instance ().mThis->bit_high (obj) ;
 		}
 
-		imports WORD merge_bit (CREF<BYTE> high ,CREF<BYTE> low) {
-			return instance ().mThis->merge_bit (high ,low) ;
+		imports WORD bit_merge (CREF<BYTE> high ,CREF<BYTE> low) {
+			return instance ().mThis->bit_merge (high ,low) ;
 		}
 
-		imports CHAR merge_bit (CREF<WORD> high ,CREF<WORD> low) {
-			return instance ().mThis->merge_bit (high ,low) ;
+		imports CHAR bit_merge (CREF<WORD> high ,CREF<WORD> low) {
+			return instance ().mThis->bit_merge (high ,low) ;
 		}
 
-		imports DATA merge_bit (CREF<CHAR> high ,CREF<CHAR> low) {
-			return instance ().mThis->merge_bit (high ,low) ;
-		}
-
-		template <class ARG1 ,class ARG2>
-		imports BOOL any_bit (CREF<ARG1> base ,CREF<ARG2> mask) {
-			require (IS_BIT<ARG1>) ;
-			return instance ().mThis->any_bit (base ,ARG1 (mask)) ;
+		imports DATA bit_merge (CREF<CHAR> high ,CREF<CHAR> low) {
+			return instance ().mThis->bit_merge (high ,low) ;
 		}
 
 		template <class ARG1 ,class ARG2>
-		imports BOOL all_bit (CREF<ARG1> base ,CREF<ARG2> mask) {
-			require (IS_BIT<ARG1>) ;
-			return instance ().mThis->all_bit (base ,ARG1 (mask)) ;
+		imports BOOL bit_any (CREF<ARG1> base ,CREF<ARG2> mask) {
+			require (IS_BYTE<ARG1>) ;
+			return instance ().mThis->bit_any (base ,ARG1 (mask)) ;
 		}
 
-		imports DATA single_bit (CREF<LENGTH> nth) {
-			return instance ().mThis->single_bit (nth) ;
+		template <class ARG1 ,class ARG2>
+		imports BOOL bit_all (CREF<ARG1> base ,CREF<ARG2> mask) {
+			require (IS_BYTE<ARG1>) ;
+			return instance ().mThis->bit_all (base ,ARG1 (mask)) ;
+		}
+
+		imports DATA bit_single (CREF<LENGTH> nth) {
+			return instance ().mThis->bit_single (nth) ;
+		}
+
+		imports BYTE bit_reverse (CREF<BYTE> obj) {
+			return instance ().mThis->bit_reverse (obj) ;
+		}
+
+		imports WORD bit_reverse (CREF<WORD> obj) {
+			return instance ().mThis->bit_reverse (obj) ;
+		}
+
+		imports CHAR bit_reverse (CREF<CHAR> obj) {
+			return instance ().mThis->bit_reverse (obj) ;
+		}
+
+		imports DATA bit_reverse (CREF<DATA> obj) {
+			return instance ().mThis->bit_reverse (obj) ;
 		}
 
 		template <class ARG1>
-		imports INDEX find_bit (CREF<ARG1> obj) {
-			require (IS_BIT<ARG1>) ;
-			return instance ().mThis->find_bit (obj) ;
+		imports INDEX bit_find (CREF<ARG1> obj) {
+			require (IS_BYTE<ARG1>) ;
+			return instance ().mThis->bit_find (obj) ;
 		}
 	} ;
 } ;
@@ -558,7 +579,7 @@ trait INTEGER_HELP<DEPEND ,ALWAYS> {
 		virtual Integer mul (CREF<VAL64> scale) const = 0 ;
 		virtual Integer div (CREF<VAL64> scale) const = 0 ;
 		virtual Integer mod (CREF<VAL64> scale) const = 0 ;
-		virtual void friend_clone (VREF<Integer> that) const = 0 ;
+		virtual Integer clone () const = 0 ;
 		virtual Integer minus () const = 0 ;
 		virtual void increase () = 0 ;
 		virtual void decrease () = 0 ;
@@ -580,17 +601,19 @@ trait INTEGER_HELP<DEPEND ,ALWAYS> {
 	public:
 		implicit Integer () = default ;
 
+		explicit Integer (RREF<Box<FakeHolder>> that) {
+			mThis = move (that) ;
+		}
+
 		explicit Integer (CREF<LENGTH> size_ ,CREF<VAL64> value_) {
 			mThis = FUNCTION_extern::invoke () ;
 			mThis->initialize (size_ ,value_) ;
 		}
 
-		explicit Integer (RREF<Box<FakeHolder>> that) {
-			mThis = move (that) ;
-		}
-
 		implicit Integer (CREF<Integer> that) {
-			that.mThis->friend_clone (thiz) ;
+			if (that.mThis == NULL)
+				return ;
+			thiz = that.mThis->clone () ;
 		}
 
 		inline VREF<Integer> operator= (CREF<Integer> that) {
@@ -609,6 +632,12 @@ trait INTEGER_HELP<DEPEND ,ALWAYS> {
 				return thiz ;
 			swap (thiz ,move (that)) ;
 			return thiz ;
+		}
+
+		LENGTH size () const {
+			if (mThis == NULL)
+				return 0 ;
+			return mThis->size () ;
 		}
 
 		LENGTH precision () const {

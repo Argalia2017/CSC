@@ -46,8 +46,8 @@ trait STRINGPROC_GBKSCACHE_HELP<DEPEND ,ALWAYS> {
 
 		inline Tuple<STRUW ,STRUW> operator[] (CREF<INDEX> index) const {
 			Tuple<STRUW ,STRUW> ret ;
-			ret.mP1st = mGBKSCache[index] ;
-			ret.mP2nd = mUTFSCache[index] ;
+			ret.m1st = mGBKSCache[index] ;
+			ret.m2nd = mUTFSCache[index] ;
 			return move (ret) ;
 		}
 

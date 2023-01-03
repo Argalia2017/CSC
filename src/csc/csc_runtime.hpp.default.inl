@@ -6,7 +6,7 @@
 
 #include "csc_runtime.hpp"
 
-#include "begin.h"
+#include "csc_end.h"
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -19,7 +19,7 @@
 #include <thread>
 #include <locale>
 #include <random>
-#include "end.h"
+#include "csc_begin.h"
 
 namespace CSC {
 template <class...>
@@ -68,13 +68,9 @@ trait TIMEDURATION_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		TIMEDURATION mTimeDuration ;
 
 	public:
-		void init_now () override {
+		void initialize () override {
 			const auto r1x = std::chrono::system_clock::now () ;
 			mTimeDuration = r1x.time_since_epoch () ;
-		}
-
-		void init_epoch () override {
-			mTimeDuration = TIMEDURATION (0) ;
 		}
 
 		void initialize (CREF<LENGTH> milliseconds_ ,CREF<LENGTH> nanoseconds_) override {
@@ -114,11 +110,11 @@ trait TIMEDURATION_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			return CRef<ImplHolder>::reference (thiz) ;
 		}
 
-		TIMEDURATION get_mTimeDuration () const leftvalue {
+		TIMEDURATION get_mTimeDuration () const {
 			return mTimeDuration ;
 		}
 
-		TIMEPOINT get_mTimePoint () const leftvalue {
+		TIMEPOINT get_mTimePoint () const {
 			return TIMEPOINT (mTimeDuration) ;
 		}
 
@@ -213,9 +209,9 @@ trait ATOMIC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		SharedRef<HEAP> mHeap ;
 
 	public:
-		void initialize () override {
+		void initialize (CREF<VAL> init_) override {
 			mHeap = SharedRef<HEAP>::make () ;
-			mHeap->mAtomic.store (0 ,std::memory_order::memory_order_relaxed) ;
+			mHeap->mAtomic.store (init_ ,std::memory_order::memory_order_relaxed) ;
 		}
 
 		VAL fetch () const override {
@@ -267,7 +263,7 @@ trait MUTEX_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		Box<std::mutex> mMutex ;
 		Box<std::recursive_mutex> mRecursive ;
 		Box<std::condition_variable> mConditional ;
-		LENGTH mCounter ;
+		Atomic mShared ;
 	} ;
 
 	class ImplHolder implement Holder {
@@ -275,28 +271,27 @@ trait MUTEX_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		SharedRef<HEAP> mHeap ;
 
 	public:
-		void init_recursive () override {
+		void initialize_recursive () override {
 			mHeap = SharedRef<HEAP>::make () ;
 			mHeap->mRecursive = Box<std::recursive_mutex>::make () ;
+			mHeap->mShared = Atomic (0) ;
 		}
 
-		void init_conditional () override {
+		void initialize_conditional () override {
 			mHeap = SharedRef<HEAP>::make () ;
 			mHeap->mMutex = Box<std::mutex>::make () ;
 			mHeap->mConditional = Box<std::condition_variable>::make () ;
-			mHeap->mCounter = 0 ;
 		}
 
 		Auto native () const leftvalue override {
 			return CRef<ImplHolder>::reference (thiz) ;
 		}
 
-		SharedRef<HEAP> conditional_lock (VREF<std::unique_lock<std::mutex>> locker) const leftvalue {
-			locker = std::unique_lock<std::mutex> (mHeap->mMutex.self) ;
+		SharedRef<HEAP> get_mHeap () const {
 			return mHeap ;
 		}
 
-		void enter () const override {
+		void enter () override {
 			auto act = TRUE ;
 			if ifswitch (act) {
 				if (mHeap->mRecursive == NULL)
@@ -310,7 +305,7 @@ trait MUTEX_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			}
 		}
 
-		void leave () const override {
+		void leave () override {
 			auto act = TRUE ;
 			if ifswitch (act) {
 				if (mHeap->mRecursive == NULL)
@@ -346,7 +341,9 @@ trait UNIQUELOCK_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		void initialize (CREF<Mutex> mutex_) override {
 			using R1X = typename MUTEX_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 			const auto r1x = mutex_.native ().poll (TYPEAS<CRef<R1X>>::expr) ;
-			mHeap = r1x->conditional_lock (mLock) ;
+			mHeap = r1x->get_mHeap () ;
+			assert (mHeap->mConditional != NULL) ;
+			mLock = std::unique_lock<std::mutex> (mHeap->mMutex.self) ;
 		}
 
 		void finalize () override {
@@ -364,18 +361,11 @@ trait UNIQUELOCK_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			mHeap->mConditional->wait_for (mLock ,r1x->get_mTimeDuration ()) ;
 		}
 
-		void wait (CREF<TimePoint> time_) override {
-			using R1X = typename TIMEDURATION_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
-			const auto r1x = time_.native ().poll (TYPEAS<CRef<R1X>>::expr) ;
-			mHeap->mConditional->wait_until (mLock ,r1x->get_mTimePoint ()) ;
-		}
-
 		void notify () override {
 			mHeap->mConditional->notify_all () ;
 		}
 
 		void yield () override {
-			mHeap->mConditional->notify_all () ;
 			mLock = std::unique_lock<std::mutex> () ;
 			std::this_thread::yield () ;
 			mLock = std::unique_lock<std::mutex> (mHeap->mMutex.self) ;
@@ -399,54 +389,69 @@ trait SHAREDLOCK_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	class ImplHolder implement Holder {
 	protected:
 		SharedRef<HEAP> mHeap ;
-		std::unique_lock<std::mutex> mLock ;
 
 	public:
 		void initialize (CREF<Mutex> mutex_) override {
 			using R1X = typename MUTEX_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 			const auto r1x = mutex_.native ().poll (TYPEAS<CRef<R1X>>::expr) ;
-			mHeap = r1x->conditional_lock (mLock) ;
-			enter () ;
+			mHeap = r1x->get_mHeap () ;
+			assert (mHeap->mRecursive != NULL) ;
+			shared_enter () ;
 		}
 
 		void finalize () override {
 			try_invoke ([&] () {
-				leave () ;
+				shared_leave () ;
 			}) ;
-		}
-
-		void enter () {
-			auto rax = move (mLock) ;
-			while (TRUE) {
-				if (mHeap->mCounter >= 0)
-					break ;
-				mHeap->mConditional->wait (rax) ;
-			}
-			mHeap->mCounter++ ;
-		}
-
-		void leave () {
-			auto rax = std::unique_lock<std::mutex> (mHeap->mMutex.self) ;
-			mHeap->mCounter-- ;
-			mHeap->mConditional->notify_all () ;
-			if ifswitch (TRUE) {
-				if (mHeap->mCounter == 0)
-					discard ;
-				mHeap->mCounter = 0 ;
-			}
 			mHeap = SharedRef<HEAP> () ;
 		}
 
-		BOOL lock () const override {
-			auto rax = std::unique_lock<std::mutex> (mHeap->mMutex.self) ;
-			mHeap->mCounter-- ;
-			while (TRUE) {
-				if (mHeap->mCounter != 0)
-					break ;
-				mHeap->mConditional->wait (rax) ;
+		BOOL busy () const override {
+			return mHeap->mShared.fetch () != IDEN ;
+		}
+
+		void shared_enter () {
+			auto rax = mHeap->mShared.fetch () ;
+			if ifswitch (TRUE) {
+				rax = vabs (rax) ;
+				const auto r1x = mHeap->mShared.change (rax ,rax + 1) ;
+				if (r1x)
+					discard ;
+				std::lock_guard<std::recursive_mutex> anonymous (mHeap->mRecursive.self) ;
+				while (TRUE) {
+					rax = vabs (rax) ;
+					const auto r2x = mHeap->mShared.change (rax ,rax + 1) ;
+					if (r2x)
+						break ;
+				}
 			}
-			mHeap->mCounter = -1 ;
-			return TRUE ;
+			std::atomic_thread_fence (std::memory_order::memory_order_acquire) ;
+		}
+
+		void shared_leave () {
+			mHeap->mShared.decrease () ;
+		}
+
+		void enter () override {
+			if ifswitch (TRUE) {
+				auto rax = IDEN ;
+				const auto r1x = mHeap->mShared.change (rax ,NONE) ;
+				if (r1x)
+					discard ;
+				mHeap->mShared.decrease () ;
+				std::lock_guard<std::recursive_mutex> anonymous (mHeap->mRecursive.self) ;
+				while (TRUE) {
+					rax = ZERO ;
+					const auto r2x = mHeap->mShared.change (rax ,NONE) ;
+					if (r2x)
+						break ;
+				}
+			}
+		}
+
+		void leave () override {
+			std::atomic_thread_fence (std::memory_order::memory_order_release) ;
+			mHeap->mShared.store (IDEN) ;
 		}
 	} ;
 } ;
@@ -462,20 +467,28 @@ exports auto SHAREDLOCK_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->Box<F
 template <class DEPEND>
 trait THREAD_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	using Holder = typename THREAD_HELP<DEPEND ,ALWAYS>::Holder ;
-	using Binder = typename THREAD_HELP<DEPEND ,ALWAYS>::Binder ;
+	using VarBinder = typename THREAD_HELP<DEPEND ,ALWAYS>::VarBinder ;
+	using ConBinder = typename THREAD_HELP<DEPEND ,ALWAYS>::ConBinder ;
 
 	class ImplHolder implement Holder {
 	protected:
 		FLAG mUID ;
-		INDEX mIndex ;
-		VRef<Binder> mBinder ;
+		INDEX mSlot ;
+		VRef<VarBinder> mVarBinder ;
+		CRef<ConBinder> mConBinder ;
 		VRef<std::thread> mBlock ;
 
 	public:
-		void initialize (RREF<VRef<Binder>> binder ,CREF<INDEX> index) override {
+		void initialize (RREF<VRef<VarBinder>> binder ,CREF<INDEX> slot) override {
 			mUID = ZERO ;
-			mIndex = index ;
-			mBinder = move (binder) ;
+			mSlot = slot ;
+			mVarBinder = move (binder) ;
+		}
+
+		void initialize (RREF<CRef<ConBinder>> binder ,CREF<INDEX> slot) override {
+			mUID = ZERO ;
+			mSlot = slot ;
+			mConBinder = move (binder) ;
 		}
 
 		void finalize () override {
@@ -488,14 +501,31 @@ trait THREAD_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 
 		void start () override {
 			assume (mBlock == NULL) ;
-			mBlock = VRef<std::thread>::make ([&] () {
-				try_invoke ([&] () {
-					mUID = RuntimeProc::thread_uid () ;
-					mBinder->friend_execute (mIndex) ;
-				} ,[&] () {
-					noop () ;
+			auto act = TRUE ;
+			if ifswitch (act) {
+				if (mVarBinder == NULL)
+					discard ;
+				mBlock = VRef<std::thread>::make ([&] () {
+					try_invoke ([&] () {
+						mUID = RuntimeProc::thread_uid () ;
+						mVarBinder->friend_execute (mSlot) ;
+					} ,[&] () {
+						noop () ;
+					}) ;
 				}) ;
-			}) ;
+			}
+			if ifswitch (act) {
+				if (mConBinder == NULL)
+					discard ;
+				mBlock = VRef<std::thread>::make ([&] () {
+					try_invoke ([&] () {
+						mUID = RuntimeProc::thread_uid () ;
+						mConBinder->friend_execute (mSlot) ;
+					} ,[&] () {
+						noop () ;
+					}) ;
+				}) ;
+			}
 		}
 
 		void stop () override {
@@ -522,12 +552,12 @@ trait SYSTEM_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 
 	class ImplHolder implement Holder {
 	protected:
-		Cell<String<STR>> mLocale ;
+		Optional<String<STR>> mLocale ;
 		String<STR> mWorkingPath ;
 
 	public:
 		void initialize () override {
-			mLocale = Cell<String<STR>>::make (slice ("C")) ;
+			mLocale = Optional<String<STR>>::make (slice ("C")) ;
 			mWorkingPath = RuntimeProc::working_path () ;
 		}
 
@@ -619,7 +649,7 @@ trait RANDOM_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		Array<INDEX> random_shuffle (CREF<LENGTH> count ,CREF<LENGTH> size_) const override {
-			Array<INDEX> ret = Array<INDEX>::make (iter (0 ,size_)) ;
+			Array<INDEX> ret = IterArray<INDEX>::make (iter (0 ,size_)) ;
 			random_shuffle (count ,size_ ,ret) ;
 			return move (ret) ;
 		}
@@ -679,4 +709,41 @@ exports auto RANDOM_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Hold
 	using R1X = typename RANDOM_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
 }
+
+template <class...>
+trait SINGLETON_HACKSHAREDREF_HELP ;
+
+template <class UNIT>
+trait SINGLETON_HACKSHAREDREF_HELP<UNIT ,ALWAYS> {
+	using Holder = typename SHAREDREF_HELP<UNIT ,ALWAYS>::Holder ;
+	using PureHolder = typename SHAREDREF_PUREHOLDER_HELP<UNIT ,ALWAYS>::PureHolder ;
+
+	class HackSharedRef extend SharedRef<UNIT> {
+	public:
+		imports SharedRef<UNIT> make () {
+			HackSharedRef ret ;
+			auto rax = CRef<Holder>::reference (unique ().self) ;
+			Scope<EasyMutex> anonymous (rax->easy_mutex ()) ;
+			ret.mThis = move (rax) ;
+			ret.mPointer = ret.mThis->pointer () ;
+			if ifswitch (TRUE) {
+				if (ret.mThis->counter () > 0)
+					discard ;
+				const auto r1x = ret.mThis->pointer () ;
+				auto &&tmp = unsafe_deref (unsafe_cast[TYPEAS<TEMP<Box<UNIT>>>::expr] (unsafe_pointer (r1x))) ;
+				tmp.acquire (TYPEAS<UNIT>::expr) ;
+			}
+			ret.mHandle = Scope<Holder> (ret.mThis.self) ;
+			return move (ret) ;
+		}
+
+		imports CREF<Box<PureHolder>> unique () {
+			return memorize ([&] () {
+				Box<PureHolder> ret = Box<PureHolder>::make () ;
+				ret->initialize () ;
+				return move (ret) ;
+			}) ;
+		}
+	} ;
+} ;
 } ;

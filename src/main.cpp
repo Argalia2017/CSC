@@ -1,10 +1,10 @@
 ﻿#include "util.h"
 
+#include "csc/csc_end.h"
 #ifdef __CSC_COMPILER_GNUC__
-#include <csc/begin.h>
 #include "inl.cpp"
-#include <csc/end.h>
 #endif
+#include "csc/csc_begin.h"
 
 using namespace UNITTEST ;
 
@@ -215,22 +215,22 @@ exports void test_main () ;
 
 #ifdef __CSC_TARGET_EXE__
 exports int main () {
+	Singleton<Reporter>::instance ().detect_memory_leaks () ;
 	Singleton<Reporter>::instance ().detect_crash_signal () ;
-	Singleton<Console>::instance ().open () ;
-	Singleton<Console>::instance ().link (slice (".")) ;
+	Singleton<Console>::instance ().show () ;
+	Singleton<Console>::instance ().open (slice (".")) ;
 	Singleton<Console>::instance ().info (slice ("start")) ;
 
-	//auto rax = SyntaxTree () ;
-	//auto &mXn = rax.stack (TYPEAS<G_mXn>::expr).mXn ;
-	//auto &mYn = rax.stack (TYPEAS<G_mYn>::expr).mYn ;
-	//rax.play () ;
-	//for (auto &&i : mXn.iter ()) {
-	//	Singleton<Console>::instance ().print (slice ("square (") ,mXn[i] ,slice (") = ") ,mYn[i]) ;
-	//}
-	//unittest (rax) ;
+	auto rax = SyntaxTree (PH0) ;
+	auto &mXn = rax.stack (TYPEAS<G_mXn>::expr).mXn ;
+	auto &mYn = rax.stack (TYPEAS<G_mYn>::expr).mYn ;
+	rax.play () ;
+	for (auto &&i : mXn.iter ()) {
+		Singleton<Console>::instance ().print (slice ("square (") ,mXn[i] ,slice (") = ") ,mYn[i]) ;
+	}
+	unittest (rax) ;
 	test_main () ;
 
-	//Singleton<Console>::instance ().pause () ;
 	return 0 ;
 }
 #endif

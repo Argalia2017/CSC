@@ -10,12 +10,12 @@
 #error "∑(っ°Д° ;)っ : bad include"
 #endif
 
-#include "begin.h"
+#include "csc_end.h"
 #include <iostream>
 #include <crtdbg.h>
 #include <signal.h>
 #include <DbgHelp.h>
-#include "end.h"
+#include "csc_begin.h"
 
 #ifdef __CSC_COMPILER_MSVC__
 #ifndef use_comment_lib_dbghelp
@@ -93,9 +93,9 @@ trait CONSOLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 
 		void set_buffer_size (CREF<LENGTH> size_) const {
 			mHeap->mConBuffer = String<STR> (size_) ;
-			mHeap->mConWriter = TextWriter<STR> (mHeap->mConBuffer.raw ().as_ref ()) ;
+			mHeap->mConWriter = TextWriter<STR> (mHeap->mConBuffer.raw ().borrow ()) ;
 			mHeap->mLogBuffer = String<STRU8> (size_) ;
-			mHeap->mLogWriter = TextWriter<STRU8> (mHeap->mLogBuffer.raw ().as_ref ()) ;
+			mHeap->mLogWriter = TextWriter<STRU8> (mHeap->mLogBuffer.raw ().borrow ()) ;
 		}
 
 		void enable_option (CREF<FLAG> option) const override {
@@ -115,7 +115,7 @@ trait CONSOLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				return ;
 			write_con_buffer (msg) ;
 			if ifswitch (TRUE) {
-				if ifnot (is_open ())
+				if ifnot (is_show ())
 					discard ;
 				const auto r1x = csc_byte16_t (FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE) ;
 				SetConsoleTextAttribute (mHeap->mConsole ,r1x) ;
@@ -133,7 +133,7 @@ trait CONSOLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				return ;
 			write_con_buffer (msg) ;
 			if ifswitch (TRUE) {
-				if ifnot (is_open ())
+				if ifnot (is_show ())
 					discard ;
 				const auto r1x = csc_byte16_t (FOREGROUND_BLUE | FOREGROUND_INTENSITY) ;
 				SetConsoleTextAttribute (mHeap->mConsole ,r1x) ;
@@ -151,7 +151,7 @@ trait CONSOLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				return ;
 			write_con_buffer (msg) ;
 			if ifswitch (TRUE) {
-				if ifnot (is_open ())
+				if ifnot (is_show ())
 					discard ;
 				const auto r1x = csc_byte16_t (FOREGROUND_RED | FOREGROUND_INTENSITY) ;
 				SetConsoleTextAttribute (mHeap->mConsole ,r1x) ;
@@ -169,7 +169,7 @@ trait CONSOLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				return ;
 			write_con_buffer (msg) ;
 			if ifswitch (TRUE) {
-				if ifnot (is_open ())
+				if ifnot (is_show ())
 					discard ;
 				const auto r1x = csc_byte16_t (FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_INTENSITY) ;
 				SetConsoleTextAttribute (mHeap->mConsole ,r1x) ;
@@ -187,7 +187,7 @@ trait CONSOLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				return ;
 			write_con_buffer (msg) ;
 			if ifswitch (TRUE) {
-				if ifnot (is_open ())
+				if ifnot (is_show ())
 					discard ;
 				const auto r1x = csc_byte16_t (FOREGROUND_GREEN | FOREGROUND_INTENSITY) ;
 				SetConsoleTextAttribute (mHeap->mConsole ,r1x) ;
@@ -205,7 +205,7 @@ trait CONSOLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				return ;
 			write_con_buffer (msg) ;
 			if ifswitch (TRUE) {
-				if ifnot (is_open ())
+				if ifnot (is_show ())
 					discard ;
 				const auto r1x = csc_byte16_t (FOREGROUND_GREEN | FOREGROUND_BLUE | FOREGROUND_INTENSITY) ;
 				SetConsoleTextAttribute (mHeap->mConsole ,r1x) ;
@@ -223,7 +223,7 @@ trait CONSOLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				return ;
 			write_con_buffer (msg) ;
 			if ifswitch (TRUE) {
-				if ifnot (is_open ())
+				if ifnot (is_show ())
 					discard ;
 				const auto r1x = csc_byte16_t (FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE | FOREGROUND_INTENSITY) ;
 				SetConsoleTextAttribute (mHeap->mConsole ,r1x) ;
@@ -242,14 +242,14 @@ trait CONSOLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			mHeap->mConWriter << EOS ;
 		}
 
-		void link (CREF<String<STR>> dire) const override {
+		void open (CREF<String<STR>> dire) const override {
 			auto act = TRUE ;
 			if ifswitch (act) {
 				if (dire.empty ())
 					discard ;
 				const auto r1x = Directory (dire).absolute () ;
-				mHeap->mLogFile = String<STR>::make (r1x ,STR ('\\') ,slice ("console.log")) ;
-				mHeap->mOldLogFile = String<STR>::make (r1x ,STR ('\\') ,slice ("console.old.log")) ;
+				mHeap->mLogFile = PrintString<STR>::make (r1x ,STR ('\\') ,slice ("console.log")) ;
+				mHeap->mOldLogFile = PrintString<STR>::make (r1x ,STR ('\\') ,slice ("console.old.log")) ;
 			}
 			if ifswitch (act) {
 				mHeap->mLogFile = String<STR> () ;
@@ -266,7 +266,7 @@ trait CONSOLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			try_invoke ([&] () {
 				if (mHeap->mLogStreamFile == NULL)
 					return ;
-				const auto r2x = mHeap->mLogStreamFile->write (RegBuffer<BYTE>::make (tmp ,0 ,r1x)) ;
+				const auto r2x = mHeap->mLogStreamFile->write (RegBuffer<BYTE>::from (tmp ,0 ,r1x)) ;
 				assume (r2x == r1x) ;
 			} ,[&] () {
 				mHeap->mLogStreamFile = NULL ;
@@ -274,8 +274,8 @@ trait CONSOLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			try_invoke ([&] () {
 				if (mHeap->mLogStreamFile != NULL)
 					return ;
-				attach_log_file () ;
-				const auto r3x = mHeap->mLogStreamFile->write (RegBuffer<BYTE>::make (tmp ,0 ,r1x)) ;
+				open_log_file () ;
+				const auto r3x = mHeap->mLogStreamFile->write (RegBuffer<BYTE>::from (tmp ,0 ,r1x)) ;
 				assume (r3x == r1x) ;
 			} ,[&] () {
 				mHeap->mLogStreamFile = NULL ;
@@ -290,13 +290,13 @@ trait CONSOLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		void write_log_buffer (CREF<Slice<STR>> tag) const {
 			mHeap->mLogWriter << CLS ;
 			mHeap->mLogWriter << slice ("[") ;
-			const auto r1x = NowTimePoint () ;
+			const auto r1x = NowTimePoint::make () ;
 			const auto r2x = r1x.calendar () ;
-			mHeap->mLogWriter << AlignedString (r2x.mHour ,2) ;
+			mHeap->mLogWriter << ValueString (r2x.mHour ,2) ;
 			mHeap->mLogWriter << slice (":") ;
-			mHeap->mLogWriter << AlignedString (r2x.mMinute ,2) ;
+			mHeap->mLogWriter << ValueString (r2x.mMinute ,2) ;
 			mHeap->mLogWriter << slice (":") ;
-			mHeap->mLogWriter << AlignedString (r2x.mSecond ,2) ;
+			mHeap->mLogWriter << ValueString (r2x.mSecond ,2) ;
 			mHeap->mLogWriter << slice ("][") ;
 			mHeap->mLogWriter << tag ;
 			mHeap->mLogWriter << slice ("] : ") ;
@@ -306,22 +306,21 @@ trait CONSOLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			mHeap->mLogWriter << EOS ;
 		}
 
-		void attach_log_file () const {
+		void open_log_file () const {
 			const auto r1x = File (mHeap->mLogFile) ;
 			const auto r2x = File (mHeap->mOldLogFile) ;
 			r2x.erase () ;
 			r2x.move_from (r1x) ;
 			mHeap->mLogStreamFile = VRef<StreamFile>::make (mHeap->mLogFile) ;
-			const auto r3x = mHeap->mLogStreamFile->link (TRUE ,TRUE) ;
-			assume (r3x) ;
-			const auto r4x = String<STRU8>::make (BOM) ;
+			mHeap->mLogStreamFile->open (TRUE ,TRUE) ;
+			const auto r4x = PrintString<STRU8>::make (BOM) ;
 			auto &&tmp = unsafe_cast[TYPEAS<TEMP<void>>::expr] (unsafe_deptr (r4x[0])) ;
-			const auto r5x = mHeap->mLogStreamFile->write (RegBuffer<BYTE>::make (tmp ,0 ,r4x.length ())) ;
+			const auto r5x = mHeap->mLogStreamFile->write (RegBuffer<BYTE>::from (tmp ,0 ,r4x.length ())) ;
 			assume (r5x == r4x.length ()) ;
 		}
 
-		void open () const override {
-			if (is_open ())
+		void show () const override {
+			if (is_show ())
 				return ;
 			mHeap->mConsole = UniqueRef<HANDLE> ([&] (VREF<HANDLE> me) {
 				const auto r1x = AttachConsole (ATTACH_PARENT_PROCESS) ;
@@ -331,7 +330,7 @@ trait CONSOLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			} ,[] (VREF<HANDLE> me) {
 				noop () ;
 			}) ;
-			if (is_open ())
+			if (is_show ())
 				return ;
 			mHeap->mConsole = UniqueRef<HANDLE> ([&] (VREF<HANDLE> me) {
 				AllocConsole () ;
@@ -342,7 +341,7 @@ trait CONSOLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			}) ;
 		}
 
-		BOOL is_open () const {
+		BOOL is_show () const {
 			if ifnot (mHeap->mConsole.exist ())
 				return FALSE ;
 			if (mHeap->mConsole.self == NULL)
@@ -350,12 +349,12 @@ trait CONSOLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			return TRUE ;
 		}
 
-		void close () const override {
+		void hide () const override {
 			mHeap->mConsole = UniqueRef<HANDLE> () ;
 		}
 
 		void pause () const override {
-			if ifnot (is_open ())
+			if ifnot (is_show ())
 				return ;
 			if ifswitch (TRUE) {
 				const auto r1x = GetConsoleWindow () ;
@@ -370,7 +369,7 @@ trait CONSOLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		void clear () const override {
-			if ifnot (is_open ())
+			if ifnot (is_show ())
 				return ;
 			const auto r1x = csc_byte16_t (FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE) ;
 			SetConsoleTextAttribute (mHeap->mConsole ,r1x) ;
@@ -411,7 +410,7 @@ trait REPORTER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	public:
 		void initialize () override {
 			mHeap = SharedRef<HEAP>::make () ;
-			mHeap->mNameBuffer = String<STR>::make () ;
+			mHeap->mNameBuffer = PrintString<STR>::make () ;
 		}
 
 		void detect_memory_leaks () const override {
@@ -534,13 +533,13 @@ trait REPORTER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				const auto r1x = maybe_SymFromAddr (mHeap->mSymbolFromAddress ,DWORD64 (addr) ,NULL ,(&rax->mFirst)) ;
 				if ifnot (r1x)
 					discard ;
+				mHeap->mNameBuffer -= BufferProc<STR>::buf_slice (unsafe_array (rax->mFirst.Name[0]) ,mHeap->mNameBuffer.size ()) ;
 				const auto r2x = string_build[TYPEAS<STR ,DATA>::expr] (DATA (addr)) ;
-				BufferProc<STR>::buf_slice (mHeap->mNameBuffer.raw () ,unsafe_array (rax->mFirst.Name[0]) ,mHeap->mNameBuffer.size ()) ;
-				ret = String<STR>::make (slice ("[") ,r2x ,slice ("] : ") ,mHeap->mNameBuffer) ;
+				ret = PrintString<STR>::make (slice ("[") ,r2x ,slice ("] : ") ,mHeap->mNameBuffer) ;
 			}
 			if ifswitch (act) {
 				const auto r3x = string_build[TYPEAS<STR ,DATA>::expr] (DATA (addr)) ;
-				ret = String<STR>::make (slice ("[") ,r3x ,slice ("] : ") ,slice ("null")) ;
+				ret = PrintString<STR>::make (slice ("[") ,r3x ,slice ("] : ") ,slice ("null")) ;
 			}
 			return move (ret) ;
 		}

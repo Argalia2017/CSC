@@ -27,7 +27,7 @@ trait WORKTHREAD_HELP<DEPEND ,ALWAYS> {
 		virtual void initialize () = 0 ;
 		virtual void set_thread_size (CREF<LENGTH> size_) = 0 ;
 		virtual void set_queue_size (CREF<LENGTH> size_) = 0 ;
-		virtual void start (RREF<Function<void ,TYPEAS<CREF<INDEX>>>> proc) = 0 ;
+		virtual void start (RREF<Function<void ,TYPEAS<INDEX>>> proc) = 0 ;
 		virtual void post (CREF<INDEX> item) = 0 ;
 		virtual BOOL post (CREF<INDEX> item ,CREF<TimeDuration> interval ,CREF<Function<BOOL>> predicate) = 0 ;
 		virtual void post_all (CREF<Array<INDEX>> item) = 0 ;
@@ -45,7 +45,9 @@ trait WORKTHREAD_HELP<DEPEND ,ALWAYS> {
 		VRef<Holder> mThis ;
 
 	public:
-		implicit WorkThread () {
+		implicit WorkThread () = default ;
+
+		explicit WorkThread (CREF<typeof (PH0)>) {
 			mThis = FUNCTION_extern::invoke () ;
 			mThis->initialize () ;
 		}
@@ -58,7 +60,7 @@ trait WORKTHREAD_HELP<DEPEND ,ALWAYS> {
 			return mThis->set_queue_size (size_) ;
 		}
 
-		void start (RREF<Function<void ,TYPEAS<CREF<INDEX>>>> proc) {
+		void start (RREF<Function<void ,TYPEAS<INDEX>>> proc) {
 			return mThis->start (move (proc)) ;
 		}
 
@@ -93,9 +95,80 @@ using WorkThread = typename WORKTHREAD_HELP<DEPEND ,ALWAYS>::WorkThread ;
 template <class...>
 trait CALCTHREAD_HELP ;
 
+template <class...>
+trait CALCTHREAD_HOLDER_HELP ;
+
+template <class...>
+trait CALCTHREAD_IMPLHOLDER_HELP ;
+
+template <class DEPEND>
+trait CALCTHREAD_HOLDER_HELP<DEPEND ,ALWAYS> {
+	using ITEM = CRef<BitSet<>> ;
+
+	struct SOLUTION {
+		INDEX mIndex ;
+		DOUBLE mError ;
+		ITEM mValue ;
+	} ;
+
+	struct Holder implement Interface {
+		virtual void initialize () = 0 ;
+		virtual void set_thread_size (CREF<LENGTH> size_) = 0 ;
+		virtual void start (RREF<Function<SOLUTION ,TYPEAS<SOLUTION>>> proc) = 0 ;
+		virtual SOLUTION best () const = 0 ;
+		virtual void suspend () = 0 ;
+		virtual void resume () = 0 ;
+		virtual void stop () = 0 ;
+	} ;
+
+	struct FUNCTION_extern {
+		imports VRef<Holder> invoke () ;
+	} ;
+} ;
+
 template <class DEPEND>
 trait CALCTHREAD_HELP<DEPEND ,ALWAYS> {
-	class CalcThread ;
+	using ITEM = typename CALCTHREAD_HOLDER_HELP<DEPEND ,ALWAYS>::ITEM ;
+	using SOLUTION = typename CALCTHREAD_HOLDER_HELP<DEPEND ,ALWAYS>::SOLUTION ;
+	using Holder = typename CALCTHREAD_HOLDER_HELP<DEPEND ,ALWAYS>::Holder ;
+	using FUNCTION_extern = typename CALCTHREAD_HOLDER_HELP<DEPEND ,ALWAYS>::FUNCTION_extern ;
+
+	class CalcThread {
+	protected:
+		VRef<Holder> mThis ;
+
+	public:
+		implicit CalcThread () = default ;
+
+		explicit CalcThread (CREF<typeof (PH0)>) {
+			mThis = FUNCTION_extern::invoke () ;
+			mThis->initialize () ;
+		}
+
+		void set_thread_size (CREF<LENGTH> size_) {
+			return mThis->set_thread_size (size_) ;
+		}
+
+		void start (RREF<Function<SOLUTION ,TYPEAS<SOLUTION>>> proc) {
+			return mThis->start (move (proc)) ;
+		}
+
+		SOLUTION best () const {
+			return mThis->best () ;
+		}
+
+		void suspend () {
+			return mThis->suspend () ;
+		}
+
+		void resume () {
+			return mThis->resume () ;
+		}
+
+		void stop () {
+			return mThis->stop () ;
+		}
+	} ;
 } ;
 
 using CalcThread = typename CALCTHREAD_HELP<DEPEND ,ALWAYS>::CalcThread ;
@@ -116,16 +189,16 @@ template <class DEPEND>
 trait PROMISE_HOLDER_HELP<DEPEND ,ALWAYS> {
 	struct Holder implement Interface {
 		virtual void initialize () = 0 ;
-		virtual void start () = 0 ;
-		virtual void start (RREF<Function<AutoRef<>>> proc) = 0 ;
-		virtual void post (RREF<AutoRef<>> item) = 0 ;
-		virtual void rethrow (CREF<Exception> e) = 0 ;
-		virtual void signal () = 0 ;
-		virtual BOOL ready () = 0 ;
-		virtual AutoRef<> poll () = 0 ;
-		virtual Cell<AutoRef<>> poll (CREF<TimeDuration> interval ,CREF<Function<BOOL>> predicate) = 0 ;
-		virtual void then (RREF<Function<void ,TYPEAS<VREF<AutoRef<>>>>> proc) = 0 ;
-		virtual void stop () = 0 ;
+		virtual void start () const = 0 ;
+		virtual void start (RREF<Function<AutoRef<>>> proc) const = 0 ;
+		virtual void post (RREF<AutoRef<>> item) const = 0 ;
+		virtual void rethrow (CREF<Exception> e) const = 0 ;
+		virtual void signal () const = 0 ;
+		virtual BOOL ready () const = 0 ;
+		virtual AutoRef<> poll () const = 0 ;
+		virtual Optional<AutoRef<>> poll (CREF<TimeDuration> interval ,CREF<Function<BOOL>> predicate) const = 0 ;
+		virtual void then (RREF<Function<void ,TYPEAS<VREF<AutoRef<>>>>> proc) const = 0 ;
+		virtual void stop () const = 0 ;
 	} ;
 
 	struct FUNCTION_extern {
@@ -143,47 +216,50 @@ trait PROMISE_HELP<ITEM ,ALWAYS> {
 
 	class Promise {
 	protected:
-		VRef<Holder> mThis ;
+		CRef<Holder> mThis ;
 
 	public:
-		implicit Promise () {
-			mThis = FUNCTION_extern::invoke () ;
-			mThis->initialize () ;
+		implicit Promise () = default ;
+
+		explicit Promise (CREF<typeof (PH0)>) {
+			auto rax = FUNCTION_extern::invoke () ;
+			rax->initialize () ;
+			mThis = rax.as_cref () ;
 		}
 
-		Future as_future () {
+		Future future () const {
 			Future ret ;
-			ret.mThis = move (mThis) ;
+			ret.mThis = mThis ;
 			return move (ret) ;
 		}
 
-		void start () {
+		void start () const {
 			return mThis->start () ;
 		}
 
-		void start (RREF<Function<ITEM>> proc) {
+		void start (RREF<Function<ITEM>> proc) const {
 			return mThis->start (proc.as_wrap ([] (CREF<Function<ITEM>> old) {
-				return AutoRef<ITEM>::make (old ()) ;
+				return AutoRef<ITEM>::make (old ()).as_cast (TYPEAS<void>::expr) ;
 			})) ;
 		}
 
-		void post (CREF<ITEM> item) {
+		void post (CREF<ITEM> item) const {
 			return mThis->post (move (item)) ;
 		}
 
-		void post (RREF<ITEM> item) {
+		void post (RREF<ITEM> item) const {
 			return mThis->post (move (item)) ;
 		}
 
-		void rethrow (CREF<Exception> e) {
+		void rethrow (CREF<Exception> e) const {
 			return mThis->rethrow (e) ;
 		}
 
-		void signal () {
+		void signal () const {
 			return mThis->signal () ;
 		}
 
-		void stop () {
+		void stop () const {
 			return mThis->stop () ;
 		}
 	} ;
@@ -191,6 +267,8 @@ trait PROMISE_HELP<ITEM ,ALWAYS> {
 
 template <class ITEM>
 trait FUTURE_HELP<ITEM ,ALWAYS> {
+	class Future ;
+
 	using Holder = typename PROMISE_HELP<ITEM ,ALWAYS>::Holder ;
 	using Promise = typename PROMISE_HELP<ITEM ,ALWAYS>::Promise ;
 
@@ -200,47 +278,42 @@ trait FUTURE_HELP<ITEM ,ALWAYS> {
 		friend trait PROMISE_HELP ;
 
 	protected:
-		VRef<Holder> mThis ;
+		CRef<Holder> mThis ;
 
 	public:
 		implicit Future () = default ;
 
-		imports Future make_async (RREF<Function<ITEM>> proc) {
-			auto rax = Promise () ;
-			rax.start (move (proc)) ;
-			return rax.as_future () ;
-		}
-
-		BOOL ready () {
+		BOOL ready () const {
 			return mThis->ready () ;
 		}
 
-		ITEM poll () {
+		ITEM poll () const {
 			auto rax = mThis->poll ().as_cast (TYPEAS<ITEM>::expr) ;
 			return move (rax.self) ;
 		}
 
-		Cell<ITEM> poll (CREF<TimeDuration> interval ,CREF<Function<BOOL>> predicate) {
+		Optional<ITEM> poll (CREF<TimeDuration> interval ,CREF<Function<BOOL>> predicate) const {
 			auto rax = mThis->poll (interval ,predicate) ;
 			if ifnot (rax.exist ())
 				return rax.code () ;
 			auto rbx = rax.poll ().as_cast (TYPEAS<ITEM>::expr) ;
-			return Cell<ITEM>::make (move (rbx.self)) ;
+			return Optional<ITEM>::make (move (rbx.self)) ;
 		}
 
-		void then (RREF<Function<void ,TYPEAS<VREF<ITEM>>>> proc) {
+		void then (RREF<Function<void ,TYPEAS<VREF<ITEM>>>> proc) const {
 			return mThis->then (proc.as_wrap ([] (Function<void ,TYPEAS<VREF<ITEM>>> old ,VREF<AutoRef<>> item) {
 				old (AutoRef<ITEM>::from (item).self) ;
 			})) ;
 		}
 	} ;
 
-	class AsyncFuture extend Future {
+	class AsyncFuture extend Proxy {
 	public:
-		implicit AsyncFuture () = delete ;
-
-		explicit AsyncFuture (RREF<Function<ITEM>> proc)
-			:Future (Future::make_async (move (proc))) {}
+		imports Future make (RREF<Function<ITEM>> proc) {
+			auto rax = Promise (PH0) ;
+			rax.start (move (proc)) ;
+			return rax.future () ;
+		}
 	} ;
 } ;
 

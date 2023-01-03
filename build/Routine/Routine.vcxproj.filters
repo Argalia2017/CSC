@@ -7,9 +7,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\util.h" />
-    <ClInclude Include="..\..\src\csc\begin.h">
-      <Filter>csc</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\csc\csc.hpp">
       <Filter>csc</Filter>
     </ClInclude>
@@ -49,9 +46,6 @@
     <ClInclude Include="..\..\src\csc\csc_stream.hpp">
       <Filter>csc</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\csc\end.h">
-      <Filter>csc</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\csc\csc_serialization.hpp">
       <Filter>csc</Filter>
     </ClInclude>
@@ -62,6 +56,12 @@
       <Filter>csc</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\csc\csc_type.hpp">
+      <Filter>csc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\csc\csc_end.h">
+      <Filter>csc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\csc\csc_begin.h">
       <Filter>csc</Filter>
     </ClInclude>
   </ItemGroup>

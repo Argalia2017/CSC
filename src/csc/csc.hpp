@@ -91,13 +91,13 @@
 #pragma warning (disable :4127) //@info: warning C4127: conditional expression is constant
 #pragma warning (disable :4324) //@info: warning C4324: 'xxx': structure was padded due to alignment specifier
 #pragma warning (disable :4365) //@info: warning C4365: 'xxx': conversion from 'xxx' to 'xxx', signed/unsigned mismatch
-
 #pragma warning (disable :4459) //@info: warning C4459: declaration of 'xxx' hides global declaration
 #pragma warning (disable :4464) //@info: warning C4464: relative include path contains '..'
 #pragma warning (disable :4505) //@info: warning C4505: 'xxx': unreferenced local function has been removed
 #pragma warning (disable :4514) //@info: warning C4514: 'xxx': unreferenced inline function has been removed
 #pragma warning (disable :4571) //@info: warning C4571: Informational: catch(...) semantics changed since Visual C++ 7.1; structured exceptions (SEH) are no longer caught
 #pragma warning (disable :4574) //@info: warning C4574: 'xxx' is defined to be '0': did you mean to use '#if xxx'?
+#pragma warning (disable :4584) //@info: warning C4584: 'xxx': base-class 'xxx' is already a base-class of 'xxx'
 #pragma warning (disable :4623) //@info: warning C4623: 'xxx': default constructor was implicitly defined as deleted
 #pragma warning (disable :4624) //@info: warning C4624: 'xxx': destructor was implicitly defined as deleted
 #pragma warning (disable :4625) //@info: warning C4625: 'xxx': copy constructor was implicitly defined as deleted
@@ -127,7 +127,7 @@
 #pragma clang diagnostic ignored "-Wunused-parameter"
 #endif
 
-#include "begin.h"
+#include "csc_end.h"
 #ifndef __CSC_CXX_LITE__
 #include <limits>
 #include <initializer_list>
@@ -167,7 +167,7 @@ struct is_trivially_constructible :integral_constant<bool ,__has_trivial_constru
 } ;
 #endif
 #endif
-#include "end.h"
+#include "csc_begin.h"
 
 #ifndef __macro_exports
 #ifdef __CSC_COMPILER_MSVC__
@@ -236,12 +236,12 @@ struct is_trivially_constructible :integral_constant<bool ,__has_trivial_constru
 
 #ifdef __CSC_COMPILER_GNUC__
 //@fatal: fuck gnuc
-#define __macro_assume(...) do { if (__VA_ARGS__) break ; CSC::Exception (CSC::Slice<CSC::STR> ("assume failed : " __macro_str (__VA_ARGS__) " : at " ,__PRETTY_FUNCTION__ ," in " __FILE__ " ," __macro_str (__LINE__))).raise () ; } while (false)
+#define __macro_assume(...) do { if (__VA_ARGS__) break ; CSC::Exception (CSC::Slice<CSC::STR> (CSC::Slice<CSC::STR> (CSC::Slice<CSC::STR> ("assume failed : " __macro_str (__VA_ARGS__) " : at ") ,__PRETTY_FUNCTION__) ," in " __FILE__ " ," __macro_str (__LINE__))).raise () ; } while (false)
 #endif
 
 #ifdef __CSC_COMPILER_CLANG__
 //@fatal: fuck clang
-#define __macro_assume(...) do { if (__VA_ARGS__) break ; CSC::Exception (CSC::Slice<CSC::STR> ("assume failed : " __macro_str (__VA_ARGS__) " : at " ,__PRETTY_FUNCTION__ ," in " __FILE__ " ," __macro_str (__LINE__))).raise () ; } while (false)
+#define __macro_assume(...) do { if (__VA_ARGS__) break ; CSC::Exception (CSC::Slice<CSC::STR> (CSC::Slice<CSC::STR> (CSC::Slice<CSC::STR> ("assume failed : " __macro_str (__VA_ARGS__) " : at ") ,__PRETTY_FUNCTION__) ," in " __FILE__ " ," __macro_str (__LINE__))).raise () ; } while (false)
 #endif
 #endif
 
@@ -382,12 +382,8 @@ using csc_initializer_t = std::initializer_list<UNIT> ;
 template <class UNIT ,csc_diff_t SIDE>
 struct ENUMAS {
 	//@fatal: fuck ODR
-	imports constexpr UNIT expr_m () noexcept {
+	imports forceinline constexpr UNIT expr_m () noexcept {
 		return UNIT (SIDE) ;
-	}
-
-	inline constexpr operator UNIT () const noexcept {
-		return expr ;
 	}
 } ;
 
@@ -401,12 +397,8 @@ struct TYPEID {} ;
 template <class...UNIT>
 struct TYPEAS {
 	//@fatal: fuck ODR
-	imports constexpr TYPEID<UNIT...> expr_m () noexcept {
+	imports forceinline constexpr TYPEID<UNIT...> expr_m () noexcept {
 		return TYPEID<UNIT...> () ;
-	}
-
-	inline constexpr operator TYPEID<UNIT...> () const noexcept {
-		return expr ;
 	}
 } ;
 
@@ -422,78 +414,78 @@ using DEPEND = bool ;
 using ALWAYS = void ;
 
 template <class...>
-trait REQUIRE_HELP ;
+trait REQUIRE_SPEC ;
 
 template <>
-trait REQUIRE_HELP<ENUM_TRUE ,ALWAYS> {
+trait REQUIRE_SPEC<ENUM_TRUE> {
 	using RET = ALWAYS ;
 } ;
 
 template <class UNIT>
-using REQUIRE = typename REQUIRE_HELP<UNIT ,ALWAYS>::RET ;
+using REQUIRE = typename REQUIRE_SPEC<UNIT>::RET ;
 
 template <class...>
-trait DEPENDENT_HELP ;
+trait DEPENDENT_SPEC ;
 
 template <class UNIT ,class SIDE>
-trait DEPENDENT_HELP<UNIT ,SIDE ,ALWAYS> {
+trait DEPENDENT_SPEC<UNIT ,SIDE> {
 	using RET = UNIT ;
 } ;
 
 template <class UNIT ,class SIDE>
-using DEPENDENT = typename DEPENDENT_HELP<UNIT ,SIDE ,ALWAYS>::RET ;
+using DEPENDENT = typename DEPENDENT_SPEC<UNIT ,SIDE>::RET ;
 
 template <class...>
-trait REMOVE_REF_HELP ;
+trait IS_SAME_SPEC ;
 
 template <class UNIT>
-trait REMOVE_REF_HELP<UNIT ,ALWAYS> {
-	using RET = UNIT ;
-} ;
-
-template <class UNIT>
-trait REMOVE_REF_HELP<DEF<UNIT &> ,ALWAYS> {
-	using RET = UNIT ;
-} ;
-
-template <class UNIT>
-trait REMOVE_REF_HELP<DEF<UNIT &&> ,ALWAYS> {
-	using RET = UNIT ;
-} ;
-
-template <class UNIT>
-trait REMOVE_REF_HELP<DEF<const UNIT> ,ALWAYS> {
-	using RET = UNIT ;
-} ;
-
-template <class UNIT>
-trait REMOVE_REF_HELP<DEF<const UNIT &> ,ALWAYS> {
-	using RET = UNIT ;
-} ;
-
-template <class UNIT>
-trait REMOVE_REF_HELP<DEF<const UNIT &&> ,ALWAYS> {
-	using RET = UNIT ;
-} ;
-
-template <class UNIT>
-using REMOVE_REF = typename REMOVE_REF_HELP<UNIT ,ALWAYS>::RET ;
-
-template <class...>
-trait IS_SAME_HELP ;
-
-template <class UNIT ,class SIDE>
-trait IS_SAME_HELP<UNIT ,SIDE ,ALWAYS> {
-	using RET = ENUM_FALSE ;
-} ;
-
-template <class UNIT>
-trait IS_SAME_HELP<UNIT ,UNIT ,ALWAYS> {
+trait IS_SAME_SPEC<UNIT ,UNIT> {
 	using RET = ENUM_TRUE ;
 } ;
 
 template <class UNIT ,class SIDE>
-using IS_SAME = typename IS_SAME_HELP<UNIT ,SIDE ,ALWAYS>::RET ;
+trait IS_SAME_SPEC<UNIT ,SIDE> {
+	using RET = ENUM_FALSE ;
+} ;
+
+template <class UNIT ,class SIDE>
+using IS_SAME = typename IS_SAME_SPEC<UNIT ,SIDE>::RET ;
+
+template <class...>
+trait REMOVE_REF_SPEC ;
+
+template <class UNIT>
+trait REMOVE_REF_SPEC<UNIT> {
+	using RET = UNIT ;
+} ;
+
+template <class UNIT>
+trait REMOVE_REF_SPEC<DEF<UNIT &>> {
+	using RET = UNIT ;
+} ;
+
+template <class UNIT>
+trait REMOVE_REF_SPEC<DEF<UNIT &&>> {
+	using RET = UNIT ;
+} ;
+
+template <class UNIT>
+trait REMOVE_REF_SPEC<DEF<const UNIT>> {
+	using RET = UNIT ;
+} ;
+
+template <class UNIT>
+trait REMOVE_REF_SPEC<DEF<const UNIT &>> {
+	using RET = UNIT ;
+} ;
+
+template <class UNIT>
+trait REMOVE_REF_SPEC<DEF<const UNIT &&>> {
+	using RET = UNIT ;
+} ;
+
+template <class UNIT>
+using REMOVE_REF = typename REMOVE_REF_SPEC<UNIT>::RET ;
 
 template <class UNIT ,class = REQUIRE<IS_SAME<UNIT ,REMOVE_REF<UNIT>>>>
 using VREF = DEF<UNIT &> ;

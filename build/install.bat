@@ -7,7 +7,13 @@ mkdir %dst%
 call :dircls "%dst%"
 set src=csc
 for /f "tokens=*" %%i in ('dir /b "%src%"') do (
-	call :copyf "%src%/%%i" "%dst%/%%i")
+	call :linkf "%src%/%%i" "%dst%/%%i")
+
+set dst=D:\Documents\C++\4D_KK3\dependencies\__CSC__
+mkdir %dst%
+call :dircls "%dst%"
+set src=D:\Depends\__CSC__
+call :copyf "%src%" "%dst%"
 
 cls
 exit
@@ -43,5 +49,10 @@ goto :EOF
 
 goto :EOF
 :copyf
+xcopy /Y /S "%~f1" "%~f2"
+goto :EOF
+
+goto :EOF
+:linkf
 mklink /H "%~f2" "%~f1"
 goto :EOF

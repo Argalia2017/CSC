@@ -1,6 +1,5 @@
 ﻿
-
-#include "begin.h"
+#include "csc_end.h"
 
 #define implicit
 #define exports __macro_exports
@@ -11,9 +10,9 @@
 #define self self_m ()
 #define fake fake_m ()
 #define expr expr_m ()
-#define mP1st mP1st_m ()
-#define mP2nd mP2nd_m ()
-#define mP3rd mP3rd_m ()
+#define m1st m1st_m ()
+#define m2nd m2nd_m ()
+#define m3rd m3rd_m ()
 #define trait struct
 #define implement :public
 #define extend :private

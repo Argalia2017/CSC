@@ -40,9 +40,9 @@ trait CONSOLE_HELP<DEPEND ,ALWAYS> {
 		virtual void info (CREF<Binder> msg) const = 0 ;
 		virtual void debug (CREF<Binder> msg) const = 0 ;
 		virtual void verbose (CREF<Binder> msg) const = 0 ;
-		virtual void link (CREF<String<STR>> dire) const = 0 ;
-		virtual void open () const = 0 ;
-		virtual void close () const = 0 ;
+		virtual void open (CREF<String<STR>> dire) const = 0 ;
+		virtual void show () const = 0 ;
+		virtual void hide () const = 0 ;
 		virtual void pause () const = 0 ;
 		virtual void clear () const = 0 ;
 	} ;
@@ -69,7 +69,7 @@ trait CONSOLE_HELP<DEPEND ,ALWAYS> {
 		imports CREF<Console> instance () {
 			return memorize ([&] () {
 				Console ret ;
-				ret.mMutex = RecursiveMutex () ;
+				ret.mMutex = RecursiveMutex::make () ;
 				ret.mThis = FUNCTION_extern::invoke () ;
 				ret.mThis->initialize () ;
 				return move (ret) ;
@@ -83,7 +83,7 @@ trait CONSOLE_HELP<DEPEND ,ALWAYS> {
 
 		template <class...ARG1>
 		void print (CREF<ARG1>...msg) const {
-			using R1X = typename CONSOLE_IMPLBINDER_HELP<TYPEAS<ARG1...> ,ALWAYS>::ImplBinder ;
+			using R1X = typename DEPENDENT<CONSOLE_IMPLBINDER_HELP<TYPEAS<ARG1...> ,ALWAYS> ,DEPEND>::ImplBinder ;
 			Scope<Mutex> anonymous (mMutex) ;
 			const auto r1x = capture (msg...) ;
 			auto rax = R1X (CRef<Capture<ARG1...>>::reference (r1x)) ;
@@ -92,7 +92,7 @@ trait CONSOLE_HELP<DEPEND ,ALWAYS> {
 
 		template <class...ARG1>
 		void fatal (CREF<ARG1>...msg) const {
-			using R1X = typename CONSOLE_IMPLBINDER_HELP<TYPEAS<ARG1...> ,ALWAYS>::ImplBinder ;
+			using R1X = typename DEPENDENT<CONSOLE_IMPLBINDER_HELP<TYPEAS<ARG1...> ,ALWAYS> ,DEPEND>::ImplBinder ;
 			Scope<Mutex> anonymous (mMutex) ;
 			const auto r1x = capture (msg...) ;
 			auto rax = R1X (CRef<Capture<ARG1...>>::reference (r1x)) ;
@@ -101,7 +101,7 @@ trait CONSOLE_HELP<DEPEND ,ALWAYS> {
 
 		template <class...ARG1>
 		void error (CREF<ARG1>...msg) const {
-			using R1X = typename CONSOLE_IMPLBINDER_HELP<TYPEAS<ARG1...> ,ALWAYS>::ImplBinder ;
+			using R1X = typename DEPENDENT<CONSOLE_IMPLBINDER_HELP<TYPEAS<ARG1...> ,ALWAYS> ,DEPEND>::ImplBinder ;
 			Scope<Mutex> anonymous (mMutex) ;
 			const auto r1x = capture (msg...) ;
 			auto rax = R1X (CRef<Capture<ARG1...>>::reference (r1x)) ;
@@ -110,7 +110,7 @@ trait CONSOLE_HELP<DEPEND ,ALWAYS> {
 
 		template <class...ARG1>
 		void warn (CREF<ARG1>...msg) const {
-			using R1X = typename CONSOLE_IMPLBINDER_HELP<TYPEAS<ARG1...> ,ALWAYS>::ImplBinder ;
+			using R1X = typename DEPENDENT<CONSOLE_IMPLBINDER_HELP<TYPEAS<ARG1...> ,ALWAYS> ,DEPEND>::ImplBinder ;
 			Scope<Mutex> anonymous (mMutex) ;
 			const auto r1x = capture (msg...) ;
 			auto rax = R1X (CRef<Capture<ARG1...>>::reference (r1x)) ;
@@ -119,7 +119,7 @@ trait CONSOLE_HELP<DEPEND ,ALWAYS> {
 
 		template <class...ARG1>
 		void info (CREF<ARG1>...msg) const {
-			using R1X = typename CONSOLE_IMPLBINDER_HELP<TYPEAS<ARG1...> ,ALWAYS>::ImplBinder ;
+			using R1X = typename DEPENDENT<CONSOLE_IMPLBINDER_HELP<TYPEAS<ARG1...> ,ALWAYS> ,DEPEND>::ImplBinder ;
 			Scope<Mutex> anonymous (mMutex) ;
 			const auto r1x = capture (msg...) ;
 			auto rax = R1X (CRef<Capture<ARG1...>>::reference (r1x)) ;
@@ -128,7 +128,7 @@ trait CONSOLE_HELP<DEPEND ,ALWAYS> {
 
 		template <class...ARG1>
 		void debug (CREF<ARG1>...msg) const {
-			using R1X = typename CONSOLE_IMPLBINDER_HELP<TYPEAS<ARG1...> ,ALWAYS>::ImplBinder ;
+			using R1X = typename DEPENDENT<CONSOLE_IMPLBINDER_HELP<TYPEAS<ARG1...> ,ALWAYS> ,DEPEND>::ImplBinder ;
 			Scope<Mutex> anonymous (mMutex) ;
 			const auto r1x = capture (msg...) ;
 			auto rax = R1X (CRef<Capture<ARG1...>>::reference (r1x)) ;
@@ -137,26 +137,26 @@ trait CONSOLE_HELP<DEPEND ,ALWAYS> {
 
 		template <class...ARG1>
 		void verbose (CREF<ARG1>...msg) const {
-			using R1X = typename CONSOLE_IMPLBINDER_HELP<TYPEAS<ARG1...> ,ALWAYS>::ImplBinder ;
+			using R1X = typename DEPENDENT<CONSOLE_IMPLBINDER_HELP<TYPEAS<ARG1...> ,ALWAYS> ,DEPEND>::ImplBinder ;
 			Scope<Mutex> anonymous (mMutex) ;
 			const auto r1x = capture (msg...) ;
 			auto rax = R1X (CRef<Capture<ARG1...>>::reference (r1x)) ;
 			return mThis->verbose (rax) ;
 		}
 
-		void link (CREF<String<STR>> dire) const {
+		void open (CREF<String<STR>> dire) const {
 			Scope<Mutex> anonymous (mMutex) ;
-			return mThis->link (dire) ;
+			return mThis->open (dire) ;
 		}
 
-		void open () const {
+		void show () const {
 			Scope<Mutex> anonymous (mMutex) ;
-			return mThis->open () ;
+			return mThis->show () ;
 		}
 
-		void close () const {
+		void hide () const {
 			Scope<Mutex> anonymous (mMutex) ;
-			return mThis->close () ;
+			return mThis->hide () ;
 		}
 
 		void pause () const {
@@ -225,7 +225,7 @@ trait REPORTER_HELP<DEPEND ,ALWAYS> {
 		imports CREF<Reporter> instance () {
 			return memorize ([&] () {
 				Reporter ret ;
-				ret.mMutex = RecursiveMutex () ;
+				ret.mMutex = RecursiveMutex::make () ;
 				ret.mThis = FUNCTION_extern::invoke () ;
 				ret.mThis->initialize () ;
 				return move (ret) ;

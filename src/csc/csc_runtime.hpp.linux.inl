@@ -15,7 +15,7 @@
 #error "∑(っ°Д° ;)っ : bad include"
 #endif
 
-#include "begin.h"
+#include "csc_end.h"
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -28,9 +28,9 @@
 #include <thread>
 #include <locale>
 #include <random>
-#include "end.h"
+#include "csc_begin.h"
 
-#include "begin.h"
+#include "csc_end.h"
 #include <unistd.h>
 #include <dlfcn.h>
 #include <sys/syscall.h>
@@ -38,7 +38,7 @@
 #include <sys/stat.h>
 #include <sys/file.h>
 #include <sys/mman.h>
-#include "end.h"
+#include "csc_begin.h"
 
 namespace CSC {
 template <class DEPEND>
@@ -88,7 +88,7 @@ trait RUNTIMEPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		String<STR> working_path () const override {
-			auto rax = String<STRA>::make () ;
+			auto rax = PrintString<STRA>::make () ;
 			if ifswitch (TRUE) {
 				const auto r1x = getcwd ((&rax[0]) ,VAL32 (rax.size ())) ;
 				if (r1x != NULL)
@@ -113,7 +113,7 @@ trait RUNTIMEPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 
 		String<STR> module_path () const override {
 			return memorize ([&] () {
-				auto rax = String<STRA>::make () ;
+				auto rax = PrintString<STRA>::make () ;
 				const auto r1x = readlink ("/proc/self/exe" ,(&rax[0]) ,VAL32 (rax.size ())) ;
 				if ifswitch (TRUE) {
 					if (vbetween (r1x ,0 ,rax.size ()))
@@ -128,7 +128,7 @@ trait RUNTIMEPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 
 		String<STR> module_name () const override {
 			return memorize ([&] () {
-				auto rax = String<STRA>::make () ;
+				auto rax = PrintString<STRA>::make () ;
 				const auto r1x = readlink ("/proc/self/exe" ,(&rax[0]) ,VAL32 (rax.size ())) ;
 				if ifswitch (TRUE) {
 					if (vbetween (r1x ,0 ,rax.size ()))
@@ -163,9 +163,9 @@ trait PROCESS_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		void initialize (CREF<FLAG> uid) override {
 			mUID = uid ;
 			auto rax = VarBuffer<BYTE> (128) ;
-			auto rbx = ByteWriter (RegBuffer<BYTE>::from (rax).as_ref ()) ;
+			auto rbx = ByteWriter (RegBuffer<BYTE>::from (rax).borrow ()) ;
 			if ifswitch (TRUE) {
-				const auto r1x = String<STR>::make (slice ("/proc/") ,mUID ,slice ("/stat")) ;
+				const auto r1x = PrintString<STR>::make (slice ("/proc/") ,mUID ,slice ("/stat")) ;
 				const auto r2x = load_proc_file (r1x) ;
 				if (r2x.empty ())
 					discard ;
@@ -182,14 +182,13 @@ trait PROCESS_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			}
 			rbx << GAP ;
 			rbx << EOS ;
-			mSnapshot = SNAPSHOT (move (rax)) ;
+			mSnapshot = rax.as_cref () ;
 		}
 
 		String<STRU8> load_proc_file (CREF<String<STR>> file) const {
-			String<STRU8> ret = String<STRU8>::make () ;
+			String<STRU8> ret = PrintString<STRU8>::make () ;
 			auto rax = StreamFile (file) ;
-			const auto r1x = rax.link (TRUE ,FALSE) ;
-			assume (r1x) ;
+			rax.open (TRUE ,FALSE) ;
 			auto rbx = ret.raw () ;
 			const auto r2x = rax.read (RegBuffer<BYTE>::from (rbx)) ;
 			ret[r2x] = 0 ;
@@ -201,7 +200,7 @@ trait PROCESS_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		DATA process_time (CREF<String<STRU8>> info ,CREF<FLAG> uid) const {
-			auto rax = TextReader<STRU8> (info.raw ().as_ref ()) ;
+			auto rax = TextReader<STRU8> (info.raw ().borrow ()) ;
 			auto rbx = String<STRU8> () ;
 			rax >> GAP ;
 			rax >> rbx ;
@@ -239,13 +238,22 @@ trait PROCESS_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		void initialize (CREF<SNAPSHOT> snapshot_) override {
+			mUID = 0 ;
 			mSnapshot = snapshot_ ;
-			auto rax = ByteReader (RegBuffer<BYTE>::from (mSnapshot).as_ref ()) ;
-			rax >> GAP ;
-			const auto r1x = rax.poll (TYPEAS<VAL64>::expr) ;
-			assume (r1x > 0) ;
-			assume (r1x <= VAL32_MAX) ;
-			mUID = FLAG (r1x) ;
+			try_invoke ([&] () {
+				auto rax = ByteReader (RegBuffer<BYTE>::from (mSnapshot).borrow ()) ;
+				rax >> GAP ;
+				if ifswitch (TRUE) {
+					const auto r1x = rax.poll (TYPEAS<VAL64>::expr) ;
+					if (r1x <= 0)
+						discard ;
+					if (r1x > VAL32_MAX)
+						discard ;
+					mUID = FLAG (r1x) ;
+				}
+			} ,[&] () {
+				noop () ;
+			}) ;
 		}
 
 		FLAG process_uid () const override {
@@ -281,7 +289,7 @@ trait MODULE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			const auto r1x = Directory (file).name () ;
 			const auto r2x = string_cvt[TYPEAS<STRA ,STR>::expr] (r1x) ;
 			assert (ifnot (r2x.empty ())) ;
-			mErrorBuffer = String<STR>::make () ;
+			mErrorBuffer = PrintString<STR>::make () ;
 			mModule = UniqueRef<HANDLE> ([&] (VREF<HANDLE> me) {
 				const auto r3x = csc_enum_t (RTLD_NOW | RTLD_LOCAL | RTLD_DEEPBIND | RTLD_NODELETE) ;
 				const auto r4x = csc_enum_t (r3x | RTLD_NOLOAD) ;
@@ -293,7 +301,7 @@ trait MODULE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 					return ;
 				const auto r5x = FLAG (errno) ;
 				format_dllerror () ;
-				mError = String<STR>::make (slice ("Error = ") ,r5x ,slice (" : ") ,mErrorBuffer) ;
+				mError = PrintString<STR>::make (slice ("Error = ") ,r5x ,slice (" : ") ,mErrorBuffer) ;
 				assume (FALSE) ;
 			} ,[] (VREF<HANDLE> me) {
 				noop () ;
@@ -314,7 +322,7 @@ trait MODULE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 					discard ;
 				const auto r2x = FLAG (errno) ;
 				format_dllerror () ;
-				mError = String<STR>::make (slice ("Error = ") ,r2x ,slice (" : ") ,mErrorBuffer) ;
+				mError = PrintString<STR>::make (slice ("Error = ") ,r2x ,slice (" : ") ,mErrorBuffer) ;
 				assume (FALSE) ;
 			}
 			return move (ret) ;
@@ -323,8 +331,8 @@ trait MODULE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		void format_dllerror () {
 			const auto r1x = FLAG (dlerror ()) ;
 			assume (r1x != ZERO) ;
-			auto &&tmp = unsafe_pointer (r1x) ;
-			BufferProc<STR>::buf_slice (mErrorBuffer.raw () ,RegBuffer<STRA>::make (tmp ,0 ,VAL32_MAX) ,mErrorBuffer.size ()) ;
+			auto &&tmp = unsafe_deref (unsafe_cast[TYPEAS<TEMP<ARR<STRA>>>::expr] (unsafe_pointer (r1x))) ;
+			mErrorBuffer -= BufferProc<STR>::buf_slice (tmp ,mErrorBuffer.size ()) ;
 		}
 	} ;
 } ;
@@ -335,6 +343,9 @@ exports auto MODULE_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Hold
 	return VRef<R1X>::make () ;
 }
 
+template <class...>
+trait SINGLETON_HACKSHAREDREF_HELP ;
+
 template <class DEPEND>
 trait SINGLETON_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	using Holder = typename SINGLETON_HOLDER_HELP<DEPEND ,ALWAYS>::Holder ;
@@ -343,7 +354,7 @@ trait SINGLETON_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	using HANDLE = csc_pointer_t ;
 
 	struct HEAP {
-		RecursiveMutex mMutex ;
+		Mutex mMutex ;
 		Set<Slice<STR>> mAddressSet ;
 	} ;
 
@@ -361,11 +372,12 @@ trait SINGLETON_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		String<STRA> mName ;
 		UniqueRef<String<STRA>> mPipe ;
 		SharedRef<HEAP> mHeap ;
+		BOOL mWeakHeap ;
 
 	public:
 		void initialize () override {
 			mUID = RuntimeProc::process_uid () ;
-			mName = String<STRA>::make (slice ("CSC_Singleton_") ,mUID) ;
+			mName = PrintString<STRA>::make (slice ("CSC_Singleton_") ,mUID) ;
 			auto rax = PIPE () ;
 			try_invoke ([&] () {
 				init_pipe () ;
@@ -378,14 +390,20 @@ trait SINGLETON_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			} ,[&] () {
 				zeroize (rax) ;
 			}) ;
-			const auto r1x = FLAG (rax.mAddress1) ;
-			assume (r1x != ZERO) ;
-			auto &&tmp = unsafe_deref (unsafe_cast[TYPEAS<TEMP<SharedRef<HEAP>>>::expr] (unsafe_pointer (r1x))) ;
-			mHeap = tmp ;
-			assume (mHeap.available ()) ;
+			if ifswitch (TRUE) {
+				const auto r1x = FLAG (rax.mAddress1) ;
+				assume (r1x != ZERO) ;
+				if (address (mHeap) == r1x)
+					discard ;
+				auto &&tmp = unsafe_deref (unsafe_cast[TYPEAS<TEMP<SharedRef<HEAP>>>::expr] (unsafe_pointer (r1x))) ;
+				mHeap = tmp.weak () ;
+				mWeakHeap = TRUE ;
+				assume (mHeap.available ()) ;
+			}
 		}
 
 		void init_pipe () {
+			using R1X = typename DEPENDENT<SINGLETON_HACKSHAREDREF_HELP<HEAP ,ALWAYS> ,DEPEND>::HackSharedRef ;
 			if (mPipe.exist ())
 				return ;
 			mPipe = UniqueRef<String<STRA>> ([&] (VREF<String<STRA>> me) {
@@ -403,7 +421,9 @@ trait SINGLETON_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			} ,[] (VREF<String<STRA>> me) {
 				shm_unlink ((&me[0])) ;
 			}) ;
-			mHeap = SharedRef<HEAP>::make () ;
+			mHeap = R1X::make () ;
+			mWeakHeap = FALSE ;
+			mHeap->mMutex = RecursiveMutex::make () ;
 		}
 
 		PIPE load_pipe () const {
@@ -455,14 +475,14 @@ trait SINGLETON_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			unsafe_sync (unsafe_pointer (r3x) ,unsafe_deptr (ret)) ;
 		}
 
-		void add (CREF<Slice<STR>> name ,CREF<FLAG> addr) const override {
+		void regi (CREF<Slice<STR>> name ,CREF<FLAG> addr) const override {
 			Scope<Mutex> anonymous (mHeap->mMutex) ;
 			assert (addr != ZERO) ;
 			assert (addr != NONE) ;
 			mHeap->mAddressSet.add (name ,addr) ;
 		}
 
-		FLAG map (CREF<Slice<STR>> name) const override {
+		FLAG link (CREF<Slice<STR>> name) const override {
 			Scope<Mutex> anonymous (mHeap->mMutex) ;
 			FLAG ret = mHeap->mAddressSet.map (name) ;
 			replace (ret ,NONE ,ZERO) ;

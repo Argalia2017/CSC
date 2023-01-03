@@ -98,7 +98,7 @@ template <class...>
 trait ROWPROXY_HELP ;
 
 template <class UNIT ,class ITEM ,class COND>
-trait ROWPROXY_HELP<UNIT ,ITEM ,COND ,REQUIRE<IS_SAME<COND ,VARIABLE>>> {
+trait ROWPROXY_HELP<UNIT ,ITEM ,COND ,REQUIRE<COND>> {
 	class RowProxy {
 	protected:
 		VRef<UNIT> mImage ;
@@ -119,7 +119,7 @@ trait ROWPROXY_HELP<UNIT ,ITEM ,COND ,REQUIRE<IS_SAME<COND ,VARIABLE>>> {
 } ;
 
 template <class UNIT ,class ITEM ,class COND>
-trait ROWPROXY_HELP<UNIT ,ITEM ,COND ,REQUIRE<IS_SAME<COND ,CONSTANT>>> {
+trait ROWPROXY_HELP<UNIT ,ITEM ,COND ,REQUIRE<ENUM_NOT<COND>>> {
 	class RowProxy {
 	protected:
 		CRef<UNIT> mImage ;
@@ -140,13 +140,16 @@ trait ROWPROXY_HELP<UNIT ,ITEM ,COND ,REQUIRE<IS_SAME<COND ,CONSTANT>>> {
 } ;
 
 template <class UNIT ,class ITEM>
-using RowProxy = typename ROWPROXY_HELP<REMOVE_REF<UNIT> ,ITEM ,REFLECT_REF<UNIT> ,ALWAYS>::RowProxy ;
+using RowProxy = typename ROWPROXY_HELP<REMOVE_REF<UNIT> ,ITEM ,IS_VARIABLE<UNIT> ,ALWAYS>::RowProxy ;
 
 template <class...>
 trait IMAGE_HELP ;
 
+template <class...>
+trait IMAGE_HOLDER_HELP ;
+
 template <class ITEM ,class SIZE>
-trait IMAGE_HELP<ITEM ,SIZE ,ALWAYS> {
+trait IMAGE_HOLDER_HELP<ITEM ,SIZE ,ALWAYS> {
 	class Image {
 	protected:
 		Buffer<ITEM ,SIZE> mImage ;
@@ -156,17 +159,32 @@ trait IMAGE_HELP<ITEM ,SIZE ,ALWAYS> {
 		INDEX mCK ;
 
 	public:
-		implicit Image () {
-			mImage = Buffer<ITEM ,SIZE> (0) ;
-			reset (0 ,0 ,0 ,0) ;
+		implicit Image () noexcept {
+			mCX = 0 ;
+			mCY = 0 ;
+			mCW = 0 ;
+			mCK = 0 ;
 		}
+	} ;
+} ;
 
-		explicit Image (CREF<ARRAY2<LENGTH>> width_) {
-			const auto r1x = width_[0] ;
-			const auto r2x = width_[1] ;
-			mImage = Buffer<ITEM ,SIZE> (r1x * r2x) ;
-			reset (r1x ,r2x ,r1x ,0) ;
-		}
+template <class ITEM ,class SIZE>
+trait IMAGE_HELP<ITEM ,SIZE ,REQUIRE<ENUM_NOT<IS_SAME<SIZE ,PROPERTY>>>> {
+	using SUPER = typename IMAGE_HOLDER_HELP<ITEM ,SIZE ,ALWAYS>::Image ;
+
+	class Image extend SUPER {
+	protected:
+		using SUPER::mImage ;
+		using SUPER::mCX ;
+		using SUPER::mCY ;
+		using SUPER::mCW ;
+		using SUPER::mCK ;
+
+	public:
+		implicit Image () = default ;
+
+		explicit Image (CREF<ARRAY2<LENGTH>> width_)
+			:Image (width_[0] ,width_[1]) {}
 
 		explicit Image (CREF<LENGTH> cx_ ,CREF<LENGTH> cy_) {
 			const auto r1x = cx_ ;
@@ -175,18 +193,12 @@ trait IMAGE_HELP<ITEM ,SIZE ,ALWAYS> {
 			reset (r1x ,r2x ,r1x ,0) ;
 		}
 
-		explicit Image (RREF<Buffer<ITEM ,SIZE>> that) {
-			mImage = move (that) ;
-			const auto r1x = mImage.size () ;
-			reset (r1x ,1 ,r1x ,0) ;
-		}
-
 		LENGTH size () const {
 			return mImage.size () ;
 		}
 
 		LENGTH length () const {
-			return mCW * mCY ;
+			return mCY * mCW + mCK ;
 		}
 
 		ARRAY2<LENGTH> width () const {
@@ -198,34 +210,43 @@ trait IMAGE_HELP<ITEM ,SIZE ,ALWAYS> {
 
 		LENGTH cx () const {
 			if (mImage.size () == 0)
-				return ZERO ;
+				return 0 ;
 			return mCX ;
 		}
 
 		LENGTH cy () const {
 			if (mImage.size () == 0)
-				return ZERO ;
+				return 0 ;
 			return mCY ;
 		}
 
 		LENGTH cw () const {
 			if (mImage.size () == 0)
-				return ZERO ;
+				return 0 ;
 			return mCW ;
 		}
 
 		LENGTH ck () const {
 			if (mImage.size () == 0)
-				return ZERO ;
+				return 0 ;
 			return mCK ;
 		}
 
+		VREF<RegBuffer<ITEM>> raw (RREF<RegCaches<ITEM>> unnamed = RegCaches<ITEM> ()) leftvalue {
+			return RegBuffer<ITEM>::from (mImage ,0 ,size () ,move (unnamed)) ;
+		}
+
+		CREF<RegBuffer<ITEM>> raw (RREF<RegCaches<ITEM>> unnamed = RegCaches<ITEM> ()) const leftvalue {
+			return RegBuffer<ITEM>::from (mImage ,0 ,length () ,move (unnamed)) ;
+		}
+
 		void reset (CREF<LENGTH> cx_ ,CREF<LENGTH> cy_ ,CREF<LENGTH> cw_ ,CREF<LENGTH> ck_) {
-			assert (vbetween (cx_ ,0 ,mImage.size ())) ;
-			assert (vbetween (cy_ ,0 ,mImage.size ())) ;
-			assert (vbetween (cw_ ,0 ,mImage.size ())) ;
-			assert (vbetween (ck_ ,0 ,mImage.size ())) ;
+			assert (cx_ >= 0) ;
+			assert (cy_ >= 0) ;
+			assert (cw_ >= 0) ;
+			assert (ck_ >= 0) ;
 			assert (cx_ <= cw_) ;
+			assert (length () <= size ()) ;
 			mCX = cx_ ;
 			mCY = cy_ ;
 			mCW = cw_ ;
@@ -343,14 +364,14 @@ trait IMAGE_HELP<ITEM ,SIZE ,ALWAYS> {
 			return add (that) ;
 		}
 
-		void addto (CREF<Image> that) {
+		void add_with (CREF<Image> that) {
 			assert (width () == that.width ()) ;
 			for (auto &&i : iter ())
 				at (i) += that.at (i) ;
 		}
 
 		inline void operator+= (CREF<Image> that) {
-			addto (that) ;
+			add_with (that) ;
 		}
 
 		Image sub (CREF<Image> that) const {
@@ -365,14 +386,14 @@ trait IMAGE_HELP<ITEM ,SIZE ,ALWAYS> {
 			return sub (that) ;
 		}
 
-		void subto (CREF<Image> that) {
+		void sub_with (CREF<Image> that) {
 			assert (width () == that.width ()) ;
 			for (auto &&i : iter ())
 				at (i) -= that.at (i) ;
 		}
 
 		inline void operator-= (CREF<Image> that) {
-			subto (that) ;
+			sub_with (that) ;
 		}
 
 		Image mul (CREF<Image> that) const {
@@ -387,14 +408,14 @@ trait IMAGE_HELP<ITEM ,SIZE ,ALWAYS> {
 			return mul (that) ;
 		}
 
-		void multo (CREF<Image> that) {
+		void mul_with (CREF<Image> that) {
 			assert (width () == that.width ()) ;
 			for (auto &&i : iter ())
 				at (i) *= that.at (i) ;
 		}
 
 		inline void operator*= (CREF<Image> that) {
-			multo (that) ;
+			mul_with (that) ;
 		}
 
 		Image div (CREF<Image> that) const {
@@ -409,14 +430,14 @@ trait IMAGE_HELP<ITEM ,SIZE ,ALWAYS> {
 			return div (that) ;
 		}
 
-		void divto (CREF<Image> that) {
+		void div_with (CREF<Image> that) {
 			assert (width () == that.width ()) ;
 			for (auto &&i : iter ())
 				at (i) /= that.at (i) ;
 		}
 
 		inline void operator/= (CREF<Image> that) {
-			divto (that) ;
+			div_with (that) ;
 		}
 
 		Image mod (CREF<Image> that) const {
@@ -431,14 +452,14 @@ trait IMAGE_HELP<ITEM ,SIZE ,ALWAYS> {
 			return mod (that) ;
 		}
 
-		void modto (CREF<Image> that) {
+		void mod_with (CREF<Image> that) {
 			assert (width () == that.width ()) ;
 			for (auto &&i : iter ())
 				at (i) %= that.at (i) ;
 		}
 
 		inline void operator%= (CREF<Image> that) {
-			modto (that) ;
+			mod_with (that) ;
 		}
 
 		Image plus () const {
@@ -475,14 +496,14 @@ trait IMAGE_HELP<ITEM ,SIZE ,ALWAYS> {
 			return band (that) ;
 		}
 
-		void bandto (CREF<Image> that) {
+		void band_with (CREF<Image> that) {
 			assert (width () == that.width ()) ;
 			for (auto &&i : iter ())
 				at (i) &= that.at (i) ;
 		}
 
 		inline void operator&= (CREF<Image> that) {
-			bandto (that) ;
+			band_with (that) ;
 		}
 
 		Image bor (CREF<Image> that) const {
@@ -497,14 +518,14 @@ trait IMAGE_HELP<ITEM ,SIZE ,ALWAYS> {
 			return bor (that) ;
 		}
 
-		void borto (CREF<Image> that) {
+		void bor_with (CREF<Image> that) {
 			assert (width () == that.width ()) ;
 			for (auto &&i : iter ())
 				at (i) |= that.at (i) ;
 		}
 
 		inline void operator|= (CREF<Image> that) {
-			borto (that) ;
+			bor_with (that) ;
 		}
 
 		Image bxor (CREF<Image> that) const {
@@ -519,14 +540,14 @@ trait IMAGE_HELP<ITEM ,SIZE ,ALWAYS> {
 			return bxor (that) ;
 		}
 
-		void bxorto (CREF<Image> that) {
+		void bxor_with (CREF<Image> that) {
 			assert (width () == that.width ()) ;
 			for (auto &&i : iter ())
 				at (i) ^= that.at (i) ;
 		}
 
 		inline void operator^= (CREF<Image> that) {
-			bxorto (that) ;
+			bxor_with (that) ;
 		}
 
 		Image bnot () const {
@@ -559,6 +580,146 @@ trait IMAGE_HELP<ITEM ,SIZE ,ALWAYS> {
 				ret.at (i) = r1x ;
 			}
 			return move (ret) ;
+		}
+
+		Image convolute (CREF<Image> that) const {
+			unimplemented () ;
+			return bad (TYPEAS<Image>::expr) ;
+		}
+	} ;
+} ;
+
+template <class ITEM ,class SIZE>
+trait IMAGE_HELP<ITEM ,SIZE ,REQUIRE<IS_SAME<SIZE ,PROPERTY>>> {
+	using SUPER = typename IMAGE_HOLDER_HELP<ITEM ,SIZE ,ALWAYS>::Image ;
+
+	class Image extend SUPER {
+	protected:
+		using SUPER::mImage ;
+		using SUPER::mCX ;
+		using SUPER::mCY ;
+		using SUPER::mCW ;
+		using SUPER::mCK ;
+
+	public:
+		implicit Image () = default ;
+
+		template <class ARG1 ,class = REQUIRE<ENUM_ALL<ENUM_NOT<IS_EXTEND<Image ,ARG1>>>>>
+		implicit Image (RREF<ARG1> that) {
+			require (IS_CLASS<ARG1>) ;
+			const auto r1x = that.cx () ;
+			const auto r2x = that.cy () ;
+			mImage = Buffer<ITEM ,SIZE> (move (that)) ;
+			reset (r1x ,r2x ,r1x ,0) ;
+		}
+
+		Auto native () const leftvalue {
+			return mImage.native () ;
+		}
+
+		LENGTH size () const {
+			return mImage.size () ;
+		}
+
+		LENGTH length () const {
+			return mCY * mCW + mCK ;
+		}
+
+		ARRAY2<LENGTH> width () const {
+			ARRAY2<LENGTH> ret ;
+			ret[0] = cx () ;
+			ret[1] = cy () ;
+			return move (ret) ;
+		}
+
+		LENGTH cx () const {
+			if (mImage.size () == 0)
+				return 0 ;
+			return mCX ;
+		}
+
+		LENGTH cy () const {
+			if (mImage.size () == 0)
+				return 0 ;
+			return mCY ;
+		}
+
+		LENGTH cw () const {
+			if (mImage.size () == 0)
+				return 0 ;
+			return mCW ;
+		}
+
+		LENGTH ck () const {
+			if (mImage.size () == 0)
+				return 0 ;
+			return mCK ;
+		}
+
+		VREF<RegBuffer<ITEM>> raw (RREF<RegCaches<ITEM>> unnamed = RegCaches<ITEM> ()) leftvalue {
+			return RegBuffer<ITEM>::from (mImage ,0 ,size () ,move (unnamed)) ;
+		}
+
+		CREF<RegBuffer<ITEM>> raw (RREF<RegCaches<ITEM>> unnamed = RegCaches<ITEM> ()) const leftvalue {
+			return RegBuffer<ITEM>::from (mImage ,0 ,length () ,move (unnamed)) ;
+		}
+
+		void reset (CREF<LENGTH> cx_ ,CREF<LENGTH> cy_ ,CREF<LENGTH> cw_ ,CREF<LENGTH> ck_) {
+			assert (cx_ >= 0) ;
+			assert (cy_ >= 0) ;
+			assert (cw_ >= 0) ;
+			assert (ck_ >= 0) ;
+			assert (cx_ <= cw_) ;
+			assert (length () <= mImage.size ()) ;
+			mCX = cx_ ;
+			mCY = cy_ ;
+			mCW = cw_ ;
+			mCK = ck_ ;
+		}
+
+		void fill (CREF<ITEM> item) {
+			for (auto &&i : CSC::iter (0 ,size ()))
+				mImage[i] = item ;
+		}
+
+		ImageIterator iter () const {
+			return ImageIterator (cx () ,cy ()) ;
+		}
+
+		VREF<ITEM> at (CREF<PIXEL> xy) leftvalue {
+			return at (xy.x ,xy.y) ;
+		}
+
+		inline VREF<ITEM> operator[] (CREF<PIXEL> xy) leftvalue {
+			return at (xy) ;
+		}
+
+		VREF<ITEM> at (CREF<INDEX> x_ ,CREF<INDEX> y_) leftvalue {
+			assert (vbetween (x_ ,0 ,mCX)) ;
+			assert (vbetween (y_ ,0 ,mCY)) ;
+			return mImage[y_ * mCW + x_ + mCK] ;
+		}
+
+		inline RowProxy<VREF<Image> ,ITEM> operator[] (CREF<INDEX> y_) leftvalue {
+			return RowProxy<VREF<Image> ,ITEM> (VRef<Image>::reference (thiz) ,y_) ;
+		}
+
+		CREF<ITEM> at (CREF<PIXEL> xy) const leftvalue {
+			return at (xy.x ,xy.y) ;
+		}
+
+		inline CREF<ITEM> operator[] (CREF<PIXEL> xy) const leftvalue {
+			return at (xy) ;
+		}
+
+		CREF<ITEM> at (CREF<INDEX> x_ ,CREF<INDEX> y_) const leftvalue {
+			assert (vbetween (x_ ,0 ,mCX)) ;
+			assert (vbetween (y_ ,0 ,mCY)) ;
+			return mImage[y_ * mCW + x_ + mCK] ;
+		}
+
+		inline RowProxy<CREF<Image> ,ITEM> operator[] (CREF<INDEX> y_) const leftvalue {
+			return RowProxy<CREF<Image> ,ITEM> (CRef<Image>::reference (thiz) ,y_) ;
 		}
 	} ;
 } ;

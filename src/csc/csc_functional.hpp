@@ -60,7 +60,9 @@ trait SYNTAXTREE_HELP<DEPEND ,ALWAYS> {
 		VRef<Holder> mThis ;
 
 	public:
-		implicit SyntaxTree () {
+		implicit SyntaxTree () = default ;
+
+		explicit SyntaxTree (CREF<typeof (PH0)>) {
 			mThis = FUNCTION_extern::invoke () ;
 			mThis->initialize () ;
 		}
@@ -75,7 +77,7 @@ trait SYNTAXTREE_HELP<DEPEND ,ALWAYS> {
 
 		template <class ARG1>
 		void maybe (CREF<TYPEID<ARG1>> id) {
-			using R1X = typename SYNTAXTREE_IMPLBINDER_HELP<ARG1 ,ALWAYS>::ImplBinder ;
+			using R1X = typename DEPENDENT<SYNTAXTREE_IMPLBINDER_HELP<ARG1 ,ALWAYS> ,DEPEND>::ImplBinder ;
 			const auto r1x = Clazz (id) ;
 			auto rax = R1X () ;
 			return mThis->maybe (r1x ,rax ,thiz) ;
@@ -83,7 +85,7 @@ trait SYNTAXTREE_HELP<DEPEND ,ALWAYS> {
 
 		template <class ARG1>
 		CREF<ARG1> stack (CREF<TYPEID<ARG1>> id) leftvalue {
-			using R1X = typename SYNTAXTREE_IMPLBINDER_HELP<ARG1 ,ALWAYS>::ImplBinder ;
+			using R1X = typename DEPENDENT<SYNTAXTREE_IMPLBINDER_HELP<ARG1 ,ALWAYS> ,DEPEND>::ImplBinder ;
 			const auto r1x = Clazz (id) ;
 			auto rax = R1X () ;
 			return AutoRef<ARG1>::from (mThis->stack (r1x ,rax ,thiz)).self ;
@@ -145,8 +147,6 @@ trait SYNTAXTREE_IMPLBINDER_HELP<UNIT ,ALWAYS> {
 		CRef<UNIT> mThat ;
 
 	public:
-		implicit ImplBinder () = default ;
-
 		AutoRef<> friend_create (VREF<SyntaxTree> tree) const override {
 			return AutoRef<UNIT>::make (tree) ;
 		}

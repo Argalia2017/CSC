@@ -269,36 +269,36 @@ template <class UNIT>
 using COUNT_OF = typename COUNT_OF_HELP<UNIT ,ALWAYS>::RET ;
 
 template <class...>
-trait IS_ENUM_HELP ;
+trait IS_ENUM_SPEC ;
 
 template <class UNIT>
-trait IS_ENUM_HELP<UNIT ,ALWAYS> {
+trait IS_ENUM_SPEC<UNIT> {
 	using RET = ENUM_FALSE ;
 } ;
 
 template <class UNIT ,csc_diff_t SIDE>
-trait IS_ENUM_HELP<ENUMAS<UNIT ,SIDE> ,ALWAYS> {
+trait IS_ENUM_SPEC<ENUMAS<UNIT ,SIDE>> {
 	using RET = ENUM_TRUE ;
 } ;
 
 template <class UNIT>
-using IS_ENUM = typename IS_ENUM_HELP<UNIT ,ALWAYS>::RET ;
+using IS_ENUM = typename IS_ENUM_SPEC<UNIT>::RET ;
 
 template <class...>
-trait IS_TYPE_HELP ;
+trait IS_TYPE_SPEC ;
 
 template <class UNIT>
-trait IS_TYPE_HELP<UNIT ,ALWAYS> {
+trait IS_TYPE_SPEC<UNIT> {
 	using RET = ENUM_FALSE ;
 } ;
 
 template <class...UNIT>
-trait IS_TYPE_HELP<TYPEAS<UNIT...> ,ALWAYS> {
+trait IS_TYPE_SPEC<TYPEAS<UNIT...>> {
 	using RET = ENUM_TRUE ;
 } ;
 
 template <class UNIT>
-using IS_TYPE = typename IS_TYPE_HELP<UNIT ,ALWAYS>::RET ;
+using IS_TYPE = typename IS_TYPE_SPEC<UNIT>::RET ;
 
 using ENUM_ZERO = ENUMAS<VAL ,ZERO> ;
 using ENUM_IDEN = ENUMAS<VAL ,IDEN> ;
@@ -490,16 +490,16 @@ template <class UNIT ,class SIDE>
 using TYPE_CAT = typename TYPE_CAT_HELP<UNIT ,SIDE ,ALWAYS>::RET ;
 
 template <class...>
-trait REFLECT_TYPE_HELP ;
+trait REFLECT_TYPE_SPEC ;
 
 template <class FIRST>
-trait REFLECT_TYPE_HELP<TYPEAS<FIRST> ,ALWAYS> {
+trait REFLECT_TYPE_SPEC<TYPEAS<FIRST>> {
 	using FIRST_ONE = FIRST ;
 	using FIRST_REST = TYPEAS<> ;
 } ;
 
 template <class FIRST ,class SECOND>
-trait REFLECT_TYPE_HELP<TYPEAS<FIRST ,SECOND> ,ALWAYS> {
+trait REFLECT_TYPE_SPEC<TYPEAS<FIRST ,SECOND>> {
 	using FIRST_ONE = FIRST ;
 	using FIRST_REST = TYPEAS<SECOND> ;
 	using SECOND_ONE = SECOND ;
@@ -507,7 +507,7 @@ trait REFLECT_TYPE_HELP<TYPEAS<FIRST ,SECOND> ,ALWAYS> {
 } ;
 
 template <class FIRST ,class SECOND ,class THIRD ,class...REST>
-trait REFLECT_TYPE_HELP<TYPEAS<FIRST ,SECOND ,THIRD ,REST...> ,ALWAYS> {
+trait REFLECT_TYPE_SPEC<TYPEAS<FIRST ,SECOND ,THIRD ,REST...>> {
 	using FIRST_ONE = FIRST ;
 	using FIRST_REST = TYPEAS<SECOND ,THIRD ,REST...> ;
 	using SECOND_ONE = SECOND ;
@@ -517,22 +517,22 @@ trait REFLECT_TYPE_HELP<TYPEAS<FIRST ,SECOND ,THIRD ,REST...> ,ALWAYS> {
 } ;
 
 template <class UNIT>
-using TYPE_FIRST_ONE = typename REFLECT_TYPE_HELP<UNIT ,ALWAYS>::FIRST_ONE ;
+using TYPE_FIRST_ONE = typename REFLECT_TYPE_SPEC<UNIT>::FIRST_ONE ;
 
 template <class UNIT>
-using TYPE_FIRST_REST = typename REFLECT_TYPE_HELP<UNIT ,ALWAYS>::FIRST_REST ;
+using TYPE_FIRST_REST = typename REFLECT_TYPE_SPEC<UNIT>::FIRST_REST ;
 
 template <class UNIT>
-using TYPE_SECOND_ONE = typename REFLECT_TYPE_HELP<UNIT ,ALWAYS>::SECOND_ONE ;
+using TYPE_SECOND_ONE = typename REFLECT_TYPE_SPEC<UNIT>::SECOND_ONE ;
 
 template <class UNIT>
-using TYPE_SECOND_REST = typename REFLECT_TYPE_HELP<UNIT ,ALWAYS>::SECOND_REST ;
+using TYPE_SECOND_REST = typename REFLECT_TYPE_SPEC<UNIT>::SECOND_REST ;
 
 template <class UNIT>
-using TYPE_THIRD_ONE = typename REFLECT_TYPE_HELP<UNIT ,ALWAYS>::THIRD_ONE ;
+using TYPE_THIRD_ONE = typename REFLECT_TYPE_SPEC<UNIT>::THIRD_ONE ;
 
 template <class UNIT>
-using TYPE_THIRD_REST = typename REFLECT_TYPE_HELP<UNIT ,ALWAYS>::THIRD_REST ;
+using TYPE_THIRD_REST = typename REFLECT_TYPE_SPEC<UNIT>::THIRD_REST ;
 
 template <class...>
 trait TYPE_REVERSE_HELP ;
@@ -782,10 +782,10 @@ template <class UNIT>
 using IS_TEXT = typename IS_TEXT_HELP<UNIT ,ALWAYS>::RET ;
 
 template <class...>
-trait IS_BIT_HELP ;
+trait IS_BYTE_HELP ;
 
 template <class UNIT>
-trait IS_BIT_HELP<UNIT ,ALWAYS> {
+trait IS_BYTE_HELP<UNIT ,ALWAYS> {
 	using R1X = IS_SAME<UNIT ,BYTE> ;
 	using R2X = IS_SAME<UNIT ,WORD> ;
 	using R3X = IS_SAME<UNIT ,CHAR> ;
@@ -796,7 +796,7 @@ trait IS_BIT_HELP<UNIT ,ALWAYS> {
 } ;
 
 template <class UNIT>
-using IS_BIT = typename IS_BIT_HELP<UNIT ,ALWAYS>::RET ;
+using IS_BYTE = typename IS_BYTE_HELP<UNIT ,ALWAYS>::RET ;
 
 template <class UNIT>
 using IS_NULL = IS_SAME<UNIT ,DEF<typeof (NULL)>> ;
@@ -828,7 +828,7 @@ trait IS_BASIC_HELP<UNIT ,ALWAYS> {
 	using R2X = IS_VALUE<UNIT> ;
 	using R3X = IS_FLOAT<UNIT> ;
 	using R4X = IS_TEXT<UNIT> ;
-	using R5X = IS_BIT<UNIT> ;
+	using R5X = IS_BYTE<UNIT> ;
 	using R6X = IS_NULL<UNIT> ;
 
 	static constexpr auto value = ENUM_ANY<R1X ,R2X ,R3X ,R4X ,R5X ,R6X>::expr ;
@@ -841,28 +841,33 @@ using IS_BASIC = typename IS_BASIC_HELP<UNIT ,ALWAYS>::RET ;
 using VARIABLE = ENUMAS<VAL ,(-1)> ;
 using CONSTANT = ENUMAS<VAL ,(-2)> ;
 using REGISTER = ENUMAS<VAL ,(-3)> ;
-using FUNCTION = ENUMAS<VAL ,(-4)> ;
+using PROPERTY = ENUMAS<VAL ,(-4)> ;
 
 template <class...>
-trait REFLECT_REF_HELP ;
+trait REFLECT_REF_SPEC ;
+
+template <class UNIT ,class SIDE>
+trait REFLECT_REF_SPEC<UNIT ,SIDE> {
+	using RET = PROPERTY ;
+} ;
 
 template <class UNIT>
-trait REFLECT_REF_HELP<UNIT ,REQUIRE<IS_SAME<UNIT ,VREF<REMOVE_REF<UNIT>>>>> {
+trait REFLECT_REF_SPEC<UNIT ,VREF<REMOVE_REF<UNIT>>> {
 	using RET = VARIABLE ;
 } ;
 
 template <class UNIT>
-trait REFLECT_REF_HELP<UNIT ,REQUIRE<IS_SAME<UNIT ,CREF<REMOVE_REF<UNIT>>>>> {
+trait REFLECT_REF_SPEC<UNIT ,CREF<REMOVE_REF<UNIT>>> {
 	using RET = CONSTANT ;
 } ;
 
 template <class UNIT>
-trait REFLECT_REF_HELP<UNIT ,REQUIRE<IS_SAME<UNIT ,RREF<REMOVE_REF<UNIT>>>>> {
+trait REFLECT_REF_SPEC<UNIT ,RREF<REMOVE_REF<UNIT>>> {
 	using RET = REGISTER ;
 } ;
 
 template <class UNIT>
-using REFLECT_REF = typename REFLECT_REF_HELP<XREF<UNIT> ,ALWAYS>::RET ;
+using REFLECT_REF = typename REFLECT_REF_SPEC<XREF<UNIT> ,UNIT>::RET ;
 
 template <class UNIT>
 using IS_VARIABLE = IS_SAME<REFLECT_REF<UNIT> ,VARIABLE> ;
@@ -873,65 +878,68 @@ using IS_CONSTANT = IS_SAME<REFLECT_REF<UNIT> ,CONSTANT> ;
 template <class UNIT>
 using IS_REGISTER = IS_SAME<REFLECT_REF<UNIT> ,REGISTER> ;
 
+template <class UNIT>
+using IS_PROPERTY = IS_SAME<REFLECT_REF<UNIT> ,PROPERTY> ;
+
 template <class...>
-trait REFLECT_POINTER_HELP ;
+trait REFLECT_POINTER_SPEC ;
 
 template <class UNIT>
-trait REFLECT_POINTER_HELP<UNIT ,ALWAYS> {
+trait REFLECT_POINTER_SPEC<UNIT> {
 	using RET = TYPEAS<> ;
 } ;
 
 template <class UNIT>
-trait REFLECT_POINTER_HELP<DEF<UNIT *> ,ALWAYS> {
+trait REFLECT_POINTER_SPEC<DEF<UNIT *>> {
 	using RET = TYPEAS<UNIT> ;
 } ;
 
 template <class UNIT>
-trait REFLECT_POINTER_HELP<DEF<const UNIT *> ,ALWAYS> {
+trait REFLECT_POINTER_SPEC<DEF<const UNIT *>> {
 	using RET = TYPEAS<UNIT> ;
 } ;
 
 template <class UNIT>
-using REFLECT_POINTER = typename REFLECT_POINTER_HELP<REMOVE_REF<UNIT> ,ALWAYS>::RET ;
+using REFLECT_POINTER = typename REFLECT_POINTER_SPEC<REMOVE_REF<UNIT>>::RET ;
 
 template <class...>
 trait PTR_HELP ;
 
 template <class UNIT ,class COND>
-trait PTR_HELP<UNIT ,COND ,REQUIRE<IS_SAME<COND ,VARIABLE>>> {
+trait PTR_HELP<UNIT ,COND ,REQUIRE<COND>> {
 	using RET = DEF<const DEF<UNIT *>> ;
 } ;
 
 template <class UNIT ,class COND>
-trait PTR_HELP<UNIT ,COND ,REQUIRE<IS_SAME<COND ,CONSTANT>>> {
+trait PTR_HELP<UNIT ,COND ,REQUIRE<ENUM_NOT<COND>>> {
 	using RET = DEF<const DEF<const UNIT *>> ;
 } ;
 
 template <class UNIT>
-using PTR = typename PTR_HELP<REMOVE_REF<UNIT> ,REFLECT_REF<UNIT> ,ALWAYS>::RET ;
+using PTR = typename PTR_HELP<REMOVE_REF<UNIT> ,IS_VARIABLE<UNIT> ,ALWAYS>::RET ;
 
 template <class...>
-trait REFLECT_ARRAY_HELP ;
+trait REFLECT_ARRAY_SPEC ;
 
 template <class UNIT>
-trait REFLECT_ARRAY_HELP<UNIT ,ALWAYS> {
+trait REFLECT_ARRAY_SPEC<UNIT> {
 	using RET = TYPEAS<> ;
 } ;
 
 template <class ITEM>
-trait REFLECT_ARRAY_HELP<DEF<ITEM[]> ,ALWAYS> {
+trait REFLECT_ARRAY_SPEC<DEF<ITEM[]>> {
 	using R1X = ENUM_ZERO ;
 	using RET = TYPEAS<ITEM ,R1X> ;
 } ;
 
 template <class ITEM ,csc_diff_t SIZE>
-trait REFLECT_ARRAY_HELP<DEF<ITEM[SIZE]> ,ALWAYS> {
+trait REFLECT_ARRAY_SPEC<DEF<ITEM[SIZE]>> {
 	using R1X = ENUMAS<VAL ,SIZE> ;
 	using RET = TYPEAS<ITEM ,R1X> ;
 } ;
 
 template <class UNIT>
-using REFLECT_ARRAY = typename REFLECT_ARRAY_HELP<REMOVE_REF<UNIT> ,ALWAYS>::RET ;
+using REFLECT_ARRAY = typename REFLECT_ARRAY_SPEC<REMOVE_REF<UNIT>>::RET ;
 
 template <class UNIT>
 using IS_ARRAY = ENUM_NOT<IS_SAME<REFLECT_ARRAY<UNIT> ,TYPEAS<>>> ;
@@ -962,29 +970,29 @@ template <class ITEM ,class SIZE = ENUM_ZERO>
 using ARR = typename ARR_HELP<ITEM ,SIZE ,ALWAYS>::RET ;
 
 template <class...>
-trait REFLECT_FUNCTION_HELP ;
+trait REFLECT_FUNCTION_SPEC ;
 
 template <class UNIT>
-trait REFLECT_FUNCTION_HELP<UNIT ,ALWAYS> {
+trait REFLECT_FUNCTION_SPEC<UNIT> {
 	using RET = TYPEAS<> ;
 } ;
 
 template <class RETURN ,class...PARAM ,class UNIT>
-trait REFLECT_FUNCTION_HELP<DEF<RETURN (UNIT::*) (PARAM...)> ,ALWAYS> {
+trait REFLECT_FUNCTION_SPEC<DEF<RETURN (UNIT::*) (PARAM...)>> {
 	using R1X = RETURN ;
 	using R2X = TYPEAS<XREF<PARAM>...> ;
 	using RET = TYPEAS<R1X ,R2X> ;
 } ;
 
 template <class RETURN ,class...PARAM ,class UNIT>
-trait REFLECT_FUNCTION_HELP<DEF<RETURN (UNIT::*) (PARAM...) const> ,ALWAYS> {
+trait REFLECT_FUNCTION_SPEC<DEF<RETURN (UNIT::*) (PARAM...) const>> {
 	using R1X = RETURN ;
 	using R2X = TYPEAS<XREF<PARAM>...> ;
 	using RET = TYPEAS<R1X ,R2X> ;
 } ;
 
 template <class UNIT>
-using REFLECT_FUNCTION = typename REFLECT_FUNCTION_HELP<DEF<typeof (&UNIT::operator())> ,ALWAYS>::RET ;
+using REFLECT_FUNCTION = typename REFLECT_FUNCTION_SPEC<DEF<typeof (&UNIT::operator())>>::RET ;
 
 template <class UNIT>
 using IS_FUNCTION = ENUM_NOT<IS_SAME<REFLECT_FUNCTION<UNIT> ,TYPEAS<>>> ;
@@ -1086,8 +1094,9 @@ template <class UNIT>
 trait IS_INTERFACE_HELP<UNIT ,REQUIRE<IS_CLASS<UNIT>>> {
 	using R1X = MACRO_IS_INTERFACE<UNIT> ;
 	using R2X = MACRO_IS_EXTEND<Interface ,UNIT> ;
+	using R3X = IS_SAME<Interface ,UNIT> ;
 
-	static constexpr auto value = ENUM_ALL<R1X ,R2X>::expr ;
+	static constexpr auto value = ENUM_ANY<ENUM_ALL<R1X ,R2X> ,R3X>::expr ;
 	using RET = ENUMAS<BOOL ,value> ;
 } ;
 
@@ -1116,24 +1125,24 @@ template <class...>
 trait TOGETHER_HELP ;
 
 template <class UNIT>
-trait TOGETHER_HELP<UNIT ,REQUIRE<ENUM_EQ_IDEN<COUNT_OF<UNIT>>>> {
-	using Binder = TYPE_FIRST_ONE<UNIT> ;
-	require (IS_INTERFACE<Binder>) ;
-
-	struct Together implement Binder {} ;
+trait TOGETHER_HELP<UNIT ,REQUIRE<ENUM_EQ_ZERO<COUNT_OF<UNIT>>>> {
+	struct Together implement Interface {} ;
 } ;
 
+using InterfaceTogether = typename TOGETHER_HELP<TYPEAS<> ,ALWAYS>::Together ;
+
 template <class UNIT>
-trait TOGETHER_HELP<UNIT ,REQUIRE<ENUM_GT_IDEN<COUNT_OF<UNIT>>>> {
+trait TOGETHER_HELP<UNIT ,REQUIRE<ENUM_GT_ZERO<COUNT_OF<UNIT>>>> {
 	using Binder = TYPE_FIRST_ONE<UNIT> ;
 	require (IS_INTERFACE<Binder>) ;
+	require (ENUM_NOT<IS_EXTEND<InterfaceTogether ,Binder>>) ;
 	using Holder = typename TOGETHER_HELP<TYPE_FIRST_REST<UNIT> ,ALWAYS>::Together ;
 
-	struct Together implement Binder ,Holder {} ;
+	struct Together implement Holder ,Binder {} ;
 } ;
 
 template <class...UNIT>
-using Together = typename TOGETHER_HELP<TYPEAS<UNIT...> ,ALWAYS>::Together ;
+using Together = typename TOGETHER_HELP<TYPE_REVERSE<TYPEAS<UNIT...>> ,ALWAYS>::Together ;
 
 template <class...>
 trait IS_CONVERTIBLE_HELP ;
@@ -1229,13 +1238,16 @@ using TEXT_BASE = typename TEXT_BASE_HELP<SIZE_OF<UNIT> ,ALIGN_OF<UNIT> ,ALWAYS>
 using STRUA = TEXT_BASE<STRA> ;
 using STRUW = TEXT_BASE<STRW> ;
 
+template <class BASE ,class ALIGN>
+using ENUM_ALIGN = ENUM_MUL<ENUM_DIV<ENUM_ADD<BASE ,ENUM_DEC<ALIGN>> ,ALIGN> ,ALIGN> ;
+
 template <class...>
 trait STORAGE_HELP ;
 
 template <class SIZE ,class ALIGN>
 trait STORAGE_HELP<SIZE ,ALIGN ,REQUIRE<ENUM_EQUAL<ALIGN ,ALIGN_OF<BYTE>>>> {
 	using R1X = BYTE ;
-	using R2X = ENUM_DIV<ENUM_ADD<SIZE ,ENUM_DEC<ALIGN>> ,ALIGN> ;
+	using R2X = ENUM_DIV<ENUM_ALIGN<SIZE ,ALIGN> ,ALIGN> ;
 	require (ENUM_GT_ZERO<R2X>) ;
 	using RET = ARR<R1X ,R2X> ;
 } ;
@@ -1243,7 +1255,7 @@ trait STORAGE_HELP<SIZE ,ALIGN ,REQUIRE<ENUM_EQUAL<ALIGN ,ALIGN_OF<BYTE>>>> {
 template <class SIZE ,class ALIGN>
 trait STORAGE_HELP<SIZE ,ALIGN ,REQUIRE<ENUM_EQUAL<ALIGN ,ALIGN_OF<WORD>>>> {
 	using R1X = WORD ;
-	using R2X = ENUM_DIV<ENUM_ADD<SIZE ,ENUM_DEC<ALIGN>> ,ALIGN> ;
+	using R2X = ENUM_DIV<ENUM_ALIGN<SIZE ,ALIGN> ,ALIGN> ;
 	require (ENUM_GT_ZERO<R2X>) ;
 	using RET = ARR<R1X ,R2X> ;
 } ;
@@ -1251,7 +1263,7 @@ trait STORAGE_HELP<SIZE ,ALIGN ,REQUIRE<ENUM_EQUAL<ALIGN ,ALIGN_OF<WORD>>>> {
 template <class SIZE ,class ALIGN>
 trait STORAGE_HELP<SIZE ,ALIGN ,REQUIRE<ENUM_EQUAL<ALIGN ,ALIGN_OF<CHAR>>>> {
 	using R1X = CHAR ;
-	using R2X = ENUM_DIV<ENUM_ADD<SIZE ,ENUM_DEC<ALIGN>> ,ALIGN> ;
+	using R2X = ENUM_DIV<ENUM_ALIGN<SIZE ,ALIGN> ,ALIGN> ;
 	require (ENUM_GT_ZERO<R2X>) ;
 	using RET = ARR<R1X ,R2X> ;
 } ;
@@ -1259,7 +1271,7 @@ trait STORAGE_HELP<SIZE ,ALIGN ,REQUIRE<ENUM_EQUAL<ALIGN ,ALIGN_OF<CHAR>>>> {
 template <class SIZE ,class ALIGN>
 trait STORAGE_HELP<SIZE ,ALIGN ,REQUIRE<ENUM_EQUAL<ALIGN ,ALIGN_OF<DATA>>>> {
 	using R1X = DATA ;
-	using R2X = ENUM_DIV<ENUM_ADD<SIZE ,ENUM_DEC<ALIGN>> ,ALIGN> ;
+	using R2X = ENUM_DIV<ENUM_ALIGN<SIZE ,ALIGN> ,ALIGN> ;
 	require (ENUM_GT_ZERO<R2X>) ;
 	using RET = ARR<R1X ,R2X> ;
 } ;
@@ -1268,20 +1280,20 @@ template <class SIZE ,class ALIGN = ENUM_IDEN>
 using Storage = typename STORAGE_HELP<SIZE ,ALIGN ,ALWAYS>::RET ;
 
 template <class...>
-trait REFLECT_TEMP_HELP ;
+trait REFLECT_TEMP_SPEC ;
 
 template <class UNIT>
-trait REFLECT_TEMP_HELP<UNIT ,ALWAYS> {
+trait REFLECT_TEMP_SPEC<UNIT> {
 	using RET = TYPEAS<> ;
 } ;
 
 template <class UNIT ,class SIDE>
-trait REFLECT_TEMP_HELP<TEMPAS<UNIT ,SIDE> ,ALWAYS> {
+trait REFLECT_TEMP_SPEC<TEMPAS<UNIT ,SIDE>> {
 	using RET = TYPEAS<UNIT ,SIDE> ;
 } ;
 
 template <class UNIT>
-using REFLECT_TEMP = typename REFLECT_TEMP_HELP<REMOVE_REF<UNIT> ,ALWAYS>::RET ;
+using REFLECT_TEMP = typename REFLECT_TEMP_SPEC<REMOVE_REF<UNIT>>::RET ;
 
 template <class UNIT>
 using IS_TEMP = ENUM_NOT<IS_SAME<REFLECT_TEMP<UNIT> ,TYPEAS<>>> ;

@@ -37,7 +37,7 @@ trait SYNTAXTREE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		LENGTH mTimeCost ;
 	} ;
 
-	using ARRAY2X = Tuple<INDEX ,INDEX> ;
+	using INDEX2X = Tuple<INDEX ,INDEX> ;
 
 	class ImplHolder implement Holder {
 	protected:
@@ -46,8 +46,8 @@ trait SYNTAXTREE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		Set<FLAG> mTreeCabiSet ;
 		CRef<BOOL> mEnableClean ;
 		Deque<INDEX> mTreeStack ;
-		Priority<ARRAY2X> mPlayPriority ;
-		Deque<ARRAY2X> mTrackStack ;
+		Priority<INDEX2X> mPlayPriority ;
+		Deque<INDEX2X> mTrackStack ;
 		Deque<INDEX> mCleanQueue ;
 		Deque<INDEX> mScanQueue ;
 
@@ -194,14 +194,14 @@ trait SYNTAXTREE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 
 		void depth_track (CREF<INDEX> curr ,CREF<INDEX> prev) {
 			mTrackStack.clear () ;
-			const auto r1x = ARRAY2X (curr ,prev) ;
+			const auto r1x = INDEX2X (curr ,prev) ;
 			mTrackStack.add (r1x) ;
 			while (TRUE) {
 				if (mTrackStack.empty ())
 					break ;
 				const auto r2x = mTrackStack[mTrackStack.tail ()] ;
-				INDEX ix = r2x.mP1st ;
-				INDEX iy = r2x.mP2nd ;
+				INDEX ix = r2x.m1st ;
+				INDEX iy = r2x.m2nd ;
 				mTrackStack.pop () ;
 				if ifswitch (TRUE) {
 					const auto r3x = mTree[iy].mOrder ;
@@ -218,17 +218,17 @@ trait SYNTAXTREE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 					if ifswitch (TRUE) {
 						if ifnot (mTree[ix].mPlaying)
 							discard ;
-						const auto r5x = ARRAY2X (mTree[ix].mOrder ,-mTree[ix].mDepth) ;
+						const auto r5x = INDEX2X (mTree[ix].mOrder ,-mTree[ix].mDepth) ;
 						mPlayPriority.add (r5x ,ix) ;
 					}
 					for (auto &&i : mTree[ix].mChild) {
 						assume (i != curr) ;
-						const auto r6x = ARRAY2X (i ,ix) ;
+						const auto r6x = INDEX2X (i ,ix) ;
 						mTrackStack.add (r6x) ;
 					}
 					for (auto &&i : mTree[ix].mMaybe) {
 						assume (i != curr) ;
-						const auto r7x = ARRAY2X (i ,ix) ;
+						const auto r7x = INDEX2X (i ,ix) ;
 						mTrackStack.add (r7x) ;
 					}
 				}
@@ -318,7 +318,7 @@ trait SYNTAXTREE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			while (TRUE) {
 				if (mPlayPriority.empty ())
 					break ;
-				INDEX iy = mPlayPriority.get (mPlayPriority.head ()) ;
+				INDEX iy = mPlayPriority.map_get (mPlayPriority.head ()) ;
 				if (mTree[iy].mDepth <= mTree[ix].mDepth)
 					break ;
 				auto act = TRUE ;
@@ -329,13 +329,13 @@ trait SYNTAXTREE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 					if ifswitch (TRUE) {
 						if ifnot (mTree[iy].mOnceActor.exist ())
 							discard ;
-						const auto r1x = NowTimePoint () ;
+						const auto r1x = NowTimePoint::make () ;
 						const auto r2x = HeapProc::instance ().usage_size () ;
 						mTreeStack.add (iy) ;
 						mTree[iy].mOnceActor () ;
 						mTreeStack.pop () ;
 						const auto r3x = HeapProc::instance ().usage_size () ;
-						const auto r4x = NowTimePoint () ;
+						const auto r4x = NowTimePoint::make () ;
 						mTree[iy].mMemoryUsage += LENGTH (r3x - r2x) ;
 						mTree[iy].mTimeCost += (r4x - r1x).seconds () ;
 					}
@@ -359,13 +359,13 @@ trait SYNTAXTREE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 					if ifswitch (TRUE) {
 						if ifnot (mTree[iy].mActor.exist ())
 							discard ;
-						const auto r5x = NowTimePoint () ;
+						const auto r5x = NowTimePoint::make () ;
 						const auto r6x = HeapProc::instance ().usage_size () ;
 						mTreeStack.add (iy) ;
 						mTree[iy].mActor () ;
 						mTreeStack.pop () ;
 						const auto r7x = HeapProc::instance ().usage_size () ;
-						const auto r8x = NowTimePoint () ;
+						const auto r8x = NowTimePoint::make () ;
 						mTree[iy].mMemoryUsage += LENGTH (r7x - r6x) ;
 						mTree[iy].mTimeCost += (r8x - r5x).seconds () ;
 					}
@@ -406,7 +406,7 @@ trait SYNTAXTREE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				if (mScanQueue.empty ())
 					break ;
 				mScanQueue.take (ix) ;
-				const auto r1x = ARRAY2X (mTree[ix].mOrder ,-mTree[ix].mDepth) ;
+				const auto r1x = INDEX2X (mTree[ix].mOrder ,-mTree[ix].mDepth) ;
 				mPlayPriority.add (r1x ,ix) ;
 				for (auto &&i : mTree[ix].mChild) {
 					if (mTree[i].mPlaying)

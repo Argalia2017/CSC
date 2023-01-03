@@ -6,6 +6,10 @@
 
 #include "csc_basic.hpp"
 
+#include "csc_end.h"
+#include <mutex>
+#include "csc_begin.h"
+
 namespace CSC {
 template <class DEPEND>
 trait BUFFERPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
@@ -23,6 +27,37 @@ template <>
 exports auto BUFFERPROC_HOLDER_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
 	using R1X = typename BUFFERPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
+}
+
+template <class DEPEND>
+trait EASYMUTEX_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
+	using Holder = typename EASYMUTEX_HELP<DEPEND ,ALWAYS>::Holder ;
+
+	class ImplHolder implement Holder {
+	protected:
+		std::mutex mMutex ;
+
+	public:
+		void initialize () override {
+			noop () ;
+		}
+
+		void enter () override {
+			mMutex.lock () ;
+		}
+
+		void leave () override {
+			mMutex.unlock () ;
+		}
+	} ;
+} ;
+
+template <>
+exports auto EASYMUTEX_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->Box<FakeHolder> {
+	using R1X = typename EASYMUTEX_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
+	Box<FakeHolder> ret ;
+	ret.acquire (TYPEAS<R1X>::expr) ;
+	return move (ret) ;
 }
 
 template <class DEPEND>
@@ -59,7 +94,7 @@ trait LATER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	public:
 		void initialize (CREF<FLAG> tag) override {
 			const auto r1x = unique () ;
-			assert (r1x.available ()) ;
+			assert (r1x.exist ()) ;
 			INDEX ix = r1x->mLast ;
 			while (TRUE) {
 				if (ix == NONE)
@@ -78,7 +113,7 @@ trait LATER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		void initialize (CREF<FLAG> tag ,RREF<Function<Auto>> expr_) override {
 			assert (expr_.exist ()) ;
 			const auto r1x = unique () ;
-			assert (r1x.available ()) ;
+			assert (r1x.exist ()) ;
 			INDEX ix = r1x->mFree ;
 			assume (ix != NONE) ;
 			auto rax = UniqueRef<OWNERSHIP> ([&] (VREF<OWNERSHIP> me) {
@@ -107,10 +142,10 @@ trait LATER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			r1x->mList[ix].mWeak = mLater.weak () ;
 		}
 
-		BOOL exist () const override {
+		BOOL available () const override {
 			if ifnot (mLater.exist ())
 				return FALSE ;
-			if ifnot (mLater->exist ())
+			if ifnot (mLater->available ())
 				return FALSE ;
 			return TRUE ;
 		}
