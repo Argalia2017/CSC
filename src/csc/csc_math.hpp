@@ -47,29 +47,29 @@ trait MATHPROC_HELP<DEPEND ,ALWAYS> {
 		virtual DOUBLE abs (CREF<DOUBLE> obj) const = 0 ;
 		virtual SINGLE inverse (CREF<SINGLE> obj) const = 0 ;
 		virtual DOUBLE inverse (CREF<DOUBLE> obj) const = 0 ;
-		virtual VAL32 min_of (CREF<VAL32> obj1 ,CREF<Variadic<VAL32>> obj2) const = 0 ;
-		virtual VAL64 min_of (CREF<VAL64> obj1 ,CREF<Variadic<VAL64>> obj2) const = 0 ;
-		virtual SINGLE min_of (CREF<SINGLE> obj1 ,CREF<Variadic<SINGLE>> obj2) const = 0 ;
-		virtual DOUBLE min_of (CREF<DOUBLE> obj1 ,CREF<Variadic<DOUBLE>> obj2) const = 0 ;
-		virtual VAL32 max_of (CREF<VAL32> obj1 ,CREF<Variadic<VAL32>> obj2) const = 0 ;
-		virtual VAL64 max_of (CREF<VAL64> obj1 ,CREF<Variadic<VAL64>> obj2) const = 0 ;
-		virtual SINGLE max_of (CREF<SINGLE> obj1 ,CREF<Variadic<SINGLE>> obj2) const = 0 ;
-		virtual DOUBLE max_of (CREF<DOUBLE> obj1 ,CREF<Variadic<DOUBLE>> obj2) const = 0 ;
-		virtual BOOL all_of (CREF<Variadic<BOOL>> obj1) const = 0 ;
-		virtual BOOL any_of (CREF<Variadic<BOOL>> obj1) const = 0 ;
-		virtual INDEX else_of (CREF<Variadic<BOOL>> obj1) const = 0 ;
-		virtual VAL32 sum_of (CREF<VAL32> obj1 ,CREF<Variadic<VAL32>> obj2) const = 0 ;
-		virtual VAL64 sum_of (CREF<VAL64> obj1 ,CREF<Variadic<VAL64>> obj2) const = 0 ;
-		virtual SINGLE sum_of (CREF<SINGLE> obj1 ,CREF<Variadic<SINGLE>> obj2) const = 0 ;
-		virtual DOUBLE sum_of (CREF<DOUBLE> obj1 ,CREF<Variadic<DOUBLE>> obj2) const = 0 ;
-		virtual VAL32 acc_of (CREF<VAL32> obj1 ,CREF<Variadic<VAL32>> obj2) const = 0 ;
-		virtual VAL64 acc_of (CREF<VAL64> obj1 ,CREF<Variadic<VAL64>> obj2) const = 0 ;
-		virtual SINGLE acc_of (CREF<SINGLE> obj1 ,CREF<Variadic<SINGLE>> obj2) const = 0 ;
-		virtual DOUBLE acc_of (CREF<DOUBLE> obj1 ,CREF<Variadic<DOUBLE>> obj2) const = 0 ;
-		virtual Array<VAL32 ,RANK2> sort_of (CREF<VAL32> obj1 ,CREF<VAL32> obj2) const = 0 ;
-		virtual Array<VAL64 ,RANK2> sort_of (CREF<VAL64> obj1 ,CREF<VAL64> obj2) const = 0 ;
-		virtual Array<SINGLE ,RANK2> sort_of (CREF<SINGLE> obj1 ,CREF<SINGLE> obj2) const = 0 ;
-		virtual Array<DOUBLE ,RANK2> sort_of (CREF<DOUBLE> obj1 ,CREF<DOUBLE> obj2) const = 0 ;
+		virtual VAL32 min_of (CREF<VAL32> obj1 ,CREF<CaptureIterator<VAL32>> obj2) const = 0 ;
+		virtual VAL64 min_of (CREF<VAL64> obj1 ,CREF<CaptureIterator<VAL64>> obj2) const = 0 ;
+		virtual SINGLE min_of (CREF<SINGLE> obj1 ,CREF<CaptureIterator<SINGLE>> obj2) const = 0 ;
+		virtual DOUBLE min_of (CREF<DOUBLE> obj1 ,CREF<CaptureIterator<DOUBLE>> obj2) const = 0 ;
+		virtual VAL32 max_of (CREF<VAL32> obj1 ,CREF<CaptureIterator<VAL32>> obj2) const = 0 ;
+		virtual VAL64 max_of (CREF<VAL64> obj1 ,CREF<CaptureIterator<VAL64>> obj2) const = 0 ;
+		virtual SINGLE max_of (CREF<SINGLE> obj1 ,CREF<CaptureIterator<SINGLE>> obj2) const = 0 ;
+		virtual DOUBLE max_of (CREF<DOUBLE> obj1 ,CREF<CaptureIterator<DOUBLE>> obj2) const = 0 ;
+		virtual BOOL all_of (CREF<CaptureIterator<BOOL>> obj1) const = 0 ;
+		virtual BOOL any_of (CREF<CaptureIterator<BOOL>> obj1) const = 0 ;
+		virtual INDEX else_of (CREF<CaptureIterator<BOOL>> obj1) const = 0 ;
+		virtual VAL32 sum_of (CREF<VAL32> obj1 ,CREF<CaptureIterator<VAL32>> obj2) const = 0 ;
+		virtual VAL64 sum_of (CREF<VAL64> obj1 ,CREF<CaptureIterator<VAL64>> obj2) const = 0 ;
+		virtual SINGLE sum_of (CREF<SINGLE> obj1 ,CREF<CaptureIterator<SINGLE>> obj2) const = 0 ;
+		virtual DOUBLE sum_of (CREF<DOUBLE> obj1 ,CREF<CaptureIterator<DOUBLE>> obj2) const = 0 ;
+		virtual VAL32 acc_of (CREF<VAL32> obj1 ,CREF<CaptureIterator<VAL32>> obj2) const = 0 ;
+		virtual VAL64 acc_of (CREF<VAL64> obj1 ,CREF<CaptureIterator<VAL64>> obj2) const = 0 ;
+		virtual SINGLE acc_of (CREF<SINGLE> obj1 ,CREF<CaptureIterator<SINGLE>> obj2) const = 0 ;
+		virtual DOUBLE acc_of (CREF<DOUBLE> obj1 ,CREF<CaptureIterator<DOUBLE>> obj2) const = 0 ;
+		virtual void sort_of (VREF<RegBuffer<VAL32>> result) const = 0 ;
+		virtual void sort_of (VREF<RegBuffer<VAL64>> result) const = 0 ;
+		virtual void sort_of (VREF<RegBuffer<SINGLE>> result) const = 0 ;
+		virtual void sort_of (VREF<RegBuffer<DOUBLE>> result) const = 0 ;
 		virtual VAL32 clamp (CREF<VAL32> curr ,CREF<VAL32> lb ,CREF<VAL32> rb) const = 0 ;
 		virtual VAL64 clamp (CREF<VAL64> curr ,CREF<VAL64> lb ,CREF<VAL64> rb) const = 0 ;
 		virtual SINGLE clamp (CREF<SINGLE> curr ,CREF<SINGLE> lb ,CREF<SINGLE> rb) const = 0 ;
@@ -216,10 +216,14 @@ trait MATHPROC_HELP<DEPEND ,ALWAYS> {
 			return instance ().mThis->sum_of (obj1 ,capture (obj2...)) ;
 		}
 
-		template <class ARG1>
-		imports Array<ARG1 ,RANK2> sort_of (CREF<ARG1> obj1 ,CREF<ARG1> obj2) {
+		template <class ARG1 ,class...ARG2>
+		imports Array<ARG1 ,COUNT_OF<TYPEAS<ARG1 ,ARG2...>>> sort_of (CREF<ARG1> obj1 ,CREF<ARG2>...obj2) {
 			require (IS_SCALAR<ARG1>) ;
-			return instance ().mThis->sort_of (obj1 ,obj2) ;
+			require (ENUM_ALL<IS_SAME<ARG1 ,ARG2>...>) ;
+			using R1X = COUNT_OF<TYPEAS<ARG1 ,ARG2...>> ;
+			Array<ARG1 ,R1X> ret = Array<ARG1 ,R1X> (CaptureIterator<ARG1> (capture (obj1 ,obj2...))) ;
+			instance ().mThis->sort_of (ret.raw ()) ;
+			return move (ret) ;
 		}
 
 		template <class ARG1>
@@ -567,6 +571,7 @@ trait INTEGER_HELP<DEPEND ,ALWAYS> {
 
 	struct Holder implement Interface {
 		virtual void initialize (CREF<LENGTH> size_ ,CREF<VAL64> value_) = 0 ;
+		virtual Integer clone () const = 0 ;
 		virtual LENGTH precision () const = 0 ;
 		virtual VAL64 get () const = 0 ;
 		virtual void set (CREF<VAL64> value_) = 0 ;
@@ -579,7 +584,6 @@ trait INTEGER_HELP<DEPEND ,ALWAYS> {
 		virtual Integer mul (CREF<VAL64> scale) const = 0 ;
 		virtual Integer div (CREF<VAL64> scale) const = 0 ;
 		virtual Integer mod (CREF<VAL64> scale) const = 0 ;
-		virtual Integer clone () const = 0 ;
 		virtual Integer minus () const = 0 ;
 		virtual void increase () = 0 ;
 		virtual void decrease () = 0 ;

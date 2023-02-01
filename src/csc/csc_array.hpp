@@ -20,7 +20,6 @@ trait ARRAYITERATOR_HELP<UNIT ,ITEM ,COND ,REQUIRE<COND>> {
 		VRef<UNIT> mArray ;
 		INDEX mBegin ;
 		INDEX mEnd ;
-		INDEX mCurr ;
 
 	public:
 		implicit ArrayIterator () = delete ;
@@ -29,35 +28,26 @@ trait ARRAYITERATOR_HELP<UNIT ,ITEM ,COND ,REQUIRE<COND>> {
 			mArray = move (array_) ;
 			mBegin = mArray->ibegin () ;
 			mEnd = mArray->iend () ;
-			mCurr = mBegin ;
 		}
 
-		LENGTH length () const {
+		LENGTH rank () const {
 			return mArray->length () ;
 		}
 
-		ArrayIterator begin () const {
-			return thiz ;
-		}
-
-		ArrayIterator end () const {
-			return thiz ;
-		}
-
-		BOOL good () const {
-			return mCurr != mEnd ;
+		BOOL bad () const {
+			return mBegin == mEnd ;
 		}
 
 		inline BOOL operator== (CREF<ArrayIterator>) const {
-			return ifnot (good ()) ;
+			return bad () ;
 		}
 
 		inline BOOL operator!= (CREF<ArrayIterator>) const {
-			return good () ;
+			return ifnot (bad ()) ;
 		}
 
 		VREF<ITEM> peek () leftvalue {
-			return mArray->at (mCurr) ;
+			return mArray->at (mBegin) ;
 		}
 
 		inline VREF<ITEM> operator* () leftvalue {
@@ -65,7 +55,7 @@ trait ARRAYITERATOR_HELP<UNIT ,ITEM ,COND ,REQUIRE<COND>> {
 		}
 
 		void next () {
-			mCurr = mArray->inext (mCurr) ;
+			mBegin = mArray->inext (mBegin) ;
 		}
 
 		inline void operator++ () {
@@ -81,7 +71,6 @@ trait ARRAYITERATOR_HELP<UNIT ,ITEM ,COND ,REQUIRE<ENUM_ALL<ENUM_NOT<COND> ,ENUM
 		CRef<UNIT> mArray ;
 		INDEX mBegin ;
 		INDEX mEnd ;
-		INDEX mCurr ;
 
 	public:
 		implicit ArrayIterator () = delete ;
@@ -90,35 +79,26 @@ trait ARRAYITERATOR_HELP<UNIT ,ITEM ,COND ,REQUIRE<ENUM_ALL<ENUM_NOT<COND> ,ENUM
 			mArray = move (array_) ;
 			mBegin = mArray->ibegin () ;
 			mEnd = mArray->iend () ;
-			mCurr = mBegin ;
 		}
 
-		LENGTH length () const {
+		LENGTH rank () const {
 			return mArray->length () ;
 		}
 
-		ArrayIterator begin () const {
-			return thiz ;
-		}
-
-		ArrayIterator end () const {
-			return thiz ;
-		}
-
-		BOOL good () const {
-			return mCurr != mEnd ;
+		BOOL bad () const {
+			return mBegin == mEnd ;
 		}
 
 		inline BOOL operator== (CREF<ArrayIterator>) const {
-			return ifnot (good ()) ;
+			return bad () ;
 		}
 
 		inline BOOL operator!= (CREF<ArrayIterator>) const {
-			return good () ;
+			return ifnot (bad ()) ;
 		}
 
 		CREF<ITEM> peek () const leftvalue {
-			return mArray->at (mCurr) ;
+			return mArray->at (mBegin) ;
 		}
 
 		inline CREF<ITEM> operator* () const leftvalue {
@@ -126,7 +106,7 @@ trait ARRAYITERATOR_HELP<UNIT ,ITEM ,COND ,REQUIRE<ENUM_ALL<ENUM_NOT<COND> ,ENUM
 		}
 
 		void next () {
-			mCurr = mArray->inext (mCurr) ;
+			mBegin = mArray->inext (mBegin) ;
 		}
 
 		inline void operator++ () {
@@ -142,7 +122,6 @@ trait ARRAYITERATOR_HELP<UNIT ,ITEM ,COND ,REQUIRE<IS_VOID<ITEM>>> {
 		CRef<UNIT> mArray ;
 		INDEX mBegin ;
 		INDEX mEnd ;
-		INDEX mCurr ;
 
 	public:
 		implicit ArrayIterator () = delete ;
@@ -151,11 +130,6 @@ trait ARRAYITERATOR_HELP<UNIT ,ITEM ,COND ,REQUIRE<IS_VOID<ITEM>>> {
 			mArray = move (array_) ;
 			mBegin = mArray->ibegin () ;
 			mEnd = mArray->iend () ;
-			mCurr = mBegin ;
-		}
-
-		LENGTH length () const {
-			return mArray->length () ;
 		}
 
 		ArrayIterator begin () const {
@@ -166,20 +140,24 @@ trait ARRAYITERATOR_HELP<UNIT ,ITEM ,COND ,REQUIRE<IS_VOID<ITEM>>> {
 			return thiz ;
 		}
 
-		BOOL good () const {
-			return mCurr != mEnd ;
+		LENGTH rank () const {
+			return mArray->length () ;
+		}
+
+		BOOL bad () const {
+			return mBegin == mEnd ;
 		}
 
 		inline BOOL operator== (CREF<ArrayIterator>) const {
-			return ifnot (good ()) ;
+			return bad () ;
 		}
 
 		inline BOOL operator!= (CREF<ArrayIterator>) const {
-			return good () ;
+			return ifnot (bad ()) ;
 		}
 
 		CREF<INDEX> peek () const leftvalue {
-			return mCurr ;
+			return mBegin ;
 		}
 
 		inline CREF<INDEX> operator* () const leftvalue {
@@ -187,7 +165,7 @@ trait ARRAYITERATOR_HELP<UNIT ,ITEM ,COND ,REQUIRE<IS_VOID<ITEM>>> {
 		}
 
 		void next () {
-			mCurr = mArray->inext (mCurr) ;
+			mBegin = mArray->inext (mBegin) ;
 		}
 
 		inline void operator++ () {
@@ -224,16 +202,12 @@ trait ARRAY_HELP<ITEM ,SIZE ,ALWAYS> {
 			}
 		}
 
-		explicit Array (CREF<Variadic<ITEM>> that) {
+		explicit Array (CREF<CaptureIterator<ITEM>> that) {
 			mArray = Buffer<ITEM ,SIZE> (that.rank ()) ;
 			INDEX ix = 0 ;
-			auto rax = that ;
-			while (TRUE) {
-				if (rax.empty ())
-					break ;
-				mArray[ix] = rax.one () ;
+			for (auto &&i : that) {
+				mArray[ix] = move (i) ;
 				ix++ ;
-				rax = rax.rest () ;
 			}
 		}
 
@@ -359,7 +333,7 @@ trait ARRAY_HELP<ITEM ,SIZE ,ALWAYS> {
 	public:
 		template <class ARG1>
 		imports Array make (CREF<ARG1> iterator) {
-			Array ret = Array (iterator.length ()) ;
+			Array ret = Array (iterator.begin ().rank ()) ;
 			INDEX ix = 0 ;
 			for (auto &&i : iterator) {
 				ret[ix] = ITEM (i) ;
@@ -433,16 +407,12 @@ trait STRING_HELP<ITEM ,SIZE ,REQUIRE<IS_TEXT<ITEM>>> {
 			trunc (ix) ;
 		}
 
-		explicit String (CREF<Variadic<ITEM>> that) {
+		explicit String (CREF<CaptureIterator<ITEM>> that) {
 			mString = Buffer<ITEM ,RESERVE_SIZE> (reserve_size (that.rank ())) ;
 			INDEX ix = 0 ;
-			auto rax = that ;
-			while (TRUE) {
-				if (rax.empty ())
-					break ;
-				mString[ix] = rax.one () ;
+			for (auto &&i : that) {
+				mString[ix] = move (i) ;
 				ix++ ;
-				rax = rax.rest () ;
 			}
 			trunc (ix) ;
 		}
@@ -450,7 +420,7 @@ trait STRING_HELP<ITEM ,SIZE ,REQUIRE<IS_TEXT<ITEM>>> {
 		imports CREF<String> zero () {
 			return memorize ([&] () {
 				String ret ;
-				ret.mString = Buffer<ITEM ,RESERVE_SIZE> (1) ;
+				ret.mString = Buffer<ITEM ,RESERVE_SIZE> (2) ;
 				ret.clear () ;
 				return move (ret) ;
 			}) ;
@@ -831,16 +801,11 @@ trait DEQUE_HELP<ITEM ,SIZE ,ALWAYS> {
 				add (move (i)) ;
 		}
 
-		explicit Deque (CREF<Variadic<ITEM>> that) {
+		explicit Deque (CREF<CaptureIterator<ITEM>> that) {
 			mDeque = Buffer<NODE ,SIZE> (that.rank ()) ;
 			clear () ;
-			auto rax = that ;
-			while (TRUE) {
-				if (rax.empty ())
-					break ;
-				add (rax.one ()) ;
-				rax = rax.rest () ;
-			}
+			for (auto &&i : that)
+				add (move (i)) ;
 		}
 
 		LENGTH size () const {
@@ -1100,16 +1065,11 @@ trait PRIORITY_HELP<ITEM ,SIZE ,ALWAYS> {
 				add (move (i)) ;
 		}
 
-		explicit Priority (CREF<Variadic<ITEM>> that) {
+		explicit Priority (CREF<CaptureIterator<ITEM>> that) {
 			mPriority = Buffer<NODE ,SIZE> (that.rank ()) ;
 			clear () ;
-			auto rax = that ;
-			while (TRUE) {
-				if (rax.empty ())
-					break ;
-				add (rax.one ()) ;
-				rax = rax.rest () ;
-			}
+			for (auto &&i : that)
+				add (move (i)) ;
 		}
 
 		LENGTH size () const {
@@ -1437,16 +1397,11 @@ trait LIST_HELP<ITEM ,SIZE ,ALWAYS> {
 				add (move (i)) ;
 		}
 
-		explicit List (CREF<Variadic<ITEM>> that) {
+		explicit List (CREF<CaptureIterator<ITEM>> that) {
 			mList = Allocator<NODE ,SIZE> (that.rank ()) ;
 			clear () ;
-			auto rax = that ;
-			while (TRUE) {
-				if (rax.empty ())
-					break ;
-				add (rax.one ()) ;
-				rax = rax.rest () ;
-			}
+			for (auto &&i : that)
+				add (move (i)) ;
 		}
 
 		LENGTH size () const {
@@ -1755,16 +1710,11 @@ trait ARRAYLIST_HELP<ITEM ,SIZE ,ALWAYS> {
 				add (move (i)) ;
 		}
 
-		explicit ArrayList (CREF<Variadic<ITEM>> that) {
+		explicit ArrayList (CREF<CaptureIterator<ITEM>> that) {
 			mList = Allocator<NODE ,SIZE> (that.rank ()) ;
 			clear () ;
-			auto rax = that ;
-			while (TRUE) {
-				if (rax.empty ())
-					break ;
-				add (rax.one ()) ;
-				rax = rax.rest () ;
-			}
+			for (auto &&i : that)
+				add (move (i)) ;
 		}
 
 		LENGTH size () const {
@@ -2541,16 +2491,11 @@ trait SET_HELP<ITEM ,SIZE ,ALWAYS> {
 				add (move (i)) ;
 		}
 
-		explicit Set (CREF<Variadic<ITEM>> that) {
+		explicit Set (CREF<CaptureIterator<ITEM>> that) {
 			mSet = Allocator<NODE ,SIZE> (that.rank ()) ;
 			clear () ;
-			auto rax = that ;
-			while (TRUE) {
-				if (rax.empty ())
-					break ;
-				add (rax.one ()) ;
-				rax = rax.rest () ;
-			}
+			for (auto &&i : that)
+				add (move (i)) ;
 		}
 
 		LENGTH size () const {
@@ -3179,16 +3124,11 @@ trait HASHSET_HELP<ITEM ,SIZE ,ALWAYS> {
 				add (move (i)) ;
 		}
 
-		explicit HashSet (CREF<Variadic<ITEM>> that) {
+		explicit HashSet (CREF<CaptureIterator<ITEM>> that) {
 			mSet = Allocator<NODE ,SIZE> (that.rank ()) ;
 			clear () ;
-			auto rax = that ;
-			while (TRUE) {
-				if (rax.empty ())
-					break ;
-				add (rax.one ()) ;
-				rax = rax.rest () ;
-			}
+			for (auto &&i : that)
+				add (move (i)) ;
 		}
 
 		LENGTH size () const {

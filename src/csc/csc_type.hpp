@@ -1129,13 +1129,13 @@ trait TOGETHER_HELP<UNIT ,REQUIRE<ENUM_EQ_ZERO<COUNT_OF<UNIT>>>> {
 	struct Together implement Interface {} ;
 } ;
 
-using InterfaceTogether = typename TOGETHER_HELP<TYPEAS<> ,ALWAYS>::Together ;
+using RootTogether = typename TOGETHER_HELP<TYPEAS<> ,ALWAYS>::Together ;
 
 template <class UNIT>
 trait TOGETHER_HELP<UNIT ,REQUIRE<ENUM_GT_ZERO<COUNT_OF<UNIT>>>> {
 	using Binder = TYPE_FIRST_ONE<UNIT> ;
 	require (IS_INTERFACE<Binder>) ;
-	require (ENUM_NOT<IS_EXTEND<InterfaceTogether ,Binder>>) ;
+	require (ENUM_NOT<IS_EXTEND<RootTogether ,Binder>>) ;
 	using Holder = typename TOGETHER_HELP<TYPE_FIRST_REST<UNIT> ,ALWAYS>::Together ;
 
 	struct Together implement Holder ,Binder {} ;

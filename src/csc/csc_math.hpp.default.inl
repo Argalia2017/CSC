@@ -131,188 +131,222 @@ trait MATHPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			return DOUBLE (1) / obj ;
 		}
 
-		VAL32 min_of (CREF<VAL32> obj1 ,CREF<Variadic<VAL32>> obj2) const override {
-			if (obj2.empty ())
-				return obj1 ;
-			if (obj1 <= obj2.one ())
-				return min_of (obj1 ,obj2.rest ()) ;
-			return min_of (obj2.one () ,obj2.rest ()) ;
-		}
-
-		VAL64 min_of (CREF<VAL64> obj1 ,CREF<Variadic<VAL64>> obj2) const override {
-			if (obj2.empty ())
-				return obj1 ;
-			if (obj1 <= obj2.one ())
-				return min_of (obj1 ,obj2.rest ()) ;
-			return min_of (obj2.one () ,obj2.rest ()) ;
-		}
-
-		SINGLE min_of (CREF<SINGLE> obj1 ,CREF<Variadic<SINGLE>> obj2) const override {
-			if (obj2.empty ())
-				return obj1 ;
-			if (obj1 <= obj2.one ())
-				return min_of (obj1 ,obj2.rest ()) ;
-			return min_of (obj2.one () ,obj2.rest ()) ;
-		}
-
-		DOUBLE min_of (CREF<DOUBLE> obj1 ,CREF<Variadic<DOUBLE>> obj2) const override {
-			if (obj2.empty ())
-				return obj1 ;
-			if (obj1 <= obj2.one ())
-				return min_of (obj1 ,obj2.rest ()) ;
-			return min_of (obj2.one () ,obj2.rest ()) ;
-		}
-
-		VAL32 max_of (CREF<VAL32> obj1 ,CREF<Variadic<VAL32>> obj2) const override {
-			if (obj2.empty ())
-				return obj1 ;
-			if (obj1 >= obj2.one ())
-				return max_of (obj1 ,obj2.rest ()) ;
-			return max_of (obj2.one () ,obj2.rest ()) ;
-		}
-
-		VAL64 max_of (CREF<VAL64> obj1 ,CREF<Variadic<VAL64>> obj2) const override {
-			if (obj2.empty ())
-				return obj1 ;
-			if (obj1 >= obj2.one ())
-				return max_of (obj1 ,obj2.rest ()) ;
-			return max_of (obj2.one () ,obj2.rest ()) ;
-		}
-
-		SINGLE max_of (CREF<SINGLE> obj1 ,CREF<Variadic<SINGLE>> obj2) const override {
-			if (obj2.empty ())
-				return obj1 ;
-			if (obj1 >= obj2.one ())
-				return max_of (obj1 ,obj2.rest ()) ;
-			return max_of (obj2.one () ,obj2.rest ()) ;
-		}
-
-		DOUBLE max_of (CREF<DOUBLE> obj1 ,CREF<Variadic<DOUBLE>> obj2) const override {
-			if (obj2.empty ())
-				return obj1 ;
-			if (obj1 >= obj2.one ())
-				return max_of (obj1 ,obj2.rest ()) ;
-			return max_of (obj2.one () ,obj2.rest ()) ;
-		}
-
-		BOOL all_of (CREF<Variadic<BOOL>> obj1) const override {
-			if (obj1.empty ())
-				return TRUE ;
-			if ifnot (obj1.one ())
-				return FALSE ;
-			return all_of (obj1.rest ()) ;
-		}
-
-		BOOL any_of (CREF<Variadic<BOOL>> obj1) const override {
-			if (obj1.empty ())
-				return FALSE ;
-			if (obj1.one ())
-				return TRUE ;
-			return any_of (obj1.rest ()) ;
-		}
-
-		INDEX else_of (CREF<Variadic<BOOL>> obj1) const override {
-			if (obj1.empty ())
-				return 0 ;
-			if (obj1.one ())
-				return 0 ;
-			return 1 + else_of (obj1.rest ()) ;
-		}
-
-		VAL32 sum_of (CREF<VAL32> obj1 ,CREF<Variadic<VAL32>> obj2) const override {
-			if (obj2.empty ())
-				return obj1 ;
-			return sum_of (obj1 + obj2.one () ,obj2.rest ()) ;
-		}
-
-		VAL64 sum_of (CREF<VAL64> obj1 ,CREF<Variadic<VAL64>> obj2) const override {
-			if (obj2.empty ())
-				return obj1 ;
-			return sum_of (obj1 + obj2.one () ,obj2.rest ()) ;
-		}
-
-		SINGLE sum_of (CREF<SINGLE> obj1 ,CREF<Variadic<SINGLE>> obj2) const override {
-			if (obj2.empty ())
-				return obj1 ;
-			return sum_of (obj1 + obj2.one () ,obj2.rest ()) ;
-		}
-
-		DOUBLE sum_of (CREF<DOUBLE> obj1 ,CREF<Variadic<DOUBLE>> obj2) const override {
-			if (obj2.empty ())
-				return obj1 ;
-			return sum_of (obj1 + obj2.one () ,obj2.rest ()) ;
-		}
-
-		VAL32 acc_of (CREF<VAL32> obj1 ,CREF<Variadic<VAL32>> obj2) const override {
-			if (obj2.empty ())
-				return obj1 ;
-			return acc_of (obj1 * obj2.one () ,obj2.rest ()) ;
-		}
-
-		VAL64 acc_of (CREF<VAL64> obj1 ,CREF<Variadic<VAL64>> obj2) const override {
-			if (obj2.empty ())
-				return obj1 ;
-			return acc_of (obj1 * obj2.one () ,obj2.rest ()) ;
-		}
-
-		SINGLE acc_of (CREF<SINGLE> obj1 ,CREF<Variadic<SINGLE>> obj2) const override {
-			if (obj2.empty ())
-				return obj1 ;
-			return acc_of (obj1 * obj2.one () ,obj2.rest ()) ;
-		}
-
-		DOUBLE acc_of (CREF<DOUBLE> obj1 ,CREF<Variadic<DOUBLE>> obj2) const override {
-			if (obj2.empty ())
-				return obj1 ;
-			return acc_of (obj1 * obj2.one () ,obj2.rest ()) ;
-		}
-
-		Array<VAL32 ,RANK2> sort_of (CREF<VAL32> obj1 ,CREF<VAL32> obj2) const override {
-			Array<VAL32 ,RANK2> ret ;
-			ret[0] = obj1 ;
-			ret[1] = obj2 ;
-			if ifswitch (TRUE) {
-				if (ret[0] <= ret[1])
-					discard ;
-				swap (ret[0] ,ret[1]) ;
+		VAL32 min_of (CREF<VAL32> obj1 ,CREF<CaptureIterator<VAL32>> obj2) const override {
+			VAL32 ret = obj1 ;
+			for (auto &&i : obj2) {
+				if (ret <= i)
+					continue ;
+				ret = i ;
 			}
 			return move (ret) ;
 		}
 
-		Array<VAL64 ,RANK2> sort_of (CREF<VAL64> obj1 ,CREF<VAL64> obj2) const override {
-			Array<VAL64 ,RANK2> ret ;
-			ret[0] = obj1 ;
-			ret[1] = obj2 ;
-			if ifswitch (TRUE) {
-				if (ret[0] <= ret[1])
-					discard ;
-				swap (ret[0] ,ret[1]) ;
+		VAL64 min_of (CREF<VAL64> obj1 ,CREF<CaptureIterator<VAL64>> obj2) const override {
+			VAL64 ret = obj1 ;
+			for (auto &&i : obj2) {
+				if (ret <= i)
+					continue ;
+				ret = i ;
 			}
 			return move (ret) ;
 		}
 
-		Array<SINGLE ,RANK2> sort_of (CREF<SINGLE> obj1 ,CREF<SINGLE> obj2) const override {
-			Array<SINGLE ,RANK2> ret ;
-			ret[0] = obj1 ;
-			ret[1] = obj2 ;
-			if ifswitch (TRUE) {
-				if (ret[0] <= ret[1])
-					discard ;
-				swap (ret[0] ,ret[1]) ;
+		SINGLE min_of (CREF<SINGLE> obj1 ,CREF<CaptureIterator<SINGLE>> obj2) const override {
+			SINGLE ret = obj1 ;
+			for (auto &&i : obj2) {
+				if (ret <= i)
+					continue ;
+				ret = i ;
 			}
 			return move (ret) ;
 		}
 
-		Array<DOUBLE ,RANK2> sort_of (CREF<DOUBLE> obj1 ,CREF<DOUBLE> obj2) const override {
-			Array<DOUBLE ,RANK2> ret ;
-			ret[0] = obj1 ;
-			ret[1] = obj2 ;
-			if ifswitch (TRUE) {
-				if (ret[0] <= ret[1])
-					discard ;
-				swap (ret[0] ,ret[1]) ;
+		DOUBLE min_of (CREF<DOUBLE> obj1 ,CREF<CaptureIterator<DOUBLE>> obj2) const override {
+			DOUBLE ret = obj1 ;
+			for (auto &&i : obj2) {
+				if (ret <= i)
+					continue ;
+				ret = i ;
 			}
 			return move (ret) ;
+		}
+
+		VAL32 max_of (CREF<VAL32> obj1 ,CREF<CaptureIterator<VAL32>> obj2) const override {
+			VAL32 ret = obj1 ;
+			for (auto &&i : obj2) {
+				if (ret >= i)
+					continue ;
+				ret = i ;
+			}
+			return move (ret) ;
+		}
+
+		VAL64 max_of (CREF<VAL64> obj1 ,CREF<CaptureIterator<VAL64>> obj2) const override {
+			VAL64 ret = obj1 ;
+			for (auto &&i : obj2) {
+				if (ret >= i)
+					continue ;
+				ret = i ;
+			}
+			return move (ret) ;
+		}
+
+		SINGLE max_of (CREF<SINGLE> obj1 ,CREF<CaptureIterator<SINGLE>> obj2) const override {
+			SINGLE ret = obj1 ;
+			for (auto &&i : obj2) {
+				if (ret >= i)
+					continue ;
+				ret = i ;
+			}
+			return move (ret) ;
+		}
+
+		DOUBLE max_of (CREF<DOUBLE> obj1 ,CREF<CaptureIterator<DOUBLE>> obj2) const override {
+			DOUBLE ret = obj1 ;
+			for (auto &&i : obj2) {
+				if (ret >= i)
+					continue ;
+				ret = i ;
+			}
+			return move (ret) ;
+		}
+
+		BOOL all_of (CREF<CaptureIterator<BOOL>> obj1) const override {
+			for (auto &&i : obj1) {
+				if ifnot (i)
+					return FALSE ;
+			}
+			return TRUE ;
+		}
+
+		BOOL any_of (CREF<CaptureIterator<BOOL>> obj1) const override {
+			for (auto &&i : obj1) {
+				if (i)
+					return TRUE ;
+			}
+			return FALSE ;
+		}
+
+		INDEX else_of (CREF<CaptureIterator<BOOL>> obj1) const override {
+			INDEX ret = 0 ;
+			for (auto &&i : obj1) {
+				if (i)
+					break ;
+				ret++ ;
+			}
+			return move (ret) ;
+		}
+
+		VAL32 sum_of (CREF<VAL32> obj1 ,CREF<CaptureIterator<VAL32>> obj2) const override {
+			VAL32 ret = obj1 ;
+			for (auto &&i : obj2)
+				ret += i ;
+			return move (ret) ;
+		}
+
+		VAL64 sum_of (CREF<VAL64> obj1 ,CREF<CaptureIterator<VAL64>> obj2) const override {
+			VAL64 ret = obj1 ;
+			for (auto &&i : obj2)
+				ret += i ;
+			return move (ret) ;
+		}
+
+		SINGLE sum_of (CREF<SINGLE> obj1 ,CREF<CaptureIterator<SINGLE>> obj2) const override {
+			SINGLE ret = obj1 ;
+			for (auto &&i : obj2)
+				ret += i ;
+			return move (ret) ;
+		}
+
+		DOUBLE sum_of (CREF<DOUBLE> obj1 ,CREF<CaptureIterator<DOUBLE>> obj2) const override {
+			DOUBLE ret = obj1 ;
+			for (auto &&i : obj2)
+				ret += i ;
+			return move (ret) ;
+		}
+
+		VAL32 acc_of (CREF<VAL32> obj1 ,CREF<CaptureIterator<VAL32>> obj2) const override {
+			VAL32 ret = obj1 ;
+			for (auto &&i : obj2)
+				ret *= i ;
+			return move (ret) ;
+		}
+
+		VAL64 acc_of (CREF<VAL64> obj1 ,CREF<CaptureIterator<VAL64>> obj2) const override {
+			VAL64 ret = obj1 ;
+			for (auto &&i : obj2)
+				ret *= i ;
+			return move (ret) ;
+		}
+
+		SINGLE acc_of (CREF<SINGLE> obj1 ,CREF<CaptureIterator<SINGLE>> obj2) const override {
+			SINGLE ret = obj1 ;
+			for (auto &&i : obj2)
+				ret *= i ;
+			return move (ret) ;
+		}
+
+		DOUBLE acc_of (CREF<DOUBLE> obj1 ,CREF<CaptureIterator<DOUBLE>> obj2) const override {
+			DOUBLE ret = obj1 ;
+			for (auto &&i : obj2)
+				ret *= i ;
+			return move (ret) ;
+		}
+
+		void sort_of (VREF<RegBuffer<VAL32>> result) const override {
+			for (auto &&i : iter (0 ,result.size ())) {
+				INDEX iy = i ;
+				for (auto &&j : iter (i + 1 ,result.size ())) {
+					if (result[iy] <= result[j])
+						continue ;
+					iy = j ;
+				}
+				if (iy == i)
+					continue ;
+				swap (result[i] ,result[iy]) ;
+			}
+		}
+
+		void sort_of (VREF<RegBuffer<VAL64>> result) const override {
+			for (auto &&i : iter (0 ,result.size ())) {
+				INDEX iy = i ;
+				for (auto &&j : iter (i + 1 ,result.size ())) {
+					if (result[iy] <= result[j])
+						continue ;
+					iy = j ;
+				}
+				if (iy == i)
+					continue ;
+				swap (result[i] ,result[iy]) ;
+			}
+		}
+
+		void sort_of (VREF<RegBuffer<SINGLE>> result) const override {
+			for (auto &&i : iter (0 ,result.size ())) {
+				INDEX iy = i ;
+				for (auto &&j : iter (i + 1 ,result.size ())) {
+					if (result[iy] <= result[j])
+						continue ;
+					iy = j ;
+				}
+				if (iy == i)
+					continue ;
+				swap (result[i] ,result[iy]) ;
+			}
+		}
+
+		void sort_of (VREF<RegBuffer<DOUBLE>> result) const override {
+			for (auto &&i : iter (0 ,result.size ())) {
+				INDEX iy = i ;
+				for (auto &&j : iter (i + 1 ,result.size ())) {
+					if (result[iy] <= result[j])
+						continue ;
+					iy = j ;
+				}
+				if (iy == i)
+					continue ;
+				swap (result[i] ,result[iy]) ;
+			}
 		}
 
 		VAL32 clamp (CREF<VAL32> curr ,CREF<VAL32> lb ,CREF<VAL32> rb) const override {
@@ -1101,6 +1135,13 @@ trait INTEGER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			set (value_) ;
 		}
 
+		Integer clone () const override {
+			auto rbx = VarBuffer<BYTE> (mInteger.size ()) ;
+			for (auto &&i : iter (0 ,mInteger.size ()))
+				rbx[i] = mInteger[i] ;
+			return factory (move (rbx)) ;
+		}
+
 		Integer factory (RREF<VarBuffer<BYTE>> that) const {
 			auto rax = Box<FakeHolder> () ;
 			rax.acquire (TYPEAS<ImplHolder>::expr) ;
@@ -1288,13 +1329,6 @@ trait INTEGER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				rax = VAL64 (DATA (r5x) << 8) ;
 			}
 			return Integer (rax ,mInteger.size ()) ;
-		}
-
-		Integer clone () const override {
-			auto rbx = VarBuffer<BYTE> (mInteger.size ()) ;
-			for (auto &&i : iter (0 ,mInteger.size ()))
-				rbx[i] = mInteger[i] ;
-			return factory (move (rbx)) ;
 		}
 
 		Integer minus () const override {

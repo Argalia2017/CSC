@@ -4,17 +4,7 @@
 #error "∑(っ°Д° ;)っ : require 'csc_core.hpp'"
 #endif
 
-#ifndef __CSC_BASIC__
-#error "∑(っ°Д° ;)っ : require 'csc_basic.hpp'"
-#endif
-
-#ifndef __CSC_RUNTIME__
-#error "∑(っ°Д° ;)っ : require 'csc_runtime.hpp'"
-#endif
-
 #include "csc_core.hpp"
-#include "csc_basic.hpp"
-#include "csc_runtime.hpp"
 
 #include "csc_end.h"
 #include <cstddef>
@@ -69,7 +59,7 @@ trait HEAPPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	using Holder = typename HEAPPROC_HELP<DEPEND ,ALWAYS>::Holder ;
 
 	struct HEAP {
-		std::atomic<LENGTH> mUsageSize ;
+		Box<std::atomic<VAL>> mUsageSize ;
 	} ;
 
 	class ImplHolder implement Holder {
@@ -79,11 +69,12 @@ trait HEAPPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	public:
 		void initialize () override {
 			mPointer = address (unique ().self) ;
-			fake.mUsageSize.store (0) ;
+			fake.mUsageSize = Box<std::atomic<VAL>>::make () ;
+			fake.mUsageSize->store (0 ,std::memory_order::memory_order_relaxed) ;
 		}
 
 		LENGTH usage_size () const override {
-			LENGTH ret = fake.mUsageSize.load () ;
+			LENGTH ret = fake.mUsageSize->load (std::memory_order::memory_order_relaxed) ;
 			return move (ret) ;
 		}
 
@@ -99,7 +90,7 @@ trait HEAPPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				assume (FALSE) ;
 			}
 			const auto r1x = current_usage_size (ret) ;
-			fake.mUsageSize.fetch_add (r1x) ;
+			fake.mUsageSize->fetch_add (r1x ,std::memory_order::memory_order_relaxed) ;
 			return move (ret) ;
 		}
 
@@ -107,7 +98,7 @@ trait HEAPPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			if (addr == ZERO)
 				return ;
 			const auto r1x = current_usage_size (addr) ;
-			fake.mUsageSize.fetch_sub (r1x) ;
+			fake.mUsageSize->fetch_sub (r1x ,std::memory_order::memory_order_relaxed) ;
 			operator delete (csc_pointer_t (addr) ,std::nothrow) ;
 		}
 
@@ -132,212 +123,6 @@ trait HEAPPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 template <>
 exports auto HEAPPROC_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->Box<FakeHolder> {
 	using R1X = typename HEAPPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
-	Box<FakeHolder> ret ;
-	ret.acquire (TYPEAS<R1X>::expr) ;
-	return move (ret) ;
-}
-
-template <class DEPEND>
-trait STATICPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
-	using Holder = typename STATICPROC_HELP<DEPEND ,ALWAYS>::Holder ;
-
-	struct NODE {
-		FLAG mCabi ;
-		CRef<Proxy> mAddr ;
-		BOOL mGood ;
-		INDEX mNext ;
-	} ;
-
-	struct HEAP {
-		Mutex mMutex ;
-		BOOL mFinalizing ;
-		VarBuffer<INDEX> mRange ;
-		LENGTH mSize ;
-		INDEX mRead ;
-		FLAG mMinCabi ;
-		FLAG mMaxCabi ;
-		Allocator<NODE ,VARIABLE> mHeap ;
-		INDEX mFirst ;
-		LENGTH mLength ;
-	} ;
-
-	using HEADER_SIZE = ENUMAS<VAL ,65536> ;
-
-	class ImplHolder implement Holder {
-	protected:
-		FLAG mPointer ;
-
-	public:
-		void initialize () {
-			mPointer = address (unique ().self) ;
-			fake.mMutex = RecursiveMutex::make () ;
-			fake.mFinalizing = FALSE ;
-			fake.mSize = 0 ;
-			fake.mRead = 0 ;
-			fake.mMinCabi = ZERO ;
-			fake.mMaxCabi = ZERO ;
-			fake.mFirst = NONE ;
-			fake.mLength = 0 ;
-		}
-
-		void finalize () override {
-			auto rax = SharedLock (fake.mMutex) ;
-			fake.mFinalizing = TRUE ;
-			auto rbx = CRef<Proxy> () ;
-			while (TRUE) {
-				if (fake.mFirst == NONE)
-					break ;
-				if ifswitch (TRUE) {
-					Scope<SharedLock> anonymous (rax) ;
-					if (fake.mFirst == NONE)
-						discard ;
-					INDEX ix = fake.mFirst ;
-					rbx = move (fake.mHeap[ix].mAddr) ;
-					fake.mHeap[ix].mGood = FALSE ;
-					fake.mFirst = fake.mHeap[ix].mNext ;
-					fake.mLength-- ;
-				}
-				rbx = NULL ;
-			}
-			fake.mHeap.clear () ;
-			fake.mHeap = Allocator<NODE ,VARIABLE> () ;
-			fake.mRange = VarBuffer<INDEX> () ;
-		}
-
-		void regi (CREF<FLAG> cabi ,VREF<CRef<Proxy>> addr) const {
-			assert (addr != NULL) ;
-			auto rax = SharedLock (fake.mMutex) ;
-			if (fake.mFinalizing)
-				return ;
-			const auto r1x = cabi ;
-			INDEX ix = NONE ;
-			if ifswitch (TRUE) {
-				if (r1x < fake.mMinCabi)
-					discard ;
-				if (r1x > fake.mMaxCabi)
-					discard ;
-				if (fake.mSize == 0)
-					discard ;
-				const auto r2x = (fake.mRead + r1x - fake.mMinCabi) % fake.mSize ;
-				ix = fake.mRange[r2x] ;
-			}
-			if ifswitch (TRUE) {
-				if (ix != NONE)
-					discard ;
-				Scope<SharedLock> anonymous (rax) ;
-				update_resize (r1x) ;
-				ix = fake.mHeap.alloc () ;
-				const auto r3x = (fake.mRead + r1x - fake.mMinCabi) % fake.mSize ;
-				fake.mRange[r3x] = ix ;
-				fake.mHeap[ix].mCabi = r1x ;
-				fake.mHeap[ix].mAddr = NULL ;
-				fake.mHeap[ix].mGood = FALSE ;
-				fake.mHeap[ix].mNext = NONE ;
-			}
-			if ifswitch (TRUE) {
-				if (fake.mHeap[ix].mGood)
-					discard ;
-				Scope<SharedLock> anonymous (rax) ;
-				fake.mHeap[ix].mAddr = move (addr) ;
-				fake.mHeap[ix].mGood = TRUE ;
-				fake.mHeap[ix].mNext = fake.mFirst ;
-				fake.mFirst = ix ;
-				fake.mLength++ ;
-			}
-			addr = CRef<Proxy>::reference (fake.mHeap[ix].mAddr.self) ;
-		}
-
-		CRef<Proxy> link (CREF<FLAG> cabi) const {
-			auto rax = SharedLock (fake.mMutex) ;
-			const auto r1x = cabi ;
-			INDEX ix = NONE ;
-			if ifswitch (TRUE) {
-				if (r1x < fake.mMinCabi)
-					discard ;
-				if (r1x > fake.mMaxCabi)
-					discard ;
-				if (fake.mSize == 0)
-					discard ;
-				const auto r2x = (fake.mRead + r1x - fake.mMinCabi) % fake.mSize ;
-				ix = fake.mRange[r2x] ;
-				if (ix == NONE)
-					discard ;
-				return CRef<Proxy>::reference (fake.mHeap[ix].mAddr.self) ;
-			}
-			return NULL ;
-		}
-
-		void update_resize (CREF<FLAG> cabi) const {
-			auto act = TRUE ;
-			if ifswitch (act) {
-				if (fake.mRange.size () > 0)
-					discard ;
-				const auto r1x = HEADER_SIZE::expr ;
-				auto rax = VarBuffer<INDEX> (r1x) ;
-				if (rax.size () == 0)
-					discard ;
-				BufferProc<INDEX>::buf_fill (rax ,NONE ,0 ,rax.size ()) ;
-				fake.mRange = move (rax) ;
-				fake.mSize = r1x ;
-				fake.mRead = 0 ;
-				fake.mMinCabi = cabi ;
-				fake.mMaxCabi = cabi ;
-			}
-			if ifswitch (act) {
-				if (cabi >= fake.mMinCabi)
-					discard ;
-				const auto r2x = fake.mMinCabi - cabi ;
-				const auto r3x = fake.mSize - (fake.mMaxCabi + 1 - fake.mMinCabi) ;
-				if (r2x > r3x)
-					discard ;
-				fake.mRead = (fake.mRead - r2x + fake.mSize) % fake.mSize ;
-				fake.mMinCabi = cabi ;
-			}
-			if ifswitch (act) {
-				if (cabi <= fake.mMaxCabi)
-					discard ;
-				const auto r4x = cabi - fake.mMaxCabi ;
-				const auto r5x = fake.mSize - (fake.mMaxCabi + 1 - fake.mMinCabi) ;
-				if (r4x > r5x)
-					discard ;
-				fake.mMaxCabi = cabi ;
-			}
-			if ifswitch (act) {
-				if (vbetween (cabi ,fake.mMinCabi ,fake.mMaxCabi + 1))
-					discard ;
-				const auto r6x = fake.mSize + vmax (cabi - fake.mMaxCabi ,fake.mMinCabi - cabi) ;
-				auto rax = VarBuffer<INDEX> (r6x) ;
-				if (rax.size () == 0)
-					discard ;
-				const auto r7x = fake.mRead + (fake.mMaxCabi + 1 - fake.mMinCabi) ;
-				const auto r8x = vmin (r7x ,fake.mSize) - fake.mRead ;
-				BufferProc<INDEX>::buf_copy (rax ,unsafe_array (fake.mRange[fake.mRead]) ,0 ,r8x) ;
-				const auto r9x = vmax (r7x - fake.mSize ,0) ;
-				BufferProc<INDEX>::buf_copy (unsafe_array (rax[r8x]) ,fake.mRange ,0 ,r9x) ;
-				const auto r10x = vmax (fake.mMinCabi - cabi ,0) ;
-				fake.mRange = move (rax) ;
-				fake.mSize = r6x ;
-				fake.mRead = (fake.mRead - r10x + fake.mSize) % fake.mSize ;
-				fake.mMinCabi = vmin (fake.mMinCabi ,cabi) ;
-				fake.mMaxCabi = vmax (fake.mMaxCabi ,cabi) ;
-			}
-		}
-
-		imports CREF<Box<HEAP>> unique () {
-			return memorize ([&] () {
-				return Box<HEAP>::make () ;
-			}) ;
-		}
-
-		VREF<HEAP> fake_m () const leftvalue {
-			return unsafe_deref (unsafe_cast[TYPEAS<TEMP<HEAP>>::expr] (unsafe_pointer (mPointer))) ;
-		}
-	} ;
-} ;
-
-template <>
-exports auto STATICPROC_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->Box<FakeHolder> {
-	using R1X = typename STATICPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	Box<FakeHolder> ret ;
 	ret.acquire (TYPEAS<R1X>::expr) ;
 	return move (ret) ;
@@ -412,8 +197,8 @@ trait SLICE_IMPLHOLDER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 			mSize = text_size () ;
 		}
 
-		void initialize (CREF<CRef<Holder>> prefix ,CREF<csc_text_t> text) override {
-			mPrefix = prefix ;
+		void initialize (RREF<CRef<Holder>> prefix ,CREF<csc_text_t> text) override {
+			mPrefix = move (prefix) ;
 			mText = text ;
 			mSize = prefix_size () + text_size () ;
 		}

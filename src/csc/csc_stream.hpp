@@ -21,12 +21,16 @@ template <class...>
 trait BYTEATTRIBUTE_HELP ;
 
 template <class...>
+trait BYTEATTRIBUTE_PUREHOLDER_HELP ;
+
+template <class...>
 trait BYTEATTRIBUTE_IMPLHOLDER_HELP ;
 
 template <class DEPEND>
 trait BYTEATTRIBUTE_HELP<DEPEND ,ALWAYS> {
 	struct Holder implement Interface {
 		virtual void initialize () = 0 ;
+		virtual void initialize (RREF<CRef<Holder>> prefix) = 0 ;
 		virtual BYTE ending_item () const = 0 ;
 		virtual BYTE space_item () const = 0 ;
 		virtual BOOL is_big_endian () const = 0 ;
@@ -52,7 +56,9 @@ trait BYTEATTRIBUTE_HELP<DEPEND ,ALWAYS> {
 		template <class ARG1>
 		void derive (CREF<TYPEID<ARG1>> id) {
 			require (IS_EXTEND<Holder ,ARG1>) ;
-			mThis = CRef<ARG1>::make (move (mThis)) ;
+			auto rax = VRef<ARG1>::make () ;
+			rax->initialize (move (mThis)) ;
+			mThis = rax.as_cref () ;
 		}
 
 		BYTE ending_item () const {
@@ -65,6 +71,37 @@ trait BYTEATTRIBUTE_HELP<DEPEND ,ALWAYS> {
 
 		BOOL is_big_endian () const {
 			return mThis->is_big_endian () ;
+		}
+	} ;
+} ;
+
+template <class DEPEND>
+trait BYTEATTRIBUTE_PUREHOLDER_HELP<DEPEND ,ALWAYS> {
+	using Holder = typename BYTEATTRIBUTE_HELP<DEPEND ,ALWAYS>::Holder ;
+
+	class PureHolder implement Holder {
+	protected:
+		CRef<Holder> mPrefix ;
+
+	public:
+		void initialize () override {
+			assert (FALSE) ;
+		}
+		
+		void initialize (RREF<CRef<Holder>> prefix) override {
+			mPrefix = move (prefix) ;
+		}
+
+		BYTE ending_item () const override {
+			return mPrefix->ending_item () ;
+		}
+
+		BYTE space_item () const override {
+			return mPrefix->space_item () ;
+		}
+
+		BOOL is_big_endian () const override {
+			return mPrefix->is_big_endian () ;
 		}
 	} ;
 } ;
@@ -515,9 +552,9 @@ trait BYTEWRITER_HELP<DEPEND ,ALWAYS> {
 			return thiz ;
 		}
 
-		void write (CREF<csc_pointer_t>) = delete ;
+		void write (CREF<csc_const_pointer_t>) = delete ;
 
-		inline VREF<ByteWriter> operator<< (CREF<csc_pointer_t>) = delete ;
+		inline VREF<ByteWriter> operator<< (CREF<csc_const_pointer_t>) = delete ;
 
 		void write (CREF<VAL32> item) {
 			return mThis->write (item) ;
@@ -653,23 +690,30 @@ template <class...>
 trait TEXTATTRIBUTE_HELP ;
 
 template <class...>
+trait TEXTATTRIBUTE_PUREHOLDER_HELP ;
+
+template <class...>
 trait TEXTATTRIBUTE_IMPLHOLDER_HELP ;
 
 template <class ITEM>
 trait TEXTATTRIBUTE_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 	struct Holder implement Interface {
 		virtual void initialize () = 0 ;
+		virtual void initialize (RREF<CRef<Holder>> prefix) = 0 ;
 		virtual ITEM ending_item () const = 0 ;
 		virtual BOOL is_gap (CREF<ITEM> str) const = 0 ;
 		virtual BOOL is_gap_space (CREF<ITEM> str) const = 0 ;
 		virtual BOOL is_gap_endline (CREF<ITEM> str) const = 0 ;
 		virtual BOOL is_word (CREF<ITEM> str) const = 0 ;
+		virtual ITEM word_lower_cast (CREF<ITEM> str) const = 0 ;
+		virtual ITEM word_upper_cast (CREF<ITEM> str) const = 0 ;
 		virtual BOOL is_number (CREF<ITEM> str) const = 0 ;
 		virtual BOOL is_hex_number (CREF<ITEM> str) const = 0 ;
 		virtual INDEX hex_from_str (CREF<ITEM> str) const = 0 ;
 		virtual ITEM str_from_hex (CREF<INDEX> hex) const = 0 ;
 		virtual BOOL is_control (CREF<ITEM> str) const = 0 ;
-		virtual Optional<ITEM> escape_cast (CREF<ITEM> str) const = 0 ;
+		virtual Optional<ITEM> escape_word_cast (CREF<ITEM> str) const = 0 ;
+		virtual Optional<ITEM> escape_ctrl_cast (CREF<ITEM> str) const = 0 ;
 		virtual LENGTH value_precision () const = 0 ;
 		virtual LENGTH float_precision () const = 0 ;
 		virtual LENGTH number_precision () const = 0 ;
@@ -695,7 +739,9 @@ trait TEXTATTRIBUTE_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 		template <class ARG1>
 		void derive (CREF<TYPEID<ARG1>> id) {
 			require (IS_EXTEND<Holder ,ARG1>) ;
-			mThis = CRef<ARG1>::make (move (mThis)) ;
+			auto rax = VRef<ARG1>::make () ;
+			rax->initialize (move (mThis)) ;
+			mThis = rax.as_cref () ;
 		}
 
 		ITEM ending_item () const {
@@ -718,6 +764,14 @@ trait TEXTATTRIBUTE_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 			return mThis->is_word (str) ;
 		}
 
+		ITEM word_lower_cast (CREF<ITEM> str) const {
+			return mThis->word_lower_cast (str) ;
+		}
+
+		ITEM word_upper_cast (CREF<ITEM> str) const {
+			return mThis->word_upper_cast (str) ;
+		}
+
 		BOOL is_number (CREF<ITEM> str) const {
 			return mThis->is_number (str) ;
 		}
@@ -738,8 +792,12 @@ trait TEXTATTRIBUTE_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 			return mThis->is_control (str) ;
 		}
 
-		Optional<ITEM> escape_cast (CREF<ITEM> str) const {
-			return mThis->escape_cast (str) ;
+		Optional<ITEM> escape_word_cast (CREF<ITEM> str) const {
+			return mThis->escape_word_cast (str) ;
+		}
+
+		Optional<ITEM> escape_ctrl_cast (CREF<ITEM> str) const {
+			return mThis->escape_ctrl_cast (str) ;
 		}
 
 		LENGTH value_precision () const {
@@ -752,6 +810,93 @@ trait TEXTATTRIBUTE_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 
 		LENGTH number_precision () const {
 			return mThis->number_precision () ;
+		}
+	} ;
+} ;
+
+template <class ITEM>
+trait TEXTATTRIBUTE_PUREHOLDER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
+	using Holder = typename TEXTATTRIBUTE_HELP<ITEM ,ALWAYS>::Holder ;
+
+	class PureHolder implement Holder {
+	protected:
+		CRef<Holder> mPrefix ;
+
+	public:
+		void initialize () override {
+			assert (FALSE) ;
+		}
+
+		void initialize (RREF<CRef<Holder>> prefix) override {
+			mPrefix = move (prefix) ;
+		}
+
+		ITEM ending_item () const override {
+			return mPrefix->ending_item () ;
+		}
+
+		BOOL is_gap (CREF<ITEM> str) const override {
+			return mPrefix->is_gap (str) ;
+		}
+
+		BOOL is_gap_space (CREF<ITEM> str) const override {
+			return mPrefix->is_gap_space (str) ;
+		}
+
+		BOOL is_gap_endline (CREF<ITEM> str) const override {
+			return mPrefix->is_gap_endline (str) ;
+		}
+
+		BOOL is_word (CREF<ITEM> str) const override {
+			return mPrefix->is_word (str) ;
+		}
+
+		ITEM word_lower_cast (CREF<ITEM> str) const override {
+			return mPrefix->word_lower_cast (str) ;
+		}
+
+		ITEM word_upper_cast (CREF<ITEM> str) const override {
+			return mPrefix->word_upper_cast (str) ;
+		}
+
+		BOOL is_number (CREF<ITEM> str) const override {
+			return mPrefix->is_number (str) ;
+		}
+
+		BOOL is_hex_number (CREF<ITEM> str) const override {
+			return mPrefix->is_hex_number (str) ;
+		}
+
+		INDEX hex_from_str (CREF<ITEM> str) const override {
+			return mPrefix->hex_from_str (str) ;
+		}
+
+		ITEM str_from_hex (CREF<INDEX> hex) const override {
+			return mPrefix->str_from_hex (hex) ;
+		}
+
+		BOOL is_control (CREF<ITEM> str) const override {
+			return mPrefix->is_control (str) ;
+		}
+
+		Optional<ITEM> escape_word_cast (CREF<ITEM> str) const override {
+			return mPrefix->escape_word_cast (str) ;
+		}
+
+		Optional<ITEM> escape_ctrl_cast (CREF<ITEM> str) const override {
+			return mPrefix->escape_ctrl_cast (str) ;
+		}
+
+		LENGTH value_precision () const override {
+			return mPrefix->value_precision () ;
+		}
+
+		LENGTH float_precision () const override {
+			return mPrefix->float_precision () ;
+		}
+
+		LENGTH number_precision () const override {
+			return mPrefix->number_precision () ;
 		}
 	} ;
 } ;
@@ -1157,9 +1302,9 @@ trait TEXTWRITER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 			return thiz ;
 		}
 
-		void write (CREF<csc_pointer_t>) = delete ;
+		void write (CREF<csc_const_pointer_t>) = delete ;
 
-		inline VREF<ByteWriter> operator<< (CREF<csc_pointer_t>) = delete ;
+		inline VREF<ByteWriter> operator<< (CREF<csc_const_pointer_t>) = delete ;
 
 		void write (CREF<VAL32> item) {
 			return mThis->write (item) ;

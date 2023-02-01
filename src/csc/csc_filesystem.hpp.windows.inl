@@ -242,27 +242,10 @@ trait FUNCTION_decouple_path_HELP ;
 
 template <class DEPEND>
 trait FUNCTION_decouple_path_HELP<DEPEND ,ALWAYS> {
-	using Holder = typename TEXTATTRIBUTE_HELP<STR ,ALWAYS>::Holder ;
+	using Holder = typename TEXTATTRIBUTE_PUREHOLDER_HELP<STR ,ALWAYS>::PureHolder ;
 
 	class Wrapper implement Holder {
-	protected:
-		CRef<Holder> mThis ;
-
 	public:
-		implicit Wrapper () = delete ;
-
-		explicit Wrapper (RREF<CRef<Holder>> that) {
-			mThis = move (that) ;
-		}
-
-		void initialize () override {
-			noop () ;
-		}
-
-		STR ending_item () const override {
-			return mThis->ending_item () ;
-		}
-
 		BOOL is_gap (CREF<STR> str) const override {
 			return is_gap_space (str) ;
 		}
@@ -277,46 +260,6 @@ trait FUNCTION_decouple_path_HELP<DEPEND ,ALWAYS> {
 
 		BOOL is_gap_endline (CREF<STR> str) const override {
 			return FALSE ;
-		}
-
-		BOOL is_word (CREF<STR> str) const override {
-			return mThis->is_word (str) ;
-		}
-
-		BOOL is_number (CREF<STR> str) const override {
-			return mThis->is_number (str) ;
-		}
-
-		BOOL is_hex_number (CREF<STR> str) const override {
-			return mThis->is_hex_number (str) ;
-		}
-
-		INDEX hex_from_str (CREF<STR> str) const override {
-			return mThis->hex_from_str (str) ;
-		}
-
-		STR str_from_hex (CREF<INDEX> hex) const override {
-			return mThis->str_from_hex (hex) ;
-		}
-
-		BOOL is_control (CREF<STR> str) const override {
-			return mThis->is_control (str) ;
-		}
-
-		Optional<STR> escape_cast (CREF<STR> str) const override {
-			return mThis->escape_cast (str) ;
-		}
-
-		LENGTH value_precision () const override {
-			return mThis->value_precision () ;
-		}
-
-		LENGTH float_precision () const override {
-			return mThis->float_precision () ;
-		}
-
-		LENGTH number_precision () const override {
-			return mThis->number_precision () ;
 		}
 	} ;
 

@@ -27,8 +27,8 @@ trait XMLPARSER_HELP<DEPEND ,ALWAYS> {
 	struct Holder implement Interface {
 		virtual void initialize () = 0 ;
 		virtual void initialize (CREF<RegBuffer<STRU8>> stream) = 0 ;
-		virtual BOOL available () const = 0 ;
 		virtual XmlParser clone () const = 0 ;
+		virtual BOOL available () const = 0 ;
 		virtual XmlParser root () const = 0 ;
 		virtual XmlParser parent () const = 0 ;
 		virtual XmlParser brother () const = 0 ;
@@ -196,7 +196,7 @@ trait XMLPARSER_HELP<DEPEND ,ALWAYS> {
 			return mThis->fetch (def) ;
 		}
 
-		csc_pointer_t fetch (CREF<csc_pointer_t>) const = delete ;
+		csc_pointer_t fetch (CREF<csc_const_pointer_t>) const = delete ;
 
 		VAL32 fetch (CREF<VAL32> def) const {
 			return mThis->fetch (def) ;
@@ -267,11 +267,11 @@ trait JSONPARSER_HELP<DEPEND ,ALWAYS> {
 	struct Holder implement Interface {
 		virtual void initialize () = 0 ;
 		virtual void initialize (CREF<RegBuffer<STRU8>> stream) = 0 ;
+		virtual JsonParser clone () const = 0 ;
 		virtual BOOL available () const = 0 ;
 		virtual BOOL string_type () const = 0 ;
 		virtual BOOL array_type () const = 0 ;
 		virtual BOOL object_type () const = 0 ;
-		virtual JsonParser clone () const = 0 ;
 		virtual JsonParser root () const = 0 ;
 		virtual JsonParser parent () const = 0 ;
 		virtual JsonParser brother () const = 0 ;
@@ -420,7 +420,7 @@ trait JSONPARSER_HELP<DEPEND ,ALWAYS> {
 			return mThis->fetch (def) ;
 		}
 
-		csc_pointer_t fetch (CREF<csc_pointer_t>) const = delete ;
+		csc_pointer_t fetch (CREF<csc_const_pointer_t>) const = delete ;
 
 		VAL32 fetch (CREF<VAL32> def) const {
 			return mThis->fetch (def) ;
