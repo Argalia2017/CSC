@@ -126,8 +126,17 @@ trait FILE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		CRef<RegBuffer<BYTE>> load_asset () const override {
-			unimplemented () ;
-			return bad (TYPEAS<CRef<RegBuffer<BYTE>>>::expr) ;
+			const auto r1x = dlopen (NULL ,RTLD_LOCAL) ;
+			assume (r1x != NULL) ;
+			const auto r2x = PrintString<STRA>::make (mFile ,slice ("input_txt_start")) ;
+			const auto r3x = PrintString<STRA>::make (mFile ,slice ("input_txt_end")) ;
+			const auto r4x = FLAG (dlsym (r1x ,(&r2x[0]))) ;
+			assume (r4x != ZERO) ;
+			const auto r5x = FLAG (dlsym (r1x ,(&r3x[0]))) ;
+			assume (r5x != ZERO) ;
+			const auto r6x = r5x - r4x ;
+			assume (r6x >= 0) ;
+			return RegBuffer<BYTE>::from (unsafe_pointer (r4x) ,0 ,r6x).borrow ().as_cref () ;
 		}
 
 		BOOL available () const override {
@@ -243,27 +252,10 @@ trait FUNCTION_decouple_path_HELP ;
 
 template <class DEPEND>
 trait FUNCTION_decouple_path_HELP<DEPEND ,ALWAYS> {
-	using Holder = typename TEXTATTRIBUTE_HELP<STR ,ALWAYS>::Holder ;
+	using Holder = typename TEXTATTRIBUTE_PUREHOLDER_HELP<STR ,ALWAYS>::PureHolder ;
 
 	class Wrapper implement Holder {
-	protected:
-		CRef<Holder> mThis ;
-
 	public:
-		implicit Wrapper () = delete ;
-
-		explicit Wrapper (RREF<CRef<Holder>> that) {
-			mThis = move (that) ;
-		}
-
-		void initialize () override {
-			noop () ;
-		}
-
-		STR ending_item () const override {
-			return mThis->ending_item () ;
-		}
-
 		BOOL is_gap (CREF<STR> str) const override {
 			return is_gap_space (str) ;
 		}
@@ -278,46 +270,6 @@ trait FUNCTION_decouple_path_HELP<DEPEND ,ALWAYS> {
 
 		BOOL is_gap_endline (CREF<STR> str) const override {
 			return FALSE ;
-		}
-
-		BOOL is_word (CREF<STR> str) const override {
-			return mThis->is_word (str) ;
-		}
-
-		BOOL is_number (CREF<STR> str) const override {
-			return mThis->is_number (str) ;
-		}
-
-		BOOL is_hex_number (CREF<STR> str) const override {
-			return mThis->is_hex_number (str) ;
-		}
-
-		INDEX hex_from_str (CREF<STR> str) const override {
-			return mThis->hex_from_str (str) ;
-		}
-
-		STR str_from_hex (CREF<INDEX> hex) const override {
-			return mThis->str_from_hex (hex) ;
-		}
-
-		BOOL is_control (CREF<STR> str) const override {
-			return mThis->is_control (str) ;
-		}
-
-		Optional<STR> escape_cast (CREF<STR> str) const override {
-			return mThis->escape_cast (str) ;
-		}
-
-		LENGTH value_precision () const override {
-			return mThis->value_precision () ;
-		}
-
-		LENGTH float_precision () const override {
-			return mThis->float_precision () ;
-		}
-
-		LENGTH number_precision () const override {
-			return mThis->number_precision () ;
 		}
 	} ;
 

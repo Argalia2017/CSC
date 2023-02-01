@@ -624,6 +624,55 @@ trait RUNTIMEPROC_HELP<DEPEND ,ALWAYS> {
 using RuntimeProc = typename RUNTIMEPROC_HELP<DEPEND ,ALWAYS>::RuntimeProc ;
 
 template <class...>
+trait STATICPROC_HELP ;
+
+template <class...>
+trait STATICPROC_IMPLHOLDER_HELP ;
+
+template <class DEPEND>
+trait STATICPROC_HELP<DEPEND ,ALWAYS> {
+	struct Holder implement Interface {
+		virtual void initialize () = 0 ;
+		virtual CRef<Proxy> link (CREF<FLAG> cabi) const = 0 ;
+		virtual void regi (CREF<FLAG> cabi ,VREF<CRef<Proxy>> addr) const = 0 ;
+	} ;
+
+	class FakeHolder implement Holder {
+	protected:
+		FLAG mPointer ;
+	} ;
+
+	struct FUNCTION_extern {
+		imports Box<FakeHolder> invoke () ;
+	} ;
+
+	class StaticProc {
+	protected:
+		Box<FakeHolder> mThis ;
+
+	public:
+		imports CREF<StaticProc> instance () {
+			return memorize ([&] () {
+				StaticProc ret ;
+				ret.mThis = FUNCTION_extern::invoke () ;
+				ret.mThis->initialize () ;
+				return move (ret) ;
+			}) ;
+		}
+
+		CRef<Proxy> link (CREF<FLAG> cabi) const {
+			return mThis->link (cabi) ;
+		}
+
+		void regi (CREF<FLAG> cabi ,VREF<CRef<Proxy>> addr) const {
+			return mThis->regi (cabi ,addr) ;
+		}
+	} ;
+} ;
+
+using StaticProc = typename STATICPROC_HELP<DEPEND ,ALWAYS>::StaticProc ;
+
+template <class...>
 trait THREAD_HELP ;
 
 template <class...>
@@ -631,19 +680,14 @@ trait THREAD_IMPLHOLDER_HELP ;
 
 template <class DEPEND>
 trait THREAD_HELP<DEPEND ,ALWAYS> {
-	struct VarBinder implement Interface {
+	struct Binder implement Interface {
 		virtual void friend_execute (CREF<INDEX> slot) = 0 ;
-	} ;
-
-	struct ConBinder implement Interface {
 		virtual void friend_execute (CREF<INDEX> slot) const = 0 ;
 	} ;
 
-	using Binder = VarBinder ;
-
 	struct Holder implement Interface {
-		virtual void initialize (RREF<VRef<VarBinder>> binder ,CREF<INDEX> slot) = 0 ;
-		virtual void initialize (RREF<CRef<ConBinder>> binder ,CREF<INDEX> slot) = 0 ;
+		virtual void initialize (RREF<VRef<Binder>> binder ,CREF<INDEX> slot) = 0 ;
+		virtual void initialize (RREF<CRef<Binder>> binder ,CREF<INDEX> slot) = 0 ;
 		virtual FLAG thread_uid () const = 0 ;
 		virtual void start () = 0 ;
 		virtual void stop () = 0 ;
@@ -660,12 +704,12 @@ trait THREAD_HELP<DEPEND ,ALWAYS> {
 	public:
 		implicit Thread () = default ;
 
-		explicit Thread (RREF<VRef<VarBinder>> binder ,CREF<INDEX> slot) {
+		explicit Thread (RREF<VRef<Binder>> binder ,CREF<INDEX> slot) {
 			mThis = FUNCTION_extern::invoke () ;
 			mThis->initialize (move (binder) ,slot) ;
 		}
 
-		explicit Thread (RREF<CRef<ConBinder>> binder ,CREF<INDEX> slot) {
+		explicit Thread (RREF<CRef<Binder>> binder ,CREF<INDEX> slot) {
 			mThis = FUNCTION_extern::invoke () ;
 			mThis->initialize (move (binder) ,slot) ;
 		}

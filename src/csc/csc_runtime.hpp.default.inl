@@ -10,6 +10,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <clocale>
 #include <exception>
 #include <ctime>
 #include <chrono>
@@ -17,7 +18,6 @@
 #include <condition_variable>
 #include <atomic>
 #include <thread>
-#include <locale>
 #include <random>
 #include "csc_begin.h"
 
@@ -201,7 +201,7 @@ trait ATOMIC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	using Holder = typename ATOMIC_HELP<DEPEND ,ALWAYS>::Holder ;
 
 	struct HEAP {
-		std::atomic<VAL> mAtomic ;
+		Box<std::atomic<VAL>> mAtomic ;
 	} ;
 
 	class ImplHolder implement Holder {
@@ -211,28 +211,29 @@ trait ATOMIC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	public:
 		void initialize (CREF<VAL> init_) override {
 			mHeap = SharedRef<HEAP>::make () ;
-			mHeap->mAtomic.store (init_ ,std::memory_order::memory_order_relaxed) ;
+			mHeap->mAtomic = Box<std::atomic<VAL>>::make () ;
+			mHeap->mAtomic->store (init_ ,std::memory_order::memory_order_relaxed) ;
 		}
 
 		VAL fetch () const override {
-			return mHeap->mAtomic.load (std::memory_order::memory_order_relaxed) ;
+			return mHeap->mAtomic->load (std::memory_order::memory_order_relaxed) ;
 		}
 
 		void store (CREF<VAL> obj) const override {
-			return mHeap->mAtomic.store (obj ,std::memory_order::memory_order_relaxed) ;
+			return mHeap->mAtomic->store (obj ,std::memory_order::memory_order_relaxed) ;
 		}
 
 		VAL exchange (CREF<VAL> obj) const override {
-			return mHeap->mAtomic.exchange (obj ,std::memory_order::memory_order_relaxed) ;
+			return mHeap->mAtomic->exchange (obj ,std::memory_order::memory_order_relaxed) ;
 		}
 
 		void replace (CREF<VAL> expect ,CREF<VAL> next) const override {
 			auto rax = expect ;
-			mHeap->mAtomic.compare_exchange_strong (rax ,next ,std::memory_order::memory_order_relaxed) ;
+			mHeap->mAtomic->compare_exchange_strong (rax ,next ,std::memory_order::memory_order_relaxed) ;
 		}
 
 		BOOL change (VREF<VAL> expect ,CREF<VAL> next) const override {
-			const auto r1x = mHeap->mAtomic.compare_exchange_weak (expect ,next ,std::memory_order::memory_order_relaxed) ;
+			const auto r1x = mHeap->mAtomic->compare_exchange_weak (expect ,next ,std::memory_order::memory_order_relaxed) ;
 			if (r1x)
 				return TRUE ;
 			std::this_thread::yield () ;
@@ -240,11 +241,11 @@ trait ATOMIC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		VAL fetch_add (CREF<VAL> obj) const override {
-			return mHeap->mAtomic.fetch_add (obj ,std::memory_order::memory_order_relaxed) ;
+			return mHeap->mAtomic->fetch_add (obj ,std::memory_order::memory_order_relaxed) ;
 		}
 
 		VAL fetch_sub (CREF<VAL> obj) const override {
-			return mHeap->mAtomic.fetch_sub (obj ,std::memory_order::memory_order_relaxed) ;
+			return mHeap->mAtomic->fetch_sub (obj ,std::memory_order::memory_order_relaxed) ;
 		}
 	} ;
 } ;
@@ -411,8 +412,8 @@ trait SHAREDLOCK_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		void shared_enter () {
-			auto rax = mHeap->mShared.fetch () ;
 			if ifswitch (TRUE) {
+				auto rax = mHeap->mShared.fetch () ;
 				rax = vabs (rax) ;
 				const auto r1x = mHeap->mShared.change (rax ,rax + 1) ;
 				if (r1x)
@@ -433,13 +434,15 @@ trait SHAREDLOCK_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		void enter () override {
+			mHeap->mShared.decrease () ;
+			mHeap->mRecursive->lock () ;
 			if ifswitch (TRUE) {
-				auto rax = IDEN ;
+				auto rax = ZERO ;
 				const auto r1x = mHeap->mShared.change (rax ,NONE) ;
 				if (r1x)
 					discard ;
-				mHeap->mShared.decrease () ;
-				std::lock_guard<std::recursive_mutex> anonymous (mHeap->mRecursive.self) ;
+				if (rax <= NONE)
+					discard ;
 				while (TRUE) {
 					rax = ZERO ;
 					const auto r2x = mHeap->mShared.change (rax ,NONE) ;
@@ -451,7 +454,9 @@ trait SHAREDLOCK_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 
 		void leave () override {
 			std::atomic_thread_fence (std::memory_order::memory_order_release) ;
-			mHeap->mShared.store (IDEN) ;
+			mHeap->mShared.replace (NONE ,ZERO) ;
+			mHeap->mShared.increase () ;
+			mHeap->mRecursive->unlock () ;
 		}
 	} ;
 } ;
@@ -465,27 +470,232 @@ exports auto SHAREDLOCK_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->Box<F
 }
 
 template <class DEPEND>
+trait STATICPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
+	using Holder = typename STATICPROC_HELP<DEPEND ,ALWAYS>::Holder ;
+
+	struct NODE {
+		FLAG mCabi ;
+		CRef<Proxy> mAddr ;
+		BOOL mGood ;
+		INDEX mNext ;
+	} ;
+
+	struct HEAP {
+		Mutex mMutex ;
+		BOOL mFinalizing ;
+		VarBuffer<INDEX> mRange ;
+		LENGTH mSize ;
+		INDEX mRead ;
+		FLAG mMinCabi ;
+		FLAG mMaxCabi ;
+		Allocator<NODE ,VARIABLE> mList ;
+		INDEX mFirst ;
+		LENGTH mLength ;
+	} ;
+
+	using HEADER_SIZE = ENUMAS<VAL ,65536> ;
+
+	class ImplHolder implement Holder {
+	protected:
+		FLAG mPointer ;
+
+	public:
+		void initialize () {
+			mPointer = address (unique ().self) ;
+			fake.mMutex = RecursiveMutex::make () ;
+			fake.mFinalizing = FALSE ;
+			fake.mSize = 0 ;
+			fake.mRead = 0 ;
+			fake.mMinCabi = ZERO ;
+			fake.mMaxCabi = ZERO ;
+			fake.mFirst = NONE ;
+			fake.mLength = 0 ;
+		}
+
+		void finalize () override {
+			auto rax = SharedLock (fake.mMutex) ;
+			fake.mFinalizing = TRUE ;
+			auto rbx = CRef<Proxy> () ;
+			while (TRUE) {
+				if (fake.mFirst == NONE)
+					break ;
+				if ifswitch (TRUE) {
+					Scope<SharedLock> anonymous (rax) ;
+					if (fake.mFirst == NONE)
+						discard ;
+					INDEX ix = fake.mFirst ;
+					rbx = move (fake.mList[ix].mAddr) ;
+					fake.mList[ix].mGood = FALSE ;
+					fake.mFirst = fake.mList[ix].mNext ;
+					fake.mLength-- ;
+				}
+				rbx = NULL ;
+			}
+			fake.mList.clear () ;
+			fake.mList = Allocator<NODE ,VARIABLE> () ;
+			fake.mRange = VarBuffer<INDEX> () ;
+		}
+
+		void regi (CREF<FLAG> cabi ,VREF<CRef<Proxy>> addr) const {
+			assert (addr != NULL) ;
+			auto rax = SharedLock (fake.mMutex) ;
+			if (fake.mFinalizing)
+				return ;
+			const auto r1x = cabi ;
+			INDEX ix = NONE ;
+			if ifswitch (TRUE) {
+				if (r1x < fake.mMinCabi)
+					discard ;
+				if (r1x > fake.mMaxCabi)
+					discard ;
+				if (fake.mSize == 0)
+					discard ;
+				const auto r2x = (fake.mRead + r1x - fake.mMinCabi) % fake.mSize ;
+				ix = fake.mRange[r2x] ;
+			}
+			if ifswitch (TRUE) {
+				if (ix != NONE)
+					discard ;
+				Scope<SharedLock> anonymous (rax) ;
+				update_resize (r1x) ;
+				ix = fake.mList.alloc () ;
+				const auto r3x = (fake.mRead + r1x - fake.mMinCabi) % fake.mSize ;
+				fake.mRange[r3x] = ix ;
+				fake.mList[ix].mCabi = r1x ;
+				fake.mList[ix].mAddr = NULL ;
+				fake.mList[ix].mGood = FALSE ;
+				fake.mList[ix].mNext = NONE ;
+			}
+			if ifswitch (TRUE) {
+				if (fake.mList[ix].mGood)
+					discard ;
+				Scope<SharedLock> anonymous (rax) ;
+				fake.mList[ix].mAddr = move (addr) ;
+				fake.mList[ix].mGood = TRUE ;
+				fake.mList[ix].mNext = fake.mFirst ;
+				fake.mFirst = ix ;
+				fake.mLength++ ;
+			}
+			addr = CRef<Proxy>::reference (fake.mList[ix].mAddr.self) ;
+		}
+
+		CRef<Proxy> link (CREF<FLAG> cabi) const {
+			auto rax = SharedLock (fake.mMutex) ;
+			const auto r1x = cabi ;
+			INDEX ix = NONE ;
+			if ifswitch (TRUE) {
+				if (r1x < fake.mMinCabi)
+					discard ;
+				if (r1x > fake.mMaxCabi)
+					discard ;
+				if (fake.mSize == 0)
+					discard ;
+				const auto r2x = (fake.mRead + r1x - fake.mMinCabi) % fake.mSize ;
+				ix = fake.mRange[r2x] ;
+				if (ix == NONE)
+					discard ;
+				return CRef<Proxy>::reference (fake.mList[ix].mAddr.self) ;
+			}
+			return NULL ;
+		}
+
+		void update_resize (CREF<FLAG> cabi) const {
+			auto act = TRUE ;
+			if ifswitch (act) {
+				if (fake.mRange.size () > 0)
+					discard ;
+				const auto r1x = HEADER_SIZE::expr ;
+				auto rax = VarBuffer<INDEX> (r1x) ;
+				if (rax.size () == 0)
+					discard ;
+				BufferProc<INDEX>::buf_fill (rax ,NONE ,0 ,rax.size ()) ;
+				fake.mRange = move (rax) ;
+				fake.mSize = r1x ;
+				fake.mRead = 0 ;
+				fake.mMinCabi = cabi ;
+				fake.mMaxCabi = cabi ;
+			}
+			if ifswitch (act) {
+				if (cabi >= fake.mMinCabi)
+					discard ;
+				const auto r2x = fake.mMinCabi - cabi ;
+				const auto r3x = fake.mSize - (fake.mMaxCabi + 1 - fake.mMinCabi) ;
+				if (r2x > r3x)
+					discard ;
+				fake.mRead = (fake.mRead - r2x + fake.mSize) % fake.mSize ;
+				fake.mMinCabi = cabi ;
+			}
+			if ifswitch (act) {
+				if (cabi <= fake.mMaxCabi)
+					discard ;
+				const auto r4x = cabi - fake.mMaxCabi ;
+				const auto r5x = fake.mSize - (fake.mMaxCabi + 1 - fake.mMinCabi) ;
+				if (r4x > r5x)
+					discard ;
+				fake.mMaxCabi = cabi ;
+			}
+			if ifswitch (act) {
+				if (vbetween (cabi ,fake.mMinCabi ,fake.mMaxCabi + 1))
+					discard ;
+				const auto r6x = fake.mSize + vmax (cabi - fake.mMaxCabi ,fake.mMinCabi - cabi) ;
+				auto rax = VarBuffer<INDEX> (r6x) ;
+				if (rax.size () == 0)
+					discard ;
+				const auto r7x = fake.mRead + (fake.mMaxCabi + 1 - fake.mMinCabi) ;
+				const auto r8x = vmin (r7x ,fake.mSize) - fake.mRead ;
+				BufferProc<INDEX>::buf_copy (rax ,unsafe_array (fake.mRange[fake.mRead]) ,0 ,r8x) ;
+				const auto r9x = vmax (r7x - fake.mSize ,0) ;
+				BufferProc<INDEX>::buf_copy (unsafe_array (rax[r8x]) ,fake.mRange ,0 ,r9x) ;
+				const auto r10x = vmax (fake.mMinCabi - cabi ,0) ;
+				fake.mRange = move (rax) ;
+				fake.mSize = r6x ;
+				fake.mRead = (fake.mRead - r10x + fake.mSize) % fake.mSize ;
+				fake.mMinCabi = vmin (fake.mMinCabi ,cabi) ;
+				fake.mMaxCabi = vmax (fake.mMaxCabi ,cabi) ;
+			}
+		}
+
+		imports CREF<Box<HEAP>> unique () {
+			return memorize ([&] () {
+				return Box<HEAP>::make () ;
+			}) ;
+		}
+
+		VREF<HEAP> fake_m () const leftvalue {
+			return unsafe_deref (unsafe_cast[TYPEAS<TEMP<HEAP>>::expr] (unsafe_pointer (mPointer))) ;
+		}
+	} ;
+} ;
+
+template <>
+exports auto STATICPROC_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->Box<FakeHolder> {
+	using R1X = typename STATICPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
+	Box<FakeHolder> ret ;
+	ret.acquire (TYPEAS<R1X>::expr) ;
+	return move (ret) ;
+}
+
+template <class DEPEND>
 trait THREAD_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	using Holder = typename THREAD_HELP<DEPEND ,ALWAYS>::Holder ;
-	using VarBinder = typename THREAD_HELP<DEPEND ,ALWAYS>::VarBinder ;
-	using ConBinder = typename THREAD_HELP<DEPEND ,ALWAYS>::ConBinder ;
+	using Binder = typename THREAD_HELP<DEPEND ,ALWAYS>::Binder ;
 
 	class ImplHolder implement Holder {
 	protected:
 		FLAG mUID ;
 		INDEX mSlot ;
-		VRef<VarBinder> mVarBinder ;
-		CRef<ConBinder> mConBinder ;
+		VRef<Binder> mVarBinder ;
+		CRef<Binder> mConBinder ;
 		VRef<std::thread> mBlock ;
 
 	public:
-		void initialize (RREF<VRef<VarBinder>> binder ,CREF<INDEX> slot) override {
+		void initialize (RREF<VRef<Binder>> binder ,CREF<INDEX> slot) override {
 			mUID = ZERO ;
 			mSlot = slot ;
 			mVarBinder = move (binder) ;
 		}
 
-		void initialize (RREF<CRef<ConBinder>> binder ,CREF<INDEX> slot) override {
+		void initialize (RREF<CRef<Binder>> binder ,CREF<INDEX> slot) override {
 			mUID = ZERO ;
 			mSlot = slot ;
 			mConBinder = move (binder) ;
@@ -546,27 +756,73 @@ exports auto THREAD_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Hold
 	return VRef<R1X>::make () ;
 }
 
+template <class...>
+trait FUNCTION_string_cvt_locale_HELP ;
+
+template <class DEPEND>
+trait FUNCTION_string_cvt_locale_HELP<DEPEND ,REQUIRE<MACRO_CONFIG_STRA<DEPEND>>> {
+#ifdef __CSC_CONFIG_STRA__
+	struct FUNCTION_string_cvt_locale {
+		inline String<STR> operator() (CREF<String<STRA>> obj) const {
+			return obj ;
+		}
+	} ;
+#endif
+} ;
+
+template <class DEPEND>
+trait FUNCTION_string_cvt_locale_HELP<DEPEND ,REQUIRE<MACRO_CONFIG_STRW<DEPEND>>> {
+#ifdef __CSC_CONFIG_STRW__
+	struct FUNCTION_string_cvt_locale {
+		inline String<STR> operator() (CREF<String<STRA>> obj) const {
+			return StringProc::string_cvt_w_from_ansi (obj) ;
+		}
+
+		inline String<STRA> operator() (CREF<String<STR>> obj) const {
+			return StringProc::string_cvt_ansi_from_w (obj) ;
+		}
+	} ;
+#endif
+} ;
+
 template <class DEPEND>
 trait SYSTEM_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	using Holder = typename SYSTEM_HELP<DEPEND ,ALWAYS>::Holder ;
 
+	struct HEAP {
+		String<STRA> mLocale ;
+		String<STRA> mOldLocale ;
+		String<STR> mWorkingPath ;
+	} ;
+
 	class ImplHolder implement Holder {
 	protected:
-		Optional<String<STR>> mLocale ;
-		String<STR> mWorkingPath ;
+		SharedRef<HEAP> mHeap ;
 
 	public:
 		void initialize () override {
-			mLocale = Optional<String<STR>>::make (slice ("C")) ;
-			mWorkingPath = RuntimeProc::working_path () ;
+			mHeap = SharedRef<HEAP>::make () ;
+			mHeap->mLocale = PrintString<STRA>::make (slice ("C")) ;
+			mHeap->mWorkingPath = RuntimeProc::working_path () ;
 		}
 
 		String<STR> get_locale () const override {
-			return mLocale.fetch () ;
+			using R1X = typename FUNCTION_string_cvt_locale_HELP<DEPEND ,ALWAYS>::FUNCTION_string_cvt_locale ;
+			const auto r1x = R1X () ;
+			return r1x (mHeap->mLocale) ;
 		}
 
 		void set_locale (CREF<String<STR>> name) const override {
-			mLocale.store (name) ;
+			using R1X = typename FUNCTION_string_cvt_locale_HELP<DEPEND ,ALWAYS>::FUNCTION_string_cvt_locale ;
+			const auto r1x = R1X () ;
+			mHeap->mOldLocale = move (mHeap->mLocale) ;
+			mHeap->mLocale = r1x (name) ;
+			if ifswitch (TRUE) {
+				if ifnot (mHeap->mLocale.empty ())
+					discard ;
+				mHeap->mLocale = String<STRA>::zero () ;
+			}
+			std::setlocale (LC_CTYPE ,(&mHeap->mLocale[0])) ;
 		}
 
 		FLAG execute (CREF<String<STR>> command) const override {
@@ -578,7 +834,7 @@ trait SYSTEM_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		String<STR> working_path () const override {
-			return mWorkingPath ;
+			return mHeap->mWorkingPath ;
 		}
 	} ;
 } ;
@@ -595,7 +851,7 @@ trait RANDOM_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 
 	struct HEAP {
 		DATA mSeed ;
-		std::mt19937_64 mRandom ;
+		Box<std::mt19937_64> mRandom ;
 	} ;
 
 	class ImplHolder implement Holder {
@@ -606,13 +862,13 @@ trait RANDOM_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		void initialize () override {
 			mHeap = SharedRef<HEAP>::make () ;
 			mHeap->mSeed = DATA (std::random_device () ()) ;
-			mHeap->mRandom = std::mt19937_64 (csc_byte64_t (mHeap->mSeed)) ;
+			mHeap->mRandom = Box<std::mt19937_64>::make (csc_byte64_t (mHeap->mSeed)) ;
 		}
 
 		void initialize (CREF<DATA> seed_) override {
 			mHeap = SharedRef<HEAP>::make () ;
 			mHeap->mSeed = seed_ ;
-			mHeap->mRandom = std::mt19937_64 (csc_byte64_t (mHeap->mSeed)) ;
+			mHeap->mRandom = Box<std::mt19937_64>::make (csc_byte64_t (mHeap->mSeed)) ;
 		}
 
 		DATA seed () const override {
@@ -620,7 +876,7 @@ trait RANDOM_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		DATA random_byte () const override {
-			return DATA (mHeap->mRandom ()) ;
+			return DATA (mHeap->mRandom.self ()) ;
 		}
 
 		Array<DATA> random_byte (CREF<LENGTH> size_) const override {
@@ -723,7 +979,7 @@ trait SINGLETON_HACKSHAREDREF_HELP<UNIT ,ALWAYS> {
 		imports SharedRef<UNIT> make () {
 			HackSharedRef ret ;
 			auto rax = CRef<Holder>::reference (unique ().self) ;
-			Scope<EasyMutex> anonymous (rax->easy_mutex ()) ;
+			Scope<PinMutex> anonymous (rax->pin_mutex ()) ;
 			ret.mThis = move (rax) ;
 			ret.mPointer = ret.mThis->pointer () ;
 			if ifswitch (TRUE) {

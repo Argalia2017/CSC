@@ -115,7 +115,7 @@ trait CALCTHREAD_HOLDER_HELP<DEPEND ,ALWAYS> {
 		virtual void initialize () = 0 ;
 		virtual void set_thread_size (CREF<LENGTH> size_) = 0 ;
 		virtual void start (RREF<Function<SOLUTION ,TYPEAS<SOLUTION>>> proc) = 0 ;
-		virtual SOLUTION best () const = 0 ;
+		virtual SOLUTION best () = 0 ;
 		virtual void suspend () = 0 ;
 		virtual void resume () = 0 ;
 		virtual void stop () = 0 ;
@@ -153,7 +153,7 @@ trait CALCTHREAD_HELP<DEPEND ,ALWAYS> {
 			return mThis->start (move (proc)) ;
 		}
 
-		SOLUTION best () const {
+		SOLUTION best () {
 			return mThis->best () ;
 		}
 
@@ -189,6 +189,7 @@ template <class DEPEND>
 trait PROMISE_HOLDER_HELP<DEPEND ,ALWAYS> {
 	struct Holder implement Interface {
 		virtual void initialize () = 0 ;
+		virtual VRef<Holder> clone () const = 0 ;
 		virtual void start () const = 0 ;
 		virtual void start (RREF<Function<AutoRef<>>> proc) const = 0 ;
 		virtual void post (RREF<AutoRef<>> item) const = 0 ;
@@ -216,21 +217,48 @@ trait PROMISE_HELP<ITEM ,ALWAYS> {
 
 	class Promise {
 	protected:
-		CRef<Holder> mThis ;
+		VRef<Holder> mThis ;
 
 	public:
 		implicit Promise () = default ;
 
 		explicit Promise (CREF<typeof (PH0)>) {
-			auto rax = FUNCTION_extern::invoke () ;
-			rax->initialize () ;
-			mThis = rax.as_cref () ;
+			mThis = FUNCTION_extern::invoke () ;
+			mThis->initialize () ;
+		}
+
+		implicit Promise (CREF<Promise> that) {
+			if (that.mThis == NULL)
+				return ;
+			mThis = that.mThis->clone () ;
+		}
+
+		inline VREF<Promise> operator= (CREF<Promise> that) {
+			if (address (thiz) == address (that))
+				return thiz ;
+			swap (thiz ,move (that)) ;
+			return thiz ;
+		}
+
+		implicit Promise (RREF<Promise> that) noexcept {
+			swap (thiz ,that) ;
+		}
+
+		inline VREF<Promise> operator= (RREF<Promise> that) noexcept {
+			if (address (thiz) == address (that))
+				return thiz ;
+			swap (thiz ,move (that)) ;
+			return thiz ;
 		}
 
 		Future future () const {
 			Future ret ;
-			ret.mThis = mThis ;
+			ret.mThis = mThis->clone () ;
 			return move (ret) ;
+		}
+
+		BOOL ready () const {
+			return mThis->ready () ;
 		}
 
 		void start () const {
@@ -278,10 +306,34 @@ trait FUTURE_HELP<ITEM ,ALWAYS> {
 		friend trait PROMISE_HELP ;
 
 	protected:
-		CRef<Holder> mThis ;
+		VRef<Holder> mThis ;
 
 	public:
 		implicit Future () = default ;
+
+		implicit Future (CREF<Future> that) {
+			if (that.mThis == NULL)
+				return ;
+			mThis = that.mThis->clone () ;
+		}
+
+		inline VREF<Future> operator= (CREF<Future> that) {
+			if (address (thiz) == address (that))
+				return thiz ;
+			swap (thiz ,move (that)) ;
+			return thiz ;
+		}
+
+		implicit Future (RREF<Future> that) noexcept {
+			swap (thiz ,that) ;
+		}
+
+		inline VREF<Future> operator= (RREF<Future> that) noexcept {
+			if (address (thiz) == address (that))
+				return thiz ;
+			swap (thiz ,move (that)) ;
+			return thiz ;
+		}
 
 		BOOL ready () const {
 			return mThis->ready () ;

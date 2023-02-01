@@ -330,6 +330,7 @@ using csc_char16_t = char16_t ;
 using csc_char32_t = char32_t ;
 
 using csc_pointer_t = DEF<void *> ;
+using csc_const_pointer_t = DEF<const void *> ;
 
 #ifdef __CSC_CXX_LITE__
 #ifdef __CSC_SYSTEM_WINDOWS__

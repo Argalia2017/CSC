@@ -17,6 +17,10 @@ trait BYTEATTRIBUTE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			noop () ;
 		}
 
+		void initialize (RREF<CRef<Holder>> prefix) override {
+			assert (FALSE) ;
+		}
+
 		BYTE ending_item () const override {
 			return BYTE (0X00) ;
 		}
@@ -616,7 +620,9 @@ trait TEXTATTRIBUTE_IMPLHOLDER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 	class ImplHolder implement Holder {
 	protected:
 		HashSet<ITEM> mSpaceSet ;
-		HashSet<ITEM> mEscapeSet ;
+		ArrayList<Tuple<ITEM ,ITEM>> mEscapeList ;
+		HashSet<ITEM> mEscapeWordSet ;
+		HashSet<ITEM> mEscapeCtrlSet ;
 
 	public:
 		void initialize () override {
@@ -626,16 +632,29 @@ trait TEXTATTRIBUTE_IMPLHOLDER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 			mSpaceSet.add (ITEM ('\r') ,GAP_ENDLINE::expr) ;
 			mSpaceSet.add (ITEM ('\n') ,GAP_ENDLINE::expr) ;
 			mSpaceSet.add (ITEM ('\f') ,GAP_ENDLINE::expr) ;
-			mEscapeSet.add (ITEM ('\\') ,INDEX ('\\')) ;
-			mEscapeSet.add (ITEM ('/') ,INDEX ('/')) ;
-			mEscapeSet.add (ITEM ('t') ,INDEX ('\t')) ;
-			mEscapeSet.add (ITEM ('b') ,INDEX ('\b')) ;
-			mEscapeSet.add (ITEM ('r') ,INDEX ('\r')) ;
-			mEscapeSet.add (ITEM ('n') ,INDEX ('\n')) ;
-			mEscapeSet.add (ITEM ('f') ,INDEX ('\f')) ;
-			mEscapeSet.add (ITEM ('\'') ,INDEX ('\'')) ;
-			mEscapeSet.add (ITEM ('\"') ,INDEX ('\"')) ;
-			mEscapeSet.add (ITEM ('u') ,INDEX (7)) ;
+			escape_list_add (ITEM ('\\') ,ITEM ('\\')) ;
+			escape_list_add (ITEM ('\\') ,ITEM ('\\')) ;
+			escape_list_add (ITEM ('/') ,ITEM ('/')) ;
+			escape_list_add (ITEM ('t') ,ITEM ('\t')) ;
+			escape_list_add (ITEM ('b') ,ITEM ('\b')) ;
+			escape_list_add (ITEM ('r') ,ITEM ('\r')) ;
+			escape_list_add (ITEM ('n') ,ITEM ('\n')) ;
+			escape_list_add (ITEM ('f') ,ITEM ('\f')) ;
+			escape_list_add (ITEM ('\'') ,ITEM ('\'')) ;
+			escape_list_add (ITEM ('\"') ,ITEM ('\"')) ;
+			escape_list_add (ITEM ('u') ,ITEM (7)) ;
+		}
+
+		void initialize (RREF<CRef<Holder>> prefix) override {
+			assert (FALSE) ;
+		}
+
+		void escape_list_add (CREF<ITEM> word ,CREF<ITEM> ctrl) {
+			INDEX ix = mEscapeList.insert () ;
+			mEscapeList[ix].m1st = word ;
+			mEscapeList[ix].m2nd = ctrl ;
+			mEscapeWordSet.add (word ,ix) ;
+			mEscapeCtrlSet.add (ctrl ,ix) ;
 		}
 
 		ITEM ending_item () const override {
@@ -666,14 +685,14 @@ trait TEXTATTRIBUTE_IMPLHOLDER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 			return FALSE ;
 		}
 
-		ITEM lower_cast (CREF<ITEM> str) const {
+		ITEM word_lower_cast (CREF<ITEM> str) const override {
 			if (str >= ITEM ('A'))
 				if (str <= ITEM ('Z'))
 					return ITEM (INDEX (str) - INDEX ('A') + INDEX ('a')) ;
 			return str ;
 		}
 
-		ITEM upper_cast (CREF<ITEM> str) const {
+		ITEM word_upper_cast (CREF<ITEM> str) const override {
 			if (str >= ITEM ('a'))
 				if (str <= ITEM ('z'))
 					return ITEM (INDEX (str) - INDEX ('a') + INDEX ('A')) ;
@@ -691,15 +710,17 @@ trait TEXTATTRIBUTE_IMPLHOLDER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 			if (str >= ITEM ('a'))
 				if (str <= ITEM ('f'))
 					return TRUE ;
+			if (str >= ITEM ('A'))
+				if (str <= ITEM ('F'))
+					return TRUE ;
 			return FALSE ;
 		}
 
 		INDEX hex_from_str (CREF<ITEM> str) const override {
 			if (is_number (str))
 				return INDEX (str) - INDEX ('0') ;
-			const auto r1x = lower_cast (str) ;
-			if (is_hex_number (r1x))
-				return INDEX (r1x) - INDEX ('a') + 10 ;
+			if (is_hex_number (str))
+				return INDEX (word_upper_cast (str)) - INDEX ('A') + 10 ;
 			assume (FALSE) ;
 			return bad (TYPEAS<ITEM>::expr) ;
 		}
@@ -725,11 +746,18 @@ trait TEXTATTRIBUTE_IMPLHOLDER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 			return TRUE ;
 		}
 
-		Optional<ITEM> escape_cast (CREF<ITEM> str) const override {
-			INDEX ix = mEscapeSet.map (str) ;
+		Optional<ITEM> escape_word_cast (CREF<ITEM> str) const override {
+			INDEX ix = mEscapeCtrlSet.map (str) ;
 			if (ix == NONE)
 				return FLAG (1) ;
-			return Optional<ITEM>::make (ITEM (ix)) ;
+			return Optional<ITEM>::make (mEscapeList[ix].m1st) ;
+		}
+
+		Optional<ITEM> escape_ctrl_cast (CREF<ITEM> str) const override {
+			INDEX ix = mEscapeWordSet.map (str) ;
+			if (ix == NONE)
+				return FLAG (1) ;
+			return Optional<ITEM>::make (mEscapeList[ix].m2nd) ;
 		}
 
 		LENGTH value_precision () const override {
@@ -875,6 +903,17 @@ trait TEXTREADER_IMPLHOLDER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 				item = TRUE ;
 			}
 			if ifswitch (act) {
+				if (rax != ITEM ('T'))
+					discard ;
+				read (rax) ;
+				assume (rax == ITEM ('R')) ;
+				read (rax) ;
+				assume (rax == ITEM ('U')) ;
+				read (rax) ;
+				assume (rax == ITEM ('E')) ;
+				item = TRUE ;
+			}
+			if ifswitch (act) {
 				if (rax != ITEM ('f'))
 					discard ;
 				read (rax) ;
@@ -886,17 +925,6 @@ trait TEXTREADER_IMPLHOLDER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 				read (rax) ;
 				assume (rax == ITEM ('e')) ;
 				item = FALSE ;
-			}
-			if ifswitch (act) {
-				if (rax != ITEM ('T'))
-					discard ;
-				read (rax) ;
-				assume (rax == ITEM ('R')) ;
-				read (rax) ;
-				assume (rax == ITEM ('U')) ;
-				read (rax) ;
-				assume (rax == ITEM ('E')) ;
-				item = TRUE ;
 			}
 			if ifswitch (act) {
 				if (rax != ITEM ('F'))
@@ -1460,6 +1488,8 @@ trait TEXTWRITER_IMPLHOLDER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 				write (ITEM ('e')) ;
 			}
 			if ifswitch (act) {
+				if (item)
+					discard ;
 				write (ITEM ('f')) ;
 				write (ITEM ('a')) ;
 				write (ITEM ('l')) ;
@@ -1911,6 +1941,7 @@ trait REGULARREADER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	class ImplHolder implement Holder {
 	protected:
 		VRef<TextReader<STRU8>> mReader ;
+		TextAttribute<STRU8> mAttribute ;
 		Deque<STRU8> mCache ;
 		Deque<STRU8> mBackupCache ;
 		BOOL mHintString ;
@@ -1919,6 +1950,7 @@ trait REGULARREADER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	public:
 		void initialize (RREF<VRef<TextReader<STRU8>>> reader ,CREF<LENGTH> ll_size) override {
 			mReader = move (reader) ;
+			mAttribute = mReader->attribute () ;
 			mReader.self >> BOM ;
 			mCache = Deque<STRU8> (ll_size) ;
 			mBackupCache = Deque<STRU8> (ll_size) ;
@@ -1966,23 +1998,22 @@ trait REGULARREADER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			mHintString = FALSE ;
 			mHintSize = 0 ;
 			backup () ;
-			const auto r1x = mReader->attribute () ;
 			while (TRUE) {
 				if ifswitch (TRUE) {
 					if (mHintSize != 0)
 						discard ;
-					assume (r1x.is_word (mCache[0])) ;
+					assume (mAttribute.is_word (mCache[0])) ;
 				}
-				const auto r2x = invoke ([&] () {
-					if (r1x.is_word (mCache[0]))
+				const auto r1x = invoke ([&] () {
+					if (mAttribute.is_word (mCache[0]))
 						return FALSE ;
-					if (r1x.is_number (mCache[0]))
+					if (mAttribute.is_number (mCache[0]))
 						return FALSE ;
 					if (mCache[0] == STRU8 ('-'))
 						return FALSE ;
 					return TRUE ;
 				}) ;
-				if (r2x)
+				if (r1x)
 					break ;
 				read () ;
 				mHintSize++ ;
@@ -1994,7 +2025,6 @@ trait REGULARREADER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			mHintString = FALSE ;
 			mHintSize = 0 ;
 			backup () ;
-			const auto r1x = mReader->attribute () ;
 			if ifswitch (TRUE) {
 				if ifnot (mCache[0] == STRU8 ('+'))
 					if ifnot (mCache[0] == STRU8 ('-'))
@@ -2002,15 +2032,15 @@ trait REGULARREADER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				read () ;
 				mHintSize++ ;
 			}
-			const auto r2x = mCache[0] ;
-			assume (r1x.is_number (r2x)) ;
+			const auto r1x = mCache[0] ;
+			assume (mAttribute.is_number (r1x)) ;
 			read () ;
 			mHintSize++ ;
 			if ifswitch (TRUE) {
-				if (r2x == STRU8 ('0'))
+				if (r1x == STRU8 ('0'))
 					discard ;
 				while (TRUE) {
-					if ifnot (r1x.is_number (mCache[0]))
+					if ifnot (mAttribute.is_number (mCache[0]))
 						break ;
 					read () ;
 					mHintSize++ ;
@@ -2022,7 +2052,7 @@ trait REGULARREADER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				read () ;
 				mHintSize++ ;
 				while (TRUE) {
-					if ifnot (r1x.is_number (mCache[0]))
+					if ifnot (mAttribute.is_number (mCache[0]))
 						break ;
 					read () ;
 					mHintSize++ ;
@@ -2041,11 +2071,11 @@ trait REGULARREADER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 					read () ;
 					mHintSize++ ;
 				}
-				assume (r1x.is_number (mCache[0])) ;
+				assume (mAttribute.is_number (mCache[0])) ;
 				read () ;
 				mHintSize++ ;
 				while (TRUE) {
-					if ifnot (r1x.is_number (mCache[0]))
+					if ifnot (mAttribute.is_number (mCache[0]))
 						break ;
 					read () ;
 					mHintSize++ ;
@@ -2058,25 +2088,24 @@ trait REGULARREADER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			mHintString = TRUE ;
 			mHintSize = 0 ;
 			backup () ;
-			const auto r1x = mReader->attribute () ;
 			assume (mCache[0] == STRU8 ('\"')) ;
 			read () ;
 			while (TRUE) {
-				if (mCache[0] == r1x.ending_item ())
+				if (mCache[0] == mAttribute.ending_item ())
 					break ;
 				if (mCache[0] == STRU8 ('\"'))
 					break ;
-				const auto r2x = mCache[0] ;
+				const auto r1x = mCache[0] ;
 				read () ;
 				auto act = TRUE ;
 				if ifswitch (act) {
-					if ifnot (r2x == STRU8 ('\\'))
+					if ifnot (r1x == STRU8 ('\\'))
 						discard ;
 					read () ;
 					mHintSize++ ;
 				}
 				if ifswitch (act) {
-					assume (ifnot (r1x.is_control (r2x))) ;
+					assume (ifnot (mAttribute.is_control (r1x))) ;
 					mHintSize++ ;
 				}
 			}
@@ -2089,13 +2118,12 @@ trait REGULARREADER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			mHintString = FALSE ;
 			mHintSize = 0 ;
 			backup () ;
-			const auto r1x = mReader->attribute () ;
 			while (TRUE) {
-				if (mCache[0] == r1x.ending_item ())
+				if (mCache[0] == mAttribute.ending_item ())
 					break ;
-				if (r1x.is_gap_endline (mCache[0]))
+				if (mAttribute.is_gap_endline (mCache[0]))
 					break ;
-				assume (ifnot (r1x.is_control (mCache[0]))) ;
+				assume (ifnot (mAttribute.is_control (mCache[0]))) ;
 				read () ;
 				mHintSize++ ;
 			}
@@ -2103,73 +2131,69 @@ trait REGULARREADER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		void read_skip_gap () override {
-			const auto r1x = mReader->attribute () ;
 			while (TRUE) {
-				if ifnot (r1x.is_gap (mCache[0]))
+				if ifnot (mAttribute.is_gap (mCache[0]))
 					break ;
 				read () ;
 			}
 		}
 
 		void read_skip_gap_space () override {
-			const auto r1x = mReader->attribute () ;
 			while (TRUE) {
-				if (mCache[0] == r1x.ending_item ())
+				if (mCache[0] == mAttribute.ending_item ())
 					break ;
-				if ifnot (r1x.is_gap_space (mCache[0]))
+				if ifnot (mAttribute.is_gap_space (mCache[0]))
 					break ;
 				read () ;
 			}
 		}
 
 		void read_skip_gap_endline () override {
-			const auto r1x = mReader->attribute () ;
 			while (TRUE) {
-				if (mCache[0] == r1x.ending_item ())
+				if (mCache[0] == mAttribute.ending_item ())
 					break ;
-				if ifnot (r1x.is_gap_endline (mCache[0]))
+				if ifnot (mAttribute.is_gap_endline (mCache[0]))
 					break ;
 				read () ;
 			}
 		}
 
 		void read (VREF<String<STRU8>> item) override {
-			const auto r1x = mReader->attribute () ;
-			const auto r2x = mHintString ;
-			const auto r3x = mHintSize ;
+			const auto r1x = mHintString ;
+			const auto r2x = mHintSize ;
 			mHintString = FALSE ;
 			mHintSize = 0 ;
 			if ifswitch (TRUE) {
-				if (item.size () >= r3x)
+				if (item.size () >= r2x)
 					discard ;
-				assume (r3x <= VAL32_MAX) ;
-				item = String<STRU8> (r3x) ;
+				assume (r2x <= VAL32_MAX) ;
+				item = String<STRU8> (r2x) ;
 			}
-			item.trunc (r3x) ;
+			item.trunc (r2x) ;
 			if ifswitch (TRUE) {
-				if ifnot (r2x)
+				if ifnot (r1x)
 					discard ;
 				assume (mCache[0] == STRU8 ('\"')) ;
 				read () ;
 			}
-			for (auto &&i : iter (0 ,r3x)) {
-				const auto r4x = mCache[0] ;
+			for (auto &&i : iter (0 ,r2x)) {
+				const auto r3x = mCache[0] ;
 				read () ;
 				auto act = TRUE ;
 				if ifswitch (act) {
-					const auto r5x = BOOL (r4x == STRU8 ('\\')) ;
-					if ifnot (r5x)
+					const auto r4x = BOOL (r3x == STRU8 ('\\')) ;
+					if ifnot (r4x)
 						discard ;
-					item[i] = r1x.escape_cast (mCache[0]).poll () ;
+					item[i] = mAttribute.escape_ctrl_cast (mCache[0]).poll () ;
 					read () ;
 				}
 				if ifswitch (act) {
-					assume (ifnot (r1x.is_control (r4x))) ;
-					item[i] = r4x ;
+					assume (ifnot (mAttribute.is_control (r3x))) ;
+					item[i] = r3x ;
 				}
 			}
 			if ifswitch (TRUE) {
-				if ifnot (r2x)
+				if ifnot (r1x)
 					discard ;
 				assume (mCache[0] == STRU8 ('\"')) ;
 				read () ;

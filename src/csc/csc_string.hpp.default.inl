@@ -4,12 +4,7 @@
 #error "∑(っ°Д° ;)っ : require 'csc_string.hpp'"
 #endif
 
-#ifndef __CSC_RUNTIME__
-#error "∑(っ°Д° ;)っ : require 'csc_runtime.hpp'"
-#endif
-
 #include "csc_string.hpp"
-#include "csc_runtime.hpp"
 
 #include "csc_end.h"
 #include <cstdlib>
@@ -66,7 +61,6 @@ trait FUNCTION_system_string_cvt_HELP<DEPEND ,REQUIRE<MACRO_COMPILER_GNUC<DEPEND
 		inline String<STRA> operator() (CREF<String<STRW>> obj) const {
 			assert (ifnot (obj.empty ())) ;
 			String<STRA> ret = String<STRA> (obj.length () * 2 + 1) ;
-			std::setlocale (LC_CTYPE ,"") ;
 			const auto r1x = std::wcstombs ((&ret[0]) ,(&obj[0]) ,VAL32 (ret.size ())) ;
 			assume (r1x == 0) ;
 			return move (ret) ;
@@ -75,7 +69,6 @@ trait FUNCTION_system_string_cvt_HELP<DEPEND ,REQUIRE<MACRO_COMPILER_GNUC<DEPEND
 		inline String<STRW> operator() (CREF<String<STRA>> obj) const {
 			assert (ifnot (obj.empty ())) ;
 			String<STRW> ret = String<STRW> (obj.length () + 1) ;
-			std::setlocale (LC_CTYPE ,"") ;
 			const auto r1x = std::mbstowcs ((&ret[0]) ,(&obj[0]) ,VAL32 (ret.size ())) ;
 			assume (r1x == 0) ;
 			return move (ret) ;
@@ -91,7 +84,6 @@ trait FUNCTION_system_string_cvt_HELP<DEPEND ,REQUIRE<MACRO_COMPILER_CLANG<DEPEN
 		inline String<STRA> operator() (CREF<String<STRW>> obj) const {
 			assert (ifnot (obj.empty ())) ;
 			String<STRA> ret = String<STRA> (obj.length () * 2 + 1) ;
-			std::setlocale (LC_CTYPE ,"") ;
 			auto rax = std::size_t (0) ;
 			const auto r1x = wcstombs_s ((&rax) ,(&ret[0]) ,VAL32 (ret.size ()) ,(&obj[0]) ,_TRUNCATE) ;
 			assume (r1x == 0) ;
@@ -101,7 +93,6 @@ trait FUNCTION_system_string_cvt_HELP<DEPEND ,REQUIRE<MACRO_COMPILER_CLANG<DEPEN
 		inline String<STRW> operator() (CREF<String<STRA>> obj) const {
 			assert (ifnot (obj.empty ())) ;
 			String<STRW> ret = String<STRW> (obj.length () + 1) ;
-			std::setlocale (LC_CTYPE ,"") ;
 			auto rax = std::size_t (0) ;
 			const auto r1x = mbstowcs_s ((&rax) ,(&ret[0]) ,VAL32 (ret.size ()) ,(&obj[0]) ,_TRUNCATE) ;
 			assume (r1x == 0) ;
@@ -124,45 +115,78 @@ trait STRINGPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			noop () ;
 		}
 
-		String<STRW> ansi_string_cvt (CREF<String<STRA>> obj) const override {
-			String<STRW> ret = String<STRW> (obj.length ()) ;
+		String<STRA> string_cvt_ansi_from_w (CREF<String<STRW>> obj) const override {
+			auto &&tmp_obj = unsafe_deref (unsafe_cast[TYPEAS<TEMP<String<STRUW>>>::expr] (unsafe_deptr (obj))) ;
+			auto rax = string_cvt_ansi_from_w (tmp_obj) ;
+			auto &&tmp = unsafe_deref (unsafe_cast[TYPEAS<TEMP<String<STRA>>>::expr] (unsafe_deptr (rax))) ;
+			return move (tmp) ;
+		}
+
+		String<STRUA> string_cvt_ansi_from_w (CREF<String<STRUW>> obj) const {
+			String<STRUA> ret = String<STRUA> (obj.length ()) ;
 			INDEX ix = 0 ;
 			for (auto &&i : obj) {
 				assume (vbetween (INDEX (i) ,0 ,128)) ;
-				ret[ix] = STRW (i) ;
+				ret[ix] = STRUA (i) ;
 				ix++ ;
 			}
 			ret.trunc (ix) ;
 			return move (ret) ;
 		}
 
-		String<STRA> ansi_string_cvt (CREF<String<STRW>> obj) const override {
-			String<STRA> ret = String<STRA> (obj.length ()) ;
+		String<STRW> string_cvt_w_from_ansi (CREF<String<STRA>> obj) const override {
+			auto &&tmp_obj = unsafe_deref (unsafe_cast[TYPEAS<TEMP<String<STRUA>>>::expr] (unsafe_deptr (obj))) ;
+			auto rax = string_cvt_w_from_ansi (tmp_obj) ;
+			auto &&tmp = unsafe_deref (unsafe_cast[TYPEAS<TEMP<String<STRW>>>::expr] (unsafe_deptr (rax))) ;
+			return move (tmp) ;
+		}
+
+		String<STRUW> string_cvt_w_from_ansi (CREF<String<STRUA>> obj) const {
+			String<STRUW> ret = String<STRUW> (obj.length ()) ;
 			INDEX ix = 0 ;
 			for (auto &&i : obj) {
 				assume (vbetween (INDEX (i) ,0 ,128)) ;
-				ret[ix] = STRA (i) ;
+				ret[ix] = STRUW (i) ;
 				ix++ ;
 			}
 			ret.trunc (ix) ;
 			return move (ret) ;
 		}
 
-		String<STRA> gbks_string_cvt (CREF<String<STRW>> obj) const override {
+		String<STRA> string_cvt_gbks_from_w (CREF<String<STRW>> obj) const override {
+			auto &&tmp_obj = unsafe_deref (unsafe_cast[TYPEAS<TEMP<String<STRUW>>>::expr] (unsafe_deptr (obj))) ;
+			auto rax = string_cvt_gbks_from_w (tmp_obj) ;
+			auto &&tmp = unsafe_deref (unsafe_cast[TYPEAS<TEMP<String<STRA>>>::expr] (unsafe_deptr (rax))) ;
+			return move (tmp) ;
+		}
+
+		String<STRUA> string_cvt_gbks_from_w (CREF<String<STRUW>> obj) const {
 			using R1X = typename DEPENDENT<STRINGPROC_GBKSCACHE_HELP<DEPEND ,ALWAYS> ,ALWAYS>::GBKSCache ;
-			String<STRA> ret = String<STRA> (obj.length () * 2) ;
+			String<STRUA> ret = String<STRUA> (obj.length () * 2) ;
 			INDEX ix = 0 ;
 			for (auto &&i : obj) {
+				const auto r1x = R1X::instance ().find_utfs (STRUW (i)) ;
 				auto act = TRUE ;
 				if ifswitch (act) {
-					const auto r1x = R1X::instance ().find_utfs (STRUW (i)) ;
 					if (r1x == NONE)
 						discard ;
-					ret[ix] = STRA (R1X::instance ()[r1x].m1st) ;
+					const auto r2x = R1X::instance ()[r1x].m1st ;
+					if (r2x >= STRUW (0X0100))
+						discard ;
+					ret[ix] = STRUA (r2x) ;
 					ix++ ;
 				}
 				if ifswitch (act) {
-					ret[ix] = STRA ('?') ;
+					if (r1x == NONE)
+						discard ;
+					const auto r3x = R1X::instance ()[r1x].m1st ;
+					ret[ix] = STRUA (r3x >> 8) ;
+					ix++ ;
+					ret[ix] = STRUA (r3x) ;
+					ix++ ;
+				}
+				if ifswitch (act) {
+					ret[ix] = STRUA ('?') ;
 					ix++ ;
 				}
 			}
@@ -170,54 +194,90 @@ trait STRINGPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			return move (ret) ;
 		}
 
-		String<STRW> gbks_string_cvt (CREF<String<STRA>> obj) const override {
+		String<STRW> string_cvt_w_from_gbks (CREF<String<STRA>> obj) const override {
+			auto &&tmp_obj = unsafe_deref (unsafe_cast[TYPEAS<TEMP<String<STRUA>>>::expr] (unsafe_deptr (obj))) ;
+			auto rax = string_cvt_w_from_gbks (tmp_obj) ;
+			auto &&tmp = unsafe_deref (unsafe_cast[TYPEAS<TEMP<String<STRW>>>::expr] (unsafe_deptr (rax))) ;
+			return move (tmp) ;
+		}
+
+		String<STRUW> string_cvt_w_from_gbks (CREF<String<STRUA>> obj) const {
 			using R1X = typename DEPENDENT<STRINGPROC_GBKSCACHE_HELP<DEPEND ,ALWAYS> ,DEPEND>::GBKSCache ;
-			String<STRW> ret = String<STRW> (obj.length ()) ;
+			String<STRUW> ret = String<STRUW> (obj.length ()) ;
 			INDEX ix = 0 ;
+			auto rax = ZERO ;
+			auto rbx = STRU32 () ;
 			for (auto &&i : obj) {
 				auto act = TRUE ;
 				if ifswitch (act) {
-					const auto r1x = R1X::instance ().find_utfs (STRUW (i)) ;
+					if ifnot (rax == 0)
+						discard ;
+					const auto r1x = R1X::instance ().find_gbks (STRUW (i)) ;
 					if (r1x == NONE)
 						discard ;
-					ret[ix] = STRW (R1X::instance ()[r1x].m2nd) ;
+					ret[ix] = R1X::instance ()[r1x].m2nd ;
 					ix++ ;
 				}
 				if ifswitch (act) {
-					ret[ix] = STRW ('?') ;
+					if ifnot (rax == 0)
+						discard ;
+					rbx = STRU32 (i) ;
+					rax = 1 ;
+				}
+				if ifswitch (act) {
+					if ifnot (rax == 1)
+						discard ;
+					rbx = STRU32 ((rbx << 8) | STRU32 (i)) ;
+					const auto r2x = R1X::instance ().find_gbks (STRUW (rbx)) ;
+					if (r2x == NONE)
+						discard ;
+					ret[ix] = R1X::instance ()[r2x].m2nd ;
 					ix++ ;
+					rax = 0 ;
+				}
+				if ifswitch (act) {
+					ret[ix] = STRUW ('?') ;
+					ix++ ;
+					rax = 0 ;
 				}
 			}
 			ret.trunc (ix) ;
 			return move (ret) ;
 		}
 
-		String<STRA> locale_string_cvt (CREF<String<STRW>> obj) const override {
-			const auto r1x = System::instance ().get_locale () ;
+		String<STRA> string_cvt_a_from_w (CREF<String<STRW>> obj) const override {
+			const auto r1x = system_locale () ;
 			if (r1x == slice ("C"))
-				return ansi_string_cvt (obj) ;
+				return string_cvt_ansi_from_w (obj) ;
 			const auto r2x = r1x.length () ;
 			if (r2x >= 6)
 				if (r1x.segment (0 ,6) == slice ("zh_CN."))
-					return gbks_string_cvt (obj) ;
+					return string_cvt_gbks_from_w (obj) ;
 			if (r2x >= 4)
 				if (r1x.segment (r2x - 4 ,r2x) == slice (".936"))
-					return gbks_string_cvt (obj) ;
+					return string_cvt_gbks_from_w (obj) ;
 			return system_string_cvt (obj) ;
 		}
 
-		String<STRW> locale_string_cvt (CREF<String<STRA>> obj) const override {
-			const auto r1x = System::instance ().get_locale () ;
+		String<STRW> string_cvt_w_from_a (CREF<String<STRA>> obj) const override {
+			const auto r1x = system_locale () ;
 			if (r1x == slice ("C"))
-				return ansi_string_cvt (obj) ;
+				return string_cvt_w_from_ansi (obj) ;
 			const auto r2x = r1x.length () ;
 			if (r2x >= 6)
 				if (r1x.segment (0 ,6) == slice ("zh_CN."))
-					return gbks_string_cvt (obj) ;
+					return string_cvt_w_from_gbks (obj) ;
 			if (r2x >= 4)
 				if (r1x.segment (r2x - 4 ,r2x) == slice (".936"))
-					return gbks_string_cvt (obj) ;
+					return string_cvt_w_from_gbks (obj) ;
 			return system_string_cvt (obj) ;
+		}
+
+		String<STR> system_locale () const {
+			const auto r1x = std::setlocale (LC_CTYPE ,NULL) ;
+			if (r1x == NULL)
+				return Slice<STR> () ;
+			return BufferProc<STR>::buf_slice (unsafe_array (r1x[0]) ,64) ;
 		}
 
 		String<STRA> system_string_cvt (CREF<String<STRW>> obj) const {
@@ -234,6 +294,521 @@ trait STRINGPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				return String<STRW> () ;
 			const auto r1x = R1X () ;
 			return r1x (obj) ;
+		}
+
+		String<STRU8> string_cvt_u8_from_u16 (CREF<String<STRU16>> obj) const override {
+			String<STRU8> ret = String<STRU8> (obj.length () * 3) ;
+			INDEX ix = 0 ;
+			auto rax = ZERO ;
+			auto rbx = STRU32 () ;
+			for (auto &&i : obj) {
+				if (rax == NONE)
+					continue ;
+				auto act = TRUE ;
+				if ifswitch (act) {
+					if ifnot (rax == 0)
+						discard ;
+					if ifnot (i <= STRU16 (0X007F))
+						discard ;
+					ret[ix] = STRU8 (i) ;
+					ix++ ;
+				}
+				if ifswitch (act) {
+					if ifnot (rax == 0)
+						discard ;
+					if ifnot (i <= STRU16 (0X07FF))
+						discard ;
+					ret[ix] = (STRU8 (i >> 6) & STRU8 (0X1F)) | STRU8 (0XC0) ;
+					ix++ ;
+					ret[ix] = (STRU8 (i) & STRU8 (0X3F)) | STRU8 (0X80) ;
+					ix++ ;
+				}
+				if ifswitch (act) {
+					if ifnot (rax == 0)
+						discard ;
+					if ifnot (i >= STRU16 (0XD800))
+						discard ;
+					if ifnot (i <= STRU16 (0XDBFF))
+						discard ;
+					rbx = STRU32 (i & STRU16 (0X03FF)) ;
+					rax = 1 ;
+				}
+				if ifswitch (act) {
+					if ifnot (rax == 0)
+						discard ;
+					ret[ix] = (STRU8 (i >> 12) & STRU8 (0X0F)) | STRU8 (0XE0) ;
+					ix++ ;
+					ret[ix] = (STRU8 (i >> 6) & STRU8 (0X3F)) | STRU8 (0X80) ;
+					ix++ ;
+					ret[ix] = (STRU8 (i) & STRU8 (0X3F)) | STRU8 (0X80) ;
+					ix++ ;
+				}
+				if ifswitch (act) {
+					if ifnot (rax == 1)
+						discard ;
+					if ifnot (i >= STRU16 (0XDC00))
+						discard ;
+					if ifnot (i <= STRU16 (0XDFFF))
+						discard ;
+					rbx = STRU32 (((rbx << 10) | (i & STRU16 (0X03FF))) + STRU32 (0X00010000)) ;
+					ret[ix] = (STRU8 (rbx >> 18) & STRU8 (0X07)) | STRU8 (0XF0) ;
+					ix++ ;
+					ret[ix] = (STRU8 (rbx >> 12) & STRU8 (0X3F)) | STRU8 (0X80) ;
+					ix++ ;
+					ret[ix] = (STRU8 (rbx >> 6) & STRU8 (0X3F)) | STRU8 (0X80) ;
+					ix++ ;
+					ret[ix] = (STRU8 (rbx) & STRU8 (0X3F)) | STRU8 (0X80) ;
+					ix++ ;
+					rax = 0 ;
+				}
+				if ifswitch (act) {
+					ret.clear () ;
+					rax = NONE ;
+				}
+			}
+			if ifswitch (TRUE) {
+				if (rax == 0)
+					discard ;
+				ret[ix] = STRU8 ('?') ;
+				ix++ ;
+			}
+			ret.trunc (ix) ;
+			return move (ret) ;
+		}
+
+		String<STRU8> string_cvt_u8_from_u32 (CREF<String<STRU32>> obj) const override {
+			/*
+			*	1 bytes [0,0X7F] 0xxxxxxx
+			*	2 bytes [0x80,0X7FF] 110xxxxx 10xxxxxx
+			*	3 bytes [0x800,0XFFFF] 1110xxxx 10xxxxxx 10xxxxxx
+			*	4 bytes [0x10000,0X1FFFFF] 11110xxx 10xxxxxx 10xxxxxx 10xxxxxx
+			*	5 bytes [0x200000,0X3FFFFFF] 111110xx 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx
+			*	6 bytes [0x4000000,0X7FFFFFFF] 1111110x 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx
+			*/
+			String<STRU8> ret = String<STRU8> (obj.length () * 6) ;
+			INDEX ix = 0 ;
+			auto rax = ZERO ;
+			for (auto &&i : obj) {
+				if (rax == NONE)
+					continue ;
+				auto act = TRUE ;
+				if ifswitch (act) {
+					if ifnot (rax == 0)
+						discard ;
+					if ifnot (i <= STRU32 (0X0000007F))
+						discard ;
+					ret[ix] = STRU8 (i) ;
+					ix++ ;
+				}
+				if ifswitch (act) {
+					if ifnot (rax == 0)
+						discard ;
+					if ifnot (i <= STRU32 (0X000007FF))
+						discard ;
+					ret[ix] = (STRU8 (i >> 6) & STRU8 (0X1F)) | STRU8 (0XC0) ;
+					ix++ ;
+					ret[ix] = (STRU8 (i) & STRU8 (0X3F)) | STRU8 (0X80) ;
+					ix++ ;
+				}
+				if ifswitch (act) {
+					if ifnot (rax == 0)
+						discard ;
+					if ifnot (i <= STRU32 (0X0000FFFF))
+						discard ;
+					ret[ix] = (STRU8 (i >> 12) & STRU8 (0X0F)) | STRU8 (0XE0) ;
+					ix++ ;
+					ret[ix] = (STRU8 (i >> 6) & STRU8 (0X3F)) | STRU8 (0X80) ;
+					ix++ ;
+					ret[ix] = (STRU8 (i) & STRU8 (0X3F)) | STRU8 (0X80) ;
+					ix++ ;
+				}
+				if ifswitch (act) {
+					if ifnot (rax == 0)
+						discard ;
+					if ifnot (i <= STRU32 (0X001FFFFF))
+						discard ;
+					ret[ix] = (STRU8 (i >> 18) & STRU8 (0X07)) | STRU8 (0XF0) ;
+					ix++ ;
+					ret[ix] = (STRU8 (i >> 12) & STRU8 (0X3F)) | STRU8 (0X80) ;
+					ix++ ;
+					ret[ix] = (STRU8 (i >> 6) & STRU8 (0X3F)) | STRU8 (0X80) ;
+					ix++ ;
+					ret[ix] = (STRU8 (i) & STRU8 (0X3F)) | STRU8 (0X80) ;
+					ix++ ;
+				}
+				if ifswitch (act) {
+					if ifnot (rax == 0)
+						discard ;
+					if ifnot (i <= STRU32 (0X03FFFFFF))
+						discard ;
+					ret[ix] = (STRU8 (i >> 24) & STRU8 (0X03)) | STRU8 (0XF8) ;
+					ix++ ;
+					ret[ix] = (STRU8 (i >> 18) & STRU8 (0X3F)) | STRU8 (0X80) ;
+					ix++ ;
+					ret[ix] = (STRU8 (i >> 12) & STRU8 (0X3F)) | STRU8 (0X80) ;
+					ix++ ;
+					ret[ix] = (STRU8 (i >> 6) & STRU8 (0X3F)) | STRU8 (0X80) ;
+					ix++ ;
+					ret[ix] = (STRU8 (i) & STRU8 (0X3F)) | STRU8 (0X80) ;
+					ix++ ;
+				}
+				if ifswitch (act) {
+					if ifnot (rax == 0)
+						discard ;
+					if ifnot (i <= STRU32 (0X7FFFFFFF))
+						discard ;
+					ret[ix] = (STRU8 (i >> 30) & STRU8 (0X01)) | STRU8 (0XFC) ;
+					ix++ ;
+					ret[ix] = (STRU8 (i >> 24) & STRU8 (0X3F)) | STRU8 (0X80) ;
+					ix++ ;
+					ret[ix] = (STRU8 (i >> 18) & STRU8 (0X3F)) | STRU8 (0X80) ;
+					ix++ ;
+					ret[ix] = (STRU8 (i >> 12) & STRU8 (0X3F)) | STRU8 (0X80) ;
+					ix++ ;
+					ret[ix] = (STRU8 (i >> 6) & STRU8 (0X3F)) | STRU8 (0X80) ;
+					ix++ ;
+					ret[ix] = (STRU8 (i) & STRU8 (0X3F)) | STRU8 (0X80) ;
+					ix++ ;
+				}
+				if ifswitch (act) {
+					ret.clear () ;
+					rax = NONE ;
+				}
+			}
+			ret.trunc (ix) ;
+			return move (ret) ;
+		}
+
+		String<STRU16> string_cvt_u16_from_u8 (CREF<String<STRU8>> obj) const override {
+			String<STRU16> ret = String<STRU16> (obj.length ()) ;
+			INDEX ix = 0 ;
+			auto rax = ZERO ;
+			auto rbx = STRU32 () ;
+			for (auto &&i : obj) {
+				if (rax == NONE)
+					continue ;
+				if ifswitch (TRUE) {
+					auto act = TRUE ;
+					if ifswitch (act) {
+						if ifnot (rax == 0)
+							discard ;
+						if ifnot (i <= STRU8 (0X7F))
+							discard ;
+						ret[ix] = STRU16 (i) ;
+						ix++ ;
+					}
+					if ifswitch (act) {
+						if ifnot (rax == 0)
+							discard ;
+						if ifnot (i <= STRU8 (0XDF))
+							discard ;
+						rbx = STRU32 (i & STRU8 (0X1F)) ;
+						rax = 1 ;
+					}
+					if ifswitch (act) {
+						if ifnot (rax == 0)
+							discard ;
+						if ifnot (i <= STRU8 (0XEF))
+							discard ;
+						rbx = STRU32 (i & STRU8 (0X0F)) ;
+						rax = 2 ;
+					}
+					if ifswitch (act) {
+						if ifnot (rax == 0)
+							discard ;
+						if ifnot (i <= STRU8 (0XF7))
+							discard ;
+						rbx = STRU32 (i & STRU8 (0X07)) ;
+						rax = 3 ;
+					}
+					if ifswitch (act) {
+						if ifnot (rax == 0)
+							discard ;
+						if ifnot (i <= STRU8 (0XFB))
+							discard ;
+						rbx = STRU32 (i & STRU8 (0X03)) ;
+						rax = 4 ;
+					}
+					if ifswitch (act) {
+						if ifnot (rax == 0)
+							discard ;
+						if ifnot (i <= STRU8 (0XFD))
+							discard ;
+						rbx = STRU32 (i & STRU8 (0X01)) ;
+						rax = 5 ;
+					}
+					if ifswitch (act) {
+						if ifnot (rax == 1)
+							discard ;
+						if ifnot (i <= STRU8 (0XBF))
+							discard ;
+						rbx = STRU32 ((rbx << 6) | (i & STRU8 (0X3F))) ;
+						rax = 10 ;
+					}
+					if ifswitch (act) {
+						if ifnot (vbetween (rax ,2 ,6))
+							discard ;
+						if ifnot (i <= STRU8 (0XBF))
+							discard ;
+						rbx = STRU32 ((rbx << 6) | (i & STRU8 (0X3F))) ;
+						rax-- ;
+					}
+					if ifswitch (act) {
+						ret.clear () ;
+						rax = NONE ;
+					}
+				}
+				if ifswitch (TRUE) {
+					if (rax != 10)
+						discard ;
+					auto act = TRUE ;
+					if ifswitch (act) {
+						if ifnot (rbx <= STRU32 (0X0000FFFF))
+							discard ;
+						ret[ix] = STRU16 (rbx) ;
+						ix++ ;
+						rax = 0 ;
+					}
+					if ifswitch (act) {
+						if ifnot (rbx <= STRU32 (0X0010FFFF))
+							discard ;
+						rbx = STRU32 (rbx - STRU32 (0X00010000)) ;
+						ret[ix] = (STRU16 (rbx >> 10) & STRU16 (0X03FF)) | STRU16 (0XD800) ;
+						ix++ ;
+						ret[ix] = (STRU16 (rbx) & STRU16 (0X03FF)) | STRU16 (0XDC00) ;
+						ix++ ;
+						rax = 0 ;
+					}
+					if ifswitch (act) {
+						if ifnot (rbx <= STRU32 (0X7FFFFFFF))
+							discard ;
+						ret[ix] = STRU16 ('?') ;
+						ix++ ;
+						rax = 0 ;
+					}
+					if ifswitch (act) {
+						ret.clear () ;
+						rax = NONE ;
+					}
+				}
+			}
+			if ifswitch (TRUE) {
+				if (rax == 0)
+					discard ;
+				ret[ix] = STRU16 ('?') ;
+				ix++ ;
+			}
+			ret.trunc (ix) ;
+			return move (ret) ;
+		}
+
+		String<STRU16> string_cvt_u16_from_u32 (CREF<String<STRU32>> obj) const override {
+			/*
+			*	utf16 surrogate pairs [D800,DBFF] 110110xx xxxxxxxx [DC00,DFFF] 110111xx xxxxxxxx
+			*	utf16-utf32 surrogate pairs [0X10000,0X10FFFF]-[0,0XFFFFF] 0000xxxx xxxxxxxx xxxxxxxx
+			*/
+			String<STRU16> ret = String<STRU16> (obj.length () * 2) ;
+			INDEX ix = 0 ;
+			auto rax = ZERO ;
+			for (auto &&i : obj) {
+				if (rax == NONE)
+					continue ;
+				auto act = TRUE ;
+				if ifswitch (act) {
+					if ifnot (rax == 0)
+						discard ;
+					if ifnot (i <= STRU32 (0X0000FFFF))
+						discard ;
+					ret[ix] = STRU16 (i) ;
+					ix++ ;
+				}
+				if ifswitch (act) {
+					if ifnot (rax == 0)
+						discard ;
+					if ifnot (i <= STRU32 (0X0010FFFF))
+						discard ;
+					ret[ix] = (STRU16 ((i - STRU32 (0X00010000)) >> 10) & STRU16 (0X03FF)) | STRU16 (0XD800) ;
+					ix++ ;
+					ret[ix] = (STRU16 (i - STRU32 (0X00010000)) & STRU16 (0X03FF)) | STRU16 (0XDC00) ;
+					ix++ ;
+				}
+				if ifswitch (act) {
+					if ifnot (rax == 0)
+						discard ;
+					if ifnot (i <= STRU32 (0X7FFFFFFF))
+						discard ;
+					ret[ix] = STRU16 ('?') ;
+					ix++ ;
+				}
+				if ifswitch (act) {
+					ret.clear () ;
+					rax = NONE ;
+				}
+			}
+			ret.trunc (ix) ;
+			return move (ret) ;
+		}
+
+		String<STRU32> string_cvt_u32_from_u8 (CREF<String<STRU8>> obj) const override {
+			/*
+			*	1 bytes [0,0X7F] 0xxxxxxx
+			*	2 bytes [0x80,0X7FF] 110xxxxx 10xxxxxx
+			*	3 bytes [0x800,0XFFFF] 1110xxxx 10xxxxxx 10xxxxxx
+			*	4 bytes [0x10000,0X1FFFFF] 11110xxx 10xxxxxx 10xxxxxx 10xxxxxx
+			*	5 bytes [0x200000,0X3FFFFFF] 111110xx 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx
+			*	6 bytes [0x4000000,0X7FFFFFFF] 1111110x 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx
+			*/
+			String<STRU32> ret = String<STRU32> (obj.length ()) ;
+			INDEX ix = 0 ;
+			auto rax = ZERO ;
+			auto rbx = STRU32 () ;
+			for (auto &&i : obj) {
+				if (rax == NONE)
+					continue ;
+				auto act = TRUE ;
+				if ifswitch (act) {
+					if ifnot (rax == 0)
+						discard ;
+					if ifnot (i <= STRU8 (0X7F))
+						discard ;
+					ret[ix] = STRU32 (i) ;
+					ix++ ;
+				}
+				if ifswitch (act) {
+					if ifnot (rax == 0)
+						discard ;
+					if ifnot (i <= STRU8 (0XDF))
+						discard ;
+					rbx = STRU32 (i & STRU8 (0X1F)) ;
+					rax = 1 ;
+				}
+				if ifswitch (act) {
+					if ifnot (rax == 0)
+						discard ;
+					if ifnot (i <= STRU8 (0XEF))
+						discard ;
+					rbx = STRU32 (i & STRU8 (0X0F)) ;
+					rax = 2 ;
+				}
+				if ifswitch (act) {
+					if ifnot (rax == 0)
+						discard ;
+					if ifnot (i <= STRU8 (0XF7))
+						discard ;
+					rbx = STRU32 (i & STRU8 (0X07)) ;
+					rax = 3 ;
+				}
+				if ifswitch (act) {
+					if ifnot (rax == 0)
+						discard ;
+					if ifnot (i <= STRU8 (0XFB))
+						discard ;
+					rbx = STRU32 (i & STRU8 (0X03)) ;
+					rax = 4 ;
+				}
+				if ifswitch (act) {
+					if ifnot (rax == 0)
+						discard ;
+					if ifnot (i <= STRU8 (0XFD))
+						discard ;
+					rbx = STRU32 (i & STRU8 (0X01)) ;
+					rax = 5 ;
+				}
+				if ifswitch (act) {
+					if ifnot (rax == 1)
+						discard ;
+					if ifnot (i <= STRU8 (0XBF))
+						discard ;
+					rbx = STRU32 ((rbx << 6) | (i & STRU8 (0X3F))) ;
+					ret[ix] = rbx ;
+					ix++ ;
+					rax = 0 ;
+				}
+				if ifswitch (act) {
+					if ifnot (vbetween (rax ,2 ,6))
+						discard ;
+					if ifnot (i <= STRU8 (0XBF))
+						discard ;
+					rbx = STRU32 ((rbx << 6) | (i & STRU8 (0X3F))) ;
+					rax-- ;
+				}
+				if ifswitch (act) {
+					ret.clear () ;
+					rax = NONE ;
+				}
+			}
+			if ifswitch (TRUE) {
+				if (rax == 0)
+					discard ;
+				ret[ix] = STRU32 ('?') ;
+				ix++ ;
+			}
+			ret.trunc (ix) ;
+			return move (ret) ;
+		}
+
+		String<STRU32> string_cvt_u32_from_u16 (CREF<String<STRU16>> obj) const override {
+			/*
+			*	utf16 surrogate pairs [D800,DBFF] 110110xx xxxxxxxx [DC00,DFFF] 110111xx xxxxxxxx
+			*	utf16-utf32 surrogate pairs [0X10000,0X10FFFF]-[0,0XFFFFF] 0000xxxx xxxxxxxx xxxxxxxx
+			*/
+			String<STRU32> ret = String<STRU32> (obj.length ()) ;
+			INDEX ix = 0 ;
+			auto rax = ZERO ;
+			auto rbx = STRU32 () ;
+			for (auto &&i : obj) {
+				if (rax == NONE)
+					continue ;
+				auto act = TRUE ;
+				if ifswitch (act) {
+					if ifnot (rax == 0)
+						discard ;
+					if ifnot (i <= STRU16 (0X07FF))
+						discard ;
+					ret[ix] = STRU32 (i) ;
+					ix++ ;
+				}
+				if ifswitch (act) {
+					if ifnot (rax == 0)
+						discard ;
+					if ifnot (i >= STRU16 (0XD800))
+						discard ;
+					if ifnot (i <= STRU16 (0XDBFF))
+						discard ;
+					rbx = STRU32 (i & STRU16 (0X03FF)) ;
+					rax = 1 ;
+				}
+				if ifswitch (act) {
+					if ifnot (rax == 0)
+						discard ;
+					ret[ix] = STRU32 (i) ;
+					ix++ ;
+				}
+				if ifswitch (act) {
+					if ifnot (rax == 1)
+						discard ;
+					if ifnot (i >= STRU16 (0XDC00))
+						discard ;
+					if ifnot (i <= STRU16 (0XDFFF))
+						discard ;
+					rbx = STRU32 (((rbx << 10) | (i & STRU16 (0X03FF))) + STRU32 (0X00010000)) ;
+					ret[ix] = rbx ;
+					ix++ ;
+					rax = 0 ;
+				}
+				if ifswitch (act) {
+					ret.clear () ;
+					rax = NONE ;
+				}
+			}
+			if ifswitch (TRUE) {
+				if (rax == 0)
+					discard ;
+				ret[ix] = STRU32 ('?') ;
+				ix++ ;
+			}
+			ret.trunc (ix) ;
+			return move (ret) ;
 		}
 	} ;
 } ;
@@ -390,7 +965,7 @@ trait ESCAPESTRING_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			for (auto &&i : text) {
 				auto act = TRUE ;
 				if ifswitch (act) {
-					const auto r2x = r1x.escape_cast (i) ;
+					const auto r2x = r1x.escape_word_cast (i) ;
 					if ifnot (r2x.available ())
 						discard ;
 					writer << slice ("\\") ;

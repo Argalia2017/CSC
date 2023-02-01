@@ -25,9 +25,8 @@ trait IMAGEITERATOR_HELP<DEPEND ,ALWAYS> {
 	class ImageIterator {
 	protected:
 		Array<LENGTH ,RANK2> mWidth ;
-		LENGTH mSize ;
 		PIXEL mPixel ;
-		BOOL mGood ;
+		BOOL mBad ;
 
 	public:
 		implicit ImageIterator () = delete ;
@@ -35,14 +34,9 @@ trait IMAGEITERATOR_HELP<DEPEND ,ALWAYS> {
 		explicit ImageIterator (CREF<LENGTH> cx_ ,CREF<LENGTH> cy_) {
 			mWidth[0] = cx_ ;
 			mWidth[1] = cy_ ;
-			mSize = mWidth[0] * mWidth[1] ;
 			mPixel.x = 0 ;
 			mPixel.y = 0 ;
-			mGood = BOOL (mSize > 0) ;
-		}
-
-		LENGTH length () const {
-			return mSize ;
+			mBad = BOOL (rank () <= 0) ;
 		}
 
 		ImageIterator begin () const {
@@ -53,16 +47,20 @@ trait IMAGEITERATOR_HELP<DEPEND ,ALWAYS> {
 			return thiz ;
 		}
 
-		BOOL good () const {
-			return mGood ;
+		LENGTH rank () const {
+			return mWidth[0] * mWidth[1] ;
+		}
+
+		BOOL bad () const {
+			return mBad ;
 		}
 
 		inline BOOL operator== (CREF<ImageIterator>) const {
-			return ifnot (good ()) ;
+			return bad () ;
 		}
 
 		inline BOOL operator!= (CREF<ImageIterator>) const {
-			return good () ;
+			return ifnot (bad ()) ;
 		}
 
 		CREF<PIXEL> peek () const leftvalue {
@@ -82,7 +80,7 @@ trait IMAGEITERATOR_HELP<DEPEND ,ALWAYS> {
 			if (mPixel.y < mWidth[1])
 				return ;
 			mPixel.y = 0 ;
-			mGood = FALSE ;
+			mBad = TRUE ;
 		}
 
 		inline void operator++ () {

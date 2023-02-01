@@ -30,31 +30,31 @@ exports auto BUFFERPROC_HOLDER_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () 
 }
 
 template <class DEPEND>
-trait EASYMUTEX_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
-	using Holder = typename EASYMUTEX_HELP<DEPEND ,ALWAYS>::Holder ;
+trait PINMUTEX_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
+	using Holder = typename PINMUTEX_HELP<DEPEND ,ALWAYS>::Holder ;
 
 	class ImplHolder implement Holder {
 	protected:
-		std::mutex mMutex ;
+		Box<std::mutex> mMutex ;
 
 	public:
 		void initialize () override {
-			noop () ;
+			mMutex = Box<std::mutex>::make () ;
 		}
 
 		void enter () override {
-			mMutex.lock () ;
+			mMutex->lock () ;
 		}
 
 		void leave () override {
-			mMutex.unlock () ;
+			mMutex->unlock () ;
 		}
 	} ;
 } ;
 
 template <>
-exports auto EASYMUTEX_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->Box<FakeHolder> {
-	using R1X = typename EASYMUTEX_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
+exports auto PINMUTEX_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->Box<FakeHolder> {
+	using R1X = typename PINMUTEX_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	Box<FakeHolder> ret ;
 	ret.acquire (TYPEAS<R1X>::expr) ;
 	return move (ret) ;

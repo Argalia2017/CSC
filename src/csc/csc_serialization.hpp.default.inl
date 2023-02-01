@@ -6,13 +6,13 @@
 
 #include "csc_serialization.hpp"
 
+namespace CSC {
 template <class...>
 trait XMLPARSER_SERIALIZATION_HELP ;
 
 template <class...>
 trait XMLPARSER_COMBINATION_HELP ;
 
-namespace CSC {
 template <class DEPEND>
 trait XMLPARSER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	using Holder = typename XMLPARSER_HELP<DEPEND ,ALWAYS>::Holder ;
@@ -56,6 +56,12 @@ trait XMLPARSER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			mIndex = 0 ;
 		}
 
+		XmlParser clone () const override {
+			if ifnot (available ())
+				return factory (NONE) ;
+			return factory (mIndex) ;
+		}
+
 		XmlParser factory (CREF<INDEX> index) const {
 			auto rax = Box<FakeHolder> () ;
 			rax.acquire (TYPEAS<ImplHolder>::expr) ;
@@ -71,12 +77,6 @@ trait XMLPARSER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			if (mIndex == NONE)
 				return FALSE ;
 			return TRUE ;
-		}
-
-		XmlParser clone () const override {
-			if ifnot (available ())
-				return factory (NONE) ;
-			return factory (mIndex) ;
 		}
 
 		XmlParser root () const override {
@@ -324,9 +324,8 @@ trait XMLPARSER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 
 		Set<INDEX> shrink_order () const {
 			Set<INDEX> ret = Set<INDEX> (mTree.length ()) ;
-			for (auto &&i : mTree.iter ()) {
+			for (auto &&i : mTree.iter ())
 				ret.add (i ,ret.length ()) ;
-			}
 			return move (ret) ;
 		}
 
@@ -655,19 +654,9 @@ trait XMLPARSER_COMBINATION_HELP<DEPEND ,ALWAYS> {
 		Set<INDEX> shrink_order () const {
 			Set<INDEX> ret = Set<INDEX> (mTree.length ()) ;
 			ret.add (mRoot ,ret.length ()) ;
-			for (auto &&i : mTree.iter ()) {
+			for (auto &&i : mTree.iter ())
 				ret.add (i ,ret.length ()) ;
-			}
 			return move (ret) ;
-		}
-
-		XmlParser factory (CREF<CRef<HEAP>> heap) const {
-			auto rax = Box<FakeHolder> () ;
-			rax.acquire (TYPEAS<ImplHolder>::expr) ;
-			auto &&tmp = keep[TYPEAS<VREF<ImplHolder>>::expr] (keep[TYPEAS<VREF<Holder>>::expr] (rax.self)) ;
-			tmp.mHeap = heap ;
-			tmp.mIndex = 0 ;
-			return XmlParser (move (rax)) ;
 		}
 
 		FLAG node_type (CREF<XmlParser> node) const {
@@ -926,6 +915,12 @@ trait JSONPARSER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			mIndex = 0 ;
 		}
 
+		JsonParser clone () const override {
+			if ifnot (available ())
+				return factory (NONE) ;
+			return factory (mIndex) ;
+		}
+
 		JsonParser factory (CREF<INDEX> index) const {
 			auto rax = Box<FakeHolder> () ;
 			rax.acquire (TYPEAS<ImplHolder>::expr) ;
@@ -955,12 +950,6 @@ trait JSONPARSER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 
 		BOOL object_type () const override {
 			return mHeap->mTree[mIndex].mClazz == NODE_CLAZZ_OBJECT::expr ;
-		}
-
-		JsonParser clone () const override {
-			if ifnot (available ())
-				return factory (NONE) ;
-			return factory (mIndex) ;
 		}
 
 		JsonParser root () const override {
@@ -1183,9 +1172,8 @@ trait JSONPARSER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 
 		Set<INDEX> shrink_order () const {
 			Set<INDEX> ret = Set<INDEX> (mTree.length ()) ;
-			for (auto &&i : mTree.iter ()) {
+			for (auto &&i : mTree.iter ())
 				ret.add (i ,ret.length ()) ;
-			}
 			return move (ret) ;
 		}
 
@@ -1193,8 +1181,7 @@ trait JSONPARSER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 			/*
 			*	$0->$11 $10 $12
 			*	$1->${scalar}
-			*	$2->true|TRUE|false|FALSE
-			*	$2x->null
+			*	$2->true|false|null
 			*	$3->"${string}"
 			*	$4->$1|$2|$2x|$3|$6|$9
 			*	$5->$4|$4 , $5
@@ -1226,7 +1213,7 @@ trait JSONPARSER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 			mReader >> HINT_SCALAR >> mLastString ;
 		}
 
-		//@info: $2->true|TRUE|false|FALSE
+		//@info: $2->true|false
 		void read_shift_e2 () {
 			auto act = TRUE ;
 			if ifswitch (act) {
@@ -1236,32 +1223,20 @@ trait JSONPARSER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 				mLastString = PrintString<STRU8>::make (slice ("true")) ;
 			}
 			if ifswitch (act) {
-				if ifnot (mReader[0] == STRU8 ('T'))
-					discard ;
-				mReader >> slice ("TRUE") ;
-				mLastString = PrintString<STRU8>::make (slice ("TRUE")) ;
-			}
-			if ifswitch (act) {
 				if ifnot (mReader[0] == STRU8 ('f'))
 					discard ;
 				mReader >> slice ("false") ;
 				mLastString = PrintString<STRU8>::make (slice ("false")) ;
 			}
 			if ifswitch (act) {
-				if ifnot (mReader[0] == STRU8 ('F'))
+				if ifnot (mReader[0] == STRU8 ('n'))
 					discard ;
-				mReader >> slice ("FALSE") ;
-				mLastString = PrintString<STRU8>::make (slice ("FALSE")) ;
+				mReader >> slice ("null") ;
+				mLastString = String<STRU8> () ;
 			}
 			if ifswitch (act) {
 				assume (FALSE) ;
 			}
-		}
-
-		//@info: $2x->null
-		void read_shift_e2x () {
-			mReader >> slice ("null") ;
-			mLastString = String<STRU8> () ;
 		}
 
 		//@info: $3->"${string}"
@@ -1301,7 +1276,7 @@ trait JSONPARSER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 				if ifnot (mReader[0] == STRU8 ('n'))
 					discard ;
 				ix = mTree.insert () ;
-				read_shift_e2x () ;
+				read_shift_e2 () ;
 				mTree[ix].mClazz = NODE_CLAZZ_NULL::expr ;
 				mTree[ix].mParent = curr ;
 				mTree[ix].mBrother = NONE ;
@@ -1350,11 +1325,7 @@ trait JSONPARSER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 		BOOL is_first_of_boolean () const {
 			if (mReader[0] == STRU8 ('t'))
 				return TRUE ;
-			if (mReader[0] == STRU8 ('T'))
-				return TRUE ;
 			if (mReader[0] == STRU8 ('f'))
-				return TRUE ;
-			if (mReader[0] == STRU8 ('F'))
 				return TRUE ;
 			return FALSE ;
 		}

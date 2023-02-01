@@ -10,7 +10,7 @@ namespace CSC {
 template <class DEPEND>
 trait WORKTHREAD_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	using Holder = typename WORKTHREAD_HELP<DEPEND ,ALWAYS>::Holder ;
-	using Binder = typename THREAD_HELP<DEPEND ,ALWAYS>::VarBinder ;
+	using Binder = typename THREAD_HELP<DEPEND ,ALWAYS>::Binder ;
 
 	using THREAD_QUEUE_SIZE = ENUMAS<VAL ,65536> ;
 
@@ -85,6 +85,10 @@ trait WORKTHREAD_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 					mThreadQueue[slot].take () ;
 				}) ;
 			}
+		}
+
+		void friend_execute (CREF<INDEX> slot) const override {
+			assert (FALSE) ;
 		}
 
 		void poll (CREF<INDEX> slot) {
@@ -340,6 +344,10 @@ trait CALCTHREAD_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			}
 		}
 
+		void friend_execute (CREF<INDEX> slot) const override {
+			assert (FALSE) ;
+		}
+
 		BitSet<> bitset_xor (CREF<BitSet<>> bitset1 ,CREF<BitSet<>> bitset2) const {
 			if (bitset1.size () == 0)
 				return bitset2 ;
@@ -403,7 +411,7 @@ trait CALCTHREAD_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			mThreadJoin.erase (slot) ;
 		}
 
-		SOLUTION best () const override {
+		SOLUTION best () override {
 			Scope<Mutex> anonymous (mThreadMutex) ;
 			return mBestSolution ;
 		}
@@ -461,7 +469,7 @@ exports auto CALCTHREAD_HOLDER_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () 
 template <class DEPEND>
 trait PROMISE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	using Holder = typename PROMISE_HELP<DEPEND ,ALWAYS>::Holder ;
-	using Binder = typename THREAD_HELP<DEPEND ,ALWAYS>::ConBinder ;
+	using Binder = typename THREAD_HELP<DEPEND ,ALWAYS>::Binder ;
 
 	struct HEAP {
 		Mutex mThreadMutex ;
@@ -481,6 +489,12 @@ trait PROMISE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		void initialize () override {
 			mHeap = SharedRef<HEAP>::make () ;
 			mHeap->mThreadMutex = ConditionalMutex::make () ;
+		}
+
+		VRef<Holder> clone () const override {
+			auto rax = VRef<ImplHolder>::make () ;
+			rax->mHeap = mHeap ;
+			return rax.as_cast (TYPEAS<Holder>::expr) ;
 		}
 
 		void finalize () override {
@@ -510,6 +524,10 @@ trait PROMISE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			mHeap->mException = NULL ;
 			mHeap->mThread = Thread (CRef<Binder>::reference (thiz) ,0) ;
 			mHeap->mThread.start () ;
+		}
+
+		void friend_execute (CREF<INDEX> slot) override {
+			assert (FALSE) ;
 		}
 
 		void friend_execute (CREF<INDEX> slot) const override {

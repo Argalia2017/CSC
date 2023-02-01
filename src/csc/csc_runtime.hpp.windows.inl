@@ -288,7 +288,7 @@ trait MODULE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				me = GetModuleHandle ((&r1x[0])) ;
 				if (me != NULL)
 					return ;
-				me = LoadLibrary ((&r1x[0])) ;
+				me = LoadLibrary ((&file[0])) ;
 				if (me != NULL)
 					return ;
 				const auto r2x = csc_enum_t (GetLastError ()) ;

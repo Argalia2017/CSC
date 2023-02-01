@@ -578,21 +578,17 @@ template <class DEPEND>
 trait INDEXITERATOR_HELP<DEPEND ,ALWAYS> {
 	class IndexIterator {
 	protected:
+		LENGTH mRank ;
 		INDEX mBegin ;
 		INDEX mEnd ;
-		INDEX mCurr ;
 
 	public:
 		implicit IndexIterator () = delete ;
 
 		explicit IndexIterator (CREF<INDEX> begin_ ,CREF<INDEX> end_) {
+			mRank = vmax (begin_ ,end_) - begin_ ;
 			mBegin = begin_ ;
-			mEnd = vmax (begin_ ,end_) ;
-			mCurr = mBegin ;
-		}
-
-		LENGTH length () const {
-			return mEnd - mBegin ;
+			mEnd = mBegin + mRank ;
 		}
 
 		IndexIterator begin () const {
@@ -603,20 +599,24 @@ trait INDEXITERATOR_HELP<DEPEND ,ALWAYS> {
 			return thiz ;
 		}
 
-		BOOL good () const {
-			return mCurr < mEnd ;
+		LENGTH rank () const {
+			return mRank ;
+		}
+
+		BOOL bad () const {
+			return mBegin == mEnd ;
 		}
 
 		inline BOOL operator== (CREF<IndexIterator>) const {
-			return ifnot (good ()) ;
+			return bad () ;
 		}
 
 		inline BOOL operator!= (CREF<IndexIterator>) const {
-			return good () ;
+			return ifnot (bad ()) ;
 		}
 
 		CREF<INDEX> peek () const leftvalue {
-			return mCurr ;
+			return mBegin ;
 		}
 
 		inline CREF<INDEX> operator* () const leftvalue {
@@ -624,7 +624,7 @@ trait INDEXITERATOR_HELP<DEPEND ,ALWAYS> {
 		}
 
 		void next () {
-			mCurr++ ;
+			mBegin++ ;
 		}
 
 		inline void operator++ () {
@@ -906,9 +906,9 @@ trait BOX_HOLDER_HELP<UNIT ,REQUIRE<IS_EXTEND<Interface ,UNIT>>> {
 			return template_vptr (PHX ,obj) ;
 		}
 
-		template <class ARG1 ,class = REQUIRE<IS_EXTEND<InterfaceTogether ,ARG1>>>
+		template <class ARG1 ,class = REQUIRE<IS_EXTEND<RootTogether ,ARG1>>>
 		imports FLAG template_vptr (CREF<typeof (PH2)> ,CREF<ARG1> obj) noexcept {
-			return bitwise[TYPEAS<FLAG>::expr] (keep[TYPEAS<CREF<InterfaceTogether>>::expr] (obj)) ;
+			return bitwise[TYPEAS<FLAG>::expr] (keep[TYPEAS<CREF<RootTogether>>::expr] (obj)) ;
 		}
 
 		template <class ARG1 ,class = REQUIRE<IS_EXTEND<Interface ,ARG1>>>
@@ -2273,55 +2273,6 @@ template <class UNIT>
 using CRef = typename CREF_HELP<UNIT ,ALWAYS>::CRef ;
 
 template <class...>
-trait STATICPROC_HELP ;
-
-template <class...>
-trait STATICPROC_IMPLHOLDER_HELP ;
-
-template <class DEPEND>
-trait STATICPROC_HELP<DEPEND ,ALWAYS> {
-	struct Holder implement Interface {
-		virtual void initialize () = 0 ;
-		virtual CRef<Proxy> link (CREF<FLAG> cabi) const = 0 ;
-		virtual void regi (CREF<FLAG> cabi ,VREF<CRef<Proxy>> addr) const = 0 ;
-	} ;
-
-	class FakeHolder implement Holder {
-	protected:
-		FLAG mPointer ;
-	} ;
-
-	struct FUNCTION_extern {
-		imports Box<FakeHolder> invoke () ;
-	} ;
-
-	class StaticProc {
-	protected:
-		Box<FakeHolder> mThis ;
-
-	public:
-		imports CREF<StaticProc> instance () {
-			return memorize ([&] () {
-				StaticProc ret ;
-				ret.mThis = FUNCTION_extern::invoke () ;
-				ret.mThis->initialize () ;
-				return move (ret) ;
-			}) ;
-		}
-
-		CRef<Proxy> link (CREF<FLAG> cabi) const {
-			return mThis->link (cabi) ;
-		}
-
-		void regi (CREF<FLAG> cabi ,VREF<CRef<Proxy>> addr) const {
-			return mThis->regi (cabi ,addr) ;
-		}
-	} ;
-} ;
-
-using StaticProc = typename STATICPROC_HELP<DEPEND ,ALWAYS>::StaticProc ;
-
-template <class...>
 trait AUTO_HELP ;
 
 template <class...>
@@ -2428,14 +2379,14 @@ template <class...>
 trait CAPTURE_HELP ;
 
 template <class...>
-trait VARIADIC_HELP ;
+trait CAPTUREITERATOR_HELP ;
 
 template <class PARAMS>
 trait CAPTURE_HELP<PARAMS ,REQUIRE<ENUM_EQ_ZERO<COUNT_OF<PARAMS>>>> {
 	class Capture {
 	private:
 		template <class...>
-		friend trait VARIADIC_HELP ;
+		friend trait CAPTUREITERATOR_HELP ;
 		using HELP = CAPTURE_HELP ;
 
 	public:
@@ -2456,7 +2407,7 @@ trait CAPTURE_HELP<TYPEAS<PARAM...> ,REQUIRE<ENUM_GT_ZERO<COUNT_OF<TYPEAS<PARAM.
 	class Capture {
 	private:
 		template <class...>
-		friend trait VARIADIC_HELP ;
+		friend trait CAPTUREITERATOR_HELP ;
 		using HELP = CAPTURE_HELP ;
 
 	protected:
@@ -2505,41 +2456,65 @@ trait CAPTURE_HELP<TYPEAS<PARAM...> ,REQUIRE<ENUM_GT_ZERO<COUNT_OF<TYPEAS<PARAM.
 } ;
 
 template <class UNIT>
-trait VARIADIC_HELP<UNIT ,ALWAYS> {
-	class Variadic {
+trait CAPTUREITERATOR_HELP<UNIT ,ALWAYS> {
+	class CaptureIterator {
 	protected:
+		LENGTH mRank ;
 		FLAG mBegin ;
 		FLAG mEnd ;
 
 	public:
-		implicit Variadic () = delete ;
+		implicit CaptureIterator () = delete ;
 
-		template <class ARG1 ,class = REQUIRE<ENUM_ALL<ENUM_NOT<IS_EXTEND<Variadic ,ARG1>> ,IS_SAME<ARG1 ,typename ARG1::HELP::Capture>>>>
-		implicit Variadic (RREF<ARG1> that) {
+		template <class ARG1 ,class = REQUIRE<ENUM_ALL<ENUM_NOT<IS_EXTEND<CaptureIterator ,ARG1>> ,IS_SAME<ARG1 ,typename ARG1::HELP::Capture>>>>
+		implicit CaptureIterator (RREF<ARG1> that) {
 			using R1X = typename ARG1::HELP::PARAMS ;
 			using R3X = TYPE_REPEAT<UNIT ,COUNT_OF<R1X>> ;
 			require (IS_SAME<R1X ,R3X>) ;
+			mRank = COUNT_OF<R1X>::expr ;
 			mBegin = address (that) ;
-			mEnd = mBegin + ENUM_MUL<COUNT_OF<R1X> ,SIZE_OF<FLAG>>::expr ;
+			mEnd = mBegin + mRank * SIZE_OF<FLAG>::expr ;
+		}
+
+		CaptureIterator begin () const {
+			return thiz ;
+		}
+
+		CaptureIterator end () const {
+			return thiz ;
 		}
 
 		LENGTH rank () const {
-			return (mEnd - mBegin) / SIZE_OF<FLAG>::expr ;
+			return mRank ;
 		}
 
-		BOOL empty () const {
+		BOOL bad () const {
 			return mBegin == mEnd ;
 		}
 
-		CREF<UNIT> one () const leftvalue {
+		inline BOOL operator== (CREF<CaptureIterator>) const {
+			return bad () ;
+		}
+
+		inline BOOL operator!= (CREF<CaptureIterator>) const {
+			return ifnot (bad ()) ;
+		}
+
+		CREF<UNIT> peek () const leftvalue {
 			auto &&tmp = unsafe_deref (unsafe_cast[TYPEAS<TEMP<FLAG>>::expr] (unsafe_pointer (mBegin))) ;
 			return unsafe_deref (unsafe_cast[TYPEAS<TEMP<UNIT>>::expr] (unsafe_pointer (tmp))) ;
 		}
 
-		Variadic rest () const leftvalue {
-			Variadic ret = thiz ;
-			ret.mBegin += SIZE_OF<FLAG>::expr ;
-			return move (ret) ;
+		inline CREF<UNIT> operator* () const leftvalue {
+			return peek () ;
+		}
+
+		void next () {
+			mBegin += SIZE_OF<FLAG>::expr ;
+		}
+
+		inline void operator++ () {
+			next () ;
 		}
 	} ;
 } ;
@@ -2548,7 +2523,7 @@ template <class...UNIT>
 using Capture = typename CAPTURE_HELP<TYPEAS<UNIT...> ,ALWAYS>::Capture ;
 
 template <class UNIT>
-using Variadic = typename VARIADIC_HELP<UNIT ,ALWAYS>::Variadic ;
+using CaptureIterator = typename CAPTUREITERATOR_HELP<UNIT ,ALWAYS>::CaptureIterator ;
 
 struct FUNCTION_capture {
 	template <class...ARG1>
@@ -2569,7 +2544,7 @@ template <class ITEM>
 trait SLICE_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 	struct Holder implement Interface {
 		virtual void initialize (CREF<csc_text_t> text) = 0 ;
-		virtual void initialize (CREF<CRef<Holder>> prefix ,CREF<csc_text_t> text) = 0 ;
+		virtual void initialize (RREF<CRef<Holder>> prefix ,CREF<csc_text_t> text) = 0 ;
 		virtual LENGTH size () const = 0 ;
 		virtual ITEM at (CREF<INDEX> index) const = 0 ;
 		virtual BOOL equal (CREF<Holder> that) const = 0 ;
@@ -2602,7 +2577,7 @@ trait SLICE_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 			using R1X = typename DEPENDENT<SLICE_HELP<ITEM ,ALWAYS> ,DEPEND>::FUNCTION_translation ;
 			const auto r1x = R1X () ;
 			auto rax = FUNCTION_extern::invoke () ;
-			rax->initialize (prefix.mThis ,r1x (text)) ;
+			rax->initialize (move (prefix.mThis) ,r1x (text)) ;
 			mThis = rax.as_cref () ;
 		}
 
