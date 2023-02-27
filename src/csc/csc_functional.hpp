@@ -62,7 +62,7 @@ trait SYNTAXTREE_HELP<DEPEND ,ALWAYS> {
 	public:
 		implicit SyntaxTree () = default ;
 
-		explicit SyntaxTree (CREF<typeof (PH0)>) {
+		explicit SyntaxTree (CREF<BoolProxy> ok) {
 			mThis = FUNCTION_extern::invoke () ;
 			mThis->initialize () ;
 		}
@@ -107,25 +107,23 @@ trait SYNTAXTREE_HELP<DEPEND ,ALWAYS> {
 
 		template <class ARG1>
 		CREF<ARG1> later (CREF<TYPEID<ARG1>> id) leftvalue {
-			return AutoRef<CRef<ARG1>>::from (mThis->later ())->self ;
+			return AutoRef<ARG1>::from (mThis->later ()).self ;
 		}
 
 		template <class ARG1 ,class ARG2>
-		void later (CREF<TYPEID<ARG1>> id ,LREF<ARG2> refer) {
+		void later (CREF<TYPEID<ARG1>> id ,XREF<ARG2> value_) {
+			using R1X = REMOVE_REF<ARG2> ;
 			const auto r1x = Clazz (id) ;
 			auto &&tmp = mThis->later (r1x) ;
-			auto rax = tmp.as_cast (TYPEAS<CRef<ARG2>>::expr) ;
+			auto rax = tmp.as_cast (TYPEAS<R1X>::expr) ;
 			if ifswitch (TRUE) {
 				if (rax.available ())
 					discard ;
-				rax = AutoRef<CRef<ARG2>>::make () ;
+				rax = AutoRef<R1X>::make () ;
 			}
-			rax.self = CRef<ARG2>::reference (refer) ;
+			rax.self = forward[TYPEAS<ARG2>::expr] (value_) ;
 			tmp = rax.as_cast (TYPEAS<void>::expr) ;
 		}
-
-		template <class ARG1 ,class ARG2>
-		void later (CREF<TYPEID<ARG1>> ,RREF<ARG2>) = delete ;
 
 		void play () {
 			return mThis->play () ;

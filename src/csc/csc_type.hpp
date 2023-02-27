@@ -395,16 +395,10 @@ template <class UNIT>
 using ENUM_EQ_ZERO = ENUM_EQUAL<UNIT ,ENUM_ZERO> ;
 
 template <class UNIT>
-using ENUM_LT_ZERO = ENUM_COMPR_LT<UNIT ,ENUM_ZERO> ;
-
-template <class UNIT>
 using ENUM_GT_ZERO = ENUM_COMPR_GT<UNIT ,ENUM_ZERO> ;
 
 template <class UNIT>
 using ENUM_EQ_IDEN = ENUM_EQUAL<UNIT ,ENUM_IDEN> ;
-
-template <class UNIT>
-using ENUM_LT_IDEN = ENUM_COMPR_LT<UNIT ,ENUM_IDEN> ;
 
 template <class UNIT>
 using ENUM_GT_IDEN = ENUM_COMPR_GT<UNIT ,ENUM_IDEN> ;
@@ -490,16 +484,16 @@ template <class UNIT ,class SIDE>
 using TYPE_CAT = typename TYPE_CAT_HELP<UNIT ,SIDE ,ALWAYS>::RET ;
 
 template <class...>
-trait REFLECT_TYPE_SPEC ;
+trait REMOVE_TYPE_SPEC ;
 
 template <class FIRST>
-trait REFLECT_TYPE_SPEC<TYPEAS<FIRST>> {
+trait REMOVE_TYPE_SPEC<TYPEAS<FIRST>> {
 	using FIRST_ONE = FIRST ;
 	using FIRST_REST = TYPEAS<> ;
 } ;
 
 template <class FIRST ,class SECOND>
-trait REFLECT_TYPE_SPEC<TYPEAS<FIRST ,SECOND>> {
+trait REMOVE_TYPE_SPEC<TYPEAS<FIRST ,SECOND>> {
 	using FIRST_ONE = FIRST ;
 	using FIRST_REST = TYPEAS<SECOND> ;
 	using SECOND_ONE = SECOND ;
@@ -507,7 +501,7 @@ trait REFLECT_TYPE_SPEC<TYPEAS<FIRST ,SECOND>> {
 } ;
 
 template <class FIRST ,class SECOND ,class THIRD ,class...REST>
-trait REFLECT_TYPE_SPEC<TYPEAS<FIRST ,SECOND ,THIRD ,REST...>> {
+trait REMOVE_TYPE_SPEC<TYPEAS<FIRST ,SECOND ,THIRD ,REST...>> {
 	using FIRST_ONE = FIRST ;
 	using FIRST_REST = TYPEAS<SECOND ,THIRD ,REST...> ;
 	using SECOND_ONE = SECOND ;
@@ -517,22 +511,22 @@ trait REFLECT_TYPE_SPEC<TYPEAS<FIRST ,SECOND ,THIRD ,REST...>> {
 } ;
 
 template <class UNIT>
-using TYPE_FIRST_ONE = typename REFLECT_TYPE_SPEC<UNIT>::FIRST_ONE ;
+using TYPE_FIRST_ONE = typename REMOVE_TYPE_SPEC<UNIT>::FIRST_ONE ;
 
 template <class UNIT>
-using TYPE_FIRST_REST = typename REFLECT_TYPE_SPEC<UNIT>::FIRST_REST ;
+using TYPE_FIRST_REST = typename REMOVE_TYPE_SPEC<UNIT>::FIRST_REST ;
 
 template <class UNIT>
-using TYPE_SECOND_ONE = typename REFLECT_TYPE_SPEC<UNIT>::SECOND_ONE ;
+using TYPE_SECOND_ONE = typename REMOVE_TYPE_SPEC<UNIT>::SECOND_ONE ;
 
 template <class UNIT>
-using TYPE_SECOND_REST = typename REFLECT_TYPE_SPEC<UNIT>::SECOND_REST ;
+using TYPE_SECOND_REST = typename REMOVE_TYPE_SPEC<UNIT>::SECOND_REST ;
 
 template <class UNIT>
-using TYPE_THIRD_ONE = typename REFLECT_TYPE_SPEC<UNIT>::THIRD_ONE ;
+using TYPE_THIRD_ONE = typename REMOVE_TYPE_SPEC<UNIT>::THIRD_ONE ;
 
 template <class UNIT>
-using TYPE_THIRD_REST = typename REFLECT_TYPE_SPEC<UNIT>::THIRD_REST ;
+using TYPE_THIRD_REST = typename REMOVE_TYPE_SPEC<UNIT>::THIRD_REST ;
 
 template <class...>
 trait TYPE_REVERSE_HELP ;
@@ -557,12 +551,6 @@ trait TYPE_REVERSE_HELP<UNIT ,REQUIRE<ENUM_GT_IDEN<COUNT_OF<UNIT>>>> {
 
 template <class UNIT>
 using TYPE_REVERSE = typename TYPE_REVERSE_HELP<UNIT ,ALWAYS>::RET ;
-
-template <class UNIT>
-using TYPE_LAST_ONE = TYPE_FIRST_ONE<TYPE_REVERSE<UNIT>> ;
-
-template <class UNIT>
-using TYPE_LAST_REST = TYPE_REVERSE<TYPE_FIRST_REST<TYPE_REVERSE<UNIT>>> ;
 
 template <class...>
 trait TYPE_REPEAT_HELP ;
@@ -852,22 +840,22 @@ trait REFLECT_REF_SPEC<UNIT ,SIDE> {
 } ;
 
 template <class UNIT>
-trait REFLECT_REF_SPEC<UNIT ,VREF<REMOVE_REF<UNIT>>> {
+trait REFLECT_REF_SPEC<UNIT ,VREF<UNIT>> {
 	using RET = VARIABLE ;
 } ;
 
 template <class UNIT>
-trait REFLECT_REF_SPEC<UNIT ,CREF<REMOVE_REF<UNIT>>> {
+trait REFLECT_REF_SPEC<UNIT ,CREF<UNIT>> {
 	using RET = CONSTANT ;
 } ;
 
 template <class UNIT>
-trait REFLECT_REF_SPEC<UNIT ,RREF<REMOVE_REF<UNIT>>> {
+trait REFLECT_REF_SPEC<UNIT ,RREF<UNIT>> {
 	using RET = REGISTER ;
 } ;
 
 template <class UNIT>
-using REFLECT_REF = typename REFLECT_REF_SPEC<XREF<UNIT> ,UNIT>::RET ;
+using REFLECT_REF = typename REFLECT_REF_SPEC<REMOVE_REF<UNIT> ,UNIT>::RET ;
 
 template <class UNIT>
 using IS_VARIABLE = IS_SAME<REFLECT_REF<UNIT> ,VARIABLE> ;
@@ -891,12 +879,12 @@ trait REFLECT_POINTER_SPEC<UNIT> {
 
 template <class UNIT>
 trait REFLECT_POINTER_SPEC<DEF<UNIT *>> {
-	using RET = TYPEAS<UNIT> ;
+	using RET = TYPEAS<UNIT ,VARIABLE> ;
 } ;
 
 template <class UNIT>
 trait REFLECT_POINTER_SPEC<DEF<const UNIT *>> {
-	using RET = TYPEAS<UNIT> ;
+	using RET = TYPEAS<UNIT ,CONSTANT> ;
 } ;
 
 template <class UNIT>
@@ -1119,7 +1107,7 @@ template <class FROM ,class INTO>
 using IS_EXTEND = typename IS_EXTEND_HELP<FROM ,INTO ,ALWAYS>::RET ;
 
 template <class UNIT>
-using IS_PLACEHOLDER = IS_EXTEND<UNIT ,DEF<typeof (PH0)>> ;
+using IS_PLACEHOLDER = IS_EXTEND<DEF<typeof (PH0)> ,UNIT> ;
 
 template <class...>
 trait TOGETHER_HELP ;
@@ -1386,21 +1374,4 @@ trait ENUM_BETWEEN_HELP<CURR ,BEGIN ,END ,ALWAYS> {
 
 template <class CURR ,class BEGIN ,class END>
 using ENUM_BETWEEN = typename ENUM_BETWEEN_HELP<CURR ,BEGIN ,END ,ALWAYS>::RET ;
-
-template <class...>
-trait ENUM_POW2_HELP ;
-
-template <class UNIT>
-trait ENUM_POW2_HELP<UNIT ,REQUIRE<ENUM_EQ_ZERO<UNIT>>> {
-	using RET = ENUM_IDEN ;
-} ;
-
-template <class UNIT>
-trait ENUM_POW2_HELP<UNIT ,REQUIRE<ENUM_GT_ZERO<UNIT>>> {
-	using R1X = typename ENUM_POW2_HELP<ENUM_DEC<UNIT> ,ALWAYS>::RET ;
-	using RET = ENUM_MUL<R1X ,RANK2> ;
-} ;
-
-template <class UNIT>
-using ENUM_POW2 = typename ENUM_POW2_HELP<UNIT ,ALWAYS>::RET ;
 } ;

@@ -107,8 +107,7 @@
   <Type Name="CSC::WATCH_HELP&lt;*&gt;::WATCH">
     <Expand HideRawView="true">
       <Item Name="[name]">mName</Item>
-      <Item Name="[value]" Condition="mPointer==0">(int*)0</Item>
-      <Item Name="[value]" Condition="mPointer!=0">($T1*)mPointer</Item>
+      <ExpandedItem>mValue</ExpandedItem>
     </Expand>
   </Type>
 
@@ -270,7 +269,7 @@
     <DisplayString Condition="mNext!=-2">{{???}}</DisplayString>
     <Expand HideRawView="true">
       <ExpandedItem Condition="mNext!=-2">(int*)0</ExpandedItem>
-      <ExpandedItem Condition="mNext==-2">&amp;mItem</ExpandedItem>
+      <ExpandedItem Condition="mNext==-2">mItem</ExpandedItem>
     </Expand>
   </Type>
 
@@ -342,7 +341,7 @@
 
   <Type Name="CSC::DEQUE_HOLDER_HELP&lt;*&gt;::NODE">
     <Expand HideRawView="true">
-      <ExpandedItem>mItem</ExpandedItem>
+      <ExpandedItem>&amp;mItem</ExpandedItem>
     </Expand>
   </Type>
 
@@ -371,7 +370,7 @@
 
   <Type Name="CSC::LIST_HOLDER_HELP&lt;*&gt;::NODE">
     <Expand HideRawView="true">
-      <ExpandedItem>mItem</ExpandedItem>
+      <ExpandedItem>&amp;mItem</ExpandedItem>
     </Expand>
   </Type>
 
@@ -384,7 +383,7 @@
 
   <Type Name="CSC::ARRAYLIST_HOLDER_HELP&lt;*&gt;::NODE">
     <Expand HideRawView="true">
-      <ExpandedItem>mItem</ExpandedItem>
+      <ExpandedItem>&amp;mItem</ExpandedItem>
     </Expand>
   </Type>
 
@@ -416,10 +415,20 @@
     </Expand>
   </Type>
 
-  <Type Name="CSC::HASHSET_HOLDER_HELP&lt;*&gt;::NODE">
+  <Type Name="CSC::HASHSET_HELP&lt;*&gt;::NODE">
     <Expand HideRawView="true">
       <Item Name="[key]">mItem</Item>
       <Item Name="[map]">mMap</Item>
+    </Expand>
+  </Type>
+
+  <Type Name="CSC::IMAGE_HELP&lt;*&gt;::Image">
+    <Expand HideRawView="true">
+      <Item Name="[cx]">mCX</Item>
+      <Item Name="[cy]">mCY</Item>
+      <Item Name="[cw]">mCW</Item>
+      <Item Name="[ck]">mCK</Item>
+      <ExpandedItem>mImage</ExpandedItem>
     </Expand>
   </Type>
 
@@ -438,6 +447,18 @@
         <Size>4</Size>
         <ValuePointer>($T1(*)[4])&amp;mMatrix.mBuffer</ValuePointer>
       </ArrayItems>
+    </Expand>
+  </Type>
+
+  <Type Name="CSC::XMLPARSER_HELP&lt;*&gt;::XmlParser">
+    <Expand HideRawView="true">
+      <ExpandedItem>mThis</ExpandedItem>
+    </Expand>
+  </Type>
+
+  <Type Name="CSC::JSONPARSER_HELP&lt;*&gt;::JsonParser">
+    <Expand HideRawView="true">
+      <ExpandedItem>mThis</ExpandedItem>
     </Expand>
   </Type>
 

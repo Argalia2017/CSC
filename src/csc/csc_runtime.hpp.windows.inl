@@ -280,10 +280,14 @@ trait MODULE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		String<STR> mError ;
 
 	public:
+		void initialize () override {
+			const auto r1x = GetModuleHandle (NULL) ;
+			mModule = UniqueRef<HMODULE>::make (r1x) ;
+		}
+
 		void initialize (CREF<String<STR>> file) override {
 			const auto r1x = Directory (file).name () ;
 			assert (ifnot (r1x.empty ())) ;
-			mErrorBuffer = PrintString<STR>::make () ;
 			mModule = UniqueRef<HMODULE> ([&] (VREF<HMODULE> me) {
 				me = GetModuleHandle ((&r1x[0])) ;
 				if (me != NULL)
@@ -305,9 +309,9 @@ trait MODULE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		FLAG link (CREF<String<STR>> name) override {
-			assert (mModule.exist ()) ;
 			assert (ifnot (name.empty ())) ;
 			const auto r1x = string_cvt[TYPEAS<STRA ,STR>::expr] (name) ;
+			assume (mModule.exist ()) ;
 			FLAG ret = FLAG (GetProcAddress (mModule ,(&r1x[0]))) ;
 			if ifswitch (TRUE) {
 				if (ret != ZERO)
@@ -321,6 +325,11 @@ trait MODULE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		void format_dllerror (CREF<csc_enum_t> code) {
+			if ifswitch (TRUE) {
+				if (mErrorBuffer.size () > 0)
+					discard ;
+				mErrorBuffer = PrintString<STR>::make () ;
+			}
 			const auto r1x = csc_enum_t (MAKELANGID (LANG_NEUTRAL ,SUBLANG_DEFAULT)) ;
 			FormatMessage (FORMAT_MESSAGE_FROM_SYSTEM ,NULL ,code ,r1x ,(&mErrorBuffer[0]) ,VAL32 (mErrorBuffer.size ()) ,NULL) ;
 		}

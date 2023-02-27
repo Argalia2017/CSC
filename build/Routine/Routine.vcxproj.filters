@@ -64,6 +64,9 @@
     <ClInclude Include="..\..\src\csc\csc_begin.h">
       <Filter>csc</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\csc\csc_lite.h">
+      <Filter>csc</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="csc">

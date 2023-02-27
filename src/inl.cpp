@@ -20,12 +20,6 @@
 #endif
 #include "csc/csc_begin.h"
 
-#ifdef __CSC_SYSTEM_WINDOWS__
-#ifdef __CSC_COMPILER_GNUC__
-#define no_comment_lib_dbghelp
-#endif
-#endif
-
 #include "csc/csc_core.hpp.default.inl"
 #include "csc/csc_basic.hpp.default.inl"
 #include "csc/csc_math.hpp.default.inl"

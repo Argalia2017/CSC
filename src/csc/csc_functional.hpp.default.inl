@@ -325,64 +325,13 @@ trait SYNTAXTREE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				if ifswitch (act) {
 					if (mTree[iy].mOncePlayed)
 						discard ;
-					assume (mTree[iy].mValue.exist ()) ;
-					if ifswitch (TRUE) {
-						if ifnot (mTree[iy].mOnceActor.exist ())
-							discard ;
-						const auto r1x = NowTimePoint::make () ;
-						const auto r2x = HeapProc::instance ().usage_size () ;
-						mTreeStack.add (iy) ;
-						mTree[iy].mOnceActor () ;
-						mTreeStack.pop () ;
-						const auto r3x = HeapProc::instance ().usage_size () ;
-						const auto r4x = NowTimePoint::make () ;
-						mTree[iy].mMemoryUsage += LENGTH (r3x - r2x) ;
-						mTree[iy].mTimeCost += (r4x - r1x).seconds () ;
-					}
-					mTree[iy].mOncePlayed = TRUE ;
-					mTree[iy].mLifetime = 0 ;
-					for (auto &&i : mTree[iy].mMaybe) {
-						if (mTree[iy].mChild.find (i) != NONE)
-							continue ;
-						mTree[i].mParent.erase (iy) ;
-						if (mTree[i].mLifetime < mTree[i].mParent.length ())
-							continue ;
-						mCleanQueue.add (i) ;
-					}
-					mTree[iy].mMaybe.clear () ;
+					play_once (iy) ;
 					play_scan (iy) ;
 				}
 				if ifswitch (act) {
 					if (mTree[iy].mPlayed)
 						discard ;
-					assume (mTree[iy].mValue.exist ()) ;
-					if ifswitch (TRUE) {
-						if ifnot (mTree[iy].mActor.exist ())
-							discard ;
-						const auto r5x = NowTimePoint::make () ;
-						const auto r6x = HeapProc::instance ().usage_size () ;
-						mTreeStack.add (iy) ;
-						mTree[iy].mActor () ;
-						mTreeStack.pop () ;
-						const auto r7x = HeapProc::instance ().usage_size () ;
-						const auto r8x = NowTimePoint::make () ;
-						mTree[iy].mMemoryUsage += LENGTH (r7x - r6x) ;
-						mTree[iy].mTimeCost += (r8x - r5x).seconds () ;
-					}
-					mTree[iy].mPlayed = TRUE ;
-					mTree[iy].mLifetime = 0 ;
-					if ifswitch (TRUE) {
-						if (mTree[iy].mIsFunction)
-							discard ;
-						if (mTree[iy].mIsIteration)
-							discard ;
-						for (auto &&i : mTree[iy].mChild) {
-							mTree[i].mLifetime++ ;
-							if (mTree[i].mLifetime < mTree[i].mParent.length ())
-								continue ;
-							mCleanQueue.add (i) ;
-						}
-					}
+					play_then (iy) ;
 				}
 				if ifswitch (act) {
 					mPlayPriority.take () ;
@@ -416,6 +365,67 @@ trait SYNTAXTREE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 					mScanQueue.add (i) ;
 				}
 				mTree[ix].mPlaying = TRUE ;
+			}
+		}
+
+		void play_once (CREF<INDEX> curr) {
+			INDEX iy = curr ;
+			assume (mTree[iy].mValue.exist ()) ;
+			if ifswitch (TRUE) {
+				if ifnot (mTree[iy].mOnceActor.exist ())
+					discard ;
+				const auto r1x = NowTimePoint::make () ;
+				const auto r2x = HeapProc::instance ().usage_size () ;
+				mTreeStack.add (iy) ;
+				mTree[iy].mOnceActor () ;
+				mTreeStack.pop () ;
+				const auto r3x = HeapProc::instance ().usage_size () ;
+				const auto r4x = NowTimePoint::make () ;
+				mTree[iy].mMemoryUsage += LENGTH (r3x - r2x) ;
+				mTree[iy].mTimeCost += (r4x - r1x).seconds () ;
+			}
+			mTree[iy].mOncePlayed = TRUE ;
+			mTree[iy].mLifetime = 0 ;
+			for (auto &&i : mTree[iy].mMaybe) {
+				if (mTree[iy].mChild.find (i) != NONE)
+					continue ;
+				mTree[i].mParent.erase (iy) ;
+				if (mTree[i].mLifetime < mTree[i].mParent.length ())
+					continue ;
+				mCleanQueue.add (i) ;
+			}
+			mTree[iy].mMaybe.clear () ;
+		}
+
+		void play_then (CREF<INDEX> curr) {
+			INDEX iy = curr ;
+			assume (mTree[iy].mValue.exist ()) ;
+			if ifswitch (TRUE) {
+				if ifnot (mTree[iy].mActor.exist ())
+					discard ;
+				const auto r1x = NowTimePoint::make () ;
+				const auto r2x = HeapProc::instance ().usage_size () ;
+				mTreeStack.add (iy) ;
+				mTree[iy].mActor () ;
+				mTreeStack.pop () ;
+				const auto r3x = HeapProc::instance ().usage_size () ;
+				const auto r4x = NowTimePoint::make () ;
+				mTree[iy].mMemoryUsage += LENGTH (r3x - r2x) ;
+				mTree[iy].mTimeCost += (r4x - r1x).seconds () ;
+			}
+			mTree[iy].mPlayed = TRUE ;
+			mTree[iy].mLifetime = 0 ;
+			if ifswitch (TRUE) {
+				if (mTree[iy].mIsFunction)
+					discard ;
+				if (mTree[iy].mIsIteration)
+					discard ;
+				for (auto &&i : mTree[iy].mChild) {
+					mTree[i].mLifetime++ ;
+					if (mTree[i].mLifetime < mTree[i].mParent.length ())
+						continue ;
+					mCleanQueue.add (i) ;
+				}
 			}
 		}
 
@@ -463,6 +473,7 @@ trait SYNTAXTREE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 					mTree[ix].mOnceActor = Function<void> () ;
 					const auto r1x = HeapProc::instance ().usage_size () ;
 					mTree[ix].mValue = AutoRef<> () ;
+					mTree[ix].mLater = AutoRef<> () ;
 					const auto r2x = HeapProc::instance ().usage_size () ;
 					const auto r3x = LENGTH (r1x - r2x) ;
 					mTree[ix].mMemoryUsage = MathProc::min_of (mTree[ix].mMemoryUsage ,r3x) ;

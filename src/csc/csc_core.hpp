@@ -143,23 +143,14 @@ trait FUNCTION_unsafe_launder_HELP<DEPEND ,REQUIRE<MACRO_COMPILER_MSVC<DEPEND>>>
 template <class DEPEND>
 trait FUNCTION_unsafe_launder_HELP<DEPEND ,REQUIRE<MACRO_COMPILER_GNUC<DEPEND>>> {
 #ifdef __CSC_COMPILER_GNUC__
-	struct Binder implement Interface {
-		virtual void friend_launder (CREF<csc_pointer_t> obj) const = 0 ;
-	} ;
-
-	class ImplBinder implement Binder {
-	public:
-		void friend_launder (CREF<csc_pointer_t> obj) const override {
-			noop () ;
-		}
-	} ;
-
 	struct FUNCTION_unsafe_launder {
 		inline void operator() (CREF<csc_pointer_t> obj) const noexcept {
 			//@fatal: fuck gnuc
-			static ImplBinder mInstance ;
-			auto &&tmp = static_cast<CREF<Binder>> (mInstance) ;
-			tmp.friend_launder (obj) ;
+			using R1X = DEF<void (*) (CREF<csc_pointer_t>)> ;
+			static R1X mInstance = NULL ;
+			if (mInstance == NULL)
+				return ;
+			mInstance (obj) ;
 		}
 	} ;
 #endif
@@ -198,7 +189,7 @@ struct FUNCTION_unsafe_deref {
 	}
 
 	template <class ARG1>
-	inline CREF<TYPE_FIRST_ONE<REFLECT_TEMP<ARG1>>> operator() (LREF<ARG1> obj) const noexcept {
+	inline CREF<TYPE_FIRST_ONE<REFLECT_TEMP<ARG1>>> operator() (CREF<ARG1> obj) const noexcept {
 		require (IS_TEMP<ARG1>) ;
 		using R1X = TYPE_FIRST_ONE<REFLECT_TEMP<ARG1>> ;
 		return reinterpret_cast<CREF<R1X>> (obj) ;
@@ -217,7 +208,7 @@ struct FUNCTION_unsafe_deptr {
 	}
 
 	template <class ARG1>
-	inline CREF<TEMP<ARG1>> operator() (LREF<ARG1> obj) const noexcept {
+	inline CREF<TEMP<ARG1>> operator() (CREF<ARG1> obj) const noexcept {
 		return reinterpret_cast<CREF<TEMP<ARG1>>> (obj) ;
 	}
 
@@ -257,7 +248,7 @@ trait TEMPLATE_unsafe_cast_HELP<UNIT ,REQUIRE<IS_OBJECT<UNIT>>> {
 		}
 
 		template <class ARG1>
-		inline CREF<UNIT> operator() (LREF<ARG1> obj) const noexcept {
+		inline CREF<UNIT> operator() (CREF<ARG1> obj) const noexcept {
 			using R1X = UNIT ;
 			using R2X = ARG1 ;
 			require (IS_TEMP<R1X>) ;
@@ -1541,14 +1532,13 @@ trait UNKNOWN_PUREHOLDER_HELP<UNIT ,ALWAYS> {
 
 		void acquire (CREF<INDEX> index ,CREF<TEMP<void>> src) override {
 			const auto r1x = pointer () + index * SIZE_OF<UNIT>::expr ;
-			auto &&tmp = unsafe_cast[TYPEAS<TEMP<UNIT>>::expr] (unsafe_pointer (r1x)) ;
-			unsafe_sync (tmp ,src) ;
+			unsafe_sync (unsafe_pointer (r1x) ,unsafe_cast[TYPEAS<TEMP<UNIT>>::expr] (src)) ;
 		}
 
 		void recycle (CREF<INDEX> index) override {
 			const auto r1x = pointer () + index * SIZE_OF<UNIT>::expr ;
-			auto rax = Box<UNIT> () ;
-			rax.acquire (unsafe_pointer (r1x)) ;
+			auto &&tmp = unsafe_deref (unsafe_cast[TYPEAS<TEMP<UNIT>>::expr] (unsafe_pointer (r1x))) ;
+			drop (tmp) ;
 		}
 	} ;
 } ;
@@ -1973,7 +1963,7 @@ trait CREF_HELP<UNIT ,REQUIRE<IS_OBJECT<UNIT>>> {
 			return VRef::make (forward[TYPEAS<ARG1>::expr] (obj)...).as_cref () ;
 		}
 
-		imports CRef reference (LREF<UNIT> that) {
+		imports CRef reference (CREF<UNIT> that) {
 			CRef ret ;
 			ret.mPointer = address (that) ;
 			return move (ret) ;
@@ -2100,7 +2090,7 @@ trait CREF_HELP<UNIT ,REQUIRE<IS_ARRAY<UNIT>>> {
 			return VRef::make (forward[TYPEAS<ARG1>::expr] (obj)...).as_cref () ;
 		}
 
-		imports CRef reference (LREF<UNIT> that) {
+		imports CRef reference (CREF<UNIT> that) {
 			CRef ret ;
 			ret.mPointer = address (that) ;
 			return move (ret) ;
@@ -2197,12 +2187,11 @@ trait XREF_PUREHOLDER_HELP<DEPEND ,ALWAYS> {
 			const auto r6x = valign (r5x ,ALIGN_OF<PureHolder>::expr) ;
 			if ifswitch (TRUE) {
 				auto rax = Box<PureHolder>::make () ;
+				rax->mOrigin = r5x ;
 				unsafe_sync (unsafe_pointer (r6x) ,unsafe_deptr (rax.self)) ;
 				rax.release () ;
 			}
-			auto &&tmp = unsafe_deref (unsafe_cast[TYPEAS<TEMP<PureHolder>>::expr] (unsafe_pointer (r6x))) ;
-			tmp.mOrigin = r5x ;
-			return address (keep[TYPEAS<VREF<Holder>>::expr] (tmp)) ;
+			return r6x ;
 		}
 
 		void initialize (RREF<Unknown> unknown) override {
@@ -2215,9 +2204,7 @@ trait XREF_PUREHOLDER_HELP<DEPEND ,ALWAYS> {
 			const auto r1x = mOrigin ;
 			if (r1x == ZERO)
 				return ;
-			auto rax = Box<PureHolder> () ;
-			auto &&tmp = unsafe_cast[TYPEAS<TEMP<void>>::expr] (unsafe_deptr (thiz)) ;
-			rax.acquire (tmp) ;
+			drop (thiz) ;
 			HeapProc::instance ().free (r1x) ;
 		}
 
@@ -2379,22 +2366,22 @@ template <class...>
 trait CAPTURE_HELP ;
 
 template <class...>
-trait CAPTUREITERATOR_HELP ;
+trait SPANITERATOR_HELP ;
 
 template <class PARAMS>
 trait CAPTURE_HELP<PARAMS ,REQUIRE<ENUM_EQ_ZERO<COUNT_OF<PARAMS>>>> {
 	class Capture {
 	private:
 		template <class...>
-		friend trait CAPTUREITERATOR_HELP ;
+		friend trait SPANITERATOR_HELP ;
 		using HELP = CAPTURE_HELP ;
 
 	public:
 		implicit Capture () = default ;
 
 		template <class ARG1>
-		inline FUNCTION_RETURN<ARG1> operator() (CREF<ARG1> func) const {
-			return func () ;
+		inline void operator() (CREF<ARG1> func) const {
+			func () ;
 		}
 	} ;
 } ;
@@ -2407,7 +2394,7 @@ trait CAPTURE_HELP<TYPEAS<PARAM...> ,REQUIRE<ENUM_GT_ZERO<COUNT_OF<TYPEAS<PARAM.
 	class Capture {
 	private:
 		template <class...>
-		friend trait CAPTUREITERATOR_HELP ;
+		friend trait SPANITERATOR_HELP ;
 		using HELP = CAPTURE_HELP ;
 
 	protected:
@@ -2417,113 +2404,62 @@ trait CAPTURE_HELP<TYPEAS<PARAM...> ,REQUIRE<ENUM_GT_ZERO<COUNT_OF<TYPEAS<PARAM.
 		implicit Capture () = delete ;
 
 		explicit Capture (CREF<DEPENDENT<FLAG ,PARAM>>...params) {
-			template_assign (PHX ,TYPEAS<RANK>::expr ,params...) ;
+			using R1X = typename DEPENDENT<CAPTURE_HELP ,DEPEND>::FUNCTION_capture_assign ;
+			const auto r1x = R1X () ;
+			r1x (mCapture.self ,params...) ;
 		}
 
 		template <class ARG1>
-		inline FUNCTION_RETURN<ARG1> operator() (CREF<ARG1> func) const {
-			return template_invoke (PHX ,func ,TYPEAS<PARAMS>::expr) ;
+		inline void operator() (CREF<ARG1> func) const {
+			using R1X = typename DEPENDENT<CAPTURE_HELP ,DEPEND>::FUNCTION_capture_invoke ;
+			const auto r1x = R1X () ;
+			r1x (func ,mCapture.self) ;
+		}
+	} ;
+
+	struct FUNCTION_capture_assign {
+		template <class...ARG1>
+		inline void operator() (VREF<ARR<FLAG ,RANK>> capt ,CREF<ARG1>...params) const {
+			template_assign (PHX ,capt ,TYPEAS<RANK>::expr ,params...) ;
 		}
 
-	private:
 		template <class ARG1 ,class...ARG2 ,class = REQUIRE<ENUM_GT_ZERO<ARG1>>>
-		void template_assign (CREF<typeof (PH2)> ,CREF<TYPEID<ARG1>> id ,CREF<FLAG> params1 ,CREF<ARG2>...params2) {
-			INDEX ix = ENUM_SUB<RANK ,ARG1>::expr ;
-			mCapture.self[ix] = params1 ;
-			template_assign (PHX ,TYPEAS<ENUM_DEC<ARG1>>::expr ,params2...) ;
+		imports void template_assign (CREF<typeof (PH2)> ,VREF<ARR<FLAG ,RANK>> capt ,CREF<TYPEID<ARG1>> id ,CREF<FLAG> params1 ,CREF<ARG2>...params2) {
+			capt[ENUM_SUB<RANK ,ARG1>::expr] = params1 ;
+			template_assign (PHX ,capt ,TYPEAS<ENUM_DEC<ARG1>>::expr ,params2...) ;
 		}
 
 		template <class ARG1>
-		void template_assign (CREF<typeof (PH1)> ,CREF<TYPEID<ARG1>> id) {
+		imports void template_assign (CREF<typeof (PH1)> ,VREF<ARR<FLAG ,RANK>> capt ,CREF<TYPEID<ARG1>> id) {
 			noop () ;
+		}
+	} ;
+
+	struct FUNCTION_capture_invoke {
+		template <class ARG1>
+		inline void operator() (CREF<ARG1> func ,CREF<ARR<FLAG ,RANK>> capt) const {
+			template_invoke (PHX ,func ,capt ,TYPEAS<PARAMS>::expr) ;
 		}
 
 		template <class ARG1 ,class ARG2 ,class...ARG3 ,class = REQUIRE<ENUM_GT_ZERO<COUNT_OF<ARG2>>>>
-		FUNCTION_RETURN<ARG1> template_invoke (CREF<typeof (PH2)> ,CREF<ARG1> func ,CREF<TYPEID<ARG2>> id ,CREF<ARG3>...params) const {
+		imports void template_invoke (CREF<typeof (PH2)> ,CREF<ARG1> func ,CREF<ARR<FLAG ,RANK>> capt ,CREF<TYPEID<ARG2>> id ,CREF<ARG3>...params) {
 			using R1X = ENUM_SUB<RANK ,COUNT_OF<ARG2>> ;
 			using R2X = TYPE_FIRST_ONE<ARG2> ;
 			using R3X = TYPE_FIRST_REST<ARG2> ;
-			const auto r1x = mCapture.self[R1X::expr] ;
+			const auto r1x = capt[R1X::expr] ;
 			auto &&tmp = unsafe_deref (unsafe_cast[TYPEAS<TEMP<R2X>>::expr] (unsafe_pointer (r1x))) ;
-			return template_invoke (PHX ,func ,TYPEAS<R3X>::expr ,params... ,keep[TYPEAS<CREF<R2X>>::expr] (tmp)) ;
+			template_invoke (PHX ,func ,capt ,TYPEAS<R3X>::expr ,params... ,keep[TYPEAS<CREF<R2X>>::expr] (tmp)) ;
 		}
 
 		template <class ARG1 ,class ARG2 ,class...ARG3 ,class = REQUIRE<ENUM_EQ_ZERO<COUNT_OF<ARG2>>>>
-		FUNCTION_RETURN<ARG1> template_invoke (CREF<typeof (PH1)> ,CREF<ARG1> func ,CREF<TYPEID<ARG2>> id ,CREF<ARG3>...params) const {
-			return func (params...) ;
-		}
-	} ;
-} ;
-
-template <class UNIT>
-trait CAPTUREITERATOR_HELP<UNIT ,ALWAYS> {
-	class CaptureIterator {
-	protected:
-		LENGTH mRank ;
-		FLAG mBegin ;
-		FLAG mEnd ;
-
-	public:
-		implicit CaptureIterator () = delete ;
-
-		template <class ARG1 ,class = REQUIRE<ENUM_ALL<ENUM_NOT<IS_EXTEND<CaptureIterator ,ARG1>> ,IS_SAME<ARG1 ,typename ARG1::HELP::Capture>>>>
-		implicit CaptureIterator (RREF<ARG1> that) {
-			using R1X = typename ARG1::HELP::PARAMS ;
-			using R3X = TYPE_REPEAT<UNIT ,COUNT_OF<R1X>> ;
-			require (IS_SAME<R1X ,R3X>) ;
-			mRank = COUNT_OF<R1X>::expr ;
-			mBegin = address (that) ;
-			mEnd = mBegin + mRank * SIZE_OF<FLAG>::expr ;
-		}
-
-		CaptureIterator begin () const {
-			return thiz ;
-		}
-
-		CaptureIterator end () const {
-			return thiz ;
-		}
-
-		LENGTH rank () const {
-			return mRank ;
-		}
-
-		BOOL bad () const {
-			return mBegin == mEnd ;
-		}
-
-		inline BOOL operator== (CREF<CaptureIterator>) const {
-			return bad () ;
-		}
-
-		inline BOOL operator!= (CREF<CaptureIterator>) const {
-			return ifnot (bad ()) ;
-		}
-
-		CREF<UNIT> peek () const leftvalue {
-			auto &&tmp = unsafe_deref (unsafe_cast[TYPEAS<TEMP<FLAG>>::expr] (unsafe_pointer (mBegin))) ;
-			return unsafe_deref (unsafe_cast[TYPEAS<TEMP<UNIT>>::expr] (unsafe_pointer (tmp))) ;
-		}
-
-		inline CREF<UNIT> operator* () const leftvalue {
-			return peek () ;
-		}
-
-		void next () {
-			mBegin += SIZE_OF<FLAG>::expr ;
-		}
-
-		inline void operator++ () {
-			next () ;
+		imports void template_invoke (CREF<typeof (PH1)> ,CREF<ARG1> func ,CREF<ARR<FLAG ,RANK>> capt ,CREF<TYPEID<ARG2>> id ,CREF<ARG3>...params) {
+			func (params...) ;
 		}
 	} ;
 } ;
 
 template <class...UNIT>
 using Capture = typename CAPTURE_HELP<TYPEAS<UNIT...> ,ALWAYS>::Capture ;
-
-template <class UNIT>
-using CaptureIterator = typename CAPTUREITERATOR_HELP<UNIT ,ALWAYS>::CaptureIterator ;
 
 struct FUNCTION_capture {
 	template <class...ARG1>
@@ -2543,8 +2479,8 @@ trait SLICE_IMPLHOLDER_HELP ;
 template <class ITEM>
 trait SLICE_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 	struct Holder implement Interface {
-		virtual void initialize (CREF<csc_text_t> text) = 0 ;
-		virtual void initialize (RREF<CRef<Holder>> prefix ,CREF<csc_text_t> text) = 0 ;
+		virtual void initialize (CREF<csc_span_t> text) = 0 ;
+		virtual void initialize (RREF<CRef<Holder>> prefix ,CREF<csc_span_t> text) = 0 ;
 		virtual LENGTH size () const = 0 ;
 		virtual ITEM at (CREF<INDEX> index) const = 0 ;
 		virtual BOOL equal (CREF<Holder> that) const = 0 ;
@@ -2563,7 +2499,7 @@ trait SLICE_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 	public:
 		implicit Slice () = default ;
 
-		template <class ARG1 ,class = REQUIRE<ENUM_ANY<IS_ARRAY<ARG1> ,IS_SAME<ARG1 ,csc_text_t>>>>
+		template <class ARG1 ,class = REQUIRE<ENUM_ANY<IS_ARRAY<ARG1> ,IS_SAME<ARG1 ,csc_span_t>>>>
 		explicit Slice (CREF<ARG1> text) {
 			using R1X = typename DEPENDENT<SLICE_HELP<ITEM ,ALWAYS> ,DEPEND>::FUNCTION_translation ;
 			const auto r1x = R1X () ;
@@ -2646,16 +2582,16 @@ trait SLICE_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 
 	struct FUNCTION_translation {
 		template <class ARG1>
-		inline csc_text_t operator() (CREF<ARG1> text) const noexcept {
+		inline csc_span_t operator() (CREF<ARG1> text) const noexcept {
 			require (IS_ARRAY<ARG1>) ;
-			csc_text_t ret ;
+			csc_span_t ret ;
 			ret.mBegin = address (text) ;
 			ret.mEnd = ret.mBegin + SIZE_OF<ARG1>::expr ;
 			ret.mStep = ALIGN_OF<ARG1>::expr ;
 			return move (ret) ;
 		}
 
-		inline csc_text_t operator() (CREF<csc_text_t> text) const noexcept {
+		inline csc_span_t operator() (CREF<csc_span_t> text) const noexcept {
 			return text ;
 		}
 	} ;
@@ -2670,7 +2606,7 @@ trait FUNCTION_operator_name_HELP ;
 template <class UNIT>
 trait FUNCTION_operator_name_HELP<UNIT ,REQUIRE<IS_SAME<UNIT ,BOOL>>> {
 	struct FUNCTION_operator_name {
-		inline Slice<STR> operator() (CREF<csc_text_t> text) const {
+		inline Slice<STR> operator() (CREF<csc_span_t> text) const {
 			return slice ("BOOL") ;
 		}
 	} ;
@@ -2679,7 +2615,7 @@ trait FUNCTION_operator_name_HELP<UNIT ,REQUIRE<IS_SAME<UNIT ,BOOL>>> {
 template <class UNIT>
 trait FUNCTION_operator_name_HELP<UNIT ,REQUIRE<IS_SAME<UNIT ,VAL32>>> {
 	struct FUNCTION_operator_name {
-		inline Slice<STR> operator() (CREF<csc_text_t> text) const {
+		inline Slice<STR> operator() (CREF<csc_span_t> text) const {
 			return slice ("VAL32") ;
 		}
 	} ;
@@ -2688,7 +2624,7 @@ trait FUNCTION_operator_name_HELP<UNIT ,REQUIRE<IS_SAME<UNIT ,VAL32>>> {
 template <class UNIT>
 trait FUNCTION_operator_name_HELP<UNIT ,REQUIRE<IS_SAME<UNIT ,VAL64>>> {
 	struct FUNCTION_operator_name {
-		inline Slice<STR> operator() (CREF<csc_text_t> text) const {
+		inline Slice<STR> operator() (CREF<csc_span_t> text) const {
 			return slice ("VAL64") ;
 		}
 	} ;
@@ -2697,7 +2633,7 @@ trait FUNCTION_operator_name_HELP<UNIT ,REQUIRE<IS_SAME<UNIT ,VAL64>>> {
 template <class UNIT>
 trait FUNCTION_operator_name_HELP<UNIT ,REQUIRE<IS_SAME<UNIT ,SINGLE>>> {
 	struct FUNCTION_operator_name {
-		inline Slice<STR> operator() (CREF<csc_text_t> text) const {
+		inline Slice<STR> operator() (CREF<csc_span_t> text) const {
 			return slice ("SINGLE") ;
 		}
 	} ;
@@ -2706,7 +2642,7 @@ trait FUNCTION_operator_name_HELP<UNIT ,REQUIRE<IS_SAME<UNIT ,SINGLE>>> {
 template <class UNIT>
 trait FUNCTION_operator_name_HELP<UNIT ,REQUIRE<IS_SAME<UNIT ,DOUBLE>>> {
 	struct FUNCTION_operator_name {
-		inline Slice<STR> operator() (CREF<csc_text_t> text) const {
+		inline Slice<STR> operator() (CREF<csc_span_t> text) const {
 			return slice ("DOUBLE") ;
 		}
 	} ;
@@ -2715,7 +2651,7 @@ trait FUNCTION_operator_name_HELP<UNIT ,REQUIRE<IS_SAME<UNIT ,DOUBLE>>> {
 template <class UNIT>
 trait FUNCTION_operator_name_HELP<UNIT ,REQUIRE<IS_SAME<UNIT ,STRA>>> {
 	struct FUNCTION_operator_name {
-		inline Slice<STR> operator() (CREF<csc_text_t> text) const {
+		inline Slice<STR> operator() (CREF<csc_span_t> text) const {
 			return slice ("STRA") ;
 		}
 	} ;
@@ -2724,7 +2660,7 @@ trait FUNCTION_operator_name_HELP<UNIT ,REQUIRE<IS_SAME<UNIT ,STRA>>> {
 template <class UNIT>
 trait FUNCTION_operator_name_HELP<UNIT ,REQUIRE<IS_SAME<UNIT ,STRW>>> {
 	struct FUNCTION_operator_name {
-		inline Slice<STR> operator() (CREF<csc_text_t> text) const {
+		inline Slice<STR> operator() (CREF<csc_span_t> text) const {
 			return slice ("STRW") ;
 		}
 	} ;
@@ -2733,7 +2669,7 @@ trait FUNCTION_operator_name_HELP<UNIT ,REQUIRE<IS_SAME<UNIT ,STRW>>> {
 template <class UNIT>
 trait FUNCTION_operator_name_HELP<UNIT ,REQUIRE<IS_SAME<UNIT ,STRU8>>> {
 	struct FUNCTION_operator_name {
-		inline Slice<STR> operator() (CREF<csc_text_t> text) const {
+		inline Slice<STR> operator() (CREF<csc_span_t> text) const {
 			return slice ("STRU8") ;
 		}
 	} ;
@@ -2742,7 +2678,7 @@ trait FUNCTION_operator_name_HELP<UNIT ,REQUIRE<IS_SAME<UNIT ,STRU8>>> {
 template <class UNIT>
 trait FUNCTION_operator_name_HELP<UNIT ,REQUIRE<IS_SAME<UNIT ,STRU16>>> {
 	struct FUNCTION_operator_name {
-		inline Slice<STR> operator() (CREF<csc_text_t> text) const {
+		inline Slice<STR> operator() (CREF<csc_span_t> text) const {
 			return slice ("STRU16") ;
 		}
 	} ;
@@ -2751,7 +2687,7 @@ trait FUNCTION_operator_name_HELP<UNIT ,REQUIRE<IS_SAME<UNIT ,STRU16>>> {
 template <class UNIT>
 trait FUNCTION_operator_name_HELP<UNIT ,REQUIRE<IS_SAME<UNIT ,STRU32>>> {
 	struct FUNCTION_operator_name {
-		inline Slice<STR> operator() (CREF<csc_text_t> text) const {
+		inline Slice<STR> operator() (CREF<csc_span_t> text) const {
 			return slice ("STRU32") ;
 		}
 	} ;
@@ -2760,7 +2696,7 @@ trait FUNCTION_operator_name_HELP<UNIT ,REQUIRE<IS_SAME<UNIT ,STRU32>>> {
 template <class UNIT>
 trait FUNCTION_operator_name_HELP<UNIT ,REQUIRE<IS_SAME<UNIT ,BYTE>>> {
 	struct FUNCTION_operator_name {
-		inline Slice<STR> operator() (CREF<csc_text_t> text) const {
+		inline Slice<STR> operator() (CREF<csc_span_t> text) const {
 			return slice ("BYTE") ;
 		}
 	} ;
@@ -2769,7 +2705,7 @@ trait FUNCTION_operator_name_HELP<UNIT ,REQUIRE<IS_SAME<UNIT ,BYTE>>> {
 template <class UNIT>
 trait FUNCTION_operator_name_HELP<UNIT ,REQUIRE<IS_SAME<UNIT ,WORD>>> {
 	struct FUNCTION_operator_name {
-		inline Slice<STR> operator() (CREF<csc_text_t> text) const {
+		inline Slice<STR> operator() (CREF<csc_span_t> text) const {
 			return slice ("WORD") ;
 		}
 	} ;
@@ -2778,7 +2714,7 @@ trait FUNCTION_operator_name_HELP<UNIT ,REQUIRE<IS_SAME<UNIT ,WORD>>> {
 template <class UNIT>
 trait FUNCTION_operator_name_HELP<UNIT ,REQUIRE<IS_SAME<UNIT ,CHAR>>> {
 	struct FUNCTION_operator_name {
-		inline Slice<STR> operator() (CREF<csc_text_t> text) const {
+		inline Slice<STR> operator() (CREF<csc_span_t> text) const {
 			return slice ("CHAR") ;
 		}
 	} ;
@@ -2787,7 +2723,7 @@ trait FUNCTION_operator_name_HELP<UNIT ,REQUIRE<IS_SAME<UNIT ,CHAR>>> {
 template <class UNIT>
 trait FUNCTION_operator_name_HELP<UNIT ,REQUIRE<IS_SAME<UNIT ,DATA>>> {
 	struct FUNCTION_operator_name {
-		inline Slice<STR> operator() (CREF<csc_text_t> text) const {
+		inline Slice<STR> operator() (CREF<csc_span_t> text) const {
 			return slice ("DATA") ;
 		}
 	} ;
@@ -2796,7 +2732,7 @@ trait FUNCTION_operator_name_HELP<UNIT ,REQUIRE<IS_SAME<UNIT ,DATA>>> {
 template <class UNIT>
 trait FUNCTION_operator_name_HELP<UNIT ,REQUIRE<IS_NULL<UNIT>>> {
 	struct FUNCTION_operator_name {
-		inline Slice<STR> operator() (CREF<csc_text_t> text) const {
+		inline Slice<STR> operator() (CREF<csc_span_t> text) const {
 			return slice ("null") ;
 		}
 	} ;
@@ -2805,7 +2741,7 @@ trait FUNCTION_operator_name_HELP<UNIT ,REQUIRE<IS_NULL<UNIT>>> {
 template <class UNIT>
 trait FUNCTION_operator_name_HELP<UNIT ,REQUIRE<IS_VOID<UNIT>>> {
 	struct FUNCTION_operator_name {
-		inline Slice<STR> operator() (CREF<csc_text_t> text) const {
+		inline Slice<STR> operator() (CREF<csc_span_t> text) const {
 			return slice ("void") ;
 		}
 	} ;
@@ -2816,7 +2752,7 @@ trait FUNCTION_operator_name_HELP<UNIT ,REQUIRE<ENUM_NOT<IS_BASIC<UNIT>>>> {
 	using SIZE = ENUMAS<VAL ,1024> ;
 
 	struct FUNCTION_operator_name {
-		inline Slice<STR> operator() (CREF<csc_text_t> text) const {
+		inline Slice<STR> operator() (CREF<csc_span_t> text) const {
 			return Slice<STR> (text) ;
 		}
 	} ;
@@ -2960,7 +2896,7 @@ template <class UNIT>
 trait WATCH_HELP<UNIT ,REQUIRE<IS_PROPERTY<UNIT>>> {
 	struct WATCH implement Interface {
 		FLAG mOffset ;
-		FLAG mPointer ;
+		CRef<UNIT> mValue ;
 		Slice<STR> mName ;
 		Clazz mClazz ;
 	} ;
@@ -2971,16 +2907,14 @@ using WATCH = typename WATCH_HELP<UNIT ,ALWAYS>::WATCH ;
 
 struct FUNCTION_unsafe_watch {
 	template <class ARG1 ,class ARG2>
-	inline forceinline void operator() (CREF<TYPEID<ARG1>> id ,CREF<Slice<STR>> name ,LREF<ARG2> expr_) const {
-		static WATCH<ARG2> mInstance ;
+	inline forceinline void operator() (CREF<TYPEID<ARG1>> id ,CREF<Slice<STR>> name ,XREF<ARG2> value_) const {
+		using R1X = REMOVE_REF<ARG2> ;
+		static WATCH<R1X> mInstance ;
 		mInstance.mOffset = address (keep[TYPEAS<CREF<Interface>>::expr] (mInstance)) ;
-		mInstance.mPointer = address (expr_) ;
+		mInstance.mValue = CRef<R1X>::reference (value_) ;
 		mInstance.mName = name ;
-		mInstance.mClazz = Clazz (TYPEAS<ARG2>::expr) ;
+		mInstance.mClazz = Clazz (TYPEAS<R1X>::expr) ;
 	}
-
-	template <class ARG1 ,class ARG2>
-	inline void operator() (CREF<ARG1> ,CREF<Slice<STR>> ,RREF<ARG2>) const = delete ;
 } ;
 
 static constexpr auto unsafe_watch = FUNCTION_unsafe_watch () ;
@@ -3099,7 +3033,7 @@ trait SCOPE_HELP<UNIT ,ALWAYS> {
 	public:
 		implicit Scope () = default ;
 
-		explicit Scope (LREF<UNIT> that) {
+		explicit Scope (CREF<UNIT> that) {
 			const auto r1x = address (that) ;
 			//@warn: unsafe_cast ignore cv-qualifier
 			auto &&tmp = unsafe_deref (unsafe_cast[TYPEAS<TEMP<UNIT>>::expr] (unsafe_pointer (r1x))) ;

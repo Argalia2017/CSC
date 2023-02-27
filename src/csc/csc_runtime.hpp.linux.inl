@@ -285,11 +285,15 @@ trait MODULE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		String<STR> mError ;
 
 	public:
+		void initialize () override {
+			const auto r1x = dlopen (NULL ,csc_enum_t (RTLD_GLOBAL)) ;
+			mModule = UniqueRef<HANDLE>::make (r1x) ;
+		}
+
 		void initialize (CREF<String<STR>> file) override {
 			const auto r1x = Directory (file).name () ;
 			const auto r2x = string_cvt[TYPEAS<STRA ,STR>::expr] (r1x) ;
 			assert (ifnot (r2x.empty ())) ;
-			mErrorBuffer = PrintString<STR>::make () ;
 			mModule = UniqueRef<HANDLE> ([&] (VREF<HANDLE> me) {
 				const auto r3x = csc_enum_t (RTLD_NOW | RTLD_LOCAL | RTLD_DEEPBIND | RTLD_NODELETE) ;
 				const auto r4x = csc_enum_t (r3x | RTLD_NOLOAD) ;
@@ -313,9 +317,9 @@ trait MODULE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		FLAG link (CREF<String<STR>> name) override {
-			assert (mModule.exist ()) ;
 			assert (ifnot (name.empty ())) ;
 			const auto r1x = string_cvt[TYPEAS<STRA ,STR>::expr] (name) ;
+			assume (mModule.exist ()) ;
 			FLAG ret = FLAG (dlsym (mModule ,(&r1x[0]))) ;
 			if ifswitch (TRUE) {
 				if (ret != ZERO)
@@ -329,6 +333,11 @@ trait MODULE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		void format_dllerror () {
+			if ifswitch (TRUE) {
+				if (mErrorBuffer.size () > 0)
+					discard ;
+				mErrorBuffer = PrintString<STR>::make () ;
+			}
 			const auto r1x = FLAG (dlerror ()) ;
 			assume (r1x != ZERO) ;
 			auto &&tmp = unsafe_deref (unsafe_cast[TYPEAS<TEMP<ARR<STRA>>>::expr] (unsafe_pointer (r1x))) ;

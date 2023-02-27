@@ -18,26 +18,26 @@ trait SORTPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			noop () ;
 		}
 
-		void insert_sort (CREF<Binder> array_ ,VREF<Array<INDEX>> range_ ,CREF<INDEX> lb ,CREF<INDEX> rb) const {
+		void insert_sort (CREF<Binder> array_ ,VREF<Array<INDEX>> result ,CREF<INDEX> lb ,CREF<INDEX> rb) const {
 			for (auto &&i : iter (lb ,rb)) {
 				INDEX ix = i + 1 ;
 				INDEX iy = i ;
-				const auto r1x = range_[ix] ;
+				const auto r1x = result[ix] ;
 				while (TRUE) {
 					if (iy < lb)
 						break ;
-					const auto r2x = array_.friend_compare (r1x ,range_[iy]) ;
+					const auto r2x = array_.friend_compare (r1x ,result[iy]) ;
 					if (r2x >= ZERO)
 						break ;
-					range_[ix] = range_[iy] ;
+					result[ix] = result[iy] ;
 					ix = iy ;
 					iy-- ;
 				}
-				range_[ix] = r1x ;
+				result[ix] = r1x ;
 			}
 		}
 
-		void quick_sort (CREF<Binder> array_ ,VREF<Array<INDEX>> range_ ,CREF<INDEX> lb ,CREF<INDEX> rb ,CREF<LENGTH> ideal) const {
+		void quick_sort (CREF<Binder> array_ ,VREF<Array<INDEX>> result ,CREF<INDEX> lb ,CREF<INDEX> rb ,CREF<LENGTH> ideal) const {
 			auto rax = ideal ;
 			INDEX ix = lb ;
 			INDEX iy = rb ;
@@ -48,59 +48,59 @@ trait SORTPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 					break ;
 				rax = rax / 2 + rax / 4 ;
 				INDEX jx = NONE ;
-				quick_sort_partition (array_ ,range_ ,ix ,iy ,jx) ;
+				quick_sort_partition (array_ ,result ,ix ,iy ,jx) ;
 				INDEX iz = jx - 1 ;
-				quick_sort (array_ ,range_ ,ix ,iz ,rax) ;
+				quick_sort (array_ ,result ,ix ,iz ,rax) ;
 				ix = jx + 1 ;
 			}
 			if (ix >= iy)
 				return ;
-			insert_sort (array_ ,range_ ,ix ,iy) ;
+			insert_sort (array_ ,result ,ix ,iy) ;
 		}
 
-		void quick_sort_partition (CREF<Binder> array_ ,VREF<Array<INDEX>> range_ ,CREF<INDEX> lb ,CREF<INDEX> rb ,VREF<INDEX> mid_one) const {
+		void quick_sort_partition (CREF<Binder> array_ ,VREF<Array<INDEX>> result ,CREF<INDEX> lb ,CREF<INDEX> rb ,VREF<INDEX> mid_one) const {
 			INDEX ix = lb ;
 			INDEX iy = rb ;
-			const auto r1x = range_[ix] ;
+			const auto r1x = result[ix] ;
 			while (TRUE) {
 				while (TRUE) {
 					if (ix >= iy)
 						break ;
-					const auto r2x = array_.friend_compare (range_[iy] ,r1x) ;
+					const auto r2x = array_.friend_compare (result[iy] ,r1x) ;
 					if (r2x <= ZERO)
 						break ;
 					iy-- ;
 				}
 				if (ix >= iy)
 					break ;
-				range_[ix] = range_[iy] ;
+				result[ix] = result[iy] ;
 				ix++ ;
 				while (TRUE) {
 					if (ix >= iy)
 						break ;
-					const auto r3x = operator_compr (range_[ix] ,r1x) ;
+					const auto r3x = array_.friend_compare (result[ix] ,r1x) ;
 					if (r3x >= ZERO)
 						break ;
 					ix++ ;
 				}
 				if (ix >= iy)
 					break ;
-				range_[iy] = range_[ix] ;
+				result[iy] = result[ix] ;
 				iy-- ;
 			}
-			range_[ix] = r1x ;
+			result[ix] = r1x ;
 			mid_one = ix ;
 		}
 
-		void sort (CREF<Binder> array_ ,VREF<Array<INDEX>> range_ ,CREF<INDEX> begin_ ,CREF<INDEX> end_) const override {
+		void sort (CREF<Binder> array_ ,VREF<Array<INDEX>> result ,CREF<INDEX> begin_ ,CREF<INDEX> end_) const override {
 			const auto r1x = end_ - begin_ ;
 			if (r1x <= 1)
 				return ;
 			INDEX ix = begin_ ;
 			INDEX iy = end_ - 1 ;
-			assert (vbetween (ix ,0 ,range_.size ())) ;
-			assert (vbetween (iy ,0 ,range_.size ())) ;
-			quick_sort (array_ ,range_ ,ix ,iy ,r1x) ;
+			assert (vbetween (ix ,0 ,result.size ())) ;
+			assert (vbetween (iy ,0 ,result.size ())) ;
+			quick_sort (array_ ,result ,ix ,iy ,r1x) ;
 		}
 	} ;
 } ;
@@ -459,7 +459,7 @@ trait SEGMENTTABLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				mTableOrder = Array<INDEX> (mTable.size ()) ;
 				mTableOrder.fill (NONE) ;
 			}
-			mTableRange = mTable.range () ;
+			mTableRange = mTable.esort () ;
 			for (auto &&i : mTableRange.iter ())
 				mTableOrder[mTableRange[i]] = i ;
 			if ifswitch (TRUE) {

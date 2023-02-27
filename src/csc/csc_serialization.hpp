@@ -38,8 +38,8 @@ trait XMLPARSER_HELP<DEPEND ,ALWAYS> {
 		virtual Array<XmlParser> child_array (CREF<LENGTH> size_) const = 0 ;
 		virtual XmlParser concat (CREF<XmlParser> that) const = 0 ;
 		virtual BOOL equal (CREF<Holder> that) const = 0 ;
-		virtual CREF<String<STRU8>> name () const leftvalue = 0 ;
-		virtual CREF<String<STRU8>> attribute (CREF<String<STRU8>> tag) const leftvalue = 0 ;
+		virtual CREF<String<STRU8>> member () const leftvalue = 0 ;
+		virtual CREF<String<STRU8>> member (CREF<String<STRU8>> tag) const leftvalue = 0 ;
 		virtual CREF<String<STRU8>> fetch () const leftvalue = 0 ;
 		virtual BOOL fetch (CREF<BOOL> def) const = 0 ;
 		virtual VAL32 fetch (CREF<VAL32> def) const = 0 ;
@@ -82,7 +82,7 @@ trait XMLPARSER_HELP<DEPEND ,ALWAYS> {
 			mThis = move (that) ;
 		}
 
-		explicit XmlParser (CREF<typeof (PH0)>) {
+		explicit XmlParser (CREF<BoolProxy> ok) {
 			mThis = FUNCTION_extern::invoke () ;
 			mThis->initialize () ;
 		}
@@ -176,16 +176,16 @@ trait XMLPARSER_HELP<DEPEND ,ALWAYS> {
 			thiz = concat (that) ;
 		}
 
-		CREF<String<STRU8>> name () const leftvalue {
-			return mThis->name () ;
+		CREF<String<STRU8>> member () const leftvalue {
+			return mThis->member () ;
 		}
 
-		CREF<String<STRU8>> attribute (CREF<Slice<STR>> tag) const leftvalue {
-			return attribute (PrintString<STRU8>::make (tag)) ;
+		CREF<String<STRU8>> member (CREF<Slice<STR>> tag) const leftvalue {
+			return member (PrintString<STRU8>::make (tag)) ;
 		}
 
-		CREF<String<STRU8>> attribute (CREF<String<STRU8>> tag) const leftvalue {
-			return mThis->attribute (tag) ;
+		CREF<String<STRU8>> member (CREF<String<STRU8>> tag) const leftvalue {
+			return mThis->member (tag) ;
 		}
 
 		CREF<String<STRU8>> fetch () const leftvalue {
@@ -318,7 +318,7 @@ trait JSONPARSER_HELP<DEPEND ,ALWAYS> {
 			mThis = move (that) ;
 		}
 
-		explicit JsonParser (CREF<typeof (PH0)>) {
+		explicit JsonParser (CREF<BoolProxy> ok) {
 			mThis = FUNCTION_extern::invoke () ;
 			mThis->initialize () ;
 		}

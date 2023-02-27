@@ -103,7 +103,7 @@ trait TIMEDURATION_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		TimeDuration factory (CREF<TIMEDURATION> duration_) const {
 			auto rax = VRef<ImplHolder>::make () ;
 			rax->mTimeDuration = duration_ ;
-			return TimeDuration (move (rax)) ;
+			return TimeDuration (rax.as_cref ()) ;
 		}
 
 		Auto native () const leftvalue override {
@@ -272,16 +272,25 @@ trait MUTEX_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		SharedRef<HEAP> mHeap ;
 
 	public:
-		void initialize_recursive () override {
-			mHeap = SharedRef<HEAP>::make () ;
-			mHeap->mRecursive = Box<std::recursive_mutex>::make () ;
-			mHeap->mShared = Atomic (0) ;
-		}
-
-		void initialize_conditional () override {
-			mHeap = SharedRef<HEAP>::make () ;
-			mHeap->mMutex = Box<std::mutex>::make () ;
-			mHeap->mConditional = Box<std::condition_variable>::make () ;
+		void initialize (CREF<LENGTH> cond_size) override {
+			auto act = TRUE ;
+			if ifswitch (act) {
+				if (cond_size != 0)
+					discard ;
+				mHeap = SharedRef<HEAP>::make () ;
+				mHeap->mRecursive = Box<std::recursive_mutex>::make () ;
+				mHeap->mShared = Atomic (0) ;
+			}
+			if ifswitch (act) {
+				if (cond_size != 1)
+					discard ;
+				mHeap = SharedRef<HEAP>::make () ;
+				mHeap->mMutex = Box<std::mutex>::make () ;
+				mHeap->mConditional = Box<std::condition_variable>::make () ;
+			}
+			if ifswitch (act) {
+				assume (FALSE) ;
+			}
 		}
 
 		Auto native () const leftvalue override {
@@ -348,7 +357,6 @@ trait UNIQUELOCK_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		void finalize () override {
-			mHeap = SharedRef<HEAP> () ;
 			mLock = std::unique_lock<std::mutex> () ;
 		}
 
@@ -401,10 +409,7 @@ trait SHAREDLOCK_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		void finalize () override {
-			try_invoke ([&] () {
-				shared_leave () ;
-			}) ;
-			mHeap = SharedRef<HEAP> () ;
+			shared_leave () ;
 		}
 
 		BOOL busy () const override {
@@ -474,10 +479,12 @@ trait STATICPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	using Holder = typename STATICPROC_HELP<DEPEND ,ALWAYS>::Holder ;
 
 	struct NODE {
+		FLAG mGroup ;
 		FLAG mCabi ;
 		CRef<Proxy> mAddr ;
-		BOOL mGood ;
 		INDEX mNext ;
+		BOOL mGood ;
+		INDEX mGoodNext ;
 	} ;
 
 	struct HEAP {
@@ -489,8 +496,8 @@ trait STATICPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		FLAG mMinCabi ;
 		FLAG mMaxCabi ;
 		Allocator<NODE ,VARIABLE> mList ;
-		INDEX mFirst ;
-		LENGTH mLength ;
+		INDEX mGoodFirst ;
+		LENGTH mGoodLength ;
 	} ;
 
 	using HEADER_SIZE = ENUMAS<VAL ,65536> ;
@@ -500,7 +507,7 @@ trait STATICPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		FLAG mPointer ;
 
 	public:
-		void initialize () {
+		void initialize () override {
 			mPointer = address (unique ().self) ;
 			fake.mMutex = RecursiveMutex::make () ;
 			fake.mFinalizing = FALSE ;
@@ -508,8 +515,8 @@ trait STATICPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			fake.mRead = 0 ;
 			fake.mMinCabi = ZERO ;
 			fake.mMaxCabi = ZERO ;
-			fake.mFirst = NONE ;
-			fake.mLength = 0 ;
+			fake.mGoodFirst = NONE ;
+			fake.mGoodLength = 0 ;
 		}
 
 		void finalize () override {
@@ -517,17 +524,17 @@ trait STATICPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			fake.mFinalizing = TRUE ;
 			auto rbx = CRef<Proxy> () ;
 			while (TRUE) {
-				if (fake.mFirst == NONE)
+				if (fake.mGoodFirst == NONE)
 					break ;
 				if ifswitch (TRUE) {
 					Scope<SharedLock> anonymous (rax) ;
-					if (fake.mFirst == NONE)
+					if (fake.mGoodFirst == NONE)
 						discard ;
-					INDEX ix = fake.mFirst ;
+					INDEX ix = fake.mGoodFirst ;
 					rbx = move (fake.mList[ix].mAddr) ;
 					fake.mList[ix].mGood = FALSE ;
-					fake.mFirst = fake.mList[ix].mNext ;
-					fake.mLength-- ;
+					fake.mGoodFirst = fake.mList[ix].mGoodNext ;
+					fake.mGoodLength-- ;
 				}
 				rbx = NULL ;
 			}
@@ -536,35 +543,72 @@ trait STATICPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			fake.mRange = VarBuffer<INDEX> () ;
 		}
 
-		void regi (CREF<FLAG> cabi ,VREF<CRef<Proxy>> addr) const {
+		CRef<Proxy> link (CREF<FLAG> group ,CREF<FLAG> cabi) const override {
+			auto rax = SharedLock (fake.mMutex) ;
+			const auto r1x = group ;
+			const auto r2x = cabi ;
+			INDEX ix = NONE ;
+			if ifswitch (TRUE) {
+				if (r2x < fake.mMinCabi)
+					discard ;
+				if (r2x > fake.mMaxCabi)
+					discard ;
+				if (fake.mSize == 0)
+					discard ;
+				const auto r3x = (fake.mRead + r2x - fake.mMinCabi) % fake.mSize ;
+				ix = fake.mRange[r3x] ;
+				while (TRUE) {
+					if (ix == NONE)
+						break ;
+					if (fake.mList[ix].mGroup == r1x)
+						break ;
+					ix = fake.mList[ix].mNext ;
+				}
+			}
+			if (ix == NONE)
+				return NULL ;
+			return CRef<Proxy>::reference (fake.mList[ix].mAddr.self) ;
+		}
+
+		void regi (CREF<FLAG> group ,CREF<FLAG> cabi ,VREF<CRef<Proxy>> addr) const override {
 			assert (addr != NULL) ;
 			auto rax = SharedLock (fake.mMutex) ;
 			if (fake.mFinalizing)
 				return ;
-			const auto r1x = cabi ;
+			const auto r1x = group ;
+			const auto r2x = cabi ;
 			INDEX ix = NONE ;
 			if ifswitch (TRUE) {
-				if (r1x < fake.mMinCabi)
+				if (r2x < fake.mMinCabi)
 					discard ;
-				if (r1x > fake.mMaxCabi)
+				if (r2x > fake.mMaxCabi)
 					discard ;
 				if (fake.mSize == 0)
 					discard ;
-				const auto r2x = (fake.mRead + r1x - fake.mMinCabi) % fake.mSize ;
-				ix = fake.mRange[r2x] ;
+				const auto r3x = (fake.mRead + r2x - fake.mMinCabi) % fake.mSize ;
+				ix = fake.mRange[r3x] ;
+				while (TRUE) {
+					if (ix == NONE)
+						break ;
+					if (fake.mList[ix].mGroup == r1x)
+						break ;
+					ix = fake.mList[ix].mNext ;
+				}
 			}
 			if ifswitch (TRUE) {
 				if (ix != NONE)
 					discard ;
 				Scope<SharedLock> anonymous (rax) ;
-				update_resize (r1x) ;
+				update_resize (r2x) ;
 				ix = fake.mList.alloc () ;
-				const auto r3x = (fake.mRead + r1x - fake.mMinCabi) % fake.mSize ;
-				fake.mRange[r3x] = ix ;
-				fake.mList[ix].mCabi = r1x ;
+				const auto r4x = (fake.mRead + r2x - fake.mMinCabi) % fake.mSize ;
+				fake.mList[ix].mGroup = r1x ;
+				fake.mList[ix].mCabi = r2x ;
 				fake.mList[ix].mAddr = NULL ;
+				fake.mList[ix].mNext = fake.mRange[r4x] ;
 				fake.mList[ix].mGood = FALSE ;
-				fake.mList[ix].mNext = NONE ;
+				fake.mList[ix].mGoodNext = NONE ;
+				fake.mRange[r4x] = ix ;
 			}
 			if ifswitch (TRUE) {
 				if (fake.mList[ix].mGood)
@@ -572,31 +616,11 @@ trait STATICPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				Scope<SharedLock> anonymous (rax) ;
 				fake.mList[ix].mAddr = move (addr) ;
 				fake.mList[ix].mGood = TRUE ;
-				fake.mList[ix].mNext = fake.mFirst ;
-				fake.mFirst = ix ;
-				fake.mLength++ ;
+				fake.mList[ix].mGoodNext = fake.mGoodFirst ;
+				fake.mGoodFirst = ix ;
+				fake.mGoodLength++ ;
 			}
 			addr = CRef<Proxy>::reference (fake.mList[ix].mAddr.self) ;
-		}
-
-		CRef<Proxy> link (CREF<FLAG> cabi) const {
-			auto rax = SharedLock (fake.mMutex) ;
-			const auto r1x = cabi ;
-			INDEX ix = NONE ;
-			if ifswitch (TRUE) {
-				if (r1x < fake.mMinCabi)
-					discard ;
-				if (r1x > fake.mMaxCabi)
-					discard ;
-				if (fake.mSize == 0)
-					discard ;
-				const auto r2x = (fake.mRead + r1x - fake.mMinCabi) % fake.mSize ;
-				ix = fake.mRange[r2x] ;
-				if (ix == NONE)
-					discard ;
-				return CRef<Proxy>::reference (fake.mList[ix].mAddr.self) ;
-			}
-			return NULL ;
 		}
 
 		void update_resize (CREF<FLAG> cabi) const {
@@ -879,11 +903,9 @@ trait RANDOM_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			return DATA (mHeap->mRandom.self ()) ;
 		}
 
-		Array<DATA> random_byte (CREF<LENGTH> size_) const override {
-			Array<DATA> ret = Array<DATA> (size_) ;
-			for (auto &&i : ret)
+		void random_byte (VREF<Array<DATA>> result) const override {
+			for (auto &&i : result)
 				i = random_byte () ;
-			return move (ret) ;
 		}
 
 		INDEX random_value (CREF<INDEX> lb ,CREF<INDEX> rb) const override {
@@ -893,60 +915,53 @@ trait RANDOM_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			return INDEX (r2x % r1x + lb) ;
 		}
 
-		Array<INDEX> random_value (CREF<INDEX> lb ,CREF<INDEX> rb ,CREF<LENGTH> size_) const override {
-			assert (lb <= rb) ;
-			Array<INDEX> ret = Array<INDEX> (size_) ;
-			const auto r1x = VAL64 (rb) - VAL64 (lb) + 1 ;
-			for (auto &&i : ret) {
-				const auto r2x = VAL64 (random_byte () & DATA (VAL64_MAX)) ;
-				i = INDEX (r2x % r1x + lb) ;
-			}
-			return move (ret) ;
+		void random_value (CREF<INDEX> lb ,CREF<INDEX> rb ,VREF<Array<INDEX>> result) const override {
+			for (auto &&i : result)
+				i = random_value (lb ,rb) ;
 		}
 
 		Array<INDEX> random_shuffle (CREF<LENGTH> count ,CREF<LENGTH> size_) const override {
 			Array<INDEX> ret = IterArray<INDEX>::make (iter (0 ,size_)) ;
-			random_shuffle (count ,size_ ,ret) ;
+			random_shuffle (count ,ret) ;
 			return move (ret) ;
 		}
 
-		void random_shuffle (CREF<LENGTH> count ,CREF<LENGTH> size_ ,VREF<Array<INDEX>> range_) const override {
+		void random_shuffle (CREF<LENGTH> count ,VREF<Array<INDEX>> result) const override {
 			assert (count >= 0) ;
-			assert (count <= size_) ;
-			assert (range_.size () == size_) ;
-			const auto r1x = range_.size () - 1 ;
+			const auto r1x = result.size () - 1 ;
+			const auto r2x = vmin (count ,r1x) ;
 			INDEX ix = 0 ;
 			while (TRUE) {
-				if (ix >= count)
+				if (ix >= r2x)
 					break ;
 				INDEX iy = random_value (ix ,r1x) ;
-				swap (range_[ix] ,range_[iy]) ;
+				swap (result[ix] ,result[iy]) ;
 				ix++ ;
 			}
 		}
 
 		BitSet<> random_pick (CREF<LENGTH> count ,CREF<LENGTH> size_) const override {
 			BitSet<> ret = BitSet<> (size_) ;
-			random_pick (count ,size_ ,ret) ;
+			random_pick (count ,ret) ;
 			return move (ret) ;
 		}
 
-		void random_pick (CREF<LENGTH> count ,CREF<LENGTH> size_ ,VREF<BitSet<>> range_) const override {
+		void random_pick (CREF<LENGTH> count ,VREF<BitSet<>> result) const override {
 			assert (count >= 0) ;
-			assert (count <= size_) ;
-			assert (range_.size () == size_) ;
+			assert (count <= result.size ()) ;
 			auto act = TRUE ;
 			if ifswitch (act) {
-				if (count >= size_ / 2)
+				if (count >= result.size () / 2)
 					discard ;
-				const auto r1x = random_shuffle (count ,size_) ;
+				const auto r1x = random_shuffle (count ,result.size ()) ;
 				for (auto &&i : iter (0 ,count))
-					range_.add (r1x[i]) ;
+					result.add (r1x[i]) ;
 			}
 			if ifswitch (act) {
-				const auto r2x = random_shuffle (size_ - count ,size_) ;
-				for (auto &&i : iter (size_ - count ,size_))
-					range_.add (r2x[i]) ;
+				const auto r2x = result.size () - count ;
+				const auto r3x = random_shuffle (r2x ,result.size ()) ;
+				for (auto &&i : iter (0 ,count))
+					result.add (r3x[r2x + i]) ;
 			}
 		}
 
@@ -956,6 +971,11 @@ trait RANDOM_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			if (r2x < possibility)
 				return TRUE ;
 			return FALSE ;
+		}
+
+		void random_draw (CREF<DOUBLE> possibility ,VREF<Array<BOOL>> result) const override {
+			for (auto &&i : result)
+				i = random_draw (possibility) ;
 		}
 	} ;
 } ;
@@ -973,10 +993,11 @@ template <class UNIT>
 trait SINGLETON_HACKSHAREDREF_HELP<UNIT ,ALWAYS> {
 	using Holder = typename SHAREDREF_HELP<UNIT ,ALWAYS>::Holder ;
 	using PureHolder = typename SHAREDREF_PUREHOLDER_HELP<UNIT ,ALWAYS>::PureHolder ;
+	using SUPER = SharedRef<UNIT> ;
 
-	class HackSharedRef extend SharedRef<UNIT> {
+	class HackSharedRef extend SUPER {
 	public:
-		imports SharedRef<UNIT> make () {
+		imports SUPER make () {
 			HackSharedRef ret ;
 			auto rax = CRef<Holder>::reference (unique ().self) ;
 			Scope<PinMutex> anonymous (rax->pin_mutex ()) ;

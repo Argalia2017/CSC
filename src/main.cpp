@@ -112,16 +112,14 @@ struct G_mX3 {
 
 	explicit G_mX3 (VREF<SyntaxTree> me) {
 		me.mark_as_iteration () ;
-		me.maybe (TYPEAS<G_mY0>::expr) ;
+		auto &mY0 = me.stack (TYPEAS<G_mY0>::expr).mY0 ;
+		auto &mW0 = me.stack (TYPEAS<G_mW0>::expr).mW0 ;
 		me.maybe (TYPEAS<G_mX1>::expr) ;
 		me.maybe (TYPEAS<G_mX2>::expr) ;
 		me.maybe (TYPEAS<G_mY1>::expr) ;
-		me.maybe (TYPEAS<G_mW0>::expr) ;
 		me.maybe (TYPEAS<G_mW1>::expr) ;
 		me.maybe (TYPEAS<G_mW2>::expr) ;
 		me.once (Function<void> ([&] () {
-			auto &mY0 = me.stack (TYPEAS<G_mY0>::expr).mY0 ;
-			auto &mW0 = me.stack (TYPEAS<G_mW0>::expr).mW0 ;
 			auto &mX1 = me.stack (TYPEAS<G_mX1>::expr).mX1 ;
 			auto &mX2 = me.stack (TYPEAS<G_mX2>::expr).mX2 ;
 			auto &mY1 = me.stack (TYPEAS<G_mY1>::expr).mY1 ;
@@ -221,7 +219,7 @@ exports int main () {
 	Singleton<Console>::instance ().open (slice (".")) ;
 	Singleton<Console>::instance ().info (slice ("start")) ;
 
-	auto rax = SyntaxTree (PH0) ;
+	auto rax = SyntaxTree (TRUE) ;
 	auto &mXn = rax.stack (TYPEAS<G_mXn>::expr).mXn ;
 	auto &mYn = rax.stack (TYPEAS<G_mYn>::expr).mYn ;
 	rax.play () ;

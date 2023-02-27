@@ -127,16 +127,16 @@ trait LATER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				me.mHeap->mLast = ix ;
 				me.mIndex = ix ;
 			} ,[] (VREF<OWNERSHIP> me) {
-				INDEX ix = me.mIndex ;
-				if (me.mHeap->mList[ix].mPrev == USED)
+				INDEX iy = me.mIndex ;
+				if (me.mHeap->mList[iy].mPrev == USED)
 					return ;
-				curr_next (me.mHeap.self ,me.mHeap->mList[ix].mPrev ,me.mHeap->mList[ix].mNext) ;
-				curr_prev (me.mHeap.self ,me.mHeap->mList[ix].mNext ,me.mHeap->mList[ix].mPrev) ;
-				me.mHeap->mList[ix].mPrev = USED ;
-				me.mHeap->mList[ix].mNext = me.mHeap->mFree ;
-				me.mHeap->mFree = ix ;
-				me.mHeap->mList[ix].mTag = 0 ;
-				me.mHeap->mList[ix].mExpr = Function<Auto> () ;
+				curr_next (me.mHeap.self ,me.mHeap->mList[iy].mPrev ,me.mHeap->mList[iy].mNext) ;
+				curr_prev (me.mHeap.self ,me.mHeap->mList[iy].mNext ,me.mHeap->mList[iy].mPrev) ;
+				me.mHeap->mList[iy].mPrev = USED ;
+				me.mHeap->mList[iy].mNext = me.mHeap->mFree ;
+				me.mHeap->mFree = iy ;
+				me.mHeap->mList[iy].mTag = 0 ;
+				me.mHeap->mList[iy].mExpr = Function<Auto> () ;
 			}) ;
 			mLater = SharedRef<UniqueRef<OWNERSHIP>>::make (move (rax)) ;
 			r1x->mList[ix].mWeak = mLater.weak () ;
