@@ -116,10 +116,12 @@ trait STRINGPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		String<STRA> string_cvt_ansi_from_w (CREF<String<STRW>> obj) const override {
+			String<STRA> ret ;
+			auto &&tmp = unsafe_deref (unsafe_cast[TYPEAS<TEMP<String<STRUA>>>::expr] (unsafe_deptr (ret))) ;
 			auto &&tmp_obj = unsafe_deref (unsafe_cast[TYPEAS<TEMP<String<STRUW>>>::expr] (unsafe_deptr (obj))) ;
-			auto rax = string_cvt_ansi_from_w (tmp_obj) ;
-			auto &&tmp = unsafe_deref (unsafe_cast[TYPEAS<TEMP<String<STRA>>>::expr] (unsafe_deptr (rax))) ;
-			return move (tmp) ;
+			tmp = string_cvt_ansi_from_w (tmp_obj) ;
+			unsafe_launder (ret) ;
+			return move (ret) ;
 		}
 
 		String<STRUA> string_cvt_ansi_from_w (CREF<String<STRUW>> obj) const {
@@ -135,10 +137,12 @@ trait STRINGPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		String<STRW> string_cvt_w_from_ansi (CREF<String<STRA>> obj) const override {
+			String<STRW> ret ;
+			auto &&tmp = unsafe_deref (unsafe_cast[TYPEAS<TEMP<String<STRUW>>>::expr] (unsafe_deptr (ret))) ;
 			auto &&tmp_obj = unsafe_deref (unsafe_cast[TYPEAS<TEMP<String<STRUA>>>::expr] (unsafe_deptr (obj))) ;
-			auto rax = string_cvt_w_from_ansi (tmp_obj) ;
-			auto &&tmp = unsafe_deref (unsafe_cast[TYPEAS<TEMP<String<STRW>>>::expr] (unsafe_deptr (rax))) ;
-			return move (tmp) ;
+			tmp = string_cvt_w_from_ansi (tmp_obj) ;
+			unsafe_launder (ret) ;
+			return move (ret) ;
 		}
 
 		String<STRUW> string_cvt_w_from_ansi (CREF<String<STRUA>> obj) const {
@@ -154,10 +158,12 @@ trait STRINGPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		String<STRA> string_cvt_gbks_from_w (CREF<String<STRW>> obj) const override {
+			String<STRA> ret ;
+			auto &&tmp = unsafe_deref (unsafe_cast[TYPEAS<TEMP<String<STRUA>>>::expr] (unsafe_deptr (ret))) ;
 			auto &&tmp_obj = unsafe_deref (unsafe_cast[TYPEAS<TEMP<String<STRUW>>>::expr] (unsafe_deptr (obj))) ;
-			auto rax = string_cvt_gbks_from_w (tmp_obj) ;
-			auto &&tmp = unsafe_deref (unsafe_cast[TYPEAS<TEMP<String<STRA>>>::expr] (unsafe_deptr (rax))) ;
-			return move (tmp) ;
+			tmp = string_cvt_gbks_from_w (tmp_obj) ;
+			unsafe_launder (ret) ;
+			return move (ret) ;
 		}
 
 		String<STRUA> string_cvt_gbks_from_w (CREF<String<STRUW>> obj) const {
@@ -195,10 +201,12 @@ trait STRINGPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		String<STRW> string_cvt_w_from_gbks (CREF<String<STRA>> obj) const override {
+			String<STRW> ret ;
+			auto &&tmp = unsafe_deref (unsafe_cast[TYPEAS<TEMP<String<STRUW>>>::expr] (unsafe_deptr (ret))) ;
 			auto &&tmp_obj = unsafe_deref (unsafe_cast[TYPEAS<TEMP<String<STRUA>>>::expr] (unsafe_deptr (obj))) ;
-			auto rax = string_cvt_w_from_gbks (tmp_obj) ;
-			auto &&tmp = unsafe_deref (unsafe_cast[TYPEAS<TEMP<String<STRW>>>::expr] (unsafe_deptr (rax))) ;
-			return move (tmp) ;
+			tmp = string_cvt_w_from_gbks (tmp_obj) ;
+			unsafe_launder (ret) ;
+			return move (ret) ;
 		}
 
 		String<STRUW> string_cvt_w_from_gbks (CREF<String<STRUA>> obj) const {

@@ -472,10 +472,12 @@ trait TEMPLATE_string_cvt_HELP<UNIT ,SIDE ,REQUIRE<ENUM_ALL<IS_SAME<UNIT ,STRW> 
 	struct TEMPLATE_string_cvt {
 		inline String<STRW> operator() (CREF<String<STRU8>> obj) const {
 			using R1X = typename TEMPLATE_string_cvt_HELP<STRUW ,SIDE ,ALWAYS>::TEMPLATE_string_cvt ;
+			String<STRW> ret ;
+			auto &&tmp = unsafe_deref (unsafe_cast[TYPEAS<TEMP<String<STRUW>>>::expr] (unsafe_deptr (ret))) ;
 			const auto r1x = R1X () ;
-			auto rax = r1x (obj) ;
-			auto &&tmp = unsafe_deref (unsafe_cast[TYPEAS<TEMP<String<STRW>>>::expr] (unsafe_deptr (rax))) ;
-			return move (tmp) ;
+			tmp = r1x (obj) ;
+			unsafe_launder (ret) ;
+			return move (ret) ;
 		}
 	} ;
 } ;
@@ -485,10 +487,12 @@ trait TEMPLATE_string_cvt_HELP<UNIT ,SIDE ,REQUIRE<ENUM_ALL<IS_SAME<UNIT ,STRW> 
 	struct TEMPLATE_string_cvt {
 		inline String<STRW> operator() (CREF<String<STRU16>> obj) const {
 			using R1X = typename TEMPLATE_string_cvt_HELP<STRUW ,SIDE ,ALWAYS>::TEMPLATE_string_cvt ;
+			String<STRW> ret ;
+			auto &&tmp = unsafe_deref (unsafe_cast[TYPEAS<TEMP<String<STRUW>>>::expr] (unsafe_deptr (ret))) ;
 			const auto r1x = R1X () ;
-			auto rax = r1x (obj) ;
-			auto &&tmp = unsafe_deref (unsafe_cast[TYPEAS<TEMP<String<STRW>>>::expr] (unsafe_deptr (rax))) ;
-			return move (tmp) ;
+			tmp = r1x (obj) ;
+			unsafe_launder (ret) ;
+			return move (ret) ;
 		}
 	} ;
 } ;
@@ -498,10 +502,12 @@ trait TEMPLATE_string_cvt_HELP<UNIT ,SIDE ,REQUIRE<ENUM_ALL<IS_SAME<UNIT ,STRW> 
 	struct TEMPLATE_string_cvt {
 		inline String<STRW> operator() (CREF<String<STRU32>> obj) const {
 			using R1X = typename TEMPLATE_string_cvt_HELP<STRUW ,SIDE ,ALWAYS>::TEMPLATE_string_cvt ;
+			String<STRW> ret ;
+			auto &&tmp = unsafe_deref (unsafe_cast[TYPEAS<TEMP<String<STRUW>>>::expr] (unsafe_deptr (ret))) ;
 			const auto r1x = R1X () ;
-			auto rax = r1x (obj) ;
-			auto &&tmp = unsafe_deref (unsafe_cast[TYPEAS<TEMP<String<STRW>>>::expr] (unsafe_deptr (rax))) ;
-			return move (tmp) ;
+			tmp = r1x (obj) ;
+			unsafe_launder (ret) ;
+			return move (ret) ;
 		}
 	} ;
 } ;

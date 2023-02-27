@@ -187,6 +187,7 @@ trait CONSOLE_IMPLBINDER_HELP<TYPEAS<UNIT...> ,ALWAYS> {
 		}
 
 		void friend_write (VREF<TextWriter<STR>> writer) const override {
+			//@fatal: fuck msvc
 			mThat.self ([&] (CREF<UNIT>...obj) {
 				writer.prints (obj...) ;
 			}) ;

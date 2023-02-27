@@ -307,45 +307,53 @@ trait CALCTHREAD_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 
 		void friend_execute (CREF<INDEX> slot) override {
 			while (TRUE) {
-				while (TRUE) {
-					wait_solution (slot) ;
-					while (TRUE) {
-						wait_suspend (slot) ;
-						if (mThreadSolution[slot].mValue == NULL)
-							break ;
-						mSearchSolution[slot] = mThreadProc (mThreadSolution[slot]) ;
-						if (mSearchSolution[slot].mValue == NULL)
-							break ;
-						if (mSearchSolution[slot].mError < mThreadSolution[slot].mError)
-							break ;
-					}
-					if (mSearchSolution[slot].mValue != NULL)
-						break ;
-				}
-				while (TRUE) {
-					accept_solution (slot) ;
-					if (mBranchSolution[slot].mValue == NULL)
-						break ;
-					const auto r10x = bitset_xor (mThreadSolution[slot].mValue.self ,mSearchSolution[slot].mValue.self) ;
-					const auto r11x = bitset_xor (mThreadSolution[slot].mValue.self ,mBranchSolution[slot].mValue.self) ;
-					const auto r12x = (r10x & r11x).length () ;
-					if (r12x == 0)
-						break ;
-					mThreadSolution[slot].mIndex = NONE ;
-					mThreadSolution[slot].mError = DOUBLE_INF ;
-					mThreadSolution[slot].mValue = CRef<BitSet<>>::make (bitset_xor (mBranchSolution[slot].mValue.self ,r10x)) ;
-					mSearchSolution[slot] = mThreadProc (mThreadSolution[slot]) ;
-					if (mSearchSolution[slot].mValue == NULL)
-						break ;
-					if (mSearchSolution[slot].mError >= mBranchSolution[slot].mError)
-						break ;
-				}
 				mThreadSolution[slot] = SOLUTION () ;
+				search_new (slot) ;
+				search_xor (slot) ;
 			}
 		}
 
 		void friend_execute (CREF<INDEX> slot) const override {
 			assert (FALSE) ;
+		}
+
+		void search_new (CREF<INDEX> slot) {
+			while (TRUE) {
+				wait_solution (slot) ;
+				while (TRUE) {
+					wait_suspend (slot) ;
+					if ifnot (mThreadSolution[slot].mValue.exist ())
+						break ;
+					mSearchSolution[slot] = mThreadProc (mThreadSolution[slot]) ;
+					if ifnot (mSearchSolution[slot].mValue.exist ())
+						break ;
+					if (mSearchSolution[slot].mError < mThreadSolution[slot].mError)
+						break ;
+				}
+				if (mSearchSolution[slot].mValue.exist ())
+					break ;
+			}
+		}
+
+		void search_xor (CREF<INDEX> slot) {
+			while (TRUE) {
+				accept_solution (slot) ;
+				if ifnot (mBranchSolution[slot].mValue.exist ())
+					break ;
+				const auto r1x = bitset_xor (mThreadSolution[slot].mValue.self ,mSearchSolution[slot].mValue.self) ;
+				const auto r2x = bitset_xor (mThreadSolution[slot].mValue.self ,mBranchSolution[slot].mValue.self) ;
+				const auto r3x = (r1x & r2x).length () ;
+				if (r3x == 0)
+					break ;
+				mThreadSolution[slot].mIndex = NONE ;
+				mThreadSolution[slot].mError = DOUBLE_INF ;
+				mThreadSolution[slot].mValue = ITEM::make (bitset_xor (mBranchSolution[slot].mValue.self ,r1x)) ;
+				mSearchSolution[slot] = mThreadProc (mThreadSolution[slot]) ;
+				if ifnot (mSearchSolution[slot].mValue.exist ())
+					break ;
+				if (mSearchSolution[slot].mError >= mBranchSolution[slot].mError)
+					break ;
+			}
 		}
 
 		BitSet<> bitset_xor (CREF<BitSet<>> bitset1 ,CREF<BitSet<>> bitset2) const {
@@ -364,7 +372,7 @@ trait CALCTHREAD_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 					break ;
 				if (mSuspendFlag)
 					break ;
-				if (mThreadSolution[slot].mValue == NULL)
+				if ifnot (mThreadSolution[slot].mValue.exist ())
 					break ;
 				const auto r1x = address (mBestSolution.mValue.self) ;
 				const auto r2x = address (mThreadSolution[slot].mValue.self) ;
@@ -489,12 +497,6 @@ trait PROMISE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		void initialize () override {
 			mHeap = SharedRef<HEAP>::make () ;
 			mHeap->mThreadMutex = ConditionalMutex::make () ;
-		}
-
-		VRef<Holder> clone () const override {
-			auto rax = VRef<ImplHolder>::make () ;
-			rax->mHeap = mHeap ;
-			return rax.as_cast (TYPEAS<Holder>::expr) ;
 		}
 
 		void finalize () override {

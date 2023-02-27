@@ -36,10 +36,10 @@ trait VECTOR_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 	public:
 		implicit Vector () = default ;
 
-		explicit Vector (CREF<ARRAY3<ITEM>> xyz ,CREF<ITEM> w_) {
-			mVector[0] = xyz[0] ;
-			mVector[1] = xyz[1] ;
-			mVector[2] = xyz[2] ;
+		explicit Vector (CREF<ARRAY3<ITEM>> xyz_ ,CREF<ITEM> w_) {
+			mVector[0] = xyz_[0] ;
+			mVector[1] = xyz_[1] ;
+			mVector[2] = xyz_[2] ;
 			mVector[3] = w_ ;
 		}
 

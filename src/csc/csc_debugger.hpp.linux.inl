@@ -194,12 +194,12 @@ trait CONSOLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				return ;
 			write_log_buffer (tag) ;
 			const auto r1x = mHeap->mLogWriter.length () - 1 ;
-			auto &&tmp = unsafe_cast[TYPEAS<TEMP<void>>::expr] (unsafe_deptr (mHeap->mLogBuffer[0])) ;
+			const auto r2x = address (mHeap->mLogBuffer[0]) ;
 			try_invoke ([&] () {
 				if (mHeap->mLogStreamFile == NULL)
 					return ;
-				const auto r2x = mHeap->mLogStreamFile->write (RegBuffer<BYTE>::from (tmp ,0 ,r1x)) ;
-				assume (r2x == r1x) ;
+				const auto r3x = mHeap->mLogStreamFile->write (RegBuffer<BYTE>::from (r2x ,0 ,r1x)) ;
+				assume (r3x == r1x) ;
 			} ,[&] () {
 				mHeap->mLogStreamFile = NULL ;
 			}) ;
@@ -207,8 +207,8 @@ trait CONSOLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				if (mHeap->mLogStreamFile != NULL)
 					return ;
 				open_log_file () ;
-				const auto r3x = mHeap->mLogStreamFile->write (RegBuffer<BYTE>::from (tmp ,0 ,r1x)) ;
-				assume (r3x == r1x) ;
+				const auto r4x = mHeap->mLogStreamFile->write (RegBuffer<BYTE>::from (r2x ,0 ,r1x)) ;
+				assume (r4x == r1x) ;
 			} ,[&] () {
 				mHeap->mLogStreamFile = NULL ;
 			}) ;
@@ -245,10 +245,10 @@ trait CONSOLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			r2x.move_from (r1x) ;
 			mHeap->mLogStreamFile = VRef<StreamFile>::make (mHeap->mLogFile) ;
 			mHeap->mLogStreamFile->open (TRUE ,TRUE) ;
-			const auto r4x = PrintString<STRU8>::make (BOM) ;
-			auto &&tmp = unsafe_cast[TYPEAS<TEMP<void>>::expr] (unsafe_deptr (r4x[0])) ;
-			const auto r5x = mHeap->mLogStreamFile->write (RegBuffer<BYTE>::from (tmp ,0 ,r4x.length ())) ;
-			assume (r5x == r4x.length ()) ;
+			const auto r3x = PrintString<STRU8>::make (BOM) ;
+			const auto r4x = address (r3x[0]) ;
+			const auto r5x = mHeap->mLogStreamFile->write (RegBuffer<BYTE>::from (r4x ,0 ,r3x.length ())) ;
+			assume (r5x == r3x.length ()) ;
 		}
 
 		void show () const override {
@@ -456,14 +456,15 @@ trait REPORTER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				}) ;
 				if (r2x.self == NULL)
 					discard ;
-				auto &&tmp = unsafe_deref (unsafe_cast[TYPEAS<TEMP<ARR<STRA>>>::expr] (unsafe_cast[TYPEAS<TEMP<void>>::expr] (unsafe_deptr ((**r2x.self))))) ;
+				const auto r3x = address ((**r2x.self)) ;
+				auto &&tmp = unsafe_deref (unsafe_cast[TYPEAS<TEMP<ARR<STRA>>>::expr] (unsafe_pointer (r3x))) ;
 				mHeap->mNameBuffer -= BufferProc<STR>::buf_slice (tmp ,mHeap->mNameBuffer.size ()) ;
-				const auto r3x = string_build[TYPEAS<STR ,DATA>::expr] (DATA (addr)) ;
-				ret = PrintString<STR>::make (slice ("[") ,r3x ,slice ("] : ") ,mHeap->mNameBuffer) ;
+				const auto r4x = string_build[TYPEAS<STR ,DATA>::expr] (DATA (addr)) ;
+				ret = PrintString<STR>::make (slice ("[") ,r4x ,slice ("] : ") ,mHeap->mNameBuffer) ;
 			}
 			if ifswitch (act) {
-				const auto r4x = string_build[TYPEAS<STR ,DATA>::expr] (DATA (addr)) ;
-				ret = PrintString<STR>::make (slice ("[") ,r4x ,slice ("] : ") ,slice ("null")) ;
+				const auto r5x = string_build[TYPEAS<STR ,DATA>::expr] (DATA (addr)) ;
+				ret = PrintString<STR>::make (slice ("[") ,r5x ,slice ("] : ") ,slice ("null")) ;
 			}
 			return move (ret) ;
 		}

@@ -10,6 +10,33 @@
 
 namespace CSC {
 template <class...>
+trait BOOLPROXY_HELP ;
+
+template <class DEPEND>
+trait BOOLPROXY_HELP<DEPEND ,ALWAYS> {
+	class BoolProxy {
+	protected:
+		BOOL mBool ;
+
+	public:
+		implicit BoolProxy () = delete ;
+
+		implicit BoolProxy (CREF<BOOL> that) {
+			mBool = that ;
+		}
+
+		template <class ARG1>
+		implicit BoolProxy (CREF<csc_initializer_t<ARG1>>) = delete ;
+
+		inline implicit operator BOOL () const {
+			return mBool ;
+		}
+	} ;
+} ;
+
+using BoolProxy = typename BOOLPROXY_HELP<DEPEND ,ALWAYS>::BoolProxy ;
+
+template <class...>
 trait OPTIONAL_HELP ;
 
 template <class...>
@@ -295,7 +322,7 @@ trait BUFFERPROC_HELP<UNIT ,ALWAYS> {
 					return r2x ;
 				return size_ ;
 			}) ;
-			auto rax = csc_text_t () ;
+			auto rax = csc_span_t () ;
 			rax.mBegin = address (src) ;
 			rax.mEnd = rax.mBegin + r1x * ALIGN_OF<R1X>::expr ;
 			rax.mStep = ALIGN_OF<R1X>::expr ;
@@ -324,26 +351,26 @@ trait FUNCTION_tuple_pick_HELP<PARAMS ,ALWAYS> {
 		}
 
 		template <class ARG1 ,class ARG2 ,class = REQUIRE<ENUM_GT_ZERO<ARG2>>>
-		VREF<TYPE_PICK<PARAMS ,ARG2>> template_pick (CREF<typeof (PH2)> ,VREF<ARG1> tuple ,CREF<TYPEID<ARG2>> id) const {
+		imports VREF<TYPE_PICK<PARAMS ,ARG2>> template_pick (CREF<typeof (PH2)> ,VREF<ARG1> tuple ,CREF<TYPEID<ARG2>> id) {
 			using R1X = typename FUNCTION_tuple_pick_HELP<TYPE_FIRST_REST<PARAMS> ,ALWAYS>::FUNCTION_tuple_pick ;
 			const auto r1x = R1X () ;
 			return r1x (tuple.rest () ,TYPEAS<ENUM_DEC<ARG2>>::expr) ;
 		}
 
 		template <class ARG1 ,class ARG2 ,class = REQUIRE<ENUM_EQ_ZERO<ARG2>>>
-		VREF<TYPE_FIRST_ONE<PARAMS>> template_pick (CREF<typeof (PH1)> ,VREF<ARG1> tuple ,CREF<TYPEID<ARG2>> id) const {
+		imports VREF<TYPE_FIRST_ONE<PARAMS>> template_pick (CREF<typeof (PH1)> ,VREF<ARG1> tuple ,CREF<TYPEID<ARG2>> id) {
 			return tuple.one () ;
 		}
 
 		template <class ARG1 ,class ARG2 ,class = REQUIRE<ENUM_GT_ZERO<ARG2>>>
-		CREF<TYPE_PICK<PARAMS ,ARG2>> template_pick (CREF<typeof (PH2)> ,CREF<ARG1> tuple ,CREF<TYPEID<ARG2>> id) const {
+		imports CREF<TYPE_PICK<PARAMS ,ARG2>> template_pick (CREF<typeof (PH2)> ,CREF<ARG1> tuple ,CREF<TYPEID<ARG2>> id) {
 			using R1X = typename FUNCTION_tuple_pick_HELP<TYPE_FIRST_REST<PARAMS> ,ALWAYS>::FUNCTION_tuple_pick ;
 			const auto r1x = R1X () ;
 			return r1x (tuple.rest () ,TYPEAS<ENUM_DEC<ARG2>>::expr) ;
 		}
 
 		template <class ARG1 ,class ARG2 ,class = REQUIRE<ENUM_EQ_ZERO<ARG2>>>
-		CREF<TYPE_FIRST_ONE<PARAMS>> template_pick (CREF<typeof (PH1)> ,CREF<ARG1> tuple ,CREF<TYPEID<ARG2>> id) const {
+		imports CREF<TYPE_FIRST_ONE<PARAMS>> template_pick (CREF<typeof (PH1)> ,CREF<ARG1> tuple ,CREF<TYPEID<ARG2>> id) {
 			return tuple.one () ;
 		}
 	} ;
@@ -1020,7 +1047,7 @@ trait SCOPEFINALLY_HELP<DEPEND ,ALWAYS> {
 		Function<void> mThat ;
 
 	public:
-		imports CREF<ScopeFinally> from (LREF<Function<void>> that) {
+		imports CREF<ScopeFinally> from (CREF<Function<void>> that) {
 			return unsafe_deref (unsafe_cast[TYPEAS<TEMP<ScopeFinally>>::expr] (unsafe_deptr (that))) ;
 		}
 
@@ -1131,7 +1158,7 @@ trait AUTOREF_HELP<UNIT ,REQUIRE<IS_VOID<UNIT>>> {
 		}
 
 		template <class ARG1>
-		imports CREF<AutoRef> from (LREF<ARG1> that) {
+		imports CREF<AutoRef> from (CREF<ARG1> that) {
 			require (IS_EXTEND<SUPER ,ARG1>) ;
 			auto &&tmp = unsafe_deref (unsafe_cast[TYPEAS<TEMP<AutoRef>>::expr] (unsafe_deptr (that))) ;
 			assert (tmp.available ()) ;
@@ -1214,7 +1241,7 @@ trait AUTOREF_HELP<UNIT ,REQUIRE<ENUM_NOT<IS_VOID<UNIT>>>> {
 		}
 
 		template <class ARG1>
-		imports CREF<AutoRef> from (LREF<ARG1> that) {
+		imports CREF<AutoRef> from (CREF<ARG1> that) {
 			require (IS_EXTEND<SUPER ,ARG1>) ;
 			auto &&tmp = unsafe_deref (unsafe_cast[TYPEAS<TEMP<AutoRef>>::expr] (unsafe_deptr (that))) ;
 			assert (tmp.available ()) ;
@@ -1373,7 +1400,7 @@ trait PINMUTEX_HELP<DEPEND ,ALWAYS> {
 	public:
 		implicit PinMutex () = default ;
 
-		explicit PinMutex (CREF<typeof (PH0)>) {
+		explicit PinMutex (CREF<BoolProxy> ok) {
 			mThis = FUNCTION_extern::invoke () ;
 			mThis->initialize () ;
 		}
@@ -1557,7 +1584,7 @@ trait SHAREDREF_PUREHOLDER_HELP<UNIT ,ALWAYS> {
 
 	public:
 		void initialize () override {
-			mMutex = PinMutex (PH0) ;
+			mMutex = PinMutex (TRUE) ;
 			mCounter = 0 ;
 		}
 
@@ -2311,7 +2338,7 @@ trait BUFFER_HELP<ITEM ,SIZE ,REQUIRE<IS_SAME<SIZE ,REGISTER>>> {
 			return unsafe_deref (unsafe_cast[TYPEAS<TEMP<Buffer>>::expr] (unsafe_deptr (that))) ;
 		}
 
-		imports CREF<Buffer> from (LREF<VarBuffer<ITEM>> that) {
+		imports CREF<Buffer> from (CREF<VarBuffer<ITEM>> that) {
 			return unsafe_deref (unsafe_cast[TYPEAS<TEMP<Buffer>>::expr] (unsafe_deptr (that))) ;
 		}
 
@@ -2323,7 +2350,7 @@ trait BUFFER_HELP<ITEM ,SIZE ,REQUIRE<IS_SAME<SIZE ,REGISTER>>> {
 		}
 
 		template <class ARG1 = ITEM ,class = REQUIRE<IS_TEXT<ARG1>>>
-		imports CREF<Buffer> from (LREF<VarBuffer<BYTE_BASE<ARG1>>> that) {
+		imports CREF<Buffer> from (CREF<VarBuffer<BYTE_BASE<ARG1>>> that) {
 			return unsafe_deref (unsafe_cast[TYPEAS<TEMP<Buffer>>::expr] (unsafe_deptr (that))) ;
 		}
 
@@ -2336,21 +2363,21 @@ trait BUFFER_HELP<ITEM ,SIZE ,REQUIRE<IS_SAME<SIZE ,REGISTER>>> {
 		}
 
 		template <class ARG1 = ITEM ,class = REQUIRE<IS_BYTE<ARG1>>>
-		imports CREF<Buffer> from (LREF<VarBuffer<TEXT_BASE<ARG1>>> that) {
+		imports CREF<Buffer> from (CREF<VarBuffer<TEXT_BASE<ARG1>>> that) {
 			return unsafe_deref (unsafe_cast[TYPEAS<TEMP<Buffer>>::expr] (unsafe_deptr (that))) ;
 		}
 
 		template <class ARG1 = ITEM ,class = REQUIRE<IS_BYTE<ARG1>>>
 		imports CREF<Buffer> from (RREF<VarBuffer<TEXT_BASE<ARG1>>>) = delete ;
 
-		imports CREF<Buffer> from (LREF<ConBuffer<ITEM>> that) {
+		imports CREF<Buffer> from (CREF<ConBuffer<ITEM>> that) {
 			return unsafe_deref (unsafe_cast[TYPEAS<TEMP<Buffer>>::expr] (unsafe_deptr (that))) ;
 		}
 
 		imports CREF<Buffer> from (RREF<ConBuffer<ITEM>>) = delete ;
 
 		template <class ARG1 = ITEM ,class = REQUIRE<IS_TEXT<ARG1>>>
-		imports CREF<Buffer> from (LREF<ConBuffer<BYTE_BASE<ARG1>>> that) {
+		imports CREF<Buffer> from (CREF<ConBuffer<BYTE_BASE<ARG1>>> that) {
 			return unsafe_deref (unsafe_cast[TYPEAS<TEMP<Buffer>>::expr] (unsafe_deptr (that))) ;
 		}
 
@@ -2358,7 +2385,7 @@ trait BUFFER_HELP<ITEM ,SIZE ,REQUIRE<IS_SAME<SIZE ,REGISTER>>> {
 		imports CREF<Buffer> from (RREF<ConBuffer<BYTE_BASE<ARG1>>>) = delete ;
 
 		template <class ARG1 = ITEM ,class = REQUIRE<IS_BYTE<ARG1>>>
-		imports CREF<Buffer> from (LREF<ConBuffer<TEXT_BASE<ARG1>>> that) {
+		imports CREF<Buffer> from (CREF<ConBuffer<TEXT_BASE<ARG1>>> that) {
 			return unsafe_deref (unsafe_cast[TYPEAS<TEMP<Buffer>>::expr] (unsafe_deptr (that))) ;
 		}
 
@@ -2371,7 +2398,7 @@ trait BUFFER_HELP<ITEM ,SIZE ,REQUIRE<IS_SAME<SIZE ,REGISTER>>> {
 		}
 
 		template <class ARG1 = ITEM ,class = REQUIRE<IS_TEXT<ARG1>>>
-		imports CREF<Buffer> from (LREF<CastRegBuffer<BYTE_BASE<ARG1>>> that) {
+		imports CREF<Buffer> from (CREF<CastRegBuffer<BYTE_BASE<ARG1>>> that) {
 			return unsafe_deref (unsafe_cast[TYPEAS<TEMP<Buffer>>::expr] (unsafe_deptr (that))) ;
 		}
 
@@ -2384,15 +2411,15 @@ trait BUFFER_HELP<ITEM ,SIZE ,REQUIRE<IS_SAME<SIZE ,REGISTER>>> {
 		}
 
 		template <class ARG1 = ITEM ,class = REQUIRE<IS_BYTE<ARG1>>>
-		imports CREF<Buffer> from (LREF<CastRegBuffer<TEXT_BASE<ARG1>>> that) {
+		imports CREF<Buffer> from (CREF<CastRegBuffer<TEXT_BASE<ARG1>>> that) {
 			return unsafe_deref (unsafe_cast[TYPEAS<TEMP<Buffer>>::expr] (unsafe_deptr (that))) ;
 		}
 
 		template <class ARG1 = ITEM ,class = REQUIRE<IS_BYTE<ARG1>>>
 		imports CREF<Buffer> from (RREF<CastRegBuffer<TEXT_BASE<ARG1>>>) = delete ;
 
-		imports VREF<Buffer> from (VREF<TEMP<void>> buffer ,CREF<INDEX> begin_ ,CREF<INDEX> end_ ,RREF<RegCaches> unnamed = RegCaches ()) {
-			auto &&tmp = unsafe_deref (unsafe_cast[TYPEAS<TEMP<ARR<ITEM>>>::expr] (buffer)) ;
+		imports VREF<Buffer> from (CREF<FLAG> buffer ,CREF<INDEX> begin_ ,CREF<INDEX> end_ ,RREF<RegCaches> unnamed = RegCaches ()) {
+			auto &&tmp = unsafe_deref (unsafe_cast[TYPEAS<TEMP<ARR<ITEM>>>::expr] (unsafe_pointer (buffer))) ;
 			return from (tmp ,begin_ ,end_ ,move (unnamed)) ;
 		}
 
@@ -2410,12 +2437,7 @@ trait BUFFER_HELP<ITEM ,SIZE ,REQUIRE<IS_SAME<SIZE ,REGISTER>>> {
 			return from (tmp) ;
 		}
 
-		imports CREF<Buffer> from (LREF<TEMP<void>> buffer ,CREF<INDEX> begin_ ,CREF<INDEX> end_ ,RREF<RegCaches> unnamed = RegCaches ()) {
-			auto &&tmp = unsafe_deref (unsafe_cast[TYPEAS<TEMP<ARR<ITEM>>>::expr] (buffer)) ;
-			return from (tmp ,begin_ ,end_ ,move (unnamed)) ;
-		}
-
-		imports CREF<Buffer> from (LREF<ARR<ITEM>> buffer ,CREF<INDEX> begin_ ,CREF<INDEX> end_ ,RREF<RegCaches> unnamed = RegCaches ()) {
+		imports CREF<Buffer> from (CREF<ARR<ITEM>> buffer ,CREF<INDEX> begin_ ,CREF<INDEX> end_ ,RREF<RegCaches> unnamed = RegCaches ()) {
 			assert (begin_ >= 0) ;
 			assert (end_ >= 0) ;
 			auto &&tmp = unsafe_deref (unsafe_cast[TYPEAS<TEMP<ConBuffer<ITEM>>>::expr] (unsafe_deptr (unnamed))) ;
@@ -2430,27 +2452,31 @@ trait BUFFER_HELP<ITEM ,SIZE ,REQUIRE<IS_SAME<SIZE ,REGISTER>>> {
 		}
 
 		VRef<Buffer> borrow () leftvalue {
-			auto rax = VRef<VarBuffer<ITEM>>::make () ;
+			VRef<Buffer> ret ;
+			auto &&tmp = unsafe_deref (unsafe_cast[TYPEAS<TEMP<VRef<VarBuffer<ITEM>>>>::expr] (unsafe_deptr (ret))) ;
+			tmp = VRef<VarBuffer<ITEM>>::make () ;
 			if ifswitch (TRUE) {
 				if (mBuffer == NULL)
 					discard ;
-				rax->mBuffer = VRef<ARR<ITEM>>::reference (mBuffer.self) ;
-				rax->mSize = mSize ;
+				tmp->mBuffer = VRef<ARR<ITEM>>::reference (mBuffer.self) ;
+				tmp->mSize = mSize ;
 			}
-			auto &&tmp = unsafe_deref (unsafe_cast[TYPEAS<TEMP<VRef<Buffer>>>::expr] (unsafe_deptr (rax))) ;
-			return move (tmp) ;
+			unsafe_launder (ret) ;
+			return move (ret) ;
 		}
 
 		CRef<Buffer> borrow () const leftvalue {
-			auto rax = VRef<ConBuffer<ITEM>>::make () ;
+			CRef<Buffer> ret ;
+			auto &&tmp = unsafe_deref (unsafe_cast[TYPEAS<TEMP<VRef<ConBuffer<ITEM>>>>::expr] (unsafe_deptr (ret))) ;
+			tmp = VRef<ConBuffer<ITEM>>::make () ;
 			if ifswitch (TRUE) {
 				if (mBuffer == NULL)
 					discard ;
-				rax->mBuffer = CRef<ARR<ITEM>>::reference (mBuffer.self) ;
-				rax->mSize = mSize ;
+				tmp->mBuffer = CRef<ARR<ITEM>>::reference (mBuffer.self) ;
+				tmp->mSize = mSize ;
 			}
-			auto &&tmp = unsafe_deref (unsafe_cast[TYPEAS<TEMP<CRef<Buffer>>>::expr] (unsafe_deptr (rax))) ;
-			return move (tmp) ;
+			unsafe_launder (ret) ;
+			return move (ret) ;
 		}
 
 		LENGTH size () const {

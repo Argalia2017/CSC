@@ -47,7 +47,7 @@ trait WORKTHREAD_HELP<DEPEND ,ALWAYS> {
 	public:
 		implicit WorkThread () = default ;
 
-		explicit WorkThread (CREF<typeof (PH0)>) {
+		explicit WorkThread (CREF<BoolProxy> ok) {
 			mThis = FUNCTION_extern::invoke () ;
 			mThis->initialize () ;
 		}
@@ -103,7 +103,7 @@ trait CALCTHREAD_IMPLHOLDER_HELP ;
 
 template <class DEPEND>
 trait CALCTHREAD_HOLDER_HELP<DEPEND ,ALWAYS> {
-	using ITEM = CRef<BitSet<>> ;
+	using ITEM = SharedRef<BitSet<>> ;
 
 	struct SOLUTION {
 		INDEX mIndex ;
@@ -140,7 +140,7 @@ trait CALCTHREAD_HELP<DEPEND ,ALWAYS> {
 	public:
 		implicit CalcThread () = default ;
 
-		explicit CalcThread (CREF<typeof (PH0)>) {
+		explicit CalcThread (CREF<BoolProxy> ok) {
 			mThis = FUNCTION_extern::invoke () ;
 			mThis->initialize () ;
 		}
@@ -189,7 +189,6 @@ template <class DEPEND>
 trait PROMISE_HOLDER_HELP<DEPEND ,ALWAYS> {
 	struct Holder implement Interface {
 		virtual void initialize () = 0 ;
-		virtual VRef<Holder> clone () const = 0 ;
 		virtual void start () const = 0 ;
 		virtual void start (RREF<Function<AutoRef<>>> proc) const = 0 ;
 		virtual void post (RREF<AutoRef<>> item) const = 0 ;
@@ -217,43 +216,20 @@ trait PROMISE_HELP<ITEM ,ALWAYS> {
 
 	class Promise {
 	protected:
-		VRef<Holder> mThis ;
+		CRef<Holder> mThis ;
 
 	public:
 		implicit Promise () = default ;
 
-		explicit Promise (CREF<typeof (PH0)>) {
-			mThis = FUNCTION_extern::invoke () ;
-			mThis->initialize () ;
-		}
-
-		implicit Promise (CREF<Promise> that) {
-			if (that.mThis == NULL)
-				return ;
-			mThis = that.mThis->clone () ;
-		}
-
-		inline VREF<Promise> operator= (CREF<Promise> that) {
-			if (address (thiz) == address (that))
-				return thiz ;
-			swap (thiz ,move (that)) ;
-			return thiz ;
-		}
-
-		implicit Promise (RREF<Promise> that) noexcept {
-			swap (thiz ,that) ;
-		}
-
-		inline VREF<Promise> operator= (RREF<Promise> that) noexcept {
-			if (address (thiz) == address (that))
-				return thiz ;
-			swap (thiz ,move (that)) ;
-			return thiz ;
+		explicit Promise (CREF<BoolProxy> ok) {
+			auto rax = FUNCTION_extern::invoke () ;
+			rax->initialize () ;
+			mThis = rax.as_cref () ;
 		}
 
 		Future future () const {
 			Future ret ;
-			ret.mThis = mThis->clone () ;
+			ret.mThis = mThis ;
 			return move (ret) ;
 		}
 
@@ -306,34 +282,10 @@ trait FUTURE_HELP<ITEM ,ALWAYS> {
 		friend trait PROMISE_HELP ;
 
 	protected:
-		VRef<Holder> mThis ;
+		CRef<Holder> mThis ;
 
 	public:
 		implicit Future () = default ;
-
-		implicit Future (CREF<Future> that) {
-			if (that.mThis == NULL)
-				return ;
-			mThis = that.mThis->clone () ;
-		}
-
-		inline VREF<Future> operator= (CREF<Future> that) {
-			if (address (thiz) == address (that))
-				return thiz ;
-			swap (thiz ,move (that)) ;
-			return thiz ;
-		}
-
-		implicit Future (RREF<Future> that) noexcept {
-			swap (thiz ,that) ;
-		}
-
-		inline VREF<Future> operator= (RREF<Future> that) noexcept {
-			if (address (thiz) == address (that))
-				return thiz ;
-			swap (thiz ,move (that)) ;
-			return thiz ;
-		}
 
 		BOOL ready () const {
 			return mThis->ready () ;
@@ -362,7 +314,7 @@ trait FUTURE_HELP<ITEM ,ALWAYS> {
 	class AsyncFuture extend Proxy {
 	public:
 		imports Future make (RREF<Function<ITEM>> proc) {
-			auto rax = Promise (PH0) ;
+			auto rax = Promise (TRUE) ;
 			rax.start (move (proc)) ;
 			return rax.future () ;
 		}

@@ -16,6 +16,7 @@
 #undef extend
 #undef require
 #undef anonymous
+#undef as
 #undef where
 #undef slice
 #undef assert
@@ -28,9 +29,13 @@
 #undef discard
 #undef typeof
 
-#ifdef use_define_has_null
+#ifdef csc_push_macro_null
 #pragma pop_macro ("TRUE")
 #pragma pop_macro ("FALSE")
 #pragma pop_macro ("NULL")
-#undef use_define_has_null
+#pragma pop_macro ("ZERO")
+#pragma pop_macro ("IDEN")
+#pragma pop_macro ("NONE")
+#pragma pop_macro ("USED")
+#undef csc_push_macro_null
 #endif

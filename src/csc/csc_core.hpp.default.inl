@@ -18,12 +18,6 @@
 #include <malloc.h>
 #include "csc_begin.h"
 
-#ifdef __CSC_COMPILER_GNUC__
-namespace std {
-using ::max_align_t ;
-} ;
-#endif
-
 namespace CSC {
 template <class...>
 trait FUNCTION_current_usage_size_HELP ;
@@ -79,7 +73,7 @@ trait HEAPPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		LENGTH basic_align () const override {
-			return ALIGN_OF<std::max_align_t>::expr ;
+			return ALIGN_OF<DATA>::expr ;
 		}
 
 		FLAG alloc (CREF<LENGTH> size_) const override {
@@ -188,16 +182,16 @@ trait SLICE_IMPLHOLDER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 	class ImplHolder implement Holder {
 	protected:
 		CRef<Holder> mPrefix ;
-		csc_text_t mText ;
+		csc_span_t mText ;
 		LENGTH mSize ;
 
 	public:
-		void initialize (CREF<csc_text_t> text) override {
+		void initialize (CREF<csc_span_t> text) override {
 			mText = text ;
 			mSize = text_size () ;
 		}
 
-		void initialize (RREF<CRef<Holder>> prefix ,CREF<csc_text_t> text) override {
+		void initialize (RREF<CRef<Holder>> prefix ,CREF<csc_span_t> text) override {
 			mPrefix = move (prefix) ;
 			mText = text ;
 			mSize = prefix_size () + text_size () ;
@@ -231,11 +225,8 @@ trait SLICE_IMPLHOLDER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 		ITEM at (CREF<INDEX> index) const override {
 			assert (vbetween (index ,0 ,size ())) ;
 			const auto r1x = prefix_size () ;
-			if ifswitch (TRUE) {
-				if (index >= r1x)
-					discard ;
+			if (index < r1x)
 				return mPrefix->at (index) ;
-			}
 			const auto r2x = mText.mBegin + (index - r1x) * mText.mStep ;
 			return at_load (mText.mStep ,r2x) ;
 		}

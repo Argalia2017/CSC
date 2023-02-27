@@ -18,6 +18,7 @@
 #define extend :private
 #define require __macro_requires
 #define anonymous __macro_anonymous
+#define as
 #define where __macro_where
 #define slice __macro_slice
 #define assert __macro_assert
@@ -31,11 +32,19 @@
 #define typeof __macro_typeof
 
 #ifdef NULL
-#define use_define_has_null
+#define csc_push_macro_null
 #pragma push_macro ("TRUE")
-#undef TRUE
 #pragma push_macro ("FALSE")
-#undef FALSE
 #pragma push_macro ("NULL")
+#pragma push_macro ("ZERO")
+#pragma push_macro ("IDEN")
+#pragma push_macro ("NONE")
+#pragma push_macro ("USED")
+#undef TRUE
+#undef FALSE
 #undef NULL
+#undef ZERO
+#undef IDEN
+#undef NONE
+#undef USED
 #endif

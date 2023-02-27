@@ -131,7 +131,7 @@ trait MATHPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			return DOUBLE (1) / obj ;
 		}
 
-		VAL32 min_of (CREF<VAL32> obj1 ,CREF<CaptureIterator<VAL32>> obj2) const override {
+		VAL32 min_of (CREF<VAL32> obj1 ,CREF<SpanIterator<VAL32>> obj2) const override {
 			VAL32 ret = obj1 ;
 			for (auto &&i : obj2) {
 				if (ret <= i)
@@ -141,7 +141,7 @@ trait MATHPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			return move (ret) ;
 		}
 
-		VAL64 min_of (CREF<VAL64> obj1 ,CREF<CaptureIterator<VAL64>> obj2) const override {
+		VAL64 min_of (CREF<VAL64> obj1 ,CREF<SpanIterator<VAL64>> obj2) const override {
 			VAL64 ret = obj1 ;
 			for (auto &&i : obj2) {
 				if (ret <= i)
@@ -151,7 +151,7 @@ trait MATHPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			return move (ret) ;
 		}
 
-		SINGLE min_of (CREF<SINGLE> obj1 ,CREF<CaptureIterator<SINGLE>> obj2) const override {
+		SINGLE min_of (CREF<SINGLE> obj1 ,CREF<SpanIterator<SINGLE>> obj2) const override {
 			SINGLE ret = obj1 ;
 			for (auto &&i : obj2) {
 				if (ret <= i)
@@ -161,7 +161,7 @@ trait MATHPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			return move (ret) ;
 		}
 
-		DOUBLE min_of (CREF<DOUBLE> obj1 ,CREF<CaptureIterator<DOUBLE>> obj2) const override {
+		DOUBLE min_of (CREF<DOUBLE> obj1 ,CREF<SpanIterator<DOUBLE>> obj2) const override {
 			DOUBLE ret = obj1 ;
 			for (auto &&i : obj2) {
 				if (ret <= i)
@@ -171,7 +171,7 @@ trait MATHPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			return move (ret) ;
 		}
 
-		VAL32 max_of (CREF<VAL32> obj1 ,CREF<CaptureIterator<VAL32>> obj2) const override {
+		VAL32 max_of (CREF<VAL32> obj1 ,CREF<SpanIterator<VAL32>> obj2) const override {
 			VAL32 ret = obj1 ;
 			for (auto &&i : obj2) {
 				if (ret >= i)
@@ -181,7 +181,7 @@ trait MATHPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			return move (ret) ;
 		}
 
-		VAL64 max_of (CREF<VAL64> obj1 ,CREF<CaptureIterator<VAL64>> obj2) const override {
+		VAL64 max_of (CREF<VAL64> obj1 ,CREF<SpanIterator<VAL64>> obj2) const override {
 			VAL64 ret = obj1 ;
 			for (auto &&i : obj2) {
 				if (ret >= i)
@@ -191,7 +191,7 @@ trait MATHPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			return move (ret) ;
 		}
 
-		SINGLE max_of (CREF<SINGLE> obj1 ,CREF<CaptureIterator<SINGLE>> obj2) const override {
+		SINGLE max_of (CREF<SINGLE> obj1 ,CREF<SpanIterator<SINGLE>> obj2) const override {
 			SINGLE ret = obj1 ;
 			for (auto &&i : obj2) {
 				if (ret >= i)
@@ -201,7 +201,7 @@ trait MATHPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			return move (ret) ;
 		}
 
-		DOUBLE max_of (CREF<DOUBLE> obj1 ,CREF<CaptureIterator<DOUBLE>> obj2) const override {
+		DOUBLE max_of (CREF<DOUBLE> obj1 ,CREF<SpanIterator<DOUBLE>> obj2) const override {
 			DOUBLE ret = obj1 ;
 			for (auto &&i : obj2) {
 				if (ret >= i)
@@ -211,7 +211,7 @@ trait MATHPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			return move (ret) ;
 		}
 
-		BOOL all_of (CREF<CaptureIterator<BOOL>> obj1) const override {
+		BOOL all_of (CREF<SpanIterator<BOOL>> obj1) const override {
 			for (auto &&i : obj1) {
 				if ifnot (i)
 					return FALSE ;
@@ -219,7 +219,7 @@ trait MATHPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			return TRUE ;
 		}
 
-		BOOL any_of (CREF<CaptureIterator<BOOL>> obj1) const override {
+		BOOL any_of (CREF<SpanIterator<BOOL>> obj1) const override {
 			for (auto &&i : obj1) {
 				if (i)
 					return TRUE ;
@@ -227,7 +227,7 @@ trait MATHPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			return FALSE ;
 		}
 
-		INDEX else_of (CREF<CaptureIterator<BOOL>> obj1) const override {
+		INDEX else_of (CREF<SpanIterator<BOOL>> obj1) const override {
 			INDEX ret = 0 ;
 			for (auto &&i : obj1) {
 				if (i)
@@ -237,56 +237,56 @@ trait MATHPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			return move (ret) ;
 		}
 
-		VAL32 sum_of (CREF<VAL32> obj1 ,CREF<CaptureIterator<VAL32>> obj2) const override {
+		VAL32 sum_of (CREF<VAL32> obj1 ,CREF<SpanIterator<VAL32>> obj2) const override {
 			VAL32 ret = obj1 ;
 			for (auto &&i : obj2)
 				ret += i ;
 			return move (ret) ;
 		}
 
-		VAL64 sum_of (CREF<VAL64> obj1 ,CREF<CaptureIterator<VAL64>> obj2) const override {
+		VAL64 sum_of (CREF<VAL64> obj1 ,CREF<SpanIterator<VAL64>> obj2) const override {
 			VAL64 ret = obj1 ;
 			for (auto &&i : obj2)
 				ret += i ;
 			return move (ret) ;
 		}
 
-		SINGLE sum_of (CREF<SINGLE> obj1 ,CREF<CaptureIterator<SINGLE>> obj2) const override {
+		SINGLE sum_of (CREF<SINGLE> obj1 ,CREF<SpanIterator<SINGLE>> obj2) const override {
 			SINGLE ret = obj1 ;
 			for (auto &&i : obj2)
 				ret += i ;
 			return move (ret) ;
 		}
 
-		DOUBLE sum_of (CREF<DOUBLE> obj1 ,CREF<CaptureIterator<DOUBLE>> obj2) const override {
+		DOUBLE sum_of (CREF<DOUBLE> obj1 ,CREF<SpanIterator<DOUBLE>> obj2) const override {
 			DOUBLE ret = obj1 ;
 			for (auto &&i : obj2)
 				ret += i ;
 			return move (ret) ;
 		}
 
-		VAL32 acc_of (CREF<VAL32> obj1 ,CREF<CaptureIterator<VAL32>> obj2) const override {
+		VAL32 acc_of (CREF<VAL32> obj1 ,CREF<SpanIterator<VAL32>> obj2) const override {
 			VAL32 ret = obj1 ;
 			for (auto &&i : obj2)
 				ret *= i ;
 			return move (ret) ;
 		}
 
-		VAL64 acc_of (CREF<VAL64> obj1 ,CREF<CaptureIterator<VAL64>> obj2) const override {
+		VAL64 acc_of (CREF<VAL64> obj1 ,CREF<SpanIterator<VAL64>> obj2) const override {
 			VAL64 ret = obj1 ;
 			for (auto &&i : obj2)
 				ret *= i ;
 			return move (ret) ;
 		}
 
-		SINGLE acc_of (CREF<SINGLE> obj1 ,CREF<CaptureIterator<SINGLE>> obj2) const override {
+		SINGLE acc_of (CREF<SINGLE> obj1 ,CREF<SpanIterator<SINGLE>> obj2) const override {
 			SINGLE ret = obj1 ;
 			for (auto &&i : obj2)
 				ret *= i ;
 			return move (ret) ;
 		}
 
-		DOUBLE acc_of (CREF<DOUBLE> obj1 ,CREF<CaptureIterator<DOUBLE>> obj2) const override {
+		DOUBLE acc_of (CREF<DOUBLE> obj1 ,CREF<SpanIterator<DOUBLE>> obj2) const override {
 			DOUBLE ret = obj1 ;
 			for (auto &&i : obj2)
 				ret *= i ;

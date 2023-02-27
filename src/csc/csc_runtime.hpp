@@ -82,8 +82,8 @@ trait TIMEDURATION_HELP<DEPEND ,ALWAYS> {
 	public:
 		implicit TimeDuration () = default ;
 
-		explicit TimeDuration (RREF<VRef<Holder>> that) {
-			mThis = that.as_cref () ;
+		explicit TimeDuration (RREF<CRef<Holder>> that) {
+			mThis = move (that) ;
 		}
 
 		explicit TimeDuration (RREF<TimePoint> that) {
@@ -193,7 +193,7 @@ trait TIMEPOINT_HELP<DEPEND ,ALWAYS> {
 			mThis = move (that.mThis) ;
 		}
 
-		explicit TimePoint (CREF<typeof (PH0)>) {
+		explicit TimePoint (CREF<BoolProxy> ok) {
 			auto rax = FUNCTION_extern::invoke () ;
 			rax->initialize () ;
 			mThis = rax.as_cref () ;
@@ -259,7 +259,7 @@ trait TIMEPOINT_HELP<DEPEND ,ALWAYS> {
 	class NowTimePoint extend Proxy {
 	public:
 		imports TimePoint make () {
-			return TimePoint (PH0) ;
+			return TimePoint (TRUE) ;
 		}
 	} ;
 } ;
@@ -355,8 +355,7 @@ trait MUTEX_IMPLHOLDER_HELP ;
 template <class DEPEND>
 trait MUTEX_HELP<DEPEND ,ALWAYS> {
 	struct Holder implement Interface {
-		virtual void initialize_recursive () = 0 ;
-		virtual void initialize_conditional () = 0 ;
+		virtual void initialize (CREF<LENGTH> cond_size) = 0 ;
 		virtual Auto native () const leftvalue = 0 ;
 		virtual void enter () = 0 ;
 		virtual void leave () = 0 ;
@@ -373,14 +372,9 @@ trait MUTEX_HELP<DEPEND ,ALWAYS> {
 	public:
 		implicit Mutex () = default ;
 
-		explicit Mutex (CREF<typeof (PH1)>) {
+		explicit Mutex (CREF<LENGTH> cond_size) {
 			mThis = FUNCTION_extern::invoke () ;
-			mThis->initialize_recursive () ;
-		}
-
-		explicit Mutex (CREF<typeof (PH2)>) {
-			mThis = FUNCTION_extern::invoke () ;
-			mThis->initialize_conditional () ;
+			mThis->initialize (cond_size) ;
 		}
 
 		Auto native () const leftvalue {
@@ -403,14 +397,14 @@ trait MUTEX_HELP<DEPEND ,ALWAYS> {
 	class RecursiveMutex extend Proxy {
 	public:
 		imports Mutex make () {
-			return Mutex (PH1) ;
+			return Mutex (0) ;
 		}
 	} ;
 
 	class ConditionalMutex extend Proxy {
 	public:
 		imports Mutex make () {
-			return Mutex (PH2) ;
+			return Mutex (1) ;
 		}
 	} ;
 } ;
@@ -435,7 +429,7 @@ trait UNIQUELOCK_HELP<DEPEND ,ALWAYS> {
 		virtual void yield () = 0 ;
 	} ;
 
-	using FAKE_MAX_SIZE = ENUMAS<VAL ,64> ;
+	using FAKE_MAX_SIZE = ENUMAS<VAL ,128> ;
 	using FAKE_MAX_ALIGN = RANK8 ;
 
 	class FakeHolder implement Holder {
@@ -494,7 +488,7 @@ trait SHAREDLOCK_HELP<DEPEND ,ALWAYS> {
 		virtual void leave () = 0 ;
 	} ;
 
-	using FAKE_MAX_SIZE = ENUMAS<VAL ,64> ;
+	using FAKE_MAX_SIZE = ENUMAS<VAL ,128> ;
 	using FAKE_MAX_ALIGN = RANK8 ;
 
 	class FakeHolder implement Holder {
@@ -633,8 +627,8 @@ template <class DEPEND>
 trait STATICPROC_HELP<DEPEND ,ALWAYS> {
 	struct Holder implement Interface {
 		virtual void initialize () = 0 ;
-		virtual CRef<Proxy> link (CREF<FLAG> cabi) const = 0 ;
-		virtual void regi (CREF<FLAG> cabi ,VREF<CRef<Proxy>> addr) const = 0 ;
+		virtual CRef<Proxy> link (CREF<FLAG> group ,CREF<FLAG> cabi) const = 0 ;
+		virtual void regi (CREF<FLAG> group ,CREF<FLAG> cabi ,VREF<CRef<Proxy>> addr) const = 0 ;
 	} ;
 
 	class FakeHolder implement Holder {
@@ -660,12 +654,12 @@ trait STATICPROC_HELP<DEPEND ,ALWAYS> {
 			}) ;
 		}
 
-		CRef<Proxy> link (CREF<FLAG> cabi) const {
-			return mThis->link (cabi) ;
+		CRef<Proxy> link (CREF<FLAG> group ,CREF<FLAG> cabi) const {
+			return mThis->link (group ,cabi) ;
 		}
 
-		void regi (CREF<FLAG> cabi ,VREF<CRef<Proxy>> addr) const {
-			return mThis->regi (cabi ,addr) ;
+		void regi (CREF<FLAG> group ,CREF<FLAG> cabi ,VREF<CRef<Proxy>> addr) const {
+			return mThis->regi (group ,cabi ,addr) ;
 		}
 	} ;
 } ;
@@ -754,7 +748,7 @@ trait THREADLOCAL_HELP<DEPEND ,ALWAYS> {
 	public:
 		implicit ThreadLocal () = default ;
 
-		explicit ThreadLocal (CREF<typeof (PH0)>) {
+		explicit ThreadLocal (CREF<BoolProxy> ok) {
 			mThis = FUNCTION_extern::invoke () ;
 			mThis->initialize () ;
 		}
@@ -834,6 +828,7 @@ trait MODULE_IMPLHOLDER_HELP ;
 template <class DEPEND>
 trait MODULE_HELP<DEPEND ,ALWAYS> {
 	struct Holder implement Interface {
+		virtual void initialize () = 0 ;
 		virtual void initialize (CREF<String<STR>> file) = 0 ;
 		virtual CREF<String<STR>> error () const leftvalue = 0 ;
 		virtual FLAG link (CREF<String<STR>> name) = 0 ;
@@ -850,6 +845,11 @@ trait MODULE_HELP<DEPEND ,ALWAYS> {
 	public:
 		implicit Module () = default ;
 
+		explicit Module (CREF<BoolProxy> ok) {
+			mThis = FUNCTION_extern::invoke () ;
+			mThis->initialize () ;
+		}
+
 		explicit Module (CREF<String<STR>> file) {
 			mThis = FUNCTION_extern::invoke () ;
 			mThis->initialize (file) ;
@@ -863,9 +863,17 @@ trait MODULE_HELP<DEPEND ,ALWAYS> {
 			return mThis->link (name) ;
 		}
 	} ;
+
+	class CurrentModule extend Proxy {
+	public:
+		imports Module make () {
+			return Module (TRUE) ;
+		}
+	} ;
 } ;
 
 using Module = typename MODULE_HELP<DEPEND ,ALWAYS>::Module ;
+using CurrentModule = typename MODULE_HELP<DEPEND ,ALWAYS>::CurrentModule ;
 
 template <class...>
 trait SYSTEM_HELP ;
@@ -940,14 +948,15 @@ trait RANDOM_HELP<DEPEND ,ALWAYS> {
 		virtual void initialize (CREF<DATA> seed) = 0 ;
 		virtual DATA seed () const = 0 ;
 		virtual DATA random_byte () const = 0 ;
-		virtual Array<DATA> random_byte (CREF<LENGTH> size_) const = 0 ;
+		virtual void random_byte (VREF<Array<DATA>> result) const = 0 ;
 		virtual INDEX random_value (CREF<INDEX> lb ,CREF<INDEX> rb) const = 0 ;
-		virtual Array<INDEX> random_value (CREF<INDEX> lb ,CREF<INDEX> rb ,CREF<LENGTH> size_) const = 0 ;
+		virtual void random_value (CREF<INDEX> lb ,CREF<INDEX> rb ,VREF<Array<INDEX>> result) const = 0 ;
 		virtual Array<INDEX> random_shuffle (CREF<LENGTH> count ,CREF<LENGTH> size_) const = 0 ;
-		virtual void random_shuffle (CREF<LENGTH> count ,CREF<LENGTH> size_ ,VREF<Array<INDEX>> range_) const = 0 ;
+		virtual void random_shuffle (CREF<LENGTH> count ,VREF<Array<INDEX>> result) const = 0 ;
 		virtual BitSet<> random_pick (CREF<LENGTH> count ,CREF<LENGTH> size_) const = 0 ;
-		virtual void random_pick (CREF<LENGTH> count ,CREF<LENGTH> size_ ,VREF<BitSet<>> range_) const = 0 ;
+		virtual void random_pick (CREF<LENGTH> count ,VREF<BitSet<>> result) const = 0 ;
 		virtual BOOL random_draw (CREF<DOUBLE> possibility) const = 0 ;
+		virtual void random_draw (CREF<DOUBLE> possibility ,VREF<Array<BOOL>> result) const = 0 ;
 	} ;
 
 	struct FUNCTION_extern {
@@ -987,9 +996,9 @@ trait RANDOM_HELP<DEPEND ,ALWAYS> {
 			return mThis->random_byte () ;
 		}
 
-		Array<DATA> random_byte (CREF<LENGTH> size_) const {
+		void random_byte (VREF<Array<DATA>> result) const {
 			Scope<Mutex> anonymous (mMutex) ;
-			return mThis->random_byte (size_) ;
+			return mThis->random_byte (result) ;
 		}
 
 		INDEX random_value (CREF<INDEX> lb ,CREF<INDEX> rb) const {
@@ -997,9 +1006,9 @@ trait RANDOM_HELP<DEPEND ,ALWAYS> {
 			return mThis->random_value (lb ,rb) ;
 		}
 
-		Array<INDEX> random_value (CREF<INDEX> lb ,CREF<INDEX> rb ,CREF<LENGTH> size_) const {
+		void random_value (CREF<INDEX> lb ,CREF<INDEX> rb ,VREF<Array<INDEX>> result) const {
 			Scope<Mutex> anonymous (mMutex) ;
-			return mThis->random_value (lb ,rb ,size_) ;
+			return mThis->random_value (lb ,rb ,result) ;
 		}
 
 		Array<INDEX> random_shuffle (CREF<LENGTH> count ,CREF<LENGTH> size_) const {
@@ -1007,9 +1016,9 @@ trait RANDOM_HELP<DEPEND ,ALWAYS> {
 			return mThis->random_shuffle (count ,size_) ;
 		}
 
-		void random_shuffle (CREF<LENGTH> count ,CREF<LENGTH> size_ ,VREF<Array<INDEX>> range_) const {
+		void random_shuffle (CREF<LENGTH> count ,VREF<Array<INDEX>> result) const {
 			Scope<Mutex> anonymous (mMutex) ;
-			return mThis->random_shuffle (count ,size_ ,range_) ;
+			return mThis->random_shuffle (count ,result) ;
 		}
 
 		BitSet<> random_pick (CREF<LENGTH> count ,CREF<LENGTH> size_) const {
@@ -1017,19 +1026,19 @@ trait RANDOM_HELP<DEPEND ,ALWAYS> {
 			return mThis->random_pick (count ,size_) ;
 		}
 
-		void random_pick (CREF<LENGTH> count ,CREF<LENGTH> size_ ,VREF<BitSet<>> range_) const {
+		void random_pick (CREF<LENGTH> count ,VREF<BitSet<>> result) const {
 			Scope<Mutex> anonymous (mMutex) ;
-			return mThis->random_pick (count ,size_ ,range_) ;
-		}
-
-		BOOL random_draw (CREF<SINGLE> possibility) const {
-			Scope<Mutex> anonymous (mMutex) ;
-			return mThis->random_draw (possibility) ;
+			return mThis->random_pick (count ,result) ;
 		}
 
 		BOOL random_draw (CREF<DOUBLE> possibility) const {
 			Scope<Mutex> anonymous (mMutex) ;
 			return mThis->random_draw (possibility) ;
+		}
+
+		void random_draw (CREF<DOUBLE> possibility ,VREF<Array<BOOL>> result) const {
+			Scope<Mutex> anonymous (mMutex) ;
+			return mThis->random_draw (possibility ,result) ;
 		}
 	} ;
 } ;

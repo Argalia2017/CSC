@@ -31,7 +31,7 @@ trait SORTPROC_HELP<DEPEND ,ALWAYS> {
 
 	struct Holder implement Interface {
 		virtual void initialize () = 0 ;
-		virtual void sort (CREF<Binder> array_ ,VREF<Array<INDEX>> range_ ,CREF<INDEX> begin_ ,CREF<INDEX> end_) const = 0 ;
+		virtual void sort (CREF<Binder> array_ ,VREF<Array<INDEX>> result ,CREF<INDEX> begin_ ,CREF<INDEX> end_) const = 0 ;
 	} ;
 
 	struct FUNCTION_extern {
@@ -61,8 +61,8 @@ trait SORTPROC_HELP<DEPEND ,ALWAYS> {
 			return move (ret) ;
 		}
 
-		imports void sort (CREF<Binder> array_ ,VREF<Array<INDEX>> range_ ,CREF<INDEX> begin_ ,CREF<INDEX> end_) {
-			return instance ().mThis->sort (array_ ,range_ ,begin_ ,end_) ;
+		imports void sort (CREF<Binder> array_ ,VREF<Array<INDEX>> result ,CREF<INDEX> begin_ ,CREF<INDEX> end_) {
+			return instance ().mThis->sort (array_ ,result ,begin_ ,end_) ;
 		}
 	} ;
 } ;
@@ -248,7 +248,7 @@ trait SEGMENTTABLE_HELP<DEPEND ,ALWAYS> {
 	public:
 		implicit SegmentTable () = default ;
 
-		explicit SegmentTable (CREF<typeof (PH0)>) {
+		explicit SegmentTable (CREF<BoolProxy> ok) {
 			mThis = FUNCTION_extern::invoke () ;
 			mThis->initialize () ;
 		}

@@ -12,10 +12,21 @@
 #include "csc_math.hpp"
 
 namespace CSC {
-static constexpr auto CLS = TYPEAS<PlaceHolder<RANK1>>::expr ;
-static constexpr auto BOM = TYPEAS<PlaceHolder<RANK2>>::expr ;
-static constexpr auto GAP = TYPEAS<PlaceHolder<RANK3>>::expr ;
-static constexpr auto EOS = TYPEAS<PlaceHolder<RANK4>>::expr ;
+struct FUNCTION_CLS {} ;
+
+static constexpr auto CLS = FUNCTION_CLS () ;
+
+struct FUNCTION_BOM {} ;
+
+static constexpr auto BOM = FUNCTION_BOM () ;
+
+struct FUNCTION_GAP {} ;
+
+static constexpr auto GAP = FUNCTION_GAP () ;
+
+struct FUNCTION_EOS {} ;
+
+static constexpr auto EOS = FUNCTION_EOS () ;
 
 template <class...>
 trait BYTEATTRIBUTE_HELP ;
@@ -47,7 +58,7 @@ trait BYTEATTRIBUTE_HELP<DEPEND ,ALWAYS> {
 	public:
 		implicit ByteAttribute () = default ;
 
-		explicit ByteAttribute (CREF<typeof (PH0)>) {
+		explicit ByteAttribute (CREF<BoolProxy> ok) {
 			auto rax = FUNCTION_extern::invoke () ;
 			rax->initialize () ;
 			mThis = rax.as_cref () ;
@@ -707,6 +718,7 @@ trait TEXTATTRIBUTE_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 		virtual BOOL is_word (CREF<ITEM> str) const = 0 ;
 		virtual ITEM word_lower_cast (CREF<ITEM> str) const = 0 ;
 		virtual ITEM word_upper_cast (CREF<ITEM> str) const = 0 ;
+		virtual BOOL is_hyphen (CREF<ITEM> str) const = 0 ;
 		virtual BOOL is_number (CREF<ITEM> str) const = 0 ;
 		virtual BOOL is_hex_number (CREF<ITEM> str) const = 0 ;
 		virtual INDEX hex_from_str (CREF<ITEM> str) const = 0 ;
@@ -730,7 +742,7 @@ trait TEXTATTRIBUTE_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 	public:
 		implicit TextAttribute () = default ;
 
-		explicit TextAttribute (CREF<typeof (PH0)>) {
+		explicit TextAttribute (CREF<BoolProxy> ok) {
 			auto rax = FUNCTION_extern::invoke () ;
 			rax->initialize () ;
 			mThis = rax.as_cref () ;
@@ -770,6 +782,10 @@ trait TEXTATTRIBUTE_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 
 		ITEM word_upper_cast (CREF<ITEM> str) const {
 			return mThis->word_upper_cast (str) ;
+		}
+
+		BOOL is_hyphen (CREF<ITEM> str) const {
+			return mThis->is_hyphen (str) ;
 		}
 
 		BOOL is_number (CREF<ITEM> str) const {
@@ -857,6 +873,10 @@ trait TEXTATTRIBUTE_PUREHOLDER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 
 		ITEM word_upper_cast (CREF<ITEM> str) const override {
 			return mPrefix->word_upper_cast (str) ;
+		}
+
+		BOOL is_hyphen (CREF<ITEM> str) const override {
+			return mPrefix->is_hyphen (str) ;
 		}
 
 		BOOL is_number (CREF<ITEM> str) const override {
@@ -1453,13 +1473,33 @@ trait STRING_TEXTWRITER_HELP<ITEM ,ALWAYS> {
 	static constexpr auto EOS = CSC::EOS ;
 } ;
 
-static constexpr auto HINT_IDENTIFIER = TYPEAS<PlaceHolder<ENUMAS<VAL ,10>>>::expr ;
-static constexpr auto HINT_SCALAR = TYPEAS<PlaceHolder<ENUMAS<VAL ,11>>>::expr ;
-static constexpr auto HINT_STRING = TYPEAS<PlaceHolder<ENUMAS<VAL ,12>>>::expr ;
-static constexpr auto HINT_WORD_ENDLINE = TYPEAS<PlaceHolder<ENUMAS<VAL ,13>>>::expr ;
-static constexpr auto SKIP_GAP = TYPEAS<PlaceHolder<ENUMAS<VAL ,20>>>::expr ;
-static constexpr auto SKIP_GAP_SPACE = TYPEAS<PlaceHolder<ENUMAS<VAL ,21>>>::expr ;
-static constexpr auto SKIP_GAP_ENDLINE = TYPEAS<PlaceHolder<ENUMAS<VAL ,22>>>::expr ;
+struct FUNCTION_HINT_WORD {} ;
+
+static constexpr auto HINT_WORD = FUNCTION_HINT_WORD () ;
+
+struct FUNCTION_HINT_SCALAR {} ;
+
+static constexpr auto HINT_SCALAR = FUNCTION_HINT_SCALAR () ;
+
+struct FUNCTION_HINT_STRING {} ;
+
+static constexpr auto HINT_STRING = FUNCTION_HINT_STRING () ;
+
+struct FUNCTION_HINT_ENDLINE {} ;
+
+static constexpr auto HINT_ENDLINE = FUNCTION_HINT_ENDLINE () ;
+
+struct FUNCTION_SKIP_GAP {} ;
+
+static constexpr auto SKIP_GAP = FUNCTION_SKIP_GAP () ;
+
+struct FUNCTION_SKIP_GAP_SPACE {} ;
+
+static constexpr auto SKIP_GAP_SPACE = FUNCTION_SKIP_GAP_SPACE () ;
+
+struct FUNCTION_SKIP_GAP_ENDLINE {} ;
+
+static constexpr auto SKIP_GAP_ENDLINE = FUNCTION_SKIP_GAP_ENDLINE () ;
 
 template <class...>
 trait REGULARREADER_HELP ;
@@ -1474,10 +1514,10 @@ trait REGULARREADER_HELP<DEPEND ,ALWAYS> {
 		virtual CREF<STRU8> at (CREF<INDEX> index) const leftvalue = 0 ;
 		virtual void read () = 0 ;
 		virtual void read (CREF<Slice<STR>> item) = 0 ;
-		virtual void read_hint_identifer () = 0 ;
+		virtual void read_hint_word () = 0 ;
 		virtual void read_hint_scalar () = 0 ;
 		virtual void read_hint_string () = 0 ;
-		virtual void read_hint_word_endline () = 0 ;
+		virtual void read_hint_endline () = 0 ;
 		virtual void read_skip_gap () = 0 ;
 		virtual void read_skip_gap_space () = 0 ;
 		virtual void read_skip_gap_endline () = 0 ;
@@ -1525,11 +1565,11 @@ trait REGULARREADER_HELP<DEPEND ,ALWAYS> {
 			return thiz ;
 		}
 
-		void read (CREF<typeof (HINT_IDENTIFIER)>) {
-			return mThis->read_hint_identifer () ;
+		void read (CREF<typeof (HINT_WORD)>) {
+			return mThis->read_hint_word () ;
 		}
 
-		inline VREF<RegularReader> operator>> (CREF<typeof (HINT_IDENTIFIER)> item) {
+		inline VREF<RegularReader> operator>> (CREF<typeof (HINT_WORD)> item) {
 			read (item) ;
 			return thiz ;
 		}
@@ -1552,11 +1592,11 @@ trait REGULARREADER_HELP<DEPEND ,ALWAYS> {
 			return thiz ;
 		}
 
-		void read (CREF<typeof (HINT_WORD_ENDLINE)>) {
-			return mThis->read_hint_word_endline () ;
+		void read (CREF<typeof (HINT_ENDLINE)>) {
+			return mThis->read_hint_endline () ;
 		}
 
-		inline VREF<RegularReader> operator>> (CREF<typeof (HINT_WORD_ENDLINE)> item) {
+		inline VREF<RegularReader> operator>> (CREF<typeof (HINT_ENDLINE)> item) {
 			read (item) ;
 			return thiz ;
 		}

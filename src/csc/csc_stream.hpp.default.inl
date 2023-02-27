@@ -64,7 +64,7 @@ trait BYTEREADER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 
 	public:
 		void initialize (RREF<CRef<RegBuffer<BYTE>>> stream) override {
-			mAttribute = ByteAttribute (PH0) ;
+			mAttribute = ByteAttribute (TRUE) ;
 			mStream = move (stream) ;
 			reset () ;
 			backup () ;
@@ -381,7 +381,7 @@ trait BYTEWRITER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 
 	public:
 		void initialize (RREF<VRef<RegBuffer<BYTE>>> stream) override {
-			mAttribute = ByteAttribute (PH0) ;
+			mAttribute = ByteAttribute (TRUE) ;
 			mStream = move (stream) ;
 			reset () ;
 			backup () ;
@@ -699,6 +699,14 @@ trait TEXTATTRIBUTE_IMPLHOLDER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 			return str ;
 		}
 
+		BOOL is_hyphen (CREF<ITEM> str) const override {
+			if (str == ITEM (':'))
+				return TRUE ;
+			if (str == ITEM ('-'))
+				return TRUE ;
+			return FALSE ;
+		}
+
 		BOOL is_number (CREF<ITEM> str) const override {
 			if (str >= ITEM ('0'))
 				if (str <= ITEM ('9'))
@@ -822,7 +830,7 @@ trait TEXTREADER_IMPLHOLDER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 
 	public:
 		void initialize (RREF<CRef<RegBuffer<ITEM>>> stream) override {
-			mAttribute = TextAttribute<ITEM> (PH0) ;
+			mAttribute = TextAttribute<ITEM> (TRUE) ;
 			mStream = move (stream) ;
 			reset () ;
 			backup () ;
@@ -1232,7 +1240,7 @@ trait TEXTREADER_IMPLHOLDER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 		}
 
 		void read (VREF<String<ITEM>> item) override {
-			const auto r1x = next_space_size () ;
+			const auto r1x = next_gap_size () ;
 			if ifswitch (TRUE) {
 				if (item.size () >= r1x)
 					discard ;
@@ -1244,7 +1252,7 @@ trait TEXTREADER_IMPLHOLDER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 				read (item[i]) ;
 		}
 
-		LENGTH next_space_size () {
+		LENGTH next_gap_size () {
 			LENGTH ret = 0 ;
 			auto rax = ITEM () ;
 			const auto r1x = mRead ;
@@ -1331,11 +1339,11 @@ trait TEXTREADER_IMPLHOLDER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 		}
 
 		void read_gap () override {
-			const auto r1x = next_not_space_size () ;
+			const auto r1x = next_not_gap_size () ;
 			mRead += r1x ;
 		}
 
-		LENGTH next_not_space_size () {
+		LENGTH next_not_gap_size () {
 			LENGTH ret = 0 ;
 			auto rax = ITEM () ;
 			const auto r1x = mRead ;
@@ -1423,7 +1431,7 @@ trait TEXTWRITER_IMPLHOLDER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 
 	public:
 		void initialize (RREF<VRef<RegBuffer<ITEM>>> stream) override {
-			mAttribute = TextAttribute<ITEM> (PH0) ;
+			mAttribute = TextAttribute<ITEM> (TRUE) ;
 			mStream = move (stream) ;
 			reset () ;
 			backup () ;
@@ -1994,22 +2002,17 @@ trait REGULARREADER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			}
 		}
 
-		void read_hint_identifer () override {
+		void read_hint_word () override {
 			mHintString = FALSE ;
 			mHintSize = 0 ;
 			backup () ;
 			while (TRUE) {
-				if ifswitch (TRUE) {
-					if (mHintSize != 0)
-						discard ;
-					assume (mAttribute.is_word (mCache[0])) ;
-				}
 				const auto r1x = invoke ([&] () {
 					if (mAttribute.is_word (mCache[0]))
 						return FALSE ;
 					if (mAttribute.is_number (mCache[0]))
 						return FALSE ;
-					if (mCache[0] == STRU8 ('-'))
+					if (mAttribute.is_hyphen (mCache[0]))
 						return FALSE ;
 					return TRUE ;
 				}) ;
@@ -2114,7 +2117,7 @@ trait REGULARREADER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			recover () ;
 		}
 
-		void read_hint_word_endline () override {
+		void read_hint_endline () override {
 			mHintString = FALSE ;
 			mHintSize = 0 ;
 			backup () ;
