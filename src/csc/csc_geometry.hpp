@@ -870,7 +870,7 @@ trait MATRIX_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 			ret.mScale = DiagMatrix::make (r11x ,r12x ,r13x ,ITEM (1)) ;
 			ret.mRotation = ViewMatrix::make_xy (r5x ,r6x) ;
 			const auto r14x = r8x.projection () ;
-			ret.mTranslation = TranslationMatrix::make (r14x[0] ,r14x[1] ,r14x[2]) ;
+			ret.mTranslation = TranslationMatrix::make (r14x) ;
 			return move (ret) ;
 		}
 
@@ -989,6 +989,10 @@ trait MATRIX_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 
 	class TranslationMatrix extend Proxy {
 	public:
+		imports Matrix make (CREF<Vector> t) {
+			return make (t[0] ,t[1] ,t[2]) ;
+		}
+
 		imports Matrix make (CREF<ITEM> tx ,CREF<ITEM> ty ,CREF<ITEM> tz) {
 			const auto r1x = Vector::axis_x () ;
 			const auto r2x = Vector::axis_y () ;

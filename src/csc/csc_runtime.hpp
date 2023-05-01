@@ -1017,12 +1017,14 @@ trait GLOBAL_HELP<DEPEND ,ALWAYS> {
 
 	class Global {
 	protected:
+		Mutex mMutex ;
 		VRef<Holder> mThis ;
 
 	public:
 		imports CREF<Global> instance () {
 			return memorize ([&] () {
 				Global ret ;
+				ret.mMutex = RecursiveMutex::make () ;
 				ret.mThis = FUNCTION_extern::invoke () ;
 				ret.mThis->initialize () ;
 				return move (ret) ;
@@ -1030,21 +1032,25 @@ trait GLOBAL_HELP<DEPEND ,ALWAYS> {
 		}
 
 		void startup () const {
+			Scope<Mutex> anonymous (mMutex) ;
 			return mThis->startup () ;
 		}
 
 		VREF<AutoRef<>> unique (CREF<Slice<STR>> name) const leftvalue {
+			Scope<Mutex> anonymous (mMutex) ;
 			return mThis->unique (name) ;
 		}
 
 		template <class ARG1>
 		CREF<ARG1> unique (CREF<Slice<STR>> name ,CREF<TYPEID<ARG1>> id) const leftvalue {
+			Scope<Mutex> anonymous (mMutex) ;
 			auto &&tmp = mThis->unique (name) ;
 			assume (tmp.exist ()) ;
 			return AutoRef<ARG1>::from (tmp).self ;
 		}
 
 		void shutdown () const {
+			Scope<Mutex> anonymous (mMutex) ;
 			return mThis->shutdown () ;
 		}
 	} ;

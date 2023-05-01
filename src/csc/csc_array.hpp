@@ -1919,10 +1919,10 @@ trait ARRAYLIST_HELP<ITEM ,SIZE ,ALWAYS> {
 		}
 
 		INDEX insert () {
-			INDEX ret = mList.alloc () ;
-			update_range (ret) ;
-			INDEX jx = find_next_free () ;
-			mJump[jx] = ret ;
+			INDEX ix = mList.alloc () ;
+			update_range (ix) ;
+			INDEX ret = find_next_free () ;
+			mJump[ret] = ix ;
 			return move (ret) ;
 		}
 
