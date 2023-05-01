@@ -302,7 +302,7 @@ trait DIRECTORY_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	using CHILD = typename DIRECTORY_HELP<DEPEND ,ALWAYS>::CHILD ;
 	using CHILD_MAX_SIZE = ENUMAS<VAL ,65536> ;
 
-	struct HEAP {
+	struct PACK {
 		String<STR> mDire ;
 		ArrayList<String<STR>> mPath ;
 		BOOL mPathCached ;
@@ -312,67 +312,67 @@ trait DIRECTORY_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 
 	class ImplHolder implement Holder {
 	protected:
-		SharedRef<HEAP> mHeap ;
+		SharedRef<PACK> mThis ;
 
 	public:
 		void initialize () {
-			mHeap = SharedRef<HEAP>::make () ;
-			mHeap->mPathCached = FALSE ;
-			mHeap->mChildCached = FALSE ;
+			mThis = SharedRef<PACK>::make () ;
+			mThis->mPathCached = FALSE ;
+			mThis->mChildCached = FALSE ;
 		}
 
 		void initialize (CREF<String<STR>> dire) override {
-			mHeap = SharedRef<HEAP>::make () ;
-			mHeap->mPathCached = FALSE ;
-			mHeap->mChildCached = FALSE ;
-			mHeap->mDire = move (dire) ;
+			mThis = SharedRef<PACK>::make () ;
+			mThis->mPathCached = FALSE ;
+			mThis->mChildCached = FALSE ;
+			mThis->mDire = move (dire) ;
 			if ifswitch (TRUE) {
-				const auto r1x = mHeap->mDire.length () ;
+				const auto r1x = mThis->mDire.length () ;
 				assume (r1x > 0) ;
 				INDEX ix = r1x - 1 ;
-				if (mHeap->mDire[ix] != STR ('\\'))
-					if (mHeap->mDire[ix] != STR ('/'))
+				if (mThis->mDire[ix] != STR ('\\'))
+					if (mThis->mDire[ix] != STR ('/'))
 						discard ;
-				mHeap->mDire += slice (".") ;
+				mThis->mDire += slice (".") ;
 			}
 		}
 
 		String<STR> path () const override {
-			const auto r1x = mHeap->mDire.length () ;
-			const auto r2x = BufferProc<STR>::buf_find_r (mHeap->mDire.raw () ,STR ('\\') ,0 ,r1x) ;
-			const auto r3x = BufferProc<STR>::buf_find_r (mHeap->mDire.raw () ,STR ('/') ,0 ,r1x) ;
+			const auto r1x = mThis->mDire.length () ;
+			const auto r2x = BufferProc<STR>::buf_find_r (mThis->mDire.raw () ,STR ('\\') ,0 ,r1x) ;
+			const auto r3x = BufferProc<STR>::buf_find_r (mThis->mDire.raw () ,STR ('/') ,0 ,r1x) ;
 			const auto r4x = MathProc::max_of (r2x ,r3x) + 1 ;
 			if (r4x == 0)
 				return String<STR> (slice ("/")) ;
-			return mHeap->mDire.segment (0 ,r4x) ;
+			return mThis->mDire.segment (0 ,r4x) ;
 		}
 
 		String<STR> name () const override {
-			const auto r1x = mHeap->mDire.length () ;
-			const auto r2x = BufferProc<STR>::buf_find_r (mHeap->mDire.raw () ,STR ('\\') ,0 ,r1x) ;
-			const auto r3x = BufferProc<STR>::buf_find_r (mHeap->mDire.raw () ,STR ('/') ,0 ,r1x) ;
+			const auto r1x = mThis->mDire.length () ;
+			const auto r2x = BufferProc<STR>::buf_find_r (mThis->mDire.raw () ,STR ('\\') ,0 ,r1x) ;
+			const auto r3x = BufferProc<STR>::buf_find_r (mThis->mDire.raw () ,STR ('/') ,0 ,r1x) ;
 			const auto r4x = MathProc::max_of (r2x ,r3x) + 1 ;
-			return mHeap->mDire.segment (r4x ,r1x) ;
+			return mThis->mDire.segment (r4x ,r1x) ;
 		}
 
 		LENGTH depth () const override {
 			update_path () ;
-			return mHeap->mPath.length () ;
+			return mThis->mPath.length () ;
 		}
 
 		String<STR> absolute () const override {
 			update_path () ;
 			String<STR> ret = PrintString<STR>::make () ;
 			if ifswitch (TRUE) {
-				if (mHeap->mDire.length () < 1)
+				if (mThis->mDire.length () < 1)
 					discard ;
-				if (mHeap->mDire[0] != STR ('\\'))
-					if (mHeap->mDire[0] != STR ('/'))
+				if (mThis->mDire[0] != STR ('\\'))
+					if (mThis->mDire[0] != STR ('/'))
 						discard ;
 				ret += slice ("\\") ;
 			}
-			for (auto &&i : mHeap->mPath.iter ()) {
-				ret += mHeap->mPath[i] ;
+			for (auto &&i : mThis->mPath.iter ()) {
+				ret += mThis->mPath[i] ;
 				ret += slice ("\\") ;
 			}
 			if ifswitch (TRUE) {
@@ -386,9 +386,9 @@ trait DIRECTORY_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 
 		Array<CHILD> load () const override {
 			update_child () ;
-			Array<CHILD> ret = Array<CHILD> (mHeap->mChild.length ()) ;
+			Array<CHILD> ret = Array<CHILD> (mThis->mChild.length ()) ;
 			INDEX ix = 0 ;
-			for (auto &&i : mHeap->mChild) {
+			for (auto &&i : mThis->mChild) {
 				ret[ix] = i ;
 				ix++ ;
 			}
@@ -396,14 +396,14 @@ trait DIRECTORY_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		void fresh () const override {
-			mHeap->mPath = ArrayList<String<STR>> () ;
-			mHeap->mPathCached = FALSE ;
-			mHeap->mChild = ArrayList<CHILD> () ;
-			mHeap->mChildCached = FALSE ;
+			mThis->mPath = ArrayList<String<STR>> () ;
+			mThis->mPathCached = FALSE ;
+			mThis->mChild = ArrayList<CHILD> () ;
+			mThis->mChildCached = FALSE ;
 		}
 
 		BOOL available () const override {
-			const auto r1x = GetFileAttributes ((&mHeap->mDire[0])) ;
+			const auto r1x = GetFileAttributes ((&mThis->mDire[0])) ;
 			if (r1x == INVALID_FILE_ATTRIBUTES)
 				return FALSE ;
 			if ifnot (BitProc::bit_any (CHAR (r1x) ,FILE_ATTRIBUTE_DIRECTORY))
@@ -412,7 +412,7 @@ trait DIRECTORY_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		BOOL lock () const override {
-			const auto r1x = PrintString<STR>::make (mHeap->mDire ,STR ('\\') ,slice (".lockdirectory")) ;
+			const auto r1x = PrintString<STR>::make (mThis->mDire ,STR ('\\') ,slice (".lockdirectory")) ;
 			const auto r2x = CurrentProcess::make () ;
 			if ifswitch (TRUE) {
 				const auto r3x = File (r1x) ;
@@ -421,13 +421,18 @@ trait DIRECTORY_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				const auto r4x = r3x.load ().as_cref () ;
 				const auto r5x = Process (r4x) ;
 				const auto r6x = Process (r5x.process_uid ()) ;
-				if (r5x.snapshot () != r6x.snapshot ())
+				if ifnot (buffer_equal (r5x.snapshot () ,r6x.snapshot ()))
 					discard ;
-				return r5x.snapshot () == r2x.snapshot () ;
+				return buffer_equal (r5x.snapshot () ,r2x.snapshot ()) ;
 			}
-			const auto r7x = r2x.snapshot () ;
-			const auto r8x = lock_handle (r1x ,r7x) ;
+			const auto r8x = lock_handle (r1x ,r2x.snapshot ()) ;
 			return r8x->self.available () ;
+		}
+
+		BOOL buffer_equal (CREF<ConBuffer<BYTE>> obj1 ,CREF<ConBuffer<BYTE>> obj2) const {
+			if (obj1.size () != obj2.size ())
+				return FALSE ;
+			return BufferProc<BYTE>::buf_equal (obj1 ,obj2 ,0 ,obj1.size ()) ;
 		}
 
 		CRef<UniqueRef<File>> lock_handle (CREF<String<STR>> file ,CREF<ConBuffer<BYTE>> snapshot_) const {
@@ -445,20 +450,20 @@ trait DIRECTORY_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			update_path () ;
 			auto rax = PrintString<STR>::make () ;
 			if ifswitch (TRUE) {
-				if (mHeap->mDire.length () < 1)
+				if (mThis->mDire.length () < 1)
 					discard ;
-				if (mHeap->mDire[0] != STR ('\\'))
-					if (mHeap->mDire[0] != STR ('/'))
+				if (mThis->mDire[0] != STR ('\\'))
+					if (mThis->mDire[0] != STR ('/'))
 						discard ;
 				rax += slice ("\\") ;
 			}
-			for (auto &&i : mHeap->mPath.iter ()) {
-				rax += mHeap->mPath[i] ;
+			for (auto &&i : mThis->mPath.iter ()) {
+				rax += mThis->mPath[i] ;
 				if ifswitch (TRUE) {
-					const auto r1x = mHeap->mPath[i].length () ;
+					const auto r1x = mThis->mPath[i].length () ;
 					if (r1x == 0)
 						discard ;
-					if (mHeap->mPath[i][r1x - 1] == STR (':'))
+					if (mThis->mPath[i][r1x - 1] == STR (':'))
 						discard ;
 					CreateDirectory ((&rax[0]) ,NULL) ;
 				}
@@ -467,7 +472,7 @@ trait DIRECTORY_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		void erase () const override {
-			RemoveDirectory ((&mHeap->mDire[0])) ;
+			RemoveDirectory ((&mThis->mDire[0])) ;
 			fresh () ;
 		}
 
@@ -475,20 +480,20 @@ trait DIRECTORY_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			auto rax = Deque<String<STR>> (CHILD_MAX_SIZE::expr) ;
 			auto rbx = ImplHolder () ;
 			rbx.initialize () ;
-			rax.add (mHeap->mDire) ;
+			rax.add (mThis->mDire) ;
 			while (TRUE) {
 				if (rax.empty ())
 					break ;
-				rax.take (rbx.mHeap->mDire) ;
+				rax.take (rbx.mThis->mDire) ;
 				rbx.fresh () ;
 				rbx.update_child () ;
-				for (auto &&i : rbx.mHeap->mChild) {
+				for (auto &&i : rbx.mThis->mChild) {
 					if ifnot (i.mIsFile)
 						continue ;
 					const auto r1x = File (i.mFile) ;
 					r1x.erase () ;
 				}
-				for (auto &&i : rbx.mHeap->mChild) {
+				for (auto &&i : rbx.mThis->mChild) {
 					if ifnot (i.mIsDire)
 						continue ;
 					if ifnot (i.mIsLink)
@@ -496,7 +501,7 @@ trait DIRECTORY_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 					const auto r2x = Directory (i.mFile) ;
 					r2x.erase () ;
 				}
-				for (auto &&i : rbx.mHeap->mChild) {
+				for (auto &&i : rbx.mThis->mChild) {
 					if ifnot (i.mIsDire)
 						continue ;
 					if (i.mIsLink)
@@ -509,14 +514,14 @@ trait DIRECTORY_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 
 		void update_path () const {
 			using R1X = typename FUNCTION_decouple_path_HELP<DEPEND ,ALWAYS>::FUNCTION_decouple_path ;
-			if (mHeap->mPathCached)
+			if (mThis->mPathCached)
 				return ;
 			const auto r1x = R1X () ;
-			auto rax = r1x (mHeap->mDire) ;
+			auto rax = r1x (mThis->mDire) ;
 			fix_working_path (rax) ;
 			fix_relative_path (rax) ;
-			mHeap->mPath = move (rax) ;
-			mHeap->mPathCached = TRUE ;
+			mThis->mPath = move (rax) ;
+			mThis->mPathCached = TRUE ;
 		}
 
 		void fix_working_path (VREF<ArrayList<String<STR>>> path_) const {
@@ -570,11 +575,11 @@ trait DIRECTORY_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		void update_child () const {
-			if (mHeap->mChildCached)
+			if (mThis->mChildCached)
 				return ;
 			auto rax = ArrayList<CHILD> (CHILD_MAX_SIZE::expr) ;
 			auto rbx = PrintString<STR>::make () ;
-			rbx += mHeap->mDire ;
+			rbx += mThis->mDire ;
 			rbx += slice ("\\") ;
 			const auto r1x = rbx.length () ;
 			rbx += slice ("*.*") ;
@@ -613,8 +618,8 @@ trait DIRECTORY_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				FindNextFile (r2x ,(&rcx)) ;
 			}
 			rax.remap () ;
-			mHeap->mChild = move (rax) ;
-			mHeap->mChildCached = TRUE ;
+			mThis->mChild = move (rax) ;
+			mThis->mChildCached = TRUE ;
 		}
 	} ;
 } ;
@@ -863,7 +868,7 @@ trait BUFFERFILE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	struct CHUNK {
 		VAL64 mOffset ;
 		VAL64 mCacheTime ;
-		UniqueRef<Tuple<HANDLE ,LENGTH>> mBuffer ;
+		UniqueRef<csc_span_t> mBuffer ;
 	} ;
 
 	struct HEADER {
@@ -989,7 +994,7 @@ trait BUFFERFILE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			assert (mHeader == NULL) ;
 			mHeader = VRef<HEADER>::make () ;
 			INDEX ix = load (0 ,HEADER_SIZE::expr) ;
-			const auto r1x = address (mCacheList[ix].mBuffer->m1st) ;
+			const auto r1x = mCacheList[ix].mBuffer->mBegin ;
 			auto rax = ByteReader (RegBuffer<BYTE>::from (r1x ,0 ,HEADER_SIZE::expr).borrow ()) ;
 			rax >> GAP ;
 			rax >> GAP ;
@@ -1041,7 +1046,7 @@ trait BUFFERFILE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				mHeader->mChunkCount = 0 ;
 			}
 			INDEX ix = load (0 ,HEADER_SIZE::expr) ;
-			const auto r2x = address (mCacheList[ix].mBuffer->m1st) ;
+			const auto r2x = mCacheList[ix].mBuffer->mBegin ;
 			auto rax = ByteWriter (RegBuffer<BYTE>::from (r2x ,0 ,HEADER_SIZE::expr).borrow ()) ;
 			rax << GAP ;
 			rax << GAP ;
@@ -1149,7 +1154,7 @@ trait BUFFERFILE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			const auto r3x = r2x + mHeader->mItemSize ;
 			const auto r4x = HEADER_SIZE::expr + r1x * mHeader->mChunkSize ;
 			INDEX ix = load (r4x ,mHeader->mChunkSize) ;
-			const auto r5x = address (mCacheList[ix].mBuffer->m1st) ;
+			const auto r5x = mCacheList[ix].mBuffer->mBegin ;
 			BufferProc<BYTE>::buf_copy (item ,RegBuffer<BYTE>::from (r5x ,r2x ,r3x) ,0 ,mHeader->mItemSize) ;
 		}
 
@@ -1162,7 +1167,7 @@ trait BUFFERFILE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			const auto r3x = r2x + mHeader->mItemSize ;
 			const auto r4x = HEADER_SIZE::expr + r1x * mHeader->mChunkSize ;
 			INDEX ix = load (r4x ,mHeader->mChunkSize) ;
-			const auto r5x = address (mCacheList[ix].mBuffer->m1st) ;
+			const auto r5x = mCacheList[ix].mBuffer->mBegin ;
 			BufferProc<BYTE>::buf_copy (RegBuffer<BYTE>::from (r5x ,r2x ,r3x) ,item ,0 ,mHeader->mItemSize) ;
 		}
 
@@ -1177,14 +1182,15 @@ trait BUFFERFILE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				mCacheList[ret].mOffset = offset ;
 				const auto r2x = csc_enum_t (BitProc::bit_high (DATA (offset))) ;
 				const auto r3x = csc_enum_t (BitProc::bit_low (DATA (offset))) ;
-				mCacheList[ret].mBuffer = UniqueRef<Tuple<HANDLE ,LENGTH>> ([&] (VREF<Tuple<HANDLE ,LENGTH>> me) {
+				mCacheList[ret].mBuffer = UniqueRef<csc_span_t> ([&] (VREF<csc_span_t> me) {
 					const auto r4x = MapViewOfFile (mMapping ,mFileMapFlag ,r2x ,r3x ,size_) ;
 					assume (r4x != NULL) ;
-					me.m1st = r4x ;
-					me.m2nd = size_ ;
-				} ,[] (VREF<Tuple<HANDLE ,LENGTH>> me) {
-					FlushViewOfFile (me.m1st ,me.m2nd) ;
-					UnmapViewOfFile (me.m1st) ;
+					me.mBegin = LENGTH (r4x) ;
+					me.mEnd = me.mBegin + size_ ;
+					me.mStep = size_ ;
+				} ,[] (VREF<csc_span_t> me) {
+					FlushViewOfFile (csc_pointer_t (me.mBegin) ,me.mStep) ;
+					UnmapViewOfFile (csc_pointer_t (me.mBegin)) ;
 				}) ;
 			}
 			mCacheList[ret].mCacheTime = mCacheTimer ;

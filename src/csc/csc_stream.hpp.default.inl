@@ -620,7 +620,7 @@ trait TEXTATTRIBUTE_IMPLHOLDER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 	class ImplHolder implement Holder {
 	protected:
 		HashSet<ITEM> mSpaceSet ;
-		ArrayList<Tuple<ITEM ,ITEM>> mEscapeList ;
+		ArrayList<ARRAY2<ITEM>> mEscapeList ;
 		HashSet<ITEM> mEscapeWordSet ;
 		HashSet<ITEM> mEscapeCtrlSet ;
 
@@ -651,8 +651,8 @@ trait TEXTATTRIBUTE_IMPLHOLDER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 
 		void escape_list_add (CREF<ITEM> word ,CREF<ITEM> ctrl) {
 			INDEX ix = mEscapeList.insert () ;
-			mEscapeList[ix].m1st = word ;
-			mEscapeList[ix].m2nd = ctrl ;
+			mEscapeList[ix][0] = word ;
+			mEscapeList[ix][1] = ctrl ;
 			mEscapeWordSet.add (word ,ix) ;
 			mEscapeCtrlSet.add (ctrl ,ix) ;
 		}
@@ -758,14 +758,14 @@ trait TEXTATTRIBUTE_IMPLHOLDER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 			INDEX ix = mEscapeCtrlSet.map (str) ;
 			if (ix == NONE)
 				return FLAG (1) ;
-			return Optional<ITEM>::make (mEscapeList[ix].m1st) ;
+			return Optional<ITEM>::make (mEscapeList[ix][0]) ;
 		}
 
 		Optional<ITEM> escape_ctrl_cast (CREF<ITEM> str) const override {
 			INDEX ix = mEscapeWordSet.map (str) ;
 			if (ix == NONE)
 				return FLAG (1) ;
-			return Optional<ITEM>::make (mEscapeList[ix].m2nd) ;
+			return Optional<ITEM>::make (mEscapeList[ix][1]) ;
 		}
 
 		LENGTH value_precision () const override {
@@ -1704,6 +1704,7 @@ trait TEXTWRITER_WRITEVALUE_HELP<ITEM ,ALWAYS> {
 			mAttribute = attribute_ ;
 			mValue = value_ ;
 			mValue.mPrecision = 1 + MathProc::vlog (mValue.mMantissa ,VAL64 (10)) ;
+			mBuffer = BoxBuffer<ITEM ,NUMBER_SIZE> (0) ;
 			mWrite = mBuffer.size () ;
 		}
 

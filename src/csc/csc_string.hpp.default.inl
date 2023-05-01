@@ -118,8 +118,8 @@ trait STRINGPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		String<STRA> string_cvt_ansi_from_w (CREF<String<STRW>> obj) const override {
 			String<STRA> ret ;
 			auto &&tmp = unsafe_deref (unsafe_cast[TYPEAS<TEMP<String<STRUA>>>::expr] (unsafe_deptr (ret))) ;
-			auto &&tmp_obj = unsafe_deref (unsafe_cast[TYPEAS<TEMP<String<STRUW>>>::expr] (unsafe_deptr (obj))) ;
-			tmp = string_cvt_ansi_from_w (tmp_obj) ;
+			auto &&tmp_2 = unsafe_deref (unsafe_cast[TYPEAS<TEMP<String<STRUW>>>::expr] (unsafe_deptr (obj))) ;
+			tmp = string_cvt_ansi_from_w (tmp_2) ;
 			unsafe_launder (ret) ;
 			return move (ret) ;
 		}
@@ -139,8 +139,8 @@ trait STRINGPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		String<STRW> string_cvt_w_from_ansi (CREF<String<STRA>> obj) const override {
 			String<STRW> ret ;
 			auto &&tmp = unsafe_deref (unsafe_cast[TYPEAS<TEMP<String<STRUW>>>::expr] (unsafe_deptr (ret))) ;
-			auto &&tmp_obj = unsafe_deref (unsafe_cast[TYPEAS<TEMP<String<STRUA>>>::expr] (unsafe_deptr (obj))) ;
-			tmp = string_cvt_w_from_ansi (tmp_obj) ;
+			auto &&tmp_2 = unsafe_deref (unsafe_cast[TYPEAS<TEMP<String<STRUA>>>::expr] (unsafe_deptr (obj))) ;
+			tmp = string_cvt_w_from_ansi (tmp_2) ;
 			unsafe_launder (ret) ;
 			return move (ret) ;
 		}
@@ -160,8 +160,8 @@ trait STRINGPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		String<STRA> string_cvt_gbks_from_w (CREF<String<STRW>> obj) const override {
 			String<STRA> ret ;
 			auto &&tmp = unsafe_deref (unsafe_cast[TYPEAS<TEMP<String<STRUA>>>::expr] (unsafe_deptr (ret))) ;
-			auto &&tmp_obj = unsafe_deref (unsafe_cast[TYPEAS<TEMP<String<STRUW>>>::expr] (unsafe_deptr (obj))) ;
-			tmp = string_cvt_gbks_from_w (tmp_obj) ;
+			auto &&tmp_2 = unsafe_deref (unsafe_cast[TYPEAS<TEMP<String<STRUW>>>::expr] (unsafe_deptr (obj))) ;
+			tmp = string_cvt_gbks_from_w (tmp_2) ;
 			unsafe_launder (ret) ;
 			return move (ret) ;
 		}
@@ -176,7 +176,7 @@ trait STRINGPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				if ifswitch (act) {
 					if (r1x == NONE)
 						discard ;
-					const auto r2x = R1X::instance ()[r1x].m1st ;
+					const auto r2x = R1X::instance ()[r1x][0] ;
 					if (r2x >= STRUW (0X0100))
 						discard ;
 					ret[ix] = STRUA (r2x) ;
@@ -185,7 +185,7 @@ trait STRINGPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				if ifswitch (act) {
 					if (r1x == NONE)
 						discard ;
-					const auto r3x = R1X::instance ()[r1x].m1st ;
+					const auto r3x = R1X::instance ()[r1x][0] ;
 					ret[ix] = STRUA (r3x >> 8) ;
 					ix++ ;
 					ret[ix] = STRUA (r3x) ;
@@ -203,8 +203,8 @@ trait STRINGPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		String<STRW> string_cvt_w_from_gbks (CREF<String<STRA>> obj) const override {
 			String<STRW> ret ;
 			auto &&tmp = unsafe_deref (unsafe_cast[TYPEAS<TEMP<String<STRUW>>>::expr] (unsafe_deptr (ret))) ;
-			auto &&tmp_obj = unsafe_deref (unsafe_cast[TYPEAS<TEMP<String<STRUA>>>::expr] (unsafe_deptr (obj))) ;
-			tmp = string_cvt_w_from_gbks (tmp_obj) ;
+			auto &&tmp_2 = unsafe_deref (unsafe_cast[TYPEAS<TEMP<String<STRUA>>>::expr] (unsafe_deptr (obj))) ;
+			tmp = string_cvt_w_from_gbks (tmp_2) ;
 			unsafe_launder (ret) ;
 			return move (ret) ;
 		}
@@ -223,7 +223,7 @@ trait STRINGPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 					const auto r1x = R1X::instance ().find_gbks (STRUW (i)) ;
 					if (r1x == NONE)
 						discard ;
-					ret[ix] = R1X::instance ()[r1x].m2nd ;
+					ret[ix] = R1X::instance ()[r1x][1] ;
 					ix++ ;
 				}
 				if ifswitch (act) {
@@ -239,7 +239,7 @@ trait STRINGPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 					const auto r2x = R1X::instance ().find_gbks (STRUW (rbx)) ;
 					if (r2x == NONE)
 						discard ;
-					ret[ix] = R1X::instance ()[r2x].m2nd ;
+					ret[ix] = R1X::instance ()[r2x][1] ;
 					ix++ ;
 					rax = 0 ;
 				}
@@ -831,7 +831,7 @@ template <class DEPEND>
 trait TEXTSTRING_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	using Holder = typename TEXTSTRING_HELP<DEPEND ,ALWAYS>::Holder ;
 
-	struct HEAP {
+	struct PACK {
 		String<STR> mText ;
 		String<STRA> mTextA ;
 		String<STRW> mTextW ;
@@ -842,87 +842,87 @@ trait TEXTSTRING_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 
 	class ImplHolder implement Holder {
 	protected:
-		SharedRef<HEAP> mHeap ;
+		SharedRef<PACK> mThis ;
 
 	public:
 		void initialize (CREF<Slice<STR>> text) override {
-			mHeap = SharedRef<HEAP>::make () ;
-			mHeap->mText = text ;
+			mThis = SharedRef<PACK>::make () ;
+			mThis->mText = text ;
 		}
 
 		void initialize (CREF<String<STRA>> text) override {
-			mHeap = SharedRef<HEAP>::make () ;
-			mHeap->mTextA = text ;
-			mHeap->mText = string_cvt[TYPEAS<STR ,STRA>::expr] (text) ;
+			mThis = SharedRef<PACK>::make () ;
+			mThis->mTextA = text ;
+			mThis->mText = string_cvt[TYPEAS<STR ,STRA>::expr] (text) ;
 		}
 
 		void initialize (CREF<String<STRW>> text) override {
-			mHeap = SharedRef<HEAP>::make () ;
-			mHeap->mTextW = text ;
-			mHeap->mText = string_cvt[TYPEAS<STR ,STRW>::expr] (text) ;
+			mThis = SharedRef<PACK>::make () ;
+			mThis->mTextW = text ;
+			mThis->mText = string_cvt[TYPEAS<STR ,STRW>::expr] (text) ;
 		}
 
 		void initialize (CREF<String<STRU8>> text) override {
-			mHeap = SharedRef<HEAP>::make () ;
-			mHeap->mTextU8 = text ;
-			mHeap->mText = string_cvt[TYPEAS<STR ,STRU8>::expr] (text) ;
+			mThis = SharedRef<PACK>::make () ;
+			mThis->mTextU8 = text ;
+			mThis->mText = string_cvt[TYPEAS<STR ,STRU8>::expr] (text) ;
 		}
 
 		void initialize (CREF<String<STRU16>> text) override {
-			mHeap = SharedRef<HEAP>::make () ;
-			mHeap->mTextU16 = text ;
-			mHeap->mText = string_cvt[TYPEAS<STR ,STRU16>::expr] (text) ;
+			mThis = SharedRef<PACK>::make () ;
+			mThis->mTextU16 = text ;
+			mThis->mText = string_cvt[TYPEAS<STR ,STRU16>::expr] (text) ;
 		}
 
 		void initialize (CREF<String<STRU32>> text) override {
-			mHeap = SharedRef<HEAP>::make () ;
-			mHeap->mTextU32 = text ;
-			mHeap->mText = string_cvt[TYPEAS<STR ,STRU32>::expr] (text) ;
+			mThis = SharedRef<PACK>::make () ;
+			mThis->mTextU32 = text ;
+			mThis->mText = string_cvt[TYPEAS<STR ,STRU32>::expr] (text) ;
 		}
 
 		CREF<String<STRA>> pick (CREF<TYPEID<STRA>> id) const leftvalue override {
 			if ifswitch (TRUE) {
-				if (mHeap->mTextA.size () > 0)
+				if (mThis->mTextA.size () > 0)
 					discard ;
-				mHeap->mTextA = string_cvt[TYPEAS<STRA ,STR>::expr] (mHeap->mText) ;
+				mThis->mTextA = string_cvt[TYPEAS<STRA ,STR>::expr] (mThis->mText) ;
 			}
-			return mHeap->mTextA ;
+			return mThis->mTextA ;
 		}
 
 		CREF<String<STRW>> pick (CREF<TYPEID<STRW>> id) const leftvalue override {
 			if ifswitch (TRUE) {
-				if (mHeap->mTextW.size () > 0)
+				if (mThis->mTextW.size () > 0)
 					discard ;
-				mHeap->mTextW = string_cvt[TYPEAS<STRW ,STR>::expr] (mHeap->mText) ;
+				mThis->mTextW = string_cvt[TYPEAS<STRW ,STR>::expr] (mThis->mText) ;
 			}
-			return mHeap->mTextW ;
+			return mThis->mTextW ;
 		}
 
 		CREF<String<STRU8>> pick (CREF<TYPEID<STRU8>> id) const leftvalue override {
 			if ifswitch (TRUE) {
-				if (mHeap->mTextU8.size () > 0)
+				if (mThis->mTextU8.size () > 0)
 					discard ;
-				mHeap->mTextU8 = string_cvt[TYPEAS<STRU8 ,STR>::expr] (mHeap->mText) ;
+				mThis->mTextU8 = string_cvt[TYPEAS<STRU8 ,STR>::expr] (mThis->mText) ;
 			}
-			return mHeap->mTextU8 ;
+			return mThis->mTextU8 ;
 		}
 
 		CREF<String<STRU16>> pick (CREF<TYPEID<STRU16>> id) const leftvalue override {
 			if ifswitch (TRUE) {
-				if (mHeap->mTextU16.size () > 0)
+				if (mThis->mTextU16.size () > 0)
 					discard ;
-				mHeap->mTextU16 = string_cvt[TYPEAS<STRU16 ,STR>::expr] (mHeap->mText) ;
+				mThis->mTextU16 = string_cvt[TYPEAS<STRU16 ,STR>::expr] (mThis->mText) ;
 			}
-			return mHeap->mTextU16 ;
+			return mThis->mTextU16 ;
 		}
 
 		CREF<String<STRU32>> pick (CREF<TYPEID<STRU32>> id) const leftvalue override {
 			if ifswitch (TRUE) {
-				if (mHeap->mTextU32.size () > 0)
+				if (mThis->mTextU32.size () > 0)
 					discard ;
-				mHeap->mTextU32 = string_cvt[TYPEAS<STRU32 ,STR>::expr] (mHeap->mText) ;
+				mThis->mTextU32 = string_cvt[TYPEAS<STRU32 ,STR>::expr] (mThis->mText) ;
 			}
-			return mHeap->mTextU32 ;
+			return mThis->mTextU32 ;
 		}
 	} ;
 } ;

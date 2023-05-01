@@ -165,7 +165,8 @@ trait XMLPARSER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		CREF<String<STRU8>> member () const leftvalue override {
-			assume (available ()) ;
+			if ifnot (available ())
+				return String<STRU8>::zero () ;
 			return mHeap->mTree[mIndex].mName ;
 		}
 
@@ -876,6 +877,7 @@ trait JSONPARSER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	using JsonParser = typename JSONPARSER_HELP<DEPEND ,ALWAYS>::JsonParser ;
 
 	struct NODE {
+		String<STRU8> mName ;
 		String<STRU8> mValue ;
 		SoftSet<INDEX> mArraySet ;
 		SoftSet<String<STRU8>> mObjectSet ;
@@ -1030,6 +1032,12 @@ trait JSONPARSER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			return TRUE ;
 		}
 
+		CREF<String<STRU8>> member () const leftvalue override {
+			if ifnot (available ())
+				return String<STRU8>::zero () ;
+			return mHeap->mTree[mIndex].mName ;
+		}
+
 		CREF<String<STRU8>> fetch () const leftvalue override {
 			assume (available ()) ;
 			assume (string_type ()) ;
@@ -1148,6 +1156,7 @@ trait JSONPARSER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 			ret.mTree = Array<NODE> (r1x.length ()) ;
 			for (auto &&i : mTree.iter ()) {
 				INDEX ix = r1x[i] ;
+				ret.mTree[ix].mName = move (mTree[i].mName) ;
 				ret.mTree[ix].mValue = move (mTree[i].mValue) ;
 				ret.mTree[ix].mArraySet = move (mTree[i].mArraySet) ;
 				for (auto &&j : ret.mTree[ix].mArraySet.iter ()) {
@@ -1253,6 +1262,7 @@ trait JSONPARSER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 				if ifnot (is_first_of_number ())
 					discard ;
 				ix = mTree.insert () ;
+				mTree[ix].mName = move (mLastString) ;
 				read_shift_e1 () ;
 				mTree[ix].mValue = move (mLastString) ;
 				mTree[ix].mClazz = NODE_CLAZZ_STRING::expr ;
@@ -1264,6 +1274,7 @@ trait JSONPARSER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 				if ifnot (is_first_of_boolean ())
 					discard ;
 				ix = mTree.insert () ;
+				mTree[ix].mName = move (mLastString) ;
 				read_shift_e2 () ;
 				mTree[ix].mValue = move (mLastString) ;
 				mTree[ix].mClazz = NODE_CLAZZ_STRING::expr ;
@@ -1275,6 +1286,7 @@ trait JSONPARSER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 				if ifnot (mReader[0] == STRU8 ('n'))
 					discard ;
 				ix = mTree.insert () ;
+				mTree[ix].mName = move (mLastString) ;
 				read_shift_e2 () ;
 				mTree[ix].mClazz = NODE_CLAZZ_NULL::expr ;
 				mTree[ix].mParent = curr ;
@@ -1285,6 +1297,7 @@ trait JSONPARSER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 				if ifnot (mReader[0] == STRU8 ('\"'))
 					discard ;
 				ix = mTree.insert () ;
+				mTree[ix].mName = move (mLastString) ;
 				read_shift_e3 () ;
 				mTree[ix].mValue = move (mLastString) ;
 				mTree[ix].mClazz = NODE_CLAZZ_STRING::expr ;
@@ -1361,6 +1374,7 @@ trait JSONPARSER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 			assume (mRecursiveCounter < COUNTER_MAX_DEPTH::expr) ;
 			mReader >> slice ("[") ;
 			INDEX ix = mTree.insert () ;
+			mTree[ix].mName = move (mLastString) ;
 			mTree[ix].mArraySet = mArraySet.share () ;
 			mTree[ix].mClazz = NODE_CLAZZ_ARRAY::expr ;
 			mTree[ix].mParent = curr ;
@@ -1381,7 +1395,7 @@ trait JSONPARSER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 		//@info: $7->$3 : $4
 		void read_shift_e7 (CREF<INDEX> curr) {
 			read_shift_e3 () ;
-			auto rax = move (mLastString) ;
+			auto rax = mLastString ;
 			mReader >> SKIP_GAP ;
 			mReader >> slice (":") ;
 			mReader >> SKIP_GAP ;
@@ -1420,6 +1434,7 @@ trait JSONPARSER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 			assume (mRecursiveCounter < COUNTER_MAX_DEPTH::expr) ;
 			mReader >> slice ("{") ;
 			INDEX ix = mTree.insert () ;
+			mTree[ix].mName = move (mLastString) ;
 			mTree[ix].mObjectSet = mObjectSet.share () ;
 			mTree[ix].mClazz = NODE_CLAZZ_OBJECT::expr ;
 			mTree[ix].mParent = curr ;

@@ -60,9 +60,10 @@
   </Type>
 
   <Type Name="CSC::SLICE_IMPLHOLDER_HELP&lt;wchar_t,*&gt;::ImplHolder">
-    <DisplayString>{mText.mBegin,su}</DisplayString>
-    <StringView Condition="mAlign==1">mText.mBegin,s8</StringView>
-    <StringView Condition="mAlign==2">mText.mBegin,su</StringView>
+    <DisplayString Condition="mText.mStep==1">{mText.mBegin,s8}</DisplayString>
+    <DisplayString Condition="mText.mStep==2">{mText.mBegin,su}</DisplayString>
+    <StringView Condition="mText.mStep==1">mText.mBegin,s8</StringView>
+    <StringView Condition="mText.mStep==2">mText.mBegin,su</StringView>
   </Type>
 
   <Type Name="CSC::SLICE_IMPLHOLDER_HELP&lt;unsigned char,*&gt;::ImplHolder">
@@ -71,15 +72,17 @@
   </Type>
 
   <Type Name="CSC::SLICE_IMPLHOLDER_HELP&lt;char16_t,*&gt;::ImplHolder">
-    <DisplayString>{mText.mBegin,su}</DisplayString>
-    <StringView Condition="mAlign==1">mText.mBegin,s8</StringView>
-    <StringView Condition="mAlign==2">mText.mBegin,su</StringView>
+    <DisplayString Condition="mText.mStep==1">{mText.mBegin,s8}</DisplayString>
+    <DisplayString Condition="mText.mStep==2">{mText.mBegin,su}</DisplayString>
+    <StringView Condition="mText.mStep==1">mText.mBegin,s8</StringView>
+    <StringView Condition="mText.mStep==2">mText.mBegin,su</StringView>
   </Type>
 
   <Type Name="CSC::SLICE_IMPLHOLDER_HELP&lt;char32_t,*&gt;::ImplHolder">
-    <DisplayString>{mText.mBegin,s32}</DisplayString>
-    <StringView Condition="mAlign==1">mText.mBegin,s8</StringView>
-    <StringView Condition="mAlign==4">mText.mBegin,s32</StringView>
+    <DisplayString Condition="mText.mStep==1">{mText.mBegin,s8}</DisplayString>
+    <DisplayString Condition="mText.mStep==4">{mText.mBegin,s32}</DisplayString>
+    <StringView Condition="mText.mStep==1">mText.mBegin,s8</StringView>
+    <StringView Condition="mText.mStep==4">mText.mBegin,s32</StringView>
   </Type>
 
   <Type Name="CSC::CLAZZ_HELP&lt;*&gt;::Clazz">
@@ -376,7 +379,7 @@
 
   <Type Name="CSC::ARRAYLIST_HELP&lt;*&gt;::ArrayList">
     <Expand HideRawView="true">
-      <Item Name="[range]">mRange</Item>
+      <Item Name="[jump]">mJump</Item>
       <ExpandedItem>mList</ExpandedItem>
     </Expand>
   </Type>
@@ -410,7 +413,7 @@
 
   <Type Name="CSC::HASHSET_HELP&lt;*&gt;::HashSet">
     <Expand HideRawView="true">
-      <Item Name="[range]">mRange</Item>
+      <Item Name="[jump]">mJump</Item>
       <ExpandedItem>mSet</ExpandedItem>
     </Expand>
   </Type>

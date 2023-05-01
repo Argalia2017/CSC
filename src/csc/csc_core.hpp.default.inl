@@ -57,14 +57,14 @@ trait HEAPPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	} ;
 
 	class ImplHolder implement Holder {
-	protected:
-		FLAG mPointer ;
-
 	public:
 		void initialize () override {
-			mPointer = address (unique ().self) ;
 			fake.mUsageSize = Box<std::atomic<VAL>>::make () ;
 			fake.mUsageSize->store (0 ,std::memory_order::memory_order_relaxed) ;
+		}
+
+		void finalize () override {
+			drop (fake) ;
 		}
 
 		LENGTH usage_size () const override {
@@ -96,20 +96,21 @@ trait HEAPPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			operator delete (csc_pointer_t (addr) ,std::nothrow) ;
 		}
 
-		imports CREF<Box<HEAP>> unique () {
-			return memorize ([&] () {
-				return Box<HEAP>::make () ;
-			}) ;
-		}
-
-		VREF<HEAP> fake_m () const leftvalue {
-			return unsafe_deref (unsafe_cast[TYPEAS<TEMP<HEAP>>::expr] (unsafe_pointer (mPointer))) ;
-		}
-
 		LENGTH current_usage_size (CREF<FLAG> addr) const {
 			using R1X = typename FUNCTION_current_usage_size_HELP<DEPEND ,ALWAYS>::FUNCTION_current_usage_size ;
 			const auto r1x = R1X () ;
 			return r1x (addr) ;
+		}
+
+		VREF<HEAP> fake_m () const leftvalue {
+			const auto r1x = address (heap_root ()) ;
+			return unsafe_deref (unsafe_cast[TYPEAS<TEMP<HEAP>>::expr] (unsafe_pointer (r1x))) ;
+		}
+
+		imports CREF<Box<HEAP>> heap_root () {
+			return memorize ([&] () {
+				return Box<HEAP>::make () ;
+			}) ;
 		}
 	} ;
 } ;
@@ -128,32 +129,29 @@ trait AUTO_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 
 	class ImplHolder implement Holder {
 	protected:
-		BOOL mGood ;
 		FLAG mCabi ;
 		Unknown mUnknown ;
 
 	public:
-		void initialize (CREF<FLAG> cabi ,RREF<Unknown> unknown) override {
-			mGood = FALSE ;
-			mCabi = cabi ;
+		void initialize (RREF<Unknown> unknown) override {
+			mCabi = ZERO ;
 			mUnknown = move (unknown) ;
 		}
 
 		void finalize () override {
-			if ifnot (mGood)
+			if (mCabi == ZERO)
 				return ;
 			mUnknown.recycle (0) ;
-			mGood = FALSE ;
+			mCabi = ZERO ;
 		}
 
-		void acquire (CREF<TEMP<void>> obj) override {
-			assert (ifnot (mGood)) ;
+		void acquire (CREF<FLAG> cabi ,CREF<TEMP<void>> obj) override {
+			assert (mCabi == ZERO) ;
 			mUnknown.acquire (0 ,obj) ;
-			mGood = TRUE ;
+			mCabi = cabi ;
 		}
 
 		void release () override {
-			mGood = FALSE ;
 			mCabi = ZERO ;
 		}
 
@@ -284,7 +282,7 @@ trait SLICE_IMPLHOLDER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 				if (r2x != ZERO)
 					return r2x ;
 			}
-			return ZERO ;
+			return operator_compr (size () ,that.size ()) ;
 		}
 
 		FLAG hash () const override {
@@ -368,7 +366,15 @@ trait CLAZZ_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		BOOL equal (CREF<ImplHolder> that) const {
-			return mCabi == that.mCabi ;
+			if (mCabi == that.mCabi)
+				return TRUE ;
+			if (mName != that.mName)
+				return FALSE ;
+			if (mSize != that.mSize)
+				return FALSE ;
+			if (mAlign != that.mAlign)
+				return FALSE ;
+			return TRUE ;
 		}
 
 		FLAG compr (CREF<Holder> that) const override {

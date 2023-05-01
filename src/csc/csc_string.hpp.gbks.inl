@@ -44,10 +44,10 @@ trait STRINGPROC_GBKSCACHE_HELP<DEPEND ,ALWAYS> {
 			return mUTFSCacheSet.map (item) ;
 		}
 
-		inline Tuple<STRUW ,STRUW> operator[] (CREF<INDEX> index) const {
-			Tuple<STRUW ,STRUW> ret ;
-			ret.m1st = mGBKSCache[index] ;
-			ret.m2nd = mUTFSCache[index] ;
+		inline ARRAY2<STRUW> operator[] (CREF<INDEX> index) const {
+			ARRAY2<STRUW> ret ;
+			ret[0] = mGBKSCache[index] ;
+			ret[1] = mUTFSCache[index] ;
 			return move (ret) ;
 		}
 

@@ -42,8 +42,7 @@ trait SYNTAXTREE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	class ImplHolder implement Holder {
 	protected:
 		List<NODE> mTree ;
-		Array<ArrayList<NODE>> mThreadTree ;
-		Set<FLAG> mTreeCabiSet ;
+		Set<FLAG> mTreeSet ;
 		CRef<BOOL> mEnableClean ;
 		Deque<INDEX> mTreeStack ;
 		Priority<INDEX2X> mPlayPriority ;
@@ -75,12 +74,12 @@ trait SYNTAXTREE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		INDEX insert_node (CREF<Clazz> clazz) {
 			const auto r1x = clazz.type_name () ;
 			const auto r2x = clazz.type_cabi () ;
-			INDEX ret = mTreeCabiSet.map (r2x) ;
+			INDEX ret = mTreeSet.map (r2x) ;
 			if ifswitch (TRUE) {
 				if (ret != NONE)
 					discard ;
 				ret = mTree.insert () ;
-				mTreeCabiSet.add (r2x ,ret) ;
+				mTreeSet.add (r2x ,ret) ;
 				mTree[ret].mName = r1x ;
 				mTree[ret].mCabi = r2x ;
 				mTree[ret].mIsFunction = FALSE ;
@@ -375,11 +374,11 @@ trait SYNTAXTREE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				if ifnot (mTree[iy].mOnceActor.exist ())
 					discard ;
 				const auto r1x = NowTimePoint::make () ;
-				const auto r2x = HeapProc::instance ().usage_size () ;
+				const auto r2x = HeapProc::usage_size () ;
 				mTreeStack.add (iy) ;
 				mTree[iy].mOnceActor () ;
 				mTreeStack.pop () ;
-				const auto r3x = HeapProc::instance ().usage_size () ;
+				const auto r3x = HeapProc::usage_size () ;
 				const auto r4x = NowTimePoint::make () ;
 				mTree[iy].mMemoryUsage += LENGTH (r3x - r2x) ;
 				mTree[iy].mTimeCost += (r4x - r1x).seconds () ;
@@ -404,11 +403,11 @@ trait SYNTAXTREE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				if ifnot (mTree[iy].mActor.exist ())
 					discard ;
 				const auto r1x = NowTimePoint::make () ;
-				const auto r2x = HeapProc::instance ().usage_size () ;
+				const auto r2x = HeapProc::usage_size () ;
 				mTreeStack.add (iy) ;
 				mTree[iy].mActor () ;
 				mTreeStack.pop () ;
-				const auto r3x = HeapProc::instance ().usage_size () ;
+				const auto r3x = HeapProc::usage_size () ;
 				const auto r4x = NowTimePoint::make () ;
 				mTree[iy].mMemoryUsage += LENGTH (r3x - r2x) ;
 				mTree[iy].mTimeCost += (r4x - r1x).seconds () ;
@@ -471,10 +470,10 @@ trait SYNTAXTREE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 						discard ;
 					mTree[ix].mActor = Function<void> () ;
 					mTree[ix].mOnceActor = Function<void> () ;
-					const auto r1x = HeapProc::instance ().usage_size () ;
+					const auto r1x = HeapProc::usage_size () ;
 					mTree[ix].mValue = AutoRef<> () ;
 					mTree[ix].mLater = AutoRef<> () ;
-					const auto r2x = HeapProc::instance ().usage_size () ;
+					const auto r2x = HeapProc::usage_size () ;
 					const auto r3x = LENGTH (r1x - r2x) ;
 					mTree[ix].mMemoryUsage = MathProc::min_of (mTree[ix].mMemoryUsage ,r3x) ;
 				}
