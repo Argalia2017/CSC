@@ -53,7 +53,7 @@ trait SORTPROC_HELP<DEPEND ,ALWAYS> {
 		}
 
 		template <class ARG1>
-		inline Array<INDEX> operator() (CREF<ARG1> array_) const {
+		imports Array<INDEX> sort (CREF<ARG1> array_) {
 			using R1X = typename DEPENDENT<SORTPROC_IMPLBINDER_HELP<ARG1 ,ALWAYS> ,DEPEND>::ImplBinder ;
 			auto rax = R1X (CRef<ARG1>::reference (array_)) ;
 			Array<INDEX> ret = IterArray<INDEX>::make (array_.iter ()) ;

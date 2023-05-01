@@ -618,55 +618,6 @@ trait RUNTIMEPROC_HELP<DEPEND ,ALWAYS> {
 using RuntimeProc = typename RUNTIMEPROC_HELP<DEPEND ,ALWAYS>::RuntimeProc ;
 
 template <class...>
-trait STATICPROC_HELP ;
-
-template <class...>
-trait STATICPROC_IMPLHOLDER_HELP ;
-
-template <class DEPEND>
-trait STATICPROC_HELP<DEPEND ,ALWAYS> {
-	struct Holder implement Interface {
-		virtual void initialize () = 0 ;
-		virtual CRef<Proxy> link (CREF<FLAG> group ,CREF<FLAG> cabi) const = 0 ;
-		virtual void regi (CREF<FLAG> group ,CREF<FLAG> cabi ,VREF<CRef<Proxy>> addr) const = 0 ;
-	} ;
-
-	class FakeHolder implement Holder {
-	protected:
-		FLAG mPointer ;
-	} ;
-
-	struct FUNCTION_extern {
-		imports Box<FakeHolder> invoke () ;
-	} ;
-
-	class StaticProc {
-	protected:
-		Box<FakeHolder> mThis ;
-
-	public:
-		imports CREF<StaticProc> instance () {
-			return memorize ([&] () {
-				StaticProc ret ;
-				ret.mThis = FUNCTION_extern::invoke () ;
-				ret.mThis->initialize () ;
-				return move (ret) ;
-			}) ;
-		}
-
-		CRef<Proxy> link (CREF<FLAG> group ,CREF<FLAG> cabi) const {
-			return mThis->link (group ,cabi) ;
-		}
-
-		void regi (CREF<FLAG> group ,CREF<FLAG> cabi ,VREF<CRef<Proxy>> addr) const {
-			return mThis->regi (group ,cabi ,addr) ;
-		}
-	} ;
-} ;
-
-using StaticProc = typename STATICPROC_HELP<DEPEND ,ALWAYS>::StaticProc ;
-
-template <class...>
 trait THREAD_HELP ;
 
 template <class...>
@@ -1046,6 +997,62 @@ trait RANDOM_HELP<DEPEND ,ALWAYS> {
 using Random = typename RANDOM_HELP<DEPEND ,ALWAYS>::Random ;
 
 template <class...>
+trait GLOBAL_HELP ;
+
+template <class...>
+trait GLOBAL_IMPLHOLDER_HELP ;
+
+template <class DEPEND>
+trait GLOBAL_HELP<DEPEND ,ALWAYS> {
+	struct Holder implement Interface {
+		virtual void initialize () = 0 ;
+		virtual void startup () const = 0 ;
+		virtual VREF<AutoRef<>> unique (CREF<Slice<STR>> name) const leftvalue = 0 ;
+		virtual void shutdown () const = 0 ;
+	} ;
+
+	struct FUNCTION_extern {
+		imports VRef<Holder> invoke () ;
+	} ;
+
+	class Global {
+	protected:
+		VRef<Holder> mThis ;
+
+	public:
+		imports CREF<Global> instance () {
+			return memorize ([&] () {
+				Global ret ;
+				ret.mThis = FUNCTION_extern::invoke () ;
+				ret.mThis->initialize () ;
+				return move (ret) ;
+			}) ;
+		}
+
+		void startup () const {
+			return mThis->startup () ;
+		}
+
+		VREF<AutoRef<>> unique (CREF<Slice<STR>> name) const leftvalue {
+			return mThis->unique (name) ;
+		}
+
+		template <class ARG1>
+		CREF<ARG1> unique (CREF<Slice<STR>> name ,CREF<TYPEID<ARG1>> id) const leftvalue {
+			auto &&tmp = mThis->unique (name) ;
+			assume (tmp.exist ()) ;
+			return AutoRef<ARG1>::from (tmp).self ;
+		}
+
+		void shutdown () const {
+			return mThis->shutdown () ;
+		}
+	} ;
+} ;
+
+using Global = typename GLOBAL_HELP<DEPEND ,ALWAYS>::Global ;
+
+template <class...>
 trait SINGLETON_HELP ;
 
 template <class...>
@@ -1066,19 +1073,26 @@ trait SINGLETON_HOLDER_HELP<DEPEND ,ALWAYS> {
 		imports VRef<Holder> invoke () ;
 	} ;
 
-	struct HEAP {
+	class Singleton {
+	protected:
 		VRef<Holder> mThis ;
-	} ;
 
-	class Singleton extend Proxy {
 	public:
-		imports SharedRef<HEAP> unique () {
+		imports CREF<Singleton> instance () {
 			return memorize ([&] () {
-				SharedRef<HEAP> ret = SharedRef<HEAP>::make () ;
-				ret->mThis = FUNCTION_extern::invoke () ;
-				ret->mThis->initialize () ;
+				Singleton ret ;
+				ret.mThis = FUNCTION_extern::invoke () ;
+				ret.mThis->initialize () ;
 				return move (ret) ;
 			}) ;
+		}
+		
+		void regi (CREF<Slice<STR>> name ,CREF<FLAG> addr) const {
+			return mThis->regi (name ,addr) ;
+		}
+		
+		FLAG link (CREF<Slice<STR>> name) const {
+			return mThis->link (name) ;
 		}
 	} ;
 } ;
@@ -1087,24 +1101,22 @@ template <class UNIT>
 trait SINGLETON_HELP<UNIT ,ALWAYS> {
 	using Holder = typename SINGLETON_HOLDER_HELP<DEPEND ,ALWAYS>::Holder ;
 	using FUNCTION_extern = typename SINGLETON_HOLDER_HELP<DEPEND ,ALWAYS>::FUNCTION_extern ;
-	using HEAP = typename SINGLETON_HOLDER_HELP<DEPEND ,ALWAYS>::HEAP ;
 	using SUPER = typename SINGLETON_HOLDER_HELP<DEPEND ,ALWAYS>::Singleton ;
 
-	class Singleton extend SUPER {
+	class Singleton extend Proxy {
 	public:
 		imports CREF<UNIT> instance () {
 			return memorize ([&] () {
 				auto rax = ZERO ;
 				if ifswitch (TRUE) {
-					const auto r1x = SUPER::unique () ;
-					assert (r1x.available ()) ;
+					const auto r1x = CRef<SUPER>::reference (SUPER::instance ()) ;
 					const auto r2x = Clazz (TYPEAS<UNIT>::expr).type_name () ;
-					rax = r1x->mThis->link (r2x) ;
+					rax = r1x->link (r2x) ;
 					if (rax != ZERO)
 						discard ;
 					const auto r3x = address (UNIT::instance ()) ;
-					r1x->mThis->regi (r2x ,r3x) ;
-					rax = r1x->mThis->link (r2x) ;
+					r1x->regi (r2x ,r3x) ;
+					rax = r1x->link (r2x) ;
 				}
 				assume (rax != ZERO) ;
 				auto &&tmp = unsafe_deref (unsafe_cast[TYPEAS<TEMP<UNIT>>::expr] (unsafe_pointer (rax))) ;

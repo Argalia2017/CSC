@@ -19,7 +19,7 @@ trait WORKTHREAD_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		Mutex mThreadMutex ;
 		Mutex mThreadJoinMutex ;
 		VRef<BOOL> mThreadFlag ;
-		Array<Thread> mThread ;
+		Array<VRef<Thread>> mThread ;
 		BitSet<> mThreadJoin ;
 		Array<Deque<INDEX>> mThreadQueue ;
 		Array<LENGTH> mThreadLoadCount ;
@@ -32,8 +32,8 @@ trait WORKTHREAD_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			mThreadMutex = ConditionalMutex::make () ;
 			//@warn: two condition_variable in same mutex
 			mThreadJoinMutex = ConditionalMutex::make () ;
-			set_thread_size (1) ;
-			set_queue_size (1) ;
+			set_thread_size (RuntimeProc::thread_concurrency ()) ;
+			set_queue_size (32) ;
 		}
 
 		void finalize () override {
@@ -45,7 +45,7 @@ trait WORKTHREAD_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		void set_thread_size (CREF<LENGTH> size_) override {
 			Scope<Mutex> anonymous (mThreadMutex) ;
 			assume (mThreadFlag == NULL) ;
-			mThread = Array<Thread> (size_) ;
+			mThread = Array<VRef<Thread>> (size_) ;
 			mThreadJoin = BitSet<> (size_) ;
 			mThreadQueue = Array<Deque<INDEX>> (size_) ;
 			mThreadLoadCount = Array<LENGTH> (size_) ;
@@ -67,8 +67,8 @@ trait WORKTHREAD_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			mThreadFlag = VRef<BOOL>::make (TRUE) ;
 			mThreadProc = move (proc) ;
 			for (auto &&i : mThread.iter ()) {
-				mThread[i] = Thread (VRef<Binder>::reference (thiz) ,i) ;
-				mThread[i].start () ;
+				mThread[i] = VRef<Thread>::make (VRef<Binder>::reference (thiz) ,i) ;
+				mThread[i]->start () ;
 			}
 		}
 
@@ -225,9 +225,12 @@ trait WORKTHREAD_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				mThreadFlag.self = FALSE ;
 				rax.notify () ;
 			}
-			for (auto &&i : mThread)
-				i.stop () ;
-			mThread = Array<Thread> () ;
+			for (auto &&i : mThread) {
+				if (i == NULL)
+					continue ;
+				i->stop () ;
+			}
+			mThread = Array<VRef<Thread>> () ;
 			mThreadProc = Function<void ,TYPEAS<INDEX>> () ;
 			mThreadFlag = NULL ;
 			mThreadJoin = BitSet<> () ;
@@ -257,7 +260,7 @@ trait CALCTHREAD_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		Mutex mThreadJoinMutex ;
 		VRef<BOOL> mThreadFlag ;
 		BOOL mSuspendFlag ;
-		Array<Thread> mThread ;
+		Array<VRef<Thread>> mThread ;
 		BitSet<> mThreadJoin ;
 		Function<SOLUTION ,TYPEAS<SOLUTION>> mThreadProc ;
 		Array<SOLUTION> mThreadSolution ;
@@ -270,7 +273,7 @@ trait CALCTHREAD_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			mThreadMutex = ConditionalMutex::make () ;
 			//@warn: two condition_variable in same mutex
 			mThreadJoinMutex = ConditionalMutex::make () ;
-			set_thread_size (1) ;
+			set_thread_size (RuntimeProc::thread_concurrency ()) ;
 		}
 
 		void finalize () override {
@@ -282,7 +285,7 @@ trait CALCTHREAD_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		void set_thread_size (CREF<LENGTH> size_) override {
 			Scope<Mutex> anonymous (mThreadMutex) ;
 			assume (mThreadFlag == NULL) ;
-			mThread = Array<Thread> (size_) ;
+			mThread = Array<VRef<Thread>> (size_) ;
 			mThreadJoin = BitSet<> (size_) ;
 			mThreadSolution = Array<SOLUTION> (size_) ;
 			mSearchSolution = Array<SOLUTION> (size_) ;
@@ -300,8 +303,8 @@ trait CALCTHREAD_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			mSuspendFlag = FALSE ;
 			mThreadProc = move (proc) ;
 			for (auto &&i : mThread.iter ()) {
-				mThread[i] = Thread (VRef<Binder>::reference (thiz) ,i) ;
-				mThread[i].start () ;
+				mThread[i] = VRef<Thread>::make (VRef<Binder>::reference (thiz) ,i) ;
+				mThread[i]->start () ;
 			}
 		}
 
@@ -454,9 +457,12 @@ trait CALCTHREAD_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				mThreadFlag.self = FALSE ;
 				rax.notify () ;
 			}
-			for (auto &&i : mThread)
-				i.stop () ;
-			mThread = Array<Thread> () ;
+			for (auto &&i : mThread) {
+				if (i == NULL)
+					continue ;
+				i->stop () ;
+			}
+			mThread = Array<VRef<Thread>> () ;
 			mThreadProc = Function<SOLUTION ,TYPEAS<SOLUTION>> () ;
 			mThreadFlag = NULL ;
 			mThreadJoin = BitSet<> () ;
@@ -479,9 +485,10 @@ trait PROMISE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	using Holder = typename PROMISE_HELP<DEPEND ,ALWAYS>::Holder ;
 	using Binder = typename THREAD_HELP<DEPEND ,ALWAYS>::Binder ;
 
-	struct HEAP {
+	struct PACK {
 		Mutex mThreadMutex ;
 		VRef<BOOL> mThreadFlag ;
+		Atomic mThreadReady ;
 		Thread mThread ;
 		Function<AutoRef<>> mThreadProc ;
 		Function<void ,TYPEAS<VREF<AutoRef<>>>> mCallbackProc ;
@@ -491,12 +498,13 @@ trait PROMISE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 
 	class ImplHolder implement Together<Holder ,Binder> {
 	protected:
-		SharedRef<HEAP> mHeap ;
+		SharedRef<PACK> mThis ;
 
 	public:
 		void initialize () override {
-			mHeap = SharedRef<HEAP>::make () ;
-			mHeap->mThreadMutex = ConditionalMutex::make () ;
+			mThis = SharedRef<PACK>::make () ;
+			mThis->mThreadMutex = ConditionalMutex::make () ;
+			mThis->mThreadReady = Atomic (TRUE) ;
 		}
 
 		void finalize () override {
@@ -506,26 +514,28 @@ trait PROMISE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		void start () const override {
-			Scope<Mutex> anonymous (mHeap->mThreadMutex) ;
-			assume (mHeap->mThreadFlag == NULL) ;
-			mHeap->mThreadFlag = VRef<BOOL>::make (TRUE) ;
-			mHeap->mThread = Thread () ;
-			mHeap->mThreadProc = Function<AutoRef<>> () ;
-			mHeap->mCallbackProc = Function<void ,TYPEAS<VREF<AutoRef<>>>> () ;
-			mHeap->mItem = NULL ;
-			mHeap->mException = NULL ;
+			Scope<Mutex> anonymous (mThis->mThreadMutex) ;
+			assume (mThis->mThreadFlag == NULL) ;
+			mThis->mThreadFlag = VRef<BOOL>::make (TRUE) ;
+			mThis->mThreadReady.store (FALSE) ;
+			mThis->mThread = Thread () ;
+			mThis->mThreadProc = Function<AutoRef<>> () ;
+			mThis->mCallbackProc = Function<void ,TYPEAS<VREF<AutoRef<>>>> () ;
+			mThis->mItem = NULL ;
+			mThis->mException = NULL ;
 		}
 
 		void start (RREF<Function<AutoRef<>>> proc) const override {
-			Scope<Mutex> anonymous (mHeap->mThreadMutex) ;
-			assume (mHeap->mThreadFlag == NULL) ;
-			mHeap->mThreadFlag = VRef<BOOL>::make (TRUE) ;
-			mHeap->mThreadProc = move (proc) ;
-			mHeap->mCallbackProc = Function<void ,TYPEAS<VREF<AutoRef<>>>> () ;
-			mHeap->mItem = NULL ;
-			mHeap->mException = NULL ;
-			mHeap->mThread = Thread (CRef<Binder>::reference (thiz) ,0) ;
-			mHeap->mThread.start () ;
+			Scope<Mutex> anonymous (mThis->mThreadMutex) ;
+			assume (mThis->mThreadFlag == NULL) ;
+			mThis->mThreadFlag = VRef<BOOL>::make (TRUE) ;
+			mThis->mThreadReady.store (FALSE) ;
+			mThis->mThreadProc = move (proc) ;
+			mThis->mCallbackProc = Function<void ,TYPEAS<VREF<AutoRef<>>>> () ;
+			mThis->mItem = NULL ;
+			mThis->mException = NULL ;
+			mThis->mThread = Thread (CRef<Binder>::reference (thiz) ,0) ;
+			mThis->mThread.start () ;
 		}
 
 		void friend_execute (CREF<INDEX> slot) override {
@@ -535,7 +545,7 @@ trait PROMISE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		void friend_execute (CREF<INDEX> slot) const override {
 			auto rax = Optional<AutoRef<>> () ;
 			try {
-				rax = Optional<AutoRef<>>::make (mHeap->mThreadProc ()) ;
+				rax = Optional<AutoRef<>>::make (mThis->mThreadProc ()) ;
 			} catch (CREF<Exception> e) {
 				rethrow (e) ;
 			} catch (...) {
@@ -550,72 +560,75 @@ trait PROMISE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		void post (RREF<AutoRef<>> item) const override {
-			Scope<Mutex> anonymous (mHeap->mThreadMutex) ;
-			assume (mHeap->mThreadFlag != NULL) ;
-			assume (mHeap->mThreadFlag.self) ;
-			assume (mHeap->mItem == NULL) ;
-			assume (mHeap->mException == NULL) ;
-			mHeap->mItem = VRef<AutoRef<>>::make (move (item)) ;
+			Scope<Mutex> anonymous (mThis->mThreadMutex) ;
+			assume (mThis->mThreadFlag != NULL) ;
+			assume (mThis->mThreadFlag.self) ;
+			assume (mThis->mItem == NULL) ;
+			assume (mThis->mException == NULL) ;
+			mThis->mItem = VRef<AutoRef<>>::make (move (item)) ;
 		}
 
 		void rethrow (CREF<Exception> e) const override {
-			Scope<Mutex> anonymous (mHeap->mThreadMutex) ;
-			assume (mHeap->mThreadFlag != NULL) ;
-			assume (mHeap->mThreadFlag.self) ;
-			assume (mHeap->mException == NULL) ;
-			mHeap->mItem = NULL ;
-			mHeap->mException = VRef<Exception>::make (e) ;
+			Scope<Mutex> anonymous (mThis->mThreadMutex) ;
+			assume (mThis->mThreadFlag != NULL) ;
+			assume (mThis->mThreadFlag.self) ;
+			assume (mThis->mException == NULL) ;
+			mThis->mItem = NULL ;
+			mThis->mException = VRef<Exception>::make (e) ;
 		}
 
 		void signal () const override {
-			auto rax = UniqueLock (mHeap->mThreadMutex) ;
-			assume (mHeap->mThreadFlag != NULL) ;
-			assume (mHeap->mThreadFlag.self) ;
-			mHeap->mThreadFlag.self = FALSE ;
+			auto rax = UniqueLock (mThis->mThreadMutex) ;
+			assume (mThis->mThreadFlag != NULL) ;
+			assume (mThis->mThreadFlag.self) ;
+			mThis->mThreadFlag.self = FALSE ;
+			mThis->mThreadReady.store (TRUE) ;
 			if ifswitch (TRUE) {
-				if (mHeap->mItem == NULL)
+				if (mThis->mItem == NULL)
 					discard ;
-				if ifnot (mHeap->mCallbackProc.exist ())
+				if ifnot (mThis->mCallbackProc.exist ())
 					discard ;
-				mHeap->mCallbackProc (mHeap->mItem.self) ;
+				mThis->mCallbackProc (mThis->mItem.self) ;
 			}
 			rax.notify () ;
 		}
 
 		BOOL ready () const override {
-			Scope<Mutex> anonymous (mHeap->mThreadMutex) ;
-			if (mHeap->mThreadFlag == NULL)
+			if ifnot (mThis->mThreadReady.fetch ())
+				return FALSE ;
+			Scope<Mutex> anonymous (mThis->mThreadMutex) ;
+			if (mThis->mThreadFlag == NULL)
 				return TRUE ;
-			if ifnot (mHeap->mThreadFlag.self)
+			if ifnot (mThis->mThreadFlag.self)
 				return TRUE ;
 			return FALSE ;
 		}
 
 		AutoRef<> poll () const override {
-			auto rax = UniqueLock (mHeap->mThreadMutex) ;
-			assume (mHeap->mThreadFlag != NULL) ;
+			auto rax = UniqueLock (mThis->mThreadMutex) ;
+			assume (mThis->mThreadFlag != NULL) ;
 			while (TRUE) {
-				if ifnot (mHeap->mThreadFlag.self)
+				if ifnot (mThis->mThreadFlag.self)
 					break ;
 				rax.wait () ;
 			}
 			if ifswitch (TRUE) {
-				if (mHeap->mException == NULL)
+				if (mThis->mException == NULL)
 					discard ;
-				mHeap->mException->raise () ;
+				mThis->mException->raise () ;
 			}
-			assume (mHeap->mItem != NULL) ;
-			AutoRef<> ret = move (mHeap->mItem.self) ;
-			mHeap->mItem = NULL ;
+			assume (mThis->mItem != NULL) ;
+			AutoRef<> ret = move (mThis->mItem.self) ;
+			mThis->mItem = NULL ;
 			rax.notify () ;
 			return move (ret) ;
 		}
 
 		Optional<AutoRef<>> poll (CREF<TimeDuration> interval ,CREF<Function<BOOL>> predicate) const override {
-			auto rax = UniqueLock (mHeap->mThreadMutex) ;
-			assume (mHeap->mThreadFlag != NULL) ;
+			auto rax = UniqueLock (mThis->mThreadMutex) ;
+			assume (mThis->mThreadFlag != NULL) ;
 			while (TRUE) {
-				if ifnot (mHeap->mThreadFlag.self)
+				if ifnot (mThis->mThreadFlag.self)
 					break ;
 				const auto r1x = predicate () ;
 				if ifnot (r1x)
@@ -623,45 +636,45 @@ trait PROMISE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				rax.wait (interval) ;
 			}
 			if ifswitch (TRUE) {
-				if (mHeap->mException == NULL)
+				if (mThis->mException == NULL)
 					discard ;
-				mHeap->mException->raise () ;
+				mThis->mException->raise () ;
 			}
-			assume (mHeap->mItem != NULL) ;
-			Optional<AutoRef<>> ret = Optional<AutoRef<>>::make (move (mHeap->mItem.self)) ;
-			mHeap->mItem = NULL ;
+			assume (mThis->mItem != NULL) ;
+			Optional<AutoRef<>> ret = Optional<AutoRef<>>::make (move (mThis->mItem.self)) ;
+			mThis->mItem = NULL ;
 			rax.notify () ;
 			return move (ret) ;
 		}
 
 		void then (RREF<Function<void ,TYPEAS<VREF<AutoRef<>>>>> proc) const override {
-			Scope<Mutex> anonymous (mHeap->mThreadMutex) ;
-			assume (mHeap->mThreadFlag != NULL) ;
-			mHeap->mCallbackProc = move (proc) ;
+			Scope<Mutex> anonymous (mThis->mThreadMutex) ;
+			assume (mThis->mThreadFlag != NULL) ;
+			mThis->mCallbackProc = move (proc) ;
 			if ifswitch (TRUE) {
-				if (mHeap->mThreadFlag.self)
+				if (mThis->mThreadFlag.self)
 					discard ;
-				if (mHeap->mItem == NULL)
+				if (mThis->mItem == NULL)
 					discard ;
-				mHeap->mCallbackProc (mHeap->mItem.self) ;
+				mThis->mCallbackProc (mThis->mItem.self) ;
 			}
 		}
 
 		void stop () const override {
 			if ifswitch (TRUE) {
-				auto rax = UniqueLock (mHeap->mThreadMutex) ;
-				if (mHeap->mThreadFlag == NULL)
+				auto rax = UniqueLock (mThis->mThreadMutex) ;
+				if (mThis->mThreadFlag == NULL)
 					discard ;
-				mHeap->mThreadFlag.self = FALSE ;
+				mThis->mThreadFlag.self = FALSE ;
 				rax.notify () ;
 			}
-			mHeap->mThread.stop () ;
-			mHeap->mThread = Thread () ;
-			mHeap->mThreadFlag = NULL ;
-			mHeap->mThreadProc = Function<AutoRef<>> () ;
-			mHeap->mCallbackProc = Function<void ,TYPEAS<VREF<AutoRef<>>>> () ;
-			mHeap->mItem = NULL ;
-			mHeap->mException = NULL ;
+			mThis->mThread.stop () ;
+			mThis->mThread = Thread () ;
+			mThis->mThreadFlag = NULL ;
+			mThis->mThreadProc = Function<AutoRef<>> () ;
+			mThis->mCallbackProc = Function<void ,TYPEAS<VREF<AutoRef<>>>> () ;
+			mThis->mItem = NULL ;
+			mThis->mException = NULL ;
 		}
 	} ;
 } ;

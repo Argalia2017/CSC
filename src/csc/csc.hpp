@@ -68,21 +68,21 @@
 #define __CSC_CONFIG_STRA__
 #endif
 
-#define __CSC_CXX_LITE__
-
-#ifndef __CSC_CXX_LITE__
 #ifdef _MSVC_LANG
-#if _MSVC_LANG >= 201703L
+#if _MSVC_LANG >= 202002L
 #define __CSC_CXX_FULL__
+#else
+#define __CSC_CXX_LITE__
 #endif
 #else
-#if __cplusplus >= 201703L
+#if __cplusplus >= 202002L
 #define __CSC_CXX_FULL__
-#elif __cplusplus >= 201103L
 #else
-#error "∑(っ°Д° ;)っ : unsupported"
+#define __CSC_CXX_LITE__
 #endif
 #endif
+
+#ifdef __CSC_COMPILER_GNUC__
 #endif
 
 #ifdef __CSC_COMPILER_MSVC__
@@ -113,6 +113,7 @@
 #pragma warning (disable :4820) //@info: warning C4820: 'xxx': 'xxx' bytes padding added after data member 'xxx'
 #pragma warning (disable :5026) //@info: warning C5026: 'xxx': move constructor was implicitly defined as deleted
 #pragma warning (disable :5027) //@info: warning C5027: 'xxx': move assignment operator was implicitly defined as deleted
+#pragma warning (disable :5045) //@info: warning C5045: 'xxx': move assignment operator was implicitly defined as deleted
 #endif
 
 #ifdef __CSC_COMPILER_GNUC__
@@ -284,8 +285,13 @@ using csc_float32_t = float ;
 using csc_float64_t = double ;
 
 #ifdef __CSC_CXX_LITE__
+//@fatal: fuck ODR
+#define consteval forceinline constexpr
+#endif
+
+#ifdef __CSC_CXX_LITE__
 struct FUNCTION_infinity {
-	inline constexpr operator csc_float32_t () const noexcept {
+	inline consteval operator csc_float32_t () const noexcept {
 		return csc_float32_t (__builtin_huge_valf ()) ;
 	}
 } ;
@@ -293,7 +299,7 @@ struct FUNCTION_infinity {
 
 #ifndef __CSC_CXX_LITE__
 struct FUNCTION_infinity {
-	inline constexpr operator csc_float32_t () const noexcept {
+	inline consteval operator csc_float32_t () const noexcept {
 		return std::numeric_limits<csc_float32_t>::infinity () ;
 	}
 } ;
@@ -308,7 +314,15 @@ using csc_byte64_t = DEF<unsigned long long> ;
 
 using csc_char_t = char ;
 using csc_wchar_t = wchar_t ;
+
+#ifdef __CSC_CXX_LITE__
 using csc_char8_t = csc_byte8_t ;
+#endif
+
+#ifdef __CSC_CXX_FULL__
+using csc_char8_t = char8_t ;
+#endif
+
 using csc_char16_t = char16_t ;
 using csc_char32_t = char32_t ;
 
@@ -365,8 +379,7 @@ using csc_initializer_t = std::initializer_list<UNIT> ;
 
 template <class UNIT ,csc_diff_t SIDE>
 struct ENUMAS {
-	//@fatal: fuck ODR
-	imports forceinline constexpr UNIT expr_m () noexcept {
+	imports consteval UNIT expr_m () noexcept {
 		return UNIT (SIDE) ;
 	}
 } ;
@@ -380,8 +393,7 @@ struct TYPEID {} ;
 
 template <class...UNIT>
 struct TYPEAS {
-	//@fatal: fuck ODR
-	imports forceinline constexpr TYPEID<UNIT...> expr_m () noexcept {
+	imports consteval TYPEID<UNIT...> expr_m () noexcept {
 		return TYPEID<UNIT...> () ;
 	}
 } ;
@@ -714,12 +726,12 @@ using MACRO_CXX_FULL = DEPENDENT<ENUM_FALSE ,DEPENDENT<FUNCTION_MACRO_B ,DEPEND>
 
 #ifdef __CSC_CXX_LITE__
 template <class UNIT>
-using MACRO_IS_INTCLASS = ENUMAS<csc_bool_t ,(__is_enum (UNIT))> ;
+using MACRO_IS_ENUMCLASS = ENUMAS<csc_bool_t ,(__is_enum (UNIT))> ;
 #endif
 
 #ifndef __CSC_CXX_LITE__
 template <class UNIT>
-using MACRO_IS_INTCLASS = ENUMAS<csc_bool_t ,(std::is_enum<UNIT>::value)> ;
+using MACRO_IS_ENUMCLASS = ENUMAS<csc_bool_t ,(std::is_enum<UNIT>::value)> ;
 #endif
 
 #ifdef __CSC_CXX_LITE__

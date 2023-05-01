@@ -81,7 +81,7 @@ inline constexpr BYTE operator| (CREF<BYTE> obj1 ,CREF<BYTE> obj2) noexcept {
 	return BYTE (csc_byte8_t (obj1) | csc_byte8_t (obj2)) ;
 }
 
-inline void operator|= (VREF<BYTE> obj1 ,CREF<BYTE> obj2) {
+inline void operator|= (VREF<BYTE> obj1 ,CREF<BYTE> obj2) noexcept {
 	obj1 = obj1 | obj2 ;
 }
 
@@ -89,7 +89,7 @@ inline constexpr BYTE operator& (CREF<BYTE> obj1 ,CREF<BYTE> obj2) noexcept {
 	return BYTE (csc_byte8_t (obj1) & csc_byte8_t (obj2)) ;
 }
 
-inline void operator&= (VREF<BYTE> obj1 ,CREF<BYTE> obj2) {
+inline void operator&= (VREF<BYTE> obj1 ,CREF<BYTE> obj2) noexcept {
 	obj1 = obj1 & obj2 ;
 }
 
@@ -97,7 +97,7 @@ inline constexpr BYTE operator^ (CREF<BYTE> obj1 ,CREF<BYTE> obj2) noexcept {
 	return BYTE (csc_byte8_t (obj1) ^ csc_byte8_t (obj2)) ;
 }
 
-inline void operator^= (VREF<BYTE> obj1 ,CREF<BYTE> obj2) {
+inline void operator^= (VREF<BYTE> obj1 ,CREF<BYTE> obj2) noexcept {
 	obj1 = obj1 ^ obj2 ;
 }
 
@@ -117,7 +117,7 @@ inline constexpr WORD operator| (CREF<WORD> obj1 ,CREF<WORD> obj2) noexcept {
 	return WORD (csc_byte16_t (obj1) | csc_byte16_t (obj2)) ;
 }
 
-inline void operator|= (VREF<WORD> obj1 ,CREF<WORD> obj2) {
+inline void operator|= (VREF<WORD> obj1 ,CREF<WORD> obj2) noexcept {
 	obj1 = obj1 | obj2 ;
 }
 
@@ -125,7 +125,7 @@ inline constexpr WORD operator& (CREF<WORD> obj1 ,CREF<WORD> obj2) noexcept {
 	return WORD (csc_byte16_t (obj1) & csc_byte16_t (obj2)) ;
 }
 
-inline void operator&= (VREF<WORD> obj1 ,CREF<WORD> obj2) {
+inline void operator&= (VREF<WORD> obj1 ,CREF<WORD> obj2) noexcept {
 	obj1 = obj1 & obj2 ;
 }
 
@@ -149,7 +149,7 @@ inline constexpr CHAR operator| (CREF<CHAR> obj1 ,CREF<CHAR> obj2) noexcept {
 	return CHAR (csc_byte32_t (obj1) | csc_byte32_t (obj2)) ;
 }
 
-inline void operator|= (VREF<CHAR> obj1 ,CREF<CHAR> obj2) {
+inline void operator|= (VREF<CHAR> obj1 ,CREF<CHAR> obj2) noexcept {
 	obj1 = obj1 | obj2 ;
 }
 
@@ -157,7 +157,7 @@ inline constexpr CHAR operator& (CREF<CHAR> obj1 ,CREF<CHAR> obj2) noexcept {
 	return CHAR (csc_byte32_t (obj1) & csc_byte32_t (obj2)) ;
 }
 
-inline void operator&= (VREF<CHAR> obj1 ,CREF<CHAR> obj2) {
+inline void operator&= (VREF<CHAR> obj1 ,CREF<CHAR> obj2) noexcept {
 	obj1 = obj1 & obj2 ;
 }
 
@@ -181,7 +181,7 @@ inline constexpr DATA operator| (CREF<DATA> obj1 ,CREF<DATA> obj2) noexcept {
 	return DATA (csc_byte64_t (obj1) | csc_byte64_t (obj2)) ;
 }
 
-inline void operator|= (VREF<DATA> obj1 ,CREF<DATA> obj2) {
+inline void operator|= (VREF<DATA> obj1 ,CREF<DATA> obj2) noexcept {
 	obj1 = obj1 | obj2 ;
 }
 
@@ -189,7 +189,7 @@ inline constexpr DATA operator& (CREF<DATA> obj1 ,CREF<DATA> obj2) noexcept {
 	return DATA (csc_byte64_t (obj1) & csc_byte64_t (obj2)) ;
 }
 
-inline void operator&= (VREF<DATA> obj1 ,CREF<DATA> obj2) {
+inline void operator&= (VREF<DATA> obj1 ,CREF<DATA> obj2) noexcept {
 	obj1 = obj1 & obj2 ;
 }
 
@@ -995,13 +995,21 @@ template <class...>
 trait IS_INTPTR_HELP ;
 
 template <class UNIT>
-trait IS_INTPTR_HELP<UNIT ,ALWAYS> {
-	using R1X = MACRO_IS_INTCLASS<UNIT> ;
-	using R2X = ENUM_NOT<IS_SAME<REFLECT_POINTER<UNIT> ,TYPEAS<>>> ;
-	using R3X = IS_SAME<UNIT ,csc_enum_t> ;
-	using R4X = IS_BASIC<UNIT> ;
+trait IS_INTPTR_HELP<UNIT ,REQUIRE<IS_BASIC<UNIT>>> {
+	using RET = ENUM_FALSE ;
+} ;
 
-	static constexpr auto value = ENUM_ALL<ENUM_ANY<R1X ,R2X ,R3X> ,ENUM_NOT<ENUM_ANY<R4X>>>::expr ;
+template <class UNIT>
+trait IS_INTPTR_HELP<UNIT ,REQUIRE<ENUM_NOT<IS_BASIC<UNIT>>>> {
+	using R1X = MACRO_IS_ENUMCLASS<UNIT> ;
+	using R2X = ENUM_NOT<IS_SAME<REFLECT_POINTER<UNIT> ,TYPEAS<>>> ;
+	using R3X = IS_SAME<UNIT ,csc_byte8_t> ;
+	using R4X = IS_SAME<UNIT ,csc_byte16_t> ;
+	using R5X = IS_SAME<UNIT ,csc_byte32_t> ;
+	using R6X = IS_SAME<UNIT ,csc_byte64_t> ;
+	using R7X = IS_SAME<UNIT ,csc_enum_t> ;
+
+	static constexpr auto value = ENUM_ANY<R1X ,R2X ,R3X ,R4X ,R5X ,R6X ,R7X>::expr ;
 	using RET = ENUMAS<BOOL ,value> ;
 } ;
 
@@ -1014,12 +1022,12 @@ trait IS_CLASS_HELP ;
 template <class UNIT>
 trait IS_CLASS_HELP<UNIT ,ALWAYS> {
 	using R1X = MACRO_IS_CLASS<UNIT> ;
-	using R3X = IS_ENUM<UNIT> ;
-	using R4X = IS_TYPE<UNIT> ;
-	using R5X = IS_BASIC<UNIT> ;
-	using R6X = IS_INTPTR<UNIT> ;
+	using R3X = ENUM_NOT<IS_ENUM<UNIT>> ;
+	using R4X = ENUM_NOT<IS_TYPE<UNIT>> ;
+	using R5X = ENUM_NOT<IS_BASIC<UNIT>> ;
+	using R6X = ENUM_NOT<IS_INTPTR<UNIT>> ;
 
-	static constexpr auto value = ENUM_ALL<R1X ,ENUM_NOT<ENUM_ANY<R3X ,R4X ,R5X ,R6X>>>::expr ;
+	static constexpr auto value = ENUM_ALL<R1X ,R3X ,R4X ,R5X ,R6X>::expr ;
 	using RET = ENUMAS<BOOL ,value> ;
 } ;
 
@@ -1076,22 +1084,6 @@ template <class UNIT>
 using IS_TRIVIAL = typename IS_TRIVIAL_HELP<UNIT ,ALWAYS>::RET ;
 
 template <class...>
-trait IS_INTERFACE_HELP ;
-
-template <class UNIT>
-trait IS_INTERFACE_HELP<UNIT ,REQUIRE<IS_CLASS<UNIT>>> {
-	using R1X = MACRO_IS_INTERFACE<UNIT> ;
-	using R2X = MACRO_IS_EXTEND<Interface ,UNIT> ;
-	using R3X = IS_SAME<Interface ,UNIT> ;
-
-	static constexpr auto value = ENUM_ANY<ENUM_ALL<R1X ,R2X> ,R3X>::expr ;
-	using RET = ENUMAS<BOOL ,value> ;
-} ;
-
-template <class UNIT>
-using IS_INTERFACE = typename IS_INTERFACE_HELP<UNIT ,ALWAYS>::RET ;
-
-template <class...>
 trait IS_EXTEND_HELP ;
 
 template <class FROM ,class INTO>
@@ -1106,6 +1098,31 @@ trait IS_EXTEND_HELP<FROM ,INTO ,ALWAYS> {
 template <class FROM ,class INTO>
 using IS_EXTEND = typename IS_EXTEND_HELP<FROM ,INTO ,ALWAYS>::RET ;
 
+template <class...>
+trait IS_INTERFACE_HELP ;
+
+template <class UNIT>
+trait IS_INTERFACE_HELP<UNIT ,REQUIRE<IS_CLASS<UNIT>>> {
+	using R1X = IS_EXTEND<Interface ,UNIT> ;
+	using R2X = MACRO_IS_INTERFACE<UNIT> ;
+	using R3X = ENUM_EQUAL<SIZE_OF<UNIT> ,SIZE_OF<Interface>> ;
+	using R4X = ENUM_EQUAL<ALIGN_OF<UNIT> ,ALIGN_OF<Interface>> ;
+
+	static constexpr auto value = ENUM_ALL<R1X ,R2X ,R3X ,R4X>::expr ;
+	using RET = ENUMAS<BOOL ,value> ;
+} ;
+
+template <class UNIT>
+trait IS_INTERFACE_HELP<UNIT ,REQUIRE<ENUM_NOT<IS_CLASS<UNIT>>>> {
+	using RET = ENUM_FALSE ;
+} ;
+
+template <class UNIT>
+using IS_INTERFACE = typename IS_INTERFACE_HELP<UNIT ,ALWAYS>::RET ;
+
+template <class UNIT>
+using IS_POLYMORPHIC = IS_EXTEND<Interface ,UNIT> ;
+
 template <class UNIT>
 using IS_PLACEHOLDER = IS_EXTEND<DEF<typeof (PH0)> ,UNIT> ;
 
@@ -1117,13 +1134,13 @@ trait TOGETHER_HELP<UNIT ,REQUIRE<ENUM_EQ_ZERO<COUNT_OF<UNIT>>>> {
 	struct Together implement Interface {} ;
 } ;
 
-using RootTogether = typename TOGETHER_HELP<TYPEAS<> ,ALWAYS>::Together ;
+using InterfaceTogether = typename TOGETHER_HELP<TYPEAS<> ,ALWAYS>::Together ;
 
 template <class UNIT>
 trait TOGETHER_HELP<UNIT ,REQUIRE<ENUM_GT_ZERO<COUNT_OF<UNIT>>>> {
 	using Binder = TYPE_FIRST_ONE<UNIT> ;
 	require (IS_INTERFACE<Binder>) ;
-	require (ENUM_NOT<IS_EXTEND<RootTogether ,Binder>>) ;
+	require (ENUM_NOT<IS_EXTEND<InterfaceTogether ,Binder>>) ;
 	using Holder = typename TOGETHER_HELP<TYPE_FIRST_REST<UNIT> ,ALWAYS>::Together ;
 
 	struct Together implement Holder ,Binder {} ;

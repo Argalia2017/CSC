@@ -277,7 +277,7 @@ trait MODULE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	protected:
 		UniqueRef<HMODULE> mModule ;
 		String<STR> mErrorBuffer ;
-		String<STR> mError ;
+		String<STR> mErrorLog ;
 
 	public:
 		void initialize () override {
@@ -297,7 +297,7 @@ trait MODULE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 					return ;
 				const auto r2x = csc_enum_t (GetLastError ()) ;
 				format_dllerror (r2x) ;
-				mError = PrintString<STR>::make (slice ("Error = ") ,FLAG (r2x) ,slice (" : ") ,mErrorBuffer) ;
+				mErrorLog = PrintString<STR>::make (slice ("Error = ") ,FLAG (r2x) ,slice (" : ") ,mErrorBuffer) ;
 				assume (FALSE) ;
 			} ,[] (VREF<HMODULE> me) {
 				noop () ;
@@ -305,7 +305,7 @@ trait MODULE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		CREF<String<STR>> error () const leftvalue override {
-			return mError ;
+			return mErrorLog ;
 		}
 
 		FLAG link (CREF<String<STR>> name) override {
@@ -318,7 +318,7 @@ trait MODULE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 					discard ;
 				const auto r2x = csc_enum_t (GetLastError ()) ;
 				format_dllerror (r2x) ;
-				mError = PrintString<STR>::make (slice ("Error = ") ,FLAG (r2x) ,slice (" : ") ,mErrorBuffer) ;
+				mErrorLog = PrintString<STR>::make (slice ("Error = ") ,FLAG (r2x) ,slice (" : ") ,mErrorBuffer) ;
 				assume (FALSE) ;
 			}
 			return move (ret) ;
@@ -342,9 +342,6 @@ exports auto MODULE_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Hold
 	return VRef<R1X>::make () ;
 }
 
-template <class...>
-trait SINGLETON_HACKSHAREDREF_HELP ;
-
 template <class DEPEND>
 trait SINGLETON_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	using Holder = typename SINGLETON_HOLDER_HELP<DEPEND ,ALWAYS>::Holder ;
@@ -361,6 +358,8 @@ trait SINGLETON_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		DATA mAddress2 ;
 		DATA mReserve3 ;
 	} ;
+
+	using HEAPROOT = typename SHAREDREF_PUREHOLDER_HELP<HEAP ,ALWAYS>::PureHolder ;
 
 	class ImplHolder implement Holder {
 	protected:
@@ -399,7 +398,6 @@ trait SINGLETON_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		void init_pipe () {
-			using R1X = typename DEPENDENT<SINGLETON_HACKSHAREDREF_HELP<HEAP ,ALWAYS> ,DEPEND>::HackSharedRef ;
 			if (mPipe.exist ())
 				return ;
 			mPipe = UniqueRef<HANDLE> ([&] (VREF<HANDLE> me) {
@@ -408,9 +406,17 @@ trait SINGLETON_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			} ,[] (VREF<HANDLE> me) {
 				CloseHandle (me) ;
 			}) ;
-			mHeap = R1X::make () ;
+			mHeap = SharedRef<HEAP>::intrusive (heap_root ()) ;
 			mWeakHeap = FALSE ;
 			mHeap->mMutex = RecursiveMutex::make () ;
+		}
+
+		CRef<HEAPROOT> heap_root () const {
+			return CRef<HEAPROOT>::reference (memorize ([&] () {
+				Box<HEAPROOT> ret = Box<HEAPROOT>::make () ;
+				ret->initialize () ;
+				return move (ret) ;
+			}).self) ;
 		}
 
 		PIPE load_pipe () const {

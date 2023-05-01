@@ -280,6 +280,7 @@ trait JSONPARSER_HELP<DEPEND ,ALWAYS> {
 		virtual Array<JsonParser> child_array () const = 0 ;
 		virtual Array<JsonParser> child_array (CREF<LENGTH> size_) const = 0 ;
 		virtual BOOL equal (CREF<Holder> that) const = 0 ;
+		virtual CREF<String<STRU8>> member () const leftvalue = 0 ;
 		virtual CREF<String<STRU8>> fetch () const leftvalue = 0 ;
 		virtual BOOL fetch (CREF<BOOL> def) const = 0 ;
 		virtual VAL32 fetch (CREF<VAL32> def) const = 0 ;
@@ -410,6 +411,10 @@ trait JSONPARSER_HELP<DEPEND ,ALWAYS> {
 
 		inline BOOL operator!= (CREF<JsonParser> that) const {
 			return ifnot (equal (that)) ;
+		}
+
+		CREF<String<STRU8>> member () const leftvalue {
+			return mThis->member () ;
 		}
 
 		CREF<String<STRU8>> fetch () const leftvalue {

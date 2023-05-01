@@ -248,11 +248,11 @@ trait PROMISE_HELP<ITEM ,ALWAYS> {
 		}
 
 		void post (CREF<ITEM> item) const {
-			return mThis->post (move (item)) ;
+			return mThis->post (AutoRef<ITEM>::make (move (item))) ;
 		}
 
 		void post (RREF<ITEM> item) const {
-			return mThis->post (move (item)) ;
+			return mThis->post (AutoRef<ITEM>::make (move (item))) ;
 		}
 
 		void rethrow (CREF<Exception> e) const {

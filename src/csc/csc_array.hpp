@@ -1679,6 +1679,14 @@ trait LIST_HELP<ITEM ,SIZE ,ALWAYS> {
 			mList.free (index) ;
 		}
 
+		INDEX find (CREF<ITEM> item) const {
+			for (auto &&i : iter ()) {
+				if (operator_equal (mList[i].mItem ,item))
+					return i ;
+			}
+			return NONE ;
+		}
+
 		void eswap (CREF<INDEX> index1 ,CREF<INDEX> index2) {
 			if (index1 == index2)
 				return ;
@@ -1763,7 +1771,7 @@ trait ARRAYLIST_HOLDER_HELP<ITEM ,SIZE ,ALWAYS> {
 	class ArrayList {
 	protected:
 		Allocator<NODE ,SIZE> mList ;
-		Buffer<INDEX ,SIZE> mRange ;
+		Buffer<INDEX ,SIZE> mJump ;
 		INDEX mFree ;
 
 	public:
@@ -1781,7 +1789,7 @@ trait ARRAYLIST_HELP<ITEM ,SIZE ,ALWAYS> {
 	class ArrayList extend SUPER {
 	protected:
 		using SUPER::mList ;
-		using SUPER::mRange ;
+		using SUPER::mJump ;
 		using SUPER::mFree ;
 
 	public:
@@ -1819,7 +1827,7 @@ trait ARRAYLIST_HELP<ITEM ,SIZE ,ALWAYS> {
 
 		void clear () {
 			mList.clear () ;
-			BufferProc<INDEX>::buf_fill (mRange ,NONE ,0 ,mRange.size ()) ;
+			BufferProc<INDEX>::buf_fill (mJump ,NONE ,0 ,mJump.size ()) ;
 			mFree = 0 ;
 		}
 
@@ -1852,8 +1860,8 @@ trait ARRAYLIST_HELP<ITEM ,SIZE ,ALWAYS> {
 		}
 
 		INDEX ibegin () const {
-			for (auto &&i : CSC::iter (0 ,mRange.size ())) {
-				if (mRange[i] != NONE)
+			for (auto &&i : CSC::iter (0 ,mJump.size ())) {
+				if (mJump[i] != NONE)
 					return i ;
 			}
 			return NONE ;
@@ -1865,15 +1873,15 @@ trait ARRAYLIST_HELP<ITEM ,SIZE ,ALWAYS> {
 
 		INDEX inext (CREF<INDEX> index) const {
 			const auto r1x = index + 1 ;
-			for (auto &&i : CSC::iter (r1x ,mRange.size ())) {
-				if (mRange[i] != NONE)
+			for (auto &&i : CSC::iter (r1x ,mJump.size ())) {
+				if (mJump[i] != NONE)
 					return i ;
 			}
 			return NONE ;
 		}
 
 		VREF<ITEM> at (CREF<INDEX> index) leftvalue {
-			return mList[mRange[index]].mItem ;
+			return mList[mJump[index]].mItem ;
 		}
 
 		inline VREF<ITEM> operator[] (CREF<INDEX> index) leftvalue {
@@ -1881,7 +1889,7 @@ trait ARRAYLIST_HELP<ITEM ,SIZE ,ALWAYS> {
 		}
 
 		CREF<ITEM> at (CREF<INDEX> index) const leftvalue {
-			return mList[mRange[index]].mItem ;
+			return mList[mJump[index]].mItem ;
 		}
 
 		inline CREF<ITEM> operator[] (CREF<INDEX> index) const leftvalue {
@@ -1907,75 +1915,83 @@ trait ARRAYLIST_HELP<ITEM ,SIZE ,ALWAYS> {
 			update_range (ix) ;
 			mList[ix].mItem = move (rax) ;
 			INDEX jx = find_next_free () ;
-			mRange[jx] = ix ;
+			mJump[jx] = ix ;
 		}
 
 		INDEX insert () {
 			INDEX ret = mList.alloc () ;
 			update_range (ret) ;
 			INDEX jx = find_next_free () ;
-			mRange[jx] = ret ;
+			mJump[jx] = ret ;
 			return move (ret) ;
 		}
 
 		INDEX insert (CREF<INDEX> index) {
 			if ifswitch (TRUE) {
-				if (mRange[index] != NONE)
+				if (mJump[index] != NONE)
 					discard ;
 				INDEX ix = mList.alloc () ;
 				update_range (ix) ;
-				mRange[index] = ix ;
+				mJump[index] = ix ;
 			}
 			return index ;
 		}
 
 		void remove (CREF<INDEX> index) {
-			mList.free (mRange[index]) ;
-			mRange[index] = NONE ;
+			mList.free (mJump[index]) ;
+			mJump[index] = NONE ;
+		}
+
+		INDEX find (CREF<ITEM> item) const {
+			for (auto &&i : iter ()) {
+				if (operator_equal (mList[mJump[i]].mItem ,item))
+					return i ;
+			}
+			return NONE ;
 		}
 
 		void eswap (CREF<INDEX> index1 ,CREF<INDEX> index2) {
 			if (index1 == index2)
 				return ;
-			swap (mRange[index1] ,mRange[index2]) ;
+			swap (mJump[index1] ,mJump[index2]) ;
 		}
 
 		void order (CREF<Array<INDEX>> range_) {
 			assert (range_.length () == length ()) ;
 			if (length () < 2)
 				return ;
-			const auto r1x = move (mRange) ;
-			mRange.resize (range_.length ()) ;
+			const auto r1x = move (mJump) ;
+			mJump.resize (range_.length ()) ;
 			for (auto &&i : range_.iter ()) {
 				INDEX ix = r1x[range_[i]] ;
-				mRange[i] = ix ;
+				mJump[i] = ix ;
 			}
 		}
 
 		void remap () {
-			if (mRange.size () == mList.length ())
+			if (mJump.size () == mList.length ())
 				return ;
-			mRange.resize (mList.length ()) ;
+			mJump.resize (mList.length ()) ;
 			INDEX ix = 0 ;
 			for (auto &&i : CSC::iter (0 ,mList.size ())) {
 				if ifnot (mList.used (i))
 					continue ;
-				mRange[ix] = i ;
+				mJump[ix] = i ;
 				ix++ ;
 			}
-			assert (ix == mRange.size ()) ;
+			assert (ix == mJump.size ()) ;
 			mFree = 0 ;
 		}
 
 	private:
 		INDEX find_next_free () {
-			assert (mRange.size () > 0) ;
-			const auto r1x = mFree % mRange.size () ;
+			assert (mJump.size () > 0) ;
+			const auto r1x = mFree % mJump.size () ;
 			mFree = r1x ;
 			while (TRUE) {
-				if (mFree >= mRange.size ())
+				if (mFree >= mJump.size ())
 					break ;
-				if (mRange[mFree] == NONE)
+				if (mJump[mFree] == NONE)
 					return mFree ;
 				mFree++ ;
 			}
@@ -1983,7 +1999,7 @@ trait ARRAYLIST_HELP<ITEM ,SIZE ,ALWAYS> {
 			while (TRUE) {
 				if (mFree >= r1x)
 					break ;
-				if (mRange[mFree] == NONE)
+				if (mJump[mFree] == NONE)
 					return mFree ;
 				mFree++ ;
 			}
@@ -1991,11 +2007,11 @@ trait ARRAYLIST_HELP<ITEM ,SIZE ,ALWAYS> {
 		}
 
 		void update_range (CREF<INDEX> curr) {
-			const auto r1x = mRange.size () ;
+			const auto r1x = mJump.size () ;
 			if (r1x == mList.size ())
 				return ;
-			mRange.resize (mList.size ()) ;
-			BufferProc<INDEX>::buf_fill (mRange ,NONE ,r1x ,mRange.size ()) ;
+			mJump.resize (mList.size ()) ;
+			BufferProc<INDEX>::buf_fill (mJump ,NONE ,r1x ,mJump.size ()) ;
 		}
 	} ;
 } ;
@@ -3199,7 +3215,7 @@ trait HASHSET_HELP<ITEM ,SIZE ,ALWAYS> {
 	class HashSet {
 	protected:
 		Allocator<NODE ,SIZE> mSet ;
-		Buffer<INDEX ,SIZE> mRange ;
+		Buffer<INDEX ,SIZE> mJump ;
 
 	public:
 		implicit HashSet () = default ;
@@ -3236,7 +3252,7 @@ trait HASHSET_HELP<ITEM ,SIZE ,ALWAYS> {
 
 		void clear () {
 			mSet.clear () ;
-			BufferProc<INDEX>::buf_fill (mRange ,NONE ,0 ,mRange.size ()) ;
+			BufferProc<INDEX>::buf_fill (mJump ,NONE ,0 ,mJump.size ()) ;
 		}
 
 		void reserve (CREF<LENGTH> size_) {
@@ -3345,11 +3361,11 @@ trait HASHSET_HELP<ITEM ,SIZE ,ALWAYS> {
 		INDEX find (CREF<ITEM> item) const {
 			INDEX ret = NONE ;
 			if ifswitch (TRUE) {
-				if (mRange.size () == 0)
+				if (mJump.size () == 0)
 					discard ;
 				const auto r1x = operator_hash (item) ;
-				INDEX ix = r1x % mRange.size () ;
-				ret = mRange[ix] ;
+				INDEX ix = r1x % mJump.size () ;
+				ret = mJump[ix] ;
 				while (TRUE) {
 					if (ret == NONE)
 						break ;
@@ -3378,11 +3394,11 @@ trait HASHSET_HELP<ITEM ,SIZE ,ALWAYS> {
 
 	private:
 		void update_range (CREF<INDEX> curr) {
-			const auto r1x = mRange.size () ;
+			const auto r1x = mJump.size () ;
 			if (r1x == mSet.size ())
 				return ;
-			mRange.resize (mSet.size ()) ;
-			BufferProc<INDEX>::buf_fill (mRange ,NONE ,0 ,mRange.size ()) ;
+			mJump.resize (mSet.size ()) ;
+			BufferProc<INDEX>::buf_fill (mJump ,NONE ,0 ,mJump.size ()) ;
 			for (auto &&i : CSC::iter (0 ,mSet.size ())) {
 				if (i == curr)
 					continue ;
@@ -3393,12 +3409,12 @@ trait HASHSET_HELP<ITEM ,SIZE ,ALWAYS> {
 		}
 
 		void update_emplace (CREF<INDEX> curr) {
-			assert (mRange.size () > 0) ;
-			INDEX ix = mSet[curr].mHash % mRange.size () ;
+			assert (mJump.size () > 0) ;
+			INDEX ix = mSet[curr].mHash % mJump.size () ;
 			mSet[curr].mPrev = NONE ;
-			mSet[curr].mNext = mRange[ix] ;
-			curr_prev (mRange[ix] ,0 ,curr) ;
-			mRange[ix] = curr ;
+			mSet[curr].mNext = mJump[ix] ;
+			curr_prev (mJump[ix] ,0 ,curr) ;
+			mJump[ix] = curr ;
 		}
 
 		void curr_next (CREF<INDEX> curr ,CREF<FLAG> hash ,CREF<INDEX> next) {
@@ -3409,9 +3425,9 @@ trait HASHSET_HELP<ITEM ,SIZE ,ALWAYS> {
 				mSet[curr].mNext = next ;
 			}
 			if ifswitch (act) {
-				assert (mRange.size () > 0) ;
-				INDEX ix = hash % mRange.size () ;
-				mRange[ix] = next ;
+				assert (mJump.size () > 0) ;
+				INDEX ix = hash % mJump.size () ;
+				mJump[ix] = next ;
 			}
 		}
 

@@ -69,7 +69,7 @@ trait CONSOLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	using OPTION_NO_VERBOSE = typename CONSOLE_HELP<DEPEND ,ALWAYS>::OPTION_NO_VERBOSE ;
 	using OPTION_SIZE = ENUMAS<VAL ,32> ;
 
-	struct HEAP {
+	struct PACK {
 		String<STR> mConBuffer ;
 		TextWriter<STR> mConWriter ;
 		String<STRU8> mLogBuffer ;
@@ -83,19 +83,19 @@ trait CONSOLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 
 	class ImplHolder implement Holder {
 	protected:
-		SharedRef<HEAP> mHeap ;
+		SharedRef<PACK> mThis ;
 
 	public:
 		void initialize () override {
-			mHeap = SharedRef<HEAP>::make () ;
+			mThis = SharedRef<PACK>::make () ;
 			set_buffer_size (CONSOLE_BUFFER_SSIZE::expr) ;
 		}
 
 		void set_buffer_size (CREF<LENGTH> size_) const {
-			mHeap->mConBuffer = String<STR> (size_) ;
-			mHeap->mConWriter = TextWriter<STR> (mHeap->mConBuffer.raw ().borrow ()) ;
-			mHeap->mLogBuffer = String<STRU8> (size_) ;
-			mHeap->mLogWriter = TextWriter<STRU8> (mHeap->mLogBuffer.raw ().borrow ()) ;
+			mThis->mConBuffer = String<STR> (size_) ;
+			mThis->mConWriter = TextWriter<STR> (mThis->mConBuffer.raw ().borrow ()) ;
+			mThis->mLogBuffer = String<STRU8> (size_) ;
+			mThis->mLogWriter = TextWriter<STRU8> (mThis->mLogBuffer.raw ().borrow ()) ;
 		}
 
 		void enable_option (CREF<FLAG> option) const override {
@@ -103,143 +103,143 @@ trait CONSOLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			if ifswitch (act) {
 				if (option != OPTION_DEFAULT::expr)
 					discard ;
-				mHeap->mOption.clear () ;
+				mThis->mOption.clear () ;
 			}
 			if ifswitch (act) {
-				mHeap->mOption.add (option) ;
+				mThis->mOption.add (option) ;
 			}
 		}
 
 		void print (CREF<Binder> msg) const override {
-			if (mHeap->mOption[OPTION_NO_PRINT::expr])
+			if (mThis->mOption[OPTION_NO_PRINT::expr])
 				return ;
 			write_con_buffer (msg) ;
 			if ifswitch (TRUE) {
 				if ifnot (is_show ())
 					discard ;
 				const auto r1x = csc_byte16_t (FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE) ;
-				SetConsoleTextAttribute (mHeap->mConsole ,r1x) ;
+				SetConsoleTextAttribute (mThis->mConsole ,r1x) ;
 				auto rax = csc_enum_t () ;
-				rax = csc_enum_t (mHeap->mConWriter.length () - 1) ;
-				WriteConsole (mHeap->mConsole ,(&mHeap->mConBuffer[0]) ,rax ,(&rax) ,NULL) ;
+				rax = csc_enum_t (mThis->mConWriter.length () - 1) ;
+				WriteConsole (mThis->mConsole ,(&mThis->mConBuffer[0]) ,rax ,(&rax) ,NULL) ;
 				rax = csc_enum_t (1) ;
-				WriteConsole (mHeap->mConsole ,TEXT ("\n") ,rax ,(&rax) ,NULL) ;
+				WriteConsole (mThis->mConsole ,TEXT ("\n") ,rax ,(&rax) ,NULL) ;
 			}
 			log (slice ("PRINT")) ;
 		}
 
 		void fatal (CREF<Binder> msg) const override {
-			if (mHeap->mOption[OPTION_NO_FATAL::expr])
+			if (mThis->mOption[OPTION_NO_FATAL::expr])
 				return ;
 			write_con_buffer (msg) ;
 			if ifswitch (TRUE) {
 				if ifnot (is_show ())
 					discard ;
 				const auto r1x = csc_byte16_t (FOREGROUND_BLUE | FOREGROUND_INTENSITY) ;
-				SetConsoleTextAttribute (mHeap->mConsole ,r1x) ;
+				SetConsoleTextAttribute (mThis->mConsole ,r1x) ;
 				auto rax = csc_enum_t () ;
-				rax = csc_enum_t (mHeap->mConWriter.length () - 1) ;
-				WriteConsole (mHeap->mConsole ,(&mHeap->mConBuffer[0]) ,rax ,(&rax) ,NULL) ;
+				rax = csc_enum_t (mThis->mConWriter.length () - 1) ;
+				WriteConsole (mThis->mConsole ,(&mThis->mConBuffer[0]) ,rax ,(&rax) ,NULL) ;
 				rax = csc_enum_t (1) ;
-				WriteConsole (mHeap->mConsole ,TEXT ("\n") ,rax ,(&rax) ,NULL) ;
+				WriteConsole (mThis->mConsole ,TEXT ("\n") ,rax ,(&rax) ,NULL) ;
 			}
 			log (slice ("FATAL")) ;
 		}
 
 		void error (CREF<Binder> msg) const override {
-			if (mHeap->mOption[OPTION_NO_ERROR::expr])
+			if (mThis->mOption[OPTION_NO_ERROR::expr])
 				return ;
 			write_con_buffer (msg) ;
 			if ifswitch (TRUE) {
 				if ifnot (is_show ())
 					discard ;
 				const auto r1x = csc_byte16_t (FOREGROUND_RED | FOREGROUND_INTENSITY) ;
-				SetConsoleTextAttribute (mHeap->mConsole ,r1x) ;
+				SetConsoleTextAttribute (mThis->mConsole ,r1x) ;
 				auto rax = csc_enum_t () ;
-				rax = csc_enum_t (mHeap->mConWriter.length () - 1) ;
-				WriteConsole (mHeap->mConsole ,(&mHeap->mConBuffer[0]) ,rax ,(&rax) ,NULL) ;
+				rax = csc_enum_t (mThis->mConWriter.length () - 1) ;
+				WriteConsole (mThis->mConsole ,(&mThis->mConBuffer[0]) ,rax ,(&rax) ,NULL) ;
 				rax = csc_enum_t (1) ;
-				WriteConsole (mHeap->mConsole ,TEXT ("\n") ,rax ,(&rax) ,NULL) ;
+				WriteConsole (mThis->mConsole ,TEXT ("\n") ,rax ,(&rax) ,NULL) ;
 			}
 			log (slice ("ERROR")) ;
 		}
 
 		void warn (CREF<Binder> msg) const override {
-			if (mHeap->mOption[OPTION_NO_WARN::expr])
+			if (mThis->mOption[OPTION_NO_WARN::expr])
 				return ;
 			write_con_buffer (msg) ;
 			if ifswitch (TRUE) {
 				if ifnot (is_show ())
 					discard ;
 				const auto r1x = csc_byte16_t (FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_INTENSITY) ;
-				SetConsoleTextAttribute (mHeap->mConsole ,r1x) ;
+				SetConsoleTextAttribute (mThis->mConsole ,r1x) ;
 				auto rax = csc_enum_t () ;
-				rax = csc_enum_t (mHeap->mConWriter.length () - 1) ;
-				WriteConsole (mHeap->mConsole ,(&mHeap->mConBuffer[0]) ,rax ,(&rax) ,NULL) ;
+				rax = csc_enum_t (mThis->mConWriter.length () - 1) ;
+				WriteConsole (mThis->mConsole ,(&mThis->mConBuffer[0]) ,rax ,(&rax) ,NULL) ;
 				rax = csc_enum_t (1) ;
-				WriteConsole (mHeap->mConsole ,TEXT ("\n") ,rax ,(&rax) ,NULL) ;
+				WriteConsole (mThis->mConsole ,TEXT ("\n") ,rax ,(&rax) ,NULL) ;
 			}
 			log (slice ("WARN")) ;
 		}
 
 		void info (CREF<Binder> msg) const override {
-			if (mHeap->mOption[OPTION_NO_INFO::expr])
+			if (mThis->mOption[OPTION_NO_INFO::expr])
 				return ;
 			write_con_buffer (msg) ;
 			if ifswitch (TRUE) {
 				if ifnot (is_show ())
 					discard ;
 				const auto r1x = csc_byte16_t (FOREGROUND_GREEN | FOREGROUND_INTENSITY) ;
-				SetConsoleTextAttribute (mHeap->mConsole ,r1x) ;
+				SetConsoleTextAttribute (mThis->mConsole ,r1x) ;
 				auto rax = csc_enum_t () ;
-				rax = csc_enum_t (mHeap->mConWriter.length () - 1) ;
-				WriteConsole (mHeap->mConsole ,(&mHeap->mConBuffer[0]) ,rax ,(&rax) ,NULL) ;
+				rax = csc_enum_t (mThis->mConWriter.length () - 1) ;
+				WriteConsole (mThis->mConsole ,(&mThis->mConBuffer[0]) ,rax ,(&rax) ,NULL) ;
 				rax = csc_enum_t (1) ;
-				WriteConsole (mHeap->mConsole ,TEXT ("\n") ,rax ,(&rax) ,NULL) ;
+				WriteConsole (mThis->mConsole ,TEXT ("\n") ,rax ,(&rax) ,NULL) ;
 			}
 			log (slice ("INFO")) ;
 		}
 
 		void debug (CREF<Binder> msg) const override {
-			if (mHeap->mOption[OPTION_NO_DEBUG::expr])
+			if (mThis->mOption[OPTION_NO_DEBUG::expr])
 				return ;
 			write_con_buffer (msg) ;
 			if ifswitch (TRUE) {
 				if ifnot (is_show ())
 					discard ;
 				const auto r1x = csc_byte16_t (FOREGROUND_GREEN | FOREGROUND_BLUE | FOREGROUND_INTENSITY) ;
-				SetConsoleTextAttribute (mHeap->mConsole ,r1x) ;
+				SetConsoleTextAttribute (mThis->mConsole ,r1x) ;
 				auto rax = csc_enum_t () ;
-				rax = csc_enum_t (mHeap->mConWriter.length () - 1) ;
-				WriteConsole (mHeap->mConsole ,(&mHeap->mConBuffer[0]) ,rax ,(&rax) ,NULL) ;
+				rax = csc_enum_t (mThis->mConWriter.length () - 1) ;
+				WriteConsole (mThis->mConsole ,(&mThis->mConBuffer[0]) ,rax ,(&rax) ,NULL) ;
 				rax = csc_enum_t (1) ;
-				WriteConsole (mHeap->mConsole ,TEXT ("\n") ,rax ,(&rax) ,NULL) ;
+				WriteConsole (mThis->mConsole ,TEXT ("\n") ,rax ,(&rax) ,NULL) ;
 			}
 			log (slice ("DEBUG")) ;
 		}
 
 		void verbose (CREF<Binder> msg) const override {
-			if (mHeap->mOption[OPTION_NO_VERBOSE::expr])
+			if (mThis->mOption[OPTION_NO_VERBOSE::expr])
 				return ;
 			write_con_buffer (msg) ;
 			if ifswitch (TRUE) {
 				if ifnot (is_show ())
 					discard ;
 				const auto r1x = csc_byte16_t (FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE | FOREGROUND_INTENSITY) ;
-				SetConsoleTextAttribute (mHeap->mConsole ,r1x) ;
+				SetConsoleTextAttribute (mThis->mConsole ,r1x) ;
 				auto rax = csc_enum_t () ;
-				rax = csc_enum_t (mHeap->mConWriter.length () - 1) ;
-				WriteConsole (mHeap->mConsole ,(&mHeap->mConBuffer[0]) ,rax ,(&rax) ,NULL) ;
+				rax = csc_enum_t (mThis->mConWriter.length () - 1) ;
+				WriteConsole (mThis->mConsole ,(&mThis->mConBuffer[0]) ,rax ,(&rax) ,NULL) ;
 				rax = csc_enum_t (1) ;
-				WriteConsole (mHeap->mConsole ,TEXT ("\n") ,rax ,(&rax) ,NULL) ;
+				WriteConsole (mThis->mConsole ,TEXT ("\n") ,rax ,(&rax) ,NULL) ;
 			}
 			log (slice ("VERBOSE")) ;
 		}
 
 		void write_con_buffer (CREF<Binder> msg) const {
-			mHeap->mConWriter << CLS ;
-			mHeap->mConWriter << msg ;
-			mHeap->mConWriter << EOS ;
+			mThis->mConWriter << CLS ;
+			mThis->mConWriter << msg ;
+			mThis->mConWriter << EOS ;
 		}
 
 		void open (CREF<String<STR>> dire) const override {
@@ -248,81 +248,81 @@ trait CONSOLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				if (dire.empty ())
 					discard ;
 				const auto r1x = Directory (dire).absolute () ;
-				mHeap->mLogFile = PrintString<STR>::make (r1x ,STR ('\\') ,slice ("console.log")) ;
-				mHeap->mOldLogFile = PrintString<STR>::make (r1x ,STR ('\\') ,slice ("console.old.log")) ;
+				mThis->mLogFile = PrintString<STR>::make (r1x ,STR ('\\') ,slice ("console.log")) ;
+				mThis->mOldLogFile = PrintString<STR>::make (r1x ,STR ('\\') ,slice ("console.old.log")) ;
 			}
 			if ifswitch (act) {
-				mHeap->mLogFile = String<STR> () ;
-				mHeap->mOldLogFile = String<STR> () ;
+				mThis->mLogFile = String<STR> () ;
+				mThis->mOldLogFile = String<STR> () ;
 			}
 		}
 
 		void log (CREF<Slice<STR>> tag) const {
-			if (mHeap->mLogFile.empty ())
+			if (mThis->mLogFile.empty ())
 				return ;
 			write_log_buffer (tag) ;
-			const auto r1x = mHeap->mLogWriter.length () - 1 ;
-			const auto r2x = address (mHeap->mLogBuffer[0]) ;
+			const auto r1x = mThis->mLogWriter.length () - 1 ;
+			const auto r2x = address (mThis->mLogBuffer[0]) ;
 			try_invoke ([&] () {
-				if (mHeap->mLogStreamFile == NULL)
+				if (mThis->mLogStreamFile == NULL)
 					return ;
-				const auto r3x = mHeap->mLogStreamFile->write (RegBuffer<BYTE>::from (r2x ,0 ,r1x)) ;
+				const auto r3x = mThis->mLogStreamFile->write (RegBuffer<BYTE>::from (r2x ,0 ,r1x)) ;
 				assume (r3x == r1x) ;
 			} ,[&] () {
-				mHeap->mLogStreamFile = NULL ;
+				mThis->mLogStreamFile = NULL ;
 			}) ;
 			try_invoke ([&] () {
-				if (mHeap->mLogStreamFile != NULL)
+				if (mThis->mLogStreamFile != NULL)
 					return ;
 				open_log_file () ;
-				const auto r4x = mHeap->mLogStreamFile->write (RegBuffer<BYTE>::from (r2x ,0 ,r1x)) ;
+				const auto r4x = mThis->mLogStreamFile->write (RegBuffer<BYTE>::from (r2x ,0 ,r1x)) ;
 				assume (r4x == r1x) ;
 			} ,[&] () {
-				mHeap->mLogStreamFile = NULL ;
+				mThis->mLogStreamFile = NULL ;
 			}) ;
 			if ifswitch (TRUE) {
-				if (mHeap->mLogStreamFile == NULL)
+				if (mThis->mLogStreamFile == NULL)
 					discard ;
-				mHeap->mLogStreamFile->flush () ;
+				mThis->mLogStreamFile->flush () ;
 			}
 		}
 
 		void write_log_buffer (CREF<Slice<STR>> tag) const {
-			mHeap->mLogWriter << CLS ;
-			mHeap->mLogWriter << slice ("[") ;
+			mThis->mLogWriter << CLS ;
+			mThis->mLogWriter << slice ("[") ;
 			const auto r1x = NowTimePoint::make () ;
 			const auto r2x = r1x.calendar () ;
-			mHeap->mLogWriter << ValueString (r2x.mHour ,2) ;
-			mHeap->mLogWriter << slice (":") ;
-			mHeap->mLogWriter << ValueString (r2x.mMinute ,2) ;
-			mHeap->mLogWriter << slice (":") ;
-			mHeap->mLogWriter << ValueString (r2x.mSecond ,2) ;
-			mHeap->mLogWriter << slice ("][") ;
-			mHeap->mLogWriter << tag ;
-			mHeap->mLogWriter << slice ("] : ") ;
-			const auto r3x = string_cvt[TYPEAS<STRU8 ,STR>::expr] (mHeap->mConBuffer) ;
-			mHeap->mLogWriter << r3x ;
-			mHeap->mLogWriter << GAP ;
-			mHeap->mLogWriter << EOS ;
+			mThis->mLogWriter << ValueString (r2x.mHour ,2) ;
+			mThis->mLogWriter << slice (":") ;
+			mThis->mLogWriter << ValueString (r2x.mMinute ,2) ;
+			mThis->mLogWriter << slice (":") ;
+			mThis->mLogWriter << ValueString (r2x.mSecond ,2) ;
+			mThis->mLogWriter << slice ("][") ;
+			mThis->mLogWriter << tag ;
+			mThis->mLogWriter << slice ("] : ") ;
+			const auto r3x = string_cvt[TYPEAS<STRU8 ,STR>::expr] (mThis->mConBuffer) ;
+			mThis->mLogWriter << r3x ;
+			mThis->mLogWriter << GAP ;
+			mThis->mLogWriter << EOS ;
 		}
 
 		void open_log_file () const {
-			const auto r1x = File (mHeap->mLogFile) ;
-			const auto r2x = File (mHeap->mOldLogFile) ;
+			const auto r1x = File (mThis->mLogFile) ;
+			const auto r2x = File (mThis->mOldLogFile) ;
 			r2x.erase () ;
 			r2x.move_from (r1x) ;
-			mHeap->mLogStreamFile = VRef<StreamFile>::make (mHeap->mLogFile) ;
-			mHeap->mLogStreamFile->open (TRUE ,TRUE) ;
+			mThis->mLogStreamFile = VRef<StreamFile>::make (mThis->mLogFile) ;
+			mThis->mLogStreamFile->open (TRUE ,TRUE) ;
 			const auto r3x = PrintString<STRU8>::make (BOM) ;
 			const auto r4x = address (r3x[0]) ;
-			const auto r5x = mHeap->mLogStreamFile->write (RegBuffer<BYTE>::from (r4x ,0 ,r3x.length ())) ;
+			const auto r5x = mThis->mLogStreamFile->write (RegBuffer<BYTE>::from (r4x ,0 ,r3x.length ())) ;
 			assume (r5x == r3x.length ()) ;
 		}
 
 		void show () const override {
 			if (is_show ())
 				return ;
-			mHeap->mConsole = UniqueRef<HANDLE> ([&] (VREF<HANDLE> me) {
+			mThis->mConsole = UniqueRef<HANDLE> ([&] (VREF<HANDLE> me) {
 				const auto r1x = AttachConsole (ATTACH_PARENT_PROCESS) ;
 				if ifnot (r1x)
 					return ;
@@ -332,7 +332,7 @@ trait CONSOLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			}) ;
 			if (is_show ())
 				return ;
-			mHeap->mConsole = UniqueRef<HANDLE> ([&] (VREF<HANDLE> me) {
+			mThis->mConsole = UniqueRef<HANDLE> ([&] (VREF<HANDLE> me) {
 				AllocConsole () ;
 				me = GetStdHandle (STD_OUTPUT_HANDLE) ;
 				assume (me != NULL) ;
@@ -342,15 +342,15 @@ trait CONSOLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		BOOL is_show () const {
-			if ifnot (mHeap->mConsole.exist ())
+			if ifnot (mThis->mConsole.exist ())
 				return FALSE ;
-			if (mHeap->mConsole.self == NULL)
+			if (mThis->mConsole.self == NULL)
 				return FALSE ;
 			return TRUE ;
 		}
 
 		void hide () const override {
-			mHeap->mConsole = UniqueRef<HANDLE> () ;
+			mThis->mConsole = UniqueRef<HANDLE> () ;
 		}
 
 		void pause () const override {
@@ -363,7 +363,7 @@ trait CONSOLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				FlashWindow (r1x ,TRUE) ;
 			}
 			const auto r2x = csc_byte16_t (FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE) ;
-			SetConsoleTextAttribute (mHeap->mConsole ,r2x) ;
+			SetConsoleTextAttribute (mThis->mConsole ,r2x) ;
 			const auto r3x = std::system ("pause") ;
 			noop (r3x) ;
 		}
@@ -372,7 +372,7 @@ trait CONSOLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			if ifnot (is_show ())
 				return ;
 			const auto r1x = csc_byte16_t (FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE) ;
-			SetConsoleTextAttribute (mHeap->mConsole ,r1x) ;
+			SetConsoleTextAttribute (mThis->mConsole ,r1x) ;
 			const auto r2x = std::system ("cls") ;
 			noop (r2x) ;
 		}
@@ -397,7 +397,7 @@ trait REPORTER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		Storage<FUNCTION_NAME_SIZE> mSecond ;
 	} ;
 
-	struct HEAP {
+	struct PACK {
 		UniqueRef<> mCrashSignal ;
 		UniqueRef<HANDLE> mSymbolFromAddress ;
 		String<STR> mNameBuffer ;
@@ -405,12 +405,12 @@ trait REPORTER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 
 	class ImplHolder implement Holder {
 	protected:
-		SharedRef<HEAP> mHeap ;
+		SharedRef<PACK> mThis ;
 
 	public:
 		void initialize () override {
-			mHeap = SharedRef<HEAP>::make () ;
-			mHeap->mNameBuffer = PrintString<STR>::make () ;
+			mThis = SharedRef<PACK>::make () ;
+			mThis->mNameBuffer = PrintString<STR>::make () ;
 		}
 
 		void detect_memory_leaks () const override {
@@ -423,7 +423,7 @@ trait REPORTER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		void detect_crash_signal () const override {
-			mHeap->mCrashSignal = UniqueRef<> ([&] () {
+			mThis->mCrashSignal = UniqueRef<> ([&] () {
 				const auto r1x = signal (SIGINT ,crash_handle_sigint) ;
 				noop (r1x) ;
 				const auto r2x = signal (SIGILL ,crash_handle_sigill) ;
@@ -525,17 +525,17 @@ trait REPORTER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			auto act = TRUE ;
 			if ifswitch (act) {
 				attach_symbol () ;
-				if ifnot (mHeap->mSymbolFromAddress.exist ())
+				if ifnot (mThis->mSymbolFromAddress.exist ())
 					discard ;
 				auto rax = Box<SYMBOL_INFO_EX>::make () ;
 				rax->mFirst.SizeOfStruct = csc_enum_t (SIZE_OF<SYMBOL_INFO>::expr) ;
 				rax->mFirst.MaxNameLen = csc_enum_t (FUNCTION_NAME_SIZE::expr) ;
-				const auto r1x = maybe_SymFromAddr (mHeap->mSymbolFromAddress ,DWORD64 (addr) ,NULL ,(&rax->mFirst)) ;
+				const auto r1x = maybe_SymFromAddr (mThis->mSymbolFromAddress ,DWORD64 (addr) ,NULL ,(&rax->mFirst)) ;
 				if ifnot (r1x)
 					discard ;
-				mHeap->mNameBuffer -= BufferProc<STR>::buf_slice (unsafe_array (rax->mFirst.Name[0]) ,mHeap->mNameBuffer.size ()) ;
+				mThis->mNameBuffer -= BufferProc<STR>::buf_slice (unsafe_array (rax->mFirst.Name[0]) ,mThis->mNameBuffer.size ()) ;
 				const auto r2x = string_build[TYPEAS<STR ,DATA>::expr] (DATA (addr)) ;
-				ret = PrintString<STR>::make (slice ("[") ,r2x ,slice ("] : ") ,mHeap->mNameBuffer) ;
+				ret = PrintString<STR>::make (slice ("[") ,r2x ,slice ("] : ") ,mThis->mNameBuffer) ;
 			}
 			if ifswitch (act) {
 				const auto r3x = string_build[TYPEAS<STR ,DATA>::expr] (DATA (addr)) ;
@@ -545,10 +545,10 @@ trait REPORTER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		void attach_symbol () const {
-			if (mHeap->mSymbolFromAddress.exist ())
+			if (mThis->mSymbolFromAddress.exist ())
 				return ;
 			if ifswitch (TRUE) {
-				mHeap->mSymbolFromAddress = UniqueRef<HANDLE> ([&] (VREF<HANDLE> me) {
+				mThis->mSymbolFromAddress = UniqueRef<HANDLE> ([&] (VREF<HANDLE> me) {
 					me = GetCurrentProcess () ;
 					const auto r1x = maybe_SymInitialize (me ,NULL ,TRUE) ;
 					if (r1x)
@@ -559,9 +559,9 @@ trait REPORTER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 						return ;
 					maybe_SymCleanup (me) ;
 				}) ;
-				if (mHeap->mSymbolFromAddress.self != NULL)
+				if (mThis->mSymbolFromAddress.self != NULL)
 					discard ;
-				mHeap->mSymbolFromAddress = UniqueRef<HANDLE> () ;
+				mThis->mSymbolFromAddress = UniqueRef<HANDLE> () ;
 			}
 		}
 	} ;

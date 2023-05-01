@@ -67,137 +67,98 @@ trait LATER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	using Holder = typename LATER_HOLDER_HELP<DEPEND ,ALWAYS>::Holder ;
 	using HEAP_SIZE = ENUMAS<VAL ,256> ;
 
-	struct OWNERSHIP {
-		VRef<HEAP> mHeap ;
-		INDEX mIndex ;
-	} ;
-
 	struct NODE {
 		FLAG mTag ;
-		Function<Auto> mExpr ;
-		SharedRef<UniqueRef<OWNERSHIP>> mWeak ;
-		INDEX mPrev ;
+		AutoRef<> mValue ;
 		INDEX mNext ;
 	} ;
 
 	struct HEAP {
+		VRef<BOOL> mFlag ;
 		BoxBuffer<NODE ,HEAP_SIZE> mList ;
 		INDEX mFirst ;
-		INDEX mLast ;
 		INDEX mFree ;
 	} ;
 
+	using HEAPROOT = typename SHAREDREF_PUREHOLDER_HELP<HEAP ,ALWAYS>::PureHolder ;
+
 	class ImplHolder implement Holder {
 	protected:
-		SharedRef<UniqueRef<OWNERSHIP>> mLater ;
+		SharedRef<HEAP> mHeap ;
+		BOOL mOwnership ;
+		INDEX mIndex ;
 
 	public:
 		void initialize (CREF<FLAG> tag) override {
-			const auto r1x = unique () ;
-			assert (r1x.exist ()) ;
-			INDEX ix = r1x->mLast ;
+			mHeap = SharedRef<HEAP>::intrusive (heap_root ()) ;
+			assume (mHeap.available ()) ;
+			update_reserve () ;
+			INDEX ix = mHeap->mFirst ;
 			while (TRUE) {
 				if (ix == NONE)
 					break ;
-				if (r1x->mList[ix].mTag == tag)
+				if (mHeap->mList[ix].mTag == tag)
 					break ;
-				ix = r1x->mList[ix].mPrev ;
+				ix = mHeap->mList[ix].mNext ;
 			}
-			if (ix == NONE)
-				return ;
-			assert (r1x->mList[ix].mPrev != USED) ;
-			mLater = r1x->mList[ix].mWeak ;
-			assume (mLater.available ()) ;
-		}
-
-		void initialize (CREF<FLAG> tag ,RREF<Function<Auto>> expr_) override {
-			assert (expr_.exist ()) ;
-			const auto r1x = unique () ;
-			assert (r1x.exist ()) ;
-			INDEX ix = r1x->mFree ;
 			assume (ix != NONE) ;
-			auto rax = UniqueRef<OWNERSHIP> ([&] (VREF<OWNERSHIP> me) {
-				me.mHeap = VRef<HEAP>::reference (r1x.self) ;
-				me.mHeap->mList[ix].mTag = tag ;
-				me.mHeap->mList[ix].mExpr = move (expr_) ;
-				me.mHeap->mFree = me.mHeap->mList[ix].mNext ;
-				me.mHeap->mList[ix].mPrev = me.mHeap->mLast ;
-				me.mHeap->mList[ix].mNext = NONE ;
-				curr_next (me.mHeap.self ,me.mHeap->mLast ,ix) ;
-				me.mHeap->mLast = ix ;
-				me.mIndex = ix ;
-			} ,[] (VREF<OWNERSHIP> me) {
-				INDEX iy = me.mIndex ;
-				if (me.mHeap->mList[iy].mPrev == USED)
-					return ;
-				curr_next (me.mHeap.self ,me.mHeap->mList[iy].mPrev ,me.mHeap->mList[iy].mNext) ;
-				curr_prev (me.mHeap.self ,me.mHeap->mList[iy].mNext ,me.mHeap->mList[iy].mPrev) ;
-				me.mHeap->mList[iy].mPrev = USED ;
-				me.mHeap->mList[iy].mNext = me.mHeap->mFree ;
-				me.mHeap->mFree = iy ;
-				me.mHeap->mList[iy].mTag = 0 ;
-				me.mHeap->mList[iy].mExpr = Function<Auto> () ;
-			}) ;
-			mLater = SharedRef<UniqueRef<OWNERSHIP>>::make (move (rax)) ;
-			r1x->mList[ix].mWeak = mLater.weak () ;
+			mOwnership = FALSE ;
+			mIndex = ix ;
 		}
 
-		BOOL available () const override {
-			if ifnot (mLater.exist ())
-				return FALSE ;
-			if ifnot (mLater->available ())
-				return FALSE ;
-			return TRUE ;
+		void initialize (CREF<FLAG> tag ,RREF<AutoRef<>> value_) override {
+			assert (value_.exist ()) ;
+			mHeap = SharedRef<HEAP>::intrusive (heap_root ()) ;
+			assume (mHeap.available ()) ;
+			update_reserve () ;
+			INDEX ix = mHeap->mFree ;
+			assume (ix != NONE) ;
+			mHeap->mList[ix].mTag = tag ;
+			mHeap->mList[ix].mValue = move (value_) ;
+			mHeap->mFree = mHeap->mList[ix].mNext ;
+			mHeap->mList[ix].mNext = mHeap->mFirst ;
+			mHeap->mFirst = ix ;
+			mOwnership = TRUE ;
+			mIndex = ix ;
 		}
 
-		Auto invoke () const override {
-			return mLater->self.mHeap->mList[mLater->self.mIndex].mExpr () ;
+		void finalize () override {
+			if ifnot (mOwnership)
+				return ;
+			INDEX ix = mIndex ;
+			assert (ix == mHeap->mFirst) ;
+			mHeap->mFirst = mHeap->mList[ix].mNext ;
+			mHeap->mList[ix].mNext = mHeap->mFree ;
+			mHeap->mFree = ix ;
+			mHeap->mList[ix].mTag = 0 ;
+			mHeap->mList[ix].mValue = AutoRef<> () ;
 		}
 
-		imports SharedRef<HEAP> unique () {
-			return memorize ([&] () {
-				SharedRef<HEAP> ret = SharedRef<HEAP>::make () ;
-				ret->mList = BoxBuffer<NODE ,HEAP_SIZE> (0) ;
-				update_reserve (ret.self) ;
-				return move (ret) ;
-			}) ;
+		CREF<AutoRef<>> invoke () const leftvalue override {
+			return mHeap->mList[mIndex].mValue ;
 		}
 
-		imports void update_reserve (VREF<HEAP> heap) {
+		void update_reserve () {
+			if (mHeap->mFlag != NULL)
+				return ;
+			mHeap->mList = BoxBuffer<NODE ,HEAP_SIZE> (0) ;
 			INDEX ix = NONE ;
-			for (auto &&i : iter (0 ,heap.mList.size ())) {
-				INDEX iy = heap.mList.size () - 1 - i ;
-				heap.mList[iy].mPrev = USED ;
-				heap.mList[iy].mNext = ix ;
+			for (auto &&i : iter (0 ,mHeap->mList.size ())) {
+				INDEX iy = mHeap->mList.size () - 1 - i ;
+				mHeap->mList[iy].mNext = ix ;
 				ix = iy ;
 			}
-			heap.mFirst = NONE ;
-			heap.mLast = NONE ;
-			heap.mFree = ix ;
+			mHeap->mFirst = NONE ;
+			mHeap->mFree = ix ;
+			mHeap->mFlag = VRef<BOOL>::make (TRUE) ;
 		}
 
-		imports void curr_next (VREF<HEAP> heap ,CREF<INDEX> curr ,CREF<INDEX> next) {
-			auto act = TRUE ;
-			if ifswitch (act) {
-				if (curr == NONE)
-					discard ;
-				heap.mList[curr].mNext = next ;
-			}
-			if ifswitch (act) {
-				heap.mFirst = next ;
-			}
-		}
-
-		imports void curr_prev (VREF<HEAP> heap ,CREF<INDEX> curr ,CREF<INDEX> prev) {
-			auto act = TRUE ;
-			if ifswitch (act) {
-				if (curr == NONE)
-					discard ;
-				heap.mList[curr].mPrev = prev ;
-			}
-			if ifswitch (act) {
-				heap.mLast = prev ;
-			}
+		CRef<HEAPROOT> heap_root () const {
+			return CRef<HEAPROOT>::reference (memorize ([&] () {
+				Box<HEAPROOT> ret = Box<HEAPROOT>::make () ;
+				ret->initialize () ;
+				return move (ret) ;
+			}).self) ;
 		}
 	} ;
 } ;
