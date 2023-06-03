@@ -1,5 +1,29 @@
 ﻿#pragma once
 
+/*
+MIT License
+
+Copyright (c) 2017 Argalia2017
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+*/
+
 #ifndef __CSC_CORE__
 #define __CSC_CORE__
 #endif
@@ -237,7 +261,7 @@ trait SIZE_OF_HELP ;
 
 template <class UNIT>
 trait SIZE_OF_HELP<UNIT ,ALWAYS> {
-	static constexpr auto value = sizeof (UNIT) ;
+	enum { value = sizeof (UNIT) } ;
 	using RET = ENUMAS<VAL ,value> ;
 } ;
 
@@ -249,7 +273,7 @@ trait ALIGN_OF_HELP ;
 
 template <class UNIT>
 trait ALIGN_OF_HELP<UNIT ,ALWAYS> {
-	static constexpr auto value = alignof (UNIT) ;
+	enum { value = alignof (UNIT) } ;
 	using RET = ENUMAS<VAL ,value> ;
 } ;
 
@@ -261,7 +285,7 @@ trait COUNT_OF_HELP ;
 
 template <class...UNIT>
 trait COUNT_OF_HELP<TYPEAS<UNIT...> ,ALWAYS> {
-	static constexpr auto value = sizeof... (UNIT) ;
+	enum { value = sizeof... (UNIT) } ;
 	using RET = ENUMAS<VAL ,value> ;
 } ;
 
@@ -316,7 +340,7 @@ trait ENUM_NOT_HELP ;
 
 template <class UNIT>
 trait ENUM_NOT_HELP<UNIT ,ALWAYS> {
-	static constexpr auto value = ifnot (ENUM_CHECK<UNIT>::expr) ;
+	enum { value = ifnot (ENUM_CHECK<UNIT>::expr) } ;
 	using RET = ENUMAS<BOOL ,value> ;
 } ;
 
@@ -344,7 +368,7 @@ trait ENUM_EQUAL_HELP ;
 
 template <class UNIT ,class SIDE>
 trait ENUM_EQUAL_HELP<UNIT ,SIDE ,ALWAYS> {
-	static constexpr auto value = (ENUM_CHECK<UNIT>::expr == ENUM_CHECK<SIDE>::expr) ;
+	enum { value = (ENUM_CHECK<UNIT>::expr == ENUM_CHECK<SIDE>::expr) } ;
 	using RET = ENUMAS<BOOL ,value> ;
 } ;
 
@@ -359,7 +383,7 @@ trait ENUM_COMPR_LT_HELP ;
 
 template <class UNIT ,class SIDE>
 trait ENUM_COMPR_LT_HELP<UNIT ,SIDE ,ALWAYS> {
-	static constexpr auto value = (ENUM_CHECK<UNIT>::expr < ENUM_CHECK<SIDE>::expr) ;
+	enum { value = (ENUM_CHECK<UNIT>::expr < ENUM_CHECK<SIDE>::expr) } ;
 	using RET = ENUMAS<BOOL ,value> ;
 } ;
 
@@ -384,7 +408,7 @@ trait ENUM_COMPR_HELP<UNIT ,SIDE ,ALWAYS> {
 	using R2X = ENUM_COMPR_GT<UNIT ,SIDE> ;
 	using R3X = CONDITIONAL<R1X ,ENUM_NONE ,CONDITIONAL<R2X ,ENUM_IDEN ,ENUM_ZERO>> ;
 
-	static constexpr auto value = R3X::expr ;
+	enum { value = R3X::expr } ;
 	using RET = ENUMAS<VAL ,value> ;
 } ;
 
@@ -408,7 +432,7 @@ trait ENUM_ADD_HELP ;
 
 template <class UNIT ,class SIDE>
 trait ENUM_ADD_HELP<UNIT ,SIDE ,ALWAYS> {
-	static constexpr auto value = (ENUM_CHECK<UNIT>::expr + ENUM_CHECK<SIDE>::expr) ;
+	enum { value = (ENUM_CHECK<UNIT>::expr + ENUM_CHECK<SIDE>::expr) } ;
 	using RET = ENUMAS<VAL ,value> ;
 } ;
 
@@ -420,7 +444,7 @@ trait ENUM_SUB_HELP ;
 
 template <class UNIT ,class SIDE>
 trait ENUM_SUB_HELP<UNIT ,SIDE ,ALWAYS> {
-	static constexpr auto value = (ENUM_CHECK<UNIT>::expr - ENUM_CHECK<SIDE>::expr) ;
+	enum { value = (ENUM_CHECK<UNIT>::expr - ENUM_CHECK<SIDE>::expr) } ;
 	using RET = ENUMAS<VAL ,value> ;
 } ;
 
@@ -432,7 +456,7 @@ trait ENUM_MUL_HELP ;
 
 template <class UNIT ,class SIDE>
 trait ENUM_MUL_HELP<UNIT ,SIDE ,ALWAYS> {
-	static constexpr auto value = (ENUM_CHECK<UNIT>::expr * ENUM_CHECK<SIDE>::expr) ;
+	enum { value = (ENUM_CHECK<UNIT>::expr * ENUM_CHECK<SIDE>::expr) } ;
 	using RET = ENUMAS<VAL ,value> ;
 } ;
 
@@ -444,7 +468,7 @@ trait ENUM_DIV_HELP ;
 
 template <class UNIT ,class SIDE>
 trait ENUM_DIV_HELP<UNIT ,SIDE ,ALWAYS> {
-	static constexpr auto value = (ENUM_CHECK<UNIT>::expr / ENUM_CHECK<SIDE>::expr) ;
+	enum { value = (ENUM_CHECK<UNIT>::expr / ENUM_CHECK<SIDE>::expr) } ;
 	using RET = ENUMAS<VAL ,value> ;
 } ;
 
@@ -456,7 +480,7 @@ trait ENUM_MOD_HELP ;
 
 template <class UNIT ,class SIDE>
 trait ENUM_MOD_HELP<UNIT ,SIDE ,ALWAYS> {
-	static constexpr auto value = (ENUM_CHECK<UNIT>::expr % ENUM_CHECK<SIDE>::expr) ;
+	enum { value = (ENUM_CHECK<UNIT>::expr % ENUM_CHECK<SIDE>::expr) } ;
 	using RET = ENUMAS<VAL ,value> ;
 } ;
 
@@ -729,7 +753,7 @@ trait IS_VALUE_HELP<UNIT ,ALWAYS> {
 	using R1X = IS_SAME<UNIT ,VAL32> ;
 	using R2X = IS_SAME<UNIT ,VAL64> ;
 
-	static constexpr auto value = ENUM_ANY<R1X ,R2X>::expr ;
+	enum { value = ENUM_ANY<R1X ,R2X>::expr } ;
 	using RET = ENUMAS<BOOL ,value> ;
 } ;
 
@@ -744,7 +768,7 @@ trait IS_FLOAT_HELP<UNIT ,ALWAYS> {
 	using R1X = IS_SAME<UNIT ,SINGLE> ;
 	using R2X = IS_SAME<UNIT ,DOUBLE> ;
 
-	static constexpr auto value = ENUM_ANY<R1X ,R2X>::expr ;
+	enum { value = ENUM_ANY<R1X ,R2X>::expr } ;
 	using RET = ENUMAS<BOOL ,value> ;
 } ;
 
@@ -762,7 +786,7 @@ trait IS_TEXT_HELP<UNIT ,ALWAYS> {
 	using R4X = IS_SAME<UNIT ,STRU16> ;
 	using R5X = IS_SAME<UNIT ,STRU32> ;
 
-	static constexpr auto value = ENUM_ANY<R1X ,R2X ,R3X ,R4X ,R5X>::expr ;
+	enum { value = ENUM_ANY<R1X ,R2X ,R3X ,R4X ,R5X>::expr } ;
 	using RET = ENUMAS<BOOL ,value> ;
 } ;
 
@@ -779,7 +803,7 @@ trait IS_BYTE_HELP<UNIT ,ALWAYS> {
 	using R3X = IS_SAME<UNIT ,CHAR> ;
 	using R4X = IS_SAME<UNIT ,DATA> ;
 
-	static constexpr auto value = ENUM_ANY<R1X ,R2X ,R3X ,R4X>::expr ;
+	enum { value = ENUM_ANY<R1X ,R2X ,R3X ,R4X>::expr } ;
 	using RET = ENUMAS<BOOL ,value> ;
 } ;
 
@@ -800,7 +824,7 @@ trait IS_SCALAR_HELP<UNIT ,ALWAYS> {
 	using R1X = IS_VALUE<UNIT> ;
 	using R2X = IS_FLOAT<UNIT> ;
 
-	static constexpr auto value = ENUM_ANY<R1X ,R2X>::expr ;
+	enum { value = ENUM_ANY<R1X ,R2X>::expr } ;
 	using RET = ENUMAS<BOOL ,value> ;
 } ;
 
@@ -819,7 +843,7 @@ trait IS_BASIC_HELP<UNIT ,ALWAYS> {
 	using R5X = IS_BYTE<UNIT> ;
 	using R6X = IS_NULL<UNIT> ;
 
-	static constexpr auto value = ENUM_ANY<R1X ,R2X ,R3X ,R4X ,R5X ,R6X>::expr ;
+	enum { value = ENUM_ANY<R1X ,R2X ,R3X ,R4X ,R5X ,R6X>::expr } ;
 	using RET = ENUMAS<BOOL ,value> ;
 } ;
 
@@ -950,7 +974,7 @@ trait ARR_HELP<ITEM ,SIZE ,REQUIRE<ENUM_EQ_ZERO<SIZE>>> {
 template <class ITEM ,class SIZE>
 trait ARR_HELP<ITEM ,SIZE ,REQUIRE<ENUM_GT_ZERO<SIZE>>> {
 	require (ENUM_NOT<IS_ARRAY<ITEM>>) ;
-	static constexpr auto value = SIZE::expr ;
+	enum { value = SIZE::expr } ;
 	using RET = DEF<ITEM[value]> ;
 } ;
 
@@ -1009,7 +1033,7 @@ trait IS_INTPTR_HELP<UNIT ,REQUIRE<ENUM_NOT<IS_BASIC<UNIT>>>> {
 	using R6X = IS_SAME<UNIT ,csc_byte64_t> ;
 	using R7X = IS_SAME<UNIT ,csc_enum_t> ;
 
-	static constexpr auto value = ENUM_ANY<R1X ,R2X ,R3X ,R4X ,R5X ,R6X ,R7X>::expr ;
+	enum { value = ENUM_ANY<R1X ,R2X ,R3X ,R4X ,R5X ,R6X ,R7X>::expr } ;
 	using RET = ENUMAS<BOOL ,value> ;
 } ;
 
@@ -1027,7 +1051,7 @@ trait IS_CLASS_HELP<UNIT ,ALWAYS> {
 	using R5X = ENUM_NOT<IS_BASIC<UNIT>> ;
 	using R6X = ENUM_NOT<IS_INTPTR<UNIT>> ;
 
-	static constexpr auto value = ENUM_ALL<R1X ,R3X ,R4X ,R5X ,R6X>::expr ;
+	enum { value = ENUM_ALL<R1X ,R3X ,R4X ,R5X ,R6X>::expr } ;
 	using RET = ENUMAS<BOOL ,value> ;
 } ;
 
@@ -1044,7 +1068,7 @@ trait IS_DEFAULT_HELP<UNIT ,ALWAYS> {
 	using R3X = MACRO_IS_MOVE_CONSTRUCTIBLE<UNIT> ;
 	using R4X = MACRO_IS_MOVE_ASSIGNABLE<UNIT> ;
 
-	static constexpr auto value = ENUM_ALL<R1X ,R2X ,R3X ,R4X>::expr ;
+	enum { value = ENUM_ALL<R1X ,R2X ,R3X ,R4X>::expr } ;
 	using RET = ENUMAS<BOOL ,value> ;
 } ;
 
@@ -1061,7 +1085,7 @@ trait IS_CLONEABLE_HELP<UNIT ,ALWAYS> {
 	using R3X = MACRO_IS_MOVE_CONSTRUCTIBLE<UNIT> ;
 	using R4X = MACRO_IS_MOVE_ASSIGNABLE<UNIT> ;
 
-	static constexpr auto value = ENUM_ALL<R1X ,R2X ,R3X ,R4X>::expr ;
+	enum { value = ENUM_ALL<R1X ,R2X ,R3X ,R4X>::expr } ;
 	using RET = ENUMAS<BOOL ,value> ;
 } ;
 
@@ -1076,7 +1100,7 @@ trait IS_TRIVIAL_HELP<UNIT ,ALWAYS> {
 	using R1X = MACRO_IS_TRIVIAL_CONSTRUCTIBLE<UNIT> ;
 	using R2X = MACRO_IS_TRIVIAL_DESTRUCTIBLE<UNIT> ;
 
-	static constexpr auto value = ENUM_ALL<R1X ,R2X>::expr ;
+	enum { value = ENUM_ALL<R1X ,R2X>::expr } ;
 	using RET = ENUMAS<BOOL ,value> ;
 } ;
 
@@ -1091,7 +1115,7 @@ trait IS_EXTEND_HELP<FROM ,INTO ,ALWAYS> {
 	using R1X = IS_SAME<FROM ,INTO> ;
 	using R2X = MACRO_IS_EXTEND<FROM ,INTO> ;
 
-	static constexpr auto value = ENUM_ANY<R1X ,R2X>::expr ;
+	enum { value = ENUM_ANY<R1X ,R2X>::expr } ;
 	using RET = ENUMAS<BOOL ,value> ;
 } ;
 
@@ -1108,7 +1132,7 @@ trait IS_INTERFACE_HELP<UNIT ,REQUIRE<IS_CLASS<UNIT>>> {
 	using R3X = ENUM_EQUAL<SIZE_OF<UNIT> ,SIZE_OF<Interface>> ;
 	using R4X = ENUM_EQUAL<ALIGN_OF<UNIT> ,ALIGN_OF<Interface>> ;
 
-	static constexpr auto value = ENUM_ALL<R1X ,R2X ,R3X ,R4X>::expr ;
+	enum { value = ENUM_ALL<R1X ,R2X ,R3X ,R4X>::expr } ;
 	using RET = ENUMAS<BOOL ,value> ;
 } ;
 
@@ -1156,7 +1180,7 @@ template <class FROM ,class INTO>
 trait IS_CONVERTIBLE_HELP<FROM ,INTO ,ALWAYS> {
 	using R1X = MACRO_IS_CONVERTIBLE<FROM ,INTO> ;
 
-	static constexpr auto value = ENUM_ANY<R1X>::expr ;
+	enum { value = ENUM_ANY<R1X>::expr } ;
 	using RET = ENUMAS<BOOL ,value> ;
 } ;
 
@@ -1186,7 +1210,7 @@ trait IS_OBJECT_HELP<UNIT ,ALWAYS> {
 	using R2X = IS_INTPTR<UNIT> ;
 	using R3X = IS_CLASS<UNIT> ;
 
-	static constexpr auto value = ENUM_ANY<R1X ,R2X ,R3X>::expr ;
+	enum { value = ENUM_ANY<R1X ,R2X ,R3X>::expr } ;
 	using RET = ENUMAS<BOOL ,value> ;
 } ;
 
@@ -1385,7 +1409,7 @@ trait ENUM_BETWEEN_HELP<CURR ,BEGIN ,END ,ALWAYS> {
 	using R1X = ENUM_COMPR_GTEQ<CURR ,BEGIN> ;
 	using R2X = ENUM_COMPR_LT<CURR ,END> ;
 
-	static constexpr auto value = ENUM_ALL<R1X ,R2X>::expr ;
+	enum { value = ENUM_ALL<R1X ,R2X>::expr } ;
 	using RET = ENUMAS<BOOL ,value> ;
 } ;
 

@@ -1,5 +1,29 @@
 ﻿#pragma once
 
+/*
+MIT License
+
+Copyright (c) 2017 Argalia2017
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+*/
+
 #ifndef __CSC__
 #define __CSC__
 #endif
@@ -185,10 +209,6 @@ struct is_trivially_default_constructible :integral_constant<bool ,__has_trivial
 #define __macro_anonymous __macro_cat (__anonymous_ ,__LINE__)
 #endif
 
-#ifndef __macro_where
-#define __macro_where CSC::ENUMAS<CSC::csc_byte32_t ,__COUNTER__>
-#endif
-
 #ifndef __macro_slice
 #ifdef __CSC_CONFIG_STRA__
 #define __macro_slice(...) CSC::Slice<CSC::STR> (__VA_ARGS__)
@@ -231,11 +251,11 @@ struct is_trivially_default_constructible :integral_constant<bool ,__has_trivial
 
 #ifndef __macro_unittest
 #ifdef __CSC_VER_DEBUG__
-#define __macro_unittest(...) do { CSC::unsafe_watch (CSC::TYPEAS<where>::expr ,slice (__macro_str (__VA_ARGS__)) ,__VA_ARGS__) ; } while (false)
+#define __macro_unittest(...) do { CSC::unsafe_watch (CSC::TYPEAS<CSC::ENUMAS<CSC::csc_byte32_t ,__COUNTER__>>::expr ,slice (__macro_str (__VA_ARGS__)) ,__VA_ARGS__) ; } while (false)
 #endif
 
 #ifdef __CSC_VER_UNITTEST__
-#define __macro_unittest(...) do { CSC::unsafe_watch (CSC::TYPEAS<where>::expr ,slice (__macro_str (__VA_ARGS__)) ,__VA_ARGS__) ; } while (false)
+#define __macro_unittest(...) do { CSC::unsafe_watch (CSC::TYPEAS<CSC::ENUMAS<CSC::csc_byte32_t ,__COUNTER__>>::expr ,slice (__macro_str (__VA_ARGS__)) ,__VA_ARGS__) ; } while (false)
 #endif
 
 #ifdef __CSC_VER_RELEASE__

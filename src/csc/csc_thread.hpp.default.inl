@@ -1,5 +1,29 @@
 ﻿#pragma once
 
+/*
+MIT License
+
+Copyright (c) 2017 Argalia2017
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+*/
+
 #ifndef __CSC_THREAD__
 #error "∑(っ°Д° ;)っ : require 'csc_thread.hpp'"
 #endif
@@ -21,11 +45,12 @@ trait WORKTHREAD_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		VRef<BOOL> mThreadFlag ;
 		Array<VRef<Thread>> mThread ;
 		BitSet<> mThreadJoin ;
-		Array<Deque<INDEX>> mThreadQueue ;
-		Array<LENGTH> mThreadLoadCount ;
 		Function<void ,TYPEAS<INDEX>> mThreadProc ;
-		Deque<INDEX> mItemQueue ;
-		LENGTH mItemLoadCount ;
+		Deque<INDEX> mWaitQueue ;
+		Array<INDEX> mLoadQueue ;
+		Atomic mLoadRead ;
+		Atomic mLoadCheck ;
+		Atomic mLoadWrite ;
 
 	public:
 		void initialize () override {
@@ -33,7 +58,7 @@ trait WORKTHREAD_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			//@warn: two condition_variable in same mutex
 			mThreadJoinMutex = ConditionalMutex::make () ;
 			set_thread_size (RuntimeProc::thread_concurrency ()) ;
-			set_queue_size (32) ;
+			set_queue_size (RuntimeProc::thread_concurrency ()) ;
 		}
 
 		void finalize () override {
@@ -47,23 +72,23 @@ trait WORKTHREAD_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			assume (mThreadFlag == NULL) ;
 			mThread = Array<VRef<Thread>> (size_) ;
 			mThreadJoin = BitSet<> (size_) ;
-			mThreadQueue = Array<Deque<INDEX>> (size_) ;
-			mThreadLoadCount = Array<LENGTH> (size_) ;
 		}
 
 		void set_queue_size (CREF<LENGTH> size_) override {
 			Scope<Mutex> anonymous (mThreadMutex) ;
 			assume (mThreadFlag == NULL) ;
-			assume (mItemQueue.length () == 0) ;
-			mItemQueue = Deque<INDEX> (size_) ;
+			assume (mWaitQueue.empty ()) ;
+			mWaitQueue = Deque<INDEX> (size_) ;
+			mLoadQueue = Array<INDEX> (THREAD_QUEUE_SIZE::expr) ;
+			mLoadRead = Atomic (0) ;
+			mLoadCheck = Atomic (0) ;
+			mLoadWrite = Atomic (0) ;
 		}
 
 		void start (RREF<Function<void ,TYPEAS<INDEX>>> proc) override {
 			Scope<Mutex> anonymous (mThreadMutex) ;
 			assume (mThreadFlag == NULL) ;
 			assume (mThread.length () > 0) ;
-			mThreadLoadCount.fill (0) ;
-			mItemLoadCount = 0 ;
 			mThreadFlag = VRef<BOOL>::make (TRUE) ;
 			mThreadProc = move (proc) ;
 			for (auto &&i : mThread.iter ()) {
@@ -74,16 +99,18 @@ trait WORKTHREAD_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 
 		void friend_execute (CREF<INDEX> slot) override {
 			while (TRUE) {
-				if ifswitch (TRUE) {
-					if ifnot (mThreadQueue[slot].empty ())
-						discard ;
-					poll (slot) ;
+				auto rax = NONE ;
+				while (TRUE) {
+					INDEX ix = mLoadRead.increase () - 1 ;
+					if (ix >= mLoadWrite.fetch ())
+						break ;
+					rax = mLoadQueue[ix] ;
+					mLoadCheck.increase () ;
+					try_invoke ([&] () {
+						mThreadProc (rax) ;
+					}) ;
 				}
-				try_invoke ([&] () {
-					INDEX ix = mThreadQueue[slot].head () ;
-					mThreadProc (mThreadQueue[slot][ix]) ;
-					mThreadQueue[slot].take () ;
-				}) ;
+				poll (slot) ;
 			}
 		}
 
@@ -97,7 +124,9 @@ trait WORKTHREAD_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			while (TRUE) {
 				if ifnot (mThreadFlag.self)
 					break ;
-				if ifnot (mItemQueue.empty ())
+				if ifnot (mWaitQueue.empty ())
+					break ;
+				if (mLoadRead.fetch () < mLoadWrite.fetch ())
 					break ;
 				if ifswitch (TRUE) {
 					if (mThreadJoin[slot])
@@ -109,24 +138,23 @@ trait WORKTHREAD_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			}
 			assume (mThreadFlag.self) ;
 			mThreadJoin.erase (slot) ;
-			if ifswitch (TRUE) {
-				if (mThreadQueue[slot].size () > 0)
-					discard ;
-				mThreadQueue[slot] = Deque<INDEX> (THREAD_QUEUE_SIZE::expr) ;
+			if (mLoadRead.fetch () < mLoadWrite.fetch ())
+				return ;
+			//@warn: should not be dead lock
+			while (TRUE) {
+				if (mLoadCheck.fetch () == mLoadWrite.fetch ())
+					break ;
+				RuntimeProc::thread_yield () ;
 			}
-			mItemLoadCount -= mThreadLoadCount[slot] ;
-			const auto r1x = mItemQueue.length () + mItemLoadCount ;
-			const auto r2x = valign (r1x ,mThread.size ()) / mThread.size () ;
-			const auto r3x = MathProc::max_of (r2x / 2 ,LENGTH (1)) ;
-			const auto r4x = MathProc::min_of (r3x ,mThreadQueue[slot].size () ,mItemQueue.length ()) ;
-			mThreadLoadCount[slot] = r4x ;
-			mItemLoadCount += mThreadLoadCount[slot] ;
-			for (auto &&i : iter (0 ,r4x)) {
-				noop (i) ;
-				INDEX ix = mItemQueue.head () ;
-				mThreadQueue[slot].add (mItemQueue[ix]) ;
-				mItemQueue.take () ;
+			const auto r1x = MathProc::min_of (mWaitQueue.length () ,mLoadQueue.length ()) ;
+			for (auto &&i : iter (0 ,r1x)) {
+				INDEX ix = mWaitQueue.head () ;
+				mLoadQueue[i] = mWaitQueue[ix] ;
+				mWaitQueue.take () ;
 			}
+			mLoadRead.store (0) ;
+			mLoadCheck.store (0) ;
+			mLoadWrite.store (r1x) ;
 			rax.notify () ;
 		}
 
@@ -136,53 +164,34 @@ trait WORKTHREAD_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			while (TRUE) {
 				if ifnot (mThreadFlag.self)
 					break ;
-				if ifnot (mItemQueue.full ())
+				if ifnot (mWaitQueue.full ())
 					break ;
 				rax.wait () ;
 			}
 			assume (mThreadFlag.self) ;
-			mItemQueue.add (item) ;
+			mWaitQueue.add (item) ;
 			rax.notify () ;
-		}
-
-		BOOL post (CREF<INDEX> item ,CREF<TimeDuration> interval ,CREF<Function<BOOL>> predicate) override {
-			auto rax = UniqueLock (mThreadMutex) ;
-			assume (mThreadFlag != NULL) ;
-			while (TRUE) {
-				if ifnot (mThreadFlag.self)
-					break ;
-				if ifnot (mItemQueue.full ())
-					break ;
-				const auto r1x = predicate () ;
-				if ifnot (r1x)
-					return FALSE ;
-				rax.wait (interval) ;
-			}
-			assume (mThreadFlag.self) ;
-			mItemQueue.add (item) ;
-			rax.notify () ;
-			return TRUE ;
 		}
 
 		void post_all (CREF<Array<INDEX>> item) override {
 			auto rax = UniqueLock (mThreadMutex) ;
 			assume (mThreadFlag != NULL) ;
 			assume (mThreadFlag.self) ;
-			const auto r1x = mItemQueue.length () + item.length () ;
+			const auto r1x = mWaitQueue.length () + item.length () ;
 			auto act = TRUE ;
 			if ifswitch (act) {
-				if (r1x >= mItemQueue.size ())
+				if (r1x >= mWaitQueue.size ())
 					discard ;
 				for (auto &&i : item)
-					mItemQueue.add (i) ;
+					mWaitQueue.add (i) ;
 			}
 			if ifswitch (act) {
 				auto rbx = Deque<INDEX> (r1x) ;
-				for (auto &&i : mItemQueue.iter ())
-					rbx.add (mItemQueue[i]) ;
+				for (auto &&i : mWaitQueue.iter ())
+					rbx.add (mWaitQueue[i]) ;
 				for (auto &&i : item)
 					rbx.add (i) ;
-				mItemQueue = move (rbx) ;
+				mWaitQueue = move (rbx) ;
 			}
 			rax.notify () ;
 		}
@@ -193,28 +202,11 @@ trait WORKTHREAD_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			while (TRUE) {
 				if ifnot (mThreadFlag.self)
 					break ;
-				if (mItemQueue.length () == 0)
+				if (mWaitQueue.empty ())
 					if (mThreadJoin.length () >= mThread.length ())
 						break ;
 				rax.wait () ;
 			}
-		}
-
-		BOOL join (CREF<TimeDuration> interval ,CREF<Function<BOOL>> predicate) override {
-			auto rax = UniqueLock (mThreadMutex) ;
-			assume (mThreadFlag != NULL) ;
-			while (TRUE) {
-				if ifnot (mThreadFlag.self)
-					break ;
-				if (mItemQueue.length () == 0)
-					if (mThreadJoin.length () >= mThread.length ())
-						break ;
-				const auto r1x = predicate () ;
-				if ifnot (r1x)
-					return FALSE ;
-				rax.wait (interval) ;
-			}
-			return TRUE ;
 		}
 
 		void stop () override {
@@ -234,9 +226,10 @@ trait WORKTHREAD_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			mThreadProc = Function<void ,TYPEAS<INDEX>> () ;
 			mThreadFlag = NULL ;
 			mThreadJoin = BitSet<> () ;
-			mThreadQueue = Array<Deque<INDEX>> () ;
-			mThreadLoadCount = Array<LENGTH> () ;
-			mItemQueue = Deque<INDEX> () ;
+			mWaitQueue.clear () ;
+			mLoadRead.store (0) ;
+			mLoadCheck.store (0) ;
+			mLoadWrite.store (0) ;
 		}
 	} ;
 } ;
@@ -619,29 +612,6 @@ trait PROMISE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			}
 			assume (mThis->mItem != NULL) ;
 			AutoRef<> ret = move (mThis->mItem.self) ;
-			mThis->mItem = NULL ;
-			rax.notify () ;
-			return move (ret) ;
-		}
-
-		Optional<AutoRef<>> poll (CREF<TimeDuration> interval ,CREF<Function<BOOL>> predicate) const override {
-			auto rax = UniqueLock (mThis->mThreadMutex) ;
-			assume (mThis->mThreadFlag != NULL) ;
-			while (TRUE) {
-				if ifnot (mThis->mThreadFlag.self)
-					break ;
-				const auto r1x = predicate () ;
-				if ifnot (r1x)
-					return FLAG (1) ;
-				rax.wait (interval) ;
-			}
-			if ifswitch (TRUE) {
-				if (mThis->mException == NULL)
-					discard ;
-				mThis->mException->raise () ;
-			}
-			assume (mThis->mItem != NULL) ;
-			Optional<AutoRef<>> ret = Optional<AutoRef<>>::make (move (mThis->mItem.self)) ;
 			mThis->mItem = NULL ;
 			rax.notify () ;
 			return move (ret) ;

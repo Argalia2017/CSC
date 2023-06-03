@@ -1,5 +1,29 @@
 ﻿#pragma once
 
+/*
+MIT License
+
+Copyright (c) 2017 Argalia2017
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+*/
+
 #ifndef __CSC_ALGORITHM__
 #define __CSC_ALGORITHM__
 #endif
@@ -103,7 +127,7 @@ trait DISJOINTTABLE_HELP<DEPEND ,ALWAYS> {
 		virtual void clear () = 0 ;
 		virtual INDEX lead (CREF<INDEX> index) = 0 ;
 		virtual void joint (CREF<INDEX> index1 ,CREF<INDEX> index2) = 0 ;
-		virtual BitSet<> filter (CREF<INDEX> index) = 0 ;
+		virtual Array<INDEX> filter (CREF<INDEX> index) = 0 ;
 		virtual Array<INDEX> linkage () = 0 ;
 		virtual Array<BitSet<>> closure () = 0 ;
 	} ;
@@ -136,7 +160,7 @@ trait DISJOINTTABLE_HELP<DEPEND ,ALWAYS> {
 			return mThis->joint (index1 ,index2) ;
 		}
 
-		BitSet<> filter (CREF<INDEX> index) {
+		Array<INDEX> filter (CREF<INDEX> index) {
 			return mThis->filter (index) ;
 		}
 
@@ -163,11 +187,9 @@ trait BINARYTABLE_HELP<DEPEND ,ALWAYS> {
 	struct Holder implement Interface {
 		virtual void initialize (CREF<LENGTH> size_) = 0 ;
 		virtual void clear () = 0 ;
-		virtual LENGTH count (CREF<INDEX> from_) const = 0 ;
-		virtual void link (CREF<INDEX> from_ ,CREF<INDEX> into_) = 0 ;
-		virtual void joint (CREF<INDEX> from_ ,CREF<INDEX> into_) = 0 ;
-		virtual BOOL get (CREF<INDEX> from_ ,CREF<INDEX> into_) const = 0 ;
-		virtual BitSet<> filter (CREF<INDEX> from_) const = 0 ;
+		virtual void joint (CREF<INDEX> index1 ,CREF<INDEX> index2) = 0 ;
+		virtual BOOL get (CREF<INDEX> index1 ,CREF<INDEX> index2) const = 0 ;
+		virtual Array<INDEX> filter (CREF<INDEX> index) const = 0 ;
 		virtual void remap () = 0 ;
 	} ;
 
@@ -191,24 +213,16 @@ trait BINARYTABLE_HELP<DEPEND ,ALWAYS> {
 			return mThis->clear () ;
 		}
 
-		LENGTH count (CREF<INDEX> from_) const {
-			return mThis->count (from_) ;
+		void joint (CREF<INDEX> index1 ,CREF<INDEX> index2) {
+			return mThis->joint (index1 ,index2) ;
 		}
 
-		void link (CREF<INDEX> from_ ,CREF<INDEX> into_) {
-			return mThis->link (from_ ,into_) ;
+		BOOL get (CREF<INDEX> index1 ,CREF<INDEX> index2) const {
+			return mThis->get (index1 ,index2) ;
 		}
 
-		void joint (CREF<INDEX> from_ ,CREF<INDEX> into_) {
-			return mThis->joint (from_ ,into_) ;
-		}
-
-		BOOL get (CREF<INDEX> from_ ,CREF<INDEX> into_) const {
-			return mThis->get (from_ ,into_) ;
-		}
-
-		BitSet<> filter (CREF<INDEX> from_) const {
-			return mThis->filter (from_) ;
+		Array<INDEX> filter (CREF<INDEX> index) const {
+			return mThis->filter (index) ;
 		}
 
 		void remap () {

@@ -156,10 +156,9 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <TreatWarningAsError>true</TreatWarningAsError>
-      <ConformanceMode>false</ConformanceMode>
       <AdditionalIncludeDirectories>D:\Depends\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <WarningLevel>EnableAllWarnings</WarningLevel>
-      <LanguageStandard>stdcpp20</LanguageStandard>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
     </ClCompile>
     <PreBuildEvent />
     <Bscmake>
@@ -182,7 +181,6 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
       <TreatWarningAsError>true</TreatWarningAsError>
-      <ConformanceMode>false</ConformanceMode>
       <AdditionalIncludeDirectories>D:\Depends\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <WarningLevel>EnableAllWarnings</WarningLevel>
       <LanguageStandard>stdcpplatest</LanguageStandard>

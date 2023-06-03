@@ -1,5 +1,29 @@
 ﻿#pragma once
 
+/*
+MIT License
+
+Copyright (c) 2017 Argalia2017
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+*/
+
 #ifndef __CSC_DEBUGGER__
 #define __CSC_DEBUGGER__
 #endif
@@ -30,6 +54,20 @@ template <class DEPEND>
 trait CONSOLE_HELP<DEPEND ,ALWAYS> {
 	using Binder = typename TEXTWRITER_HELP<STR ,ALWAYS>::Binder ;
 
+	struct OPTION_CLAZZ {
+		enum {
+			Default ,
+			NoPrint ,
+			NoFatal ,
+			NoError ,
+			NoWarn ,
+			NoInfo ,
+			NoDebug ,
+			NoVerbose ,
+			EnumSize
+		} ;
+	} ;
+
 	struct Holder implement Interface {
 		virtual void initialize () = 0 ;
 		virtual void enable_option (CREF<FLAG> option) const = 0 ;
@@ -50,15 +88,6 @@ trait CONSOLE_HELP<DEPEND ,ALWAYS> {
 	struct FUNCTION_extern {
 		imports VRef<Holder> invoke () ;
 	} ;
-
-	using OPTION_DEFAULT = RANK0 ;
-	using OPTION_NO_PRINT = RANK1 ;
-	using OPTION_NO_FATAL = RANK2 ;
-	using OPTION_NO_ERROR = RANK3 ;
-	using OPTION_NO_WARN = RANK4 ;
-	using OPTION_NO_INFO = RANK5 ;
-	using OPTION_NO_DEBUG = RANK6 ;
-	using OPTION_NO_VERBOSE = RANK7 ;
 
 	class Console {
 	protected:

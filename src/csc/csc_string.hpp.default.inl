@@ -1,5 +1,29 @@
 ﻿#pragma once
 
+/*
+MIT License
+
+Copyright (c) 2017 Argalia2017
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+*/
+
 #ifndef __CSC_STRING__
 #error "∑(っ°Д° ;)っ : require 'csc_string.hpp'"
 #endif
@@ -947,27 +971,27 @@ trait ESCAPESTRING_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		void write_text (VREF<TextWriter<STRA>> writer) const override {
-			write_text_impl (writer ,mText.pick (TYPEAS<STRA>::expr)) ;
+			template_write_text (writer ,mText.pick (TYPEAS<STRA>::expr)) ;
 		}
 
 		void write_text (VREF<TextWriter<STRW>> writer) const override {
-			write_text_impl (writer ,mText.pick (TYPEAS<STRW>::expr)) ;
+			template_write_text (writer ,mText.pick (TYPEAS<STRW>::expr)) ;
 		}
 
 		void write_text (VREF<TextWriter<STRU8>> writer) const override {
-			write_text_impl (writer ,mText.pick (TYPEAS<STRU8>::expr)) ;
+			template_write_text (writer ,mText.pick (TYPEAS<STRU8>::expr)) ;
 		}
 
 		void write_text (VREF<TextWriter<STRU16>> writer) const override {
-			write_text_impl (writer ,mText.pick (TYPEAS<STRU16>::expr)) ;
+			template_write_text (writer ,mText.pick (TYPEAS<STRU16>::expr)) ;
 		}
 
 		void write_text (VREF<TextWriter<STRU32>> writer) const override {
-			write_text_impl (writer ,mText.pick (TYPEAS<STRU32>::expr)) ;
+			template_write_text (writer ,mText.pick (TYPEAS<STRU32>::expr)) ;
 		}
 
 		template <class ARG1 ,class ARG2>
-		void write_text_impl (VREF<ARG1> writer ,CREF<ARG2> text) const {
+		forceinline void template_write_text (VREF<ARG1> writer ,CREF<ARG2> text) const {
 			const auto r1x = writer.attribute () ;
 			writer << slice ("\"") ;
 			for (auto &&i : text) {
@@ -1021,27 +1045,27 @@ trait COMMASTRING_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		void write_text (VREF<TextWriter<STRA>> writer) const override {
-			write_text_impl (writer ,mGapText.pick (TYPEAS<STRA>::expr) ,mCommaText.pick (TYPEAS<STRA>::expr) ,mFirstText.pick (TYPEAS<STRA>::expr)) ;
+			template_write_text (writer ,mGapText.pick (TYPEAS<STRA>::expr) ,mCommaText.pick (TYPEAS<STRA>::expr) ,mFirstText.pick (TYPEAS<STRA>::expr)) ;
 		}
 
 		void write_text (VREF<TextWriter<STRW>> writer) const override {
-			write_text_impl (writer ,mGapText.pick (TYPEAS<STRW>::expr) ,mCommaText.pick (TYPEAS<STRW>::expr) ,mFirstText.pick (TYPEAS<STRW>::expr)) ;
+			template_write_text (writer ,mGapText.pick (TYPEAS<STRW>::expr) ,mCommaText.pick (TYPEAS<STRW>::expr) ,mFirstText.pick (TYPEAS<STRW>::expr)) ;
 		}
 
 		void write_text (VREF<TextWriter<STRU8>> writer) const override {
-			write_text_impl (writer ,mGapText.pick (TYPEAS<STRU8>::expr) ,mCommaText.pick (TYPEAS<STRU8>::expr) ,mFirstText.pick (TYPEAS<STRU8>::expr)) ;
+			template_write_text (writer ,mGapText.pick (TYPEAS<STRU8>::expr) ,mCommaText.pick (TYPEAS<STRU8>::expr) ,mFirstText.pick (TYPEAS<STRU8>::expr)) ;
 		}
 
 		void write_text (VREF<TextWriter<STRU16>> writer) const override {
-			write_text_impl (writer ,mGapText.pick (TYPEAS<STRU16>::expr) ,mCommaText.pick (TYPEAS<STRU16>::expr) ,mFirstText.pick (TYPEAS<STRU16>::expr)) ;
+			template_write_text (writer ,mGapText.pick (TYPEAS<STRU16>::expr) ,mCommaText.pick (TYPEAS<STRU16>::expr) ,mFirstText.pick (TYPEAS<STRU16>::expr)) ;
 		}
 
 		void write_text (VREF<TextWriter<STRU32>> writer) const override {
-			write_text_impl (writer ,mGapText.pick (TYPEAS<STRU32>::expr) ,mCommaText.pick (TYPEAS<STRU32>::expr) ,mFirstText.pick (TYPEAS<STRU32>::expr)) ;
+			template_write_text (writer ,mGapText.pick (TYPEAS<STRU32>::expr) ,mCommaText.pick (TYPEAS<STRU32>::expr) ,mFirstText.pick (TYPEAS<STRU32>::expr)) ;
 		}
 
 		template <class ARG1 ,class ARG2>
-		void write_text_impl (VREF<ARG1> writer ,CREF<ARG2> gap_text ,CREF<ARG2> comma_text ,CREF<ARG2> first_text) const {
+		forceinline void template_write_text (VREF<ARG1> writer ,CREF<ARG2> gap_text ,CREF<ARG2> comma_text ,CREF<ARG2> first_text) const {
 			INDEX ix = mFirst.tail () ;
 			auto act = TRUE ;
 			if ifswitch (act) {
@@ -1127,27 +1151,27 @@ trait VALUESTRING_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		void write_text (VREF<TextWriter<STRA>> writer) const override {
-			write_text_impl (writer) ;
+			template_write_text (writer) ;
 		}
 
 		void write_text (VREF<TextWriter<STRW>> writer) const override {
-			write_text_impl (writer) ;
+			template_write_text (writer) ;
 		}
 
 		void write_text (VREF<TextWriter<STRU8>> writer) const override {
-			write_text_impl (writer) ;
+			template_write_text (writer) ;
 		}
 
 		void write_text (VREF<TextWriter<STRU16>> writer) const override {
-			write_text_impl (writer) ;
+			template_write_text (writer) ;
 		}
 
 		void write_text (VREF<TextWriter<STRU32>> writer) const override {
-			write_text_impl (writer) ;
+			template_write_text (writer) ;
 		}
 
 		template <class ARG1>
-		void write_text_impl (VREF<ARG1> writer) const {
+		forceinline void template_write_text (VREF<ARG1> writer) const {
 			for (auto &&i : iter (0 ,mSpace)) {
 				noop (i) ;
 				writer << slice ("0") ;

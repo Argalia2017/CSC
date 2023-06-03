@@ -1,5 +1,29 @@
 ﻿#pragma once
 
+/*
+MIT License
+
+Copyright (c) 2017 Argalia2017
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+*/
+
 #ifndef __CSC_ALGORITHM__
 #error "∑(っ°Д° ;)っ : require 'csc_algorithm.hpp'"
 #endif
@@ -117,7 +141,7 @@ trait DISJOINTTABLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 
 	struct NODE {
 		INDEX mUp ;
-		LENGTH mWidth ;
+		LENGTH mLength ;
 	} ;
 
 	class ImplHolder implement Holder {
@@ -134,7 +158,7 @@ trait DISJOINTTABLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			const auto r1x = invoke ([&] () {
 				NODE ret ;
 				ret.mUp = NONE ;
-				ret.mWidth = 0 ;
+				ret.mLength = 0 ;
 				return move (ret) ;
 			}) ;
 			mTable.fill (r1x) ;
@@ -146,7 +170,7 @@ trait DISJOINTTABLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				if (mTable[ret].mUp != NONE)
 					discard ;
 				mTable[ret].mUp = ret ;
-				mTable[ret].mWidth = 1 ;
+				mTable[ret].mLength = 1 ;
 			}
 			while (TRUE) {
 				if (mTable[ret].mUp == ret)
@@ -165,7 +189,7 @@ trait DISJOINTTABLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				if (ix == root)
 					break ;
 				mTable[iy].mUp = root ;
-				mTable[ix].mWidth -= mTable[iy].mWidth ;
+				mTable[ix].mLength -= mTable[iy].mLength ;
 			}
 		}
 
@@ -175,24 +199,26 @@ trait DISJOINTTABLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			if (ix == iy)
 				return ;
 			if ifswitch (TRUE) {
-				if (mTable[iy].mWidth <= mTable[ix].mWidth)
+				if (mTable[iy].mLength <= mTable[ix].mLength)
 					discard ;
 				swap (ix ,iy) ;
 			}
 			mTable[iy].mUp = ix ;
-			mTable[ix].mWidth += mTable[iy].mWidth ;
+			mTable[ix].mLength += mTable[iy].mLength ;
 		}
 
-		BitSet<> filter (CREF<INDEX> index) override {
-			BitSet<> ret = BitSet<> (mTable.size ()) ;
-			const auto r1x = lead (index) ;
+		Array<INDEX> filter (CREF<INDEX> index) override {
+			INDEX ix = lead (index) ;
+			Array<INDEX> ret = Array<INDEX> (mTable[ix].mLength) ;
+			INDEX jx = 0 ;
 			for (auto &&i : mTable.iter ()) {
 				if (mTable[i].mUp == NONE)
 					continue ;
-				INDEX ix = lead (i) ;
-				if (ix != r1x)
+				INDEX iy = lead (i) ;
+				if (iy != ix)
 					continue ;
-				ret.add (i) ;
+				ret[jx] = i ;
+				jx++ ;
 			}
 			return move (ret) ;
 		}
@@ -251,25 +277,20 @@ trait BINARYTABLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	using Holder = typename BINARYTABLE_HELP<DEPEND ,ALWAYS>::Holder ;
 
 	struct NODE {
-		INDEX mInto ;
-		INDEX mNext ;
-	} ;
-
-	struct BINARY {
 		INDEX mFirst ;
 		LENGTH mLength ;
 	} ;
 
 	class ImplHolder implement Holder {
 	protected:
-		Allocator<NODE ,VARIABLE> mTable ;
-		Array<BINARY> mBinary ;
+		Deque<ARRAY2<INDEX>> mTable ;
+		Array<NODE> mBinary ;
 		Array<INDEX> mJump ;
 
 	public:
 		void initialize (CREF<LENGTH> size_) override {
-			mTable = Allocator<NODE ,VARIABLE> (size_) ;
-			mBinary = Array<BINARY> (size_) ;
+			mTable = Deque<ARRAY2<INDEX>> (size_) ;
+			mBinary = Array<NODE> (size_) ;
 			clear () ;
 		}
 
@@ -277,7 +298,7 @@ trait BINARYTABLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			mTable.clear () ;
 			mJump = Array<INDEX> () ;
 			const auto r1x = invoke ([&] () {
-				BINARY ret ;
+				NODE ret ;
 				ret.mFirst = NONE ;
 				ret.mLength = 0 ;
 				return move (ret) ;
@@ -285,48 +306,20 @@ trait BINARYTABLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			mBinary.fill (r1x) ;
 		}
 
-		LENGTH count (CREF<INDEX> from_) const override {
-			return mBinary[from_].mLength ;
-		}
-
-		void link (CREF<INDEX> from_ ,CREF<INDEX> into_) override {
+		void joint (CREF<INDEX> index1 ,CREF<INDEX> index2) override {
 			assert (mJump.size () == 0) ;
-			INDEX ix = from_ ;
-			INDEX jx = find_table (mBinary[ix].mFirst ,into_) ;
-			if ifswitch (TRUE) {
-				if (jx != NONE)
-					discard ;
-				jx = mTable.alloc () ;
-				mTable[jx].mInto = into_ ;
-				mTable[jx].mNext = mBinary[ix].mFirst ;
-				mBinary[ix].mFirst = jx ;
-				mBinary[ix].mLength++ ;
-			}
-		}
-
-		INDEX find_table (CREF<INDEX> root ,CREF<INDEX> into_) const {
-			INDEX jx = root ;
-			while (TRUE) {
-				if (jx == NONE)
-					break ;
-				if (mTable[jx].mInto == into_)
-					return jx ;
-				jx = mTable[jx].mNext ;
-			}
-			return NONE ;
-		}
-
-		void joint (CREF<INDEX> from_ ,CREF<INDEX> into_) override {
-			if (from_ == into_)
+			const auto r1x = ARRAY2<INDEX> ({index1 ,index2}) ;
+			mTable.add (r1x) ;
+			if (index1 == index2)
 				return ;
-			link (from_ ,into_) ;
-			link (into_ ,from_) ;
+			const auto r2x = ARRAY2<INDEX> ({index2 ,index1}) ;
+			mTable.add (r2x) ;
 		}
 
-		BOOL get (CREF<INDEX> from_ ,CREF<INDEX> into_) const override {
+		BOOL get (CREF<INDEX> index1 ,CREF<INDEX> index2) const override {
 			assert (mTable.size () == 0) ;
-			INDEX ix = from_ ;
-			INDEX iy = into_ ;
+			INDEX ix = index1 ;
+			INDEX iy = index2 ;
 			if ifswitch (TRUE) {
 				if (mBinary[ix].mLength < mBinary[iy].mLength)
 					discard ;
@@ -334,18 +327,18 @@ trait BINARYTABLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			}
 			const auto r1x = mBinary[ix].mFirst ;
 			const auto r2x = r1x + mBinary[ix].mLength ;
-			INDEX jx = find_binary (r1x ,r2x ,iy) ;
-			return jx != NONE ;
+			const auto r3x = find_binary (r1x ,r2x ,iy) ;
+			return r3x != NONE ;
 		}
 
-		INDEX find_binary (CREF<INDEX> begin_ ,CREF<INDEX> end_ ,CREF<INDEX> into_) const {
+		INDEX find_binary (CREF<INDEX> begin_ ,CREF<INDEX> end_ ,CREF<INDEX> item) const {
 			INDEX ix = begin_ ;
 			INDEX iy = end_ - 1 ;
 			while (TRUE) {
 				if (ix >= iy)
 					break ;
 				INDEX iz = (ix + iy) / 2 ;
-				const auto r1x = operator_compr (into_ ,mJump[iz]) ;
+				const auto r1x = operator_compr (item ,mJump[iz]) ;
 				auto act = TRUE ;
 				if ifswitch (act) {
 					if (r1x != 0)
@@ -362,37 +355,51 @@ trait BINARYTABLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 					iy = iz - 1 ;
 				}
 			}
-			if (mJump[ix] == into_)
+			if (mJump[ix] == item)
 				return ix ;
 			return NONE ;
 		}
 
-		BitSet<> filter (CREF<INDEX> from_) const override {
+		Array<INDEX> filter (CREF<INDEX> index) const override {
 			assert (mTable.size () == 0) ;
-			BitSet<> ret = BitSet<> (mBinary.size ()) ;
-			INDEX ix = from_ ;
-			for (auto &&i : ret.iter ()) {
-				INDEX jx = mBinary[ix].mFirst + i ;
-				ret[mJump[jx]] = TRUE ;
+			Array<INDEX> ret = Array<INDEX> (mBinary[index].mLength) ;
+			INDEX ix = 0 ;
+			const auto r1x = mBinary[index].mFirst ;
+			while (TRUE) {
+				if (ix >= ret.size ())
+					break ;
+				ret[ix] = mJump[r1x + ix] ;
+				ix++ ;
 			}
 			return move (ret) ;
 		}
 
 		void remap () override {
 			mJump = Array<INDEX> (mTable.length ()) ;
-			INDEX ix = 0 ;
-			for (auto &&i : mBinary) {
-				INDEX jx = i.mFirst ;
-				i.mFirst = ix ;
-				while (TRUE) {
-					if (jx == NONE)
-						break ;
-					mJump[ix] = mTable[jx].mInto ;
-					ix++ ;
-					jx = mTable[jx].mNext ;
+			mJump.fill (NONE) ;
+			INDEX ix = NONE ;
+			INDEX jx = 0 ;
+			const auto r1x = SortProc::sort (mTable) ;
+			for (auto &&i : r1x.iter ()) {
+				if ifswitch (TRUE) {
+					if (ix == mTable[r1x[i]][0])
+						discard ;
+					ix = mTable[r1x[i]][0] ;
+					mBinary[ix].mFirst = jx ;
+					if (ix == 0)
+						discard ;
+					mBinary[ix - 1].mLength = jx - mBinary[ix - 1].mFirst ;
+				}
+				if ifswitch (TRUE) {
+					if (jx >= 1)
+						if (mJump[jx - 1] == mTable[r1x[i]][1])
+							discard ;
+					mJump[jx] = mTable[r1x[i]][1] ;
+					jx++ ;
 				}
 			}
-			mTable = Allocator<NODE ,VARIABLE> () ;
+			mBinary[ix].mLength = jx - mBinary[ix].mFirst ;
+			mTable = Deque<ARRAY2<INDEX>> () ;
 		}
 	} ;
 } ;

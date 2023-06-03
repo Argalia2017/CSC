@@ -1,5 +1,29 @@
 ﻿#pragma once
 
+/*
+MIT License
+
+Copyright (c) 2017 Argalia2017
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+*/
+
 #ifndef __CSC_IMAGE__
 #define __CSC_IMAGE__
 #endif
@@ -557,88 +581,6 @@ trait IMAGE_HELP<ITEM ,SIZE ,REQUIRE<ENUM_NOT<IS_SAME<SIZE ,PROPERTY>>>> {
 
 		inline Image operator~ () const {
 			return bnot () ;
-		}
-
-		Image transpose () const {
-			Image ret = Image (mCY ,mCX) ;
-			for (auto &&i : iter ())
-				ret.at (i.y ,i.x) = at (i) ;
-			return move (ret) ;
-		}
-
-		Image product (CREF<Image> that) const {
-			Image ret = Image (that.mCX ,mCY) ;
-			for (auto &&i : ret.iter ()) {
-				const auto r1x = invoke ([&] () {
-					ITEM ret = ITEM (0) ;
-					for (auto &&j : CSC::iter (0 ,mCX))
-						ret += at (j ,i.y) * that.at (i.x ,j) ;
-					return move (ret) ;
-				}) ;
-				ret.at (i) = r1x ;
-			}
-			return move (ret) ;
-		}
-
-		Image rotate (CREF<LENGTH> times) const {
-			Image ret ;
-			const auto r1x = (times % 4 + 4) % 4 ;
-			auto act = TRUE ;
-			if ifswitch (act) {
-				if (r1x == 0)
-					discard ;
-				ret = thiz ;
-			}
-			if ifswitch (act) {
-				if (r1x == 1)
-					discard ;
-				ret = Image (mCY ,mCX) ;
-				for (auto &&i : iter ()) {
-					INDEX ix = mCY - 1 - i.y ;
-					ret.at (ix ,i.x) = at (i) ;
-				}
-			}
-			if ifswitch (act) {
-				if (r1x == 2)
-					discard ;
-				ret = Image (mCX ,mCY) ;
-				for (auto &&i : iter ()) {
-					INDEX ix = mCX - 1 - i.x ;
-					INDEX iy = mCY - 1 - i.y ;
-					ret.at (ix ,iy) = at (i) ;
-				}
-			}
-			if ifswitch (act) {
-				if (r1x == 3)
-					discard ;
-				ret = Image (mCY ,mCX) ;
-				for (auto &&i : iter ()) {
-					INDEX iy = mCX - 1 - i.x ;
-					ret.at (i.y ,iy) = at (i) ;
-				}
-			}
-			return move (ret) ;
-		}
-
-		Image convolute (CREF<Image> kernel) const {
-			const auto r1x = kernel.cx () / 2 ;
-			assert (kernel.cx () == r1x * 2 + 1) ;
-			assert (kernel.cy () == r1x * 2 + 1) ;
-			Image ret = Image (mCX ,mCY) ;
-			for (auto &&i : iter ()) {
-				auto rax = ITEM (0) ;
-				for (auto &&j : kernel.iter ()) {
-					INDEX ix = i.x + j.x - r1x ;
-					INDEX iy = i.y + j.y - r1x ;
-					ix = MathProc::clamp (ix ,ZERO ,mCX - 1) ;
-					iy = MathProc::clamp (iy ,ZERO ,mCY - 1) ;
-					INDEX jx = kernel.mCX - 1 - j.x ;
-					INDEX jy = kernel.mCY - 1 - j.y ;
-					rax += at (ix ,iy) * kernel.at (jx ,jy) ;
-				}
-				ret.at (i) = rax ;
-			}
-			return move (ret) ;
 		}
 	} ;
 } ;

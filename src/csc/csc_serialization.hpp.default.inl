@@ -1,5 +1,29 @@
 ﻿#pragma once
 
+/*
+MIT License
+
+Copyright (c) 2017 Argalia2017
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+*/
+
 #ifndef __CSC_SERIALIZATION__
 #error "∑(っ°Д° ;)っ : require 'csc_serialization.hpp'"
 #endif
@@ -110,29 +134,31 @@ trait XMLPARSER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			return factory (ix) ;
 		}
 
-		Array<XmlParser> child_array () const override {
+		Array<XmlParser> children () const override {
 			Array<XmlParser> ret ;
 			if ifswitch (TRUE) {
 				if ifnot (available ())
 					discard ;
-				const auto r1x = mHeap->mTree[mIndex].mArraySet.map_all () ;
+				auto &&tmp = mHeap->mTree[mIndex].mArraySet ;
+				const auto r1x = IterArray<INDEX>::make (tmp.iter ()) ;
 				ret = Array<XmlParser> (r1x.length ()) ;
 				for (auto &&i : ret.iter ())
-					ret[i] = factory (r1x[i]) ;
+					ret[i] = factory (tmp.map_get (r1x[i])) ;
 			}
 			return move (ret) ;
 		}
 
-		Array<XmlParser> child_array (CREF<LENGTH> size_) const override {
+		Array<XmlParser> children (CREF<LENGTH> size_) const override {
 			Array<XmlParser> ret = Array<XmlParser> (size_) ;
 			if ifswitch (TRUE) {
 				if ifnot (available ())
 					discard ;
-				const auto r1x = mHeap->mTree[mIndex].mArraySet.map_all () ;
+				auto &&tmp = mHeap->mTree[mIndex].mArraySet ;
+				const auto r1x = IterArray<INDEX>::make (tmp.iter ()) ;
 				for (auto &&i : ret.iter ()) {
 					if (i >= r1x.size ())
 						break ;
-					ret[i] = factory (r1x[i]) ;
+					ret[i] = factory (tmp.map_get (r1x[i])) ;
 				}
 			}
 			return move (ret) ;
@@ -188,63 +214,63 @@ trait XMLPARSER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		BOOL fetch (CREF<BOOL> def) const override {
-			return fetch_impl (def ,string_parse[TYPEAS<BOOL ,STRU8>::expr]) ;
+			return template_fetch (def ,string_parse[TYPEAS<BOOL ,STRU8>::expr]) ;
 		}
 
 		VAL32 fetch (CREF<VAL32> def) const override {
-			return fetch_impl (def ,string_parse[TYPEAS<VAL32 ,STRU8>::expr]) ;
+			return template_fetch (def ,string_parse[TYPEAS<VAL32 ,STRU8>::expr]) ;
 		}
 
 		VAL64 fetch (CREF<VAL64> def) const override {
-			return fetch_impl (def ,string_parse[TYPEAS<VAL64 ,STRU8>::expr]) ;
+			return template_fetch (def ,string_parse[TYPEAS<VAL64 ,STRU8>::expr]) ;
 		}
 
 		SINGLE fetch (CREF<SINGLE> def) const override {
-			return fetch_impl (def ,string_parse[TYPEAS<SINGLE ,STRU8>::expr]) ;
+			return template_fetch (def ,string_parse[TYPEAS<SINGLE ,STRU8>::expr]) ;
 		}
 
 		DOUBLE fetch (CREF<DOUBLE> def) const override {
-			return fetch_impl (def ,string_parse[TYPEAS<DOUBLE ,STRU8>::expr]) ;
+			return template_fetch (def ,string_parse[TYPEAS<DOUBLE ,STRU8>::expr]) ;
 		}
 
 		BYTE fetch (CREF<BYTE> def) const override {
-			return fetch_impl (def ,string_parse[TYPEAS<BYTE ,STRU8>::expr]) ;
+			return template_fetch (def ,string_parse[TYPEAS<BYTE ,STRU8>::expr]) ;
 		}
 
 		WORD fetch (CREF<WORD> def) const override {
-			return fetch_impl (def ,string_parse[TYPEAS<WORD ,STRU8>::expr]) ;
+			return template_fetch (def ,string_parse[TYPEAS<WORD ,STRU8>::expr]) ;
 		}
 
 		CHAR fetch (CREF<CHAR> def) const override {
-			return fetch_impl (def ,string_parse[TYPEAS<CHAR ,STRU8>::expr]) ;
+			return template_fetch (def ,string_parse[TYPEAS<CHAR ,STRU8>::expr]) ;
 		}
 
 		DATA fetch (CREF<DATA> def) const override {
-			return fetch_impl (def ,string_parse[TYPEAS<DATA ,STRU8>::expr]) ;
+			return template_fetch (def ,string_parse[TYPEAS<DATA ,STRU8>::expr]) ;
 		}
 
 		String<STRA> fetch (CREF<String<STRA>> def) const override {
-			return fetch_impl (def ,string_cvt[TYPEAS<STRA ,STRU8>::expr]) ;
+			return template_fetch (def ,string_cvt[TYPEAS<STRA ,STRU8>::expr]) ;
 		}
 
 		String<STRW> fetch (CREF<String<STRW>> def) const override {
-			return fetch_impl (def ,string_cvt[TYPEAS<STRW ,STRU8>::expr]) ;
+			return template_fetch (def ,string_cvt[TYPEAS<STRW ,STRU8>::expr]) ;
 		}
 
 		String<STRU8> fetch (CREF<String<STRU8>> def) const override {
-			return fetch_impl (def ,string_cvt[TYPEAS<STRU8 ,STRU8>::expr]) ;
+			return template_fetch (def ,string_cvt[TYPEAS<STRU8 ,STRU8>::expr]) ;
 		}
 
 		String<STRU16> fetch (CREF<String<STRU16>> def) const override {
-			return fetch_impl (def ,string_cvt[TYPEAS<STRU16 ,STRU8>::expr]) ;
+			return template_fetch (def ,string_cvt[TYPEAS<STRU16 ,STRU8>::expr]) ;
 		}
 
 		String<STRU32> fetch (CREF<String<STRU32>> def) const override {
-			return fetch_impl (def ,string_cvt[TYPEAS<STRU32 ,STRU8>::expr]) ;
+			return template_fetch (def ,string_cvt[TYPEAS<STRU32 ,STRU8>::expr]) ;
 		}
 
 		template <class ARG1 ,class ARG2>
-		ARG1 fetch_impl (CREF<ARG1> def ,CREF<ARG2> cvt) const {
+		forceinline ARG1 template_fetch (CREF<ARG1> def ,CREF<ARG2> cvt) const {
 			auto rax = Optional<ARG1> () ;
 			try_invoke ([&] () {
 				rax = Optional<ARG1>::make (cvt (fetch ())) ;
@@ -559,11 +585,16 @@ trait XMLPARSER_COMBINATION_HELP<DEPEND ,ALWAYS> {
 	using ImplHolder = typename XMLPARSER_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	using XmlParser = typename XMLPARSER_HELP<DEPEND ,ALWAYS>::XmlParser ;
 
-	using NODE_CLAZZ_NULL = RANK0 ;
-	using NODE_CLAZZ_STRING = RANK1 ;
-	using NODE_CLAZZ_ARRAY = RANK2 ;
-	using NODE_CLAZZ_OBJECT = RANK3 ;
-	using NODE_CLAZZ_FINAL = RANK5 ;
+	struct NODE_CLAZZ {
+		enum {
+			Null ,
+			String ,
+			Array ,
+			Object ,
+			Final ,
+			EnumSize
+		} ;
+	} ;
 
 	struct FOUND_NODE {
 		String<STRU8> mName ;
@@ -660,13 +691,13 @@ trait XMLPARSER_COMBINATION_HELP<DEPEND ,ALWAYS> {
 		FLAG node_type (CREF<XmlParser> node) const {
 			auto &&tmp = node.member (mTypeString) ;
 			if (tmp == mObjectClazzString)
-				return NODE_CLAZZ_OBJECT::expr ;
+				return NODE_CLAZZ::Object ;
 			if (tmp == mArrayClazzString)
-				return NODE_CLAZZ_ARRAY::expr ;
+				return NODE_CLAZZ::Array ;
 			if (tmp == mFinalClazzString)
-				return NODE_CLAZZ_FINAL::expr ;
+				return NODE_CLAZZ::Final ;
 			assume (tmp.empty ()) ;
-			return NODE_CLAZZ_FINAL::expr ;
+			return NODE_CLAZZ::Final ;
 		}
 
 		void generate () {
@@ -678,12 +709,12 @@ trait XMLPARSER_COMBINATION_HELP<DEPEND ,ALWAYS> {
 				for (auto &&i : mTempNode.mBaseNode) {
 					auto act = TRUE ;
 					if ifswitch (act) {
-						if (mTempNode.mClazz != NODE_CLAZZ_OBJECT::expr)
+						if (mTempNode.mClazz != NODE_CLAZZ::Object)
 							discard ;
 						update_found_object_node (i) ;
 					}
 					if ifswitch (act) {
-						if (mTempNode.mClazz != NODE_CLAZZ_ARRAY::expr)
+						if (mTempNode.mClazz != NODE_CLAZZ::Array)
 							discard ;
 						update_found_array_node (i) ;
 					}
@@ -704,7 +735,7 @@ trait XMLPARSER_COMBINATION_HELP<DEPEND ,ALWAYS> {
 					continue ;
 				mNodeStack[jx].mBaseNode.add (i) ;
 			}
-			mNodeStack[jx].mClazz = NODE_CLAZZ_OBJECT::expr ;
+			mNodeStack[jx].mClazz = NODE_CLAZZ::Object ;
 			mNodeStack[jx].mParent = mRoot ;
 		}
 
@@ -728,7 +759,7 @@ trait XMLPARSER_COMBINATION_HELP<DEPEND ,ALWAYS> {
 					if (ix == NONE)
 						discard ;
 					assume (mFoundNode[ix].mClazz == r2x) ;
-					assume (r2x != NODE_CLAZZ_FINAL::expr) ;
+					assume (r2x != NODE_CLAZZ::Final) ;
 				}
 				INDEX iy = ix ;
 				if ifswitch (TRUE) {
@@ -782,7 +813,7 @@ trait XMLPARSER_COMBINATION_HELP<DEPEND ,ALWAYS> {
 					if (ix == NONE)
 						discard ;
 					assume (mFoundNode[ix].mName == r1x) ;
-					assume (r2x != NODE_CLAZZ_FINAL::expr) ;
+					assume (r2x != NODE_CLAZZ::Final) ;
 				}
 				INDEX iy = mFoundNode.insert () ;
 				mFoundNodeSet.add (r1x ,iy) ;
@@ -891,10 +922,15 @@ trait JSONPARSER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		Array<NODE> mTree ;
 	} ;
 
-	using NODE_CLAZZ_NULL = RANK0 ;
-	using NODE_CLAZZ_STRING = RANK1 ;
-	using NODE_CLAZZ_ARRAY = RANK2 ;
-	using NODE_CLAZZ_OBJECT = RANK3 ;
+	struct NODE_CLAZZ {
+		enum {
+			Null ,
+			String ,
+			Array ,
+			Object ,
+			EnumSize
+		} ;
+	} ;
 
 	class ImplHolder implement Holder {
 	protected:
@@ -934,21 +970,21 @@ trait JSONPARSER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				return FALSE ;
 			if (mIndex == NONE)
 				return FALSE ;
-			if (mHeap->mTree[mIndex].mClazz == NODE_CLAZZ_NULL::expr)
+			if (mHeap->mTree[mIndex].mClazz == NODE_CLAZZ::Null)
 				return FALSE ;
 			return TRUE ;
 		}
 
 		BOOL string_type () const override {
-			return mHeap->mTree[mIndex].mClazz == NODE_CLAZZ_STRING::expr ;
+			return mHeap->mTree[mIndex].mClazz == NODE_CLAZZ::String ;
 		}
 
 		BOOL array_type () const override {
-			return mHeap->mTree[mIndex].mClazz == NODE_CLAZZ_ARRAY::expr ;
+			return mHeap->mTree[mIndex].mClazz == NODE_CLAZZ::Array ;
 		}
 
 		BOOL object_type () const override {
-			return mHeap->mTree[mIndex].mClazz == NODE_CLAZZ_OBJECT::expr ;
+			return mHeap->mTree[mIndex].mClazz == NODE_CLAZZ::Object ;
 		}
 
 		JsonParser root () const override {
@@ -984,33 +1020,35 @@ trait JSONPARSER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			return factory (ix) ;
 		}
 
-		Array<JsonParser> child_array () const override {
+		Array<JsonParser> children () const override {
 			Array<JsonParser> ret ;
 			if ifswitch (TRUE) {
 				if ifnot (available ())
 					discard ;
 				if ifnot (array_type ())
 					discard ;
-				const auto r1x = mHeap->mTree[mIndex].mArraySet.map_all () ;
+				auto &&tmp = mHeap->mTree[mIndex].mArraySet ;
+				const auto r1x = IterArray<INDEX>::make (tmp.iter ()) ;
 				ret = Array<JsonParser> (r1x.length ()) ;
 				for (auto &&i : ret.iter ())
-					ret[i] = factory (r1x[i]) ;
+					ret[i] = factory (tmp.map_get (r1x[i])) ;
 			}
 			return move (ret) ;
 		}
 
-		Array<JsonParser> child_array (CREF<LENGTH> size_) const override {
+		Array<JsonParser> children (CREF<LENGTH> size_) const override {
 			Array<JsonParser> ret = Array<JsonParser> (size_) ;
 			if ifswitch (TRUE) {
 				if ifnot (available ())
 					discard ;
 				if ifnot (array_type ())
 					discard ;
-				const auto r1x = mHeap->mTree[mIndex].mArraySet.map_all () ;
+				auto &&tmp = mHeap->mTree[mIndex].mArraySet ;
+				const auto r1x = IterArray<INDEX>::make (tmp.iter ()) ;
 				for (auto &&i : ret.iter ()) {
 					if (i >= r1x.size ())
 						break ;
-					ret[i] = factory (r1x[i]) ;
+					ret[i] = factory (tmp.map_get (r1x[i])) ;
 				}
 			}
 			return move (ret) ;
@@ -1045,63 +1083,63 @@ trait JSONPARSER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		BOOL fetch (CREF<BOOL> def) const override {
-			return fetch_impl (def ,string_parse[TYPEAS<BOOL ,STRU8>::expr]) ;
+			return template_fetch (def ,string_parse[TYPEAS<BOOL ,STRU8>::expr]) ;
 		}
 
 		VAL32 fetch (CREF<VAL32> def) const override {
-			return fetch_impl (def ,string_parse[TYPEAS<VAL32 ,STRU8>::expr]) ;
+			return template_fetch (def ,string_parse[TYPEAS<VAL32 ,STRU8>::expr]) ;
 		}
 
 		VAL64 fetch (CREF<VAL64> def) const override {
-			return fetch_impl (def ,string_parse[TYPEAS<VAL64 ,STRU8>::expr]) ;
+			return template_fetch (def ,string_parse[TYPEAS<VAL64 ,STRU8>::expr]) ;
 		}
 
 		SINGLE fetch (CREF<SINGLE> def) const override {
-			return fetch_impl (def ,string_parse[TYPEAS<SINGLE ,STRU8>::expr]) ;
+			return template_fetch (def ,string_parse[TYPEAS<SINGLE ,STRU8>::expr]) ;
 		}
 
 		DOUBLE fetch (CREF<DOUBLE> def) const override {
-			return fetch_impl (def ,string_parse[TYPEAS<DOUBLE ,STRU8>::expr]) ;
+			return template_fetch (def ,string_parse[TYPEAS<DOUBLE ,STRU8>::expr]) ;
 		}
 
 		BYTE fetch (CREF<BYTE> def) const override {
-			return fetch_impl (def ,string_parse[TYPEAS<BYTE ,STRU8>::expr]) ;
+			return template_fetch (def ,string_parse[TYPEAS<BYTE ,STRU8>::expr]) ;
 		}
 
 		WORD fetch (CREF<WORD> def) const override {
-			return fetch_impl (def ,string_parse[TYPEAS<WORD ,STRU8>::expr]) ;
+			return template_fetch (def ,string_parse[TYPEAS<WORD ,STRU8>::expr]) ;
 		}
 
 		CHAR fetch (CREF<CHAR> def) const override {
-			return fetch_impl (def ,string_parse[TYPEAS<CHAR ,STRU8>::expr]) ;
+			return template_fetch (def ,string_parse[TYPEAS<CHAR ,STRU8>::expr]) ;
 		}
 
 		DATA fetch (CREF<DATA> def) const override {
-			return fetch_impl (def ,string_parse[TYPEAS<DATA ,STRU8>::expr]) ;
+			return template_fetch (def ,string_parse[TYPEAS<DATA ,STRU8>::expr]) ;
 		}
 
 		String<STRA> fetch (CREF<String<STRA>> def) const override {
-			return fetch_impl (def ,string_cvt[TYPEAS<STRA ,STRU8>::expr]) ;
+			return template_fetch (def ,string_cvt[TYPEAS<STRA ,STRU8>::expr]) ;
 		}
 
 		String<STRW> fetch (CREF<String<STRW>> def) const override {
-			return fetch_impl (def ,string_cvt[TYPEAS<STRW ,STRU8>::expr]) ;
+			return template_fetch (def ,string_cvt[TYPEAS<STRW ,STRU8>::expr]) ;
 		}
 
 		String<STRU8> fetch (CREF<String<STRU8>> def) const override {
-			return fetch_impl (def ,string_cvt[TYPEAS<STRU8 ,STRU8>::expr]) ;
+			return template_fetch (def ,string_cvt[TYPEAS<STRU8 ,STRU8>::expr]) ;
 		}
 
 		String<STRU16> fetch (CREF<String<STRU16>> def) const override {
-			return fetch_impl (def ,string_cvt[TYPEAS<STRU16 ,STRU8>::expr]) ;
+			return template_fetch (def ,string_cvt[TYPEAS<STRU16 ,STRU8>::expr]) ;
 		}
 
 		String<STRU32> fetch (CREF<String<STRU32>> def) const override {
-			return fetch_impl (def ,string_cvt[TYPEAS<STRU32 ,STRU8>::expr]) ;
+			return template_fetch (def ,string_cvt[TYPEAS<STRU32 ,STRU8>::expr]) ;
 		}
 
 		template <class ARG1 ,class ARG2>
-		ARG1 fetch_impl (CREF<ARG1> def ,CREF<ARG2> cvt) const {
+		forceinline ARG1 template_fetch (CREF<ARG1> def ,CREF<ARG2> cvt) const {
 			auto rax = Optional<ARG1> () ;
 			try_invoke ([&] () {
 				rax = Optional<ARG1>::make (cvt (fetch ())) ;
@@ -1120,13 +1158,9 @@ trait JSONPARSER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 	using NODE = typename JSONPARSER_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::NODE ;
 	using HEAP = typename JSONPARSER_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::HEAP ;
 	using JsonParser = typename JSONPARSER_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::JsonParser ;
+	using NODE_CLAZZ = typename JSONPARSER_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::NODE_CLAZZ ;
 
 	using COUNTER_MAX_DEPTH = ENUMAS<VAL ,256> ;
-
-	using NODE_CLAZZ_NULL = typename JSONPARSER_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::NODE_CLAZZ_NULL ;
-	using NODE_CLAZZ_STRING = typename JSONPARSER_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::NODE_CLAZZ_STRING ;
-	using NODE_CLAZZ_ARRAY = typename JSONPARSER_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::NODE_CLAZZ_ARRAY ;
-	using NODE_CLAZZ_OBJECT = typename JSONPARSER_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::NODE_CLAZZ_OBJECT ;
 
 	class Serialization {
 	protected:
@@ -1265,7 +1299,7 @@ trait JSONPARSER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 				mTree[ix].mName = move (mLastString) ;
 				read_shift_e1 () ;
 				mTree[ix].mValue = move (mLastString) ;
-				mTree[ix].mClazz = NODE_CLAZZ_STRING::expr ;
+				mTree[ix].mClazz = NODE_CLAZZ::String ;
 				mTree[ix].mParent = curr ;
 				mTree[ix].mBrother = NONE ;
 				mTree[ix].mChild = NONE ;
@@ -1277,7 +1311,7 @@ trait JSONPARSER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 				mTree[ix].mName = move (mLastString) ;
 				read_shift_e2 () ;
 				mTree[ix].mValue = move (mLastString) ;
-				mTree[ix].mClazz = NODE_CLAZZ_STRING::expr ;
+				mTree[ix].mClazz = NODE_CLAZZ::String ;
 				mTree[ix].mParent = curr ;
 				mTree[ix].mBrother = NONE ;
 				mTree[ix].mChild = NONE ;
@@ -1288,7 +1322,7 @@ trait JSONPARSER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 				ix = mTree.insert () ;
 				mTree[ix].mName = move (mLastString) ;
 				read_shift_e2 () ;
-				mTree[ix].mClazz = NODE_CLAZZ_NULL::expr ;
+				mTree[ix].mClazz = NODE_CLAZZ::Null ;
 				mTree[ix].mParent = curr ;
 				mTree[ix].mBrother = NONE ;
 				mTree[ix].mChild = NONE ;
@@ -1300,7 +1334,7 @@ trait JSONPARSER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 				mTree[ix].mName = move (mLastString) ;
 				read_shift_e3 () ;
 				mTree[ix].mValue = move (mLastString) ;
-				mTree[ix].mClazz = NODE_CLAZZ_STRING::expr ;
+				mTree[ix].mClazz = NODE_CLAZZ::String ;
 				mTree[ix].mParent = curr ;
 				mTree[ix].mBrother = NONE ;
 				mTree[ix].mChild = NONE ;
@@ -1376,7 +1410,7 @@ trait JSONPARSER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 			INDEX ix = mTree.insert () ;
 			mTree[ix].mName = move (mLastString) ;
 			mTree[ix].mArraySet = mArraySet.share () ;
-			mTree[ix].mClazz = NODE_CLAZZ_ARRAY::expr ;
+			mTree[ix].mClazz = NODE_CLAZZ::Array ;
 			mTree[ix].mParent = curr ;
 			mTree[ix].mBrother = NONE ;
 			mTree[ix].mChild = NONE ;
@@ -1436,7 +1470,7 @@ trait JSONPARSER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 			INDEX ix = mTree.insert () ;
 			mTree[ix].mName = move (mLastString) ;
 			mTree[ix].mObjectSet = mObjectSet.share () ;
-			mTree[ix].mClazz = NODE_CLAZZ_OBJECT::expr ;
+			mTree[ix].mClazz = NODE_CLAZZ::Object ;
 			mTree[ix].mParent = curr ;
 			mTree[ix].mBrother = NONE ;
 			mTree[ix].mChild = NONE ;
@@ -1493,8 +1527,8 @@ trait PLYREADER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 
 	struct PROPERTY {
 		String<STRU8> mName ;
-		FLAG mType ;
-		FLAG mListType ;
+		FLAG mClazz ;
+		FLAG mListClazz ;
 	} ;
 
 	struct ELEMENT {
@@ -1514,20 +1548,27 @@ trait PLYREADER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	using INDEX2X = Tuple<INDEX ,INDEX> ;
 
 	struct BODY {
-		FLAG mType ;
+		FLAG mClazz ;
 		Array<INDEX2X> mLine ;
 	} ;
 
-	using BODY_TYPE_NULL = RANK0 ;
-	using BODY_TYPE_BOOL = RANK1 ;
-	using BODY_TYPE_VAL32 = RANK2 ;
-	using BODY_TYPE_VAL64 = RANK3 ;
-	using BODY_TYPE_SINGLE = RANK4 ;
-	using BODY_TYPE_DOUBLE = RANK5 ;
-	using BODY_TYPE_BYTE = RANK6 ;
-	using BODY_TYPE_WORD = RANK7 ;
-	using BODY_TYPE_CHAR = RANK8 ;
-	using BODY_TYPE_DATA = RANK9 ;
+	struct BODY_CLAZZ {
+		enum {
+			Null ,
+			Bool ,
+			Val8 ,
+			Val16 ,
+			Val32 ,
+			Val64 ,
+			Single ,
+			Double ,
+			Byte ,
+			Word ,
+			Char ,
+			Data ,
+			EnumSize
+		} ;
+	} ;
 
 	struct GUIDE {
 		INDEX mElement ;
@@ -1535,7 +1576,7 @@ trait PLYREADER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		INDEX mPropertyIndex ;
 		INDEX mLineIndex ;
 		INDEX mPlyIndex ;
-		FLAG mPlyType ;
+		FLAG mPlyClazz ;
 	} ;
 
 	class ImplHolder implement Holder {
@@ -1632,64 +1673,72 @@ trait PLYREADER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				assume (FALSE) ;
 			}
 			if ifswitch (TRUE) {
-				mGuide.mPlyType = mHeader.mElementList[ix].mPropertyList[jx].mListType ;
-				if (mGuide.mPlyType != BODY_TYPE_NULL::expr)
+				mGuide.mPlyClazz = mHeader.mElementList[ix].mPropertyList[jx].mListClazz ;
+				if (mGuide.mPlyClazz != BODY_CLAZZ::Null)
 					discard ;
-				mGuide.mPlyType = mHeader.mElementList[ix].mPropertyList[jx].mType ;
+				mGuide.mPlyClazz = mHeader.mElementList[ix].mPropertyList[jx].mClazz ;
 			}
 		}
 
 		void read (VREF<BOOL> item) override {
 			guide_jmp () ;
-			assume (mGuide.mPlyType == BODY_TYPE_BOOL::expr) ;
+			assume (mGuide.mPlyClazz == BODY_CLAZZ::Bool) ;
 			item = BOOL (mPlyBYTE[mGuide.mPlyIndex] != BYTE (0X00)) ;
 		}
 
 		void read (VREF<VAL32> item) override {
 			guide_jmp () ;
-			assume (mGuide.mPlyType == BODY_TYPE_VAL32::expr) ;
+			assume (mGuide.mPlyClazz == BODY_CLAZZ::Val32) ;
 			item = bitwise[TYPEAS<VAL32>::expr] (mPlyCHAR[mGuide.mPlyIndex]) ;
 		}
 
 		void read (VREF<VAL64> item) override {
 			guide_jmp () ;
-			assume (mGuide.mPlyType == BODY_TYPE_VAL64::expr) ;
+			assume (mGuide.mPlyClazz == BODY_CLAZZ::Val64) ;
 			item = bitwise[TYPEAS<VAL64>::expr] (mPlyDATA[mGuide.mPlyIndex]) ;
 		}
 
 		void read (VREF<SINGLE> item) override {
 			guide_jmp () ;
-			assume (mGuide.mPlyType == BODY_TYPE_SINGLE::expr) ;
+			assume (mGuide.mPlyClazz == BODY_CLAZZ::Single) ;
 			item = bitwise[TYPEAS<SINGLE>::expr] (mPlyCHAR[mGuide.mPlyIndex]) ;
 		}
 
 		void read (VREF<DOUBLE> item) override {
 			guide_jmp () ;
-			assume (mGuide.mPlyType == BODY_TYPE_DOUBLE::expr) ;
+			assume (mGuide.mPlyClazz == BODY_CLAZZ::Double) ;
 			item = bitwise[TYPEAS<DOUBLE>::expr] (mPlyDATA[mGuide.mPlyIndex]) ;
 		}
 
 		void read (VREF<BYTE> item) override {
 			guide_jmp () ;
-			assume (mGuide.mPlyType == BODY_TYPE_BYTE::expr) ;
+			if ifswitch (TRUE) {
+				if (mGuide.mPlyClazz == BODY_CLAZZ::Val8)
+					discard ;
+				assume (mGuide.mPlyClazz == BODY_CLAZZ::Byte) ;
+			}
 			item = mPlyBYTE[mGuide.mPlyIndex] ;
 		}
 
 		void read (VREF<WORD> item) override {
 			guide_jmp () ;
-			assume (mGuide.mPlyType == BODY_TYPE_WORD::expr) ;
+			if ifswitch (TRUE) {
+				if (mGuide.mPlyClazz == BODY_CLAZZ::Val16)
+					discard ;
+				assume (mGuide.mPlyClazz == BODY_CLAZZ::Word) ;
+			}
 			item = mPlyWORD[mGuide.mPlyIndex] ;
 		}
 
 		void read (VREF<CHAR> item) override {
 			guide_jmp () ;
-			assume (mGuide.mPlyType == BODY_TYPE_CHAR::expr) ;
+			assume (mGuide.mPlyClazz == BODY_CLAZZ::Char) ;
 			item = mPlyCHAR[mGuide.mPlyIndex] ;
 		}
 
 		void read (VREF<DATA> item) override {
 			guide_jmp () ;
-			assume (mGuide.mPlyType == BODY_TYPE_DATA::expr) ;
+			assume (mGuide.mPlyClazz == BODY_CLAZZ::Data) ;
 			item = mPlyDATA[mGuide.mPlyIndex] ;
 		}
 	} ;
@@ -1702,17 +1751,7 @@ trait PLYREADER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 	using HEADER = typename PLYREADER_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::HEADER ;
 	using BODY = typename PLYREADER_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::BODY ;
 	using INDEX2X = typename PLYREADER_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::INDEX2X ;
-
-	using BODY_TYPE_NULL = typename PLYREADER_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::BODY_TYPE_NULL ;
-	using BODY_TYPE_BOOL = typename PLYREADER_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::BODY_TYPE_BOOL ;
-	using BODY_TYPE_VAL32 = typename PLYREADER_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::BODY_TYPE_VAL32 ;
-	using BODY_TYPE_VAL64 = typename PLYREADER_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::BODY_TYPE_VAL64 ;
-	using BODY_TYPE_SINGLE = typename PLYREADER_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::BODY_TYPE_SINGLE ;
-	using BODY_TYPE_DOUBLE = typename PLYREADER_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::BODY_TYPE_DOUBLE ;
-	using BODY_TYPE_BYTE = typename PLYREADER_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::BODY_TYPE_BYTE ;
-	using BODY_TYPE_WORD = typename PLYREADER_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::BODY_TYPE_WORD ;
-	using BODY_TYPE_CHAR = typename PLYREADER_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::BODY_TYPE_CHAR ;
-	using BODY_TYPE_DATA = typename PLYREADER_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::BODY_TYPE_DATA ;
+	using BODY_CLAZZ = typename PLYREADER_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::BODY_CLAZZ ;
 
 	class Serialization {
 	protected:
@@ -1805,21 +1844,32 @@ trait PLYREADER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 			INDEX iy = NONE ;
 			const auto r1x = invoke ([&] () {
 				Set<String<STRU8>> ret = Set<String<STRU8>> (100) ;
-				ret.add (Slice<STRU8> ("float") ,BODY_TYPE_SINGLE::expr) ;
-				ret.add (Slice<STRU8> ("double") ,BODY_TYPE_DOUBLE::expr) ;
-				ret.add (Slice<STRU8> ("int") ,BODY_TYPE_VAL32::expr) ;
-				ret.add (Slice<STRU8> ("int64") ,BODY_TYPE_VAL64::expr) ;
-				ret.add (Slice<STRU8> ("uchar") ,BODY_TYPE_BYTE::expr) ;
-				ret.add (Slice<STRU8> ("uint16") ,BODY_TYPE_WORD::expr) ;
-				ret.add (Slice<STRU8> ("uint32") ,BODY_TYPE_CHAR::expr) ;
-				ret.add (Slice<STRU8> ("uint64") ,BODY_TYPE_DATA::expr) ;
+				ret.add (Slice<STRU8> ("float") ,BODY_CLAZZ::Single) ;
+				ret.add (Slice<STRU8> ("single") ,BODY_CLAZZ::Single) ;
+				ret.add (Slice<STRU8> ("double") ,BODY_CLAZZ::Double) ;
+				ret.add (Slice<STRU8> ("char") ,BODY_CLAZZ::Val8) ;
+				ret.add (Slice<STRU8> ("uchar") ,BODY_CLAZZ::Val8) ;
+				ret.add (Slice<STRU8> ("short") ,BODY_CLAZZ::Val16) ;
+				ret.add (Slice<STRU8> ("ushort") ,BODY_CLAZZ::Val16) ;
+				ret.add (Slice<STRU8> ("int") ,BODY_CLAZZ::Val32) ;
+				ret.add (Slice<STRU8> ("uint") ,BODY_CLAZZ::Val32) ;
+				ret.add (Slice<STRU8> ("int32") ,BODY_CLAZZ::Val32) ;
+				ret.add (Slice<STRU8> ("int64") ,BODY_CLAZZ::Val64) ;
+				ret.add (Slice<STRU8> ("uint8") ,BODY_CLAZZ::Byte) ;
+				ret.add (Slice<STRU8> ("uint16") ,BODY_CLAZZ::Word) ;
+				ret.add (Slice<STRU8> ("uint32") ,BODY_CLAZZ::Char) ;
+				ret.add (Slice<STRU8> ("uint64") ,BODY_CLAZZ::Data) ;
 				return move (ret) ;
 			}) ;
 			const auto r2x = invoke ([&] () {
 				Set<String<STRU8>> ret = Set<String<STRU8>> (100) ;
-				ret.add (Slice<STRU8> ("uchar") ,BODY_TYPE_BYTE::expr) ;
-				ret.add (Slice<STRU8> ("uint16") ,BODY_TYPE_WORD::expr) ;
-				ret.add (Slice<STRU8> ("uint32") ,BODY_TYPE_CHAR::expr) ;
+				ret.add (Slice<STRU8> ("char") ,BODY_CLAZZ::Byte) ;
+				ret.add (Slice<STRU8> ("uchar") ,BODY_CLAZZ::Byte) ;
+				ret.add (Slice<STRU8> ("short") ,BODY_CLAZZ::Word) ;
+				ret.add (Slice<STRU8> ("ushort") ,BODY_CLAZZ::Word) ;
+				ret.add (Slice<STRU8> ("int") ,BODY_CLAZZ::Char) ;
+				ret.add (Slice<STRU8> ("uint") ,BODY_CLAZZ::Char) ;
+				ret.add (Slice<STRU8> ("int32") ,BODY_CLAZZ::Char) ;
 				return move (ret) ;
 			}) ;
 			while (TRUE) {
@@ -1855,12 +1905,12 @@ trait PLYREADER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 					mReader >> HINT_WORD >> mLastString ;
 					const auto r4x = r2x.map (mLastString) ;
 					assume (r4x != NONE) ;
-					mHeader.mElementList[ix].mPropertyList[iy].mType = r4x ;
+					mHeader.mElementList[ix].mPropertyList[iy].mClazz = r4x ;
 					mReader >> SKIP_GAP_SPACE ;
 					mReader >> HINT_WORD >> mLastString ;
 					const auto r5x = r1x.map (mLastString) ;
 					assume (r5x != NONE) ;
-					mHeader.mElementList[ix].mPropertyList[iy].mListType = r5x ;
+					mHeader.mElementList[ix].mPropertyList[iy].mListClazz = r5x ;
 					mReader >> SKIP_GAP_SPACE ;
 					mReader >> HINT_WORD >> mLastString ;
 					mHeader.mElementList[ix].mPropertyList[iy].mName = mLastString ;
@@ -1874,9 +1924,9 @@ trait PLYREADER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 					iy = mHeader.mElementList[ix].mPropertyList.insert () ;
 					const auto r6x = r1x.map (mLastType) ;
 					assume (r6x != NONE) ;
-					mHeader.mElementList[ix].mPropertyList[iy].mType = r6x ;
+					mHeader.mElementList[ix].mPropertyList[iy].mClazz = r6x ;
 					mReader >> SKIP_GAP_SPACE ;
-					mHeader.mElementList[ix].mPropertyList[iy].mListType = BODY_TYPE_NULL::expr ;
+					mHeader.mElementList[ix].mPropertyList[iy].mListClazz = BODY_CLAZZ::Null ;
 					mReader >> HINT_WORD >> mLastString ;
 					mHeader.mElementList[ix].mPropertyList[iy].mName = mLastString ;
 					mReader >> SKIP_GAP_SPACE ;
@@ -1924,7 +1974,7 @@ trait PLYREADER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 			for (auto &&i : mHeader.mElementList.iter ()) {
 				mBody[i] = Array<BODY> (mHeader.mElementList[i].mPropertyList.length ()) ;
 				for (auto &&j : mHeader.mElementList[i].mPropertyList.iter ()) {
-					mBody[i][j].mType = BODY_TYPE_NULL::expr ;
+					mBody[i][j].mClazz = BODY_CLAZZ::Null ;
 					mBody[i][j].mLine = Array<INDEX2X> (mHeader.mElementList[i].mSize) ;
 				}
 				for (auto &&j : iter (0 ,mHeader.mElementList[i].mSize)) {
@@ -1939,13 +1989,13 @@ trait PLYREADER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 		}
 
 		void read_body_text_item (CREF<INDEX> element ,CREF<INDEX> property ,CREF<INDEX> line) {
-			const auto r1x = mHeader.mElementList[element].mPropertyList[property].mType ;
+			const auto r1x = mHeader.mElementList[element].mPropertyList[property].mClazz ;
 			auto act = TRUE ;
 			if ifswitch (act) {
-				if (r1x != BODY_TYPE_SINGLE::expr)
+				if (r1x != BODY_CLAZZ::Single)
 					discard ;
 				INDEX ix = mPlyCHAR.tail () ;
-				mBody[element][property].mType = BODY_TYPE_CHAR::expr ;
+				mBody[element][property].mClazz = r1x ;
 				mBody[element][property].mLine[line].m1st = ix + 1 ;
 				mBody[element][property].mLine[line].m2nd = ix + 2 ;
 				const auto r2x = mTextReader.poll (TYPEAS<SINGLE>::expr) ;
@@ -1953,10 +2003,10 @@ trait PLYREADER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 				mTextReader >> GAP ;
 			}
 			if ifswitch (act) {
-				if (r1x != BODY_TYPE_DOUBLE::expr)
+				if (r1x != BODY_CLAZZ::Double)
 					discard ;
 				INDEX ix = mPlyDATA.tail () ;
-				mBody[element][property].mType = BODY_TYPE_DATA::expr ;
+				mBody[element][property].mClazz = r1x ;
 				mBody[element][property].mLine[line].m1st = ix + 1 ;
 				mBody[element][property].mLine[line].m2nd = ix + 2 ;
 				const auto r3x = mTextReader.poll (TYPEAS<DOUBLE>::expr) ;
@@ -1964,10 +2014,32 @@ trait PLYREADER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 				mTextReader >> GAP ;
 			}
 			if ifswitch (act) {
-				if (r1x != BODY_TYPE_VAL32::expr)
+				if (r1x != BODY_CLAZZ::Val8)
+					discard ;
+				INDEX ix = mPlyBYTE.tail () ;
+				mBody[element][property].mClazz = r1x ;
+				mBody[element][property].mLine[line].m1st = ix + 1 ;
+				mBody[element][property].mLine[line].m2nd = ix + 2 ;
+				const auto r4x = mTextReader.poll (TYPEAS<VAL32>::expr) ;
+				mPlyBYTE.add (BYTE (r4x)) ;
+				mTextReader >> GAP ;
+			}
+			if ifswitch (act) {
+				if (r1x != BODY_CLAZZ::Val16)
+					discard ;
+				INDEX ix = mPlyWORD.tail () ;
+				mBody[element][property].mClazz = r1x ;
+				mBody[element][property].mLine[line].m1st = ix + 1 ;
+				mBody[element][property].mLine[line].m2nd = ix + 2 ;
+				const auto r4x = mTextReader.poll (TYPEAS<VAL32>::expr) ;
+				mPlyWORD.add (WORD (r4x)) ;
+				mTextReader >> GAP ;
+			}
+			if ifswitch (act) {
+				if (r1x != BODY_CLAZZ::Val32)
 					discard ;
 				INDEX ix = mPlyCHAR.tail () ;
-				mBody[element][property].mType = BODY_TYPE_CHAR::expr ;
+				mBody[element][property].mClazz = r1x ;
 				mBody[element][property].mLine[line].m1st = ix + 1 ;
 				mBody[element][property].mLine[line].m2nd = ix + 2 ;
 				const auto r4x = mTextReader.poll (TYPEAS<VAL32>::expr) ;
@@ -1975,10 +2047,10 @@ trait PLYREADER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 				mTextReader >> GAP ;
 			}
 			if ifswitch (act) {
-				if (r1x != BODY_TYPE_VAL64::expr)
+				if (r1x != BODY_CLAZZ::Val64)
 					discard ;
 				INDEX ix = mPlyDATA.tail () ;
-				mBody[element][property].mType = BODY_TYPE_DATA::expr ;
+				mBody[element][property].mClazz = r1x ;
 				mBody[element][property].mLine[line].m1st = ix + 1 ;
 				mBody[element][property].mLine[line].m2nd = ix + 2 ;
 				const auto r5x = mTextReader.poll (TYPEAS<VAL64>::expr) ;
@@ -1986,76 +2058,71 @@ trait PLYREADER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 				mTextReader >> GAP ;
 			}
 			if ifswitch (act) {
-				if (r1x != BODY_TYPE_BYTE::expr)
+				if (r1x != BODY_CLAZZ::Byte)
 					discard ;
 				INDEX ix = mPlyBYTE.tail () ;
-				mBody[element][property].mType = r1x ;
+				mBody[element][property].mClazz = r1x ;
 				mBody[element][property].mLine[line].m1st = ix + 1 ;
 				mBody[element][property].mLine[line].m2nd = ix + 2 ;
-				const auto r6x = mTextReader.poll (TYPEAS<VAL64>::expr) ;
-				assume (r6x >= 0) ;
-				mPlyBYTE.add (BYTE (r6x)) ;
+				const auto r6x = mTextReader.poll (TYPEAS<BYTE>::expr) ;
+				mPlyBYTE.add (r6x) ;
 				mTextReader >> GAP ;
 			}
 			if ifswitch (act) {
-				if (r1x != BODY_TYPE_WORD::expr)
+				if (r1x != BODY_CLAZZ::Word)
 					discard ;
 				INDEX ix = mPlyWORD.tail () ;
-				mBody[element][property].mType = r1x ;
+				mBody[element][property].mClazz = r1x ;
 				mBody[element][property].mLine[line].m1st = ix + 1 ;
 				mBody[element][property].mLine[line].m2nd = ix + 2 ;
-				const auto r7x = mTextReader.poll (TYPEAS<VAL64>::expr) ;
-				assume (r7x >= 0) ;
-				mPlyWORD.add (WORD (r7x)) ;
+				const auto r7x = mTextReader.poll (TYPEAS<WORD>::expr) ;
+				mPlyWORD.add (r7x) ;
 				mTextReader >> GAP ;
 			}
 			if ifswitch (act) {
-				if (r1x != BODY_TYPE_CHAR::expr)
+				if (r1x != BODY_CLAZZ::Char)
 					discard ;
 				INDEX ix = mPlyCHAR.tail () ;
-				mBody[element][property].mType = r1x ;
+				mBody[element][property].mClazz = r1x ;
 				mBody[element][property].mLine[line].m1st = ix + 1 ;
 				mBody[element][property].mLine[line].m2nd = ix + 2 ;
-				const auto r8x = mTextReader.poll (TYPEAS<VAL64>::expr) ;
-				assume (r8x >= 0) ;
-				mPlyCHAR.add (CHAR (r8x)) ;
+				const auto r8x = mTextReader.poll (TYPEAS<CHAR>::expr) ;
+				mPlyCHAR.add (r8x) ;
 				mTextReader >> GAP ;
 			}
 			if ifswitch (act) {
-				//@warn: mTextReader only read value smaller then VAL64_MAX
-				if (r1x != BODY_TYPE_DATA::expr)
+				if (r1x != BODY_CLAZZ::Data)
 					discard ;
 				INDEX ix = mPlyDATA.tail () ;
-				mBody[element][property].mType = r1x ;
+				mBody[element][property].mClazz = r1x ;
 				mBody[element][property].mLine[line].m1st = ix + 1 ;
 				mBody[element][property].mLine[line].m2nd = ix + 2 ;
-				const auto r9x = mTextReader.poll (TYPEAS<VAL64>::expr) ;
-				assume (r9x >= 0) ;
-				mPlyDATA.add (DATA (r9x)) ;
+				const auto r9x = mTextReader.poll (TYPEAS<DATA>::expr) ;
+				mPlyDATA.add (r9x) ;
 				mTextReader >> GAP ;
 			}
 		}
 
 		void read_body_text_list (CREF<INDEX> element ,CREF<INDEX> property ,CREF<INDEX> line) {
-			const auto r1x = mHeader.mElementList[element].mPropertyList[property].mListType ;
-			if (r1x == BODY_TYPE_NULL::expr)
+			const auto r1x = mHeader.mElementList[element].mPropertyList[property].mListClazz ;
+			if (r1x == BODY_CLAZZ::Null)
 				return ;
 			const auto r2x = invoke ([&] () {
-				if (mBody[element][property].mType == BODY_TYPE_BYTE::expr)
+				if (mBody[element][property].mClazz == BODY_CLAZZ::Byte)
 					return LENGTH (mPlyBYTE[mBody[element][property].mLine[line].m1st]) ;
-				if (mBody[element][property].mType == BODY_TYPE_WORD::expr)
+				if (mBody[element][property].mClazz == BODY_CLAZZ::Word)
 					return LENGTH (mPlyWORD[mBody[element][property].mLine[line].m1st]) ;
-				if (mBody[element][property].mType == BODY_TYPE_CHAR::expr)
+				if (mBody[element][property].mClazz == BODY_CLAZZ::Char)
 					return LENGTH (mPlyCHAR[mBody[element][property].mLine[line].m1st]) ;
 				assume (FALSE) ;
 				return ZERO ;
 			}) ;
 			auto act = TRUE ;
 			if ifswitch (act) {
-				if (r1x != BODY_TYPE_SINGLE::expr)
+				if (r1x != BODY_CLAZZ::Single)
 					discard ;
 				INDEX ix = mPlyCHAR.tail () ;
-				mBody[element][property].mType = BODY_TYPE_CHAR::expr ;
+				mBody[element][property].mClazz = r1x ;
 				mBody[element][property].mLine[line].m1st = ix + 1 ;
 				mBody[element][property].mLine[line].m2nd = ix + r2x + 1 ;
 				mTextReader >> GAP ;
@@ -2067,10 +2134,10 @@ trait PLYREADER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 				}
 			}
 			if ifswitch (act) {
-				if (r1x != BODY_TYPE_DOUBLE::expr)
+				if (r1x != BODY_CLAZZ::Double)
 					discard ;
 				INDEX ix = mPlyDATA.tail () ;
-				mBody[element][property].mType = BODY_TYPE_DATA::expr ;
+				mBody[element][property].mClazz = r1x ;
 				mBody[element][property].mLine[line].m1st = ix + 1 ;
 				mBody[element][property].mLine[line].m2nd = ix + r2x + 1 ;
 				mTextReader >> GAP ;
@@ -2082,10 +2149,40 @@ trait PLYREADER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 				}
 			}
 			if ifswitch (act) {
-				if (r1x != BODY_TYPE_VAL32::expr)
+				if (r1x != BODY_CLAZZ::Val8)
+					discard ;
+				INDEX ix = mPlyBYTE.tail () ;
+				mBody[element][property].mClazz = r1x ;
+				mBody[element][property].mLine[line].m1st = ix + 1 ;
+				mBody[element][property].mLine[line].m2nd = ix + r2x + 1 ;
+				mTextReader >> GAP ;
+				for (auto &&i : iter (0 ,r2x)) {
+					noop (i) ;
+					const auto r5x = mTextReader.poll (TYPEAS<VAL32>::expr) ;
+					mPlyBYTE.add (BYTE (r5x)) ;
+					mTextReader >> GAP ;
+				}
+			}
+			if ifswitch (act) {
+				if (r1x != BODY_CLAZZ::Val16)
+					discard ;
+				INDEX ix = mPlyWORD.tail () ;
+				mBody[element][property].mClazz = r1x ;
+				mBody[element][property].mLine[line].m1st = ix + 1 ;
+				mBody[element][property].mLine[line].m2nd = ix + r2x + 1 ;
+				mTextReader >> GAP ;
+				for (auto &&i : iter (0 ,r2x)) {
+					noop (i) ;
+					const auto r5x = mTextReader.poll (TYPEAS<VAL32>::expr) ;
+					mPlyWORD.add (WORD (r5x)) ;
+					mTextReader >> GAP ;
+				}
+			}
+			if ifswitch (act) {
+				if (r1x != BODY_CLAZZ::Val32)
 					discard ;
 				INDEX ix = mPlyCHAR.tail () ;
-				mBody[element][property].mType = BODY_TYPE_CHAR::expr ;
+				mBody[element][property].mClazz = r1x ;
 				mBody[element][property].mLine[line].m1st = ix + 1 ;
 				mBody[element][property].mLine[line].m2nd = ix + r2x + 1 ;
 				mTextReader >> GAP ;
@@ -2097,10 +2194,10 @@ trait PLYREADER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 				}
 			}
 			if ifswitch (act) {
-				if (r1x != BODY_TYPE_VAL64::expr)
+				if (r1x != BODY_CLAZZ::Val64)
 					discard ;
 				INDEX ix = mPlyDATA.tail () ;
-				mBody[element][property].mType = BODY_TYPE_DATA::expr ;
+				mBody[element][property].mClazz = r1x ;
 				mBody[element][property].mLine[line].m1st = ix + 1 ;
 				mBody[element][property].mLine[line].m2nd = ix + r2x + 1 ;
 				mTextReader >> GAP ;
@@ -2112,67 +2209,62 @@ trait PLYREADER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 				}
 			}
 			if ifswitch (act) {
-				if (r1x != BODY_TYPE_BYTE::expr)
+				if (r1x != BODY_CLAZZ::Byte)
 					discard ;
 				INDEX ix = mPlyBYTE.tail () ;
-				mBody[element][property].mType = r1x ;
+				mBody[element][property].mClazz = r1x ;
 				mBody[element][property].mLine[line].m1st = ix + 1 ;
 				mBody[element][property].mLine[line].m2nd = ix + r2x + 1 ;
 				mTextReader >> GAP ;
 				for (auto &&i : iter (0 ,r2x)) {
 					noop (i) ;
-					const auto r7x = mTextReader.poll (TYPEAS<VAL64>::expr) ;
-					assume (r7x >= 0) ;
-					mPlyBYTE.add (BYTE (r7x)) ;
+					const auto r7x = mTextReader.poll (TYPEAS<BYTE>::expr) ;
+					mPlyBYTE.add (r7x) ;
 					mTextReader >> GAP ;
 				}
 			}
 			if ifswitch (act) {
-				if (r1x != BODY_TYPE_WORD::expr)
+				if (r1x != BODY_CLAZZ::Word)
 					discard ;
 				INDEX ix = mPlyWORD.tail () ;
-				mBody[element][property].mType = r1x ;
+				mBody[element][property].mClazz = r1x ;
 				mBody[element][property].mLine[line].m1st = ix + 1 ;
 				mBody[element][property].mLine[line].m2nd = ix + r2x + 1 ;
 				mTextReader >> GAP ;
 				for (auto &&i : iter (0 ,r2x)) {
 					noop (i) ;
-					const auto r8x = mTextReader.poll (TYPEAS<VAL64>::expr) ;
-					assume (r8x >= 0) ;
-					mPlyWORD.add (WORD (r8x)) ;
+					const auto r8x = mTextReader.poll (TYPEAS<WORD>::expr) ;
+					mPlyWORD.add (r8x) ;
 					mTextReader >> GAP ;
 				}
 			}
 			if ifswitch (act) {
-				if (r1x != BODY_TYPE_CHAR::expr)
+				if (r1x != BODY_CLAZZ::Char)
 					discard ;
 				INDEX ix = mPlyCHAR.tail () ;
-				mBody[element][property].mType = r1x ;
+				mBody[element][property].mClazz = r1x ;
 				mBody[element][property].mLine[line].m1st = ix + 1 ;
 				mBody[element][property].mLine[line].m2nd = ix + r2x + 1 ;
 				mTextReader >> GAP ;
 				for (auto &&i : iter (0 ,r2x)) {
 					noop (i) ;
-					const auto r9x = mTextReader.poll (TYPEAS<VAL64>::expr) ;
-					assume (r9x >= 0) ;
-					mPlyCHAR.add (CHAR (r9x)) ;
+					const auto r9x = mTextReader.poll (TYPEAS<CHAR>::expr) ;
+					mPlyCHAR.add (r9x) ;
 					mTextReader >> GAP ;
 				}
 			}
 			if ifswitch (act) {
-				//@warn: mTextReader only read value smaller then VAL64_MAX
-				if (r1x != BODY_TYPE_DATA::expr)
+				if (r1x != BODY_CLAZZ::Data)
 					discard ;
 				INDEX ix = mPlyDATA.tail () ;
-				mBody[element][property].mType = r1x ;
+				mBody[element][property].mClazz = r1x ;
 				mBody[element][property].mLine[line].m1st = ix + 1 ;
 				mBody[element][property].mLine[line].m2nd = ix + r2x + 1 ;
 				mTextReader >> GAP ;
 				for (auto &&i : iter (0 ,r2x)) {
 					noop (i) ;
-					const auto r10x = mTextReader.poll (TYPEAS<VAL64>::expr) ;
-					assume (r10x >= 0) ;
-					mPlyDATA.add (DATA (r10x)) ;
+					const auto r10x = mTextReader.poll (TYPEAS<DATA>::expr) ;
+					mPlyDATA.add (r10x) ;
 					mTextReader >> GAP ;
 				}
 			}
@@ -2185,7 +2277,7 @@ trait PLYREADER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 			for (auto &&i : mHeader.mElementList.iter ()) {
 				mBody[i] = Array<BODY> (mHeader.mElementList[i].mPropertyList.length ()) ;
 				for (auto &&j : mHeader.mElementList[i].mPropertyList.iter ()) {
-					mBody[i][j].mType = BODY_TYPE_NULL::expr ;
+					mBody[i][j].mClazz = BODY_CLAZZ::Null ;
 					mBody[i][j].mLine = Array<INDEX2X> (mHeader.mElementList[i].mSize) ;
 				}
 				for (auto &&j : iter (0 ,mHeader.mElementList[i].mSize)) {
@@ -2199,13 +2291,13 @@ trait PLYREADER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 		}
 
 		void read_body_binary_item (CREF<INDEX> element ,CREF<INDEX> property ,CREF<INDEX> line) {
-			const auto r1x = mHeader.mElementList[element].mPropertyList[property].mType ;
+			const auto r1x = mHeader.mElementList[element].mPropertyList[property].mClazz ;
 			auto act = TRUE ;
 			if ifswitch (act) {
-				if (r1x != BODY_TYPE_SINGLE::expr)
+				if (r1x != BODY_CLAZZ::Single)
 					discard ;
 				INDEX ix = mPlyCHAR.tail () ;
-				mBody[element][property].mType = BODY_TYPE_CHAR::expr ;
+				mBody[element][property].mClazz = r1x ;
 				mBody[element][property].mLine[line].m1st = ix + 1 ;
 				mBody[element][property].mLine[line].m2nd = ix + 2 ;
 				const auto r2x = mByteReader.poll (TYPEAS<SINGLE>::expr) ;
@@ -2213,10 +2305,10 @@ trait PLYREADER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 				mPlyCHAR.add (bitwise_reverse (r3x)) ;
 			}
 			if ifswitch (act) {
-				if (r1x != BODY_TYPE_DOUBLE::expr)
+				if (r1x != BODY_CLAZZ::Double)
 					discard ;
 				INDEX ix = mPlyDATA.tail () ;
-				mBody[element][property].mType = BODY_TYPE_DATA::expr ;
+				mBody[element][property].mClazz = r1x ;
 				mBody[element][property].mLine[line].m1st = ix + 1 ;
 				mBody[element][property].mLine[line].m2nd = ix + 2 ;
 				const auto r4x = mByteReader.poll (TYPEAS<DOUBLE>::expr) ;
@@ -2224,10 +2316,30 @@ trait PLYREADER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 				mPlyDATA.add (bitwise_reverse (r5x)) ;
 			}
 			if ifswitch (act) {
-				if (r1x != BODY_TYPE_VAL32::expr)
+				if (r1x != BODY_CLAZZ::Val8)
+					discard ;
+				INDEX ix = mPlyBYTE.tail () ;
+				mBody[element][property].mClazz = r1x ;
+				mBody[element][property].mLine[line].m1st = ix + 1 ;
+				mBody[element][property].mLine[line].m2nd = ix + 2 ;
+				const auto r6x = mByteReader.poll (TYPEAS<BYTE>::expr) ;
+				mPlyBYTE.add (bitwise_reverse (r6x)) ;
+			}
+			if ifswitch (act) {
+				if (r1x != BODY_CLAZZ::Val16)
+					discard ;
+				INDEX ix = mPlyWORD.tail () ;
+				mBody[element][property].mClazz = r1x ;
+				mBody[element][property].mLine[line].m1st = ix + 1 ;
+				mBody[element][property].mLine[line].m2nd = ix + 2 ;
+				const auto r6x = mByteReader.poll (TYPEAS<WORD>::expr) ;
+				mPlyWORD.add (bitwise_reverse (r6x)) ;
+			}
+			if ifswitch (act) {
+				if (r1x != BODY_CLAZZ::Val32)
 					discard ;
 				INDEX ix = mPlyCHAR.tail () ;
-				mBody[element][property].mType = BODY_TYPE_CHAR::expr ;
+				mBody[element][property].mClazz = r1x ;
 				mBody[element][property].mLine[line].m1st = ix + 1 ;
 				mBody[element][property].mLine[line].m2nd = ix + 2 ;
 				const auto r6x = mByteReader.poll (TYPEAS<VAL32>::expr) ;
@@ -2235,10 +2347,10 @@ trait PLYREADER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 				mPlyCHAR.add (bitwise_reverse (r7x)) ;
 			}
 			if ifswitch (act) {
-				if (r1x != BODY_TYPE_VAL64::expr)
+				if (r1x != BODY_CLAZZ::Val64)
 					discard ;
 				INDEX ix = mPlyDATA.tail () ;
-				mBody[element][property].mType = BODY_TYPE_DATA::expr ;
+				mBody[element][property].mClazz = r1x ;
 				mBody[element][property].mLine[line].m1st = ix + 1 ;
 				mBody[element][property].mLine[line].m2nd = ix + 2 ;
 				const auto r8x = mByteReader.poll (TYPEAS<VAL64>::expr) ;
@@ -2246,40 +2358,40 @@ trait PLYREADER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 				mPlyDATA.add (bitwise_reverse (r9x)) ;
 			}
 			if ifswitch (act) {
-				if (r1x != BODY_TYPE_BYTE::expr)
+				if (r1x != BODY_CLAZZ::Byte)
 					discard ;
 				INDEX ix = mPlyBYTE.tail () ;
-				mBody[element][property].mType = r1x ;
+				mBody[element][property].mClazz = r1x ;
 				mBody[element][property].mLine[line].m1st = ix + 1 ;
 				mBody[element][property].mLine[line].m2nd = ix + 2 ;
 				const auto r10x = mByteReader.poll (TYPEAS<BYTE>::expr) ;
 				mPlyBYTE.add (bitwise_reverse (r10x)) ;
 			}
 			if ifswitch (act) {
-				if (r1x != BODY_TYPE_WORD::expr)
+				if (r1x != BODY_CLAZZ::Word)
 					discard ;
 				INDEX ix = mPlyWORD.tail () ;
-				mBody[element][property].mType = r1x ;
+				mBody[element][property].mClazz = r1x ;
 				mBody[element][property].mLine[line].m1st = ix + 1 ;
 				mBody[element][property].mLine[line].m2nd = ix + 2 ;
 				const auto r11x = mByteReader.poll (TYPEAS<WORD>::expr) ;
 				mPlyWORD.add (bitwise_reverse (r11x)) ;
 			}
 			if ifswitch (act) {
-				if (r1x != BODY_TYPE_CHAR::expr)
+				if (r1x != BODY_CLAZZ::Char)
 					discard ;
 				INDEX ix = mPlyCHAR.tail () ;
-				mBody[element][property].mType = r1x ;
+				mBody[element][property].mClazz = r1x ;
 				mBody[element][property].mLine[line].m1st = ix + 1 ;
 				mBody[element][property].mLine[line].m2nd = ix + 2 ;
 				const auto r12x = mByteReader.poll (TYPEAS<CHAR>::expr) ;
 				mPlyCHAR.add (bitwise_reverse (r12x)) ;
 			}
 			if ifswitch (act) {
-				if (r1x != BODY_TYPE_DATA::expr)
+				if (r1x != BODY_CLAZZ::Data)
 					discard ;
 				INDEX ix = mPlyDATA.tail () ;
-				mBody[element][property].mType = r1x ;
+				mBody[element][property].mClazz = r1x ;
 				mBody[element][property].mLine[line].m1st = ix + 1 ;
 				mBody[element][property].mLine[line].m2nd = ix + 2 ;
 				const auto r13x = mByteReader.poll (TYPEAS<DATA>::expr) ;
@@ -2288,25 +2400,25 @@ trait PLYREADER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 		}
 
 		void read_body_binary_list (CREF<INDEX> element ,CREF<INDEX> property ,CREF<INDEX> line) {
-			const auto r1x = mHeader.mElementList[element].mPropertyList[property].mListType ;
-			if (r1x == BODY_TYPE_NULL::expr)
+			const auto r1x = mHeader.mElementList[element].mPropertyList[property].mListClazz ;
+			if (r1x == BODY_CLAZZ::Null)
 				return ;
 			const auto r2x = invoke ([&] () {
-				if (mBody[element][property].mType == BODY_TYPE_BYTE::expr)
+				if (mBody[element][property].mClazz == BODY_CLAZZ::Byte)
 					return LENGTH (mPlyBYTE[mBody[element][property].mLine[line].m1st]) ;
-				if (mBody[element][property].mType == BODY_TYPE_WORD::expr)
+				if (mBody[element][property].mClazz == BODY_CLAZZ::Word)
 					return LENGTH (mPlyWORD[mBody[element][property].mLine[line].m1st]) ;
-				if (mBody[element][property].mType == BODY_TYPE_CHAR::expr)
+				if (mBody[element][property].mClazz == BODY_CLAZZ::Char)
 					return LENGTH (mPlyCHAR[mBody[element][property].mLine[line].m1st]) ;
 				assume (FALSE) ;
 				return ZERO ;
 			}) ;
 			auto act = TRUE ;
 			if ifswitch (act) {
-				if (r1x != BODY_TYPE_SINGLE::expr)
+				if (r1x != BODY_CLAZZ::Single)
 					discard ;
 				INDEX ix = mPlyCHAR.tail () ;
-				mBody[element][property].mType = BODY_TYPE_CHAR::expr ;
+				mBody[element][property].mClazz = r1x ;
 				mBody[element][property].mLine[line].m1st = ix + 1 ;
 				mBody[element][property].mLine[line].m2nd = ix + r2x + 1 ;
 				for (auto &&i : iter (0 ,r2x)) {
@@ -2317,10 +2429,10 @@ trait PLYREADER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 				}
 			}
 			if ifswitch (act) {
-				if (r1x != BODY_TYPE_DOUBLE::expr)
+				if (r1x != BODY_CLAZZ::Double)
 					discard ;
 				INDEX ix = mPlyDATA.tail () ;
-				mBody[element][property].mType = BODY_TYPE_DATA::expr ;
+				mBody[element][property].mClazz = r1x ;
 				mBody[element][property].mLine[line].m1st = ix + 1 ;
 				mBody[element][property].mLine[line].m2nd = ix + r2x + 1 ;
 				for (auto &&i : iter (0 ,r2x)) {
@@ -2331,10 +2443,36 @@ trait PLYREADER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 				}
 			}
 			if ifswitch (act) {
-				if (r1x != BODY_TYPE_VAL32::expr)
+				if (r1x != BODY_CLAZZ::Val8)
+					discard ;
+				INDEX ix = mPlyBYTE.tail () ;
+				mBody[element][property].mClazz = r1x ;
+				mBody[element][property].mLine[line].m1st = ix + 1 ;
+				mBody[element][property].mLine[line].m2nd = ix + r2x + 1 ;
+				for (auto &&i : iter (0 ,r2x)) {
+					noop (i) ;
+					const auto r7x = mByteReader.poll (TYPEAS<BYTE>::expr) ;
+					mPlyBYTE.add (bitwise_reverse (r7x)) ;
+				}
+			}
+			if ifswitch (act) {
+				if (r1x != BODY_CLAZZ::Val16)
+					discard ;
+				INDEX ix = mPlyWORD.tail () ;
+				mBody[element][property].mClazz = r1x ;
+				mBody[element][property].mLine[line].m1st = ix + 1 ;
+				mBody[element][property].mLine[line].m2nd = ix + r2x + 1 ;
+				for (auto &&i : iter (0 ,r2x)) {
+					noop (i) ;
+					const auto r7x = mByteReader.poll (TYPEAS<WORD>::expr) ;
+					mPlyWORD.add (bitwise_reverse (r7x)) ;
+				}
+			}
+			if ifswitch (act) {
+				if (r1x != BODY_CLAZZ::Val32)
 					discard ;
 				INDEX ix = mPlyCHAR.tail () ;
-				mBody[element][property].mType = BODY_TYPE_CHAR::expr ;
+				mBody[element][property].mClazz = r1x ;
 				mBody[element][property].mLine[line].m1st = ix + 1 ;
 				mBody[element][property].mLine[line].m2nd = ix + r2x + 1 ;
 				for (auto &&i : iter (0 ,r2x)) {
@@ -2345,10 +2483,10 @@ trait PLYREADER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 				}
 			}
 			if ifswitch (act) {
-				if (r1x != BODY_TYPE_VAL64::expr)
+				if (r1x != BODY_CLAZZ::Val64)
 					discard ;
 				INDEX ix = mPlyDATA.tail () ;
-				mBody[element][property].mType = BODY_TYPE_DATA::expr ;
+				mBody[element][property].mClazz = r1x ;
 				mBody[element][property].mLine[line].m1st = ix + 1 ;
 				mBody[element][property].mLine[line].m2nd = ix + r2x + 1 ;
 				for (auto &&i : iter (0 ,r2x)) {
@@ -2359,10 +2497,10 @@ trait PLYREADER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 				}
 			}
 			if ifswitch (act) {
-				if (r1x != BODY_TYPE_BYTE::expr)
+				if (r1x != BODY_CLAZZ::Byte)
 					discard ;
 				INDEX ix = mPlyBYTE.tail () ;
-				mBody[element][property].mType = r1x ;
+				mBody[element][property].mClazz = r1x ;
 				mBody[element][property].mLine[line].m1st = ix + 1 ;
 				mBody[element][property].mLine[line].m2nd = ix + r2x + 1 ;
 				for (auto &&i : iter (0 ,r2x)) {
@@ -2372,10 +2510,10 @@ trait PLYREADER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 				}
 			}
 			if ifswitch (act) {
-				if (r1x != BODY_TYPE_WORD::expr)
+				if (r1x != BODY_CLAZZ::Word)
 					discard ;
 				INDEX ix = mPlyWORD.tail () ;
-				mBody[element][property].mType = r1x ;
+				mBody[element][property].mClazz = r1x ;
 				mBody[element][property].mLine[line].m1st = ix + 1 ;
 				mBody[element][property].mLine[line].m2nd = ix + r2x + 1 ;
 				for (auto &&i : iter (0 ,r2x)) {
@@ -2385,10 +2523,10 @@ trait PLYREADER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 				}
 			}
 			if ifswitch (act) {
-				if (r1x != BODY_TYPE_CHAR::expr)
+				if (r1x != BODY_CLAZZ::Char)
 					discard ;
 				INDEX ix = mPlyCHAR.tail () ;
-				mBody[element][property].mType = r1x ;
+				mBody[element][property].mClazz = r1x ;
 				mBody[element][property].mLine[line].m1st = ix + 1 ;
 				mBody[element][property].mLine[line].m2nd = ix + r2x + 1 ;
 				for (auto &&i : iter (0 ,r2x)) {
@@ -2398,10 +2536,10 @@ trait PLYREADER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 				}
 			}
 			if ifswitch (act) {
-				if (r1x != BODY_TYPE_DATA::expr)
+				if (r1x != BODY_CLAZZ::Data)
 					discard ;
 				INDEX ix = mPlyDATA.tail () ;
-				mBody[element][property].mType = r1x ;
+				mBody[element][property].mClazz = r1x ;
 				mBody[element][property].mLine[line].m1st = ix + 1 ;
 				mBody[element][property].mLine[line].m2nd = ix + r2x + 1 ;
 				for (auto &&i : iter (0 ,r2x)) {

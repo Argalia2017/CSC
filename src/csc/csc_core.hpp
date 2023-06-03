@@ -1,5 +1,29 @@
 ﻿#pragma once
 
+/*
+MIT License
+
+Copyright (c) 2017 Argalia2017
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+*/
+
 #ifndef __CSC_CORE__
 #define __CSC_CORE__
 #endif
@@ -271,9 +295,8 @@ using TEMPLATE_unsafe_cast = typename TEMPLATE_unsafe_cast_HELP<UNIT ,ALWAYS>::T
 
 struct FUNCTION_unsafe_cast {
 	template <class ARG1>
-	inline constexpr TEMPLATE_unsafe_cast<ARG1> operator[] (CREF<TYPEID<ARG1>> id) const noexcept {
-		using R1X = TEMPLATE_unsafe_cast<ARG1> ;
-		return R1X () ;
+	inline consteval TEMPLATE_unsafe_cast<ARG1> operator[] (CREF<TYPEID<ARG1>> id) const noexcept {
+		return TEMPLATE_unsafe_cast<ARG1> () ;
 	}
 } ;
 
@@ -381,9 +404,8 @@ using TEMPLATE_keep = typename TEMPLATE_keep_HELP<UNIT ,ALWAYS>::TEMPLATE_keep ;
 
 struct FUNCTION_keep {
 	template <class ARG1>
-	inline constexpr TEMPLATE_keep<ARG1> operator[] (CREF<TYPEID<ARG1>> id) const noexcept {
-		using R1X = TEMPLATE_keep<ARG1> ;
-		return R1X () ;
+	inline consteval TEMPLATE_keep<ARG1> operator[] (CREF<TYPEID<ARG1>> id) const noexcept {
+		return TEMPLATE_keep<ARG1> () ;
 	}
 } ;
 
@@ -444,7 +466,7 @@ static constexpr auto drop = FUNCTION_drop () ;
 
 struct FUNCTION_forward {
 	template <class ARG1>
-	inline constexpr TEMPLATE_keep<ARG1> operator[] (CREF<TYPEID<ARG1>> id) const noexcept {
+	inline consteval TEMPLATE_keep<ARG1> operator[] (CREF<TYPEID<ARG1>> id) const noexcept {
 		return keep[TYPEAS<ARG1>::expr] ;
 	}
 } ;
@@ -502,9 +524,8 @@ struct FUNCTION_bitwise {
 	}
 
 	template <class ARG1>
-	inline constexpr TEMPLATE_bitwise<ARG1> operator[] (CREF<TYPEID<ARG1>> id) const noexcept {
-		using R1X = TEMPLATE_bitwise<ARG1> ;
-		return R1X () ;
+	inline consteval TEMPLATE_bitwise<ARG1> operator[] (CREF<TYPEID<ARG1>> id) const noexcept {
+		return TEMPLATE_bitwise<ARG1> () ;
 	}
 } ;
 
@@ -880,12 +901,12 @@ struct FUNCTION_interface_vptr {
 	}
 
 	template <class ARG1 ,class = REQUIRE<IS_EXTEND<InterfaceTogether ,ARG1>>>
-	imports FLAG template_vptr (CREF<typeof (PH2)> ,CREF<ARG1> obj) noexcept {
+	imports forceinline FLAG template_vptr (CREF<typeof (PH2)> ,CREF<ARG1> obj) noexcept {
 		return bitwise[TYPEAS<FLAG>::expr] (keep[TYPEAS<CREF<InterfaceTogether>>::expr] (obj)) ;
 	}
 
 	template <class ARG1 ,class = REQUIRE<IS_POLYMORPHIC<ARG1>>>
-	imports FLAG template_vptr (CREF<typeof (PH1)> ,CREF<ARG1> obj) noexcept {
+	imports forceinline FLAG template_vptr (CREF<typeof (PH1)> ,CREF<ARG1> obj) noexcept {
 		return bitwise[TYPEAS<FLAG>::expr] (keep[TYPEAS<CREF<Interface>>::expr] (obj)) ;
 	}
 } ;
@@ -2425,13 +2446,13 @@ trait CAPTURE_HELP<TYPEAS<PARAM...> ,REQUIRE<ENUM_GT_ZERO<COUNT_OF<TYPEAS<PARAM.
 		}
 
 		template <class ARG1 ,class...ARG2 ,class = REQUIRE<ENUM_GT_ZERO<ARG1>>>
-		imports void template_assign (CREF<typeof (PH2)> ,VREF<ARR<FLAG ,RANK>> capt ,CREF<TYPEID<ARG1>> id ,CREF<FLAG> params1 ,CREF<ARG2>...params2) {
+		imports forceinline void template_assign (CREF<typeof (PH2)> ,VREF<ARR<FLAG ,RANK>> capt ,CREF<TYPEID<ARG1>> id ,CREF<FLAG> params1 ,CREF<ARG2>...params2) {
 			capt[ENUM_SUB<RANK ,ARG1>::expr] = params1 ;
 			template_assign (PHX ,capt ,TYPEAS<ENUM_DEC<ARG1>>::expr ,params2...) ;
 		}
 
 		template <class ARG1>
-		imports void template_assign (CREF<typeof (PH1)> ,VREF<ARR<FLAG ,RANK>> capt ,CREF<TYPEID<ARG1>> id) {
+		imports forceinline void template_assign (CREF<typeof (PH1)> ,VREF<ARR<FLAG ,RANK>> capt ,CREF<TYPEID<ARG1>> id) {
 			noop () ;
 		}
 	} ;
@@ -2443,7 +2464,7 @@ trait CAPTURE_HELP<TYPEAS<PARAM...> ,REQUIRE<ENUM_GT_ZERO<COUNT_OF<TYPEAS<PARAM.
 		}
 
 		template <class ARG1 ,class ARG2 ,class...ARG3 ,class = REQUIRE<ENUM_GT_ZERO<COUNT_OF<ARG2>>>>
-		imports void template_invoke (CREF<typeof (PH2)> ,CREF<ARG1> func ,CREF<ARR<FLAG ,RANK>> capt ,CREF<TYPEID<ARG2>> id ,CREF<ARG3>...params) {
+		imports forceinline void template_invoke (CREF<typeof (PH2)> ,CREF<ARG1> func ,CREF<ARR<FLAG ,RANK>> capt ,CREF<TYPEID<ARG2>> id ,CREF<ARG3>...params) {
 			using R1X = ENUM_SUB<RANK ,COUNT_OF<ARG2>> ;
 			using R2X = TYPE_FIRST_ONE<ARG2> ;
 			using R3X = TYPE_FIRST_REST<ARG2> ;
@@ -2453,7 +2474,7 @@ trait CAPTURE_HELP<TYPEAS<PARAM...> ,REQUIRE<ENUM_GT_ZERO<COUNT_OF<TYPEAS<PARAM.
 		}
 
 		template <class ARG1 ,class ARG2 ,class...ARG3 ,class = REQUIRE<ENUM_EQ_ZERO<COUNT_OF<ARG2>>>>
-		imports void template_invoke (CREF<typeof (PH1)> ,CREF<ARG1> func ,CREF<ARR<FLAG ,RANK>> capt ,CREF<TYPEID<ARG2>> id ,CREF<ARG3>...params) {
+		imports forceinline void template_invoke (CREF<typeof (PH1)> ,CREF<ARG1> func ,CREF<ARR<FLAG ,RANK>> capt ,CREF<TYPEID<ARG2>> id ,CREF<ARG3>...params) {
 			func (params...) ;
 		}
 	} ;
