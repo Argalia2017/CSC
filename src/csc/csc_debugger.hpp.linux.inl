@@ -1,5 +1,29 @@
 ﻿#pragma once
 
+/*
+MIT License
+
+Copyright (c) 2017 Argalia2017
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+*/
+
 #ifndef __CSC_DEBUGGER__
 #error "∑(っ°Д° ;)っ : require 'csc_debugger.hpp'"
 #endif
@@ -32,26 +56,17 @@ template <class DEPEND>
 trait CONSOLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	using Binder = typename CONSOLE_HELP<DEPEND ,ALWAYS>::Binder ;
 	using Holder = typename CONSOLE_HELP<DEPEND ,ALWAYS>::Holder ;
+	using OPTION = typename CONSOLE_HELP<DEPEND ,ALWAYS>::OPTION ;
 
 	using HANDLE = csc_pointer_t ;
 	using CONSOLE_BUFFER_SSIZE = ENUMAS<VAL ,8388607> ;
-
-	using OPTION_DEFAULT = typename CONSOLE_HELP<DEPEND ,ALWAYS>::OPTION_DEFAULT ;
-	using OPTION_NO_PRINT = typename CONSOLE_HELP<DEPEND ,ALWAYS>::OPTION_NO_PRINT ;
-	using OPTION_NO_FATAL = typename CONSOLE_HELP<DEPEND ,ALWAYS>::OPTION_NO_FATAL ;
-	using OPTION_NO_ERROR = typename CONSOLE_HELP<DEPEND ,ALWAYS>::OPTION_NO_ERROR ;
-	using OPTION_NO_WARN = typename CONSOLE_HELP<DEPEND ,ALWAYS>::OPTION_NO_WARN ;
-	using OPTION_NO_INFO = typename CONSOLE_HELP<DEPEND ,ALWAYS>::OPTION_NO_INFO ;
-	using OPTION_NO_DEBUG = typename CONSOLE_HELP<DEPEND ,ALWAYS>::OPTION_NO_DEBUG ;
-	using OPTION_NO_VERBOSE = typename CONSOLE_HELP<DEPEND ,ALWAYS>::OPTION_NO_VERBOSE ;
-	using OPTION_SIZE = ENUMAS<VAL ,32> ;
 
 	struct PACK {
 		String<STR> mConBuffer ;
 		TextWriter<STR> mConWriter ;
 		String<STRU8> mLogBuffer ;
 		TextWriter<STRU8> mLogWriter ;
-		BitSet<OPTION_SIZE> mOption ;
+		BitSet<> mOption ;
 		UniqueRef<HANDLE> mConsole ;
 		String<STR> mLogFile ;
 		String<STR> mOldLogFile ;
@@ -65,6 +80,7 @@ trait CONSOLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	public:
 		void initialize () override {
 			mThis = SharedRef<PACK>::make () ;
+			mThis->mOption = BitSet<> (LENGTH (OPTION_CLAZZ::EnumSize)) ;
 			set_buffer_size (CONSOLE_BUFFER_SSIZE::expr) ;
 		}
 
@@ -78,7 +94,7 @@ trait CONSOLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		void enable_option (CREF<FLAG> option) const override {
 			auto act = TRUE ;
 			if ifswitch (act) {
-				if (option != OPTION_DEFAULT::expr)
+				if (option != OPTION_CLAZZ::Default)
 					discard ;
 				mThis->mOption.clear () ;
 			}
@@ -88,7 +104,7 @@ trait CONSOLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		void print (CREF<Binder> msg) const override {
-			if (mThis->mOption[OPTION_NO_PRINT::expr])
+			if (mThis->mOption[FLAG (OPTION_CLAZZ::NoPrint)])
 				return ;
 			write_con_buffer (msg) ;
 			if ifswitch (TRUE) {
@@ -101,7 +117,7 @@ trait CONSOLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		void fatal (CREF<Binder> msg) const override {
-			if (mThis->mOption[OPTION_NO_FATAL::expr])
+			if (mThis->mOption[FLAG (OPTION_CLAZZ::NoFatal)])
 				return ;
 			write_con_buffer (msg) ;
 			if ifswitch (TRUE) {
@@ -114,7 +130,7 @@ trait CONSOLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		void error (CREF<Binder> msg) const override {
-			if (mThis->mOption[OPTION_NO_ERROR::expr])
+			if (mThis->mOption[FLAG (OPTION_CLAZZ::NoError)])
 				return ;
 			write_con_buffer (msg) ;
 			if ifswitch (TRUE) {
@@ -127,7 +143,7 @@ trait CONSOLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		void warn (CREF<Binder> msg) const override {
-			if (mThis->mOption[OPTION_NO_WARN::expr])
+			if (mThis->mOption[FLAG (OPTION_CLAZZ::NoWarn)])
 				return ;
 			write_con_buffer (msg) ;
 			if ifswitch (TRUE) {
@@ -140,7 +156,7 @@ trait CONSOLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		void info (CREF<Binder> msg) const override {
-			if (mThis->mOption[OPTION_NO_INFO::expr])
+			if (mThis->mOption[FLAG (OPTION_CLAZZ::NoInfo)])
 				return ;
 			write_con_buffer (msg) ;
 			if ifswitch (TRUE) {
@@ -153,7 +169,7 @@ trait CONSOLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		void debug (CREF<Binder> msg) const override {
-			if (mThis->mOption[OPTION_NO_DEBUG::expr])
+			if (mThis->mOption[FLAG (OPTION_CLAZZ::NoDebug)])
 				return ;
 			write_con_buffer (msg) ;
 			if ifswitch (TRUE) {
@@ -166,7 +182,7 @@ trait CONSOLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		void verbose (CREF<Binder> msg) const override {
-			if (mThis->mOption[OPTION_NO_VERBOSE::expr])
+			if (mThis->mOption[FLAG (OPTION_CLAZZ::NoVerbose)])
 				return ;
 			write_con_buffer (msg) ;
 			if ifswitch (TRUE) {

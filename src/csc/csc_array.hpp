@@ -1,5 +1,29 @@
 ﻿#pragma once
 
+/*
+MIT License
+
+Copyright (c) 2017 Argalia2017
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+*/
+
 #ifndef __CSC_ARRAY__
 #define __CSC_ARRAY__
 #endif
@@ -1280,14 +1304,6 @@ trait PRIORITY_HELP<ITEM ,SIZE ,ALWAYS> {
 		void map_set (CREF<INDEX> index ,CREF<INDEX> map_) {
 			assert (vbetween (index ,0 ,mWrite)) ;
 			mPriority[index].mMap = map_ ;
-		}
-
-		Array<INDEX> map_all () const {
-			const auto r1x = IterArray<INDEX>::make (iter ()) ;
-			Array<INDEX> ret = Array<INDEX> (r1x.length ()) ;
-			for (auto &&i : r1x.iter ())
-				ret[i] = mPriority[r1x[i]].mMap ;
-			return move (ret) ;
 		}
 
 		BOOL empty () const {
@@ -2686,26 +2702,6 @@ trait SET_HELP<ITEM ,SIZE ,ALWAYS> {
 			mSet[index].mMap = map_ ;
 		}
 
-		Array<INDEX> map_all () const {
-			const auto r1x = IterArray<INDEX>::make (iter ()) ;
-			Array<INDEX> ret = Array<INDEX> (r1x.length ()) ;
-			for (auto &&i : r1x.iter ())
-				ret[i] = mSet[r1x[i]].mMap ;
-			return move (ret) ;
-		}
-
-		BOOL empty () const {
-			return mSet.length () == 0 ;
-		}
-
-		BOOL full () const {
-			if (mSet.size () == 0)
-				return TRUE ;
-			if (mSet.length () < mSet.size ())
-				return FALSE ;
-			return TRUE ;
-		}
-
 		void add (CREF<ITEM> item) {
 			add (move (item) ,NONE) ;
 		}
@@ -2731,32 +2727,6 @@ trait SET_HELP<ITEM ,SIZE ,ALWAYS> {
 				update_emplace (ix) ;
 				update_insert (ix) ;
 			}
-		}
-
-		void take () {
-			assert (ifnot (empty ())) ;
-			INDEX ix = head () ;
-			remove (ix) ;
-		}
-
-		void take (VREF<ITEM> item) {
-			assert (ifnot (empty ())) ;
-			INDEX ix = head () ;
-			item = move (mSet[ix].mItem) ;
-			remove (ix) ;
-		}
-
-		INDEX head () const {
-			INDEX ret = mRoot ;
-			while (TRUE) {
-				if (ret == NONE)
-					break ;
-				const auto r1x = mSet[ret].mLeft ;
-				if (r1x == NONE)
-					break ;
-				ret = r1x ;
-			}
-			return move (ret) ;
 		}
 
 		void remove (CREF<INDEX> index) {
@@ -3317,14 +3287,6 @@ trait HASHSET_HELP<ITEM ,SIZE ,ALWAYS> {
 			mSet[index].mMap = map_ ;
 		}
 
-		Array<INDEX> map_all () const {
-			const auto r1x = IterArray<INDEX>::make (iter ()) ;
-			Array<INDEX> ret = Array<INDEX> (r1x.length ()) ;
-			for (auto &&i : r1x.iter ())
-				ret[i] = mSet[r1x[i]].mMap ;
-			return move (ret) ;
-		}
-
 		void add (CREF<ITEM> item) {
 			add (move (item) ,NONE) ;
 		}
@@ -3578,14 +3540,6 @@ trait SOFTSET_HELP<ITEM ,ALWAYS> {
 
 		void map_set (CREF<INDEX> index ,CREF<INDEX> map_) {
 			mSet.self[index].mMap = map_ ;
-		}
-
-		Array<INDEX> map_all () const {
-			const auto r1x = IterArray<INDEX>::make (iter ()) ;
-			Array<INDEX> ret = Array<INDEX> (r1x.length ()) ;
-			for (auto &&i : r1x.iter ())
-				ret[i] = mSet.self[r1x[i]].mMap ;
-			return move (ret) ;
 		}
 
 		void add (CREF<ITEM> item) {

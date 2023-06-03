@@ -7,7 +7,7 @@ mkdir %dst%
 call :dircls "%dst%"
 set src=csc
 for /f "tokens=*" %%i in ('dir /b "%src%"') do (
-	call :linkf "%src%/%%i" "%dst%/%%i")
+	call :linkf "%%i" "%src%" "%dst%")
 
 cls
 exit
@@ -43,10 +43,10 @@ goto :EOF
 
 goto :EOF
 :copyf
-xcopy /Y /S "%~f1" "%~f2"
+xcopy /Y /S "%~f2\%~1" "%~f3"
 goto :EOF
 
 goto :EOF
 :linkf
-mklink /H "%~f2" "%~f1"
+mklink /H "%~f3\%~1" "%~f2\%~1"
 goto :EOF

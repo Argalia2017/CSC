@@ -1,5 +1,29 @@
 ﻿#pragma once
 
+/*
+MIT License
+
+Copyright (c) 2017 Argalia2017
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+*/
+
 #ifndef __CSC_SERIALIZATION__
 #define __CSC_SERIALIZATION__
 #endif
@@ -34,8 +58,8 @@ trait XMLPARSER_HELP<DEPEND ,ALWAYS> {
 		virtual XmlParser brother () const = 0 ;
 		virtual XmlParser child () const = 0 ;
 		virtual XmlParser child (CREF<String<STRU8>> name) const = 0 ;
-		virtual Array<XmlParser> child_array () const = 0 ;
-		virtual Array<XmlParser> child_array (CREF<LENGTH> size_) const = 0 ;
+		virtual Array<XmlParser> children () const = 0 ;
+		virtual Array<XmlParser> children (CREF<LENGTH> size_) const = 0 ;
 		virtual XmlParser concat (CREF<XmlParser> that) const = 0 ;
 		virtual BOOL equal (CREF<Holder> that) const = 0 ;
 		virtual CREF<String<STRU8>> member () const leftvalue = 0 ;
@@ -144,12 +168,12 @@ trait XMLPARSER_HELP<DEPEND ,ALWAYS> {
 			return mThis->child (name) ;
 		}
 
-		Array<XmlParser> child_array () const {
-			return mThis->child_array () ;
+		Array<XmlParser> children () const {
+			return mThis->children () ;
 		}
 
-		Array<XmlParser> child_array (CREF<LENGTH> size_) const {
-			return mThis->child_array () ;
+		Array<XmlParser> children (CREF<LENGTH> size_) const {
+			return mThis->children () ;
 		}
 
 		BOOL equal (CREF<XmlParser> that) const {
@@ -277,8 +301,8 @@ trait JSONPARSER_HELP<DEPEND ,ALWAYS> {
 		virtual JsonParser brother () const = 0 ;
 		virtual JsonParser child () const = 0 ;
 		virtual JsonParser child (CREF<String<STRU8>> name) const = 0 ;
-		virtual Array<JsonParser> child_array () const = 0 ;
-		virtual Array<JsonParser> child_array (CREF<LENGTH> size_) const = 0 ;
+		virtual Array<JsonParser> children () const = 0 ;
+		virtual Array<JsonParser> children (CREF<LENGTH> size_) const = 0 ;
 		virtual BOOL equal (CREF<Holder> that) const = 0 ;
 		virtual CREF<String<STRU8>> member () const leftvalue = 0 ;
 		virtual CREF<String<STRU8>> fetch () const leftvalue = 0 ;
@@ -393,12 +417,12 @@ trait JSONPARSER_HELP<DEPEND ,ALWAYS> {
 			return mThis->child (name) ;
 		}
 
-		Array<JsonParser> child_array () const {
-			return mThis->child_array () ;
+		Array<JsonParser> children () const {
+			return mThis->children () ;
 		}
 
-		Array<JsonParser> child_array (CREF<LENGTH> size_) const {
-			return mThis->child_array (size_) ;
+		Array<JsonParser> children (CREF<LENGTH> size_) const {
+			return mThis->children (size_) ;
 		}
 
 		BOOL equal (CREF<JsonParser> that) const {

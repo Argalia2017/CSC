@@ -17,7 +17,6 @@
 #undef require
 #undef anonymous
 #undef as
-#undef where
 #undef slice
 #undef assert
 #undef assume

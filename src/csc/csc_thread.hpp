@@ -1,5 +1,29 @@
 ﻿#pragma once
 
+/*
+MIT License
+
+Copyright (c) 2017 Argalia2017
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+*/
+
 #ifndef __CSC_THREAD__
 #define __CSC_THREAD__
 #endif
@@ -29,10 +53,8 @@ trait WORKTHREAD_HELP<DEPEND ,ALWAYS> {
 		virtual void set_queue_size (CREF<LENGTH> size_) = 0 ;
 		virtual void start (RREF<Function<void ,TYPEAS<INDEX>>> proc) = 0 ;
 		virtual void post (CREF<INDEX> item) = 0 ;
-		virtual BOOL post (CREF<INDEX> item ,CREF<TimeDuration> interval ,CREF<Function<BOOL>> predicate) = 0 ;
 		virtual void post_all (CREF<Array<INDEX>> item) = 0 ;
 		virtual void join () = 0 ;
-		virtual BOOL join (CREF<TimeDuration> interval ,CREF<Function<BOOL>> predicate) = 0 ;
 		virtual void stop () = 0 ;
 	} ;
 
@@ -68,20 +90,12 @@ trait WORKTHREAD_HELP<DEPEND ,ALWAYS> {
 			return mThis->post (item) ;
 		}
 
-		BOOL post (CREF<INDEX> item ,CREF<TimeDuration> interval ,CREF<Function<BOOL>> predicate) {
-			return mThis->post (item ,interval ,predicate) ;
-		}
-
 		void post_all (CREF<Array<INDEX>> item) {
 			return mThis->post_all (item) ;
 		}
 
 		void join () {
 			return mThis->join () ;
-		}
-
-		BOOL join (CREF<TimeDuration> interval ,CREF<Function<BOOL>> predicate) {
-			return mThis->join (interval ,predicate) ;
 		}
 
 		void stop () {
@@ -196,7 +210,6 @@ trait PROMISE_HOLDER_HELP<DEPEND ,ALWAYS> {
 		virtual void signal () const = 0 ;
 		virtual BOOL ready () const = 0 ;
 		virtual AutoRef<> poll () const = 0 ;
-		virtual Optional<AutoRef<>> poll (CREF<TimeDuration> interval ,CREF<Function<BOOL>> predicate) const = 0 ;
 		virtual void then (RREF<Function<void ,TYPEAS<VREF<AutoRef<>>>>> proc) const = 0 ;
 		virtual void stop () const = 0 ;
 	} ;
@@ -294,14 +307,6 @@ trait FUTURE_HELP<ITEM ,ALWAYS> {
 		ITEM poll () const {
 			auto rax = mThis->poll ().as_cast (TYPEAS<ITEM>::expr) ;
 			return move (rax.self) ;
-		}
-
-		Optional<ITEM> poll (CREF<TimeDuration> interval ,CREF<Function<BOOL>> predicate) const {
-			auto rax = mThis->poll (interval ,predicate) ;
-			if ifnot (rax.exist ())
-				return rax.code () ;
-			auto rbx = rax.poll ().as_cast (TYPEAS<ITEM>::expr) ;
-			return Optional<ITEM>::make (move (rbx.self)) ;
 		}
 
 		void then (RREF<Function<void ,TYPEAS<VREF<ITEM>>>> proc) const {

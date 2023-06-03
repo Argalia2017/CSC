@@ -19,7 +19,6 @@
 #define require __macro_requires
 #define anonymous __macro_anonymous
 #define as
-#define where __macro_where
 #define slice __macro_slice
 #define assert __macro_assert
 #define assume __macro_assume

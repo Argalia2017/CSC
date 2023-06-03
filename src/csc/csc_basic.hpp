@@ -1,5 +1,29 @@
 ﻿#pragma once
 
+/*
+MIT License
+
+Copyright (c) 2017 Argalia2017
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+*/
+
 #ifndef __CSC_BASIC__
 #define __CSC_BASIC__
 #endif
@@ -288,32 +312,32 @@ trait BUFFERPROC_HELP<UNIT ,ALWAYS> {
 
 		template <class ARG1 = UNIT ,class = REQUIRE<IS_TEXT<ARG1>>>
 		imports Slice<ARG1> buf_slice (CREF<ARR<DEPENDENT<STRA ,ARG1>>> src ,CREF<LENGTH> size_) {
-			return buf_slice_impl (TYPEAS<ARG1>::expr ,src ,size_) ;
+			return template_buf_slice (TYPEAS<ARG1>::expr ,src ,size_) ;
 		}
 
 		template <class ARG1 = UNIT ,class = REQUIRE<IS_TEXT<ARG1>>>
 		imports Slice<ARG1> buf_slice (CREF<ARR<DEPENDENT<STRW ,ARG1>>> src ,CREF<LENGTH> size_) {
-			return buf_slice_impl (TYPEAS<ARG1>::expr ,src ,size_) ;
+			return template_buf_slice (TYPEAS<ARG1>::expr ,src ,size_) ;
 		}
 
 		template <class ARG1 = UNIT ,class = REQUIRE<IS_TEXT<ARG1>>>
 		imports Slice<ARG1> buf_slice (CREF<ARR<DEPENDENT<STRU8 ,ARG1>>> src ,CREF<LENGTH> size_) {
-			return buf_slice_impl (TYPEAS<ARG1>::expr ,src ,size_) ;
+			return template_buf_slice (TYPEAS<ARG1>::expr ,src ,size_) ;
 		}
 
 		template <class ARG1 = UNIT ,class = REQUIRE<IS_TEXT<ARG1>>>
 		imports Slice<ARG1> buf_slice (CREF<ARR<DEPENDENT<STRU16 ,ARG1>>> src ,CREF<LENGTH> size_) {
-			return buf_slice_impl (TYPEAS<ARG1>::expr ,src ,size_) ;
+			return template_buf_slice (TYPEAS<ARG1>::expr ,src ,size_) ;
 		}
 
 		template <class ARG1 = UNIT ,class = REQUIRE<IS_TEXT<ARG1>>>
 		imports Slice<ARG1> buf_slice (CREF<ARR<DEPENDENT<STRU32 ,ARG1>>> src ,CREF<LENGTH> size_) {
-			return buf_slice_impl (TYPEAS<ARG1>::expr ,src ,size_) ;
+			return template_buf_slice (TYPEAS<ARG1>::expr ,src ,size_) ;
 		}
 
 	private:
-		template <class ARG1 ,class ARG2 >
-		imports Slice<ARG1> buf_slice_impl (CREF<TYPEID<ARG1>> id ,CREF<ARG2> src ,CREF<LENGTH> size_) {
+		template <class ARG1 ,class ARG2>
+		imports forceinline Slice<ARG1> template_buf_slice (CREF<TYPEID<ARG1>> id ,CREF<ARG2> src ,CREF<LENGTH> size_) {
 			using R1X = ARRAY_ITEM<ARG2> ;
 			using R2X = typename BUFFERPROC_HELP<R1X ,ALWAYS>::BufferProc ;
 			const auto r1x = invoke ([&] () {
@@ -351,26 +375,26 @@ trait FUNCTION_tuple_pick_HELP<PARAMS ,ALWAYS> {
 		}
 
 		template <class ARG1 ,class ARG2 ,class = REQUIRE<ENUM_GT_ZERO<ARG2>>>
-		imports VREF<TYPE_PICK<PARAMS ,ARG2>> template_pick (CREF<typeof (PH2)> ,VREF<ARG1> tuple ,CREF<TYPEID<ARG2>> id) {
+		imports forceinline VREF<TYPE_PICK<PARAMS ,ARG2>> template_pick (CREF<typeof (PH2)> ,VREF<ARG1> tuple ,CREF<TYPEID<ARG2>> id) {
 			using R1X = typename FUNCTION_tuple_pick_HELP<TYPE_FIRST_REST<PARAMS> ,ALWAYS>::FUNCTION_tuple_pick ;
 			const auto r1x = R1X () ;
 			return r1x (tuple.rest () ,TYPEAS<ENUM_DEC<ARG2>>::expr) ;
 		}
 
 		template <class ARG1 ,class ARG2 ,class = REQUIRE<ENUM_EQ_ZERO<ARG2>>>
-		imports VREF<TYPE_FIRST_ONE<PARAMS>> template_pick (CREF<typeof (PH1)> ,VREF<ARG1> tuple ,CREF<TYPEID<ARG2>> id) {
+		imports forceinline VREF<TYPE_FIRST_ONE<PARAMS>> template_pick (CREF<typeof (PH1)> ,VREF<ARG1> tuple ,CREF<TYPEID<ARG2>> id) {
 			return tuple.one () ;
 		}
 
 		template <class ARG1 ,class ARG2 ,class = REQUIRE<ENUM_GT_ZERO<ARG2>>>
-		imports CREF<TYPE_PICK<PARAMS ,ARG2>> template_pick (CREF<typeof (PH2)> ,CREF<ARG1> tuple ,CREF<TYPEID<ARG2>> id) {
+		imports forceinline CREF<TYPE_PICK<PARAMS ,ARG2>> template_pick (CREF<typeof (PH2)> ,CREF<ARG1> tuple ,CREF<TYPEID<ARG2>> id) {
 			using R1X = typename FUNCTION_tuple_pick_HELP<TYPE_FIRST_REST<PARAMS> ,ALWAYS>::FUNCTION_tuple_pick ;
 			const auto r1x = R1X () ;
 			return r1x (tuple.rest () ,TYPEAS<ENUM_DEC<ARG2>>::expr) ;
 		}
 
 		template <class ARG1 ,class ARG2 ,class = REQUIRE<ENUM_EQ_ZERO<ARG2>>>
-		imports CREF<TYPE_FIRST_ONE<PARAMS>> template_pick (CREF<typeof (PH1)> ,CREF<ARG1> tuple ,CREF<TYPEID<ARG2>> id) {
+		imports forceinline CREF<TYPE_FIRST_ONE<PARAMS>> template_pick (CREF<typeof (PH1)> ,CREF<ARG1> tuple ,CREF<TYPEID<ARG2>> id) {
 			return tuple.one () ;
 		}
 	} ;
@@ -786,11 +810,11 @@ trait TUPLE_HELP<PARAMS ,REQUIRE<ENUM_COMPR_GT<COUNT_OF<PARAMS> ,RANK2>>> {
 			return mTuple.mRest.mOne ;
 		}
 
-		VREF<SECOND_ONE> m3rd_m () leftvalue {
+		VREF<THIRD_ONE> m3rd_m () leftvalue {
 			return mTuple.mRest.mRest.mOne ;
 		}
 
-		CREF<SECOND_ONE> m3rd_m () const leftvalue {
+		CREF<THIRD_ONE> m3rd_m () const leftvalue {
 			return mTuple.mRest.mRest.mOne ;
 		}
 
@@ -2929,7 +2953,7 @@ trait LATER_HELP<UNIT ,ALWAYS> {
 		UNIT invoke () const {
 			return AutoRef<UNIT>::from (mThis->invoke ()).self ;
 		}
-
+  
 		inline UNIT operator() () const {
 			return invoke () ;
 		}

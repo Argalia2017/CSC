@@ -1,5 +1,29 @@
 ﻿#pragma once
 
+/*
+MIT License
+
+Copyright (c) 2017 Argalia2017
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+*/
+
 #ifndef __CSC_STREAM__
 #error "∑(っ°Д° ;)っ : require 'csc_stream.hpp'"
 #endif
@@ -614,8 +638,13 @@ template <class ITEM>
 trait TEXTATTRIBUTE_IMPLHOLDER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 	using Holder = typename TEXTATTRIBUTE_HELP<ITEM ,ALWAYS>::Holder ;
 
-	using GAP_SPACE = RANK1 ;
-	using GAP_ENDLINE = RANK2 ;
+	struct GAP_CLAZZ {
+		enum {
+			Space ,
+			Endline ,
+			EnumSize
+		} ;
+	} ;
 
 	class ImplHolder implement Holder {
 	protected:
@@ -626,12 +655,12 @@ trait TEXTATTRIBUTE_IMPLHOLDER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 
 	public:
 		void initialize () override {
-			mSpaceSet.add (ITEM (' ') ,GAP_SPACE::expr) ;
-			mSpaceSet.add (ITEM ('\t') ,GAP_SPACE::expr) ;
-			mSpaceSet.add (ITEM ('\b') ,GAP_SPACE::expr) ;
-			mSpaceSet.add (ITEM ('\r') ,GAP_ENDLINE::expr) ;
-			mSpaceSet.add (ITEM ('\n') ,GAP_ENDLINE::expr) ;
-			mSpaceSet.add (ITEM ('\f') ,GAP_ENDLINE::expr) ;
+			mSpaceSet.add (ITEM (' ') ,GAP_CLAZZ::Space) ;
+			mSpaceSet.add (ITEM ('\t') ,GAP_CLAZZ::Space) ;
+			mSpaceSet.add (ITEM ('\b') ,GAP_CLAZZ::Space) ;
+			mSpaceSet.add (ITEM ('\r') ,GAP_CLAZZ::Endline) ;
+			mSpaceSet.add (ITEM ('\n') ,GAP_CLAZZ::Endline) ;
+			mSpaceSet.add (ITEM ('\f') ,GAP_CLAZZ::Endline) ;
 			escape_list_add (ITEM ('\\') ,ITEM ('\\')) ;
 			escape_list_add (ITEM ('\\') ,ITEM ('\\')) ;
 			escape_list_add (ITEM ('/') ,ITEM ('/')) ;
@@ -666,11 +695,11 @@ trait TEXTATTRIBUTE_IMPLHOLDER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 		}
 
 		BOOL is_gap_space (CREF<ITEM> str) const override {
-			return mSpaceSet.map (str) == GAP_SPACE::expr ;
+			return mSpaceSet.map (str) == GAP_CLAZZ::Space ;
 		}
 
 		BOOL is_gap_endline (CREF<ITEM> str) const override {
-			return mSpaceSet.map (str) == GAP_ENDLINE::expr ;
+			return mSpaceSet.map (str) == GAP_CLAZZ::Endline ;
 		}
 
 		BOOL is_word (CREF<ITEM> str) const override {
