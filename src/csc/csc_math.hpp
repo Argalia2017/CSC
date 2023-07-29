@@ -54,6 +54,8 @@ trait MATHPROC_IMPLHOLDER_HELP ;
 template <class DEPEND>
 trait MATHPROC_HELP<DEPEND ,ALWAYS> {
 	struct Holder implement Interface {
+		imports VRef<Holder> create () ;
+
 		virtual void initialize () = 0 ;
 		virtual BOOL is_inf (CREF<SINGLE> obj) const = 0 ;
 		virtual BOOL is_inf (CREF<DOUBLE> obj) const = 0 ;
@@ -61,10 +63,6 @@ trait MATHPROC_HELP<DEPEND ,ALWAYS> {
 		virtual VAL64 sign (CREF<VAL64> obj) const = 0 ;
 		virtual SINGLE sign (CREF<SINGLE> obj) const = 0 ;
 		virtual DOUBLE sign (CREF<DOUBLE> obj) const = 0 ;
-		virtual VAL32 step (CREF<VAL32> obj) const = 0 ;
-		virtual VAL64 step (CREF<VAL64> obj) const = 0 ;
-		virtual SINGLE step (CREF<SINGLE> obj) const = 0 ;
-		virtual DOUBLE step (CREF<DOUBLE> obj) const = 0 ;
 		virtual VAL32 abs (CREF<VAL32> obj) const = 0 ;
 		virtual VAL64 abs (CREF<VAL64> obj) const = 0 ;
 		virtual SINGLE abs (CREF<SINGLE> obj) const = 0 ;
@@ -112,10 +110,10 @@ trait MATHPROC_HELP<DEPEND ,ALWAYS> {
 		virtual DOUBLE square (CREF<DOUBLE> obj) const = 0 ;
 		virtual SINGLE sqrt (CREF<SINGLE> obj) const = 0 ;
 		virtual DOUBLE sqrt (CREF<DOUBLE> obj) const = 0 ;
-		virtual VAL32 cube (CREF<VAL32> obj) const = 0 ;
-		virtual VAL64 cube (CREF<VAL64> obj) const = 0 ;
-		virtual SINGLE cube (CREF<SINGLE> obj) const = 0 ;
-		virtual DOUBLE cube (CREF<DOUBLE> obj) const = 0 ;
+		virtual VAL32 cubic (CREF<VAL32> obj) const = 0 ;
+		virtual VAL64 cubic (CREF<VAL64> obj) const = 0 ;
+		virtual SINGLE cubic (CREF<SINGLE> obj) const = 0 ;
+		virtual DOUBLE cubic (CREF<DOUBLE> obj) const = 0 ;
 		virtual SINGLE cbrt (CREF<SINGLE> obj) const = 0 ;
 		virtual DOUBLE cbrt (CREF<DOUBLE> obj) const = 0 ;
 		virtual SINGLE exp (CREF<SINGLE> obj) const = 0 ;
@@ -146,10 +144,6 @@ trait MATHPROC_HELP<DEPEND ,ALWAYS> {
 		virtual DOUBLE radian_angle (CREF<DOUBLE> obj) const = 0 ;
 	} ;
 
-	struct FUNCTION_extern {
-		imports VRef<Holder> invoke () ;
-	} ;
-
 	class MathProc {
 	protected:
 		VRef<Holder> mThis ;
@@ -158,7 +152,7 @@ trait MATHPROC_HELP<DEPEND ,ALWAYS> {
 		imports CREF<MathProc> instance () {
 			return memorize ([&] () {
 				MathProc ret ;
-				ret.mThis = FUNCTION_extern::invoke () ;
+				ret.mThis = Holder::create () ;
 				ret.mThis->initialize () ;
 				return move (ret) ;
 			}) ;
@@ -174,12 +168,6 @@ trait MATHPROC_HELP<DEPEND ,ALWAYS> {
 		imports ARG1 sign (CREF<ARG1> obj) {
 			require (IS_SCALAR<ARG1>) ;
 			return instance ().mThis->sign (obj) ;
-		}
-
-		template <class ARG1>
-		imports ARG1 step (CREF<ARG1> obj) {
-			require (IS_SCALAR<ARG1>) ;
-			return instance ().mThis->step (obj) ;
 		}
 
 		template <class ARG1>
@@ -294,9 +282,9 @@ trait MATHPROC_HELP<DEPEND ,ALWAYS> {
 		}
 
 		template <class ARG1>
-		imports ARG1 cube (CREF<ARG1> obj) {
+		imports ARG1 cubic (CREF<ARG1> obj) {
 			require (IS_SCALAR<ARG1>) ;
-			return instance ().mThis->cube (obj) ;
+			return instance ().mThis->cubic (obj) ;
 		}
 
 		template <class ARG1>
@@ -405,15 +393,13 @@ trait FLOATPROC_HELP<DEPEND ,ALWAYS> {
 	} ;
 
 	struct Holder implement Interface {
+		imports VRef<Holder> create () ;
+
 		virtual void initialize () = 0 ;
 		virtual DOUBLE encode (CREF<NOTATION> fexp2) const = 0 ;
 		virtual NOTATION decode (CREF<DOUBLE> float_) const = 0 ;
 		virtual NOTATION fexp2_from_fexp10 (CREF<NOTATION> fexp10) const = 0 ;
 		virtual NOTATION fexp10_from_fexp2 (CREF<NOTATION> fexp2) const = 0 ;
-	} ;
-
-	struct FUNCTION_extern {
-		imports VRef<Holder> invoke () ;
 	} ;
 
 	class FloatProc {
@@ -424,7 +410,7 @@ trait FLOATPROC_HELP<DEPEND ,ALWAYS> {
 		imports CREF<FloatProc> instance () {
 			return memorize ([&] () {
 				FloatProc ret ;
-				ret.mThis = FUNCTION_extern::invoke () ;
+				ret.mThis = Holder::create () ;
 				ret.mThis->initialize () ;
 				return move (ret) ;
 			}) ;
@@ -459,6 +445,8 @@ trait BITPROC_IMPLHOLDER_HELP ;
 template <class DEPEND>
 trait BITPROC_HELP<DEPEND ,ALWAYS> {
 	struct Holder implement Interface {
+		imports VRef<Holder> create () ;
+
 		virtual void initialize () = 0 ;
 		virtual BYTE bit_low (CREF<WORD> obj) const = 0 ;
 		virtual WORD bit_low (CREF<CHAR> obj) const = 0 ;
@@ -488,10 +476,6 @@ trait BITPROC_HELP<DEPEND ,ALWAYS> {
 		virtual INDEX bit_find (CREF<DATA> obj) const = 0 ;
 	} ;
 
-	struct FUNCTION_extern {
-		imports VRef<Holder> invoke () ;
-	} ;
-
 	class BitProc {
 	protected:
 		VRef<Holder> mThis ;
@@ -500,7 +484,7 @@ trait BITPROC_HELP<DEPEND ,ALWAYS> {
 		imports CREF<BitProc> instance () {
 			return memorize ([&] () {
 				BitProc ret ;
-				ret.mThis = FUNCTION_extern::invoke () ;
+				ret.mThis = Holder::create () ;
 				ret.mThis->initialize () ;
 				return move (ret) ;
 			}) ;
@@ -592,50 +576,47 @@ trait INTEGER_IMPLHOLDER_HELP ;
 
 template <class DEPEND>
 trait INTEGER_HELP<DEPEND ,ALWAYS> {
-	class Integer ;
+	struct Layout ;
 
 	struct Holder implement Interface {
+		imports VRef<Holder> create () ;
+
 		virtual void initialize (CREF<LENGTH> size_ ,CREF<VAL64> value_) = 0 ;
-		virtual Integer clone () const = 0 ;
+		virtual Layout clone () const = 0 ;
 		virtual LENGTH precision () const = 0 ;
 		virtual VAL64 get () const = 0 ;
 		virtual void set (CREF<VAL64> value_) = 0 ;
-		virtual BOOL equal (CREF<Holder> that) const = 0 ;
-		virtual FLAG compr (CREF<Holder> that) const = 0 ;
+		virtual BOOL equal (CREF<Layout> that) const = 0 ;
+		virtual FLAG compr (CREF<Layout> that) const = 0 ;
 		virtual FLAG hash () const = 0 ;
-		virtual Integer add (CREF<Holder> that) const = 0 ;
-		virtual Integer sub (CREF<Holder> that) const = 0 ;
-		virtual Integer mul (CREF<Holder> that) const = 0 ;
-		virtual Integer mul (CREF<VAL64> scale) const = 0 ;
-		virtual Integer div (CREF<VAL64> scale) const = 0 ;
-		virtual Integer mod (CREF<VAL64> scale) const = 0 ;
-		virtual Integer minus () const = 0 ;
+		virtual Layout add (CREF<Layout> that) const = 0 ;
+		virtual Layout sub (CREF<Layout> that) const = 0 ;
+		virtual Layout mul (CREF<Layout> that) const = 0 ;
+		virtual Layout mul (CREF<VAL64> scale) const = 0 ;
+		virtual Layout div (CREF<VAL64> scale) const = 0 ;
+		virtual Layout mod (CREF<VAL64> scale) const = 0 ;
+		virtual Layout minus () const = 0 ;
 		virtual void increase () = 0 ;
 		virtual void decrease () = 0 ;
 	} ;
 
-	class FakeHolder implement Holder {
-	protected:
-		VarBuffer<BYTE> mInteger ;
+	struct Layout {
+		VRef<Holder> mThis ;
 	} ;
 
-	struct FUNCTION_extern {
-		imports Box<FakeHolder> invoke () ;
-	} ;
-
-	class Integer {
+	class Integer implement Layout {
 	protected:
-		Box<FakeHolder> mThis ;
+		using Layout::mThis ;
 
 	public:
 		implicit Integer () = default ;
 
-		explicit Integer (RREF<Box<FakeHolder>> that) {
-			mThis = move (that) ;
+		implicit Integer (RREF<Layout> that) {
+			mThis = move (that.mThis) ;
 		}
 
 		explicit Integer (CREF<LENGTH> size_ ,CREF<VAL64> value_) {
-			mThis = FUNCTION_extern::invoke () ;
+			mThis = Holder::create () ;
 			mThis->initialize (size_ ,value_) ;
 		}
 
@@ -645,7 +626,7 @@ trait INTEGER_HELP<DEPEND ,ALWAYS> {
 			thiz = that.mThis->clone () ;
 		}
 
-		inline VREF<Integer> operator= (CREF<Integer> that) {
+		forceinline VREF<Integer> operator= (CREF<Integer> that) {
 			if (address (thiz) == address (that))
 				return thiz ;
 			swap (thiz ,move (that)) ;
@@ -656,17 +637,11 @@ trait INTEGER_HELP<DEPEND ,ALWAYS> {
 			swap (thiz ,that) ;
 		}
 
-		inline VREF<Integer> operator= (RREF<Integer> that) noexcept {
+		forceinline VREF<Integer> operator= (RREF<Integer> that) noexcept {
 			if (address (thiz) == address (that))
 				return thiz ;
 			swap (thiz ,move (that)) ;
 			return thiz ;
-		}
-
-		LENGTH size () const {
-			if (mThis == NULL)
-				return 0 ;
-			return mThis->size () ;
 		}
 
 		LENGTH precision () const {
@@ -682,34 +657,34 @@ trait INTEGER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		BOOL equal (CREF<Integer> that) const {
-			return mThis->equal (that.mThis.self) ;
+			return mThis->equal (that) ;
 		}
 
-		inline BOOL operator== (CREF<Integer> that) const {
+		forceinline BOOL operator== (CREF<Integer> that) const {
 			return equal (that) ;
 		}
 
-		inline BOOL operator!= (CREF<Integer> that) const {
+		forceinline BOOL operator!= (CREF<Integer> that) const {
 			return ifnot (equal (that)) ;
 		}
 
 		FLAG compr (CREF<Integer> that) const {
-			return mThis->compr (that.mThis.self) ;
+			return mThis->compr (that) ;
 		}
 
-		inline BOOL operator< (CREF<Integer> that) const {
+		forceinline BOOL operator< (CREF<Integer> that) const {
 			return compr (that) < ZERO ;
 		}
 
-		inline BOOL operator<= (CREF<Integer> that) const {
+		forceinline BOOL operator<= (CREF<Integer> that) const {
 			return compr (that) <= ZERO ;
 		}
 
-		inline BOOL operator> (CREF<Integer> that) const {
+		forceinline BOOL operator> (CREF<Integer> that) const {
 			return compr (that) > ZERO ;
 		}
 
-		inline BOOL operator>= (CREF<Integer> that) const {
+		forceinline BOOL operator>= (CREF<Integer> that) const {
 			return compr (that) >= ZERO ;
 		}
 
@@ -718,38 +693,38 @@ trait INTEGER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		Integer add (CREF<Integer> that) const {
-			return mThis->add (keep[TYPEAS<CREF<Holder>>::expr] (that.mThis.self)) ;
+			return mThis->add (that) ;
 		}
 
-		inline Integer operator+ (CREF<Integer> that) const {
+		forceinline Integer operator+ (CREF<Integer> that) const {
 			return add (that) ;
 		}
 
-		inline void operator+= (CREF<Integer> that) {
+		forceinline void operator+= (CREF<Integer> that) {
 			thiz = add (that) ;
 		}
 
 		Integer sub (CREF<Integer> that) const {
-			return mThis->sub (keep[TYPEAS<CREF<Holder>>::expr] (that.mThis.self)) ;
+			return mThis->sub (that) ;
 		}
 
-		inline Integer operator- (CREF<Integer> that) const {
+		forceinline Integer operator- (CREF<Integer> that) const {
 			return sub (that) ;
 		}
 
-		inline void operator-= (CREF<Integer> that) {
+		forceinline void operator-= (CREF<Integer> that) {
 			thiz = sub (that) ;
 		}
 
 		Integer mul (CREF<Integer> that) const {
-			return mThis->mul (keep[TYPEAS<CREF<Holder>>::expr] (that.mThis.self)) ;
+			return mThis->mul (that) ;
 		}
 
-		inline Integer operator* (CREF<Integer> that) const {
+		forceinline Integer operator* (CREF<Integer> that) const {
 			return mul (that) ;
 		}
 
-		inline void operator*= (CREF<Integer> that) {
+		forceinline void operator*= (CREF<Integer> that) {
 			thiz = mul (that) ;
 		}
 
@@ -757,11 +732,11 @@ trait INTEGER_HELP<DEPEND ,ALWAYS> {
 			return mThis->mul (scale) ;
 		}
 
-		inline Integer operator* (CREF<VAL64> scale) const {
+		forceinline Integer operator* (CREF<VAL64> scale) const {
 			return mul (scale) ;
 		}
 
-		inline void operator*= (CREF<VAL64> scale) {
+		forceinline void operator*= (CREF<VAL64> scale) {
 			thiz = mul (scale) ;
 		}
 
@@ -769,11 +744,11 @@ trait INTEGER_HELP<DEPEND ,ALWAYS> {
 			return mThis->div (scale) ;
 		}
 
-		inline Integer operator/ (CREF<VAL64> scale) const {
+		forceinline Integer operator/ (CREF<VAL64> scale) const {
 			return div (scale) ;
 		}
 
-		inline void operator/= (CREF<VAL64> scale) {
+		forceinline void operator/= (CREF<VAL64> scale) {
 			thiz = div (scale) ;
 		}
 
@@ -781,15 +756,15 @@ trait INTEGER_HELP<DEPEND ,ALWAYS> {
 			return mThis->mod (scale) ;
 		}
 
-		inline Integer operator% (CREF<VAL64> scale) const {
+		forceinline Integer operator% (CREF<VAL64> scale) const {
 			return mod (scale) ;
 		}
 
-		inline void operator%= (CREF<VAL64> scale) {
+		forceinline void operator%= (CREF<VAL64> scale) {
 			thiz = mod (scale) ;
 		}
 
-		inline Integer operator+ () const {
+		forceinline Integer operator+ () const {
 			return thiz ;
 		}
 
@@ -797,7 +772,7 @@ trait INTEGER_HELP<DEPEND ,ALWAYS> {
 			return mThis->minus () ;
 		}
 
-		inline Integer operator- () const {
+		forceinline Integer operator- () const {
 			return minus () ;
 		}
 
@@ -805,7 +780,7 @@ trait INTEGER_HELP<DEPEND ,ALWAYS> {
 			return mThis->increase () ;
 		}
 
-		inline void operator++ (VAL32) {
+		forceinline void operator++ (VAL32) {
 			increase () ;
 		}
 
@@ -813,7 +788,7 @@ trait INTEGER_HELP<DEPEND ,ALWAYS> {
 			return mThis->decrease () ;
 		}
 
-		inline void operator-- (VAL32) {
+		forceinline void operator-- (VAL32) {
 			decrease () ;
 		}
 	} ;

@@ -19,10 +19,10 @@
   </Type>
 
   <Type Name="CSC::BOX_HELP&lt;*&gt;::Box" Priority="High">
-    <DisplayString Condition="!mExist">{{???}}</DisplayString>
+    <DisplayString Condition="mVptr == 0">{{???}}</DisplayString>
     <Expand HideRawView="true">
-      <ExpandedItem Condition="!mExist">(int*)0</ExpandedItem>
-      <ExpandedItem Condition="mExist">mValue</ExpandedItem>
+      <ExpandedItem Condition="mVptr == 0">(int*)0</ExpandedItem>
+      <ExpandedItem Condition="mVptr != 0">mValue</ExpandedItem>
     </Expand>
   </Type>
 
@@ -132,33 +132,15 @@
     </Expand>
   </Type>
 
-  <Type Name="CSC::AUTOREF_PUREHOLDER_HELP&lt;*&gt;::PureHolder">
-    <Expand HideRawView="true">
-      <ExpandedItem>mValue</ExpandedItem>
-    </Expand>
-  </Type>
-
   <Type Name="CSC::SHAREDREF_HELP&lt;*&gt;::SharedRef">
     <Expand HideRawView="true">
       <ExpandedItem>mThis</ExpandedItem>
     </Expand>
   </Type>
 
-  <Type Name="CSC::SHAREDREF_PUREHOLDER_HELP&lt;*&gt;::PureHolder">
-    <Expand HideRawView="true">
-      <ExpandedItem>mValue</ExpandedItem>
-    </Expand>
-  </Type>
-
   <Type Name="CSC::UNIQUEREF_HELP&lt;*&gt;::UniqueRef">
     <Expand HideRawView="true">
       <ExpandedItem>mThis</ExpandedItem>
-    </Expand>
-  </Type>
-
-  <Type Name="CSC::UNIQUEREF_PUREHOLDER_HELP&lt;*&gt;::PureHolder">
-    <Expand HideRawView="true">
-      <ExpandedItem>mValue</ExpandedItem>
     </Expand>
   </Type>
 
@@ -252,12 +234,6 @@
   <Type Name="CSC::BUFFER_HELP&lt;*,CSC::ENUMAS&lt;*,*&gt;,*&gt;::Buffer" Priority="High">
     <Expand HideRawView="true">
       <ExpandedItem>mThis</ExpandedItem>
-    </Expand>
-  </Type>
-
-  <Type Name="CSC::PROBUFFER_PUREHOLDER_HELP&lt;*,*&gt;::PureHolder">
-    <Expand HideRawView="true">
-      <ExpandedItem>mValue</ExpandedItem>
     </Expand>
   </Type>
 

@@ -13,15 +13,12 @@
 #undef m3rd
 #undef trait
 #undef implement
-#undef extend
 #undef require
 #undef anonymous
-#undef as
 #undef slice
 #undef assert
 #undef assume
 #undef unittest
-#undef noinline
 #undef forceinline
 #undef ifnot
 #undef ifswitch

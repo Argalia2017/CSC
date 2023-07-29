@@ -40,8 +40,7 @@ trait XMLPARSER_COMBINATION_HELP ;
 template <class DEPEND>
 trait XMLPARSER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	using Holder = typename XMLPARSER_HELP<DEPEND ,ALWAYS>::Holder ;
-	using FakeHolder = typename XMLPARSER_HELP<DEPEND ,ALWAYS>::FakeHolder ;
-	using XmlParser = typename XMLPARSER_HELP<DEPEND ,ALWAYS>::XmlParser ;
+	using Layout = typename XMLPARSER_HELP<DEPEND ,ALWAYS>::Layout ;
 
 	struct NODE {
 		String<STRU8> mName ;
@@ -59,10 +58,6 @@ trait XMLPARSER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	} ;
 
 	class ImplHolder implement Holder {
-	private:
-		template <class...>
-		friend trait XMLPARSER_COMBINATION_HELP ;
-
 	protected:
 		CRef<HEAP> mHeap ;
 		INDEX mIndex ;
@@ -80,22 +75,30 @@ trait XMLPARSER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			mIndex = 0 ;
 		}
 
-		XmlParser clone () const override {
-			if ifnot (available ())
+		CRef<HEAP> get_mHeap () const {
+			return mHeap ;
+		}
+
+		INDEX get_mIndex () const {
+			return mIndex ;
+		}
+
+		Layout clone () const override {
+			if ifnot (good ())
 				return factory (NONE) ;
 			return factory (mIndex) ;
 		}
 
-		XmlParser factory (CREF<INDEX> index) const {
-			auto rax = Box<FakeHolder> () ;
-			rax.acquire (TYPEAS<ImplHolder>::expr) ;
-			auto &&tmp = keep[TYPEAS<VREF<ImplHolder>>::expr] (keep[TYPEAS<VREF<Holder>>::expr] (rax.self)) ;
-			tmp.mHeap = mHeap ;
-			tmp.mIndex = index ;
-			return XmlParser (move (rax)) ;
+		Layout factory (CREF<INDEX> index) const {
+			Layout ret ;
+			auto rax = VRef<ImplHolder>::make () ;
+			rax->mHeap = mHeap ;
+			rax->mIndex = index ;
+			ret.mThis = move (rax) ;
+			return move (ret) ;
 		}
 
-		BOOL available () const override {
+		BOOL good () const override {
 			if (mHeap == NULL)
 				return FALSE ;
 			if (mIndex == NONE)
@@ -103,55 +106,55 @@ trait XMLPARSER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			return TRUE ;
 		}
 
-		XmlParser root () const override {
-			if ifnot (available ())
+		Layout root () const override {
+			if ifnot (good ())
 				return factory (NONE) ;
 			return factory (0) ;
 		}
 
-		XmlParser parent () const override {
-			if ifnot (available ())
+		Layout parent () const override {
+			if ifnot (good ())
 				return factory (NONE) ;
 			return factory (mHeap->mTree[mIndex].mParent) ;
 		}
 
-		XmlParser brother () const override {
-			if ifnot (available ())
+		Layout brother () const override {
+			if ifnot (good ())
 				return factory (NONE) ;
 			return factory (mHeap->mTree[mIndex].mBrother) ;
 		}
 
-		XmlParser child () const override {
-			if ifnot (available ())
+		Layout child () const override {
+			if ifnot (good ())
 				return factory (NONE) ;
 			return factory (mHeap->mTree[mIndex].mChild) ;
 		}
 
-		XmlParser child (CREF<String<STRU8>> name) const override {
-			if ifnot (available ())
+		Layout child (CREF<String<STRU8>> name) const override {
+			if ifnot (good ())
 				return factory (NONE) ;
 			INDEX ix = mHeap->mTree[mIndex].mObjectSet.map (name) ;
 			return factory (ix) ;
 		}
 
-		Array<XmlParser> children () const override {
-			Array<XmlParser> ret ;
+		Array<Layout> children () const override {
+			Array<Layout> ret ;
 			if ifswitch (TRUE) {
-				if ifnot (available ())
+				if ifnot (good ())
 					discard ;
 				auto &&tmp = mHeap->mTree[mIndex].mArraySet ;
 				const auto r1x = IterArray<INDEX>::make (tmp.iter ()) ;
-				ret = Array<XmlParser> (r1x.length ()) ;
+				ret = Array<Layout> (r1x.length ()) ;
 				for (auto &&i : ret.iter ())
 					ret[i] = factory (tmp.map_get (r1x[i])) ;
 			}
 			return move (ret) ;
 		}
 
-		Array<XmlParser> children (CREF<LENGTH> size_) const override {
-			Array<XmlParser> ret = Array<XmlParser> (size_) ;
+		Array<Layout> children (CREF<LENGTH> size_) const override {
+			Array<Layout> ret = Array<Layout> (size_) ;
 			if ifswitch (TRUE) {
-				if ifnot (available ())
+				if ifnot (good ())
 					discard ;
 				auto &&tmp = mHeap->mTree[mIndex].mArraySet ;
 				const auto r1x = IterArray<INDEX>::make (tmp.iter ()) ;
@@ -164,9 +167,9 @@ trait XMLPARSER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			return move (ret) ;
 		}
 
-		XmlParser concat (CREF<XmlParser> that) const override {
+		Layout concat (CREF<Layout> that) const override {
 			using R1X = typename DEPENDENT<XMLPARSER_COMBINATION_HELP<DEPEND ,ALWAYS> ,DEPEND>::Combination ;
-			auto rax = R1X (factory (mIndex) ,that) ;
+			auto rax = R1X (factory (mIndex) ,XmlParser (Layout ())) ;
 			rax.generate () ;
 			auto rbx = ImplHolder () ;
 			rbx.mHeap = CRef<HEAP>::make (rax.poll ()) ;
@@ -174,14 +177,14 @@ trait XMLPARSER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			return rbx.factory (0) ;
 		}
 
-		BOOL equal (CREF<Holder> that) const override {
-			return equal (keep[TYPEAS<CREF<ImplHolder>>::expr] (that)) ;
+		BOOL equal (CREF<Layout> that) const override {
+			return equal (keep[TYPEAS<CREF<ImplHolder>>::expr] (that.mThis.self)) ;
 		}
 
 		BOOL equal (CREF<ImplHolder> that) const {
-			if (available () != that.available ())
+			if (good () != that.good ())
 				return FALSE ;
-			if ifnot (available ())
+			if ifnot (good ())
 				return TRUE ;
 			if (address (mHeap->mTree) != address (that.mHeap->mTree))
 				return FALSE ;
@@ -191,13 +194,13 @@ trait XMLPARSER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		CREF<String<STRU8>> member () const leftvalue override {
-			if ifnot (available ())
+			if ifnot (good ())
 				return String<STRU8>::zero () ;
 			return mHeap->mTree[mIndex].mName ;
 		}
 
 		CREF<String<STRU8>> member (CREF<String<STRU8>> tag) const leftvalue override {
-			if ifnot (available ())
+			if ifnot (good ())
 				return String<STRU8>::zero () ;
 			INDEX ix = mHeap->mTree[mIndex].mMemberSet.map (tag) ;
 			if (ix == NONE)
@@ -206,7 +209,7 @@ trait XMLPARSER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		CREF<String<STRU8>> fetch () const leftvalue override {
-			assume (available ()) ;
+			assume (good ()) ;
 			assume (mHeap->mTree[mIndex].mArraySet.size () == 0) ;
 			assume (mHeap->mTree[mIndex].mObjectSet.size () == 0) ;
 			assume (mHeap->mTree[mIndex].mMemberSet.length () == 1) ;
@@ -288,7 +291,6 @@ template <class DEPEND>
 trait XMLPARSER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 	using NODE = typename XMLPARSER_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::NODE ;
 	using HEAP = typename XMLPARSER_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::HEAP ;
-	using XmlParser = typename XMLPARSER_HELP<DEPEND ,ALWAYS>::XmlParser ;
 
 	using COUNTER_MAX_DEPTH = ENUMAS<VAL ,256> ;
 
@@ -581,9 +583,8 @@ trait XMLPARSER_COMBINATION_HELP<DEPEND ,ALWAYS> {
 	using NODE = typename XMLPARSER_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::NODE ;
 	using HEAP = typename XMLPARSER_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::HEAP ;
 	using Holder = typename XMLPARSER_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::Holder ;
-	using FakeHolder = typename XMLPARSER_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::FakeHolder ;
+	using Layout = typename XMLPARSER_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::Layout ;
 	using ImplHolder = typename XMLPARSER_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
-	using XmlParser = typename XMLPARSER_HELP<DEPEND ,ALWAYS>::XmlParser ;
 
 	struct NODE_CLAZZ {
 		enum {
@@ -731,7 +732,7 @@ trait XMLPARSER_COMBINATION_HELP<DEPEND ,ALWAYS> {
 			INDEX jx = mNodeStack.insert () ;
 			mNodeStack[jx].mBaseNode = List<XmlParser> (mSequence.length ()) ;
 			for (auto &&i : mSequence) {
-				if ifnot (i.available ())
+				if ifnot (i.good ())
 					continue ;
 				mNodeStack[jx].mBaseNode.add (i) ;
 			}
@@ -741,7 +742,7 @@ trait XMLPARSER_COMBINATION_HELP<DEPEND ,ALWAYS> {
 
 		INDEX find_good_node () const {
 			for (auto &&i : mSequence.iter ()) {
-				if (mSequence[i].available ())
+				if (mSequence[i].good ())
 					return i ;
 			}
 			return NONE ;
@@ -750,7 +751,7 @@ trait XMLPARSER_COMBINATION_HELP<DEPEND ,ALWAYS> {
 		void update_found_object_node (CREF<XmlParser> node) {
 			auto rax = node ;
 			while (TRUE) {
-				if ifnot (rax.available ())
+				if ifnot (rax.good ())
 					break ;
 				const auto r1x = rax.member () ;
 				const auto r2x = node_type (rax) ;
@@ -779,8 +780,9 @@ trait XMLPARSER_COMBINATION_HELP<DEPEND ,ALWAYS> {
 					mFoundNode[iy].mBaseNode.clear () ;
 				}
 				if ifswitch (TRUE) {
-					auto &&tmp = down_cast (rax.mThis.self) ;
-					copy_object_member (iy ,tmp.mHeap->mTree[tmp.mIndex].mMemberSet ,tmp.mHeap->mMember) ;
+					const auto r3x = down_cast (rax).get_mHeap () ;
+					const auto r4x = down_cast (rax).get_mIndex () ;
+					copy_object_member (iy ,r3x->mTree[r4x].mMemberSet ,r3x->mMember) ;
 				}
 				mFoundNode[iy].mBaseNode.add (rax.child ()) ;
 				rax = rax.brother () ;
@@ -804,7 +806,7 @@ trait XMLPARSER_COMBINATION_HELP<DEPEND ,ALWAYS> {
 		void update_found_array_node (CREF<XmlParser> node) {
 			auto rax = node ;
 			while (TRUE) {
-				if ifnot (rax.available ())
+				if ifnot (rax.good ())
 					break ;
 				const auto r1x = rax.member () ;
 				const auto r2x = node_type (rax) ;
@@ -821,8 +823,9 @@ trait XMLPARSER_COMBINATION_HELP<DEPEND ,ALWAYS> {
 				mFoundNode[iy].mClazz = r2x ;
 				mFoundNode[iy].mMemberSet = mMemberSet.share () ;
 				if ifswitch (TRUE) {
-					auto &&tmp = down_cast (rax.mThis.self) ;
-					copy_array_member (ix ,tmp.mHeap->mTree[tmp.mIndex].mMemberSet ,tmp.mHeap->mMember) ;
+					const auto r3x = down_cast (rax).get_mHeap () ;
+					const auto r4x = down_cast (rax).get_mIndex () ;
+					copy_array_member (ix ,r3x->mTree[r4x].mMemberSet ,r3x->mMember) ;
 				}
 				if ifswitch (TRUE) {
 					if ifnot (mBaseNodeQueue.empty ())
@@ -845,8 +848,8 @@ trait XMLPARSER_COMBINATION_HELP<DEPEND ,ALWAYS> {
 			}
 		}
 
-		CREF<ImplHolder> down_cast (CREF<Holder> that) const {
-			return keep[TYPEAS<CREF<ImplHolder>>::expr] (that) ;
+		CREF<ImplHolder> down_cast (CREF<Layout> that) const {
+			return keep[TYPEAS<CREF<ImplHolder>>::expr] (that.mThis.self) ;
 		}
 
 		void update_merge_found_node (CREF<INDEX> curr) {
@@ -891,11 +894,9 @@ trait XMLPARSER_COMBINATION_HELP<DEPEND ,ALWAYS> {
 } ;
 
 template <>
-exports auto XMLPARSER_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->Box<FakeHolder> {
+exports auto XMLPARSER_HELP<DEPEND ,ALWAYS>::Holder::create () ->VRef<Holder> {
 	using R1X = typename XMLPARSER_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
-	Box<FakeHolder> ret ;
-	ret.acquire (TYPEAS<R1X>::expr) ;
-	return move (ret) ;
+	return VRef<R1X>::make () ;
 }
 
 template <class...>
@@ -904,8 +905,7 @@ trait JSONPARSER_SERIALIZATION_HELP ;
 template <class DEPEND>
 trait JSONPARSER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	using Holder = typename JSONPARSER_HELP<DEPEND ,ALWAYS>::Holder ;
-	using FakeHolder = typename JSONPARSER_HELP<DEPEND ,ALWAYS>::FakeHolder ;
-	using JsonParser = typename JSONPARSER_HELP<DEPEND ,ALWAYS>::JsonParser ;
+	using Layout = typename JSONPARSER_HELP<DEPEND ,ALWAYS>::Layout ;
 
 	struct NODE {
 		String<STRU8> mName ;
@@ -950,22 +950,22 @@ trait JSONPARSER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			mIndex = 0 ;
 		}
 
-		JsonParser clone () const override {
-			if ifnot (available ())
+		Layout clone () const override {
+			if ifnot (good ())
 				return factory (NONE) ;
 			return factory (mIndex) ;
 		}
 
-		JsonParser factory (CREF<INDEX> index) const {
-			auto rax = Box<FakeHolder> () ;
-			rax.acquire (TYPEAS<ImplHolder>::expr) ;
-			auto &&tmp = keep[TYPEAS<VREF<ImplHolder>>::expr] (keep[TYPEAS<VREF<Holder>>::expr] (rax.self)) ;
-			tmp.mHeap = mHeap ;
-			tmp.mIndex = index ;
-			return JsonParser (move (rax)) ;
+		Layout factory (CREF<INDEX> index) const {
+			Layout ret ;
+			auto rax = VRef<ImplHolder>::make () ;
+			rax->mHeap = mHeap ;
+			rax->mIndex = index ;
+			ret.mThis = move (rax) ;
+			return move (ret) ;
 		}
 
-		BOOL available () const override {
+		BOOL good () const override {
 			if (mHeap == NULL)
 				return FALSE ;
 			if (mIndex == NONE)
@@ -987,32 +987,32 @@ trait JSONPARSER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			return mHeap->mTree[mIndex].mClazz == NODE_CLAZZ::Object ;
 		}
 
-		JsonParser root () const override {
-			if ifnot (available ())
+		Layout root () const override {
+			if ifnot (good ())
 				return factory (NONE) ;
 			return factory (0) ;
 		}
 
-		JsonParser parent () const override {
-			if ifnot (available ())
+		Layout parent () const override {
+			if ifnot (good ())
 				return factory (NONE) ;
 			return factory (mHeap->mTree[mIndex].mParent) ;
 		}
 
-		JsonParser brother () const override {
-			if ifnot (available ())
+		Layout brother () const override {
+			if ifnot (good ())
 				return factory (NONE) ;
 			return factory (mHeap->mTree[mIndex].mBrother) ;
 		}
 
-		JsonParser child () const override {
-			if ifnot (available ())
+		Layout child () const override {
+			if ifnot (good ())
 				return factory (NONE) ;
 			return factory (mHeap->mTree[mIndex].mChild) ;
 		}
 
-		JsonParser child (CREF<String<STRU8>> name) const override {
-			if ifnot (available ())
+		Layout child (CREF<String<STRU8>> name) const override {
+			if ifnot (good ())
 				return factory (NONE) ;
 			if ifnot (object_type ())
 				return factory (NONE) ;
@@ -1020,26 +1020,26 @@ trait JSONPARSER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			return factory (ix) ;
 		}
 
-		Array<JsonParser> children () const override {
-			Array<JsonParser> ret ;
+		Array<Layout> children () const override {
+			Array<Layout> ret ;
 			if ifswitch (TRUE) {
-				if ifnot (available ())
+				if ifnot (good ())
 					discard ;
 				if ifnot (array_type ())
 					discard ;
 				auto &&tmp = mHeap->mTree[mIndex].mArraySet ;
 				const auto r1x = IterArray<INDEX>::make (tmp.iter ()) ;
-				ret = Array<JsonParser> (r1x.length ()) ;
+				ret = Array<Layout> (r1x.length ()) ;
 				for (auto &&i : ret.iter ())
 					ret[i] = factory (tmp.map_get (r1x[i])) ;
 			}
 			return move (ret) ;
 		}
 
-		Array<JsonParser> children (CREF<LENGTH> size_) const override {
-			Array<JsonParser> ret = Array<JsonParser> (size_) ;
+		Array<Layout> children (CREF<LENGTH> size_) const override {
+			Array<Layout> ret = Array<Layout> (size_) ;
 			if ifswitch (TRUE) {
-				if ifnot (available ())
+				if ifnot (good ())
 					discard ;
 				if ifnot (array_type ())
 					discard ;
@@ -1054,14 +1054,14 @@ trait JSONPARSER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			return move (ret) ;
 		}
 
-		BOOL equal (CREF<Holder> that) const override {
-			return equal (keep[TYPEAS<CREF<ImplHolder>>::expr] (that)) ;
+		BOOL equal (CREF<Layout> that) const override {
+			return equal (keep[TYPEAS<CREF<ImplHolder>>::expr] (that.mThis.self)) ;
 		}
 
 		BOOL equal (CREF<ImplHolder> that) const {
-			if (available () != that.available ())
+			if (good () != that.good ())
 				return FALSE ;
-			if ifnot (available ())
+			if ifnot (good ())
 				return TRUE ;
 			if (address (mHeap->mTree) != address (that.mHeap->mTree))
 				return FALSE ;
@@ -1071,13 +1071,13 @@ trait JSONPARSER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		CREF<String<STRU8>> member () const leftvalue override {
-			if ifnot (available ())
+			if ifnot (good ())
 				return String<STRU8>::zero () ;
 			return mHeap->mTree[mIndex].mName ;
 		}
 
 		CREF<String<STRU8>> fetch () const leftvalue override {
-			assume (available ()) ;
+			assume (good ()) ;
 			assume (string_type ()) ;
 			return mHeap->mTree[mIndex].mValue ;
 		}
@@ -1157,7 +1157,6 @@ template <class DEPEND>
 trait JSONPARSER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 	using NODE = typename JSONPARSER_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::NODE ;
 	using HEAP = typename JSONPARSER_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::HEAP ;
-	using JsonParser = typename JSONPARSER_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::JsonParser ;
 	using NODE_CLAZZ = typename JSONPARSER_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::NODE_CLAZZ ;
 
 	using COUNTER_MAX_DEPTH = ENUMAS<VAL ,256> ;
@@ -1511,11 +1510,9 @@ trait JSONPARSER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 } ;
 
 template <>
-exports auto JSONPARSER_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->Box<FakeHolder> {
+exports auto JSONPARSER_HELP<DEPEND ,ALWAYS>::Holder::create () ->VRef<Holder> {
 	using R1X = typename JSONPARSER_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
-	Box<FakeHolder> ret ;
-	ret.acquire (TYPEAS<R1X>::expr) ;
-	return move (ret) ;
+	return VRef<R1X>::make () ;
 }
 
 template <class...>
@@ -1525,7 +1522,7 @@ template <class DEPEND>
 trait PLYREADER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	using Holder = typename PLYREADER_HELP<DEPEND ,ALWAYS>::Holder ;
 
-	struct PROPERTY {
+	struct ORDINARY {
 		String<STRU8> mName ;
 		FLAG mClazz ;
 		FLAG mListClazz ;
@@ -1534,7 +1531,7 @@ trait PLYREADER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	struct ELEMENT {
 		String<STRU8> mName ;
 		LENGTH mSize ;
-		ArrayList<PROPERTY> mPropertyList ;
+		ArrayList<ORDINARY> mPropertyList ;
 		Set<String<STRU8>> mPropertySet ;
 	} ;
 
@@ -1620,6 +1617,7 @@ trait PLYREADER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		void guide_new (CREF<INDEX> element) override {
+			assume (element != NONE) ;
 			mGuide.mElement = element ;
 			mGuide.mProperty.clear () ;
 			mGuide.mPropertyIndex = 0 ;
@@ -1628,6 +1626,7 @@ trait PLYREADER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		void guide_put (CREF<INDEX> property) override {
+			assume (property != NONE) ;
 			assert (mGuide.mElement != NONE) ;
 			assert (mGuide.mPlyIndex == NONE) ;
 			mGuide.mProperty.add (property) ;
@@ -1747,7 +1746,7 @@ trait PLYREADER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 template <class DEPEND>
 trait PLYREADER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 	using ELEMENT = typename PLYREADER_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ELEMENT ;
-	using PROPERTY = typename PLYREADER_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::PROPERTY ;
+	using ORDINARY = typename PLYREADER_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ORDINARY ;
 	using HEADER = typename PLYREADER_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::HEADER ;
 	using BODY = typename PLYREADER_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::BODY ;
 	using INDEX2X = typename PLYREADER_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::INDEX2X ;
@@ -1889,7 +1888,7 @@ trait PLYREADER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 					const auto r3x = string_parse[TYPEAS<INDEX ,STRU8>::expr] (mLastString) ;
 					assume (r3x >= 0) ;
 					mHeader.mElementList[ix].mSize = r3x ;
-					mHeader.mElementList[ix].mPropertyList = ArrayList<PROPERTY> (r3x) ;
+					mHeader.mElementList[ix].mPropertyList = ArrayList<ORDINARY> (r3x) ;
 					mReader >> SKIP_GAP_SPACE ;
 					mReader >> SKIP_GAP_ENDLINE ;
 				}
@@ -1967,8 +1966,7 @@ trait PLYREADER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 		}
 
 		void read_body_text () {
-			const auto r1x = address (mStream.self[0]) ;
-			mTextReader = TextReader<STRU8> (RegBuffer<STRU8>::from (r1x ,mHeader.mBodyOffset ,mStream->size ()).borrow ()) ;
+			mTextReader = TextReader<STRU8> (RegBuffer<STRU8>::from (unsafe_deptr (mStream.self[0]) ,mHeader.mBodyOffset ,mStream->size ()).borrow ()) ;
 			mTextReader >> GAP ;
 			mBody = Array<Array<BODY>> (mHeader.mElementList.length ()) ;
 			for (auto &&i : mHeader.mElementList.iter ()) {
@@ -2271,8 +2269,7 @@ trait PLYREADER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 		}
 
 		void read_body_binary () {
-			const auto r1x = address (mStream.self[0]) ;
-			mByteReader = ByteReader (RegBuffer<BYTE>::from (r1x ,mHeader.mBodyOffset ,mStream->size ()).borrow ()) ;
+			mByteReader = ByteReader (RegBuffer<BYTE>::from (unsafe_deptr (mStream.self[0]) ,mHeader.mBodyOffset ,mStream->size ()).borrow ()) ;
 			mBody = Array<Array<BODY>> (mHeader.mElementList.length ()) ;
 			for (auto &&i : mHeader.mElementList.iter ()) {
 				mBody[i] = Array<BODY> (mHeader.mElementList[i].mPropertyList.length ()) ;
@@ -2577,7 +2574,7 @@ trait PLYREADER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 } ;
 
 template <>
-exports auto PLYREADER_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
+exports auto PLYREADER_HELP<DEPEND ,ALWAYS>::Holder::create () ->VRef<Holder> {
 	using R1X = typename PLYREADER_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
 }

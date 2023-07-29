@@ -278,11 +278,10 @@ trait CONSOLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				return ;
 			write_log_buffer (tag) ;
 			const auto r1x = mThis->mLogWriter.length () - 1 ;
-			const auto r2x = address (mThis->mLogBuffer[0]) ;
 			try_invoke ([&] () {
 				if (mThis->mLogStreamFile == NULL)
 					return ;
-				const auto r3x = mThis->mLogStreamFile->write (RegBuffer<BYTE>::from (r2x ,0 ,r1x)) ;
+				const auto r3x = mThis->mLogStreamFile->write (RegBuffer<BYTE>::from (unsafe_deptr (mThis->mLogBuffer[0]) ,0 ,r1x)) ;
 				assume (r3x == r1x) ;
 			} ,[&] () {
 				mThis->mLogStreamFile = NULL ;
@@ -291,7 +290,7 @@ trait CONSOLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				if (mThis->mLogStreamFile != NULL)
 					return ;
 				open_log_file () ;
-				const auto r4x = mThis->mLogStreamFile->write (RegBuffer<BYTE>::from (r2x ,0 ,r1x)) ;
+				const auto r4x = mThis->mLogStreamFile->write (RegBuffer<BYTE>::from (unsafe_deptr (mThis->mLogBuffer[0]) ,0 ,r1x)) ;
 				assume (r4x == r1x) ;
 			} ,[&] () {
 				mThis->mLogStreamFile = NULL ;
@@ -330,8 +329,7 @@ trait CONSOLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			mThis->mLogStreamFile = VRef<StreamFile>::make (mThis->mLogFile) ;
 			mThis->mLogStreamFile->open (TRUE ,TRUE) ;
 			const auto r3x = PrintString<STRU8>::make (BOM) ;
-			const auto r4x = address (r3x[0]) ;
-			const auto r5x = mThis->mLogStreamFile->write (RegBuffer<BYTE>::from (r4x ,0 ,r3x.length ())) ;
+			const auto r5x = mThis->mLogStreamFile->write (RegBuffer<BYTE>::from (unsafe_deptr (r3x[0]) ,0 ,r3x.length ())) ;
 			assume (r5x == r3x.length ()) ;
 		}
 
@@ -396,7 +394,7 @@ trait CONSOLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 } ;
 
 template <>
-exports auto CONSOLE_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
+exports auto CONSOLE_HELP<DEPEND ,ALWAYS>::Holder::create () ->VRef<Holder> {
 	using R1X = typename CONSOLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
 }
@@ -584,7 +582,7 @@ trait REPORTER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 } ;
 
 template <>
-exports auto REPORTER_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
+exports auto REPORTER_HELP<DEPEND ,ALWAYS>::Holder::create () ->VRef<Holder> {
 	using R1X = typename REPORTER_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
 }

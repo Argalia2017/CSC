@@ -42,9 +42,6 @@ template <class...>
 trait TIMEDURATION_HELP ;
 
 template <class...>
-trait TIMEPOINT_HELP ;
-
-template <class...>
 trait TIMEDURATION_HOLDER_HELP ;
 
 template <class...>
@@ -63,13 +60,15 @@ trait TIMEDURATION_HOLDER_HELP<DEPEND ,ALWAYS> {
 		LENGTH mSecond ;
 	} ;
 
-	using TimeDuration = typename TIMEDURATION_HELP<DEPEND ,ALWAYS>::TimeDuration ;
+	struct Layout ;
 
 	struct Holder implement Interface {
+		imports VRef<Holder> create () ;
+
 		virtual void initialize () = 0 ;
 		virtual void initialize (CREF<LENGTH> milliseconds_ ,CREF<LENGTH> nanoseconds_) = 0 ;
 		virtual void initialize (CREF<CALENDAR> calendar_) = 0 ;
-		virtual Auto native () const leftvalue = 0 ;
+		virtual XRef native () const leftvalue = 0 ;
 		virtual LENGTH hours () const = 0 ;
 		virtual LENGTH minutes () const = 0 ;
 		virtual LENGTH seconds () const = 0 ;
@@ -77,40 +76,32 @@ trait TIMEDURATION_HOLDER_HELP<DEPEND ,ALWAYS> {
 		virtual LENGTH microseconds () const = 0 ;
 		virtual LENGTH nanoseconds () const = 0 ;
 		virtual CALENDAR calendar () const = 0 ;
-		virtual TimeDuration add (CREF<Holder> that) const = 0 ;
-		virtual TimeDuration sub (CREF<Holder> that) const = 0 ;
+		virtual Layout add (CREF<Layout> that) const = 0 ;
+		virtual Layout sub (CREF<Layout> that) const = 0 ;
 	} ;
 
-	struct FUNCTION_extern {
-		imports VRef<Holder> invoke () ;
+	struct Layout {
+		CRef<Holder> mThis ;
 	} ;
 } ;
 
 template <class DEPEND>
 trait TIMEDURATION_HELP<DEPEND ,ALWAYS> {
 	class TimeDuration ;
+	class TimePoint ;
 
 	using CALENDAR = typename TIMEDURATION_HOLDER_HELP<DEPEND ,ALWAYS>::CALENDAR ;
 	using Holder = typename TIMEDURATION_HOLDER_HELP<DEPEND ,ALWAYS>::Holder ;
-	using FUNCTION_extern = typename TIMEDURATION_HOLDER_HELP<DEPEND ,ALWAYS>::FUNCTION_extern ;
-	using TimePoint = typename TIMEPOINT_HELP<DEPEND ,ALWAYS>::TimePoint ;
+	using Layout = typename TIMEDURATION_HOLDER_HELP<DEPEND ,ALWAYS>::Layout ;
 
-	class TimeDuration {
-	private:
-		template <class...>
-		friend trait TIMEPOINT_HELP ;
-
+	class TimeDuration implement Layout {
 	protected:
-		CRef<Holder> mThis ;
+		using Layout::mThis ;
 
 	public:
 		implicit TimeDuration () = default ;
 
-		explicit TimeDuration (RREF<CRef<Holder>> that) {
-			mThis = move (that) ;
-		}
-
-		explicit TimeDuration (RREF<TimePoint> that) {
+		implicit TimeDuration (RREF<Layout> that) {
 			mThis = move (that.mThis) ;
 		}
 
@@ -118,12 +109,12 @@ trait TIMEDURATION_HELP<DEPEND ,ALWAYS> {
 			:TimeDuration (milliseconds_ ,0) {}
 
 		explicit TimeDuration (CREF<LENGTH> milliseconds_ ,CREF<LENGTH> nanoseconds_) {
-			auto rax = FUNCTION_extern::invoke () ;
+			auto rax = Holder::create () ;
 			rax->initialize (milliseconds_ ,nanoseconds_) ;
-			mThis = rax.as_cref () ;
+			mThis = move (rax) ;
 		}
 
-		Auto native () const leftvalue {
+		XRef native () const leftvalue {
 			return mThis->native () ;
 		}
 
@@ -152,126 +143,112 @@ trait TIMEDURATION_HELP<DEPEND ,ALWAYS> {
 		}
 
 		TimeDuration add (CREF<TimeDuration> that) const {
-			return mThis->add (keep[TYPEAS<CREF<Holder>>::expr] (that.mThis.self)) ;
+			return mThis->add (that) ;
 		}
 
-		inline TimeDuration operator+ (CREF<TimeDuration> that) const {
+		forceinline TimeDuration operator+ (CREF<TimeDuration> that) const {
 			return add (that) ;
 		}
 
-		inline void operator+= (CREF<TimeDuration> that) {
+		forceinline void operator+= (CREF<TimeDuration> that) {
 			thiz = add (that) ;
 		}
 
 		TimeDuration sub (CREF<TimeDuration> that) const {
-			return mThis->sub (keep[TYPEAS<CREF<Holder>>::expr] (that.mThis.self)) ;
+			return mThis->sub (that) ;
 		}
 
-		inline TimeDuration operator- (CREF<TimeDuration> that) const {
+		forceinline TimeDuration operator- (CREF<TimeDuration> that) const {
 			return sub (that) ;
 		}
 
-		inline void operator-= (CREF<TimeDuration> that) {
+		forceinline void operator-= (CREF<TimeDuration> that) {
 			thiz = sub (that) ;
 		}
 
 		TimePoint add (CREF<TimePoint> that) const {
-			return mThis->add (keep[TYPEAS<CREF<Holder>>::expr] (that.mThis.self)) ;
+			return mThis->add (that) ;
 		}
 
-		inline TimePoint operator+ (CREF<TimePoint> that) const {
+		forceinline TimePoint operator+ (CREF<TimePoint> that) const {
 			return add (that) ;
 		}
 
 		TimePoint sub (CREF<TimePoint> that) const {
-			return mThis->sub (keep[TYPEAS<CREF<Holder>>::expr] (that.mThis.self)) ;
+			return mThis->sub (that) ;
 		}
 
-		inline TimePoint operator- (CREF<TimePoint> that) const {
+		forceinline TimePoint operator- (CREF<TimePoint> that) const {
 			return sub (that) ;
 		}
 	} ;
-} ;
 
-template <class DEPEND>
-trait TIMEPOINT_HELP<DEPEND ,ALWAYS> {
-	class TimePoint ;
-
-	using CALENDAR = typename TIMEDURATION_HOLDER_HELP<DEPEND ,ALWAYS>::CALENDAR ;
-	using Holder = typename TIMEDURATION_HOLDER_HELP<DEPEND ,ALWAYS>::Holder ;
-	using FUNCTION_extern = typename TIMEDURATION_HOLDER_HELP<DEPEND ,ALWAYS>::FUNCTION_extern ;
-	using TimeDuration = typename TIMEDURATION_HELP<DEPEND ,ALWAYS>::TimeDuration ;
-
-	class TimePoint {
-	private:
-		template <class...>
-		friend trait TIMEDURATION_HELP ;
-
+	class TimePoint implement Layout {
 	protected:
-		CRef<Holder> mThis ;
+		using Layout::mThis ;
 
 	public:
 		implicit TimePoint () = default ;
 
-		explicit TimePoint (RREF<TimeDuration> that) {
+		implicit TimePoint (RREF<Layout> that) {
 			mThis = move (that.mThis) ;
 		}
 
 		explicit TimePoint (CREF<BoolProxy> ok) {
-			auto rax = FUNCTION_extern::invoke () ;
+			auto rax = Holder::create () ;
 			rax->initialize () ;
-			mThis = rax.as_cref () ;
+			mThis = move (rax) ;
 		}
 
 		explicit TimePoint (CREF<CALENDAR> calendar_) {
-			auto rax = FUNCTION_extern::invoke () ;
+			auto rax = Holder::create () ;
 			rax->initialize (calendar_) ;
-			mThis = rax.as_cref () ;
+			mThis = move (rax) ;
 		}
 
 		imports CREF<TimePoint> epoch () {
 			return memorize ([&] () {
 				TimePoint ret ;
-				auto rax = FUNCTION_extern::invoke () ;
+				auto rax = Holder::create () ;
 				rax->initialize (0 ,0) ;
-				ret.mThis = rax.as_cref () ;
+				ret.mThis = move (rax) ;
 				return move (ret) ;
 			}) ;
 		}
 
-		Auto native () const leftvalue {
+		XRef native () const leftvalue {
 			return mThis->native () ;
 		}
 
 		TimePoint add (CREF<TimeDuration> that) const {
-			return TimePoint (mThis->add (keep[TYPEAS<CREF<Holder>>::expr] (that.mThis.self))) ;
+			return mThis->add (that) ;
 		}
 
-		inline TimePoint operator+ (CREF<TimeDuration> that) const {
+		forceinline TimePoint operator+ (CREF<TimeDuration> that) const {
 			return add (that) ;
 		}
 
-		inline void operator+= (CREF<TimeDuration> that) {
+		forceinline void operator+= (CREF<TimeDuration> that) {
 			thiz = add (that) ;
 		}
 
 		TimePoint sub (CREF<TimeDuration> that) const {
-			return TimePoint (mThis->sub (keep[TYPEAS<CREF<Holder>>::expr] (that.mThis.self))) ;
+			return mThis->sub (that) ;
 		}
 
-		inline TimePoint operator- (CREF<TimeDuration> that) const {
+		forceinline TimePoint operator- (CREF<TimeDuration> that) const {
 			return sub (that) ;
 		}
 
-		inline void operator-= (CREF<TimeDuration> that) {
+		forceinline void operator-= (CREF<TimeDuration> that) {
 			thiz = sub (that) ;
 		}
 
 		TimeDuration sub (CREF<TimePoint> that) const {
-			return mThis->sub (keep[TYPEAS<CREF<Holder>>::expr] (that.mThis.self)) ;
+			return mThis->sub (that) ;
 		}
 
-		inline TimeDuration operator- (CREF<TimePoint> that) const {
+		forceinline TimeDuration operator- (CREF<TimePoint> that) const {
 			return sub (that) ;
 		}
 
@@ -280,7 +257,7 @@ trait TIMEPOINT_HELP<DEPEND ,ALWAYS> {
 		}
 	} ;
 
-	class NowTimePoint extend Proxy {
+	class NowTimePoint implement Proxy {
 	public:
 		imports TimePoint make () {
 			return TimePoint (TRUE) ;
@@ -290,8 +267,8 @@ trait TIMEPOINT_HELP<DEPEND ,ALWAYS> {
 
 using TimeDuration = typename TIMEDURATION_HELP<DEPEND ,ALWAYS>::TimeDuration ;
 
-using TimePoint = typename TIMEPOINT_HELP<DEPEND ,ALWAYS>::TimePoint ;
-using NowTimePoint = typename TIMEPOINT_HELP<DEPEND ,ALWAYS>::NowTimePoint ;
+using TimePoint = typename TIMEDURATION_HELP<DEPEND ,ALWAYS>::TimePoint ;
+using NowTimePoint = typename TIMEDURATION_HELP<DEPEND ,ALWAYS>::NowTimePoint ;
 
 template <class...>
 trait ATOMIC_HELP ;
@@ -304,18 +281,16 @@ trait ATOMIC_HELP<DEPEND ,ALWAYS> {
 	require (IS_CLONEABLE<VAL>) ;
 
 	struct Holder implement Interface {
+		imports VRef<Holder> create () ;
+
 		virtual void initialize (CREF<VAL> init_) = 0 ;
 		virtual VAL fetch () const = 0 ;
 		virtual void store (CREF<VAL> obj) const = 0 ;
 		virtual VAL exchange (CREF<VAL> obj) const = 0 ;
 		virtual void replace (CREF<VAL> expect ,CREF<VAL> next) const = 0 ;
 		virtual BOOL change (VREF<VAL> expect ,CREF<VAL> next) const = 0 ;
-		virtual VAL fetch_add (CREF<VAL> obj) const = 0 ;
-		virtual VAL fetch_sub (CREF<VAL> obj) const = 0 ;
-	} ;
-
-	struct FUNCTION_extern {
-		imports VRef<Holder> invoke () ;
+		virtual VAL add_with (CREF<VAL> obj) const = 0 ;
+		virtual VAL sub_with (CREF<VAL> obj) const = 0 ;
 	} ;
 
 	class Atomic {
@@ -326,7 +301,7 @@ trait ATOMIC_HELP<DEPEND ,ALWAYS> {
 		implicit Atomic () = default ;
 
 		explicit Atomic (CREF<VAL> init_) {
-			mThis = FUNCTION_extern::invoke () ;
+			mThis = Holder::create () ;
 			mThis->initialize (init_) ;
 		}
 
@@ -350,20 +325,20 @@ trait ATOMIC_HELP<DEPEND ,ALWAYS> {
 			return mThis->change (expect ,next) ;
 		}
 
-		VAL fetch_add (CREF<VAL> obj) const {
-			return mThis->fetch_add (obj) ;
+		VAL add_with (CREF<VAL> obj) const {
+			return mThis->add_with (obj) ;
 		}
 
-		VAL fetch_sub (CREF<VAL> obj) const {
-			return mThis->fetch_sub (obj) ;
+		VAL sub_with (CREF<VAL> obj) const {
+			return mThis->sub_with (obj) ;
 		}
 
 		VAL increase () const {
-			return fetch_add (VAL (1)) + VAL (1) ;
+			return add_with (VAL (1)) ;
 		}
 
 		VAL decrease () const {
-			return fetch_sub (VAL (1)) + VAL (1) ;
+			return sub_with (VAL (1)) ;
 		}
 	} ;
 } ;
@@ -379,14 +354,12 @@ trait MUTEX_IMPLHOLDER_HELP ;
 template <class DEPEND>
 trait MUTEX_HELP<DEPEND ,ALWAYS> {
 	struct Holder implement Interface {
+		imports VRef<Holder> create () ;
+
 		virtual void initialize (CREF<LENGTH> cond_size) = 0 ;
-		virtual Auto native () const leftvalue = 0 ;
+		virtual XRef native () const leftvalue = 0 ;
 		virtual void enter () = 0 ;
 		virtual void leave () = 0 ;
-	} ;
-
-	struct FUNCTION_extern {
-		imports VRef<Holder> invoke () ;
 	} ;
 
 	class Mutex {
@@ -397,11 +370,11 @@ trait MUTEX_HELP<DEPEND ,ALWAYS> {
 		implicit Mutex () = default ;
 
 		explicit Mutex (CREF<LENGTH> cond_size) {
-			mThis = FUNCTION_extern::invoke () ;
+			mThis = Holder::create () ;
 			mThis->initialize (cond_size) ;
 		}
 
-		Auto native () const leftvalue {
+		XRef native () const leftvalue {
 			return mThis->native () ;
 		}
 
@@ -418,14 +391,14 @@ trait MUTEX_HELP<DEPEND ,ALWAYS> {
 		}
 	} ;
 
-	class RecursiveMutex extend Proxy {
+	class RecursiveMutex implement Proxy {
 	public:
 		imports Mutex make () {
 			return Mutex (0) ;
 		}
 	} ;
 
-	class ConditionalMutex extend Proxy {
+	class ConditionalMutex implement Proxy {
 	public:
 		imports Mutex make () {
 			return Mutex (1) ;
@@ -461,8 +434,8 @@ trait UNIQUELOCK_HELP<DEPEND ,ALWAYS> {
 		Storage<FAKE_MAX_SIZE ,FAKE_MAX_ALIGN> mStorage ;
 	} ;
 
-	struct FUNCTION_extern {
-		imports Box<FakeHolder> invoke () ;
+	struct FakeImplHolder {
+		imports Box<FakeHolder> create () ;
 	} ;
 
 	class UniqueLock {
@@ -473,7 +446,7 @@ trait UNIQUELOCK_HELP<DEPEND ,ALWAYS> {
 		implicit UniqueLock () = default ;
 
 		explicit UniqueLock (CREF<Mutex> mutex_) {
-			mThis = FUNCTION_extern::invoke () ;
+			mThis = FakeImplHolder::create () ;
 			mThis->initialize (mutex_) ;
 		}
 
@@ -520,8 +493,8 @@ trait SHAREDLOCK_HELP<DEPEND ,ALWAYS> {
 		Storage<FAKE_MAX_SIZE ,FAKE_MAX_ALIGN> mStorage ;
 	} ;
 
-	struct FUNCTION_extern {
-		imports Box<FakeHolder> invoke () ;
+	struct FakeImplHolder {
+		imports Box<FakeHolder> create () ;
 	} ;
 
 	class SharedLock {
@@ -532,7 +505,7 @@ trait SHAREDLOCK_HELP<DEPEND ,ALWAYS> {
 		implicit SharedLock () = default ;
 
 		explicit SharedLock (CREF<Mutex> mutex_) {
-			mThis = FUNCTION_extern::invoke () ;
+			mThis = FakeImplHolder::create () ;
 			mThis->initialize (mutex_) ;
 		}
 
@@ -561,6 +534,8 @@ trait RUNTIMEPROC_IMPLHOLDER_HELP ;
 template <class DEPEND>
 trait RUNTIMEPROC_HELP<DEPEND ,ALWAYS> {
 	struct Holder implement Interface {
+		imports VRef<Holder> create () ;
+
 		virtual void initialize () = 0 ;
 		virtual LENGTH thread_concurrency () const = 0 ;
 		virtual FLAG thread_uid () const = 0 ;
@@ -575,10 +550,6 @@ trait RUNTIMEPROC_HELP<DEPEND ,ALWAYS> {
 		virtual CREF<String<STR>> module_name () const = 0 ;
 	} ;
 
-	struct FUNCTION_extern {
-		imports VRef<Holder> invoke () ;
-	} ;
-
 	class RuntimeProc {
 	protected:
 		VRef<Holder> mThis ;
@@ -587,7 +558,7 @@ trait RUNTIMEPROC_HELP<DEPEND ,ALWAYS> {
 		imports CREF<RuntimeProc> instance () {
 			return memorize ([&] () {
 				RuntimeProc ret ;
-				ret.mThis = FUNCTION_extern::invoke () ;
+				ret.mThis = Holder::create () ;
 				ret.mThis->initialize () ;
 				return move (ret) ;
 			}) ;
@@ -650,20 +621,21 @@ trait THREAD_IMPLHOLDER_HELP ;
 template <class DEPEND>
 trait THREAD_HELP<DEPEND ,ALWAYS> {
 	struct Binder implement Interface {
-		virtual void friend_execute (CREF<INDEX> slot) = 0 ;
+		virtual void friend_execute (CREF<INDEX> slot) {
+			return keep[TYPEAS<CREF<Binder>>::expr] (thiz).friend_execute (slot) ;
+		}
+
 		virtual void friend_execute (CREF<INDEX> slot) const = 0 ;
 	} ;
 
 	struct Holder implement Interface {
+		imports VRef<Holder> create () ;
+
 		virtual void initialize (RREF<VRef<Binder>> binder ,CREF<INDEX> slot) = 0 ;
 		virtual void initialize (RREF<CRef<Binder>> binder ,CREF<INDEX> slot) = 0 ;
 		virtual FLAG thread_uid () const = 0 ;
 		virtual void start () = 0 ;
 		virtual void stop () = 0 ;
-	} ;
-
-	struct FUNCTION_extern {
-		imports VRef<Holder> invoke () ;
 	} ;
 
 	class Thread {
@@ -674,12 +646,12 @@ trait THREAD_HELP<DEPEND ,ALWAYS> {
 		implicit Thread () = default ;
 
 		explicit Thread (RREF<VRef<Binder>> binder ,CREF<INDEX> slot) {
-			mThis = FUNCTION_extern::invoke () ;
+			mThis = Holder::create () ;
 			mThis->initialize (move (binder) ,slot) ;
 		}
 
 		explicit Thread (RREF<CRef<Binder>> binder ,CREF<INDEX> slot) {
-			mThis = FUNCTION_extern::invoke () ;
+			mThis = Holder::create () ;
 			mThis->initialize (move (binder) ,slot) ;
 		}
 
@@ -688,10 +660,14 @@ trait THREAD_HELP<DEPEND ,ALWAYS> {
 		}
 
 		void start () {
+			if (mThis == NULL)
+				return ;
 			return mThis->start () ;
 		}
 
 		void stop () {
+			if (mThis == NULL)
+				return ;
 			return mThis->stop () ;
 		}
 	} ;
@@ -708,12 +684,10 @@ trait THREADLOCAL_IMPLHOLDER_HELP ;
 template <class DEPEND>
 trait THREADLOCAL_HELP<DEPEND ,ALWAYS> {
 	struct Holder implement Interface {
+		imports VRef<Holder> create () ;
+
 		virtual void initialize () = 0 ;
 		virtual INDEX local () const = 0 ;
-	} ;
-
-	struct FUNCTION_extern {
-		imports VRef<Holder> invoke () ;
 	} ;
 
 	class ThreadLocal {
@@ -724,7 +698,7 @@ trait THREADLOCAL_HELP<DEPEND ,ALWAYS> {
 		implicit ThreadLocal () = default ;
 
 		explicit ThreadLocal (CREF<BoolProxy> ok) {
-			mThis = FUNCTION_extern::invoke () ;
+			mThis = Holder::create () ;
 			mThis->initialize () ;
 		}
 
@@ -747,14 +721,12 @@ trait PROCESS_HELP<DEPEND ,ALWAYS> {
 	using SNAPSHOT = ConBuffer<BYTE> ;
 
 	struct Holder implement Interface {
+		imports VRef<Holder> create () ;
+
 		virtual void initialize (CREF<FLAG> uid) = 0 ;
 		virtual void initialize (CREF<SNAPSHOT> snapshot_) = 0 ;
 		virtual FLAG process_uid () const = 0 ;
 		virtual SNAPSHOT snapshot () const = 0 ;
-	} ;
-
-	struct FUNCTION_extern {
-		imports VRef<Holder> invoke () ;
 	} ;
 
 	class Process {
@@ -765,12 +737,12 @@ trait PROCESS_HELP<DEPEND ,ALWAYS> {
 		implicit Process () = default ;
 
 		explicit Process (CREF<FLAG> uid) {
-			mThis = FUNCTION_extern::invoke () ;
+			mThis = Holder::create () ;
 			mThis->initialize (uid) ;
 		}
 
 		explicit Process (CREF<SNAPSHOT> snapshot_) {
-			mThis = FUNCTION_extern::invoke () ;
+			mThis = Holder::create () ;
 			mThis->initialize (snapshot_) ;
 		}
 
@@ -783,7 +755,7 @@ trait PROCESS_HELP<DEPEND ,ALWAYS> {
 		}
 	} ;
 
-	class CurrentProcess extend Proxy {
+	class CurrentProcess implement Proxy {
 	public:
 		imports Process make () {
 			return Process (RuntimeProc::process_uid ()) ;
@@ -803,14 +775,12 @@ trait MODULE_IMPLHOLDER_HELP ;
 template <class DEPEND>
 trait MODULE_HELP<DEPEND ,ALWAYS> {
 	struct Holder implement Interface {
+		imports VRef<Holder> create () ;
+
 		virtual void initialize () = 0 ;
 		virtual void initialize (CREF<String<STR>> file) = 0 ;
 		virtual CREF<String<STR>> error () const leftvalue = 0 ;
 		virtual FLAG link (CREF<String<STR>> name) = 0 ;
-	} ;
-
-	struct FUNCTION_extern {
-		imports VRef<Holder> invoke () ;
 	} ;
 
 	class Module {
@@ -821,12 +791,12 @@ trait MODULE_HELP<DEPEND ,ALWAYS> {
 		implicit Module () = default ;
 
 		explicit Module (CREF<BoolProxy> ok) {
-			mThis = FUNCTION_extern::invoke () ;
+			mThis = Holder::create () ;
 			mThis->initialize () ;
 		}
 
 		explicit Module (CREF<String<STR>> file) {
-			mThis = FUNCTION_extern::invoke () ;
+			mThis = Holder::create () ;
 			mThis->initialize (file) ;
 		}
 
@@ -839,7 +809,7 @@ trait MODULE_HELP<DEPEND ,ALWAYS> {
 		}
 	} ;
 
-	class CurrentModule extend Proxy {
+	class CurrentModule implement Proxy {
 	public:
 		imports Module make () {
 			return Module (TRUE) ;
@@ -859,15 +829,13 @@ trait SYSTEM_IMPLHOLDER_HELP ;
 template <class DEPEND>
 trait SYSTEM_HELP<DEPEND ,ALWAYS> {
 	struct Holder implement Interface {
+		imports VRef<Holder> create () ;
+
 		virtual void initialize () = 0 ;
 		virtual String<STR> get_locale () const = 0 ;
 		virtual void set_locale (CREF<String<STR>> name) const = 0 ;
 		virtual FLAG execute (CREF<String<STR>> command) const = 0 ;
 		virtual String<STR> working_path () const = 0 ;
-	} ;
-
-	struct FUNCTION_extern {
-		imports VRef<Holder> invoke () ;
 	} ;
 
 	class System {
@@ -880,7 +848,7 @@ trait SYSTEM_HELP<DEPEND ,ALWAYS> {
 			return memorize ([&] () {
 				System ret ;
 				ret.mMutex = RecursiveMutex::make () ;
-				ret.mThis = FUNCTION_extern::invoke () ;
+				ret.mThis = Holder::create () ;
 				ret.mThis->initialize () ;
 				return move (ret) ;
 			}) ;
@@ -919,6 +887,8 @@ trait RANDOM_IMPLHOLDER_HELP ;
 template <class DEPEND>
 trait RANDOM_HELP<DEPEND ,ALWAYS> {
 	struct Holder implement Interface {
+		imports VRef<Holder> create () ;
+
 		virtual void initialize () = 0 ;
 		virtual void initialize (CREF<DATA> seed) = 0 ;
 		virtual DATA seed () const = 0 ;
@@ -934,10 +904,6 @@ trait RANDOM_HELP<DEPEND ,ALWAYS> {
 		virtual void random_draw (CREF<DOUBLE> possibility ,VREF<Array<BOOL>> result) const = 0 ;
 	} ;
 
-	struct FUNCTION_extern {
-		imports VRef<Holder> invoke () ;
-	} ;
-
 	class Random {
 	protected:
 		Mutex mMutex ;
@@ -947,7 +913,7 @@ trait RANDOM_HELP<DEPEND ,ALWAYS> {
 		implicit Random () = default ;
 
 		explicit Random (CREF<DATA> seed_) {
-			mThis = FUNCTION_extern::invoke () ;
+			mThis = Holder::create () ;
 			mThis->initialize (seed_) ;
 		}
 
@@ -955,7 +921,7 @@ trait RANDOM_HELP<DEPEND ,ALWAYS> {
 			return memorize ([&] () {
 				Random ret ;
 				ret.mMutex = RecursiveMutex::make () ;
-				ret.mThis = FUNCTION_extern::invoke () ;
+				ret.mThis = Holder::create () ;
 				ret.mThis->initialize () ;
 				return move (ret) ;
 			}) ;
@@ -1029,14 +995,12 @@ trait GLOBAL_IMPLHOLDER_HELP ;
 template <class DEPEND>
 trait GLOBAL_HELP<DEPEND ,ALWAYS> {
 	struct Holder implement Interface {
+		imports VRef<Holder> create () ;
+
 		virtual void initialize () = 0 ;
 		virtual void startup () const = 0 ;
 		virtual VREF<AutoRef<>> unique (CREF<Slice<STR>> name) const leftvalue = 0 ;
 		virtual void shutdown () const = 0 ;
-	} ;
-
-	struct FUNCTION_extern {
-		imports VRef<Holder> invoke () ;
 	} ;
 
 	class Global {
@@ -1049,7 +1013,7 @@ trait GLOBAL_HELP<DEPEND ,ALWAYS> {
 			return memorize ([&] () {
 				Global ret ;
 				ret.mMutex = RecursiveMutex::make () ;
-				ret.mThis = FUNCTION_extern::invoke () ;
+				ret.mThis = Holder::create () ;
 				ret.mThis->initialize () ;
 				return move (ret) ;
 			}) ;
@@ -1094,13 +1058,11 @@ trait SINGLETON_IMPLHOLDER_HELP ;
 template <class DEPEND>
 trait SINGLETON_HOLDER_HELP<DEPEND ,ALWAYS> {
 	struct Holder implement Interface {
+		imports VRef<Holder> create () ;
+
 		virtual void initialize () = 0 ;
 		virtual void regi (CREF<Slice<STR>> name ,CREF<FLAG> addr) const = 0 ;
 		virtual FLAG link (CREF<Slice<STR>> name) const = 0 ;
-	} ;
-
-	struct FUNCTION_extern {
-		imports VRef<Holder> invoke () ;
 	} ;
 
 	class Singleton {
@@ -1111,7 +1073,7 @@ trait SINGLETON_HOLDER_HELP<DEPEND ,ALWAYS> {
 		imports CREF<Singleton> instance () {
 			return memorize ([&] () {
 				Singleton ret ;
-				ret.mThis = FUNCTION_extern::invoke () ;
+				ret.mThis = Holder::create () ;
 				ret.mThis->initialize () ;
 				return move (ret) ;
 			}) ;
@@ -1130,27 +1092,26 @@ trait SINGLETON_HOLDER_HELP<DEPEND ,ALWAYS> {
 template <class UNIT>
 trait SINGLETON_HELP<UNIT ,ALWAYS> {
 	using Holder = typename SINGLETON_HOLDER_HELP<DEPEND ,ALWAYS>::Holder ;
-	using FUNCTION_extern = typename SINGLETON_HOLDER_HELP<DEPEND ,ALWAYS>::FUNCTION_extern ;
-	using SUPER = typename SINGLETON_HOLDER_HELP<DEPEND ,ALWAYS>::Singleton ;
+	using Super = typename SINGLETON_HOLDER_HELP<DEPEND ,ALWAYS>::Singleton ;
 
-	class Singleton extend Proxy {
+	class Singleton implement Proxy {
 	public:
 		imports CREF<UNIT> instance () {
 			return memorize ([&] () {
 				auto rax = ZERO ;
 				if ifswitch (TRUE) {
-					const auto r1x = CRef<SUPER>::reference (SUPER::instance ()) ;
+					auto &&tmp = Super::instance () ;
 					const auto r2x = Clazz (TYPEAS<UNIT>::expr).type_name () ;
-					rax = r1x->link (r2x) ;
+					rax = tmp.link (r2x) ;
 					if (rax != ZERO)
 						discard ;
 					const auto r3x = address (UNIT::instance ()) ;
-					r1x->regi (r2x ,r3x) ;
-					rax = r1x->link (r2x) ;
+					tmp.regi (r2x ,r3x) ;
+					rax = tmp.link (r2x) ;
 				}
 				assume (rax != ZERO) ;
-				auto &&tmp = unsafe_deref (unsafe_cast[TYPEAS<TEMP<UNIT>>::expr] (unsafe_pointer (rax))) ;
-				return CRef<UNIT>::reference (tmp) ;
+				auto &&tmp_2 = unsafe_cast[TYPEAS<UNIT>::expr] (unsafe_deref (rax)) ;
+				return CRef<UNIT>::reference (tmp_2) ;
 			}).self ;
 		}
 	} ;

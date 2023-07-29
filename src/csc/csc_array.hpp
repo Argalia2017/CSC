@@ -37,8 +37,10 @@ namespace CSC {
 template <class...>
 trait SPANITERATOR_HELP ;
 
-template <class UNIT ,class SIDE>
-trait SPANITERATOR_HELP<UNIT ,SIDE ,REQUIRE<IS_SAME<SIDE ,REGISTER>>> {
+template <class UNIT>
+trait SPANITERATOR_HELP<UNIT ,ALWAYS> {
+	using Capture = typename CAPTURE_HOLDER_HELP<DEPEND ,ALWAYS>::Capture ;
+
 	class SpanIterator {
 	protected:
 		LENGTH mRank ;
@@ -48,74 +50,9 @@ trait SPANITERATOR_HELP<UNIT ,SIDE ,REQUIRE<IS_SAME<SIDE ,REGISTER>>> {
 	public:
 		implicit SpanIterator () = delete ;
 
-		implicit SpanIterator (CREF<csc_initializer_t<UNIT>> that) {
-			const auto r1x = FUNCTION_internel_span () ;
-			const auto r2x = r1x (that) ;
-			mRank = (r2x.mEnd - r2x.mBegin) / r2x.mStep ;
-			mBegin = r2x.mBegin ;
-			mEnd = r2x.mEnd ;
-		}
-
-		SpanIterator begin () const {
-			return thiz ;
-		}
-
-		SpanIterator end () const {
-			return thiz ;
-		}
-
-		LENGTH rank () const {
-			return mRank ;
-		}
-
-		BOOL bad () const {
-			return mBegin == mEnd ;
-		}
-
-		inline BOOL operator== (CREF<SpanIterator>) const {
-			return bad () ;
-		}
-
-		inline BOOL operator!= (CREF<SpanIterator>) const {
-			return ifnot (bad ()) ;
-		}
-
-		VREF<UNIT> peek () leftvalue {
-			return unsafe_deref (unsafe_cast[TYPEAS<TEMP<UNIT>>::expr] (unsafe_pointer (mBegin))) ;
-		}
-
-		inline VREF<UNIT> operator* () leftvalue {
-			return peek () ;
-		}
-
-		void next () {
-			mBegin += SIZE_OF<UNIT>::expr ;
-		}
-
-		inline void operator++ () {
-			next () ;
-		}
-	} ;
-} ;
-
-template <class UNIT ,class SIDE>
-trait SPANITERATOR_HELP<UNIT ,SIDE ,REQUIRE<IS_VOID<SIDE>>> {
-	class SpanIterator {
-	protected:
-		LENGTH mRank ;
-		FLAG mBegin ;
-		FLAG mEnd ;
-
-	public:
-		implicit SpanIterator () = delete ;
-
-		template <class ARG1 ,class = REQUIRE<ENUM_ALL<ENUM_NOT<IS_EXTEND<SpanIterator ,ARG1>> ,IS_SAME<ARG1 ,typename ARG1::HELP::Capture>>>>
-		implicit SpanIterator (RREF<ARG1> that) {
-			using R1X = typename ARG1::HELP::PARAMS ;
-			using R3X = TYPE_REPEAT<UNIT ,COUNT_OF<R1X>> ;
-			require (IS_SAME<R1X ,R3X>) ;
-			mRank = COUNT_OF<R1X>::expr ;
-			mBegin = address (that) ;
+		implicit SpanIterator (RREF<Capture> that) {
+			mRank = that.rank () ;
+			mBegin = address (that) + SIZE_OF<FLAG>::expr ;
 			mEnd = mBegin + mRank * SIZE_OF<FLAG>::expr ;
 		}
 
@@ -135,22 +72,22 @@ trait SPANITERATOR_HELP<UNIT ,SIDE ,REQUIRE<IS_VOID<SIDE>>> {
 			return mBegin == mEnd ;
 		}
 
-		inline BOOL operator== (CREF<SpanIterator>) const {
+		forceinline BOOL operator== (CREF<SpanIterator>) const {
 			return bad () ;
 		}
 
-		inline BOOL operator!= (CREF<SpanIterator>) const {
+		forceinline BOOL operator!= (CREF<SpanIterator>) const {
 			return ifnot (bad ()) ;
 		}
 
 		CREF<UNIT> peek () const leftvalue {
 			auto rax = ZERO ;
-			unsafe_sync (unsafe_deptr (rax) ,unsafe_pointer (mBegin)) ;
+			unsafe_sync (unsafe_cast[TYPEAS<TEMP<FLAG>>::expr] (rax) ,unsafe_deref (mBegin)) ;
 			unsafe_launder (rax) ;
-			return unsafe_deref (unsafe_cast[TYPEAS<TEMP<UNIT>>::expr] (unsafe_pointer (rax))) ;
+			return unsafe_cast[TYPEAS<UNIT>::expr] (unsafe_deref (rax)) ;
 		}
 
-		inline CREF<UNIT> operator* () const leftvalue {
+		forceinline CREF<UNIT> operator* () const leftvalue {
 			return peek () ;
 		}
 
@@ -158,14 +95,14 @@ trait SPANITERATOR_HELP<UNIT ,SIDE ,REQUIRE<IS_VOID<SIDE>>> {
 			mBegin += SIZE_OF<FLAG>::expr ;
 		}
 
-		inline void operator++ () {
+		forceinline void operator++ () {
 			next () ;
 		}
 	} ;
 } ;
 
-template <class UNIT ,class SIDE = void>
-using SpanIterator = typename SPANITERATOR_HELP<UNIT ,SIDE ,ALWAYS>::SpanIterator ;
+template <class UNIT>
+using SpanIterator = typename SPANITERATOR_HELP<UNIT ,ALWAYS>::SpanIterator ;
 
 template <class...>
 trait ARRAYITERATOR_HELP ;
@@ -174,7 +111,7 @@ template <class UNIT ,class ITEM ,class COND>
 trait ARRAYITERATOR_HELP<UNIT ,ITEM ,COND ,REQUIRE<ENUM_ALL<COND ,ENUM_NOT<IS_VOID<ITEM>>>>> {
 	class ArrayIterator {
 	protected:
-		VRef<UNIT> mArray ;
+		VRef<UNIT> mThat ;
 		INDEX mBegin ;
 		INDEX mEnd ;
 
@@ -182,40 +119,40 @@ trait ARRAYITERATOR_HELP<UNIT ,ITEM ,COND ,REQUIRE<ENUM_ALL<COND ,ENUM_NOT<IS_VO
 		implicit ArrayIterator () = delete ;
 
 		explicit ArrayIterator (RREF<VRef<UNIT>> array_) {
-			mArray = move (array_) ;
-			mBegin = mArray->ibegin () ;
-			mEnd = mArray->iend () ;
+			mThat = move (array_) ;
+			mBegin = mThat->ibegin () ;
+			mEnd = mThat->iend () ;
 		}
 
 		LENGTH rank () const {
-			return mArray->length () ;
+			return mThat->length () ;
 		}
 
 		BOOL bad () const {
 			return mBegin == mEnd ;
 		}
 
-		inline BOOL operator== (CREF<ArrayIterator>) const {
+		forceinline BOOL operator== (CREF<ArrayIterator>) const {
 			return bad () ;
 		}
 
-		inline BOOL operator!= (CREF<ArrayIterator>) const {
+		forceinline BOOL operator!= (CREF<ArrayIterator>) const {
 			return ifnot (bad ()) ;
 		}
 
 		VREF<ITEM> peek () leftvalue {
-			return mArray->at (mBegin) ;
+			return mThat->at (mBegin) ;
 		}
 
-		inline VREF<ITEM> operator* () leftvalue {
+		forceinline VREF<ITEM> operator* () leftvalue {
 			return peek () ;
 		}
 
 		void next () {
-			mBegin = mArray->inext (mBegin) ;
+			mBegin = mThat->inext (mBegin) ;
 		}
 
-		inline void operator++ () {
+		forceinline void operator++ () {
 			next () ;
 		}
 	} ;
@@ -225,7 +162,7 @@ template <class UNIT ,class ITEM ,class COND>
 trait ARRAYITERATOR_HELP<UNIT ,ITEM ,COND ,REQUIRE<ENUM_ALL<ENUM_NOT<COND> ,ENUM_NOT<IS_VOID<ITEM>>>>> {
 	class ArrayIterator {
 	protected:
-		CRef<UNIT> mArray ;
+		CRef<UNIT> mThat ;
 		INDEX mBegin ;
 		INDEX mEnd ;
 
@@ -233,40 +170,40 @@ trait ARRAYITERATOR_HELP<UNIT ,ITEM ,COND ,REQUIRE<ENUM_ALL<ENUM_NOT<COND> ,ENUM
 		implicit ArrayIterator () = delete ;
 
 		explicit ArrayIterator (RREF<CRef<UNIT>> array_) {
-			mArray = move (array_) ;
-			mBegin = mArray->ibegin () ;
-			mEnd = mArray->iend () ;
+			mThat = move (array_) ;
+			mBegin = mThat->ibegin () ;
+			mEnd = mThat->iend () ;
 		}
 
 		LENGTH rank () const {
-			return mArray->length () ;
+			return mThat->length () ;
 		}
 
 		BOOL bad () const {
 			return mBegin == mEnd ;
 		}
 
-		inline BOOL operator== (CREF<ArrayIterator>) const {
+		forceinline BOOL operator== (CREF<ArrayIterator>) const {
 			return bad () ;
 		}
 
-		inline BOOL operator!= (CREF<ArrayIterator>) const {
+		forceinline BOOL operator!= (CREF<ArrayIterator>) const {
 			return ifnot (bad ()) ;
 		}
 
 		CREF<ITEM> peek () const leftvalue {
-			return mArray->at (mBegin) ;
+			return mThat->at (mBegin) ;
 		}
 
-		inline CREF<ITEM> operator* () const leftvalue {
+		forceinline CREF<ITEM> operator* () const leftvalue {
 			return peek () ;
 		}
 
 		void next () {
-			mBegin = mArray->inext (mBegin) ;
+			mBegin = mThat->inext (mBegin) ;
 		}
 
-		inline void operator++ () {
+		forceinline void operator++ () {
 			next () ;
 		}
 	} ;
@@ -276,7 +213,7 @@ template <class UNIT ,class ITEM ,class COND>
 trait ARRAYITERATOR_HELP<UNIT ,ITEM ,COND ,REQUIRE<IS_VOID<ITEM>>> {
 	class ArrayIterator {
 	protected:
-		CRef<UNIT> mArray ;
+		CRef<UNIT> mThat ;
 		INDEX mBegin ;
 		INDEX mEnd ;
 
@@ -284,9 +221,9 @@ trait ARRAYITERATOR_HELP<UNIT ,ITEM ,COND ,REQUIRE<IS_VOID<ITEM>>> {
 		implicit ArrayIterator () = delete ;
 
 		explicit ArrayIterator (RREF<CRef<UNIT>> array_) {
-			mArray = move (array_) ;
-			mBegin = mArray->ibegin () ;
-			mEnd = mArray->iend () ;
+			mThat = move (array_) ;
+			mBegin = mThat->ibegin () ;
+			mEnd = mThat->iend () ;
 		}
 
 		ArrayIterator begin () const {
@@ -298,18 +235,18 @@ trait ARRAYITERATOR_HELP<UNIT ,ITEM ,COND ,REQUIRE<IS_VOID<ITEM>>> {
 		}
 
 		LENGTH rank () const {
-			return mArray->length () ;
+			return mThat->length () ;
 		}
 
 		BOOL bad () const {
 			return mBegin == mEnd ;
 		}
 
-		inline BOOL operator== (CREF<ArrayIterator>) const {
+		forceinline BOOL operator== (CREF<ArrayIterator>) const {
 			return bad () ;
 		}
 
-		inline BOOL operator!= (CREF<ArrayIterator>) const {
+		forceinline BOOL operator!= (CREF<ArrayIterator>) const {
 			return ifnot (bad ()) ;
 		}
 
@@ -317,15 +254,15 @@ trait ARRAYITERATOR_HELP<UNIT ,ITEM ,COND ,REQUIRE<IS_VOID<ITEM>>> {
 			return mBegin ;
 		}
 
-		inline CREF<INDEX> operator* () const leftvalue {
+		forceinline CREF<INDEX> operator* () const leftvalue {
 			return peek () ;
 		}
 
 		void next () {
-			mBegin = mArray->inext (mBegin) ;
+			mBegin = mThat->inext (mBegin) ;
 		}
 
-		inline void operator++ () {
+		forceinline void operator++ () {
 			next () ;
 		}
 	} ;
@@ -350,19 +287,19 @@ trait ARRAY_HELP<ITEM ,SIZE ,ALWAYS> {
 			mArray = Buffer<ITEM ,SIZE> (size_) ;
 		}
 
-		explicit Array (CREF<csc_initializer_t<ITEM>> that)
-			:Array (SpanIterator<ITEM ,REGISTER> (that)) {}
-
-		explicit Array (CREF<SpanIterator<ITEM>> that) {
-			mArray = Buffer<ITEM ,SIZE> (that.rank ()) ;
+		explicit Array (CREF<csc_initializer_t<ITEM>> that) {
+			const auto r1x = FLAG (that.begin ()) ;
+			const auto r2x = FLAG (that.size ()) ;
+			mArray = Buffer<ITEM ,SIZE> (r2x) ;
 			INDEX ix = 0 ;
-			for (auto &&i : that) {
-				mArray[ix] = move (i) ;
+			auto &&tmp = unsafe_cast[TYPEAS<ARR<ITEM>>::expr] (unsafe_deref (r1x)) ;
+			for (auto &&i : CSC::iter (0 ,r2x)) {
+				mArray[ix] = move (tmp[i]) ;
 				ix++ ;
 			}
 		}
 
-		explicit Array (RREF<SpanIterator<ITEM ,REGISTER>> that) {
+		explicit Array (CREF<SpanIterator<ITEM>> that) {
 			mArray = Buffer<ITEM ,SIZE> (that.rank ()) ;
 			INDEX ix = 0 ;
 			for (auto &&i : that) {
@@ -427,7 +364,7 @@ trait ARRAY_HELP<ITEM ,SIZE ,ALWAYS> {
 			return mArray[index] ;
 		}
 
-		inline VREF<ITEM> operator[] (CREF<INDEX> index) leftvalue {
+		forceinline VREF<ITEM> operator[] (CREF<INDEX> index) leftvalue {
 			return at (index) ;
 		}
 
@@ -435,7 +372,7 @@ trait ARRAY_HELP<ITEM ,SIZE ,ALWAYS> {
 			return mArray[index] ;
 		}
 
-		inline CREF<ITEM> operator[] (CREF<INDEX> index) const leftvalue {
+		forceinline CREF<ITEM> operator[] (CREF<INDEX> index) const leftvalue {
 			return at (index) ;
 		}
 
@@ -450,11 +387,11 @@ trait ARRAY_HELP<ITEM ,SIZE ,ALWAYS> {
 			return BufferProc<ITEM>::buf_equal (mArray ,that.mArray ,0 ,size ()) ;
 		}
 
-		inline BOOL operator== (CREF<Array> that) const {
+		forceinline BOOL operator== (CREF<Array> that) const {
 			return equal (that) ;
 		}
 
-		inline BOOL operator!= (CREF<Array> that) const {
+		forceinline BOOL operator!= (CREF<Array> that) const {
 			return ifnot (equal (that)) ;
 		}
 
@@ -468,19 +405,19 @@ trait ARRAY_HELP<ITEM ,SIZE ,ALWAYS> {
 			return operator_compr (r1x ,r2x) ;
 		}
 
-		inline BOOL operator< (CREF<Array> that) const {
+		forceinline BOOL operator< (CREF<Array> that) const {
 			return compr (that) < ZERO ;
 		}
 
-		inline BOOL operator<= (CREF<Array> that) const {
+		forceinline BOOL operator<= (CREF<Array> that) const {
 			return compr (that) <= ZERO ;
 		}
 
-		inline BOOL operator> (CREF<Array> that) const {
+		forceinline BOOL operator> (CREF<Array> that) const {
 			return compr (that) > ZERO ;
 		}
 
-		inline BOOL operator>= (CREF<Array> that) const {
+		forceinline BOOL operator>= (CREF<Array> that) const {
 			return compr (that) >= ZERO ;
 		}
 
@@ -489,7 +426,7 @@ trait ARRAY_HELP<ITEM ,SIZE ,ALWAYS> {
 		}
 	} ;
 
-	class IterArray extend Proxy {
+	class IterArray implement Proxy {
 	public:
 		template <class ARG1>
 		imports Array make (CREF<ARG1> iterator) {
@@ -557,20 +494,20 @@ trait STRING_HELP<ITEM ,SIZE ,REQUIRE<IS_TEXT<ITEM>>> {
 			clear () ;
 		}
 
-		explicit String (CREF<csc_initializer_t<ITEM>> that)
-			:String (SpanIterator<ITEM ,REGISTER> (that)) {}
-
-		explicit String (CREF<SpanIterator<ITEM>> that) {
-			mString = Buffer<ITEM ,RESERVE_SIZE> (reserve_size (that.rank ())) ;
+		explicit String (CREF<csc_initializer_t<ITEM>> that) {
+			const auto r1x = FLAG (that.begin ()) ;
+			const auto r2x = FLAG (that.size ()) ;
+			mString = Buffer<ITEM ,RESERVE_SIZE> (reserve_size (r2x)) ;
 			INDEX ix = 0 ;
-			for (auto &&i : that) {
-				mString[ix] = move (i) ;
+			auto &&tmp = unsafe_cast[TYPEAS<ARR<ITEM>>::expr] (unsafe_deref (r1x)) ;
+			for (auto &&i : CSC::iter (0 ,r2x)) {
+				mString[ix] = move (tmp[i]) ;
 				ix++ ;
 			}
 			trunc (ix) ;
 		}
 
-		explicit String (RREF<SpanIterator<ITEM ,REGISTER>> that) {
+		explicit String (CREF<SpanIterator<ITEM>> that) {
 			mString = Buffer<ITEM ,RESERVE_SIZE> (reserve_size (that.rank ())) ;
 			INDEX ix = 0 ;
 			for (auto &&i : that) {
@@ -658,7 +595,7 @@ trait STRING_HELP<ITEM ,SIZE ,REQUIRE<IS_TEXT<ITEM>>> {
 			return mString[index] ;
 		}
 
-		inline VREF<ITEM> operator[] (CREF<INDEX> index) leftvalue {
+		forceinline VREF<ITEM> operator[] (CREF<INDEX> index) leftvalue {
 			return at (index) ;
 		}
 
@@ -666,7 +603,7 @@ trait STRING_HELP<ITEM ,SIZE ,REQUIRE<IS_TEXT<ITEM>>> {
 			return mString[index] ;
 		}
 
-		inline CREF<ITEM> operator[] (CREF<INDEX> index) const leftvalue {
+		forceinline CREF<ITEM> operator[] (CREF<INDEX> index) const leftvalue {
 			return at (index) ;
 		}
 
@@ -691,11 +628,11 @@ trait STRING_HELP<ITEM ,SIZE ,REQUIRE<IS_TEXT<ITEM>>> {
 			return BufferProc<ITEM>::buf_equal (mString ,that.mString ,0 ,r1x) ;
 		}
 
-		inline BOOL operator== (CREF<String> that) const {
+		forceinline BOOL operator== (CREF<String> that) const {
 			return equal (that) ;
 		}
 
-		inline BOOL operator!= (CREF<String> that) const {
+		forceinline BOOL operator!= (CREF<String> that) const {
 			return ifnot (equal (that)) ;
 		}
 
@@ -711,11 +648,11 @@ trait STRING_HELP<ITEM ,SIZE ,REQUIRE<IS_TEXT<ITEM>>> {
 			return TRUE ;
 		}
 
-		inline BOOL operator== (CREF<Slice<ITEM>> that) const {
+		forceinline BOOL operator== (CREF<Slice<ITEM>> that) const {
 			return equal (that) ;
 		}
 
-		inline BOOL operator!= (CREF<Slice<ITEM>> that) const {
+		forceinline BOOL operator!= (CREF<Slice<ITEM>> that) const {
 			return ifnot (equal (that)) ;
 		}
 
@@ -729,19 +666,19 @@ trait STRING_HELP<ITEM ,SIZE ,REQUIRE<IS_TEXT<ITEM>>> {
 			return operator_compr (r1x ,r2x) ;
 		}
 
-		inline BOOL operator< (CREF<String> that) const {
+		forceinline BOOL operator< (CREF<String> that) const {
 			return compr (that) < ZERO ;
 		}
 
-		inline BOOL operator<= (CREF<String> that) const {
+		forceinline BOOL operator<= (CREF<String> that) const {
 			return compr (that) <= ZERO ;
 		}
 
-		inline BOOL operator> (CREF<String> that) const {
+		forceinline BOOL operator> (CREF<String> that) const {
 			return compr (that) > ZERO ;
 		}
 
-		inline BOOL operator>= (CREF<String> that) const {
+		forceinline BOOL operator>= (CREF<String> that) const {
 			return compr (that) >= ZERO ;
 		}
 
@@ -760,7 +697,7 @@ trait STRING_HELP<ITEM ,SIZE ,REQUIRE<IS_TEXT<ITEM>>> {
 			trunc (ix) ;
 		}
 
-		inline void operator-= (CREF<String> that) {
+		forceinline void operator-= (CREF<String> that) {
 			return cover_with (that) ;
 		}
 
@@ -774,7 +711,7 @@ trait STRING_HELP<ITEM ,SIZE ,REQUIRE<IS_TEXT<ITEM>>> {
 			trunc (ix) ;
 		}
 
-		inline void operator-= (CREF<Slice<ITEM>> that) {
+		forceinline void operator-= (CREF<Slice<ITEM>> that) {
 			return cover_with (that) ;
 		}
 
@@ -792,7 +729,7 @@ trait STRING_HELP<ITEM ,SIZE ,REQUIRE<IS_TEXT<ITEM>>> {
 			return move (ret) ;
 		}
 
-		inline String operator+ (CREF<String> that) const {
+		forceinline String operator+ (CREF<String> that) const {
 			return concat (that) ;
 		}
 
@@ -810,7 +747,7 @@ trait STRING_HELP<ITEM ,SIZE ,REQUIRE<IS_TEXT<ITEM>>> {
 			return move (ret) ;
 		}
 
-		inline String operator+ (CREF<Slice<ITEM>> that) const {
+		forceinline String operator+ (CREF<Slice<ITEM>> that) const {
 			return concat (that) ;
 		}
 
@@ -833,7 +770,7 @@ trait STRING_HELP<ITEM ,SIZE ,REQUIRE<IS_TEXT<ITEM>>> {
 			}
 		}
 
-		inline void operator+= (CREF<String> that) {
+		forceinline void operator+= (CREF<String> that) {
 			concat_with (that) ;
 		}
 
@@ -856,7 +793,7 @@ trait STRING_HELP<ITEM ,SIZE ,REQUIRE<IS_TEXT<ITEM>>> {
 			}
 		}
 
-		inline void operator+= (CREF<Slice<ITEM>> that) {
+		forceinline void operator+= (CREF<Slice<ITEM>> that) {
 			concat_with (that) ;
 		}
 
@@ -890,7 +827,7 @@ trait STRING_HELP<ITEM ,SIZE ,REQUIRE<IS_TEXT<ITEM>>> {
 		}
 	} ;
 
-	class PrintString extend Proxy {
+	class PrintString implement Proxy {
 	public:
 		template <class...ARG1>
 		imports String make (CREF<ARG1>...obj) {
@@ -939,13 +876,13 @@ trait DEQUE_HOLDER_HELP<ITEM ,SIZE ,ALWAYS> {
 template <class ITEM ,class SIZE>
 trait DEQUE_HELP<ITEM ,SIZE ,ALWAYS> {
 	using NODE = typename DEQUE_HOLDER_HELP<ITEM ,SIZE ,ALWAYS>::NODE ;
-	using SUPER = typename DEQUE_HOLDER_HELP<ITEM ,SIZE ,ALWAYS>::Deque ;
+	using Super = typename DEQUE_HOLDER_HELP<ITEM ,SIZE ,ALWAYS>::Deque ;
 
-	class Deque extend SUPER {
+	class Deque implement Super {
 	protected:
-		using SUPER::mDeque ;
-		using SUPER::mRead ;
-		using SUPER::mWrite ;
+		using Super::mDeque ;
+		using Super::mRead ;
+		using Super::mWrite ;
 
 	public:
 		implicit Deque () = default ;
@@ -955,17 +892,17 @@ trait DEQUE_HELP<ITEM ,SIZE ,ALWAYS> {
 			clear () ;
 		}
 
-		explicit Deque (CREF<csc_initializer_t<ITEM>> that)
-			:Deque (SpanIterator<ITEM ,REGISTER> (that)) {}
-
-		explicit Deque (CREF<SpanIterator<ITEM>> that) {
-			mDeque = Buffer<NODE ,SIZE> (that.rank ()) ;
+		explicit Deque (CREF<csc_initializer_t<ITEM>> that) {
+			const auto r1x = FLAG (that.begin ()) ;
+			const auto r2x = FLAG (that.size ()) ;
+			mDeque = Buffer<NODE ,SIZE> (r2x) ;
 			clear () ;
-			for (auto &&i : that)
-				add (move (i)) ;
+			auto &&tmp = unsafe_cast[TYPEAS<ARR<ITEM>>::expr] (unsafe_deref (r1x)) ;
+			for (auto &&i : CSC::iter (0 ,r2x))
+				add (move (tmp[i])) ;
 		}
 
-		explicit Deque (RREF<SpanIterator<ITEM ,REGISTER>> that) {
+		explicit Deque (CREF<SpanIterator<ITEM>> that) {
 			mDeque = Buffer<NODE ,SIZE> (that.rank ()) ;
 			clear () ;
 			for (auto &&i : that)
@@ -1030,7 +967,7 @@ trait DEQUE_HELP<ITEM ,SIZE ,ALWAYS> {
 			return mDeque[ix].mItem ;
 		}
 
-		inline VREF<ITEM> operator[] (CREF<INDEX> index) leftvalue {
+		forceinline VREF<ITEM> operator[] (CREF<INDEX> index) leftvalue {
 			return at (index) ;
 		}
 
@@ -1041,7 +978,7 @@ trait DEQUE_HELP<ITEM ,SIZE ,ALWAYS> {
 			return mDeque[ix].mItem ;
 		}
 
-		inline CREF<ITEM> operator[] (CREF<INDEX> index) const leftvalue {
+		forceinline CREF<ITEM> operator[] (CREF<INDEX> index) const leftvalue {
 			return at (index) ;
 		}
 
@@ -1206,13 +1143,13 @@ trait PRIORITY_HOLDER_HELP<ITEM ,SIZE ,ALWAYS> {
 template <class ITEM ,class SIZE>
 trait PRIORITY_HELP<ITEM ,SIZE ,ALWAYS> {
 	using NODE = typename PRIORITY_HOLDER_HELP<ITEM ,SIZE ,ALWAYS>::NODE ;
-	using SUPER = typename PRIORITY_HOLDER_HELP<ITEM ,SIZE ,ALWAYS>::Priority ;
+	using Super = typename PRIORITY_HOLDER_HELP<ITEM ,SIZE ,ALWAYS>::Priority ;
 
-	class Priority extend SUPER {
+	class Priority implement Super {
 	protected:
-		using SUPER::mPriority ;
-		using SUPER::mRead ;
-		using SUPER::mWrite ;
+		using Super::mPriority ;
+		using Super::mRead ;
+		using Super::mWrite ;
 
 	public:
 		implicit Priority () = default ;
@@ -1222,17 +1159,17 @@ trait PRIORITY_HELP<ITEM ,SIZE ,ALWAYS> {
 			clear () ;
 		}
 
-		explicit Priority (CREF<csc_initializer_t<ITEM>> that)
-			:Priority (SpanIterator<ITEM ,REGISTER> (that)) {}
-
-		explicit Priority (CREF<SpanIterator<ITEM>> that) {
-			mPriority = Buffer<NODE ,SIZE> (that.rank ()) ;
+		explicit Priority (CREF<csc_initializer_t<ITEM>> that) {
+			const auto r1x = FLAG (that.begin ()) ;
+			const auto r2x = FLAG (that.size ()) ;
+			mPriority = Buffer<NODE ,SIZE> (r2x) ;
 			clear () ;
-			for (auto &&i : that)
-				add (move (i)) ;
+			auto &&tmp = unsafe_cast[TYPEAS<ARR<ITEM>>::expr] (unsafe_deref (r1x)) ;
+			for (auto &&i : CSC::iter (0 ,r2x))
+				add (move (tmp[i])) ;
 		}
 
-		explicit Priority (RREF<SpanIterator<ITEM ,REGISTER>> that) {
+		explicit Priority (CREF<SpanIterator<ITEM>> that) {
 			mPriority = Buffer<NODE ,SIZE> (that.rank ()) ;
 			clear () ;
 			for (auto &&i : that)
@@ -1287,7 +1224,7 @@ trait PRIORITY_HELP<ITEM ,SIZE ,ALWAYS> {
 			return mPriority[index].mItem ;
 		}
 
-		inline CREF<ITEM> operator[] (CREF<INDEX> index) const leftvalue {
+		forceinline CREF<ITEM> operator[] (CREF<INDEX> index) const leftvalue {
 			return at (index) ;
 		}
 
@@ -1481,13 +1418,13 @@ trait LIST_HOLDER_HELP<ITEM ,SIZE ,ALWAYS> {
 template <class ITEM ,class SIZE>
 trait LIST_HELP<ITEM ,SIZE ,ALWAYS> {
 	using NODE = typename LIST_HOLDER_HELP<ITEM ,SIZE ,ALWAYS>::NODE ;
-	using SUPER = typename LIST_HOLDER_HELP<ITEM ,SIZE ,ALWAYS>::List ;
+	using Super = typename LIST_HOLDER_HELP<ITEM ,SIZE ,ALWAYS>::List ;
 
-	class List extend SUPER {
+	class List implement Super {
 	protected:
-		using SUPER::mList ;
-		using SUPER::mFirst ;
-		using SUPER::mLast ;
+		using Super::mList ;
+		using Super::mFirst ;
+		using Super::mLast ;
 
 	public:
 		implicit List () = default ;
@@ -1497,17 +1434,17 @@ trait LIST_HELP<ITEM ,SIZE ,ALWAYS> {
 			clear () ;
 		}
 
-		explicit List (CREF<csc_initializer_t<ITEM>> that)
-			:List (SpanIterator<ITEM ,REGISTER> (that)) {}
-
-		explicit List (CREF<SpanIterator<ITEM>> that) {
-			mList = Allocator<NODE ,SIZE> (that.rank ()) ;
+		explicit List (CREF<csc_initializer_t<ITEM>> that) {
+			const auto r1x = FLAG (that.begin ()) ;
+			const auto r2x = FLAG (that.size ()) ;
+			mList = Allocator<NODE ,SIZE> (r2x) ;
 			clear () ;
-			for (auto &&i : that)
-				add (move (i)) ;
+			auto &&tmp = unsafe_cast[TYPEAS<ARR<ITEM>>::expr] (unsafe_deref (r1x)) ;
+			for (auto &&i : CSC::iter (0 ,r2x))
+				add (move (tmp[i])) ;
 		}
 
-		explicit List (RREF<SpanIterator<ITEM ,REGISTER>> that) {
+		explicit List (CREF<SpanIterator<ITEM>> that) {
 			mList = Allocator<NODE ,SIZE> (that.rank ()) ;
 			clear () ;
 			for (auto &&i : that)
@@ -1572,7 +1509,7 @@ trait LIST_HELP<ITEM ,SIZE ,ALWAYS> {
 			return mList[index].mItem ;
 		}
 
-		inline VREF<ITEM> operator[] (CREF<INDEX> index) leftvalue {
+		forceinline VREF<ITEM> operator[] (CREF<INDEX> index) leftvalue {
 			return at (index) ;
 		}
 
@@ -1580,7 +1517,7 @@ trait LIST_HELP<ITEM ,SIZE ,ALWAYS> {
 			return mList[index].mItem ;
 		}
 
-		inline CREF<ITEM> operator[] (CREF<INDEX> index) const leftvalue {
+		forceinline CREF<ITEM> operator[] (CREF<INDEX> index) const leftvalue {
 			return at (index) ;
 		}
 
@@ -1696,7 +1633,7 @@ trait LIST_HELP<ITEM ,SIZE ,ALWAYS> {
 		}
 
 		INDEX find (CREF<ITEM> item) const {
-			for (auto &&i : iter ()) {
+			for (auto &&i : CSC::iter ()) {
 				if (operator_equal (mList[i].mItem ,item))
 					return i ;
 			}
@@ -1800,13 +1737,13 @@ trait ARRAYLIST_HOLDER_HELP<ITEM ,SIZE ,ALWAYS> {
 template <class ITEM ,class SIZE>
 trait ARRAYLIST_HELP<ITEM ,SIZE ,ALWAYS> {
 	using NODE = typename ARRAYLIST_HOLDER_HELP<ITEM ,SIZE ,ALWAYS>::NODE ;
-	using SUPER = typename ARRAYLIST_HOLDER_HELP<ITEM ,SIZE ,ALWAYS>::ArrayList ;
+	using Super = typename ARRAYLIST_HOLDER_HELP<ITEM ,SIZE ,ALWAYS>::ArrayList ;
 
-	class ArrayList extend SUPER {
+	class ArrayList implement Super {
 	protected:
-		using SUPER::mList ;
-		using SUPER::mJump ;
-		using SUPER::mFree ;
+		using Super::mList ;
+		using Super::mJump ;
+		using Super::mFree ;
 
 	public:
 		implicit ArrayList () = default ;
@@ -1816,17 +1753,17 @@ trait ARRAYLIST_HELP<ITEM ,SIZE ,ALWAYS> {
 			clear () ;
 		}
 
-		explicit ArrayList (CREF<csc_initializer_t<ITEM>> that)
-			:ArrayList (SpanIterator<ITEM ,REGISTER> (that)) {}
-
-		explicit ArrayList (CREF<SpanIterator<ITEM>> that) {
-			mList = Allocator<NODE ,SIZE> (that.rank ()) ;
+		explicit ArrayList (CREF<csc_initializer_t<ITEM>> that) {
+			const auto r1x = FLAG (that.begin ()) ;
+			const auto r2x = FLAG (that.size ()) ;
+			mList = Allocator<NODE ,SIZE> (r2x) ;
 			clear () ;
-			for (auto &&i : that)
-				add (move (i)) ;
+			auto &&tmp = unsafe_cast[TYPEAS<ARR<ITEM>>::expr] (unsafe_deref (r1x)) ;
+			for (auto &&i : CSC::iter (0 ,r2x))
+				add (move (tmp[i])) ;
 		}
 
-		explicit ArrayList (RREF<SpanIterator<ITEM ,REGISTER>> that) {
+		explicit ArrayList (CREF<SpanIterator<ITEM>> that) {
 			mList = Allocator<NODE ,SIZE> (that.rank ()) ;
 			clear () ;
 			for (auto &&i : that)
@@ -1900,7 +1837,7 @@ trait ARRAYLIST_HELP<ITEM ,SIZE ,ALWAYS> {
 			return mList[mJump[index]].mItem ;
 		}
 
-		inline VREF<ITEM> operator[] (CREF<INDEX> index) leftvalue {
+		forceinline VREF<ITEM> operator[] (CREF<INDEX> index) leftvalue {
 			return at (index) ;
 		}
 
@@ -1908,7 +1845,7 @@ trait ARRAYLIST_HELP<ITEM ,SIZE ,ALWAYS> {
 			return mList[mJump[index]].mItem ;
 		}
 
-		inline CREF<ITEM> operator[] (CREF<INDEX> index) const leftvalue {
+		forceinline CREF<ITEM> operator[] (CREF<INDEX> index) const leftvalue {
 			return at (index) ;
 		}
 
@@ -1959,7 +1896,7 @@ trait ARRAYLIST_HELP<ITEM ,SIZE ,ALWAYS> {
 		}
 
 		INDEX find (CREF<ITEM> item) const {
-			for (auto &&i : iter ()) {
+			for (auto &&i : CSC::iter ()) {
 				if (operator_equal (mList[mJump[i]].mItem ,item))
 					return i ;
 			}
@@ -2042,23 +1979,23 @@ template <class UNIT ,class COND>
 trait BITPROXY_HELP<UNIT ,COND ,REQUIRE<COND>> {
 	class BitProxy {
 	protected:
-		VRef<UNIT> mBitSet ;
+		VRef<UNIT> mThat ;
 		INDEX mY ;
 
 	public:
 		implicit BitProxy () = delete ;
 
 		explicit BitProxy (RREF<VRef<UNIT>> array_ ,CREF<INDEX> y_) {
-			mBitSet = move (array_) ;
+			mThat = move (array_) ;
 			mY = y_ ;
 		}
 
-		inline implicit operator BOOL () rightvalue {
-			return mBitSet->map_get (mY) ;
+		forceinline implicit operator BOOL () rightvalue {
+			return mThat->map_get (mY) ;
 		}
 
-		inline void operator= (CREF<BOOL> that) rightvalue {
-			mBitSet->map_set (mY ,that) ;
+		forceinline void operator= (CREF<BOOL> that) rightvalue {
+			mThat->map_set (mY ,that) ;
 		}
 	} ;
 } ;
@@ -2067,19 +2004,19 @@ template <class UNIT ,class COND>
 trait BITPROXY_HELP<UNIT ,COND ,REQUIRE<ENUM_NOT<COND>>> {
 	class BitProxy {
 	protected:
-		CRef<UNIT> mBitSet ;
+		CRef<UNIT> mThat ;
 		INDEX mY ;
 
 	public:
 		implicit BitProxy () = delete ;
 
 		explicit BitProxy (RREF<CRef<UNIT>> array_ ,CREF<INDEX> y_) {
-			mBitSet = move (array_) ;
+			mThat = move (array_) ;
 			mY = y_ ;
 		}
 
-		inline implicit operator BOOL () rightvalue {
-			return mBitSet->map_get (mY) ;
+		forceinline implicit operator BOOL () rightvalue {
+			return mThat->map_get (mY) ;
 		}
 	} ;
 } ;
@@ -2119,13 +2056,13 @@ trait BITSET_HOLDER_HELP<SIZE ,ALWAYS> {
 template <class SIZE>
 trait BITSET_HELP<SIZE ,ALWAYS> {
 	using RESERVE_SIZE = typename BITSET_HOLDER_HELP<SIZE ,ALWAYS>::RESERVE_SIZE ;
-	using SUPER = typename BITSET_HOLDER_HELP<SIZE ,ALWAYS>::BitSet ;
+	using Super = typename BITSET_HOLDER_HELP<SIZE ,ALWAYS>::BitSet ;
 	using ITEM = INDEX ;
 
-	class BitSet extend SUPER {
+	class BitSet implement Super {
 	protected:
-		using SUPER::mSet ;
-		using SUPER::mWidth ;
+		using Super::mSet ;
+		using Super::mWidth ;
 
 	public:
 		implicit BitSet () = default ;
@@ -2217,11 +2154,11 @@ trait BITSET_HELP<SIZE ,ALWAYS> {
 			return index ;
 		}
 
-		inline BitProxy<VREF<BitSet>> operator[] (CREF<INDEX> index) leftvalue {
+		forceinline BitProxy<VREF<BitSet>> operator[] (CREF<INDEX> index) leftvalue {
 			return BitProxy<VREF<BitSet>> (VRef<BitSet>::reference (thiz) ,index) ;
 		}
 
-		inline BitProxy<CREF<BitSet>> operator[] (CREF<INDEX> index) const leftvalue {
+		forceinline BitProxy<CREF<BitSet>> operator[] (CREF<INDEX> index) const leftvalue {
 			return BitProxy<CREF<BitSet>> (CRef<BitSet>::reference (thiz) ,index) ;
 		}
 
@@ -2284,11 +2221,11 @@ trait BITSET_HELP<SIZE ,ALWAYS> {
 			return TRUE ;
 		}
 
-		inline BOOL operator== (CREF<BitSet> that) const {
+		forceinline BOOL operator== (CREF<BitSet> that) const {
 			return equal (that) ;
 		}
 
-		inline BOOL operator!= (CREF<BitSet> that) const {
+		forceinline BOOL operator!= (CREF<BitSet> that) const {
 			return ifnot (equal (that)) ;
 		}
 
@@ -2303,19 +2240,19 @@ trait BITSET_HELP<SIZE ,ALWAYS> {
 			return operator_compr (last_byte () ,that.last_byte ()) ;
 		}
 
-		inline BOOL operator< (CREF<BitSet> that) const {
+		forceinline BOOL operator< (CREF<BitSet> that) const {
 			return compr (that) < ZERO ;
 		}
 
-		inline BOOL operator<= (CREF<BitSet> that) const {
+		forceinline BOOL operator<= (CREF<BitSet> that) const {
 			return compr (that) <= ZERO ;
 		}
 
-		inline BOOL operator> (CREF<BitSet> that) const {
+		forceinline BOOL operator> (CREF<BitSet> that) const {
 			return compr (that) > ZERO ;
 		}
 
-		inline BOOL operator>= (CREF<BitSet> that) const {
+		forceinline BOOL operator>= (CREF<BitSet> that) const {
 			return compr (that) >= ZERO ;
 		}
 
@@ -2336,7 +2273,7 @@ trait BITSET_HELP<SIZE ,ALWAYS> {
 			return move (ret) ;
 		}
 
-		inline BitSet operator& (CREF<BitSet> that) const {
+		forceinline BitSet operator& (CREF<BitSet> that) const {
 			return band (that) ;
 		}
 
@@ -2346,7 +2283,7 @@ trait BITSET_HELP<SIZE ,ALWAYS> {
 				mSet[i] &= that.mSet[i] ;
 		}
 
-		inline void operator&= (CREF<BitSet> that) {
+		forceinline void operator&= (CREF<BitSet> that) {
 			band_with (that) ;
 		}
 
@@ -2358,7 +2295,7 @@ trait BITSET_HELP<SIZE ,ALWAYS> {
 			return move (ret) ;
 		}
 
-		inline BitSet operator| (CREF<BitSet> that) const {
+		forceinline BitSet operator| (CREF<BitSet> that) const {
 			return bor (that) ;
 		}
 
@@ -2368,7 +2305,7 @@ trait BITSET_HELP<SIZE ,ALWAYS> {
 				mSet[i] |= that.mSet[i] ;
 		}
 
-		inline void operator|= (CREF<BitSet> that) {
+		forceinline void operator|= (CREF<BitSet> that) {
 			bor_with (that) ;
 		}
 
@@ -2380,7 +2317,7 @@ trait BITSET_HELP<SIZE ,ALWAYS> {
 			return move (ret) ;
 		}
 
-		inline BitSet operator^ (CREF<BitSet> that) const {
+		forceinline BitSet operator^ (CREF<BitSet> that) const {
 			return bxor (that) ;
 		}
 
@@ -2390,7 +2327,7 @@ trait BITSET_HELP<SIZE ,ALWAYS> {
 				mSet[i] ^= that.mSet[i] ;
 		}
 
-		inline void operator^= (CREF<BitSet> that) {
+		forceinline void operator^= (CREF<BitSet> that) {
 			bxor_with (that) ;
 		}
 
@@ -2402,7 +2339,7 @@ trait BITSET_HELP<SIZE ,ALWAYS> {
 			return move (ret) ;
 		}
 
-		inline BitSet operator- (CREF<BitSet> that) const {
+		forceinline BitSet operator- (CREF<BitSet> that) const {
 			return bsub (that) ;
 		}
 
@@ -2412,7 +2349,7 @@ trait BITSET_HELP<SIZE ,ALWAYS> {
 				mSet[i] &= ~that.mSet[i] ;
 		}
 
-		inline void operator-= (CREF<BitSet> that) {
+		forceinline void operator-= (CREF<BitSet> that) {
 			bsub_with (that) ;
 		}
 
@@ -2423,7 +2360,7 @@ trait BITSET_HELP<SIZE ,ALWAYS> {
 			return move (ret) ;
 		}
 
-		inline BitSet operator~ () const {
+		forceinline BitSet operator~ () const {
 			return bnot () ;
 		}
 
@@ -2495,7 +2432,7 @@ trait BITSET_BYTELCACHE_HELP<DEPEND ,ALWAYS> {
 			}) ;
 		}
 
-		inline LENGTH operator[] (CREF<BYTE> k) const {
+		forceinline LENGTH operator[] (CREF<BYTE> k) const {
 			const auto r1x = INDEX (k) ;
 			return mCache[r1x] ;
 		}
@@ -2536,7 +2473,7 @@ trait BITSET_BYTEFCACHE_HELP<DEPEND ,ALWAYS> {
 			}) ;
 		}
 
-		inline LENGTH operator[] (CREF<BYTE> k) const {
+		forceinline LENGTH operator[] (CREF<BYTE> k) const {
 			const auto r1x = INDEX (k) ;
 			return mCache[r1x] ;
 		}
@@ -2580,18 +2517,18 @@ trait SET_HOLDER_HELP<ITEM ,SIZE ,ALWAYS> {
 template <class ITEM ,class SIZE>
 trait SET_HELP<ITEM ,SIZE ,ALWAYS> {
 	using NODE = typename SET_HOLDER_HELP<ITEM ,SIZE ,ALWAYS>::NODE ;
-	using SUPER = typename SET_HOLDER_HELP<ITEM ,SIZE ,ALWAYS>::Set ;
+	using Super = typename SET_HOLDER_HELP<ITEM ,SIZE ,ALWAYS>::Set ;
 
 	struct CHILD {
 		INDEX mUp ;
 		BOOL mLR ;
 	} ;
 
-	class Set extend SUPER {
+	class Set implement Super {
 	protected:
-		using SUPER::mSet ;
-		using SUPER::mRoot ;
-		using SUPER::mTop ;
+		using Super::mSet ;
+		using Super::mRoot ;
+		using Super::mTop ;
 
 	public:
 		implicit Set () = default ;
@@ -2601,17 +2538,17 @@ trait SET_HELP<ITEM ,SIZE ,ALWAYS> {
 			clear () ;
 		}
 
-		explicit Set (CREF<csc_initializer_t<ITEM>> that)
-			:Set (SpanIterator<ITEM ,REGISTER> (that)) {}
-
-		explicit Set (CREF<SpanIterator<ITEM>> that) {
-			mSet = Allocator<NODE ,SIZE> (that.rank ()) ;
+		explicit Set (CREF<csc_initializer_t<ITEM>> that) {
+			const auto r1x = FLAG (that.begin ()) ;
+			const auto r2x = FLAG (that.size ()) ;
+			mSet = Allocator<NODE ,SIZE> (r2x) ;
 			clear () ;
-			for (auto &&i : that)
-				add (move (i)) ;
+			auto &&tmp = unsafe_cast[TYPEAS<ARR<ITEM>>::expr] (unsafe_deref (r1x)) ;
+			for (auto &&i : CSC::iter (0 ,r2x))
+				add (move (tmp[i])) ;
 		}
 
-		explicit Set (RREF<SpanIterator<ITEM ,REGISTER>> that) {
+		explicit Set (CREF<SpanIterator<ITEM>> that) {
 			mSet = Allocator<NODE ,SIZE> (that.rank ()) ;
 			clear () ;
 			for (auto &&i : that)
@@ -2677,7 +2614,7 @@ trait SET_HELP<ITEM ,SIZE ,ALWAYS> {
 			return mSet[index].mItem ;
 		}
 
-		inline CREF<ITEM> operator[] (CREF<INDEX> index) const leftvalue {
+		forceinline CREF<ITEM> operator[] (CREF<INDEX> index) const leftvalue {
 			return at (index) ;
 		}
 
@@ -3195,17 +3132,17 @@ trait HASHSET_HELP<ITEM ,SIZE ,ALWAYS> {
 			clear () ;
 		}
 
-		explicit HashSet (CREF<csc_initializer_t<ITEM>> that)
-			:HashSet (SpanIterator<ITEM ,REGISTER> (that)) {}
-
-		explicit HashSet (CREF<SpanIterator<ITEM>> that) {
-			mSet = Allocator<NODE ,SIZE> (that.rank ()) ;
+		explicit HashSet (CREF<csc_initializer_t<ITEM>> that) {
+			const auto r1x = FLAG (that.begin ()) ;
+			const auto r2x = FLAG (that.size ()) ;
+			mSet = Allocator<NODE ,SIZE> (r2x) ;
 			clear () ;
-			for (auto &&i : that)
-				add (move (i)) ;
+			auto &&tmp = unsafe_cast[TYPEAS<ARR<ITEM>>::expr] (unsafe_deref (r1x)) ;
+			for (auto &&i : CSC::iter (0 ,r2x))
+				add (move (tmp[i])) ;
 		}
 
-		explicit HashSet (RREF<SpanIterator<ITEM ,REGISTER>> that) {
+		explicit HashSet (CREF<SpanIterator<ITEM>> that) {
 			mSet = Allocator<NODE ,SIZE> (that.rank ()) ;
 			clear () ;
 			for (auto &&i : that)
@@ -3270,7 +3207,7 @@ trait HASHSET_HELP<ITEM ,SIZE ,ALWAYS> {
 			return mSet[index].mItem ;
 		}
 
-		inline CREF<ITEM> operator[] (CREF<INDEX> index) const leftvalue {
+		forceinline CREF<ITEM> operator[] (CREF<INDEX> index) const leftvalue {
 			return at (index) ;
 		}
 
@@ -3446,15 +3383,15 @@ template <class ITEM>
 trait SOFTSET_HELP<ITEM ,ALWAYS> {
 	using SIZE = typename SOFTSET_HOLDER_HELP<ITEM ,ALWAYS>::SIZE ;
 	using NODE = typename SOFTSET_HOLDER_HELP<ITEM ,ALWAYS>::NODE ;
-	using SUPER = typename SOFTSET_HOLDER_HELP<ITEM ,ALWAYS>::SoftSet ;
+	using Super = typename SOFTSET_HOLDER_HELP<ITEM ,ALWAYS>::SoftSet ;
 
-	class SoftSet extend SUPER {
+	class SoftSet implement Super {
 	protected:
-		using SUPER::mHeap ;
-		using SUPER::mSet ;
-		using SUPER::mLength ;
-		using SUPER::mRoot ;
-		using SUPER::mFirst ;
+		using Super::mHeap ;
+		using Super::mSet ;
+		using Super::mLength ;
+		using Super::mRoot ;
+		using Super::mFirst ;
 
 	public:
 		implicit SoftSet () = default ;
@@ -3517,7 +3454,7 @@ trait SOFTSET_HELP<ITEM ,ALWAYS> {
 			return mSet.self[index].mItem ;
 		}
 
-		inline CREF<ITEM> operator[] (CREF<INDEX> index) const leftvalue {
+		forceinline CREF<ITEM> operator[] (CREF<INDEX> index) const leftvalue {
 			return at (index) ;
 		}
 

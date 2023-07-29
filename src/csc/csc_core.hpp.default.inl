@@ -50,7 +50,7 @@ template <class DEPEND>
 trait FUNCTION_current_usage_size_HELP<DEPEND ,REQUIRE<MACRO_SYSTEM_WINDOWS<DEPEND>>> {
 #ifdef __CSC_SYSTEM_WINDOWS__
 	struct FUNCTION_current_usage_size {
-		inline LENGTH operator() (CREF<FLAG> addr) const {
+		forceinline LENGTH operator() (CREF<FLAG> addr) const {
 			if (addr == ZERO)
 				return 0 ;
 			return LENGTH (_msize (csc_pointer_t (addr))) ;
@@ -63,7 +63,7 @@ template <class DEPEND>
 trait FUNCTION_current_usage_size_HELP<DEPEND ,REQUIRE<MACRO_SYSTEM_LINUX<DEPEND>>> {
 #ifdef __CSC_SYSTEM_LINUX__
 	struct FUNCTION_current_usage_size {
-		inline LENGTH operator() (CREF<FLAG> addr) const {
+		forceinline LENGTH operator() (CREF<FLAG> addr) const {
 			if (addr == ZERO)
 				return 0 ;
 			return LENGTH (malloc_usable_size (csc_pointer_t (addr))) ;
@@ -128,70 +128,20 @@ trait HEAPPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 
 		VREF<HEAP> fake_m () const leftvalue {
 			const auto r1x = address (heap_root ()) ;
-			return unsafe_deref (unsafe_cast[TYPEAS<TEMP<HEAP>>::expr] (unsafe_pointer (r1x))) ;
+			return unsafe_cast[TYPEAS<HEAP>::expr] (unsafe_deref (r1x)) ;
 		}
 
-		imports CREF<Box<HEAP>> heap_root () {
+		imports CREF<HEAP> heap_root () {
 			return memorize ([&] () {
 				return Box<HEAP>::make () ;
-			}) ;
+			}).self ;
 		}
 	} ;
 } ;
 
 template <>
-exports auto HEAPPROC_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->Box<FakeHolder> {
+exports auto HEAPPROC_HELP<DEPEND ,ALWAYS>::FakeImplHolder::create () ->Box<FakeHolder> {
 	using R1X = typename HEAPPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
-	Box<FakeHolder> ret ;
-	ret.acquire (TYPEAS<R1X>::expr) ;
-	return move (ret) ;
-}
-
-template <class DEPEND>
-trait AUTO_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
-	using Holder = typename AUTO_HELP<DEPEND ,ALWAYS>::Holder ;
-
-	class ImplHolder implement Holder {
-	protected:
-		FLAG mCabi ;
-		Unknown mUnknown ;
-
-	public:
-		void initialize (RREF<Unknown> unknown) override {
-			mCabi = ZERO ;
-			mUnknown = move (unknown) ;
-		}
-
-		void finalize () override {
-			if (mCabi == ZERO)
-				return ;
-			mUnknown.recycle (0) ;
-			mCabi = ZERO ;
-		}
-
-		void acquire (CREF<FLAG> cabi ,CREF<TEMP<void>> obj) override {
-			assert (mCabi == ZERO) ;
-			mUnknown.acquire (0 ,obj) ;
-			mCabi = cabi ;
-		}
-
-		void release () override {
-			mCabi = ZERO ;
-		}
-
-		FLAG pointer () const override {
-			return mUnknown.pointer () ;
-		}
-
-		FLAG type_cabi () const override {
-			return mCabi ;
-		}
-	} ;
-} ;
-
-template <>
-exports auto AUTO_HOLDER_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->Box<FakeHolder> {
-	using R1X = typename AUTO_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	Box<FakeHolder> ret ;
 	ret.acquire (TYPEAS<R1X>::expr) ;
 	return move (ret) ;
@@ -200,6 +150,7 @@ exports auto AUTO_HOLDER_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->Box<
 template <class ITEM>
 trait SLICE_IMPLHOLDER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 	using Holder = typename SLICE_HELP<ITEM ,ALWAYS>::Holder ;
+	using Layout = typename SLICE_HELP<ITEM ,ALWAYS>::Layout ;
 
 	class ImplHolder implement Holder {
 	protected:
@@ -258,7 +209,7 @@ trait SLICE_IMPLHOLDER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 				if (align_ != ALIGN_OF<STRU8>::expr)
 					discard ;
 				auto rax = STRU8 () ;
-				unsafe_sync (unsafe_deptr (rax) ,unsafe_pointer (pointer)) ;
+				unsafe_sync (unsafe_cast[TYPEAS<TEMP<STRU8>>::expr] (rax) ,unsafe_deref (pointer)) ;
 				unsafe_launder (rax) ;
 				return ITEM (rax) ;
 			}
@@ -266,7 +217,7 @@ trait SLICE_IMPLHOLDER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 				if (align_ != ALIGN_OF<STRU16>::expr)
 					discard ;
 				auto rax = STRU16 () ;
-				unsafe_sync (unsafe_deptr (rax) ,unsafe_pointer (pointer)) ;
+				unsafe_sync (unsafe_cast[TYPEAS<TEMP<STRU16>>::expr] (rax) ,unsafe_deref (pointer)) ;
 				unsafe_launder (rax) ;
 				return ITEM (rax) ;
 			}
@@ -274,15 +225,15 @@ trait SLICE_IMPLHOLDER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 				if (align_ != ALIGN_OF<STRU32>::expr)
 					discard ;
 				auto rax = STRU32 () ;
-				unsafe_sync (unsafe_deptr (rax) ,unsafe_pointer (pointer)) ;
+				unsafe_sync (unsafe_cast[TYPEAS<TEMP<STRU32>>::expr] (rax) ,unsafe_deref (pointer)) ;
 				unsafe_launder (rax) ;
 				return ITEM (rax) ;
 			}
 			return bad (TYPEAS<ITEM>::expr) ;
 		}
 
-		BOOL equal (CREF<Holder> that) const override {
-			return equal (keep[TYPEAS<CREF<ImplHolder>>::expr] (that)) ;
+		BOOL equal (CREF<Layout> that) const override {
+			return equal (keep[TYPEAS<CREF<ImplHolder>>::expr] (that.mThis.self)) ;
 		}
 
 		BOOL equal (CREF<ImplHolder> that) const {
@@ -295,8 +246,8 @@ trait SLICE_IMPLHOLDER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 			return TRUE ;
 		}
 
-		FLAG compr (CREF<Holder> that) const override {
-			return compr (keep[TYPEAS<CREF<ImplHolder>>::expr] (that)) ;
+		FLAG compr (CREF<Layout> that) const override {
+			return compr (keep[TYPEAS<CREF<ImplHolder>>::expr] (that.mThis.self)) ;
 		}
 
 		FLAG compr (CREF<ImplHolder> that) const {
@@ -320,32 +271,27 @@ trait SLICE_IMPLHOLDER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 	} ;
 } ;
 
-template <>
-exports auto SLICE_HELP<STRA ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
+exports auto SLICE_HELP<STRA ,ALWAYS>::Holder::create () ->VRef<Holder> {
 	using R1X = typename SLICE_IMPLHOLDER_HELP<STRA ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
 }
 
-template <>
-exports auto SLICE_HELP<STRW ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
+exports auto SLICE_HELP<STRW ,ALWAYS>::Holder::create () ->VRef<Holder> {
 	using R1X = typename SLICE_IMPLHOLDER_HELP<STRW ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
 }
 
-template <>
-exports auto SLICE_HELP<STRU8 ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
+exports auto SLICE_HELP<STRU8 ,ALWAYS>::Holder::create () ->VRef<Holder> {
 	using R1X = typename SLICE_IMPLHOLDER_HELP<STRU8 ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
 }
 
-template <>
-exports auto SLICE_HELP<STRU16 ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
+exports auto SLICE_HELP<STRU16 ,ALWAYS>::Holder::create () ->VRef<Holder> {
 	using R1X = typename SLICE_IMPLHOLDER_HELP<STRU16 ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
 }
 
-template <>
-exports auto SLICE_HELP<STRU32 ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
+exports auto SLICE_HELP<STRU32 ,ALWAYS>::Holder::create () ->VRef<Holder> {
 	using R1X = typename SLICE_IMPLHOLDER_HELP<STRU32 ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
 }
@@ -353,6 +299,7 @@ exports auto SLICE_HELP<STRU32 ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holde
 template <class DEPEND>
 trait CLAZZ_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	using Holder = typename CLAZZ_HELP<DEPEND ,ALWAYS>::Holder ;
+	using Layout = typename CLAZZ_HELP<DEPEND ,ALWAYS>::Layout ;
 
 	class ImplHolder implement Holder {
 	protected:
@@ -385,8 +332,8 @@ trait CLAZZ_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			return mName ;
 		}
 
-		BOOL equal (CREF<Holder> that) const override {
-			return equal (keep[TYPEAS<CREF<ImplHolder>>::expr] (that)) ;
+		BOOL equal (CREF<Layout> that) const override {
+			return equal (keep[TYPEAS<CREF<ImplHolder>>::expr] (that.mThis.self)) ;
 		}
 
 		BOOL equal (CREF<ImplHolder> that) const {
@@ -401,8 +348,8 @@ trait CLAZZ_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			return TRUE ;
 		}
 
-		FLAG compr (CREF<Holder> that) const override {
-			return compr (keep[TYPEAS<CREF<ImplHolder>>::expr] (that)) ;
+		FLAG compr (CREF<Layout> that) const override {
+			return compr (keep[TYPEAS<CREF<ImplHolder>>::expr] (that.mThis.self)) ;
 		}
 
 		FLAG compr (CREF<ImplHolder> that) const {
@@ -422,7 +369,7 @@ trait CLAZZ_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 } ;
 
 template <>
-exports auto CLAZZ_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
+exports auto CLAZZ_HELP<DEPEND ,ALWAYS>::Holder::create () ->VRef<Holder> {
 	using R1X = typename CLAZZ_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
 }
@@ -447,7 +394,7 @@ trait EXCEPTION_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 } ;
 
 template <>
-exports auto EXCEPTION_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
+exports auto EXCEPTION_HELP<DEPEND ,ALWAYS>::Holder::create () ->VRef<Holder> {
 	using R1X = typename EXCEPTION_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
 }

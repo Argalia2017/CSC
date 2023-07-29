@@ -6,7 +6,7 @@
 #endif
 #include "csc/csc_begin.h"
 
-using namespace UNITTEST ;
+using namespace SOLUTION ;
 
 struct G_mY0 {
 	DOUBLE mY0 ;

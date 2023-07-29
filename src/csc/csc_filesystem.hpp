@@ -47,36 +47,38 @@ trait FILE_IMPLHOLDER_HELP ;
 
 template <class DEPEND>
 trait FILE_HELP<DEPEND ,ALWAYS> {
-	using RETRY_TIMES = RANK2 ;
+	struct Layout ;
 
 	struct Holder implement Interface {
+		imports VRef<Holder> create () ;
+
 		virtual void initialize (CREF<String<STR>> file) = 0 ;
 		virtual VAL64 length () const = 0 ;
 		virtual VarBuffer<BYTE> load () const = 0 ;
 		virtual void load (VREF<RegBuffer<BYTE>> item) const = 0 ;
 		virtual void save (CREF<RegBuffer<BYTE>> item) const = 0 ;
 		virtual CRef<RegBuffer<BYTE>> load_asset () const = 0 ;
-		virtual BOOL available () const = 0 ;
+		virtual BOOL good () const = 0 ;
 		virtual void erase () const = 0 ;
-		virtual void copy_from (CREF<Holder> that) const = 0 ;
-		virtual void move_from (CREF<Holder> that) const = 0 ;
-		virtual void link_from (CREF<Holder> that) const = 0 ;
-		virtual BOOL identical (CREF<Holder> that) const = 0 ;
+		virtual void copy_from (CREF<Layout> that) const = 0 ;
+		virtual void move_from (CREF<Layout> that) const = 0 ;
+		virtual void link_from (CREF<Layout> that) const = 0 ;
+		virtual BOOL identical (CREF<Layout> that) const = 0 ;
 	} ;
 
-	struct FUNCTION_extern {
-		imports VRef<Holder> invoke () ;
-	} ;
-
-	class File {
-	protected:
+	struct Layout {
 		VRef<Holder> mThis ;
+	} ;
+
+	class File implement Layout {
+	protected:
+		using Layout::mThis ;
 
 	public:
 		implicit File () = default ;
 
 		explicit File (CREF<String<STR>> file) {
-			mThis = FUNCTION_extern::invoke () ;
+			mThis = Holder::create () ;
 			mThis->initialize (file) ;
 		}
 
@@ -108,8 +110,8 @@ trait FILE_HELP<DEPEND ,ALWAYS> {
 			return mThis->load_asset () ;
 		}
 
-		BOOL available () const {
-			return mThis->available () ;
+		BOOL good () const {
+			return mThis->good () ;
 		}
 
 		VAL64 length () const {
@@ -121,19 +123,19 @@ trait FILE_HELP<DEPEND ,ALWAYS> {
 		}
 
 		void copy_from (CREF<File> that) const {
-			return mThis->copy_from (that.mThis.self) ;
+			return mThis->copy_from (that) ;
 		}
 
 		void move_from (CREF<File> that) const {
-			return mThis->move_from (that.mThis.self) ;
+			return mThis->move_from (that) ;
 		}
 
 		void link_from (CREF<File> that) const {
-			return mThis->link_from (that.mThis.self) ;
+			return mThis->link_from (that) ;
 		}
 
 		BOOL identical (CREF<File> that) const {
-			return mThis->identical (that.mThis.self) ;
+			return mThis->identical (that) ;
 		}
 	} ;
 } ;
@@ -156,6 +158,8 @@ trait DIRECTORY_HELP<DEPEND ,ALWAYS> {
 	} ;
 
 	struct Holder implement Interface {
+		imports VRef<Holder> create () ;
+
 		virtual void initialize (CREF<String<STR>> dire) = 0 ;
 		virtual String<STR> path () const = 0 ;
 		virtual String<STR> name () const = 0 ;
@@ -163,15 +167,11 @@ trait DIRECTORY_HELP<DEPEND ,ALWAYS> {
 		virtual String<STR> absolute () const = 0 ;
 		virtual Array<CHILD> load () const = 0 ;
 		virtual void fresh () const = 0 ;
-		virtual BOOL available () const = 0 ;
+		virtual BOOL good () const = 0 ;
 		virtual BOOL lock () const = 0 ;
 		virtual void build () const = 0 ;
 		virtual void erase () const = 0 ;
 		virtual void clear () const = 0 ;
-	} ;
-
-	struct FUNCTION_extern {
-		imports VRef<Holder> invoke () ;
 	} ;
 
 	class Directory {
@@ -182,7 +182,7 @@ trait DIRECTORY_HELP<DEPEND ,ALWAYS> {
 		implicit Directory () = default ;
 
 		explicit Directory (CREF<String<STR>> dire) {
-			mThis = FUNCTION_extern::invoke () ;
+			mThis = Holder::create () ;
 			mThis->initialize (dire) ;
 		}
 
@@ -210,8 +210,8 @@ trait DIRECTORY_HELP<DEPEND ,ALWAYS> {
 			return mThis->fresh () ;
 		}
 
-		BOOL available () const {
-			return mThis->available () ;
+		BOOL good () const {
+			return mThis->good () ;
 		}
 
 		BOOL lock () const {
@@ -243,6 +243,8 @@ trait STREAMFILE_IMPLHOLDER_HELP ;
 template <class DEPEND>
 trait STREAMFILE_HELP<DEPEND ,ALWAYS> {
 	struct Holder implement Interface {
+		imports VRef<Holder> create () ;
+
 		virtual void initialize (CREF<String<STR>> file) = 0 ;
 		virtual void open_r () = 0 ;
 		virtual void open_w () = 0 ;
@@ -260,10 +262,6 @@ trait STREAMFILE_HELP<DEPEND ,ALWAYS> {
 		virtual void flush () = 0 ;
 	} ;
 
-	struct FUNCTION_extern {
-		imports VRef<Holder> invoke () ;
-	} ;
-
 	class StreamFile {
 	protected:
 		VRef<Holder> mThis ;
@@ -272,7 +270,7 @@ trait STREAMFILE_HELP<DEPEND ,ALWAYS> {
 		implicit StreamFile () = default ;
 
 		explicit StreamFile (CREF<String<STR>> file) {
-			mThis = FUNCTION_extern::invoke () ;
+			mThis = Holder::create () ;
 			mThis->initialize (file) ;
 		}
 
@@ -380,6 +378,8 @@ trait BUFFERFILE_IMPLHOLDER_HELP ;
 template <class DEPEND>
 trait BUFFERFILE_HOLDER_HELP<DEPEND ,ALWAYS> {
 	struct Holder implement Interface {
+		imports VRef<Holder> create () ;
+
 		virtual void initialize (CREF<String<STR>> file ,CREF<Clazz> clazz) = 0 ;
 		virtual void set_cache_size (CREF<LENGTH> size_) = 0 ;
 		virtual void open_r () = 0 ;
@@ -393,16 +393,11 @@ trait BUFFERFILE_HOLDER_HELP<DEPEND ,ALWAYS> {
 		virtual void set (CREF<VAL64> index ,CREF<RegBuffer<BYTE>> item) = 0 ;
 		virtual void flush () = 0 ;
 	} ;
-
-	struct FUNCTION_extern {
-		imports VRef<Holder> invoke () ;
-	} ;
 } ;
 
 template <class ITEM>
 trait BUFFERFILE_HELP<ITEM ,ALWAYS> {
 	using Holder = typename BUFFERFILE_HOLDER_HELP<DEPEND ,ALWAYS>::Holder ;
-	using FUNCTION_extern = typename BUFFERFILE_HOLDER_HELP<DEPEND ,ALWAYS>::FUNCTION_extern ;
 
 	class BufferFile {
 	protected:
@@ -413,7 +408,7 @@ trait BUFFERFILE_HELP<ITEM ,ALWAYS> {
 
 		explicit BufferFile (CREF<String<STR>> file) {
 			const auto r1x = Clazz (TYPEAS<ITEM>::expr) ;
-			mThis = FUNCTION_extern::invoke () ;
+			mThis = Holder::create () ;
 			mThis->initialize (file ,r1x) ;
 		}
 
@@ -435,15 +430,13 @@ trait BUFFERFILE_HELP<ITEM ,ALWAYS> {
 
 		ITEM get (CREF<VAL64> index) {
 			ITEM ret ;
-			const auto r1x = address (ret) ;
-			mThis->get (index ,RegBuffer<BYTE>::from (r1x ,0 ,SIZE_OF<ITEM>::expr)) ;
+			mThis->get (index ,RegBuffer<BYTE>::from (unsafe_deptr (ret) ,0 ,SIZE_OF<ITEM>::expr)) ;
 			unsafe_launder (ret) ;
 			return move (ret) ;
 		}
 
 		void set (CREF<VAL64> index ,CREF<ITEM> item) {
-			const auto r1x = address (item) ;
-			mThis->set (index ,RegBuffer<BYTE>::from (r1x ,0 ,SIZE_OF<ITEM>::expr)) ;
+			mThis->set (index ,RegBuffer<BYTE>::from (unsafe_deptr (item) ,0 ,SIZE_OF<ITEM>::expr)) ;
 		}
 
 		void flush () {

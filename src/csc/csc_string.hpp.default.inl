@@ -46,7 +46,7 @@ template <class DEPEND>
 trait FUNCTION_system_string_cvt_HELP<DEPEND ,REQUIRE<MACRO_COMPILER_MSVC<DEPEND>>> {
 #ifdef __CSC_COMPILER_MSVC__
 	struct FUNCTION_system_string_cvt {
-		inline String<STRA> operator() (CREF<String<STRW>> obj) const {
+		forceinline String<STRA> operator() (CREF<String<STRW>> obj) const {
 			assert (ifnot (obj.empty ())) ;
 			String<STRA> ret = String<STRA> (obj.length () * 2 + 1) ;
 			const auto r1x = system_page () ;
@@ -55,7 +55,7 @@ trait FUNCTION_system_string_cvt_HELP<DEPEND ,REQUIRE<MACRO_COMPILER_MSVC<DEPEND
 			return move (ret) ;
 		}
 
-		inline String<STRW> operator() (CREF<String<STRA>> obj) const {
+		forceinline String<STRW> operator() (CREF<String<STRA>> obj) const {
 			assert (ifnot (obj.empty ())) ;
 			const auto r1x = system_page () ;
 			String<STRW> ret = String<STRW> (obj.length () + 1) ;
@@ -82,7 +82,7 @@ template <class DEPEND>
 trait FUNCTION_system_string_cvt_HELP<DEPEND ,REQUIRE<MACRO_COMPILER_GNUC<DEPEND>>> {
 #ifdef __CSC_COMPILER_GNUC__
 	struct FUNCTION_system_string_cvt {
-		inline String<STRA> operator() (CREF<String<STRW>> obj) const {
+		forceinline String<STRA> operator() (CREF<String<STRW>> obj) const {
 			assert (ifnot (obj.empty ())) ;
 			String<STRA> ret = String<STRA> (obj.length () * 2 + 1) ;
 			const auto r1x = std::wcstombs ((&ret[0]) ,(&obj[0]) ,VAL32 (ret.size ())) ;
@@ -90,7 +90,7 @@ trait FUNCTION_system_string_cvt_HELP<DEPEND ,REQUIRE<MACRO_COMPILER_GNUC<DEPEND
 			return move (ret) ;
 		}
 
-		inline String<STRW> operator() (CREF<String<STRA>> obj) const {
+		forceinline String<STRW> operator() (CREF<String<STRA>> obj) const {
 			assert (ifnot (obj.empty ())) ;
 			String<STRW> ret = String<STRW> (obj.length () + 1) ;
 			const auto r1x = std::mbstowcs ((&ret[0]) ,(&obj[0]) ,VAL32 (ret.size ())) ;
@@ -105,7 +105,7 @@ template <class DEPEND>
 trait FUNCTION_system_string_cvt_HELP<DEPEND ,REQUIRE<MACRO_COMPILER_CLANG<DEPEND>>> {
 #ifdef __CSC_COMPILER_CLANG__
 	struct FUNCTION_system_string_cvt {
-		inline String<STRA> operator() (CREF<String<STRW>> obj) const {
+		forceinline String<STRA> operator() (CREF<String<STRW>> obj) const {
 			assert (ifnot (obj.empty ())) ;
 			String<STRA> ret = String<STRA> (obj.length () * 2 + 1) ;
 			auto rax = std::size_t (0) ;
@@ -114,7 +114,7 @@ trait FUNCTION_system_string_cvt_HELP<DEPEND ,REQUIRE<MACRO_COMPILER_CLANG<DEPEN
 			return move (ret) ;
 		}
 
-		inline String<STRW> operator() (CREF<String<STRA>> obj) const {
+		forceinline String<STRW> operator() (CREF<String<STRA>> obj) const {
 			assert (ifnot (obj.empty ())) ;
 			String<STRW> ret = String<STRW> (obj.length () + 1) ;
 			auto rax = std::size_t (0) ;
@@ -141,8 +141,8 @@ trait STRINGPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 
 		String<STRA> string_cvt_ansi_from_w (CREF<String<STRW>> obj) const override {
 			String<STRA> ret ;
-			auto &&tmp = unsafe_deref (unsafe_cast[TYPEAS<TEMP<String<STRUA>>>::expr] (unsafe_deptr (ret))) ;
-			auto &&tmp_2 = unsafe_deref (unsafe_cast[TYPEAS<TEMP<String<STRUW>>>::expr] (unsafe_deptr (obj))) ;
+			auto &&tmp = unsafe_cast[TYPEAS<String<STRUA>>::expr] (ret) ;
+			auto &&tmp_2 = unsafe_cast[TYPEAS<String<STRUW>>::expr] (obj) ;
 			tmp = string_cvt_ansi_from_w (tmp_2) ;
 			unsafe_launder (ret) ;
 			return move (ret) ;
@@ -162,8 +162,8 @@ trait STRINGPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 
 		String<STRW> string_cvt_w_from_ansi (CREF<String<STRA>> obj) const override {
 			String<STRW> ret ;
-			auto &&tmp = unsafe_deref (unsafe_cast[TYPEAS<TEMP<String<STRUW>>>::expr] (unsafe_deptr (ret))) ;
-			auto &&tmp_2 = unsafe_deref (unsafe_cast[TYPEAS<TEMP<String<STRUA>>>::expr] (unsafe_deptr (obj))) ;
+			auto &&tmp = unsafe_cast[TYPEAS<String<STRUW>>::expr] (ret) ;
+			auto &&tmp_2 = unsafe_cast[TYPEAS<String<STRUA>>::expr] (obj) ;
 			tmp = string_cvt_w_from_ansi (tmp_2) ;
 			unsafe_launder (ret) ;
 			return move (ret) ;
@@ -183,8 +183,8 @@ trait STRINGPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 
 		String<STRA> string_cvt_gbks_from_w (CREF<String<STRW>> obj) const override {
 			String<STRA> ret ;
-			auto &&tmp = unsafe_deref (unsafe_cast[TYPEAS<TEMP<String<STRUA>>>::expr] (unsafe_deptr (ret))) ;
-			auto &&tmp_2 = unsafe_deref (unsafe_cast[TYPEAS<TEMP<String<STRUW>>>::expr] (unsafe_deptr (obj))) ;
+			auto &&tmp = unsafe_cast[TYPEAS<String<STRUA>>::expr] (ret) ;
+			auto &&tmp_2 = unsafe_cast[TYPEAS<String<STRUW>>::expr] (obj) ;
 			tmp = string_cvt_gbks_from_w (tmp_2) ;
 			unsafe_launder (ret) ;
 			return move (ret) ;
@@ -226,8 +226,8 @@ trait STRINGPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 
 		String<STRW> string_cvt_w_from_gbks (CREF<String<STRA>> obj) const override {
 			String<STRW> ret ;
-			auto &&tmp = unsafe_deref (unsafe_cast[TYPEAS<TEMP<String<STRUW>>>::expr] (unsafe_deptr (ret))) ;
-			auto &&tmp_2 = unsafe_deref (unsafe_cast[TYPEAS<TEMP<String<STRUA>>>::expr] (unsafe_deptr (obj))) ;
+			auto &&tmp = unsafe_cast[TYPEAS<String<STRUW>>::expr] (ret) ;
+			auto &&tmp_2 = unsafe_cast[TYPEAS<String<STRUA>>::expr] (obj) ;
 			tmp = string_cvt_w_from_gbks (tmp_2) ;
 			unsafe_launder (ret) ;
 			return move (ret) ;
@@ -846,7 +846,7 @@ trait STRINGPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 } ;
 
 template <>
-exports auto STRINGPROC_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
+exports auto STRINGPROC_HELP<DEPEND ,ALWAYS>::Holder::create () ->VRef<Holder> {
 	using R1X = typename STRINGPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
 }
@@ -952,7 +952,7 @@ trait TEXTSTRING_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 } ;
 
 template <>
-exports auto TEXTSTRING_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
+exports auto TEXTSTRING_HELP<DEPEND ,ALWAYS>::Holder::create () ->VRef<Holder> {
 	using R1X = typename TEXTSTRING_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
 }
@@ -998,7 +998,7 @@ trait ESCAPESTRING_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				auto act = TRUE ;
 				if ifswitch (act) {
 					const auto r2x = r1x.escape_word_cast (i) ;
-					if ifnot (r2x.available ())
+					if ifnot (r2x.good ())
 						discard ;
 					writer << slice ("\\") ;
 					writer << r2x.fetch () ;
@@ -1013,7 +1013,7 @@ trait ESCAPESTRING_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 } ;
 
 template <>
-exports auto ESCAPESTRING_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
+exports auto ESCAPESTRING_HELP<DEPEND ,ALWAYS>::Holder::create () ->VRef<Holder> {
 	using R1X = typename ESCAPESTRING_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
 }
@@ -1030,8 +1030,8 @@ trait COMMASTRING_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		TextString mCommaText ;
 		TextString mFirstText ;
 		LENGTH mCounter ;
-		Optional<LENGTH> mTightCounter ;
-		Deque<Optional<BOOL>> mFirst ;
+		LENGTH mTightCounter ;
+		Deque<BOOL> mFirst ;
 
 	public:
 		void initialize (RREF<TextString> gap_text ,RREF<TextString> comma_text ,RREF<TextString> first_text) override {
@@ -1039,64 +1039,64 @@ trait COMMASTRING_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			mCommaText = move (comma_text) ;
 			mFirstText = move (first_text) ;
 			mCounter = 0 ;
-			mTightCounter = Optional<LENGTH>::make (COUNTER_MAX_DEPTH::expr) ;
-			mFirst = Deque<Optional<BOOL>> (COUNTER_MAX_DEPTH::expr * 2) ;
-			mFirst.add (Optional<BOOL>::make (TRUE)) ;
+			mTightCounter = COUNTER_MAX_DEPTH::expr ;
+			mFirst = Deque<BOOL> (COUNTER_MAX_DEPTH::expr * 2) ;
+			mFirst.add (TRUE) ;
 		}
 
-		void write_text (VREF<TextWriter<STRA>> writer) const override {
+		void write_text (VREF<TextWriter<STRA>> writer) override {
 			template_write_text (writer ,mGapText.pick (TYPEAS<STRA>::expr) ,mCommaText.pick (TYPEAS<STRA>::expr) ,mFirstText.pick (TYPEAS<STRA>::expr)) ;
 		}
 
-		void write_text (VREF<TextWriter<STRW>> writer) const override {
+		void write_text (VREF<TextWriter<STRW>> writer) override {
 			template_write_text (writer ,mGapText.pick (TYPEAS<STRW>::expr) ,mCommaText.pick (TYPEAS<STRW>::expr) ,mFirstText.pick (TYPEAS<STRW>::expr)) ;
 		}
 
-		void write_text (VREF<TextWriter<STRU8>> writer) const override {
+		void write_text (VREF<TextWriter<STRU8>> writer) override {
 			template_write_text (writer ,mGapText.pick (TYPEAS<STRU8>::expr) ,mCommaText.pick (TYPEAS<STRU8>::expr) ,mFirstText.pick (TYPEAS<STRU8>::expr)) ;
 		}
 
-		void write_text (VREF<TextWriter<STRU16>> writer) const override {
+		void write_text (VREF<TextWriter<STRU16>> writer) override {
 			template_write_text (writer ,mGapText.pick (TYPEAS<STRU16>::expr) ,mCommaText.pick (TYPEAS<STRU16>::expr) ,mFirstText.pick (TYPEAS<STRU16>::expr)) ;
 		}
 
-		void write_text (VREF<TextWriter<STRU32>> writer) const override {
+		void write_text (VREF<TextWriter<STRU32>> writer) override {
 			template_write_text (writer ,mGapText.pick (TYPEAS<STRU32>::expr) ,mCommaText.pick (TYPEAS<STRU32>::expr) ,mFirstText.pick (TYPEAS<STRU32>::expr)) ;
 		}
 
 		template <class ARG1 ,class ARG2>
-		forceinline void template_write_text (VREF<ARG1> writer ,CREF<ARG2> gap_text ,CREF<ARG2> comma_text ,CREF<ARG2> first_text) const {
+		forceinline void template_write_text (VREF<ARG1> writer ,CREF<ARG2> gap_text ,CREF<ARG2> comma_text ,CREF<ARG2> first_text) {
 			INDEX ix = mFirst.tail () ;
 			auto act = TRUE ;
 			if ifswitch (act) {
-				if ifnot (mCounter > mTightCounter.fetch ())
+				if ifnot (mCounter > mTightCounter)
 					discard ;
 				if ifswitch (TRUE) {
-					if (mFirst[ix].fetch ())
+					if (mFirst[ix])
 						discard ;
 					for (auto &&j : comma_text)
 						writer << j ;
 				}
-				mFirst[ix].store (FALSE) ;
+				mFirst[ix] = FALSE ;
 			}
 			if ifswitch (act) {
-				if (mCounter != mTightCounter.fetch ())
+				if (mCounter != mTightCounter)
 					discard ;
-				if ifnot (mFirst[ix].fetch ())
+				if ifnot (mFirst[ix])
 					discard ;
-				mTightCounter.store (COUNTER_MAX_DEPTH::expr) ;
-				mFirst[ix].store (FALSE) ;
+				mTightCounter = COUNTER_MAX_DEPTH::expr ;
+				mFirst[ix] = FALSE ;
 			}
 			if ifswitch (act) {
 				for (auto &&j : first_text)
 					writer << j ;
 				if ifswitch (TRUE) {
-					if (mFirst[ix].fetch ())
+					if (mFirst[ix])
 						discard ;
 					for (auto &&j : comma_text)
 						writer << j ;
 				}
-				mFirst[ix].store (FALSE) ;
+				mFirst[ix] = FALSE ;
 				for (auto &&i : iter (0 ,mCounter)) {
 					noop (i) ;
 					for (auto &&j : gap_text)
@@ -1106,26 +1106,26 @@ trait COMMASTRING_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		void tight () override {
-			mTightCounter.store (mCounter) ;
+			mTightCounter = mCounter ;
 		}
 
 		void enter () override {
 			assume (mCounter < COUNTER_MAX_DEPTH::expr) ;
 			mCounter++ ;
-			mFirst.add (Optional<BOOL>::make (TRUE)) ;
+			mFirst.add (TRUE) ;
 		}
 
 		void leave () override {
 			mFirst.pop () ;
 			INDEX ix = mFirst.tail () ;
-			mFirst[ix].store (TRUE) ;
+			mFirst[ix] = TRUE ;
 			mCounter-- ;
 		}
 	} ;
 } ;
 
 template <>
-exports auto COMMASTRING_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
+exports auto COMMASTRING_HELP<DEPEND ,ALWAYS>::Holder::create () ->VRef<Holder> {
 	using R1X = typename COMMASTRING_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
 }
@@ -1182,7 +1182,7 @@ trait VALUESTRING_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 } ;
 
 template <>
-exports auto VALUESTRING_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
+exports auto VALUESTRING_HELP<DEPEND ,ALWAYS>::Holder::create () ->VRef<Holder> {
 	using R1X = typename VALUESTRING_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
 }

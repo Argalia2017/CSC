@@ -61,11 +61,13 @@ trait SYNTAXTREE_HELP<DEPEND ,ALWAYS> {
 	} ;
 
 	struct Holder implement Interface {
+		imports VRef<Holder> create () ;
+
 		virtual void initialize () = 0 ;
 		virtual void mark_as_function () = 0 ;
 		virtual void mark_as_iteration () = 0 ;
-		virtual void maybe (CREF<Clazz> clazz ,CREF<Binder> binder ,VREF<SyntaxTree> tree) = 0 ;
-		virtual CREF<AutoRef<>> stack (CREF<Clazz> clazz ,CREF<Binder> binder ,VREF<SyntaxTree> tree) leftvalue = 0 ;
+		virtual void maybe (CREF<Clazz> clazz ,CREF<Binder> binder) = 0 ;
+		virtual CREF<AutoRef<>> stack (CREF<Clazz> clazz ,CREF<Binder> binder) leftvalue = 0 ;
 		virtual void once (RREF<Function<void>> actor) = 0 ;
 		virtual void then (RREF<Function<void>> actor) = 0 ;
 		virtual void undo (CREF<Clazz> clazz) = 0 ;
@@ -75,19 +77,23 @@ trait SYNTAXTREE_HELP<DEPEND ,ALWAYS> {
 		virtual void clean () = 0 ;
 	} ;
 
-	struct FUNCTION_extern {
-		imports VRef<Holder> invoke () ;
+	struct Layout {
+		VRef<Holder> mThis ;
 	} ;
 
-	class SyntaxTree {
+	class SyntaxTree implement Layout {
 	protected:
-		VRef<Holder> mThis ;
+		using Layout::mThis ;
 
 	public:
 		implicit SyntaxTree () = default ;
 
+		implicit SyntaxTree (RREF<Layout> that) {
+			mThis = move (that.mThis) ;
+		}
+
 		explicit SyntaxTree (CREF<BoolProxy> ok) {
-			mThis = FUNCTION_extern::invoke () ;
+			mThis = Holder::create () ;
 			mThis->initialize () ;
 		}
 
@@ -104,7 +110,7 @@ trait SYNTAXTREE_HELP<DEPEND ,ALWAYS> {
 			using R1X = typename DEPENDENT<SYNTAXTREE_IMPLBINDER_HELP<ARG1 ,ALWAYS> ,DEPEND>::ImplBinder ;
 			const auto r1x = Clazz (id) ;
 			auto rax = R1X () ;
-			return mThis->maybe (r1x ,rax ,thiz) ;
+			return mThis->maybe (r1x ,rax) ;
 		}
 
 		template <class ARG1>
@@ -112,7 +118,7 @@ trait SYNTAXTREE_HELP<DEPEND ,ALWAYS> {
 			using R1X = typename DEPENDENT<SYNTAXTREE_IMPLBINDER_HELP<ARG1 ,ALWAYS> ,DEPEND>::ImplBinder ;
 			const auto r1x = Clazz (id) ;
 			auto rax = R1X () ;
-			return AutoRef<ARG1>::from (mThis->stack (r1x ,rax ,thiz)).self ;
+			return AutoRef<ARG1>::from (mThis->stack (r1x ,rax)).self ;
 		}
 
 		void once (RREF<Function<void>> actor) {
@@ -139,14 +145,14 @@ trait SYNTAXTREE_HELP<DEPEND ,ALWAYS> {
 			using R1X = REMOVE_REF<ARG2> ;
 			const auto r1x = Clazz (id) ;
 			auto &&tmp = mThis->later (r1x) ;
-			auto rax = tmp.as_cast (TYPEAS<R1X>::expr) ;
+			auto rax = AutoRef<R1X> (move (tmp)) ;
 			if ifswitch (TRUE) {
-				if (rax.available ())
+				if (rax.good ())
 					discard ;
 				rax = AutoRef<R1X>::make () ;
 			}
 			rax.self = forward[TYPEAS<ARG2>::expr] (value_) ;
-			tmp = rax.as_cast (TYPEAS<void>::expr) ;
+			tmp = move (rax) ;
 		}
 
 		void play () {

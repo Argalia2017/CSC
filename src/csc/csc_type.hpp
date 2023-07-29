@@ -101,135 +101,135 @@ enum class WORD :csc_byte16_t ;
 enum class CHAR :csc_byte32_t ;
 enum class DATA :csc_byte64_t ;
 
-inline constexpr BYTE operator| (CREF<BYTE> obj1 ,CREF<BYTE> obj2) noexcept {
+forceinline constexpr BYTE operator| (CREF<BYTE> obj1 ,CREF<BYTE> obj2) noexcept {
 	return BYTE (csc_byte8_t (obj1) | csc_byte8_t (obj2)) ;
 }
 
-inline void operator|= (VREF<BYTE> obj1 ,CREF<BYTE> obj2) noexcept {
+forceinline void operator|= (VREF<BYTE> obj1 ,CREF<BYTE> obj2) noexcept {
 	obj1 = obj1 | obj2 ;
 }
 
-inline constexpr BYTE operator& (CREF<BYTE> obj1 ,CREF<BYTE> obj2) noexcept {
+forceinline constexpr BYTE operator& (CREF<BYTE> obj1 ,CREF<BYTE> obj2) noexcept {
 	return BYTE (csc_byte8_t (obj1) & csc_byte8_t (obj2)) ;
 }
 
-inline void operator&= (VREF<BYTE> obj1 ,CREF<BYTE> obj2) noexcept {
+forceinline void operator&= (VREF<BYTE> obj1 ,CREF<BYTE> obj2) noexcept {
 	obj1 = obj1 & obj2 ;
 }
 
-inline constexpr BYTE operator^ (CREF<BYTE> obj1 ,CREF<BYTE> obj2) noexcept {
+forceinline constexpr BYTE operator^ (CREF<BYTE> obj1 ,CREF<BYTE> obj2) noexcept {
 	return BYTE (csc_byte8_t (obj1) ^ csc_byte8_t (obj2)) ;
 }
 
-inline void operator^= (VREF<BYTE> obj1 ,CREF<BYTE> obj2) noexcept {
+forceinline void operator^= (VREF<BYTE> obj1 ,CREF<BYTE> obj2) noexcept {
 	obj1 = obj1 ^ obj2 ;
 }
 
-inline constexpr BYTE operator~ (CREF<BYTE> obj1) noexcept {
+forceinline constexpr BYTE operator~ (CREF<BYTE> obj1) noexcept {
 	return BYTE (~csc_byte8_t (obj1)) ;
 }
 
-inline constexpr BYTE operator<< (CREF<BYTE> obj1 ,CREF<LENGTH> obj2) noexcept {
+forceinline constexpr BYTE operator<< (CREF<BYTE> obj1 ,CREF<LENGTH> obj2) noexcept {
 	return BYTE (csc_byte8_t (obj1) << obj2) ;
 }
 
-inline constexpr BYTE operator>> (CREF<BYTE> obj1 ,CREF<LENGTH> obj2) noexcept {
+forceinline constexpr BYTE operator>> (CREF<BYTE> obj1 ,CREF<LENGTH> obj2) noexcept {
 	return BYTE (csc_byte8_t (obj1) >> obj2) ;
 }
 
-inline constexpr WORD operator| (CREF<WORD> obj1 ,CREF<WORD> obj2) noexcept {
+forceinline constexpr WORD operator| (CREF<WORD> obj1 ,CREF<WORD> obj2) noexcept {
 	return WORD (csc_byte16_t (obj1) | csc_byte16_t (obj2)) ;
 }
 
-inline void operator|= (VREF<WORD> obj1 ,CREF<WORD> obj2) noexcept {
+forceinline void operator|= (VREF<WORD> obj1 ,CREF<WORD> obj2) noexcept {
 	obj1 = obj1 | obj2 ;
 }
 
-inline constexpr WORD operator& (CREF<WORD> obj1 ,CREF<WORD> obj2) noexcept {
+forceinline constexpr WORD operator& (CREF<WORD> obj1 ,CREF<WORD> obj2) noexcept {
 	return WORD (csc_byte16_t (obj1) & csc_byte16_t (obj2)) ;
 }
 
-inline void operator&= (VREF<WORD> obj1 ,CREF<WORD> obj2) noexcept {
+forceinline void operator&= (VREF<WORD> obj1 ,CREF<WORD> obj2) noexcept {
 	obj1 = obj1 & obj2 ;
 }
 
-inline constexpr WORD operator^ (CREF<WORD> obj1 ,CREF<WORD> obj2) noexcept {
+forceinline constexpr WORD operator^ (CREF<WORD> obj1 ,CREF<WORD> obj2) noexcept {
 	return WORD (csc_byte16_t (obj1) ^ csc_byte16_t (obj2)) ;
 }
 
-inline constexpr WORD operator~ (CREF<WORD> obj1) noexcept {
+forceinline constexpr WORD operator~ (CREF<WORD> obj1) noexcept {
 	return WORD (~csc_byte16_t (obj1)) ;
 }
 
-inline constexpr WORD operator<< (CREF<WORD> obj1 ,CREF<LENGTH> obj2) noexcept {
+forceinline constexpr WORD operator<< (CREF<WORD> obj1 ,CREF<LENGTH> obj2) noexcept {
 	return WORD (csc_byte16_t (obj1) << obj2) ;
 }
 
-inline constexpr WORD operator>> (CREF<WORD> obj1 ,CREF<LENGTH> obj2) noexcept {
+forceinline constexpr WORD operator>> (CREF<WORD> obj1 ,CREF<LENGTH> obj2) noexcept {
 	return WORD (csc_byte16_t (obj1) >> obj2) ;
 }
 
-inline constexpr CHAR operator| (CREF<CHAR> obj1 ,CREF<CHAR> obj2) noexcept {
+forceinline constexpr CHAR operator| (CREF<CHAR> obj1 ,CREF<CHAR> obj2) noexcept {
 	return CHAR (csc_byte32_t (obj1) | csc_byte32_t (obj2)) ;
 }
 
-inline void operator|= (VREF<CHAR> obj1 ,CREF<CHAR> obj2) noexcept {
+forceinline void operator|= (VREF<CHAR> obj1 ,CREF<CHAR> obj2) noexcept {
 	obj1 = obj1 | obj2 ;
 }
 
-inline constexpr CHAR operator& (CREF<CHAR> obj1 ,CREF<CHAR> obj2) noexcept {
+forceinline constexpr CHAR operator& (CREF<CHAR> obj1 ,CREF<CHAR> obj2) noexcept {
 	return CHAR (csc_byte32_t (obj1) & csc_byte32_t (obj2)) ;
 }
 
-inline void operator&= (VREF<CHAR> obj1 ,CREF<CHAR> obj2) noexcept {
+forceinline void operator&= (VREF<CHAR> obj1 ,CREF<CHAR> obj2) noexcept {
 	obj1 = obj1 & obj2 ;
 }
 
-inline constexpr CHAR operator^ (CREF<CHAR> obj1 ,CREF<CHAR> obj2) noexcept {
+forceinline constexpr CHAR operator^ (CREF<CHAR> obj1 ,CREF<CHAR> obj2) noexcept {
 	return CHAR (csc_byte32_t (obj1) ^ csc_byte32_t (obj2)) ;
 }
 
-inline constexpr CHAR operator~ (CREF<CHAR> obj1) noexcept {
+forceinline constexpr CHAR operator~ (CREF<CHAR> obj1) noexcept {
 	return CHAR (~csc_byte32_t (obj1)) ;
 }
 
-inline constexpr CHAR operator<< (CREF<CHAR> obj1 ,CREF<LENGTH> obj2) noexcept {
+forceinline constexpr CHAR operator<< (CREF<CHAR> obj1 ,CREF<LENGTH> obj2) noexcept {
 	return CHAR (csc_byte32_t (obj1) << obj2) ;
 }
 
-inline constexpr CHAR operator>> (CREF<CHAR> obj1 ,CREF<LENGTH> obj2) noexcept {
+forceinline constexpr CHAR operator>> (CREF<CHAR> obj1 ,CREF<LENGTH> obj2) noexcept {
 	return CHAR (csc_byte32_t (obj1) >> obj2) ;
 }
 
-inline constexpr DATA operator| (CREF<DATA> obj1 ,CREF<DATA> obj2) noexcept {
+forceinline constexpr DATA operator| (CREF<DATA> obj1 ,CREF<DATA> obj2) noexcept {
 	return DATA (csc_byte64_t (obj1) | csc_byte64_t (obj2)) ;
 }
 
-inline void operator|= (VREF<DATA> obj1 ,CREF<DATA> obj2) noexcept {
+forceinline void operator|= (VREF<DATA> obj1 ,CREF<DATA> obj2) noexcept {
 	obj1 = obj1 | obj2 ;
 }
 
-inline constexpr DATA operator& (CREF<DATA> obj1 ,CREF<DATA> obj2) noexcept {
+forceinline constexpr DATA operator& (CREF<DATA> obj1 ,CREF<DATA> obj2) noexcept {
 	return DATA (csc_byte64_t (obj1) & csc_byte64_t (obj2)) ;
 }
 
-inline void operator&= (VREF<DATA> obj1 ,CREF<DATA> obj2) noexcept {
+forceinline void operator&= (VREF<DATA> obj1 ,CREF<DATA> obj2) noexcept {
 	obj1 = obj1 & obj2 ;
 }
 
-inline constexpr DATA operator^ (CREF<DATA> obj1 ,CREF<DATA> obj2) noexcept {
+forceinline constexpr DATA operator^ (CREF<DATA> obj1 ,CREF<DATA> obj2) noexcept {
 	return DATA (csc_byte64_t (obj1) ^ csc_byte64_t (obj2)) ;
 }
 
-inline constexpr DATA operator~ (CREF<DATA> obj1) noexcept {
+forceinline constexpr DATA operator~ (CREF<DATA> obj1) noexcept {
 	return DATA (~csc_byte64_t (obj1)) ;
 }
 
-inline constexpr DATA operator<< (CREF<DATA> obj1 ,CREF<LENGTH> obj2) noexcept {
+forceinline constexpr DATA operator<< (CREF<DATA> obj1 ,CREF<LENGTH> obj2) noexcept {
 	return DATA (csc_byte64_t (obj1) << obj2) ;
 }
 
-inline constexpr DATA operator>> (CREF<DATA> obj1 ,CREF<LENGTH> obj2) noexcept {
+forceinline constexpr DATA operator>> (CREF<DATA> obj1 ,CREF<LENGTH> obj2) noexcept {
 	return DATA (csc_byte64_t (obj1) >> obj2) ;
 }
 
@@ -293,36 +293,76 @@ template <class UNIT>
 using COUNT_OF = typename COUNT_OF_HELP<UNIT ,ALWAYS>::RET ;
 
 template <class...>
-trait IS_ENUM_SPEC ;
+trait REFLECT_ENUM_HELP ;
 
 template <class UNIT>
-trait IS_ENUM_SPEC<UNIT> {
+trait REFLECT_ENUM_HELP<UNIT> {
 	using RET = ENUM_FALSE ;
 } ;
 
 template <class UNIT ,csc_diff_t SIDE>
-trait IS_ENUM_SPEC<ENUMAS<UNIT ,SIDE>> {
+trait REFLECT_ENUM_HELP<ENUMAS<UNIT ,SIDE>> {
 	using RET = ENUM_TRUE ;
 } ;
 
 template <class UNIT>
-using IS_ENUM = typename IS_ENUM_SPEC<UNIT>::RET ;
+using IS_ENUM = typename REFLECT_ENUM_HELP<UNIT>::RET ;
 
 template <class...>
-trait IS_TYPE_SPEC ;
+trait REFLECT_TYPE_HELP ;
 
 template <class UNIT>
-trait IS_TYPE_SPEC<UNIT> {
+trait REFLECT_TYPE_HELP<UNIT> {
 	using RET = ENUM_FALSE ;
 } ;
 
-template <class...UNIT>
-trait IS_TYPE_SPEC<TYPEAS<UNIT...>> {
+template <class FIRST>
+trait REFLECT_TYPE_HELP<TYPEAS<FIRST>> {
+	using FIRST_ONE = FIRST ;
+	using FIRST_REST = TYPEAS<> ;
+	using RET = ENUM_TRUE ;
+} ;
+
+template <class FIRST ,class SECOND>
+trait REFLECT_TYPE_HELP<TYPEAS<FIRST ,SECOND>> {
+	using FIRST_ONE = FIRST ;
+	using FIRST_REST = TYPEAS<SECOND> ;
+	using SECOND_ONE = SECOND ;
+	using SECOND_REST = TYPEAS<> ;
+	using RET = ENUM_TRUE ;
+} ;
+
+template <class FIRST ,class SECOND ,class THIRD ,class...REST>
+trait REFLECT_TYPE_HELP<TYPEAS<FIRST ,SECOND ,THIRD ,REST...>> {
+	using FIRST_ONE = FIRST ;
+	using FIRST_REST = TYPEAS<SECOND ,THIRD ,REST...> ;
+	using SECOND_ONE = SECOND ;
+	using SECOND_REST = TYPEAS<THIRD ,REST...> ;
+	using THIRD_ONE = THIRD ;
+	using THIRD_REST = TYPEAS<REST...> ;
 	using RET = ENUM_TRUE ;
 } ;
 
 template <class UNIT>
-using IS_TYPE = typename IS_TYPE_SPEC<UNIT>::RET ;
+using IS_TYPE = typename REFLECT_TYPE_HELP<UNIT>::RET ;
+
+template <class UNIT>
+using TYPE_FIRST_ONE = typename REFLECT_TYPE_HELP<UNIT>::FIRST_ONE ;
+
+template <class UNIT>
+using TYPE_FIRST_REST = typename REFLECT_TYPE_HELP<UNIT>::FIRST_REST ;
+
+template <class UNIT>
+using TYPE_SECOND_ONE = typename REFLECT_TYPE_HELP<UNIT>::SECOND_ONE ;
+
+template <class UNIT>
+using TYPE_SECOND_REST = typename REFLECT_TYPE_HELP<UNIT>::SECOND_REST ;
+
+template <class UNIT>
+using TYPE_THIRD_ONE = typename REFLECT_TYPE_HELP<UNIT>::THIRD_ONE ;
+
+template <class UNIT>
+using TYPE_THIRD_REST = typename REFLECT_TYPE_HELP<UNIT>::THIRD_REST ;
 
 using ENUM_ZERO = ENUMAS<VAL ,ZERO> ;
 using ENUM_IDEN = ENUMAS<VAL ,IDEN> ;
@@ -508,51 +548,6 @@ template <class UNIT ,class SIDE>
 using TYPE_CAT = typename TYPE_CAT_HELP<UNIT ,SIDE ,ALWAYS>::RET ;
 
 template <class...>
-trait REMOVE_TYPE_SPEC ;
-
-template <class FIRST>
-trait REMOVE_TYPE_SPEC<TYPEAS<FIRST>> {
-	using FIRST_ONE = FIRST ;
-	using FIRST_REST = TYPEAS<> ;
-} ;
-
-template <class FIRST ,class SECOND>
-trait REMOVE_TYPE_SPEC<TYPEAS<FIRST ,SECOND>> {
-	using FIRST_ONE = FIRST ;
-	using FIRST_REST = TYPEAS<SECOND> ;
-	using SECOND_ONE = SECOND ;
-	using SECOND_REST = TYPEAS<> ;
-} ;
-
-template <class FIRST ,class SECOND ,class THIRD ,class...REST>
-trait REMOVE_TYPE_SPEC<TYPEAS<FIRST ,SECOND ,THIRD ,REST...>> {
-	using FIRST_ONE = FIRST ;
-	using FIRST_REST = TYPEAS<SECOND ,THIRD ,REST...> ;
-	using SECOND_ONE = SECOND ;
-	using SECOND_REST = TYPEAS<THIRD ,REST...> ;
-	using THIRD_ONE = THIRD ;
-	using THIRD_REST = TYPEAS<REST...> ;
-} ;
-
-template <class UNIT>
-using TYPE_FIRST_ONE = typename REMOVE_TYPE_SPEC<UNIT>::FIRST_ONE ;
-
-template <class UNIT>
-using TYPE_FIRST_REST = typename REMOVE_TYPE_SPEC<UNIT>::FIRST_REST ;
-
-template <class UNIT>
-using TYPE_SECOND_ONE = typename REMOVE_TYPE_SPEC<UNIT>::SECOND_ONE ;
-
-template <class UNIT>
-using TYPE_SECOND_REST = typename REMOVE_TYPE_SPEC<UNIT>::SECOND_REST ;
-
-template <class UNIT>
-using TYPE_THIRD_ONE = typename REMOVE_TYPE_SPEC<UNIT>::THIRD_ONE ;
-
-template <class UNIT>
-using TYPE_THIRD_REST = typename REMOVE_TYPE_SPEC<UNIT>::THIRD_REST ;
-
-template <class...>
 trait TYPE_REVERSE_HELP ;
 
 template <class UNIT>
@@ -684,19 +679,19 @@ struct Proxy {
 	implicit Proxy () = delete ;
 	implicit ~Proxy () = delete ;
 	implicit Proxy (CREF<Proxy>) = delete ;
-	inline VREF<Proxy> operator= (CREF<Proxy>) = delete ;
+	forceinline VREF<Proxy> operator= (CREF<Proxy>) = delete ;
 	implicit Proxy (RREF<Proxy>) = delete ;
-	inline VREF<Proxy> operator= (RREF<Proxy>) = delete ;
+	forceinline VREF<Proxy> operator= (RREF<Proxy>) = delete ;
 } ;
 
 struct Interface {
 	implicit Interface () = default ;
 	virtual ~Interface () = default ;
 	implicit Interface (CREF<Interface>) = delete ;
-	inline VREF<Interface> operator= (CREF<Interface>) = delete ;
+	forceinline VREF<Interface> operator= (CREF<Interface>) = delete ;
 	//@info: fuck clang
 	implicit Interface (Interface &&) = default ;
-	inline VREF<Interface> operator= (Interface &&) = default ;
+	forceinline VREF<Interface> operator= (Interface &&) = default ;
 	virtual void finalize () {}
 } ;
 
@@ -853,33 +848,33 @@ using IS_BASIC = typename IS_BASIC_HELP<UNIT ,ALWAYS>::RET ;
 using VARIABLE = ENUMAS<VAL ,(-1)> ;
 using CONSTANT = ENUMAS<VAL ,(-2)> ;
 using REGISTER = ENUMAS<VAL ,(-3)> ;
-using PROPERTY = ENUMAS<VAL ,(-4)> ;
+using ORDINARY = ENUMAS<VAL ,(-4)> ;
 
 template <class...>
-trait REFLECT_REF_SPEC ;
+trait REFLECT_REF_HELP ;
 
 template <class UNIT ,class SIDE>
-trait REFLECT_REF_SPEC<UNIT ,SIDE> {
-	using RET = PROPERTY ;
+trait REFLECT_REF_HELP<UNIT ,SIDE> {
+	using RET = ORDINARY ;
 } ;
 
 template <class UNIT>
-trait REFLECT_REF_SPEC<UNIT ,VREF<UNIT>> {
+trait REFLECT_REF_HELP<UNIT ,VREF<UNIT>> {
 	using RET = VARIABLE ;
 } ;
 
 template <class UNIT>
-trait REFLECT_REF_SPEC<UNIT ,CREF<UNIT>> {
+trait REFLECT_REF_HELP<UNIT ,CREF<UNIT>> {
 	using RET = CONSTANT ;
 } ;
 
 template <class UNIT>
-trait REFLECT_REF_SPEC<UNIT ,RREF<UNIT>> {
+trait REFLECT_REF_HELP<UNIT ,RREF<UNIT>> {
 	using RET = REGISTER ;
 } ;
 
 template <class UNIT>
-using REFLECT_REF = typename REFLECT_REF_SPEC<REMOVE_REF<UNIT> ,UNIT>::RET ;
+using REFLECT_REF = typename REFLECT_REF_HELP<REMOVE_REF<UNIT> ,UNIT>::RET ;
 
 template <class UNIT>
 using IS_VARIABLE = IS_SAME<REFLECT_REF<UNIT> ,VARIABLE> ;
@@ -891,28 +886,28 @@ template <class UNIT>
 using IS_REGISTER = IS_SAME<REFLECT_REF<UNIT> ,REGISTER> ;
 
 template <class UNIT>
-using IS_PROPERTY = IS_SAME<REFLECT_REF<UNIT> ,PROPERTY> ;
+using IS_ORDINARY = IS_SAME<REFLECT_REF<UNIT> ,ORDINARY> ;
 
 template <class...>
-trait REFLECT_POINTER_SPEC ;
+trait REFLECT_POINTER_HELP ;
 
 template <class UNIT>
-trait REFLECT_POINTER_SPEC<UNIT> {
-	using RET = TYPEAS<> ;
+trait REFLECT_POINTER_HELP<UNIT> {
+	using RET = ENUM_FALSE ;
 } ;
 
 template <class UNIT>
-trait REFLECT_POINTER_SPEC<DEF<UNIT *>> {
-	using RET = TYPEAS<UNIT ,VARIABLE> ;
+trait REFLECT_POINTER_HELP<DEF<UNIT *>> {
+	using RET = ENUM_TRUE ;
 } ;
 
 template <class UNIT>
-trait REFLECT_POINTER_SPEC<DEF<const UNIT *>> {
-	using RET = TYPEAS<UNIT ,CONSTANT> ;
+trait REFLECT_POINTER_HELP<DEF<const UNIT *>> {
+	using RET = ENUM_TRUE ;
 } ;
 
 template <class UNIT>
-using REFLECT_POINTER = typename REFLECT_POINTER_SPEC<REMOVE_REF<UNIT>>::RET ;
+using IS_POINTER = typename REFLECT_POINTER_HELP<REMOVE_REF<UNIT>>::RET ;
 
 template <class...>
 trait PTR_HELP ;
@@ -931,36 +926,35 @@ template <class UNIT>
 using PTR = typename PTR_HELP<REMOVE_REF<UNIT> ,IS_VARIABLE<UNIT> ,ALWAYS>::RET ;
 
 template <class...>
-trait REFLECT_ARRAY_SPEC ;
+trait REFLECT_ARRAY_HELP ;
 
 template <class UNIT>
-trait REFLECT_ARRAY_SPEC<UNIT> {
-	using RET = TYPEAS<> ;
-} ;
-
-template <class ITEM>
-trait REFLECT_ARRAY_SPEC<DEF<ITEM[]>> {
-	using R1X = ENUM_ZERO ;
-	using RET = TYPEAS<ITEM ,R1X> ;
-} ;
-
-template <class ITEM ,csc_diff_t SIZE>
-trait REFLECT_ARRAY_SPEC<DEF<ITEM[SIZE]>> {
-	using R1X = ENUMAS<VAL ,SIZE> ;
-	using RET = TYPEAS<ITEM ,R1X> ;
+trait REFLECT_ARRAY_HELP<UNIT> {
+	using RET = ENUM_FALSE ;
 } ;
 
 template <class UNIT>
-using REFLECT_ARRAY = typename REFLECT_ARRAY_SPEC<REMOVE_REF<UNIT>>::RET ;
+trait REFLECT_ARRAY_HELP<DEF<UNIT[]>> {
+	using ITEM = UNIT ;
+	using SIZE = ENUM_ZERO ;
+	using RET = ENUM_TRUE ;
+} ;
+
+template <class UNIT ,csc_diff_t SIDE>
+trait REFLECT_ARRAY_HELP<DEF<UNIT[SIDE]>> {
+	using ITEM = UNIT ;
+	using SIZE = ENUMAS<VAL ,SIDE> ;
+	using RET = ENUM_TRUE ;
+} ;
 
 template <class UNIT>
-using IS_ARRAY = ENUM_NOT<IS_SAME<REFLECT_ARRAY<UNIT> ,TYPEAS<>>> ;
+using IS_ARRAY = typename REFLECT_ARRAY_HELP<REMOVE_REF<UNIT>>::RET ;
 
 template <class UNIT>
-using ARRAY_ITEM = TYPE_FIRST_ONE<REFLECT_ARRAY<UNIT>> ;
+using ARRAY_ITEM = typename REFLECT_ARRAY_HELP<REMOVE_REF<UNIT>>::ITEM ;
 
 template <class UNIT>
-using ARRAY_SIZE = TYPE_SECOND_ONE<REFLECT_ARRAY<UNIT>> ;
+using ARRAY_SIZE = typename REFLECT_ARRAY_HELP<REMOVE_REF<UNIT>>::SIZE ;
 
 template <class...>
 trait ARR_HELP ;
@@ -982,38 +976,35 @@ template <class ITEM ,class SIZE = ENUM_ZERO>
 using ARR = typename ARR_HELP<ITEM ,SIZE ,ALWAYS>::RET ;
 
 template <class...>
-trait REFLECT_FUNCTION_SPEC ;
+trait REFLECT_FUNCTION_HELP ;
 
 template <class UNIT>
-trait REFLECT_FUNCTION_SPEC<UNIT> {
-	using RET = TYPEAS<> ;
+trait REFLECT_FUNCTION_HELP<UNIT> {
+	using RET = ENUM_FALSE ;
 } ;
 
-template <class RETURN ,class...PARAM ,class UNIT>
-trait REFLECT_FUNCTION_SPEC<DEF<RETURN (UNIT::*) (PARAM...)>> {
-	using R1X = RETURN ;
-	using R2X = TYPEAS<XREF<PARAM>...> ;
-	using RET = TYPEAS<R1X ,R2X> ;
+template <class FIRST ,class...REST ,class UNIT>
+trait REFLECT_FUNCTION_HELP<DEF<FIRST (UNIT::*) (REST...)>> {
+	using RETURN = FIRST ;
+	using PARAMS = TYPEAS<XREF<REST>...> ;
+	using RET = ENUM_TRUE ;
 } ;
 
-template <class RETURN ,class...PARAM ,class UNIT>
-trait REFLECT_FUNCTION_SPEC<DEF<RETURN (UNIT::*) (PARAM...) const>> {
-	using R1X = RETURN ;
-	using R2X = TYPEAS<XREF<PARAM>...> ;
-	using RET = TYPEAS<R1X ,R2X> ;
+template <class FIRST ,class...REST ,class UNIT>
+trait REFLECT_FUNCTION_HELP<DEF<FIRST (UNIT::*) (REST...) const>> {
+	using RETURN = FIRST ;
+	using PARAMS = TYPEAS<XREF<REST>...> ;
+	using RET = ENUM_TRUE ;
 } ;
 
 template <class UNIT>
-using REFLECT_FUNCTION = typename REFLECT_FUNCTION_SPEC<DEF<typeof (&UNIT::operator())>>::RET ;
+using IS_FUNCTION = typename REFLECT_FUNCTION_HELP<DEF<typeof (&UNIT::operator())>>::RET ;
 
 template <class UNIT>
-using IS_FUNCTION = ENUM_NOT<IS_SAME<REFLECT_FUNCTION<UNIT> ,TYPEAS<>>> ;
+using FUNCTION_RETURN = typename REFLECT_FUNCTION_HELP<DEF<typeof (&UNIT::operator())>>::RETURN ;
 
 template <class UNIT>
-using FUNCTION_RETURN = TYPE_FIRST_ONE<REFLECT_FUNCTION<UNIT>> ;
-
-template <class UNIT>
-using FUNCTION_PARAMS = TYPE_SECOND_ONE<REFLECT_FUNCTION<UNIT>> ;
+using FUNCTION_PARAMS = typename REFLECT_FUNCTION_HELP<DEF<typeof (&UNIT::operator())>>::PARAMS ;
 
 template <class...>
 trait IS_INTPTR_HELP ;
@@ -1026,7 +1017,7 @@ trait IS_INTPTR_HELP<UNIT ,REQUIRE<IS_BASIC<UNIT>>> {
 template <class UNIT>
 trait IS_INTPTR_HELP<UNIT ,REQUIRE<ENUM_NOT<IS_BASIC<UNIT>>>> {
 	using R1X = MACRO_IS_ENUMCLASS<UNIT> ;
-	using R2X = ENUM_NOT<IS_SAME<REFLECT_POINTER<UNIT> ,TYPEAS<>>> ;
+	using R2X = IS_POINTER<UNIT> ;
 	using R3X = IS_SAME<UNIT ,csc_byte8_t> ;
 	using R4X = IS_SAME<UNIT ,csc_byte16_t> ;
 	using R5X = IS_SAME<UNIT ,csc_byte32_t> ;
@@ -1309,23 +1300,28 @@ template <class SIZE ,class ALIGN = ENUM_IDEN>
 using Storage = typename STORAGE_HELP<SIZE ,ALIGN ,ALWAYS>::RET ;
 
 template <class...>
-trait REFLECT_TEMP_SPEC ;
+trait REFLECT_TEMP_HELP ;
 
 template <class UNIT>
-trait REFLECT_TEMP_SPEC<UNIT> {
-	using RET = TYPEAS<> ;
+trait REFLECT_TEMP_HELP<UNIT> {
+	using RET = ENUM_FALSE ;
 } ;
 
 template <class UNIT ,class SIDE>
-trait REFLECT_TEMP_SPEC<TEMPAS<UNIT ,SIDE>> {
-	using RET = TYPEAS<UNIT ,SIDE> ;
+trait REFLECT_TEMP_HELP<TEMPAS<UNIT ,SIDE>> {
+	using ITEM = UNIT ;
+	using SIZE = SIDE ;
+	using RET = ENUM_TRUE ;
 } ;
 
 template <class UNIT>
-using REFLECT_TEMP = typename REFLECT_TEMP_SPEC<REMOVE_REF<UNIT>>::RET ;
+using IS_TEMP = typename REFLECT_TEMP_HELP<REMOVE_REF<UNIT>>::RET ;
 
 template <class UNIT>
-using IS_TEMP = ENUM_NOT<IS_SAME<REFLECT_TEMP<UNIT> ,TYPEAS<>>> ;
+using TEMP_ITEM = typename REFLECT_TEMP_HELP<REMOVE_REF<UNIT>>::ITEM ;
+
+template <class UNIT>
+using TEMP_SIZE = typename REFLECT_TEMP_HELP<REMOVE_REF<UNIT>>::SIZE ;
 
 template <class...>
 trait TEMP_HELP ;
@@ -1337,7 +1333,7 @@ trait TEMP_HELP<UNIT ,REQUIRE<IS_VOID<UNIT>>> {
 
 template <class UNIT>
 trait TEMP_HELP<UNIT ,REQUIRE<IS_TEMP<UNIT>>> {
-	using R1X = TYPE_SECOND_ONE<REFLECT_TEMP<UNIT>> ;
+	using R1X = TEMP_SIZE<UNIT> ;
 	using RET = TEMPAS<UNIT ,R1X> ;
 } ;
 

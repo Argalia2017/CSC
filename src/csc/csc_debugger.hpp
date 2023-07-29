@@ -69,6 +69,8 @@ trait CONSOLE_HELP<DEPEND ,ALWAYS> {
 	} ;
 
 	struct Holder implement Interface {
+		imports VRef<Holder> create () ;
+
 		virtual void initialize () = 0 ;
 		virtual void enable_option (CREF<FLAG> option) const = 0 ;
 		virtual void print (CREF<Binder> msg) const = 0 ;
@@ -85,10 +87,6 @@ trait CONSOLE_HELP<DEPEND ,ALWAYS> {
 		virtual void clear () const = 0 ;
 	} ;
 
-	struct FUNCTION_extern {
-		imports VRef<Holder> invoke () ;
-	} ;
-
 	class Console {
 	protected:
 		Mutex mMutex ;
@@ -99,7 +97,7 @@ trait CONSOLE_HELP<DEPEND ,ALWAYS> {
 			return memorize ([&] () {
 				Console ret ;
 				ret.mMutex = RecursiveMutex::make () ;
-				ret.mThis = FUNCTION_extern::invoke () ;
+				ret.mThis = Holder::create () ;
 				ret.mThis->initialize () ;
 				return move (ret) ;
 			}) ;
@@ -235,15 +233,13 @@ trait REPORTER_IMPLHOLDER_HELP ;
 template <class DEPEND>
 trait REPORTER_HELP<DEPEND ,ALWAYS> {
 	struct Holder implement Interface {
+		imports VRef<Holder> create () ;
+
 		virtual void initialize () = 0 ;
 		virtual void detect_memory_leaks () const = 0 ;
 		virtual void detect_crash_signal () const = 0 ;
 		virtual Array<FLAG> captrue_stack_trace () const = 0 ;
 		virtual String<STR> symbol_from_address (CREF<FLAG> addr) const = 0 ;
-	} ;
-
-	struct FUNCTION_extern {
-		imports VRef<Holder> invoke () ;
 	} ;
 
 	class Reporter {
@@ -256,7 +252,7 @@ trait REPORTER_HELP<DEPEND ,ALWAYS> {
 			return memorize ([&] () {
 				Reporter ret ;
 				ret.mMutex = RecursiveMutex::make () ;
-				ret.mThis = FUNCTION_extern::invoke () ;
+				ret.mThis = Holder::create () ;
 				ret.mThis->initialize () ;
 				return move (ret) ;
 			}) ;
