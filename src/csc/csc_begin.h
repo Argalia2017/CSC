@@ -15,15 +15,12 @@
 #define m3rd m3rd_m ()
 #define trait struct
 #define implement :public
-#define extend :private
 #define require __macro_requires
 #define anonymous __macro_anonymous
-#define as
 #define slice __macro_slice
 #define assert __macro_assert
 #define assume __macro_assume
 #define unittest __macro_unittest
-#define avoidinline __macro_avoidinline
 #define forceinline __macro_forceinline
 #define ifnot __macro_ifnot
 #define ifswitch __macro_ifswitch

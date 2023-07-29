@@ -54,12 +54,10 @@ trait SORTPROC_HELP<DEPEND ,ALWAYS> {
 	} ;
 
 	struct Holder implement Interface {
+		imports VRef<Holder> create () ;
+
 		virtual void initialize () = 0 ;
 		virtual void sort (CREF<Binder> array_ ,VREF<Array<INDEX>> result ,CREF<INDEX> begin_ ,CREF<INDEX> end_) const = 0 ;
-	} ;
-
-	struct FUNCTION_extern {
-		imports VRef<Holder> invoke () ;
 	} ;
 
 	class SortProc {
@@ -70,7 +68,7 @@ trait SORTPROC_HELP<DEPEND ,ALWAYS> {
 		imports CREF<SortProc> instance () {
 			return memorize ([&] () {
 				SortProc ret ;
-				ret.mThis = FUNCTION_extern::invoke () ;
+				ret.mThis = Holder::create () ;
 				ret.mThis->initialize () ;
 				return move (ret) ;
 			}) ;
@@ -123,6 +121,8 @@ trait DISJOINTTABLE_IMPLHOLDER_HELP ;
 template <class DEPEND>
 trait DISJOINTTABLE_HELP<DEPEND ,ALWAYS> {
 	struct Holder implement Interface {
+		imports VRef<Holder> create () ;
+
 		virtual void initialize (CREF<LENGTH> size_) = 0 ;
 		virtual void clear () = 0 ;
 		virtual INDEX lead (CREF<INDEX> index) = 0 ;
@@ -130,10 +130,6 @@ trait DISJOINTTABLE_HELP<DEPEND ,ALWAYS> {
 		virtual Array<INDEX> filter (CREF<INDEX> index) = 0 ;
 		virtual Array<INDEX> linkage () = 0 ;
 		virtual Array<BitSet<>> closure () = 0 ;
-	} ;
-
-	struct FUNCTION_extern {
-		imports VRef<Holder> invoke () ;
 	} ;
 
 	class DisjointTable {
@@ -144,7 +140,7 @@ trait DISJOINTTABLE_HELP<DEPEND ,ALWAYS> {
 		implicit DisjointTable () = default ;
 
 		explicit DisjointTable (CREF<SizeProxy> size_) {
-			mThis = FUNCTION_extern::invoke () ;
+			mThis = Holder::create () ;
 			mThis->initialize (size_) ;
 		}
 
@@ -185,16 +181,14 @@ trait BINARYTABLE_IMPLHOLDER_HELP ;
 template <class DEPEND>
 trait BINARYTABLE_HELP<DEPEND ,ALWAYS> {
 	struct Holder implement Interface {
+		imports VRef<Holder> create () ;
+
 		virtual void initialize (CREF<LENGTH> size_) = 0 ;
 		virtual void clear () = 0 ;
 		virtual void joint (CREF<INDEX> index1 ,CREF<INDEX> index2) = 0 ;
 		virtual BOOL get (CREF<INDEX> index1 ,CREF<INDEX> index2) const = 0 ;
 		virtual Array<INDEX> filter (CREF<INDEX> index) const = 0 ;
 		virtual void remap () = 0 ;
-	} ;
-
-	struct FUNCTION_extern {
-		imports VRef<Holder> invoke () ;
 	} ;
 
 	class BinaryTable {
@@ -205,7 +199,7 @@ trait BINARYTABLE_HELP<DEPEND ,ALWAYS> {
 		implicit BinaryTable () = default ;
 
 		explicit BinaryTable (CREF<SizeProxy> size_) {
-			mThis = FUNCTION_extern::invoke () ;
+			mThis = Holder::create () ;
 			mThis->initialize (size_) ;
 		}
 
@@ -244,15 +238,13 @@ trait SEGMENTTABLE_HELP<DEPEND ,ALWAYS> {
 	using FLOAT = DOUBLE ;
 
 	struct Holder implement Interface {
+		imports VRef<Holder> create () ;
+
 		virtual void initialize () = 0 ;
 		virtual void set_tolerance (CREF<FLOAT> tolerance) = 0 ;
 		virtual void add (CREF<FLOAT> lb ,CREF<FLOAT> rb) = 0 ;
 		virtual void erase (CREF<FLOAT> lb ,CREF<FLOAT> rb) = 0 ;
 		virtual FLOAT percent (CREF<FLOAT> lb ,CREF<FLOAT> rb) = 0 ;
-	} ;
-
-	struct FUNCTION_extern {
-		imports VRef<Holder> invoke () ;
 	} ;
 
 	class SegmentTable {
@@ -263,7 +255,7 @@ trait SEGMENTTABLE_HELP<DEPEND ,ALWAYS> {
 		implicit SegmentTable () = default ;
 
 		explicit SegmentTable (CREF<BoolProxy> ok) {
-			mThis = FUNCTION_extern::invoke () ;
+			mThis = Holder::create () ;
 			mThis->initialize () ;
 		}
 

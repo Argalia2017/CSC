@@ -1,28 +1,31 @@
 ﻿#include "util.h"
 
-using namespace UNITTEST ;
+using namespace SOLUTION ;
 
 /*
-template <[^\r]+>\r\n(?!(\t+friend )?trait|\t*using)
+[CV]Ref<(?!ARR<)[^\r]+> (?!mThis|mThat)m\w+ ;
 BashRename for VS
 */
 
 exports void test_main () {
-	auto rax = BinaryTable (100) ;
-	rax.joint (1 ,1) ;
-	rax.joint (1 ,2) ;
-	rax.joint (2 ,3) ;
-	rax.joint (2 ,3) ;
-	rax.joint (4 ,4) ;
-	rax.joint (4 ,5) ;
-	rax.joint (4 ,6) ;
-	rax.remap () ;
-	const auto r1x = IterArray<INDEX>::make (rax.filter (1)) ;
-	const auto r2x = IterArray<INDEX>::make (rax.filter (2)) ;
-	const auto r3x = IterArray<INDEX>::make (rax.filter (3)) ;
-	const auto r4x = IterArray<INDEX>::make (rax.filter (4)) ;
-	unittest (r1x) ;
-	unittest (r2x) ;
-	unittest (r3x) ;
-	unittest (r4x) ;
+	auto mArray = Array<SharedRef<int>> (10) ;
+	for (auto &&i : mArray.iter ())
+		mArray[i] = SharedRef<int>::make (int (i)) ;
+	auto mIndex = Array<INDEX> (10000) ;
+	for (auto &&i : mIndex.iter ())
+		mIndex[i] = Random::instance ().random_value (0 ,9) ;
+	auto mThread = WorkThread (TRUE) ;
+	mThread.start (Function<void ,TYPEAS<INDEX>> ([&] (CREF<INDEX> item) {
+		INDEX ix = mIndex[item] ;
+		auto rax = mArray[ix] ;
+		auto rbx = rax ;
+		//unittest (rax) ;
+		//unittest (rbx) ;
+		rax = SharedRef<int> () ;
+		rbx = SharedRef<int> () ;
+	})) ;
+	mThread.post_all (IterArray<INDEX>::make (iter (0 ,10000))) ;
+	mThread.join () ;
+	mThread.stop () ;
+	mThread.stop () ;
 }

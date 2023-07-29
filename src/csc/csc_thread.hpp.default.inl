@@ -41,9 +41,9 @@ trait WORKTHREAD_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	class ImplHolder implement Together<Holder ,Binder> {
 	protected:
 		Mutex mThreadMutex ;
-		Mutex mThreadJoinMutex ;
-		VRef<BOOL> mThreadFlag ;
-		Array<VRef<Thread>> mThread ;
+		BOOL mThreadFlag ;
+		BOOL mRunningFlag ;
+		Array<Thread> mThread ;
 		BitSet<> mThreadJoin ;
 		Function<void ,TYPEAS<INDEX>> mThreadProc ;
 		Deque<INDEX> mWaitQueue ;
@@ -55,8 +55,8 @@ trait WORKTHREAD_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	public:
 		void initialize () override {
 			mThreadMutex = ConditionalMutex::make () ;
-			//@warn: two condition_variable in same mutex
-			mThreadJoinMutex = ConditionalMutex::make () ;
+			mThreadFlag = FALSE ;
+			mRunningFlag = FALSE ;
 			set_thread_size (RuntimeProc::thread_concurrency ()) ;
 			set_queue_size (RuntimeProc::thread_concurrency ()) ;
 		}
@@ -69,14 +69,14 @@ trait WORKTHREAD_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 
 		void set_thread_size (CREF<LENGTH> size_) override {
 			Scope<Mutex> anonymous (mThreadMutex) ;
-			assume (mThreadFlag == NULL) ;
-			mThread = Array<VRef<Thread>> (size_) ;
+			assume (ifnot (mThreadFlag)) ;
+			mThread = Array<Thread> (size_) ;
 			mThreadJoin = BitSet<> (size_) ;
 		}
 
 		void set_queue_size (CREF<LENGTH> size_) override {
 			Scope<Mutex> anonymous (mThreadMutex) ;
-			assume (mThreadFlag == NULL) ;
+			assume (ifnot (mThreadFlag)) ;
 			assume (mWaitQueue.empty ()) ;
 			mWaitQueue = Deque<INDEX> (size_) ;
 			mLoadQueue = Array<INDEX> (THREAD_QUEUE_SIZE::expr) ;
@@ -87,13 +87,14 @@ trait WORKTHREAD_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 
 		void start (RREF<Function<void ,TYPEAS<INDEX>>> proc) override {
 			Scope<Mutex> anonymous (mThreadMutex) ;
-			assume (mThreadFlag == NULL) ;
+			assume (ifnot (mThreadFlag)) ;
 			assume (mThread.length () > 0) ;
-			mThreadFlag = VRef<BOOL>::make (TRUE) ;
+			mThreadFlag = TRUE ;
+			mRunningFlag = TRUE ;
 			mThreadProc = move (proc) ;
 			for (auto &&i : mThread.iter ()) {
-				mThread[i] = VRef<Thread>::make (VRef<Binder>::reference (thiz) ,i) ;
-				mThread[i]->start () ;
+				mThread[i] = Thread (VRef<Binder>::reference (thiz) ,i) ;
+				mThread[i].start () ;
 			}
 		}
 
@@ -120,9 +121,9 @@ trait WORKTHREAD_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 
 		void poll (CREF<INDEX> slot) {
 			auto rax = UniqueLock (mThreadMutex) ;
-			assume (mThreadFlag != NULL) ;
+			assume (mThreadFlag) ;
 			while (TRUE) {
-				if ifnot (mThreadFlag.self)
+				if ifnot (mRunningFlag)
 					break ;
 				if ifnot (mWaitQueue.empty ())
 					break ;
@@ -136,7 +137,7 @@ trait WORKTHREAD_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				}
 				rax.wait () ;
 			}
-			assume (mThreadFlag.self) ;
+			assume (mRunningFlag) ;
 			mThreadJoin.erase (slot) ;
 			if (mLoadRead.fetch () < mLoadWrite.fetch ())
 				return ;
@@ -160,23 +161,23 @@ trait WORKTHREAD_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 
 		void post (CREF<INDEX> item) override {
 			auto rax = UniqueLock (mThreadMutex) ;
-			assume (mThreadFlag != NULL) ;
+			assume (mThreadFlag) ;
 			while (TRUE) {
-				if ifnot (mThreadFlag.self)
+				if ifnot (mRunningFlag)
 					break ;
 				if ifnot (mWaitQueue.full ())
 					break ;
 				rax.wait () ;
 			}
-			assume (mThreadFlag.self) ;
+			assume (mRunningFlag) ;
 			mWaitQueue.add (item) ;
 			rax.notify () ;
 		}
 
 		void post_all (CREF<Array<INDEX>> item) override {
 			auto rax = UniqueLock (mThreadMutex) ;
-			assume (mThreadFlag != NULL) ;
-			assume (mThreadFlag.self) ;
+			assume (mThreadFlag) ;
+			assume (mRunningFlag) ;
 			const auto r1x = mWaitQueue.length () + item.length () ;
 			auto act = TRUE ;
 			if ifswitch (act) {
@@ -198,9 +199,9 @@ trait WORKTHREAD_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 
 		void join () override {
 			auto rax = UniqueLock (mThreadMutex) ;
-			assume (mThreadFlag != NULL) ;
+			assume (mThreadFlag) ;
 			while (TRUE) {
-				if ifnot (mThreadFlag.self)
+				if ifnot (mRunningFlag)
 					break ;
 				if (mWaitQueue.empty ())
 					if (mThreadJoin.length () >= mThread.length ())
@@ -212,19 +213,16 @@ trait WORKTHREAD_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		void stop () override {
 			if ifswitch (TRUE) {
 				auto rax = UniqueLock (mThreadMutex) ;
-				if (mThreadFlag == NULL)
+				if (ifnot (mThreadFlag))
 					discard ;
-				mThreadFlag.self = FALSE ;
+				mRunningFlag = FALSE ;
 				rax.notify () ;
 			}
-			for (auto &&i : mThread) {
-				if (i == NULL)
-					continue ;
-				i->stop () ;
-			}
-			mThread = Array<VRef<Thread>> () ;
+			for (auto &&i : mThread.iter ())
+				mThread[i].stop () ;
+			mThread = Array<Thread> () ;
 			mThreadProc = Function<void ,TYPEAS<INDEX>> () ;
-			mThreadFlag = NULL ;
+			mThreadFlag = FALSE ;
 			mThreadJoin = BitSet<> () ;
 			mWaitQueue.clear () ;
 			mLoadRead.store (0) ;
@@ -235,7 +233,7 @@ trait WORKTHREAD_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 } ;
 
 template <>
-exports auto WORKTHREAD_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
+exports auto WORKTHREAD_HELP<DEPEND ,ALWAYS>::Holder::create () ->VRef<Holder> {
 	using R1X = typename WORKTHREAD_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
 }
@@ -250,10 +248,10 @@ trait CALCTHREAD_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	class ImplHolder implement Together<Holder ,Binder> {
 	protected:
 		Mutex mThreadMutex ;
-		Mutex mThreadJoinMutex ;
-		VRef<BOOL> mThreadFlag ;
+		BOOL mThreadFlag ;
+		BOOL mRunningFlag ;
 		BOOL mSuspendFlag ;
-		Array<VRef<Thread>> mThread ;
+		Array<Thread> mThread ;
 		BitSet<> mThreadJoin ;
 		Function<SOLUTION ,TYPEAS<SOLUTION>> mThreadProc ;
 		Array<SOLUTION> mThreadSolution ;
@@ -264,8 +262,8 @@ trait CALCTHREAD_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	public:
 		void initialize () override {
 			mThreadMutex = ConditionalMutex::make () ;
-			//@warn: two condition_variable in same mutex
-			mThreadJoinMutex = ConditionalMutex::make () ;
+			mThreadFlag = FALSE ;
+			mRunningFlag = FALSE ;
 			set_thread_size (RuntimeProc::thread_concurrency ()) ;
 		}
 
@@ -277,8 +275,8 @@ trait CALCTHREAD_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 
 		void set_thread_size (CREF<LENGTH> size_) override {
 			Scope<Mutex> anonymous (mThreadMutex) ;
-			assume (mThreadFlag == NULL) ;
-			mThread = Array<VRef<Thread>> (size_) ;
+			assume (ifnot (mThreadFlag)) ;
+			mThread = Array<Thread> (size_) ;
 			mThreadJoin = BitSet<> (size_) ;
 			mThreadSolution = Array<SOLUTION> (size_) ;
 			mSearchSolution = Array<SOLUTION> (size_) ;
@@ -290,14 +288,15 @@ trait CALCTHREAD_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 
 		void start (RREF<Function<SOLUTION ,TYPEAS<SOLUTION>>> proc) override {
 			Scope<Mutex> anonymous (mThreadMutex) ;
-			assume (mThreadFlag == NULL) ;
+			assume (ifnot (mThreadFlag)) ;
 			assume (mThread.length () > 0) ;
-			mThreadFlag = VRef<BOOL>::make (TRUE) ;
+			mThreadFlag = TRUE ;
+			mRunningFlag = TRUE ;
 			mSuspendFlag = FALSE ;
 			mThreadProc = move (proc) ;
 			for (auto &&i : mThread.iter ()) {
-				mThread[i] = VRef<Thread>::make (VRef<Binder>::reference (thiz) ,i) ;
-				mThread[i]->start () ;
+				mThread[i] = Thread (VRef<Binder>::reference (thiz) ,i) ;
+				mThread[i].start () ;
 			}
 		}
 
@@ -362,9 +361,9 @@ trait CALCTHREAD_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 
 		void wait_solution (CREF<INDEX> slot) {
 			auto rax = UniqueLock (mThreadMutex) ;
-			assume (mThreadFlag != NULL) ;
+			assume (mThreadFlag) ;
 			while (TRUE) {
-				if ifnot (mThreadFlag.self)
+				if ifnot (mRunningFlag)
 					break ;
 				if (mSuspendFlag)
 					break ;
@@ -376,7 +375,7 @@ trait CALCTHREAD_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 					break ;
 				rax.wait () ;
 			}
-			assume (mThreadFlag.self) ;
+			assume (mRunningFlag) ;
 			mThreadSolution[slot] = mBestSolution ;
 		}
 
@@ -397,9 +396,9 @@ trait CALCTHREAD_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 
 		void wait_suspend (CREF<INDEX> slot) {
 			auto rax = UniqueLock (mThreadMutex) ;
-			assume (mThreadFlag != NULL) ;
+			assume (mThreadFlag) ;
 			while (TRUE) {
-				if ifnot (mThreadFlag.self)
+				if ifnot (mRunningFlag)
 					break ;
 				if ifnot (mSuspendFlag)
 					break ;
@@ -411,7 +410,7 @@ trait CALCTHREAD_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				}
 				rax.wait () ;
 			}
-			assume (mThreadFlag.self) ;
+			assume (mRunningFlag) ;
 			mThreadJoin.erase (slot) ;
 		}
 
@@ -422,11 +421,11 @@ trait CALCTHREAD_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 
 		void suspend () override {
 			auto rax = UniqueLock (mThreadMutex) ;
-			assume (mThreadFlag != NULL) ;
+			assume (mThreadFlag) ;
 			mSuspendFlag = TRUE ;
 			rax.notify () ;
 			while (TRUE) {
-				if ifnot (mThreadFlag.self)
+				if ifnot (mRunningFlag)
 					break ;
 				if ifnot (mSuspendFlag)
 					break ;
@@ -445,19 +444,16 @@ trait CALCTHREAD_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		void stop () override {
 			if ifswitch (TRUE) {
 				auto rax = UniqueLock (mThreadMutex) ;
-				if (mThreadFlag == NULL)
+				if (ifnot (mThreadFlag))
 					discard ;
-				mThreadFlag.self = FALSE ;
+				mRunningFlag = FALSE ;
 				rax.notify () ;
 			}
-			for (auto &&i : mThread) {
-				if (i == NULL)
-					continue ;
-				i->stop () ;
-			}
-			mThread = Array<VRef<Thread>> () ;
+			for (auto &&i : mThread.iter ())
+				mThread[i].stop () ;
+			mThread = Array<Thread> () ;
 			mThreadProc = Function<SOLUTION ,TYPEAS<SOLUTION>> () ;
-			mThreadFlag = NULL ;
+			mThreadFlag = FALSE ;
 			mThreadJoin = BitSet<> () ;
 			mThreadSolution = Array<SOLUTION> () ;
 			mSearchSolution = Array<SOLUTION> () ;
@@ -468,7 +464,7 @@ trait CALCTHREAD_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 } ;
 
 template <>
-exports auto CALCTHREAD_HOLDER_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
+exports auto CALCTHREAD_HOLDER_HELP<DEPEND ,ALWAYS>::Holder::create () ->VRef<Holder> {
 	using R1X = typename CALCTHREAD_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
 }
@@ -480,13 +476,13 @@ trait PROMISE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 
 	struct PACK {
 		Mutex mThreadMutex ;
-		VRef<BOOL> mThreadFlag ;
-		Atomic mThreadReady ;
+		BOOL mThreadFlag ;
+		BOOL mRunningFlag ;
 		Thread mThread ;
 		Function<AutoRef<>> mThreadProc ;
 		Function<void ,TYPEAS<VREF<AutoRef<>>>> mCallbackProc ;
-		VRef<AutoRef<>> mItem ;
-		VRef<Exception> mException ;
+		Optional<AutoRef<>> mItem ;
+		Optional<Exception> mException ;
 	} ;
 
 	class ImplHolder implement Together<Holder ,Binder> {
@@ -497,7 +493,8 @@ trait PROMISE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		void initialize () override {
 			mThis = SharedRef<PACK>::make () ;
 			mThis->mThreadMutex = ConditionalMutex::make () ;
-			mThis->mThreadReady = Atomic (TRUE) ;
+			mThis->mThreadFlag = FALSE ;
+			mThis->mRunningFlag = FALSE ;
 		}
 
 		void finalize () override {
@@ -508,31 +505,27 @@ trait PROMISE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 
 		void start () const override {
 			Scope<Mutex> anonymous (mThis->mThreadMutex) ;
-			assume (mThis->mThreadFlag == NULL) ;
-			mThis->mThreadFlag = VRef<BOOL>::make (TRUE) ;
-			mThis->mThreadReady.store (FALSE) ;
+			assume (ifnot (mThis->mThreadFlag)) ;
+			mThis->mThreadFlag = TRUE ;
+			mThis->mRunningFlag = TRUE ;
 			mThis->mThread = Thread () ;
 			mThis->mThreadProc = Function<AutoRef<>> () ;
 			mThis->mCallbackProc = Function<void ,TYPEAS<VREF<AutoRef<>>>> () ;
-			mThis->mItem = NULL ;
-			mThis->mException = NULL ;
+			mThis->mItem = 0 ;
+			mThis->mException = 0 ;
 		}
 
 		void start (RREF<Function<AutoRef<>>> proc) const override {
 			Scope<Mutex> anonymous (mThis->mThreadMutex) ;
-			assume (mThis->mThreadFlag == NULL) ;
-			mThis->mThreadFlag = VRef<BOOL>::make (TRUE) ;
-			mThis->mThreadReady.store (FALSE) ;
+			assume (ifnot (mThis->mThreadFlag)) ;
+			mThis->mThreadFlag = TRUE ;
+			mThis->mRunningFlag = TRUE ;
 			mThis->mThreadProc = move (proc) ;
 			mThis->mCallbackProc = Function<void ,TYPEAS<VREF<AutoRef<>>>> () ;
-			mThis->mItem = NULL ;
-			mThis->mException = NULL ;
+			mThis->mItem = 0 ;
+			mThis->mException = 0 ;
 			mThis->mThread = Thread (CRef<Binder>::reference (thiz) ,0) ;
 			mThis->mThread.start () ;
-		}
-
-		void friend_execute (CREF<INDEX> slot) override {
-			assert (FALSE) ;
 		}
 
 		void friend_execute (CREF<INDEX> slot) const override {
@@ -545,7 +538,7 @@ trait PROMISE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				rethrow (Exception (slice ("unknown C++ exception"))) ;
 			}
 			if ifswitch (TRUE) {
-				if ifnot (rax.available ())
+				if ifnot (rax.good ())
 					discard ;
 				post (rax.poll ()) ;
 			}
@@ -554,103 +547,103 @@ trait PROMISE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 
 		void post (RREF<AutoRef<>> item) const override {
 			Scope<Mutex> anonymous (mThis->mThreadMutex) ;
-			assume (mThis->mThreadFlag != NULL) ;
-			assume (mThis->mThreadFlag.self) ;
-			assume (mThis->mItem == NULL) ;
-			assume (mThis->mException == NULL) ;
-			mThis->mItem = VRef<AutoRef<>>::make (move (item)) ;
+			assume (mThis->mThreadFlag) ;
+			assume (mThis->mRunningFlag) ;
+			assume (ifnot (mThis->mItem.good ())) ;
+			assume (ifnot (mThis->mException.good ())) ;
+			mThis->mItem = Optional<AutoRef<>>::make (move (item)) ;
 		}
 
 		void rethrow (CREF<Exception> e) const override {
 			Scope<Mutex> anonymous (mThis->mThreadMutex) ;
-			assume (mThis->mThreadFlag != NULL) ;
-			assume (mThis->mThreadFlag.self) ;
-			assume (mThis->mException == NULL) ;
-			mThis->mItem = NULL ;
-			mThis->mException = VRef<Exception>::make (e) ;
+			assume (mThis->mThreadFlag) ;
+			assume (mThis->mRunningFlag) ;
+			assume (ifnot (mThis->mException.good ())) ;
+			mThis->mItem = 0 ;
+			mThis->mException = Optional<Exception>::make (e) ;
 		}
 
 		void signal () const override {
 			auto rax = UniqueLock (mThis->mThreadMutex) ;
-			assume (mThis->mThreadFlag != NULL) ;
-			assume (mThis->mThreadFlag.self) ;
-			mThis->mThreadFlag.self = FALSE ;
-			mThis->mThreadReady.store (TRUE) ;
+			assume (mThis->mThreadFlag) ;
+			assume (mThis->mRunningFlag) ;
+			mThis->mRunningFlag = FALSE ;
 			if ifswitch (TRUE) {
-				if (mThis->mItem == NULL)
+				if ifnot (mThis->mItem.good ())
 					discard ;
 				if ifnot (mThis->mCallbackProc.exist ())
 					discard ;
-				mThis->mCallbackProc (mThis->mItem.self) ;
+				auto rbx = mThis->mItem.poll () ;
+				mThis->mCallbackProc (rbx) ;
+				mThis->mItem = Optional<AutoRef<>>::make (move (rbx)) ;
 			}
 			rax.notify () ;
 		}
 
 		BOOL ready () const override {
-			if ifnot (mThis->mThreadReady.fetch ())
-				return FALSE ;
 			Scope<Mutex> anonymous (mThis->mThreadMutex) ;
-			if (mThis->mThreadFlag == NULL)
+			if ifnot (mThis->mThreadFlag)
 				return TRUE ;
-			if ifnot (mThis->mThreadFlag.self)
-				return TRUE ;
-			return FALSE ;
+			if (mThis->mRunningFlag)
+				return FALSE ;
+			return TRUE ;
 		}
 
 		AutoRef<> poll () const override {
 			auto rax = UniqueLock (mThis->mThreadMutex) ;
-			assume (mThis->mThreadFlag != NULL) ;
+			assume (mThis->mThreadFlag) ;
 			while (TRUE) {
-				if ifnot (mThis->mThreadFlag.self)
+				if ifnot (mThis->mRunningFlag)
 					break ;
 				rax.wait () ;
 			}
 			if ifswitch (TRUE) {
-				if (mThis->mException == NULL)
+				if ifnot (mThis->mException.good ())
 					discard ;
-				mThis->mException->raise () ;
+				auto rbx = mThis->mException.poll () ;
+				rbx.raise () ;
 			}
-			assume (mThis->mItem != NULL) ;
-			AutoRef<> ret = move (mThis->mItem.self) ;
-			mThis->mItem = NULL ;
+			AutoRef<> ret = mThis->mItem.poll () ;
 			rax.notify () ;
 			return move (ret) ;
 		}
 
 		void then (RREF<Function<void ,TYPEAS<VREF<AutoRef<>>>>> proc) const override {
 			Scope<Mutex> anonymous (mThis->mThreadMutex) ;
-			assume (mThis->mThreadFlag != NULL) ;
+			assume (mThis->mThreadFlag) ;
 			mThis->mCallbackProc = move (proc) ;
 			if ifswitch (TRUE) {
-				if (mThis->mThreadFlag.self)
+				if (mThis->mRunningFlag)
 					discard ;
-				if (mThis->mItem == NULL)
+				if ifnot (mThis->mItem.good ())
 					discard ;
-				mThis->mCallbackProc (mThis->mItem.self) ;
+				auto rbx = mThis->mItem.poll () ;
+				mThis->mCallbackProc (rbx) ;
+				mThis->mItem = Optional<AutoRef<>>::make (move (rbx)) ;
 			}
 		}
 
 		void stop () const override {
 			if ifswitch (TRUE) {
 				auto rax = UniqueLock (mThis->mThreadMutex) ;
-				if (mThis->mThreadFlag == NULL)
+				if ifnot (mThis->mThreadFlag)
 					discard ;
-				mThis->mThreadFlag.self = FALSE ;
+				mThis->mRunningFlag = FALSE ;
 				rax.notify () ;
 			}
 			mThis->mThread.stop () ;
 			mThis->mThread = Thread () ;
-			mThis->mThreadFlag = NULL ;
+			mThis->mThreadFlag = FALSE ;
 			mThis->mThreadProc = Function<AutoRef<>> () ;
 			mThis->mCallbackProc = Function<void ,TYPEAS<VREF<AutoRef<>>>> () ;
-			mThis->mItem = NULL ;
-			mThis->mException = NULL ;
+			mThis->mItem = 0 ;
+			mThis->mException = 0 ;
 		}
 	} ;
 } ;
 
 template <>
-exports auto PROMISE_HOLDER_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
+exports auto PROMISE_HOLDER_HELP<DEPEND ,ALWAYS>::Holder::create () ->VRef<Holder> {
 	using R1X = typename PROMISE_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
 }

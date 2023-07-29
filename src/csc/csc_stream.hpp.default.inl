@@ -66,7 +66,7 @@ trait BYTEATTRIBUTE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 } ;
 
 template <>
-exports auto BYTEATTRIBUTE_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
+exports auto BYTEATTRIBUTE_HELP<DEPEND ,ALWAYS>::Holder::create () ->VRef<Holder> {
 	using R1X = typename BYTEATTRIBUTE_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
 }
@@ -75,6 +75,7 @@ template <class DEPEND>
 trait BYTEREADER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	using Holder = typename BYTEREADER_HELP<DEPEND ,ALWAYS>::Holder ;
 	using Binder = typename BYTEREADER_HELP<DEPEND ,ALWAYS>::Binder ;
+	using Layout = typename BYTEREADER_HELP<DEPEND ,ALWAYS>::Layout ;
 	using ByteReader = typename BYTEREADER_HELP<DEPEND ,ALWAYS>::ByteReader ;
 
 	class ImplHolder implement Holder {
@@ -353,8 +354,14 @@ trait BYTEREADER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		void read (VREF<Binder> item) override {
-			auto rax = ByteReader (VRef<Holder>::reference (thiz)) ;
+			auto rax = ByteReader (share ()) ;
 			item.friend_read (rax) ;
+		}
+
+		Layout share () leftvalue {
+			Layout ret ;
+			ret.mThis = VRef<Holder>::reference (thiz) ;
+			return move (ret) ;
 		}
 
 		void read_cls () override {
@@ -383,7 +390,7 @@ trait BYTEREADER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 } ;
 
 template <>
-exports auto BYTEREADER_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
+exports auto BYTEREADER_HELP<DEPEND ,ALWAYS>::Holder::create () ->VRef<Holder> {
 	using R1X = typename BYTEREADER_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
 }
@@ -392,6 +399,7 @@ template <class DEPEND>
 trait BYTEWRITER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	using Holder = typename BYTEWRITER_HELP<DEPEND ,ALWAYS>::Holder ;
 	using Binder = typename BYTEWRITER_HELP<DEPEND ,ALWAYS>::Binder ;
+	using Layout = typename BYTEWRITER_HELP<DEPEND ,ALWAYS>::Layout ;
 	using ByteWriter = typename BYTEWRITER_HELP<DEPEND ,ALWAYS>::ByteWriter ;
 
 	class ImplHolder implement Holder {
@@ -603,9 +611,20 @@ trait BYTEWRITER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			write (r3x) ;
 		}
 
-		void write (CREF<Binder> item) override {
-			auto rax = ByteWriter (VRef<Holder>::reference (thiz)) ;
+		void write (VREF<Binder> item) override {
+			auto rax = ByteWriter (share ()) ;
 			item.friend_write (rax) ;
+		}
+
+		void write (CREF<Binder> item) override {
+			auto rax = ByteWriter (share ()) ;
+			item.friend_write (rax) ;
+		}
+
+		Layout share () leftvalue {
+			Layout ret ;
+			ret.mThis = VRef<Holder>::reference (thiz) ;
+			return move (ret) ;
 		}
 
 		void write_cls () override {
@@ -629,7 +648,7 @@ trait BYTEWRITER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 } ;
 
 template <>
-exports auto BYTEWRITER_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
+exports auto BYTEWRITER_HELP<DEPEND ,ALWAYS>::Holder::create () ->VRef<Holder> {
 	using R1X = typename BYTEWRITER_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
 }
@@ -811,32 +830,27 @@ trait TEXTATTRIBUTE_IMPLHOLDER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 	} ;
 } ;
 
-template <>
-exports auto TEXTATTRIBUTE_HELP<STRA ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
+exports auto TEXTATTRIBUTE_HELP<STRA ,ALWAYS>::Holder::create () ->VRef<Holder> {
 	using R1X = typename TEXTATTRIBUTE_IMPLHOLDER_HELP<STRA ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
 }
 
-template <>
-exports auto TEXTATTRIBUTE_HELP<STRW ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
+exports auto TEXTATTRIBUTE_HELP<STRW ,ALWAYS>::Holder::create () ->VRef<Holder> {
 	using R1X = typename TEXTATTRIBUTE_IMPLHOLDER_HELP<STRW ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
 }
 
-template <>
-exports auto TEXTATTRIBUTE_HELP<STRU8 ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
+exports auto TEXTATTRIBUTE_HELP<STRU8 ,ALWAYS>::Holder::create () ->VRef<Holder> {
 	using R1X = typename TEXTATTRIBUTE_IMPLHOLDER_HELP<STRU8 ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
 }
 
-template <>
-exports auto TEXTATTRIBUTE_HELP<STRU16 ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
+exports auto TEXTATTRIBUTE_HELP<STRU16 ,ALWAYS>::Holder::create () ->VRef<Holder> {
 	using R1X = typename TEXTATTRIBUTE_IMPLHOLDER_HELP<STRU16 ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
 }
 
-template <>
-exports auto TEXTATTRIBUTE_HELP<STRU32 ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
+exports auto TEXTATTRIBUTE_HELP<STRU32 ,ALWAYS>::Holder::create () ->VRef<Holder> {
 	using R1X = typename TEXTATTRIBUTE_IMPLHOLDER_HELP<STRU32 ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
 }
@@ -846,6 +860,7 @@ trait TEXTREADER_IMPLHOLDER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 	using NOTATION = typename FLOATPROC_HELP<DEPEND ,ALWAYS>::NOTATION ;
 	using Holder = typename TEXTREADER_HELP<ITEM ,ALWAYS>::Holder ;
 	using Binder = typename TEXTREADER_HELP<ITEM ,ALWAYS>::Binder ;
+	using Layout = typename TEXTREADER_HELP<ITEM ,ALWAYS>::Layout ;
 	using TextReader = typename TEXTREADER_HELP<ITEM ,ALWAYS>::TextReader ;
 
 	class ImplHolder implement Holder {
@@ -1299,8 +1314,14 @@ trait TEXTREADER_IMPLHOLDER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 		}
 
 		void read (VREF<Binder> item) override {
-			auto rax = TextReader (VRef<Holder>::reference (thiz)) ;
+			auto rax = TextReader (share ()) ;
 			item.friend_read (rax) ;
+		}
+
+		Layout share () leftvalue {
+			Layout ret ;
+			ret.mThis = VRef<Holder>::reference (thiz) ;
+			return move (ret) ;
 		}
 
 		void read_cls () override {
@@ -1409,32 +1430,27 @@ trait TEXTREADER_IMPLHOLDER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 	} ;
 } ;
 
-template <>
-exports auto TEXTREADER_HELP<STRA ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
+exports auto TEXTREADER_HELP<STRA ,ALWAYS>::Holder::create () ->VRef<Holder> {
 	using R1X = typename TEXTREADER_IMPLHOLDER_HELP<STRA ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
 }
 
-template <>
-exports auto TEXTREADER_HELP<STRW ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
+exports auto TEXTREADER_HELP<STRW ,ALWAYS>::Holder::create () ->VRef<Holder> {
 	using R1X = typename TEXTREADER_IMPLHOLDER_HELP<STRW ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
 }
 
-template <>
-exports auto TEXTREADER_HELP<STRU8 ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
+exports auto TEXTREADER_HELP<STRU8 ,ALWAYS>::Holder::create () ->VRef<Holder> {
 	using R1X = typename TEXTREADER_IMPLHOLDER_HELP<STRU8 ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
 }
 
-template <>
-exports auto TEXTREADER_HELP<STRU16 ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
+exports auto TEXTREADER_HELP<STRU16 ,ALWAYS>::Holder::create () ->VRef<Holder> {
 	using R1X = typename TEXTREADER_IMPLHOLDER_HELP<STRU16 ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
 }
 
-template <>
-exports auto TEXTREADER_HELP<STRU32 ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
+exports auto TEXTREADER_HELP<STRU32 ,ALWAYS>::Holder::create () ->VRef<Holder> {
 	using R1X = typename TEXTREADER_IMPLHOLDER_HELP<STRU32 ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
 }
@@ -1447,6 +1463,7 @@ trait TEXTWRITER_IMPLHOLDER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 	using NOTATION = typename FLOATPROC_HELP<DEPEND ,ALWAYS>::NOTATION ;
 	using Holder = typename TEXTWRITER_HELP<ITEM ,ALWAYS>::Holder ;
 	using Binder = typename TEXTWRITER_HELP<ITEM ,ALWAYS>::Binder ;
+	using Layout = typename TEXTWRITER_HELP<ITEM ,ALWAYS>::Layout ;
 	using TextWriter = typename TEXTWRITER_HELP<ITEM ,ALWAYS>::TextWriter ;
 
 	class ImplHolder implement Holder {
@@ -1661,9 +1678,20 @@ trait TEXTWRITER_IMPLHOLDER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 				write (i) ;
 		}
 
-		void write (CREF<Binder> item) override {
-			auto rax = TextWriter (VRef<Holder>::reference (thiz)) ;
+		void write (VREF<Binder> item) override {
+			auto rax = TextWriter (share ()) ;
 			item.friend_write (rax) ;
+		}
+
+		void write (CREF<Binder> item) override {
+			auto rax = TextWriter (share ()) ;
+			item.friend_write (rax) ;
+		}
+
+		Layout share () leftvalue {
+			Layout ret ;
+			ret.mThis = VRef<Holder>::reference (thiz) ;
+			return move (ret) ;
 		}
 
 		void write_cls () override {
@@ -1794,7 +1822,7 @@ trait TEXTWRITER_WRITEVALUE_HELP<ITEM ,ALWAYS> {
 				}
 				if (r2x <= 0)
 					discard ;
-				mValue.mMantissa += MathProc::step (mValue.mMantissa - 5) * 5 ;
+				mValue.mMantissa += VAL64 (mValue.mMantissa >= 5) * 5 ;
 				mValue.mMantissa /= 10 ;
 				mValue.mExponent++ ;
 				mValue.mPrecision-- ;
@@ -1942,32 +1970,27 @@ trait TEXTWRITER_WRITEVALUE_HELP<ITEM ,ALWAYS> {
 	} ;
 } ;
 
-template <>
-exports auto TEXTWRITER_HELP<STRA ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
+exports auto TEXTWRITER_HELP<STRA ,ALWAYS>::Holder::create () ->VRef<Holder> {
 	using R1X = typename TEXTWRITER_IMPLHOLDER_HELP<STRA ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
 }
 
-template <>
-exports auto TEXTWRITER_HELP<STRW ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
+exports auto TEXTWRITER_HELP<STRW ,ALWAYS>::Holder::create () ->VRef<Holder> {
 	using R1X = typename TEXTWRITER_IMPLHOLDER_HELP<STRW ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
 }
 
-template <>
-exports auto TEXTWRITER_HELP<STRU8 ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
+exports auto TEXTWRITER_HELP<STRU8 ,ALWAYS>::Holder::create () ->VRef<Holder> {
 	using R1X = typename TEXTWRITER_IMPLHOLDER_HELP<STRU8 ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
 }
 
-template <>
-exports auto TEXTWRITER_HELP<STRU16 ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
+exports auto TEXTWRITER_HELP<STRU16 ,ALWAYS>::Holder::create () ->VRef<Holder> {
 	using R1X = typename TEXTWRITER_IMPLHOLDER_HELP<STRU16 ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
 }
 
-template <>
-exports auto TEXTWRITER_HELP<STRU32 ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
+exports auto TEXTWRITER_HELP<STRU32 ,ALWAYS>::Holder::create () ->VRef<Holder> {
 	using R1X = typename TEXTWRITER_IMPLHOLDER_HELP<STRU32 ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
 }
@@ -2236,7 +2259,7 @@ trait REGULARREADER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 } ;
 
 template <>
-exports auto REGULARREADER_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
+exports auto REGULARREADER_HELP<DEPEND ,ALWAYS>::Holder::create () ->VRef<Holder> {
 	using R1X = typename REGULARREADER_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
 }

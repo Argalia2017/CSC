@@ -89,30 +89,6 @@ trait MATHPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			return DOUBLE (-1) ;
 		}
 
-		VAL32 step (CREF<VAL32> obj) const override {
-			if (obj >= 0)
-				return VAL32 (1) ;
-			return VAL32 (0) ;
-		}
-
-		VAL64 step (CREF<VAL64> obj) const override {
-			if (obj >= 0)
-				return VAL64 (1) ;
-			return VAL64 (0) ;
-		}
-
-		SINGLE step (CREF<SINGLE> obj) const override {
-			if (obj >= 0)
-				return SINGLE (1) ;
-			return SINGLE (0) ;
-		}
-
-		DOUBLE step (CREF<DOUBLE> obj) const override {
-			if (obj >= 0)
-				return DOUBLE (1) ;
-			return DOUBLE (0) ;
-		}
-
 		VAL32 abs (CREF<VAL32> obj) const override {
 			//@warn: treat abs as 0
 			if (obj == VAL32_ABS)
@@ -491,19 +467,19 @@ trait MATHPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			return std::sqrt (obj) ;
 		}
 
-		VAL32 cube (CREF<VAL32> obj) const override {
+		VAL32 cubic (CREF<VAL32> obj) const override {
 			return obj * obj * obj ;
 		}
 
-		VAL64 cube (CREF<VAL64> obj) const override {
+		VAL64 cubic (CREF<VAL64> obj) const override {
 			return obj * obj * obj ;
 		}
 
-		SINGLE cube (CREF<SINGLE> obj) const override {
+		SINGLE cubic (CREF<SINGLE> obj) const override {
 			return obj * obj * obj ;
 		}
 
-		DOUBLE cube (CREF<DOUBLE> obj) const override {
+		DOUBLE cubic (CREF<DOUBLE> obj) const override {
 			return obj * obj * obj ;
 		}
 
@@ -642,7 +618,7 @@ trait MATHPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 } ;
 
 template <>
-exports auto MATHPROC_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
+exports auto MATHPROC_HELP<DEPEND ,ALWAYS>::Holder::create () ->VRef<Holder> {
 	using R1X = typename MATHPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
 }
@@ -921,7 +897,7 @@ trait FLOATPROC_FEXP2CACHE_HELP<DEPEND ,ALWAYS> {
 			}) ;
 		}
 
-		inline NOTATION operator[] (CREF<VAL64> k) const {
+		forceinline NOTATION operator[] (CREF<VAL64> k) const {
 			NOTATION ret ;
 			ret.mRadix = 2 ;
 			ret.mSign = FALSE ;
@@ -960,7 +936,7 @@ trait FLOATPROC_FEXP10CACHE_HELP<DEPEND ,ALWAYS> {
 			}) ;
 		}
 
-		inline NOTATION operator[] (CREF<VAL64> k) const {
+		forceinline NOTATION operator[] (CREF<VAL64> k) const {
 			NOTATION ret ;
 			ret.mRadix = 10 ;
 			ret.mSign = FALSE ;
@@ -975,7 +951,7 @@ trait FLOATPROC_FEXP10CACHE_HELP<DEPEND ,ALWAYS> {
 } ;
 
 template <>
-exports auto FLOATPROC_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
+exports auto FLOATPROC_HELP<DEPEND ,ALWAYS>::Holder::create () ->VRef<Holder> {
 	using R1X = typename FLOATPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
 }
@@ -1139,7 +1115,7 @@ trait BITPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 } ;
 
 template <>
-exports auto BITPROC_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
+exports auto BITPROC_HELP<DEPEND ,ALWAYS>::Holder::create () ->VRef<Holder> {
 	using R1X = typename BITPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
 }
@@ -1147,7 +1123,7 @@ exports auto BITPROC_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Hol
 template <class DEPEND>
 trait INTEGER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	using Holder = typename INTEGER_HELP<DEPEND ,ALWAYS>::Holder ;
-	using FakeHolder = typename INTEGER_HELP<DEPEND ,ALWAYS>::FakeHolder ;
+	using Layout = typename INTEGER_HELP<DEPEND ,ALWAYS>::Layout ;
 
 	class ImplHolder implement Holder {
 	protected:
@@ -1159,28 +1135,19 @@ trait INTEGER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			set (value_) ;
 		}
 
-		Integer clone () const override {
+		Layout clone () const override {
 			auto rbx = VarBuffer<BYTE> (mInteger.size ()) ;
 			for (auto &&i : iter (0 ,mInteger.size ()))
 				rbx[i] = mInteger[i] ;
 			return factory (move (rbx)) ;
 		}
 
-		Integer factory (RREF<VarBuffer<BYTE>> that) const {
-			auto rax = Box<FakeHolder> () ;
-			rax.acquire (TYPEAS<ImplHolder>::expr) ;
-			auto &&tmp = keep[TYPEAS<VREF<ImplHolder>>::expr] (keep[TYPEAS<VREF<Holder>>::expr] (rax.self)) ;
-			tmp.mInteger = move (that) ;
-			return Integer (move (rax)) ;
-		}
-
-		INDEX find_highest () const {
-			for (auto &&i : iter (0 ,mInteger.size ())) {
-				INDEX ix = mInteger.size () - 1 - i ;
-				if (mInteger[ix] != BYTE (0X00))
-					return ix ;
-			}
-			return NONE ;
+		Layout factory (RREF<VarBuffer<BYTE>> that) const {
+			Layout ret ;
+			auto rax = VRef<ImplHolder>::make () ;
+			rax->mInteger = move (that) ;
+			ret.mThis = move (rax) ;
+			return move (ret) ;
 		}
 
 		LENGTH precision () const override {
@@ -1191,6 +1158,15 @@ trait INTEGER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			const auto r3x = BitProc::bit_find (r2x) + 1 ;
 			const auto r4x = r1x * 8 + r3x ;
 			return r4x ;
+		}
+
+		INDEX find_highest () const {
+			for (auto &&i : iter (0 ,mInteger.size ())) {
+				INDEX ix = mInteger.size () - 1 - i ;
+				if (mInteger[ix] != BYTE (0X00))
+					return ix ;
+			}
+			return NONE ;
 		}
 
 		VAL64 get () const override {
@@ -1218,8 +1194,8 @@ trait INTEGER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			BufferProc<BYTE>::buf_fill (mInteger ,r4x ,r1x ,mInteger.size ()) ;
 		}
 
-		BOOL equal (CREF<Holder> that) const override {
-			return equal (keep[TYPEAS<CREF<ImplHolder>>::expr] (that)) ;
+		BOOL equal (CREF<Layout> that) const override {
+			return equal (keep[TYPEAS<CREF<ImplHolder>>::expr] (that.mThis.self)) ;
 		}
 
 		BOOL equal (CREF<ImplHolder> that) const {
@@ -1227,8 +1203,8 @@ trait INTEGER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			return BufferProc<BYTE>::buf_equal (mInteger ,that.mInteger ,0 ,mInteger.size ()) ;
 		}
 
-		FLAG compr (CREF<Holder> that) const override {
-			return compr (keep[TYPEAS<CREF<ImplHolder>>::expr] (that)) ;
+		FLAG compr (CREF<Layout> that) const override {
+			return compr (keep[TYPEAS<CREF<ImplHolder>>::expr] (that.mThis.self)) ;
 		}
 
 		FLAG compr (CREF<ImplHolder> that) const {
@@ -1240,11 +1216,11 @@ trait INTEGER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			return BufferProc<BYTE>::buf_hash (mInteger ,0 ,mInteger.size ()) ;
 		}
 
-		Integer add (CREF<Holder> that) const override {
-			return add (keep[TYPEAS<CREF<ImplHolder>>::expr] (that)) ;
+		Layout add (CREF<Layout> that) const override {
+			return add (keep[TYPEAS<CREF<ImplHolder>>::expr] (that.mThis.self)) ;
 		}
 
-		Integer add (CREF<ImplHolder> that) const {
+		Layout add (CREF<ImplHolder> that) const {
 			assert (mInteger.size () == that.mInteger.size ()) ;
 			auto rbx = VarBuffer<BYTE> (mInteger.size ()) ;
 			auto rax = VAL64 (0) ;
@@ -1257,11 +1233,11 @@ trait INTEGER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			return factory (move (rbx)) ;
 		}
 
-		Integer sub (CREF<Holder> that) const override {
-			return sub (keep[TYPEAS<CREF<ImplHolder>>::expr] (that)) ;
+		Layout sub (CREF<Layout> that) const override {
+			return sub (keep[TYPEAS<CREF<ImplHolder>>::expr] (that.mThis.self)) ;
 		}
 
-		Integer sub (CREF<ImplHolder> that) const {
+		Layout sub (CREF<ImplHolder> that) const {
 			assert (mInteger.size () == that.mInteger.size ()) ;
 			auto rbx = VarBuffer<BYTE> (mInteger.size ()) ;
 			auto rax = VAL64 (0) ;
@@ -1276,11 +1252,11 @@ trait INTEGER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			return factory (move (rbx)) ;
 		}
 
-		Integer mul (CREF<Holder> that) const override {
-			return mul (keep[TYPEAS<CREF<ImplHolder>>::expr] (that)) ;
+		Layout mul (CREF<Layout> that) const override {
+			return mul (keep[TYPEAS<CREF<ImplHolder>>::expr] (that.mThis.self)) ;
 		}
 
-		Integer mul (CREF<ImplHolder> that) const {
+		Layout mul (CREF<ImplHolder> that) const {
 			assert (mInteger.size () == that.mInteger.size ()) ;
 			auto rbx = VarBuffer<BYTE> (mInteger.size ()) ;
 			auto rax = VAL64 (0) ;
@@ -1296,7 +1272,7 @@ trait INTEGER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			return factory (move (rbx)) ;
 		}
 
-		Integer mul (CREF<VAL64> that) const override {
+		Layout mul (CREF<VAL64> that) const override {
 			auto rbx = VarBuffer<BYTE> (mInteger.size ()) ;
 			auto rax = VAL64 (0) ;
 			const auto r1x = find_highest () + 1 ;
@@ -1319,7 +1295,7 @@ trait INTEGER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			return factory (move (rbx)) ;
 		}
 
-		Integer div (CREF<VAL64> that) const override {
+		Layout div (CREF<VAL64> that) const override {
 			assert (that != ZERO) ;
 			auto rbx = VarBuffer<BYTE> (mInteger.size ()) ;
 			auto rax = VAL64 (0) ;
@@ -1337,7 +1313,7 @@ trait INTEGER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			return factory (move (rbx)) ;
 		}
 
-		Integer mod (CREF<VAL64> that) const override {
+		Layout mod (CREF<VAL64> that) const override {
 			assert (that != ZERO) ;
 			auto rbx = VarBuffer<BYTE> (mInteger.size ()) ;
 			auto rax = VAL64 (0) ;
@@ -1355,7 +1331,7 @@ trait INTEGER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			return Integer (rax ,mInteger.size ()) ;
 		}
 
-		Integer minus () const override {
+		Layout minus () const override {
 			auto rbx = VarBuffer<BYTE> (mInteger.size ()) ;
 			for (auto &&i : iter (0 ,mInteger.size ()))
 				rbx[i] = ~mInteger[i] ;
@@ -1391,10 +1367,8 @@ trait INTEGER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 } ;
 
 template <>
-exports auto INTEGER_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->Box<FakeHolder> {
+exports auto INTEGER_HELP<DEPEND ,ALWAYS>::Holder::create () ->VRef<Holder> {
 	using R1X = typename INTEGER_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
-	Box<FakeHolder> ret ;
-	ret.acquire (TYPEAS<R1X>::expr) ;
-	return move (ret) ;
+	return VRef<R1X>::make () ;
 }
 } ;

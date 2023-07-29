@@ -46,6 +46,8 @@ trait STRINGPROC_IMPLHOLDER_HELP ;
 template <class DEPEND>
 trait STRINGPROC_HELP<DEPEND ,ALWAYS> {
 	struct Holder implement Interface {
+		imports VRef<Holder> create () ;
+
 		virtual void initialize () = 0 ;
 		virtual String<STRA> string_cvt_ansi_from_w (CREF<String<STRW>> obj) const = 0 ;
 		virtual String<STRW> string_cvt_w_from_ansi (CREF<String<STRA>> obj) const = 0 ;
@@ -61,10 +63,6 @@ trait STRINGPROC_HELP<DEPEND ,ALWAYS> {
 		virtual String<STRU32> string_cvt_u32_from_u16 (CREF<String<STRU16>> obj) const = 0 ;
 	} ;
 
-	struct FUNCTION_extern {
-		imports VRef<Holder> invoke () ;
-	} ;
-
 	class StringProc {
 	protected:
 		VRef<Holder> mThis ;
@@ -73,7 +71,7 @@ trait STRINGPROC_HELP<DEPEND ,ALWAYS> {
 		imports CREF<StringProc> instance () {
 			return memorize ([&] () {
 				StringProc ret ;
-				ret.mThis = FUNCTION_extern::invoke () ;
+				ret.mThis = Holder::create () ;
 				ret.mThis->initialize () ;
 				return move (ret) ;
 			}) ;
@@ -140,7 +138,7 @@ trait TEMPLATE_string_build_HELP ;
 template <class UNIT ,class SIDE>
 trait TEMPLATE_string_parse_HELP<UNIT ,SIDE ,REQUIRE<IS_SAME<UNIT ,BOOL>>> {
 	struct TEMPLATE_string_parse {
-		inline BOOL operator() (CREF<String<SIDE>> obj) const {
+		forceinline BOOL operator() (CREF<String<SIDE>> obj) const {
 			BOOL ret ;
 			auto rax = TextReader<SIDE> (obj.raw ().borrow ()) ;
 			rax >> ret ;
@@ -153,7 +151,7 @@ trait TEMPLATE_string_parse_HELP<UNIT ,SIDE ,REQUIRE<IS_SAME<UNIT ,BOOL>>> {
 template <class UNIT ,class SIDE>
 trait TEMPLATE_string_build_HELP<UNIT ,SIDE ,REQUIRE<IS_SAME<SIDE ,BOOL>>> {
 	struct TEMPLATE_string_build {
-		inline String<UNIT> operator() (CREF<BOOL> obj) const {
+		forceinline String<UNIT> operator() (CREF<BOOL> obj) const {
 			String<UNIT> ret = String<UNIT> (64) ;
 			auto rax = TextWriter<UNIT> (ret.raw ().borrow ()) ;
 			rax << obj ;
@@ -166,7 +164,7 @@ trait TEMPLATE_string_build_HELP<UNIT ,SIDE ,REQUIRE<IS_SAME<SIDE ,BOOL>>> {
 template <class UNIT ,class SIDE>
 trait TEMPLATE_string_parse_HELP<UNIT ,SIDE ,REQUIRE<IS_SAME<UNIT ,VAL32>>> {
 	struct TEMPLATE_string_parse {
-		inline VAL32 operator() (CREF<String<SIDE>> obj) const {
+		forceinline VAL32 operator() (CREF<String<SIDE>> obj) const {
 			VAL32 ret ;
 			auto rax = TextReader<SIDE> (obj.raw ().borrow ()) ;
 			rax >> ret ;
@@ -179,7 +177,7 @@ trait TEMPLATE_string_parse_HELP<UNIT ,SIDE ,REQUIRE<IS_SAME<UNIT ,VAL32>>> {
 template <class UNIT ,class SIDE>
 trait TEMPLATE_string_build_HELP<UNIT ,SIDE ,REQUIRE<IS_SAME<SIDE ,VAL32>>> {
 	struct TEMPLATE_string_build {
-		inline String<UNIT> operator() (CREF<VAL32> obj) const {
+		forceinline String<UNIT> operator() (CREF<VAL32> obj) const {
 			String<UNIT> ret = String<UNIT> (64) ;
 			auto rax = TextWriter<UNIT> (ret.raw ().borrow ()) ;
 			rax << obj ;
@@ -192,7 +190,7 @@ trait TEMPLATE_string_build_HELP<UNIT ,SIDE ,REQUIRE<IS_SAME<SIDE ,VAL32>>> {
 template <class UNIT ,class SIDE>
 trait TEMPLATE_string_parse_HELP<UNIT ,SIDE ,REQUIRE<IS_SAME<UNIT ,VAL64>>> {
 	struct TEMPLATE_string_parse {
-		inline VAL64 operator() (CREF<String<SIDE>> obj) const {
+		forceinline VAL64 operator() (CREF<String<SIDE>> obj) const {
 			VAL64 ret ;
 			auto rax = TextReader<SIDE> (obj.raw ().borrow ()) ;
 			rax >> ret ;
@@ -205,7 +203,7 @@ trait TEMPLATE_string_parse_HELP<UNIT ,SIDE ,REQUIRE<IS_SAME<UNIT ,VAL64>>> {
 template <class UNIT ,class SIDE>
 trait TEMPLATE_string_build_HELP<UNIT ,SIDE ,REQUIRE<IS_SAME<SIDE ,VAL64>>> {
 	struct TEMPLATE_string_build {
-		inline String<UNIT> operator() (CREF<VAL64> obj) const {
+		forceinline String<UNIT> operator() (CREF<VAL64> obj) const {
 			String<UNIT> ret = String<UNIT> (64) ;
 			auto rax = TextWriter<UNIT> (ret.raw ().borrow ()) ;
 			rax << obj ;
@@ -218,7 +216,7 @@ trait TEMPLATE_string_build_HELP<UNIT ,SIDE ,REQUIRE<IS_SAME<SIDE ,VAL64>>> {
 template <class UNIT ,class SIDE>
 trait TEMPLATE_string_parse_HELP<UNIT ,SIDE ,REQUIRE<IS_SAME<UNIT ,SINGLE>>> {
 	struct TEMPLATE_string_parse {
-		inline SINGLE operator() (CREF<String<SIDE>> obj) const {
+		forceinline SINGLE operator() (CREF<String<SIDE>> obj) const {
 			SINGLE ret ;
 			auto rax = TextReader<SIDE> (obj.raw ().borrow ()) ;
 			rax >> ret ;
@@ -231,7 +229,7 @@ trait TEMPLATE_string_parse_HELP<UNIT ,SIDE ,REQUIRE<IS_SAME<UNIT ,SINGLE>>> {
 template <class UNIT ,class SIDE>
 trait TEMPLATE_string_build_HELP<UNIT ,SIDE ,REQUIRE<IS_SAME<SIDE ,SINGLE>>> {
 	struct TEMPLATE_string_build {
-		inline String<UNIT> operator() (CREF<SINGLE> obj) const {
+		forceinline String<UNIT> operator() (CREF<SINGLE> obj) const {
 			String<UNIT> ret = String<UNIT> (64) ;
 			auto rax = TextWriter<UNIT> (ret.raw ().borrow ()) ;
 			rax << obj ;
@@ -244,7 +242,7 @@ trait TEMPLATE_string_build_HELP<UNIT ,SIDE ,REQUIRE<IS_SAME<SIDE ,SINGLE>>> {
 template <class UNIT ,class SIDE>
 trait TEMPLATE_string_parse_HELP<UNIT ,SIDE ,REQUIRE<IS_SAME<UNIT ,DOUBLE>>> {
 	struct TEMPLATE_string_parse {
-		inline DOUBLE operator() (CREF<String<SIDE>> obj) const {
+		forceinline DOUBLE operator() (CREF<String<SIDE>> obj) const {
 			DOUBLE ret ;
 			auto rax = TextReader<SIDE> (obj.raw ().borrow ()) ;
 			rax >> ret ;
@@ -257,7 +255,7 @@ trait TEMPLATE_string_parse_HELP<UNIT ,SIDE ,REQUIRE<IS_SAME<UNIT ,DOUBLE>>> {
 template <class UNIT ,class SIDE>
 trait TEMPLATE_string_build_HELP<UNIT ,SIDE ,REQUIRE<IS_SAME<SIDE ,DOUBLE>>> {
 	struct TEMPLATE_string_build {
-		inline String<UNIT> operator() (CREF<DOUBLE> obj) const {
+		forceinline String<UNIT> operator() (CREF<DOUBLE> obj) const {
 			String<UNIT> ret = String<UNIT> (64) ;
 			auto rax = TextWriter<UNIT> (ret.raw ().borrow ()) ;
 			rax << obj ;
@@ -270,7 +268,7 @@ trait TEMPLATE_string_build_HELP<UNIT ,SIDE ,REQUIRE<IS_SAME<SIDE ,DOUBLE>>> {
 template <class UNIT ,class SIDE>
 trait TEMPLATE_string_parse_HELP<UNIT ,SIDE ,REQUIRE<IS_SAME<UNIT ,BYTE>>> {
 	struct TEMPLATE_string_parse {
-		inline BYTE operator() (CREF<String<SIDE>> obj) const {
+		forceinline BYTE operator() (CREF<String<SIDE>> obj) const {
 			BYTE ret ;
 			auto rax = TextReader<SIDE> (obj.raw ().borrow ()) ;
 			rax >> ret ;
@@ -283,7 +281,7 @@ trait TEMPLATE_string_parse_HELP<UNIT ,SIDE ,REQUIRE<IS_SAME<UNIT ,BYTE>>> {
 template <class UNIT ,class SIDE>
 trait TEMPLATE_string_build_HELP<UNIT ,SIDE ,REQUIRE<IS_SAME<SIDE ,BYTE>>> {
 	struct TEMPLATE_string_build {
-		inline String<UNIT> operator() (CREF<BYTE> obj) const {
+		forceinline String<UNIT> operator() (CREF<BYTE> obj) const {
 			String<UNIT> ret = String<UNIT> (64) ;
 			auto rax = TextWriter<UNIT> (ret.raw ().borrow ()) ;
 			rax << obj ;
@@ -296,7 +294,7 @@ trait TEMPLATE_string_build_HELP<UNIT ,SIDE ,REQUIRE<IS_SAME<SIDE ,BYTE>>> {
 template <class UNIT ,class SIDE>
 trait TEMPLATE_string_parse_HELP<UNIT ,SIDE ,REQUIRE<IS_SAME<UNIT ,WORD>>> {
 	struct TEMPLATE_string_parse {
-		inline WORD operator() (CREF<String<SIDE>> obj) const {
+		forceinline WORD operator() (CREF<String<SIDE>> obj) const {
 			WORD ret ;
 			auto rax = TextReader<SIDE> (obj.raw ().borrow ()) ;
 			rax >> ret ;
@@ -309,7 +307,7 @@ trait TEMPLATE_string_parse_HELP<UNIT ,SIDE ,REQUIRE<IS_SAME<UNIT ,WORD>>> {
 template <class UNIT ,class SIDE>
 trait TEMPLATE_string_build_HELP<UNIT ,SIDE ,REQUIRE<IS_SAME<SIDE ,WORD>>> {
 	struct TEMPLATE_string_build {
-		inline String<UNIT> operator() (CREF<WORD> obj) const {
+		forceinline String<UNIT> operator() (CREF<WORD> obj) const {
 			String<UNIT> ret = String<UNIT> (64) ;
 			auto rax = TextWriter<UNIT> (ret.raw ().borrow ()) ;
 			rax << obj ;
@@ -322,7 +320,7 @@ trait TEMPLATE_string_build_HELP<UNIT ,SIDE ,REQUIRE<IS_SAME<SIDE ,WORD>>> {
 template <class UNIT ,class SIDE>
 trait TEMPLATE_string_parse_HELP<UNIT ,SIDE ,REQUIRE<IS_SAME<UNIT ,CHAR>>> {
 	struct TEMPLATE_string_parse {
-		inline CHAR operator() (CREF<String<SIDE>> obj) const {
+		forceinline CHAR operator() (CREF<String<SIDE>> obj) const {
 			CHAR ret ;
 			auto rax = TextReader<SIDE> (obj.raw ().borrow ()) ;
 			rax >> ret ;
@@ -335,7 +333,7 @@ trait TEMPLATE_string_parse_HELP<UNIT ,SIDE ,REQUIRE<IS_SAME<UNIT ,CHAR>>> {
 template <class UNIT ,class SIDE>
 trait TEMPLATE_string_build_HELP<UNIT ,SIDE ,REQUIRE<IS_SAME<SIDE ,CHAR>>> {
 	struct TEMPLATE_string_build {
-		inline String<UNIT> operator() (CREF<CHAR> obj) const {
+		forceinline String<UNIT> operator() (CREF<CHAR> obj) const {
 			String<UNIT> ret = String<UNIT> (64) ;
 			auto rax = TextWriter<UNIT> (ret.raw ().borrow ()) ;
 			rax << obj ;
@@ -348,7 +346,7 @@ trait TEMPLATE_string_build_HELP<UNIT ,SIDE ,REQUIRE<IS_SAME<SIDE ,CHAR>>> {
 template <class UNIT ,class SIDE>
 trait TEMPLATE_string_parse_HELP<UNIT ,SIDE ,REQUIRE<IS_SAME<UNIT ,DATA>>> {
 	struct TEMPLATE_string_parse {
-		inline DATA operator() (CREF<String<SIDE>> obj) const {
+		forceinline DATA operator() (CREF<String<SIDE>> obj) const {
 			DATA ret ;
 			auto rax = TextReader<SIDE> (obj.raw ().borrow ()) ;
 			rax >> ret ;
@@ -361,7 +359,7 @@ trait TEMPLATE_string_parse_HELP<UNIT ,SIDE ,REQUIRE<IS_SAME<UNIT ,DATA>>> {
 template <class UNIT ,class SIDE>
 trait TEMPLATE_string_build_HELP<UNIT ,SIDE ,REQUIRE<IS_SAME<SIDE ,DATA>>> {
 	struct TEMPLATE_string_build {
-		inline String<UNIT> operator() (CREF<DATA> obj) const {
+		forceinline String<UNIT> operator() (CREF<DATA> obj) const {
 			String<UNIT> ret = String<UNIT> (64) ;
 			auto rax = TextWriter<UNIT> (ret.raw ().borrow ()) ;
 			rax << obj ;
@@ -381,7 +379,7 @@ template <class DEPEND>
 trait FUNCTION_string_parse_HELP<DEPEND ,ALWAYS> {
 	struct FUNCTION_string_parse {
 		template <class ARG1 ,class ARG2>
-		inline consteval TEMPLATE_string_parse<ARG1 ,ARG2> operator[] (CREF<TYPEID<ARG1 ,ARG2>> id) const noexcept {
+		forceinline consteval TEMPLATE_string_parse<ARG1 ,ARG2> operator[] (CREF<TYPEID<ARG1 ,ARG2>> id) const noexcept {
 			return TEMPLATE_string_parse<ARG1 ,ARG2> () ;
 		}
 	} ;
@@ -401,7 +399,7 @@ template <class DEPEND>
 trait FUNCTION_string_build_HELP<DEPEND ,ALWAYS> {
 	struct FUNCTION_string_build {
 		template <class ARG1 ,class ARG2>
-		inline consteval TEMPLATE_string_build<ARG1 ,ARG2> operator[] (CREF<TYPEID<ARG1 ,ARG2>> id) const noexcept {
+		forceinline consteval TEMPLATE_string_build<ARG1 ,ARG2> operator[] (CREF<TYPEID<ARG1 ,ARG2>> id) const noexcept {
 			return TEMPLATE_string_build<ARG1 ,ARG2> () ;
 		}
 	} ;
@@ -417,7 +415,7 @@ trait TEMPLATE_string_cvt_HELP ;
 template <class UNIT ,class SIDE>
 trait TEMPLATE_string_cvt_HELP<UNIT ,SIDE ,REQUIRE<ENUM_ALL<IS_SAME<UNIT ,STRA> ,IS_SAME<SIDE ,STRA>>>> {
 	struct TEMPLATE_string_cvt {
-		inline String<STRA> operator() (CREF<String<STRA>> obj) const {
+		forceinline String<STRA> operator() (CREF<String<STRA>> obj) const {
 			return obj ;
 		}
 	} ;
@@ -426,7 +424,7 @@ trait TEMPLATE_string_cvt_HELP<UNIT ,SIDE ,REQUIRE<ENUM_ALL<IS_SAME<UNIT ,STRA> 
 template <class UNIT ,class SIDE>
 trait TEMPLATE_string_cvt_HELP<UNIT ,SIDE ,REQUIRE<ENUM_ALL<IS_SAME<UNIT ,STRA> ,IS_SAME<SIDE ,STRW>>>> {
 	struct TEMPLATE_string_cvt {
-		inline String<STRA> operator() (CREF<String<STRW>> obj) const {
+		forceinline String<STRA> operator() (CREF<String<STRW>> obj) const {
 			return StringProc::string_cvt_a_from_w (obj) ;
 		}
 	} ;
@@ -435,7 +433,7 @@ trait TEMPLATE_string_cvt_HELP<UNIT ,SIDE ,REQUIRE<ENUM_ALL<IS_SAME<UNIT ,STRA> 
 template <class UNIT ,class SIDE>
 trait TEMPLATE_string_cvt_HELP<UNIT ,SIDE ,REQUIRE<ENUM_ALL<IS_SAME<UNIT ,STRA> ,IS_SAME<SIDE ,STRU8>>>> {
 	struct TEMPLATE_string_cvt {
-		inline String<STRA> operator() (CREF<String<STRU8>> obj) const {
+		forceinline String<STRA> operator() (CREF<String<STRU8>> obj) const {
 			using R1X = typename TEMPLATE_string_cvt_HELP<STRW ,SIDE ,ALWAYS>::TEMPLATE_string_cvt ;
 			using R2X = typename TEMPLATE_string_cvt_HELP<UNIT ,STRW ,ALWAYS>::TEMPLATE_string_cvt ;
 			const auto r1x = R1X () ;
@@ -448,7 +446,7 @@ trait TEMPLATE_string_cvt_HELP<UNIT ,SIDE ,REQUIRE<ENUM_ALL<IS_SAME<UNIT ,STRA> 
 template <class UNIT ,class SIDE>
 trait TEMPLATE_string_cvt_HELP<UNIT ,SIDE ,REQUIRE<ENUM_ALL<IS_SAME<UNIT ,STRA> ,IS_SAME<SIDE ,STRU16>>>> {
 	struct TEMPLATE_string_cvt {
-		inline String<STRA> operator() (CREF<String<STRU16>> obj) const {
+		forceinline String<STRA> operator() (CREF<String<STRU16>> obj) const {
 			using R1X = typename TEMPLATE_string_cvt_HELP<STRW ,SIDE ,ALWAYS>::TEMPLATE_string_cvt ;
 			using R2X = typename TEMPLATE_string_cvt_HELP<UNIT ,STRW ,ALWAYS>::TEMPLATE_string_cvt ;
 			const auto r1x = R1X () ;
@@ -461,7 +459,7 @@ trait TEMPLATE_string_cvt_HELP<UNIT ,SIDE ,REQUIRE<ENUM_ALL<IS_SAME<UNIT ,STRA> 
 template <class UNIT ,class SIDE>
 trait TEMPLATE_string_cvt_HELP<UNIT ,SIDE ,REQUIRE<ENUM_ALL<IS_SAME<UNIT ,STRA> ,IS_SAME<SIDE ,STRU32>>>> {
 	struct TEMPLATE_string_cvt {
-		inline String<STRA> operator() (CREF<String<STRU32>> obj) const {
+		forceinline String<STRA> operator() (CREF<String<STRU32>> obj) const {
 			using R1X = typename TEMPLATE_string_cvt_HELP<STRW ,SIDE ,ALWAYS>::TEMPLATE_string_cvt ;
 			using R2X = typename TEMPLATE_string_cvt_HELP<UNIT ,STRW ,ALWAYS>::TEMPLATE_string_cvt ;
 			const auto r1x = R1X () ;
@@ -474,7 +472,7 @@ trait TEMPLATE_string_cvt_HELP<UNIT ,SIDE ,REQUIRE<ENUM_ALL<IS_SAME<UNIT ,STRA> 
 template <class UNIT ,class SIDE>
 trait TEMPLATE_string_cvt_HELP<UNIT ,SIDE ,REQUIRE<ENUM_ALL<IS_SAME<UNIT ,STRW> ,IS_SAME<SIDE ,STRA>>>> {
 	struct TEMPLATE_string_cvt {
-		inline String<STRW> operator() (CREF<String<STRA>> obj) const {
+		forceinline String<STRW> operator() (CREF<String<STRA>> obj) const {
 			return StringProc::string_cvt_w_from_a (obj) ;
 		}
 	} ;
@@ -483,7 +481,7 @@ trait TEMPLATE_string_cvt_HELP<UNIT ,SIDE ,REQUIRE<ENUM_ALL<IS_SAME<UNIT ,STRW> 
 template <class UNIT ,class SIDE>
 trait TEMPLATE_string_cvt_HELP<UNIT ,SIDE ,REQUIRE<ENUM_ALL<IS_SAME<UNIT ,STRW> ,IS_SAME<SIDE ,STRW>>>> {
 	struct TEMPLATE_string_cvt {
-		inline String<STRW> operator() (CREF<String<STRW>> obj) const {
+		forceinline String<STRW> operator() (CREF<String<STRW>> obj) const {
 			return obj ;
 		}
 	} ;
@@ -492,10 +490,10 @@ trait TEMPLATE_string_cvt_HELP<UNIT ,SIDE ,REQUIRE<ENUM_ALL<IS_SAME<UNIT ,STRW> 
 template <class UNIT ,class SIDE>
 trait TEMPLATE_string_cvt_HELP<UNIT ,SIDE ,REQUIRE<ENUM_ALL<IS_SAME<UNIT ,STRW> ,IS_SAME<SIDE ,STRU8>>>> {
 	struct TEMPLATE_string_cvt {
-		inline String<STRW> operator() (CREF<String<STRU8>> obj) const {
+		forceinline String<STRW> operator() (CREF<String<STRU8>> obj) const {
 			using R1X = typename TEMPLATE_string_cvt_HELP<STRUW ,SIDE ,ALWAYS>::TEMPLATE_string_cvt ;
 			String<STRW> ret ;
-			auto &&tmp = unsafe_deref (unsafe_cast[TYPEAS<TEMP<String<STRUW>>>::expr] (unsafe_deptr (ret))) ;
+			auto &&tmp = unsafe_cast[TYPEAS<String<STRUW>>::expr] (ret) ;
 			const auto r1x = R1X () ;
 			tmp = r1x (obj) ;
 			unsafe_launder (ret) ;
@@ -507,10 +505,10 @@ trait TEMPLATE_string_cvt_HELP<UNIT ,SIDE ,REQUIRE<ENUM_ALL<IS_SAME<UNIT ,STRW> 
 template <class UNIT ,class SIDE>
 trait TEMPLATE_string_cvt_HELP<UNIT ,SIDE ,REQUIRE<ENUM_ALL<IS_SAME<UNIT ,STRW> ,IS_SAME<SIDE ,STRU16>>>> {
 	struct TEMPLATE_string_cvt {
-		inline String<STRW> operator() (CREF<String<STRU16>> obj) const {
+		forceinline String<STRW> operator() (CREF<String<STRU16>> obj) const {
 			using R1X = typename TEMPLATE_string_cvt_HELP<STRUW ,SIDE ,ALWAYS>::TEMPLATE_string_cvt ;
 			String<STRW> ret ;
-			auto &&tmp = unsafe_deref (unsafe_cast[TYPEAS<TEMP<String<STRUW>>>::expr] (unsafe_deptr (ret))) ;
+			auto &&tmp = unsafe_cast[TYPEAS<String<STRUW>>::expr] (ret) ;
 			const auto r1x = R1X () ;
 			tmp = r1x (obj) ;
 			unsafe_launder (ret) ;
@@ -522,10 +520,10 @@ trait TEMPLATE_string_cvt_HELP<UNIT ,SIDE ,REQUIRE<ENUM_ALL<IS_SAME<UNIT ,STRW> 
 template <class UNIT ,class SIDE>
 trait TEMPLATE_string_cvt_HELP<UNIT ,SIDE ,REQUIRE<ENUM_ALL<IS_SAME<UNIT ,STRW> ,IS_SAME<SIDE ,STRU32>>>> {
 	struct TEMPLATE_string_cvt {
-		inline String<STRW> operator() (CREF<String<STRU32>> obj) const {
+		forceinline String<STRW> operator() (CREF<String<STRU32>> obj) const {
 			using R1X = typename TEMPLATE_string_cvt_HELP<STRUW ,SIDE ,ALWAYS>::TEMPLATE_string_cvt ;
 			String<STRW> ret ;
-			auto &&tmp = unsafe_deref (unsafe_cast[TYPEAS<TEMP<String<STRUW>>>::expr] (unsafe_deptr (ret))) ;
+			auto &&tmp = unsafe_cast[TYPEAS<String<STRUW>>::expr] (ret) ;
 			const auto r1x = R1X () ;
 			tmp = r1x (obj) ;
 			unsafe_launder (ret) ;
@@ -537,7 +535,7 @@ trait TEMPLATE_string_cvt_HELP<UNIT ,SIDE ,REQUIRE<ENUM_ALL<IS_SAME<UNIT ,STRW> 
 template <class UNIT ,class SIDE>
 trait TEMPLATE_string_cvt_HELP<UNIT ,SIDE ,REQUIRE<ENUM_ALL<IS_SAME<UNIT ,STRU8> ,IS_SAME<SIDE ,STRA>>>> {
 	struct TEMPLATE_string_cvt {
-		inline String<STRU8> operator() (CREF<String<STRA>> obj) const {
+		forceinline String<STRU8> operator() (CREF<String<STRA>> obj) const {
 			using R1X = typename TEMPLATE_string_cvt_HELP<STRW ,SIDE ,ALWAYS>::TEMPLATE_string_cvt ;
 			using R2X = typename TEMPLATE_string_cvt_HELP<UNIT ,STRW ,ALWAYS>::TEMPLATE_string_cvt ;
 			const auto r1x = R1X () ;
@@ -550,10 +548,10 @@ trait TEMPLATE_string_cvt_HELP<UNIT ,SIDE ,REQUIRE<ENUM_ALL<IS_SAME<UNIT ,STRU8>
 template <class UNIT ,class SIDE>
 trait TEMPLATE_string_cvt_HELP<UNIT ,SIDE ,REQUIRE<ENUM_ALL<IS_SAME<UNIT ,STRU8> ,IS_SAME<SIDE ,STRW>>>> {
 	struct TEMPLATE_string_cvt {
-		inline String<STRU8> operator() (CREF<String<STRW>> obj) const {
+		forceinline String<STRU8> operator() (CREF<String<STRW>> obj) const {
 			using R1X = typename TEMPLATE_string_cvt_HELP<UNIT ,STRUW ,ALWAYS>::TEMPLATE_string_cvt ;
 			const auto r1x = R1X () ;
-			auto &&tmp = unsafe_deref (unsafe_cast[TYPEAS<TEMP<String<STRUW>>>::expr] (unsafe_deptr (obj))) ;
+			auto &&tmp = unsafe_cast[TYPEAS<String<STRUW>>::expr] (obj) ;
 			return r1x (tmp) ;
 		}
 	} ;
@@ -562,7 +560,7 @@ trait TEMPLATE_string_cvt_HELP<UNIT ,SIDE ,REQUIRE<ENUM_ALL<IS_SAME<UNIT ,STRU8>
 template <class UNIT ,class SIDE>
 trait TEMPLATE_string_cvt_HELP<UNIT ,SIDE ,REQUIRE<ENUM_ALL<IS_SAME<UNIT ,STRU8> ,IS_SAME<SIDE ,STRU8>>>> {
 	struct TEMPLATE_string_cvt {
-		inline String<STRU8> operator() (CREF<String<STRU8>> obj) const {
+		forceinline String<STRU8> operator() (CREF<String<STRU8>> obj) const {
 			return obj ;
 		}
 	} ;
@@ -571,7 +569,7 @@ trait TEMPLATE_string_cvt_HELP<UNIT ,SIDE ,REQUIRE<ENUM_ALL<IS_SAME<UNIT ,STRU8>
 template <class UNIT ,class SIDE>
 trait TEMPLATE_string_cvt_HELP<UNIT ,SIDE ,REQUIRE<ENUM_ALL<IS_SAME<UNIT ,STRU8> ,IS_SAME<SIDE ,STRU16>>>> {
 	struct TEMPLATE_string_cvt {
-		inline String<STRU8> operator() (CREF<String<STRU16>> obj) const {
+		forceinline String<STRU8> operator() (CREF<String<STRU16>> obj) const {
 			return StringProc::string_cvt_u8_from_u16 (obj) ;
 		}
 	} ;
@@ -580,7 +578,7 @@ trait TEMPLATE_string_cvt_HELP<UNIT ,SIDE ,REQUIRE<ENUM_ALL<IS_SAME<UNIT ,STRU8>
 template <class UNIT ,class SIDE>
 trait TEMPLATE_string_cvt_HELP<UNIT ,SIDE ,REQUIRE<ENUM_ALL<IS_SAME<UNIT ,STRU8> ,IS_SAME<SIDE ,STRU32>>>> {
 	struct TEMPLATE_string_cvt {
-		inline String<STRU8> operator() (CREF<String<STRU32>> obj) const {
+		forceinline String<STRU8> operator() (CREF<String<STRU32>> obj) const {
 			return StringProc::string_cvt_u8_from_u32 (obj) ;
 		}
 	} ;
@@ -589,7 +587,7 @@ trait TEMPLATE_string_cvt_HELP<UNIT ,SIDE ,REQUIRE<ENUM_ALL<IS_SAME<UNIT ,STRU8>
 template <class UNIT ,class SIDE>
 trait TEMPLATE_string_cvt_HELP<UNIT ,SIDE ,REQUIRE<ENUM_ALL<IS_SAME<UNIT ,STRU16> ,IS_SAME<SIDE ,STRA>>>> {
 	struct TEMPLATE_string_cvt {
-		inline String<STRU16> operator() (CREF<String<STRA>> obj) const {
+		forceinline String<STRU16> operator() (CREF<String<STRA>> obj) const {
 			using R1X = typename TEMPLATE_string_cvt_HELP<STRW ,SIDE ,ALWAYS>::TEMPLATE_string_cvt ;
 			using R2X = typename TEMPLATE_string_cvt_HELP<UNIT ,STRW ,ALWAYS>::TEMPLATE_string_cvt ;
 			const auto r1x = R1X () ;
@@ -602,10 +600,10 @@ trait TEMPLATE_string_cvt_HELP<UNIT ,SIDE ,REQUIRE<ENUM_ALL<IS_SAME<UNIT ,STRU16
 template <class UNIT ,class SIDE>
 trait TEMPLATE_string_cvt_HELP<UNIT ,SIDE ,REQUIRE<ENUM_ALL<IS_SAME<UNIT ,STRU16> ,IS_SAME<SIDE ,STRW>>>> {
 	struct TEMPLATE_string_cvt {
-		inline String<STRU16> operator() (CREF<String<STRW>> obj) const {
+		forceinline String<STRU16> operator() (CREF<String<STRW>> obj) const {
 			using R1X = typename TEMPLATE_string_cvt_HELP<UNIT ,STRUW ,ALWAYS>::TEMPLATE_string_cvt ;
 			const auto r1x = R1X () ;
-			auto &&tmp = unsafe_deref (unsafe_cast[TYPEAS<TEMP<String<STRUW>>>::expr] (unsafe_deptr (obj))) ;
+			auto &&tmp = unsafe_cast[TYPEAS<String<STRUW>>::expr] (obj) ;
 			return r1x (tmp) ;
 		}
 	} ;
@@ -614,7 +612,7 @@ trait TEMPLATE_string_cvt_HELP<UNIT ,SIDE ,REQUIRE<ENUM_ALL<IS_SAME<UNIT ,STRU16
 template <class UNIT ,class SIDE>
 trait TEMPLATE_string_cvt_HELP<UNIT ,SIDE ,REQUIRE<ENUM_ALL<IS_SAME<UNIT ,STRU16> ,IS_SAME<SIDE ,STRU8>>>> {
 	struct TEMPLATE_string_cvt {
-		inline String<STRU16> operator() (CREF<String<STRU8>> obj) const {
+		forceinline String<STRU16> operator() (CREF<String<STRU8>> obj) const {
 			return StringProc::string_cvt_u16_from_u8 (obj) ;
 		}
 	} ;
@@ -623,7 +621,7 @@ trait TEMPLATE_string_cvt_HELP<UNIT ,SIDE ,REQUIRE<ENUM_ALL<IS_SAME<UNIT ,STRU16
 template <class UNIT ,class SIDE>
 trait TEMPLATE_string_cvt_HELP<UNIT ,SIDE ,REQUIRE<ENUM_ALL<IS_SAME<UNIT ,STRU16> ,IS_SAME<SIDE ,STRU16>>>> {
 	struct TEMPLATE_string_cvt {
-		inline String<STRU16> operator() (CREF<String<STRU16>> obj) const {
+		forceinline String<STRU16> operator() (CREF<String<STRU16>> obj) const {
 			return obj ;
 		}
 	} ;
@@ -632,7 +630,7 @@ trait TEMPLATE_string_cvt_HELP<UNIT ,SIDE ,REQUIRE<ENUM_ALL<IS_SAME<UNIT ,STRU16
 template <class UNIT ,class SIDE>
 trait TEMPLATE_string_cvt_HELP<UNIT ,SIDE ,REQUIRE<ENUM_ALL<IS_SAME<UNIT ,STRU16> ,IS_SAME<SIDE ,STRU32>>>> {
 	struct TEMPLATE_string_cvt {
-		inline String<STRU16> operator() (CREF<String<STRU32>> obj) const {
+		forceinline String<STRU16> operator() (CREF<String<STRU32>> obj) const {
 			return StringProc::string_cvt_u16_from_u32 (obj) ;
 		}
 	} ;
@@ -641,7 +639,7 @@ trait TEMPLATE_string_cvt_HELP<UNIT ,SIDE ,REQUIRE<ENUM_ALL<IS_SAME<UNIT ,STRU16
 template <class UNIT ,class SIDE>
 trait TEMPLATE_string_cvt_HELP<UNIT ,SIDE ,REQUIRE<ENUM_ALL<IS_SAME<UNIT ,STRU32> ,IS_SAME<SIDE ,STRA>>>> {
 	struct TEMPLATE_string_cvt {
-		inline String<STRU32> operator() (CREF<String<STRA>> obj) const {
+		forceinline String<STRU32> operator() (CREF<String<STRA>> obj) const {
 			using R1X = typename TEMPLATE_string_cvt_HELP<STRW ,SIDE ,ALWAYS>::TEMPLATE_string_cvt ;
 			using R2X = typename TEMPLATE_string_cvt_HELP<UNIT ,STRW ,ALWAYS>::TEMPLATE_string_cvt ;
 			const auto r1x = R1X () ;
@@ -654,10 +652,10 @@ trait TEMPLATE_string_cvt_HELP<UNIT ,SIDE ,REQUIRE<ENUM_ALL<IS_SAME<UNIT ,STRU32
 template <class UNIT ,class SIDE>
 trait TEMPLATE_string_cvt_HELP<UNIT ,SIDE ,REQUIRE<ENUM_ALL<IS_SAME<UNIT ,STRU32> ,IS_SAME<SIDE ,STRW>>>> {
 	struct TEMPLATE_string_cvt {
-		inline String<STRU32> operator() (CREF<String<STRW>> obj) const {
+		forceinline String<STRU32> operator() (CREF<String<STRW>> obj) const {
 			using R1X = typename TEMPLATE_string_cvt_HELP<UNIT ,STRUW ,ALWAYS>::TEMPLATE_string_cvt ;
 			const auto r1x = R1X () ;
-			auto &&tmp = unsafe_deref (unsafe_cast[TYPEAS<TEMP<String<STRUW>>>::expr] (unsafe_deptr (obj))) ;
+			auto &&tmp = unsafe_cast[TYPEAS<String<STRUW>>::expr] (obj) ;
 			return r1x (tmp) ;
 		}
 	} ;
@@ -666,7 +664,7 @@ trait TEMPLATE_string_cvt_HELP<UNIT ,SIDE ,REQUIRE<ENUM_ALL<IS_SAME<UNIT ,STRU32
 template <class UNIT ,class SIDE>
 trait TEMPLATE_string_cvt_HELP<UNIT ,SIDE ,REQUIRE<ENUM_ALL<IS_SAME<UNIT ,STRU32> ,IS_SAME<SIDE ,STRU8>>>> {
 	struct TEMPLATE_string_cvt {
-		inline String<STRU32> operator() (CREF<String<STRU8>> obj) const {
+		forceinline String<STRU32> operator() (CREF<String<STRU8>> obj) const {
 			return StringProc::string_cvt_u32_from_u8 (obj) ;
 		}
 	} ;
@@ -675,7 +673,7 @@ trait TEMPLATE_string_cvt_HELP<UNIT ,SIDE ,REQUIRE<ENUM_ALL<IS_SAME<UNIT ,STRU32
 template <class UNIT ,class SIDE>
 trait TEMPLATE_string_cvt_HELP<UNIT ,SIDE ,REQUIRE<ENUM_ALL<IS_SAME<UNIT ,STRU32> ,IS_SAME<SIDE ,STRU16>>>> {
 	struct TEMPLATE_string_cvt {
-		inline String<STRU32> operator() (CREF<String<STRU16>> obj) const {
+		forceinline String<STRU32> operator() (CREF<String<STRU16>> obj) const {
 			return StringProc::string_cvt_u32_from_u16 (obj) ;
 		}
 	} ;
@@ -684,7 +682,7 @@ trait TEMPLATE_string_cvt_HELP<UNIT ,SIDE ,REQUIRE<ENUM_ALL<IS_SAME<UNIT ,STRU32
 template <class UNIT ,class SIDE>
 trait TEMPLATE_string_cvt_HELP<UNIT ,SIDE ,REQUIRE<ENUM_ALL<IS_SAME<UNIT ,STRU32> ,IS_SAME<SIDE ,STRU32>>>> {
 	struct TEMPLATE_string_cvt {
-		inline String<STRU32> operator() (CREF<String<STRU32>> obj) const {
+		forceinline String<STRU32> operator() (CREF<String<STRU32>> obj) const {
 			return obj ;
 		}
 	} ;
@@ -700,7 +698,7 @@ template <class DEPEND>
 trait FUNCTION_string_cvt_HELP<DEPEND ,ALWAYS> {
 	struct FUNCTION_string_cvt {
 		template <class ARG1 ,class ARG2>
-		inline consteval TEMPLATE_string_cvt<ARG1 ,ARG2> operator[] (CREF<TYPEID<ARG1 ,ARG2>> id) const noexcept {
+		forceinline consteval TEMPLATE_string_cvt<ARG1 ,ARG2> operator[] (CREF<TYPEID<ARG1 ,ARG2>> id) const noexcept {
 			return TEMPLATE_string_cvt<ARG1 ,ARG2> () ;
 		}
 	} ;
@@ -719,6 +717,8 @@ trait TEXTSTRING_IMPLHOLDER_HELP ;
 template <class DEPEND>
 trait TEXTSTRING_HELP<DEPEND ,ALWAYS> {
 	struct Holder implement Interface {
+		imports VRef<Holder> create () ;
+
 		virtual void initialize (CREF<Slice<STR>> text) = 0 ;
 		virtual void initialize (CREF<String<STRA>> text) = 0 ;
 		virtual void initialize (CREF<String<STRW>> text) = 0 ;
@@ -732,10 +732,6 @@ trait TEXTSTRING_HELP<DEPEND ,ALWAYS> {
 		virtual CREF<String<STRU32>> pick (CREF<TYPEID<STRU32>> id) const leftvalue = 0 ;
 	} ;
 
-	struct FUNCTION_extern {
-		imports VRef<Holder> invoke () ;
-	} ;
-
 	class TextString {
 	protected:
 		VRef<Holder> mThis ;
@@ -744,32 +740,32 @@ trait TEXTSTRING_HELP<DEPEND ,ALWAYS> {
 		implicit TextString () = default ;
 
 		explicit TextString (CREF<Slice<STR>> text) {
-			mThis = FUNCTION_extern::invoke () ;
+			mThis = Holder::create () ;
 			mThis->initialize (text) ;
 		}
 
 		explicit TextString (CREF<String<STRA>> text) {
-			mThis = FUNCTION_extern::invoke () ;
+			mThis = Holder::create () ;
 			mThis->initialize (text) ;
 		}
 
 		explicit TextString (CREF<String<STRW>> text) {
-			mThis = FUNCTION_extern::invoke () ;
+			mThis = Holder::create () ;
 			mThis->initialize (text) ;
 		}
 
 		explicit TextString (CREF<String<STRU8>> text) {
-			mThis = FUNCTION_extern::invoke () ;
+			mThis = Holder::create () ;
 			mThis->initialize (text) ;
 		}
 
 		explicit TextString (CREF<String<STRU16>> text) {
-			mThis = FUNCTION_extern::invoke () ;
+			mThis = Holder::create () ;
 			mThis->initialize (text) ;
 		}
 
 		explicit TextString (CREF<String<STRU32>> text) {
-			mThis = FUNCTION_extern::invoke () ;
+			mThis = Holder::create () ;
 			mThis->initialize (text) ;
 		}
 
@@ -813,16 +809,14 @@ trait ESCAPESTRING_HELP<DEPEND ,ALWAYS> {
 	using Binder = Together<BinderA ,BinderW ,BinderU8 ,BinderU16 ,BinderU32> ;
 
 	struct Holder implement Interface {
+		imports VRef<Holder> create () ;
+
 		virtual void initialize (RREF<TextString> text) = 0 ;
 		virtual void write_text (VREF<TextWriter<STRA>> writer) const = 0 ;
 		virtual void write_text (VREF<TextWriter<STRW>> writer) const = 0 ;
 		virtual void write_text (VREF<TextWriter<STRU8>> writer) const = 0 ;
 		virtual void write_text (VREF<TextWriter<STRU16>> writer) const = 0 ;
 		virtual void write_text (VREF<TextWriter<STRU32>> writer) const = 0 ;
-	} ;
-
-	struct FUNCTION_extern {
-		imports VRef<Holder> invoke () ;
 	} ;
 
 	class EscapeString implement Binder {
@@ -833,32 +827,32 @@ trait ESCAPESTRING_HELP<DEPEND ,ALWAYS> {
 		implicit EscapeString () = default ;
 
 		explicit EscapeString (CREF<Slice<STR>> text) {
-			mThis = FUNCTION_extern::invoke () ;
+			mThis = Holder::create () ;
 			mThis->initialize (TextString (text)) ;
 		}
 
 		explicit EscapeString (CREF<String<STRA>> text) {
-			mThis = FUNCTION_extern::invoke () ;
+			mThis = Holder::create () ;
 			mThis->initialize (TextString (text)) ;
 		}
 
 		explicit EscapeString (CREF<String<STRW>> text) {
-			mThis = FUNCTION_extern::invoke () ;
+			mThis = Holder::create () ;
 			mThis->initialize (TextString (text)) ;
 		}
 
 		explicit EscapeString (CREF<String<STRU8>> text) {
-			mThis = FUNCTION_extern::invoke () ;
+			mThis = Holder::create () ;
 			mThis->initialize (TextString (text)) ;
 		}
 
 		explicit EscapeString (CREF<String<STRU16>> text) {
-			mThis = FUNCTION_extern::invoke () ;
+			mThis = Holder::create () ;
 			mThis->initialize (TextString (text)) ;
 		}
 
 		explicit EscapeString (CREF<String<STRU32>> text) {
-			mThis = FUNCTION_extern::invoke () ;
+			mThis = Holder::create () ;
 			mThis->initialize (TextString (text)) ;
 		}
 
@@ -902,19 +896,17 @@ trait COMMASTRING_HELP<DEPEND ,ALWAYS> {
 	using Binder = Together<BinderA ,BinderW ,BinderU8 ,BinderU16 ,BinderU32> ;
 
 	struct Holder implement Interface {
+		imports VRef<Holder> create () ;
+
 		virtual void initialize (RREF<TextString> gap_text ,RREF<TextString> comma_text ,RREF<TextString> first_text) = 0 ;
-		virtual void write_text (VREF<TextWriter<STRA>> writer) const = 0 ;
-		virtual void write_text (VREF<TextWriter<STRW>> writer) const = 0 ;
-		virtual void write_text (VREF<TextWriter<STRU8>> writer) const = 0 ;
-		virtual void write_text (VREF<TextWriter<STRU16>> writer) const = 0 ;
-		virtual void write_text (VREF<TextWriter<STRU32>> writer) const = 0 ;
+		virtual void write_text (VREF<TextWriter<STRA>> writer) = 0 ;
+		virtual void write_text (VREF<TextWriter<STRW>> writer) = 0 ;
+		virtual void write_text (VREF<TextWriter<STRU8>> writer) = 0 ;
+		virtual void write_text (VREF<TextWriter<STRU16>> writer) = 0 ;
+		virtual void write_text (VREF<TextWriter<STRU32>> writer) = 0 ;
 		virtual void tight () = 0 ;
 		virtual void enter () = 0 ;
 		virtual void leave () = 0 ;
-	} ;
-
-	struct FUNCTION_extern {
-		imports VRef<Holder> invoke () ;
 	} ;
 
 	using COUNTER_MAX_DEPTH = ENUMAS<VAL ,256> ;
@@ -927,53 +919,73 @@ trait COMMASTRING_HELP<DEPEND ,ALWAYS> {
 		implicit CommaString () = default ;
 
 		explicit CommaString (CREF<Slice<STR>> gap_text ,CREF<Slice<STR>> comma_text ,CREF<String<STR>> first_text) {
-			mThis = FUNCTION_extern::invoke () ;
+			mThis = Holder::create () ;
 			mThis->initialize (TextString (gap_text) ,TextString (comma_text) ,TextString (first_text)) ;
 		}
 
 		explicit CommaString (CREF<String<STRA>> gap_text ,CREF<String<STRA>> comma_text ,CREF<String<STRA>> first_text) {
-			mThis = FUNCTION_extern::invoke () ;
+			mThis = Holder::create () ;
 			mThis->initialize (TextString (gap_text) ,TextString (comma_text) ,TextString (first_text)) ;
 		}
 
 		explicit CommaString (CREF<String<STRW>> gap_text ,CREF<String<STRW>> comma_text ,CREF<String<STRW>> first_text) {
-			mThis = FUNCTION_extern::invoke () ;
+			mThis = Holder::create () ;
 			mThis->initialize (TextString (gap_text) ,TextString (comma_text) ,TextString (first_text)) ;
 		}
 
 		explicit CommaString (CREF<String<STRU8>> gap_text ,CREF<String<STRU8>> comma_text ,CREF<String<STRU8>> first_text) {
-			mThis = FUNCTION_extern::invoke () ;
+			mThis = Holder::create () ;
 			mThis->initialize (TextString (gap_text) ,TextString (comma_text) ,TextString (first_text)) ;
 		}
 
 		explicit CommaString (CREF<String<STRU16>> gap_text ,CREF<String<STRU16>> comma_text ,CREF<String<STRU16>> first_text) {
-			mThis = FUNCTION_extern::invoke () ;
+			mThis = Holder::create () ;
 			mThis->initialize (TextString (gap_text) ,TextString (comma_text) ,TextString (first_text)) ;
 		}
 
 		explicit CommaString (CREF<String<STRU32>> gap_text ,CREF<String<STRU32>> comma_text ,CREF<String<STRU32>> first_text) {
-			mThis = FUNCTION_extern::invoke () ;
+			mThis = Holder::create () ;
 			mThis->initialize (TextString (gap_text) ,TextString (comma_text) ,TextString (first_text)) ;
 		}
 
+		void friend_write (VREF<TextWriter<STRA>> writer) override {
+			return mThis->write_text (writer) ;
+		}
+
 		void friend_write (VREF<TextWriter<STRA>> writer) const override {
+			assert (FALSE) ;
+		}
+
+		void friend_write (VREF<TextWriter<STRW>> writer) override {
 			return mThis->write_text (writer) ;
 		}
 
 		void friend_write (VREF<TextWriter<STRW>> writer) const override {
+			assert (FALSE) ;
+		}
+
+		void friend_write (VREF<TextWriter<STRU8>> writer) override {
 			return mThis->write_text (writer) ;
 		}
 
 		void friend_write (VREF<TextWriter<STRU8>> writer) const override {
+			assert (FALSE) ;
+		}
+
+		void friend_write (VREF<TextWriter<STRU16>> writer) override {
 			return mThis->write_text (writer) ;
 		}
 
 		void friend_write (VREF<TextWriter<STRU16>> writer) const override {
+			assert (FALSE) ;
+		}
+
+		void friend_write (VREF<TextWriter<STRU32>> writer) override {
 			return mThis->write_text (writer) ;
 		}
 
 		void friend_write (VREF<TextWriter<STRU32>> writer) const override {
-			return mThis->write_text (writer) ;
+			assert (FALSE) ;
 		}
 
 		void tight () {
@@ -1008,16 +1020,14 @@ trait VALUESTRING_HELP<DEPEND ,ALWAYS> {
 	using Binder = Together<BinderA ,BinderW ,BinderU8 ,BinderU16 ,BinderU32> ;
 
 	struct Holder implement Interface {
+		imports VRef<Holder> create () ;
+
 		virtual void initialize (CREF<VAL64> value_ ,CREF<LENGTH> align_) = 0 ;
 		virtual void write_text (VREF<TextWriter<STRA>> writer) const = 0 ;
 		virtual void write_text (VREF<TextWriter<STRW>> writer) const = 0 ;
 		virtual void write_text (VREF<TextWriter<STRU8>> writer) const = 0 ;
 		virtual void write_text (VREF<TextWriter<STRU16>> writer) const = 0 ;
 		virtual void write_text (VREF<TextWriter<STRU32>> writer) const = 0 ;
-	} ;
-
-	struct FUNCTION_extern {
-		imports VRef<Holder> invoke () ;
 	} ;
 
 	class ValueString implement Binder {
@@ -1028,7 +1038,7 @@ trait VALUESTRING_HELP<DEPEND ,ALWAYS> {
 		implicit ValueString () = default ;
 
 		explicit ValueString (CREF<VAL64> value_ ,CREF<LENGTH> align_) {
-			mThis = FUNCTION_extern::invoke () ;
+			mThis = Holder::create () ;
 			mThis->initialize (value_ ,align_) ;
 		}
 

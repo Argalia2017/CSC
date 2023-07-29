@@ -113,12 +113,13 @@ SOFTWARE.
 #pragma warning (disable :4068) //@info: warning C4068: unknown pragma
 #pragma warning (disable :4100) //@info: warning C4100: 'xxx': unreferenced formal parameter
 #pragma warning (disable :4127) //@info: warning C4127: conditional expression is constant
+#pragma warning (disable :4266) //@info: warning C4266: 'xxx'; function is hidden
 #pragma warning (disable :4324) //@info: warning C4324: 'xxx': structure was padded due to alignment specifier
 #pragma warning (disable :4365) //@info: warning C4365: 'xxx': conversion from 'xxx' to 'xxx', signed/unsigned mismatch
 #pragma warning (disable :4459) //@info: warning C4459: declaration of 'xxx' hides global declaration
 #pragma warning (disable :4464) //@info: warning C4464: relative include path contains '..'
 #pragma warning (disable :4505) //@info: warning C4505: 'xxx': unreferenced local function has been removed
-#pragma warning (disable :4514) //@info: warning C4514: 'xxx': unreferenced inline function has been removed
+#pragma warning (disable :4514) //@info: warning C4514: 'xxx': unreferenced forceinline function has been removed
 #pragma warning (disable :4571) //@info: warning C4571: Informational: catch(...) semantics changed since Visual C++ 7.1; structured exceptions (SEH) are no longer caught
 #pragma warning (disable :4574) //@info: warning C4574: 'xxx' is defined to be '0': did you mean to use '#if xxx'?
 #pragma warning (disable :4584) //@info: warning C4584: 'xxx': base-class 'xxx' is already a base-class of 'xxx'
@@ -131,7 +132,8 @@ SOFTWARE.
 #pragma warning (disable :4686) //@info: warning C4686: 'xxx': possible change in behavior, change in UDT return calling convention
 #pragma warning (disable :4702) //@info: warning C4702: unreachable code
 #pragma warning (disable :4710) //@info: warning C4710: 'xxx': function not inlined
-#pragma warning (disable :4711) //@info: warning C4711: function 'xxx' selected for automatic inline expansion
+#pragma warning (disable :4711) //@info: warning C4711: function 'xxx' selected for automatic forceinline expansion
+#pragma warning (disable :4714) //@info: warning C4714: function 'xxx' marked as __forceinline not inlined
 #pragma warning (disable :4717) //@info: warning C4717: 'xxx': recursive on all control paths, function will cause runtime stack overflow
 #pragma warning (disable :4774) //@info: warning C4774: 'xxx' : format string expected in argument xxx is not a string literal
 #pragma warning (disable :4820) //@info: warning C4820: 'xxx': 'xxx' bytes padding added after data member 'xxx'
@@ -265,17 +267,14 @@ struct is_trivially_default_constructible :integral_constant<bool ,__has_trivial
 
 #ifndef __macro_forceinline
 #ifdef __CSC_COMPILER_MSVC__
-#define __macro_avoidinline __declspec (noinline)
 #define __macro_forceinline __forceinline
 #endif
 
 #ifdef __CSC_COMPILER_GNUC__
-#define __macro_avoidinline __attribute__ ((noinline))
 #define __macro_forceinline __attribute__ ((always_inline))
 #endif
 
 #ifdef __CSC_COMPILER_CLANG__
-#define __macro_avoidinline __attribute__ ((noinline))
 #define __macro_forceinline __attribute__ ((always_inline))
 #endif
 #endif
@@ -306,12 +305,12 @@ using csc_float64_t = double ;
 
 #ifdef __CSC_CXX_LITE__
 //@fatal: fuck ODR
-#define consteval forceinline constexpr
+#define consteval constexpr
 #endif
 
 #ifdef __CSC_CXX_LITE__
 struct FUNCTION_infinity {
-	inline consteval operator csc_float32_t () const noexcept {
+	forceinline consteval operator csc_float32_t () const noexcept {
 		return csc_float32_t (__builtin_huge_valf ()) ;
 	}
 } ;
@@ -319,7 +318,7 @@ struct FUNCTION_infinity {
 
 #ifndef __CSC_CXX_LITE__
 struct FUNCTION_infinity {
-	inline consteval operator csc_float32_t () const noexcept {
+	forceinline consteval operator csc_float32_t () const noexcept {
 		return std::numeric_limits<csc_float32_t>::infinity () ;
 	}
 } ;
@@ -430,43 +429,43 @@ using DEPEND = bool ;
 using ALWAYS = void ;
 
 template <class...>
-trait REQUIRE_SPEC ;
+trait REQUIRE_HELP ;
 
 template <>
-trait REQUIRE_SPEC<ENUM_TRUE> {
+trait REQUIRE_HELP<ENUM_TRUE> {
 	using RET = ALWAYS ;
 } ;
 
 template <class UNIT>
-using REQUIRE = typename REQUIRE_SPEC<UNIT>::RET ;
+using REQUIRE = typename REQUIRE_HELP<UNIT>::RET ;
 
 template <class...>
-trait DEPENDENT_SPEC ;
+trait DEPENDENT_HELP ;
 
 template <class UNIT ,class SIDE>
-trait DEPENDENT_SPEC<UNIT ,SIDE> {
+trait DEPENDENT_HELP<UNIT ,SIDE> {
 	using RET = UNIT ;
 } ;
 
 template <class UNIT ,class SIDE>
-using DEPENDENT = typename DEPENDENT_SPEC<UNIT ,SIDE>::RET ;
+using DEPENDENT = typename DEPENDENT_HELP<UNIT ,SIDE>::RET ;
 
 #ifdef __CSC_CXX_LITE__
 template <class...>
-trait IS_SAME_SPEC ;
+trait IS_SAME_HELP ;
 
 template <class UNIT>
-trait IS_SAME_SPEC<UNIT ,UNIT> {
+trait IS_SAME_HELP<UNIT ,UNIT> {
 	using RET = ENUM_TRUE ;
 } ;
 
 template <class UNIT ,class SIDE>
-trait IS_SAME_SPEC<UNIT ,SIDE> {
+trait IS_SAME_HELP<UNIT ,SIDE> {
 	using RET = ENUM_FALSE ;
 } ;
 
 template <class UNIT ,class SIDE>
-using IS_SAME = typename IS_SAME_SPEC<UNIT ,SIDE>::RET ;
+using IS_SAME = typename IS_SAME_HELP<UNIT ,SIDE>::RET ;
 #endif
 
 #ifndef __CSC_CXX_LITE__
@@ -476,40 +475,40 @@ using IS_SAME = ENUMAS<csc_bool_t ,std::is_same<UNIT ,SIDE>::value> ;
 
 #ifdef __CSC_CXX_LITE__
 template <class...>
-trait REMOVE_REF_SPEC ;
+trait REMOVE_REF_HELP ;
 
 template <class UNIT>
-trait REMOVE_REF_SPEC<UNIT> {
+trait REMOVE_REF_HELP<UNIT> {
 	using RET = UNIT ;
 } ;
 
 template <class UNIT>
-trait REMOVE_REF_SPEC<DEF<UNIT &>> {
+trait REMOVE_REF_HELP<DEF<UNIT &>> {
 	using RET = UNIT ;
 } ;
 
 template <class UNIT>
-trait REMOVE_REF_SPEC<DEF<UNIT &&>> {
+trait REMOVE_REF_HELP<DEF<UNIT &&>> {
 	using RET = UNIT ;
 } ;
 
 template <class UNIT>
-trait REMOVE_REF_SPEC<DEF<const UNIT>> {
+trait REMOVE_REF_HELP<DEF<const UNIT>> {
 	using RET = UNIT ;
 } ;
 
 template <class UNIT>
-trait REMOVE_REF_SPEC<DEF<const UNIT &>> {
+trait REMOVE_REF_HELP<DEF<const UNIT &>> {
 	using RET = UNIT ;
 } ;
 
 template <class UNIT>
-trait REMOVE_REF_SPEC<DEF<const UNIT &&>> {
+trait REMOVE_REF_HELP<DEF<const UNIT &&>> {
 	using RET = UNIT ;
 } ;
 
 template <class UNIT>
-using REMOVE_REF = typename REMOVE_REF_SPEC<UNIT>::RET ;
+using REMOVE_REF = typename REMOVE_REF_HELP<UNIT>::RET ;
 #endif
 
 #ifndef __CSC_CXX_LITE__
@@ -888,7 +887,7 @@ struct FUNCTION_internel_name {
 	}
 
 	template <class ARG1>
-	inline csc_span_t operator() (CREF<TYPEID<ARG1>> id) const noexcept {
+	forceinline csc_span_t operator() (CREF<TYPEID<ARG1>> id) const noexcept {
 		return invoke<ARG1> () ;
 	}
 } ;
@@ -908,7 +907,7 @@ struct FUNCTION_internel_name {
 	}
 
 	template <class ARG1>
-	inline csc_span_t operator() (CREF<TYPEID<ARG1>> id) const noexcept {
+	forceinline csc_span_t operator() (CREF<TYPEID<ARG1>> id) const noexcept {
 		return invoke<ARG1> () ;
 	}
 } ;
@@ -928,50 +927,8 @@ struct FUNCTION_internel_name {
 	}
 
 	template <class ARG1>
-	inline csc_span_t operator() (CREF<TYPEID<ARG1>> id) const noexcept {
+	forceinline csc_span_t operator() (CREF<TYPEID<ARG1>> id) const noexcept {
 		return invoke<ARG1> () ;
-	}
-} ;
-#endif
-
-#ifdef __CSC_COMPILER_MSVC__
-struct FUNCTION_internel_span {
-	template <class ARG1>
-	inline csc_span_t operator() (CREF<csc_initializer_t<ARG1>> list) const noexcept {
-		auto rax = csc_span_t () ;
-		const auto r1x = DEF<const csc_diff_t *> (&list) ;
-		rax.mBegin = r1x[0] ;
-		rax.mEnd = r1x[1] ;
-		rax.mStep = sizeof (ARG1) ;
-		return rax ;
-	}
-} ;
-#endif
-
-#ifdef __CSC_COMPILER_GNUC__
-struct FUNCTION_internel_span {
-	template <class ARG1>
-	inline csc_span_t operator() (CREF<csc_initializer_t<ARG1>> list) const noexcept {
-		auto rax = csc_span_t () ;
-		const auto r1x = DEF<const csc_diff_t *> (&list) ;
-		rax.mBegin = r1x[0] ;
-		rax.mEnd = rax.mBegin + r1x[1] * sizeof (ARG1) ;
-		rax.mStep = sizeof (ARG1) ;
-		return rax ;
-	}
-} ;
-#endif
-
-#ifdef __CSC_COMPILER_CLANG__
-struct FUNCTION_internel_span {
-	template <class ARG1>
-	inline csc_span_t operator() (CREF<csc_initializer_t<ARG1>> list) const noexcept {
-		auto rax = csc_span_t () ;
-		const auto r1x = DEF<const csc_diff_t *> (&list) ;
-		rax.mBegin = r1x[0] ;
-		rax.mEnd = r1x[1] ;
-		rax.mStep = sizeof (ARG1) ;
-		return rax ;
 	}
 } ;
 #endif
@@ -979,12 +936,12 @@ struct FUNCTION_internel_span {
 
 #ifdef __CSC_CXX_LITE__
 template <class ARG1 ,class ARG2>
-inline constexpr CSC::csc_pointer_t operator new (CSC::csc_size_t ,CSC::DEF<CSC::TEMPAS<ARG1 ,ARG2> *> where_) noexcept {
+forceinline constexpr CSC::csc_pointer_t operator new (CSC::csc_size_t ,CSC::DEF<CSC::TEMPAS<ARG1 ,ARG2> *> where_) noexcept {
 	return where_ ;
 }
 
 template <class ARG1 ,class ARG2>
-inline constexpr void operator delete (CSC::csc_pointer_t ,CSC::DEF<CSC::TEMPAS<ARG1 ,ARG2> *> where_) noexcept {
+forceinline constexpr void operator delete (CSC::csc_pointer_t ,CSC::DEF<CSC::TEMPAS<ARG1 ,ARG2> *> where_) noexcept {
 	return ;
 }
 #endif

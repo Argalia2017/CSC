@@ -18,6 +18,11 @@
 #include "csc/csc_filesystem.hpp"
 #include "csc/csc_debugger.hpp"
 
-namespace UNITTEST {
+namespace SOLUTION {
 using namespace CSC ;
+
+using CSC::BOOL ;
+using CSC::BYTE ;
+using CSC::WORD ;
+using CSC::CHAR ;
 } ;

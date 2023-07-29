@@ -48,6 +48,8 @@ trait WORKTHREAD_IMPLHOLDER_HELP ;
 template <class DEPEND>
 trait WORKTHREAD_HELP<DEPEND ,ALWAYS> {
 	struct Holder implement Interface {
+		imports VRef<Holder> create () ;
+
 		virtual void initialize () = 0 ;
 		virtual void set_thread_size (CREF<LENGTH> size_) = 0 ;
 		virtual void set_queue_size (CREF<LENGTH> size_) = 0 ;
@@ -58,10 +60,6 @@ trait WORKTHREAD_HELP<DEPEND ,ALWAYS> {
 		virtual void stop () = 0 ;
 	} ;
 
-	struct FUNCTION_extern {
-		imports VRef<Holder> invoke () ;
-	} ;
-
 	class WorkThread {
 	protected:
 		VRef<Holder> mThis ;
@@ -70,7 +68,7 @@ trait WORKTHREAD_HELP<DEPEND ,ALWAYS> {
 		implicit WorkThread () = default ;
 
 		explicit WorkThread (CREF<BoolProxy> ok) {
-			mThis = FUNCTION_extern::invoke () ;
+			mThis = Holder::create () ;
 			mThis->initialize () ;
 		}
 
@@ -126,6 +124,8 @@ trait CALCTHREAD_HOLDER_HELP<DEPEND ,ALWAYS> {
 	} ;
 
 	struct Holder implement Interface {
+		imports VRef<Holder> create () ;
+
 		virtual void initialize () = 0 ;
 		virtual void set_thread_size (CREF<LENGTH> size_) = 0 ;
 		virtual void start (RREF<Function<SOLUTION ,TYPEAS<SOLUTION>>> proc) = 0 ;
@@ -134,10 +134,6 @@ trait CALCTHREAD_HOLDER_HELP<DEPEND ,ALWAYS> {
 		virtual void resume () = 0 ;
 		virtual void stop () = 0 ;
 	} ;
-
-	struct FUNCTION_extern {
-		imports VRef<Holder> invoke () ;
-	} ;
 } ;
 
 template <class DEPEND>
@@ -145,7 +141,6 @@ trait CALCTHREAD_HELP<DEPEND ,ALWAYS> {
 	using ITEM = typename CALCTHREAD_HOLDER_HELP<DEPEND ,ALWAYS>::ITEM ;
 	using SOLUTION = typename CALCTHREAD_HOLDER_HELP<DEPEND ,ALWAYS>::SOLUTION ;
 	using Holder = typename CALCTHREAD_HOLDER_HELP<DEPEND ,ALWAYS>::Holder ;
-	using FUNCTION_extern = typename CALCTHREAD_HOLDER_HELP<DEPEND ,ALWAYS>::FUNCTION_extern ;
 
 	class CalcThread {
 	protected:
@@ -155,7 +150,7 @@ trait CALCTHREAD_HELP<DEPEND ,ALWAYS> {
 		implicit CalcThread () = default ;
 
 		explicit CalcThread (CREF<BoolProxy> ok) {
-			mThis = FUNCTION_extern::invoke () ;
+			mThis = Holder::create () ;
 			mThis->initialize () ;
 		}
 
@@ -202,6 +197,8 @@ trait PROMISE_IMPLHOLDER_HELP ;
 template <class DEPEND>
 trait PROMISE_HOLDER_HELP<DEPEND ,ALWAYS> {
 	struct Holder implement Interface {
+		imports VRef<Holder> create () ;
+
 		virtual void initialize () = 0 ;
 		virtual void start () const = 0 ;
 		virtual void start (RREF<Function<AutoRef<>>> proc) const = 0 ;
@@ -214,36 +211,38 @@ trait PROMISE_HOLDER_HELP<DEPEND ,ALWAYS> {
 		virtual void stop () const = 0 ;
 	} ;
 
-	struct FUNCTION_extern {
-		imports VRef<Holder> invoke () ;
+	struct Layout {
+		CRef<Holder> mThis ;
 	} ;
 } ;
 
 template <class ITEM>
 trait PROMISE_HELP<ITEM ,ALWAYS> {
 	class Promise ;
+	class Future ;
 
 	using Holder = typename PROMISE_HOLDER_HELP<DEPEND ,ALWAYS>::Holder ;
-	using FUNCTION_extern = typename PROMISE_HOLDER_HELP<DEPEND ,ALWAYS>::FUNCTION_extern ;
-	using Future = typename FUTURE_HELP<ITEM ,ALWAYS>::Future ;
+	using Layout = typename PROMISE_HOLDER_HELP<DEPEND ,ALWAYS>::Layout ;
 
-	class Promise {
+	class Promise implement Layout {
 	protected:
-		CRef<Holder> mThis ;
+		using Layout::mThis ;
 
 	public:
 		implicit Promise () = default ;
 
+		implicit Promise (RREF<Layout> that) {
+			mThis = move (that.mThis) ;
+		}
+
 		explicit Promise (CREF<BoolProxy> ok) {
-			auto rax = FUNCTION_extern::invoke () ;
+			auto rax = Holder::create () ;
 			rax->initialize () ;
-			mThis = rax.as_cref () ;
+			mThis = move (rax) ;
 		}
 
 		Future future () const {
-			Future ret ;
-			ret.mThis = mThis ;
-			return move (ret) ;
+			return thiz ;
 		}
 
 		BOOL ready () const {
@@ -255,9 +254,7 @@ trait PROMISE_HELP<ITEM ,ALWAYS> {
 		}
 
 		void start (RREF<Function<ITEM>> proc) const {
-			return mThis->start (proc.as_wrap ([] (CREF<Function<ITEM>> old) {
-				return AutoRef<ITEM>::make (old ()).as_cast (TYPEAS<void>::expr) ;
-			})) ;
+			unimplemented () ;
 		}
 
 		void post (CREF<ITEM> item) const {
@@ -280,43 +277,33 @@ trait PROMISE_HELP<ITEM ,ALWAYS> {
 			return mThis->stop () ;
 		}
 	} ;
-} ;
 
-template <class ITEM>
-trait FUTURE_HELP<ITEM ,ALWAYS> {
-	class Future ;
-
-	using Holder = typename PROMISE_HELP<ITEM ,ALWAYS>::Holder ;
-	using Promise = typename PROMISE_HELP<ITEM ,ALWAYS>::Promise ;
-
-	class Future {
-	private:
-		template <class...>
-		friend trait PROMISE_HELP ;
-
+	class Future implement Layout {
 	protected:
-		CRef<Holder> mThis ;
+		using Layout::mThis ;
 
 	public:
 		implicit Future () = default ;
+
+		implicit Future (RREF<Layout> that) {
+			mThis = move (that.mThis) ;
+		}
 
 		BOOL ready () const {
 			return mThis->ready () ;
 		}
 
 		ITEM poll () const {
-			auto rax = mThis->poll ().as_cast (TYPEAS<ITEM>::expr) ;
+			auto rax = AutoRef<ITEM> (mThis->poll ()) ;
 			return move (rax.self) ;
 		}
 
 		void then (RREF<Function<void ,TYPEAS<VREF<ITEM>>>> proc) const {
-			return mThis->then (proc.as_wrap ([] (Function<void ,TYPEAS<VREF<ITEM>>> old ,VREF<AutoRef<>> item) {
-				old (AutoRef<ITEM>::from (item).self) ;
-			})) ;
+			unimplemented () ;
 		}
 	} ;
 
-	class AsyncFuture extend Proxy {
+	class AsyncFuture implement Proxy {
 	public:
 		imports Future make (RREF<Function<ITEM>> proc) {
 			auto rax = Promise (TRUE) ;
@@ -330,7 +317,7 @@ template <class ITEM>
 using Promise = typename PROMISE_HELP<ITEM ,ALWAYS>::Promise ;
 
 template <class ITEM>
-using Future = typename FUTURE_HELP<ITEM ,ALWAYS>::Future ;
+using Future = typename PROMISE_HELP<ITEM ,ALWAYS>::Future ;
 template <class ITEM>
-using AsyncFuture = typename FUTURE_HELP<ITEM ,ALWAYS>::AsyncFuture ;
+using AsyncFuture = typename PROMISE_HELP<ITEM ,ALWAYS>::AsyncFuture ;
 } ;

@@ -117,7 +117,7 @@ trait VECTOR_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 			return mVector[y_] ;
 		}
 
-		inline VREF<ITEM> operator[] (CREF<INDEX> y_) leftvalue {
+		forceinline VREF<ITEM> operator[] (CREF<INDEX> y_) leftvalue {
 			return at (y_) ;
 		}
 
@@ -126,7 +126,7 @@ trait VECTOR_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 			return mVector[y_] ;
 		}
 
-		inline CREF<ITEM> operator[] (CREF<INDEX> y_) const leftvalue {
+		forceinline CREF<ITEM> operator[] (CREF<INDEX> y_) const leftvalue {
 			return at (y_) ;
 		}
 
@@ -134,11 +134,11 @@ trait VECTOR_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 			return operator_equal (mVector ,that.mVector) ;
 		}
 
-		inline BOOL operator== (CREF<Vector> that) const {
+		forceinline BOOL operator== (CREF<Vector> that) const {
 			return equal (that) ;
 		}
 
-		inline BOOL operator!= (CREF<Vector> that) const {
+		forceinline BOOL operator!= (CREF<Vector> that) const {
 			return ifnot (equal (that)) ;
 		}
 
@@ -146,19 +146,19 @@ trait VECTOR_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 			return operator_compr (mVector ,that.mVector) ;
 		}
 
-		inline BOOL operator< (CREF<Vector> that) const {
+		forceinline BOOL operator< (CREF<Vector> that) const {
 			return compr (that) < ZERO ;
 		}
 
-		inline BOOL operator<= (CREF<Vector> that) const {
+		forceinline BOOL operator<= (CREF<Vector> that) const {
 			return compr (that) <= ZERO ;
 		}
 
-		inline BOOL operator> (CREF<Vector> that) const {
+		forceinline BOOL operator> (CREF<Vector> that) const {
 			return compr (that) > ZERO ;
 		}
 
-		inline BOOL operator>= (CREF<Vector> that) const {
+		forceinline BOOL operator>= (CREF<Vector> that) const {
 			return compr (that) >= ZERO ;
 		}
 
@@ -173,7 +173,7 @@ trait VECTOR_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 			return move (ret) ;
 		}
 
-		inline Vector operator+ (CREF<Vector> that) const {
+		forceinline Vector operator+ (CREF<Vector> that) const {
 			return add (that) ;
 		}
 
@@ -182,7 +182,7 @@ trait VECTOR_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 				mVector[i] += that.mVector[i] ;
 		}
 
-		inline void operator+= (CREF<Vector> that) {
+		forceinline void operator+= (CREF<Vector> that) {
 			add_with (that) ;
 		}
 
@@ -193,7 +193,7 @@ trait VECTOR_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 			return move (ret) ;
 		}
 
-		inline Vector operator- (CREF<Vector> that) const {
+		forceinline Vector operator- (CREF<Vector> that) const {
 			return sub (that) ;
 		}
 
@@ -202,7 +202,7 @@ trait VECTOR_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 				mVector[i] -= that.mVector[i] ;
 		}
 
-		inline void operator-= (CREF<Vector> that) {
+		forceinline void operator-= (CREF<Vector> that) {
 			sub_with (that) ;
 		}
 
@@ -213,11 +213,11 @@ trait VECTOR_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 			return move (ret) ;
 		}
 
-		inline Vector operator* (CREF<ITEM> scale) const {
+		forceinline Vector operator* (CREF<ITEM> scale) const {
 			return mul (scale) ;
 		}
 
-		inline friend Vector operator* (CREF<ITEM> scale ,CREF<Vector> that) {
+		forceinline friend Vector operator* (CREF<ITEM> scale ,CREF<Vector> that) {
 			return that.mul (scale) ;
 		}
 
@@ -226,7 +226,7 @@ trait VECTOR_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 				mVector[i] *= scale ;
 		}
 
-		inline void operator*= (CREF<ITEM> scale) {
+		forceinline void operator*= (CREF<ITEM> scale) {
 			mul_with (scale) ;
 		}
 
@@ -237,7 +237,7 @@ trait VECTOR_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 			return move (ret) ;
 		}
 
-		inline ITEM operator* (CREF<Vector> that) const {
+		forceinline ITEM operator* (CREF<Vector> that) const {
 			return dot (that) ;
 		}
 
@@ -253,7 +253,7 @@ trait VECTOR_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 			return move (ret) ;
 		}
 
-		inline Vector operator* (CREF<Matrix> that) const {
+		forceinline Vector operator* (CREF<Matrix> that) const {
 			return mul (that) ;
 		}
 
@@ -268,15 +268,15 @@ trait VECTOR_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 			return move (ret) ;
 		}
 
-		inline Vector operator^ (CREF<Vector> that) const {
+		forceinline Vector operator^ (CREF<Vector> that) const {
 			return cross (that) ;
 		}
 
-		inline void operator^= (CREF<Vector> that) {
+		forceinline void operator^= (CREF<Vector> that) {
 			thiz = cross (that) ;
 		}
 
-		inline Vector operator+ () const {
+		forceinline Vector operator+ () const {
 			return thiz ;
 		}
 
@@ -287,7 +287,7 @@ trait VECTOR_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 			return move (ret) ;
 		}
 
-		inline Vector operator- () const {
+		forceinline Vector operator- () const {
 			return minus () ;
 		}
 
@@ -493,7 +493,7 @@ trait QUATERNION_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 			return mQuaternion[y_] ;
 		}
 
-		inline CREF<ITEM> operator[] (CREF<INDEX> y_) const leftvalue {
+		forceinline CREF<ITEM> operator[] (CREF<INDEX> y_) const leftvalue {
 			return at (y_) ;
 		}
 
@@ -501,11 +501,11 @@ trait QUATERNION_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 			return operator_equal (mQuaternion ,that.mQuaternion) ;
 		}
 
-		inline BOOL operator== (CREF<Quaternion> that) const {
+		forceinline BOOL operator== (CREF<Quaternion> that) const {
 			return equal (that) ;
 		}
 
-		inline BOOL operator!= (CREF<Quaternion> that) const {
+		forceinline BOOL operator!= (CREF<Quaternion> that) const {
 			return ifnot (equal (that)) ;
 		}
 
@@ -513,19 +513,19 @@ trait QUATERNION_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 			return operator_compr (mQuaternion ,that.mQuaternion) ;
 		}
 
-		inline BOOL operator< (CREF<Quaternion> that) const {
+		forceinline BOOL operator< (CREF<Quaternion> that) const {
 			return compr (that) < ZERO ;
 		}
 
-		inline BOOL operator<= (CREF<Quaternion> that) const {
+		forceinline BOOL operator<= (CREF<Quaternion> that) const {
 			return compr (that) <= ZERO ;
 		}
 
-		inline BOOL operator> (CREF<Quaternion> that) const {
+		forceinline BOOL operator> (CREF<Quaternion> that) const {
 			return compr (that) > ZERO ;
 		}
 
-		inline BOOL operator>= (CREF<Quaternion> that) const {
+		forceinline BOOL operator>= (CREF<Quaternion> that) const {
 			return compr (that) >= ZERO ;
 		}
 
@@ -593,7 +593,7 @@ trait MATRIX_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 			return at (xy.x ,xy.y) ;
 		}
 
-		inline VREF<ITEM> operator[] (CREF<PIXEL> xy) leftvalue {
+		forceinline VREF<ITEM> operator[] (CREF<PIXEL> xy) leftvalue {
 			return at (xy) ;
 		}
 
@@ -603,7 +603,7 @@ trait MATRIX_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 			return mMatrix[y_ * 4 + x_] ;
 		}
 
-		inline RowProxy<VREF<Matrix> ,ITEM> operator[] (CREF<INDEX> y_) leftvalue {
+		forceinline RowProxy<VREF<Matrix> ,ITEM> operator[] (CREF<INDEX> y_) leftvalue {
 			return RowProxy<VREF<Matrix> ,ITEM> (VRef<Matrix>::reference (thiz) ,y_) ;
 		}
 
@@ -611,7 +611,7 @@ trait MATRIX_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 			return at (xy.x ,xy.y) ;
 		}
 
-		inline CREF<ITEM> operator[] (CREF<PIXEL> xy) const leftvalue {
+		forceinline CREF<ITEM> operator[] (CREF<PIXEL> xy) const leftvalue {
 			return at (xy) ;
 		}
 
@@ -621,7 +621,7 @@ trait MATRIX_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 			return mMatrix[y_ * 4 + x_] ;
 		}
 
-		inline RowProxy<CREF<Matrix> ,ITEM> operator[] (CREF<INDEX> y_) const leftvalue {
+		forceinline RowProxy<CREF<Matrix> ,ITEM> operator[] (CREF<INDEX> y_) const leftvalue {
 			return RowProxy<CREF<Matrix> ,ITEM> (CRef<Matrix>::reference (thiz) ,y_) ;
 		}
 
@@ -629,11 +629,11 @@ trait MATRIX_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 			return operator_equal (mMatrix ,that.mMatrix) ;
 		}
 
-		inline BOOL operator== (CREF<Matrix> that) const {
+		forceinline BOOL operator== (CREF<Matrix> that) const {
 			return equal (that) ;
 		}
 
-		inline BOOL operator!= (CREF<Matrix> that) const {
+		forceinline BOOL operator!= (CREF<Matrix> that) const {
 			return ifnot (equal (that)) ;
 		}
 
@@ -641,19 +641,19 @@ trait MATRIX_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 			return operator_compr (mMatrix ,that.mMatrix) ;
 		}
 
-		inline BOOL operator< (CREF<Matrix> that) const {
+		forceinline BOOL operator< (CREF<Matrix> that) const {
 			return compr (that) < ZERO ;
 		}
 
-		inline BOOL operator<= (CREF<Matrix> that) const {
+		forceinline BOOL operator<= (CREF<Matrix> that) const {
 			return compr (that) <= ZERO ;
 		}
 
-		inline BOOL operator> (CREF<Matrix> that) const {
+		forceinline BOOL operator> (CREF<Matrix> that) const {
 			return compr (that) > ZERO ;
 		}
 
-		inline BOOL operator>= (CREF<Matrix> that) const {
+		forceinline BOOL operator>= (CREF<Matrix> that) const {
 			return compr (that) >= ZERO ;
 		}
 
@@ -668,7 +668,7 @@ trait MATRIX_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 			return move (ret) ;
 		}
 
-		inline Matrix operator+ (CREF<Matrix> that) const {
+		forceinline Matrix operator+ (CREF<Matrix> that) const {
 			return add (that) ;
 		}
 
@@ -677,7 +677,7 @@ trait MATRIX_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 				mMatrix[i] += that.mMatrix[i] ;
 		}
 
-		inline void operator+= (CREF<Matrix> that) {
+		forceinline void operator+= (CREF<Matrix> that) {
 			add_with (that) ;
 		}
 
@@ -688,7 +688,7 @@ trait MATRIX_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 			return move (ret) ;
 		}
 
-		inline Matrix operator- (CREF<Matrix> that) const {
+		forceinline Matrix operator- (CREF<Matrix> that) const {
 			return sub (that) ;
 		}
 
@@ -697,7 +697,7 @@ trait MATRIX_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 				mMatrix[i] -= that.mMatrix[i] ;
 		}
 
-		inline void operator-= (CREF<Matrix> that) {
+		forceinline void operator-= (CREF<Matrix> that) {
 			sub_with (that) ;
 		}
 
@@ -708,11 +708,11 @@ trait MATRIX_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 			return move (ret) ;
 		}
 
-		inline Matrix operator* (CREF<ITEM> scale) const {
+		forceinline Matrix operator* (CREF<ITEM> scale) const {
 			return mul (scale) ;
 		}
 
-		inline friend Matrix operator* (CREF<ITEM> scale ,CREF<Matrix> that) {
+		forceinline friend Matrix operator* (CREF<ITEM> scale ,CREF<Matrix> that) {
 			return that.mul (scale) ;
 		}
 
@@ -721,7 +721,7 @@ trait MATRIX_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 				mMatrix[i] *= scale ;
 		}
 
-		inline void operator*= (CREF<ITEM> scale) {
+		forceinline void operator*= (CREF<ITEM> scale) {
 			mul_with (scale) ;
 		}
 
@@ -737,7 +737,7 @@ trait MATRIX_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 			return move (ret) ;
 		}
 
-		inline Vector operator* (CREF<Vector> that) const {
+		forceinline Vector operator* (CREF<Vector> that) const {
 			return mul (that) ;
 		}
 
@@ -755,11 +755,11 @@ trait MATRIX_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 			return move (ret) ;
 		}
 
-		inline Matrix operator* (CREF<Matrix> that) const {
+		forceinline Matrix operator* (CREF<Matrix> that) const {
 			return mul (that) ;
 		}
 
-		inline Matrix operator+ () const {
+		forceinline Matrix operator+ () const {
 			return thiz ;
 		}
 
@@ -770,7 +770,7 @@ trait MATRIX_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 			return move (ret) ;
 		}
 
-		inline Matrix operator- () const {
+		forceinline Matrix operator- () const {
 			return minus () ;
 		}
 
@@ -951,7 +951,7 @@ trait MATRIX_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 		Matrix mV ;
 	} ;
 
-	class DiagMatrix extend Proxy {
+	class DiagMatrix implement Proxy {
 	public:
 		imports Matrix make (CREF<ITEM> x_ ,CREF<ITEM> y_ ,CREF<ITEM> z_ ,CREF<ITEM> w_) {
 			Matrix ret = Matrix::zero () ;
@@ -963,7 +963,7 @@ trait MATRIX_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 		}
 	} ;
 
-	class ShearMatrix extend Proxy {
+	class ShearMatrix implement Proxy {
 	public:
 		imports Matrix make (CREF<Vector> vx ,CREF<Vector> vy ,CREF<Vector> vz) {
 			const auto r1x = vx.normalize () ;
@@ -983,7 +983,7 @@ trait MATRIX_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 		}
 	} ;
 
-	class RotationMatrix extend Proxy {
+	class RotationMatrix implement Proxy {
 	public:
 		imports Matrix make (CREF<Vector> normal ,CREF<ITEM> angle) {
 			Matrix ret ;
@@ -1011,7 +1011,7 @@ trait MATRIX_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 		}
 	} ;
 
-	class TranslationMatrix extend Proxy {
+	class TranslationMatrix implement Proxy {
 	public:
 		imports Matrix make (CREF<Vector> t) {
 			return make (t[0] ,t[1] ,t[2]) ;
@@ -1026,7 +1026,7 @@ trait MATRIX_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 		}
 	} ;
 
-	class PerspectiveMatrix extend Proxy {
+	class PerspectiveMatrix implement Proxy {
 	public:
 		imports Matrix make (CREF<ITEM> fx ,CREF<ITEM> fy ,CREF<ITEM> wx ,CREF<ITEM> wy) {
 			assert (fx > ITEM (0)) ;
@@ -1039,7 +1039,7 @@ trait MATRIX_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 		}
 	} ;
 
-	class ProjectionMatrix extend Proxy {
+	class ProjectionMatrix implement Proxy {
 	public:
 		imports Matrix make (CREF<Vector> normal ,CREF<ITEM> center ,CREF<Vector> light) {
 			Matrix ret ;
@@ -1066,7 +1066,7 @@ trait MATRIX_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 		}
 	} ;
 
-	class ViewMatrix extend Proxy {
+	class ViewMatrix implement Proxy {
 	public:
 		imports Matrix make (CREF<Vector> vx ,CREF<Vector> vy) {
 			const auto r1x = vx.normalize () ;
@@ -1132,7 +1132,7 @@ trait MATRIX_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 		}
 	} ;
 
-	class CrossProductMatrix extend Proxy {
+	class CrossProductMatrix implement Proxy {
 	public:
 		imports Matrix make (CREF<Vector> vx) {
 			assert (vx[3] == ITEM (0)) ;
@@ -1144,7 +1144,7 @@ trait MATRIX_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 		}
 	} ;
 
-	class SymmetryMatrix extend Proxy {
+	class SymmetryMatrix implement Proxy {
 	public:
 		imports Matrix make (CREF<Vector> vx ,CREF<Vector> vy) {
 			Matrix ret ;
@@ -1156,7 +1156,7 @@ trait MATRIX_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 		}
 	} ;
 
-	class ReflectionMatrix extend Proxy {
+	class ReflectionMatrix implement Proxy {
 	public:
 		imports Matrix make (CREF<Vector> normal) {
 			const auto r1x = normal.normalize () ;

@@ -64,15 +64,13 @@ trait BYTEATTRIBUTE_IMPLHOLDER_HELP ;
 template <class DEPEND>
 trait BYTEATTRIBUTE_HELP<DEPEND ,ALWAYS> {
 	struct Holder implement Interface {
+		imports VRef<Holder> create () ;
+
 		virtual void initialize () = 0 ;
 		virtual void initialize (RREF<CRef<Holder>> prefix) = 0 ;
 		virtual BYTE ending_item () const = 0 ;
 		virtual BYTE space_item () const = 0 ;
 		virtual BOOL is_big_endian () const = 0 ;
-	} ;
-
-	struct FUNCTION_extern {
-		imports VRef<Holder> invoke () ;
 	} ;
 
 	class ByteAttribute {
@@ -83,9 +81,9 @@ trait BYTEATTRIBUTE_HELP<DEPEND ,ALWAYS> {
 		implicit ByteAttribute () = default ;
 
 		explicit ByteAttribute (CREF<BoolProxy> ok) {
-			auto rax = FUNCTION_extern::invoke () ;
+			auto rax = Holder::create () ;
 			rax->initialize () ;
-			mThis = rax.as_cref () ;
+			mThis = move (rax) ;
 		}
 
 		template <class ARG1>
@@ -93,7 +91,7 @@ trait BYTEATTRIBUTE_HELP<DEPEND ,ALWAYS> {
 			require (IS_EXTEND<Holder ,ARG1>) ;
 			auto rax = VRef<ARG1>::make () ;
 			rax->initialize (move (mThis)) ;
-			mThis = rax.as_cref () ;
+			mThis = move (rax) ;
 		}
 
 		BYTE ending_item () const {
@@ -122,7 +120,7 @@ trait BYTEATTRIBUTE_PUREHOLDER_HELP<DEPEND ,ALWAYS> {
 		void initialize () override {
 			assert (FALSE) ;
 		}
-		
+
 		void initialize (RREF<CRef<Holder>> prefix) override {
 			mPrefix = move (prefix) ;
 		}
@@ -156,8 +154,12 @@ trait BYTEREADER_HELP<DEPEND ,ALWAYS> {
 	struct Binder implement Interface {
 		virtual void friend_read (VREF<ByteReader> reader) = 0 ;
 	} ;
+		
+	struct Layout ;
 
 	struct Holder implement Interface {
+		imports VRef<Holder> create () ;
+
 		virtual void initialize (RREF<CRef<RegBuffer<BYTE>>> stream) = 0 ;
 		virtual VREF<ByteAttribute> attribute () leftvalue = 0 ;
 		virtual LENGTH size () const = 0 ;
@@ -188,28 +190,28 @@ trait BYTEREADER_HELP<DEPEND ,ALWAYS> {
 		virtual void read_eos () = 0 ;
 	} ;
 
-	struct FUNCTION_extern {
-		imports VRef<Holder> invoke () ;
+	struct Layout {
+		VRef<Holder> mThis ;
 	} ;
 
-	class ByteReader {
+	class ByteReader implement Layout {
 	protected:
-		VRef<Holder> mThis ;
+		using Layout::mThis ;
 
 	public:
 		implicit ByteReader () = default ;
 
-		explicit ByteReader (RREF<VRef<Holder>> that) {
-			mThis = move (that) ;
+		explicit ByteReader (RREF<Layout> that) {
+			mThis = move (that.mThis) ;
 		}
 
 		explicit ByteReader (RREF<CRef<RegBuffer<BYTE>>> stream) {
-			mThis = FUNCTION_extern::invoke () ;
+			mThis = Holder::create () ;
 			mThis->initialize (move (stream)) ;
 		}
 
 		explicit ByteReader (RREF<VRef<RegBuffer<BYTE>>> stream)
-			:ByteReader (stream.as_cref ()) {}
+			:ByteReader (CRef<RegBuffer<BYTE>> (move (stream))) {}
 
 		VREF<ByteAttribute> attribute () leftvalue {
 			return mThis->attribute () ;
@@ -264,7 +266,7 @@ trait BYTEREADER_HELP<DEPEND ,ALWAYS> {
 			return mThis->read (item) ;
 		}
 
-		inline VREF<ByteReader> operator>> (VREF<BYTE> item) {
+		forceinline VREF<ByteReader> operator>> (VREF<BYTE> item) {
 			read (item) ;
 			return thiz ;
 		}
@@ -273,7 +275,7 @@ trait BYTEREADER_HELP<DEPEND ,ALWAYS> {
 			return mThis->read (item) ;
 		}
 
-		inline VREF<ByteReader> operator>> (VREF<WORD> item) {
+		forceinline VREF<ByteReader> operator>> (VREF<WORD> item) {
 			read (item) ;
 			return thiz ;
 		}
@@ -282,7 +284,7 @@ trait BYTEREADER_HELP<DEPEND ,ALWAYS> {
 			return mThis->read (item) ;
 		}
 
-		inline VREF<ByteReader> operator>> (VREF<CHAR> item) {
+		forceinline VREF<ByteReader> operator>> (VREF<CHAR> item) {
 			read (item) ;
 			return thiz ;
 		}
@@ -291,7 +293,7 @@ trait BYTEREADER_HELP<DEPEND ,ALWAYS> {
 			return mThis->read (item) ;
 		}
 
-		inline VREF<ByteReader> operator>> (VREF<DATA> item) {
+		forceinline VREF<ByteReader> operator>> (VREF<DATA> item) {
 			read (item) ;
 			return thiz ;
 		}
@@ -300,7 +302,7 @@ trait BYTEREADER_HELP<DEPEND ,ALWAYS> {
 			return mThis->read (item) ;
 		}
 
-		inline VREF<ByteReader> operator>> (VREF<BOOL> item) {
+		forceinline VREF<ByteReader> operator>> (VREF<BOOL> item) {
 			read (item) ;
 			return thiz ;
 		}
@@ -309,7 +311,7 @@ trait BYTEREADER_HELP<DEPEND ,ALWAYS> {
 			return mThis->read (item) ;
 		}
 
-		inline VREF<ByteReader> operator>> (VREF<VAL32> item) {
+		forceinline VREF<ByteReader> operator>> (VREF<VAL32> item) {
 			read (item) ;
 			return thiz ;
 		}
@@ -318,7 +320,7 @@ trait BYTEREADER_HELP<DEPEND ,ALWAYS> {
 			return mThis->read (item) ;
 		}
 
-		inline VREF<ByteReader> operator>> (VREF<VAL64> item) {
+		forceinline VREF<ByteReader> operator>> (VREF<VAL64> item) {
 			read (item) ;
 			return thiz ;
 		}
@@ -327,7 +329,7 @@ trait BYTEREADER_HELP<DEPEND ,ALWAYS> {
 			return mThis->read (item) ;
 		}
 
-		inline VREF<ByteReader> operator>> (VREF<SINGLE> item) {
+		forceinline VREF<ByteReader> operator>> (VREF<SINGLE> item) {
 			read (item) ;
 			return thiz ;
 		}
@@ -336,7 +338,7 @@ trait BYTEREADER_HELP<DEPEND ,ALWAYS> {
 			return mThis->read (item) ;
 		}
 
-		inline VREF<ByteReader> operator>> (VREF<DOUBLE> item) {
+		forceinline VREF<ByteReader> operator>> (VREF<DOUBLE> item) {
 			read (item) ;
 			return thiz ;
 		}
@@ -345,7 +347,7 @@ trait BYTEREADER_HELP<DEPEND ,ALWAYS> {
 			return mThis->read (item) ;
 		}
 
-		inline VREF<ByteReader> operator>> (CREF<Slice<STR>> item) {
+		forceinline VREF<ByteReader> operator>> (CREF<Slice<STR>> item) {
 			read (item) ;
 			return thiz ;
 		}
@@ -354,7 +356,7 @@ trait BYTEREADER_HELP<DEPEND ,ALWAYS> {
 			return mThis->read (item) ;
 		}
 
-		inline VREF<ByteReader> operator>> (VREF<String<STRA>> item) {
+		forceinline VREF<ByteReader> operator>> (VREF<String<STRA>> item) {
 			read (item) ;
 			return thiz ;
 		}
@@ -363,7 +365,7 @@ trait BYTEREADER_HELP<DEPEND ,ALWAYS> {
 			return mThis->read (item) ;
 		}
 
-		inline VREF<ByteReader> operator>> (VREF<String<STRW>> item) {
+		forceinline VREF<ByteReader> operator>> (VREF<String<STRW>> item) {
 			read (item) ;
 			return thiz ;
 		}
@@ -372,7 +374,7 @@ trait BYTEREADER_HELP<DEPEND ,ALWAYS> {
 			return mThis->read (item) ;
 		}
 
-		inline VREF<ByteReader> operator>> (VREF<String<STRU8>> item) {
+		forceinline VREF<ByteReader> operator>> (VREF<String<STRU8>> item) {
 			read (item) ;
 			return thiz ;
 		}
@@ -381,7 +383,7 @@ trait BYTEREADER_HELP<DEPEND ,ALWAYS> {
 			return mThis->read (item) ;
 		}
 
-		inline VREF<ByteReader> operator>> (VREF<String<STRU16>> item) {
+		forceinline VREF<ByteReader> operator>> (VREF<String<STRU16>> item) {
 			read (item) ;
 			return thiz ;
 		}
@@ -390,7 +392,7 @@ trait BYTEREADER_HELP<DEPEND ,ALWAYS> {
 			return mThis->read (item) ;
 		}
 
-		inline VREF<ByteReader> operator>> (VREF<String<STRU32>> item) {
+		forceinline VREF<ByteReader> operator>> (VREF<String<STRU32>> item) {
 			read (item) ;
 			return thiz ;
 		}
@@ -399,7 +401,7 @@ trait BYTEREADER_HELP<DEPEND ,ALWAYS> {
 			return item.friend_read (thiz) ;
 		}
 
-		inline VREF<ByteReader> operator>> (VREF<Binder> item) {
+		forceinline VREF<ByteReader> operator>> (VREF<Binder> item) {
 			read (item) ;
 			return thiz ;
 		}
@@ -408,7 +410,7 @@ trait BYTEREADER_HELP<DEPEND ,ALWAYS> {
 			return mThis->read_cls () ;
 		}
 
-		inline VREF<ByteReader> operator>> (CREF<typeof (CLS)> item) {
+		forceinline VREF<ByteReader> operator>> (CREF<typeof (CLS)> item) {
 			read (item) ;
 			return thiz ;
 		}
@@ -417,7 +419,7 @@ trait BYTEREADER_HELP<DEPEND ,ALWAYS> {
 			return mThis->read_gap () ;
 		}
 
-		inline VREF<ByteReader> operator>> (CREF<typeof (GAP)> item) {
+		forceinline VREF<ByteReader> operator>> (CREF<typeof (GAP)> item) {
 			read (item) ;
 			return thiz ;
 		}
@@ -426,7 +428,7 @@ trait BYTEREADER_HELP<DEPEND ,ALWAYS> {
 			return mThis->read_eos () ;
 		}
 
-		inline VREF<ByteReader> operator>> (CREF<typeof (EOS)> item) {
+		forceinline VREF<ByteReader> operator>> (CREF<typeof (EOS)> item) {
 			read (item) ;
 			return thiz ;
 		}
@@ -446,10 +448,18 @@ trait BYTEWRITER_HELP<DEPEND ,ALWAYS> {
 	class ByteWriter ;
 
 	struct Binder implement Interface {
+		virtual void friend_write (VREF<ByteWriter> writer) {
+			return keep[TYPEAS<CREF<Binder>>::expr] (thiz).friend_write (writer) ;
+		}
+
 		virtual void friend_write (VREF<ByteWriter> writer) const = 0 ;
 	} ;
+	
+	struct Layout ;
 
 	struct Holder implement Interface {
+		imports VRef<Holder> create () ;
+
 		virtual void initialize (RREF<VRef<RegBuffer<BYTE>>> stream) = 0 ;
 		virtual VREF<ByteAttribute> attribute () leftvalue = 0 ;
 		virtual LENGTH size () const = 0 ;
@@ -474,29 +484,30 @@ trait BYTEWRITER_HELP<DEPEND ,ALWAYS> {
 		virtual void write (CREF<String<STRU8>> item) = 0 ;
 		virtual void write (CREF<String<STRU16>> item) = 0 ;
 		virtual void write (CREF<String<STRU32>> item) = 0 ;
+		virtual void write (VREF<Binder> item) = 0 ;
 		virtual void write (CREF<Binder> item) = 0 ;
 		virtual void write_cls () = 0 ;
 		virtual void write_gap () = 0 ;
 		virtual void write_eos () = 0 ;
 	} ;
 
-	struct FUNCTION_extern {
-		imports VRef<Holder> invoke () ;
+	struct Layout {
+		VRef<Holder> mThis ;
 	} ;
 
-	class ByteWriter {
+	class ByteWriter implement Layout {
 	protected:
-		VRef<Holder> mThis ;
+		using Layout::mThis ;
 
 	public:
 		implicit ByteWriter () = default ;
 
-		explicit ByteWriter (RREF<VRef<Holder>> that) {
-			mThis = move (that) ;
+		explicit ByteWriter (RREF<Layout> that) {
+			mThis = move (that.mThis) ;
 		}
 
 		explicit ByteWriter (RREF<VRef<RegBuffer<BYTE>>> stream) {
-			mThis = FUNCTION_extern::invoke () ;
+			mThis = Holder::create () ;
 			mThis->initialize (move (stream)) ;
 		}
 
@@ -546,7 +557,7 @@ trait BYTEWRITER_HELP<DEPEND ,ALWAYS> {
 			return mThis->write (item) ;
 		}
 
-		inline VREF<ByteWriter> operator<< (CREF<BYTE> item) {
+		forceinline VREF<ByteWriter> operator<< (CREF<BYTE> item) {
 			write (item) ;
 			return thiz ;
 		}
@@ -555,7 +566,7 @@ trait BYTEWRITER_HELP<DEPEND ,ALWAYS> {
 			return mThis->write (item) ;
 		}
 
-		inline VREF<ByteWriter> operator<< (CREF<WORD> item) {
+		forceinline VREF<ByteWriter> operator<< (CREF<WORD> item) {
 			write (item) ;
 			return thiz ;
 		}
@@ -564,7 +575,7 @@ trait BYTEWRITER_HELP<DEPEND ,ALWAYS> {
 			return mThis->write (item) ;
 		}
 
-		inline VREF<ByteWriter> operator<< (CREF<CHAR> item) {
+		forceinline VREF<ByteWriter> operator<< (CREF<CHAR> item) {
 			write (item) ;
 			return thiz ;
 		}
@@ -573,7 +584,7 @@ trait BYTEWRITER_HELP<DEPEND ,ALWAYS> {
 			return mThis->write (item) ;
 		}
 
-		inline VREF<ByteWriter> operator<< (CREF<DATA> item) {
+		forceinline VREF<ByteWriter> operator<< (CREF<DATA> item) {
 			write (item) ;
 			return thiz ;
 		}
@@ -582,20 +593,20 @@ trait BYTEWRITER_HELP<DEPEND ,ALWAYS> {
 			return mThis->write (item) ;
 		}
 
-		inline VREF<ByteWriter> operator<< (CREF<BOOL> item) {
+		forceinline VREF<ByteWriter> operator<< (CREF<BOOL> item) {
 			write (item) ;
 			return thiz ;
 		}
 
 		void write (CREF<csc_const_pointer_t>) = delete ;
 
-		inline VREF<ByteWriter> operator<< (CREF<csc_const_pointer_t>) = delete ;
+		forceinline VREF<ByteWriter> operator<< (CREF<csc_const_pointer_t>) = delete ;
 
 		void write (CREF<VAL32> item) {
 			return mThis->write (item) ;
 		}
 
-		inline VREF<ByteWriter> operator<< (CREF<VAL32> item) {
+		forceinline VREF<ByteWriter> operator<< (CREF<VAL32> item) {
 			write (item) ;
 			return thiz ;
 		}
@@ -604,7 +615,7 @@ trait BYTEWRITER_HELP<DEPEND ,ALWAYS> {
 			return mThis->write (item) ;
 		}
 
-		inline VREF<ByteWriter> operator<< (CREF<VAL64> item) {
+		forceinline VREF<ByteWriter> operator<< (CREF<VAL64> item) {
 			write (item) ;
 			return thiz ;
 		}
@@ -613,7 +624,7 @@ trait BYTEWRITER_HELP<DEPEND ,ALWAYS> {
 			return mThis->write (item) ;
 		}
 
-		inline VREF<ByteWriter> operator<< (CREF<SINGLE> item) {
+		forceinline VREF<ByteWriter> operator<< (CREF<SINGLE> item) {
 			write (item) ;
 			return thiz ;
 		}
@@ -622,7 +633,7 @@ trait BYTEWRITER_HELP<DEPEND ,ALWAYS> {
 			return mThis->write (item) ;
 		}
 
-		inline VREF<ByteWriter> operator<< (CREF<DOUBLE> item) {
+		forceinline VREF<ByteWriter> operator<< (CREF<DOUBLE> item) {
 			write (item) ;
 			return thiz ;
 		}
@@ -631,7 +642,7 @@ trait BYTEWRITER_HELP<DEPEND ,ALWAYS> {
 			return mThis->write (item) ;
 		}
 
-		inline VREF<ByteWriter> operator<< (CREF<Slice<STR>> item) {
+		forceinline VREF<ByteWriter> operator<< (CREF<Slice<STR>> item) {
 			write (item) ;
 			return thiz ;
 		}
@@ -640,7 +651,7 @@ trait BYTEWRITER_HELP<DEPEND ,ALWAYS> {
 			return mThis->write (item) ;
 		}
 
-		inline VREF<ByteWriter> operator<< (CREF<String<STRA>> item) {
+		forceinline VREF<ByteWriter> operator<< (CREF<String<STRA>> item) {
 			write (item) ;
 			return thiz ;
 		}
@@ -649,7 +660,7 @@ trait BYTEWRITER_HELP<DEPEND ,ALWAYS> {
 			return mThis->write (item) ;
 		}
 
-		inline VREF<ByteWriter> operator<< (CREF<String<STRW>> item) {
+		forceinline VREF<ByteWriter> operator<< (CREF<String<STRW>> item) {
 			write (item) ;
 			return thiz ;
 		}
@@ -658,7 +669,7 @@ trait BYTEWRITER_HELP<DEPEND ,ALWAYS> {
 			return mThis->write (item) ;
 		}
 
-		inline VREF<ByteWriter> operator<< (CREF<String<STRU8>> item) {
+		forceinline VREF<ByteWriter> operator<< (CREF<String<STRU8>> item) {
 			write (item) ;
 			return thiz ;
 		}
@@ -667,7 +678,7 @@ trait BYTEWRITER_HELP<DEPEND ,ALWAYS> {
 			return mThis->write (item) ;
 		}
 
-		inline VREF<ByteWriter> operator<< (CREF<String<STRU16>> item) {
+		forceinline VREF<ByteWriter> operator<< (CREF<String<STRU16>> item) {
 			write (item) ;
 			return thiz ;
 		}
@@ -676,7 +687,16 @@ trait BYTEWRITER_HELP<DEPEND ,ALWAYS> {
 			return mThis->write (item) ;
 		}
 
-		inline VREF<ByteWriter> operator<< (CREF<String<STRU32>> item) {
+		forceinline VREF<ByteWriter> operator<< (CREF<String<STRU32>> item) {
+			write (item) ;
+			return thiz ;
+		}
+
+		void write (VREF<Binder> item) {
+			return item.friend_write (thiz) ;
+		}
+
+		forceinline VREF<ByteWriter> operator<< (VREF<Binder> item) {
 			write (item) ;
 			return thiz ;
 		}
@@ -685,7 +705,7 @@ trait BYTEWRITER_HELP<DEPEND ,ALWAYS> {
 			return item.friend_write (thiz) ;
 		}
 
-		inline VREF<ByteWriter> operator<< (CREF<Binder> item) {
+		forceinline VREF<ByteWriter> operator<< (CREF<Binder> item) {
 			write (item) ;
 			return thiz ;
 		}
@@ -694,7 +714,7 @@ trait BYTEWRITER_HELP<DEPEND ,ALWAYS> {
 			return mThis->write_cls () ;
 		}
 
-		inline VREF<ByteWriter> operator<< (CREF<typeof (CLS)> item) {
+		forceinline VREF<ByteWriter> operator<< (CREF<typeof (CLS)> item) {
 			write (item) ;
 			return thiz ;
 		}
@@ -703,7 +723,7 @@ trait BYTEWRITER_HELP<DEPEND ,ALWAYS> {
 			return mThis->write_gap () ;
 		}
 
-		inline VREF<ByteWriter> operator<< (CREF<typeof (GAP)> item) {
+		forceinline VREF<ByteWriter> operator<< (CREF<typeof (GAP)> item) {
 			write (item) ;
 			return thiz ;
 		}
@@ -712,7 +732,7 @@ trait BYTEWRITER_HELP<DEPEND ,ALWAYS> {
 			return mThis->write_eos () ;
 		}
 
-		inline VREF<ByteWriter> operator<< (CREF<typeof (EOS)> item) {
+		forceinline VREF<ByteWriter> operator<< (CREF<typeof (EOS)> item) {
 			write (item) ;
 			return thiz ;
 		}
@@ -733,6 +753,8 @@ trait TEXTATTRIBUTE_IMPLHOLDER_HELP ;
 template <class ITEM>
 trait TEXTATTRIBUTE_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 	struct Holder implement Interface {
+		imports VRef<Holder> create () ;
+
 		virtual void initialize () = 0 ;
 		virtual void initialize (RREF<CRef<Holder>> prefix) = 0 ;
 		virtual ITEM ending_item () const = 0 ;
@@ -755,10 +777,6 @@ trait TEXTATTRIBUTE_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 		virtual LENGTH number_precision () const = 0 ;
 	} ;
 
-	struct FUNCTION_extern {
-		imports VRef<Holder> invoke () ;
-	} ;
-
 	class TextAttribute {
 	protected:
 		CRef<Holder> mThis ;
@@ -767,9 +785,9 @@ trait TEXTATTRIBUTE_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 		implicit TextAttribute () = default ;
 
 		explicit TextAttribute (CREF<BoolProxy> ok) {
-			auto rax = FUNCTION_extern::invoke () ;
+			auto rax = Holder::create () ;
 			rax->initialize () ;
-			mThis = rax.as_cref () ;
+			mThis = move (rax) ;
 		}
 
 		template <class ARG1>
@@ -777,7 +795,7 @@ trait TEXTATTRIBUTE_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 			require (IS_EXTEND<Holder ,ARG1>) ;
 			auto rax = VRef<ARG1>::make () ;
 			rax->initialize (move (mThis)) ;
-			mThis = rax.as_cref () ;
+			mThis = move (rax) ;
 		}
 
 		ITEM ending_item () const {
@@ -964,7 +982,11 @@ trait TEXTREADER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 		virtual void friend_read (VREF<TextReader> reader) = 0 ;
 	} ;
 
+	struct Layout ;
+
 	struct Holder implement Interface {
+		imports VRef<Holder> create () ;
+
 		virtual void initialize (RREF<CRef<RegBuffer<ITEM>>> stream) = 0 ;
 		virtual VREF<TextAttribute<ITEM>> attribute () leftvalue = 0 ;
 		virtual LENGTH size () const = 0 ;
@@ -993,28 +1015,28 @@ trait TEXTREADER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 		virtual void read_eos () = 0 ;
 	} ;
 
-	struct FUNCTION_extern {
-		imports VRef<Holder> invoke () ;
+	struct Layout {
+		VRef<Holder> mThis ;
 	} ;
 
-	class TextReader {
+	class TextReader implement Layout {
 	protected:
-		VRef<Holder> mThis ;
+		using Layout::mThis ;
 
 	public:
 		implicit TextReader () = default ;
 
-		explicit TextReader (RREF<VRef<Holder>> that) {
-			mThis = move (that) ;
+		explicit TextReader (RREF<Layout> that) {
+			mThis = move (that.mThis) ;
 		}
 
 		explicit TextReader (RREF<CRef<RegBuffer<ITEM>>> stream) {
-			mThis = FUNCTION_extern::invoke () ;
+			mThis = Holder::create () ;
 			mThis->initialize (move (stream)) ;
 		}
 
 		explicit TextReader (RREF<VRef<RegBuffer<ITEM>>> stream)
-			:TextReader (stream.as_cref ()) {}
+			:TextReader (CRef<RegBuffer<ITEM>> (move (stream))) {}
 
 		VREF<TextAttribute<ITEM>> attribute () leftvalue {
 			return mThis->attribute () ;
@@ -1069,7 +1091,7 @@ trait TEXTREADER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 			return mThis->read (item) ;
 		}
 
-		inline VREF<TextReader> operator>> (VREF<ITEM> item) {
+		forceinline VREF<TextReader> operator>> (VREF<ITEM> item) {
 			read (item) ;
 			return thiz ;
 		}
@@ -1078,7 +1100,7 @@ trait TEXTREADER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 			return mThis->read (item) ;
 		}
 
-		inline VREF<TextReader> operator>> (VREF<BOOL> item) {
+		forceinline VREF<TextReader> operator>> (VREF<BOOL> item) {
 			read (item) ;
 			return thiz ;
 		}
@@ -1087,7 +1109,7 @@ trait TEXTREADER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 			return mThis->read (item) ;
 		}
 
-		inline VREF<TextReader> operator>> (VREF<VAL32> item) {
+		forceinline VREF<TextReader> operator>> (VREF<VAL32> item) {
 			read (item) ;
 			return thiz ;
 		}
@@ -1096,7 +1118,7 @@ trait TEXTREADER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 			return mThis->read (item) ;
 		}
 
-		inline VREF<TextReader> operator>> (VREF<VAL64> item) {
+		forceinline VREF<TextReader> operator>> (VREF<VAL64> item) {
 			read (item) ;
 			return thiz ;
 		}
@@ -1105,7 +1127,7 @@ trait TEXTREADER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 			return mThis->read (item) ;
 		}
 
-		inline VREF<TextReader> operator>> (VREF<SINGLE> item) {
+		forceinline VREF<TextReader> operator>> (VREF<SINGLE> item) {
 			read (item) ;
 			return thiz ;
 		}
@@ -1114,7 +1136,7 @@ trait TEXTREADER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 			return mThis->read (item) ;
 		}
 
-		inline VREF<TextReader> operator>> (VREF<DOUBLE> item) {
+		forceinline VREF<TextReader> operator>> (VREF<DOUBLE> item) {
 			read (item) ;
 			return thiz ;
 		}
@@ -1123,7 +1145,7 @@ trait TEXTREADER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 			return mThis->read (item) ;
 		}
 
-		inline VREF<TextReader> operator>> (VREF<BYTE> item) {
+		forceinline VREF<TextReader> operator>> (VREF<BYTE> item) {
 			read (item) ;
 			return thiz ;
 		}
@@ -1132,7 +1154,7 @@ trait TEXTREADER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 			return mThis->read (item) ;
 		}
 
-		inline VREF<TextReader> operator>> (VREF<WORD> item) {
+		forceinline VREF<TextReader> operator>> (VREF<WORD> item) {
 			read (item) ;
 			return thiz ;
 		}
@@ -1141,7 +1163,7 @@ trait TEXTREADER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 			return mThis->read (item) ;
 		}
 
-		inline VREF<TextReader> operator>> (VREF<CHAR> item) {
+		forceinline VREF<TextReader> operator>> (VREF<CHAR> item) {
 			read (item) ;
 			return thiz ;
 		}
@@ -1150,7 +1172,7 @@ trait TEXTREADER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 			return mThis->read (item) ;
 		}
 
-		inline VREF<TextReader> operator>> (VREF<DATA> item) {
+		forceinline VREF<TextReader> operator>> (VREF<DATA> item) {
 			read (item) ;
 			return thiz ;
 		}
@@ -1159,7 +1181,7 @@ trait TEXTREADER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 			return mThis->read (item) ;
 		}
 
-		inline VREF<TextReader> operator>> (CREF<Slice<STR>> item) {
+		forceinline VREF<TextReader> operator>> (CREF<Slice<STR>> item) {
 			read (item) ;
 			return thiz ;
 		}
@@ -1168,7 +1190,7 @@ trait TEXTREADER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 			return mThis->read (item) ;
 		}
 
-		inline VREF<TextReader> operator>> (VREF<String<ITEM>> item) {
+		forceinline VREF<TextReader> operator>> (VREF<String<ITEM>> item) {
 			read (item) ;
 			return thiz ;
 		}
@@ -1177,7 +1199,7 @@ trait TEXTREADER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 			return item.friend_read (thiz) ;
 		}
 
-		inline VREF<TextReader> operator>> (VREF<Binder> item) {
+		forceinline VREF<TextReader> operator>> (VREF<Binder> item) {
 			read (item) ;
 			return thiz ;
 		}
@@ -1186,7 +1208,7 @@ trait TEXTREADER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 			return mThis->read_cls () ;
 		}
 
-		inline VREF<TextReader> operator>> (CREF<typeof (CLS)> item) {
+		forceinline VREF<TextReader> operator>> (CREF<typeof (CLS)> item) {
 			read (item) ;
 			return thiz ;
 		}
@@ -1195,7 +1217,7 @@ trait TEXTREADER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 			return mThis->read_bom () ;
 		}
 
-		inline VREF<TextReader> operator>> (CREF<typeof (BOM)> item) {
+		forceinline VREF<TextReader> operator>> (CREF<typeof (BOM)> item) {
 			read (item) ;
 			return thiz ;
 		}
@@ -1204,7 +1226,7 @@ trait TEXTREADER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 			return mThis->read_gap () ;
 		}
 
-		inline VREF<TextReader> operator>> (CREF<typeof (GAP)> item) {
+		forceinline VREF<TextReader> operator>> (CREF<typeof (GAP)> item) {
 			read (item) ;
 			return thiz ;
 		}
@@ -1213,7 +1235,7 @@ trait TEXTREADER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 			return mThis->read_eos () ;
 		}
 
-		inline VREF<TextReader> operator>> (CREF<typeof (EOS)> item) {
+		forceinline VREF<TextReader> operator>> (CREF<typeof (EOS)> item) {
 			read (item) ;
 			return thiz ;
 		}
@@ -1234,10 +1256,18 @@ trait TEXTWRITER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 	class TextWriter ;
 
 	struct Binder implement Interface {
+		virtual void friend_write (VREF<TextWriter> writer) {
+			return keep[TYPEAS<CREF<Binder>>::expr] (thiz).friend_write (writer) ;
+		}
+
 		virtual void friend_write (VREF<TextWriter> writer) const = 0 ;
 	} ;
 
+	struct Layout ;
+
 	struct Holder implement Interface {
+		imports VRef<Holder> create () ;
+
 		virtual void initialize (RREF<VRef<RegBuffer<ITEM>>> stream) = 0 ;
 		virtual VREF<TextAttribute<ITEM>> attribute () leftvalue = 0 ;
 		virtual LENGTH size () const = 0 ;
@@ -1259,6 +1289,7 @@ trait TEXTWRITER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 		virtual void write (CREF<DATA> item) = 0 ;
 		virtual void write (CREF<Slice<STR>> item) = 0 ;
 		virtual void write (CREF<String<ITEM>> item) = 0 ;
+		virtual void write (VREF<Binder> item) = 0 ;
 		virtual void write (CREF<Binder> item) = 0 ;
 		virtual void write_cls () = 0 ;
 		virtual void write_bom () = 0 ;
@@ -1266,23 +1297,23 @@ trait TEXTWRITER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 		virtual void write_eos () = 0 ;
 	} ;
 
-	struct FUNCTION_extern {
-		imports VRef<Holder> invoke () ;
+	struct Layout {
+		VRef<Holder> mThis ;
 	} ;
 
-	class TextWriter {
+	class TextWriter implement Layout {
 	protected:
-		VRef<Holder> mThis ;
+		using Layout::mThis ;
 
 	public:
 		implicit TextWriter () = default ;
 
-		explicit TextWriter (RREF<VRef<Holder>> that) {
-			mThis = move (that) ;
+		explicit TextWriter (RREF<Layout> that) {
+			mThis = move (that.mThis) ;
 		}
 
 		explicit TextWriter (RREF<VRef<RegBuffer<ITEM>>> stream) {
-			mThis = FUNCTION_extern::invoke () ;
+			mThis = Holder::create () ;
 			mThis->initialize (move (stream)) ;
 		}
 
@@ -1332,7 +1363,7 @@ trait TEXTWRITER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 			return mThis->write (item) ;
 		}
 
-		inline VREF<TextWriter> operator<< (CREF<ITEM> item) {
+		forceinline VREF<TextWriter> operator<< (CREF<ITEM> item) {
 			write (item) ;
 			return thiz ;
 		}
@@ -1341,20 +1372,20 @@ trait TEXTWRITER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 			return mThis->write (item) ;
 		}
 
-		inline VREF<TextWriter> operator<< (CREF<BOOL> item) {
+		forceinline VREF<TextWriter> operator<< (CREF<BOOL> item) {
 			write (item) ;
 			return thiz ;
 		}
 
 		void write (CREF<csc_const_pointer_t>) = delete ;
 
-		inline VREF<ByteWriter> operator<< (CREF<csc_const_pointer_t>) = delete ;
+		forceinline VREF<ByteWriter> operator<< (CREF<csc_const_pointer_t>) = delete ;
 
 		void write (CREF<VAL32> item) {
 			return mThis->write (item) ;
 		}
 
-		inline VREF<TextWriter> operator<< (CREF<VAL32> item) {
+		forceinline VREF<TextWriter> operator<< (CREF<VAL32> item) {
 			write (item) ;
 			return thiz ;
 		}
@@ -1363,7 +1394,7 @@ trait TEXTWRITER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 			return mThis->write (item) ;
 		}
 
-		inline VREF<TextWriter> operator<< (CREF<VAL64> item) {
+		forceinline VREF<TextWriter> operator<< (CREF<VAL64> item) {
 			write (item) ;
 			return thiz ;
 		}
@@ -1372,7 +1403,7 @@ trait TEXTWRITER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 			return mThis->write (item) ;
 		}
 
-		inline VREF<TextWriter> operator<< (CREF<SINGLE> item) {
+		forceinline VREF<TextWriter> operator<< (CREF<SINGLE> item) {
 			write (item) ;
 			return thiz ;
 		}
@@ -1381,7 +1412,7 @@ trait TEXTWRITER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 			return mThis->write (item) ;
 		}
 
-		inline VREF<TextWriter> operator<< (CREF<DOUBLE> item) {
+		forceinline VREF<TextWriter> operator<< (CREF<DOUBLE> item) {
 			write (item) ;
 			return thiz ;
 		}
@@ -1390,7 +1421,7 @@ trait TEXTWRITER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 			return mThis->write (item) ;
 		}
 
-		inline VREF<TextWriter> operator<< (CREF<BYTE> item) {
+		forceinline VREF<TextWriter> operator<< (CREF<BYTE> item) {
 			write (item) ;
 			return thiz ;
 		}
@@ -1399,7 +1430,7 @@ trait TEXTWRITER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 			return mThis->write (item) ;
 		}
 
-		inline VREF<TextWriter> operator<< (CREF<WORD> item) {
+		forceinline VREF<TextWriter> operator<< (CREF<WORD> item) {
 			write (item) ;
 			return thiz ;
 		}
@@ -1408,7 +1439,7 @@ trait TEXTWRITER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 			return mThis->write (item) ;
 		}
 
-		inline VREF<TextWriter> operator<< (CREF<CHAR> item) {
+		forceinline VREF<TextWriter> operator<< (CREF<CHAR> item) {
 			write (item) ;
 			return thiz ;
 		}
@@ -1417,7 +1448,7 @@ trait TEXTWRITER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 			return mThis->write (item) ;
 		}
 
-		inline VREF<TextWriter> operator<< (CREF<DATA> item) {
+		forceinline VREF<TextWriter> operator<< (CREF<DATA> item) {
 			write (item) ;
 			return thiz ;
 		}
@@ -1426,7 +1457,7 @@ trait TEXTWRITER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 			return mThis->write (item) ;
 		}
 
-		inline VREF<TextWriter> operator<< (CREF<Slice<STR>> item) {
+		forceinline VREF<TextWriter> operator<< (CREF<Slice<STR>> item) {
 			write (item) ;
 			return thiz ;
 		}
@@ -1435,7 +1466,16 @@ trait TEXTWRITER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 			return mThis->write (item) ;
 		}
 
-		inline VREF<TextWriter> operator<< (CREF<String<ITEM>> item) {
+		forceinline VREF<TextWriter> operator<< (CREF<String<ITEM>> item) {
+			write (item) ;
+			return thiz ;
+		}
+
+		void write (VREF<Binder> item) {
+			return item.friend_write (thiz) ;
+		}
+
+		forceinline VREF<TextWriter> operator<< (VREF<Binder> item) {
 			write (item) ;
 			return thiz ;
 		}
@@ -1444,7 +1484,7 @@ trait TEXTWRITER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 			return item.friend_write (thiz) ;
 		}
 
-		inline VREF<TextWriter> operator<< (CREF<Binder> item) {
+		forceinline VREF<TextWriter> operator<< (CREF<Binder> item) {
 			write (item) ;
 			return thiz ;
 		}
@@ -1453,7 +1493,7 @@ trait TEXTWRITER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 			return mThis->write_cls () ;
 		}
 
-		inline VREF<TextWriter> operator<< (CREF<typeof (CLS)> item) {
+		forceinline VREF<TextWriter> operator<< (CREF<typeof (CLS)> item) {
 			write (item) ;
 			return thiz ;
 		}
@@ -1462,7 +1502,7 @@ trait TEXTWRITER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 			return mThis->write_bom () ;
 		}
 
-		inline VREF<TextWriter> operator<< (CREF<typeof (BOM)> item) {
+		forceinline VREF<TextWriter> operator<< (CREF<typeof (BOM)> item) {
 			write (item) ;
 			return thiz ;
 		}
@@ -1471,7 +1511,7 @@ trait TEXTWRITER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 			return mThis->write_gap () ;
 		}
 
-		inline VREF<TextWriter> operator<< (CREF<typeof (GAP)> item) {
+		forceinline VREF<TextWriter> operator<< (CREF<typeof (GAP)> item) {
 			write (item) ;
 			return thiz ;
 		}
@@ -1480,7 +1520,7 @@ trait TEXTWRITER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 			return mThis->write_eos () ;
 		}
 
-		inline VREF<TextWriter> operator<< (CREF<typeof (EOS)> item) {
+		forceinline VREF<TextWriter> operator<< (CREF<typeof (EOS)> item) {
 			write (item) ;
 			return thiz ;
 		}
@@ -1534,6 +1574,8 @@ trait REGULARREADER_IMPLHOLDER_HELP ;
 template <class DEPEND>
 trait REGULARREADER_HELP<DEPEND ,ALWAYS> {
 	struct Holder implement Interface {
+		imports VRef<Holder> create () ;
+
 		virtual void initialize (RREF<VRef<TextReader<STRU8>>> reader ,CREF<LENGTH> ll_size) = 0 ;
 		virtual CREF<STRU8> at (CREF<INDEX> index) const leftvalue = 0 ;
 		virtual void read () = 0 ;
@@ -1548,10 +1590,6 @@ trait REGULARREADER_HELP<DEPEND ,ALWAYS> {
 		virtual void read (VREF<String<STRU8>> item) = 0 ;
 	} ;
 
-	struct FUNCTION_extern {
-		imports VRef<Holder> invoke () ;
-	} ;
-
 	class RegularReader {
 	protected:
 		VRef<Holder> mThis ;
@@ -1560,7 +1598,7 @@ trait REGULARREADER_HELP<DEPEND ,ALWAYS> {
 		implicit RegularReader () = default ;
 
 		explicit RegularReader (RREF<VRef<TextReader<STRU8>>> reader ,CREF<LENGTH> ll_size) {
-			mThis = FUNCTION_extern::invoke () ;
+			mThis = Holder::create () ;
 			mThis->initialize (move (reader) ,ll_size) ;
 		}
 
@@ -1568,7 +1606,7 @@ trait REGULARREADER_HELP<DEPEND ,ALWAYS> {
 			return mThis->at (index) ;
 		}
 
-		inline CREF<STRU8> operator[] (CREF<INDEX> index) const leftvalue {
+		forceinline CREF<STRU8> operator[] (CREF<INDEX> index) const leftvalue {
 			return at (index) ;
 		}
 
@@ -1576,7 +1614,7 @@ trait REGULARREADER_HELP<DEPEND ,ALWAYS> {
 			return mThis->read () ;
 		}
 
-		inline void operator++ (VAL32) {
+		forceinline void operator++ (VAL32) {
 			read () ;
 		}
 
@@ -1584,7 +1622,7 @@ trait REGULARREADER_HELP<DEPEND ,ALWAYS> {
 			return mThis->read (item) ;
 		}
 
-		inline VREF<RegularReader> operator>> (CREF<Slice<STR>> item) {
+		forceinline VREF<RegularReader> operator>> (CREF<Slice<STR>> item) {
 			read (item) ;
 			return thiz ;
 		}
@@ -1593,7 +1631,7 @@ trait REGULARREADER_HELP<DEPEND ,ALWAYS> {
 			return mThis->read_hint_word () ;
 		}
 
-		inline VREF<RegularReader> operator>> (CREF<typeof (HINT_WORD)> item) {
+		forceinline VREF<RegularReader> operator>> (CREF<typeof (HINT_WORD)> item) {
 			read (item) ;
 			return thiz ;
 		}
@@ -1602,7 +1640,7 @@ trait REGULARREADER_HELP<DEPEND ,ALWAYS> {
 			return mThis->read_hint_scalar () ;
 		}
 
-		inline VREF<RegularReader> operator>> (CREF<typeof (HINT_SCALAR)> item) {
+		forceinline VREF<RegularReader> operator>> (CREF<typeof (HINT_SCALAR)> item) {
 			read (item) ;
 			return thiz ;
 		}
@@ -1611,7 +1649,7 @@ trait REGULARREADER_HELP<DEPEND ,ALWAYS> {
 			return mThis->read_hint_string () ;
 		}
 
-		inline VREF<RegularReader> operator>> (CREF<typeof (HINT_STRING)> item) {
+		forceinline VREF<RegularReader> operator>> (CREF<typeof (HINT_STRING)> item) {
 			read (item) ;
 			return thiz ;
 		}
@@ -1620,7 +1658,7 @@ trait REGULARREADER_HELP<DEPEND ,ALWAYS> {
 			return mThis->read_hint_endline () ;
 		}
 
-		inline VREF<RegularReader> operator>> (CREF<typeof (HINT_ENDLINE)> item) {
+		forceinline VREF<RegularReader> operator>> (CREF<typeof (HINT_ENDLINE)> item) {
 			read (item) ;
 			return thiz ;
 		}
@@ -1629,7 +1667,7 @@ trait REGULARREADER_HELP<DEPEND ,ALWAYS> {
 			return mThis->read_skip_gap () ;
 		}
 
-		inline VREF<RegularReader> operator>> (CREF<typeof (SKIP_GAP)> item) {
+		forceinline VREF<RegularReader> operator>> (CREF<typeof (SKIP_GAP)> item) {
 			read (item) ;
 			return thiz ;
 		}
@@ -1638,7 +1676,7 @@ trait REGULARREADER_HELP<DEPEND ,ALWAYS> {
 			return mThis->read_skip_gap_space () ;
 		}
 
-		inline VREF<RegularReader> operator>> (CREF<typeof (SKIP_GAP_SPACE)> item) {
+		forceinline VREF<RegularReader> operator>> (CREF<typeof (SKIP_GAP_SPACE)> item) {
 			read (item) ;
 			return thiz ;
 		}
@@ -1647,7 +1685,7 @@ trait REGULARREADER_HELP<DEPEND ,ALWAYS> {
 			return mThis->read_skip_gap_endline () ;
 		}
 
-		inline VREF<RegularReader> operator>> (CREF<typeof (SKIP_GAP_ENDLINE)> item) {
+		forceinline VREF<RegularReader> operator>> (CREF<typeof (SKIP_GAP_ENDLINE)> item) {
 			read (item) ;
 			return thiz ;
 		}
@@ -1656,7 +1694,7 @@ trait REGULARREADER_HELP<DEPEND ,ALWAYS> {
 			return mThis->read (item) ;
 		}
 
-		inline VREF<RegularReader> operator>> (VREF<String<STRU8>> item) {
+		forceinline VREF<RegularReader> operator>> (VREF<String<STRU8>> item) {
 			read (item) ;
 			return thiz ;
 		}

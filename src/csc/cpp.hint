@@ -8,12 +8,14 @@
 #define thiz
 #define self
 #define fake
+#define expr
+#define m1st
+#define m2nd
+#define m3rd
 #define trait
 #define implement
-#define extend
 #define require(...)
 #define anonymous
-#define where
 #define slice(...)
 #define assert(...)
 #define assume(...)

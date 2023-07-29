@@ -35,7 +35,9 @@ template <class DEPEND>
 trait SYNTAXTREE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	using Binder = typename SYNTAXTREE_HELP<DEPEND ,ALWAYS>::Binder ;
 	using Holder = typename SYNTAXTREE_HELP<DEPEND ,ALWAYS>::Holder ;
+	using Layout = typename SYNTAXTREE_HELP<DEPEND ,ALWAYS>::Layout ;
 	using SyntaxTree = typename SYNTAXTREE_HELP<DEPEND ,ALWAYS>::SyntaxTree ;
+
 	using LINK_MIN_SIZE = ENUMAS<VAL ,32> ;
 
 	struct NODE {
@@ -67,7 +69,7 @@ trait SYNTAXTREE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	protected:
 		List<NODE> mTree ;
 		Set<FLAG> mTreeSet ;
-		CRef<BOOL> mEnableClean ;
+		BOOL mEnableClean ;
 		Deque<INDEX> mTreeStack ;
 		Priority<INDEX2X> mPlayPriority ;
 		Deque<INDEX2X> mTrackStack ;
@@ -76,6 +78,11 @@ trait SYNTAXTREE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 
 	public:
 		void initialize () override {
+			mEnableClean = FALSE ;
+			insert_root_node () ;
+		}
+
+		void insert_root_node () {
 			INDEX ix = mTree.insert () ;
 			mTree[ix].mName = slice ("") ;
 			mTree[ix].mCabi = 0 ;
@@ -152,7 +159,7 @@ trait SYNTAXTREE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			mTree[ix].mDepend.add (ix) ;
 		}
 
-		void maybe (CREF<Clazz> clazz ,CREF<Binder> binder ,VREF<SyntaxTree> tree) override {
+		void maybe (CREF<Clazz> clazz ,CREF<Binder> binder) override {
 			INDEX ix = curr_node () ;
 			assume (ifnot (mTree[ix].mOnceActor.exist ())) ;
 			assume (ifnot (mTree[ix].mActor.exist ())) ;
@@ -172,12 +179,13 @@ trait SYNTAXTREE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				assume (ifnot (mTree[iy].mOncePlayed)) ;
 				assume (ifnot (mTree[iy].mPlayed)) ;
 				mTreeStack.add (iy) ;
-				mTree[iy].mValue = binder.friend_create (tree) ;
+				auto rax = SyntaxTree (share ()) ;
+				mTree[iy].mValue = binder.friend_create (rax) ;
 				mTreeStack.pop () ;
 			}
 		}
 
-		CREF<AutoRef<>> stack (CREF<Clazz> clazz ,CREF<Binder> binder ,VREF<SyntaxTree> tree) leftvalue override {
+		CREF<AutoRef<>> stack (CREF<Clazz> clazz ,CREF<Binder> binder) leftvalue override {
 			INDEX ix = curr_node () ;
 			assume (ifnot (mTree[ix].mActor.exist ())) ;
 			assume (ifnot (mTree[ix].mOncePlayed)) ;
@@ -202,7 +210,8 @@ trait SYNTAXTREE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				assume (ifnot (mTree[iy].mOncePlayed)) ;
 				assume (ifnot (mTree[iy].mPlayed)) ;
 				mTreeStack.add (iy) ;
-				mTree[iy].mValue = binder.friend_create (tree) ;
+				auto rax = SyntaxTree (share ()) ;
+				mTree[iy].mValue = binder.friend_create (rax) ;
 				mTreeStack.pop () ;
 			}
 			if ifswitch (TRUE) {
@@ -213,6 +222,12 @@ trait SYNTAXTREE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				undo_scan (iy ,ix) ;
 			}
 			return mTree[iy].mValue ;
+		}
+
+		Layout share () leftvalue {
+			Layout ret ;
+			ret.mThis = VRef<Holder>::reference (thiz) ;
+			return move (ret) ;
 		}
 
 		void depth_track (CREF<INDEX> curr ,CREF<INDEX> prev) {
@@ -455,7 +470,7 @@ trait SYNTAXTREE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		void clean () override {
 			INDEX ix = curr_node () ;
 			assume (ix == root_node ()) ;
-			mEnableClean = CRef<BOOL>::make (TRUE) ;
+			mEnableClean = TRUE ;
 			mCleanQueue.clear () ;
 			for (auto &&i : mTree.iter ()) {
 				if (i == ix)
@@ -468,9 +483,7 @@ trait SYNTAXTREE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		void play_clean () {
-			if (mEnableClean == NULL)
-				return ;
-			if ifnot (mEnableClean.self)
+			if ifnot (mEnableClean)
 				return ;
 			INDEX ix = NONE ;
 			while (TRUE) {
@@ -507,7 +520,7 @@ trait SYNTAXTREE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 } ;
 
 template <>
-exports auto SYNTAXTREE_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
+exports auto SYNTAXTREE_HELP<DEPEND ,ALWAYS>::Holder::create () ->VRef<Holder> {
 	using R1X = typename SYNTAXTREE_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
 }

@@ -79,13 +79,13 @@ trait RUNTIMEPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 
 		void thread_sleep (CREF<TimeDuration> time_) const override {
 			using R1X = typename TIMEDURATION_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
-			const auto r1x = time_.native ().poll (TYPEAS<CRef<R1X>>::expr) ;
+			const auto r1x = CRef<R1X> (time_.native ()) ;
 			std::this_thread::sleep_for (r1x->get_mTimeDuration ()) ;
 		}
 
 		void thread_sleep (CREF<TimePoint> time_) const override {
 			using R1X = typename TIMEDURATION_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
-			const auto r1x = time_.native ().poll (TYPEAS<CRef<R1X>>::expr) ;
+			const auto r1x = CRef<R1X> (time_.native ()) ;
 			std::this_thread::sleep_until (r1x->get_mTimePoint ()) ;
 		}
 
@@ -145,7 +145,7 @@ trait RUNTIMEPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 } ;
 
 template <>
-exports auto RUNTIMEPROC_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
+exports auto RUNTIMEPROC_HELP<DEPEND ,ALWAYS>::Holder::create () ->VRef<Holder> {
 	using R1X = typename RUNTIMEPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
 }
@@ -185,7 +185,7 @@ trait THREADLOCAL_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 } ;
 
 template <>
-exports auto THREADLOCAL_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
+exports auto THREADLOCAL_HELP<DEPEND ,ALWAYS>::Holder::create () ->VRef<Holder> {
 	using R1X = typename THREADLOCAL_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
 }
@@ -228,7 +228,7 @@ trait PROCESS_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			}
 			rbx << GAP ;
 			rbx << EOS ;
-			mSnapshot = rax.as_cref () ;
+			mSnapshot = move (rax) ;
 		}
 
 		DATA process_code (CREF<HANDLE> handle ,CREF<FLAG> uid) const {
@@ -288,7 +288,7 @@ trait PROCESS_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 } ;
 
 template <>
-exports auto PROCESS_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
+exports auto PROCESS_HELP<DEPEND ,ALWAYS>::Holder::create () ->VRef<Holder> {
 	using R1X = typename PROCESS_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
 }
@@ -361,7 +361,7 @@ trait MODULE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 } ;
 
 template <>
-exports auto MODULE_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
+exports auto MODULE_HELP<DEPEND ,ALWAYS>::Holder::create () ->VRef<Holder> {
 	using R1X = typename MODULE_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
 }
@@ -414,10 +414,10 @@ trait SINGLETON_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				assume (r1x != ZERO) ;
 				if (address (mHeap) == r1x)
 					discard ;
-				auto &&tmp = unsafe_deref (unsafe_cast[TYPEAS<TEMP<SharedRef<HEAP>>>::expr] (unsafe_pointer (r1x))) ;
+				auto &&tmp = unsafe_cast[TYPEAS<SharedRef<HEAP>>::expr] (unsafe_deref (r1x)) ;
 				mHeap = tmp.weak () ;
 				mWeakHeap = TRUE ;
-				assume (mHeap.available ()) ;
+				assume (mHeap.good ()) ;
 			}
 		}
 
@@ -458,7 +458,7 @@ trait SINGLETON_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			}) ;
 			const auto r3x = FLAG (r2x.self) ;
 			PIPE ret ;
-			unsafe_sync (unsafe_deptr (ret) ,unsafe_pointer (r3x)) ;
+			unsafe_sync (unsafe_cast[TYPEAS<TEMP<PIPE>>::expr] (ret) ,unsafe_deref (r3x)) ;
 			unsafe_launder (ret) ;
 			assume (ret.mReserve1 == DATA (0X1122334455667788)) ;
 			assume (ret.mReserve3 == DATA (0XAAAABBBBCCCCDDDD)) ;
@@ -487,7 +487,7 @@ trait SINGLETON_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			rax.mReserve2 = DATA (mUID) ;
 			rax.mAddress2 = DATA (address (mHeap)) ;
 			rax.mReserve3 = DATA (0XAAAABBBBCCCCDDDD) ;
-			unsafe_sync (unsafe_pointer (r3x) ,unsafe_deptr (rax)) ;
+			unsafe_sync (unsafe_deref (r3x) ,unsafe_cast[TYPEAS<TEMP<PIPE>>::expr] (rax)) ;
 		}
 
 		void regi (CREF<Slice<STR>> name ,CREF<FLAG> addr) const override {
@@ -507,7 +507,7 @@ trait SINGLETON_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 } ;
 
 template <>
-exports auto SINGLETON_HOLDER_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
+exports auto SINGLETON_HOLDER_HELP<DEPEND ,ALWAYS>::Holder::create () ->VRef<Holder> {
 	using R1X = typename SINGLETON_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
 }

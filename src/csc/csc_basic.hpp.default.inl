@@ -48,7 +48,7 @@ trait BUFFERPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 } ;
 
 template <>
-exports auto BUFFERPROC_HOLDER_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
+exports auto BUFFERPROC_HOLDER_HELP<DEPEND ,ALWAYS>::Holder::create () ->VRef<Holder> {
 	using R1X = typename BUFFERPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
 }
@@ -60,24 +60,30 @@ trait PINMUTEX_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	class ImplHolder implement Holder {
 	protected:
 		Box<std::mutex> mMutex ;
+		BOOL mLock ;
 
 	public:
 		void initialize () override {
-			mMutex = Box<std::mutex>::make () ;
+			mMutex.acquire (TYPEAS<std::mutex>::expr) ;
+			mLock = FALSE ;
 		}
 
 		void enter () override {
 			mMutex->lock () ;
+			mLock = TRUE ;
 		}
 
 		void leave () override {
+			if ifnot (mLock)
+				return ;
+			mLock = FALSE ;
 			mMutex->unlock () ;
 		}
 	} ;
 } ;
 
 template <>
-exports auto PINMUTEX_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->Box<FakeHolder> {
+exports auto PINMUTEX_HELP<DEPEND ,ALWAYS>::FakeImplHolder::create () ->Box<FakeHolder> {
 	using R1X = typename PINMUTEX_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	Box<FakeHolder> ret ;
 	ret.acquire (TYPEAS<R1X>::expr) ;
@@ -98,7 +104,7 @@ trait LATER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	} ;
 
 	struct HEAP {
-		VRef<BOOL> mFlag ;
+		VRef<BOOL> mLaterFlag ;
 		BoxBuffer<NODE ,HEAP_SIZE> mList ;
 		INDEX mFirst ;
 		INDEX mFree ;
@@ -115,7 +121,7 @@ trait LATER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	public:
 		void initialize (CREF<FLAG> tag) override {
 			mHeap = SharedRef<HEAP>::intrusive (heap_root ()) ;
-			assume (mHeap.available ()) ;
+			assume (mHeap.good ()) ;
 			update_reserve () ;
 			INDEX ix = mHeap->mFirst ;
 			while (TRUE) {
@@ -133,7 +139,7 @@ trait LATER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		void initialize (CREF<FLAG> tag ,RREF<AutoRef<>> value_) override {
 			assert (value_.exist ()) ;
 			mHeap = SharedRef<HEAP>::intrusive (heap_root ()) ;
-			assume (mHeap.available ()) ;
+			assume (mHeap.good ()) ;
 			update_reserve () ;
 			INDEX ix = mHeap->mFree ;
 			assume (ix != NONE) ;
@@ -163,7 +169,7 @@ trait LATER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		void update_reserve () {
-			if (mHeap->mFlag != NULL)
+			if (mHeap->mLaterFlag != NULL)
 				return ;
 			mHeap->mList = BoxBuffer<NODE ,HEAP_SIZE> (0) ;
 			INDEX ix = NONE ;
@@ -174,7 +180,7 @@ trait LATER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			}
 			mHeap->mFirst = NONE ;
 			mHeap->mFree = ix ;
-			mHeap->mFlag = VRef<BOOL>::make (TRUE) ;
+			mHeap->mLaterFlag = VRef<BOOL>::make (TRUE) ;
 		}
 
 		CRef<HEAPROOT> heap_root () const {
@@ -188,7 +194,7 @@ trait LATER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 } ;
 
 template <>
-exports auto LATER_HOLDER_HELP<DEPEND ,ALWAYS>::FUNCTION_extern::invoke () ->VRef<Holder> {
+exports auto LATER_HOLDER_HELP<DEPEND ,ALWAYS>::Holder::create () ->VRef<Holder> {
 	using R1X = typename LATER_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
 }
