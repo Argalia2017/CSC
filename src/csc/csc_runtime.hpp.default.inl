@@ -53,7 +53,7 @@ template <class DEPEND>
 trait FUNCTION_calendar_from_timepoint_HELP<DEPEND ,REQUIRE<MACRO_SYSTEM_WINDOWS<DEPEND>>> {
 #ifdef __CSC_SYSTEM_WINDOWS__
 	struct FUNCTION_calendar_from_timepoint {
-		forceinline std::tm operator() (CREF<std::time_t> time_) const {
+		inline std::tm operator() (CREF<std::time_t> time_) const {
 			std::tm ret ;
 			zeroize (ret) ;
 			localtime_s ((&ret) ,(&time_)) ;
@@ -67,7 +67,7 @@ template <class DEPEND>
 trait FUNCTION_calendar_from_timepoint_HELP<DEPEND ,REQUIRE<MACRO_SYSTEM_LINUX<DEPEND>>> {
 #ifdef __CSC_SYSTEM_LINUX__
 	struct FUNCTION_calendar_from_timepoint {
-		forceinline std::tm operator() (CREF<std::time_t> time_) const {
+		inline std::tm operator() (CREF<std::time_t> time_) const {
 			std::tm ret ;
 			const auto r1x = FLAG (std::localtime ((&time_))) ;
 			unsafe_sync (unsafe_cast[TYPEAS<TEMP<std::tm>>::expr] (ret) ,unsafe_deref (r1x)) ;
@@ -590,7 +590,7 @@ template <class DEPEND>
 trait FUNCTION_string_cvt_locale_HELP<DEPEND ,REQUIRE<MACRO_CONFIG_STRA<DEPEND>>> {
 #ifdef __CSC_CONFIG_STRA__
 	struct FUNCTION_string_cvt_locale {
-		forceinline String<STR> operator() (CREF<String<STRA>> obj) const {
+		inline String<STR> operator() (CREF<String<STRA>> obj) const {
 			return obj ;
 		}
 	} ;
@@ -601,11 +601,11 @@ template <class DEPEND>
 trait FUNCTION_string_cvt_locale_HELP<DEPEND ,REQUIRE<MACRO_CONFIG_STRW<DEPEND>>> {
 #ifdef __CSC_CONFIG_STRW__
 	struct FUNCTION_string_cvt_locale {
-		forceinline String<STR> operator() (CREF<String<STRA>> obj) const {
+		inline String<STR> operator() (CREF<String<STRA>> obj) const {
 			return StringProc::string_cvt_w_from_ansi (obj) ;
 		}
 
-		forceinline String<STRA> operator() (CREF<String<STR>> obj) const {
+		inline String<STRA> operator() (CREF<String<STR>> obj) const {
 			return StringProc::string_cvt_ansi_from_w (obj) ;
 		}
 	} ;
@@ -689,13 +689,13 @@ trait RANDOM_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		void initialize () override {
 			mThis = SharedRef<PACK>::make () ;
 			mThis->mSeed = DATA (std::random_device () ()) ;
-			mThis->mRandom = Box<std::mt19937_64>::make (csc_byte64_t (mThis->mSeed)) ;
+			mThis->mRandom = Box<std::mt19937_64>::make (csc_uint64_t (mThis->mSeed)) ;
 		}
 
 		void initialize (CREF<DATA> seed_) override {
 			mThis = SharedRef<PACK>::make () ;
 			mThis->mSeed = seed_ ;
-			mThis->mRandom = Box<std::mt19937_64>::make (csc_byte64_t (mThis->mSeed)) ;
+			mThis->mRandom = Box<std::mt19937_64>::make (csc_uint64_t (mThis->mSeed)) ;
 		}
 
 		DATA seed () const override {
@@ -768,15 +768,15 @@ trait RANDOM_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			}
 		}
 
-		BOOL random_draw (CREF<DOUBLE> possibility) const override {
+		BOOL random_draw (CREF<FLT64> possibility) const override {
 			const auto r1x = random_value (0 ,10000) ;
-			const auto r2x = DOUBLE (r1x) * MathProc::inverse (DOUBLE (10000)) ;
+			const auto r2x = FLT64 (r1x) * MathProc::inverse (FLT64 (10000)) ;
 			if (r2x < possibility)
 				return TRUE ;
 			return FALSE ;
 		}
 
-		void random_draw (CREF<DOUBLE> possibility ,VREF<Array<BOOL>> result) const override {
+		void random_draw (CREF<FLT64> possibility ,VREF<Array<BOOL>> result) const override {
 			for (auto &&i : result)
 				i = random_draw (possibility) ;
 		}

@@ -214,8 +214,8 @@ trait PROCESS_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			auto rax = StreamFile (file) ;
 			rax.open (TRUE ,FALSE) ;
 			auto rbx = ret.raw () ;
-			const auto r2x = rax.read (RegBuffer<BYTE>::from (rbx)) ;
-			ret[r2x] = 0 ;
+			const auto r1x = rax.read (RegBuffer<BYTE>::from (rbx)) ;
+			ret[r1x] = 0 ;
 			return move (ret) ;
 		}
 
@@ -377,8 +377,8 @@ exports auto MODULE_HELP<DEPEND ,ALWAYS>::Holder::create () ->VRef<Holder> {
 }
 
 template <class DEPEND>
-trait SINGLETON_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
-	using Holder = typename SINGLETON_HOLDER_HELP<DEPEND ,ALWAYS>::Holder ;
+trait FLT32TON_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
+	using Holder = typename FLT32TON_HOLDER_HELP<DEPEND ,ALWAYS>::Holder ;
 
 	using HFILE = csc_int32_t ;
 	using HANDLE = csc_pointer_t ;
@@ -531,8 +531,8 @@ trait SINGLETON_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 } ;
 
 template <>
-exports auto SINGLETON_HOLDER_HELP<DEPEND ,ALWAYS>::Holder::create () ->VRef<Holder> {
-	using R1X = typename SINGLETON_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
+exports auto FLT32TON_HOLDER_HELP<DEPEND ,ALWAYS>::Holder::create () ->VRef<Holder> {
+	using R1X = typename FLT32TON_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
 }
 } ;

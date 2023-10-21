@@ -70,8 +70,8 @@ trait XMLPARSER_HELP<DEPEND ,ALWAYS> {
 		virtual BOOL fetch (CREF<BOOL> def) const = 0 ;
 		virtual VAL32 fetch (CREF<VAL32> def) const = 0 ;
 		virtual VAL64 fetch (CREF<VAL64> def) const = 0 ;
-		virtual SINGLE fetch (CREF<SINGLE> def) const = 0 ;
-		virtual DOUBLE fetch (CREF<DOUBLE> def) const = 0 ;
+		virtual FLT32 fetch (CREF<FLT32> def) const = 0 ;
+		virtual FLT64 fetch (CREF<FLT64> def) const = 0 ;
 		virtual BYTE fetch (CREF<BYTE> def) const = 0 ;
 		virtual WORD fetch (CREF<WORD> def) const = 0 ;
 		virtual CHAR fetch (CREF<CHAR> def) const = 0 ;
@@ -114,7 +114,7 @@ trait XMLPARSER_HELP<DEPEND ,ALWAYS> {
 			thiz = that.mThis->clone () ;
 		}
 
-		forceinline VREF<XmlParser> operator= (CREF<XmlParser> that) {
+		inline VREF<XmlParser> operator= (CREF<XmlParser> that) {
 			if (address (thiz) == address (that))
 				return thiz ;
 			swap (thiz ,move (that)) ;
@@ -125,7 +125,7 @@ trait XMLPARSER_HELP<DEPEND ,ALWAYS> {
 			swap (thiz ,that) ;
 		}
 
-		forceinline VREF<XmlParser> operator= (RREF<XmlParser> that) noexcept {
+		inline VREF<XmlParser> operator= (RREF<XmlParser> that) noexcept {
 			if (address (thiz) == address (that))
 				return thiz ;
 			swap (thiz ,move (that)) ;
@@ -180,11 +180,11 @@ trait XMLPARSER_HELP<DEPEND ,ALWAYS> {
 			return mThis->equal (that) ;
 		}
 
-		forceinline BOOL operator== (CREF<XmlParser> that) const {
+		inline BOOL operator== (CREF<XmlParser> that) const {
 			return equal (that) ;
 		}
 
-		forceinline BOOL operator!= (CREF<XmlParser> that) const {
+		inline BOOL operator!= (CREF<XmlParser> that) const {
 			return ifnot (equal (that)) ;
 		}
 
@@ -192,11 +192,11 @@ trait XMLPARSER_HELP<DEPEND ,ALWAYS> {
 			return mThis->concat (that) ;
 		}
 
-		forceinline XmlParser operator+ (CREF<XmlParser> that) const {
+		inline XmlParser operator+ (CREF<XmlParser> that) const {
 			return concat (that) ;
 		}
 
-		forceinline void operator+= (CREF<XmlParser> that) {
+		inline void operator+= (CREF<XmlParser> that) {
 			thiz = concat (that) ;
 		}
 
@@ -230,11 +230,11 @@ trait XMLPARSER_HELP<DEPEND ,ALWAYS> {
 			return mThis->fetch (def) ;
 		}
 
-		SINGLE fetch (CREF<SINGLE> def) const {
+		FLT32 fetch (CREF<FLT32> def) const {
 			return mThis->fetch (def) ;
 		}
 
-		DOUBLE fetch (CREF<DOUBLE> def) const {
+		FLT64 fetch (CREF<FLT64> def) const {
 			return mThis->fetch (def) ;
 		}
 
@@ -311,8 +311,8 @@ trait JSONPARSER_HELP<DEPEND ,ALWAYS> {
 		virtual BOOL fetch (CREF<BOOL> def) const = 0 ;
 		virtual VAL32 fetch (CREF<VAL32> def) const = 0 ;
 		virtual VAL64 fetch (CREF<VAL64> def) const = 0 ;
-		virtual SINGLE fetch (CREF<SINGLE> def) const = 0 ;
-		virtual DOUBLE fetch (CREF<DOUBLE> def) const = 0 ;
+		virtual FLT32 fetch (CREF<FLT32> def) const = 0 ;
+		virtual FLT64 fetch (CREF<FLT64> def) const = 0 ;
 		virtual BYTE fetch (CREF<BYTE> def) const = 0 ;
 		virtual WORD fetch (CREF<WORD> def) const = 0 ;
 		virtual CHAR fetch (CREF<CHAR> def) const = 0 ;
@@ -355,7 +355,7 @@ trait JSONPARSER_HELP<DEPEND ,ALWAYS> {
 			thiz = that.mThis->clone () ;
 		}
 
-		forceinline VREF<JsonParser> operator= (CREF<JsonParser> that) {
+		inline VREF<JsonParser> operator= (CREF<JsonParser> that) {
 			if (address (thiz) == address (that))
 				return thiz ;
 			swap (thiz ,move (that)) ;
@@ -366,7 +366,7 @@ trait JSONPARSER_HELP<DEPEND ,ALWAYS> {
 			swap (thiz ,that) ;
 		}
 
-		forceinline VREF<JsonParser> operator= (RREF<JsonParser> that) noexcept {
+		inline VREF<JsonParser> operator= (RREF<JsonParser> that) noexcept {
 			if (address (thiz) == address (that))
 				return thiz ;
 			swap (thiz ,move (that)) ;
@@ -433,11 +433,11 @@ trait JSONPARSER_HELP<DEPEND ,ALWAYS> {
 			return mThis->equal (that) ;
 		}
 
-		forceinline BOOL operator== (CREF<JsonParser> that) const {
+		inline BOOL operator== (CREF<JsonParser> that) const {
 			return equal (that) ;
 		}
 
-		forceinline BOOL operator!= (CREF<JsonParser> that) const {
+		inline BOOL operator!= (CREF<JsonParser> that) const {
 			return ifnot (equal (that)) ;
 		}
 
@@ -463,11 +463,11 @@ trait JSONPARSER_HELP<DEPEND ,ALWAYS> {
 			return mThis->fetch (def) ;
 		}
 
-		SINGLE fetch (CREF<SINGLE> def) const {
+		FLT32 fetch (CREF<FLT32> def) const {
 			return mThis->fetch (def) ;
 		}
 
-		DOUBLE fetch (CREF<DOUBLE> def) const {
+		FLT64 fetch (CREF<FLT64> def) const {
 			return mThis->fetch (def) ;
 		}
 
@@ -532,8 +532,8 @@ trait PLYREADER_HELP<DEPEND ,ALWAYS> {
 		virtual void read (VREF<BOOL> item) = 0 ;
 		virtual void read (VREF<VAL32> item) = 0 ;
 		virtual void read (VREF<VAL64> item) = 0 ;
-		virtual void read (VREF<SINGLE> item) = 0 ;
-		virtual void read (VREF<DOUBLE> item) = 0 ;
+		virtual void read (VREF<FLT32> item) = 0 ;
+		virtual void read (VREF<FLT64> item) = 0 ;
 		virtual void read (VREF<BYTE> item) = 0 ;
 		virtual void read (VREF<WORD> item) = 0 ;
 		virtual void read (VREF<CHAR> item) = 0 ;
@@ -585,7 +585,7 @@ trait PLYREADER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		template <class ARG1>
-		ARG1 poll (CREF<TYPEID<ARG1>> id) {
+		ARG1 poll (TYPEID<ARG1> id) {
 			ARG1 ret ;
 			read (ret) ;
 			return move (ret) ;
@@ -605,7 +605,7 @@ trait PLYREADER_HELP<DEPEND ,ALWAYS> {
 			return mThis->read (item) ;
 		}
 
-		forceinline VREF<PlyReader> operator>> (VREF<BOOL> item) {
+		inline VREF<PlyReader> operator>> (VREF<BOOL> item) {
 			read (item) ;
 			return thiz ;
 		}
@@ -614,7 +614,7 @@ trait PLYREADER_HELP<DEPEND ,ALWAYS> {
 			return mThis->read (item) ;
 		}
 
-		forceinline VREF<PlyReader> operator>> (VREF<VAL32> item) {
+		inline VREF<PlyReader> operator>> (VREF<VAL32> item) {
 			read (item) ;
 			return thiz ;
 		}
@@ -623,25 +623,25 @@ trait PLYREADER_HELP<DEPEND ,ALWAYS> {
 			return mThis->read (item) ;
 		}
 
-		forceinline VREF<PlyReader> operator>> (VREF<VAL64> item) {
+		inline VREF<PlyReader> operator>> (VREF<VAL64> item) {
 			read (item) ;
 			return thiz ;
 		}
 
-		void read (VREF<SINGLE> item) {
+		void read (VREF<FLT32> item) {
 			return mThis->read (item) ;
 		}
 
-		forceinline VREF<PlyReader> operator>> (VREF<SINGLE> item) {
+		inline VREF<PlyReader> operator>> (VREF<FLT32> item) {
 			read (item) ;
 			return thiz ;
 		}
 
-		void read (VREF<DOUBLE> item) {
+		void read (VREF<FLT64> item) {
 			return mThis->read (item) ;
 		}
 
-		forceinline VREF<PlyReader> operator>> (VREF<DOUBLE> item) {
+		inline VREF<PlyReader> operator>> (VREF<FLT64> item) {
 			read (item) ;
 			return thiz ;
 		}
@@ -650,7 +650,7 @@ trait PLYREADER_HELP<DEPEND ,ALWAYS> {
 			return mThis->read (item) ;
 		}
 
-		forceinline VREF<PlyReader> operator>> (VREF<BYTE> item) {
+		inline VREF<PlyReader> operator>> (VREF<BYTE> item) {
 			read (item) ;
 			return thiz ;
 		}
@@ -659,7 +659,7 @@ trait PLYREADER_HELP<DEPEND ,ALWAYS> {
 			return mThis->read (item) ;
 		}
 
-		forceinline VREF<PlyReader> operator>> (VREF<WORD> item) {
+		inline VREF<PlyReader> operator>> (VREF<WORD> item) {
 			read (item) ;
 			return thiz ;
 		}
@@ -668,7 +668,7 @@ trait PLYREADER_HELP<DEPEND ,ALWAYS> {
 			return mThis->read (item) ;
 		}
 
-		forceinline VREF<PlyReader> operator>> (VREF<CHAR> item) {
+		inline VREF<PlyReader> operator>> (VREF<CHAR> item) {
 			read (item) ;
 			return thiz ;
 		}
@@ -677,7 +677,7 @@ trait PLYREADER_HELP<DEPEND ,ALWAYS> {
 			return mThis->read (item) ;
 		}
 
-		forceinline VREF<PlyReader> operator>> (VREF<DATA> item) {
+		inline VREF<PlyReader> operator>> (VREF<DATA> item) {
 			read (item) ;
 			return thiz ;
 		}

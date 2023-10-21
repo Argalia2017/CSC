@@ -9,31 +9,31 @@
 using namespace SOLUTION ;
 
 struct G_mY0 {
-	DOUBLE mY0 ;
+	FLT64 mY0 ;
 
 	explicit G_mY0 (VREF<SyntaxTree> me) {
 		me.mark_as_iteration () ;
 		me.then (Function<void> ([&] () {
-			mY0 = me.later (TYPEAS<DOUBLE>::expr) ;
+			mY0 = me.later (TYPEAS<FLT64>::expr) ;
 		})) ;
 	}
 } ;
 
 struct G_mX1 {
-	DOUBLE mX1 ;
+	FLT64 mX1 ;
 
 	explicit G_mX1 (VREF<SyntaxTree> me) {
 		me.mark_as_iteration () ;
 		auto &mY0 = me.stack (TYPEAS<G_mY0>::expr).mY0 ;
 		me.then (Function<void> ([&] () {
 			noop (mY0) ;
-			mX1 = me.later (TYPEAS<DOUBLE>::expr) ;
+			mX1 = me.later (TYPEAS<FLT64>::expr) ;
 		})) ;
 	}
 } ;
 
 struct G_mY1 {
-	DOUBLE mY1 ;
+	FLT64 mY1 ;
 
 	explicit G_mY1 (VREF<SyntaxTree> me) {
 		me.mark_as_iteration () ;
@@ -46,7 +46,7 @@ struct G_mY1 {
 } ;
 
 struct G_mZ1 {
-	DOUBLE mZ1 ;
+	FLT64 mZ1 ;
 
 	explicit G_mZ1 (VREF<SyntaxTree> me) {
 		me.mark_as_iteration () ;
@@ -58,7 +58,7 @@ struct G_mZ1 {
 } ;
 
 struct G_mW0 {
-	DOUBLE mW0 ;
+	FLT64 mW0 ;
 
 	explicit G_mW0 (VREF<SyntaxTree> me) {
 		me.then (Function<void> ([&] () {
@@ -68,32 +68,32 @@ struct G_mW0 {
 } ;
 
 struct G_mW1 {
-	DOUBLE mW1 ;
+	FLT64 mW1 ;
 
 	explicit G_mW1 (VREF<SyntaxTree> me) {
 		me.mark_as_iteration () ;
 		auto &mW0 = me.stack (TYPEAS<G_mW0>::expr).mW0 ;
 		me.then (Function<void> ([&] () {
 			noop (mW0) ;
-			mW1 = me.later (TYPEAS<DOUBLE>::expr) ;
+			mW1 = me.later (TYPEAS<FLT64>::expr) ;
 		})) ;
 	}
 } ;
 
 struct G_mW2 {
-	DOUBLE mW2 ;
+	FLT64 mW2 ;
 
 	explicit G_mW2 (VREF<SyntaxTree> me) {
 		me.mark_as_iteration () ;
 		auto &mW1 = me.stack (TYPEAS<G_mW1>::expr).mW1 ;
 		me.then (Function<void> ([&] () {
-			mW2 = mW1 * (1 - DOUBLE (1E-3)) ;
+			mW2 = mW1 * (1 - FLT64 (1E-3)) ;
 		})) ;
 	}
 } ;
 
 struct G_mX2 {
-	DOUBLE mX2 ;
+	FLT64 mX2 ;
 
 	explicit G_mX2 (VREF<SyntaxTree> me) {
 		me.mark_as_iteration () ;
@@ -108,7 +108,7 @@ struct G_mX2 {
 } ;
 
 struct G_mX3 {
-	DOUBLE mX3 ;
+	FLT64 mX3 ;
 
 	explicit G_mX3 (VREF<SyntaxTree> me) {
 		me.mark_as_iteration () ;
@@ -131,9 +131,9 @@ struct G_mX3 {
 			me.later (TYPEAS<G_mW1>::expr ,mW0) ;
 			while (TRUE) {
 				me.play () ;
-				if (MathProc::abs (mW1) < DOUBLE (1E-9))
+				if (MathProc::abs (mW1) < FLT64 (1E-9))
 					break ;
-				if (MathProc::abs (mY1) < DOUBLE (1E-9))
+				if (MathProc::abs (mY1) < FLT64 (1E-9))
 					break ;
 				me.undo (TYPEAS<G_mX1>::expr) ;
 				me.undo (TYPEAS<G_mW1>::expr) ;
@@ -146,11 +146,11 @@ struct G_mX3 {
 } ;
 
 struct G_mYa {
-	Array<DOUBLE> mYa ;
+	Array<FLT64> mYa ;
 
 	explicit G_mYa (VREF<SyntaxTree> me) {
 		me.then (Function<void> ([&] () {
-			mYa = Array<DOUBLE> (4) ;
+			mYa = Array<FLT64> (4) ;
 			mYa[0] = 26 ;
 			mYa[1] = 54 ;
 			mYa[2] = 22 ;
@@ -160,14 +160,14 @@ struct G_mYa {
 } ;
 
 struct G_mXn {
-	Array<DOUBLE> mXn ;
+	Array<FLT64> mXn ;
 
 	explicit G_mXn (VREF<SyntaxTree> me) {
 		me.maybe (TYPEAS<G_mX3>::expr) ;
 		auto &mYa = me.stack (TYPEAS<G_mYa>::expr).mYa ;
 		me.once (Function<void> ([&] () {
 			auto &mX3 = me.stack (TYPEAS<G_mX3>::expr).mX3 ;
-			mXn = Array<DOUBLE> (mYa.length ()) ;
+			mXn = Array<FLT64> (mYa.length ()) ;
 			for (auto &&i : mYa.iter ()) {
 				me.undo (TYPEAS<G_mY0>::expr) ;
 				me.later (TYPEAS<G_mY0>::expr ,mYa[i]) ;
@@ -179,7 +179,7 @@ struct G_mXn {
 } ;
 
 struct G_mXn_thread {
-	Array<DOUBLE> mXn ;
+	Array<FLT64> mXn ;
 
 	explicit G_mXn_thread (VREF<SyntaxTree> me) {
 		me.maybe (TYPEAS<G_mX3>::expr) ;
@@ -197,12 +197,12 @@ struct G_mXn_thread {
 } ;
 
 struct G_mYn {
-	Array<DOUBLE> mYn ;
+	Array<FLT64> mYn ;
 
 	explicit G_mYn (VREF<SyntaxTree> me) {
 		auto &mXn = me.stack (TYPEAS<G_mXn>::expr).mXn ;
 		me.then (Function<void> ([&] () {
-			mYn = Array<DOUBLE> (mXn.length ()) ;
+			mYn = Array<FLT64> (mXn.length ()) ;
 			for (auto &&i : mXn.iter ())
 				mYn[i] = MathProc::square (mXn[i]) ;
 		})) ;

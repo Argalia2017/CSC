@@ -106,16 +106,16 @@ trait SYNTAXTREE_HELP<DEPEND ,ALWAYS> {
 		}
 
 		template <class ARG1>
-		void maybe (CREF<TYPEID<ARG1>> id) {
-			using R1X = typename DEPENDENT<SYNTAXTREE_IMPLBINDER_HELP<ARG1 ,ALWAYS> ,DEPEND>::ImplBinder ;
+		void maybe (TYPEID<ARG1> id) {
+			using R1X = typename KILL<SYNTAXTREE_IMPLBINDER_HELP<ARG1 ,ALWAYS> ,DEPEND>::ImplBinder ;
 			const auto r1x = Clazz (id) ;
 			auto rax = R1X () ;
 			return mThis->maybe (r1x ,rax) ;
 		}
 
 		template <class ARG1>
-		CREF<ARG1> stack (CREF<TYPEID<ARG1>> id) leftvalue {
-			using R1X = typename DEPENDENT<SYNTAXTREE_IMPLBINDER_HELP<ARG1 ,ALWAYS> ,DEPEND>::ImplBinder ;
+		CREF<ARG1> stack (TYPEID<ARG1> id) leftvalue {
+			using R1X = typename KILL<SYNTAXTREE_IMPLBINDER_HELP<ARG1 ,ALWAYS> ,DEPEND>::ImplBinder ;
 			const auto r1x = Clazz (id) ;
 			auto rax = R1X () ;
 			return AutoRef<ARG1>::from (mThis->stack (r1x ,rax)).self ;
@@ -130,18 +130,18 @@ trait SYNTAXTREE_HELP<DEPEND ,ALWAYS> {
 		}
 
 		template <class ARG1>
-		void undo (CREF<TYPEID<ARG1>> id) {
+		void undo (TYPEID<ARG1> id) {
 			const auto r1x = Clazz (id) ;
 			return mThis->undo (r1x) ;
 		}
 
 		template <class ARG1>
-		CREF<ARG1> later (CREF<TYPEID<ARG1>> id) leftvalue {
+		CREF<ARG1> later (TYPEID<ARG1> id) leftvalue {
 			return AutoRef<ARG1>::from (mThis->later ()).self ;
 		}
 
 		template <class ARG1 ,class ARG2>
-		void later (CREF<TYPEID<ARG1>> id ,XREF<ARG2> value_) {
+		void later (TYPEID<ARG1> id ,XREF<ARG2> value_) {
 			using R1X = REMOVE_REF<ARG2> ;
 			const auto r1x = Clazz (id) ;
 			auto &&tmp = mThis->later (r1x) ;

@@ -146,11 +146,11 @@ trait TIMEDURATION_HELP<DEPEND ,ALWAYS> {
 			return mThis->add (that) ;
 		}
 
-		forceinline TimeDuration operator+ (CREF<TimeDuration> that) const {
+		inline TimeDuration operator+ (CREF<TimeDuration> that) const {
 			return add (that) ;
 		}
 
-		forceinline void operator+= (CREF<TimeDuration> that) {
+		inline void operator+= (CREF<TimeDuration> that) {
 			thiz = add (that) ;
 		}
 
@@ -158,11 +158,11 @@ trait TIMEDURATION_HELP<DEPEND ,ALWAYS> {
 			return mThis->sub (that) ;
 		}
 
-		forceinline TimeDuration operator- (CREF<TimeDuration> that) const {
+		inline TimeDuration operator- (CREF<TimeDuration> that) const {
 			return sub (that) ;
 		}
 
-		forceinline void operator-= (CREF<TimeDuration> that) {
+		inline void operator-= (CREF<TimeDuration> that) {
 			thiz = sub (that) ;
 		}
 
@@ -170,7 +170,7 @@ trait TIMEDURATION_HELP<DEPEND ,ALWAYS> {
 			return mThis->add (that) ;
 		}
 
-		forceinline TimePoint operator+ (CREF<TimePoint> that) const {
+		inline TimePoint operator+ (CREF<TimePoint> that) const {
 			return add (that) ;
 		}
 
@@ -178,7 +178,7 @@ trait TIMEDURATION_HELP<DEPEND ,ALWAYS> {
 			return mThis->sub (that) ;
 		}
 
-		forceinline TimePoint operator- (CREF<TimePoint> that) const {
+		inline TimePoint operator- (CREF<TimePoint> that) const {
 			return sub (that) ;
 		}
 	} ;
@@ -224,11 +224,11 @@ trait TIMEDURATION_HELP<DEPEND ,ALWAYS> {
 			return mThis->add (that) ;
 		}
 
-		forceinline TimePoint operator+ (CREF<TimeDuration> that) const {
+		inline TimePoint operator+ (CREF<TimeDuration> that) const {
 			return add (that) ;
 		}
 
-		forceinline void operator+= (CREF<TimeDuration> that) {
+		inline void operator+= (CREF<TimeDuration> that) {
 			thiz = add (that) ;
 		}
 
@@ -236,11 +236,11 @@ trait TIMEDURATION_HELP<DEPEND ,ALWAYS> {
 			return mThis->sub (that) ;
 		}
 
-		forceinline TimePoint operator- (CREF<TimeDuration> that) const {
+		inline TimePoint operator- (CREF<TimeDuration> that) const {
 			return sub (that) ;
 		}
 
-		forceinline void operator-= (CREF<TimeDuration> that) {
+		inline void operator-= (CREF<TimeDuration> that) {
 			thiz = sub (that) ;
 		}
 
@@ -248,7 +248,7 @@ trait TIMEDURATION_HELP<DEPEND ,ALWAYS> {
 			return mThis->sub (that) ;
 		}
 
-		forceinline TimeDuration operator- (CREF<TimePoint> that) const {
+		inline TimeDuration operator- (CREF<TimePoint> that) const {
 			return sub (that) ;
 		}
 
@@ -900,8 +900,8 @@ trait RANDOM_HELP<DEPEND ,ALWAYS> {
 		virtual void random_shuffle (CREF<LENGTH> count ,VREF<Array<INDEX>> result) const = 0 ;
 		virtual BitSet<> random_pick (CREF<LENGTH> count ,CREF<LENGTH> size_) const = 0 ;
 		virtual void random_pick (CREF<LENGTH> count ,VREF<BitSet<>> result) const = 0 ;
-		virtual BOOL random_draw (CREF<DOUBLE> possibility) const = 0 ;
-		virtual void random_draw (CREF<DOUBLE> possibility ,VREF<Array<BOOL>> result) const = 0 ;
+		virtual BOOL random_draw (CREF<FLT64> possibility) const = 0 ;
+		virtual void random_draw (CREF<FLT64> possibility ,VREF<Array<BOOL>> result) const = 0 ;
 	} ;
 
 	class Random {
@@ -972,12 +972,12 @@ trait RANDOM_HELP<DEPEND ,ALWAYS> {
 			return mThis->random_pick (count ,result) ;
 		}
 
-		BOOL random_draw (CREF<DOUBLE> possibility) const {
+		BOOL random_draw (CREF<FLT64> possibility) const {
 			Scope<Mutex> anonymous (mMutex) ;
 			return mThis->random_draw (possibility) ;
 		}
 
-		void random_draw (CREF<DOUBLE> possibility ,VREF<Array<BOOL>> result) const {
+		void random_draw (CREF<FLT64> possibility ,VREF<Array<BOOL>> result) const {
 			Scope<Mutex> anonymous (mMutex) ;
 			return mThis->random_draw (possibility ,result) ;
 		}
@@ -1030,7 +1030,7 @@ trait GLOBAL_HELP<DEPEND ,ALWAYS> {
 		}
 
 		template <class ARG1>
-		CREF<ARG1> unique (CREF<Slice<STR>> name ,CREF<TYPEID<ARG1>> id) const leftvalue {
+		CREF<ARG1> unique (CREF<Slice<STR>> name ,TYPEID<ARG1> id) const leftvalue {
 			Scope<Mutex> anonymous (mMutex) ;
 			auto &&tmp = mThis->unique (name) ;
 			assume (tmp.exist ()) ;
@@ -1047,16 +1047,16 @@ trait GLOBAL_HELP<DEPEND ,ALWAYS> {
 using Global = typename GLOBAL_HELP<DEPEND ,ALWAYS>::Global ;
 
 template <class...>
-trait SINGLETON_HELP ;
+trait FLT32TON_HELP ;
 
 template <class...>
-trait SINGLETON_HOLDER_HELP ;
+trait FLT32TON_HOLDER_HELP ;
 
 template <class...>
-trait SINGLETON_IMPLHOLDER_HELP ;
+trait FLT32TON_IMPLHOLDER_HELP ;
 
 template <class DEPEND>
-trait SINGLETON_HOLDER_HELP<DEPEND ,ALWAYS> {
+trait FLT32TON_HOLDER_HELP<DEPEND ,ALWAYS> {
 	struct Holder implement Interface {
 		imports VRef<Holder> create () ;
 
@@ -1090,9 +1090,9 @@ trait SINGLETON_HOLDER_HELP<DEPEND ,ALWAYS> {
 } ;
 
 template <class UNIT>
-trait SINGLETON_HELP<UNIT ,ALWAYS> {
-	using Holder = typename SINGLETON_HOLDER_HELP<DEPEND ,ALWAYS>::Holder ;
-	using Super = typename SINGLETON_HOLDER_HELP<DEPEND ,ALWAYS>::Singleton ;
+trait FLT32TON_HELP<UNIT ,ALWAYS> {
+	using Holder = typename FLT32TON_HOLDER_HELP<DEPEND ,ALWAYS>::Holder ;
+	using Super = typename FLT32TON_HOLDER_HELP<DEPEND ,ALWAYS>::Singleton ;
 
 	class Singleton implement Proxy {
 	public:
@@ -1118,5 +1118,5 @@ trait SINGLETON_HELP<UNIT ,ALWAYS> {
 } ;
 
 template <class UNIT>
-using Singleton = typename SINGLETON_HELP<UNIT ,ALWAYS>::Singleton ;
+using Singleton = typename FLT32TON_HELP<UNIT ,ALWAYS>::Singleton ;
 } ;

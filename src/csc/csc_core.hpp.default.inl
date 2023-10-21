@@ -50,7 +50,7 @@ template <class DEPEND>
 trait FUNCTION_current_usage_size_HELP<DEPEND ,REQUIRE<MACRO_SYSTEM_WINDOWS<DEPEND>>> {
 #ifdef __CSC_SYSTEM_WINDOWS__
 	struct FUNCTION_current_usage_size {
-		forceinline LENGTH operator() (CREF<FLAG> addr) const {
+		inline LENGTH operator() (CREF<FLAG> addr) const {
 			if (addr == ZERO)
 				return 0 ;
 			return LENGTH (_msize (csc_pointer_t (addr))) ;
@@ -63,7 +63,7 @@ template <class DEPEND>
 trait FUNCTION_current_usage_size_HELP<DEPEND ,REQUIRE<MACRO_SYSTEM_LINUX<DEPEND>>> {
 #ifdef __CSC_SYSTEM_LINUX__
 	struct FUNCTION_current_usage_size {
-		forceinline LENGTH operator() (CREF<FLAG> addr) const {
+		inline LENGTH operator() (CREF<FLAG> addr) const {
 			if (addr == ZERO)
 				return 0 ;
 			return LENGTH (malloc_usable_size (csc_pointer_t (addr))) ;

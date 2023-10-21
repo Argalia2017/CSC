@@ -110,7 +110,7 @@ trait CONSOLE_HELP<DEPEND ,ALWAYS> {
 
 		template <class...ARG1>
 		void print (CREF<ARG1>...msg) const {
-			using R1X = typename DEPENDENT<CONSOLE_IMPLBINDER_HELP<TYPEAS<ARG1...> ,ALWAYS> ,DEPEND>::ImplBinder ;
+			using R1X = typename KILL<CONSOLE_IMPLBINDER_HELP<TYPEAS<ARG1...> ,ALWAYS> ,DEPEND>::ImplBinder ;
 			Scope<Mutex> anonymous (mMutex) ;
 			const auto r1x = capture (msg...) ;
 			auto rax = R1X (CRef<Capture<ARG1...>>::reference (r1x)) ;
@@ -119,7 +119,7 @@ trait CONSOLE_HELP<DEPEND ,ALWAYS> {
 
 		template <class...ARG1>
 		void fatal (CREF<ARG1>...msg) const {
-			using R1X = typename DEPENDENT<CONSOLE_IMPLBINDER_HELP<TYPEAS<ARG1...> ,ALWAYS> ,DEPEND>::ImplBinder ;
+			using R1X = typename KILL<CONSOLE_IMPLBINDER_HELP<TYPEAS<ARG1...> ,ALWAYS> ,DEPEND>::ImplBinder ;
 			Scope<Mutex> anonymous (mMutex) ;
 			const auto r1x = capture (msg...) ;
 			auto rax = R1X (CRef<Capture<ARG1...>>::reference (r1x)) ;
@@ -128,7 +128,7 @@ trait CONSOLE_HELP<DEPEND ,ALWAYS> {
 
 		template <class...ARG1>
 		void error (CREF<ARG1>...msg) const {
-			using R1X = typename DEPENDENT<CONSOLE_IMPLBINDER_HELP<TYPEAS<ARG1...> ,ALWAYS> ,DEPEND>::ImplBinder ;
+			using R1X = typename KILL<CONSOLE_IMPLBINDER_HELP<TYPEAS<ARG1...> ,ALWAYS> ,DEPEND>::ImplBinder ;
 			Scope<Mutex> anonymous (mMutex) ;
 			const auto r1x = capture (msg...) ;
 			auto rax = R1X (CRef<Capture<ARG1...>>::reference (r1x)) ;
@@ -137,7 +137,7 @@ trait CONSOLE_HELP<DEPEND ,ALWAYS> {
 
 		template <class...ARG1>
 		void warn (CREF<ARG1>...msg) const {
-			using R1X = typename DEPENDENT<CONSOLE_IMPLBINDER_HELP<TYPEAS<ARG1...> ,ALWAYS> ,DEPEND>::ImplBinder ;
+			using R1X = typename KILL<CONSOLE_IMPLBINDER_HELP<TYPEAS<ARG1...> ,ALWAYS> ,DEPEND>::ImplBinder ;
 			Scope<Mutex> anonymous (mMutex) ;
 			const auto r1x = capture (msg...) ;
 			auto rax = R1X (CRef<Capture<ARG1...>>::reference (r1x)) ;
@@ -146,7 +146,7 @@ trait CONSOLE_HELP<DEPEND ,ALWAYS> {
 
 		template <class...ARG1>
 		void info (CREF<ARG1>...msg) const {
-			using R1X = typename DEPENDENT<CONSOLE_IMPLBINDER_HELP<TYPEAS<ARG1...> ,ALWAYS> ,DEPEND>::ImplBinder ;
+			using R1X = typename KILL<CONSOLE_IMPLBINDER_HELP<TYPEAS<ARG1...> ,ALWAYS> ,DEPEND>::ImplBinder ;
 			Scope<Mutex> anonymous (mMutex) ;
 			const auto r1x = capture (msg...) ;
 			auto rax = R1X (CRef<Capture<ARG1...>>::reference (r1x)) ;
@@ -155,7 +155,7 @@ trait CONSOLE_HELP<DEPEND ,ALWAYS> {
 
 		template <class...ARG1>
 		void debug (CREF<ARG1>...msg) const {
-			using R1X = typename DEPENDENT<CONSOLE_IMPLBINDER_HELP<TYPEAS<ARG1...> ,ALWAYS> ,DEPEND>::ImplBinder ;
+			using R1X = typename KILL<CONSOLE_IMPLBINDER_HELP<TYPEAS<ARG1...> ,ALWAYS> ,DEPEND>::ImplBinder ;
 			Scope<Mutex> anonymous (mMutex) ;
 			const auto r1x = capture (msg...) ;
 			auto rax = R1X (CRef<Capture<ARG1...>>::reference (r1x)) ;
@@ -164,7 +164,7 @@ trait CONSOLE_HELP<DEPEND ,ALWAYS> {
 
 		template <class...ARG1>
 		void verbose (CREF<ARG1>...msg) const {
-			using R1X = typename DEPENDENT<CONSOLE_IMPLBINDER_HELP<TYPEAS<ARG1...> ,ALWAYS> ,DEPEND>::ImplBinder ;
+			using R1X = typename KILL<CONSOLE_IMPLBINDER_HELP<TYPEAS<ARG1...> ,ALWAYS> ,DEPEND>::ImplBinder ;
 			Scope<Mutex> anonymous (mMutex) ;
 			const auto r1x = capture (msg...) ;
 			auto rax = R1X (CRef<Capture<ARG1...>>::reference (r1x)) ;

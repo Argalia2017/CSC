@@ -367,8 +367,8 @@ exports auto MODULE_HELP<DEPEND ,ALWAYS>::Holder::create () ->VRef<Holder> {
 }
 
 template <class DEPEND>
-trait SINGLETON_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
-	using Holder = typename SINGLETON_HOLDER_HELP<DEPEND ,ALWAYS>::Holder ;
+trait FLT32TON_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
+	using Holder = typename FLT32TON_HOLDER_HELP<DEPEND ,ALWAYS>::Holder ;
 
 	struct HEAP {
 		Mutex mMutex ;
@@ -507,8 +507,8 @@ trait SINGLETON_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 } ;
 
 template <>
-exports auto SINGLETON_HOLDER_HELP<DEPEND ,ALWAYS>::Holder::create () ->VRef<Holder> {
-	using R1X = typename SINGLETON_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
+exports auto FLT32TON_HOLDER_HELP<DEPEND ,ALWAYS>::Holder::create () ->VRef<Holder> {
+	using R1X = typename FLT32TON_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	return VRef<R1X>::make () ;
 }
 } ;

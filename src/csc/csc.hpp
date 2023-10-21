@@ -132,7 +132,7 @@ SOFTWARE.
 #pragma warning (disable :4686) //@info: warning C4686: 'xxx': possible change in behavior, change in UDT return calling convention
 #pragma warning (disable :4702) //@info: warning C4702: unreachable code
 #pragma warning (disable :4710) //@info: warning C4710: 'xxx': function not inlined
-#pragma warning (disable :4711) //@info: warning C4711: function 'xxx' selected for automatic forceinline expansion
+#pragma warning (disable :4711) //@info: warning C4711: function 'xxx' selected for automatic inline expansion
 #pragma warning (disable :4714) //@info: warning C4714: function 'xxx' marked as __forceinline not inlined
 #pragma warning (disable :4717) //@info: warning C4717: 'xxx': recursive on all control paths, function will cause runtime stack overflow
 #pragma warning (disable :4774) //@info: warning C4774: 'xxx' : format string expected in argument xxx is not a string literal
@@ -253,11 +253,11 @@ struct is_trivially_default_constructible :integral_constant<bool ,__has_trivial
 
 #ifndef __macro_unittest
 #ifdef __CSC_VER_DEBUG__
-#define __macro_unittest(...) do { CSC::unsafe_watch (CSC::TYPEAS<CSC::ENUMAS<CSC::csc_byte32_t ,__COUNTER__>>::expr ,slice (__macro_str (__VA_ARGS__)) ,__VA_ARGS__) ; } while (false)
+#define __macro_unittest(...) do { CSC::unsafe_watch (CSC::TYPEAS<CSC::ENUMAS<CSC::csc_uint32_t ,__COUNTER__>>::expr ,slice (__macro_str (__VA_ARGS__)) ,__VA_ARGS__) ; } while (false)
 #endif
 
 #ifdef __CSC_VER_UNITTEST__
-#define __macro_unittest(...) do { CSC::unsafe_watch (CSC::TYPEAS<CSC::ENUMAS<CSC::csc_byte32_t ,__COUNTER__>>::expr ,slice (__macro_str (__VA_ARGS__)) ,__VA_ARGS__) ; } while (false)
+#define __macro_unittest(...) do { CSC::unsafe_watch (CSC::TYPEAS<CSC::ENUMAS<CSC::csc_uint32_t ,__COUNTER__>>::expr ,slice (__macro_str (__VA_ARGS__)) ,__VA_ARGS__) ; } while (false)
 #endif
 
 #ifdef __CSC_VER_RELEASE__
@@ -310,7 +310,7 @@ using csc_float64_t = double ;
 
 #ifdef __CSC_CXX_LITE__
 struct FUNCTION_infinity {
-	forceinline consteval operator csc_float32_t () const noexcept {
+	inline consteval operator csc_float32_t () const noexcept {
 		return csc_float32_t (__builtin_huge_valf ()) ;
 	}
 } ;
@@ -318,7 +318,7 @@ struct FUNCTION_infinity {
 
 #ifndef __CSC_CXX_LITE__
 struct FUNCTION_infinity {
-	forceinline consteval operator csc_float32_t () const noexcept {
+	inline consteval operator csc_float32_t () const noexcept {
 		return std::numeric_limits<csc_float32_t>::infinity () ;
 	}
 } ;
@@ -326,16 +326,16 @@ struct FUNCTION_infinity {
 
 static constexpr auto infinity = FUNCTION_infinity () ;
 
-using csc_byte8_t = DEF<unsigned char> ;
-using csc_byte16_t = DEF<unsigned short> ;
-using csc_byte32_t = DEF<unsigned int> ;
-using csc_byte64_t = DEF<unsigned long long> ;
+using csc_uint8_t = DEF<unsigned char> ;
+using csc_uint16_t = DEF<unsigned short> ;
+using csc_uint32_t = DEF<unsigned int> ;
+using csc_uint64_t = DEF<unsigned long long> ;
 
 using csc_char_t = char ;
 using csc_wchar_t = wchar_t ;
 
 #ifdef __CSC_CXX_LITE__
-using csc_char8_t = csc_byte8_t ;
+using csc_char8_t = csc_uint8_t ;
 #endif
 
 #ifdef __CSC_CXX_FULL__
@@ -398,7 +398,7 @@ using csc_initializer_t = std::initializer_list<UNIT> ;
 
 template <class UNIT ,csc_diff_t SIDE>
 struct ENUMAS {
-	imports consteval UNIT expr_m () noexcept {
+	imports inline consteval UNIT expr_m () noexcept {
 		return UNIT (SIDE) ;
 	}
 } ;
@@ -412,7 +412,7 @@ struct TYPEID {} ;
 
 template <class...UNIT>
 struct TYPEAS {
-	imports consteval TYPEID<UNIT...> expr_m () noexcept {
+	imports inline consteval TYPEID<UNIT...> expr_m () noexcept {
 		return TYPEID<UNIT...> () ;
 	}
 } ;
@@ -440,15 +440,15 @@ template <class UNIT>
 using REQUIRE = typename REQUIRE_HELP<UNIT>::RET ;
 
 template <class...>
-trait DEPENDENT_HELP ;
+trait KILL_HELP ;
 
 template <class UNIT ,class SIDE>
-trait DEPENDENT_HELP<UNIT ,SIDE> {
+trait KILL_HELP<UNIT ,SIDE> {
 	using RET = UNIT ;
 } ;
 
 template <class UNIT ,class SIDE>
-using DEPENDENT = typename DEPENDENT_HELP<UNIT ,SIDE>::RET ;
+using KILL = typename KILL_HELP<UNIT ,SIDE>::RET ;
 
 #ifdef __CSC_CXX_LITE__
 template <class...>
@@ -535,212 +535,212 @@ struct FUNCTION_MACRO_D {} ;
 
 #ifdef __CSC_VER_DEBUG__
 template <class DEPEND>
-using MACRO_VER_DEBUG = DEPENDENT<ENUM_TRUE ,DEPENDENT<FUNCTION_MACRO_A ,DEPEND>> ;
+using MACRO_VER_DEBUG = KILL<ENUM_TRUE ,KILL<FUNCTION_MACRO_A ,DEPEND>> ;
 #endif
 
 #ifndef __CSC_VER_DEBUG__
 template <class DEPEND>
-using MACRO_VER_DEBUG = DEPENDENT<ENUM_FALSE ,DEPENDENT<FUNCTION_MACRO_A ,DEPEND>> ;
+using MACRO_VER_DEBUG = KILL<ENUM_FALSE ,KILL<FUNCTION_MACRO_A ,DEPEND>> ;
 #endif
 
 #ifdef __CSC_VER_UNITTEST__
 template <class DEPEND>
-using MACRO_VER_UNITTEST = DEPENDENT<ENUM_TRUE ,DEPENDENT<FUNCTION_MACRO_B ,DEPEND>> ;
+using MACRO_VER_UNITTEST = KILL<ENUM_TRUE ,KILL<FUNCTION_MACRO_B ,DEPEND>> ;
 #endif
 
 #ifndef __CSC_VER_UNITTEST__
 template <class DEPEND>
-using MACRO_VER_UNITTEST = DEPENDENT<ENUM_FALSE ,DEPENDENT<FUNCTION_MACRO_B ,DEPEND>> ;
+using MACRO_VER_UNITTEST = KILL<ENUM_FALSE ,KILL<FUNCTION_MACRO_B ,DEPEND>> ;
 #endif
 
 #ifdef __CSC_VER_RELEASE__
 template <class DEPEND>
-using MACRO_VER_RELEASE = DEPENDENT<ENUM_TRUE ,DEPENDENT<FUNCTION_MACRO_C ,DEPEND>> ;
+using MACRO_VER_RELEASE = KILL<ENUM_TRUE ,KILL<FUNCTION_MACRO_C ,DEPEND>> ;
 #endif
 
 #ifndef __CSC_VER_RELEASE__
 template <class DEPEND>
-using MACRO_VER_RELEASE = DEPENDENT<ENUM_FALSE ,DEPENDENT<FUNCTION_MACRO_C ,DEPEND>> ;
+using MACRO_VER_RELEASE = KILL<ENUM_FALSE ,KILL<FUNCTION_MACRO_C ,DEPEND>> ;
 #endif
 
 #ifdef __CSC_COMPILER_MSVC__
 template <class DEPEND>
-using MACRO_COMPILER_MSVC = DEPENDENT<ENUM_TRUE ,DEPENDENT<FUNCTION_MACRO_A ,DEPEND>> ;
+using MACRO_COMPILER_MSVC = KILL<ENUM_TRUE ,KILL<FUNCTION_MACRO_A ,DEPEND>> ;
 #endif
 
 #ifndef __CSC_COMPILER_MSVC__
 template <class DEPEND>
-using MACRO_COMPILER_MSVC = DEPENDENT<ENUM_FALSE ,DEPENDENT<FUNCTION_MACRO_A ,DEPEND>> ;
+using MACRO_COMPILER_MSVC = KILL<ENUM_FALSE ,KILL<FUNCTION_MACRO_A ,DEPEND>> ;
 #endif
 
 #ifdef __CSC_COMPILER_GNUC__
 template <class DEPEND>
-using MACRO_COMPILER_GNUC = DEPENDENT<ENUM_TRUE ,DEPENDENT<FUNCTION_MACRO_B ,DEPEND>> ;
+using MACRO_COMPILER_GNUC = KILL<ENUM_TRUE ,KILL<FUNCTION_MACRO_B ,DEPEND>> ;
 #endif
 
 #ifndef __CSC_COMPILER_GNUC__
 template <class DEPEND>
-using MACRO_COMPILER_GNUC = DEPENDENT<ENUM_FALSE ,DEPENDENT<FUNCTION_MACRO_B ,DEPEND>> ;
+using MACRO_COMPILER_GNUC = KILL<ENUM_FALSE ,KILL<FUNCTION_MACRO_B ,DEPEND>> ;
 #endif
 
 #ifdef __CSC_COMPILER_CLANG__
 template <class DEPEND>
-using MACRO_COMPILER_CLANG = DEPENDENT<ENUM_TRUE ,DEPENDENT<FUNCTION_MACRO_C ,DEPEND>> ;
+using MACRO_COMPILER_CLANG = KILL<ENUM_TRUE ,KILL<FUNCTION_MACRO_C ,DEPEND>> ;
 #endif
 
 #ifndef __CSC_COMPILER_CLANG__
 template <class DEPEND>
-using MACRO_COMPILER_CLANG = DEPENDENT<ENUM_FALSE ,DEPENDENT<FUNCTION_MACRO_C ,DEPEND>> ;
+using MACRO_COMPILER_CLANG = KILL<ENUM_FALSE ,KILL<FUNCTION_MACRO_C ,DEPEND>> ;
 #endif
 
 #ifdef __CSC_SYSTEM_WINDOWS__
 template <class DEPEND>
-using MACRO_SYSTEM_WINDOWS = DEPENDENT<ENUM_TRUE ,DEPENDENT<FUNCTION_MACRO_A ,DEPEND>> ;
+using MACRO_SYSTEM_WINDOWS = KILL<ENUM_TRUE ,KILL<FUNCTION_MACRO_A ,DEPEND>> ;
 #endif
 
 #ifndef __CSC_SYSTEM_WINDOWS__
 template <class DEPEND>
-using MACRO_SYSTEM_WINDOWS = DEPENDENT<ENUM_FALSE ,DEPENDENT<FUNCTION_MACRO_A ,DEPEND>> ;
+using MACRO_SYSTEM_WINDOWS = KILL<ENUM_FALSE ,KILL<FUNCTION_MACRO_A ,DEPEND>> ;
 #endif
 
 #ifdef __CSC_SYSTEM_LINUX__
 template <class DEPEND>
-using MACRO_SYSTEM_LINUX = DEPENDENT<ENUM_TRUE ,DEPENDENT<FUNCTION_MACRO_B ,DEPEND>> ;
+using MACRO_SYSTEM_LINUX = KILL<ENUM_TRUE ,KILL<FUNCTION_MACRO_B ,DEPEND>> ;
 #endif
 
 #ifndef __CSC_SYSTEM_LINUX__
 template <class DEPEND>
-using MACRO_SYSTEM_LINUX = DEPENDENT<ENUM_FALSE ,DEPENDENT<FUNCTION_MACRO_B ,DEPEND>> ;
+using MACRO_SYSTEM_LINUX = KILL<ENUM_FALSE ,KILL<FUNCTION_MACRO_B ,DEPEND>> ;
 #endif
 
 #ifdef __CSC_PLATFORM_X86__
 template <class DEPEND>
-using MACRO_PLATFORM_X86 = DEPENDENT<ENUM_TRUE ,DEPENDENT<FUNCTION_MACRO_A ,DEPEND>> ;
+using MACRO_PLATFORM_X86 = KILL<ENUM_TRUE ,KILL<FUNCTION_MACRO_A ,DEPEND>> ;
 #endif
 
 #ifndef __CSC_PLATFORM_X86__
 template <class DEPEND>
-using MACRO_PLATFORM_X86 = DEPENDENT<ENUM_FALSE ,DEPENDENT<FUNCTION_MACRO_A ,DEPEND>> ;
+using MACRO_PLATFORM_X86 = KILL<ENUM_FALSE ,KILL<FUNCTION_MACRO_A ,DEPEND>> ;
 #endif
 
 #ifdef __CSC_PLATFORM_X64__
 template <class DEPEND>
-using MACRO_PLATFORM_X64 = DEPENDENT<ENUM_TRUE ,DEPENDENT<FUNCTION_MACRO_B ,DEPEND>> ;
+using MACRO_PLATFORM_X64 = KILL<ENUM_TRUE ,KILL<FUNCTION_MACRO_B ,DEPEND>> ;
 #endif
 
 #ifndef __CSC_PLATFORM_X64__
 template <class DEPEND>
-using MACRO_PLATFORM_X64 = DEPENDENT<ENUM_FALSE ,DEPENDENT<FUNCTION_MACRO_B ,DEPEND>> ;
+using MACRO_PLATFORM_X64 = KILL<ENUM_FALSE ,KILL<FUNCTION_MACRO_B ,DEPEND>> ;
 #endif
 
 #ifdef __CSC_PLATFORM_ARM__
 template <class DEPEND>
-using MACRO_PLATFORM_ARM = DEPENDENT<ENUM_TRUE ,DEPENDENT<FUNCTION_MACRO_C ,DEPEND>> ;
+using MACRO_PLATFORM_ARM = KILL<ENUM_TRUE ,KILL<FUNCTION_MACRO_C ,DEPEND>> ;
 #endif
 
 #ifndef __CSC_PLATFORM_ARM__
 template <class DEPEND>
-using MACRO_PLATFORM_ARM = DEPENDENT<ENUM_FALSE ,DEPENDENT<FUNCTION_MACRO_C ,DEPEND>> ;
+using MACRO_PLATFORM_ARM = KILL<ENUM_FALSE ,KILL<FUNCTION_MACRO_C ,DEPEND>> ;
 #endif
 
 #ifdef __CSC_PLATFORM_ARM64__
 template <class DEPEND>
-using MACRO_PLATFORM_ARM64 = DEPENDENT<ENUM_TRUE ,DEPENDENT<FUNCTION_MACRO_D ,DEPEND>> ;
+using MACRO_PLATFORM_ARM64 = KILL<ENUM_TRUE ,KILL<FUNCTION_MACRO_D ,DEPEND>> ;
 #endif
 
 #ifndef __CSC_PLATFORM_ARM64__
 template <class DEPEND>
-using MACRO_PLATFORM_ARM64 = DEPENDENT<ENUM_FALSE ,DEPENDENT<FUNCTION_MACRO_D ,DEPEND>> ;
+using MACRO_PLATFORM_ARM64 = KILL<ENUM_FALSE ,KILL<FUNCTION_MACRO_D ,DEPEND>> ;
 #endif
 
 #ifdef __CSC_TARGET_EXE__
 template <class DEPEND>
-using MACRO_TARGET_EXE = DEPENDENT<ENUM_TRUE ,DEPENDENT<FUNCTION_MACRO_A ,DEPEND>> ;
+using MACRO_TARGET_EXE = KILL<ENUM_TRUE ,KILL<FUNCTION_MACRO_A ,DEPEND>> ;
 #endif
 
 #ifndef __CSC_TARGET_EXE__
 template <class DEPEND>
-using MACRO_TARGET_EXE = DEPENDENT<ENUM_FALSE ,DEPENDENT<FUNCTION_MACRO_A ,DEPEND>> ;
+using MACRO_TARGET_EXE = KILL<ENUM_FALSE ,KILL<FUNCTION_MACRO_A ,DEPEND>> ;
 #endif
 
 #ifdef __CSC_TARGET_DLL__
 template <class DEPEND>
-using MACRO_TARGET_DLL = DEPENDENT<ENUM_TRUE ,DEPENDENT<FUNCTION_MACRO_B ,DEPEND>> ;
+using MACRO_TARGET_DLL = KILL<ENUM_TRUE ,KILL<FUNCTION_MACRO_B ,DEPEND>> ;
 #endif
 
 #ifndef __CSC_TARGET_DLL__
 template <class DEPEND>
-using MACRO_TARGET_DLL = DEPENDENT<ENUM_FALSE ,DEPENDENT<FUNCTION_MACRO_B ,DEPEND>> ;
+using MACRO_TARGET_DLL = KILL<ENUM_FALSE ,KILL<FUNCTION_MACRO_B ,DEPEND>> ;
 #endif
 
 #ifdef __CSC_TARGET_LIB__
 template <class DEPEND>
-using MACRO_TARGET_LIB = DEPENDENT<ENUM_TRUE ,DEPENDENT<FUNCTION_MACRO_C ,DEPEND>> ;
+using MACRO_TARGET_LIB = KILL<ENUM_TRUE ,KILL<FUNCTION_MACRO_C ,DEPEND>> ;
 #endif
 
 #ifndef __CSC_TARGET_LIB__
 template <class DEPEND>
-using MACRO_TARGET_LIB = DEPENDENT<ENUM_FALSE ,DEPENDENT<FUNCTION_MACRO_C ,DEPEND>> ;
+using MACRO_TARGET_LIB = KILL<ENUM_FALSE ,KILL<FUNCTION_MACRO_C ,DEPEND>> ;
 #endif
 
 #ifdef __CSC_CONFIG_VAL32__
 template <class DEPEND>
-using MACRO_CONFIG_VAL32 = DEPENDENT<ENUM_TRUE ,DEPENDENT<FUNCTION_MACRO_A ,DEPEND>> ;
+using MACRO_CONFIG_VAL32 = KILL<ENUM_TRUE ,KILL<FUNCTION_MACRO_A ,DEPEND>> ;
 #endif
 
 #ifndef __CSC_CONFIG_VAL32__
 template <class DEPEND>
-using MACRO_CONFIG_VAL32 = DEPENDENT<ENUM_FALSE ,DEPENDENT<FUNCTION_MACRO_A ,DEPEND>> ;
+using MACRO_CONFIG_VAL32 = KILL<ENUM_FALSE ,KILL<FUNCTION_MACRO_A ,DEPEND>> ;
 #endif
 
 #ifdef __CSC_CONFIG_VAL64__
 template <class DEPEND>
-using MACRO_CONFIG_VAL64 = DEPENDENT<ENUM_TRUE ,DEPENDENT<FUNCTION_MACRO_B ,DEPEND>> ;
+using MACRO_CONFIG_VAL64 = KILL<ENUM_TRUE ,KILL<FUNCTION_MACRO_B ,DEPEND>> ;
 #endif
 
 #ifndef __CSC_CONFIG_VAL64__
 template <class DEPEND>
-using MACRO_CONFIG_VAL64 = DEPENDENT<ENUM_FALSE ,DEPENDENT<FUNCTION_MACRO_B ,DEPEND>> ;
+using MACRO_CONFIG_VAL64 = KILL<ENUM_FALSE ,KILL<FUNCTION_MACRO_B ,DEPEND>> ;
 #endif
 
 #ifdef __CSC_CONFIG_STRA__
 template <class DEPEND>
-using MACRO_CONFIG_STRA = DEPENDENT<ENUM_TRUE ,DEPENDENT<FUNCTION_MACRO_A ,DEPEND>> ;
+using MACRO_CONFIG_STRA = KILL<ENUM_TRUE ,KILL<FUNCTION_MACRO_A ,DEPEND>> ;
 #endif
 
 #ifndef __CSC_CONFIG_STRA__
 template <class DEPEND>
-using MACRO_CONFIG_STRA = DEPENDENT<ENUM_FALSE ,DEPENDENT<FUNCTION_MACRO_A ,DEPEND>> ;
+using MACRO_CONFIG_STRA = KILL<ENUM_FALSE ,KILL<FUNCTION_MACRO_A ,DEPEND>> ;
 #endif
 
 #ifdef __CSC_CONFIG_STRW__
 template <class DEPEND>
-using MACRO_CONFIG_STRW = DEPENDENT<ENUM_TRUE ,DEPENDENT<FUNCTION_MACRO_B ,DEPEND>> ;
+using MACRO_CONFIG_STRW = KILL<ENUM_TRUE ,KILL<FUNCTION_MACRO_B ,DEPEND>> ;
 #endif
 
 #ifndef __CSC_CONFIG_STRW__
 template <class DEPEND>
-using MACRO_CONFIG_STRW = DEPENDENT<ENUM_FALSE ,DEPENDENT<FUNCTION_MACRO_B ,DEPEND>> ;
+using MACRO_CONFIG_STRW = KILL<ENUM_FALSE ,KILL<FUNCTION_MACRO_B ,DEPEND>> ;
 #endif
 
 #ifdef __CSC_CXX_LITE__
 template <class DEPEND>
-using MACRO_CXX_LITE = DEPENDENT<ENUM_TRUE ,DEPENDENT<FUNCTION_MACRO_A ,DEPEND>> ;
+using MACRO_CXX_LITE = KILL<ENUM_TRUE ,KILL<FUNCTION_MACRO_A ,DEPEND>> ;
 #endif
 
 #ifndef __CSC_CXX_LITE__
 template <class DEPEND>
-using MACRO_CXX_LITE = DEPENDENT<ENUM_FALSE ,DEPENDENT<FUNCTION_MACRO_A ,DEPEND>> ;
+using MACRO_CXX_LITE = KILL<ENUM_FALSE ,KILL<FUNCTION_MACRO_A ,DEPEND>> ;
 #endif
 
 #ifdef __CSC_CXX_FULL__
 template <class DEPEND>
-using MACRO_CXX_FULL = DEPENDENT<ENUM_TRUE ,DEPENDENT<FUNCTION_MACRO_B ,DEPEND>> ;
+using MACRO_CXX_FULL = KILL<ENUM_TRUE ,KILL<FUNCTION_MACRO_B ,DEPEND>> ;
 #endif
 
 #ifndef __CSC_CXX_FULL__
 template <class DEPEND>
-using MACRO_CXX_FULL = DEPENDENT<ENUM_FALSE ,DEPENDENT<FUNCTION_MACRO_B ,DEPEND>> ;
+using MACRO_CXX_FULL = KILL<ENUM_FALSE ,KILL<FUNCTION_MACRO_B ,DEPEND>> ;
 #endif
 
 #ifdef __CSC_CXX_LITE__
@@ -887,7 +887,7 @@ struct FUNCTION_internel_name {
 	}
 
 	template <class ARG1>
-	forceinline csc_span_t operator() (CREF<TYPEID<ARG1>> id) const noexcept {
+	inline csc_span_t operator() (TYPEID<ARG1> id) const noexcept {
 		return invoke<ARG1> () ;
 	}
 } ;
@@ -907,7 +907,7 @@ struct FUNCTION_internel_name {
 	}
 
 	template <class ARG1>
-	forceinline csc_span_t operator() (CREF<TYPEID<ARG1>> id) const noexcept {
+	inline csc_span_t operator() (TYPEID<ARG1> id) const noexcept {
 		return invoke<ARG1> () ;
 	}
 } ;
@@ -927,7 +927,7 @@ struct FUNCTION_internel_name {
 	}
 
 	template <class ARG1>
-	forceinline csc_span_t operator() (CREF<TYPEID<ARG1>> id) const noexcept {
+	inline csc_span_t operator() (TYPEID<ARG1> id) const noexcept {
 		return invoke<ARG1> () ;
 	}
 } ;
@@ -936,12 +936,12 @@ struct FUNCTION_internel_name {
 
 #ifdef __CSC_CXX_LITE__
 template <class ARG1 ,class ARG2>
-forceinline constexpr CSC::csc_pointer_t operator new (CSC::csc_size_t ,CSC::DEF<CSC::TEMPAS<ARG1 ,ARG2> *> where_) noexcept {
+inline constexpr CSC::csc_pointer_t operator new (CSC::csc_size_t ,CSC::DEF<CSC::TEMPAS<ARG1 ,ARG2> *> where_) noexcept {
 	return where_ ;
 }
 
 template <class ARG1 ,class ARG2>
-forceinline constexpr void operator delete (CSC::csc_pointer_t ,CSC::DEF<CSC::TEMPAS<ARG1 ,ARG2> *> where_) noexcept {
+inline constexpr void operator delete (CSC::csc_pointer_t ,CSC::DEF<CSC::TEMPAS<ARG1 ,ARG2> *> where_) noexcept {
 	return ;
 }
 #endif

@@ -79,11 +79,11 @@ trait IMAGEITERATOR_HELP<DEPEND ,ALWAYS> {
 			return mBad ;
 		}
 
-		forceinline BOOL operator== (CREF<ImageIterator>) const {
+		inline BOOL operator== (CREF<ImageIterator>) const {
 			return bad () ;
 		}
 
-		forceinline BOOL operator!= (CREF<ImageIterator>) const {
+		inline BOOL operator!= (CREF<ImageIterator>) const {
 			return ifnot (bad ()) ;
 		}
 
@@ -91,7 +91,7 @@ trait IMAGEITERATOR_HELP<DEPEND ,ALWAYS> {
 			return mPixel ;
 		}
 
-		forceinline CREF<PIXEL> operator* () const leftvalue {
+		inline CREF<PIXEL> operator* () const leftvalue {
 			return peek () ;
 		}
 
@@ -107,7 +107,7 @@ trait IMAGEITERATOR_HELP<DEPEND ,ALWAYS> {
 			mBad = TRUE ;
 		}
 
-		forceinline void operator++ () {
+		inline void operator++ () {
 			next () ;
 		}
 	} ;
@@ -134,7 +134,7 @@ trait ROWPROXY_HELP<UNIT ,ITEM ,COND ,REQUIRE<COND>> {
 			mY = y_ ;
 		}
 
-		forceinline VREF<ITEM> operator[] (CREF<INDEX> x_) rightvalue {
+		inline VREF<ITEM> operator[] (CREF<INDEX> x_) rightvalue {
 			return mThat->at (x_ ,mY) ;
 		}
 	} ;
@@ -155,7 +155,7 @@ trait ROWPROXY_HELP<UNIT ,ITEM ,COND ,REQUIRE<ENUM_NOT<COND>>> {
 			mY = y_ ;
 		}
 
-		forceinline CREF<ITEM> operator[] (CREF<INDEX> x_) rightvalue {
+		inline CREF<ITEM> operator[] (CREF<INDEX> x_) rightvalue {
 			return mThat->at (x_ ,mY) ;
 		}
 	} ;
@@ -291,7 +291,7 @@ trait IMAGE_HELP<ITEM ,SIZE ,REQUIRE<ENUM_NOT<IS_SAME<SIZE ,ORDINARY>>>> {
 			return at (xy.x ,xy.y) ;
 		}
 
-		forceinline VREF<ITEM> operator[] (CREF<PIXEL> xy) leftvalue {
+		inline VREF<ITEM> operator[] (CREF<PIXEL> xy) leftvalue {
 			return at (xy) ;
 		}
 
@@ -301,7 +301,7 @@ trait IMAGE_HELP<ITEM ,SIZE ,REQUIRE<ENUM_NOT<IS_SAME<SIZE ,ORDINARY>>>> {
 			return mImage[y_ * mStrip + x_ + mOffset] ;
 		}
 
-		forceinline RowProxy<VREF<Image> ,ITEM> operator[] (CREF<INDEX> y_) leftvalue {
+		inline RowProxy<VREF<Image> ,ITEM> operator[] (CREF<INDEX> y_) leftvalue {
 			return RowProxy<VREF<Image> ,ITEM> (VRef<Image>::reference (thiz) ,y_) ;
 		}
 
@@ -309,7 +309,7 @@ trait IMAGE_HELP<ITEM ,SIZE ,REQUIRE<ENUM_NOT<IS_SAME<SIZE ,ORDINARY>>>> {
 			return at (xy.x ,xy.y) ;
 		}
 
-		forceinline CREF<ITEM> operator[] (CREF<PIXEL> xy) const leftvalue {
+		inline CREF<ITEM> operator[] (CREF<PIXEL> xy) const leftvalue {
 			return at (xy) ;
 		}
 
@@ -319,7 +319,7 @@ trait IMAGE_HELP<ITEM ,SIZE ,REQUIRE<ENUM_NOT<IS_SAME<SIZE ,ORDINARY>>>> {
 			return mImage[y_ * mStrip + x_ + mOffset] ;
 		}
 
-		forceinline RowProxy<CREF<Image> ,ITEM> operator[] (CREF<INDEX> y_) const leftvalue {
+		inline RowProxy<CREF<Image> ,ITEM> operator[] (CREF<INDEX> y_) const leftvalue {
 			return RowProxy<CREF<Image> ,ITEM> (CRef<Image>::reference (thiz) ,y_) ;
 		}
 
@@ -333,11 +333,11 @@ trait IMAGE_HELP<ITEM ,SIZE ,REQUIRE<ENUM_NOT<IS_SAME<SIZE ,ORDINARY>>>> {
 			return TRUE ;
 		}
 
-		forceinline BOOL operator== (CREF<Image> that) const {
+		inline BOOL operator== (CREF<Image> that) const {
 			return equal (that) ;
 		}
 
-		forceinline BOOL operator!= (CREF<Image> that) const {
+		inline BOOL operator!= (CREF<Image> that) const {
 			return ifnot (equal (that)) ;
 		}
 
@@ -353,19 +353,19 @@ trait IMAGE_HELP<ITEM ,SIZE ,REQUIRE<ENUM_NOT<IS_SAME<SIZE ,ORDINARY>>>> {
 			return ZERO ;
 		}
 
-		forceinline BOOL operator< (CREF<Image> that) const {
+		inline BOOL operator< (CREF<Image> that) const {
 			return compr (that) < ZERO ;
 		}
 
-		forceinline BOOL operator<= (CREF<Image> that) const {
+		inline BOOL operator<= (CREF<Image> that) const {
 			return compr (that) <= ZERO ;
 		}
 
-		forceinline BOOL operator> (CREF<Image> that) const {
+		inline BOOL operator> (CREF<Image> that) const {
 			return compr (that) > ZERO ;
 		}
 
-		forceinline BOOL operator>= (CREF<Image> that) const {
+		inline BOOL operator>= (CREF<Image> that) const {
 			return compr (that) >= ZERO ;
 		}
 
@@ -386,7 +386,7 @@ trait IMAGE_HELP<ITEM ,SIZE ,REQUIRE<ENUM_NOT<IS_SAME<SIZE ,ORDINARY>>>> {
 			return move (ret) ;
 		}
 
-		forceinline Image operator+ (CREF<Image> that) const {
+		inline Image operator+ (CREF<Image> that) const {
 			return add (that) ;
 		}
 
@@ -396,7 +396,7 @@ trait IMAGE_HELP<ITEM ,SIZE ,REQUIRE<ENUM_NOT<IS_SAME<SIZE ,ORDINARY>>>> {
 				at (i) += that.at (i) ;
 		}
 
-		forceinline void operator+= (CREF<Image> that) {
+		inline void operator+= (CREF<Image> that) {
 			add_with (that) ;
 		}
 
@@ -408,7 +408,7 @@ trait IMAGE_HELP<ITEM ,SIZE ,REQUIRE<ENUM_NOT<IS_SAME<SIZE ,ORDINARY>>>> {
 			return move (ret) ;
 		}
 
-		forceinline Image operator- (CREF<Image> that) const {
+		inline Image operator- (CREF<Image> that) const {
 			return sub (that) ;
 		}
 
@@ -418,7 +418,7 @@ trait IMAGE_HELP<ITEM ,SIZE ,REQUIRE<ENUM_NOT<IS_SAME<SIZE ,ORDINARY>>>> {
 				at (i) -= that.at (i) ;
 		}
 
-		forceinline void operator-= (CREF<Image> that) {
+		inline void operator-= (CREF<Image> that) {
 			sub_with (that) ;
 		}
 
@@ -430,7 +430,7 @@ trait IMAGE_HELP<ITEM ,SIZE ,REQUIRE<ENUM_NOT<IS_SAME<SIZE ,ORDINARY>>>> {
 			return move (ret) ;
 		}
 
-		forceinline Image operator* (CREF<Image> that) const {
+		inline Image operator* (CREF<Image> that) const {
 			return mul (that) ;
 		}
 
@@ -440,7 +440,7 @@ trait IMAGE_HELP<ITEM ,SIZE ,REQUIRE<ENUM_NOT<IS_SAME<SIZE ,ORDINARY>>>> {
 				at (i) *= that.at (i) ;
 		}
 
-		forceinline void operator*= (CREF<Image> that) {
+		inline void operator*= (CREF<Image> that) {
 			mul_with (that) ;
 		}
 
@@ -452,7 +452,7 @@ trait IMAGE_HELP<ITEM ,SIZE ,REQUIRE<ENUM_NOT<IS_SAME<SIZE ,ORDINARY>>>> {
 			return move (ret) ;
 		}
 
-		forceinline Image operator/ (CREF<Image> that) const {
+		inline Image operator/ (CREF<Image> that) const {
 			return div (that) ;
 		}
 
@@ -462,7 +462,7 @@ trait IMAGE_HELP<ITEM ,SIZE ,REQUIRE<ENUM_NOT<IS_SAME<SIZE ,ORDINARY>>>> {
 				at (i) /= that.at (i) ;
 		}
 
-		forceinline void operator/= (CREF<Image> that) {
+		inline void operator/= (CREF<Image> that) {
 			div_with (that) ;
 		}
 
@@ -474,7 +474,7 @@ trait IMAGE_HELP<ITEM ,SIZE ,REQUIRE<ENUM_NOT<IS_SAME<SIZE ,ORDINARY>>>> {
 			return move (ret) ;
 		}
 
-		forceinline Image operator% (CREF<Image> that) const {
+		inline Image operator% (CREF<Image> that) const {
 			return mod (that) ;
 		}
 
@@ -484,7 +484,7 @@ trait IMAGE_HELP<ITEM ,SIZE ,REQUIRE<ENUM_NOT<IS_SAME<SIZE ,ORDINARY>>>> {
 				at (i) %= that.at (i) ;
 		}
 
-		forceinline void operator%= (CREF<Image> that) {
+		inline void operator%= (CREF<Image> that) {
 			mod_with (that) ;
 		}
 
@@ -495,7 +495,7 @@ trait IMAGE_HELP<ITEM ,SIZE ,REQUIRE<ENUM_NOT<IS_SAME<SIZE ,ORDINARY>>>> {
 			return move (ret) ;
 		}
 
-		forceinline Image operator+ () const {
+		inline Image operator+ () const {
 			return plus () ;
 		}
 
@@ -506,7 +506,7 @@ trait IMAGE_HELP<ITEM ,SIZE ,REQUIRE<ENUM_NOT<IS_SAME<SIZE ,ORDINARY>>>> {
 			return move (ret) ;
 		}
 
-		forceinline Image operator- () const {
+		inline Image operator- () const {
 			return minus () ;
 		}
 
@@ -518,7 +518,7 @@ trait IMAGE_HELP<ITEM ,SIZE ,REQUIRE<ENUM_NOT<IS_SAME<SIZE ,ORDINARY>>>> {
 			return move (ret) ;
 		}
 
-		forceinline Image operator& (CREF<Image> that) const {
+		inline Image operator& (CREF<Image> that) const {
 			return band (that) ;
 		}
 
@@ -528,7 +528,7 @@ trait IMAGE_HELP<ITEM ,SIZE ,REQUIRE<ENUM_NOT<IS_SAME<SIZE ,ORDINARY>>>> {
 				at (i) &= that.at (i) ;
 		}
 
-		forceinline void operator&= (CREF<Image> that) {
+		inline void operator&= (CREF<Image> that) {
 			band_with (that) ;
 		}
 
@@ -540,7 +540,7 @@ trait IMAGE_HELP<ITEM ,SIZE ,REQUIRE<ENUM_NOT<IS_SAME<SIZE ,ORDINARY>>>> {
 			return move (ret) ;
 		}
 
-		forceinline Image operator| (CREF<Image> that) const {
+		inline Image operator| (CREF<Image> that) const {
 			return bor (that) ;
 		}
 
@@ -550,7 +550,7 @@ trait IMAGE_HELP<ITEM ,SIZE ,REQUIRE<ENUM_NOT<IS_SAME<SIZE ,ORDINARY>>>> {
 				at (i) |= that.at (i) ;
 		}
 
-		forceinline void operator|= (CREF<Image> that) {
+		inline void operator|= (CREF<Image> that) {
 			bor_with (that) ;
 		}
 
@@ -562,7 +562,7 @@ trait IMAGE_HELP<ITEM ,SIZE ,REQUIRE<ENUM_NOT<IS_SAME<SIZE ,ORDINARY>>>> {
 			return move (ret) ;
 		}
 
-		forceinline Image operator^ (CREF<Image> that) const {
+		inline Image operator^ (CREF<Image> that) const {
 			return bxor (that) ;
 		}
 
@@ -572,7 +572,7 @@ trait IMAGE_HELP<ITEM ,SIZE ,REQUIRE<ENUM_NOT<IS_SAME<SIZE ,ORDINARY>>>> {
 				at (i) ^= that.at (i) ;
 		}
 
-		forceinline void operator^= (CREF<Image> that) {
+		inline void operator^= (CREF<Image> that) {
 			bxor_with (that) ;
 		}
 
@@ -583,7 +583,7 @@ trait IMAGE_HELP<ITEM ,SIZE ,REQUIRE<ENUM_NOT<IS_SAME<SIZE ,ORDINARY>>>> {
 			return move (ret) ;
 		}
 
-		forceinline Image operator~ () const {
+		inline Image operator~ () const {
 			return bnot () ;
 		}
 	} ;

@@ -133,7 +133,7 @@ trait CONSOLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			if ifswitch (TRUE) {
 				if ifnot (is_show ())
 					discard ;
-				const auto r1x = csc_byte16_t (FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE) ;
+				const auto r1x = csc_uint16_t (FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE) ;
 				SetConsoleTextAttribute (mThis->mConsole ,r1x) ;
 				auto rax = csc_enum_t () ;
 				rax = csc_enum_t (mThis->mConWriter.length () - 1) ;
@@ -151,7 +151,7 @@ trait CONSOLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			if ifswitch (TRUE) {
 				if ifnot (is_show ())
 					discard ;
-				const auto r1x = csc_byte16_t (FOREGROUND_BLUE | FOREGROUND_INTENSITY) ;
+				const auto r1x = csc_uint16_t (FOREGROUND_BLUE | FOREGROUND_INTENSITY) ;
 				SetConsoleTextAttribute (mThis->mConsole ,r1x) ;
 				auto rax = csc_enum_t () ;
 				rax = csc_enum_t (mThis->mConWriter.length () - 1) ;
@@ -169,7 +169,7 @@ trait CONSOLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			if ifswitch (TRUE) {
 				if ifnot (is_show ())
 					discard ;
-				const auto r1x = csc_byte16_t (FOREGROUND_RED | FOREGROUND_INTENSITY) ;
+				const auto r1x = csc_uint16_t (FOREGROUND_RED | FOREGROUND_INTENSITY) ;
 				SetConsoleTextAttribute (mThis->mConsole ,r1x) ;
 				auto rax = csc_enum_t () ;
 				rax = csc_enum_t (mThis->mConWriter.length () - 1) ;
@@ -187,7 +187,7 @@ trait CONSOLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			if ifswitch (TRUE) {
 				if ifnot (is_show ())
 					discard ;
-				const auto r1x = csc_byte16_t (FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_INTENSITY) ;
+				const auto r1x = csc_uint16_t (FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_INTENSITY) ;
 				SetConsoleTextAttribute (mThis->mConsole ,r1x) ;
 				auto rax = csc_enum_t () ;
 				rax = csc_enum_t (mThis->mConWriter.length () - 1) ;
@@ -205,7 +205,7 @@ trait CONSOLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			if ifswitch (TRUE) {
 				if ifnot (is_show ())
 					discard ;
-				const auto r1x = csc_byte16_t (FOREGROUND_GREEN | FOREGROUND_INTENSITY) ;
+				const auto r1x = csc_uint16_t (FOREGROUND_GREEN | FOREGROUND_INTENSITY) ;
 				SetConsoleTextAttribute (mThis->mConsole ,r1x) ;
 				auto rax = csc_enum_t () ;
 				rax = csc_enum_t (mThis->mConWriter.length () - 1) ;
@@ -223,7 +223,7 @@ trait CONSOLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			if ifswitch (TRUE) {
 				if ifnot (is_show ())
 					discard ;
-				const auto r1x = csc_byte16_t (FOREGROUND_GREEN | FOREGROUND_BLUE | FOREGROUND_INTENSITY) ;
+				const auto r1x = csc_uint16_t (FOREGROUND_GREEN | FOREGROUND_BLUE | FOREGROUND_INTENSITY) ;
 				SetConsoleTextAttribute (mThis->mConsole ,r1x) ;
 				auto rax = csc_enum_t () ;
 				rax = csc_enum_t (mThis->mConWriter.length () - 1) ;
@@ -241,7 +241,7 @@ trait CONSOLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			if ifswitch (TRUE) {
 				if ifnot (is_show ())
 					discard ;
-				const auto r1x = csc_byte16_t (FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE | FOREGROUND_INTENSITY) ;
+				const auto r1x = csc_uint16_t (FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE | FOREGROUND_INTENSITY) ;
 				SetConsoleTextAttribute (mThis->mConsole ,r1x) ;
 				auto rax = csc_enum_t () ;
 				rax = csc_enum_t (mThis->mConWriter.length () - 1) ;
@@ -281,8 +281,8 @@ trait CONSOLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			try_invoke ([&] () {
 				if (mThis->mLogStreamFile == NULL)
 					return ;
-				const auto r3x = mThis->mLogStreamFile->write (RegBuffer<BYTE>::from (unsafe_deptr (mThis->mLogBuffer[0]) ,0 ,r1x)) ;
-				assume (r3x == r1x) ;
+				const auto r2x = mThis->mLogStreamFile->write (RegBuffer<BYTE>::from (unsafe_deptr (mThis->mLogBuffer[0]) ,0 ,r1x)) ;
+				assume (r2x == r1x) ;
 			} ,[&] () {
 				mThis->mLogStreamFile = NULL ;
 			}) ;
@@ -290,8 +290,8 @@ trait CONSOLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				if (mThis->mLogStreamFile != NULL)
 					return ;
 				open_log_file () ;
-				const auto r4x = mThis->mLogStreamFile->write (RegBuffer<BYTE>::from (unsafe_deptr (mThis->mLogBuffer[0]) ,0 ,r1x)) ;
-				assume (r4x == r1x) ;
+				const auto r3x = mThis->mLogStreamFile->write (RegBuffer<BYTE>::from (unsafe_deptr (mThis->mLogBuffer[0]) ,0 ,r1x)) ;
+				assume (r3x == r1x) ;
 			} ,[&] () {
 				mThis->mLogStreamFile = NULL ;
 			}) ;
@@ -329,8 +329,8 @@ trait CONSOLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			mThis->mLogStreamFile = VRef<StreamFile>::make (mThis->mLogFile) ;
 			mThis->mLogStreamFile->open (TRUE ,TRUE) ;
 			const auto r3x = PrintString<STRU8>::make (BOM) ;
-			const auto r5x = mThis->mLogStreamFile->write (RegBuffer<BYTE>::from (unsafe_deptr (r3x[0]) ,0 ,r3x.length ())) ;
-			assume (r5x == r3x.length ()) ;
+			const auto r4x = mThis->mLogStreamFile->write (RegBuffer<BYTE>::from (unsafe_deptr (r3x[0]) ,0 ,r3x.length ())) ;
+			assume (r4x == r3x.length ()) ;
 		}
 
 		void show () const override {
@@ -376,7 +376,7 @@ trait CONSOLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 					discard ;
 				FlashWindow (r1x ,TRUE) ;
 			}
-			const auto r2x = csc_byte16_t (FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE) ;
+			const auto r2x = csc_uint16_t (FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE) ;
 			SetConsoleTextAttribute (mThis->mConsole ,r2x) ;
 			const auto r3x = std::system ("pause") ;
 			noop (r3x) ;
@@ -385,7 +385,7 @@ trait CONSOLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		void clear () const override {
 			if ifnot (is_show ())
 				return ;
-			const auto r1x = csc_byte16_t (FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE) ;
+			const auto r1x = csc_uint16_t (FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE) ;
 			SetConsoleTextAttribute (mThis->mConsole ,r1x) ;
 			const auto r2x = std::system ("cls") ;
 			noop (r2x) ;
@@ -428,11 +428,11 @@ trait REPORTER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		void detect_memory_leaks () const override {
-			const auto r1x = csc_byte32_t (_CrtSetDbgFlag (_CRTDBG_REPORT_FLAG)) ;
+			const auto r1x = csc_uint32_t (_CrtSetDbgFlag (_CRTDBG_REPORT_FLAG)) ;
 			noop (r1x) ;
-			const auto r2x = csc_byte32_t (r1x | _CRTDBG_LEAK_CHECK_DF) ;
+			const auto r2x = csc_uint32_t (r1x | _CRTDBG_LEAK_CHECK_DF) ;
 			noop (r2x) ;
-			const auto r3x = csc_byte32_t (_CrtSetDbgFlag (r2x)) ;
+			const auto r3x = csc_uint32_t (_CrtSetDbgFlag (r2x)) ;
 			noop (r3x) ;
 		}
 
