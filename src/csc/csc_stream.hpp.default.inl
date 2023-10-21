@@ -135,7 +135,7 @@ trait BYTEREADER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		template <class ARG1>
-		ARG1 poll (CREF<TYPEID<ARG1>> id) {
+		ARG1 poll (TYPEID<ARG1> id) {
 			ARG1 ret ;
 			read (ret) ;
 			return move (ret) ;
@@ -215,38 +215,38 @@ trait BYTEREADER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		void read (VREF<BOOL> item) override {
-			using R1X = DEPENDENT<BYTE_BASE<BOOL> ,DEPEND> ;
+			using R1X = KILL<BYTE_BASE<BOOL> ,DEPEND> ;
 			auto rax = R1X () ;
 			read (rax) ;
 			item = bitwise[TYPEAS<BOOL>::expr] (rax) ;
 		}
 
 		void read (VREF<VAL32> item) override {
-			using R1X = DEPENDENT<BYTE_BASE<VAL32> ,DEPEND> ;
+			using R1X = KILL<BYTE_BASE<VAL32> ,DEPEND> ;
 			auto rax = R1X () ;
 			read (rax) ;
 			item = bitwise[TYPEAS<VAL32>::expr] (rax) ;
 		}
 
 		void read (VREF<VAL64> item) override {
-			using R1X = DEPENDENT<BYTE_BASE<VAL64> ,DEPEND> ;
+			using R1X = KILL<BYTE_BASE<VAL64> ,DEPEND> ;
 			auto rax = R1X () ;
 			read (rax) ;
 			item = bitwise[TYPEAS<VAL64>::expr] (rax) ;
 		}
 
-		void read (VREF<SINGLE> item) override {
-			using R1X = DEPENDENT<BYTE_BASE<SINGLE> ,DEPEND> ;
+		void read (VREF<FLT32> item) override {
+			using R1X = KILL<BYTE_BASE<FLT32> ,DEPEND> ;
 			auto rax = R1X () ;
 			read (rax) ;
-			item = bitwise[TYPEAS<SINGLE>::expr] (rax) ;
+			item = bitwise[TYPEAS<FLT32>::expr] (rax) ;
 		}
 
-		void read (VREF<DOUBLE> item) override {
-			using R1X = DEPENDENT<BYTE_BASE<DOUBLE> ,DEPEND> ;
+		void read (VREF<FLT64> item) override {
+			using R1X = KILL<BYTE_BASE<FLT64> ,DEPEND> ;
 			auto rax = R1X () ;
 			read (rax) ;
-			item = bitwise[TYPEAS<DOUBLE>::expr] (rax) ;
+			item = bitwise[TYPEAS<FLT64>::expr] (rax) ;
 		}
 
 		void read (CREF<Slice<STR>> item) override {
@@ -259,7 +259,7 @@ trait BYTEREADER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		void read (VREF<String<STRA>> item) override {
-			using R1X = DEPENDENT<BYTE_BASE<STRA> ,DEPEND> ;
+			using R1X = KILL<BYTE_BASE<STRA> ,DEPEND> ;
 			const auto r1x = poll (TYPEAS<VAL32>::expr) ;
 			if ifswitch (TRUE) {
 				if (item.size () >= r1x)
@@ -278,7 +278,7 @@ trait BYTEREADER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		void read (VREF<String<STRW>> item) override {
-			using R1X = DEPENDENT<BYTE_BASE<STRW> ,DEPEND> ;
+			using R1X = KILL<BYTE_BASE<STRW> ,DEPEND> ;
 			const auto r1x = poll (TYPEAS<VAL32>::expr) ;
 			if ifswitch (TRUE) {
 				if (item.size () >= r1x)
@@ -297,7 +297,7 @@ trait BYTEREADER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		void read (VREF<String<STRU8>> item) override {
-			using R1X = DEPENDENT<BYTE_BASE<STRU8> ,DEPEND> ;
+			using R1X = KILL<BYTE_BASE<STRU8> ,DEPEND> ;
 			const auto r1x = poll (TYPEAS<VAL32>::expr) ;
 			if ifswitch (TRUE) {
 				if (item.size () >= r1x)
@@ -316,7 +316,7 @@ trait BYTEREADER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		void read (VREF<String<STRU16>> item) override {
-			using R1X = DEPENDENT<BYTE_BASE<STRU16> ,DEPEND> ;
+			using R1X = KILL<BYTE_BASE<STRU16> ,DEPEND> ;
 			const auto r1x = poll (TYPEAS<VAL32>::expr) ;
 			if ifswitch (TRUE) {
 				if (item.size () >= r1x)
@@ -335,7 +335,7 @@ trait BYTEREADER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		void read (VREF<String<STRU32>> item) override {
-			using R1X = DEPENDENT<BYTE_BASE<STRU32> ,DEPEND> ;
+			using R1X = KILL<BYTE_BASE<STRU32> ,DEPEND> ;
 			const auto r1x = poll (TYPEAS<VAL32>::expr) ;
 			if ifswitch (TRUE) {
 				if (item.size () >= r1x)
@@ -533,12 +533,12 @@ trait BYTEWRITER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			write (r1x) ;
 		}
 
-		void write (CREF<SINGLE> item) override {
+		void write (CREF<FLT32> item) override {
 			const auto r1x = bitwise (item) ;
 			write (r1x) ;
 		}
 
-		void write (CREF<DOUBLE> item) override {
+		void write (CREF<FLT64> item) override {
 			const auto r1x = bitwise (item) ;
 			write (r1x) ;
 		}
@@ -920,7 +920,7 @@ trait TEXTREADER_IMPLHOLDER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 		}
 
 		template <class ARG1>
-		ARG1 poll (CREF<TYPEID<ARG1>> id) {
+		ARG1 poll (TYPEID<ARG1> id) {
 			ARG1 ret ;
 			read (ret) ;
 			return move (ret) ;
@@ -1084,14 +1084,14 @@ trait TEXTREADER_IMPLHOLDER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 			}
 		}
 
-		void read (VREF<SINGLE> item) override {
-			const auto r1x = poll (TYPEAS<DOUBLE>::expr) ;
-			assume (r1x >= SINGLE_MIN) ;
-			assume (r1x <= SINGLE_MAX) ;
-			item = SINGLE (r1x) ;
+		void read (VREF<FLT32> item) override {
+			const auto r1x = poll (TYPEAS<FLT64>::expr) ;
+			assume (r1x >= FLT32_MIN) ;
+			assume (r1x <= FLT32_MAX) ;
+			item = FLT32 (r1x) ;
 		}
 
-		void read (VREF<DOUBLE> item) override {
+		void read (VREF<FLT64> item) override {
 			auto rax = ITEM () ;
 			read (rax) ;
 			const auto r1x = BOOL (rax == ITEM ('-')) ;
@@ -1109,7 +1109,7 @@ trait TEXTREADER_IMPLHOLDER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 				assume (rax == ITEM ('n')) ;
 				read (rax) ;
 				assume (rax == ITEM ('f')) ;
-				item = DOUBLE_INF ;
+				item = FLT64_INF ;
 			}
 			if ifswitch (act) {
 				if (rax != ITEM ('I'))
@@ -1118,7 +1118,7 @@ trait TEXTREADER_IMPLHOLDER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 				assume (rax == ITEM ('N')) ;
 				read (rax) ;
 				assume (rax == ITEM ('F')) ;
-				item = DOUBLE_INF ;
+				item = FLT64_INF ;
 			}
 			if ifswitch (act) {
 				assume (mAttribute.is_number (rax)) ;
@@ -1332,15 +1332,15 @@ trait TEXTREADER_IMPLHOLDER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 			read_bom (TYPEAS<ITEM>::expr) ;
 		}
 
-		void read_bom (CREF<TYPEID<STRA>> id) {
+		void read_bom (TYPEID<STRA> id) {
 			noop () ;
 		}
 
-		void read_bom (CREF<TYPEID<STRW>> id) {
+		void read_bom (TYPEID<STRW> id) {
 			read_bom (TYPEAS<STRUW>::expr) ;
 		}
 
-		void read_bom (CREF<TYPEID<STRU8>> id) {
+		void read_bom (TYPEID<STRU8> id) {
 			auto rax = ITEM () ;
 			auto rbx = mRead ;
 			if ifswitch (TRUE) {
@@ -1358,7 +1358,7 @@ trait TEXTREADER_IMPLHOLDER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 			mRead = rbx ;
 		}
 
-		void read_bom (CREF<TYPEID<STRU16>> id) {
+		void read_bom (TYPEID<STRU16> id) {
 			auto rax = ITEM () ;
 			auto rbx = mRead ;
 			if ifswitch (TRUE) {
@@ -1373,7 +1373,7 @@ trait TEXTREADER_IMPLHOLDER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 			mRead = rbx ;
 		}
 
-		void read_bom (CREF<TYPEID<STRU32>> id) {
+		void read_bom (TYPEID<STRU32> id) {
 			auto rax = ITEM () ;
 			auto rbx = mRead ;
 			if ifswitch (TRUE) {
@@ -1557,7 +1557,7 @@ trait TEXTWRITER_IMPLHOLDER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 		}
 
 		void write (CREF<VAL64> item) override {
-			using R1X = typename DEPENDENT<TEXTWRITER_WRITEVALUE_HELP<ITEM ,ALWAYS> ,DEPEND>::WriteValue ;
+			using R1X = typename KILL<TEXTWRITER_WRITEVALUE_HELP<ITEM ,ALWAYS> ,DEPEND>::WriteValue ;
 			if ifswitch (TRUE) {
 				if (item >= 0)
 					discard ;
@@ -1587,12 +1587,12 @@ trait TEXTWRITER_IMPLHOLDER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 			}
 		}
 
-		void write (CREF<SINGLE> item) override {
-			write (DOUBLE (item)) ;
+		void write (CREF<FLT32> item) override {
+			write (FLT64 (item)) ;
 		}
 
-		void write (CREF<DOUBLE> item) override {
-			using R1X = typename DEPENDENT<TEXTWRITER_WRITEVALUE_HELP<ITEM ,ALWAYS> ,DEPEND>::WriteValue ;
+		void write (CREF<FLT64> item) override {
+			using R1X = typename KILL<TEXTWRITER_WRITEVALUE_HELP<ITEM ,ALWAYS> ,DEPEND>::WriteValue ;
 			if ifswitch (TRUE) {
 				if (item >= 0)
 					discard ;
@@ -1702,26 +1702,26 @@ trait TEXTWRITER_IMPLHOLDER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 			write_bom (TYPEAS<ITEM>::expr) ;
 		}
 
-		void write_bom (CREF<TYPEID<STRA>> id) {
+		void write_bom (TYPEID<STRA> id) {
 			noop () ;
 		}
 
-		void write_bom (CREF<TYPEID<STRW>> id) {
+		void write_bom (TYPEID<STRW> id) {
 			write_bom (TYPEAS<STRUW>::expr) ;
 		}
 
-		void write_bom (CREF<TYPEID<STRU8>> id) {
+		void write_bom (TYPEID<STRU8> id) {
 			write (ITEM (0XEF)) ;
 			write (ITEM (0XBB)) ;
 			write (ITEM (0XBF)) ;
 		}
 
-		void write_bom (CREF<TYPEID<STRU16>> id) {
+		void write_bom (TYPEID<STRU16> id) {
 			write (ITEM (0XFEFF)) ;
 			write (ITEM (0XFFFE)) ;
 		}
 
-		void write_bom (CREF<TYPEID<STRU32>> id) {
+		void write_bom (TYPEID<STRU32> id) {
 			write (ITEM (0X0000FEFF)) ;
 			write (ITEM (0XFFFE0000)) ;
 		}

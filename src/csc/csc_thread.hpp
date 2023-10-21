@@ -119,7 +119,7 @@ trait CALCTHREAD_HOLDER_HELP<DEPEND ,ALWAYS> {
 
 	struct SOLUTION {
 		INDEX mIndex ;
-		DOUBLE mError ;
+		FLT64 mError ;
 		ITEM mValue ;
 	} ;
 

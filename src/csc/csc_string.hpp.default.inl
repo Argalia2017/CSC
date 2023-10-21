@@ -46,7 +46,7 @@ template <class DEPEND>
 trait FUNCTION_system_string_cvt_HELP<DEPEND ,REQUIRE<MACRO_COMPILER_MSVC<DEPEND>>> {
 #ifdef __CSC_COMPILER_MSVC__
 	struct FUNCTION_system_string_cvt {
-		forceinline String<STRA> operator() (CREF<String<STRW>> obj) const {
+		inline String<STRA> operator() (CREF<String<STRW>> obj) const {
 			assert (ifnot (obj.empty ())) ;
 			String<STRA> ret = String<STRA> (obj.length () * 2 + 1) ;
 			const auto r1x = system_page () ;
@@ -55,7 +55,7 @@ trait FUNCTION_system_string_cvt_HELP<DEPEND ,REQUIRE<MACRO_COMPILER_MSVC<DEPEND
 			return move (ret) ;
 		}
 
-		forceinline String<STRW> operator() (CREF<String<STRA>> obj) const {
+		inline String<STRW> operator() (CREF<String<STRA>> obj) const {
 			assert (ifnot (obj.empty ())) ;
 			const auto r1x = system_page () ;
 			String<STRW> ret = String<STRW> (obj.length () + 1) ;
@@ -82,7 +82,7 @@ template <class DEPEND>
 trait FUNCTION_system_string_cvt_HELP<DEPEND ,REQUIRE<MACRO_COMPILER_GNUC<DEPEND>>> {
 #ifdef __CSC_COMPILER_GNUC__
 	struct FUNCTION_system_string_cvt {
-		forceinline String<STRA> operator() (CREF<String<STRW>> obj) const {
+		inline String<STRA> operator() (CREF<String<STRW>> obj) const {
 			assert (ifnot (obj.empty ())) ;
 			String<STRA> ret = String<STRA> (obj.length () * 2 + 1) ;
 			const auto r1x = std::wcstombs ((&ret[0]) ,(&obj[0]) ,VAL32 (ret.size ())) ;
@@ -90,7 +90,7 @@ trait FUNCTION_system_string_cvt_HELP<DEPEND ,REQUIRE<MACRO_COMPILER_GNUC<DEPEND
 			return move (ret) ;
 		}
 
-		forceinline String<STRW> operator() (CREF<String<STRA>> obj) const {
+		inline String<STRW> operator() (CREF<String<STRA>> obj) const {
 			assert (ifnot (obj.empty ())) ;
 			String<STRW> ret = String<STRW> (obj.length () + 1) ;
 			const auto r1x = std::mbstowcs ((&ret[0]) ,(&obj[0]) ,VAL32 (ret.size ())) ;
@@ -105,7 +105,7 @@ template <class DEPEND>
 trait FUNCTION_system_string_cvt_HELP<DEPEND ,REQUIRE<MACRO_COMPILER_CLANG<DEPEND>>> {
 #ifdef __CSC_COMPILER_CLANG__
 	struct FUNCTION_system_string_cvt {
-		forceinline String<STRA> operator() (CREF<String<STRW>> obj) const {
+		inline String<STRA> operator() (CREF<String<STRW>> obj) const {
 			assert (ifnot (obj.empty ())) ;
 			String<STRA> ret = String<STRA> (obj.length () * 2 + 1) ;
 			auto rax = std::size_t (0) ;
@@ -114,7 +114,7 @@ trait FUNCTION_system_string_cvt_HELP<DEPEND ,REQUIRE<MACRO_COMPILER_CLANG<DEPEN
 			return move (ret) ;
 		}
 
-		forceinline String<STRW> operator() (CREF<String<STRA>> obj) const {
+		inline String<STRW> operator() (CREF<String<STRA>> obj) const {
 			assert (ifnot (obj.empty ())) ;
 			String<STRW> ret = String<STRW> (obj.length () + 1) ;
 			auto rax = std::size_t (0) ;
@@ -191,7 +191,7 @@ trait STRINGPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		String<STRUA> string_cvt_gbks_from_w (CREF<String<STRUW>> obj) const {
-			using R1X = typename DEPENDENT<STRINGPROC_GBKSCACHE_HELP<DEPEND ,ALWAYS> ,ALWAYS>::GBKSCache ;
+			using R1X = typename KILL<STRINGPROC_GBKSCACHE_HELP<DEPEND ,ALWAYS> ,ALWAYS>::GBKSCache ;
 			String<STRUA> ret = String<STRUA> (obj.length () * 2) ;
 			INDEX ix = 0 ;
 			for (auto &&i : obj) {
@@ -234,7 +234,7 @@ trait STRINGPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		String<STRUW> string_cvt_w_from_gbks (CREF<String<STRUA>> obj) const {
-			using R1X = typename DEPENDENT<STRINGPROC_GBKSCACHE_HELP<DEPEND ,ALWAYS> ,DEPEND>::GBKSCache ;
+			using R1X = typename KILL<STRINGPROC_GBKSCACHE_HELP<DEPEND ,ALWAYS> ,DEPEND>::GBKSCache ;
 			String<STRUW> ret = String<STRUW> (obj.length ()) ;
 			INDEX ix = 0 ;
 			auto rax = ZERO ;
@@ -904,7 +904,7 @@ trait TEXTSTRING_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			mThis->mText = string_cvt[TYPEAS<STR ,STRU32>::expr] (text) ;
 		}
 
-		CREF<String<STRA>> pick (CREF<TYPEID<STRA>> id) const leftvalue override {
+		CREF<String<STRA>> pick (TYPEID<STRA> id) const leftvalue override {
 			if ifswitch (TRUE) {
 				if (mThis->mTextA.size () > 0)
 					discard ;
@@ -913,7 +913,7 @@ trait TEXTSTRING_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			return mThis->mTextA ;
 		}
 
-		CREF<String<STRW>> pick (CREF<TYPEID<STRW>> id) const leftvalue override {
+		CREF<String<STRW>> pick (TYPEID<STRW> id) const leftvalue override {
 			if ifswitch (TRUE) {
 				if (mThis->mTextW.size () > 0)
 					discard ;
@@ -922,7 +922,7 @@ trait TEXTSTRING_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			return mThis->mTextW ;
 		}
 
-		CREF<String<STRU8>> pick (CREF<TYPEID<STRU8>> id) const leftvalue override {
+		CREF<String<STRU8>> pick (TYPEID<STRU8> id) const leftvalue override {
 			if ifswitch (TRUE) {
 				if (mThis->mTextU8.size () > 0)
 					discard ;
@@ -931,7 +931,7 @@ trait TEXTSTRING_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			return mThis->mTextU8 ;
 		}
 
-		CREF<String<STRU16>> pick (CREF<TYPEID<STRU16>> id) const leftvalue override {
+		CREF<String<STRU16>> pick (TYPEID<STRU16> id) const leftvalue override {
 			if ifswitch (TRUE) {
 				if (mThis->mTextU16.size () > 0)
 					discard ;
@@ -940,7 +940,7 @@ trait TEXTSTRING_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			return mThis->mTextU16 ;
 		}
 
-		CREF<String<STRU32>> pick (CREF<TYPEID<STRU32>> id) const leftvalue override {
+		CREF<String<STRU32>> pick (TYPEID<STRU32> id) const leftvalue override {
 			if ifswitch (TRUE) {
 				if (mThis->mTextU32.size () > 0)
 					discard ;
@@ -991,7 +991,7 @@ trait ESCAPESTRING_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		template <class ARG1 ,class ARG2>
-		forceinline void template_write_text (VREF<ARG1> writer ,CREF<ARG2> text) const {
+		inline void template_write_text (VREF<ARG1> writer ,CREF<ARG2> text) const {
 			const auto r1x = writer.attribute () ;
 			writer << slice ("\"") ;
 			for (auto &&i : text) {
@@ -1065,7 +1065,7 @@ trait COMMASTRING_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		template <class ARG1 ,class ARG2>
-		forceinline void template_write_text (VREF<ARG1> writer ,CREF<ARG2> gap_text ,CREF<ARG2> comma_text ,CREF<ARG2> first_text) {
+		inline void template_write_text (VREF<ARG1> writer ,CREF<ARG2> gap_text ,CREF<ARG2> comma_text ,CREF<ARG2> first_text) {
 			INDEX ix = mFirst.tail () ;
 			auto act = TRUE ;
 			if ifswitch (act) {
@@ -1171,7 +1171,7 @@ trait VALUESTRING_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		template <class ARG1>
-		forceinline void template_write_text (VREF<ARG1> writer) const {
+		inline void template_write_text (VREF<ARG1> writer) const {
 			for (auto &&i : iter (0 ,mSpace)) {
 				noop (i) ;
 				writer << slice ("0") ;

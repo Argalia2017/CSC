@@ -68,7 +68,7 @@ trait STRINGPROC_GBKSCACHE_HELP<DEPEND ,ALWAYS> {
 			return mUTFSCacheSet.map (item) ;
 		}
 
-		forceinline ARRAY2<STRUW> operator[] (CREF<INDEX> index) const {
+		inline ARRAY2<STRUW> operator[] (CREF<INDEX> index) const {
 			ARRAY2<STRUW> ret ;
 			ret[0] = mGBKSCache[index] ;
 			ret[1] = mUTFSCache[index] ;

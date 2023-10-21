@@ -4,7 +4,7 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup>
     <_PropertySheetDisplayName>build.Debug.x64</_PropertySheetDisplayName>
-    <IncludePath>D:\Depends\__CSC__;$(IncludePath)</IncludePath>
+    <IncludePath>D:\Depends\CSC;$(IncludePath)</IncludePath>
     <OutDir>$(SolutionDir)lib\$(Configuration)\$(Platform)\</OutDir>
     <IntDir>$(SolutionDir)obj\$(ProjectName)\$(Configuration)\$(Platform)\</IntDir>
   </PropertyGroup>

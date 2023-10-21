@@ -290,7 +290,7 @@ trait FUNCTION_decouple_path_HELP<DEPEND ,ALWAYS> {
 	} ;
 
 	struct FUNCTION_decouple_path {
-		forceinline ArrayList<String<STR>> operator() (CREF<String<STR>> dire) const {
+		inline ArrayList<String<STR>> operator() (CREF<String<STR>> dire) const {
 			ArrayList<String<STR>> ret ;
 			auto rax = TextReader<STR> (dire.raw ().borrow ()) ;
 			rax.attribute ().derive (TYPEAS<Wrapper>::expr) ;

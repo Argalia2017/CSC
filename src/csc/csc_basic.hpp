@@ -52,7 +52,7 @@ trait BOOLPROXY_HELP<DEPEND ,ALWAYS> {
 		template <class ARG1>
 		implicit BoolProxy (CREF<csc_initializer_t<ARG1>>) = delete ;
 
-		forceinline implicit operator BOOL () const {
+		inline implicit operator BOOL () const {
 			return mBool ;
 		}
 	} ;
@@ -240,33 +240,33 @@ trait BUFFERPROC_HELP<UNIT ,ALWAYS> {
 		}
 
 		template <class ARG1 = UNIT ,class = REQUIRE<IS_TEXT<ARG1>>>
-		imports Slice<ARG1> buf_slice (CREF<ARR<DEPENDENT<STRA ,ARG1>>> src ,CREF<LENGTH> size_) {
+		imports Slice<ARG1> buf_slice (CREF<ARR<KILL<STRA ,ARG1>>> src ,CREF<LENGTH> size_) {
 			return template_buf_slice (TYPEAS<ARG1>::expr ,src ,size_) ;
 		}
 
 		template <class ARG1 = UNIT ,class = REQUIRE<IS_TEXT<ARG1>>>
-		imports Slice<ARG1> buf_slice (CREF<ARR<DEPENDENT<STRW ,ARG1>>> src ,CREF<LENGTH> size_) {
+		imports Slice<ARG1> buf_slice (CREF<ARR<KILL<STRW ,ARG1>>> src ,CREF<LENGTH> size_) {
 			return template_buf_slice (TYPEAS<ARG1>::expr ,src ,size_) ;
 		}
 
 		template <class ARG1 = UNIT ,class = REQUIRE<IS_TEXT<ARG1>>>
-		imports Slice<ARG1> buf_slice (CREF<ARR<DEPENDENT<STRU8 ,ARG1>>> src ,CREF<LENGTH> size_) {
+		imports Slice<ARG1> buf_slice (CREF<ARR<KILL<STRU8 ,ARG1>>> src ,CREF<LENGTH> size_) {
 			return template_buf_slice (TYPEAS<ARG1>::expr ,src ,size_) ;
 		}
 
 		template <class ARG1 = UNIT ,class = REQUIRE<IS_TEXT<ARG1>>>
-		imports Slice<ARG1> buf_slice (CREF<ARR<DEPENDENT<STRU16 ,ARG1>>> src ,CREF<LENGTH> size_) {
+		imports Slice<ARG1> buf_slice (CREF<ARR<KILL<STRU16 ,ARG1>>> src ,CREF<LENGTH> size_) {
 			return template_buf_slice (TYPEAS<ARG1>::expr ,src ,size_) ;
 		}
 
 		template <class ARG1 = UNIT ,class = REQUIRE<IS_TEXT<ARG1>>>
-		imports Slice<ARG1> buf_slice (CREF<ARR<DEPENDENT<STRU32 ,ARG1>>> src ,CREF<LENGTH> size_) {
+		imports Slice<ARG1> buf_slice (CREF<ARR<KILL<STRU32 ,ARG1>>> src ,CREF<LENGTH> size_) {
 			return template_buf_slice (TYPEAS<ARG1>::expr ,src ,size_) ;
 		}
 
 	private:
 		template <class ARG1 ,class ARG2>
-		imports forceinline Slice<ARG1> template_buf_slice (CREF<TYPEID<ARG1>> id ,CREF<ARG2> src ,CREF<LENGTH> size_) {
+		imports inline Slice<ARG1> template_buf_slice (TYPEID<ARG1> id ,CREF<ARG2> src ,CREF<LENGTH> size_) {
 			using R1X = ARRAY_ITEM<ARG2> ;
 			using R2X = typename BUFFERPROC_HELP<R1X ,ALWAYS>::BufferProc ;
 			const auto r1x = invoke ([&] () {
@@ -294,36 +294,36 @@ template <class PARAMS>
 trait FUNCTION_tuple_pick_HELP<PARAMS ,ALWAYS> {
 	struct FUNCTION_tuple_pick {
 		template <class ARG1 ,class ARG2>
-		forceinline VREF<TYPE_PICK<PARAMS ,ARG2>> operator() (VREF<ARG1> tuple ,CREF<TYPEID<ARG2>> id) const noexcept {
+		inline VREF<TYPE_PICK<PARAMS ,ARG2>> operator() (VREF<ARG1> tuple ,TYPEID<ARG2> id) const noexcept {
 			return template_pick (PHX ,tuple ,id) ;
 		}
 
 		template <class ARG1 ,class ARG2>
-		forceinline CREF<TYPE_PICK<PARAMS ,ARG2>> operator() (CREF<ARG1> tuple ,CREF<TYPEID<ARG2>> id) const noexcept {
+		inline CREF<TYPE_PICK<PARAMS ,ARG2>> operator() (CREF<ARG1> tuple ,TYPEID<ARG2> id) const noexcept {
 			return template_pick (PHX ,tuple ,id) ;
 		}
 
 		template <class ARG1 ,class ARG2 ,class = REQUIRE<ENUM_GT_ZERO<ARG2>>>
-		imports forceinline VREF<TYPE_PICK<PARAMS ,ARG2>> template_pick (CREF<typeof (PH2)> ,VREF<ARG1> tuple ,CREF<TYPEID<ARG2>> id) {
+		imports inline VREF<TYPE_PICK<PARAMS ,ARG2>> template_pick (CREF<typeof (PH2)> ,VREF<ARG1> tuple ,TYPEID<ARG2> id) {
 			using R1X = typename FUNCTION_tuple_pick_HELP<TYPE_FIRST_REST<PARAMS> ,ALWAYS>::FUNCTION_tuple_pick ;
 			const auto r1x = R1X () ;
 			return r1x (tuple.rest () ,TYPEAS<ENUM_DEC<ARG2>>::expr) ;
 		}
 
 		template <class ARG1 ,class ARG2 ,class = REQUIRE<ENUM_EQ_ZERO<ARG2>>>
-		imports forceinline VREF<TYPE_FIRST_ONE<PARAMS>> template_pick (CREF<typeof (PH1)> ,VREF<ARG1> tuple ,CREF<TYPEID<ARG2>> id) {
+		imports inline VREF<TYPE_FIRST_ONE<PARAMS>> template_pick (CREF<typeof (PH1)> ,VREF<ARG1> tuple ,TYPEID<ARG2> id) {
 			return tuple.one () ;
 		}
 
 		template <class ARG1 ,class ARG2 ,class = REQUIRE<ENUM_GT_ZERO<ARG2>>>
-		imports forceinline CREF<TYPE_PICK<PARAMS ,ARG2>> template_pick (CREF<typeof (PH2)> ,CREF<ARG1> tuple ,CREF<TYPEID<ARG2>> id) {
+		imports inline CREF<TYPE_PICK<PARAMS ,ARG2>> template_pick (CREF<typeof (PH2)> ,CREF<ARG1> tuple ,TYPEID<ARG2> id) {
 			using R1X = typename FUNCTION_tuple_pick_HELP<TYPE_FIRST_REST<PARAMS> ,ALWAYS>::FUNCTION_tuple_pick ;
 			const auto r1x = R1X () ;
 			return r1x (tuple.rest () ,TYPEAS<ENUM_DEC<ARG2>>::expr) ;
 		}
 
 		template <class ARG1 ,class ARG2 ,class = REQUIRE<ENUM_EQ_ZERO<ARG2>>>
-		imports forceinline CREF<TYPE_FIRST_ONE<PARAMS>> template_pick (CREF<typeof (PH1)> ,CREF<ARG1> tuple ,CREF<TYPEID<ARG2>> id) {
+		imports inline CREF<TYPE_FIRST_ONE<PARAMS>> template_pick (CREF<typeof (PH1)> ,CREF<ARG1> tuple ,TYPEID<ARG2> id) {
 			return tuple.one () ;
 		}
 	} ;
@@ -356,11 +356,11 @@ trait TUPLE_HELP<UNIT ,REQUIRE<ENUM_EQ_ZERO<COUNT_OF<UNIT>>>> {
 			return TRUE ;
 		}
 
-		forceinline BOOL operator== (CREF<Tuple> that) const {
+		inline BOOL operator== (CREF<Tuple> that) const {
 			return equal (that) ;
 		}
 
-		forceinline BOOL operator!= (CREF<Tuple> that) const {
+		inline BOOL operator!= (CREF<Tuple> that) const {
 			return ifnot (equal (that)) ;
 		}
 
@@ -368,19 +368,19 @@ trait TUPLE_HELP<UNIT ,REQUIRE<ENUM_EQ_ZERO<COUNT_OF<UNIT>>>> {
 			return ZERO ;
 		}
 
-		forceinline BOOL operator< (CREF<Tuple> that) const {
+		inline BOOL operator< (CREF<Tuple> that) const {
 			return compr (that) < ZERO ;
 		}
 
-		forceinline BOOL operator<= (CREF<Tuple> that) const {
+		inline BOOL operator<= (CREF<Tuple> that) const {
 			return compr (that) <= ZERO ;
 		}
 
-		forceinline BOOL operator> (CREF<Tuple> that) const {
+		inline BOOL operator> (CREF<Tuple> that) const {
 			return compr (that) > ZERO ;
 		}
 
-		forceinline BOOL operator>= (CREF<Tuple> that) const {
+		inline BOOL operator>= (CREF<Tuple> that) const {
 			return compr (that) >= ZERO ;
 		}
 
@@ -453,7 +453,7 @@ trait TUPLE_HELP<PARAMS ,REQUIRE<ENUM_EQ_IDEN<COUNT_OF<PARAMS>>>> {
 		}
 
 		template <class ARG1>
-		VREF<TYPE_PICK<PARAMS ,ARG1>> pick (CREF<TYPEID<ARG1>> id) leftvalue {
+		VREF<TYPE_PICK<PARAMS ,ARG1>> pick (TYPEID<ARG1> id) leftvalue {
 			require (ENUM_BETWEEN<ARG1 ,ENUM_ZERO ,COUNT_OF<PARAMS>>) ;
 			using R2X = typename FUNCTION_tuple_pick_HELP<PARAMS ,ALWAYS>::FUNCTION_tuple_pick ;
 			const auto r1x = R2X () ;
@@ -461,7 +461,7 @@ trait TUPLE_HELP<PARAMS ,REQUIRE<ENUM_EQ_IDEN<COUNT_OF<PARAMS>>>> {
 		}
 
 		template <class ARG1>
-		CREF<TYPE_PICK<PARAMS ,ARG1>> pick (CREF<TYPEID<ARG1>> id) const leftvalue {
+		CREF<TYPE_PICK<PARAMS ,ARG1>> pick (TYPEID<ARG1> id) const leftvalue {
 			require (ENUM_BETWEEN<ARG1 ,ENUM_ZERO ,COUNT_OF<PARAMS>>) ;
 			using R2X = typename FUNCTION_tuple_pick_HELP<PARAMS ,ALWAYS>::FUNCTION_tuple_pick ;
 			const auto r1x = R2X () ;
@@ -476,11 +476,11 @@ trait TUPLE_HELP<PARAMS ,REQUIRE<ENUM_EQ_IDEN<COUNT_OF<PARAMS>>>> {
 			return TRUE ;
 		}
 
-		forceinline BOOL operator== (CREF<Tuple> that) const {
+		inline BOOL operator== (CREF<Tuple> that) const {
 			return equal (that) ;
 		}
 
-		forceinline BOOL operator!= (CREF<Tuple> that) const {
+		inline BOOL operator!= (CREF<Tuple> that) const {
 			return ifnot (equal (that)) ;
 		}
 
@@ -494,19 +494,19 @@ trait TUPLE_HELP<PARAMS ,REQUIRE<ENUM_EQ_IDEN<COUNT_OF<PARAMS>>>> {
 			return ZERO ;
 		}
 
-		forceinline BOOL operator< (CREF<Tuple> that) const {
+		inline BOOL operator< (CREF<Tuple> that) const {
 			return compr (that) < ZERO ;
 		}
 
-		forceinline BOOL operator<= (CREF<Tuple> that) const {
+		inline BOOL operator<= (CREF<Tuple> that) const {
 			return compr (that) <= ZERO ;
 		}
 
-		forceinline BOOL operator> (CREF<Tuple> that) const {
+		inline BOOL operator> (CREF<Tuple> that) const {
 			return compr (that) > ZERO ;
 		}
 
-		forceinline BOOL operator>= (CREF<Tuple> that) const {
+		inline BOOL operator>= (CREF<Tuple> that) const {
 			return compr (that) >= ZERO ;
 		}
 
@@ -596,7 +596,7 @@ trait TUPLE_HELP<PARAMS ,REQUIRE<ENUM_EQUAL<COUNT_OF<PARAMS> ,RANK2>>> {
 		}
 
 		template <class ARG1>
-		VREF<TYPE_PICK<PARAMS ,ARG1>> pick (CREF<TYPEID<ARG1>> id) leftvalue {
+		VREF<TYPE_PICK<PARAMS ,ARG1>> pick (TYPEID<ARG1> id) leftvalue {
 			require (ENUM_BETWEEN<ARG1 ,ENUM_ZERO ,COUNT_OF<PARAMS>>) ;
 			using R2X = typename FUNCTION_tuple_pick_HELP<PARAMS ,ALWAYS>::FUNCTION_tuple_pick ;
 			const auto r1x = R2X () ;
@@ -604,7 +604,7 @@ trait TUPLE_HELP<PARAMS ,REQUIRE<ENUM_EQUAL<COUNT_OF<PARAMS> ,RANK2>>> {
 		}
 
 		template <class ARG1>
-		CREF<TYPE_PICK<PARAMS ,ARG1>> pick (CREF<TYPEID<ARG1>> id) const leftvalue {
+		CREF<TYPE_PICK<PARAMS ,ARG1>> pick (TYPEID<ARG1> id) const leftvalue {
 			require (ENUM_BETWEEN<ARG1 ,ENUM_ZERO ,COUNT_OF<PARAMS>>) ;
 			using R2X = typename FUNCTION_tuple_pick_HELP<PARAMS ,ALWAYS>::FUNCTION_tuple_pick ;
 			const auto r1x = R2X () ;
@@ -619,11 +619,11 @@ trait TUPLE_HELP<PARAMS ,REQUIRE<ENUM_EQUAL<COUNT_OF<PARAMS> ,RANK2>>> {
 			return TRUE ;
 		}
 
-		forceinline BOOL operator== (CREF<Tuple> that) const {
+		inline BOOL operator== (CREF<Tuple> that) const {
 			return equal (that) ;
 		}
 
-		forceinline BOOL operator!= (CREF<Tuple> that) const {
+		inline BOOL operator!= (CREF<Tuple> that) const {
 			return ifnot (equal (that)) ;
 		}
 
@@ -637,19 +637,19 @@ trait TUPLE_HELP<PARAMS ,REQUIRE<ENUM_EQUAL<COUNT_OF<PARAMS> ,RANK2>>> {
 			return ZERO ;
 		}
 
-		forceinline BOOL operator< (CREF<Tuple> that) const {
+		inline BOOL operator< (CREF<Tuple> that) const {
 			return compr (that) < ZERO ;
 		}
 
-		forceinline BOOL operator<= (CREF<Tuple> that) const {
+		inline BOOL operator<= (CREF<Tuple> that) const {
 			return compr (that) <= ZERO ;
 		}
 
-		forceinline BOOL operator> (CREF<Tuple> that) const {
+		inline BOOL operator> (CREF<Tuple> that) const {
 			return compr (that) > ZERO ;
 		}
 
-		forceinline BOOL operator>= (CREF<Tuple> that) const {
+		inline BOOL operator>= (CREF<Tuple> that) const {
 			return compr (that) >= ZERO ;
 		}
 
@@ -748,7 +748,7 @@ trait TUPLE_HELP<PARAMS ,REQUIRE<ENUM_COMPR_GT<COUNT_OF<PARAMS> ,RANK2>>> {
 		}
 
 		template <class ARG1>
-		VREF<TYPE_PICK<PARAMS ,ARG1>> pick (CREF<TYPEID<ARG1>> id) leftvalue {
+		VREF<TYPE_PICK<PARAMS ,ARG1>> pick (TYPEID<ARG1> id) leftvalue {
 			require (ENUM_BETWEEN<ARG1 ,ENUM_ZERO ,COUNT_OF<PARAMS>>) ;
 			using R2X = typename FUNCTION_tuple_pick_HELP<PARAMS ,ALWAYS>::FUNCTION_tuple_pick ;
 			const auto r1x = R2X () ;
@@ -756,7 +756,7 @@ trait TUPLE_HELP<PARAMS ,REQUIRE<ENUM_COMPR_GT<COUNT_OF<PARAMS> ,RANK2>>> {
 		}
 
 		template <class ARG1>
-		CREF<TYPE_PICK<PARAMS ,ARG1>> pick (CREF<TYPEID<ARG1>> id) const leftvalue {
+		CREF<TYPE_PICK<PARAMS ,ARG1>> pick (TYPEID<ARG1> id) const leftvalue {
 			require (ENUM_BETWEEN<ARG1 ,ENUM_ZERO ,COUNT_OF<PARAMS>>) ;
 			using R2X = typename FUNCTION_tuple_pick_HELP<PARAMS ,ALWAYS>::FUNCTION_tuple_pick ;
 			const auto r1x = R2X () ;
@@ -771,11 +771,11 @@ trait TUPLE_HELP<PARAMS ,REQUIRE<ENUM_COMPR_GT<COUNT_OF<PARAMS> ,RANK2>>> {
 			return TRUE ;
 		}
 
-		forceinline BOOL operator== (CREF<Tuple> that) const {
+		inline BOOL operator== (CREF<Tuple> that) const {
 			return equal (that) ;
 		}
 
-		forceinline BOOL operator!= (CREF<Tuple> that) const {
+		inline BOOL operator!= (CREF<Tuple> that) const {
 			return ifnot (equal (that)) ;
 		}
 
@@ -789,19 +789,19 @@ trait TUPLE_HELP<PARAMS ,REQUIRE<ENUM_COMPR_GT<COUNT_OF<PARAMS> ,RANK2>>> {
 			return ZERO ;
 		}
 
-		forceinline BOOL operator< (CREF<Tuple> that) const {
+		inline BOOL operator< (CREF<Tuple> that) const {
 			return compr (that) < ZERO ;
 		}
 
-		forceinline BOOL operator<= (CREF<Tuple> that) const {
+		inline BOOL operator<= (CREF<Tuple> that) const {
 			return compr (that) <= ZERO ;
 		}
 
-		forceinline BOOL operator> (CREF<Tuple> that) const {
+		inline BOOL operator> (CREF<Tuple> that) const {
 			return compr (that) > ZERO ;
 		}
 
-		forceinline BOOL operator>= (CREF<Tuple> that) const {
+		inline BOOL operator>= (CREF<Tuple> that) const {
 			return compr (that) >= ZERO ;
 		}
 
@@ -903,9 +903,9 @@ trait FUNCTION_HELP<RETURN ,TYPEAS<PARAM...> ,ALWAYS> {
 			return mThis != NULL ;
 		}
 
-		forceinline BOOL operator== (CREF<typeof (NULL)>) = delete ;
+		inline BOOL operator== (CREF<typeof (NULL)>) = delete ;
 
-		forceinline BOOL operator!= (CREF<typeof (NULL)>) = delete ;
+		inline BOOL operator!= (CREF<typeof (NULL)>) = delete ;
 
 		LENGTH rank () const {
 			return COUNT_OF<PARAMS>::expr ;
@@ -921,7 +921,7 @@ trait FUNCTION_HELP<RETURN ,TYPEAS<PARAM...> ,ALWAYS> {
 			return mThis->invoke (forward[TYPEAS<PARAM>::expr] (params)...) ;
 		}
 
-		forceinline RETURN operator() (XREF<PARAM>...params) const {
+		inline RETURN operator() (XREF<PARAM>...params) const {
 			return invoke (forward[TYPEAS<PARAM>::expr] (params)...) ;
 		}
 	} ;
@@ -1093,9 +1093,9 @@ trait AUTOREF_HELP<UNIT ,REQUIRE<IS_VOID<UNIT>>> {
 			return mPointer != ZERO ;
 		}
 
-		forceinline BOOL operator== (CREF<typeof (NULL)>) = delete ;
+		inline BOOL operator== (CREF<typeof (NULL)>) = delete ;
 
-		forceinline BOOL operator!= (CREF<typeof (NULL)>) = delete ;
+		inline BOOL operator!= (CREF<typeof (NULL)>) = delete ;
 
 		BOOL good () const {
 			if (mThis == NULL)
@@ -1153,8 +1153,8 @@ trait AUTOREF_HELP<UNIT ,REQUIRE<ENUM_NOT<IS_VOID<UNIT>>>> {
 
 		template <class...ARG1>
 		imports AutoRef make (XREF<ARG1>...obj) {
-			using R1X = DEPENDENT<UNIT ,TYPEAS<ARG1...>> ;
-			using R2X = typename DEPENDENT<AUTOREF_PUREHOLDER_HELP<R1X ,ALWAYS> ,DEPEND>::PureHolder ;
+			using R1X = KILL<UNIT ,TYPEAS<ARG1...>> ;
+			using R2X = typename KILL<AUTOREF_PUREHOLDER_HELP<R1X ,ALWAYS> ,DEPEND>::PureHolder ;
 			AutoRef ret ;
 			ret.mThis = VRef<R2X>::make () ;
 			ret.mThis->initialize () ;
@@ -1171,9 +1171,9 @@ trait AUTOREF_HELP<UNIT ,REQUIRE<ENUM_NOT<IS_VOID<UNIT>>>> {
 			return mPointer != ZERO ;
 		}
 
-		forceinline BOOL operator== (CREF<typeof (NULL)>) = delete ;
+		inline BOOL operator== (CREF<typeof (NULL)>) = delete ;
 
-		forceinline BOOL operator!= (CREF<typeof (NULL)>) = delete ;
+		inline BOOL operator!= (CREF<typeof (NULL)>) = delete ;
 
 		BOOL good () const {
 			if (mThis == NULL)
@@ -1193,11 +1193,11 @@ trait AUTOREF_HELP<UNIT ,REQUIRE<ENUM_NOT<IS_VOID<UNIT>>>> {
 			return unsafe_cast[TYPEAS<UNIT>::expr] (unsafe_deref (mPointer)) ;
 		}
 
-		forceinline implicit operator VREF<UNIT> () leftvalue {
+		inline implicit operator VREF<UNIT> () leftvalue {
 			return self ;
 		}
 
-		forceinline PTR<VREF<UNIT>> operator-> () leftvalue {
+		inline PTR<VREF<UNIT>> operator-> () leftvalue {
 			return (&self) ;
 		}
 
@@ -1205,11 +1205,11 @@ trait AUTOREF_HELP<UNIT ,REQUIRE<ENUM_NOT<IS_VOID<UNIT>>>> {
 			return unsafe_cast[TYPEAS<UNIT>::expr] (unsafe_deref (mPointer)) ;
 		}
 
-		forceinline implicit operator CREF<UNIT> () const leftvalue {
+		inline implicit operator CREF<UNIT> () const leftvalue {
 			return self ;
 		}
 
-		forceinline PTR<CREF<UNIT>> operator-> () const leftvalue {
+		inline PTR<CREF<UNIT>> operator-> () const leftvalue {
 			return (&self) ;
 		}
 	} ;
@@ -1365,8 +1365,8 @@ trait SHAREDREF_HELP<UNIT ,ALWAYS> {
 
 		template <class...ARG1>
 		imports SharedRef make (XREF<ARG1>...obj) {
-			using R1X = DEPENDENT<UNIT ,TYPEAS<ARG1...>> ;
-			using R2X = typename DEPENDENT<SHAREDREF_PUREHOLDER_HELP<R1X ,ALWAYS> ,DEPEND>::PureHolder ;
+			using R1X = KILL<UNIT ,TYPEAS<ARG1...>> ;
+			using R2X = typename KILL<SHAREDREF_PUREHOLDER_HELP<R1X ,ALWAYS> ,DEPEND>::PureHolder ;
 			SharedRef ret ;
 			auto rax = VRef<Holder> (VRef<R2X>::make ()) ;
 			rax->initialize () ;
@@ -1380,7 +1380,7 @@ trait SHAREDREF_HELP<UNIT ,ALWAYS> {
 
 		template <class ARG1 = CRef<Holder>>
 		imports SharedRef intrusive (RREF<ARG1> obj) {
-			using R1X = DEPENDENT<UNIT ,ARG1> ;
+			using R1X = KILL<UNIT ,ARG1> ;
 			assert (obj != NULL) ;
 			SharedRef ret ;
 			Scope<PinMutex> anonymous (obj->pin_mutex ()) ;
@@ -1407,7 +1407,7 @@ trait SHAREDREF_HELP<UNIT ,ALWAYS> {
 			mHandle = Scope<Holder> (mThis.self) ;
 		}
 
-		forceinline VREF<SharedRef> operator= (CREF<SharedRef> that) {
+		inline VREF<SharedRef> operator= (CREF<SharedRef> that) {
 			if (address (thiz) == address (that))
 				return thiz ;
 			swap (thiz ,move (that)) ;
@@ -1418,7 +1418,7 @@ trait SHAREDREF_HELP<UNIT ,ALWAYS> {
 			swap (thiz ,that) ;
 		}
 
-		forceinline VREF<SharedRef> operator= (RREF<SharedRef> that) noexcept {
+		inline VREF<SharedRef> operator= (RREF<SharedRef> that) noexcept {
 			if (address (thiz) == address (that))
 				return thiz ;
 			swap (thiz ,move (that)) ;
@@ -1431,9 +1431,9 @@ trait SHAREDREF_HELP<UNIT ,ALWAYS> {
 			return mPointer != ZERO ;
 		}
 
-		forceinline BOOL operator== (CREF<typeof (NULL)>) = delete ;
+		inline BOOL operator== (CREF<typeof (NULL)>) = delete ;
 
-		forceinline BOOL operator!= (CREF<typeof (NULL)>) = delete ;
+		inline BOOL operator!= (CREF<typeof (NULL)>) = delete ;
 
 		BOOL good () const {
 			if (mThis == NULL)
@@ -1447,11 +1447,11 @@ trait SHAREDREF_HELP<UNIT ,ALWAYS> {
 			return unsafe_cast[TYPEAS<UNIT>::expr] (unsafe_deref (mPointer)) ;
 		}
 
-		forceinline implicit operator VREF<UNIT> () const leftvalue {
+		inline implicit operator VREF<UNIT> () const leftvalue {
 			return self ;
 		}
 
-		forceinline PTR<VREF<UNIT>> operator-> () const leftvalue {
+		inline PTR<VREF<UNIT>> operator-> () const leftvalue {
 			return (&self) ;
 		}
 
@@ -1562,8 +1562,8 @@ trait UNIQUEREF_HELP<UNIT ,REQUIRE<IS_VOID<UNIT>>> {
 
 		template <class ARG1 ,class ARG2>
 		explicit UniqueRef (RREF<ARG1> constructor ,RREF<ARG2> destructor) {
-			using R1X = DEPENDENT<UNIT ,TYPEAS<ARG1 ,ARG2>> ;
-			using R2X = typename DEPENDENT<UNIQUEREF_PUREHOLDER_HELP<R1X ,ALWAYS> ,DEPEND>::PureHolder ;
+			using R1X = KILL<UNIT ,TYPEAS<ARG1 ,ARG2>> ;
+			using R2X = typename KILL<UNIQUEREF_PUREHOLDER_HELP<R1X ,ALWAYS> ,DEPEND>::PureHolder ;
 			using R3X = Function<void> ;
 			mThis = VRef<R2X>::make () ;
 			auto rax = R3X (move (destructor)) ;
@@ -1576,7 +1576,7 @@ trait UNIQUEREF_HELP<UNIT ,REQUIRE<IS_VOID<UNIT>>> {
 
 		imports UniqueRef make () {
 			using R1X = UNIT ;
-			using R2X = typename DEPENDENT<UNIQUEREF_PUREHOLDER_HELP<R1X ,ALWAYS> ,DEPEND>::PureHolder ;
+			using R2X = typename KILL<UNIQUEREF_PUREHOLDER_HELP<R1X ,ALWAYS> ,DEPEND>::PureHolder ;
 			using R3X = Function<void> ;
 			UniqueRef ret ;
 			ret.mThis = VRef<R2X>::make () ;
@@ -1593,9 +1593,9 @@ trait UNIQUEREF_HELP<UNIT ,REQUIRE<IS_VOID<UNIT>>> {
 			return mPointer != ZERO ;
 		}
 
-		forceinline BOOL operator== (CREF<typeof (NULL)>) = delete ;
+		inline BOOL operator== (CREF<typeof (NULL)>) = delete ;
 
-		forceinline BOOL operator!= (CREF<typeof (NULL)>) = delete ;
+		inline BOOL operator!= (CREF<typeof (NULL)>) = delete ;
 
 		BOOL good () const {
 			if (mThis == NULL)
@@ -1623,8 +1623,8 @@ trait UNIQUEREF_HELP<UNIT ,REQUIRE<ENUM_NOT<IS_VOID<UNIT>>>> {
 
 		template <class ARG1 ,class ARG2>
 		explicit UniqueRef (RREF<ARG1> constructor ,RREF<ARG2> destructor) {
-			using R1X = DEPENDENT<UNIT ,TYPEAS<ARG1 ,ARG2>> ;
-			using R2X = typename DEPENDENT<UNIQUEREF_PUREHOLDER_HELP<R1X ,ALWAYS> ,DEPEND>::PureHolder ;
+			using R1X = KILL<UNIT ,TYPEAS<ARG1 ,ARG2>> ;
+			using R2X = typename KILL<UNIQUEREF_PUREHOLDER_HELP<R1X ,ALWAYS> ,DEPEND>::PureHolder ;
 			using R3X = Function<void ,TYPEAS<VREF<R1X>>> ;
 			mThis = VRef<R2X>::make () ;
 			auto rax = R3X (move (destructor)) ;
@@ -1639,8 +1639,8 @@ trait UNIQUEREF_HELP<UNIT ,REQUIRE<ENUM_NOT<IS_VOID<UNIT>>>> {
 
 		template <class...ARG1>
 		imports UniqueRef make (XREF<ARG1>...obj) {
-			using R1X = DEPENDENT<UNIT ,TYPEAS<ARG1...>> ;
-			using R2X = typename DEPENDENT<UNIQUEREF_PUREHOLDER_HELP<R1X ,ALWAYS> ,DEPEND>::PureHolder ;
+			using R1X = KILL<UNIT ,TYPEAS<ARG1...>> ;
+			using R2X = typename KILL<UNIQUEREF_PUREHOLDER_HELP<R1X ,ALWAYS> ,DEPEND>::PureHolder ;
 			using R3X = Function<void ,TYPEAS<VREF<R1X>>> ;
 			UniqueRef ret ;
 			ret.mThis = VRef<R2X>::make () ;
@@ -1659,9 +1659,9 @@ trait UNIQUEREF_HELP<UNIT ,REQUIRE<ENUM_NOT<IS_VOID<UNIT>>>> {
 			return mPointer != ZERO ;
 		}
 
-		forceinline BOOL operator== (CREF<typeof (NULL)>) = delete ;
+		inline BOOL operator== (CREF<typeof (NULL)>) = delete ;
 
-		forceinline BOOL operator!= (CREF<typeof (NULL)>) = delete ;
+		inline BOOL operator!= (CREF<typeof (NULL)>) = delete ;
 
 		BOOL good () const {
 			if (mThis == NULL)
@@ -1675,11 +1675,11 @@ trait UNIQUEREF_HELP<UNIT ,REQUIRE<ENUM_NOT<IS_VOID<UNIT>>>> {
 			return unsafe_cast[TYPEAS<UNIT>::expr] (unsafe_deref (mPointer)) ;
 		}
 
-		forceinline implicit operator CREF<UNIT> () const leftvalue {
+		inline implicit operator CREF<UNIT> () const leftvalue {
 			return self ;
 		}
 
-		forceinline PTR<CREF<UNIT>> operator-> () const leftvalue {
+		inline PTR<CREF<UNIT>> operator-> () const leftvalue {
 			return (&self) ;
 		}
 	} ;
@@ -1792,7 +1792,7 @@ trait SIZEPROXY_HELP<DEPEND ,ALWAYS> {
 		template <class ARG1>
 		implicit SizeProxy (CREF<csc_initializer_t<ARG1>>) = delete ;
 
-		forceinline implicit operator LENGTH () const {
+		inline implicit operator LENGTH () const {
 			return mSize ;
 		}
 	} ;
@@ -1874,7 +1874,7 @@ trait BOXBUFFER_HOLDER_HELP<ITEM ,SIZE ,COND ,REQUIRE<COND>> {
 			mBuffer = Box<ARR<ITEM ,SIZE>>::make (that.mBuffer.self) ;
 		}
 
-		forceinline VREF<Buffer> operator= (CREF<Buffer> that) {
+		inline VREF<Buffer> operator= (CREF<Buffer> that) {
 			if (address (thiz) == address (that))
 				return thiz ;
 			swap (thiz ,move (that)) ;
@@ -1885,7 +1885,7 @@ trait BOXBUFFER_HOLDER_HELP<ITEM ,SIZE ,COND ,REQUIRE<COND>> {
 			swap (thiz ,that) ;
 		}
 
-		forceinline VREF<Buffer> operator= (RREF<Buffer> that) noexcept {
+		inline VREF<Buffer> operator= (RREF<Buffer> that) noexcept {
 			if (address (thiz) == address (that))
 				return thiz ;
 			swap (thiz ,move (that)) ;
@@ -1927,7 +1927,7 @@ trait BUFFER_HELP<ITEM ,SIZE ,REQUIRE<ENUM_GT_ZERO<SIZE>>> {
 			return unsafe_array (mBuffer.self[0]) ;
 		}
 
-		forceinline implicit operator VREF<ARR<ITEM>> () leftvalue {
+		inline implicit operator VREF<ARR<ITEM>> () leftvalue {
 			return self ;
 		}
 
@@ -1937,20 +1937,20 @@ trait BUFFER_HELP<ITEM ,SIZE ,REQUIRE<ENUM_GT_ZERO<SIZE>>> {
 			return unsafe_array (mBuffer.self[0]) ;
 		}
 
-		forceinline implicit operator CREF<ARR<ITEM>> () const leftvalue {
+		inline implicit operator CREF<ARR<ITEM>> () const leftvalue {
 			return self ;
 		}
 
-		forceinline BOOL operator== (CREF<Buffer>) = delete ;
+		inline BOOL operator== (CREF<Buffer>) = delete ;
 
-		forceinline BOOL operator!= (CREF<Buffer>) = delete ;
+		inline BOOL operator!= (CREF<Buffer>) = delete ;
 
 		VREF<ITEM> at (CREF<INDEX> index) leftvalue {
 			assert (vbetween (index ,0 ,size ())) ;
 			return mBuffer.self[index] ;
 		}
 
-		forceinline VREF<ITEM> operator[] (CREF<INDEX> index) leftvalue {
+		inline VREF<ITEM> operator[] (CREF<INDEX> index) leftvalue {
 			return at (index) ;
 		}
 
@@ -1959,7 +1959,7 @@ trait BUFFER_HELP<ITEM ,SIZE ,REQUIRE<ENUM_GT_ZERO<SIZE>>> {
 			return mBuffer.self[index] ;
 		}
 
-		forceinline CREF<ITEM> operator[] (CREF<INDEX> index) const leftvalue {
+		inline CREF<ITEM> operator[] (CREF<INDEX> index) const leftvalue {
 			return at (index) ;
 		}
 
@@ -2024,7 +2024,7 @@ trait VARBUFFER_HELP<ITEM ,COND ,REQUIRE<COND>> {
 			mSize = that.mSize ;
 		}
 
-		forceinline VREF<Buffer> operator= (CREF<Buffer> that) {
+		inline VREF<Buffer> operator= (CREF<Buffer> that) {
 			if (address (thiz) == address (that))
 				return thiz ;
 			swap (thiz ,move (that)) ;
@@ -2035,7 +2035,7 @@ trait VARBUFFER_HELP<ITEM ,COND ,REQUIRE<COND>> {
 			swap (thiz ,that) ;
 		}
 
-		forceinline VREF<Buffer> operator= (RREF<Buffer> that) noexcept {
+		inline VREF<Buffer> operator= (RREF<Buffer> that) noexcept {
 			if (address (thiz) == address (that))
 				return thiz ;
 			swap (thiz ,move (that)) ;
@@ -2081,7 +2081,7 @@ trait BUFFER_HELP<ITEM ,SIZE ,REQUIRE<IS_SAME<SIZE ,VARIABLE>>> {
 			return mBuffer.self ;
 		}
 
-		forceinline implicit operator VREF<ARR<ITEM>> () leftvalue {
+		inline implicit operator VREF<ARR<ITEM>> () leftvalue {
 			return self ;
 		}
 
@@ -2091,20 +2091,20 @@ trait BUFFER_HELP<ITEM ,SIZE ,REQUIRE<IS_SAME<SIZE ,VARIABLE>>> {
 			return mBuffer.self ;
 		}
 
-		forceinline implicit operator CREF<ARR<ITEM>> () const leftvalue {
+		inline implicit operator CREF<ARR<ITEM>> () const leftvalue {
 			return self ;
 		}
 
-		forceinline BOOL operator== (CREF<Buffer>) = delete ;
+		inline BOOL operator== (CREF<Buffer>) = delete ;
 
-		forceinline BOOL operator!= (CREF<Buffer>) = delete ;
+		inline BOOL operator!= (CREF<Buffer>) = delete ;
 
 		VREF<ITEM> at (CREF<INDEX> index) leftvalue {
 			assert (vbetween (index ,0 ,size ())) ;
 			return mBuffer.self[index] ;
 		}
 
-		forceinline VREF<ITEM> operator[] (CREF<INDEX> index) leftvalue {
+		inline VREF<ITEM> operator[] (CREF<INDEX> index) leftvalue {
 			return at (index) ;
 		}
 
@@ -2113,7 +2113,7 @@ trait BUFFER_HELP<ITEM ,SIZE ,REQUIRE<IS_SAME<SIZE ,VARIABLE>>> {
 			return mBuffer.self[index] ;
 		}
 
-		forceinline CREF<ITEM> operator[] (CREF<INDEX> index) const leftvalue {
+		inline CREF<ITEM> operator[] (CREF<INDEX> index) const leftvalue {
 			return at (index) ;
 		}
 
@@ -2205,20 +2205,20 @@ trait BUFFER_HELP<ITEM ,SIZE ,REQUIRE<IS_SAME<SIZE ,CONSTANT>>> {
 			return mBuffer.self ;
 		}
 
-		forceinline implicit operator CREF<ARR<ITEM>> () const leftvalue {
+		inline implicit operator CREF<ARR<ITEM>> () const leftvalue {
 			return self ;
 		}
 
-		forceinline BOOL operator== (CREF<Buffer>) = delete ;
+		inline BOOL operator== (CREF<Buffer>) = delete ;
 
-		forceinline BOOL operator!= (CREF<Buffer>) = delete ;
+		inline BOOL operator!= (CREF<Buffer>) = delete ;
 
 		CREF<ITEM> at (CREF<INDEX> index) const leftvalue {
 			assert (vbetween (index ,0 ,size ())) ;
 			return mBuffer.self[index] ;
 		}
 
-		forceinline CREF<ITEM> operator[] (CREF<INDEX> index) const leftvalue {
+		inline CREF<ITEM> operator[] (CREF<INDEX> index) const leftvalue {
 			return at (index) ;
 		}
 
@@ -2333,7 +2333,7 @@ trait BUFFER_HELP<ITEM ,SIZE ,REQUIRE<IS_SAME<SIZE ,REGISTER>>> {
 			return mBuffer.self ;
 		}
 
-		forceinline implicit operator VREF<ARR<ITEM>> () leftvalue {
+		inline implicit operator VREF<ARR<ITEM>> () leftvalue {
 			return self ;
 		}
 
@@ -2343,20 +2343,20 @@ trait BUFFER_HELP<ITEM ,SIZE ,REQUIRE<IS_SAME<SIZE ,REGISTER>>> {
 			return mBuffer.self ;
 		}
 
-		forceinline implicit operator CREF<ARR<ITEM>> () const leftvalue {
+		inline implicit operator CREF<ARR<ITEM>> () const leftvalue {
 			return self ;
 		}
 
-		forceinline BOOL operator== (CREF<Buffer>) = delete ;
+		inline BOOL operator== (CREF<Buffer>) = delete ;
 
-		forceinline BOOL operator!= (CREF<Buffer>) = delete ;
+		inline BOOL operator!= (CREF<Buffer>) = delete ;
 
 		VREF<ITEM> at (CREF<INDEX> index) leftvalue {
 			assert (vbetween (index ,0 ,size ())) ;
 			return mBuffer.self[index] ;
 		}
 
-		forceinline VREF<ITEM> operator[] (CREF<INDEX> index) leftvalue {
+		inline VREF<ITEM> operator[] (CREF<INDEX> index) leftvalue {
 			return at (index) ;
 		}
 
@@ -2365,7 +2365,7 @@ trait BUFFER_HELP<ITEM ,SIZE ,REQUIRE<IS_SAME<SIZE ,REGISTER>>> {
 			return mBuffer.self[index] ;
 		}
 
-		forceinline CREF<ITEM> operator[] (CREF<INDEX> index) const leftvalue {
+		inline CREF<ITEM> operator[] (CREF<INDEX> index) const leftvalue {
 			return at (index) ;
 		}
 
@@ -2407,7 +2407,7 @@ trait BUFFER_HELP<ITEM ,SIZE ,REQUIRE<IS_SAME<SIZE ,ORDINARY>>> {
 		implicit Buffer () = default ;
 
 		implicit Buffer (RREF<VRef<Holder>> that) {
-			using R1X = typename DEPENDENT<ORDBUFFER_PUREHOLDER_HELP<ITEM ,ALWAYS> ,DEPEND>::PureHolder ;
+			using R1X = typename KILL<ORDBUFFER_PUREHOLDER_HELP<ITEM ,ALWAYS> ,DEPEND>::PureHolder ;
 			mThis = VRef<R1X>::make () ;
 			mThis->initialize (move (that)) ;
 		}
@@ -2431,7 +2431,7 @@ trait BUFFER_HELP<ITEM ,SIZE ,REQUIRE<IS_SAME<SIZE ,ORDINARY>>> {
 			return mThis->at (index) ;
 		}
 
-		forceinline VREF<ITEM> operator[] (CREF<INDEX> index) leftvalue {
+		inline VREF<ITEM> operator[] (CREF<INDEX> index) leftvalue {
 			return at (index) ;
 		}
 
@@ -2440,7 +2440,7 @@ trait BUFFER_HELP<ITEM ,SIZE ,REQUIRE<IS_SAME<SIZE ,ORDINARY>>> {
 			return mThis->at (index) ;
 		}
 
-		forceinline CREF<ITEM> operator[] (CREF<INDEX> index) const leftvalue {
+		inline CREF<ITEM> operator[] (CREF<INDEX> index) const leftvalue {
 			return at (index) ;
 		}
 
@@ -2545,7 +2545,7 @@ trait ALLOCATOR_HOLDER_HELP<ITEM ,SIZE ,COND ,REQUIRE<COND>> {
 			mFree = that.mFree ;
 		}
 
-		forceinline VREF<Allocator> operator= (CREF<Allocator> that) {
+		inline VREF<Allocator> operator= (CREF<Allocator> that) {
 			if (address (thiz) == address (that))
 				return thiz ;
 			swap (thiz ,move (that)) ;
@@ -2556,7 +2556,7 @@ trait ALLOCATOR_HOLDER_HELP<ITEM ,SIZE ,COND ,REQUIRE<COND>> {
 			swap (thiz ,that) ;
 		}
 
-		forceinline VREF<Allocator> operator= (RREF<Allocator> that) noexcept {
+		inline VREF<Allocator> operator= (RREF<Allocator> that) noexcept {
 			if (address (thiz) == address (that))
 				return thiz ;
 			swap (thiz ,move (that)) ;
@@ -2622,7 +2622,7 @@ trait ALLOCATOR_HELP<ITEM ,SIZE ,ALWAYS> {
 			return mAllocator[index].mItem.self ;
 		}
 
-		forceinline VREF<ITEM> operator[] (CREF<INDEX> index) leftvalue {
+		inline VREF<ITEM> operator[] (CREF<INDEX> index) leftvalue {
 			return at (index) ;
 		}
 
@@ -2631,7 +2631,7 @@ trait ALLOCATOR_HELP<ITEM ,SIZE ,ALWAYS> {
 			return mAllocator[index].mItem.self ;
 		}
 
-		forceinline CREF<ITEM> operator[] (CREF<INDEX> index) const leftvalue {
+		inline CREF<ITEM> operator[] (CREF<INDEX> index) const leftvalue {
 			return at (index) ;
 		}
 
@@ -2740,7 +2740,7 @@ trait LATER_HELP<UNIT ,ALWAYS> {
 			return AutoRef<UNIT>::from (mThis->invoke ()).self ;
 		}
 
-		forceinline UNIT operator() () const {
+		inline UNIT operator() () const {
 			return invoke () ;
 		}
 	} ;

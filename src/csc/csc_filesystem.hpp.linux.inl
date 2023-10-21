@@ -300,7 +300,7 @@ trait FUNCTION_decouple_path_HELP<DEPEND ,ALWAYS> {
 	} ;
 
 	struct FUNCTION_decouple_path {
-		forceinline ArrayList<String<STR>> operator() (CREF<String<STR>> dire) const {
+		inline ArrayList<String<STR>> operator() (CREF<String<STR>> dire) const {
 			ArrayList<String<STR>> ret ;
 			auto rax = TextReader<STR> (dire.raw ().borrow ()) ;
 			rax.attribute ().derive (TYPEAS<Wrapper>::expr) ;
@@ -470,8 +470,8 @@ trait DIRECTORY_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 					discard ;
 				return buffer_equal (r5x.snapshot () ,r2x.snapshot ()) ;
 			}
-			const auto r8x = lock_handle (r1x ,r2x.snapshot ()) ;
-			return r8x->self.good () ;
+			const auto r7x = lock_handle (r1x ,r2x.snapshot ()) ;
+			return r7x->self.good () ;
 		}
 
 		BOOL buffer_equal (CREF<ConBuffer<BYTE>> obj1 ,CREF<ConBuffer<BYTE>> obj2) const {
@@ -1212,9 +1212,9 @@ trait BUFFERFILE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				mCacheSet.add (offset ,ret) ;
 				mCacheList[ret].mOffset = offset ;
 				mCacheList[ret].mBuffer = UniqueRef<csc_span_t> ([&] (VREF<csc_span_t> me) {
-					const auto r2x = mmap64 (NULL ,size_ ,mFileMapFlag ,MAP_SHARED ,mPipe ,offset) ;
-					assume (r2x != MAP_FAILED) ;
-					me.mBegin = LENGTH (r2x) ;
+					const auto r1x = mmap64 (NULL ,size_ ,mFileMapFlag ,MAP_SHARED ,mPipe ,offset) ;
+					assume (r1x != MAP_FAILED) ;
+					me.mBegin = LENGTH (r1x) ;
 					me.mEnd = me.mBegin + size_ ;
 					me.mStep = size_ ;
 				} ,[] (VREF<csc_span_t> me) {

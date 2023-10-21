@@ -82,155 +82,155 @@ using INDEX = VAL ;
 using LENGTH = VAL ;
 using FLAG = VAL ;
 
-using SINGLE = csc_float32_t ;
-using DOUBLE = csc_float64_t ;
+using FLT32 = csc_float32_t ;
+using FLT64 = csc_float64_t ;
 
-static constexpr auto SINGLE_MAX = SINGLE (3.402823466E+38) ;
-static constexpr auto SINGLE_MIN = -SINGLE_MAX ;
-static constexpr auto SINGLE_LOW = SINGLE (1.175494351E-38) ;
-static constexpr auto SINGLE_EPS = SINGLE (1.192092896E-07) ;
-static constexpr auto SINGLE_INF = SINGLE (infinity) ;
-static constexpr auto DOUBLE_MAX = DOUBLE (1.7976931348623158E+308) ;
-static constexpr auto DOUBLE_MIN = -DOUBLE_MAX ;
-static constexpr auto DOUBLE_LOW = DOUBLE (2.2250738585072014E-308) ;
-static constexpr auto DOUBLE_EPS = DOUBLE (2.2204460492503131E-016) ;
-static constexpr auto DOUBLE_INF = DOUBLE (infinity) ;
+static constexpr auto FLT32_MAX = FLT32 (3.402823466E+38) ;
+static constexpr auto FLT32_MIN = -FLT32_MAX ;
+static constexpr auto FLT32_LOW = FLT32 (1.175494351E-38) ;
+static constexpr auto FLT32_EPS = FLT32 (1.192092896E-07) ;
+static constexpr auto FLT32_INF = FLT32 (infinity) ;
+static constexpr auto FLT64_MAX = FLT64 (1.7976931348623158E+308) ;
+static constexpr auto FLT64_MIN = -FLT64_MAX ;
+static constexpr auto FLT64_LOW = FLT64 (2.2250738585072014E-308) ;
+static constexpr auto FLT64_EPS = FLT64 (2.2204460492503131E-016) ;
+static constexpr auto FLT64_INF = FLT64 (infinity) ;
 
-enum class BYTE :csc_byte8_t ;
-enum class WORD :csc_byte16_t ;
-enum class CHAR :csc_byte32_t ;
-enum class DATA :csc_byte64_t ;
+enum class BYTE :csc_uint8_t ;
+enum class WORD :csc_uint16_t ;
+enum class CHAR :csc_uint32_t ;
+enum class DATA :csc_uint64_t ;
 
-forceinline constexpr BYTE operator| (CREF<BYTE> obj1 ,CREF<BYTE> obj2) noexcept {
-	return BYTE (csc_byte8_t (obj1) | csc_byte8_t (obj2)) ;
+inline constexpr BYTE operator| (CREF<BYTE> obj1 ,CREF<BYTE> obj2) noexcept {
+	return BYTE (csc_uint8_t (obj1) | csc_uint8_t (obj2)) ;
 }
 
-forceinline void operator|= (VREF<BYTE> obj1 ,CREF<BYTE> obj2) noexcept {
+inline void operator|= (VREF<BYTE> obj1 ,CREF<BYTE> obj2) noexcept {
 	obj1 = obj1 | obj2 ;
 }
 
-forceinline constexpr BYTE operator& (CREF<BYTE> obj1 ,CREF<BYTE> obj2) noexcept {
-	return BYTE (csc_byte8_t (obj1) & csc_byte8_t (obj2)) ;
+inline constexpr BYTE operator& (CREF<BYTE> obj1 ,CREF<BYTE> obj2) noexcept {
+	return BYTE (csc_uint8_t (obj1) & csc_uint8_t (obj2)) ;
 }
 
-forceinline void operator&= (VREF<BYTE> obj1 ,CREF<BYTE> obj2) noexcept {
+inline void operator&= (VREF<BYTE> obj1 ,CREF<BYTE> obj2) noexcept {
 	obj1 = obj1 & obj2 ;
 }
 
-forceinline constexpr BYTE operator^ (CREF<BYTE> obj1 ,CREF<BYTE> obj2) noexcept {
-	return BYTE (csc_byte8_t (obj1) ^ csc_byte8_t (obj2)) ;
+inline constexpr BYTE operator^ (CREF<BYTE> obj1 ,CREF<BYTE> obj2) noexcept {
+	return BYTE (csc_uint8_t (obj1) ^ csc_uint8_t (obj2)) ;
 }
 
-forceinline void operator^= (VREF<BYTE> obj1 ,CREF<BYTE> obj2) noexcept {
+inline void operator^= (VREF<BYTE> obj1 ,CREF<BYTE> obj2) noexcept {
 	obj1 = obj1 ^ obj2 ;
 }
 
-forceinline constexpr BYTE operator~ (CREF<BYTE> obj1) noexcept {
-	return BYTE (~csc_byte8_t (obj1)) ;
+inline constexpr BYTE operator~ (CREF<BYTE> obj1) noexcept {
+	return BYTE (~csc_uint8_t (obj1)) ;
 }
 
-forceinline constexpr BYTE operator<< (CREF<BYTE> obj1 ,CREF<LENGTH> obj2) noexcept {
-	return BYTE (csc_byte8_t (obj1) << obj2) ;
+inline constexpr BYTE operator<< (CREF<BYTE> obj1 ,CREF<LENGTH> obj2) noexcept {
+	return BYTE (csc_uint8_t (obj1) << obj2) ;
 }
 
-forceinline constexpr BYTE operator>> (CREF<BYTE> obj1 ,CREF<LENGTH> obj2) noexcept {
-	return BYTE (csc_byte8_t (obj1) >> obj2) ;
+inline constexpr BYTE operator>> (CREF<BYTE> obj1 ,CREF<LENGTH> obj2) noexcept {
+	return BYTE (csc_uint8_t (obj1) >> obj2) ;
 }
 
-forceinline constexpr WORD operator| (CREF<WORD> obj1 ,CREF<WORD> obj2) noexcept {
-	return WORD (csc_byte16_t (obj1) | csc_byte16_t (obj2)) ;
+inline constexpr WORD operator| (CREF<WORD> obj1 ,CREF<WORD> obj2) noexcept {
+	return WORD (csc_uint16_t (obj1) | csc_uint16_t (obj2)) ;
 }
 
-forceinline void operator|= (VREF<WORD> obj1 ,CREF<WORD> obj2) noexcept {
+inline void operator|= (VREF<WORD> obj1 ,CREF<WORD> obj2) noexcept {
 	obj1 = obj1 | obj2 ;
 }
 
-forceinline constexpr WORD operator& (CREF<WORD> obj1 ,CREF<WORD> obj2) noexcept {
-	return WORD (csc_byte16_t (obj1) & csc_byte16_t (obj2)) ;
+inline constexpr WORD operator& (CREF<WORD> obj1 ,CREF<WORD> obj2) noexcept {
+	return WORD (csc_uint16_t (obj1) & csc_uint16_t (obj2)) ;
 }
 
-forceinline void operator&= (VREF<WORD> obj1 ,CREF<WORD> obj2) noexcept {
+inline void operator&= (VREF<WORD> obj1 ,CREF<WORD> obj2) noexcept {
 	obj1 = obj1 & obj2 ;
 }
 
-forceinline constexpr WORD operator^ (CREF<WORD> obj1 ,CREF<WORD> obj2) noexcept {
-	return WORD (csc_byte16_t (obj1) ^ csc_byte16_t (obj2)) ;
+inline constexpr WORD operator^ (CREF<WORD> obj1 ,CREF<WORD> obj2) noexcept {
+	return WORD (csc_uint16_t (obj1) ^ csc_uint16_t (obj2)) ;
 }
 
-forceinline constexpr WORD operator~ (CREF<WORD> obj1) noexcept {
-	return WORD (~csc_byte16_t (obj1)) ;
+inline constexpr WORD operator~ (CREF<WORD> obj1) noexcept {
+	return WORD (~csc_uint16_t (obj1)) ;
 }
 
-forceinline constexpr WORD operator<< (CREF<WORD> obj1 ,CREF<LENGTH> obj2) noexcept {
-	return WORD (csc_byte16_t (obj1) << obj2) ;
+inline constexpr WORD operator<< (CREF<WORD> obj1 ,CREF<LENGTH> obj2) noexcept {
+	return WORD (csc_uint16_t (obj1) << obj2) ;
 }
 
-forceinline constexpr WORD operator>> (CREF<WORD> obj1 ,CREF<LENGTH> obj2) noexcept {
-	return WORD (csc_byte16_t (obj1) >> obj2) ;
+inline constexpr WORD operator>> (CREF<WORD> obj1 ,CREF<LENGTH> obj2) noexcept {
+	return WORD (csc_uint16_t (obj1) >> obj2) ;
 }
 
-forceinline constexpr CHAR operator| (CREF<CHAR> obj1 ,CREF<CHAR> obj2) noexcept {
-	return CHAR (csc_byte32_t (obj1) | csc_byte32_t (obj2)) ;
+inline constexpr CHAR operator| (CREF<CHAR> obj1 ,CREF<CHAR> obj2) noexcept {
+	return CHAR (csc_uint32_t (obj1) | csc_uint32_t (obj2)) ;
 }
 
-forceinline void operator|= (VREF<CHAR> obj1 ,CREF<CHAR> obj2) noexcept {
+inline void operator|= (VREF<CHAR> obj1 ,CREF<CHAR> obj2) noexcept {
 	obj1 = obj1 | obj2 ;
 }
 
-forceinline constexpr CHAR operator& (CREF<CHAR> obj1 ,CREF<CHAR> obj2) noexcept {
-	return CHAR (csc_byte32_t (obj1) & csc_byte32_t (obj2)) ;
+inline constexpr CHAR operator& (CREF<CHAR> obj1 ,CREF<CHAR> obj2) noexcept {
+	return CHAR (csc_uint32_t (obj1) & csc_uint32_t (obj2)) ;
 }
 
-forceinline void operator&= (VREF<CHAR> obj1 ,CREF<CHAR> obj2) noexcept {
+inline void operator&= (VREF<CHAR> obj1 ,CREF<CHAR> obj2) noexcept {
 	obj1 = obj1 & obj2 ;
 }
 
-forceinline constexpr CHAR operator^ (CREF<CHAR> obj1 ,CREF<CHAR> obj2) noexcept {
-	return CHAR (csc_byte32_t (obj1) ^ csc_byte32_t (obj2)) ;
+inline constexpr CHAR operator^ (CREF<CHAR> obj1 ,CREF<CHAR> obj2) noexcept {
+	return CHAR (csc_uint32_t (obj1) ^ csc_uint32_t (obj2)) ;
 }
 
-forceinline constexpr CHAR operator~ (CREF<CHAR> obj1) noexcept {
-	return CHAR (~csc_byte32_t (obj1)) ;
+inline constexpr CHAR operator~ (CREF<CHAR> obj1) noexcept {
+	return CHAR (~csc_uint32_t (obj1)) ;
 }
 
-forceinline constexpr CHAR operator<< (CREF<CHAR> obj1 ,CREF<LENGTH> obj2) noexcept {
-	return CHAR (csc_byte32_t (obj1) << obj2) ;
+inline constexpr CHAR operator<< (CREF<CHAR> obj1 ,CREF<LENGTH> obj2) noexcept {
+	return CHAR (csc_uint32_t (obj1) << obj2) ;
 }
 
-forceinline constexpr CHAR operator>> (CREF<CHAR> obj1 ,CREF<LENGTH> obj2) noexcept {
-	return CHAR (csc_byte32_t (obj1) >> obj2) ;
+inline constexpr CHAR operator>> (CREF<CHAR> obj1 ,CREF<LENGTH> obj2) noexcept {
+	return CHAR (csc_uint32_t (obj1) >> obj2) ;
 }
 
-forceinline constexpr DATA operator| (CREF<DATA> obj1 ,CREF<DATA> obj2) noexcept {
-	return DATA (csc_byte64_t (obj1) | csc_byte64_t (obj2)) ;
+inline constexpr DATA operator| (CREF<DATA> obj1 ,CREF<DATA> obj2) noexcept {
+	return DATA (csc_uint64_t (obj1) | csc_uint64_t (obj2)) ;
 }
 
-forceinline void operator|= (VREF<DATA> obj1 ,CREF<DATA> obj2) noexcept {
+inline void operator|= (VREF<DATA> obj1 ,CREF<DATA> obj2) noexcept {
 	obj1 = obj1 | obj2 ;
 }
 
-forceinline constexpr DATA operator& (CREF<DATA> obj1 ,CREF<DATA> obj2) noexcept {
-	return DATA (csc_byte64_t (obj1) & csc_byte64_t (obj2)) ;
+inline constexpr DATA operator& (CREF<DATA> obj1 ,CREF<DATA> obj2) noexcept {
+	return DATA (csc_uint64_t (obj1) & csc_uint64_t (obj2)) ;
 }
 
-forceinline void operator&= (VREF<DATA> obj1 ,CREF<DATA> obj2) noexcept {
+inline void operator&= (VREF<DATA> obj1 ,CREF<DATA> obj2) noexcept {
 	obj1 = obj1 & obj2 ;
 }
 
-forceinline constexpr DATA operator^ (CREF<DATA> obj1 ,CREF<DATA> obj2) noexcept {
-	return DATA (csc_byte64_t (obj1) ^ csc_byte64_t (obj2)) ;
+inline constexpr DATA operator^ (CREF<DATA> obj1 ,CREF<DATA> obj2) noexcept {
+	return DATA (csc_uint64_t (obj1) ^ csc_uint64_t (obj2)) ;
 }
 
-forceinline constexpr DATA operator~ (CREF<DATA> obj1) noexcept {
-	return DATA (~csc_byte64_t (obj1)) ;
+inline constexpr DATA operator~ (CREF<DATA> obj1) noexcept {
+	return DATA (~csc_uint64_t (obj1)) ;
 }
 
-forceinline constexpr DATA operator<< (CREF<DATA> obj1 ,CREF<LENGTH> obj2) noexcept {
-	return DATA (csc_byte64_t (obj1) << obj2) ;
+inline constexpr DATA operator<< (CREF<DATA> obj1 ,CREF<LENGTH> obj2) noexcept {
+	return DATA (csc_uint64_t (obj1) << obj2) ;
 }
 
-forceinline constexpr DATA operator>> (CREF<DATA> obj1 ,CREF<LENGTH> obj2) noexcept {
-	return DATA (csc_byte64_t (obj1) >> obj2) ;
+inline constexpr DATA operator>> (CREF<DATA> obj1 ,CREF<LENGTH> obj2) noexcept {
+	return DATA (csc_uint64_t (obj1) >> obj2) ;
 }
 
 using STRA = csc_char_t ;
@@ -679,19 +679,19 @@ struct Proxy {
 	implicit Proxy () = delete ;
 	implicit ~Proxy () = delete ;
 	implicit Proxy (CREF<Proxy>) = delete ;
-	forceinline VREF<Proxy> operator= (CREF<Proxy>) = delete ;
+	inline VREF<Proxy> operator= (CREF<Proxy>) = delete ;
 	implicit Proxy (RREF<Proxy>) = delete ;
-	forceinline VREF<Proxy> operator= (RREF<Proxy>) = delete ;
+	inline VREF<Proxy> operator= (RREF<Proxy>) = delete ;
 } ;
 
 struct Interface {
 	implicit Interface () = default ;
 	virtual ~Interface () = default ;
 	implicit Interface (CREF<Interface>) = delete ;
-	forceinline VREF<Interface> operator= (CREF<Interface>) = delete ;
+	inline VREF<Interface> operator= (CREF<Interface>) = delete ;
 	//@info: fuck clang
 	implicit Interface (Interface &&) = default ;
-	forceinline VREF<Interface> operator= (Interface &&) = default ;
+	inline VREF<Interface> operator= (Interface &&) = default ;
 	virtual void finalize () {}
 } ;
 
@@ -760,8 +760,8 @@ trait IS_FLOAT_HELP ;
 
 template <class UNIT>
 trait IS_FLOAT_HELP<UNIT ,ALWAYS> {
-	using R1X = IS_SAME<UNIT ,SINGLE> ;
-	using R2X = IS_SAME<UNIT ,DOUBLE> ;
+	using R1X = IS_SAME<UNIT ,FLT32> ;
+	using R2X = IS_SAME<UNIT ,FLT64> ;
 
 	enum { value = ENUM_ANY<R1X ,R2X>::expr } ;
 	using RET = ENUMAS<BOOL ,value> ;
@@ -1018,10 +1018,10 @@ template <class UNIT>
 trait IS_INTPTR_HELP<UNIT ,REQUIRE<ENUM_NOT<IS_BASIC<UNIT>>>> {
 	using R1X = MACRO_IS_ENUMCLASS<UNIT> ;
 	using R2X = IS_POINTER<UNIT> ;
-	using R3X = IS_SAME<UNIT ,csc_byte8_t> ;
-	using R4X = IS_SAME<UNIT ,csc_byte16_t> ;
-	using R5X = IS_SAME<UNIT ,csc_byte32_t> ;
-	using R6X = IS_SAME<UNIT ,csc_byte64_t> ;
+	using R3X = IS_SAME<UNIT ,csc_uint8_t> ;
+	using R4X = IS_SAME<UNIT ,csc_uint16_t> ;
+	using R5X = IS_SAME<UNIT ,csc_uint32_t> ;
+	using R6X = IS_SAME<UNIT ,csc_uint64_t> ;
 	using R7X = IS_SAME<UNIT ,csc_enum_t> ;
 
 	enum { value = ENUM_ANY<R1X ,R2X ,R3X ,R4X ,R5X ,R6X ,R7X>::expr } ;

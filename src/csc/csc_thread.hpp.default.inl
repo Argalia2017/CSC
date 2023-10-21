@@ -282,7 +282,7 @@ trait CALCTHREAD_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			mSearchSolution = Array<SOLUTION> (size_) ;
 			mBranchSolution = Array<SOLUTION> (size_) ;
 			mBestSolution.mIndex = NONE ;
-			mBestSolution.mError = DOUBLE_INF ;
+			mBestSolution.mError = FLT64_INF ;
 			mBestSolution.mValue = ITEM::make () ;
 		}
 
@@ -341,7 +341,7 @@ trait CALCTHREAD_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				if (r3x == 0)
 					break ;
 				mThreadSolution[slot].mIndex = NONE ;
-				mThreadSolution[slot].mError = DOUBLE_INF ;
+				mThreadSolution[slot].mError = FLT64_INF ;
 				mThreadSolution[slot].mValue = ITEM::make (bitset_xor (mBranchSolution[slot].mValue.self ,r1x)) ;
 				mSearchSolution[slot] = mThreadProc (mThreadSolution[slot]) ;
 				if ifnot (mSearchSolution[slot].mValue.exist ())

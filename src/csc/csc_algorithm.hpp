@@ -76,7 +76,7 @@ trait SORTPROC_HELP<DEPEND ,ALWAYS> {
 
 		template <class ARG1>
 		imports Array<INDEX> sort (CREF<ARG1> array_) {
-			using R1X = typename DEPENDENT<SORTPROC_IMPLBINDER_HELP<ARG1 ,ALWAYS> ,DEPEND>::ImplBinder ;
+			using R1X = typename KILL<SORTPROC_IMPLBINDER_HELP<ARG1 ,ALWAYS> ,DEPEND>::ImplBinder ;
 			auto rax = R1X (CRef<ARG1>::reference (array_)) ;
 			Array<INDEX> ret = IterArray<INDEX>::make (array_.iter ()) ;
 			sort (rax ,ret ,0 ,ret.length ()) ;
@@ -235,7 +235,7 @@ trait SEGMENTTABLE_IMPLHOLDER_HELP ;
 
 template <class DEPEND>
 trait SEGMENTTABLE_HELP<DEPEND ,ALWAYS> {
-	using FLOAT = DOUBLE ;
+	using FLOAT = FLT64 ;
 
 	struct Holder implement Interface {
 		imports VRef<Holder> create () ;

@@ -45,7 +45,7 @@ trait MATHPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			noop () ;
 		}
 
-		BOOL is_inf (CREF<SINGLE> obj) const override {
+		BOOL is_inf (CREF<FLT32> obj) const override {
 			const auto r1x = bitwise (obj) ;
 			if ifnot (BitProc::bit_all (r1x ,CHAR (0X7F800000)))
 				return FALSE ;
@@ -55,7 +55,7 @@ trait MATHPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			return TRUE ;
 		}
 
-		BOOL is_inf (CREF<DOUBLE> obj) const override {
+		BOOL is_inf (CREF<FLT64> obj) const override {
 			const auto r1x = bitwise (obj) ;
 			if ifnot (BitProc::bit_all (r1x ,DATA (0X7FF0000000000000)))
 				return FALSE ;
@@ -77,16 +77,16 @@ trait MATHPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			return VAL64 (-1) ;
 		}
 
-		SINGLE sign (CREF<SINGLE> obj) const override {
+		FLT32 sign (CREF<FLT32> obj) const override {
 			if (obj >= 0)
-				return SINGLE (1) ;
-			return SINGLE (-1) ;
+				return FLT32 (1) ;
+			return FLT32 (-1) ;
 		}
 
-		DOUBLE sign (CREF<DOUBLE> obj) const override {
+		FLT64 sign (CREF<FLT64> obj) const override {
 			if (obj >= 0)
-				return DOUBLE (1) ;
-			return DOUBLE (-1) ;
+				return FLT64 (1) ;
+			return FLT64 (-1) ;
 		}
 
 		VAL32 abs (CREF<VAL32> obj) const override {
@@ -107,28 +107,28 @@ trait MATHPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			return -obj ;
 		}
 
-		SINGLE abs (CREF<SINGLE> obj) const override {
+		FLT32 abs (CREF<FLT32> obj) const override {
 			if (obj >= 0)
 				return obj ;
 			return -obj ;
 		}
 
-		DOUBLE abs (CREF<DOUBLE> obj) const override {
+		FLT64 abs (CREF<FLT64> obj) const override {
 			if (obj >= 0)
 				return obj ;
 			return -obj ;
 		}
 
-		SINGLE inverse (CREF<SINGLE> obj) const override {
-			if (MathProc::abs (obj) < SINGLE_EPS)
-				return SINGLE (0) ;
-			return SINGLE (1) / obj ;
+		FLT32 inverse (CREF<FLT32> obj) const override {
+			if (MathProc::abs (obj) < FLT32_EPS)
+				return FLT32 (0) ;
+			return FLT32 (1) / obj ;
 		}
 
-		DOUBLE inverse (CREF<DOUBLE> obj) const override {
-			if (MathProc::abs (obj) < DOUBLE_EPS)
-				return DOUBLE (0) ;
-			return DOUBLE (1) / obj ;
+		FLT64 inverse (CREF<FLT64> obj) const override {
+			if (MathProc::abs (obj) < FLT64_EPS)
+				return FLT64 (0) ;
+			return FLT64 (1) / obj ;
 		}
 
 		VAL32 min_of (CREF<VAL32> obj1 ,CREF<SpanIterator<VAL32>> obj2) const override {
@@ -151,8 +151,8 @@ trait MATHPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			return move (ret) ;
 		}
 
-		SINGLE min_of (CREF<SINGLE> obj1 ,CREF<SpanIterator<SINGLE>> obj2) const override {
-			SINGLE ret = obj1 ;
+		FLT32 min_of (CREF<FLT32> obj1 ,CREF<SpanIterator<FLT32>> obj2) const override {
+			FLT32 ret = obj1 ;
 			for (auto &&i : obj2) {
 				if (ret <= i)
 					continue ;
@@ -161,8 +161,8 @@ trait MATHPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			return move (ret) ;
 		}
 
-		DOUBLE min_of (CREF<DOUBLE> obj1 ,CREF<SpanIterator<DOUBLE>> obj2) const override {
-			DOUBLE ret = obj1 ;
+		FLT64 min_of (CREF<FLT64> obj1 ,CREF<SpanIterator<FLT64>> obj2) const override {
+			FLT64 ret = obj1 ;
 			for (auto &&i : obj2) {
 				if (ret <= i)
 					continue ;
@@ -191,8 +191,8 @@ trait MATHPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			return move (ret) ;
 		}
 
-		SINGLE max_of (CREF<SINGLE> obj1 ,CREF<SpanIterator<SINGLE>> obj2) const override {
-			SINGLE ret = obj1 ;
+		FLT32 max_of (CREF<FLT32> obj1 ,CREF<SpanIterator<FLT32>> obj2) const override {
+			FLT32 ret = obj1 ;
 			for (auto &&i : obj2) {
 				if (ret >= i)
 					continue ;
@@ -201,8 +201,8 @@ trait MATHPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			return move (ret) ;
 		}
 
-		DOUBLE max_of (CREF<DOUBLE> obj1 ,CREF<SpanIterator<DOUBLE>> obj2) const override {
-			DOUBLE ret = obj1 ;
+		FLT64 max_of (CREF<FLT64> obj1 ,CREF<SpanIterator<FLT64>> obj2) const override {
+			FLT64 ret = obj1 ;
 			for (auto &&i : obj2) {
 				if (ret >= i)
 					continue ;
@@ -251,15 +251,15 @@ trait MATHPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			return move (ret) ;
 		}
 
-		SINGLE sum_of (CREF<SINGLE> obj1 ,CREF<SpanIterator<SINGLE>> obj2) const override {
-			SINGLE ret = obj1 ;
+		FLT32 sum_of (CREF<FLT32> obj1 ,CREF<SpanIterator<FLT32>> obj2) const override {
+			FLT32 ret = obj1 ;
 			for (auto &&i : obj2)
 				ret += i ;
 			return move (ret) ;
 		}
 
-		DOUBLE sum_of (CREF<DOUBLE> obj1 ,CREF<SpanIterator<DOUBLE>> obj2) const override {
-			DOUBLE ret = obj1 ;
+		FLT64 sum_of (CREF<FLT64> obj1 ,CREF<SpanIterator<FLT64>> obj2) const override {
+			FLT64 ret = obj1 ;
 			for (auto &&i : obj2)
 				ret += i ;
 			return move (ret) ;
@@ -279,15 +279,15 @@ trait MATHPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			return move (ret) ;
 		}
 
-		SINGLE acc_of (CREF<SINGLE> obj1 ,CREF<SpanIterator<SINGLE>> obj2) const override {
-			SINGLE ret = obj1 ;
+		FLT32 acc_of (CREF<FLT32> obj1 ,CREF<SpanIterator<FLT32>> obj2) const override {
+			FLT32 ret = obj1 ;
 			for (auto &&i : obj2)
 				ret *= i ;
 			return move (ret) ;
 		}
 
-		DOUBLE acc_of (CREF<DOUBLE> obj1 ,CREF<SpanIterator<DOUBLE>> obj2) const override {
-			DOUBLE ret = obj1 ;
+		FLT64 acc_of (CREF<FLT64> obj1 ,CREF<SpanIterator<FLT64>> obj2) const override {
+			FLT64 ret = obj1 ;
 			for (auto &&i : obj2)
 				ret *= i ;
 			return move (ret) ;
@@ -321,7 +321,7 @@ trait MATHPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			}
 		}
 
-		void sort_of (VREF<RegBuffer<SINGLE>> result) const override {
+		void sort_of (VREF<RegBuffer<FLT32>> result) const override {
 			for (auto &&i : iter (0 ,result.size ())) {
 				INDEX iy = i ;
 				for (auto &&j : iter (i + 1 ,result.size ())) {
@@ -335,7 +335,7 @@ trait MATHPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			}
 		}
 
-		void sort_of (VREF<RegBuffer<DOUBLE>> result) const override {
+		void sort_of (VREF<RegBuffer<FLT64>> result) const override {
 			for (auto &&i : iter (0 ,result.size ())) {
 				INDEX iy = i ;
 				for (auto &&j : iter (i + 1 ,result.size ())) {
@@ -365,7 +365,7 @@ trait MATHPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			return curr ;
 		}
 
-		SINGLE clamp (CREF<SINGLE> curr ,CREF<SINGLE> lb ,CREF<SINGLE> rb) const override {
+		FLT32 clamp (CREF<FLT32> curr ,CREF<FLT32> lb ,CREF<FLT32> rb) const override {
 			if (curr <= lb)
 				return lb ;
 			if (curr >= rb)
@@ -373,7 +373,7 @@ trait MATHPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			return curr ;
 		}
 
-		DOUBLE clamp (CREF<DOUBLE> curr ,CREF<DOUBLE> lb ,CREF<DOUBLE> rb) const override {
+		FLT64 clamp (CREF<FLT64> curr ,CREF<FLT64> lb ,CREF<FLT64> rb) const override {
 			if (curr <= lb)
 				return lb ;
 			if (curr >= rb)
@@ -381,65 +381,65 @@ trait MATHPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			return curr ;
 		}
 
-		SINGLE floor (CREF<SINGLE> curr ,CREF<SINGLE> base) const override {
+		FLT32 floor (CREF<FLT32> curr ,CREF<FLT32> base) const override {
 			assert (base > 0) ;
 			const auto r1x = VAL64 (curr * MathProc::inverse (base)) ;
-			const auto r2x = base * SINGLE (r1x) ;
+			const auto r2x = base * FLT32 (r1x) ;
 			if (curr >= 0)
 				return r2x ;
 			if (curr >= r2x)
 				return r2x ;
-			return base * SINGLE (r1x - 1) ;
+			return base * FLT32 (r1x - 1) ;
 		}
 
-		DOUBLE floor (CREF<DOUBLE> curr ,CREF<DOUBLE> base) const override {
+		FLT64 floor (CREF<FLT64> curr ,CREF<FLT64> base) const override {
 			assert (base > 0) ;
 			const auto r1x = VAL64 (curr * MathProc::inverse (base)) ;
-			const auto r2x = base * DOUBLE (r1x) ;
+			const auto r2x = base * FLT64 (r1x) ;
 			if (curr >= 0)
 				return r2x ;
 			if (curr >= r2x)
 				return r2x ;
-			return base * DOUBLE (r1x - 1) ;
+			return base * FLT64 (r1x - 1) ;
 		}
 
-		SINGLE ceil (CREF<SINGLE> curr ,CREF<SINGLE> base) const override {
+		FLT32 ceil (CREF<FLT32> curr ,CREF<FLT32> base) const override {
 			assert (base > 0) ;
 			const auto r1x = VAL64 (curr * MathProc::inverse (base)) ;
-			const auto r2x = base * SINGLE (r1x) ;
+			const auto r2x = base * FLT32 (r1x) ;
 			if (curr <= 0)
 				return r2x ;
 			if (curr <= r2x)
 				return r2x ;
-			return base * SINGLE (r1x + 1) ;
+			return base * FLT32 (r1x + 1) ;
 		}
 
-		DOUBLE ceil (CREF<DOUBLE> curr ,CREF<DOUBLE> base) const override {
+		FLT64 ceil (CREF<FLT64> curr ,CREF<FLT64> base) const override {
 			assert (base > 0) ;
 			const auto r1x = VAL64 (curr * MathProc::inverse (base)) ;
-			const auto r2x = base * DOUBLE (r1x) ;
+			const auto r2x = base * FLT64 (r1x) ;
 			if (curr <= 0)
 				return r2x ;
 			if (curr <= r2x)
 				return r2x ;
-			return base * DOUBLE (r1x + 1) ;
+			return base * FLT64 (r1x + 1) ;
 		}
 
-		SINGLE round (CREF<SINGLE> curr ,CREF<SINGLE> base) const override {
-			const auto r1x = curr + base * SINGLE (MATH_INV2) ;
+		FLT32 round (CREF<FLT32> curr ,CREF<FLT32> base) const override {
+			const auto r1x = curr + base * FLT32 (MATH_INV2) ;
 			return floor (r1x ,base) ;
 		}
 
-		DOUBLE round (CREF<DOUBLE> curr ,CREF<DOUBLE> base) const override {
-			const auto r1x = curr + base * DOUBLE (MATH_INV2) ;
+		FLT64 round (CREF<FLT64> curr ,CREF<FLT64> base) const override {
+			const auto r1x = curr + base * FLT64 (MATH_INV2) ;
 			return floor (r1x ,base) ;
 		}
 
-		SINGLE trunc (CREF<SINGLE> curr ,CREF<SINGLE> base) const override {
+		FLT32 trunc (CREF<FLT32> curr ,CREF<FLT32> base) const override {
 			return floor (abs (curr) ,base) * sign (curr) ;
 		}
 
-		DOUBLE trunc (CREF<DOUBLE> curr ,CREF<DOUBLE> base) const override {
+		FLT64 trunc (CREF<FLT64> curr ,CREF<FLT64> base) const override {
 			return floor (abs (curr) ,base) * sign (curr) ;
 		}
 
@@ -451,19 +451,19 @@ trait MATHPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			return obj * obj ;
 		}
 
-		SINGLE square (CREF<SINGLE> obj) const override {
+		FLT32 square (CREF<FLT32> obj) const override {
 			return obj * obj ;
 		}
 
-		DOUBLE square (CREF<DOUBLE> obj) const override {
+		FLT64 square (CREF<FLT64> obj) const override {
 			return obj * obj ;
 		}
 
-		SINGLE sqrt (CREF<SINGLE> obj) const override {
+		FLT32 sqrt (CREF<FLT32> obj) const override {
 			return std::sqrt (obj) ;
 		}
 
-		DOUBLE sqrt (CREF<DOUBLE> obj) const override {
+		FLT64 sqrt (CREF<FLT64> obj) const override {
 			return std::sqrt (obj) ;
 		}
 
@@ -475,35 +475,35 @@ trait MATHPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			return obj * obj * obj ;
 		}
 
-		SINGLE cubic (CREF<SINGLE> obj) const override {
+		FLT32 cubic (CREF<FLT32> obj) const override {
 			return obj * obj * obj ;
 		}
 
-		DOUBLE cubic (CREF<DOUBLE> obj) const override {
+		FLT64 cubic (CREF<FLT64> obj) const override {
 			return obj * obj * obj ;
 		}
 
-		SINGLE cbrt (CREF<SINGLE> obj) const override {
+		FLT32 cbrt (CREF<FLT32> obj) const override {
 			return std::cbrt (obj) ;
 		}
 
-		DOUBLE cbrt (CREF<DOUBLE> obj) const override {
+		FLT64 cbrt (CREF<FLT64> obj) const override {
 			return std::cbrt (obj) ;
 		}
 
-		SINGLE exp (CREF<SINGLE> obj) const override {
+		FLT32 exp (CREF<FLT32> obj) const override {
 			return std::exp (obj) ;
 		}
 
-		DOUBLE exp (CREF<DOUBLE> obj) const override {
+		FLT64 exp (CREF<FLT64> obj) const override {
 			return std::exp (obj) ;
 		}
 
-		SINGLE log (CREF<SINGLE> obj) const override {
+		FLT32 log (CREF<FLT32> obj) const override {
 			return std::log (obj) ;
 		}
 
-		DOUBLE log (CREF<DOUBLE> obj) const override {
+		FLT64 log (CREF<FLT64> obj) const override {
 			return std::log (obj) ;
 		}
 
@@ -531,88 +531,88 @@ trait MATHPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			return move (ret) ;
 		}
 
-		SINGLE pow (CREF<SINGLE> base ,CREF<SINGLE> exponent) const override {
+		FLT32 pow (CREF<FLT32> base ,CREF<FLT32> exponent) const override {
 			return std::pow (base ,exponent) ;
 		}
 
-		DOUBLE pow (CREF<DOUBLE> base ,CREF<DOUBLE> exponent) const override {
+		FLT64 pow (CREF<FLT64> base ,CREF<FLT64> exponent) const override {
 			return std::pow (base ,exponent) ;
 		}
 
-		SINGLE ncdf (CREF<SINGLE> obj) const override {
-			const auto r1x = obj * MathProc::inverse (SINGLE (MATH_SQRT2)) ;
-			return std::erf (r1x) * SINGLE (MATH_INV2) + SINGLE (MATH_INV2) ;
+		FLT32 ncdf (CREF<FLT32> obj) const override {
+			const auto r1x = obj * MathProc::inverse (FLT32 (MATH_SQRT2)) ;
+			return std::erf (r1x) * FLT32 (MATH_INV2) + FLT32 (MATH_INV2) ;
 		}
 
-		DOUBLE ncdf (CREF<DOUBLE> obj) const override {
-			const auto r1x = obj * MathProc::inverse (DOUBLE (MATH_SQRT2)) ;
-			return std::erf (r1x) * DOUBLE (MATH_INV2) + DOUBLE (MATH_INV2) ;
+		FLT64 ncdf (CREF<FLT64> obj) const override {
+			const auto r1x = obj * MathProc::inverse (FLT64 (MATH_SQRT2)) ;
+			return std::erf (r1x) * FLT64 (MATH_INV2) + FLT64 (MATH_INV2) ;
 		}
 
-		SINGLE npdf (CREF<SINGLE> obj) const override {
-			const auto r1x = -MathProc::square (obj) * SINGLE (MATH_INV2) ;
-			return exp (r1x) * SINGLE (MATH_INVSQRT2PI) ;
+		FLT32 npdf (CREF<FLT32> obj) const override {
+			const auto r1x = -MathProc::square (obj) * FLT32 (MATH_INV2) ;
+			return exp (r1x) * FLT32 (MATH_INVSQRT2PI) ;
 		}
 
-		DOUBLE npdf (CREF<DOUBLE> obj) const override {
-			const auto r1x = -MathProc::square (obj) * DOUBLE (MATH_INV2) ;
-			return exp (r1x) * DOUBLE (MATH_INVSQRT2PI) ;
+		FLT64 npdf (CREF<FLT64> obj) const override {
+			const auto r1x = -MathProc::square (obj) * FLT64 (MATH_INV2) ;
+			return exp (r1x) * FLT64 (MATH_INVSQRT2PI) ;
 		}
 
-		SINGLE sin (CREF<SINGLE> obj) const override {
+		FLT32 sin (CREF<FLT32> obj) const override {
 			return std::sin (obj) ;
 		}
 
-		DOUBLE sin (CREF<DOUBLE> obj) const override {
+		FLT64 sin (CREF<FLT64> obj) const override {
 			return std::sin (obj) ;
 		}
 
-		SINGLE cos (CREF<SINGLE> obj) const override {
+		FLT32 cos (CREF<FLT32> obj) const override {
 			return std::cos (obj) ;
 		}
 
-		DOUBLE cos (CREF<DOUBLE> obj) const override {
+		FLT64 cos (CREF<FLT64> obj) const override {
 			return std::cos (obj) ;
 		}
 
-		SINGLE tan (CREF<SINGLE> obj) const override {
+		FLT32 tan (CREF<FLT32> obj) const override {
 			return std::tan (obj) ;
 		}
 
-		DOUBLE tan (CREF<DOUBLE> obj) const override {
+		FLT64 tan (CREF<FLT64> obj) const override {
 			return std::tan (obj) ;
 		}
 
-		SINGLE arcsin (CREF<SINGLE> obj) const override {
+		FLT32 arcsin (CREF<FLT32> obj) const override {
 			return std::asin (obj) ;
 		}
 
-		DOUBLE arcsin (CREF<DOUBLE> obj) const override {
+		FLT64 arcsin (CREF<FLT64> obj) const override {
 			return std::asin (obj) ;
 		}
 
-		SINGLE arccos (CREF<SINGLE> obj) const override {
+		FLT32 arccos (CREF<FLT32> obj) const override {
 			return std::acos (obj) ;
 		}
 
-		DOUBLE arccos (CREF<DOUBLE> obj) const override {
+		FLT64 arccos (CREF<FLT64> obj) const override {
 			return std::acos (obj) ;
 		}
 
-		SINGLE arctan (CREF<SINGLE> fy ,CREF<SINGLE> fx) const override {
+		FLT32 arctan (CREF<FLT32> fy ,CREF<FLT32> fx) const override {
 			return std::atan2 (fy ,fx) ;
 		}
 
-		DOUBLE arctan (CREF<DOUBLE> fy ,CREF<DOUBLE> fx) const override {
+		FLT64 arctan (CREF<FLT64> fy ,CREF<FLT64> fx) const override {
 			return std::atan2 (fy ,fx) ;
 		}
 
-		SINGLE radian_angle (CREF<SINGLE> obj) const override {
-			return obj / SINGLE (180) * SINGLE (MATH_PI) ;
+		FLT32 radian_angle (CREF<FLT32> obj) const override {
+			return obj / FLT32 (180) * FLT32 (MATH_PI) ;
 		}
 
-		DOUBLE radian_angle (CREF<DOUBLE> obj) const override {
-			return obj / DOUBLE (180) * DOUBLE (MATH_PI) ;
+		FLT64 radian_angle (CREF<FLT64> obj) const override {
+			return obj / FLT64 (180) * FLT64 (MATH_PI) ;
 		}
 	} ;
 } ;
@@ -640,7 +640,7 @@ trait FLOATPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			noop () ;
 		}
 
-		DOUBLE encode (CREF<NOTATION> fexp2) const override {
+		FLT64 encode (CREF<NOTATION> fexp2) const override {
 			assert (fexp2.mRadix == 2) ;
 			auto rax = fexp2 ;
 			if ifswitch (TRUE) {
@@ -680,10 +680,10 @@ trait FLOATPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			const auto r3x = (DATA (rax.mExponent) << 52) & DATA (0X7FF0000000000000) ;
 			const auto r4x = DATA (rax.mMantissa) & DATA (0X000FFFFFFFFFFFFF) ;
 			const auto r5x = r2x | r3x | r4x ;
-			return bitwise[TYPEAS<DOUBLE>::expr] (r5x) ;
+			return bitwise[TYPEAS<FLT64>::expr] (r5x) ;
 		}
 
-		NOTATION decode (CREF<DOUBLE> obj) const override {
+		NOTATION decode (CREF<FLT64> obj) const override {
 			NOTATION ret ;
 			ret.mRadix = 2 ;
 			const auto r1x = bitwise (obj) ;
@@ -767,7 +767,7 @@ trait FLOATPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		NOTATION fexp2_from_fexp10 (CREF<NOTATION> fexp10) const override {
-			using R1X = typename DEPENDENT<FLOATPROC_FEXP2CACHE_HELP<DEPEND ,ALWAYS> ,DEPEND>::FEXP2Cache ;
+			using R1X = typename KILL<FLOATPROC_FEXP2CACHE_HELP<DEPEND ,ALWAYS> ,DEPEND>::FEXP2Cache ;
 			assert (fexp10.mRadix == 10) ;
 			const auto r1x = invoke ([&] () {
 				NOTATION ret ;
@@ -854,7 +854,7 @@ trait FLOATPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		NOTATION fexp10_from_fexp2 (CREF<NOTATION> fexp2) const override {
-			using R1X = typename DEPENDENT<FLOATPROC_FEXP10CACHE_HELP<DEPEND ,ALWAYS> ,DEPEND>::FEXP10Cache ;
+			using R1X = typename KILL<FLOATPROC_FEXP10CACHE_HELP<DEPEND ,ALWAYS> ,DEPEND>::FEXP10Cache ;
 			assert (fexp2.mRadix == 2) ;
 			const auto r1x = invoke ([&] () {
 				NOTATION ret ;
@@ -897,7 +897,7 @@ trait FLOATPROC_FEXP2CACHE_HELP<DEPEND ,ALWAYS> {
 			}) ;
 		}
 
-		forceinline NOTATION operator[] (CREF<VAL64> k) const {
+		inline NOTATION operator[] (CREF<VAL64> k) const {
 			NOTATION ret ;
 			ret.mRadix = 2 ;
 			ret.mSign = FALSE ;
@@ -936,7 +936,7 @@ trait FLOATPROC_FEXP10CACHE_HELP<DEPEND ,ALWAYS> {
 			}) ;
 		}
 
-		forceinline NOTATION operator[] (CREF<VAL64> k) const {
+		inline NOTATION operator[] (CREF<VAL64> k) const {
 			NOTATION ret ;
 			ret.mRadix = 10 ;
 			ret.mSign = FALSE ;

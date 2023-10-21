@@ -35,15 +35,15 @@ SOFTWARE.
 #include "csc_array.hpp"
 
 namespace CSC {
-static constexpr auto MATH_INV2 = DOUBLE (0.5) ;
-static constexpr auto MATH_INV3 = DOUBLE (0.33333333333333333333) ;
-static constexpr auto MATH_E = DOUBLE (2.71828182845904523536) ;
-static constexpr auto MATH_PI = DOUBLE (3.14159265358979323846) ;
-static constexpr auto MATH_SQRT2 = DOUBLE (1.41421356237309504880) ;
-static constexpr auto MATH_SQRT3 = DOUBLE (1.73205080756887729353) ;
-static constexpr auto MATH_LN2 = DOUBLE (0.693147180559945309417) ;
-static constexpr auto MATH_LN10 = DOUBLE (2.30258509299404568402) ;
-static constexpr auto MATH_INVSQRT2PI = DOUBLE (0.39894228040143267794) ;
+static constexpr auto MATH_INV2 = FLT64 (0.5) ;
+static constexpr auto MATH_INV3 = FLT64 (0.33333333333333333333) ;
+static constexpr auto MATH_E = FLT64 (2.71828182845904523536) ;
+static constexpr auto MATH_PI = FLT64 (3.14159265358979323846) ;
+static constexpr auto MATH_SQRT2 = FLT64 (1.41421356237309504880) ;
+static constexpr auto MATH_SQRT3 = FLT64 (1.73205080756887729353) ;
+static constexpr auto MATH_LN2 = FLT64 (0.693147180559945309417) ;
+static constexpr auto MATH_LN10 = FLT64 (2.30258509299404568402) ;
+static constexpr auto MATH_INVSQRT2PI = FLT64 (0.39894228040143267794) ;
 
 template <class...>
 trait MATHPROC_HELP ;
@@ -57,91 +57,91 @@ trait MATHPROC_HELP<DEPEND ,ALWAYS> {
 		imports VRef<Holder> create () ;
 
 		virtual void initialize () = 0 ;
-		virtual BOOL is_inf (CREF<SINGLE> obj) const = 0 ;
-		virtual BOOL is_inf (CREF<DOUBLE> obj) const = 0 ;
+		virtual BOOL is_inf (CREF<FLT32> obj) const = 0 ;
+		virtual BOOL is_inf (CREF<FLT64> obj) const = 0 ;
 		virtual VAL32 sign (CREF<VAL32> obj) const = 0 ;
 		virtual VAL64 sign (CREF<VAL64> obj) const = 0 ;
-		virtual SINGLE sign (CREF<SINGLE> obj) const = 0 ;
-		virtual DOUBLE sign (CREF<DOUBLE> obj) const = 0 ;
+		virtual FLT32 sign (CREF<FLT32> obj) const = 0 ;
+		virtual FLT64 sign (CREF<FLT64> obj) const = 0 ;
 		virtual VAL32 abs (CREF<VAL32> obj) const = 0 ;
 		virtual VAL64 abs (CREF<VAL64> obj) const = 0 ;
-		virtual SINGLE abs (CREF<SINGLE> obj) const = 0 ;
-		virtual DOUBLE abs (CREF<DOUBLE> obj) const = 0 ;
-		virtual SINGLE inverse (CREF<SINGLE> obj) const = 0 ;
-		virtual DOUBLE inverse (CREF<DOUBLE> obj) const = 0 ;
+		virtual FLT32 abs (CREF<FLT32> obj) const = 0 ;
+		virtual FLT64 abs (CREF<FLT64> obj) const = 0 ;
+		virtual FLT32 inverse (CREF<FLT32> obj) const = 0 ;
+		virtual FLT64 inverse (CREF<FLT64> obj) const = 0 ;
 		virtual VAL32 min_of (CREF<VAL32> obj1 ,CREF<SpanIterator<VAL32>> obj2) const = 0 ;
 		virtual VAL64 min_of (CREF<VAL64> obj1 ,CREF<SpanIterator<VAL64>> obj2) const = 0 ;
-		virtual SINGLE min_of (CREF<SINGLE> obj1 ,CREF<SpanIterator<SINGLE>> obj2) const = 0 ;
-		virtual DOUBLE min_of (CREF<DOUBLE> obj1 ,CREF<SpanIterator<DOUBLE>> obj2) const = 0 ;
+		virtual FLT32 min_of (CREF<FLT32> obj1 ,CREF<SpanIterator<FLT32>> obj2) const = 0 ;
+		virtual FLT64 min_of (CREF<FLT64> obj1 ,CREF<SpanIterator<FLT64>> obj2) const = 0 ;
 		virtual VAL32 max_of (CREF<VAL32> obj1 ,CREF<SpanIterator<VAL32>> obj2) const = 0 ;
 		virtual VAL64 max_of (CREF<VAL64> obj1 ,CREF<SpanIterator<VAL64>> obj2) const = 0 ;
-		virtual SINGLE max_of (CREF<SINGLE> obj1 ,CREF<SpanIterator<SINGLE>> obj2) const = 0 ;
-		virtual DOUBLE max_of (CREF<DOUBLE> obj1 ,CREF<SpanIterator<DOUBLE>> obj2) const = 0 ;
+		virtual FLT32 max_of (CREF<FLT32> obj1 ,CREF<SpanIterator<FLT32>> obj2) const = 0 ;
+		virtual FLT64 max_of (CREF<FLT64> obj1 ,CREF<SpanIterator<FLT64>> obj2) const = 0 ;
 		virtual BOOL all_of (CREF<SpanIterator<BOOL>> obj1) const = 0 ;
 		virtual BOOL any_of (CREF<SpanIterator<BOOL>> obj1) const = 0 ;
 		virtual INDEX else_of (CREF<SpanIterator<BOOL>> obj1) const = 0 ;
 		virtual VAL32 sum_of (CREF<VAL32> obj1 ,CREF<SpanIterator<VAL32>> obj2) const = 0 ;
 		virtual VAL64 sum_of (CREF<VAL64> obj1 ,CREF<SpanIterator<VAL64>> obj2) const = 0 ;
-		virtual SINGLE sum_of (CREF<SINGLE> obj1 ,CREF<SpanIterator<SINGLE>> obj2) const = 0 ;
-		virtual DOUBLE sum_of (CREF<DOUBLE> obj1 ,CREF<SpanIterator<DOUBLE>> obj2) const = 0 ;
+		virtual FLT32 sum_of (CREF<FLT32> obj1 ,CREF<SpanIterator<FLT32>> obj2) const = 0 ;
+		virtual FLT64 sum_of (CREF<FLT64> obj1 ,CREF<SpanIterator<FLT64>> obj2) const = 0 ;
 		virtual VAL32 acc_of (CREF<VAL32> obj1 ,CREF<SpanIterator<VAL32>> obj2) const = 0 ;
 		virtual VAL64 acc_of (CREF<VAL64> obj1 ,CREF<SpanIterator<VAL64>> obj2) const = 0 ;
-		virtual SINGLE acc_of (CREF<SINGLE> obj1 ,CREF<SpanIterator<SINGLE>> obj2) const = 0 ;
-		virtual DOUBLE acc_of (CREF<DOUBLE> obj1 ,CREF<SpanIterator<DOUBLE>> obj2) const = 0 ;
+		virtual FLT32 acc_of (CREF<FLT32> obj1 ,CREF<SpanIterator<FLT32>> obj2) const = 0 ;
+		virtual FLT64 acc_of (CREF<FLT64> obj1 ,CREF<SpanIterator<FLT64>> obj2) const = 0 ;
 		virtual void sort_of (VREF<RegBuffer<VAL32>> result) const = 0 ;
 		virtual void sort_of (VREF<RegBuffer<VAL64>> result) const = 0 ;
-		virtual void sort_of (VREF<RegBuffer<SINGLE>> result) const = 0 ;
-		virtual void sort_of (VREF<RegBuffer<DOUBLE>> result) const = 0 ;
+		virtual void sort_of (VREF<RegBuffer<FLT32>> result) const = 0 ;
+		virtual void sort_of (VREF<RegBuffer<FLT64>> result) const = 0 ;
 		virtual VAL32 clamp (CREF<VAL32> curr ,CREF<VAL32> lb ,CREF<VAL32> rb) const = 0 ;
 		virtual VAL64 clamp (CREF<VAL64> curr ,CREF<VAL64> lb ,CREF<VAL64> rb) const = 0 ;
-		virtual SINGLE clamp (CREF<SINGLE> curr ,CREF<SINGLE> lb ,CREF<SINGLE> rb) const = 0 ;
-		virtual DOUBLE clamp (CREF<DOUBLE> curr ,CREF<DOUBLE> lb ,CREF<DOUBLE> rb) const = 0 ;
-		virtual SINGLE floor (CREF<SINGLE> curr ,CREF<SINGLE> base) const = 0 ;
-		virtual DOUBLE floor (CREF<DOUBLE> curr ,CREF<DOUBLE> base) const = 0 ;
-		virtual SINGLE ceil (CREF<SINGLE> curr ,CREF<SINGLE> base) const = 0 ;
-		virtual DOUBLE ceil (CREF<DOUBLE> curr ,CREF<DOUBLE> base) const = 0 ;
-		virtual SINGLE round (CREF<SINGLE> curr ,CREF<SINGLE> base) const = 0 ;
-		virtual DOUBLE round (CREF<DOUBLE> curr ,CREF<DOUBLE> base) const = 0 ;
-		virtual SINGLE trunc (CREF<SINGLE> curr ,CREF<SINGLE> base) const = 0 ;
-		virtual DOUBLE trunc (CREF<DOUBLE> curr ,CREF<DOUBLE> base) const = 0 ;
+		virtual FLT32 clamp (CREF<FLT32> curr ,CREF<FLT32> lb ,CREF<FLT32> rb) const = 0 ;
+		virtual FLT64 clamp (CREF<FLT64> curr ,CREF<FLT64> lb ,CREF<FLT64> rb) const = 0 ;
+		virtual FLT32 floor (CREF<FLT32> curr ,CREF<FLT32> base) const = 0 ;
+		virtual FLT64 floor (CREF<FLT64> curr ,CREF<FLT64> base) const = 0 ;
+		virtual FLT32 ceil (CREF<FLT32> curr ,CREF<FLT32> base) const = 0 ;
+		virtual FLT64 ceil (CREF<FLT64> curr ,CREF<FLT64> base) const = 0 ;
+		virtual FLT32 round (CREF<FLT32> curr ,CREF<FLT32> base) const = 0 ;
+		virtual FLT64 round (CREF<FLT64> curr ,CREF<FLT64> base) const = 0 ;
+		virtual FLT32 trunc (CREF<FLT32> curr ,CREF<FLT32> base) const = 0 ;
+		virtual FLT64 trunc (CREF<FLT64> curr ,CREF<FLT64> base) const = 0 ;
 		virtual VAL32 square (CREF<VAL32> obj) const = 0 ;
 		virtual VAL64 square (CREF<VAL64> obj) const = 0 ;
-		virtual SINGLE square (CREF<SINGLE> obj) const = 0 ;
-		virtual DOUBLE square (CREF<DOUBLE> obj) const = 0 ;
-		virtual SINGLE sqrt (CREF<SINGLE> obj) const = 0 ;
-		virtual DOUBLE sqrt (CREF<DOUBLE> obj) const = 0 ;
+		virtual FLT32 square (CREF<FLT32> obj) const = 0 ;
+		virtual FLT64 square (CREF<FLT64> obj) const = 0 ;
+		virtual FLT32 sqrt (CREF<FLT32> obj) const = 0 ;
+		virtual FLT64 sqrt (CREF<FLT64> obj) const = 0 ;
 		virtual VAL32 cubic (CREF<VAL32> obj) const = 0 ;
 		virtual VAL64 cubic (CREF<VAL64> obj) const = 0 ;
-		virtual SINGLE cubic (CREF<SINGLE> obj) const = 0 ;
-		virtual DOUBLE cubic (CREF<DOUBLE> obj) const = 0 ;
-		virtual SINGLE cbrt (CREF<SINGLE> obj) const = 0 ;
-		virtual DOUBLE cbrt (CREF<DOUBLE> obj) const = 0 ;
-		virtual SINGLE exp (CREF<SINGLE> obj) const = 0 ;
-		virtual DOUBLE exp (CREF<DOUBLE> obj) const = 0 ;
-		virtual SINGLE log (CREF<SINGLE> obj) const = 0 ;
-		virtual DOUBLE log (CREF<DOUBLE> obj) const = 0 ;
+		virtual FLT32 cubic (CREF<FLT32> obj) const = 0 ;
+		virtual FLT64 cubic (CREF<FLT64> obj) const = 0 ;
+		virtual FLT32 cbrt (CREF<FLT32> obj) const = 0 ;
+		virtual FLT64 cbrt (CREF<FLT64> obj) const = 0 ;
+		virtual FLT32 exp (CREF<FLT32> obj) const = 0 ;
+		virtual FLT64 exp (CREF<FLT64> obj) const = 0 ;
+		virtual FLT32 log (CREF<FLT32> obj) const = 0 ;
+		virtual FLT64 log (CREF<FLT64> obj) const = 0 ;
 		virtual VAL32 vlog (CREF<VAL32> curr ,CREF<VAL32> base) const = 0 ;
 		virtual VAL64 vlog (CREF<VAL64> curr ,CREF<VAL64> base) const = 0 ;
-		virtual SINGLE pow (CREF<SINGLE> base ,CREF<SINGLE> exponent) const = 0 ;
-		virtual DOUBLE pow (CREF<DOUBLE> base ,CREF<DOUBLE> exponent) const = 0 ;
-		virtual SINGLE ncdf (CREF<SINGLE> obj) const = 0 ;
-		virtual DOUBLE ncdf (CREF<DOUBLE> obj) const = 0 ;
-		virtual SINGLE npdf (CREF<SINGLE> obj) const = 0 ;
-		virtual DOUBLE npdf (CREF<DOUBLE> obj) const = 0 ;
-		virtual SINGLE sin (CREF<SINGLE> obj) const = 0 ;
-		virtual DOUBLE sin (CREF<DOUBLE> obj) const = 0 ;
-		virtual SINGLE cos (CREF<SINGLE> obj) const = 0 ;
-		virtual DOUBLE cos (CREF<DOUBLE> obj) const = 0 ;
-		virtual SINGLE tan (CREF<SINGLE> obj) const = 0 ;
-		virtual DOUBLE tan (CREF<DOUBLE> obj) const = 0 ;
-		virtual SINGLE arcsin (CREF<SINGLE> obj) const = 0 ;
-		virtual DOUBLE arcsin (CREF<DOUBLE> obj) const = 0 ;
-		virtual SINGLE arccos (CREF<SINGLE> obj) const = 0 ;
-		virtual DOUBLE arccos (CREF<DOUBLE> obj) const = 0 ;
-		virtual SINGLE arctan (CREF<SINGLE> fy ,CREF<SINGLE> fx) const = 0 ;
-		virtual DOUBLE arctan (CREF<DOUBLE> fy ,CREF<DOUBLE> fx) const = 0 ;
-		virtual SINGLE radian_angle (CREF<SINGLE> obj) const = 0 ;
-		virtual DOUBLE radian_angle (CREF<DOUBLE> obj) const = 0 ;
+		virtual FLT32 pow (CREF<FLT32> base ,CREF<FLT32> exponent) const = 0 ;
+		virtual FLT64 pow (CREF<FLT64> base ,CREF<FLT64> exponent) const = 0 ;
+		virtual FLT32 ncdf (CREF<FLT32> obj) const = 0 ;
+		virtual FLT64 ncdf (CREF<FLT64> obj) const = 0 ;
+		virtual FLT32 npdf (CREF<FLT32> obj) const = 0 ;
+		virtual FLT64 npdf (CREF<FLT64> obj) const = 0 ;
+		virtual FLT32 sin (CREF<FLT32> obj) const = 0 ;
+		virtual FLT64 sin (CREF<FLT64> obj) const = 0 ;
+		virtual FLT32 cos (CREF<FLT32> obj) const = 0 ;
+		virtual FLT64 cos (CREF<FLT64> obj) const = 0 ;
+		virtual FLT32 tan (CREF<FLT32> obj) const = 0 ;
+		virtual FLT64 tan (CREF<FLT64> obj) const = 0 ;
+		virtual FLT32 arcsin (CREF<FLT32> obj) const = 0 ;
+		virtual FLT64 arcsin (CREF<FLT64> obj) const = 0 ;
+		virtual FLT32 arccos (CREF<FLT32> obj) const = 0 ;
+		virtual FLT64 arccos (CREF<FLT64> obj) const = 0 ;
+		virtual FLT32 arctan (CREF<FLT32> fy ,CREF<FLT32> fx) const = 0 ;
+		virtual FLT64 arctan (CREF<FLT64> fy ,CREF<FLT64> fx) const = 0 ;
+		virtual FLT32 radian_angle (CREF<FLT32> obj) const = 0 ;
+		virtual FLT64 radian_angle (CREF<FLT64> obj) const = 0 ;
 	} ;
 
 	class MathProc {
@@ -396,8 +396,8 @@ trait FLOATPROC_HELP<DEPEND ,ALWAYS> {
 		imports VRef<Holder> create () ;
 
 		virtual void initialize () = 0 ;
-		virtual DOUBLE encode (CREF<NOTATION> fexp2) const = 0 ;
-		virtual NOTATION decode (CREF<DOUBLE> float_) const = 0 ;
+		virtual FLT64 encode (CREF<NOTATION> fexp2) const = 0 ;
+		virtual NOTATION decode (CREF<FLT64> float_) const = 0 ;
 		virtual NOTATION fexp2_from_fexp10 (CREF<NOTATION> fexp10) const = 0 ;
 		virtual NOTATION fexp10_from_fexp2 (CREF<NOTATION> fexp2) const = 0 ;
 	} ;
@@ -416,11 +416,11 @@ trait FLOATPROC_HELP<DEPEND ,ALWAYS> {
 			}) ;
 		}
 
-		imports DOUBLE encode (CREF<NOTATION> fexp2) {
+		imports FLT64 encode (CREF<NOTATION> fexp2) {
 			return instance ().mThis->encode (fexp2) ;
 		}
 
-		imports NOTATION decode (CREF<DOUBLE> float_) {
+		imports NOTATION decode (CREF<FLT64> float_) {
 			return instance ().mThis->decode (float_) ;
 		}
 
@@ -626,7 +626,7 @@ trait INTEGER_HELP<DEPEND ,ALWAYS> {
 			thiz = that.mThis->clone () ;
 		}
 
-		forceinline VREF<Integer> operator= (CREF<Integer> that) {
+		inline VREF<Integer> operator= (CREF<Integer> that) {
 			if (address (thiz) == address (that))
 				return thiz ;
 			swap (thiz ,move (that)) ;
@@ -637,7 +637,7 @@ trait INTEGER_HELP<DEPEND ,ALWAYS> {
 			swap (thiz ,that) ;
 		}
 
-		forceinline VREF<Integer> operator= (RREF<Integer> that) noexcept {
+		inline VREF<Integer> operator= (RREF<Integer> that) noexcept {
 			if (address (thiz) == address (that))
 				return thiz ;
 			swap (thiz ,move (that)) ;
@@ -660,11 +660,11 @@ trait INTEGER_HELP<DEPEND ,ALWAYS> {
 			return mThis->equal (that) ;
 		}
 
-		forceinline BOOL operator== (CREF<Integer> that) const {
+		inline BOOL operator== (CREF<Integer> that) const {
 			return equal (that) ;
 		}
 
-		forceinline BOOL operator!= (CREF<Integer> that) const {
+		inline BOOL operator!= (CREF<Integer> that) const {
 			return ifnot (equal (that)) ;
 		}
 
@@ -672,19 +672,19 @@ trait INTEGER_HELP<DEPEND ,ALWAYS> {
 			return mThis->compr (that) ;
 		}
 
-		forceinline BOOL operator< (CREF<Integer> that) const {
+		inline BOOL operator< (CREF<Integer> that) const {
 			return compr (that) < ZERO ;
 		}
 
-		forceinline BOOL operator<= (CREF<Integer> that) const {
+		inline BOOL operator<= (CREF<Integer> that) const {
 			return compr (that) <= ZERO ;
 		}
 
-		forceinline BOOL operator> (CREF<Integer> that) const {
+		inline BOOL operator> (CREF<Integer> that) const {
 			return compr (that) > ZERO ;
 		}
 
-		forceinline BOOL operator>= (CREF<Integer> that) const {
+		inline BOOL operator>= (CREF<Integer> that) const {
 			return compr (that) >= ZERO ;
 		}
 
@@ -696,11 +696,11 @@ trait INTEGER_HELP<DEPEND ,ALWAYS> {
 			return mThis->add (that) ;
 		}
 
-		forceinline Integer operator+ (CREF<Integer> that) const {
+		inline Integer operator+ (CREF<Integer> that) const {
 			return add (that) ;
 		}
 
-		forceinline void operator+= (CREF<Integer> that) {
+		inline void operator+= (CREF<Integer> that) {
 			thiz = add (that) ;
 		}
 
@@ -708,11 +708,11 @@ trait INTEGER_HELP<DEPEND ,ALWAYS> {
 			return mThis->sub (that) ;
 		}
 
-		forceinline Integer operator- (CREF<Integer> that) const {
+		inline Integer operator- (CREF<Integer> that) const {
 			return sub (that) ;
 		}
 
-		forceinline void operator-= (CREF<Integer> that) {
+		inline void operator-= (CREF<Integer> that) {
 			thiz = sub (that) ;
 		}
 
@@ -720,11 +720,11 @@ trait INTEGER_HELP<DEPEND ,ALWAYS> {
 			return mThis->mul (that) ;
 		}
 
-		forceinline Integer operator* (CREF<Integer> that) const {
+		inline Integer operator* (CREF<Integer> that) const {
 			return mul (that) ;
 		}
 
-		forceinline void operator*= (CREF<Integer> that) {
+		inline void operator*= (CREF<Integer> that) {
 			thiz = mul (that) ;
 		}
 
@@ -732,11 +732,11 @@ trait INTEGER_HELP<DEPEND ,ALWAYS> {
 			return mThis->mul (scale) ;
 		}
 
-		forceinline Integer operator* (CREF<VAL64> scale) const {
+		inline Integer operator* (CREF<VAL64> scale) const {
 			return mul (scale) ;
 		}
 
-		forceinline void operator*= (CREF<VAL64> scale) {
+		inline void operator*= (CREF<VAL64> scale) {
 			thiz = mul (scale) ;
 		}
 
@@ -744,11 +744,11 @@ trait INTEGER_HELP<DEPEND ,ALWAYS> {
 			return mThis->div (scale) ;
 		}
 
-		forceinline Integer operator/ (CREF<VAL64> scale) const {
+		inline Integer operator/ (CREF<VAL64> scale) const {
 			return div (scale) ;
 		}
 
-		forceinline void operator/= (CREF<VAL64> scale) {
+		inline void operator/= (CREF<VAL64> scale) {
 			thiz = div (scale) ;
 		}
 
@@ -756,15 +756,15 @@ trait INTEGER_HELP<DEPEND ,ALWAYS> {
 			return mThis->mod (scale) ;
 		}
 
-		forceinline Integer operator% (CREF<VAL64> scale) const {
+		inline Integer operator% (CREF<VAL64> scale) const {
 			return mod (scale) ;
 		}
 
-		forceinline void operator%= (CREF<VAL64> scale) {
+		inline void operator%= (CREF<VAL64> scale) {
 			thiz = mod (scale) ;
 		}
 
-		forceinline Integer operator+ () const {
+		inline Integer operator+ () const {
 			return thiz ;
 		}
 
@@ -772,7 +772,7 @@ trait INTEGER_HELP<DEPEND ,ALWAYS> {
 			return mThis->minus () ;
 		}
 
-		forceinline Integer operator- () const {
+		inline Integer operator- () const {
 			return minus () ;
 		}
 
@@ -780,7 +780,7 @@ trait INTEGER_HELP<DEPEND ,ALWAYS> {
 			return mThis->increase () ;
 		}
 
-		forceinline void operator++ (VAL32) {
+		inline void operator++ (VAL32) {
 			increase () ;
 		}
 
@@ -788,7 +788,7 @@ trait INTEGER_HELP<DEPEND ,ALWAYS> {
 			return mThis->decrease () ;
 		}
 
-		forceinline void operator-- (VAL32) {
+		inline void operator-- (VAL32) {
 			decrease () ;
 		}
 	} ;

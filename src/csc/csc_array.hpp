@@ -72,11 +72,11 @@ trait SPANITERATOR_HELP<UNIT ,ALWAYS> {
 			return mBegin == mEnd ;
 		}
 
-		forceinline BOOL operator== (CREF<SpanIterator>) const {
+		inline BOOL operator== (CREF<SpanIterator>) const {
 			return bad () ;
 		}
 
-		forceinline BOOL operator!= (CREF<SpanIterator>) const {
+		inline BOOL operator!= (CREF<SpanIterator>) const {
 			return ifnot (bad ()) ;
 		}
 
@@ -87,7 +87,7 @@ trait SPANITERATOR_HELP<UNIT ,ALWAYS> {
 			return unsafe_cast[TYPEAS<UNIT>::expr] (unsafe_deref (rax)) ;
 		}
 
-		forceinline CREF<UNIT> operator* () const leftvalue {
+		inline CREF<UNIT> operator* () const leftvalue {
 			return peek () ;
 		}
 
@@ -95,7 +95,7 @@ trait SPANITERATOR_HELP<UNIT ,ALWAYS> {
 			mBegin += SIZE_OF<FLAG>::expr ;
 		}
 
-		forceinline void operator++ () {
+		inline void operator++ () {
 			next () ;
 		}
 	} ;
@@ -132,11 +132,11 @@ trait ARRAYITERATOR_HELP<UNIT ,ITEM ,COND ,REQUIRE<ENUM_ALL<COND ,ENUM_NOT<IS_VO
 			return mBegin == mEnd ;
 		}
 
-		forceinline BOOL operator== (CREF<ArrayIterator>) const {
+		inline BOOL operator== (CREF<ArrayIterator>) const {
 			return bad () ;
 		}
 
-		forceinline BOOL operator!= (CREF<ArrayIterator>) const {
+		inline BOOL operator!= (CREF<ArrayIterator>) const {
 			return ifnot (bad ()) ;
 		}
 
@@ -144,7 +144,7 @@ trait ARRAYITERATOR_HELP<UNIT ,ITEM ,COND ,REQUIRE<ENUM_ALL<COND ,ENUM_NOT<IS_VO
 			return mThat->at (mBegin) ;
 		}
 
-		forceinline VREF<ITEM> operator* () leftvalue {
+		inline VREF<ITEM> operator* () leftvalue {
 			return peek () ;
 		}
 
@@ -152,7 +152,7 @@ trait ARRAYITERATOR_HELP<UNIT ,ITEM ,COND ,REQUIRE<ENUM_ALL<COND ,ENUM_NOT<IS_VO
 			mBegin = mThat->inext (mBegin) ;
 		}
 
-		forceinline void operator++ () {
+		inline void operator++ () {
 			next () ;
 		}
 	} ;
@@ -183,11 +183,11 @@ trait ARRAYITERATOR_HELP<UNIT ,ITEM ,COND ,REQUIRE<ENUM_ALL<ENUM_NOT<COND> ,ENUM
 			return mBegin == mEnd ;
 		}
 
-		forceinline BOOL operator== (CREF<ArrayIterator>) const {
+		inline BOOL operator== (CREF<ArrayIterator>) const {
 			return bad () ;
 		}
 
-		forceinline BOOL operator!= (CREF<ArrayIterator>) const {
+		inline BOOL operator!= (CREF<ArrayIterator>) const {
 			return ifnot (bad ()) ;
 		}
 
@@ -195,7 +195,7 @@ trait ARRAYITERATOR_HELP<UNIT ,ITEM ,COND ,REQUIRE<ENUM_ALL<ENUM_NOT<COND> ,ENUM
 			return mThat->at (mBegin) ;
 		}
 
-		forceinline CREF<ITEM> operator* () const leftvalue {
+		inline CREF<ITEM> operator* () const leftvalue {
 			return peek () ;
 		}
 
@@ -203,7 +203,7 @@ trait ARRAYITERATOR_HELP<UNIT ,ITEM ,COND ,REQUIRE<ENUM_ALL<ENUM_NOT<COND> ,ENUM
 			mBegin = mThat->inext (mBegin) ;
 		}
 
-		forceinline void operator++ () {
+		inline void operator++ () {
 			next () ;
 		}
 	} ;
@@ -242,11 +242,11 @@ trait ARRAYITERATOR_HELP<UNIT ,ITEM ,COND ,REQUIRE<IS_VOID<ITEM>>> {
 			return mBegin == mEnd ;
 		}
 
-		forceinline BOOL operator== (CREF<ArrayIterator>) const {
+		inline BOOL operator== (CREF<ArrayIterator>) const {
 			return bad () ;
 		}
 
-		forceinline BOOL operator!= (CREF<ArrayIterator>) const {
+		inline BOOL operator!= (CREF<ArrayIterator>) const {
 			return ifnot (bad ()) ;
 		}
 
@@ -254,7 +254,7 @@ trait ARRAYITERATOR_HELP<UNIT ,ITEM ,COND ,REQUIRE<IS_VOID<ITEM>>> {
 			return mBegin ;
 		}
 
-		forceinline CREF<INDEX> operator* () const leftvalue {
+		inline CREF<INDEX> operator* () const leftvalue {
 			return peek () ;
 		}
 
@@ -262,7 +262,7 @@ trait ARRAYITERATOR_HELP<UNIT ,ITEM ,COND ,REQUIRE<IS_VOID<ITEM>>> {
 			mBegin = mThat->inext (mBegin) ;
 		}
 
-		forceinline void operator++ () {
+		inline void operator++ () {
 			next () ;
 		}
 	} ;
@@ -364,7 +364,7 @@ trait ARRAY_HELP<ITEM ,SIZE ,ALWAYS> {
 			return mArray[index] ;
 		}
 
-		forceinline VREF<ITEM> operator[] (CREF<INDEX> index) leftvalue {
+		inline VREF<ITEM> operator[] (CREF<INDEX> index) leftvalue {
 			return at (index) ;
 		}
 
@@ -372,7 +372,7 @@ trait ARRAY_HELP<ITEM ,SIZE ,ALWAYS> {
 			return mArray[index] ;
 		}
 
-		forceinline CREF<ITEM> operator[] (CREF<INDEX> index) const leftvalue {
+		inline CREF<ITEM> operator[] (CREF<INDEX> index) const leftvalue {
 			return at (index) ;
 		}
 
@@ -387,11 +387,11 @@ trait ARRAY_HELP<ITEM ,SIZE ,ALWAYS> {
 			return BufferProc<ITEM>::buf_equal (mArray ,that.mArray ,0 ,size ()) ;
 		}
 
-		forceinline BOOL operator== (CREF<Array> that) const {
+		inline BOOL operator== (CREF<Array> that) const {
 			return equal (that) ;
 		}
 
-		forceinline BOOL operator!= (CREF<Array> that) const {
+		inline BOOL operator!= (CREF<Array> that) const {
 			return ifnot (equal (that)) ;
 		}
 
@@ -405,19 +405,19 @@ trait ARRAY_HELP<ITEM ,SIZE ,ALWAYS> {
 			return operator_compr (r1x ,r2x) ;
 		}
 
-		forceinline BOOL operator< (CREF<Array> that) const {
+		inline BOOL operator< (CREF<Array> that) const {
 			return compr (that) < ZERO ;
 		}
 
-		forceinline BOOL operator<= (CREF<Array> that) const {
+		inline BOOL operator<= (CREF<Array> that) const {
 			return compr (that) <= ZERO ;
 		}
 
-		forceinline BOOL operator> (CREF<Array> that) const {
+		inline BOOL operator> (CREF<Array> that) const {
 			return compr (that) > ZERO ;
 		}
 
-		forceinline BOOL operator>= (CREF<Array> that) const {
+		inline BOOL operator>= (CREF<Array> that) const {
 			return compr (that) >= ZERO ;
 		}
 
@@ -595,7 +595,7 @@ trait STRING_HELP<ITEM ,SIZE ,REQUIRE<IS_TEXT<ITEM>>> {
 			return mString[index] ;
 		}
 
-		forceinline VREF<ITEM> operator[] (CREF<INDEX> index) leftvalue {
+		inline VREF<ITEM> operator[] (CREF<INDEX> index) leftvalue {
 			return at (index) ;
 		}
 
@@ -603,7 +603,7 @@ trait STRING_HELP<ITEM ,SIZE ,REQUIRE<IS_TEXT<ITEM>>> {
 			return mString[index] ;
 		}
 
-		forceinline CREF<ITEM> operator[] (CREF<INDEX> index) const leftvalue {
+		inline CREF<ITEM> operator[] (CREF<INDEX> index) const leftvalue {
 			return at (index) ;
 		}
 
@@ -628,11 +628,11 @@ trait STRING_HELP<ITEM ,SIZE ,REQUIRE<IS_TEXT<ITEM>>> {
 			return BufferProc<ITEM>::buf_equal (mString ,that.mString ,0 ,r1x) ;
 		}
 
-		forceinline BOOL operator== (CREF<String> that) const {
+		inline BOOL operator== (CREF<String> that) const {
 			return equal (that) ;
 		}
 
-		forceinline BOOL operator!= (CREF<String> that) const {
+		inline BOOL operator!= (CREF<String> that) const {
 			return ifnot (equal (that)) ;
 		}
 
@@ -648,11 +648,11 @@ trait STRING_HELP<ITEM ,SIZE ,REQUIRE<IS_TEXT<ITEM>>> {
 			return TRUE ;
 		}
 
-		forceinline BOOL operator== (CREF<Slice<ITEM>> that) const {
+		inline BOOL operator== (CREF<Slice<ITEM>> that) const {
 			return equal (that) ;
 		}
 
-		forceinline BOOL operator!= (CREF<Slice<ITEM>> that) const {
+		inline BOOL operator!= (CREF<Slice<ITEM>> that) const {
 			return ifnot (equal (that)) ;
 		}
 
@@ -666,19 +666,19 @@ trait STRING_HELP<ITEM ,SIZE ,REQUIRE<IS_TEXT<ITEM>>> {
 			return operator_compr (r1x ,r2x) ;
 		}
 
-		forceinline BOOL operator< (CREF<String> that) const {
+		inline BOOL operator< (CREF<String> that) const {
 			return compr (that) < ZERO ;
 		}
 
-		forceinline BOOL operator<= (CREF<String> that) const {
+		inline BOOL operator<= (CREF<String> that) const {
 			return compr (that) <= ZERO ;
 		}
 
-		forceinline BOOL operator> (CREF<String> that) const {
+		inline BOOL operator> (CREF<String> that) const {
 			return compr (that) > ZERO ;
 		}
 
-		forceinline BOOL operator>= (CREF<String> that) const {
+		inline BOOL operator>= (CREF<String> that) const {
 			return compr (that) >= ZERO ;
 		}
 
@@ -697,7 +697,7 @@ trait STRING_HELP<ITEM ,SIZE ,REQUIRE<IS_TEXT<ITEM>>> {
 			trunc (ix) ;
 		}
 
-		forceinline void operator-= (CREF<String> that) {
+		inline void operator-= (CREF<String> that) {
 			return cover_with (that) ;
 		}
 
@@ -711,7 +711,7 @@ trait STRING_HELP<ITEM ,SIZE ,REQUIRE<IS_TEXT<ITEM>>> {
 			trunc (ix) ;
 		}
 
-		forceinline void operator-= (CREF<Slice<ITEM>> that) {
+		inline void operator-= (CREF<Slice<ITEM>> that) {
 			return cover_with (that) ;
 		}
 
@@ -729,7 +729,7 @@ trait STRING_HELP<ITEM ,SIZE ,REQUIRE<IS_TEXT<ITEM>>> {
 			return move (ret) ;
 		}
 
-		forceinline String operator+ (CREF<String> that) const {
+		inline String operator+ (CREF<String> that) const {
 			return concat (that) ;
 		}
 
@@ -747,7 +747,7 @@ trait STRING_HELP<ITEM ,SIZE ,REQUIRE<IS_TEXT<ITEM>>> {
 			return move (ret) ;
 		}
 
-		forceinline String operator+ (CREF<Slice<ITEM>> that) const {
+		inline String operator+ (CREF<Slice<ITEM>> that) const {
 			return concat (that) ;
 		}
 
@@ -770,7 +770,7 @@ trait STRING_HELP<ITEM ,SIZE ,REQUIRE<IS_TEXT<ITEM>>> {
 			}
 		}
 
-		forceinline void operator+= (CREF<String> that) {
+		inline void operator+= (CREF<String> that) {
 			concat_with (that) ;
 		}
 
@@ -793,7 +793,7 @@ trait STRING_HELP<ITEM ,SIZE ,REQUIRE<IS_TEXT<ITEM>>> {
 			}
 		}
 
-		forceinline void operator+= (CREF<Slice<ITEM>> that) {
+		inline void operator+= (CREF<Slice<ITEM>> that) {
 			concat_with (that) ;
 		}
 
@@ -831,8 +831,8 @@ trait STRING_HELP<ITEM ,SIZE ,REQUIRE<IS_TEXT<ITEM>>> {
 	public:
 		template <class...ARG1>
 		imports String make (CREF<ARG1>...obj) {
-			using R1X = typename DEPENDENT<STRING_TEXTWRITER_HELP<ITEM ,ALWAYS> ,TYPEAS<ARG1...>>::TextWriter ;
-			static constexpr auto EOS = DEPENDENT<STRING_TEXTWRITER_HELP<ITEM ,ALWAYS> ,TYPEAS<ARG1...>>::EOS ;
+			using R1X = typename KILL<STRING_TEXTWRITER_HELP<ITEM ,ALWAYS> ,TYPEAS<ARG1...>>::TextWriter ;
+			static constexpr auto EOS = KILL<STRING_TEXTWRITER_HELP<ITEM ,ALWAYS> ,TYPEAS<ARG1...>>::EOS ;
 			String ret = String (BUFFER_SSIZE::expr) ;
 			auto rax = R1X (ret.raw ().borrow ()) ;
 			rax.prints (obj...) ;
@@ -967,7 +967,7 @@ trait DEQUE_HELP<ITEM ,SIZE ,ALWAYS> {
 			return mDeque[ix].mItem ;
 		}
 
-		forceinline VREF<ITEM> operator[] (CREF<INDEX> index) leftvalue {
+		inline VREF<ITEM> operator[] (CREF<INDEX> index) leftvalue {
 			return at (index) ;
 		}
 
@@ -978,7 +978,7 @@ trait DEQUE_HELP<ITEM ,SIZE ,ALWAYS> {
 			return mDeque[ix].mItem ;
 		}
 
-		forceinline CREF<ITEM> operator[] (CREF<INDEX> index) const leftvalue {
+		inline CREF<ITEM> operator[] (CREF<INDEX> index) const leftvalue {
 			return at (index) ;
 		}
 
@@ -1224,7 +1224,7 @@ trait PRIORITY_HELP<ITEM ,SIZE ,ALWAYS> {
 			return mPriority[index].mItem ;
 		}
 
-		forceinline CREF<ITEM> operator[] (CREF<INDEX> index) const leftvalue {
+		inline CREF<ITEM> operator[] (CREF<INDEX> index) const leftvalue {
 			return at (index) ;
 		}
 
@@ -1509,7 +1509,7 @@ trait LIST_HELP<ITEM ,SIZE ,ALWAYS> {
 			return mList[index].mItem ;
 		}
 
-		forceinline VREF<ITEM> operator[] (CREF<INDEX> index) leftvalue {
+		inline VREF<ITEM> operator[] (CREF<INDEX> index) leftvalue {
 			return at (index) ;
 		}
 
@@ -1517,7 +1517,7 @@ trait LIST_HELP<ITEM ,SIZE ,ALWAYS> {
 			return mList[index].mItem ;
 		}
 
-		forceinline CREF<ITEM> operator[] (CREF<INDEX> index) const leftvalue {
+		inline CREF<ITEM> operator[] (CREF<INDEX> index) const leftvalue {
 			return at (index) ;
 		}
 
@@ -1837,7 +1837,7 @@ trait ARRAYLIST_HELP<ITEM ,SIZE ,ALWAYS> {
 			return mList[mJump[index]].mItem ;
 		}
 
-		forceinline VREF<ITEM> operator[] (CREF<INDEX> index) leftvalue {
+		inline VREF<ITEM> operator[] (CREF<INDEX> index) leftvalue {
 			return at (index) ;
 		}
 
@@ -1845,7 +1845,7 @@ trait ARRAYLIST_HELP<ITEM ,SIZE ,ALWAYS> {
 			return mList[mJump[index]].mItem ;
 		}
 
-		forceinline CREF<ITEM> operator[] (CREF<INDEX> index) const leftvalue {
+		inline CREF<ITEM> operator[] (CREF<INDEX> index) const leftvalue {
 			return at (index) ;
 		}
 
@@ -1990,11 +1990,11 @@ trait BITPROXY_HELP<UNIT ,COND ,REQUIRE<COND>> {
 			mY = y_ ;
 		}
 
-		forceinline implicit operator BOOL () rightvalue {
+		inline implicit operator BOOL () rightvalue {
 			return mThat->map_get (mY) ;
 		}
 
-		forceinline void operator= (CREF<BOOL> that) rightvalue {
+		inline void operator= (CREF<BOOL> that) rightvalue {
 			mThat->map_set (mY ,that) ;
 		}
 	} ;
@@ -2015,7 +2015,7 @@ trait BITPROXY_HELP<UNIT ,COND ,REQUIRE<ENUM_NOT<COND>>> {
 			mY = y_ ;
 		}
 
-		forceinline implicit operator BOOL () rightvalue {
+		inline implicit operator BOOL () rightvalue {
 			return mThat->map_get (mY) ;
 		}
 	} ;
@@ -2081,7 +2081,7 @@ trait BITSET_HELP<SIZE ,ALWAYS> {
 		}
 
 		LENGTH length () const {
-			using R1X = typename DEPENDENT<BITSET_BYTELCACHE_HELP<DEPEND ,ALWAYS> ,SIZE>::ByteLCache ;
+			using R1X = typename KILL<BITSET_BYTELCACHE_HELP<DEPEND ,ALWAYS> ,SIZE>::ByteLCache ;
 			LENGTH ret = 0 ;
 			for (auto &&i : CSC::iter (0 ,mSet.size ()))
 				ret += R1X::instance ()[mSet[i]] ;
@@ -2154,11 +2154,11 @@ trait BITSET_HELP<SIZE ,ALWAYS> {
 			return index ;
 		}
 
-		forceinline BitProxy<VREF<BitSet>> operator[] (CREF<INDEX> index) leftvalue {
+		inline BitProxy<VREF<BitSet>> operator[] (CREF<INDEX> index) leftvalue {
 			return BitProxy<VREF<BitSet>> (VRef<BitSet>::reference (thiz) ,index) ;
 		}
 
-		forceinline BitProxy<CREF<BitSet>> operator[] (CREF<INDEX> index) const leftvalue {
+		inline BitProxy<CREF<BitSet>> operator[] (CREF<INDEX> index) const leftvalue {
 			return BitProxy<CREF<BitSet>> (CRef<BitSet>::reference (thiz) ,index) ;
 		}
 
@@ -2221,11 +2221,11 @@ trait BITSET_HELP<SIZE ,ALWAYS> {
 			return TRUE ;
 		}
 
-		forceinline BOOL operator== (CREF<BitSet> that) const {
+		inline BOOL operator== (CREF<BitSet> that) const {
 			return equal (that) ;
 		}
 
-		forceinline BOOL operator!= (CREF<BitSet> that) const {
+		inline BOOL operator!= (CREF<BitSet> that) const {
 			return ifnot (equal (that)) ;
 		}
 
@@ -2240,19 +2240,19 @@ trait BITSET_HELP<SIZE ,ALWAYS> {
 			return operator_compr (last_byte () ,that.last_byte ()) ;
 		}
 
-		forceinline BOOL operator< (CREF<BitSet> that) const {
+		inline BOOL operator< (CREF<BitSet> that) const {
 			return compr (that) < ZERO ;
 		}
 
-		forceinline BOOL operator<= (CREF<BitSet> that) const {
+		inline BOOL operator<= (CREF<BitSet> that) const {
 			return compr (that) <= ZERO ;
 		}
 
-		forceinline BOOL operator> (CREF<BitSet> that) const {
+		inline BOOL operator> (CREF<BitSet> that) const {
 			return compr (that) > ZERO ;
 		}
 
-		forceinline BOOL operator>= (CREF<BitSet> that) const {
+		inline BOOL operator>= (CREF<BitSet> that) const {
 			return compr (that) >= ZERO ;
 		}
 
@@ -2273,7 +2273,7 @@ trait BITSET_HELP<SIZE ,ALWAYS> {
 			return move (ret) ;
 		}
 
-		forceinline BitSet operator& (CREF<BitSet> that) const {
+		inline BitSet operator& (CREF<BitSet> that) const {
 			return band (that) ;
 		}
 
@@ -2283,7 +2283,7 @@ trait BITSET_HELP<SIZE ,ALWAYS> {
 				mSet[i] &= that.mSet[i] ;
 		}
 
-		forceinline void operator&= (CREF<BitSet> that) {
+		inline void operator&= (CREF<BitSet> that) {
 			band_with (that) ;
 		}
 
@@ -2295,7 +2295,7 @@ trait BITSET_HELP<SIZE ,ALWAYS> {
 			return move (ret) ;
 		}
 
-		forceinline BitSet operator| (CREF<BitSet> that) const {
+		inline BitSet operator| (CREF<BitSet> that) const {
 			return bor (that) ;
 		}
 
@@ -2305,7 +2305,7 @@ trait BITSET_HELP<SIZE ,ALWAYS> {
 				mSet[i] |= that.mSet[i] ;
 		}
 
-		forceinline void operator|= (CREF<BitSet> that) {
+		inline void operator|= (CREF<BitSet> that) {
 			bor_with (that) ;
 		}
 
@@ -2317,7 +2317,7 @@ trait BITSET_HELP<SIZE ,ALWAYS> {
 			return move (ret) ;
 		}
 
-		forceinline BitSet operator^ (CREF<BitSet> that) const {
+		inline BitSet operator^ (CREF<BitSet> that) const {
 			return bxor (that) ;
 		}
 
@@ -2327,7 +2327,7 @@ trait BITSET_HELP<SIZE ,ALWAYS> {
 				mSet[i] ^= that.mSet[i] ;
 		}
 
-		forceinline void operator^= (CREF<BitSet> that) {
+		inline void operator^= (CREF<BitSet> that) {
 			bxor_with (that) ;
 		}
 
@@ -2339,7 +2339,7 @@ trait BITSET_HELP<SIZE ,ALWAYS> {
 			return move (ret) ;
 		}
 
-		forceinline BitSet operator- (CREF<BitSet> that) const {
+		inline BitSet operator- (CREF<BitSet> that) const {
 			return bsub (that) ;
 		}
 
@@ -2349,7 +2349,7 @@ trait BITSET_HELP<SIZE ,ALWAYS> {
 				mSet[i] &= ~that.mSet[i] ;
 		}
 
-		forceinline void operator-= (CREF<BitSet> that) {
+		inline void operator-= (CREF<BitSet> that) {
 			bsub_with (that) ;
 		}
 
@@ -2360,7 +2360,7 @@ trait BITSET_HELP<SIZE ,ALWAYS> {
 			return move (ret) ;
 		}
 
-		forceinline BitSet operator~ () const {
+		inline BitSet operator~ () const {
 			return bnot () ;
 		}
 
@@ -2372,7 +2372,7 @@ trait BITSET_HELP<SIZE ,ALWAYS> {
 		}
 
 		INDEX find_first (CREF<BYTE> obj) const {
-			using R1X = typename DEPENDENT<BITSET_BYTEFCACHE_HELP<DEPEND ,ALWAYS> ,SIZE>::ByteFCache ;
+			using R1X = typename KILL<BITSET_BYTEFCACHE_HELP<DEPEND ,ALWAYS> ,SIZE>::ByteFCache ;
 			const auto r1x = obj & BYTE (INDEX (~obj) + 1) ;
 			return R1X::instance ()[r1x] ;
 		}
@@ -2432,7 +2432,7 @@ trait BITSET_BYTELCACHE_HELP<DEPEND ,ALWAYS> {
 			}) ;
 		}
 
-		forceinline LENGTH operator[] (CREF<BYTE> k) const {
+		inline LENGTH operator[] (CREF<BYTE> k) const {
 			const auto r1x = INDEX (k) ;
 			return mCache[r1x] ;
 		}
@@ -2473,7 +2473,7 @@ trait BITSET_BYTEFCACHE_HELP<DEPEND ,ALWAYS> {
 			}) ;
 		}
 
-		forceinline LENGTH operator[] (CREF<BYTE> k) const {
+		inline LENGTH operator[] (CREF<BYTE> k) const {
 			const auto r1x = INDEX (k) ;
 			return mCache[r1x] ;
 		}
@@ -2614,7 +2614,7 @@ trait SET_HELP<ITEM ,SIZE ,ALWAYS> {
 			return mSet[index].mItem ;
 		}
 
-		forceinline CREF<ITEM> operator[] (CREF<INDEX> index) const leftvalue {
+		inline CREF<ITEM> operator[] (CREF<INDEX> index) const leftvalue {
 			return at (index) ;
 		}
 
@@ -3207,7 +3207,7 @@ trait HASHSET_HELP<ITEM ,SIZE ,ALWAYS> {
 			return mSet[index].mItem ;
 		}
 
-		forceinline CREF<ITEM> operator[] (CREF<INDEX> index) const leftvalue {
+		inline CREF<ITEM> operator[] (CREF<INDEX> index) const leftvalue {
 			return at (index) ;
 		}
 
@@ -3454,7 +3454,7 @@ trait SOFTSET_HELP<ITEM ,ALWAYS> {
 			return mSet.self[index].mItem ;
 		}
 
-		forceinline CREF<ITEM> operator[] (CREF<INDEX> index) const leftvalue {
+		inline CREF<ITEM> operator[] (CREF<INDEX> index) const leftvalue {
 			return at (index) ;
 		}
 
