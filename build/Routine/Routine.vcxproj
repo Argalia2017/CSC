@@ -32,52 +32,12 @@
     <ClCompile Include="..\..\src\test.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\src\csc\csc_end.h" />
-    <ClInclude Include="..\..\src\csc\csc.hpp" />
-    <ClInclude Include="..\..\src\csc\csc_algorithm.hpp" />
-    <ClInclude Include="..\..\src\csc\csc_array.hpp" />
-    <ClInclude Include="..\..\src\csc\csc_basic.hpp" />
-    <ClInclude Include="..\..\src\csc\csc_core.hpp" />
-    <ClInclude Include="..\..\src\csc\csc_debugger.hpp" />
-    <ClInclude Include="..\..\src\csc\csc_filesystem.hpp" />
-    <ClInclude Include="..\..\src\csc\csc_functional.hpp" />
-    <ClInclude Include="..\..\src\csc\csc_geometry.hpp" />
-    <ClInclude Include="..\..\src\csc\csc_image.hpp" />
-    <ClInclude Include="..\..\src\csc\csc_lite.h" />
-    <ClInclude Include="..\..\src\csc\csc_math.hpp" />
-    <ClInclude Include="..\..\src\csc\csc_runtime.hpp" />
-    <ClInclude Include="..\..\src\csc\csc_serialization.hpp" />
-    <ClInclude Include="..\..\src\csc\csc_stream.hpp" />
-    <ClInclude Include="..\..\src\csc\csc_string.hpp" />
-    <ClInclude Include="..\..\src\csc\csc_thread.hpp" />
-    <ClInclude Include="..\..\src\csc\csc_type.hpp" />
-    <ClInclude Include="..\..\src\csc\csc_begin.h" />
+    <ClInclude Include="..\..\src\csc2\csc.hpp" />
+    <ClInclude Include="..\..\src\csc2\csc_begin.h" />
+    <ClInclude Include="..\..\src\csc2\csc_core.hpp" />
+    <ClInclude Include="..\..\src\csc2\csc_end.h" />
+    <ClInclude Include="..\..\src\csc2\csc_type.hpp" />
     <ClInclude Include="..\..\src\util.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="..\..\src\csc\cpp.hint" />
-    <None Include="..\..\src\csc\csc_algorithm.hpp.default.inl" />
-    <None Include="..\..\src\csc\csc_basic.hpp.default.inl" />
-    <None Include="..\..\src\csc\csc_core.hpp.default.inl" />
-    <None Include="..\..\src\csc\csc_debugger.hpp.linux.inl" />
-    <None Include="..\..\src\csc\csc_debugger.hpp.windows.inl" />
-    <None Include="..\..\src\csc\csc_filesystem.hpp.linux.inl" />
-    <None Include="..\..\src\csc\csc_filesystem.hpp.windows.inl" />
-    <None Include="..\..\src\csc\csc_functional.hpp.default.inl" />
-    <None Include="..\..\src\csc\csc_math.hpp.default.inl" />
-    <None Include="..\..\src\csc\csc_runtime.hpp.default.inl" />
-    <None Include="..\..\src\csc\csc_runtime.hpp.linux.inl" />
-    <None Include="..\..\src\csc\csc_runtime.hpp.windows.inl" />
-    <None Include="..\..\src\csc\csc_serialization.hpp.default.inl" />
-    <None Include="..\..\src\csc\csc_stream.hpp.default.inl" />
-    <None Include="..\..\src\csc\csc_string.hpp.default.inl" />
-    <None Include="..\..\src\csc\csc_string.hpp.gbks.inl" />
-    <None Include="..\..\src\csc\csc_thread.hpp.default.inl" />
-  </ItemGroup>
-  <ItemGroup>
-    <Natvis Include="..\..\src\csc\cpp.natvis">
-      <SubType>Designer</SubType>
-    </Natvis>
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>
