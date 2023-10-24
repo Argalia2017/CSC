@@ -7,131 +7,25 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\util.h" />
-    <ClInclude Include="..\..\src\csc\csc.hpp">
-      <Filter>csc</Filter>
+    <ClInclude Include="..\..\src\csc2\csc_core.hpp">
+      <Filter>csc2</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\csc\csc_algorithm.hpp">
-      <Filter>csc</Filter>
+    <ClInclude Include="..\..\src\csc2\csc.hpp">
+      <Filter>csc2</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\csc\csc_array.hpp">
-      <Filter>csc</Filter>
+    <ClInclude Include="..\..\src\csc2\csc_type.hpp">
+      <Filter>csc2</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\csc\csc_basic.hpp">
-      <Filter>csc</Filter>
+    <ClInclude Include="..\..\src\csc2\csc_begin.h">
+      <Filter>csc2</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\csc\csc_core.hpp">
-      <Filter>csc</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\csc\csc_debugger.hpp">
-      <Filter>csc</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\csc\csc_filesystem.hpp">
-      <Filter>csc</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\csc\csc_functional.hpp">
-      <Filter>csc</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\csc\csc_geometry.hpp">
-      <Filter>csc</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\csc\csc_image.hpp">
-      <Filter>csc</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\csc\csc_math.hpp">
-      <Filter>csc</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\csc\csc_runtime.hpp">
-      <Filter>csc</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\csc\csc_stream.hpp">
-      <Filter>csc</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\csc\csc_serialization.hpp">
-      <Filter>csc</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\csc\csc_string.hpp">
-      <Filter>csc</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\csc\csc_thread.hpp">
-      <Filter>csc</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\csc\csc_type.hpp">
-      <Filter>csc</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\csc\csc_end.h">
-      <Filter>csc</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\csc\csc_begin.h">
-      <Filter>csc</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\csc\csc_lite.h">
-      <Filter>csc</Filter>
+    <ClInclude Include="..\..\src\csc2\csc_end.h">
+      <Filter>csc2</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <Filter Include="csc">
+    <Filter Include="csc2">
       <UniqueIdentifier>{39dd61d7-1230-4b66-96d6-a7e28319a439}</UniqueIdentifier>
     </Filter>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="..\..\src\csc\cpp.hint">
-      <Filter>csc</Filter>
-    </None>
-    <None Include="..\..\src\csc\csc_runtime.hpp.default.inl">
-      <Filter>csc</Filter>
-    </None>
-    <None Include="..\..\src\csc\csc_filesystem.hpp.linux.inl">
-      <Filter>csc</Filter>
-    </None>
-    <None Include="..\..\src\csc\csc_filesystem.hpp.windows.inl">
-      <Filter>csc</Filter>
-    </None>
-    <None Include="..\..\src\csc\csc_math.hpp.default.inl">
-      <Filter>csc</Filter>
-    </None>
-    <None Include="..\..\src\csc\csc_string.hpp.default.inl">
-      <Filter>csc</Filter>
-    </None>
-    <None Include="..\..\src\csc\csc_debugger.hpp.linux.inl">
-      <Filter>csc</Filter>
-    </None>
-    <None Include="..\..\src\csc\csc_debugger.hpp.windows.inl">
-      <Filter>csc</Filter>
-    </None>
-    <None Include="..\..\src\csc\csc_core.hpp.default.inl">
-      <Filter>csc</Filter>
-    </None>
-    <None Include="..\..\src\csc\csc_runtime.hpp.linux.inl">
-      <Filter>csc</Filter>
-    </None>
-    <None Include="..\..\src\csc\csc_runtime.hpp.windows.inl">
-      <Filter>csc</Filter>
-    </None>
-    <None Include="..\..\src\csc\csc_string.hpp.gbks.inl">
-      <Filter>csc</Filter>
-    </None>
-    <None Include="..\..\src\csc\csc_algorithm.hpp.default.inl">
-      <Filter>csc</Filter>
-    </None>
-    <None Include="..\..\src\csc\csc_basic.hpp.default.inl">
-      <Filter>csc</Filter>
-    </None>
-    <None Include="..\..\src\csc\csc_thread.hpp.default.inl">
-      <Filter>csc</Filter>
-    </None>
-    <None Include="..\..\src\csc\csc_functional.hpp.default.inl">
-      <Filter>csc</Filter>
-    </None>
-    <None Include="..\..\src\csc\csc_serialization.hpp.default.inl">
-      <Filter>csc</Filter>
-    </None>
-    <None Include="..\..\src\csc\csc_stream.hpp.default.inl">
-      <Filter>csc</Filter>
-    </None>
-  </ItemGroup>
-  <ItemGroup>
-    <Natvis Include="..\..\src\csc\cpp.natvis">
-      <Filter>csc</Filter>
-    </Natvis>
   </ItemGroup>
 </Project>
