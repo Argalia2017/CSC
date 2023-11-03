@@ -21,6 +21,7 @@
 #define assume(...)
 #define unittest(...)
 #define forceinline
+#define as
 #define ifnot(...)
 #define ifswitch(...)
 #define discard

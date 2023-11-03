@@ -7,25 +7,42 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\util.h" />
-    <ClInclude Include="..\..\src\csc2\csc_core.hpp">
-      <Filter>csc2</Filter>
+    <ClInclude Include="..\..\src\csc\csc.hpp">
+      <Filter>csc</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\csc2\csc.hpp">
-      <Filter>csc2</Filter>
+    <ClInclude Include="..\..\src\csc\csc_basic.hpp">
+      <Filter>csc</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\csc2\csc_type.hpp">
-      <Filter>csc2</Filter>
+    <ClInclude Include="..\..\src\csc\csc_begin.h">
+      <Filter>csc</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\csc2\csc_begin.h">
-      <Filter>csc2</Filter>
+    <ClInclude Include="..\..\src\csc\csc_core.hpp">
+      <Filter>csc</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\csc2\csc_end.h">
-      <Filter>csc2</Filter>
+    <ClInclude Include="..\..\src\csc\csc_end.h">
+      <Filter>csc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\csc\csc_type.hpp">
+      <Filter>csc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\csc\csc_geometry.hpp">
+      <Filter>csc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\csc\csc_image.hpp">
+      <Filter>csc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\csc\csc_array.hpp">
+      <Filter>csc</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <Filter Include="csc2">
-      <UniqueIdentifier>{39dd61d7-1230-4b66-96d6-a7e28319a439}</UniqueIdentifier>
+    <Filter Include="csc">
+      <UniqueIdentifier>{d660981f-9a8f-45f3-b1dc-23641ec5244e}</UniqueIdentifier>
     </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\src\csc\cpp.hint">
+      <Filter>csc</Filter>
+    </None>
   </ItemGroup>
 </Project>

@@ -20,6 +20,7 @@
 #undef assume
 #undef unittest
 #undef forceinline
+#undef as
 #undef ifnot
 #undef ifswitch
 #undef discard

@@ -1,8 +1,10 @@
 ﻿#pragma once
 
-#include "csc2/csc.hpp"
-#include "csc2/csc_type.hpp"
-#include "csc2/csc_core.hpp"
+#include "csc/csc.hpp"
+#include "csc/csc_type.hpp"
+#include "csc/csc_core.hpp"
+#include "csc/csc_basic.hpp"
+#include "csc/csc_geometry.hpp"
 
 namespace SOLUTION {
 using namespace CSC ;
