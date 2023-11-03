@@ -113,7 +113,7 @@ trait VECTOR_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 		}
 
 		VREF<ITEM> at (CREF<INDEX> y_) leftvalue {
-			assert (vbetween (y_ ,0 ,4)) ;
+			assert (operator_between (y_ ,0 ,4)) ;
 			return mVector[y_] ;
 		}
 
@@ -122,7 +122,7 @@ trait VECTOR_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 		}
 
 		CREF<ITEM> at (CREF<INDEX> y_) const leftvalue {
-			assert (vbetween (y_ ,0 ,4)) ;
+			assert (operator_between (y_ ,0 ,4)) ;
 			return mVector[y_] ;
 		}
 
@@ -489,7 +489,7 @@ trait QUATERNION_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 		}
 
 		CREF<ITEM> at (CREF<INDEX> y_) const leftvalue {
-			assert (vbetween (y_ ,0 ,4)) ;
+			assert (operator_between (y_ ,0 ,4)) ;
 			return mQuaternion[y_] ;
 		}
 
@@ -554,7 +554,7 @@ trait MATRIX_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 
 	using Vector = typename VECTOR_HELP<ITEM ,ALWAYS>::Vector ;
 	using Quaternion = typename QUATERNION_HELP<ITEM ,ALWAYS>::Quaternion ;
-	using RANK = ENUMAS<VAL ,16> ;
+	using RANK = ENUM<16> ;
 
 	class Matrix {
 	protected:
@@ -598,8 +598,8 @@ trait MATRIX_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 		}
 
 		VREF<ITEM> at (CREF<INDEX> x_ ,CREF<INDEX> y_) leftvalue {
-			assert (vbetween (x_ ,0 ,4)) ;
-			assert (vbetween (y_ ,0 ,4)) ;
+			assert (operator_between (x_ ,0 ,4)) ;
+			assert (operator_between (y_ ,0 ,4)) ;
 			return mMatrix[y_ * 4 + x_] ;
 		}
 
@@ -616,8 +616,8 @@ trait MATRIX_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 		}
 
 		CREF<ITEM> at (CREF<INDEX> x_ ,CREF<INDEX> y_) const leftvalue {
-			assert (vbetween (x_ ,0 ,4)) ;
-			assert (vbetween (y_ ,0 ,4)) ;
+			assert (operator_between (x_ ,0 ,4)) ;
+			assert (operator_between (y_ ,0 ,4)) ;
 			return mMatrix[y_ * 4 + x_] ;
 		}
 
@@ -900,7 +900,7 @@ trait MATRIX_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 
 		SINGULAR singular () const {
 			unimplemented () ;
-			return bad (TYPEAS<SINGULAR>::expr) ;
+			return bad (TYPE<SINGULAR>::expr) ;
 		}
 
 		Matrix pseudo_inverse () const {

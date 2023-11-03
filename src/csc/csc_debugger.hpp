@@ -110,7 +110,7 @@ trait CONSOLE_HELP<DEPEND ,ALWAYS> {
 
 		template <class...ARG1>
 		void print (CREF<ARG1>...msg) const {
-			using R1X = typename KILL<CONSOLE_IMPLBINDER_HELP<TYPEAS<ARG1...> ,ALWAYS> ,DEPEND>::ImplBinder ;
+			using R1X = typename KILL<CONSOLE_IMPLBINDER_HELP<TYPE<ARG1...> ,ALWAYS> ,DEPEND>::ImplBinder ;
 			Scope<Mutex> anonymous (mMutex) ;
 			const auto r1x = capture (msg...) ;
 			auto rax = R1X (CRef<Capture<ARG1...>>::reference (r1x)) ;
@@ -119,7 +119,7 @@ trait CONSOLE_HELP<DEPEND ,ALWAYS> {
 
 		template <class...ARG1>
 		void fatal (CREF<ARG1>...msg) const {
-			using R1X = typename KILL<CONSOLE_IMPLBINDER_HELP<TYPEAS<ARG1...> ,ALWAYS> ,DEPEND>::ImplBinder ;
+			using R1X = typename KILL<CONSOLE_IMPLBINDER_HELP<TYPE<ARG1...> ,ALWAYS> ,DEPEND>::ImplBinder ;
 			Scope<Mutex> anonymous (mMutex) ;
 			const auto r1x = capture (msg...) ;
 			auto rax = R1X (CRef<Capture<ARG1...>>::reference (r1x)) ;
@@ -128,7 +128,7 @@ trait CONSOLE_HELP<DEPEND ,ALWAYS> {
 
 		template <class...ARG1>
 		void error (CREF<ARG1>...msg) const {
-			using R1X = typename KILL<CONSOLE_IMPLBINDER_HELP<TYPEAS<ARG1...> ,ALWAYS> ,DEPEND>::ImplBinder ;
+			using R1X = typename KILL<CONSOLE_IMPLBINDER_HELP<TYPE<ARG1...> ,ALWAYS> ,DEPEND>::ImplBinder ;
 			Scope<Mutex> anonymous (mMutex) ;
 			const auto r1x = capture (msg...) ;
 			auto rax = R1X (CRef<Capture<ARG1...>>::reference (r1x)) ;
@@ -137,7 +137,7 @@ trait CONSOLE_HELP<DEPEND ,ALWAYS> {
 
 		template <class...ARG1>
 		void warn (CREF<ARG1>...msg) const {
-			using R1X = typename KILL<CONSOLE_IMPLBINDER_HELP<TYPEAS<ARG1...> ,ALWAYS> ,DEPEND>::ImplBinder ;
+			using R1X = typename KILL<CONSOLE_IMPLBINDER_HELP<TYPE<ARG1...> ,ALWAYS> ,DEPEND>::ImplBinder ;
 			Scope<Mutex> anonymous (mMutex) ;
 			const auto r1x = capture (msg...) ;
 			auto rax = R1X (CRef<Capture<ARG1...>>::reference (r1x)) ;
@@ -146,7 +146,7 @@ trait CONSOLE_HELP<DEPEND ,ALWAYS> {
 
 		template <class...ARG1>
 		void info (CREF<ARG1>...msg) const {
-			using R1X = typename KILL<CONSOLE_IMPLBINDER_HELP<TYPEAS<ARG1...> ,ALWAYS> ,DEPEND>::ImplBinder ;
+			using R1X = typename KILL<CONSOLE_IMPLBINDER_HELP<TYPE<ARG1...> ,ALWAYS> ,DEPEND>::ImplBinder ;
 			Scope<Mutex> anonymous (mMutex) ;
 			const auto r1x = capture (msg...) ;
 			auto rax = R1X (CRef<Capture<ARG1...>>::reference (r1x)) ;
@@ -155,7 +155,7 @@ trait CONSOLE_HELP<DEPEND ,ALWAYS> {
 
 		template <class...ARG1>
 		void debug (CREF<ARG1>...msg) const {
-			using R1X = typename KILL<CONSOLE_IMPLBINDER_HELP<TYPEAS<ARG1...> ,ALWAYS> ,DEPEND>::ImplBinder ;
+			using R1X = typename KILL<CONSOLE_IMPLBINDER_HELP<TYPE<ARG1...> ,ALWAYS> ,DEPEND>::ImplBinder ;
 			Scope<Mutex> anonymous (mMutex) ;
 			const auto r1x = capture (msg...) ;
 			auto rax = R1X (CRef<Capture<ARG1...>>::reference (r1x)) ;
@@ -164,7 +164,7 @@ trait CONSOLE_HELP<DEPEND ,ALWAYS> {
 
 		template <class...ARG1>
 		void verbose (CREF<ARG1>...msg) const {
-			using R1X = typename KILL<CONSOLE_IMPLBINDER_HELP<TYPEAS<ARG1...> ,ALWAYS> ,DEPEND>::ImplBinder ;
+			using R1X = typename KILL<CONSOLE_IMPLBINDER_HELP<TYPE<ARG1...> ,ALWAYS> ,DEPEND>::ImplBinder ;
 			Scope<Mutex> anonymous (mMutex) ;
 			const auto r1x = capture (msg...) ;
 			auto rax = R1X (CRef<Capture<ARG1...>>::reference (r1x)) ;
@@ -198,25 +198,25 @@ trait CONSOLE_HELP<DEPEND ,ALWAYS> {
 	} ;
 } ;
 
-template <class...UNIT>
-trait CONSOLE_IMPLBINDER_HELP<TYPEAS<UNIT...> ,ALWAYS> {
+template <class...A>
+trait CONSOLE_IMPLBINDER_HELP<TYPE<A...> ,ALWAYS> {
 	using Binder = typename CONSOLE_HELP<DEPEND ,ALWAYS>::Binder ;
 
 	class ImplBinder implement Binder {
 	protected:
-		CRef<Capture<UNIT...>> mThat ;
+		CRef<Capture<A...>> mThat ;
 
 	public:
 		implicit ImplBinder () = delete ;
 
-		explicit ImplBinder (RREF<CRef<Capture<UNIT...>>> that) {
+		explicit ImplBinder (RREF<CRef<Capture<A...>>> that) {
 			mThat = move (that) ;
 		}
 
 		void friend_write (VREF<TextWriter<STR>> writer) const override {
 			//@fatal: fuck msvc
-			mThat.self ([&] (CREF<UNIT>...obj) {
-				writer.prints (obj...) ;
+			mThat.self ([&] (CREF<A>...a) {
+				writer.prints (a...) ;
 			}) ;
 		}
 	} ;

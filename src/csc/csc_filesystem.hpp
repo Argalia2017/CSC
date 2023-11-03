@@ -407,7 +407,7 @@ trait BUFFERFILE_HELP<ITEM ,ALWAYS> {
 		implicit BufferFile () = default ;
 
 		explicit BufferFile (CREF<String<STR>> file) {
-			const auto r1x = Clazz (TYPEAS<ITEM>::expr) ;
+			const auto r1x = Clazz (TYPE<ITEM>::expr) ;
 			mThis = Holder::create () ;
 			mThis->initialize (file ,r1x) ;
 		}
@@ -430,13 +430,13 @@ trait BUFFERFILE_HELP<ITEM ,ALWAYS> {
 
 		ITEM get (CREF<VAL64> index) {
 			ITEM ret ;
-			mThis->get (index ,RegBuffer<BYTE>::from (unsafe_deptr (ret) ,0 ,SIZE_OF<ITEM>::expr)) ;
+			mThis->get (index ,RegBuffer<BYTE>::from (unsafe_cast[TYPE<TEMP<void>>::expr] (ret) ,0 ,SIZE_OF<ITEM>::expr)) ;
 			unsafe_launder (ret) ;
 			return move (ret) ;
 		}
 
 		void set (CREF<VAL64> index ,CREF<ITEM> item) {
-			mThis->set (index ,RegBuffer<BYTE>::from (unsafe_deptr (item) ,0 ,SIZE_OF<ITEM>::expr)) ;
+			mThis->set (index ,RegBuffer<BYTE>::from (unsafe_cast[TYPE<TEMP<void>>::expr] (item) ,0 ,SIZE_OF<ITEM>::expr)) ;
 		}
 
 		void flush () {

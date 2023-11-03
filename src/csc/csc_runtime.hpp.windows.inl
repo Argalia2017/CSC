@@ -265,7 +265,7 @@ trait PROCESS_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				auto rax = ByteReader (RegBuffer<BYTE>::from (mSnapshot).borrow ()) ;
 				rax >> GAP ;
 				if ifswitch (TRUE) {
-					const auto r1x = rax.poll (TYPEAS<VAL64>::expr) ;
+					const auto r1x = rax.poll (TYPE<VAL64>::expr) ;
 					if (r1x <= 0)
 						discard ;
 					if (r1x > VAL32_MAX)
@@ -334,7 +334,7 @@ trait MODULE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 
 		FLAG link (CREF<String<STR>> name) override {
 			assert (ifnot (name.empty ())) ;
-			const auto r1x = string_cvt[TYPEAS<STRA ,STR>::expr] (name) ;
+			const auto r1x = string_cvt[TYPE<STRA ,STR>::expr] (name) ;
 			assume (mModule.exist ()) ;
 			FLAG ret = FLAG (GetProcAddress (mModule ,(&r1x[0]))) ;
 			if ifswitch (TRUE) {
@@ -414,8 +414,8 @@ trait FLT32TON_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				assume (r1x != ZERO) ;
 				if (address (mHeap) == r1x)
 					discard ;
-				auto &&tmp = unsafe_cast[TYPEAS<SharedRef<HEAP>>::expr] (unsafe_deref (r1x)) ;
-				mHeap = tmp.weak () ;
+				auto &&tmp1 = unsafe_cast[TYPE<SharedRef<HEAP>>::expr] (unsafe_pointer (r1x)) ;
+				mHeap = tmp1.weak () ;
 				mWeakHeap = TRUE ;
 				assume (mHeap.good ()) ;
 			}
@@ -458,7 +458,7 @@ trait FLT32TON_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			}) ;
 			const auto r3x = FLAG (r2x.self) ;
 			PIPE ret ;
-			unsafe_sync (unsafe_cast[TYPEAS<TEMP<PIPE>>::expr] (ret) ,unsafe_deref (r3x)) ;
+			unsafe_sync (unsafe_cast[TYPE<TEMP<PIPE>>::expr] (ret) ,unsafe_pointer (r3x)) ;
 			unsafe_launder (ret) ;
 			assume (ret.mReserve1 == DATA (0X1122334455667788)) ;
 			assume (ret.mReserve3 == DATA (0XAAAABBBBCCCCDDDD)) ;
@@ -487,7 +487,7 @@ trait FLT32TON_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			rax.mReserve2 = DATA (mUID) ;
 			rax.mAddress2 = DATA (address (mHeap)) ;
 			rax.mReserve3 = DATA (0XAAAABBBBCCCCDDDD) ;
-			unsafe_sync (unsafe_deref (r3x) ,unsafe_cast[TYPEAS<TEMP<PIPE>>::expr] (rax)) ;
+			unsafe_sync (unsafe_pointer (r3x) ,unsafe_cast[TYPE<TEMP<PIPE>>::expr] (rax)) ;
 		}
 
 		void regi (CREF<Slice<STR>> name ,CREF<FLAG> addr) const override {

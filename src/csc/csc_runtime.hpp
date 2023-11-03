@@ -285,12 +285,12 @@ trait ATOMIC_HELP<DEPEND ,ALWAYS> {
 
 		virtual void initialize (CREF<VAL> init_) = 0 ;
 		virtual VAL fetch () const = 0 ;
-		virtual void store (CREF<VAL> obj) const = 0 ;
-		virtual VAL exchange (CREF<VAL> obj) const = 0 ;
+		virtual void store (CREF<VAL> a) const = 0 ;
+		virtual VAL exchange (CREF<VAL> a) const = 0 ;
 		virtual void replace (CREF<VAL> expect ,CREF<VAL> next) const = 0 ;
 		virtual BOOL change (VREF<VAL> expect ,CREF<VAL> next) const = 0 ;
-		virtual VAL add_with (CREF<VAL> obj) const = 0 ;
-		virtual VAL sub_with (CREF<VAL> obj) const = 0 ;
+		virtual VAL add_with (CREF<VAL> a) const = 0 ;
+		virtual VAL sub_with (CREF<VAL> a) const = 0 ;
 	} ;
 
 	class Atomic {
@@ -309,12 +309,12 @@ trait ATOMIC_HELP<DEPEND ,ALWAYS> {
 			return mThis->fetch () ;
 		}
 
-		void store (CREF<VAL> obj) const {
-			return mThis->store (obj) ;
+		void store (CREF<VAL> a) const {
+			return mThis->store (a) ;
 		}
 
-		VAL exchange (CREF<VAL> obj) const {
-			return mThis->exchange (obj) ;
+		VAL exchange (CREF<VAL> a) const {
+			return mThis->exchange (a) ;
 		}
 
 		void replace (CREF<VAL> expect ,CREF<VAL> next) const {
@@ -325,12 +325,12 @@ trait ATOMIC_HELP<DEPEND ,ALWAYS> {
 			return mThis->change (expect ,next) ;
 		}
 
-		VAL add_with (CREF<VAL> obj) const {
-			return mThis->add_with (obj) ;
+		VAL add_with (CREF<VAL> a) const {
+			return mThis->add_with (a) ;
 		}
 
-		VAL sub_with (CREF<VAL> obj) const {
-			return mThis->sub_with (obj) ;
+		VAL sub_with (CREF<VAL> a) const {
+			return mThis->sub_with (a) ;
 		}
 
 		VAL increase () const {
@@ -426,7 +426,7 @@ trait UNIQUELOCK_HELP<DEPEND ,ALWAYS> {
 		virtual void yield () = 0 ;
 	} ;
 
-	using FAKE_MAX_SIZE = ENUMAS<VAL ,128> ;
+	using FAKE_MAX_SIZE = ENUM<128> ;
 	using FAKE_MAX_ALIGN = RANK8 ;
 
 	class FakeHolder implement Holder {
@@ -485,7 +485,7 @@ trait SHAREDLOCK_HELP<DEPEND ,ALWAYS> {
 		virtual void leave () = 0 ;
 	} ;
 
-	using FAKE_MAX_SIZE = ENUMAS<VAL ,128> ;
+	using FAKE_MAX_SIZE = ENUM<128> ;
 	using FAKE_MAX_ALIGN = RANK8 ;
 
 	class FakeHolder implement Holder {
@@ -622,7 +622,7 @@ template <class DEPEND>
 trait THREAD_HELP<DEPEND ,ALWAYS> {
 	struct Binder implement Interface {
 		virtual void friend_execute (CREF<INDEX> slot) {
-			return keep[TYPEAS<CREF<Binder>>::expr] (thiz).friend_execute (slot) ;
+			return keep[TYPE<CREF<Binder>>::expr] (thiz).friend_execute (slot) ;
 		}
 
 		virtual void friend_execute (CREF<INDEX> slot) const = 0 ;
@@ -1032,9 +1032,9 @@ trait GLOBAL_HELP<DEPEND ,ALWAYS> {
 		template <class ARG1>
 		CREF<ARG1> unique (CREF<Slice<STR>> name ,TYPEID<ARG1> id) const leftvalue {
 			Scope<Mutex> anonymous (mMutex) ;
-			auto &&tmp = mThis->unique (name) ;
-			assume (tmp.exist ()) ;
-			return AutoRef<ARG1>::from (tmp).self ;
+			auto &&tmp1 = mThis->unique (name) ;
+			assume (tmp1.exist ()) ;
+			return AutoRef<ARG1>::from (tmp1).self ;
 		}
 
 		void shutdown () const {
@@ -1089,34 +1089,34 @@ trait FLT32TON_HOLDER_HELP<DEPEND ,ALWAYS> {
 	} ;
 } ;
 
-template <class UNIT>
-trait FLT32TON_HELP<UNIT ,ALWAYS> {
+template <class A>
+trait FLT32TON_HELP<A ,ALWAYS> {
 	using Holder = typename FLT32TON_HOLDER_HELP<DEPEND ,ALWAYS>::Holder ;
 	using Super = typename FLT32TON_HOLDER_HELP<DEPEND ,ALWAYS>::Singleton ;
 
 	class Singleton implement Proxy {
 	public:
-		imports CREF<UNIT> instance () {
+		imports CREF<A> instance () {
 			return memorize ([&] () {
 				auto rax = ZERO ;
 				if ifswitch (TRUE) {
-					auto &&tmp = Super::instance () ;
-					const auto r2x = Clazz (TYPEAS<UNIT>::expr).type_name () ;
-					rax = tmp.link (r2x) ;
+					auto &&tmp1 = Super::instance () ;
+					const auto r2x = Clazz (TYPE<A>::expr).type_name () ;
+					rax = tmp1.link (r2x) ;
 					if (rax != ZERO)
 						discard ;
-					const auto r3x = address (UNIT::instance ()) ;
-					tmp.regi (r2x ,r3x) ;
-					rax = tmp.link (r2x) ;
+					const auto r3x = address (A::instance ()) ;
+					tmp1.regi (r2x ,r3x) ;
+					rax = tmp1.link (r2x) ;
 				}
 				assume (rax != ZERO) ;
-				auto &&tmp_2 = unsafe_cast[TYPEAS<UNIT>::expr] (unsafe_deref (rax)) ;
-				return CRef<UNIT>::reference (tmp_2) ;
+				auto &&tmp2 = unsafe_cast[TYPE<A>::expr] (unsafe_pointer (rax)) ;
+				return CRef<A>::reference (tmp2) ;
 			}).self ;
 		}
 	} ;
 } ;
 
-template <class UNIT>
-using Singleton = typename FLT32TON_HELP<UNIT ,ALWAYS>::Singleton ;
+template <class A>
+using Singleton = typename FLT32TON_HELP<A ,ALWAYS>::Singleton ;
 } ;

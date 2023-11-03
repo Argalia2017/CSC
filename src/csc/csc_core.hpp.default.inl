@@ -43,34 +43,25 @@ SOFTWARE.
 #include "csc_begin.h"
 
 namespace CSC {
-template <class...>
-trait FUNCTION_current_usage_size_HELP ;
-
-template <class DEPEND>
-trait FUNCTION_current_usage_size_HELP<DEPEND ,REQUIRE<MACRO_SYSTEM_WINDOWS<DEPEND>>> {
 #ifdef __CSC_SYSTEM_WINDOWS__
-	struct FUNCTION_current_usage_size {
-		inline LENGTH operator() (CREF<FLAG> addr) const {
-			if (addr == ZERO)
-				return 0 ;
-			return LENGTH (_msize (csc_pointer_t (addr))) ;
-		}
-	} ;
-#endif
+struct FUNCTION_current_usage_size {
+	inline LENGTH operator() (CREF<FLAG> addr) const {
+		if (addr == ZERO)
+			return 0 ;
+		return LENGTH (_msize (csc_pointer_t (addr))) ;
+	}
 } ;
+#endif
 
-template <class DEPEND>
-trait FUNCTION_current_usage_size_HELP<DEPEND ,REQUIRE<MACRO_SYSTEM_LINUX<DEPEND>>> {
 #ifdef __CSC_SYSTEM_LINUX__
-	struct FUNCTION_current_usage_size {
-		inline LENGTH operator() (CREF<FLAG> addr) const {
-			if (addr == ZERO)
-				return 0 ;
-			return LENGTH (malloc_usable_size (csc_pointer_t (addr))) ;
-		}
-	} ;
-#endif
+struct FUNCTION_current_usage_size {
+	inline LENGTH operator() (CREF<FLAG> addr) const {
+		if (addr == ZERO)
+			return 0 ;
+		return LENGTH (malloc_usable_size (csc_pointer_t (addr))) ;
+	}
 } ;
+#endif
 
 template <class DEPEND>
 trait HEAPPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
@@ -128,7 +119,7 @@ trait HEAPPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 
 		VREF<HEAP> fake_m () const leftvalue {
 			const auto r1x = address (heap_root ()) ;
-			return unsafe_cast[TYPEAS<HEAP>::expr] (unsafe_deref (r1x)) ;
+			return unsafe_cast[TYPE<HEAP>::expr] (unsafe_pointer (r1x)) ;
 		}
 
 		imports CREF<HEAP> heap_root () {
@@ -143,7 +134,7 @@ template <>
 exports auto HEAPPROC_HELP<DEPEND ,ALWAYS>::FakeImplHolder::create () ->Box<FakeHolder> {
 	using R1X = typename HEAPPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	Box<FakeHolder> ret ;
-	ret.acquire (TYPEAS<R1X>::expr) ;
+	ret.remake (TYPE<R1X>::expr) ;
 	return move (ret) ;
 }
 
@@ -196,7 +187,7 @@ trait SLICE_IMPLHOLDER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 		}
 
 		ITEM at (CREF<INDEX> index) const override {
-			assert (vbetween (index ,0 ,size ())) ;
+			assert (operator_between (index ,0 ,size ())) ;
 			const auto r1x = prefix_size () ;
 			if (index < r1x)
 				return mPrefix->at (index) ;
@@ -209,7 +200,7 @@ trait SLICE_IMPLHOLDER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 				if (align_ != ALIGN_OF<STRU8>::expr)
 					discard ;
 				auto rax = STRU8 () ;
-				unsafe_sync (unsafe_cast[TYPEAS<TEMP<STRU8>>::expr] (rax) ,unsafe_deref (pointer)) ;
+				unsafe_sync (unsafe_cast[TYPE<TEMP<STRU8>>::expr] (rax) ,unsafe_pointer (pointer)) ;
 				unsafe_launder (rax) ;
 				return ITEM (rax) ;
 			}
@@ -217,7 +208,7 @@ trait SLICE_IMPLHOLDER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 				if (align_ != ALIGN_OF<STRU16>::expr)
 					discard ;
 				auto rax = STRU16 () ;
-				unsafe_sync (unsafe_cast[TYPEAS<TEMP<STRU16>>::expr] (rax) ,unsafe_deref (pointer)) ;
+				unsafe_sync (unsafe_cast[TYPE<TEMP<STRU16>>::expr] (rax) ,unsafe_pointer (pointer)) ;
 				unsafe_launder (rax) ;
 				return ITEM (rax) ;
 			}
@@ -225,21 +216,21 @@ trait SLICE_IMPLHOLDER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 				if (align_ != ALIGN_OF<STRU32>::expr)
 					discard ;
 				auto rax = STRU32 () ;
-				unsafe_sync (unsafe_cast[TYPEAS<TEMP<STRU32>>::expr] (rax) ,unsafe_deref (pointer)) ;
+				unsafe_sync (unsafe_cast[TYPE<TEMP<STRU32>>::expr] (rax) ,unsafe_pointer (pointer)) ;
 				unsafe_launder (rax) ;
 				return ITEM (rax) ;
 			}
-			return bad (TYPEAS<ITEM>::expr) ;
+			return bad (TYPE<ITEM>::expr) ;
 		}
 
 		BOOL equal (CREF<Layout> that) const override {
-			return equal (keep[TYPEAS<CREF<ImplHolder>>::expr] (that.mThis.self)) ;
+			return equal (keep[TYPE<CREF<ImplHolder>>::expr] (that.mThis.self)) ;
 		}
 
 		BOOL equal (CREF<ImplHolder> that) const {
 			if (size () != that.size ())
 				return FALSE ;
-			for (auto &&i : iter (0 ,size ())) {
+			for (auto&& i : iter (0 ,size ())) {
 				if ifnot (operator_equal (at (i) ,that.at (i)))
 					return FALSE ;
 			}
@@ -247,12 +238,12 @@ trait SLICE_IMPLHOLDER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 		}
 
 		FLAG compr (CREF<Layout> that) const override {
-			return compr (keep[TYPEAS<CREF<ImplHolder>>::expr] (that.mThis.self)) ;
+			return compr (keep[TYPE<CREF<ImplHolder>>::expr] (that.mThis.self)) ;
 		}
 
 		FLAG compr (CREF<ImplHolder> that) const {
-			const auto r1x = vmin (size () ,that.size ()) ;
-			for (auto &&i : iter (0 ,r1x)) {
+			const auto r1x = operator_min (size () ,that.size ()) ;
+			for (auto&& i : iter (0 ,r1x)) {
 				const auto r2x = operator_compr (at (i) ,that.at (i)) ;
 				if (r2x != ZERO)
 					return r2x ;
@@ -262,7 +253,7 @@ trait SLICE_IMPLHOLDER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 
 		FLAG hash () const override {
 			FLAG ret = hashcode () ;
-			for (auto &&i : iter (0 ,size ())) {
+			for (auto&& i : iter (0 ,size ())) {
 				const auto r1x = operator_hash (at (i)) ;
 				ret = hashcode (ret ,r1x) ;
 			}
@@ -333,7 +324,7 @@ trait CLAZZ_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		BOOL equal (CREF<Layout> that) const override {
-			return equal (keep[TYPEAS<CREF<ImplHolder>>::expr] (that.mThis.self)) ;
+			return equal (keep[TYPE<CREF<ImplHolder>>::expr] (that.mThis.self)) ;
 		}
 
 		BOOL equal (CREF<ImplHolder> that) const {
@@ -349,7 +340,7 @@ trait CLAZZ_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		FLAG compr (CREF<Layout> that) const override {
-			return compr (keep[TYPEAS<CREF<ImplHolder>>::expr] (that.mThis.self)) ;
+			return compr (keep[TYPE<CREF<ImplHolder>>::expr] (that.mThis.self)) ;
 		}
 
 		FLAG compr (CREF<ImplHolder> that) const {

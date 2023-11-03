@@ -59,7 +59,7 @@ trait CONSOLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	using OPTION = typename CONSOLE_HELP<DEPEND ,ALWAYS>::OPTION ;
 
 	using HANDLE = csc_pointer_t ;
-	using CONSOLE_BUFFER_SSIZE = ENUMAS<VAL ,8388607> ;
+	using CONSOLE_BUFFER_SSIZE = ENUM<8388607> ;
 
 	struct PACK {
 		String<STR> mConBuffer ;
@@ -110,7 +110,7 @@ trait CONSOLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			if ifswitch (TRUE) {
 				if ifnot (is_show ())
 					discard ;
-				const auto r1x = string_cvt[TYPEAS<STRA ,STR>::expr] (mThis->mConBuffer) ;
+				const auto r1x = string_cvt[TYPE<STRA ,STR>::expr] (mThis->mConBuffer) ;
 				printf ("%s\n" ,(&r1x[0])) ;
 			}
 			log (slice ("PRINT")) ;
@@ -123,7 +123,7 @@ trait CONSOLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			if ifswitch (TRUE) {
 				if ifnot (is_show ())
 					discard ;
-				const auto r1x = string_cvt[TYPEAS<STRA ,STR>::expr] (mThis->mConBuffer) ;
+				const auto r1x = string_cvt[TYPE<STRA ,STR>::expr] (mThis->mConBuffer) ;
 				printf (PRINT_BLUE ,(&r1x[0])) ;
 			}
 			log (slice ("FATAL")) ;
@@ -136,7 +136,7 @@ trait CONSOLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			if ifswitch (TRUE) {
 				if ifnot (is_show ())
 					discard ;
-				const auto r1x = string_cvt[TYPEAS<STRA ,STR>::expr] (mThis->mConBuffer) ;
+				const auto r1x = string_cvt[TYPE<STRA ,STR>::expr] (mThis->mConBuffer) ;
 				printf (PRINT_RED ,(&r1x[0])) ;
 			}
 			log (slice ("ERROR")) ;
@@ -149,7 +149,7 @@ trait CONSOLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			if ifswitch (TRUE) {
 				if ifnot (is_show ())
 					discard ;
-				const auto r1x = string_cvt[TYPEAS<STRA ,STR>::expr] (mThis->mConBuffer) ;
+				const auto r1x = string_cvt[TYPE<STRA ,STR>::expr] (mThis->mConBuffer) ;
 				printf (PRINT_YELLOW ,(&r1x[0])) ;
 			}
 			log (slice ("WARN")) ;
@@ -162,7 +162,7 @@ trait CONSOLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			if ifswitch (TRUE) {
 				if ifnot (is_show ())
 					discard ;
-				const auto r1x = string_cvt[TYPEAS<STRA ,STR>::expr] (mThis->mConBuffer) ;
+				const auto r1x = string_cvt[TYPE<STRA ,STR>::expr] (mThis->mConBuffer) ;
 				printf (PRINT_GREEN ,(&r1x[0])) ;
 			}
 			log (slice ("INFO")) ;
@@ -175,7 +175,7 @@ trait CONSOLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			if ifswitch (TRUE) {
 				if ifnot (is_show ())
 					discard ;
-				const auto r1x = string_cvt[TYPEAS<STRA ,STR>::expr] (mThis->mConBuffer) ;
+				const auto r1x = string_cvt[TYPE<STRA ,STR>::expr] (mThis->mConBuffer) ;
 				printf (PRINT_CYAN ,(&r1x[0])) ;
 			}
 			log (slice ("DEBUG")) ;
@@ -188,7 +188,7 @@ trait CONSOLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			if ifswitch (TRUE) {
 				if ifnot (is_show ())
 					discard ;
-				const auto r1x = string_cvt[TYPEAS<STRA ,STR>::expr] (mThis->mConBuffer) ;
+				const auto r1x = string_cvt[TYPE<STRA ,STR>::expr] (mThis->mConBuffer) ;
 				printf (PRINT_WHITE ,(&r1x[0])) ;
 			}
 			log (slice ("VERBOSE")) ;
@@ -223,7 +223,7 @@ trait CONSOLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			try_invoke ([&] () {
 				if (mThis->mLogStreamFile == NULL)
 					return ;
-				const auto r3x = mThis->mLogStreamFile->write (RegBuffer<BYTE>::from (unsafe_deptr (mThis->mLogBuffer[0]) ,0 ,r1x)) ;
+				const auto r3x = mThis->mLogStreamFile->write (RegBuffer<BYTE>::from (unsafe_cast[TYPE<TEMP<void>>::expr] (mThis->mLogBuffer[0]) ,0 ,r1x)) ;
 				assume (r3x == r1x) ;
 			} ,[&] () {
 				mThis->mLogStreamFile = NULL ;
@@ -232,7 +232,7 @@ trait CONSOLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				if (mThis->mLogStreamFile != NULL)
 					return ;
 				open_log_file () ;
-				const auto r4x = mThis->mLogStreamFile->write (RegBuffer<BYTE>::from (unsafe_deptr (mThis->mLogBuffer[0]) ,0 ,r1x)) ;
+				const auto r4x = mThis->mLogStreamFile->write (RegBuffer<BYTE>::from (unsafe_cast[TYPE<TEMP<void>>::expr] (mThis->mLogBuffer[0]) ,0 ,r1x)) ;
 				assume (r4x == r1x) ;
 			} ,[&] () {
 				mThis->mLogStreamFile = NULL ;
@@ -257,7 +257,7 @@ trait CONSOLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			mThis->mLogWriter << slice ("][") ;
 			mThis->mLogWriter << tag ;
 			mThis->mLogWriter << slice ("] : ") ;
-			const auto r3x = string_cvt[TYPEAS<STRU8 ,STR>::expr] (mThis->mConBuffer) ;
+			const auto r3x = string_cvt[TYPE<STRU8 ,STR>::expr] (mThis->mConBuffer) ;
 			mThis->mLogWriter << r3x ;
 			mThis->mLogWriter << GAP ;
 			mThis->mLogWriter << EOS ;
@@ -271,7 +271,7 @@ trait CONSOLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			mThis->mLogStreamFile = VRef<StreamFile>::make (mThis->mLogFile) ;
 			mThis->mLogStreamFile->open (TRUE ,TRUE) ;
 			const auto r3x = PrintString<STRU8>::make (BOM) ;
-			const auto r5x = mThis->mLogStreamFile->write (RegBuffer<BYTE>::from (unsafe_deptr (r3x[0]) ,0 ,r3x.length ())) ;
+			const auto r5x = mThis->mLogStreamFile->write (RegBuffer<BYTE>::from (unsafe_cast[TYPE<TEMP<void>>::expr] (r3x[0]) ,0 ,r3x.length ())) ;
 			assume (r5x == r3x.length ()) ;
 		}
 
@@ -321,8 +321,8 @@ trait REPORTER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	using Holder = typename REPORTER_HELP<DEPEND ,ALWAYS>::Holder ;
 
 	using HSYMB = DEF<STRA **> ;
-	using STACK_MAX_DEPTH = ENUMAS<VAL ,256> ;
-	using FUNCTION_NAME_MAX_SIZE = ENUMAS<VAL ,1024> ;
+	using STACK_MAX_DEPTH = ENUM<256> ;
+	using FUNCTION_NAME_MAX_SIZE = ENUM<1024> ;
 
 	struct PACK {
 		UniqueRef<> mCrashSignal ;
@@ -481,13 +481,13 @@ trait REPORTER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				if (r2x.self == NULL)
 					discard ;
 				const auto r3x = address ((**r2x.self)) ;
-				auto &&tmp = unsafe_cast[TYPEAS<ARR<STRA>>::expr] (unsafe_deref (r3x)) ;
-				mThis->mNameBuffer -= BufferProc<STR>::buf_slice (tmp ,mThis->mNameBuffer.size ()) ;
-				const auto r4x = string_build[TYPEAS<STR ,DATA>::expr] (DATA (addr)) ;
+				auto &&tmp1 = unsafe_cast[TYPE<ARR<STRA>>::expr] (unsafe_pointer (r3x)) ;
+				mThis->mNameBuffer -= BufferProc<STR>::buf_slice (tmp1 ,mThis->mNameBuffer.size ()) ;
+				const auto r4x = string_build[TYPE<STR ,DATA>::expr] (DATA (addr)) ;
 				ret = PrintString<STR>::make (slice ("[") ,r4x ,slice ("] : ") ,mThis->mNameBuffer) ;
 			}
 			if ifswitch (act) {
-				const auto r5x = string_build[TYPEAS<STR ,DATA>::expr] (DATA (addr)) ;
+				const auto r5x = string_build[TYPE<STR ,DATA>::expr] (DATA (addr)) ;
 				ret = PrintString<STR>::make (slice ("[") ,r5x ,slice ("] : ") ,slice ("null")) ;
 			}
 			return move (ret) ;

@@ -119,17 +119,17 @@ using ImageIterator = typename IMAGEITERATOR_HELP<DEPEND ,ALWAYS>::ImageIterator
 template <class...>
 trait ROWPROXY_HELP ;
 
-template <class UNIT ,class ITEM ,class COND>
-trait ROWPROXY_HELP<UNIT ,ITEM ,COND ,REQUIRE<COND>> {
+template <class A ,class ITEM ,class COND>
+trait ROWPROXY_HELP<A ,ITEM ,COND ,REQUIRE<COND>> {
 	class RowProxy {
 	protected:
-		VRef<UNIT> mThat ;
+		VRef<A> mThat ;
 		INDEX mY ;
 
 	public:
 		implicit RowProxy () = delete ;
 
-		explicit RowProxy (RREF<VRef<UNIT>> image ,CREF<INDEX> y_) {
+		explicit RowProxy (RREF<VRef<A>> image ,CREF<INDEX> y_) {
 			mThat = move (image) ;
 			mY = y_ ;
 		}
@@ -140,17 +140,17 @@ trait ROWPROXY_HELP<UNIT ,ITEM ,COND ,REQUIRE<COND>> {
 	} ;
 } ;
 
-template <class UNIT ,class ITEM ,class COND>
-trait ROWPROXY_HELP<UNIT ,ITEM ,COND ,REQUIRE<ENUM_NOT<COND>>> {
+template <class A ,class ITEM ,class COND>
+trait ROWPROXY_HELP<A ,ITEM ,COND ,REQUIRE<ENUM_NOT<COND>>> {
 	class RowProxy {
 	protected:
-		CRef<UNIT> mThat ;
+		CRef<A> mThat ;
 		INDEX mY ;
 
 	public:
 		implicit RowProxy () = delete ;
 
-		explicit RowProxy (RREF<CRef<UNIT>> image ,CREF<INDEX> y_) {
+		explicit RowProxy (RREF<CRef<A>> image ,CREF<INDEX> y_) {
 			mThat = move (image) ;
 			mY = y_ ;
 		}
@@ -161,8 +161,8 @@ trait ROWPROXY_HELP<UNIT ,ITEM ,COND ,REQUIRE<ENUM_NOT<COND>>> {
 	} ;
 } ;
 
-template <class UNIT ,class ITEM>
-using RowProxy = typename ROWPROXY_HELP<REMOVE_REF<UNIT> ,ITEM ,IS_VARIABLE<UNIT> ,ALWAYS>::RowProxy ;
+template <class A ,class ITEM>
+using RowProxy = typename ROWPROXY_HELP<REMOVE_REF<A> ,ITEM ,IS_VARIABLE<A> ,ALWAYS>::RowProxy ;
 
 template <class...>
 trait IMAGE_HELP ;
@@ -296,8 +296,8 @@ trait IMAGE_HELP<ITEM ,SIZE ,REQUIRE<ENUM_NOT<IS_SAME<SIZE ,ORDINARY>>>> {
 		}
 
 		VREF<ITEM> at (CREF<INDEX> x_ ,CREF<INDEX> y_) leftvalue {
-			assert (vbetween (x_ ,0 ,mCX)) ;
-			assert (vbetween (y_ ,0 ,mCY)) ;
+			assert (operator_between (x_ ,0 ,mCX)) ;
+			assert (operator_between (y_ ,0 ,mCY)) ;
 			return mImage[y_ * mStrip + x_ + mOffset] ;
 		}
 
@@ -314,8 +314,8 @@ trait IMAGE_HELP<ITEM ,SIZE ,REQUIRE<ENUM_NOT<IS_SAME<SIZE ,ORDINARY>>>> {
 		}
 
 		CREF<ITEM> at (CREF<INDEX> x_ ,CREF<INDEX> y_) const leftvalue {
-			assert (vbetween (x_ ,0 ,mCX)) ;
-			assert (vbetween (y_ ,0 ,mCY)) ;
+			assert (operator_between (x_ ,0 ,mCX)) ;
+			assert (operator_between (y_ ,0 ,mCY)) ;
 			return mImage[y_ * mStrip + x_ + mOffset] ;
 		}
 

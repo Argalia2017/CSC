@@ -46,37 +46,28 @@ SOFTWARE.
 #include "csc_begin.h"
 
 namespace CSC {
-template <class...>
-trait FUNCTION_calendar_from_timepoint_HELP ;
-
-template <class DEPEND>
-trait FUNCTION_calendar_from_timepoint_HELP<DEPEND ,REQUIRE<MACRO_SYSTEM_WINDOWS<DEPEND>>> {
 #ifdef __CSC_SYSTEM_WINDOWS__
-	struct FUNCTION_calendar_from_timepoint {
-		inline std::tm operator() (CREF<std::time_t> time_) const {
-			std::tm ret ;
-			zeroize (ret) ;
-			localtime_s ((&ret) ,(&time_)) ;
-			return move (ret) ;
-		}
-	} ;
-#endif
+struct FUNCTION_calendar_from_timepoint {
+	inline std::tm operator() (CREF<std::time_t> time_) const {
+		std::tm ret ;
+		zeroize (ret) ;
+		localtime_s ((&ret) ,(&time_)) ;
+		return move (ret) ;
+	}
 } ;
+#endif
 
-template <class DEPEND>
-trait FUNCTION_calendar_from_timepoint_HELP<DEPEND ,REQUIRE<MACRO_SYSTEM_LINUX<DEPEND>>> {
 #ifdef __CSC_SYSTEM_LINUX__
-	struct FUNCTION_calendar_from_timepoint {
-		inline std::tm operator() (CREF<std::time_t> time_) const {
-			std::tm ret ;
-			const auto r1x = FLAG (std::localtime ((&time_))) ;
-			unsafe_sync (unsafe_cast[TYPEAS<TEMP<std::tm>>::expr] (ret) ,unsafe_deref (r1x)) ;
-			unsafe_launder (ret) ;
-			return move (ret) ;
-		}
-	} ;
-#endif
+struct FUNCTION_calendar_from_timepoint {
+	inline std::tm operator() (CREF<std::time_t> time_) const {
+		std::tm ret ;
+		const auto r1x = FLAG (std::localtime ((&time_))) ;
+		unsafe_sync (unsafe_cast[TYPE<TEMP<std::tm>>::expr] (ret) ,unsafe_pointer (r1x)) ;
+		unsafe_launder (ret) ;
+		return move (ret) ;
+	}
 } ;
+#endif
 
 template <class DEPEND>
 trait TIMEDURATION_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
@@ -175,7 +166,7 @@ trait TIMEDURATION_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		Layout add (CREF<Layout> that) const override {
-			return add (keep[TYPEAS<CREF<ImplHolder>>::expr] (that.mThis.self)) ;
+			return add (keep[TYPE<CREF<ImplHolder>>::expr] (that.mThis.self)) ;
 		}
 
 		Layout add (CREF<ImplHolder> that) const {
@@ -184,7 +175,7 @@ trait TIMEDURATION_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		Layout sub (CREF<Layout> that) const override {
-			return sub (keep[TYPEAS<CREF<ImplHolder>>::expr] (that.mThis.self)) ;
+			return sub (keep[TYPE<CREF<ImplHolder>>::expr] (that.mThis.self)) ;
 		}
 
 		Layout sub (CREF<ImplHolder> that) const {
@@ -245,12 +236,12 @@ trait ATOMIC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			return mThis->mAtomic->load (std::memory_order::memory_order_relaxed) ;
 		}
 
-		void store (CREF<VAL> obj) const override {
-			return mThis->mAtomic->store (obj ,std::memory_order::memory_order_relaxed) ;
+		void store (CREF<VAL> a) const override {
+			return mThis->mAtomic->store (a ,std::memory_order::memory_order_relaxed) ;
 		}
 
-		VAL exchange (CREF<VAL> obj) const override {
-			return mThis->mAtomic->exchange (obj ,std::memory_order::memory_order_relaxed) ;
+		VAL exchange (CREF<VAL> a) const override {
+			return mThis->mAtomic->exchange (a ,std::memory_order::memory_order_relaxed) ;
 		}
 
 		void replace (CREF<VAL> expect ,CREF<VAL> next) const override {
@@ -266,14 +257,14 @@ trait ATOMIC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			return FALSE ;
 		}
 
-		VAL add_with (CREF<VAL> obj) const override {
-			const auto r1x = mThis->mAtomic->fetch_add (obj ,std::memory_order::memory_order_relaxed) ;
-			return r1x + obj ;
+		VAL add_with (CREF<VAL> a) const override {
+			const auto r1x = mThis->mAtomic->fetch_add (a ,std::memory_order::memory_order_relaxed) ;
+			return r1x + a ;
 		}
 
-		VAL sub_with (CREF<VAL> obj) const override {
-			const auto r1x = mThis->mAtomic->fetch_sub (obj ,std::memory_order::memory_order_relaxed) ;
-			return r1x - obj ;
+		VAL sub_with (CREF<VAL> a) const override {
+			const auto r1x = mThis->mAtomic->fetch_sub (a ,std::memory_order::memory_order_relaxed) ;
+			return r1x - a ;
 		}
 	} ;
 } ;
@@ -414,7 +405,7 @@ template <>
 exports auto UNIQUELOCK_HELP<DEPEND ,ALWAYS>::FakeImplHolder::create () ->Box<FakeHolder> {
 	using R1X = typename UNIQUELOCK_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	Box<FakeHolder> ret ;
-	ret.acquire (TYPEAS<R1X>::expr) ;
+	ret.remake (TYPE<R1X>::expr) ;
 	return move (ret) ;
 }
 
@@ -498,7 +489,7 @@ template <>
 exports auto SHAREDLOCK_HELP<DEPEND ,ALWAYS>::FakeImplHolder::create () ->Box<FakeHolder> {
 	using R1X = typename SHAREDLOCK_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	Box<FakeHolder> ret ;
-	ret.acquire (TYPEAS<R1X>::expr) ;
+	ret.remake (TYPE<R1X>::expr) ;
 	return move (ret) ;
 }
 
@@ -583,34 +574,25 @@ exports auto THREAD_HELP<DEPEND ,ALWAYS>::Holder::create () ->VRef<Holder> {
 	return VRef<R1X>::make () ;
 }
 
-template <class...>
-trait FUNCTION_string_cvt_locale_HELP ;
-
-template <class DEPEND>
-trait FUNCTION_string_cvt_locale_HELP<DEPEND ,REQUIRE<MACRO_CONFIG_STRA<DEPEND>>> {
 #ifdef __CSC_CONFIG_STRA__
-	struct FUNCTION_string_cvt_locale {
-		inline String<STR> operator() (CREF<String<STRA>> obj) const {
-			return obj ;
-		}
-	} ;
-#endif
+struct FUNCTION_string_cvt_locale {
+	inline String<STR> operator() (CREF<String<STRA>> a) const {
+		return a ;
+	}
 } ;
+#endif
 
-template <class DEPEND>
-trait FUNCTION_string_cvt_locale_HELP<DEPEND ,REQUIRE<MACRO_CONFIG_STRW<DEPEND>>> {
 #ifdef __CSC_CONFIG_STRW__
-	struct FUNCTION_string_cvt_locale {
-		inline String<STR> operator() (CREF<String<STRA>> obj) const {
-			return StringProc::string_cvt_w_from_ansi (obj) ;
-		}
+struct FUNCTION_string_cvt_locale {
+	inline String<STR> operator() (CREF<String<STRA>> a) const {
+		return StringProc::string_cvt_w_from_ansi (a) ;
+	}
 
-		inline String<STRA> operator() (CREF<String<STR>> obj) const {
-			return StringProc::string_cvt_ansi_from_w (obj) ;
-		}
-	} ;
-#endif
+	inline String<STRA> operator() (CREF<String<STR>> a) const {
+		return StringProc::string_cvt_ansi_from_w (a) ;
+	}
 } ;
+#endif
 
 template <class DEPEND>
 trait SYSTEM_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
@@ -655,7 +637,7 @@ trait SYSTEM_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		FLAG execute (CREF<String<STR>> command) const override {
 			if (command.empty ())
 				return NONE ;
-			const auto r1x = string_cvt[TYPEAS<STRA ,STR>::expr] (command) ;
+			const auto r1x = string_cvt[TYPE<STRA ,STR>::expr] (command) ;
 			const auto r2x = std::system ((&r1x[0])) ;
 			return FLAG (r2x) ;
 		}
@@ -707,7 +689,7 @@ trait RANDOM_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		void random_byte (VREF<Array<DATA>> result) const override {
-			for (auto &&i : result)
+			for (auto&& i : result)
 				i = random_byte () ;
 		}
 
@@ -719,7 +701,7 @@ trait RANDOM_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		void random_value (CREF<INDEX> lb ,CREF<INDEX> rb ,VREF<Array<INDEX>> result) const override {
-			for (auto &&i : result)
+			for (auto&& i : result)
 				i = random_value (lb ,rb) ;
 		}
 
@@ -732,7 +714,7 @@ trait RANDOM_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		void random_shuffle (CREF<LENGTH> count ,VREF<Array<INDEX>> result) const override {
 			assert (count >= 0) ;
 			const auto r1x = result.size () - 1 ;
-			const auto r2x = vmin (count ,r1x) ;
+			const auto r2x = operator_min (count ,r1x) ;
 			INDEX ix = 0 ;
 			while (TRUE) {
 				if (ix >= r2x)
@@ -757,13 +739,13 @@ trait RANDOM_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				if (count >= result.size () / 2)
 					discard ;
 				const auto r1x = random_shuffle (count ,result.size ()) ;
-				for (auto &&i : iter (0 ,count))
+				for (auto&& i : iter (0 ,count))
 					result.add (r1x[i]) ;
 			}
 			if ifswitch (act) {
 				const auto r2x = result.size () - count ;
 				const auto r3x = random_shuffle (r2x ,result.size ()) ;
-				for (auto &&i : iter (0 ,count))
+				for (auto&& i : iter (0 ,count))
 					result.add (r3x[r2x + i]) ;
 			}
 		}
@@ -777,7 +759,7 @@ trait RANDOM_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		void random_draw (CREF<FLT64> possibility ,VREF<Array<BOOL>> result) const override {
-			for (auto &&i : result)
+			for (auto&& i : result)
 				i = random_draw (possibility) ;
 		}
 	} ;

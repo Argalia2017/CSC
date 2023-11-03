@@ -39,92 +39,80 @@ SOFTWARE.
 #include "csc_begin.h"
 
 namespace CSC {
-template <class...>
-trait FUNCTION_system_string_cvt_HELP ;
-
-template <class DEPEND>
-trait FUNCTION_system_string_cvt_HELP<DEPEND ,REQUIRE<MACRO_COMPILER_MSVC<DEPEND>>> {
 #ifdef __CSC_COMPILER_MSVC__
-	struct FUNCTION_system_string_cvt {
-		inline String<STRA> operator() (CREF<String<STRW>> obj) const {
-			assert (ifnot (obj.empty ())) ;
-			String<STRA> ret = String<STRA> (obj.length () * 2 + 1) ;
-			const auto r1x = system_page () ;
-			const auto r2x = _wcstombs_s_l (NULL ,(&ret[0]) ,VAL32 (ret.size ()) ,(&obj[0]) ,_TRUNCATE ,r1x.self) ;
-			assume (r2x == 0) ;
-			return move (ret) ;
-		}
+struct FUNCTION_system_string_cvt {
+	inline String<STRA> operator() (CREF<String<STRW>> a) const {
+		assert (ifnot (a.empty ())) ;
+		String<STRA> ret = String<STRA> (a.length () * 2 + 1) ;
+		const auto r1x = system_page () ;
+		const auto r2x = _wcstombs_s_l (NULL ,(&ret[0]) ,VAL32 (ret.size ()) ,(&a[0]) ,_TRUNCATE ,r1x.self) ;
+		assume (r2x == 0) ;
+		return move (ret) ;
+	}
 
-		inline String<STRW> operator() (CREF<String<STRA>> obj) const {
-			assert (ifnot (obj.empty ())) ;
-			const auto r1x = system_page () ;
-			String<STRW> ret = String<STRW> (obj.length () + 1) ;
-			const auto r2x = _mbstowcs_s_l (NULL ,(&ret[0]) ,VAL32 (ret.size ()) ,(&obj[0]) ,_TRUNCATE ,r1x.self) ;
-			assume (r2x == 0) ;
-			return move (ret) ;
-		}
+	inline String<STRW> operator() (CREF<String<STRA>> a) const {
+		assert (ifnot (a.empty ())) ;
+		const auto r1x = system_page () ;
+		String<STRW> ret = String<STRW> (a.length () + 1) ;
+		const auto r2x = _mbstowcs_s_l (NULL ,(&ret[0]) ,VAL32 (ret.size ()) ,(&a[0]) ,_TRUNCATE ,r1x.self) ;
+		assume (r2x == 0) ;
+		return move (ret) ;
+	}
 
-		CRef<UniqueRef<_locale_t>> system_page () const {
-			return CRef<UniqueRef<_locale_t>>::reference (memorize ([&] () {
-				return UniqueRef<_locale_t> ([&] (VREF<_locale_t> me) {
-					me = _create_locale (LC_CTYPE ,"") ;
-					assume (me != NULL) ;
-				} ,[] (VREF<_locale_t> me) {
-					_free_locale (me) ;
-				}) ;
-			})) ;
-		}
-	} ;
-#endif
+	CRef<UniqueRef<_locale_t>> system_page () const {
+		return CRef<UniqueRef<_locale_t>>::reference (memorize ([&] () {
+			return UniqueRef<_locale_t> ([&] (VREF<_locale_t> me) {
+				me = _create_locale (LC_CTYPE ,"") ;
+				assume (me != NULL) ;
+			} ,[] (VREF<_locale_t> me) {
+				_free_locale (me) ;
+			}) ;
+		})) ;
+	}
 } ;
+#endif
 
-template <class DEPEND>
-trait FUNCTION_system_string_cvt_HELP<DEPEND ,REQUIRE<MACRO_COMPILER_GNUC<DEPEND>>> {
 #ifdef __CSC_COMPILER_GNUC__
-	struct FUNCTION_system_string_cvt {
-		inline String<STRA> operator() (CREF<String<STRW>> obj) const {
-			assert (ifnot (obj.empty ())) ;
-			String<STRA> ret = String<STRA> (obj.length () * 2 + 1) ;
-			const auto r1x = std::wcstombs ((&ret[0]) ,(&obj[0]) ,VAL32 (ret.size ())) ;
-			assume (r1x == 0) ;
-			return move (ret) ;
-		}
+struct FUNCTION_system_string_cvt {
+	inline String<STRA> operator() (CREF<String<STRW>> a) const {
+		assert (ifnot (a.empty ())) ;
+		String<STRA> ret = String<STRA> (a.length () * 2 + 1) ;
+		const auto r1x = std::wcstombs ((&ret[0]) ,(&a[0]) ,VAL32 (ret.size ())) ;
+		assume (r1x == 0) ;
+		return move (ret) ;
+	}
 
-		inline String<STRW> operator() (CREF<String<STRA>> obj) const {
-			assert (ifnot (obj.empty ())) ;
-			String<STRW> ret = String<STRW> (obj.length () + 1) ;
-			const auto r1x = std::mbstowcs ((&ret[0]) ,(&obj[0]) ,VAL32 (ret.size ())) ;
-			assume (r1x == 0) ;
-			return move (ret) ;
-		}
-	} ;
-#endif
+	inline String<STRW> operator() (CREF<String<STRA>> a) const {
+		assert (ifnot (a.empty ())) ;
+		String<STRW> ret = String<STRW> (a.length () + 1) ;
+		const auto r1x = std::mbstowcs ((&ret[0]) ,(&a[0]) ,VAL32 (ret.size ())) ;
+		assume (r1x == 0) ;
+		return move (ret) ;
+	}
 } ;
+#endif
 
-template <class DEPEND>
-trait FUNCTION_system_string_cvt_HELP<DEPEND ,REQUIRE<MACRO_COMPILER_CLANG<DEPEND>>> {
 #ifdef __CSC_COMPILER_CLANG__
-	struct FUNCTION_system_string_cvt {
-		inline String<STRA> operator() (CREF<String<STRW>> obj) const {
-			assert (ifnot (obj.empty ())) ;
-			String<STRA> ret = String<STRA> (obj.length () * 2 + 1) ;
-			auto rax = std::size_t (0) ;
-			const auto r1x = wcstombs_s ((&rax) ,(&ret[0]) ,VAL32 (ret.size ()) ,(&obj[0]) ,_TRUNCATE) ;
-			assume (r1x == 0) ;
-			return move (ret) ;
-		}
+struct FUNCTION_system_string_cvt {
+	inline String<STRA> operator() (CREF<String<STRW>> a) const {
+		assert (ifnot (a.empty ())) ;
+		String<STRA> ret = String<STRA> (a.length () * 2 + 1) ;
+		auto rax = std::size_t (0) ;
+		const auto r1x = wcstombs_s ((&rax) ,(&ret[0]) ,VAL32 (ret.size ()) ,(&a[0]) ,_TRUNCATE) ;
+		assume (r1x == 0) ;
+		return move (ret) ;
+	}
 
-		inline String<STRW> operator() (CREF<String<STRA>> obj) const {
-			assert (ifnot (obj.empty ())) ;
-			String<STRW> ret = String<STRW> (obj.length () + 1) ;
-			auto rax = std::size_t (0) ;
-			const auto r1x = mbstowcs_s ((&rax) ,(&ret[0]) ,VAL32 (ret.size ()) ,(&obj[0]) ,_TRUNCATE) ;
-			assume (r1x == 0) ;
-			return move (ret) ;
-		}
-	} ;
-#endif
+	inline String<STRW> operator() (CREF<String<STRA>> a) const {
+		assert (ifnot (a.empty ())) ;
+		String<STRW> ret = String<STRW> (a.length () + 1) ;
+		auto rax = std::size_t (0) ;
+		const auto r1x = mbstowcs_s ((&rax) ,(&ret[0]) ,VAL32 (ret.size ()) ,(&a[0]) ,_TRUNCATE) ;
+		assume (r1x == 0) ;
+		return move (ret) ;
+	}
 } ;
+#endif
 
 template <class...>
 trait STRINGPROC_GBKSCACHE_HELP ;
@@ -139,20 +127,20 @@ trait STRINGPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			noop () ;
 		}
 
-		String<STRA> string_cvt_ansi_from_w (CREF<String<STRW>> obj) const override {
+		String<STRA> string_cvt_ansi_from_w (CREF<String<STRW>> a) const override {
 			String<STRA> ret ;
-			auto &&tmp = unsafe_cast[TYPEAS<String<STRUA>>::expr] (ret) ;
-			auto &&tmp_2 = unsafe_cast[TYPEAS<String<STRUW>>::expr] (obj) ;
-			tmp = string_cvt_ansi_from_w (tmp_2) ;
+			auto&& tmp1 = unsafe_cast[TYPE<String<STRUA>>::expr] (ret) ;
+			auto&& tmp2 = unsafe_cast[TYPE<String<STRUW>>::expr] (a) ;
+			tmp1 = string_cvt_ansi_from_w (tmp2) ;
 			unsafe_launder (ret) ;
 			return move (ret) ;
 		}
 
-		String<STRUA> string_cvt_ansi_from_w (CREF<String<STRUW>> obj) const {
-			String<STRUA> ret = String<STRUA> (obj.length ()) ;
+		String<STRUA> string_cvt_ansi_from_w (CREF<String<STRUW>> a) const {
+			String<STRUA> ret = String<STRUA> (a.length ()) ;
 			INDEX ix = 0 ;
-			for (auto &&i : obj) {
-				assume (vbetween (INDEX (i) ,0 ,128)) ;
+			for (auto&& i : a) {
+				assume (operator_between (INDEX (i) ,0 ,128)) ;
 				ret[ix] = STRUA (i) ;
 				ix++ ;
 			}
@@ -160,20 +148,20 @@ trait STRINGPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			return move (ret) ;
 		}
 
-		String<STRW> string_cvt_w_from_ansi (CREF<String<STRA>> obj) const override {
+		String<STRW> string_cvt_w_from_ansi (CREF<String<STRA>> a) const override {
 			String<STRW> ret ;
-			auto &&tmp = unsafe_cast[TYPEAS<String<STRUW>>::expr] (ret) ;
-			auto &&tmp_2 = unsafe_cast[TYPEAS<String<STRUA>>::expr] (obj) ;
-			tmp = string_cvt_w_from_ansi (tmp_2) ;
+			auto&& tmp1 = unsafe_cast[TYPE<String<STRUW>>::expr] (ret) ;
+			auto&& tmp2 = unsafe_cast[TYPE<String<STRUA>>::expr] (a) ;
+			tmp1 = string_cvt_w_from_ansi (tmp2) ;
 			unsafe_launder (ret) ;
 			return move (ret) ;
 		}
 
-		String<STRUW> string_cvt_w_from_ansi (CREF<String<STRUA>> obj) const {
-			String<STRUW> ret = String<STRUW> (obj.length ()) ;
+		String<STRUW> string_cvt_w_from_ansi (CREF<String<STRUA>> a) const {
+			String<STRUW> ret = String<STRUW> (a.length ()) ;
 			INDEX ix = 0 ;
-			for (auto &&i : obj) {
-				assume (vbetween (INDEX (i) ,0 ,128)) ;
+			for (auto&& i : a) {
+				assume (operator_between (INDEX (i) ,0 ,128)) ;
 				ret[ix] = STRUW (i) ;
 				ix++ ;
 			}
@@ -181,20 +169,20 @@ trait STRINGPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			return move (ret) ;
 		}
 
-		String<STRA> string_cvt_gbks_from_w (CREF<String<STRW>> obj) const override {
+		String<STRA> string_cvt_gbks_from_w (CREF<String<STRW>> a) const override {
 			String<STRA> ret ;
-			auto &&tmp = unsafe_cast[TYPEAS<String<STRUA>>::expr] (ret) ;
-			auto &&tmp_2 = unsafe_cast[TYPEAS<String<STRUW>>::expr] (obj) ;
-			tmp = string_cvt_gbks_from_w (tmp_2) ;
+			auto&& tmp1 = unsafe_cast[TYPE<String<STRUA>>::expr] (ret) ;
+			auto&& tmp2 = unsafe_cast[TYPE<String<STRUW>>::expr] (a) ;
+			tmp1 = string_cvt_gbks_from_w (tmp2) ;
 			unsafe_launder (ret) ;
 			return move (ret) ;
 		}
 
-		String<STRUA> string_cvt_gbks_from_w (CREF<String<STRUW>> obj) const {
+		String<STRUA> string_cvt_gbks_from_w (CREF<String<STRUW>> a) const {
 			using R1X = typename KILL<STRINGPROC_GBKSCACHE_HELP<DEPEND ,ALWAYS> ,ALWAYS>::GBKSCache ;
-			String<STRUA> ret = String<STRUA> (obj.length () * 2) ;
+			String<STRUA> ret = String<STRUA> (a.length () * 2) ;
 			INDEX ix = 0 ;
-			for (auto &&i : obj) {
+			for (auto&& i : a) {
 				const auto r1x = R1X::instance ().find_utfs (STRUW (i)) ;
 				auto act = TRUE ;
 				if ifswitch (act) {
@@ -224,22 +212,22 @@ trait STRINGPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			return move (ret) ;
 		}
 
-		String<STRW> string_cvt_w_from_gbks (CREF<String<STRA>> obj) const override {
+		String<STRW> string_cvt_w_from_gbks (CREF<String<STRA>> a) const override {
 			String<STRW> ret ;
-			auto &&tmp = unsafe_cast[TYPEAS<String<STRUW>>::expr] (ret) ;
-			auto &&tmp_2 = unsafe_cast[TYPEAS<String<STRUA>>::expr] (obj) ;
-			tmp = string_cvt_w_from_gbks (tmp_2) ;
+			auto&& tmp1 = unsafe_cast[TYPE<String<STRUW>>::expr] (ret) ;
+			auto&& tmp2 = unsafe_cast[TYPE<String<STRUA>>::expr] (a) ;
+			tmp1 = string_cvt_w_from_gbks (tmp2) ;
 			unsafe_launder (ret) ;
 			return move (ret) ;
 		}
 
-		String<STRUW> string_cvt_w_from_gbks (CREF<String<STRUA>> obj) const {
+		String<STRUW> string_cvt_w_from_gbks (CREF<String<STRUA>> a) const {
 			using R1X = typename KILL<STRINGPROC_GBKSCACHE_HELP<DEPEND ,ALWAYS> ,DEPEND>::GBKSCache ;
-			String<STRUW> ret = String<STRUW> (obj.length ()) ;
+			String<STRUW> ret = String<STRUW> (a.length ()) ;
 			INDEX ix = 0 ;
 			auto rax = ZERO ;
 			auto rbx = STRU32 () ;
-			for (auto &&i : obj) {
+			for (auto&& i : a) {
 				auto act = TRUE ;
 				if ifswitch (act) {
 					if ifnot (rax == 0)
@@ -277,32 +265,32 @@ trait STRINGPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			return move (ret) ;
 		}
 
-		String<STRA> string_cvt_a_from_w (CREF<String<STRW>> obj) const override {
+		String<STRA> string_cvt_a_from_w (CREF<String<STRW>> a) const override {
 			const auto r1x = system_locale () ;
 			if (r1x == slice ("C"))
-				return string_cvt_ansi_from_w (obj) ;
+				return string_cvt_ansi_from_w (a) ;
 			const auto r2x = r1x.length () ;
 			if (r2x >= 6)
 				if (r1x.segment (0 ,6) == slice ("zh_CN."))
-					return string_cvt_gbks_from_w (obj) ;
+					return string_cvt_gbks_from_w (a) ;
 			if (r2x >= 4)
 				if (r1x.segment (r2x - 4 ,r2x) == slice (".936"))
-					return string_cvt_gbks_from_w (obj) ;
-			return system_string_cvt (obj) ;
+					return string_cvt_gbks_from_w (a) ;
+			return system_string_cvt (a) ;
 		}
 
-		String<STRW> string_cvt_w_from_a (CREF<String<STRA>> obj) const override {
+		String<STRW> string_cvt_w_from_a (CREF<String<STRA>> a) const override {
 			const auto r1x = system_locale () ;
 			if (r1x == slice ("C"))
-				return string_cvt_w_from_ansi (obj) ;
+				return string_cvt_w_from_ansi (a) ;
 			const auto r2x = r1x.length () ;
 			if (r2x >= 6)
 				if (r1x.segment (0 ,6) == slice ("zh_CN."))
-					return string_cvt_w_from_gbks (obj) ;
+					return string_cvt_w_from_gbks (a) ;
 			if (r2x >= 4)
 				if (r1x.segment (r2x - 4 ,r2x) == slice (".936"))
-					return string_cvt_w_from_gbks (obj) ;
-			return system_string_cvt (obj) ;
+					return string_cvt_w_from_gbks (a) ;
+			return system_string_cvt (a) ;
 		}
 
 		String<STR> system_locale () const {
@@ -312,28 +300,28 @@ trait STRINGPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			return BufferProc<STR>::buf_slice (unsafe_array (r1x[0]) ,64) ;
 		}
 
-		String<STRA> system_string_cvt (CREF<String<STRW>> obj) const {
+		String<STRA> system_string_cvt (CREF<String<STRW>> a) const {
 			using R1X = typename FUNCTION_system_string_cvt_HELP<DEPEND ,ALWAYS>::FUNCTION_system_string_cvt ;
-			if (obj.empty ())
+			if (a.empty ())
 				return String<STRA> () ;
 			const auto r1x = R1X () ;
-			return r1x (obj) ;
+			return r1x (a) ;
 		}
 
-		String<STRW> system_string_cvt (CREF<String<STRA>> obj) const {
+		String<STRW> system_string_cvt (CREF<String<STRA>> a) const {
 			using R1X = typename FUNCTION_system_string_cvt_HELP<DEPEND ,ALWAYS>::FUNCTION_system_string_cvt ;
-			if (obj.empty ())
+			if (a.empty ())
 				return String<STRW> () ;
 			const auto r1x = R1X () ;
-			return r1x (obj) ;
+			return r1x (a) ;
 		}
 
-		String<STRU8> string_cvt_u8_from_u16 (CREF<String<STRU16>> obj) const override {
-			String<STRU8> ret = String<STRU8> (obj.length () * 3) ;
+		String<STRU8> string_cvt_u8_from_u16 (CREF<String<STRU16>> a) const override {
+			String<STRU8> ret = String<STRU8> (a.length () * 3) ;
 			INDEX ix = 0 ;
 			auto rax = ZERO ;
 			auto rbx = STRU32 () ;
-			for (auto &&i : obj) {
+			for (auto&& i : a) {
 				if (rax == NONE)
 					continue ;
 				auto act = TRUE ;
@@ -408,7 +396,7 @@ trait STRINGPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			return move (ret) ;
 		}
 
-		String<STRU8> string_cvt_u8_from_u32 (CREF<String<STRU32>> obj) const override {
+		String<STRU8> string_cvt_u8_from_u32 (CREF<String<STRU32>> a) const override {
 			/*
 			*	1 bytes [0,0X7F] 0xxxxxxx
 			*	2 bytes [0x80,0X7FF] 110xxxxx 10xxxxxx
@@ -417,10 +405,10 @@ trait STRINGPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			*	5 bytes [0x200000,0X3FFFFFF] 111110xx 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx
 			*	6 bytes [0x4000000,0X7FFFFFFF] 1111110x 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx
 			*/
-			String<STRU8> ret = String<STRU8> (obj.length () * 6) ;
+			String<STRU8> ret = String<STRU8> (a.length () * 6) ;
 			INDEX ix = 0 ;
 			auto rax = ZERO ;
-			for (auto &&i : obj) {
+			for (auto&& i : a) {
 				if (rax == NONE)
 					continue ;
 				auto act = TRUE ;
@@ -511,12 +499,12 @@ trait STRINGPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			return move (ret) ;
 		}
 
-		String<STRU16> string_cvt_u16_from_u8 (CREF<String<STRU8>> obj) const override {
-			String<STRU16> ret = String<STRU16> (obj.length ()) ;
+		String<STRU16> string_cvt_u16_from_u8 (CREF<String<STRU8>> a) const override {
+			String<STRU16> ret = String<STRU16> (a.length ()) ;
 			INDEX ix = 0 ;
 			auto rax = ZERO ;
 			auto rbx = STRU32 () ;
-			for (auto &&i : obj) {
+			for (auto&& i : a) {
 				if (rax == NONE)
 					continue ;
 				if ifswitch (TRUE) {
@@ -578,7 +566,7 @@ trait STRINGPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 						rax = 10 ;
 					}
 					if ifswitch (act) {
-						if ifnot (vbetween (rax ,2 ,6))
+						if ifnot (operator_between (rax ,2 ,6))
 							discard ;
 						if ifnot (i <= STRU8 (0XBF))
 							discard ;
@@ -634,15 +622,15 @@ trait STRINGPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			return move (ret) ;
 		}
 
-		String<STRU16> string_cvt_u16_from_u32 (CREF<String<STRU32>> obj) const override {
+		String<STRU16> string_cvt_u16_from_u32 (CREF<String<STRU32>> a) const override {
 			/*
 			*	utf16 surrogate pairs [D800,DBFF] 110110xx xxxxxxxx [DC00,DFFF] 110111xx xxxxxxxx
 			*	utf16-utf32 surrogate pairs [0X10000,0X10FFFF]-[0,0XFFFFF] 0000xxxx xxxxxxxx xxxxxxxx
 			*/
-			String<STRU16> ret = String<STRU16> (obj.length () * 2) ;
+			String<STRU16> ret = String<STRU16> (a.length () * 2) ;
 			INDEX ix = 0 ;
 			auto rax = ZERO ;
-			for (auto &&i : obj) {
+			for (auto&& i : a) {
 				if (rax == NONE)
 					continue ;
 				auto act = TRUE ;
@@ -681,7 +669,7 @@ trait STRINGPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			return move (ret) ;
 		}
 
-		String<STRU32> string_cvt_u32_from_u8 (CREF<String<STRU8>> obj) const override {
+		String<STRU32> string_cvt_u32_from_u8 (CREF<String<STRU8>> a) const override {
 			/*
 			*	1 bytes [0,0X7F] 0xxxxxxx
 			*	2 bytes [0x80,0X7FF] 110xxxxx 10xxxxxx
@@ -690,11 +678,11 @@ trait STRINGPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			*	5 bytes [0x200000,0X3FFFFFF] 111110xx 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx
 			*	6 bytes [0x4000000,0X7FFFFFFF] 1111110x 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx
 			*/
-			String<STRU32> ret = String<STRU32> (obj.length ()) ;
+			String<STRU32> ret = String<STRU32> (a.length ()) ;
 			INDEX ix = 0 ;
 			auto rax = ZERO ;
 			auto rbx = STRU32 () ;
-			for (auto &&i : obj) {
+			for (auto&& i : a) {
 				if (rax == NONE)
 					continue ;
 				auto act = TRUE ;
@@ -757,7 +745,7 @@ trait STRINGPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 					rax = 0 ;
 				}
 				if ifswitch (act) {
-					if ifnot (vbetween (rax ,2 ,6))
+					if ifnot (operator_between (rax ,2 ,6))
 						discard ;
 					if ifnot (i <= STRU8 (0XBF))
 						discard ;
@@ -779,16 +767,16 @@ trait STRINGPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			return move (ret) ;
 		}
 
-		String<STRU32> string_cvt_u32_from_u16 (CREF<String<STRU16>> obj) const override {
+		String<STRU32> string_cvt_u32_from_u16 (CREF<String<STRU16>> a) const override {
 			/*
 			*	utf16 surrogate pairs [D800,DBFF] 110110xx xxxxxxxx [DC00,DFFF] 110111xx xxxxxxxx
 			*	utf16-utf32 surrogate pairs [0X10000,0X10FFFF]-[0,0XFFFFF] 0000xxxx xxxxxxxx xxxxxxxx
 			*/
-			String<STRU32> ret = String<STRU32> (obj.length ()) ;
+			String<STRU32> ret = String<STRU32> (a.length ()) ;
 			INDEX ix = 0 ;
 			auto rax = ZERO ;
 			auto rbx = STRU32 () ;
-			for (auto &&i : obj) {
+			for (auto&& i : a) {
 				if (rax == NONE)
 					continue ;
 				auto act = TRUE ;
@@ -877,38 +865,38 @@ trait TEXTSTRING_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		void initialize (CREF<String<STRA>> text) override {
 			mThis = SharedRef<PACK>::make () ;
 			mThis->mTextA = text ;
-			mThis->mText = string_cvt[TYPEAS<STR ,STRA>::expr] (text) ;
+			mThis->mText = string_cvt[TYPE<STR ,STRA>::expr] (text) ;
 		}
 
 		void initialize (CREF<String<STRW>> text) override {
 			mThis = SharedRef<PACK>::make () ;
 			mThis->mTextW = text ;
-			mThis->mText = string_cvt[TYPEAS<STR ,STRW>::expr] (text) ;
+			mThis->mText = string_cvt[TYPE<STR ,STRW>::expr] (text) ;
 		}
 
 		void initialize (CREF<String<STRU8>> text) override {
 			mThis = SharedRef<PACK>::make () ;
 			mThis->mTextU8 = text ;
-			mThis->mText = string_cvt[TYPEAS<STR ,STRU8>::expr] (text) ;
+			mThis->mText = string_cvt[TYPE<STR ,STRU8>::expr] (text) ;
 		}
 
 		void initialize (CREF<String<STRU16>> text) override {
 			mThis = SharedRef<PACK>::make () ;
 			mThis->mTextU16 = text ;
-			mThis->mText = string_cvt[TYPEAS<STR ,STRU16>::expr] (text) ;
+			mThis->mText = string_cvt[TYPE<STR ,STRU16>::expr] (text) ;
 		}
 
 		void initialize (CREF<String<STRU32>> text) override {
 			mThis = SharedRef<PACK>::make () ;
 			mThis->mTextU32 = text ;
-			mThis->mText = string_cvt[TYPEAS<STR ,STRU32>::expr] (text) ;
+			mThis->mText = string_cvt[TYPE<STR ,STRU32>::expr] (text) ;
 		}
 
 		CREF<String<STRA>> pick (TYPEID<STRA> id) const leftvalue override {
 			if ifswitch (TRUE) {
 				if (mThis->mTextA.size () > 0)
 					discard ;
-				mThis->mTextA = string_cvt[TYPEAS<STRA ,STR>::expr] (mThis->mText) ;
+				mThis->mTextA = string_cvt[TYPE<STRA ,STR>::expr] (mThis->mText) ;
 			}
 			return mThis->mTextA ;
 		}
@@ -917,7 +905,7 @@ trait TEXTSTRING_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			if ifswitch (TRUE) {
 				if (mThis->mTextW.size () > 0)
 					discard ;
-				mThis->mTextW = string_cvt[TYPEAS<STRW ,STR>::expr] (mThis->mText) ;
+				mThis->mTextW = string_cvt[TYPE<STRW ,STR>::expr] (mThis->mText) ;
 			}
 			return mThis->mTextW ;
 		}
@@ -926,7 +914,7 @@ trait TEXTSTRING_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			if ifswitch (TRUE) {
 				if (mThis->mTextU8.size () > 0)
 					discard ;
-				mThis->mTextU8 = string_cvt[TYPEAS<STRU8 ,STR>::expr] (mThis->mText) ;
+				mThis->mTextU8 = string_cvt[TYPE<STRU8 ,STR>::expr] (mThis->mText) ;
 			}
 			return mThis->mTextU8 ;
 		}
@@ -935,7 +923,7 @@ trait TEXTSTRING_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			if ifswitch (TRUE) {
 				if (mThis->mTextU16.size () > 0)
 					discard ;
-				mThis->mTextU16 = string_cvt[TYPEAS<STRU16 ,STR>::expr] (mThis->mText) ;
+				mThis->mTextU16 = string_cvt[TYPE<STRU16 ,STR>::expr] (mThis->mText) ;
 			}
 			return mThis->mTextU16 ;
 		}
@@ -944,7 +932,7 @@ trait TEXTSTRING_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			if ifswitch (TRUE) {
 				if (mThis->mTextU32.size () > 0)
 					discard ;
-				mThis->mTextU32 = string_cvt[TYPEAS<STRU32 ,STR>::expr] (mThis->mText) ;
+				mThis->mTextU32 = string_cvt[TYPE<STRU32 ,STR>::expr] (mThis->mText) ;
 			}
 			return mThis->mTextU32 ;
 		}
@@ -971,30 +959,30 @@ trait ESCAPESTRING_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		void write_text (VREF<TextWriter<STRA>> writer) const override {
-			template_write_text (writer ,mText.pick (TYPEAS<STRA>::expr)) ;
+			template_write_text (writer ,mText.pick (TYPE<STRA>::expr)) ;
 		}
 
 		void write_text (VREF<TextWriter<STRW>> writer) const override {
-			template_write_text (writer ,mText.pick (TYPEAS<STRW>::expr)) ;
+			template_write_text (writer ,mText.pick (TYPE<STRW>::expr)) ;
 		}
 
 		void write_text (VREF<TextWriter<STRU8>> writer) const override {
-			template_write_text (writer ,mText.pick (TYPEAS<STRU8>::expr)) ;
+			template_write_text (writer ,mText.pick (TYPE<STRU8>::expr)) ;
 		}
 
 		void write_text (VREF<TextWriter<STRU16>> writer) const override {
-			template_write_text (writer ,mText.pick (TYPEAS<STRU16>::expr)) ;
+			template_write_text (writer ,mText.pick (TYPE<STRU16>::expr)) ;
 		}
 
 		void write_text (VREF<TextWriter<STRU32>> writer) const override {
-			template_write_text (writer ,mText.pick (TYPEAS<STRU32>::expr)) ;
+			template_write_text (writer ,mText.pick (TYPE<STRU32>::expr)) ;
 		}
 
 		template <class ARG1 ,class ARG2>
 		inline void template_write_text (VREF<ARG1> writer ,CREF<ARG2> text) const {
 			const auto r1x = writer.attribute () ;
 			writer << slice ("\"") ;
-			for (auto &&i : text) {
+			for (auto&& i : text) {
 				auto act = TRUE ;
 				if ifswitch (act) {
 					const auto r2x = r1x.escape_word_cast (i) ;
@@ -1022,7 +1010,7 @@ template <class DEPEND>
 trait COMMASTRING_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	using Holder = typename COMMASTRING_HELP<DEPEND ,ALWAYS>::Holder ;
 
-	using COUNTER_MAX_DEPTH = ENUMAS<VAL ,256> ;
+	using COUNTER_MAX_DEPTH = ENUM<256> ;
 
 	class ImplHolder implement Holder {
 	protected:
@@ -1045,23 +1033,23 @@ trait COMMASTRING_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		void write_text (VREF<TextWriter<STRA>> writer) override {
-			template_write_text (writer ,mGapText.pick (TYPEAS<STRA>::expr) ,mCommaText.pick (TYPEAS<STRA>::expr) ,mFirstText.pick (TYPEAS<STRA>::expr)) ;
+			template_write_text (writer ,mGapText.pick (TYPE<STRA>::expr) ,mCommaText.pick (TYPE<STRA>::expr) ,mFirstText.pick (TYPE<STRA>::expr)) ;
 		}
 
 		void write_text (VREF<TextWriter<STRW>> writer) override {
-			template_write_text (writer ,mGapText.pick (TYPEAS<STRW>::expr) ,mCommaText.pick (TYPEAS<STRW>::expr) ,mFirstText.pick (TYPEAS<STRW>::expr)) ;
+			template_write_text (writer ,mGapText.pick (TYPE<STRW>::expr) ,mCommaText.pick (TYPE<STRW>::expr) ,mFirstText.pick (TYPE<STRW>::expr)) ;
 		}
 
 		void write_text (VREF<TextWriter<STRU8>> writer) override {
-			template_write_text (writer ,mGapText.pick (TYPEAS<STRU8>::expr) ,mCommaText.pick (TYPEAS<STRU8>::expr) ,mFirstText.pick (TYPEAS<STRU8>::expr)) ;
+			template_write_text (writer ,mGapText.pick (TYPE<STRU8>::expr) ,mCommaText.pick (TYPE<STRU8>::expr) ,mFirstText.pick (TYPE<STRU8>::expr)) ;
 		}
 
 		void write_text (VREF<TextWriter<STRU16>> writer) override {
-			template_write_text (writer ,mGapText.pick (TYPEAS<STRU16>::expr) ,mCommaText.pick (TYPEAS<STRU16>::expr) ,mFirstText.pick (TYPEAS<STRU16>::expr)) ;
+			template_write_text (writer ,mGapText.pick (TYPE<STRU16>::expr) ,mCommaText.pick (TYPE<STRU16>::expr) ,mFirstText.pick (TYPE<STRU16>::expr)) ;
 		}
 
 		void write_text (VREF<TextWriter<STRU32>> writer) override {
-			template_write_text (writer ,mGapText.pick (TYPEAS<STRU32>::expr) ,mCommaText.pick (TYPEAS<STRU32>::expr) ,mFirstText.pick (TYPEAS<STRU32>::expr)) ;
+			template_write_text (writer ,mGapText.pick (TYPE<STRU32>::expr) ,mCommaText.pick (TYPE<STRU32>::expr) ,mFirstText.pick (TYPE<STRU32>::expr)) ;
 		}
 
 		template <class ARG1 ,class ARG2>
@@ -1074,7 +1062,7 @@ trait COMMASTRING_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				if ifswitch (TRUE) {
 					if (mFirst[ix])
 						discard ;
-					for (auto &&j : comma_text)
+					for (auto&& j : comma_text)
 						writer << j ;
 				}
 				mFirst[ix] = FALSE ;
@@ -1088,18 +1076,18 @@ trait COMMASTRING_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				mFirst[ix] = FALSE ;
 			}
 			if ifswitch (act) {
-				for (auto &&j : first_text)
+				for (auto&& j : first_text)
 					writer << j ;
 				if ifswitch (TRUE) {
 					if (mFirst[ix])
 						discard ;
-					for (auto &&j : comma_text)
+					for (auto&& j : comma_text)
 						writer << j ;
 				}
 				mFirst[ix] = FALSE ;
-				for (auto &&i : iter (0 ,mCounter)) {
+				for (auto&& i : iter (0 ,mCounter)) {
 					noop (i) ;
-					for (auto &&j : gap_text)
+					for (auto&& j : gap_text)
 						writer << j ;
 				}
 			}
@@ -1134,7 +1122,7 @@ template <class DEPEND>
 trait VALUESTRING_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	using Holder = typename VALUESTRING_HELP<DEPEND ,ALWAYS>::Holder ;
 
-	using COUNTER_MAX_DEPTH = ENUMAS<VAL ,256> ;
+	using COUNTER_MAX_DEPTH = ENUM<256> ;
 
 	class ImplHolder implement Holder {
 	protected:
@@ -1172,7 +1160,7 @@ trait VALUESTRING_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 
 		template <class ARG1>
 		inline void template_write_text (VREF<ARG1> writer) const {
-			for (auto &&i : iter (0 ,mSpace)) {
+			for (auto&& i : iter (0 ,mSpace)) {
 				noop (i) ;
 				writer << slice ("0") ;
 			}

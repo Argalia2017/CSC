@@ -162,16 +162,16 @@ trait XMLPARSER_HELP<DEPEND ,ALWAYS> {
 
 		Array<XmlParser> children () const {
 			Array<XmlParser> ret ;
-			auto &&tmp = unsafe_cast[TYPEAS<Array<Layout>>::expr] (ret) ;
-			tmp = mThis->children () ;
+			auto &&tmp1 = unsafe_cast[TYPE<Array<Layout>>::expr] (ret) ;
+			tmp1 = mThis->children () ;
 			unsafe_launder (ret) ;
 			return move (ret) ;
 		}
 
 		Array<XmlParser> children (CREF<LENGTH> size_) const {
 			Array<XmlParser> ret ;
-			auto &&tmp = unsafe_cast[TYPEAS<Array<Layout>>::expr] (ret) ;
-			tmp = mThis->children (size_) ;
+			auto &&tmp1 = unsafe_cast[TYPE<Array<Layout>>::expr] (ret) ;
+			tmp1 = mThis->children (size_) ;
 			unsafe_launder (ret) ;
 			return move (ret) ;
 		}
@@ -415,16 +415,16 @@ trait JSONPARSER_HELP<DEPEND ,ALWAYS> {
 
 		Array<JsonParser> children () const {
 			Array<JsonParser> ret ;
-			auto &&tmp = unsafe_cast[TYPEAS<Array<Layout>>::expr] (ret) ;
-			tmp = mThis->children () ;
+			auto &&tmp1 = unsafe_cast[TYPE<Array<Layout>>::expr] (ret) ;
+			tmp1 = mThis->children () ;
 			unsafe_launder (ret) ;
 			return move (ret) ;
 		}
 
 		Array<JsonParser> children (CREF<LENGTH> size_) const {
 			Array<JsonParser> ret ;
-			auto &&tmp = unsafe_cast[TYPEAS<Array<Layout>>::expr] (ret) ;
-			tmp = mThis->children (size_) ;
+			auto &&tmp1 = unsafe_cast[TYPE<Array<Layout>>::expr] (ret) ;
+			tmp1 = mThis->children (size_) ;
 			unsafe_launder (ret) ;
 			return move (ret) ;
 		}

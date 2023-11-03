@@ -36,7 +36,7 @@ trait STRINGPROC_GBKSCACHE_HELP ;
 
 template <class DEPEND>
 trait STRINGPROC_GBKSCACHE_HELP<DEPEND ,ALWAYS> {
-	using SIZE = ENUMAS<VAL ,24481> ;
+	using SIZE = ENUM<24481> ;
 
 	class GBKSCache {
 	protected:

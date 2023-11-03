@@ -68,8 +68,8 @@ trait SYNTAXTREE_HELP<DEPEND ,ALWAYS> {
 		virtual void mark_as_iteration () = 0 ;
 		virtual void maybe (CREF<Clazz> clazz ,CREF<Binder> binder) = 0 ;
 		virtual CREF<AutoRef<>> stack (CREF<Clazz> clazz ,CREF<Binder> binder) leftvalue = 0 ;
-		virtual void once (RREF<Function<void>> actor) = 0 ;
-		virtual void then (RREF<Function<void>> actor) = 0 ;
+		virtual void once (RREF<Function<TYPE<>>> actor) = 0 ;
+		virtual void then (RREF<Function<TYPE<>>> actor) = 0 ;
 		virtual void undo (CREF<Clazz> clazz) = 0 ;
 		virtual CREF<AutoRef<>> later () leftvalue = 0 ;
 		virtual VREF<AutoRef<>> later (CREF<Clazz> clazz) leftvalue = 0 ;
@@ -121,11 +121,11 @@ trait SYNTAXTREE_HELP<DEPEND ,ALWAYS> {
 			return AutoRef<ARG1>::from (mThis->stack (r1x ,rax)).self ;
 		}
 
-		void once (RREF<Function<void>> actor) {
+		void once (RREF<Function<TYPE<>>> actor) {
 			return mThis->once (move (actor)) ;
 		}
 
-		void then (RREF<Function<void>> actor) {
+		void then (RREF<Function<TYPE<>>> actor) {
 			return mThis->then (move (actor)) ;
 		}
 
@@ -144,15 +144,15 @@ trait SYNTAXTREE_HELP<DEPEND ,ALWAYS> {
 		void later (TYPEID<ARG1> id ,XREF<ARG2> value_) {
 			using R1X = REMOVE_REF<ARG2> ;
 			const auto r1x = Clazz (id) ;
-			auto &&tmp = mThis->later (r1x) ;
-			auto rax = AutoRef<R1X> (move (tmp)) ;
+			auto &&tmp1 = mThis->later (r1x) ;
+			auto rax = AutoRef<R1X> (move (tmp1)) ;
 			if ifswitch (TRUE) {
 				if (rax.good ())
 					discard ;
 				rax = AutoRef<R1X>::make () ;
 			}
-			rax.self = forward[TYPEAS<ARG2>::expr] (value_) ;
-			tmp = move (rax) ;
+			rax.self = keep[TYPE<ARG2>::expr] (value_) ;
+			tmp1 = move (rax) ;
 		}
 
 		void play () {
@@ -165,18 +165,18 @@ trait SYNTAXTREE_HELP<DEPEND ,ALWAYS> {
 	} ;
 } ;
 
-template <class UNIT>
-trait SYNTAXTREE_IMPLBINDER_HELP<UNIT ,ALWAYS> {
+template <class A>
+trait SYNTAXTREE_IMPLBINDER_HELP<A ,ALWAYS> {
 	using Binder = typename SYNTAXTREE_HELP<DEPEND ,ALWAYS>::Binder ;
 	using SyntaxTree = typename SYNTAXTREE_HELP<DEPEND ,ALWAYS>::SyntaxTree ;
 
 	class ImplBinder implement Binder {
 	protected:
-		CRef<UNIT> mThat ;
+		CRef<A> mThat ;
 
 	public:
 		AutoRef<> friend_create (VREF<SyntaxTree> tree) const override {
-			return AutoRef<UNIT>::make (tree) ;
+			return AutoRef<A>::make (tree) ;
 		}
 	} ;
 } ;

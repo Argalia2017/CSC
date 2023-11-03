@@ -142,11 +142,11 @@ trait XMLPARSER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			if ifswitch (TRUE) {
 				if ifnot (good ())
 					discard ;
-				auto &&tmp = mHeap->mTree[mIndex].mArraySet ;
-				const auto r1x = IterArray<INDEX>::make (tmp.iter ()) ;
+				auto &&tmp1 = mHeap->mTree[mIndex].mArraySet ;
+				const auto r1x = IterArray<INDEX>::make (tmp1.iter ()) ;
 				ret = Array<Layout> (r1x.length ()) ;
 				for (auto &&i : ret.iter ())
-					ret[i] = factory (tmp.map_get (r1x[i])) ;
+					ret[i] = factory (tmp1.map_get (r1x[i])) ;
 			}
 			return move (ret) ;
 		}
@@ -156,12 +156,12 @@ trait XMLPARSER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			if ifswitch (TRUE) {
 				if ifnot (good ())
 					discard ;
-				auto &&tmp = mHeap->mTree[mIndex].mArraySet ;
-				const auto r1x = IterArray<INDEX>::make (tmp.iter ()) ;
+				auto &&tmp1 = mHeap->mTree[mIndex].mArraySet ;
+				const auto r1x = IterArray<INDEX>::make (tmp1.iter ()) ;
 				for (auto &&i : ret.iter ()) {
 					if (i >= r1x.size ())
 						break ;
-					ret[i] = factory (tmp.map_get (r1x[i])) ;
+					ret[i] = factory (tmp1.map_get (r1x[i])) ;
 				}
 			}
 			return move (ret) ;
@@ -178,7 +178,7 @@ trait XMLPARSER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		BOOL equal (CREF<Layout> that) const override {
-			return equal (keep[TYPEAS<CREF<ImplHolder>>::expr] (that.mThis.self)) ;
+			return equal (keep[TYPE<CREF<ImplHolder>>::expr] (that.mThis.self)) ;
 		}
 
 		BOOL equal (CREF<ImplHolder> that) const {
@@ -217,59 +217,59 @@ trait XMLPARSER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		BOOL fetch (CREF<BOOL> def) const override {
-			return template_fetch (def ,string_parse[TYPEAS<BOOL ,STRU8>::expr]) ;
+			return template_fetch (def ,string_parse[TYPE<BOOL ,STRU8>::expr]) ;
 		}
 
 		VAL32 fetch (CREF<VAL32> def) const override {
-			return template_fetch (def ,string_parse[TYPEAS<VAL32 ,STRU8>::expr]) ;
+			return template_fetch (def ,string_parse[TYPE<VAL32 ,STRU8>::expr]) ;
 		}
 
 		VAL64 fetch (CREF<VAL64> def) const override {
-			return template_fetch (def ,string_parse[TYPEAS<VAL64 ,STRU8>::expr]) ;
+			return template_fetch (def ,string_parse[TYPE<VAL64 ,STRU8>::expr]) ;
 		}
 
 		FLT32 fetch (CREF<FLT32> def) const override {
-			return template_fetch (def ,string_parse[TYPEAS<FLT32 ,STRU8>::expr]) ;
+			return template_fetch (def ,string_parse[TYPE<FLT32 ,STRU8>::expr]) ;
 		}
 
 		FLT64 fetch (CREF<FLT64> def) const override {
-			return template_fetch (def ,string_parse[TYPEAS<FLT64 ,STRU8>::expr]) ;
+			return template_fetch (def ,string_parse[TYPE<FLT64 ,STRU8>::expr]) ;
 		}
 
 		BYTE fetch (CREF<BYTE> def) const override {
-			return template_fetch (def ,string_parse[TYPEAS<BYTE ,STRU8>::expr]) ;
+			return template_fetch (def ,string_parse[TYPE<BYTE ,STRU8>::expr]) ;
 		}
 
 		WORD fetch (CREF<WORD> def) const override {
-			return template_fetch (def ,string_parse[TYPEAS<WORD ,STRU8>::expr]) ;
+			return template_fetch (def ,string_parse[TYPE<WORD ,STRU8>::expr]) ;
 		}
 
 		CHAR fetch (CREF<CHAR> def) const override {
-			return template_fetch (def ,string_parse[TYPEAS<CHAR ,STRU8>::expr]) ;
+			return template_fetch (def ,string_parse[TYPE<CHAR ,STRU8>::expr]) ;
 		}
 
 		DATA fetch (CREF<DATA> def) const override {
-			return template_fetch (def ,string_parse[TYPEAS<DATA ,STRU8>::expr]) ;
+			return template_fetch (def ,string_parse[TYPE<DATA ,STRU8>::expr]) ;
 		}
 
 		String<STRA> fetch (CREF<String<STRA>> def) const override {
-			return template_fetch (def ,string_cvt[TYPEAS<STRA ,STRU8>::expr]) ;
+			return template_fetch (def ,string_cvt[TYPE<STRA ,STRU8>::expr]) ;
 		}
 
 		String<STRW> fetch (CREF<String<STRW>> def) const override {
-			return template_fetch (def ,string_cvt[TYPEAS<STRW ,STRU8>::expr]) ;
+			return template_fetch (def ,string_cvt[TYPE<STRW ,STRU8>::expr]) ;
 		}
 
 		String<STRU8> fetch (CREF<String<STRU8>> def) const override {
-			return template_fetch (def ,string_cvt[TYPEAS<STRU8 ,STRU8>::expr]) ;
+			return template_fetch (def ,string_cvt[TYPE<STRU8 ,STRU8>::expr]) ;
 		}
 
 		String<STRU16> fetch (CREF<String<STRU16>> def) const override {
-			return template_fetch (def ,string_cvt[TYPEAS<STRU16 ,STRU8>::expr]) ;
+			return template_fetch (def ,string_cvt[TYPE<STRU16 ,STRU8>::expr]) ;
 		}
 
 		String<STRU32> fetch (CREF<String<STRU32>> def) const override {
-			return template_fetch (def ,string_cvt[TYPEAS<STRU32 ,STRU8>::expr]) ;
+			return template_fetch (def ,string_cvt[TYPE<STRU32 ,STRU8>::expr]) ;
 		}
 
 		template <class ARG1 ,class ARG2>
@@ -292,7 +292,7 @@ trait XMLPARSER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 	using NODE = typename XMLPARSER_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::NODE ;
 	using HEAP = typename XMLPARSER_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::HEAP ;
 
-	using COUNTER_MAX_DEPTH = ENUMAS<VAL ,256> ;
+	using COUNTER_MAX_DEPTH = ENUM<256> ;
 
 	class Serialization {
 	protected:
@@ -345,7 +345,7 @@ trait XMLPARSER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 			}
 			ret.mMember = Array<String<STRU8>> (mMember.length ()) ;
 			for (auto &&i : mMember.iter ()) {
-				assume (vbetween (i ,0 ,ret.mMember.length ())) ;
+				assume (operator_between (i ,0 ,ret.mMember.length ())) ;
 				ret.mMember[i] = move (mMember[i]) ;
 			}
 			return move (ret) ;
@@ -636,10 +636,10 @@ trait XMLPARSER_COMBINATION_HELP<DEPEND ,ALWAYS> {
 			mSequence = Array<XmlParser> (2) ;
 			mSequence[0] = first ;
 			mSequence[1] = second ;
-			mTypeString = string_cvt[TYPEAS<STRU8 ,STR>::expr] (slice ("type")) ;
-			mObjectClazzString = string_cvt[TYPEAS<STRU8 ,STR>::expr] (slice ("object")) ;
-			mArrayClazzString = string_cvt[TYPEAS<STRU8 ,STR>::expr] (slice ("array")) ;
-			mFinalClazzString = string_cvt[TYPEAS<STRU8 ,STR>::expr] (slice ("final")) ;
+			mTypeString = string_cvt[TYPE<STRU8 ,STR>::expr] (slice ("type")) ;
+			mObjectClazzString = string_cvt[TYPE<STRU8 ,STR>::expr] (slice ("object")) ;
+			mArrayClazzString = string_cvt[TYPE<STRU8 ,STR>::expr] (slice ("array")) ;
+			mFinalClazzString = string_cvt[TYPE<STRU8 ,STR>::expr] (slice ("final")) ;
 			mRoot = mTree.insert () ;
 			mTree[mRoot].mArraySet = mArraySet.share () ;
 			mTree[mRoot].mObjectSet = mObjectSet.share () ;
@@ -675,7 +675,7 @@ trait XMLPARSER_COMBINATION_HELP<DEPEND ,ALWAYS> {
 			}
 			ret.mMember = Array<String<STRU8>> (mMember.length ()) ;
 			for (auto &&i : mMember.iter ()) {
-				assume (vbetween (i ,0 ,ret.mMember.length ())) ;
+				assume (operator_between (i ,0 ,ret.mMember.length ())) ;
 				ret.mMember[i] = move (mMember[i]) ;
 			}
 			return move (ret) ;
@@ -690,14 +690,14 @@ trait XMLPARSER_COMBINATION_HELP<DEPEND ,ALWAYS> {
 		}
 
 		FLAG node_type (CREF<XmlParser> node) const {
-			auto &&tmp = node.member (mTypeString) ;
-			if (tmp == mObjectClazzString)
+			auto &&tmp1 = node.member (mTypeString) ;
+			if (tmp1 == mObjectClazzString)
 				return NODE_CLAZZ::Object ;
-			if (tmp == mArrayClazzString)
+			if (tmp1 == mArrayClazzString)
 				return NODE_CLAZZ::Array ;
-			if (tmp == mFinalClazzString)
+			if (tmp1 == mFinalClazzString)
 				return NODE_CLAZZ::Final ;
-			assume (tmp.empty ()) ;
+			assume (tmp1.empty ()) ;
 			return NODE_CLAZZ::Final ;
 		}
 
@@ -849,7 +849,7 @@ trait XMLPARSER_COMBINATION_HELP<DEPEND ,ALWAYS> {
 		}
 
 		CREF<ImplHolder> down_cast (CREF<Layout> that) const {
-			return keep[TYPEAS<CREF<ImplHolder>>::expr] (that.mThis.self) ;
+			return keep[TYPE<CREF<ImplHolder>>::expr] (that.mThis.self) ;
 		}
 
 		void update_merge_found_node (CREF<INDEX> curr) {
@@ -1027,11 +1027,11 @@ trait JSONPARSER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 					discard ;
 				if ifnot (array_type ())
 					discard ;
-				auto &&tmp = mHeap->mTree[mIndex].mArraySet ;
-				const auto r1x = IterArray<INDEX>::make (tmp.iter ()) ;
+				auto &&tmp1 = mHeap->mTree[mIndex].mArraySet ;
+				const auto r1x = IterArray<INDEX>::make (tmp1.iter ()) ;
 				ret = Array<Layout> (r1x.length ()) ;
 				for (auto &&i : ret.iter ())
-					ret[i] = factory (tmp.map_get (r1x[i])) ;
+					ret[i] = factory (tmp1.map_get (r1x[i])) ;
 			}
 			return move (ret) ;
 		}
@@ -1043,19 +1043,19 @@ trait JSONPARSER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 					discard ;
 				if ifnot (array_type ())
 					discard ;
-				auto &&tmp = mHeap->mTree[mIndex].mArraySet ;
-				const auto r1x = IterArray<INDEX>::make (tmp.iter ()) ;
+				auto &&tmp1 = mHeap->mTree[mIndex].mArraySet ;
+				const auto r1x = IterArray<INDEX>::make (tmp1.iter ()) ;
 				for (auto &&i : ret.iter ()) {
 					if (i >= r1x.size ())
 						break ;
-					ret[i] = factory (tmp.map_get (r1x[i])) ;
+					ret[i] = factory (tmp1.map_get (r1x[i])) ;
 				}
 			}
 			return move (ret) ;
 		}
 
 		BOOL equal (CREF<Layout> that) const override {
-			return equal (keep[TYPEAS<CREF<ImplHolder>>::expr] (that.mThis.self)) ;
+			return equal (keep[TYPE<CREF<ImplHolder>>::expr] (that.mThis.self)) ;
 		}
 
 		BOOL equal (CREF<ImplHolder> that) const {
@@ -1083,59 +1083,59 @@ trait JSONPARSER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		BOOL fetch (CREF<BOOL> def) const override {
-			return template_fetch (def ,string_parse[TYPEAS<BOOL ,STRU8>::expr]) ;
+			return template_fetch (def ,string_parse[TYPE<BOOL ,STRU8>::expr]) ;
 		}
 
 		VAL32 fetch (CREF<VAL32> def) const override {
-			return template_fetch (def ,string_parse[TYPEAS<VAL32 ,STRU8>::expr]) ;
+			return template_fetch (def ,string_parse[TYPE<VAL32 ,STRU8>::expr]) ;
 		}
 
 		VAL64 fetch (CREF<VAL64> def) const override {
-			return template_fetch (def ,string_parse[TYPEAS<VAL64 ,STRU8>::expr]) ;
+			return template_fetch (def ,string_parse[TYPE<VAL64 ,STRU8>::expr]) ;
 		}
 
 		FLT32 fetch (CREF<FLT32> def) const override {
-			return template_fetch (def ,string_parse[TYPEAS<FLT32 ,STRU8>::expr]) ;
+			return template_fetch (def ,string_parse[TYPE<FLT32 ,STRU8>::expr]) ;
 		}
 
 		FLT64 fetch (CREF<FLT64> def) const override {
-			return template_fetch (def ,string_parse[TYPEAS<FLT64 ,STRU8>::expr]) ;
+			return template_fetch (def ,string_parse[TYPE<FLT64 ,STRU8>::expr]) ;
 		}
 
 		BYTE fetch (CREF<BYTE> def) const override {
-			return template_fetch (def ,string_parse[TYPEAS<BYTE ,STRU8>::expr]) ;
+			return template_fetch (def ,string_parse[TYPE<BYTE ,STRU8>::expr]) ;
 		}
 
 		WORD fetch (CREF<WORD> def) const override {
-			return template_fetch (def ,string_parse[TYPEAS<WORD ,STRU8>::expr]) ;
+			return template_fetch (def ,string_parse[TYPE<WORD ,STRU8>::expr]) ;
 		}
 
 		CHAR fetch (CREF<CHAR> def) const override {
-			return template_fetch (def ,string_parse[TYPEAS<CHAR ,STRU8>::expr]) ;
+			return template_fetch (def ,string_parse[TYPE<CHAR ,STRU8>::expr]) ;
 		}
 
 		DATA fetch (CREF<DATA> def) const override {
-			return template_fetch (def ,string_parse[TYPEAS<DATA ,STRU8>::expr]) ;
+			return template_fetch (def ,string_parse[TYPE<DATA ,STRU8>::expr]) ;
 		}
 
 		String<STRA> fetch (CREF<String<STRA>> def) const override {
-			return template_fetch (def ,string_cvt[TYPEAS<STRA ,STRU8>::expr]) ;
+			return template_fetch (def ,string_cvt[TYPE<STRA ,STRU8>::expr]) ;
 		}
 
 		String<STRW> fetch (CREF<String<STRW>> def) const override {
-			return template_fetch (def ,string_cvt[TYPEAS<STRW ,STRU8>::expr]) ;
+			return template_fetch (def ,string_cvt[TYPE<STRW ,STRU8>::expr]) ;
 		}
 
 		String<STRU8> fetch (CREF<String<STRU8>> def) const override {
-			return template_fetch (def ,string_cvt[TYPEAS<STRU8 ,STRU8>::expr]) ;
+			return template_fetch (def ,string_cvt[TYPE<STRU8 ,STRU8>::expr]) ;
 		}
 
 		String<STRU16> fetch (CREF<String<STRU16>> def) const override {
-			return template_fetch (def ,string_cvt[TYPEAS<STRU16 ,STRU8>::expr]) ;
+			return template_fetch (def ,string_cvt[TYPE<STRU16 ,STRU8>::expr]) ;
 		}
 
 		String<STRU32> fetch (CREF<String<STRU32>> def) const override {
-			return template_fetch (def ,string_cvt[TYPEAS<STRU32 ,STRU8>::expr]) ;
+			return template_fetch (def ,string_cvt[TYPE<STRU32 ,STRU8>::expr]) ;
 		}
 
 		template <class ARG1 ,class ARG2>
@@ -1159,7 +1159,7 @@ trait JSONPARSER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 	using HEAP = typename JSONPARSER_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::HEAP ;
 	using NODE_CLAZZ = typename JSONPARSER_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::NODE_CLAZZ ;
 
-	using COUNTER_MAX_DEPTH = ENUMAS<VAL ,256> ;
+	using COUNTER_MAX_DEPTH = ENUM<256> ;
 
 	class Serialization {
 	protected:
@@ -1688,25 +1688,25 @@ trait PLYREADER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		void read (VREF<VAL32> item) override {
 			guide_jmp () ;
 			assume (mGuide.mPlyClazz == BODY_CLAZZ::Val32) ;
-			item = bitwise[TYPEAS<VAL32>::expr] (mPlyCHAR[mGuide.mPlyIndex]) ;
+			item = bitwise[TYPE<VAL32>::expr] (mPlyCHAR[mGuide.mPlyIndex]) ;
 		}
 
 		void read (VREF<VAL64> item) override {
 			guide_jmp () ;
 			assume (mGuide.mPlyClazz == BODY_CLAZZ::Val64) ;
-			item = bitwise[TYPEAS<VAL64>::expr] (mPlyDATA[mGuide.mPlyIndex]) ;
+			item = bitwise[TYPE<VAL64>::expr] (mPlyDATA[mGuide.mPlyIndex]) ;
 		}
 
 		void read (VREF<FLT32> item) override {
 			guide_jmp () ;
 			assume (mGuide.mPlyClazz == BODY_CLAZZ::Single) ;
-			item = bitwise[TYPEAS<FLT32>::expr] (mPlyCHAR[mGuide.mPlyIndex]) ;
+			item = bitwise[TYPE<FLT32>::expr] (mPlyCHAR[mGuide.mPlyIndex]) ;
 		}
 
 		void read (VREF<FLT64> item) override {
 			guide_jmp () ;
 			assume (mGuide.mPlyClazz == BODY_CLAZZ::Double) ;
-			item = bitwise[TYPEAS<FLT64>::expr] (mPlyDATA[mGuide.mPlyIndex]) ;
+			item = bitwise[TYPE<FLT64>::expr] (mPlyDATA[mGuide.mPlyIndex]) ;
 		}
 
 		void read (VREF<BYTE> item) override {
@@ -1885,7 +1885,7 @@ trait PLYREADER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 					mHeader.mElementList[ix].mName = mLastString ;
 					mReader >> SKIP_GAP_SPACE ;
 					mReader >> HINT_SCALAR >> mLastString ;
-					const auto r3x = string_parse[TYPEAS<INDEX ,STRU8>::expr] (mLastString) ;
+					const auto r3x = string_parse[TYPE<INDEX ,STRU8>::expr] (mLastString) ;
 					assume (r3x >= 0) ;
 					mHeader.mElementList[ix].mSize = r3x ;
 					mHeader.mElementList[ix].mPropertyList = ArrayList<ORDINARY> (r3x) ;
@@ -1966,7 +1966,7 @@ trait PLYREADER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 		}
 
 		void read_body_text () {
-			mTextReader = TextReader<STRU8> (RegBuffer<STRU8>::from (unsafe_deptr (mStream.self[0]) ,mHeader.mBodyOffset ,mStream->size ()).borrow ()) ;
+			mTextReader = TextReader<STRU8> (RegBuffer<STRU8>::from (unsafe_cast[TYPE<TEMP<void>>::expr] (mStream.self[0]) ,mHeader.mBodyOffset ,mStream->size ()).borrow ()) ;
 			mTextReader >> GAP ;
 			mBody = Array<Array<BODY>> (mHeader.mElementList.length ()) ;
 			for (auto &&i : mHeader.mElementList.iter ()) {
@@ -1996,8 +1996,8 @@ trait PLYREADER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 				mBody[element][property].mClazz = r1x ;
 				mBody[element][property].mLine[line].m1st = ix + 1 ;
 				mBody[element][property].mLine[line].m2nd = ix + 2 ;
-				const auto r2x = mTextReader.poll (TYPEAS<FLT32>::expr) ;
-				mPlyCHAR.add (bitwise[TYPEAS<CHAR>::expr] (r2x)) ;
+				const auto r2x = mTextReader.poll (TYPE<FLT32>::expr) ;
+				mPlyCHAR.add (bitwise[TYPE<CHAR>::expr] (r2x)) ;
 				mTextReader >> GAP ;
 			}
 			if ifswitch (act) {
@@ -2007,8 +2007,8 @@ trait PLYREADER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 				mBody[element][property].mClazz = r1x ;
 				mBody[element][property].mLine[line].m1st = ix + 1 ;
 				mBody[element][property].mLine[line].m2nd = ix + 2 ;
-				const auto r3x = mTextReader.poll (TYPEAS<FLT64>::expr) ;
-				mPlyDATA.add (bitwise[TYPEAS<DATA>::expr] (r3x)) ;
+				const auto r3x = mTextReader.poll (TYPE<FLT64>::expr) ;
+				mPlyDATA.add (bitwise[TYPE<DATA>::expr] (r3x)) ;
 				mTextReader >> GAP ;
 			}
 			if ifswitch (act) {
@@ -2018,7 +2018,7 @@ trait PLYREADER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 				mBody[element][property].mClazz = r1x ;
 				mBody[element][property].mLine[line].m1st = ix + 1 ;
 				mBody[element][property].mLine[line].m2nd = ix + 2 ;
-				const auto r4x = mTextReader.poll (TYPEAS<VAL32>::expr) ;
+				const auto r4x = mTextReader.poll (TYPE<VAL32>::expr) ;
 				mPlyBYTE.add (BYTE (r4x)) ;
 				mTextReader >> GAP ;
 			}
@@ -2029,7 +2029,7 @@ trait PLYREADER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 				mBody[element][property].mClazz = r1x ;
 				mBody[element][property].mLine[line].m1st = ix + 1 ;
 				mBody[element][property].mLine[line].m2nd = ix + 2 ;
-				const auto r5x = mTextReader.poll (TYPEAS<VAL32>::expr) ;
+				const auto r5x = mTextReader.poll (TYPE<VAL32>::expr) ;
 				mPlyWORD.add (WORD (r5x)) ;
 				mTextReader >> GAP ;
 			}
@@ -2040,8 +2040,8 @@ trait PLYREADER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 				mBody[element][property].mClazz = r1x ;
 				mBody[element][property].mLine[line].m1st = ix + 1 ;
 				mBody[element][property].mLine[line].m2nd = ix + 2 ;
-				const auto r6x = mTextReader.poll (TYPEAS<VAL32>::expr) ;
-				mPlyCHAR.add (bitwise[TYPEAS<CHAR>::expr] (r6x)) ;
+				const auto r6x = mTextReader.poll (TYPE<VAL32>::expr) ;
+				mPlyCHAR.add (bitwise[TYPE<CHAR>::expr] (r6x)) ;
 				mTextReader >> GAP ;
 			}
 			if ifswitch (act) {
@@ -2051,8 +2051,8 @@ trait PLYREADER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 				mBody[element][property].mClazz = r1x ;
 				mBody[element][property].mLine[line].m1st = ix + 1 ;
 				mBody[element][property].mLine[line].m2nd = ix + 2 ;
-				const auto r7x = mTextReader.poll (TYPEAS<VAL64>::expr) ;
-				mPlyDATA.add (bitwise[TYPEAS<DATA>::expr] (r7x)) ;
+				const auto r7x = mTextReader.poll (TYPE<VAL64>::expr) ;
+				mPlyDATA.add (bitwise[TYPE<DATA>::expr] (r7x)) ;
 				mTextReader >> GAP ;
 			}
 			if ifswitch (act) {
@@ -2062,7 +2062,7 @@ trait PLYREADER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 				mBody[element][property].mClazz = r1x ;
 				mBody[element][property].mLine[line].m1st = ix + 1 ;
 				mBody[element][property].mLine[line].m2nd = ix + 2 ;
-				const auto r8x = mTextReader.poll (TYPEAS<BYTE>::expr) ;
+				const auto r8x = mTextReader.poll (TYPE<BYTE>::expr) ;
 				mPlyBYTE.add (r8x) ;
 				mTextReader >> GAP ;
 			}
@@ -2073,7 +2073,7 @@ trait PLYREADER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 				mBody[element][property].mClazz = r1x ;
 				mBody[element][property].mLine[line].m1st = ix + 1 ;
 				mBody[element][property].mLine[line].m2nd = ix + 2 ;
-				const auto r9x = mTextReader.poll (TYPEAS<WORD>::expr) ;
+				const auto r9x = mTextReader.poll (TYPE<WORD>::expr) ;
 				mPlyWORD.add (r9x) ;
 				mTextReader >> GAP ;
 			}
@@ -2084,7 +2084,7 @@ trait PLYREADER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 				mBody[element][property].mClazz = r1x ;
 				mBody[element][property].mLine[line].m1st = ix + 1 ;
 				mBody[element][property].mLine[line].m2nd = ix + 2 ;
-				const auto r10x = mTextReader.poll (TYPEAS<CHAR>::expr) ;
+				const auto r10x = mTextReader.poll (TYPE<CHAR>::expr) ;
 				mPlyCHAR.add (r10x) ;
 				mTextReader >> GAP ;
 			}
@@ -2095,7 +2095,7 @@ trait PLYREADER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 				mBody[element][property].mClazz = r1x ;
 				mBody[element][property].mLine[line].m1st = ix + 1 ;
 				mBody[element][property].mLine[line].m2nd = ix + 2 ;
-				const auto r11x = mTextReader.poll (TYPEAS<DATA>::expr) ;
+				const auto r11x = mTextReader.poll (TYPE<DATA>::expr) ;
 				mPlyDATA.add (r11x) ;
 				mTextReader >> GAP ;
 			}
@@ -2126,8 +2126,8 @@ trait PLYREADER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 				mTextReader >> GAP ;
 				for (auto &&i : iter (0 ,r2x)) {
 					noop (i) ;
-					const auto r3x = mTextReader.poll (TYPEAS<FLT32>::expr) ;
-					mPlyCHAR.add (bitwise[TYPEAS<CHAR>::expr] (r3x)) ;
+					const auto r3x = mTextReader.poll (TYPE<FLT32>::expr) ;
+					mPlyCHAR.add (bitwise[TYPE<CHAR>::expr] (r3x)) ;
 					mTextReader >> GAP ;
 				}
 			}
@@ -2141,8 +2141,8 @@ trait PLYREADER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 				mTextReader >> GAP ;
 				for (auto &&i : iter (0 ,r2x)) {
 					noop (i) ;
-					const auto r4x = mTextReader.poll (TYPEAS<FLT64>::expr) ;
-					mPlyDATA.add (bitwise[TYPEAS<DATA>::expr] (r4x)) ;
+					const auto r4x = mTextReader.poll (TYPE<FLT64>::expr) ;
+					mPlyDATA.add (bitwise[TYPE<DATA>::expr] (r4x)) ;
 					mTextReader >> GAP ;
 				}
 			}
@@ -2156,7 +2156,7 @@ trait PLYREADER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 				mTextReader >> GAP ;
 				for (auto &&i : iter (0 ,r2x)) {
 					noop (i) ;
-					const auto r5x = mTextReader.poll (TYPEAS<VAL32>::expr) ;
+					const auto r5x = mTextReader.poll (TYPE<VAL32>::expr) ;
 					mPlyBYTE.add (BYTE (r5x)) ;
 					mTextReader >> GAP ;
 				}
@@ -2171,7 +2171,7 @@ trait PLYREADER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 				mTextReader >> GAP ;
 				for (auto &&i : iter (0 ,r2x)) {
 					noop (i) ;
-					const auto r6x = mTextReader.poll (TYPEAS<VAL32>::expr) ;
+					const auto r6x = mTextReader.poll (TYPE<VAL32>::expr) ;
 					mPlyWORD.add (WORD (r6x)) ;
 					mTextReader >> GAP ;
 				}
@@ -2186,8 +2186,8 @@ trait PLYREADER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 				mTextReader >> GAP ;
 				for (auto &&i : iter (0 ,r2x)) {
 					noop (i) ;
-					const auto r7x = mTextReader.poll (TYPEAS<VAL32>::expr) ;
-					mPlyCHAR.add (bitwise[TYPEAS<CHAR>::expr] (r7x)) ;
+					const auto r7x = mTextReader.poll (TYPE<VAL32>::expr) ;
+					mPlyCHAR.add (bitwise[TYPE<CHAR>::expr] (r7x)) ;
 					mTextReader >> GAP ;
 				}
 			}
@@ -2201,8 +2201,8 @@ trait PLYREADER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 				mTextReader >> GAP ;
 				for (auto &&i : iter (0 ,r2x)) {
 					noop (i) ;
-					const auto r8x = mTextReader.poll (TYPEAS<VAL64>::expr) ;
-					mPlyDATA.add (bitwise[TYPEAS<DATA>::expr] (r8x)) ;
+					const auto r8x = mTextReader.poll (TYPE<VAL64>::expr) ;
+					mPlyDATA.add (bitwise[TYPE<DATA>::expr] (r8x)) ;
 					mTextReader >> GAP ;
 				}
 			}
@@ -2216,7 +2216,7 @@ trait PLYREADER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 				mTextReader >> GAP ;
 				for (auto &&i : iter (0 ,r2x)) {
 					noop (i) ;
-					const auto r9x = mTextReader.poll (TYPEAS<BYTE>::expr) ;
+					const auto r9x = mTextReader.poll (TYPE<BYTE>::expr) ;
 					mPlyBYTE.add (r9x) ;
 					mTextReader >> GAP ;
 				}
@@ -2231,7 +2231,7 @@ trait PLYREADER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 				mTextReader >> GAP ;
 				for (auto &&i : iter (0 ,r2x)) {
 					noop (i) ;
-					const auto r10x = mTextReader.poll (TYPEAS<WORD>::expr) ;
+					const auto r10x = mTextReader.poll (TYPE<WORD>::expr) ;
 					mPlyWORD.add (r10x) ;
 					mTextReader >> GAP ;
 				}
@@ -2246,7 +2246,7 @@ trait PLYREADER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 				mTextReader >> GAP ;
 				for (auto &&i : iter (0 ,r2x)) {
 					noop (i) ;
-					const auto r11x = mTextReader.poll (TYPEAS<CHAR>::expr) ;
+					const auto r11x = mTextReader.poll (TYPE<CHAR>::expr) ;
 					mPlyCHAR.add (r11x) ;
 					mTextReader >> GAP ;
 				}
@@ -2261,7 +2261,7 @@ trait PLYREADER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 				mTextReader >> GAP ;
 				for (auto &&i : iter (0 ,r2x)) {
 					noop (i) ;
-					const auto r12x = mTextReader.poll (TYPEAS<DATA>::expr) ;
+					const auto r12x = mTextReader.poll (TYPE<DATA>::expr) ;
 					mPlyDATA.add (r12x) ;
 					mTextReader >> GAP ;
 				}
@@ -2269,7 +2269,7 @@ trait PLYREADER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 		}
 
 		void read_body_binary () {
-			mByteReader = ByteReader (RegBuffer<BYTE>::from (unsafe_deptr (mStream.self[0]) ,mHeader.mBodyOffset ,mStream->size ()).borrow ()) ;
+			mByteReader = ByteReader (RegBuffer<BYTE>::from (unsafe_cast[TYPE<TEMP<void>>::expr] (mStream.self[0]) ,mHeader.mBodyOffset ,mStream->size ()).borrow ()) ;
 			mBody = Array<Array<BODY>> (mHeader.mElementList.length ()) ;
 			for (auto &&i : mHeader.mElementList.iter ()) {
 				mBody[i] = Array<BODY> (mHeader.mElementList[i].mPropertyList.length ()) ;
@@ -2297,8 +2297,8 @@ trait PLYREADER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 				mBody[element][property].mClazz = r1x ;
 				mBody[element][property].mLine[line].m1st = ix + 1 ;
 				mBody[element][property].mLine[line].m2nd = ix + 2 ;
-				const auto r2x = mByteReader.poll (TYPEAS<FLT32>::expr) ;
-				const auto r3x = bitwise[TYPEAS<CHAR>::expr] (r2x) ;
+				const auto r2x = mByteReader.poll (TYPE<FLT32>::expr) ;
+				const auto r3x = bitwise[TYPE<CHAR>::expr] (r2x) ;
 				mPlyCHAR.add (bitwise_reverse (r3x)) ;
 			}
 			if ifswitch (act) {
@@ -2308,8 +2308,8 @@ trait PLYREADER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 				mBody[element][property].mClazz = r1x ;
 				mBody[element][property].mLine[line].m1st = ix + 1 ;
 				mBody[element][property].mLine[line].m2nd = ix + 2 ;
-				const auto r4x = mByteReader.poll (TYPEAS<FLT64>::expr) ;
-				const auto r5x = bitwise[TYPEAS<DATA>::expr] (r4x) ;
+				const auto r4x = mByteReader.poll (TYPE<FLT64>::expr) ;
+				const auto r5x = bitwise[TYPE<DATA>::expr] (r4x) ;
 				mPlyDATA.add (bitwise_reverse (r5x)) ;
 			}
 			if ifswitch (act) {
@@ -2319,7 +2319,7 @@ trait PLYREADER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 				mBody[element][property].mClazz = r1x ;
 				mBody[element][property].mLine[line].m1st = ix + 1 ;
 				mBody[element][property].mLine[line].m2nd = ix + 2 ;
-				const auto r6x = mByteReader.poll (TYPEAS<BYTE>::expr) ;
+				const auto r6x = mByteReader.poll (TYPE<BYTE>::expr) ;
 				mPlyBYTE.add (bitwise_reverse (r6x)) ;
 			}
 			if ifswitch (act) {
@@ -2329,7 +2329,7 @@ trait PLYREADER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 				mBody[element][property].mClazz = r1x ;
 				mBody[element][property].mLine[line].m1st = ix + 1 ;
 				mBody[element][property].mLine[line].m2nd = ix + 2 ;
-				const auto r7x = mByteReader.poll (TYPEAS<WORD>::expr) ;
+				const auto r7x = mByteReader.poll (TYPE<WORD>::expr) ;
 				mPlyWORD.add (bitwise_reverse (r7x)) ;
 			}
 			if ifswitch (act) {
@@ -2339,8 +2339,8 @@ trait PLYREADER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 				mBody[element][property].mClazz = r1x ;
 				mBody[element][property].mLine[line].m1st = ix + 1 ;
 				mBody[element][property].mLine[line].m2nd = ix + 2 ;
-				const auto r8x = mByteReader.poll (TYPEAS<VAL32>::expr) ;
-				const auto r9x = bitwise[TYPEAS<CHAR>::expr] (r8x) ;
+				const auto r8x = mByteReader.poll (TYPE<VAL32>::expr) ;
+				const auto r9x = bitwise[TYPE<CHAR>::expr] (r8x) ;
 				mPlyCHAR.add (bitwise_reverse (r9x)) ;
 			}
 			if ifswitch (act) {
@@ -2350,8 +2350,8 @@ trait PLYREADER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 				mBody[element][property].mClazz = r1x ;
 				mBody[element][property].mLine[line].m1st = ix + 1 ;
 				mBody[element][property].mLine[line].m2nd = ix + 2 ;
-				const auto r10x = mByteReader.poll (TYPEAS<VAL64>::expr) ;
-				const auto r11x = bitwise[TYPEAS<DATA>::expr] (r10x) ;
+				const auto r10x = mByteReader.poll (TYPE<VAL64>::expr) ;
+				const auto r11x = bitwise[TYPE<DATA>::expr] (r10x) ;
 				mPlyDATA.add (bitwise_reverse (r11x)) ;
 			}
 			if ifswitch (act) {
@@ -2361,7 +2361,7 @@ trait PLYREADER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 				mBody[element][property].mClazz = r1x ;
 				mBody[element][property].mLine[line].m1st = ix + 1 ;
 				mBody[element][property].mLine[line].m2nd = ix + 2 ;
-				const auto r12x = mByteReader.poll (TYPEAS<BYTE>::expr) ;
+				const auto r12x = mByteReader.poll (TYPE<BYTE>::expr) ;
 				mPlyBYTE.add (bitwise_reverse (r12x)) ;
 			}
 			if ifswitch (act) {
@@ -2371,7 +2371,7 @@ trait PLYREADER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 				mBody[element][property].mClazz = r1x ;
 				mBody[element][property].mLine[line].m1st = ix + 1 ;
 				mBody[element][property].mLine[line].m2nd = ix + 2 ;
-				const auto r13x = mByteReader.poll (TYPEAS<WORD>::expr) ;
+				const auto r13x = mByteReader.poll (TYPE<WORD>::expr) ;
 				mPlyWORD.add (bitwise_reverse (r13x)) ;
 			}
 			if ifswitch (act) {
@@ -2381,7 +2381,7 @@ trait PLYREADER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 				mBody[element][property].mClazz = r1x ;
 				mBody[element][property].mLine[line].m1st = ix + 1 ;
 				mBody[element][property].mLine[line].m2nd = ix + 2 ;
-				const auto r14x = mByteReader.poll (TYPEAS<CHAR>::expr) ;
+				const auto r14x = mByteReader.poll (TYPE<CHAR>::expr) ;
 				mPlyCHAR.add (bitwise_reverse (r14x)) ;
 			}
 			if ifswitch (act) {
@@ -2391,7 +2391,7 @@ trait PLYREADER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 				mBody[element][property].mClazz = r1x ;
 				mBody[element][property].mLine[line].m1st = ix + 1 ;
 				mBody[element][property].mLine[line].m2nd = ix + 2 ;
-				const auto r15x = mByteReader.poll (TYPEAS<DATA>::expr) ;
+				const auto r15x = mByteReader.poll (TYPE<DATA>::expr) ;
 				mPlyDATA.add (bitwise_reverse (r15x)) ;
 			}
 		}
@@ -2420,8 +2420,8 @@ trait PLYREADER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 				mBody[element][property].mLine[line].m2nd = ix + r2x + 1 ;
 				for (auto &&i : iter (0 ,r2x)) {
 					noop (i) ;
-					const auto r3x = mByteReader.poll (TYPEAS<FLT32>::expr) ;
-					const auto r4x = bitwise[TYPEAS<CHAR>::expr] (r3x) ;
+					const auto r3x = mByteReader.poll (TYPE<FLT32>::expr) ;
+					const auto r4x = bitwise[TYPE<CHAR>::expr] (r3x) ;
 					mPlyCHAR.add (bitwise_reverse (r4x)) ;
 				}
 			}
@@ -2434,8 +2434,8 @@ trait PLYREADER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 				mBody[element][property].mLine[line].m2nd = ix + r2x + 1 ;
 				for (auto &&i : iter (0 ,r2x)) {
 					noop (i) ;
-					const auto r5x = mByteReader.poll (TYPEAS<FLT64>::expr) ;
-					const auto r6x = bitwise[TYPEAS<DATA>::expr] (r5x) ;
+					const auto r5x = mByteReader.poll (TYPE<FLT64>::expr) ;
+					const auto r6x = bitwise[TYPE<DATA>::expr] (r5x) ;
 					mPlyDATA.add (bitwise_reverse (r6x)) ;
 				}
 			}
@@ -2448,7 +2448,7 @@ trait PLYREADER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 				mBody[element][property].mLine[line].m2nd = ix + r2x + 1 ;
 				for (auto &&i : iter (0 ,r2x)) {
 					noop (i) ;
-					const auto r7x = mByteReader.poll (TYPEAS<BYTE>::expr) ;
+					const auto r7x = mByteReader.poll (TYPE<BYTE>::expr) ;
 					mPlyBYTE.add (bitwise_reverse (r7x)) ;
 				}
 			}
@@ -2461,7 +2461,7 @@ trait PLYREADER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 				mBody[element][property].mLine[line].m2nd = ix + r2x + 1 ;
 				for (auto &&i : iter (0 ,r2x)) {
 					noop (i) ;
-					const auto r8x = mByteReader.poll (TYPEAS<WORD>::expr) ;
+					const auto r8x = mByteReader.poll (TYPE<WORD>::expr) ;
 					mPlyWORD.add (bitwise_reverse (r8x)) ;
 				}
 			}
@@ -2474,8 +2474,8 @@ trait PLYREADER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 				mBody[element][property].mLine[line].m2nd = ix + r2x + 1 ;
 				for (auto &&i : iter (0 ,r2x)) {
 					noop (i) ;
-					const auto r9x = mByteReader.poll (TYPEAS<VAL32>::expr) ;
-					const auto r10x = bitwise[TYPEAS<CHAR>::expr] (r9x) ;
+					const auto r9x = mByteReader.poll (TYPE<VAL32>::expr) ;
+					const auto r10x = bitwise[TYPE<CHAR>::expr] (r9x) ;
 					mPlyCHAR.add (bitwise_reverse (r10x)) ;
 				}
 			}
@@ -2488,8 +2488,8 @@ trait PLYREADER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 				mBody[element][property].mLine[line].m2nd = ix + r2x + 1 ;
 				for (auto &&i : iter (0 ,r2x)) {
 					noop (i) ;
-					const auto r11x = mByteReader.poll (TYPEAS<VAL64>::expr) ;
-					const auto r12x = bitwise[TYPEAS<DATA>::expr] (r11x) ;
+					const auto r11x = mByteReader.poll (TYPE<VAL64>::expr) ;
+					const auto r12x = bitwise[TYPE<DATA>::expr] (r11x) ;
 					mPlyDATA.add (bitwise_reverse (r12x)) ;
 				}
 			}
@@ -2502,7 +2502,7 @@ trait PLYREADER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 				mBody[element][property].mLine[line].m2nd = ix + r2x + 1 ;
 				for (auto &&i : iter (0 ,r2x)) {
 					noop (i) ;
-					const auto r13x = mByteReader.poll (TYPEAS<BYTE>::expr) ;
+					const auto r13x = mByteReader.poll (TYPE<BYTE>::expr) ;
 					mPlyBYTE.add (bitwise_reverse (r13x)) ;
 				}
 			}
@@ -2515,7 +2515,7 @@ trait PLYREADER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 				mBody[element][property].mLine[line].m2nd = ix + r2x + 1 ;
 				for (auto &&i : iter (0 ,r2x)) {
 					noop (i) ;
-					const auto r14x = mByteReader.poll (TYPEAS<WORD>::expr) ;
+					const auto r14x = mByteReader.poll (TYPE<WORD>::expr) ;
 					mPlyWORD.add (bitwise_reverse (r14x)) ;
 				}
 			}
@@ -2528,7 +2528,7 @@ trait PLYREADER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 				mBody[element][property].mLine[line].m2nd = ix + r2x + 1 ;
 				for (auto &&i : iter (0 ,r2x)) {
 					noop (i) ;
-					const auto r15x = mByteReader.poll (TYPEAS<CHAR>::expr) ;
+					const auto r15x = mByteReader.poll (TYPE<CHAR>::expr) ;
 					mPlyCHAR.add (bitwise_reverse (r15x)) ;
 				}
 			}
@@ -2541,34 +2541,34 @@ trait PLYREADER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 				mBody[element][property].mLine[line].m2nd = ix + r2x + 1 ;
 				for (auto &&i : iter (0 ,r2x)) {
 					noop (i) ;
-					const auto r16x = mByteReader.poll (TYPEAS<DATA>::expr) ;
+					const auto r16x = mByteReader.poll (TYPE<DATA>::expr) ;
 					mPlyDATA.add (bitwise_reverse (r16x)) ;
 				}
 			}
 		}
 
-		BYTE bitwise_reverse (CREF<BYTE> obj) const {
+		BYTE bitwise_reverse (CREF<BYTE> a) const {
 			if ifnot (mBitwiseReverseFlag)
-				return obj ;
-			return BitProc::bit_reverse (obj) ;
+				return a ;
+			return BitProc::bit_reverse (a) ;
 		}
 
-		WORD bitwise_reverse (CREF<WORD> obj) const {
+		WORD bitwise_reverse (CREF<WORD> a) const {
 			if ifnot (mBitwiseReverseFlag)
-				return obj ;
-			return BitProc::bit_reverse (obj) ;
+				return a ;
+			return BitProc::bit_reverse (a) ;
 		}
 
-		CHAR bitwise_reverse (CREF<CHAR> obj) const {
+		CHAR bitwise_reverse (CREF<CHAR> a) const {
 			if ifnot (mBitwiseReverseFlag)
-				return obj ;
-			return BitProc::bit_reverse (obj) ;
+				return a ;
+			return BitProc::bit_reverse (a) ;
 		}
 
-		DATA bitwise_reverse (CREF<DATA> obj) const {
+		DATA bitwise_reverse (CREF<DATA> a) const {
 			if ifnot (mBitwiseReverseFlag)
-				return obj ;
-			return BitProc::bit_reverse (obj) ;
+				return a ;
+			return BitProc::bit_reverse (a) ;
 		}
 	} ;
 } ;

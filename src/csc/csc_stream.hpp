@@ -449,7 +449,7 @@ trait BYTEWRITER_HELP<DEPEND ,ALWAYS> {
 
 	struct Binder implement Interface {
 		virtual void friend_write (VREF<ByteWriter> writer) {
-			return keep[TYPEAS<CREF<Binder>>::expr] (thiz).friend_write (writer) ;
+			return keep[TYPE<CREF<Binder>>::expr] (thiz).friend_write (writer) ;
 		}
 
 		virtual void friend_write (VREF<ByteWriter> writer) const = 0 ;
@@ -1257,7 +1257,7 @@ trait TEXTWRITER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 
 	struct Binder implement Interface {
 		virtual void friend_write (VREF<TextWriter> writer) {
-			return keep[TYPEAS<CREF<Binder>>::expr] (thiz).friend_write (writer) ;
+			return keep[TYPE<CREF<Binder>>::expr] (thiz).friend_write (writer) ;
 		}
 
 		virtual void friend_write (VREF<TextWriter> writer) const = 0 ;

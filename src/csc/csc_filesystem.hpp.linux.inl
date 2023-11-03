@@ -68,7 +68,7 @@ trait FILE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 
 	public:
 		void initialize (CREF<String<STR>> file) override {
-			mFile = string_cvt[TYPEAS<STRA ,STR>::expr] (file) ;
+			mFile = string_cvt[TYPE<STRA ,STR>::expr] (file) ;
 			if ifswitch (TRUE) {
 				const auto r1x = mFile.length () ;
 				assume (r1x > 0) ;
@@ -209,7 +209,7 @@ trait FILE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		void copy_from (CREF<Layout> that) const override {
-			return copy_from (keep[TYPEAS<CREF<ImplHolder>>::expr] (that.mThis.self)) ;
+			return copy_from (keep[TYPE<CREF<ImplHolder>>::expr] (that.mThis.self)) ;
 		}
 
 		void copy_from (CREF<ImplHolder> that) const {
@@ -219,7 +219,7 @@ trait FILE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		void move_from (CREF<Layout> that) const override {
-			return move_from (keep[TYPEAS<CREF<ImplHolder>>::expr] (that.mThis.self)) ;
+			return move_from (keep[TYPE<CREF<ImplHolder>>::expr] (that.mThis.self)) ;
 		}
 
 		void move_from (CREF<ImplHolder> that) const {
@@ -230,7 +230,7 @@ trait FILE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		void link_from (CREF<Layout> that) const override {
-			return link_from (keep[TYPEAS<CREF<ImplHolder>>::expr] (that.mThis.self)) ;
+			return link_from (keep[TYPE<CREF<ImplHolder>>::expr] (that.mThis.self)) ;
 		}
 
 		void link_from (CREF<ImplHolder> that) const {
@@ -241,7 +241,7 @@ trait FILE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		BOOL identical (CREF<Layout> that) const override {
-			return identical (keep[TYPEAS<CREF<ImplHolder>>::expr] (that.mThis.self)) ;
+			return identical (keep[TYPE<CREF<ImplHolder>>::expr] (that.mThis.self)) ;
 		}
 
 		BOOL identical (CREF<ImplHolder> that) const {
@@ -303,7 +303,7 @@ trait FUNCTION_decouple_path_HELP<DEPEND ,ALWAYS> {
 		inline ArrayList<String<STR>> operator() (CREF<String<STR>> dire) const {
 			ArrayList<String<STR>> ret ;
 			auto rax = TextReader<STR> (dire.raw ().borrow ()) ;
-			rax.attribute ().derive (TYPEAS<Wrapper>::expr) ;
+			rax.attribute ().derive (TYPE<Wrapper>::expr) ;
 			const auto r1x = rax.attribute () ;
 			INDEX ix = ret.insert () ;
 			auto rbx = STR () ;
@@ -336,7 +336,7 @@ template <class DEPEND>
 trait DIRECTORY_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	using Holder = typename DIRECTORY_HELP<DEPEND ,ALWAYS>::Holder ;
 	using CHILD = typename DIRECTORY_HELP<DEPEND ,ALWAYS>::CHILD ;
-	using CHILD_MAX_SIZE = ENUMAS<VAL ,65536> ;
+	using CHILD_MAX_SIZE = ENUM<65536> ;
 
 	using HDIRE = DEF<DIR *> ;
 	using STAT_INFO = DEF<struct stat> ;
@@ -375,7 +375,7 @@ trait DIRECTORY_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 						discard ;
 				mThis->mDire += slice (".") ;
 			}
-			mThis->mDireA = string_cvt[TYPEAS<STRA ,STR>::expr] (mThis->mDire) ;
+			mThis->mDireA = string_cvt[TYPE<STRA ,STR>::expr] (mThis->mDire) ;
 		}
 
 		String<STR> path () const override {
@@ -692,7 +692,7 @@ trait STREAMFILE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 
 	public:
 		void initialize (CREF<String<STR>> file) override {
-			mFile = string_cvt[TYPEAS<STRA ,STR>::expr] (file) ;
+			mFile = string_cvt[TYPE<STRA ,STR>::expr] (file) ;
 			mRead = 0 ;
 			mWrite = 0 ;
 		}
@@ -811,7 +811,7 @@ trait STREAMFILE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			using R1X = SIZE_OF<WORD> ;
 			if (item.size () == 0)
 				return 0 ;
-			LENGTH ret = read (RegBuffer<BYTE>::from (unsafe_deptr (item[0]) ,0 ,item.size () * R1X::expr)) ;
+			LENGTH ret = read (RegBuffer<BYTE>::from (unsafe_cast[TYPE<TEMP<void>>::expr] (item[0]) ,0 ,item.size () * R1X::expr)) ;
 			ret /= R1X::expr ;
 			unsafe_launder (item) ;
 			return move (ret) ;
@@ -821,7 +821,7 @@ trait STREAMFILE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			using R1X = SIZE_OF<CHAR> ;
 			if (item.size () == 0)
 				return 0 ;
-			LENGTH ret = read (RegBuffer<BYTE>::from (unsafe_deptr (item[0]) ,0 ,item.size () * R1X::expr)) ;
+			LENGTH ret = read (RegBuffer<BYTE>::from (unsafe_cast[TYPE<TEMP<void>>::expr] (item[0]) ,0 ,item.size () * R1X::expr)) ;
 			ret /= R1X::expr ;
 			unsafe_launder (item) ;
 			return move (ret) ;
@@ -831,7 +831,7 @@ trait STREAMFILE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			using R1X = SIZE_OF<DATA> ;
 			if (item.size () == 0)
 				return 0 ;
-			LENGTH ret = read (RegBuffer<BYTE>::from (unsafe_deptr (item[0]) ,0 ,item.size () * R1X::expr)) ;
+			LENGTH ret = read (RegBuffer<BYTE>::from (unsafe_cast[TYPE<TEMP<void>>::expr] (item[0]) ,0 ,item.size () * R1X::expr)) ;
 			ret /= R1X::expr ;
 			unsafe_launder (item) ;
 			return move (ret) ;
@@ -857,7 +857,7 @@ trait STREAMFILE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			using R1X = SIZE_OF<WORD> ;
 			if (item.size () == 0)
 				return 0 ;
-			LENGTH ret = write (RegBuffer<BYTE>::from (unsafe_deptr (item[0]) ,0 ,item.size () * R1X::expr)) ;
+			LENGTH ret = write (RegBuffer<BYTE>::from (unsafe_cast[TYPE<TEMP<void>>::expr] (item[0]) ,0 ,item.size () * R1X::expr)) ;
 			ret /= R1X::expr ;
 			return move (ret) ;
 		}
@@ -866,7 +866,7 @@ trait STREAMFILE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			using R1X = SIZE_OF<CHAR> ;
 			if (item.size () == 0)
 				return 0 ;
-			LENGTH ret = write (RegBuffer<BYTE>::from (unsafe_deptr (item[0]) ,0 ,item.size () * R1X::expr)) ;
+			LENGTH ret = write (RegBuffer<BYTE>::from (unsafe_cast[TYPE<TEMP<void>>::expr] (item[0]) ,0 ,item.size () * R1X::expr)) ;
 			ret /= R1X::expr ;
 			return move (ret) ;
 		}
@@ -875,7 +875,7 @@ trait STREAMFILE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			using R1X = SIZE_OF<DATA> ;
 			if (item.size () == 0)
 				return 0 ;
-			LENGTH ret = write (RegBuffer<BYTE>::from (unsafe_deptr (item[0]) ,0 ,item.size () * R1X::expr)) ;
+			LENGTH ret = write (RegBuffer<BYTE>::from (unsafe_cast[TYPE<TEMP<void>>::expr] (item[0]) ,0 ,item.size () * R1X::expr)) ;
 			ret /= R1X::expr ;
 			return move (ret) ;
 		}
@@ -897,8 +897,8 @@ exports auto STREAMFILE_HELP<DEPEND ,ALWAYS>::Holder::create () ->VRef<Holder> {
 template <class DEPEND>
 trait BUFFERFILE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	using Holder = typename BUFFERFILE_HOLDER_HELP<DEPEND ,ALWAYS>::Holder ;
-	using CHUNK_SIZE = ENUMAS<VAL ,4194304> ;
-	using HEADER_SIZE = ENUMAS<VAL ,65536> ;
+	using CHUNK_SIZE = ENUM<4194304> ;
+	using HEADER_SIZE = ENUM<65536> ;
 
 	using HFILE = csc_int32_t ;
 	using HANDLE = csc_pointer_t ;
@@ -935,7 +935,7 @@ trait BUFFERFILE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 
 	public:
 		void initialize (CREF<String<STR>> file ,CREF<Clazz> clazz) override {
-			mFile = string_cvt[TYPEAS<STRA ,STR>::expr] (file) ;
+			mFile = string_cvt[TYPE<STRA ,STR>::expr] (file) ;
 			mItemClazz = clazz ;
 			mFileSize = 0 ;
 			mFileMapFlag = 0 ;
@@ -1110,7 +1110,7 @@ trait BUFFERFILE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				rax[1] = BYTE (0X01) ;
 				rax[2] = BYTE (0X02) ;
 				rax[3] = BYTE (0X03) ;
-				return bitwise[TYPEAS<CHAR>::expr] (rax) ;
+				return bitwise[TYPE<CHAR>::expr] (rax) ;
 			}) ;
 			return VAL64 (r1x) ;
 		}
@@ -1163,7 +1163,7 @@ trait BUFFERFILE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		void resize (CREF<VAL64> size_) override {
 			assert (mPipe.exist ()) ;
 			const auto r1x = mHeader->mItemCount ;
-			const auto r2x = valign (r1x + size_ ,mHeader->mChunkCapacity) / mHeader->mChunkCapacity ;
+			const auto r2x = operator_alignas (r1x + size_ ,mHeader->mChunkCapacity) / mHeader->mChunkCapacity ;
 			const auto r3x = MathProc::max_of (r2x - mHeader->mChunkCount ,VAL64 (0)) ;
 			mHeader->mItemCount += size_ ;
 			mHeader->mChunkCount += r3x ;
@@ -1178,7 +1178,7 @@ trait BUFFERFILE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 
 		void get (CREF<VAL64> index ,VREF<RegBuffer<BYTE>> item) override {
 			assert (mPipe.exist ()) ;
-			assume (vbetween (index ,0 ,mHeader->mItemCount)) ;
+			assume (operator_between (index ,0 ,mHeader->mItemCount)) ;
 			assume (item.size () == mHeader->mItemSize) ;
 			const auto r1x = index / mHeader->mChunkCapacity ;
 			const auto r2x = index % mHeader->mChunkCapacity * mHeader->mItemSize ;
@@ -1191,7 +1191,7 @@ trait BUFFERFILE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 
 		void set (CREF<VAL64> index ,CREF<RegBuffer<BYTE>> item) override {
 			assert (mPipe.exist ()) ;
-			assume (vbetween (index ,0 ,mHeader->mItemCount)) ;
+			assume (operator_between (index ,0 ,mHeader->mItemCount)) ;
 			assume (item.size () == mHeader->mItemSize) ;
 			const auto r1x = index / mHeader->mChunkCapacity ;
 			const auto r2x = index % mHeader->mChunkCapacity * mHeader->mItemSize ;

@@ -45,8 +45,8 @@ trait MATHPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			noop () ;
 		}
 
-		BOOL is_inf (CREF<FLT32> obj) const override {
-			const auto r1x = bitwise (obj) ;
+		BOOL is_inf (CREF<FLT32> a) const override {
+			const auto r1x = bitwise (a) ;
 			if ifnot (BitProc::bit_all (r1x ,CHAR (0X7F800000)))
 				return FALSE ;
 			//@warn: treat nan as inf
@@ -55,8 +55,8 @@ trait MATHPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			return TRUE ;
 		}
 
-		BOOL is_inf (CREF<FLT64> obj) const override {
-			const auto r1x = bitwise (obj) ;
+		BOOL is_inf (CREF<FLT64> a) const override {
+			const auto r1x = bitwise (a) ;
 			if ifnot (BitProc::bit_all (r1x ,DATA (0X7FF0000000000000)))
 				return FALSE ;
 			//@warn: treat nan as inf
@@ -65,70 +65,70 @@ trait MATHPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			return TRUE ;
 		}
 
-		VAL32 sign (CREF<VAL32> obj) const override {
-			if (obj >= 0)
+		VAL32 sign (CREF<VAL32> a) const override {
+			if (a >= 0)
 				return VAL32 (1) ;
 			return VAL32 (-1) ;
 		}
 
-		VAL64 sign (CREF<VAL64> obj) const override {
-			if (obj >= 0)
+		VAL64 sign (CREF<VAL64> a) const override {
+			if (a >= 0)
 				return VAL64 (1) ;
 			return VAL64 (-1) ;
 		}
 
-		FLT32 sign (CREF<FLT32> obj) const override {
-			if (obj >= 0)
+		FLT32 sign (CREF<FLT32> a) const override {
+			if (a >= 0)
 				return FLT32 (1) ;
 			return FLT32 (-1) ;
 		}
 
-		FLT64 sign (CREF<FLT64> obj) const override {
-			if (obj >= 0)
+		FLT64 sign (CREF<FLT64> a) const override {
+			if (a >= 0)
 				return FLT64 (1) ;
 			return FLT64 (-1) ;
 		}
 
-		VAL32 abs (CREF<VAL32> obj) const override {
+		VAL32 abs (CREF<VAL32> a) const override {
 			//@warn: treat abs as 0
-			if (obj == VAL32_ABS)
+			if (a == VAL32_ABS)
 				return 0 ;
-			if (obj >= 0)
-				return obj ;
-			return -obj ;
+			if (a >= 0)
+				return a ;
+			return -a ;
 		}
 
-		VAL64 abs (CREF<VAL64> obj) const override {
+		VAL64 abs (CREF<VAL64> a) const override {
 			//@warn: treat abs as 0
-			if (obj == VAL64_ABS)
+			if (a == VAL64_ABS)
 				return 0 ;
-			if (obj >= 0)
-				return obj ;
-			return -obj ;
+			if (a >= 0)
+				return a ;
+			return -a ;
 		}
 
-		FLT32 abs (CREF<FLT32> obj) const override {
-			if (obj >= 0)
-				return obj ;
-			return -obj ;
+		FLT32 abs (CREF<FLT32> a) const override {
+			if (a >= 0)
+				return a ;
+			return -a ;
 		}
 
-		FLT64 abs (CREF<FLT64> obj) const override {
-			if (obj >= 0)
-				return obj ;
-			return -obj ;
+		FLT64 abs (CREF<FLT64> a) const override {
+			if (a >= 0)
+				return a ;
+			return -a ;
 		}
 
-		FLT32 inverse (CREF<FLT32> obj) const override {
-			if (MathProc::abs (obj) < FLT32_EPS)
+		FLT32 inverse (CREF<FLT32> a) const override {
+			if (MathProc::abs (a) < FLT32_EPS)
 				return FLT32 (0) ;
-			return FLT32 (1) / obj ;
+			return FLT32 (1) / a ;
 		}
 
-		FLT64 inverse (CREF<FLT64> obj) const override {
-			if (MathProc::abs (obj) < FLT64_EPS)
+		FLT64 inverse (CREF<FLT64> a) const override {
+			if (MathProc::abs (a) < FLT64_EPS)
 				return FLT64 (0) ;
-			return FLT64 (1) / obj ;
+			return FLT64 (1) / a ;
 		}
 
 		VAL32 min_of (CREF<VAL32> obj1 ,CREF<SpanIterator<VAL32>> obj2) const override {
@@ -443,68 +443,68 @@ trait MATHPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			return floor (abs (curr) ,base) * sign (curr) ;
 		}
 
-		VAL32 square (CREF<VAL32> obj) const override {
-			return obj * obj ;
+		VAL32 square (CREF<VAL32> a) const override {
+			return a * a ;
 		}
 
-		VAL64 square (CREF<VAL64> obj) const override {
-			return obj * obj ;
+		VAL64 square (CREF<VAL64> a) const override {
+			return a * a ;
 		}
 
-		FLT32 square (CREF<FLT32> obj) const override {
-			return obj * obj ;
+		FLT32 square (CREF<FLT32> a) const override {
+			return a * a ;
 		}
 
-		FLT64 square (CREF<FLT64> obj) const override {
-			return obj * obj ;
+		FLT64 square (CREF<FLT64> a) const override {
+			return a * a ;
 		}
 
-		FLT32 sqrt (CREF<FLT32> obj) const override {
-			return std::sqrt (obj) ;
+		FLT32 sqrt (CREF<FLT32> a) const override {
+			return std::sqrt (a) ;
 		}
 
-		FLT64 sqrt (CREF<FLT64> obj) const override {
-			return std::sqrt (obj) ;
+		FLT64 sqrt (CREF<FLT64> a) const override {
+			return std::sqrt (a) ;
 		}
 
-		VAL32 cubic (CREF<VAL32> obj) const override {
-			return obj * obj * obj ;
+		VAL32 cubic (CREF<VAL32> a) const override {
+			return a * a * a ;
 		}
 
-		VAL64 cubic (CREF<VAL64> obj) const override {
-			return obj * obj * obj ;
+		VAL64 cubic (CREF<VAL64> a) const override {
+			return a * a * a ;
 		}
 
-		FLT32 cubic (CREF<FLT32> obj) const override {
-			return obj * obj * obj ;
+		FLT32 cubic (CREF<FLT32> a) const override {
+			return a * a * a ;
 		}
 
-		FLT64 cubic (CREF<FLT64> obj) const override {
-			return obj * obj * obj ;
+		FLT64 cubic (CREF<FLT64> a) const override {
+			return a * a * a ;
 		}
 
-		FLT32 cbrt (CREF<FLT32> obj) const override {
-			return std::cbrt (obj) ;
+		FLT32 cbrt (CREF<FLT32> a) const override {
+			return std::cbrt (a) ;
 		}
 
-		FLT64 cbrt (CREF<FLT64> obj) const override {
-			return std::cbrt (obj) ;
+		FLT64 cbrt (CREF<FLT64> a) const override {
+			return std::cbrt (a) ;
 		}
 
-		FLT32 exp (CREF<FLT32> obj) const override {
-			return std::exp (obj) ;
+		FLT32 exp (CREF<FLT32> a) const override {
+			return std::exp (a) ;
 		}
 
-		FLT64 exp (CREF<FLT64> obj) const override {
-			return std::exp (obj) ;
+		FLT64 exp (CREF<FLT64> a) const override {
+			return std::exp (a) ;
 		}
 
-		FLT32 log (CREF<FLT32> obj) const override {
-			return std::log (obj) ;
+		FLT32 log (CREF<FLT32> a) const override {
+			return std::log (a) ;
 		}
 
-		FLT64 log (CREF<FLT64> obj) const override {
-			return std::log (obj) ;
+		FLT64 log (CREF<FLT64> a) const override {
+			return std::log (a) ;
 		}
 
 		VAL32 vlog (CREF<VAL32> curr ,CREF<VAL32> base) const override {
@@ -539,64 +539,64 @@ trait MATHPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			return std::pow (base ,exponent) ;
 		}
 
-		FLT32 ncdf (CREF<FLT32> obj) const override {
-			const auto r1x = obj * MathProc::inverse (FLT32 (MATH_SQRT2)) ;
+		FLT32 ncdf (CREF<FLT32> a) const override {
+			const auto r1x = a * MathProc::inverse (FLT32 (MATH_SQRT2)) ;
 			return std::erf (r1x) * FLT32 (MATH_INV2) + FLT32 (MATH_INV2) ;
 		}
 
-		FLT64 ncdf (CREF<FLT64> obj) const override {
-			const auto r1x = obj * MathProc::inverse (FLT64 (MATH_SQRT2)) ;
+		FLT64 ncdf (CREF<FLT64> a) const override {
+			const auto r1x = a * MathProc::inverse (FLT64 (MATH_SQRT2)) ;
 			return std::erf (r1x) * FLT64 (MATH_INV2) + FLT64 (MATH_INV2) ;
 		}
 
-		FLT32 npdf (CREF<FLT32> obj) const override {
-			const auto r1x = -MathProc::square (obj) * FLT32 (MATH_INV2) ;
+		FLT32 npdf (CREF<FLT32> a) const override {
+			const auto r1x = -MathProc::square (a) * FLT32 (MATH_INV2) ;
 			return exp (r1x) * FLT32 (MATH_INVSQRT2PI) ;
 		}
 
-		FLT64 npdf (CREF<FLT64> obj) const override {
-			const auto r1x = -MathProc::square (obj) * FLT64 (MATH_INV2) ;
+		FLT64 npdf (CREF<FLT64> a) const override {
+			const auto r1x = -MathProc::square (a) * FLT64 (MATH_INV2) ;
 			return exp (r1x) * FLT64 (MATH_INVSQRT2PI) ;
 		}
 
-		FLT32 sin (CREF<FLT32> obj) const override {
-			return std::sin (obj) ;
+		FLT32 sin (CREF<FLT32> a) const override {
+			return std::sin (a) ;
 		}
 
-		FLT64 sin (CREF<FLT64> obj) const override {
-			return std::sin (obj) ;
+		FLT64 sin (CREF<FLT64> a) const override {
+			return std::sin (a) ;
 		}
 
-		FLT32 cos (CREF<FLT32> obj) const override {
-			return std::cos (obj) ;
+		FLT32 cos (CREF<FLT32> a) const override {
+			return std::cos (a) ;
 		}
 
-		FLT64 cos (CREF<FLT64> obj) const override {
-			return std::cos (obj) ;
+		FLT64 cos (CREF<FLT64> a) const override {
+			return std::cos (a) ;
 		}
 
-		FLT32 tan (CREF<FLT32> obj) const override {
-			return std::tan (obj) ;
+		FLT32 tan (CREF<FLT32> a) const override {
+			return std::tan (a) ;
 		}
 
-		FLT64 tan (CREF<FLT64> obj) const override {
-			return std::tan (obj) ;
+		FLT64 tan (CREF<FLT64> a) const override {
+			return std::tan (a) ;
 		}
 
-		FLT32 arcsin (CREF<FLT32> obj) const override {
-			return std::asin (obj) ;
+		FLT32 arcsin (CREF<FLT32> a) const override {
+			return std::asin (a) ;
 		}
 
-		FLT64 arcsin (CREF<FLT64> obj) const override {
-			return std::asin (obj) ;
+		FLT64 arcsin (CREF<FLT64> a) const override {
+			return std::asin (a) ;
 		}
 
-		FLT32 arccos (CREF<FLT32> obj) const override {
-			return std::acos (obj) ;
+		FLT32 arccos (CREF<FLT32> a) const override {
+			return std::acos (a) ;
 		}
 
-		FLT64 arccos (CREF<FLT64> obj) const override {
-			return std::acos (obj) ;
+		FLT64 arccos (CREF<FLT64> a) const override {
+			return std::acos (a) ;
 		}
 
 		FLT32 arctan (CREF<FLT32> fy ,CREF<FLT32> fx) const override {
@@ -607,12 +607,12 @@ trait MATHPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			return std::atan2 (fy ,fx) ;
 		}
 
-		FLT32 radian_angle (CREF<FLT32> obj) const override {
-			return obj / FLT32 (180) * FLT32 (MATH_PI) ;
+		FLT32 radian_angle (CREF<FLT32> a) const override {
+			return a / FLT32 (180) * FLT32 (MATH_PI) ;
 		}
 
-		FLT64 radian_angle (CREF<FLT64> obj) const override {
-			return obj / FLT64 (180) * FLT64 (MATH_PI) ;
+		FLT64 radian_angle (CREF<FLT64> a) const override {
+			return a / FLT64 (180) * FLT64 (MATH_PI) ;
 		}
 	} ;
 } ;
@@ -680,13 +680,13 @@ trait FLOATPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			const auto r3x = (DATA (rax.mExponent) << 52) & DATA (0X7FF0000000000000) ;
 			const auto r4x = DATA (rax.mMantissa) & DATA (0X000FFFFFFFFFFFFF) ;
 			const auto r5x = r2x | r3x | r4x ;
-			return bitwise[TYPEAS<FLT64>::expr] (r5x) ;
+			return bitwise[TYPE<FLT64>::expr] (r5x) ;
 		}
 
-		NOTATION decode (CREF<FLT64> obj) const override {
+		NOTATION decode (CREF<FLT64> a) const override {
 			NOTATION ret ;
 			ret.mRadix = 2 ;
-			const auto r1x = bitwise (obj) ;
+			const auto r1x = bitwise (a) ;
 			const auto r2x = r1x & DATA (0X7FF0000000000000) ;
 			const auto r3x = r1x & DATA (0X000FFFFFFFFFFFFF) ;
 			ret.mSign = BitProc::bit_any (r1x ,DATA (0X8000000000000000)) ;
@@ -876,7 +876,7 @@ template <class DEPEND>
 trait FLOATPROC_FEXP2CACHE_HELP<DEPEND ,ALWAYS> {
 	using NOTATION = typename FLOATPROC_HELP<DEPEND ,ALWAYS>::NOTATION ;
 
-	using SIZE = ENUMAS<VAL ,693> ;
+	using SIZE = ENUM<693> ;
 
 	class FEXP2Cache {
 	protected:
@@ -902,7 +902,7 @@ trait FLOATPROC_FEXP2CACHE_HELP<DEPEND ,ALWAYS> {
 			ret.mRadix = 2 ;
 			ret.mSign = FALSE ;
 			const auto r1x = SIZE::expr / 2 + INDEX (k) ;
-			assume (vbetween (r1x ,0 ,SIZE::expr)) ;
+			assume (operator_between (r1x ,0 ,SIZE::expr)) ;
 			ret.mMantissa = VAL64 (mMCache[r1x]) ;
 			ret.mPrecision = 0 ;
 			ret.mExponent = VAL64 (mECache[r1x]) ;
@@ -915,7 +915,7 @@ template <class DEPEND>
 trait FLOATPROC_FEXP10CACHE_HELP<DEPEND ,ALWAYS> {
 	using NOTATION = typename FLOATPROC_HELP<DEPEND ,ALWAYS>::NOTATION ;
 
-	using SIZE = ENUMAS<VAL ,2175> ;
+	using SIZE = ENUM<2175> ;
 
 	class FEXP10Cache {
 	protected:
@@ -941,7 +941,7 @@ trait FLOATPROC_FEXP10CACHE_HELP<DEPEND ,ALWAYS> {
 			ret.mRadix = 10 ;
 			ret.mSign = FALSE ;
 			const auto r1x = SIZE::expr / 2 + INDEX (k) ;
-			assume (vbetween (r1x ,0 ,SIZE::expr)) ;
+			assume (operator_between (r1x ,0 ,SIZE::expr)) ;
 			ret.mMantissa = VAL64 (mMCache[r1x]) ;
 			ret.mPrecision = 0 ;
 			ret.mExponent = VAL64 (mECache[r1x]) ;
@@ -966,28 +966,28 @@ trait BITPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			noop () ;
 		}
 
-		BYTE bit_low (CREF<WORD> obj) const override {
-			return BYTE (obj) ;
+		BYTE bit_low (CREF<WORD> a) const override {
+			return BYTE (a) ;
 		}
 
-		WORD bit_low (CREF<CHAR> obj) const override {
-			return WORD (obj) ;
+		WORD bit_low (CREF<CHAR> a) const override {
+			return WORD (a) ;
 		}
 
-		CHAR bit_low (CREF<DATA> obj) const override {
-			return CHAR (obj) ;
+		CHAR bit_low (CREF<DATA> a) const override {
+			return CHAR (a) ;
 		}
 
-		BYTE bit_high (CREF<WORD> obj) const override {
-			return BYTE (obj >> 8) ;
+		BYTE bit_high (CREF<WORD> a) const override {
+			return BYTE (a >> 8) ;
 		}
 
-		WORD bit_high (CREF<CHAR> obj) const override {
-			return WORD (obj >> 16) ;
+		WORD bit_high (CREF<CHAR> a) const override {
+			return WORD (a >> 16) ;
 		}
 
-		CHAR bit_high (CREF<DATA> obj) const override {
-			return CHAR (obj >> 32) ;
+		CHAR bit_high (CREF<DATA> a) const override {
+			return CHAR (a >> 32) ;
 		}
 
 		WORD bit_merge (CREF<BYTE> high ,CREF<BYTE> low) const override {
@@ -1038,35 +1038,35 @@ trait BITPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			return DATA (0X01) << nth ;
 		}
 
-		BYTE bit_reverse (CREF<BYTE> obj) const override {
-			return obj ;
+		BYTE bit_reverse (CREF<BYTE> a) const override {
+			return a ;
 		}
 
-		WORD bit_reverse (CREF<WORD> obj) const override {
-			auto rax = bitwise[TYPEAS<BoxBuffer<BYTE ,SIZE_OF<WORD>>>::expr] (obj) ;
+		WORD bit_reverse (CREF<WORD> a) const override {
+			auto rax = bitwise[TYPE<BoxBuffer<BYTE ,SIZE_OF<WORD>>>::expr] (a) ;
 			swap (rax[0] ,rax[1]) ;
-			return bitwise[TYPEAS<WORD>::expr] (rax) ;
+			return bitwise[TYPE<WORD>::expr] (rax) ;
 		}
 
-		CHAR bit_reverse (CREF<CHAR> obj) const override {
-			auto rax = bitwise[TYPEAS<BoxBuffer<BYTE ,SIZE_OF<CHAR>>>::expr] (obj) ;
+		CHAR bit_reverse (CREF<CHAR> a) const override {
+			auto rax = bitwise[TYPE<BoxBuffer<BYTE ,SIZE_OF<CHAR>>>::expr] (a) ;
 			swap (rax[0] ,rax[3]) ;
 			swap (rax[1] ,rax[2]) ;
-			return bitwise[TYPEAS<CHAR>::expr] (rax) ;
+			return bitwise[TYPE<CHAR>::expr] (rax) ;
 		}
 
-		DATA bit_reverse (CREF<DATA> obj) const override {
-			auto rax = bitwise[TYPEAS<BoxBuffer<BYTE ,SIZE_OF<DATA>>>::expr] (obj) ;
+		DATA bit_reverse (CREF<DATA> a) const override {
+			auto rax = bitwise[TYPE<BoxBuffer<BYTE ,SIZE_OF<DATA>>>::expr] (a) ;
 			swap (rax[0] ,rax[7]) ;
 			swap (rax[1] ,rax[6]) ;
 			swap (rax[2] ,rax[5]) ;
 			swap (rax[3] ,rax[4]) ;
-			return bitwise[TYPEAS<DATA>::expr] (rax) ;
+			return bitwise[TYPE<DATA>::expr] (rax) ;
 		}
 
-		INDEX bit_find (CREF<BYTE> obj) const override {
+		INDEX bit_find (CREF<BYTE> a) const override {
 			INDEX ret = NONE ;
-			auto rax = obj ;
+			auto rax = a ;
 			while (TRUE) {
 				if (rax == BYTE (0X00))
 					break ;
@@ -1076,9 +1076,9 @@ trait BITPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			return move (ret) ;
 		}
 
-		INDEX bit_find (CREF<WORD> obj) const override {
+		INDEX bit_find (CREF<WORD> a) const override {
 			INDEX ret = NONE ;
-			auto rax = obj ;
+			auto rax = a ;
 			while (TRUE) {
 				if (rax == WORD (0X00))
 					break ;
@@ -1088,9 +1088,9 @@ trait BITPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			return move (ret) ;
 		}
 
-		INDEX bit_find (CREF<CHAR> obj) const override {
+		INDEX bit_find (CREF<CHAR> a) const override {
 			INDEX ret = NONE ;
-			auto rax = obj ;
+			auto rax = a ;
 			while (TRUE) {
 				if (rax == CHAR (0X00))
 					break ;
@@ -1100,9 +1100,9 @@ trait BITPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			return move (ret) ;
 		}
 
-		INDEX bit_find (CREF<DATA> obj) const override {
+		INDEX bit_find (CREF<DATA> a) const override {
 			INDEX ret = NONE ;
-			auto rax = obj ;
+			auto rax = a ;
 			while (TRUE) {
 				if (rax == DATA (0X00))
 					break ;
@@ -1171,7 +1171,7 @@ trait INTEGER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 
 		VAL64 get () const override {
 			VAL64 ret = 0 ;
-			const auto r1x = vmin (mInteger.size () ,SIZE_OF<VAL64>::expr) ;
+			const auto r1x = operator_min (mInteger.size () ,SIZE_OF<VAL64>::expr) ;
 			for (auto &&i : iter (0 ,r1x)) {
 				const auto r2x = DATA (mInteger[i]) << (i * 8) ;
 				ret = VAL64 (DATA (ret) | r2x) ;
@@ -1180,7 +1180,7 @@ trait INTEGER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		void set (CREF<VAL64> value_) override {
-			const auto r1x = vmin (mInteger.size () ,SIZE_OF<VAL64>::expr) ;
+			const auto r1x = operator_min (mInteger.size () ,SIZE_OF<VAL64>::expr) ;
 			const auto r2x = DATA (value_) ;
 			for (auto &&i : iter (0 ,r1x)) {
 				const auto r3x = BYTE (r2x >> (i * 8)) ;
@@ -1195,7 +1195,7 @@ trait INTEGER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		BOOL equal (CREF<Layout> that) const override {
-			return equal (keep[TYPEAS<CREF<ImplHolder>>::expr] (that.mThis.self)) ;
+			return equal (keep[TYPE<CREF<ImplHolder>>::expr] (that.mThis.self)) ;
 		}
 
 		BOOL equal (CREF<ImplHolder> that) const {
@@ -1204,7 +1204,7 @@ trait INTEGER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		FLAG compr (CREF<Layout> that) const override {
-			return compr (keep[TYPEAS<CREF<ImplHolder>>::expr] (that.mThis.self)) ;
+			return compr (keep[TYPE<CREF<ImplHolder>>::expr] (that.mThis.self)) ;
 		}
 
 		FLAG compr (CREF<ImplHolder> that) const {
@@ -1217,7 +1217,7 @@ trait INTEGER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		Layout add (CREF<Layout> that) const override {
-			return add (keep[TYPEAS<CREF<ImplHolder>>::expr] (that.mThis.self)) ;
+			return add (keep[TYPE<CREF<ImplHolder>>::expr] (that.mThis.self)) ;
 		}
 
 		Layout add (CREF<ImplHolder> that) const {
@@ -1234,7 +1234,7 @@ trait INTEGER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		Layout sub (CREF<Layout> that) const override {
-			return sub (keep[TYPEAS<CREF<ImplHolder>>::expr] (that.mThis.self)) ;
+			return sub (keep[TYPE<CREF<ImplHolder>>::expr] (that.mThis.self)) ;
 		}
 
 		Layout sub (CREF<ImplHolder> that) const {
@@ -1253,7 +1253,7 @@ trait INTEGER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		Layout mul (CREF<Layout> that) const override {
-			return mul (keep[TYPEAS<CREF<ImplHolder>>::expr] (that.mThis.self)) ;
+			return mul (keep[TYPE<CREF<ImplHolder>>::expr] (that.mThis.self)) ;
 		}
 
 		Layout mul (CREF<ImplHolder> that) const {

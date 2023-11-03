@@ -89,18 +89,18 @@ trait SORTPROC_HELP<DEPEND ,ALWAYS> {
 	} ;
 } ;
 
-template <class UNIT>
-trait SORTPROC_IMPLBINDER_HELP<UNIT ,ALWAYS> {
+template <class A>
+trait SORTPROC_IMPLBINDER_HELP<A ,ALWAYS> {
 	using Binder = typename SORTPROC_HELP<DEPEND ,ALWAYS>::Binder ;
 
 	class ImplBinder implement Binder {
 	protected:
-		CRef<UNIT> mThat ;
+		CRef<A> mThat ;
 
 	public:
 		implicit ImplBinder () = delete ;
 
-		explicit ImplBinder (RREF<CRef<UNIT>> that) {
+		explicit ImplBinder (RREF<CRef<A>> that) {
 			mThat = move (that) ;
 		}
 

@@ -122,8 +122,8 @@ trait SORTPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				return ;
 			INDEX ix = begin_ ;
 			INDEX iy = end_ - 1 ;
-			assert (vbetween (ix ,0 ,result.size ())) ;
-			assert (vbetween (iy ,0 ,result.size ())) ;
+			assert (operator_between (ix ,0 ,result.size ())) ;
+			assert (operator_between (iy ,0 ,result.size ())) ;
 			quick_sort (array_ ,result ,ix ,iy ,r1x) ;
 		}
 	} ;

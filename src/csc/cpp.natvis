@@ -32,7 +32,7 @@
     </Expand>
   </Type>
 
-  <Type Name="CSC::VREF_HELP&lt;*&gt;::VRef">
+  <Type Name="CSC::XREF_HELP&lt;*&gt;::VRef">
     <DisplayString Condition="mPointer==0">{{???}}</DisplayString>
     <Expand HideRawView="true">
       <ExpandedItem Condition="mPointer==0">(int*)0</ExpandedItem>
@@ -156,7 +156,7 @@
     </Expand>
   </Type>
 
-  <Type Name="CSC::BUFFER_HELP&lt;*,CSC::ENUMAS&lt;*,*&gt;,*&gt;::Buffer">
+  <Type Name="CSC::BUFFER_HELP&lt;*,CSC::ENUM&lt;*,*&gt;,*&gt;::Buffer">
     <Expand HideRawView="true">
       <Item Name="[size]">$T3</Item>
       <ArrayItems Condition="$T3&gt;=10">
@@ -171,7 +171,7 @@
     </Expand>
   </Type>
 
-  <Type Name="CSC::BUFFER_HELP&lt;*,CSC::ENUMAS&lt;*,*&gt;,*&gt;::Buffer" Priority="High">
+  <Type Name="CSC::BUFFER_HELP&lt;*,CSC::ENUM&lt;*,*&gt;,*&gt;::Buffer" Priority="High">
     <Expand HideRawView="true">
       <Item Name="[size]">mSize</Item>
       <ArrayItems Condition="mSize&gt;=10">
@@ -182,7 +182,7 @@
         <Size>mSize</Size>
         <ValuePointer>($T1*)mBuffer.mPointer</ValuePointer>
       </ArrayItems>
-      <Item Name="[+]">(CSC::VARBUFFER_HOLDER_HELP&lt;$T1,CSC::ENUMAS&lt;bool,0&gt;,$T4&gt;::Buffer*)this</Item>
+      <Item Name="[+]">(CSC::VARBUFFER_HOLDER_HELP&lt;$T1,CSC::ENUM&lt;bool,0&gt;,$T4&gt;::Buffer*)this</Item>
     </Expand>
   </Type>
 
@@ -231,7 +231,7 @@
     </Expand>
   </Type>
 
-  <Type Name="CSC::BUFFER_HELP&lt;*,CSC::ENUMAS&lt;*,*&gt;,*&gt;::Buffer" Priority="High">
+  <Type Name="CSC::BUFFER_HELP&lt;*,CSC::ENUM&lt;*,*&gt;,*&gt;::Buffer" Priority="High">
     <Expand HideRawView="true">
       <ExpandedItem>mThis</ExpandedItem>
     </Expand>

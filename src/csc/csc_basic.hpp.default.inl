@@ -64,7 +64,7 @@ trait PINMUTEX_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 
 	public:
 		void initialize () override {
-			mMutex.acquire (TYPEAS<std::mutex>::expr) ;
+			mMutex.remake (TYPE<std::mutex>::expr) ;
 			mLock = FALSE ;
 		}
 
@@ -86,7 +86,7 @@ template <>
 exports auto PINMUTEX_HELP<DEPEND ,ALWAYS>::FakeImplHolder::create () ->Box<FakeHolder> {
 	using R1X = typename PINMUTEX_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
 	Box<FakeHolder> ret ;
-	ret.acquire (TYPEAS<R1X>::expr) ;
+	ret.remake (TYPE<R1X>::expr) ;
 	return move (ret) ;
 }
 
@@ -95,7 +95,7 @@ trait LATER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	struct HEAP ;
 
 	using Holder = typename LATER_HOLDER_HELP<DEPEND ,ALWAYS>::Holder ;
-	using HEAP_SIZE = ENUMAS<VAL ,256> ;
+	using HEAP_SIZE = ENUM<256> ;
 
 	struct NODE {
 		FLAG mTag ;

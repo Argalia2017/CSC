@@ -82,7 +82,7 @@ trait CONSOLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	using Holder = typename CONSOLE_HELP<DEPEND ,ALWAYS>::Holder ;
 	using OPTION_CLAZZ = typename CONSOLE_HELP<DEPEND ,ALWAYS>::OPTION_CLAZZ ;
 
-	using CONSOLE_BUFFER_SSIZE = ENUMAS<VAL ,8388607> ;
+	using CONSOLE_BUFFER_SSIZE = ENUM<8388607> ;
 
 	struct PACK {
 		String<STR> mConBuffer ;
@@ -281,7 +281,7 @@ trait CONSOLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			try_invoke ([&] () {
 				if (mThis->mLogStreamFile == NULL)
 					return ;
-				const auto r2x = mThis->mLogStreamFile->write (RegBuffer<BYTE>::from (unsafe_deptr (mThis->mLogBuffer[0]) ,0 ,r1x)) ;
+				const auto r2x = mThis->mLogStreamFile->write (RegBuffer<BYTE>::from (unsafe_cast[TYPE<TEMP<void>>::expr] (mThis->mLogBuffer[0]) ,0 ,r1x)) ;
 				assume (r2x == r1x) ;
 			} ,[&] () {
 				mThis->mLogStreamFile = NULL ;
@@ -290,7 +290,7 @@ trait CONSOLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				if (mThis->mLogStreamFile != NULL)
 					return ;
 				open_log_file () ;
-				const auto r3x = mThis->mLogStreamFile->write (RegBuffer<BYTE>::from (unsafe_deptr (mThis->mLogBuffer[0]) ,0 ,r1x)) ;
+				const auto r3x = mThis->mLogStreamFile->write (RegBuffer<BYTE>::from (unsafe_cast[TYPE<TEMP<void>>::expr] (mThis->mLogBuffer[0]) ,0 ,r1x)) ;
 				assume (r3x == r1x) ;
 			} ,[&] () {
 				mThis->mLogStreamFile = NULL ;
@@ -315,7 +315,7 @@ trait CONSOLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			mThis->mLogWriter << slice ("][") ;
 			mThis->mLogWriter << tag ;
 			mThis->mLogWriter << slice ("] : ") ;
-			const auto r3x = string_cvt[TYPEAS<STRU8 ,STR>::expr] (mThis->mConBuffer) ;
+			const auto r3x = string_cvt[TYPE<STRU8 ,STR>::expr] (mThis->mConBuffer) ;
 			mThis->mLogWriter << r3x ;
 			mThis->mLogWriter << GAP ;
 			mThis->mLogWriter << EOS ;
@@ -329,7 +329,7 @@ trait CONSOLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			mThis->mLogStreamFile = VRef<StreamFile>::make (mThis->mLogFile) ;
 			mThis->mLogStreamFile->open (TRUE ,TRUE) ;
 			const auto r3x = PrintString<STRU8>::make (BOM) ;
-			const auto r4x = mThis->mLogStreamFile->write (RegBuffer<BYTE>::from (unsafe_deptr (r3x[0]) ,0 ,r3x.length ())) ;
+			const auto r4x = mThis->mLogStreamFile->write (RegBuffer<BYTE>::from (unsafe_cast[TYPE<TEMP<void>>::expr] (r3x[0]) ,0 ,r3x.length ())) ;
 			assume (r4x == r3x.length ()) ;
 		}
 
@@ -403,8 +403,8 @@ template <class DEPEND>
 trait REPORTER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	using Holder = typename REPORTER_HELP<DEPEND ,ALWAYS>::Holder ;
 
-	using STACK_MAX_DEPTH = ENUMAS<VAL ,256> ;
-	using FUNCTION_NAME_SIZE = ENUMAS<VAL ,1024> ;
+	using STACK_MAX_DEPTH = ENUM<256> ;
+	using FUNCTION_NAME_SIZE = ENUM<1024> ;
 
 	struct SYMBOL_INFO_EX {
 		SYMBOL_INFO mFirst ;
@@ -548,11 +548,11 @@ trait REPORTER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				if ifnot (r1x)
 					discard ;
 				mThis->mNameBuffer -= BufferProc<STR>::buf_slice (unsafe_array (rax->mFirst.Name[0]) ,mThis->mNameBuffer.size ()) ;
-				const auto r2x = string_build[TYPEAS<STR ,DATA>::expr] (DATA (addr)) ;
+				const auto r2x = string_build[TYPE<STR ,DATA>::expr] (DATA (addr)) ;
 				ret = PrintString<STR>::make (slice ("[") ,r2x ,slice ("] : ") ,mThis->mNameBuffer) ;
 			}
 			if ifswitch (act) {
-				const auto r3x = string_build[TYPEAS<STR ,DATA>::expr] (DATA (addr)) ;
+				const auto r3x = string_build[TYPE<STR ,DATA>::expr] (DATA (addr)) ;
 				ret = PrintString<STR>::make (slice ("[") ,r3x ,slice ("] : ") ,slice ("null")) ;
 			}
 			return move (ret) ;

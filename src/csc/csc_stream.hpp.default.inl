@@ -56,7 +56,7 @@ trait BYTEATTRIBUTE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		BOOL is_big_endian () const override {
 			return memorize ([&] () {
 				const auto r1x = WORD (0X00FF) ;
-				const auto r2x = bitwise[TYPEAS<BoxBuffer<BYTE ,SIZE_OF<WORD>>>::expr] (r1x) ;
+				const auto r2x = bitwise[TYPE<BoxBuffer<BYTE ,SIZE_OF<WORD>>>::expr] (r1x) ;
 				if (r2x[0] != BYTE (0X00))
 					return FALSE ;
 				return TRUE ;
@@ -162,7 +162,7 @@ trait BYTEREADER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				auto rax = BoxBuffer<BYTE ,SIZE_OF<WORD>> (0) ;
 				for (auto &&i : iter (0 ,SIZE_OF<WORD>::expr))
 					read (rax[i]) ;
-				item = bitwise[TYPEAS<WORD>::expr] (rax) ;
+				item = bitwise[TYPE<WORD>::expr] (rax) ;
 			}
 			if ifswitch (act) {
 				auto rax = BoxBuffer<BYTE ,SIZE_OF<WORD>> (0) ;
@@ -170,7 +170,7 @@ trait BYTEREADER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 					INDEX ix = SIZE_OF<WORD>::expr - 1 - i ;
 					read (rax[ix]) ;
 				}
-				item = bitwise[TYPEAS<WORD>::expr] (rax) ;
+				item = bitwise[TYPE<WORD>::expr] (rax) ;
 			}
 		}
 
@@ -182,7 +182,7 @@ trait BYTEREADER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				auto rax = BoxBuffer<BYTE ,SIZE_OF<CHAR>> (0) ;
 				for (auto &&i : iter (0 ,SIZE_OF<CHAR>::expr))
 					read (rax[i]) ;
-				item = bitwise[TYPEAS<CHAR>::expr] (rax) ;
+				item = bitwise[TYPE<CHAR>::expr] (rax) ;
 			}
 			if ifswitch (act) {
 				auto rax = BoxBuffer<BYTE ,SIZE_OF<CHAR>> (0) ;
@@ -190,7 +190,7 @@ trait BYTEREADER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 					INDEX ix = SIZE_OF<CHAR>::expr - 1 - i ;
 					read (rax[ix]) ;
 				}
-				item = bitwise[TYPEAS<CHAR>::expr] (rax) ;
+				item = bitwise[TYPE<CHAR>::expr] (rax) ;
 			}
 		}
 
@@ -202,7 +202,7 @@ trait BYTEREADER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				auto rax = BoxBuffer<BYTE ,SIZE_OF<DATA>> (0) ;
 				for (auto &&i : iter (0 ,SIZE_OF<DATA>::expr))
 					read (rax[i]) ;
-				item = bitwise[TYPEAS<DATA>::expr] (rax) ;
+				item = bitwise[TYPE<DATA>::expr] (rax) ;
 			}
 			if ifswitch (act) {
 				auto rax = BoxBuffer<BYTE ,SIZE_OF<DATA>> (0) ;
@@ -210,7 +210,7 @@ trait BYTEREADER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 					INDEX ix = SIZE_OF<DATA>::expr - 1 - i ;
 					read (rax[ix]) ;
 				}
-				item = bitwise[TYPEAS<DATA>::expr] (rax) ;
+				item = bitwise[TYPE<DATA>::expr] (rax) ;
 			}
 		}
 
@@ -218,41 +218,41 @@ trait BYTEREADER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			using R1X = KILL<BYTE_BASE<BOOL> ,DEPEND> ;
 			auto rax = R1X () ;
 			read (rax) ;
-			item = bitwise[TYPEAS<BOOL>::expr] (rax) ;
+			item = bitwise[TYPE<BOOL>::expr] (rax) ;
 		}
 
 		void read (VREF<VAL32> item) override {
 			using R1X = KILL<BYTE_BASE<VAL32> ,DEPEND> ;
 			auto rax = R1X () ;
 			read (rax) ;
-			item = bitwise[TYPEAS<VAL32>::expr] (rax) ;
+			item = bitwise[TYPE<VAL32>::expr] (rax) ;
 		}
 
 		void read (VREF<VAL64> item) override {
 			using R1X = KILL<BYTE_BASE<VAL64> ,DEPEND> ;
 			auto rax = R1X () ;
 			read (rax) ;
-			item = bitwise[TYPEAS<VAL64>::expr] (rax) ;
+			item = bitwise[TYPE<VAL64>::expr] (rax) ;
 		}
 
 		void read (VREF<FLT32> item) override {
 			using R1X = KILL<BYTE_BASE<FLT32> ,DEPEND> ;
 			auto rax = R1X () ;
 			read (rax) ;
-			item = bitwise[TYPEAS<FLT32>::expr] (rax) ;
+			item = bitwise[TYPE<FLT32>::expr] (rax) ;
 		}
 
 		void read (VREF<FLT64> item) override {
 			using R1X = KILL<BYTE_BASE<FLT64> ,DEPEND> ;
 			auto rax = R1X () ;
 			read (rax) ;
-			item = bitwise[TYPEAS<FLT64>::expr] (rax) ;
+			item = bitwise[TYPE<FLT64>::expr] (rax) ;
 		}
 
 		void read (CREF<Slice<STR>> item) override {
 			auto rax = BYTE () ;
 			for (auto &&i : iter (0 ,item.size ())) {
-				assume (vbetween (INDEX (item[i]) ,0 ,128)) ;
+				assume (operator_between (INDEX (item[i]) ,0 ,128)) ;
 				read (rax) ;
 				assume (rax == BYTE (item[i])) ;
 			}
@@ -260,7 +260,7 @@ trait BYTEREADER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 
 		void read (VREF<String<STRA>> item) override {
 			using R1X = KILL<BYTE_BASE<STRA> ,DEPEND> ;
-			const auto r1x = poll (TYPEAS<VAL32>::expr) ;
+			const auto r1x = poll (TYPE<VAL32>::expr) ;
 			if ifswitch (TRUE) {
 				if (item.size () >= r1x)
 					discard ;
@@ -271,7 +271,7 @@ trait BYTEREADER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			auto rax = R1X () ;
 			for (auto &&i : iter (0 ,r1x)) {
 				read (rax) ;
-				item[i] = bitwise[TYPEAS<STRA>::expr] (rax) ;
+				item[i] = bitwise[TYPE<STRA>::expr] (rax) ;
 			}
 			read (rax) ;
 			assume (rax == R1X (0X00)) ;
@@ -279,7 +279,7 @@ trait BYTEREADER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 
 		void read (VREF<String<STRW>> item) override {
 			using R1X = KILL<BYTE_BASE<STRW> ,DEPEND> ;
-			const auto r1x = poll (TYPEAS<VAL32>::expr) ;
+			const auto r1x = poll (TYPE<VAL32>::expr) ;
 			if ifswitch (TRUE) {
 				if (item.size () >= r1x)
 					discard ;
@@ -290,7 +290,7 @@ trait BYTEREADER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			auto rax = R1X () ;
 			for (auto &&i : iter (0 ,r1x)) {
 				read (rax) ;
-				item[i] = bitwise[TYPEAS<STRW>::expr] (rax) ;
+				item[i] = bitwise[TYPE<STRW>::expr] (rax) ;
 			}
 			read (rax) ;
 			assume (rax == R1X (0X00)) ;
@@ -298,7 +298,7 @@ trait BYTEREADER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 
 		void read (VREF<String<STRU8>> item) override {
 			using R1X = KILL<BYTE_BASE<STRU8> ,DEPEND> ;
-			const auto r1x = poll (TYPEAS<VAL32>::expr) ;
+			const auto r1x = poll (TYPE<VAL32>::expr) ;
 			if ifswitch (TRUE) {
 				if (item.size () >= r1x)
 					discard ;
@@ -309,7 +309,7 @@ trait BYTEREADER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			auto rax = R1X () ;
 			for (auto &&i : iter (0 ,r1x)) {
 				read (rax) ;
-				item[i] = bitwise[TYPEAS<STRU8>::expr] (rax) ;
+				item[i] = bitwise[TYPE<STRU8>::expr] (rax) ;
 			}
 			read (rax) ;
 			assume (rax == R1X (0X00)) ;
@@ -317,7 +317,7 @@ trait BYTEREADER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 
 		void read (VREF<String<STRU16>> item) override {
 			using R1X = KILL<BYTE_BASE<STRU16> ,DEPEND> ;
-			const auto r1x = poll (TYPEAS<VAL32>::expr) ;
+			const auto r1x = poll (TYPE<VAL32>::expr) ;
 			if ifswitch (TRUE) {
 				if (item.size () >= r1x)
 					discard ;
@@ -328,7 +328,7 @@ trait BYTEREADER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			auto rax = R1X () ;
 			for (auto &&i : iter (0 ,r1x)) {
 				read (rax) ;
-				item[i] = bitwise[TYPEAS<STRU16>::expr] (rax) ;
+				item[i] = bitwise[TYPE<STRU16>::expr] (rax) ;
 			}
 			read (rax) ;
 			assume (rax == R1X (0X00)) ;
@@ -336,7 +336,7 @@ trait BYTEREADER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 
 		void read (VREF<String<STRU32>> item) override {
 			using R1X = KILL<BYTE_BASE<STRU32> ,DEPEND> ;
-			const auto r1x = poll (TYPEAS<VAL32>::expr) ;
+			const auto r1x = poll (TYPE<VAL32>::expr) ;
 			if ifswitch (TRUE) {
 				if (item.size () >= r1x)
 					discard ;
@@ -347,7 +347,7 @@ trait BYTEREADER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			auto rax = R1X () ;
 			for (auto &&i : iter (0 ,r1x)) {
 				read (rax) ;
-				item[i] = bitwise[TYPEAS<STRU32>::expr] (rax) ;
+				item[i] = bitwise[TYPE<STRU32>::expr] (rax) ;
 			}
 			read (rax) ;
 			assume (rax == R1X (0X00)) ;
@@ -468,7 +468,7 @@ trait BYTEWRITER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		void write (CREF<WORD> item) override {
-			const auto r1x = bitwise[TYPEAS<BoxBuffer<BYTE ,SIZE_OF<WORD>>>::expr] (item) ;
+			const auto r1x = bitwise[TYPE<BoxBuffer<BYTE ,SIZE_OF<WORD>>>::expr] (item) ;
 			auto act = TRUE ;
 			if ifswitch (act) {
 				if ifnot (mAttribute.is_big_endian ())
@@ -485,7 +485,7 @@ trait BYTEWRITER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		void write (CREF<CHAR> item) override {
-			const auto r1x = bitwise[TYPEAS<BoxBuffer<BYTE ,SIZE_OF<CHAR>>>::expr] (item) ;
+			const auto r1x = bitwise[TYPE<BoxBuffer<BYTE ,SIZE_OF<CHAR>>>::expr] (item) ;
 			auto act = TRUE ;
 			if ifswitch (act) {
 				if ifnot (mAttribute.is_big_endian ())
@@ -502,7 +502,7 @@ trait BYTEWRITER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		void write (CREF<DATA> item) override {
-			const auto r1x = bitwise[TYPEAS<BoxBuffer<BYTE ,SIZE_OF<DATA>>>::expr] (item) ;
+			const auto r1x = bitwise[TYPE<BoxBuffer<BYTE ,SIZE_OF<DATA>>>::expr] (item) ;
 			auto act = TRUE ;
 			if ifswitch (act) {
 				if ifnot (mAttribute.is_big_endian ())
@@ -545,7 +545,7 @@ trait BYTEWRITER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 
 		void write (CREF<Slice<STR>> item) override {
 			for (auto &&i : iter (0 ,item.size ())) {
-				assume (vbetween (INDEX (item[i]) ,0 ,128)) ;
+				assume (operator_between (INDEX (item[i]) ,0 ,128)) ;
 				const auto r1x = BYTE (item[i]) ;
 				write (r1x) ;
 			}
@@ -778,16 +778,16 @@ trait TEXTATTRIBUTE_IMPLHOLDER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 			if (is_hex_number (str))
 				return INDEX (word_upper_cast (str)) - INDEX ('A') + 10 ;
 			assume (FALSE) ;
-			return bad (TYPEAS<ITEM>::expr) ;
+			return bad (TYPE<ITEM>::expr) ;
 		}
 
 		ITEM str_from_hex (CREF<INDEX> hex) const override {
-			if (vbetween (hex ,0 ,10))
+			if (operator_between (hex ,0 ,10))
 				return ITEM (INDEX ('0') + hex) ;
-			if (vbetween (hex ,10 ,16))
+			if (operator_between (hex ,10 ,16))
 				return ITEM (INDEX ('A') + hex - 10) ;
 			assume (FALSE) ;
-			return bad (TYPEAS<ITEM>::expr) ;
+			return bad (TYPE<ITEM>::expr) ;
 		}
 
 		BOOL is_control (CREF<ITEM> str) const override {
@@ -997,7 +997,7 @@ trait TEXTREADER_IMPLHOLDER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 		}
 
 		void read (VREF<VAL32> item) override {
-			const auto r1x = poll (TYPEAS<VAL64>::expr) ;
+			const auto r1x = poll (TYPE<VAL64>::expr) ;
 			assume (r1x >= VAL32_MIN) ;
 			assume (r1x <= VAL32_MAX) ;
 			item = VAL32 (r1x) ;
@@ -1085,7 +1085,7 @@ trait TEXTREADER_IMPLHOLDER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 		}
 
 		void read (VREF<FLT32> item) override {
-			const auto r1x = poll (TYPEAS<FLT64>::expr) ;
+			const auto r1x = poll (TYPE<FLT64>::expr) ;
 			assume (r1x >= FLT32_MIN) ;
 			assume (r1x <= FLT32_MAX) ;
 			item = FLT32 (r1x) ;
@@ -1277,7 +1277,7 @@ trait TEXTREADER_IMPLHOLDER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 		void read (CREF<Slice<STR>> item) override {
 			auto rax = ITEM () ;
 			for (auto &&i : iter (0 ,item.size ())) {
-				assume (vbetween (INDEX (item[i]) ,0 ,128)) ;
+				assume (operator_between (INDEX (item[i]) ,0 ,128)) ;
 				read (rax) ;
 				assume (rax == ITEM (item[i])) ;
 			}
@@ -1329,7 +1329,7 @@ trait TEXTREADER_IMPLHOLDER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 		}
 
 		void read_bom () override {
-			read_bom (TYPEAS<ITEM>::expr) ;
+			read_bom (TYPE<ITEM>::expr) ;
 		}
 
 		void read_bom (TYPEID<STRA> id) {
@@ -1337,7 +1337,7 @@ trait TEXTREADER_IMPLHOLDER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 		}
 
 		void read_bom (TYPEID<STRW> id) {
-			read_bom (TYPEAS<STRUW>::expr) ;
+			read_bom (TYPE<STRUW>::expr) ;
 		}
 
 		void read_bom (TYPEID<STRU8> id) {
@@ -1665,7 +1665,7 @@ trait TEXTWRITER_IMPLHOLDER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 
 		void write (CREF<Slice<STR>> item) override {
 			for (auto &&i : iter (0 ,item.size ())) {
-				assume (vbetween (INDEX (item[i]) ,0 ,128)) ;
+				assume (operator_between (INDEX (item[i]) ,0 ,128)) ;
 				const auto r1x = ITEM (item[i]) ;
 				write (r1x) ;
 			}
@@ -1699,7 +1699,7 @@ trait TEXTWRITER_IMPLHOLDER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 		}
 
 		void write_bom () override {
-			write_bom (TYPEAS<ITEM>::expr) ;
+			write_bom (TYPE<ITEM>::expr) ;
 		}
 
 		void write_bom (TYPEID<STRA> id) {
@@ -1707,7 +1707,7 @@ trait TEXTWRITER_IMPLHOLDER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 		}
 
 		void write_bom (TYPEID<STRW> id) {
-			write_bom (TYPEAS<STRUW>::expr) ;
+			write_bom (TYPE<STRUW>::expr) ;
 		}
 
 		void write_bom (TYPEID<STRU8> id) {
@@ -1744,7 +1744,7 @@ trait TEXTWRITER_WRITEVALUE_HELP<ITEM ,ALWAYS> {
 	using Binder = typename TEXTWRITER_HELP<ITEM ,ALWAYS>::Binder ;
 
 	using NOTATION = typename FLOATPROC_HELP<DEPEND ,ALWAYS>::NOTATION ;
-	using NUMBER_SIZE = ENUMAS<VAL ,64> ;
+	using NUMBER_SIZE = ENUM<64> ;
 
 	class WriteValue implement Binder {
 	protected:
@@ -1851,7 +1851,7 @@ trait TEXTWRITER_WRITEVALUE_HELP<ITEM ,ALWAYS> {
 				mValue = r6x ;
 				mWrite-- ;
 				mBuffer[mWrite] = ITEM ('E') ;
-				const auto r7x = vmax (LENGTH (r3x - 1 - r1x) ,0) ;
+				const auto r7x = operator_max (LENGTH (r3x - 1 - r1x) ,0) ;
 				for (auto &&i : iter (0 ,r7x)) {
 					noop (i) ;
 					mValue.mMantissa /= 10 ;
@@ -1901,7 +1901,7 @@ trait TEXTWRITER_WRITEVALUE_HELP<ITEM ,ALWAYS> {
 					discard ;
 				if (r4x >= 0)
 					discard ;
-				const auto r8x = vmax (LENGTH (-r4x - r1x) ,0) ;
+				const auto r8x = operator_max (LENGTH (-r4x - r1x) ,0) ;
 				for (auto &&i : iter (0 ,r8x)) {
 					noop (i) ;
 					mValue.mMantissa /= 10 ;
@@ -1936,7 +1936,7 @@ trait TEXTWRITER_WRITEVALUE_HELP<ITEM ,ALWAYS> {
 					discard ;
 				if (r4x >= 0)
 					discard ;
-				const auto r9x = vmax (LENGTH (-r4x - r1x) ,0) ;
+				const auto r9x = operator_max (LENGTH (-r4x - r1x) ,0) ;
 				for (auto &&i : iter (0 ,r9x)) {
 					noop (i) ;
 					mValue.mMantissa /= 10 ;
@@ -1953,7 +1953,7 @@ trait TEXTWRITER_WRITEVALUE_HELP<ITEM ,ALWAYS> {
 					mValue.mExponent++ ;
 					mValue.mPrecision-- ;
 				}
-				const auto r10x = vmax (r9x ,r3x) ;
+				const auto r10x = operator_max (r9x ,r3x) ;
 				for (auto &&i : iter (r10x ,-r4x)) {
 					noop (i) ;
 					mWrite-- ;
@@ -2017,7 +2017,7 @@ trait REGULARREADER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			mBackupCache = Deque<STRU8> (ll_size) ;
 			for (auto &&i : iter (0 ,ll_size)) {
 				noop (i) ;
-				const auto r1x = mReader->poll (TYPEAS<STRU8>::expr) ;
+				const auto r1x = mReader->poll (TYPE<STRU8>::expr) ;
 				mCache.add (r1x) ;
 			}
 			mHintString = FALSE ;
@@ -2043,13 +2043,13 @@ trait REGULARREADER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 
 		void read () override {
 			mCache.take () ;
-			const auto r1x = mReader->poll (TYPEAS<STRU8>::expr) ;
+			const auto r1x = mReader->poll (TYPE<STRU8>::expr) ;
 			mCache.add (r1x) ;
 		}
 
 		void read (CREF<Slice<STR>> item) override {
 			for (auto &&i : iter (0 ,item.size ())) {
-				assert (vbetween (INDEX (item[i]) ,0 ,128)) ;
+				assert (operator_between (INDEX (item[i]) ,0 ,128)) ;
 				assume (mCache[0] == STRU8 (item[i])) ;
 				read () ;
 			}

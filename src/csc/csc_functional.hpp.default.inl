@@ -38,15 +38,15 @@ trait SYNTAXTREE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	using Layout = typename SYNTAXTREE_HELP<DEPEND ,ALWAYS>::Layout ;
 	using SyntaxTree = typename SYNTAXTREE_HELP<DEPEND ,ALWAYS>::SyntaxTree ;
 
-	using LINK_MIN_SIZE = ENUMAS<VAL ,32> ;
+	using LINK_MIN_SIZE = ENUM<32> ;
 
 	struct NODE {
 		String<STR> mName ;
 		FLAG mCabi ;
 		AutoRef<> mValue ;
 		AutoRef<> mLater ;
-		Function<void> mOnceActor ;
-		Function<void> mActor ;
+		Function<TYPE<>> mOnceActor ;
+		Function<TYPE<>> mActor ;
 		BOOL mIsFunction ;
 		BOOL mIsIteration ;
 		BOOL mPlaying ;
@@ -290,7 +290,7 @@ trait SYNTAXTREE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			}
 		}
 
-		void once (RREF<Function<void>> actor) override {
+		void once (RREF<Function<TYPE<>>> actor) override {
 			INDEX ix = curr_node () ;
 			assume (ix != root_node ()) ;
 			assume (ifnot (mTree[ix].mOnceActor.exist ())) ;
@@ -300,7 +300,7 @@ trait SYNTAXTREE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			mTree[ix].mOnceActor = move (actor) ;
 		}
 
-		void then (RREF<Function<void>> actor) override {
+		void then (RREF<Function<TYPE<>>> actor) override {
 			INDEX ix = curr_node () ;
 			assume (ix != root_node ()) ;
 			assume (ifnot (mTree[ix].mActor.exist ())) ;
@@ -505,8 +505,8 @@ trait SYNTAXTREE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				if ifswitch (TRUE) {
 					if ifnot (mTree[ix].mValue.exist ())
 						discard ;
-					mTree[ix].mActor = Function<void> () ;
-					mTree[ix].mOnceActor = Function<void> () ;
+					mTree[ix].mActor = Function<TYPE<>> () ;
+					mTree[ix].mOnceActor = Function<TYPE<>> () ;
 					const auto r1x = HeapProc::usage_size () ;
 					mTree[ix].mValue = AutoRef<> () ;
 					mTree[ix].mLater = AutoRef<> () ;
