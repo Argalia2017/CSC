@@ -19,7 +19,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
 AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING A,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
@@ -301,18 +301,16 @@ trait STRINGPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		String<STRA> system_string_cvt (CREF<String<STRW>> a) const {
-			using R1X = typename FUNCTION_system_string_cvt_HELP<DEPEND ,ALWAYS>::FUNCTION_system_string_cvt ;
 			if (a.empty ())
 				return String<STRA> () ;
-			const auto r1x = R1X () ;
+			const auto r1x = FUNCTION_system_string_cvt () ;
 			return r1x (a) ;
 		}
 
 		String<STRW> system_string_cvt (CREF<String<STRA>> a) const {
-			using R1X = typename FUNCTION_system_string_cvt_HELP<DEPEND ,ALWAYS>::FUNCTION_system_string_cvt ;
 			if (a.empty ())
 				return String<STRW> () ;
-			const auto r1x = R1X () ;
+			const auto r1x = FUNCTION_system_string_cvt () ;
 			return r1x (a) ;
 		}
 

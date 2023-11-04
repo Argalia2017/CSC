@@ -19,7 +19,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
 AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING A,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
@@ -261,7 +261,7 @@ trait PROCESS_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		void initialize (CREF<SNAPSHOT> snapshot_) override {
 			mUID = 0 ;
 			mSnapshot = snapshot_ ;
-			try_invoke ([&] () {
+			try {
 				auto rax = ByteReader (RegBuffer<BYTE>::from (mSnapshot).borrow ()) ;
 				rax >> GAP ;
 				if ifswitch (TRUE) {
@@ -272,9 +272,9 @@ trait PROCESS_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 						discard ;
 					mUID = FLAG (r1x) ;
 				}
-			} ,[&] () {
+			} catch (...) {
 				noop () ;
-			}) ;
+			}
 		}
 
 		FLAG process_uid () const override {
@@ -398,17 +398,17 @@ trait FLT32TON_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			mUID = RuntimeProc::process_uid () ;
 			mName = PrintString<STR>::make (slice ("CSC_Singleton_") ,mUID) ;
 			auto rax = PIPE () ;
-			try_invoke ([&] () {
+			try {
 				init_pipe () ;
 				rax = load_pipe () ;
-			} ,[&] () {
+			} catch (...) {
 				rax = load_pipe () ;
-			} ,[&] () {
+			} catch (...) {
 				save_pipe () ;
 				rax = load_pipe () ;
-			} ,[&] () {
+			} catch (...) {
 				zeroize (rax) ;
-			}) ;
+			}
 			if ifswitch (TRUE) {
 				const auto r1x = FLAG (rax.mAddress1) ;
 				assume (r1x != ZERO) ;

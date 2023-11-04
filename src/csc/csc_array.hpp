@@ -19,7 +19,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
 AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING A,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
@@ -287,18 +287,6 @@ trait ARRAY_HELP<ITEM ,SIZE ,ALWAYS> {
 			mArray = Buffer<ITEM ,SIZE> (size_) ;
 		}
 
-		explicit Array (CREF<csc_initializer_t<ITEM>> that) {
-			const auto r1x = FLAG (that.begin ()) ;
-			const auto r2x = FLAG (that.size ()) ;
-			mArray = Buffer<ITEM ,SIZE> (r2x) ;
-			INDEX ix = 0 ;
-			auto &&tmp1 = unsafe_cast[TYPE<ARR<ITEM>>::expr] (unsafe_pointer (r1x)) ;
-			for (auto &&i : CSC::iter (0 ,r2x)) {
-				mArray[ix] = move (tmp1[i]) ;
-				ix++ ;
-			}
-		}
-
 		explicit Array (CREF<SpanIterator<ITEM>> that) {
 			mArray = Buffer<ITEM ,SIZE> (that.rank ()) ;
 			INDEX ix = 0 ;
@@ -492,19 +480,6 @@ trait STRING_HELP<ITEM ,SIZE ,REQUIRE<IS_TEXT<ITEM>>> {
 		explicit String (CREF<SizeProxy> size_) {
 			mString = Buffer<ITEM ,RESERVE_SIZE> (reserve_size (size_)) ;
 			clear () ;
-		}
-
-		explicit String (CREF<csc_initializer_t<ITEM>> that) {
-			const auto r1x = FLAG (that.begin ()) ;
-			const auto r2x = FLAG (that.size ()) ;
-			mString = Buffer<ITEM ,RESERVE_SIZE> (reserve_size (r2x)) ;
-			INDEX ix = 0 ;
-			auto &&tmp1 = unsafe_cast[TYPE<ARR<ITEM>>::expr] (unsafe_pointer (r1x)) ;
-			for (auto &&i : CSC::iter (0 ,r2x)) {
-				mString[ix] = move (tmp1[i]) ;
-				ix++ ;
-			}
-			trunc (ix) ;
 		}
 
 		explicit String (CREF<SpanIterator<ITEM>> that) {
@@ -892,16 +867,6 @@ trait DEQUE_HELP<ITEM ,SIZE ,ALWAYS> {
 			clear () ;
 		}
 
-		explicit Deque (CREF<csc_initializer_t<ITEM>> that) {
-			const auto r1x = FLAG (that.begin ()) ;
-			const auto r2x = FLAG (that.size ()) ;
-			mDeque = Buffer<NODE ,SIZE> (r2x) ;
-			clear () ;
-			auto &&tmp1 = unsafe_cast[TYPE<ARR<ITEM>>::expr] (unsafe_pointer (r1x)) ;
-			for (auto &&i : CSC::iter (0 ,r2x))
-				add (move (tmp1[i])) ;
-		}
-
 		explicit Deque (CREF<SpanIterator<ITEM>> that) {
 			mDeque = Buffer<NODE ,SIZE> (that.rank ()) ;
 			clear () ;
@@ -1157,16 +1122,6 @@ trait PRIORITY_HELP<ITEM ,SIZE ,ALWAYS> {
 		explicit Priority (CREF<SizeProxy> size_) {
 			mPriority = Buffer<NODE ,SIZE> (size_) ;
 			clear () ;
-		}
-
-		explicit Priority (CREF<csc_initializer_t<ITEM>> that) {
-			const auto r1x = FLAG (that.begin ()) ;
-			const auto r2x = FLAG (that.size ()) ;
-			mPriority = Buffer<NODE ,SIZE> (r2x) ;
-			clear () ;
-			auto &&tmp1 = unsafe_cast[TYPE<ARR<ITEM>>::expr] (unsafe_pointer (r1x)) ;
-			for (auto &&i : CSC::iter (0 ,r2x))
-				add (move (tmp1[i])) ;
 		}
 
 		explicit Priority (CREF<SpanIterator<ITEM>> that) {
@@ -1432,16 +1387,6 @@ trait LIST_HELP<ITEM ,SIZE ,ALWAYS> {
 		explicit List (CREF<SizeProxy> size_) {
 			mList = Allocator<NODE ,SIZE> (size_) ;
 			clear () ;
-		}
-
-		explicit List (CREF<csc_initializer_t<ITEM>> that) {
-			const auto r1x = FLAG (that.begin ()) ;
-			const auto r2x = FLAG (that.size ()) ;
-			mList = Allocator<NODE ,SIZE> (r2x) ;
-			clear () ;
-			auto &&tmp1 = unsafe_cast[TYPE<ARR<ITEM>>::expr] (unsafe_pointer (r1x)) ;
-			for (auto &&i : CSC::iter (0 ,r2x))
-				add (move (tmp1[i])) ;
 		}
 
 		explicit List (CREF<SpanIterator<ITEM>> that) {
@@ -1753,16 +1698,6 @@ trait ARRAYLIST_HELP<ITEM ,SIZE ,ALWAYS> {
 			clear () ;
 		}
 
-		explicit ArrayList (CREF<csc_initializer_t<ITEM>> that) {
-			const auto r1x = FLAG (that.begin ()) ;
-			const auto r2x = FLAG (that.size ()) ;
-			mList = Allocator<NODE ,SIZE> (r2x) ;
-			clear () ;
-			auto &&tmp1 = unsafe_cast[TYPE<ARR<ITEM>>::expr] (unsafe_pointer (r1x)) ;
-			for (auto &&i : CSC::iter (0 ,r2x))
-				add (move (tmp1[i])) ;
-		}
-
 		explicit ArrayList (CREF<SpanIterator<ITEM>> that) {
 			mList = Allocator<NODE ,SIZE> (that.rank ()) ;
 			clear () ;
@@ -1985,9 +1920,9 @@ trait BITPROXY_HELP<A ,COND ,REQUIRE<COND>> {
 	public:
 		implicit BitProxy () = delete ;
 
-		explicit BitProxy (RREF<VRef<A>> array_ ,CREF<INDEX> y_) {
+		explicit BitProxy (RREF<VRef<A>> array_ ,CREF<INDEX> y) {
 			mThat = move (array_) ;
-			mY = y_ ;
+			mY = y ;
 		}
 
 		inline implicit operator BOOL () rightvalue {
@@ -2010,9 +1945,9 @@ trait BITPROXY_HELP<A ,COND ,REQUIRE<ENUM_NOT<COND>>> {
 	public:
 		implicit BitProxy () = delete ;
 
-		explicit BitProxy (RREF<CRef<A>> array_ ,CREF<INDEX> y_) {
+		explicit BitProxy (RREF<CRef<A>> array_ ,CREF<INDEX> y) {
 			mThat = move (array_) ;
-			mY = y_ ;
+			mY = y ;
 		}
 
 		inline implicit operator BOOL () rightvalue {
@@ -2536,16 +2471,6 @@ trait SET_HELP<ITEM ,SIZE ,ALWAYS> {
 		explicit Set (CREF<SizeProxy> size_) {
 			mSet = Allocator<NODE ,SIZE> (size_) ;
 			clear () ;
-		}
-
-		explicit Set (CREF<csc_initializer_t<ITEM>> that) {
-			const auto r1x = FLAG (that.begin ()) ;
-			const auto r2x = FLAG (that.size ()) ;
-			mSet = Allocator<NODE ,SIZE> (r2x) ;
-			clear () ;
-			auto &&tmp1 = unsafe_cast[TYPE<ARR<ITEM>>::expr] (unsafe_pointer (r1x)) ;
-			for (auto &&i : CSC::iter (0 ,r2x))
-				add (move (tmp1[i])) ;
 		}
 
 		explicit Set (CREF<SpanIterator<ITEM>> that) {
@@ -3130,16 +3055,6 @@ trait HASHSET_HELP<ITEM ,SIZE ,ALWAYS> {
 		explicit HashSet (CREF<SizeProxy> size_) {
 			mSet = Allocator<NODE ,SIZE> (size_) ;
 			clear () ;
-		}
-
-		explicit HashSet (CREF<csc_initializer_t<ITEM>> that) {
-			const auto r1x = FLAG (that.begin ()) ;
-			const auto r2x = FLAG (that.size ()) ;
-			mSet = Allocator<NODE ,SIZE> (r2x) ;
-			clear () ;
-			auto &&tmp1 = unsafe_cast[TYPE<ARR<ITEM>>::expr] (unsafe_pointer (r1x)) ;
-			for (auto &&i : CSC::iter (0 ,r2x))
-				add (move (tmp1[i])) ;
 		}
 
 		explicit HashSet (CREF<SpanIterator<ITEM>> that) {

@@ -19,7 +19,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
 AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING A,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
@@ -68,7 +68,7 @@ trait TIMEDURATION_HOLDER_HELP<DEPEND ,ALWAYS> {
 		virtual void initialize () = 0 ;
 		virtual void initialize (CREF<LENGTH> milliseconds_ ,CREF<LENGTH> nanoseconds_) = 0 ;
 		virtual void initialize (CREF<CALENDAR> calendar_) = 0 ;
-		virtual XRef native () const leftvalue = 0 ;
+		virtual CRef<Interface> native () const leftvalue = 0 ;
 		virtual LENGTH hours () const = 0 ;
 		virtual LENGTH minutes () const = 0 ;
 		virtual LENGTH seconds () const = 0 ;
@@ -114,7 +114,7 @@ trait TIMEDURATION_HELP<DEPEND ,ALWAYS> {
 			mThis = move (rax) ;
 		}
 
-		XRef native () const leftvalue {
+		CRef<Interface> native () const leftvalue {
 			return mThis->native () ;
 		}
 
@@ -216,7 +216,7 @@ trait TIMEDURATION_HELP<DEPEND ,ALWAYS> {
 			}) ;
 		}
 
-		XRef native () const leftvalue {
+		CRef<Interface> native () const leftvalue {
 			return mThis->native () ;
 		}
 
@@ -357,7 +357,7 @@ trait MUTEX_HELP<DEPEND ,ALWAYS> {
 		imports VRef<Holder> create () ;
 
 		virtual void initialize (CREF<LENGTH> cond_size) = 0 ;
-		virtual XRef native () const leftvalue = 0 ;
+		virtual CRef<Interface> native () const leftvalue = 0 ;
 		virtual void enter () = 0 ;
 		virtual void leave () = 0 ;
 	} ;
@@ -374,7 +374,7 @@ trait MUTEX_HELP<DEPEND ,ALWAYS> {
 			mThis->initialize (cond_size) ;
 		}
 
-		XRef native () const leftvalue {
+		CRef<Interface> native () const leftvalue {
 			return mThis->native () ;
 		}
 

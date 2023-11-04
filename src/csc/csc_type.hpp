@@ -19,7 +19,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
 AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING A,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
@@ -295,30 +295,30 @@ trait REFLECT_TYPE_HELP<A> {
 	using RET = ENUM_FALSE ;
 } ;
 
-template <class FIRST>
-trait REFLECT_TYPE_HELP<TYPE<FIRST>> {
-	using M1ST_ONE = FIRST ;
+template <class A>
+trait REFLECT_TYPE_HELP<TYPE<A>> {
+	using M1ST_ONE = A ;
 	using M1ST_REST = TYPE<> ;
 	using RET = ENUM_TRUE ;
 } ;
 
-template <class FIRST ,class SECOND>
-trait REFLECT_TYPE_HELP<TYPE<FIRST ,SECOND>> {
-	using M1ST_ONE = FIRST ;
-	using M1ST_REST = TYPE<SECOND> ;
-	using M2ND_ONE = SECOND ;
+template <class A ,class B>
+trait REFLECT_TYPE_HELP<TYPE<A ,B>> {
+	using M1ST_ONE = A ;
+	using M1ST_REST = TYPE<B> ;
+	using M2ND_ONE = B ;
 	using M2ND_REST = TYPE<> ;
 	using RET = ENUM_TRUE ;
 } ;
 
-template <class FIRST ,class SECOND ,class THIRD ,class...REST>
-trait REFLECT_TYPE_HELP<TYPE<FIRST ,SECOND ,THIRD ,REST...>> {
-	using M1ST_ONE = FIRST ;
-	using M1ST_REST = TYPE<SECOND ,THIRD ,REST...> ;
-	using M2ND_ONE = SECOND ;
-	using M2ND_REST = TYPE<THIRD ,REST...> ;
-	using M3RD_ONE = THIRD ;
-	using M3RD_REST = TYPE<REST...> ;
+template <class A ,class B ,class C ,class...D>
+trait REFLECT_TYPE_HELP<TYPE<A ,B ,C ,D...>> {
+	using M1ST_ONE = A ;
+	using M1ST_REST = TYPE<B ,C ,D...> ;
+	using M2ND_ONE = B ;
+	using M2ND_REST = TYPE<C ,D...> ;
+	using M3RD_ONE = C ;
+	using M3RD_REST = TYPE<D...> ;
 	using RET = ENUM_TRUE ;
 } ;
 
@@ -936,17 +936,17 @@ trait REFLECT_FUNCTION_HELP<A> {
 	using RET = ENUM_FALSE ;
 } ;
 
-template <class FIRST ,class...REST ,class A>
-trait REFLECT_FUNCTION_HELP<DEF<FIRST (A::*) (REST...)>> {
-	using RETURN = FIRST ;
-	using PARAMS = TYPE<XREF<REST>...> ;
+template <class A ,class...B ,class C>
+trait REFLECT_FUNCTION_HELP<DEF<A (C::*) (B...)>> {
+	using RETURN = A ;
+	using PARAMS = TYPE<XREF<B>...> ;
 	using RET = ENUM_TRUE ;
 } ;
 
-template <class FIRST ,class...REST ,class A>
-trait REFLECT_FUNCTION_HELP<DEF<FIRST (A::*) (REST...) const>> {
-	using RETURN = FIRST ;
-	using PARAMS = TYPE<XREF<REST>...> ;
+template <class A ,class...B ,class C>
+trait REFLECT_FUNCTION_HELP<DEF<A (C::*) (B...) const>> {
+	using RETURN = A ;
+	using PARAMS = TYPE<XREF<B>...> ;
 	using RET = ENUM_TRUE ;
 } ;
 
@@ -1049,16 +1049,16 @@ using IS_TRIVIAL = typename IS_TRIVIAL_HELP<A ,ALWAYS>::RET ;
 template <class...>
 trait IS_EXTEND_HELP ;
 
-template <class FROM ,class INTO>
-trait IS_EXTEND_HELP<FROM ,INTO ,ALWAYS> {
-	using R1X = IS_SAME<FROM ,INTO> ;
-	using R2X = MACRO_IS_EXTEND<FROM ,INTO> ;
+template <class A ,class B>
+trait IS_EXTEND_HELP<A ,B ,ALWAYS> {
+	using R1X = IS_SAME<A ,B> ;
+	using R2X = MACRO_IS_EXTEND<A ,B> ;
 
 	using RET = ENUM_ANY<R1X ,R2X> ;
 } ;
 
-template <class FROM ,class INTO>
-using IS_EXTEND = typename IS_EXTEND_HELP<FROM ,INTO ,ALWAYS>::RET ;
+template <class A ,class B>
+using IS_EXTEND = typename IS_EXTEND_HELP<A ,B ,ALWAYS>::RET ;
 
 template <class...>
 trait IS_INTERFACE_HELP ;
@@ -1110,15 +1110,15 @@ using Together = typename TOGETHER_HELP<TYPE_REVERSE<TYPE<A...>> ,ALWAYS>::Toget
 template <class...>
 trait IS_CONVERTIBLE_HELP ;
 
-template <class FROM ,class INTO>
-trait IS_CONVERTIBLE_HELP<FROM ,INTO ,ALWAYS> {
-	using R1X = MACRO_IS_CONVERTIBLE<FROM ,INTO> ;
+template <class A ,class B>
+trait IS_CONVERTIBLE_HELP<A ,B ,ALWAYS> {
+	using R1X = MACRO_IS_CONVERTIBLE<A ,B> ;
 
 	using RET = ENUM_ANY<R1X> ;
 } ;
 
-template <class FROM ,class INTO>
-using IS_CONVERTIBLE = typename IS_CONVERTIBLE_HELP<XREF<FROM> ,XREF<INTO> ,ALWAYS>::RET ;
+template <class A ,class B>
+using IS_CONVERTIBLE = typename IS_CONVERTIBLE_HELP<XREF<A> ,XREF<B> ,ALWAYS>::RET ;
 
 template <class...>
 trait IS_EFFECTIVE_HELP ;

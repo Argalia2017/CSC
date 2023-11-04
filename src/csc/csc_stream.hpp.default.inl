@@ -19,7 +19,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
 AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING A,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
@@ -162,7 +162,7 @@ trait BYTEREADER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				auto rax = BoxBuffer<BYTE ,SIZE_OF<WORD>> (0) ;
 				for (auto &&i : iter (0 ,SIZE_OF<WORD>::expr))
 					read (rax[i]) ;
-				item = bitwise[TYPE<WORD>::expr] (rax) ;
+				item = bitwise (rax) ;
 			}
 			if ifswitch (act) {
 				auto rax = BoxBuffer<BYTE ,SIZE_OF<WORD>> (0) ;
@@ -170,7 +170,7 @@ trait BYTEREADER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 					INDEX ix = SIZE_OF<WORD>::expr - 1 - i ;
 					read (rax[ix]) ;
 				}
-				item = bitwise[TYPE<WORD>::expr] (rax) ;
+				item = bitwise (rax) ;
 			}
 		}
 
@@ -182,7 +182,7 @@ trait BYTEREADER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				auto rax = BoxBuffer<BYTE ,SIZE_OF<CHAR>> (0) ;
 				for (auto &&i : iter (0 ,SIZE_OF<CHAR>::expr))
 					read (rax[i]) ;
-				item = bitwise[TYPE<CHAR>::expr] (rax) ;
+				item = bitwise (rax) ;
 			}
 			if ifswitch (act) {
 				auto rax = BoxBuffer<BYTE ,SIZE_OF<CHAR>> (0) ;
@@ -190,7 +190,7 @@ trait BYTEREADER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 					INDEX ix = SIZE_OF<CHAR>::expr - 1 - i ;
 					read (rax[ix]) ;
 				}
-				item = bitwise[TYPE<CHAR>::expr] (rax) ;
+				item = bitwise (rax) ;
 			}
 		}
 
@@ -202,7 +202,7 @@ trait BYTEREADER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				auto rax = BoxBuffer<BYTE ,SIZE_OF<DATA>> (0) ;
 				for (auto &&i : iter (0 ,SIZE_OF<DATA>::expr))
 					read (rax[i]) ;
-				item = bitwise[TYPE<DATA>::expr] (rax) ;
+				item = bitwise (rax) ;
 			}
 			if ifswitch (act) {
 				auto rax = BoxBuffer<BYTE ,SIZE_OF<DATA>> (0) ;
@@ -210,7 +210,7 @@ trait BYTEREADER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 					INDEX ix = SIZE_OF<DATA>::expr - 1 - i ;
 					read (rax[ix]) ;
 				}
-				item = bitwise[TYPE<DATA>::expr] (rax) ;
+				item = bitwise (rax) ;
 			}
 		}
 

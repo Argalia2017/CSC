@@ -19,7 +19,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
 AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING A,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
@@ -779,13 +779,13 @@ trait STREAMFILE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 					discard ;
 				if ifnot (writable)
 					discard ;
-				try_invoke ([&] () {
+				try {
 					open_r () ;
-				} ,[&] () {
+				} catch (...) {
 					open_w () ;
-				} ,[&] () {
+				} catch (...) {
 					noop () ;
-				}) ;
+				}
 				close () ;
 				open_a () ;
 			}
@@ -811,7 +811,7 @@ trait STREAMFILE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			using R1X = SIZE_OF<WORD> ;
 			if (item.size () == 0)
 				return 0 ;
-			LENGTH ret = read (RegBuffer<BYTE>::from (unsafe_cast[TYPE<TEMP<void>>::expr] (item[0]) ,0 ,item.size () * R1X::expr)) ;
+			LENGTH ret = read (RegBuffer<BYTE>::from (address (item[0]) ,0 ,item.size () * R1X::expr)) ;
 			ret /= R1X::expr ;
 			unsafe_launder (item) ;
 			return move (ret) ;
@@ -821,7 +821,7 @@ trait STREAMFILE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			using R1X = SIZE_OF<CHAR> ;
 			if (item.size () == 0)
 				return 0 ;
-			LENGTH ret = read (RegBuffer<BYTE>::from (unsafe_cast[TYPE<TEMP<void>>::expr] (item[0]) ,0 ,item.size () * R1X::expr)) ;
+			LENGTH ret = read (RegBuffer<BYTE>::from (address (item[0]) ,0 ,item.size () * R1X::expr)) ;
 			ret /= R1X::expr ;
 			unsafe_launder (item) ;
 			return move (ret) ;
@@ -831,7 +831,7 @@ trait STREAMFILE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			using R1X = SIZE_OF<DATA> ;
 			if (item.size () == 0)
 				return 0 ;
-			LENGTH ret = read (RegBuffer<BYTE>::from (unsafe_cast[TYPE<TEMP<void>>::expr] (item[0]) ,0 ,item.size () * R1X::expr)) ;
+			LENGTH ret = read (RegBuffer<BYTE>::from (address (item[0]) ,0 ,item.size () * R1X::expr)) ;
 			ret /= R1X::expr ;
 			unsafe_launder (item) ;
 			return move (ret) ;
@@ -857,7 +857,7 @@ trait STREAMFILE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			using R1X = SIZE_OF<WORD> ;
 			if (item.size () == 0)
 				return 0 ;
-			LENGTH ret = write (RegBuffer<BYTE>::from (unsafe_cast[TYPE<TEMP<void>>::expr] (item[0]) ,0 ,item.size () * R1X::expr)) ;
+			LENGTH ret = write (RegBuffer<BYTE>::from (address (item[0]) ,0 ,item.size () * R1X::expr)) ;
 			ret /= R1X::expr ;
 			return move (ret) ;
 		}
@@ -866,7 +866,7 @@ trait STREAMFILE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			using R1X = SIZE_OF<CHAR> ;
 			if (item.size () == 0)
 				return 0 ;
-			LENGTH ret = write (RegBuffer<BYTE>::from (unsafe_cast[TYPE<TEMP<void>>::expr] (item[0]) ,0 ,item.size () * R1X::expr)) ;
+			LENGTH ret = write (RegBuffer<BYTE>::from (address (item[0]) ,0 ,item.size () * R1X::expr)) ;
 			ret /= R1X::expr ;
 			return move (ret) ;
 		}
@@ -875,7 +875,7 @@ trait STREAMFILE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			using R1X = SIZE_OF<DATA> ;
 			if (item.size () == 0)
 				return 0 ;
-			LENGTH ret = write (RegBuffer<BYTE>::from (unsafe_cast[TYPE<TEMP<void>>::expr] (item[0]) ,0 ,item.size () * R1X::expr)) ;
+			LENGTH ret = write (RegBuffer<BYTE>::from (address (item[0]) ,0 ,item.size () * R1X::expr)) ;
 			ret /= R1X::expr ;
 			return move (ret) ;
 		}
@@ -1110,7 +1110,7 @@ trait BUFFERFILE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				rax[1] = BYTE (0X01) ;
 				rax[2] = BYTE (0X02) ;
 				rax[3] = BYTE (0X03) ;
-				return bitwise[TYPE<CHAR>::expr] (rax) ;
+				return bitwise (rax) ;
 			}) ;
 			return VAL64 (r1x) ;
 		}

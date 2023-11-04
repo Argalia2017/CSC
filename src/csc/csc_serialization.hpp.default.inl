@@ -19,7 +19,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
 AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING A,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
@@ -275,13 +275,13 @@ trait XMLPARSER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		template <class ARG1 ,class ARG2>
 		inline ARG1 template_fetch (CREF<ARG1> def ,CREF<ARG2> cvt) const {
 			auto rax = Optional<ARG1> () ;
-			try_invoke ([&] () {
+			try {
 				rax = Optional<ARG1>::make (cvt (fetch ())) ;
-			} ,[&] () {
+			} catch (...) {
 				rax = Optional<ARG1>::make (def) ;
-			} ,[&] () {
+			} catch (...) {
 				noop () ;
-			}) ;
+			}
 			return rax.poll () ;
 		}
 	} ;
@@ -1141,13 +1141,13 @@ trait JSONPARSER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 		template <class ARG1 ,class ARG2>
 		inline ARG1 template_fetch (CREF<ARG1> def ,CREF<ARG2> cvt) const {
 			auto rax = Optional<ARG1> () ;
-			try_invoke ([&] () {
+			try {
 				rax = Optional<ARG1>::make (cvt (fetch ())) ;
-			} ,[&] () {
+			} catch (...) {
 				rax = Optional<ARG1>::make (def) ;
-			} ,[&] () {
+			} catch (...) {
 				noop () ;
-			}) ;
+			}
 			return rax.poll () ;
 		}
 	} ;
@@ -1557,8 +1557,8 @@ trait PLYREADER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			Val16 ,
 			Val32 ,
 			Val64 ,
-			Single ,
-			Double ,
+			Flt32 ,
+			Flt32 ,
 			Byte ,
 			Word ,
 			Char ,
@@ -1699,13 +1699,13 @@ trait PLYREADER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 
 		void read (VREF<FLT32> item) override {
 			guide_jmp () ;
-			assume (mGuide.mPlyClazz == BODY_CLAZZ::Single) ;
+			assume (mGuide.mPlyClazz == BODY_CLAZZ::Flt32) ;
 			item = bitwise[TYPE<FLT32>::expr] (mPlyCHAR[mGuide.mPlyIndex]) ;
 		}
 
 		void read (VREF<FLT64> item) override {
 			guide_jmp () ;
-			assume (mGuide.mPlyClazz == BODY_CLAZZ::Double) ;
+			assume (mGuide.mPlyClazz == BODY_CLAZZ::Flt32) ;
 			item = bitwise[TYPE<FLT64>::expr] (mPlyDATA[mGuide.mPlyIndex]) ;
 		}
 
@@ -1843,9 +1843,9 @@ trait PLYREADER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 			INDEX iy = NONE ;
 			const auto r1x = invoke ([&] () {
 				Set<String<STRU8>> ret = Set<String<STRU8>> (100) ;
-				ret.add (Slice<STRU8> ("float") ,BODY_CLAZZ::Single) ;
-				ret.add (Slice<STRU8> ("single") ,BODY_CLAZZ::Single) ;
-				ret.add (Slice<STRU8> ("double") ,BODY_CLAZZ::Double) ;
+				ret.add (Slice<STRU8> ("float") ,BODY_CLAZZ::Flt32) ;
+				ret.add (Slice<STRU8> ("single") ,BODY_CLAZZ::Flt32) ;
+				ret.add (Slice<STRU8> ("double") ,BODY_CLAZZ::Flt32) ;
 				ret.add (Slice<STRU8> ("char") ,BODY_CLAZZ::Val8) ;
 				ret.add (Slice<STRU8> ("uchar") ,BODY_CLAZZ::Val8) ;
 				ret.add (Slice<STRU8> ("short") ,BODY_CLAZZ::Val16) ;
@@ -1966,7 +1966,7 @@ trait PLYREADER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 		}
 
 		void read_body_text () {
-			mTextReader = TextReader<STRU8> (RegBuffer<STRU8>::from (unsafe_cast[TYPE<TEMP<void>>::expr] (mStream.self[0]) ,mHeader.mBodyOffset ,mStream->size ()).borrow ()) ;
+			mTextReader = TextReader<STRU8> (RegBuffer<STRU8>::from (address (mStream.self[0]) ,mHeader.mBodyOffset ,mStream->size ()).borrow ()) ;
 			mTextReader >> GAP ;
 			mBody = Array<Array<BODY>> (mHeader.mElementList.length ()) ;
 			for (auto &&i : mHeader.mElementList.iter ()) {
@@ -1990,25 +1990,25 @@ trait PLYREADER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 			const auto r1x = mHeader.mElementList[element].mPropertyList[property].mClazz ;
 			auto act = TRUE ;
 			if ifswitch (act) {
-				if (r1x != BODY_CLAZZ::Single)
+				if (r1x != BODY_CLAZZ::Flt32)
 					discard ;
 				INDEX ix = mPlyCHAR.tail () ;
 				mBody[element][property].mClazz = r1x ;
 				mBody[element][property].mLine[line].m1st = ix + 1 ;
 				mBody[element][property].mLine[line].m2nd = ix + 2 ;
 				const auto r2x = mTextReader.poll (TYPE<FLT32>::expr) ;
-				mPlyCHAR.add (bitwise[TYPE<CHAR>::expr] (r2x)) ;
+				mPlyCHAR.add (bitwise (r2x)) ;
 				mTextReader >> GAP ;
 			}
 			if ifswitch (act) {
-				if (r1x != BODY_CLAZZ::Double)
+				if (r1x != BODY_CLAZZ::Flt32)
 					discard ;
 				INDEX ix = mPlyDATA.tail () ;
 				mBody[element][property].mClazz = r1x ;
 				mBody[element][property].mLine[line].m1st = ix + 1 ;
 				mBody[element][property].mLine[line].m2nd = ix + 2 ;
 				const auto r3x = mTextReader.poll (TYPE<FLT64>::expr) ;
-				mPlyDATA.add (bitwise[TYPE<DATA>::expr] (r3x)) ;
+				mPlyDATA.add (bitwise (r3x)) ;
 				mTextReader >> GAP ;
 			}
 			if ifswitch (act) {
@@ -2041,7 +2041,7 @@ trait PLYREADER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 				mBody[element][property].mLine[line].m1st = ix + 1 ;
 				mBody[element][property].mLine[line].m2nd = ix + 2 ;
 				const auto r6x = mTextReader.poll (TYPE<VAL32>::expr) ;
-				mPlyCHAR.add (bitwise[TYPE<CHAR>::expr] (r6x)) ;
+				mPlyCHAR.add (bitwise (r6x)) ;
 				mTextReader >> GAP ;
 			}
 			if ifswitch (act) {
@@ -2052,7 +2052,7 @@ trait PLYREADER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 				mBody[element][property].mLine[line].m1st = ix + 1 ;
 				mBody[element][property].mLine[line].m2nd = ix + 2 ;
 				const auto r7x = mTextReader.poll (TYPE<VAL64>::expr) ;
-				mPlyDATA.add (bitwise[TYPE<DATA>::expr] (r7x)) ;
+				mPlyDATA.add (bitwise (r7x)) ;
 				mTextReader >> GAP ;
 			}
 			if ifswitch (act) {
@@ -2117,7 +2117,7 @@ trait PLYREADER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 			}) ;
 			auto act = TRUE ;
 			if ifswitch (act) {
-				if (r1x != BODY_CLAZZ::Single)
+				if (r1x != BODY_CLAZZ::Flt32)
 					discard ;
 				INDEX ix = mPlyCHAR.tail () ;
 				mBody[element][property].mClazz = r1x ;
@@ -2127,12 +2127,12 @@ trait PLYREADER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 				for (auto &&i : iter (0 ,r2x)) {
 					noop (i) ;
 					const auto r3x = mTextReader.poll (TYPE<FLT32>::expr) ;
-					mPlyCHAR.add (bitwise[TYPE<CHAR>::expr] (r3x)) ;
+					mPlyCHAR.add (bitwise (r3x)) ;
 					mTextReader >> GAP ;
 				}
 			}
 			if ifswitch (act) {
-				if (r1x != BODY_CLAZZ::Double)
+				if (r1x != BODY_CLAZZ::Flt32)
 					discard ;
 				INDEX ix = mPlyDATA.tail () ;
 				mBody[element][property].mClazz = r1x ;
@@ -2142,7 +2142,7 @@ trait PLYREADER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 				for (auto &&i : iter (0 ,r2x)) {
 					noop (i) ;
 					const auto r4x = mTextReader.poll (TYPE<FLT64>::expr) ;
-					mPlyDATA.add (bitwise[TYPE<DATA>::expr] (r4x)) ;
+					mPlyDATA.add (bitwise (r4x)) ;
 					mTextReader >> GAP ;
 				}
 			}
@@ -2187,7 +2187,7 @@ trait PLYREADER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 				for (auto &&i : iter (0 ,r2x)) {
 					noop (i) ;
 					const auto r7x = mTextReader.poll (TYPE<VAL32>::expr) ;
-					mPlyCHAR.add (bitwise[TYPE<CHAR>::expr] (r7x)) ;
+					mPlyCHAR.add (bitwise (r7x)) ;
 					mTextReader >> GAP ;
 				}
 			}
@@ -2202,7 +2202,7 @@ trait PLYREADER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 				for (auto &&i : iter (0 ,r2x)) {
 					noop (i) ;
 					const auto r8x = mTextReader.poll (TYPE<VAL64>::expr) ;
-					mPlyDATA.add (bitwise[TYPE<DATA>::expr] (r8x)) ;
+					mPlyDATA.add (bitwise (r8x)) ;
 					mTextReader >> GAP ;
 				}
 			}
@@ -2269,7 +2269,7 @@ trait PLYREADER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 		}
 
 		void read_body_binary () {
-			mByteReader = ByteReader (RegBuffer<BYTE>::from (unsafe_cast[TYPE<TEMP<void>>::expr] (mStream.self[0]) ,mHeader.mBodyOffset ,mStream->size ()).borrow ()) ;
+			mByteReader = ByteReader (RegBuffer<BYTE>::from (address (mStream.self[0]) ,mHeader.mBodyOffset ,mStream->size ()).borrow ()) ;
 			mBody = Array<Array<BODY>> (mHeader.mElementList.length ()) ;
 			for (auto &&i : mHeader.mElementList.iter ()) {
 				mBody[i] = Array<BODY> (mHeader.mElementList[i].mPropertyList.length ()) ;
@@ -2291,25 +2291,25 @@ trait PLYREADER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 			const auto r1x = mHeader.mElementList[element].mPropertyList[property].mClazz ;
 			auto act = TRUE ;
 			if ifswitch (act) {
-				if (r1x != BODY_CLAZZ::Single)
+				if (r1x != BODY_CLAZZ::Flt32)
 					discard ;
 				INDEX ix = mPlyCHAR.tail () ;
 				mBody[element][property].mClazz = r1x ;
 				mBody[element][property].mLine[line].m1st = ix + 1 ;
 				mBody[element][property].mLine[line].m2nd = ix + 2 ;
 				const auto r2x = mByteReader.poll (TYPE<FLT32>::expr) ;
-				const auto r3x = bitwise[TYPE<CHAR>::expr] (r2x) ;
+				const auto r3x = bitwise (r2x) ;
 				mPlyCHAR.add (bitwise_reverse (r3x)) ;
 			}
 			if ifswitch (act) {
-				if (r1x != BODY_CLAZZ::Double)
+				if (r1x != BODY_CLAZZ::Flt32)
 					discard ;
 				INDEX ix = mPlyDATA.tail () ;
 				mBody[element][property].mClazz = r1x ;
 				mBody[element][property].mLine[line].m1st = ix + 1 ;
 				mBody[element][property].mLine[line].m2nd = ix + 2 ;
 				const auto r4x = mByteReader.poll (TYPE<FLT64>::expr) ;
-				const auto r5x = bitwise[TYPE<DATA>::expr] (r4x) ;
+				const auto r5x = bitwise (r4x) ;
 				mPlyDATA.add (bitwise_reverse (r5x)) ;
 			}
 			if ifswitch (act) {
@@ -2340,7 +2340,7 @@ trait PLYREADER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 				mBody[element][property].mLine[line].m1st = ix + 1 ;
 				mBody[element][property].mLine[line].m2nd = ix + 2 ;
 				const auto r8x = mByteReader.poll (TYPE<VAL32>::expr) ;
-				const auto r9x = bitwise[TYPE<CHAR>::expr] (r8x) ;
+				const auto r9x = bitwise (r8x) ;
 				mPlyCHAR.add (bitwise_reverse (r9x)) ;
 			}
 			if ifswitch (act) {
@@ -2351,7 +2351,7 @@ trait PLYREADER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 				mBody[element][property].mLine[line].m1st = ix + 1 ;
 				mBody[element][property].mLine[line].m2nd = ix + 2 ;
 				const auto r10x = mByteReader.poll (TYPE<VAL64>::expr) ;
-				const auto r11x = bitwise[TYPE<DATA>::expr] (r10x) ;
+				const auto r11x = bitwise (r10x) ;
 				mPlyDATA.add (bitwise_reverse (r11x)) ;
 			}
 			if ifswitch (act) {
@@ -2412,7 +2412,7 @@ trait PLYREADER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 			}) ;
 			auto act = TRUE ;
 			if ifswitch (act) {
-				if (r1x != BODY_CLAZZ::Single)
+				if (r1x != BODY_CLAZZ::Flt32)
 					discard ;
 				INDEX ix = mPlyCHAR.tail () ;
 				mBody[element][property].mClazz = r1x ;
@@ -2421,12 +2421,12 @@ trait PLYREADER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 				for (auto &&i : iter (0 ,r2x)) {
 					noop (i) ;
 					const auto r3x = mByteReader.poll (TYPE<FLT32>::expr) ;
-					const auto r4x = bitwise[TYPE<CHAR>::expr] (r3x) ;
+					const auto r4x = bitwise (r3x) ;
 					mPlyCHAR.add (bitwise_reverse (r4x)) ;
 				}
 			}
 			if ifswitch (act) {
-				if (r1x != BODY_CLAZZ::Double)
+				if (r1x != BODY_CLAZZ::Flt32)
 					discard ;
 				INDEX ix = mPlyDATA.tail () ;
 				mBody[element][property].mClazz = r1x ;
@@ -2435,7 +2435,7 @@ trait PLYREADER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 				for (auto &&i : iter (0 ,r2x)) {
 					noop (i) ;
 					const auto r5x = mByteReader.poll (TYPE<FLT64>::expr) ;
-					const auto r6x = bitwise[TYPE<DATA>::expr] (r5x) ;
+					const auto r6x = bitwise (r5x) ;
 					mPlyDATA.add (bitwise_reverse (r6x)) ;
 				}
 			}
@@ -2475,7 +2475,7 @@ trait PLYREADER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 				for (auto &&i : iter (0 ,r2x)) {
 					noop (i) ;
 					const auto r9x = mByteReader.poll (TYPE<VAL32>::expr) ;
-					const auto r10x = bitwise[TYPE<CHAR>::expr] (r9x) ;
+					const auto r10x = bitwise (r9x) ;
 					mPlyCHAR.add (bitwise_reverse (r10x)) ;
 				}
 			}
@@ -2489,7 +2489,7 @@ trait PLYREADER_SERIALIZATION_HELP<DEPEND ,ALWAYS> {
 				for (auto &&i : iter (0 ,r2x)) {
 					noop (i) ;
 					const auto r11x = mByteReader.poll (TYPE<VAL64>::expr) ;
-					const auto r12x = bitwise[TYPE<DATA>::expr] (r11x) ;
+					const auto r12x = bitwise (r11x) ;
 					mPlyDATA.add (bitwise_reverse (r12x)) ;
 				}
 			}

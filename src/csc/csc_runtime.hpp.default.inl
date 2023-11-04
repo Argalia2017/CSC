@@ -19,7 +19,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
 AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING A,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
@@ -123,7 +123,7 @@ trait TIMEDURATION_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			return move (ret) ;
 		}
 
-		XRef native () const leftvalue override {
+		CRef<Interface> native () const leftvalue override {
 			return CRef<ImplHolder>::reference (thiz) ;
 		}
 
@@ -312,7 +312,7 @@ trait MUTEX_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			}
 		}
 
-		XRef native () const leftvalue override {
+		CRef<Interface> native () const leftvalue override {
 			return CRef<ImplHolder>::reference (thiz) ;
 		}
 
@@ -534,24 +534,24 @@ trait THREAD_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				if (mVarBinder == NULL)
 					discard ;
 				mBlock = Box<std::thread>::make ([&] () {
-					try_invoke ([&] () {
+					try {
 						mUID = RuntimeProc::thread_uid () ;
 						mVarBinder->friend_execute (mSlot) ;
-					} ,[&] () {
+					} catch (...) {
 						noop () ;
-					}) ;
+					}
 				}) ;
 			}
 			if ifswitch (act) {
 				if (mConBinder == NULL)
 					discard ;
 				mBlock = Box<std::thread>::make ([&] () {
-					try_invoke ([&] () {
+					try {
 						mUID = RuntimeProc::thread_uid () ;
 						mConBinder->friend_execute (mSlot) ;
-					} ,[&] () {
+					} catch (...) {
 						noop () ;
-					}) ;
+					}
 				}) ;
 			}
 		}

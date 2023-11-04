@@ -19,7 +19,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
 AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING A,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
@@ -37,86 +37,6 @@ SOFTWARE.
 
 namespace CSC {
 template <class...>
-trait IMAGEITERATOR_HELP ;
-
-template <class DEPEND>
-trait IMAGEITERATOR_HELP<DEPEND ,ALWAYS> {
-	struct PIXEL {
-		INDEX x ;
-		INDEX y ;
-	} ;
-
-	class ImageIterator {
-	protected:
-		Array<LENGTH ,RANK2> mWidth ;
-		PIXEL mPixel ;
-		BOOL mBad ;
-
-	public:
-		implicit ImageIterator () = delete ;
-
-		explicit ImageIterator (CREF<LENGTH> cx_ ,CREF<LENGTH> cy_) {
-			mWidth[0] = cx_ ;
-			mWidth[1] = cy_ ;
-			mPixel.x = 0 ;
-			mPixel.y = 0 ;
-			mBad = BOOL (rank () <= 0) ;
-		}
-
-		ImageIterator begin () const {
-			return thiz ;
-		}
-
-		ImageIterator end () const {
-			return thiz ;
-		}
-
-		LENGTH rank () const {
-			return mWidth[0] * mWidth[1] ;
-		}
-
-		BOOL bad () const {
-			return mBad ;
-		}
-
-		inline BOOL operator== (CREF<ImageIterator>) const {
-			return bad () ;
-		}
-
-		inline BOOL operator!= (CREF<ImageIterator>) const {
-			return ifnot (bad ()) ;
-		}
-
-		CREF<PIXEL> peek () const leftvalue {
-			return mPixel ;
-		}
-
-		inline CREF<PIXEL> operator* () const leftvalue {
-			return peek () ;
-		}
-
-		void next () {
-			mPixel.x++ ;
-			if (mPixel.x < mWidth[0])
-				return ;
-			mPixel.x = 0 ;
-			mPixel.y++ ;
-			if (mPixel.y < mWidth[1])
-				return ;
-			mPixel.y = 0 ;
-			mBad = TRUE ;
-		}
-
-		inline void operator++ () {
-			next () ;
-		}
-	} ;
-} ;
-
-using PIXEL = typename IMAGEITERATOR_HELP<DEPEND ,ALWAYS>::PIXEL ;
-using ImageIterator = typename IMAGEITERATOR_HELP<DEPEND ,ALWAYS>::ImageIterator ;
-
-template <class...>
 trait ROWPROXY_HELP ;
 
 template <class A ,class ITEM ,class COND>
@@ -129,13 +49,13 @@ trait ROWPROXY_HELP<A ,ITEM ,COND ,REQUIRE<COND>> {
 	public:
 		implicit RowProxy () = delete ;
 
-		explicit RowProxy (RREF<VRef<A>> image ,CREF<INDEX> y_) {
+		explicit RowProxy (RREF<VRef<A>> image ,CREF<INDEX> y) {
 			mThat = move (image) ;
-			mY = y_ ;
+			mY = y ;
 		}
 
-		inline VREF<ITEM> operator[] (CREF<INDEX> x_) rightvalue {
-			return mThat->at (x_ ,mY) ;
+		inline VREF<ITEM> operator[] (CREF<INDEX> x) rightvalue {
+			return mThat->at (x ,mY) ;
 		}
 	} ;
 } ;
@@ -150,13 +70,13 @@ trait ROWPROXY_HELP<A ,ITEM ,COND ,REQUIRE<ENUM_NOT<COND>>> {
 	public:
 		implicit RowProxy () = delete ;
 
-		explicit RowProxy (RREF<CRef<A>> image ,CREF<INDEX> y_) {
+		explicit RowProxy (RREF<CRef<A>> image ,CREF<INDEX> y) {
 			mThat = move (image) ;
-			mY = y_ ;
+			mY = y ;
 		}
 
-		inline CREF<ITEM> operator[] (CREF<INDEX> x_) rightvalue {
-			return mThat->at (x_ ,mY) ;
+		inline CREF<ITEM> operator[] (CREF<INDEX> x) rightvalue {
+			return mThat->at (x ,mY) ;
 		}
 	} ;
 } ;
@@ -191,7 +111,7 @@ trait IMAGE_HOLDER_HELP<ITEM ,SIZE ,ALWAYS> {
 } ;
 
 template <class ITEM ,class SIZE>
-trait IMAGE_HELP<ITEM ,SIZE ,REQUIRE<ENUM_NOT<IS_SAME<SIZE ,ORDINARY>>>> {
+trait IMAGE_HELP<ITEM ,SIZE ,ALWAYS> {
 	using Super = typename IMAGE_HOLDER_HELP<ITEM ,SIZE ,ALWAYS>::Image ;
 
 	class Image implement Super {
@@ -283,8 +203,8 @@ trait IMAGE_HELP<ITEM ,SIZE ,REQUIRE<ENUM_NOT<IS_SAME<SIZE ,ORDINARY>>>> {
 			BufferProc<ITEM>::buf_fill (mImage ,item ,0 ,size ()) ;
 		}
 
-		ImageIterator iter () const {
-			return ImageIterator (cx () ,cy ()) ;
+		PixelIterator iter () const {
+			return PixelIterator (0 ,cx () ,0 ,cy ()) ;
 		}
 
 		VREF<ITEM> at (CREF<PIXEL> xy) leftvalue {
@@ -295,14 +215,14 @@ trait IMAGE_HELP<ITEM ,SIZE ,REQUIRE<ENUM_NOT<IS_SAME<SIZE ,ORDINARY>>>> {
 			return at (xy) ;
 		}
 
-		VREF<ITEM> at (CREF<INDEX> x_ ,CREF<INDEX> y_) leftvalue {
-			assert (operator_between (x_ ,0 ,mCX)) ;
-			assert (operator_between (y_ ,0 ,mCY)) ;
-			return mImage[y_ * mStrip + x_ + mOffset] ;
+		VREF<ITEM> at (CREF<INDEX> x ,CREF<INDEX> y) leftvalue {
+			assert (operator_between (x ,0 ,mCX)) ;
+			assert (operator_between (y ,0 ,mCY)) ;
+			return mImage[y * mStrip + x + mOffset] ;
 		}
 
-		inline RowProxy<VREF<Image> ,ITEM> operator[] (CREF<INDEX> y_) leftvalue {
-			return RowProxy<VREF<Image> ,ITEM> (VRef<Image>::reference (thiz) ,y_) ;
+		inline RowProxy<VREF<Image> ,ITEM> operator[] (CREF<INDEX> y) leftvalue {
+			return RowProxy<VREF<Image> ,ITEM> (VRef<Image>::reference (thiz) ,y) ;
 		}
 
 		CREF<ITEM> at (CREF<PIXEL> xy) const leftvalue {
@@ -313,20 +233,20 @@ trait IMAGE_HELP<ITEM ,SIZE ,REQUIRE<ENUM_NOT<IS_SAME<SIZE ,ORDINARY>>>> {
 			return at (xy) ;
 		}
 
-		CREF<ITEM> at (CREF<INDEX> x_ ,CREF<INDEX> y_) const leftvalue {
-			assert (operator_between (x_ ,0 ,mCX)) ;
-			assert (operator_between (y_ ,0 ,mCY)) ;
-			return mImage[y_ * mStrip + x_ + mOffset] ;
+		CREF<ITEM> at (CREF<INDEX> x ,CREF<INDEX> y) const leftvalue {
+			assert (operator_between (x ,0 ,mCX)) ;
+			assert (operator_between (y ,0 ,mCY)) ;
+			return mImage[y * mStrip + x + mOffset] ;
 		}
 
-		inline RowProxy<CREF<Image> ,ITEM> operator[] (CREF<INDEX> y_) const leftvalue {
-			return RowProxy<CREF<Image> ,ITEM> (CRef<Image>::reference (thiz) ,y_) ;
+		inline RowProxy<CREF<Image> ,ITEM> operator[] (CREF<INDEX> y) const leftvalue {
+			return RowProxy<CREF<Image> ,ITEM> (CRef<Image>::reference (thiz) ,y) ;
 		}
 
 		BOOL equal (CREF<Image> that) const {
 			if (width () != that.width ())
 				return FALSE ;
-			for (auto &&i : iter ()) {
+			for (auto&& i : iter ()) {
 				if ifnot (operator_equal (at (i) ,that.at (i)))
 					return FALSE ;
 			}
@@ -345,7 +265,7 @@ trait IMAGE_HELP<ITEM ,SIZE ,REQUIRE<ENUM_NOT<IS_SAME<SIZE ,ORDINARY>>>> {
 			const auto r1x = operator_compr (width () ,that.width ()) ;
 			if (r1x != ZERO)
 				return r1x ;
-			for (auto &&i : iter ()) {
+			for (auto&& i : iter ()) {
 				const auto r2x = operator_compr (at (i) ,that.at (i)) ;
 				if (r2x != ZERO)
 					return r2x ;
@@ -371,7 +291,7 @@ trait IMAGE_HELP<ITEM ,SIZE ,REQUIRE<ENUM_NOT<IS_SAME<SIZE ,ORDINARY>>>> {
 
 		FLAG hash () const {
 			FLAG ret = hashcode () ;
-			for (auto &&i : iter ()) {
+			for (auto&& i : iter ()) {
 				const auto r1x = operator_hash (at (i)) ;
 				ret = hashcode (ret ,r1x) ;
 			}
@@ -381,7 +301,7 @@ trait IMAGE_HELP<ITEM ,SIZE ,REQUIRE<ENUM_NOT<IS_SAME<SIZE ,ORDINARY>>>> {
 		Image add (CREF<Image> that) const {
 			assert (width () == that.width ()) ;
 			Image ret = Image (width ()) ;
-			for (auto &&i : iter ())
+			for (auto&& i : iter ())
 				ret.at (i) = at (i) + that.at (i) ;
 			return move (ret) ;
 		}
@@ -392,7 +312,7 @@ trait IMAGE_HELP<ITEM ,SIZE ,REQUIRE<ENUM_NOT<IS_SAME<SIZE ,ORDINARY>>>> {
 
 		void add_with (CREF<Image> that) {
 			assert (width () == that.width ()) ;
-			for (auto &&i : iter ())
+			for (auto&& i : iter ())
 				at (i) += that.at (i) ;
 		}
 
@@ -403,7 +323,7 @@ trait IMAGE_HELP<ITEM ,SIZE ,REQUIRE<ENUM_NOT<IS_SAME<SIZE ,ORDINARY>>>> {
 		Image sub (CREF<Image> that) const {
 			assert (width () == that.width ()) ;
 			Image ret = Image (width ()) ;
-			for (auto &&i : iter ())
+			for (auto&& i : iter ())
 				ret.at (i) = at (i) - that.at (i) ;
 			return move (ret) ;
 		}
@@ -414,7 +334,7 @@ trait IMAGE_HELP<ITEM ,SIZE ,REQUIRE<ENUM_NOT<IS_SAME<SIZE ,ORDINARY>>>> {
 
 		void sub_with (CREF<Image> that) {
 			assert (width () == that.width ()) ;
-			for (auto &&i : iter ())
+			for (auto&& i : iter ())
 				at (i) -= that.at (i) ;
 		}
 
@@ -425,7 +345,7 @@ trait IMAGE_HELP<ITEM ,SIZE ,REQUIRE<ENUM_NOT<IS_SAME<SIZE ,ORDINARY>>>> {
 		Image mul (CREF<Image> that) const {
 			assert (width () == that.width ()) ;
 			Image ret = Image (width ()) ;
-			for (auto &&i : iter ())
+			for (auto&& i : iter ())
 				ret.at (i) = at (i) * that.at (i) ;
 			return move (ret) ;
 		}
@@ -436,7 +356,7 @@ trait IMAGE_HELP<ITEM ,SIZE ,REQUIRE<ENUM_NOT<IS_SAME<SIZE ,ORDINARY>>>> {
 
 		void mul_with (CREF<Image> that) {
 			assert (width () == that.width ()) ;
-			for (auto &&i : iter ())
+			for (auto&& i : iter ())
 				at (i) *= that.at (i) ;
 		}
 
@@ -447,7 +367,7 @@ trait IMAGE_HELP<ITEM ,SIZE ,REQUIRE<ENUM_NOT<IS_SAME<SIZE ,ORDINARY>>>> {
 		Image div (CREF<Image> that) const {
 			assert (width () == that.width ()) ;
 			Image ret = Image (width ()) ;
-			for (auto &&i : iter ())
+			for (auto&& i : iter ())
 				ret.at (i) = at (i) / that.at (i) ;
 			return move (ret) ;
 		}
@@ -458,7 +378,7 @@ trait IMAGE_HELP<ITEM ,SIZE ,REQUIRE<ENUM_NOT<IS_SAME<SIZE ,ORDINARY>>>> {
 
 		void div_with (CREF<Image> that) {
 			assert (width () == that.width ()) ;
-			for (auto &&i : iter ())
+			for (auto&& i : iter ())
 				at (i) /= that.at (i) ;
 		}
 
@@ -469,7 +389,7 @@ trait IMAGE_HELP<ITEM ,SIZE ,REQUIRE<ENUM_NOT<IS_SAME<SIZE ,ORDINARY>>>> {
 		Image mod (CREF<Image> that) const {
 			assert (width () == that.width ()) ;
 			Image ret = Image (width ()) ;
-			for (auto &&i : iter ())
+			for (auto&& i : iter ())
 				ret.at (i) = at (i) % that.at (i) ;
 			return move (ret) ;
 		}
@@ -480,7 +400,7 @@ trait IMAGE_HELP<ITEM ,SIZE ,REQUIRE<ENUM_NOT<IS_SAME<SIZE ,ORDINARY>>>> {
 
 		void mod_with (CREF<Image> that) {
 			assert (width () == that.width ()) ;
-			for (auto &&i : iter ())
+			for (auto&& i : iter ())
 				at (i) %= that.at (i) ;
 		}
 
@@ -490,7 +410,7 @@ trait IMAGE_HELP<ITEM ,SIZE ,REQUIRE<ENUM_NOT<IS_SAME<SIZE ,ORDINARY>>>> {
 
 		Image plus () const {
 			Image ret = Image (width ()) ;
-			for (auto &&i : iter ())
+			for (auto&& i : iter ())
 				ret.at (i) = +at (i) ;
 			return move (ret) ;
 		}
@@ -501,7 +421,7 @@ trait IMAGE_HELP<ITEM ,SIZE ,REQUIRE<ENUM_NOT<IS_SAME<SIZE ,ORDINARY>>>> {
 
 		Image minus () const {
 			Image ret = Image (width ()) ;
-			for (auto &&i : iter ())
+			for (auto&& i : iter ())
 				ret.at (i) = -at (i) ;
 			return move (ret) ;
 		}
@@ -513,7 +433,7 @@ trait IMAGE_HELP<ITEM ,SIZE ,REQUIRE<ENUM_NOT<IS_SAME<SIZE ,ORDINARY>>>> {
 		Image band (CREF<Image> that) const {
 			assert (width () == that.width ()) ;
 			Image ret = Image (width ()) ;
-			for (auto &&i : iter ())
+			for (auto&& i : iter ())
 				ret.at (i) = at (i) & that.at (i) ;
 			return move (ret) ;
 		}
@@ -524,7 +444,7 @@ trait IMAGE_HELP<ITEM ,SIZE ,REQUIRE<ENUM_NOT<IS_SAME<SIZE ,ORDINARY>>>> {
 
 		void band_with (CREF<Image> that) {
 			assert (width () == that.width ()) ;
-			for (auto &&i : iter ())
+			for (auto&& i : iter ())
 				at (i) &= that.at (i) ;
 		}
 
@@ -535,7 +455,7 @@ trait IMAGE_HELP<ITEM ,SIZE ,REQUIRE<ENUM_NOT<IS_SAME<SIZE ,ORDINARY>>>> {
 		Image bor (CREF<Image> that) const {
 			assert (width () == that.width ()) ;
 			Image ret = Image (width ()) ;
-			for (auto &&i : iter ())
+			for (auto&& i : iter ())
 				ret.at (i) = at (i) | that.at (i) ;
 			return move (ret) ;
 		}
@@ -546,7 +466,7 @@ trait IMAGE_HELP<ITEM ,SIZE ,REQUIRE<ENUM_NOT<IS_SAME<SIZE ,ORDINARY>>>> {
 
 		void bor_with (CREF<Image> that) {
 			assert (width () == that.width ()) ;
-			for (auto &&i : iter ())
+			for (auto&& i : iter ())
 				at (i) |= that.at (i) ;
 		}
 
@@ -557,7 +477,7 @@ trait IMAGE_HELP<ITEM ,SIZE ,REQUIRE<ENUM_NOT<IS_SAME<SIZE ,ORDINARY>>>> {
 		Image bxor (CREF<Image> that) const {
 			assert (width () == that.width ()) ;
 			Image ret = Image (width ()) ;
-			for (auto &&i : iter ())
+			for (auto&& i : iter ())
 				ret.at (i) = at (i) ^ that.at (i) ;
 			return move (ret) ;
 		}
@@ -568,7 +488,7 @@ trait IMAGE_HELP<ITEM ,SIZE ,REQUIRE<ENUM_NOT<IS_SAME<SIZE ,ORDINARY>>>> {
 
 		void bxor_with (CREF<Image> that) {
 			assert (width () == that.width ()) ;
-			for (auto &&i : iter ())
+			for (auto&& i : iter ())
 				at (i) ^= that.at (i) ;
 		}
 
@@ -578,7 +498,7 @@ trait IMAGE_HELP<ITEM ,SIZE ,REQUIRE<ENUM_NOT<IS_SAME<SIZE ,ORDINARY>>>> {
 
 		Image bnot () const {
 			Image ret = Image (width ()) ;
-			for (auto &&i : iter ())
+			for (auto&& i : iter ())
 				ret.at (i) = ITEM (~at (i)) ;
 			return move (ret) ;
 		}

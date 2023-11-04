@@ -19,7 +19,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
 AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING A,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
@@ -60,18 +60,18 @@ trait VECTOR_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 	public:
 		implicit Vector () = default ;
 
-		explicit Vector (CREF<ARRAY3<ITEM>> xyz_ ,CREF<ITEM> w_) {
+		explicit Vector (CREF<ARRAY3<ITEM>> xyz_ ,CREF<ITEM> w) {
 			mVector[0] = xyz_[0] ;
 			mVector[1] = xyz_[1] ;
 			mVector[2] = xyz_[2] ;
-			mVector[3] = w_ ;
+			mVector[3] = w ;
 		}
 
-		explicit Vector (CREF<ITEM> x_ ,CREF<ITEM> y_ ,CREF<ITEM> z_ ,CREF<ITEM> w_) {
-			mVector[0] = x_ ;
-			mVector[1] = y_ ;
-			mVector[2] = z_ ;
-			mVector[3] = w_ ;
+		explicit Vector (CREF<ITEM> x ,CREF<ITEM> y ,CREF<ITEM> z ,CREF<ITEM> w) {
+			mVector[0] = x ;
+			mVector[1] = y ;
+			mVector[2] = z ;
+			mVector[3] = w ;
 		}
 
 		imports CREF<Vector> zero () {
@@ -112,22 +112,22 @@ trait VECTOR_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 			return move (ret) ;
 		}
 
-		VREF<ITEM> at (CREF<INDEX> y_) leftvalue {
-			assert (operator_between (y_ ,0 ,4)) ;
-			return mVector[y_] ;
+		VREF<ITEM> at (CREF<INDEX> y) leftvalue {
+			assert (operator_between (y ,0 ,4)) ;
+			return mVector[y] ;
 		}
 
-		inline VREF<ITEM> operator[] (CREF<INDEX> y_) leftvalue {
-			return at (y_) ;
+		inline VREF<ITEM> operator[] (CREF<INDEX> y) leftvalue {
+			return at (y) ;
 		}
 
-		CREF<ITEM> at (CREF<INDEX> y_) const leftvalue {
-			assert (operator_between (y_ ,0 ,4)) ;
-			return mVector[y_] ;
+		CREF<ITEM> at (CREF<INDEX> y) const leftvalue {
+			assert (operator_between (y ,0 ,4)) ;
+			return mVector[y] ;
 		}
 
-		inline CREF<ITEM> operator[] (CREF<INDEX> y_) const leftvalue {
-			return at (y_) ;
+		inline CREF<ITEM> operator[] (CREF<INDEX> y) const leftvalue {
+			return at (y) ;
 		}
 
 		BOOL equal (CREF<Vector> that) const {
@@ -373,11 +373,11 @@ trait QUATERNION_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 	public:
 		implicit Quaternion () = default ;
 
-		explicit Quaternion (CREF<ITEM> x_ ,CREF<ITEM> y_ ,CREF<ITEM> z_ ,CREF<ITEM> w_) {
-			mQuaternion[0] = x_ ;
-			mQuaternion[1] = y_ ;
-			mQuaternion[2] = z_ ;
-			mQuaternion[3] = w_ ;
+		explicit Quaternion (CREF<ITEM> x ,CREF<ITEM> y ,CREF<ITEM> z ,CREF<ITEM> w) {
+			mQuaternion[0] = x ;
+			mQuaternion[1] = y ;
+			mQuaternion[2] = z ;
+			mQuaternion[3] = w ;
 			update_normalize () ;
 		}
 
@@ -488,13 +488,13 @@ trait QUATERNION_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 			return move (ret) ;
 		}
 
-		CREF<ITEM> at (CREF<INDEX> y_) const leftvalue {
-			assert (operator_between (y_ ,0 ,4)) ;
-			return mQuaternion[y_] ;
+		CREF<ITEM> at (CREF<INDEX> y) const leftvalue {
+			assert (operator_between (y ,0 ,4)) ;
+			return mQuaternion[y] ;
 		}
 
-		inline CREF<ITEM> operator[] (CREF<INDEX> y_) const leftvalue {
-			return at (y_) ;
+		inline CREF<ITEM> operator[] (CREF<INDEX> y) const leftvalue {
+			return at (y) ;
 		}
 
 		BOOL equal (CREF<Quaternion> that) const {
@@ -597,14 +597,14 @@ trait MATRIX_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 			return at (xy) ;
 		}
 
-		VREF<ITEM> at (CREF<INDEX> x_ ,CREF<INDEX> y_) leftvalue {
-			assert (operator_between (x_ ,0 ,4)) ;
-			assert (operator_between (y_ ,0 ,4)) ;
-			return mMatrix[y_ * 4 + x_] ;
+		VREF<ITEM> at (CREF<INDEX> x ,CREF<INDEX> y) leftvalue {
+			assert (operator_between (x ,0 ,4)) ;
+			assert (operator_between (y ,0 ,4)) ;
+			return mMatrix[y * 4 + x] ;
 		}
 
-		inline RowProxy<VREF<Matrix> ,ITEM> operator[] (CREF<INDEX> y_) leftvalue {
-			return RowProxy<VREF<Matrix> ,ITEM> (VRef<Matrix>::reference (thiz) ,y_) ;
+		inline RowProxy<VREF<Matrix> ,ITEM> operator[] (CREF<INDEX> y) leftvalue {
+			return RowProxy<VREF<Matrix> ,ITEM> (VRef<Matrix>::reference (thiz) ,y) ;
 		}
 
 		CREF<ITEM> at (CREF<PIXEL> xy) const leftvalue {
@@ -615,14 +615,14 @@ trait MATRIX_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 			return at (xy) ;
 		}
 
-		CREF<ITEM> at (CREF<INDEX> x_ ,CREF<INDEX> y_) const leftvalue {
-			assert (operator_between (x_ ,0 ,4)) ;
-			assert (operator_between (y_ ,0 ,4)) ;
-			return mMatrix[y_ * 4 + x_] ;
+		CREF<ITEM> at (CREF<INDEX> x ,CREF<INDEX> y) const leftvalue {
+			assert (operator_between (x ,0 ,4)) ;
+			assert (operator_between (y ,0 ,4)) ;
+			return mMatrix[y * 4 + x] ;
 		}
 
-		inline RowProxy<CREF<Matrix> ,ITEM> operator[] (CREF<INDEX> y_) const leftvalue {
-			return RowProxy<CREF<Matrix> ,ITEM> (CRef<Matrix>::reference (thiz) ,y_) ;
+		inline RowProxy<CREF<Matrix> ,ITEM> operator[] (CREF<INDEX> y) const leftvalue {
+			return RowProxy<CREF<Matrix> ,ITEM> (CRef<Matrix>::reference (thiz) ,y) ;
 		}
 
 		BOOL equal (CREF<Matrix> that) const {
@@ -923,11 +923,11 @@ trait MATRIX_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 			return TRUE ;
 		}
 
-		INDEX find_abs_max_row (CREF<INDEX> x_) const {
+		INDEX find_abs_max_row (CREF<INDEX> x) const {
 			INDEX ret = NONE ;
 			auto rax = ITEM () ;
-			for (auto &&i : iter (x_ ,4)) {
-				const auto r1x = MathProc::abs (at (x_ ,i)) ;
+			for (auto &&i : iter (x ,4)) {
+				const auto r1x = MathProc::abs (at (x ,i)) ;
 				if (ret != NONE)
 					if (rax >= r1x)
 						continue ;
@@ -953,12 +953,12 @@ trait MATRIX_HELP<ITEM ,REQUIRE<IS_FLOAT<ITEM>>> {
 
 	class DiagMatrix implement Proxy {
 	public:
-		imports Matrix make (CREF<ITEM> x_ ,CREF<ITEM> y_ ,CREF<ITEM> z_ ,CREF<ITEM> w_) {
+		imports Matrix make (CREF<ITEM> x ,CREF<ITEM> y ,CREF<ITEM> z ,CREF<ITEM> w) {
 			Matrix ret = Matrix::zero () ;
-			ret.at (0 ,0) = x_ ;
-			ret.at (1 ,1) = y_ ;
-			ret.at (2 ,2) = z_ ;
-			ret.at (3 ,3) = w_ ;
+			ret.at (0 ,0) = x ;
+			ret.at (1 ,1) = y ;
+			ret.at (2 ,2) = z ;
+			ret.at (3 ,3) = w ;
 			return move (ret) ;
 		}
 	} ;

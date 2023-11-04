@@ -19,7 +19,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
 AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING A,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
@@ -278,23 +278,23 @@ trait CONSOLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				return ;
 			write_log_buffer (tag) ;
 			const auto r1x = mThis->mLogWriter.length () - 1 ;
-			try_invoke ([&] () {
+			try {
 				if (mThis->mLogStreamFile == NULL)
 					return ;
-				const auto r2x = mThis->mLogStreamFile->write (RegBuffer<BYTE>::from (unsafe_cast[TYPE<TEMP<void>>::expr] (mThis->mLogBuffer[0]) ,0 ,r1x)) ;
+				const auto r2x = mThis->mLogStreamFile->write (RegBuffer<BYTE>::from (address (mThis->mLogBuffer[0]) ,0 ,r1x)) ;
 				assume (r2x == r1x) ;
-			} ,[&] () {
+			} catch (...) {
 				mThis->mLogStreamFile = NULL ;
-			}) ;
-			try_invoke ([&] () {
+			}
+			try {
 				if (mThis->mLogStreamFile != NULL)
 					return ;
 				open_log_file () ;
-				const auto r3x = mThis->mLogStreamFile->write (RegBuffer<BYTE>::from (unsafe_cast[TYPE<TEMP<void>>::expr] (mThis->mLogBuffer[0]) ,0 ,r1x)) ;
+				const auto r3x = mThis->mLogStreamFile->write (RegBuffer<BYTE>::from (address (mThis->mLogBuffer[0]) ,0 ,r1x)) ;
 				assume (r3x == r1x) ;
-			} ,[&] () {
+			} catch (...) {
 				mThis->mLogStreamFile = NULL ;
-			}) ;
+			}
 			if ifswitch (TRUE) {
 				if (mThis->mLogStreamFile == NULL)
 					discard ;
@@ -329,7 +329,7 @@ trait CONSOLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			mThis->mLogStreamFile = VRef<StreamFile>::make (mThis->mLogFile) ;
 			mThis->mLogStreamFile->open (TRUE ,TRUE) ;
 			const auto r3x = PrintString<STRU8>::make (BOM) ;
-			const auto r4x = mThis->mLogStreamFile->write (RegBuffer<BYTE>::from (unsafe_cast[TYPE<TEMP<void>>::expr] (r3x[0]) ,0 ,r3x.length ())) ;
+			const auto r4x = mThis->mLogStreamFile->write (RegBuffer<BYTE>::from (address (r3x[0]) ,0 ,r3x.length ())) ;
 			assume (r4x == r3x.length ()) ;
 		}
 

@@ -19,7 +19,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
 AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING A,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
@@ -867,7 +867,7 @@ trait FUNCTION_HELP<TYPE<PARAM...> ,ALWAYS> {
 	using PARAMS = TYPE<PARAM...> ;
 
 	struct Holder implement Interface {
-		virtual void initialize (RREF<XRef> value_) = 0 ;
+		virtual void initialize (CREF<BoxBase> value_) = 0 ;
 		virtual BOOL effective () const = 0 ;
 		virtual void invoke (XREF<PARAM>...params) const = 0 ;
 	} ;
@@ -889,12 +889,16 @@ trait FUNCTION_HELP<TYPE<PARAM...> ,ALWAYS> {
 				if (IS_EFFECTIVE<ARG1>::expr)
 					discard ;
 				auto rax = VRef<Holder> (VRef<R2X>::make ()) ;
-				rax->initialize (VRef<ARG1>::reference (that)) ;
+				auto rbx = Box<ARG1>::make (that) ;
+				rax->initialize (rbx) ;
+				rbx.release () ;
 				mThis = move (rax) ;
 			}
 			if ifswitch (act) {
 				auto rax = VRef<Holder> (VRef<R2X>::make ()) ;
-				rax->initialize (VRef<ARG1>::reference (that)) ;
+				auto rbx = Box<ARG1>::make (that) ;
+				rax->initialize (rbx) ;
+				rbx.release () ;
 				mThis = move (rax) ;
 			}
 		}
@@ -939,9 +943,8 @@ trait FUNCTION_PUREHOLDER_HELP<TYPE<PARAM...> ,A ,ALWAYS> {
 		Box<A> mValue ;
 
 	public:
-		void initialize (RREF<XRef> value_) override {
-			auto rax = VRef<A> (move (value_)) ;
-			mValue = Box<A>::make (move (rax.self)) ;
+		void initialize (CREF<BoxBase> value_) override {
+			mValue.acquire (value_) ;
 		}
 
 		BOOL effective () const override {
@@ -1052,7 +1055,6 @@ trait AUTOREF_HOLDER_HELP<DEPEND ,ALWAYS> {
 template <class A>
 trait AUTOREF_HELP<A ,REQUIRE<IS_VOID<A>>> {
 	using Holder = typename AUTOREF_HOLDER_HELP<DEPEND ,ALWAYS>::Holder ;
-	using Layout = typename AUTOREF_HOLDER_HELP<DEPEND ,ALWAYS>::Layout ;
 	using Super = typename AUTOREF_HOLDER_HELP<DEPEND ,ALWAYS>::AutoRef ;
 
 	class AutoRef implement Super {
@@ -1116,7 +1118,6 @@ trait AUTOREF_HELP<A ,REQUIRE<IS_VOID<A>>> {
 template <class A>
 trait AUTOREF_HELP<A ,REQUIRE<ENUM_NOT<IS_VOID<A>>>> {
 	using Holder = typename AUTOREF_HOLDER_HELP<DEPEND ,ALWAYS>::Holder ;
-	using Layout = typename AUTOREF_HOLDER_HELP<DEPEND ,ALWAYS>::Layout ;
 	using Super = typename AUTOREF_HOLDER_HELP<DEPEND ,ALWAYS>::AutoRef ;
 
 	class AutoRef implement Super {
@@ -1528,7 +1529,7 @@ trait UNIQUEREF_PUREHOLDER_HELP ;
 template <class DEPEND>
 trait UNIQUEREF_HOLDER_HELP<DEPEND ,ALWAYS> {
 	struct Holder implement Interface {
-		virtual void initialize (RREF<XRef> destructor) = 0 ;
+		virtual void initialize (CREF<BoxBase> destructor) = 0 ;
 		virtual FLAG pointer () const = 0 ;
 		virtual BOOL ownership () const = 0 ;
 		virtual void enter () = 0 ;
@@ -1568,9 +1569,10 @@ trait UNIQUEREF_HELP<A ,REQUIRE<IS_VOID<A>>> {
 			using R2X = typename KILL<UNIQUEREF_PUREHOLDER_HELP<R1X ,ALWAYS> ,DEPEND>::PureHolder ;
 			using R3X = Function<TYPE<>> ;
 			mThis = VRef<R2X>::make () ;
-			auto rax = R3X (move (destructor)) ;
-			assert (ifnot (rax.effective ())) ;
-			mThis->initialize (VRef<R3X>::reference (rax)) ;
+			auto rax = Box<R3X>::make (move (destructor)) ;
+			assert (ifnot (rax->effective ())) ;
+			mThis->initialize (rax) ;
+			rax.release () ;
 			mPointer = mThis->pointer () ;
 			constructor () ;
 			mHandle = Scope<Holder> (mThis.self) ;
@@ -1582,8 +1584,9 @@ trait UNIQUEREF_HELP<A ,REQUIRE<IS_VOID<A>>> {
 			using R3X = Function<TYPE<>> ;
 			UniqueRef ret ;
 			ret.mThis = VRef<R2X>::make () ;
-			auto rax = R3X () ;
-			ret.mThis->initialize (VRef<R3X>::reference (rax)) ;
+			auto rax = Box<R3X>::make () ;
+			ret.mThis->initialize (rax) ;
+			rax.release () ;
 			ret.mPointer = ret.mThis->pointer () ;
 			ret.mHandle = Scope<Holder> (ret.mThis.self) ;
 			return move (ret) ;
@@ -1629,9 +1632,10 @@ trait UNIQUEREF_HELP<A ,REQUIRE<ENUM_NOT<IS_VOID<A>>>> {
 			using R2X = typename KILL<UNIQUEREF_PUREHOLDER_HELP<R1X ,ALWAYS> ,DEPEND>::PureHolder ;
 			using R3X = Function<TYPE<VREF<R1X>>> ;
 			mThis = VRef<R2X>::make () ;
-			auto rax = R3X (move (destructor)) ;
-			assert (ifnot (rax.effective ())) ;
-			mThis->initialize (VRef<R3X>::reference (rax)) ;
+			auto rax = Box<R3X>::make (move (destructor)) ;
+			assert (ifnot (rax->effective ())) ;
+			mThis->initialize (rax) ;
+			rax.release () ;
 			mPointer = mThis->pointer () ;
 			auto&& tmp1 = unsafe_cast[TYPE<Box<R1X>>::expr] (unsafe_pointer (mPointer)) ;
 			tmp1.remake (TYPE<R1X>::expr) ;
@@ -1646,8 +1650,9 @@ trait UNIQUEREF_HELP<A ,REQUIRE<ENUM_NOT<IS_VOID<A>>>> {
 			using R3X = Function<TYPE<VREF<R1X>>> ;
 			UniqueRef ret ;
 			ret.mThis = VRef<R2X>::make () ;
-			auto rax = R3X () ;
-			ret.mThis->initialize (VRef<R3X>::reference (rax)) ;
+			auto rax = Box<R3X>::make () ;
+			ret.mThis->initialize (rax) ;
+			rax.release () ;
 			ret.mPointer = ret.mThis->pointer () ;
 			auto&& tmp1 = unsafe_cast[TYPE<Box<R1X>>::expr] (unsafe_pointer (ret.mPointer)) ;
 			tmp1.remake (TYPE<R1X>::expr ,keep[TYPE<ARG1>::expr] (a)...) ;
@@ -1695,12 +1700,11 @@ trait UNIQUEREF_PUREHOLDER_HELP<A ,REQUIRE<IS_VOID<A>>> {
 
 	class PureHolder implement Holder {
 	protected:
-		Destructor mDestructor ;
+		Box<Destructor> mDestructor ;
 
 	public:
-		void initialize (RREF<XRef> destructor) override {
-			auto rax = VRef<Destructor> (move (destructor)) ;
-			mDestructor = move (rax.self) ;
+		void initialize (CREF<BoxBase> destructor) override {
+			mDestructor.acquire (destructor) ;
 		}
 
 		FLAG pointer () const override {
@@ -1719,8 +1723,8 @@ trait UNIQUEREF_PUREHOLDER_HELP<A ,REQUIRE<IS_VOID<A>>> {
 			if ifswitch (TRUE) {
 				if ifnot (mDestructor.exist ())
 					discard ;
-				mDestructor () ;
-				mDestructor = Destructor () ;
+				mDestructor.self () ;
+				mDestructor = NULL ;
 			}
 		}
 	} ;
@@ -1734,13 +1738,13 @@ trait UNIQUEREF_PUREHOLDER_HELP<A ,REQUIRE<ENUM_NOT<IS_VOID<A>>>> {
 
 	class PureHolder implement Holder {
 	protected:
-		Destructor mDestructor ;
+		Box<Destructor> mDestructor ;
 		Box<A> mValue ;
 
 	public:
-		void initialize (RREF<XRef> destructor) override {
+		void initialize (CREF<BoxBase> destructor) override {
 			auto rax = VRef<Destructor> (move (destructor)) ;
-			mDestructor = move (rax.self) ;
+			mDestructor.acquire (destructor) ;
 		}
 
 		FLAG pointer () const override {
@@ -2011,8 +2015,8 @@ trait VARBUFFER_HELP ;
 
 template <class ITEM ,class COND>
 trait VARBUFFER_HELP<ITEM ,COND ,REQUIRE<ENUM_NOT<COND>>> {
-	using NODE = typename REGBUFFER_HELP<ITEM ,ALWAYS>::NODE ;
 	using Layout = typename REGBUFFER_HELP<ITEM ,ALWAYS>::Layout ;
+	using NODE = typename REGBUFFER_HELP<ITEM ,ALWAYS>::NODE ;
 
 	class Buffer implement Layout {
 	protected:
@@ -2028,6 +2032,7 @@ trait VARBUFFER_HELP<ITEM ,COND ,REQUIRE<ENUM_NOT<COND>>> {
 
 template <class ITEM ,class COND>
 trait VARBUFFER_HELP<ITEM ,COND ,REQUIRE<COND>> {
+	using Layout = typename VARBUFFER_HELP<ITEM ,ENUM_FALSE ,ALWAYS>::Layout ;
 	using NODE = typename VARBUFFER_HELP<ITEM ,ENUM_FALSE ,ALWAYS>::NODE ;
 	using Super = typename VARBUFFER_HELP<ITEM ,ENUM_FALSE ,ALWAYS>::Buffer ;
 
@@ -2069,7 +2074,7 @@ trait VARBUFFER_HELP<ITEM ,COND ,REQUIRE<COND>> {
 
 template <class ITEM ,class SIZE>
 trait BUFFER_HELP<ITEM ,SIZE ,REQUIRE<IS_SAME<SIZE ,VARIABLE>>> {
-	using Layout = typename REGBUFFER_HELP<ITEM ,ALWAYS>::Layout ;
+	using Layout = typename VARBUFFER_HELP<ITEM ,IS_CLONEABLE<ITEM> ,ALWAYS>::Layout ;
 	using Super = typename VARBUFFER_HELP<ITEM ,IS_CLONEABLE<ITEM> ,ALWAYS>::Buffer ;
 
 	class Buffer implement Super {
@@ -2177,8 +2182,8 @@ trait CONBUFFER_HELP ;
 
 template <class ITEM>
 trait CONBUFFER_HELP<ITEM ,ALWAYS> {
-	using NODE = typename REGBUFFER_HELP<ITEM ,ALWAYS>::NODE ;
 	using Layout = typename REGBUFFER_HELP<ITEM ,ALWAYS>::Layout ;
+	using NODE = typename REGBUFFER_HELP<ITEM ,ALWAYS>::NODE ;
 
 	class Buffer implement Layout {
 	protected:
@@ -2194,7 +2199,7 @@ trait CONBUFFER_HELP<ITEM ,ALWAYS> {
 
 template <class ITEM ,class SIZE>
 trait BUFFER_HELP<ITEM ,SIZE ,REQUIRE<IS_SAME<SIZE ,CONSTANT>>> {
-	using Layout = typename REGBUFFER_HELP<ITEM ,ALWAYS>::Layout ;
+	using Layout = typename CONBUFFER_HELP<ITEM ,ALWAYS>::Layout ;
 	using Super = typename CONBUFFER_HELP<ITEM ,ALWAYS>::Buffer ;
 
 	class Buffer implement Super {
@@ -2259,8 +2264,8 @@ using ConBuffer = typename BUFFER_HELP<ITEM ,CONSTANT ,ALWAYS>::Buffer ;
 
 template <class ITEM ,class SIZE>
 trait BUFFER_HELP<ITEM ,SIZE ,REQUIRE<IS_SAME<SIZE ,REGISTER>>> {
-	using NODE = typename REGBUFFER_HELP<ITEM ,ALWAYS>::NODE ;
 	using Layout = typename REGBUFFER_HELP<ITEM ,ALWAYS>::Layout ;
+	using NODE = typename REGBUFFER_HELP<ITEM ,ALWAYS>::NODE ;
 
 	struct RegCaches ;
 
@@ -2410,106 +2415,6 @@ template <class ITEM>
 using RegBuffer = typename BUFFER_HELP<ITEM ,REGISTER ,ALWAYS>::Buffer ;
 template <class ITEM>
 using RegCaches = typename BUFFER_HELP<ITEM ,REGISTER ,ALWAYS>::RegCaches ;
-
-template <class...>
-trait ORDBUFFER_PUREHOLDER_HELP ;
-
-template <class ITEM ,class SIZE>
-trait BUFFER_HELP<ITEM ,SIZE ,REQUIRE<IS_SAME<SIZE ,ORDINARY>>> {
-	struct Holder implement Interface {
-		virtual void initialize (RREF<VRef<Holder>> prefix) = 0 ;
-		virtual XRef native () const leftvalue = 0 ;
-		virtual LENGTH size () const = 0 ;
-		virtual VREF<ITEM> at (CREF<INDEX> index) leftvalue = 0 ;
-		virtual CREF<ITEM> at (CREF<INDEX> index) const leftvalue = 0 ;
-	} ;
-
-	class Buffer {
-	protected:
-		VRef<Holder> mThis ;
-
-	public:
-		implicit Buffer () = default ;
-
-		implicit Buffer (RREF<VRef<Holder>> that) {
-			using R1X = typename KILL<ORDBUFFER_PUREHOLDER_HELP<ITEM ,ALWAYS> ,DEPEND>::PureHolder ;
-			mThis = VRef<R1X>::make () ;
-			mThis->initialize (move (that)) ;
-		}
-
-		explicit Buffer (CREF<SizeProxy> size_) {
-			assert (size_ == 0) ;
-		}
-
-		XRef native () const leftvalue {
-			return mThis->native () ;
-		}
-
-		LENGTH size () const {
-			if (mThis == NULL)
-				return 0 ;
-			return mThis->size () ;
-		}
-
-		VREF<ITEM> at (CREF<INDEX> index) leftvalue {
-			assert (operator_between (index ,0 ,size ())) ;
-			return mThis->at (index) ;
-		}
-
-		inline VREF<ITEM> operator[] (CREF<INDEX> index) leftvalue {
-			return at (index) ;
-		}
-
-		CREF<ITEM> at (CREF<INDEX> index) const leftvalue {
-			assert (operator_between (index ,0 ,size ())) ;
-			return mThis->at (index) ;
-		}
-
-		inline CREF<ITEM> operator[] (CREF<INDEX> index) const leftvalue {
-			return at (index) ;
-		}
-
-		void resize (CREF<LENGTH> size_) {
-			if (size_ == size ())
-				return ;
-			assume (FALSE) ;
-		}
-	} ;
-} ;
-
-template <class ITEM>
-trait ORDBUFFER_PUREHOLDER_HELP<ITEM ,ALWAYS> {
-	using Holder = typename BUFFER_HELP<ITEM ,ORDINARY ,ALWAYS>::Holder ;
-
-	class PureHolder implement Holder {
-	protected:
-		VRef<Holder> mPrefix ;
-
-	public:
-		void initialize (RREF<VRef<Holder>> prefix) override {
-			mPrefix = move (prefix) ;
-		}
-
-		XRef native () const leftvalue override {
-			return mPrefix->native () ;
-		}
-
-		LENGTH size () const override {
-			return mPrefix->size () ;
-		}
-
-		VREF<ITEM> at (CREF<INDEX> index) leftvalue override {
-			return mPrefix->at (index) ;
-		}
-
-		CREF<ITEM> at (CREF<INDEX> index) const leftvalue override {
-			return mPrefix->at (index) ;
-		}
-	} ;
-} ;
-
-template <class ITEM>
-using OrdBuffer = typename BUFFER_HELP<ITEM ,ORDINARY ,ALWAYS>::Buffer ;
 
 template <class...>
 trait ALLOCATOR_HELP ;

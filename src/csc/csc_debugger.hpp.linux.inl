@@ -19,7 +19,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
 AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING A,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
@@ -56,7 +56,7 @@ template <class DEPEND>
 trait CONSOLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	using Binder = typename CONSOLE_HELP<DEPEND ,ALWAYS>::Binder ;
 	using Holder = typename CONSOLE_HELP<DEPEND ,ALWAYS>::Holder ;
-	using OPTION = typename CONSOLE_HELP<DEPEND ,ALWAYS>::OPTION ;
+	using OPTION_CLAZZ = typename CONSOLE_HELP<DEPEND ,ALWAYS>::OPTION_CLAZZ ;
 
 	using HANDLE = csc_pointer_t ;
 	using CONSOLE_BUFFER_SSIZE = ENUM<8388607> ;
@@ -220,23 +220,23 @@ trait CONSOLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				return ;
 			write_log_buffer (tag) ;
 			const auto r1x = mThis->mLogWriter.length () - 1 ;
-			try_invoke ([&] () {
+			try {
 				if (mThis->mLogStreamFile == NULL)
 					return ;
-				const auto r3x = mThis->mLogStreamFile->write (RegBuffer<BYTE>::from (unsafe_cast[TYPE<TEMP<void>>::expr] (mThis->mLogBuffer[0]) ,0 ,r1x)) ;
+				const auto r3x = mThis->mLogStreamFile->write (RegBuffer<BYTE>::from (address (mThis->mLogBuffer[0]) ,0 ,r1x)) ;
 				assume (r3x == r1x) ;
-			} ,[&] () {
+			} catch (...) {
 				mThis->mLogStreamFile = NULL ;
-			}) ;
-			try_invoke ([&] () {
+			}
+			try {
 				if (mThis->mLogStreamFile != NULL)
 					return ;
 				open_log_file () ;
-				const auto r4x = mThis->mLogStreamFile->write (RegBuffer<BYTE>::from (unsafe_cast[TYPE<TEMP<void>>::expr] (mThis->mLogBuffer[0]) ,0 ,r1x)) ;
+				const auto r4x = mThis->mLogStreamFile->write (RegBuffer<BYTE>::from (address (mThis->mLogBuffer[0]) ,0 ,r1x)) ;
 				assume (r4x == r1x) ;
-			} ,[&] () {
+			} catch (...) {
 				mThis->mLogStreamFile = NULL ;
-			}) ;
+			}
 			if ifswitch (TRUE) {
 				if (mThis->mLogStreamFile == NULL)
 					discard ;
@@ -271,7 +271,7 @@ trait CONSOLE_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			mThis->mLogStreamFile = VRef<StreamFile>::make (mThis->mLogFile) ;
 			mThis->mLogStreamFile->open (TRUE ,TRUE) ;
 			const auto r3x = PrintString<STRU8>::make (BOM) ;
-			const auto r5x = mThis->mLogStreamFile->write (RegBuffer<BYTE>::from (unsafe_cast[TYPE<TEMP<void>>::expr] (r3x[0]) ,0 ,r3x.length ())) ;
+			const auto r5x = mThis->mLogStreamFile->write (RegBuffer<BYTE>::from (address (r3x[0]) ,0 ,r3x.length ())) ;
 			assume (r5x == r3x.length ()) ;
 		}
 
@@ -320,7 +320,7 @@ template <class DEPEND>
 trait REPORTER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	using Holder = typename REPORTER_HELP<DEPEND ,ALWAYS>::Holder ;
 
-	using HSYMB = DEF<STRA **> ;
+	using HSYMB = DEF<STRA**> ;
 	using STACK_MAX_DEPTH = ENUM<256> ;
 	using FUNCTION_NAME_MAX_SIZE = ENUM<1024> ;
 
@@ -450,7 +450,7 @@ trait REPORTER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			Singleton<Console>::instance ().print () ;
 			const auto r1x = Singleton<Reporter>::instance ().captrue_stack_trace () ;
 			Singleton<Console>::instance ().fatal (slice ("stack trace")) ;
-			for (auto &&i : r1x.iter ()) {
+			for (auto&& i : r1x.iter ()) {
 				const auto r2x = Singleton<Reporter>::instance ().symbol_from_address (r1x[i]) ;
 				Singleton<Console>::instance ().debug (slice ("#[") ,i ,slice ("] = ") ,r2x) ;
 			}
@@ -461,7 +461,7 @@ trait REPORTER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 			auto rax = Array<csc_pointer_t> (STACK_MAX_DEPTH::expr) ;
 			const auto r1x = LENGTH (backtrace ((&rax[0]) ,VAL32 (rax.size ()))) - 3 ;
 			Array<FLAG> ret = Array<FLAG> (r1x) ;
-			for (auto &&i : ret.iter ())
+			for (auto&& i : ret.iter ())
 				ret[i] = LENGTH (rax[3 + i]) ;
 			return move (ret) ;
 		}
@@ -481,7 +481,7 @@ trait REPORTER_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 				if (r2x.self == NULL)
 					discard ;
 				const auto r3x = address ((**r2x.self)) ;
-				auto &&tmp1 = unsafe_cast[TYPE<ARR<STRA>>::expr] (unsafe_pointer (r3x)) ;
+				auto&& tmp1 = unsafe_cast[TYPE<ARR<STRA>>::expr] (unsafe_pointer (r3x)) ;
 				mThis->mNameBuffer -= BufferProc<STR>::buf_slice (tmp1 ,mThis->mNameBuffer.size ()) ;
 				const auto r4x = string_build[TYPE<STR ,DATA>::expr] (DATA (addr)) ;
 				ret = PrintString<STR>::make (slice ("[") ,r4x ,slice ("] : ") ,mThis->mNameBuffer) ;

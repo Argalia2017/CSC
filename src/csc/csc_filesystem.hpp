@@ -19,7 +19,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
 AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING A,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
@@ -430,13 +430,13 @@ trait BUFFERFILE_HELP<ITEM ,ALWAYS> {
 
 		ITEM get (CREF<VAL64> index) {
 			ITEM ret ;
-			mThis->get (index ,RegBuffer<BYTE>::from (unsafe_cast[TYPE<TEMP<void>>::expr] (ret) ,0 ,SIZE_OF<ITEM>::expr)) ;
+			mThis->get (index ,RegBuffer<BYTE>::from (address (ret) ,0 ,SIZE_OF<ITEM>::expr)) ;
 			unsafe_launder (ret) ;
 			return move (ret) ;
 		}
 
 		void set (CREF<VAL64> index ,CREF<ITEM> item) {
-			mThis->set (index ,RegBuffer<BYTE>::from (unsafe_cast[TYPE<TEMP<void>>::expr] (item) ,0 ,SIZE_OF<ITEM>::expr)) ;
+			mThis->set (index ,RegBuffer<BYTE>::from (address (item) ,0 ,SIZE_OF<ITEM>::expr)) ;
 		}
 
 		void flush () {
