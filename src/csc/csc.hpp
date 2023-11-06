@@ -372,14 +372,6 @@ struct TYPE {
 	}
 } ;
 
-template <class A ,class B>
-struct TEMPAS {
-	B mUnused ;
-} ;
-
-template <class A>
-struct TEMPAS<A ,void> ;
-
 using DEPEND = bool ;
 using ALWAYS = void ;
 
@@ -509,12 +501,10 @@ template <class A ,class B>
 using MACRO_IS_CONVERTIBLE = ENUM<(__is_convertible_to (A ,B))> ;
 } ;
 
-template <class ARG1 ,class ARG2>
-inline constexpr CSC::csc_pointer_t operator new (CSC::csc_size_t ,CSC::DEF<CSC::TEMPAS<ARG1 ,ARG2> *> where_) noexcept {
+inline constexpr CSC::csc_pointer_t operator new (CSC::csc_size_t ,CSC::DEF<CSC::csc_temp_t *> where_) noexcept {
 	return where_ ;
 }
 
-template <class ARG1 ,class ARG2>
-inline constexpr void operator delete (CSC::csc_pointer_t ,CSC::DEF<CSC::TEMPAS<ARG1 ,ARG2> *> where_) noexcept {
+inline constexpr void operator delete (CSC::csc_pointer_t ,CSC::DEF<CSC::csc_temp_t *> where_) noexcept {
 	return ;
 }

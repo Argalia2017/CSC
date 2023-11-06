@@ -176,14 +176,12 @@ struct FUNCTION_unsafe_array {
 
 static constexpr auto unsafe_array = FUNCTION_unsafe_array () ;
 
-#define unsafe_sync(...)
-
 struct FUNCTION_swap {
 	template <class ARG1>
 	inline void operator() (VREF<ARG1> obj1 ,VREF<ARG1> obj2) const noexcept {
 		//@warn: no class should depend on its address
-		auto&& tmp1 = unsafe_cast[TYPE<TEMP<ARG1>>::expr] (obj1) ;
-		auto&& tmp2 = unsafe_cast[TYPE<TEMP<ARG1>>::expr] (obj2) ;
+		auto &&tmp1 = unsafe_cast[TYPE<TEMP<ARG1>>::expr] (obj1) ;
+		auto &&tmp2 = unsafe_cast[TYPE<TEMP<ARG1>>::expr] (obj2) ;
 		const auto r1x = tmp1 ;
 		tmp1 = tmp2 ;
 		tmp2 = r1x ;
@@ -263,8 +261,8 @@ struct FUNCTION_drop {
 	template <class ARG1>
 	inline void operator() (VREF<ARG1> a) const noexcept {
 		require (IS_TEMP<ARG1>) ;
-		using R1X = TEMP_ITEM<ARG1> ;
-		auto&& tmp1 = unsafe_cast[TYPE<R1X>::expr] (a) ;
+		using R1X = TEMP_BASE<ARG1> ;
+		auto &&tmp1 = unsafe_cast[TYPE<R1X>::expr] (a) ;
 		tmp1.~R1X () ;
 	}
 } ;
@@ -276,7 +274,7 @@ struct FUNCTION_zeroize {
 	inline void operator() (VREF<ARG1> a) const noexcept {
 		require (IS_TRIVIAL<ARG1>) ;
 		using R2X = Storage<SIZE_OF<ARG1>> ;
-		auto&& tmp1 = unsafe_cast[TYPE<R2X>::expr] (a) ;
+		auto &&tmp1 = unsafe_cast[TYPE<R2X>::expr] (a) ;
 		tmp1 = {0} ;
 		unsafe_launder (a) ;
 	}
@@ -298,8 +296,8 @@ trait TEMPLATE_bitwise_HELP<A ,ALWAYS> {
 			require (ENUM_EQUAL<SIZE_OF<R1X> ,SIZE_OF<R2X>>) ;
 			using R3X = Storage<SIZE_OF<R1X>> ;
 			A ret ;
-			auto&& tmp1 = unsafe_cast[TYPE<R3X>::expr] (ret) ;
-			auto&& tmp2 = unsafe_cast[TYPE<R3X>::expr] (a) ;
+			auto &&tmp1 = unsafe_cast[TYPE<R3X>::expr] (ret) ;
+			auto &&tmp2 = unsafe_cast[TYPE<R3X>::expr] (a) ;
 			tmp1 = tmp2 ;
 			unsafe_launder (ret) ;
 			return move (ret) ;
@@ -862,6 +860,7 @@ trait BOX_HELP<A ,REQUIRE<ENUM_ALL<IS_TRIVIAL<A> ,IS_OBJECT<A>>>> {
 		}
 
 		VREF<A> self_m () leftvalue {
+			assert (exist ()) ;
 			return fake ;
 		}
 
@@ -870,6 +869,7 @@ trait BOX_HELP<A ,REQUIRE<ENUM_ALL<IS_TRIVIAL<A> ,IS_OBJECT<A>>>> {
 		}
 
 		CREF<A> self_m () const leftvalue {
+			assert (exist ()) ;
 			return fake ;
 		}
 
@@ -878,7 +878,8 @@ trait BOX_HELP<A ,REQUIRE<ENUM_ALL<IS_TRIVIAL<A> ,IS_OBJECT<A>>>> {
 		}
 
 		void acquire (CREF<BoxBase> a) {
-			auto&& tmp1 = keep[TYPE<CREF<Box>>::expr] (a) ;
+			assert (ifnot (exist ())) ;
+			auto &&tmp1 = keep[TYPE<CREF<Box>>::expr] (a) ;
 			mValue = tmp1.mValue ;
 			unsafe_launder (fake) ;
 		}
@@ -886,6 +887,7 @@ trait BOX_HELP<A ,REQUIRE<ENUM_ALL<IS_TRIVIAL<A> ,IS_OBJECT<A>>>> {
 		template <class ARG1 ,class...ARG2>
 		void remake (TYPEID<ARG1> id ,XREF<ARG2>...a) {
 			require (IS_SAME<A ,ARG1>) ;
+			assert (ifnot (exist ())) ;
 			new ((&mValue)) ARG1 (keep[TYPE<ARG2>::expr] (a)...) ;
 			unsafe_launder (fake) ;
 		}
@@ -973,7 +975,7 @@ trait BOX_HELP<A ,REQUIRE<ENUM_ALL<ENUM_NOT<IS_TRIVIAL<A>> ,ENUM_NOT<IS_POLYMORP
 
 		void acquire (CREF<BoxBase> a) {
 			assert (ifnot (exist ())) ;
-			auto&& tmp1 = keep[TYPE<CREF<Box>>::expr] (a) ;
+			auto &&tmp1 = keep[TYPE<CREF<Box>>::expr] (a) ;
 			mValue = tmp1.mValue ;
 			unsafe_launder (fake) ;
 			mExist = TRUE ;
@@ -1053,6 +1055,7 @@ trait BOX_HELP<A ,REQUIRE<IS_POLYMORPHIC<A>>> {
 		}
 
 		VREF<A> self_m () leftvalue {
+			assert (exist ()) ;
 			return fake ;
 		}
 
@@ -1061,6 +1064,7 @@ trait BOX_HELP<A ,REQUIRE<IS_POLYMORPHIC<A>>> {
 		}
 
 		CREF<A> self_m () const leftvalue {
+			assert (exist ()) ;
 			return fake ;
 		}
 
@@ -1070,7 +1074,7 @@ trait BOX_HELP<A ,REQUIRE<IS_POLYMORPHIC<A>>> {
 
 		void acquire (CREF<BoxBase> a) {
 			assert (ifnot (exist ())) ;
-			auto&& tmp1 = keep[TYPE<CREF<Box>>::expr] (a) ;
+			auto &&tmp1 = keep[TYPE<CREF<Box>>::expr] (a) ;
 			mValue = tmp1.mValue ;
 			unsafe_launder (fake) ;
 		}
@@ -1248,17 +1252,14 @@ trait XREF_PUREHOLDER_HELP<DEPEND ,ALWAYS> {
 	public:
 		imports FLAG create (CREF<LENGTH> size_ ,CREF<LENGTH> align_) {
 			const auto r1x = HeapProc::basic_align () ;
-			const auto r2x = operator_max (ALIGN_OF<PureHolder>::expr - r1x ,0) + SIZE_OF<PureHolder>::expr ;
-			const auto r3x = operator_max (align_ - ALIGN_OF<PureHolder>::expr ,0) + size_ ;
+			const auto r2x = operator_max (ALIGN_OF<PureHolder>::expr - r1x ,0) ;
+			const auto r3x = operator_alignas (SIZE_OF<PureHolder>::expr ,align_) ;
 			const auto r4x = r2x + r3x ;
 			const auto r5x = HeapProc::alloc (r4x) ;
 			const auto r6x = operator_alignas (r5x ,ALIGN_OF<PureHolder>::expr) ;
-			if ifswitch (TRUE) {
-				auto rax = Box<PureHolder>::make () ;
-				rax->mOrigin = r5x ;
-				unsafe_sync (unsafe_pointer (r6x) ,unsafe_cast[TYPE<TEMP<PureHolder>>::expr] (rax.self)) ;
-				rax.release () ;
-			}
+			auto &&tmp1 = unsafe_cast[TYPE<Box<PureHolder>>::expr] (unsafe_pointer (r6x)) ;
+			tmp1.release () ;
+			tmp1.remake (TYPE<PureHolder>::expr) ;
 			return r6x ;
 		}
 
@@ -1618,7 +1619,7 @@ trait CAPTURE_HELP<TYPE<PARAM...> ,REQUIRE<ENUM_GT_ZERO<COUNT_OF<TYPE<PARAM...>>
 			using R2X = TYPE_M1ST_ONE<ARG2> ;
 			using R3X = TYPE_M1ST_REST<ARG2> ;
 			const auto r1x = capt[R1X::expr] ;
-			auto&& tmp1 = unsafe_cast[TYPE<R2X>::expr] (unsafe_pointer (r1x)) ;
+			auto &&tmp1 = unsafe_cast[TYPE<R2X>::expr] (unsafe_pointer (r1x)) ;
 			template_invoke (PHX ,func ,capt ,TYPE<R3X>::expr ,params... ,keep[TYPE<CREF<R2X>>::expr] (tmp1)) ;
 		}
 
@@ -2230,7 +2231,7 @@ trait SCOPE_HOLDER_HELP<A ,ALWAYS> {
 			if (mPointer == ZERO)
 				return ;
 			//@warn: unsafe_cast ignore cv-qualifier
-			auto&& tmp1 = unsafe_cast[TYPE<A>::expr] (unsafe_pointer (mPointer)) ;
+			auto &&tmp1 = unsafe_cast[TYPE<A>::expr] (unsafe_pointer (mPointer)) ;
 			tmp1.leave () ;
 			mPointer = ZERO ;
 		}
@@ -2251,7 +2252,7 @@ trait SCOPE_HELP<A ,ALWAYS> {
 		explicit Scope (CREF<A> that) {
 			const auto r1x = address (that) ;
 			//@warn: unsafe_cast ignore cv-qualifier
-			auto&& tmp1 = unsafe_cast[TYPE<A>::expr] (unsafe_pointer (r1x)) ;
+			auto &&tmp1 = unsafe_cast[TYPE<A>::expr] (unsafe_pointer (r1x)) ;
 			tmp1.enter () ;
 			mPointer = r1x ;
 		}

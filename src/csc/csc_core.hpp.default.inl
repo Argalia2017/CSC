@@ -171,30 +171,24 @@ trait SLICE_IMPLHOLDER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 			return at_load (mText.mStep ,r2x) ;
 		}
 
-		ITEM at_load (CREF<LENGTH> align_ ,CREF<FLAG> pointer) const {
+		ITEM at_load (CREF<LENGTH> align_ ,CREF<FLAG> addr) const {
 			if ifswitch (TRUE) {
 				if (align_ != ALIGN_OF<STRU8>::expr)
 					discard ;
-				auto rax = STRU8 () ;
-				unsafe_sync (unsafe_cast[TYPE<TEMP<STRU8>>::expr] (rax) ,unsafe_pointer (pointer)) ;
-				unsafe_launder (rax) ;
-				return ITEM (rax) ;
+				const auto r1x = unsafe_cast[TYPE<STRU8>::expr] (unsafe_pointer (addr)) ;
+				return ITEM (r1x) ;
 			}
 			if ifswitch (TRUE) {
 				if (align_ != ALIGN_OF<STRU16>::expr)
 					discard ;
-				auto rax = STRU16 () ;
-				unsafe_sync (unsafe_cast[TYPE<TEMP<STRU16>>::expr] (rax) ,unsafe_pointer (pointer)) ;
-				unsafe_launder (rax) ;
-				return ITEM (rax) ;
+				const auto r2x = unsafe_cast[TYPE<STRU16>::expr] (unsafe_pointer (addr)) ;
+				return ITEM (r2x) ;
 			}
 			if ifswitch (TRUE) {
 				if (align_ != ALIGN_OF<STRU32>::expr)
 					discard ;
-				auto rax = STRU32 () ;
-				unsafe_sync (unsafe_cast[TYPE<TEMP<STRU32>>::expr] (rax) ,unsafe_pointer (pointer)) ;
-				unsafe_launder (rax) ;
-				return ITEM (rax) ;
+				const auto r3x = unsafe_cast[TYPE<STRU32>::expr] (unsafe_pointer (addr)) ;
+				return ITEM (r3x) ;
 			}
 			return bad (TYPE<ITEM>::expr) ;
 		}
@@ -206,7 +200,7 @@ trait SLICE_IMPLHOLDER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 		BOOL equal (CREF<ImplHolder> that) const {
 			if (size () != that.size ())
 				return FALSE ;
-			for (auto&& i : iter (0 ,size ())) {
+			for (auto &&i : iter (0 ,size ())) {
 				if ifnot (operator_equal (at (i) ,that.at (i)))
 					return FALSE ;
 			}
@@ -219,7 +213,7 @@ trait SLICE_IMPLHOLDER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 
 		FLAG compr (CREF<ImplHolder> that) const {
 			const auto r1x = operator_min (size () ,that.size ()) ;
-			for (auto&& i : iter (0 ,r1x)) {
+			for (auto &&i : iter (0 ,r1x)) {
 				const auto r2x = operator_compr (at (i) ,that.at (i)) ;
 				if (r2x != ZERO)
 					return r2x ;
@@ -229,7 +223,7 @@ trait SLICE_IMPLHOLDER_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 
 		FLAG hash () const override {
 			FLAG ret = hashcode () ;
-			for (auto&& i : iter (0 ,size ())) {
+			for (auto &&i : iter (0 ,size ())) {
 				const auto r1x = operator_hash (at (i)) ;
 				ret = hashcode (ret ,r1x) ;
 			}

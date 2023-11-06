@@ -12,24 +12,6 @@
 
 namespace CSC {
 template <class DEPEND>
-trait BUFFERPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
-	using Holder = typename BUFFERPROC_HOLDER_HELP<DEPEND ,ALWAYS>::Holder ;
-
-	class ImplHolder implement Holder {
-	public:
-		void initialize () override {
-			noop () ;
-		}
-	} ;
-} ;
-
-template <>
-exports auto BUFFERPROC_HOLDER_HELP<DEPEND ,ALWAYS>::Holder::create () ->VRef<Holder> {
-	using R1X = typename BUFFERPROC_IMPLHOLDER_HELP<DEPEND ,ALWAYS>::ImplHolder ;
-	return VRef<R1X>::make () ;
-}
-
-template <class DEPEND>
 trait PINMUTEX_IMPLHOLDER_HELP<DEPEND ,ALWAYS> {
 	using Holder = typename PINMUTEX_HELP<DEPEND ,ALWAYS>::Holder ;
 

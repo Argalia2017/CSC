@@ -439,7 +439,7 @@ trait ENUM_MUL_HELP ;
 
 template <class A ,class B>
 trait ENUM_MUL_HELP<A ,B ,ALWAYS> {
-	using RET = ENUM<(A::expr* B::expr)> ;
+	using RET = ENUM<(A::expr *B::expr)> ;
 } ;
 
 template <class A ,class B>
@@ -461,7 +461,7 @@ trait ENUM_MOD_HELP ;
 
 template <class A ,class B>
 trait ENUM_MOD_HELP<A ,B ,ALWAYS> {
-	using RET = ENUM<(A::expr% B::expr)> ;
+	using RET = ENUM<(A::expr %B::expr)> ;
 } ;
 
 template <class A ,class B>
@@ -630,8 +630,8 @@ struct Interface {
 	implicit Interface (CREF<Interface>) = delete ;
 	inline VREF<Interface> operator= (CREF<Interface>) = delete ;
 	//@info: fuck clang
-	implicit Interface (Interface&&) = default ;
-	inline VREF<Interface> operator= (Interface&&) = default ;
+	implicit Interface (Interface &&) = default ;
+	inline VREF<Interface> operator= (Interface &&) = default ;
 	virtual void finalize () {}
 } ;
 
@@ -831,12 +831,12 @@ trait REFLECT_POINTER_HELP<A> {
 } ;
 
 template <class A>
-trait REFLECT_POINTER_HELP<DEF<A*>> {
+trait REFLECT_POINTER_HELP<DEF<A *>> {
 	using RET = ENUM_TRUE ;
 } ;
 
 template <class A>
-trait REFLECT_POINTER_HELP<DEF<const A*>> {
+trait REFLECT_POINTER_HELP<DEF<const A *>> {
 	using RET = ENUM_TRUE ;
 } ;
 
@@ -844,13 +844,13 @@ template <class A>
 using IS_POINTER = typename REFLECT_POINTER_HELP<REMOVE_REF<A>>::RET ;
 
 template <class A ,class = REQUIRE<IS_SAME<A ,REMOVE_REF<A>>>>
-using VPTR = DEF<const DEF<A*>> ;
+using VPTR = DEF<const DEF<A *>> ;
 
 template <class A ,class = REQUIRE<IS_SAME<A ,REMOVE_REF<A>>>>
-using CPTR = DEF<const DEF<const A*>> ;
+using CPTR = DEF<const DEF<const A *>> ;
 
 template <class A ,class = REQUIRE<IS_SAME<A ,REMOVE_REF<A>>>>
-using RPTR = DEF<A*> ;
+using RPTR = DEF<A *> ;
 
 template <class...>
 trait REFLECT_ARRAY_HELP ;
@@ -913,14 +913,14 @@ trait REFLECT_FUNCTION_HELP<A> {
 } ;
 
 template <class A ,class...B ,class C>
-trait REFLECT_FUNCTION_HELP<DEF<A (C::*) (B...)>> {
+trait REFLECT_FUNCTION_HELP<DEF<A (C:: *) (B...)>> {
 	using RETURN = A ;
 	using PARAMS = TYPE<XREF<B>...> ;
 	using RET = ENUM_TRUE ;
 } ;
 
 template <class A ,class...B ,class C>
-trait REFLECT_FUNCTION_HELP<DEF<A (C::*) (B...) const>> {
+trait REFLECT_FUNCTION_HELP<DEF<A (C:: *) (B...) const>> {
 	using RETURN = A ;
 	using PARAMS = TYPE<XREF<B>...> ;
 	using RET = ENUM_TRUE ;
@@ -1221,57 +1221,41 @@ trait REFLECT_TEMP_HELP ;
 
 template <class A>
 trait REFLECT_TEMP_HELP<A> {
+	using BASE = A ;
 	using RET = ENUM_FALSE ;
 } ;
 
-template <class A ,class B>
-trait REFLECT_TEMP_HELP<TEMPAS<A ,B>> {
-	using ITEM = A ;
-	using SIZE = B ;
+template <class A>
+trait REFLECT_TEMP_HELP<A ,REQUIRE<IS_EXTEND<csc_temp_t ,A>>> {
+	using BASE = typename A::BASE ;
 	using RET = ENUM_TRUE ;
 } ;
 
 template <class A>
-using IS_TEMP = typename REFLECT_TEMP_HELP<REMOVE_REF<A>>::RET ;
+using IS_TEMP = typename REFLECT_TEMP_HELP<REMOVE_REF<A> ,ALWAYS>::RET ;
 
 template <class A>
-using TEMP_ITEM = typename REFLECT_TEMP_HELP<REMOVE_REF<A>>::ITEM ;
-
-template <class A>
-using TEMP_SIZE = typename REFLECT_TEMP_HELP<REMOVE_REF<A>>::SIZE ;
+using TEMP_BASE = typename REFLECT_TEMP_HELP<REMOVE_REF<A>>::BASE ;
 
 template <class...>
 trait TEMP_HELP ;
 
 template <class A>
 trait TEMP_HELP<A ,REQUIRE<IS_VOID<A>>> {
-	using RET = TEMPAS<void ,void> ;
+	using TEMP = csc_temp_t ;
 } ;
 
 template <class A>
-trait TEMP_HELP<A ,REQUIRE<IS_TEMP<A>>> {
-	using R1X = TEMP_SIZE<A> ;
-	using RET = TEMPAS<A ,R1X> ;
+trait TEMP_HELP<A ,REQUIRE<ENUM_NOT<IS_VOID<A>>>> {
+	struct TEMP implement csc_temp_t {
+		using BASE = A ;
+
+		Storage<SIZE_OF<A> ,ALIGN_OF<A>> mUnused ;
+	} ;
 } ;
 
 template <class A>
-trait TEMP_HELP<A ,REQUIRE<IS_ARRAY<A>>> {
-	using R1X = ARRAY_ITEM<A> ;
-	using R2X = ENUM_EQ_ZERO<ARRAY_SIZE<A>> ;
-	using R3X = CONDITIONAL<R2X ,R1X ,A> ;
-	using R4X = Storage<SIZE_OF<R3X> ,ALIGN_OF<R3X>> ;
-	using R5X = CONDITIONAL<R2X ,void ,R4X> ;
-	using RET = TEMPAS<A ,R5X> ;
-} ;
-
-template <class A>
-trait TEMP_HELP<A ,REQUIRE<ENUM_ALL<IS_OBJECT<A> ,ENUM_NOT<IS_TEMP<A>>>>> {
-	using R1X = Storage<SIZE_OF<A> ,ALIGN_OF<A>> ;
-	using RET = TEMPAS<A ,R1X> ;
-} ;
-
-template <class A>
-using TEMP = typename TEMP_HELP<REMOVE_REF<A> ,ALWAYS>::RET ;
+using TEMP = typename TEMP_HELP<REMOVE_REF<A> ,ALWAYS>::TEMP ;
 
 template <class A>
 using ENUM_ABS = CONDITIONAL<ENUM_COMPR_GTEQ<A ,ENUM_ZERO> ,A ,ENUM_MINUS<A>> ;
