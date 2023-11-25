@@ -257,6 +257,16 @@ struct FUNCTION_move {
 
 static constexpr auto move = FUNCTION_move () ;
 
+struct FUNCTION_init {
+	template <class ARG1>
+	inline void operator() (VREF<ARG1> a) const noexcept {
+		require (IS_TRIVIAL<ARG1>) ;
+		//@mark
+	}
+} ;
+
+static constexpr auto init = FUNCTION_init () ;
+
 struct FUNCTION_drop {
 	template <class ARG1>
 	inline void operator() (VREF<ARG1> a) const noexcept {
@@ -268,19 +278,6 @@ struct FUNCTION_drop {
 } ;
 
 static constexpr auto drop = FUNCTION_drop () ;
-
-struct FUNCTION_zeroize {
-	template <class ARG1>
-	inline void operator() (VREF<ARG1> a) const noexcept {
-		require (IS_TRIVIAL<ARG1>) ;
-		using R2X = Storage<SIZE_OF<ARG1>> ;
-		auto &&tmp1 = unsafe_cast[TYPE<R2X>::expr] (a) ;
-		tmp1 = {0} ;
-		unsafe_launder (a) ;
-	}
-} ;
-
-static constexpr auto zeroize = FUNCTION_zeroize () ;
 
 template <class...>
 trait TEMPLATE_bitwise_HELP ;
@@ -390,8 +387,8 @@ static constexpr auto operator_alignas = FUNCTION_valign () ;
 template <class...>
 trait INDEXITERATOR_HELP ;
 
-template <class DEPEND>
-trait INDEXITERATOR_HELP<DEPEND ,ALWAYS> {
+template <>
+trait INDEXITERATOR_HELP<ALWAYS> {
 	class IndexIterator {
 	protected:
 		LENGTH mRank ;
@@ -449,13 +446,13 @@ trait INDEXITERATOR_HELP<DEPEND ,ALWAYS> {
 	} ;
 } ;
 
-using IndexIterator = typename INDEXITERATOR_HELP<DEPEND ,ALWAYS>::IndexIterator ;
+using IndexIterator = typename INDEXITERATOR_HELP<ALWAYS>::IndexIterator ;
 
 template <class...>
 trait PIXELITERATOR_HELP ;
 
-template <class DEPEND>
-trait PIXELITERATOR_HELP<DEPEND ,ALWAYS> {
+template <>
+trait PIXELITERATOR_HELP<ALWAYS> {
 	struct PIXEL {
 		INDEX x ;
 		INDEX y ;
@@ -526,8 +523,8 @@ trait PIXELITERATOR_HELP<DEPEND ,ALWAYS> {
 	} ;
 } ;
 
-using PIXEL = typename PIXELITERATOR_HELP<DEPEND ,ALWAYS>::PIXEL ;
-using PixelIterator = typename PIXELITERATOR_HELP<DEPEND ,ALWAYS>::PixelIterator ;
+using PIXEL = typename PIXELITERATOR_HELP<ALWAYS>::PIXEL ;
+using PixelIterator = typename PIXELITERATOR_HELP<ALWAYS>::PixelIterator ;
 
 struct FUNCTION_iter {
 	inline IndexIterator operator() (CREF<INDEX> begin_ ,CREF<INDEX> end_) const noexcept {
@@ -640,8 +637,7 @@ struct FUNCTION_hashcode {
 	}
 
 	inline FLAG operator() (CREF<FLAG> now ,CREF<FLAG> inc) const noexcept {
-		//@fatal: fuck gnuc
-		using R1X = KILL<BYTE_BASE<FLAG> ,DEPEND> ;
+		using R1X = BYTE_BASE<FLAG> ;
 		const auto r1x = R1X (now) ^ R1X (inc) ;
 		const auto r2x = R1X (FLAG (r1x) * FLAG (16777619)) ;
 		const auto r3x = r2x & R1X (VAL_MAX) ;
@@ -657,8 +653,7 @@ struct FUNCTION_hashcode {
 	}
 
 	inline FLAG operator() (CREF<FLAG> now ,CREF<FLAG> inc) const noexcept {
-		//@fatal: fuck gnuc
-		using R1X = KILL<BYTE_BASE<FLAG> ,DEPEND> ;
+		using R1X = BYTE_BASE<FLAG> ;
 		const auto r1x = R1X (now) ^ R1X (inc) ;
 		const auto r2x = R1X (FLAG (r1x) * FLAG (1099511628211)) ;
 		const auto r3x = r2x & R1X (VAL_MAX) ;
@@ -743,11 +738,48 @@ struct FUNCTION_interface_vptr {
 	template <class ARG1>
 	inline FLAG operator() (CREF<ARG1> a) const noexcept {
 		require (IS_POLYMORPHIC<ARG1>) ;
-		return FLAG (bitwise (reinterpret_cast<CREF<Interface>> (a))) ;
+		const auto r1x = address (a) ;
+		return unsafe_cast[TYPE<FLAG>::expr] (unsafe_pointer (r1x)) ;
 	}
 } ;
 
 static constexpr auto interface_vptr = FUNCTION_interface_vptr () ;
+
+template <class A>
+class VFat {
+protected:
+	FLAG mHolder ;
+	FLAG mPointer ;
+
+public:
+	inline VPTR<A> operator-> () rightvalue {
+		return unsafe_cast[TYPE<A>::expr] (mHolder) ;
+	}
+} ;
+
+template <class A>
+class CFat {
+protected:
+	FLAG mHolder ;
+	FLAG mPointer ;
+
+public:
+	inline CPTR<A> operator-> () rightvalue {
+		return unsafe_cast[TYPE<A>::expr] (mHolder) ;
+	}
+} ;
+
+template <class A>
+class RFat {
+protected:
+	FLAG mHolder ;
+	FLAG mPointer ;
+
+public:
+	inline implicit operator A () rightvalue {
+		return move (unsafe_cast[TYPE<A>::expr] (mHolder)) ;
+	}
+} ;
 
 template <class...>
 trait BOX_HELP ;
@@ -773,7 +805,7 @@ trait BOX_HOLDER_HELP<A ,REQUIRE<IS_POLYMORPHIC<A>>> {
 
 	public:
 		implicit Box () noexcept {
-			zeroize (mValue) ;
+			init (mValue) ;
 		}
 
 		implicit ~Box () noexcept {
@@ -781,7 +813,7 @@ trait BOX_HOLDER_HELP<A ,REQUIRE<IS_POLYMORPHIC<A>>> {
 			if (r1x == ZERO)
 				return ;
 			drop (mValue) ;
-			zeroize (mValue) ;
+			init (mValue) ;
 		}
 
 	private:
@@ -985,7 +1017,7 @@ trait BOX_HELP<A ,REQUIRE<ENUM_ALL<ENUM_NOT<IS_TRIVIAL<A>> ,ENUM_NOT<IS_POLYMORP
 		void remake (TYPEID<ARG1> id ,XREF<ARG2>...a) {
 			require (IS_SAME<A ,ARG1>) ;
 			assert (ifnot (exist ())) ;
-			zeroize (mValue) ;
+			init (mValue) ;
 			new ((&mValue)) ARG1 (keep[TYPE<ARG2>::expr] (a)...) ;
 			unsafe_launder (fake) ;
 			mExist = TRUE ;
@@ -1085,13 +1117,13 @@ trait BOX_HELP<A ,REQUIRE<IS_POLYMORPHIC<A>>> {
 			require (ENUM_COMPR_LTEQ<SIZE_OF<ARG1> ,SIZE_OF<A>>) ;
 			require (ENUM_COMPR_LTEQ<ALIGN_OF<ARG1> ,ALIGN_OF<A>>) ;
 			assert (ifnot (exist ())) ;
-			zeroize (mValue) ;
+			init (mValue) ;
 			new ((&mValue)) ARG1 (keep[TYPE<ARG2>::expr] (a)...) ;
 			unsafe_launder (fake) ;
 		}
 
 		void release () {
-			zeroize (mValue) ;
+			init (mValue) ;
 		}
 
 	private:
@@ -1125,8 +1157,8 @@ trait HEAPPROC_HELP ;
 template <class...>
 trait HEAPPROC_IMPLHOLDER_HELP ;
 
-template <class DEPEND>
-trait HEAPPROC_HELP<DEPEND ,ALWAYS> {
+template <>
+trait HEAPPROC_HELP<ALWAYS> {
 	struct Holder implement Interface {
 		virtual void initialize () = 0 ;
 		virtual LENGTH usage_size () const = 0 ;
@@ -1173,7 +1205,7 @@ trait HEAPPROC_HELP<DEPEND ,ALWAYS> {
 	} ;
 } ;
 
-using HeapProc = typename HEAPPROC_HELP<DEPEND ,ALWAYS>::HeapProc ;
+using HeapProc = typename HEAPPROC_HELP<ALWAYS>::HeapProc ;
 
 template <class...>
 trait XREF_HELP ;
@@ -1184,8 +1216,8 @@ trait XREF_HOLDER_HELP ;
 template <class...>
 trait XREF_PUREHOLDER_HELP ;
 
-template <class DEPEND>
-trait XREF_HOLDER_HELP<DEPEND ,ALWAYS> {
+template <>
+trait XREF_HOLDER_HELP<ALWAYS> {
 	struct Holder implement Interface {
 		virtual void initialize () = 0 ;
 		virtual void destroy () = 0 ;
@@ -1198,15 +1230,10 @@ trait XREF_HOLDER_HELP<DEPEND ,ALWAYS> {
 		virtual void unlock () = 0 ;
 	} ;
 
-	struct Layout {
+	class XRef {
+	protected:
 		FLAG mHolder ;
 		FLAG mPointer ;
-	} ;
-
-	class XRef implement Layout {
-	protected:
-		using Layout::mHolder ;
-		using Layout::mPointer ;
 
 	public:
 		implicit XRef () noexcept {
@@ -1215,21 +1242,7 @@ trait XREF_HOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		implicit ~XRef () noexcept {
-			if (mHolder == ZERO)
-				return ;
-			if ifswitch (TRUE) {
-				const auto r1x = fake.decrease () ;
-				if (r1x > 0)
-					discard ;
-				if ifswitch (TRUE) {
-					if (mPointer == ZERO)
-						discard ;
-					fake.recycle () ;
-				}
-				fake.destroy () ;
-			}
-			mHolder = ZERO ;
-			mPointer = ZERO ;
+			//@mark
 		}
 
 	private:
@@ -1239,9 +1252,9 @@ trait XREF_HOLDER_HELP<DEPEND ,ALWAYS> {
 	} ;
 } ;
 
-template <class DEPEND>
-trait XREF_PUREHOLDER_HELP<DEPEND ,ALWAYS> {
-	using Holder = typename XREF_HOLDER_HELP<DEPEND ,ALWAYS>::Holder ;
+template <>
+trait XREF_PUREHOLDER_HELP<ALWAYS> {
+	using Holder = typename XREF_HOLDER_HELP<ALWAYS>::Holder ;
 
 	class PureHolder implement Holder {
 	protected:
@@ -1269,31 +1282,20 @@ trait XREF_PUREHOLDER_HELP<DEPEND ,ALWAYS> {
 		}
 
 		void destroy () override {
-			const auto r1x = mOrigin ;
-			if (r1x == ZERO)
-				return ;
-			drop (thiz) ;
-			HeapProc::free (r1x) ;
+			//@mark
 		}
 
 		void acquire (CREF<BoxBase> a) override {
-			INDEX ix = mSize ;
-			mUnknown.acquire (ix ,a) ;
-			mSize++ ;
+			//@mark
 		}
 
-		void recycle () override {
-			while (TRUE) {
-				INDEX ix = mSize - 1 ;
-				if (ix < 0)
-					break ;
-				mUnknown.recycle (ix) ;
-				mSize-- ;
-			}
+		void recycle (VREF<BoxBase> a) override {
+			//@mark
 		}
 
 		FLAG pointer () const override {
-			return mUnknown.pointer () ;
+			//@mark
+			return 0 ;
 		}
 
 		LENGTH increase () override {
@@ -1323,9 +1325,8 @@ trait XREF_PUREHOLDER_HELP<DEPEND ,ALWAYS> {
 
 template <class A>
 trait XREF_HELP<A ,REQUIRE<IS_OBJECT<A>>> {
-	using Layout = typename XREF_HOLDER_HELP<DEPEND ,ALWAYS>::Layout ;
-	using Holder = typename XREF_HOLDER_HELP<DEPEND ,ALWAYS>::Holder ;
-	using Super = typename XREF_HOLDER_HELP<DEPEND ,ALWAYS>::XRef ;
+	using Holder = typename XREF_HOLDER_HELP<ALWAYS>::Holder ;
+	using Super = typename XREF_HOLDER_HELP<ALWAYS>::XRef ;
 
 	class VRef final implement Super {
 	protected:
@@ -1337,22 +1338,14 @@ trait XREF_HELP<A ,REQUIRE<IS_OBJECT<A>>> {
 
 		implicit VRef (CREF<typeof (NULL)>) {}
 
-		implicit VRef (RREF<Layout> that) {
-			if ifswitch (TRUE) {
-				mHolder = that.mHolder ;
-				that.mHolder = ZERO ;
-				if (mHolder == ZERO)
-					discard ;
-				fake.lock () ;
-			}
-			mPointer = that.mPointer ;
-			that.mPointer = ZERO ;
+		implicit VRef (RREF<Super> that) {
+			//@mark
 		}
 
 		template <class...ARG1>
 		imports VRef make (XREF<ARG1>...a) {
 			using R1X = A ;
-			using R2X = typename KILL<XREF_PUREHOLDER_HELP<DEPEND ,ALWAYS> ,A>::PureHolder ;
+			using R2X = typename KILL<XREF_PUREHOLDER_HELP<ALWAYS> ,A>::PureHolder ;
 			VRef ret ;
 			const auto r1x = LENGTH (1) ;
 			assert (r1x > 0) ;
@@ -1432,16 +1425,8 @@ trait XREF_HELP<A ,REQUIRE<IS_OBJECT<A>>> {
 
 		implicit CRef (CREF<typeof (NULL)>) {}
 
-		implicit CRef (RREF<Layout> that) {
-			if ifswitch (TRUE) {
-				mHolder = that.mHolder ;
-				that.mHolder = ZERO ;
-				if (mHolder == ZERO)
-					discard ;
-				fake.unlock () ;
-			}
-			mPointer = that.mPointer ;
-			that.mPointer = ZERO ;
+		implicit CRef (RREF<Super> that) {
+			//@mark
 		}
 
 		template <class...ARG1>
@@ -1525,8 +1510,8 @@ trait CAPTURE_HELP ;
 template <class...>
 trait CAPTURE_HOLDER_HELP ;
 
-template <class DEPEND>
-trait CAPTURE_HOLDER_HELP<DEPEND ,ALWAYS> {
+template <>
+trait CAPTURE_HOLDER_HELP<ALWAYS> {
 	class Capture {
 	protected:
 		LENGTH mRank ;
@@ -1544,7 +1529,7 @@ trait CAPTURE_HOLDER_HELP<DEPEND ,ALWAYS> {
 
 template <class PARAMS>
 trait CAPTURE_HELP<PARAMS ,REQUIRE<ENUM_EQ_ZERO<COUNT_OF<PARAMS>>>> {
-	using Super = typename CAPTURE_HOLDER_HELP<DEPEND ,ALWAYS>::Capture ;
+	using Super = typename CAPTURE_HOLDER_HELP<ALWAYS>::Capture ;
 
 	class Capture implement Super {
 	protected:
@@ -1564,68 +1549,23 @@ template <class...PARAM>
 trait CAPTURE_HELP<TYPE<PARAM...> ,REQUIRE<ENUM_GT_ZERO<COUNT_OF<TYPE<PARAM...>>>>> {
 	using PARAMS = TYPE<PARAM...> ;
 	using RANK = COUNT_OF<PARAMS> ;
-	using Super = typename CAPTURE_HOLDER_HELP<DEPEND ,ALWAYS>::Capture ;
+	using Super = typename CAPTURE_HOLDER_HELP<ALWAYS>::Capture ;
 
 	class Capture implement Super {
 	protected:
 		using Super::mRank ;
-		Box<ARR<FLAG ,RANK>> mCapture ;
+		ARR<FLAG ,RANK> mCapture ;
 
 	public:
 		implicit Capture () = delete ;
 
 		explicit Capture (CREF<KILL<FLAG ,PARAM>>...params) {
-			using R1X = typename KILL<CAPTURE_HELP ,DEPEND>::FUNCTION_capture_assign ;
-			mRank = RANK::expr ;
-			const auto r1x = R1X () ;
-			r1x (mCapture.self ,params...) ;
+			//@mark
 		}
 
 		template <class ARG1>
 		inline void operator() (CREF<ARG1> func) const {
-			using R1X = typename KILL<CAPTURE_HELP ,DEPEND>::FUNCTION_capture_invoke ;
-			const auto r1x = R1X () ;
-			r1x (func ,mCapture.self) ;
-		}
-	} ;
-
-	struct FUNCTION_capture_assign {
-		template <class...ARG1>
-		inline void operator() (VREF<ARR<FLAG ,RANK>> capt ,CREF<ARG1>...params) const {
-			template_assign (PHX ,capt ,TYPE<RANK>::expr ,params...) ;
-		}
-
-		template <class ARG1 ,class...ARG2 ,class = REQUIRE<ENUM_GT_ZERO<ARG1>>>
-		imports inline void template_assign (CREF<typeof (PH2)> ,VREF<ARR<FLAG ,RANK>> capt ,TYPEID<ARG1> id ,CREF<FLAG> params1 ,CREF<ARG2>...params2) {
-			capt[ENUM_SUB<RANK ,ARG1>::expr] = params1 ;
-			template_assign (PHX ,capt ,TYPE<ENUM_DEC<ARG1>>::expr ,params2...) ;
-		}
-
-		template <class ARG1>
-		imports inline void template_assign (CREF<typeof (PH1)> ,VREF<ARR<FLAG ,RANK>> capt ,TYPEID<ARG1> id) {
-			noop () ;
-		}
-	} ;
-
-	struct FUNCTION_capture_invoke {
-		template <class ARG1>
-		inline void operator() (CREF<ARG1> func ,CREF<ARR<FLAG ,RANK>> capt) const {
-			template_invoke (PHX ,func ,capt ,TYPE<PARAMS>::expr) ;
-		}
-
-		template <class ARG1 ,class ARG2 ,class...ARG3 ,class = REQUIRE<ENUM_GT_ZERO<COUNT_OF<ARG2>>>>
-		imports inline void template_invoke (CREF<typeof (PH2)> ,CREF<ARG1> func ,CREF<ARR<FLAG ,RANK>> capt ,TYPEID<ARG2> id ,CREF<ARG3>...params) {
-			using R1X = ENUM_SUB<RANK ,COUNT_OF<ARG2>> ;
-			using R2X = TYPE_M1ST_ONE<ARG2> ;
-			using R3X = TYPE_M1ST_REST<ARG2> ;
-			const auto r1x = capt[R1X::expr] ;
-			auto &&tmp1 = unsafe_cast[TYPE<R2X>::expr] (unsafe_pointer (r1x)) ;
-			template_invoke (PHX ,func ,capt ,TYPE<R3X>::expr ,params... ,keep[TYPE<CREF<R2X>>::expr] (tmp1)) ;
-		}
-
-		template <class ARG1 ,class ARG2 ,class...ARG3 ,class = REQUIRE<ENUM_EQ_ZERO<COUNT_OF<ARG2>>>>
-		imports inline void template_invoke (CREF<typeof (PH1)> ,CREF<ARG1> func ,CREF<ARR<FLAG ,RANK>> capt ,TYPEID<ARG2> id ,CREF<ARG3>...params) {
-			func (params...) ;
+			//@mark
 		}
 	} ;
 } ;
@@ -1648,49 +1588,35 @@ trait SLICE_HELP ;
 template <class...>
 trait SLICE_IMPLHOLDER_HELP ;
 
-template <class ITEM>
-trait SLICE_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
-	struct Layout ;
-
+template <class A>
+trait SLICE_HELP<A ,REQUIRE<IS_TEXT<A>>> {
 	struct Holder implement Interface {
 		imports VRef<Holder> create () ;
 
 		virtual void initialize (CREF<csc_span_t> text) = 0 ;
 		virtual void initialize (RREF<CRef<Holder>> prefix ,CREF<csc_span_t> text) = 0 ;
 		virtual LENGTH size () const = 0 ;
-		virtual ITEM at (CREF<INDEX> index) const = 0 ;
-		virtual BOOL equal (CREF<Layout> that) const = 0 ;
-		virtual FLAG compr (CREF<Layout> that) const = 0 ;
+		virtual A at (CREF<INDEX> index) const = 0 ;
+		virtual BOOL equal (CREF<Holder> that) const = 0 ;
+		virtual FLAG compr (CREF<Holder> that) const = 0 ;
 		virtual FLAG hash () const = 0 ;
 	} ;
 
-	struct Layout {
-		CRef<Holder> mThis ;
-	} ;
-
-	class Slice implement Layout {
+	class Slice {
 	protected:
-		using Layout::mThis ;
+		CRef<Holder> mThis ;
 
 	public:
 		implicit Slice () = default ;
 
 		template <class ARG1 ,class = REQUIRE<ENUM_ANY<IS_ARRAY<ARG1> ,IS_SAME<ARG1 ,csc_span_t>>>>
 		explicit Slice (CREF<ARG1> text) {
-			using R1X = typename KILL<SLICE_HELP<ITEM ,ALWAYS> ,DEPEND>::FUNCTION_translation ;
-			const auto r1x = R1X () ;
-			auto rax = Holder::create () ;
-			rax->initialize (r1x (text)) ;
-			mThis = move (rax) ;
+			//@mark
 		}
 
 		template <class ARG1>
 		explicit Slice (CREF<Slice> prefix ,CREF<ARG1> text) {
-			using R1X = typename KILL<SLICE_HELP<ITEM ,ALWAYS> ,DEPEND>::FUNCTION_translation ;
-			const auto r1x = R1X () ;
-			auto rax = Holder::create () ;
-			rax->initialize (move (prefix.mThis) ,r1x (text)) ;
-			mThis = move (rax) ;
+			//@mark
 		}
 
 		LENGTH size () const {
@@ -1699,11 +1625,11 @@ trait SLICE_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 			return mThis->size () ;
 		}
 
-		ITEM at (CREF<INDEX> index) const {
+		A at (CREF<INDEX> index) const {
 			return mThis->at (index) ;
 		}
 
-		inline ITEM operator[] (CREF<INDEX> index) const {
+		inline A operator[] (CREF<INDEX> index) const {
 			return at (index) ;
 		}
 
@@ -1755,26 +1681,10 @@ trait SLICE_HELP<ITEM ,REQUIRE<IS_TEXT<ITEM>>> {
 			return mThis->hash () ;
 		}
 	} ;
-
-	struct FUNCTION_translation {
-		template <class ARG1>
-		inline csc_span_t operator() (CREF<ARG1> text) const noexcept {
-			require (IS_ARRAY<ARG1>) ;
-			csc_span_t ret ;
-			ret.mBegin = address (text) ;
-			ret.mEnd = ret.mBegin + SIZE_OF<ARG1>::expr ;
-			ret.mStep = ALIGN_OF<ARG1>::expr ;
-			return move (ret) ;
-		}
-
-		inline csc_span_t operator() (CREF<csc_span_t> text) const noexcept {
-			return text ;
-		}
-	} ;
 } ;
 
-template <class ITEM>
-using Slice = typename SLICE_HELP<ITEM ,ALWAYS>::Slice ;
+template <class A>
+using Slice = typename SLICE_HELP<A ,ALWAYS>::Slice ;
 
 template <class...>
 trait FUNCTION_operator_name_HELP ;
@@ -2014,10 +1924,8 @@ trait CLAZZ_HELP ;
 template <class...>
 trait CLAZZ_IMPLHOLDER_HELP ;
 
-template <class DEPEND>
-trait CLAZZ_HELP<DEPEND ,ALWAYS> {
-	struct Layout ;
-
+template <>
+trait CLAZZ_HELP<ALWAYS> {
 	struct Holder implement Interface {
 		imports VRef<Holder> create () ;
 
@@ -2026,18 +1934,14 @@ trait CLAZZ_HELP<DEPEND ,ALWAYS> {
 		virtual LENGTH type_align () const = 0 ;
 		virtual FLAG type_cabi () const = 0 ;
 		virtual Slice<STR> type_name () const = 0 ;
-		virtual BOOL equal (CREF<Layout> that) const = 0 ;
-		virtual FLAG compr (CREF<Layout> that) const = 0 ;
+		virtual BOOL equal (CREF<Holder> that) const = 0 ;
+		virtual FLAG compr (CREF<Holder> that) const = 0 ;
 		virtual FLAG hash () const = 0 ;
 	} ;
 
-	struct Layout {
-		CRef<Holder> mThis ;
-	} ;
-
-	class Clazz implement Layout {
+	class Clazz {
 	protected:
-		using Layout::mThis ;
+		CRef<Holder> mThis ;
 
 	public:
 		implicit Clazz () = default ;
@@ -2083,7 +1987,7 @@ trait CLAZZ_HELP<DEPEND ,ALWAYS> {
 				return FALSE ;
 			if (mThis == NULL)
 				return TRUE ;
-			return mThis->equal (that) ;
+			return mThis->equal (that.mThis.self) ;
 		}
 
 		inline BOOL operator== (CREF<Clazz> that) const {
@@ -2100,7 +2004,7 @@ trait CLAZZ_HELP<DEPEND ,ALWAYS> {
 				return r1x ;
 			if (mThis == NULL)
 				return r1x ;
-			return mThis->compr (that) ;
+			return mThis->compr (that.mThis.self) ;
 		}
 
 		inline BOOL operator< (CREF<Clazz> that) const {
@@ -2127,7 +2031,7 @@ trait CLAZZ_HELP<DEPEND ,ALWAYS> {
 	} ;
 } ;
 
-using Clazz = typename CLAZZ_HELP<DEPEND ,ALWAYS>::Clazz ;
+using Clazz = typename CLAZZ_HELP<ALWAYS>::Clazz ;
 
 template <class...>
 trait WATCH_HELP ;
@@ -2166,8 +2070,8 @@ trait EXCEPTION_HELP ;
 template <class...>
 trait EXCEPTION_IMPLHOLDER_HELP ;
 
-template <class DEPEND>
-trait EXCEPTION_HELP<DEPEND ,ALWAYS> {
+template <>
+trait EXCEPTION_HELP<ALWAYS> {
 	struct Holder implement Interface {
 		imports VRef<Holder> create () ;
 
@@ -2200,7 +2104,7 @@ trait EXCEPTION_HELP<DEPEND ,ALWAYS> {
 	} ;
 } ;
 
-using Exception = typename EXCEPTION_HELP<DEPEND ,ALWAYS>::Exception ;
+using Exception = typename EXCEPTION_HELP<ALWAYS>::Exception ;
 
 struct FUNCTION_unimplemented {
 	inline void operator() () const {

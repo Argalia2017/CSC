@@ -25,6 +25,15 @@
     <ClInclude Include="..\..\src\csc\csc_type.hpp">
       <Filter>csc</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\csc\csc_geometry.hpp">
+      <Filter>csc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\csc\csc_image.hpp">
+      <Filter>csc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\csc\csc_array.hpp">
+      <Filter>csc</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="csc">
@@ -33,12 +42,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\src\csc\cpp.hint">
-      <Filter>csc</Filter>
-    </None>
-    <None Include="..\..\src\csc\csc_basic.hpp.default.inl">
-      <Filter>csc</Filter>
-    </None>
-    <None Include="..\..\src\csc\csc_core.hpp.default.inl">
       <Filter>csc</Filter>
     </None>
   </ItemGroup>

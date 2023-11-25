@@ -4,6 +4,7 @@
 #include "csc/csc_type.hpp"
 #include "csc/csc_core.hpp"
 #include "csc/csc_basic.hpp"
+#include "csc/csc_geometry.hpp"
 
 namespace SOLUTION {
 using namespace CSC ;

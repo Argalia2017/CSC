@@ -514,19 +514,19 @@ using TYPE_REVERSE = typename TYPE_REVERSE_HELP<A ,ALWAYS>::RET ;
 template <class...>
 trait TYPE_REPEAT_HELP ;
 
-template <class ITEM ,class SIZE>
-trait TYPE_REPEAT_HELP<ITEM ,SIZE ,REQUIRE<ENUM_EQ_ZERO<SIZE>>> {
+template <class A ,class SIZE>
+trait TYPE_REPEAT_HELP<A ,SIZE ,REQUIRE<ENUM_EQ_ZERO<SIZE>>> {
 	using RET = TYPE<> ;
 } ;
 
-template <class ITEM ,class SIZE>
-trait TYPE_REPEAT_HELP<ITEM ,SIZE ,REQUIRE<ENUM_GT_ZERO<SIZE>>> {
-	using R1X = typename TYPE_REPEAT_HELP<ITEM ,ENUM_DEC<SIZE> ,ALWAYS>::RET ;
-	using RET = TYPE_CAT<R1X ,TYPE<ITEM>> ;
+template <class A ,class SIZE>
+trait TYPE_REPEAT_HELP<A ,SIZE ,REQUIRE<ENUM_GT_ZERO<SIZE>>> {
+	using R1X = typename TYPE_REPEAT_HELP<A ,ENUM_DEC<SIZE> ,ALWAYS>::RET ;
+	using RET = TYPE_CAT<R1X ,TYPE<A>> ;
 } ;
 
-template <class ITEM ,class SIZE>
-using TYPE_REPEAT = typename TYPE_REPEAT_HELP<ITEM ,SIZE ,ALWAYS>::RET ;
+template <class A ,class SIZE>
+using TYPE_REPEAT = typename TYPE_REPEAT_HELP<A ,SIZE ,ALWAYS>::RET ;
 
 template <class...>
 trait TYPE_SENQUENCE_HELP ;
@@ -886,23 +886,20 @@ using ARRAY_SIZE = typename REFLECT_ARRAY_HELP<REMOVE_REF<A>>::SIZE ;
 template <class...>
 trait ARR_HELP ;
 
-template <class ITEM ,class SIZE>
-trait ARR_HELP<ITEM ,SIZE ,REQUIRE<ENUM_EQ_ZERO<SIZE>>> {
-	require (ENUM_NOT<IS_ARRAY<ITEM>>) ;
-	using RET = DEF<ITEM[]> ;
+template <class A ,class SIZE>
+trait ARR_HELP<A ,SIZE ,REQUIRE<ENUM_EQ_ZERO<SIZE>>> {
+	require (ENUM_NOT<IS_ARRAY<A>>) ;
+	using RET = DEF<A[]> ;
 } ;
 
-template <class ITEM ,class SIZE>
-trait ARR_HELP<ITEM ,SIZE ,REQUIRE<ENUM_GT_ZERO<SIZE>>> {
-	require (ENUM_NOT<IS_ARRAY<ITEM>>) ;
-	enum {
-		value = SIZE::expr
-	} ;
-	using RET = DEF<ITEM[value]> ;
+template <class A ,class SIZE>
+trait ARR_HELP<A ,SIZE ,REQUIRE<ENUM_GT_ZERO<SIZE>>> {
+	require (ENUM_NOT<IS_ARRAY<A>>) ;
+	using RET = DEF<A[SIZE::expr]> ;
 } ;
 
-template <class ITEM ,class SIZE = ENUM_ZERO>
-using ARR = typename ARR_HELP<ITEM ,SIZE ,ALWAYS>::RET ;
+template <class A ,class SIZE = ENUM_ZERO>
+using ARR = typename ARR_HELP<A ,SIZE ,ALWAYS>::RET ;
 
 template <class...>
 trait REFLECT_FUNCTION_HELP ;
@@ -1220,7 +1217,7 @@ template <class...>
 trait REFLECT_TEMP_HELP ;
 
 template <class A>
-trait REFLECT_TEMP_HELP<A> {
+trait REFLECT_TEMP_HELP<A ,REQUIRE<ENUM_NOT<IS_EXTEND<csc_temp_t ,A>>>> {
 	using BASE = A ;
 	using RET = ENUM_FALSE ;
 } ;
@@ -1235,7 +1232,7 @@ template <class A>
 using IS_TEMP = typename REFLECT_TEMP_HELP<REMOVE_REF<A> ,ALWAYS>::RET ;
 
 template <class A>
-using TEMP_BASE = typename REFLECT_TEMP_HELP<REMOVE_REF<A>>::BASE ;
+using TEMP_BASE = typename REFLECT_TEMP_HELP<REMOVE_REF<A> ,ALWAYS>::BASE ;
 
 template <class...>
 trait TEMP_HELP ;
