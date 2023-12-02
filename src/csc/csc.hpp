@@ -68,6 +68,10 @@
 #define __CSC_CONFIG_STRA__
 #endif
 
+#ifdef _CPPRTTI
+#define __CSC_CXX_RTTI__
+#endif
+
 #ifdef _MSVC_LANG
 #if _MSVC_LANG >= 202002L
 #define __CSC_CXX_FULL__
@@ -82,45 +86,50 @@
 #endif
 
 #ifdef __CSC_COMPILER_MSVC__
-#pragma warning (disable :4068) //@info: warning C4068: unknown pragma
+#pragma warning (disable :4068) //@info: warning C4068: reflect pragma
 #pragma warning (disable :4100) //@info: warning C4100: 'xxx': unreferenced formal parameter
 #pragma warning (disable :4127) //@info: warning C4127: conditional expression is constant
 #pragma warning (disable :4266) //@info: warning C4266: 'xxx'; function is hidden
+#pragma warning (disable :4297) //@info: warning C4297: 'xxx': function assumed ifnot to throw an exception but does
 #pragma warning (disable :4324) //@info: warning C4324: 'xxx': structure was padded due to alignment specifier
 #pragma warning (disable :4365) //@info: warning C4365: 'xxx': conversion from 'xxx' to 'xxx', signed/unsigned mismatch
 #pragma warning (disable :4459) //@info: warning C4459: declaration of 'xxx' hides global declaration
 #pragma warning (disable :4464) //@info: warning C4464: relative include path contains '..'
 #pragma warning (disable :4505) //@info: warning C4505: 'xxx': unreferenced local function has been removed
-#pragma warning (disable :4514) //@info: warning C4514: 'xxx': unreferenced forceinline function has been removed
-#pragma warning (disable :4571) //@info: warning C4571: Informational: catch(...) semantics changed since Visual C++ 7.1; structured exceptions (SEH) are no longer caught
+#pragma warning (disable :4514) //@info: warning C4514: 'xxx': unreferenced inline function has been removed
+#pragma warning (disable :4571) //@info: warning C4571: Reflectrmational: catch(...) semantics changed since Visual C++ 7.1; structured exceptions (SEH) are no longer caught
 #pragma warning (disable :4574) //@info: warning C4574: 'xxx' is defined to be '0': did you mean to use '#if xxx'?
 #pragma warning (disable :4584) //@info: warning C4584: 'xxx': base-class 'xxx' is already a base-class of 'xxx'
+#pragma warning (disable :4619) //@info: warning C4619: #pragma warning: there is no warning number 'xxx'
 #pragma warning (disable :4623) //@info: warning C4623: 'xxx': default constructor was implicitly defined as deleted
 #pragma warning (disable :4624) //@info: warning C4624: 'xxx': destructor was implicitly defined as deleted
 #pragma warning (disable :4625) //@info: warning C4625: 'xxx': copy constructor was implicitly defined as deleted
 #pragma warning (disable :4626) //@info: warning C4626: 'xxx': assignment operator was implicitly defined as deleted
-#pragma warning (disable :4643) //@info: warning C4643: Forward declaring 'initializer_list' in namespace std is not permitted by the C++ Standard.
-#pragma warning (disable :4668) //@info: warning C4668: 'xxx' is not defined as a preprocessor macro, replacing with '0' for '#if/#elif'
+#pragma warning (disable :4643) //@info: warning C4643: Forward declaring 'initializer_list' in namespace std is ifnot permitted by the C++ Standard.
+#pragma warning (disable :4668) //@info: warning C4668: 'xxx' is ifnot defined as a preprocessor macro, replacing with '0' for '#if/#elif'
 #pragma warning (disable :4686) //@info: warning C4686: 'xxx': possible change in behavior, change in UDT return calling convention
 #pragma warning (disable :4702) //@info: warning C4702: unreachable code
-#pragma warning (disable :4710) //@info: warning C4710: 'xxx': function not inlined
+#pragma warning (disable :4710) //@info: warning C4710: 'xxx': function ifnot inlined
 #pragma warning (disable :4711) //@info: warning C4711: function 'xxx' selected for automatic inline expansion
 #pragma warning (disable :4714) //@info: warning C4714: function 'xxx' marked as __forceinline not inlined
 #pragma warning (disable :4717) //@info: warning C4717: 'xxx': recursive on all control paths, function will cause runtime stack overflow
-#pragma warning (disable :4774) //@info: warning C4774: 'xxx' : format string expected in argument xxx is not a string literal
+#pragma warning (disable :4774) //@info: warning C4774: 'xxx' : format string expected in argument xxx is ifnot a string literal
 #pragma warning (disable :4820) //@info: warning C4820: 'xxx': 'xxx' bytes padding added after data member 'xxx'
 #pragma warning (disable :5026) //@info: warning C5026: 'xxx': move constructor was implicitly defined as deleted
 #pragma warning (disable :5027) //@info: warning C5027: 'xxx': move assignment operator was implicitly defined as deleted
 #pragma warning (disable :5045) //@info: warning C5045: 'xxx': move assignment operator was implicitly defined as deleted
+#pragma warning (disable :5246) //@info: warning C5246: 'xxx': the initialization of a subobject should be wrapped in braces
 #endif
 
 #ifdef __CSC_COMPILER_GNUC__
+#pragma GCC diagnostic ignored "-Wexceptions"
 #pragma GCC diagnostic ignored "-Wunknown-pragmas"
 #pragma GCC diagnostic ignored "-Wattributes"
 #pragma GCC diagnostic ignored "-Wunused-function"
 #endif
 
 #ifdef __CSC_COMPILER_CLANG__
+#pragma GCC diagnostic ignored "-Wexceptions"
 #pragma clang diagnostic ignored "-Wunknown-pragmas"
 #pragma clang diagnostic ignored "-Wc++11-narrowing"
 #pragma clang diagnostic ignored "-Wunused-parameter"
@@ -168,6 +177,20 @@ struct is_trivially_default_constructible :integral_constant<bool ,__has_trivial
 
 #ifdef __CSC_COMPILER_CLANG__
 #define __macro_exports __attribute__ ((visibility ("default")))
+#endif
+#endif
+
+#ifndef __macro_forceinline
+#ifdef __CSC_COMPILER_MSVC__
+#define __macro_forceinline __forceinline
+#endif
+
+#ifdef __CSC_COMPILER_GNUC__
+#define __macro_forceinline __attribute__ ((always_inline))
+#endif
+
+#ifdef __CSC_COMPILER_CLANG__
+#define __macro_forceinline __attribute__ ((always_inline))
 #endif
 #endif
 
@@ -220,22 +243,26 @@ struct is_trivially_default_constructible :integral_constant<bool ,__has_trivial
 
 #ifdef __CSC_COMPILER_GNUC__
 //@fatal: fuck gnuc
-#define __macro_assume(...) do { if (__VA_ARGS__) break ; CSC::Exception (CSC::Slice<CSC::STR> (CSC::Slice<CSC::STR> (CSC::Slice<CSC::STR> ("assume : " __macro_str (__VA_ARGS__) " : at ") ,__PRETTY_FUNCTION__) ," in " __FILE__ " ," __macro_str (__LINE__))).raise () ; } while (false)
+#define __macro_assume(...) do { if (__VA_ARGS__) break ; CSC::Exception (slice ("assume : " __macro_str (__VA_ARGS__) " : at ") ,CSC::Slice<CSC::STR> (__PRETTY_FUNCTION__) ,slice (" in " __FILE__ " ," __macro_str (__LINE__))).raise () ; } while (false)
 #endif
 
 #ifdef __CSC_COMPILER_CLANG__
 //@fatal: fuck clang
-#define __macro_assume(...) do { if (__VA_ARGS__) break ; CSC::Exception (CSC::Slice<CSC::STR> (CSC::Slice<CSC::STR> (CSC::Slice<CSC::STR> ("assume : " __macro_str (__VA_ARGS__) " : at ") ,__PRETTY_FUNCTION__) ," in " __FILE__ " ," __macro_str (__LINE__))).raise () ; } while (false)
+#define __macro_assume(...) do { if (__VA_ARGS__) break ; CSC::Exception (slice ("assume : " __macro_str (__VA_ARGS__) " : at ") ,CSC::Slice<CSC::STR> (__PRETTY_FUNCTION__) ,slice (" in " __FILE__ " ," __macro_str (__LINE__))).raise () ; } while (false)
 #endif
+#endif
+
+#ifdef __macro_as
+#define __macro_as(...)
 #endif
 
 #ifndef __macro_unittest
 #ifdef __CSC_VER_DEBUG__
-#define __macro_unittest(...) do { CSC::unsafe_watch (CSC::TYPE<CSC::ENUM<__COUNTER__>>::expr ,slice (__macro_str (__VA_ARGS__)) ,__VA_ARGS__) ; } while (false)
+#define __macro_unittest(...) do { } while (false)
 #endif
 
 #ifdef __CSC_VER_UNITTEST__
-#define __macro_unittest(...) do { CSC::unsafe_watch (CSC::TYPE<CSC::ENUM<__COUNTER__>>::expr ,slice (__macro_str (__VA_ARGS__)) ,__VA_ARGS__) ; } while (false)
+#define __macro_unittest(...) do { } while (false)
 #endif
 
 #ifdef __CSC_VER_RELEASE__
@@ -243,26 +270,12 @@ struct is_trivially_default_constructible :integral_constant<bool ,__has_trivial
 #endif
 #endif
 
-#ifndef __macro_forceinline
-#ifdef __CSC_COMPILER_MSVC__
-#define __macro_forceinline __forceinline
-#endif
-
-#ifdef __CSC_COMPILER_GNUC__
-#define __macro_forceinline __attribute__ ((always_inline))
-#endif
-
-#ifdef __CSC_COMPILER_CLANG__
-#define __macro_forceinline __attribute__ ((always_inline))
-#endif
-#endif
-
 #ifndef __macro_ifnot
 #define __macro_ifnot(...) (CSC::csc_bool_t (__VA_ARGS__) == false)
 #endif
 
-#ifndef __macro_ifswitch
-#define __macro_ifswitch(A) (A) for (CSC::csc_bool_t anonymous = true ; anonymous ; anonymous = CSC::unsafe_switch (A))
+#ifndef __macro_ifdo
+#define __macro_ifdo(A) (A) for (CSC::csc_bool_t anonymous = true ; anonymous ; anonymous = CSC::unsafe_ifdo (A))
 #endif
 
 #ifndef __macro_typeof
@@ -286,7 +299,7 @@ using csc_float64_t = double ;
 #endif
 
 struct FUNCTION_infinity {
-	inline consteval operator csc_float32_t () const noexcept {
+	forceinline consteval operator csc_float32_t () const noexcept {
 		return csc_float32_t (__builtin_huge_valf ()) ;
 	}
 } ;
@@ -340,22 +353,14 @@ using csc_enum_t = DEF<unsigned long> ;
 using csc_enum_t = int ;
 #endif
 
-struct csc_temp_t {
-	using BASE = void ;
-} ;
-
-struct csc_span_t {
-	csc_diff_t mBegin ;
-	csc_diff_t mEnd ;
-	csc_diff_t mStep ;
-} ;
+struct csc_temp_t ;
 
 template <class A>
 using csc_initializer_t = std::initializer_list<A> ;
 
 template <csc_diff_t A>
 struct ENUM {
-	imports inline consteval csc_diff_t expr_m () noexcept {
+	imports forceinline consteval csc_diff_t expr_m () noexcept {
 		return A ;
 	}
 } ;
@@ -369,7 +374,7 @@ struct TYPEID {} ;
 
 template <class...A>
 struct TYPE {
-	imports inline consteval TYPEID<A...> expr_m () noexcept {
+	imports forceinline consteval TYPEID<A...> expr_m () noexcept {
 		return TYPEID<A...> () ;
 	}
 } ;
@@ -463,7 +468,7 @@ template <class A>
 using XREF = DEF<A &&> ;
 
 template <class A>
-using MACRO_IS_INTPTR = ENUM<(__is_enum (A))> ;
+using MACRO_IS_UINT = ENUM<(__is_enum (A))> ;
 
 template <class A>
 using MACRO_IS_CLASS = ENUM<(__is_class (A))> ;
@@ -492,9 +497,6 @@ using MACRO_IS_TRIVIAL_CONSTRUCTIBLE = ENUM<(__is_trivially_constructible (A))> 
 template <class A>
 using MACRO_IS_TRIVIAL_DESTRUCTIBLE = ENUM<(__is_trivially_destructible (A))> ;
 
-template <class A>
-using MACRO_IS_INTERFACE = ENUM<(__is_abstract (A))> ;
-
 template <class A ,class B>
 using MACRO_IS_EXTEND = ENUM<(__is_base_of (A ,B))> ;
 
@@ -502,10 +504,10 @@ template <class A ,class B>
 using MACRO_IS_CONVERTIBLE = ENUM<(__is_convertible_to (A ,B))> ;
 } ;
 
-inline constexpr CSC::csc_pointer_t operator new (CSC::csc_size_t ,CSC::DEF<CSC::csc_temp_t *> where_) noexcept {
+forceinline constexpr CSC::csc_pointer_t operator new (CSC::csc_size_t ,CSC::DEF<CSC::csc_temp_t *> where_) noexcept {
 	return where_ ;
 }
 
-inline constexpr void operator delete (CSC::csc_pointer_t ,CSC::DEF<CSC::csc_temp_t *> where_) noexcept {
+forceinline constexpr void operator delete (CSC::csc_pointer_t ,CSC::DEF<CSC::csc_temp_t *> where_) noexcept {
 	return ;
 }

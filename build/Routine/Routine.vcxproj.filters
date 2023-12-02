@@ -25,13 +25,16 @@
     <ClInclude Include="..\..\src\csc\csc_type.hpp">
       <Filter>csc</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\csc\csc_geometry.hpp">
-      <Filter>csc</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\csc\csc_image.hpp">
       <Filter>csc</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\csc\csc_array.hpp">
+      <Filter>csc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\csc\csc_matrix.hpp">
+      <Filter>csc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\csc\csc_math.hpp">
       <Filter>csc</Filter>
     </ClInclude>
   </ItemGroup>
@@ -44,5 +47,25 @@
     <None Include="..\..\src\csc\cpp.hint">
       <Filter>csc</Filter>
     </None>
+    <None Include="..\..\src\csc\csc_core.inl">
+      <Filter>csc</Filter>
+    </None>
+    <None Include="..\..\src\csc\csc_basic.inl">
+      <Filter>csc</Filter>
+    </None>
+    <None Include="..\..\src\csc\csc_matrix.inl">
+      <Filter>csc</Filter>
+    </None>
+    <None Include="..\..\src\csc\csc_math.inl">
+      <Filter>csc</Filter>
+    </None>
+    <None Include="..\..\src\csc\csc_array.inl">
+      <Filter>csc</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Natvis Include="..\..\src\csc\cpp.natvis">
+      <Filter>csc</Filter>
+    </Natvis>
   </ItemGroup>
 </Project>
