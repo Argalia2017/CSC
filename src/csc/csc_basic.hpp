@@ -9,93 +9,154 @@
 #include "csc_core.hpp"
 
 namespace CSC {
-template <class...>
-trait BUFFER_HELP ;
+class BoxBufferLayout {} ;
 
-template <class A ,class SIZE>
-trait BUFFER_HELP<A ,SIZE ,ALWAYS> {
-	class Buffer ;
+struct BoxBufferHolder implement Interface {
+	imports VFat<BoxBufferHolder> create (VREF<BoxBufferLayout> that) ;
+	imports CFat<BoxBufferHolder> create (CREF<BoxBufferLayout> that) ;
 
-	struct NODE {
-		ARR<A ,SIZE> mValue ;
-	} ;
-
-	class Buffer {
-	protected:
-		Box<NODE> mBuffer ;
-
-	public:
-		implicit Buffer () = default ;
-
-		implicit Buffer (CREF<ARR<A ,SIZE>> that) {
-			mBuffer = Box<NODE>::make (unsafe_cast[TYPE<NODE>::expr] (that)) ;
-		}
-
-		explicit Buffer (CREF<LENGTH> size_) {
-			assert (size_ >= 0) ;
-			assert (size_ <= size ()) ;
-			mBuffer = Box<NODE>::make () ;
-		}
-
-		LENGTH size () const {
-			if (mBuffer == NULL)
-				return 0 ;
-			return SIZE::expr ;
-		}
-
-		VREF<ARR<A>> self_m () leftvalue {
-			if (mBuffer == NULL)
-				return unsafe_array (unsafe_cast[TYPE<NODE>::expr] (unsafe_pointer (ZERO))) ;
-			return unsafe_array (mBuffer->mValue[0]) ;
-		}
-
-		inline implicit operator VREF<ARR<A>> () leftvalue {
-			return self ;
-		}
-
-		CREF<ARR<A>> self_m () const leftvalue {
-			if (mBuffer == NULL)
-				return unsafe_array (unsafe_cast[TYPE<NODE>::expr] (unsafe_pointer (ZERO))) ;
-			return unsafe_array (mBuffer->mValue[0]) ;
-		}
-
-		inline implicit operator CREF<ARR<A>> () const leftvalue {
-			return self ;
-		}
-
-		inline BOOL operator== (CREF<Buffer>) = delete ;
-
-		inline BOOL operator!= (CREF<Buffer>) = delete ;
-
-		VREF<A> at (CREF<INDEX> index) leftvalue {
-			assert (operator_between (index ,0 ,size ())) ;
-			return mBuffer->mValue[index] ;
-		}
-
-		inline VREF<A> operator[] (CREF<INDEX> index) leftvalue {
-			return at (index) ;
-		}
-
-		CREF<A> at (CREF<INDEX> index) const leftvalue {
-			assert (operator_between (index ,0 ,size ())) ;
-			return mBuffer->mValue[index] ;
-		}
-
-		inline CREF<A> operator[] (CREF<INDEX> index) const leftvalue {
-			return at (index) ;
-		}
-
-		void resize (CREF<LENGTH> size_) {
-			if (size_ == size ())
-				return ;
-			assume (FALSE) ;
-		}
-	} ;
+	virtual void initialize (CREF<Pointer> that) = 0 ;
+	virtual void initialize (CREF<LENGTH> size_) = 0 ;
+	virtual LENGTH size () const = 0 ;
+	virtual VREF<Pointer> self_m () leftvalue = 0 ;
+	virtual CREF<Pointer> self_m () const leftvalue = 0 ;
+	virtual VREF<Pointer> at (CREF<INDEX> index) leftvalue = 0 ;
+	virtual CREF<Pointer> at (CREF<INDEX> index) const leftvalue = 0 ;
+	virtual void resize () = 0 ;
 } ;
 
-template <class A ,class SIZE>
-using Buffer = typename BUFFER_HELP<A ,SIZE ,ALWAYS>::Buffer ;
+template <class A ,class B>
+class BoxBuffer implement BoxBufferLayout {
+protected:
+	ARR<A ,B> mBuffer ;
 
-template <class A ,class SIZE ,class = REQUIRE<ENUM_COMPR_GTEQ<SIZE ,ENUM_ZERO>>>
-using BoxBuffer = typename BUFFER_HELP<A ,SIZE ,ALWAYS>::Buffer ;
+public:
+	implicit BoxBuffer () = default ;
+
+	implicit BoxBuffer (CREF<ARR<A ,B>> that) {
+		BoxBufferHolder::create (thiz)->initialize (Pointer::from (that)) ;
+	}
+
+	explicit BoxBuffer (CREF<LENGTH> size_) {
+		BoxBufferHolder::create (thiz)->initialize (size_) ;
+	}
+
+	LENGTH size () const {
+		return BoxBufferHolder::create (thiz)->size () ;
+	}
+
+	VREF<ARR<A>> self_m () leftvalue {
+		return BoxBufferHolder::create (thiz)->self_m () ;
+	}
+
+	inline implicit operator VREF<ARR<A>> () leftvalue {
+		return self ;
+	}
+
+	CREF<ARR<A>> self_m () const leftvalue {
+		return BoxBufferHolder::create (thiz)->self_m () ;
+	}
+
+	inline implicit operator CREF<ARR<A>> () const leftvalue {
+		return self ;
+	}
+
+	inline BOOL operator== (CREF<BoxBuffer>) = delete ;
+
+	inline BOOL operator!= (CREF<BoxBuffer>) = delete ;
+
+	VREF<A> at (CREF<INDEX> index) leftvalue {
+		return BoxBufferHolder::create (thiz)->at (index) ;
+	}
+
+	inline VREF<A> operator[] (CREF<INDEX> index) leftvalue {
+		return at (index) ;
+	}
+
+	CREF<A> at (CREF<INDEX> index) const leftvalue {
+		return BoxBufferHolder::create (thiz)->at (index) ;
+	}
+
+	inline CREF<A> operator[] (CREF<INDEX> index) const leftvalue {
+		return at (index) ;
+	}
+
+	void resize (CREF<LENGTH> size_) {
+		return Holder::create (thiz)->resize (size_) ;
+	}
+} ;
+
+class RefBufferLayout {
+public:
+	RefLayout mBuffer ;
+	LENGTH mSize ;
+	LENGTH mAlign ;
+} ;
+
+struct RefBufferHolder implement Interface {
+	imports VFat<RefBufferHolder> create (VREF<RefBufferLayout> that) ;
+	imports CFat<RefBufferHolder> create (CREF<RefBufferLayout> that) ;
+
+	virtual void initialize (CREF<LENGTH> size_) = 0 ;
+	virtual LENGTH size () const = 0 ;
+	virtual VREF<Pointer> self_m () leftvalue = 0 ;
+	virtual CREF<Pointer> self_m () const leftvalue = 0 ;
+	virtual VREF<Pointer> at (CREF<INDEX> index) leftvalue = 0 ;
+	virtual CREF<Pointer> at (CREF<INDEX> index) const leftvalue = 0 ;
+	virtual void resize () = 0 ;
+} ;
+
+template <class A>
+class RefBuffer implement RefBufferLayout {
+public:
+	implicit RefBuffer () = default ;
+
+	explicit RefBuffer (CREF<LENGTH> size_) {
+		RefBufferHolder::create (thiz)->initialize (size_) ;
+	}
+
+	LENGTH size () const {
+		return RefBufferHolder::create (thiz)->size () ;
+	}
+
+	VREF<ARR<A>> self_m () leftvalue {
+		return RefBufferHolder::create (thiz)->self_m () ;
+	}
+
+	inline implicit operator VREF<ARR<A>> () leftvalue {
+		return self ;
+	}
+
+	CREF<ARR<A>> self_m () const leftvalue {
+		return RefBufferHolder::create (thiz)->self_m () ;
+	}
+
+	inline implicit operator CREF<ARR<A>> () const leftvalue {
+		return self ;
+	}
+
+	inline BOOL operator== (CREF<RefBuffer>) = delete ;
+
+	inline BOOL operator!= (CREF<RefBuffer>) = delete ;
+
+	VREF<A> at (CREF<INDEX> index) leftvalue {
+		return RefBufferHolder::create (thiz)->at (index) ;
+	}
+
+	inline VREF<A> operator[] (CREF<INDEX> index) leftvalue {
+		return at (index) ;
+	}
+
+	CREF<A> at (CREF<INDEX> index) const leftvalue {
+		return RefBufferHolder::create (thiz)->at (index) ;
+	}
+
+	inline CREF<A> operator[] (CREF<INDEX> index) const leftvalue {
+		return at (index) ;
+	}
+
+	void resize (CREF<LENGTH> size_) {
+		return RefBufferHolder::create (thiz)->resize (size_) ;
+	}
+} ;
 } ;

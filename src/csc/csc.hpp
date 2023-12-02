@@ -231,11 +231,11 @@ struct is_trivially_default_constructible :integral_constant<bool ,__has_trivial
 
 #ifndef __macro_unittest
 #ifdef __CSC_VER_DEBUG__
-#define __macro_unittest(...) do { CSC::unsafe_watch (CSC::TYPE<CSC::ENUM<__COUNTER__>>::expr ,slice (__macro_str (__VA_ARGS__)) ,__VA_ARGS__) ; } while (false)
+#define __macro_unittest(...) do { } while (false)
 #endif
 
 #ifdef __CSC_VER_UNITTEST__
-#define __macro_unittest(...) do { CSC::unsafe_watch (CSC::TYPE<CSC::ENUM<__COUNTER__>>::expr ,slice (__macro_str (__VA_ARGS__)) ,__VA_ARGS__) ; } while (false)
+#define __macro_unittest(...) do { } while (false)
 #endif
 
 #ifdef __CSC_VER_RELEASE__
@@ -342,12 +342,6 @@ using csc_enum_t = int ;
 
 struct csc_temp_t {
 	using BASE = void ;
-} ;
-
-struct csc_span_t {
-	csc_diff_t mBegin ;
-	csc_diff_t mEnd ;
-	csc_diff_t mStep ;
 } ;
 
 template <class A>

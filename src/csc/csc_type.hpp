@@ -64,7 +64,7 @@ static constexpr auto FLT64_INF = FLT64 (infinity) ;
 enum class BYTE :csc_uint8_t ;
 enum class WORD :csc_uint16_t ;
 enum class CHAR :csc_uint32_t ;
-enum class DATA :csc_uint64_t ;
+enum class QUAD :csc_uint64_t ;
 
 inline constexpr BYTE operator| (CREF<BYTE> obj1 ,CREF<BYTE> obj2) noexcept {
 	return BYTE (csc_uint8_t (obj1) | csc_uint8_t (obj2)) ;
@@ -166,36 +166,36 @@ inline constexpr CHAR operator>> (CREF<CHAR> obj1 ,CREF<LENGTH> obj2) noexcept {
 	return CHAR (csc_uint32_t (obj1) >> obj2) ;
 }
 
-inline constexpr DATA operator| (CREF<DATA> obj1 ,CREF<DATA> obj2) noexcept {
-	return DATA (csc_uint64_t (obj1) | csc_uint64_t (obj2)) ;
+inline constexpr QUAD operator| (CREF<QUAD> obj1 ,CREF<QUAD> obj2) noexcept {
+	return QUAD (csc_uint64_t (obj1) | csc_uint64_t (obj2)) ;
 }
 
-inline void operator|= (VREF<DATA> obj1 ,CREF<DATA> obj2) noexcept {
+inline void operator|= (VREF<QUAD> obj1 ,CREF<QUAD> obj2) noexcept {
 	obj1 = obj1 | obj2 ;
 }
 
-inline constexpr DATA operator& (CREF<DATA> obj1 ,CREF<DATA> obj2) noexcept {
-	return DATA (csc_uint64_t (obj1) & csc_uint64_t (obj2)) ;
+inline constexpr QUAD operator& (CREF<QUAD> obj1 ,CREF<QUAD> obj2) noexcept {
+	return QUAD (csc_uint64_t (obj1) & csc_uint64_t (obj2)) ;
 }
 
-inline void operator&= (VREF<DATA> obj1 ,CREF<DATA> obj2) noexcept {
+inline void operator&= (VREF<QUAD> obj1 ,CREF<QUAD> obj2) noexcept {
 	obj1 = obj1 & obj2 ;
 }
 
-inline constexpr DATA operator^ (CREF<DATA> obj1 ,CREF<DATA> obj2) noexcept {
-	return DATA (csc_uint64_t (obj1) ^ csc_uint64_t (obj2)) ;
+inline constexpr QUAD operator^ (CREF<QUAD> obj1 ,CREF<QUAD> obj2) noexcept {
+	return QUAD (csc_uint64_t (obj1) ^ csc_uint64_t (obj2)) ;
 }
 
-inline constexpr DATA operator~ (CREF<DATA> obj1) noexcept {
-	return DATA (~csc_uint64_t (obj1)) ;
+inline constexpr QUAD operator~ (CREF<QUAD> obj1) noexcept {
+	return QUAD (~csc_uint64_t (obj1)) ;
 }
 
-inline constexpr DATA operator<< (CREF<DATA> obj1 ,CREF<LENGTH> obj2) noexcept {
-	return DATA (csc_uint64_t (obj1) << obj2) ;
+inline constexpr QUAD operator<< (CREF<QUAD> obj1 ,CREF<LENGTH> obj2) noexcept {
+	return QUAD (csc_uint64_t (obj1) << obj2) ;
 }
 
-inline constexpr DATA operator>> (CREF<DATA> obj1 ,CREF<LENGTH> obj2) noexcept {
-	return DATA (csc_uint64_t (obj1) >> obj2) ;
+inline constexpr QUAD operator>> (CREF<QUAD> obj1 ,CREF<LENGTH> obj2) noexcept {
+	return QUAD (csc_uint64_t (obj1) >> obj2) ;
 }
 
 using STRA = csc_char_t ;
@@ -733,7 +733,7 @@ trait IS_BYTE_HELP<A ,ALWAYS> {
 	using R1X = IS_SAME<A ,BYTE> ;
 	using R2X = IS_SAME<A ,WORD> ;
 	using R3X = IS_SAME<A ,CHAR> ;
-	using R4X = IS_SAME<A ,DATA> ;
+	using R4X = IS_SAME<A ,QUAD> ;
 
 	using RET = ENUM_ANY<R1X ,R2X ,R3X ,R4X> ;
 } ;
@@ -1141,8 +1141,8 @@ trait BYTE_BASE_HELP<SIZE ,ALIGN ,REQUIRE<ENUM_ALL<ENUM_EQUAL<SIZE ,SIZE_OF<CHAR
 } ;
 
 template <class SIZE ,class ALIGN>
-trait BYTE_BASE_HELP<SIZE ,ALIGN ,REQUIRE<ENUM_ALL<ENUM_EQUAL<SIZE ,SIZE_OF<DATA>> ,ENUM_EQUAL<ALIGN ,ALIGN_OF<DATA>>>>> {
-	using RET = DATA ;
+trait BYTE_BASE_HELP<SIZE ,ALIGN ,REQUIRE<ENUM_ALL<ENUM_EQUAL<SIZE ,SIZE_OF<QUAD>> ,ENUM_EQUAL<ALIGN ,ALIGN_OF<QUAD>>>>> {
+	using RET = QUAD ;
 } ;
 
 template <class A>
@@ -1203,8 +1203,8 @@ trait STORAGE_HELP<SIZE ,ALIGN ,REQUIRE<ENUM_EQUAL<ALIGN ,ALIGN_OF<CHAR>>>> {
 } ;
 
 template <class SIZE ,class ALIGN>
-trait STORAGE_HELP<SIZE ,ALIGN ,REQUIRE<ENUM_EQUAL<ALIGN ,ALIGN_OF<DATA>>>> {
-	using R1X = DATA ;
+trait STORAGE_HELP<SIZE ,ALIGN ,REQUIRE<ENUM_EQUAL<ALIGN ,ALIGN_OF<QUAD>>>> {
+	using R1X = QUAD ;
 	using R2X = ENUM_DIV<ENUM_ALIGN<SIZE ,ALIGN> ,ALIGN> ;
 	require (ENUM_GT_ZERO<R2X>) ;
 	using RET = ARR<R1X ,R2X> ;

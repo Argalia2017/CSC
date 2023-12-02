@@ -10,9 +10,6 @@
 #define self self_m ()
 #define fake fake_m ()
 #define expr expr_m ()
-#define m1st m1st_m ()
-#define m2nd m2nd_m ()
-#define m3rd m3rd_m ()
 #define trait struct
 #define implement :public
 #define require __macro_requires

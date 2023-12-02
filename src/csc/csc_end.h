@@ -8,9 +8,6 @@
 #undef self
 #undef fake
 #undef expr
-#undef m1st
-#undef m2nd
-#undef m3rd
 #undef trait
 #undef implement
 #undef require

@@ -12,513 +12,314 @@
 #include "csc_image.hpp"
 
 namespace CSC {
-template <class...>
-trait VECTOR_HELP ;
+struct POINT2F {} ;
 
-template <class...>
-trait MATRIX_HELP ;
+struct POINT3F {} ;
 
-template <class...>
-trait VECTOR_HELP ;
+struct BBOX {} ;
 
-template <class A>
-trait VECTOR_HELP<A ,ALWAYS> {
-	class Vector ;
-	using Matrix = typename MATRIX_HELP<A ,ALWAYS>::Matrix ;
+class VectorLayout {} ;
 
-	struct Holder implement Interface {
-		imports VFat<Holder> linkage () ;
-		imports VFat<Holder> linkage (VREF<Vector> that) ;
-		imports CFat<Holder> linkage (CREF<Vector> that) ;
+class MatrixLayout {} ;
 
-		virtual void initialize (CREF<A> x ,CREF<A> y ,CREF<A> z ,CREF<A> w) = 0 ;
-		virtual void initialize (CREF<PIXEL> xy) = 0 ;
-		virtual void initialize (CREF<ARRAY2<FLT32>> xy) = 0 ;
-		virtual void initialize (CREF<ARRAY3<FLT32>> xyz) = 0 ;
-		virtual RFat<Vector> zero () const = 0 ;
-		virtual RFat<Vector> axis_x () const = 0 ;
-		virtual RFat<Vector> axis_y () const = 0 ;
-		virtual RFat<Vector> axis_z () const = 0 ;
-		virtual RFat<Vector> axis_w () const = 0 ;
-		virtual ARRAY2<FLT32> xy () const = 0 ;
-		virtual ARRAY3<FLT32> xyz () const = 0 ;
-		virtual void add_with (CREF<Vector> that) = 0 ;
-		virtual RFat<Vector> sub (CREF<Vector> that) const = 0 ;
-		virtual void sub_with (CREF<Vector> that) = 0 ;
-		virtual RFat<Vector> mul (CREF<A> scale) const = 0 ;
-		virtual void mul_with (CREF<A> scale) = 0 ;
-		virtual A dot (CREF<Vector> that) const = 0 ;
-		virtual RFat<Vector> mul (CREF<Matrix> that) const = 0 ;
-		virtual RFat<Vector> cross (CREF<Vector> that) const = 0 ;
-		virtual void cross_with (CREF<Vector> that) = 0 ;
-		virtual RFat<Vector> minus () const = 0 ;
-		virtual A magnitude () const = 0 ;
-		virtual RFat<Vector> normalize () const = 0 ;
-		virtual RFat<Vector> projection () const = 0 ;
-		virtual RFat<Vector> homogenize () const = 0 ;
-	} ;
+class QuaternionLayout {} ;
 
-	class Vector {
-	protected:
-		BoxBuffer<A ,RANK4> mVector ;
+struct VectorHolder implement Interface {
+	imports VFat<VectorHolder> create () ;
+	imports VFat<VectorHolder> create (VREF<VectorLayout> that) ;
+	imports CFat<VectorHolder> create (CREF<VectorLayout> that) ;
 
-	public:
-		implicit Vector () = default ;
-
-		explicit Vector (CREF<A> x ,CREF<A> y ,CREF<A> z ,CREF<A> w) {
-			Holder::linkage (thiz)->initialize (x ,y ,z ,w) ;
-		}
-
-		explicit Vector (CREF<ARRAY2<FLT32>> xy) {
-			Holder::linkage (thiz)->initialize (xy) ;
-		}
-
-		explicit Vector (CREF<ARRAY3<FLT32>> xyz) {
-			Holder::linkage (thiz)->initialize (xyz) ;
-		}
-
-		imports CREF<Vector> zero () {
-			return Holder::linkage ()->zero () ;
-		}
-
-		imports CREF<Vector> axis_x () {
-			return Holder::linkage ()->axis_x () ;
-		}
-
-		imports CREF<Vector> axis_y () {
-			return Holder::linkage ()->axis_y () ;
-		}
-
-		imports CREF<Vector> axis_z () {
-			return Holder::linkage ()->axis_z () ;
-		}
-
-		imports CREF<Vector> axis_w () {
-			return Holder::linkage ()->axis_w () ;
-		}
-
-		ARRAY2<FLT32> xy () const {
-			return Holder::linkage (thiz)->xy () ;
-		}
-
-		ARRAY3<FLT32> xyz () const {
-			return Holder::linkage (thiz)->xyz () ;
-		}
-
-		inline VREF<A> at (CREF<INDEX> y) leftvalue {
-			assert (operator_between (y ,0 ,4)) ;
-			return mVector[y] ;
-		}
-
-		inline VREF<A> operator[] (CREF<INDEX> y) leftvalue {
-			return at (y) ;
-		}
-
-		inline CREF<A> at (CREF<INDEX> y) const leftvalue {
-			assert (operator_between (y ,0 ,4)) ;
-			return mVector[y] ;
-		}
-
-		inline CREF<A> operator[] (CREF<INDEX> y) const leftvalue {
-			return at (y) ;
-		}
-
-		BOOL equal (CREF<Vector> that) const {
-			return operator_equal (mVector ,that.mVector) ;
-		}
-
-		inline BOOL operator== (CREF<Vector> that) const {
-			return equal (that) ;
-		}
-
-		inline BOOL operator!= (CREF<Vector> that) const {
-			return ifnot (equal (that)) ;
-		}
-
-		FLAG compr (CREF<Vector> that) const {
-			return operator_compr (mVector ,that.mVector) ;
-		}
-
-		inline BOOL operator< (CREF<Vector> that) const {
-			return compr (that) < ZERO ;
-		}
-
-		inline BOOL operator<= (CREF<Vector> that) const {
-			return compr (that) <= ZERO ;
-		}
-
-		inline BOOL operator> (CREF<Vector> that) const {
-			return compr (that) > ZERO ;
-		}
-
-		inline BOOL operator>= (CREF<Vector> that) const {
-			return compr (that) >= ZERO ;
-		}
-
-		template <class ARG1>
-		FLAG hash (CREF<ARG1> visitor) const {
-			return visitor (mVector) ;
-		}
-
-		Vector add (CREF<Vector> that) const {
-			return Holder::linkage (thiz)->add (that) ;
-		}
-
-		inline Vector operator+ (CREF<Vector> that) const {
-			return add (that) ;
-		}
-
-		void add_with (CREF<Vector> that) {
-			return Holder::linkage (thiz)->add_with (that) ;
-		}
-
-		inline void operator+= (CREF<Vector> that) {
-			add_with (that) ;
-		}
-
-		Vector sub (CREF<Vector> that) const {
-			return Holder::linkage (thiz)->sub (that) ;
-		}
-
-		inline Vector operator- (CREF<Vector> that) const {
-			return sub (that) ;
-		}
-
-		void sub_with (CREF<Vector> that) {
-			return Holder::linkage (thiz)->sub_with (that) ;
-		}
-
-		inline void operator-= (CREF<Vector> that) {
-			sub_with (that) ;
-		}
-
-		Vector mul (CREF<A> scale) const {
-			return Holder::linkage (thiz)->mul (scale) ;
-		}
-
-		inline Vector operator* (CREF<A> scale) const {
-			return mul (scale) ;
-		}
-
-		inline friend Vector operator* (CREF<A> scale ,CREF<Vector> that) {
-			return that.mul (scale) ;
-		}
-
-		void mul_with (CREF<A> scale) {
-			return Holder::linkage (thiz)->mul_with (scale) ;
-		}
-
-		inline void operator*= (CREF<A> scale) {
-			mul_with (scale) ;
-		}
-
-		A dot (CREF<Vector> that) const {
-			return Holder::linkage (thiz)->dot (that) ;
-		}
-
-		inline A operator* (CREF<Vector> that) const {
-			return dot (that) ;
-		}
-
-		Vector mul (CREF<Matrix> that) const {
-			return Holder::linkage (thiz)->mul (that) ;
-		}
-
-		inline Vector operator* (CREF<Matrix> that) const {
-			return mul (that) ;
-		}
-
-		Vector cross (CREF<Vector> that) const {
-			return Holder::linkage (thiz)->cross (that) ;
-		}
-
-		inline Vector operator^ (CREF<Vector> that) const {
-			return cross (that) ;
-		}
-
-		inline void operator^= (CREF<Vector> that) {
-			return Holder::linkage (thiz)->cross_with (that) ;
-		}
-
-		inline Vector operator+ () const {
-			return thiz ;
-		}
-
-		Vector minus () const {
-			return Holder::linkage (thiz)->minus () ;
-		}
-
-		inline Vector operator- () const {
-			return minus () ;
-		}
-
-		A magnitude () const {
-			return Holder::linkage (thiz)->magnitude () ;
-		}
-
-		Vector normalize () const {
-			return Holder::linkage (thiz)->normalize () ;
-		}
-
-		Vector projection () const {
-			return Holder::linkage (thiz)->projection () ;
-		}
-
-		Vector homogenize () const {
-			return Holder::linkage (thiz)->homogenize () ;
-		}
-	} ;
+	virtual void initialize (CREF<Pointer> x ,CREF<Pointer> y ,CREF<Pointer> z ,CREF<Pointer> w) = 0 ;
+	virtual void initialize (CREF<PIXEL> xy) = 0 ;
+	virtual void initialize (CREF<POINT2F> xy) = 0 ;
+	virtual void initialize (CREF<POINT3F> xyz) = 0 ;
+	virtual CREF<VectorLayout> zero () const = 0 ;
+	virtual CREF<VectorLayout> axis_x () const = 0 ;
+	virtual CREF<VectorLayout> axis_y () const = 0 ;
+	virtual CREF<VectorLayout> axis_z () const = 0 ;
+	virtual CREF<VectorLayout> axis_w () const = 0 ;
+	virtual POINT2F xy () const = 0 ;
+	virtual POINT3F xyz () const = 0 ;
+	virtual VREF<Pointer> at (CREF<INDEX> y) leftvalue = 0 ;
+	virtual CREF<Pointer> at (CREF<INDEX> y) const leftvalue = 0 ;
+	virtual BOOL equal (CREF<VectorLayout> that) const = 0 ;
+	virtual FLAG compr (CREF<VectorLayout> that) const = 0 ;
+	virtual FLAG visit (CREF<Visitor> visitor) const = 0 ;
+	virtual void add_with (CREF<VectorLayout> that) = 0 ;
+	virtual VectorLayout sub (CREF<VectorLayout> that) const = 0 ;
+	virtual void sub_with (CREF<VectorLayout> that) = 0 ;
+	virtual VectorLayout mul (CREF<Pointer> scale) const = 0 ;
+	virtual void mul_with (CREF<Pointer> scale) = 0 ;
+	virtual RREF<Pointer> dot (CREF<VectorLayout> that) const = 0 ;
+	virtual VectorLayout mul (CREF<MatrixLayout> that) const = 0 ;
+	virtual VectorLayout cross (CREF<VectorLayout> that) const = 0 ;
+	virtual void cross_with (CREF<VectorLayout> that) = 0 ;
+	virtual VectorLayout minus () const = 0 ;
+	virtual RREF<Pointer> magnitude () const = 0 ;
+	virtual VectorLayout normalize () const = 0 ;
+	virtual VectorLayout projection () const = 0 ;
+	virtual VectorLayout homogenize () const = 0 ;
 } ;
 
-template <class...>
-trait MATRIX_HELP ;
+template <class>
+class Matrix ;
 
 template <class A>
-trait MATRIX_HELP<A ,ALWAYS> {
-	using Vector = typename VECTOR_HELP<A ,ALWAYS>::Vector ;
-	class Matrix ;
+class Vector implement VectorLayout {
+private:
+	using Matrix = CSC::Matrix<A> ;
 
-	struct DECOMPOSE ;
-	struct SINGULAR ;
+public:
+	implicit Vector () = default ;
 
-	struct Holder implement Interface {
-		imports VFat<Holder> linkage () ;
-		imports VFat<Holder> linkage (VREF<Matrix> that) ;
-		imports CFat<Holder> linkage (CREF<Matrix> that) ;
+	implicit Vector (RREF<VectorLayout> that) :Vector (keep[TYPE<RREF<Vector>>::expr] (that)) {}
 
-		virtual void initialize (CREF<Vector> x ,CREF<Vector> y ,CREF<Vector> z ,CREF<Vector> w) = 0 ;
-		virtual RFat<Matrix> add (CREF<Matrix> that) const = 0 ;
-		virtual void add_with (CREF<Matrix> that) = 0 ;
-		virtual RFat<Matrix> sub (CREF<Matrix> that) const = 0 ;
-		virtual void sub_with (CREF<Matrix> that) = 0 ;
-		virtual RFat<Matrix> mul (CREF<A> scale) const = 0 ;
-		virtual void mul_with (CREF<A> scale) = 0 ;
-		virtual RFat<Matrix> mul (CREF<Matrix> that) const = 0 ;
-		virtual RFat<Matrix> minus () const = 0 ;
-		virtual RFat<Matrix> transpose () const = 0 ;
-		virtual RFat<Matrix> triangular () const = 0 ;
-		virtual A determinant () const = 0 ;
-		virtual RFat<Matrix> inverse () const = 0 ;
-		virtual A trace () const = 0 ;
-		virtual RFat<DECOMPOSE> decompose () const = 0 ;
-		virtual RFat<SINGULAR> singular () const = 0 ;
-		virtual RFat<Matrix> pseudo_inverse () const = 0 ;
+	explicit Vector (CREF<A> x ,CREF<A> y ,CREF<A> z ,CREF<A> w) {
+		VectorHolder::create (thiz)->initialize (Pointer::from (x) ,Pointer::from (y) ,Pointer::from (z) ,Pointer::from (w)) ;
+	}
 
-		virtual void DiagMatrix_initialize (CREF<A> x ,CREF<A> y ,CREF<A> z ,CREF<A> w) = 0 ;
-		virtual void ShearMatrix_initialize (CREF<Vector> x ,CREF<Vector> y ,CREF<Vector> z) = 0 ;
-		virtual void RotationMatrix_initialize (CREF<Vector> normal ,CREF<A> angle) = 0 ;
-		virtual void TranslationMatrix_initialize (CREF<Vector> xyz) = 0 ;
-		virtual void TranslationMatrix_initialize (CREF<A> x ,CREF<A> y ,CREF<A> z) = 0 ;
-		virtual void PerspectiveMatrix_initialize (CREF<A> fx ,CREF<A> fy ,CREF<A> wx ,CREF<A> wy) = 0 ;
-		virtual void ProjectionMatrix_initialize (CREF<Vector> normal ,CREF<A> center ,CREF<Vector> light) = 0 ;
-		virtual void ViewMatrix_initialize (CREF<Vector> vx ,CREF<Vector> vy) = 0 ;
-		virtual void ViewMatrix_initialize (CREF<Vector> vx ,CREF<Vector> vy ,CREF<FLAG> flag) = 0 ;
-	} ;
+	explicit Vector (CREF<POINT2F> xy) {
+		VectorHolder::create (thiz)->initialize (xy) ;
+	}
 
-	class Matrix {
-	protected:
-		BoxBuffer<A ,ENUM<16>> mMatrix ;
+	explicit Vector (CREF<POINT3F> xyz) {
+		VectorHolder::create (thiz)->initialize (xyz) ;
+	}
 
-	public:
-		implicit Matrix () = default ;
+	imports CREF<Vector> zero () {
+		return VectorHolder::create ()->zero () ;
+	}
 
-		explicit Matrix (CREF<Vector> x ,CREF<Vector> y ,CREF<Vector> z ,CREF<Vector> w) {
-			Holder::linkage (thiz)->initialize (x ,y ,z ,w) ;
-		}
+	imports CREF<Vector> axis_x () {
+		return VectorHolder::create ()->axis_x () ;
+	}
 
-		imports CREF<Matrix> zero () {
-			return Holder::linkage ()->zero () ;
-		}
+	imports CREF<Vector> axis_y () {
+		return VectorHolder::create ()->axis_y () ;
+	}
 
-		imports CREF<Matrix> identity () {
-			return Holder::linkage ()->identity () ;
-		}
+	imports CREF<Vector> axis_z () {
+		return VectorHolder::create ()->axis_z () ;
+	}
 
-		VREF<A> at (CREF<PIXEL> xy) leftvalue {
-			return at (xy.x ,xy.y) ;
-		}
+	imports CREF<Vector> axis_w () {
+		return VectorHolder::create ()->axis_w () ;
+	}
 
-		inline VREF<A> operator[] (CREF<PIXEL> xy) leftvalue {
-			return at (xy) ;
-		}
+	POINT2F xy () const {
+		return VectorHolder::create (thiz)->xy () ;
+	}
 
-		VREF<A> at (CREF<INDEX> x ,CREF<INDEX> y) leftvalue {
-			assert (operator_between (x ,0 ,4)) ;
-			assert (operator_between (y ,0 ,4)) ;
-			return mMatrix[y * 4 + x] ;
-		}
+	POINT3F xyz () const {
+		return VectorHolder::create (thiz)->xyz () ;
+	}
 
-		inline RowProxy<VRef<Matrix>> operator[] (CREF<INDEX> y) leftvalue {
-			return RowProxy<VRef<Matrix>> (VRef<Matrix>::reference (thiz) ,y) ;
-		}
+	inline VREF<A> at (CREF<INDEX> y) leftvalue {
+		return VectorHolder::create (thiz)->at (y) ;
+	}
 
-		CREF<A> at (CREF<PIXEL> xy) const leftvalue {
-			return at (xy.x ,xy.y) ;
-		}
+	inline VREF<A> operator[] (CREF<INDEX> y) leftvalue {
+		return at (y) ;
+	}
 
-		inline CREF<A> operator[] (CREF<PIXEL> xy) const leftvalue {
-			return at (xy) ;
-		}
+	inline CREF<A> at (CREF<INDEX> y) const leftvalue {
+		return VectorHolder::create (thiz)->at (y) ;
+	}
 
-		CREF<A> at (CREF<INDEX> x ,CREF<INDEX> y) const leftvalue {
-			assert (operator_between (x ,0 ,4)) ;
-			assert (operator_between (y ,0 ,4)) ;
-			return mMatrix[y * 4 + x] ;
-		}
+	inline CREF<A> operator[] (CREF<INDEX> y) const leftvalue {
+		return at (y) ;
+	}
 
-		inline RowProxy<CRef<Matrix>> operator[] (CREF<INDEX> y) const leftvalue {
-			return RowProxy<CRef<Matrix>> (CRef<Matrix>::reference (thiz) ,y) ;
-		}
+	BOOL equal (CREF<Vector> that) const {
+		return VectorHolder::create (thiz)->equal (that) ;
+	}
 
-		BOOL equal (CREF<Matrix> that) const {
-			return operator_equal (mMatrix ,that.mMatrix) ;
-		}
+	inline BOOL operator== (CREF<Vector> that) const {
+		return equal (that) ;
+	}
 
-		inline BOOL operator== (CREF<Matrix> that) const {
-			return equal (that) ;
-		}
+	inline BOOL operator!= (CREF<Vector> that) const {
+		return ifnot (equal (that)) ;
+	}
 
-		inline BOOL operator!= (CREF<Matrix> that) const {
-			return ifnot (equal (that)) ;
-		}
+	FLAG compr (CREF<Vector> that) const {
+		return VectorHolder::create (thiz)->compr (that) ;
+	}
 
-		FLAG compr (CREF<Matrix> that) const {
-			return operator_compr (mMatrix ,that.mMatrix) ;
-		}
+	inline BOOL operator< (CREF<Vector> that) const {
+		return compr (that) < ZERO ;
+	}
 
-		inline BOOL operator< (CREF<Matrix> that) const {
-			return compr (that) < ZERO ;
-		}
+	inline BOOL operator<= (CREF<Vector> that) const {
+		return compr (that) <= ZERO ;
+	}
 
-		inline BOOL operator<= (CREF<Matrix> that) const {
-			return compr (that) <= ZERO ;
-		}
+	inline BOOL operator> (CREF<Vector> that) const {
+		return compr (that) > ZERO ;
+	}
 
-		inline BOOL operator> (CREF<Matrix> that) const {
-			return compr (that) > ZERO ;
-		}
+	inline BOOL operator>= (CREF<Vector> that) const {
+		return compr (that) >= ZERO ;
+	}
 
-		inline BOOL operator>= (CREF<Matrix> that) const {
-			return compr (that) >= ZERO ;
-		}
+	FLAG visit (CREF<Visitor> visitor) const {
+		return VectorHolder::create (thiz)->visit (visitor) ;
+	}
 
-		template <class ARG1>
-		FLAG hash (CREF<ARG1> visitor) const {
-			return visitor (mMatrix) ;
-		}
+	Vector add (CREF<Vector> that) const {
+		return VectorHolder::create (thiz)->add (that) ;
+	}
 
-		Matrix add (CREF<Matrix> that) const {
-			return Holder::linkage (thiz)->add (that) ;
-		}
+	inline Vector operator+ (CREF<Vector> that) const {
+		return add (that) ;
+	}
 
-		inline Matrix operator+ (CREF<Matrix> that) const {
-			return add (that) ;
-		}
+	void add_with (CREF<Vector> that) {
+		return VectorHolder::create (thiz)->add_with (that) ;
+	}
 
-		void add_with (CREF<Matrix> that) {
-			return Holder::linkage (thiz)->add_with (that) ;
-		}
+	inline void operator+= (CREF<Vector> that) {
+		add_with (that) ;
+	}
 
-		inline void operator+= (CREF<Matrix> that) {
-			add_with (that) ;
-		}
+	Vector sub (CREF<Vector> that) const {
+		return VectorHolder::create (thiz)->sub (that) ;
+	}
 
-		Matrix sub (CREF<Matrix> that) const {
-			return Holder::linkage (thiz)->sub (that) ;
-		}
+	inline Vector operator- (CREF<Vector> that) const {
+		return sub (that) ;
+	}
 
-		inline Matrix operator- (CREF<Matrix> that) const {
-			return sub (that) ;
-		}
+	void sub_with (CREF<Vector> that) {
+		return VectorHolder::create (thiz)->sub_with (that) ;
+	}
 
-		void sub_with (CREF<Matrix> that) {
-			return Holder::linkage (thiz)->sub_with (that) ;
-		}
+	inline void operator-= (CREF<Vector> that) {
+		sub_with (that) ;
+	}
 
-		inline void operator-= (CREF<Matrix> that) {
-			sub_with (that) ;
-		}
+	Vector mul (CREF<A> scale) const {
+		return VectorHolder::create (thiz)->mul (Pointer::from (scale)) ;
+	}
 
-		Matrix mul (CREF<A> scale) const {
-			return Holder::linkage (thiz)->mul (scale) ;
-		}
+	inline Vector operator* (CREF<A> scale) const {
+		return mul (scale) ;
+	}
 
-		inline Matrix operator* (CREF<A> scale) const {
-			return mul (scale) ;
-		}
+	inline friend Vector operator* (CREF<A> scale ,CREF<Vector> that) {
+		return that.mul (scale) ;
+	}
 
-		inline friend Matrix operator* (CREF<A> scale ,CREF<Matrix> that) {
-			return that.mul (scale) ;
-		}
+	void mul_with (CREF<A> scale) {
+		return VectorHolder::create (thiz)->mul_with (Pointer::from (scale)) ;
+	}
 
-		void mul_with (CREF<A> scale) {
-			return Holder::linkage (thiz)->mul_with (scale) ;
-		}
+	inline void operator*= (CREF<A> scale) {
+		mul_with (scale) ;
+	}
 
-		inline void operator*= (CREF<A> scale) {
-			mul_with (scale) ;
-		}
+	A dot (CREF<Vector> that) const {
+		return VectorHolder::create (thiz)->dot (that) ;
+	}
 
-		Vector mul (CREF<Vector> that) const {
-			return Holder::linkage (thiz)->mul (that) ;
-		}
+	inline A operator* (CREF<Vector> that) const {
+		return dot (that) ;
+	}
 
-		inline Vector operator* (CREF<Vector> that) const {
-			return mul (that) ;
-		}
+	Vector mul (CREF<Matrix> that) const {
+		return VectorHolder::create (thiz)->mul (that) ;
+	}
 
-		Matrix mul (CREF<Matrix> that) const {
-			return Holder::linkage (thiz)->mul (that) ;
-		}
+	inline Vector operator* (CREF<Matrix> that) const {
+		return mul (that) ;
+	}
 
-		inline Matrix operator* (CREF<Matrix> that) const {
-			return mul (that) ;
-		}
+	Vector cross (CREF<Vector> that) const {
+		return VectorHolder::create (thiz)->cross (that) ;
+	}
 
-		inline Matrix operator+ () const {
-			return thiz ;
-		}
+	inline Vector operator^ (CREF<Vector> that) const {
+		return cross (that) ;
+	}
 
-		Matrix minus () const {
-			return Holder::linkage (thiz)->minus () ;
-		}
+	inline void operator^= (CREF<Vector> that) {
+		return VectorHolder::create (thiz)->cross_with (that) ;
+	}
 
-		inline Matrix operator- () const {
-			return minus () ;
-		}
+	inline Vector operator+ () const {
+		return thiz ;
+	}
 
-		Matrix transpose () const {
-			return Holder::linkage (thiz)->transpose () ;
-		}
+	Vector minus () const {
+		return VectorHolder::create (thiz)->minus () ;
+	}
 
-		Matrix triangular () const {
-			return Holder::linkage (thiz)->triangular () ;
-		}
+	inline Vector operator- () const {
+		return minus () ;
+	}
 
-		A determinant () const {
-			return Holder::linkage (thiz)->determinant () ;
-		}
+	A magnitude () const {
+		return VectorHolder::create (thiz)->magnitude () ;
+	}
 
-		Matrix inverse () const {
-			return Holder::linkage (thiz)->inverse () ;
-		}
+	Vector normalize () const {
+		return VectorHolder::create (thiz)->normalize () ;
+	}
 
-		A trace () const {
-			return Holder::linkage (thiz)->trace () ;
-		}
+	Vector projection () const {
+		return VectorHolder::create (thiz)->projection () ;
+	}
 
-		DECOMPOSE decompose () const {
-			return Holder::linkage (thiz)->decompose () ;
-		}
+	Vector homogenize () const {
+		return VectorHolder::create (thiz)->homogenize () ;
+	}
+} ;
 
-		SINGULAR singular () const {
-			return Holder::linkage (thiz)->singular () ;
-		}
+struct MatrixHolder implement Interface {
+	imports VFat<MatrixHolder> create () ;
+	imports VFat<MatrixHolder> create (VREF<MatrixLayout> that) ;
+	imports CFat<MatrixHolder> create (CREF<MatrixLayout> that) ;
 
-		Matrix pseudo_inverse () const {
-			return Holder::linkage (thiz)->pseudo_inverse () ;
-		}
-	} ;
+	virtual void initialize (CREF<VectorLayout> x ,CREF<VectorLayout> y ,CREF<VectorLayout> z ,CREF<VectorLayout> w) = 0 ;
+	virtual VREF<Pointer> at (CREF<INDEX> x ,CREF<INDEX> y) leftvalue = 0 ;
+	virtual CREF<Pointer> at (CREF<INDEX> x ,CREF<INDEX> y) const leftvalue = 0 ;
+	virtual BOOL equal (CREF<MatrixLayout> that) const = 0 ;
+	virtual FLAG compr (CREF<MatrixLayout> that) const = 0 ;
+	virtual FLAG visit (CREF<Visitor> visitor) const = 0 ;
+	virtual MatrixLayout add (CREF<MatrixLayout> that) const = 0 ;
+	virtual void add_with (CREF<MatrixLayout> that) = 0 ;
+	virtual MatrixLayout sub (CREF<MatrixLayout> that) const = 0 ;
+	virtual void sub_with (CREF<MatrixLayout> that) = 0 ;
+	virtual MatrixLayout mul (CREF<Pointer> scale) const = 0 ;
+	virtual void mul_with (CREF<Pointer> scale) = 0 ;
+	virtual MatrixLayout mul (CREF<MatrixLayout> that) const = 0 ;
+	virtual void mul_with (CREF<MatrixLayout> scale) = 0 ;
+	virtual MatrixLayout minus () const = 0 ;
+	virtual MatrixLayout transpose () const = 0 ;
+	virtual MatrixLayout triangular () const = 0 ;
+	virtual MatrixLayout homogensize () const = 0 ;
+	virtual RREF<Pointer> determinant () const = 0 ;
+	virtual MatrixLayout inverse () const = 0 ;
+	virtual RREF<Pointer> trace () const = 0 ;
+	virtual RREF<Pointer> decompose () const = 0 ;
+	virtual RREF<Pointer> singular () const = 0 ;
+	virtual MatrixLayout pseudo_inverse () const = 0 ;
+
+	virtual void DiagMatrix_initialize (CREF<Pointer> x ,CREF<Pointer> y ,CREF<Pointer> z ,CREF<Pointer> w) = 0 ;
+	virtual void ShearMatrix_initialize (CREF<VectorLayout> x ,CREF<VectorLayout> y ,CREF<VectorLayout> z) = 0 ;
+	virtual void RotationMatrix_initialize (CREF<VectorLayout> normal ,CREF<Pointer> angle) = 0 ;
+	virtual void TranslationMatrix_initialize (CREF<VectorLayout> xyz) = 0 ;
+	virtual void TranslationMatrix_initialize (CREF<Pointer> x ,CREF<Pointer> y ,CREF<Pointer> z) = 0 ;
+	virtual void PerspectiveMatrix_initialize (CREF<Pointer> fx ,CREF<Pointer> fy ,CREF<Pointer> wx ,CREF<Pointer> wy) = 0 ;
+	virtual void ProjectionMatrix_initialize (CREF<VectorLayout> normal ,CREF<VectorLayout> center ,CREF<VectorLayout> light) = 0 ;
+	virtual void ViewMatrix_initialize (CREF<VectorLayout> vx ,CREF<VectorLayout> vy) = 0 ;
+	virtual void ViewMatrix_initialize (CREF<VectorLayout> vx ,CREF<VectorLayout> vy ,CREF<FLAG> flag) = 0 ;
+} ;
+
+template <class A>
+class Matrix implement MatrixLayout {
+private:
+	using Vector = CSC::Vector<A> ;
 
 	struct DECOMPOSE {
 		Matrix mT ;
@@ -533,206 +334,424 @@ trait MATRIX_HELP<A ,ALWAYS> {
 		Matrix mV ;
 	} ;
 
-	class DiagMatrix implement Matrix {
-	public:
-		explicit DiagMatrix (CREF<A> x ,CREF<A> y ,CREF<A> z ,CREF<A> w) {
-			Holder::linkage (thiz)->DiagMatrix_initialize (x ,y ,z ,w) ;
-		}
-	} ;
+public:
+	implicit Matrix () = default ;
 
-	class ShearMatrix implement Matrix {
-	public:
-		explicit ShearMatrix (CREF<Vector> x ,CREF<Vector> y ,CREF<Vector> z) {
-			Holder::linkage (thiz)->ShearMatrix_initialize (x ,y ,z) ;
-		}
-	} ;
+	implicit Matrix (RREF<MatrixLayout> that) :Matrix (keep[TYPE<RREF<Matrix>>::expr] (that)) {}
 
-	class RotationMatrix implement Matrix {
-	public:
-		explicit RotationMatrix (CREF<Vector> normal ,CREF<A> angle) {
-			Holder::linkage (thiz)->RotationMatrix_initialize (normal ,angle) ;
-		}
-	} ;
+	explicit Matrix (CREF<Vector> x ,CREF<Vector> y ,CREF<Vector> z ,CREF<Vector> w) {
+		MatrixHolder::create (thiz)->initialize (x ,y ,z ,w) ;
+	}
 
-	class TranslationMatrix implement Matrix {
-	public:
-		explicit TranslationMatrix (CREF<Vector> xyz) {
-			Holder::linkage (thiz)->TranslationMatrix_initialize (xyz) ;
-		}
+	imports CREF<Matrix> zero () {
+		return MatrixHolder::create ()->zero () ;
+	}
 
-		explicit TranslationMatrix (CREF<A> x ,CREF<A> y ,CREF<A> z) {
-			Holder::linkage (thiz)->TranslationMatrix_initialize (x ,y ,z) ;
-		}
-	} ;
+	imports CREF<Matrix> identity () {
+		return MatrixHolder::create ()->identity () ;
+	}
 
-	class PerspectiveMatrix implement Matrix {
-	public:
-		explicit PerspectiveMatrix (CREF<A> fx ,CREF<A> fy ,CREF<A> wx ,CREF<A> wy) {
-			Holder::linkage (thiz)->PerspectiveMatrix_initialize (fx ,fy ,wx ,wy) ;
-		}
-	} ;
+	VREF<A> at (CREF<INDEX> x ,CREF<INDEX> y) leftvalue {
+		return MatrixHolder::create (thiz)->at (x ,y) ;
+	}
 
-	class ProjectionMatrix implement Matrix {
-	public:
-		explicit ProjectionMatrix (CREF<Vector> normal) {
-			Holder::linkage (thiz)->ProjectionMatrix_initialize (normal) ;
-		}
+	VREF<A> at (CREF<PIXEL> xy) leftvalue {
+		return at (xy.x ,xy.y) ;
+	}
 
-		explicit ProjectionMatrix (CREF<Vector> normal ,CREF<A> center ,CREF<Vector> light) {
-			Holder::linkage (thiz)->ProjectionMatrix_initialize (normal ,center ,light) ;
-		}
-	} ;
+	inline VREF<A> operator[] (CREF<PIXEL> xy) leftvalue {
+		return at (xy) ;
+	}
 
-	struct ViewMatrixFlag {
-		enum {
-			XY ,
-			XZ ,
-			YX ,
-			YZ ,
-			ZX ,
-			ZY ,
-			MAX_SIZE
-		} ;
-	} ;
+	inline RowProxy<VRef<Matrix>> operator[] (CREF<INDEX> y) leftvalue {
+		return RowProxy<VRef<Matrix>> (VRef<Matrix>::reference (thiz) ,y) ;
+	}
 
-	class ViewMatrix implement Matrix {
-	public:
-		explicit ViewMatrix (CREF<Vector> vx ,CREF<Vector> vy) {
-			Holder::linkage (thiz)->ViewMatrix_initialize (vx ,vy) ;
-		}
+	CREF<A> at (CREF<INDEX> x ,CREF<INDEX> y) const leftvalue {
+		return MatrixHolder::create (thiz)->at (x ,y) ;
+	}
 
-		imports Matrix make_xy (CREF<Vector> vx ,CREF<Vector> vy) {
-			Holder::linkage (thiz)->ViewMatrix_initialize (vx ,vy ,ViewMatrixFlag::XY) ;
-		}
+	CREF<A> at (CREF<PIXEL> xy) const leftvalue {
+		return at (xy.x ,xy.y) ;
+	}
 
-		imports Matrix make_xz (CREF<Vector> vx ,CREF<Vector> vz) {
-			Holder::linkage (thiz)->ViewMatrix_initialize (vx ,vz ,ViewMatrixFlag::XZ) ;
-		}
+	inline CREF<A> operator[] (CREF<PIXEL> xy) const leftvalue {
+		return at (xy) ;
+	}
 
-		imports Matrix make_yx (CREF<Vector> vy ,CREF<Vector> vx) {
-			Holder::linkage (thiz)->ViewMatrix_initialize (vy ,vx ,ViewMatrixFlag::YX) ;
-		}
+	inline RowProxy<CRef<Matrix>> operator[] (CREF<INDEX> y) const leftvalue {
+		return RowProxy<CRef<Matrix>> (CRef<Matrix>::reference (thiz) ,y) ;
+	}
 
-		imports Matrix make_yz (CREF<Vector> vy ,CREF<Vector> vz) {
-			Holder::linkage (thiz)->ViewMatrix_initialize (vy ,vz ,ViewMatrixFlag::YZ) ;
-		}
+	BOOL equal (CREF<Matrix> that) const {
+		return MatrixHolder::create (thiz)->at (that) ;
+	}
 
-		imports Matrix make_zx (CREF<Vector> vz ,CREF<Vector> vx) {
-			Holder::linkage (thiz)->ViewMatrix_initialize (vz ,vx ,ViewMatrixFlag::ZX) ;
-		}
+	inline BOOL operator== (CREF<Matrix> that) const {
+		return equal (that) ;
+	}
 
-		imports Matrix make_zy (CREF<Vector> vz ,CREF<Vector> vy) {
-			Holder::linkage (thiz)->ViewMatrix_initialize (vz ,vy ,ViewMatrixFlag::ZY) ;
-		}
+	inline BOOL operator!= (CREF<Matrix> that) const {
+		return ifnot (equal (that)) ;
+	}
+
+	FLAG compr (CREF<Matrix> that) const {
+		return MatrixHolder::create (thiz)->at (that) ;
+	}
+
+	inline BOOL operator< (CREF<Matrix> that) const {
+		return compr (that) < ZERO ;
+	}
+
+	inline BOOL operator<= (CREF<Matrix> that) const {
+		return compr (that) <= ZERO ;
+	}
+
+	inline BOOL operator> (CREF<Matrix> that) const {
+		return compr (that) > ZERO ;
+	}
+
+	inline BOOL operator>= (CREF<Matrix> that) const {
+		return compr (that) >= ZERO ;
+	}
+
+	FLAG visit (CREF<Visitor> visitor) const {
+		return MatrixHolder::create (thiz)->visit (visitor) ;
+	}
+
+	Matrix add (CREF<Matrix> that) const {
+		return MatrixHolder::create (thiz)->add (that) ;
+	}
+
+	inline Matrix operator+ (CREF<Matrix> that) const {
+		return add (that) ;
+	}
+
+	void add_with (CREF<Matrix> that) {
+		return MatrixHolder::create (thiz)->add_with (that) ;
+	}
+
+	inline void operator+= (CREF<Matrix> that) {
+		add_with (that) ;
+	}
+
+	Matrix sub (CREF<Matrix> that) const {
+		return MatrixHolder::create (thiz)->sub (that) ;
+	}
+
+	inline Matrix operator- (CREF<Matrix> that) const {
+		return sub (that) ;
+	}
+
+	void sub_with (CREF<Matrix> that) {
+		return MatrixHolder::create (thiz)->sub_with (that) ;
+	}
+
+	inline void operator-= (CREF<Matrix> that) {
+		sub_with (that) ;
+	}
+
+	Matrix mul (CREF<A> scale) const {
+		return MatrixHolder::create (thiz)->mul (Pointer::from (scale)) ;
+	}
+
+	inline Matrix operator* (CREF<A> scale) const {
+		return mul (scale) ;
+	}
+
+	inline friend Matrix operator* (CREF<A> scale ,CREF<Matrix> that) {
+		return that.mul (scale) ;
+	}
+
+	void mul_with (CREF<A> scale) {
+		return MatrixHolder::create (thiz)->mul_with (Pointer::from (scale)) ;
+	}
+
+	inline void operator*= (CREF<A> scale) {
+		mul_with (scale) ;
+	}
+
+	Vector mul (CREF<Vector> that) const {
+		return MatrixHolder::create (thiz)->mul (that) ;
+	}
+
+	inline Vector operator* (CREF<Vector> that) const {
+		return mul (that) ;
+	}
+
+	Matrix mul (CREF<Matrix> that) const {
+		return MatrixHolder::create (thiz)->mul (that) ;
+	}
+
+	inline Matrix operator* (CREF<Matrix> that) const {
+		return mul (that) ;
+	}
+
+	void mul_with (CREF<Matrix> that) {
+		return MatrixHolder::create (thiz)->mul_with (that) ;
+	}
+
+	inline void operator*= (CREF<Matrix> that) {
+		return mul_with (that) ;
+	}
+
+	inline Matrix operator+ () const {
+		return thiz ;
+	}
+
+	Matrix minus () const {
+		return MatrixHolder::create (thiz)->minus () ;
+	}
+
+	inline Matrix operator- () const {
+		return minus () ;
+	}
+
+	Matrix transpose () const {
+		return MatrixHolder::create (thiz)->transpose () ;
+	}
+
+	Matrix triangular () const {
+		return MatrixHolder::create (thiz)->triangular () ;
+	}
+
+	Matrix homogensize () const {
+		return MatrixHolder::create (thiz)->homogensize () ;
+	}
+
+	A determinant () const {
+		return MatrixHolder::create (thiz)->determinant () ;
+	}
+
+	Matrix inverse () const {
+		return MatrixHolder::create (thiz)->inverse () ;
+	}
+
+	A trace () const {
+		return MatrixHolder::create (thiz)->trace () ;
+	}
+
+	DECOMPOSE decompose () const {
+		return MatrixHolder::create (thiz)->decompose () ;
+	}
+
+	SINGULAR singular () const {
+		return MatrixHolder::create (thiz)->singular () ;
+	}
+
+	Matrix pseudo_inverse () const {
+		return MatrixHolder::create (thiz)->pseudo_inverse () ;
+	}
+} ;
+
+template <class A>
+class DiagMatrix implement Matrix<A> {
+public:
+	explicit DiagMatrix (CREF<A> x ,CREF<A> y ,CREF<A> z ,CREF<A> w) {
+		MatrixHolder::create (thiz)->DiagMatrix_initialize (Pointer::from (x) ,Pointer::from (y) ,Pointer::from (z) ,Pointer::from (w)) ;
+	}
+} ;
+
+template <class A>
+class ShearMatrix implement Matrix<A> {
+public:
+	explicit ShearMatrix (CREF<Vector> x ,CREF<Vector> y ,CREF<Vector> z) {
+		MatrixHolder::create (thiz)->ShearMatrix_initialize (x ,y ,z) ;
+	}
+} ;
+
+template <class A>
+class RotationMatrix implement Matrix<A> {
+public:
+	explicit RotationMatrix (CREF<Vector> normal ,CREF<A> angle) {
+		MatrixHolder::create (thiz)->RotationMatrix_initialize (normal ,Pointer::from (angle)) ;
+	}
+} ;
+
+template <class A>
+class TranslationMatrix implement Matrix<A> {
+public:
+	explicit TranslationMatrix (CREF<Vector> xyz) {
+		MatrixHolder::create (thiz)->TranslationMatrix_initialize (xyz) ;
+	}
+
+	explicit TranslationMatrix (CREF<A> x ,CREF<A> y ,CREF<A> z) {
+		MatrixHolder::create (thiz)->TranslationMatrix_initialize (Pointer::from (x) ,Pointer::from (y) ,Pointer::from (z)) ;
+	}
+} ;
+
+template <class A>
+class PerspectiveMatrix implement Matrix<A> {
+public:
+	explicit PerspectiveMatrix (CREF<A> fx ,CREF<A> fy ,CREF<A> wx ,CREF<A> wy) {
+		MatrixHolder::create (thiz)->PerspectiveMatrix_initialize (Pointer::from (fx) ,Pointer::from (fy) ,Pointer::from (wx) ,Pointer::from (wy)) ;
+	}
+} ;
+
+template <class A>
+class ProjectionMatrix implement Matrix<A> {
+public:
+	explicit ProjectionMatrix (CREF<Vector> normal) {
+		MatrixHolder::create (thiz)->ProjectionMatrix_initialize (normal) ;
+	}
+
+	explicit ProjectionMatrix (CREF<Vector> normal ,CREF<Vector> center ,CREF<Vector> light) {
+		MatrixHolder::create (thiz)->ProjectionMatrix_initialize (normal ,center ,light) ;
+	}
+} ;
+
+struct ViewMatrixFlag {
+	enum {
+		XY ,
+		XZ ,
+		YX ,
+		YZ ,
+		ZX ,
+		ZY ,
+		MAX_SIZE
 	} ;
 } ;
 
-template <class...>
-trait QUATERNION_HELP ;
-
 template <class A>
-trait QUATERNION_HELP<A ,ALWAYS> {
-	using Vector = typename VECTOR_HELP<A ,ALWAYS>::Vector ;
-	using Matrix = typename VECTOR_HELP<A ,ALWAYS>::Matrix ;
-	class Quaternoin ;
+class ViewMatrix implement Matrix<A> {
+public:
+	explicit ViewMatrix (CREF<Vector> vx ,CREF<Vector> vy) {
+		MatrixHolder::create (thiz)->ViewMatrix_initialize (vx ,vy) ;
+	}
 
-	struct Holder implement Interface {
-		imports VFat<Holder> linkage () ;
-		imports VFat<Holder> linkage (VREF<Quaternoin> that) ;
-		imports CFat<Holder> linkage (CREF<Quaternoin> that) ;
+	imports Matrix make_xy (CREF<Vector> vx ,CREF<Vector> vy) {
+		MatrixHolder::create (thiz)->ViewMatrix_initialize (vx ,vy ,ViewMatrixFlag::XY) ;
+	}
 
-		virtual void initialize (CREF<A> x ,CREF<A> y ,CREF<A> z ,CREF<A> w) = 0 ;
-		virtual void initialize (CREF<Matrix> that) = 0 ;
-		virtual Vector axis () const = 0 ;
-		virtual A angle () const = 0 ;
-		virtual Vector angle_axis () const = 0 ;
-		virtual Matrix matrix () const = 0 ;
-	} ;
+	imports Matrix make_xz (CREF<Vector> vx ,CREF<Vector> vz) {
+		MatrixHolder::create (thiz)->ViewMatrix_initialize (vx ,vz ,ViewMatrixFlag::XZ) ;
+	}
 
-	class Quaternion {
-	protected:
-		BoxBuffer<A ,RANK4> mQuaternion ;
+	imports Matrix make_yx (CREF<Vector> vy ,CREF<Vector> vx) {
+		MatrixHolder::create (thiz)->ViewMatrix_initialize (vy ,vx ,ViewMatrixFlag::YX) ;
+	}
 
-	public:
-		implicit Quaternion () = default ;
+	imports Matrix make_yz (CREF<Vector> vy ,CREF<Vector> vz) {
+		MatrixHolder::create (thiz)->ViewMatrix_initialize (vy ,vz ,ViewMatrixFlag::YZ) ;
+	}
 
-		explicit Quaternion (CREF<A> x ,CREF<A> y ,CREF<A> z ,CREF<A> w) {
-			Holder::linkage (thiz)->initialize (x ,y ,z ,w) ;
-		}
+	imports Matrix make_zx (CREF<Vector> vz ,CREF<Vector> vx) {
+		MatrixHolder::create (thiz)->ViewMatrix_initialize (vz ,vx ,ViewMatrixFlag::ZX) ;
+	}
 
-		explicit Quaternion (CREF<Matrix> that) {
-			Holder::linkage (thiz)->initialize (that) ;
-		}
+	imports Matrix make_zy (CREF<Vector> vz ,CREF<Vector> vy) {
+		MatrixHolder::create (thiz)->ViewMatrix_initialize (vz ,vy ,ViewMatrixFlag::ZY) ;
+	}
+} ;
 
-		CREF<A> at (CREF<INDEX> y) const leftvalue {
-			return mQuaternion[y] ;
-		}
+struct QuaternionHolder implement Interface {
+	imports VFat<QuaternionHolder> create () ;
+	imports VFat<QuaternionHolder> create (VREF<QuaternionLayout> that) ;
+	imports CFat<QuaternionHolder> create (CREF<QuaternionLayout> that) ;
 
-		inline CREF<A> operator[] (CREF<INDEX> y) const leftvalue {
-			return at (y) ;
-		}
-
-		BOOL equal (CREF<Quaternion> that) const {
-			return operator_equal (mQuaternion ,that.mQuaternion) ;
-		}
-
-		inline BOOL operator== (CREF<Quaternion> that) const {
-			return equal (that) ;
-		}
-
-		inline BOOL operator!= (CREF<Quaternion> that) const {
-			return ifnot (equal (that)) ;
-		}
-
-		FLAG compr (CREF<Quaternion> that) const {
-			return operator_compr (mQuaternion ,that.mQuaternion) ;
-		}
-
-		inline BOOL operator< (CREF<Quaternion> that) const {
-			return compr (that) < ZERO ;
-		}
-
-		inline BOOL operator<= (CREF<Quaternion> that) const {
-			return compr (that) <= ZERO ;
-		}
-
-		inline BOOL operator> (CREF<Quaternion> that) const {
-			return compr (that) > ZERO ;
-		}
-
-		inline BOOL operator>= (CREF<Quaternion> that) const {
-			return compr (that) >= ZERO ;
-		}
-
-		template <class ARG1>
-		FLAG hash (CREF<ARG1> visitor) const {
-			return visitor (mQuaternion) ;
-		}
-
-		Vector axis () const {
-			return Holder::linkage (thiz)->axis () ;
-		}
-
-		A angle () const {
-			return Holder::linkage (thiz)->angle () ;
-		}
-
-		Vector angle_axis () const {
-			return Holder::linkage (thiz)->angle_axis () ;
-		}
-
-		Matrix matrix () const {
-			return Holder::linkage (thiz)->matrix () ;
-		}
-	} ;
+	virtual void initialize (CREF<Pointer> x ,CREF<Pointer> y ,CREF<Pointer> z ,CREF<Pointer> w) = 0 ;
+	virtual void initialize (CREF<MatrixLayout> that) = 0 ;
+	virtual VREF<Pointer> at (CREF<INDEX> x ,CREF<INDEX> y) leftvalue = 0 ;
+	virtual CREF<Pointer> at (CREF<INDEX> x ,CREF<INDEX> y) const leftvalue = 0 ;
+	virtual BOOL equal (CREF<QuaternionLayout> that) const = 0 ;
+	virtual FLAG compr (CREF<QuaternionLayout> that) const = 0 ;
+	virtual FLAG visit (CREF<Visitor> visitor) const = 0 ;
+	virtual VectorLayout axis () const = 0 ;
+	virtual RREF<Pointer> angle () const = 0 ;
+	virtual VectorLayout angle_axis () const = 0 ;
+	virtual MatrixLayout matrix () const = 0 ;
+	virtual QuaternionLayout normalize () const = 0 ;
 } ;
 
 template <class A>
-using Vector = typename VECTOR_HELP<A ,ALWAYS>::Vector ;
+class Quaternion implement QuaternionLayout {
+private:
+	using Vector = CSC::Vector<A> ;
+	using Matrix = CSC::Matrix<A> ;
 
-template <class A>
-using Matrix = typename MATRIX_HELP<A ,ALWAYS>::Matrix ;
+public:
+	implicit Quaternion () = default ;
 
-template <class A>
-using Quaternion = typename QUATERNION_HELP<A ,ALWAYS>::Quaternion ;
+	implicit Quaternion (RREF<QuaternionLayout> that) :Quaternion (keep[TYPE<RREF<Quaternion>>::expr] (that)) {}
+
+	explicit Quaternion (CREF<A> x ,CREF<A> y ,CREF<A> z ,CREF<A> w) {
+		QuaternionHolder::create (thiz)->initialize (Pointer::from (x) ,Pointer::from (y) ,Pointer::from (z) ,Pointer::from (w)) ;
+	}
+
+	explicit Quaternion (CREF<Matrix> that) {
+		QuaternionHolder::create (thiz)->initialize (that) ;
+	}
+
+	VREF<A> at (CREF<INDEX> y) leftvalue {
+		return QuaternionHolder::create (thiz)->at (y) ;
+	}
+
+	inline VREF<A> operator[] (CREF<INDEX> y) leftvalue {
+		return at (y) ;
+	}
+
+	CREF<A> at (CREF<INDEX> y) const leftvalue {
+		return QuaternionHolder::create (thiz)->at (y) ;
+	}
+
+	inline CREF<A> operator[] (CREF<INDEX> y) const leftvalue {
+		return at (y) ;
+	}
+
+	BOOL equal (CREF<Quaternion> that) const {
+		return QuaternionHolder::create (thiz)->equal (that) ;
+	}
+
+	inline BOOL operator== (CREF<Quaternion> that) const {
+		return equal (that) ;
+	}
+
+	inline BOOL operator!= (CREF<Quaternion> that) const {
+		return ifnot (equal (that)) ;
+	}
+
+	FLAG compr (CREF<Quaternion> that) const {
+		return QuaternionHolder::create (thiz)->compr (that) ;
+	}
+
+	inline BOOL operator< (CREF<Quaternion> that) const {
+		return compr (that) < ZERO ;
+	}
+
+	inline BOOL operator<= (CREF<Quaternion> that) const {
+		return compr (that) <= ZERO ;
+	}
+
+	inline BOOL operator> (CREF<Quaternion> that) const {
+		return compr (that) > ZERO ;
+	}
+
+	inline BOOL operator>= (CREF<Quaternion> that) const {
+		return compr (that) >= ZERO ;
+	}
+
+	FLAG visit (CREF<Visitor> visitor) const {
+		return QuaternionHolder::create (thiz)->visit (visitor) ;
+	}
+
+	Vector axis () const {
+		return QuaternionHolder::create (thiz)->axis () ;
+	}
+
+	A angle () const {
+		return QuaternionHolder::create (thiz)->angle () ;
+	}
+
+	Vector angle_axis () const {
+		return QuaternionHolder::create (thiz)->angle_axis () ;
+	}
+
+	Matrix matrix () const {
+		return QuaternionHolder::create (thiz)->matrix () ;
+	}
+
+	Quaternion normalize () const {
+		return QuaternionHolder::create (thiz)->normalize () ;
+	}
+} ;
 } ;

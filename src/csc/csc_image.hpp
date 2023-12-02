@@ -11,48 +11,107 @@
 #include "csc_array.hpp"
 
 namespace CSC {
-template <class...>
-trait ROWPROXY_HELP ;
-
 template <class A>
-trait ROWPROXY_HELP<A ,ALWAYS> {
-	class RowProxy {
-	protected:
-		A mThat ;
-		INDEX mY ;
+class RowProxy {
+protected:
+	A mThat ;
+	INDEX mY ;
 
-	public:
-		implicit RowProxy () = delete ;
+public:
+	implicit RowProxy () = delete ;
 
-		explicit RowProxy (RREF<A> that ,CREF<INDEX> y) {
-			mThat = A::reference (that) ;
-			mY = y ;
-		}
+	explicit RowProxy (RREF<A> that ,CREF<INDEX> y) {
+		mThat = A::reference (that) ;
+		mY = y ;
+	}
 
-		auto operator[] (CREF<INDEX> x) rightvalue->decltype (mThat->at (x ,mY)) {
-			return mThat->at (x ,mY) ;
-		}
-	} ;
+	auto operator[] (CREF<INDEX> x) rightvalue->decltype (mThat->at (x ,mY)) {
+		return mThat->at (x ,mY) ;
+	}
+} ;
+
+class ImageLayout {
+public:
+	RefBufferLayout mImage ;
+	LENGTH mCX ;
+	LENGTH mCY ;
+	LENGTH mStrip ;
+	LENGTH mOffset ;
+} ;
+
+struct ImageHolder implement Interface {
+	imports VFat<ImageHolder> create (VREF<ImageLayout> that) ;
+	imports CFat<ImageHolder> create (CREF<ImageLayout> that) ;
+
+	virtual void initialize (CREF<LENGTH> cx_ ,CREF<LENGTH> cy_) = 0 ;
+	virtual LENGTH size () const = 0 ;
+	virtual LENGTH cx () const = 0 ;
+	virtual LENGTH cy () const = 0 ;
+	virtual LENGTH strip () const = 0 ;
+	virtual LENGTH offset () const = 0 ;
+	virtual VREF<Pointer> at (CREF<INDEX> x ,CREF<INDEX> y) leftvalue = 0 ;
+	virtual CREF<Pointer> at (CREF<INDEX> x ,CREF<INDEX> y) const leftvalue = 0 ;
 } ;
 
 template <class A>
-using RowProxy = typename ROWPROXY_HELP<A ,ALWAYS>::RowProxy ;
+class Image implement ImageLayout {
+public:
+	implicit Image () = default ;
 
-template <class...>
-trait IMAGE_HELP ;
+	explicit Image (CREF<LENGTH> cx_ ,CREF<LENGTH> cy_) {
+		ImageHolder::create (thiz)->initialize (cx_ ,cy_) ;
+	}
 
-template <class A>
-trait IMAGE_HELP<A ,ALWAYS> {
-	class Image ;
+	LENGTH size () const {
+		return ImageHolder::create (thiz)->size () ;
+	}
 
-	class Image {
-	protected:
+	LENGTH cx () const {
+		return ImageHolder::create (thiz)->cx () ;
+	}
 
-	public:
-		implicit Image () = default ;
-	} ;
+	LENGTH cy () const {
+		return ImageHolder::create (thiz)->cy () ;
+	}
+
+	LENGTH strip () const {
+		return ImageHolder::create (thiz)->strip () ;
+	}
+
+	LENGTH offset () const {
+		return ImageHolder::create (thiz)->offset () ;
+	}
+
+	VREF<A> at (CREF<INDEX> x ,CREF<INDEX> y) leftvalue {
+		return ImageHolder::create (thiz)->at (x ,y) ;
+	}
+
+	VREF<A> at (CREF<PIXEL> xy) leftvalue {
+		return at (xy.x ,xy.y) ;
+	}
+
+	inline VREF<A> operator[] (CREF<PIXEL> xy) leftvalue {
+		return at (xy) ;
+	}
+
+	inline RowProxy<VRef<Image>> operator[] (CREF<INDEX> y) leftvalue {
+		return RowProxy<VRef<Image>> (VRef<Image>::reference (thiz) ,y) ;
+	}
+
+	CREF<A> at (CREF<INDEX> x ,CREF<INDEX> y) const leftvalue {
+		return ImageHolder::create (thiz)->at (x ,y) ;
+	}
+
+	CREF<A> at (CREF<PIXEL> xy) const leftvalue {
+		return at (xy.x ,xy.y) ;
+	}
+
+	inline CREF<A> operator[] (CREF<PIXEL> xy) const leftvalue {
+		return at (xy) ;
+	}
+
+	inline RowProxy<CRef<Image>> operator[] (CREF<INDEX> y) const leftvalue {
+		return RowProxy<CRef<Image>> (CRef<Image>::reference (thiz) ,y) ;
+	}
 } ;
-
-template <class A>
-using Image = typename IMAGE_HELP<A ,ALWAYS>::Image ;
 } ;
