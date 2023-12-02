@@ -63,7 +63,7 @@ struct BoxBufferHolder implement Interface {
 template <class A ,class B>
 class BoxBuffer implement BoxBufferLayout {
 protected:
-	ARR<A ,B> mBuffer ;
+	TEMP<ARR<A ,B>> mBuffer ;
 
 public:
 	implicit BoxBuffer () = default ;
@@ -125,7 +125,7 @@ class RefBufferLayout {
 public:
 	RefLayout mBuffer ;
 	LENGTH mSize ;
-	LENGTH mAlign ;
+	LENGTH mStep ;
 } ;
 
 struct RefBufferHolder implement Interface {

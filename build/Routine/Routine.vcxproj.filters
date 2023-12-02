@@ -44,5 +44,11 @@
     <None Include="..\..\src\csc\cpp.hint">
       <Filter>csc</Filter>
     </None>
+    <None Include="..\..\src\csc\csc_core.inl">
+      <Filter>csc</Filter>
+    </None>
+    <None Include="..\..\src\csc\csc_basic.inl">
+      <Filter>csc</Filter>
+    </None>
   </ItemGroup>
 </Project>

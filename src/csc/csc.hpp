@@ -345,7 +345,7 @@ using csc_enum_t = DEF<unsigned long> ;
 using csc_enum_t = int ;
 #endif
 
-struct csc_temp_t {} ;
+struct csc_temp_t ;
 
 template <class A>
 using csc_initializer_t = std::initializer_list<A> ;

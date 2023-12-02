@@ -1210,42 +1210,10 @@ trait STORAGE_HELP<SIZE ,ALIGN ,REQUIRE<ENUM_EQUAL<ALIGN ,ALIGN_OF<QUAD>>>> {
 template <class SIZE ,class ALIGN = ENUM_IDEN>
 using Storage = typename STORAGE_HELP<SIZE ,ALIGN ,ALWAYS>::RET ;
 
-template <class...>
-trait REFLECT_TEMP_HELP ;
-
 template <class A>
-trait REFLECT_TEMP_HELP<A ,REQUIRE<ENUM_NOT<IS_EXTEND<csc_temp_t ,A>>>> {
-	using BASE = A ;
-	using RET = ENUM_FALSE ;
+struct TEMP {
+	Storage<SIZE_OF<A> ,ALIGN_OF<A>> mUnused ;
 } ;
-
-template <class A>
-trait REFLECT_TEMP_HELP<A ,REQUIRE<IS_EXTEND<csc_temp_t ,A>>> {
-	require (ENUM_NOT<IS_SAME<A ,csc_temp_t>>) ;
-	using BASE = typename A::BASE ;
-	using RET = ENUM_TRUE ;
-} ;
-
-template <class A>
-using IS_TEMP = typename REFLECT_TEMP_HELP<REMOVE_REF<A> ,ALWAYS>::RET ;
-
-template <class A>
-using TEMP_BASE = typename REFLECT_TEMP_HELP<REMOVE_REF<A> ,ALWAYS>::BASE ;
-
-template <class...>
-trait TEMP_HELP ;
-
-template <class A>
-trait TEMP_HELP<A ,REQUIRE<ENUM_NOT<IS_VOID<A>>>> {
-	struct TEMP implement csc_temp_t {
-		using BASE = A ;
-
-		Storage<SIZE_OF<A> ,ALIGN_OF<A>> mUnused ;
-	} ;
-} ;
-
-template <class A>
-using TEMP = typename TEMP_HELP<REMOVE_REF<A> ,ALWAYS>::TEMP ;
 
 template <class A>
 using ENUM_ABS = CONDITIONAL<ENUM_COMPR_GTEQ<A ,ENUM_ZERO> ,A ,ENUM_MINUS<A>> ;

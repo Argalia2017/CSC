@@ -45,6 +45,8 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\src\csc\cpp.hint" />
+    <None Include="..\..\src\csc\csc_basic.inl" />
+    <None Include="..\..\src\csc\csc_core.inl" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>
