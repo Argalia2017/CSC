@@ -9,6 +9,41 @@
 #include "csc_core.hpp"
 
 namespace CSC {
+template <class...>
+trait TUPLE_HELP ;
+
+template <class PARAMS>
+trait TUPLE_HELP<PARAMS ,REQUIRE<ENUM_EQ_ZERO<COUNT_OF<PARAMS>>>> {
+	struct Tuple ;
+} ;
+
+template <class PARAMS>
+trait TUPLE_HELP<PARAMS ,REQUIRE<ENUM_EQUAL<COUNT_OF<PARAMS> ,RANK1>>> {
+	struct Tuple {
+		TYPE_M1ST_ONE<PARAMS> m1st ;
+	} ;
+} ;
+
+template <class PARAMS>
+trait TUPLE_HELP<PARAMS ,REQUIRE<ENUM_EQUAL<COUNT_OF<PARAMS> ,RANK2>>> {
+	struct Tuple {
+		TYPE_M1ST_ONE<PARAMS> m1st ;
+		TYPE_M2ND_ONE<PARAMS> m2nd ;
+	} ;
+} ;
+
+template <class PARAMS>
+trait TUPLE_HELP<PARAMS ,REQUIRE<ENUM_EQUAL<COUNT_OF<PARAMS> ,RANK3>>> {
+	struct Tuple {
+		TYPE_M1ST_ONE<PARAMS> m1st ;
+		TYPE_M2ND_ONE<PARAMS> m2nd ;
+		TYPE_M3RD_ONE<PARAMS> m3rd ;
+	} ;
+} ;
+
+template <class...A>
+using Tuple = typename TUPLE_HELP<TYPE<A...> ,ALWAYS>::Tuple ;
+
 class BoxBufferLayout {} ;
 
 struct BoxBufferHolder implement Interface {

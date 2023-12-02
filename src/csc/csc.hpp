@@ -86,6 +86,7 @@
 #pragma warning (disable :4100) //@info: warning C4100: 'xxx': unreferenced formal parameter
 #pragma warning (disable :4127) //@info: warning C4127: conditional expression is constant
 #pragma warning (disable :4266) //@info: warning C4266: 'xxx'; function is hidden
+#pragma warning (disable :4297) //@info: warning C4297: 'xxx': function assumed not to throw an exception but does
 #pragma warning (disable :4324) //@info: warning C4324: 'xxx': structure was padded due to alignment specifier
 #pragma warning (disable :4365) //@info: warning C4365: 'xxx': conversion from 'xxx' to 'xxx', signed/unsigned mismatch
 #pragma warning (disable :4459) //@info: warning C4459: declaration of 'xxx' hides global declaration
@@ -95,6 +96,7 @@
 #pragma warning (disable :4571) //@info: warning C4571: Informational: catch(...) semantics changed since Visual C++ 7.1; structured exceptions (SEH) are no longer caught
 #pragma warning (disable :4574) //@info: warning C4574: 'xxx' is defined to be '0': did you mean to use '#if xxx'?
 #pragma warning (disable :4584) //@info: warning C4584: 'xxx': base-class 'xxx' is already a base-class of 'xxx'
+#pragma warning (disable :4619) //@info: warning C4619: #pragma warning: there is no warning number 'xxx'
 #pragma warning (disable :4623) //@info: warning C4623: 'xxx': default constructor was implicitly defined as deleted
 #pragma warning (disable :4624) //@info: warning C4624: 'xxx': destructor was implicitly defined as deleted
 #pragma warning (disable :4625) //@info: warning C4625: 'xxx': copy constructor was implicitly defined as deleted
@@ -112,15 +114,18 @@
 #pragma warning (disable :5026) //@info: warning C5026: 'xxx': move constructor was implicitly defined as deleted
 #pragma warning (disable :5027) //@info: warning C5027: 'xxx': move assignment operator was implicitly defined as deleted
 #pragma warning (disable :5045) //@info: warning C5045: 'xxx': move assignment operator was implicitly defined as deleted
+#pragma warning (disable :5246) //@info: warning C5246: 'xxx': the initialization of a subobject should be wrapped in braces
 #endif
 
 #ifdef __CSC_COMPILER_GNUC__
+#pragma GCC diagnostic ignored "-Wexceptions"
 #pragma GCC diagnostic ignored "-Wunknown-pragmas"
 #pragma GCC diagnostic ignored "-Wattributes"
 #pragma GCC diagnostic ignored "-Wunused-function"
 #endif
 
 #ifdef __CSC_COMPILER_CLANG__
+#pragma GCC diagnostic ignored "-Wexceptions"
 #pragma clang diagnostic ignored "-Wunknown-pragmas"
 #pragma clang diagnostic ignored "-Wc++11-narrowing"
 #pragma clang diagnostic ignored "-Wunused-parameter"
@@ -340,9 +345,7 @@ using csc_enum_t = DEF<unsigned long> ;
 using csc_enum_t = int ;
 #endif
 
-struct csc_temp_t {
-	using BASE = void ;
-} ;
+struct csc_temp_t {} ;
 
 template <class A>
 using csc_initializer_t = std::initializer_list<A> ;

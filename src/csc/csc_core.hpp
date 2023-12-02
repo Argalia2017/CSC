@@ -62,7 +62,7 @@ static constexpr auto unsafe_break = FUNCTION_unsafe_break () ;
 
 #ifdef __CSC_COMPILER_MSVC__
 struct FUNCTION_unsafe_abort {
-	inline void operator() () const {
+	inline void operator() () const noexcept {
 		throw ;
 	}
 } ;
@@ -70,7 +70,7 @@ struct FUNCTION_unsafe_abort {
 
 #ifdef __CSC_COMPILER_GNUC__
 struct FUNCTION_unsafe_abort {
-	inline void operator() () const {
+	inline void operator() () const noexcept {
 		throw ;
 	}
 } ;
@@ -78,7 +78,7 @@ struct FUNCTION_unsafe_abort {
 
 #ifdef __CSC_COMPILER_CLANG__
 struct FUNCTION_unsafe_abort {
-	inline void operator() () const {
+	inline void operator() () const noexcept {
 		throw ;
 	}
 } ;
@@ -86,45 +86,29 @@ struct FUNCTION_unsafe_abort {
 
 static constexpr auto unsafe_abort = FUNCTION_unsafe_abort () ;
 
-#define unsafe_launder(...)
-
-template <class...>
-trait TEMPLATE_unsafe_cast_HELP ;
-
 template <class A>
-trait TEMPLATE_unsafe_cast_HELP<A ,ALWAYS> {
-	struct TEMPLATE_unsafe_cast {
-		template <class ARG1>
-		inline VREF<A> operator() (VREF<ARG1> a) const noexcept {
-			using R1X = A ;
-			using R2X = ARG1 ;
-			using R3X = ENUM_ANY<IS_SAME<R1X ,TEMP<void>> ,IS_SAME<R2X ,TEMP<void>>> ;
-			using R4X = CONDITIONAL<R3X ,BYTE ,R1X> ;
-			using R5X = CONDITIONAL<R3X ,BYTE ,R2X> ;
-			require (ENUM_EQUAL<SIZE_OF<R4X> ,SIZE_OF<R5X>>) ;
-			require (ENUM_COMPR_LTEQ<ALIGN_OF<R4X> ,ALIGN_OF<R5X>>) ;
-			return reinterpret_cast<VREF<R1X>> (a) ;
-		}
+struct TEMPLATE_unsafe_cast {
+	template <class ARG1>
+	inline VREF<A> operator() (VREF<ARG1> a) const noexcept {
+		using R1X = A ;
+		using R2X = ARG1 ;
+		require (ENUM_EQUAL<SIZE_OF<R1X> ,SIZE_OF<R2X>>) ;
+		require (ENUM_COMPR_LTEQ<ALIGN_OF<R1X> ,ALIGN_OF<R2X>>) ;
+		return reinterpret_cast<VREF<R1X>> (a) ;
+	}
 
-		template <class ARG1>
-		inline CREF<A> operator() (CREF<ARG1> a) const noexcept {
-			using R1X = A ;
-			using R2X = ARG1 ;
-			using R3X = ENUM_ANY<IS_SAME<R1X ,TEMP<void>> ,IS_SAME<R2X ,TEMP<void>>> ;
-			using R4X = CONDITIONAL<R3X ,BYTE ,R1X> ;
-			using R5X = CONDITIONAL<R3X ,BYTE ,R2X> ;
-			require (ENUM_EQUAL<SIZE_OF<R4X> ,SIZE_OF<R5X>>) ;
-			require (ENUM_COMPR_LTEQ<ALIGN_OF<R4X> ,ALIGN_OF<R5X>>) ;
-			return reinterpret_cast<CREF<R1X>> (a) ;
-		}
+	template <class ARG1>
+	inline CREF<A> operator() (CREF<ARG1> a) const noexcept {
+		using R1X = A ;
+		using R2X = ARG1 ;
+		require (ENUM_EQUAL<SIZE_OF<R1X> ,SIZE_OF<R2X>>) ;
+		require (ENUM_COMPR_LTEQ<ALIGN_OF<R1X> ,ALIGN_OF<R2X>>) ;
+		return reinterpret_cast<CREF<R1X>> (a) ;
+	}
 
-		template <class ARG1>
-		inline CREF<A> operator() (RREF<ARG1>) const noexcept = delete ;
-	} ;
+	template <class ARG1>
+	inline CREF<A> operator() (RREF<ARG1>) const noexcept = delete ;
 } ;
-
-template <class A>
-using TEMPLATE_unsafe_cast = typename TEMPLATE_unsafe_cast_HELP<A ,ALWAYS>::TEMPLATE_unsafe_cast ;
 
 struct FUNCTION_unsafe_cast {
 	template <class ARG1>
@@ -138,7 +122,7 @@ static constexpr auto unsafe_cast = FUNCTION_unsafe_cast () ;
 struct FUNCTION_address {
 	template <class ARG1>
 	inline FLAG operator() (CREF<ARG1> a) const noexcept {
-		return FLAG (&unsafe_cast[TYPE<TEMP<void>>::expr] (a)) ;
+		return FLAG (&reinterpret_cast<CREF<int>> (a)) ;
 	}
 } ;
 
@@ -153,8 +137,8 @@ struct FUNCTION_swap {
 		const auto r1x = tmp1 ;
 		tmp1 = tmp2 ;
 		tmp2 = r1x ;
-		unsafe_launder (obj1) ;
-		unsafe_launder (obj2) ;
+		noop (obj1) ;
+		noop (obj2) ;
 	}
 
 	template <class ARG1 ,class ARG2>
@@ -170,31 +154,23 @@ struct FUNCTION_swap {
 
 static constexpr auto swap = FUNCTION_swap () ;
 
-template <class...>
-trait TEMPLATE_keep_HELP ;
-
 template <class A>
-trait TEMPLATE_keep_HELP<A ,ALWAYS> {
-	struct TEMPLATE_keep {
-		template <class ARG1>
-		inline XREF<A> operator() (VREF<ARG1> a) const noexcept {
-			return static_cast<XREF<A>> (a) ;
-		}
+struct TEMPLATE_keep {
+	template <class ARG1>
+	inline XREF<A> operator() (VREF<ARG1> a) const noexcept {
+		return static_cast<XREF<A>> (a) ;
+	}
 
-		template <class ARG1>
-		inline XREF<A> operator() (CREF<ARG1> a) const noexcept {
-			return static_cast<XREF<A>> (a) ;
-		}
+	template <class ARG1>
+	inline XREF<A> operator() (CREF<ARG1> a) const noexcept {
+		return static_cast<XREF<A>> (a) ;
+	}
 
-		template <class ARG1>
-		inline XREF<A> operator() (RREF<ARG1> a) const noexcept {
-			return static_cast<XREF<A>> (a) ;
-		}
-	} ;
+	template <class ARG1>
+	inline XREF<A> operator() (RREF<ARG1> a) const noexcept {
+		return static_cast<XREF<A>> (a) ;
+	}
 } ;
-
-template <class A>
-using TEMPLATE_keep = typename TEMPLATE_keep_HELP<A ,ALWAYS>::TEMPLATE_keep ;
 
 struct FUNCTION_keep {
 	template <class ARG1>
@@ -229,7 +205,9 @@ struct FUNCTION_init {
 	template <class ARG1>
 	inline void operator() (VREF<ARG1> a) const noexcept {
 		require (IS_TRIVIAL<ARG1>) ;
-		//@mark
+		using R1X = TEMP<ARG1> ;
+		auto &&tmp1 = unsafe_cast[TYPE<R1X>::expr] (a) ;
+		tmp1 = {0} ;
 	}
 } ;
 
@@ -246,47 +224,6 @@ struct FUNCTION_drop {
 } ;
 
 static constexpr auto drop = FUNCTION_drop () ;
-
-template <class...>
-trait TEMPLATE_bitwise_HELP ;
-
-template <class A>
-trait TEMPLATE_bitwise_HELP<A ,ALWAYS> {
-	struct TEMPLATE_bitwise {
-		template <class ARG1>
-		inline A operator() (CREF<ARG1> a) const noexcept {
-			using R1X = A ;
-			using R2X = ARG1 ;
-			require (IS_TRIVIAL<R1X>) ;
-			require (ENUM_EQUAL<SIZE_OF<R1X> ,SIZE_OF<R2X>>) ;
-			using R3X = Storage<SIZE_OF<R1X>> ;
-			A ret ;
-			auto &&tmp1 = unsafe_cast[TYPE<R3X>::expr] (ret) ;
-			auto &&tmp2 = unsafe_cast[TYPE<R3X>::expr] (a) ;
-			tmp1 = tmp2 ;
-			unsafe_launder (ret) ;
-			return move (ret) ;
-		}
-	} ;
-} ;
-
-template <class A>
-using TEMPLATE_bitwise = typename TEMPLATE_bitwise_HELP<A ,ALWAYS>::TEMPLATE_bitwise ;
-
-struct FUNCTION_bitwise {
-	template <class ARG1>
-	inline BYTE_BASE<ARG1> operator() (CREF<ARG1> a) const noexcept {
-		using R1X = BYTE_BASE<ARG1> ;
-		return thiz[TYPE<R1X>::expr] (a) ;
-	}
-
-	template <class ARG1>
-	inline consteval TEMPLATE_bitwise<ARG1> operator[] (TYPEID<ARG1>) const noexcept {
-		return TEMPLATE_bitwise<ARG1> () ;
-	}
-} ;
-
-static constexpr auto bitwise = FUNCTION_bitwise () ;
 
 struct FUNCTION_invoke {
 	template <class ARG1>
@@ -479,7 +416,14 @@ struct FUNCTION_iter {
 
 static constexpr auto iter = FUNCTION_iter () ;
 
-class Visitor {} ;
+struct Visitor implement Interface {
+	virtual void begin () const = 0 ;
+	virtual void end () const = 0 ;
+	virtual FLAG push (CREF<BYTE> a) const = 0 ;
+	virtual FLAG push (CREF<WORD> a) const = 0 ;
+	virtual FLAG push (CREF<CHAR> a) const = 0 ;
+	virtual FLAG push (CREF<QUAD> a) const = 0 ;
+} ;
 
 class Pointer implement Proxy {
 public:
@@ -499,17 +443,17 @@ public:
 
 	template <class ARG1>
 	inline operator VREF<ARG1> () leftvalue {
-		return *reinterpret_cast<VREF<ARG1>> (thiz) ;
+		return reinterpret_cast<VREF<ARG1>> (thiz) ;
 	}
 
 	template <class ARG1>
 	inline operator CREF<ARG1> () const leftvalue {
-		return *reinterpret_cast<CREF<ARG1>> (thiz) ;
+		return reinterpret_cast<CREF<ARG1>> (thiz) ;
 	}
 
 	template <class ARG1>
 	inline operator RREF<ARG1> () rightvalue {
-		return move (*reinterpret_cast<VREF<ARG1>> (thiz)) ;
+		return reinterpret_cast<RREF<ARG1>> (thiz) ;
 	}
 } ;
 
@@ -520,6 +464,8 @@ protected:
 	FLAG mPointer ;
 
 public:
+	implicit VFat () = delete ;
+
 	inline VPTR<A> operator-> () rightvalue {
 		return (&reinterpret_cast<VREF<A>> (thiz)) ;
 	}
@@ -532,6 +478,8 @@ protected:
 	FLAG mPointer ;
 
 public:
+	implicit CFat () = delete ;
+
 	inline CPTR<A> operator-> () rightvalue {
 		return (&reinterpret_cast<VREF<A>> (thiz)) ;
 	}
@@ -632,7 +580,10 @@ struct FUNCTION_memorize {
 
 static constexpr auto memorize = FUNCTION_memorize () ;
 
-class HeapProcLayout {} ;
+class HeapProcLayout {
+public:
+	FLAG mData ;
+} ;
 
 struct HeapProcHolder implement Interface {
 	imports VFat<HeapProcHolder> create () ;
@@ -685,7 +636,14 @@ public:
 } ;
 
 struct RefHolder implement Interface {
+	imports VFat<RefHolder> create (VREF<RefLayout> that) ;
+	imports CFat<RefHolder> create (CREF<RefLayout> that) ;
+
 	virtual void initialize () = 0 ;
+	virtual RefLayout clone () const = 0 ;
+	virtual void destroy () = 0 ;
+	virtual void acquire (CREF<BoxLayout> a) = 0 ;
+	virtual void release (VREF<BoxLayout> a) = 0 ;
 } ;
 
 template <class A>
@@ -699,7 +657,11 @@ public:
 
 	template <class...ARG1>
 	imports VRef make (XREF<ARG1>...initval) {
-		//@mark
+		VRef ret ;
+		auto rax = Box<A>::make (forward[TYPE<ARG1>::expr] (initval)...) ;
+		RefHolder::create (ret)->acquire (rax) ;
+		rax.release () ;
+		return move (ret) ;
 	}
 
 	imports VRef reference (VREF<A> that) {
@@ -759,9 +721,7 @@ public:
 
 	imports CRef reference (RREF<A>) = delete ;
 
-	implicit CRef (CREF<CRef> that) {
-		//@mark
-	}
+	implicit CRef (CREF<CRef> that) :CRef (RefHolder::create (that)->clone ()) {}
 
 	inline VREF<CRef> operator= (CREF<CRef> that) {
 		if (address (thiz) == address (that))
@@ -795,7 +755,6 @@ public:
 	}
 } ;
 
-
 class CaptureLayout {
 protected:
 	LENGTH mRank ;
@@ -806,25 +765,41 @@ public:
 	}
 } ;
 
-template <class...PARAM>
+template <class...PARAMS>
 class Capture implement CaptureLayout {
+private:
+	using RANK = COUNT_OF<TYPE<PARAMS...>> ;
+
+	struct NODE {
+		ARR<FLAG ,RANK> mValue ;
+	} ;
+
+protected:
+	NODE mCapture ;
+
 public:
 	implicit Capture () = delete ;
 
-	explicit Capture (CREF<KILL<FLAG ,PARAM>>...params) {
-		//@mark
+	explicit Capture (CREF<KILL<FLAG ,PARAMS>>...params) {
+		mCapture = NODE {params...} ;
 	}
 
 	template <class ARG1>
 	inline void operator() (CREF<ARG1> func) const {
-		//@mark
+		using R1X = TYPE_SENQUENCE<RANK> ;
+		return thiz (func ,TYPE<R1X>::expr) ;
+	}
+
+	template <class ARG1 ,class...ARG2>
+	inline void operator() (CREF<ARG1> func ,TYPEID<TYPE<ARG2...>>) const {
+		return func (keep[TYPE<CREF<PARAMS>>::expr] (Pointer::make (mCapture.mValue[ARG2::expr]))...) ;
 	}
 } ;
 
 struct FUNCTION_capture {
 	template <class...ARG1>
-	inline Capture<ARG1...> operator() (CREF<ARG1>...a) const noexcept {
-		return Capture<ARG1...> (address (a)...) ;
+	inline Capture<ARG1...> operator() (CREF<ARG1>...initval) const noexcept {
+		return Capture<ARG1...> (address (initval)...) ;
 	}
 } ;
 
@@ -862,7 +837,12 @@ public:
 	implicit Slice () = default ;
 
 	template <class ARG1>
-	explicit Slice (CREF<ARG1> that) {
+	explicit Slice (CREF<ARG1> text) {
+		//@mark
+	}
+
+	template <class ARG1>
+	explicit Slice (RREF<Slice> prefix ,CREF<ARG1> text) {
 		//@mark
 	}
 
@@ -915,7 +895,10 @@ public:
 	}
 } ;
 
-class ClazzLayout {} ;
+class ClazzLayout {
+public:
+	FLAG mData ;
+} ;
 
 struct ClazzHolder implement Interface {
 	imports VFat<ClazzHolder> create (VREF<ClazzLayout> that) ;
@@ -937,7 +920,10 @@ public:
 
 	template <class ARG1>
 	explicit Clazz (TYPEID<ARG1>) {
-		//@mark
+		const auto r1x = SIZE_OF<ARG1>::expr ;
+		const auto r2x = ALIGN_OF<ARG1>::expr ;
+		const auto r3x = Slice<STR> ("") ;
+		ClazzHolder::create (thiz)->initialize (r1x ,r2x ,r3x) ;
 	}
 
 	LENGTH type_size () const {
@@ -1026,21 +1012,36 @@ class AutoLayout {} ;
 struct AutoHolder implement Interface {
 	imports VFat<AutoHolder> create (VREF<AutoLayout> that) ;
 	imports CFat<AutoHolder> create (CREF<AutoLayout> that) ;
+
+	virtual void initialize (VREF<BoxLayout> value) = 0 ;
+	virtual VREF<Pointer> poll () const leftvalue = 0 ;
 } ;
 
 class Auto implement AutoLayout {
+private:
+	Box<AutoHolder> mThis ;
+	Storage<ENUM<1024> ,RANK8> mValue ;
+
 public:
 	implicit Auto () = delete ;
 
 	template <class ARG1>
 	explicit Auto (RREF<ARG1> that) {
-		//@mark
+		using R1X = ARG1 ;
+		auto rax = Box<R1X>::make (keep[TYPE<ARG1>::expr] (that)) ;
+		AutoHolder::create (thiz)->initialize (rax) ;
+		rax.release () ;
+	}
+
+	BOOL exist () const {
+		return mThis.exist () ;
 	}
 
 	template <class ARG1>
 	ARG1 poll (TYPEID<ARG1>) const {
-		//@mark
-		return Pointer::make (0) ;
+		ARG1 ret = move (mThis->poll ()) ;
+		mThis = NULL ;
+		return move (ret) ;
 	}
 } ;
 } ;

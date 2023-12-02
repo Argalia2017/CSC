@@ -538,7 +538,7 @@ trait TYPE_SENQUENCE_HELP<SIZE ,CURR ,REQUIRE<ENUM_EQ_ZERO<SIZE>>> {
 
 template <class SIZE ,class CURR>
 trait TYPE_SENQUENCE_HELP<SIZE ,CURR ,REQUIRE<ENUM_GT_ZERO<SIZE>>> {
-	using R1X = typename TYPE_REPEAT_HELP<ENUM_DEC<SIZE> ,ENUM_INC<CURR> ,ALWAYS>::RET ;
+	using R1X = typename TYPE_SENQUENCE_HELP<ENUM_DEC<SIZE> ,ENUM_INC<CURR> ,ALWAYS>::RET ;
 	using RET = TYPE_CAT<TYPE<CURR> ,R1X> ;
 } ;
 
@@ -629,7 +629,7 @@ struct Interface {
 	virtual ~Interface () = default ;
 	implicit Interface (CREF<Interface>) = delete ;
 	inline VREF<Interface> operator= (CREF<Interface>) = delete ;
-	//@info: fuck clang
+	//@fatal: fuck clang
 	implicit Interface (Interface &&) = default ;
 	inline VREF<Interface> operator= (Interface &&) = default ;
 	virtual void finalize () {}
@@ -850,7 +850,7 @@ template <class A ,class = REQUIRE<IS_SAME<A ,REMOVE_REF<A>>>>
 using CPTR = DEF<const DEF<const A *>> ;
 
 template <class A ,class = REQUIRE<IS_SAME<A ,REMOVE_REF<A>>>>
-using RPTR = DEF<A *> ;
+using XPTR = DEF<A *> ;
 
 template <class...>
 trait REFLECT_ARRAY_HELP ;
@@ -1055,9 +1055,6 @@ template <class A>
 using IS_INTERFACE = typename IS_INTERFACE_HELP<A ,ALWAYS>::RET ;
 
 template <class A>
-using IS_POLYMORPHIC = IS_EXTEND<Interface ,A> ;
-
-template <class A>
 using IS_PLACEHOLDER = IS_EXTEND<DEF<typeof (PH0)> ,A> ;
 
 template <class...>
@@ -1096,10 +1093,10 @@ using IS_CONVERTIBLE = typename IS_CONVERTIBLE_HELP<XREF<A> ,XREF<B> ,ALWAYS>::R
 template <class...>
 trait IS_EFFECTIVE_HELP ;
 
-template <class RETURN ,class...PARAM ,class A>
-trait IS_EFFECTIVE_HELP<RETURN ,TYPE<PARAM...> ,A ,ALWAYS> {
+template <class RETURN ,class...PARAMS ,class A>
+trait IS_EFFECTIVE_HELP<RETURN ,TYPE<PARAMS...> ,A ,ALWAYS> {
 	using R1X = A ;
-	using R2X = DEF<RETURN (*) (PARAM...)> ;
+	using R2X = DEF<RETURN (*) (PARAMS...)> ;
 	using R3X = IS_CONVERTIBLE<CREF<R1X> ,RREF<R2X>> ;
 	using RET = ENUM_NOT<R3X> ;
 } ;
@@ -1224,6 +1221,7 @@ trait REFLECT_TEMP_HELP<A ,REQUIRE<ENUM_NOT<IS_EXTEND<csc_temp_t ,A>>>> {
 
 template <class A>
 trait REFLECT_TEMP_HELP<A ,REQUIRE<IS_EXTEND<csc_temp_t ,A>>> {
+	require (ENUM_NOT<IS_SAME<A ,csc_temp_t>>) ;
 	using BASE = typename A::BASE ;
 	using RET = ENUM_TRUE ;
 } ;
@@ -1236,11 +1234,6 @@ using TEMP_BASE = typename REFLECT_TEMP_HELP<REMOVE_REF<A> ,ALWAYS>::BASE ;
 
 template <class...>
 trait TEMP_HELP ;
-
-template <class A>
-trait TEMP_HELP<A ,REQUIRE<IS_VOID<A>>> {
-	using TEMP = csc_temp_t ;
-} ;
 
 template <class A>
 trait TEMP_HELP<A ,REQUIRE<ENUM_NOT<IS_VOID<A>>>> {
