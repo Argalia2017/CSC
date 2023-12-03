@@ -442,6 +442,12 @@ protected:
 public:
 	implicit VFat () = delete ;
 
+	template <class ARG1>
+	explicit VFat (CREF<A> holder ,VREF<ARG1> pointer) {
+		mHolder = reinterpret_cast<CREF<FLAG>> (holder) ;
+		mPointer = address (pointer) ;
+	}
+
 	inline VPTR<A> operator-> () rightvalue {
 		return (&reinterpret_cast<VREF<A>> (thiz)) ;
 	}
@@ -455,6 +461,12 @@ protected:
 
 public:
 	implicit CFat () = delete ;
+
+	template <class ARG1>
+	explicit CFat (CREF<A> holder ,CREF<ARG1> pointer) {
+		mHolder = reinterpret_cast<CREF<FLAG>> (holder) ;
+		mPointer = address (pointer) ;
+	}
 
 	inline CPTR<A> operator-> () rightvalue {
 		return (&reinterpret_cast<VREF<A>> (thiz)) ;
@@ -580,8 +592,21 @@ struct FUNCTION_memorize {
 
 static constexpr auto memorize = FUNCTION_memorize () ;
 
+struct HeapProcData ;
+
+class HeapProcLayout {
+public:
+	XPTR<HeapProcData> mData ;
+
+public:
+	implicit HeapProcLayout () noexcept {
+		mData = NULL ;
+	}
+} ;
+
 struct HeapProcHolder implement Interface {
-	imports Box<HeapProcHolder> create () ;
+	imports VFat<HeapProcHolder> create (VREF<HeapProcLayout> that) ;
+	imports CFat<HeapProcHolder> create (CREF<HeapProcLayout> that) ;
 
 	virtual void initialize () = 0 ;
 	virtual LENGTH length () const = 0 ;
@@ -589,32 +614,26 @@ struct HeapProcHolder implement Interface {
 	virtual void free (CREF<FLAG> addr) const = 0 ;
 } ;
 
-class HeapProcLayout {
-public:
-	Box<HeapProcHolder> mThis ;
-} ;
-
 class HeapProc implement HeapProcLayout {
 public:
 	imports CREF<HeapProc> instance () {
 		return memorize ([&] () {
 			HeapProc ret ;
-			ret.mThis = HeapProcHolder::create () ;
-			ret.mThis->initialize () ;
+			HeapProcHolder::create (ret)->initialize () ;
 			return move (ret) ;
 		}) ;
 	}
 
 	LENGTH length () const {
-		return instance ().mThis->length () ;
+		return HeapProcHolder::create (thiz)->length () ;
 	}
 
 	FLAG alloc (CREF<LENGTH> size_) const {
-		return instance ().mThis->alloc (size_) ;
+		return HeapProcHolder::create (thiz)->alloc (size_) ;
 	}
 
 	void free (CREF<FLAG> addr) const {
-		return instance ().mThis->free (addr) ;
+		return HeapProcHolder::create (thiz)->free (addr) ;
 	}
 } ;
 
@@ -631,7 +650,7 @@ struct RefHolder implement Interface {
 } ;
 
 class RefLayout {
-protected:
+public:
 	FLAG mHolder ;
 	FLAG mPointer ;
 
@@ -831,17 +850,7 @@ struct FUNCTION_capture {
 
 static constexpr auto capture = FUNCTION_capture () ;
 
-struct SliceData {
-	XPTR<SliceData> mPrefix ;
-	FLAG mBegin ;
-	FLAG mEnd ;
-	LENGTH mStep ;
-} ;
-
-class SliceLayout {
-public:
-	XPTR<SliceData> mData ;
-} ;
+class SliceLayout ;
 
 struct SliceHolder implement Interface {
 	imports VFat<SliceHolder> create (VREF<SliceLayout> that) ;
@@ -855,29 +864,28 @@ struct SliceHolder implement Interface {
 	virtual FLAG visit (CREF<Visitor> visitor) const = 0 ;
 } ;
 
+struct SliceData {
+	CRef<SliceHolder> mPrefix ;
+	FLAG mBegin ;
+	FLAG mEnd ;
+	LENGTH mStep ;
+} ;
+
+class SliceLayout {
+public:
+	CRef<SliceHolder> mThis ;
+} ;
+
 template <class A>
 class Slice implement SliceLayout {
 public:
 	implicit Slice () = default ;
 
-	template <class ARG1 ,class = REQUIRE<ENUM_NOT<IS_SAME<ARG1 ,Slice>>>>
-	implicit Slice (CREF<ARG1> text) {
-		auto &&rax = memorize ([&] () {
-			SliceData ret ;
-			ret.mPrefix = NULL ;
-			ret.mBegin = address (text) ;
-			ret.mEnd = ret.mBegin + SIZE_OF<ARG1>::expr ;
-			ret.mStep = ALIGN_OF<ARG1>::expr ;
-			return move (ret) ;
-		}) ;
-		SliceHolder::create (thiz)->initialize (Pointer::from (rax)) ;
-	}
-
 	template <class ARG1>
 	explicit Slice (RREF<Slice> prefix ,CREF<ARG1> text) {
 		auto &&rax = memorize ([&] () {
 			SliceData ret ;
-			ret.mPrefix = prefix.mData ;
+			ret.mPrefix = prefix.mThis ;
 			ret.mBegin = address (text) ;
 			ret.mEnd = ret.mBegin + SIZE_OF<ARG1>::expr ;
 			ret.mStep = ALIGN_OF<ARG1>::expr ;
@@ -891,7 +899,7 @@ public:
 	}
 
 	A at (CREF<INDEX> index) const {
-		return mThis->at (index) ;
+		return SliceHolder::create (thiz)->at (index) ;
 	}
 
 	inline A operator[] (CREF<INDEX> index) const {
@@ -942,10 +950,7 @@ struct ClazzData {
 	Slice<STR> mName ;
 } ;
 
-class ClazzLayout {
-public:
-	XPTR<ClazzData> mData ;
-} ;
+class ClazzLayout ;
 
 struct ClazzHolder implement Interface {
 	imports VFat<ClazzHolder> create (VREF<ClazzLayout> that) ;
@@ -959,6 +964,11 @@ struct ClazzHolder implement Interface {
 	virtual BOOL equal (CREF<ClazzLayout> that) const = 0 ;
 	virtual FLAG compr (CREF<ClazzLayout> that) const = 0 ;
 	virtual FLAG visit (CREF<Visitor> visitor) const = 0 ;
+} ;
+
+class ClazzLayout {
+public:
+	CRef<ClazzHolder> mThis ;
 } ;
 
 class Clazz implement ClazzLayout {
@@ -1068,17 +1078,13 @@ struct AutoHolder implement Interface {
 	virtual VREF<Pointer> poll () const leftvalue = 0 ;
 } ;
 
-class AutoLayout {
-public:
-	Box<AutoHolder> mThis ;
-} ;
-
-class Auto implement AutoLayout {
+class Auto {
 private:
 	using FAKE_SIZE = ENUM<1024> ;
 	using FAKE_ALIGN = RANK8 ;
 
 protected:
+	Box<AutoHolder> mThis ;
 	Storage<ENUM<1024> ,FAKE_ALIGN> mValue ;
 
 public:
@@ -1086,12 +1092,12 @@ public:
 
 	template <class ARG1 ,class = REQUIRE<ENUM_NOT<IS_SAME<ARG1 ,Auto>>>>
 	implicit Auto (RREF<ARG1> that) {
-		using R1X = ARG1 ;
-		require (ENUM_COMPR_LTEQ<SIZE_OF<ARG1> ,FAKE_SIZE>) ;
-		require (ENUM_COMPR_LTEQ<ALIGN_OF<ARG1> ,FAKE_ALIGN>) ;
+		using R1X = Box<R1X> ;
+		require (ENUM_COMPR_LTEQ<SIZE_OF<R1X> ,FAKE_SIZE>) ;
+		require (ENUM_COMPR_LTEQ<ALIGN_OF<R1X> ,FAKE_ALIGN>) ;
 		mThis = AutoHolder::create () ;
 		mThis->initialize () ;
-		auto rax = Box<R1X>::make (move (that)) ;
+		auto rax = R1X::make (move (that)) ;
 		mThis->acquire (rax) ;
 		rax.release () ;
 	}

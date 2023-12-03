@@ -19,3 +19,5 @@
 #include <Windows.h>
 #endif
 #include "csc/csc_begin.h"
+
+#include "csc/csc_core.inl"

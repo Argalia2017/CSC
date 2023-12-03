@@ -196,11 +196,11 @@ struct is_trivially_default_constructible :integral_constant<bool ,__has_trivial
 
 #ifndef __macro_slice
 #ifdef __CSC_CONFIG_STRA__
-#define __macro_slice(...) CSC::Slice<CSC::STR> (__VA_ARGS__)
+#define __macro_slice(...) CSC::Slice<CSC::STR> (CSC::Slice<CSC::STR> () ,__VA_ARGS__)
 #endif
 
 #ifdef __CSC_CONFIG_STRW__
-#define __macro_slice(...) CSC::Slice<CSC::STR> (__macro_cat (L ,__VA_ARGS__))
+#define __macro_slice(...) CSC::Slice<CSC::STR> (CSC::Slice<CSC::STR> () ,__macro_cat (L ,__VA_ARGS__))
 #endif
 #endif
 
@@ -225,12 +225,12 @@ struct is_trivially_default_constructible :integral_constant<bool ,__has_trivial
 
 #ifdef __CSC_COMPILER_GNUC__
 //@fatal: fuck gnuc
-#define __macro_assume(...) do { if (__VA_ARGS__) break ; CSC::Exception (CSC::Slice<CSC::STR> (CSC::Slice<CSC::STR> (CSC::Slice<CSC::STR> ("assume : " __macro_str (__VA_ARGS__) " : at ") ,__PRETTY_FUNCTION__) ," in " __FILE__ " ," __macro_str (__LINE__))).raise () ; } while (false)
+#define __macro_assume(...) do { if (__VA_ARGS__) break ; CSC::Exception (CSC::Slice<CSC::STR> (CSC::Slice<CSC::STR> (CSC::Slice<CSC::STR> (CSC::Slice<CSC::STR> () ,"assume : " __macro_str (__VA_ARGS__) " : at ") ,__PRETTY_FUNCTION__) ," in " __FILE__ " ," __macro_str (__LINE__))).raise () ; } while (false)
 #endif
 
 #ifdef __CSC_COMPILER_CLANG__
 //@fatal: fuck clang
-#define __macro_assume(...) do { if (__VA_ARGS__) break ; CSC::Exception (CSC::Slice<CSC::STR> (CSC::Slice<CSC::STR> (CSC::Slice<CSC::STR> ("assume : " __macro_str (__VA_ARGS__) " : at ") ,__PRETTY_FUNCTION__) ," in " __FILE__ " ," __macro_str (__LINE__))).raise () ; } while (false)
+#define __macro_assume(...) do { if (__VA_ARGS__) break ; CSC::Exception (CSC::Slice<CSC::STR> (CSC::Slice<CSC::STR> (CSC::Slice<CSC::STR> (CSC::Slice<CSC::STR> () ,"assume : " __macro_str (__VA_ARGS__) " : at ") ,__PRETTY_FUNCTION__) ," in " __FILE__ " ," __macro_str (__LINE__))).raise () ; } while (false)
 #endif
 #endif
 
