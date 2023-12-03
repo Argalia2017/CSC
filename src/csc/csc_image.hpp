@@ -21,7 +21,7 @@ public:
 	implicit RowProxy () = delete ;
 
 	explicit RowProxy (RREF<A> that ,CREF<INDEX> y) {
-		mThat = A::reference (that) ;
+		mThat = that ;
 		mY = y ;
 	}
 
@@ -94,8 +94,8 @@ public:
 		return at (xy) ;
 	}
 
-	inline RowProxy<VRef<Image>> operator[] (CREF<INDEX> y) leftvalue {
-		return RowProxy<VRef<Image>> (VRef<Image>::reference (thiz) ,y) ;
+	inline RowProxy<VPTR<Image>> operator[] (CREF<INDEX> y) leftvalue {
+		return RowProxy<VPTR<Image>> ((&thiz) ,y) ;
 	}
 
 	CREF<A> at (CREF<INDEX> x ,CREF<INDEX> y) const leftvalue {
@@ -110,8 +110,8 @@ public:
 		return at (xy) ;
 	}
 
-	inline RowProxy<CRef<Image>> operator[] (CREF<INDEX> y) const leftvalue {
-		return RowProxy<CRef<Image>> (CRef<Image>::reference (thiz) ,y) ;
+	inline RowProxy<CPTR<Image>> operator[] (CREF<INDEX> y) const leftvalue {
+		return RowProxy<CPTR<Image>> ((&thiz) ,y) ;
 	}
 } ;
 } ;

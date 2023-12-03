@@ -849,9 +849,6 @@ using VPTR = DEF<const DEF<A *>> ;
 template <class A ,class = REQUIRE<IS_SAME<A ,REMOVE_REF<A>>>>
 using CPTR = DEF<const DEF<const A *>> ;
 
-template <class A ,class = REQUIRE<IS_SAME<A ,REMOVE_REF<A>>>>
-using XPTR = DEF<A *> ;
-
 template <class...>
 trait REFLECT_ARRAY_HELP ;
 

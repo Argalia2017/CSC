@@ -390,8 +390,8 @@ public:
 		return at (xy) ;
 	}
 
-	inline RowProxy<VRef<Matrix>> operator[] (CREF<INDEX> y) leftvalue {
-		return RowProxy<VRef<Matrix>> (VRef<Matrix>::reference (thiz) ,y) ;
+	inline RowProxy<VPTR<Matrix>> operator[] (CREF<INDEX> y) leftvalue {
+		return RowProxy<VPTR<Matrix>> ((&thiz) ,y) ;
 	}
 
 	CREF<A> at (CREF<INDEX> x ,CREF<INDEX> y) const leftvalue {
@@ -406,8 +406,8 @@ public:
 		return at (xy) ;
 	}
 
-	inline RowProxy<CRef<Matrix>> operator[] (CREF<INDEX> y) const leftvalue {
-		return RowProxy<CRef<Matrix>> (CRef<Matrix>::reference (thiz) ,y) ;
+	inline RowProxy<CPTR<Matrix>> operator[] (CREF<INDEX> y) const leftvalue {
+		return RowProxy<CPTR<Matrix>> ((&thiz) ,y) ;
 	}
 
 	BOOL equal (CREF<Matrix> that) const {

@@ -81,7 +81,7 @@ public:
 	}
 
 	VREF<ARR<A>> self_m () leftvalue {
-		return BoxBufferHolder::create (thiz)->self_m () ;
+		return BoxBufferHolder::create (thiz)->self ;
 	}
 
 	inline implicit operator VREF<ARR<A>> () leftvalue {
@@ -89,7 +89,7 @@ public:
 	}
 
 	CREF<ARR<A>> self_m () const leftvalue {
-		return BoxBufferHolder::create (thiz)->self_m () ;
+		return BoxBufferHolder::create (thiz)->self ;
 	}
 
 	inline implicit operator CREF<ARR<A>> () const leftvalue {
@@ -155,7 +155,7 @@ public:
 	}
 
 	VREF<ARR<A>> self_m () leftvalue {
-		return RefBufferHolder::create (thiz)->self_m () ;
+		return RefBufferHolder::create (thiz)->self ;
 	}
 
 	inline implicit operator VREF<ARR<A>> () leftvalue {
@@ -163,7 +163,7 @@ public:
 	}
 
 	CREF<ARR<A>> self_m () const leftvalue {
-		return RefBufferHolder::create (thiz)->self_m () ;
+		return RefBufferHolder::create (thiz)->self ;
 	}
 
 	inline implicit operator CREF<ARR<A>> () const leftvalue {

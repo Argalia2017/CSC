@@ -473,16 +473,6 @@ public:
 	}
 } ;
 
-class BoxLayout ;
-
-struct BoxHolder implement Interface {
-	imports VFat<BoxHolder> create (VREF<BoxLayout> that) ;
-	imports CFat<BoxHolder> create (CREF<BoxLayout> that) ;
-
-	virtual void initialize () = 0 ;
-	virtual void destroy () = 0 ;
-} ;
-
 class BoxLayout {
 public:
 	BOOL mExist ;
@@ -493,10 +483,7 @@ public:
 	}
 
 	implicit ~BoxLayout () noexcept {
-		if (ifnot (mExist))
-			return ;
-		BoxHolder::create (thiz)->destroy () ;
-		mExist = FALSE ;
+		//@mark
 	}
 
 	implicit BoxLayout (CREF<BoxLayout>) = delete ;
@@ -513,6 +500,19 @@ public:
 		swap (thiz ,move (that)) ;
 		return thiz ;
 	}
+} ;
+
+struct BoxHolder implement Interface {
+	imports VFat<BoxHolder> create (VREF<BoxLayout> that) ;
+	imports CFat<BoxHolder> create (CREF<BoxLayout> that) ;
+
+	virtual void initialize () = 0 ;
+	virtual void destroy () = 0 ;
+	virtual BOOL exist () const = 0 ;
+	virtual VREF<Pointer> self_m () leftvalue = 0 ;
+	virtual CREF<Pointer> self_m () const leftvalue = 0 ;
+	virtual void acquire (CREF<BoxLayout> a) = 0 ;
+	virtual void release () = 0 ;
 } ;
 
 template <class A>
@@ -533,7 +533,7 @@ public:
 	}
 
 	BOOL exist () const {
-		return mExist ;
+		return BoxHolder::create (thiz)->exist () ;
 	}
 
 	inline BOOL operator== (CREF<typeof (NULL)>) const {
@@ -545,8 +545,7 @@ public:
 	}
 
 	VREF<A> self_m () leftvalue {
-		assert (exist ()) ;
-		return Pointer::from (mValue) ;
+		return BoxHolder::create (thiz)->self ;
 	}
 
 	inline VPTR<A> operator-> () leftvalue {
@@ -554,8 +553,7 @@ public:
 	}
 
 	CREF<A> self_m () const leftvalue {
-		assert (exist ()) ;
-		return Pointer::from (mValue) ;
+		return BoxHolder::create (thiz)->self ;
 	}
 
 	inline CPTR<A> operator-> () const leftvalue {
@@ -563,9 +561,7 @@ public:
 	}
 
 	void acquire (CREF<BoxLayout> a) {
-		auto &&rax = keep[TYPE<CREF<Box>>::expr] (a) ;
-		mValue = rax.mValue ;
-		mExist = rax.mExist ;
+		return BoxHolder::acquire (thiz)->acquire (a) ;
 	}
 
 	template <class ARG1 ,class...ARG2>
@@ -577,7 +573,7 @@ public:
 	}
 
 	void release () {
-		mExist = FALSE ;
+		return BoxHolder::acquire (thiz)->release () ;
 	}
 } ;
 
@@ -592,16 +588,9 @@ struct FUNCTION_memorize {
 
 static constexpr auto memorize = FUNCTION_memorize () ;
 
-struct HeapProcData ;
-
 class HeapProcLayout {
 public:
-	XPTR<HeapProcData> mData ;
-
-public:
-	implicit HeapProcLayout () noexcept {
-		mData = NULL ;
-	}
+	FLAG mPointer ;
 } ;
 
 struct HeapProcHolder implement Interface {
@@ -637,18 +626,6 @@ public:
 	}
 } ;
 
-class RefLayout ;
-
-struct RefHolder implement Interface {
-	imports VFat<RefHolder> create (VREF<RefLayout> that) ;
-	imports CFat<RefHolder> create (CREF<RefLayout> that) ;
-
-	virtual void initialize () = 0 ;
-	virtual void destroy () = 0 ;
-	virtual RefLayout clone () const = 0 ;
-	virtual void acquire (CREF<BoxLayout> a) = 0 ;
-} ;
-
 class RefLayout {
 public:
 	FLAG mHolder ;
@@ -661,10 +638,7 @@ public:
 	}
 
 	implicit ~RefLayout () noexcept {
-		if (mHolder == ZERO)
-			return ;
-		RefHolder::create (thiz)->destroy () ;
-		mHolder = ZERO ;
+		//@mark
 	}
 
 	implicit RefLayout (CREF<RefLayout>) = delete ;
@@ -683,18 +657,31 @@ public:
 	}
 } ;
 
+struct RefHolder implement Interface {
+	imports VFat<RefHolder> create (VREF<RefLayout> that) ;
+	imports CFat<RefHolder> create (CREF<RefLayout> that) ;
+
+	virtual void initialize () = 0 ;
+	virtual void destroy () = 0 ;
+	virtual RefLayout clone () const = 0 ;
+	virtual void acquire (CREF<BoxLayout> a) = 0 ;
+	virtual BOOL exist () const = 0 ;
+	virtual VREF<Pointer> self_m () leftvalue = 0 ;
+	virtual CREF<Pointer> self_m () const leftvalue = 0 ;
+} ;
+
 template <class A>
-class VRef implement RefLayout {
+class Ref implement RefLayout {
 public:
-	implicit VRef () = default ;
+	implicit Ref () = default ;
 
-	implicit VRef (CREF<typeof (NULL)>) {}
+	implicit Ref (CREF<typeof (NULL)>) {}
 
-	implicit VRef (RREF<RefLayout> that) :VRef (keep[TYPE<RREF<VRef>>::expr] (that)) {}
+	implicit Ref (RREF<RefLayout> that) :Ref (keep[TYPE<RREF<Ref>>::expr] (that)) {}
 
 	template <class...ARG1>
-	imports VRef make (XREF<ARG1>...initval) {
-		VRef ret ;
+	imports Ref make (XREF<ARG1>...initval) {
+		Ref ret ;
 		RefHolder::create (ret)->initialize () ;
 		auto rax = Box<A>::make (keep[TYPE<XREF<ARG1>>::expr] (initval)...) ;
 		RefHolder::create (ret)->acquire (rax) ;
@@ -702,14 +689,14 @@ public:
 		return move (ret) ;
 	}
 
-	imports VRef reference (VREF<A> that) {
-		VRef ret ;
+	imports Ref reference (VREF<A> that) {
+		Ref ret ;
 		ret.mPointer = address (that) ;
 		return move (ret) ;
 	}
 
 	BOOL exist () const {
-		return mPointer != ZERO ;
+		return RefHolder::create (thiz)->exist () ;
 	}
 
 	inline BOOL operator== (CREF<typeof (NULL)>) const {
@@ -721,8 +708,7 @@ public:
 	}
 
 	VREF<A> self_m () leftvalue {
-		assert (exist ()) ;
-		return Pointer::make (mPointer) ;
+		return RefHolder::create (thiz)->self ;
 	}
 
 	inline VPTR<A> operator-> () leftvalue {
@@ -730,65 +716,7 @@ public:
 	}
 
 	CREF<A> self_m () const leftvalue {
-		assert (exist ()) ;
-		return Pointer::make (mPointer) ;
-	}
-
-	inline CPTR<A> operator-> () const leftvalue {
-		return (&self) ;
-	}
-} ;
-
-template <class A>
-class CRef implement RefLayout {
-public:
-	implicit CRef () = default ;
-
-	implicit CRef (CREF<typeof (NULL)>) {}
-
-	implicit CRef (RREF<RefLayout> that) :CRef (keep[TYPE<RREF<CRef>>::expr] (that)) {}
-
-	template <class...ARG1>
-	imports CRef make (XREF<ARG1>...initval) {
-		return VRef<A>::make (keep[TYPE<XREF<ARG1>>::expr] (initval)...) ;
-	}
-
-	imports CRef reference (CREF<A> that) {
-		CRef ret ;
-		ret.mPointer = address (that) ;
-		return move (ret) ;
-	}
-
-	imports CRef reference (RREF<A>) = delete ;
-
-	implicit CRef (CREF<CRef> that) :CRef (RefHolder::create (that)->clone ()) {}
-
-	inline VREF<CRef> operator= (CREF<CRef> that) {
-		if (address (thiz) == address (that))
-			return thiz ;
-		swap (thiz ,move (that)) ;
-		return thiz ;
-	}
-
-	implicit CRef (RREF<CRef>) = default ;
-
-	inline VREF<CRef> operator= (RREF<CRef>) = default ;
-
-	BOOL exist () const {
-		return mPointer != ZERO ;
-	}
-
-	inline BOOL operator== (CREF<typeof (NULL)>) const {
-		return ifnot (exist ()) ;
-	}
-
-	inline BOOL operator!= (CREF<typeof (NULL)>) const {
-		return exist () ;
-	}
-
-	CREF<A> self_m () const leftvalue {
-		assert (exist ()) ;
-		return Pointer::make (mPointer) ;
+		return RefHolder::create (thiz)->self ;
 	}
 
 	inline CPTR<A> operator-> () const leftvalue {
@@ -850,13 +778,23 @@ struct FUNCTION_capture {
 
 static constexpr auto capture = FUNCTION_capture () ;
 
-class SliceLayout ;
+class SliceLayout {
+public:
+	RefLayout mThis ;
+} ;
+
+struct SliceData {
+	RefLayout mPrefix ;
+	FLAG mBegin ;
+	FLAG mEnd ;
+	LENGTH mStep ;
+} ;
 
 struct SliceHolder implement Interface {
 	imports VFat<SliceHolder> create (VREF<SliceLayout> that) ;
 	imports CFat<SliceHolder> create (CREF<SliceLayout> that) ;
 
-	virtual void initialize (CREF<Pointer> data) = 0 ;
+	virtual void initialize (CREF<SliceData> data) = 0 ;
 	virtual LENGTH size () const = 0 ;
 	virtual RREF<Pointer> at (CREF<INDEX> index) const = 0 ;
 	virtual BOOL equal (CREF<SliceLayout> that) const = 0 ;
@@ -864,20 +802,11 @@ struct SliceHolder implement Interface {
 	virtual FLAG visit (CREF<Visitor> visitor) const = 0 ;
 } ;
 
-struct SliceData {
-	CRef<SliceHolder> mPrefix ;
-	FLAG mBegin ;
-	FLAG mEnd ;
-	LENGTH mStep ;
-} ;
-
-class SliceLayout {
-public:
-	CRef<SliceHolder> mThis ;
-} ;
-
 template <class A>
 class Slice implement SliceLayout {
+protected:
+	using SliceLayout::mThis ;
+
 public:
 	implicit Slice () = default ;
 
@@ -885,14 +814,29 @@ public:
 	explicit Slice (RREF<Slice> prefix ,CREF<ARG1> text) {
 		auto &&rax = memorize ([&] () {
 			SliceData ret ;
-			ret.mPrefix = prefix.mThis ;
+			ret.mPrefix = RefHolder::create (prefix.mThis)->clone () ;
 			ret.mBegin = address (text) ;
 			ret.mEnd = ret.mBegin + SIZE_OF<ARG1>::expr ;
 			ret.mStep = ALIGN_OF<ARG1>::expr ;
 			return move (ret) ;
 		}) ;
-		SliceHolder::create (thiz)->initialize (Pointer::from (rax)) ;
+		SliceHolder::create (thiz)->initialize (rax) ;
 	}
+
+	implicit Slice (CREF<Slice> that) {
+		mThis = RefHolder::create (that.mThis)->clone () ;
+	}
+
+	implicit VREF<Slice> operator= (CREF<Slice> that) {
+		if (address (thiz) == address (that))
+			return thiz ;
+		swap (thiz ,move (that)) ;
+		return thiz ;
+	}
+
+	implicit Slice (RREF<Slice> that) = default ;
+
+	implicit VREF<Slice> operator= (RREF<Slice>) = default ;
 
 	LENGTH size () const {
 		return SliceHolder::create (thiz)->size () ;
@@ -943,6 +887,11 @@ public:
 	}
 } ;
 
+class ClazzLayout {
+public:
+	RefLayout mThis ;
+} ;
+
 struct ClazzData {
 	LENGTH mSize ;
 	LENGTH mAlign ;
@@ -950,13 +899,11 @@ struct ClazzData {
 	Slice<STR> mName ;
 } ;
 
-class ClazzLayout ;
-
 struct ClazzHolder implement Interface {
 	imports VFat<ClazzHolder> create (VREF<ClazzLayout> that) ;
 	imports CFat<ClazzHolder> create (CREF<ClazzLayout> that) ;
 
-	virtual void initialize (CREF<Pointer> data) = 0 ;
+	virtual void initialize (CREF<ClazzData> data) = 0 ;
 	virtual LENGTH type_size () const = 0 ;
 	virtual LENGTH type_align () const = 0 ;
 	virtual FLAG type_cabi () const = 0 ;
@@ -964,11 +911,6 @@ struct ClazzHolder implement Interface {
 	virtual BOOL equal (CREF<ClazzLayout> that) const = 0 ;
 	virtual FLAG compr (CREF<ClazzLayout> that) const = 0 ;
 	virtual FLAG visit (CREF<Visitor> visitor) const = 0 ;
-} ;
-
-class ClazzLayout {
-public:
-	CRef<ClazzHolder> mThis ;
 } ;
 
 class Clazz implement ClazzLayout {
@@ -986,8 +928,23 @@ public:
 			ret.mName = r1x ;
 			return move (ret) ;
 		}) ;
-		ClazzHolder::create (thiz)->initialize (Pointer::from (rax)) ;
+		ClazzHolder::create (thiz)->initialize (rax) ;
 	}
+
+	implicit Clazz (CREF<Clazz> that) {
+		mThis = RefHolder::create (that.mThis)->clone () ;
+	}
+
+	implicit VREF<Clazz> operator= (CREF<Clazz> that) {
+		if (address (thiz) == address (that))
+			return thiz ;
+		swap (thiz ,move (that)) ;
+		return thiz ;
+	}
+
+	implicit Clazz (RREF<Clazz> that) = default ;
+
+	implicit VREF<Clazz> operator= (RREF<Clazz>) = default ;
 
 	LENGTH type_size () const {
 		return ClazzHolder::create (thiz)->type_size () ;
