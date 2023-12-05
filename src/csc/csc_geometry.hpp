@@ -70,7 +70,7 @@ struct VectorHolder implement Interface {
 	virtual CREF<A> at (CREF<INDEX> y) const leftvalue = 0 ;
 	virtual BOOL equal (CREF<VectorLayout> that) const = 0 ;
 	virtual FLAG compr (CREF<VectorLayout> that) const = 0 ;
-	virtual FLAG visit (CREF<Visitor> visitor) const = 0 ;
+	virtual void visit (CREF<Visitor> visitor) const = 0 ;
 	virtual void add_with (CREF<VectorLayout> that) = 0 ;
 	virtual VectorLayout sub (CREF<VectorLayout> that) const = 0 ;
 	virtual void sub_with (CREF<VectorLayout> that) = 0 ;
@@ -188,7 +188,7 @@ public:
 		return compr (that) >= ZERO ;
 	}
 
-	FLAG visit (CREF<Visitor> visitor) const {
+	void visit (CREF<Visitor> visitor) const {
 		return VectorHolder<A>::create (thiz)->visit (visitor) ;
 	}
 
@@ -311,7 +311,7 @@ struct MatrixHolder implement Interface {
 	virtual CREF<A> at (CREF<INDEX> x ,CREF<INDEX> y) const leftvalue = 0 ;
 	virtual BOOL equal (CREF<MatrixLayout> that) const = 0 ;
 	virtual FLAG compr (CREF<MatrixLayout> that) const = 0 ;
-	virtual FLAG visit (CREF<Visitor> visitor) const = 0 ;
+	virtual void visit (CREF<Visitor> visitor) const = 0 ;
 	virtual MatrixLayout add (CREF<MatrixLayout> that) const = 0 ;
 	virtual void add_with (CREF<MatrixLayout> that) = 0 ;
 	virtual MatrixLayout sub (CREF<MatrixLayout> that) const = 0 ;
@@ -442,7 +442,7 @@ public:
 		return compr (that) >= ZERO ;
 	}
 
-	FLAG visit (CREF<Visitor> visitor) const {
+	void visit (CREF<Visitor> visitor) const {
 		return MatrixHolder<A>::create (thiz)->visit (visitor) ;
 	}
 
@@ -682,7 +682,7 @@ struct QuaternionHolder implement Interface {
 	virtual CREF<A> at (CREF<INDEX> x ,CREF<INDEX> y) const leftvalue = 0 ;
 	virtual BOOL equal (CREF<QuaternionLayout> that) const = 0 ;
 	virtual FLAG compr (CREF<QuaternionLayout> that) const = 0 ;
-	virtual FLAG visit (CREF<Visitor> visitor) const = 0 ;
+	virtual void visit (CREF<Visitor> visitor) const = 0 ;
 	virtual VectorLayout axis () const = 0 ;
 	virtual A angle () const = 0 ;
 	virtual VectorLayout angle_axis () const = 0 ;
@@ -756,7 +756,7 @@ public:
 		return compr (that) >= ZERO ;
 	}
 
-	FLAG visit (CREF<Visitor> visitor) const {
+	void visit (CREF<Visitor> visitor) const {
 		return QuaternionHolder<A>::create (thiz)->visit (visitor) ;
 	}
 
