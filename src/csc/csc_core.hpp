@@ -831,6 +831,8 @@ public:
 		return Pointer::from (that) ;
 	}
 
+	imports CREF<Capture> from (RREF<CaptureLayout>) = delete ;
+
 	template <class ARG1>
 	inline void operator() (CREF<ARG1> func) const {
 		using R1X = TYPE_SENQUENCE<RANK> ;

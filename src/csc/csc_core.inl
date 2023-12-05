@@ -115,7 +115,7 @@ exports CFat<HeapProcHolder> HeapProcHolder::create (CREF<HeapProcLayout> that) 
 struct RefUnknownBinderLayout {
 	LENGTH mCounter ;
 	LENGTH mSize ;
-	FLAG mHolder ;
+	BoxLayout mHolder ;
 } ;
 
 class RefImplHolder implement RefHolder {
@@ -130,8 +130,7 @@ public:
 		mThis->mHolder = HeapProc::instance ().alloc (r2x) ;
 		fake.mCounter = 0 ;
 		fake.mSize = size_ ;
-		auto &&rbx = unsafe_cast[TYPE<BoxLayout>::expr] (fake.mHolder) ;
-		BoxHolder::create (rbx)->acquire (value) ;
+		BoxHolder::create (fake.mHolder)->acquire (value) ;
 		const auto r3x = mThis->mHolder + SIZE_OF<RefUnknownBinderLayout>::expr ;
 		mThis->mPointer = operator_alignas (r3x ,rax.type_align ()) ;
 	}

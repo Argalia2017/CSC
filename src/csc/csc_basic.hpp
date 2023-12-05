@@ -117,7 +117,7 @@ public:
 	}
 
 	void resize (CREF<LENGTH> size_) {
-		return Holder::create (thiz)->resize (size_) ;
+		return BoxBufferHolder::create (thiz)->resize (size_) ;
 	}
 } ;
 
