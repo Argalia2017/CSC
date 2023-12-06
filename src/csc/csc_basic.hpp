@@ -51,13 +51,14 @@ struct BoxBufferHolder implement Interface {
 	imports CFat<BoxBufferHolder> create (CREF<BoxBufferLayout> that) ;
 
 	virtual void initialize (CREF<Pointer> that) = 0 ;
-	virtual void initialize (CREF<LENGTH> size_) = 0 ;
+	virtual void initialize (CREF<BoxLayout> value ,CREF<LENGTH> size_) = 0 ;
 	virtual LENGTH size () const = 0 ;
+	virtual LENGTH step () const = 0 ;
 	virtual VREF<Pointer> self_m () leftvalue = 0 ;
 	virtual CREF<Pointer> self_m () const leftvalue = 0 ;
 	virtual VREF<Pointer> at (CREF<INDEX> index) leftvalue = 0 ;
 	virtual CREF<Pointer> at (CREF<INDEX> index) const leftvalue = 0 ;
-	virtual void resize () = 0 ;
+	virtual void resize (CREF<LENGTH> size_) = 0 ;
 } ;
 
 template <class A ,class B>
@@ -73,11 +74,17 @@ public:
 	}
 
 	explicit BoxBuffer (CREF<LENGTH> size_) {
-		BoxBufferHolder::create (thiz)->initialize (size_) ;
+		auto rax = Box<A>::make () ;
+		BoxBufferHolder::create (thiz)->initialize (rax ,size_) ;
+		rax.release () ;
 	}
 
 	LENGTH size () const {
 		return BoxBufferHolder::create (thiz)->size () ;
+	}
+
+	LENGTH step () const {
+		return BoxBufferHolder::create (thiz)->step () ;
 	}
 
 	VREF<ARR<A>> self_m () leftvalue {
@@ -132,13 +139,14 @@ struct RefBufferHolder implement Interface {
 	imports VFat<RefBufferHolder> create (VREF<RefBufferLayout> that) ;
 	imports CFat<RefBufferHolder> create (CREF<RefBufferLayout> that) ;
 
-	virtual void initialize (CREF<LENGTH> size_) = 0 ;
+	virtual void initialize (CREF<BoxLayout> value ,CREF<LENGTH> size_) = 0 ;
 	virtual LENGTH size () const = 0 ;
+	virtual LENGTH step () const = 0 ;
 	virtual VREF<Pointer> self_m () leftvalue = 0 ;
 	virtual CREF<Pointer> self_m () const leftvalue = 0 ;
 	virtual VREF<Pointer> at (CREF<INDEX> index) leftvalue = 0 ;
 	virtual CREF<Pointer> at (CREF<INDEX> index) const leftvalue = 0 ;
-	virtual void resize () = 0 ;
+	virtual void resize (CREF<LENGTH> size_) = 0 ;
 } ;
 
 template <class A>
@@ -147,11 +155,17 @@ public:
 	implicit RefBuffer () = default ;
 
 	explicit RefBuffer (CREF<LENGTH> size_) {
-		RefBufferHolder::create (thiz)->initialize (size_) ;
+		auto rax = Box<A>::make () ;
+		RefBufferHolder::create (thiz)->initialize (rax ,size_) ;
+		rax.release () ;
 	}
 
 	LENGTH size () const {
 		return RefBufferHolder::create (thiz)->size () ;
+	}
+
+	LENGTH step () const {
+		return RefBufferHolder::create (thiz)->step () ;
 	}
 
 	VREF<ARR<A>> self_m () leftvalue {

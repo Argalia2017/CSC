@@ -5,19 +5,9 @@
 using namespace CSC ;
 using namespace std ;
 
-void test_r (CREF<Capture<int ,float ,int>> initval) {
-	initval ([] (int a ,float b ,int c) {
-		cout << a << "\n" ;
-		cout << b << "\n" ;
-		cout << c << "\n" ;
-	}) ;
-}
-
-void test () {
-	test_r (capture (1 ,3.2f ,2)) ;
-}
-
 exports int main () {
-	test () ;
+	auto rax = Box<FLT64>::make (32.0f) ;
+	auto rbx = Ref<FLT64>::make (32.0f) ;
+	auto rdx = RefBuffer<int> (2) ;
 	return 0 ;
 }

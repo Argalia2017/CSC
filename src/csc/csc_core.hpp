@@ -103,6 +103,11 @@ public:
 	}
 
 	template <class ARG1>
+	imports RREF<Pointer> from (RREF<ARG1> that) {
+		return reinterpret_cast<RREF<Pointer>> (that) ;
+	}
+
+	template <class ARG1>
 	inline operator VREF<ARG1> () leftvalue {
 		return reinterpret_cast<VREF<ARG1>> (thiz) ;
 	}
@@ -455,6 +460,21 @@ struct Visitor implement Interface {
 	virtual void push (CREF<QUAD> a) const = 0 ;
 } ;
 
+template <class A ,class B>
+class Fat implement A {
+protected:
+	FLAG mPointer ;
+
+public:
+	VREF<B> thix_m () leftvalue {
+		return Pointer::make (mPointer) ;
+	}
+
+	CREF<B> thix_m () const leftvalue {
+		return Pointer::make (mPointer) ;
+	}
+} ;
+
 template <class A>
 class VFat {
 protected:
@@ -470,12 +490,13 @@ public:
 		mPointer = address (pointer) ;
 	}
 
-	VREF<A> self_m () leftvalue {
-		return Pointer::from (thiz) ;
-	}
-
 	inline VPTR<A> operator-> () rightvalue {
 		return (&self) ;
+	}
+
+private:
+	VREF<A> self_m () leftvalue {
+		return Pointer::from (thiz) ;
 	}
 } ;
 
@@ -494,12 +515,13 @@ public:
 		mPointer = address (pointer) ;
 	}
 
-	CREF<A> self_m () leftvalue {
-		return Pointer::from (thiz) ;
-	}
-
 	inline CPTR<A> operator-> () rightvalue {
 		return (&self) ;
+	}
+
+private:
+	CREF<A> self_m () leftvalue {
+		return Pointer::from (thiz) ;
 	}
 } ;
 
@@ -527,7 +549,7 @@ public:
 	}
 
 	void destroy (CREF<LENGTH> size_) noexcept override {
-		auto &&rax = unsafe_cast[TYPE<ARR<A>>::expr] (mValue) ;
+		auto &&rax = unsafe_cast[TYPE<ARR<A ,RANK1>>::expr] (mValue) ;
 		for (auto &&i : iter (0 ,size_)) {
 			rax[i].~A () ;
 		}
@@ -633,12 +655,12 @@ public:
 	template <class ARG1 ,class...ARG2>
 	void remake (TYPEID<ARG1> ,XREF<ARG2>...initval) {
 		assert (mHolder == ZERO) ;
-		const auto r1x = CPTR<csc_temp_t> (&thiz) ;
+		const auto r1x = VPTR<csc_temp_t> (&thiz) ;
 		new (r1x) UnknownBinder<ARG1> (keep[TYPE<XREF<ARG2>>::expr] (initval)...) ;
 	}
 
 	void release () {
-		return BoxHolder::acquire (thiz)->release () ;
+		return BoxHolder::create (thiz)->release () ;
 	}
 } ;
 
@@ -655,7 +677,7 @@ static constexpr auto memorize = FUNCTION_memorize () ;
 
 class HeapProcLayout {
 public:
-	FLAG mPointer ;
+	FLAG mHolder ;
 } ;
 
 struct HeapProcHolder implement Interface {
@@ -872,7 +894,7 @@ struct SliceHolder implement Interface {
 
 	virtual void initialize (CREF<SliceData> data) = 0 ;
 	virtual LENGTH size () const = 0 ;
-	virtual CREF<Pointer> at (CREF<INDEX> index) const = 0 ;
+	virtual RREF<Pointer> at (CREF<INDEX> index ,RREF<STRU32> unused) const = 0 ;
 	virtual BOOL equal (CREF<SliceLayout> that) const = 0 ;
 	virtual FLAG compr (CREF<SliceLayout> that) const = 0 ;
 	virtual void visit (CREF<Visitor> visitor) const = 0 ;
@@ -919,7 +941,7 @@ public:
 	}
 
 	A at (CREF<INDEX> index) const {
-		return SliceHolder::create (thiz)->at (index) ;
+		return SliceHolder::create (thiz)->at (index ,STRU32 ()) ;
 	}
 
 	inline A operator[] (CREF<INDEX> index) const {
@@ -1016,7 +1038,7 @@ public:
 		return thiz ;
 	}
 
-	implicit Clazz (RREF<Clazz> that) = default ;
+	implicit Clazz (RREF<Clazz>) = default ;
 
 	implicit VREF<Clazz> operator= (RREF<Clazz>) = default ;
 
@@ -1121,7 +1143,7 @@ private:
 	using FAKE_ALIGN = RANK8 ;
 
 protected:
-	Storage<FAKE_SIZE ,FAKE_ALIGN> mValue ;
+	TEMP<Storage<FAKE_SIZE ,FAKE_ALIGN>> mValue ;
 
 public:
 	implicit Auto () = delete ;
