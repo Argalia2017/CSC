@@ -39,6 +39,8 @@ public:
 
 	void acquire (CREF<BoxLayout> that) override {
 		thix.mHolder = that.mHolder ;
+		if (thix.mHolder == ZERO)
+			return ;
 		const auto r1x = fake.type_size () ;
 		const auto r2x = fake.type_align () ;
 		const auto r3x = operator_alignas (address (thix.mHolder) + SIZE_OF<FLAG>::expr ,r2x) ;
@@ -156,9 +158,13 @@ public:
 
 	RefLayout share () const override {
 		RefLayout ret ;
-		ret.mHolder = thix.mHolder ;
-		ret.mPointer = thix.mPointer ;
-		fake.mCounter++ ;
+		if ifswitch (TRUE) {
+			ret.mHolder = thix.mHolder ;
+			ret.mPointer = thix.mPointer ;
+			if (ret.mHolder == ZERO)
+				discard ;
+			fake.mCounter++ ;
+		}
 		return move (ret) ;
 	}
 
@@ -188,9 +194,8 @@ public:
 		return thix.mThis->mEnd - thix.mThis->mBegin ;
 	}
 
-	RREF<Pointer> at (CREF<INDEX> index ,RREF<STRU32> ret) const override {
-		ret = load (thix.mThis->mBegin + index * thix.mThis->mStep) ;
-		return Pointer::from (move (ret)) ;
+	STRU32 at (CREF<INDEX> index) const override {
+		return load (thix.mThis->mBegin + index * thix.mThis->mStep) ;
 	}
 
 	STRU32 load (CREF<FLAG> addr) const {

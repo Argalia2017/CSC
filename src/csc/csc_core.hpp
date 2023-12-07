@@ -877,7 +877,6 @@ struct FUNCTION_capture {
 static constexpr auto capture = FUNCTION_capture () ;
 
 struct SliceData {
-	Ref<SliceData> mPrefix ;
 	FLAG mBegin ;
 	FLAG mEnd ;
 	LENGTH mStep ;
@@ -894,7 +893,7 @@ struct SliceHolder implement Interface {
 
 	virtual void initialize (CREF<SliceData> data) = 0 ;
 	virtual LENGTH size () const = 0 ;
-	virtual RREF<Pointer> at (CREF<INDEX> index ,RREF<STRU32> unused) const = 0 ;
+	virtual STRU32 at (CREF<INDEX> index) const = 0 ;
 	virtual BOOL equal (CREF<SliceLayout> that) const = 0 ;
 	virtual FLAG compr (CREF<SliceLayout> that) const = 0 ;
 	virtual void visit (CREF<Visitor> visitor) const = 0 ;
@@ -909,10 +908,9 @@ public:
 	implicit Slice () = default ;
 
 	template <class ARG1>
-	explicit Slice (RREF<Slice> prefix ,CREF<ARG1> text) {
+	explicit Slice (CREF<ARG1> text) {
 		auto &&rax = memorize ([&] () {
 			SliceData ret ;
-			ret.mPrefix = prefix.mThis.share () ;
 			ret.mBegin = address (text) ;
 			ret.mEnd = ret.mBegin + SIZE_OF<ARG1>::expr ;
 			ret.mStep = ALIGN_OF<ARG1>::expr ;
@@ -941,7 +939,7 @@ public:
 	}
 
 	A at (CREF<INDEX> index) const {
-		return SliceHolder::create (thiz)->at (index ,STRU32 ()) ;
+		return A (SliceHolder::create (thiz)->at (index)) ;
 	}
 
 	inline A operator[] (CREF<INDEX> index) const {
@@ -1016,7 +1014,7 @@ public:
 
 	template <class ARG1>
 	explicit Clazz (TYPEID<ARG1>) {
-		const auto r1x = slice (__FUNCSIG__) ;
+		const auto r1x = Slice<STR> ("") ;
 		auto &&rax = memorize ([&] () {
 			ClazzData ret ;
 			ret.mTypeSize = SIZE_OF<ARG1>::expr ;
@@ -1097,17 +1095,36 @@ public:
 
 class Exception {
 protected:
-	Slice<STR> mWhat ;
+	Slice<STR> mWhatA ;
+	Slice<STR> mWhatB ;
+	Slice<STR> mWhatC ;
 
 public:
 	implicit Exception () = default ;
 
-	explicit Exception (CREF<Slice<STR>> what_) {
-		mWhat = what_ ;
+	explicit Exception (CREF<Slice<STR>> a) {
+		mWhatA = a ;
 	}
 
-	Slice<STR> what () const {
-		return mWhat ;
+	explicit Exception (CREF<Slice<STR>> a ,CREF<Slice<STR>> b) {
+		mWhatA = a ;
+		mWhatB = b ;
+	}
+
+	explicit Exception (CREF<Slice<STR>> a ,CREF<Slice<STR>> b ,CREF<Slice<STR>> c) {
+		mWhatA = a ;
+		mWhatB = b ;
+		mWhatC = c ;
+	}
+
+	Slice<STR> what (CREF<INDEX> index) const {
+		if (index == 0)
+			return mWhatA ;
+		if (index == 1)
+			return mWhatB ;
+		if (index == 2)
+			return mWhatC ;
+		return Slice<STR> () ;
 	}
 
 	void raise () {

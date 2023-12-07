@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AutoVisualizer xmlns="http://schemas.microsoft.com/vstudio/debugger/natvis/2010">
+
+  <!--"https://docs.microsoft.com/en-us/visualstudio/debugger/create-custom-views-of-native-objects?view=vs-2017#BKMK_Why_create_visualizations_"-->
+  <!--"https://docs.microsoft.com/en-us/visualstudio/debugger/format-specifiers-in-cpp?view=vs-2017#BKMK_Visual_Studio_2012_format_specifiers"-->
+  <!--"https://docs.microsoft.com/en-us/visualstudio/debugger/pseudovariables?view=vs-2017"-->
+  <!--"https://docs.microsoft.com/en-us/visualstudio/debugger/context-operator-cpp?view=vs-2017"-->
+
+  <!--csc_core.hpp-->
+  
+  <Type Name="CSC::Box&lt;*&gt;">
+    <DisplayString Condition="mHolder==0">{{???}}</DisplayString>
+    <Expand HideRawView="true">
+      <Item Name="[+]" Condition="mHolder==0">*(int*)0</Item>
+      <Item Name="[+]" Condition="mHolder!=0">*($T1*)&amp;mValue</Item>
+    </Expand>
+  </Type>
+
+  <Type Name="CSC::Ref&lt;*&gt;">
+    <DisplayString Condition="mPointer==0">{{???}}</DisplayString>
+    <Expand HideRawView="true">
+      <Item Name="[+]" Condition="mPointer==0">*(int*)0</Item>
+      <Item Name="[+]" Condition="mPointer!=0">*($T1*)mPointer</Item>
+    </Expand>
+  </Type>
+
+  <Type Name="CSC::SliceData">
+    <DisplayString Condition="mStep==1">{mBegin,s8}</DisplayString>
+    <DisplayString Condition="mStep==2">{mBegin,su}</DisplayString>
+    <DisplayString Condition="mStep==4">{mBegin,s32}</DisplayString>
+    <StringView Condition="mStep==1">mBegin,s8</StringView>
+    <StringView Condition="mStep==2">mBegin,su</StringView>
+    <StringView Condition="mStep==4">mBegin,s32</StringView>
+    <Expand HideRawView="true" />
+  </Type>
+
+  <Type Name="CSC::Slice&lt;*&gt;">
+    <Expand HideRawView="true">
+      <ExpandedItem>mThis</ExpandedItem>
+    </Expand>
+  </Type>
+
+  <Type Name="CSC::Clazz">
+    <Expand HideRawView="true">
+      <ExpandedItem>mThis</ExpandedItem>
+    </Expand>
+  </Type>
+
+  <Type Name="CSC::Clazz">
+    <Expand HideRawView="true">
+      <ExpandedItem>mThis</ExpandedItem>
+    </Expand>
+  </Type>
+
+  <Type Name="CSC::Auto">
+    <Expand HideRawView="true">
+      <Item Name="[+]">(CSC::Unknown*)mThis.mHolder</Item>
+    </Expand>
+  </Type>
+  
+  <!--csc_basic.hpp-->
+  
+  <Type Name="CSC::RefBuffer&lt;*&gt;">
+    <Expand HideRawView="true">
+      <Item Name="[size]">mSize</Item>
+      <Item Name="[step]">mStep</Item>
+      <ArrayItems Condition="mSize&lt;10">
+        <Size>mSize</Size>
+        <ValuePointer>($T1*)mBuffer.mPointer</ValuePointer>
+      </ArrayItems>
+      <ArrayItems Condition="mSize&gt;=10">
+        <Size>10</Size>
+        <ValuePointer>($T1*)mBuffer.mPointer</ValuePointer>
+      </ArrayItems>
+      <Item Name="[+]" Condition="mSize&gt;=10">0</Item>
+    </Expand>
+  </Type>
+
+</AutoVisualizer>

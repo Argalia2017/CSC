@@ -48,6 +48,9 @@
     <None Include="..\..\src\csc\csc_basic.inl" />
     <None Include="..\..\src\csc\csc_core.inl" />
   </ItemGroup>
+  <ItemGroup>
+    <Natvis Include="..\..\src\csc\cpp.natvis" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>
     <ProjectGuid>{4951C889-6723-4F82-962D-0C24330B9A89}</ProjectGuid>

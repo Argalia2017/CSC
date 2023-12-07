@@ -51,4 +51,9 @@
       <Filter>csc</Filter>
     </None>
   </ItemGroup>
+  <ItemGroup>
+    <Natvis Include="..\..\src\csc\cpp.natvis">
+      <Filter>csc</Filter>
+    </Natvis>
+  </ItemGroup>
 </Project>
