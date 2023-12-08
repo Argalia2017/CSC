@@ -38,8 +38,8 @@
     <ClInclude Include="..\..\src\csc\csc_begin.h" />
     <ClInclude Include="..\..\src\csc\csc_core.hpp" />
     <ClInclude Include="..\..\src\csc\csc_end.h" />
-    <ClInclude Include="..\..\src\csc\csc_geometry.hpp" />
     <ClInclude Include="..\..\src\csc\csc_image.hpp" />
+    <ClInclude Include="..\..\src\csc\csc_matrix.hpp" />
     <ClInclude Include="..\..\src\csc\csc_type.hpp" />
     <ClInclude Include="..\..\src\util.h" />
   </ItemGroup>
@@ -47,6 +47,7 @@
     <None Include="..\..\src\csc\cpp.hint" />
     <None Include="..\..\src\csc\csc_basic.inl" />
     <None Include="..\..\src\csc\csc_core.inl" />
+    <None Include="..\..\src\csc\csc_matrix.inl" />
   </ItemGroup>
   <ItemGroup>
     <Natvis Include="..\..\src\csc\cpp.natvis" />

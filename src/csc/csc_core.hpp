@@ -313,6 +313,24 @@ struct FUNCTION_operator_compr {
 
 static constexpr auto operator_compr = FUNCTION_operator_compr () ;
 
+struct Visitor implement Interface {
+	virtual void begin () const = 0 ;
+	virtual void end () const = 0 ;
+	virtual void push (CREF<BYTE> a) const = 0 ;
+	virtual void push (CREF<WORD> a) const = 0 ;
+	virtual void push (CREF<CHAR> a) const = 0 ;
+	virtual void push (CREF<QUAD> a) const = 0 ;
+} ;
+
+struct FUNCTION_operator_visit {
+	template <class ARG1>
+	inline void operator() (CREF<Visitor> visitor ,CREF<ARG1> a) const noexcept {
+		return ;
+	}
+} ;
+
+static constexpr auto operator_visit = FUNCTION_operator_visit () ;
+
 class IndexIterator {
 protected:
 	LENGTH mRank ;
@@ -450,15 +468,6 @@ struct FUNCTION_iter {
 } ;
 
 static constexpr auto iter = FUNCTION_iter () ;
-
-struct Visitor implement Interface {
-	virtual void begin () const = 0 ;
-	virtual void end () const = 0 ;
-	virtual void push (CREF<BYTE> a) const = 0 ;
-	virtual void push (CREF<WORD> a) const = 0 ;
-	virtual void push (CREF<CHAR> a) const = 0 ;
-	virtual void push (CREF<QUAD> a) const = 0 ;
-} ;
 
 template <class A ,class B>
 class Fat implement A {

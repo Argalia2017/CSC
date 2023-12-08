@@ -22,3 +22,4 @@
 
 #include "csc/csc_core.inl"
 #include "csc/csc_basic.inl"
+#include "csc/csc_matrix.inl"

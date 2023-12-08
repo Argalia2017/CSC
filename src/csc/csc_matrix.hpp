@@ -1,7 +1,7 @@
 ﻿#pragma once
 
-#ifndef __CSC_GEOMETRY__
-#define __CSC_GEOMETRY__
+#ifndef __CSC_MATRIX__
+#define __CSC_MATRIX__
 #endif
 
 #include "csc.hpp"
@@ -44,61 +44,71 @@ struct BBOX3D {
 	POINT3D mMax ;
 } ;
 
-class VectorLayout {} ;
+template <class A>
+class VectorLayout {
+public:
+	BoxBuffer<A ,RANK4> mVector ;
+} ;
 
-class MatrixLayout {} ;
+template <class A>
+class MatrixLayout {
+public:
+	BoxBuffer<A ,RANK4> mMatrix ;
+} ;
 
-class QuaternionLayout {} ;
+template <class A>
+class QuaternionLayout {
+public:
+	BoxBuffer<A ,RANK4> mQuaternion ;
+} ;
 
 template <class A>
 struct VectorHolder implement Interface {
-	imports VFat<VectorHolder> create (VREF<VectorLayout> that) ;
-	imports CFat<VectorHolder> create (CREF<VectorLayout> that) ;
+	imports VFat<VectorHolder> create (VREF<VectorLayout<A>> that) ;
+	imports CFat<VectorHolder> create (CREF<VectorLayout<A>> that) ;
 
 	virtual void initialize (CREF<A> x ,CREF<A> y ,CREF<A> z ,CREF<A> w) = 0 ;
 	virtual void initialize (CREF<PIXEL> xy) = 0 ;
 	virtual void initialize (CREF<POINT2F> xy) = 0 ;
 	virtual void initialize (CREF<POINT3F> xyz) = 0 ;
-	virtual CREF<VectorLayout> zero () const = 0 ;
-	virtual CREF<VectorLayout> axis_x () const = 0 ;
-	virtual CREF<VectorLayout> axis_y () const = 0 ;
-	virtual CREF<VectorLayout> axis_z () const = 0 ;
-	virtual CREF<VectorLayout> axis_w () const = 0 ;
+	virtual CREF<VectorLayout<A>> zero () const = 0 ;
+	virtual CREF<VectorLayout<A>> axis_x () const = 0 ;
+	virtual CREF<VectorLayout<A>> axis_y () const = 0 ;
+	virtual CREF<VectorLayout<A>> axis_z () const = 0 ;
+	virtual CREF<VectorLayout<A>> axis_w () const = 0 ;
 	virtual POINT2F xy () const = 0 ;
 	virtual POINT3F xyz () const = 0 ;
 	virtual VREF<A> at (CREF<INDEX> y) leftvalue = 0 ;
 	virtual CREF<A> at (CREF<INDEX> y) const leftvalue = 0 ;
-	virtual BOOL equal (CREF<VectorLayout> that) const = 0 ;
-	virtual FLAG compr (CREF<VectorLayout> that) const = 0 ;
+	virtual BOOL equal (CREF<VectorLayout<A>> that) const = 0 ;
+	virtual FLAG compr (CREF<VectorLayout<A>> that) const = 0 ;
 	virtual void visit (CREF<Visitor> visitor) const = 0 ;
-	virtual void add_with (CREF<VectorLayout> that) = 0 ;
-	virtual VectorLayout sub (CREF<VectorLayout> that) const = 0 ;
-	virtual void sub_with (CREF<VectorLayout> that) = 0 ;
-	virtual VectorLayout mul (CREF<A> scale) const = 0 ;
+	virtual VectorLayout<A> add (CREF<VectorLayout<A>> that) const = 0 ;
+	virtual void add_with (CREF<VectorLayout<A>> that) = 0 ;
+	virtual VectorLayout<A> sub (CREF<VectorLayout<A>> that) const = 0 ;
+	virtual void sub_with (CREF<VectorLayout<A>> that) = 0 ;
+	virtual VectorLayout<A> mul (CREF<A> scale) const = 0 ;
 	virtual void mul_with (CREF<A> scale) = 0 ;
-	virtual A dot (CREF<VectorLayout> that) const = 0 ;
-	virtual VectorLayout mul (CREF<MatrixLayout> that) const = 0 ;
-	virtual VectorLayout cross (CREF<VectorLayout> that) const = 0 ;
-	virtual void cross_with (CREF<VectorLayout> that) = 0 ;
-	virtual VectorLayout minus () const = 0 ;
+	virtual A dot (CREF<VectorLayout<A>> that) const = 0 ;
+	virtual VectorLayout<A> mul (CREF<MatrixLayout<A>> that) const = 0 ;
+	virtual VectorLayout<A> cross (CREF<VectorLayout<A>> that) const = 0 ;
+	virtual void cross_with (CREF<VectorLayout<A>> that) = 0 ;
+	virtual VectorLayout<A> minus () const = 0 ;
 	virtual A magnitude () const = 0 ;
-	virtual VectorLayout normalize () const = 0 ;
-	virtual VectorLayout projection () const = 0 ;
-	virtual VectorLayout homogenize () const = 0 ;
+	virtual VectorLayout<A> normalize () const = 0 ;
+	virtual VectorLayout<A> projection () const = 0 ;
+	virtual VectorLayout<A> homogenize () const = 0 ;
 } ;
 
 template <class>
 class Matrix ;
 
 template <class A>
-class Vector implement VectorLayout {
-protected:
-	BoxBuffer<A ,RANK4> mVector ;
-
+class Vector implement VectorLayout<A> {
 public:
 	implicit Vector () = default ;
 
-	implicit Vector (RREF<VectorLayout> that) :Vector (keep[TYPE<RREF<Vector>>::expr] (that)) {}
+	implicit Vector (RREF<VectorLayout<A>> that) :Vector (keep[TYPE<RREF<Vector>>::expr] (that)) {}
 
 	explicit Vector (CREF<A> x ,CREF<A> y ,CREF<A> z ,CREF<A> w) {
 		VectorHolder<A>::create (thiz)->initialize (x ,y ,z ,w) ;
@@ -303,47 +313,47 @@ public:
 
 template <class A>
 struct MatrixHolder implement Interface {
-	imports VFat<MatrixHolder> create (VREF<MatrixLayout> that) ;
-	imports CFat<MatrixHolder> create (CREF<MatrixLayout> that) ;
+	imports VFat<MatrixHolder> create (VREF<MatrixLayout<A>> that) ;
+	imports CFat<MatrixHolder> create (CREF<MatrixLayout<A>> that) ;
 
-	virtual void initialize (CREF<VectorLayout> x ,CREF<VectorLayout> y ,CREF<VectorLayout> z ,CREF<VectorLayout> w) = 0 ;
+	virtual void initialize (CREF<VectorLayout<A>> x ,CREF<VectorLayout<A>> y ,CREF<VectorLayout<A>> z ,CREF<VectorLayout<A>> w) = 0 ;
 	virtual VREF<A> at (CREF<INDEX> x ,CREF<INDEX> y) leftvalue = 0 ;
 	virtual CREF<A> at (CREF<INDEX> x ,CREF<INDEX> y) const leftvalue = 0 ;
-	virtual BOOL equal (CREF<MatrixLayout> that) const = 0 ;
-	virtual FLAG compr (CREF<MatrixLayout> that) const = 0 ;
+	virtual BOOL equal (CREF<MatrixLayout<A>> that) const = 0 ;
+	virtual FLAG compr (CREF<MatrixLayout<A>> that) const = 0 ;
 	virtual void visit (CREF<Visitor> visitor) const = 0 ;
-	virtual MatrixLayout add (CREF<MatrixLayout> that) const = 0 ;
-	virtual void add_with (CREF<MatrixLayout> that) = 0 ;
-	virtual MatrixLayout sub (CREF<MatrixLayout> that) const = 0 ;
-	virtual void sub_with (CREF<MatrixLayout> that) = 0 ;
-	virtual MatrixLayout mul (CREF<A> scale) const = 0 ;
+	virtual MatrixLayout<A> add (CREF<MatrixLayout<A>> that) const = 0 ;
+	virtual void add_with (CREF<MatrixLayout<A>> that) = 0 ;
+	virtual MatrixLayout<A> sub (CREF<MatrixLayout<A>> that) const = 0 ;
+	virtual void sub_with (CREF<MatrixLayout<A>> that) = 0 ;
+	virtual MatrixLayout<A> mul (CREF<A> scale) const = 0 ;
 	virtual void mul_with (CREF<A> scale) = 0 ;
-	virtual MatrixLayout mul (CREF<MatrixLayout> that) const = 0 ;
-	virtual void mul_with (CREF<MatrixLayout> scale) = 0 ;
-	virtual MatrixLayout minus () const = 0 ;
-	virtual MatrixLayout transpose () const = 0 ;
-	virtual MatrixLayout triangular () const = 0 ;
-	virtual MatrixLayout homogensize () const = 0 ;
+	virtual MatrixLayout<A> mul (CREF<MatrixLayout<A>> that) const = 0 ;
+	virtual void mul_with (CREF<MatrixLayout<A>> scale) = 0 ;
+	virtual MatrixLayout<A> minus () const = 0 ;
+	virtual MatrixLayout<A> transpose () const = 0 ;
+	virtual MatrixLayout<A> triangular () const = 0 ;
+	virtual MatrixLayout<A> homogensize () const = 0 ;
 	virtual A determinant () const = 0 ;
-	virtual MatrixLayout inverse () const = 0 ;
+	virtual MatrixLayout<A> inverse () const = 0 ;
 	virtual A trace () const = 0 ;
 	virtual RREF<Pointer> decompose () const = 0 ;
 	virtual RREF<Pointer> singular () const = 0 ;
-	virtual MatrixLayout pseudo_inverse () const = 0 ;
+	virtual MatrixLayout<A> pseudo_inverse () const = 0 ;
 
 	virtual void DiagMatrix_initialize (CREF<A> x ,CREF<A> y ,CREF<A> z ,CREF<A> w) = 0 ;
-	virtual void ShearMatrix_initialize (CREF<VectorLayout> x ,CREF<VectorLayout> y ,CREF<VectorLayout> z) = 0 ;
-	virtual void RotationMatrix_initialize (CREF<VectorLayout> normal ,CREF<A> angle) = 0 ;
-	virtual void TranslationMatrix_initialize (CREF<VectorLayout> xyz) = 0 ;
+	virtual void ShearMatrix_initialize (CREF<VectorLayout<A>> x ,CREF<VectorLayout<A>> y ,CREF<VectorLayout<A>> z) = 0 ;
+	virtual void RotationMatrix_initialize (CREF<VectorLayout<A>> normal ,CREF<A> angle) = 0 ;
+	virtual void TranslationMatrix_initialize (CREF<VectorLayout<A>> xyz) = 0 ;
 	virtual void TranslationMatrix_initialize (CREF<A> x ,CREF<A> y ,CREF<A> z) = 0 ;
 	virtual void PerspectiveMatrix_initialize (CREF<A> fx ,CREF<A> fy ,CREF<A> wx ,CREF<A> wy) = 0 ;
-	virtual void ProjectionMatrix_initialize (CREF<VectorLayout> normal ,CREF<VectorLayout> center ,CREF<VectorLayout> light) = 0 ;
-	virtual void ViewMatrix_initialize (CREF<VectorLayout> vx ,CREF<VectorLayout> vy) = 0 ;
-	virtual void ViewMatrix_initialize (CREF<VectorLayout> vx ,CREF<VectorLayout> vy ,CREF<FLAG> flag) = 0 ;
+	virtual void ProjectionMatrix_initialize (CREF<VectorLayout<A>> normal ,CREF<VectorLayout<A>> center ,CREF<VectorLayout<A>> light) = 0 ;
+	virtual void ViewMatrix_initialize (CREF<VectorLayout<A>> vx ,CREF<VectorLayout<A>> vy) = 0 ;
+	virtual void ViewMatrix_initialize (CREF<VectorLayout<A>> vx ,CREF<VectorLayout<A>> vy ,CREF<FLAG> flag) = 0 ;
 } ;
 
 template <class A>
-class Matrix implement MatrixLayout {
+class Matrix implement MatrixLayout<A> {
 private:
 	struct DECOMPOSE {
 		Matrix mT ;
@@ -358,13 +368,10 @@ private:
 		Matrix mV ;
 	} ;
 
-protected:
-	BoxBuffer<A ,ENUM<16>> mMatrix ;
-
 public:
 	implicit Matrix () = default ;
 
-	implicit Matrix (RREF<MatrixLayout> that) :Matrix (keep[TYPE<RREF<Matrix>>::expr] (that)) {}
+	implicit Matrix (RREF<MatrixLayout<A>> that) :Matrix (keep[TYPE<RREF<Matrix>>::expr] (that)) {}
 
 	explicit Matrix (CREF<Vector<A>> x ,CREF<Vector<A>> y ,CREF<Vector<A>> z ,CREF<Vector<A>> w) {
 		MatrixHolder<A>::create (thiz)->initialize (x ,y ,z ,w) ;
@@ -673,32 +680,29 @@ public:
 
 template <class A>
 struct QuaternionHolder implement Interface {
-	imports VFat<QuaternionHolder> create (VREF<QuaternionLayout> that) ;
-	imports CFat<QuaternionHolder> create (CREF<QuaternionLayout> that) ;
+	imports VFat<QuaternionHolder> create (VREF<QuaternionLayout<A>> that) ;
+	imports CFat<QuaternionHolder> create (CREF<QuaternionLayout<A>> that) ;
 
 	virtual void initialize (CREF<A> x ,CREF<A> y ,CREF<A> z ,CREF<A> w) = 0 ;
-	virtual void initialize (CREF<MatrixLayout> that) = 0 ;
+	virtual void initialize (CREF<MatrixLayout<A>> that) = 0 ;
 	virtual VREF<A> at (CREF<INDEX> x ,CREF<INDEX> y) leftvalue = 0 ;
 	virtual CREF<A> at (CREF<INDEX> x ,CREF<INDEX> y) const leftvalue = 0 ;
-	virtual BOOL equal (CREF<QuaternionLayout> that) const = 0 ;
-	virtual FLAG compr (CREF<QuaternionLayout> that) const = 0 ;
+	virtual BOOL equal (CREF<QuaternionLayout<A>> that) const = 0 ;
+	virtual FLAG compr (CREF<QuaternionLayout<A>> that) const = 0 ;
 	virtual void visit (CREF<Visitor> visitor) const = 0 ;
-	virtual VectorLayout axis () const = 0 ;
+	virtual VectorLayout<A> axis () const = 0 ;
 	virtual A angle () const = 0 ;
-	virtual VectorLayout angle_axis () const = 0 ;
-	virtual MatrixLayout matrix () const = 0 ;
-	virtual QuaternionLayout normalize () const = 0 ;
+	virtual VectorLayout<A> angle_axis () const = 0 ;
+	virtual MatrixLayout<A> matrix () const = 0 ;
+	virtual QuaternionLayout<A> normalize () const = 0 ;
 } ;
 
 template <class A>
-class Quaternion implement QuaternionLayout {
-protected:
-	BoxBuffer<A ,RANK4> mQuaternion ;
-
+class Quaternion implement QuaternionLayout<A> {
 public:
 	implicit Quaternion () = default ;
 
-	implicit Quaternion (RREF<QuaternionLayout> that) :Quaternion (keep[TYPE<RREF<Quaternion>>::expr] (that)) {}
+	implicit Quaternion (RREF<QuaternionLayout<A>> that) :Quaternion (keep[TYPE<RREF<Quaternion>>::expr] (that)) {}
 
 	explicit Quaternion (CREF<A> x ,CREF<A> y ,CREF<A> z ,CREF<A> w) {
 		QuaternionHolder<A>::create (thiz)->initialize (x ,y ,z ,w) ;

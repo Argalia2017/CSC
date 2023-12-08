@@ -242,7 +242,7 @@ public:
 		const auto r1x = size () ;
 		for (auto &&i : iter (0 ,r1x)) {
 			const auto r2x = load (thix.mThis->mBegin + i * thix.mThis->mStep) ;
-			visitor.push (bitwise (r2x)) ;
+			operator_visit (visitor ,r2x) ;
 		}
 		visitor.end () ;
 	}
@@ -301,10 +301,10 @@ public:
 
 	void visit (CREF<Visitor> visitor) const override {
 		visitor.begin () ;
-		visitor.push (bitwise (type_size ())) ;
-		visitor.push (bitwise (type_align ())) ;
-		visitor.push (bitwise (type_cabi ())) ;
-		type_name ().visit (visitor) ;
+		operator_visit (visitor ,type_size ()) ;
+		operator_visit (visitor ,type_align ()) ;
+		operator_visit (visitor ,type_cabi ()) ;
+		operator_visit (visitor ,type_name ()) ;
 		visitor.end () ;
 	}
 } ;
