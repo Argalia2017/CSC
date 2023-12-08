@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <AutoVisualizer xmlns="http://schemas.microsoft.com/vstudio/debugger/natvis/2010">
 
   <!--"https://docs.microsoft.com/en-us/visualstudio/debugger/create-custom-views-of-native-objects?view=vs-2017#BKMK_Why_create_visualizations_"-->
@@ -7,7 +7,7 @@
   <!--"https://docs.microsoft.com/en-us/visualstudio/debugger/context-operator-cpp?view=vs-2017"-->
 
   <!--csc_core.hpp-->
-  
+
   <Type Name="CSC::Box&lt;*&gt;">
     <DisplayString Condition="mHolder==0">{{???}}</DisplayString>
     <Expand HideRawView="true">
@@ -57,9 +57,12 @@
       <Item Name="[+]">(CSC::Unknown*)mThis.mHolder</Item>
     </Expand>
   </Type>
-  
+
   <!--csc_basic.hpp-->
-  
+
+  <Type Name="CSC::BoxBuffer&lt;*&gt;">
+  </Type>
+
   <Type Name="CSC::RefBuffer&lt;*&gt;">
     <Expand HideRawView="true">
       <Item Name="[size]">mSize</Item>
@@ -72,7 +75,7 @@
         <Size>10</Size>
         <ValuePointer>($T1*)mBuffer.mPointer</ValuePointer>
       </ArrayItems>
-      <Item Name="[+]" Condition="mSize&gt;=10">0</Item>
+      <Item Name="[+]" Condition="mSize&gt;=10">this</Item>
     </Expand>
   </Type>
 

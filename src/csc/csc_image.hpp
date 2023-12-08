@@ -87,7 +87,7 @@ public:
 	}
 
 	VREF<A> at (CREF<PIXEL> xy) leftvalue {
-		return at (xy.x ,xy.y) ;
+		return at (xy.mX ,xy.mY) ;
 	}
 
 	inline VREF<A> operator[] (CREF<PIXEL> xy) leftvalue {
@@ -103,7 +103,7 @@ public:
 	}
 
 	CREF<A> at (CREF<PIXEL> xy) const leftvalue {
-		return at (xy.x ,xy.y) ;
+		return at (xy.mX ,xy.mY) ;
 	}
 
 	inline CREF<A> operator[] (CREF<PIXEL> xy) const leftvalue {

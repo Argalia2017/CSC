@@ -370,8 +370,8 @@ public:
 } ;
 
 struct PIXEL {
-	INDEX x ;
-	INDEX y ;
+	INDEX mX ;
+	INDEX mY ;
 } ;
 
 class PixelIterator {
@@ -384,11 +384,11 @@ public:
 	implicit PixelIterator () = delete ;
 
 	explicit PixelIterator (CREF<INDEX> begin_x ,CREF<INDEX> end_x ,CREF<INDEX> begin_y ,CREF<INDEX> end_y) {
-		mBegin.x = begin_x ;
-		mBegin.y = begin_y ;
-		mEnd.x = operator_min (begin_x ,end_x) ;
-		mEnd.y = operator_min (begin_y ,end_y) ;
-		mRank = (mEnd.x - mBegin.x) * (mEnd.y - mBegin.y) ;
+		mBegin.mX = begin_x ;
+		mBegin.mY = begin_y ;
+		mEnd.mX = operator_min (begin_x ,end_x) ;
+		mEnd.mY = operator_min (begin_y ,end_y) ;
+		mRank = (mEnd.mX - mBegin.mX) * (mEnd.mY - mBegin.mY) ;
 		if (mRank > 0)
 			return ;
 		mBegin = mEnd ;
@@ -407,7 +407,7 @@ public:
 	}
 
 	BOOL good () const {
-		return mBegin.y != mEnd.y ;
+		return mBegin.mY != mEnd.mY ;
 	}
 
 	inline BOOL operator== (CREF<PixelIterator>) const {
@@ -427,11 +427,11 @@ public:
 	}
 
 	void next () {
-		mBegin.x++ ;
-		if (mBegin.x < mEnd.x)
+		mBegin.mX++ ;
+		if (mBegin.mX < mEnd.mX)
 			return ;
-		mBegin.x = 0 ;
-		mBegin.y++ ;
+		mBegin.mX = 0 ;
+		mBegin.mY++ ;
 	}
 
 	inline void operator++ () {
@@ -491,12 +491,7 @@ public:
 	}
 
 	inline VPTR<A> operator-> () rightvalue {
-		return (&self) ;
-	}
-
-private:
-	VREF<A> self_m () leftvalue {
-		return Pointer::from (thiz) ;
+		return (&unsafe_cast[TYPE<A>::expr] (mHolder)) ;
 	}
 } ;
 
@@ -516,12 +511,7 @@ public:
 	}
 
 	inline CPTR<A> operator-> () rightvalue {
-		return (&self) ;
-	}
-
-private:
-	CREF<A> self_m () leftvalue {
-		return Pointer::from (thiz) ;
+		return (&unsafe_cast[TYPE<A>::expr] (mHolder)) ;
 	}
 } ;
 
@@ -820,15 +810,7 @@ public:
 	}
 } ;
 
-class CaptureLayout {
-protected:
-	LENGTH mRank ;
-
-public:
-	implicit CaptureLayout () noexcept {
-		mRank = 0 ;
-	}
-} ;
+class CaptureLayout {} ;
 
 template <class...PARAMS>
 class Capture implement CaptureLayout {
@@ -1014,7 +996,7 @@ public:
 
 	template <class ARG1>
 	explicit Clazz (TYPEID<ARG1>) {
-		const auto r1x = Slice<STR> ("") ;
+		const auto r1x = Slice<STR> (__FUNCSIG__) ;
 		auto &&rax = memorize ([&] () {
 			ClazzData ret ;
 			ret.mTypeSize = SIZE_OF<ARG1>::expr ;

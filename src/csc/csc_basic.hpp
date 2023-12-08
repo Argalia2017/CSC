@@ -14,7 +14,7 @@ trait TUPLE_HELP ;
 
 template <class PARAMS>
 trait TUPLE_HELP<PARAMS ,REQUIRE<ENUM_EQ_ZERO<COUNT_OF<PARAMS>>>> {
-	struct Tuple ;
+	struct Tuple {} ;
 } ;
 
 template <class PARAMS>
@@ -63,6 +63,9 @@ struct BoxBufferHolder implement Interface {
 
 template <class A ,class B>
 class BoxBuffer implement BoxBufferLayout {
+private:
+	require (IS_TRIVIAL<A>) ;
+
 protected:
 	TEMP<ARR<A ,B>> mBuffer ;
 

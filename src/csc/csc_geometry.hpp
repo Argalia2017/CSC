@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #ifndef __CSC_GEOMETRY__
 #define __CSC_GEOMETRY__
@@ -13,25 +13,25 @@
 
 namespace CSC {
 struct POINT2F {
-	FLT32 x ;
-	FLT32 y ;
+	FLT32 mX ;
+	FLT32 mY ;
 } ;
 
 struct POINT2D {
-	FLT64 x ;
-	FLT64 y ;
+	FLT64 mX ;
+	FLT64 mY ;
 } ;
 
 struct POINT3F {
-	FLT32 x ;
-	FLT32 y ;
-	FLT32 z ;
+	FLT32 mX ;
+	FLT32 mY ;
+	FLT32 mZ ;
 } ;
 
 struct POINT3D {
-	FLT64 x ;
-	FLT64 y ;
-	FLT64 z ;
+	FLT64 mX ;
+	FLT64 mY ;
+	FLT64 mZ ;
 } ;
 
 struct BBOX3F {
@@ -383,7 +383,7 @@ public:
 	}
 
 	VREF<A> at (CREF<PIXEL> xy) leftvalue {
-		return at (xy.x ,xy.y) ;
+		return at (xy.mX ,xy.mY) ;
 	}
 
 	inline VREF<A> operator[] (CREF<PIXEL> xy) leftvalue {
@@ -399,7 +399,7 @@ public:
 	}
 
 	CREF<A> at (CREF<PIXEL> xy) const leftvalue {
-		return at (xy.x ,xy.y) ;
+		return at (xy.mX ,xy.mY) ;
 	}
 
 	inline CREF<A> operator[] (CREF<PIXEL> xy) const leftvalue {
