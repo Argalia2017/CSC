@@ -6,57 +6,6 @@
 #include "csc_basic.hpp"
 
 namespace CSC {
-class BoxBufferImplHolder implement Fat<BoxBufferHolder ,BoxBufferLayout> {
-public:
-	void initialize (CREF<Pointer> that) override {
-
-	}
-
-	void initialize (CREF<BoxLayout> value ,CREF<LENGTH> size_) override {
-
-	}
-
-	LENGTH size () const override {
-		return 0 ;
-	}
-
-	LENGTH step () const override {
-		return 0 ;
-	}
-
-	VREF<Pointer> self_m () leftvalue override {
-		return Pointer::from (thix) ;
-	}
-
-	CREF<Pointer> self_m () const leftvalue override {
-		return Pointer::from (thix) ;
-	}
-
-	VREF<Pointer> at (CREF<INDEX> index) leftvalue override {
-		assert (operator_between (index ,0 ,size ())) ;
-		const auto r1x = address (thix) + index * SIZE_OF<int>::expr ;
-		return Pointer::make (r1x) ;
-	}
-
-	CREF<Pointer> at (CREF<INDEX> index) const leftvalue override {
-		assert (operator_between (index ,0 ,size ())) ;
-		const auto r1x = address (thix) + index * SIZE_OF<int>::expr ;
-		return Pointer::make (r1x) ;
-	}
-
-	void resize (CREF<LENGTH> size_) override {
-		assert (FALSE) ;
-	}
-} ;
-
-exports VFat<BoxBufferHolder> BoxBufferHolder::create (VREF<BoxBufferLayout> that) {
-	return VFat<BoxBufferHolder> (BoxBufferImplHolder () ,that) ;
-}
-
-exports CFat<BoxBufferHolder> BoxBufferHolder::create (CREF<BoxBufferLayout> that) {
-	return CFat<BoxBufferHolder> (BoxBufferImplHolder () ,that) ;
-}
-
 class RefBufferImplHolder implement Fat<RefBufferHolder ,RefBufferLayout> {
 public:
 	void initialize (CREF<BoxLayout> value ,CREF<LENGTH> size_) override {

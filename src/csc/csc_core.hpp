@@ -522,7 +522,7 @@ struct Unknown implement Interface {
 } ;
 
 template <class A>
-class UnknownBinder implement Unknown {
+class UnknownBinder final implement Unknown {
 protected:
 	A mValue ;
 
@@ -810,6 +810,41 @@ public:
 	}
 } ;
 
+template <class...>
+trait TUPLE_HELP ;
+
+template <class PARAMS>
+trait TUPLE_HELP<PARAMS ,REQUIRE<ENUM_EQ_ZERO<COUNT_OF<PARAMS>>>> {
+	struct Tuple {} ;
+} ;
+
+template <class PARAMS>
+trait TUPLE_HELP<PARAMS ,REQUIRE<ENUM_EQUAL<COUNT_OF<PARAMS> ,RANK1>>> {
+	struct Tuple {
+		TYPE_M1ST_ONE<PARAMS> m1st ;
+	} ;
+} ;
+
+template <class PARAMS>
+trait TUPLE_HELP<PARAMS ,REQUIRE<ENUM_EQUAL<COUNT_OF<PARAMS> ,RANK2>>> {
+	struct Tuple {
+		TYPE_M1ST_ONE<PARAMS> m1st ;
+		TYPE_M2ND_ONE<PARAMS> m2nd ;
+	} ;
+} ;
+
+template <class PARAMS>
+trait TUPLE_HELP<PARAMS ,REQUIRE<ENUM_EQUAL<COUNT_OF<PARAMS> ,RANK3>>> {
+	struct Tuple {
+		TYPE_M1ST_ONE<PARAMS> m1st ;
+		TYPE_M2ND_ONE<PARAMS> m2nd ;
+		TYPE_M3RD_ONE<PARAMS> m3rd ;
+	} ;
+} ;
+
+template <class...A>
+using Tuple = typename TUPLE_HELP<TYPE<A...> ,ALWAYS>::Tuple ;
+
 class CaptureLayout {} ;
 
 template <class...PARAMS>
@@ -817,18 +852,14 @@ class Capture implement CaptureLayout {
 private:
 	using RANK = COUNT_OF<TYPE<PARAMS...>> ;
 
-	struct NODE {
-		ARR<FLAG ,RANK> mValue ;
-	} ;
-
 protected:
-	NODE mCapture ;
+	Tuple<ARR<FLAG ,RANK>> mCapture ;
 
 public:
 	implicit Capture () = delete ;
 
 	explicit Capture (CREF<KILL<FLAG ,PARAMS>>...params) {
-		mCapture = NODE {params...} ;
+		mCapture = Tuple<ARR<FLAG ,RANK>> {params...} ;
 	}
 
 	imports CREF<Capture> from (CREF<CaptureLayout> that) {
@@ -845,7 +876,7 @@ public:
 
 	template <class ARG1 ,class...ARG2>
 	inline void operator() (CREF<ARG1> func ,TYPEID<TYPE<ARG2...>>) const {
-		return func (keep[TYPE<CREF<PARAMS>>::expr] (Pointer::make (mCapture.mValue[ARG2::expr]))...) ;
+		return func (keep[TYPE<CREF<PARAMS>>::expr] (Pointer::make (mCapture.m1st[ARG2::expr]))...) ;
 	}
 } ;
 
@@ -1142,7 +1173,7 @@ private:
 	using FAKE_ALIGN = RANK8 ;
 
 protected:
-	TEMP<Storage<FAKE_SIZE ,FAKE_ALIGN>> mValue ;
+	Storage<FAKE_SIZE ,FAKE_ALIGN> mValue ;
 
 public:
 	implicit Auto () = delete ;
