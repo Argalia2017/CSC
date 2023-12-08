@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #ifndef __CSC_IMAGE__
 #define __CSC_IMAGE__
@@ -9,6 +9,7 @@
 #include "csc_core.hpp"
 #include "csc_basic.hpp"
 #include "csc_array.hpp"
+#include "csc_math.hpp"
 
 namespace CSC {
 template <class A>

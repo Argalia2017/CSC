@@ -929,16 +929,16 @@ template <class A>
 using FUNCTION_PARAMS = typename REFLECT_FUNCTION_HELP<DEF<typeof (&A::operator())>>::PARAMS ;
 
 template <class...>
-trait IS_INTPTR_HELP ;
+trait IS_UINT_HELP ;
 
 template <class A>
-trait IS_INTPTR_HELP<A ,REQUIRE<IS_BASIC<A>>> {
+trait IS_UINT_HELP<A ,REQUIRE<IS_BASIC<A>>> {
 	using RET = ENUM_FALSE ;
 } ;
 
 template <class A>
-trait IS_INTPTR_HELP<A ,REQUIRE<ENUM_NOT<IS_BASIC<A>>>> {
-	using R1X = MACRO_IS_INTPTR<A> ;
+trait IS_UINT_HELP<A ,REQUIRE<ENUM_NOT<IS_BASIC<A>>>> {
+	using R1X = MACRO_IS_UINT<A> ;
 	using R2X = IS_POINTER<A> ;
 	using R3X = IS_SAME<A ,csc_uint8_t> ;
 	using R4X = IS_SAME<A ,csc_uint16_t> ;
@@ -950,7 +950,7 @@ trait IS_INTPTR_HELP<A ,REQUIRE<ENUM_NOT<IS_BASIC<A>>>> {
 } ;
 
 template <class A>
-using IS_INTPTR = typename IS_INTPTR_HELP<A ,ALWAYS>::RET ;
+using IS_UINT = typename IS_UINT_HELP<A ,ALWAYS>::RET ;
 
 template <class...>
 trait IS_CLASS_HELP ;
@@ -961,7 +961,7 @@ trait IS_CLASS_HELP<A ,ALWAYS> {
 	using R3X = ENUM_NOT<IS_ENUM<A>> ;
 	using R4X = ENUM_NOT<IS_TYPE<A>> ;
 	using R5X = ENUM_NOT<IS_BASIC<A>> ;
-	using R6X = ENUM_NOT<IS_INTPTR<A>> ;
+	using R6X = ENUM_NOT<IS_UINT<A>> ;
 
 	using RET = ENUM_ALL<R1X ,R3X ,R4X ,R5X ,R6X> ;
 } ;
@@ -1106,7 +1106,7 @@ trait IS_OBJECT_HELP ;
 template <class A>
 trait IS_OBJECT_HELP<A ,ALWAYS> {
 	using R1X = IS_BASIC<A> ;
-	using R2X = IS_INTPTR<A> ;
+	using R2X = IS_UINT<A> ;
 	using R3X = IS_CLASS<A> ;
 
 	using RET = ENUM_ANY<R1X ,R2X ,R3X> ;

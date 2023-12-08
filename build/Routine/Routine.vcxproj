@@ -39,6 +39,7 @@
     <ClInclude Include="..\..\src\csc\csc_core.hpp" />
     <ClInclude Include="..\..\src\csc\csc_end.h" />
     <ClInclude Include="..\..\src\csc\csc_image.hpp" />
+    <ClInclude Include="..\..\src\csc\csc_math.hpp" />
     <ClInclude Include="..\..\src\csc\csc_matrix.hpp" />
     <ClInclude Include="..\..\src\csc\csc_type.hpp" />
     <ClInclude Include="..\..\src\util.h" />

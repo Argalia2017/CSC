@@ -460,7 +460,7 @@ template <class A>
 using XREF = DEF<A &&> ;
 
 template <class A>
-using MACRO_IS_INTPTR = ENUM<(__is_enum (A))> ;
+using MACRO_IS_UINT = ENUM<(__is_enum (A))> ;
 
 template <class A>
 using MACRO_IS_CLASS = ENUM<(__is_class (A))> ;

@@ -9,6 +9,7 @@
 #include "csc_core.hpp"
 #include "csc_basic.hpp"
 #include "csc_array.hpp"
+#include "csc_math.hpp"
 #include "csc_image.hpp"
 #include "csc_matrix.hpp"
 
@@ -221,36 +222,30 @@ public:
 
 	A magnitude () const override {
 		assume (thix.mVector[3] == 0) ;
-		//A ret = 0 ;
-		//for (auto &&i : iter (0 ,4)) {
-		//	ret += Math::square (thix.mVector[i]) ;
-		//}
-		//return move (ret) ;
-		unimplemented () ;
-		return Pointer::make (0) ;
+		A ret = 0 ;
+		for (auto &&i : iter (0 ,4)) {
+			ret += MathProc::square (thix.mVector[i]) ;
+		}
+		return move (ret) ;
 	}
 
 	VectorLayout<A> normalize () const override {
-		//VectorLayout<A> ret ;
-		//const auto r1x = Math::inverse (magnitude ()) ;
-		//for (auto &&i : iter (0 ,4)) {
-		//	ret.mVector[i] = thix.mVector[i] * r1x ;
-		//}
-		//return move (ret) ;
-		unimplemented () ;
-		return Pointer::make (0) ;
+		VectorLayout<A> ret ;
+		const auto r1x = MathProc::inverse (magnitude ()) ;
+		for (auto &&i : iter (0 ,4)) {
+			ret.mVector[i] = thix.mVector[i] * r1x ;
+		}
+		return move (ret) ;
 	}
 
 	VectorLayout<A> projection () const override {
-		//VectorLayout<A> ret ;
-		//const auto r1x = Math::inverse (thix.mVector[3]) ;
-		//ret.mVector[0] = thix.mVector[0] * r1x ;
-		//ret.mVector[1] = thix.mVector[1] * r1x ;
-		//ret.mVector[2] = thix.mVector[2] * r1x ;
-		//ret.mVector[3] = 1 ;
-		//return move (ret) ;
-		unimplemented () ;
-		return Pointer::make (0) ;
+		VectorLayout<A> ret ;
+		const auto r1x = MathProc::inverse (thix.mVector[3]) ;
+		ret.mVector[0] = thix.mVector[0] * r1x ;
+		ret.mVector[1] = thix.mVector[1] * r1x ;
+		ret.mVector[2] = thix.mVector[2] * r1x ;
+		ret.mVector[3] = 1 ;
+		return move (ret) ;
 	}
 
 	VectorLayout<A> homogenize () const override {

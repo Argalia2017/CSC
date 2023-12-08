@@ -34,6 +34,9 @@
     <ClInclude Include="..\..\src\csc\csc_matrix.hpp">
       <Filter>csc</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\csc\csc_math.hpp">
+      <Filter>csc</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="csc">
