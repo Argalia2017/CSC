@@ -9,8 +9,10 @@
 #include "csc_core.hpp"
 
 namespace CSC {
+class BoxBufferLayout {} ;
+
 template <class A ,class B>
-class BoxBuffer {
+class BoxBuffer implement BoxBufferLayout {
 private:
 	require (IS_DEFAULT<A>) ;
 

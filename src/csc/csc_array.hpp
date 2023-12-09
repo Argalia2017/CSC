@@ -210,11 +210,8 @@ struct StringHolder implement Interface {
 	virtual void fill (CREF<STRU32> item) = 0 ;
 } ;
 
-template <class A>
+template <class A ,class B>
 class SetProxy {
-private:
-	using ITEM = typeof (A ()->get (0)) ;
-
 protected:
 	A mThat ;
 	INDEX mIndex ;
@@ -226,11 +223,11 @@ public:
 		mIndex = index ;
 	}
 
-	inline operator ITEM () rightvalue {
+	inline operator B () rightvalue {
 		return mThat->get (mIndex) ;
 	}
 
-	inline void operator= (CREF<ITEM> that) rightvalue {
+	inline void operator= (CREF<B> that) rightvalue {
 		mThat->set (mIndex ,that)
 	}
 } ;
@@ -267,8 +264,8 @@ public:
 		return StringHolder::create (thiz)->set (index ,item) ;
 	}
 
-	inline SetProxy<VPTR<String>> operator[] (CREF<INDEX> index) leftvalue {
-		return SetProxy<VPTR<String>> ((&thiz) ,index) ;
+	inline SetProxy<VPTR<String> ,STRU32> operator[] (CREF<INDEX> index) leftvalue {
+		return SetProxy<VPTR<String> ,STRU32> ((&thiz) ,index) ;
 	}
 
 	INDEX ibegin () const {

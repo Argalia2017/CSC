@@ -158,7 +158,7 @@ public:
 
 	RefLayout share () const override {
 		RefLayout ret ;
-		if ifswitch (TRUE) {
+		if ifdo (TRUE) {
 			ret.mHolder = fake.mHolder ;
 			ret.mPointer = fake.mPointer ;
 			if (ret.mHolder == ZERO)
@@ -181,12 +181,7 @@ exports CFat<RefHolder> RefHolder::create (CREF<RefLayout> that) {
 	return CFat<RefHolder> (RefImplHolder () ,that) ;
 }
 
-class SliceLayout {
-public:
-	FLAG mBegin ;
-	FLAG mEnd ;
-	LENGTH mStep ;
-} ;
+class SliceLayout implement SliceData {} ;
 
 class SliceImplHolder implement Fat<SliceHolder ,Ref<SliceLayout>> {
 public:
@@ -263,12 +258,7 @@ exports CFat<SliceHolder> SliceHolder::create (CREF<Ref<SliceLayout>> that) {
 	return CFat<SliceHolder> (SliceImplHolder () ,that) ;
 }
 
-class ClazzLayout {
-public:
-	LENGTH mTypeSize ;
-	LENGTH mTypeAlign ;
-	Slice<STR> mTypeName ;
-} ;
+class ClazzLayout implement ClazzData {} ;
 
 class ClazzImplHolder implement Fat<ClazzHolder ,Ref<ClazzLayout>> {
 public:

@@ -18,10 +18,9 @@
 #define assert __macro_assert
 #define assume __macro_assume
 #define unittest __macro_unittest
-#define forceinline __macro_forceinline
 #define as
 #define ifnot __macro_ifnot
-#define ifswitch __macro_ifswitch
+#define ifdo __macro_ifdo
 #define discard break
 #define typeof __macro_typeof
 

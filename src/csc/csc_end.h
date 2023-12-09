@@ -16,10 +16,9 @@
 #undef assert
 #undef assume
 #undef unittest
-#undef forceinline
 #undef as
 #undef ifnot
-#undef ifswitch
+#undef ifdo
 #undef discard
 #undef typeof
 

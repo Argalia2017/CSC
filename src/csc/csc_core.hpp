@@ -21,7 +21,7 @@ struct FUNCTION_noop {
 
 static constexpr auto noop = FUNCTION_noop () ;
 
-struct FUNCTION_unsafe_switch {
+struct FUNCTION_unsafe_do {
 	inline BOOL operator() (CREF<BOOL> flag) const noexcept {
 		return FALSE ;
 	}
@@ -32,7 +32,7 @@ struct FUNCTION_unsafe_switch {
 	}
 } ;
 
-static constexpr auto unsafe_switch = FUNCTION_unsafe_switch () ;
+static constexpr auto unsafe_ifdo = FUNCTION_unsafe_do () ;
 
 #ifdef __CSC_COMPILER_MSVC__
 struct FUNCTION_unsafe_break {
@@ -303,11 +303,21 @@ static constexpr auto operator_alignas = FUNCTION_operator_alignas () ;
 struct FUNCTION_operator_compr {
 	template <class ARG1>
 	inline FLAG operator() (CREF<ARG1> a ,CREF<ARG1> b) const noexcept {
+		return invoke (PHX ,a ,b) ;
+	}
+
+	template <class ARG1 ,class = REQUIRE<IS_BASIC<ARG1>>>
+	FLAG invoke (CREF<typeof (PH2)> ,CREF<ARG1> a ,CREF<ARG1> b) const {
 		if (a < b)
 			return NONE ;
 		if (a > b)
 			return IDEN ;
 		return ZERO ;
+	}
+
+	template <class ARG1 ,class = REQUIRE<IS_CLASS<ARG1>>>
+	FLAG invoke (CREF<typeof (PH1)> ,CREF<ARG1> a ,CREF<ARG1> b) const {
+		return a.compr (b) ;
 	}
 } ;
 
@@ -325,7 +335,17 @@ struct Visitor implement Interface {
 struct FUNCTION_operator_visit {
 	template <class ARG1>
 	inline void operator() (CREF<Visitor> visitor ,CREF<ARG1> a) const noexcept {
-		return ;
+		return invoke (PHX ,visitor ,a) ;
+	}
+
+	template <class ARG1 ,class = REQUIRE<IS_BASIC<ARG1>>>
+	inline void invoke (CREF<typeof (PH2)> ,CREF<Visitor> visitor ,CREF<ARG1> a) const {
+		visitor.push (bitwise (a)) ;
+	}
+
+	template <class ARG1 ,class = REQUIRE<IS_CLASS<ARG1>>>
+	inline void invoke (CREF<typeof (PH1)> ,CREF<Visitor> visitor ,CREF<ARG1> a) const {
+		return a.visit (visitor) ;
 	}
 } ;
 
@@ -892,11 +912,11 @@ public:
 	template <class ARG1>
 	inline void operator() (CREF<ARG1> func) const {
 		using R1X = TYPE_SENQUENCE<RANK> ;
-		return thiz (func ,TYPE<R1X>::expr) ;
+		return invoke (func ,TYPE<R1X>::expr) ;
 	}
 
 	template <class ARG1 ,class...ARG2>
-	inline void operator() (CREF<ARG1> func ,TYPEID<TYPE<ARG2...>>) const {
+	inline void invoke (CREF<ARG1> func ,TYPEID<TYPE<ARG2...>>) const {
 		return func (keep[TYPE<CREF<PARAMS>>::expr] (Pointer::make (mCapture.m1st[ARG2::expr]))...) ;
 	}
 } ;

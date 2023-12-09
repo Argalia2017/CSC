@@ -428,7 +428,7 @@ public:
 	MatrixLayout<A> triangular () const override {
 		MatrixLayout<A> ret = fake ;
 		for (auto &&i : iter (0 ,4)) {
-			if ifswitch (TRUE) {
+			if ifdo (TRUE) {
 				INDEX ix = find_abs_max_row (i) ;
 				if (ix == i)
 					discard ;
