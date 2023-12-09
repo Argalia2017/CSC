@@ -52,6 +52,7 @@ struct ImageHolder implement Interface {
 	virtual LENGTH offset () const = 0 ;
 	virtual VREF<Pointer> at (CREF<INDEX> x ,CREF<INDEX> y) leftvalue = 0 ;
 	virtual CREF<Pointer> at (CREF<INDEX> x ,CREF<INDEX> y) const leftvalue = 0 ;
+	virtual void fill (CREF<Pointer> a) = 0 ;
 } ;
 
 template <class A>
@@ -113,6 +114,14 @@ public:
 
 	inline RowProxy<CPTR<Image>> operator[] (CREF<INDEX> y) const leftvalue {
 		return RowProxy<CPTR<Image>> ((&thiz) ,y) ;
+	}
+
+	PixelIterator range () const {
+		return PixelIterator (0 ,cx () ,0 ,cy ()) ;
+	}
+
+	void fill (CREF<A> a) {
+		return ImageHolder::create (thiz)->fill (Pointer::from (a)) ;
 	}
 } ;
 } ;

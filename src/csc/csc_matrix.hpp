@@ -72,11 +72,11 @@ struct VectorHolder implement Interface {
 	virtual void initialize (CREF<PIXEL> xy) = 0 ;
 	virtual void initialize (CREF<POINT2F> xy) = 0 ;
 	virtual void initialize (CREF<POINT3F> xyz) = 0 ;
-	virtual CREF<VectorLayout<A>> zero () const = 0 ;
-	virtual CREF<VectorLayout<A>> axis_x () const = 0 ;
-	virtual CREF<VectorLayout<A>> axis_y () const = 0 ;
-	virtual CREF<VectorLayout<A>> axis_z () const = 0 ;
-	virtual CREF<VectorLayout<A>> axis_w () const = 0 ;
+	virtual CREF<Pointer> zero () const = 0 ;
+	virtual CREF<Pointer> axis_x () const = 0 ;
+	virtual CREF<Pointer> axis_y () const = 0 ;
+	virtual CREF<Pointer> axis_z () const = 0 ;
+	virtual CREF<Pointer> axis_w () const = 0 ;
 	virtual POINT2F xy () const = 0 ;
 	virtual POINT3F xyz () const = 0 ;
 	virtual VREF<A> at (CREF<INDEX> y) leftvalue = 0 ;
@@ -123,24 +123,30 @@ public:
 		VectorHolder<A>::create (thiz)->initialize (xyz) ;
 	}
 
+	imports CREF<Vector> instance () {
+		return memorize ([&] () {
+			return Vector () ;
+		}) ;
+	}
+
 	imports CREF<Vector> zero () {
-		return VectorHolder<A>::create (Pointer::make (0))->zero () ;
+		return VectorHolder<A>::create (instance ())->zero () ;
 	}
 
 	imports CREF<Vector> axis_x () {
-		return VectorHolder<A>::create (Pointer::make (0))->axis_x () ;
+		return VectorHolder<A>::create (instance ())->axis_x () ;
 	}
 
 	imports CREF<Vector> axis_y () {
-		return VectorHolder<A>::create (Pointer::make (0))->axis_y () ;
+		return VectorHolder<A>::create (instance ())->axis_y () ;
 	}
 
 	imports CREF<Vector> axis_z () {
-		return VectorHolder<A>::create (Pointer::make (0))->axis_z () ;
+		return VectorHolder<A>::create (instance ())->axis_z () ;
 	}
 
 	imports CREF<Vector> axis_w () {
-		return VectorHolder<A>::create (Pointer::make (0))->axis_w () ;
+		return VectorHolder<A>::create (instance ())->axis_w () ;
 	}
 
 	POINT2F xy () const {
@@ -318,6 +324,8 @@ struct MatrixHolder implement Interface {
 	imports CFat<MatrixHolder> create (CREF<MatrixLayout<A>> that) ;
 
 	virtual void initialize (CREF<VectorLayout<A>> x ,CREF<VectorLayout<A>> y ,CREF<VectorLayout<A>> z ,CREF<VectorLayout<A>> w) = 0 ;
+	virtual CREF<Pointer> zero () const = 0 ;
+	virtual CREF<Pointer> identity () const = 0 ;
 	virtual VREF<A> at (CREF<INDEX> x ,CREF<INDEX> y) leftvalue = 0 ;
 	virtual CREF<A> at (CREF<INDEX> x ,CREF<INDEX> y) const leftvalue = 0 ;
 	virtual BOOL equal (CREF<MatrixLayout<A>> that) const = 0 ;
@@ -329,8 +337,9 @@ struct MatrixHolder implement Interface {
 	virtual void sub_with (CREF<MatrixLayout<A>> that) = 0 ;
 	virtual MatrixLayout<A> mul (CREF<A> scale) const = 0 ;
 	virtual void mul_with (CREF<A> scale) = 0 ;
+	virtual VectorLayout<A> mul (CREF<VectorLayout<A>> that) const = 0 ;
 	virtual MatrixLayout<A> mul (CREF<MatrixLayout<A>> that) const = 0 ;
-	virtual void mul_with (CREF<MatrixLayout<A>> scale) = 0 ;
+	virtual void mul_with (CREF<MatrixLayout<A>> that) = 0 ;
 	virtual MatrixLayout<A> minus () const = 0 ;
 	virtual MatrixLayout<A> transpose () const = 0 ;
 	virtual MatrixLayout<A> triangular () const = 0 ;
@@ -340,8 +349,6 @@ struct MatrixHolder implement Interface {
 	virtual A trace () const = 0 ;
 	virtual RREF<Pointer> decompose () const = 0 ;
 	virtual RREF<Pointer> singular () const = 0 ;
-	virtual MatrixLayout<A> pseudo_inverse () const = 0 ;
-
 	virtual void DiagMatrix_initialize (CREF<A> x ,CREF<A> y ,CREF<A> z ,CREF<A> w) = 0 ;
 	virtual void ShearMatrix_initialize (CREF<VectorLayout<A>> x ,CREF<VectorLayout<A>> y ,CREF<VectorLayout<A>> z) = 0 ;
 	virtual void RotationMatrix_initialize (CREF<VectorLayout<A>> normal ,CREF<A> angle) = 0 ;
@@ -378,12 +385,18 @@ public:
 		MatrixHolder<A>::create (thiz)->initialize (x ,y ,z ,w) ;
 	}
 
+	imports CREF<Matrix> instance () {
+		return memorize ([&] () {
+			return Matrix () ;
+		}) ;
+	}
+
 	imports CREF<Matrix> zero () {
-		return MatrixHolder<A>::create (Pointer::make (0))->zero () ;
+		return MatrixHolder<A>::create (instance ())->zero () ;
 	}
 
 	imports CREF<Matrix> identity () {
-		return MatrixHolder<A>::create (Pointer::make (0))->identity () ;
+		return MatrixHolder<A>::create (instance ())->identity () ;
 	}
 
 	VREF<A> at (CREF<INDEX> x ,CREF<INDEX> y) leftvalue {
@@ -572,10 +585,6 @@ public:
 
 	SINGULAR singular () const {
 		return MatrixHolder<A>::create (thiz)->singular () ;
-	}
-
-	Matrix pseudo_inverse () const {
-		return MatrixHolder<A>::create (thiz)->pseudo_inverse () ;
 	}
 } ;
 

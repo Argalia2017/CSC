@@ -30,6 +30,18 @@ public:
 		return a * a ;
 	}
 
+	VAL32 abs (CREF<VAL32> a) const override {
+		if (a < 0)
+			return -a ;
+		return a ;
+	}
+
+	VAL64 abs (CREF<VAL64> a) const override {
+		if (a < 0)
+			return -a ;
+		return a ;
+	}
+
 	FLT32 abs (CREF<FLT32> a) const override {
 		if (a < 0)
 			return -a ;

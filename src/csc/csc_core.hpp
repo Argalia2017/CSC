@@ -333,9 +333,9 @@ static constexpr auto operator_visit = FUNCTION_operator_visit () ;
 
 class IndexIterator {
 protected:
-	LENGTH mRank ;
 	INDEX mBegin ;
 	INDEX mEnd ;
+	INDEX mPeek ;
 
 public:
 	implicit IndexIterator () = delete ;
@@ -343,7 +343,7 @@ public:
 	explicit IndexIterator (CREF<INDEX> begin_ ,CREF<INDEX> end_) {
 		mBegin = begin_ ;
 		mEnd = operator_max (begin_ ,end_) ;
-		mRank = mEnd - mBegin ;
+		mPeek = mBegin ;
 	}
 
 	IndexIterator begin () const {
@@ -355,11 +355,11 @@ public:
 	}
 
 	LENGTH rank () const {
-		return mRank ;
+		return mEnd - mBegin ;
 	}
 
 	BOOL good () const {
-		return mBegin != mEnd ;
+		return mPeek != mEnd ;
 	}
 
 	inline BOOL operator== (CREF<IndexIterator>) const {
@@ -371,7 +371,7 @@ public:
 	}
 
 	CREF<INDEX> peek () const leftvalue {
-		return mBegin ;
+		return mPeek ;
 	}
 
 	inline CREF<INDEX> operator* () const leftvalue {
@@ -379,7 +379,7 @@ public:
 	}
 
 	void next () {
-		mBegin++ ;
+		mPeek++ ;
 	}
 
 	inline void operator++ () {
@@ -394,9 +394,9 @@ struct PIXEL {
 
 class PixelIterator {
 protected:
-	LENGTH mRank ;
 	PIXEL mBegin ;
 	PIXEL mEnd ;
+	PIXEL mPeek ;
 
 public:
 	implicit PixelIterator () = delete ;
@@ -406,10 +406,10 @@ public:
 		mBegin.mY = begin_y ;
 		mEnd.mX = operator_min (begin_x ,end_x) ;
 		mEnd.mY = operator_min (begin_y ,end_y) ;
-		mRank = (mEnd.mX - mBegin.mX) * (mEnd.mY - mBegin.mY) ;
-		if (mRank > 0)
+		mPeek = mBegin ;
+		if (rank () > 0)
 			return ;
-		mBegin = mEnd ;
+		mPeek = mEnd ;
 	}
 
 	PixelIterator begin () const {
@@ -421,11 +421,11 @@ public:
 	}
 
 	LENGTH rank () const {
-		return mRank ;
+		return (mEnd.mX - mBegin.mX) * (mEnd.mY - mBegin.mY) ;
 	}
 
 	BOOL good () const {
-		return mBegin.mY != mEnd.mY ;
+		return mPeek.mY != mEnd.mY ;
 	}
 
 	inline BOOL operator== (CREF<PixelIterator>) const {
@@ -437,7 +437,7 @@ public:
 	}
 
 	CREF<PIXEL> peek () const leftvalue {
-		return mBegin ;
+		return mPeek ;
 	}
 
 	inline CREF<PIXEL> operator* () const leftvalue {
@@ -445,11 +445,11 @@ public:
 	}
 
 	void next () {
-		mBegin.mX++ ;
-		if (mBegin.mX < mEnd.mX)
+		mPeek.mX++ ;
+		if (mPeek.mX < mEnd.mX)
 			return ;
-		mBegin.mX = 0 ;
-		mBegin.mY++ ;
+		mPeek.mX = 0 ;
+		mPeek.mY++ ;
 	}
 
 	inline void operator++ () {
@@ -862,7 +862,10 @@ trait TUPLE_HELP<PARAMS ,REQUIRE<ENUM_EQUAL<COUNT_OF<PARAMS> ,RANK3>>> {
 template <class...A>
 using Tuple = typename TUPLE_HELP<TYPE<A...> ,ALWAYS>::Tuple ;
 
-class CaptureLayout {} ;
+class CaptureLayout {
+public:
+	LENGTH mRank ;
+} ;
 
 template <class...PARAMS>
 class Capture implement CaptureLayout {
@@ -870,16 +873,17 @@ private:
 	using RANK = COUNT_OF<TYPE<PARAMS...>> ;
 
 protected:
+	using CaptureLayout::mRank ;
 	Tuple<ARR<FLAG ,RANK>> mCapture ;
 
 public:
-	implicit Capture () = delete ;
-
 	explicit Capture (CREF<KILL<FLAG ,PARAMS>>...params) {
+		mRank = RANK::expr ;
 		mCapture = Tuple<ARR<FLAG ,RANK>> {params...} ;
 	}
 
 	imports CREF<Capture> from (CREF<CaptureLayout> that) {
+		assert (that.mRank == RANK::expr) ;
 		return Pointer::from (that) ;
 	}
 

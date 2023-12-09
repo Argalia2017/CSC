@@ -17,6 +17,10 @@ public:
 		return RefBufferHolder::create (fake.mArray)->size () ;
 	}
 
+	LENGTH step () const override {
+		return RefBufferHolder::create (fake.mArray)->step () ;
+	}
+
 	LENGTH length () const override {
 		return RefBufferHolder::create (fake.mArray)->size () ;
 	}
@@ -27,6 +31,30 @@ public:
 
 	CREF<Pointer> at (CREF<INDEX> index) const leftvalue override {
 		return RefBufferHolder::create (fake.mArray)->at (index) ;
+	}
+
+	INDEX ibegin () const override {
+		return 0 ;
+	}
+
+	INDEX iend () const override {
+		return size () ;
+	}
+
+	INDEX inext (CREF<INDEX> index) const override {
+		return index - 1 ;
+	}
+
+	BOOL equal (CREF<ArrayHolder> that) const override {
+	
+	}
+
+	FLAG compr (CREF<ArrayHolder> that) const override {
+	
+	}
+
+	void visit (CREF<Visitor> visitor) const override {
+	
 	}
 
 	void fill (CREF<Pointer> a) override {
