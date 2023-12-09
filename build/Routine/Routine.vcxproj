@@ -48,6 +48,7 @@
     <None Include="..\..\src\csc\cpp.hint" />
     <None Include="..\..\src\csc\csc_basic.inl" />
     <None Include="..\..\src\csc\csc_core.inl" />
+    <None Include="..\..\src\csc\csc_math.inl" />
     <None Include="..\..\src\csc\csc_matrix.inl" />
   </ItemGroup>
   <ItemGroup>

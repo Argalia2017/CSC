@@ -69,48 +69,46 @@ exports CFat<BoxHolder> BoxHolder::create (CREF<BoxLayout> that) {
 	return CFat<BoxHolder> (BoxImplHolder () ,that) ;
 }
 
-struct HeapProcLayoutData {
-	std::atomic<LENGTH> mValue ;
+class HeapProcLayout {
+public:
+	mutable std::atomic<LENGTH> mValue ;
 } ;
 
-class HeapProcImplHolder implement Fat<HeapProcHolder ,HeapProcLayout> {
+class HeapProcImplHolder implement Fat<HeapProcHolder ,Ref<HeapProcLayout>> {
 public:
 	void initialize () override {
 		auto &&rax = memorize ([&] () {
-			return TEMP<HeapProcLayoutData> () ;
+			return TEMP<HeapProcLayout> () ;
 		}) ;
-		thix.mHolder = address (rax) ;
+		const auto r1x = address (rax) ;
+		thix = Ref<HeapProcLayout>::reference (Pointer::make (r1x)) ;
 	}
 
 	LENGTH length () const override {
-		return fake.mValue ;
+		return thix->mValue ;
 	}
 
 	FLAG alloc (CREF<LENGTH> size_) const override {
 		FLAG ret = FLAG (operator new (size_)) ;
 		const auto r1x = csc_pointer_t (ret) ;
 		const auto r2x = LENGTH (_msize (r1x)) ;
-		fake.mValue += r2x ;
+		thix->mValue += r2x ;
 		return move (ret) ;
 	}
 
 	void free (CREF<FLAG> addr) const override {
 		const auto r1x = csc_pointer_t (addr) ;
 		const auto r2x = LENGTH (_msize (r1x)) ;
-		fake.mValue -= r2x ;
+		thix->mValue -= r2x ;
 		operator delete (r1x) ;
-	}
-
-	VREF<HeapProcLayoutData> fake_m () const leftvalue {
-		return Pointer::make (thix.mHolder) ;
 	}
 } ;
 
-exports VFat<HeapProcHolder> HeapProcHolder::create (VREF<HeapProcLayout> that) {
+exports VFat<HeapProcHolder> HeapProcHolder::create (VREF<Ref<HeapProcLayout>> that) {
 	return VFat<HeapProcHolder> (HeapProcImplHolder () ,that) ;
 }
 
-exports CFat<HeapProcHolder> HeapProcHolder::create (CREF<HeapProcLayout> that) {
+exports CFat<HeapProcHolder> HeapProcHolder::create (CREF<Ref<HeapProcLayout>> that) {
 	return CFat<HeapProcHolder> (HeapProcImplHolder () ,that) ;
 }
 
@@ -140,6 +138,8 @@ public:
 			return ;
 		auto &&rax = unsafe_cast[TYPE<Unknown>::expr] (fake.mHolder) ;
 		rax.destroy (fake.mSize) ;
+		const auto r2x = thix.mHolder ;
+		HeapProc::instance ().free (r2x) ;
 	}
 
 	BOOL exist () const override {
@@ -181,55 +181,62 @@ exports CFat<RefHolder> RefHolder::create (CREF<RefLayout> that) {
 	return CFat<RefHolder> (RefImplHolder () ,that) ;
 }
 
-class SliceImplHolder implement Fat<SliceHolder ,SliceLayout> {
+class SliceLayout {
+public:
+	FLAG mBegin ;
+	FLAG mEnd ;
+	LENGTH mStep ;
+} ;
+
+class SliceImplHolder implement Fat<SliceHolder ,Ref<SliceLayout>> {
 public:
 	void initialize (CREF<SliceData> data) override {
 		const auto r1x = address (data) ;
-		thix.mThis = Ref<SliceData>::reference (Pointer::make (r1x)) ;
+		thix = Ref<SliceLayout>::reference (Pointer::make (r1x)) ;
 	}
 
 	LENGTH size () const override {
-		if (thix.mThis == NULL)
+		if (thix == NULL)
 			return 0 ;
-		return thix.mThis->mEnd - thix.mThis->mBegin ;
+		return thix->mEnd - thix->mBegin ;
 	}
 
 	STRU32 at (CREF<INDEX> index) const override {
-		return load (thix.mThis->mBegin + index * thix.mThis->mStep) ;
+		return load (thix->mBegin + index * thix->mStep) ;
 	}
 
 	STRU32 load (CREF<FLAG> addr) const {
-		if (thix.mThis->mStep == 1)
+		if (thix->mStep == 1)
 			return STRU8 (Pointer::make (addr)) ;
-		if (thix.mThis->mStep == 2)
+		if (thix->mStep == 2)
 			return STRU16 (Pointer::make (addr)) ;
-		if (thix.mThis->mStep == 4)
+		if (thix->mStep == 4)
 			return STRU32 (Pointer::make (addr)) ;
 		assert (FALSE) ;
 		return 0 ;
 	}
 
-	BOOL equal (CREF<SliceLayout> that) const override {
+	BOOL equal (CREF<Ref<SliceLayout>> that) const override {
 		const auto r1x = size () ;
 		const auto r2x = SliceHolder::create (that)->size () ;
 		if (r1x != r2x)
 			return FALSE ;
 		for (auto &&i : iter (0 ,r1x)) {
-			const auto r3x = load (thix.mThis->mBegin + i * thix.mThis->mStep) ;
-			const auto r4x = load (that.mThis->mBegin + i * that.mThis->mStep) ;
+			const auto r3x = load (thix->mBegin + i * thix->mStep) ;
+			const auto r4x = load (that->mBegin + i * that->mStep) ;
 			if (r3x != r4x)
 				return FALSE ;
 		}
 		return TRUE ;
 	}
 
-	FLAG compr (CREF<SliceLayout> that) const override {
+	FLAG compr (CREF<Ref<SliceLayout>> that) const override {
 		const auto r1x = size () ;
 		const auto r2x = SliceHolder::create (that)->size () ;
 		const auto r3x = operator_min (r1x ,r2x) ;
 		for (auto &&i : iter (0 ,r3x)) {
-			const auto r4x = load (thix.mThis->mBegin + i * thix.mThis->mStep) ;
-			const auto r5x = load (that.mThis->mBegin + i * that.mThis->mStep) ;
+			const auto r4x = load (thix->mBegin + i * thix->mStep) ;
+			const auto r5x = load (that->mBegin + i * that->mStep) ;
 			const auto r6x = operator_compr (r4x ,r5x) ;
 			if (r6x != ZERO)
 				return r6x ;
@@ -241,59 +248,66 @@ public:
 		visitor.begin () ;
 		const auto r1x = size () ;
 		for (auto &&i : iter (0 ,r1x)) {
-			const auto r2x = load (thix.mThis->mBegin + i * thix.mThis->mStep) ;
+			const auto r2x = load (thix->mBegin + i * thix->mStep) ;
 			operator_visit (visitor ,r2x) ;
 		}
 		visitor.end () ;
 	}
 } ;
 
-exports VFat<SliceHolder> SliceHolder::create (VREF<SliceLayout> that) {
+exports VFat<SliceHolder> SliceHolder::create (VREF<Ref<SliceLayout>> that) {
 	return VFat<SliceHolder> (SliceImplHolder () ,that) ;
 }
 
-exports CFat<SliceHolder> SliceHolder::create (CREF<SliceLayout> that) {
+exports CFat<SliceHolder> SliceHolder::create (CREF<Ref<SliceLayout>> that) {
 	return CFat<SliceHolder> (SliceImplHolder () ,that) ;
 }
 
-class ClazzImplHolder implement Fat<ClazzHolder ,ClazzLayout> {
+class ClazzLayout {
+public:
+	LENGTH mTypeSize ;
+	LENGTH mTypeAlign ;
+	Slice<STR> mTypeName ;
+} ;
+
+class ClazzImplHolder implement Fat<ClazzHolder ,Ref<ClazzLayout>> {
 public:
 	void initialize (CREF<ClazzData> data) override {
 		const auto r1x = address (data) ;
-		thix.mThis = Ref<ClazzData>::reference (Pointer::make (r1x)) ;
+		thix = Ref<ClazzLayout>::reference (Pointer::make (r1x)) ;
 	}
 
 	LENGTH type_size () const override {
-		if (thix.mThis == NULL)
+		if (thix == NULL)
 			return 0 ;
-		return thix.mThis->mTypeSize ;
+		return thix->mTypeSize ;
 	}
 
 	LENGTH type_align () const override {
-		if (thix.mThis == NULL)
+		if (thix == NULL)
 			return 0 ;
-		return thix.mThis->mTypeAlign ;
+		return thix->mTypeAlign ;
 	}
 
 	FLAG type_cabi () const override {
-		if (thix.mThis == NULL)
+		if (thix == NULL)
 			return 0 ;
-		return address (thix.mThis.self) ;
+		return address (thix.self) ;
 	}
 
 	Slice<STR> type_name () const override {
-		if (thix.mThis == NULL)
+		if (thix == NULL)
 			return Slice<STR> () ;
-		return thix.mThis->mTypeName ;
+		return thix->mTypeName ;
 	}
 
-	BOOL equal (CREF<ClazzLayout> that) const override {
+	BOOL equal (CREF<Ref<ClazzLayout>> that) const override {
 		const auto r1x = type_name () ;
 		const auto r2x = ClazzHolder::create (that)->type_name () ;
 		return r1x == r2x ;
 	}
 
-	FLAG compr (CREF<ClazzLayout> that) const override {
+	FLAG compr (CREF<Ref<ClazzLayout>> that) const override {
 		const auto r1x = type_name () ;
 		const auto r2x = ClazzHolder::create (that)->type_name () ;
 		return operator_compr (r1x ,r2x) ;
@@ -309,11 +323,11 @@ public:
 	}
 } ;
 
-exports VFat<ClazzHolder> ClazzHolder::create (VREF<ClazzLayout> that) {
+exports VFat<ClazzHolder> ClazzHolder::create (VREF<Ref<ClazzLayout>> that) {
 	return VFat<ClazzHolder> (ClazzImplHolder () ,that) ;
 }
 
-exports CFat<ClazzHolder> ClazzHolder::create (CREF<ClazzLayout> that) {
+exports CFat<ClazzHolder> ClazzHolder::create (CREF<Ref<ClazzLayout>> that) {
 	return CFat<ClazzHolder> (ClazzImplHolder () ,that) ;
 }
 

@@ -674,44 +674,6 @@ struct FUNCTION_memorize {
 
 static constexpr auto memorize = FUNCTION_memorize () ;
 
-class HeapProcLayout {
-public:
-	FLAG mHolder ;
-} ;
-
-struct HeapProcHolder implement Interface {
-	imports VFat<HeapProcHolder> create (VREF<HeapProcLayout> that) ;
-	imports CFat<HeapProcHolder> create (CREF<HeapProcLayout> that) ;
-
-	virtual void initialize () = 0 ;
-	virtual LENGTH length () const = 0 ;
-	virtual FLAG alloc (CREF<LENGTH> size_) const = 0 ;
-	virtual void free (CREF<FLAG> addr) const = 0 ;
-} ;
-
-class HeapProc implement HeapProcLayout {
-public:
-	imports CREF<HeapProc> instance () {
-		return memorize ([&] () {
-			HeapProc ret ;
-			HeapProcHolder::create (ret)->initialize () ;
-			return move (ret) ;
-		}) ;
-	}
-
-	LENGTH length () const {
-		return HeapProcHolder::create (thiz)->length () ;
-	}
-
-	FLAG alloc (CREF<LENGTH> size_) const {
-		return HeapProcHolder::create (thiz)->alloc (size_) ;
-	}
-
-	void free (CREF<FLAG> addr) const {
-		return HeapProcHolder::create (thiz)->free (addr) ;
-	}
-} ;
-
 class RefLayout ;
 
 struct RefHolder implement Interface {
@@ -768,7 +730,8 @@ public:
 
 	implicit Ref (CREF<typeof (NULL)>) {}
 
-	implicit Ref (RREF<RefLayout> that) :Ref (keep[TYPE<RREF<Ref>>::expr] (that)) {}
+	template <class ARG1 ,class = REQUIRE<IS_EXTEND<A ,ARG1>>>
+	implicit Ref (RREF<Ref<ARG1>> that) :Ref (keep[TYPE<RREF<Ref>>::expr] (that)) {}
 
 	template <class...ARG1>
 	imports Ref make (XREF<ARG1>...initval) {
@@ -815,7 +778,58 @@ public:
 	}
 
 	Ref share () const {
-		return RefHolder::create (thiz)->share () ;
+		auto rax = RefHolder::create (thiz)->share () ;
+		return keep[TYPE<RREF<Ref>>::expr] (rax) ;
+	}
+} ;
+
+template <class A>
+class RefBase {
+protected:
+	Ref<A> mThis ;
+
+public:
+	inline operator VREF<Ref<A>> () leftvalue {
+		return mThis ;
+	}
+
+	inline operator CREF<Ref<A>> () const leftvalue {
+		return mThis ;
+	}
+} ;
+
+class HeapProcLayout ;
+
+struct HeapProcHolder implement Interface {
+	imports VFat<HeapProcHolder> create (VREF<Ref<HeapProcLayout>> that) ;
+	imports CFat<HeapProcHolder> create (CREF<Ref<HeapProcLayout>> that) ;
+
+	virtual void initialize () = 0 ;
+	virtual LENGTH length () const = 0 ;
+	virtual FLAG alloc (CREF<LENGTH> size_) const = 0 ;
+	virtual void free (CREF<FLAG> addr) const = 0 ;
+} ;
+
+class HeapProc implement RefBase<HeapProcLayout> {
+public:
+	imports CREF<HeapProc> instance () {
+		return memorize ([&] () {
+			HeapProc ret ;
+			HeapProcHolder::create (ret)->initialize () ;
+			return move (ret) ;
+		}) ;
+	}
+
+	imports LENGTH length () {
+		return HeapProcHolder::create (instance ())->length () ;
+	}
+
+	imports FLAG alloc (CREF<LENGTH> size_) {
+		return HeapProcHolder::create (instance ())->alloc (size_) ;
+	}
+
+	imports void free (CREF<FLAG> addr) {
+		return HeapProcHolder::create (instance ())->free (addr) ;
 	}
 } ;
 
@@ -904,28 +918,22 @@ struct SliceData {
 	LENGTH mStep ;
 } ;
 
-class SliceLayout {
-public:
-	Ref<SliceData> mThis ;
-} ;
+class SliceLayout ;
 
 struct SliceHolder implement Interface {
-	imports VFat<SliceHolder> create (VREF<SliceLayout> that) ;
-	imports CFat<SliceHolder> create (CREF<SliceLayout> that) ;
+	imports VFat<SliceHolder> create (VREF<Ref<SliceLayout>> that) ;
+	imports CFat<SliceHolder> create (CREF<Ref<SliceLayout>> that) ;
 
 	virtual void initialize (CREF<SliceData> data) = 0 ;
 	virtual LENGTH size () const = 0 ;
 	virtual STRU32 at (CREF<INDEX> index) const = 0 ;
-	virtual BOOL equal (CREF<SliceLayout> that) const = 0 ;
-	virtual FLAG compr (CREF<SliceLayout> that) const = 0 ;
+	virtual BOOL equal (CREF<Ref<SliceLayout>> that) const = 0 ;
+	virtual FLAG compr (CREF<Ref<SliceLayout>> that) const = 0 ;
 	virtual void visit (CREF<Visitor> visitor) const = 0 ;
 } ;
 
 template <class A>
-class Slice implement SliceLayout {
-protected:
-	using SliceLayout::mThis ;
-
+class Slice implement RefBase<SliceLayout> {
 public:
 	implicit Slice () = default ;
 
@@ -1011,26 +1019,23 @@ struct ClazzData {
 	Slice<STR> mTypeName ;
 } ;
 
-class ClazzLayout {
-public:
-	Ref<ClazzData> mThis ;
-} ;
+class ClazzLayout ;
 
 struct ClazzHolder implement Interface {
-	imports VFat<ClazzHolder> create (VREF<ClazzLayout> that) ;
-	imports CFat<ClazzHolder> create (CREF<ClazzLayout> that) ;
+	imports VFat<ClazzHolder> create (VREF<Ref<ClazzLayout>> that) ;
+	imports CFat<ClazzHolder> create (CREF<Ref<ClazzLayout>> that) ;
 
 	virtual void initialize (CREF<ClazzData> data) = 0 ;
 	virtual LENGTH type_size () const = 0 ;
 	virtual LENGTH type_align () const = 0 ;
 	virtual FLAG type_cabi () const = 0 ;
 	virtual Slice<STR> type_name () const = 0 ;
-	virtual BOOL equal (CREF<ClazzLayout> that) const = 0 ;
-	virtual FLAG compr (CREF<ClazzLayout> that) const = 0 ;
+	virtual BOOL equal (CREF<Ref<ClazzLayout>> that) const = 0 ;
+	virtual FLAG compr (CREF<Ref<ClazzLayout>> that) const = 0 ;
 	virtual void visit (CREF<Visitor> visitor) const = 0 ;
 } ;
 
-class Clazz implement ClazzLayout {
+class Clazz implement RefBase<ClazzLayout> {
 public:
 	implicit Clazz () = default ;
 
