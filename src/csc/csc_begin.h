@@ -8,7 +8,6 @@
 #define rightvalue &&
 #define thiz (*this)
 #define self self_m ()
-#define thix thix_m ()
 #define fake fake_m ()
 #define expr expr_m ()
 #define trait struct

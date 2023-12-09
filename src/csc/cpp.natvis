@@ -24,7 +24,7 @@
     </Expand>
   </Type>
 
-  <Type Name="CSC::SliceData">
+  <Type Name="CSC::SliceLayout">
     <DisplayString Condition="mStep==1">{mBegin,s8}</DisplayString>
     <DisplayString Condition="mStep==2">{mBegin,su}</DisplayString>
     <DisplayString Condition="mStep==4">{mBegin,s32}</DisplayString>
@@ -40,9 +40,11 @@
     </Expand>
   </Type>
 
-  <Type Name="CSC::Clazz">
+  <Type Name="CSC::ClazzLayout">
     <Expand HideRawView="true">
-      <ExpandedItem>mThis</ExpandedItem>
+      <Item Name="mTypeSize">mTypeSize</Item>
+      <Item Name="mTypeAlign">mTypeAlign</Item>
+      <Item Name="mTypeName">mTypeName</Item>
     </Expand>
   </Type>
 
@@ -54,7 +56,7 @@
 
   <Type Name="CSC::Auto">
     <Expand HideRawView="true">
-      <Item Name="[+]">(CSC::Unknown*)mThis.mHolder</Item>
+      <Item Name="[+]">(CSC::Unknown*)&amp;mThis.mHolder</Item>
     </Expand>
   </Type>
 

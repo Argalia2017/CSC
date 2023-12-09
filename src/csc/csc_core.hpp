@@ -475,11 +475,11 @@ protected:
 	FLAG mPointer ;
 
 public:
-	VREF<B> thix_m () leftvalue {
+	VREF<B> fake_m () leftvalue {
 		return Pointer::make (mPointer) ;
 	}
 
-	CREF<B> thix_m () const leftvalue {
+	CREF<B> fake_m () const leftvalue {
 		return Pointer::make (mPointer) ;
 	}
 } ;
@@ -615,7 +615,8 @@ public:
 	template <class...ARG1>
 	imports Box make (XREF<ARG1>...initval) {
 		Box ret ;
-		ret.remake (TYPE<A>::expr ,keep[TYPE<XREF<ARG1>>::expr] (initval)...) ;
+		const auto r1x = DEF<csc_temp_t *> (&ret) ;
+		new (r1x) UnknownBinder<A> (keep[TYPE<XREF<ARG1>>::expr] (initval)...) ;
 		return move (ret) ;
 	}
 
@@ -649,13 +650,6 @@ public:
 
 	void acquire (CREF<BoxLayout> that) {
 		return BoxHolder::create (thiz)->acquire (that) ;
-	}
-
-	template <class ARG1 ,class...ARG2>
-	void remake (TYPEID<ARG1> ,XREF<ARG2>...initval) {
-		assert (mHolder == ZERO) ;
-		const auto r1x = VPTR<csc_temp_t> (&thiz) ;
-		new (r1x) UnknownBinder<ARG1> (keep[TYPE<XREF<ARG2>>::expr] (initval)...) ;
 	}
 
 	void release () {
@@ -937,12 +931,12 @@ class Slice implement RefBase<SliceLayout> {
 public:
 	implicit Slice () = default ;
 
-	template <class ARG1>
-	explicit Slice (CREF<ARG1> text) {
+	template <class ARG1 ,class = REQUIRE<IS_TEXT<ARRAY_ITEM<ARG1>>>>
+	explicit Slice (CREF<ARG1> that) {
 		auto &&rax = memorize ([&] () {
 			SliceData ret ;
-			ret.mBegin = address (text) ;
-			ret.mEnd = ret.mBegin + SIZE_OF<ARG1>::expr ;
+			ret.mBegin = address (that) ;
+			ret.mEnd = ret.mBegin + SIZE_OF<ARG1>::expr / ALIGN_OF<ARG1>::expr ;
 			ret.mStep = ALIGN_OF<ARG1>::expr ;
 			return move (ret) ;
 		}) ;

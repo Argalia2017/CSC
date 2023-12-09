@@ -59,6 +59,9 @@
     <None Include="..\..\src\csc\csc_math.inl">
       <Filter>csc</Filter>
     </None>
+    <None Include="..\..\src\csc\csc_array.inl">
+      <Filter>csc</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Natvis Include="..\..\src\csc\cpp.natvis">

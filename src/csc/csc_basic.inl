@@ -9,41 +9,41 @@ namespace CSC {
 class RefBufferImplHolder implement Fat<RefBufferHolder ,RefBufferLayout> {
 public:
 	void initialize (CREF<BoxLayout> value ,CREF<LENGTH> size_) override {
-		RefHolder::create (thix.mBuffer)->initialize (value ,size_) ;
-		thix.mSize = size_ ;
+		RefHolder::create (fake.mBuffer)->initialize (value ,size_) ;
+		fake.mSize = size_ ;
 		auto &&rax = unsafe_cast[TYPE<Unknown>::expr] (value.mHolder) ;
-		thix.mStep = rax.type_size () ;
+		fake.mStep = rax.type_size () ;
 	}
 
 	LENGTH size () const override {
-		if ifnot (RefHolder::create (thix.mBuffer)->exist ())
+		if ifnot (RefHolder::create (fake.mBuffer)->exist ())
 			return 0 ;
-		return thix.mSize ;
+		return fake.mSize ;
 	}
 
 	LENGTH step () const override {
-		if ifnot (RefHolder::create (thix.mBuffer)->exist ())
+		if ifnot (RefHolder::create (fake.mBuffer)->exist ())
 			return 0 ;
-		return thix.mStep ;
+		return fake.mStep ;
 	}
 
 	VREF<Pointer> self_m () leftvalue override {
-		return Pointer::make (thix.mBuffer.mPointer) ;
+		return Pointer::make (fake.mBuffer.mPointer) ;
 	}
 
 	CREF<Pointer> self_m () const leftvalue override {
-		return Pointer::make (thix.mBuffer.mPointer) ;
+		return Pointer::make (fake.mBuffer.mPointer) ;
 	}
 
 	VREF<Pointer> at (CREF<INDEX> index) leftvalue override {
 		assert (operator_between (index ,0 ,size ())) ;
-		const auto r1x = thix.mBuffer.mPointer + index * thix.mStep ;
+		const auto r1x = fake.mBuffer.mPointer + index * fake.mStep ;
 		return Pointer::make (r1x) ;
 	}
 
 	CREF<Pointer> at (CREF<INDEX> index) const leftvalue override {
 		assert (operator_between (index ,0 ,size ())) ;
-		const auto r1x = thix.mBuffer.mPointer + index * thix.mStep ;
+		const auto r1x = fake.mBuffer.mPointer + index * fake.mStep ;
 		return Pointer::make (r1x) ;
 	}
 
