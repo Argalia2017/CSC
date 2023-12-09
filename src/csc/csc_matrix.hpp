@@ -54,7 +54,7 @@ public:
 template <class A>
 class MatrixLayout {
 public:
-	BoxBuffer<A ,RANK4> mMatrix ;
+	BoxBuffer<A ,ENUM<16>> mMatrix ;
 } ;
 
 template <class A>

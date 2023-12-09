@@ -924,7 +924,7 @@ struct SliceHolder implement Interface {
 
 	virtual void initialize (CREF<SliceData> data) = 0 ;
 	virtual LENGTH size () const = 0 ;
-	virtual STRU32 at (CREF<INDEX> index) const = 0 ;
+	virtual STRU32 get (CREF<INDEX> index) const = 0 ;
 	virtual BOOL equal (CREF<Ref<SliceLayout>> that) const = 0 ;
 	virtual FLAG compr (CREF<Ref<SliceLayout>> that) const = 0 ;
 	virtual void visit (CREF<Visitor> visitor) const = 0 ;
@@ -966,12 +966,12 @@ public:
 		return SliceHolder::create (thiz)->size () ;
 	}
 
-	A at (CREF<INDEX> index) const {
-		return A (SliceHolder::create (thiz)->at (index)) ;
+	A get (CREF<INDEX> index) const {
+		return A (SliceHolder::create (thiz)->get (index)) ;
 	}
 
 	inline A operator[] (CREF<INDEX> index) const {
-		return at (index) ;
+		return get (index) ;
 	}
 
 	BOOL equal (CREF<Slice> that) const {

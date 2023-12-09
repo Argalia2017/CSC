@@ -177,10 +177,10 @@ public:
 		VectorLayout<A> ret ;
 		for (auto &&i : iter (0 ,4)) {
 			auto rax = A (0) ;
-			rax += fake.mVector[0] * that.mMatrix[0 * 4 + i] ;
-			rax += fake.mVector[1] * that.mMatrix[1 * 4 + i] ;
-			rax += fake.mVector[2] * that.mMatrix[2 * 4 + i] ;
-			rax += fake.mVector[3] * that.mMatrix[3 * 4 + i] ;
+			rax += fake.mVector[0] * that.mMatrix[i + 0 * 4] ;
+			rax += fake.mVector[1] * that.mMatrix[i + 1 * 4] ;
+			rax += fake.mVector[2] * that.mMatrix[i + 2 * 4] ;
+			rax += fake.mVector[3] * that.mMatrix[i + 3 * 4] ;
 			ret.mVector[i] = rax ;
 		}
 		return move (ret) ;
@@ -268,10 +268,10 @@ class MatrixImplHolder implement Fat<MatrixHolder<A> ,MatrixLayout<A>> {
 public:
 	void initialize (CREF<VectorLayout<A>> x ,CREF<VectorLayout<A>> y ,CREF<VectorLayout<A>> z ,CREF<VectorLayout<A>> w) override {
 		for (auto &&i : iter (0 ,4)) {
-			fake.mMatrix[i * 4 + 0] = x.mVector[i] ;
-			fake.mMatrix[i * 4 + 1] = y.mVector[i] ;
-			fake.mMatrix[i * 4 + 2] = z.mVector[i] ;
-			fake.mMatrix[i * 4 + 3] = w.mVector[i] ;
+			load (fake ,0 ,i) = x.mVector[i] ;
+			load (fake ,1 ,i) = y.mVector[i] ;
+			load (fake ,2 ,i) = z.mVector[i] ;
+			load (fake ,3 ,i) = w.mVector[i] ;
 		}
 	}
 
@@ -295,13 +295,21 @@ public:
 	VREF<A> at (CREF<INDEX> x ,CREF<INDEX> y) leftvalue override {
 		assert (operator_between (x ,0 ,4)) ;
 		assert (operator_between (y ,0 ,4)) ;
-		return fake.mMatrix[y * 4 + x] ;
+		return load (fake ,x ,y) ;
 	}
 
 	CREF<A> at (CREF<INDEX> x ,CREF<INDEX> y) const leftvalue override {
 		assert (operator_between (x ,0 ,4)) ;
 		assert (operator_between (y ,0 ,4)) ;
-		return fake.mMatrix[y * 4 + x] ;
+		return load (fake ,x ,y) ;
+	}
+
+	VREF<A> load (VREF<MatrixLayout<A>> matrix ,CREF<INDEX> x ,CREF<INDEX> y) const {
+		return matrix.mMatrix[x + y * 4] ;
+	}
+
+	CREF<A> load (CREF<MatrixLayout<A>> matrix ,CREF<INDEX> x ,CREF<INDEX> y) const {
+		return matrix.mMatrix[x + y * 4] ;
 	}
 
 	BOOL equal (CREF<MatrixLayout<A>> that) const override {
@@ -375,10 +383,10 @@ public:
 		VectorLayout<A> ret ;
 		for (auto &&i : iter (0 ,4)) {
 			auto rax = A (0) ;
-			rax += fake.mMatrix[i * 4 + 0] * ret.mVector[0] ;
-			rax += fake.mMatrix[i * 4 + 1] * ret.mVector[1] ;
-			rax += fake.mMatrix[i * 4 + 2] * ret.mVector[2] ;
-			rax += fake.mMatrix[i * 4 + 3] * ret.mVector[3] ;
+			rax += load (fake ,0 ,i) * ret.mVector[0] ;
+			rax += load (fake ,1 ,i) * ret.mVector[1] ;
+			rax += load (fake ,2 ,i) * ret.mVector[2] ;
+			rax += load (fake ,3 ,i) * ret.mVector[3] ;
 			ret.mVector[i] = rax ;
 		}
 		return move (ret) ;
@@ -388,11 +396,11 @@ public:
 		MatrixLayout<A> ret ;
 		for (auto &&i : iter (0 ,4 ,0 ,4)) {
 			auto rax = A (0) ;
-			rax += fake.mMatrix[i.mY * 4 + 0] * that.mMatrix[0 * 4 + i.mX] ;
-			rax += fake.mMatrix[i.mY * 4 + 1] * that.mMatrix[1 * 4 + i.mX] ;
-			rax += fake.mMatrix[i.mY * 4 + 2] * that.mMatrix[2 * 4 + i.mX] ;
-			rax += fake.mMatrix[i.mY * 4 + 3] * that.mMatrix[3 * 4 + i.mX] ;
-			ret.mMatrix[i.mY * 4 + i.mX] = rax ;
+			rax += load (fake ,0 ,i.mY) * load (that ,i.mX ,0) ;
+			rax += load (fake ,1 ,i.mY) * load (that ,i.mX ,1) ;
+			rax += load (fake ,2 ,i.mY) * load (that ,i.mX ,2) ;
+			rax += load (fake ,3 ,i.mY) * load (that ,i.mX ,3) ;
+			load (ret ,i.mX ,i.mY) = rax ;
 		}
 		return move (ret) ;
 	}
@@ -412,44 +420,96 @@ public:
 	MatrixLayout<A> transpose () const override {
 		MatrixLayout<A> ret ;
 		for (auto &&i : iter (0 ,4 ,0 ,4)) {
-			INDEX ix = i.mY * 4 + i.mX ;
-			INDEX iy = i.mX * 4 + i.mY ;
-			ret.mMatrix[ix] = fake.mMatrix[iy] ;
+			load (ret ,i.mY ,i.mX) = load (fake ,i.mX ,i.mY) ;
 		}
 		return move (ret) ;
 	}
 
 	MatrixLayout<A> triangular () const override {
-		MatrixLayout<A> ret ;
-		unimplemented () ;
+		MatrixLayout<A> ret = fake ;
+		for (auto &&i : iter (0 ,4)) {
+			if ifswitch (TRUE) {
+				INDEX ix = find_abs_max_row (i) ;
+				if (ix == i)
+					discard ;
+				for (auto &&j : iter (i ,4)) {
+					const auto r1x = -load (ret ,j ,i) ;
+					load (ret ,j ,i) = load (ret ,j ,ix) ;
+					load (ret ,j ,ix) = r1x ;
+				}
+			}
+			const auto r2x = MathProc::inverse (load (ret ,i ,i)) ;
+			if (r2x == 0)
+				continue ;
+			for (auto &&j : iter (i + 1 ,4)) {
+				const auto r3x = load (ret ,i ,j) * r2x ;
+				for (auto &&k : iter (i + 1 ,4))
+					load (ret ,k ,j) -= r3x * load (ret ,k ,i) ;
+				load (ret ,i ,j) = 0 ;
+			}
+		}
+		return move (ret) ;
+	}
+
+	INDEX find_abs_max_row (CREF<INDEX> x) const {
+		INDEX ret = NONE ;
+		auto rax = A () ;
+		for (auto &&i : iter (x ,4)) {
+			const auto r1x = MathProc::abs (load (fake ,x ,i)) ;
+			if (ret != NONE)
+				if (rax >= r1x)
+					continue ;
+			ret = i ;
+			rax = r1x ;
+		}
 		return move (ret) ;
 	}
 
 	MatrixLayout<A> homogensize () const override {
 		MatrixLayout<A> ret = zero () ;
 		for (auto &&i : iter (0 ,3 ,0 ,3)) {
-			INDEX ix = i.mY * 4 + i.mX ;
-			ret.mMatrix[ix] = fake.mMatrix[ix] ;
+			load (ret ,i.mX ,i.mY) = load (fake ,i.mX ,i.mY) ;
 		}
 		return move (ret) ;
 	}
 
 	A determinant () const override {
-		A ret = 0 ;
-		unimplemented () ;
+		const auto r1x = triangular () ;
+		A ret = A (1) ;
+		for (auto &&i : iter (0 ,4))
+			ret *= load (r1x ,i ,i) ;
 		return move (ret) ;
 	}
 
 	MatrixLayout<A> inverse () const override {
 		MatrixLayout<A> ret ;
-		unimplemented () ;
+		for (auto &&i : iter (0 ,4 ,0 ,4)) {
+			INDEX ix = LENGTH (i.mY == 0) ;
+			INDEX iy = ix + 1 + LENGTH (i.mY == 1) ;
+			INDEX iz = iy + 1 + LENGTH (i.mY == 2) ;
+			INDEX jx = LENGTH (i.mX == 0) ;
+			INDEX jy = jx + 1 + LENGTH (i.mX == 1) ;
+			INDEX jz = jy + 1 + LENGTH (i.mX == 2) ;
+			const auto r2x = load (fake ,jx ,ix) * (load (fake ,jy ,iy) * load (fake ,jz ,iz) - load (fake ,jz ,iy) * load (fake ,jy ,iz)) ;
+			const auto r3x = load (fake ,jx ,iy) * (load (fake ,jy ,ix) * load (fake ,jz ,iz) - load (fake ,jz ,ix) * load (fake ,jy ,iz)) ;
+			const auto r4x = load (fake ,jx ,iz) * (load (fake ,jy ,ix) * load (fake ,jz ,iy) - load (fake ,jz ,ix) * load (fake ,jy ,iy)) ;
+			const auto r5x = r2x - r3x + r4x ;
+			const auto r6x = invoke ([&] () {
+				if ((i.mY + i.mX) % 2 == 0)
+					return r5x ;
+				return -r5x ;
+			}) ;
+			load (ret ,i.mY ,i.mX) = r6x ;
+		}
+		const auto r1x = MathProc::inverse (determinant ()) ;
+		MatrixHolder<A>::create (ret)->mul_with (r1x) ;
 		return move (ret) ;
 	}
 
 	A trace () const override {
 		A ret = 0 ;
 		for (auto &&i : iter (0 ,4)) {
-			ret += fake.mMatrix[i * 4 + i] ;
+			ret += load (fake ,i ,i) ;
 		}
 		return move (ret) ;
 	}
@@ -466,10 +526,10 @@ public:
 
 	void DiagMatrix_initialize (CREF<A> x ,CREF<A> y ,CREF<A> z ,CREF<A> w) override {
 		fake = zero () ;
-		MatrixHolder<A>::create (fake)->at (0 ,0) = x ;
-		MatrixHolder<A>::create (fake)->at (1 ,1) = y ;
-		MatrixHolder<A>::create (fake)->at (2 ,2) = z ;
-		MatrixHolder<A>::create (fake)->at (3 ,3) = w ;
+		load (fake ,0 ,0) = x ;
+		load (fake ,1 ,1) = y ;
+		load (fake ,2 ,2) = z ;
+		load (fake ,3 ,3) = w ;
 	}
 
 	void ShearMatrix_initialize (CREF<VectorLayout<A>> x ,CREF<VectorLayout<A>> y ,CREF<VectorLayout<A>> z) override {
@@ -486,10 +546,10 @@ public:
 
 	void TranslationMatrix_initialize (CREF<A> x ,CREF<A> y ,CREF<A> z) override {
 		fake = identity () ;
-		MatrixHolder<A>::create (fake)->at (3 ,0) = x ;
-		MatrixHolder<A>::create (fake)->at (3 ,1) = y ;
-		MatrixHolder<A>::create (fake)->at (3 ,2) = z ;
-		MatrixHolder<A>::create (fake)->at (3 ,3) = 1 ;
+		load (fake ,0 ,3) = x ;
+		load (fake ,1 ,3) = y ;
+		load (fake ,2 ,3) = z ;
+		load (fake ,3 ,3) = 1 ;
 	}
 
 	void PerspectiveMatrix_initialize (CREF<A> fx ,CREF<A> fy ,CREF<A> wx ,CREF<A> wy) override {

@@ -54,6 +54,12 @@
     </Expand>
   </Type>
 
+  <Type Name="CSC::UnknownBinder&lt;*&gt;">
+    <Expand HideRawView="true">
+      <ExpandedItem>&amp;mValue</ExpandedItem>
+    </Expand>
+  </Type>
+
   <Type Name="CSC::Auto">
     <Expand HideRawView="true">
       <Item Name="[+]">(CSC::Unknown*)&amp;mThis.mHolder</Item>
@@ -63,6 +69,11 @@
   <!--csc_basic.hpp-->
 
   <Type Name="CSC::BoxBuffer&lt;*&gt;">
+    <Expand HideRawView="true">
+      <Item Name="[size]">(csc_diff_t)$T2::expr_m()</Item>
+      <Item Name="[step]">(csc_diff_t)sizeof($T1)</Item>
+      <ExpandedItem>mBuffer.m1st</ExpandedItem>
+    </Expand>
   </Type>
 
   <Type Name="CSC::RefBuffer&lt;*&gt;">
@@ -78,6 +89,26 @@
         <ValuePointer>($T1*)mBuffer.mPointer</ValuePointer>
       </ArrayItems>
       <Item Name="[+]" Condition="mSize&gt;=10">this</Item>
+    </Expand>
+  </Type>
+
+  <!--csc_matrix.hpp-->
+
+  <Type Name="CSC::Vector&lt;*&gt;">
+    <Expand HideRawView="true">
+      <ExpandedItem>($T1(*)[4][1])&amp;mVector</ExpandedItem>
+    </Expand>
+  </Type>
+
+  <Type Name="CSC::Matrix&lt;*&gt;">
+    <Expand HideRawView="true">
+      <ExpandedItem>($T1(*)[4][4])&amp;mMatrix</ExpandedItem>
+    </Expand>
+  </Type>
+
+  <Type Name="CSC::Quaternion&lt;*&gt;">
+    <Expand HideRawView="true">
+      <ExpandedItem>($T1(*)[4])&amp;mQuaternion</ExpandedItem>
     </Expand>
   </Type>
 

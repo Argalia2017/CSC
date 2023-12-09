@@ -21,8 +21,7 @@ protected:
 public:
 	implicit RowProxy () = delete ;
 
-	explicit RowProxy (RREF<A> that ,CREF<INDEX> y) {
-		mThat = that ;
+	explicit RowProxy (XREF<A> that ,CREF<INDEX> y) :mThat (that) {
 		mY = y ;
 	}
 

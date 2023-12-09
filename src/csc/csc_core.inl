@@ -201,7 +201,7 @@ public:
 		return fake->mEnd - fake->mBegin ;
 	}
 
-	STRU32 at (CREF<INDEX> index) const override {
+	STRU32 get (CREF<INDEX> index) const override {
 		return load (fake->mBegin + index * fake->mStep) ;
 	}
 

@@ -21,8 +21,7 @@ protected:
 public:
 	implicit ArrayIterator () = delete ;
 
-	explicit ArrayIterator (RREF<A> that) {
-		mThat = that ;
+	explicit ArrayIterator (XREF<A> that) :mThat (that) {
 		mBegin = mThat->ibegin () ;
 		mEnd = mThat->iend () ;
 		mPeek = mBegin ;
@@ -87,10 +86,10 @@ struct ArrayHolder implement Interface {
 	virtual INDEX ibegin () const = 0 ;
 	virtual INDEX iend () const = 0 ;
 	virtual INDEX inext (CREF<INDEX> index) const = 0 ;
-	virtual BOOL equal (CREF<ArrayHolder> that) const = 0 ;
-	virtual FLAG compr (CREF<ArrayHolder> that) const = 0 ;
+	virtual BOOL equal (CREF<ArrayLayout> that) const = 0 ;
+	virtual FLAG compr (CREF<ArrayLayout> that) const = 0 ;
 	virtual void visit (CREF<Visitor> visitor) const = 0 ;
-	virtual void fill (CREF<Pointer> a) = 0 ;
+	virtual void fill (CREF<Pointer> item) = 0 ;
 } ;
 
 template <class A>
@@ -130,15 +129,15 @@ public:
 		return at (index) ;
 	}
 
-	INDEX ibegin () const override {
+	INDEX ibegin () const {
 		return ArrayHolder::create (thiz)->ibegin () ;
 	}
 
-	INDEX iend () const override {
+	INDEX iend () const {
 		return ArrayHolder::create (thiz)->iend () ;
 	}
 
-	INDEX inext (CREF<INDEX> index) const override {
+	INDEX inext (CREF<INDEX> index) const {
 		return ArrayHolder::create (thiz)->inext (index) ;
 	}
 
@@ -147,7 +146,7 @@ public:
 	}
 
 	BOOL equal (CREF<Array> that) const {
-		return ArrayHolder::create (thiz)->at (that) ;
+		return ArrayHolder::create (thiz)->equal (that) ;
 	}
 
 	inline BOOL operator== (CREF<Array> that) const {
@@ -159,7 +158,7 @@ public:
 	}
 
 	FLAG compr (CREF<Array> that) const {
-		return ArrayHolder::create (thiz)->at (that) ;
+		return ArrayHolder::create (thiz)->compr (that) ;
 	}
 
 	inline BOOL operator< (CREF<Array> that) const {
@@ -182,8 +181,8 @@ public:
 		return ArrayHolder::create (thiz)->visit (visitor) ;
 	}
 
-	void fill (CREF<A> a) {
-		return ArrayHolder::create (thiz)->fill (Pointer::from (a)) ;
+	void fill (CREF<A> item) {
+		return ArrayHolder::create (thiz)->fill (Pointer::from (item)) ;
 	}
 } ;
 
@@ -200,19 +199,132 @@ struct StringHolder implement Interface {
 	virtual LENGTH size () const = 0 ;
 	virtual LENGTH step () const = 0 ;
 	virtual LENGTH length () const = 0 ;
-	virtual VREF<Pointer> at (CREF<INDEX> index) leftvalue = 0 ;
-	virtual CREF<Pointer> at (CREF<INDEX> index) const leftvalue = 0 ;
+	virtual STRU32 get (CREF<INDEX> index) const = 0 ;
+	virtual void set (CREF<INDEX> index ,CREF<STRU32> item) = 0 ;
 	virtual INDEX ibegin () const = 0 ;
 	virtual INDEX iend () const = 0 ;
 	virtual INDEX inext (CREF<INDEX> index) const = 0 ;
-	virtual BOOL equal (CREF<StringHolder> that) const = 0 ;
-	virtual FLAG compr (CREF<StringHolder> that) const = 0 ;
+	virtual BOOL equal (CREF<StringLayout> that) const = 0 ;
+	virtual FLAG compr (CREF<StringLayout> that) const = 0 ;
 	virtual void visit (CREF<Visitor> visitor) const = 0 ;
-	virtual void fill (CREF<Pointer> a) = 0 ;
+	virtual void fill (CREF<STRU32> item) = 0 ;
+} ;
+
+template <class A>
+class SetProxy {
+private:
+	using ITEM = typeof (A ()->get (0)) ;
+
+protected:
+	A mThat ;
+	INDEX mIndex ;
+
+public:
+	implicit SetProxy () = delete ;
+
+	explicit SetProxy (XREF<A> that ,CREF<INDEX> index) :mThat (that) {
+		mIndex = index ;
+	}
+
+	inline operator ITEM () rightvalue {
+		return mThat->get (mIndex) ;
+	}
+
+	inline void operator= (CREF<ITEM> that) rightvalue {
+		mThat->set (mIndex ,that)
+	}
 } ;
 
 class String implement StringLayout {
 public:
 	implicit String () = default ;
+
+	explicit String (CREF<LENGTH> size_) {
+		StringHolder::create (thiz)->initialize (size_) ;
+	}
+
+	LENGTH size () const {
+		return StringHolder::create (thiz)->size () ;
+	}
+
+	LENGTH step () const {
+		return StringHolder::create (thiz)->step () ;
+	}
+
+	LENGTH length () const {
+		return StringHolder::create (thiz)->length () ;
+	}
+
+	STRU32 get (CREF<INDEX> index) const {
+		return StringHolder::create (thiz)->get (index) ;
+	}
+
+	inline STRU32 operator[] (CREF<INDEX> index) const leftvalue {
+		return get (index) ;
+	}
+
+	void set (CREF<INDEX> index ,CREF<STRU32> item) {
+		return StringHolder::create (thiz)->set (index ,item) ;
+	}
+
+	inline SetProxy<VPTR<String>> operator[] (CREF<INDEX> index) leftvalue {
+		return SetProxy<VPTR<String>> ((&thiz) ,index) ;
+	}
+
+	INDEX ibegin () const {
+		return StringHolder::create (thiz)->ibegin () ;
+	}
+
+	INDEX iend () const {
+		return StringHolder::create (thiz)->iend () ;
+	}
+
+	INDEX inext (CREF<INDEX> index) const {
+		return StringHolder::create (thiz)->inext (index) ;
+	}
+
+	ArrayIterator<CPTR<String>> range () const leftvalue {
+		return ArrayIterator<CPTR<String>> ((&thiz)) ;
+	}
+
+	BOOL equal (CREF<String> that) const {
+		return StringHolder::create (thiz)->equal (that) ;
+	}
+
+	inline BOOL operator== (CREF<String> that) const {
+		return equal (that) ;
+	}
+
+	inline BOOL operator!= (CREF<String> that) const {
+		return ifnot (equal (that)) ;
+	}
+
+	FLAG compr (CREF<String> that) const {
+		return StringHolder::create (thiz)->compr (that) ;
+	}
+
+	inline BOOL operator< (CREF<String> that) const {
+		return compr (that) < ZERO ;
+	}
+
+	inline BOOL operator<= (CREF<String> that) const {
+		return compr (that) <= ZERO ;
+	}
+
+	inline BOOL operator> (CREF<String> that) const {
+		return compr (that) > ZERO ;
+	}
+
+	inline BOOL operator>= (CREF<String> that) const {
+		return compr (that) >= ZERO ;
+	}
+
+	void visit (CREF<Visitor> visitor) const {
+		return StringHolder::create (thiz)->visit (visitor) ;
+	}
+
+	void fill (CREF<STRU32> item) {
+		return StringHolder::create (thiz)->fill (item) ;
+	}
 } ;
 } ;
