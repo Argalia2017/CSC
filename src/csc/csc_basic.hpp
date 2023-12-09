@@ -14,7 +14,7 @@ class BoxBufferLayout {} ;
 template <class A ,class B>
 class BoxBuffer implement BoxBufferLayout {
 private:
-	require (IS_DEFAULT<A>) ;
+	require (IS_TRIVIAL<A>) ;
 
 protected:
 	Tuple<ARR<A ,B>> mBuffer ;
@@ -109,6 +109,7 @@ public:
 	implicit RefBuffer () = default ;
 
 	explicit RefBuffer (CREF<LENGTH> size_) {
+		require (IS_DEFAULT<A>) ;
 		auto rax = Box<A>::make () ;
 		RefBufferHolder::create (thiz)->initialize (rax ,size_) ;
 		rax.release () ;

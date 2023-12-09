@@ -77,7 +77,7 @@ struct ArrayHolder implement Interface {
 	imports VFat<ArrayHolder> create (VREF<ArrayLayout> that) ;
 	imports CFat<ArrayHolder> create (CREF<ArrayLayout> that) ;
 
-	virtual void initialize (CREF<LENGTH> size_) = 0 ;
+	virtual void initialize (CREF<BoxLayout> value ,CREF<LENGTH> size_) = 0 ;
 	virtual LENGTH size () const = 0 ;
 	virtual LENGTH step () const = 0 ;
 	virtual LENGTH length () const = 0 ;
@@ -98,7 +98,9 @@ public:
 	implicit Array () = default ;
 
 	explicit Array (CREF<LENGTH> size_) {
-		ArrayHolder::create (thiz)->initialize (size_) ;
+		auto rax = Box<A>::make () ;
+		ArrayHolder::create (thiz)->initialize (rax ,size_) ;
+		rax.release () ;
 	}
 
 	LENGTH size () const {
@@ -196,10 +198,11 @@ struct StringHolder implement Interface {
 	imports CFat<StringHolder> create (CREF<StringLayout> that) ;
 
 	virtual void initialize (CREF<LENGTH> size_) = 0 ;
+	virtual void initialize (CREF<RefBase<SliceLayout>> size_) = 0 ;
 	virtual LENGTH size () const = 0 ;
 	virtual LENGTH step () const = 0 ;
 	virtual LENGTH length () const = 0 ;
-	virtual STRU32 get (CREF<INDEX> index) const = 0 ;
+	virtual void get (CREF<INDEX> index ,VREF<STRU32> item) const = 0 ;
 	virtual void set (CREF<INDEX> index ,CREF<STRU32> item) = 0 ;
 	virtual INDEX ibegin () const = 0 ;
 	virtual INDEX iend () const = 0 ;
@@ -210,34 +213,16 @@ struct StringHolder implement Interface {
 	virtual void fill (CREF<STRU32> item) = 0 ;
 } ;
 
-template <class A ,class B>
-class SetProxy {
-protected:
-	A mThat ;
-	INDEX mIndex ;
-
-public:
-	implicit SetProxy () = delete ;
-
-	explicit SetProxy (XREF<A> that ,CREF<INDEX> index) :mThat (that) {
-		mIndex = index ;
-	}
-
-	inline operator B () rightvalue {
-		return mThat->get (mIndex) ;
-	}
-
-	inline void operator= (CREF<B> that) rightvalue {
-		mThat->set (mIndex ,that)
-	}
-} ;
-
 class String implement StringLayout {
 public:
 	implicit String () = default ;
 
 	explicit String (CREF<LENGTH> size_) {
 		StringHolder::create (thiz)->initialize (size_) ;
+	}
+
+	explicit String (CREF<RefBase<SliceLayout>> text) {
+		StringHolder::create (thiz)->initialize (text) ;
 	}
 
 	LENGTH size () const {
@@ -252,20 +237,26 @@ public:
 		return StringHolder::create (thiz)->length () ;
 	}
 
-	STRU32 get (CREF<INDEX> index) const {
-		return StringHolder::create (thiz)->get (index) ;
-	}
-
-	inline STRU32 operator[] (CREF<INDEX> index) const leftvalue {
-		return get (index) ;
+	void get (CREF<INDEX> index ,VREF<STRU32> item) const {
+		return StringHolder::create (thiz)->get (index ,item) ;
 	}
 
 	void set (CREF<INDEX> index ,CREF<STRU32> item) {
 		return StringHolder::create (thiz)->set (index ,item) ;
 	}
 
+	STRU32 at (CREF<INDEX> index) const {
+		STRU32 ret ;
+		get (index ,ret) ;
+		return move (ret) ;
+	}
+
 	inline SetProxy<VPTR<String> ,STRU32> operator[] (CREF<INDEX> index) leftvalue {
 		return SetProxy<VPTR<String> ,STRU32> ((&thiz) ,index) ;
+	}
+
+	inline SetProxy<CPTR<String> ,STRU32> operator[] (CREF<INDEX> index) const leftvalue {
+		return SetProxy<CPTR<String> ,STRU32> ((&thiz) ,index) ;
 	}
 
 	INDEX ibegin () const {

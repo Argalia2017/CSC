@@ -358,6 +358,8 @@ struct MatrixHolder implement Interface {
 	virtual void ProjectionMatrix_initialize (CREF<VectorLayout<A>> normal ,CREF<VectorLayout<A>> center ,CREF<VectorLayout<A>> light) = 0 ;
 	virtual void ViewMatrix_initialize (CREF<VectorLayout<A>> vx ,CREF<VectorLayout<A>> vy) = 0 ;
 	virtual void ViewMatrix_initialize (CREF<VectorLayout<A>> vx ,CREF<VectorLayout<A>> vy ,CREF<FLAG> flag) = 0 ;
+	virtual void CrossProductMatrix_initialize (CREF<VectorLayout<A>> xyz) = 0 ;
+	virtual void SymmetryMatrix_initialize (CREF<VectorLayout<A>> x ,CREF<VectorLayout<A>> y) = 0 ;
 } ;
 
 template <class A>
@@ -659,32 +661,48 @@ struct ViewMatrixFlag {
 template <class A>
 class ViewMatrix implement Matrix<A> {
 public:
-	explicit ViewMatrix (CREF<Vector<A>> vx ,CREF<Vector<A>> vy) {
-		MatrixHolder<A>::create (thiz)->ViewMatrix_initialize (vx ,vy) ;
+	explicit ViewMatrix (CREF<Vector<A>> x ,CREF<Vector<A>> y) {
+		MatrixHolder<A>::create (thiz)->ViewMatrix_initialize (x ,y) ;
 	}
 
-	imports Matrix<A> make_xy (CREF<Vector<A>> vx ,CREF<Vector<A>> vy) {
-		MatrixHolder<A>::create (thiz)->ViewMatrix_initialize (vx ,vy ,ViewMatrixFlag::XY) ;
+	imports Matrix<A> make_xy (CREF<Vector<A>> x ,CREF<Vector<A>> y) {
+		MatrixHolder<A>::create (thiz)->ViewMatrix_initialize (x ,y ,ViewMatrixFlag::XY) ;
 	}
 
-	imports Matrix<A> make_xz (CREF<Vector<A>> vx ,CREF<Vector<A>> vz) {
-		MatrixHolder<A>::create (thiz)->ViewMatrix_initialize (vx ,vz ,ViewMatrixFlag::XZ) ;
+	imports Matrix<A> make_xz (CREF<Vector<A>> x ,CREF<Vector<A>> z) {
+		MatrixHolder<A>::create (thiz)->ViewMatrix_initialize (x ,z ,ViewMatrixFlag::XZ) ;
 	}
 
-	imports Matrix<A> make_yx (CREF<Vector<A>> vy ,CREF<Vector<A>> vx) {
-		MatrixHolder<A>::create (thiz)->ViewMatrix_initialize (vy ,vx ,ViewMatrixFlag::YX) ;
+	imports Matrix<A> make_yx (CREF<Vector<A>> y ,CREF<Vector<A>> x) {
+		MatrixHolder<A>::create (thiz)->ViewMatrix_initialize (y ,x ,ViewMatrixFlag::YX) ;
 	}
 
-	imports Matrix<A> make_yz (CREF<Vector<A>> vy ,CREF<Vector<A>> vz) {
-		MatrixHolder<A>::create (thiz)->ViewMatrix_initialize (vy ,vz ,ViewMatrixFlag::YZ) ;
+	imports Matrix<A> make_yz (CREF<Vector<A>> y ,CREF<Vector<A>> z) {
+		MatrixHolder<A>::create (thiz)->ViewMatrix_initialize (y ,z ,ViewMatrixFlag::YZ) ;
 	}
 
-	imports Matrix<A> make_zx (CREF<Vector<A>> vz ,CREF<Vector<A>> vx) {
-		MatrixHolder<A>::create (thiz)->ViewMatrix_initialize (vz ,vx ,ViewMatrixFlag::ZX) ;
+	imports Matrix<A> make_zx (CREF<Vector<A>> z ,CREF<Vector<A>> x) {
+		MatrixHolder<A>::create (thiz)->ViewMatrix_initialize (z ,x ,ViewMatrixFlag::ZX) ;
 	}
 
-	imports Matrix<A> make_zy (CREF<Vector<A>> vz ,CREF<Vector<A>> vy) {
-		MatrixHolder<A>::create (thiz)->ViewMatrix_initialize (vz ,vy ,ViewMatrixFlag::ZY) ;
+	imports Matrix<A> make_zy (CREF<Vector<A>> z ,CREF<Vector<A>> y) {
+		MatrixHolder<A>::create (thiz)->ViewMatrix_initialize (z ,y ,ViewMatrixFlag::ZY) ;
+	}
+} ;
+
+template <class A>
+class CrossProductMatrix implement Matrix<A> {
+public:
+	explicit CrossProductMatrix (CREF<Vector<A>> xyz) {
+		MatrixHolder<A>::create (thiz)->CrossProductMatrix_initialize (xyz) ;
+	}
+} ;
+
+template <class A>
+class SymmetryMatrix implement Matrix<A> {
+public:
+	explicit SymmetryMatrix (CREF<Vector<A>> x ,CREF<Vector<A>> y) {
+		MatrixHolder<A>::create (thiz)->SymmetryMatrix_initialize (x ,y) ;
 	}
 } ;
 

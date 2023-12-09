@@ -103,9 +103,7 @@ public:
 	}
 
 	template <class ARG1>
-	imports RREF<Pointer> from (RREF<ARG1> that) {
-		return reinterpret_cast<RREF<Pointer>> (that) ;
-	}
+	imports RREF<Pointer> from (RREF<ARG1>) = delete ;
 
 	template <class ARG1>
 	inline operator VREF<ARG1> () leftvalue {
@@ -118,9 +116,7 @@ public:
 	}
 
 	template <class ARG1>
-	inline operator RREF<ARG1> () rightvalue {
-		return reinterpret_cast<RREF<ARG1>> (thiz) ;
-	}
+	inline operator RREF<ARG1> () rightvalue = delete ;
 } ;
 
 template <class A>
@@ -547,17 +543,17 @@ public:
 struct Unknown implement Interface {
 	virtual LENGTH type_size () const = 0 ;
 	virtual LENGTH type_align () const = 0 ;
-	virtual void destroy (CREF<LENGTH> size_) noexcept = 0 ;
+	virtual void create (CREF<LENGTH> size_) const noexcept = 0 ;
+	virtual void destroy (CREF<LENGTH> size_) const noexcept = 0 ;
 } ;
 
 template <class A>
 class UnknownBinder final implement Unknown {
 protected:
-	A mValue ;
+	TEMP<A> mValue ;
 
 public:
-	template <class...ARG1>
-	explicit UnknownBinder (XREF<ARG1>...initval) :mValue (keep[TYPE<XREF<ARG1>>::expr] (initval)...) {}
+	implicit UnknownBinder () = default ;
 
 	LENGTH type_size () const override {
 		return SIZE_OF<A>::expr ;
@@ -567,7 +563,18 @@ public:
 		return ALIGN_OF<A>::expr ;
 	}
 
-	void destroy (CREF<LENGTH> size_) noexcept override {
+	void create (CREF<LENGTH> size_) const noexcept override {
+		if (IS_TRIVIAL<A>::expr)
+			return ;
+		auto &&rax = unsafe_cast[TYPE<ARR<A ,RANK1>>::expr] (mValue) ;
+		for (auto &&i : iter (0 ,size_)) {
+			new (DEF<csc_temp_t *> (&rax[i])) A () ;
+		}
+	}
+
+	void destroy (CREF<LENGTH> size_) const noexcept override {
+		if (IS_TRIVIAL<A>::expr)
+			return ;
 		auto &&rax = unsafe_cast[TYPE<ARR<A ,RANK1>>::expr] (mValue) ;
 		for (auto &&i : iter (0 ,size_)) {
 			rax[i].~A () ;
@@ -635,8 +642,9 @@ public:
 	template <class...ARG1>
 	imports Box make (XREF<ARG1>...initval) {
 		Box ret ;
-		const auto r1x = DEF<csc_temp_t *> (&ret) ;
-		new (r1x) UnknownBinder<A> (keep[TYPE<XREF<ARG1>>::expr] (initval)...) ;
+		const auto r1x = UnknownBinder<A> () ;
+		new (DEF<csc_temp_t *> (&ret.mValue)) A (keep[TYPE<ARG1>::expr] (initval)...) ;
+		ret.mHolder = Pointer::from (r1x) ;
 		return move (ret) ;
 	}
 
@@ -694,6 +702,7 @@ struct RefHolder implement Interface {
 	imports VFat<RefHolder> create (VREF<RefLayout> that) ;
 	imports CFat<RefHolder> create (CREF<RefLayout> that) ;
 
+	virtual void initialize (CREF<BoxLayout> value) = 0 ;
 	virtual void initialize (CREF<BoxLayout> value ,CREF<LENGTH> size_) = 0 ;
 	virtual void destroy () = 0 ;
 	virtual BOOL exist () const = 0 ;
@@ -751,8 +760,7 @@ public:
 	imports Ref make (XREF<ARG1>...initval) {
 		Ref ret ;
 		auto rax = Box<A>::make (keep[TYPE<XREF<ARG1>>::expr] (initval)...) ;
-		const auto r1x = 1 - IS_TRIVIAL<A>::expr ;
-		RefHolder::create (ret)->initialize (rax ,r1x) ;
+		RefHolder::create (ret)->initialize (rax) ;
 		rax.release () ;
 		return move (ret) ;
 	}
@@ -930,6 +938,30 @@ struct FUNCTION_capture {
 
 static constexpr auto capture = FUNCTION_capture () ;
 
+template <class A ,class B>
+class SetProxy {
+protected:
+	A mThat ;
+	INDEX mIndex ;
+
+public:
+	implicit SetProxy () = delete ;
+
+	explicit SetProxy (XREF<A> that ,CREF<INDEX> index) :mThat (that) {
+		mIndex = index ;
+	}
+
+	inline operator B () rightvalue {
+		B ret ;
+		mThat->get (mIndex ,ret) ;
+		return move (ret) ;
+	}
+
+	inline void operator= (CREF<B> that) rightvalue {
+		mThat->set (mIndex ,that)
+	}
+} ;
+
 struct SliceData {
 	FLAG mBegin ;
 	FLAG mEnd ;
@@ -944,7 +976,7 @@ struct SliceHolder implement Interface {
 
 	virtual void initialize (CREF<SliceData> data) = 0 ;
 	virtual LENGTH size () const = 0 ;
-	virtual STRU32 get (CREF<INDEX> index) const = 0 ;
+	virtual void get (CREF<INDEX> index ,VREF<STRU32> item) const = 0 ;
 	virtual BOOL equal (CREF<Ref<SliceLayout>> that) const = 0 ;
 	virtual FLAG compr (CREF<Ref<SliceLayout>> that) const = 0 ;
 	virtual void visit (CREF<Visitor> visitor) const = 0 ;
@@ -986,12 +1018,18 @@ public:
 		return SliceHolder::create (thiz)->size () ;
 	}
 
-	A get (CREF<INDEX> index) const {
-		return A (SliceHolder::create (thiz)->get (index)) ;
+	void get (CREF<INDEX> index ,VREF<STRU32> item) const {
+		return SliceHolder::create (thiz)->get (index ,item) ;
 	}
 
-	inline A operator[] (CREF<INDEX> index) const {
-		return get (index) ;
+	A at (CREF<INDEX> index) const {
+		auto rax = STRU32 () ;
+		get (index ,rax) ;
+		return A (rax) ;
+	}
+
+	inline SetProxy<CPTR<Slice> ,A> operator[] (CREF<INDEX> index) const leftvalue {
+		return at (index) ;
 	}
 
 	BOOL equal (CREF<Slice> that) const {

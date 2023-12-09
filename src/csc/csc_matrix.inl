@@ -490,19 +490,19 @@ public:
 			INDEX jx = LENGTH (i.mX == 0) ;
 			INDEX jy = jx + 1 + LENGTH (i.mX == 1) ;
 			INDEX jz = jy + 1 + LENGTH (i.mX == 2) ;
-			const auto r2x = load (fake ,jx ,ix) * (load (fake ,jy ,iy) * load (fake ,jz ,iz) - load (fake ,jz ,iy) * load (fake ,jy ,iz)) ;
-			const auto r3x = load (fake ,jx ,iy) * (load (fake ,jy ,ix) * load (fake ,jz ,iz) - load (fake ,jz ,ix) * load (fake ,jy ,iz)) ;
-			const auto r4x = load (fake ,jx ,iz) * (load (fake ,jy ,ix) * load (fake ,jz ,iy) - load (fake ,jz ,ix) * load (fake ,jy ,iy)) ;
-			const auto r5x = r2x - r3x + r4x ;
-			const auto r6x = invoke ([&] () {
+			const auto r1x = load (fake ,jx ,ix) * (load (fake ,jy ,iy) * load (fake ,jz ,iz) - load (fake ,jz ,iy) * load (fake ,jy ,iz)) ;
+			const auto r2x = load (fake ,jx ,iy) * (load (fake ,jy ,ix) * load (fake ,jz ,iz) - load (fake ,jz ,ix) * load (fake ,jy ,iz)) ;
+			const auto r3x = load (fake ,jx ,iz) * (load (fake ,jy ,ix) * load (fake ,jz ,iy) - load (fake ,jz ,ix) * load (fake ,jy ,iy)) ;
+			const auto r4x = r1x - r2x + r3x ;
+			const auto r5x = invoke ([&] () {
 				if ((i.mY + i.mX) % 2 == 0)
-					return r5x ;
-				return -r5x ;
+					return r4x ;
+				return -r4x ;
 			}) ;
-			load (ret ,i.mY ,i.mX) = r6x ;
+			load (ret ,i.mY ,i.mX) = r5x ;
 		}
-		const auto r1x = MathProc::inverse (determinant ()) ;
-		MatrixHolder<A>::create (ret)->mul_with (r1x) ;
+		const auto r6x = MathProc::inverse (determinant ()) ;
+		MatrixHolder<A>::create (ret)->mul_with (r6x) ;
 		return move (ret) ;
 	}
 
@@ -525,19 +525,52 @@ public:
 	}
 
 	void DiagMatrix_initialize (CREF<A> x ,CREF<A> y ,CREF<A> z ,CREF<A> w) override {
-		fake = zero () ;
-		load (fake ,0 ,0) = x ;
-		load (fake ,1 ,1) = y ;
-		load (fake ,2 ,2) = z ;
-		load (fake ,3 ,3) = w ;
+		Matrix<A> ret = Matrix<A>::zero () ;
+		ret[0][0] = x ;
+		ret[1][1] = y ;
+		ret[2][2] = z ;
+		ret[1][3] = w ;
+		fake = move (ret) ;
 	}
 
 	void ShearMatrix_initialize (CREF<VectorLayout<A>> x ,CREF<VectorLayout<A>> y ,CREF<VectorLayout<A>> z) override {
-		unimplemented () ;
+		Matrix<A> ret = Matrix<A>::zero () ;
+		const auto r1x = Vector<A> (move (x)).normalize () ;
+		const auto r2x = Vector<A> (move (y)).normalize () ;
+		const auto r3x = Vector<A> (move (z)).normalize () ;
+		const auto r4x = r1x * r2x ;
+		const auto r5x = r1x * r3x ;
+		const auto r6x = r2x * r3x ;
+		const auto r7x = MathProc::sqrt (A (1) - MathProc::square (r4x)) ;
+		const auto r8x = (r6x - r4x * r5x) * MathProc::inverse (r7x) ;
+		const auto r9x = MathProc::sqrt (A (1) - MathProc::square (r5x) - MathProc::square (r8x)) ;
+		ret[0][0] = 1 ;
+		ret[0][1] = r4x ;
+		ret[1][1] = r7x ;
+		ret[0][2] = r5x ;
+		ret[1][2] = r8x ;
+		ret[2][3] = r9x ;
+		ret[3][3] = 1 ;
+		fake = move (ret) ;
 	}
 
 	void RotationMatrix_initialize (CREF<VectorLayout<A>> normal ,CREF<A> angle) override {
-		unimplemented () ;
+		Matrix<A> ret = Matrix<A>::zero () ;
+		const auto r1x = Vector<A> (move (normal)).normalize () ;
+		const auto r2x = MathProc::cos (angle) ;
+		const auto r3x = r1x * MathProc::sin (angle) ;
+		const auto r4x = r1x * (1 - r2x) ;
+		ret[0][0] = r1x[0] * r4x[0] + r2x ;
+		ret[1][0] = r1x[1] * r4x[0] + r3x[2] ;
+		ret[2][0] = r1x[2] * r4x[0] - r3x[1] ;
+		ret[0][1] = r1x[0] * r4x[1] - r3x[2] ;
+		ret[1][1] = r1x[1] * r4x[1] + r2x ;
+		ret[2][1] = r1x[2] * r4x[1] + r3x[0] ;
+		ret[0][2] = r1x[0] * r4x[2] + r3x[1] ;
+		ret[1][2] = r1x[1] * r4x[2] - r3x[0] ;
+		ret[2][2] = r1x[2] * r4x[2] + r2x ;
+		ret[3][3] = 1 ;
+		fake = move (ret) ;
 	}
 
 	void TranslationMatrix_initialize (CREF<VectorLayout<A>> xyz) override {
@@ -545,27 +578,82 @@ public:
 	}
 
 	void TranslationMatrix_initialize (CREF<A> x ,CREF<A> y ,CREF<A> z) override {
-		fake = identity () ;
-		load (fake ,0 ,3) = x ;
-		load (fake ,1 ,3) = y ;
-		load (fake ,2 ,3) = z ;
-		load (fake ,3 ,3) = 1 ;
+		Matrix<A> ret = Matrix<A>::identity () ;
+		ret[0][3] = x ;
+		ret[1][3] = y ;
+		ret[2][3] = z ;
+		fake = move (ret) ;
 	}
 
 	void PerspectiveMatrix_initialize (CREF<A> fx ,CREF<A> fy ,CREF<A> wx ,CREF<A> wy) override {
-		unimplemented () ;
+		assert (fx > 0) ;
+		assert (fy > 0) ;
+		Matrix<A> ret = Matrix<A>::zero () ;
+		ret[0][0] = fx ;
+		ret[1][1] = fy ;
+		ret[0][2] = wx ;
+		ret[1][2] = wx ;
+		ret[3][2] = 1 ;
+		ret[3][3] = 1 ;
+		fake = move (ret) ;
 	}
 
 	void ProjectionMatrix_initialize (CREF<VectorLayout<A>> normal ,CREF<VectorLayout<A>> center ,CREF<VectorLayout<A>> light) override {
+		Matrix<A> ret = Matrix<A>::zero () ;
+		const auto r1x = Vector<A> (move (normal)).normalize () ;
+		const auto r2x = Vector<A> (move (center)) * r1x ;
+		const auto r3x = Vector<A> (move (light)).normalize () ;
+		const auto r4x = r1x * r3x ;
+		ret[0][0] = r4x - r1x[0] * r3x[0] ;
+		ret[1][0] = -r1x[0] * r3x[1] ;
+		ret[2][0] = -r1x[0] * r3x[2] ;
+		ret[0][1] = -r1x[1] * r3x[0] ;
+		ret[1][1] = r4x - r1x[1] * r3x[1] ;
+		ret[2][1] = -r1x[1] * r3x[2] ;
+		ret[0][2] = -r1x[2] * r3x[0] ;
+		ret[1][2] = -r1x[2] * r3x[1] ;
+		ret[2][2] = r4x - r1x[2] * r3x[2] ;
+		ret[0][3] = r2x * r3x[0] ;
+		ret[1][3] = r2x * r3x[1] ;
+		ret[2][3] = r2x * r3x[2] ;
+		ret[3][3] = r4x ;
+		fake = move (ret) ;
+	}
+
+	void ViewMatrix_initialize (CREF<VectorLayout<A>> x ,CREF<VectorLayout<A>> y) override {
+		const auto r1x = Vector<A> (move (x)).normalize () ;
+		const auto r2x = Vector<A> (move (y)).normalize () ;
+		const auto r3x = (r1x ^ r2x).normalize () ;
+		const auto r4x = (r3x ^ r1x).normalize () ;
+		const auto r5x = Vector<A>::axis_w () ;
+		fake = Matrix<A> (r1x ,r4x ,r3x ,r5x) ;
+	}
+
+	void ViewMatrix_initialize (CREF<VectorLayout<A>> x ,CREF<VectorLayout<A>> y ,CREF<FLAG> flag) override {
 		unimplemented () ;
 	}
 
-	void ViewMatrix_initialize (CREF<VectorLayout<A>> vx ,CREF<VectorLayout<A>> vy) override {
-		unimplemented () ;
+	void CrossProductMatrix_initialize (CREF<VectorLayout<A>> xyz) override {
+		Matrix<A> ret = Matrix<A>::zero () ;
+		const auto r1x = Vector<A> (move (xyz)) ;
+		assert (r1x[3] == 0) ;
+		ret[1][0] = r1x[2] ;
+		ret[2][0] = -r1x[1] ;
+		ret[0][1] = -r1x[2] ;
+		ret[2][1] = r1x[0] ;
+		ret[0][2] = r1x[1] ;
+		ret[1][2] = -r1x[0] ;
+		fake = move (ret) ;
 	}
 
-	void ViewMatrix_initialize (CREF<VectorLayout<A>> vx ,CREF<VectorLayout<A>> vy ,CREF<FLAG> flag) override {
-		unimplemented () ;
+	void SymmetryMatrix_initialize (CREF<VectorLayout<A>> x ,CREF<VectorLayout<A>> y) override {
+		Matrix<A> ret = Matrix<A>::zero () ;
+		const auto r1x = Vector<A> (move (x)) ;
+		const auto r2x = Vector<A> (move (y)) ;
+		for (auto &&i : iter (0 ,4 ,0 ,4)) {
+			ret[i] = r1x[i.mY] * r2x[i.mX] ;
+		}
+		fake = move (ret) ;
 	}
 } ;
 

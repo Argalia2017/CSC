@@ -9,8 +9,8 @@
 namespace CSC {
 class ArrayImplHolder implement Fat<ArrayHolder ,ArrayLayout> {
 public:
-	void initialize (CREF<LENGTH> size_) override {
-		unimplemented () ;
+	void initialize (CREF<BoxLayout> value ,CREF<LENGTH> size_) override {
+		RefBufferHolder::create (fake.mArray)->initialize (value ,size_) ;
 	}
 
 	LENGTH size () const override {
@@ -45,20 +45,39 @@ public:
 		return index - 1 ;
 	}
 
-	BOOL equal (CREF<ArrayHolder> that) const override {
-	
+	BOOL equal (CREF<ArrayLayout> that) const override {
+		for (auto &&i : iter (0 ,size ())) {
+			auto &&rax = RefBufferHolder::create (fake.mArray)->at (i) ;
+			auto &&rbx = RefBufferHolder::create (that.mArray)->at (i) ;
+			unimplemented () ;
+			//if (equalable (rax ,rbx))
+			//	return FALSE ;
+		}
+		return TRUE ;
 	}
 
-	FLAG compr (CREF<ArrayHolder> that) const override {
-	
+	FLAG compr (CREF<ArrayLayout> that) const override {
+		for (auto &&i : iter (0 ,size ())) {
+			auto &&rax = RefBufferHolder::create (fake.mArray)->at (i) ;
+			auto &&rbx = RefBufferHolder::create (that.mArray)->at (i) ;
+			unimplemented () ;
+			//const auto r1x = compareable (rax ,rbx) ;
+			//if (r1x != ZERO)
+			//	return r1x ;
+		}
+		return ZERO ;
 	}
 
 	void visit (CREF<Visitor> visitor) const override {
-	
+		unimplemented () ;
 	}
 
-	void fill (CREF<Pointer> a) override {
-		unimplemented () ;
+	void fill (CREF<Pointer> item) override {
+		for (auto &&i : iter (0 ,size ())) {
+			auto &&rax = RefBufferHolder::create (fake.mArray)->at (i) ;
+			unimplemented () ;
+			//RefBufferHolder::create (fake.mArray)->assign (rax ,item) ;
+		}
 	}
 } ;
 

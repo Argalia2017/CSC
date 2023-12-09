@@ -7,6 +7,10 @@
 #include "csc_array.hpp"
 #include "csc_math.hpp"
 
+#include "csc_end.h"
+#include <cmath>
+#include "csc_begin.h"
+
 namespace CSC {
 class MathProcImplHolder implement Fat<MathProcHolder ,Ref<MathProcLayout>> {
 public:
@@ -28,6 +32,14 @@ public:
 
 	FLT64 square (CREF<FLT64> a) const override {
 		return a * a ;
+	}
+
+	FLT32 sqrt (CREF<FLT32> a) const override {
+		return std::sqrt (a) ;
+	}
+
+	FLT64 sqrt (CREF<FLT64> a) const override {
+		return std::sqrt (a) ;
 	}
 
 	VAL32 abs (CREF<VAL32> a) const override {
@@ -64,6 +76,30 @@ public:
 		if (abs (a) < FLT64_EPS)
 			return 0 ;
 		return 1 / a ;
+	}
+	
+	FLT32 cos (CREF<FLT32> a) const override {
+		return std::cos (a) ;
+	}
+	
+	FLT64 cos (CREF<FLT64> a) const override {
+		return std::cos (a) ;
+	}
+	
+	FLT32 sin (CREF<FLT32> a) const override {
+		return std::sin (a) ;
+	}
+	
+	FLT64 sin (CREF<FLT64> a) const override {
+		return std::sin (a) ;
+	}
+	
+	FLT32 tan (CREF<FLT32> a) const override {
+		return std::tan (a) ;
+	}
+	
+	FLT64 tan (CREF<FLT64> a) const override {
+		return std::tan (a) ;
 	}
 } ;
 

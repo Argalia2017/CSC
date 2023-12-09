@@ -52,10 +52,6 @@ public:
 		fake.mHolder = ZERO ;
 	}
 
-	VREF<Unknown> unknown () leftvalue {
-		return Pointer::from (fake.mHolder) ;
-	}
-
 	CREF<Unknown> unknown () const leftvalue {
 		return Pointer::from (fake.mHolder) ;
 	}
@@ -120,24 +116,36 @@ struct RefLayoutData {
 
 class RefImplHolder implement Fat<RefHolder ,RefLayout> {
 public:
+	void initialize (CREF<BoxLayout> value) override {
+		auto &&rax = unsafe_cast[TYPE<Unknown>::expr] (value.mHolder) ;
+		const auto r1x = operator_max (rax.type_align () - ALIGN_OF<FLAG>::expr ,0) ;
+		const auto r2x = SIZE_OF<RefLayoutData>::expr + r1x + 1 * rax.type_size () ;
+		fake.mHolder = HeapProc::instance ().alloc (r2x) ;
+		holder ().mCounter = 0 ;
+		holder ().mSize = 1 ;
+		BoxHolder::create (holder ().mThis)->acquire (value) ;
+		const auto r3x = fake.mHolder + SIZE_OF<RefLayoutData>::expr ;
+		fake.mPointer = operator_alignas (r3x ,rax.type_align ()) ;
+	}
+
 	void initialize (CREF<BoxLayout> value ,CREF<LENGTH> size_) override {
 		auto &&rax = unsafe_cast[TYPE<Unknown>::expr] (value.mHolder) ;
 		const auto r1x = operator_max (rax.type_align () - ALIGN_OF<FLAG>::expr ,0) ;
 		const auto r2x = SIZE_OF<RefLayoutData>::expr + r1x + size_ * rax.type_size () ;
 		fake.mHolder = HeapProc::instance ().alloc (r2x) ;
-		unknown ().mCounter = 0 ;
-		unknown ().mSize = size_ ;
-		BoxHolder::create (unknown ().mThis)->acquire (value) ;
+		holder ().mCounter = 0 ;
+		holder ().mSize = 0 ;
+		holder ().mThis.mHolder = value.mHolder ;
 		const auto r3x = fake.mHolder + SIZE_OF<RefLayoutData>::expr ;
 		fake.mPointer = operator_alignas (r3x ,rax.type_align ()) ;
 	}
 
 	void destroy () override {
-		const auto r1x = --unknown ().mCounter ;
+		const auto r1x = --holder ().mCounter ;
 		if (r1x > 0)
 			return ;
-		auto &&rax = unsafe_cast[TYPE<Unknown>::expr] (unknown ().mThis) ;
-		rax.destroy (unknown ().mSize) ;
+		auto &&rax = unsafe_cast[TYPE<Unknown>::expr] (holder ().mThis) ;
+		rax.destroy (holder ().mSize) ;
 		const auto r2x = fake.mHolder ;
 		HeapProc::instance ().free (r2x) ;
 	}
@@ -163,12 +171,12 @@ public:
 			ret.mPointer = fake.mPointer ;
 			if (ret.mHolder == ZERO)
 				discard ;
-			unknown ().mCounter++ ;
+			holder ().mCounter++ ;
 		}
 		return move (ret) ;
 	}
 
-	VREF<RefLayoutData> unknown () const leftvalue {
+	VREF<RefLayoutData> holder () const leftvalue {
 		return Pointer::make (fake.mHolder) ;
 	}
 } ;
@@ -196,8 +204,8 @@ public:
 		return fake->mEnd - fake->mBegin ;
 	}
 
-	STRU32 get (CREF<INDEX> index) const override {
-		return load (fake->mBegin + index * fake->mStep) ;
+	void get (CREF<INDEX> index ,VREF<STRU32> item) const override {
+		item = load (fake->mBegin + index * fake->mStep) ;
 	}
 
 	STRU32 load (CREF<FLAG> addr) const {
