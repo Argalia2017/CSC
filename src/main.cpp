@@ -5,10 +5,18 @@
 using namespace CSC ;
 using namespace std ;
 
+class XX {
+public:
+	XX () noexcept {
+		cerr << "this = " << this << "\n" ;
+	}
+} ;
+
 exports int main () {
 	const auto r1x = Box<Box<FLT64>>::make () ;
 	const auto r2x = Ref<Ref<FLT64>>::make (Ref<FLT64>::make (32.0f)) ;
 	const auto r3x = RefBuffer<int> (200) ;
+	const auto r21x = RefBuffer<XX> (20) ;
 	const auto r20x = BoxBuffer<float ,RANK5> () ;
 	const auto r4x = Clazz (TYPE<float>::expr) ;
 	const auto r5x = Exception (slice ("XSSS")) ;

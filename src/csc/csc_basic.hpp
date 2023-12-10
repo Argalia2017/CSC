@@ -106,8 +106,15 @@ struct RefBufferHolder implement Interface {
 template <class A>
 class RefBufferUnknownBinder final implement Unknown {
 public:
-	CREF<Interface> unknown (CREF<FLAG> uuid) const override {
-		return Pointer::make (0) ;
+	FLAG unknown (CREF<FLAG> uuid) const override {
+		if (uuid == ReflectSize::uuid ())
+			return unsafe_hold (ReflectSizeBinder<A> ()) ;
+		if (uuid == ReflectCreate::uuid ())
+			return unsafe_hold (ReflectCreateBinder<A> ()) ;
+		if (uuid == ReflectDestroy::uuid ())
+			return unsafe_hold (ReflectDestroyBinder<A> ()) ;
+		assert (FALSE) ;
+		return 0 ;
 	}
 } ;
 

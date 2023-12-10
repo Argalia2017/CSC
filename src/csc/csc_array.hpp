@@ -95,8 +95,21 @@ struct ArrayHolder implement Interface {
 template <class A>
 class ArrayUnknownBinder final implement Unknown {
 public:
-	CREF<Interface> unknown (CREF<FLAG> uuid) const override {
-		return Pointer::make (0) ;
+	FLAG unknown (CREF<FLAG> uuid) const override {
+		if (uuid == ReflectSize::uuid ())
+			return unsafe_hold (ReflectSizeBinder<A> ()) ;
+		if (uuid == ReflectCreate::uuid ())
+			return unsafe_hold (ReflectCreateBinder<A> ()) ;
+		if (uuid == ReflectDestroy::uuid ())
+			return unsafe_hold (ReflectDestroyBinder<A> ()) ;
+		if (uuid == ReflectAssign::uuid ())
+			return unsafe_hold (ReflectAssignBinder<A> ()) ;
+		if (uuid == ReflectEqual::uuid ())
+			return unsafe_hold (ReflectEqualBinder<A> ()) ;
+		if (uuid == ReflectCompr::uuid ())
+			return unsafe_hold (ReflectComprBinder<A> ()) ;
+		assert (FALSE) ;
+		return 0 ;
 	}
 } ;
 

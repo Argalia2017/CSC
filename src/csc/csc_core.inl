@@ -11,8 +11,7 @@
 namespace CSC {
 class BoxImplHolder implement Fat<BoxHolder ,BoxLayout> {
 public:
-	CREF<Interface> unknown (CREF<FLAG> uuid) const override {
-		assert (exist ()) ;
+	FLAG unknown (CREF<FLAG> uuid) const override {
 		auto &&rax = unsafe_cast[TYPE<Unknown>::expr] (fake.mHolder) ;
 		return rax.unknown (uuid) ;
 	}
@@ -22,7 +21,7 @@ public:
 	}
 
 	void destroy () override {
-		fake.unknown (TYPE<ReflectDestroy>::expr)->destroy (1) ;
+		fake.unknown (TYPE<ReflectDestroy>::expr)->destroy (self ,1) ;
 	}
 
 	BOOL exist () const override {
@@ -75,7 +74,7 @@ struct RefLayoutData {
 
 class RefImplHolder implement Fat<RefHolder ,RefLayout> {
 public:
-	CREF<Interface> unknown (CREF<FLAG> uuid) const override {
+	FLAG unknown (CREF<FLAG> uuid) const override {
 		return BoxHolder::create (holder ().mThis)->unknown (uuid) ;
 	}
 
@@ -87,9 +86,9 @@ public:
 		fake.mHolder = HeapProc::instance ().alloc (r4x) ;
 		holder ().mCounter = 0 ;
 		holder ().mSize = 1 ;
-		BoxHolder::create (holder ().mThis)->acquire (value) ;
 		const auto r5x = fake.mHolder + SIZE_OF<RefLayoutData>::expr ;
 		fake.mPointer = operator_alignas (r5x ,r2x) ;
+		BoxHolder::create (holder ().mThis)->acquire (value) ;
 	}
 
 	void initialize (CREF<Unknown> value ,CREF<LENGTH> size_) override {
@@ -102,16 +101,16 @@ public:
 		holder ().mCounter = 0 ;
 		holder ().mSize = size_ ;
 		holder ().mThis.mHolder = rax.mHolder ;
-		rax.unknown (TYPE<ReflectCreate>::expr)->create (holder ().mSize) ;
 		const auto r5x = fake.mHolder + SIZE_OF<RefLayoutData>::expr ;
 		fake.mPointer = operator_alignas (r5x ,r2x) ;
+		rax.unknown (TYPE<ReflectCreate>::expr)->create (self ,holder ().mSize) ;
 	}
 
 	void destroy () override {
 		const auto r1x = --holder ().mCounter ;
 		if (r1x > 0)
 			return ;
-		holder ().mThis.unknown (TYPE<ReflectDestroy>::expr)->destroy (holder ().mSize) ;
+		holder ().mThis.unknown (TYPE<ReflectDestroy>::expr)->destroy (self ,holder ().mSize) ;
 		const auto r2x = fake.mHolder ;
 		HeapProc::instance ().free (r2x) ;
 	}

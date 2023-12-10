@@ -474,9 +474,6 @@ using MACRO_IS_TRIVIAL_CONSTRUCTIBLE = ENUM<(__is_trivially_constructible (A))> 
 template <class A>
 using MACRO_IS_TRIVIAL_DESTRUCTIBLE = ENUM<(__is_trivially_destructible (A))> ;
 
-template <class A>
-using MACRO_IS_INTERFACE = ENUM<(__is_abstract (A))> ;
-
 template <class A ,class B>
 using MACRO_IS_EXTEND = ENUM<(__is_base_of (A ,B))> ;
 

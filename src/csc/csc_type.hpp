@@ -635,7 +635,7 @@ struct Interface {
 } ;
 
 struct Unknown implement Interface {
-	virtual CREF<Interface> unknown (CREF<FLAG> uuid) const = 0 ;
+	virtual FLAG unknown (CREF<FLAG> uuid) const = 0 ;
 } ;
 
 template <class...>
@@ -1039,11 +1039,10 @@ trait IS_INTERFACE_HELP ;
 template <class A>
 trait IS_INTERFACE_HELP<A ,REQUIRE<IS_CLASS<A>>> {
 	using R1X = IS_EXTEND<Interface ,A> ;
-	using R2X = MACRO_IS_INTERFACE<A> ;
 	using R3X = ENUM_EQUAL<SIZE_OF<A> ,SIZE_OF<Interface>> ;
 	using R4X = ENUM_EQUAL<ALIGN_OF<A> ,ALIGN_OF<Interface>> ;
 
-	using RET = ENUM_ALL<R1X ,R2X ,R3X ,R4X> ;
+	using RET = ENUM_ALL<R1X ,R3X ,R4X> ;
 } ;
 
 template <class A>
