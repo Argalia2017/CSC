@@ -1045,11 +1045,8 @@ using Tuple = typename TUPLE_HELP<TYPE<A...> ,ALWAYS>::Tuple ;
 
 class CaptureLayout {} ;
 
-template <class>
-class Capture ;
-
 template <class...PARAMS>
-class Capture<TYPE<PARAMS...>> implement CaptureLayout {
+class Capture implement CaptureLayout {
 private:
 	using RANK = COUNT_OF<TYPE<PARAMS...>> ;
 
@@ -1075,7 +1072,7 @@ public:
 
 	template <class ARG1 ,class...ARG2>
 	inline void invoke (CREF<ARG1> func ,TYPEID<TYPE<ARG2...>>) const {
-		return func (keep[TYPE<CREF<PARAMS>>::expr] (Pointer::make (mCapture.m1st[ARG2::expr]))...) ;
+		return func (keep[TYPE<XREF<PARAMS>>::expr] (Pointer::make (mCapture.m1st[ARG2::expr]))...) ;
 	}
 } ;
 

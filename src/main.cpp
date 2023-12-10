@@ -5,15 +5,16 @@
 using namespace CSC ;
 using namespace std ;
 
-class XX {
-public:
-	XX () noexcept {
-		cerr << "this = " << this << "\n" ;
-	}
-} ;
-
 exports int main () {
-	auto rax = Array<int> (20) ;
-	rax.fill (22) ;
+	auto rax = AutoRef<int>::make (2223) ;
+	auto rbx = AutoRef<float> (CSC::move (rax)) ;
+	auto rcx = SharedRef<int>::make (220) ;
+	auto rdx = rcx ;
+	auto rex = UniqueRef<int> ([] (VREF<int> me) {
+		cerr << "me = " << me << "\n" ;
+		me = 231 ;
+	} ,[] (VREF<int> me) {
+		cerr << "me = " << me << "\n" ;
+	}) ;
 	return 0 ;
 }

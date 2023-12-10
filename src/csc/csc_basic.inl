@@ -10,6 +10,200 @@
 #include "csc_begin.h"
 
 namespace CSC {
+struct FunctionImplLayout {
+	BoxLayout mHandle ;
+	RefLayout mValue ;
+} ;
+
+class FunctionImplHolder implement Fat<FunctionHolder ,Ref<FunctionImplLayout>> {
+public:
+	void initialize (CREF<BoxLayout> value ,CREF<Unknown> holder) override {
+		fake = Ref<FunctionImplLayout>::make () ;
+		RefHolder::create (fake->mValue)->initialize (value) ;
+		BoxHolder::create (fake->mHandle)->initialize (holder) ;
+	}
+
+	LENGTH rank () const override {
+		return fake->mHandle.reflect (TYPE<ReflectInvoke>::expr)->rank () ;
+	}
+
+	void invoke (CREF<CaptureLayout> params) const override {
+		auto &&rax = RefHolder::create (fake->mValue)->self ;
+		return fake->mHandle.reflect (TYPE<ReflectInvoke>::expr)->invoke (rax ,params) ;
+	}
+} ;
+
+exports VFat<FunctionHolder> FunctionHolder::create (VREF<Ref<FunctionImplLayout>> that) {
+	return VFat<FunctionHolder> (FunctionImplHolder () ,that) ;
+}
+
+exports CFat<FunctionHolder> FunctionHolder::create (CREF<Ref<FunctionImplLayout>> that) {
+	return CFat<FunctionHolder> (FunctionImplHolder () ,that) ;
+}
+
+struct AutoRefImplLayout {
+	Clazz mClazz ;
+	RefLayout mValue ;
+} ;
+
+class AutoRefImplHolder implement Fat<AutoRefHolder ,AutoRefLayout> {
+public:
+	void initialize (CREF<BoxLayout> value ,CREF<Clazz> clazz) override {
+		//@mark
+		fake.mThis = Ref<AutoRefImplLayout>::make () ;
+		RefHolder::create (fake.mThis->mValue)->initialize (value) ;
+		fake.mThis->mClazz = clazz ;
+		fake.mPointer = fake.mThis->mValue.mPointer ;
+	}
+
+	void destroy () override {
+		if ifdo (TRUE) {
+			if (fake.mThis == NULL)
+				discard ;
+			fake.mThis->mValue = RefLayout () ;
+		}
+		fake.mPointer = ZERO ;
+	}
+
+	BOOL exist () const override {
+		return fake.mPointer != ZERO ;
+	}
+
+	Clazz clazz () const override {
+		return fake.mThis->mClazz ;
+	}
+
+	VREF<Pointer> self_m () leftvalue override {
+		assert (exist ()) ;
+		return Pointer::make (fake.mPointer) ;
+	}
+
+	CREF<Pointer> self_m () const leftvalue override {
+		assert (exist ()) ;
+		return Pointer::make (fake.mPointer) ;
+	}
+} ;
+
+exports VFat<AutoRefHolder> AutoRefHolder::create (VREF<AutoRefLayout> that) {
+	return VFat<AutoRefHolder> (AutoRefImplHolder () ,that) ;
+}
+
+exports CFat<AutoRefHolder> AutoRefHolder::create (CREF<AutoRefLayout> that) {
+	return CFat<AutoRefHolder> (AutoRefImplHolder () ,that) ;
+}
+
+struct SharedRefImplLayout {
+	LENGTH mCounter ;
+	RefLayout mValue ;
+} ;
+
+class SharedRefImplHolder implement Fat<SharedRefHolder ,SharedRefLayout> {
+public:
+	void initialize (CREF<BoxLayout> value) override {
+		//@mark
+		fake.mThis = Ref<SharedRefImplLayout>::make () ;
+		RefHolder::create (fake.mThis->mValue)->initialize (value) ;
+		fake.mThis->mCounter = 0 ;
+		fake.mPointer = fake.mThis->mValue.mPointer ;
+	}
+
+	void initialize (CREF<SharedRefLayout> that) override {
+		fake.mThis = that.mThis.share () ;
+		fake.mPointer = that.mPointer ;
+	}
+
+	void destroy () override {
+		if ifdo (TRUE) {
+			if (fake.mThis == NULL)
+				discard ;
+			const auto r1x = --fake.mThis->mCounter ;
+			if (r1x > 0)
+				discard ;
+			fake.mThis->mValue = RefLayout () ;
+		}
+		fake.mPointer = ZERO ;
+	}
+
+	BOOL exist () const override {
+		return fake.mPointer != ZERO ;
+	}
+
+	FLAG counter () const override {
+		return fake.mThis->mCounter ;
+	}
+
+	VREF<Pointer> self_m () const leftvalue override {
+		assert (exist ()) ;
+		return Pointer::make (fake.mPointer) ;
+	}
+
+	SharedRefLayout weak () const override {
+		SharedRefLayout ret ;
+		ret.mThis = fake.mThis.share () ;
+		ret.mPointer = ZERO ;
+		return move (ret) ;
+	}
+} ;
+
+exports VFat<SharedRefHolder> SharedRefHolder::create (VREF<SharedRefLayout> that) {
+	return VFat<SharedRefHolder> (SharedRefImplHolder () ,that) ;
+}
+
+exports CFat<SharedRefHolder> SharedRefHolder::create (CREF<SharedRefLayout> that) {
+	return CFat<SharedRefHolder> (SharedRefImplHolder () ,that) ;
+}
+
+struct UniqueRefImplLayout {
+	Function<VREF<Pointer>> mHandle ;
+	RefLayout mValue ;
+} ;
+
+class UniqueRefImplHolder implement Fat<UniqueRefHolder ,UniqueRefLayout> {
+public:
+	void initialize (CREF<BoxLayout> value) override {
+		//@mark
+		fake.mThis = Ref<UniqueRefImplLayout>::make () ;
+		RefHolder::create (fake.mThis->mValue)->initialize (value) ;
+		fake.mPointer = fake.mThis->mValue.mPointer ;
+	}
+
+	void destroy () override {
+		if ifdo (TRUE) {
+			if (fake.mThis == NULL)
+				discard ;
+			fake.mThis->mHandle (self) ;
+			fake.mThis->mValue = RefLayout () ;
+		}
+		fake.mPointer = ZERO ;
+	}
+
+	void ownership (RREF<Function<VREF<Pointer>>> dtor) override {
+		fake.mThis->mHandle = move (dtor) ;
+	}
+
+	BOOL exist () const override {
+		return fake.mPointer != ZERO ;
+	}
+
+	VREF<Pointer> self_m () leftvalue override {
+		assert (exist ()) ;
+		return Pointer::make (fake.mPointer) ;
+	}
+
+	CREF<Pointer> self_m () const leftvalue override {
+		assert (exist ()) ;
+		return Pointer::make (fake.mPointer) ;
+	}
+} ;
+
+exports VFat<UniqueRefHolder> UniqueRefHolder::create (VREF<UniqueRefLayout> that) {
+	return VFat<UniqueRefHolder> (UniqueRefImplHolder () ,that) ;
+}
+
+exports CFat<UniqueRefHolder> UniqueRefHolder::create (CREF<UniqueRefLayout> that) {
+	return CFat<UniqueRefHolder> (UniqueRefImplHolder () ,that) ;
+}
+
 class RefBufferImplHolder implement Fat<RefBufferHolder ,RefBufferLayout> {
 public:
 	void initialize (CREF<Unknown> holder ,CREF<LENGTH> size_) override {

@@ -84,6 +84,30 @@
 
   <!--csc_basic.hpp-->
 
+  <Type Name="CSC::AutoRef&lt;*&gt;">
+    <DisplayString Condition="mPointer==0">{{???}}</DisplayString>
+    <Expand HideRawView="true">
+      <Item Name="[+]" Condition="mPointer==0">*(int*)0</Item>
+      <Item Name="[+]" Condition="mPointer!=0">*($T1*)mPointer</Item>
+    </Expand>
+  </Type>
+
+  <Type Name="CSC::SharedRef&lt;*&gt;">
+    <DisplayString Condition="mPointer==0">{{???}}</DisplayString>
+    <Expand HideRawView="true">
+      <Item Name="[+]" Condition="mPointer==0">*(int*)0</Item>
+      <Item Name="[+]" Condition="mPointer!=0">*($T1*)mPointer</Item>
+    </Expand>
+  </Type>
+
+  <Type Name="CSC::UniqueRef&lt;*&gt;">
+    <DisplayString Condition="mPointer==0">{{???}}</DisplayString>
+    <Expand HideRawView="true">
+      <Item Name="[+]" Condition="mPointer==0">*(int*)0</Item>
+      <Item Name="[+]" Condition="mPointer!=0">*($T1*)mPointer</Item>
+    </Expand>
+  </Type>
+
   <Type Name="CSC::BoxBuffer&lt;*&gt;">
     <Expand HideRawView="true">
       <Item Name="[size]">(__int64)$T2::expr_m()</Item>

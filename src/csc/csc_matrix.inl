@@ -523,7 +523,27 @@ public:
 		unimplemented () ;
 		return move (Pointer::make (0)) ;
 	}
+} ;
 
+exports VFat<MatrixHolder<FLT32>> MatrixHolder<FLT32>::create (VREF<MatrixLayout<FLT32>> that) {
+	return VFat<MatrixHolder<FLT32>> (MatrixImplHolder<FLT32> () ,that) ;
+}
+
+exports CFat<MatrixHolder<FLT32>> MatrixHolder<FLT32>::create (CREF<MatrixLayout<FLT32>> that) {
+	return CFat<MatrixHolder<FLT32>> (MatrixImplHolder<FLT32> () ,that) ;
+}
+
+exports VFat<MatrixHolder<FLT64>> MatrixHolder<FLT64>::create (VREF<MatrixLayout<FLT64>> that) {
+	return VFat<MatrixHolder<FLT64>> (MatrixImplHolder<FLT64> () ,that) ;
+}
+
+exports CFat<MatrixHolder<FLT64>> MatrixHolder<FLT64>::create (CREF<MatrixLayout<FLT64>> that) {
+	return CFat<MatrixHolder<FLT64>> (MatrixImplHolder<FLT64> () ,that) ;
+}
+
+template <class A>
+class MakeMatrixImplHolder implement Fat<MakeMatrixHolder<A> ,MatrixLayout<A>> {
+public:
 	void DiagMatrix_initialize (CREF<A> x ,CREF<A> y ,CREF<A> z ,CREF<A> w) override {
 		Matrix<A> ret = Matrix<A>::zero () ;
 		ret[0][0] = x ;
@@ -533,11 +553,11 @@ public:
 		fake = move (ret) ;
 	}
 
-	void ShearMatrix_initialize (CREF<VectorLayout<A>> x ,CREF<VectorLayout<A>> y ,CREF<VectorLayout<A>> z) override {
+	void ShearMatrix_initialize (CREF<Vector<A>> x ,CREF<Vector<A>> y ,CREF<Vector<A>> z) override {
 		Matrix<A> ret = Matrix<A>::zero () ;
-		const auto r1x = Vector<A> (move (x)).normalize () ;
-		const auto r2x = Vector<A> (move (y)).normalize () ;
-		const auto r3x = Vector<A> (move (z)).normalize () ;
+		const auto r1x = x.normalize () ;
+		const auto r2x = y.normalize () ;
+		const auto r3x = z.normalize () ;
 		const auto r4x = r1x * r2x ;
 		const auto r5x = r1x * r3x ;
 		const auto r6x = r2x * r3x ;
@@ -554,9 +574,9 @@ public:
 		fake = move (ret) ;
 	}
 
-	void RotationMatrix_initialize (CREF<VectorLayout<A>> normal ,CREF<A> angle) override {
+	void RotationMatrix_initialize (CREF<Vector<A>> normal ,CREF<A> angle) override {
 		Matrix<A> ret = Matrix<A>::zero () ;
-		const auto r1x = Vector<A> (move (normal)).normalize () ;
+		const auto r1x = normal.normalize () ;
 		const auto r2x = MathProc::cos (angle) ;
 		const auto r3x = r1x * MathProc::sin (angle) ;
 		const auto r4x = r1x * (1 - r2x) ;
@@ -573,8 +593,8 @@ public:
 		fake = move (ret) ;
 	}
 
-	void TranslationMatrix_initialize (CREF<VectorLayout<A>> xyz) override {
-		TranslationMatrix_initialize (xyz.mVector[0] ,xyz.mVector[1] ,xyz.mVector[2]) ;
+	void TranslationMatrix_initialize (CREF<Vector<A>> xyz) override {
+		TranslationMatrix_initialize (xyz[0] ,xyz[1] ,xyz[2]) ;
 	}
 
 	void TranslationMatrix_initialize (CREF<A> x ,CREF<A> y ,CREF<A> z) override {
@@ -598,11 +618,11 @@ public:
 		fake = move (ret) ;
 	}
 
-	void ProjectionMatrix_initialize (CREF<VectorLayout<A>> normal ,CREF<VectorLayout<A>> center ,CREF<VectorLayout<A>> light) override {
+	void ProjectionMatrix_initialize (CREF<Vector<A>> normal ,CREF<Vector<A>> center ,CREF<Vector<A>> light) override {
 		Matrix<A> ret = Matrix<A>::zero () ;
-		const auto r1x = Vector<A> (move (normal)).normalize () ;
-		const auto r2x = Vector<A> (move (center)) * r1x ;
-		const auto r3x = Vector<A> (move (light)).normalize () ;
+		const auto r1x = normal.normalize () ;
+		const auto r2x = center * r1x ;
+		const auto r3x = light.normalize () ;
 		const auto r4x = r1x * r3x ;
 		ret[0][0] = r4x - r1x[0] * r3x[0] ;
 		ret[1][0] = -r1x[0] * r3x[1] ;
@@ -620,22 +640,82 @@ public:
 		fake = move (ret) ;
 	}
 
-	void ViewMatrix_initialize (CREF<VectorLayout<A>> x ,CREF<VectorLayout<A>> y) override {
-		const auto r1x = Vector<A> (move (x)).normalize () ;
-		const auto r2x = Vector<A> (move (y)).normalize () ;
+	void ViewMatrix_initialize (CREF<Vector<A>> x ,CREF<Vector<A>> y) override {
+		const auto r1x = x.normalize () ;
+		const auto r2x = y.normalize () ;
 		const auto r3x = (r1x ^ r2x).normalize () ;
 		const auto r4x = (r3x ^ r1x).normalize () ;
 		const auto r5x = Vector<A>::axis_w () ;
 		fake = Matrix<A> (r1x ,r4x ,r3x ,r5x) ;
 	}
 
-	void ViewMatrix_initialize (CREF<VectorLayout<A>> x ,CREF<VectorLayout<A>> y ,CREF<FLAG> flag) override {
-		unimplemented () ;
+	void ViewMatrix_initialize (CREF<Vector<A>> x ,CREF<Vector<A>> y ,CREF<FLAG> flag) override {
+		//@mark
+		if ifdo (TRUE) {
+			if (flag != ViewMatrixFlag::XY)
+				discard ;
+			const auto r1x = Vector<A>::axis_x () ;
+			const auto r2x = Vector<A>::axis_y () ;
+			const auto r3x = Vector<A>::axis_z () ;
+			const auto r4x = Vector<A>::axis_w () ;
+			const auto r5x = Matrix<A> (r1x ,r2x ,r3x ,r4x) ;
+			return ;
+		}
+		if ifdo (TRUE) {
+			if (flag != ViewMatrixFlag::XZ)
+				discard ;
+			const auto r1x = Vector<A>::axis_x () ;
+			const auto r2x = -Vector<A>::axis_z () ;
+			const auto r3x = Vector<A>::axis_y () ;
+			const auto r4x = Vector<A>::axis_w () ;
+			const auto r5x = Matrix<A> (r1x ,r2x ,r3x ,r4x) ;
+			return ;
+		}
+		if ifdo (TRUE) {
+			if (flag != ViewMatrixFlag::YX)
+				discard ;
+			const auto r1x = Vector<A>::axis_y () ;
+			const auto r2x = Vector<A>::axis_x () ;
+			const auto r3x = -Vector<A>::axis_z () ;
+			const auto r4x = Vector<A>::axis_w () ;
+			const auto r5x = Matrix<A> (r1x ,r2x ,r3x ,r4x) ;
+			return ;
+		}
+		if ifdo (TRUE) {
+			if (flag != ViewMatrixFlag::YZ)
+				discard ;
+			const auto r1x = Vector<A>::axis_z () ;
+			const auto r2x = Vector<A>::axis_x () ;
+			const auto r3x = Vector<A>::axis_y () ;
+			const auto r4x = Vector<A>::axis_w () ;
+			const auto r5x = Matrix<A> (r1x ,r2x ,r3x ,r4x) ;
+			return ;
+		}
+		if ifdo (TRUE) {
+			if (flag != ViewMatrixFlag::ZX)
+				discard ;
+			const auto r1x = Vector<A>::axis_y () ;
+			const auto r2x = Vector<A>::axis_z () ;
+			const auto r3x = Vector<A>::axis_x () ;
+			const auto r4x = Vector<A>::axis_w () ;
+			const auto r5x = Matrix<A> (r1x ,r2x ,r3x ,r4x) ;
+			return ;
+		}
+		if ifdo (TRUE) {
+			if (flag != ViewMatrixFlag::ZY)
+				discard ;
+			const auto r1x = -Vector<A>::axis_z () ;
+			const auto r2x = Vector<A>::axis_y () ;
+			const auto r3x = Vector<A>::axis_x () ;
+			const auto r4x = Vector<A>::axis_w () ;
+			const auto r5x = Matrix<A> (r1x ,r2x ,r3x ,r4x) ;
+			return ;
+		}
 	}
 
-	void CrossProductMatrix_initialize (CREF<VectorLayout<A>> xyz) override {
+	void CrossProductMatrix_initialize (CREF<Vector<A>> xyz) override {
 		Matrix<A> ret = Matrix<A>::zero () ;
-		const auto r1x = Vector<A> (move (xyz)) ;
+		const auto r1x = xyz ;
 		assert (r1x[3] == 0) ;
 		ret[1][0] = r1x[2] ;
 		ret[2][0] = -r1x[1] ;
@@ -646,10 +726,10 @@ public:
 		fake = move (ret) ;
 	}
 
-	void SymmetryMatrix_initialize (CREF<VectorLayout<A>> x ,CREF<VectorLayout<A>> y) override {
+	void SymmetryMatrix_initialize (CREF<Vector<A>> x ,CREF<Vector<A>> y) override {
 		Matrix<A> ret = Matrix<A>::zero () ;
-		const auto r1x = Vector<A> (move (x)) ;
-		const auto r2x = Vector<A> (move (y)) ;
+		const auto r1x = x ;
+		const auto r2x = y ;
 		for (auto &&i : iter (0 ,4 ,0 ,4)) {
 			ret[i] = r1x[i.mY] * r2x[i.mX] ;
 		}
@@ -657,19 +737,19 @@ public:
 	}
 } ;
 
-exports VFat<MatrixHolder<FLT32>> MatrixHolder<FLT32>::create (VREF<MatrixLayout<FLT32>> that) {
-	return VFat<MatrixHolder<FLT32>> (MatrixImplHolder<FLT32> () ,that) ;
+exports VFat<MakeMatrixHolder<FLT32>> MakeMatrixHolder<FLT32>::create (VREF<MatrixLayout<FLT32>> that) {
+	return VFat<MakeMatrixHolder<FLT32>> (MakeMatrixImplHolder<FLT32> () ,that) ;
 }
 
-exports CFat<MatrixHolder<FLT32>> MatrixHolder<FLT32>::create (CREF<MatrixLayout<FLT32>> that) {
-	return CFat<MatrixHolder<FLT32>> (MatrixImplHolder<FLT32> () ,that) ;
+exports CFat<MakeMatrixHolder<FLT32>> MakeMatrixHolder<FLT32>::create (CREF<MatrixLayout<FLT32>> that) {
+	return CFat<MakeMatrixHolder<FLT32>> (MakeMatrixImplHolder<FLT32> () ,that) ;
 }
 
-exports VFat<MatrixHolder<FLT64>> MatrixHolder<FLT64>::create (VREF<MatrixLayout<FLT64>> that) {
-	return VFat<MatrixHolder<FLT64>> (MatrixImplHolder<FLT64> () ,that) ;
+exports VFat<MakeMatrixHolder<FLT64>> MakeMatrixHolder<FLT64>::create (VREF<MatrixLayout<FLT64>> that) {
+	return VFat<MakeMatrixHolder<FLT64>> (MakeMatrixImplHolder<FLT64> () ,that) ;
 }
 
-exports CFat<MatrixHolder<FLT64>> MatrixHolder<FLT64>::create (CREF<MatrixLayout<FLT64>> that) {
-	return CFat<MatrixHolder<FLT64>> (MatrixImplHolder<FLT64> () ,that) ;
+exports CFat<MakeMatrixHolder<FLT64>> MakeMatrixHolder<FLT64>::create (CREF<MatrixLayout<FLT64>> that) {
+	return CFat<MakeMatrixHolder<FLT64>> (MakeMatrixImplHolder<FLT64> () ,that) ;
 }
 } ;

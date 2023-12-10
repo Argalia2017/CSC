@@ -13,7 +13,7 @@ public:
 		RefBufferHolder::create (fake.mArray)->initialize (holder ,size_) ;
 	}
 
-	void clone (CREF<ArrayLayout> that) override {
+	void initialize (CREF<ArrayLayout> that) override {
 		assert (size () == ArrayHolder::create (that)->size ()) ;
 		const auto r1x = fake.mArray.mBuffer.reflect (TYPE<ReflectClone>::expr) ;
 		for (auto &&i : iter (0 ,size ())) {
@@ -79,7 +79,11 @@ public:
 	}
 
 	void visit (CREF<Visitor> visitor) const override {
-		unimplemented () ;
+		const auto r1x = fake.mArray.mBuffer.reflect (TYPE<ReflectVisit>::expr) ;
+		for (auto &&i : iter (0 ,size ())) {
+			auto &&rax = RefBufferHolder::create (fake.mArray)->at (i) ;
+			r1x->visit (visitor ,rax) ;
+		}
 	}
 
 	void fill (CREF<Pointer> item) override {

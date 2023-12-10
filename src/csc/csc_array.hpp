@@ -77,7 +77,7 @@ struct ArrayHolder implement Interface {
 	imports CFat<ArrayHolder> create (CREF<ArrayLayout> that) ;
 
 	virtual void initialize (CREF<Unknown> holder ,CREF<LENGTH> size_) = 0 ;
-	virtual void clone (CREF<ArrayLayout> that) = 0 ;
+	virtual void initialize (CREF<ArrayLayout> that) = 0 ;
 	virtual LENGTH size () const = 0 ;
 	virtual LENGTH step () const = 0 ;
 	virtual LENGTH length () const = 0 ;
@@ -127,7 +127,7 @@ public:
 
 	implicit Array (CREF<Array> that) {
 		ArrayHolder::create (thiz)->initialize (ArrayUnknownBinder<A> () ,that.size ()) ;
-		ArrayHolder::create (thiz)->clone (that) ;
+		ArrayHolder::create (thiz)->initialize (that) ;
 	}
 
 	implicit VREF<Array> operator= (CREF<Array> that) {
@@ -236,7 +236,7 @@ struct StringHolder implement Interface {
 
 	virtual void initialize (CREF<LENGTH> size_) = 0 ;
 	virtual void initialize (CREF<RefBase<SliceImplLayout>> size_) = 0 ;
-	virtual void clone (CREF<StringLayout> that) = 0 ;
+	virtual void initialize (CREF<StringLayout> that) = 0 ;
 	virtual LENGTH size () const = 0 ;
 	virtual LENGTH step () const = 0 ;
 	virtual LENGTH length () const = 0 ;
@@ -268,7 +268,7 @@ public:
 
 	implicit String (CREF<String> that) {
 		StringHolder::create (thiz)->initialize (that.size ()) ;
-		StringHolder::create (thiz)->clone (that) ;
+		StringHolder::create (thiz)->initialize (that) ;
 	}
 
 	implicit VREF<String> operator= (CREF<String> that) {

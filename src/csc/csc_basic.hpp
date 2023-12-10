@@ -9,6 +9,52 @@
 #include "csc_core.hpp"
 
 namespace CSC {
+template <class A>
+class Optional {
+protected:
+	mutable Box<A> mValue ;
+	mutable BOOL mExist ;
+	FLAG mCode ;
+
+public:
+	implicit Optional () = default ;
+
+	implicit Optional (RREF<A> that) {
+		mValue = Box<A>::make (move (that)) ;
+		mExist = TRUE ;
+		mCode = 0 ;
+	}
+
+	imports Optional error (CREF<FLAG> code) {
+		Optional ret ;
+		ret.mCode = code ;
+		return move (ret) ;
+	}
+
+	BOOL exist () const {
+		if ifnot (mValue.exist ())
+			return FALSE ;
+		return mExist ;
+	}
+
+	FLAG code () const {
+		return mCode ;
+	}
+
+	A poll () const {
+		assert (exist ()) ;
+		A ret = move (mValue.self) ;
+		mExist = FALSE ;
+		return move (ret) ;
+	}
+
+	CREF<A> fetch (CREF<A> def) const {
+		if ifnot (exist ())
+			return def ;
+		return mValue.self ;
+	}
+} ;
+
 struct ReflectInvoke implement Interface {
 	virtual FLAG rank () const = 0 ;
 	virtual void invoke (CREF<Pointer> this_ ,CREF<CaptureLayout> params) const = 0 ;
@@ -18,6 +64,17 @@ struct ReflectInvoke implement Interface {
 	}
 } ;
 
+template <class...>
+trait CAPTURE_FUNCTION_HELP ;
+
+template <class...A>
+trait CAPTURE_FUNCTION_HELP<TYPE<A...> ,ALWAYS> {
+	using RET = Capture<A...> ;
+} ;
+
+template <class A>
+using CAPTURE_FUNCTION = typename CAPTURE_FUNCTION_HELP<A ,ALWAYS>::RET ;
+
 template <class A>
 class ReflectInvokeBinder final implement ReflectInvoke {
 public:
@@ -26,15 +83,16 @@ public:
 	}
 
 	void invoke (CREF<Pointer> this_ ,CREF<CaptureLayout> params) const override {
-		return Capture<FUNCTION_PARAMS<A>>::from (params).invoke (this_) ;
+		auto &&rax = unsafe_cast[TYPE<A>::expr] (this_) ;
+		return CAPTURE_FUNCTION<FUNCTION_PARAMS<A>>::from (params) (rax) ;
 	}
 } ;
 
-struct FunctionLayout ;
+struct FunctionImplLayout ;
 
 struct FunctionHolder implement Interface {
-	imports VFat<FunctionHolder> create (VREF<FunctionLayout> that) ;
-	imports CFat<FunctionHolder> create (CREF<FunctionLayout> that) ;
+	imports VFat<FunctionHolder> create (VREF<Ref<FunctionImplLayout>> that) ;
+	imports CFat<FunctionHolder> create (CREF<Ref<FunctionImplLayout>> that) ;
 
 	virtual void initialize (CREF<BoxLayout> value ,CREF<Unknown> holder) = 0 ;
 	virtual LENGTH rank () const = 0 ;
@@ -56,11 +114,8 @@ public:
 	}
 } ;
 
-template <class>
-class Function ;
-
 template <class...PARAMS>
-class Function<TYPE<PARAMS...>> implement RefBase<FunctionLayout> {
+class Function implement RefBase<FunctionImplLayout> {
 public:
 	implicit Function () = default ;
 
@@ -103,9 +158,10 @@ public:
 	}
 } ;
 
+struct AutoRefImplLayout ;
+
 struct AutoRefLayout {
-	RefLayout mThis ;
-	FLAG mHandle ;
+	Ref<AutoRefImplLayout> mThis ;
 	FLAG mPointer ;
 } ;
 
@@ -113,7 +169,8 @@ struct AutoRefHolder implement Interface {
 	imports VFat<AutoRefHolder> create (VREF<AutoRefLayout> that) ;
 	imports CFat<AutoRefHolder> create (CREF<AutoRefLayout> that) ;
 
-	virtual void initialize (CREF<BoxLayout> value) = 0 ;
+	virtual void initialize (CREF<BoxLayout> value ,CREF<Clazz> clazz) = 0 ;
+	virtual void destroy () = 0 ;
 	virtual BOOL exist () const = 0 ;
 	virtual Clazz clazz () const = 0 ;
 	virtual VREF<Pointer> self_m () leftvalue = 0 ;
@@ -134,7 +191,7 @@ public:
 	imports AutoRef make (XREF<ARG1>...initval) {
 		AutoRef ret ;
 		auto rax = Box<A>::make (keep[TYPE<XREF<ARG1>>::expr] (initval)...) ;
-		AutoRefHolder::create (ret)->initialize (rax) ;
+		AutoRefHolder::create (ret)->initialize (rax ,Clazz (TYPE<A>::expr)) ;
 		rax.release () ;
 		return move (ret) ;
 	}
@@ -176,9 +233,10 @@ public:
 	inline BOOL operator!= (CREF<AutoRef>) = delete ;
 } ;
 
+struct SharedRefImplLayout ;
+
 struct SharedRefLayout {
-	RefLayout mThis ;
-	FLAG mHandle ;
+	Ref<SharedRefImplLayout> mThis ;
 	FLAG mPointer ;
 } ;
 
@@ -187,6 +245,8 @@ struct SharedRefHolder implement Interface {
 	imports CFat<SharedRefHolder> create (CREF<SharedRefLayout> that) ;
 
 	virtual void initialize (CREF<BoxLayout> value) = 0 ;
+	virtual void initialize (CREF<SharedRefLayout> that) = 0 ;
+	virtual void destroy () = 0 ;
 	virtual BOOL exist () const = 0 ;
 	virtual FLAG counter () const = 0 ;
 	virtual VREF<Pointer> self_m () const leftvalue = 0 ;
@@ -203,6 +263,21 @@ public:
 
 	template <class ARG1 ,class = REQUIRE<IS_EXTEND<A ,ARG1>>>
 	implicit SharedRef (RREF<SharedRef<ARG1>> that) :SharedRef (keep[TYPE<RREF<SharedRef>>::expr] (that)) {}
+
+	implicit SharedRef (CREF<SharedRef> that) {
+		SharedRefHolder::create (thiz)->initialize (that) ;
+	}
+
+	implicit VREF<SharedRef> operator= (CREF<SharedRef> that) {
+		if (address (thiz) == address (that))
+			return thiz ;
+		swap (thiz ,move (that)) ;
+		return thiz ;
+	}
+
+	implicit SharedRef (RREF<SharedRef>) = default ;
+
+	implicit VREF<SharedRef> operator= (RREF<SharedRef>) = default ;
 
 	template <class...ARG1>
 	imports SharedRef make (XREF<ARG1>...initval) {
@@ -244,9 +319,10 @@ public:
 	}
 } ;
 
+struct UniqueRefImplLayout ;
+
 struct UniqueRefLayout {
-	RefLayout mThis ;
-	FLAG mHandle ;
+	Ref<UniqueRefImplLayout> mThis ;
 	FLAG mPointer ;
 } ;
 
@@ -255,7 +331,8 @@ struct UniqueRefHolder implement Interface {
 	imports CFat<UniqueRefHolder> create (CREF<UniqueRefLayout> that) ;
 
 	virtual void initialize (CREF<BoxLayout> value) = 0 ;
-	virtual void ownership (CREF<BoxLayout> dtor) = 0 ;
+	virtual void destroy () = 0 ;
+	virtual void ownership (RREF<Function<VREF<Pointer>>> dtor) = 0 ;
 	virtual BOOL exist () const = 0 ;
 	virtual VREF<Pointer> self_m () leftvalue = 0 ;
 	virtual CREF<Pointer> self_m () const leftvalue = 0 ;
@@ -274,10 +351,8 @@ public:
 		auto rax = Box<A>::make () ;
 		UniqueRefHolder::create (thiz)->initialize (rax) ;
 		rax.release () ;
-		auto rbx = Box<Function<VREF<Pointer>>>::make (move (dtor)) ;
 		ctor (UniqueRefHolder::create (thiz)->self) ;
-		UniqueRefHolder::create (thiz)->ownership (rbx) ;
-		rbx.release () ;
+		UniqueRefHolder::create (thiz)->ownership (Function<VREF<Pointer>> (move (dtor))) ;
 	}
 
 	template <class...ARG1>

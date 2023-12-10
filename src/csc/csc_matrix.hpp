@@ -349,17 +349,6 @@ struct MatrixHolder implement Interface {
 	virtual A trace () const = 0 ;
 	virtual RREF<Pointer> decompose () const = 0 ;
 	virtual RREF<Pointer> singular () const = 0 ;
-	virtual void DiagMatrix_initialize (CREF<A> x ,CREF<A> y ,CREF<A> z ,CREF<A> w) = 0 ;
-	virtual void ShearMatrix_initialize (CREF<VectorLayout<A>> x ,CREF<VectorLayout<A>> y ,CREF<VectorLayout<A>> z) = 0 ;
-	virtual void RotationMatrix_initialize (CREF<VectorLayout<A>> normal ,CREF<A> angle) = 0 ;
-	virtual void TranslationMatrix_initialize (CREF<VectorLayout<A>> xyz) = 0 ;
-	virtual void TranslationMatrix_initialize (CREF<A> x ,CREF<A> y ,CREF<A> z) = 0 ;
-	virtual void PerspectiveMatrix_initialize (CREF<A> fx ,CREF<A> fy ,CREF<A> wx ,CREF<A> wy) = 0 ;
-	virtual void ProjectionMatrix_initialize (CREF<VectorLayout<A>> normal ,CREF<VectorLayout<A>> center ,CREF<VectorLayout<A>> light) = 0 ;
-	virtual void ViewMatrix_initialize (CREF<VectorLayout<A>> vx ,CREF<VectorLayout<A>> vy) = 0 ;
-	virtual void ViewMatrix_initialize (CREF<VectorLayout<A>> vx ,CREF<VectorLayout<A>> vy ,CREF<FLAG> flag) = 0 ;
-	virtual void CrossProductMatrix_initialize (CREF<VectorLayout<A>> xyz) = 0 ;
-	virtual void SymmetryMatrix_initialize (CREF<VectorLayout<A>> x ,CREF<VectorLayout<A>> y) = 0 ;
 } ;
 
 template <class A>
@@ -594,10 +583,28 @@ public:
 } ;
 
 template <class A>
+struct MakeMatrixHolder implement Interface {
+	imports VFat<MakeMatrixHolder> create (VREF<MatrixLayout<A>> that) ;
+	imports CFat<MakeMatrixHolder> create (CREF<MatrixLayout<A>> that) ;
+
+	virtual void DiagMatrix_initialize (CREF<A> x ,CREF<A> y ,CREF<A> z ,CREF<A> w) = 0 ;
+	virtual void ShearMatrix_initialize (CREF<Vector<A>> x ,CREF<Vector<A>> y ,CREF<Vector<A>> z) = 0 ;
+	virtual void RotationMatrix_initialize (CREF<Vector<A>> normal ,CREF<A> angle) = 0 ;
+	virtual void TranslationMatrix_initialize (CREF<Vector<A>> xyz) = 0 ;
+	virtual void TranslationMatrix_initialize (CREF<A> x ,CREF<A> y ,CREF<A> z) = 0 ;
+	virtual void PerspectiveMatrix_initialize (CREF<A> fx ,CREF<A> fy ,CREF<A> wx ,CREF<A> wy) = 0 ;
+	virtual void ProjectionMatrix_initialize (CREF<Vector<A>> normal ,CREF<Vector<A>> center ,CREF<Vector<A>> light) = 0 ;
+	virtual void ViewMatrix_initialize (CREF<Vector<A>> vx ,CREF<Vector<A>> vy) = 0 ;
+	virtual void ViewMatrix_initialize (CREF<Vector<A>> vx ,CREF<Vector<A>> vy ,CREF<FLAG> flag) = 0 ;
+	virtual void CrossProductMatrix_initialize (CREF<Vector<A>> xyz) = 0 ;
+	virtual void SymmetryMatrix_initialize (CREF<Vector<A>> x ,CREF<Vector<A>> y) = 0 ;
+} ;
+
+template <class A>
 class DiagMatrix implement Matrix<A> {
 public:
 	explicit DiagMatrix (CREF<A> x ,CREF<A> y ,CREF<A> z ,CREF<A> w) {
-		MatrixHolder<A>::create (thiz)->DiagMatrix_initialize (x ,y ,z ,w) ;
+		MakeMatrixHolder<A>::create (thiz)->DiagMatrix_initialize (x ,y ,z ,w) ;
 	}
 } ;
 
@@ -605,7 +612,7 @@ template <class A>
 class ShearMatrix implement Matrix<A> {
 public:
 	explicit ShearMatrix (CREF<Vector<A>> x ,CREF<Vector<A>> y ,CREF<Vector<A>> z) {
-		MatrixHolder<A>::create (thiz)->ShearMatrix_initialize (x ,y ,z) ;
+		MakeMatrixHolder<A>::create (thiz)->ShearMatrix_initialize (x ,y ,z) ;
 	}
 } ;
 
@@ -613,7 +620,7 @@ template <class A>
 class RotationMatrix implement Matrix<A> {
 public:
 	explicit RotationMatrix (CREF<Vector<A>> normal ,CREF<A> angle) {
-		MatrixHolder<A>::create (thiz)->RotationMatrix_initialize (normal ,angle) ;
+		MakeMatrixHolder<A>::create (thiz)->RotationMatrix_initialize (normal ,angle) ;
 	}
 } ;
 
@@ -621,11 +628,11 @@ template <class A>
 class TranslationMatrix implement Matrix<A> {
 public:
 	explicit TranslationMatrix (CREF<Vector<A>> xyz) {
-		MatrixHolder<A>::create (thiz)->TranslationMatrix_initialize (xyz) ;
+		MakeMatrixHolder<A>::create (thiz)->TranslationMatrix_initialize (xyz) ;
 	}
 
 	explicit TranslationMatrix (CREF<A> x ,CREF<A> y ,CREF<A> z) {
-		MatrixHolder<A>::create (thiz)->TranslationMatrix_initialize (x ,y ,z) ;
+		MakeMatrixHolder<A>::create (thiz)->TranslationMatrix_initialize (x ,y ,z) ;
 	}
 } ;
 
@@ -633,7 +640,7 @@ template <class A>
 class PerspectiveMatrix implement Matrix<A> {
 public:
 	explicit PerspectiveMatrix (CREF<A> fx ,CREF<A> fy ,CREF<A> wx ,CREF<A> wy) {
-		MatrixHolder<A>::create (thiz)->PerspectiveMatrix_initialize (fx ,fy ,wx ,wy) ;
+		MakeMatrixHolder<A>::create (thiz)->PerspectiveMatrix_initialize (fx ,fy ,wx ,wy) ;
 	}
 } ;
 
@@ -641,11 +648,11 @@ template <class A>
 class ProjectionMatrix implement Matrix<A> {
 public:
 	explicit ProjectionMatrix (CREF<Vector<A>> normal) {
-		MatrixHolder<A>::create (thiz)->ProjectionMatrix_initialize (normal) ;
+		MakeMatrixHolder<A>::create (thiz)->ProjectionMatrix_initialize (normal) ;
 	}
 
 	explicit ProjectionMatrix (CREF<Vector<A>> normal ,CREF<Vector<A>> center ,CREF<Vector<A>> light) {
-		MatrixHolder<A>::create (thiz)->ProjectionMatrix_initialize (normal ,center ,light) ;
+		MakeMatrixHolder<A>::create (thiz)->ProjectionMatrix_initialize (normal ,center ,light) ;
 	}
 } ;
 
@@ -665,31 +672,31 @@ template <class A>
 class ViewMatrix implement Matrix<A> {
 public:
 	explicit ViewMatrix (CREF<Vector<A>> x ,CREF<Vector<A>> y) {
-		MatrixHolder<A>::create (thiz)->ViewMatrix_initialize (x ,y) ;
+		MakeMatrixHolder<A>::create (thiz)->ViewMatrix_initialize (x ,y) ;
 	}
 
 	imports Matrix<A> make_xy (CREF<Vector<A>> x ,CREF<Vector<A>> y) {
-		MatrixHolder<A>::create (thiz)->ViewMatrix_initialize (x ,y ,ViewMatrixFlag::XY) ;
+		MakeMatrixHolder<A>::create (thiz)->ViewMatrix_initialize (x ,y ,ViewMatrixFlag::XY) ;
 	}
 
 	imports Matrix<A> make_xz (CREF<Vector<A>> x ,CREF<Vector<A>> z) {
-		MatrixHolder<A>::create (thiz)->ViewMatrix_initialize (x ,z ,ViewMatrixFlag::XZ) ;
+		MakeMatrixHolder<A>::create (thiz)->ViewMatrix_initialize (x ,z ,ViewMatrixFlag::XZ) ;
 	}
 
 	imports Matrix<A> make_yx (CREF<Vector<A>> y ,CREF<Vector<A>> x) {
-		MatrixHolder<A>::create (thiz)->ViewMatrix_initialize (y ,x ,ViewMatrixFlag::YX) ;
+		MakeMatrixHolder<A>::create (thiz)->ViewMatrix_initialize (y ,x ,ViewMatrixFlag::YX) ;
 	}
 
 	imports Matrix<A> make_yz (CREF<Vector<A>> y ,CREF<Vector<A>> z) {
-		MatrixHolder<A>::create (thiz)->ViewMatrix_initialize (y ,z ,ViewMatrixFlag::YZ) ;
+		MakeMatrixHolder<A>::create (thiz)->ViewMatrix_initialize (y ,z ,ViewMatrixFlag::YZ) ;
 	}
 
 	imports Matrix<A> make_zx (CREF<Vector<A>> z ,CREF<Vector<A>> x) {
-		MatrixHolder<A>::create (thiz)->ViewMatrix_initialize (z ,x ,ViewMatrixFlag::ZX) ;
+		MakeMatrixHolder<A>::create (thiz)->ViewMatrix_initialize (z ,x ,ViewMatrixFlag::ZX) ;
 	}
 
 	imports Matrix<A> make_zy (CREF<Vector<A>> z ,CREF<Vector<A>> y) {
-		MatrixHolder<A>::create (thiz)->ViewMatrix_initialize (z ,y ,ViewMatrixFlag::ZY) ;
+		MakeMatrixHolder<A>::create (thiz)->ViewMatrix_initialize (z ,y ,ViewMatrixFlag::ZY) ;
 	}
 } ;
 
@@ -697,7 +704,7 @@ template <class A>
 class CrossProductMatrix implement Matrix<A> {
 public:
 	explicit CrossProductMatrix (CREF<Vector<A>> xyz) {
-		MatrixHolder<A>::create (thiz)->CrossProductMatrix_initialize (xyz) ;
+		MakeMatrixHolder<A>::create (thiz)->CrossProductMatrix_initialize (xyz) ;
 	}
 } ;
 
@@ -705,7 +712,7 @@ template <class A>
 class SymmetryMatrix implement Matrix<A> {
 public:
 	explicit SymmetryMatrix (CREF<Vector<A>> x ,CREF<Vector<A>> y) {
-		MatrixHolder<A>::create (thiz)->SymmetryMatrix_initialize (x ,y) ;
+		MakeMatrixHolder<A>::create (thiz)->SymmetryMatrix_initialize (x ,y) ;
 	}
 } ;
 
