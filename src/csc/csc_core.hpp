@@ -692,7 +692,24 @@ public:
 	}
 } ;
 
-class BoxLayout ;
+struct ReflectVisit implement Interface {
+	virtual void visit (CREF<Visitor> visitor ,CREF<Pointer> this_) const = 0 ;
+
+	imports FLAG uuid () {
+		return FLAG (107) ;
+	}
+} ;
+
+template <class A>
+class ReflectVisitBinder final implement ReflectVisit {
+public:
+	void visit (CREF<Visitor> visitor ,CREF<Pointer> this_) const override {
+		auto &&rax = keep[TYPE<CREF<A>>::expr] (this_) ;
+		return operator_visit (visitor ,this_) ;
+	}
+} ;
+
+struct BoxLayout ;
 
 struct BoxHolder implement Interface {
 	imports VFat<BoxHolder> create (VREF<BoxLayout> that) ;
@@ -708,8 +725,7 @@ struct BoxHolder implement Interface {
 	virtual void release () = 0 ;
 } ;
 
-class BoxLayout {
-public:
+struct BoxLayout {
 	FLAG mHolder ;
 
 public:
@@ -762,6 +778,7 @@ public:
 template <class A>
 class Box implement BoxLayout {
 protected:
+	using BoxLayout::mHolder as (Unknown) ;
 	TEMP<A> mValue ;
 
 public:
@@ -818,14 +835,14 @@ struct FUNCTION_memorize {
 	template <class ARG1>
 	inline CREF<FUNCTION_RETURN<ARG1>> operator() (CREF<ARG1> func) const {
 		using R1X = FUNCTION_RETURN<ARG1> ;
-		static R1X mInstance = func () ;
+		static const auto mInstance = func () ;
 		return mInstance ;
 	}
 } ;
 
 static constexpr auto memorize = FUNCTION_memorize () ;
 
-class RefLayout ;
+struct RefLayout ;
 
 struct RefHolder implement Interface {
 	imports VFat<RefHolder> create (VREF<RefLayout> that) ;
@@ -841,8 +858,7 @@ struct RefHolder implement Interface {
 	virtual RefLayout share () const = 0 ;
 } ;
 
-class RefLayout {
-public:
+struct RefLayout {
 	FLAG mHolder ;
 	FLAG mPointer ;
 
@@ -884,13 +900,14 @@ public:
 
 template <class A>
 class Ref implement RefLayout {
+protected:
+	using RefLayout::mHolder ;
+	using RefLayout::mPointer ;
+
 public:
 	implicit Ref () = default ;
 
 	implicit Ref (CREF<typeof (NULL)>) {}
-
-	template <class ARG1 ,class = REQUIRE<IS_EXTEND<A ,ARG1>>>
-	implicit Ref (RREF<Ref<ARG1>> that) :Ref (keep[TYPE<RREF<Ref>>::expr] (that)) {}
 
 	template <class...ARG1>
 	imports Ref make (XREF<ARG1>...initval) {
@@ -956,11 +973,11 @@ public:
 	}
 } ;
 
-class HeapProcLayout ;
+struct HeapProcImplLayout ;
 
 struct HeapProcHolder implement Interface {
-	imports VFat<HeapProcHolder> create (VREF<Ref<HeapProcLayout>> that) ;
-	imports CFat<HeapProcHolder> create (CREF<Ref<HeapProcLayout>> that) ;
+	imports VFat<HeapProcHolder> create (VREF<Ref<HeapProcImplLayout>> that) ;
+	imports CFat<HeapProcHolder> create (CREF<Ref<HeapProcImplLayout>> that) ;
 
 	virtual void initialize () = 0 ;
 	virtual LENGTH length () const = 0 ;
@@ -968,7 +985,7 @@ struct HeapProcHolder implement Interface {
 	virtual void free (CREF<FLAG> addr) const = 0 ;
 } ;
 
-class HeapProc implement RefBase<HeapProcLayout> {
+class HeapProc implement RefBase<HeapProcImplLayout> {
 public:
 	imports CREF<HeapProc> instance () {
 		return memorize ([&] () {
@@ -1101,22 +1118,22 @@ struct SliceData {
 	LENGTH mStep ;
 } ;
 
-class SliceLayout ;
+struct SliceImplLayout ;
 
 struct SliceHolder implement Interface {
-	imports VFat<SliceHolder> create (VREF<Ref<SliceLayout>> that) ;
-	imports CFat<SliceHolder> create (CREF<Ref<SliceLayout>> that) ;
+	imports VFat<SliceHolder> create (VREF<Ref<SliceImplLayout>> that) ;
+	imports CFat<SliceHolder> create (CREF<Ref<SliceImplLayout>> that) ;
 
 	virtual void initialize (CREF<SliceData> data) = 0 ;
 	virtual LENGTH size () const = 0 ;
 	virtual void get (CREF<INDEX> index ,VREF<STRU32> item) const = 0 ;
-	virtual BOOL equal (CREF<Ref<SliceLayout>> that) const = 0 ;
-	virtual FLAG compr (CREF<Ref<SliceLayout>> that) const = 0 ;
+	virtual BOOL equal (CREF<Ref<SliceImplLayout>> that) const = 0 ;
+	virtual FLAG compr (CREF<Ref<SliceImplLayout>> that) const = 0 ;
 	virtual void visit (CREF<Visitor> visitor) const = 0 ;
 } ;
 
 template <class A>
-class Slice implement RefBase<SliceLayout> {
+class Slice implement RefBase<SliceImplLayout> {
 public:
 	implicit Slice () = default ;
 
@@ -1208,23 +1225,23 @@ struct ClazzData {
 	Slice<STR> mTypeName ;
 } ;
 
-class ClazzLayout ;
+struct ClazzImplLayout ;
 
 struct ClazzHolder implement Interface {
-	imports VFat<ClazzHolder> create (VREF<Ref<ClazzLayout>> that) ;
-	imports CFat<ClazzHolder> create (CREF<Ref<ClazzLayout>> that) ;
+	imports VFat<ClazzHolder> create (VREF<Ref<ClazzImplLayout>> that) ;
+	imports CFat<ClazzHolder> create (CREF<Ref<ClazzImplLayout>> that) ;
 
 	virtual void initialize (CREF<ClazzData> data) = 0 ;
 	virtual LENGTH type_size () const = 0 ;
 	virtual LENGTH type_align () const = 0 ;
 	virtual FLAG type_uuid () const = 0 ;
 	virtual Slice<STR> type_name () const = 0 ;
-	virtual BOOL equal (CREF<Ref<ClazzLayout>> that) const = 0 ;
-	virtual FLAG compr (CREF<Ref<ClazzLayout>> that) const = 0 ;
+	virtual BOOL equal (CREF<Ref<ClazzImplLayout>> that) const = 0 ;
+	virtual FLAG compr (CREF<Ref<ClazzImplLayout>> that) const = 0 ;
 	virtual void visit (CREF<Visitor> visitor) const = 0 ;
 } ;
 
-class Clazz implement RefBase<ClazzLayout> {
+class Clazz implement RefBase<ClazzImplLayout> {
 public:
 	implicit Clazz () = default ;
 
@@ -1356,8 +1373,7 @@ struct FUNCTION_unimplemented {
 
 static constexpr auto unimplemented = FUNCTION_unimplemented () ;
 
-class AutoLayout {
-public:
+struct AutoLayout {
 	BoxLayout mThis ;
 } ;
 

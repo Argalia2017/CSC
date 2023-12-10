@@ -30,8 +30,7 @@ public:
 	}
 } ;
 
-class ImageLayout {
-public:
+struct ImageLayout {
 	RefBufferLayout mImage ;
 	LENGTH mCX ;
 	LENGTH mCY ;
@@ -56,6 +55,9 @@ struct ImageHolder implement Interface {
 
 template <class A>
 class Image implement ImageLayout {
+protected:
+	using ImageLayout::mImage as (RefBuffer<A>) ;
+
 public:
 	implicit Image () = default ;
 

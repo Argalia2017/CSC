@@ -247,6 +247,10 @@ struct is_trivially_default_constructible :integral_constant<bool ,__has_trivial
 #endif
 #endif
 
+#ifndef __macro_as
+#define __macro_as(...)
+#endif
+
 #ifndef __macro_ifnot
 #define __macro_ifnot(...) (CSC::csc_bool_t (__VA_ARGS__) == false)
 #endif

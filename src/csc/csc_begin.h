@@ -18,7 +18,7 @@
 #define assert __macro_assert
 #define assume __macro_assume
 #define unittest __macro_unittest
-#define as
+#define as __macro_as
 #define ifnot __macro_ifnot
 #define ifdo __macro_ifdo
 #define discard break

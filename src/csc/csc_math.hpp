@@ -11,11 +11,11 @@
 #include "csc_array.hpp"
 
 namespace CSC {
-class MathProcLayout ;
+struct MathProcImplLayout ;
 
 struct MathProcHolder implement Interface {
-	imports VFat<MathProcHolder> create (VREF<Ref<MathProcLayout>> that) ;
-	imports CFat<MathProcHolder> create (CREF<Ref<MathProcLayout>> that) ;
+	imports VFat<MathProcHolder> create (VREF<Ref<MathProcImplLayout>> that) ;
+	imports CFat<MathProcHolder> create (CREF<Ref<MathProcImplLayout>> that) ;
 
 	virtual void initialize () = 0 ;
 	virtual VAL32 square (CREF<VAL32> a) const = 0 ;
@@ -38,7 +38,7 @@ struct MathProcHolder implement Interface {
 	virtual FLT64 tan (CREF<FLT64> a) const = 0 ;
 } ;
 
-class MathProc implement RefBase<MathProcLayout> {
+class MathProc implement RefBase<MathProcImplLayout> {
 public:
 	imports CREF<MathProc> instance () {
 		return memorize ([&] () {

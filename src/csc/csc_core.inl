@@ -67,7 +67,7 @@ exports CFat<BoxHolder> BoxHolder::create (CREF<BoxLayout> that) {
 	return CFat<BoxHolder> (BoxImplHolder () ,that) ;
 }
 
-struct RefLayoutData {
+struct RefImplLayout {
 	LENGTH mCounter ;
 	LENGTH mSize ;
 	BoxLayout mThis ;
@@ -85,11 +85,11 @@ public:
 		const auto r1x = value.reflect (TYPE<ReflectSize>::expr)->type_size () ;
 		const auto r2x = value.reflect (TYPE<ReflectSize>::expr)->type_align () ;
 		const auto r3x = operator_max (r2x - ALIGN_OF<FLAG>::expr ,0) ;
-		const auto r4x = SIZE_OF<RefLayoutData>::expr + r3x + 1 * r1x ;
+		const auto r4x = SIZE_OF<RefImplLayout>::expr + r3x + 1 * r1x ;
 		fake.mHolder = HeapProc::instance ().alloc (r4x) ;
 		super ().mCounter = 0 ;
 		super ().mSize = 1 ;
-		const auto r5x = fake.mHolder + SIZE_OF<RefLayoutData>::expr ;
+		const auto r5x = fake.mHolder + SIZE_OF<RefImplLayout>::expr ;
 		fake.mPointer = operator_alignas (r5x ,r2x) ;
 		BoxHolder::create (super ().mThis)->acquire (value) ;
 	}
@@ -99,12 +99,12 @@ public:
 		const auto r1x = rax.reflect (TYPE<ReflectSize>::expr)->type_size () ;
 		const auto r2x = rax.reflect (TYPE<ReflectSize>::expr)->type_align () ;
 		const auto r3x = operator_max (r2x - ALIGN_OF<FLAG>::expr ,0) ;
-		const auto r4x = SIZE_OF<RefLayoutData>::expr + r3x + size_ * r1x ;
+		const auto r4x = SIZE_OF<RefImplLayout>::expr + r3x + size_ * r1x ;
 		fake.mHolder = HeapProc::instance ().alloc (r4x) ;
 		super ().mCounter = 0 ;
 		super ().mSize = size_ ;
 		super ().mThis.mHolder = rax.mHolder ;
-		const auto r5x = fake.mHolder + SIZE_OF<RefLayoutData>::expr ;
+		const auto r5x = fake.mHolder + SIZE_OF<RefImplLayout>::expr ;
 		fake.mPointer = operator_alignas (r5x ,r2x) ;
 		rax.reflect (TYPE<ReflectCreate>::expr)->create (self ,super ().mSize) ;
 	}
@@ -144,7 +144,7 @@ public:
 		return move (ret) ;
 	}
 
-	VREF<RefLayoutData> super () const leftvalue {
+	VREF<RefImplLayout> super () const leftvalue {
 		return Pointer::make (fake.mHolder) ;
 	}
 } ;
@@ -157,19 +157,18 @@ exports CFat<RefHolder> RefHolder::create (CREF<RefLayout> that) {
 	return CFat<RefHolder> (RefImplHolder () ,that) ;
 }
 
-class HeapProcLayout {
-public:
+struct HeapProcImplLayout {
 	mutable std::atomic<LENGTH> mValue ;
 } ;
 
-class HeapProcImplHolder implement Fat<HeapProcHolder ,Ref<HeapProcLayout>> {
+class HeapProcImplHolder implement Fat<HeapProcHolder ,Ref<HeapProcImplLayout>> {
 public:
 	void initialize () override {
 		auto &&rax = memorize ([&] () {
-			return TEMP<HeapProcLayout> () ;
+			return TEMP<HeapProcImplLayout> () ;
 		}) ;
 		const auto r1x = address (rax) ;
-		fake = Ref<HeapProcLayout>::reference (Pointer::make (r1x)) ;
+		fake = Ref<HeapProcImplLayout>::reference (Pointer::make (r1x)) ;
 	}
 
 	LENGTH length () const override {
@@ -192,21 +191,21 @@ public:
 	}
 } ;
 
-exports VFat<HeapProcHolder> HeapProcHolder::create (VREF<Ref<HeapProcLayout>> that) {
+exports VFat<HeapProcHolder> HeapProcHolder::create (VREF<Ref<HeapProcImplLayout>> that) {
 	return VFat<HeapProcHolder> (HeapProcImplHolder () ,that) ;
 }
 
-exports CFat<HeapProcHolder> HeapProcHolder::create (CREF<Ref<HeapProcLayout>> that) {
+exports CFat<HeapProcHolder> HeapProcHolder::create (CREF<Ref<HeapProcImplLayout>> that) {
 	return CFat<HeapProcHolder> (HeapProcImplHolder () ,that) ;
 }
 
-class SliceLayout implement SliceData {} ;
+struct SliceImplLayout implement SliceData {} ;
 
-class SliceImplHolder implement Fat<SliceHolder ,Ref<SliceLayout>> {
+class SliceImplHolder implement Fat<SliceHolder ,Ref<SliceImplLayout>> {
 public:
 	void initialize (CREF<SliceData> data) override {
 		const auto r1x = address (data) ;
-		fake = Ref<SliceLayout>::reference (Pointer::make (r1x)) ;
+		fake = Ref<SliceImplLayout>::reference (Pointer::make (r1x)) ;
 	}
 
 	LENGTH size () const override {
@@ -230,7 +229,7 @@ public:
 		return 0 ;
 	}
 
-	BOOL equal (CREF<Ref<SliceLayout>> that) const override {
+	BOOL equal (CREF<Ref<SliceImplLayout>> that) const override {
 		const auto r1x = size () ;
 		const auto r2x = SliceHolder::create (that)->size () ;
 		if (r1x != r2x)
@@ -244,7 +243,7 @@ public:
 		return TRUE ;
 	}
 
-	FLAG compr (CREF<Ref<SliceLayout>> that) const override {
+	FLAG compr (CREF<Ref<SliceImplLayout>> that) const override {
 		const auto r1x = size () ;
 		const auto r2x = SliceHolder::create (that)->size () ;
 		const auto r3x = operator_min (r1x ,r2x) ;
@@ -269,21 +268,21 @@ public:
 	}
 } ;
 
-exports VFat<SliceHolder> SliceHolder::create (VREF<Ref<SliceLayout>> that) {
+exports VFat<SliceHolder> SliceHolder::create (VREF<Ref<SliceImplLayout>> that) {
 	return VFat<SliceHolder> (SliceImplHolder () ,that) ;
 }
 
-exports CFat<SliceHolder> SliceHolder::create (CREF<Ref<SliceLayout>> that) {
+exports CFat<SliceHolder> SliceHolder::create (CREF<Ref<SliceImplLayout>> that) {
 	return CFat<SliceHolder> (SliceImplHolder () ,that) ;
 }
 
-class ClazzLayout implement ClazzData {} ;
+struct ClazzImplLayout implement ClazzData {} ;
 
-class ClazzImplHolder implement Fat<ClazzHolder ,Ref<ClazzLayout>> {
+class ClazzImplHolder implement Fat<ClazzHolder ,Ref<ClazzImplLayout>> {
 public:
 	void initialize (CREF<ClazzData> data) override {
 		const auto r1x = address (data) ;
-		fake = Ref<ClazzLayout>::reference (Pointer::make (r1x)) ;
+		fake = Ref<ClazzImplLayout>::reference (Pointer::make (r1x)) ;
 	}
 
 	LENGTH type_size () const override {
@@ -300,8 +299,8 @@ public:
 
 	FLAG type_uuid () const override {
 		if (fake == NULL)
-			return 0 ;
-		return address (fake.self) ;
+			return ZERO ;
+		return ZERO ;
 	}
 
 	Slice<STR> type_name () const override {
@@ -310,15 +309,17 @@ public:
 		return fake->mTypeName ;
 	}
 
-	BOOL equal (CREF<Ref<ClazzLayout>> that) const override {
-		if (type_uuid () == ClazzHolder::create (that)->type_uuid ())
-			return TRUE ;
+	BOOL equal (CREF<Ref<ClazzImplLayout>> that) const override {
+		if (type_uuid () != 0)
+			if (type_uuid () == ClazzHolder::create (that)->type_uuid ())
+				return TRUE ;
 		return type_name () == ClazzHolder::create (that)->type_name () ;
 	}
 
-	FLAG compr (CREF<Ref<ClazzLayout>> that) const override {
-		if (type_uuid () == ClazzHolder::create (that)->type_uuid ())
-			return ZERO ;
+	FLAG compr (CREF<Ref<ClazzImplLayout>> that) const override {
+		if (type_uuid () != 0)
+			if (type_uuid () == ClazzHolder::create (that)->type_uuid ())
+				return ZERO ;
 		return operator_compr (type_name () ,ClazzHolder::create (that)->type_name ()) ;
 	}
 
@@ -332,11 +333,11 @@ public:
 	}
 } ;
 
-exports VFat<ClazzHolder> ClazzHolder::create (VREF<Ref<ClazzLayout>> that) {
+exports VFat<ClazzHolder> ClazzHolder::create (VREF<Ref<ClazzImplLayout>> that) {
 	return VFat<ClazzHolder> (ClazzImplHolder () ,that) ;
 }
 
-exports CFat<ClazzHolder> ClazzHolder::create (CREF<Ref<ClazzLayout>> that) {
+exports CFat<ClazzHolder> ClazzHolder::create (CREF<Ref<ClazzImplLayout>> that) {
 	return CFat<ClazzHolder> (ClazzImplHolder () ,that) ;
 }
 

@@ -13,6 +13,16 @@ public:
 		RefBufferHolder::create (fake.mArray)->initialize (holder ,size_) ;
 	}
 
+	void clone (CREF<ArrayLayout> that) override {
+		assert (size () == ArrayHolder::create (that)->size ()) ;
+		const auto r1x = fake.mArray.mBuffer.reflect (TYPE<ReflectClone>::expr) ;
+		for (auto &&i : iter (0 ,size ())) {
+			auto &&rax = RefBufferHolder::create (fake.mArray)->at (i) ;
+			auto &&rbx = RefBufferHolder::create (that.mArray)->at (i) ;
+			r1x->clone (rax ,rbx) ;
+		}
+	}
+
 	LENGTH size () const override {
 		return RefBufferHolder::create (fake.mArray)->size () ;
 	}

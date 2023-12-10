@@ -12,7 +12,9 @@
 #include "csc_begin.h"
 
 namespace CSC {
-class MathProcImplHolder implement Fat<MathProcHolder ,Ref<MathProcLayout>> {
+struct MathProcImplLayout {} ;
+
+class MathProcImplHolder implement Fat<MathProcHolder ,Ref<MathProcImplLayout>> {
 public:
 	void initialize () override {
 	
@@ -103,11 +105,11 @@ public:
 	}
 } ;
 
-exports VFat<MathProcHolder> MathProcHolder::create (VREF<Ref<MathProcLayout>> that) {
+exports VFat<MathProcHolder> MathProcHolder::create (VREF<Ref<MathProcImplLayout>> that) {
 	return VFat<MathProcHolder> (MathProcImplHolder () ,that) ;
 }
 
-exports CFat<MathProcHolder> MathProcHolder::create (CREF<Ref<MathProcLayout>> that) {
+exports CFat<MathProcHolder> MathProcHolder::create (CREF<Ref<MathProcImplLayout>> that) {
 	return CFat<MathProcHolder> (MathProcImplHolder () ,that) ;
 }
 } ;

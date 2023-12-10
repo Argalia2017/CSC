@@ -17,7 +17,7 @@
 #define assert(...)
 #define assume(...)
 #define unittest(...)
-#define as
+#define as(...)
 #define ifnot(...)
 #define ifdo(...)
 #define discard

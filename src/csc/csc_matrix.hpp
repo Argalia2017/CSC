@@ -46,20 +46,17 @@ struct BBOX3D {
 } ;
 
 template <class A>
-class VectorLayout {
-public:
+struct VectorLayout {
 	BoxBuffer<A ,RANK4> mVector ;
 } ;
 
 template <class A>
-class MatrixLayout {
-public:
+struct MatrixLayout {
 	BoxBuffer<A ,ENUM<16>> mMatrix ;
 } ;
 
 template <class A>
-class QuaternionLayout {
-public:
+struct QuaternionLayout {
 	BoxBuffer<A ,RANK4> mQuaternion ;
 } ;
 
@@ -106,6 +103,9 @@ class Matrix ;
 
 template <class A>
 class Vector implement VectorLayout<A> {
+protected:
+	using VectorLayout<A>::mVector as (BoxBuffer<A ,RANK4>) ;
+
 public:
 	implicit Vector () = default ;
 
@@ -364,6 +364,9 @@ struct MatrixHolder implement Interface {
 
 template <class A>
 class Matrix implement MatrixLayout<A> {
+protected:
+	using MatrixLayout<A>::mMatrix as (BoxBuffer<A ,ENUM<16>>) ;
+
 private:
 	struct DECOMPOSE {
 		Matrix mT ;
@@ -727,6 +730,9 @@ struct QuaternionHolder implement Interface {
 
 template <class A>
 class Quaternion implement QuaternionLayout<A> {
+protected:
+	using QuaternionLayout<A>::mQuaternion as (BoxBuffer<A ,ENUM<4>>) ;
+
 public:
 	implicit Quaternion () = default ;
 

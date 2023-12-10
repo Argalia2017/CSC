@@ -68,8 +68,7 @@ public:
 	}
 } ;
 
-class ArrayLayout {
-public:
+struct ArrayLayout {
 	RefBufferLayout mArray ;
 } ;
 
@@ -78,7 +77,7 @@ struct ArrayHolder implement Interface {
 	imports CFat<ArrayHolder> create (CREF<ArrayLayout> that) ;
 
 	virtual void initialize (CREF<Unknown> holder ,CREF<LENGTH> size_) = 0 ;
-	virtual void clone (CREF<ArrayLayout> size_) = 0 ;
+	virtual void clone (CREF<ArrayLayout> that) = 0 ;
 	virtual LENGTH size () const = 0 ;
 	virtual LENGTH step () const = 0 ;
 	virtual LENGTH length () const = 0 ;
@@ -116,6 +115,9 @@ public:
 
 template <class A>
 class Array implement ArrayLayout {
+protected:
+	using ArrayLayout::mArray as (RefBuffer<A>) ;
+
 public:
 	implicit Array () = default ;
 
@@ -224,8 +226,7 @@ public:
 	}
 } ;
 
-class StringLayout {
-public:
+struct StringLayout {
 	RefBufferLayout mString ;
 } ;
 
@@ -234,7 +235,7 @@ struct StringHolder implement Interface {
 	imports CFat<StringHolder> create (CREF<StringLayout> that) ;
 
 	virtual void initialize (CREF<LENGTH> size_) = 0 ;
-	virtual void initialize (CREF<RefBase<SliceLayout>> size_) = 0 ;
+	virtual void initialize (CREF<RefBase<SliceImplLayout>> size_) = 0 ;
 	virtual void clone (CREF<StringLayout> that) = 0 ;
 	virtual LENGTH size () const = 0 ;
 	virtual LENGTH step () const = 0 ;
@@ -251,6 +252,9 @@ struct StringHolder implement Interface {
 } ;
 
 class String implement StringLayout {
+protected:
+	using StringLayout::mString as (RefBuffer<STRU32>) ;
+
 public:
 	implicit String () = default ;
 
@@ -258,7 +262,7 @@ public:
 		StringHolder::create (thiz)->initialize (size_) ;
 	}
 
-	explicit String (CREF<RefBase<SliceLayout>> text) {
+	explicit String (CREF<RefBase<SliceImplLayout>> text) {
 		StringHolder::create (thiz)->initialize (text) ;
 	}
 

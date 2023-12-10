@@ -30,7 +30,7 @@ public:
 	}
 } ;
 
-class FunctionLayout ;
+struct FunctionLayout ;
 
 struct FunctionHolder implement Interface {
 	imports VFat<FunctionHolder> create (VREF<FunctionLayout> that) ;
@@ -103,8 +103,7 @@ public:
 	}
 } ;
 
-class AutoRefLayout {
-public:
+struct AutoRefLayout {
 	RefLayout mThis ;
 	FLAG mHandle ;
 	FLAG mPointer ;
@@ -123,6 +122,9 @@ struct AutoRefHolder implement Interface {
 
 template <class A>
 class AutoRef implement AutoRefLayout {
+protected:
+	using AutoRefLayout::mThis as (Ref<AutoRefLayoutData>) ;
+
 public:
 	implicit AutoRef () = default ;
 
@@ -174,8 +176,7 @@ public:
 	inline BOOL operator!= (CREF<AutoRef>) = delete ;
 } ;
 
-class SharedRefLayout {
-public:
+struct SharedRefLayout {
 	RefLayout mThis ;
 	FLAG mHandle ;
 	FLAG mPointer ;
@@ -194,8 +195,14 @@ struct SharedRefHolder implement Interface {
 
 template <class A>
 class SharedRef implement SharedRefLayout {
+protected:
+	using SharedRefLayout::mThis as (Ref<SharedRefLayoutData>) ;
+
 public:
 	implicit SharedRef () = default ;
+
+	template <class ARG1 ,class = REQUIRE<IS_EXTEND<A ,ARG1>>>
+	implicit SharedRef (RREF<SharedRef<ARG1>> that) :SharedRef (keep[TYPE<RREF<SharedRef>>::expr] (that)) {}
 
 	template <class...ARG1>
 	imports SharedRef make (XREF<ARG1>...initval) {
@@ -237,8 +244,7 @@ public:
 	}
 } ;
 
-class UniqueRefLayout {
-public:
+struct UniqueRefLayout {
 	RefLayout mThis ;
 	FLAG mHandle ;
 	FLAG mPointer ;
@@ -257,6 +263,9 @@ struct UniqueRefHolder implement Interface {
 
 template <class A>
 class UniqueRef implement UniqueRefLayout {
+protected:
+	using UniqueRefLayout::mThis as (Ref<UniqueRefLayoutData>) ;
+
 public:
 	implicit UniqueRef () = default ;
 
@@ -374,8 +383,7 @@ public:
 	}
 } ;
 
-class RefBufferLayout {
-public:
+struct RefBufferLayout {
 	RefLayout mBuffer ;
 	LENGTH mSize ;
 	LENGTH mStep ;
@@ -415,6 +423,9 @@ class RefBufferBase implement RefBufferLayout {} ;
 
 template <class A>
 class RefBuffer implement RefBufferBase<A> {
+protected:
+	using RefBufferLayout::mBuffer as (Ref<A>) ;
+
 public:
 	implicit RefBuffer () = default ;
 
@@ -471,8 +482,7 @@ public:
 	}
 } ;
 
-class RefAllocatorLayout {
-public:
+struct RefAllocatorLayout {
 	RefBufferLayout mAllocator ;
 	LENGTH mSize ;
 	LENGTH mLength ;
@@ -525,6 +535,9 @@ public:
 
 template <class A>
 class RefAllocator implement RefAllocatorBase<A> {
+protected:
+	using RefAllocatorLayout::mAllocator as (RefBuffer<NODE>) ;
+
 public:
 	implicit RefAllocator () = default ;
 
