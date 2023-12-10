@@ -5,13 +5,17 @@
 #include "csc_core.hpp"
 #include "csc_basic.hpp"
 
+#include "csc_end.h"
+#include <cstdlib>
+#include "csc_begin.h"
+
 namespace CSC {
 class RefBufferImplHolder implement Fat<RefBufferHolder ,RefBufferLayout> {
 public:
 	void initialize (CREF<Unknown> value ,CREF<LENGTH> size_) override {
 		RefHolder::create (fake.mBuffer)->initialize (value ,size_) ;
 		fake.mSize = size_ ;
-		fake.mStep = fake.mBuffer.unknown (TYPE<ReflectSize>::expr)->type_size () ;
+		fake.mStep = fake.mBuffer.reflect (TYPE<ReflectSize>::expr)->type_size () ;
 	}
 
 	LENGTH size () const override {
@@ -47,7 +51,17 @@ public:
 	}
 
 	void resize (CREF<LENGTH> size_) override {
-		unimplemented () ;
+		if (size_ <= size ())
+			return ;
+		auto rax = RefLayout () ;
+		RefHolder::create (rax)->initialize (RefHolder::create (fake.mBuffer)->unknown () ,size_) ;
+		for (auto &&i : iter (0 ,fake.mSize)) {
+			const auto r1x = fake.mBuffer.mPointer + i * fake.mStep ;
+			const auto r2x = rax.mPointer + i * fake.mStep ;
+			memcpy (csc_pointer_t (r2x) ,csc_pointer_t (r1x) ,fake.mStep) ;
+		}
+		swap (rax ,fake.mBuffer) ;
+		fake.mSize = size_ ;
 	}
 } ;
 

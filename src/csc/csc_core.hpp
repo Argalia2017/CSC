@@ -621,8 +621,8 @@ public:
 	}
 } ;
 
-struct ReflectAssign implement Interface {
-	virtual void assign (VREF<Pointer> this_ ,CREF<Pointer> that_) const = 0 ;
+struct ReflectClone implement Interface {
+	virtual void clone (VREF<Pointer> this_ ,CREF<Pointer> that_) const = 0 ;
 
 	imports FLAG uuid () {
 		return FLAG (103) ;
@@ -630,9 +630,9 @@ struct ReflectAssign implement Interface {
 } ;
 
 template <class A>
-class ReflectAssignBinder final implement ReflectAssign {
+class ReflectCloneBinder final implement ReflectClone {
 public:
-	void assign (VREF<Pointer> this_ ,CREF<Pointer> that_) const override {
+	void clone (VREF<Pointer> this_ ,CREF<Pointer> that_) const override {
 		auto &&rax = keep[TYPE<VREF<A>>::expr] (this_) ;
 		auto &&rbx = keep[TYPE<CREF<A>>::expr] (that_) ;
 		rax = rbx ;
@@ -643,7 +643,7 @@ struct ReflectEqual implement Interface {
 	virtual BOOL equal (CREF<Pointer> this_ ,CREF<Pointer> that_) const = 0 ;
 
 	imports FLAG uuid () {
-		return FLAG (104) ;
+		return FLAG (105) ;
 	}
 } ;
 
@@ -661,7 +661,7 @@ struct ReflectCompr implement Interface {
 	virtual FLAG compr (CREF<Pointer> this_ ,CREF<Pointer> that_) const = 0 ;
 
 	imports FLAG uuid () {
-		return FLAG (105) ;
+		return FLAG (106) ;
 	}
 } ;
 
@@ -681,7 +681,7 @@ struct BoxHolder implement Interface {
 	imports VFat<BoxHolder> create (VREF<BoxLayout> that) ;
 	imports CFat<BoxHolder> create (CREF<BoxLayout> that) ;
 
-	virtual FLAG unknown (CREF<FLAG> uuid) const = 0  ;
+	virtual CREF<Unknown> unknown () const leftvalue = 0 ;
 	virtual void initialize (CREF<Unknown> value) = 0 ;
 	virtual void destroy () = 0 ;
 	virtual BOOL exist () const = 0 ;
@@ -723,9 +723,10 @@ public:
 	}
 
 	template <class ARG1>
-	CPTR<ARG1> unknown (TYPEID<ARG1>) const {
+	CPTR<ARG1> reflect (TYPEID<ARG1>) const {
 		require (IS_INTERFACE<ARG1>) ;
-		const auto r1x = BoxHolder::create (thiz)->unknown (ARG1::uuid ()) ;
+		const auto r1x = BoxHolder::create (thiz)->unknown ().unknown (ARG1::uuid ()) ;
+		assert (r1x != ZERO) ;
 		return CPTR<ARG1> (r1x) ;
 	}
 } ;
@@ -815,7 +816,7 @@ struct RefHolder implement Interface {
 	imports VFat<RefHolder> create (VREF<RefLayout> that) ;
 	imports CFat<RefHolder> create (CREF<RefLayout> that) ;
 
-	virtual FLAG unknown (CREF<FLAG> uuid) const = 0  ;
+	virtual CREF<Unknown> unknown () const leftvalue = 0 ;
 	virtual void initialize (CREF<BoxLayout> value) = 0 ;
 	virtual void initialize (CREF<Unknown> value ,CREF<LENGTH> size_) = 0 ;
 	virtual void destroy () = 0 ;
@@ -860,9 +861,10 @@ public:
 	}
 
 	template <class ARG1>
-	CPTR<ARG1> unknown (TYPEID<ARG1>) const {
+	CPTR<ARG1> reflect (TYPEID<ARG1>) const {
 		require (IS_INTERFACE<ARG1>) ;
-		const auto r1x = RefHolder::create (thiz)->unknown (ARG1::uuid ()) ;
+		const auto r1x = RefHolder::create (thiz)->unknown ().unknown (ARG1::uuid ()) ;
+		assert (r1x != ZERO) ;
 		return CPTR<ARG1> (r1x) ;
 	}
 } ;

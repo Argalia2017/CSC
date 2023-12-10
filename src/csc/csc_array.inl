@@ -46,7 +46,7 @@ public:
 	}
 
 	BOOL equal (CREF<ArrayLayout> that) const override {
-		const auto r1x = ReflectEqual::from (fake.mArray.mBuffer.mHolder) ;
+		const auto r1x = fake.mArray.mBuffer.reflect (TYPE<ReflectEqual>::expr) ;
 		for (auto &&i : iter (0 ,size ())) {
 			auto &&rax = RefBufferHolder::create (fake.mArray)->at (i) ;
 			auto &&rbx = RefBufferHolder::create (that.mArray)->at (i) ;
@@ -57,7 +57,7 @@ public:
 	}
 
 	FLAG compr (CREF<ArrayLayout> that) const override {
-		const auto r1x = ReflectCompr::from (fake.mArray.mBuffer.mHolder) ;
+		const auto r1x = fake.mArray.mBuffer.reflect (TYPE<ReflectCompr>::expr) ;
 		for (auto &&i : iter (0 ,size ())) {
 			auto &&rax = RefBufferHolder::create (fake.mArray)->at (i) ;
 			auto &&rbx = RefBufferHolder::create (that.mArray)->at (i) ;
@@ -73,10 +73,10 @@ public:
 	}
 
 	void fill (CREF<Pointer> item) override {
-		const auto r1x = ReflectAssign::from (fake.mArray.mBuffer.mHolder) ;
+		const auto r1x = fake.mArray.mBuffer.reflect (TYPE<ReflectClone>::expr) ;
 		for (auto &&i : iter (0 ,size ())) {
 			auto &&rax = RefBufferHolder::create (fake.mArray)->at (i) ;
-			r1x->assign (rax ,item) ;
+			r1x->clone (rax ,item) ;
 		}
 	}
 } ;

@@ -102,8 +102,8 @@ public:
 			return unsafe_hold (ReflectCreateBinder<A> ()) ;
 		if (uuid == ReflectDestroy::uuid ())
 			return unsafe_hold (ReflectDestroyBinder<A> ()) ;
-		if (uuid == ReflectAssign::uuid ())
-			return unsafe_hold (ReflectAssignBinder<A> ()) ;
+		if (uuid == ReflectClone::uuid ())
+			return unsafe_hold (ReflectCloneBinder<A> ()) ;
 		if (uuid == ReflectEqual::uuid ())
 			return unsafe_hold (ReflectEqualBinder<A> ()) ;
 		if (uuid == ReflectCompr::uuid ())

@@ -21,6 +21,7 @@ exports int main () {
 	const auto r4x = Clazz (TYPE<float>::expr) ;
 	const auto r5x = Exception (slice ("XSSS")) ;
 	const auto r6x = Auto (100) ;
+	r6x.poll (TYPE<int>::expr) ;
 	const auto r7x = Auto (200.0f) ;
 	const auto r8x = Auto (slice ("30")) ;
 	const auto r9x = Vector<FLT64>::axis_w () ;
