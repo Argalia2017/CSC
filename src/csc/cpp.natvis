@@ -1,119 +1,171 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <AutoVisualizer xmlns="http://schemas.microsoft.com/vstudio/debugger/natvis/2010">
 
- <!--"https://docs.microsoft.com/en-us/visualstudio/debugger/create-custom-views-of-native-objects?view=vs-2017#BKMK_Why_create_visualizations_"-->
- <!--"https://docs.microsoft.com/en-us/visualstudio/debugger/format-specifiers-in-cpp?view=vs-2017#BKMK_Visual_Studio_2012_format_specifiers"-->
- <!--"https://docs.microsoft.com/en-us/visualstudio/debugger/pseudovariables?view=vs-2017"-->
- <!--"https://docs.microsoft.com/en-us/visualstudio/debugger/context-operator-cpp?view=vs-2017"-->
+  <!--"https://docs.microsoft.com/en-us/visualstudio/debugger/create-custom-views-of-native-objects?view=vs-2017#BKMK_Why_create_visualizations_"-->
+  <!--"https://docs.microsoft.com/en-us/visualstudio/debugger/format-specifiers-in-cpp?view=vs-2017#BKMK_Visual_Studio_2012_format_specifiers"-->
+  <!--"https://docs.microsoft.com/en-us/visualstudio/debugger/pseudovariables?view=vs-2017"-->
+  <!--"https://docs.microsoft.com/en-us/visualstudio/debugger/context-operator-cpp?view=vs-2017"-->
 
- <!--csc_core.hpp-->
+  <!--csc_core.hpp-->
 
- <Type Name="CSC::Interface" Inheritable="false">
-  <Expand HideRawView="true">
-   <ExpandedItem>__vfptr</ExpandedItem>
-  </Expand>
- </Type>
- 
- <!--csc_core.hpp-->
+  <Type Name="CSC::Interface" Inheritable="false">
+    <Expand HideRawView="true">
+      <ExpandedItem>__vfptr</ExpandedItem>
+    </Expand>
+  </Type>
 
- <Type Name="CSC::Box&lt;*&gt;">
-  <DisplayString Condition="mHolder==0">{{???}}</DisplayString>
-  <Expand HideRawView="true">
-   <Item Name="[+]" Condition="mHolder==0">*(int*)0</Item>
-   <Item Name="[+]" Condition="mHolder!=0">*($T1*)&amp;mValue</Item>
-  </Expand>
- </Type>
+  <!--csc_core.hpp-->
 
- <Type Name="CSC::Ref&lt;*&gt;">
-  <DisplayString Condition="mPointer==0">{{???}}</DisplayString>
-  <Expand HideRawView="true">
-   <Item Name="[+]" Condition="mPointer==0">*(int*)0</Item>
-   <Item Name="[+]" Condition="mPointer!=0">*($T1*)mPointer</Item>
-  </Expand>
- </Type>
+  <Type Name="CSC::Fat&lt;*&gt;">
+    <Expand HideRawView="true">
+      <ExpandedItem>($T2*)mPointer</ExpandedItem>
+    </Expand>
+  </Type>
 
- <Type Name="CSC::SliceLayout">
-  <DisplayString Condition="mStep==1">{mBegin,s8}</DisplayString>
-  <DisplayString Condition="mStep==2">{mBegin,su}</DisplayString>
-  <DisplayString Condition="mStep==4">{mBegin,s32}</DisplayString>
-  <StringView Condition="mStep==1">mBegin,s8</StringView>
-  <StringView Condition="mStep==2">mBegin,su</StringView>
-  <StringView Condition="mStep==4">mBegin,s32</StringView>
-  <Expand HideRawView="true" />
- </Type>
+  <Type Name="CSC::Box&lt;*&gt;">
+    <DisplayString Condition="mHolder==0">{{???}}</DisplayString>
+    <Expand HideRawView="true">
+      <Item Name="[+]" Condition="mHolder==0">*(int*)0</Item>
+      <Item Name="[+]" Condition="mHolder!=0">*($T1*)&amp;mValue</Item>
+    </Expand>
+  </Type>
 
- <Type Name="CSC::Slice&lt;*&gt;">
-  <Expand HideRawView="true">
-   <ExpandedItem>mThis</ExpandedItem>
-  </Expand>
- </Type>
+  <Type Name="CSC::RefLayout">
+    <Expand HideRawView="true">
+      <ExpandedItem>(CSC::RefLayoutData*)mHolder</ExpandedItem>
+    </Expand>
+  </Type>
 
- <Type Name="CSC::ClazzLayout">
-  <Expand HideRawView="true">
-   <Item Name="mTypeSize">mTypeSize</Item>
-   <Item Name="mTypeAlign">mTypeAlign</Item>
-   <Item Name="mTypeName">mTypeName</Item>
-  </Expand>
- </Type>
+  <Type Name="CSC::Ref&lt;*&gt;">
+    <DisplayString Condition="mPointer==0">{{???}}</DisplayString>
+    <Expand HideRawView="true">
+      <Item Name="[+]" Condition="mPointer==0">*(int*)0</Item>
+      <Item Name="[+]" Condition="mPointer!=0">*($T1*)mPointer</Item>
+    </Expand>
+  </Type>
 
- <Type Name="CSC::Clazz">
-  <Expand HideRawView="true">
-   <ExpandedItem>mThis</ExpandedItem>
-  </Expand>
- </Type>
+  <Type Name="CSC::SliceLayout">
+    <DisplayString Condition="mStep==1">{mBegin,s8}</DisplayString>
+    <DisplayString Condition="mStep==2">{mBegin,su}</DisplayString>
+    <DisplayString Condition="mStep==4">{mBegin,s32}</DisplayString>
+    <StringView Condition="mStep==1">mBegin,s8</StringView>
+    <StringView Condition="mStep==2">mBegin,su</StringView>
+    <StringView Condition="mStep==4">mBegin,s32</StringView>
+    <Expand HideRawView="true" />
+  </Type>
 
- <Type Name="CSC::Auto">
-  <DisplayString Condition="mThis.mHolder==0">{{???}}</DisplayString>
-  <Expand HideRawView="true">
-   <Item Name="[+]" Condition="mThis.mHolder==0">*(int*)0</Item>
-   <Item Name="[+]" Condition="mThis.mHolder!=0">(CSC::Unknown*)&amp;mThis.mHolder</Item>
-  </Expand>
- </Type>
+  <Type Name="CSC::Slice&lt;*&gt;">
+    <Expand HideRawView="true">
+      <ExpandedItem>mThis</ExpandedItem>
+    </Expand>
+  </Type>
 
- <!--csc_basic.hpp-->
+  <Type Name="CSC::ClazzLayout">
+    <Expand HideRawView="true">
+      <Item Name="mTypeSize">mTypeSize</Item>
+      <Item Name="mTypeAlign">mTypeAlign</Item>
+      <Item Name="mTypeName">mTypeName</Item>
+    </Expand>
+  </Type>
 
- <Type Name="CSC::BoxBuffer&lt;*&gt;">
-  <Expand HideRawView="true">
-   <Item Name="[size]">(csc_diff_t)$T2::expr_m()</Item>
-   <Item Name="[step]">(csc_diff_t)sizeof($T1)</Item>
-   <ExpandedItem>mBuffer.m1st</ExpandedItem>
-  </Expand>
- </Type>
+  <Type Name="CSC::Clazz">
+    <Expand HideRawView="true">
+      <ExpandedItem>mThis</ExpandedItem>
+    </Expand>
+  </Type>
 
- <Type Name="CSC::RefBuffer&lt;*&gt;">
-  <Expand HideRawView="true">
-   <Item Name="[size]">mSize</Item>
-   <Item Name="[step]">mStep</Item>
-   <ArrayItems Condition="mSize&lt;10">
-    <Size>mSize</Size>
-    <ValuePointer>($T1*)mBuffer.mPointer</ValuePointer>
-   </ArrayItems>
-   <ArrayItems Condition="mSize&gt;=10">
-    <Size>10</Size>
-    <ValuePointer>($T1*)mBuffer.mPointer</ValuePointer>
-   </ArrayItems>
-   <Item Name="[+]" Condition="mSize&gt;=10">this</Item>
-  </Expand>
- </Type>
+  <Type Name="CSC::Auto">
+    <DisplayString Condition="mThis.mHolder==0">{{???}}</DisplayString>
+    <Expand HideRawView="true">
+      <Item Name="[+]" Condition="mThis.mHolder==0">*(int*)0</Item>
+      <Item Name="[+]" Condition="mThis.mHolder!=0">(CSC::Unknown*)&amp;mThis.mHolder</Item>
+    </Expand>
+  </Type>
 
- <!--csc_matrix.hpp-->
+  <!--csc_basic.hpp-->
 
- <Type Name="CSC::Vector&lt;*&gt;">
-  <Expand HideRawView="true">
-   <ExpandedItem>($T1(*)[4][1])&amp;mVector</ExpandedItem>
-  </Expand>
- </Type>
+  <Type Name="CSC::BoxBuffer&lt;*&gt;">
+    <Expand HideRawView="true">
+      <Item Name="[size]">(__int64)$T2::expr_m()</Item>
+      <ExpandedItem>mBuffer.m1st</ExpandedItem>
+    </Expand>
+  </Type>
 
- <Type Name="CSC::Matrix&lt;*&gt;">
-  <Expand HideRawView="true">
-   <ExpandedItem>($T1(*)[4][4])&amp;mMatrix</ExpandedItem>
-  </Expand>
- </Type>
+  <Type Name="CSC::RefBufferBase&lt;*&gt;">
+    <Expand HideRawView="true">
+      <Item Name="[size]">mSize</Item>
+      <ArrayItems>
+        <Size>mSize</Size>
+        <ValuePointer>($T1*)mBuffer.mPointer</ValuePointer>
+      </ArrayItems>
+    </Expand>
+  </Type>
 
- <Type Name="CSC::Quaternion&lt;*&gt;">
-  <Expand HideRawView="true">
-   <ExpandedItem>($T1(*)[4])&amp;mQuaternion</ExpandedItem>
-  </Expand>
- </Type>
+  <Type Name="CSC::RefBuffer&lt;*&gt;">
+    <Expand HideRawView="true">
+      <Item Name="[size]">mSize</Item>
+      <ArrayItems Condition="mSize&lt;10">
+        <Size>mSize</Size>
+        <ValuePointer>($T1*)mBuffer.mPointer</ValuePointer>
+      </ArrayItems>
+      <ArrayItems Condition="mSize&gt;=10">
+        <Size>10</Size>
+        <ValuePointer>($T1*)mBuffer.mPointer</ValuePointer>
+      </ArrayItems>
+      <Item Name="[+]" Condition="mSize&gt;=10">(CSC::RefBufferBase&lt;$T1&gt;*)this</Item>
+    </Expand>
+  </Type>
+
+  <Type Name="CSC::RefAllocatorBase&lt;*&gt;::NODE">
+    <Expand HideRawView="true">
+      <ExpandedItem Condition="mNext==-2">&amp;mValue</ExpandedItem>
+    </Expand>
+  </Type>
+
+  <Type Name="CSC::RefAllocatorBase&lt;*&gt;">
+    <Expand HideRawView="true">
+      <Item Name="[size]">mAllocator.mSize</Item>
+      <ArrayItems>
+        <Size>mAllocator.mSize</Size>
+        <ValuePointer>(NODE*)mAllocator.mBuffer.mPointer</ValuePointer>
+      </ArrayItems>
+    </Expand>
+  </Type>
+
+  <Type Name="CSC::RefAllocator&lt;*&gt;">
+    <Expand HideRawView="true">
+      <Item Name="[size]">mAllocator.mSize</Item>
+      <Item Name="[length]">mLength</Item>
+      <ArrayItems Condition="mAllocator.mSize&lt;10">
+        <Size>mSize</Size>
+        <ValuePointer>(NODE*)mAllocator.mBuffer.mPointer</ValuePointer>
+      </ArrayItems>
+      <ArrayItems Condition="mAllocator.mSize&gt;=10">
+        <Size>10</Size>
+        <ValuePointer>(NODE*)mAllocator.mBuffer.mPointer</ValuePointer>
+      </ArrayItems>
+      <Item Name="[+]" Condition="mAllocator.mSize&gt;=10">*(CSC::RefAllocatorBase&lt;$T1&gt;*)this</Item>
+    </Expand>
+  </Type>
+
+  <!--csc_matrix.hpp-->
+
+  <Type Name="CSC::Vector&lt;*&gt;">
+    <Expand HideRawView="true">
+      <ExpandedItem>($T1(*)[4][1])&amp;mVector</ExpandedItem>
+    </Expand>
+  </Type>
+
+  <Type Name="CSC::Matrix&lt;*&gt;">
+    <Expand HideRawView="true">
+      <ExpandedItem>($T1(*)[4][4])&amp;mMatrix</ExpandedItem>
+    </Expand>
+  </Type>
+
+  <Type Name="CSC::Quaternion&lt;*&gt;">
+    <Expand HideRawView="true">
+      <ExpandedItem>($T1(*)[4])&amp;mQuaternion</ExpandedItem>
+    </Expand>
+  </Type>
 
 </AutoVisualizer>

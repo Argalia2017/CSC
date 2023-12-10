@@ -9,8 +9,8 @@
 namespace CSC {
 class ArrayImplHolder implement Fat<ArrayHolder ,ArrayLayout> {
 public:
-	void initialize (CREF<Unknown> value ,CREF<LENGTH> size_) override {
-		RefBufferHolder::create (fake.mArray)->initialize (value ,size_) ;
+	void initialize (CREF<Unknown> holder ,CREF<LENGTH> size_) override {
+		RefBufferHolder::create (fake.mArray)->initialize (holder ,size_) ;
 	}
 
 	LENGTH size () const override {

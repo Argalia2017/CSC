@@ -77,7 +77,8 @@ struct ArrayHolder implement Interface {
 	imports VFat<ArrayHolder> create (VREF<ArrayLayout> that) ;
 	imports CFat<ArrayHolder> create (CREF<ArrayLayout> that) ;
 
-	virtual void initialize (CREF<Unknown> value ,CREF<LENGTH> size_) = 0 ;
+	virtual void initialize (CREF<Unknown> holder ,CREF<LENGTH> size_) = 0 ;
+	virtual void clone (CREF<ArrayLayout> size_) = 0 ;
 	virtual LENGTH size () const = 0 ;
 	virtual LENGTH step () const = 0 ;
 	virtual LENGTH length () const = 0 ;
@@ -121,6 +122,22 @@ public:
 	explicit Array (CREF<LENGTH> size_) {
 		ArrayHolder::create (thiz)->initialize (ArrayUnknownBinder<A> () ,size_) ;
 	}
+
+	implicit Array (CREF<Array> that) {
+		ArrayHolder::create (thiz)->initialize (ArrayUnknownBinder<A> () ,that.size ()) ;
+		ArrayHolder::create (thiz)->clone (that) ;
+	}
+
+	implicit VREF<Array> operator= (CREF<Array> that) {
+		if (address (thiz) == address (that))
+			return thiz ;
+		swap (thiz ,move (that)) ;
+		return thiz ;
+	}
+
+	implicit Array (RREF<Array>) = default ;
+
+	implicit VREF<Array> operator= (RREF<Array>) = default ;
 
 	LENGTH size () const {
 		return ArrayHolder::create (thiz)->size () ;
@@ -218,6 +235,7 @@ struct StringHolder implement Interface {
 
 	virtual void initialize (CREF<LENGTH> size_) = 0 ;
 	virtual void initialize (CREF<RefBase<SliceLayout>> size_) = 0 ;
+	virtual void clone (CREF<StringLayout> that) = 0 ;
 	virtual LENGTH size () const = 0 ;
 	virtual LENGTH step () const = 0 ;
 	virtual LENGTH length () const = 0 ;
@@ -243,6 +261,22 @@ public:
 	explicit String (CREF<RefBase<SliceLayout>> text) {
 		StringHolder::create (thiz)->initialize (text) ;
 	}
+
+	implicit String (CREF<String> that) {
+		StringHolder::create (thiz)->initialize (that.size ()) ;
+		StringHolder::create (thiz)->clone (that) ;
+	}
+
+	implicit VREF<String> operator= (CREF<String> that) {
+		if (address (thiz) == address (that))
+			return thiz ;
+		swap (thiz ,move (that)) ;
+		return thiz ;
+	}
+
+	implicit String (RREF<String>) = default ;
+
+	implicit VREF<String> operator= (RREF<String>) = default ;
 
 	LENGTH size () const {
 		return StringHolder::create (thiz)->size () ;

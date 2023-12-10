@@ -13,18 +13,22 @@ public:
 } ;
 
 exports int main () {
-	const auto r1x = Box<Box<FLT64>>::make () ;
-	const auto r2x = Ref<Ref<FLT64>>::make (Ref<FLT64>::make (32.0f)) ;
-	const auto r3x = RefBuffer<int> (200) ;
-	const auto r21x = RefBuffer<XX> (20) ;
-	const auto r20x = BoxBuffer<float ,RANK5> () ;
-	const auto r4x = Clazz (TYPE<float>::expr) ;
-	const auto r5x = Exception (slice ("XSSS")) ;
-	const auto r6x = Auto (100) ;
-	r6x.poll (TYPE<int>::expr) ;
-	const auto r7x = Auto (200.0f) ;
-	const auto r8x = Auto (slice ("30")) ;
-	const auto r9x = Vector<FLT64>::axis_w () ;
-	const auto r10x = Matrix<FLT64>::identity () ;
+	auto rax = RefAllocator<Tuple<int ,float>> (20) ;
+	INDEX ix = NONE ;
+	ix = rax.alloc () ;
+	rax[ix].m1st = 2 ;
+	rax[ix].m2nd = 0 ;
+	ix = rax.alloc () ;
+	rax[ix].m1st = 4 ;
+	ix = rax.alloc () ;
+	INDEX iy = ix ;
+	rax[ix].m1st = 6 ;
+	ix = rax.alloc () ;
+	rax[ix].m1st = 7 ;
+	ix = rax.alloc () ;
+	rax[ix].m1st = 2 ;
+	rax.free (iy) ;
+	ix = rax.alloc () ;
+	rax[ix].m1st = 3 ;
 	return 0 ;
 }

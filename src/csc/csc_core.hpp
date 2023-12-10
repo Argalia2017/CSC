@@ -579,7 +579,7 @@ public:
 } ;
 
 struct ReflectCreate implement Interface {
-	virtual void create (VREF<Pointer> this_ ,CREF<LENGTH> size_) const noexcept = 0 ;
+	virtual void create (VREF<Pointer> this_ ,CREF<LENGTH> size_) const = 0 ;
 
 	imports FLAG uuid () {
 		return FLAG (101) ;
@@ -589,8 +589,7 @@ struct ReflectCreate implement Interface {
 template <class A>
 class ReflectCreateBinder final implement ReflectCreate {
 public:
-	void create (VREF<Pointer> this_ ,CREF<LENGTH> size_) const noexcept override {
-		require (IS_DEFAULT<A>) ;
+	void create (VREF<Pointer> this_ ,CREF<LENGTH> size_) const override {
 		if (IS_TRIVIAL<A>::expr)
 			return ;
 		auto &&rax = keep[TYPE<VREF<ARR<A ,RANK1>>>::expr] (this_) ;
@@ -639,6 +638,24 @@ public:
 	}
 } ;
 
+struct ReflectDrop implement Interface {
+	virtual void drop (VREF<Pointer> this_) const noexcept = 0 ;
+
+	imports FLAG uuid () {
+		return FLAG (104) ;
+	}
+} ;
+
+template <class A>
+class ReflectDropBinder final implement ReflectDrop {
+public:
+	void drop (VREF<Pointer> this_) const noexcept override {
+		require (IS_DEFAULT<A>) ;
+		auto &&rax = keep[TYPE<VREF<A>>::expr] (this_) ;
+		rax = A () ;
+	}
+} ;
+
 struct ReflectEqual implement Interface {
 	virtual BOOL equal (CREF<Pointer> this_ ,CREF<Pointer> that_) const = 0 ;
 
@@ -681,8 +698,8 @@ struct BoxHolder implement Interface {
 	imports VFat<BoxHolder> create (VREF<BoxLayout> that) ;
 	imports CFat<BoxHolder> create (CREF<BoxLayout> that) ;
 
-	virtual CREF<Unknown> unknown () const leftvalue = 0 ;
-	virtual void initialize (CREF<Unknown> value) = 0 ;
+	virtual FLAG reflect (CREF<FLAG> uuid) const = 0 ;
+	virtual void initialize (CREF<Unknown> holder) = 0 ;
 	virtual void destroy () = 0 ;
 	virtual BOOL exist () const = 0 ;
 	virtual VREF<Pointer> self_m () leftvalue = 0 ;
@@ -725,9 +742,7 @@ public:
 	template <class ARG1>
 	CPTR<ARG1> reflect (TYPEID<ARG1>) const {
 		require (IS_INTERFACE<ARG1>) ;
-		const auto r1x = BoxHolder::create (thiz)->unknown ().unknown (ARG1::uuid ()) ;
-		assert (r1x != ZERO) ;
-		return CPTR<ARG1> (r1x) ;
+		return CPTR<ARG1> (BoxHolder::create (thiz)->reflect (ARG1::uuid ())) ;
 	}
 } ;
 
@@ -816,9 +831,9 @@ struct RefHolder implement Interface {
 	imports VFat<RefHolder> create (VREF<RefLayout> that) ;
 	imports CFat<RefHolder> create (CREF<RefLayout> that) ;
 
-	virtual CREF<Unknown> unknown () const leftvalue = 0 ;
+	virtual FLAG reflect (CREF<FLAG> uuid) const = 0 ;
 	virtual void initialize (CREF<BoxLayout> value) = 0 ;
-	virtual void initialize (CREF<Unknown> value ,CREF<LENGTH> size_) = 0 ;
+	virtual void initialize (CREF<Unknown> holder ,CREF<LENGTH> size_) = 0 ;
 	virtual void destroy () = 0 ;
 	virtual BOOL exist () const = 0 ;
 	virtual VREF<Pointer> self_m () leftvalue = 0 ;
@@ -863,9 +878,7 @@ public:
 	template <class ARG1>
 	CPTR<ARG1> reflect (TYPEID<ARG1>) const {
 		require (IS_INTERFACE<ARG1>) ;
-		const auto r1x = RefHolder::create (thiz)->unknown ().unknown (ARG1::uuid ()) ;
-		assert (r1x != ZERO) ;
-		return CPTR<ARG1> (r1x) ;
+		return CPTR<ARG1> (RefHolder::create (thiz)->reflect (ARG1::uuid ())) ;
 	}
 } ;
 
@@ -1013,28 +1026,25 @@ trait TUPLE_HELP<PARAMS ,REQUIRE<ENUM_EQUAL<COUNT_OF<PARAMS> ,RANK3>>> {
 template <class...A>
 using Tuple = typename TUPLE_HELP<TYPE<A...> ,ALWAYS>::Tuple ;
 
-class CaptureLayout {
-public:
-	LENGTH mRank ;
-} ;
+class CaptureLayout {} ;
+
+template <class>
+class Capture ;
 
 template <class...PARAMS>
-class Capture implement CaptureLayout {
+class Capture<TYPE<PARAMS...>> implement CaptureLayout {
 private:
 	using RANK = COUNT_OF<TYPE<PARAMS...>> ;
 
 protected:
-	using CaptureLayout::mRank ;
 	Tuple<ARR<FLAG ,RANK>> mCapture ;
 
 public:
 	explicit Capture (CREF<KILL<FLAG ,PARAMS>>...params) {
-		mRank = RANK::expr ;
 		mCapture = Tuple<ARR<FLAG ,RANK>> {params...} ;
 	}
 
 	imports CREF<Capture> from (CREF<CaptureLayout> that) {
-		assert (that.mRank == RANK::expr) ;
 		return Pointer::from (that) ;
 	}
 
@@ -1054,7 +1064,7 @@ public:
 
 struct FUNCTION_capture {
 	template <class...ARG1>
-	inline Capture<ARG1...> operator() (CREF<ARG1>...initval) const noexcept {
+	inline Capture<ARG1...> operator() (XREF<ARG1>...initval) const noexcept {
 		return Capture<ARG1...> (address (initval)...) ;
 	}
 } ;
