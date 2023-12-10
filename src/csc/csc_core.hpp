@@ -111,9 +111,15 @@ public:
 	}
 
 	template <class ARG1>
+	inline operator RREF<ARG1> () leftvalue = delete ;
+
+	template <class ARG1>
 	inline operator CREF<ARG1> () const leftvalue {
 		return reinterpret_cast<CREF<ARG1>> (thiz) ;
 	}
+
+	template <class ARG1>
+	inline operator RREF<ARG1> () const leftvalue = delete ;
 
 	template <class ARG1>
 	inline operator RREF<ARG1> () rightvalue = delete ;
@@ -510,8 +516,8 @@ public:
 	implicit VFat () = delete ;
 
 	template <class ARG1>
-	explicit VFat (CREF<A> holder ,VREF<ARG1> pointer) {
-		mHolder = Pointer::from (holder) ;
+	explicit VFat (CREF<Interface> holder ,VREF<ARG1> pointer) {
+		mHolder = unsafe_cast[TYPE<FLAG>::expr] (keep[TYPE<CREF<Interface>>::expr] (holder)) ;
 		mPointer = address (pointer) ;
 	}
 
@@ -531,7 +537,7 @@ public:
 
 	template <class ARG1>
 	explicit CFat (CREF<A> holder ,CREF<ARG1> pointer) {
-		mHolder = Pointer::from (holder) ;
+		mHolder = unsafe_cast[TYPE<FLAG>::expr] (keep[TYPE<CREF<Interface>>::expr] (holder)) ;
 		mPointer = address (pointer) ;
 	}
 
@@ -540,21 +546,14 @@ public:
 	}
 } ;
 
-struct Unknown implement Interface {
+struct ReflectSize implement Interface {
 	virtual LENGTH type_size () const = 0 ;
 	virtual LENGTH type_align () const = 0 ;
-	virtual void create (CREF<LENGTH> size_) const noexcept = 0 ;
-	virtual void destroy (CREF<LENGTH> size_) const noexcept = 0 ;
 } ;
 
 template <class A>
-class UnknownBinder final implement Unknown {
-protected:
-	TEMP<A> mValue ;
-
+class ReflectSizeBinder final implement ReflectSize {
 public:
-	implicit UnknownBinder () = default ;
-
 	LENGTH type_size () const override {
 		return SIZE_OF<A>::expr ;
 	}
@@ -562,8 +561,17 @@ public:
 	LENGTH type_align () const override {
 		return ALIGN_OF<A>::expr ;
 	}
+} ;
 
+struct ReflectCreate implement Interface {
+	virtual void create (CREF<LENGTH> size_) const noexcept = 0 ;
+} ;
+
+template <class A>
+class ReflectCreateBinder final implement ReflectCreate {
+public:
 	void create (CREF<LENGTH> size_) const noexcept override {
+		require (IS_DEFAULT<A>) ;
 		if (IS_TRIVIAL<A>::expr)
 			return ;
 		auto &&rax = unsafe_cast[TYPE<ARR<A ,RANK1>>::expr] (mValue) ;
@@ -571,7 +579,15 @@ public:
 			new (DEF<csc_temp_t *> (&rax[i])) A () ;
 		}
 	}
+} ;
 
+struct ReflectDestroy implement Interface {
+	virtual void destroy (CREF<LENGTH> size_) const noexcept = 0 ;
+} ;
+
+template <class A>
+class ReflectDestroyBinder final implement ReflectDestroy {
+public:
 	void destroy (CREF<LENGTH> size_) const noexcept override {
 		if (IS_TRIVIAL<A>::expr)
 			return ;
@@ -582,13 +598,56 @@ public:
 	}
 } ;
 
+struct ReflectAssign implement Interface {
+	virtual void assign (VREF<Pointer> this_ ,CREF<Pointer> that_) const = 0 ;
+} ;
+
+template <class A>
+class ReflectAssignBinder final implement ReflectAssign {
+public:
+	void assign (VREF<Pointer> this_ ,CREF<Pointer> that_) const override {
+		auto &&rax = keep[TYPE<VREF<A>>::expr] (this_) ;
+		auto &&rbx = keep[TYPE<CREF<A>>::expr] (that_) ;
+		rax = rbx ;
+	}
+} ;
+
+struct ReflectEqual implement Interface {
+	virtual BOOL equal (CREF<Pointer> this_ ,CREF<Pointer> that_) const = 0 ;
+} ;
+
+template <class A>
+class ReflectEqualBinder final implement ReflectEqual {
+public:
+	BOOL equal (CREF<Pointer> this_ ,CREF<Pointer> that_) const override {
+		auto &&rax = keep[TYPE<CREF<A>>::expr] (this_) ;
+		auto &&rbx = keep[TYPE<CREF<A>>::expr] (that_) ;
+		return rax == rbx ;
+	}
+} ;
+
+struct ReflectCompr implement Interface {
+	virtual FLAG compr (CREF<Pointer> this_ ,CREF<Pointer> that_) const = 0 ;
+} ;
+
+template <class A>
+class ReflectComprBinder final implement ReflectCompr {
+public:
+	FLAG compr (CREF<Pointer> this_ ,CREF<Pointer> that_) const override {
+		auto &&rax = keep[TYPE<CREF<A>>::expr] (this_) ;
+		auto &&rbx = keep[TYPE<CREF<A>>::expr] (that_) ;
+		return operator_compr (rax ,rbx) ;
+	}
+} ;
+
 class BoxLayout ;
 
 struct BoxHolder implement Interface {
 	imports VFat<BoxHolder> create (VREF<BoxLayout> that) ;
 	imports CFat<BoxHolder> create (CREF<BoxLayout> that) ;
 
-	virtual void initialize (CREF<Unknown> that) = 0 ;
+	virtual CREF<Interface> unknown (CREF<FLAG> uuid) const = 0  ;
+	virtual void initialize (CREF<Unknown> value) = 0 ;
 	virtual void destroy () = 0 ;
 	virtual BOOL exist () const = 0 ;
 	virtual VREF<Pointer> self_m () leftvalue = 0 ;
@@ -627,6 +686,20 @@ public:
 		swap (thiz ,move (that)) ;
 		return thiz ;
 	}
+
+	template <class ARG1>
+	CPTR<ARG1> unknown (TYPEID<ARG1>) const {
+		require (IS_INTERFACE<ARG1>) ;
+		return (&unsafe_cast[TYPE<ARG1>::expr] (BoxHolder::create (thiz)->unknown (0))) ;
+	}
+} ;
+
+template <class A>
+class BoxUnknownBinder final implement Unknown {
+public:
+	CREF<Interface> unknown (CREF<FLAG> uuid) const override {
+		return Pointer::make (0) ;
+	}
 } ;
 
 template <class A>
@@ -642,9 +715,8 @@ public:
 	template <class...ARG1>
 	imports Box make (XREF<ARG1>...initval) {
 		Box ret ;
-		const auto r1x = UnknownBinder<A> () ;
 		new (DEF<csc_temp_t *> (&ret.mValue)) A (keep[TYPE<ARG1>::expr] (initval)...) ;
-		ret.mHolder = Pointer::from (r1x) ;
+		BoxHolder::create (ret)->initialize (BoxUnknownBinder<A> ()) ;
 		return move (ret) ;
 	}
 
@@ -702,8 +774,9 @@ struct RefHolder implement Interface {
 	imports VFat<RefHolder> create (VREF<RefLayout> that) ;
 	imports CFat<RefHolder> create (CREF<RefLayout> that) ;
 
+	virtual CREF<Interface> unknown (CREF<FLAG> uuid) const = 0  ;
 	virtual void initialize (CREF<BoxLayout> value) = 0 ;
-	virtual void initialize (CREF<BoxLayout> value ,CREF<LENGTH> size_) = 0 ;
+	virtual void initialize (CREF<Unknown> value ,CREF<LENGTH> size_) = 0 ;
 	virtual void destroy () = 0 ;
 	virtual BOOL exist () const = 0 ;
 	virtual VREF<Pointer> self_m () leftvalue = 0 ;
@@ -743,6 +816,12 @@ public:
 			return thiz ;
 		swap (thiz ,move (that)) ;
 		return thiz ;
+	}
+
+	template <class ARG1>
+	CPTR<ARG1> unknown (TYPEID<ARG1>) const {
+		require (IS_INTERFACE<ARG1>) ;
+		return (&unsafe_cast[TYPE<ARG1>::expr] (RefHolder::create (thiz)->unknown (0))) ;
 	}
 } ;
 
@@ -1084,7 +1163,7 @@ struct ClazzHolder implement Interface {
 	virtual void initialize (CREF<ClazzData> data) = 0 ;
 	virtual LENGTH type_size () const = 0 ;
 	virtual LENGTH type_align () const = 0 ;
-	virtual FLAG type_cabi () const = 0 ;
+	virtual FLAG type_uuid () const = 0 ;
 	virtual Slice<STR> type_name () const = 0 ;
 	virtual BOOL equal (CREF<Ref<ClazzLayout>> that) const = 0 ;
 	virtual FLAG compr (CREF<Ref<ClazzLayout>> that) const = 0 ;
@@ -1131,8 +1210,8 @@ public:
 		return ClazzHolder::create (thiz)->type_align () ;
 	}
 
-	FLAG type_cabi () const {
-		return ClazzHolder::create (thiz)->type_cabi () ;
+	FLAG type_uuid () const {
+		return ClazzHolder::create (thiz)->type_uuid () ;
 	}
 
 	Slice<STR> type_name () const {

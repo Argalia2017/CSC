@@ -11,12 +11,18 @@
 namespace CSC {
 class BoxImplHolder implement Fat<BoxHolder ,BoxLayout> {
 public:
-	void initialize (CREF<Unknown> that) override {
-		assert (FALSE) ;
+	CREF<Interface> unknown (CREF<FLAG> uuid) const override {
+		assert (exist ()) ;
+		auto &&rax = unsafe_cast[TYPE<Unknown>::expr] (fake.mHolder) ;
+		return rax.unknown (uuid) ;
+	}
+
+	void initialize (CREF<Unknown> value) override {
+		fake.mHolder = unsafe_cast[TYPE<FLAG>::expr] (value) ;
 	}
 
 	void destroy () override {
-		unknown ().destroy (1) ;
+		fake.unknown (TYPE<ReflectDestroy>::expr)->destroy (1) ;
 	}
 
 	BOOL exist () const override {
@@ -25,14 +31,14 @@ public:
 
 	VREF<Pointer> self_m () leftvalue override {
 		assert (exist ()) ;
-		const auto r1x = unknown ().type_align () ;
+		const auto r1x = fake.unknown (TYPE<ReflectSize>::expr)->type_align () ;
 		const auto r2x = operator_alignas (address (fake.mHolder) + SIZE_OF<FLAG>::expr ,r1x) ;
 		return Pointer::make (r2x) ;
 	}
 
 	CREF<Pointer> self_m () const leftvalue override {
 		assert (exist ()) ;
-		const auto r1x = unknown ().type_align () ;
+		const auto r1x = fake.unknown (TYPE<ReflectSize>::expr)->type_align () ;
 		const auto r2x = operator_alignas (address (fake.mHolder) + SIZE_OF<FLAG>::expr ,r1x) ;
 		return Pointer::make (r2x) ;
 	}
@@ -41,8 +47,8 @@ public:
 		fake.mHolder = that.mHolder ;
 		if (fake.mHolder == ZERO)
 			return ;
-		const auto r1x = unknown ().type_size () ;
-		const auto r2x = unknown ().type_align () ;
+		const auto r1x = fake.unknown (TYPE<ReflectSize>::expr)->type_size () ;
+		const auto r2x = fake.unknown (TYPE<ReflectSize>::expr)->type_align () ;
 		const auto r3x = operator_alignas (address (fake.mHolder) + SIZE_OF<FLAG>::expr ,r2x) ;
 		const auto r4x = operator_alignas (address (that.mHolder) + SIZE_OF<FLAG>::expr ,r2x) ;
 		memcpy (csc_pointer_t (r3x) ,csc_pointer_t (r4x) ,r1x) ;
@@ -50,10 +56,6 @@ public:
 
 	void release () override {
 		fake.mHolder = ZERO ;
-	}
-
-	CREF<Unknown> unknown () const leftvalue {
-		return Pointer::from (fake.mHolder) ;
 	}
 } ;
 
@@ -63,6 +65,94 @@ exports VFat<BoxHolder> BoxHolder::create (VREF<BoxLayout> that) {
 
 exports CFat<BoxHolder> BoxHolder::create (CREF<BoxLayout> that) {
 	return CFat<BoxHolder> (BoxImplHolder () ,that) ;
+}
+
+struct RefLayoutData {
+	LENGTH mCounter ;
+	LENGTH mSize ;
+	BoxLayout mThis ;
+} ;
+
+class RefImplHolder implement Fat<RefHolder ,RefLayout> {
+public:
+	CREF<Interface> unknown (CREF<FLAG> uuid) const override {
+		return BoxHolder::create (holder ().mThis)->unknown (uuid) ;
+	}
+
+	void initialize (CREF<BoxLayout> value) override {
+		const auto r1x = value.unknown (TYPE<ReflectSize>::expr)->type_size () ;
+		const auto r2x = value.unknown (TYPE<ReflectSize>::expr)->type_align () ;
+		const auto r3x = operator_max (r2x - ALIGN_OF<FLAG>::expr ,0) ;
+		const auto r4x = SIZE_OF<RefLayoutData>::expr + r3x + 1 * r1x ;
+		fake.mHolder = HeapProc::instance ().alloc (r4x) ;
+		holder ().mCounter = 0 ;
+		holder ().mSize = 1 ;
+		BoxHolder::create (holder ().mThis)->acquire (value) ;
+		const auto r5x = fake.mHolder + SIZE_OF<RefLayoutData>::expr ;
+		fake.mPointer = operator_alignas (r5x ,r2x) ;
+	}
+
+	void initialize (CREF<Unknown> value ,CREF<LENGTH> size_) override {
+		auto &&rax = unsafe_cast[TYPE<BoxLayout>::expr] (value) ;
+		const auto r1x = rax.unknown (TYPE<ReflectSize>::expr)->type_size () ;
+		const auto r2x = rax.unknown (TYPE<ReflectSize>::expr)->type_align () ;
+		const auto r3x = operator_max (r2x - ALIGN_OF<FLAG>::expr ,0) ;
+		const auto r4x = SIZE_OF<RefLayoutData>::expr + r3x + size_ * r1x ;
+		fake.mHolder = HeapProc::instance ().alloc (r4x) ;
+		holder ().mCounter = 0 ;
+		holder ().mSize = size_ ;
+		holder ().mThis.mHolder = rax.mHolder ;
+		rax.unknown (TYPE<ReflectCreate>::expr)->create (holder ().mSize) ;
+		const auto r5x = fake.mHolder + SIZE_OF<RefLayoutData>::expr ;
+		fake.mPointer = operator_alignas (r5x ,r2x) ;
+	}
+
+	void destroy () override {
+		const auto r1x = --holder ().mCounter ;
+		if (r1x > 0)
+			return ;
+		holder ().mThis.unknown (TYPE<ReflectDestroy>::expr)->destroy (holder ().mSize) ;
+		const auto r2x = fake.mHolder ;
+		HeapProc::instance ().free (r2x) ;
+	}
+
+	BOOL exist () const override {
+		return fake.mPointer != ZERO ;
+	}
+
+	VREF<Pointer> self_m () leftvalue override {
+		assert (exist ()) ;
+		return Pointer::make (fake.mPointer) ;
+	}
+
+	CREF<Pointer> self_m () const leftvalue override {
+		assert (exist ()) ;
+		return Pointer::make (fake.mPointer) ;
+	}
+
+	RefLayout share () const override {
+		RefLayout ret ;
+		if ifdo (TRUE) {
+			ret.mHolder = fake.mHolder ;
+			ret.mPointer = fake.mPointer ;
+			if (ret.mHolder == ZERO)
+				discard ;
+			holder ().mCounter++ ;
+		}
+		return move (ret) ;
+	}
+
+	VREF<RefLayoutData> holder () const leftvalue {
+		return Pointer::make (fake.mHolder) ;
+	}
+} ;
+
+exports VFat<RefHolder> RefHolder::create (VREF<RefLayout> that) {
+	return VFat<RefHolder> (RefImplHolder () ,that) ;
+}
+
+exports CFat<RefHolder> RefHolder::create (CREF<RefLayout> that) {
+	return CFat<RefHolder> (RefImplHolder () ,that) ;
 }
 
 class HeapProcLayout {
@@ -106,87 +196,6 @@ exports VFat<HeapProcHolder> HeapProcHolder::create (VREF<Ref<HeapProcLayout>> t
 
 exports CFat<HeapProcHolder> HeapProcHolder::create (CREF<Ref<HeapProcLayout>> that) {
 	return CFat<HeapProcHolder> (HeapProcImplHolder () ,that) ;
-}
-
-struct RefLayoutData {
-	LENGTH mCounter ;
-	LENGTH mSize ;
-	BoxLayout mThis ;
-} ;
-
-class RefImplHolder implement Fat<RefHolder ,RefLayout> {
-public:
-	void initialize (CREF<BoxLayout> value) override {
-		auto &&rax = unsafe_cast[TYPE<Unknown>::expr] (value.mHolder) ;
-		const auto r1x = operator_max (rax.type_align () - ALIGN_OF<FLAG>::expr ,0) ;
-		const auto r2x = SIZE_OF<RefLayoutData>::expr + r1x + 1 * rax.type_size () ;
-		fake.mHolder = HeapProc::instance ().alloc (r2x) ;
-		holder ().mCounter = 0 ;
-		holder ().mSize = 1 ;
-		BoxHolder::create (holder ().mThis)->acquire (value) ;
-		const auto r3x = fake.mHolder + SIZE_OF<RefLayoutData>::expr ;
-		fake.mPointer = operator_alignas (r3x ,rax.type_align ()) ;
-	}
-
-	void initialize (CREF<BoxLayout> value ,CREF<LENGTH> size_) override {
-		auto &&rax = unsafe_cast[TYPE<Unknown>::expr] (value.mHolder) ;
-		const auto r1x = operator_max (rax.type_align () - ALIGN_OF<FLAG>::expr ,0) ;
-		const auto r2x = SIZE_OF<RefLayoutData>::expr + r1x + size_ * rax.type_size () ;
-		fake.mHolder = HeapProc::instance ().alloc (r2x) ;
-		holder ().mCounter = 0 ;
-		holder ().mSize = 0 ;
-		holder ().mThis.mHolder = value.mHolder ;
-		const auto r3x = fake.mHolder + SIZE_OF<RefLayoutData>::expr ;
-		fake.mPointer = operator_alignas (r3x ,rax.type_align ()) ;
-	}
-
-	void destroy () override {
-		const auto r1x = --holder ().mCounter ;
-		if (r1x > 0)
-			return ;
-		auto &&rax = unsafe_cast[TYPE<Unknown>::expr] (holder ().mThis) ;
-		rax.destroy (holder ().mSize) ;
-		const auto r2x = fake.mHolder ;
-		HeapProc::instance ().free (r2x) ;
-	}
-
-	BOOL exist () const override {
-		return fake.mPointer != ZERO ;
-	}
-
-	VREF<Pointer> self_m () leftvalue override {
-		assert (exist ()) ;
-		return Pointer::make (fake.mPointer) ;
-	}
-
-	CREF<Pointer> self_m () const leftvalue override {
-		assert (exist ()) ;
-		return Pointer::make (fake.mPointer) ;
-	}
-
-	RefLayout share () const override {
-		RefLayout ret ;
-		if ifdo (TRUE) {
-			ret.mHolder = fake.mHolder ;
-			ret.mPointer = fake.mPointer ;
-			if (ret.mHolder == ZERO)
-				discard ;
-			holder ().mCounter++ ;
-		}
-		return move (ret) ;
-	}
-
-	VREF<RefLayoutData> holder () const leftvalue {
-		return Pointer::make (fake.mHolder) ;
-	}
-} ;
-
-exports VFat<RefHolder> RefHolder::create (VREF<RefLayout> that) {
-	return VFat<RefHolder> (RefImplHolder () ,that) ;
-}
-
-exports CFat<RefHolder> RefHolder::create (CREF<RefLayout> that) {
-	return CFat<RefHolder> (RefImplHolder () ,that) ;
 }
 
 class SliceLayout implement SliceData {} ;
@@ -287,7 +296,7 @@ public:
 		return fake->mTypeAlign ;
 	}
 
-	FLAG type_cabi () const override {
+	FLAG type_uuid () const override {
 		if (fake == NULL)
 			return 0 ;
 		return address (fake.self) ;
@@ -300,22 +309,22 @@ public:
 	}
 
 	BOOL equal (CREF<Ref<ClazzLayout>> that) const override {
-		const auto r1x = type_name () ;
-		const auto r2x = ClazzHolder::create (that)->type_name () ;
-		return r1x == r2x ;
+		if (type_uuid () == ClazzHolder::create (that)->type_uuid ())
+			return TRUE ;
+		return type_name () == ClazzHolder::create (that)->type_name () ;
 	}
 
 	FLAG compr (CREF<Ref<ClazzLayout>> that) const override {
-		const auto r1x = type_name () ;
-		const auto r2x = ClazzHolder::create (that)->type_name () ;
-		return operator_compr (r1x ,r2x) ;
+		if (type_uuid () == ClazzHolder::create (that)->type_uuid ())
+			return ZERO ;
+		return operator_compr (type_name () ,ClazzHolder::create (that)->type_name ()) ;
 	}
 
 	void visit (CREF<Visitor> visitor) const override {
 		visitor.begin () ;
 		operator_visit (visitor ,type_size ()) ;
 		operator_visit (visitor ,type_align ()) ;
-		operator_visit (visitor ,type_cabi ()) ;
+		operator_visit (visitor ,type_uuid ()) ;
 		operator_visit (visitor ,type_name ()) ;
 		visitor.end () ;
 	}

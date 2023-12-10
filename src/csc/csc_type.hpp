@@ -634,6 +634,10 @@ struct Interface {
 	inline VREF<Interface> operator= (Interface &&) = default ;
 } ;
 
+struct Unknown implement Interface {
+	virtual CREF<Interface> unknown (CREF<FLAG> uuid) const = 0 ;
+} ;
+
 template <class...>
 trait PLACEHOLDER_HELP ;
 

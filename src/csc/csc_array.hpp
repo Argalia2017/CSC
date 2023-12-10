@@ -77,7 +77,7 @@ struct ArrayHolder implement Interface {
 	imports VFat<ArrayHolder> create (VREF<ArrayLayout> that) ;
 	imports CFat<ArrayHolder> create (CREF<ArrayLayout> that) ;
 
-	virtual void initialize (CREF<BoxLayout> value ,CREF<LENGTH> size_) = 0 ;
+	virtual void initialize (CREF<Unknown> value ,CREF<LENGTH> size_) = 0 ;
 	virtual LENGTH size () const = 0 ;
 	virtual LENGTH step () const = 0 ;
 	virtual LENGTH length () const = 0 ;
@@ -93,14 +93,20 @@ struct ArrayHolder implement Interface {
 } ;
 
 template <class A>
+class ArrayUnknownBinder final implement Unknown {
+public:
+	CREF<Interface> unknown (CREF<FLAG> uuid) const override {
+		return Pointer::make (0) ;
+	}
+} ;
+
+template <class A>
 class Array implement ArrayLayout {
 public:
 	implicit Array () = default ;
 
 	explicit Array (CREF<LENGTH> size_) {
-		auto rax = Box<A>::make () ;
-		ArrayHolder::create (thiz)->initialize (rax ,size_) ;
-		rax.release () ;
+		ArrayHolder::create (thiz)->initialize (ArrayUnknownBinder<A> () ,size_) ;
 	}
 
 	LENGTH size () const {

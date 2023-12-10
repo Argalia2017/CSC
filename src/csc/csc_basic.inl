@@ -8,11 +8,10 @@
 namespace CSC {
 class RefBufferImplHolder implement Fat<RefBufferHolder ,RefBufferLayout> {
 public:
-	void initialize (CREF<BoxLayout> value ,CREF<LENGTH> size_) override {
+	void initialize (CREF<Unknown> value ,CREF<LENGTH> size_) override {
 		RefHolder::create (fake.mBuffer)->initialize (value ,size_) ;
 		fake.mSize = size_ ;
-		auto &&rax = unsafe_cast[TYPE<Unknown>::expr] (value.mHolder) ;
-		fake.mStep = rax.type_size () ;
+		fake.mStep = fake.mBuffer.unknown (TYPE<ReflectSize>::expr)->type_size () ;
 	}
 
 	LENGTH size () const override {
@@ -28,11 +27,11 @@ public:
 	}
 
 	VREF<Pointer> self_m () leftvalue override {
-		return Pointer::make (fake.mBuffer.mPointer) ;
+		return RefHolder::create (fake.mBuffer)->self ;
 	}
 
 	CREF<Pointer> self_m () const leftvalue override {
-		return Pointer::make (fake.mBuffer.mPointer) ;
+		return RefHolder::create (fake.mBuffer)->self ;
 	}
 
 	VREF<Pointer> at (CREF<INDEX> index) leftvalue override {

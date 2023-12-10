@@ -93,7 +93,7 @@ struct RefBufferHolder implement Interface {
 	imports VFat<RefBufferHolder> create (VREF<RefBufferLayout> that) ;
 	imports CFat<RefBufferHolder> create (CREF<RefBufferLayout> that) ;
 
-	virtual void initialize (CREF<BoxLayout> value ,CREF<LENGTH> size_) = 0 ;
+	virtual void initialize (CREF<Unknown> value ,CREF<LENGTH> size_) = 0 ;
 	virtual LENGTH size () const = 0 ;
 	virtual LENGTH step () const = 0 ;
 	virtual VREF<Pointer> self_m () leftvalue = 0 ;
@@ -104,15 +104,20 @@ struct RefBufferHolder implement Interface {
 } ;
 
 template <class A>
+class RefBufferUnknownBinder final implement Unknown {
+public:
+	CREF<Interface> unknown (CREF<FLAG> uuid) const override {
+		return Pointer::make (0) ;
+	}
+} ;
+
+template <class A>
 class RefBuffer implement RefBufferLayout {
 public:
 	implicit RefBuffer () = default ;
 
 	explicit RefBuffer (CREF<LENGTH> size_) {
-		require (IS_DEFAULT<A>) ;
-		auto rax = Box<A>::make () ;
-		RefBufferHolder::create (thiz)->initialize (rax ,size_) ;
-		rax.release () ;
+		RefBufferHolder::create (thiz)->initialize (RefBufferUnknownBinder<A> () ,size_) ;
 	}
 
 	LENGTH size () const {
