@@ -177,9 +177,7 @@ struct FUNCTION_address {
 static constexpr auto address = FUNCTION_address () ;
 
 struct FUNCTION_unsafe_hold {
-	template <class ARG1>
-	forceinline FLAG operator() (CREF<ARG1> binder) const noexcept {
-		require (IS_INTERFACE<ARG1>) ;
+	forceinline FLAG operator() (CREF<Interface> binder) const noexcept {
 		return unsafe_cast[TYPE<FLAG>::expr] (binder) ;
 	}
 } ;
@@ -563,16 +561,16 @@ protected:
 public:
 	implicit VFat () = delete ;
 
-	template <class ARG1 ,class = REQUIRE<IS_SAME<ARG1 ,Unknown>>>
+	template <class ARG1>
 	explicit VFat (CREF<ARG1> holder) {
 		mHolder = holder.reflect (KILL<A ,ARG1>::expr) ;
+		assert (mHolder != ZERO) ;
 		mPointer = ZERO ;
 	}
 
-	template <class ARG1>
-	explicit VFat (CREF<A> holder ,VREF<ARG1> that) {
-		mHolder = unsafe_hold (keep[TYPE<CREF<Interface>>::expr] (holder)) ;
-		mPointer = address (that) ;
+	explicit VFat (CREF<Interface> holder ,CREF<FLAG> addr) {
+		mHolder = unsafe_hold (holder) ;
+		mPointer = addr ;
 	}
 
 	forceinline VPTR<A> operator-> () const {
@@ -592,20 +590,17 @@ protected:
 public:
 	implicit CFat () = delete ;
 
-	template <class ARG1 ,class = REQUIRE<IS_SAME<ARG1 ,Unknown>>>
+	template <class ARG1>
 	explicit CFat (CREF<ARG1> holder) {
 		mHolder = holder.reflect (KILL<A ,ARG1>::expr) ;
+		assert (mHolder != ZERO) ;
 		mPointer = ZERO ;
 	}
 
-	template <class ARG1>
-	explicit CFat (CREF<A> holder ,CREF<ARG1> that) {
-		mHolder = unsafe_hold (keep[TYPE<CREF<Interface>>::expr] (holder)) ;
-		mPointer = address (that) ;
+	explicit CFat (CREF<Interface> holder ,CREF<FLAG> addr) {
+		mHolder = unsafe_hold (holder) ;
+		mPointer = addr ;
 	}
-
-	template <class ARG1>
-	explicit CFat (CREF<A> ,RREF<ARG1>) = delete ;
 
 	forceinline CPTR<A> operator-> () const {
 		return CPTR<A> (address (thiz)) ;
@@ -676,62 +671,6 @@ public:
 	}
 } ;
 
-struct ReflectRemake implement Interface {
-	virtual BOOL trivial () const = 0 ;
-	virtual void drop (VREF<Pointer> this_) const = 0 ;
-
-	imports forceinline consteval csc_diff_t expr_m () noexcept {
-		return 103 ;
-	}
-} ;
-
-template <class A>
-class ReflectRemakeBinder final implement ReflectRemake {
-public:
-	BOOL trivial () const override {
-		return IS_TRIVIAL<A>::expr ;
-	}
-
-	void drop (VREF<Pointer> this_) const override {
-		auto &&rax = keep[TYPE<VREF<A>>::expr] (this_) ;
-		rax.~A () ;
-	}
-} ;
-
-struct ReflectNode implement Interface {
-	virtual LENGTH offset (CREF<INDEX> index) const = 0 ;
-
-	imports forceinline consteval csc_diff_t expr_m () noexcept {
-		return 104 ;
-	}
-} ;
-
-template <class A>
-class ReflectNodeBinder final implement ReflectNode {
-public:
-	LENGTH offset (CREF<INDEX> index) const override {
-		return template_offset (PHX ,index ,TYPE<A>::expr) ;
-	}
-
-	template <class ARG1 ,class = REQUIRE<KILL<ENUM_TRUE ,typeof (CPTR<ARG1> (0)->mItem)>>>
-	forceinline FLAG template_offset (CREF<typeof (PH3)> ,CREF<INDEX> index ,TYPEID<ARG1>) const {
-		if (index == 0)
-			return address (CPTR<ARG1> (0)->mNode) ;
-		return template_offset (PHX ,index - 1 ,TYPE<typeof (CPTR<ARG1> (0)->mItem)>::expr) ;
-	}
-
-	template <class ARG1>
-	forceinline FLAG template_offset (CREF<typeof (PH2)> ,CREF<INDEX> index ,TYPEID<TEMP<ARG1>>) const {
-		return template_offset (PHX ,index ,TYPE<ARG1>::expr) ;
-	}
-
-	template <class ARG1>
-	forceinline FLAG template_offset (CREF<typeof (PH1)> ,CREF<INDEX> index ,TYPEID<ARG1>) const {
-		assert (FALSE) ;
-		return 0 ;
-	}
-} ;
-
 template <class A>
 class Pin {
 protected:
@@ -767,22 +706,6 @@ public:
 	}
 } ;
 
-struct BoxLayout ;
-
-struct BoxHolder implement Interface {
-	imports VFat<BoxHolder> create (VREF<BoxLayout> that) ;
-	imports CFat<BoxHolder> create (CREF<BoxLayout> that) ;
-
-	virtual void initialize (CREF<Unknown> holder) = 0 ;
-	virtual void destroy () = 0 ;
-	virtual BOOL exist () const = 0 ;
-	virtual CREF<Unknown> unknown () const leftvalue = 0 ;
-	virtual VREF<Pointer> self_m () leftvalue = 0 ;
-	virtual CREF<Pointer> self_m () const leftvalue = 0 ;
-	virtual void acquire (CREF<BoxLayout> that) = 0 ;
-	virtual void release () = 0 ;
-} ;
-
 struct BoxLayout {
 	FLAG mHolder ;
 
@@ -791,9 +714,7 @@ public:
 		mHolder = ZERO ;
 	}
 
-	implicit ~BoxLayout () noexcept {
-		BoxHolder::create (thiz)->destroy () ;
-	}
+	implicit ~BoxLayout () noexcept ;
 
 	implicit BoxLayout (CREF<BoxLayout>) = delete ;
 
@@ -811,6 +732,24 @@ public:
 	}
 } ;
 
+struct BoxHolder implement Interface {
+	imports VFat<BoxHolder> create (VREF<BoxLayout> that) ;
+	imports CFat<BoxHolder> create (CREF<BoxLayout> that) ;
+
+	virtual void initialize (CREF<Unknown> holder) = 0 ;
+	virtual void destroy () = 0 ;
+	virtual BOOL exist () const = 0 ;
+	virtual CREF<Unknown> unknown () const leftvalue = 0 ;
+	virtual VREF<Pointer> self_m () leftvalue = 0 ;
+	virtual CREF<Pointer> self_m () const leftvalue = 0 ;
+	virtual void acquire (CREF<BoxLayout> that) = 0 ;
+	virtual void release () = 0 ;
+} ;
+
+inline BoxLayout::~BoxLayout () noexcept {
+	BoxHolder::create (thiz)->destroy () ;
+}
+
 template <class A>
 class BoxUnknownBinder final implement Unknown {
 public:
@@ -819,7 +758,7 @@ public:
 			return unsafe_hold (ReflectSizeBinder<A> ()) ;
 		if (uuid == ReflectDestroyBinder<A>::expr)
 			return unsafe_hold (ReflectDestroyBinder<A> ()) ;
-		return 0 ;
+		return ZERO ;
 	}
 } ;
 
@@ -896,22 +835,6 @@ struct FUNCTION_memorize {
 
 static constexpr auto memorize = FUNCTION_memorize () ;
 
-struct RefLayout ;
-
-struct RefHolder implement Interface {
-	imports VFat<RefHolder> create (VREF<RefLayout> that) ;
-	imports CFat<RefHolder> create (CREF<RefLayout> that) ;
-
-	virtual void initialize (RREF<BoxLayout> value) = 0 ;
-	virtual void initialize (CREF<Unknown> holder ,CREF<LENGTH> size_) = 0 ;
-	virtual void initialize (CREF<Unknown> holder ,CREF<Unknown> element) = 0 ;
-	virtual void destroy () = 0 ;
-	virtual BOOL exist () const = 0 ;
-	virtual CREF<Unknown> unknown () const leftvalue = 0 ;
-	virtual VREF<Pointer> self_m () leftvalue = 0 ;
-	virtual CREF<Pointer> self_m () const leftvalue = 0 ;
-	virtual RefLayout share () const = 0 ;
-} ;
 
 struct RefLayout {
 	FLAG mHolder ;
@@ -923,9 +846,7 @@ public:
 		mPointer = ZERO ;
 	}
 
-	implicit ~RefLayout () noexcept {
-		RefHolder::create (thiz)->destroy () ;
-	}
+	implicit ~RefLayout () noexcept ;
 
 	implicit RefLayout (CREF<RefLayout>) = delete ;
 
@@ -940,6 +861,38 @@ public:
 			return thiz ;
 		swap (thiz ,move (that)) ;
 		return thiz ;
+	}
+} ;
+
+struct RefHolder implement Interface {
+	imports VFat<RefHolder> create (VREF<RefLayout> that) ;
+	imports CFat<RefHolder> create (CREF<RefLayout> that) ;
+
+	virtual void initialize (RREF<BoxLayout> value) = 0 ;
+	virtual void initialize (CREF<Unknown> holder ,CREF<Unknown> item ,CREF<LENGTH> size_) = 0 ;
+	virtual void destroy () = 0 ;
+	virtual BOOL exist () const = 0 ;
+	virtual CREF<Unknown> unknown () const leftvalue = 0 ;
+	virtual VREF<Pointer> self_m () leftvalue = 0 ;
+	virtual CREF<Pointer> self_m () const leftvalue = 0 ;
+	virtual RefLayout share () const = 0 ;
+} ;
+
+inline RefLayout::~RefLayout () noexcept {
+	RefHolder::create (thiz)->destroy () ;
+}
+
+template <class A>
+class RefUnknownBinder final implement Unknown {
+public:
+	FLAG reflect (CREF<FLAG> uuid) const override {
+		if (uuid == ReflectSizeBinder<A>::expr)
+			return unsafe_hold (ReflectSizeBinder<A> ()) ;
+		if (uuid == ReflectCreateBinder<A>::expr)
+			return unsafe_hold (ReflectCreateBinder<A> ()) ;
+		if (uuid == ReflectDestroyBinder<A>::expr)
+			return unsafe_hold (ReflectDestroyBinder<A> ()) ;
+		return ZERO ;
 	}
 } ;
 
@@ -1097,6 +1050,38 @@ public:
 	}
 } ;
 
+template <>
+class Capture<> implement CaptureLayout {
+private:
+	using RANK = ENUM_ZERO ;
+
+protected:
+	using CaptureLayout::mRank ;
+
+public:
+	explicit Capture () {
+		mRank = RANK::expr ;
+	}
+
+	imports CREF<Capture> from (CREF<CaptureLayout> that) {
+		assert (that.mRank == RANK::expr) ;
+		return Pointer::from (that) ;
+	}
+
+	imports CREF<Capture> from (RREF<CaptureLayout>) = delete ;
+
+	template <class ARG1>
+	forceinline void operator() (CREF<ARG1> func) const {
+		using R1X = TYPE_SENQUENCE<RANK> ;
+		return invoke (func ,TYPE<R1X>::expr) ;
+	}
+
+	template <class ARG1>
+	forceinline void invoke (CREF<ARG1> func ,TYPEID<TYPE<>>) const {
+		return func () ;
+	}
+} ;
+
 template <class...>
 trait CAPTURE_WRAP_HELP ;
 
@@ -1143,7 +1128,7 @@ public:
 	FLAG reflect (CREF<FLAG> uuid) const override {
 		if (uuid == ReflectSizeBinder<A>::expr)
 			return unsafe_hold (ReflectSizeBinder<A> ()) ;
-		return 0 ;
+		return ZERO ;
 	}
 } ;
 
@@ -1340,7 +1325,7 @@ public:
 			return unsafe_hold (ReflectSizeBinder<A> ()) ;
 		if (uuid == ReflectNameBinder<A>::expr)
 			return unsafe_hold (ReflectNameBinder<A> ()) ;
-		return 0 ;
+		return ZERO ;
 	}
 } ;
 
@@ -1507,67 +1492,5 @@ public:
 	forceinline operator ARG1 () rightvalue {
 		return fetch (TYPE<ARG1>::expr) ;
 	}
-} ;
-
-struct ReflectScope implement Interface {
-	virtual void enter (VREF<Pointer> this_) const = 0 ;
-	virtual void leave (VREF<Pointer> this_) const = 0 ;
-
-	imports forceinline consteval csc_diff_t expr_m () noexcept {
-		return 115 ;
-	}
-} ;
-
-struct ScopeLayout ;
-
-struct ScopeHolder implement Interface {
-	imports VFat<ScopeHolder> create (VREF<ScopeLayout> that) ;
-	imports CFat<ScopeHolder> create (CREF<ScopeLayout> that) ;
-
-	virtual void initialize (CREF<FLAG> pointer) = 0 ;
-	virtual void destroy () = 0 ;
-} ;
-
-struct ScopeLayout {
-	FLAG mPointer ;
-
-public:
-	implicit ScopeLayout () noexcept {
-		mPointer = ZERO ;
-	}
-
-	implicit ~ScopeLayout () noexcept {
-		ScopeHolder::create (thiz)->destroy () ;
-	}
-
-	implicit ScopeLayout (CREF<ScopeLayout>) = delete ;
-
-	forceinline VREF<ScopeLayout> operator= (CREF<ScopeLayout>) = delete ;
-
-	implicit ScopeLayout (RREF<ScopeLayout> that) noexcept :ScopeLayout () {
-		swap (thiz ,that) ;
-	}
-
-	forceinline VREF<ScopeLayout> operator= (RREF<ScopeLayout> that) noexcept {
-		if (address (thiz) == address (that))
-			return thiz ;
-		swap (thiz ,move (that)) ;
-		return thiz ;
-	}
-} ;
-
-template <class A>
-class Scope implement ScopeLayout {
-protected:
-	using ScopeLayout::mPointer ;
-
-public:
-	implicit Scope () = default ;
-
-	explicit Scope (CREF<Ref<A>> that) {
-		ScopeHolder::create (thiz)->initialize (address (that.unknown ())) ;
-	}
-
-	explicit Scope (RREF<Ref<A>>) = delete ;
 } ;
 } ;

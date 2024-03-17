@@ -33,24 +33,17 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\csc\csc.hpp" />
-    <ClInclude Include="..\..\src\csc\csc_array.hpp" />
     <ClInclude Include="..\..\src\csc\csc_basic.hpp" />
     <ClInclude Include="..\..\src\csc\csc_begin.h" />
     <ClInclude Include="..\..\src\csc\csc_core.hpp" />
     <ClInclude Include="..\..\src\csc\csc_end.h" />
-    <ClInclude Include="..\..\src\csc\csc_image.hpp" />
-    <ClInclude Include="..\..\src\csc\csc_math.hpp" />
-    <ClInclude Include="..\..\src\csc\csc_matrix.hpp" />
     <ClInclude Include="..\..\src\csc\csc_type.hpp" />
     <ClInclude Include="..\..\src\util.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\src\csc\cpp.hint" />
-    <None Include="..\..\src\csc\csc_array.inl" />
     <None Include="..\..\src\csc\csc_basic.inl" />
     <None Include="..\..\src\csc\csc_core.inl" />
-    <None Include="..\..\src\csc\csc_math.inl" />
-    <None Include="..\..\src\csc\csc_matrix.inl" />
   </ItemGroup>
   <ItemGroup>
     <Natvis Include="..\..\src\csc\cpp.natvis" />
@@ -95,14 +88,14 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v141</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
     <CharacterSet>MultiByte</CharacterSet>
     <UseOfMfc>false</UseOfMfc>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v141</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
     <UseOfMfc>false</UseOfMfc>
   </PropertyGroup>

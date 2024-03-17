@@ -685,6 +685,12 @@ struct Unknown implement Interface {
 	virtual FLAG reflect (CREF<FLAG> uuid) const = 0 ;
 } ;
 
+struct DefaultUnknown implement Unknown {
+	FLAG reflect (CREF<FLAG> uuid) const override {
+		return ZERO ;
+	}
+} ;
+
 template <class...>
 trait PLACEHOLDER_HELP ;
 

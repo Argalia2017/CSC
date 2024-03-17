@@ -25,18 +25,6 @@
     <ClInclude Include="..\..\src\csc\csc_type.hpp">
       <Filter>csc</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\csc\csc_image.hpp">
-      <Filter>csc</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\csc\csc_array.hpp">
-      <Filter>csc</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\csc\csc_matrix.hpp">
-      <Filter>csc</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\csc\csc_math.hpp">
-      <Filter>csc</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="csc">
@@ -51,15 +39,6 @@
       <Filter>csc</Filter>
     </None>
     <None Include="..\..\src\csc\csc_basic.inl">
-      <Filter>csc</Filter>
-    </None>
-    <None Include="..\..\src\csc\csc_matrix.inl">
-      <Filter>csc</Filter>
-    </None>
-    <None Include="..\..\src\csc\csc_math.inl">
-      <Filter>csc</Filter>
-    </None>
-    <None Include="..\..\src\csc\csc_array.inl">
       <Filter>csc</Filter>
     </None>
   </ItemGroup>

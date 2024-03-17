@@ -10,11 +10,13 @@
 
   <Type Name="CSC::Interface" Inheritable="false">
     <Expand HideRawView="true">
+      <ExpandedItem>__vfptr</ExpandedItem>
     </Expand>
   </Type>
 
   <Type Name="CSC::Unknown" Inheritable="false">
     <Expand HideRawView="true">
+      <ExpandedItem>__vfptr</ExpandedItem>
     </Expand>
   </Type>
 

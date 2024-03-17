@@ -11,7 +11,7 @@
 namespace CSC {
 struct OptionalLayout {
 	FLAG mCode ;
-	BoxLayout mValue ;
+	mutable BoxLayout mValue ;
 
 public:
 	implicit OptionalLayout () noexcept {
@@ -35,7 +35,8 @@ struct OptionalHolder implement Interface {
 template <class A>
 class Optional implement OptionalLayout {
 protected:
-	using OptionalLayout::mThis ;
+	using OptionalLayout::mCode ;
+	using OptionalLayout::mValue ;
 	TEMP<A> mStorage ;
 
 public:
@@ -121,7 +122,7 @@ public:
 	FLAG reflect (CREF<FLAG> uuid) const override {
 		if (uuid == ReflectInvokeBinder<A>::expr)
 			return unsafe_hold (ReflectInvokeBinder<A> ()) ;
-		return 0 ;
+		return ZERO ;
 	}
 } ;
 
@@ -182,20 +183,6 @@ template <class A>
 using FUNCTION_WRAP = typename FUNCTION_WRAP_HELP<A ,ALWAYS>::RET ;
 
 struct AutoRefImplLayout ;
-struct AutoRefLayout ;
-
-struct AutoRefHolder implement Interface {
-	imports VFat<AutoRefHolder> create (VREF<AutoRefLayout> that) ;
-	imports CFat<AutoRefHolder> create (CREF<AutoRefLayout> that) ;
-
-	virtual void initialize (RREF<BoxLayout> value ,CREF<Clazz> clazz) = 0 ;
-	virtual void initialize (RREF<AutoRefLayout> that ,CREF<Clazz> clazz) = 0 ;
-	virtual void destroy () = 0 ;
-	virtual BOOL exist () const = 0 ;
-	virtual Clazz clazz () const = 0 ;
-	virtual VREF<Pointer> self_m () leftvalue = 0 ;
-	virtual CREF<Pointer> self_m () const leftvalue = 0 ;
-} ;
 
 struct AutoRefLayout implement RefBase<AutoRefImplLayout> {
 	FLAG mPointer ;
@@ -205,9 +192,7 @@ public:
 		mPointer = ZERO ;
 	}
 
-	implicit ~AutoRefLayout () noexcept {
-		AutoRefHolder::create (thiz)->destroy () ;
-	}
+	implicit ~AutoRefLayout () noexcept ;
 
 	implicit AutoRefLayout (CREF<AutoRefLayout>) = delete ;
 
@@ -224,6 +209,23 @@ public:
 		return thiz ;
 	}
 } ;
+
+struct AutoRefHolder implement Interface {
+	imports VFat<AutoRefHolder> create (VREF<AutoRefLayout> that) ;
+	imports CFat<AutoRefHolder> create (CREF<AutoRefLayout> that) ;
+
+	virtual void initialize (RREF<BoxLayout> value ,CREF<Clazz> clazz) = 0 ;
+	virtual void initialize (RREF<AutoRefLayout> that ,CREF<Clazz> clazz) = 0 ;
+	virtual void destroy () = 0 ;
+	virtual BOOL exist () const = 0 ;
+	virtual Clazz clazz () const = 0 ;
+	virtual VREF<Pointer> self_m () leftvalue = 0 ;
+	virtual CREF<Pointer> self_m () const leftvalue = 0 ;
+} ;
+
+inline AutoRefLayout::~AutoRefLayout () noexcept {
+	AutoRefHolder::create (thiz)->destroy () ;
+}
 
 template <class A>
 class AutoRef implement AutoRefLayout {
@@ -284,20 +286,6 @@ public:
 } ;
 
 struct SharedRefImplLayout ;
-struct SharedRefLayout ;
-
-struct SharedRefHolder implement Interface {
-	imports VFat<SharedRefHolder> create (VREF<SharedRefLayout> that) ;
-	imports CFat<SharedRefHolder> create (CREF<SharedRefLayout> that) ;
-
-	virtual void initialize (RREF<BoxLayout> value) = 0 ;
-	virtual void initialize (CREF<SharedRefLayout> that) = 0 ;
-	virtual void destroy () = 0 ;
-	virtual BOOL exist () const = 0 ;
-	virtual FLAG counter () const = 0 ;
-	virtual VREF<Pointer> self_m () const leftvalue = 0 ;
-	virtual SharedRefLayout weak () const = 0 ;
-} ;
 
 struct SharedRefLayout implement RefBase<SharedRefImplLayout> {
 	FLAG mPointer ;
@@ -307,9 +295,7 @@ public:
 		mPointer = ZERO ;
 	}
 
-	implicit ~SharedRefLayout () noexcept {
-		SharedRefHolder::create (thiz)->destroy () ;
-	}
+	implicit ~SharedRefLayout () noexcept ;
 
 	implicit SharedRefLayout (CREF<SharedRefLayout>) = delete ;
 
@@ -326,6 +312,23 @@ public:
 		return thiz ;
 	}
 } ;
+
+struct SharedRefHolder implement Interface {
+	imports VFat<SharedRefHolder> create (VREF<SharedRefLayout> that) ;
+	imports CFat<SharedRefHolder> create (CREF<SharedRefLayout> that) ;
+
+	virtual void initialize (RREF<BoxLayout> value) = 0 ;
+	virtual void initialize (CREF<SharedRefLayout> that) = 0 ;
+	virtual void destroy () = 0 ;
+	virtual BOOL exist () const = 0 ;
+	virtual FLAG counter () const = 0 ;
+	virtual VREF<Pointer> self_m () const leftvalue = 0 ;
+	virtual SharedRefLayout weak () const = 0 ;
+} ;
+
+inline SharedRefLayout::~SharedRefLayout () noexcept {
+	SharedRefHolder::create (thiz)->destroy () ;
+}
 
 template <class A>
 class SharedRef implement SharedRefLayout {
@@ -391,18 +394,6 @@ public:
 } ;
 
 struct UniqueRefImplLayout ;
-struct UniqueRefLayout ;
-
-struct UniqueRefHolder implement Interface {
-	imports VFat<UniqueRefHolder> create (VREF<UniqueRefLayout> that) ;
-	imports CFat<UniqueRefHolder> create (CREF<UniqueRefLayout> that) ;
-
-	virtual void initialize (RREF<BoxLayout> value ,RREF<Function<VREF<Pointer>>> dtor) = 0 ;
-	virtual void destroy () = 0 ;
-	virtual BOOL exist () const = 0 ;
-	virtual VREF<Pointer> self_m () leftvalue = 0 ;
-	virtual CREF<Pointer> self_m () const leftvalue = 0 ;
-} ;
 
 struct UniqueRefLayout implement RefBase<UniqueRefImplLayout> {
 	FLAG mPointer ;
@@ -412,9 +403,7 @@ public:
 		mPointer = ZERO ;
 	}
 
-	implicit ~UniqueRefLayout () noexcept {
-		UniqueRefHolder::create (thiz)->destroy () ;
-	}
+	implicit ~UniqueRefLayout () noexcept ;
 
 	implicit UniqueRefLayout (CREF<UniqueRefLayout>) = delete ;
 
@@ -431,6 +420,21 @@ public:
 		return thiz ;
 	}
 } ;
+
+struct UniqueRefHolder implement Interface {
+	imports VFat<UniqueRefHolder> create (VREF<UniqueRefLayout> that) ;
+	imports CFat<UniqueRefHolder> create (CREF<UniqueRefLayout> that) ;
+
+	virtual void initialize (RREF<BoxLayout> value ,RREF<Function<VREF<Pointer>>> dtor) = 0 ;
+	virtual void destroy () = 0 ;
+	virtual BOOL exist () const = 0 ;
+	virtual VREF<Pointer> self_m () leftvalue = 0 ;
+	virtual CREF<Pointer> self_m () const leftvalue = 0 ;
+} ;
+
+inline UniqueRefLayout::~UniqueRefLayout () noexcept {
+	UniqueRefHolder::create (thiz)->destroy () ;
+}
 
 template <class A>
 class UniqueRef implement UniqueRefLayout {
@@ -562,35 +566,43 @@ public:
 		mSize = 0 ;
 		mStep = 0 ;
 	}
+
+	implicit ~RefBufferLayout () noexcept ;
+
+	implicit RefBufferLayout (CREF<RefBufferLayout>) = delete ;
+
+	forceinline VREF<RefBufferLayout> operator= (CREF<RefBufferLayout>) = delete ;
+
+	implicit RefBufferLayout (RREF<RefBufferLayout> that) noexcept :RefBufferLayout () {
+		swap (thiz ,that) ;
+	}
+
+	forceinline VREF<RefBufferLayout> operator= (RREF<RefBufferLayout> that) noexcept {
+		if (address (thiz) == address (that))
+			return thiz ;
+		swap (thiz ,move (that)) ;
+		return thiz ;
+	}
 } ;
 
 struct RefBufferHolder implement Interface {
 	imports VFat<RefBufferHolder> create (VREF<RefBufferLayout> that) ;
 	imports CFat<RefBufferHolder> create (CREF<RefBufferLayout> that) ;
 
-	virtual void initialize (CREF<Unknown> holder ,CREF<LENGTH> size_) = 0 ;
+	virtual void initialize (CREF<Unknown> item ,CREF<LENGTH> size_) = 0 ;
+	virtual void destroy () = 0 ;
 	virtual LENGTH size () const = 0 ;
 	virtual LENGTH step () const = 0 ;
 	virtual VREF<Pointer> self_m () leftvalue = 0 ;
 	virtual CREF<Pointer> self_m () const leftvalue = 0 ;
 	virtual VREF<Pointer> at (CREF<INDEX> index) leftvalue = 0 ;
 	virtual CREF<Pointer> at (CREF<INDEX> index) const leftvalue = 0 ;
-	virtual void resize (CREF<Unknown> holder ,CREF<LENGTH> size_) = 0 ;
+	virtual void resize (CREF<Unknown> item ,CREF<LENGTH> size_) = 0 ;
 } ;
 
-template <class A>
-class RefBufferUnknownBinder final implement Unknown {
-public:
-	FLAG reflect (CREF<FLAG> uuid) const override {
-		if (uuid == ReflectSizeBinder<A>::expr)
-			return unsafe_hold (ReflectSizeBinder<A> ()) ;
-		if (uuid == ReflectCreateBinder<A>::expr)
-			return unsafe_hold (ReflectCreateBinder<A> ()) ;
-		if (uuid == ReflectDestroyBinder<A>::expr)
-			return unsafe_hold (ReflectDestroyBinder<A> ()) ;
-		return 0 ;
-	}
-} ;
+inline RefBufferLayout::~RefBufferLayout () noexcept {
+	RefBufferHolder::create (thiz)->destroy () ;
+}
 
 template <class A>
 class RefBufferBase implement RefBufferLayout {} ;
@@ -607,7 +619,7 @@ public:
 	implicit RefBuffer () = default ;
 
 	explicit RefBuffer (CREF<LENGTH> size_) {
-		RefBufferHolder::create (thiz)->initialize (RefBufferUnknownBinder<A> () ,size_) ;
+		RefBufferHolder::create (thiz)->initialize (RefUnknownBinder<A> () ,size_) ;
 	}
 
 	LENGTH size () const {
@@ -655,27 +667,17 @@ public:
 	}
 
 	void resize (CREF<LENGTH> size_) {
-		return RefBufferHolder::create (thiz)->resize (RefBufferUnknownBinder<A> () ,size_) ;
+		return RefBufferHolder::create (thiz)->resize (RefUnknownBinder<A> () ,size_) ;
 	}
 } ;
 
 struct AllocatorLayout ;
 
-struct AllocatorNodeLayout {
-	INDEX mNext ;
-} ;
-
-template <class A>
-struct AllocatorNode {
-	TEMP<A> mItem ;
-	AllocatorNodeLayout mNode ;
-} ;
-
 struct AllocatorHolder implement Interface {
 	imports VFat<AllocatorHolder> create (VREF<AllocatorLayout> that) ;
 	imports CFat<AllocatorHolder> create (CREF<AllocatorLayout> that) ;
 
-	virtual void initialize (CREF<Unknown> holder ,CREF<LENGTH> size_) = 0 ;
+	virtual void initialize (CREF<Unknown> item ,CREF<LENGTH> size_) = 0 ;
 	virtual void destroy () = 0 ;
 	virtual void clear () = 0 ;
 	virtual LENGTH size () const = 0 ;
@@ -683,21 +685,21 @@ struct AllocatorHolder implement Interface {
 	virtual LENGTH length () const = 0 ;
 	virtual VREF<Pointer> at (CREF<INDEX> index) leftvalue = 0 ;
 	virtual CREF<Pointer> at (CREF<INDEX> index) const leftvalue = 0 ;
-	virtual INDEX alloc (CREF<Unknown> holder) = 0 ;
+	virtual INDEX alloc (CREF<Unknown> item) = 0 ;
 	virtual void free (CREF<INDEX> index) = 0 ;
 	virtual BOOL used (CREF<INDEX> index) const = 0 ;
-	virtual void resize (CREF<Unknown> holder ,CREF<LENGTH> size_) = 0 ;
+	virtual void resize (CREF<Unknown> item ,CREF<LENGTH> size_) = 0 ;
 } ;
 
 struct AllocatorLayout {
 	RefBufferLayout mAllocator ;
-	LENGTH mSize ;
+	LENGTH mWidth ;
 	LENGTH mLength ;
 	INDEX mFree ;
 
 public:
 	implicit AllocatorLayout () noexcept {
-		mSize = 0 ;
+		mWidth = 0 ;
 		mLength = 0 ;
 		mFree = NONE ;
 	}
@@ -723,6 +725,12 @@ public:
 } ;
 
 template <class A>
+struct AllocatorNode {
+	TEMP<A> mItem ;
+	INDEX mNext ;
+} ;
+
+template <class A>
 class AllocatorUnknownBinder final implement Unknown {
 public:
 	FLAG reflect (CREF<FLAG> uuid) const override {
@@ -732,11 +740,7 @@ public:
 			return unsafe_hold (ReflectCreateBinder<AllocatorNode<A>> ()) ;
 		if (uuid == ReflectDestroyBinder<AllocatorNode<A>>::expr)
 			return unsafe_hold (ReflectDestroyBinder<AllocatorNode<A>> ()) ;
-		if (uuid == ReflectNodeBinder<AllocatorNode<A>>::expr)
-			return unsafe_hold (ReflectNodeBinder<AllocatorNode<A>> ()) ;
-		if (uuid == ReflectRemakeBinder<A>::expr)
-			return unsafe_hold (ReflectRemakeBinder<A> ()) ;
-		return 0 ;
+		return ZERO ;
 	}
 } ;
 
@@ -745,7 +749,7 @@ class Allocator implement AllocatorLayout {
 protected:
 	require (CHECK<RefBuffer<AllocatorNode<A>>>) ;
 	using AllocatorLayout::mAllocator ;
-	using AllocatorLayout::mSize ;
+	using AllocatorLayout::mWidth ;
 	using AllocatorLayout::mLength ;
 	using AllocatorLayout::mFree ;
 
