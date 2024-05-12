@@ -74,11 +74,11 @@
 
 #ifdef _MSVC_LANG
 #if _MSVC_LANG >= 202002L
-#define __CSC_CXX_FULL__
+#define __CSC_CXX_LATEST__
 #endif
 #else
 #if __cplusplus >= 202002L
-#define __CSC_CXX_FULL__
+#define __CSC_CXX_LATEST__
 #endif
 #endif
 
@@ -94,7 +94,7 @@
 #pragma warning (disable :4324) //@info: warning C4324: 'xxx': structure was padded due to alignment specifier
 #pragma warning (disable :4365) //@info: warning C4365: 'xxx': conversion from 'xxx' to 'xxx', signed/unsigned mismatch
 #pragma warning (disable :4459) //@info: warning C4459: declaration of 'xxx' hides global declaration
-#pragma warning (disable :4464) //@info: warning C4464: relative include path contains '..'
+#pragma warning (disable :4464) //@info: warning C4464: relative include dire contains '..'
 #pragma warning (disable :4505) //@info: warning C4505: 'xxx': unreferenced local function has been removed
 #pragma warning (disable :4514) //@info: warning C4514: 'xxx': unreferenced inline function has been removed
 #pragma warning (disable :4571) //@info: warning C4571: Reflectrmational: catch(...) semantics changed since Visual C++ 7.1; structured exceptions (SEH) are no longer caught
@@ -119,31 +119,32 @@
 #pragma warning (disable :5027) //@info: warning C5027: 'xxx': move assignment operator was implicitly defined as deleted
 #pragma warning (disable :5045) //@info: warning C5045: 'xxx': move assignment operator was implicitly defined as deleted
 #pragma warning (disable :5246) //@info: warning C5246: 'xxx': the initialization of a subobject should be wrapped in braces
+#pragma warning (disable :5039) //@info: warning C5039: 'xxx': pointer or reference to potentially throwing function passed to 'xxx' function under -EHc. Undefined behavior may occur if this function throws an exception.
 #endif
 
 #ifdef __CSC_COMPILER_GNUC__
-#pragma GCC diagnostic ignored "-Wexceptions"
 #pragma GCC diagnostic ignored "-Wunknown-pragmas"
-#pragma GCC diagnostic ignored "-Wattributes"
+#pragma GCC diagnostic ignored "-Wunused-parameter"
 #pragma GCC diagnostic ignored "-Wunused-function"
+#pragma GCC diagnostic ignored "-Wmicrosoft-template"
 #endif
 
 #ifdef __CSC_COMPILER_CLANG__
-#pragma GCC diagnostic ignored "-Wexceptions"
 #pragma clang diagnostic ignored "-Wunknown-pragmas"
-#pragma clang diagnostic ignored "-Wc++11-narrowing"
 #pragma clang diagnostic ignored "-Wunused-parameter"
+#pragma clang diagnostic ignored "-Wunused-function"
+#pragma clang diagnostic ignored "-Wmicrosoft-template"
 #endif
 
 #include "csc_end.h"
 #ifdef __CSC_COMPILER_GNUC__
 //@fatal: fuck gnuc
 #include <type_traits>
-#define __is_constructible(...) std::is_constructible<__VA_ARGS__>::value
-#define __is_nothrow_constructible(...) std::is_nothrow_constructible<__VA_ARGS__>::value
-#define __is_nothrow_destructible(...) std::is_nothrow_destructible<__VA_ARGS__>::value
-#define __is_assignable(...) std::is_assignable<__VA_ARGS__>::value
-#define __is_convertible_to(...) std::is_convertible<__VA_ARGS__>::value
+#define __is_constructible(...) std::is_constructible<__VA_ARGS__>::item
+#define __is_nothrow_constructible(...) std::is_nothrow_constructible<__VA_ARGS__>::item
+#define __is_nothrow_destructible(...) std::is_nothrow_destructible<__VA_ARGS__>::item
+#define __is_assignable(...) std::is_assignable<__VA_ARGS__>::item
+#define __is_convertible_to(...) std::is_convertible<__VA_ARGS__>::item
 #define __is_trivially_constructible __has_trivial_constructor
 #define __is_trivially_destructible __has_trivial_destructor
 #endif
@@ -154,7 +155,7 @@ class initializer_list ;
 } ;
 #include "csc_begin.h"
 
-#ifndef __CSC_CXX_FULL__
+#ifndef __CSC_CXX_LATEST__
 #ifdef __CSC_COMPILER_GNUC__
 #if __GLIBCXX__ <= 20140522L
 //@fatal: fuck gnuc
@@ -182,15 +183,15 @@ struct is_trivially_default_constructible :integral_constant<bool ,__has_trivial
 
 #ifndef __macro_forceinline
 #ifdef __CSC_COMPILER_MSVC__
-#define __macro_forceinline __forceinline
+#define __macro_forceinline inline __forceinline
 #endif
 
 #ifdef __CSC_COMPILER_GNUC__
-#define __macro_forceinline __attribute__ ((always_inline))
+#define __macro_forceinline inline __attribute__ ((always_inline))
 #endif
 
 #ifdef __CSC_COMPILER_CLANG__
-#define __macro_forceinline __attribute__ ((always_inline))
+#define __macro_forceinline inline __attribute__ ((always_inline))
 #endif
 #endif
 
@@ -206,6 +207,10 @@ struct is_trivially_default_constructible :integral_constant<bool ,__has_trivial
 
 #ifndef __macro_requires
 #define __macro_requires(...) static_assert (CSC::DEF<__VA_ARGS__>::expr ,"requires : " __macro_str (__VA_ARGS__))
+#endif
+
+#ifndef __macro_as
+#define __macro_as(...) ; require (CSC::IS_DEFAULT<__VA_ARGS__>) ;
 #endif
 
 #ifndef __macro_anonymous
@@ -224,11 +229,11 @@ struct is_trivially_default_constructible :integral_constant<bool ,__has_trivial
 
 #ifndef __macro_assert
 #ifdef __CSC_VER_DEBUG__
-#define __macro_assert(...) do { if (__VA_ARGS__) break ; CSC::unsafe_break () ; } while (false)
+#define __macro_assert(...) do { if (__VA_ARGS__) break ; CSC::inline_break () ; } while (false)
 #endif
 
 #ifdef __CSC_VER_UNITTEST__
-#define __macro_assert(...) do { if (__VA_ARGS__) break ; CSC::unsafe_abort () ; } while (false)
+#define __macro_assert(...) do { if (__VA_ARGS__) break ; CSC::inline_abort () ; } while (false)
 #endif
 
 #ifdef __CSC_VER_RELEASE__
@@ -238,35 +243,29 @@ struct is_trivially_default_constructible :integral_constant<bool ,__has_trivial
 
 #ifndef __macro_assume
 #ifdef __CSC_COMPILER_MSVC__
-#define __macro_assume(...) do { if (__VA_ARGS__) break ; CSC::Exception (slice ("assume : " __macro_str (__VA_ARGS__) " : at " __FUNCSIG__ " in " __FILE__ " ," __macro_str (__LINE__))).raise () ; } while (false)
+#define __macro_assume(...) do { if (__VA_ARGS__) break ; CSC::Exception (slice (__macro_str (__VA_ARGS__)) ,CSC::Slice<CSC::STR> (__FUNCSIG__) ,slice (__FILE__) ,slice (__macro_str (__LINE__))).raise () ; } while (false)
 #endif
 
 #ifdef __CSC_COMPILER_GNUC__
-//@fatal: fuck gnuc
-#define __macro_assume(...) do { if (__VA_ARGS__) break ; CSC::Exception (slice ("assume : " __macro_str (__VA_ARGS__) " : at ") ,CSC::Slice<CSC::STR> (__PRETTY_FUNCTION__) ,slice (" in " __FILE__ " ," __macro_str (__LINE__))).raise () ; } while (false)
+#define __macro_assume(...) do { if (__VA_ARGS__) break ; CSC::Exception (slice (__macro_str (__VA_ARGS__)) ,CSC::Slice<CSC::STR> (__PRETTY_FUNCTION__) ,slice (__FILE__) ,slice (__macro_str (__LINE__))).raise () ; } while (false)
 #endif
 
 #ifdef __CSC_COMPILER_CLANG__
-//@fatal: fuck clang
-#define __macro_assume(...) do { if (__VA_ARGS__) break ; CSC::Exception (slice ("assume : " __macro_str (__VA_ARGS__) " : at ") ,CSC::Slice<CSC::STR> (__PRETTY_FUNCTION__) ,slice (" in " __FILE__ " ," __macro_str (__LINE__))).raise () ; } while (false)
+#define __macro_assume(...) do { if (__VA_ARGS__) break ; CSC::Exception (slice (__macro_str (__VA_ARGS__)) ,CSC::Slice<CSC::STR> (__PRETTY_FUNCTION__) ,slice (__FILE__) ,slice (__macro_str (__LINE__))).raise () ; } while (false)
 #endif
 #endif
 
-#ifdef __macro_as
-#define __macro_as(...)
-#endif
-
-#ifndef __macro_unittest
+#ifndef __macro_barrier
 #ifdef __CSC_VER_DEBUG__
-#define __macro_unittest(...) do { } while (false)
+#define __macro_barrier(...) do { CSC::inline_barrier (TYPE<ENUM<__LINE__>>::expr ,__VA_ARGS__) ; } while (false)
 #endif
 
 #ifdef __CSC_VER_UNITTEST__
-#define __macro_unittest(...) do { } while (false)
+#define __macro_barrier(...) do { CSC::inline_barrier (TYPE<ENUM<__LINE__>>::expr ,__VA_ARGS__) ; } while (false)
 #endif
 
 #ifdef __CSC_VER_RELEASE__
-#define __macro_unittest(...)
+#define __macro_barrier(...)
 #endif
 #endif
 
@@ -275,7 +274,7 @@ struct is_trivially_default_constructible :integral_constant<bool ,__has_trivial
 #endif
 
 #ifndef __macro_ifdo
-#define __macro_ifdo(A) (A) for (CSC::csc_bool_t anonymous = true ; anonymous ; anonymous = CSC::unsafe_ifdo (A))
+#define __macro_ifdo(A) (A) for (CSC::csc_bool_t anonymous = true ; anonymous ; anonymous = CSC::inline_ifdo (A))
 #endif
 
 #ifndef __macro_typeof
@@ -294,7 +293,7 @@ using csc_int64_t = DEF<long long> ;
 using csc_float32_t = float ;
 using csc_float64_t = double ;
 
-#ifndef __CSC_CXX_FULL__
+#ifndef __CSC_CXX_LATEST__
 #define consteval constexpr
 #endif
 
@@ -314,19 +313,16 @@ using csc_uint64_t = DEF<unsigned long long> ;
 using csc_char_t = char ;
 using csc_wchar_t = wchar_t ;
 
-#ifdef __CSC_CXX_FULL__
+#ifdef __CSC_CXX_LATEST__
 using csc_char8_t = char8_t ;
 #endif
 
-#ifndef __CSC_CXX_FULL__
+#ifndef __CSC_CXX_LATEST__
 using csc_char8_t = csc_uint8_t ;
 #endif
 
 using csc_char16_t = char16_t ;
 using csc_char32_t = char32_t ;
-
-using csc_pointer_t = DEF<void *> ;
-using csc_const_pointer_t = DEF<const void *> ;
 
 #ifdef __CSC_SYSTEM_WINDOWS__
 #ifdef __CSC_CONFIG_VAL32__
@@ -353,7 +349,10 @@ using csc_enum_t = DEF<unsigned long> ;
 using csc_enum_t = int ;
 #endif
 
-struct csc_temp_t ;
+struct csc_new_t ;
+
+using csc_pointer_t = DEF<void *> ;
+using csc_new_pointer_t = DEF<csc_new_t *> ;
 
 template <class A>
 using csc_initializer_t = std::initializer_list<A> ;
@@ -499,15 +498,12 @@ using MACRO_IS_TRIVIAL_DESTRUCTIBLE = ENUM<(__is_trivially_destructible (A))> ;
 
 template <class A ,class B>
 using MACRO_IS_EXTEND = ENUM<(__is_base_of (A ,B))> ;
-
-template <class A ,class B>
-using MACRO_IS_CONVERTIBLE = ENUM<(__is_convertible_to (A ,B))> ;
 } ;
 
-forceinline constexpr CSC::csc_pointer_t operator new (CSC::csc_size_t ,CSC::DEF<CSC::csc_temp_t *> where_) noexcept {
+forceinline constexpr CSC::csc_pointer_t operator new (CSC::csc_size_t ,CSC::csc_new_pointer_t where_) noexcept {
 	return where_ ;
 }
 
-forceinline constexpr void operator delete (CSC::csc_pointer_t ,CSC::DEF<CSC::csc_temp_t *> where_) noexcept {
+forceinline constexpr void operator delete (CSC::csc_pointer_t ,CSC::csc_new_pointer_t where_) noexcept {
 	return ;
 }

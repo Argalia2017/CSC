@@ -2,12 +2,6 @@
 
 #include "csc/csc_end.h"
 #ifdef __CSC_SYSTEM_WINDOWS__
-#ifdef __CSC_COMPILER_MSVC__
-#pragma warning (disable :4091)
-#pragma warning (disable :4996)
-#pragma warning (disable :5039)
-#endif
-
 #ifndef NOMINMAX
 #define NOMINMAX
 #endif
@@ -18,10 +12,24 @@
 
 #include <Windows.h>
 #endif
-
-#include <iostream>
-
 #include "csc/csc_begin.h"
+
 #include "csc/csc_core.inl"
 #include "csc/csc_basic.inl"
-#include "csc/csc_end.h"
+#include "csc/csc_array.inl"
+#include "csc/csc_math.inl"
+#include "csc/csc_image.inl"
+#include "csc/csc_matrix.inl"
+#include "csc/csc_stream.inl"
+#include "csc/csc_runtime.inl"
+#include "csc/csc_thread.inl"
+
+#ifdef __CSC_SYSTEM_WINDOWS__
+#include  "csc/csc_runtime.windows.inl"
+#endif
+
+#ifdef __CSC_COMPILER_MSVC__
+#include "csc/csc_image.opencv.inl"
+#endif
+
+#include "csc/csc_matrix.eigen.inl"

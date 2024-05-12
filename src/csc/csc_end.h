@@ -12,18 +12,18 @@
 #undef trait
 #undef implement
 #undef require
+#undef as
 #undef anonymous
 #undef slice
 #undef assert
 #undef assume
-#undef unittest
-#undef as
+#undef barrier
 #undef ifnot
 #undef ifdo
 #undef discard
 #undef typeof
 
-#ifdef csc_push_macro_null
+#ifdef csc_push_macro
 #pragma pop_macro ("TRUE")
 #pragma pop_macro ("FALSE")
 #pragma pop_macro ("NULL")
@@ -31,5 +31,21 @@
 #pragma pop_macro ("IDEN")
 #pragma pop_macro ("NONE")
 #pragma pop_macro ("USED")
-#undef csc_push_macro_null
+#undef csc_push_macro
+#endif
+
+#ifdef __CSC_COMPILER_MSVC__
+#pragma warning (push, 0)
+#endif
+
+#ifdef __CSC_COMPILER_GNUC__
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wall"
+#pragma GCC diagnostic ignored "-Wshadow"
+#endif
+
+#ifdef __CSC_COMPILER_CLANG__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wall"
+#pragma clang diagnostic ignored "-Wshadow"
 #endif

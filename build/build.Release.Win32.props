@@ -4,13 +4,16 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup>
     <_PropertySheetDisplayName>build.Release.Win32</_PropertySheetDisplayName>
-    <IncludePath>D:\Depends\CSC;$(IncludePath)</IncludePath>
     <OutDir>$(SolutionDir)lib\$(Configuration)\$(Platform)\</OutDir>
     <IntDir>$(SolutionDir)obj\$(ProjectName)\$(Configuration)\$(Platform)\</IntDir>
   </PropertyGroup>
   <ItemDefinitionGroup>
     <ClCompile>
       <PreprocessorDefinitions>_DEPRECATED;_UNITTEST;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>D:\Depends\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
+    <Link>
+      <AdditionalLibraryDirectories>D:\Depends\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+    </Link>
   </ItemDefinitionGroup>
 </Project>

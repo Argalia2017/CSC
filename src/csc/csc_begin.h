@@ -1,4 +1,5 @@
-﻿
+﻿#pragma warning (pop)
+
 #include "csc_end.h"
 
 #define implicit
@@ -14,19 +15,19 @@
 #define trait struct
 #define implement :public
 #define require __macro_requires
+#define as __macro_as
 #define anonymous __macro_anonymous
 #define slice __macro_slice
 #define assert __macro_assert
 #define assume __macro_assume
-#define unittest __macro_unittest
-#define as __macro_as
+#define barrier __macro_barrier
 #define ifnot __macro_ifnot
 #define ifdo __macro_ifdo
 #define discard break
 #define typeof __macro_typeof
 
 #ifdef NULL
-#define csc_push_macro_null
+#define csc_push_macro
 #pragma push_macro ("TRUE")
 #pragma push_macro ("FALSE")
 #pragma push_macro ("NULL")
@@ -41,4 +42,16 @@
 #undef IDEN
 #undef NONE
 #undef USED
+#endif
+
+#ifdef __CSC_COMPILER_MSVC__
+#pragma warning (pop)
+#endif
+
+#ifdef __CSC_COMPILER_GNUC__
+#pragma GCC diagnostic pop
+#endif
+
+#ifdef __CSC_COMPILER_CLANG__
+#pragma clang diagnostic pop
 #endif

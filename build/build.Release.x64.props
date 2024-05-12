@@ -4,7 +4,6 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup>
     <_PropertySheetDisplayName>build.Release.x64</_PropertySheetDisplayName>
-    <IncludePath>D:\Depends\CSC;$(IncludePath)</IncludePath>
     <OutDir>$(SolutionDir)lib\$(Configuration)\$(Platform)\</OutDir>
     <IntDir>$(SolutionDir)obj\$(ProjectName)\$(Configuration)\$(Platform)\</IntDir>
   </PropertyGroup>
@@ -12,6 +11,10 @@
     <ClCompile>
       <PreprocessorDefinitions>_DEPRECATED;_UNITTEST;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalOptions>/bigobj %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalIncludeDirectories>D:\Depends\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
+    <Link>
+      <AdditionalLibraryDirectories>D:\Depends\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+    </Link>
   </ItemDefinitionGroup>
 </Project>

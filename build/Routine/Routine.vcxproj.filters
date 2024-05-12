@@ -1,50 +1,42 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
+    <Natvis Include="..\..\src\csc\cpp.natvis" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\src\inl.cpp" />
     <ClCompile Include="..\..\src\main.cpp" />
     <ClCompile Include="..\..\src\test.cpp" />
-    <ClCompile Include="..\..\src\inl.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\src\csc\csc.hpp" />
+    <ClInclude Include="..\..\src\csc\csc_array.hpp" />
+    <ClInclude Include="..\..\src\csc\csc_basic.hpp" />
+    <ClInclude Include="..\..\src\csc\csc_begin.h" />
+    <ClInclude Include="..\..\src\csc\csc_core.hpp" />
+    <ClInclude Include="..\..\src\csc\csc_end.h" />
+    <ClInclude Include="..\..\src\csc\csc_image.hpp" />
+    <ClInclude Include="..\..\src\csc\csc_math.hpp" />
+    <ClInclude Include="..\..\src\csc\csc_matrix.hpp" />
+    <ClInclude Include="..\..\src\csc\csc_runtime.hpp" />
+    <ClInclude Include="..\..\src\csc\csc_stream.hpp" />
+    <ClInclude Include="..\..\src\csc\csc_type.hpp" />
     <ClInclude Include="..\..\src\util.h" />
-    <ClInclude Include="..\..\src\csc\csc.hpp">
-      <Filter>csc</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\csc\csc_basic.hpp">
-      <Filter>csc</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\csc\csc_begin.h">
-      <Filter>csc</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\csc\csc_core.hpp">
-      <Filter>csc</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\csc\csc_end.h">
-      <Filter>csc</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\csc\csc_type.hpp">
-      <Filter>csc</Filter>
-    </ClInclude>
+    <ClInclude Include="..\..\src\csc\csc_thread.hpp" />
   </ItemGroup>
   <ItemGroup>
-    <Filter Include="csc">
-      <UniqueIdentifier>{d660981f-9a8f-45f3-b1dc-23641ec5244e}</UniqueIdentifier>
-    </Filter>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="..\..\src\csc\cpp.hint">
-      <Filter>csc</Filter>
-    </None>
-    <None Include="..\..\src\csc\csc_core.inl">
-      <Filter>csc</Filter>
-    </None>
-    <None Include="..\..\src\csc\csc_basic.inl">
-      <Filter>csc</Filter>
-    </None>
-  </ItemGroup>
-  <ItemGroup>
-    <Natvis Include="..\..\src\csc\cpp.natvis">
-      <Filter>csc</Filter>
-    </Natvis>
+    <None Include="..\..\src\csc\cpp.hint" />
+    <None Include="..\..\src\csc\csc_array.inl" />
+    <None Include="..\..\src\csc\csc_basic.inl" />
+    <None Include="..\..\src\csc\csc_core.inl" />
+    <None Include="..\..\src\csc\csc_image.inl" />
+    <None Include="..\..\src\csc\csc_math.inl" />
+    <None Include="..\..\src\csc\csc_matrix.inl" />
+    <None Include="..\..\src\csc\csc_runtime.inl" />
+    <None Include="..\..\src\csc\csc_stream.inl" />
+    <None Include="..\..\src\csc\csc_thread.inl" />
+    <None Include="..\..\src\csc\csc_image.opencv.inl" />
+    <None Include="..\..\src\csc\csc_runtime.windows.inl" />
+    <None Include="..\..\src\csc\csc_matrix.eigen.inl" />
   </ItemGroup>
 </Project>
