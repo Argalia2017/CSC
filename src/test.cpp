@@ -2,8 +2,9 @@
 
 #include "csc/csc_end.h"
 
+#ifdef __CSC_COMPILER_MSVC__
+#include <yvals.h>
 #include <intrin.h>
-
 #include <corecrt_io.h>
 #include <corecrt_malloc.h>
 #include <corecrt_math.h>
@@ -25,5 +26,6 @@
 #include <corecrt_wstring.h>
 #include <corecrt_wtime.h>
 #include "csc/csc_begin.h"
+#endif
 
 using namespace SOLUTION ;

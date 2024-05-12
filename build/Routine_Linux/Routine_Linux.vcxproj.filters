@@ -48,6 +48,11 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
+    <Filter Include="csc">
+      <UniqueIdentifier>{9669c8e6-1304-411a-a6b2-c826be330c83}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
     <None Include="..\..\src\csc\cpp.hint">
       <Filter>csc</Filter>
     </None>
@@ -81,6 +86,9 @@
     <None Include="..\..\src\csc\csc_runtime.inl">
       <Filter>csc</Filter>
     </None>
+    <None Include="..\..\src\csc\csc_runtime.linux.inl">
+      <Filter>csc</Filter>
+    </None>
     <None Include="..\..\src\csc\csc_runtime.windows.inl">
       <Filter>csc</Filter>
     </None>
@@ -90,14 +98,6 @@
     <None Include="..\..\src\csc\csc_thread.inl">
       <Filter>csc</Filter>
     </None>
-    <None Include="..\..\src\csc\csc_runtime.linux.inl">
-      <Filter>csc</Filter>
-    </None>
-  </ItemGroup>
-  <ItemGroup>
-    <Filter Include="csc">
-      <UniqueIdentifier>{cc9d7e1c-e9f5-4d29-beb4-0a68d66c30eb}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Natvis Include="..\..\src\csc\cpp.natvis">

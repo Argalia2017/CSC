@@ -122,12 +122,26 @@ public:
 } ;
 
 exports VFat<ImageHolder> ImageHolder::create (VREF<ImageLayout> that) {
-	return VFat<ImageHolder> (ImageImplement () ,Pointer::from (that)) ;
+	return VFat<ImageHolder> (ImageImplement () ,that) ;
 }
 
 exports CFat<ImageHolder> ImageHolder::create (CREF<ImageLayout> that) {
-	return CFat<ImageHolder> (ImageImplement () ,Pointer::from (that)) ;
+	return CFat<ImageHolder> (ImageImplement () ,that) ;
 }
+
+#ifndef __CSC_API_WITH_OPENCV__
+class ImageProcImplement implement Fat<ImageProcHolder ,ImageProcLayout> {} ;
+
+exports VFat<ImageProcHolder> ImageProcHolder::create (VREF<ImageProcLayout> that) {
+	assume (FALSE) ;
+	return VFat<ImageProcHolder> (keep[TYPE<ImageProcImplement>::expr] (Pointer::make (0)) ,that) ;
+}
+
+exports CFat<ImageProcHolder> ImageProcHolder::create (CREF<ImageProcLayout> that) {
+	assume (FALSE) ;
+	return CFat<ImageProcHolder> (keep[TYPE<ImageProcImplement>::expr] (Pointer::make (0)) ,that) ;
+}
+#endif
 
 class SparseImplement implement Fat<SparseHolder ,SparseLayout> {
 public:
@@ -222,16 +236,17 @@ public:
 } ;
 
 exports VFat<SparseHolder> SparseHolder::create (VREF<SparseLayout> that) {
-	return VFat<SparseHolder> (SparseImplement () ,Pointer::from (that)) ;
+	return VFat<SparseHolder> (SparseImplement () ,that) ;
 }
 
 exports CFat<SparseHolder> SparseHolder::create (CREF<SparseLayout> that) {
-	return CFat<SparseHolder> (SparseImplement () ,Pointer::from (that)) ;
+	return CFat<SparseHolder> (SparseImplement () ,that) ;
 }
 
 class DisjointImplement implement Fat<DisjointHolder ,DisjointLayout> {
 public:
 	void initialize (CREF<LENGTH> size_) override {
+		fake.mTable = SharedRef<Array<INDEX>>::make () ;
 		fake.mTable.self = Array<INDEX> (size_) ;
 		fake.mTable->fill (NONE) ;
 	}
@@ -322,11 +337,11 @@ public:
 } ;
 
 exports VFat<DisjointHolder> DisjointHolder::create (VREF<DisjointLayout> that) {
-	return VFat<DisjointHolder> (DisjointImplement () ,Pointer::from (that)) ;
+	return VFat<DisjointHolder> (DisjointImplement () ,that) ;
 }
 
 exports CFat<DisjointHolder> DisjointHolder::create (CREF<DisjointLayout> that) {
-	return CFat<DisjointHolder> (DisjointImplement () ,Pointer::from (that)) ;
+	return CFat<DisjointHolder> (DisjointImplement () ,that) ;
 }
 
 class KMMatchImplement implement Fat<KMMatchHolder ,KMMatchLayout> {
@@ -347,7 +362,7 @@ public:
 	}
 
 	Array<INDEX> sort (CREF<Array<VAL32>> love) override {
-		const auto r1x = MathTool::square (fake.mSize) ;
+		const auto r1x = MathProc::square (fake.mSize) ;
 		assume (love.size () == r1x) ;
 		solve () ;
 		return fake.mMatch ;
@@ -357,7 +372,7 @@ public:
 		for (auto &&i : iter (0 ,fake.mSize)) {
 			fake.mUser[i] = -fake.mInfinity ;
 			for (auto &&j : iter (0 ,fake.mSize)) {
-				fake.mUser[i] = MathTool::max_of (fake.mUser[i] ,fake.mLove[i * fake.mSize + j]) ;
+				fake.mUser[i] = MathProc::max_of (fake.mUser[i] ,fake.mLove[i * fake.mSize + j]) ;
 			}
 		}
 		for (auto &&i : iter (0 ,fake.mSize)) {
@@ -372,7 +387,7 @@ public:
 					for (auto &&j : iter (0 ,fake.mSize)) {
 						if (fake.mWorkVisit[j])
 							continue ;
-						ret = MathTool::min_of (ret ,fake.mLack[j]) ;
+						ret = MathProc::min_of (ret ,fake.mLack[j]) ;
 					}
 					return move (ret) ;
 				}) ;
@@ -380,6 +395,7 @@ public:
 					if (fake.mUserVisit[j]) {
 						fake.mUser[j] -= r1x ;
 					}
+					//@mark
 					if (fake.mWorkVisit[j]) {
 						fake.mWork[j] += r1x ;
 					} else {
@@ -397,17 +413,19 @@ public:
 				continue ;
 			const auto r1x = fake.mUser[user] + fake.mWork[i] - fake.mLove[user * fake.mSize + i] ;
 			const auto r2x = fake.mMatch[i] ;
+			//@mark
 			if (r1x == 0) {
 				fake.mWorkVisit[i] = TRUE ;
 				if (r2x == NONE) {
 					fake.mMatch[i] = user ;
 					return TRUE ;
-				} else if (dfs (r2x)) {
+				}
+				if (dfs (r2x)) {
 					fake.mMatch[i] = user ;
 					return TRUE ;
 				}
 			} else {
-				fake.mLack[i] = MathTool::min_of (fake.mLack[i] ,r1x) ;
+				fake.mLack[i] = MathProc::min_of (fake.mLack[i] ,r1x) ;
 			}
 		}
 		return FALSE ;
@@ -415,10 +433,10 @@ public:
 } ;
 
 exports VFat<KMMatchHolder> KMMatchHolder::create (VREF<KMMatchLayout> that) {
-	return VFat<KMMatchHolder> (KMMatchImplement () ,Pointer::from (that)) ;
+	return VFat<KMMatchHolder> (KMMatchImplement () ,that) ;
 }
 
 exports CFat<KMMatchHolder> KMMatchHolder::create (CREF<KMMatchLayout> that) {
-	return CFat<KMMatchHolder> (KMMatchImplement () ,Pointer::from (that)) ;
+	return CFat<KMMatchHolder> (KMMatchImplement () ,that) ;
 }
 } ;

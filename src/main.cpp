@@ -1,6 +1,7 @@
 ﻿#include "util.h"
 
 #include "csc/csc_end.h"
+#include <vector>
 #include <iostream>
 #include "csc/csc_begin.h"
 
@@ -14,11 +15,11 @@ public:
 	implicit TestInt () noexcept {
 		static auto mStaticInt = 0 ;
 		mInt = mStaticInt++ ;
-		cerr << "[" << mInt << "]create" << "\n" ;
+		cerr << "[" << mInt << "]create in " << address (thiz) << "\n" ;
 	}
 
 	implicit ~TestInt () noexcept {
-		cerr << "[" << mInt << "]destroy" << "\n" ;
+		cerr << "[" << mInt << "]destroy in " << address (thiz) << "\n" ;
 	}
 
 	implicit TestInt (CREF<TestInt> that) = delete ;
@@ -36,24 +37,17 @@ public:
 } ;
 
 exports int main () {
-	auto rax = Priority<int> () ;
-	INDEX ix = 0 ;
-	INDEX iy = 0 ;
-	for (auto &&i : iter (0 ,1000)) {
-		const auto r1x = rand () % 2 ;
-		if (r1x == 0)
-			continue ;
-		rax.add (int (i) ,ix) ;
-		ix++ ;
-	}
-	ix = 0 ;
-	while (TRUE) {
-		if (rax.empty ())
-			break ;
-		rax.get (rax.head () ,iy) ;
-		assume (ix == iy) ;
-		rax.take () ;
-		ix++ ;
+	if (true) {
+		auto rbx = std::vector<double> (1000000) ;
+		auto rcx = Array<char> (10) ;
+		auto rax = FarBuffer<double> (rbx.size ()) ;
+		rax.use_setter ([&] (CREF<INDEX> index ,VREF<double> item) {
+			rbx[index] = item ;
+		}) ;
+		rax[0] = 2 ;
+		rax[1] = 3 ;
+		rax[2] = 4 ;
+		assert (FALSE) ;
 	}
 	return 0 ;
 }

@@ -11,7 +11,7 @@
 namespace CSC {
 struct OptionalLayout {
 	FLAG mCode ;
-	Pin<BoxLayout> mValue ;
+	BoxLayout mValue ;
 
 public:
 	implicit OptionalLayout () noexcept {
@@ -37,7 +37,7 @@ class Optional implement OptionalLayout {
 protected:
 	using OptionalLayout::mCode ;
 	using OptionalLayout::mValue ;
-	TEMP<A> mStorage ;
+	Temp<A> mStorage ;
 
 public:
 	implicit Optional () = default ;
@@ -61,6 +61,10 @@ public:
 		return OptionalHolder::create (thiz)->code () ;
 	}
 
+	CREF<A> fetch (CREF<A> item) const leftvalue {
+		return OptionalHolder::create (thiz)->fetch (Pointer::from (item)) ;
+	}
+
 	A poll () const {
 		auto rax = Box<A> () ;
 		OptionalHolder::create (thiz)->poll (rax) ;
@@ -69,10 +73,6 @@ public:
 
 	forceinline operator A () const rightvalue {
 		return poll () ;
-	}
-
-	CREF<A> fetch (CREF<A> item) const leftvalue {
-		return OptionalHolder::create (thiz)->fetch (Pointer::from (item)) ;
 	}
 
 	void store (CREF<A> item) const {
@@ -89,7 +89,7 @@ struct ReflectInvoke implement Interface {
 	virtual LENGTH rank () const = 0 ;
 	virtual void invoke (CREF<Pointer> func ,CREF<CaptureLayout> params) const = 0 ;
 
-	imports forceinline consteval csc_diff_t expr_m () noexcept {
+	imports forceinline consteval FLAG expr_m () noexcept {
 		return 200 ;
 	}
 } ;
@@ -102,8 +102,13 @@ public:
 	}
 
 	void invoke (CREF<Pointer> func ,CREF<CaptureLayout> params) const override {
-		auto &&tmp = CaptureBind<FUNCTION_PARAMS<A>>::from (params) ;
+		auto &&tmp = capture_from (FUNCTION_PARAMS<A>::expr ,params) ;
 		return tmp (keep[TYPE<A>::expr] (func)) ;
+	}
+
+	template <class...ARG1>
+	CREF<Capture<ARG1...>> capture_from (TYPE<ARG1...> ,CREF<CaptureLayout> params) const {
+		return Pointer::from (params) ;
 	}
 } ;
 
@@ -117,7 +122,7 @@ struct FunctionHolder implement Interface {
 	imports VFat<FunctionHolder> create (VREF<FunctionLayout> that) ;
 	imports CFat<FunctionHolder> create (CREF<FunctionLayout> that) ;
 
-	virtual void initialize (RREF<BoxLayout> item) = 0 ;
+	virtual void initialize (RREF<BoxLayout> item ,CREF<Unknown> functor) = 0 ;
 	virtual void initialize (CREF<FunctionLayout> that) = 0 ;
 	virtual LENGTH rank () const = 0 ;
 	virtual void invoke (CREF<CaptureLayout> params) const = 0 ;
@@ -149,8 +154,7 @@ public:
 		using R1X = FUNCTION_RETURN<ARG1> ;
 		require (IS_VOID<R1X>) ;
 		auto rax = Box<ARG1>::make (move (that)) ;
-		BoxHolder::create (rax)->initialize (FunctionUnknownBinder<ARG1> ()) ;
-		FunctionHolder::create (thiz)->initialize (move (rax)) ;
+		FunctionHolder::create (thiz)->initialize (move (rax) ,FunctionUnknownBinder<ARG1> ()) ;
 	}
 
 	implicit Function (CREF<Function> that) {
@@ -208,12 +212,14 @@ struct AutoRefHolder implement Interface {
 	imports VFat<AutoRefHolder> create (VREF<AutoRefLayout> that) ;
 	imports CFat<AutoRefHolder> create (CREF<AutoRefLayout> that) ;
 
-	virtual void initialize (CREF<Unknown> holder) = 0 ;
+	virtual void initialize (RREF<UnknownHolder> that) = 0 ;
 	virtual void initialize (RREF<BoxLayout> item ,CREF<Clazz> clazz) = 0 ;
 	virtual void initialize (RREF<AutoRefLayout> that ,CREF<Clazz> clazz) = 0 ;
 	virtual void destroy () = 0 ;
 	virtual BOOL exist () const = 0 ;
 	virtual Clazz clazz () const = 0 ;
+	virtual VREF<Pointer> raw () leftvalue = 0 ;
+	virtual CREF<Pointer> raw () const leftvalue = 0 ;
 	virtual VREF<Pointer> self_m () leftvalue = 0 ;
 	virtual CREF<Pointer> self_m () const leftvalue = 0 ;
 } ;
@@ -221,6 +227,23 @@ struct AutoRefHolder implement Interface {
 inline AutoRefLayout::~AutoRefLayout () noexcept {
 	AutoRefHolder::create (thiz)->destroy () ;
 }
+
+template <class A>
+struct AutoRefUnknownBinder implement Unknown {
+	FLAG reflect (CREF<FLAG> uuid) const override {
+		if (uuid == ReflectSizeBinder<A>::expr)
+			return inline_code (ReflectSizeBinder<A> ()) ;
+		if (uuid == ReflectCreateBinder<A>::expr)
+			return inline_code (ReflectCreateBinder<A> ()) ;
+		if (uuid == ReflectDestroyBinder<A>::expr)
+			return inline_code (ReflectDestroyBinder<A> ()) ;
+		if (uuid == ReflectCodeBinder<A>::expr)
+			return inline_code (ReflectCodeBinder<A> ()) ;
+		if (uuid == ReflectNameBinder<A>::expr)
+			return inline_code (ReflectNameBinder<A> ()) ;
+		return ZERO ;
+	}
+} ;
 
 template <class A>
 class AutoRef implement AutoRefLayout {
@@ -231,28 +254,31 @@ protected:
 public:
 	implicit AutoRef () = default ;
 
+	implicit AutoRef (RREF<UnknownHolder> that) {
+		AutoRefHolder::create (thiz)->initialize (move (that)) ;
+	}
+
 	template <class ARG1 ,class = REQUIRE<ENUM_NOT<IS_SAME<ARG1 ,A>>>>
-	implicit AutoRef (RREF<AutoRef<A>> that) {
-		AutoRefHolder::create (thiz)->intialize (move (that) ,Clazz (TYPE<A>::expr)) ;
+	implicit AutoRef (RREF<AutoRef<ARG1>> that) {
+		AutoRefHolder::create (thiz)->initialize (move (that) ,Clazz (TYPE<A>::expr)) ;
 	}
 
 	template <class...ARG1>
-	imports AutoRef make (XREF<ARG1>...initval) {
+	imports AutoRef make (ARG1 &&...initval) {
 		AutoRef ret ;
 		auto rax = Box<A>::make (keep[TYPE<XREF<ARG1>>::expr] (initval)...) ;
 		AutoRefHolder::create (ret)->initialize (move (rax) ,Clazz (TYPE<A>::expr)) ;
 		return move (ret) ;
 	}
 
-	imports AutoRef generate (CREF<Unknown> holder) {
-		AutoRef ret ;
-		AutoRefHolder::create (ret)->initialize (holder) ;
-		return move (ret) ;
+	imports UnknownHolder expression () {
+		//@mark
+		return AutoRefUnknownBinder<A> () ;
 	}
 
-	implicit AutoRef (CREF<AutoRef> that) = default ;
+	implicit AutoRef (CREF<AutoRef> that) = delete ;
 
-	forceinline VREF<AutoRef> operator= (CREF<AutoRef> that) = default ;
+	forceinline VREF<AutoRef> operator= (CREF<AutoRef> that) = delete ;
 
 	implicit AutoRef (RREF<AutoRef> that) = default ;
 
@@ -326,12 +352,14 @@ struct SharedRefHolder implement Interface {
 	imports CFat<SharedRefHolder> create (CREF<SharedRefLayout> that) ;
 
 	virtual void initialize (RREF<BoxLayout> item) = 0 ;
-	virtual void initialize (RREF<SharedRefLayout> that ,CREF<FLAG> offset) = 0 ;
 	virtual void initialize (CREF<SharedRefLayout> that) = 0 ;
-	virtual void initialize (CREF<Unknown> holder ,VREF<Pointer> that) = 0 ;
+	virtual void initialize (RREF<SharedRefLayout> that ,CREF<FLAG> offset) = 0 ;
+	virtual void initialize (CREF<Unknown> holder ,VREF<Pointer> pointer) = 0 ;
 	virtual void destroy () = 0 ;
 	virtual BOOL exist () const = 0 ;
 	virtual FLAG counter () const = 0 ;
+	virtual VREF<Pointer> raw () leftvalue = 0 ;
+	virtual CREF<Pointer> raw () const leftvalue = 0 ;
 	virtual VREF<Pointer> self_m () const leftvalue = 0 ;
 	virtual SharedRefLayout weak () const = 0 ;
 } ;
@@ -358,14 +386,13 @@ public:
 	}
 
 	template <class...ARG1>
-	imports SharedRef make (XREF<ARG1>...initval) {
+	imports SharedRef make (ARG1 &&...initval) {
 		SharedRef ret ;
 		auto rax = Box<A>::make (keep[TYPE<XREF<ARG1>>::expr] (initval)...) ;
 		SharedRefHolder::create (ret)->initialize (move (rax)) ;
 		return move (ret) ;
 	}
 
-	template <class A>
 	imports SharedRef intrusive (VREF<A> that) {
 		SharedRef ret ;
 		SharedRefHolder::create (ret)->initialize (BoxUnknownBinder<A> () ,Pointer::from (that)) ;
@@ -447,7 +474,8 @@ struct UniqueRefHolder implement Interface {
 	virtual void initialize (RREF<BoxLayout> item ,RREF<Function<VREF<Pointer>>> dtor) = 0 ;
 	virtual void destroy () = 0 ;
 	virtual BOOL exist () const = 0 ;
-	virtual VREF<Pointer> self_m () leftvalue = 0 ;
+	virtual VREF<Pointer> raw () leftvalue = 0 ;
+	virtual CREF<Pointer> raw () const leftvalue = 0 ;
 	virtual CREF<Pointer> self_m () const leftvalue = 0 ;
 } ;
 
@@ -469,11 +497,11 @@ public:
 		auto rax = Box<A>::make () ;
 		auto rbx = Function<VREF<Pointer>> (move (dtor)) ;
 		UniqueRefHolder::create (thiz)->initialize (move (rax) ,move (rbx)) ;
-		ctor (UniqueRefHolder::create (thiz)->self) ;
+		ctor (UniqueRefHolder::create (thiz)->raw ()) ;
 	}
 
 	template <class...ARG1>
-	imports UniqueRef make (XREF<ARG1>...initval) {
+	imports UniqueRef make (ARG1 &&...initval) {
 		UniqueRef ret ;
 		auto rax = Box<A>::make (keep[TYPE<XREF<ARG1>>::expr] (initval)...) ;
 		auto rbx = Function<VREF<Pointer>> () ;
@@ -523,6 +551,10 @@ public:
 
 	LENGTH step () const {
 		return SIZE_OF<A>::expr ;
+	}
+
+	VREF<Pointer> raw () leftvalue {
+		return Pointer::from (mBuffer) ;
 	}
 
 	CREF<Pointer> raw () const leftvalue {
@@ -582,6 +614,7 @@ struct RefBufferLayout {
 
 public:
 	implicit RefBufferLayout () noexcept {
+		mBuffer = ZERO ;
 		mSize = 0 ;
 		mStep = 0 ;
 	}
@@ -610,7 +643,7 @@ struct RefBufferHolder implement Interface {
 	virtual void initialize (RREF<BoxLayout> item) = 0 ;
 	virtual void destroy () = 0 ;
 	virtual BOOL exist () const = 0 ;
-	virtual CREF<Unknown> unknown () const leftvalue = 0 ;
+	virtual UnknownHolder unknown () const = 0 ;
 	virtual LENGTH size () const = 0 ;
 	virtual LENGTH step () const = 0 ;
 	virtual VREF<Pointer> raw () leftvalue = 0 ;
@@ -629,7 +662,7 @@ inline RefBufferLayout::~RefBufferLayout () noexcept {
 }
 
 template <class A>
-struct RefBufferWrap implement RefBufferLayout {} ;
+class RefBufferWrap implement RefBufferLayout {} ;
 
 template <class A>
 class RefBuffer implement RefBufferWrap<A> {
@@ -650,7 +683,7 @@ public:
 		return RefBufferHolder::create (thiz)->exist () ;
 	}
 
-	CREF<Unknown> unknown () const leftvalue {
+	UnknownHolder unknown () const {
 		return RefBufferHolder::create (thiz)->unknown () ;
 	}
 
@@ -660,14 +693,6 @@ public:
 
 	LENGTH step () const {
 		return RefBufferHolder::create (thiz)->step () ;
-	}
-
-	VREF<Pointer> raw () leftvalue {
-		return RefBufferHolder::create (thiz)->raw () ;
-	}
-
-	CREF<Pointer> raw () const leftvalue {
-		return RefBufferHolder::create (thiz)->raw () ;
 	}
 
 	VREF<ARR<A>> self_m () leftvalue {
@@ -720,19 +745,121 @@ public:
 	}
 } ;
 
+struct FarBufferLayout {
+	Function<CREF<INDEX> ,VREF<Pointer>> mGetter ;
+	Function<CREF<INDEX> ,CREF<Pointer>> mSetter ;
+	Ref<Pointer> mBuffer ;
+	INDEX mIndex ;
+	LENGTH mSize ;
+	LENGTH mStep ;
+
+public:
+	implicit FarBufferLayout () = default ;
+
+	implicit ~FarBufferLayout () noexcept ;
+
+	implicit FarBufferLayout (CREF<FarBufferLayout> that) = delete ;
+
+	forceinline VREF<FarBufferLayout> operator= (CREF<FarBufferLayout> that) = delete ;
+
+	implicit FarBufferLayout (RREF<FarBufferLayout> that) noexcept {
+		swap (thiz ,that) ;
+	}
+
+	forceinline VREF<FarBufferLayout> operator= (RREF<FarBufferLayout> that) noexcept {
+		return assign (thiz ,that) ;
+	}
+} ;
+
+struct FarBufferHolder implement Interface {
+	imports VFat<FarBufferHolder> create (VREF<FarBufferLayout> that) ;
+	imports CFat<FarBufferHolder> create (CREF<FarBufferLayout> that) ;
+
+	virtual void initialize (CREF<Unknown> element) = 0 ;
+	virtual void initialize (CREF<Unknown> element ,CREF<LENGTH> size_) = 0 ;
+	virtual void destroy () = 0 ;
+	virtual BOOL exist () const = 0 ;
+	virtual UnknownHolder unknown () const = 0 ;
+	virtual void use_getter (RREF<FunctionLayout> getter) = 0 ;
+	virtual void use_setter (RREF<FunctionLayout> setter) = 0 ;
+	virtual LENGTH size () const = 0 ;
+	virtual LENGTH step () const = 0 ;
+	virtual VREF<Pointer> at (CREF<INDEX> index) leftvalue = 0 ;
+	virtual void resize (CREF<LENGTH> size_) = 0 ;
+} ;
+
+inline FarBufferLayout::~FarBufferLayout () noexcept {
+	FarBufferHolder::create (thiz)->destroy () ;
+}
+
+template <class A>
+class FarBuffer implement FarBufferLayout {
+protected:
+	using FarBufferLayout::mGetter ;
+	using FarBufferLayout::mSetter ;
+	using FarBufferLayout::mBuffer as (Ref<A>) ;
+	using FarBufferLayout::mIndex ;
+	using FarBufferLayout::mSize ;
+	using FarBufferLayout::mStep ;
+
+public:
+	implicit FarBuffer () = default ;
+
+	explicit FarBuffer (CREF<LENGTH> size_) {
+		FarBufferHolder::create (thiz)->initialize (RefUnknownBinder<A> () ,size_) ;
+	}
+
+	void use_getter (RREF<Function<CREF<INDEX> ,VREF<A>>> getter) {
+		FarBufferHolder::create (thiz)->use_getter (move (getter)) ;
+	}
+
+	void use_setter (RREF<Function<CREF<INDEX> ,CREF<A>>> setter) {
+		FarBufferHolder::create (thiz)->use_setter (move (setter)) ;
+	}
+
+	BOOL exist () const {
+		return FarBufferHolder::create (thiz)->exist () ;
+	}
+
+	UnknownHolder unknown () const {
+		return FarBufferHolder::create (thiz)->unknown () ;
+	}
+
+	LENGTH size () const {
+		return FarBufferHolder::create (thiz)->size () ;
+	}
+
+	LENGTH step () const {
+		return FarBufferHolder::create (thiz)->step () ;
+	}
+
+	VREF<A> at (CREF<INDEX> index) leftvalue {
+		return FarBufferHolder::create (thiz)->at (index) ;
+	}
+
+	forceinline VREF<A> operator[] (CREF<INDEX> index) leftvalue {
+		return at (index) ;
+	}
+
+	void resize (CREF<LENGTH> size_) {
+		FarBufferHolder::create (thiz)->initialize (RefUnknownBinder<A> ()) ;
+		return FarBufferHolder::create (thiz)->resize (size_) ;
+	}
+} ;
+
 struct AllocatorNode {
 	INDEX mNext ;
 } ;
 
 struct AllocatorLayout {
 	RefBuffer<Pointer> mAllocator ;
-	LENGTH mWidth ;
+	LENGTH mRest ;
 	LENGTH mLength ;
 	INDEX mFree ;
 
 public:
 	implicit AllocatorLayout () noexcept {
-		mWidth = 0 ;
+		mRest = 0 ;
 		mLength = 0 ;
 		mFree = NONE ;
 	}
@@ -760,7 +887,7 @@ struct AllocatorHolder implement Interface {
 	virtual void initialize (CREF<Unknown> element ,CREF<LENGTH> size_) = 0 ;
 	virtual void destroy () = 0 ;
 	virtual BOOL exist () const = 0 ;
-	virtual CREF<Unknown> unknown () const leftvalue = 0 ;
+	virtual UnknownHolder unknown () const = 0 ;
 	virtual void clear () = 0 ;
 	virtual LENGTH size () const = 0 ;
 	virtual LENGTH step () const = 0 ;
@@ -783,15 +910,15 @@ inline AllocatorLayout::~AllocatorLayout () noexcept {
 template <class A ,class B>
 struct AllocatorUnknownBinder implement Unknown {
 	FLAG reflect (CREF<FLAG> uuid) const override {
-		using R1X = PAIR<TEMP<A> ,B> ;
+		using R1X = Tuple<Temp<A> ,B> ;
 		if (uuid == ReflectSizeBinder<R1X>::expr)
 			return inline_code (ReflectSizeBinder<R1X> ()) ;
 		if (uuid == ReflectCreateBinder<R1X>::expr)
 			return inline_code (ReflectCreateBinder<R1X> ()) ;
 		if (uuid == ReflectDestroyBinder<R1X>::expr)
 			return inline_code (ReflectDestroyBinder<R1X> ()) ;
-		if (uuid == ReflectPairBinder<R1X>::expr)
-			return inline_code (ReflectPairBinder<R1X> ()) ;
+		if (uuid == ReflectTupleBinder<R1X>::expr)
+			return inline_code (ReflectTupleBinder<R1X> ()) ;
 		if (uuid == ReflectMoveBinder<A>::expr)
 			return inline_code (ReflectMoveBinder<A> ()) ;
 		return ZERO ;
@@ -799,13 +926,13 @@ struct AllocatorUnknownBinder implement Unknown {
 } ;
 
 template <class A ,class B>
-struct AllocatorWrap implement AllocatorLayout {} ;
+class AllocatorWrap implement AllocatorLayout {} ;
 
 template <class A ,class B>
 class Allocator implement AllocatorWrap<A ,B> {
 protected:
-	using AllocatorLayout::mAllocator as (RefBuffer<PAIR<TEMP<A> ,B>>) ;
-	using AllocatorLayout::mWidth ;
+	using AllocatorLayout::mAllocator as (RefBuffer<Tuple<Temp<A> ,B>>) ;
+	using AllocatorLayout::mRest ;
 	using AllocatorLayout::mLength ;
 	using AllocatorLayout::mFree ;
 
@@ -820,7 +947,7 @@ public:
 		return AllocatorHolder::create (thiz)->exist () ;
 	}
 
-	CREF<Unknown> unknown () const leftvalue {
+	UnknownHolder unknown () const {
 		return AllocatorHolder::create (thiz)->unknown () ;
 	}
 
@@ -864,11 +991,9 @@ public:
 		return AllocatorHolder::create (thiz)->bt (index) ;
 	}
 
-	template <class...ARG1>
-	INDEX alloc (XREF<ARG1>...initval) {
-		auto rax = Box<A>::make (keep[TYPE<XREF<ARG1>>::expr] (initval)...) ;
+	INDEX alloc () {
 		AllocatorHolder::create (thiz)->initialize (AllocatorUnknownBinder<A ,B> ()) ;
-		return AllocatorHolder::create (thiz)->alloc (move (rax)) ;
+		return AllocatorHolder::create (thiz)->alloc () ;
 	}
 
 	void free (CREF<INDEX> index) {

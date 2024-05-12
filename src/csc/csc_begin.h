@@ -1,4 +1,14 @@
-﻿#pragma warning (pop)
+﻿#ifdef __CSC_COMPILER_MSVC__
+#pragma warning (pop)
+#endif
+
+#ifdef __CSC_COMPILER_GNUC__
+#pragma GCC diagnostic pop
+#endif
+
+#ifdef __CSC_COMPILER_CLANG__
+#pragma clang diagnostic pop
+#endif
 
 #include "csc_end.h"
 
@@ -10,7 +20,7 @@
 #define rightvalue &&
 #define thiz (*this)
 #define self self_m ()
-#define fake fake_m ()
+#define fake thiz.fake_m ()
 #define expr expr_m ()
 #define trait struct
 #define implement :public

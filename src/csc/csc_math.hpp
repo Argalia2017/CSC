@@ -10,15 +10,15 @@
 #include "csc_basic.hpp"
 
 namespace CSC {
-struct MathToolPureLayout ;
+struct MathProcPureLayout ;
 
-struct MathToolLayout {
-	Ref<MathToolPureLayout> mThis ;
+struct MathProcLayout {
+	Ref<MathProcPureLayout> mThis ;
 } ;
 
-struct MathToolHolder implement Interface {
-	imports VFat<MathToolHolder> create (VREF<MathToolLayout> that) ;
-	imports CFat<MathToolHolder> create (CREF<MathToolLayout> that) ;
+struct MathProcHolder implement Interface {
+	imports VFat<MathProcHolder> create (VREF<MathProcLayout> that) ;
+	imports CFat<MathProcHolder> create (CREF<MathProcLayout> that) ;
 
 	virtual void initialize () = 0 ;
 	virtual BOOL is_inf (CREF<FLT32> a) const = 0 ;
@@ -35,6 +35,12 @@ struct MathToolHolder implement Interface {
 	virtual FLT64 square (CREF<FLT64> a) const = 0 ;
 	virtual FLT32 sqrt (CREF<FLT32> a) const = 0 ;
 	virtual FLT64 sqrt (CREF<FLT64> a) const = 0 ;
+	virtual VAL32 cubic (CREF<VAL32> a) const = 0 ;
+	virtual VAL64 cubic (CREF<VAL64> a) const = 0 ;
+	virtual FLT32 cubic (CREF<FLT32> a) const = 0 ;
+	virtual FLT64 cubic (CREF<FLT64> a) const = 0 ;
+	virtual FLT32 cbrt (CREF<FLT32> a) const = 0 ;
+	virtual FLT64 cbrt (CREF<FLT64> a) const = 0 ;
 	virtual VAL32 abs (CREF<VAL32> a) const = 0 ;
 	virtual VAL64 abs (CREF<VAL64> a) const = 0 ;
 	virtual FLT32 abs (CREF<FLT32> a) const = 0 ;
@@ -83,15 +89,15 @@ struct MathToolHolder implement Interface {
 	virtual FLT64 min_of (CREF<FLT64> a ,CREF<CaptureLayout> b) const = 0 ;
 } ;
 
-class MathTool implement MathToolLayout {
+class MathProc implement MathProcLayout {
 protected:
-	using MathToolLayout::mThis ;
+	using MathProcLayout::mThis ;
 
 public:
-	imports CREF<MathTool> instance () {
+	imports CREF<MathProc> instance () {
 		return memorize ([&] () {
-			MathTool ret ;
-			MathToolHolder::create (ret)->initialize () ;
+			MathProc ret ;
+			MathProcHolder::create (ret)->initialize () ;
 			return move (ret) ;
 		}) ;
 	}
@@ -99,159 +105,171 @@ public:
 	template <class ARG1>
 	imports BOOL is_inf (CREF<ARG1> a) {
 		require (IS_FLOAT<ARG1>) ;
-		return MathToolHolder::create (instance ())->is_inf (a) ;
+		return MathProcHolder::create (instance ())->is_inf (a) ;
 	}
 
 	template <class ARG1>
 	imports ARG1 step (CREF<ARG1> a) {
 		require (IS_SCALAR<ARG1>) ;
-		return MathToolHolder::create (instance ())->step (a) ;
+		return MathProcHolder::create (instance ())->step (a) ;
 	}
 
 	template <class ARG1>
 	imports ARG1 sign (CREF<ARG1> a) {
 		require (IS_FLOAT<ARG1>) ;
-		return MathToolHolder::create (instance ())->sign (a) ;
+		return MathProcHolder::create (instance ())->sign (a) ;
 	}
 
 	template <class ARG1>
 	imports ARG1 square (CREF<ARG1> a) {
 		require (IS_SCALAR<ARG1>) ;
-		return MathToolHolder::create (instance ())->square (a) ;
+		return MathProcHolder::create (instance ())->square (a) ;
 	}
 
 	template <class ARG1>
 	imports ARG1 sqrt (CREF<ARG1> a) {
 		require (IS_FLOAT<ARG1>) ;
-		return MathToolHolder::create (instance ())->sqrt (a) ;
+		return MathProcHolder::create (instance ())->sqrt (a) ;
+	}
+
+	template <class ARG1>
+	imports ARG1 cubic (CREF<ARG1> a) {
+		require (IS_SCALAR<ARG1>) ;
+		return MathProcHolder::create (instance ())->cubic (a) ;
+	}
+
+	template <class ARG1>
+	imports ARG1 cbrt (CREF<ARG1> a) {
+		require (IS_FLOAT<ARG1>) ;
+		return MathProcHolder::create (instance ())->cbrt (a) ;
 	}
 
 	template <class ARG1>
 	imports ARG1 abs (CREF<ARG1> a) {
 		require (IS_SCALAR<ARG1>) ;
-		return MathToolHolder::create (instance ())->abs (a) ;
+		return MathProcHolder::create (instance ())->abs (a) ;
 	}
 
 	template <class ARG1>
 	imports ARG1 inverse (CREF<ARG1> a) {
 		require (IS_FLOAT<ARG1>) ;
-		return MathToolHolder::create (instance ())->inverse (a) ;
+		return MathProcHolder::create (instance ())->inverse (a) ;
 	}
 
 	template <class ARG1>
 	imports ARG1 floor (CREF<ARG1> a ,CREF<ARG1> b) {
 		require (IS_FLOAT<ARG1>) ;
-		return MathToolHolder::create (instance ())->floor (a ,b) ;
+		return MathProcHolder::create (instance ())->floor (a ,b) ;
 	}
 
 	template <class ARG1>
 	imports ARG1 round (CREF<ARG1> a ,CREF<ARG1> b) {
 		require (IS_FLOAT<ARG1>) ;
-		return MathToolHolder::create (instance ())->round (a ,b) ;
+		return MathProcHolder::create (instance ())->round (a ,b) ;
 	}
 
 	template <class ARG1>
 	imports ARG1 ceil (CREF<ARG1> a ,CREF<ARG1> b) {
 		require (IS_FLOAT<ARG1>) ;
-		return MathToolHolder::create (instance ())->ceil (a ,b) ;
+		return MathProcHolder::create (instance ())->ceil (a ,b) ;
 	}
 
 	template <class ARG1>
 	imports ARG1 clamp (CREF<ARG1> a ,CREF<ARG1> lb ,CREF<ARG1> rb) {
 		require (IS_SCALAR<ARG1>) ;
-		return MathToolHolder::create (instance ())->clamp (a ,lb ,rb) ;
+		return MathProcHolder::create (instance ())->clamp (a ,lb ,rb) ;
 	}
 
 	template <class ARG1>
 	imports ARG1 cos (CREF<ARG1> a) {
 		require (IS_FLOAT<ARG1>) ;
-		return MathToolHolder::create (instance ())->cos (a) ;
+		return MathProcHolder::create (instance ())->cos (a) ;
 	}
 
 	template <class ARG1>
 	imports ARG1 sin (CREF<ARG1> a) {
 		require (IS_FLOAT<ARG1>) ;
-		return MathToolHolder::create (instance ())->sin (a) ;
+		return MathProcHolder::create (instance ())->sin (a) ;
 	}
 
 	template <class ARG1>
 	imports ARG1 tan (CREF<ARG1> a) {
 		require (IS_FLOAT<ARG1>) ;
-		return MathToolHolder::create (instance ())->tan (a) ;
+		return MathProcHolder::create (instance ())->tan (a) ;
 	}
 
 	template <class ARG1>
 	imports ARG1 arccos (CREF<ARG1> a) {
 		require (IS_FLOAT<ARG1>) ;
-		return MathToolHolder::create (instance ())->arccos (a) ;
+		return MathProcHolder::create (instance ())->arccos (a) ;
 	}
 
 	template <class ARG1>
 	imports ARG1 arcsin (CREF<ARG1> a) {
 		require (IS_FLOAT<ARG1>) ;
-		return MathToolHolder::create (instance ())->arcsin (a) ;
+		return MathProcHolder::create (instance ())->arcsin (a) ;
 	}
 
 	template <class ARG1>
 	imports ARG1 arctan (CREF<ARG1> y ,CREF<ARG1> x) {
 		require (IS_FLOAT<ARG1>) ;
-		return MathToolHolder::create (instance ())->arctan (y ,x) ;
+		return MathProcHolder::create (instance ())->arctan (y ,x) ;
 	}
 
 	template <class ARG1>
 	imports ARG1 exp (CREF<ARG1> a) {
 		require (IS_FLOAT<ARG1>) ;
-		return MathToolHolder::create (instance ())->exp (a) ;
+		return MathProcHolder::create (instance ())->exp (a) ;
 	}
 
 	template <class ARG1>
 	imports ARG1 log (CREF<ARG1> a) {
 		require (IS_FLOAT<ARG1>) ;
-		return MathToolHolder::create (instance ())->log (a) ;
+		return MathProcHolder::create (instance ())->log (a) ;
 	}
 
 	template <class ARG1>
 	imports ARG1 pdf (CREF<ARG1> a) {
 		require (IS_FLOAT<ARG1>) ;
-		return MathToolHolder::create (instance ())->pdf (a) ;
+		return MathProcHolder::create (instance ())->pdf (a) ;
 	}
 
 	template <class ARG1>
 	imports ARG1 cbf (CREF<ARG1> a) {
 		require (IS_FLOAT<ARG1>) ;
-		return MathToolHolder::create (instance ())->cbf (a) ;
+		return MathProcHolder::create (instance ())->cbf (a) ;
 	}
 
 	template <class ARG1 ,class...ARG2>
 	imports BOOL all_of (CREF<ARG1> a ,CREF<ARG2>...b) {
 		require (ENUM_ALL<IS_BOOL<ARG1>>) ;
 		require (ENUM_ALL<IS_SAME<ARG1 ,ARG2>...>) ;
-		return MathToolHolder::create (instance ())->all_of (a ,Capture<CREF<ARG2>...> (b...)) ;
+		return MathProcHolder::create (instance ())->all_of (a ,Capture<CREF<ARG2>...> (b...)) ;
 	}
 
 	template <class ARG1 ,class...ARG2>
 	imports BOOL any_of (CREF<ARG1> a ,CREF<ARG2>...b) {
 		require (ENUM_ALL<IS_BOOL<ARG1>>) ;
 		require (ENUM_ALL<IS_SAME<ARG1 ,ARG2>...>) ;
-		return MathToolHolder::create (instance ())->any_of (a ,Capture<CREF<ARG2>...> (b...)) ;
+		return MathProcHolder::create (instance ())->any_of (a ,Capture<CREF<ARG2>...> (b...)) ;
 	}
 
 	template <class ARG1 ,class...ARG2>
 	imports ARG1 max_of (CREF<ARG1> a ,CREF<ARG2>...b) {
 		require (ENUM_ALL<IS_SCALAR<ARG1>>) ;
 		require (ENUM_ALL<IS_SAME<ARG1 ,ARG2>...>) ;
-		return MathToolHolder::create (instance ())->max_of (a ,Capture<CREF<ARG2>...> (b...)) ;
+		return MathProcHolder::create (instance ())->max_of (a ,Capture<CREF<ARG2>...> (b...)) ;
 	}
 
 	template <class ARG1 ,class...ARG2>
 	imports ARG1 min_of (CREF<ARG1> a ,CREF<ARG2>...b) {
 		require (ENUM_ALL<IS_SCALAR<ARG1>>) ;
 		require (ENUM_ALL<IS_SAME<ARG1 ,ARG2>...>) ;
-		return MathToolHolder::create (instance ())->min_of (a ,Capture<CREF<ARG2>...> (b...)) ;
+		return MathProcHolder::create (instance ())->min_of (a ,Capture<CREF<ARG2>...> (b...)) ;
 	}
 } ;
 
-struct NORMALERROR {
+struct NormalError {
 	LENGTH mCount ;
 	FLT64 mMaxError ;
 	FLT64 mAvgError ;
@@ -260,17 +278,17 @@ struct NORMALERROR {
 public:
 	forceinline void operator+= (CREF<FLT64> error) {
 		const auto r1x = FLT64 (mCount) ;
-		const auto r2x = MathTool::inverse (r1x + 1) ;
+		const auto r2x = MathProc::inverse (r1x + 1) ;
 		const auto r3x = error - mAvgError ;
-		mMaxError = MathTool::max_of (mMaxError ,error) ;
+		mMaxError = MathProc::max_of (mMaxError ,error) ;
 		mAvgError = mAvgError + r3x * r2x ;
-		const auto r4x = r1x * r2x * MathTool::square (mStdError) + r1x * MathTool::square (r3x * r2x) ;
-		mStdError = MathTool::sqrt (r4x) ;
+		const auto r4x = r1x * r2x * MathProc::square (mStdError) + r1x * MathProc::square (r3x * r2x) ;
+		mStdError = MathProc::sqrt (r4x) ;
 		mCount = LENGTH (r1x + 1) ;
 	}
 } ;
 
-struct NOTATION {
+struct Notation {
 	FLAG mRadix ;
 	BOOL mSign ;
 	LENGTH mPrecision ;
@@ -279,62 +297,116 @@ struct NOTATION {
 	VAL64 mExponent ;
 } ;
 
-struct FloatToolPureLayout ;
+struct FEXP2CacheLayout {} ;
 
-struct FloatToolLayout {
-	Ref<FloatToolPureLayout> mThis ;
-} ;
-
-struct FloatToolHolder implement Interface {
-	imports VFat<FloatToolHolder> create (VREF<FloatToolLayout> that) ;
-	imports CFat<FloatToolHolder> create (CREF<FloatToolLayout> that) ;
+struct FEXP2CacheHolder implement Interface {
+	imports VFat<FEXP2CacheHolder> create (VREF<FEXP2CacheLayout> that) ;
+	imports CFat<FEXP2CacheHolder> create (CREF<FEXP2CacheLayout> that) ;
 
 	virtual void initialize () = 0 ;
-	virtual FLT64 encode (CREF<NOTATION> fexp2) const = 0 ;
-	virtual NOTATION decode (CREF<FLT64> float_) const = 0 ;
-	virtual NOTATION fexp2_from_fexp10 (CREF<NOTATION> fexp10) const = 0 ;
-	virtual NOTATION fexp10_from_fexp2 (CREF<NOTATION> fexp2) const = 0 ;
+	virtual void get (CREF<VAL64> index ,VREF<Notation> item) const = 0 ;
 } ;
 
-class FloatTool implement FloatToolLayout {
-protected:
-	using FloatToolLayout::mThis ;
-
+class FEXP2Cache implement FEXP2CacheLayout {
 public:
-	imports CREF<FloatTool> instance () {
+	imports CREF<FEXP2Cache> instance () {
 		return memorize ([&] () {
-			FloatTool ret ;
-			FloatToolHolder::create (ret)->initialize () ;
+			FEXP2Cache ret ;
+			FEXP2CacheHolder::create (ret)->initialize () ;
 			return move (ret) ;
 		}) ;
 	}
 
-	imports FLT64 encode (CREF<NOTATION> fexp2) {
-		return FloatToolHolder::create (instance ())->encode (fexp2) ;
-	}
-
-	imports NOTATION decode (CREF<FLT64> float_) {
-		return FloatToolHolder::create (instance ())->decode (float_) ;
-	}
-
-	imports NOTATION fexp2_from_fexp10 (CREF<NOTATION> fexp10) {
-		return FloatToolHolder::create (instance ())->fexp2_from_fexp10 (fexp10) ;
-	}
-
-	imports NOTATION fexp10_from_fexp2 (CREF<NOTATION> fexp2) {
-		return FloatToolHolder::create (instance ())->fexp10_from_fexp2 (fexp2) ;
+	forceinline Notation operator[] (CREF<VAL64> index) const {
+		Notation ret ;
+		FEXP2CacheHolder::create (thiz)->get (index ,ret) ;
+		return move (ret) ;
 	}
 } ;
 
-struct ByteToolPureLayout ;
+struct FEXP10CacheLayout {} ;
 
-struct ByteToolLayout {
-	Ref<ByteToolPureLayout> mThis ;
+struct FEXP10CacheHolder implement Interface {
+	imports VFat<FEXP10CacheHolder> create (VREF<FEXP10CacheLayout> that) ;
+	imports CFat<FEXP10CacheHolder> create (CREF<FEXP10CacheLayout> that) ;
+
+	virtual void initialize () = 0 ;
+	virtual void get (CREF<VAL64> index ,VREF<Notation> item) const = 0 ;
 } ;
 
-struct ByteToolHolder implement Interface {
-	imports VFat<ByteToolHolder> create (VREF<ByteToolLayout> that) ;
-	imports CFat<ByteToolHolder> create (CREF<ByteToolLayout> that) ;
+class FEXP10Cache implement FEXP10CacheLayout {
+public:
+	imports CREF<FEXP10Cache> instance () {
+		return memorize ([&] () {
+			FEXP10Cache ret ;
+			FEXP10CacheHolder::create (ret)->initialize () ;
+			return move (ret) ;
+		}) ;
+	}
+
+	forceinline Notation operator[] (CREF<VAL64> index) const {
+		Notation ret ;
+		FEXP10CacheHolder::create (thiz)->get (index ,ret) ;
+		return move (ret) ;
+	}
+} ;
+
+struct FloatProcPureLayout ;
+
+struct FloatProcLayout {
+	Ref<FloatProcPureLayout> mThis ;
+} ;
+
+struct FloatProcHolder implement Interface {
+	imports VFat<FloatProcHolder> create (VREF<FloatProcLayout> that) ;
+	imports CFat<FloatProcHolder> create (CREF<FloatProcLayout> that) ;
+
+	virtual void initialize () = 0 ;
+	virtual FLT64 encode (CREF<Notation> fexp2) const = 0 ;
+	virtual Notation decode (CREF<FLT64> float_) const = 0 ;
+	virtual Notation fexp2_from_fexp10 (CREF<Notation> fexp10) const = 0 ;
+	virtual Notation fexp10_from_fexp2 (CREF<Notation> fexp2) const = 0 ;
+} ;
+
+class FloatProc implement FloatProcLayout {
+protected:
+	using FloatProcLayout::mThis ;
+
+public:
+	imports CREF<FloatProc> instance () {
+		return memorize ([&] () {
+			FloatProc ret ;
+			FloatProcHolder::create (ret)->initialize () ;
+			return move (ret) ;
+		}) ;
+	}
+
+	imports FLT64 encode (CREF<Notation> fexp2) {
+		return FloatProcHolder::create (instance ())->encode (fexp2) ;
+	}
+
+	imports Notation decode (CREF<FLT64> float_) {
+		return FloatProcHolder::create (instance ())->decode (float_) ;
+	}
+
+	imports Notation fexp2_from_fexp10 (CREF<Notation> fexp10) {
+		return FloatProcHolder::create (instance ())->fexp2_from_fexp10 (fexp10) ;
+	}
+
+	imports Notation fexp10_from_fexp2 (CREF<Notation> fexp2) {
+		return FloatProcHolder::create (instance ())->fexp10_from_fexp2 (fexp2) ;
+	}
+} ;
+
+struct ByteProcPureLayout ;
+
+struct ByteProcLayout {
+	Ref<ByteProcPureLayout> mThis ;
+} ;
+
+struct ByteProcHolder implement Interface {
+	imports VFat<ByteProcHolder> create (VREF<ByteProcLayout> that) ;
+	imports CFat<ByteProcHolder> create (CREF<ByteProcLayout> that) ;
 
 	virtual void initialize () = 0 ;
 	virtual BYTE bit_low (CREF<WORD> a) const = 0 ;
@@ -354,107 +426,107 @@ struct ByteToolHolder implement Interface {
 	virtual BOOL bit_all (CREF<WORD> base ,CREF<WORD> mask) const = 0 ;
 	virtual BOOL bit_all (CREF<CHAR> base ,CREF<CHAR> mask) const = 0 ;
 	virtual BOOL bit_all (CREF<QUAD> base ,CREF<QUAD> mask) const = 0 ;
-	virtual QUAD bit_single (CREF<LENGTH> nth) const = 0 ;
 	virtual BYTE bit_reverse (CREF<BYTE> a) const = 0 ;
 	virtual WORD bit_reverse (CREF<WORD> a) const = 0 ;
 	virtual CHAR bit_reverse (CREF<CHAR> a) const = 0 ;
 	virtual QUAD bit_reverse (CREF<QUAD> a) const = 0 ;
-	virtual INDEX bit_find (CREF<BYTE> a) const = 0 ;
-	virtual INDEX bit_find (CREF<WORD> a) const = 0 ;
-	virtual INDEX bit_find (CREF<CHAR> a) const = 0 ;
-	virtual INDEX bit_find (CREF<QUAD> a) const = 0 ;
+	virtual INDEX bit_pow (CREF<LENGTH> nth) const = 0 ;
+	virtual LENGTH popcount (CREF<BYTE> a) const = 0 ;
+	virtual LENGTH lowcount (CREF<BYTE> a) const = 0 ;
 } ;
 
-class ByteTool implement ByteToolLayout {
+class ByteProc implement ByteProcLayout {
 protected:
-	using ByteToolLayout::mThis ;
+	using ByteProcLayout::mThis ;
 
 public:
-	imports CREF<ByteTool> instance () {
+	imports CREF<ByteProc> instance () {
 		return memorize ([&] () {
-			ByteTool ret ;
-			ByteToolHolder::create (ret)->initialize () ;
+			ByteProc ret ;
+			ByteProcHolder::create (ret)->initialize () ;
 			return move (ret) ;
 		}) ;
 	}
 
 	imports BYTE bit_low (CREF<WORD> a) {
-		return ByteToolHolder::create (instance ())->bit_low (a) ;
+		return ByteProcHolder::create (instance ())->bit_low (a) ;
 	}
 
 	imports WORD bit_low (CREF<CHAR> a) {
-		return ByteToolHolder::create (instance ())->bit_low (a) ;
+		return ByteProcHolder::create (instance ())->bit_low (a) ;
 	}
 
 	imports CHAR bit_low (CREF<QUAD> a) {
-		return ByteToolHolder::create (instance ())->bit_low (a) ;
+		return ByteProcHolder::create (instance ())->bit_low (a) ;
 	}
 
 	imports BYTE bit_high (CREF<WORD> a) {
-		return ByteToolHolder::create (instance ())->bit_high (a) ;
+		return ByteProcHolder::create (instance ())->bit_high (a) ;
 	}
 
 	imports WORD bit_high (CREF<CHAR> a) {
-		return ByteToolHolder::create (instance ())->bit_high (a) ;
+		return ByteProcHolder::create (instance ())->bit_high (a) ;
 	}
 
 	imports CHAR bit_high (CREF<QUAD> a) {
-		return ByteToolHolder::create (instance ())->bit_high (a) ;
+		return ByteProcHolder::create (instance ())->bit_high (a) ;
 	}
 
 	imports WORD bit_merge (CREF<BYTE> high ,CREF<BYTE> low) {
-		return ByteToolHolder::create (instance ())->bit_merge (high ,low) ;
+		return ByteProcHolder::create (instance ())->bit_merge (high ,low) ;
 	}
 
 	imports CHAR bit_merge (CREF<WORD> high ,CREF<WORD> low) {
-		return ByteToolHolder::create (instance ())->bit_merge (high ,low) ;
+		return ByteProcHolder::create (instance ())->bit_merge (high ,low) ;
 	}
 
 	imports QUAD bit_merge (CREF<CHAR> high ,CREF<CHAR> low) {
-		return ByteToolHolder::create (instance ())->bit_merge (high ,low) ;
+		return ByteProcHolder::create (instance ())->bit_merge (high ,low) ;
 	}
 
 	template <class ARG1 ,class ARG2>
 	imports BOOL bit_any (CREF<ARG1> base ,CREF<ARG2> mask) {
 		require (IS_BYTE<ARG1>) ;
-		return ByteToolHolder::create (instance ())->bit_any (base ,ARG1 (mask)) ;
+		return ByteProcHolder::create (instance ())->bit_any (base ,ARG1 (mask)) ;
 	}
 
 	template <class ARG1 ,class ARG2>
 	imports BOOL bit_all (CREF<ARG1> base ,CREF<ARG2> mask) {
 		require (IS_BYTE<ARG1>) ;
-		return ByteToolHolder::create (instance ())->bit_all (base ,ARG1 (mask)) ;
-	}
-
-	imports QUAD bit_single (CREF<LENGTH> nth) {
-		return ByteToolHolder::create (instance ())->bit_single (nth) ;
+		return ByteProcHolder::create (instance ())->bit_all (base ,ARG1 (mask)) ;
 	}
 
 	imports BYTE bit_reverse (CREF<BYTE> a) {
-		return ByteToolHolder::create (instance ())->bit_reverse (a) ;
+		return ByteProcHolder::create (instance ())->bit_reverse (a) ;
 	}
 
 	imports WORD bit_reverse (CREF<WORD> a) {
-		return ByteToolHolder::create (instance ())->bit_reverse (a) ;
+		return ByteProcHolder::create (instance ())->bit_reverse (a) ;
 	}
 
 	imports CHAR bit_reverse (CREF<CHAR> a) {
-		return ByteToolHolder::create (instance ())->bit_reverse (a) ;
+		return ByteProcHolder::create (instance ())->bit_reverse (a) ;
 	}
 
 	imports QUAD bit_reverse (CREF<QUAD> a) {
-		return ByteToolHolder::create (instance ())->bit_reverse (a) ;
+		return ByteProcHolder::create (instance ())->bit_reverse (a) ;
 	}
 
-	template <class ARG1>
-	imports INDEX bit_find (CREF<ARG1> a) {
-		require (IS_BYTE<ARG1>) ;
-		return ByteToolHolder::create (instance ())->bit_find (a) ;
+	imports INDEX bit_pow (CREF<LENGTH> nth) {
+		return ByteProcHolder::create (instance ())->bit_pow (nth) ;
+	}
+
+	imports LENGTH popcount (CREF<BYTE> a) {
+		return ByteProcHolder::create (instance ())->popcount (a) ;
+	}
+
+	imports LENGTH lowcount (CREF<BYTE> a) {
+		return ByteProcHolder::create (instance ())->lowcount (a) ;
 	}
 } ;
 
 struct IntegerLayout {
-	RefBuffer<VAL> mInteger ;
+	RefBuffer<BYTE> mInteger ;
 } ;
 
 struct IntegerHolder implement Interface {
@@ -468,7 +540,7 @@ struct IntegerHolder implement Interface {
 	virtual void set (CREF<VAL64> item) = 0 ;
 	virtual BOOL equal (CREF<IntegerLayout> that) const = 0 ;
 	virtual FLAG compr (CREF<IntegerLayout> that) const = 0 ;
-	virtual FLAG hash () const = 0 ;
+	virtual void visit (CREF<Visitor> visitor) const = 0 ;
 	virtual IntegerLayout add (CREF<IntegerLayout> that) const = 0 ;
 	virtual IntegerLayout sub (CREF<IntegerLayout> that) const = 0 ;
 	virtual IntegerLayout mul (CREF<IntegerLayout> that) const = 0 ;
@@ -540,8 +612,8 @@ public:
 		return compr (that) >= ZERO ;
 	}
 
-	FLAG hash () const {
-		return IntegerHolder::create (thiz)->hash () ;
+	void visit (CREF<Visitor> visitor) const {
+		return IntegerHolder::create (thiz)->visit (visitor) ;
 	}
 
 	Integer add (CREF<Integer> that) const {

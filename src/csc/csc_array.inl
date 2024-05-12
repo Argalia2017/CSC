@@ -11,45 +11,23 @@
 #include "csc_begin.h"
 
 namespace CSC {
-#ifdef __CSC_SYSTEM_WINDOWS__
 struct FUNCTION_buffer_from_initializer_list {
 	forceinline RefBuffer<Pointer> operator() (CREF<CaptureLayout> params ,CREF<Unknown> element) const {
 		RefBufferLayout ret ;
-		auto &&tmp = Capture<CREF<csc_initializer_t<Pointer>>>::from (params) ;
-		tmp ([&] (CREF<csc_initializer_t<Pointer>> a) {
-			const auto r1x = FLAG (a.begin ()) ;
-			const auto r2x = FLAG (a.end ()) ;
-			const auto r3x = RFat<ReflectSize> (element) ;
-			const auto r4x = r3x->type_size () ;
+		auto &&tmp = keep[TYPE<Capture<CREF<csc_initializer_list_t<Pointer>>>>::expr] (Pointer::from (params)) ;
+		tmp ([&] (CREF<csc_initializer_list_t<Pointer>> a) {
+			const auto r1x = RFat<ReflectSize> (element) ;
+			const auto r2x = r1x->type_size () ;
+			const auto r3x = CoreProc::inline_list_begin (a ,r2x) ;
+			const auto r4x = CoreProc::inline_list_end (a ,r2x) ;
 			RefBufferHolder::create (ret)->initialize (element) ;
-			ret.mBuffer = r1x ;
-			ret.mSize = (r2x - r1x) / r4x ;
-			ret.mStep = r4x ;
+			ret.mBuffer = r3x ;
+			ret.mSize = (r4x - r3x) / r2x ;
+			ret.mStep = r2x ;
 		}) ;
 		return move (keep[TYPE<RefBuffer<Pointer>>::expr] (ret)) ;
 	}
 } ;
-#endif
-
-#ifdef __CSC_SYSTEM_LINUX__
-struct FUNCTION_buffer_from_initializer_list {
-	forceinline RefBuffer<Pointer> operator() (CREF<CaptureLayout> params ,CREF<Unknown> element) const {
-		RefBufferLayout ret ;
-		auto &&tmp = Capture<CREF<csc_initializer_t<Pointer>>>::from (params) ;
-		tmp ([&] (CREF<csc_initializer_t<Pointer>> a) {
-			const auto r1x = FLAG (a.begin ()) ;
-			const auto r2x = LENGTH (a.size ()) ;
-			const auto r3x = RFat<ReflectSize> (element) ;
-			const auto r4x = r3x->type_size () ;
-			RefBufferHolder::create (ret)->initialize (element) ;
-			ret.mBuffer = r1x ;
-			ret.mSize = r2x ;
-			ret.mStep = r4x ;
-		}) ;
-		return move (keep[TYPE<RefBuffer<Pointer>>::expr] (ret)) ;
-	}
-} ;
-#endif
 
 static constexpr auto buffer_from_initializer_list = FUNCTION_buffer_from_initializer_list () ;
 
@@ -186,56 +164,16 @@ public:
 } ;
 
 exports VFat<ArrayHolder> ArrayHolder::create (VREF<ArrayLayout> that) {
-	return VFat<ArrayHolder> (ArrayImplement () ,Pointer::from (that)) ;
+	return VFat<ArrayHolder> (ArrayImplement () ,that) ;
 }
 
 exports CFat<ArrayHolder> ArrayHolder::create (CREF<ArrayLayout> that) {
-	return CFat<ArrayHolder> (ArrayImplement () ,Pointer::from (that)) ;
+	return CFat<ArrayHolder> (ArrayImplement () ,that) ;
 }
 
 class StringImplement implement Fat<StringHolder ,StringLayout> {
 public:
-	void initialize (CREF<Slice<STRA>> that) override {
-		const auto r1x = SliceHolder::create (that)->size () ;
-		const auto r2x = SliceHolder::create (that)->step () ;
-		initialize (r1x ,r2x) ;
-		for (auto &&i : iter (0 ,r1x)) {
-			set (i ,that[i]) ;
-		}
-		trunc (r1x) ;
-	}
-
-	void initialize (CREF<Slice<STRW>> that) override {
-		const auto r1x = SliceHolder::create (that)->size () ;
-		const auto r2x = SliceHolder::create (that)->step () ;
-		initialize (r1x ,r2x) ;
-		for (auto &&i : iter (0 ,r1x)) {
-			set (i ,that[i]) ;
-		}
-		trunc (r1x) ;
-	}
-
-	void initialize (CREF<Slice<STRU8>> that) override {
-		const auto r1x = SliceHolder::create (that)->size () ;
-		const auto r2x = SliceHolder::create (that)->step () ;
-		initialize (r1x ,r2x) ;
-		for (auto &&i : iter (0 ,r1x)) {
-			set (i ,that[i]) ;
-		}
-		trunc (r1x) ;
-	}
-
-	void initialize (CREF<Slice<STRU16>> that) override {
-		const auto r1x = SliceHolder::create (that)->size () ;
-		const auto r2x = SliceHolder::create (that)->step () ;
-		initialize (r1x ,r2x) ;
-		for (auto &&i : iter (0 ,r1x)) {
-			set (i ,that[i]) ;
-		}
-		trunc (r1x) ;
-	}
-
-	void initialize (CREF<Slice<STRU32>> that) override {
+	void initialize (CREF<Slice> that) override {
 		const auto r1x = SliceHolder::create (that)->size () ;
 		const auto r2x = SliceHolder::create (that)->step () ;
 		initialize (r1x ,r2x) ;
@@ -249,23 +187,23 @@ public:
 		const auto r1x = size_ + 1 ;
 		auto act = TRUE ;
 		if ifdo (act) {
-			if (step_ != ALIGN_OF<STRU8>::expr)
+			if (step_ != SIZE_OF<STRU8>::expr)
 				discard ;
 			auto &&tmp = keep[TYPE<RefBufferLayout>::expr] (fake.mString) ;
 			tmp = RefBuffer<STRU8> (r1x) ;
 		}
 		if ifdo (act) {
-			if (step_ != ALIGN_OF<STRU16>::expr)
+			if (step_ != SIZE_OF<STRU16>::expr)
 				discard ;
 			auto &&tmp = keep[TYPE<RefBufferLayout>::expr] (fake.mString) ;
-			tmp = RefBuffer<STRU8> (r1x) ;
+			tmp = RefBuffer<STRU16> (r1x) ;
 			clear () ;
 		}
 		if ifdo (act) {
-			if (step_ != ALIGN_OF<STRU32>::expr)
+			if (step_ != SIZE_OF<STRU32>::expr)
 				discard ;
 			auto &&tmp = keep[TYPE<RefBufferLayout>::expr] (fake.mString) ;
-			tmp = RefBuffer<STRU8> (r1x) ;
+			tmp = RefBuffer<STRU32> (r1x) ;
 			clear () ;
 		}
 		if ifdo (act) {
@@ -279,10 +217,8 @@ public:
 		if (r1x == 0)
 			return ;
 		initialize (r1x ,r2x) ;
-		const auto r3x = RFat<ReflectClone> (that.mString.unknown ()) ;
-		for (auto &&i : iter (0 ,r1x)) {
-			r3x->clone (at (i) ,StringHolder::create (that)->at (i)) ;
-		}
+		const auto r3x = r1x * r2x ;
+		CoreProc::inline_memcpy (fake.mString.at (0) ,that.mString.at (0) ,r3x) ;
 		trunc (r1x) ;
 	}
 
@@ -311,40 +247,38 @@ public:
 		return size () ;
 	}
 
-	VREF<ARR<STRA>> raw (TYPEID<STRA>) leftvalue override {
-		assume (step () == SIZE_OF<STRA>::expr) ;
-		return fake.mString.raw () ;
+	VREF<Pointer> raw () leftvalue override {
+		return RefBufferHolder::create (fake.mString)->raw () ;
 	}
 
-	CREF<ARR<STRA>> raw (TYPEID<STRA>) const leftvalue override {
-		assume (step () == SIZE_OF<STRA>::expr) ;
-		return fake.mString.raw () ;
+	CREF<Pointer> raw () const leftvalue override {
+		return RefBufferHolder::create (fake.mString)->raw () ;
 	}
 
-	VREF<ARR<STRW>> raw (TYPEID<STRW>) leftvalue override {
-		assume (step () == SIZE_OF<STRW>::expr) ;
-		return fake.mString.raw () ;
-	}
-
-	CREF<ARR<STRW>> raw (TYPEID<STRW>) const leftvalue override {
-		assume (step () == SIZE_OF<STRW>::expr) ;
-		return fake.mString.raw () ;
+	Ref<RefBuffer<BYTE>> borrow () const leftvalue override {
+		Ref<RefBuffer<BYTE>> ret = Ref<RefBuffer<BYTE>>::make () ;
+		auto &&tmp = keep[TYPE<RefBufferLayout>::expr] (ret.self) ;
+		RefBufferHolder::create (tmp)->initialize (RefUnknownBinder<BYTE> ()) ;
+		tmp.mBuffer = address (raw ()) ;
+		tmp.mSize = size () ;
+		tmp.mStep = step () ;
+		return move (ret) ;
 	}
 
 	void get (CREF<INDEX> index ,VREF<STRU32> item) const override {
 		auto act = TRUE ;
 		if ifdo (act) {
-			if (step () != ALIGN_OF<STRU8>::expr)
+			if (step () != SIZE_OF<STRU8>::expr)
 				discard ;
 			item = bitwise[TYPE<STRU8>::expr] (at (index)) ;
 		}
 		if ifdo (act) {
-			if (step () != ALIGN_OF<STRU16>::expr)
+			if (step () != SIZE_OF<STRU16>::expr)
 				discard ;
 			item = bitwise[TYPE<STRU16>::expr] (at (index)) ;
 		}
 		if ifdo (act) {
-			if (step () != ALIGN_OF<STRU32>::expr)
+			if (step () != SIZE_OF<STRU32>::expr)
 				discard ;
 			item = bitwise[TYPE<STRU32>::expr] (at (index)) ;
 		}
@@ -356,19 +290,19 @@ public:
 	void set (CREF<INDEX> index ,CREF<STRU32> item) override {
 		auto act = TRUE ;
 		if ifdo (act) {
-			if (step () != ALIGN_OF<STRU8>::expr)
+			if (step () != SIZE_OF<STRU8>::expr)
 				discard ;
 			auto &&tmp = keep[TYPE<STRU8>::expr] (at (index)) ;
 			tmp = STRU8 (item) ;
 		}
 		if ifdo (act) {
-			if (step () != ALIGN_OF<STRU16>::expr)
+			if (step () != SIZE_OF<STRU16>::expr)
 				discard ;
 			auto &&tmp = keep[TYPE<STRU16>::expr] (at (index)) ;
 			tmp = STRU16 (item) ;
 		}
 		if ifdo (act) {
-			if (step () != ALIGN_OF<STRU32>::expr)
+			if (step () != SIZE_OF<STRU32>::expr)
 				discard ;
 			auto &&tmp = keep[TYPE<STRU32>::expr] (at (index)) ;
 			tmp = STRU32 (item) ;
@@ -398,25 +332,39 @@ public:
 		return index + 1 ;
 	}
 
+	BOOL equal (CREF<Slice> that) const override {
+		const auto r1x = size () ;
+		const auto r2x = that.size () ;
+		const auto r3x = inline_min (r1x ,r2x) ;
+		auto rax = STRU32 () ;
+		for (auto &&i : iter (0 ,r3x)) {
+			get (i ,rax) ;
+			const auto r4x = inline_equal (rax ,that[i]) ;
+			if ifnot (r4x)
+				return r4x ;
+		}
+		return inline_equal (r1x ,r2x) ;
+	}
+
 	BOOL equal (CREF<StringLayout> that) const override {
-		const auto r1x = length () ;
-		const auto r2x = StringHolder::create (that)->length () ;
-		if (r1x != r2x)
-			return FALSE ;
+		const auto r1x = size () ;
+		const auto r2x = StringHolder::create (that)->size () ;
+		const auto r3x = inline_min (r1x ,r2x) ;
 		auto rax = STRU32 () ;
 		auto rbx = STRU32 () ;
-		for (auto &&i : iter (0 ,r1x)) {
+		for (auto &&i : iter (0 ,r3x)) {
 			get (i ,rax) ;
 			StringHolder::create (that)->get (i ,rbx) ;
-			if (rax != rbx)
-				return FALSE ;
+			const auto r4x = inline_equal (rax ,rbx) ;
+			if ifnot (r4x)
+				return r4x ;
 		}
-		return TRUE ;
+		return inline_equal (r1x ,r2x) ;
 	}
 
 	FLAG compr (CREF<StringLayout> that) const override {
-		const auto r1x = length () ;
-		const auto r2x = StringHolder::create (that)->length () ;
+		const auto r1x = size () ;
+		const auto r2x = StringHolder::create (that)->size () ;
 		const auto r3x = inline_min (r1x ,r2x) ;
 		auto rax = STRU32 () ;
 		auto rbx = STRU32 () ;
@@ -432,10 +380,12 @@ public:
 
 	void visit (CREF<Visitor> visitor) const override {
 		visitor.begin () ;
-		const auto r1x = length () ;
+		const auto r1x = size () ;
 		auto rax = STRU32 () ;
 		for (auto &&i : iter (0 ,r1x)) {
 			get (i ,rax) ;
+			if (rax == 0)
+				break ;
 			const auto r2x = bitwise[TYPE<CHAR>::expr] (rax) ;
 			visitor.push (r2x) ;
 		}
@@ -479,20 +429,54 @@ public:
 			set (ix ,rax) ;
 		}
 	}
+
+	void concat (CREF<Slice> that) override {
+		const auto r1x = length () ;
+		const auto r2x = that.size () ;
+		assume (r1x + r2x <= size ()) ;
+		for (auto &&i : iter (0 ,r2x)) {
+			INDEX ix = r1x + i ;
+			set (ix ,that[i]) ;
+		}
+	}
+
+	void concat (CREF<StringLayout> that) override {
+		const auto r1x = StringHolder::create (that)->length () ;
+		const auto r2x = StringHolder::create (that)->step () ;
+		auto act = TRUE ;
+		if ifdo (act) {
+			if (r2x != SIZE_OF<STRU8>::expr)
+				discard ;
+			concat (Slice (FLAG (that.mString.self) ,r1x ,r2x)) ;
+		}
+		if ifdo (act) {
+			if (r2x != SIZE_OF<STRU16>::expr)
+				discard ;
+			concat (Slice (FLAG (that.mString.self) ,r1x ,r2x)) ;
+		}
+		if ifdo (act) {
+			if (r2x != SIZE_OF<STRU32>::expr)
+				discard ;
+			concat (Slice (FLAG (that.mString.self) ,r1x ,r2x)) ;
+		}
+	}
 } ;
 
 exports VFat<StringHolder> StringHolder::create (VREF<StringLayout> that) {
-	return VFat<StringHolder> (StringImplement () ,Pointer::from (that)) ;
+	return VFat<StringHolder> (StringImplement () ,that) ;
 }
 
 exports CFat<StringHolder> StringHolder::create (CREF<StringLayout> that) {
-	return CFat<StringHolder> (StringImplement () ,Pointer::from (that)) ;
+	return CFat<StringHolder> (StringImplement () ,that) ;
 }
 
 class DequeImplement implement Fat<DequeHolder ,DequeLayout> {
 public:
 	void initialize (CREF<Unknown> element) override {
+		if (fake.mDeque.exist ())
+			return ;
 		RefBufferHolder::create (fake.mDeque)->initialize (element) ;
+		clear () ;
 	}
 
 	void initialize (CREF<Unknown> element ,CREF<LENGTH> size_) override {
@@ -649,17 +633,20 @@ public:
 } ;
 
 exports VFat<DequeHolder> DequeHolder::create (VREF<DequeLayout> that) {
-	return VFat<DequeHolder> (DequeImplement () ,Pointer::from (that)) ;
+	return VFat<DequeHolder> (DequeImplement () ,that) ;
 }
 
 exports CFat<DequeHolder> DequeHolder::create (CREF<DequeLayout> that) {
-	return CFat<DequeHolder> (DequeImplement () ,Pointer::from (that)) ;
+	return CFat<DequeHolder> (DequeImplement () ,that) ;
 }
 
 class PriorityImplement implement Fat<PriorityHolder ,PriorityLayout> {
 public:
 	void initialize (CREF<Unknown> element) override {
+		if (fake.mPriority.exist ())
+			return ;
 		RefBufferHolder::create (fake.mPriority)->initialize (element) ;
+		clear () ;
 	}
 
 	void initialize (CREF<Unknown> element ,CREF<LENGTH> size_) override {
@@ -841,17 +828,20 @@ public:
 } ;
 
 exports VFat<PriorityHolder> PriorityHolder::create (VREF<PriorityLayout> that) {
-	return VFat<PriorityHolder> (PriorityImplement () ,Pointer::from (that)) ;
+	return VFat<PriorityHolder> (PriorityImplement () ,that) ;
 }
 
 exports CFat<PriorityHolder> PriorityHolder::create (CREF<PriorityLayout> that) {
-	return CFat<PriorityHolder> (PriorityImplement () ,Pointer::from (that)) ;
+	return CFat<PriorityHolder> (PriorityImplement () ,that) ;
 }
 
 class ListImplement implement Fat<ListHolder ,ListLayout> {
 public:
 	void initialize (CREF<Unknown> element) override {
+		if (fake.mList.exist ())
+			return ;
 		AllocatorHolder::create (fake.mList)->initialize (element) ;
+		clear () ;
 	}
 
 	void initialize (CREF<Unknown> element ,CREF<LENGTH> size_) override {
@@ -1017,17 +1007,20 @@ public:
 } ;
 
 exports VFat<ListHolder> ListHolder::create (VREF<ListLayout> that) {
-	return VFat<ListHolder> (ListImplement () ,Pointer::from (that)) ;
+	return VFat<ListHolder> (ListImplement () ,that) ;
 }
 
 exports CFat<ListHolder> ListHolder::create (CREF<ListLayout> that) {
-	return CFat<ListHolder> (ListImplement () ,Pointer::from (that)) ;
+	return CFat<ListHolder> (ListImplement () ,that) ;
 }
 
 class ArrayListImplement implement Fat<ArrayListHolder ,ArrayListLayout> {
 public:
 	void initialize (CREF<Unknown> element) override {
+		if (fake.mList.exist ())
+			return ;
 		AllocatorHolder::create (fake.mList)->initialize (element) ;
+		clear () ;
 	}
 
 	void initialize (CREF<Unknown> element ,CREF<LENGTH> size_) override {
@@ -1199,17 +1192,20 @@ public:
 } ;
 
 exports VFat<ArrayListHolder> ArrayListHolder::create (VREF<ArrayListLayout> that) {
-	return VFat<ArrayListHolder> (ArrayListImplement () ,Pointer::from (that)) ;
+	return VFat<ArrayListHolder> (ArrayListImplement () ,that) ;
 }
 
 exports CFat<ArrayListHolder> ArrayListHolder::create (CREF<ArrayListLayout> that) {
-	return CFat<ArrayListHolder> (ArrayListImplement () ,Pointer::from (that)) ;
+	return CFat<ArrayListHolder> (ArrayListImplement () ,that) ;
 }
 
 class SortedListImplement implement Fat<SortedListHolder ,SortedListLayout> {
 public:
 	void initialize (CREF<Unknown> element) override {
+		if (fake.mList.exist ())
+			return ;
 		RefBufferHolder::create (fake.mList)->initialize (element) ;
+		clear () ;
 	}
 
 	void initialize (CREF<Unknown> element ,CREF<LENGTH> size_) override {
@@ -1279,7 +1275,7 @@ public:
 	}
 
 	BOOL duplicate (CREF<BoxLayout> item) const {
-		if (length () == 0)
+		if ifnot (fake.mList.exist ())
 			return FALSE ;
 		const auto r1x = RFat<ReflectCompr> (fake.mList.unknown ()) ;
 		INDEX ix = fake.mRead ;
@@ -1291,6 +1287,8 @@ public:
 	}
 
 	INDEX find (CREF<Pointer> item) const override {
+		if ifnot (fake.mList.exist ())
+			return NONE ;
 		INDEX ix = 0 ;
 		INDEX iy = length () - 1 ;
 		INDEX iz = 0 ;
@@ -1338,11 +1336,11 @@ public:
 } ;
 
 exports VFat<SortedListHolder> SortedListHolder::create (VREF<SortedListLayout> that) {
-	return VFat<SortedListHolder> (SortedListImplement () ,Pointer::from (that)) ;
+	return VFat<SortedListHolder> (SortedListImplement () ,that) ;
 }
 
 exports CFat<SortedListHolder> SortedListHolder::create (CREF<SortedListLayout> that) {
-	return CFat<SortedListHolder> (SortedListImplement () ,Pointer::from (that)) ;
+	return CFat<SortedListHolder> (SortedListImplement () ,that) ;
 }
 
 struct SetChild {
@@ -1353,7 +1351,10 @@ struct SetChild {
 class SetImplement implement Fat<SetHolder ,SetLayout> {
 public:
 	void initialize (CREF<Unknown> element) override {
+		if (fake.mSet.exist ())
+			return ;
 		AllocatorHolder::create (fake.mSet)->initialize (element) ;
+		clear () ;
 	}
 
 	void initialize (CREF<Unknown> element ,CREF<LENGTH> size_) override {
@@ -1478,8 +1479,6 @@ public:
 				ix = fake.mTop ;
 			}
 			if ifdo (act) {
-				if ifnot (fake.mSet.bt (iy).mBin)
-					discard ;
 				update_insert_right (ix) ;
 				ix = fake.mTop ;
 			}
@@ -1511,8 +1510,6 @@ public:
 			fake.mTop = ix ;
 		}
 		if ifdo (act) {
-			if (fake.mSet.bt (curr).mBin)
-				discard ;
 			fake.mSet.bt (ix).mRed = FALSE ;
 			fake.mSet.bt (iy).mRed = TRUE ;
 			rotate_right (iy) ;
@@ -1543,8 +1540,6 @@ public:
 			fake.mTop = ix ;
 		}
 		if ifdo (act) {
-			if ifnot (fake.mSet.bt (curr).mBin)
-				discard ;
 			fake.mSet.bt (ix).mRed = FALSE ;
 			fake.mSet.bt (iy).mRed = TRUE ;
 			rotate_left (iy) ;
@@ -1553,6 +1548,8 @@ public:
 	}
 
 	INDEX find (CREF<Pointer> item) const override {
+		if ifnot (fake.mSet.exist ())
+			return NONE ;
 		INDEX ret = fake.mRoot ;
 		const auto r1x = RFat<ReflectCompr> (fake.mSet.unknown ()) ;
 		while (TRUE) {
@@ -1866,20 +1863,17 @@ public:
 } ;
 
 exports VFat<SetHolder> SetHolder::create (VREF<SetLayout> that) {
-	return VFat<SetHolder> (SetImplement () ,Pointer::from (that)) ;
+	return VFat<SetHolder> (SetImplement () ,that) ;
 }
 
 exports CFat<SetHolder> SetHolder::create (CREF<SetLayout> that) {
-	return CFat<SetHolder> (SetImplement () ,Pointer::from (that)) ;
+	return CFat<SetHolder> (SetImplement () ,that) ;
 }
 
 #ifdef __CSC_CONFIG_VAL32__
 struct FUNCTION_fnvhash {
-	using FNV_BASIS = ENUM<VAL (2166136261)> ;
-	using FNV_PRIME = ENUM<VAL (16777619)> ;
-
 	forceinline VAL operator() () const {
-		return FNV_BASIS::expr ;
+		return VAL (CHAR (2166136261UL)) ;
 	}
 
 	forceinline VAL operator() (CREF<VAL> curr ,CREF<Pointer> buffer ,CREF<LENGTH> size_) const {
@@ -1888,7 +1882,7 @@ struct FUNCTION_fnvhash {
 		auto &&tmp = keep[TYPE<ARR<BYTE>>::expr] (buffer) ;
 		for (auto &&i : iter (0 ,size_)) {
 			ret = VAL (R1X (ret) ^ R1X (tmp[i])) ;
-			ret = VAL (R1X (ret * FNV_PRIME::expr)) ;
+			ret = VAL (R1X (ret * VAL (16777619))) ;
 		}
 		return move (ret) ;
 	}
@@ -1897,11 +1891,8 @@ struct FUNCTION_fnvhash {
 
 #ifdef __CSC_CONFIG_VAL64__
 struct FUNCTION_fnvhash {
-	using FNV_BASIS = ENUM<VAL (14695981039346656037)> ;
-	using FNV_PRIME = ENUM<VAL (1099511628211)> ;
-
 	forceinline VAL operator() () const {
-		return FNV_BASIS::expr ;
+		return VAL (QUAD (14695981039346656037ULL)) ;
 	}
 
 	forceinline VAL operator() (CREF<VAL> curr ,CREF<Pointer> buffer ,CREF<LENGTH> size_) const {
@@ -1910,7 +1901,7 @@ struct FUNCTION_fnvhash {
 		auto &&tmp = keep[TYPE<ARR<BYTE>>::expr] (buffer) ;
 		for (auto &&i : iter (0 ,size_)) {
 			ret = VAL (R1X (ret) ^ R1X (tmp[i])) ;
-			ret = VAL (R1X (ret * FNV_PRIME::expr)) ;
+			ret = VAL (R1X (ret * VAL (1099511628211))) ;
 		}
 		return move (ret) ;
 	}
@@ -1979,9 +1970,12 @@ public:
 class HashSetImplement implement Fat<HashSetHolder ,HashSetLayout> {
 public:
 	void initialize (CREF<Unknown> element) override {
+		if (fake.mSet.exist ())
+			return ;
 		AllocatorHolder::create (fake.mSet)->initialize (element) ;
 		fake.mVisitor = SharedRef<HashcodeVisitor>::make () ;
 		fake.mVisitor->initialize () ;
+		clear () ;
 	}
 
 	void initialize (CREF<Unknown> element ,CREF<LENGTH> size_) override {
@@ -2185,62 +2179,12 @@ public:
 } ;
 
 exports VFat<HashSetHolder> HashSetHolder::create (VREF<HashSetLayout> that) {
-	return VFat<HashSetHolder> (HashSetImplement () ,Pointer::from (that)) ;
+	return VFat<HashSetHolder> (HashSetImplement () ,that) ;
 }
 
 exports CFat<HashSetHolder> HashSetHolder::create (CREF<HashSetLayout> that) {
-	return CFat<HashSetHolder> (HashSetImplement () ,Pointer::from (that)) ;
+	return CFat<HashSetHolder> (HashSetImplement () ,that) ;
 }
-
-struct FUNCTION_popcount {
-	forceinline LENGTH operator() (CREF<BYTE> bits) const {
-		static const DEF<LENGTH[256]> mTable {
-			0 ,1 ,1 ,2 ,1 ,2 ,2 ,3 ,1 ,2 ,2 ,3 ,2 ,3 ,3 ,4 ,
-			1 ,2 ,2 ,3 ,2 ,3 ,3 ,4 ,2 ,3 ,3 ,4 ,3 ,4 ,4 ,5 ,
-			1 ,2 ,2 ,3 ,2 ,3 ,3 ,4 ,2 ,3 ,3 ,4 ,3 ,4 ,4 ,5 ,
-			2 ,3 ,3 ,4 ,3 ,4 ,4 ,5 ,3 ,4 ,4 ,5 ,4 ,5 ,5 ,6 ,
-			1 ,2 ,2 ,3 ,2 ,3 ,3 ,4 ,2 ,3 ,3 ,4 ,3 ,4 ,4 ,5 ,
-			2 ,3 ,3 ,4 ,3 ,4 ,4 ,5 ,3 ,4 ,4 ,5 ,4 ,5 ,5 ,6 ,
-			2 ,3 ,3 ,4 ,3 ,4 ,4 ,5 ,3 ,4 ,4 ,5 ,4 ,5 ,5 ,6 ,
-			3 ,4 ,4 ,5 ,4 ,5 ,5 ,6 ,4 ,5 ,5 ,6 ,5 ,6 ,6 ,7 ,
-			1 ,2 ,2 ,3 ,2 ,3 ,3 ,4 ,2 ,3 ,3 ,4 ,3 ,4 ,4 ,5 ,
-			2 ,3 ,3 ,4 ,3 ,4 ,4 ,5 ,3 ,4 ,4 ,5 ,4 ,5 ,5 ,6 ,
-			2 ,3 ,3 ,4 ,3 ,4 ,4 ,5 ,3 ,4 ,4 ,5 ,4 ,5 ,5 ,6 ,
-			3 ,4 ,4 ,5 ,4 ,5 ,5 ,6 ,4 ,5 ,5 ,6 ,5 ,6 ,6 ,7 ,
-			2 ,3 ,3 ,4 ,3 ,4 ,4 ,5 ,3 ,4 ,4 ,5 ,4 ,5 ,5 ,6 ,
-			3 ,4 ,4 ,5 ,4 ,5 ,5 ,6 ,4 ,5 ,5 ,6 ,5 ,6 ,6 ,7 ,
-			3 ,4 ,4 ,5 ,4 ,5 ,5 ,6 ,4 ,5 ,5 ,6 ,5 ,6 ,6 ,7 ,
-			4 ,5 ,5 ,6 ,5 ,6 ,6 ,7 ,5 ,6 ,6 ,7 ,6 ,7 ,7 ,8} ;
-		return mTable[INDEX (bits)] ;
-	}
-} ;
-
-static constexpr auto popcount = FUNCTION_popcount () ;
-
-struct FUNCTION_lowcount {
-	forceinline LENGTH operator() (CREF<BYTE> bits) const {
-		static const DEF<LENGTH[256]> mTable {
-			8 ,0 ,1 ,0 ,2 ,0 ,1 ,0 ,3 ,0 ,1 ,0 ,2 ,0 ,1 ,0 ,
-			4 ,0 ,1 ,0 ,2 ,0 ,1 ,0 ,3 ,0 ,1 ,0 ,2 ,0 ,1 ,0 ,
-			5 ,0 ,1 ,0 ,2 ,0 ,1 ,0 ,3 ,0 ,1 ,0 ,2 ,0 ,1 ,0 ,
-			4 ,0 ,1 ,0 ,2 ,0 ,1 ,0 ,3 ,0 ,1 ,0 ,2 ,0 ,1 ,0 ,
-			6 ,0 ,1 ,0 ,2 ,0 ,1 ,0 ,3 ,0 ,1 ,0 ,2 ,0 ,1 ,0 ,
-			4 ,0 ,1 ,0 ,2 ,0 ,1 ,0 ,3 ,0 ,1 ,0 ,2 ,0 ,1 ,0 ,
-			5 ,0 ,1 ,0 ,2 ,0 ,1 ,0 ,3 ,0 ,1 ,0 ,2 ,0 ,1 ,0 ,
-			4 ,0 ,1 ,0 ,2 ,0 ,1 ,0 ,3 ,0 ,1 ,0 ,2 ,0 ,1 ,0 ,
-			7 ,0 ,1 ,0 ,2 ,0 ,1 ,0 ,3 ,0 ,1 ,0 ,2 ,0 ,1 ,0 ,
-			4 ,0 ,1 ,0 ,2 ,0 ,1 ,0 ,3 ,0 ,1 ,0 ,2 ,0 ,1 ,0 ,
-			5 ,0 ,1 ,0 ,2 ,0 ,1 ,0 ,3 ,0 ,1 ,0 ,2 ,0 ,1 ,0 ,
-			4 ,0 ,1 ,0 ,2 ,0 ,1 ,0 ,3 ,0 ,1 ,0 ,2 ,0 ,1 ,0 ,
-			6 ,0 ,1 ,0 ,2 ,0 ,1 ,0 ,3 ,0 ,1 ,0 ,2 ,0 ,1 ,0 ,
-			4 ,0 ,1 ,0 ,2 ,0 ,1 ,0 ,3 ,0 ,1 ,0 ,2 ,0 ,1 ,0 ,
-			5 ,0 ,1 ,0 ,2 ,0 ,1 ,0 ,3 ,0 ,1 ,0 ,2 ,0 ,1 ,0 ,
-			4 ,0 ,1 ,0 ,2 ,0 ,1 ,0 ,3 ,0 ,1 ,0 ,2 ,0 ,1 ,0} ;
-		return mTable[INDEX (bits)] ;
-	}
-} ;
-
-static constexpr auto lowcount = FUNCTION_lowcount () ;
 
 class BitSetImplement implement Fat<BitSetHolder ,BitSetLayout> {
 public:
@@ -2263,6 +2207,16 @@ public:
 		}
 	}
 
+	void initialize (CREF<BitSetLayout> that) override {
+		const auto r1x = BitSetHolder::create (that)->size () ;
+		if (r1x == 0)
+			return ;
+		initialize (r1x) ;
+		for (auto &&i : iter (0 ,fake.mSet.size ()))
+			fake.mSet[i] = that.mSet[i] ;
+		fake.mWidth = that.mWidth ;
+	}
+
 	void clear () override {
 		fill (BYTE (0X00)) ;
 	}
@@ -2276,31 +2230,26 @@ public:
 	LENGTH length () const override {
 		LENGTH ret = 0 ;
 		for (auto &&i : iter (0 ,fake.mSet.size ()))
-			ret += popcount (fake.mSet[i]) ;
+			ret += ByteProc::popcount (fake.mSet[i]) ;
 		return move (ret) ;
 	}
 
 	void get (CREF<INDEX> index ,VREF<BOOL> item) const override {
-		const auto r1x = BYTE (0X01) << (index % 8) ;
-		const auto r2x = fake.mSet[index / 8] & r1x ;
+		const auto r1x = ByteProc::bit_pow (index % 8) ;
+		const auto r2x = fake.mSet[index / 8] & BYTE (r1x) ;
 		item = BOOL (r2x != BYTE (0X00)) ;
 	}
 
 	void set (CREF<INDEX> index ,CREF<BOOL> item) override {
-		const auto r1x = BYTE (0X01) << (index % 8) ;
+		const auto r1x = ByteProc::bit_pow (index % 8) ;
 		auto act = TRUE ;
 		if ifdo (act) {
 			if ifnot (item)
 				discard ;
-			fake.mSet[index / 8] |= r1x ;
+			fake.mSet[index / 8] |= BYTE (r1x) ;
 		}
 		if ifdo (act) {
-			if (item)
-				discard ;
-			fake.mSet[index / 8] &= ~r1x ;
-		}
-		if ifdo (act) {
-			assert (FALSE) ;
+			fake.mSet[index / 8] &= ~BYTE (r1x) ;
 		}
 	}
 
@@ -2319,11 +2268,11 @@ public:
 			const auto r1x = index % 8 + 1 ;
 			if (r1x == 8)
 				discard ;
-			const auto r2x = BYTE (0X01) << r1x ;
-			const auto r3x = fake.mSet[ix] & ~BYTE (INDEX (r2x) - 1) ;
+			const auto r2x = ByteProc::bit_pow (r1x) - 1 ;
+			const auto r3x = fake.mSet[ix] & ~BYTE (r2x) ;
 			if (r3x == BYTE (0X00))
 				discard ;
-			const auto r4x = lowcount (r3x) ;
+			const auto r4x = ByteProc::lowcount (r3x) ;
 			const auto r5x = ix * 8 + r4x ;
 			return inline_min (r5x ,size ()) ;
 		}
@@ -2340,7 +2289,7 @@ public:
 			if ifdo (TRUE) {
 				if (fake.mSet[ix] == BYTE (0X00))
 					discard ;
-				const auto r1x = lowcount (fake.mSet[ix]) ;
+				const auto r1x = ByteProc::lowcount (fake.mSet[ix]) ;
 				return ix * 8 + r1x ;
 			}
 			ix++ ;
@@ -2364,13 +2313,15 @@ public:
 	FLAG compr (CREF<BitSetLayout> that) const override {
 		const auto r1x = fake.mSet.size () ;
 		const auto r2x = that.mSet.size () ;
-		const auto r3x = inline_min (r1x ,r2x) ;
+		const auto r3x = inline_compr (r1x ,r2x) ;
+		if (r3x != ZERO)
+			return r3x ;
 		for (auto &&i : iter (0 ,r3x)) {
 			const auto r4x = inline_compr (fake.mSet[i] ,that.mSet[i]) ;
 			if (r4x != ZERO)
 				return r4x ;
 		}
-		return inline_compr (r1x ,r2x) ;
+		return ZERO ;
 	}
 
 	void visit (CREF<Visitor> visitor) const override {
@@ -2470,16 +2421,16 @@ public:
 		if (ix <= 0)
 			return ;
 		const auto r1x = layout.mWidth % 8 + 1 ;
-		const auto r2x = LENGTH (WORD (0X01) << r1x) - 1 ;
+		const auto r2x = ByteProc::bit_pow (r1x) - 1 ;
 		layout.mSet[ix] &= BYTE (r2x) ;
 	}
 } ;
 
 exports VFat<BitSetHolder> BitSetHolder::create (VREF<BitSetLayout> that) {
-	return VFat<BitSetHolder> (BitSetImplement () ,Pointer::from (that)) ;
+	return VFat<BitSetHolder> (BitSetImplement () ,that) ;
 }
 
 exports CFat<BitSetHolder> BitSetHolder::create (CREF<BitSetLayout> that) {
-	return CFat<BitSetHolder> (BitSetImplement () ,Pointer::from (that)) ;
+	return CFat<BitSetHolder> (BitSetImplement () ,that) ;
 }
 } ;

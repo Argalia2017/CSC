@@ -19,36 +19,36 @@ public:
 		fake.mVector[3] = w ;
 	}
 
-	void initialize (CREF<PIXEL> point) override {
+	void initialize (CREF<Pixel> point) override {
 		fake.mVector[0] = FLT64 (point.mX) + FLT64 (0.5) ;
 		fake.mVector[1] = FLT64 (point.mY) + FLT64 (0.5) ;
 		fake.mVector[2] = 0 ;
 		fake.mVector[3] = 1 ;
 	}
 
-	void initialize (CREF<POINT2F> point) override {
+	void initialize (CREF<Point2F> point) override {
 		fake.mVector[0] = FLT64 (point.mX) ;
 		fake.mVector[1] = FLT64 (point.mY) ;
 		fake.mVector[2] = 0 ;
 		fake.mVector[3] = 1 ;
 	}
 
-	void initialize (CREF<POINT3F> point) override {
+	void initialize (CREF<Point3F> point) override {
 		fake.mVector[0] = FLT64 (point.mX) ;
 		fake.mVector[1] = FLT64 (point.mY) ;
 		fake.mVector[2] = FLT64 (point.mZ) ;
 		fake.mVector[3] = 1 ;
 	}
 
-	POINT2F xy () const override {
-		POINT2F ret ;
+	Point2F xy () const override {
+		Point2F ret ;
 		ret.mX = FLT32 (fake.mVector[0]) ;
 		ret.mY = FLT32 (fake.mVector[1]) ;
 		return move (ret) ;
 	}
 
-	POINT3F xyz () const override {
-		POINT3F ret ;
+	Point3F xyz () const override {
+		Point3F ret ;
 		ret.mX = FLT32 (fake.mVector[0]) ;
 		ret.mY = FLT32 (fake.mVector[1]) ;
 		ret.mZ = FLT32 (fake.mVector[2]) ;
@@ -172,16 +172,16 @@ public:
 	FLT64 magnitude () const override {
 		assert (fake.mVector[3] == 0) ;
 		FLT64 ret = 0 ;
-		ret += MathTool::square (fake.mVector[0]) ;
-		ret += MathTool::square (fake.mVector[1]) ;
-		ret += MathTool::square (fake.mVector[2]) ;
-		ret = MathTool::sqrt (ret) ;
+		ret += MathProc::square (fake.mVector[0]) ;
+		ret += MathProc::square (fake.mVector[1]) ;
+		ret += MathProc::square (fake.mVector[2]) ;
+		ret = MathProc::sqrt (ret) ;
 		return move (ret) ;
 	}
 
 	VectorLayout normalize () const override {
 		VectorLayout ret ;
-		const auto r1x = MathTool::inverse (magnitude ()) ;
+		const auto r1x = MathProc::inverse (magnitude ()) ;
 		ret.mVector[0] = fake.mVector[0] * r1x ;
 		ret.mVector[1] = fake.mVector[1] * r1x ;
 		ret.mVector[2] = fake.mVector[2] * r1x ;
@@ -191,7 +191,7 @@ public:
 
 	VectorLayout projection () const override {
 		VectorLayout ret ;
-		const auto r1x = MathTool::inverse (fake.mVector[3]) ;
+		const auto r1x = MathProc::inverse (fake.mVector[3]) ;
 		ret.mVector[0] = fake.mVector[0] * r1x ;
 		ret.mVector[1] = fake.mVector[1] * r1x ;
 		ret.mVector[2] = fake.mVector[2] * r1x ;
@@ -210,11 +210,11 @@ public:
 } ;
 
 exports VFat<VectorHolder> VectorHolder::create (VREF<VectorLayout> that) {
-	return VFat<VectorHolder> (VectorImplement () ,Pointer::from (that)) ;
+	return VFat<VectorHolder> (VectorImplement () ,that) ;
 }
 
 exports CFat<VectorHolder> VectorHolder::create (CREF<VectorLayout> that) {
-	return CFat<VectorHolder> (VectorImplement () ,Pointer::from (that)) ;
+	return CFat<VectorHolder> (VectorImplement () ,that) ;
 }
 
 class MatrixImplement implement Fat<MatrixHolder ,MatrixLayout> {
@@ -368,7 +368,7 @@ public:
 					ret.mMatrix[mm (j ,ix)] = r1x ;
 				}
 			}
-			const auto r2x = MathTool::inverse (ret.mMatrix[mm (i ,i)]) ;
+			const auto r2x = MathProc::inverse (ret.mMatrix[mm (i ,i)]) ;
 			if (r2x == 0)
 				continue ;
 			for (auto &&j : iter (i + 1 ,4)) {
@@ -385,7 +385,7 @@ public:
 		INDEX ret = NONE ;
 		auto rax = FLT64 () ;
 		for (auto &&i : iter (x ,4)) {
-			const auto r1x = MathTool::abs (fake.mMatrix[mm (x ,i)]) ;
+			const auto r1x = MathProc::abs (fake.mMatrix[mm (x ,i)]) ;
 			if (ret != NONE)
 				if (rax >= r1x)
 					continue ;
@@ -429,7 +429,7 @@ public:
 			const auto r7x = (r4x - r5x + r6x) * det_sign (i.mY + i.mX) ;
 			ret.mMatrix[mm (i.mY ,i.mX)] = r7x ;
 		}
-		const auto r8x = MathTool::inverse (det ()) ;
+		const auto r8x = MathProc::inverse (det ()) ;
 		ret = MatrixHolder::create (ret)->mul (r8x) ;
 		return move (ret) ;
 	}
@@ -450,11 +450,11 @@ public:
 } ;
 
 exports VFat<MatrixHolder> MatrixHolder::create (VREF<MatrixLayout> that) {
-	return VFat<MatrixHolder> (MatrixImplement () ,Pointer::from (that)) ;
+	return VFat<MatrixHolder> (MatrixImplement () ,that) ;
 }
 
 exports CFat<MatrixHolder> MatrixHolder::create (CREF<MatrixLayout> that) {
-	return CFat<MatrixHolder> (MatrixImplement () ,Pointer::from (that)) ;
+	return CFat<MatrixHolder> (MatrixImplement () ,that) ;
 }
 
 class MakeMatrixImplement implement Fat<MakeMatrixHolder ,MatrixLayout> {
@@ -479,9 +479,9 @@ public:
 		const auto r4x = r1x * r2x ;
 		const auto r5x = r1x * r3x ;
 		const auto r6x = r2x * r3x ;
-		const auto r7x = MathTool::sqrt (1 - MathTool::square (r4x)) ;
-		const auto r8x = (r6x - r4x * r5x) * MathTool::inverse (r7x) ;
-		const auto r9x = MathTool::sqrt (1 - MathTool::square (r5x) - MathTool::square (r8x)) ;
+		const auto r7x = MathProc::sqrt (1 - MathProc::square (r4x)) ;
+		const auto r8x = (r6x - r4x * r5x) * MathProc::inverse (r7x) ;
+		const auto r9x = MathProc::sqrt (1 - MathProc::square (r5x) - MathProc::square (r8x)) ;
 		ret[0][0] = 1 ;
 		ret[0][1] = r4x ;
 		ret[1][1] = r7x ;
@@ -495,8 +495,8 @@ public:
 	void RotationMatrix_initialize (CREF<Vector> normal ,CREF<FLT64> angle) override {
 		Matrix ret = Matrix::zero () ;
 		const auto r1x = normal.normalize () ;
-		const auto r2x = MathTool::cos (angle) ;
-		const auto r3x = r1x * MathTool::sin (angle) ;
+		const auto r2x = MathProc::cos (angle) ;
+		const auto r3x = r1x * MathProc::sin (angle) ;
 		const auto r4x = r1x * (1 - r2x) ;
 		ret[0][0] = r1x[0] * r4x[0] + r2x ;
 		ret[1][0] = r1x[1] * r4x[0] + r3x[2] ;
@@ -532,7 +532,7 @@ public:
 		ret[0][2] = wx ;
 		ret[1][2] = wx ;
 		ret[3][2] = 1 ;
-		ret[3][3] = 1 ;
+		ret[2][3] = 1 ;
 		fake = move (ret) ;
 	}
 
@@ -571,7 +571,7 @@ public:
 		ViewMatrix_initialize (x ,y) ;
 		auto act = TRUE ;
 		if ifdo (act) {
-			if (flag != ViewMatrixRotation::XY)
+			if (flag != ViewMatrixOption::XY)
 				discard ;
 			const auto r1x = Vector::axis_x () ;
 			const auto r2x = Vector::axis_y () ;
@@ -581,7 +581,7 @@ public:
 			fake = MatrixHolder::create (fake)->mul (r5x) ;
 		}
 		if ifdo (act) {
-			if (flag != ViewMatrixRotation::XZ)
+			if (flag != ViewMatrixOption::XZ)
 				discard ;
 			const auto r6x = Vector::axis_x () ;
 			const auto r7x = -Vector::axis_z () ;
@@ -591,7 +591,7 @@ public:
 			fake = MatrixHolder::create (fake)->mul (r10x) ;
 		}
 		if ifdo (act) {
-			if (flag != ViewMatrixRotation::YX)
+			if (flag != ViewMatrixOption::YX)
 				discard ;
 			const auto r11x = Vector::axis_y () ;
 			const auto r12x = Vector::axis_x () ;
@@ -601,7 +601,7 @@ public:
 			fake = MatrixHolder::create (fake)->mul (r15x) ;
 		}
 		if ifdo (act) {
-			if (flag != ViewMatrixRotation::YZ)
+			if (flag != ViewMatrixOption::YZ)
 				discard ;
 			const auto r16x = Vector::axis_z () ;
 			const auto r17x = Vector::axis_x () ;
@@ -611,7 +611,7 @@ public:
 			fake = MatrixHolder::create (fake)->mul (r20x) ;
 		}
 		if ifdo (act) {
-			if (flag != ViewMatrixRotation::ZX)
+			if (flag != ViewMatrixOption::ZX)
 				discard ;
 			const auto r21x = Vector::axis_y () ;
 			const auto r22x = Vector::axis_z () ;
@@ -621,7 +621,7 @@ public:
 			fake = MatrixHolder::create (fake)->mul (r25x) ;
 		}
 		if ifdo (act) {
-			if (flag != ViewMatrixRotation::ZY)
+			if (flag != ViewMatrixOption::ZY)
 				discard ;
 			const auto r26x = -Vector::axis_z () ;
 			const auto r27x = Vector::axis_y () ;
@@ -659,12 +659,26 @@ public:
 } ;
 
 exports VFat<MakeMatrixHolder> MakeMatrixHolder::create (VREF<MatrixLayout> that) {
-	return VFat<MakeMatrixHolder> (MakeMatrixImplement () ,Pointer::from (that)) ;
+	return VFat<MakeMatrixHolder> (MakeMatrixImplement () ,that) ;
 }
 
 exports CFat<MakeMatrixHolder> MakeMatrixHolder::create (CREF<MatrixLayout> that) {
-	return CFat<MakeMatrixHolder> (MakeMatrixImplement () ,Pointer::from (that)) ;
+	return CFat<MakeMatrixHolder> (MakeMatrixImplement () ,that) ;
 }
+
+#ifndef __CSC_API_WITH_EIGEN__
+class MatrixProcImplement implement Fat<MatrixProcHolder ,MatrixProcLayout> {} ;
+
+exports VFat<MatrixProcHolder> MatrixProcHolder::create (VREF<MatrixProcLayout> that) {
+	assume (FALSE) ;
+	return VFat<MatrixProcHolder> (keep[TYPE<MatrixProcImplement>::expr] (Pointer::make (0)) ,that) ;
+}
+
+exports CFat<MatrixProcHolder> MatrixProcHolder::create (CREF<MatrixProcLayout> that) {
+	assume (FALSE) ;
+	return CFat<MatrixProcHolder> (keep[TYPE<MatrixProcImplement>::expr] (Pointer::make (0)) ,that) ;
+}
+#endif
 
 class QuaternionImplement implement Fat<QuaternionHolder ,QuaternionLayout> {
 private:
@@ -686,8 +700,8 @@ public:
 			const auto r3x = 1 + r2x.trace () ;
 			if (r3x < 1)
 				discard ;
-			const auto r4x = MathTool::sqrt (r3x) ;
-			const auto r5x = MathTool::inverse (r4x) ;
+			const auto r4x = MathProc::sqrt (r3x) ;
+			const auto r5x = MathProc::inverse (r4x) ;
 			const auto r6x = (r2x[2][1] - r2x[1][2]) * r5x ;
 			const auto r7x = (r2x[0][2] - r2x[2][0]) * r5x ;
 			const auto r8x = (r2x[1][0] - r2x[0][1]) * r5x ;
@@ -700,8 +714,8 @@ public:
 			const auto r9x = 1 + r2x[0][0] - r2x[1][1] - r2x[2][2] ;
 			if (r9x < 1)
 				discard ;
-			const auto r10x = MathTool::sqrt (r9x) ;
-			const auto r11x = MathTool::inverse (r10x) ;
+			const auto r10x = MathProc::sqrt (r9x) ;
+			const auto r11x = MathProc::inverse (r10x) ;
 			const auto r12x = (r2x[1][0] + r2x[0][1]) * r11x ;
 			const auto r13x = (r2x[0][2] + r2x[2][0]) * r11x ;
 			const auto r14x = (r2x[2][1] - r2x[1][2]) * r11x ;
@@ -714,8 +728,8 @@ public:
 			const auto r15x = 1 - r2x[0][0] + r2x[1][1] - r2x[2][2] ;
 			if (r15x < 1)
 				discard ;
-			const auto r16x = MathTool::sqrt (r15x) ;
-			const auto r17x = MathTool::inverse (r16x) ;
+			const auto r16x = MathProc::sqrt (r15x) ;
+			const auto r17x = MathProc::inverse (r16x) ;
 			const auto r18x = (r2x[1][0] + r2x[0][1]) * r17x ;
 			const auto r19x = (r2x[2][1] + r2x[1][2]) * r17x ;
 			const auto r20x = (r2x[0][2] - r2x[2][0]) * r17x ;
@@ -728,8 +742,8 @@ public:
 			const auto r21x = 1 - r2x[0][0] - r2x[1][1] + r2x[2][2] ;
 			if (r21x < 1)
 				discard ;
-			const auto r22x = MathTool::sqrt (r21x) ;
-			const auto r23x = MathTool::inverse (r22x) ;
+			const auto r22x = MathProc::sqrt (r21x) ;
+			const auto r23x = MathProc::inverse (r22x) ;
 			const auto r24x = (r2x[0][2] + r2x[2][0]) * r23x ;
 			const auto r25x = (r2x[2][1] + r2x[1][2]) * r23x ;
 			const auto r26x = (r2x[1][0] - r2x[0][1]) * r23x ;
@@ -743,8 +757,8 @@ public:
 		}
 	}
 
-	CREF<FLT64> at (CREF<INDEX> x) const leftvalue override {
-		return fake.mQuaternion[x] ;
+	CREF<FLT64> at (CREF<INDEX> y) const leftvalue override {
+		return fake.mQuaternion[y] ;
 	}
 
 	BOOL equal (CREF<QuaternionLayout> that) const override {
@@ -795,7 +809,7 @@ public:
 	FLT64 angle () const {
 		const auto r1x = real (fake).magnitude () ;
 		const auto r2x = fake.mQuaternion[3] ;
-		return MathTool::arctan (r1x ,r2x) * 2 ;
+		return MathProc::arctan (r1x ,r2x) * 2 ;
 	}
 
 	VectorLayout vector () const override {
@@ -812,24 +826,24 @@ public:
 } ;
 
 exports VFat<QuaternionHolder> QuaternionHolder::create (VREF<QuaternionLayout> that) {
-	return VFat<QuaternionHolder> (QuaternionImplement () ,Pointer::from (that)) ;
+	return VFat<QuaternionHolder> (QuaternionImplement () ,that) ;
 }
 
 exports CFat<QuaternionHolder> QuaternionHolder::create (CREF<QuaternionLayout> that) {
-	return CFat<QuaternionHolder> (QuaternionImplement () ,Pointer::from (that)) ;
+	return CFat<QuaternionHolder> (QuaternionImplement () ,that) ;
 }
 
 template <class A>
-class PointCloudGeneric implement Proxy {
+class PointCloudImplLayout implement Proxy {
 private:
 	Array<A> mPointCloud ;
 
 public:
-	imports VREF<PointCloudGeneric> from (VREF<PointCloudLayout> that) {
+	imports VREF<PointCloudImplLayout> from (VREF<PointCloudLayout> that) {
 		return Pointer::from (that) ;
 	}
 
-	imports CREF<PointCloudGeneric> from (CREF<PointCloudLayout> that) {
+	imports CREF<PointCloudImplLayout> from (CREF<PointCloudLayout> that) {
 		return Pointer::from (that) ;
 	}
 
@@ -858,16 +872,21 @@ public:
 			for (auto &&i : iter (0 ,mPointCloud.size ())) {
 				const auto r3x = Vector (mPointCloud[i]) ;
 				const auto r4x = (r3x - r1x).normalize () ;
-				ret[0][0] += MathTool::square (r4x[0]) ;
-				ret[1][0] += r4x[0] * r4x[1] ;
-				ret[1][1] += MathTool::square (r4x[1]) ;
+				ret[0][0] += MathProc::square (r4x[0]) ;
+				ret[0][1] += r4x[0] * r4x[1] ;
+				ret[0][2] += r4x[0] * r4x[2] ;
+				ret[1][1] += MathProc::square (r4x[1]) ;
+				ret[1][2] += r4x[1] * r4x[2] ;
+				ret[2][2] += MathProc::square (r4x[2]) ;
 			}
-			ret[0][1] = ret[1][0] ;
+			ret[1][0] = ret[0][1] ;
+			ret[2][0] = ret[0][2] ;
+			ret[2][1] = ret[1][2] ;
 			return move (ret) ;
 		}) ;
-		const auto r5x = MatrixTool::solve_svd (r2x) ;
-		const auto r6x = TranslationMatrix::make (r1x[0] ,r1x[1] ,0) ;
-		const auto r7x = DiagMatrix::make (MathTool::sqrt (r5x.mS[0][0]) ,MathTool::sqrt (r5x.mS[1][1]) ,1 ,1) ;
+		const auto r5x = MatrixProc::solve_svd (r2x) ;
+		const auto r6x = TranslationMatrix::make (r1x[0] ,r1x[1] ,r1x[2]) ;
+		const auto r7x = DiagMatrix::make (MathProc::sqrt (r5x.mS[0][0]) ,MathProc::sqrt (r5x.mS[1][1]) ,MathProc::sqrt (r5x.mS[2][2]) ,1) ;
 		const auto r8x = r6x * r5x.mV * rank_fix (r7x) ;
 		return r8x ;
 	}
@@ -875,7 +894,7 @@ public:
 	Matrix rank_fix (CREF<Matrix> a) const {
 		Matrix ret = a ;
 		for (auto &&i : iter (0 ,4)) {
-			if (MathTool::inverse (ret[i][i]) != 0)
+			if (MathProc::inverse (ret[i][i]) != 0)
 				continue ;
 			ret[i][i] = 1 ;
 		}
@@ -898,8 +917,8 @@ public:
 		return r3x * r4x ;
 	}
 
-	BBOX3F bound () const {
-		BBOX3F ret ;
+	Rect3F bound () const {
+		Rect3F ret ;
 		ret.mMin.mX = +FLT64_INF ;
 		ret.mMin.mY = +FLT64_INF ;
 		ret.mMin.mZ = +FLT64_INF ;
@@ -908,12 +927,12 @@ public:
 		ret.mMax.mZ = -FLT64_INF ;
 		for (auto &&i : iter (0 ,mPointCloud.size ())) {
 			const auto r1x = Vector (mPointCloud[i]) ;
-			ret.mMin.mX = MathTool::min_of (ret.mMin.mX ,FLT32 (r1x[0])) ;
-			ret.mMin.mY = MathTool::min_of (ret.mMin.mY ,FLT32 (r1x[1])) ;
-			ret.mMin.mZ = MathTool::min_of (ret.mMin.mZ ,FLT32 (r1x[2])) ;
-			ret.mMax.mX = MathTool::max_of (ret.mMax.mX ,FLT32 (r1x[0])) ;
-			ret.mMax.mY = MathTool::max_of (ret.mMax.mY ,FLT32 (r1x[1])) ;
-			ret.mMax.mZ = MathTool::max_of (ret.mMax.mZ ,FLT32 (r1x[2])) ;
+			ret.mMin.mX = MathProc::min_of (ret.mMin.mX ,FLT32 (r1x[0])) ;
+			ret.mMin.mY = MathProc::min_of (ret.mMin.mY ,FLT32 (r1x[1])) ;
+			ret.mMin.mZ = MathProc::min_of (ret.mMin.mZ ,FLT32 (r1x[2])) ;
+			ret.mMax.mX = MathProc::max_of (ret.mMax.mX ,FLT32 (r1x[0])) ;
+			ret.mMax.mY = MathProc::max_of (ret.mMax.mY ,FLT32 (r1x[1])) ;
+			ret.mMax.mZ = MathProc::max_of (ret.mMax.mZ ,FLT32 (r1x[2])) ;
 		}
 		return move (ret) ;
 	}
@@ -921,76 +940,76 @@ public:
 
 class PointCloudImplement implement Fat<PointCloudHolder ,PointCloudLayout> {
 public:
-	void initialize (RREF<Array<POINT2F>> that) override {
+	void initialize (RREF<Array<Point2F>> that) override {
 		fake.mRank = 2 ;
 		fake.mPointCloud = move (that) ;
 	}
 
-	void initialize (RREF<Array<POINT3F>> that) override {
+	void initialize (RREF<Array<Point3F>> that) override {
 		fake.mRank = 3 ;
 		fake.mPointCloud = move (that) ;
 	}
 
 	LENGTH size () const override {
 		if (fake.mRank == 2)
-			return PointCloudGeneric<POINT2F>::from (fake).size () ;
+			return PointCloudImplLayout<Point2F>::from (fake).size () ;
 		if (fake.mRank == 3)
-			return PointCloudGeneric<POINT3F>::from (fake).size () ;
+			return PointCloudImplLayout<Point3F>::from (fake).size () ;
 		assume (FALSE) ;
 		return 0 ;
 	}
 
 	void get (CREF<INDEX> index ,VREF<Vector> item) const override {
 		if (fake.mRank == 2)
-			return PointCloudGeneric<POINT2F>::from (fake).get (index ,item) ;
+			return PointCloudImplLayout<Point2F>::from (fake).get (index ,item) ;
 		if (fake.mRank == 3)
-			return PointCloudGeneric<POINT3F>::from (fake).get (index ,item) ;
+			return PointCloudImplLayout<Point3F>::from (fake).get (index ,item) ;
 		assume (FALSE) ;
 		return ;
 	}
 
 	Vector center () const override {
 		if (fake.mRank == 2)
-			return PointCloudGeneric<POINT2F>::from (fake).center () ;
+			return PointCloudImplLayout<Point2F>::from (fake).center () ;
 		if (fake.mRank == 3)
-			return PointCloudGeneric<POINT3F>::from (fake).center () ;
+			return PointCloudImplLayout<Point3F>::from (fake).center () ;
 		assume (FALSE) ;
 		return Vector () ;
 	}
 
 	Matrix svd_matrix () const override {
 		if (fake.mRank == 2)
-			return PointCloudGeneric<POINT2F>::from (fake).svd_matrix () ;
+			return PointCloudImplLayout<Point2F>::from (fake).svd_matrix () ;
 		if (fake.mRank == 3)
-			return PointCloudGeneric<POINT3F>::from (fake).svd_matrix () ;
+			return PointCloudImplLayout<Point3F>::from (fake).svd_matrix () ;
 		assume (FALSE) ;
 		return Matrix () ;
 	}
 
 	Matrix box_matrix () const override {
 		if (fake.mRank == 2)
-			return PointCloudGeneric<POINT2F>::from (fake).box_matrix () ;
+			return PointCloudImplLayout<Point2F>::from (fake).box_matrix () ;
 		if (fake.mRank == 3)
-			return PointCloudGeneric<POINT3F>::from (fake).box_matrix () ;
+			return PointCloudImplLayout<Point3F>::from (fake).box_matrix () ;
 		assume (FALSE) ;
 		return Matrix () ;
 	}
 
-	BBOX3F bound () const override {
+	Rect3F bound () const override {
 		if (fake.mRank == 2)
-			return PointCloudGeneric<POINT2F>::from (fake).bound () ;
+			return PointCloudImplLayout<Point2F>::from (fake).bound () ;
 		if (fake.mRank == 3)
-			return PointCloudGeneric<POINT3F>::from (fake).bound () ;
+			return PointCloudImplLayout<Point3F>::from (fake).bound () ;
 		assume (FALSE) ;
-		return BBOX3F () ;
+		return Rect3F () ;
 	}
 } ;
 
 exports VFat<PointCloudHolder> PointCloudHolder::create (VREF<PointCloudLayout> that) {
-	return VFat<PointCloudHolder> (PointCloudImplement () ,Pointer::from (that)) ;
+	return VFat<PointCloudHolder> (PointCloudImplement () ,that) ;
 }
 
 exports CFat<PointCloudHolder> PointCloudHolder::create (CREF<PointCloudLayout> that) {
-	return CFat<PointCloudHolder> (PointCloudImplement () ,Pointer::from (that)) ;
+	return CFat<PointCloudHolder> (PointCloudImplement () ,that) ;
 }
 } ;

@@ -8,17 +8,17 @@
 #include "csc_type.hpp"
 #include "csc_core.hpp"
 #include "csc_basic.hpp"
-#include "csc_array.hpp"
 #include "csc_math.hpp"
+#include "csc_array.hpp"
 
 namespace CSC {
-struct COLOR3B {
+struct Color3B {
 	BYTE mB ;
 	BYTE mG ;
 	BYTE mR ;
 } ;
 
-struct COLOR4B {
+struct Color4B {
 	BYTE mB ;
 	BYTE mG ;
 	BYTE mR ;
@@ -28,7 +28,7 @@ struct COLOR4B {
 template <class A>
 class RowProxy {
 private:
-	using ITEM = REF<typeof (A (NULL)->at (0 ,0)) ,POINTER_CVR<A>> ;
+	using ITEM = REF<typeof (A (NULL)->at (0 ,0)) ,REFLECT_REF<POINTER_BASE<A>>> ;
 
 protected:
 	A mThat ;
@@ -37,7 +37,7 @@ protected:
 public:
 	implicit RowProxy () = delete ;
 
-	explicit RowProxy (XREF<A> that ,CREF<INDEX> y) :mThat (that) {
+	explicit RowProxy (XREF<POINTER_BASE<A>> that ,CREF<INDEX> y) :mThat ((&that)) {
 		mY = y ;
 	}
 
@@ -52,6 +52,10 @@ struct ImageWidth {
 	Clazz mClazz ;
 
 public:
+	LENGTH size () const {
+		return mCX * mCY ;
+	}
+
 	BOOL equal (CREF<ImageWidth> that) const {
 		if (mCX != that.mCX)
 			return FALSE ;
@@ -79,15 +83,6 @@ struct ImageLayout {
 	LENGTH mSX ;
 	LENGTH mSY ;
 	LENGTH mOffset ;
-
-public:
-	implicit ImageLayout () noexcept {
-		mCX = 0 ;
-		mCY = 0 ;
-		mSX = 0 ;
-		mSY = 0 ;
-		mOffset = 0 ;
-	}
 } ;
 
 struct ImageHolder implement Interface {
@@ -200,32 +195,32 @@ public:
 		return ImageHolder::create (thiz)->at (x ,y) ;
 	}
 
-	VREF<A> at (CREF<PIXEL> index) leftvalue {
+	VREF<A> at (CREF<Pixel> index) leftvalue {
 		return at (index.mX ,index.mY) ;
 	}
 
-	forceinline VREF<A> operator[] (CREF<PIXEL> index) leftvalue {
+	forceinline VREF<A> operator[] (CREF<Pixel> index) leftvalue {
 		return at (index) ;
 	}
 
 	forceinline RowProxy<VPTR<Image>> operator[] (CREF<INDEX> y) leftvalue {
-		return RowProxy<VPTR<Image>> ((&thiz) ,y) ;
+		return RowProxy<VPTR<Image>> (thiz ,y) ;
 	}
 
 	CREF<A> at (CREF<INDEX> x ,CREF<INDEX> y) const leftvalue {
 		return ImageHolder::create (thiz)->at (x ,y) ;
 	}
 
-	CREF<A> at (CREF<PIXEL> index) const leftvalue {
+	CREF<A> at (CREF<Pixel> index) const leftvalue {
 		return at (index.mX ,index.mY) ;
 	}
 
-	forceinline CREF<A> operator[] (CREF<PIXEL> index) const leftvalue {
+	forceinline CREF<A> operator[] (CREF<Pixel> index) const leftvalue {
 		return at (index) ;
 	}
 
 	forceinline RowProxy<CPTR<Image>> operator[] (CREF<INDEX> y) const leftvalue {
-		return RowProxy<CPTR<Image>> ((&thiz) ,y) ;
+		return RowProxy<CPTR<Image>> (thiz ,y) ;
 	}
 
 	PixelIterator range () const {
@@ -450,14 +445,14 @@ public:
 		mColor[3] = that ;
 	}
 
-	implicit Color (CREF<COLOR3B> that) {
+	implicit Color (CREF<Color3B> that) {
 		mColor[0] = FLT64 (that.mB) ;
 		mColor[1] = FLT64 (that.mG) ;
 		mColor[2] = FLT64 (that.mR) ;
 		mColor[3] = 0 ;
 	}
 
-	implicit Color (CREF<COLOR4B> that) {
+	implicit Color (CREF<Color4B> that) {
 		mColor[0] = FLT64 (that.mB) ;
 		mColor[1] = FLT64 (that.mG) ;
 		mColor[2] = FLT64 (that.mR) ;
@@ -541,51 +536,51 @@ public:
 
 	void clamp (CREF<FLT64> lb ,CREF<FLT64> rb) {
 		for (auto &&i : iter (0 ,4))
-			mColor[i] = MathTool::clamp (mColor[i] ,lb ,rb) ;
+			mColor[i] = MathProc::clamp (mColor[i] ,lb ,rb) ;
 	}
 } ;
 
-struct ImageToolPureLayout ;
+struct ImageProcPureLayout ;
 
-struct ImageToolLayout {
-	Ref<ImageToolPureLayout> mThis ;
+struct ImageProcLayout {
+	Ref<ImageProcPureLayout> mThis ;
 } ;
 
-struct ImageToolHolder implement Interface {
-	imports VFat<ImageToolHolder> create (VREF<ImageToolLayout> that) ;
-	imports CFat<ImageToolHolder> create (CREF<ImageToolLayout> that) ;
+struct ImageProcHolder implement Interface {
+	imports VFat<ImageProcHolder> create (VREF<ImageProcLayout> that) ;
+	imports CFat<ImageProcHolder> create (CREF<ImageProcLayout> that) ;
 
 	virtual void initialize () = 0 ;
-	virtual ImageLayout load (CREF<String> file) const = 0 ;
-	virtual void save (CREF<String> file ,CREF<ImageLayout> image) const = 0 ;
-	virtual COLOR3B sampler (TYPEID<COLOR3B> ,CREF<ImageLayout> image ,CREF<FLT64> x ,CREF<FLT64> y) const = 0 ;
-	virtual COLOR4B sampler (TYPEID<COLOR4B> ,CREF<ImageLayout> image ,CREF<FLT64> x ,CREF<FLT64> y) const = 0 ;
+	virtual ImageLayout load (CREF<String<STR>> file) const = 0 ;
+	virtual void save (CREF<String<STR>> file ,CREF<ImageLayout> image) const = 0 ;
+	virtual Color3B sampler (TYPE<Color3B> ,CREF<ImageLayout> image ,CREF<FLT64> x ,CREF<FLT64> y) const = 0 ;
+	virtual Color4B sampler (TYPE<Color4B> ,CREF<ImageLayout> image ,CREF<FLT64> x ,CREF<FLT64> y) const = 0 ;
 } ;
 
-class ImageTool implement ImageToolLayout {
+class ImageProc implement ImageProcLayout {
 protected:
-	using ImageToolLayout::mThis ;
+	using ImageProcLayout::mThis ;
 
 public:
-	imports CREF<ImageTool> instance () {
+	imports CREF<ImageProc> instance () {
 		return memorize ([&] () {
-			ImageTool ret ;
-			ImageToolHolder::create (ret)->initialize () ;
+			ImageProc ret ;
+			ImageProcHolder::create (ret)->initialize () ;
 			return move (ret) ;
 		}) ;
 	}
 
-	imports ImageLayout load (CREF<String> file) {
-		return ImageToolHolder::create (instance ())->load (file) ;
+	imports ImageLayout load (CREF<String<STR>> file) {
+		return ImageProcHolder::create (instance ())->load (file) ;
 	}
 
-	imports void save (CREF<String> file ,CREF<ImageLayout> image) {
-		return ImageToolHolder::create (instance ())->save (file ,image) ;
+	imports void save (CREF<String<STR>> file ,CREF<ImageLayout> image) {
+		return ImageProcHolder::create (instance ())->save (file ,image) ;
 	}
 
 	template <class ARG1>
 	imports ARG1 sampler (CREF<Image<ARG1>> image ,CREF<FLT64> x ,CREF<FLT64> y) {
-		return ImageToolHolder::create (instance ())->sampler (TYPE<ARG1>::expr ,image ,x ,y) ;
+		return ImageProcHolder::create (instance ())->sampler (TYPE<ARG1>::expr ,image ,x ,y) ;
 	}
 } ;
 
@@ -646,7 +641,7 @@ public:
 } ;
 
 struct DisjointLayout {
-	Pin<Array<INDEX>> mTable ;
+	SharedRef<Array<INDEX>> mTable ;
 } ;
 
 struct DisjointHolder implement Interface {

@@ -8,30 +8,30 @@
 #include "csc_type.hpp"
 #include "csc_core.hpp"
 #include "csc_basic.hpp"
-#include "csc_array.hpp"
 #include "csc_math.hpp"
+#include "csc_array.hpp"
 #include "csc_image.hpp"
 
 namespace CSC {
-struct POINT2F {
+struct Point2F {
 	FLT32 mX ;
 	FLT32 mY ;
 } ;
 
-struct POINT3F {
+struct Point3F {
 	FLT32 mX ;
 	FLT32 mY ;
 	FLT32 mZ ;
 } ;
 
-struct BBOX2F {
-	POINT2F mMin ;
-	POINT2F mMax ;
+struct Rect2F {
+	Point2F mMin ;
+	Point2F mMax ;
 } ;
 
-struct BBOX3F {
-	POINT3F mMin ;
-	POINT3F mMax ;
+struct Rect3F {
+	Point3F mMin ;
+	Point3F mMax ;
 } ;
 
 struct VectorLayout {
@@ -51,11 +51,11 @@ struct VectorHolder implement Interface {
 	imports CFat<VectorHolder> create (CREF<VectorLayout> that) ;
 
 	virtual void initialize (CREF<FLT64> x ,CREF<FLT64> y ,CREF<FLT64> z ,CREF<FLT64> w) = 0 ;
-	virtual void initialize (CREF<PIXEL> point) = 0 ;
-	virtual void initialize (CREF<POINT2F> point) = 0 ;
-	virtual void initialize (CREF<POINT3F> point) = 0 ;
-	virtual POINT2F xy () const = 0 ;
-	virtual POINT3F xyz () const = 0 ;
+	virtual void initialize (CREF<Pixel> point) = 0 ;
+	virtual void initialize (CREF<Point2F> point) = 0 ;
+	virtual void initialize (CREF<Point3F> point) = 0 ;
+	virtual Point2F xy () const = 0 ;
+	virtual Point3F xyz () const = 0 ;
 	virtual VREF<FLT64> at (CREF<INDEX> y) leftvalue = 0 ;
 	virtual CREF<FLT64> at (CREF<INDEX> y) const leftvalue = 0 ;
 	virtual BOOL equal (CREF<VectorLayout> that) const = 0 ;
@@ -76,8 +76,6 @@ struct VectorHolder implement Interface {
 	virtual VectorLayout homogenize () const = 0 ;
 } ;
 
-class Matrix ;
-
 class Vector implement VectorLayout {
 public:
 	implicit Vector () = default ;
@@ -86,15 +84,15 @@ public:
 		VectorHolder::create (thiz)->initialize (x ,y ,z ,w) ;
 	}
 
-	explicit Vector (CREF<PIXEL> point) {
+	explicit Vector (CREF<Pixel> point) {
 		VectorHolder::create (thiz)->initialize (point) ;
 	}
 
-	explicit Vector (CREF<POINT2F> point) {
+	explicit Vector (CREF<Point2F> point) {
 		VectorHolder::create (thiz)->initialize (point) ;
 	}
 
-	explicit Vector (CREF<POINT3F> point) {
+	explicit Vector (CREF<Point3F> point) {
 		VectorHolder::create (thiz)->initialize (point) ;
 	}
 
@@ -128,11 +126,11 @@ public:
 		}) ;
 	}
 
-	POINT2F xy () const {
+	Point2F xy () const {
 		return VectorHolder::create (thiz)->xy () ;
 	}
 
-	POINT3F xyz () const {
+	Point3F xyz () const {
 		return VectorHolder::create (thiz)->xyz () ;
 	}
 
@@ -252,14 +250,12 @@ public:
 		return dot (that) ;
 	}
 
-	template <class Matrix = CSC::Matrix>
-	Vector mul (CREF<Matrix> that) const {
+	Vector mul (CREF<MatrixLayout> that) const {
 		VectorLayout ret = VectorHolder::create (thiz)->mul (that) ;
 		return move (keep[TYPE<Vector>::expr] (ret)) ;
 	}
 
-	template <class Matrix = CSC::Matrix>
-	forceinline Vector operator* (CREF<Matrix> that) const {
+	forceinline Vector operator* (CREF<MatrixLayout> that) const {
 		return mul (that) ;
 	}
 
@@ -365,36 +361,44 @@ public:
 		}) ;
 	}
 
+	imports CREF<Matrix> axis_w () {
+		return memorize ([&] () {
+			const auto r1x = Vector::zero () ;
+			const auto r2x = Vector::axis_w () ;
+			return Matrix (r1x ,r1x ,r1x ,r2x) ;
+		}) ;
+	}
+
 	VREF<FLT64> at (CREF<INDEX> x ,CREF<INDEX> y) leftvalue {
 		return MatrixHolder::create (thiz)->at (x ,y) ;
 	}
 
-	VREF<FLT64> at (CREF<PIXEL> index) leftvalue {
+	VREF<FLT64> at (CREF<Pixel> index) leftvalue {
 		return at (index.mX ,index.mY) ;
 	}
 
-	forceinline VREF<FLT64> operator[] (CREF<PIXEL> index) leftvalue {
+	forceinline VREF<FLT64> operator[] (CREF<Pixel> index) leftvalue {
 		return at (index) ;
 	}
 
 	forceinline RowProxy<VPTR<Matrix>> operator[] (CREF<INDEX> y) leftvalue {
-		return RowProxy<VPTR<Matrix>> ((&thiz) ,y) ;
+		return RowProxy<VPTR<Matrix>> (thiz ,y) ;
 	}
 
 	CREF<FLT64> at (CREF<INDEX> x ,CREF<INDEX> y) const leftvalue {
 		return MatrixHolder::create (thiz)->at (x ,y) ;
 	}
 
-	CREF<FLT64> at (CREF<PIXEL> index) const leftvalue {
+	CREF<FLT64> at (CREF<Pixel> index) const leftvalue {
 		return at (index.mX ,index.mY) ;
 	}
 
-	forceinline CREF<FLT64> operator[] (CREF<PIXEL> index) const leftvalue {
+	forceinline CREF<FLT64> operator[] (CREF<Pixel> index) const leftvalue {
 		return at (index) ;
 	}
 
 	forceinline RowProxy<CPTR<Matrix>> operator[] (CREF<INDEX> y) const leftvalue {
-		return RowProxy<CPTR<Matrix>> ((&thiz) ,y) ;
+		return RowProxy<CPTR<Matrix>> (thiz ,y) ;
 	}
 
 	BOOL equal (CREF<Matrix> that) const {
@@ -558,55 +562,6 @@ public:
 	}
 } ;
 
-struct XTR_RESULT {
-	Matrix mX ;
-	Matrix mT ;
-	Matrix mR ;
-} ;
-
-struct SVD_RESULT {
-	Matrix mU ;
-	Matrix mS ;
-	Matrix mV ;
-} ;
-
-struct MatrixToolPureLayout ;
-
-struct MatrixToolLayout {
-	Ref<MatrixToolPureLayout> mThis ;
-} ;
-
-struct MatrixToolHolder implement Interface {
-	imports VFat<MatrixToolHolder> create (VREF<MatrixToolLayout> that) ;
-	imports CFat<MatrixToolHolder> create (CREF<MatrixToolLayout> that) ;
-
-	virtual void initialize () = 0 ;
-	virtual XTR_RESULT solve_xtr (CREF<Matrix> a) const = 0 ;
-	virtual SVD_RESULT solve_svd (CREF<Matrix> a) const = 0 ;
-} ;
-
-class MatrixTool implement MatrixToolLayout {
-protected:
-	using MatrixToolLayout::mThis ;
-
-public:
-	imports CREF<MatrixTool> instance () {
-		return memorize ([&] () {
-			MatrixTool ret ;
-			MatrixToolHolder::create (ret)->initialize () ;
-			return move (ret) ;
-		}) ;
-	}
-
-	imports XTR_RESULT solve_xtr (CREF<Matrix> a) {
-		return MatrixToolHolder::create (instance ())->solve_xtr (a) ;
-	}
-
-	imports SVD_RESULT solve_svd (CREF<Matrix> a) {
-		return MatrixToolHolder::create (instance ())->solve_svd (a) ;
-	}
-} ;
-
 struct MakeMatrixHolder implement Interface {
 	imports VFat<MakeMatrixHolder> create (VREF<MatrixLayout> that) ;
 	imports CFat<MakeMatrixHolder> create (CREF<MatrixLayout> that) ;
@@ -678,7 +633,7 @@ struct ProjectionMatrix implement Proxy {
 	}
 } ;
 
-struct ViewMatrixRotation {
+struct ViewMatrixOption {
 	enum {
 		XY ,
 		XZ ,
@@ -693,37 +648,37 @@ struct ViewMatrixRotation {
 struct ViewMatrix implement Proxy {
 	imports Matrix make_xy (CREF<Vector> x ,CREF<Vector> y) {
 		Matrix ret ;
-		MakeMatrixHolder::create (ret)->ViewMatrix_initialize (x ,y ,ViewMatrixRotation::XY) ;
+		MakeMatrixHolder::create (ret)->ViewMatrix_initialize (x ,y ,ViewMatrixOption::XY) ;
 		return move (ret) ;
 	}
 
 	imports Matrix make_xz (CREF<Vector> x ,CREF<Vector> z) {
 		Matrix ret ;
-		MakeMatrixHolder::create (ret)->ViewMatrix_initialize (x ,z ,ViewMatrixRotation::XZ) ;
+		MakeMatrixHolder::create (ret)->ViewMatrix_initialize (x ,z ,ViewMatrixOption::XZ) ;
 		return move (ret) ;
 	}
 
 	imports Matrix make_yx (CREF<Vector> y ,CREF<Vector> x) {
 		Matrix ret ;
-		MakeMatrixHolder::create (ret)->ViewMatrix_initialize (y ,x ,ViewMatrixRotation::YX) ;
+		MakeMatrixHolder::create (ret)->ViewMatrix_initialize (y ,x ,ViewMatrixOption::YX) ;
 		return move (ret) ;
 	}
 
 	imports Matrix make_yz (CREF<Vector> y ,CREF<Vector> z) {
 		Matrix ret ;
-		MakeMatrixHolder::create (ret)->ViewMatrix_initialize (y ,z ,ViewMatrixRotation::YZ) ;
+		MakeMatrixHolder::create (ret)->ViewMatrix_initialize (y ,z ,ViewMatrixOption::YZ) ;
 		return move (ret) ;
 	}
 
 	imports Matrix make_zx (CREF<Vector> z ,CREF<Vector> x) {
 		Matrix ret ;
-		MakeMatrixHolder::create (ret)->ViewMatrix_initialize (z ,x ,ViewMatrixRotation::ZX) ;
+		MakeMatrixHolder::create (ret)->ViewMatrix_initialize (z ,x ,ViewMatrixOption::ZX) ;
 		return move (ret) ;
 	}
 
 	imports Matrix make_zy (CREF<Vector> z ,CREF<Vector> y) {
 		Matrix ret ;
-		MakeMatrixHolder::create (ret)->ViewMatrix_initialize (z ,y ,ViewMatrixRotation::ZY) ;
+		MakeMatrixHolder::create (ret)->ViewMatrix_initialize (z ,y ,ViewMatrixOption::ZY) ;
 		return move (ret) ;
 	}
 } ;
@@ -744,24 +699,73 @@ struct SymmetryMatrix implement Proxy {
 	}
 } ;
 
-class WithInvMatrix {
+class BiMatrix {
 protected:
-	BoxBuffer<Matrix ,RANK2> mMat ;
+	BoxBuffer<Matrix ,RANK2> mBiMatrix ;
 
 public:
-	implicit WithInvMatrix () = default ;
+	implicit BiMatrix () = default ;
 
-	implicit WithInvMatrix (CREF<Matrix> that) {
-		mMat[0] = that ;
-		mMat[1] = mMat[0].inverse () ;
+	implicit BiMatrix (CREF<Matrix> that) {
+		mBiMatrix[0] = that ;
+		mBiMatrix[1] = mBiMatrix[0].inverse () ;
 	}
 
 	CREF<Matrix> at (CREF<INDEX> index) const leftvalue {
-		return mMat[index] ;
+		return mBiMatrix[index] ;
 	}
 
 	forceinline CREF<Matrix> operator[] (CREF<INDEX> index) const leftvalue {
 		return at (index) ;
+	}
+} ;
+
+struct XTRResult {
+	Matrix mX ;
+	Matrix mT ;
+	Matrix mR ;
+} ;
+
+struct SVDResult {
+	Matrix mU ;
+	Matrix mS ;
+	Matrix mV ;
+} ;
+
+struct MatrixProcPureLayout ;
+
+struct MatrixProcLayout {
+	Ref<MatrixProcPureLayout> mThis ;
+} ;
+
+struct MatrixProcHolder implement Interface {
+	imports VFat<MatrixProcHolder> create (VREF<MatrixProcLayout> that) ;
+	imports CFat<MatrixProcHolder> create (CREF<MatrixProcLayout> that) ;
+
+	virtual void initialize () = 0 ;
+	virtual XTRResult solve_xtr (CREF<Matrix> a) const = 0 ;
+	virtual SVDResult solve_svd (CREF<Matrix> a) const = 0 ;
+} ;
+
+class MatrixProc implement MatrixProcLayout {
+protected:
+	using MatrixProcLayout::mThis ;
+
+public:
+	imports CREF<MatrixProc> instance () {
+		return memorize ([&] () {
+			MatrixProc ret ;
+			MatrixProcHolder::create (ret)->initialize () ;
+			return move (ret) ;
+		}) ;
+	}
+
+	imports XTRResult solve_xtr (CREF<Matrix> a) {
+		return MatrixProcHolder::create (instance ())->solve_xtr (a) ;
+	}
+
+	imports SVDResult solve_svd (CREF<Matrix> a) {
+		return MatrixProcHolder::create (instance ())->solve_svd (a) ;
 	}
 } ;
 
@@ -771,7 +775,7 @@ struct QuaternionHolder implement Interface {
 
 	virtual void initialize (CREF<FLT64> x ,CREF<FLT64> y ,CREF<FLT64> z ,CREF<FLT64> w) = 0 ;
 	virtual void initialize (CREF<MatrixLayout> that) = 0 ;
-	virtual CREF<FLT64> at (CREF<INDEX> x) const leftvalue = 0 ;
+	virtual CREF<FLT64> at (CREF<INDEX> y) const leftvalue = 0 ;
 	virtual BOOL equal (CREF<QuaternionLayout> that) const = 0 ;
 	virtual FLAG compr (CREF<QuaternionLayout> that) const = 0 ;
 	virtual void visit (CREF<Visitor> visitor) const = 0 ;
@@ -878,14 +882,14 @@ struct PointCloudHolder implement Interface {
 	imports VFat<PointCloudHolder> create (VREF<PointCloudLayout> that) ;
 	imports CFat<PointCloudHolder> create (CREF<PointCloudLayout> that) ;
 
-	virtual void initialize (RREF<Array<POINT2F>> that) = 0 ;
-	virtual void initialize (RREF<Array<POINT3F>> that) = 0 ;
+	virtual void initialize (RREF<Array<Point2F>> that) = 0 ;
+	virtual void initialize (RREF<Array<Point3F>> that) = 0 ;
 	virtual LENGTH size () const = 0 ;
 	virtual void get (CREF<INDEX> index ,VREF<Vector> item) const = 0 ;
 	virtual Vector center () const = 0 ;
 	virtual Matrix svd_matrix () const = 0 ;
 	virtual Matrix box_matrix () const = 0 ;
-	virtual BBOX3F bound () const = 0 ;
+	virtual Rect3F bound () const = 0 ;
 } ;
 
 class PointCloud implement PointCloudLayout {
@@ -896,19 +900,19 @@ protected:
 public:
 	implicit PointCloud () = default ;
 
-	explicit PointCloud (CREF<Array<POINT2F>> that) {
+	explicit PointCloud (CREF<Array<Point2F>> that) {
 		PointCloudHolder::create (thiz)->initialize (move (that)) ;
 	}
 
-	explicit PointCloud (RREF<Array<POINT2F>> that) {
+	explicit PointCloud (RREF<Array<Point2F>> that) {
 		PointCloudHolder::create (thiz)->initialize (move (that)) ;
 	}
 
-	explicit PointCloud (CREF<Array<POINT3F>> that) {
+	explicit PointCloud (CREF<Array<Point3F>> that) {
 		PointCloudHolder::create (thiz)->initialize (move (that)) ;
 	}
 
-	explicit PointCloud (RREF<Array<POINT3F>> that) {
+	explicit PointCloud (RREF<Array<Point3F>> that) {
 		PointCloudHolder::create (thiz)->initialize (move (that)) ;
 	}
 
@@ -938,7 +942,7 @@ public:
 		return PointCloudHolder::create (thiz)->box_matrix () ;
 	}
 
-	BBOX3F bound () const {
+	Rect3F bound () const {
 		return PointCloudHolder::create (thiz)->bound () ;
 	}
 } ;

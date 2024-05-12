@@ -8,19 +8,19 @@
 
 	<!--csc_type.hpp-->
 
-	<Type Name="CSC::Interface" Inheritable="true">
+	<Type Name="CSC::Interface">
 		<Expand HideRawView="true">
 			<ExpandedItem>__vfptr</ExpandedItem>
 		</Expand>
 	</Type>
 
-	<Type Name="CSC::Unknown" Inheritable="true">
+	<Type Name="CSC::Unknown">
 		<Expand HideRawView="true">
 			<ExpandedItem>__vfptr</ExpandedItem>
 		</Expand>
 	</Type>
 
-	<Type Name="CSC::TEMP&lt;*&gt;">
+	<Type Name="CSC::Temp&lt;*&gt;">
 		<Expand HideRawView="true">
 			<ExpandedItem>($T1*)&amp;mUnused</ExpandedItem>
 		</Expand>
@@ -49,7 +49,6 @@
 	<Type Name="CSC::Box&lt;*&gt;">
 		<DisplayString Condition="mHolder==0">{{???}}</DisplayString>
 		<Expand HideRawView="true">
-			<Item Name="[+]" Condition="mHolder==0">*(int*)0</Item>
 			<Item Name="[+]" Condition="mHolder!=0">*($T1*)&amp;mValue</Item>
 		</Expand>
 	</Type>
@@ -63,7 +62,6 @@
 	<Type Name="CSC::Ref&lt;*&gt;">
 		<DisplayString Condition="mPointer==0">{{???}}</DisplayString>
 		<Expand HideRawView="true">
-			<Item Name="[+]" Condition="mPointer==0">*(int*)0</Item>
 			<Item Name="[+]" Condition="mPointer!=0">*($T1*)mPointer</Item>
 		</Expand>
 	</Type>
@@ -98,7 +96,6 @@
 	<Type Name="CSC::AutoRef&lt;*&gt;">
 		<DisplayString Condition="mThis.mPointer==0">{{???}}</DisplayString>
 		<Expand HideRawView="true">
-			<Item Name="[+]" Condition="mThis.mPointer==0">*(int*)0</Item>
 			<Item Name="[+]" Condition="mThis.mPointer!=0">*($T1*)mPointer</Item>
 		</Expand>
 	</Type>
@@ -106,7 +103,6 @@
 	<Type Name="CSC::SharedRef&lt;*&gt;">
 		<DisplayString Condition="mThis.mPointer==0">{{???}}</DisplayString>
 		<Expand HideRawView="true">
-			<Item Name="[+]" Condition="mThis.mPointer==0">*(int*)0</Item>
 			<Item Name="[+]" Condition="mThis.mPointer!=0">*($T1*)mPointer</Item>
 		</Expand>
 	</Type>
@@ -114,22 +110,22 @@
 	<Type Name="CSC::UniqueRef&lt;*&gt;">
 		<DisplayString Condition="mThis.mPointer==0">{{???}}</DisplayString>
 		<Expand HideRawView="true">
-			<Item Name="[+]" Condition="mThis.mPointer==0">*(int*)0</Item>
 			<Item Name="[+]" Condition="mThis.mPointer!=0">*($T1*)mPointer</Item>
 		</Expand>
 	</Type>
 
 	<Type Name="CSC::BoxBuffer&lt;*&gt;">
 		<Expand HideRawView="true">
-			<Item Name="[size]">mSize</Item>
-			<ExpandedItem>mStorage</ExpandedItem>
+			<Item Name="[size]">0</Item>
+			<ExpandedItem>mBuffer.m1st</ExpandedItem>
 		</Expand>
 	</Type>
 
 	<Type Name="CSC::RefBufferWrap&lt;*&gt;">
 		<Expand HideRawView="true">
 			<ArrayItems>
-				<Size>mSize</Size>
+				<Size Condition="mThis.mPointer==0">0</Size>
+				<Size Condition="mThis.mPointer!=0">mSize</Size>
 				<ValuePointer>($T1*)mBuffer</ValuePointer>
 			</ArrayItems>
 		</Expand>
@@ -140,11 +136,13 @@
 			<Item Name="[size]" Condition="mThis.mPointer==0">0</Item>
 			<Item Name="[size]" Condition="mThis.mPointer!=0">mSize</Item>
 			<ArrayItems Condition="mSize&lt;10">
-				<Size>mSize</Size>
+				<Size Condition="mThis.mPointer==0">0</Size>
+				<Size Condition="mThis.mPointer!=0">mSize</Size>
 				<ValuePointer>($T1*)mBuffer</ValuePointer>
 			</ArrayItems>
 			<ArrayItems Condition="mSize&gt;=10">
-				<Size>10</Size>
+				<Size Condition="mThis.mPointer==0">0</Size>
+				<Size Condition="mThis.mPointer!=0">10</Size>
 				<ValuePointer>($T1*)mBuffer</ValuePointer>
 			</ArrayItems>
 			<Item Name="[+]" Condition="mSize&gt;=10">(CSC::RefBufferWrap&lt;$T1&gt;*)this</Item>
@@ -175,9 +173,8 @@
 		</Expand>
 	</Type>
 
-	<Type Name="CSC::PAIR&lt;*&gt;">
+	<Type Name="CSC::TupleWrap2&lt;*&gt;">
 		<Expand HideRawView="true">
-			<ExpandedItem Condition="mNode.mNext!=-2">*(int*)0</ExpandedItem>
 			<ExpandedItem Condition="mNode.mNext==-2">this</ExpandedItem>
 		</Expand>
 	</Type>
@@ -186,7 +183,7 @@
 		<Expand HideRawView="true">
 			<ArrayItems>
 				<Size>mAllocator.mSize</Size>
-				<ValuePointer>(CSC::PAIR&lt;CSC::TEMP&lt;$T1&gt;,$T2&gt;*)mAllocator.mBuffer</ValuePointer>
+				<ValuePointer>(CSC::TupleWrap2&lt;CSC::Temp&lt;$T1&gt;,$T2&gt;*)mAllocator.mBuffer</ValuePointer>
 			</ArrayItems>
 		</Expand>
 	</Type>
@@ -199,11 +196,11 @@
 			<Item Name="[length]" Condition="mAllocator.mThis.mPointer!=0">mLength</Item>
 			<ArrayItems Condition="mAllocator.mSize&lt;10">
 				<Size>mAllocator.mSize</Size>
-				<ValuePointer>(CSC::PAIR&lt;CSC::TEMP&lt;$T1&gt;,$T2&gt;*)mAllocator.mBuffer</ValuePointer>
+				<ValuePointer>(CSC::TupleWrap2&lt;CSC::Temp&lt;$T1&gt;,$T2&gt;*)mAllocator.mBuffer</ValuePointer>
 			</ArrayItems>
 			<ArrayItems Condition="mAllocator.mSize&gt;=10">
 				<Size>10</Size>
-				<ValuePointer>(CSC::PAIR&lt;CSC::TEMP&lt;$T1&gt;,$T2&gt;*)mAllocator.mBuffer</ValuePointer>
+				<ValuePointer>(CSC::TupleWrap2&lt;CSC::Temp&lt;$T1&gt;,$T2&gt;*)mAllocator.mBuffer</ValuePointer>
 			</ArrayItems>
 			<Item Name="[+]" Condition="mAllocator.mSize&gt;=10">(CSC::AllocatorWrap&lt;$T1,$T2&gt;*)this</Item>
 		</Expand>
@@ -217,7 +214,7 @@
 		</Expand>
 	</Type>
 
-	<Type Name="CSC::String">
+	<Type Name="CSC::String&lt;*&gt;">
 		<DisplayString Condition="mString.mStep==1">{(char8_t*)mString.mBuffer,s8}</DisplayString>
 		<DisplayString Condition="mString.mStep==2">{(char16_t*)mString.mBuffer,su}</DisplayString>
 		<DisplayString Condition="mString.mStep==4">{(char32_t*)mString.mBuffer,s32}</DisplayString>
@@ -241,7 +238,7 @@
 		<Expand HideRawView="true">
 			<Item Name="[read]">mRead</Item>
 			<Item Name="[write]">mWrite</Item>
-			<ExpandedItem>(CSC::RefBuffer&lt;CSC::PAIR&lt;$T1,CSC::PriorityNode&gt; &gt;*)&amp;mPriority</ExpandedItem>
+			<ExpandedItem>(CSC::RefBuffer&lt;CSC::TupleWrap2&lt;$T1,CSC::PriorityNode&gt; &gt;*)&amp;mPriority</ExpandedItem>
 		</Expand>
 	</Type>
 
@@ -264,7 +261,7 @@
 		<Expand HideRawView="true">
 			<Item Name="[read]">mRead</Item>
 			<Item Name="[write]">mWrite</Item>
-			<ExpandedItem>(CSC::RefBuffer&lt;CSC::PAIR&lt;$T1,CSC::SortedListNode&gt; &gt;*)&amp;mList</ExpandedItem>
+			<ExpandedItem>(CSC::RefBuffer&lt;CSC::TupleWrap2&lt;$T1,CSC::SortedListNode&gt; &gt;*)&amp;mList</ExpandedItem>
 		</Expand>
 	</Type>
 
@@ -291,21 +288,21 @@
 
 	<!--csc_matrix.hpp-->
 
-	<Type Name="CSC::Vector&lt;*&gt;">
+	<Type Name="CSC::Vector">
 		<Expand HideRawView="true">
-			<ExpandedItem>($T1(*)[4][1])&amp;mVector</ExpandedItem>
+			<ExpandedItem>(double(*)[4][1])&amp;mVector</ExpandedItem>
 		</Expand>
 	</Type>
 
-	<Type Name="CSC::Matrix&lt;*&gt;">
+	<Type Name="CSC::Matrix">
 		<Expand HideRawView="true">
-			<ExpandedItem>($T1(*)[4][4])&amp;mMatrix</ExpandedItem>
+			<ExpandedItem>(double(*)[4][4])&amp;mMatrix</ExpandedItem>
 		</Expand>
 	</Type>
 
-	<Type Name="CSC::Quaternion&lt;*&gt;">
+	<Type Name="CSC::Quaternion">
 		<Expand HideRawView="true">
-			<ExpandedItem>($T1(*)[4])&amp;mQuaternion</ExpandedItem>
+			<ExpandedItem>(double(*)[4])&amp;mQuaternion</ExpandedItem>
 		</Expand>
 	</Type>
 

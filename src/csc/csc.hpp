@@ -12,10 +12,10 @@
 #define __CSC_VER_RELEASE__
 #endif
 
-#ifdef __clang__
-#define __CSC_COMPILER_CLANG__
-#elif defined __GNUC__
+#if defined __GNUC__
 #define __CSC_COMPILER_GNUC__
+#elif defined __clang__
+#define __CSC_COMPILER_CLANG__
 #elif defined _MSC_VER
 #define __CSC_COMPILER_MSVC__
 #else
@@ -126,7 +126,9 @@
 #pragma GCC diagnostic ignored "-Wunknown-pragmas"
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 #pragma GCC diagnostic ignored "-Wunused-function"
-#pragma GCC diagnostic ignored "-Wmicrosoft-template"
+#pragma GCC diagnostic ignored "-Wclass-memaccess"
+#pragma GCC diagnostic ignored "-Wuninitialized"
+#pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
 #endif
 
 #ifdef __CSC_COMPILER_CLANG__
@@ -140,13 +142,35 @@
 #ifdef __CSC_COMPILER_GNUC__
 //@fatal: fuck gnuc
 #include <type_traits>
-#define __is_constructible(...) std::is_constructible<__VA_ARGS__>::item
-#define __is_nothrow_constructible(...) std::is_nothrow_constructible<__VA_ARGS__>::item
-#define __is_nothrow_destructible(...) std::is_nothrow_destructible<__VA_ARGS__>::item
-#define __is_assignable(...) std::is_assignable<__VA_ARGS__>::item
-#define __is_convertible_to(...) std::is_convertible<__VA_ARGS__>::item
+#define __is_constructible(...) std::is_constructible<__VA_ARGS__>::value
+#define __is_nothrow_constructible(...) std::is_nothrow_constructible<__VA_ARGS__>::value
+#define __is_nothrow_destructible(...) std::is_nothrow_destructible<__VA_ARGS__>::value
+#define __is_assignable(...) std::is_assignable<__VA_ARGS__>::value
+#define __is_convertible_to(...) std::is_convertible<__VA_ARGS__>::value
 #define __is_trivially_constructible __has_trivial_constructor
 #define __is_trivially_destructible __has_trivial_destructor
+#endif
+
+#ifdef __CSC_COMPILER_MSVC__
+class type_info ;
+
+namespace std {
+using ::type_info ;
+} ;
+#endif
+
+#ifdef __CSC_COMPILER_GNUC__
+namespace std {
+class type_info ;
+} ;
+#endif
+
+#ifdef __CSC_COMPILER_CLANG__
+class type_info ;
+
+namespace std {
+using ::type_info ;
+} ;
 #endif
 
 namespace std {
@@ -210,7 +234,7 @@ struct is_trivially_default_constructible :integral_constant<bool ,__has_trivial
 #endif
 
 #ifndef __macro_as
-#define __macro_as(...) ; require (CSC::IS_DEFAULT<__VA_ARGS__>) ;
+#define __macro_as(...) ; ;
 #endif
 
 #ifndef __macro_anonymous
@@ -219,11 +243,11 @@ struct is_trivially_default_constructible :integral_constant<bool ,__has_trivial
 
 #ifndef __macro_slice
 #ifdef __CSC_CONFIG_STRA__
-#define __macro_slice(...) CSC::Slice<CSC::STR> (__VA_ARGS__)
+#define __macro_slice(...) CSC::Slice (__VA_ARGS__)
 #endif
 
 #ifdef __CSC_CONFIG_STRW__
-#define __macro_slice(...) CSC::Slice<CSC::STR> (__macro_cat (L ,__VA_ARGS__))
+#define __macro_slice(...) CSC::Slice (__macro_cat (L ,__VA_ARGS__))
 #endif
 #endif
 
@@ -241,27 +265,41 @@ struct is_trivially_default_constructible :integral_constant<bool ,__has_trivial
 #endif
 #endif
 
-#ifndef __macro_assume
+#ifndef __macro_funcion
 #ifdef __CSC_COMPILER_MSVC__
-#define __macro_assume(...) do { if (__VA_ARGS__) break ; CSC::Exception (slice (__macro_str (__VA_ARGS__)) ,CSC::Slice<CSC::STR> (__FUNCSIG__) ,slice (__FILE__) ,slice (__macro_str (__LINE__))).raise () ; } while (false)
+#define __macro_funcion __FUNCSIG__
 #endif
 
 #ifdef __CSC_COMPILER_GNUC__
-#define __macro_assume(...) do { if (__VA_ARGS__) break ; CSC::Exception (slice (__macro_str (__VA_ARGS__)) ,CSC::Slice<CSC::STR> (__PRETTY_FUNCTION__) ,slice (__FILE__) ,slice (__macro_str (__LINE__))).raise () ; } while (false)
+#define __macro_funcion __PRETTY_FUNCTION__
 #endif
 
 #ifdef __CSC_COMPILER_CLANG__
-#define __macro_assume(...) do { if (__VA_ARGS__) break ; CSC::Exception (slice (__macro_str (__VA_ARGS__)) ,CSC::Slice<CSC::STR> (__PRETTY_FUNCTION__) ,slice (__FILE__) ,slice (__macro_str (__LINE__))).raise () ; } while (false)
+#define __macro_funcion __PRETTY_FUNCTION__
+#endif
+#endif
+
+#ifndef __macro_assume
+#ifdef __CSC_VER_DEBUG__
+#define __macro_assume(...) do { if (__VA_ARGS__) break ; CSC::Exception (slice (__macro_str (__VA_ARGS__)) ,CSC::Slice (__macro_funcion) ,slice (__FILE__) ,slice (__macro_str (__LINE__))).raise () ; } while (false)
+#endif
+
+#ifdef __CSC_VER_UNITTEST__
+#define __macro_assume(...) do { if (__VA_ARGS__) break ; CSC::Exception (slice (__macro_str (__VA_ARGS__)) ,CSC::Slice (__macro_funcion) ,slice (__FILE__) ,slice (__macro_str (__LINE__))).raise () ; } while (false)
+#endif
+
+#ifdef __CSC_VER_RELEASE__
+#define __macro_assume(...) do { if (__VA_ARGS__) break ; CSC::Exception (slice (__macro_str (__VA_ARGS__)) ,CSC::Slice (__FUNCTION__)).raise () ; } while (false)
 #endif
 #endif
 
 #ifndef __macro_barrier
 #ifdef __CSC_VER_DEBUG__
-#define __macro_barrier(...) do { CSC::inline_barrier (TYPE<ENUM<__LINE__>>::expr ,__VA_ARGS__) ; } while (false)
+#define __macro_barrier(...) do { CSC::inline_barrier (TYPE<ENUM<__LINE__>>::expr ,(&__VA_ARGS__)) ; } while (false)
 #endif
 
 #ifdef __CSC_VER_UNITTEST__
-#define __macro_barrier(...) do { CSC::inline_barrier (TYPE<ENUM<__LINE__>>::expr ,__VA_ARGS__) ; } while (false)
+#define __macro_barrier(...) do { CSC::inline_barrier (TYPE<ENUM<__LINE__>>::expr ,(&__VA_ARGS__)) ; } while (false)
 #endif
 
 #ifdef __CSC_VER_RELEASE__
@@ -289,6 +327,14 @@ using csc_bool_t = bool ;
 
 using csc_int32_t = int ;
 using csc_int64_t = DEF<long long> ;
+
+#ifdef __CSC_CONFIG_VAL32__
+using csc_value_t = csc_int32_t ;
+#endif
+
+#ifdef __CSC_CONFIG_VAL64__
+using csc_value_t = csc_int64_t ;
+#endif
 
 using csc_float32_t = float ;
 using csc_float64_t = double ;
@@ -328,38 +374,35 @@ using csc_char32_t = char32_t ;
 #ifdef __CSC_CONFIG_VAL32__
 using csc_diff_t = int ;
 using csc_size_t = DEF<unsigned int> ;
+using csc_enum_t = DEF<unsigned long> ;
 #endif
 
 #ifdef __CSC_CONFIG_VAL64__
 using csc_diff_t = DEF<long long> ;
 using csc_size_t = DEF<unsigned long long> ;
+using csc_enum_t = DEF<unsigned long> ;
 #endif
 #endif
 
 #ifdef __CSC_SYSTEM_LINUX__
 using csc_diff_t = long ;
 using csc_size_t = DEF<unsigned long> ;
-#endif
-
-#ifdef __CSC_SYSTEM_WINDOWS__
-using csc_enum_t = DEF<unsigned long> ;
-#endif
-
-#ifdef __CSC_SYSTEM_LINUX__
 using csc_enum_t = int ;
 #endif
 
-struct csc_new_t ;
+class Pointer ;
 
 using csc_pointer_t = DEF<void *> ;
-using csc_new_pointer_t = DEF<csc_new_t *> ;
+using csc_const_pointer_t = DEF<const void *> ;
+
+using csc_type_info_t = std::type_info ;
 
 template <class A>
-using csc_initializer_t = std::initializer_list<A> ;
+using csc_initializer_list_t = std::initializer_list<A> ;
 
-template <csc_diff_t A>
+template <csc_value_t A>
 struct ENUM {
-	imports forceinline consteval csc_diff_t expr_m () noexcept {
+	imports forceinline consteval csc_value_t expr_m () noexcept {
 		return A ;
 	}
 } ;
@@ -368,13 +411,10 @@ using ENUM_TRUE = ENUM<true> ;
 
 using ENUM_FALSE = ENUM<false> ;
 
-template <class...>
-struct TYPEID {} ;
-
 template <class...A>
 struct TYPE {
-	imports forceinline consteval TYPEID<A...> expr_m () noexcept {
-		return TYPEID<A...> () ;
+	imports forceinline consteval TYPE expr_m () noexcept {
+		return TYPE () ;
 	}
 } ;
 
@@ -500,10 +540,10 @@ template <class A ,class B>
 using MACRO_IS_EXTEND = ENUM<(__is_base_of (A ,B))> ;
 } ;
 
-forceinline constexpr CSC::csc_pointer_t operator new (CSC::csc_size_t ,CSC::csc_new_pointer_t where_) noexcept {
-	return where_ ;
+forceinline CSC::csc_pointer_t operator new (CSC::csc_size_t ,CSC::VREF<CSC::Pointer> where_) noexcept {
+	return (&where_) ;
 }
 
-forceinline constexpr void operator delete (CSC::csc_pointer_t ,CSC::csc_new_pointer_t where_) noexcept {
+forceinline void operator delete (CSC::csc_pointer_t ,CSC::VREF<CSC::Pointer> where_) noexcept {
 	return ;
 }

@@ -6,23 +6,71 @@
 
 #include "csc_matrix.hpp"
 
+#ifdef __CSC_COMPILER_MSVC__
+#pragma system_header
+#endif
+
 #include "csc_end.h"
+#ifdef __CSC_CXX_LATEST__
+namespace std {
+template<class _Fn>
+class unary_negate
+{	// functor adapter !_Func(left)
+public:
+	typedef typename _Fn::argument_type argument_type;
+	typedef bool result_type;
+
+	constexpr explicit unary_negate (const _Fn &_Func)
+		: _Functor (_Func) {	// construct from functor
+	}
+
+	constexpr bool operator()(const argument_type &_Left) const {	// apply functor to operand
+		return (!_Functor (_Left));
+	}
+
+private:
+	_Fn _Functor;	// the functor to apply
+};
+
+template<class _Fn>
+class binary_negate
+{	// functor adapter !_Func(left, right)
+public:
+	typedef typename _Fn::first_argument_type first_argument_type;
+	typedef typename _Fn::second_argument_type second_argument_type;
+	typedef bool result_type;
+
+	constexpr explicit binary_negate (const _Fn &_Func)
+		: _Functor (_Func) {	// construct from functor
+	}
+
+	constexpr bool operator()(const first_argument_type &_Left ,
+		const second_argument_type &_Right) const {	// apply functor to operands
+		return (!_Functor (_Left ,_Right));
+	}
+
+private:
+	_Fn _Functor;	// the functor to apply
+};
+} ;
+#endif
+
 #include <Eigen/Dense>
 
 #include <unsupported/Eigen/NonLinearOptimization>
 #include "csc_begin.h"
 
 namespace CSC {
-struct MatrixToolPureLayout {} ;
+struct MatrixProcPureLayout {} ;
 
-class MatrixProcImplement implement Fat<MatrixToolHolder ,MatrixToolLayout> {
+class MatrixProcImplement implement Fat<MatrixProcHolder ,MatrixProcLayout> {
 public:
 	void initialize () override {
-		fake.mThis = Ref<MatrixToolPureLayout>::make () ;
+		fake.mThis = Ref<MatrixProcPureLayout>::make () ;
 	}
 
-	XTR_RESULT solve_xtr (CREF<Matrix> a) const override {
-		XTR_RESULT ret ;
+	XTRResult solve_xtr (CREF<Matrix> a) const override {
+		XTRResult ret ;
 		ret.mX = a.homogenize () ;
 		ret.mR = Matrix::identity () ;
 		ret.mT = Matrix::identity () ;
@@ -30,11 +78,11 @@ public:
 		while (TRUE) {
 			rax = FALSE ;
 			if ifdo (TRUE) {
-				if (MathTool::inverse (ret.mX[1][0]) == 0)
+				if (MathProc::inverse (ret.mX[1][0]) == 0)
 					discard ;
 				const auto r1x = ret.mX[1][0] ;
 				const auto r2x = ret.mX[1][1] ;
-				const auto r3x = MathTool::inverse (Vector (r1x ,r2x ,0 ,0).magnitude ()) ;
+				const auto r3x = MathProc::inverse (Vector (r1x ,r2x ,0 ,0).magnitude ()) ;
 				const auto r4x = invoke ([&] () {
 					Matrix ret = Matrix::identity () ;
 					ret[0][0] = r2x * r3x ;
@@ -48,11 +96,11 @@ public:
 				rax = TRUE ;
 			}
 			if ifdo (TRUE) {
-				if (MathTool::inverse (ret.mX[2][0]) == 0)
+				if (MathProc::inverse (ret.mX[2][0]) == 0)
 					discard ;
 				const auto r5x = ret.mX[2][0] ;
 				const auto r6x = ret.mX[2][2] ;
-				const auto r7x = MathTool::inverse (Vector (r5x ,r6x ,0 ,0).magnitude ()) ;
+				const auto r7x = MathProc::inverse (Vector (r5x ,r6x ,0 ,0).magnitude ()) ;
 				const auto r8x = invoke ([&] () {
 					Matrix ret = Matrix::identity () ;
 					ret[0][0] = r6x * r7x ;
@@ -66,11 +114,11 @@ public:
 				rax = TRUE ;
 			}
 			if ifdo (TRUE) {
-				if (MathTool::inverse (ret.mX[2][1]) == 0)
+				if (MathProc::inverse (ret.mX[2][1]) == 0)
 					discard ;
 				const auto r9x = ret.mX[2][1] ;
 				const auto r10x = ret.mX[2][2] ;
-				const auto r11x = MathTool::inverse (Vector (r9x ,r10x ,0 ,0).magnitude ()) ;
+				const auto r11x = MathProc::inverse (Vector (r9x ,r10x ,0 ,0).magnitude ()) ;
 				const auto r12x = invoke ([&] () {
 					Matrix ret = Matrix::identity () ;
 					ret[1][1] = r10x * r11x ;
@@ -89,8 +137,8 @@ public:
 		return move (ret) ;
 	}
 
-	SVD_RESULT solve_svd (CREF<Matrix> a) const override {
-		SVD_RESULT ret ;
+	SVDResult solve_svd (CREF<Matrix> a) const override {
+		SVDResult ret ;
 		const auto r1x = cvt_eigen_matrix (a) ;
 		auto rax = Eigen::JacobiSVD<Eigen::Matrix4d> (r1x ,Eigen::ComputeFullU | Eigen::ComputeFullV) ;
 		ret.mU = cvt_csc_matrix (rax.matrixU ()) ;
@@ -117,11 +165,11 @@ public:
 	}
 } ;
 
-exports VFat<MatrixToolHolder> MatrixToolHolder::create (VREF<MatrixToolLayout> that) {
-	return VFat<MatrixToolHolder> (MatrixProcImplement () ,Pointer::from (that)) ;
+exports VFat<MatrixProcHolder> MatrixProcHolder::create (VREF<MatrixProcLayout> that) {
+	return VFat<MatrixProcHolder> (MatrixProcImplement () ,that) ;
 }
 
-exports CFat<MatrixToolHolder> MatrixToolHolder::create (CREF<MatrixToolLayout> that) {
-	return CFat<MatrixToolHolder> (MatrixProcImplement () ,Pointer::from (that)) ;
+exports CFat<MatrixProcHolder> MatrixProcHolder::create (CREF<MatrixProcLayout> that) {
+	return CFat<MatrixProcHolder> (MatrixProcImplement () ,that) ;
 }
 } ;

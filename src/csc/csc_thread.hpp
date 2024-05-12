@@ -8,31 +8,31 @@
 #include "csc_type.hpp"
 #include "csc_core.hpp"
 #include "csc_basic.hpp"
-#include "csc_array.hpp"
 #include "csc_math.hpp"
+#include "csc_array.hpp"
 #include "csc_stream.hpp"
 #include "csc_runtime.hpp"
 
 namespace CSC {
-struct WorkThreadPureLayout ;
+class WorkThreadImplLayout ;
 
 struct WorkThreadLayout {
-	SharedRef<WorkThreadPureLayout> mThis ;
+	SharedRef<WorkThreadImplLayout> mThis ;
 } ;
 
 struct WorkThreadHolder implement Interface {
-	imports VFat<WorkThreadHolder> create (VREF<WorkThreadPureLayout> that) ;
-	imports CFat<WorkThreadHolder> create (CREF<WorkThreadPureLayout> that) ;
+	imports VFat<WorkThreadHolder> create (VREF<WorkThreadLayout> that) ;
+	imports CFat<WorkThreadHolder> create (CREF<WorkThreadLayout> that) ;
 
 	virtual void initialize () = 0 ;
-	virtual void set_thread_size (CREF<LENGTH> size_) = 0 ;
-	virtual void set_queue_size (CREF<LENGTH> size_) = 0 ;
-	virtual void start (RREF<Function<CREF<INDEX>>> func) = 0 ;
-	virtual void post (CREF<INDEX> item) = 0 ;
-	virtual void post (CREF<Array<INDEX>> item) = 0 ;
-	virtual void join () = 0 ;
-	virtual BOOL join (CREF<Time> interval ,CREF<Function<VREF<BOOL>>> predicate) = 0 ;
-	virtual void stop () = 0 ;
+	virtual void set_thread_size (CREF<LENGTH> size_) const = 0 ;
+	virtual void set_queue_size (CREF<LENGTH> size_) const = 0 ;
+	virtual void start (RREF<Function<CREF<INDEX>>> func) const = 0 ;
+	virtual void post (CREF<INDEX> item) const = 0 ;
+	virtual void post (CREF<Array<INDEX>> item) const = 0 ;
+	virtual void join () const = 0 ;
+	virtual BOOL join (CREF<Time> interval ,CREF<Function<VREF<BOOL>>> predicate) const = 0 ;
+	virtual void stop () const = 0 ;
 } ;
 
 class WorkThread implement WorkThreadLayout {
@@ -42,62 +42,66 @@ protected:
 public:
 	implicit WorkThread () = default ;
 
-	void set_thread_size (CREF<LENGTH> size_) {
-		return WorkThreadHolder::create (mThis)->set_thread_size (size_) ;
+	implicit WorkThread (CREF<typeof (FULL)>) {
+		WorkThreadHolder::create (thiz)->initialize () ;
 	}
 
-	void set_queue_size (CREF<LENGTH> size_) {
-		return WorkThreadHolder::create (mThis)->set_queue_size (size_) ;
+	void set_thread_size (CREF<LENGTH> size_) const {
+		return WorkThreadHolder::create (thiz)->set_thread_size (size_) ;
 	}
 
-	void start (RREF<Function<CREF<INDEX>>> func) {
-		return WorkThreadHolder::create (mThis)->start (move (func)) ;
+	void set_queue_size (CREF<LENGTH> size_) const {
+		return WorkThreadHolder::create (thiz)->set_queue_size (size_) ;
 	}
 
-	void post (CREF<INDEX> item) {
-		return WorkThreadHolder::create (mThis)->post (item) ;
+	void start (RREF<Function<CREF<INDEX>>> func) const {
+		return WorkThreadHolder::create (thiz)->start (move (func)) ;
 	}
 
-	void post (CREF<Array<INDEX>> item) {
-		return WorkThreadHolder::create (mThis)->post (item) ;
+	void post (CREF<INDEX> item) const {
+		return WorkThreadHolder::create (thiz)->post (item) ;
 	}
 
-	void join () {
-		return WorkThreadHolder::create (mThis)->join () ;
+	void post (CREF<Array<INDEX>> item) const {
+		return WorkThreadHolder::create (thiz)->post (item) ;
 	}
 
-	BOOL join (CREF<Time> interval ,CREF<Function<VREF<BOOL>>> predicate) {
-		return WorkThreadHolder::create (mThis)->join (interval ,predicate) ;
+	void join () const {
+		return WorkThreadHolder::create (thiz)->join () ;
 	}
 
-	void stop () {
-		return WorkThreadHolder::create (mThis)->stop () ;
+	BOOL join (CREF<Time> interval ,CREF<Function<VREF<BOOL>>> predicate) const {
+		return WorkThreadHolder::create (thiz)->join (interval ,predicate) ;
+	}
+
+	void stop () const {
+		return WorkThreadHolder::create (thiz)->stop () ;
 	}
 } ;
 
 struct CalcSolution {
-	INDEX mIteration ;
-	NORMALERROR mCost ;
-	Array<FLT64> mValue ;
+	INDEX mIndex ;
+	FLT64 mError ;
+	BitSet mValue ;
 } ;
 
-struct CalcThreadPureLayout ;
+class CalcThreadImplLayout ;
 
 struct CalcThreadLayout {
-	SharedRef<CalcThreadPureLayout> mThis ;
+	SharedRef<CalcThreadImplLayout> mThis ;
 } ;
 
 struct CalcThreadHolder implement Interface {
-	imports VFat<CalcThreadHolder> create (VREF<CalcThreadPureLayout> that) ;
-	imports CFat<CalcThreadHolder> create (CREF<CalcThreadPureLayout> that) ;
+	imports VFat<CalcThreadHolder> create (VREF<CalcThreadLayout> that) ;
+	imports CFat<CalcThreadHolder> create (CREF<CalcThreadLayout> that) ;
 
 	virtual void initialize () = 0 ;
-	virtual void set_thread_size (CREF<LENGTH> size_) = 0 ;
-	virtual void start (RREF<Function<VREF<CalcSolution>>> func) = 0 ;
-	virtual CalcSolution best () = 0 ;
-	virtual void suspend () = 0 ;
-	virtual void resume () = 0 ;
-	virtual void stop () = 0 ;
+	virtual void set_thread_size (CREF<LENGTH> size_) const = 0 ;
+	virtual void start (RREF<Function<CREF<CalcSolution> ,VREF<CalcSolution>>> func) const = 0 ;
+	virtual CalcSolution best () const = 0 ;
+	virtual void suspend () const = 0 ;
+	virtual void resume () const = 0 ;
+	virtual void stop () const = 0 ;
 } ;
 
 class CalcThread implement CalcThreadLayout {
@@ -107,32 +111,36 @@ protected:
 public:
 	implicit CalcThread () = default ;
 
-	void set_thread_size (CREF<LENGTH> size_) {
-		return CalcThreadHolder::create (mThis)->set_thread_size (size_) ;
+	implicit CalcThread (CREF<typeof (FULL)>) {
+		CalcThreadHolder::create (thiz)->initialize () ;
 	}
 
-	void start (RREF<Function<VREF<CalcSolution>>> func) {
-		return CalcThreadHolder::create (mThis)->start (move (func)) ;
+	void set_thread_size (CREF<LENGTH> size_) const {
+		return CalcThreadHolder::create (thiz)->set_thread_size (size_) ;
 	}
 
-	CalcSolution best () {
-		return CalcThreadHolder::create (mThis)->best () ;
+	void start (RREF<Function<CREF<CalcSolution> ,VREF<CalcSolution>>> func) const {
+		return CalcThreadHolder::create (thiz)->start (move (func)) ;
 	}
 
-	void suspend () {
-		return CalcThreadHolder::create (mThis)->suspend () ;
+	CalcSolution best () const {
+		return CalcThreadHolder::create (thiz)->best () ;
 	}
 
-	void resume () {
-		return CalcThreadHolder::create (mThis)->resume () ;
+	void suspend () const {
+		return CalcThreadHolder::create (thiz)->suspend () ;
 	}
 
-	void stop () {
-		return CalcThreadHolder::create (mThis)->stop () ;
+	void resume () const {
+		return CalcThreadHolder::create (thiz)->resume () ;
+	}
+
+	void stop () const {
+		return CalcThreadHolder::create (thiz)->stop () ;
 	}
 } ;
 
-struct PromiseImplLayout ;
+class PromiseImplLayout ;
 
 struct PromiseLayout {
 	SharedRef<PromiseImplLayout> mThis ;
@@ -144,16 +152,16 @@ struct PromiseHolder implement Interface {
 
 	virtual void initialize () = 0 ;
 	virtual void start () const = 0 ;
-	virtual void start (RREF<Function<VREF<AutoRef<Pointer>>>> func) const = 0 ;
+	virtual void start (RREF<FunctionLayout> func) const = 0 ;
 	virtual void post (RREF<AutoRef<Pointer>> item) const = 0 ;
 	virtual void rethrow (CREF<Exception> e) const = 0 ;
 	virtual void signal () const = 0 ;
 	virtual BOOL ready () const = 0 ;
 	virtual AutoRef<Pointer> poll () const = 0 ;
-	virtual PromiseLayout then (RREF<Function<VREF<AutoRef<Pointer>>>> func) const = 0 ;
 	virtual void stop () const = 0 ;
 } ;
 
+template <class A>
 class Promise implement PromiseLayout {
 protected:
 	using PromiseLayout::mThis ;
@@ -161,8 +169,12 @@ protected:
 public:
 	implicit Promise () = default ;
 
-	imports Promise make (RREF<Function<VREF<AutoRef<Pointer>>>> func) {
-		Promise ret ;
+	implicit Promise (CREF<typeof (FULL)>) {
+		PromiseHolder::create (thiz)->initialize () ;
+	}
+
+	imports Promise make (RREF<Function<VREF<AutoRef<A>>>> func) {
+		Promise ret = FULL ;
 		ret.start (move (func)) ;
 		return move (ret) ;
 	}
@@ -171,7 +183,7 @@ public:
 		return PromiseHolder::create (thiz)->start () ;
 	}
 
-	void start (RREF<Function<VREF<AutoRef<Pointer>>>> func) const {
+	void start (RREF<Function<VREF<AutoRef<A>>>> func) const {
 		return PromiseHolder::create (thiz)->start (move (func)) ;
 	}
 
@@ -191,13 +203,8 @@ public:
 		return PromiseHolder::create (thiz)->ready () ;
 	}
 
-	AutoRef<Pointer> poll () const {
+	AutoRef<A> poll () const {
 		return PromiseHolder::create (thiz)->poll () ;
-	}
-
-	Promise then (RREF<Function<VREF<AutoRef<Pointer>>>> func) const {
-		PromiseLayout ret = PromiseHolder::create (thiz)->then (move (func)) ;
-		return move (keep[TYPE<Promise>::expr] (ret)) ;
 	}
 
 	void stop () const {
