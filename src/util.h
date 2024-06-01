@@ -9,6 +9,7 @@
 #include "csc/csc_image.hpp"
 #include "csc/csc_matrix.hpp"
 #include "csc/csc_stream.hpp"
+#include "csc/csc_string.hpp"
 #include "csc/csc_runtime.hpp"
 #include "csc/csc_thread.hpp"
 

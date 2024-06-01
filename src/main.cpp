@@ -1,25 +1,22 @@
 ﻿#include "util.h"
 
-#include "csc/csc_end.h"
-#include <vector>
-#include <iostream>
-#include "csc/csc_begin.h"
-
-using namespace std ;
 using namespace SOLUTION ;
 
-struct TestInt {
+class TestInt {
+protected:
 	int mInt ;
 
 public:
 	implicit TestInt () noexcept {
 		static auto mStaticInt = 0 ;
 		mInt = mStaticInt++ ;
-		cerr << "[" << mInt << "]create in " << address (thiz) << "\n" ;
+		auto mFormat = Format (slice ("[$0] create in $1")) ;
+		Singleton<Console>::instance ().info (mFormat (mInt ,QUAD (address (thiz)))) ;
 	}
 
 	implicit ~TestInt () noexcept {
-		cerr << "[" << mInt << "]destroy in " << address (thiz) << "\n" ;
+		auto mFormat = Format (slice ("[$0] destroy in $1")) ;
+		Singleton<Console>::instance ().info (mFormat (mInt ,QUAD (address (thiz)))) ;
 	}
 
 	implicit TestInt (CREF<TestInt> that) = delete ;
@@ -37,17 +34,7 @@ public:
 } ;
 
 exports int main () {
-	if (true) {
-		auto rbx = std::vector<double> (1000000) ;
-		auto rcx = Array<char> (10) ;
-		auto rax = FarBuffer<double> (rbx.size ()) ;
-		rax.use_setter ([&] (CREF<INDEX> index ,VREF<double> item) {
-			rbx[index] = item ;
-		}) ;
-		rax[0] = 2 ;
-		rax[1] = 3 ;
-		rax[2] = 4 ;
-		assert (FALSE) ;
-	}
+	Singleton<Console>::instance ().start () ;
+	
 	return 0 ;
 }

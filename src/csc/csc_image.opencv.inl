@@ -19,47 +19,90 @@
 #include "csc_begin.h"
 
 namespace CSC {
-struct ImageProcPureLayout {} ;
-
-class ImageProcImplement implement Fat<ImageProcHolder ,ImageProcLayout> {
+class ImageProcImplHolder implement Fat<ImageProcHolder ,ImageProcLayout> {
 public:
 	void initialize () override {
-		fake.mThis = Ref<ImageProcPureLayout>::make () ;
+		noop () ;
+	}
+
+	ImageLayout load (RREF<AutoRef<Pointer>> item) const override {
+		ImageLayout ret ;
+		auto rax = move (AutoRef<Pin<cv::Mat>> (move (item))->self) ;
+		const auto r1x = rax.size () ;
+		const auto r2x = size_of_cvmat_depth (rax.depth ()) ;
+		const auto r3x = rax.channels ();
+		auto &&tmp1 = keep[TYPE<RefBufferLayout>::expr] (ret.mImage) ;
+		tmp1.mBuffer = FLAG (rax.data) ;
+		tmp1.mSize = r1x.area () * r3x ;
+		tmp1.mStep = r2x ;
+		ret.mWidth.mCX = r1x.width ;
+		ret.mWidth.mCY = r1x.height ;
+		ret.mWidth.mStep = r2x * r3x ;
+		ret.mWidth.mChannel = r3x ;
+		RefBufferHolder::create (ret.mImage)->initialize (Box<Pin<cv::Mat>>::make ()) ;
+		auto &&tmp2 = keep[TYPE<Box<Pin<cv::Mat>>>::expr] (ret.mImage.raw ()).self ;
+		tmp2.self = move (rax) ;
+		ImageHolder::create (ret)->reset () ;
+		return move (ret) ;
 	}
 
 	ImageLayout load (CREF<String<STR>> file) const override {
 		ImageLayout ret ;
 		const auto r1x = StringProc::stra_from_strs (file) ;
-		auto rax = Box<cv::Mat>::make (cv::imread (r1x.raw () ,cv::IMREAD_COLOR)) ;
-		assume (ifnot (rax->empty ())) ;
-		const auto r2x = rax->size () ;
-		const auto r3x = Clazz (TYPE<Color3B>::expr) ;
-		auto &&tmp = keep[TYPE<RefBufferLayout>::expr] (ret.mImage) ;
-		tmp.mBuffer = FLAG (rax->data) ;
-		tmp.mSize = r2x.area () ;
-		tmp.mStep = r3x.type_size () ;
+		auto rax = cv::imread (r1x.self ,cv::IMREAD_UNCHANGED) ;
+		assume (!(rax.empty ())) ;
+		const auto r2x = rax.size () ;
+		const auto r3x = size_of_cvmat_depth (rax.depth ()) ;
+		const auto r4x = rax.channels () ;
+		auto &&tmp1 = keep[TYPE<RefBufferLayout>::expr] (ret.mImage) ;
+		tmp1.mBuffer = FLAG (rax.data) ;
+		tmp1.mSize = r2x.area () * r4x ;
+		tmp1.mStep = r3x ;
 		ret.mWidth.mCX = r2x.width ;
 		ret.mWidth.mCY = r2x.height ;
-		ret.mWidth.mClazz = r3x ;
-		RefBufferHolder::create (ret.mImage)->initialize (move (rax)) ;
+		ret.mWidth.mStep = r3x * r4x ;
+		ret.mWidth.mChannel = r4x ;
+		RefBufferHolder::create (ret.mImage)->initialize (Box<Pin<cv::Mat>>::make ()) ;
+		auto &&tmp2 = keep[TYPE<Box<Pin<cv::Mat>>>::expr] (ret.mImage.raw ()).self ;
+		tmp2.self = move (rax) ;
 		ImageHolder::create (ret)->reset () ;
 		return move (ret) ;
 	}
 
-	void save (CREF<String<STR>> file ,CREF<ImageLayout> image) const override {
-		assert (image.mWidth.mClazz == Clazz (TYPE<Color3B>::expr)) ;
-		const auto r1x = StringProc::stra_from_strs (file) ;
-		auto &&tmp = keep[TYPE<cv::Mat>::expr] (RefBufferHolder::create (image.mImage)->raw ()) ;
-		cv::imwrite (r1x.raw () ,tmp) ;
+	LENGTH size_of_cvmat_depth (CREF<int> depth) const {
+		if (depth == CV_8U)
+			return 1 ;
+		if (depth == CV_16U)
+			return 2 ;
+		if (depth == CV_8S)
+			return 1 ;
+		if (depth == CV_16S)
+			return 2 ;
+		if (depth == CV_32S)
+			return 4 ;
+		if (depth == CV_16F)
+			return 2 ;
+		if (depth == CV_32F)
+			return 4 ;
+		if (depth == CV_64F)
+			return 8 ;
+		assume (FALSE) ;
+		return 0 ;
 	}
 
-	Color3B sampler (TYPE<Color3B> ,CREF<ImageLayout> image ,CREF<FLT64> x ,CREF<FLT64> y) const override {
+	void save (CREF<String<STR>> file ,CREF<ImageLayout> image) const override {
+		const auto r1x = StringProc::stra_from_strs (file) ;
+		const auto r2x = keep[TYPE<Box<cv::Mat>>::expr] (image.mImage.raw ()).self ;
+		cv::imwrite (r1x.self ,r2x) ;
+	}
+
+	Color3B sampler (CREF<Image<Color3B>> image ,CREF<FLT64> x ,CREF<FLT64> y) const override {
 		Color3B ret ;
 		auto &&tmp = keep[TYPE<Image<Color3B>>::expr] (image) ;
 		const auto r1x = VAL (MathProc::round (x ,FLT64 (1))) ;
 		const auto r2x = VAL (MathProc::round (y ,FLT64 (1))) ;
-		const auto r3x = MathProc::clamp (r1x ,ZERO ,image.mCX - 1) ;
-		const auto r4x = MathProc::clamp (r2x ,ZERO ,image.mCY - 1) ;
+		const auto r3x = MathProc::clamp (r1x ,ZERO ,image.cx () - 1) ;
+		const auto r4x = MathProc::clamp (r2x ,ZERO ,image.cy () - 1) ;
 		const auto r5x = MathProc::max_of (r3x - 1 ,ZERO) ;
 		const auto r6x = MathProc::max_of (r4x - 1 ,ZERO) ;
 		const auto r7x = FLT64 (r3x) + FLT64 (0.5) - x ;
@@ -84,13 +127,13 @@ public:
 		return move (ret) ;
 	}
 
-	Color4B sampler (TYPE<Color4B> ,CREF<ImageLayout> image ,CREF<FLT64> x ,CREF<FLT64> y) const override {
+	Color4B sampler (CREF<Image<Color4B>> image ,CREF<FLT64> x ,CREF<FLT64> y) const override {
 		Color4B ret ;
 		auto &&tmp = keep[TYPE<Image<Color4B>>::expr] (image) ;
 		const auto r1x = VAL (MathProc::round (x ,FLT64 (1))) ;
 		const auto r2x = VAL (MathProc::round (y ,FLT64 (1))) ;
-		const auto r3x = MathProc::clamp (r1x ,ZERO ,image.mCX - 1) ;
-		const auto r4x = MathProc::clamp (r2x ,ZERO ,image.mCY - 1) ;
+		const auto r3x = MathProc::clamp (r1x ,ZERO ,image.cx () - 1) ;
+		const auto r4x = MathProc::clamp (r2x ,ZERO ,image.cy () - 1) ;
 		const auto r5x = MathProc::max_of (r3x - 1 ,ZERO) ;
 		const auto r6x = MathProc::max_of (r4x - 1 ,ZERO) ;
 		const auto r7x = FLT64 (r3x) + FLT64 (0.5) - x ;
@@ -117,11 +160,7 @@ public:
 	}
 } ;
 
-exports VFat<ImageProcHolder> ImageProcHolder::create (VREF<ImageProcLayout> that) {
-	return VFat<ImageProcHolder> (ImageProcImplement () ,that) ;
-}
-
-exports CFat<ImageProcHolder> ImageProcHolder::create (CREF<ImageProcLayout> that) {
-	return CFat<ImageProcHolder> (ImageProcImplement () ,that) ;
-}
+static const auto anonymous = External<ImageProcHolder ,ImageProcLayout>::declare ([] () {
+	return inline_hold (ImageProcImplHolder ()) ;
+}) ;
 } ;

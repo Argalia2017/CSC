@@ -17,7 +17,7 @@ struct ThreadFlag {
 	} ;
 } ;
 
-class WorkThreadImplLayout {
+class WorkThreadImplement implement ThreadFriend {
 private:
 	using THREAD_QUEUE_SIZE = ENUM<65536> ;
 
@@ -33,21 +33,21 @@ protected:
 	LENGTH mItemLoadCount ;
 
 public:
-	implicit WorkThreadImplLayout () = default ;
+	implicit WorkThreadImplement () = default ;
 
-	implicit ~WorkThreadImplLayout () noexcept {
+	implicit ~WorkThreadImplement () noexcept {
 		stop () ;
 	}
 
 	void initialize () {
-		mThreadMutex = UniqueMutex::make () ;
+		mThreadMutex = UniqueMutex () ;
 		mThreadFlag = ThreadFlag::Preparing ;
 		set_thread_size (1) ;
 		set_queue_size (1) ;
 	}
 
 	void set_thread_size (CREF<LENGTH> size_) {
-		Scope<CPTR<Mutex>> anonymous (mThreadMutex) ;
+		Scope<CREF<Mutex>> anonymous (mThreadMutex) ;
 		assume (mThreadFlag == ThreadFlag::Preparing) ;
 		mThread = Array<Thread> (size_) ;
 		mThreadJoin = BitSet (size_) ;
@@ -56,30 +56,29 @@ public:
 	}
 
 	void set_queue_size (CREF<LENGTH> size_) {
-		Scope<CPTR<Mutex>> anonymous (mThreadMutex) ;
+		Scope<CREF<Mutex>> anonymous (mThreadMutex) ;
 		assume (mThreadFlag == ThreadFlag::Preparing) ;
-		assume (mItemQueue.length () == 0) ;
+		assume (mItemQueue.empty ()) ;
 		mItemQueue = Deque<INDEX> (size_) ;
 	}
 
-	void start (RREF<Function<CREF<INDEX>>> func) {
-		Scope<CPTR<Mutex>> anonymous (mThreadMutex) ;
+	void start (CREF<Function<CREF<INDEX>>> func) {
+		Scope<CREF<Mutex>> anonymous (mThreadMutex) ;
 		assume (mThreadFlag == ThreadFlag::Preparing) ;
 		assume (mThread.length () > 0) ;
 		mThreadLoadCount.fill (0) ;
 		mItemLoadCount = 0 ;
 		mThreadFlag = ThreadFlag::Running ;
 		mThreadFunc = move (func) ;
-		const auto r1x = VFat<ThreadFriend> (ThreadFriendBinder<WorkThreadImplLayout> () ,thiz) ;
 		for (auto &&i : iter (0 ,mThread.size ())) {
-			mThread[i] = Thread (move (r1x) ,i) ;
+			mThread[i] = Thread (Ref<ThreadFriend>::reference (thiz) ,i) ;
 			mThread[i].start () ;
 		}
 	}
 
-	void friend_execute (CREF<INDEX> slot) {
+	void friend_execute (CREF<INDEX> slot) override {
 		if ifdo (TRUE) {
-			if ifnot (mThreadQueue[slot].empty ())
+			if (!(mThreadQueue[slot].empty ()))
 				discard ;
 			poll (slot) ;
 		}
@@ -92,7 +91,7 @@ public:
 		auto rax = UniqueLock (mThreadMutex) ;
 		while (TRUE) {
 			assume (mThreadFlag == ThreadFlag::Running) ;
-			if ifnot (mItemQueue.empty ())
+			if (!(mItemQueue.empty ()))
 				break ;
 			if ifdo (TRUE) {
 				if (mThreadJoin[slot])
@@ -165,7 +164,7 @@ public:
 					break ;
 			auto rbx = FALSE ;
 			predicate (rbx) ;
-			if ifnot (rbx)
+			if (!(rbx))
 				return FALSE ;
 			rax.wait (interval) ;
 		}
@@ -192,10 +191,10 @@ public:
 	}
 } ;
 
-class WorkThreadImplement implement Fat<WorkThreadHolder ,WorkThreadLayout> {
+class WorkThreadImplHolder implement Fat<WorkThreadHolder ,WorkThreadLayout> {
 public:
 	void initialize () override {
-		fake.mThis = SharedRef<WorkThreadImplLayout>::make () ;
+		fake.mThis = SharedRef<WorkThreadImplement>::make () ;
 		fake.mThis->initialize () ;
 	}
 
@@ -207,7 +206,7 @@ public:
 		return fake.mThis->set_queue_size (size_) ;
 	}
 
-	void start (RREF<Function<CREF<INDEX>>> func) const override {
+	void start (CREF<Function<CREF<INDEX>>> func) const override {
 		return fake.mThis->start (move (func)) ;
 	}
 
@@ -233,14 +232,14 @@ public:
 } ;
 
 exports VFat<WorkThreadHolder> WorkThreadHolder::create (VREF<WorkThreadLayout> that) {
-	return VFat<WorkThreadHolder> (WorkThreadImplement () ,that) ;
+	return VFat<WorkThreadHolder> (WorkThreadImplHolder () ,that) ;
 }
 
 exports CFat<WorkThreadHolder> WorkThreadHolder::create (CREF<WorkThreadLayout> that) {
-	return CFat<WorkThreadHolder> (WorkThreadImplement () ,that) ;
+	return CFat<WorkThreadHolder> (WorkThreadImplHolder () ,that) ;
 }
 
-class CalcThreadImplLayout {
+class CalcThreadImplement implement ThreadFriend {
 protected:
 	Mutex mThreadMutex ;
 	FLAG mThreadFlag ;
@@ -253,44 +252,43 @@ protected:
 	CalcSolution mBestSolution ;
 
 public:
-	implicit CalcThreadImplLayout () = default ;
+	implicit CalcThreadImplement () = default ;
 
-	implicit ~CalcThreadImplLayout () noexcept {
+	implicit ~CalcThreadImplement () noexcept {
 		stop () ;
 	}
 
 	void initialize () {
-		mThreadMutex = UniqueMutex::make () ;
+		mThreadMutex = UniqueMutex () ;
 		mThreadFlag = ThreadFlag::Preparing ;
 		set_thread_size (1) ;
 	}
 
 	void set_thread_size (CREF<LENGTH> size_) {
-		Scope<CPTR<Mutex>> anonymous (mThreadMutex) ;
+		Scope<CREF<Mutex>> anonymous (mThreadMutex) ;
 		assume (mThreadFlag == ThreadFlag::Preparing) ;
 		mThread = Array<Thread> (size_) ;
 		mThreadJoin = BitSet (size_) ;
 		mThreadSolution = Array<CalcSolution> (size_) ;
 		mBestSolution.mIndex = NONE ;
 		mBestSolution.mError = FLT64_INF ;
-		mBestSolution.mValue = BitSet () ;
+		mBestSolution.mInput = BitSet () ;
 	}
 
-	void start (RREF<Function<CREF<CalcSolution> ,VREF<CalcSolution>>> func) {
-		Scope<CPTR<Mutex>> anonymous (mThreadMutex) ;
+	void start (CREF<Function<CREF<CalcSolution> ,VREF<CalcSolution>>> func) {
+		Scope<CREF<Mutex>> anonymous (mThreadMutex) ;
 		assume (mThreadFlag == ThreadFlag::Preparing) ;
 		assume (mThread.length () > 0) ;
 		mThreadFlag = ThreadFlag::Running ;
 		mSuspendFlag = FALSE ;
 		mThreadFunc = move (func) ;
-		const auto r1x = VFat<ThreadFriend> (ThreadFriendBinder<CalcThreadImplLayout> () ,thiz) ;
 		for (auto &&i : iter (0 ,mThread.size ())) {
-			mThread[i] = Thread (move (r1x) ,i) ;
+			mThread[i] = Thread (Ref<ThreadFriend>::reference (thiz) ,i) ;
 			mThread[i].start () ;
 		}
 	}
 
-	void friend_execute (CREF<INDEX> slot) {
+	void friend_execute (CREF<INDEX> slot) override {
 		search_new (slot) ;
 		search_xor (slot) ;
 	}
@@ -333,7 +331,7 @@ public:
 	}
 
 	void wait_solution (CREF<INDEX> slot) {
-		Scope<CPTR<Mutex>> anonymous (mThreadMutex) ;
+		Scope<CREF<Mutex>> anonymous (mThreadMutex) ;
 		if (mThreadSolution[slot].mIndex == mBestSolution.mIndex)
 			return ;
 		mThreadSolution[slot] = mBestSolution ;
@@ -348,19 +346,19 @@ public:
 					discard ;
 			mBestSolution.mIndex++ ;
 			mBestSolution.mError = mSearchSolution[slot].mError ;
-			mBestSolution.mValue = mSearchSolution[slot].mValue ;
+			mBestSolution.mInput = mSearchSolution[slot].mInput ;
 			rax.notify () ;
 		}
 		if ifdo (act) {
-			assert (mBestSolution.mIndex != NONE) ;
-			const auto r1x = bitset_xor (mThreadSolution[slot].mValue ,mSearchSolution[slot].mValue) ;
-			const auto r2x = bitset_xor (mThreadSolution[slot].mValue ,mBestSolution.mValue) ;
+			assume (mBestSolution.mIndex != NONE) ;
+			const auto r1x = bitset_xor (mThreadSolution[slot].mInput ,mSearchSolution[slot].mInput) ;
+			const auto r2x = bitset_xor (mThreadSolution[slot].mInput ,mBestSolution.mInput) ;
 			const auto r3x = (r1x & r2x).length () ;
 			if (r3x == 0)
 				discard ;
 			mThreadSolution[slot].mIndex = mBestSolution.mIndex ;
 			mThreadSolution[slot].mError = mBestSolution.mError ;
-			mThreadSolution[slot].mValue = bitset_xor (mBestSolution.mValue ,r1x) ;
+			mThreadSolution[slot].mInput = bitset_xor (mBestSolution.mInput ,r1x) ;
 			return TRUE ;
 		}
 		return FALSE ;
@@ -370,7 +368,7 @@ public:
 		auto rax = UniqueLock (mThreadMutex) ;
 		while (TRUE) {
 			assume (mThreadFlag == ThreadFlag::Running) ;
-			if ifnot (mSuspendFlag)
+			if (!(mSuspendFlag))
 				break ;
 			if ifdo (TRUE) {
 				if (mThreadJoin[slot])
@@ -384,7 +382,7 @@ public:
 	}
 
 	CalcSolution best () {
-		Scope<CPTR<Mutex>> anonymous (mThreadMutex) ;
+		Scope<CREF<Mutex>> anonymous (mThreadMutex) ;
 		return mBestSolution ;
 	}
 
@@ -397,7 +395,7 @@ public:
 		while (TRUE) {
 			if (mThreadFlag != ThreadFlag::Running)
 				break ;
-			if ifnot (mSuspendFlag)
+			if (!(mSuspendFlag))
 				break ;
 			if (mThreadJoin.length () >= mThread.length ())
 				break ;
@@ -431,10 +429,10 @@ public:
 	}
 } ;
 
-class CalcThreadImplement implement Fat<CalcThreadHolder ,CalcThreadLayout> {
+class CalcThreadImplHolder implement Fat<CalcThreadHolder ,CalcThreadLayout> {
 public:
 	void initialize () override {
-		fake.mThis = SharedRef<CalcThreadImplLayout>::make () ;
+		fake.mThis = SharedRef<CalcThreadImplement>::make () ;
 		fake.mThis->initialize () ;
 	}
 
@@ -442,7 +440,7 @@ public:
 		return fake.mThis->set_thread_size (size_) ;
 	}
 
-	void start (RREF<Function<CREF<CalcSolution> ,VREF<CalcSolution>>> func) const override {
+	void start (CREF<Function<CREF<CalcSolution> ,VREF<CalcSolution>>> func) const override {
 		return fake.mThis->start (move (func)) ;
 	}
 
@@ -464,14 +462,14 @@ public:
 } ;
 
 exports VFat<CalcThreadHolder> CalcThreadHolder::create (VREF<CalcThreadLayout> that) {
-	return VFat<CalcThreadHolder> (CalcThreadImplement () ,that) ;
+	return VFat<CalcThreadHolder> (CalcThreadImplHolder () ,that) ;
 }
 
 exports CFat<CalcThreadHolder> CalcThreadHolder::create (CREF<CalcThreadLayout> that) {
-	return CFat<CalcThreadHolder> (CalcThreadImplement () ,that) ;
+	return CFat<CalcThreadHolder> (CalcThreadImplHolder () ,that) ;
 }
 
-class PromiseImplLayout {
+class PromiseImplement implement ThreadFriend {
 protected:
 	Mutex mThreadMutex ;
 	FLAG mThreadFlag ;
@@ -479,16 +477,22 @@ protected:
 	Function<VREF<AutoRef<Pointer>>> mThreadFunc ;
 	Box<AutoRef<Pointer>> mItem ;
 	Box<Exception> mException ;
-	SharedRef<PromiseImplLayout> mPrevious ;
+	SharedRef<PromiseImplement> mPrevious ;
 
 public:
+	implicit PromiseImplement () = default ;
+
+	implicit ~PromiseImplement () noexcept {
+		stop () ;
+	}
+
 	void initialize () {
-		mThreadMutex = UniqueMutex::make () ;
+		mThreadMutex = UniqueMutex () ;
 		mThreadFlag = ThreadFlag::Preparing ;
 	}
 
 	void start () {
-		Scope<CPTR<Mutex>> anonymous (mThreadMutex) ;
+		Scope<CREF<Mutex>> anonymous (mThreadMutex) ;
 		assume (mThreadFlag == ThreadFlag::Preparing) ;
 		mThreadFlag = ThreadFlag::Running ;
 		mThread = Thread () ;
@@ -497,19 +501,18 @@ public:
 		mException = NULL ;
 	}
 
-	void start (RREF<Function<VREF<AutoRef<Pointer>>>> func) {
-		Scope<CPTR<Mutex>> anonymous (mThreadMutex) ;
+	void start (CREF<Function<VREF<AutoRef<Pointer>>>> func) {
+		Scope<CREF<Mutex>> anonymous (mThreadMutex) ;
 		assume (mThreadFlag == ThreadFlag::Preparing) ;
 		mThreadFlag = ThreadFlag::Running ;
 		mThreadFunc = move (func) ;
 		mItem = NULL ;
 		mException = NULL ;
-		const auto r1x = VFat<ThreadFriend> (ThreadFriendBinder<PromiseImplLayout> () ,thiz) ;
-		mThread = Thread (move (r1x) ,0) ;
+		mThread = Thread (Ref<ThreadFriend>::reference (thiz) ,0) ;
 		mThread.start () ;
 	}
 
-	void friend_execute (CREF<INDEX> slot) {
+	void friend_execute (CREF<INDEX> slot) override {
 		auto rax = AutoRef<Pointer> () ;
 		try {
 			mThreadFunc (rax) ;
@@ -524,7 +527,7 @@ public:
 	}
 
 	void post (RREF<AutoRef<Pointer>> item) {
-		Scope<CPTR<Mutex>> anonymous (mThreadMutex) ;
+		Scope<CREF<Mutex>> anonymous (mThreadMutex) ;
 		assume (mThreadFlag == ThreadFlag::Running) ;
 		assume (mItem == NULL) ;
 		assume (mException == NULL) ;
@@ -532,7 +535,7 @@ public:
 	}
 
 	void rethrow (CREF<Exception> e) {
-		Scope<CPTR<Mutex>> anonymous (mThreadMutex) ;
+		Scope<CREF<Mutex>> anonymous (mThreadMutex) ;
 		assume (mThreadFlag == ThreadFlag::Running) ;
 		assume (mException == NULL) ;
 		mItem = NULL ;
@@ -547,7 +550,7 @@ public:
 	}
 
 	BOOL ready () {
-		Scope<CPTR<Mutex>> anonymous (mThreadMutex) ;
+		Scope<CREF<Mutex>> anonymous (mThreadMutex) ;
 		if (mThreadFlag == ThreadFlag::Closing)
 			return TRUE ;
 		return FALSE ;
@@ -589,10 +592,10 @@ public:
 	}
 } ;
 
-class PromiseImplement implement Fat<PromiseHolder ,PromiseLayout> {
+class PromiseImplHolder implement Fat<PromiseHolder ,PromiseLayout> {
 public:
 	void initialize () override {
-		fake.mThis = SharedRef<PromiseImplLayout>::make () ;
+		fake.mThis = SharedRef<PromiseImplement>::make () ;
 		fake.mThis->initialize () ;
 	}
 
@@ -630,10 +633,10 @@ public:
 } ;
 
 exports VFat<PromiseHolder> PromiseHolder::create (VREF<PromiseLayout> that) {
-	return VFat<PromiseHolder> (PromiseImplement () ,that) ;
+	return VFat<PromiseHolder> (PromiseImplHolder () ,that) ;
 }
 
 exports CFat<PromiseHolder> PromiseHolder::create (CREF<PromiseLayout> that) {
-	return CFat<PromiseHolder> (PromiseImplement () ,that) ;
+	return CFat<PromiseHolder> (PromiseImplHolder () ,that) ;
 }
 } ;

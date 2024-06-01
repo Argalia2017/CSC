@@ -2,6 +2,8 @@
 
 #include "csc/csc_end.h"
 
+#include <cstdint>
+
 #ifdef __CSC_COMPILER_MSVC__
 #include <yvals.h>
 #include <intrin.h>

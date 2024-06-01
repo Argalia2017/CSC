@@ -11,6 +11,7 @@
 #include "csc_math.hpp"
 #include "csc_array.hpp"
 #include "csc_stream.hpp"
+#include "csc_string.hpp"
 
 namespace CSC {
 struct TimeCalendar {
@@ -62,12 +63,6 @@ public:
 
 	explicit Time (CREF<TimeCalendar> calendar_) {
 		TimeHolder::create (thiz)->initialize (calendar_) ;
-	}
-
-	imports Time current () {
-		Time ret ;
-		TimeHolder::create (ret)->initialize () ;
-		return move (ret) ;
 	}
 
 	implicit Time (CREF<Time> that) {
@@ -136,6 +131,12 @@ public:
 		thiz = sub (that) ;
 	}
 } ;
+
+inline Time CurrentTime () {
+	Time ret ;
+	TimeHolder::create (ret)->initialize () ;
+	return move (ret) ;
+}
 
 struct RuntimeProcPureLayout ;
 
@@ -241,7 +242,7 @@ protected:
 public:
 	implicit Atomic () = default ;
 
-	implicit Atomic (CREF<typeof (FULL)>) {
+	implicit Atomic (CREF<typeof (NULL)>) {
 		AtomicHolder::create (thiz)->initialize () ;
 	}
 
@@ -292,6 +293,7 @@ struct MutexHolder implement Interface {
 	imports VFat<MutexHolder> create (VREF<MutexLayout> that) ;
 	imports CFat<MutexHolder> create (CREF<MutexLayout> that) ;
 
+	virtual void initialize () = 0 ;
 	virtual Ref<MutexPureLayout> borrow () const = 0 ;
 	virtual void enter () const = 0 ;
 	virtual void leave () const = 0 ;
@@ -321,34 +323,35 @@ struct MakeMutexHolder implement Interface {
 	imports VFat<MakeMutexHolder> create (VREF<MutexLayout> that) ;
 	imports CFat<MakeMutexHolder> create (CREF<MutexLayout> that) ;
 
+	virtual void MakeMutex_initialize () = 0 ;
 	virtual void RecursiveMutex_initialize () = 0 ;
 	virtual void SharedMutex_initialize () = 0 ;
 	virtual void UniqueMutex_initialize () = 0 ;
 } ;
 
-struct RecursiveMutex implement Proxy {
-	imports Mutex make () {
-		Mutex ret ;
-		MakeMutexHolder::create (ret)->RecursiveMutex_initialize () ;
-		return move (ret) ;
-	}
-} ;
+inline Mutex MakeMutex () {
+	Mutex ret ;
+	MakeMutexHolder::create (ret)->MakeMutex_initialize () ;
+	return move (ret) ;
+}
 
-struct SharedMutex implement Proxy {
-	imports Mutex make () {
-		Mutex ret ;
-		MakeMutexHolder::create (ret)->SharedMutex_initialize () ;
-		return move (ret) ;
-	}
-} ;
+inline Mutex RecursiveMutex () {
+	Mutex ret ;
+	MakeMutexHolder::create (ret)->RecursiveMutex_initialize () ;
+	return move (ret) ;
+}
 
-struct UniqueMutex implement Proxy {
-	imports Mutex make () {
-		Mutex ret ;
-		MakeMutexHolder::create (ret)->UniqueMutex_initialize () ;
-		return move (ret) ;
-	}
-} ;
+inline Mutex SharedMutex () {
+	Mutex ret ;
+	MakeMutexHolder::create (ret)->SharedMutex_initialize () ;
+	return move (ret) ;
+}
+
+inline Mutex UniqueMutex () {
+	Mutex ret ;
+	MakeMutexHolder::create (ret)->UniqueMutex_initialize () ;
+	return move (ret) ;
+}
 
 struct SharedLockPureLayout ;
 
@@ -371,7 +374,7 @@ protected:
 	using SharedLockLayout::mThis ;
 
 public:
-	implicit SharedLock () = default ;
+	implicit SharedLock () = delete ;
 
 	explicit SharedLock (CREF<Mutex> mutex) {
 		SharedLockHolder::create (thiz)->initialize (mutex) ;
@@ -412,7 +415,7 @@ protected:
 	using UniqueLockLayout::mThis ;
 
 public:
-	implicit UniqueLock () = default ;
+	implicit UniqueLock () = delete ;
 
 	explicit UniqueLock (CREF<Mutex> mutex) {
 		UniqueLockHolder::create (thiz)->initialize (mutex) ;
@@ -442,8 +445,12 @@ struct ThreadFriend implement Interface {
 template <class A>
 class ThreadFriendBinder implement Fat<ThreadFriend ,A> {
 public:
+	imports VFat<ThreadFriend> create (VREF<A> that) {
+		return VFat<ThreadFriend> (ThreadFriendBinder () ,that) ;
+	}
+
 	void friend_execute (CREF<INDEX> slot) override {
-		return fake.friend_execute (slot) ;
+		thiz.fake.friend_execute (slot) ;
 	}
 } ;
 
@@ -457,18 +464,21 @@ struct ThreadHolder implement Interface {
 	imports VFat<ThreadHolder> create (VREF<ThreadLayout> that) ;
 	imports CFat<ThreadHolder> create (CREF<ThreadLayout> that) ;
 
-	virtual void initialize (RREF<VFat<ThreadFriend>> binder ,CREF<INDEX> slot) = 0 ;
+	virtual void initialize (RREF<Ref<ThreadFriend>> executor ,CREF<INDEX> slot) = 0 ;
 	virtual FLAG thread_uid () const = 0 ;
 	virtual void start () = 0 ;
 	virtual void stop () = 0 ;
 } ;
 
 class Thread implement ThreadLayout {
+protected:
+	using ThreadLayout::mThis ;
+
 public:
 	implicit Thread () = default ;
 
-	explicit Thread (RREF<VFat<ThreadFriend>> binder ,CREF<INDEX> slot) {
-		ThreadHolder::create (thiz)->initialize (move (binder) ,slot) ;
+	explicit Thread (RREF<Ref<ThreadFriend>> executor ,CREF<INDEX> slot) {
+		ThreadHolder::create (thiz)->initialize (move (executor) ,slot) ;
 	}
 
 	FLAG thread_uid () const {
@@ -525,7 +535,7 @@ public:
 	}
 
 	forceinline BOOL operator!= (CREF<Process> that) const {
-		return ifnot (equal (that)) ;
+		return !(equal (that)) ;
 	}
 
 	FLAG process_uid () const {
@@ -678,7 +688,7 @@ struct SingletonProcHolder implement Interface {
 	virtual void save (CREF<Clazz> clazz ,CREF<FLAG> addr) const = 0 ;
 } ;
 
-struct SingletonProc implement SingletonProcLayout {
+class SingletonProc implement SingletonProcLayout {
 protected:
 	using SingletonProcLayout::mThis ;
 
@@ -701,7 +711,8 @@ public:
 } ;
 
 template <class A>
-struct Singleton implement Proxy {
+class Singleton implement Proxy {
+public:
 	imports CREF<A> instance () {
 		return memorize ([&] () {
 			const auto r1x = Clazz (TYPE<A>::expr) ;
@@ -751,18 +762,15 @@ public:
 	}
 
 	void startup () const {
-		Scope<CPTR<Mutex>> anonymous (mMutex) ;
 		return GlobalHolder::create (thiz)->startup () ;
 	}
 
 	Ref<A> borrow (CREF<Slice> name) const {
-		Scope<CPTR<Mutex>> anonymous (mMutex) ;
 		RefLayout ret = GlobalHolder::create (thiz)->borrow (name ,AutoRef<A>::expression ()) ;
 		return move (keep[TYPE<Ref<A>>::expr] (ret)) ;
 	}
 
 	void shutdown () const {
-		Scope<CPTR<Mutex>> anonymous (mMutex) ;
 		return GlobalHolder::create (thiz)->shutdown () ;
 	}
 } ;
@@ -875,7 +883,7 @@ public:
 	}
 
 	forceinline BOOL operator!= (CREF<Path> that) const {
-		return ifnot (equal (that)) ;
+		return !(equal (that)) ;
 	}
 
 	BOOL is_file () const {
@@ -889,7 +897,7 @@ public:
 	BOOL is_link () const {
 		return PathHolder::create (thiz)->is_link () ;
 	}
-	
+
 	Deque<String<STR>> decouple () const {
 		return PathHolder::create (thiz)->decouple () ;
 	}
@@ -997,10 +1005,10 @@ public:
 	}
 } ;
 
-class StreamFileImplLayout ;
+class StreamFileImplement ;
 
 struct StreamFileLayout {
-	Ref<StreamFileImplLayout> mThis ;
+	Ref<StreamFileImplement> mThis ;
 } ;
 
 struct StreamFileHolder implement Interface {
@@ -1057,10 +1065,10 @@ public:
 	}
 } ;
 
-class BufferFileImplLayout ;
+class BufferFileImplement ;
 
 struct BufferFileLayout {
-	Ref<BufferFileImplLayout> mThis ;
+	Ref<BufferFileImplement> mThis ;
 } ;
 
 struct BufferFileHolder implement Interface {
@@ -1154,13 +1162,13 @@ struct ConsoleHolder implement Interface {
 
 	virtual void initialize () = 0 ;
 	virtual void set_option (CREF<FLAG> option) const = 0 ;
-	virtual void print (CREF<String<STR>> msg) const = 0 ;
-	virtual void fatal (CREF<String<STR>> msg) const = 0 ;
-	virtual void error (CREF<String<STR>> msg) const = 0 ;
-	virtual void warn (CREF<String<STR>> msg) const = 0 ;
-	virtual void info (CREF<String<STR>> msg) const = 0 ;
-	virtual void debug (CREF<String<STR>> msg) const = 0 ;
-	virtual void verbose (CREF<String<STR>> msg) const = 0 ;
+	virtual void print (CREF<Format> msg) const = 0 ;
+	virtual void fatal (CREF<Format> msg) const = 0 ;
+	virtual void error (CREF<Format> msg) const = 0 ;
+	virtual void warn (CREF<Format> msg) const = 0 ;
+	virtual void info (CREF<Format> msg) const = 0 ;
+	virtual void debug (CREF<Format> msg) const = 0 ;
+	virtual void verbose (CREF<Format> msg) const = 0 ;
 	virtual void open (CREF<String<STR>> dire) const = 0 ;
 	virtual void start () const = 0 ;
 	virtual void stop () const = 0 ;
@@ -1183,107 +1191,62 @@ public:
 	}
 
 	void set_option (CREF<FLAG> option) const {
-		Scope<CPTR<Mutex>> anonymous (mMutex) ;
 		return ConsoleHolder::create (thiz)->set_option (option) ;
 	}
 
-	void print (CREF<String<STR>> msg) const {
-		Scope<CPTR<Mutex>> anonymous (mMutex) ;
-		return ConsoleHolder::create (thiz)->print (msg) ;
+	template <class...ARG1>
+	void print (CREF<ARG1>...params) const {
+		return ConsoleHolder::create (thiz)->print (PrintFormat (params...)) ;
 	}
 
-	void fatal (CREF<String<STR>> msg) const {
-		Scope<CPTR<Mutex>> anonymous (mMutex) ;
-		return ConsoleHolder::create (thiz)->fatal (msg) ;
+	template <class...ARG1>
+	void fatal (CREF<ARG1>...params) const {
+		return ConsoleHolder::create (thiz)->fatal (PrintFormat (params...)) ;
 	}
 
-	void error (CREF<String<STR>> msg) const {
-		Scope<CPTR<Mutex>> anonymous (mMutex) ;
-		return ConsoleHolder::create (thiz)->error (msg) ;
+	template <class...ARG1>
+	void error (CREF<ARG1>...params) const {
+		return ConsoleHolder::create (thiz)->error (PrintFormat (params...)) ;
 	}
 
-	void warn (CREF<String<STR>> msg) const {
-		Scope<CPTR<Mutex>> anonymous (mMutex) ;
-		return ConsoleHolder::create (thiz)->warn (msg) ;
+	template <class...ARG1>
+	void warn (CREF<ARG1>...params) const {
+		return ConsoleHolder::create (thiz)->warn (PrintFormat (params...)) ;
 	}
 
-	void info (CREF<String<STR>> msg) const {
-		Scope<CPTR<Mutex>> anonymous (mMutex) ;
-		return ConsoleHolder::create (thiz)->info (msg) ;
+	template <class...ARG1>
+	void info (CREF<ARG1>...params) const {
+		return ConsoleHolder::create (thiz)->info (PrintFormat (params...)) ;
 	}
 
-	void debug (CREF<String<STR>> msg) const {
-		Scope<CPTR<Mutex>> anonymous (mMutex) ;
-		return ConsoleHolder::create (thiz)->debug (msg) ;
+	template <class...ARG1>
+	void debug (CREF<ARG1>...params) const {
+		return ConsoleHolder::create (thiz)->debug (PrintFormat (params...)) ;
 	}
 
-	void verbose (CREF<String<STR>> msg) const {
-		Scope<CPTR<Mutex>> anonymous (mMutex) ;
-		return ConsoleHolder::create (thiz)->verbose (msg) ;
+	template <class...ARG1>
+	void verbose (CREF<ARG1>...params) const {
+		return ConsoleHolder::create (thiz)->verbose (PrintFormat (params...)) ;
 	}
 
 	void open (CREF<String<STR>> dire) const {
-		Scope<CPTR<Mutex>> anonymous (mMutex) ;
 		return ConsoleHolder::create (thiz)->open (dire) ;
 	}
 
 	void start () const {
-		Scope<CPTR<Mutex>> anonymous (mMutex) ;
 		return ConsoleHolder::create (thiz)->start () ;
 	}
 
 	void stop () const {
-		Scope<CPTR<Mutex>> anonymous (mMutex) ;
 		return ConsoleHolder::create (thiz)->stop () ;
 	}
 
 	void pause () const {
-		Scope<CPTR<Mutex>> anonymous (mMutex) ;
 		return ConsoleHolder::create (thiz)->pause () ;
 	}
 
 	void clear () const {
-		Scope<CPTR<Mutex>> anonymous (mMutex) ;
 		return ConsoleHolder::create (thiz)->clear () ;
-	}
-} ;
-
-struct StackTracePureLayout ;
-
-struct StackTraceLayout {
-	Mutex mMutex ;
-	SharedRef<StackTracePureLayout> mThis ;
-} ;
-
-struct StackTraceHolder implement Interface {
-	imports VFat<StackTraceHolder> create (VREF<StackTraceLayout> that) ;
-	imports CFat<StackTraceHolder> create (CREF<StackTraceLayout> that) ;
-
-	virtual void initialize () = 0 ;
-	virtual Array<FLAG> stack_trace () const = 0 ;
-	virtual String<STR> function_name (CREF<FLAG> addr) const = 0 ;
-} ;
-
-class StackTrace implement StackTraceLayout {
-protected:
-	using StackTraceLayout::mMutex ;
-	using StackTraceLayout::mThis ;
-
-public:
-	imports CREF<StackTrace> instance () {
-		return memorize ([&] () {
-			StackTrace ret ;
-			StackTraceHolder::create (ret)->initialize () ;
-			return move (ret) ;
-		}) ;
-	}
-
-	Array<FLAG> stack_trace () const {
-		return StackTraceHolder::create (thiz)->stack_trace () ;
-	}
-
-	String<STR> function_name (CREF<FLAG> addr) const {
-		return StackTraceHolder::create (thiz)->function_name (addr) ;
 	}
 } ;
 } ;

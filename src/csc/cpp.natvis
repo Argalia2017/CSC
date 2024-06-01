@@ -8,12 +8,6 @@
 
 	<!--csc_type.hpp-->
 
-	<Type Name="CSC::Interface">
-		<Expand HideRawView="true">
-			<ExpandedItem>__vfptr</ExpandedItem>
-		</Expand>
-	</Type>
-
 	<Type Name="CSC::Unknown">
 		<Expand HideRawView="true">
 			<ExpandedItem>__vfptr</ExpandedItem>
@@ -34,9 +28,27 @@
 		</Expand>
 	</Type>
 
+  <Type Name="CSC::VFat&lt;*&gt;">
+    <Expand HideRawView="true">
+      <ExpandedItem>(Interface*)&amp;mHolder</ExpandedItem>
+    </Expand>
+  </Type>
+
+  <Type Name="CSC::CFat&lt;*&gt;">
+    <Expand HideRawView="true">
+      <ExpandedItem>(Interface*)&amp;mHolder</ExpandedItem>
+    </Expand>
+  </Type>
+
+  <Type Name="CSC::RFat&lt;*&gt;">
+    <Expand HideRawView="true">
+      <ExpandedItem>(Interface*)&amp;mHolder</ExpandedItem>
+    </Expand>
+  </Type>
+
 	<Type Name="CSC::Pin&lt;*&gt;">
 		<Expand HideRawView="true">
-			<ExpandedItem>($T1*)&amp;mStorage</ExpandedItem>
+			<ExpandedItem>($T1*)&amp;mValue</ExpandedItem>
 		</Expand>
 	</Type>
 
@@ -49,7 +61,7 @@
 	<Type Name="CSC::Box&lt;*&gt;">
 		<DisplayString Condition="mHolder==0">{{???}}</DisplayString>
 		<Expand HideRawView="true">
-			<Item Name="[+]" Condition="mHolder!=0">*($T1*)&amp;mValue</Item>
+			<Item Name="[+]" Condition="mHolder!=0">*($T1*)&amp;mStorage</Item>
 		</Expand>
 	</Type>
 
@@ -74,6 +86,7 @@
 		<StringView Condition="mStep==2">(char16_t*)mBuffer,su</StringView>
 		<StringView Condition="mStep==4">(char32_t*)mBuffer,s32</StringView>
 		<Expand HideRawView="true">
+			<Item Name="[buffer]">mBuffer</Item>
 			<Item Name="[size]">mSize</Item>
 			<Item Name="[step]">mStep</Item>
 		</Expand>
@@ -117,6 +130,7 @@
 	<Type Name="CSC::BoxBuffer&lt;*&gt;">
 		<Expand HideRawView="true">
 			<Item Name="[size]">0</Item>
+			<Item Name="[step]">0</Item>
 			<ExpandedItem>mBuffer.m1st</ExpandedItem>
 		</Expand>
 	</Type>
@@ -135,6 +149,8 @@
 		<Expand HideRawView="true">
 			<Item Name="[size]" Condition="mThis.mPointer==0">0</Item>
 			<Item Name="[size]" Condition="mThis.mPointer!=0">mSize</Item>
+			<Item Name="[step]" Condition="mThis.mPointer==0">0</Item>
+			<Item Name="[step]" Condition="mThis.mPointer!=0">mStep</Item>
 			<ArrayItems Condition="mSize&lt;10">
 				<Size Condition="mThis.mPointer==0">0</Size>
 				<Size Condition="mThis.mPointer!=0">mSize</Size>
@@ -173,13 +189,38 @@
 		</Expand>
 	</Type>
 
+  <Type Name="CSC::FarBuffer&lt;*&gt;">
+    <Expand HideRawView="true">
+      <Item Name="[size]" Condition="mBuffer.mPointer==0">0</Item>
+      <Item Name="[size]" Condition="mBuffer.mPointer!=0">mSize</Item>
+      <Item Name="[step]" Condition="mBuffer.mPointer==0">0</Item>
+      <Item Name="[step]" Condition="mBuffer.mPointer!=0">mStep</Item>
+      <ArrayItems Condition="mSize&lt;10">
+        <Size Condition="mBuffer.mPointer==0">0</Size>
+        <Size Condition="mBuffer.mPointer!=0">mSize</Size>
+        <ValuePointer>($T1*)mBuffer.mPointer</ValuePointer>
+      </ArrayItems>
+      <ArrayItems Condition="mSize&gt;=10">
+        <Size Condition="mBuffer.mPointer==0">0</Size>
+        <Size Condition="mBuffer.mPointer!=0">10</Size>
+        <ValuePointer>($T1*)mBuffer.mPointer</ValuePointer>
+      </ArrayItems>
+      <Item Name="[+]" Condition="mSize&gt;=10">(CSC::RefBufferWrap&lt;$T1&gt;*)this</Item>
+    </Expand>
+  </Type>
+
 	<Type Name="CSC::TupleWrap2&lt;*&gt;">
 		<Expand HideRawView="true">
 			<ExpandedItem Condition="mNode.mNext==-2">this</ExpandedItem>
 		</Expand>
 	</Type>
 
-	<Type Name="CSC::AllocatorWrap&lt;*&gt;">
+	<Type Name="CSC::AllocatorNode">
+    <DisplayString Condition="mNext==-2">{{used}}</DisplayString>
+    <DisplayString Condition="mNext!=-2">{{???}}</DisplayString>
+	</Type>
+
+	<Type Name="CSC::AllocatorImplLayout&lt;*&gt;">
 		<Expand HideRawView="true">
 			<ArrayItems>
 				<Size>mAllocator.mSize</Size>
@@ -192,6 +233,8 @@
 		<Expand HideRawView="true">
 			<Item Name="[size]" Condition="mAllocator.mThis.mPointer==0">0</Item>
 			<Item Name="[size]" Condition="mAllocator.mThis.mPointer!=0">mAllocator.mSize</Item>
+			<Item Name="[step]" Condition="mAllocator.mThis.mPointer==0">0</Item>
+			<Item Name="[step]" Condition="mAllocator.mThis.mPointer!=0">mAllocator.mStep</Item>
 			<Item Name="[length]" Condition="mAllocator.mThis.mPointer==0">0</Item>
 			<Item Name="[length]" Condition="mAllocator.mThis.mPointer!=0">mLength</Item>
 			<ArrayItems Condition="mAllocator.mSize&lt;10">
@@ -202,7 +245,7 @@
 				<Size>10</Size>
 				<ValuePointer>(CSC::TupleWrap2&lt;CSC::Temp&lt;$T1&gt;,$T2&gt;*)mAllocator.mBuffer</ValuePointer>
 			</ArrayItems>
-			<Item Name="[+]" Condition="mAllocator.mSize&gt;=10">(CSC::AllocatorWrap&lt;$T1,$T2&gt;*)this</Item>
+			<Item Name="[+]" Condition="mAllocator.mSize&gt;=10">(CSC::AllocatorImplLayout&lt;$T1,$T2&gt;*)this</Item>
 		</Expand>
 	</Type>
 
@@ -222,7 +265,7 @@
 		<StringView Condition="mString.mStep==2">(char16_t*)mString.mBuffer,su</StringView>
 		<StringView Condition="mString.mStep==4">(char32_t*)mString.mBuffer,s32</StringView>
 		<Expand HideRawView="true">
-			<ExpandedItem>(CSC::RefBufferLayout*)&amp;mString</ExpandedItem>
+			<ExpandedItem>(CSC::RefBuffer&lt;$T1&gt;*)&amp;mString</ExpandedItem>
 		</Expand>
 	</Type>
 
@@ -257,11 +300,11 @@
 		</Expand>
 	</Type>
 
-	<Type Name="CSC::SortedList&lt;*&gt;">
+	<Type Name="CSC::SortedMap&lt;*&gt;">
 		<Expand HideRawView="true">
-			<Item Name="[read]">mRead</Item>
+      <Item Name="[range]">mRange</Item>
 			<Item Name="[write]">mWrite</Item>
-			<ExpandedItem>(CSC::RefBuffer&lt;CSC::TupleWrap2&lt;$T1,CSC::SortedListNode&gt; &gt;*)&amp;mList</ExpandedItem>
+      <ExpandedItem>(CSC::RefBuffer&lt;CSC::TupleWrap2&lt;int,CSC::SortedMapNode&gt; &gt;*)&amp;(*(CSC::SortedMapHeap*)(mHeap.mPointer)).mList</ExpandedItem>
 		</Expand>
 	</Type>
 
@@ -286,21 +329,34 @@
 		</Expand>
 	</Type>
 
+	<!--csc_image.hpp-->
+
+	<Type Name="CSC::Image&lt;*&gt;">
+		<Expand HideRawView="true">
+			<Item Name="[cx]">mCX</Item>
+			<Item Name="[cy]">mCY</Item>
+			<Item Name="[sx]">mSX</Item>
+			<Item Name="[sy]">mSY</Item>
+			<Item Name="[offset]">mOffset</Item>
+			<ExpandedItem>(CSC::RefBuffer&lt;$T1&gt;*)&amp;mImage</ExpandedItem>
+		</Expand>
+	</Type>
+
 	<!--csc_matrix.hpp-->
 
-	<Type Name="CSC::Vector">
+	<Type Name="CSC::VectorLayout">
 		<Expand HideRawView="true">
 			<ExpandedItem>(double(*)[4][1])&amp;mVector</ExpandedItem>
 		</Expand>
 	</Type>
 
-	<Type Name="CSC::Matrix">
+	<Type Name="CSC::MatrixLayout">
 		<Expand HideRawView="true">
 			<ExpandedItem>(double(*)[4][4])&amp;mMatrix</ExpandedItem>
 		</Expand>
 	</Type>
 
-	<Type Name="CSC::Quaternion">
+	<Type Name="CSC::QuaternionLayout">
 		<Expand HideRawView="true">
 			<ExpandedItem>(double(*)[4])&amp;mQuaternion</ExpandedItem>
 		</Expand>

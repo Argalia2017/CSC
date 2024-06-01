@@ -11,13 +11,40 @@
 #include "csc_math.hpp"
 #include "csc_array.hpp"
 #include "csc_stream.hpp"
+#include "csc_string.hpp"
 #include "csc_runtime.hpp"
 
 namespace CSC {
-class WorkThreadImplLayout ;
+struct CoroutineFriend implement Interface {
+	virtual void before () = 0 ;
+	virtual BOOL tick () = 0 ;
+	virtual void after () = 0 ;
+} ;
+
+template <class A>
+class CoroutineFriendBinder implement Fat<CoroutineFriend ,A> {
+protected:
+	imports VFat<CoroutineFriend> create (VREF<A> that) {
+		return VFat<CoroutineFriend> (CoroutineFriendBinder () ,that) ;
+	}
+
+	void before () override {
+		return thiz.fake.before () ;
+	}
+
+	BOOL tick () override {
+		return thiz.fake.tick () ;
+	}
+
+	void after () override {
+		return thiz.fake.after () ;
+	}
+} ;
+
+class WorkThreadImplement ;
 
 struct WorkThreadLayout {
-	SharedRef<WorkThreadImplLayout> mThis ;
+	SharedRef<WorkThreadImplement> mThis ;
 } ;
 
 struct WorkThreadHolder implement Interface {
@@ -27,7 +54,7 @@ struct WorkThreadHolder implement Interface {
 	virtual void initialize () = 0 ;
 	virtual void set_thread_size (CREF<LENGTH> size_) const = 0 ;
 	virtual void set_queue_size (CREF<LENGTH> size_) const = 0 ;
-	virtual void start (RREF<Function<CREF<INDEX>>> func) const = 0 ;
+	virtual void start (CREF<Function<CREF<INDEX>>> func) const = 0 ;
 	virtual void post (CREF<INDEX> item) const = 0 ;
 	virtual void post (CREF<Array<INDEX>> item) const = 0 ;
 	virtual void join () const = 0 ;
@@ -40,9 +67,7 @@ protected:
 	using WorkThreadLayout::mThis ;
 
 public:
-	implicit WorkThread () = default ;
-
-	implicit WorkThread (CREF<typeof (FULL)>) {
+	explicit WorkThread () {
 		WorkThreadHolder::create (thiz)->initialize () ;
 	}
 
@@ -54,7 +79,7 @@ public:
 		return WorkThreadHolder::create (thiz)->set_queue_size (size_) ;
 	}
 
-	void start (RREF<Function<CREF<INDEX>>> func) const {
+	void start (CREF<Function<CREF<INDEX>>> func) const {
 		return WorkThreadHolder::create (thiz)->start (move (func)) ;
 	}
 
@@ -82,13 +107,13 @@ public:
 struct CalcSolution {
 	INDEX mIndex ;
 	FLT64 mError ;
-	BitSet mValue ;
+	BitSet mInput ;
 } ;
 
-class CalcThreadImplLayout ;
+class CalcThreadImplement ;
 
 struct CalcThreadLayout {
-	SharedRef<CalcThreadImplLayout> mThis ;
+	SharedRef<CalcThreadImplement> mThis ;
 } ;
 
 struct CalcThreadHolder implement Interface {
@@ -97,7 +122,7 @@ struct CalcThreadHolder implement Interface {
 
 	virtual void initialize () = 0 ;
 	virtual void set_thread_size (CREF<LENGTH> size_) const = 0 ;
-	virtual void start (RREF<Function<CREF<CalcSolution> ,VREF<CalcSolution>>> func) const = 0 ;
+	virtual void start (CREF<Function<CREF<CalcSolution> ,VREF<CalcSolution>>> func) const = 0 ;
 	virtual CalcSolution best () const = 0 ;
 	virtual void suspend () const = 0 ;
 	virtual void resume () const = 0 ;
@@ -109,9 +134,7 @@ protected:
 	using CalcThreadLayout::mThis ;
 
 public:
-	implicit CalcThread () = default ;
-
-	implicit CalcThread (CREF<typeof (FULL)>) {
+	explicit CalcThread () {
 		CalcThreadHolder::create (thiz)->initialize () ;
 	}
 
@@ -119,7 +142,7 @@ public:
 		return CalcThreadHolder::create (thiz)->set_thread_size (size_) ;
 	}
 
-	void start (RREF<Function<CREF<CalcSolution> ,VREF<CalcSolution>>> func) const {
+	void start (CREF<Function<CREF<CalcSolution> ,VREF<CalcSolution>>> func) const {
 		return CalcThreadHolder::create (thiz)->start (move (func)) ;
 	}
 
@@ -140,10 +163,10 @@ public:
 	}
 } ;
 
-class PromiseImplLayout ;
+class PromiseImplement ;
 
 struct PromiseLayout {
-	SharedRef<PromiseImplLayout> mThis ;
+	SharedRef<PromiseImplement> mThis ;
 } ;
 
 struct PromiseHolder implement Interface {
@@ -167,23 +190,15 @@ protected:
 	using PromiseLayout::mThis ;
 
 public:
-	implicit Promise () = default ;
-
-	implicit Promise (CREF<typeof (FULL)>) {
+	explicit Promise () {
 		PromiseHolder::create (thiz)->initialize () ;
-	}
-
-	imports Promise make (RREF<Function<VREF<AutoRef<A>>>> func) {
-		Promise ret = FULL ;
-		ret.start (move (func)) ;
-		return move (ret) ;
 	}
 
 	void start () const {
 		return PromiseHolder::create (thiz)->start () ;
 	}
 
-	void start (RREF<Function<VREF<AutoRef<A>>>> func) const {
+	void start (CREF<Function<VREF<AutoRef<A>>>> func) const {
 		return PromiseHolder::create (thiz)->start (move (func)) ;
 	}
 
@@ -211,4 +226,11 @@ public:
 		return PromiseHolder::create (thiz)->stop () ;
 	}
 } ;
+
+template <class ARG1>
+inline Promise<ARG1> AsyncPromise (CREF<Function<VREF<AutoRef<ARG1>>>> func) {
+	Promise<ARG1> ret ;
+	ret.start (move (func)) ;
+	return move (ret) ;
+}
 } ;

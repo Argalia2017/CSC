@@ -8,6 +8,7 @@
 
 #include "csc_end.h"
 #include <cstdlib>
+#include <clocale>
 #include <regex>
 #include <sstream>
 #include "csc_begin.h"
@@ -15,6 +16,14 @@
 #ifdef __CSC_COMPILER_MSVC__
 #pragma warning (disable :4996)
 #endif
+
+namespace CSC {
+namespace std {
+using namespace ::std ;
+
+using ::setlocale ;
+} ;
+} ;
 
 namespace CSC {
 struct StreamProcPureLayout {
@@ -32,7 +41,7 @@ struct GapType {
 	} ;
 } ;
 
-class StreamProcImplement implement Fat<StreamProcHolder ,StreamProcLayout> {
+class StreamProcImplHolder implement Fat<StreamProcHolder ,StreamProcLayout> {
 public:
 	void initialize () override {
 		fake.mThis = Ref<StreamProcPureLayout>::make () ;
@@ -176,18 +185,18 @@ public:
 } ;
 
 exports VFat<StreamProcHolder> StreamProcHolder::create (VREF<StreamProcLayout> that) {
-	return VFat<StreamProcHolder> (StreamProcImplement () ,that) ;
+	return VFat<StreamProcHolder> (StreamProcImplHolder () ,that) ;
 }
 
 exports CFat<StreamProcHolder> StreamProcHolder::create (CREF<StreamProcLayout> that) {
-	return CFat<StreamProcHolder> (StreamProcImplement () ,that) ;
+	return CFat<StreamProcHolder> (StreamProcImplHolder () ,that) ;
 }
 
-class ByteReaderImplement implement Fat<ByteReaderHolder ,ByteReaderLayout> {
+class ByteReaderImplHolder implement Fat<ByteReaderHolder ,ByteReaderLayout> {
 public:
 	void initialize (RREF<Ref<RefBuffer<BYTE>>> stream) override {
-		assume (stream != NULL) ;
-		assume (stream->step () == 1) ;
+		assert (stream != NULL) ;
+		assert (stream->step () == 1) ;
 		fake.mStream = move (stream) ;
 		reset () ;
 		backup () ;
@@ -265,46 +274,23 @@ public:
 	}
 
 	void read (VREF<WORD> item) override {
-		auto rax = BoxBuffer<BYTE ,SIZE_OF<WORD>> () ;
-		auto act = TRUE ;
-		if ifdo (act) {
-			if ifnot (StreamProc::big_endian ())
-				discard ;
-			for (auto &&i : iter (0 ,rax.size ()))
-				read (rax[i]) ;
-		}
-		if ifdo (act) {
-			for (auto &&i : iter (0 ,rax.size ())) {
-				INDEX ix = rax.size () - 1 - i ;
-				read (rax[ix]) ;
-			}
-		}
-		item = bitwise[TYPE<WORD>::expr] (rax) ;
+		read_byte_impl (item) ;
 	}
 
 	void read (VREF<CHAR> item) override {
-		auto rax = BoxBuffer<BYTE ,SIZE_OF<CHAR>> () ;
-		auto act = TRUE ;
-		if ifdo (act) {
-			if ifnot (StreamProc::big_endian ())
-				discard ;
-			for (auto &&i : iter (0 ,rax.size ()))
-				read (rax[i]) ;
-		}
-		if ifdo (act) {
-			for (auto &&i : iter (0 ,rax.size ())) {
-				INDEX ix = rax.size () - 1 - i ;
-				read (rax[ix]) ;
-			}
-		}
-		item = bitwise[TYPE<CHAR>::expr] (rax) ;
+		read_byte_impl (item) ;
 	}
 
 	void read (VREF<QUAD> item) override {
-		auto rax = BoxBuffer<BYTE ,SIZE_OF<QUAD>> () ;
+		read_byte_impl (item) ;
+	}
+
+	template <class ARG1>
+	void read_byte_impl (VREF<ARG1> item) {
+		auto rax = BoxBuffer<BYTE ,SIZE_OF<ARG1>> () ;
 		auto act = TRUE ;
 		if ifdo (act) {
-			if ifnot (StreamProc::big_endian ())
+			if (!(StreamProc::big_endian ()))
 				discard ;
 			for (auto &&i : iter (0 ,rax.size ()))
 				read (rax[i]) ;
@@ -315,89 +301,60 @@ public:
 				read (rax[ix]) ;
 			}
 		}
-		item = bitwise[TYPE<QUAD>::expr] (rax) ;
+		item = bitwise[TYPE<ARG1>::expr] (rax) ;
+	}
+
+	void read (VREF<STRU32> item) override {
+		auto rax = BYTE () ;
+		read (rax) ;
+		item = STRU32 (rax) ;
 	}
 
 	void read (CREF<Slice> item) override {
-		auto rax = BYTE () ;
+		auto rax = STRU32 () ;
 		for (auto &&i : iter (0 ,item.size ())) {
+			assume (inline_between (INDEX (item[i]) ,0 ,128)) ;
 			read (rax) ;
-			assume (STRU32 (rax) == item[i]) ;
+			assume (rax == item[i]) ;
 		}
 	}
 
 	void read (VREF<String<STRA>> item) override {
-		auto rax = VAL32 () ;
-		auto rbx = VAL32 () ;
-		auto rcx = BYTE_BASE<STRA> () ;
-		read (rax) ;
-		read (rbx) ;
-		assume (rbx == SIZE_OF<STRA>::expr) ;
-		item = String<STRA> (rax) ;
-		for (auto &&i : iter (0 ,item.size ())) {
-			read (rcx) ;
-			item[i] = STRA (rcx) ;
-		}
+		read_string_impl (item) ;
 	}
 
 	void read (VREF<String<STRW>> item) override {
-		auto rax = VAL32 () ;
-		auto rbx = VAL32 () ;
-		auto rcx = BYTE_BASE<STRW> () ;
-		read (rax) ;
-		read (rbx) ;
-		assume (rbx == SIZE_OF<STRW>::expr) ;
-		item = String<STRW> (rax) ;
-		for (auto &&i : iter (0 ,item.size ())) {
-			read (rcx) ;
-			item[i] = STRW (rcx) ;
-		}
+		read_string_impl (item) ;
 	}
 
 	void read (VREF<String<STRU8>> item) override {
-		auto rax = VAL32 () ;
-		auto rbx = VAL32 () ;
-		auto rcx = BYTE_BASE<STRU8> () ;
-		read (rax) ;
-		read (rbx) ;
-		assume (rbx == SIZE_OF<STRU8>::expr) ;
-		item = String<STRU8> (rax) ;
-		for (auto &&i : iter (0 ,item.size ())) {
-			read (rcx) ;
-			item[i] = STRU8 (rcx) ;
-		}
+		read_string_impl (item) ;
 	}
 
 	void read (VREF<String<STRU16>> item) override {
-		auto rax = VAL32 () ;
-		auto rbx = VAL32 () ;
-		auto rcx = BYTE_BASE<STRU16> () ;
-		read (rax) ;
-		read (rbx) ;
-		assume (rbx == SIZE_OF<STRU16>::expr) ;
-		item = String<STRU16> (rax) ;
-		for (auto &&i : iter (0 ,item.size ())) {
-			read (rcx) ;
-			item[i] = STRU16 (rcx) ;
-		}
+		read_string_impl (item) ;
 	}
 
 	void read (VREF<String<STRU32>> item) override {
-		auto rax = VAL32 () ;
-		auto rbx = VAL32 () ;
-		auto rcx = BYTE_BASE<STRU32> () ;
-		read (rax) ;
-		read (rbx) ;
-		assume (rbx == SIZE_OF<STRU32>::expr) ;
-		item = String<STRU32> (rax) ;
+		read_string_impl (item) ;
+	}
+
+	template <class ARG1>
+	void read_string_impl (VREF<String<ARG1>> item) {
+		item.clear () ;
+		auto rax = BYTE_BASE<ARG1> () ;
 		for (auto &&i : iter (0 ,item.size ())) {
-			read (rcx) ;
-			item[i] = STRU32 (rcx) ;
+			read (rax) ;
+			item[i] = ARG1 (rax) ;
 		}
 	}
 
 	void read (CREF<typeof (CLS)>) override {
 		reset () ;
+	}
+
+	void read (CREF<typeof (BOM)>) override {
+		noop () ;
 	}
 
 	void read (CREF<typeof (GAP)>) override {
@@ -412,24 +369,469 @@ public:
 		assume (fake.mRead >= fake.mWrite) ;
 	}
 
-	void read (CREF<VFat<ByteReaderFriend>> item) override {
-		item->friend_read (keep[TYPE<ByteReader>::expr] (fake)) ;
+	void read (VREF<StreamReaderFriend> item) override {
+		const auto r1x = StreamReaderBinder<ByteReaderImplHolder>::create (thiz) ;
+		item.friend_read (r1x.self) ;
 	}
 } ;
 
 exports VFat<ByteReaderHolder> ByteReaderHolder::create (VREF<ByteReaderLayout> that) {
-	return VFat<ByteReaderHolder> (ByteReaderImplement () ,that) ;
+	return VFat<ByteReaderHolder> (ByteReaderImplHolder () ,that) ;
 }
 
 exports CFat<ByteReaderHolder> ByteReaderHolder::create (CREF<ByteReaderLayout> that) {
-	return CFat<ByteReaderHolder> (ByteReaderImplement () ,that) ;
+	return CFat<ByteReaderHolder> (ByteReaderImplHolder () ,that) ;
 }
 
-class ByteWriterImplement implement Fat<ByteWriterHolder ,ByteWriterLayout> {
+class TextReaderImplHolder implement Fat<TextReaderHolder ,TextReaderLayout> {
 public:
 	void initialize (RREF<Ref<RefBuffer<BYTE>>> stream) override {
-		assume (stream != NULL) ;
-		assume (stream->step () == 1) ;
+		assert (stream != NULL) ;
+		assert (stream->step () <= 4) ;
+		fake.mStream = move (stream) ;
+		reset () ;
+		backup () ;
+	}
+
+	LENGTH size () const override {
+		return fake.mStream->size () ;
+	}
+
+	LENGTH length () const override {
+		return fake.mRead ;
+	}
+
+	void reset () override {
+		fake.mRead = 0 ;
+		fake.mWrite = fake.mStream->size () ;
+	}
+
+	void reset (CREF<INDEX> read_ ,CREF<INDEX> write_) override {
+		fake.mRead = read_ ;
+		fake.mWrite = write_ ;
+	}
+
+	void backup () override {
+		fake.mBackupRead = fake.mRead ;
+		fake.mBackupWrite = fake.mWrite ;
+	}
+
+	void recover () override {
+		fake.mRead = fake.mBackupRead ;
+		fake.mWrite = fake.mBackupWrite ;
+	}
+
+	void read (VREF<BOOL> item) override {
+		auto rax = STRU32 () ;
+		read (rax) ;
+		auto act = TRUE ;
+		if ifdo (act) {
+			if (rax != STRU32 ('t'))
+				discard ;
+			push (rax) ;
+			read (slice ("true")) ;
+			item = TRUE ;
+		}
+		if ifdo (act) {
+			if (rax != STRU32 ('T'))
+				discard ;
+			push (rax) ;
+			read (slice ("TRUE")) ;
+			item = TRUE ;
+		}
+		if ifdo (act) {
+			if (rax != STRU32 ('f'))
+				discard ;
+			push (rax) ;
+			read (slice ("false")) ;
+			item = FALSE ;
+		}
+		if ifdo (act) {
+			if (rax != STRU32 ('F'))
+				discard ;
+			push (rax) ;
+			read (slice ("FALSE")) ;
+			item = FALSE ;
+		}
+		if ifdo (act) {
+			assume (FALSE) ;
+		}
+	}
+
+	void read (VREF<VAL32> item) override {
+		auto rax = VAL64 () ;
+		read (rax) ;
+		assume (rax >= VAL32_MIN) ;
+		assume (rax <= VAL32_MAX) ;
+		item = VAL32 (rax) ;
+	}
+
+	void read (VREF<VAL64> item) override {
+		auto rax = STRU32 () ;
+		read (rax) ;
+		const auto r1x = BOOL (rax == STRU32 ('-')) ;
+		if ifdo (TRUE) {
+			if (rax != STRU32 ('-'))
+				if (rax != STRU32 ('+'))
+					discard ;
+			read (rax) ;
+		}
+		auto act = TRUE ;
+		if ifdo (act) {
+			if (rax != STRU32 ('i'))
+				discard ;
+			push (rax) ;
+			read (slice ("infinity")) ;
+			item = VAL64_LOW ;
+		}
+		if ifdo (act) {
+			if (rax != STRU32 ('I'))
+				discard ;
+			push (rax) ;
+			read (slice ("INFINITY")) ;
+			item = VAL64_LOW ;
+		}
+		if ifdo (act) {
+			assume (StreamProc::is_digit (rax)) ;
+			auto rbx = Notation () ;
+			rbx.mRadix = 10 ;
+			rbx.mPrecision = 0 ;
+			rbx.mSign = FALSE ;
+			rbx.mMantissa = 0 ;
+			rbx.mDownflow = 0 ;
+			rbx.mExponent = 0 ;
+			read_value (rbx ,rax) ;
+			item = rbx.mMantissa ;
+		}
+		if ifdo (TRUE) {
+			if (!(r1x))
+				discard ;
+			item = -item ;
+		}
+		push (rax) ;
+	}
+
+	void read_value (VREF<Notation> fexp10 ,VREF<STRU32> top) {
+		assert (fexp10.mRadix == 10) ;
+		const auto r1x = FloatProc::value_precision () ;
+		if ifdo (TRUE) {
+			while (TRUE) {
+				if (top == 0)
+					break ;
+				if (!(StreamProc::is_digit (top)))
+					break ;
+				if (fexp10.mPrecision > r1x)
+					break ;
+				fexp10.mMantissa *= 10 ;
+				fexp10.mMantissa += StreamProc::hex_from_str (top) ;
+				fexp10.mPrecision++ ;
+				read (top) ;
+			}
+			while (TRUE) {
+				if (top == 0)
+					break ;
+				if (!(StreamProc::is_digit (top)))
+					break ;
+				fexp10.mExponent++ ;
+				read (top) ;
+			}
+		}
+	}
+
+	void read (VREF<FLT32> item) override {
+		auto rax = FLT64 () ;
+		read (rax) ;
+		assume (rax >= FLT32_MIN) ;
+		assume (rax <= FLT32_MAX) ;
+		item = FLT32 (rax) ;
+	}
+
+	void read (VREF<FLT64> item) override {
+		auto rax = STRU32 () ;
+		read (rax) ;
+		const auto r1x = BOOL (rax == STRU32 ('-')) ;
+		if ifdo (TRUE) {
+			if (rax != STRU32 ('-'))
+				if (rax != STRU32 ('+'))
+					discard ;
+			read (rax) ;
+		}
+		auto act = TRUE ;
+		if ifdo (act) {
+			assume (StreamProc::is_digit (rax)) ;
+			auto rbx = Notation () ;
+			rbx.mRadix = 10 ;
+			rbx.mPrecision = 0 ;
+			rbx.mSign = FALSE ;
+			rbx.mMantissa = 0 ;
+			rbx.mDownflow = 0 ;
+			rbx.mExponent = 0 ;
+			read_float (rbx ,rax) ;
+			rbx = FloatProc::fexp2_from_fexp10 (rbx) ;
+			item = FloatProc::encode (rbx) ;
+		}
+		if ifdo (TRUE) {
+			if (!(r1x))
+				discard ;
+			item = -item ;
+		}
+		push (rax) ;
+	}
+
+	void read_float (VREF<Notation> fexp10 ,VREF<STRU32> top) {
+		assert (fexp10.mRadix == 10) ;
+		const auto r1x = FloatProc::value_precision () ;
+		read_value (fexp10 ,top) ;
+		if ifdo (TRUE) {
+			if (top != STRU32 ('.'))
+				discard ;
+			read (top) ;
+			while (TRUE) {
+				if (top == 0)
+					break ;
+				if (!(StreamProc::is_digit (top)))
+					break ;
+				if (fexp10.mPrecision > r1x)
+					break ;
+				fexp10.mMantissa *= 10 ;
+				fexp10.mMantissa += StreamProc::hex_from_str (top) ;
+				fexp10.mExponent-- ;
+				fexp10.mPrecision++ ;
+				read (top) ;
+			}
+			while (TRUE) {
+				if (top == 0)
+					break ;
+				if (!(StreamProc::is_digit (top)))
+					break ;
+				read (top) ;
+			}
+		}
+		if ifdo (TRUE) {
+			if (top != STRU32 ('e'))
+				if (top != STRU32 ('E'))
+					discard ;
+			read (top) ;
+			const auto r2x = BOOL (top == STRU32 ('-')) ;
+			if ifdo (TRUE) {
+				if (top != STRU32 ('-'))
+					if (top != STRU32 ('+'))
+						discard ;
+				read (top) ;
+			}
+			assume (StreamProc::is_digit (top)) ;
+			auto rbx = Notation () ;
+			rbx.mRadix = 10 ;
+			rbx.mPrecision = 0 ;
+			rbx.mSign = r2x ;
+			read_value (rbx ,top) ;
+			assume (rbx.mExponent == 0) ;
+			const auto r3x = invoke ([&] () {
+				if (r2x)
+					return -rbx.mMantissa ;
+				return rbx.mMantissa ;
+			}) ;
+			fexp10.mExponent += r3x ;
+		}
+	}
+
+	void read (VREF<BYTE> item) override {
+		read_byte_impl (item) ;
+	}
+
+	void read (VREF<WORD> item) override {
+		read_byte_impl (item) ;
+	}
+
+	void read (VREF<CHAR> item) override {
+		read_byte_impl (item) ;
+	}
+
+	void read (VREF<QUAD> item) override {
+		read_byte_impl (item) ;
+	}
+
+	template <class ARG1>
+	void read_byte_impl (VREF<ARG1> item) {
+		auto rax = STRU32 () ;
+		if ifdo (TRUE) {
+			read (rax) ;
+			assume (rax == STRU32 ('0')) ;
+			read (rax) ;
+			if (rax == STRU32 ('x'))
+				discard ;
+			if (rax == STRU32 ('X'))
+				discard ;
+			assume (FALSE) ;
+		}
+		item = ARG1 (0X00) ;
+		for (auto &&i : iter (0 ,SIZE_OF<ARG1>::expr)) {
+			noop (i) ;
+			read (rax) ;
+			const auto r1x = ARG1 (StreamProc::hex_from_str (rax)) ;
+			item = (item << 4) | r1x ;
+			read (rax) ;
+			const auto r2x = ARG1 (StreamProc::hex_from_str (rax)) ;
+			item = (item << 4) | r2x ;
+		}
+	}
+
+	void read (VREF<STRU32> item) override {
+		auto act = TRUE ;
+		if ifdo (act) {
+			if (fake.mStream->step () != SIZE_OF<STRU8>::expr)
+				discard ;
+			if (fake.mRead >= fake.mWrite)
+				discard ;
+			auto &&tmp = keep[TYPE<RefBuffer<STRU8>>::expr] (keep[TYPE<RefBufferLayout>::expr] (fake.mStream.self)) ;
+			item = tmp[fake.mRead] ;
+			fake.mRead++ ;
+		}
+		if ifdo (act) {
+			if (fake.mStream->step () != SIZE_OF<STRU16>::expr)
+				discard ;
+			if (fake.mRead >= fake.mWrite)
+				discard ;
+			auto &&tmp = keep[TYPE<RefBuffer<STRU16>>::expr] (keep[TYPE<RefBufferLayout>::expr] (fake.mStream.self)) ;
+			item = tmp[fake.mRead] ;
+			fake.mRead++ ;
+		}
+		if ifdo (act) {
+			if (fake.mStream->step () != SIZE_OF<STRU32>::expr)
+				discard ;
+			if (fake.mRead >= fake.mWrite)
+				discard ;
+			auto &&tmp = keep[TYPE<RefBuffer<STRU32>>::expr] (keep[TYPE<RefBufferLayout>::expr] (fake.mStream.self)) ;
+			item = tmp[fake.mRead] ;
+			fake.mRead++ ;
+		}
+		if ifdo (act) {
+			item = STRU32 (0X00) ;
+		}
+	}
+
+	void push (CREF<STRU32> item) {
+		auto act = TRUE ;
+		if ifdo (act) {
+			if (item != STRU32 (0X00))
+				discard ;
+			if (fake.mRead < fake.mWrite)
+				discard ;
+			noop () ;
+		}
+		if ifdo (act) {
+			fake.mRead-- ;
+		}
+	}
+
+	void read (CREF<Slice> item) override {
+		auto rax = STRU32 () ;
+		for (auto &&i : iter (0 ,item.size ())) {
+			assume (inline_between (INDEX (item[i]) ,0 ,128)) ;
+			read (rax) ;
+			assume (rax == item[i]) ;
+		}
+	}
+
+	void read (VREF<String<STRA>> item) override {
+		read_string_impl (item) ;
+	}
+
+	void read (VREF<String<STRW>> item) override {
+		read_string_impl (item) ;
+	}
+
+	void read (VREF<String<STRU8>> item) override {
+		read_string_impl (item) ;
+	}
+
+	void read (VREF<String<STRU16>> item) override {
+		read_string_impl (item) ;
+	}
+
+	void read (VREF<String<STRU32>> item) override {
+		read_string_impl (item) ;
+	}
+
+	template <class ARG1>
+	void read_string_impl (VREF<String<ARG1>> item) {
+		item.clear () ;
+		auto rax = STRU32 () ;
+		for (auto &&i : iter (0 ,item.size ())) {
+			read (rax) ;
+			item[i] = ARG1 (rax) ;
+		}
+	}
+
+	void read (CREF<typeof (CLS)>) override {
+		reset () ;
+	}
+
+	void read (CREF<typeof (BOM)>) override {
+		auto rax = STRU32 () ;
+		auto act = TRUE ;
+		if ifdo (act) {
+			if (fake.mStream->step () == SIZE_OF<STRU8>::expr)
+				discard ;
+			read (rax) ;
+			assume (rax == STRU32 (0XEF)) ;
+			read (rax) ;
+			assume (rax == STRU32 (0XBB)) ;
+			read (rax) ;
+			assume (rax == STRU32 (0XBF)) ;
+		}
+		if ifdo (act) {
+			if (fake.mStream->step () == SIZE_OF<STRU16>::expr)
+				discard ;
+			read (rax) ;
+			assume (rax == STRU32 (0XFEFF)) ;
+		}
+		if ifdo (act) {
+			if (fake.mStream->step () == SIZE_OF<STRU32>::expr)
+				discard ;
+			read (rax) ;
+			assume (rax == STRU32 (0X0000FEFF)) ;
+		}
+	}
+
+	void read (CREF<typeof (GAP)>) override {
+		auto rax = STRU32 () ;
+		read (rax) ;
+		while (TRUE) {
+			if (rax == STRU32 (0X00))
+				break ;
+			if (!(StreamProc::is_blank (rax)))
+				break ;
+			read (rax) ;
+		}
+		push (rax) ;
+	}
+
+	void read (CREF<typeof (EOS)>) override {
+		auto rax = STRU32 () ;
+		read (rax) ;
+		assume (rax == STRU32 (0X00)) ;
+	}
+
+	void read (VREF<StreamReaderFriend> item) override {
+		const auto r1x = StreamReaderBinder<TextReaderImplHolder>::create (thiz) ;
+		item.friend_read (r1x.self) ;
+	}
+} ;
+
+exports VFat<TextReaderHolder> TextReaderHolder::create (VREF<TextReaderLayout> that) {
+	return VFat<TextReaderHolder> (TextReaderImplHolder () ,that) ;
+}
+
+exports CFat<TextReaderHolder> TextReaderHolder::create (CREF<TextReaderLayout> that) {
+	return CFat<TextReaderHolder> (TextReaderImplHolder () ,that) ;
+}
+
+class ByteWriterImplHolder implement Fat<ByteWriterHolder ,ByteWriterLayout> {
+public:
+	void initialize (RREF<Ref<RefBuffer<BYTE>>> stream) override {
+		assert (stream != NULL) ;
+		assert (stream->step () == 1) ;
 		fake.mStream = move (stream) ;
 		reset () ;
 		backup () ;
@@ -499,27 +901,23 @@ public:
 	}
 
 	void write (CREF<WORD> item) override {
-		const auto r1x = bitwise[TYPE<BoxBuffer<BYTE ,SIZE_OF<WORD>>>::expr] (item) ;
-		auto act = TRUE ;
-		if ifdo (act) {
-			if ifnot (StreamProc::big_endian ())
-				discard ;
-			for (auto &&i : iter (0 ,r1x.size ()))
-				write (r1x[i]) ;
-		}
-		if ifdo (act) {
-			for (auto &&i : iter (0 ,r1x.size ())) {
-				INDEX ix = r1x.size () - 1 - i ;
-				write (r1x[ix]) ;
-			}
-		}
+		write_byte_impl (item) ;
 	}
 
 	void write (CREF<CHAR> item) override {
-		const auto r1x = bitwise[TYPE<BoxBuffer<BYTE ,SIZE_OF<CHAR>>>::expr] (item) ;
+		write_byte_impl (item) ;
+	}
+
+	void write (CREF<QUAD> item) override {
+		write_byte_impl (item) ;
+	}
+
+	template <class ARG1>
+	void write_byte_impl (CREF<ARG1> item) {
+		const auto r1x = bitwise[TYPE<BoxBuffer<BYTE ,SIZE_OF<ARG1>>>::expr] (item) ;
 		auto act = TRUE ;
 		if ifdo (act) {
-			if ifnot (StreamProc::big_endian ())
+			if (!(StreamProc::big_endian ()))
 				discard ;
 			for (auto &&i : iter (0 ,r1x.size ()))
 				write (r1x[i]) ;
@@ -532,87 +930,52 @@ public:
 		}
 	}
 
-	void write (CREF<QUAD> item) override {
-		const auto r1x = bitwise[TYPE<BoxBuffer<BYTE ,SIZE_OF<QUAD>>>::expr] (item) ;
-		auto act = TRUE ;
-		if ifdo (act) {
-			if ifnot (StreamProc::big_endian ())
-				discard ;
-			for (auto &&i : iter (0 ,r1x.size ()))
-				write (r1x[i]) ;
-		}
-		if ifdo (act) {
-			for (auto &&i : iter (0 ,r1x.size ())) {
-				INDEX ix = r1x.size () - 1 - i ;
-				write (r1x[ix]) ;
-			}
-		}
+	void write (CREF<STRU32> item) override {
+		write (BYTE (item)) ;
 	}
 
 	void write (CREF<Slice> item) override {
 		for (auto &&i : iter (0 ,item.size ())) {
-			const auto r1x = BYTE (item[i]) ;
-			write (r1x) ;
+			assume (inline_between (INDEX (item[i]) ,0 ,128)) ;
+			write (item[i]) ;
 		}
 	}
 
 	void write (CREF<String<STRA>> item) override {
-		const auto r1x = VAL32 (item.length ()) ;
-		const auto r2x = VAL32 (item.step ()) ;
-		write (r1x) ;
-		write (r2x) ;
-		for (auto &&i : iter (0 ,r1x)) {
-			const auto r3x = bitwise[TYPE<BYTE_BASE<STRA>>::expr] (item[i]) ;
-			write (r3x) ;
-		}
+		write_string_impl (item) ;
 	}
 
 	void write (CREF<String<STRW>> item) override {
-		const auto r1x = VAL32 (item.length ()) ;
-		const auto r2x = VAL32 (item.step ()) ;
-		write (r1x) ;
-		write (r2x) ;
-		for (auto &&i : iter (0 ,r1x)) {
-			const auto r3x = bitwise[TYPE<BYTE_BASE<STRW>>::expr] (item[i]) ;
-			write (r3x) ;
-		}
+		write_string_impl (item) ;
 	}
 
 	void write (CREF<String<STRU8>> item) override {
-		const auto r1x = VAL32 (item.length ()) ;
-		const auto r2x = VAL32 (item.step ()) ;
-		write (r1x) ;
-		write (r2x) ;
-		for (auto &&i : iter (0 ,r1x)) {
-			const auto r3x = bitwise[TYPE<BYTE_BASE<STRU8>>::expr] (item[i]) ;
-			write (r3x) ;
-		}
+		write_string_impl (item) ;
 	}
 
 	void write (CREF<String<STRU16>> item) override {
-		const auto r1x = VAL32 (item.length ()) ;
-		const auto r2x = VAL32 (item.step ()) ;
-		write (r1x) ;
-		write (r2x) ;
-		for (auto &&i : iter (0 ,r1x)) {
-			const auto r3x = bitwise[TYPE<BYTE_BASE<STRU16>>::expr] (item[i]) ;
-			write (r3x) ;
-		}
+		write_string_impl (item) ;
 	}
 
 	void write (CREF<String<STRU32>> item) override {
-		const auto r1x = VAL32 (item.length ()) ;
-		const auto r2x = VAL32 (item.step ()) ;
-		write (r1x) ;
-		write (r2x) ;
+		write_string_impl (item) ;
+	}
+
+	template <class ARG1>
+	void write_string_impl (CREF<String<ARG1>> item) {
+		const auto r1x = item.length () ;
 		for (auto &&i : iter (0 ,r1x)) {
-			const auto r3x = bitwise[TYPE<BYTE_BASE<STRU32>>::expr] (item[i]) ;
-			write (r3x) ;
+			const auto r2x = bitwise[TYPE<BYTE_BASE<ARG1>>::expr] (item[i]) ;
+			write (r2x) ;
 		}
 	}
 
 	void write (CREF<typeof (CLS)>) override {
 		reset () ;
+	}
+
+	void write (CREF<typeof (BOM)>) override {
+		noop () ;
 	}
 
 	void write (CREF<typeof (GAP)>) override {
@@ -628,391 +991,30 @@ public:
 		}
 	}
 
-	void write (CREF<CFat<ByteWriterFriend>> item) override {
-		item->friend_write (keep[TYPE<ByteWriter>::expr] (fake)) ;
+	void write (CREF<StreamWriterFriend> item) override {
+		const auto r1x = StreamWriterBinder<ByteWriterImplHolder>::create (thiz) ;
+		item.friend_write (r1x.self) ;
 	}
 } ;
 
 exports VFat<ByteWriterHolder> ByteWriterHolder::create (VREF<ByteWriterLayout> that) {
-	return VFat<ByteWriterHolder> (ByteWriterImplement () ,that) ;
+	return VFat<ByteWriterHolder> (ByteWriterImplHolder () ,that) ;
 }
 
 exports CFat<ByteWriterHolder> ByteWriterHolder::create (CREF<ByteWriterLayout> that) {
-	return CFat<ByteWriterHolder> (ByteWriterImplement () ,that) ;
+	return CFat<ByteWriterHolder> (ByteWriterImplHolder () ,that) ;
 }
 
-class TextReaderImplement implement Fat<TextReaderHolder ,TextReaderLayout> {
-public:
-	void initialize (RREF<Ref<RefBuffer<BYTE>>> stream) override {
-		assume (stream != NULL) ;
-		assume (stream->step () <= 4) ;
-		fake.mStream = move (stream) ;
-		reset () ;
-		backup () ;
-	}
-
-	LENGTH size () const override {
-		return fake.mStream->size () ;
-	}
-
-	LENGTH length () const override {
-		return fake.mRead ;
-	}
-
-	void reset () override {
-		fake.mRead = 0 ;
-		fake.mWrite = fake.mStream->size () ;
-	}
-
-	void reset (CREF<INDEX> read_ ,CREF<INDEX> write_) override {
-		fake.mRead = read_ ;
-		fake.mWrite = write_ ;
-	}
-
-	void backup () override {
-		fake.mBackupRead = fake.mRead ;
-		fake.mBackupWrite = fake.mWrite ;
-	}
-
-	void recover () override {
-		fake.mRead = fake.mBackupRead ;
-		fake.mWrite = fake.mBackupWrite ;
-	}
-
-	void read (VREF<BOOL> item) override {
-		auto rax = STRU32 () ;
-		read (rax) ;
-		auto act = TRUE ;
-		if ifdo (act) {
-			if (rax != STRU32 ('t'))
-				discard ;
-			fake.mRead-- ;
-			read (slice ("true")) ;
-			item = TRUE ;
-		}
-		if ifdo (act) {
-			if (rax != STRU32 ('T'))
-				discard ;
-			fake.mRead-- ;
-			read (slice ("TRUE")) ;
-			item = TRUE ;
-		}
-		if ifdo (act) {
-			if (rax != STRU32 ('f'))
-				discard ;
-			fake.mRead-- ;
-			read (slice ("false")) ;
-			item = FALSE ;
-		}
-		if ifdo (act) {
-			if (rax != STRU32 ('F'))
-				discard ;
-			fake.mRead-- ;
-			read (slice ("FALSE")) ;
-			item = FALSE ;
-		}
-		if ifdo (act) {
-			assume (FALSE) ;
-		}
-	}
-
-	void read (VREF<VAL32> item) override {
-		auto rax = VAL64 () ;
-		read (rax) ;
-		assume (rax >= VAL32_MIN) ;
-		assume (rax <= VAL32_MAX) ;
-		item = VAL32 (rax) ;
-	}
-
-	void read (VREF<VAL64> item) override {
-		//@mark
-		const auto r1x = CPTR<char> (&fake.mStream.self[fake.mRead]) ;
-		const auto r2x = inline_min (64 ,fake.mWrite - fake.mRead) ;
-		auto rax = std::stringstream (std::string (r1x ,r2x)) ;
-		rax >> item ;
-	}
-
-	void read (VREF<FLT32> item) override {
-		auto rax = FLT64 () ;
-		read (rax) ;
-		assume (rax >= FLT32_MIN) ;
-		assume (rax <= FLT32_MAX) ;
-		item = FLT32 (rax) ;
-	}
-
-	void read (VREF<FLT64> item) override {
-		//@mark
-		const auto r1x = CPTR<char> (&fake.mStream.self[fake.mRead]) ;
-		const auto r2x = inline_min (64 ,fake.mWrite - fake.mRead) ;
-		auto rax = std::stringstream (std::string (r1x ,r2x)) ;
-		rax >> item ;
-	}
-
-	void read (VREF<BYTE> item) override {
-		assume (fake.mStream->step () == SIZE_OF<BYTE>::expr) ;
-		auto act = TRUE ;
-		if ifdo (act) {
-			if (fake.mWrite >= fake.mRead)
-				discard ;
-			auto &&tmp = keep[TYPE<RefBuffer<BYTE>>::expr] (Pointer::from (fake.mStream.self)) ;
-			tmp[fake.mWrite] = item ;
-			fake.mWrite++ ;
-		}
-	}
-
-	void read (VREF<WORD> item) override {
-		assume (fake.mStream->step () == SIZE_OF<WORD>::expr) ;
-		auto act = TRUE ;
-		if ifdo (act) {
-			if (fake.mWrite >= fake.mRead)
-				discard ;
-			auto &&tmp = keep[TYPE<RefBuffer<WORD>>::expr] (Pointer::from (fake.mStream.self)) ;
-			tmp[fake.mWrite] = item ;
-			fake.mWrite++ ;
-		}
-	}
-
-	void read (VREF<CHAR> item) override {
-		assume (fake.mStream->step () == SIZE_OF<CHAR>::expr) ;
-		auto act = TRUE ;
-		if ifdo (act) {
-			if (fake.mWrite >= fake.mRead)
-				discard ;
-			auto &&tmp = keep[TYPE<RefBuffer<CHAR>>::expr] (Pointer::from (fake.mStream.self)) ;
-			tmp[fake.mWrite] = item ;
-			fake.mWrite++ ;
-		}
-	}
-
-	void read (VREF<QUAD> item) override {
-		assume (fake.mStream->step () == SIZE_OF<QUAD>::expr) ;
-		auto act = TRUE ;
-		if ifdo (act) {
-			if (fake.mWrite >= fake.mRead)
-				discard ;
-			auto &&tmp = keep[TYPE<RefBuffer<QUAD>>::expr] (Pointer::from (fake.mStream.self)) ;
-			tmp[fake.mWrite] = item ;
-			fake.mWrite++ ;
-		}
-	}
-
-	void read (VREF<STRU32> item) {
-		auto act = TRUE ;
-		if ifdo (act) {
-			if (fake.mStream->step () != SIZE_OF<STRU8>::expr)
-				discard ;
-			auto rax = BYTE_BASE<STRU8> () ;
-			read (rax) ;
-			item = STRU32 (rax) ;
-		}
-		if ifdo (act) {
-			if (fake.mStream->step () != SIZE_OF<STRU16>::expr)
-				discard ;
-			auto rax = BYTE_BASE<STRU16> () ;
-			read (rax) ;
-			item = STRU32 (rax) ;
-		}
-		if ifdo (act) {
-			if (fake.mStream->step () != SIZE_OF<STRU32>::expr)
-				discard ;
-			auto rax = BYTE_BASE<STRU32> () ;
-			read (rax) ;
-			item = STRU32 (rax) ;
-		}
-		if ifdo (act) {
-			assume (FALSE) ;
-		}
-	}
-
-	void read (CREF<Slice> item) override {
-		auto rax = STRU32 () ;
-		for (auto &&i : iter (0 ,item.size ())) {
-			assume (inline_between (INDEX (item[i]) ,0 ,128)) ;
-			read (rax) ;
-			assume (rax == item[i]) ;
-		}
-	}
-
-	void read (VREF<String<STRA>> item) override {
-		auto rax = STRU32 () ;
-		read (rax) ;
-		assume (rax == STRU32 ('\"')) ;
-		const auto r1x = next_reading () ;
-		item = String<STRA> (r1x) ;
-		for (auto &&i : iter (0 ,r1x)) {
-			read (rax) ;
-			if ifdo (TRUE) {
-				if (rax != STRU32 ('\\'))
-					discard ;
-				read (rax) ;
-				rax = StreamProc::ctrl_from_word (rax) ;
-			}
-			item[i] = STRA (rax) ;
-		}
-		read (rax) ;
-		assume (rax == STRU32 ('\"')) ;
-	}
-
-	void read (VREF<String<STRW>> item) override {
-		auto rax = STRU32 () ;
-		read (rax) ;
-		assume (rax == STRU32 ('\"')) ;
-		const auto r1x = next_reading () ;
-		item = String<STRW> (r1x) ;
-		for (auto &&i : iter (0 ,r1x)) {
-			read (rax) ;
-			if ifdo (TRUE) {
-				if (rax != STRU32 ('\\'))
-					discard ;
-				read (rax) ;
-				rax = StreamProc::ctrl_from_word (rax) ;
-			}
-			item[i] = STRW (rax) ;
-		}
-		read (rax) ;
-		assume (rax == STRU32 ('\"')) ;
-	}
-
-	void read (VREF<String<STRU8>> item) override {
-		auto rax = STRU32 () ;
-		read (rax) ;
-		assume (rax == STRU32 ('\"')) ;
-		const auto r1x = next_reading () ;
-		item = String<STRU8> (r1x) ;
-		for (auto &&i : iter (0 ,r1x)) {
-			read (rax) ;
-			if ifdo (TRUE) {
-				if (rax != STRU32 ('\\'))
-					discard ;
-				read (rax) ;
-				rax = StreamProc::ctrl_from_word (rax) ;
-			}
-			item[i] = STRU8 (rax) ;
-		}
-		read (rax) ;
-		assume (rax == STRU32 ('\"')) ;
-	}
-
-	void read (VREF<String<STRU16>> item) override {
-		auto rax = STRU32 () ;
-		read (rax) ;
-		assume (rax == STRU32 ('\"')) ;
-		const auto r1x = next_reading () ;
-		item = String<STRU16> (r1x) ;
-		for (auto &&i : iter (0 ,r1x)) {
-			read (rax) ;
-			if ifdo (TRUE) {
-				if (rax != STRU32 ('\\'))
-					discard ;
-				read (rax) ;
-				rax = StreamProc::ctrl_from_word (rax) ;
-			}
-			item[i] = STRU16 (rax) ;
-		}
-		read (rax) ;
-		assume (rax == STRU32 ('\"')) ;
-	}
-
-	void read (VREF<String<STRU32>> item) override {
-		auto rax = STRU32 () ;
-		read (rax) ;
-		assume (rax == STRU32 ('\"')) ;
-		const auto r1x = next_reading () ;
-		item = String<STRU32> (r1x) ;
-		for (auto &&i : iter (0 ,r1x)) {
-			read (rax) ;
-			if ifdo (TRUE) {
-				if (rax != STRU32 ('\\'))
-					discard ;
-				read (rax) ;
-				rax = StreamProc::ctrl_from_word (rax) ;
-			}
-			item[i] = STRU32 (rax) ;
-		}
-		read (rax) ;
-		assume (rax == STRU32 ('\"')) ;
-	}
-
-	LENGTH next_reading () {
-		LENGTH ret = 0 ;
-		const auto r1x = fake.mRead ;
-		auto rax = STRU32 () ;
-		read (rax) ;
-		while (TRUE) {
-			if (rax == STRU32 ('\"'))
-				break ;
-			if ifdo (TRUE) {
-				if (rax != STRU32 ('\\'))
-					discard ;
-				read (rax) ;
-			}
-			ret++ ;
-			read (rax) ;
-		}
-		fake.mRead = r1x ;
-		return move (ret) ;
-	}
-
-	void read (CREF<typeof (CLS)>) override {
-		reset () ;
-	}
-
-	void read (CREF<typeof (BOM)>) override {
-		auto rax = STRU32 () ;
-		read (rax) ;
-		assume (rax == STRU32 (0XEF)) ;
-		read (rax) ;
-		assume (rax == STRU32 (0XBB)) ;
-		read (rax) ;
-		assume (rax == STRU32 (0XBF)) ;
-	}
-
-	void read (CREF<typeof (GAP)>) override {
-		const auto r1x = next_read_gap () ;
-		fake.mRead += r1x ;
-	}
-
-	LENGTH next_read_gap () {
-		LENGTH ret = 0 ;
-		const auto r1x = fake.mRead ;
-		auto rax = STRU32 () ;
-		read (rax) ;
-		while (TRUE) {
-			if (rax == STRU32 (0X00))
-				break ;
-			if (StreamProc::is_blank (rax))
-				break ;
-			ret++ ;
-			read (rax) ;
-		}
-		fake.mRead = r1x ;
-		return move (ret) ;
-	}
-
-	void read (CREF<typeof (EOS)>) override {
-		auto rax = STRU32 () ;
-		read (rax) ;
-		assume (rax == STRU32 (0X00)) ;
-	}
-
-	void read (CREF<VFat<TextReaderFriend>> item) override {
-		item->friend_read (keep[TYPE<TextReader>::expr] (fake)) ;
-	}
+struct WriteValueBuffer {
+	BoxBuffer<STRU8 ,ENUM<64>> mBuffer ;
+	INDEX mWrite ;
 } ;
 
-exports VFat<TextReaderHolder> TextReaderHolder::create (VREF<TextReaderLayout> that) {
-	return VFat<TextReaderHolder> (TextReaderImplement () ,that) ;
-}
-
-exports CFat<TextReaderHolder> TextReaderHolder::create (CREF<TextReaderLayout> that) {
-	return CFat<TextReaderHolder> (TextReaderImplement () ,that) ;
-}
-
-class TextWriterImplement implement Fat<TextWriterHolder ,TextWriterLayout> {
+class TextWriterImplHolder implement Fat<TextWriterHolder ,TextWriterLayout> {
 public:
 	void initialize (RREF<Ref<RefBuffer<BYTE>>> stream) override {
-		assume (stream != NULL) ;
-		assume (stream->step () <= 4) ;
+		assert (stream != NULL) ;
+		assert (stream->step () <= 4) ;
 		fake.mStream = move (stream) ;
 		reset () ;
 		backup () ;
@@ -1049,12 +1051,12 @@ public:
 	void write (CREF<BOOL> item) override {
 		auto act = TRUE ;
 		if ifdo (act) {
-			if ifnot (act)
+			if (!(act))
 				discard ;
-			write (slice ("TRUE")) ;
+			write (slice ("true")) ;
 		}
 		if ifdo (act) {
-			write (slice ("FALSE")) ;
+			write (slice ("false")) ;
 		}
 	}
 
@@ -1064,12 +1066,55 @@ public:
 	}
 
 	void write (CREF<VAL64> item) override {
-		//@mark
-		auto rax = std::stringstream () ;
-		rax << item ;
-		const auto r1x = rax.str () ;
-		for (auto &&i : iter (0 ,r1x.length ())) {
-			write (BYTE (r1x[i])) ;
+		if ifdo (TRUE) {
+			if (item >= 0)
+				discard ;
+			write (STRU32 ('-')) ;
+		}
+		auto act = TRUE ;
+		if ifdo (act) {
+			auto rax = Notation () ;
+			rax.mRadix = 10 ;
+			rax.mSign = FALSE ;
+			rax.mMantissa = MathProc::abs (item) ;
+			rax.mDownflow = 0 ;
+			rax.mExponent = 0 ;
+			rax.mPrecision = MathProc::log10 (rax.mMantissa) ;
+			auto rbx = WriteValueBuffer () ;
+			rbx.mWrite = rbx.mBuffer.size () ;
+			write_value (rax ,rbx) ;
+			for (auto &&i : iter (rbx.mWrite ,rbx.mBuffer.size ()))
+				write (STRU32 (rbx.mBuffer[i])) ;
+		}
+	}
+
+	void write_value (VREF<Notation> fexp10 ,VREF<WriteValueBuffer> wvb) {
+		assert (fexp10.mRadix == 10) ;
+		const auto r1x = fexp10.mPrecision ;
+		auto act = TRUE ;
+		if ifdo (act) {
+			//@info: case '0'
+			if (fexp10.mMantissa != 0)
+				discard ;
+			wvb.mWrite-- ;
+			wvb.mBuffer[wvb.mWrite] = STRU32 ('0') ;
+		}
+		if ifdo (act) {
+			//@info: case 'xxx'
+			for (auto &&i : iter (0 ,r1x)) {
+				noop (i) ;
+				wvb.mWrite-- ;
+				wvb.mBuffer[wvb.mWrite] = STRU8 (StreamProc::str_from_hex (fexp10.mMantissa % 10)) ;
+				fexp10.mMantissa /= 10 ;
+				fexp10.mExponent++ ;
+				fexp10.mPrecision-- ;
+			}
+		}
+		if ifdo (TRUE) {
+			if (!(fexp10.mSign))
+				discard ;
+			wvb.mWrite-- ;
+			wvb.mBuffer[wvb.mWrite] = STRU32 ('-') ;
 		}
 	}
 
@@ -1079,85 +1124,262 @@ public:
 	}
 
 	void write (CREF<FLT64> item) override {
-		//@mark
-		auto rax = std::stringstream () ;
-		rax << item ;
-		const auto r1x = rax.str () ;
-		for (auto &&i : iter (0 ,r1x.length ())) {
-			write (BYTE (r1x[i])) ;
+		if ifdo (TRUE) {
+			if (item >= 0)
+				discard ;
+			write (STRU32 ('-')) ;
+		}
+		auto act = TRUE ;
+		if ifdo (act) {
+			if (!(MathProc::is_inf (item)))
+				discard ;
+			write (slice ("infinity")) ;
+		}
+		if ifdo (act) {
+			auto rax = FloatProc::decode (MathProc::abs (item)) ;
+			rax = FloatProc::fexp10_from_fexp2 (rax) ;
+			rax.mPrecision = MathProc::log10 (rax.mMantissa) ;
+			auto rbx = WriteValueBuffer () ;
+			rbx.mWrite = rbx.mBuffer.size () ;
+			write_float (rax ,rbx) ;
+			for (auto &&i : iter (rbx.mWrite ,rbx.mBuffer.size ()))
+				write (STRU32 (rbx.mBuffer[i])) ;
+		}
+	}
+
+	void write_float (VREF<Notation> fexp10 ,VREF<WriteValueBuffer> wvb) {
+		assert (fexp10.mRadix == 10) ;
+		const auto r1x = FloatProc::float_precision () ;
+		if ifdo (TRUE) {
+			if (fexp10.mPrecision == 0)
+				discard ;
+			while (TRUE) {
+				if (fexp10.mMantissa == 0)
+					break ;
+				if (fexp10.mMantissa % 10 != 0)
+					break ;
+				fexp10.mMantissa /= 10 ;
+				fexp10.mExponent++ ;
+				fexp10.mPrecision-- ;
+			}
+			const auto r2x = fexp10.mPrecision - r1x ;
+			for (auto &&i : iter (0 ,r2x - 1)) {
+				noop (i) ;
+				fexp10.mMantissa /= 10 ;
+				fexp10.mExponent++ ;
+				fexp10.mPrecision-- ;
+			}
+			if (r2x <= 0)
+				discard ;
+			fexp10.mMantissa += MathProc::step (fexp10.mMantissa - 5) * 5 ;
+			fexp10.mMantissa /= 10 ;
+			fexp10.mExponent++ ;
+			fexp10.mPrecision-- ;
+		}
+		const auto r3x = fexp10.mPrecision ;
+		const auto r4x = LENGTH (fexp10.mExponent) ;
+		auto act = TRUE ;
+		if ifdo (act) {
+			//@info: case '0'
+			if (fexp10.mMantissa != 0)
+				discard ;
+			wvb.mWrite-- ;
+			wvb.mBuffer[wvb.mWrite] = STRU32 ('0') ;
+		}
+		if ifdo (act) {
+			//@info: case 'x.xxxExxx'
+			const auto r5x = r3x - 1 + r4x ;
+			if (MathProc::abs (r5x) < r1x)
+				discard ;
+			auto rax = Notation () ;
+			rax.mRadix = 10 ;
+			rax.mSign = BOOL (r5x < 0) ;
+			rax.mMantissa = MathProc::abs (r5x) ;
+			rax.mDownflow = 0 ;
+			rax.mExponent = 0 ;
+			rax.mPrecision = MathProc::log10 (rax.mMantissa) ;
+			write_value (rax ,wvb) ;
+			wvb.mWrite-- ;
+			wvb.mBuffer[wvb.mWrite] = STRU32 ('E') ;
+			const auto r6x = inline_max (LENGTH (r3x - 1 - r1x) ,0) ;
+			for (auto &&i : iter (0 ,r6x)) {
+				noop (i) ;
+				fexp10.mMantissa /= 10 ;
+				fexp10.mExponent++ ;
+				fexp10.mPrecision-- ;
+			}
+			INDEX ix = wvb.mWrite - 1 ;
+			for (auto &&i : iter (r6x ,r3x - 1)) {
+				noop (i) ;
+				wvb.mWrite-- ;
+				wvb.mBuffer[wvb.mWrite] = STRU8 (StreamProc::str_from_hex (fexp10.mMantissa % 10)) ;
+				wvb.mWrite += LENGTH (wvb.mBuffer[ix] == STRU32 ('0')) ;
+				fexp10.mMantissa /= 10 ;
+				fexp10.mExponent++ ;
+				fexp10.mPrecision-- ;
+			}
+			wvb.mWrite-- ;
+			wvb.mBuffer[wvb.mWrite] = STRU32 ('.') ;
+			wvb.mWrite += LENGTH (wvb.mBuffer[ix] == STRU32 ('.')) ;
+			wvb.mWrite-- ;
+			wvb.mBuffer[wvb.mWrite] = STRU8 (StreamProc::str_from_hex (fexp10.mMantissa % 10)) ;
+			fexp10.mMantissa /= 10 ;
+			fexp10.mExponent++ ;
+			fexp10.mPrecision-- ;
+		}
+		if ifdo (act) {
+			//@info: case 'xxx000'
+			if (r4x < 0)
+				discard ;
+			for (auto &&i : iter (0 ,r4x)) {
+				noop (i) ;
+				wvb.mWrite-- ;
+				wvb.mBuffer[wvb.mWrite] = STRU32 ('0') ;
+			}
+			for (auto &&i : iter (0 ,r3x)) {
+				noop (i) ;
+				wvb.mWrite-- ;
+				wvb.mBuffer[wvb.mWrite] = STRU8 (StreamProc::str_from_hex (fexp10.mMantissa % 10)) ;
+				fexp10.mMantissa /= 10 ;
+				fexp10.mExponent++ ;
+				fexp10.mPrecision-- ;
+			}
+		}
+		if ifdo (act) {
+			//@info: case 'xxx.xxx'
+			if (r4x < 1 - r3x)
+				discard ;
+			if (r4x >= 0)
+				discard ;
+			const auto r7x = inline_max (LENGTH (-r4x - r1x) ,0) ;
+			for (auto &&i : iter (0 ,r7x)) {
+				noop (i) ;
+				fexp10.mMantissa /= 10 ;
+				fexp10.mExponent++ ;
+				fexp10.mPrecision-- ;
+			}
+			INDEX ix = wvb.mWrite - 1 ;
+			for (auto &&i : iter (r7x ,-r4x)) {
+				noop (i) ;
+				wvb.mWrite-- ;
+				wvb.mBuffer[wvb.mWrite] = STRU8 (StreamProc::str_from_hex (fexp10.mMantissa % 10)) ;
+				wvb.mWrite += LENGTH (wvb.mBuffer[ix] == STRU32 ('0')) ;
+				fexp10.mMantissa /= 10 ;
+				fexp10.mExponent++ ;
+				fexp10.mPrecision-- ;
+			}
+			wvb.mWrite-- ;
+			wvb.mBuffer[wvb.mWrite] = STRU32 ('.') ;
+			wvb.mWrite += LENGTH (wvb.mBuffer[ix] == STRU32 ('.')) ;
+			for (auto &&i : iter (0 ,r3x + r4x)) {
+				noop (i) ;
+				wvb.mWrite-- ;
+				wvb.mBuffer[wvb.mWrite] = STRU8 (StreamProc::str_from_hex (fexp10.mMantissa % 10)) ;
+				fexp10.mMantissa /= 10 ;
+				fexp10.mExponent++ ;
+				fexp10.mPrecision-- ;
+			}
+		}
+		if ifdo (act) {
+			//@info: case '0.000xxx'
+			if (r4x >= 1 - r3x)
+				discard ;
+			if (r4x >= 0)
+				discard ;
+			const auto r8x = inline_max (LENGTH (-r4x - r1x) ,ZERO) ;
+			for (auto &&i : iter (0 ,r8x)) {
+				noop (i) ;
+				fexp10.mMantissa /= 10 ;
+				fexp10.mExponent++ ;
+				fexp10.mPrecision-- ;
+			}
+			INDEX ix = wvb.mWrite - 1 ;
+			for (auto &&i : iter (r8x ,r3x)) {
+				noop (i) ;
+				wvb.mWrite-- ;
+				wvb.mBuffer[wvb.mWrite] = STRU8 (StreamProc::str_from_hex (fexp10.mMantissa % 10)) ;
+				wvb.mWrite += LENGTH (wvb.mBuffer[ix] == STRU32 ('0')) ;
+				fexp10.mMantissa /= 10 ;
+				fexp10.mExponent++ ;
+				fexp10.mPrecision-- ;
+			}
+			const auto r9x = inline_max (r8x ,r3x) ;
+			for (auto &&i : iter (r9x ,-r4x)) {
+				noop (i) ;
+				wvb.mWrite-- ;
+				wvb.mBuffer[wvb.mWrite] = STRU32 ('0') ;
+				wvb.mWrite += LENGTH (wvb.mBuffer[ix] == STRU32 ('0')) ;
+			}
+			wvb.mWrite-- ;
+			wvb.mBuffer[wvb.mWrite] = STRU32 ('.') ;
+			wvb.mWrite += LENGTH (wvb.mBuffer[ix] == STRU32 ('.')) ;
+			wvb.mWrite-- ;
+			wvb.mBuffer[wvb.mWrite] = STRU32 ('0') ;
 		}
 	}
 
 	void write (CREF<BYTE> item) override {
-		assume (fake.mStream->step () == SIZE_OF<BYTE>::expr) ;
-		auto act = TRUE ;
-		if ifdo (act) {
-			if (fake.mWrite >= fake.mRead)
-				discard ;
-			auto &&tmp = keep[TYPE<RefBuffer<BYTE>>::expr] (Pointer::from (fake.mStream.self)) ;
-			tmp[fake.mWrite] = item ;
-			fake.mWrite++ ;
-		}
+		write_byte_impl (item) ;
 	}
 
 	void write (CREF<WORD> item) override {
-		assume (fake.mStream->step () == SIZE_OF<WORD>::expr) ;
-		auto act = TRUE ;
-		if ifdo (act) {
-			if (fake.mWrite >= fake.mRead)
-				discard ;
-			auto &&tmp = keep[TYPE<RefBuffer<WORD>>::expr] (Pointer::from (fake.mStream.self)) ;
-			tmp[fake.mWrite] = item ;
-			fake.mWrite++ ;
-		}
+		write_byte_impl (item) ;
 	}
 
 	void write (CREF<CHAR> item) override {
-		assume (fake.mStream->step () == SIZE_OF<CHAR>::expr) ;
-		auto act = TRUE ;
-		if ifdo (act) {
-			if (fake.mWrite >= fake.mRead)
-				discard ;
-			auto &&tmp = keep[TYPE<RefBuffer<CHAR>>::expr] (Pointer::from (fake.mStream.self)) ;
-			tmp[fake.mWrite] = item ;
-			fake.mWrite++ ;
-		}
+		write_byte_impl (item) ;
 	}
 
 	void write (CREF<QUAD> item) override {
-		assume (fake.mStream->step () == SIZE_OF<QUAD>::expr) ;
-		auto act = TRUE ;
-		if ifdo (act) {
-			if (fake.mWrite >= fake.mRead)
-				discard ;
-			auto &&tmp = keep[TYPE<RefBuffer<QUAD>>::expr] (Pointer::from (fake.mStream.self)) ;
-			tmp[fake.mWrite] = item ;
-			fake.mWrite++ ;
+		write_byte_impl (item) ;
+	}
+
+	template <class ARG1>
+	void write_byte_impl (CREF<ARG1> item) {
+		write (slice ("0X")) ;
+		INDEX ix = SIZE_OF<ARG1>::expr * 8  ;
+		for (auto &&i : iter (0 ,SIZE_OF<ARG1>::expr)) {
+			noop (i) ;
+			ix -= 4 ;
+			const auto r1x = INDEX ((item >> ix) & ARG1 (0X0F)) ;
+			write (StreamProc::str_from_hex (r1x)) ;
+			ix -= 4 ;
+			const auto r2x = INDEX ((item >> ix) & ARG1 (0X0F)) ;
+			write (StreamProc::str_from_hex (r2x)) ;
 		}
 	}
 
-	void write (CREF<STRU32> item) {
+	void write (CREF<STRU32> item) override {
 		auto act = TRUE ;
 		if ifdo (act) {
 			if (fake.mStream->step () != SIZE_OF<STRU8>::expr)
 				discard ;
-			const auto r1x = BYTE_BASE<STRU8> (item) ;
-			write (r1x) ;
+			if (fake.mWrite >= fake.mRead)
+				discard ;
+			auto &&tmp = keep[TYPE<RefBuffer<STRU8>>::expr] (keep[TYPE<RefBufferLayout>::expr] (fake.mStream.self)) ;
+			tmp[fake.mWrite] = STRU8 (item) ;
+			fake.mWrite++ ;
 		}
 		if ifdo (act) {
 			if (fake.mStream->step () != SIZE_OF<STRU16>::expr)
 				discard ;
-			const auto r2x = BYTE_BASE<STRU16> (item) ;
-			write (r2x) ;
+			if (fake.mWrite >= fake.mRead)
+				discard ;
+			auto &&tmp = keep[TYPE<RefBuffer<STRU16>>::expr] (keep[TYPE<RefBufferLayout>::expr] (fake.mStream.self)) ;
+			tmp[fake.mWrite] = STRU16 (item) ;
+			fake.mWrite++ ;
 		}
 		if ifdo (act) {
 			if (fake.mStream->step () != SIZE_OF<STRU32>::expr)
 				discard ;
-			const auto r3x = BYTE_BASE<STRU32> (item) ;
-			write (r3x) ;
+			if (fake.mWrite >= fake.mRead)
+				discard ;
+			auto &&tmp = keep[TYPE<RefBuffer<STRU32>>::expr] (keep[TYPE<RefBufferLayout>::expr] (fake.mStream.self)) ;
+			tmp[fake.mWrite] = STRU32 (item) ;
+			fake.mWrite++ ;
 		}
 		if ifdo (act) {
-			assume (FALSE) ;
+			assert (FALSE) ;
 		}
 	}
 
@@ -1170,38 +1392,27 @@ public:
 	}
 
 	void write (CREF<String<STRA>> item) override {
-		const auto r1x = item.length () ;
-		for (auto &&i : iter (0 ,r1x)) {
-			const auto r2x = STRU32 (item[i]) ;
-			write (r2x) ;
-		}
+		write_string_impl (item) ;
 	}
 
 	void write (CREF<String<STRW>> item) override {
-		const auto r1x = item.length () ;
-		for (auto &&i : iter (0 ,r1x)) {
-			const auto r2x = STRU32 (item[i]) ;
-			write (r2x) ;
-		}
+		write_string_impl (item) ;
 	}
 
 	void write (CREF<String<STRU8>> item) override {
-		const auto r1x = item.length () ;
-		for (auto &&i : iter (0 ,r1x)) {
-			const auto r2x = STRU32 (item[i]) ;
-			write (r2x) ;
-		}
+		write_string_impl (item) ;
 	}
 
 	void write (CREF<String<STRU16>> item) override {
-		const auto r1x = item.length () ;
-		for (auto &&i : iter (0 ,r1x)) {
-			const auto r2x = STRU32 (item[i]) ;
-			write (r2x) ;
-		}
+		write_string_impl (item) ;
 	}
 
 	void write (CREF<String<STRU32>> item) override {
+		write_string_impl (item) ;
+	}
+
+	template <class ARG1>
+	void write_string_impl (CREF<String<ARG1>> item) {
 		const auto r1x = item.length () ;
 		for (auto &&i : iter (0 ,r1x)) {
 			const auto r2x = STRU32 (item[i]) ;
@@ -1214,9 +1425,24 @@ public:
 	}
 
 	void write (CREF<typeof (BOM)>) override {
-		write (STRU32 (0XEF)) ;
-		write (STRU32 (0XBB)) ;
-		write (STRU32 (0XBF)) ;
+		auto act = TRUE ;
+		if ifdo (act) {
+			if (fake.mStream->step () != SIZE_OF<STRU8>::expr)
+				discard ;
+			write (STRU32 (0XEF)) ;
+			write (STRU32 (0XBB)) ;
+			write (STRU32 (0XBF)) ;
+		}
+		if ifdo (act) {
+			if (fake.mStream->step () != SIZE_OF<STRU16>::expr)
+				discard ;
+			write (STRU32 (0XFEFF)) ;
+		}
+		if ifdo (act) {
+			if (fake.mStream->step () != SIZE_OF<STRU32>::expr)
+				discard ;
+			write (STRU32 (0X0000FEFF)) ;
+		}
 	}
 
 	void write (CREF<typeof (GAP)>) override {
@@ -1224,63 +1450,142 @@ public:
 	}
 
 	void write (CREF<typeof (EOS)>) override {
-		while (TRUE) {
-			if (fake.mWrite >= fake.mRead)
-				break ;
-			write (STRU32 (0X00)) ;
-		}
+		assume (fake.mWrite < fake.mRead) ;
+		write (STRU32 (0X00)) ;
 	}
 
-	void write (CREF<CFat<TextWriterFriend>> item) override {
-		item->friend_write (keep[TYPE<TextWriter>::expr] (fake)) ;
+	void write (CREF<StreamWriterFriend> item) override {
+		const auto r1x = StreamWriterBinder<TextWriterImplHolder>::create (thiz) ;
+		item.friend_write (r1x.self) ;
 	}
 } ;
 
 exports VFat<TextWriterHolder> TextWriterHolder::create (VREF<TextWriterLayout> that) {
-	return VFat<TextWriterHolder> (TextWriterImplement () ,that) ;
+	return VFat<TextWriterHolder> (TextWriterImplHolder () ,that) ;
 }
 
 exports CFat<TextWriterHolder> TextWriterHolder::create (CREF<TextWriterLayout> that) {
-	return CFat<TextWriterHolder> (TextWriterImplement () ,that) ;
+	return CFat<TextWriterHolder> (TextWriterImplHolder () ,that) ;
+}
+
+class FormatImplHolder implement Fat<FormatHolder ,FormatLayout> {
+public:
+	void initialize (CREF<Slice> format) override {
+		fake.mFormat = format ;
+		fake.mWrite = 0 ;
+	}
+
+	void friend_write (VREF<StreamWriter> writer) const override {
+		auto rax = ZERO ;
+		for (auto &&i : iter (0 ,fake.mFormat.size ())) {
+			auto act = TRUE ;
+			if ifdo (act) {
+				if (rax != 0)
+					discard ;
+				if (fake.mFormat[i] != STRU32 ('$'))
+					discard ;
+				rax = 1 ;
+			}
+			if ifdo (act) {
+				if (rax != 1)
+					discard ;
+				if (fake.mFormat[i] != STRU32 ('{'))
+					discard ;
+				rax = 2 ;
+			}
+			if ifdo (act) {
+				if (rax != 1)
+					discard ;
+				const auto r1x = StreamProc::hex_from_str (fake.mFormat[i]) ;
+				if (!(inline_between (r1x ,0 ,fake.mWrite)))
+					discard ;
+				fake.mParams[r1x]->friend_write (writer) ;
+				rax = 0 ;
+			}
+			if ifdo (act) {
+				if (rax != 2)
+					discard ;
+				if (fake.mFormat[i] != STRU32 ('*'))
+					discard ;
+				for (auto &&j : iter (0 ,fake.mWrite)) {
+					fake.mParams[j]->friend_write (writer) ;
+				}
+				rax = 3 ;
+			}
+			if ifdo (act) {
+				if (rax != 2)
+					discard ;
+				const auto r1x = StreamProc::hex_from_str (fake.mFormat[i]) ;
+				if (!(inline_between (r1x ,0 ,fake.mWrite)))
+					discard ;
+				fake.mParams[r1x]->friend_write (writer) ;
+				rax = 3 ;
+			}
+			if ifdo (act) {
+				if (rax != 3)
+					discard ;
+				assert (fake.mFormat[i] == STRU32 ('}')) ;
+				rax = 0 ;
+			}
+			if ifdo (act) {
+				assume (rax == 0) ;
+				writer.write (fake.mFormat[i]) ;
+			}
+		}
+	}
+
+	void invoke (CREF<WrapperLayout> params) override {
+		fake.mWrite = 0 ;
+		for (auto &&i : WrapperIterator<RFat<StreamWriterFriend>> (params)) {
+			fake.mParams[fake.mWrite] = i ;
+			fake.mWrite++ ;
+		}
+	}
+} ;
+
+exports VFat<FormatHolder> FormatHolder::create (VREF<FormatLayout> that) {
+	return VFat<FormatHolder> (FormatImplHolder () ,that) ;
+}
+
+exports CFat<FormatHolder> FormatHolder::create (CREF<FormatLayout> that) {
+	return CFat<FormatHolder> (FormatImplHolder () ,that) ;
 }
 
 template <class A>
-struct FUNTION_string_from_impl {
+struct FUNCTION_string_from_impl {
 	template <class ARG1>
 	forceinline CREF<String<A>> operator() (CREF<String<ARG1>> that) {
-		assume (IS_SAME<A ,ARG1>::expr) ;
+		assert (IS_SAME<A ,ARG1>::expr) ;
 		return keep[TYPE<String<A>>::expr] (Pointer::from (that)) ;
 	}
 
 	template <class ARG1>
 	forceinline RREF<String<A>> operator() (RREF<String<ARG1>> that) {
-		assume (IS_SAME<A ,ARG1>::expr) ;
+		assert (IS_SAME<A ,ARG1>::expr) ;
 		return move (keep[TYPE<String<A>>::expr] (Pointer::from (that))) ;
 	}
 } ;
 
-struct FUNTION_string_from {
+struct FUNCTION_string_from {
 	template <class ARG1>
-	forceinline consteval FUNTION_string_from_impl<ARG1> operator[] (TYPE<ARG1>) const noexcept {
-		return FUNTION_string_from_impl<ARG1> () ;
+	forceinline consteval FUNCTION_string_from_impl<ARG1> operator[] (TYPE<ARG1>) const noexcept {
+		return FUNCTION_string_from_impl<ARG1> () ;
 	}
 } ;
 
-static constexpr auto string_from = FUNTION_string_from () ;
+static constexpr auto string_from = FUNCTION_string_from () ;
 
-struct StringProcPureLayout {} ;
-
-class StringProcImplement implement Fat<StringProcHolder ,StringProcLayout> {
+class StringProcImplHolder implement Fat<StringProcHolder ,StringProcLayout> {
 public:
 	void initialize () override {
-		fake.mThis = Ref<StringProcPureLayout>::make () ;
+		noop () ;
 	}
 
 	String<STRA> stra_from_strw (CREF<String<STRW>> a) const override {
 		String<STRA> ret = String<STRA> (a.length () * 2 + 1) ;
-		std::setlocale (LC_CTYPE ,"") ;
+		std::setlocale (LC_CTYPE ,String<STRA>::zero ()) ;
 		const auto r1x = (ret.size () + 1) * ret.step () ;
-		const auto r2x = std::wcstombs (ret.raw () ,a.raw () ,r1x) ;
+		const auto r2x = std::wcstombs (ret ,a ,r1x) ;
 		assume (r2x >= 0) ;
 		return move (ret) ;
 	}
@@ -1290,15 +1595,15 @@ public:
 			return string_from[TYPE<STRA>::expr] (a) ;
 		if (IS_SAME<STR ,STRW>::expr)
 			return stra_from_strw (string_from[TYPE<STRW>::expr] (a)) ;
-		assume (FALSE) ;
+		assert (FALSE) ;
 		return String<STRA> () ;
 	}
 
 	String<STRW> strw_from_stra (CREF<String<STRA>> a) const override {
 		String<STRW> ret = String<STRW> (a.length () + 1) ;
-		std::setlocale (LC_CTYPE ,"") ;
+		std::setlocale (LC_CTYPE ,String<STRA>::zero ()) ;
 		const auto r1x = (ret.size () + 1) * ret.step () ;
-		const auto r2x = std::mbstowcs (ret.raw () ,a.raw () ,r1x) ;
+		const auto r2x = std::mbstowcs (ret ,a ,r1x) ;
 		assume (r2x >= 0) ;
 		return move (ret) ;
 	}
@@ -1308,7 +1613,7 @@ public:
 			return strw_from_stra (string_from[TYPE<STRA>::expr] (a)) ;
 		if (IS_SAME<STR ,STRW>::expr)
 			return string_from[TYPE<STRW>::expr] (a) ;
-		assume (FALSE) ;
+		assert (FALSE) ;
 		return String<STRW> () ;
 	}
 
@@ -1317,7 +1622,7 @@ public:
 			return string_from[TYPE<STR>::expr] (a) ;
 		if (IS_SAME<STR ,STRW>::expr)
 			return string_from[TYPE<STR>::expr] (strw_from_stra (a)) ;
-		assume (FALSE) ;
+		assert (FALSE) ;
 		return String<STR> () ;
 	}
 
@@ -1326,7 +1631,7 @@ public:
 			return string_from[TYPE<STR>::expr] (stra_from_strw (a)) ;
 		if (IS_SAME<STR ,STRW>::expr)
 			return string_from[TYPE<STR>::expr] (a) ;
-		assume (FALSE) ;
+		assert (FALSE) ;
 		return String<STR> () ;
 	}
 
@@ -1340,17 +1645,17 @@ public:
 				continue ;
 			auto act = TRUE ;
 			if ifdo (act) {
-				if ifnot (rax == 0)
+				if (rax != 0)
 					discard ;
-				if ifnot (a[i] <= STRU16 (0X007F))
+				if (a[i] > STRU16 (0X007F))
 					discard ;
 				ret[ix] = STRU8 (a[i]) ;
 				ix++ ;
 			}
 			if ifdo (act) {
-				if ifnot (rax == 0)
+				if (rax != 0)
 					discard ;
-				if ifnot (a[i] <= STRU16 (0X07FF))
+				if (a[i] > STRU16 (0X07FF))
 					discard ;
 				ret[ix] = (STRU8 (a[i] >> 6) & STRU8 (0X1F)) | STRU8 (0XC0) ;
 				ix++ ;
@@ -1358,17 +1663,17 @@ public:
 				ix++ ;
 			}
 			if ifdo (act) {
-				if ifnot (rax == 0)
+				if (rax != 0)
 					discard ;
-				if ifnot (a[i] >= STRU16 (0XD800))
+				if (a[i] < STRU16 (0XD800))
 					discard ;
-				if ifnot (a[i] <= STRU16 (0XDBFF))
+				if (a[i] > STRU16 (0XDBFF))
 					discard ;
 				rbx = STRU32 (a[i] & STRU16 (0X03FF)) ;
 				rax = 1 ;
 			}
 			if ifdo (act) {
-				if ifnot (rax == 0)
+				if (rax != 0)
 					discard ;
 				ret[ix] = (STRU8 (a[i] >> 12) & STRU8 (0X0F)) | STRU8 (0XE0) ;
 				ix++ ;
@@ -1378,11 +1683,11 @@ public:
 				ix++ ;
 			}
 			if ifdo (act) {
-				if ifnot (rax == 1)
+				if (rax != 1)
 					discard ;
-				if ifnot (a[i] >= STRU16 (0XDC00))
+				if (a[i] < STRU16 (0XDC00))
 					discard ;
-				if ifnot (a[i] <= STRU16 (0XDFFF))
+				if (a[i] > STRU16 (0XDFFF))
 					discard ;
 				rbx = STRU32 (((rbx << 10) | (a[i] & STRU16 (0X03FF))) + STRU32 (0X00010000)) ;
 				ret[ix] = (STRU8 (rbx >> 18) & STRU8 (0X07)) | STRU8 (0XF0) ;
@@ -1403,7 +1708,7 @@ public:
 		if ifdo (TRUE) {
 			if (rax == 0)
 				discard ;
-			ret[ix] = STRU8 ('?') ;
+			ret[ix] = STRU8 (0X3F) ;
 			ix++ ;
 		}
 		ret.trunc (ix) ;
@@ -1411,14 +1716,12 @@ public:
 	}
 
 	String<STRU8> stru8_from_stru32 (CREF<String<STRU32>> a) const override {
-		/*
-			*	1 bytes [0,0X7F] 0xxxxxxx
-			*	2 bytes [0x80,0X7FF] 110xxxxx 10xxxxxx
-			*	3 bytes [0x800,0XFFFF] 1110xxxx 10xxxxxx 10xxxxxx
-			*	4 bytes [0x10000,0X1FFFFF] 11110xxx 10xxxxxx 10xxxxxx 10xxxxxx
-			*	5 bytes [0x200000,0X3FFFFFF] 111110xx 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx
-			*	6 bytes [0x4000000,0X7FFFFFFF] 1111110x 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx
-			*/
+		//@info: 1 bytes [0,0X7F] 0xxxxxxx
+		//@info: 2 bytes [0x80,0X7FF] 110xxxxx 10xxxxxx
+		//@info: 3 bytes [0x800,0XFFFF] 1110xxxx 10xxxxxx 10xxxxxx
+		//@info: 4 bytes [0x10000,0X1FFFFF] 11110xxx 10xxxxxx 10xxxxxx 10xxxxxx
+		//@info: 5 bytes [0x200000,0X3FFFFFF] 111110xx 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx
+		//@info: 6 bytes [0x4000000,0X7FFFFFFF] 1111110x 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx
 		String<STRU8> ret = String<STRU8> (a.length () * 6) ;
 		INDEX ix = 0 ;
 		auto rax = ZERO ;
@@ -1427,17 +1730,17 @@ public:
 				continue ;
 			auto act = TRUE ;
 			if ifdo (act) {
-				if ifnot (rax == 0)
+				if (rax != 0)
 					discard ;
-				if ifnot (a[i] <= STRU32 (0X0000007F))
+				if (a[i] > STRU32 (0X0000007F))
 					discard ;
 				ret[ix] = STRU8 (a[i]) ;
 				ix++ ;
 			}
 			if ifdo (act) {
-				if ifnot (rax == 0)
+				if (rax != 0)
 					discard ;
-				if ifnot (a[i] <= STRU32 (0X000007FF))
+				if (a[i] > STRU32 (0X000007FF))
 					discard ;
 				ret[ix] = (STRU8 (a[i] >> 6) & STRU8 (0X1F)) | STRU8 (0XC0) ;
 				ix++ ;
@@ -1445,9 +1748,9 @@ public:
 				ix++ ;
 			}
 			if ifdo (act) {
-				if ifnot (rax == 0)
+				if (rax != 0)
 					discard ;
-				if ifnot (a[i] <= STRU32 (0X0000FFFF))
+				if (a[i] > STRU32 (0X0000FFFF))
 					discard ;
 				ret[ix] = (STRU8 (a[i] >> 12) & STRU8 (0X0F)) | STRU8 (0XE0) ;
 				ix++ ;
@@ -1457,9 +1760,9 @@ public:
 				ix++ ;
 			}
 			if ifdo (act) {
-				if ifnot (rax == 0)
+				if (rax != 0)
 					discard ;
-				if ifnot (a[i] <= STRU32 (0X001FFFFF))
+				if (a[i] > STRU32 (0X001FFFFF))
 					discard ;
 				ret[ix] = (STRU8 (a[i] >> 18) & STRU8 (0X07)) | STRU8 (0XF0) ;
 				ix++ ;
@@ -1471,9 +1774,9 @@ public:
 				ix++ ;
 			}
 			if ifdo (act) {
-				if ifnot (rax == 0)
+				if (rax != 0)
 					discard ;
-				if ifnot (a[i] <= STRU32 (0X03FFFFFF))
+				if (a[i] > STRU32 (0X03FFFFFF))
 					discard ;
 				ret[ix] = (STRU8 (a[i] >> 24) & STRU8 (0X03)) | STRU8 (0XF8) ;
 				ix++ ;
@@ -1487,9 +1790,9 @@ public:
 				ix++ ;
 			}
 			if ifdo (act) {
-				if ifnot (rax == 0)
+				if (rax != 0)
 					discard ;
-				if ifnot (a[i] <= STRU32 (0X7FFFFFFF))
+				if (a[i] > STRU32 (0X7FFFFFFF))
 					discard ;
 				ret[ix] = (STRU8 (a[i] >> 30) & STRU8 (0X01)) | STRU8 (0XFC) ;
 				ix++ ;
@@ -1524,65 +1827,65 @@ public:
 			if ifdo (TRUE) {
 				auto act = TRUE ;
 				if ifdo (act) {
-					if ifnot (rax == 0)
+					if (rax != 0)
 						discard ;
-					if ifnot (a[i] <= STRU8 (0X7F))
+					if (a[i] > STRU8 (0X7F))
 						discard ;
 					ret[ix] = STRU16 (a[i]) ;
 					ix++ ;
 				}
 				if ifdo (act) {
-					if ifnot (rax == 0)
+					if (rax != 0)
 						discard ;
-					if ifnot (a[i] <= STRU8 (0XDF))
+					if (a[i] > STRU8 (0XDF))
 						discard ;
 					rbx = STRU32 (a[i] & STRU8 (0X1F)) ;
 					rax = 1 ;
 				}
 				if ifdo (act) {
-					if ifnot (rax == 0)
+					if (rax != 0)
 						discard ;
-					if ifnot (a[i] <= STRU8 (0XEF))
+					if (a[i] > STRU8 (0XEF))
 						discard ;
 					rbx = STRU32 (a[i] & STRU8 (0X0F)) ;
 					rax = 2 ;
 				}
 				if ifdo (act) {
-					if ifnot (rax == 0)
+					if (rax != 0)
 						discard ;
-					if ifnot (a[i] <= STRU8 (0XF7))
+					if (a[i] > STRU8 (0XF7))
 						discard ;
 					rbx = STRU32 (a[i] & STRU8 (0X07)) ;
 					rax = 3 ;
 				}
 				if ifdo (act) {
-					if ifnot (rax == 0)
+					if (rax != 0)
 						discard ;
-					if ifnot (a[i] <= STRU8 (0XFB))
+					if (a[i] > STRU8 (0XFB))
 						discard ;
 					rbx = STRU32 (a[i] & STRU8 (0X03)) ;
 					rax = 4 ;
 				}
 				if ifdo (act) {
-					if ifnot (rax == 0)
+					if (rax != 0)
 						discard ;
-					if ifnot (a[i] <= STRU8 (0XFD))
+					if (a[i] > STRU8 (0XFD))
 						discard ;
 					rbx = STRU32 (a[i] & STRU8 (0X01)) ;
 					rax = 5 ;
 				}
 				if ifdo (act) {
-					if ifnot (rax == 1)
+					if (rax != 1)
 						discard ;
-					if ifnot (a[i] <= STRU8 (0XBF))
+					if (a[i] > STRU8 (0XBF))
 						discard ;
 					rbx = STRU32 ((rbx << 6) | (a[i] & STRU8 (0X3F))) ;
 					rax = 10 ;
 				}
 				if ifdo (act) {
-					if ifnot (inline_between (rax ,2 ,6))
+					if (!(inline_between (rax ,2 ,6)))
 						discard ;
-					if ifnot (a[i] <= STRU8 (0XBF))
+					if (a[i] > STRU8 (0XBF))
 						discard ;
 					rbx = STRU32 ((rbx << 6) | (a[i] & STRU8 (0X3F))) ;
 					rax-- ;
@@ -1597,14 +1900,14 @@ public:
 					discard ;
 				auto act = TRUE ;
 				if ifdo (act) {
-					if ifnot (rbx <= STRU32 (0X0000FFFF))
+					if (rbx > STRU32 (0X0000FFFF))
 						discard ;
 					ret[ix] = STRU16 (rbx) ;
 					ix++ ;
 					rax = 0 ;
 				}
 				if ifdo (act) {
-					if ifnot (rbx <= STRU32 (0X0010FFFF))
+					if (rbx > STRU32 (0X0010FFFF))
 						discard ;
 					rbx = STRU32 (rbx - STRU32 (0X00010000)) ;
 					ret[ix] = (STRU16 (rbx >> 10) & STRU16 (0X03FF)) | STRU16 (0XD800) ;
@@ -1614,9 +1917,9 @@ public:
 					rax = 0 ;
 				}
 				if ifdo (act) {
-					if ifnot (rbx <= STRU32 (0X7FFFFFFF))
+					if (rbx > STRU32 (0X7FFFFFFF))
 						discard ;
-					ret[ix] = STRU16 ('?') ;
+					ret[ix] = STRU16 (0X3F) ;
 					ix++ ;
 					rax = 0 ;
 				}
@@ -1629,7 +1932,7 @@ public:
 		if ifdo (TRUE) {
 			if (rax == 0)
 				discard ;
-			ret[ix] = STRU16 ('?') ;
+			ret[ix] = STRU16 (0X3F) ;
 			ix++ ;
 		}
 		ret.trunc (ix) ;
@@ -1637,10 +1940,8 @@ public:
 	}
 
 	String<STRU16> stru16_from_stru32 (CREF<String<STRU32>> a) const override {
-		/*
-			*	utf16 surrogate pairs [D800,DBFF] 110110xx xxxxxxxx [DC00,DFFF] 110111xx xxxxxxxx
-			*	utf16-utf32 surrogate pairs [0X10000,0X10FFFF]-[0,0XFFFFF] 0000xxxx xxxxxxxx xxxxxxxx
-			*/
+		//@info: utf16 [D800,DBFF] 110110xx xxxxxxxx [DC00,DFFF] 110111xx xxxxxxxx
+		//@info: utf32 [0X10000,0X10FFFF]-[0,0XFFFFF] 0000xxxx xxxxxxxx xxxxxxxx
 		String<STRU16> ret = String<STRU16> (a.length () * 2) ;
 		INDEX ix = 0 ;
 		auto rax = ZERO ;
@@ -1649,17 +1950,17 @@ public:
 				continue ;
 			auto act = TRUE ;
 			if ifdo (act) {
-				if ifnot (rax == 0)
+				if (rax != 0)
 					discard ;
-				if ifnot (a[i] <= STRU32 (0X0000FFFF))
+				if (a[i] > STRU32 (0X0000FFFF))
 					discard ;
 				ret[ix] = STRU16 (a[i]) ;
 				ix++ ;
 			}
 			if ifdo (act) {
-				if ifnot (rax == 0)
+				if (rax != 0)
 					discard ;
-				if ifnot (a[i] <= STRU32 (0X0010FFFF))
+				if (a[i] > STRU32 (0X0010FFFF))
 					discard ;
 				ret[ix] = (STRU16 ((a[i] - STRU32 (0X00010000)) >> 10) & STRU16 (0X03FF)) | STRU16 (0XD800) ;
 				ix++ ;
@@ -1667,11 +1968,11 @@ public:
 				ix++ ;
 			}
 			if ifdo (act) {
-				if ifnot (rax == 0)
+				if (rax != 0)
 					discard ;
-				if ifnot (a[i] <= STRU32 (0X7FFFFFFF))
+				if (a[i] > STRU32 (0X7FFFFFFF))
 					discard ;
-				ret[ix] = STRU16 ('?') ;
+				ret[ix] = STRU16 (0X3F) ;
 				ix++ ;
 			}
 			if ifdo (act) {
@@ -1684,14 +1985,12 @@ public:
 	}
 
 	String<STRU32> stru32_from_stru8 (CREF<String<STRU8>> a) const override {
-		/*
-			*	1 bytes [0,0X7F] 0xxxxxxx
-			*	2 bytes [0x80,0X7FF] 110xxxxx 10xxxxxx
-			*	3 bytes [0x800,0XFFFF] 1110xxxx 10xxxxxx 10xxxxxx
-			*	4 bytes [0x10000,0X1FFFFF] 11110xxx 10xxxxxx 10xxxxxx 10xxxxxx
-			*	5 bytes [0x200000,0X3FFFFFF] 111110xx 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx
-			*	6 bytes [0x4000000,0X7FFFFFFF] 1111110x 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx
-			*/
+		//@info: 1 bytes [0,0X7F] 0xxxxxxx
+		//@info: 2 bytes [0x80,0X7FF] 110xxxxx 10xxxxxx
+		//@info: 3 bytes [0x800,0XFFFF] 1110xxxx 10xxxxxx 10xxxxxx
+		//@info: 4 bytes [0x10000,0X1FFFFF] 11110xxx 10xxxxxx 10xxxxxx 10xxxxxx
+		//@info: 5 bytes [0x200000,0X3FFFFFF] 111110xx 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx
+		//@info: 6 bytes [0x4000000,0X7FFFFFFF] 1111110x 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx
 		String<STRU32> ret = String<STRU32> (a.length ()) ;
 		INDEX ix = 0 ;
 		auto rax = ZERO ;
@@ -1701,57 +2000,57 @@ public:
 				continue ;
 			auto act = TRUE ;
 			if ifdo (act) {
-				if ifnot (rax == 0)
+				if (rax != 0)
 					discard ;
-				if ifnot (a[i] <= STRU8 (0X7F))
+				if (a[i] > STRU8 (0X7F))
 					discard ;
 				ret[ix] = STRU32 (a[i]) ;
 				ix++ ;
 			}
 			if ifdo (act) {
-				if ifnot (rax == 0)
+				if (rax != 0)
 					discard ;
-				if ifnot (a[i] <= STRU8 (0XDF))
+				if (a[i] > STRU8 (0XDF))
 					discard ;
 				rbx = STRU32 (a[i] & STRU8 (0X1F)) ;
 				rax = 1 ;
 			}
 			if ifdo (act) {
-				if ifnot (rax == 0)
+				if (rax != 0)
 					discard ;
-				if ifnot (a[i] <= STRU8 (0XEF))
+				if (a[i] > STRU8 (0XEF))
 					discard ;
 				rbx = STRU32 (a[i] & STRU8 (0X0F)) ;
 				rax = 2 ;
 			}
 			if ifdo (act) {
-				if ifnot (rax == 0)
+				if (rax != 0)
 					discard ;
-				if ifnot (a[i] <= STRU8 (0XF7))
+				if (a[i] > STRU8 (0XF7))
 					discard ;
 				rbx = STRU32 (a[i] & STRU8 (0X07)) ;
 				rax = 3 ;
 			}
 			if ifdo (act) {
-				if ifnot (rax == 0)
+				if (rax != 0)
 					discard ;
-				if ifnot (a[i] <= STRU8 (0XFB))
+				if (a[i] > STRU8 (0XFB))
 					discard ;
 				rbx = STRU32 (a[i] & STRU8 (0X03)) ;
 				rax = 4 ;
 			}
 			if ifdo (act) {
-				if ifnot (rax == 0)
+				if (rax != 0)
 					discard ;
-				if ifnot (a[i] <= STRU8 (0XFD))
+				if (a[i] > STRU8 (0XFD))
 					discard ;
 				rbx = STRU32 (a[i] & STRU8 (0X01)) ;
 				rax = 5 ;
 			}
 			if ifdo (act) {
-				if ifnot (rax == 1)
+				if (rax != 1)
 					discard ;
-				if ifnot (a[i] <= STRU8 (0XBF))
+				if (a[i] > STRU8 (0XBF))
 					discard ;
 				rbx = STRU32 ((rbx << 6) | (a[i] & STRU8 (0X3F))) ;
 				ret[ix] = rbx ;
@@ -1759,9 +2058,9 @@ public:
 				rax = 0 ;
 			}
 			if ifdo (act) {
-				if ifnot (inline_between (rax ,2 ,6))
+				if (!(inline_between (rax ,2 ,6)))
 					discard ;
-				if ifnot (a[i] <= STRU8 (0XBF))
+				if (a[i] > STRU8 (0XBF))
 					discard ;
 				rbx = STRU32 ((rbx << 6) | (a[i] & STRU8 (0X3F))) ;
 				rax-- ;
@@ -1782,10 +2081,8 @@ public:
 	}
 
 	String<STRU32> stru32_from_stru16 (CREF<String<STRU16>> a) const override {
-		/*
-			*	utf16 surrogate pairs [D800,DBFF] 110110xx xxxxxxxx [DC00,DFFF] 110111xx xxxxxxxx
-			*	utf16-utf32 surrogate pairs [0X10000,0X10FFFF]-[0,0XFFFFF] 0000xxxx xxxxxxxx xxxxxxxx
-			*/
+		//@info: utf16 [D800,DBFF] 110110xx xxxxxxxx [DC00,DFFF] 110111xx xxxxxxxx
+		//@info: utf32 [0X10000,0X10FFFF]-[0,0XFFFFF] 0000xxxx xxxxxxxx xxxxxxxx
 		String<STRU32> ret = String<STRU32> (a.length ()) ;
 		INDEX ix = 0 ;
 		auto rax = ZERO ;
@@ -1795,35 +2092,35 @@ public:
 				continue ;
 			auto act = TRUE ;
 			if ifdo (act) {
-				if ifnot (rax == 0)
+				if (rax != 0)
 					discard ;
-				if ifnot (a[i] <= STRU16 (0X07FF))
+				if (a[i] > STRU16 (0X07FF))
 					discard ;
 				ret[ix] = STRU32 (a[i]) ;
 				ix++ ;
 			}
 			if ifdo (act) {
-				if ifnot (rax == 0)
+				if (rax != 0)
 					discard ;
-				if ifnot (a[i] >= STRU16 (0XD800))
+				if (a[i] < STRU16 (0XD800))
 					discard ;
-				if ifnot (a[i] <= STRU16 (0XDBFF))
+				if (a[i] > STRU16 (0XDBFF))
 					discard ;
 				rbx = STRU32 (a[i] & STRU16 (0X03FF)) ;
 				rax = 1 ;
 			}
 			if ifdo (act) {
-				if ifnot (rax == 0)
+				if (rax != 0)
 					discard ;
 				ret[ix] = STRU32 (a[i]) ;
 				ix++ ;
 			}
 			if ifdo (act) {
-				if ifnot (rax == 1)
+				if (rax != 1)
 					discard ;
-				if ifnot (a[i] >= STRU16 (0XDC00))
+				if (a[i] < STRU16 (0XDC00))
 					discard ;
-				if ifnot (a[i] <= STRU16 (0XDFFF))
+				if (a[i] > STRU16 (0XDFFF))
 					discard ;
 				rbx = STRU32 (((rbx << 10) | (a[i] & STRU16 (0X03FF))) + STRU32 (0X00010000)) ;
 				ret[ix] = rbx ;
@@ -1846,19 +2143,19 @@ public:
 	}
 
 	String<STRUA> strua_from_stra (RREF<String<STRA>> a) const override {
-		return string_from[TYPE<STRUA>::expr] (a) ;
+		return move (keep[TYPE<String<STRUA>>::expr] (keep[TYPE<StringLayout>::expr] (a))) ;
 	}
 
 	String<STRA> stra_from_strua (RREF<String<STRUA>> a) const override {
-		return string_from[TYPE<STRA>::expr] (a) ;
+		return move (keep[TYPE<String<STRA>>::expr] (keep[TYPE<StringLayout>::expr] (a))) ;
 	}
 
 	String<STRUW> struw_from_strw (RREF<String<STRW>> a) const override {
-		return string_from[TYPE<STRUW>::expr] (a) ;
+		return move (keep[TYPE<String<STRUW>>::expr] (keep[TYPE<StringLayout>::expr] (a))) ;
 	}
 
 	String<STRW> strw_from_struw (RREF<String<STRUW>> a) const override {
-		return string_from[TYPE<STRW>::expr] (a) ;
+		return move (keep[TYPE<String<STRW>>::expr] (keep[TYPE<StringLayout>::expr] (a))) ;
 	}
 
 	String<STRA> stra_from_stru (CREF<String<STRU8>> a) const override {
@@ -1880,7 +2177,7 @@ public:
 			return strw_from_struw (string_from[TYPE<STRUW>::expr] (stru16_from_stru8 (a))) ;
 		if (IS_SAME<STRUW ,STRU32>::expr)
 			return strw_from_struw (string_from[TYPE<STRUW>::expr] (stru32_from_stru8 (a))) ;
-		assume (FALSE) ;
+		assert (FALSE) ;
 		return String<STRW> () ;
 	}
 
@@ -1891,7 +2188,7 @@ public:
 			return strw_from_struw (string_from[TYPE<STRUW>::expr] (move (a))) ;
 		if (IS_SAME<STRUW ,STRU32>::expr)
 			return strw_from_struw (string_from[TYPE<STRUW>::expr] (stru32_from_stru16 (a))) ;
-		assume (FALSE) ;
+		assert (FALSE) ;
 		return String<STRW> () ;
 	}
 
@@ -1902,7 +2199,7 @@ public:
 			return strw_from_struw (string_from[TYPE<STRUW>::expr] (stru16_from_stru32 (a))) ;
 		if (IS_SAME<STRUW ,STRU32>::expr)
 			return strw_from_struw (string_from[TYPE<STRUW>::expr] (move (a))) ;
-		assume (FALSE) ;
+		assert (FALSE) ;
 		return String<STRW> () ;
 	}
 
@@ -1911,7 +2208,7 @@ public:
 			return string_from[TYPE<STR>::expr] (stra_from_stru (a)) ;
 		if (IS_SAME<STR ,STRW>::expr)
 			return string_from[TYPE<STR>::expr] (strw_from_stru (a)) ;
-		assume (FALSE) ;
+		assert (FALSE) ;
 		return String<STR> () ;
 	}
 
@@ -1920,7 +2217,7 @@ public:
 			return string_from[TYPE<STR>::expr] (stra_from_stru (a)) ;
 		if (IS_SAME<STR ,STRW>::expr)
 			return string_from[TYPE<STR>::expr] (strw_from_stru (a)) ;
-		assume (FALSE) ;
+		assert (FALSE) ;
 		return String<STR> () ;
 	}
 
@@ -1929,946 +2226,53 @@ public:
 			return string_from[TYPE<STR>::expr] (stra_from_stru (a)) ;
 		if (IS_SAME<STR ,STRW>::expr)
 			return string_from[TYPE<STR>::expr] (strw_from_stru (a)) ;
-		assume (FALSE) ;
+		assert (FALSE) ;
 		return String<STR> () ;
 	}
 } ;
 
 exports VFat<StringProcHolder> StringProcHolder::create (VREF<StringProcLayout> that) {
-	return VFat<StringProcHolder> (StringProcImplement () ,that) ;
+	return VFat<StringProcHolder> (StringProcImplHolder () ,that) ;
 }
 
 exports CFat<StringProcHolder> StringProcHolder::create (CREF<StringProcLayout> that) {
-	return CFat<StringProcHolder> (StringProcImplement () ,that) ;
+	return CFat<StringProcHolder> (StringProcImplHolder () ,that) ;
 }
 
 struct RegexPureLayout {
-	std::regex mRegex ;
-	std::cmatch mMatch ;
+	std::basic_regex<STR> mRegex ;
+	std::match_results<DEF<const STR *>> mMatch ;
 } ;
 
-class RegexImplement implement Fat<RegexHolder ,RegexLayout> {
+class RegexImplHolder implement Fat<RegexHolder ,RegexLayout> {
 public:
-	void initialize (CREF<String<STRA>> text) override {
+	void initialize (CREF<String<STR>> format) override {
 		fake.mThis = Ref<RegexPureLayout>::make () ;
-		fake.mThis->mRegex = std::regex (text.raw ()) ;
+		fake.mThis->mRegex = std::basic_regex<STR> (format) ;
 	}
 
-	INDEX search (CREF<String<STRA>> text ,CREF<INDEX> index) override {
-		const auto r1x = text.raw () ;
+	INDEX search (CREF<String<STR>> text ,CREF<INDEX> index) override {
+		const auto r1x = text.self ;
 		const auto r2x = std::regex_search (r1x ,fake.mThis->mMatch ,fake.mThis->mRegex) ;
-		if ifnot (r2x)
+		if (!(r2x))
 			return NONE ;
 		const auto r3x = FLAG (fake.mThis->mMatch.suffix ().second) ;
 		return r3x - FLAG (r1x) ;
 	}
 
-	String<STRA> match (CREF<INDEX> index) const override {
+	String<STR> match (CREF<INDEX> index) const override {
 		const auto r1x = FLAG (fake.mThis->mMatch[index].first) ;
 		const auto r2x = FLAG (fake.mThis->mMatch[index].second) ;
-		const auto r3x = Slice (r1x ,r2x - r1x ,SIZE_OF<STRU8>::expr) ;
-		return String<STRA> (r3x) ;
+		const auto r3x = Slice (r1x ,r2x - r1x ,SIZE_OF<STR>::expr) ;
+		return String<STR> (r3x) ;
 	}
 } ;
 
 exports VFat<RegexHolder> RegexHolder::create (VREF<RegexLayout> that) {
-	return VFat<RegexHolder> (RegexImplement () ,that) ;
+	return VFat<RegexHolder> (RegexImplHolder () ,that) ;
 }
 
 exports CFat<RegexHolder> RegexHolder::create (CREF<RegexLayout> that) {
-	return CFat<RegexHolder> (RegexImplement () ,that) ;
-}
-
-struct XmlParserNode {
-	String<STRU8> mName ;
-	String<STRU8> mString ;
-	SortedList<INDEX> mArraySet ;
-	SortedList<String<STRU8>> mObjectSet ;
-	INDEX mParent ;
-	INDEX mBrother ;
-	INDEX mChild ;
-} ;
-
-struct XmlParserPureLayout {
-	Array<XmlParserNode> mTree ;
-	INDEX mRoot ;
-} ;
-
-class XmlParserImplement implement Fat<XmlParserHolder ,XmlParserLayout> {
-public:
-	void initialize (CREF<RefBuffer<BYTE>> stream) override {
-		unimplemented () ;
-	}
-
-	void initialize (CREF<XmlParserLayout> that) override {
-		fake.mThis = that.mThis.share () ;
-		fake.mIndex = that.mIndex ;
-	}
-
-	BOOL exist () const override {
-		if (fake.mThis == NULL)
-			return FALSE ;
-		if (fake.mIndex == NONE)
-			return FALSE ;
-		return TRUE ;
-	}
-
-	XmlParserLayout root () const override {
-		XmlParserLayout ret ;
-		if ifdo (TRUE) {
-			if ifnot (exist ())
-				discard ;
-			ret.mThis = fake.mThis.share () ;
-			ret.mIndex = fake.mThis->mRoot ;
-		}
-		return move (ret) ;
-	}
-
-	XmlParserLayout parent () const override {
-		XmlParserLayout ret ;
-		if ifdo (TRUE) {
-			if ifnot (exist ())
-				discard ;
-			ret.mThis = fake.mThis.share () ;
-			ret.mIndex = fake.mThis->mTree[fake.mIndex].mParent ;
-		}
-		return move (ret) ;
-	}
-
-	XmlParserLayout brother () const override {
-		XmlParserLayout ret ;
-		if ifdo (TRUE) {
-			if ifnot (exist ())
-				discard ;
-			ret.mThis = fake.mThis.share () ;
-			ret.mIndex = fake.mThis->mTree[fake.mIndex].mBrother ;
-		}
-		return move (ret) ;
-	}
-
-	XmlParserLayout child () const override {
-		XmlParserLayout ret ;
-		if ifdo (TRUE) {
-			if ifnot (exist ())
-				discard ;
-			ret.mThis = fake.mThis.share () ;
-			ret.mIndex = fake.mThis->mTree[fake.mIndex].mChild ;
-		}
-		return move (ret) ;
-	}
-
-	XmlParserLayout child (CREF<INDEX> index) const override {
-		XmlParserLayout ret ;
-		if ifdo (TRUE) {
-			if ifnot (exist ())
-				discard ;
-			ret.mThis = fake.mThis.share () ;
-			ret.mIndex = fake.mThis->mTree[fake.mIndex].mArraySet.map (index) ;
-		}
-		return move (ret) ;
-	}
-
-	XmlParserLayout child (CREF<Slice> name) const override {
-		XmlParserLayout ret ;
-		if ifdo (TRUE) {
-			if ifnot (exist ())
-				discard ;
-			ret.mThis = fake.mThis.share () ;
-			ret.mIndex = fake.mThis->mTree[fake.mIndex].mObjectSet.map (name) ;
-		}
-		return move (ret) ;
-	}
-
-	XmlParserLayout child (CREF<String<STRU8>> name) const override {
-		XmlParserLayout ret ;
-		if ifdo (TRUE) {
-			if ifnot (exist ())
-				discard ;
-			ret.mThis = fake.mThis.share () ;
-			ret.mIndex = fake.mThis->mTree[fake.mIndex].mObjectSet.map (name) ;
-		}
-		return move (ret) ;
-	}
-
-	Array<XmlParserLayout> list () const override {
-		Array<XmlParserLayout> ret ;
-		if ifdo (TRUE) {
-			if ifnot (exist ())
-				discard ;
-			const auto r1x = fake.mThis->mTree[fake.mIndex].mArraySet.length () ;
-			ret = Array<XmlParserLayout> (r1x) ;
-			for (auto &&i : iter (0 ,r1x)) {
-				ret[i].mThis = fake.mThis.share () ;
-				ret[i].mIndex = fake.mThis->mTree[fake.mIndex].mArraySet.map (r1x) ;
-			}
-		}
-		return move (ret) ;
-	}
-
-	Array<XmlParserLayout> list (CREF<LENGTH> size_) const override {
-		Array<XmlParserLayout> ret = Array<XmlParserLayout> (size_) ;
-		if ifdo (TRUE) {
-			if ifnot (exist ())
-				discard ;
-			const auto r1x = fake.mThis->mTree[fake.mIndex].mArraySet.length () ;
-			const auto r2x = inline_min (r1x ,size_) ;
-			for (auto &&i : iter (0 ,r2x)) {
-				ret[i].mThis = fake.mThis.share () ;
-				ret[i].mIndex = fake.mThis->mTree[fake.mIndex].mArraySet.map (r1x) ;
-			}
-		}
-		return move (ret) ;
-	}
-
-	BOOL equal (CREF<XmlParserLayout> that) const override {
-		const auto r1x = inline_compr (fake.mThis.exist () ,that.mThis.exist ()) ;
-		if (r1x != ZERO)
-			return FALSE ;
-		if ifnot (fake.mThis.exist ())
-			return TRUE ;
-		if (address (fake.mThis.self) != address (that.mThis.self))
-			return FALSE ;
-		if (fake.mIndex != that.mIndex)
-			return FALSE ;
-		return FALSE ;
-	}
-
-	CREF<String<STRU8>> name () const leftvalue override {
-		if ifnot (exist ())
-			return String<STRU8>::error () ;
-		return fake.mThis->mTree[fake.mIndex].mName ;
-	}
-
-	BOOL fetch (CREF<BOOL> def) const override {
-		if ifnot (exist ())
-			return def ;
-		try {
-			BOOL ret ;
-			auto rax = TextReader (fake.mThis->mTree[fake.mIndex].mString.borrow ()) ;
-			rax >> ret ;
-			rax >> EOS ;
-			return move (ret) ;
-		} catch (CREF<Exception> e) {
-			noop (e) ;
-		}
-		return def ;
-	}
-
-	VAL32 fetch (CREF<VAL32> def) const override {
-		if ifnot (exist ())
-			return def ;
-		try {
-			VAL32 ret ;
-			auto rax = TextReader (fake.mThis->mTree[fake.mIndex].mString.borrow ()) ;
-			rax >> ret ;
-			rax >> EOS ;
-			return move (ret) ;
-		} catch (CREF<Exception> e) {
-			noop (e) ;
-		}
-		return def ;
-	}
-
-	VAL64 fetch (CREF<VAL64> def) const override {
-		if ifnot (exist ())
-			return def ;
-		try {
-			VAL64 ret ;
-			auto rax = TextReader (fake.mThis->mTree[fake.mIndex].mString.borrow ()) ;
-			rax >> ret ;
-			rax >> EOS ;
-			return move (ret) ;
-		} catch (CREF<Exception> e) {
-			noop (e) ;
-		}
-		return def ;
-	}
-
-	FLT32 fetch (CREF<FLT32> def) const override {
-		if ifnot (exist ())
-			return def ;
-		try {
-			FLT32 ret ;
-			auto rax = TextReader (fake.mThis->mTree[fake.mIndex].mString.borrow ()) ;
-			rax >> ret ;
-			rax >> EOS ;
-			return move (ret) ;
-		} catch (CREF<Exception> e) {
-			noop (e) ;
-		}
-		return def ;
-	}
-
-	FLT64 fetch (CREF<FLT64> def) const override {
-		if ifnot (exist ())
-			return def ;
-		try {
-			FLT64 ret ;
-			auto rax = TextReader (fake.mThis->mTree[fake.mIndex].mString.borrow ()) ;
-			rax >> ret ;
-			rax >> EOS ;
-			return move (ret) ;
-		} catch (CREF<Exception> e) {
-			noop (e) ;
-		}
-		return def ;
-	}
-
-	String<STRA> fetch (CREF<String<STRA>> def) const override {
-		if ifnot (exist ())
-			return def ;
-		try {
-			return StringProc::stra_from_stru (fake.mThis->mTree[fake.mIndex].mString) ;
-		} catch (CREF<Exception> e) {
-			noop (e) ;
-		}
-		return def ;
-	}
-
-	String<STRW> fetch (CREF<String<STRW>> def) const override {
-		if ifnot (exist ())
-			return def ;
-		try {
-			return StringProc::strw_from_stru (fake.mThis->mTree[fake.mIndex].mString) ;
-		} catch (CREF<Exception> e) {
-			noop (e) ;
-		}
-		return def ;
-	}
-
-	String<STRU8> fetch (CREF<String<STRU8>> def) const override {
-		if ifnot (exist ())
-			return def ;
-		try {
-			return fake.mThis->mTree[fake.mIndex].mString ;
-		} catch (CREF<Exception> e) {
-			noop (e) ;
-		}
-		return def ;
-	}
-
-	String<STRU16> fetch (CREF<String<STRU16>> def) const override {
-		if ifnot (exist ())
-			return def ;
-		try {
-			return StringProc::stru16_from_stru8 (fake.mThis->mTree[fake.mIndex].mString) ;
-		} catch (CREF<Exception> e) {
-			noop (e) ;
-		}
-		return def ;
-	}
-
-	String<STRU32> fetch (CREF<String<STRU32>> def) const override {
-		if ifnot (exist ())
-			return def ;
-		try {
-			return StringProc::stru32_from_stru8 (fake.mThis->mTree[fake.mIndex].mString) ;
-		} catch (CREF<Exception> e) {
-			noop (e) ;
-		}
-		return def ;
-	}
-
-	Array<BOOL> fetch (CREF<BOOL> def ,CREF<LENGTH> size_) const override {
-		return fetch_impl (def ,size_) ;
-	}
-
-	Array<VAL32> fetch (CREF<VAL32> def ,CREF<LENGTH> size_) const override {
-		return fetch_impl (def ,size_) ;
-	}
-
-	Array<VAL64> fetch (CREF<VAL64> def ,CREF<LENGTH> size_) const override {
-		return fetch_impl (def ,size_) ;
-	}
-
-	Array<FLT32> fetch (CREF<FLT32> def ,CREF<LENGTH> size_) const override {
-		return fetch_impl (def ,size_) ;
-	}
-
-	Array<FLT64> fetch (CREF<FLT64> def ,CREF<LENGTH> size_) const override {
-		return fetch_impl (def ,size_) ;
-	}
-
-	Array<String<STRA>> fetch (CREF<String<STRA>> def ,CREF<LENGTH> size_) const override {
-		return fetch_impl (def ,size_) ;
-	}
-
-	Array<String<STRW>> fetch (CREF<String<STRW>> def ,CREF<LENGTH> size_) const override {
-		return fetch_impl (def ,size_) ;
-	}
-
-	Array<String<STRU8>> fetch (CREF<String<STRU8>> def ,CREF<LENGTH> size_) const override {
-		return fetch_impl (def ,size_) ;
-	}
-
-	Array<String<STRU16>> fetch (CREF<String<STRU16>> def ,CREF<LENGTH> size_) const override {
-		return fetch_impl (def ,size_) ;
-	}
-
-	Array<String<STRU32>> fetch (CREF<String<STRU32>> def ,CREF<LENGTH> size_) const override {
-		return fetch_impl (def ,size_) ;
-	}
-
-	template <class ARG1>
-	Array<ARG1> fetch_impl (CREF<ARG1> def ,CREF<LENGTH> size_) const {
-		const auto r1x = list (size_) ;
-		Array<ARG1> ret = Array<ARG1> (r1x.size ()) ;
-		for (auto &&i : iter (0 ,ret.size ()))
-			ret[i] = fetch (def) ;
-		return move (ret) ;
-	}
-} ;
-
-exports VFat<XmlParserHolder> XmlParserHolder::create (VREF<XmlParserLayout> that) {
-	return VFat<XmlParserHolder> (XmlParserImplement () ,that) ;
-}
-
-exports CFat<XmlParserHolder> XmlParserHolder::create (CREF<XmlParserLayout> that) {
-	return CFat<XmlParserHolder> (XmlParserImplement () ,that) ;
-}
-
-struct JsonParserNode {
-	String<STRU8> mName ;
-	String<STRU8> mString ;
-	SortedList<INDEX> mArraySet ;
-	SortedList<String<STRU8>> mObjectSet ;
-	INDEX mParent ;
-	INDEX mBrother ;
-	INDEX mChild ;
-} ;
-
-struct JsonParserPureLayout {
-	Array<JsonParserNode> mTree ;
-	INDEX mRoot ;
-} ;
-
-class JsonParserImplement implement Fat<JsonParserHolder ,JsonParserLayout> {
-public:
-	void initialize (CREF<RefBuffer<BYTE>> stream) override {
-		unimplemented () ;
-	}
-
-	void initialize (CREF<JsonParserLayout> that) override {
-		fake.mThis = that.mThis.share () ;
-		fake.mIndex = that.mIndex ;
-	}
-
-	BOOL exist () const override {
-		if (fake.mThis == NULL)
-			return FALSE ;
-		if (fake.mIndex == NONE)
-			return FALSE ;
-		return TRUE ;
-	}
-
-	JsonParserLayout root () const override {
-		JsonParserLayout ret ;
-		if ifdo (TRUE) {
-			if ifnot (exist ())
-				discard ;
-			ret.mThis = fake.mThis.share () ;
-			ret.mIndex = fake.mThis->mRoot ;
-		}
-		return move (ret) ;
-	}
-
-	JsonParserLayout parent () const override {
-		JsonParserLayout ret ;
-		if ifdo (TRUE) {
-			if ifnot (exist ())
-				discard ;
-			ret.mThis = fake.mThis.share () ;
-			ret.mIndex = fake.mThis->mTree[fake.mIndex].mParent ;
-		}
-		return move (ret) ;
-	}
-
-	JsonParserLayout brother () const override {
-		JsonParserLayout ret ;
-		if ifdo (TRUE) {
-			if ifnot (exist ())
-				discard ;
-			ret.mThis = fake.mThis.share () ;
-			ret.mIndex = fake.mThis->mTree[fake.mIndex].mBrother ;
-		}
-		return move (ret) ;
-	}
-
-	JsonParserLayout child () const override {
-		JsonParserLayout ret ;
-		if ifdo (TRUE) {
-			if ifnot (exist ())
-				discard ;
-			ret.mThis = fake.mThis.share () ;
-			ret.mIndex = fake.mThis->mTree[fake.mIndex].mChild ;
-		}
-		return move (ret) ;
-	}
-
-	JsonParserLayout child (CREF<INDEX> index) const override {
-		JsonParserLayout ret ;
-		if ifdo (TRUE) {
-			if ifnot (exist ())
-				discard ;
-			ret.mThis = fake.mThis.share () ;
-			ret.mIndex = fake.mThis->mTree[fake.mIndex].mArraySet.map (index) ;
-		}
-		return move (ret) ;
-	}
-
-	JsonParserLayout child (CREF<Slice> name) const override {
-		JsonParserLayout ret ;
-		if ifdo (TRUE) {
-			if ifnot (exist ())
-				discard ;
-			ret.mThis = fake.mThis.share () ;
-			ret.mIndex = fake.mThis->mTree[fake.mIndex].mObjectSet.map (name) ;
-		}
-		return move (ret) ;
-	}
-
-	JsonParserLayout child (CREF<String<STRU8>> name) const override {
-		JsonParserLayout ret ;
-		if ifdo (TRUE) {
-			if ifnot (exist ())
-				discard ;
-			ret.mThis = fake.mThis.share () ;
-			ret.mIndex = fake.mThis->mTree[fake.mIndex].mObjectSet.map (name) ;
-		}
-		return move (ret) ;
-	}
-
-	Array<JsonParserLayout> list () const override {
-		Array<JsonParserLayout> ret ;
-		if ifdo (TRUE) {
-			if ifnot (exist ())
-				discard ;
-			const auto r1x = fake.mThis->mTree[fake.mIndex].mArraySet.length () ;
-			ret = Array<JsonParserLayout> (r1x) ;
-			for (auto &&i : iter (0 ,r1x)) {
-				ret[i].mThis = fake.mThis.share () ;
-				ret[i].mIndex = fake.mThis->mTree[fake.mIndex].mArraySet.map (r1x) ;
-			}
-		}
-		return move (ret) ;
-	}
-
-	Array<JsonParserLayout> list (CREF<LENGTH> size_) const override {
-		Array<JsonParserLayout> ret = Array<JsonParserLayout> (size_) ;
-		if ifdo (TRUE) {
-			if ifnot (exist ())
-				discard ;
-			const auto r1x = fake.mThis->mTree[fake.mIndex].mArraySet.length () ;
-			const auto r2x = inline_min (r1x ,size_) ;
-			for (auto &&i : iter (0 ,r2x)) {
-				ret[i].mThis = fake.mThis.share () ;
-				ret[i].mIndex = fake.mThis->mTree[fake.mIndex].mArraySet.map (r1x) ;
-			}
-		}
-		return move (ret) ;
-	}
-
-	BOOL equal (CREF<JsonParserLayout> that) const override {
-		const auto r1x = inline_compr (fake.mThis.exist () ,that.mThis.exist ()) ;
-		if (r1x != ZERO)
-			return FALSE ;
-		if ifnot (fake.mThis.exist ())
-			return TRUE ;
-		if (address (fake.mThis.self) != address (that.mThis.self))
-			return FALSE ;
-		if (fake.mIndex != that.mIndex)
-			return FALSE ;
-		return FALSE ;
-	}
-
-	CREF<String<STRU8>> name () const leftvalue override {
-		if ifnot (exist ())
-			return String<STRU8>::error () ;
-		return fake.mThis->mTree[fake.mIndex].mName ;
-	}
-
-	BOOL fetch (CREF<BOOL> def) const override {
-		if ifnot (exist ())
-			return def ;
-		try {
-			BOOL ret ;
-			auto rax = TextReader (fake.mThis->mTree[fake.mIndex].mString.borrow ()) ;
-			rax >> ret ;
-			rax >> EOS ;
-			return move (ret) ;
-		} catch (CREF<Exception> e) {
-			noop (e) ;
-		}
-		return def ;
-	}
-
-	VAL32 fetch (CREF<VAL32> def) const override {
-		if ifnot (exist ())
-			return def ;
-		try {
-			VAL32 ret ;
-			auto rax = TextReader (fake.mThis->mTree[fake.mIndex].mString.borrow ()) ;
-			rax >> ret ;
-			rax >> EOS ;
-			return move (ret) ;
-		} catch (CREF<Exception> e) {
-			noop (e) ;
-		}
-		return def ;
-	}
-
-	VAL64 fetch (CREF<VAL64> def) const override {
-		if ifnot (exist ())
-			return def ;
-		try {
-			VAL64 ret ;
-			auto rax = TextReader (fake.mThis->mTree[fake.mIndex].mString.borrow ()) ;
-			rax >> ret ;
-			rax >> EOS ;
-			return move (ret) ;
-		} catch (CREF<Exception> e) {
-			noop (e) ;
-		}
-		return def ;
-	}
-
-	FLT32 fetch (CREF<FLT32> def) const override {
-		if ifnot (exist ())
-			return def ;
-		try {
-			FLT32 ret ;
-			auto rax = TextReader (fake.mThis->mTree[fake.mIndex].mString.borrow ()) ;
-			rax >> ret ;
-			rax >> EOS ;
-			return move (ret) ;
-		} catch (CREF<Exception> e) {
-			noop (e) ;
-		}
-		return def ;
-	}
-
-	FLT64 fetch (CREF<FLT64> def) const override {
-		if ifnot (exist ())
-			return def ;
-		try {
-			FLT64 ret ;
-			auto rax = TextReader (fake.mThis->mTree[fake.mIndex].mString.borrow ()) ;
-			rax >> ret ;
-			rax >> EOS ;
-			return move (ret) ;
-		} catch (CREF<Exception> e) {
-			noop (e) ;
-		}
-		return def ;
-	}
-
-	String<STRA> fetch (CREF<String<STRA>> def) const override {
-		if ifnot (exist ())
-			return def ;
-		try {
-			return StringProc::stra_from_stru (fake.mThis->mTree[fake.mIndex].mString) ;
-		} catch (CREF<Exception> e) {
-			noop (e) ;
-		}
-		return def ;
-	}
-
-	String<STRW> fetch (CREF<String<STRW>> def) const override {
-		if ifnot (exist ())
-			return def ;
-		try {
-			return StringProc::strw_from_stru (fake.mThis->mTree[fake.mIndex].mString) ;
-		} catch (CREF<Exception> e) {
-			noop (e) ;
-		}
-		return def ;
-	}
-
-	String<STRU8> fetch (CREF<String<STRU8>> def) const override {
-		if ifnot (exist ())
-			return def ;
-		try {
-			return fake.mThis->mTree[fake.mIndex].mString ;
-		} catch (CREF<Exception> e) {
-			noop (e) ;
-		}
-		return def ;
-	}
-
-	String<STRU16> fetch (CREF<String<STRU16>> def) const override {
-		if ifnot (exist ())
-			return def ;
-		try {
-			return StringProc::stru16_from_stru8 (fake.mThis->mTree[fake.mIndex].mString) ;
-		} catch (CREF<Exception> e) {
-			noop (e) ;
-		}
-		return def ;
-	}
-
-	String<STRU32> fetch (CREF<String<STRU32>> def) const override {
-		if ifnot (exist ())
-			return def ;
-		try {
-			return StringProc::stru32_from_stru8 (fake.mThis->mTree[fake.mIndex].mString) ;
-		} catch (CREF<Exception> e) {
-			noop (e) ;
-		}
-		return def ;
-	}
-
-	Array<BOOL> fetch (CREF<BOOL> def ,CREF<LENGTH> size_) const override {
-		return fetch_impl (def ,size_) ;
-	}
-
-	Array<VAL32> fetch (CREF<VAL32> def ,CREF<LENGTH> size_) const override {
-		return fetch_impl (def ,size_) ;
-	}
-
-	Array<VAL64> fetch (CREF<VAL64> def ,CREF<LENGTH> size_) const override {
-		return fetch_impl (def ,size_) ;
-	}
-
-	Array<FLT32> fetch (CREF<FLT32> def ,CREF<LENGTH> size_) const override {
-		return fetch_impl (def ,size_) ;
-	}
-
-	Array<FLT64> fetch (CREF<FLT64> def ,CREF<LENGTH> size_) const override {
-		return fetch_impl (def ,size_) ;
-	}
-
-	Array<String<STRA>> fetch (CREF<String<STRA>> def ,CREF<LENGTH> size_) const override {
-		return fetch_impl (def ,size_) ;
-	}
-
-	Array<String<STRW>> fetch (CREF<String<STRW>> def ,CREF<LENGTH> size_) const override {
-		return fetch_impl (def ,size_) ;
-	}
-
-	Array<String<STRU8>> fetch (CREF<String<STRU8>> def ,CREF<LENGTH> size_) const override {
-		return fetch_impl (def ,size_) ;
-	}
-
-	Array<String<STRU16>> fetch (CREF<String<STRU16>> def ,CREF<LENGTH> size_) const override {
-		return fetch_impl (def ,size_) ;
-	}
-
-	Array<String<STRU32>> fetch (CREF<String<STRU32>> def ,CREF<LENGTH> size_) const override {
-		return fetch_impl (def ,size_) ;
-	}
-
-	template <class ARG1>
-	Array<ARG1> fetch_impl (CREF<ARG1> def ,CREF<LENGTH> size_) const {
-		const auto r1x = list (size_) ;
-		Array<ARG1> ret = Array<ARG1> (r1x.size ()) ;
-		for (auto &&i : iter (0 ,ret.size ()))
-			ret[i] = fetch (def) ;
-		return move (ret) ;
-	}
-} ;
-
-exports VFat<JsonParserHolder> JsonParserHolder::create (VREF<JsonParserLayout> that) {
-	return VFat<JsonParserHolder> (JsonParserImplement () ,that) ;
-}
-
-exports CFat<JsonParserHolder> JsonParserHolder::create (CREF<JsonParserLayout> that) {
-	return CFat<JsonParserHolder> (JsonParserImplement () ,that) ;
-}
-
-struct PlyParserProperty {
-	String<STR> mName ;
-	FLAG mType ;
-	FLAG mListType ;
-} ;
-
-struct PlyParserElement {
-	String<STR> mName ;
-	LENGTH mSize ;
-	ArrayList<PlyParserProperty> mPropertyList ;
-	Set<String<STR>> mPropertySet ;
-} ;
-
-struct PlyParserHeader {
-	String<STR> mFormat ;
-	ArrayList<PlyParserElement> mElementList ;
-	Set<String<STR>> mElementSet ;
-	LENGTH mBodyOffset ;
-} ;
-
-struct PlyParserBody {
-	FLAG mType ;
-	Array<Tuple<INDEX ,INDEX>> mLine ;
-} ;
-
-struct PlyParserBodyType {
-	enum {
-		Bool ,
-		Val32 ,
-		Val64 ,
-		Flt32 ,
-		Flt64 ,
-		Byte ,
-		Word ,
-		Char ,
-		Quad ,
-		Null ,
-		ETC
-	} ;
-} ;
-
-struct PlyParserPureLayout {
-	PlyParserHeader mHeader ;
-	Array<Array<PlyParserBody>> mBody ;
-	Deque<BYTE> mPlyBYTE ;
-	Deque<WORD> mPlyWORD ;
-	Deque<CHAR> mPlyCHAR ;
-	Deque<QUAD> mPlyQUAD ;
-} ;
-
-class PlyParserImplement implement Fat<PlyParserHolder ,PlyParserLayout> {
-public:
-	void initialize (CREF<RefBuffer<BYTE>> stream) override {
-		unimplemented () ;
-	}
-
-	INDEX find_element (CREF<Slice> name) const override {
-		return fake.mThis->mHeader.mElementSet.map (name) ;
-	}
-
-	LENGTH element_size (CREF<INDEX> element) const override {
-		return fake.mThis->mHeader.mElementList[element].mSize ;
-	}
-
-	INDEX find_property (CREF<INDEX> element ,CREF<Slice> name) const override {
-		return fake.mThis->mHeader.mElementList[element].mPropertySet.map (name) ;
-	}
-
-	LENGTH property_size (CREF<INDEX> element ,CREF<INDEX> line ,CREF<INDEX> property) const override {
-		const auto r1x = fake.mThis->mBody[element][property].mLine[line] ;
-		return r1x.m2nd - r1x.m1st ;
-	}
-
-	void guide_new (CREF<INDEX> element) override {
-		fake.mGuide.mElement = element ;
-		fake.mGuide.mProperty.clear () ;
-		fake.mGuide.mPropertyIndex = 0 ;
-		fake.mGuide.mLineIndex = 0 ;
-		fake.mGuide.mPlyIndex = NONE ;
-	}
-
-	void guide_put (CREF<INDEX> property) override {
-		assert (fake.mGuide.mElement != NONE) ;
-		assert (fake.mGuide.mPlyIndex == NONE) ;
-		fake.mGuide.mProperty.add (property) ;
-	}
-
-	void guide_jmp () {
-		assert (fake.mGuide.mElement != NONE) ;
-		INDEX ix = fake.mGuide.mElement ;
-		INDEX jx = NONE ;
-		auto act = TRUE ;
-		if ifdo (act) {
-			if (fake.mGuide.mPlyIndex != NONE)
-				discard ;
-			fake.mGuide.mLineIndex = 0 ;
-			fake.mGuide.mPropertyIndex = 0 ;
-			assume (fake.mGuide.mPropertyIndex < fake.mGuide.mProperty.length ()) ;
-			assume (fake.mGuide.mLineIndex < fake.mThis->mHeader.mElementList[ix].mSize) ;
-			jx = fake.mGuide.mProperty[fake.mGuide.mPropertyIndex] ;
-			fake.mGuide.mPlyIndex = fake.mThis->mBody[ix][jx].mLine[fake.mGuide.mLineIndex].m1st ;
-		}
-		if ifdo (act) {
-			fake.mGuide.mPlyIndex++ ;
-			jx = fake.mGuide.mProperty[fake.mGuide.mPropertyIndex] ;
-			if (fake.mGuide.mPlyIndex >= fake.mThis->mBody[ix][jx].mLine[fake.mGuide.mLineIndex].m2nd)
-				discard ;
-		}
-		if ifdo (act) {
-			fake.mGuide.mPropertyIndex++ ;
-			if (fake.mGuide.mPropertyIndex >= fake.mGuide.mProperty.length ())
-				discard ;
-			jx = fake.mGuide.mProperty[fake.mGuide.mPropertyIndex] ;
-			fake.mGuide.mPlyIndex = fake.mThis->mBody[ix][jx].mLine[fake.mGuide.mLineIndex].m1st ;
-		}
-		if ifdo (act) {
-			fake.mGuide.mLineIndex++ ;
-			fake.mGuide.mPropertyIndex = 0 ;
-			if (fake.mGuide.mLineIndex >= fake.mThis->mHeader.mElementList[ix].mSize)
-				discard ;
-			jx = fake.mGuide.mProperty[fake.mGuide.mPropertyIndex] ;
-			fake.mGuide.mPlyIndex = fake.mThis->mBody[ix][jx].mLine[fake.mGuide.mLineIndex].m1st ;
-		}
-		if ifdo (act) {
-			assume (FALSE) ;
-		}
-		if ifdo (TRUE) {
-			fake.mGuide.mPlyType = fake.mThis->mHeader.mElementList[ix].mPropertyList[jx].mListType ;
-			if (fake.mGuide.mPlyType != PlyParserBodyType::Null)
-				discard ;
-			fake.mGuide.mPlyType = fake.mThis->mHeader.mElementList[ix].mPropertyList[jx].mType ;
-		}
-	}
-
-	void read (VREF<BOOL> item) override {
-		guide_jmp () ;
-		assume (fake.mGuide.mPlyType == PlyParserBodyType::Bool) ;
-		item = bitwise[TYPE<BOOL>::expr] (fake.mThis->mPlyBYTE[fake.mGuide.mPlyIndex]) ;
-	}
-
-	void read (VREF<VAL32> item) override {
-		guide_jmp () ;
-		assume (fake.mGuide.mPlyType == PlyParserBodyType::Val32) ;
-		item = bitwise[TYPE<VAL32>::expr] (fake.mThis->mPlyCHAR[fake.mGuide.mPlyIndex]) ;
-	}
-
-	void read (VREF<VAL64> item) override {
-		guide_jmp () ;
-		assume (fake.mGuide.mPlyType == PlyParserBodyType::Val64) ;
-		item = bitwise[TYPE<VAL64>::expr] (fake.mThis->mPlyQUAD[fake.mGuide.mPlyIndex]) ;
-	}
-
-	void read (VREF<FLT32> item) override {
-		guide_jmp () ;
-		assume (fake.mGuide.mPlyType == PlyParserBodyType::Flt32) ;
-		item = bitwise[TYPE<FLT32>::expr] (fake.mThis->mPlyCHAR[fake.mGuide.mPlyIndex]) ;
-	}
-
-	void read (VREF<FLT64> item) override {
-		guide_jmp () ;
-		assume (fake.mGuide.mPlyType == PlyParserBodyType::Flt64) ;
-		item = bitwise[TYPE<FLT64>::expr] (fake.mThis->mPlyQUAD[fake.mGuide.mPlyIndex]) ;
-	}
-
-	void read (VREF<BYTE> item) override {
-		guide_jmp () ;
-		assume (fake.mGuide.mPlyType == PlyParserBodyType::Byte) ;
-		item = fake.mThis->mPlyBYTE[fake.mGuide.mPlyIndex] ;
-	}
-
-	void read (VREF<WORD> item) override {
-		guide_jmp () ;
-		assume (fake.mGuide.mPlyType == PlyParserBodyType::Byte) ;
-		item = fake.mThis->mPlyWORD[fake.mGuide.mPlyIndex] ;
-	}
-
-	void read (VREF<CHAR> item) override {
-		guide_jmp () ;
-		assume (fake.mGuide.mPlyType == PlyParserBodyType::Byte) ;
-		item = fake.mThis->mPlyCHAR[fake.mGuide.mPlyIndex] ;
-	}
-
-	void read (VREF<QUAD> item) override {
-		guide_jmp () ;
-		assume (fake.mGuide.mPlyType == PlyParserBodyType::Byte) ;
-		item = fake.mThis->mPlyQUAD[fake.mGuide.mPlyIndex] ;
-	}
-} ;
-
-exports VFat<PlyParserHolder> PlyParserHolder::create (VREF<PlyParserLayout> that) {
-	return VFat<PlyParserHolder> (PlyParserImplement () ,that) ;
-}
-
-exports CFat<PlyParserHolder> PlyParserHolder::create (CREF<PlyParserLayout> that) {
-	return CFat<PlyParserHolder> (PlyParserImplement () ,that) ;
+	return CFat<RegexHolder> (RegexImplHolder () ,that) ;
 }
 } ;

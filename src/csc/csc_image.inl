@@ -7,19 +7,60 @@
 #include "csc_image.hpp"
 
 namespace CSC {
-class ImageImplement implement Fat<ImageHolder ,ImageLayout> {
+class ImageImplHolder implement Fat<ImageHolder ,ImageLayout> {
 public:
-	void initialize (CREF<Unknown> element ,CREF<LENGTH> cx_ ,CREF<LENGTH> cy_ ,CREF<Clazz> clazz) override {
-		const auto r1x = cx_ * cy_ ;
-		RefBufferHolder::create (fake.mImage)->initialize (element ,r1x) ;
+	void initialize (CREF<Unknown> element ,RREF<ImageLayout> that) override {
+		const auto r1x = RFat<ReflectSize> (element) ;
+		noop (r1x) ;
+		assert (r1x->type_size () == that.mWidth.mStep) ;
+		assert (r1x->type_size () / r1x->type_align () == that.mWidth.mChannel) ;
+		fake = move (that) ;
+	}
+
+	void initialize (CREF<Unknown> element ,CREF<LENGTH> cx_ ,CREF<LENGTH> cy_) override {
+		const auto r1x = RFat<ReflectSize> (element) ;
+		const auto r2x = cx_ * cy_ * (r1x->type_size () / r1x->type_align ()) ;
+		auto act = TRUE ;
+		if ifdo (act) {
+			if (r1x->type_align () != SIZE_OF<BYTE>::expr)
+				discard ;
+			RefBufferHolder::create (fake.mImage)->initialize (RefUnknownBinder<BYTE> () ,r2x) ;
+		}
+		if ifdo (act) {
+			if (r1x->type_align () != SIZE_OF<WORD>::expr)
+				discard ;
+			RefBufferHolder::create (fake.mImage)->initialize (RefUnknownBinder<WORD> () ,r2x) ;
+		}
+		if ifdo (act) {
+			if (r1x->type_align () != SIZE_OF<CHAR>::expr)
+				discard ;
+			RefBufferHolder::create (fake.mImage)->initialize (RefUnknownBinder<CHAR> () ,r2x) ;
+		}
+		if ifdo (act) {
+			if (r1x->type_align () != SIZE_OF<QUAD>::expr)
+				discard ;
+			RefBufferHolder::create (fake.mImage)->initialize (RefUnknownBinder<QUAD> () ,r2x) ;
+		}
+		if ifdo (act) {
+			assert (FALSE) ;
+		}
 		fake.mWidth.mCX = cx_ ;
 		fake.mWidth.mCY = cy_ ;
-		fake.mWidth.mClazz = clazz ;
+		fake.mWidth.mStep = r1x->type_size () ;
+		fake.mWidth.mChannel = r1x->type_size () / r1x->type_align () ;
 		reset () ;
 	}
 
 	void initialize (CREF<Unknown> element ,CREF<ImageWidth> width) override {
-		initialize (element ,width.mCX ,width.mCY ,width.mClazz) ;
+		const auto r1x = RFat<ReflectSize> (element) ;
+		noop (r1x) ;
+		assert (r1x->type_size () == width.mStep) ;
+		assert (r1x->type_size () / r1x->type_align () == width.mChannel) ;
+		initialize (element ,width.mCX ,width.mCY) ;
+	}
+
+	BOOL exist () const override {
+		return fake.mImage.exist () ;
 	}
 
 	LENGTH size () const override {
@@ -31,31 +72,31 @@ public:
 	}
 
 	LENGTH cx () const override {
-		if ifnot (fake.mImage.exist ())
+		if (!(fake.mImage.exist ()))
 			return 0 ;
 		return fake.mCX ;
 	}
 
 	LENGTH cy () const override {
-		if ifnot (fake.mImage.exist ())
+		if (!(fake.mImage.exist ()))
 			return 0 ;
 		return fake.mCY ;
 	}
 
 	LENGTH sx () const override {
-		if ifnot (fake.mImage.exist ())
+		if (!(fake.mImage.exist ()))
 			return 0 ;
 		return fake.mSX ;
 	}
 
 	LENGTH sy () const override {
-		if ifnot (fake.mImage.exist ())
+		if (!(fake.mImage.exist ()))
 			return 0 ;
 		return fake.mSY ;
 	}
 
 	LENGTH offset () const override {
-		if ifnot (fake.mImage.exist ())
+		if (!(fake.mImage.exist ()))
 			return 0 ;
 		return fake.mOffset ;
 	}
@@ -64,15 +105,16 @@ public:
 		ImageWidth ret ;
 		ret.mCX = cx () ;
 		ret.mCY = cy () ;
-		ret.mClazz = fake.mWidth.mClazz ;
+		ret.mStep = fake.mWidth.mStep ;
+		ret.mChannel = fake.mWidth.mChannel ;
 		return move (ret) ;
 	}
 
 	void reset () override {
 		fake.mCX = fake.mWidth.mCX ;
 		fake.mCY = fake.mWidth.mCY ;
-		fake.mSX = 1 ;
-		fake.mSY = fake.mWidth.mCX ;
+		fake.mSX = fake.mWidth.mChannel ;
+		fake.mSY = fake.mWidth.mCX * fake.mWidth.mChannel ;
 		fake.mOffset = 0 ;
 	}
 
@@ -82,6 +124,14 @@ public:
 		fake.mSX = sx_ ;
 		fake.mSY = sy_ ;
 		fake.mOffset = offset_ ;
+	}
+
+	VREF<BoxLayout> raw () leftvalue override {
+		return RefBufferHolder::create (fake.mImage)->raw () ;
+	}
+
+	CREF<BoxLayout> raw () const leftvalue override {
+		return RefBufferHolder::create (fake.mImage)->raw () ;
 	}
 
 	VREF<Pointer> at (CREF<INDEX> x ,CREF<INDEX> y) leftvalue override {
@@ -99,51 +149,99 @@ public:
 	}
 
 	void fill (CREF<Pointer> item) override {
-		const auto r1x = RFat<ReflectClone> (fake.mImage.unknown ()) ;
+		auto act = TRUE ;
+		if ifdo (act) {
+			if (sx () != fake.mWidth.mChannel)
+				discard ;
+			if (cy () == 0)
+				discard ;
+			fill_fast (item) ;
+		}
+		if ifdo (act) {
+			fill_slow (item) ;
+		}
+	}
+
+	void fill_slow (CREF<Pointer> item) {
 		for (auto &&i : iter (0 ,cx () ,0 ,cy ())) {
-			r1x->clone (at (i.mX ,i.mY) ,item) ;
+			inline_memcpy (at (i.mX ,i.mY) ,item ,fake.mWidth.mStep) ;
+		}
+	}
+
+	void fill_fast (CREF<Pointer> item) {
+		for (auto &&i : iter (0 ,cx ())) {
+			inline_memcpy (at (i ,0) ,item ,fake.mWidth.mStep) ;
+		}
+		const auto r1x = cx () * fake.mWidth.mStep ;
+		for (auto &&i : iter (1 ,cy ())) {
+			inline_memcpy (at (0 ,i) ,at (0 ,0) ,r1x) ;
 		}
 	}
 
 	void splice (CREF<INDEX> x ,CREF<INDEX> y ,CREF<ImageLayout> item) override {
 		const auto r1x = ImageHolder::create (item)->cx () ;
+		noop (r1x) ;
 		const auto r2x = ImageHolder::create (item)->cy () ;
-		assume (inline_between (x ,0 ,cx ())) ;
-		assume (inline_between (y ,0 ,cy ())) ;
-		assume (x + r1x <= cx ()) ;
-		assume (y + r1x <= cy ()) ;
-		const auto r3x = RFat<ReflectClone> (fake.mImage.unknown ()) ;
+		noop (r2x) ;
+		assert (inline_between (x ,0 ,cx ())) ;
+		assert (inline_between (y ,0 ,cy ())) ;
+		assert (x + r1x <= cx ()) ;
+		assert (y + r2x <= cy ()) ;
+		assert (fake.mWidth.mStep == item.mWidth.mStep) ;
+		assert (fake.mWidth.mChannel == item.mWidth.mChannel) ;
+		auto act = TRUE ;
+		if ifdo (act) {
+			if (sx () != fake.mWidth.mChannel)
+				discard ;
+			if (ImageHolder::create (item)->sx () != fake.mWidth.mChannel)
+				discard ;
+			splice_fast (x ,y ,item) ;
+		}
+		if ifdo (act) {
+			splice_slow (x ,y ,item) ;
+		}
+	}
+
+	void splice_slow (CREF<INDEX> x ,CREF<INDEX> y ,CREF<ImageLayout> item) {
+		const auto r1x = ImageHolder::create (item)->cx () ;
+		const auto r2x = ImageHolder::create (item)->cy () ;
 		for (auto &&i : iter (0 ,r1x ,0 ,r2x)) {
 			INDEX ix = x + i.mX ;
 			INDEX iy = y + i.mY ;
-			r3x->clone (at (ix ,iy) ,ImageHolder::create (item)->at (i.mX ,i.mY)) ;
+			inline_memcpy (at (ix ,iy) ,ImageHolder::create (item)->at (i.mX ,i.mY) ,fake.mWidth.mStep) ;
+		}
+	}
+
+	void splice_fast (CREF<INDEX> x ,CREF<INDEX> y ,CREF<ImageLayout> item) {
+		const auto r1x = ImageHolder::create (item)->cx () ;
+		const auto r2x = ImageHolder::create (item)->cy () ;
+		const auto r3x = r1x * fake.mWidth.mStep ;
+		for (auto &&i : iter (0 ,r2x)) {
+			INDEX iy = y + i ;
+			inline_memcpy (at (0 ,iy) ,ImageHolder::create (item)->at (0 ,i) ,r3x) ;
 		}
 	}
 } ;
 
 exports VFat<ImageHolder> ImageHolder::create (VREF<ImageLayout> that) {
-	return VFat<ImageHolder> (ImageImplement () ,that) ;
+	return VFat<ImageHolder> (ImageImplHolder () ,that) ;
 }
 
 exports CFat<ImageHolder> ImageHolder::create (CREF<ImageLayout> that) {
-	return CFat<ImageHolder> (ImageImplement () ,that) ;
+	return CFat<ImageHolder> (ImageImplHolder () ,that) ;
 }
 
-#ifndef __CSC_API_WITH_OPENCV__
-class ImageProcImplement implement Fat<ImageProcHolder ,ImageProcLayout> {} ;
+template class External<ImageProcHolder ,ImageProcLayout> ;
 
 exports VFat<ImageProcHolder> ImageProcHolder::create (VREF<ImageProcLayout> that) {
-	assume (FALSE) ;
-	return VFat<ImageProcHolder> (keep[TYPE<ImageProcImplement>::expr] (Pointer::make (0)) ,that) ;
+	return VFat<ImageProcHolder> (External<ImageProcHolder ,ImageProcLayout>::create () ,that) ;
 }
 
 exports CFat<ImageProcHolder> ImageProcHolder::create (CREF<ImageProcLayout> that) {
-	assume (FALSE) ;
-	return CFat<ImageProcHolder> (keep[TYPE<ImageProcImplement>::expr] (Pointer::make (0)) ,that) ;
+	return CFat<ImageProcHolder> (External<ImageProcHolder ,ImageProcLayout>::create () ,that) ;
 }
-#endif
 
-class SparseImplement implement Fat<SparseHolder ,SparseLayout> {
+class SparseImplHolder implement Fat<SparseHolder ,SparseLayout> {
 public:
 	void initialize (CREF<LENGTH> size_) override {
 		fake.mTable = Array<INDEX> (size_) ;
@@ -236,14 +334,14 @@ public:
 } ;
 
 exports VFat<SparseHolder> SparseHolder::create (VREF<SparseLayout> that) {
-	return VFat<SparseHolder> (SparseImplement () ,that) ;
+	return VFat<SparseHolder> (SparseImplHolder () ,that) ;
 }
 
 exports CFat<SparseHolder> SparseHolder::create (CREF<SparseLayout> that) {
-	return CFat<SparseHolder> (SparseImplement () ,that) ;
+	return CFat<SparseHolder> (SparseImplHolder () ,that) ;
 }
 
-class DisjointImplement implement Fat<DisjointHolder ,DisjointLayout> {
+class DisjointImplHolder implement Fat<DisjointHolder ,DisjointLayout> {
 public:
 	void initialize (CREF<LENGTH> size_) override {
 		fake.mTable = SharedRef<Array<INDEX>>::make () ;
@@ -337,14 +435,14 @@ public:
 } ;
 
 exports VFat<DisjointHolder> DisjointHolder::create (VREF<DisjointLayout> that) {
-	return VFat<DisjointHolder> (DisjointImplement () ,that) ;
+	return VFat<DisjointHolder> (DisjointImplHolder () ,that) ;
 }
 
 exports CFat<DisjointHolder> DisjointHolder::create (CREF<DisjointLayout> that) {
-	return CFat<DisjointHolder> (DisjointImplement () ,that) ;
+	return CFat<DisjointHolder> (DisjointImplHolder () ,that) ;
 }
 
-class KMMatchImplement implement Fat<KMMatchHolder ,KMMatchLayout> {
+class KMMatchImplHolder implement Fat<KMMatchHolder ,KMMatchLayout> {
 public:
 	void initialize (CREF<LENGTH> size_) override {
 		fake.mSize = size_ ;
@@ -362,8 +460,7 @@ public:
 	}
 
 	Array<INDEX> sort (CREF<Array<VAL32>> love) override {
-		const auto r1x = MathProc::square (fake.mSize) ;
-		assume (love.size () == r1x) ;
+		assert (love.size () == MathProc::square (fake.mSize)) ;
 		solve () ;
 		return fake.mMatch ;
 	}
@@ -395,7 +492,6 @@ public:
 					if (fake.mUserVisit[j]) {
 						fake.mUser[j] -= r1x ;
 					}
-					//@mark
 					if (fake.mWorkVisit[j]) {
 						fake.mWork[j] += r1x ;
 					} else {
@@ -413,7 +509,6 @@ public:
 				continue ;
 			const auto r1x = fake.mUser[user] + fake.mWork[i] - fake.mLove[user * fake.mSize + i] ;
 			const auto r2x = fake.mMatch[i] ;
-			//@mark
 			if (r1x == 0) {
 				fake.mWorkVisit[i] = TRUE ;
 				if (r2x == NONE) {
@@ -433,10 +528,10 @@ public:
 } ;
 
 exports VFat<KMMatchHolder> KMMatchHolder::create (VREF<KMMatchLayout> that) {
-	return VFat<KMMatchHolder> (KMMatchImplement () ,that) ;
+	return VFat<KMMatchHolder> (KMMatchImplHolder () ,that) ;
 }
 
 exports CFat<KMMatchHolder> KMMatchHolder::create (CREF<KMMatchLayout> that) {
-	return CFat<KMMatchHolder> (KMMatchImplement () ,that) ;
+	return CFat<KMMatchHolder> (KMMatchImplHolder () ,that) ;
 }
 } ;

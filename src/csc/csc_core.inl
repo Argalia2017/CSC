@@ -16,64 +16,57 @@
 #include "csc_begin.h"
 
 namespace CSC {
-exports FLAG CoreProc::inline_type_name (CREF<csc_type_info_t> squalor) noexcept {
+exports FLAG FUNCTION_inline_type_name::invoke (CREF<csc_type_info_t> squalor) noexcept {
 	return FLAG (squalor.name ()) ;
 }
 
 #ifdef __CSC_COMPILER_MSVC__
-exports FLAG CoreProc::inline_list_begin (CREF<csc_initializer_list_t<Pointer>> squalor ,CREF<LENGTH> step_) noexcept {
+exports FLAG FUNCTION_inline_list_begin::invoke (CREF<csc_initializer_list_t<Pointer>> squalor ,CREF<LENGTH> step_) noexcept {
 	return FLAG (squalor.begin ()) ;
 }
 
-exports FLAG CoreProc::inline_list_end (CREF<csc_initializer_list_t<Pointer>> squalor ,CREF<LENGTH> step_) noexcept {
+exports FLAG FUNCTION_inline_list_end::invoke (CREF<csc_initializer_list_t<Pointer>> squalor ,CREF<LENGTH> step_) noexcept {
 	return FLAG (squalor.end ()) ;
 }
 #endif
 
 #ifdef __CSC_COMPILER_CLANG__
-exports FLAG CoreProc::inline_list_begin (CREF<csc_initializer_list_t<Pointer>> squalor ,CREF<LENGTH> step_) noexcept {
+exports FLAG FUNCTION_inline_list_begin::invoke (CREF<csc_initializer_list_t<Pointer>> squalor ,CREF<LENGTH> step_) noexcept {
 	return FLAG (squalor.begin ()) ;
 }
 
-exports FLAG CoreProc::inline_list_end (CREF<csc_initializer_list_t<Pointer>> squalor ,CREF<LENGTH> step_) noexcept {
+exports FLAG FUNCTION_inline_list_end::invoke (CREF<csc_initializer_list_t<Pointer>> squalor ,CREF<LENGTH> step_) noexcept {
 	return FLAG (squalor.end ()) ;
 }
 #endif
 
 #ifdef __CSC_COMPILER_GNUC__
-exports FLAG CoreProc::inline_list_begin (CREF<csc_initializer_list_t<Pointer>> squalor ,CREF<LENGTH> step_) noexcept {
+exports FLAG FUNCTION_inline_list_begin::invoke (CREF<csc_initializer_list_t<Pointer>> squalor ,CREF<LENGTH> step_) noexcept {
 	return FLAG (squalor.begin ()) ;
 }
 
-exports FLAG CoreProc::inline_list_end (CREF<csc_initializer_list_t<Pointer>> squalor ,CREF<LENGTH> step_) noexcept {
+exports FLAG FUNCTION_inline_list_end::invoke (CREF<csc_initializer_list_t<Pointer>> squalor ,CREF<LENGTH> step_) noexcept {
 	return FLAG (squalor.begin ()) + LENGTH (squalor.size ()) * step_ ;
 }
 #endif
 
-exports void CoreProc::inline_memset (VREF<Pointer> dst ,CREF<LENGTH> size_) noexcept {
+exports void FUNCTION_inline_memset::invoke (VREF<Pointer> dst ,CREF<LENGTH> size_) noexcept {
 	std::memset ((&dst) ,0 ,size_) ;
 }
 
-exports void CoreProc::inline_memcpy (VREF<Pointer> dst ,CREF<Pointer> src ,CREF<LENGTH> size_) noexcept {
+exports void FUNCTION_inline_memcpy::invoke (VREF<Pointer> dst ,CREF<Pointer> src ,CREF<LENGTH> size_) noexcept {
 	std::memcpy ((&dst) ,(&src) ,size_) ;
 }
 
-exports FLAG CoreProc::inline_memcmp (CREF<Pointer> dst ,CREF<Pointer> src ,CREF<LENGTH> size_) noexcept {
+exports FLAG FUNCTION_inline_memcmp::invoke (CREF<Pointer> dst ,CREF<Pointer> src ,CREF<LENGTH> size_) noexcept {
 	return FLAG (std::memcmp ((&dst) ,(&src) ,size_)) ;
 }
 
-exports LENGTH CoreProc::inline_memchr (CREF<Pointer> src ,CREF<LENGTH> size_) noexcept {
-	const auto r1x = FLAG (std::memchr ((&src) ,0 ,size_)) ;
-	if (r1x == ZERO)
-		return size_ ;
-	return r1x - address (src) ;
-}
-
-class BoxImplement implement Fat<BoxHolder ,BoxLayout> {
+class BoxImplHolder implement Fat<BoxHolder ,BoxLayout> {
 public:
 	void initialize (CREF<Unknown> holder) override {
 		assert (fake.mHolder == ZERO) ;
-		fake.mHolder = inline_code (holder) ;
+		fake.mHolder = inline_hold (holder) ;
 	}
 
 	void destroy () override {
@@ -117,7 +110,7 @@ public:
 		fake.mHolder = that.mHolder ;
 		const auto r1x = RFat<ReflectSize> (unknown ()) ;
 		const auto r2x = r1x->type_size () ;
-		CoreProc::inline_memcpy (self ,BoxHolder::create (that)->self ,r2x) ;
+		inline_memcpy (self ,BoxHolder::create (that)->self ,r2x) ;
 	}
 
 	void release () override {
@@ -126,11 +119,11 @@ public:
 } ;
 
 exports VFat<BoxHolder> BoxHolder::create (VREF<BoxLayout> that) {
-	return VFat<BoxHolder> (BoxImplement () ,that) ;
+	return VFat<BoxHolder> (BoxImplHolder () ,that) ;
 }
 
 exports CFat<BoxHolder> BoxHolder::create (CREF<BoxLayout> that) {
-	return CFat<BoxHolder> (BoxImplement () ,that) ;
+	return CFat<BoxHolder> (BoxImplHolder () ,that) ;
 }
 
 struct RefPureLayout {
@@ -139,7 +132,7 @@ struct RefPureLayout {
 	BoxLayout mValue ;
 } ;
 
-class RefImplement implement Fat<RefHolder ,RefLayout> {
+class RefImplHolder implement Fat<RefHolder ,RefLayout> {
 public:
 	void initialize (RREF<BoxLayout> item) override {
 		assert (fake.mHolder == ZERO) ;
@@ -148,7 +141,7 @@ public:
 		const auto r3x = r1x->type_align () ;
 		const auto r4x = inline_alignas (SIZE_OF<RefPureLayout>::expr ,r3x) ;
 		const auto r5x = r4x + r2x ;
-		const auto r6x = Heap (FULL) ;
+		const auto r6x = Heap () ;
 		fake.mHolder = r6x.alloc (r5x) ;
 		ptr (fake).mHeap = r6x ;
 		ptr (fake).mCounter = 1 ;
@@ -169,7 +162,7 @@ public:
 		const auto r7x = inline_alignas (SIZE_OF<RefPureLayout>::expr ,r3x) ;
 		const auto r8x = inline_alignas (r7x + r2x ,r6x) ;
 		const auto r9x = r8x + r5x * size_ ;
-		const auto r10x = Heap (FULL) ;
+		const auto r10x = Heap () ;
 		fake.mHolder = r10x.alloc (r9x) ;
 		ptr (fake).mHeap = r10x ;
 		ptr (fake).mCounter = 1 ;
@@ -238,11 +231,11 @@ public:
 } ;
 
 exports VFat<RefHolder> RefHolder::create (VREF<RefLayout> that) {
-	return VFat<RefHolder> (RefImplement () ,that) ;
+	return VFat<RefHolder> (RefImplHolder () ,that) ;
 }
 
 exports CFat<RefHolder> RefHolder::create (CREF<RefLayout> that) {
-	return CFat<RefHolder> (RefImplement () ,that) ;
+	return CFat<RefHolder> (RefImplHolder () ,that) ;
 }
 
 #ifdef __CSC_COMPILER_MSVC__
@@ -271,19 +264,20 @@ struct FUNCTION_memsize {
 
 static constexpr auto memsize = FUNCTION_memsize () ;
 
-class HeapImplLayout implement HeapHolder {
+class HeapImplement implement HeapHolder {
 protected:
 	Pin<std::atomic<VAL>> mLength ;
 	Temp<Auto> mStorage ;
 
 public:
-	imports CREF<HeapImplLayout> instance () {
+	imports CREF<Box<HeapImplement>> instance () {
 		return memorize ([&] () {
-			return HeapImplLayout () ;
+			return Box<HeapImplement>::make () ;
 		}) ;
 	}
 
 	void initialize () override {
+		mLength = NULL ;
 		mLength.self = 0 ;
 	}
 
@@ -313,10 +307,11 @@ public:
 	}
 } ;
 
-class HeapImplement implement Fat<HeapHolder ,HeapLayout> {
+class HeapImplHolder implement Fat<HeapHolder ,HeapLayout> {
 public:
 	void initialize () override {
-		fake.mHolder = address (HeapImplLayout::instance ()) ;
+		fake.mHolder = address (HeapImplement::instance ().self) ;
+		ptr (fake).initialize () ;
 	}
 
 	imports VREF<HeapHolder> ptr (CREF<HeapLayout> layout) {
@@ -345,14 +340,14 @@ public:
 } ;
 
 exports VFat<HeapHolder> HeapHolder::create (VREF<HeapLayout> that) {
-	return VFat<HeapHolder> (HeapImplement () ,that) ;
+	return VFat<HeapHolder> (HeapImplHolder () ,that) ;
 }
 
 exports CFat<HeapHolder> HeapHolder::create (CREF<HeapLayout> that) {
-	return CFat<HeapHolder> (HeapImplement () ,that) ;
+	return CFat<HeapHolder> (HeapImplHolder () ,that) ;
 }
 
-class SliceImplement implement Fat<SliceHolder ,SliceLayout> {
+class SliceImplHolder implement Fat<SliceHolder ,SliceLayout> {
 public:
 	LENGTH size () const override {
 		return fake.mSize ;
@@ -401,7 +396,7 @@ public:
 			get (i ,rax) ;
 			SliceHolder::create (that)->get (i ,rbx) ;
 			const auto r3x = inline_equal (rax ,rbx) ;
-			if ifnot (r3x)
+			if (!(r3x))
 				return r3x ;
 		}
 		return TRUE ;
@@ -433,14 +428,30 @@ public:
 		}
 		visitor.end () ;
 	}
+
+	SliceLayout eos () const override {
+		SliceLayout ret = fake ;
+		INDEX ix = 0 ;
+		auto rax = STRU32 () ;
+		while (TRUE) {
+			if (ix >= fake.mSize)
+				break ;
+			get (ix ,rax) ;
+			if (rax == STRU32 (0X00))
+				break ;
+			ix++ ;
+		}
+		ret.mSize = ix ;
+		return move (ret) ;
+	}
 } ;
 
 exports VFat<SliceHolder> SliceHolder::create (VREF<SliceLayout> that) {
-	return VFat<SliceHolder> (SliceImplement () ,that) ;
+	return VFat<SliceHolder> (SliceImplHolder () ,that) ;
 }
 
 exports CFat<SliceHolder> SliceHolder::create (CREF<SliceLayout> that) {
-	return CFat<SliceHolder> (SliceImplement () ,that) ;
+	return CFat<SliceHolder> (SliceImplHolder () ,that) ;
 }
 
 struct ClazzPureLayout {
@@ -450,15 +461,15 @@ struct ClazzPureLayout {
 	Slice mTypeName ;
 } ;
 
-class ClazzImplement implement Fat<ClazzHolder ,ClazzLayout> {
+class ClazzImplHolder implement Fat<ClazzHolder ,ClazzLayout> {
 public:
 	void initialize (CREF<Unknown> holder) override {
 		fake.mThis = Ref<ClazzPureLayout>::make () ;
 		const auto r1x = RFat<ReflectSize> (holder) ;
 		fake.mThis->mTypeSize = r1x->type_size () ;
 		fake.mThis->mTypeAlign = r1x->type_align () ;
-		const auto r2x = RFat<ReflectCode> (holder) ;
-		fake.mThis->mTypeCode = r2x->type_code () ;
+		const auto r2x = RFat<ReflectGuid> (holder) ;
+		fake.mThis->mTypeCode = r2x->type_guid () ;
 		const auto r3x = RFat<ReflectName> (holder) ;
 		fake.mThis->mTypeName = r3x->type_name () ;
 	}
@@ -479,7 +490,7 @@ public:
 		return fake.mThis->mTypeAlign ;
 	}
 
-	FLAG type_code () const override {
+	FLAG type_guid () const override {
 		if (fake.mThis == NULL)
 			return ZERO ;
 		return fake.mThis->mTypeCode ;
@@ -492,18 +503,20 @@ public:
 	}
 
 	BOOL equal (CREF<ClazzLayout> that) const override {
-		if (type_code () == ClazzHolder::create (that)->type_code ())
-			return TRUE ;
 		if (type_size () != ClazzHolder::create (that)->type_size ())
 			return FALSE ;
 		if (type_align () != ClazzHolder::create (that)->type_align ())
 			return FALSE ;
+		if (type_guid () == ClazzHolder::create (that)->type_guid ())
+			return TRUE ;
 		return inline_equal (type_name () ,ClazzHolder::create (that)->type_name ()) ;
 	}
 
 	FLAG compr (CREF<ClazzLayout> that) const override {
-		if (type_code () == ClazzHolder::create (that)->type_code ())
-			return ZERO ;
+		if (type_size () == ClazzHolder::create (that)->type_size ())
+			if (type_align () == ClazzHolder::create (that)->type_align ())
+				if (type_guid () == ClazzHolder::create (that)->type_guid ())
+					return ZERO ;
 		return inline_compr (type_name () ,ClazzHolder::create (that)->type_name ()) ;
 	}
 
@@ -511,21 +524,21 @@ public:
 		visitor.begin () ;
 		inline_visit (visitor ,type_size ()) ;
 		inline_visit (visitor ,type_align ()) ;
-		inline_visit (visitor ,type_code ()) ;
+		inline_visit (visitor ,type_guid ()) ;
 		inline_visit (visitor ,type_name ()) ;
 		visitor.end () ;
 	}
 } ;
 
 exports VFat<ClazzHolder> ClazzHolder::create (VREF<ClazzLayout> that) {
-	return VFat<ClazzHolder> (ClazzImplement () ,that) ;
+	return VFat<ClazzHolder> (ClazzImplHolder () ,that) ;
 }
 
 exports CFat<ClazzHolder> ClazzHolder::create (CREF<ClazzLayout> that) {
-	return CFat<ClazzHolder> (ClazzImplement () ,that) ;
+	return CFat<ClazzHolder> (ClazzImplHolder () ,that) ;
 }
 
-class AutoImplement implement Fat<AutoHolder ,AutoLayout> {
+class AutoImplHolder implement Fat<AutoHolder ,AutoLayout> {
 public:
 	void initialize (RREF<BoxLayout> item) override {
 		BoxHolder::create (fake.mValue)->acquire (item) ;
@@ -545,10 +558,10 @@ public:
 } ;
 
 exports VFat<AutoHolder> AutoHolder::create (VREF<AutoLayout> that) {
-	return VFat<AutoHolder> (AutoImplement () ,that) ;
+	return VFat<AutoHolder> (AutoImplHolder () ,that) ;
 }
 
 exports CFat<AutoHolder> AutoHolder::create (CREF<AutoLayout> that) {
-	return CFat<AutoHolder> (AutoImplement () ,that) ;
+	return CFat<AutoHolder> (AutoImplHolder () ,that) ;
 }
 } ;

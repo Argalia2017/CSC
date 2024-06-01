@@ -89,7 +89,7 @@ static constexpr auto inline_abort = FUNCTION_inline_abort () ;
 struct FUNCTION_inline_barrier {
 	template <class ARG1>
 	forceinline void operator() (TYPE<ARG1> ,CREF<csc_const_pointer_t> a) const noexcept {
-		static volatile auto mInstance = CPTR<void (CREF<csc_const_pointer_t>)> (NULL) ;
+		static volatile auto mInstance = PTR<void (csc_const_pointer_t)> (NULL) ;
 		if (mInstance == NULL)
 			return ;
 		mInstance (a) ;
@@ -101,7 +101,7 @@ static constexpr auto inline_barrier = FUNCTION_inline_barrier () ;
 class Pointer implement Proxy {
 public:
 	imports VREF<Pointer> make (CREF<FLAG> that) {
-		return (*reinterpret_cast<VPTR<Pointer>> (that)) ;
+		return (*reinterpret_cast<PTR<VREF<Pointer>>> (that)) ;
 	}
 
 	template <class ARG1>
@@ -148,21 +148,86 @@ public:
 	forceinline operator ARG1 () const leftvalue = delete ;
 } ;
 
-struct CoreProc implement Proxy {
-	imports FLAG inline_type_name (CREF<csc_type_info_t> squalor) noexcept ;
+struct FUNCTION_inline_type_name {
+	//@fatal: fuck cpp
+	imports FLAG invoke (CREF<csc_type_info_t> squalor) noexcept ;
 
-	imports FLAG inline_list_begin (CREF<csc_initializer_list_t<Pointer>> squalor ,CREF<LENGTH> step_) noexcept ;
-
-	imports FLAG inline_list_end (CREF<csc_initializer_list_t<Pointer>> squalor ,CREF<LENGTH> step_) noexcept ;
-
-	imports void inline_memset (VREF<Pointer> dst ,CREF<LENGTH> size_) noexcept ;
-
-	imports void inline_memcpy (VREF<Pointer> dst ,CREF<Pointer> src ,CREF<LENGTH> size_) noexcept ;
-
-	imports FLAG inline_memcmp (CREF<Pointer> dst ,CREF<Pointer> src ,CREF<LENGTH> size_) noexcept ;
-
-	imports LENGTH inline_memchr (CREF<Pointer> src ,CREF<LENGTH> size_) noexcept ;
+	forceinline FLAG operator() (CREF<csc_type_info_t> squalor) const noexcept {
+		return invoke (squalor) ;
+	}
 } ;
+
+static constexpr auto inline_type_name = FUNCTION_inline_type_name () ;
+
+struct FUNCTION_inline_list_begin {
+	//@fatal: fuck cpp
+	imports FLAG invoke (CREF<csc_initializer_list_t<Pointer>> squalor ,CREF<LENGTH> step_) noexcept ;
+
+	forceinline FLAG operator() (CREF<csc_initializer_list_t<Pointer>> squalor ,CREF<LENGTH> step_) const noexcept {
+		return invoke (squalor ,step_) ;
+	}
+} ;
+
+static constexpr auto inline_list_begin = FUNCTION_inline_list_begin () ;
+
+struct FUNCTION_inline_list_end {
+	//@fatal: fuck cpp
+	imports FLAG invoke (CREF<csc_initializer_list_t<Pointer>> squalor ,CREF<LENGTH> step_) noexcept ;
+
+	forceinline FLAG operator() (CREF<csc_initializer_list_t<Pointer>> squalor ,CREF<LENGTH> step_) const noexcept {
+		return invoke (squalor ,step_) ;
+	}
+} ;
+
+static constexpr auto inline_list_end = FUNCTION_inline_list_end () ;
+
+struct FUNCTION_inline_memset {
+	imports void invoke (VREF<Pointer> dst ,CREF<LENGTH> size_) noexcept ;
+
+	forceinline void operator() (VREF<Pointer> dst ,CREF<LENGTH> size_) const noexcept {
+		return invoke (dst ,size_) ;
+	}
+
+	template <class ARG1>
+	forceinline void operator() (VREF<ARG1> dst) const noexcept {
+		require (IS_TRIVIAL<ARG1>) ;
+		return invoke (Pointer::from (dst) ,SIZE_OF<ARG1>::expr) ;
+	}
+} ;
+
+static constexpr auto inline_memset = FUNCTION_inline_memset () ;
+
+struct FUNCTION_inline_memcpy {
+	imports void invoke (VREF<Pointer> dst ,CREF<Pointer> src ,CREF<LENGTH> size_) noexcept ;
+
+	forceinline void operator() (VREF<Pointer> dst ,CREF<Pointer> src ,CREF<LENGTH> size_) const noexcept {
+		return invoke (dst ,src ,size_) ;
+	}
+
+	template <class ARG1>
+	forceinline void operator() (VREF<ARG1> dst ,CREF<ARG1> src) {
+		require (IS_TRIVIAL<ARG1>) ;
+		return invoke (dst ,src ,SIZE_OF<ARG1>::expr) ;
+	}
+} ;
+
+static constexpr auto inline_memcpy = FUNCTION_inline_memcpy () ;
+
+struct FUNCTION_inline_memcmp {
+	imports FLAG invoke (CREF<Pointer> dst ,CREF<Pointer> src ,CREF<LENGTH> size_) noexcept ;
+
+	forceinline FLAG operator() (CREF<Pointer> dst ,CREF<Pointer> src ,CREF<LENGTH> size_) const noexcept {
+		return invoke (dst ,src ,size_) ;
+	}
+
+	template <class ARG1>
+	forceinline void operator() (CREF<ARG1> dst ,CREF<ARG1> src) {
+		require (IS_TRIVIAL<ARG1>) ;
+		return invoke (dst ,src ,SIZE_OF<ARG1>::expr) ;
+	}
+} ;
+
+static constexpr auto inline_memcmp = FUNCTION_inline_memcmp () ;
 
 struct FUNCTION_address {
 	template <class ARG1>
@@ -290,8 +355,6 @@ struct FUNCTION_swap {
 		const auto r1x = tmp1 ;
 		tmp1 = tmp2 ;
 		tmp2 = r1x ;
-		barrier (tmp1) ;
-		barrier (tmp2) ;
 	}
 } ;
 
@@ -323,7 +386,7 @@ struct FUNCTION_replace {
 	forceinline void operator() (VREF<ARG1> a ,CREF<ARG1> expect ,CREF<ARG2> item) const noexcept {
 		if (a != expect)
 			return ;
-		a = item ;
+		a = ARG1 (item) ;
 	}
 } ;
 
@@ -347,7 +410,7 @@ struct FUNCTION_bitwise_impl {
 		using R2X = CONDITIONAL<IS_SAME<ARG1 ,Pointer> ,A ,ARG1> ;
 		require (ENUM_EQUAL<SIZE_OF<R1X> ,SIZE_OF<R2X>>) ;
 		A ret ;
-		CoreProc::inline_memcpy (Pointer::from (ret) ,Pointer::from (a) ,SIZE_OF<R1X>::expr) ;
+		inline_memcpy (Pointer::from (ret) ,Pointer::from (a) ,SIZE_OF<R1X>::expr) ;
 		return move (ret) ;
 	}
 } ;
@@ -361,13 +424,13 @@ struct FUNCTION_bitwise {
 
 static constexpr auto bitwise = FUNCTION_bitwise () ;
 
-struct FUNCTION_inline_code {
+struct FUNCTION_inline_hold {
 	forceinline FLAG operator() (CREF<Interface> binder) const noexcept {
 		return bitwise[TYPE<FLAG>::expr] (binder) ;
 	}
 } ;
 
-static constexpr auto inline_code = FUNCTION_inline_code () ;
+static constexpr auto inline_hold = FUNCTION_inline_hold () ;
 
 struct FUNCTION_inline_min {
 	forceinline VAL operator() (CREF<VAL> a ,CREF<VAL> b) const noexcept {
@@ -501,7 +564,7 @@ public:
 		mPeek = mBegin ;
 	}
 
-	LENGTH size () const {
+	LENGTH length () const {
 		return mEnd - mBegin ;
 	}
 
@@ -513,20 +576,32 @@ public:
 		return thiz ;
 	}
 
-	forceinline BOOL operator== (CREF<IndexIterator>) const {
-		return mPeek == mEnd ;
-	}
-
-	forceinline BOOL operator!= (CREF<IndexIterator>) const {
+	BOOL good () const {
 		return mPeek != mEnd ;
 	}
 
-	forceinline CREF<INDEX> operator* () const leftvalue {
+	forceinline BOOL operator== (CREF<IndexIterator>) const {
+		return !(good ()) ;
+	}
+
+	forceinline BOOL operator!= (CREF<IndexIterator>) const {
+		return good () ;
+	}
+
+	CREF<INDEX> peek () const leftvalue {
 		return mPeek ;
 	}
 
-	forceinline void operator++ () {
+	forceinline CREF<INDEX> operator* () const leftvalue {
+		return peek () ;
+	}
+
+	void next () {
 		mPeek++ ;
+	}
+
+	forceinline void operator++ () {
+		next () ;
 	}
 } ;
 
@@ -550,12 +625,12 @@ public:
 		mEnd.mX = inline_max (begin_x ,end_x) ;
 		mEnd.mY = inline_max (begin_y ,end_y) ;
 		mPeek = mBegin ;
-		if (size () > 0)
+		if (length () > 0)
 			return ;
 		mPeek = mEnd ;
 	}
 
-	LENGTH size () const {
+	LENGTH length () const {
 		return (mEnd.mX - mBegin.mX) * (mEnd.mY - mBegin.mY) ;
 	}
 
@@ -567,24 +642,36 @@ public:
 		return thiz ;
 	}
 
-	forceinline BOOL operator== (CREF<PixelIterator>) const {
-		return mPeek.mY == mEnd.mY ;
-	}
-
-	forceinline BOOL operator!= (CREF<PixelIterator>) const {
+	BOOL good () const {
 		return mPeek.mY != mEnd.mY ;
 	}
 
-	forceinline CREF<Pixel> operator* () const leftvalue {
+	forceinline BOOL operator== (CREF<PixelIterator>) const {
+		return !(good ()) ;
+	}
+
+	forceinline BOOL operator!= (CREF<PixelIterator>) const {
+		return good () ;
+	}
+
+	CREF<Pixel> peek () const leftvalue {
 		return mPeek ;
 	}
 
-	forceinline void operator++ () {
+	forceinline CREF<Pixel> operator* () const leftvalue {
+		return peek () ;
+	}
+
+	void next () {
 		mPeek.mX++ ;
 		if (mPeek.mX < mEnd.mX)
 			return ;
 		mPeek.mX = 0 ;
 		mPeek.mY++ ;
+	}
+
+	forceinline void operator++ () {
+		next () ;
 	}
 } ;
 
@@ -632,12 +719,16 @@ public:
 
 	template <class ARG1 ,class ARG2 ,class = REQUIRE<IS_EXTEND<Fat<A ,ARG2> ,ARG1>>>
 	explicit VFat (CREF<ARG1> holder ,VREF<ARG2> pointer) {
-		mHolder = inline_code (holder) ;
+		mHolder = inline_hold (holder) ;
 		mPointer = address (pointer) ;
 	}
 
-	forceinline VPTR<A> operator-> () const {
-		return VPTR<A> (address (thiz)) ;
+	VREF<A> self_m () const {
+		return Pointer::from (const_cast<VREF<VFat>> (thiz)) ;
+	}
+
+	forceinline PTR<VREF<A>> operator-> () const {
+		return (&self) ;
 	}
 } ;
 
@@ -655,12 +746,16 @@ public:
 
 	template <class ARG1 ,class ARG2 ,class = REQUIRE<IS_EXTEND<Fat<A ,ARG2> ,ARG1>>>
 	explicit CFat (CREF<ARG1> holder ,CREF<ARG2> pointer) {
-		mHolder = inline_code (holder) ;
+		mHolder = inline_hold (holder) ;
 		mPointer = address (pointer) ;
 	}
 
-	forceinline CPTR<A> operator-> () const {
-		return CPTR<A> (address (thiz)) ;
+	CREF<A> self_m () const {
+		return Pointer::from (const_cast<CREF<CFat>> (thiz)) ;
+	}
+
+	forceinline PTR<CREF<A>> operator-> () const {
+		return (&self) ;
 	}
 } ;
 
@@ -674,7 +769,7 @@ protected:
 	FLAG mPointer ;
 
 public:
-	implicit RFat () = delete ;
+	implicit RFat () = default ;
 
 	explicit RFat (CREF<Unknown> holder) {
 		mHolder = holder.reflect (A::expr) ;
@@ -682,43 +777,12 @@ public:
 		mPointer = ZERO ;
 	}
 
-	forceinline CPTR<A> operator-> () const {
-		return CPTR<A> (address (thiz)) ;
-	}
-} ;
-
-template <class A>
-class Pin {
-protected:
-	mutable A mValue ;
-
-public:
-	implicit Pin () noexcept {
-		noop () ;
+	CREF<A> self_m () const {
+		return Pointer::from (const_cast<CREF<RFat>> (thiz)) ;
 	}
 
-	implicit Pin (CREF<Pin> that) :Pin () {
-		noop () ;
-	}
-
-	forceinline VREF<Pin> operator= (CREF<Pin> that) {
-		return thiz ;
-	}
-
-	implicit Pin (RREF<Pin> that) noexcept :Pin () {
-		noop () ;
-	}
-
-	forceinline VREF<Pin> operator= (RREF<Pin> that) noexcept {
-		return thiz ;
-	}
-
-	VREF<A> self_m () const {
-		return mValue ;
-	}
-
-	forceinline operator VREF<A> () const {
-		return self ;
+	forceinline PTR<CREF<A>> operator-> () const {
+		return (&self) ;
 	}
 } ;
 
@@ -802,11 +866,11 @@ public:
 	void init (VREF<Pointer> a) const noexcept override {
 		if (IS_TRIVIAL<A>::expr)
 			return ;
-		CoreProc::inline_memset (a ,SIZE_OF<A>::expr) ;
+		inline_memset (a ,SIZE_OF<A>::expr) ;
 	}
 
 	void copy (VREF<Pointer> a ,CREF<Pointer> b) const noexcept override {
-		CoreProc::inline_memcpy (a ,b ,SIZE_OF<A>::expr) ;
+		inline_memcpy (a ,b ,SIZE_OF<A>::expr) ;
 	}
 
 	void drop (VREF<Pointer> a) const noexcept override {
@@ -834,9 +898,9 @@ public:
 		return offset_m1st_impl (PHX ,TYPE<A>::expr) ;
 	}
 
-	template <class ARG1 ,class = REQUIRE<KILL<ENUM_TRUE ,typeof (CPTR<ARG1> (NULL)->m1st)>>>
+	template <class ARG1 ,class = REQUIRE<KILL<ENUM_TRUE ,typeof (PTR<CREF<ARG1>> (NULL)->m1st)>>>
 	LENGTH offset_m1st_impl (CREF<typeof (PH2)> ,TYPE<ARG1>) const {
-		return address (CPTR<A> (NULL)->m1st) ;
+		return address (PTR<CREF<A>> (NULL)->m1st) ;
 	}
 
 	template <class ARG1>
@@ -849,9 +913,9 @@ public:
 		return offset_m2nd_impl (PHX ,TYPE<A>::expr) ;
 	}
 
-	template <class ARG1 ,class = REQUIRE<KILL<ENUM_TRUE ,typeof (CPTR<ARG1> (NULL)->m2nd)>>>
+	template <class ARG1 ,class = REQUIRE<KILL<ENUM_TRUE ,typeof (PTR<CREF<ARG1>> (NULL)->m2nd)>>>
 	LENGTH offset_m2nd_impl (CREF<typeof (PH2)> ,TYPE<ARG1>) const {
-		return address (CPTR<A> (NULL)->m2nd) ;
+		return address (PTR<CREF<A>> (NULL)->m2nd) ;
 	}
 
 	template <class ARG1>
@@ -864,9 +928,9 @@ public:
 		return offset_m3rd_impl (PHX ,TYPE<A>::expr) ;
 	}
 
-	template <class ARG1 ,class = REQUIRE<KILL<ENUM_TRUE ,typeof (CPTR<ARG1> (NULL)->m3rd)>>>
+	template <class ARG1 ,class = REQUIRE<KILL<ENUM_TRUE ,typeof (PTR<CREF<ARG1>> (NULL)->m3rd)>>>
 	LENGTH offset_m3rd_impl (CREF<typeof (PH2)> ,TYPE<ARG1>) const {
-		return address (CPTR<A> (NULL)->m3rd) ;
+		return address (PTR<CREF<A>> (NULL)->m3rd) ;
 	}
 
 	template <class ARG1>
@@ -886,7 +950,7 @@ public:
 	}
 
 	implicit UnknownHolder (CREF<Unknown> holder) {
-		mHolder = inline_code (holder) ;
+		mHolder = inline_hold (holder) ;
 	}
 
 	explicit UnknownHolder (CREF<FLAG> holder) {
@@ -902,7 +966,7 @@ public:
 	}
 
 	forceinline BOOL operator!= (CREF<UnknownHolder> that) const {
-		return ifnot (equal (that)) ;
+		return !(equal (that)) ;
 	}
 
 	CREF<Unknown> self_m () const leftvalue {
@@ -912,6 +976,88 @@ public:
 
 	forceinline operator CREF<Unknown> () const leftvalue {
 		return self ;
+	}
+} ;
+
+template <class A>
+class Pin {
+protected:
+	mutable Temp<A> mStorage ;
+
+public:
+	implicit Pin () noexcept {
+		inline_memset (mStorage) ;
+	}
+
+	implicit ~Pin () noexcept {
+		self.~A () ;
+	}
+
+	implicit Pin (CREF<Pin> that) :Pin () {
+		noop () ;
+	}
+
+	forceinline VREF<Pin> operator= (CREF<Pin> that) {
+		return thiz ;
+	}
+
+	implicit Pin (RREF<Pin> that) noexcept :Pin () {
+		noop () ;
+	}
+
+	forceinline VREF<Pin> operator= (RREF<Pin> that) noexcept {
+		return thiz ;
+	}
+
+	VREF<A> self_m () const leftvalue {
+		return Pointer::from (mStorage) ;
+	}
+
+	forceinline PTR<VREF<A>> operator-> () const leftvalue {
+		return (&self) ;
+	}
+
+	void assign (CREF<typeof (NULL)>) {
+		//@warn: may cause leaks on duplicated call
+		new (Pointer::from (mStorage)) A () ;
+	}
+
+	forceinline void operator= (CREF<typeof (NULL)>) {
+		assign (NULL) ;
+	}
+} ;
+
+struct FUNCTION_memorize {
+	template <class ARG1>
+	forceinline CREF<FUNCTION_RETURN<ARG1>> operator() (CREF<ARG1> func) const {
+		static const auto mInstance = func () ;
+		return mInstance ;
+	}
+} ;
+
+static constexpr auto memorize = FUNCTION_memorize () ;
+
+template <class A ,class B>
+class External {
+protected:
+	FLAG mHolder ;
+	FLAG mPointer ;
+
+public:
+	imports CREF<Pin<External>> instance () {
+		return memorize ([&] () {
+			return Pin<External> () ;
+		}) ;
+	}
+
+	imports CREF<Fat<A ,B>> create () {
+		return Pointer::from (instance ()) ;
+	}
+
+	template <class ARG1>
+	imports BOOL declare (RREF<ARG1> func) {
+		instance ()->mHolder = func () ;
+		return TRUE ;
 	}
 } ;
 
@@ -957,12 +1103,13 @@ inline BoxLayout::~BoxLayout () noexcept {
 }
 
 template <class A>
-struct BoxUnknownBinder implement Unknown {
+class BoxUnknownBinder implement Unknown {
+public:
 	FLAG reflect (CREF<FLAG> uuid) const override {
 		if (uuid == ReflectSizeBinder<A>::expr)
-			return inline_code (ReflectSizeBinder<A> ()) ;
+			return inline_hold (ReflectSizeBinder<A> ()) ;
 		if (uuid == ReflectDestroyBinder<A>::expr)
-			return inline_code (ReflectDestroyBinder<A> ()) ;
+			return inline_hold (ReflectDestroyBinder<A> ()) ;
 		return ZERO ;
 	}
 } ;
@@ -992,27 +1139,23 @@ public:
 		return BoxHolder::create (thiz)->exist () ;
 	}
 
-	UnknownHolder unknown () const {
-		return BoxHolder::create (thiz)->unknown () ;
-	}
-
 	forceinline BOOL operator== (CREF<typeof (NULL)>) const {
-		return ifnot (exist ()) ;
+		return !(exist ()) ;
 	}
 
 	forceinline BOOL operator!= (CREF<typeof (NULL)>) const {
 		return exist () ;
 	}
 
+	UnknownHolder unknown () const {
+		return BoxHolder::create (thiz)->unknown () ;
+	}
+
 	VREF<A> self_m () leftvalue {
 		return BoxHolder::create (thiz)->self ;
 	}
 
-	forceinline operator VREF<A> () leftvalue {
-		return self ;
-	}
-
-	forceinline VPTR<A> operator-> () leftvalue {
+	forceinline PTR<VREF<A>> operator-> () leftvalue {
 		return (&self) ;
 	}
 
@@ -1020,11 +1163,7 @@ public:
 		return BoxHolder::create (thiz)->self ;
 	}
 
-	forceinline operator CREF<A> () const leftvalue {
-		return self ;
-	}
-
-	forceinline CPTR<A> operator-> () const leftvalue {
+	forceinline PTR<CREF<A>> operator-> () const leftvalue {
 		return (&self) ;
 	}
 
@@ -1036,16 +1175,6 @@ public:
 		return BoxHolder::create (thiz)->release () ;
 	}
 } ;
-
-struct FUNCTION_memorize {
-	template <class ARG1>
-	forceinline CREF<FUNCTION_RETURN<ARG1>> operator() (CREF<ARG1> func) const {
-		static const auto mInstance = func () ;
-		return mInstance ;
-	}
-} ;
-
-static constexpr auto memorize = FUNCTION_memorize () ;
 
 struct RefLayout {
 	FLAG mHolder ;
@@ -1091,14 +1220,15 @@ inline RefLayout::~RefLayout () noexcept {
 }
 
 template <class A>
-struct RefUnknownBinder implement Unknown {
+class RefUnknownBinder implement Unknown {
+public:
 	FLAG reflect (CREF<FLAG> uuid) const override {
 		if (uuid == ReflectSizeBinder<A>::expr)
-			return inline_code (ReflectSizeBinder<A> ()) ;
+			return inline_hold (ReflectSizeBinder<A> ()) ;
 		if (uuid == ReflectCreateBinder<A>::expr)
-			return inline_code (ReflectCreateBinder<A> ()) ;
+			return inline_hold (ReflectCreateBinder<A> ()) ;
 		if (uuid == ReflectDestroyBinder<A>::expr)
-			return inline_code (ReflectDestroyBinder<A> ()) ;
+			return inline_hold (ReflectDestroyBinder<A> ()) ;
 		return ZERO ;
 	}
 } ;
@@ -1134,27 +1264,23 @@ public:
 		return RefHolder::create (thiz)->exist () ;
 	}
 
-	UnknownHolder unknown () const {
-		return RefHolder::create (thiz)->unknown () ;
-	}
-
 	forceinline BOOL operator== (CREF<typeof (NULL)>) const {
-		return ifnot (exist ()) ;
+		return !(exist ()) ;
 	}
 
 	forceinline BOOL operator!= (CREF<typeof (NULL)>) const {
 		return exist () ;
 	}
 
+	UnknownHolder unknown () const {
+		return RefHolder::create (thiz)->unknown () ;
+	}
+
 	VREF<A> self_m () leftvalue {
 		return RefHolder::create (thiz)->self ;
 	}
 
-	forceinline operator VREF<A> () leftvalue {
-		return self ;
-	}
-
-	forceinline VPTR<A> operator-> () leftvalue {
+	forceinline PTR<VREF<A>> operator-> () leftvalue {
 		return (&self) ;
 	}
 
@@ -1162,11 +1288,7 @@ public:
 		return RefHolder::create (thiz)->self ;
 	}
 
-	forceinline operator CREF<A> () const leftvalue {
-		return self ;
-	}
-
-	forceinline CPTR<A> operator-> () const leftvalue {
+	forceinline PTR<CREF<A>> operator-> () const leftvalue {
 		return (&self) ;
 	}
 
@@ -1203,9 +1325,7 @@ protected:
 	using HeapLayout::mHolder ;
 
 public:
-	implicit Heap () = default ;
-
-	explicit Heap (CREF<typeof (FULL)>) {
+	explicit Heap () {
 		HeapHolder::create (thiz)->initialize () ;
 	}
 
@@ -1225,24 +1345,24 @@ public:
 		return HeapHolder::create (thiz)->free (addr) ;
 	}
 } ;
-struct CaptureLayout {
+struct WrapperLayout {
 	LENGTH mRank ;
 } ;
 
 template <class...PARAMS>
-class Capture implement CaptureLayout {
+class Wrapper implement WrapperLayout {
 private:
 	using RANK = RANK_OF<TYPE<PARAMS...>> ;
 	using CAPTURE = Tuple<ARR<FLAG ,ENUM_MAX<RANK ,RANK1>>> ;
 
 protected:
-	using CaptureLayout::mRank ;
+	using WrapperLayout::mRank ;
 	CAPTURE mStorage ;
 
 public:
-	explicit Capture (CREF<REMOVE_REF<PARAMS>>...params) {
+	explicit Wrapper (CREF<KILL<FLAG ,PARAMS>>...params) {
 		mRank = RANK::expr ;
-		mStorage = {address (params)...} ;
+		mStorage = {params...} ;
 	}
 
 	template <class ARG1>
@@ -1262,49 +1382,66 @@ public:
 	}
 } ;
 
+template <class...ARG1>
+inline Wrapper<CREF<ARG1>...> MakeWrapper (CREF<ARG1>...params) {
+	return Wrapper<CREF<ARG1>...> (address (params)...) ;
+}
+
 template <class A>
-class CaptureIterator {
+class WrapperIterator {
 protected:
 	FLAG mBegin ;
 	FLAG mEnd ;
 	FLAG mPeek ;
 
 public:
-	implicit CaptureIterator () = delete ;
+	implicit WrapperIterator () = delete ;
 
-	explicit CaptureIterator (CREF<CaptureLayout> that) {
-		mBegin = address (that) + SIZE_OF<CaptureLayout>::expr ;
+	explicit WrapperIterator (CREF<WrapperLayout> that) {
+		mBegin = address (that) + SIZE_OF<WrapperLayout>::expr ;
 		mEnd = mBegin + that.mRank * SIZE_OF<FLAG>::expr ;
 		mPeek = mBegin ;
 	}
 
-	LENGTH size () const {
+	LENGTH length () const {
 		return (mEnd - mBegin) / SIZE_OF<FLAG>::expr ;
 	}
 
-	CaptureIterator begin () const {
+	WrapperIterator begin () const {
 		return thiz ;
 	}
 
-	CaptureIterator end () const {
+	WrapperIterator end () const {
 		return thiz ;
 	}
 
-	forceinline BOOL operator== (CREF<CaptureIterator>) const {
-		return mPeek == mEnd ;
-	}
-
-	forceinline BOOL operator!= (CREF<CaptureIterator>) const {
+	BOOL good () const {
 		return mPeek != mEnd ;
 	}
 
-	forceinline CREF<A> operator* () const leftvalue {
-		const auto r1x = inline_code (Pointer::make (mPeek)) ;
+	forceinline BOOL operator== (CREF<WrapperIterator>) const {
+		return !(good ()) ;
+	}
+
+	forceinline BOOL operator!= (CREF<WrapperIterator>) const {
+		return good () ;
+	}
+
+	CREF<A> peek () const leftvalue {
+		const auto r1x = inline_hold (Pointer::make (mPeek)) ;
 		return Pointer::make (r1x) ;
 	}
 
-	forceinline void operator++ () {
+	forceinline CREF<A> operator* () const leftvalue {
+		return peek () ;
+	}
+
+	void next () {
 		mPeek += SIZE_OF<FLAG>::expr ;
+	}
+
+	forceinline void operator++ () {
+		next () ;
 	}
 } ;
 
@@ -1324,6 +1461,7 @@ struct SliceHolder implement Interface {
 	virtual BOOL equal (CREF<SliceLayout> that) const = 0 ;
 	virtual FLAG compr (CREF<SliceLayout> that) const = 0 ;
 	virtual void visit (CREF<Visitor> visitor) const = 0 ;
+	virtual SliceLayout eos () const = 0 ;
 } ;
 
 class Slice implement SliceLayout {
@@ -1375,7 +1513,7 @@ public:
 	}
 
 	forceinline BOOL operator!= (CREF<Slice> that) const {
-		return ifnot (equal (that)) ;
+		return !(equal (that)) ;
 	}
 
 	FLAG compr (CREF<Slice> that) const {
@@ -1400,6 +1538,11 @@ public:
 
 	void visit (CREF<Visitor> visitor) const {
 		return SliceHolder::create (thiz)->visit (visitor) ;
+	}
+
+	Slice eos () const {
+		SliceLayout ret = SliceHolder::create (thiz)->eos () ;
+		return move (keep[TYPE<Slice>::expr] (ret)) ;
 	}
 } ;
 
@@ -1445,7 +1588,7 @@ public:
 		return mLine ;
 	}
 
-	void raise () {
+	declspec (noreturn) void raise () {
 		throw thiz ;
 	}
 } ;
@@ -1480,7 +1623,7 @@ public:
 
 	template <class ARG1>
 	forceinline void clone_impl (CREF<typeof (PH1)> ,VREF<ARG1> a ,CREF<ARG1> b) const {
-		assume (FALSE) ;
+		assert (FALSE) ;
 	}
 } ;
 
@@ -1506,7 +1649,7 @@ public:
 
 	template <class ARG1>
 	forceinline BOOL equal_impl (CREF<typeof (PH1)> ,CREF<ARG1> a ,CREF<ARG1> b) const {
-		assume (FALSE) ;
+		assert (FALSE) ;
 		return BOOL () ;
 	}
 } ;
@@ -1533,7 +1676,7 @@ public:
 
 	template <class ARG1>
 	forceinline FLAG equal_impl (CREF<typeof (PH1)> ,CREF<ARG1> a ,CREF<ARG1> b) const {
-		assume (FALSE) ;
+		assert (FALSE) ;
 		return FLAG () ;
 	}
 } ;
@@ -1560,23 +1703,67 @@ public:
 
 	template <class ARG1>
 	forceinline void visit_impl (CREF<typeof (PH1)> ,CREF<Visitor> visitor ,CREF<ARG1> a) const {
-		assume (FALSE) ;
+		assert (FALSE) ;
 	}
 } ;
 
-struct ReflectCode implement Interface {
-	virtual FLAG type_code () const = 0 ;
+struct ReflectGuid implement Interface {
+	virtual FLAG type_guid () const = 0 ;
 
 	imports forceinline consteval FLAG expr_m () noexcept {
 		return 114 ;
 	}
 } ;
 
+template <class...>
+trait REFLECT_GUID_HELP ;
+
+template <class A ,class OTHERWISE>
+trait REFLECT_GUID_HELP<A ,OTHERWISE> {
+	using RET = ENUM<0> ;
+} ;
+
 template <class A>
-class ReflectCodeBinder implement ReflectCode {
+trait REFLECT_GUID_HELP<A ,REQUIRE<IS_BOOL<A>>> {
+	using RET = ENUM<1> ;
+} ;
+
+template <class A>
+trait REFLECT_GUID_HELP<A ,REQUIRE<IS_VALUE<A>>> {
+	using RET = ENUM<2> ;
+} ;
+
+template <class A>
+trait REFLECT_GUID_HELP<A ,REQUIRE<IS_FLOAT<A>>> {
+	using RET = ENUM<3> ;
+} ;
+
+template <class A>
+trait REFLECT_GUID_HELP<A ,REQUIRE<IS_TEXT<A>>> {
+	using RET = ENUM<4> ;
+} ;
+
+template <class A>
+trait REFLECT_GUID_HELP<A ,REQUIRE<IS_BYTE<A>>> {
+	using RET = ENUM<5> ;
+} ;
+
+template <class A>
+trait REFLECT_GUID_HELP<A ,REQUIRE<IS_NULL<A>>> {
+	using RET = ENUM<6> ;
+} ;
+
+template <class A>
+using REFLECT_GUID = typename REFLECT_GUID_HELP<A ,ALWAYS>::RET ;
+
+template <class A>
+class ReflectGuidBinder implement ReflectGuid {
 public:
-	FLAG type_code () const override {
-		return inline_code (thiz) ;
+	FLAG type_guid () const override {
+		const auto r1x = REFLECT_GUID<A>::expr ;
+		if (r1x != 0)
+			return r1x ;
+		return inline_hold (thiz) ;
 	}
 } ;
 
@@ -1588,14 +1775,15 @@ struct ReflectName implement Interface {
 	}
 } ;
 
+using DEFAULT_SLICE_SIZE = ENUM<4096> ;
+
 #ifdef __CSC_CXX_RTTI__
 template <class A>
 class ReflectNameBinder implement ReflectName {
 public:
 	Slice type_name () const override {
-		const auto r1x = CoreProc::inline_type_name (typeid (A)) ;
-		const auto r2x = CoreProc::inline_memchr (Pointer::make (r1x) ,4096) ;
-		return Slice (r1x ,r2x ,1) ;
+		const auto r1x = inline_type_name (typeid (A)) ;
+		return Slice (r1x ,DEFAULT_SLICE_SIZE::expr ,1).eos () ;
 	}
 } ;
 #endif
@@ -1606,7 +1794,7 @@ class ReflectNameBinder implement ReflectName {
 public:
 	Slice type_name () const override {
 		return Slice (__macro_funcion) ;
-	}
+}
 } ;
 #endif
 
@@ -1624,7 +1812,7 @@ struct ClazzHolder implement Interface {
 	virtual void initialize (CREF<ClazzLayout> that) = 0 ;
 	virtual LENGTH type_size () const = 0 ;
 	virtual LENGTH type_align () const = 0 ;
-	virtual FLAG type_code () const = 0 ;
+	virtual FLAG type_guid () const = 0 ;
 	virtual Slice type_name () const = 0 ;
 	virtual BOOL equal (CREF<ClazzLayout> that) const = 0 ;
 	virtual FLAG compr (CREF<ClazzLayout> that) const = 0 ;
@@ -1632,14 +1820,15 @@ struct ClazzHolder implement Interface {
 } ;
 
 template <class A>
-struct ClazzUnknownBinder implement Unknown {
+class ClazzUnknownBinder implement Unknown {
+public:
 	FLAG reflect (CREF<FLAG> uuid) const override {
 		if (uuid == ReflectSizeBinder<A>::expr)
-			return inline_code (ReflectSizeBinder<A> ()) ;
-		if (uuid == ReflectCodeBinder<A>::expr)
-			return inline_code (ReflectCodeBinder<A> ()) ;
+			return inline_hold (ReflectSizeBinder<A> ()) ;
+		if (uuid == ReflectGuidBinder<A>::expr)
+			return inline_hold (ReflectGuidBinder<A> ()) ;
 		if (uuid == ReflectNameBinder<A>::expr)
-			return inline_code (ReflectNameBinder<A> ()) ;
+			return inline_hold (ReflectNameBinder<A> ()) ;
 		return ZERO ;
 	}
 } ;
@@ -1653,7 +1842,12 @@ public:
 
 	template <class ARG1>
 	explicit Clazz (TYPE<ARG1>) {
-		ClazzHolder::create (thiz)->initialize (ClazzUnknownBinder<ARG1> ()) ;
+		auto &&tmp = memorize ([&] () {
+			Clazz ret ;
+			ClazzHolder::create (ret)->initialize (ClazzUnknownBinder<ARG1> ()) ;
+			return move (ret) ;
+		}) ;
+		mThis = Ref<ClazzPureLayout>::reference (Pointer::make (address (tmp.mThis.self))) ;
 	}
 
 	implicit Clazz (CREF<Clazz> that) {
@@ -1676,8 +1870,8 @@ public:
 		return ClazzHolder::create (thiz)->type_align () ;
 	}
 
-	FLAG type_code () const {
-		return ClazzHolder::create (thiz)->type_code () ;
+	FLAG type_guid () const {
+		return ClazzHolder::create (thiz)->type_guid () ;
 	}
 
 	Slice type_name () const {
@@ -1693,7 +1887,7 @@ public:
 	}
 
 	forceinline BOOL operator!= (CREF<Clazz> that) const {
-		return ifnot (equal (that)) ;
+		return !(equal (that)) ;
 	}
 
 	FLAG compr (CREF<Clazz> that) const {
@@ -1735,7 +1929,7 @@ struct AutoHolder implement Interface {
 
 class Auto implement AutoLayout {
 private:
-	using FAKE_SIZE = ENUM<1024> ;
+	using FAKE_SIZE = ENUM<1024 - 8> ;
 	using FAKE_ALIGN = RANK8 ;
 
 protected:
@@ -1769,19 +1963,19 @@ public:
 template <class A>
 class Scope {
 protected:
-	A mThat ;
+	PTR<A> mThat ;
 	BOOL mOwner ;
 
 public:
 	implicit Scope () = delete ;
 
-	explicit Scope (XREF<POINTER_BASE<A>> that) :mThat ((&that)) {
+	explicit Scope (XREF<A> that) :mThat ((&that)) {
 		mThat->enter () ;
 		mOwner = TRUE ;
 	}
 
 	implicit ~Scope () noexcept {
-		if ifnot (mOwner)
+		if (!(mOwner))
 			return ;
 		mThat->leave () ;
 		mOwner = FALSE ;

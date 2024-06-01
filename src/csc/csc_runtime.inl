@@ -26,7 +26,7 @@ namespace CSC {
 struct FUNCTION_calendar_from_timepoint {
 	inline std::tm operator() (CREF<std::time_t> time) const {
 		std::tm ret ;
-		CoreProc::inline_memset (Pointer::from (ret) ,SIZE_OF<std::tm>::expr) ;
+		inline_memset (ret) ;
 		localtime_s ((&ret) ,(&time)) ;
 		return move (ret) ;
 	}
@@ -37,7 +37,7 @@ struct FUNCTION_calendar_from_timepoint {
 struct FUNCTION_calendar_from_timepoint {
 	inline std::tm operator() (CREF<std::time_t> time) const {
 		std::tm ret ;
-		CoreProc::inline_memset (Pointer::from (ret) ,SIZE_OF<std::tm>::expr) ;
+		inline_memset (ret) ;
 		localtime_s ((&ret) ,(&time)) ;
 		return move (ret) ;
 	}
@@ -49,7 +49,7 @@ struct FUNCTION_calendar_from_timepoint {
 	inline std::tm operator() (CREF<std::time_t> time) const {
 		std::tm ret ;
 		const auto r1x = FLAG (std::localtime ((&time))) ;
-		CoreProc::inline_memcpy (Pointer::from (ret) ,Pointer::make (r1x) ,SIZE_OF<std::tm>::expr) ;
+		inline_memcpy (Pointer::from (ret) ,Pointer::make (r1x) ,SIZE_OF<std::tm>::expr) ;
 		return move (ret) ;
 	}
 } ;
@@ -61,7 +61,7 @@ struct TimePureLayout {
 	std::chrono::system_clock::duration mTime ;
 } ;
 
-class TimeImplement implement Fat<TimeHolder ,TimeLayout> {
+class TimeImplHolder implement Fat<TimeHolder ,TimeLayout> {
 public:
 	void initialize () override {
 		const auto r1x = std::chrono::system_clock::now () ;
@@ -163,79 +163,78 @@ public:
 } ;
 
 exports VFat<TimeHolder> TimeHolder::create (VREF<TimeLayout> that) {
-	return VFat<TimeHolder> (TimeImplement () ,that) ;
+	return VFat<TimeHolder> (TimeImplHolder () ,that) ;
 }
 
 exports CFat<TimeHolder> TimeHolder::create (CREF<TimeLayout> that) {
-	return CFat<TimeHolder> (TimeImplement () ,that) ;
+	return CFat<TimeHolder> (TimeImplHolder () ,that) ;
 }
 
-#ifndef __CSC_API_WITH_SYS__
-class RuntimeProcImplement implement Fat<RuntimeProcHolder ,RuntimeProcLayout> {} ;
+template class External<RuntimeProcHolder ,RuntimeProcLayout> ;
 
 exports VFat<RuntimeProcHolder> RuntimeProcHolder::create (VREF<RuntimeProcLayout> that) {
-	return VFat<RuntimeProcHolder> (RuntimeProcImplement () ,that) ;
+	return VFat<RuntimeProcHolder> (External<RuntimeProcHolder ,RuntimeProcLayout>::create () ,that) ;
 }
 
 exports CFat<RuntimeProcHolder> RuntimeProcHolder::create (CREF<RuntimeProcLayout> that) {
-	return CFat<RuntimeProcHolder> (RuntimeProcImplement () ,that) ;
+	return CFat<RuntimeProcHolder> (External<RuntimeProcHolder ,RuntimeProcLayout>::create () ,that) ;
 }
-#endif
 
 struct AtomicPureLayout {
 	Pin<std::atomic<VAL>> mAtomic ;
 } ;
 
-class AtomicImplement implement Fat<AtomicHolder ,AtomicLayout> {
+class AtomicImplHolder implement Fat<AtomicHolder ,AtomicLayout> {
 public:
 	void initialize () override {
 		fake.mThis = Ref<AtomicPureLayout>::make () ;
-		fake.mThis->mAtomic.self.store (0) ;
+		fake.mThis->mAtomic = NULL ;
+		fake.mThis->mAtomic->store (0) ;
 	}
 
 	VAL fetch () const override {
 		if (fake.mThis == NULL)
 			return 0 ;
-		return fake.mThis->mAtomic.self.load (std::memory_order::memory_order_relaxed) ;
+		return fake.mThis->mAtomic->load (std::memory_order::memory_order_relaxed) ;
 	}
 
 	void store (CREF<VAL> item) const override {
-		return fake.mThis->mAtomic.self.store (item ,std::memory_order::memory_order_relaxed) ;
+		return fake.mThis->mAtomic->store (item ,std::memory_order::memory_order_relaxed) ;
 	}
 
 	VAL exchange (CREF<VAL> item) const override {
-		return fake.mThis->mAtomic.self.exchange (item ,std::memory_order::memory_order_relaxed) ;
+		return fake.mThis->mAtomic->exchange (item ,std::memory_order::memory_order_relaxed) ;
 	}
 
 	BOOL change (VREF<VAL> expect ,CREF<VAL> item) const override {
-		return fake.mThis->mAtomic.self.compare_exchange_weak (expect ,item ,std::memory_order::memory_order_relaxed) ;
+		return fake.mThis->mAtomic->compare_exchange_weak (expect ,item ,std::memory_order::memory_order_relaxed) ;
 	}
 
 	void replace (CREF<VAL> expect ,CREF<VAL> item) const override {
 		auto rax = expect ;
-		fake.mThis->mAtomic.self.compare_exchange_strong (rax ,item ,std::memory_order::memory_order_relaxed) ;
+		fake.mThis->mAtomic->compare_exchange_strong (rax ,item ,std::memory_order::memory_order_relaxed) ;
 	}
 
 	void increase () const override {
-		fake.mThis->mAtomic.self.fetch_add (1 ,std::memory_order::memory_order_relaxed) ;
+		fake.mThis->mAtomic->fetch_add (1 ,std::memory_order::memory_order_relaxed) ;
 	}
 
 	void decrease () const override {
-		fake.mThis->mAtomic.self.fetch_sub (1 ,std::memory_order::memory_order_relaxed) ;
+		fake.mThis->mAtomic->fetch_sub (1 ,std::memory_order::memory_order_relaxed) ;
 	}
 } ;
 
 exports VFat<AtomicHolder> AtomicHolder::create (VREF<AtomicLayout> that) {
-	return VFat<AtomicHolder> (AtomicImplement () ,that) ;
+	return VFat<AtomicHolder> (AtomicImplHolder () ,that) ;
 }
 
 exports CFat<AtomicHolder> AtomicHolder::create (CREF<AtomicLayout> that) {
-	return CFat<AtomicHolder> (AtomicImplement () ,that) ;
+	return CFat<AtomicHolder> (AtomicImplHolder () ,that) ;
 }
 
 struct MutexType {
 	enum {
-		Empty ,
+		Make ,
 		Recursive ,
 		Shared ,
 		Unique ,
@@ -251,8 +250,16 @@ struct MutexPureLayout {
 	Pin<std::condition_variable> mUnique ;
 } ;
 
-class MutexImplement implement Fat<MutexHolder ,MutexLayout> {
+class MutexImplHolder implement Fat<MutexHolder ,MutexLayout> {
 public:
+	void initialize () override {
+		fake.mThis = Ref<MutexPureLayout>::make () ;
+		fake.mThis->mMutexType = MutexType::Make ;
+		fake.mThis->mMutex = NULL ;
+		fake.mThis->mRecursive = NULL ;
+		fake.mThis->mUnique = NULL ;
+	}
+
 	Ref<MutexPureLayout> borrow () const override {
 		assert (fake.mThis != NULL) ;
 		return Ref<MutexPureLayout>::reference (Pointer::make (address (fake.mThis.self))) ;
@@ -263,12 +270,12 @@ public:
 			return ;
 		auto act = TRUE ;
 		if ifdo (act) {
-			if (fake.mThis->mMutexType == MutexType::Recursive)
+			if (fake.mThis->mMutexType != MutexType::Recursive)
 				discard ;
-			fake.mThis->mRecursive.self.lock () ;
+			fake.mThis->mRecursive->lock () ;
 		}
 		if ifdo (act) {
-			fake.mThis->mMutex.self.lock () ;
+			fake.mThis->mMutex->lock () ;
 		}
 	}
 
@@ -277,49 +284,53 @@ public:
 			return ;
 		auto act = TRUE ;
 		if ifdo (act) {
-			if (fake.mThis->mMutexType == MutexType::Recursive)
+			if (fake.mThis->mMutexType != MutexType::Recursive)
 				discard ;
-			fake.mThis->mRecursive.self.unlock () ;
+			fake.mThis->mRecursive->unlock () ;
 		}
 		if ifdo (act) {
-			fake.mThis->mMutex.self.unlock () ;
+			fake.mThis->mMutex->unlock () ;
 		}
 	}
 } ;
 
 exports VFat<MutexHolder> MutexHolder::create (VREF<MutexLayout> that) {
-	return VFat<MutexHolder> (MutexImplement () ,that) ;
+	return VFat<MutexHolder> (MutexImplHolder () ,that) ;
 }
 
 exports CFat<MutexHolder> MutexHolder::create (CREF<MutexLayout> that) {
-	return CFat<MutexHolder> (MutexImplement () ,that) ;
+	return CFat<MutexHolder> (MutexImplHolder () ,that) ;
 }
 
-class MakeMutexImplement implement Fat<MakeMutexHolder ,MutexLayout> {
+class MakeMutexImplHolder implement Fat<MakeMutexHolder ,MutexLayout> {
 public:
+	void MakeMutex_initialize () override {
+		MutexHolder::create (fake)->initialize () ;
+	}
+
 	void RecursiveMutex_initialize () override {
-		fake.mThis = Ref<MutexPureLayout>::make () ;
+		MutexHolder::create (fake)->initialize () ;
 		fake.mThis->mMutexType = MutexType::Recursive ;
 	}
 
 	void SharedMutex_initialize () override {
-		fake.mThis = Ref<MutexPureLayout>::make () ;
+		MutexHolder::create (fake)->initialize () ;
 		fake.mThis->mMutexType = MutexType::Shared ;
-		fake.mThis->mShared = FULL ;
+		fake.mThis->mShared = NULL ;
 	}
 
 	void UniqueMutex_initialize () override {
-		fake.mThis = Ref<MutexPureLayout>::make () ;
+		MutexHolder::create (fake)->initialize () ;
 		fake.mThis->mMutexType = MutexType::Unique ;
 	}
 } ;
 
 exports VFat<MakeMutexHolder> MakeMutexHolder::create (VREF<MutexLayout> that) {
-	return VFat<MakeMutexHolder> (MakeMutexImplement () ,that) ;
+	return VFat<MakeMutexHolder> (MakeMutexImplHolder () ,that) ;
 }
 
 exports CFat<MakeMutexHolder> MakeMutexHolder::create (CREF<MutexLayout> that) {
-	return CFat<MakeMutexHolder> (MakeMutexImplement () ,that) ;
+	return CFat<MakeMutexHolder> (MakeMutexImplHolder () ,that) ;
 }
 
 class SharedAtomicMutex implement Proxy {
@@ -345,11 +356,12 @@ struct SharedLockPureLayout {
 	std::unique_lock<SharedAtomicMutex> mLock ;
 } ;
 
-class SharedLockImplement implement Fat<SharedLockHolder ,SharedLockLayout> {
+class SharedLockImplHolder implement Fat<SharedLockHolder ,SharedLockLayout> {
 public:
 	void initialize (CREF<Mutex> mutex) override {
 		fake.mThis = Ref<SharedLockPureLayout>::make () ;
-		fake.mThis->mMutex = mutex.borrow () ;
+		fake.mThis->mMutex = mutex.borrow () ;	
+		assert (fake.mThis->mMutex->mMutexType == MutexType::Shared) ;
 		shared_enter () ;
 		fake.mThis->mLock = std::unique_lock<SharedAtomicMutex> (SharedAtomicMutex::from (fake.mThis->mMutex->mShared)) ;
 	}
@@ -374,7 +386,7 @@ public:
 
 	void enter () const override {
 		fake.mThis->mMutex->mShared.decrease () ;
-		fake.mThis->mMutex->mMutex.self.lock () ;
+		fake.mThis->mMutex->mMutex->lock () ;
 		if ifdo (TRUE) {
 			auto rax = ZERO ;
 			while (TRUE) {
@@ -390,16 +402,16 @@ public:
 	void leave () const override {
 		std::atomic_thread_fence (std::memory_order::memory_order_release) ;
 		fake.mThis->mMutex->mShared.replace (NONE ,IDEN) ;
-		fake.mThis->mMutex->mMutex.self.unlock () ;
+		fake.mThis->mMutex->mMutex->unlock () ;
 	}
 } ;
 
 exports VFat<SharedLockHolder> SharedLockHolder::create (VREF<SharedLockLayout> that) {
-	return VFat<SharedLockHolder> (SharedLockImplement () ,that) ;
+	return VFat<SharedLockHolder> (SharedLockImplHolder () ,that) ;
 }
 
 exports CFat<SharedLockHolder> SharedLockHolder::create (CREF<SharedLockLayout> that) {
-	return CFat<SharedLockHolder> (SharedLockImplement () ,that) ;
+	return CFat<SharedLockHolder> (SharedLockImplHolder () ,that) ;
 }
 
 struct UniqueLockPureLayout {
@@ -407,25 +419,26 @@ struct UniqueLockPureLayout {
 	std::unique_lock<std::mutex> mLock ;
 } ;
 
-class UniqueLockImplement implement Fat<UniqueLockHolder ,UniqueLockLayout> {
+class UniqueLockImplHolder implement Fat<UniqueLockHolder ,UniqueLockLayout> {
 public:
 	void initialize (CREF<Mutex> mutex) override {
 		fake.mThis = Ref<UniqueLockPureLayout>::make () ;
 		fake.mThis->mMutex = mutex.borrow () ;
+		assert (fake.mThis->mMutex->mMutexType == MutexType::Unique) ;
 		fake.mThis->mLock = std::unique_lock<std::mutex> (fake.mThis->mMutex->mMutex.self) ;
 	}
 
 	void wait () override {
-		fake.mThis->mMutex->mUnique.self.wait (fake.mThis->mLock) ;
+		fake.mThis->mMutex->mUnique->wait (fake.mThis->mLock) ;
 	}
 
 	void wait (CREF<Time> time) override {
 		auto &&tmp = keep[TYPE<TimeLayout>::expr] (time) ;
-		fake.mThis->mMutex->mUnique.self.wait_for (fake.mThis->mLock ,tmp.mThis->mTime) ;
+		fake.mThis->mMutex->mUnique->wait_for (fake.mThis->mLock ,tmp.mThis->mTime) ;
 	}
 
 	void notify () override {
-		fake.mThis->mMutex->mUnique.self.notify_all () ;
+		fake.mThis->mMutex->mUnique->notify_all () ;
 	}
 
 	void yield () override {
@@ -436,29 +449,29 @@ public:
 } ;
 
 exports VFat<UniqueLockHolder> UniqueLockHolder::create (VREF<UniqueLockLayout> that) {
-	return VFat<UniqueLockHolder> (UniqueLockImplement () ,that) ;
+	return VFat<UniqueLockHolder> (UniqueLockImplHolder () ,that) ;
 }
 
 exports CFat<UniqueLockHolder> UniqueLockHolder::create (CREF<UniqueLockLayout> that) {
-	return CFat<UniqueLockHolder> (UniqueLockImplement () ,that) ;
+	return CFat<UniqueLockHolder> (UniqueLockImplHolder () ,that) ;
 }
 
 struct ThreadPureLayout {
-	Box<VFat<ThreadFriend>> mBinder ;
+	Ref<ThreadFriend> mExecutor ;
 	FLAG mUid ;
 	INDEX mSlot ;
-	Atomic mExitFlag ;
+	Atomic mEnable ;
 	std::thread mThread ;
 } ;
 
-class ThreadImplement implement Fat<ThreadHolder ,ThreadLayout> {
+class ThreadImplHolder implement Fat<ThreadHolder ,ThreadLayout> {
 public:
-	void initialize (RREF<VFat<ThreadFriend>> binder ,CREF<INDEX> slot) override {
+	void initialize (RREF<Ref<ThreadFriend>> executor ,CREF<INDEX> slot) override {
 		fake.mThis = Ref<ThreadPureLayout>::make () ;
-		fake.mThis->mBinder = Box<VFat<ThreadFriend>>::make (move (binder)) ;
-		fake.mThis->mSlot = slot ;
+		fake.mThis->mExecutor = move (executor) ;
 		fake.mThis->mUid = ZERO ;
-		fake.mThis->mExitFlag = FULL ;
+		fake.mThis->mSlot = slot ;
+		fake.mThis->mEnable = NULL ;
 	}
 
 	FLAG thread_uid () const override {
@@ -466,63 +479,60 @@ public:
 	}
 
 	void start () override {
-		const auto r1x = Capture<VREF<ThreadPureLayout>> (fake.mThis.self) ;
+		const auto r1x = Wrapper<VREF<ThreadPureLayout>> (address (fake.mThis.self)) ;
 		fake.mThis->mThread = std::thread ([=] () {
 			r1x ([&] (VREF<ThreadPureLayout> me) {
 				me.mUid = RuntimeProc::thread_uid () ;
 				try {
 					while (TRUE) {
-						if (me.mExitFlag.fetch ())
+						if (me.mEnable.fetch ())
 							break ;
-						me.mBinder.self->friend_execute (me.mSlot) ;
+						me.mExecutor->friend_execute (me.mSlot) ;
 					}
 				} catch (CREF<Exception> e) {
 					noop (e) ;
+					me.mEnable.store (TRUE) ;
 				}
 			}) ;
 		}) ;
 	}
 
 	void stop () override {
-		fake.mThis->mExitFlag.store (TRUE) ;
+		fake.mThis->mEnable.store (TRUE) ;
 		fake.mThis->mThread.join () ;
 		fake.mThis->mThread = std::thread () ;
 	}
 } ;
 
 exports VFat<ThreadHolder> ThreadHolder::create (VREF<ThreadLayout> that) {
-	return VFat<ThreadHolder> (ThreadImplement () ,that) ;
+	return VFat<ThreadHolder> (ThreadImplHolder () ,that) ;
 }
 
 exports CFat<ThreadHolder> ThreadHolder::create (CREF<ThreadLayout> that) {
-	return CFat<ThreadHolder> (ThreadImplement () ,that) ;
+	return CFat<ThreadHolder> (ThreadImplHolder () ,that) ;
 }
 
-#ifndef __CSC_API_WITH_SYS__
-class ProcessImplement implement Fat<ProcessHolder ,ProcessLayout> {} ;
+template class External<ProcessHolder ,ProcessLayout> ;
 
 exports VFat<ProcessHolder> ProcessHolder::create (VREF<ProcessLayout> that) {
-	return VFat<ProcessHolder> (ProcessImplement () ,that) ;
+	return VFat<ProcessHolder> (External<ProcessHolder ,ProcessLayout>::create () ,that) ;
 }
 
 exports CFat<ProcessHolder> ProcessHolder::create (CREF<ProcessLayout> that) {
-	return CFat<ProcessHolder> (ProcessImplement () ,that) ;
+	return CFat<ProcessHolder> (External<ProcessHolder ,ProcessLayout>::create () ,that) ;
 }
-#endif
 
-#ifndef __CSC_API_WITH_SYS__
-class ModuleImplement implement Fat<ModuleHolder ,ModuleLayout> {} ;
+template class External<ModuleHolder ,ModuleLayout> ;
 
 exports VFat<ModuleHolder> ModuleHolder::create (VREF<ModuleLayout> that) {
-	return VFat<ModuleHolder> (ModuleImplement () ,that) ;
+	return VFat<ModuleHolder> (External<ModuleHolder ,ModuleLayout>::create () ,that) ;
 }
 
 exports CFat<ModuleHolder> ModuleHolder::create (CREF<ModuleLayout> that) {
-	return CFat<ModuleHolder> (ModuleImplement () ,that) ;
+	return CFat<ModuleHolder> (External<ModuleHolder ,ModuleLayout>::create () ,that) ;
 }
-#endif
 
-class SystemImplement implement Fat<SystemHolder ,SystemLayout> {
+class SystemImplHolder implement Fat<SystemHolder ,SystemLayout> {
 public:
 	void initialize () override {
 		noop () ;
@@ -530,21 +540,21 @@ public:
 
 	void set_locale (CREF<String<STR>> name) const override {
 		const auto r1x = StringProc::stra_from_strs (name) ;
-		std::setlocale (LC_ALL ,r1x.raw ()) ;
+		std::setlocale (LC_ALL ,r1x) ;
 	}
 
 	FLAG execute (CREF<String<STR>> command) const override {
 		const auto r1x = StringProc::stra_from_strs (command) ;
-		return FLAG (std::system (r1x.raw ())) ;
+		return FLAG (std::system (r1x)) ;
 	}
 } ;
 
 exports VFat<SystemHolder> SystemHolder::create (VREF<SystemLayout> that) {
-	return VFat<SystemHolder> (SystemImplement () ,that) ;
+	return VFat<SystemHolder> (SystemImplHolder () ,that) ;
 }
 
 exports CFat<SystemHolder> SystemHolder::create (CREF<SystemLayout> that) {
-	return CFat<SystemHolder> (SystemImplement () ,that) ;
+	return CFat<SystemHolder> (SystemImplHolder () ,that) ;
 }
 
 struct RandomPureLayout {
@@ -552,11 +562,12 @@ struct RandomPureLayout {
 	Pin<std::mt19937_64> mRandom ;
 } ;
 
-class RandomImplement implement Fat<RandomHolder ,RandomLayout> {
+class RandomImplHolder implement Fat<RandomHolder ,RandomLayout> {
 public:
 	void initialize (CREF<FLAG> seed) override {
 		fake.mThis = Ref<RandomPureLayout>::make () ;
 		fake.mThis->mSeed = seed ;
+		fake.mThis->mRandom = NULL ;
 		fake.mThis->mRandom.self = std::mt19937_64 (seed) ;
 	}
 
@@ -631,45 +642,60 @@ public:
 } ;
 
 exports VFat<RandomHolder> RandomHolder::create (VREF<RandomLayout> that) {
-	return VFat<RandomHolder> (RandomImplement () ,that) ;
+	return VFat<RandomHolder> (RandomImplHolder () ,that) ;
 }
 
 exports CFat<RandomHolder> RandomHolder::create (CREF<RandomLayout> that) {
-	return CFat<RandomHolder> (RandomImplement () ,that) ;
+	return CFat<RandomHolder> (RandomImplHolder () ,that) ;
 }
 
-#ifndef __CSC_API_WITH_SYS__
-class SingletonProcImplement implement Fat<SingletonProcHolder ,SingletonProcLayout> {} ;
+template class External<SingletonProcHolder ,SingletonProcLayout> ;
 
 exports VFat<SingletonProcHolder> SingletonProcHolder::create (VREF<SingletonProcLayout> that) {
-	return VFat<SingletonProcHolder> (SingletonProcImplement () ,that) ;
+	return VFat<SingletonProcHolder> (External<SingletonProcHolder ,SingletonProcLayout>::create () ,that) ;
 }
 
 exports CFat<SingletonProcHolder> SingletonProcHolder::create (CREF<SingletonProcLayout> that) {
-	return CFat<SingletonProcHolder> (SingletonProcImplement () ,that) ;
+	return CFat<SingletonProcHolder> (External<SingletonProcHolder ,SingletonProcLayout>::create () ,that) ;
 }
+
+#ifdef __CSC_SYSTEM_WINDOWS__
+struct FUNCTION_dump_memory_leaks {
+	forceinline void operator() () const {
+		_CrtSetDbgFlag (_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF) ;
+	}
+} ;
 #endif
+
+#ifdef __CSC_SYSTEM_LINUX__
+struct FUNCTION_dump_memory_leaks {
+	forceinline void operator() () const {
+		noop () ;
+	}
+} ;
+#endif
+
+static constexpr auto dump_memory_leaks = FUNCTION_dump_memory_leaks () ;
 
 struct GlobalPureLayout {
 	Set<Slice> mNameSet ;
 	List<AutoRef<Pointer>> mGlobalList ;
 } ;
 
-class GlobalImplement implement Fat<GlobalHolder ,GlobalLayout> {
+class GlobalImplHolder implement Fat<GlobalHolder ,GlobalLayout> {
 public:
 	void initialize () override {
-		fake.mMutex = RecursiveMutex::make () ;
+		fake.mMutex = RecursiveMutex () ;
 		fake.mThis = SharedRef<GlobalPureLayout>::make () ;
 	}
 
 	void startup () const override {
-#ifdef __CSC_SYSTEM_WINDOWS__
-		_CrtSetDbgFlag (_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF) ;
-#endif
+		Scope<CREF<Mutex>> anonymous (fake.mMutex) ;
+		dump_memory_leaks () ;
 	}
 
 	RefLayout borrow (CREF<Slice> name ,RREF<UnknownHolder> value) const override {
-		RefLayout ret ;
+		Scope<CREF<Mutex>> anonymous (fake.mMutex) ;
 		INDEX ix = fake.mThis->mNameSet.map (name) ;
 		if ifdo (TRUE) {
 			if (ix != NONE)
@@ -678,93 +704,71 @@ public:
 			fake.mThis->mNameSet.add (name ,ix) ;
 			fake.mThis->mGlobalList[ix] = AutoRef<Pointer> (move (value)) ;
 		}
-		ret.mPointer = address (fake.mThis->mGlobalList[ix].self) ;
-		return move (ret) ;
+		return Ref<Pointer>::reference (fake.mThis->mGlobalList[ix]) ;
 	}
 
 	void shutdown () const override {
+		Scope<CREF<Mutex>> anonymous (fake.mMutex) ;
 		fake.mThis->mNameSet.clear () ;
 		fake.mThis->mGlobalList.clear () ;
 	}
 } ;
 
 exports VFat<GlobalHolder> GlobalHolder::create (VREF<GlobalLayout> that) {
-	return VFat<GlobalHolder> (GlobalImplement () ,that) ;
+	return VFat<GlobalHolder> (GlobalImplHolder () ,that) ;
 }
 
 exports CFat<GlobalHolder> GlobalHolder::create (CREF<GlobalLayout> that) {
-	return CFat<GlobalHolder> (GlobalImplement () ,that) ;
+	return CFat<GlobalHolder> (GlobalImplHolder () ,that) ;
 }
 
-#ifndef __CSC_API_WITH_SYS__
-class PathImplement implement Fat<PathHolder ,PathLayout> {} ;
+template class External<PathHolder ,PathLayout> ;
 
 exports VFat<PathHolder> PathHolder::create (VREF<PathLayout> that) {
-	return VFat<PathHolder> (PathImplement () ,that) ;
+	return VFat<PathHolder> (External<PathHolder ,PathLayout>::create () ,that) ;
 }
 
 exports CFat<PathHolder> PathHolder::create (CREF<PathLayout> that) {
-	return CFat<PathHolder> (PathImplement () ,that) ;
+	return CFat<PathHolder> (External<PathHolder ,PathLayout>::create () ,that) ;
 }
-#endif
 
-#ifndef __CSC_API_WITH_SYS__
-class FileProcImplement implement Fat<FileProcHolder ,FileProcLayout> {} ;
+template class External<FileProcHolder ,FileProcLayout> ;
 
 exports VFat<FileProcHolder> FileProcHolder::create (VREF<FileProcLayout> that) {
-	return VFat<FileProcHolder> (FileProcImplement () ,that) ;
+	return VFat<FileProcHolder> (External<FileProcHolder ,FileProcLayout>::create () ,that) ;
 }
 
 exports CFat<FileProcHolder> FileProcHolder::create (CREF<FileProcLayout> that) {
-	return CFat<FileProcHolder> (FileProcImplement () ,that) ;
+	return CFat<FileProcHolder> (External<FileProcHolder ,FileProcLayout>::create () ,that) ;
 }
-#endif
 
-#ifndef __CSC_API_WITH_SYS__
-class StreamFileImplement implement Fat<StreamFileHolder ,StreamFileLayout> {} ;
+template class External<StreamFileHolder ,StreamFileLayout> ;
 
 exports VFat<StreamFileHolder> StreamFileHolder::create (VREF<StreamFileLayout> that) {
-	return VFat<StreamFileHolder> (StreamFileImplement () ,that) ;
+	return VFat<StreamFileHolder> (External<StreamFileHolder ,StreamFileLayout>::create () ,that) ;
 }
 
 exports CFat<StreamFileHolder> StreamFileHolder::create (CREF<StreamFileLayout> that) {
-	return CFat<StreamFileHolder> (StreamFileImplement () ,that) ;
+	return CFat<StreamFileHolder> (External<StreamFileHolder ,StreamFileLayout>::create () ,that) ;
 }
-#endif
 
-#ifndef __CSC_API_WITH_SYS__
-class BufferFileImplement implement Fat<BufferFileHolder ,BufferFileLayout> {} ;
+template class External<BufferFileHolder ,BufferFileLayout> ;
 
 exports VFat<BufferFileHolder> BufferFileHolder::create (VREF<BufferFileLayout> that) {
-	return VFat<BufferFileHolder> (BufferFileImplement () ,that) ;
+	return VFat<BufferFileHolder> (External<BufferFileHolder ,BufferFileLayout>::create () ,that) ;
 }
 
 exports CFat<BufferFileHolder> BufferFileHolder::create (CREF<BufferFileLayout> that) {
-	return CFat<BufferFileHolder> (BufferFileImplement () ,that) ;
+	return CFat<BufferFileHolder> (External<BufferFileHolder ,BufferFileLayout>::create () ,that) ;
 }
-#endif
 
-#ifndef __CSC_API_WITH_SYS__
-class ConsoleImplement implement Fat<ConsoleHolder ,ConsoleLayout> {} ;
+template class External<ConsoleHolder ,ConsoleLayout> ;
 
 exports VFat<ConsoleHolder> ConsoleHolder::create (VREF<ConsoleLayout> that) {
-	return VFat<ConsoleHolder> (ConsoleImplement () ,that) ;
+	return VFat<ConsoleHolder> (External<ConsoleHolder ,ConsoleLayout>::create () ,that) ;
 }
 
 exports CFat<ConsoleHolder> ConsoleHolder::create (CREF<ConsoleLayout> that) {
-	return CFat<ConsoleHolder> (ConsoleImplement () ,that) ;
+	return CFat<ConsoleHolder> (External<ConsoleHolder ,ConsoleLayout>::create () ,that) ;
 }
-#endif
-
-#ifndef __CSC_API_WITH_SYS__
-class StackTraceImplement implement Fat<StackTraceHolder ,StackTraceLayout> {} ;
-
-exports VFat<StackTraceHolder> StackTraceHolder::create (VREF<StackTraceLayout> that) {
-	return VFat<StackTraceHolder> (StackTraceImplement () ,that) ;
-}
-
-exports CFat<StackTraceHolder> StackTraceHolder::create (CREF<StackTraceLayout> that) {
-	return CFat<StackTraceHolder> (StackTraceImplement () ,that) ;
-}
-#endif
 } ;

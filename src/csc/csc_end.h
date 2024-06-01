@@ -3,6 +3,7 @@
 #undef exports
 #undef imports
 #undef forceinline
+#undef declspec
 #undef leftvalue
 #undef rightvalue
 #undef thiz
@@ -12,13 +13,11 @@
 #undef trait
 #undef implement
 #undef require
-#undef as
 #undef anonymous
 #undef slice
 #undef assert
 #undef assume
 #undef barrier
-#undef ifnot
 #undef ifdo
 #undef discard
 #undef typeof
@@ -42,10 +41,12 @@
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wall"
 #pragma GCC diagnostic ignored "-Wshadow"
+#pragma GCC diagnostic ignored "-Wdeprecated"
 #endif
 
 #ifdef __CSC_COMPILER_CLANG__
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wall"
 #pragma clang diagnostic ignored "-Wshadow"
+#pragma clang diagnostic ignored "-Wdeprecated"
 #endif

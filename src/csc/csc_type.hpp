@@ -17,17 +17,17 @@ using VAL64 = csc_int64_t ;
 
 static constexpr auto VAL32_MAX = VAL32 (2147483647) ;
 static constexpr auto VAL32_MIN = -VAL32_MAX ;
-static constexpr auto VAL32_ABS = VAL32_MIN - 1 ;
+static constexpr auto VAL32_LOW = VAL32_MIN - 1 ;
 static constexpr auto VAL64_MAX = VAL64 (9223372036854775807) ;
 static constexpr auto VAL64_MIN = -VAL64_MAX ;
-static constexpr auto VAL64_ABS = VAL64_MIN - 1 ;
+static constexpr auto VAL64_LOW = VAL64_MIN - 1 ;
 
 #ifdef __CSC_CONFIG_VAL32__
 using VAL = VAL32 ;
 
 static constexpr auto VAL_MAX = VAL32_MAX ;
 static constexpr auto VAL_MIN = VAL32_MIN ;
-static constexpr auto VAL_ABS = VAL32_ABS ;
+static constexpr auto VAL_LOW = VAL32_LOW ;
 #endif
 
 #ifdef __CSC_CONFIG_VAL64__
@@ -35,7 +35,7 @@ using VAL = VAL64 ;
 
 static constexpr auto VAL_MAX = VAL64_MAX ;
 static constexpr auto VAL_MIN = VAL64_MIN ;
-static constexpr auto VAL_ABS = VAL64_ABS ;
+static constexpr auto VAL_LOW = VAL64_LOW ;
 #endif
 
 static constexpr auto ZERO = VAL (+0) ;
@@ -213,7 +213,6 @@ using STR = STRW ;
 #endif
 
 static constexpr auto NULL = nullptr ;
-static constexpr auto FULL = nullptr ;
 
 template <class...>
 trait SIZE_OF_HELP ;
@@ -337,7 +336,7 @@ trait ENUM_NOT_HELP ;
 
 template <class A>
 trait ENUM_NOT_HELP<A ,ALWAYS> {
-	using RET = ENUM<(ifnot (A::expr))> ;
+	using RET = ENUM<(!(A::expr))> ;
 } ;
 
 template <class A>
@@ -673,8 +672,8 @@ struct Interface {
 	virtual ~Interface () = default ;
 	implicit Interface (CREF<Interface> that) = delete ;
 	forceinline VREF<Interface> operator= (CREF<Interface> that) = delete ;
-	implicit Interface (RREF<Interface> that) = default ;
-	forceinline VREF<Interface> operator= (RREF<Interface> that) = default ;
+	implicit Interface (RREF<Interface> that) = delete ;
+	forceinline VREF<Interface> operator= (RREF<Interface> that) = delete ;
 } ;
 
 struct Unknown implement Interface {
@@ -817,10 +816,10 @@ trait IS_BASIC_HELP<A ,ALWAYS> {
 template <class A>
 using IS_BASIC = typename IS_BASIC_HELP<A ,ALWAYS>::RET ;
 
+using ORDINARY = ENUM_FALSE ;
 using VARIABLE = ENUM<(-1)> ;
 using CONSTANT = ENUM<(-2)> ;
 using REGISTER = ENUM<(-3)> ;
-using ORDINARY = ENUM<(-4)> ;
 
 template <class...>
 trait REFLECT_REF_HELP ;
@@ -884,27 +883,37 @@ trait REFLECT_POINTER_HELP<A> {
 
 template <class A>
 trait REFLECT_POINTER_HELP<DEF<A *>> {
-	using BASE = VREF<A> ;
 	using RET = ENUM_TRUE ;
 } ;
 
 template <class A>
 trait REFLECT_POINTER_HELP<DEF<const A *>> {
-	using BASE = CREF<A> ;
 	using RET = ENUM_TRUE ;
 } ;
 
 template <class A>
 using IS_POINTER = typename REFLECT_POINTER_HELP<REMOVE_REF<A>>::RET ;
 
+template <class...>
+trait PTR_HELP ;
+
+template <class A ,class B>
+trait PTR_HELP<A ,B ,REQUIRE<IS_SAME<B ,ORDINARY>>> {
+	using RET = DEF<A *> ;
+} ;
+
+template <class A ,class B>
+trait PTR_HELP<A ,B ,REQUIRE<IS_SAME<B ,VARIABLE>>> {
+	using RET = DEF<A *> ;
+} ;
+
+template <class A ,class B>
+trait PTR_HELP<A , B,REQUIRE<IS_SAME<B ,CONSTANT>>> {
+	using RET = DEF<const A *> ;
+} ;
+
 template <class A>
-using POINTER_BASE = typename REFLECT_POINTER_HELP<REMOVE_REF<A>>::BASE ;
-
-template <class A ,class = REQUIRE<IS_SAME<A ,REMOVE_REF<A>>>>
-using VPTR = DEF<const DEF<A *>> ;
-
-template <class A ,class = REQUIRE<IS_SAME<A ,REMOVE_REF<A>>>>
-using CPTR = DEF<const DEF<const A *>> ;
+using PTR = typename PTR_HELP<REMOVE_REF<A> ,REFLECT_REF<A> ,ALWAYS>::RET ;
 
 template <class...>
 trait REFLECT_ARRAY_HELP ;
@@ -987,28 +996,30 @@ template <class A>
 using FUNCTION_PARAMS = typename REFLECT_FUNCTION_HELP<DEF<typeof (&A::operator())>>::PARAMS ;
 
 template <class...>
-trait IS_UINT_HELP ;
+trait IS_UNDER_HELP ;
 
 template <class A>
-trait IS_UINT_HELP<A ,REQUIRE<IS_BASIC<A>>> {
+trait IS_UNDER_HELP<A ,REQUIRE<IS_BASIC<A>>> {
 	using RET = ENUM_FALSE ;
 } ;
 
 template <class A>
-trait IS_UINT_HELP<A ,REQUIRE<ENUM_NOT<IS_BASIC<A>>>> {
-	using R1X = MACRO_IS_UINT<A> ;
-	using R2X = IS_POINTER<A> ;
+trait IS_UNDER_HELP<A ,REQUIRE<ENUM_NOT<IS_BASIC<A>>>> {
+	using R1X = MACRO_IS_UNDER1<A> ;
+	using R2X = MACRO_IS_UNDER2<A> ;
 	using R3X = IS_SAME<A ,csc_uint8_t> ;
 	using R4X = IS_SAME<A ,csc_uint16_t> ;
 	using R5X = IS_SAME<A ,csc_uint32_t> ;
 	using R6X = IS_SAME<A ,csc_uint64_t> ;
-	using R7X = IS_SAME<A ,csc_enum_t> ;
+	using R7X = IS_SAME<A ,csc_diff_t> ;
+	using R8X = IS_SAME<A ,csc_size_t> ;
+	using R9X = IS_SAME<A ,csc_enum_t> ;
 
-	using RET = ENUM_ANY<R1X ,R2X ,R3X ,R4X ,R5X ,R6X ,R7X> ;
+	using RET = ENUM_ANY<R1X ,R2X ,R3X ,R4X ,R5X ,R6X ,R7X ,R8X ,R9X> ;
 } ;
 
 template <class A>
-using IS_UINT = typename IS_UINT_HELP<A ,ALWAYS>::RET ;
+using IS_UNDER = typename IS_UNDER_HELP<A ,ALWAYS>::RET ;
 
 template <class...>
 trait IS_CLASS_HELP ;
@@ -1019,7 +1030,7 @@ trait IS_CLASS_HELP<A ,ALWAYS> {
 	using R3X = ENUM_NOT<IS_ENUM<A>> ;
 	using R4X = ENUM_NOT<IS_TYPE<A>> ;
 	using R5X = ENUM_NOT<IS_BASIC<A>> ;
-	using R6X = ENUM_NOT<IS_UINT<A>> ;
+	using R6X = ENUM_NOT<IS_UNDER<A>> ;
 
 	using RET = ENUM_ALL<R1X ,R3X ,R4X ,R5X ,R6X> ;
 } ;
@@ -1034,8 +1045,10 @@ template <class A>
 trait IS_DEFAULT_HELP<A ,ALWAYS> {
 	using R1X = MACRO_IS_CONSTRUCTIBLE<A> ;
 	using R2X = MACRO_IS_DESTRUCTIBLE<A> ;
+	using R3X = MACRO_IS_MOVE_CONSTRUCTIBLE<A> ;
+	using R4X = MACRO_IS_MOVE_ASSIGNABLE<A> ;
 
-	using RET = ENUM_ALL<R1X ,R2X> ;
+	using RET = ENUM_ALL<R1X ,R2X ,R3X ,R4X> ;
 } ;
 
 template <class A>
@@ -1095,10 +1108,9 @@ trait IS_OBJECT_HELP ;
 template <class A>
 trait IS_OBJECT_HELP<A ,ALWAYS> {
 	using R1X = IS_BASIC<A> ;
-	using R2X = IS_UINT<A> ;
-	using R3X = IS_CLASS<A> ;
+	using R2X = IS_CLASS<A> ;
 
-	using RET = ENUM_ANY<R1X ,R2X ,R3X> ;
+	using RET = ENUM_ANY<R1X ,R2X> ;
 } ;
 
 template <class A>

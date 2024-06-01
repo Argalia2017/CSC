@@ -98,7 +98,7 @@ public:
 	}
 
 	imports BOOL is_word (CREF<STRU32> str) {
-		return StreamProcHolder::create (instance ())->is_control (str) ;
+		return StreamProcHolder::create (instance ())->is_word (str) ;
 	}
 
 	imports BOOL is_control (CREF<STRU32> str) {
@@ -119,17 +119,137 @@ static constexpr auto BOM = TYPE<PlaceHolder<RANK2>>::expr ;
 static constexpr auto GAP = TYPE<PlaceHolder<RANK3>>::expr ;
 static constexpr auto EOS = TYPE<PlaceHolder<RANK4>>::expr ;
 
-class ByteReader ;
+struct StreamReaderFriend ;
 
-struct ByteReaderFriend implement Interface {
-	virtual void friend_read (VREF<ByteReader> reader) = 0 ;
+struct StreamReader implement Interface {
+	virtual void read (VREF<BOOL> item) = 0 ;
+	virtual void read (VREF<VAL32> item) = 0 ;
+	virtual void read (VREF<VAL64> item) = 0 ;
+	virtual void read (VREF<FLT32> item) = 0 ;
+	virtual void read (VREF<FLT64> item) = 0 ;
+	virtual void read (VREF<BYTE> item) = 0 ;
+	virtual void read (VREF<WORD> item) = 0 ;
+	virtual void read (VREF<CHAR> item) = 0 ;
+	virtual void read (VREF<QUAD> item) = 0 ;
+	virtual void read (VREF<STRU32> item) = 0 ;
+	virtual void read (CREF<Slice> item) = 0 ;
+	virtual void read (VREF<String<STRA>> item) = 0 ;
+	virtual void read (VREF<String<STRW>> item) = 0 ;
+	virtual void read (VREF<String<STRU8>> item) = 0 ;
+	virtual void read (VREF<String<STRU16>> item) = 0 ;
+	virtual void read (VREF<String<STRU32>> item) = 0 ;
+	virtual void read (CREF<typeof (CLS)> item) = 0 ;
+	virtual void read (CREF<typeof (BOM)> item) = 0 ;
+	virtual void read (CREF<typeof (GAP)> item) = 0 ;
+	virtual void read (CREF<typeof (EOS)> item) = 0 ;
+	virtual void read (VREF<StreamReaderFriend> item) = 0 ;
 } ;
 
 template <class A>
-class ByteReaderFriendBinder implement Fat<ByteReaderFriend ,A> {
+class StreamReaderBinder implement Fat<StreamReader ,A> {
 public:
-	void friend_read (VREF<ByteReader> reader) override {
-		return fake.friend_read (reader) ;
+	imports VFat<StreamReader> create (VREF<A> that) {
+		return VFat<StreamReader> (StreamReaderBinder () ,that) ;
+	}
+
+	void read (VREF<BOOL> item) override {
+		return thiz.fake.read (item) ;
+	}
+
+	void read (VREF<VAL32> item) override {
+		return thiz.fake.read (item) ;
+	}
+
+	void read (VREF<VAL64> item) override {
+		return thiz.fake.read (item) ;
+	}
+
+	void read (VREF<FLT32> item) override {
+		return thiz.fake.read (item) ;
+	}
+
+	void read (VREF<FLT64> item) override {
+		return thiz.fake.read (item) ;
+	}
+
+	void read (VREF<BYTE> item) override {
+		return thiz.fake.read (item) ;
+	}
+
+	void read (VREF<WORD> item) override {
+		return thiz.fake.read (item) ;
+	}
+
+	void read (VREF<CHAR> item) override {
+		return thiz.fake.read (item) ;
+	}
+
+	void read (VREF<QUAD> item) override {
+		return thiz.fake.read (item) ;
+	}
+
+	void read (VREF<STRU32> item) override {
+		return thiz.fake.read (item) ;
+	}
+
+	void read (CREF<Slice> item) override {
+		return thiz.fake.read (item) ;
+	}
+
+	void read (VREF<String<STRA>> item) override {
+		return thiz.fake.read (item) ;
+	}
+
+	void read (VREF<String<STRW>> item) override {
+		return thiz.fake.read (item) ;
+	}
+
+	void read (VREF<String<STRU8>> item) override {
+		return thiz.fake.read (item) ;
+	}
+
+	void read (VREF<String<STRU16>> item) override {
+		return thiz.fake.read (item) ;
+	}
+
+	void read (VREF<String<STRU32>> item) override {
+		return thiz.fake.read (item) ;
+	}
+
+	void read (CREF<typeof (CLS)> item) override {
+		return thiz.fake.read (item) ;
+	}
+
+	void read (CREF<typeof (BOM)> item) override {
+		return thiz.fake.read (item) ;
+	}
+
+	void read (CREF<typeof (GAP)> item) override {
+		return thiz.fake.read (item) ;
+	}
+
+	void read (CREF<typeof (EOS)> item) override {
+		return thiz.fake.read (item) ;
+	}
+
+	void read (VREF<StreamReaderFriend> item) override {
+		return thiz.fake.read (item) ;
+	}
+} ;
+
+struct StreamReaderFriend implement Interface {
+	virtual void friend_read (VREF<StreamReader> reader) = 0 ;
+} ;
+
+template <class A>
+class StreamReaderFriendBinder implement Fat<StreamReaderFriend ,A> {
+public:
+	imports VFat<StreamReaderFriend> create (VREF<A> that) {
+		return VFat<StreamReaderFriend> (StreamReaderFriendBinder () ,that) ;
+	}
+
+	void friend_read (VREF<StreamReader> reader) override {
+		reader.read (thiz.fake) ;
 	}
 } ;
 
@@ -161,6 +281,7 @@ struct ByteReaderHolder implement Interface {
 	virtual void read (VREF<WORD> item) = 0 ;
 	virtual void read (VREF<CHAR> item) = 0 ;
 	virtual void read (VREF<QUAD> item) = 0 ;
+	virtual void read (VREF<STRU32> item) = 0 ;
 	virtual void read (CREF<Slice> item) = 0 ;
 	virtual void read (VREF<String<STRA>> item) = 0 ;
 	virtual void read (VREF<String<STRW>> item) = 0 ;
@@ -168,9 +289,10 @@ struct ByteReaderHolder implement Interface {
 	virtual void read (VREF<String<STRU16>> item) = 0 ;
 	virtual void read (VREF<String<STRU32>> item) = 0 ;
 	virtual void read (CREF<typeof (CLS)> item) = 0 ;
+	virtual void read (CREF<typeof (BOM)> item) = 0 ;
 	virtual void read (CREF<typeof (GAP)> item) = 0 ;
 	virtual void read (CREF<typeof (EOS)> item) = 0 ;
-	virtual void read (CREF<VFat<ByteReaderFriend>> item) = 0 ;
+	virtual void read (VREF<StreamReaderFriend> item) = 0 ;
 } ;
 
 class ByteReader implement ByteReaderLayout {
@@ -300,6 +422,15 @@ public:
 		return thiz ;
 	}
 
+	void read (VREF<STRU32> item) {
+		return ByteReaderHolder::create (thiz)->read (item) ;
+	}
+
+	forceinline VREF<ByteReader> operator>> (VREF<STRU32> item) {
+		read (item) ;
+		return thiz ;
+	}
+
 	void read (CREF<Slice> item) {
 		return ByteReaderHolder::create (thiz)->read (item) ;
 	}
@@ -363,6 +494,15 @@ public:
 		return thiz ;
 	}
 
+	void read (CREF<typeof (BOM)> item) {
+		return ByteReaderHolder::create (thiz)->read (item) ;
+	}
+
+	forceinline VREF<ByteReader> operator>> (CREF<typeof (BOM)> item) {
+		read (item) ;
+		return thiz ;
+	}
+
 	void read (CREF<typeof (GAP)> item) {
 		return ByteReaderHolder::create (thiz)->read (item) ;
 	}
@@ -381,303 +521,20 @@ public:
 		return thiz ;
 	}
 
-	template <class ARG1>
-	void read (VREF<ARG1> item) {
-		const auto r1x = VFat<ByteReaderFriend> (ByteReaderFriendBinder<ARG1> () ,item) ;
-		return ByteReaderHolder::create (thiz)->read (r1x) ;
+	void read (VREF<StreamReaderFriend> item) {
+		return ByteReaderHolder::create (thiz)->read (item) ;
 	}
 
-	template <class ARG1>
-	forceinline VREF<ByteReader> operator>> (VREF<ARG1> item) {
+	forceinline VREF<ByteReader> operator>> (VREF<StreamReaderFriend> item) {
 		read (item) ;
 		return thiz ;
 	}
-} ;
 
-class ByteWriter ;
+	template <class ARG1 ,class = REQUIRE<ENUM_NOT<IS_OBJECT<ARG1>>>>
+	void read (VREF<ARG1> item) = delete ;
 
-struct ByteWriterFriend implement Interface {
-	virtual void friend_write (VREF<ByteWriter> reader) const = 0 ;
-} ;
-
-template <class A>
-class ByteWriterFriendBinder implement Fat<ByteWriterFriend ,A> {
-public:
-	void friend_write (VREF<ByteWriter> reader) const override {
-		return fake.friend_write (reader) ;
-	}
-} ;
-
-struct ByteWriterLayout {
-	Ref<RefBuffer<BYTE>> mStream ;
-	INDEX mRead ;
-	INDEX mWrite ;
-	INDEX mBackupRead ;
-	INDEX mBackupWrite ;
-} ;
-
-struct ByteWriterHolder implement Interface {
-	imports VFat<ByteWriterHolder> create (VREF<ByteWriterLayout> that) ;
-	imports CFat<ByteWriterHolder> create (CREF<ByteWriterLayout> that) ;
-
-	virtual void initialize (RREF<Ref<RefBuffer<BYTE>>> stream) = 0 ;
-	virtual LENGTH size () const = 0 ;
-	virtual LENGTH length () const = 0 ;
-	virtual void reset () = 0 ;
-	virtual void reset (CREF<INDEX> read_ ,CREF<INDEX> write_) = 0 ;
-	virtual void backup () = 0 ;
-	virtual void recover () = 0 ;
-	virtual void write (CREF<BOOL> item) = 0 ;
-	virtual void write (CREF<VAL32> item) = 0 ;
-	virtual void write (CREF<VAL64> item) = 0 ;
-	virtual void write (CREF<FLT32> item) = 0 ;
-	virtual void write (CREF<FLT64> item) = 0 ;
-	virtual void write (CREF<BYTE> item) = 0 ;
-	virtual void write (CREF<WORD> item) = 0 ;
-	virtual void write (CREF<CHAR> item) = 0 ;
-	virtual void write (CREF<QUAD> item) = 0 ;
-	virtual void write (CREF<Slice> item) = 0 ;
-	virtual void write (CREF<String<STRA>> item) = 0 ;
-	virtual void write (CREF<String<STRW>> item) = 0 ;
-	virtual void write (CREF<String<STRU8>> item) = 0 ;
-	virtual void write (CREF<String<STRU16>> item) = 0 ;
-	virtual void write (CREF<String<STRU32>> item) = 0 ;
-	virtual void write (CREF<typeof (CLS)> item) = 0 ;
-	virtual void write (CREF<typeof (GAP)> item) = 0 ;
-	virtual void write (CREF<typeof (EOS)> item) = 0 ;
-	virtual void write (CREF<CFat<ByteWriterFriend>> item) = 0 ;
-} ;
-
-class ByteWriter implement ByteWriterLayout {
-protected:
-	using ByteWriterLayout::mStream ;
-	using ByteWriterLayout::mRead ;
-	using ByteWriterLayout::mWrite ;
-	using ByteWriterLayout::mBackupRead ;
-	using ByteWriterLayout::mBackupWrite ;
-
-public:
-	implicit ByteWriter () = default ;
-
-	explicit ByteWriter (RREF<Ref<RefBuffer<BYTE>>> stream) {
-		ByteWriterHolder::create (thiz)->initialize (move (stream)) ;
-	}
-
-	LENGTH size () const {
-		return ByteWriterHolder::create (thiz)->size () ;
-	}
-
-	LENGTH length () const {
-		return ByteWriterHolder::create (thiz)->length () ;
-	}
-
-	void reset () {
-		return ByteWriterHolder::create (thiz)->reset () ;
-	}
-
-	void reset (CREF<INDEX> read_ ,CREF<INDEX> write_) {
-		return ByteWriterHolder::create (thiz)->reset (read_ ,write_) ;
-	}
-
-	void backup () {
-		return ByteWriterHolder::create (thiz)->backup () ;
-	}
-
-	void recover () {
-		return ByteWriterHolder::create (thiz)->recover () ;
-	}
-
-	void write (CREF<BOOL> item) {
-		return ByteWriterHolder::create (thiz)->write (item) ;
-	}
-
-	forceinline VREF<ByteWriter> operator<< (CREF<BOOL> item) {
-		write (item) ;
-		return thiz ;
-	}
-
-	void write (CREF<csc_const_pointer_t> item) = delete ;
-
-	forceinline VREF<ByteWriter> operator<< (CREF<csc_const_pointer_t> item) = delete ;
-
-	void write (CREF<VAL32> item) {
-		return ByteWriterHolder::create (thiz)->write (item) ;
-	}
-
-	forceinline VREF<ByteWriter> operator<< (CREF<VAL32> item) {
-		write (item) ;
-		return thiz ;
-	}
-
-	void write (CREF<VAL64> item) {
-		return ByteWriterHolder::create (thiz)->write (item) ;
-	}
-
-	forceinline VREF<ByteWriter> operator<< (CREF<VAL64> item) {
-		write (item) ;
-		return thiz ;
-	}
-
-	void write (CREF<FLT32> item) {
-		return ByteWriterHolder::create (thiz)->write (item) ;
-	}
-
-	forceinline VREF<ByteWriter> operator<< (CREF<FLT32> item) {
-		write (item) ;
-		return thiz ;
-	}
-
-	void write (CREF<FLT64> item) {
-		return ByteWriterHolder::create (thiz)->write (item) ;
-	}
-
-	forceinline VREF<ByteWriter> operator<< (CREF<FLT64> item) {
-		write (item) ;
-		return thiz ;
-	}
-
-	void write (CREF<BYTE> item) {
-		return ByteWriterHolder::create (thiz)->write (item) ;
-	}
-
-	forceinline VREF<ByteWriter> operator<< (CREF<BYTE> item) {
-		write (item) ;
-		return thiz ;
-	}
-
-	void write (CREF<WORD> item) {
-		return ByteWriterHolder::create (thiz)->write (item) ;
-	}
-
-	forceinline VREF<ByteWriter> operator<< (CREF<WORD> item) {
-		write (item) ;
-		return thiz ;
-	}
-
-	void write (CREF<CHAR> item) {
-		return ByteWriterHolder::create (thiz)->write (item) ;
-	}
-
-	forceinline VREF<ByteWriter> operator<< (CREF<CHAR> item) {
-		write (item) ;
-		return thiz ;
-	}
-
-	void write (CREF<QUAD> item) {
-		return ByteWriterHolder::create (thiz)->write (item) ;
-	}
-
-	forceinline VREF<ByteWriter> operator<< (CREF<QUAD> item) {
-		write (item) ;
-		return thiz ;
-	}
-
-	void write (CREF<Slice> item) {
-		return ByteWriterHolder::create (thiz)->write (item) ;
-	}
-
-	forceinline VREF<ByteWriter> operator<< (CREF<Slice> item) {
-		write (item) ;
-		return thiz ;
-	}
-
-	void write (CREF<String<STRA>> item) {
-		return ByteWriterHolder::create (thiz)->write (item) ;
-	}
-
-	forceinline VREF<ByteWriter> operator<< (CREF<String<STRA>> item) {
-		write (item) ;
-		return thiz ;
-	}
-
-	void write (CREF<String<STRW>> item) {
-		return ByteWriterHolder::create (thiz)->write (item) ;
-	}
-
-	forceinline VREF<ByteWriter> operator<< (CREF<String<STRW>> item) {
-		write (item) ;
-		return thiz ;
-	}
-
-	void write (CREF<String<STRU8>> item) {
-		return ByteWriterHolder::create (thiz)->write (item) ;
-	}
-
-	forceinline VREF<ByteWriter> operator<< (CREF<String<STRU8>> item) {
-		write (item) ;
-		return thiz ;
-	}
-
-	void write (CREF<String<STRU16>> item) {
-		return ByteWriterHolder::create (thiz)->write (item) ;
-	}
-
-	forceinline VREF<ByteWriter> operator<< (CREF<String<STRU16>> item) {
-		write (item) ;
-		return thiz ;
-	}
-
-	void write (CREF<String<STRU32>> item) {
-		return ByteWriterHolder::create (thiz)->write (item) ;
-	}
-
-	forceinline VREF<ByteWriter> operator<< (CREF<String<STRU32>> item) {
-		write (item) ;
-		return thiz ;
-	}
-
-	void write (CREF<typeof (CLS)> item) {
-		return ByteWriterHolder::create (thiz)->write (item) ;
-	}
-
-	forceinline VREF<ByteWriter> operator<< (CREF<typeof (CLS)> item) {
-		write (item) ;
-		return thiz ;
-	}
-
-	void write (CREF<typeof (GAP)> item) {
-		return ByteWriterHolder::create (thiz)->write (item) ;
-	}
-
-	forceinline VREF<ByteWriter> operator<< (CREF<typeof (GAP)> item) {
-		write (item) ;
-		return thiz ;
-	}
-
-	void write (CREF<typeof (EOS)> item) {
-		return ByteWriterHolder::create (thiz)->write (item) ;
-	}
-
-	forceinline VREF<ByteWriter> operator<< (CREF<typeof (EOS)> item) {
-		write (item) ;
-		return thiz ;
-	}
-
-	template <class ARG1>
-	void write (CREF<ARG1> item) {
-		const auto r1x = CFat<ByteWriterFriend> (ByteWriterFriendBinder<ARG1> () ,item) ;
-		return ByteWriterHolder::create (thiz)->write (r1x) ;
-	}
-
-	template <class ARG1>
-	forceinline VREF<ByteWriter> operator<< (CREF<ARG1> item) {
-		write (item) ;
-		return thiz ;
-	}
-} ;
-
-class TextReader ;
-
-struct TextReaderFriend implement Interface {
-	virtual void friend_read (VREF<TextReader> reader) = 0 ;
-} ;
-
-template <class A>
-class TextReaderFriendBinder implement Fat<TextReaderFriend ,A> {
-public:
-	void friend_read (VREF<TextReader> reader) override {
-		return fake.friend_read (reader) ;
-	}
+	template <class ARG1 ,class = REQUIRE<ENUM_NOT<IS_OBJECT<ARG1>>>>
+	forceinline VREF<ByteReader> operator>> (VREF<ARG1> item) = delete ;
 } ;
 
 struct TextReaderLayout {
@@ -708,6 +565,7 @@ struct TextReaderHolder implement Interface {
 	virtual void read (VREF<WORD> item) = 0 ;
 	virtual void read (VREF<CHAR> item) = 0 ;
 	virtual void read (VREF<QUAD> item) = 0 ;
+	virtual void read (VREF<STRU32> item) = 0 ;
 	virtual void read (CREF<Slice> item) = 0 ;
 	virtual void read (VREF<String<STRA>> item) = 0 ;
 	virtual void read (VREF<String<STRW>> item) = 0 ;
@@ -718,7 +576,7 @@ struct TextReaderHolder implement Interface {
 	virtual void read (CREF<typeof (BOM)> item) = 0 ;
 	virtual void read (CREF<typeof (GAP)> item) = 0 ;
 	virtual void read (CREF<typeof (EOS)> item) = 0 ;
-	virtual void read (CREF<VFat<TextReaderFriend>> item) = 0 ;
+	virtual void read (VREF<StreamReaderFriend> item) = 0 ;
 } ;
 
 class TextReader implement TextReaderLayout {
@@ -848,6 +706,15 @@ public:
 		return thiz ;
 	}
 
+	void read (VREF<STRU32> item) {
+		return TextReaderHolder::create (thiz)->read (item) ;
+	}
+
+	forceinline VREF<TextReader> operator>> (VREF<STRU32> item) {
+		read (item) ;
+		return thiz ;
+	}
+
 	void read (CREF<Slice> item) {
 		return TextReaderHolder::create (thiz)->read (item) ;
 	}
@@ -938,31 +805,458 @@ public:
 		return thiz ;
 	}
 
-	template <class ARG1>
-	void read (VREF<ARG1> item) {
-		const auto r1x = VFat<TextReaderFriend> (TextReaderFriendBinder<ARG1> () ,item) ;
-		return TextReaderHolder::create (thiz)->read (r1x) ;
+	void read (VREF<StreamReaderFriend> item) {
+		return TextReaderHolder::create (thiz)->read (item) ;
 	}
 
-	template <class ARG1>
-	forceinline VREF<TextReader> operator>> (VREF<ARG1> item) {
+	forceinline VREF<TextReader> operator>> (VREF<StreamReaderFriend> item) {
 		read (item) ;
 		return thiz ;
 	}
+
+	template <class ARG1 ,class = REQUIRE<ENUM_NOT<IS_OBJECT<ARG1>>>>
+	void read (VREF<ARG1> item) = delete ;
+
+	template <class ARG1 ,class = REQUIRE<ENUM_NOT<IS_OBJECT<ARG1>>>>
+	forceinline VREF<ByteReader> operator>> (VREF<ARG1> item) = delete ;
 } ;
 
-class TextWriter ;
+struct ReflectWriter implement Interface {
+	virtual void write (CREF<BOOL> item) = 0 ;
+	virtual void write (CREF<VAL32> item) = 0 ;
+	virtual void write (CREF<VAL64> item) = 0 ;
+	virtual void write (CREF<FLT32> item) = 0 ;
+	virtual void write (CREF<FLT64> item) = 0 ;
+	virtual void write (CREF<BYTE> item) = 0 ;
+	virtual void write (CREF<WORD> item) = 0 ;
+	virtual void write (CREF<CHAR> item) = 0 ;
+	virtual void write (CREF<QUAD> item) = 0 ;
+	virtual void write (CREF<STRU32> item) = 0 ;
+	virtual void write (CREF<Slice> item) = 0 ;
+	virtual void write (CREF<String<STRA>> item) = 0 ;
+	virtual void write (CREF<String<STRW>> item) = 0 ;
+	virtual void write (CREF<String<STRU8>> item) = 0 ;
+	virtual void write (CREF<String<STRU16>> item) = 0 ;
+	virtual void write (CREF<String<STRU32>> item) = 0 ;
+	virtual void write (CREF<typeof (BOM)> item) = 0 ;
+	virtual void write (CREF<typeof (CLS)> item) = 0 ;
+	virtual void write (CREF<typeof (GAP)> item) = 0 ;
+	virtual void write (CREF<typeof (EOS)> item) = 0 ;
 
-struct TextWriterFriend implement Interface {
-	virtual void friend_write (VREF<TextWriter> reader) const = 0 ;
+	imports forceinline consteval FLAG expr_m () noexcept {
+		return 202 ;
+	}
+} ;
+
+struct StreamWriterFriend ;
+
+struct StreamWriter implement Interface {
+	virtual void write (CREF<BOOL> item) = 0 ;
+	virtual void write (CREF<VAL32> item) = 0 ;
+	virtual void write (CREF<VAL64> item) = 0 ;
+	virtual void write (CREF<FLT32> item) = 0 ;
+	virtual void write (CREF<FLT64> item) = 0 ;
+	virtual void write (CREF<BYTE> item) = 0 ;
+	virtual void write (CREF<WORD> item) = 0 ;
+	virtual void write (CREF<CHAR> item) = 0 ;
+	virtual void write (CREF<QUAD> item) = 0 ;
+	virtual void write (CREF<STRU32> item) = 0 ;
+	virtual void write (CREF<Slice> item) = 0 ;
+	virtual void write (CREF<String<STRA>> item) = 0 ;
+	virtual void write (CREF<String<STRW>> item) = 0 ;
+	virtual void write (CREF<String<STRU8>> item) = 0 ;
+	virtual void write (CREF<String<STRU16>> item) = 0 ;
+	virtual void write (CREF<String<STRU32>> item) = 0 ;
+	virtual void write (CREF<typeof (BOM)> item) = 0 ;
+	virtual void write (CREF<typeof (CLS)> item) = 0 ;
+	virtual void write (CREF<typeof (GAP)> item) = 0 ;
+	virtual void write (CREF<typeof (EOS)> item) = 0 ;
+	virtual void write (CREF<StreamWriterFriend> item) = 0 ;
 } ;
 
 template <class A>
-class TextWriterFriendBinder implement Fat<TextWriterFriend ,A> {
+class StreamWriterBinder implement Fat<StreamWriter ,A> {
 public:
-	void friend_write (VREF<TextWriter> reader) const override {
-		return fake.friend_write (reader) ;
+	imports VFat<StreamWriter> create (VREF<A> that) {
+		return VFat<StreamWriter> (StreamWriterBinder () ,that) ;
 	}
+
+	void write (CREF<BOOL> item) override {
+		return thiz.fake.write (item) ;
+	}
+
+	void write (CREF<VAL32> item) override {
+		return thiz.fake.write (item) ;
+	}
+
+	void write (CREF<VAL64> item) override {
+		return thiz.fake.write (item) ;
+	}
+
+	void write (CREF<FLT32> item) override {
+		return thiz.fake.write (item) ;
+	}
+
+	void write (CREF<FLT64> item) override {
+		return thiz.fake.write (item) ;
+	}
+
+	void write (CREF<BYTE> item) override {
+		return thiz.fake.write (item) ;
+	}
+
+	void write (CREF<WORD> item) override {
+		return thiz.fake.write (item) ;
+	}
+
+	void write (CREF<CHAR> item) override {
+		return thiz.fake.write (item) ;
+	}
+
+	void write (CREF<QUAD> item) override {
+		return thiz.fake.write (item) ;
+	}
+
+	void write (CREF<STRU32> item) override {
+		return thiz.fake.write (item) ;
+	}
+
+	void write (CREF<Slice> item) override {
+		return thiz.fake.write (item) ;
+	}
+
+	void write (CREF<String<STRA>> item) override {
+		return thiz.fake.write (item) ;
+	}
+
+	void write (CREF<String<STRW>> item) override {
+		return thiz.fake.write (item) ;
+	}
+
+	void write (CREF<String<STRU8>> item) override {
+		return thiz.fake.write (item) ;
+	}
+
+	void write (CREF<String<STRU16>> item) override {
+		return thiz.fake.write (item) ;
+	}
+
+	void write (CREF<String<STRU32>> item) override {
+		return thiz.fake.write (item) ;
+	}
+
+	void write (CREF<typeof (BOM)> item) override {
+		return thiz.fake.write (item) ;
+	}
+
+	void write (CREF<typeof (CLS)> item) override {
+		return thiz.fake.write (item) ;
+	}
+
+	void write (CREF<typeof (GAP)> item) override {
+		return thiz.fake.write (item) ;
+	}
+
+	void write (CREF<typeof (EOS)> item) override {
+		return thiz.fake.write (item) ;
+	}
+
+	void write (CREF<StreamWriterFriend> item) override {
+		return thiz.fake.write (item) ;
+	}
+} ;
+
+struct StreamWriterFriend implement Interface {
+	virtual void friend_write (VREF<StreamWriter> writer) const = 0 ;
+} ;
+
+template <class A>
+class StreamWriterFriendBinder implement Fat<StreamWriterFriend ,A> {
+public:
+	imports CFat<StreamWriterFriend> create (CREF<A> that) {
+		return CFat<StreamWriterFriend> (StreamWriterFriendBinder () ,that) ;
+	}
+
+	void friend_write (VREF<StreamWriter> writer) const override {
+		writer.write (thiz.fake) ;
+	}
+} ;
+
+struct ByteWriterLayout {
+	Ref<RefBuffer<BYTE>> mStream ;
+	INDEX mRead ;
+	INDEX mWrite ;
+	INDEX mBackupRead ;
+	INDEX mBackupWrite ;
+} ;
+
+struct ByteWriterHolder implement Interface {
+	imports VFat<ByteWriterHolder> create (VREF<ByteWriterLayout> that) ;
+	imports CFat<ByteWriterHolder> create (CREF<ByteWriterLayout> that) ;
+
+	virtual void initialize (RREF<Ref<RefBuffer<BYTE>>> stream) = 0 ;
+	virtual LENGTH size () const = 0 ;
+	virtual LENGTH length () const = 0 ;
+	virtual void reset () = 0 ;
+	virtual void reset (CREF<INDEX> read_ ,CREF<INDEX> write_) = 0 ;
+	virtual void backup () = 0 ;
+	virtual void recover () = 0 ;
+	virtual void write (CREF<BOOL> item) = 0 ;
+	virtual void write (CREF<VAL32> item) = 0 ;
+	virtual void write (CREF<VAL64> item) = 0 ;
+	virtual void write (CREF<FLT32> item) = 0 ;
+	virtual void write (CREF<FLT64> item) = 0 ;
+	virtual void write (CREF<BYTE> item) = 0 ;
+	virtual void write (CREF<WORD> item) = 0 ;
+	virtual void write (CREF<CHAR> item) = 0 ;
+	virtual void write (CREF<QUAD> item) = 0 ;
+	virtual void write (CREF<STRU32> item) = 0 ;
+	virtual void write (CREF<Slice> item) = 0 ;
+	virtual void write (CREF<String<STRA>> item) = 0 ;
+	virtual void write (CREF<String<STRW>> item) = 0 ;
+	virtual void write (CREF<String<STRU8>> item) = 0 ;
+	virtual void write (CREF<String<STRU16>> item) = 0 ;
+	virtual void write (CREF<String<STRU32>> item) = 0 ;
+	virtual void write (CREF<typeof (BOM)> item) = 0 ;
+	virtual void write (CREF<typeof (CLS)> item) = 0 ;
+	virtual void write (CREF<typeof (GAP)> item) = 0 ;
+	virtual void write (CREF<typeof (EOS)> item) = 0 ;
+	virtual void write (CREF<StreamWriterFriend> item) = 0 ;
+} ;
+
+class ByteWriter implement ByteWriterLayout {
+protected:
+	using ByteWriterLayout::mStream ;
+	using ByteWriterLayout::mRead ;
+	using ByteWriterLayout::mWrite ;
+	using ByteWriterLayout::mBackupRead ;
+	using ByteWriterLayout::mBackupWrite ;
+
+public:
+	implicit ByteWriter () = default ;
+
+	explicit ByteWriter (RREF<Ref<RefBuffer<BYTE>>> stream) {
+		ByteWriterHolder::create (thiz)->initialize (move (stream)) ;
+	}
+
+	LENGTH size () const {
+		return ByteWriterHolder::create (thiz)->size () ;
+	}
+
+	LENGTH length () const {
+		return ByteWriterHolder::create (thiz)->length () ;
+	}
+
+	void reset () {
+		return ByteWriterHolder::create (thiz)->reset () ;
+	}
+
+	void reset (CREF<INDEX> read_ ,CREF<INDEX> write_) {
+		return ByteWriterHolder::create (thiz)->reset (read_ ,write_) ;
+	}
+
+	void backup () {
+		return ByteWriterHolder::create (thiz)->backup () ;
+	}
+
+	void recover () {
+		return ByteWriterHolder::create (thiz)->recover () ;
+	}
+
+	void write (CREF<BOOL> item) {
+		return ByteWriterHolder::create (thiz)->write (item) ;
+	}
+
+	forceinline VREF<ByteWriter> operator<< (CREF<BOOL> item) {
+		write (item) ;
+		return thiz ;
+	}
+
+	void write (CREF<VAL32> item) {
+		return ByteWriterHolder::create (thiz)->write (item) ;
+	}
+
+	forceinline VREF<ByteWriter> operator<< (CREF<VAL32> item) {
+		write (item) ;
+		return thiz ;
+	}
+
+	void write (CREF<VAL64> item) {
+		return ByteWriterHolder::create (thiz)->write (item) ;
+	}
+
+	forceinline VREF<ByteWriter> operator<< (CREF<VAL64> item) {
+		write (item) ;
+		return thiz ;
+	}
+
+	void write (CREF<FLT32> item) {
+		return ByteWriterHolder::create (thiz)->write (item) ;
+	}
+
+	forceinline VREF<ByteWriter> operator<< (CREF<FLT32> item) {
+		write (item) ;
+		return thiz ;
+	}
+
+	void write (CREF<FLT64> item) {
+		return ByteWriterHolder::create (thiz)->write (item) ;
+	}
+
+	forceinline VREF<ByteWriter> operator<< (CREF<FLT64> item) {
+		write (item) ;
+		return thiz ;
+	}
+
+	void write (CREF<BYTE> item) {
+		return ByteWriterHolder::create (thiz)->write (item) ;
+	}
+
+	forceinline VREF<ByteWriter> operator<< (CREF<BYTE> item) {
+		write (item) ;
+		return thiz ;
+	}
+
+	void write (CREF<WORD> item) {
+		return ByteWriterHolder::create (thiz)->write (item) ;
+	}
+
+	forceinline VREF<ByteWriter> operator<< (CREF<WORD> item) {
+		write (item) ;
+		return thiz ;
+	}
+
+	void write (CREF<CHAR> item) {
+		return ByteWriterHolder::create (thiz)->write (item) ;
+	}
+
+	forceinline VREF<ByteWriter> operator<< (CREF<CHAR> item) {
+		write (item) ;
+		return thiz ;
+	}
+
+	void write (CREF<QUAD> item) {
+		return ByteWriterHolder::create (thiz)->write (item) ;
+	}
+
+	forceinline VREF<ByteWriter> operator<< (CREF<QUAD> item) {
+		write (item) ;
+		return thiz ;
+	}
+
+	void write (CREF<STRU32> item) {
+		return ByteWriterHolder::create (thiz)->write (item) ;
+	}
+
+	forceinline VREF<ByteWriter> operator<< (CREF<STRU32> item) {
+		write (item) ;
+		return thiz ;
+	}
+
+	void write (CREF<Slice> item) {
+		return ByteWriterHolder::create (thiz)->write (item) ;
+	}
+
+	forceinline VREF<ByteWriter> operator<< (CREF<Slice> item) {
+		write (item) ;
+		return thiz ;
+	}
+
+	void write (CREF<String<STRA>> item) {
+		return ByteWriterHolder::create (thiz)->write (item) ;
+	}
+
+	forceinline VREF<ByteWriter> operator<< (CREF<String<STRA>> item) {
+		write (item) ;
+		return thiz ;
+	}
+
+	void write (CREF<String<STRW>> item) {
+		return ByteWriterHolder::create (thiz)->write (item) ;
+	}
+
+	forceinline VREF<ByteWriter> operator<< (CREF<String<STRW>> item) {
+		write (item) ;
+		return thiz ;
+	}
+
+	void write (CREF<String<STRU8>> item) {
+		return ByteWriterHolder::create (thiz)->write (item) ;
+	}
+
+	forceinline VREF<ByteWriter> operator<< (CREF<String<STRU8>> item) {
+		write (item) ;
+		return thiz ;
+	}
+
+	void write (CREF<String<STRU16>> item) {
+		return ByteWriterHolder::create (thiz)->write (item) ;
+	}
+
+	forceinline VREF<ByteWriter> operator<< (CREF<String<STRU16>> item) {
+		write (item) ;
+		return thiz ;
+	}
+
+	void write (CREF<String<STRU32>> item) {
+		return ByteWriterHolder::create (thiz)->write (item) ;
+	}
+
+	forceinline VREF<ByteWriter> operator<< (CREF<String<STRU32>> item) {
+		write (item) ;
+		return thiz ;
+	}
+
+	void write (CREF<typeof (BOM)> item) {
+		return ByteWriterHolder::create (thiz)->write (item) ;
+	}
+
+	forceinline VREF<ByteWriter> operator<< (CREF<typeof (BOM)> item) {
+		write (item) ;
+		return thiz ;
+	}
+
+	void write (CREF<typeof (CLS)> item) {
+		return ByteWriterHolder::create (thiz)->write (item) ;
+	}
+
+	forceinline VREF<ByteWriter> operator<< (CREF<typeof (CLS)> item) {
+		write (item) ;
+		return thiz ;
+	}
+
+	void write (CREF<typeof (GAP)> item) {
+		return ByteWriterHolder::create (thiz)->write (item) ;
+	}
+
+	forceinline VREF<ByteWriter> operator<< (CREF<typeof (GAP)> item) {
+		write (item) ;
+		return thiz ;
+	}
+
+	void write (CREF<typeof (EOS)> item) {
+		return ByteWriterHolder::create (thiz)->write (item) ;
+	}
+
+	forceinline VREF<ByteWriter> operator<< (CREF<typeof (EOS)> item) {
+		write (item) ;
+		return thiz ;
+	}
+
+	void write (CREF<StreamWriterFriend> item) {
+		return ByteWriterHolder::create (thiz)->write (item) ;
+	}
+
+	forceinline VREF<ByteWriter> operator<< (CREF<StreamWriterFriend> item) {
+		write (item) ;
+		return thiz ;
+	}
+
+	template <class ARG1 ,class = REQUIRE<ENUM_NOT<IS_OBJECT<ARG1>>>>
+	void write (CREF<ARG1> item) = delete ;
+
+	template <class ARG1 ,class = REQUIRE<ENUM_NOT<IS_OBJECT<ARG1>>>>
+	forceinline VREF<ByteWriter> operator<< (CREF<ARG1> item) = delete ;
 } ;
 
 struct TextWriterLayout {
@@ -993,6 +1287,7 @@ struct TextWriterHolder implement Interface {
 	virtual void write (CREF<WORD> item) = 0 ;
 	virtual void write (CREF<CHAR> item) = 0 ;
 	virtual void write (CREF<QUAD> item) = 0 ;
+	virtual void write (CREF<STRU32> item) = 0 ;
 	virtual void write (CREF<Slice> item) = 0 ;
 	virtual void write (CREF<String<STRA>> item) = 0 ;
 	virtual void write (CREF<String<STRW>> item) = 0 ;
@@ -1003,7 +1298,7 @@ struct TextWriterHolder implement Interface {
 	virtual void write (CREF<typeof (BOM)> item) = 0 ;
 	virtual void write (CREF<typeof (GAP)> item) = 0 ;
 	virtual void write (CREF<typeof (EOS)> item) = 0 ;
-	virtual void write (CREF<CFat<TextWriterFriend>> item) = 0 ;
+	virtual void write (CREF<StreamWriterFriend> item) = 0 ;
 } ;
 
 class TextWriter implement TextWriterLayout {
@@ -1053,10 +1348,6 @@ public:
 		write (item) ;
 		return thiz ;
 	}
-
-	void write (CREF<csc_const_pointer_t> item) = delete ;
-
-	forceinline VREF<TextWriter> operator<< (CREF<csc_const_pointer_t> item) = delete ;
 
 	void write (CREF<VAL32> item) {
 		return TextWriterHolder::create (thiz)->write (item) ;
@@ -1126,6 +1417,15 @@ public:
 	}
 
 	forceinline VREF<TextWriter> operator<< (CREF<QUAD> item) {
+		write (item) ;
+		return thiz ;
+	}
+
+	void write (CREF<STRU32> item) {
+		return TextWriterHolder::create (thiz)->write (item) ;
+	}
+
+	forceinline VREF<TextWriter> operator<< (CREF<STRU32> item) {
 		write (item) ;
 		return thiz ;
 	}
@@ -1220,27 +1520,117 @@ public:
 		return thiz ;
 	}
 
-	template <class ARG1>
-	void write (CREF<ARG1> item) {
-		const auto r1x = CFat<TextWriterFriend> (TextWriterFriendBinder<ARG1> () ,item) ;
-		return TextWriterHolder::create (thiz)->write (r1x) ;
+	void write (CREF<StreamWriterFriend> item) {
+		return TextWriterHolder::create (thiz)->write (item) ;
+	}
+
+	forceinline VREF<TextWriter> operator<< (CREF<StreamWriterFriend> item) {
+		write (item) ;
+		return thiz ;
+	}
+
+	template <class ARG1 ,class = REQUIRE<ENUM_NOT<IS_OBJECT<ARG1>>>>
+	void write (CREF<ARG1> item) = delete ;
+
+	template <class ARG1 ,class = REQUIRE<ENUM_NOT<IS_OBJECT<ARG1>>>>
+	forceinline VREF<TextWriter> operator<< (CREF<ARG1> item) = delete ;
+} ;
+
+template <class A>
+class StringParse implement Proxy {
+public:
+	imports A make (CREF<Slice> text) {
+		return make (String<STR> (text)) ;
 	}
 
 	template <class ARG1>
-	forceinline VREF<TextWriter> operator<< (CREF<ARG1> item) {
-		write (item) ;
+	imports A make (CREF<String<ARG1>> text) {
+		A ret ;
+		auto rax = TextReader (text.borrow ()) ;
+		rax >> ret ;
+		rax >> EOS ;
+		return move (ret) ;
+	}
+} ;
+
+#ifdef __CSC_COMPILER_CLANG__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wall"
+#pragma clang diagnostic ignored "-Wshadow"
+#pragma clang diagnostic ignored "-Wdeprecated"
+#pragma clang diagnostic ignored "-Wdangling"
+#endif
+
+template <class A>
+class StringBuild implement Proxy {
+public:
+	template <class...ARG1>
+	imports String<A> make (CREF<ARG1>...params) {
+		String<A> ret = String<A> (DEFAULT_SLICE_SIZE::expr) ;
+		auto rax = TextWriter (ret.borrow ()) ;
+		const auto r1x = csc_initializer_list_t<FLAG> ({(rax << params ,ZERO)...}) ;
+		noop (r1x) ;
+		rax << EOS ;
+		return move (ret) ;
+	}
+} ;
+
+#ifdef __CSC_COMPILER_CLANG__
+#pragma clang diagnostic pop
+#endif
+
+struct FormatLayout {
+	Slice mFormat ;
+	BoxBuffer<RFat<StreamWriterFriend> ,RANKX> mParams ;
+	INDEX mWrite ;
+} ;
+
+struct FormatHolder implement Interface {
+	imports VFat<FormatHolder> create (VREF<FormatLayout> that) ;
+	imports CFat<FormatHolder> create (CREF<FormatLayout> that) ;
+
+	virtual void initialize (CREF<Slice> format) = 0 ;
+	virtual void friend_write (VREF<StreamWriter> writer) const = 0 ;
+	virtual void invoke (CREF<WrapperLayout> params) = 0 ;
+} ;
+
+class Format implement FormatLayout ,public StreamWriterFriend {
+protected:
+	using FormatLayout::mFormat ;
+	using FormatLayout::mParams ;
+	using FormatLayout::mWrite ;
+
+public:
+	implicit Format () = default ;
+
+	implicit Format (CREF<Slice> format) {
+		FormatHolder::create (thiz)->initialize (format) ;
+	}
+
+	void friend_write (VREF<StreamWriter> writer) const override {
+		return FormatHolder::create (thiz)->friend_write (writer) ;
+	}
+
+	template <class...ARG1>
+	void invoke (CREF<ARG1>...params) {
+		return FormatHolder::create (thiz)->invoke (MakeWrapper (StreamWriterFriendBinder<ARG1>::create (params)...)) ;
+	}
+
+	template <class...ARG1>
+	VREF<Format> operator() (CREF<ARG1>...params) {
+		invoke (params...) ;
 		return thiz ;
 	}
 } ;
 
-template <class A>
+inline CREF<Format> PrintFormat (CREF<Format> params) {
+	return params ;
+}
+
 template <class...ARG1>
-inline String<A> String<A>::make (ARG1 &&...initval) {
-	String<A> ret = String<A> (4096) ;
-	auto rax = TextWriter (ret.borrow ()) ;
-	const auto r1x = csc_initializer_list_t<FLAG> ({(rax << initval ,ZERO)...}) ;
-	noop (r1x) ;
-	rax << EOS ;
+inline Format PrintFormat (CREF<ARG1>...params) {
+	Format ret = slice ("${*}") ;
+	ret (params...) ;
 	return move (ret) ;
 }
 
@@ -1396,35 +1786,6 @@ public:
 	}
 } ;
 
-class AlignText {
-protected:
-	VAL64 mValue ;
-	VAL64 mAlign ;
-
-public:
-	implicit AlignText () = delete ;
-
-	explicit AlignText (CREF<VAL64> value ,CREF<VAL64> align) {
-		mValue = value ;
-		mAlign = align ;
-	}
-
-	void friend_write (VREF<TextWriter> reader) const {
-		assume (mValue >= 0) ;
-		assume (mAlign >= 1) ;
-		auto rcx = 1 ;
-		for (auto &&i : iter (0 ,mAlign - 1)) {
-			noop (i) ;
-			rcx *= 10 ;
-			if (mValue >= rcx)
-				continue ;
-			reader << slice ("0") ;
-		}
-		const auto r1x = mValue % rcx ;
-		reader << r1x ;
-	}
-} ;
-
 struct RegexPureLayout ;
 
 struct RegexLayout {
@@ -1435,9 +1796,9 @@ struct RegexHolder implement Interface {
 	imports VFat<RegexHolder> create (VREF<RegexLayout> that) ;
 	imports CFat<RegexHolder> create (CREF<RegexLayout> that) ;
 
-	virtual void initialize (CREF<String<STRA>> pattern) = 0 ;
-	virtual INDEX search (CREF<String<STRA>> text ,CREF<INDEX> index) = 0 ;
-	virtual String<STRA> match (CREF<INDEX> index) const = 0 ;
+	virtual void initialize (CREF<String<STR>> format) = 0 ;
+	virtual INDEX search (CREF<String<STR>> text ,CREF<INDEX> index) = 0 ;
+	virtual String<STR> match (CREF<INDEX> index) const = 0 ;
 } ;
 
 class Regex implement RegexLayout {
@@ -1447,560 +1808,16 @@ protected:
 public:
 	implicit Regex () = default ;
 
-	explicit Regex (CREF<String<STRA>> pattern) {
-		RegexHolder::create (thiz)->initialize (pattern) ;
+	explicit Regex (CREF<String<STR>> format) {
+		RegexHolder::create (thiz)->initialize (format) ;
 	}
 
-	INDEX search (CREF<String<STRA>> text ,CREF<INDEX> index) {
+	INDEX search (CREF<String<STR>> text ,CREF<INDEX> index) {
 		return RegexHolder::create (thiz)->search (text ,index) ;
 	}
 
-	String<STRA> match (CREF<INDEX> index) const {
+	String<STR> match (CREF<INDEX> index) const {
 		return RegexHolder::create (thiz)->match (index) ;
-	}
-} ;
-
-struct XmlParserPureLayout ;
-
-struct XmlParserLayout {
-	Ref<XmlParserPureLayout> mThis ;
-	INDEX mIndex ;
-} ;
-
-struct XmlParserHolder implement Interface {
-	imports VFat<XmlParserHolder> create (VREF<XmlParserLayout> that) ;
-	imports CFat<XmlParserHolder> create (CREF<XmlParserLayout> that) ;
-
-	virtual void initialize (CREF<RefBuffer<BYTE>> stream) = 0 ;
-	virtual void initialize (CREF<XmlParserLayout> that) = 0 ;
-	virtual BOOL exist () const = 0 ;
-	virtual XmlParserLayout root () const = 0 ;
-	virtual XmlParserLayout parent () const = 0 ;
-	virtual XmlParserLayout brother () const = 0 ;
-	virtual XmlParserLayout child () const = 0 ;
-	virtual XmlParserLayout child (CREF<INDEX> index) const = 0 ;
-	virtual XmlParserLayout child (CREF<Slice> name) const = 0 ;
-	virtual XmlParserLayout child (CREF<String<STRU8>> name) const = 0 ;
-	virtual Array<XmlParserLayout> list () const = 0 ;
-	virtual Array<XmlParserLayout> list (CREF<LENGTH> size_) const = 0 ;
-	virtual BOOL equal (CREF<XmlParserLayout> that) const = 0 ;
-	virtual CREF<String<STRU8>> name () const leftvalue = 0 ;
-	virtual BOOL fetch (CREF<BOOL> def) const = 0 ;
-	virtual VAL32 fetch (CREF<VAL32> def) const = 0 ;
-	virtual VAL64 fetch (CREF<VAL64> def) const = 0 ;
-	virtual FLT32 fetch (CREF<FLT32> def) const = 0 ;
-	virtual FLT64 fetch (CREF<FLT64> def) const = 0 ;
-	virtual String<STRA> fetch (CREF<String<STRA>> def) const = 0 ;
-	virtual String<STRW> fetch (CREF<String<STRW>> def) const = 0 ;
-	virtual String<STRU8> fetch (CREF<String<STRU8>> def) const = 0 ;
-	virtual String<STRU16> fetch (CREF<String<STRU16>> def) const = 0 ;
-	virtual String<STRU32> fetch (CREF<String<STRU32>> def) const = 0 ;
-	virtual Array<BOOL> fetch (CREF<BOOL> def ,CREF<LENGTH> size_) const = 0 ;
-	virtual Array<VAL32> fetch (CREF<VAL32> def ,CREF<LENGTH> size_) const = 0 ;
-	virtual Array<VAL64> fetch (CREF<VAL64> def ,CREF<LENGTH> size_) const = 0 ;
-	virtual Array<FLT32> fetch (CREF<FLT32> def ,CREF<LENGTH> size_) const = 0 ;
-	virtual Array<FLT64> fetch (CREF<FLT64> def ,CREF<LENGTH> size_) const = 0 ;
-	virtual Array<String<STRA>> fetch (CREF<String<STRA>> def ,CREF<LENGTH> size_) const = 0 ;
-	virtual Array<String<STRW>> fetch (CREF<String<STRW>> def ,CREF<LENGTH> size_) const = 0 ;
-	virtual Array<String<STRU8>> fetch (CREF<String<STRU8>> def ,CREF<LENGTH> size_) const = 0 ;
-	virtual Array<String<STRU16>> fetch (CREF<String<STRU16>> def ,CREF<LENGTH> size_) const = 0 ;
-	virtual Array<String<STRU32>> fetch (CREF<String<STRU32>> def ,CREF<LENGTH> size_) const = 0 ;
-} ;
-
-class XmlParser implement XmlParserLayout {
-protected:
-	using XmlParserLayout::mThis ;
-	using XmlParserLayout::mIndex ;
-
-public:
-	implicit XmlParser () = default ;
-
-	explicit XmlParser (CREF<RefBuffer<BYTE>> stream) {
-		XmlParserHolder::create (thiz)->initialize (stream) ;
-	}
-
-	implicit XmlParser (CREF<XmlParser> that) {
-		XmlParserHolder::create (thiz)->initialize (that) ;
-	}
-
-	forceinline VREF<XmlParser> operator= (CREF<XmlParser> that) {
-		return assign (thiz ,that) ;
-	}
-
-	implicit XmlParser (RREF<XmlParser> that) = default ;
-
-	forceinline VREF<XmlParser> operator= (RREF<XmlParser> that) = default ;
-
-	BOOL exist () const {
-		return XmlParserHolder::create (thiz)->exist () ;
-	}
-
-	XmlParser root () const {
-		XmlParserLayout ret = XmlParserHolder::create (thiz)->root () ;
-		return move (keep[TYPE<XmlParser>::expr] (ret)) ;
-	}
-
-	XmlParser parent () const {
-		XmlParserLayout ret = XmlParserHolder::create (thiz)->parent () ;
-		return move (keep[TYPE<XmlParser>::expr] (ret)) ;
-	}
-
-	XmlParser brother () const {
-		XmlParserLayout ret = XmlParserHolder::create (thiz)->brother () ;
-		return move (keep[TYPE<XmlParser>::expr] (ret)) ;
-	}
-
-	XmlParser child () const {
-		XmlParserLayout ret = XmlParserHolder::create (thiz)->child () ;
-		return move (keep[TYPE<XmlParser>::expr] (ret)) ;
-	}
-
-	XmlParser child (CREF<INDEX> index) const {
-		XmlParserLayout ret = XmlParserHolder::create (thiz)->child (index) ;
-		return move (keep[TYPE<XmlParser>::expr] (ret)) ;
-	}
-
-	XmlParser child (CREF<Slice> name) const {
-		XmlParserLayout ret = XmlParserHolder::create (thiz)->child (name) ;
-		return move (keep[TYPE<XmlParser>::expr] (ret)) ;
-	}
-
-	XmlParser child (CREF<String<STRU8>> name) const {
-		XmlParserLayout ret = XmlParserHolder::create (thiz)->child (name) ;
-		return move (keep[TYPE<XmlParser>::expr] (ret)) ;
-	}
-
-	Array<XmlParser> list () const {
-		Array<XmlParserLayout> ret = XmlParserHolder::create (thiz)->list () ;
-		return move (keep[TYPE<Array<XmlParser>>::expr] (keep[TYPE<ArrayLayout>::expr] (ret))) ;
-	}
-
-	Array<XmlParser> list (CREF<LENGTH> size_) const {
-		Array<XmlParserLayout> ret = XmlParserHolder::create (thiz)->list (size_) ;
-		return move (keep[TYPE<Array<XmlParser>>::expr] (keep[TYPE<ArrayLayout>::expr] (ret))) ;
-	}
-
-	BOOL equal (CREF<XmlParser> that) const {
-		return XmlParserHolder::create (thiz)->equal (that) ;
-	}
-
-	forceinline BOOL operator== (CREF<XmlParser> that) const {
-		return equal (that) ;
-	}
-
-	forceinline BOOL operator!= (CREF<XmlParser> that) const {
-		return ifnot (equal (that)) ;
-	}
-
-	CREF<String<STRU8>> name () const leftvalue {
-		return XmlParserHolder::create (thiz)->name () ;
-	}
-
-	BOOL fetch (CREF<BOOL> def) const {
-		return XmlParserHolder::create (thiz)->fetch (def) ;
-	}
-
-	VAL32 fetch (CREF<VAL32> def) const {
-		return XmlParserHolder::create (thiz)->fetch (def) ;
-	}
-
-	VAL64 fetch (CREF<VAL64> def) const {
-		return XmlParserHolder::create (thiz)->fetch (def) ;
-	}
-
-	FLT32 fetch (CREF<FLT32> def) const {
-		return XmlParserHolder::create (thiz)->fetch (def) ;
-	}
-
-	FLT64 fetch (CREF<FLT64> def) const {
-		return XmlParserHolder::create (thiz)->fetch (def) ;
-	}
-
-	String<STRA> fetch (CREF<String<STRA>> def) const {
-		return XmlParserHolder::create (thiz)->fetch (def) ;
-	}
-
-	String<STRW> fetch (CREF<String<STRW>> def) const {
-		return XmlParserHolder::create (thiz)->fetch (def) ;
-	}
-
-	String<STRU8> fetch (CREF<String<STRU8>> def) const {
-		return XmlParserHolder::create (thiz)->fetch (def) ;
-	}
-
-	String<STRU16> fetch (CREF<String<STRU16>> def) const {
-		return XmlParserHolder::create (thiz)->fetch (def) ;
-	}
-
-	String<STRU32> fetch (CREF<String<STRU32>> def) const {
-		return XmlParserHolder::create (thiz)->fetch (def) ;
-	}
-
-	Array<BOOL> fetch (CREF<BOOL> def ,CREF<LENGTH> size_) const {
-		return XmlParserHolder::create (thiz)->fetch (def ,size_) ;
-	}
-
-	Array<VAL32> fetch (CREF<VAL32> def ,CREF<LENGTH> size_) const {
-		return XmlParserHolder::create (thiz)->fetch (def ,size_) ;
-	}
-
-	Array<VAL64> fetch (CREF<VAL64> def ,CREF<LENGTH> size_) const {
-		return XmlParserHolder::create (thiz)->fetch (def ,size_) ;
-	}
-
-	Array<FLT32> fetch (CREF<FLT32> def ,CREF<LENGTH> size_) const {
-		return XmlParserHolder::create (thiz)->fetch (def ,size_) ;
-	}
-
-	Array<FLT64> fetch (CREF<FLT64> def ,CREF<LENGTH> size_) const {
-		return XmlParserHolder::create (thiz)->fetch (def ,size_) ;
-	}
-
-	Array<String<STRA>> fetch (CREF<String<STRA>> def ,CREF<LENGTH> size_) const {
-		return XmlParserHolder::create (thiz)->fetch (def ,size_) ;
-	}
-
-	Array<String<STRW>> fetch (CREF<String<STRW>> def ,CREF<LENGTH> size_) const {
-		return XmlParserHolder::create (thiz)->fetch (def ,size_) ;
-	}
-
-	Array<String<STRU8>> fetch (CREF<String<STRU8>> def ,CREF<LENGTH> size_) const {
-		return XmlParserHolder::create (thiz)->fetch (def ,size_) ;
-	}
-
-	Array<String<STRU16>> fetch (CREF<String<STRU16>> def ,CREF<LENGTH> size_) const {
-		return XmlParserHolder::create (thiz)->fetch (def ,size_) ;
-	}
-
-	Array<String<STRU32>> fetch (CREF<String<STRU32>> def ,CREF<LENGTH> size_) const {
-		return XmlParserHolder::create (thiz)->fetch (def ,size_) ;
-	}
-} ;
-
-struct JsonParserPureLayout ;
-
-struct JsonParserLayout {
-	Ref<JsonParserPureLayout> mThis ;
-	INDEX mIndex ;
-} ;
-
-struct JsonParserHolder implement Interface {
-	imports VFat<JsonParserHolder> create (VREF<JsonParserLayout> that) ;
-	imports CFat<JsonParserHolder> create (CREF<JsonParserLayout> that) ;
-
-	virtual void initialize (CREF<RefBuffer<BYTE>> stream) = 0 ;
-	virtual void initialize (CREF<JsonParserLayout> that) = 0 ;
-	virtual BOOL exist () const = 0 ;
-	virtual JsonParserLayout root () const = 0 ;
-	virtual JsonParserLayout parent () const = 0 ;
-	virtual JsonParserLayout brother () const = 0 ;
-	virtual JsonParserLayout child () const = 0 ;
-	virtual JsonParserLayout child (CREF<INDEX> index) const = 0 ;
-	virtual JsonParserLayout child (CREF<Slice> name) const = 0 ;
-	virtual JsonParserLayout child (CREF<String<STRU8>> name) const = 0 ;
-	virtual Array<JsonParserLayout> list () const = 0 ;
-	virtual Array<JsonParserLayout> list (CREF<LENGTH> size_) const = 0 ;
-	virtual BOOL equal (CREF<JsonParserLayout> that) const = 0 ;
-	virtual CREF<String<STRU8>> name () const leftvalue = 0 ;
-	virtual BOOL fetch (CREF<BOOL> def) const = 0 ;
-	virtual VAL32 fetch (CREF<VAL32> def) const = 0 ;
-	virtual VAL64 fetch (CREF<VAL64> def) const = 0 ;
-	virtual FLT32 fetch (CREF<FLT32> def) const = 0 ;
-	virtual FLT64 fetch (CREF<FLT64> def) const = 0 ;
-	virtual String<STRA> fetch (CREF<String<STRA>> def) const = 0 ;
-	virtual String<STRW> fetch (CREF<String<STRW>> def) const = 0 ;
-	virtual String<STRU8> fetch (CREF<String<STRU8>> def) const = 0 ;
-	virtual String<STRU16> fetch (CREF<String<STRU16>> def) const = 0 ;
-	virtual String<STRU32> fetch (CREF<String<STRU32>> def) const = 0 ;
-	virtual Array<BOOL> fetch (CREF<BOOL> def ,CREF<LENGTH> size_) const = 0 ;
-	virtual Array<VAL32> fetch (CREF<VAL32> def ,CREF<LENGTH> size_) const = 0 ;
-	virtual Array<VAL64> fetch (CREF<VAL64> def ,CREF<LENGTH> size_) const = 0 ;
-	virtual Array<FLT32> fetch (CREF<FLT32> def ,CREF<LENGTH> size_) const = 0 ;
-	virtual Array<FLT64> fetch (CREF<FLT64> def ,CREF<LENGTH> size_) const = 0 ;
-	virtual Array<String<STRA>> fetch (CREF<String<STRA>> def ,CREF<LENGTH> size_) const = 0 ;
-	virtual Array<String<STRW>> fetch (CREF<String<STRW>> def ,CREF<LENGTH> size_) const = 0 ;
-	virtual Array<String<STRU8>> fetch (CREF<String<STRU8>> def ,CREF<LENGTH> size_) const = 0 ;
-	virtual Array<String<STRU16>> fetch (CREF<String<STRU16>> def ,CREF<LENGTH> size_) const = 0 ;
-	virtual Array<String<STRU32>> fetch (CREF<String<STRU32>> def ,CREF<LENGTH> size_) const = 0 ;
-} ;
-
-class JsonParser implement JsonParserLayout {
-protected:
-	using JsonParserLayout::mThis ;
-	using JsonParserLayout::mIndex ;
-
-public:
-	implicit JsonParser () = default ;
-
-	explicit JsonParser (CREF<RefBuffer<BYTE>> stream) {
-		JsonParserHolder::create (thiz)->initialize (stream) ;
-	}
-
-	implicit JsonParser (CREF<JsonParser> that) {
-		JsonParserHolder::create (thiz)->initialize (that) ;
-	}
-
-	forceinline VREF<JsonParser> operator= (CREF<JsonParser> that) {
-		return assign (thiz ,that) ;
-	}
-
-	implicit JsonParser (RREF<JsonParser> that) = default ;
-
-	forceinline VREF<JsonParser> operator= (RREF<JsonParser> that) = default ;
-
-	BOOL exist () const {
-		return JsonParserHolder::create (thiz)->exist () ;
-	}
-
-	JsonParser root () const {
-		JsonParserLayout ret = JsonParserHolder::create (thiz)->root () ;
-		return move (keep[TYPE<JsonParser>::expr] (ret)) ;
-	}
-
-	JsonParser parent () const {
-		JsonParserLayout ret = JsonParserHolder::create (thiz)->parent () ;
-		return move (keep[TYPE<JsonParser>::expr] (ret)) ;
-	}
-
-	JsonParser brother () const {
-		JsonParserLayout ret = JsonParserHolder::create (thiz)->brother () ;
-		return move (keep[TYPE<JsonParser>::expr] (ret)) ;
-	}
-
-	JsonParser child () const {
-		JsonParserLayout ret = JsonParserHolder::create (thiz)->child () ;
-		return move (keep[TYPE<JsonParser>::expr] (ret)) ;
-	}
-
-	JsonParser child (CREF<INDEX> index) const {
-		JsonParserLayout ret = JsonParserHolder::create (thiz)->child (index) ;
-		return move (keep[TYPE<JsonParser>::expr] (ret)) ;
-	}
-
-	JsonParser child (CREF<Slice> name) const {
-		JsonParserLayout ret = JsonParserHolder::create (thiz)->child (name) ;
-		return move (keep[TYPE<JsonParser>::expr] (ret)) ;
-	}
-
-	JsonParser child (CREF<String<STRU8>> name) const {
-		JsonParserLayout ret = JsonParserHolder::create (thiz)->child (name) ;
-		return move (keep[TYPE<JsonParser>::expr] (ret)) ;
-	}
-
-	Array<JsonParser> list () const {
-		Array<JsonParserLayout> ret = JsonParserHolder::create (thiz)->list () ;
-		return move (keep[TYPE<Array<JsonParser>>::expr] (keep[TYPE<ArrayLayout>::expr] (ret))) ;
-	}
-
-	Array<JsonParser> list (CREF<LENGTH> size_) const {
-		Array<JsonParserLayout> ret = JsonParserHolder::create (thiz)->list (size_) ;
-		return move (keep[TYPE<Array<JsonParser>>::expr] (keep[TYPE<ArrayLayout>::expr] (ret))) ;
-	}
-
-	BOOL equal (CREF<JsonParser> that) const {
-		return JsonParserHolder::create (thiz)->equal (that) ;
-	}
-
-	forceinline BOOL operator== (CREF<JsonParser> that) const {
-		return equal (that) ;
-	}
-
-	forceinline BOOL operator!= (CREF<JsonParser> that) const {
-		return ifnot (equal (that)) ;
-	}
-
-	CREF<String<STRU8>> name () const leftvalue {
-		return JsonParserHolder::create (thiz)->name () ;
-	}
-
-	BOOL fetch (CREF<BOOL> def) const {
-		return JsonParserHolder::create (thiz)->fetch (def) ;
-	}
-
-	VAL32 fetch (CREF<VAL32> def) const {
-		return JsonParserHolder::create (thiz)->fetch (def) ;
-	}
-
-	VAL64 fetch (CREF<VAL64> def) const {
-		return JsonParserHolder::create (thiz)->fetch (def) ;
-	}
-
-	FLT32 fetch (CREF<FLT32> def) const {
-		return JsonParserHolder::create (thiz)->fetch (def) ;
-	}
-
-	FLT64 fetch (CREF<FLT64> def) const {
-		return JsonParserHolder::create (thiz)->fetch (def) ;
-	}
-
-	String<STRA> fetch (CREF<String<STRA>> def) const {
-		return JsonParserHolder::create (thiz)->fetch (def) ;
-	}
-
-	String<STRW> fetch (CREF<String<STRW>> def) const {
-		return JsonParserHolder::create (thiz)->fetch (def) ;
-	}
-
-	String<STRU8> fetch (CREF<String<STRU8>> def) const {
-		return JsonParserHolder::create (thiz)->fetch (def) ;
-	}
-
-	String<STRU16> fetch (CREF<String<STRU16>> def) const {
-		return JsonParserHolder::create (thiz)->fetch (def) ;
-	}
-
-	String<STRU32> fetch (CREF<String<STRU32>> def) const {
-		return JsonParserHolder::create (thiz)->fetch (def) ;
-	}
-
-	Array<BOOL> fetch (CREF<BOOL> def ,CREF<LENGTH> size_) const {
-		return JsonParserHolder::create (thiz)->fetch (def ,size_) ;
-	}
-
-	Array<VAL32> fetch (CREF<VAL32> def ,CREF<LENGTH> size_) const {
-		return JsonParserHolder::create (thiz)->fetch (def ,size_) ;
-	}
-
-	Array<VAL64> fetch (CREF<VAL64> def ,CREF<LENGTH> size_) const {
-		return JsonParserHolder::create (thiz)->fetch (def ,size_) ;
-	}
-
-	Array<FLT32> fetch (CREF<FLT32> def ,CREF<LENGTH> size_) const {
-		return JsonParserHolder::create (thiz)->fetch (def ,size_) ;
-	}
-
-	Array<FLT64> fetch (CREF<FLT64> def ,CREF<LENGTH> size_) const {
-		return JsonParserHolder::create (thiz)->fetch (def ,size_) ;
-	}
-
-	Array<String<STRA>> fetch (CREF<String<STRA>> def ,CREF<LENGTH> size_) const {
-		return JsonParserHolder::create (thiz)->fetch (def ,size_) ;
-	}
-
-	Array<String<STRW>> fetch (CREF<String<STRW>> def ,CREF<LENGTH> size_) const {
-		return JsonParserHolder::create (thiz)->fetch (def ,size_) ;
-	}
-
-	Array<String<STRU8>> fetch (CREF<String<STRU8>> def ,CREF<LENGTH> size_) const {
-		return JsonParserHolder::create (thiz)->fetch (def ,size_) ;
-	}
-
-	Array<String<STRU16>> fetch (CREF<String<STRU16>> def ,CREF<LENGTH> size_) const {
-		return JsonParserHolder::create (thiz)->fetch (def ,size_) ;
-	}
-
-	Array<String<STRU32>> fetch (CREF<String<STRU32>> def ,CREF<LENGTH> size_) const {
-		return JsonParserHolder::create (thiz)->fetch (def ,size_) ;
-	}
-} ;
-
-struct PlyParserGuide {
-	INDEX mElement ;
-	ArrayList<INDEX> mProperty ;
-	INDEX mPropertyIndex ;
-	INDEX mLineIndex ;
-	INDEX mPlyIndex ;
-	FLAG mPlyType ;
-} ;
-
-struct PlyParserPureLayout ;
-
-struct PlyParserLayout {
-	Ref<PlyParserPureLayout> mThis ;
-	PlyParserGuide mGuide ;
-} ;
-
-struct PlyParserHolder implement Interface {
-	imports VFat<PlyParserHolder> create (VREF<PlyParserLayout> that) ;
-	imports CFat<PlyParserHolder> create (CREF<PlyParserLayout> that) ;
-
-	virtual void initialize (CREF<RefBuffer<BYTE>> stream) = 0 ;
-	virtual INDEX find_element (CREF<Slice> name) const = 0 ;
-	virtual LENGTH element_size (CREF<INDEX> element) const = 0 ;
-	virtual INDEX find_property (CREF<INDEX> element ,CREF<Slice> name) const = 0 ;
-	virtual LENGTH property_size (CREF<INDEX> element ,CREF<INDEX> line ,CREF<INDEX> property) const = 0 ;
-	virtual void guide_new (CREF<INDEX> element) = 0 ;
-	virtual void guide_put (CREF<INDEX> property) = 0 ;
-	virtual void read (VREF<BOOL> item) = 0 ;
-	virtual void read (VREF<VAL32> item) = 0 ;
-	virtual void read (VREF<VAL64> item) = 0 ;
-	virtual void read (VREF<FLT32> item) = 0 ;
-	virtual void read (VREF<FLT64> item) = 0 ;
-	virtual void read (VREF<BYTE> item) = 0 ;
-	virtual void read (VREF<WORD> item) = 0 ;
-	virtual void read (VREF<CHAR> item) = 0 ;
-	virtual void read (VREF<QUAD> item) = 0 ;
-} ;
-
-class PlyParser implement PlyParserLayout {
-protected:
-	using PlyParserLayout::mThis ;
-
-public:
-	implicit PlyParser () = default ;
-
-	explicit PlyParser (CREF<RefBuffer<BYTE>> stream) {
-		PlyParserHolder::create (thiz)->initialize (stream) ;
-	}
-
-	INDEX find_element (CREF<Slice> name) const {
-		return PlyParserHolder::create (thiz)->find_element (name) ;
-	}
-
-	LENGTH element_size (CREF<INDEX> element) const {
-		return PlyParserHolder::create (thiz)->element_size (element) ;
-	}
-
-	INDEX find_property (CREF<INDEX> element ,CREF<Slice> name) const {
-		return PlyParserHolder::create (thiz)->find_property (element ,name) ;
-	}
-
-	LENGTH property_size (CREF<INDEX> element ,CREF<INDEX> line ,CREF<INDEX> property) const {
-		return PlyParserHolder::create (thiz)->property_size (element ,line ,property) ;
-	}
-
-	void guide_new (CREF<INDEX> element) {
-		return PlyParserHolder::create (thiz)->guide_new (element) ;
-	}
-
-	void guide_put (CREF<INDEX> property) {
-		return PlyParserHolder::create (thiz)->guide_put (property) ;
-	}
-
-	void read (VREF<BOOL> item) {
-		return PlyParserHolder::create (thiz)->read (item) ;
-	}
-
-	void read (VREF<VAL32> item) {
-		return PlyParserHolder::create (thiz)->read (item) ;
-	}
-
-	void read (VREF<VAL64> item) {
-		return PlyParserHolder::create (thiz)->read (item) ;
-	}
-
-	void read (VREF<FLT32> item) {
-		return PlyParserHolder::create (thiz)->read (item) ;
-	}
-
-	void read (VREF<FLT64> item) {
-		return PlyParserHolder::create (thiz)->read (item) ;
-	}
-
-	void read (VREF<BYTE> item) {
-		return PlyParserHolder::create (thiz)->read (item) ;
-	}
-
-	void read (VREF<WORD> item) {
-		return PlyParserHolder::create (thiz)->read (item) ;
-	}
-
-	void read (VREF<CHAR> item) {
-		return PlyParserHolder::create (thiz)->read (item) ;
-	}
-
-	void read (VREF<QUAD> item) {
-		return PlyParserHolder::create (thiz)->read (item) ;
 	}
 } ;
 } ;

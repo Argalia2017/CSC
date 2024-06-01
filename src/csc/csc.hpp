@@ -90,7 +90,7 @@
 #pragma warning (disable :4100) //@info: warning C4100: 'xxx': unreferenced formal parameter
 #pragma warning (disable :4127) //@info: warning C4127: conditional expression is constant
 #pragma warning (disable :4266) //@info: warning C4266: 'xxx'; function is hidden
-#pragma warning (disable :4297) //@info: warning C4297: 'xxx': function assumed ifnot to throw an exception but does
+#pragma warning (disable :4297) //@info: warning C4297: 'xxx': function assumed not to throw an exception but does
 #pragma warning (disable :4324) //@info: warning C4324: 'xxx': structure was padded due to alignment specifier
 #pragma warning (disable :4365) //@info: warning C4365: 'xxx': conversion from 'xxx' to 'xxx', signed/unsigned mismatch
 #pragma warning (disable :4459) //@info: warning C4459: declaration of 'xxx' hides global declaration
@@ -105,15 +105,15 @@
 #pragma warning (disable :4624) //@info: warning C4624: 'xxx': destructor was implicitly defined as deleted
 #pragma warning (disable :4625) //@info: warning C4625: 'xxx': copy constructor was implicitly defined as deleted
 #pragma warning (disable :4626) //@info: warning C4626: 'xxx': assignment operator was implicitly defined as deleted
-#pragma warning (disable :4643) //@info: warning C4643: Forward declaring 'initializer_list' in namespace std is ifnot permitted by the C++ Standard.
-#pragma warning (disable :4668) //@info: warning C4668: 'xxx' is ifnot defined as a preprocessor macro, replacing with '0' for '#if/#elif'
+#pragma warning (disable :4643) //@info: warning C4643: Forward declaring 'initializer_list' in namespace std is not permitted by the C++ Standard.
+#pragma warning (disable :4668) //@info: warning C4668: 'xxx' is not defined as a preprocessor macro, replacing with '0' for '#if/#elif'
 #pragma warning (disable :4686) //@info: warning C4686: 'xxx': possible change in behavior, change in UDT return calling convention
 #pragma warning (disable :4702) //@info: warning C4702: unreachable code
-#pragma warning (disable :4710) //@info: warning C4710: 'xxx': function ifnot inlined
+#pragma warning (disable :4710) //@info: warning C4710: 'xxx': function not inlined
 #pragma warning (disable :4711) //@info: warning C4711: function 'xxx' selected for automatic inline expansion
 #pragma warning (disable :4714) //@info: warning C4714: function 'xxx' marked as __forceinline not inlined
 #pragma warning (disable :4717) //@info: warning C4717: 'xxx': recursive on all control paths, function will cause runtime stack overflow
-#pragma warning (disable :4774) //@info: warning C4774: 'xxx' : format string expected in argument xxx is ifnot a string literal
+#pragma warning (disable :4774) //@info: warning C4774: 'xxx' : format string expected in argument xxx is not a string literal
 #pragma warning (disable :4820) //@info: warning C4820: 'xxx': 'xxx' bytes padding added after data member 'xxx'
 #pragma warning (disable :5026) //@info: warning C5026: 'xxx': move constructor was implicitly defined as deleted
 #pragma warning (disable :5027) //@info: warning C5027: 'xxx': move assignment operator was implicitly defined as deleted
@@ -219,6 +219,20 @@ struct is_trivially_default_constructible :integral_constant<bool ,__has_trivial
 #endif
 #endif
 
+#ifndef __macro_declspec
+#ifdef __CSC_COMPILER_MSVC__
+#define __macro_declspec(...) __declspec (__VA_ARGS__)
+#endif
+
+#ifdef __CSC_COMPILER_GNUC__
+#define __macro_declspec(...) __attribute__ ((__VA_ARGS__))
+#endif
+
+#ifdef __CSC_COMPILER_CLANG__
+#define __macro_declspec(...) __attribute__ ((__VA_ARGS__))
+#endif
+#endif
+
 #ifndef __macro_str
 #define __macro_str_impl(...) #__VA_ARGS__
 #define __macro_str(...) __macro_str_impl (__VA_ARGS__)
@@ -231,10 +245,6 @@ struct is_trivially_default_constructible :integral_constant<bool ,__has_trivial
 
 #ifndef __macro_requires
 #define __macro_requires(...) static_assert (CSC::DEF<__VA_ARGS__>::expr ,"requires : " __macro_str (__VA_ARGS__))
-#endif
-
-#ifndef __macro_as
-#define __macro_as(...) ; ;
 #endif
 
 #ifndef __macro_anonymous
@@ -295,20 +305,16 @@ struct is_trivially_default_constructible :integral_constant<bool ,__has_trivial
 
 #ifndef __macro_barrier
 #ifdef __CSC_VER_DEBUG__
-#define __macro_barrier(...) do { CSC::inline_barrier (TYPE<ENUM<__LINE__>>::expr ,(&__VA_ARGS__)) ; } while (false)
+#define __macro_barrier(...) do { struct LINE ; CSC::inline_barrier (TYPE<LINE>::expr ,(&__VA_ARGS__)) ; } while (false)
 #endif
 
 #ifdef __CSC_VER_UNITTEST__
-#define __macro_barrier(...) do { CSC::inline_barrier (TYPE<ENUM<__LINE__>>::expr ,(&__VA_ARGS__)) ; } while (false)
+#define __macro_barrier(...) do { struct LINE ; CSC::inline_barrier (TYPE<LINE>::expr ,(&__VA_ARGS__)) ; } while (false)
 #endif
 
 #ifdef __CSC_VER_RELEASE__
 #define __macro_barrier(...)
 #endif
-#endif
-
-#ifndef __macro_ifnot
-#define __macro_ifnot(...) (CSC::csc_bool_t (__VA_ARGS__) == false)
 #endif
 
 #ifndef __macro_ifdo
@@ -385,8 +391,8 @@ using csc_enum_t = DEF<unsigned long> ;
 #endif
 
 #ifdef __CSC_SYSTEM_LINUX__
-using csc_diff_t = long ;
-using csc_size_t = DEF<unsigned long> ;
+using csc_diff_t = DEF<long int> ;
+using csc_size_t = DEF<long unsigned int> ;
 using csc_enum_t = int ;
 #endif
 
@@ -507,7 +513,10 @@ template <class A>
 using XREF = DEF<A &&> ;
 
 template <class A>
-using MACRO_IS_UINT = ENUM<(__is_enum (A))> ;
+using MACRO_IS_UNDER1 = ENUM<(__is_enum (A))> ;
+
+template <class A>
+using MACRO_IS_UNDER2 = ENUM<(__is_union (A))> ;
 
 template <class A>
 using MACRO_IS_CLASS = ENUM<(__is_class (A))> ;

@@ -11,62 +11,20 @@
 #endif
 
 #include "csc_end.h"
+#ifdef __CSC_COMPILER_MSVC__
 #ifdef __CSC_CXX_LATEST__
-namespace std {
-template<class _Fn>
-class unary_negate
-{	// functor adapter !_Func(left)
-public:
-	typedef typename _Fn::argument_type argument_type;
-	typedef bool result_type;
-
-	constexpr explicit unary_negate (const _Fn &_Func)
-		: _Functor (_Func) {	// construct from functor
-	}
-
-	constexpr bool operator()(const argument_type &_Left) const {	// apply functor to operand
-		return (!_Functor (_Left));
-	}
-
-private:
-	_Fn _Functor;	// the functor to apply
-};
-
-template<class _Fn>
-class binary_negate
-{	// functor adapter !_Func(left, right)
-public:
-	typedef typename _Fn::first_argument_type first_argument_type;
-	typedef typename _Fn::second_argument_type second_argument_type;
-	typedef bool result_type;
-
-	constexpr explicit binary_negate (const _Fn &_Func)
-		: _Functor (_Func) {	// construct from functor
-	}
-
-	constexpr bool operator()(const first_argument_type &_Left ,
-		const second_argument_type &_Right) const {	// apply functor to operands
-		return (!_Functor (_Left ,_Right));
-	}
-
-private:
-	_Fn _Functor;	// the functor to apply
-};
-} ;
+#include "csc_matrix.eigen.fix.h"
+#endif
 #endif
 
 #include <Eigen/Dense>
-
-#include <unsupported/Eigen/NonLinearOptimization>
 #include "csc_begin.h"
 
 namespace CSC {
-struct MatrixProcPureLayout {} ;
-
-class MatrixProcImplement implement Fat<MatrixProcHolder ,MatrixProcLayout> {
+class MatrixProcImplHolder implement Fat<MatrixProcHolder ,MatrixProcLayout> {
 public:
 	void initialize () override {
-		fake.mThis = Ref<MatrixProcPureLayout>::make () ;
+		noop () ;
 	}
 
 	XTRResult solve_xtr (CREF<Matrix> a) const override {
@@ -131,7 +89,7 @@ public:
 				ret.mR = r12x.transpose () * ret.mR ;
 				rax = TRUE ;
 			}
-			if ifnot (rax)
+			if (!(rax))
 				break ;
 		}
 		return move (ret) ;
@@ -143,7 +101,7 @@ public:
 		auto rax = Eigen::JacobiSVD<Eigen::Matrix4d> (r1x ,Eigen::ComputeFullU | Eigen::ComputeFullV) ;
 		ret.mU = cvt_csc_matrix (rax.matrixU ()) ;
 		const auto r2x = Eigen::Vector4d (rax.singularValues ()) ;
-		ret.mS = DiagMatrix::make (r2x[0] ,r2x[1] ,r2x[2] ,r2x[3]) ;
+		ret.mS = DiagMatrix (r2x[0] ,r2x[1] ,r2x[2] ,r2x[3]) ;
 		ret.mV = cvt_csc_matrix (rax.matrixV ()) ;
 		return move (ret) ;
 	}
@@ -159,17 +117,77 @@ public:
 		Matrix ret ;
 		for (auto &&i : iter (0 ,4 ,0 ,4)) {
 			ret[i] = a (i.mY ,i.mX) ;
-			assume (ifnot (isnan (ret[i]))) ;
+			assume (!(isnan (ret[i]))) ;
 		}
 		return move (ret) ;
 	}
 } ;
 
-exports VFat<MatrixProcHolder> MatrixProcHolder::create (VREF<MatrixProcLayout> that) {
-	return VFat<MatrixProcHolder> (MatrixProcImplement () ,that) ;
-}
+static const auto anonymous = External<MatrixProcHolder ,MatrixProcLayout>::declare ([] () {
+	return inline_hold (MatrixProcImplHolder ()) ;
+}) ;
 
-exports CFat<MatrixProcHolder> MatrixProcHolder::create (CREF<MatrixProcLayout> that) {
-	return CFat<MatrixProcHolder> (MatrixProcImplement () ,that) ;
-}
+class SolveProcImplHolder implement Fat<SolveProcHolder ,SolveProcLayout> {
+public:
+	void initialize () override {
+		noop () ;
+	}
+
+	Image<FLT64> solve_lsm (CREF<Image<FLT64>> a) const override {
+		Image<FLT64> ret = Image<FLT64> (1 ,a.cx ()) ;
+		const auto r1x = cvt_eigen_matrix (a) ;
+		auto rax = Eigen::JacobiSVD<Eigen::MatrixXd> (r1x ,Eigen::ComputeFullV) ;
+		INDEX ix = MathProc::min_of (INDEX (rax.rank ()) ,a.cx () - 1) ;
+		assume (ix >= 0) ;
+		const auto r3x = cvt_csc_matrix (rax.matrixV ()) ;
+		for (auto &&i : iter (0 ,4))
+			ret[i][0] = r3x[i][ix] ;
+		return move (ret) ;
+	}
+
+	Image<FLT64> solve_lsm (CREF<Image<FLT64>> a ,CREF<Image<FLT64>> b) const override {
+		const auto r1x = cvt_eigen_matrix (a) ;
+		const auto r2x = cvt_eigen_matrix (b) ;
+		const auto r4x = r1x.transpose () * r1x ;
+		const auto r3x = r1x.transpose () * r2x ;
+		auto rax = Eigen::JacobiSVD<Eigen::MatrixXd> (r4x ,Eigen::ComputeFullU | Eigen::ComputeFullV) ;
+		const auto r5x = rax.matrixV () ;
+		const auto r6x = cvt_eigen_matrix (rax.singularValues ()) ;
+		const auto r7x = rax.matrixU ().transpose () ;
+		const auto r8x = r5x * pesedo_inverse (r6x) * r7x * r3x ;
+		return cvt_csc_matrix (r8x) ;
+	}
+
+	Eigen::MatrixXd pesedo_inverse (CREF<Eigen::MatrixXd> a) const {
+		Eigen::MatrixXd ret = Eigen::MatrixXd::Zero (a.rows () ,a.cols ()) ;
+		for (auto &&i : iter (0 ,a.rows ()))
+			ret (i ,i) = MathProc::inverse (a (i ,i)) ;
+		return move (ret) ;
+	}
+
+	Eigen::MatrixXd cvt_eigen_matrix (CREF<Eigen::VectorXd> a) const {
+		Eigen::MatrixXd ret = Eigen::MatrixXd::Zero (a.rows () ,a.rows ()) ;
+		for (auto &&i : iter (0 ,a.rows ()))
+			ret (i ,i) = a (i) ;
+		return move (ret) ;
+	}
+
+	Eigen::MatrixXd cvt_eigen_matrix (CREF<Image<FLT64>> a) const {
+		Eigen::MatrixXd ret = Eigen::MatrixXd (a.cx () ,a.cy ()) ;
+		for (auto &&i : a.range ())
+			ret (i.mY ,i.mX) = a[i] ;
+		return move (ret) ;
+	}
+
+	Image<FLT64> cvt_csc_matrix (CREF<Eigen::MatrixXd> a) const {
+		Image<FLT64> ret = Image<FLT64> (a.cols () ,a.rows ()) ;
+		for (auto &&i : ret.range ())
+			ret[i] = a (i.mY ,i.mX) ;
+		return move (ret) ;
+	}
+} ;
+
+static const auto anonymous = External<MatrixProcHolder ,MatrixProcLayout>::declare ([] () {
+	return inline_hold (MatrixProcImplHolder ()) ;
+}) ;
 } ;

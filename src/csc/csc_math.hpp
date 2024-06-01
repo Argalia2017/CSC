@@ -10,6 +10,11 @@
 #include "csc_basic.hpp"
 
 namespace CSC {
+static constexpr auto MATH_E = FLT64 (2.71828182845904523536) ;
+static constexpr auto MATH_PI = FLT64 (3.14159265358979323846) ;
+static constexpr auto MATH_SQRT2 = FLT64 (1.41421356237309504880) ;
+static constexpr auto MATH_PDF0 = FLT64 (0.39894228040143267794) ;
+
 struct MathProcPureLayout ;
 
 struct MathProcLayout {
@@ -73,20 +78,22 @@ struct MathProcHolder implement Interface {
 	virtual FLT64 exp (CREF<FLT64> a) const = 0 ;
 	virtual FLT32 log (CREF<FLT32> a) const = 0 ;
 	virtual FLT64 log (CREF<FLT64> a) const = 0 ;
+	virtual VAL32 log10 (CREF<VAL32> a) const = 0 ;
+	virtual VAL64 log10 (CREF<VAL64> a) const = 0 ;
 	virtual FLT32 pdf (CREF<FLT32> a) const = 0 ;
 	virtual FLT64 pdf (CREF<FLT64> a) const = 0 ;
 	virtual FLT32 cbf (CREF<FLT32> a) const = 0 ;
 	virtual FLT64 cbf (CREF<FLT64> a) const = 0 ;
-	virtual BOOL all_of (CREF<BOOL> a ,CREF<CaptureLayout> b) const = 0 ;
-	virtual BOOL any_of (CREF<BOOL> a ,CREF<CaptureLayout> b) const = 0 ;
-	virtual VAL32 max_of (CREF<VAL32> a ,CREF<CaptureLayout> b) const = 0 ;
-	virtual VAL64 max_of (CREF<VAL64> a ,CREF<CaptureLayout> b) const = 0 ;
-	virtual FLT32 max_of (CREF<FLT32> a ,CREF<CaptureLayout> b) const = 0 ;
-	virtual FLT64 max_of (CREF<FLT64> a ,CREF<CaptureLayout> b) const = 0 ;
-	virtual VAL32 min_of (CREF<VAL32> a ,CREF<CaptureLayout> b) const = 0 ;
-	virtual VAL64 min_of (CREF<VAL64> a ,CREF<CaptureLayout> b) const = 0 ;
-	virtual FLT32 min_of (CREF<FLT32> a ,CREF<CaptureLayout> b) const = 0 ;
-	virtual FLT64 min_of (CREF<FLT64> a ,CREF<CaptureLayout> b) const = 0 ;
+	virtual BOOL all_of (CREF<BOOL> a ,CREF<WrapperLayout> b) const = 0 ;
+	virtual BOOL any_of (CREF<BOOL> a ,CREF<WrapperLayout> b) const = 0 ;
+	virtual VAL32 max_of (CREF<VAL32> a ,CREF<WrapperLayout> b) const = 0 ;
+	virtual VAL64 max_of (CREF<VAL64> a ,CREF<WrapperLayout> b) const = 0 ;
+	virtual FLT32 max_of (CREF<FLT32> a ,CREF<WrapperLayout> b) const = 0 ;
+	virtual FLT64 max_of (CREF<FLT64> a ,CREF<WrapperLayout> b) const = 0 ;
+	virtual VAL32 min_of (CREF<VAL32> a ,CREF<WrapperLayout> b) const = 0 ;
+	virtual VAL64 min_of (CREF<VAL64> a ,CREF<WrapperLayout> b) const = 0 ;
+	virtual FLT32 min_of (CREF<FLT32> a ,CREF<WrapperLayout> b) const = 0 ;
+	virtual FLT64 min_of (CREF<FLT64> a ,CREF<WrapperLayout> b) const = 0 ;
 } ;
 
 class MathProc implement MathProcLayout {
@@ -229,6 +236,12 @@ public:
 	}
 
 	template <class ARG1>
+	imports ARG1 log10 (CREF<ARG1> a) {
+		require (IS_VALUE<ARG1>) ;
+		return MathProcHolder::create (instance ())->log10 (a) ;
+	}
+
+	template <class ARG1>
 	imports ARG1 pdf (CREF<ARG1> a) {
 		require (IS_FLOAT<ARG1>) ;
 		return MathProcHolder::create (instance ())->pdf (a) ;
@@ -244,28 +257,28 @@ public:
 	imports BOOL all_of (CREF<ARG1> a ,CREF<ARG2>...b) {
 		require (ENUM_ALL<IS_BOOL<ARG1>>) ;
 		require (ENUM_ALL<IS_SAME<ARG1 ,ARG2>...>) ;
-		return MathProcHolder::create (instance ())->all_of (a ,Capture<CREF<ARG2>...> (b...)) ;
+		return MathProcHolder::create (instance ())->all_of (a ,MakeWrapper (b...)) ;
 	}
 
 	template <class ARG1 ,class...ARG2>
 	imports BOOL any_of (CREF<ARG1> a ,CREF<ARG2>...b) {
 		require (ENUM_ALL<IS_BOOL<ARG1>>) ;
 		require (ENUM_ALL<IS_SAME<ARG1 ,ARG2>...>) ;
-		return MathProcHolder::create (instance ())->any_of (a ,Capture<CREF<ARG2>...> (b...)) ;
+		return MathProcHolder::create (instance ())->any_of (a ,MakeWrapper (b...)) ;
 	}
 
 	template <class ARG1 ,class...ARG2>
 	imports ARG1 max_of (CREF<ARG1> a ,CREF<ARG2>...b) {
 		require (ENUM_ALL<IS_SCALAR<ARG1>>) ;
 		require (ENUM_ALL<IS_SAME<ARG1 ,ARG2>...>) ;
-		return MathProcHolder::create (instance ())->max_of (a ,Capture<CREF<ARG2>...> (b...)) ;
+		return MathProcHolder::create (instance ())->max_of (a ,MakeWrapper (b...)) ;
 	}
 
 	template <class ARG1 ,class...ARG2>
 	imports ARG1 min_of (CREF<ARG1> a ,CREF<ARG2>...b) {
 		require (ENUM_ALL<IS_SCALAR<ARG1>>) ;
 		require (ENUM_ALL<IS_SAME<ARG1 ,ARG2>...>) ;
-		return MathProcHolder::create (instance ())->min_of (a ,Capture<CREF<ARG2>...> (b...)) ;
+		return MathProcHolder::create (instance ())->min_of (a ,MakeWrapper (b...)) ;
 	}
 } ;
 
@@ -290,8 +303,8 @@ public:
 
 struct Notation {
 	FLAG mRadix ;
-	BOOL mSign ;
 	LENGTH mPrecision ;
+	BOOL mSign ;
 	VAL64 mMantissa ;
 	VAL64 mDownflow ;
 	VAL64 mExponent ;
@@ -362,6 +375,8 @@ struct FloatProcHolder implement Interface {
 	imports CFat<FloatProcHolder> create (CREF<FloatProcLayout> that) ;
 
 	virtual void initialize () = 0 ;
+	virtual LENGTH value_precision () const = 0 ;
+	virtual LENGTH float_precision () const = 0 ;
 	virtual FLT64 encode (CREF<Notation> fexp2) const = 0 ;
 	virtual Notation decode (CREF<FLT64> float_) const = 0 ;
 	virtual Notation fexp2_from_fexp10 (CREF<Notation> fexp10) const = 0 ;
@@ -379,6 +394,14 @@ public:
 			FloatProcHolder::create (ret)->initialize () ;
 			return move (ret) ;
 		}) ;
+	}
+
+	imports LENGTH value_precision () {
+		return FloatProcHolder::create (instance ())->value_precision () ;
+	}
+
+	imports LENGTH float_precision () {
+		return FloatProcHolder::create (instance ())->float_precision () ;
 	}
 
 	imports FLT64 encode (CREF<Notation> fexp2) {
@@ -589,7 +612,7 @@ public:
 	}
 
 	inline BOOL operator!= (CREF<Integer> that) const {
-		return ifnot (equal (that)) ;
+		return !(equal (that)) ;
 	}
 
 	FLAG compr (CREF<Integer> that) const {
@@ -726,6 +749,70 @@ public:
 
 	inline void operator-- (VAL32) {
 		decrease () ;
+	}
+} ;
+
+struct HashProcPureLayout ;
+
+struct HashProcLayout {
+	Ref<HashProcPureLayout> mThis ;
+} ;
+
+struct HashProcHolder implement Interface {
+	imports VFat<HashProcHolder> create (VREF<HashProcLayout> that) ;
+	imports CFat<HashProcHolder> create (CREF<HashProcLayout> that) ;
+
+	virtual void initialize () = 0 ;
+	virtual CHAR fnvhash32 (CREF<Pointer> src ,CREF<LENGTH> size_) const = 0 ;
+	virtual CHAR fnvhash32 (CREF<Pointer> src ,CREF<LENGTH> size_ ,CREF<CHAR> curr) const = 0 ;
+	virtual QUAD fnvhash64 (CREF<Pointer> src ,CREF<LENGTH> size_) const = 0 ;
+	virtual QUAD fnvhash64 (CREF<Pointer> src ,CREF<LENGTH> size_ ,CREF<QUAD> curr) const = 0 ;
+	virtual BYTE crchash8 (CREF<Pointer> src ,CREF<LENGTH> size_) const = 0 ;
+	virtual BYTE crchash8 (CREF<Pointer> src ,CREF<LENGTH> size_ ,CREF<BYTE> curr) const = 0 ;
+	virtual WORD crchash16 (CREF<Pointer> src ,CREF<LENGTH> size_) const = 0 ;
+	virtual WORD crchash16 (CREF<Pointer> src ,CREF<LENGTH> size_ ,CREF<WORD> curr) const = 0 ;
+} ;
+
+class HashProc implement HashProcLayout {
+public:
+	imports CREF<HashProc> instance () {
+		return memorize ([&] () {
+			HashProc ret ;
+			HashProcHolder::create (ret)->initialize () ;
+			return move (ret) ;
+		}) ;
+	}
+
+	imports CHAR fnvhash32 (CREF<Pointer> src ,CREF<LENGTH> size_) {
+		return HashProcHolder::create (instance ())->fnvhash32 (src ,size_) ;
+	}
+
+	imports CHAR fnvhash32 (CREF<Pointer> src ,CREF<LENGTH> size_ ,CREF<CHAR> curr) {
+		return HashProcHolder::create (instance ())->fnvhash32 (src ,size_ ,curr) ;
+	}
+
+	imports QUAD fnvhash64 (CREF<Pointer> src ,CREF<LENGTH> size_) {
+		return HashProcHolder::create (instance ())->fnvhash64 (src ,size_) ;
+	}
+
+	imports QUAD fnvhash64 (CREF<Pointer> src ,CREF<LENGTH> size_ ,CREF<QUAD> curr) {
+		return HashProcHolder::create (instance ())->fnvhash64 (src ,size_ ,curr) ;
+	}
+
+	imports BYTE crchash8 (CREF<Pointer> src ,CREF<LENGTH> size_) {
+		return HashProcHolder::create (instance ())->crchash8 (src ,size_) ;
+	}
+
+	imports BYTE crchash8 (CREF<Pointer> src ,CREF<LENGTH> size_ ,CREF<BYTE> curr) {
+		return HashProcHolder::create (instance ())->crchash8 (src ,size_ ,curr) ;
+	}
+
+	imports WORD crchash16 (CREF<Pointer> src ,CREF<LENGTH> size_) {
+		return HashProcHolder::create (instance ())->crchash16 (src ,size_) ;
+	}
+
+	imports WORD crchash16 (CREF<Pointer> src ,CREF<LENGTH> size_ ,CREF<WORD> curr) {
+		return HashProcHolder::create (instance ())->crchash16 (src ,size_ ,curr) ;
 	}
 } ;
 } ;

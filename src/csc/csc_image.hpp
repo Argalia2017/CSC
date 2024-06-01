@@ -12,6 +12,11 @@
 #include "csc_array.hpp"
 
 namespace CSC {
+struct Color2B {
+	BYTE mB ;
+	BYTE mG ;
+} ;
+
 struct Color3B {
 	BYTE mB ;
 	BYTE mG ;
@@ -25,19 +30,132 @@ struct Color4B {
 	BYTE mA ;
 } ;
 
+struct ColorLayout {
+	BoxBuffer<FLT64 ,RANK4> mColor ;
+} ;
+
+class Color implement ColorLayout {
+private:
+	using ColorLayout::mColor ;
+
+public:
+	implicit Color () = default ;
+
+	implicit Color (CREF<FLT64> that) {
+		mColor[0] = that ;
+		mColor[1] = that ;
+		mColor[2] = that ;
+		mColor[3] = that ;
+	}
+
+	implicit Color (CREF<Color3B> that) {
+		mColor[0] = FLT64 (that.mB) ;
+		mColor[1] = FLT64 (that.mG) ;
+		mColor[2] = FLT64 (that.mR) ;
+		mColor[3] = 0 ;
+	}
+
+	implicit Color (CREF<Color4B> that) {
+		mColor[0] = FLT64 (that.mB) ;
+		mColor[1] = FLT64 (that.mG) ;
+		mColor[2] = FLT64 (that.mR) ;
+		mColor[3] = FLT64 (that.mA) ;
+	}
+
+	explicit Color (CREF<FLT64> b ,CREF<FLT64> g ,CREF<FLT64> r ,CREF<FLT64> a) {
+		mColor[0] = b ;
+		mColor[1] = g ;
+		mColor[2] = r ;
+		mColor[3] = a ;
+	}
+
+	CREF<FLT64> at (CREF<INDEX> index) const leftvalue {
+		return mColor[index] ;
+	}
+
+	forceinline CREF<FLT64> operator[] (CREF<INDEX> index) const leftvalue {
+		return at (index) ;
+	}
+
+	Color add (CREF<Color> that) const {
+		Color ret ;
+		for (auto &&i : iter (0 ,4))
+			ret.mColor[i] = mColor[i] + that.mColor[i] ;
+		return move (ret) ;
+	}
+
+	forceinline Color operator+ (CREF<Color> that) const {
+		return add (that) ;
+	}
+
+	forceinline void operator+= (CREF<Color> that) {
+		thiz = add (that) ;
+	}
+
+	Color sub (CREF<Color> that) const {
+		Color ret ;
+		for (auto &&i : iter (0 ,4))
+			ret.mColor[i] = mColor[i] - that.mColor[i] ;
+		return move (ret) ;
+	}
+
+	forceinline Color operator- (CREF<Color> that) const {
+		return sub (that) ;
+	}
+
+	forceinline void operator-= (CREF<Color> that) {
+		thiz = sub (that) ;
+	}
+
+	Color mul (CREF<FLT64> scale) const {
+		Color ret ;
+		for (auto &&i : iter (0 ,4))
+			ret.mColor[i] = mColor[i] * scale ;
+		return move (ret) ;
+	}
+
+	forceinline Color operator* (CREF<FLT64> scale) const {
+		return mul (scale) ;
+	}
+
+	forceinline void operator*= (CREF<FLT64> scale) {
+		thiz = mul (scale) ;
+	}
+
+	Color div (CREF<FLT64> scale) const {
+		Color ret ;
+		for (auto &&i : iter (0 ,4))
+			ret.mColor[i] = mColor[i] / scale ;
+		return move (ret) ;
+	}
+
+	forceinline Color operator/ (CREF<FLT64> scale) const {
+		return div (scale) ;
+	}
+
+	forceinline void operator/= (CREF<FLT64> scale) {
+		thiz = div (scale) ;
+	}
+
+	void clamp (CREF<FLT64> lb ,CREF<FLT64> rb) {
+		for (auto &&i : iter (0 ,4))
+			mColor[i] = MathProc::clamp (mColor[i] ,lb ,rb) ;
+	}
+} ;
+
 template <class A>
 class RowProxy {
 private:
-	using ITEM = REF<typeof (A (NULL)->at (0 ,0)) ,REFLECT_REF<POINTER_BASE<A>>> ;
+	using ITEM = REF<typeof (PTR<A> (NULL)->at (0 ,0)) ,REFLECT_REF<A>> ;
 
 protected:
-	A mThat ;
+	PTR<A> mThat ;
 	INDEX mY ;
 
 public:
 	implicit RowProxy () = delete ;
 
-	explicit RowProxy (XREF<POINTER_BASE<A>> that ,CREF<INDEX> y) :mThat ((&that)) {
+	explicit RowProxy (XREF<A> that ,CREF<INDEX> y) :mThat ((&that)) {
 		mY = y ;
 	}
 
@@ -49,7 +167,8 @@ public:
 struct ImageWidth {
 	LENGTH mCX ;
 	LENGTH mCY ;
-	Clazz mClazz ;
+	LENGTH mStep ;
+	LENGTH mChannel ;
 
 public:
 	LENGTH size () const {
@@ -61,7 +180,9 @@ public:
 			return FALSE ;
 		if (mCY != that.mCY)
 			return FALSE ;
-		if (mClazz != that.mClazz)
+		if (mStep != that.mStep)
+			return FALSE ;
+		if (mChannel != that.mChannel)
 			return FALSE ;
 		return TRUE ;
 	}
@@ -71,7 +192,7 @@ public:
 	}
 
 	forceinline BOOL operator!= (CREF<ImageWidth> that) const {
-		return ifnot (equal (that)) ;
+		return !(equal (that)) ;
 	}
 } ;
 
@@ -85,12 +206,22 @@ struct ImageLayout {
 	LENGTH mOffset ;
 } ;
 
+template <class A>
+struct ImageImplLayout implement ImageLayout {
+public:
+	implicit ImageImplLayout () noexcept {
+		noop (RefBuffer<A> ()) ;
+	}
+} ;
+
 struct ImageHolder implement Interface {
 	imports VFat<ImageHolder> create (VREF<ImageLayout> that) ;
 	imports CFat<ImageHolder> create (CREF<ImageLayout> that) ;
 
-	virtual void initialize (CREF<Unknown> element ,CREF<LENGTH> cx_ ,CREF<LENGTH> cy_ ,CREF<Clazz> clazz) = 0 ;
+	virtual void initialize (CREF<Unknown> element ,RREF<ImageLayout> that) = 0 ;
+	virtual void initialize (CREF<Unknown> element ,CREF<LENGTH> cx_ ,CREF<LENGTH> cy_) = 0 ;
 	virtual void initialize (CREF<Unknown> element ,CREF<ImageWidth> width) = 0 ;
+	virtual BOOL exist () const = 0 ;
 	virtual LENGTH size () const = 0 ;
 	virtual LENGTH step () const = 0 ;
 	virtual LENGTH cx () const = 0 ;
@@ -101,6 +232,8 @@ struct ImageHolder implement Interface {
 	virtual ImageWidth width () const = 0 ;
 	virtual void reset () = 0 ;
 	virtual void reset (CREF<INDEX> cx_ ,CREF<INDEX> cy_ ,CREF<INDEX> sx_ ,CREF<INDEX> sy_ ,CREF<INDEX> offset_) = 0 ;
+	virtual VREF<BoxLayout> raw () leftvalue = 0 ;
+	virtual CREF<BoxLayout> raw () const leftvalue = 0 ;
 	virtual VREF<Pointer> at (CREF<INDEX> x ,CREF<INDEX> y) leftvalue = 0 ;
 	virtual CREF<Pointer> at (CREF<INDEX> x ,CREF<INDEX> y) const leftvalue = 0 ;
 	virtual void fill (CREF<Pointer> item) = 0 ;
@@ -108,31 +241,13 @@ struct ImageHolder implement Interface {
 } ;
 
 template <class A>
-struct ImageUnknownBinder implement Unknown {
-	FLAG reflect (CREF<FLAG> uuid) const override {
-		if (uuid == ReflectSizeBinder<A>::expr)
-			return inline_code (ReflectSizeBinder<A> ()) ;
-		if (uuid == ReflectCreateBinder<A>::expr)
-			return inline_code (ReflectCreateBinder<A> ()) ;
-		if (uuid == ReflectDestroyBinder<A>::expr)
-			return inline_code (ReflectDestroyBinder<A> ()) ;
-		if (uuid == ReflectMoveBinder<A>::expr)
-			return inline_code (ReflectMoveBinder<A> ()) ;
-		if (uuid == ReflectCloneBinder<A>::expr)
-			return inline_code (ReflectCloneBinder<A> ()) ;
-		if (uuid == ReflectCodeBinder<A>::expr)
-			return inline_code (ReflectCodeBinder<A> ()) ;
-		return ZERO ;
-	}
-} ;
-
-template <class A>
-class Image implement ImageLayout {
+class Image implement ImageImplLayout<A> {
 private:
 	require (IS_TRIVIAL<A>) ;
+	using ImageLayout = ImageImplLayout<A> ;
 
 protected:
-	using ImageLayout::mImage as (RefBuffer<A>) ;
+	using ImageLayout::mImage ;
 	using ImageLayout::mWidth ;
 	using ImageLayout::mCX ;
 	using ImageLayout::mCY ;
@@ -143,12 +258,20 @@ protected:
 public:
 	implicit Image () = default ;
 
+	implicit Image (RREF<ImageLayout> that) {
+		ImageHolder::create (thiz)->initialize (RefUnknownBinder<A> () ,move (that)) ;
+	}
+
 	explicit Image (CREF<LENGTH> cx_ ,CREF<LENGTH> cy_) {
-		ImageHolder::create (thiz)->initialize (ImageUnknownBinder<A> () ,cx_ ,cy_ ,Clazz (TYPE<A>::expr)) ;
+		ImageHolder::create (thiz)->initialize (RefUnknownBinder<A> () ,cx_ ,cy_) ;
 	}
 
 	explicit Image (CREF<ImageWidth> width) {
-		ImageHolder::create (thiz)->initialize (ImageUnknownBinder<A> () ,width) ;
+		ImageHolder::create (thiz)->initialize (RefUnknownBinder<A> () ,width) ;
+	}
+
+	BOOL exist () const {
+		return ImageHolder::create (thiz)->exist () ;
 	}
 
 	LENGTH size () const {
@@ -203,8 +326,16 @@ public:
 		return at (index) ;
 	}
 
-	forceinline RowProxy<VPTR<Image>> operator[] (CREF<INDEX> y) leftvalue {
-		return RowProxy<VPTR<Image>> (thiz ,y) ;
+	forceinline RowProxy<VREF<Image>> operator[] (CREF<INDEX> y) leftvalue {
+		return RowProxy<VREF<Image>> (thiz ,y) ;
+	}
+
+	VREF<BoxLayout> raw () leftvalue {
+		return ImageHolder::create (thiz)->raw () ;
+	}
+
+	CREF<BoxLayout> raw () const leftvalue {
+		return ImageHolder::create (thiz)->raw () ;
 	}
 
 	CREF<A> at (CREF<INDEX> x ,CREF<INDEX> y) const leftvalue {
@@ -219,8 +350,8 @@ public:
 		return at (index) ;
 	}
 
-	forceinline RowProxy<CPTR<Image>> operator[] (CREF<INDEX> y) const leftvalue {
-		return RowProxy<CPTR<Image>> (thiz ,y) ;
+	forceinline RowProxy<CREF<Image>> operator[] (CREF<INDEX> y) const leftvalue {
+		return RowProxy<CREF<Image>> (thiz ,y) ;
 	}
 
 	PixelIterator range () const {
@@ -427,119 +558,6 @@ public:
 	}
 } ;
 
-struct ColorLayout {
-	BoxBuffer<FLT64 ,RANK4> mColor ;
-} ;
-
-class Color implement ColorLayout {
-private:
-	using ColorLayout::mColor ;
-
-public:
-	implicit Color () = default ;
-
-	implicit Color (CREF<FLT64> that) {
-		mColor[0] = that ;
-		mColor[1] = that ;
-		mColor[2] = that ;
-		mColor[3] = that ;
-	}
-
-	implicit Color (CREF<Color3B> that) {
-		mColor[0] = FLT64 (that.mB) ;
-		mColor[1] = FLT64 (that.mG) ;
-		mColor[2] = FLT64 (that.mR) ;
-		mColor[3] = 0 ;
-	}
-
-	implicit Color (CREF<Color4B> that) {
-		mColor[0] = FLT64 (that.mB) ;
-		mColor[1] = FLT64 (that.mG) ;
-		mColor[2] = FLT64 (that.mR) ;
-		mColor[3] = FLT64 (that.mA) ;
-	}
-
-	explicit Color (CREF<FLT64> b ,CREF<FLT64> g ,CREF<FLT64> r ,CREF<FLT64> a) {
-		mColor[0] = b ;
-		mColor[1] = g ;
-		mColor[2] = r ;
-		mColor[3] = a ;
-	}
-
-	CREF<FLT64> at (CREF<INDEX> index) const leftvalue {
-		return mColor[index] ;
-	}
-
-	forceinline CREF<FLT64> operator[] (CREF<INDEX> index) const leftvalue {
-		return at (index) ;
-	}
-
-	Color add (CREF<Color> that) const {
-		Color ret ;
-		for (auto &&i : iter (0 ,4))
-			ret.mColor[i] = mColor[i] + that.mColor[i] ;
-		return move (ret) ;
-	}
-
-	forceinline Color operator+ (CREF<Color> that) const {
-		return add (that) ;
-	}
-
-	forceinline void operator+= (CREF<Color> that) {
-		thiz = add (that) ;
-	}
-
-	Color sub (CREF<Color> that) const {
-		Color ret ;
-		for (auto &&i : iter (0 ,4))
-			ret.mColor[i] = mColor[i] - that.mColor[i] ;
-		return move (ret) ;
-	}
-
-	forceinline Color operator- (CREF<Color> that) const {
-		return sub (that) ;
-	}
-
-	forceinline void operator-= (CREF<Color> that) {
-		thiz = sub (that) ;
-	}
-
-	Color mul (CREF<FLT64> scale) const {
-		Color ret ;
-		for (auto &&i : iter (0 ,4))
-			ret.mColor[i] = ret.mColor[i] * scale ;
-		return move (ret) ;
-	}
-
-	forceinline Color operator* (CREF<FLT64> scale) const {
-		return mul (scale) ;
-	}
-
-	forceinline void operator*= (CREF<FLT64> scale) {
-		thiz = mul (scale) ;
-	}
-
-	Color div (CREF<FLT64> scale) const {
-		Color ret ;
-		for (auto &&i : iter (0 ,4))
-			ret.mColor[i] = ret.mColor[i] / scale ;
-		return move (ret) ;
-	}
-
-	forceinline Color operator/ (CREF<FLT64> scale) const {
-		return div (scale) ;
-	}
-
-	forceinline void operator/= (CREF<FLT64> scale) {
-		thiz = div (scale) ;
-	}
-
-	void clamp (CREF<FLT64> lb ,CREF<FLT64> rb) {
-		for (auto &&i : iter (0 ,4))
-			mColor[i] = MathProc::clamp (mColor[i] ,lb ,rb) ;
-	}
-} ;
-
 struct ImageProcPureLayout ;
 
 struct ImageProcLayout {
@@ -551,10 +569,11 @@ struct ImageProcHolder implement Interface {
 	imports CFat<ImageProcHolder> create (CREF<ImageProcLayout> that) ;
 
 	virtual void initialize () = 0 ;
+	virtual ImageLayout load (RREF<AutoRef<Pointer>> item) const = 0 ;
 	virtual ImageLayout load (CREF<String<STR>> file) const = 0 ;
 	virtual void save (CREF<String<STR>> file ,CREF<ImageLayout> image) const = 0 ;
-	virtual Color3B sampler (TYPE<Color3B> ,CREF<ImageLayout> image ,CREF<FLT64> x ,CREF<FLT64> y) const = 0 ;
-	virtual Color4B sampler (TYPE<Color4B> ,CREF<ImageLayout> image ,CREF<FLT64> x ,CREF<FLT64> y) const = 0 ;
+	virtual Color3B sampler (CREF<Image<Color3B>> image ,CREF<FLT64> x ,CREF<FLT64> y) const = 0 ;
+	virtual Color4B sampler (CREF<Image<Color4B>> image ,CREF<FLT64> x ,CREF<FLT64> y) const = 0 ;
 } ;
 
 class ImageProc implement ImageProcLayout {
@@ -570,6 +589,10 @@ public:
 		}) ;
 	}
 
+	imports ImageLayout load (RREF<AutoRef<Pointer>> item) {
+		return ImageProcHolder::create (instance ())->load (move (item)) ;
+	}
+
 	imports ImageLayout load (CREF<String<STR>> file) {
 		return ImageProcHolder::create (instance ())->load (file) ;
 	}
@@ -580,7 +603,7 @@ public:
 
 	template <class ARG1>
 	imports ARG1 sampler (CREF<Image<ARG1>> image ,CREF<FLT64> x ,CREF<FLT64> y) {
-		return ImageProcHolder::create (instance ())->sampler (TYPE<ARG1>::expr ,image ,x ,y) ;
+		return ImageProcHolder::create (instance ())->sampler (image ,x ,y) ;
 	}
 } ;
 
