@@ -3,7 +3,6 @@
 #undef exports
 #undef imports
 #undef forceinline
-#undef declspec
 #undef leftvalue
 #undef rightvalue
 #undef thiz
@@ -21,6 +20,7 @@
 #undef ifdo
 #undef discard
 #undef typeof
+#undef nullof
 
 #ifdef csc_push_macro
 #pragma pop_macro ("TRUE")

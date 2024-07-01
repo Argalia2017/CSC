@@ -12,10 +12,10 @@
 #include "csc_array.hpp"
 
 namespace CSC {
-struct StreamProcPureLayout ;
+struct StreamProcImplLayout ;
 
 struct StreamProcLayout {
-	Ref<StreamProcPureLayout> mThis ;
+	Ref<StreamProcImplLayout> mThis ;
 } ;
 
 struct StreamProcHolder implement Interface {
@@ -35,7 +35,7 @@ struct StreamProcHolder implement Interface {
 	virtual INDEX hex_from_str (CREF<STRU32> str) const = 0 ;
 	virtual STRU32 str_from_hex (CREF<INDEX> hex) const = 0 ;
 	virtual BOOL is_word (CREF<STRU32> str) const = 0 ;
-	virtual BOOL is_control (CREF<STRU32> str) const = 0 ;
+	virtual BOOL is_ctrl (CREF<STRU32> str) const = 0 ;
 	virtual STRU32 word_from_ctrl (CREF<STRU32> str) const = 0 ;
 	virtual STRU32 ctrl_from_word (CREF<STRU32> str) const = 0 ;
 } ;
@@ -101,8 +101,8 @@ public:
 		return StreamProcHolder::create (instance ())->is_word (str) ;
 	}
 
-	imports BOOL is_control (CREF<STRU32> str) {
-		return StreamProcHolder::create (instance ())->is_control (str) ;
+	imports BOOL is_ctrl (CREF<STRU32> str) {
+		return StreamProcHolder::create (instance ())->is_ctrl (str) ;
 	}
 
 	imports STRU32 word_from_ctrl (CREF<STRU32> str) {
@@ -119,9 +119,27 @@ static constexpr auto BOM = TYPE<PlaceHolder<RANK2>>::expr ;
 static constexpr auto GAP = TYPE<PlaceHolder<RANK3>>::expr ;
 static constexpr auto EOS = TYPE<PlaceHolder<RANK4>>::expr ;
 
-struct StreamReaderFriend ;
+struct StreamReader ;
+
+template <class...>
+trait HAS_FRIEND_READ_HELP ;
+
+template <class A ,class OTHERWISE>
+trait HAS_FRIEND_READ_HELP<A ,OTHERWISE> {
+	using RET = ENUM_FALSE ;
+} ;
+
+template <class A>
+trait HAS_FRIEND_READ_HELP<A ,REQUIRE<KILL<ENUM_TRUE ,typeof (nullof (A).friend_read (nullof (StreamReader)))>>> {
+	using RET = ENUM_TRUE ;
+} ;
+
+template <class A>
+using HAS_FRIEND_READ = typename HAS_FRIEND_READ_HELP<A ,ALWAYS>::RET ;
 
 struct StreamReader implement Interface {
+	virtual void backup () = 0 ;
+	virtual void recover () = 0 ;
 	virtual void read (VREF<BOOL> item) = 0 ;
 	virtual void read (VREF<VAL32> item) = 0 ;
 	virtual void read (VREF<VAL64> item) = 0 ;
@@ -142,7 +160,11 @@ struct StreamReader implement Interface {
 	virtual void read (CREF<typeof (BOM)> item) = 0 ;
 	virtual void read (CREF<typeof (GAP)> item) = 0 ;
 	virtual void read (CREF<typeof (EOS)> item) = 0 ;
-	virtual void read (VREF<StreamReaderFriend> item) = 0 ;
+
+	template <class ARG1 ,class = REQUIRE<HAS_FRIEND_READ<ARG1>>>
+	void read (VREF<ARG1> item) {
+		item.friend_read (thiz) ;
+	}
 } ;
 
 template <class A>
@@ -150,6 +172,14 @@ class StreamReaderBinder implement Fat<StreamReader ,A> {
 public:
 	imports VFat<StreamReader> create (VREF<A> that) {
 		return VFat<StreamReader> (StreamReaderBinder () ,that) ;
+	}
+
+	void backup () override {
+		return thiz.fake.backup () ;
+	}
+
+	void recover () override {
+		return thiz.fake.recover () ;
 	}
 
 	void read (VREF<BOOL> item) override {
@@ -231,30 +261,11 @@ public:
 	void read (CREF<typeof (EOS)> item) override {
 		return thiz.fake.read (item) ;
 	}
-
-	void read (VREF<StreamReaderFriend> item) override {
-		return thiz.fake.read (item) ;
-	}
-} ;
-
-struct StreamReaderFriend implement Interface {
-	virtual void friend_read (VREF<StreamReader> reader) = 0 ;
-} ;
-
-template <class A>
-class StreamReaderFriendBinder implement Fat<StreamReaderFriend ,A> {
-public:
-	imports VFat<StreamReaderFriend> create (VREF<A> that) {
-		return VFat<StreamReaderFriend> (StreamReaderFriendBinder () ,that) ;
-	}
-
-	void friend_read (VREF<StreamReader> reader) override {
-		reader.read (thiz.fake) ;
-	}
 } ;
 
 struct ByteReaderLayout {
 	Ref<RefBuffer<BYTE>> mStream ;
+	Function<VREF<ByteReaderLayout>> mOverflow ;
 	INDEX mRead ;
 	INDEX mWrite ;
 	INDEX mBackupRead ;
@@ -266,6 +277,7 @@ struct ByteReaderHolder implement Interface {
 	imports CFat<ByteReaderHolder> create (CREF<ByteReaderLayout> that) ;
 
 	virtual void initialize (RREF<Ref<RefBuffer<BYTE>>> stream) = 0 ;
+	virtual void use_overflow (CREF<FunctionLayout> overflow) = 0 ;
 	virtual LENGTH size () const = 0 ;
 	virtual LENGTH length () const = 0 ;
 	virtual void reset () = 0 ;
@@ -292,7 +304,6 @@ struct ByteReaderHolder implement Interface {
 	virtual void read (CREF<typeof (BOM)> item) = 0 ;
 	virtual void read (CREF<typeof (GAP)> item) = 0 ;
 	virtual void read (CREF<typeof (EOS)> item) = 0 ;
-	virtual void read (VREF<StreamReaderFriend> item) = 0 ;
 } ;
 
 class ByteReader implement ByteReaderLayout {
@@ -308,6 +319,10 @@ public:
 
 	explicit ByteReader (RREF<Ref<RefBuffer<BYTE>>> stream) {
 		ByteReaderHolder::create (thiz)->initialize (move (stream)) ;
+	}
+
+	void use_overflow (CREF<Function<VREF<ByteReader>>> overflow) {
+		return ByteReaderHolder::create (thiz)->use_overflow (overflow) ;
 	}
 
 	LENGTH size () const {
@@ -521,24 +536,21 @@ public:
 		return thiz ;
 	}
 
-	void read (VREF<StreamReaderFriend> item) {
-		return ByteReaderHolder::create (thiz)->read (item) ;
+	template <class ARG1 ,class = REQUIRE<HAS_FRIEND_READ<ARG1>>>
+	void read (VREF<ARG1> item) {
+		item.friend_read (StreamReaderBinder<ByteReader>::create (thiz).self) ;
 	}
 
-	forceinline VREF<ByteReader> operator>> (VREF<StreamReaderFriend> item) {
+	template <class ARG1 ,class = REQUIRE<HAS_FRIEND_READ<ARG1>>>
+	forceinline VREF<ByteReader> operator>> (VREF<ARG1> item) {
 		read (item) ;
 		return thiz ;
 	}
-
-	template <class ARG1 ,class = REQUIRE<ENUM_NOT<IS_OBJECT<ARG1>>>>
-	void read (VREF<ARG1> item) = delete ;
-
-	template <class ARG1 ,class = REQUIRE<ENUM_NOT<IS_OBJECT<ARG1>>>>
-	forceinline VREF<ByteReader> operator>> (VREF<ARG1> item) = delete ;
 } ;
 
 struct TextReaderLayout {
 	Ref<RefBuffer<BYTE>> mStream ;
+	Function<VREF<TextReaderLayout>> mOverflow ;
 	INDEX mRead ;
 	INDEX mWrite ;
 	INDEX mBackupRead ;
@@ -550,6 +562,7 @@ struct TextReaderHolder implement Interface {
 	imports CFat<TextReaderHolder> create (CREF<TextReaderLayout> that) ;
 
 	virtual void initialize (RREF<Ref<RefBuffer<BYTE>>> stream) = 0 ;
+	virtual void use_overflow (CREF<FunctionLayout> overflow) = 0 ;
 	virtual LENGTH size () const = 0 ;
 	virtual LENGTH length () const = 0 ;
 	virtual void reset () = 0 ;
@@ -576,7 +589,6 @@ struct TextReaderHolder implement Interface {
 	virtual void read (CREF<typeof (BOM)> item) = 0 ;
 	virtual void read (CREF<typeof (GAP)> item) = 0 ;
 	virtual void read (CREF<typeof (EOS)> item) = 0 ;
-	virtual void read (VREF<StreamReaderFriend> item) = 0 ;
 } ;
 
 class TextReader implement TextReaderLayout {
@@ -592,6 +604,10 @@ public:
 
 	explicit TextReader (RREF<Ref<RefBuffer<BYTE>>> stream) {
 		TextReaderHolder::create (thiz)->initialize (move (stream)) ;
+	}
+
+	void use_overflow (CREF<Function<VREF<TextReader>>> overflow) {
+		return TextReaderHolder::create (thiz)->use_overflow (overflow) ;
 	}
 
 	LENGTH size () const {
@@ -805,52 +821,39 @@ public:
 		return thiz ;
 	}
 
-	void read (VREF<StreamReaderFriend> item) {
-		return TextReaderHolder::create (thiz)->read (item) ;
+	template <class ARG1 ,class = REQUIRE<HAS_FRIEND_READ<ARG1>>>
+	void read (VREF<ARG1> item) {
+		item.friend_read (StreamReaderBinder<TextReader>::create (thiz).self) ;
 	}
 
-	forceinline VREF<TextReader> operator>> (VREF<StreamReaderFriend> item) {
+	template <class ARG1 ,class = REQUIRE<HAS_FRIEND_READ<ARG1>>>
+	forceinline VREF<TextReader> operator>> (VREF<ARG1> item) {
 		read (item) ;
 		return thiz ;
 	}
-
-	template <class ARG1 ,class = REQUIRE<ENUM_NOT<IS_OBJECT<ARG1>>>>
-	void read (VREF<ARG1> item) = delete ;
-
-	template <class ARG1 ,class = REQUIRE<ENUM_NOT<IS_OBJECT<ARG1>>>>
-	forceinline VREF<ByteReader> operator>> (VREF<ARG1> item) = delete ;
 } ;
 
-struct ReflectWriter implement Interface {
-	virtual void write (CREF<BOOL> item) = 0 ;
-	virtual void write (CREF<VAL32> item) = 0 ;
-	virtual void write (CREF<VAL64> item) = 0 ;
-	virtual void write (CREF<FLT32> item) = 0 ;
-	virtual void write (CREF<FLT64> item) = 0 ;
-	virtual void write (CREF<BYTE> item) = 0 ;
-	virtual void write (CREF<WORD> item) = 0 ;
-	virtual void write (CREF<CHAR> item) = 0 ;
-	virtual void write (CREF<QUAD> item) = 0 ;
-	virtual void write (CREF<STRU32> item) = 0 ;
-	virtual void write (CREF<Slice> item) = 0 ;
-	virtual void write (CREF<String<STRA>> item) = 0 ;
-	virtual void write (CREF<String<STRW>> item) = 0 ;
-	virtual void write (CREF<String<STRU8>> item) = 0 ;
-	virtual void write (CREF<String<STRU16>> item) = 0 ;
-	virtual void write (CREF<String<STRU32>> item) = 0 ;
-	virtual void write (CREF<typeof (BOM)> item) = 0 ;
-	virtual void write (CREF<typeof (CLS)> item) = 0 ;
-	virtual void write (CREF<typeof (GAP)> item) = 0 ;
-	virtual void write (CREF<typeof (EOS)> item) = 0 ;
+struct StreamWriter ;
 
-	imports forceinline consteval FLAG expr_m () noexcept {
-		return 202 ;
-	}
+template <class...>
+trait HAS_FRIEND_WRITE_HELP ;
+
+template <class A ,class OTHERWISE>
+trait HAS_FRIEND_WRITE_HELP<A ,OTHERWISE> {
+	using RET = ENUM_FALSE ;
 } ;
 
-struct StreamWriterFriend ;
+template <class A>
+trait HAS_FRIEND_WRITE_HELP<A ,REQUIRE<KILL<ENUM_TRUE ,typeof (nullof (A).friend_write (nullof (StreamWriter)))>>> {
+	using RET = ENUM_TRUE ;
+} ;
+
+template <class A>
+using HAS_FRIEND_WRITE = typename HAS_FRIEND_WRITE_HELP<A ,ALWAYS>::RET ;
 
 struct StreamWriter implement Interface {
+	virtual void backup () = 0 ;
+	virtual void recover () = 0 ;
 	virtual void write (CREF<BOOL> item) = 0 ;
 	virtual void write (CREF<VAL32> item) = 0 ;
 	virtual void write (CREF<VAL64> item) = 0 ;
@@ -871,7 +874,11 @@ struct StreamWriter implement Interface {
 	virtual void write (CREF<typeof (CLS)> item) = 0 ;
 	virtual void write (CREF<typeof (GAP)> item) = 0 ;
 	virtual void write (CREF<typeof (EOS)> item) = 0 ;
-	virtual void write (CREF<StreamWriterFriend> item) = 0 ;
+
+	template <class ARG1 ,class = REQUIRE<HAS_FRIEND_WRITE<ARG1>>>
+	void write (CREF<ARG1> item) {
+		item.friend_write (thiz) ;
+	}
 } ;
 
 template <class A>
@@ -879,6 +886,14 @@ class StreamWriterBinder implement Fat<StreamWriter ,A> {
 public:
 	imports VFat<StreamWriter> create (VREF<A> that) {
 		return VFat<StreamWriter> (StreamWriterBinder () ,that) ;
+	}
+
+	void backup () override {
+		return thiz.fake.backup () ;
+	}
+
+	void recover () override {
+		return thiz.fake.recover () ;
 	}
 
 	void write (CREF<BOOL> item) override {
@@ -960,30 +975,11 @@ public:
 	void write (CREF<typeof (EOS)> item) override {
 		return thiz.fake.write (item) ;
 	}
-
-	void write (CREF<StreamWriterFriend> item) override {
-		return thiz.fake.write (item) ;
-	}
-} ;
-
-struct StreamWriterFriend implement Interface {
-	virtual void friend_write (VREF<StreamWriter> writer) const = 0 ;
-} ;
-
-template <class A>
-class StreamWriterFriendBinder implement Fat<StreamWriterFriend ,A> {
-public:
-	imports CFat<StreamWriterFriend> create (CREF<A> that) {
-		return CFat<StreamWriterFriend> (StreamWriterFriendBinder () ,that) ;
-	}
-
-	void friend_write (VREF<StreamWriter> writer) const override {
-		writer.write (thiz.fake) ;
-	}
 } ;
 
 struct ByteWriterLayout {
 	Ref<RefBuffer<BYTE>> mStream ;
+	Function<VREF<ByteWriterLayout>> mOverflow ;
 	INDEX mRead ;
 	INDEX mWrite ;
 	INDEX mBackupRead ;
@@ -995,6 +991,7 @@ struct ByteWriterHolder implement Interface {
 	imports CFat<ByteWriterHolder> create (CREF<ByteWriterLayout> that) ;
 
 	virtual void initialize (RREF<Ref<RefBuffer<BYTE>>> stream) = 0 ;
+	virtual void use_overflow (CREF<FunctionLayout> overflow) = 0 ;
 	virtual LENGTH size () const = 0 ;
 	virtual LENGTH length () const = 0 ;
 	virtual void reset () = 0 ;
@@ -1021,7 +1018,6 @@ struct ByteWriterHolder implement Interface {
 	virtual void write (CREF<typeof (CLS)> item) = 0 ;
 	virtual void write (CREF<typeof (GAP)> item) = 0 ;
 	virtual void write (CREF<typeof (EOS)> item) = 0 ;
-	virtual void write (CREF<StreamWriterFriend> item) = 0 ;
 } ;
 
 class ByteWriter implement ByteWriterLayout {
@@ -1037,6 +1033,10 @@ public:
 
 	explicit ByteWriter (RREF<Ref<RefBuffer<BYTE>>> stream) {
 		ByteWriterHolder::create (thiz)->initialize (move (stream)) ;
+	}
+
+	void use_overflow (CREF<Function<VREF<ByteWriter>>> overflow) {
+		return ByteWriterHolder::create (thiz)->use_overflow (overflow) ;
 	}
 
 	LENGTH size () const {
@@ -1243,24 +1243,21 @@ public:
 		return thiz ;
 	}
 
-	void write (CREF<StreamWriterFriend> item) {
-		return ByteWriterHolder::create (thiz)->write (item) ;
+	template <class ARG1 ,class = REQUIRE<HAS_FRIEND_WRITE<ARG1>>>
+	void write (CREF<ARG1> item) {
+		item.friend_write (StreamWriterBinder<ByteWriter>::create (thiz).self) ;
 	}
 
-	forceinline VREF<ByteWriter> operator<< (CREF<StreamWriterFriend> item) {
+	template <class ARG1 ,class = REQUIRE<HAS_FRIEND_WRITE<ARG1>>>
+	forceinline VREF<ByteWriter> operator<< (CREF<ARG1> item) {
 		write (item) ;
 		return thiz ;
 	}
-
-	template <class ARG1 ,class = REQUIRE<ENUM_NOT<IS_OBJECT<ARG1>>>>
-	void write (CREF<ARG1> item) = delete ;
-
-	template <class ARG1 ,class = REQUIRE<ENUM_NOT<IS_OBJECT<ARG1>>>>
-	forceinline VREF<ByteWriter> operator<< (CREF<ARG1> item) = delete ;
 } ;
 
 struct TextWriterLayout {
 	Ref<RefBuffer<BYTE>> mStream ;
+	Function<VREF<TextWriterLayout>> mOverflow ;
 	INDEX mRead ;
 	INDEX mWrite ;
 	INDEX mBackupRead ;
@@ -1272,6 +1269,7 @@ struct TextWriterHolder implement Interface {
 	imports CFat<TextWriterHolder> create (CREF<TextWriterLayout> that) ;
 
 	virtual void initialize (RREF<Ref<RefBuffer<BYTE>>> stream) = 0 ;
+	virtual void use_overflow (CREF<FunctionLayout> overflow) = 0 ;
 	virtual LENGTH size () const = 0 ;
 	virtual LENGTH length () const = 0 ;
 	virtual void reset () = 0 ;
@@ -1298,7 +1296,6 @@ struct TextWriterHolder implement Interface {
 	virtual void write (CREF<typeof (BOM)> item) = 0 ;
 	virtual void write (CREF<typeof (GAP)> item) = 0 ;
 	virtual void write (CREF<typeof (EOS)> item) = 0 ;
-	virtual void write (CREF<StreamWriterFriend> item) = 0 ;
 } ;
 
 class TextWriter implement TextWriterLayout {
@@ -1314,6 +1311,10 @@ public:
 
 	explicit TextWriter (RREF<Ref<RefBuffer<BYTE>>> stream) {
 		TextWriterHolder::create (thiz)->initialize (move (stream)) ;
+	}
+
+	void use_overflow (CREF<Function<VREF<TextWriter>>> overflow) {
+		return TextWriterHolder::create (thiz)->use_overflow (overflow) ;
 	}
 
 	LENGTH size () const {
@@ -1520,20 +1521,16 @@ public:
 		return thiz ;
 	}
 
-	void write (CREF<StreamWriterFriend> item) {
-		return TextWriterHolder::create (thiz)->write (item) ;
+	template <class ARG1 ,class = REQUIRE<HAS_FRIEND_WRITE<ARG1>>>
+	void write (CREF<ARG1> item) {
+		item.friend_write (StreamWriterBinder<TextWriter>::create (thiz).self) ;
 	}
 
-	forceinline VREF<TextWriter> operator<< (CREF<StreamWriterFriend> item) {
+	template <class ARG1 ,class = REQUIRE<HAS_FRIEND_WRITE<ARG1>>>
+	forceinline VREF<TextWriter> operator<< (CREF<ARG1> item) {
 		write (item) ;
 		return thiz ;
 	}
-
-	template <class ARG1 ,class = REQUIRE<ENUM_NOT<IS_OBJECT<ARG1>>>>
-	void write (CREF<ARG1> item) = delete ;
-
-	template <class ARG1 ,class = REQUIRE<ENUM_NOT<IS_OBJECT<ARG1>>>>
-	forceinline VREF<TextWriter> operator<< (CREF<ARG1> item) = delete ;
 } ;
 
 template <class A>
@@ -1553,36 +1550,49 @@ public:
 	}
 } ;
 
-#ifdef __CSC_COMPILER_CLANG__
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wall"
-#pragma clang diagnostic ignored "-Wshadow"
-#pragma clang diagnostic ignored "-Wdeprecated"
-#pragma clang diagnostic ignored "-Wdangling"
-#endif
-
 template <class A>
 class StringBuild implement Proxy {
 public:
 	template <class...ARG1>
 	imports String<A> make (CREF<ARG1>...params) {
-		String<A> ret = String<A> (DEFAULT_SLICE_SIZE::expr) ;
+		String<A> ret = String<A> (SLICE_MAX_SIZE::expr) ;
 		auto rax = TextWriter (ret.borrow ()) ;
-		const auto r1x = csc_initializer_list_t<FLAG> ({(rax << params ,ZERO)...}) ;
-		noop (r1x) ;
+		make_impl (rax ,params...) ;
 		rax << EOS ;
 		return move (ret) ;
 	}
+
+	imports forceinline void make_impl (VREF<TextWriter> writer) {
+		noop () ;
+	}
+
+	template <class ARG1 ,class...ARG2>
+	imports forceinline void make_impl (VREF<TextWriter> writer ,CREF<ARG1> params1 ,CREF<ARG2>...params2) {
+		writer << params1 ;
+		make_impl (writer ,params2...) ;
+	}
 } ;
 
-#ifdef __CSC_COMPILER_CLANG__
-#pragma clang diagnostic pop
-#endif
+struct FormatFriend implement Interface {
+	virtual void friend_write (VREF<StreamWriter> writer) const = 0 ;
+} ;
+
+template <class A>
+class FormatFriendBinder implement Fat<FormatFriend ,A> {
+public:
+	imports CFat<FormatFriend> create (CREF<A> that) {
+		return CFat<FormatFriend> (FormatFriendBinder () ,that) ;
+	}
+
+	void friend_write (VREF<StreamWriter> writer) const override {
+		writer.write (thiz.fake) ;
+	}
+} ;
 
 struct FormatLayout {
 	Slice mFormat ;
-	BoxBuffer<RFat<StreamWriterFriend> ,RANKX> mParams ;
-	INDEX mWrite ;
+	BufferX<FatLayout> mParams ;
+	INDEX mTop ;
 } ;
 
 struct FormatHolder implement Interface {
@@ -1591,34 +1601,34 @@ struct FormatHolder implement Interface {
 
 	virtual void initialize (CREF<Slice> format) = 0 ;
 	virtual void friend_write (VREF<StreamWriter> writer) const = 0 ;
-	virtual void invoke (CREF<WrapperLayout> params) = 0 ;
+	virtual void then (CREF<WrapperLayout> params) = 0 ;
 } ;
 
-class Format implement FormatLayout ,public StreamWriterFriend {
+class Format implement FormatLayout {
 protected:
 	using FormatLayout::mFormat ;
 	using FormatLayout::mParams ;
-	using FormatLayout::mWrite ;
+	using FormatLayout::mTop ;
 
 public:
 	implicit Format () = default ;
 
-	implicit Format (CREF<Slice> format) {
+	explicit Format (CREF<Slice> format) {
 		FormatHolder::create (thiz)->initialize (format) ;
 	}
 
-	void friend_write (VREF<StreamWriter> writer) const override {
+	void friend_write (VREF<StreamWriter> writer) const {
 		return FormatHolder::create (thiz)->friend_write (writer) ;
 	}
 
 	template <class...ARG1>
-	void invoke (CREF<ARG1>...params) {
-		return FormatHolder::create (thiz)->invoke (MakeWrapper (StreamWriterFriendBinder<ARG1>::create (params)...)) ;
+	void then (CREF<ARG1>...params) {
+		return FormatHolder::create (thiz)->then (MakeWrapper (FormatFriendBinder<ARG1>::create (params)...)) ;
 	}
 
 	template <class...ARG1>
 	VREF<Format> operator() (CREF<ARG1>...params) {
-		invoke (params...) ;
+		then (params...) ;
 		return thiz ;
 	}
 } ;
@@ -1629,15 +1639,13 @@ inline CREF<Format> PrintFormat (CREF<Format> params) {
 
 template <class...ARG1>
 inline Format PrintFormat (CREF<ARG1>...params) {
-	Format ret = slice ("${*}") ;
+	Format ret = Format (slice ("${*}")) ;
 	ret (params...) ;
 	return move (ret) ;
 }
 
-struct StringProcPureLayout ;
-
 struct StringProcLayout {
-	Ref<StringProcPureLayout> mThis ;
+	RefLayout mThis ;
 } ;
 
 struct StringProcHolder implement Interface {
@@ -1786,10 +1794,10 @@ public:
 	}
 } ;
 
-struct RegexPureLayout ;
+struct RegexImplLayout ;
 
 struct RegexLayout {
-	Ref<RegexPureLayout> mThis ;
+	Ref<RegexImplLayout> mThis ;
 } ;
 
 struct RegexHolder implement Interface {
@@ -1797,8 +1805,8 @@ struct RegexHolder implement Interface {
 	imports CFat<RegexHolder> create (CREF<RegexLayout> that) ;
 
 	virtual void initialize (CREF<String<STR>> format) = 0 ;
-	virtual INDEX search (CREF<String<STR>> text ,CREF<INDEX> index) = 0 ;
-	virtual String<STR> match (CREF<INDEX> index) const = 0 ;
+	virtual BOOL search (CREF<String<STR>> text) = 0 ;
+	virtual String<STR> brace (CREF<INDEX> index) const = 0 ;
 } ;
 
 class Regex implement RegexLayout {
@@ -1812,12 +1820,162 @@ public:
 		RegexHolder::create (thiz)->initialize (format) ;
 	}
 
-	INDEX search (CREF<String<STR>> text ,CREF<INDEX> index) {
-		return RegexHolder::create (thiz)->search (text ,index) ;
+	BOOL search (CREF<String<STR>> text) {
+		return RegexHolder::create (thiz)->search (text) ;
 	}
 
-	String<STR> match (CREF<INDEX> index) const {
-		return RegexHolder::create (thiz)->match (index) ;
+	String<STR> brace (CREF<INDEX> index) const {
+		return RegexHolder::create (thiz)->brace (index) ;
+	}
+} ;
+
+struct StreamTextProcLayout {
+	RefLayout mThis ;
+} ;
+
+struct StreamTextProcHolder implement Interface {
+	imports VFat<StreamTextProcHolder> create (VREF<StreamTextProcLayout> that) ;
+	imports CFat<StreamTextProcHolder> create (CREF<StreamTextProcLayout> that) ;
+
+	virtual void initialize () = 0 ;
+	virtual void read_identifer (VREF<StreamReader> reader ,VREF<String<STRU8>> item) const = 0 ;
+	virtual void read_scalar (VREF<StreamReader> reader ,VREF<String<STRU8>> item) const = 0 ;
+	virtual void read_escape (VREF<StreamReader> reader ,VREF<String<STRU8>> item) const = 0 ;
+	virtual void write_escape (VREF<StreamWriter> writer ,CREF<String<STRU8>> item) const = 0 ;
+	virtual void read_endline (VREF<StreamReader> reader ,VREF<String<STRU8>> item) const = 0 ;
+	virtual void write_aligned (VREF<StreamWriter> writer ,CREF<VAL64> number ,CREF<LENGTH> align) const = 0 ;
+} ;
+
+class StreamTextProc implement StreamTextProcLayout {
+protected:
+	using StreamTextProcLayout::mThis ;
+
+public:
+	imports CREF<StreamTextProc> instance () {
+		return memorize ([&] () {
+			StreamTextProc ret ;
+			StreamTextProcHolder::create (ret)->initialize () ;
+			return move (ret) ;
+		}) ;
+	}
+
+	imports void read_identifer (VREF<StreamReader> reader ,VREF<String<STRU8>> item) {
+		return StreamTextProcHolder::create (instance ())->read_identifer (reader ,item) ;
+	}
+
+	imports void read_scalar (VREF<StreamReader> reader ,VREF<String<STRU8>> item) {
+		return StreamTextProcHolder::create (instance ())->read_scalar (reader ,item) ;
+	}
+
+	imports void read_escape (VREF<StreamReader> reader ,VREF<String<STRU8>> item) {
+		return StreamTextProcHolder::create (instance ())->read_escape (reader ,item) ;
+	}
+
+	imports void write_escape (VREF<StreamWriter> writer ,CREF<String<STRU8>> item) {
+		return StreamTextProcHolder::create (instance ())->write_escape (writer ,item) ;
+	}
+
+	imports void read_endline (VREF<StreamReader> reader ,VREF<String<STRU8>> item) {
+		return StreamTextProcHolder::create (instance ())->read_endline (reader ,item) ;
+	}
+
+	imports void write_aligned (VREF<StreamWriter> writer ,CREF<VAL64> number ,CREF<LENGTH> align) {
+		return StreamTextProcHolder::create (instance ())->write_aligned (writer ,number ,align) ;
+	}
+} ;
+
+class IdentifierText implement Proxy {
+protected:
+	String<STRU8> mThat ;
+
+public:
+	imports VREF<IdentifierText> from (VREF<String<STRU8>> that) {
+		return Pointer::from (that) ;
+	}
+
+	template <class ARG1>
+	void friend_read (VREF<ARG1> reader) {
+		return StreamTextProc::read_identifer (StreamReaderBinder<ARG1>::create (reader) ,mThat) ;
+	}
+} ;
+
+class ScalarText implement Proxy {
+protected:
+	String<STRU8> mThat ;
+
+public:
+	imports VREF<ScalarText> from (VREF<String<STRU8>> that) {
+		return Pointer::from (that) ;
+	}
+
+	template <class ARG1>
+	void friend_read (VREF<ARG1> reader) {
+		return StreamTextProc::read_scalar (StreamReaderBinder<ARG1>::create (reader) ,mThat) ;
+	}
+} ;
+
+class EscapeText implement Proxy {
+protected:
+	String<STRU8> mThat ;
+
+public:
+	imports VREF<EscapeText> from (VREF<String<STRU8>> that) {
+		return Pointer::from (that) ;
+	}
+
+	imports CREF<EscapeText> from (CREF<String<STRU8>> that) {
+		return Pointer::from (that) ;
+	}
+
+	imports CREF<EscapeText> from (RREF<String<STRU8>> that) = delete ;
+
+	template <class ARG1>
+	void friend_read (VREF<ARG1> reader) {
+		return StreamTextProc::read_escape (StreamReaderBinder<ARG1>::create (reader) ,mThat) ;
+	}
+
+	template <class ARG1>
+	void friend_write (VREF<ARG1> writer) const {
+		return StreamTextProc::write_escape (StreamWriterBinder<ARG1>::create (writer) ,mThat) ;
+	}
+} ;
+
+class EndlineText implement Proxy {
+protected:
+	String<STRU8> mThat ;
+
+public:
+	imports VREF<EndlineText> from (VREF<String<STRU8>> that) {
+		return Pointer::from (that) ;
+	}
+
+	template <class ARG1>
+	void friend_read (VREF<ARG1> reader) {
+		return StreamTextProc::read_endline (StreamReaderBinder<ARG1>::create (reader) ,mThat) ;
+	}
+} ;
+
+struct AlignedTextLayout {
+	VAL64 mNumber ;
+	LENGTH mAlign ;
+} ;
+
+class AlignedText implement AlignedTextLayout {
+protected:
+	using AlignedTextLayout::mNumber ;
+	using AlignedTextLayout::mAlign ;
+
+public:
+	implicit AlignedText () = delete ;
+
+	explicit AlignedText (CREF<VAL64> number ,CREF<VAL64> align) {
+		mNumber = number ;
+		mAlign = align ;
+	}
+
+	template <class ARG1>
+	void friend_write (VREF<ARG1> writer) const {
+		return StreamTextProc::write_aligned (StreamWriterBinder<ARG1>::create (writer) ,mNumber ,mAlign) ;
 	}
 } ;
 } ;

@@ -49,6 +49,18 @@ public:
 		return 0 ;
 	}
 
+	VAL32 sign (CREF<VAL32> a) const override {
+		if (a >= 0)
+			return 1 ;
+		return -1 ;
+	}
+
+	VAL64 sign (CREF<VAL64> a) const override {
+		if (a >= 0)
+			return 1 ;
+		return -1 ;
+	}
+
 	FLT32 sign (CREF<FLT32> a) const override {
 		if (a >= 0)
 			return 1 ;
@@ -205,6 +217,20 @@ public:
 		return a ;
 	}
 
+	VAL32 lerp (CREF<FLT64> a ,CREF<VAL32> lb ,CREF<VAL32> rb) const override {
+		const auto r1x = rb - lb ;
+		assert (r1x > 0) ;
+		const auto r2x = VAL32 (round (r1x * a ,FLT64 (1))) ;
+		return lb + (r2x % r1x + r1x) % r1x ;
+	}
+
+	VAL64 lerp (CREF<FLT64> a ,CREF<VAL64> lb ,CREF<VAL64> rb) const override {
+		const auto r1x = rb - lb ;
+		assert (r1x > 0) ;
+		const auto r2x = VAL64 (round (r1x * a ,FLT64 (1))) ;
+		return lb + (r2x % r1x + r1x) % r1x ;
+	}
+
 	FLT32 cos (CREF<FLT32> a) const override {
 		return std::cos (a) ;
 	}
@@ -314,10 +340,10 @@ public:
 	}
 
 	BOOL all_of (CREF<BOOL> a ,CREF<WrapperLayout> b) const override {
-		if (!(a))
+		if ((!a))
 			return FALSE ;
 		for (auto &&i : WrapperIterator<BOOL> (b)) {
-			if (!(i))
+			if ((!i))
 				return FALSE ;
 		}
 		return TRUE ;
@@ -396,6 +422,32 @@ exports CFat<MathProcHolder> MathProcHolder::create (CREF<MathProcLayout> that) 
 	return CFat<MathProcHolder> (MathProcImplHolder () ,that) ;
 }
 
+class NormalErrorImplHolder implement Fat<NormalErrorHolder ,NormalErrorLayout> {
+public:
+	void initialize () override {
+		inline_memset (fake) ;
+	}
+
+	void update (CREF<FLT64> error) override {
+		const auto r1x = FLT64 (fake.mCount) ;
+		const auto r2x = MathProc::inverse (r1x + 1) ;
+		const auto r3x = error - fake.mAvgError ;
+		fake.mMaxError = MathProc::max_of (fake.mMaxError ,error) ;
+		fake.mAvgError = fake.mAvgError + r3x * r2x ;
+		const auto r4x = r1x * r2x * MathProc::square (fake.mStdError) + r1x * MathProc::square (r3x * r2x) ;
+		fake.mStdError = MathProc::sqrt (r4x) ;
+		fake.mCount = LENGTH (r1x + 1) ;
+	}
+} ;
+
+exports VFat<NormalErrorHolder> NormalErrorHolder::create (VREF<NormalErrorLayout> that) {
+	return VFat<NormalErrorHolder> (NormalErrorImplHolder () ,that) ;
+}
+
+exports CFat<NormalErrorHolder> NormalErrorHolder::create (CREF<NormalErrorLayout> that) {
+	return CFat<NormalErrorHolder> (NormalErrorImplHolder () ,that) ;
+}
+
 class FloatProcImplHolder implement Fat<FloatProcHolder ,FloatProcLayout> {
 public:
 	void initialize () override {
@@ -417,7 +469,7 @@ public:
 			if (rax.mMantissa == 0)
 				discard ;
 			while (TRUE) {
-				if (!(ByteProc::bit_any (QUAD (rax.mMantissa) ,QUAD (0XFFE0000000000000))))
+				if ((!ByteProc::bit_any (QUAD (rax.mMantissa) ,QUAD (0XFFE0000000000000))))
 					break ;
 				rax.mMantissa = VAL64 (QUAD (rax.mMantissa) >> 1) ;
 				rax.mDownflow = 0 ;
@@ -446,7 +498,7 @@ public:
 			rax.mExponent = 0 ;
 		}
 		const auto r2x = invoke ([&] () {
-			if (!(fexp2.mSign))
+			if ((!fexp2.mSign))
 				return QUAD (0X00) ;
 			return QUAD (0X8000000000000000) ;
 		}) ;
@@ -728,20 +780,20 @@ public:
 	}
 
 	WORD bit_reverse (CREF<WORD> a) const override {
-		auto rax = bitwise[TYPE<BoxBuffer<BYTE ,SIZE_OF<WORD>>>::expr] (a) ;
+		auto rax = bitwise[TYPE<Buffer<BYTE ,SIZE_OF<WORD>>>::expr] (a) ;
 		swap (rax[0] ,rax[1]) ;
 		return bitwise[TYPE<WORD>::expr] (rax) ;
 	}
 
 	CHAR bit_reverse (CREF<CHAR> a) const override {
-		auto rax = bitwise[TYPE<BoxBuffer<BYTE ,SIZE_OF<CHAR>>>::expr] (a) ;
+		auto rax = bitwise[TYPE<Buffer<BYTE ,SIZE_OF<CHAR>>>::expr] (a) ;
 		swap (rax[0] ,rax[3]) ;
 		swap (rax[1] ,rax[2]) ;
 		return bitwise[TYPE<CHAR>::expr] (rax) ;
 	}
 
 	QUAD bit_reverse (CREF<QUAD> a) const override {
-		auto rax = bitwise[TYPE<BoxBuffer<BYTE ,SIZE_OF<QUAD>>>::expr] (a) ;
+		auto rax = bitwise[TYPE<Buffer<BYTE ,SIZE_OF<QUAD>>>::expr] (a) ;
 		swap (rax[0] ,rax[7]) ;
 		swap (rax[1] ,rax[6]) ;
 		swap (rax[2] ,rax[5]) ;
@@ -756,42 +808,42 @@ public:
 	LENGTH popcount (CREF<BYTE> a) const override {
 		static const ARR<VAL32 ,ENUM<256>> mCache {
 			0 ,1 ,1 ,2 ,1 ,2 ,2 ,3 ,1 ,2 ,2 ,3 ,2 ,3 ,3 ,4 ,
-			1 ,2 ,2 ,3 ,2 ,3 ,3 ,4 ,2 ,3 ,3 ,4 ,3 ,4 ,4 ,5 ,
-			1 ,2 ,2 ,3 ,2 ,3 ,3 ,4 ,2 ,3 ,3 ,4 ,3 ,4 ,4 ,5 ,
-			2 ,3 ,3 ,4 ,3 ,4 ,4 ,5 ,3 ,4 ,4 ,5 ,4 ,5 ,5 ,6 ,
-			1 ,2 ,2 ,3 ,2 ,3 ,3 ,4 ,2 ,3 ,3 ,4 ,3 ,4 ,4 ,5 ,
-			2 ,3 ,3 ,4 ,3 ,4 ,4 ,5 ,3 ,4 ,4 ,5 ,4 ,5 ,5 ,6 ,
-			2 ,3 ,3 ,4 ,3 ,4 ,4 ,5 ,3 ,4 ,4 ,5 ,4 ,5 ,5 ,6 ,
-			3 ,4 ,4 ,5 ,4 ,5 ,5 ,6 ,4 ,5 ,5 ,6 ,5 ,6 ,6 ,7 ,
-			1 ,2 ,2 ,3 ,2 ,3 ,3 ,4 ,2 ,3 ,3 ,4 ,3 ,4 ,4 ,5 ,
-			2 ,3 ,3 ,4 ,3 ,4 ,4 ,5 ,3 ,4 ,4 ,5 ,4 ,5 ,5 ,6 ,
-			2 ,3 ,3 ,4 ,3 ,4 ,4 ,5 ,3 ,4 ,4 ,5 ,4 ,5 ,5 ,6 ,
-			3 ,4 ,4 ,5 ,4 ,5 ,5 ,6 ,4 ,5 ,5 ,6 ,5 ,6 ,6 ,7 ,
-			2 ,3 ,3 ,4 ,3 ,4 ,4 ,5 ,3 ,4 ,4 ,5 ,4 ,5 ,5 ,6 ,
-			3 ,4 ,4 ,5 ,4 ,5 ,5 ,6 ,4 ,5 ,5 ,6 ,5 ,6 ,6 ,7 ,
-			3 ,4 ,4 ,5 ,4 ,5 ,5 ,6 ,4 ,5 ,5 ,6 ,5 ,6 ,6 ,7 ,
-			4 ,5 ,5 ,6 ,5 ,6 ,6 ,7 ,5 ,6 ,6 ,7 ,6 ,7 ,7 ,8} ;
+				1 ,2 ,2 ,3 ,2 ,3 ,3 ,4 ,2 ,3 ,3 ,4 ,3 ,4 ,4 ,5 ,
+				1 ,2 ,2 ,3 ,2 ,3 ,3 ,4 ,2 ,3 ,3 ,4 ,3 ,4 ,4 ,5 ,
+				2 ,3 ,3 ,4 ,3 ,4 ,4 ,5 ,3 ,4 ,4 ,5 ,4 ,5 ,5 ,6 ,
+				1 ,2 ,2 ,3 ,2 ,3 ,3 ,4 ,2 ,3 ,3 ,4 ,3 ,4 ,4 ,5 ,
+				2 ,3 ,3 ,4 ,3 ,4 ,4 ,5 ,3 ,4 ,4 ,5 ,4 ,5 ,5 ,6 ,
+				2 ,3 ,3 ,4 ,3 ,4 ,4 ,5 ,3 ,4 ,4 ,5 ,4 ,5 ,5 ,6 ,
+				3 ,4 ,4 ,5 ,4 ,5 ,5 ,6 ,4 ,5 ,5 ,6 ,5 ,6 ,6 ,7 ,
+				1 ,2 ,2 ,3 ,2 ,3 ,3 ,4 ,2 ,3 ,3 ,4 ,3 ,4 ,4 ,5 ,
+				2 ,3 ,3 ,4 ,3 ,4 ,4 ,5 ,3 ,4 ,4 ,5 ,4 ,5 ,5 ,6 ,
+				2 ,3 ,3 ,4 ,3 ,4 ,4 ,5 ,3 ,4 ,4 ,5 ,4 ,5 ,5 ,6 ,
+				3 ,4 ,4 ,5 ,4 ,5 ,5 ,6 ,4 ,5 ,5 ,6 ,5 ,6 ,6 ,7 ,
+				2 ,3 ,3 ,4 ,3 ,4 ,4 ,5 ,3 ,4 ,4 ,5 ,4 ,5 ,5 ,6 ,
+				3 ,4 ,4 ,5 ,4 ,5 ,5 ,6 ,4 ,5 ,5 ,6 ,5 ,6 ,6 ,7 ,
+				3 ,4 ,4 ,5 ,4 ,5 ,5 ,6 ,4 ,5 ,5 ,6 ,5 ,6 ,6 ,7 ,
+				4 ,5 ,5 ,6 ,5 ,6 ,6 ,7 ,5 ,6 ,6 ,7 ,6 ,7 ,7 ,8} ;
 		return LENGTH (mCache[INDEX (a)]) ;
 	}
 
 	LENGTH lowcount (CREF<BYTE> a) const override {
 		static const ARR<VAL32 ,ENUM<256>> mCache {
 			8 ,0 ,1 ,0 ,2 ,0 ,1 ,0 ,3 ,0 ,1 ,0 ,2 ,0 ,1 ,0 ,
-			4 ,0 ,1 ,0 ,2 ,0 ,1 ,0 ,3 ,0 ,1 ,0 ,2 ,0 ,1 ,0 ,
-			5 ,0 ,1 ,0 ,2 ,0 ,1 ,0 ,3 ,0 ,1 ,0 ,2 ,0 ,1 ,0 ,
-			4 ,0 ,1 ,0 ,2 ,0 ,1 ,0 ,3 ,0 ,1 ,0 ,2 ,0 ,1 ,0 ,
-			6 ,0 ,1 ,0 ,2 ,0 ,1 ,0 ,3 ,0 ,1 ,0 ,2 ,0 ,1 ,0 ,
-			4 ,0 ,1 ,0 ,2 ,0 ,1 ,0 ,3 ,0 ,1 ,0 ,2 ,0 ,1 ,0 ,
-			5 ,0 ,1 ,0 ,2 ,0 ,1 ,0 ,3 ,0 ,1 ,0 ,2 ,0 ,1 ,0 ,
-			4 ,0 ,1 ,0 ,2 ,0 ,1 ,0 ,3 ,0 ,1 ,0 ,2 ,0 ,1 ,0 ,
-			7 ,0 ,1 ,0 ,2 ,0 ,1 ,0 ,3 ,0 ,1 ,0 ,2 ,0 ,1 ,0 ,
-			4 ,0 ,1 ,0 ,2 ,0 ,1 ,0 ,3 ,0 ,1 ,0 ,2 ,0 ,1 ,0 ,
-			5 ,0 ,1 ,0 ,2 ,0 ,1 ,0 ,3 ,0 ,1 ,0 ,2 ,0 ,1 ,0 ,
-			4 ,0 ,1 ,0 ,2 ,0 ,1 ,0 ,3 ,0 ,1 ,0 ,2 ,0 ,1 ,0 ,
-			6 ,0 ,1 ,0 ,2 ,0 ,1 ,0 ,3 ,0 ,1 ,0 ,2 ,0 ,1 ,0 ,
-			4 ,0 ,1 ,0 ,2 ,0 ,1 ,0 ,3 ,0 ,1 ,0 ,2 ,0 ,1 ,0 ,
-			5 ,0 ,1 ,0 ,2 ,0 ,1 ,0 ,3 ,0 ,1 ,0 ,2 ,0 ,1 ,0 ,
-			4 ,0 ,1 ,0 ,2 ,0 ,1 ,0 ,3 ,0 ,1 ,0 ,2 ,0 ,1 ,0} ;
+				4 ,0 ,1 ,0 ,2 ,0 ,1 ,0 ,3 ,0 ,1 ,0 ,2 ,0 ,1 ,0 ,
+				5 ,0 ,1 ,0 ,2 ,0 ,1 ,0 ,3 ,0 ,1 ,0 ,2 ,0 ,1 ,0 ,
+				4 ,0 ,1 ,0 ,2 ,0 ,1 ,0 ,3 ,0 ,1 ,0 ,2 ,0 ,1 ,0 ,
+				6 ,0 ,1 ,0 ,2 ,0 ,1 ,0 ,3 ,0 ,1 ,0 ,2 ,0 ,1 ,0 ,
+				4 ,0 ,1 ,0 ,2 ,0 ,1 ,0 ,3 ,0 ,1 ,0 ,2 ,0 ,1 ,0 ,
+				5 ,0 ,1 ,0 ,2 ,0 ,1 ,0 ,3 ,0 ,1 ,0 ,2 ,0 ,1 ,0 ,
+				4 ,0 ,1 ,0 ,2 ,0 ,1 ,0 ,3 ,0 ,1 ,0 ,2 ,0 ,1 ,0 ,
+				7 ,0 ,1 ,0 ,2 ,0 ,1 ,0 ,3 ,0 ,1 ,0 ,2 ,0 ,1 ,0 ,
+				4 ,0 ,1 ,0 ,2 ,0 ,1 ,0 ,3 ,0 ,1 ,0 ,2 ,0 ,1 ,0 ,
+				5 ,0 ,1 ,0 ,2 ,0 ,1 ,0 ,3 ,0 ,1 ,0 ,2 ,0 ,1 ,0 ,
+				4 ,0 ,1 ,0 ,2 ,0 ,1 ,0 ,3 ,0 ,1 ,0 ,2 ,0 ,1 ,0 ,
+				6 ,0 ,1 ,0 ,2 ,0 ,1 ,0 ,3 ,0 ,1 ,0 ,2 ,0 ,1 ,0 ,
+				4 ,0 ,1 ,0 ,2 ,0 ,1 ,0 ,3 ,0 ,1 ,0 ,2 ,0 ,1 ,0 ,
+				5 ,0 ,1 ,0 ,2 ,0 ,1 ,0 ,3 ,0 ,1 ,0 ,2 ,0 ,1 ,0 ,
+				4 ,0 ,1 ,0 ,2 ,0 ,1 ,0 ,3 ,0 ,1 ,0 ,2 ,0 ,1 ,0} ;
 		return LENGTH (mCache[INDEX (a)]) ;
 	}
 } ;
@@ -865,7 +917,7 @@ public:
 			return FALSE ;
 		for (auto &&i : iter (0 ,r1x)) {
 			const auto r3x = inline_equal (fake.mInteger[i] ,that.mInteger[i]) ;
-			if (!(r3x))
+			if ((!r3x))
 				return r3x ;
 		}
 		return TRUE ;
@@ -895,7 +947,7 @@ public:
 		return ZERO ;
 	}
 
-	void visit (CREF<Visitor> visitor) const override {
+	void visit (VREF<Visitor> visitor) const override {
 		visitor.begin () ;
 		const auto r1x = fake.mInteger.size () ;
 		for (auto &&i : iter (0 ,r1x)) {
@@ -1121,7 +1173,7 @@ public:
 		auto &&tmp = keep[TYPE<ARR<BYTE>>::expr] (src) ;
 		for (auto &&i : iter (0 ,size_)) {
 			const auto r1x = INDEX (((ret >> 8) ^ WORD (tmp[i])) & WORD (0XFF)) ;
-			ret = WORD (mCache[r1x]) ^ (ret << 8);
+			ret = WORD (mCache[r1x]) ^ (ret << 8) ;
 		}
 		return move (ret) ;
 	}

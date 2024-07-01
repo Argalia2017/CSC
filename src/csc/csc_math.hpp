@@ -14,11 +14,10 @@ static constexpr auto MATH_E = FLT64 (2.71828182845904523536) ;
 static constexpr auto MATH_PI = FLT64 (3.14159265358979323846) ;
 static constexpr auto MATH_SQRT2 = FLT64 (1.41421356237309504880) ;
 static constexpr auto MATH_PDF0 = FLT64 (0.39894228040143267794) ;
-
-struct MathProcPureLayout ;
+static constexpr auto MATH_R = MATH_PI / FLT64 (180) ;
 
 struct MathProcLayout {
-	Ref<MathProcPureLayout> mThis ;
+	RefLayout mThis ;
 } ;
 
 struct MathProcHolder implement Interface {
@@ -32,6 +31,8 @@ struct MathProcHolder implement Interface {
 	virtual VAL64 step (CREF<VAL64> a) const = 0 ;
 	virtual FLT32 step (CREF<FLT32> a) const = 0 ;
 	virtual FLT64 step (CREF<FLT64> a) const = 0 ;
+	virtual VAL32 sign (CREF<VAL32> a) const = 0 ;
+	virtual VAL64 sign (CREF<VAL64> a) const = 0 ;
 	virtual FLT32 sign (CREF<FLT32> a) const = 0 ;
 	virtual FLT64 sign (CREF<FLT64> a) const = 0 ;
 	virtual VAL32 square (CREF<VAL32> a) const = 0 ;
@@ -62,6 +63,8 @@ struct MathProcHolder implement Interface {
 	virtual VAL64 clamp (CREF<VAL64> a ,CREF<VAL64> lb ,CREF<VAL64> rb) const = 0 ;
 	virtual FLT32 clamp (CREF<FLT32> a ,CREF<FLT32> lb ,CREF<FLT32> rb) const = 0 ;
 	virtual FLT64 clamp (CREF<FLT64> a ,CREF<FLT64> lb ,CREF<FLT64> rb) const = 0 ;
+	virtual VAL32 lerp (CREF<FLT64> a ,CREF<VAL32> lb ,CREF<VAL32> rb) const = 0 ;
+	virtual VAL64 lerp (CREF<FLT64> a ,CREF<VAL64> lb ,CREF<VAL64> rb) const = 0 ;
 	virtual FLT32 cos (CREF<FLT32> a) const = 0 ;
 	virtual FLT64 cos (CREF<FLT64> a) const = 0 ;
 	virtual FLT32 sin (CREF<FLT32> a) const = 0 ;
@@ -109,195 +112,189 @@ public:
 		}) ;
 	}
 
-	template <class ARG1>
+	template <class ARG1 ,class = REQUIRE<IS_FLOAT<ARG1>>>
 	imports BOOL is_inf (CREF<ARG1> a) {
-		require (IS_FLOAT<ARG1>) ;
 		return MathProcHolder::create (instance ())->is_inf (a) ;
 	}
 
-	template <class ARG1>
+	template <class ARG1 ,class = REQUIRE<IS_SCALAR<ARG1>>>
 	imports ARG1 step (CREF<ARG1> a) {
-		require (IS_SCALAR<ARG1>) ;
 		return MathProcHolder::create (instance ())->step (a) ;
 	}
 
-	template <class ARG1>
+	template <class ARG1 ,class = REQUIRE<IS_SCALAR<ARG1>>>
 	imports ARG1 sign (CREF<ARG1> a) {
-		require (IS_FLOAT<ARG1>) ;
 		return MathProcHolder::create (instance ())->sign (a) ;
 	}
 
-	template <class ARG1>
+	template <class ARG1 ,class = REQUIRE<IS_SCALAR<ARG1>>>
 	imports ARG1 square (CREF<ARG1> a) {
-		require (IS_SCALAR<ARG1>) ;
 		return MathProcHolder::create (instance ())->square (a) ;
 	}
 
-	template <class ARG1>
+	template <class ARG1 ,class = REQUIRE<IS_FLOAT<ARG1>>>
 	imports ARG1 sqrt (CREF<ARG1> a) {
-		require (IS_FLOAT<ARG1>) ;
 		return MathProcHolder::create (instance ())->sqrt (a) ;
 	}
 
-	template <class ARG1>
+	template <class ARG1 ,class = REQUIRE<IS_SCALAR<ARG1>>>
 	imports ARG1 cubic (CREF<ARG1> a) {
-		require (IS_SCALAR<ARG1>) ;
 		return MathProcHolder::create (instance ())->cubic (a) ;
 	}
 
-	template <class ARG1>
+	template <class ARG1 ,class = REQUIRE<IS_FLOAT<ARG1>>>
 	imports ARG1 cbrt (CREF<ARG1> a) {
-		require (IS_FLOAT<ARG1>) ;
 		return MathProcHolder::create (instance ())->cbrt (a) ;
 	}
 
-	template <class ARG1>
+	template <class ARG1 ,class = REQUIRE<IS_SCALAR<ARG1>>>
 	imports ARG1 abs (CREF<ARG1> a) {
-		require (IS_SCALAR<ARG1>) ;
 		return MathProcHolder::create (instance ())->abs (a) ;
 	}
 
-	template <class ARG1>
+	template <class ARG1 ,class = REQUIRE<IS_FLOAT<ARG1>>>
 	imports ARG1 inverse (CREF<ARG1> a) {
-		require (IS_FLOAT<ARG1>) ;
 		return MathProcHolder::create (instance ())->inverse (a) ;
 	}
 
-	template <class ARG1>
+	template <class ARG1 ,class = REQUIRE<IS_FLOAT<ARG1>>>
 	imports ARG1 floor (CREF<ARG1> a ,CREF<ARG1> b) {
-		require (IS_FLOAT<ARG1>) ;
 		return MathProcHolder::create (instance ())->floor (a ,b) ;
 	}
 
-	template <class ARG1>
+	template <class ARG1 ,class = REQUIRE<IS_FLOAT<ARG1>>>
 	imports ARG1 round (CREF<ARG1> a ,CREF<ARG1> b) {
-		require (IS_FLOAT<ARG1>) ;
 		return MathProcHolder::create (instance ())->round (a ,b) ;
 	}
 
-	template <class ARG1>
+	template <class ARG1 ,class = REQUIRE<IS_FLOAT<ARG1>>>
 	imports ARG1 ceil (CREF<ARG1> a ,CREF<ARG1> b) {
-		require (IS_FLOAT<ARG1>) ;
 		return MathProcHolder::create (instance ())->ceil (a ,b) ;
 	}
 
-	template <class ARG1>
+	template <class ARG1 ,class = REQUIRE<IS_SCALAR<ARG1>>>
 	imports ARG1 clamp (CREF<ARG1> a ,CREF<ARG1> lb ,CREF<ARG1> rb) {
-		require (IS_SCALAR<ARG1>) ;
 		return MathProcHolder::create (instance ())->clamp (a ,lb ,rb) ;
 	}
 
-	template <class ARG1>
+	template <class ARG1 ,class ARG2 ,class = REQUIRE<IS_VALUE<ARG2>>>
+	imports ARG2 lerp (CREF<ARG1> a ,CREF<ARG2> lb ,CREF<ARG2> rb) {
+		return MathProcHolder::create (instance ())->lerp (FLT64 (a) ,lb ,rb) ;
+	}
+
+	template <class ARG1 ,class = REQUIRE<IS_FLOAT<ARG1>>>
 	imports ARG1 cos (CREF<ARG1> a) {
-		require (IS_FLOAT<ARG1>) ;
 		return MathProcHolder::create (instance ())->cos (a) ;
 	}
 
-	template <class ARG1>
+	template <class ARG1 ,class = REQUIRE<IS_FLOAT<ARG1>>>
 	imports ARG1 sin (CREF<ARG1> a) {
-		require (IS_FLOAT<ARG1>) ;
 		return MathProcHolder::create (instance ())->sin (a) ;
 	}
 
-	template <class ARG1>
+	template <class ARG1 ,class = REQUIRE<IS_FLOAT<ARG1>>>
 	imports ARG1 tan (CREF<ARG1> a) {
-		require (IS_FLOAT<ARG1>) ;
 		return MathProcHolder::create (instance ())->tan (a) ;
 	}
 
-	template <class ARG1>
+	template <class ARG1 ,class = REQUIRE<IS_FLOAT<ARG1>>>
 	imports ARG1 arccos (CREF<ARG1> a) {
-		require (IS_FLOAT<ARG1>) ;
 		return MathProcHolder::create (instance ())->arccos (a) ;
 	}
 
-	template <class ARG1>
+	template <class ARG1 ,class = REQUIRE<IS_FLOAT<ARG1>>>
 	imports ARG1 arcsin (CREF<ARG1> a) {
-		require (IS_FLOAT<ARG1>) ;
 		return MathProcHolder::create (instance ())->arcsin (a) ;
 	}
 
-	template <class ARG1>
+	template <class ARG1 ,class = REQUIRE<IS_FLOAT<ARG1>>>
 	imports ARG1 arctan (CREF<ARG1> y ,CREF<ARG1> x) {
-		require (IS_FLOAT<ARG1>) ;
 		return MathProcHolder::create (instance ())->arctan (y ,x) ;
 	}
 
-	template <class ARG1>
+	template <class ARG1 ,class = REQUIRE<IS_FLOAT<ARG1>>>
 	imports ARG1 exp (CREF<ARG1> a) {
-		require (IS_FLOAT<ARG1>) ;
 		return MathProcHolder::create (instance ())->exp (a) ;
 	}
 
-	template <class ARG1>
+	template <class ARG1 ,class = REQUIRE<IS_FLOAT<ARG1>>>
 	imports ARG1 log (CREF<ARG1> a) {
-		require (IS_FLOAT<ARG1>) ;
 		return MathProcHolder::create (instance ())->log (a) ;
 	}
 
-	template <class ARG1>
+	template <class ARG1 ,class = REQUIRE<IS_VALUE<ARG1>>>
 	imports ARG1 log10 (CREF<ARG1> a) {
-		require (IS_VALUE<ARG1>) ;
 		return MathProcHolder::create (instance ())->log10 (a) ;
 	}
 
-	template <class ARG1>
+	template <class ARG1 ,class = REQUIRE<IS_FLOAT<ARG1>>>
 	imports ARG1 pdf (CREF<ARG1> a) {
-		require (IS_FLOAT<ARG1>) ;
 		return MathProcHolder::create (instance ())->pdf (a) ;
 	}
 
-	template <class ARG1>
+	template <class ARG1 ,class = REQUIRE<IS_FLOAT<ARG1>>>
 	imports ARG1 cbf (CREF<ARG1> a) {
-		require (IS_FLOAT<ARG1>) ;
 		return MathProcHolder::create (instance ())->cbf (a) ;
 	}
 
-	template <class ARG1 ,class...ARG2>
+	template <class ARG1 ,class...ARG2 ,class = REQUIRE<IS_BOOL<ARG1>> ,class = REQUIRE<ENUM_ALL<IS_BOOL<ARG2>...>>>
 	imports BOOL all_of (CREF<ARG1> a ,CREF<ARG2>...b) {
-		require (ENUM_ALL<IS_BOOL<ARG1>>) ;
-		require (ENUM_ALL<IS_SAME<ARG1 ,ARG2>...>) ;
 		return MathProcHolder::create (instance ())->all_of (a ,MakeWrapper (b...)) ;
 	}
 
-	template <class ARG1 ,class...ARG2>
+	template <class ARG1 ,class...ARG2 ,class = REQUIRE<IS_BOOL<ARG1>> ,class = REQUIRE<ENUM_ALL<IS_BOOL<ARG2>...>>>
 	imports BOOL any_of (CREF<ARG1> a ,CREF<ARG2>...b) {
-		require (ENUM_ALL<IS_BOOL<ARG1>>) ;
-		require (ENUM_ALL<IS_SAME<ARG1 ,ARG2>...>) ;
 		return MathProcHolder::create (instance ())->any_of (a ,MakeWrapper (b...)) ;
 	}
 
-	template <class ARG1 ,class...ARG2>
+	template <class ARG1 ,class...ARG2 ,class = REQUIRE<IS_SCALAR<ARG1>> ,class = REQUIRE<ENUM_ALL<IS_SCALAR<ARG2>...>>>
 	imports ARG1 max_of (CREF<ARG1> a ,CREF<ARG2>...b) {
-		require (ENUM_ALL<IS_SCALAR<ARG1>>) ;
-		require (ENUM_ALL<IS_SAME<ARG1 ,ARG2>...>) ;
 		return MathProcHolder::create (instance ())->max_of (a ,MakeWrapper (b...)) ;
 	}
 
-	template <class ARG1 ,class...ARG2>
+	template <class ARG1 ,class...ARG2 ,class = REQUIRE<IS_SCALAR<ARG1>> ,class = REQUIRE<ENUM_ALL<IS_SCALAR<ARG2>...>>>
 	imports ARG1 min_of (CREF<ARG1> a ,CREF<ARG2>...b) {
-		require (ENUM_ALL<IS_SCALAR<ARG1>>) ;
-		require (ENUM_ALL<IS_SAME<ARG1 ,ARG2>...>) ;
 		return MathProcHolder::create (instance ())->min_of (a ,MakeWrapper (b...)) ;
 	}
 } ;
 
-struct NormalError {
+struct NormalErrorLayout {
 	LENGTH mCount ;
 	FLT64 mMaxError ;
 	FLT64 mAvgError ;
 	FLT64 mStdError ;
+} ;
+
+struct NormalErrorHolder implement Interface {
+	imports VFat<NormalErrorHolder> create (VREF<NormalErrorLayout> that) ;
+	imports CFat<NormalErrorHolder> create (CREF<NormalErrorLayout> that) ;
+
+	virtual void initialize () = 0 ;
+	virtual void update (CREF<FLT64> error) = 0 ;
+} ;
+
+class NormalError implement NormalErrorLayout {
+protected:
+	using NormalErrorLayout::mCount ;
+	using NormalErrorLayout::mMaxError ;
+	using NormalErrorLayout::mAvgError ;
+	using NormalErrorLayout::mStdError ;
 
 public:
+	explicit NormalError () {
+		NormalErrorHolder::create (thiz)->initialize () ;
+	}
+
+	CREF<NormalErrorLayout> layout () const leftvalue {
+		return thiz ;
+	}
+
+	void update (CREF<FLT64> error) {
+		return NormalErrorHolder::create (thiz)->update (error) ;
+	}
+
 	forceinline void operator+= (CREF<FLT64> error) {
-		const auto r1x = FLT64 (mCount) ;
-		const auto r2x = MathProc::inverse (r1x + 1) ;
-		const auto r3x = error - mAvgError ;
-		mMaxError = MathProc::max_of (mMaxError ,error) ;
-		mAvgError = mAvgError + r3x * r2x ;
-		const auto r4x = r1x * r2x * MathProc::square (mStdError) + r1x * MathProc::square (r3x * r2x) ;
-		mStdError = MathProc::sqrt (r4x) ;
-		mCount = LENGTH (r1x + 1) ;
+		return update (error) ;
 	}
 } ;
 
@@ -310,7 +307,9 @@ struct Notation {
 	VAL64 mExponent ;
 } ;
 
-struct FEXP2CacheLayout {} ;
+struct FEXP2CacheLayout {
+	RefLayout mThis ;
+} ;
 
 struct FEXP2CacheHolder implement Interface {
 	imports VFat<FEXP2CacheHolder> create (VREF<FEXP2CacheLayout> that) ;
@@ -337,7 +336,9 @@ public:
 	}
 } ;
 
-struct FEXP10CacheLayout {} ;
+struct FEXP10CacheLayout {
+	RefLayout mThis ;
+} ;
 
 struct FEXP10CacheHolder implement Interface {
 	imports VFat<FEXP10CacheHolder> create (VREF<FEXP10CacheLayout> that) ;
@@ -364,10 +365,8 @@ public:
 	}
 } ;
 
-struct FloatProcPureLayout ;
-
 struct FloatProcLayout {
-	Ref<FloatProcPureLayout> mThis ;
+	RefLayout mThis ;
 } ;
 
 struct FloatProcHolder implement Interface {
@@ -421,10 +420,8 @@ public:
 	}
 } ;
 
-struct ByteProcPureLayout ;
-
 struct ByteProcLayout {
-	Ref<ByteProcPureLayout> mThis ;
+	RefLayout mThis ;
 } ;
 
 struct ByteProcHolder implement Interface {
@@ -507,15 +504,13 @@ public:
 		return ByteProcHolder::create (instance ())->bit_merge (high ,low) ;
 	}
 
-	template <class ARG1 ,class ARG2>
+	template <class ARG1 ,class ARG2 ,class = REQUIRE<IS_BYTE<ARG1>>>
 	imports BOOL bit_any (CREF<ARG1> base ,CREF<ARG2> mask) {
-		require (IS_BYTE<ARG1>) ;
 		return ByteProcHolder::create (instance ())->bit_any (base ,ARG1 (mask)) ;
 	}
 
-	template <class ARG1 ,class ARG2>
+	template <class ARG1 ,class ARG2 ,class = REQUIRE<IS_BYTE<ARG1>>>
 	imports BOOL bit_all (CREF<ARG1> base ,CREF<ARG2> mask) {
-		require (IS_BYTE<ARG1>) ;
 		return ByteProcHolder::create (instance ())->bit_all (base ,ARG1 (mask)) ;
 	}
 
@@ -563,7 +558,7 @@ struct IntegerHolder implement Interface {
 	virtual void set (CREF<VAL64> item) = 0 ;
 	virtual BOOL equal (CREF<IntegerLayout> that) const = 0 ;
 	virtual FLAG compr (CREF<IntegerLayout> that) const = 0 ;
-	virtual void visit (CREF<Visitor> visitor) const = 0 ;
+	virtual void visit (VREF<Visitor> visitor) const = 0 ;
 	virtual IntegerLayout add (CREF<IntegerLayout> that) const = 0 ;
 	virtual IntegerLayout sub (CREF<IntegerLayout> that) const = 0 ;
 	virtual IntegerLayout mul (CREF<IntegerLayout> that) const = 0 ;
@@ -612,7 +607,7 @@ public:
 	}
 
 	inline BOOL operator!= (CREF<Integer> that) const {
-		return !(equal (that)) ;
+		return (!equal (that)) ;
 	}
 
 	FLAG compr (CREF<Integer> that) const {
@@ -635,7 +630,7 @@ public:
 		return compr (that) >= ZERO ;
 	}
 
-	void visit (CREF<Visitor> visitor) const {
+	void visit (VREF<Visitor> visitor) const {
 		return IntegerHolder::create (thiz)->visit (visitor) ;
 	}
 
@@ -752,10 +747,8 @@ public:
 	}
 } ;
 
-struct HashProcPureLayout ;
-
 struct HashProcLayout {
-	Ref<HashProcPureLayout> mThis ;
+	RefLayout mThis ;
 } ;
 
 struct HashProcHolder implement Interface {

@@ -47,6 +47,9 @@ using INDEX = VAL ;
 using LENGTH = VAL ;
 using FLAG = VAL ;
 
+template <class A>
+using JustInt = KILL<VAL ,A> ;
+
 using FLT32 = csc_float32_t ;
 using FLT64 = csc_float64_t ;
 
@@ -273,27 +276,27 @@ trait REFLECT_TYPE_HELP<A> {
 
 template <class A>
 trait REFLECT_TYPE_HELP<TYPE<A>> {
-	using M1ST_ONE = A ;
+	using M1ST_ITEM = A ;
 	using M1ST_REST = TYPE<> ;
 	using RET = ENUM_TRUE ;
 } ;
 
 template <class A ,class B>
 trait REFLECT_TYPE_HELP<TYPE<A ,B>> {
-	using M1ST_ONE = A ;
+	using M1ST_ITEM = A ;
 	using M1ST_REST = TYPE<B> ;
-	using M2ND_ONE = B ;
+	using M2ND_ITEM = B ;
 	using M2ND_REST = TYPE<> ;
 	using RET = ENUM_TRUE ;
 } ;
 
 template <class A ,class B ,class C ,class...D>
 trait REFLECT_TYPE_HELP<TYPE<A ,B ,C ,D...>> {
-	using M1ST_ONE = A ;
+	using M1ST_ITEM = A ;
 	using M1ST_REST = TYPE<B ,C ,D...> ;
-	using M2ND_ONE = B ;
+	using M2ND_ITEM = B ;
 	using M2ND_REST = TYPE<C ,D...> ;
-	using M3RD_ONE = C ;
+	using M3RD_ITEM = C ;
 	using M3RD_REST = TYPE<D...> ;
 	using RET = ENUM_TRUE ;
 } ;
@@ -302,19 +305,19 @@ template <class A>
 using IS_TYPE = typename REFLECT_TYPE_HELP<A>::RET ;
 
 template <class A>
-using TYPE_M1ST_ONE = typename REFLECT_TYPE_HELP<A>::M1ST_ONE ;
+using TYPE_M1ST_ITEM = typename REFLECT_TYPE_HELP<A>::M1ST_ITEM ;
 
 template <class A>
 using TYPE_M1ST_REST = typename REFLECT_TYPE_HELP<A>::M1ST_REST ;
 
 template <class A>
-using TYPE_M2ND_ONE = typename REFLECT_TYPE_HELP<A>::M2ND_ONE ;
+using TYPE_M2ND_ITEM = typename REFLECT_TYPE_HELP<A>::M2ND_ITEM ;
 
 template <class A>
 using TYPE_M2ND_REST = typename REFLECT_TYPE_HELP<A>::M2ND_REST ;
 
 template <class A>
-using TYPE_M3RD_ONE = typename REFLECT_TYPE_HELP<A>::M3RD_ONE ;
+using TYPE_M3RD_ITEM = typename REFLECT_TYPE_HELP<A>::M3RD_ITEM ;
 
 template <class A>
 using TYPE_M3RD_REST = typename REFLECT_TYPE_HELP<A>::M3RD_REST ;
@@ -336,11 +339,14 @@ trait ENUM_NOT_HELP ;
 
 template <class A>
 trait ENUM_NOT_HELP<A ,ALWAYS> {
-	using RET = ENUM<(!(A::expr))> ;
+	using RET = ENUM<(!A::expr)> ;
 } ;
 
 template <class A>
 using ENUM_NOT = typename ENUM_NOT_HELP<A ,ALWAYS>::RET ;
+
+template <class A ,class B>
+using IS_NOT_SAME = ENUM_NOT<IS_SAME<A ,B>> ;
 
 template <class...>
 trait CONDITIONAL_HELP ;
@@ -369,43 +375,32 @@ trait ENUM_EQUAL_HELP<A ,B ,ALWAYS> {
 template <class A ,class B>
 using ENUM_EQUAL = typename ENUM_EQUAL_HELP<A ,B ,ALWAYS>::RET ;
 
-template <class A ,class B>
-using ENUM_NOT_EQUAL = ENUM_NOT<ENUM_EQUAL<A ,B>> ;
-
-template <class...>
-trait ENUM_COMPR_LT_HELP ;
-
-template <class A ,class B>
-trait ENUM_COMPR_LT_HELP<A ,B ,ALWAYS> {
-	using RET = ENUM<(A::expr < B::expr)> ;
-} ;
-
-template <class A ,class B>
-using ENUM_COMPR_LT = typename ENUM_COMPR_LT_HELP<A ,B ,ALWAYS>::RET ;
-
-template <class A ,class B>
-using ENUM_COMPR_GT = ENUM_COMPR_LT<B ,A> ;
-
-template <class A ,class B>
-using ENUM_COMPR_LTEQ = ENUM_NOT<ENUM_COMPR_GT<A ,B>> ;
-
-template <class A ,class B>
-using ENUM_COMPR_GTEQ = ENUM_NOT<ENUM_COMPR_LT<A ,B>> ;
-
 template <class...>
 trait ENUM_COMPR_HELP ;
 
 template <class A ,class B>
 trait ENUM_COMPR_HELP<A ,B ,ALWAYS> {
-	using R1X = ENUM_COMPR_LT<A ,B> ;
-	using R2X = ENUM_COMPR_GT<A ,B> ;
-	using R3X = CONDITIONAL<R1X ,ENUM<(-1)> ,CONDITIONAL<R2X ,RANK1 ,RANK0>> ;
+	using R1X = ENUM<(A::expr < B::expr)> ;
+	using R2X = ENUM<(A::expr > B::expr)> ;
+	using R3X = CONDITIONAL<R1X ,ENUM<(-1)> ,CONDITIONAL<R2X ,ENUM<(+1)> ,ENUM<(+0)>>> ;
 
 	using RET = ENUM<(R3X::expr)> ;
 } ;
 
 template <class A ,class B>
 using ENUM_COMPR = typename ENUM_COMPR_HELP<A ,B ,ALWAYS>::RET ;
+
+template <class A ,class B>
+using ENUM_COMPR_LT = IS_SAME<ENUM_COMPR<A ,B> ,ENUM<(-1)>> ;
+
+template <class A ,class B>
+using ENUM_COMPR_GT = IS_SAME<ENUM_COMPR<A ,B> ,ENUM<(+1)>> ;
+
+template <class A ,class B>
+using ENUM_COMPR_LTEQ = ENUM_NOT<ENUM_COMPR_GT<A ,B>> ;
+
+template <class A ,class B>
+using ENUM_COMPR_GTEQ = ENUM_NOT<ENUM_COMPR_LT<A ,B>> ;
 
 template <class A>
 using ENUM_EQ_ZERO = ENUM_EQUAL<A ,RANK0> ;
@@ -504,13 +499,13 @@ trait TYPE_REVERSE_HELP<A ,REQUIRE<ENUM_EQ_ZERO<RANK_OF<A>>>> {
 
 template <class A>
 trait TYPE_REVERSE_HELP<A ,REQUIRE<ENUM_EQ_IDEN<RANK_OF<A>>>> {
-	using R1X = TYPE_M1ST_ONE<A> ;
+	using R1X = TYPE_M1ST_ITEM<A> ;
 	using RET = TYPE<R1X> ;
 } ;
 
 template <class A>
 trait TYPE_REVERSE_HELP<A ,REQUIRE<ENUM_GT_IDEN<RANK_OF<A>>>> {
-	using R1X = TYPE<TYPE_M1ST_ONE<A>> ;
+	using R1X = TYPE<TYPE_M1ST_ITEM<A>> ;
 	using R2X = typename TYPE_REVERSE_HELP<TYPE_M1ST_REST<A> ,ALWAYS>::RET ;
 	using RET = TYPE_CAT<R2X ,R1X> ;
 } ;
@@ -533,7 +528,7 @@ trait TYPE_REPEAT_HELP<A ,SIZE ,REQUIRE<ENUM_GT_ZERO<SIZE>>> {
 } ;
 
 template <class A ,class SIZE>
-using TYPE_REPEAT = typename TYPE_REPEAT_HELP<A ,SIZE ,ALWAYS>::RET ;
+using TYPE_BUFFER = typename TYPE_REPEAT_HELP<A ,SIZE ,ALWAYS>::RET ;
 
 template <class...>
 trait TYPE_SENQUENCE_HELP ;
@@ -557,7 +552,7 @@ trait TYPE_PICK_HELP ;
 
 template <class A ,class CURR>
 trait TYPE_PICK_HELP<A ,CURR ,REQUIRE<ENUM_EQ_ZERO<CURR>>> {
-	using RET = TYPE_M1ST_ONE<A> ;
+	using RET = TYPE_M1ST_ITEM<A> ;
 } ;
 
 template <class A ,class CURR>
@@ -578,7 +573,7 @@ trait ENUM_ALL_HELP<A ,REQUIRE<ENUM_EQ_ZERO<RANK_OF<A>>>> {
 
 template <class A>
 trait ENUM_ALL_HELP<A ,REQUIRE<ENUM_GT_ZERO<RANK_OF<A>>>> {
-	using R1X = TYPE_M1ST_ONE<A> ;
+	using R1X = TYPE_M1ST_ITEM<A> ;
 	using R2X = typename ENUM_ALL_HELP<TYPE_M1ST_REST<A> ,ALWAYS>::RET ;
 	using RET = CONDITIONAL<R1X ,R2X ,ENUM_FALSE> ;
 } ;
@@ -596,7 +591,7 @@ trait ENUM_ANY_HELP<A ,REQUIRE<ENUM_EQ_ZERO<RANK_OF<A>>>> {
 
 template <class A>
 trait ENUM_ANY_HELP<A ,REQUIRE<ENUM_GT_ZERO<RANK_OF<A>>>> {
-	using R1X = TYPE_M1ST_ONE<A> ;
+	using R1X = TYPE_M1ST_ITEM<A> ;
 	using R2X = typename ENUM_ANY_HELP<TYPE_M1ST_REST<A> ,ALWAYS>::RET ;
 	using RET = CONDITIONAL<R1X ,ENUM_TRUE ,R2X> ;
 } ;
@@ -614,7 +609,7 @@ trait ENUM_SUM_HELP<A ,REQUIRE<ENUM_EQ_ZERO<RANK_OF<A>>>> {
 
 template <class A>
 trait ENUM_SUM_HELP<A ,REQUIRE<ENUM_GT_ZERO<RANK_OF<A>>>> {
-	using R1X = TYPE_M1ST_ONE<A> ;
+	using R1X = TYPE_M1ST_ITEM<A> ;
 	using R2X = typename ENUM_SUM_HELP<TYPE_M1ST_REST<A> ,ALWAYS>::RET ;
 	using RET = ENUM_ADD<R1X ,R2X> ;
 } ;
@@ -632,7 +627,7 @@ trait ENUM_MAX_HELP<A ,REQUIRE<ENUM_EQ_ZERO<RANK_OF<A>>>> {
 
 template <class A>
 trait ENUM_MAX_HELP<A ,REQUIRE<ENUM_GT_ZERO<RANK_OF<A>>>> {
-	using R1X = TYPE_M1ST_ONE<A> ;
+	using R1X = TYPE_M1ST_ITEM<A> ;
 	using R2X = typename ENUM_MAX_HELP<TYPE_M1ST_REST<A> ,ALWAYS>::RET ;
 	using RET = CONDITIONAL<ENUM_COMPR_GTEQ<R1X ,R2X> ,R1X ,R2X> ;
 } ;
@@ -650,7 +645,7 @@ trait ENUM_MIN_HELP<A ,REQUIRE<ENUM_EQ_ZERO<RANK_OF<A>>>> {
 
 template <class A>
 trait ENUM_MIN_HELP<A ,REQUIRE<ENUM_GT_ZERO<RANK_OF<A>>>> {
-	using R1X = TYPE_M1ST_ONE<A> ;
+	using R1X = TYPE_M1ST_ITEM<A> ;
 	using R2X = typename ENUM_MIN_HELP<TYPE_M1ST_REST<A> ,ALWAYS>::RET ;
 	using RET = CONDITIONAL<ENUM_COMPR_LTEQ<R1X ,R2X> ,R1X ,R2X> ;
 } ;
@@ -665,6 +660,21 @@ struct Proxy {
 	forceinline VREF<Proxy> operator= (CREF<Proxy> that) = delete ;
 	implicit Proxy (RREF<Proxy> that) = delete ;
 	forceinline VREF<Proxy> operator= (RREF<Proxy> that) = delete ;
+} ;
+
+template <class A>
+struct RefProxy {
+protected:
+	XREF<A> mThat ;
+
+public:
+	implicit RefProxy () = delete ;
+	explicit RefProxy (XREF<A> that) :mThat (that) {}
+	implicit ~RefProxy () = default ;
+	implicit RefProxy (CREF<RefProxy> that) = delete ;
+	forceinline VREF<RefProxy> operator= (CREF<RefProxy> that) = delete ;
+	implicit RefProxy (RREF<RefProxy> that) = default ;
+	forceinline VREF<RefProxy> operator= (RREF<RefProxy> that) = delete ;
 } ;
 
 struct Interface {
@@ -816,6 +826,47 @@ trait IS_BASIC_HELP<A ,ALWAYS> {
 template <class A>
 using IS_BASIC = typename IS_BASIC_HELP<A ,ALWAYS>::RET ;
 
+template <class...>
+trait REFLECT_GUID_HELP ;
+
+template <class A ,class OTHERWISE>
+trait REFLECT_GUID_HELP<A ,OTHERWISE> {
+	using RET = RANK0 ;
+} ;
+
+template <class A>
+trait REFLECT_GUID_HELP<A ,REQUIRE<IS_BOOL<A>>> {
+	using RET = RANK1 ;
+} ;
+
+template <class A>
+trait REFLECT_GUID_HELP<A ,REQUIRE<IS_VALUE<A>>> {
+	using RET = RANK2 ;
+} ;
+
+template <class A>
+trait REFLECT_GUID_HELP<A ,REQUIRE<IS_FLOAT<A>>> {
+	using RET = RANK3 ;
+} ;
+
+template <class A>
+trait REFLECT_GUID_HELP<A ,REQUIRE<IS_TEXT<A>>> {
+	using RET = RANK4 ;
+} ;
+
+template <class A>
+trait REFLECT_GUID_HELP<A ,REQUIRE<IS_BYTE<A>>> {
+	using RET = RANK5 ;
+} ;
+
+template <class A>
+trait REFLECT_GUID_HELP<A ,REQUIRE<IS_NULL<A>>> {
+	using RET = RANK6 ;
+} ;
+
+template <class A>
+using REFLECT_GUID = typename REFLECT_GUID_HELP<A ,ALWAYS>::RET ;
+
 using ORDINARY = ENUM_FALSE ;
 using VARIABLE = ENUM<(-1)> ;
 using CONSTANT = ENUM<(-2)> ;
@@ -845,15 +896,10 @@ trait REFLECT_REF_HELP<A ,RREF<A>> {
 } ;
 
 template <class A>
-using REFLECT_REF = typename REFLECT_REF_HELP<REMOVE_REF<A> ,A>::RET ;
+using REFLECT_REF = typename REFLECT_REF_HELP<REMOVE_CVR<A> ,A>::RET ;
 
 template <class...>
 trait REF_HELP ;
-
-template <class A ,class B>
-trait REF_HELP<A ,B ,REQUIRE<IS_SAME<B ,ORDINARY>>> {
-	using RET = A ;
-} ;
 
 template <class A ,class B>
 trait REF_HELP<A ,B ,REQUIRE<IS_SAME<B ,VARIABLE>>> {
@@ -871,7 +917,7 @@ trait REF_HELP<A ,B ,REQUIRE<IS_SAME<B ,REGISTER>>> {
 } ;
 
 template <class A ,class B>
-using REF = typename REF_HELP<REMOVE_REF<A> ,B ,ALWAYS>::RET ;
+using REF = typename REF_HELP<REMOVE_CVR<A> ,B ,ALWAYS>::RET ;
 
 template <class...>
 trait REFLECT_POINTER_HELP ;
@@ -892,7 +938,7 @@ trait REFLECT_POINTER_HELP<DEF<const A *>> {
 } ;
 
 template <class A>
-using IS_POINTER = typename REFLECT_POINTER_HELP<REMOVE_REF<A>>::RET ;
+using IS_POINTER = typename REFLECT_POINTER_HELP<REMOVE_CVR<A>>::RET ;
 
 template <class...>
 trait PTR_HELP ;
@@ -908,12 +954,12 @@ trait PTR_HELP<A ,B ,REQUIRE<IS_SAME<B ,VARIABLE>>> {
 } ;
 
 template <class A ,class B>
-trait PTR_HELP<A , B,REQUIRE<IS_SAME<B ,CONSTANT>>> {
+trait PTR_HELP<A ,B ,REQUIRE<IS_SAME<B ,CONSTANT>>> {
 	using RET = DEF<const A *> ;
 } ;
 
 template <class A>
-using PTR = typename PTR_HELP<REMOVE_REF<A> ,REFLECT_REF<A> ,ALWAYS>::RET ;
+using PTR = typename PTR_HELP<REMOVE_CVR<A> ,REFLECT_REF<A> ,ALWAYS>::RET ;
 
 template <class...>
 trait REFLECT_ARRAY_HELP ;
@@ -938,13 +984,13 @@ trait REFLECT_ARRAY_HELP<DEF<A[B]>> {
 } ;
 
 template <class A>
-using IS_ARRAY = typename REFLECT_ARRAY_HELP<REMOVE_REF<A>>::RET ;
+using IS_ARRAY = typename REFLECT_ARRAY_HELP<REMOVE_CVR<A>>::RET ;
 
 template <class A>
-using ARRAY_ITEM = typename REFLECT_ARRAY_HELP<REMOVE_REF<A>>::ITEM ;
+using ARRAY_ITEM = typename REFLECT_ARRAY_HELP<REMOVE_CVR<A>>::ITEM ;
 
 template <class A>
-using ARRAY_SIZE = typename REFLECT_ARRAY_HELP<REMOVE_REF<A>>::SIZE ;
+using ARRAY_SIZE = typename REFLECT_ARRAY_HELP<REMOVE_CVR<A>>::SIZE ;
 
 template <class...>
 trait ARR_HELP ;
@@ -965,6 +1011,22 @@ template <class A ,class SIZE = RANK0>
 using ARR = typename ARR_HELP<A ,SIZE ,ALWAYS>::RET ;
 
 template <class...>
+trait REFLECT_INVOKE_HELP ;
+
+template <class A ,class OTHERWISE>
+trait REFLECT_INVOKE_HELP<A ,OTHERWISE> {
+	using RET = A ;
+} ;
+
+template <class A>
+trait REFLECT_INVOKE_HELP<A ,REQUIRE<KILL<ENUM_TRUE ,typeof (&A::operator())>>> {
+	using RET = typeof (&A::operator()) ;
+} ;
+
+template <class A>
+using REFLECT_INVOKE = typename REFLECT_INVOKE_HELP<A ,ALWAYS>::RET ;
+
+template <class...>
 trait REFLECT_FUNCTION_HELP ;
 
 template <class A>
@@ -975,25 +1037,25 @@ trait REFLECT_FUNCTION_HELP<A> {
 template <class A ,class...B ,class C>
 trait REFLECT_FUNCTION_HELP<DEF<A (C:: *) (B...)>> {
 	using RETURN = A ;
-	using PARAMS = TYPE<XREF<B>...> ;
+	using PARAMS = TYPE<B...> ;
 	using RET = ENUM_TRUE ;
 } ;
 
 template <class A ,class...B ,class C>
 trait REFLECT_FUNCTION_HELP<DEF<A (C:: *) (B...) const>> {
 	using RETURN = A ;
-	using PARAMS = TYPE<XREF<B>...> ;
+	using PARAMS = TYPE<B...> ;
 	using RET = ENUM_TRUE ;
 } ;
 
 template <class A>
-using IS_FUNCTION = typename REFLECT_FUNCTION_HELP<DEF<typeof (&A::operator())>>::RET ;
+using IS_FUNCTION = typename REFLECT_FUNCTION_HELP<REFLECT_INVOKE<A>>::RET ;
 
 template <class A>
-using FUNCTION_RETURN = typename REFLECT_FUNCTION_HELP<DEF<typeof (&A::operator())>>::RETURN ;
+using FUNCTION_RETURN = typename REFLECT_FUNCTION_HELP<REFLECT_INVOKE<A>>::RETURN ;
 
 template <class A>
-using FUNCTION_PARAMS = typename REFLECT_FUNCTION_HELP<DEF<typeof (&A::operator())>>::PARAMS ;
+using FUNCTION_PARAMS = typename REFLECT_FUNCTION_HELP<REFLECT_INVOKE<A>>::PARAMS ;
 
 template <class...>
 trait IS_UNDER_HELP ;
@@ -1069,6 +1131,128 @@ template <class A>
 using IS_TRIVIAL = typename IS_TRIVIAL_HELP<A ,ALWAYS>::RET ;
 
 template <class...>
+trait IS_COPYABLE_HELP ;
+
+template <class A>
+trait IS_COPYABLE_HELP<A ,ALWAYS> {
+	using R1X = MACRO_IS_COPY_CONSTRUCTIBLE<A> ;
+	using R2X = MACRO_IS_COPY_ASSIGNABLE<A> ;
+	using R3X = MACRO_IS_MOVE_CONSTRUCTIBLE<A> ;
+	using R4X = MACRO_IS_MOVE_ASSIGNABLE<A> ;
+
+	using RET = ENUM_ALL<R1X ,R2X ,R3X ,R4X> ;
+} ;
+
+template <class A>
+using IS_COPYABLE = typename IS_COPYABLE_HELP<A ,ALWAYS>::RET ;
+
+template <class...>
+trait IS_EQUALABLE_HELP ;
+
+template <class A ,class OTHERWISE>
+trait IS_EQUALABLE_HELP<A ,OTHERWISE> {
+	using RET = ENUM_FALSE ;
+} ;
+
+template <class A>
+trait IS_EQUALABLE_HELP<A ,REQUIRE<KILL<ENUM_TRUE ,typeof (nullof (A) == nullof (A))>>> {
+	using RET = ENUM_NOT<IS_CLASS<A>> ;
+} ;
+
+template <class A>
+using IS_EQUALABLE = typename IS_EQUALABLE_HELP<A ,ALWAYS>::RET ;
+
+template <class...>
+trait IS_COMPRABLE_HELP ;
+
+template <class A ,class OTHERWISE>
+trait IS_COMPRABLE_HELP<A ,OTHERWISE> {
+	using RET = ENUM_FALSE ;
+} ;
+
+template <class A>
+trait IS_COMPRABLE_HELP<A ,REQUIRE<KILL<ENUM_TRUE ,typeof (nullof (A) < nullof (A))>>> {
+	using RET = ENUM_NOT<IS_CLASS<A>> ;
+} ;
+
+template <class A>
+using IS_COMPRABLE = typename IS_COMPRABLE_HELP<A ,ALWAYS>::RET ;
+
+template <class...>
+trait HAS_CLONE_HELP ;
+
+template <class A ,class OTHERWISE>
+trait HAS_CLONE_HELP<A ,OTHERWISE> {
+	using RET = ENUM_FALSE ;
+} ;
+
+template <class A>
+trait HAS_CLONE_HELP<A ,REQUIRE<KILL<ENUM_TRUE ,typeof (nullof (A).clone ())>>> {
+	using RET = ENUM_TRUE ;
+} ;
+
+template <class A>
+using HAS_CLONE = typename HAS_CLONE_HELP<A ,ALWAYS>::RET ;
+
+template <class...>
+trait HAS_EQUAL_HELP ;
+
+template <class A ,class OTHERWISE>
+trait HAS_EQUAL_HELP<A ,OTHERWISE> {
+	using RET = ENUM_FALSE ;
+} ;
+
+template <class A>
+trait HAS_EQUAL_HELP<A ,REQUIRE<KILL<ENUM_TRUE ,typeof (nullof (A).equal (nullof (A)))>>> {
+	using RET = ENUM_TRUE ;
+} ;
+
+template <class A>
+using HAS_EQUAL = typename HAS_EQUAL_HELP<A ,ALWAYS>::RET ;
+
+template <class...>
+trait HAS_COMPR_HELP ;
+
+template <class A ,class OTHERWISE>
+trait HAS_COMPR_HELP<A ,OTHERWISE> {
+	using RET = ENUM_FALSE ;
+} ;
+
+template <class A>
+trait HAS_COMPR_HELP<A ,REQUIRE<KILL<ENUM_TRUE ,typeof (nullof (A).compr (nullof (A)))>>> {
+	using RET = ENUM_TRUE ;
+} ;
+
+template <class A>
+using HAS_COMPR = typename HAS_COMPR_HELP<A ,ALWAYS>::RET ;
+
+struct Visitor implement Interface {
+	virtual void begin () = 0 ;
+	virtual void end () = 0 ;
+	virtual void push (CREF<BYTE> a) = 0 ;
+	virtual void push (CREF<WORD> a) = 0 ;
+	virtual void push (CREF<CHAR> a) = 0 ;
+	virtual void push (CREF<QUAD> a) = 0 ;
+	virtual FLAG peek () const = 0 ;
+} ;
+
+template <class...>
+trait HAS_VISIT_HELP ;
+
+template <class A ,class OTHERWISE>
+trait HAS_VISIT_HELP<A ,OTHERWISE> {
+	using RET = ENUM_FALSE ;
+} ;
+
+template <class A>
+trait HAS_VISIT_HELP<A ,REQUIRE<KILL<ENUM_TRUE ,typeof (nullof (A).visit (nullof (Visitor)))>>> {
+	using RET = ENUM_TRUE ;
+} ;
+
+template <class A>
+using HAS_VISIT = typename HAS_VISIT_HELP<A ,ALWAYS>::RET ;
+
+template <class...>
 trait IS_EXTEND_HELP ;
 
 template <class A ,class B>
@@ -1081,6 +1265,9 @@ trait IS_EXTEND_HELP<A ,B ,ALWAYS> {
 
 template <class A ,class B>
 using IS_EXTEND = typename IS_EXTEND_HELP<A ,B ,ALWAYS>::RET ;
+
+template <class A ,class B>
+using IS_NOT_EXTEND = ENUM_NOT<IS_EXTEND<A ,B>> ;
 
 template <class...>
 trait IS_INTERFACE_HELP ;
@@ -1108,77 +1295,14 @@ trait IS_OBJECT_HELP ;
 template <class A>
 trait IS_OBJECT_HELP<A ,ALWAYS> {
 	using R1X = IS_BASIC<A> ;
-	using R2X = IS_CLASS<A> ;
+	using R2X = IS_UNDER<A> ;
+	using R3X = IS_CLASS<A> ;
 
-	using RET = ENUM_ANY<R1X ,R2X> ;
+	using RET = ENUM_ANY<R1X ,R2X ,R3X> ;
 } ;
 
 template <class A>
 using IS_OBJECT = typename IS_OBJECT_HELP<A ,ALWAYS>::RET ;
-
-template <class...>
-trait HAS_CLONE_HELP ;
-
-template <class A>
-trait HAS_CLONE_HELP<A ,ALWAYS> {
-	using R1X = MACRO_IS_COPY_CONSTRUCTIBLE<A> ;
-	using R2X = MACRO_IS_COPY_ASSIGNABLE<A> ;
-	using R3X = MACRO_IS_MOVE_CONSTRUCTIBLE<A> ;
-	using R4X = MACRO_IS_MOVE_ASSIGNABLE<A> ;
-
-	using RET = ENUM_ALL<R1X ,R2X ,R3X ,R4X> ;
-} ;
-
-template <class A>
-using HAS_CLONE = typename HAS_CLONE_HELP<A ,ALWAYS>::RET ;
-
-template <class...>
-trait HAS_EQUAL_HELP ;
-
-template <class A>
-trait HAS_EQUAL_HELP<A ,REQUIRE<IS_BASIC<A>>> {
-	using RET = ENUM_TRUE ;
-} ;
-
-template <class A>
-trait HAS_EQUAL_HELP<A ,REQUIRE<KILL<ENUM_TRUE ,typeof (&A::equal)>>> {
-	using RET = ENUM_TRUE ;
-} ;
-
-template <class A>
-using HAS_EQUAL = typename HAS_EQUAL_HELP<A ,ALWAYS>::RET ;
-
-template <class...>
-trait HAS_COMPR_HELP ;
-
-template <class A>
-trait HAS_COMPR_HELP<A ,REQUIRE<IS_BASIC<A>>> {
-	using RET = ENUM_TRUE ;
-} ;
-
-template <class A>
-trait HAS_COMPR_HELP<A ,REQUIRE<KILL<ENUM_TRUE ,typeof (&A::compr)>>> {
-	using RET = ENUM_TRUE ;
-} ;
-
-template <class A>
-using HAS_COMPR = typename HAS_COMPR_HELP<A ,ALWAYS>::RET ;
-
-template <class...>
-trait HAS_VISIT_HELP ;
-
-template <class A>
-trait HAS_VISIT_HELP<A ,REQUIRE<IS_BASIC<A>>> {
-	using RET = ENUM_TRUE ;
-} ;
-
-template <class A>
-trait HAS_VISIT_HELP<A ,REQUIRE<KILL<ENUM_TRUE ,typeof (&A::visit)>>> {
-	using RET = ENUM_TRUE ;
-} ;
-
-template <class A>
-using HAS_VISIT = typename HAS_VISIT_HELP<A ,ALWAYS>::RET ;
 
 template <class...>
 trait BYTE_BASE_HELP ;
@@ -1320,25 +1444,89 @@ trait TUPLE_HELP<PARAMS ,REQUIRE<ENUM_EQ_ZERO<RANK_OF<PARAMS>>>> {
 
 template <class PARAMS>
 trait TUPLE_HELP<PARAMS ,REQUIRE<ENUM_EQUAL<RANK_OF<PARAMS> ,RANK1>>> {
-	using R1X = TYPE_M1ST_ONE<PARAMS> ;
+	using R1X = TYPE_M1ST_ITEM<PARAMS> ;
 	using RET = TupleWrap1<R1X> ;
 } ;
 
 template <class PARAMS>
 trait TUPLE_HELP<PARAMS ,REQUIRE<ENUM_EQUAL<RANK_OF<PARAMS> ,RANK2>>> {
-	using R1X = TYPE_M1ST_ONE<PARAMS> ;
-	using R2X = TYPE_M2ND_ONE<PARAMS> ;
+	using R1X = TYPE_M1ST_ITEM<PARAMS> ;
+	using R2X = TYPE_M2ND_ITEM<PARAMS> ;
 	using RET = TupleWrap2<R1X ,R2X> ;
 } ;
 
 template <class PARAMS>
 trait TUPLE_HELP<PARAMS ,REQUIRE<ENUM_EQUAL<RANK_OF<PARAMS> ,RANK3>>> {
-	using R1X = TYPE_M1ST_ONE<PARAMS> ;
-	using R2X = TYPE_M2ND_ONE<PARAMS> ;
-	using R3X = TYPE_M3RD_ONE<PARAMS> ;
+	using R1X = TYPE_M1ST_ITEM<PARAMS> ;
+	using R2X = TYPE_M2ND_ITEM<PARAMS> ;
+	using R3X = TYPE_M3RD_ITEM<PARAMS> ;
 	using RET = TupleWrap3<R1X ,R2X ,R3X> ;
 } ;
 
 template <class...A>
 using Tuple = typename TUPLE_HELP<TYPE<A...> ,ALWAYS>::RET ;
+
+template <class...>
+trait HAS_SELF_HELP ;
+
+template <class A ,class OTHERWISE>
+trait HAS_SELF_HELP<A ,OTHERWISE> {
+	using RET = ENUM_FALSE ;
+} ;
+
+template <class A>
+trait HAS_SELF_HELP<A ,REQUIRE<KILL<ENUM_TRUE ,typeof (nullof (A).self)>>> {
+	using RET = ENUM_TRUE ;
+} ;
+
+template <class A>
+using HAS_SELF = typename HAS_SELF_HELP<A ,ALWAYS>::RET ;
+
+template <class...>
+trait HAS_M1ST_HELP ;
+
+template <class A ,class OTHERWISE>
+trait HAS_M1ST_HELP<A ,OTHERWISE> {
+	using RET = ENUM_FALSE ;
+} ;
+
+template <class A>
+trait HAS_M1ST_HELP<A ,REQUIRE<KILL<ENUM_TRUE ,typeof (nullof (A).m1st)>>> {
+	using RET = ENUM_TRUE ;
+} ;
+
+template <class A>
+using HAS_M1ST = typename HAS_M1ST_HELP<A ,ALWAYS>::RET ;
+
+template <class...>
+trait HAS_M2ND_HELP ;
+
+template <class A ,class OTHERWISE>
+trait HAS_M2ND_HELP<A ,OTHERWISE> {
+	using RET = ENUM_FALSE ;
+} ;
+
+template <class A>
+trait HAS_M2ND_HELP<A ,REQUIRE<KILL<ENUM_TRUE ,typeof (nullof (A).m2nd)>>> {
+	using RET = ENUM_TRUE ;
+} ;
+
+template <class A>
+using HAS_M2ND = typename HAS_M2ND_HELP<A ,ALWAYS>::RET ;
+
+template <class...>
+trait HAS_M3RD_HELP ;
+
+template <class A ,class OTHERWISE>
+trait HAS_M3RD_HELP<A ,OTHERWISE> {
+	using RET = ENUM_FALSE ;
+} ;
+
+template <class A>
+trait HAS_M3RD_HELP<A ,REQUIRE<KILL<ENUM_TRUE ,typeof (nullof (A).m3rd)>>> {
+	using RET = ENUM_TRUE ;
+} ;
+
+template <class A>
+using HAS_M3RD = typename HAS_M3RD_HELP<A ,ALWAYS>::RET ;
 } ;

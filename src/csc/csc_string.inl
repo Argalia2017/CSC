@@ -7,42 +7,128 @@
 #include "csc_string.hpp"
 
 namespace CSC {
-class RegularReader {
-protected:
+struct CommaImplLayout {
+	Slice mIndent ;
+	Slice mComma ;
+	Slice mEndline ;
+	LENGTH mDepth ;
+	Deque<BOOL> mFirst ;
+	LENGTH mTight ;
+	LENGTH mLastTight ;
+} ;
+
+class CommaImplHolder implement Fat<CommaHolder ,CommaLayout> {
+public:
+	void initialize (CREF<Slice> indent ,CREF<Slice> comma ,CREF<Slice> endline) override {
+		fake.mThis = SharedRef<CommaImplLayout>::make () ;
+		fake.mThis->mIndent = indent ;
+		fake.mThis->mComma = comma ;
+		fake.mThis->mEndline = endline ;
+		fake.mThis->mDepth = 0 ;
+		fake.mThis->mTight = 255 ;
+		fake.mThis->mLastTight = 0 ;
+	}
+
+	void friend_write (VREF<StreamWriter> writer) const override {
+		if ifdo (TRUE) {
+			if (fake.mThis->mDepth >= fake.mThis->mTight + fake.mThis->mLastTight)
+				discard ;
+			writer.write (fake.mThis->mEndline) ;
+		}
+		if ifdo (TRUE) {
+			if (fake.mThis->mFirst.empty ())
+				discard ;
+			INDEX ix = fake.mThis->mFirst.tail () ;
+			if ifdo (TRUE) {
+				if (fake.mThis->mFirst[ix])
+					discard ;
+				writer.write (fake.mThis->mComma) ;
+			}
+			fake.mThis->mFirst[ix] = FALSE ;
+		}
+		if ifdo (TRUE) {
+			if (fake.mThis->mDepth >= fake.mThis->mTight + fake.mThis->mLastTight)
+				discard ;
+			for (auto &&i : iter (0 ,fake.mThis->mDepth)) {
+				noop (i) ;
+				writer.write (fake.mThis->mIndent) ;
+			}
+		}
+		fake.mThis->mLastTight = 0 ;
+	}
+
+	void increase () const override {
+		fake.mThis->mDepth++ ;
+		if ifdo (TRUE) {
+			if (fake.mThis->mFirst.empty ())
+				discard ;
+			fake.mThis->mFirst[fake.mThis->mFirst.tail ()] = TRUE ;
+		}
+		fake.mThis->mFirst.add (TRUE) ;
+	}
+
+	void decrease () const override {
+		fake.mThis->mFirst.pop () ;
+		fake.mThis->mDepth-- ;
+		fake.mThis->mLastTight = fake.mThis->mTight - 256 ;
+		fake.mThis->mTight = 255 ;
+	}
+
+	void tight () const override {
+		fake.mThis->mTight = inline_min (fake.mThis->mTight ,fake.mThis->mDepth) ;
+	}
+} ;
+
+exports VFat<CommaHolder> CommaHolder::create (VREF<CommaLayout> that) {
+	return VFat<CommaHolder> (CommaImplHolder () ,that) ;
+}
+
+exports CFat<CommaHolder> CommaHolder::create (CREF<CommaLayout> that) {
+	return CFat<CommaHolder> (CommaImplHolder () ,that) ;
+}
+
+struct RegularReaderLayout {
 	Ref<RefBuffer<BYTE>> mStream ;
 	LENGTH mLookSize ;
-	ByteReader mByteReader ;
-	TextReader mTextReader ;
+	Box<ByteReader> mByteReader ;
+	Box<TextReader> mTextReader ;
 	Deque<STRU32> mDeque ;
 	STRU32 mTop ;
-	LENGTH mHintSize ;
+} ;
+
+class RegularReader implement RegularReaderLayout {
+protected:
+	using RegularReaderLayout::mStream ;
+	using RegularReaderLayout::mLookSize ;
+	using RegularReaderLayout::mByteReader ;
+	using RegularReaderLayout::mTextReader ;
+	using RegularReaderLayout::mDeque ;
+	using RegularReaderLayout::mTop ;
 
 public:
 	implicit RegularReader () = default ;
 
-	explicit RegularReader (RREF<Ref<RefBuffer<BYTE>>> stream ,CREF<LENGTH> look_size) {
+	explicit RegularReader (RREF<Ref<RefBuffer<BYTE>>> stream ,CREF<LENGTH> ring_size) {
 		mStream = move (stream) ;
-		mLookSize = look_size ;
+		mDeque = Deque<STRU32> (ring_size) ;
 	}
 
 	void use_byte () {
-		mByteReader = ByteReader (mStream.share ()) ;
-		mDeque = Deque<STRU32> (mLookSize) ;
+		mByteReader = Box<ByteReader>::make (mStream.share ()) ;
 		while (TRUE) {
 			if (mDeque.length () >= mDeque.size ())
 				break ;
-			mTextReader >> mTop ;
+			mByteReader.self >> mTop ;
 			mDeque.add (mTop) ;
 		}
 	}
 
 	void use_text () {
-		mTextReader = TextReader (mStream.share ()) ;
-		mDeque = Deque<STRU32> (mLookSize) ;
+		mTextReader = Box<TextReader>::make (mStream.share ()) ;
 		while (TRUE) {
 			if (mDeque.length () >= mDeque.size ())
 				break ;
-			mTextReader >> mTop ;
+			mTextReader.self >> mTop ;
 			mDeque.add (mTop) ;
 		}
 	}
@@ -61,98 +147,29 @@ public:
 		return ARG1 () ;
 	}
 
-	void read (CREF<Slice> item) {
-		for (auto &&i : iter (0 ,item.size ())) {
-			assume (mDeque[0] == item[i]) ;
-			next () ;
-		}
-	}
-
-	forceinline VREF<RegularReader> operator>> (CREF<Slice> item) {
-		read (item) ;
-		return thiz ;
-	}
-
-	void read (VREF<String<STRU8>> item) {
-		item = String<STRU8> (mHintSize) ;
-		mHintSize = 0 ;
-		for (auto &&i : iter (0 ,item.size ())) {
-			item[i] = STRU8 (mDeque[0]) ;
-			next () ;
-		}
-	}
-
-	forceinline VREF<RegularReader> operator>> (VREF<String<STRU8>> item) {
-		read (item) ;
-		return thiz ;
-	}
-
-	void read (VREF<String<STRU16>> item) {
-		item = String<STRU16> (mHintSize) ;
-		mHintSize = 0 ;
-		for (auto &&i : iter (0 ,item.size ())) {
-			item[i] = STRU16 (mDeque[0]) ;
-			next () ;
-		}
-	}
-
-	forceinline VREF<RegularReader> operator>> (VREF<String<STRU16>> item) {
-		read (item) ;
-		return thiz ;
-	}
-
-	void read (VREF<String<STRU32>> item) {
-		item = String<STRU32> (mHintSize) ;
-		mHintSize = 0 ;
-		for (auto &&i : iter (0 ,item.size ())) {
-			item[i] = STRU32 (mDeque[0]) ;
-			next () ;
-		}
-	}
-
-	forceinline VREF<RegularReader> operator>> (VREF<String<STRU32>> item) {
-		read (item) ;
-		return thiz ;
-	}
-
-	void read (CREF<typeof (BOM)> item) {
+	template <class ARG1>
+	void read (CREF<ARG1> item) {
 		unimplemented () ;
 	}
 
-	forceinline VREF<RegularReader> operator>> (CREF<typeof (BOM)> item) {
-		read (item) ;
-		return thiz ;
-	}
-
-	void read (CREF<typeof (GAP)> item) {
-		unimplemented () ;
-	}
-
-	forceinline VREF<RegularReader> operator>> (CREF<typeof (GAP)> item) {
-		read (item) ;
-		return thiz ;
-	}
-
-	void read (CREF<typeof (EOS)> item) {
-		unimplemented () ;
-	}
-
-	forceinline VREF<RegularReader> operator>> (CREF<typeof (EOS)> item) {
-		read (item) ;
-		return thiz ;
-	}
-
-	void read (CREF<StreamReaderFriend> item) {
-		unimplemented () ;
-	}
-
-	forceinline VREF<RegularReader> operator>> (CREF<StreamReaderFriend> item) {
+	template <class ARG1>
+	forceinline VREF<RegularReader> operator>> (CREF<ARG1> item) {
 		read (item) ;
 		return thiz ;
 	}
 
 	void next () {
-		mTextReader >> mTop ;
+		auto act = TRUE ;
+		if ifdo (act) {
+			if (mByteReader == NULL)
+				discard ;
+			mByteReader.self >> mTop ;
+		}
+		if ifdo (act) {
+			if (mTextReader == NULL)
+				discard ;
+			mTextReader.self >> mTop ;
+		}
 		mDeque.take () ;
 		mDeque.add (mTop) ;
 	}
@@ -184,17 +201,6 @@ public:
 	}
 } ;
 
-struct XmlParserNode {
-	String<STRU8> mName ;
-	String<STRU8> mString ;
-	SortedMap<INDEX> mArrayMap ;
-	SortedMap<String<STRU8>> mObjectMap ;
-	FLAG mType ;
-	INDEX mParent ;
-	INDEX mBrother ;
-	INDEX mChild ;
-} ;
-
 struct XmlParserNodeType {
 	enum {
 		Value ,
@@ -204,32 +210,52 @@ struct XmlParserNodeType {
 	} ;
 } ;
 
-struct XmlParserPureLayout {
+struct XmlParserNode {
+	String<STRU8> mName ;
+	String<STRU8> mString ;
+	SortedMap<INDEX> mArrayMap ;
+	SortedMap<String<STRU8>> mObjectMap ;
+	JustInt<XmlParserNodeType> mType ;
+	INDEX mParent ;
+	INDEX mBrother ;
+	INDEX mChild ;
+} ;
+
+struct XmlParserImplLayout {
 	Array<XmlParserNode> mTree ;
 	INDEX mRoot ;
 } ;
 
-class MakeXmlParser {
-protected:
+struct MakeXmlParserLayout {
 	RegularReader mReader ;
 	LENGTH mRecursiveCounter ;
 	List<XmlParserNode> mTree ;
-	INDEX mRoot ;
 	SortedMap<INDEX> mArrayMap ;
 	SortedMap<String<STRU8>> mObjectMap ;
 	INDEX mLastIndex ;
 	String<STRU8> mLastString ;
+} ;
+
+class MakeXmlParser implement MakeXmlParserLayout {
+protected:
+	using MakeXmlParserLayout::mReader ;
+	using MakeXmlParserLayout::mRecursiveCounter ;
+	using MakeXmlParserLayout::mTree ;
+	using MakeXmlParserLayout::mArrayMap ;
+	using MakeXmlParserLayout::mObjectMap ;
+	using MakeXmlParserLayout::mLastIndex ;
+	using MakeXmlParserLayout::mLastString ;
 
 public:
-	implicit MakeXmlParser () = delete ;
+	implicit MakeXmlParser () = default ;
 
 	explicit MakeXmlParser (RREF<Ref<RefBuffer<BYTE>>> stream) {
 		mReader = RegularReader (move (stream) ,5) ;
 		mReader.use_text () ;
 	}
 
-	XmlParserPureLayout poll () {
-		XmlParserPureLayout ret ;
+	XmlParserImplLayout poll () {
+		XmlParserImplLayout ret ;
 		ret.mTree = Array<XmlParserNode> (mTree.length ()) ;
 		const auto r1x = Array<INDEX>::make (mTree.range ()) ;
 		for (auto &&i : iter (0 ,r1x.length ())) {
@@ -237,7 +263,12 @@ public:
 			ret.mTree[i].mArrayMap.remap () ;
 			ret.mTree[i].mObjectMap.remap () ;
 		}
-		ret.mRoot = mRoot ;
+		ret.mRoot = NONE ;
+		if ifdo (TRUE) {
+			if (r1x.length () == 0)
+				discard ;
+			ret.mRoot = 0 ;
+		}
 		return move (ret) ;
 	}
 
@@ -262,6 +293,7 @@ public:
 		INDEX ix = mTree.insert () ;
 		mTree[ix].mArrayMap = mArrayMap.share () ;
 		mTree[ix].mObjectMap = mObjectMap.share () ;
+		mTree[ix].mType = XmlParserNodeType::Value ;
 		mTree[ix].mParent = NONE ;
 		read_shift_e7 (ix ,NONE) ;
 		mTree[ix].mChild = mLastIndex ;
@@ -273,12 +305,12 @@ public:
 
 	//@info: $1->${identity}
 	void read_shift_e1 () {
-		mReader >> IdentifierText (mLastString) ;
+		mReader >> IdentifierText::from (mLastString) ;
 	}
 
 	//@info: $2->"${string}"
 	void read_shift_e2 () {
-		mReader >> EscapeText (mLastString) ;
+		mReader >> EscapeText::from (mLastString) ;
 	}
 
 	//@info: $3->$1 = $2
@@ -286,6 +318,7 @@ public:
 		INDEX ix = mTree.insert () ;
 		read_shift_e1 () ;
 		mTree[ix].mName = move (mLastString) ;
+		mTree[ix].mType = XmlParserNodeType::Value ;
 		mTree[ix].mParent = curr ;
 		mTree[ix].mBrother = NONE ;
 		mTree[ix].mChild = NONE ;
@@ -302,7 +335,7 @@ public:
 		INDEX ix = NONE ;
 		INDEX iy = NONE ;
 		while (TRUE) {
-			if (!(is_frist_identity ()))
+			if ((!is_frist_identity ()))
 				break ;
 			auto act = TRUE ;
 			if ifdo (act) {
@@ -338,11 +371,12 @@ public:
 
 	//@info: $5-><$1 $4 />|<$1 $4 > $7 </$1 >
 	void read_shift_e5 (CREF<INDEX> curr) {
-		Scope<VREF<ScopeCounter>> anonymous (ScopeCounter::from (mRecursiveCounter)) ;
+		Scope<ScopeCounter> anonymous (ScopeCounter::from (mRecursiveCounter)) ;
 		mReader >> slice ("<") ;
 		INDEX ix = mTree.insert () ;
 		read_shift_e1 () ;
 		mTree[ix].mName = move (mLastString) ;
+		mTree[ix].mType = XmlParserNodeType::Value ;
 		mTree[ix].mParent = curr ;
 		mTree[ix].mBrother = NONE ;
 		mTree[ix].mChild = NONE ;
@@ -390,23 +424,23 @@ public:
 
 	//@info: $7->${eps}|$5 $7|$6 $7
 	void read_shift_e7 (CREF<INDEX> curr ,CREF<INDEX> first) {
-		Scope<VREF<ScopeCounter>> anonymous (ScopeCounter::from (mRecursiveCounter)) ;
+		Scope<ScopeCounter> anonymous (ScopeCounter::from (mRecursiveCounter)) ;
 		INDEX ix = first ;
 		INDEX iy = first ;
 		while (TRUE) {
 			const auto r1x = is_first_of_comment () ;
 			const auto r2x = is_first_of_object () ;
-			if (!(r1x))
-				if (!(r2x))
+			if ((!r1x))
+				if ((!r2x))
 					break ;
 			auto act = TRUE ;
 			if ifdo (act) {
-				if (!(r1x))
+				if ((!r1x))
 					discard ;
 				read_shift_e6 () ;
 			}
 			if ifdo (act) {
-				if (!(r2x))
+				if ((!r2x))
 					discard ;
 				if (ix != NONE)
 					discard ;
@@ -418,7 +452,7 @@ public:
 				iy = mLastIndex ;
 			}
 			if ifdo (act) {
-				if (!(r2x))
+				if ((!r2x))
 					discard ;
 				read_shift_e5 (curr) ;
 				const auto r4x = mTree[curr].mArrayMap.length () ;
@@ -486,7 +520,7 @@ class XmlParserImplHolder implement Fat<XmlParserHolder ,XmlParserLayout> {
 public:
 	void initialize (CREF<RefBuffer<BYTE>> stream) override {
 		auto rax = MakeXmlParser (Ref<RefBuffer<BYTE>>::reference (Pointer::make (address (stream)))) ;
-		fake.mThis = Ref<XmlParserPureLayout>::make (rax.poll ()) ;
+		fake.mThis = Ref<XmlParserImplLayout>::make (rax.poll ()) ;
 		fake.mIndex = fake.mThis->mRoot ;
 	}
 
@@ -506,7 +540,7 @@ public:
 	XmlParserLayout root () const override {
 		XmlParserLayout ret ;
 		if ifdo (TRUE) {
-			if (!(exist ()))
+			if ((!exist ()))
 				discard ;
 			ret.mThis = fake.mThis.share () ;
 			ret.mIndex = fake.mThis->mRoot ;
@@ -517,7 +551,7 @@ public:
 	XmlParserLayout parent () const override {
 		XmlParserLayout ret ;
 		if ifdo (TRUE) {
-			if (!(exist ()))
+			if ((!exist ()))
 				discard ;
 			ret.mThis = fake.mThis.share () ;
 			ret.mIndex = fake.mThis->mTree[fake.mIndex].mParent ;
@@ -528,7 +562,7 @@ public:
 	XmlParserLayout brother () const override {
 		XmlParserLayout ret ;
 		if ifdo (TRUE) {
-			if (!(exist ()))
+			if ((!exist ()))
 				discard ;
 			ret.mThis = fake.mThis.share () ;
 			ret.mIndex = fake.mThis->mTree[fake.mIndex].mBrother ;
@@ -539,7 +573,7 @@ public:
 	XmlParserLayout child () const override {
 		XmlParserLayout ret ;
 		if ifdo (TRUE) {
-			if (!(exist ()))
+			if ((!exist ()))
 				discard ;
 			ret.mThis = fake.mThis.share () ;
 			ret.mIndex = fake.mThis->mTree[fake.mIndex].mChild ;
@@ -550,7 +584,7 @@ public:
 	XmlParserLayout child (CREF<INDEX> index) const override {
 		XmlParserLayout ret ;
 		if ifdo (TRUE) {
-			if (!(exist ()))
+			if ((!exist ()))
 				discard ;
 			ret.mThis = fake.mThis.share () ;
 			ret.mIndex = fake.mThis->mTree[fake.mIndex].mArrayMap.map (index) ;
@@ -561,7 +595,7 @@ public:
 	XmlParserLayout child (CREF<Slice> name) const override {
 		XmlParserLayout ret ;
 		if ifdo (TRUE) {
-			if (!(exist ()))
+			if ((!exist ()))
 				discard ;
 			ret.mThis = fake.mThis.share () ;
 			ret.mIndex = fake.mThis->mTree[fake.mIndex].mObjectMap.map (name) ;
@@ -572,7 +606,7 @@ public:
 	XmlParserLayout child (CREF<String<STRU8>> name) const override {
 		XmlParserLayout ret ;
 		if ifdo (TRUE) {
-			if (!(exist ()))
+			if ((!exist ()))
 				discard ;
 			ret.mThis = fake.mThis.share () ;
 			ret.mIndex = fake.mThis->mTree[fake.mIndex].mObjectMap.map (name) ;
@@ -583,7 +617,7 @@ public:
 	Array<XmlParserLayout> list () const override {
 		Array<XmlParserLayout> ret ;
 		if ifdo (TRUE) {
-			if (!(exist ()))
+			if ((!exist ()))
 				discard ;
 			const auto r1x = fake.mThis->mTree[fake.mIndex].mArrayMap.length () ;
 			ret = Array<XmlParserLayout> (r1x) ;
@@ -598,7 +632,7 @@ public:
 	Array<XmlParserLayout> list (CREF<LENGTH> size_) const override {
 		Array<XmlParserLayout> ret = Array<XmlParserLayout> (size_) ;
 		if ifdo (TRUE) {
-			if (!(exist ()))
+			if ((!exist ()))
 				discard ;
 			const auto r1x = fake.mThis->mTree[fake.mIndex].mArrayMap.length () ;
 			const auto r2x = inline_min (r1x ,size_) ;
@@ -614,7 +648,7 @@ public:
 		const auto r1x = inline_compr (fake.mThis.exist () ,that.mThis.exist ()) ;
 		if (r1x != ZERO)
 			return FALSE ;
-		if (!(fake.mThis.exist ()))
+		if ((!fake.mThis.exist ()))
 			return TRUE ;
 		if (address (fake.mThis.self) != address (that.mThis.self))
 			return FALSE ;
@@ -624,7 +658,7 @@ public:
 	}
 
 	BOOL fetch (CREF<BOOL> def) const override {
-		if (!(exist ()))
+		if ((!exist ()))
 			return def ;
 		try {
 			return StringParse<BOOL>::make (fake.mThis->mTree[fake.mIndex].mString) ;
@@ -635,7 +669,7 @@ public:
 	}
 
 	VAL32 fetch (CREF<VAL32> def) const override {
-		if (!(exist ()))
+		if ((!exist ()))
 			return def ;
 		try {
 			return StringParse<VAL32>::make (fake.mThis->mTree[fake.mIndex].mString) ;
@@ -646,7 +680,7 @@ public:
 	}
 
 	VAL64 fetch (CREF<VAL64> def) const override {
-		if (!(exist ()))
+		if ((!exist ()))
 			return def ;
 		try {
 			return StringParse<VAL64>::make (fake.mThis->mTree[fake.mIndex].mString) ;
@@ -657,7 +691,7 @@ public:
 	}
 
 	FLT32 fetch (CREF<FLT32> def) const override {
-		if (!(exist ()))
+		if ((!exist ()))
 			return def ;
 		try {
 			return StringParse<FLT32>::make (fake.mThis->mTree[fake.mIndex].mString) ;
@@ -668,7 +702,7 @@ public:
 	}
 
 	FLT64 fetch (CREF<FLT64> def) const override {
-		if (!(exist ()))
+		if ((!exist ()))
 			return def ;
 		try {
 			return StringParse<FLT64>::make (fake.mThis->mTree[fake.mIndex].mString) ;
@@ -679,58 +713,58 @@ public:
 	}
 
 	String<STRA> fetch (CREF<String<STRA>> def) const override {
-		if (!(exist ()))
-			return def ;
+		if ((!exist ()))
+			return def.clone () ;
 		try {
 			return StringProc::stra_from_stru (fake.mThis->mTree[fake.mIndex].mString) ;
 		} catch (CREF<Exception> e) {
 			noop (e) ;
 		}
-		return def ;
+		return def.clone () ;
 	}
 
 	String<STRW> fetch (CREF<String<STRW>> def) const override {
-		if (!(exist ()))
-			return def ;
+		if ((!exist ()))
+			return def.clone () ;
 		try {
 			return StringProc::strw_from_stru (fake.mThis->mTree[fake.mIndex].mString) ;
 		} catch (CREF<Exception> e) {
 			noop (e) ;
 		}
-		return def ;
+		return def.clone () ;
 	}
 
 	String<STRU8> fetch (CREF<String<STRU8>> def) const override {
-		if (!(exist ()))
-			return def ;
+		if ((!exist ()))
+			return def.clone () ;
 		try {
-			return fake.mThis->mTree[fake.mIndex].mString ;
+			return fake.mThis->mTree[fake.mIndex].mString.clone () ;
 		} catch (CREF<Exception> e) {
 			noop (e) ;
 		}
-		return def ;
+		return def.clone () ;
 	}
 
 	String<STRU16> fetch (CREF<String<STRU16>> def) const override {
-		if (!(exist ()))
-			return def ;
+		if ((!exist ()))
+			return def.clone () ;
 		try {
 			return StringProc::stru16_from_stru8 (fake.mThis->mTree[fake.mIndex].mString) ;
 		} catch (CREF<Exception> e) {
 			noop (e) ;
 		}
-		return def ;
+		return def.clone () ;
 	}
 
 	String<STRU32> fetch (CREF<String<STRU32>> def) const override {
-		if (!(exist ()))
-			return def ;
+		if ((!exist ()))
+			return def.clone () ;
 		try {
 			return StringProc::stru32_from_stru8 (fake.mThis->mTree[fake.mIndex].mString) ;
 		} catch (CREF<Exception> e) {
 			noop (e) ;
 		}
-		return def ;
+		return def.clone () ;
 	}
 
 	Array<BOOL> fetch (CREF<BOOL> def ,CREF<LENGTH> size_) const override {
@@ -775,7 +809,8 @@ public:
 
 	template <class ARG1>
 	Array<ARG1> fetch_impl (CREF<ARG1> def ,CREF<LENGTH> size_) const {
-		const auto r1x = list (size_) ;
+		const auto r1x = list () ;
+		assume (r1x.size () == size_) ;
 		Array<ARG1> ret = Array<ARG1> (r1x.size ()) ;
 		for (auto &&i : iter (0 ,ret.size ()))
 			ret[i] = fetch (def) ;
@@ -791,17 +826,6 @@ exports CFat<XmlParserHolder> XmlParserHolder::create (CREF<XmlParserLayout> tha
 	return CFat<XmlParserHolder> (XmlParserImplHolder () ,that) ;
 }
 
-struct JsonParserNode {
-	String<STRU8> mName ;
-	String<STRU8> mString ;
-	SortedMap<INDEX> mArrayMap ;
-	SortedMap<String<STRU8>> mObjectMap ;
-	FLAG mType ;
-	INDEX mParent ;
-	INDEX mBrother ;
-	INDEX mChild ;
-} ;
-
 struct JsonParserNodeType {
 	enum {
 		Value ,
@@ -811,32 +835,52 @@ struct JsonParserNodeType {
 	} ;
 } ;
 
-struct JsonParserPureLayout {
+struct JsonParserNode {
+	String<STRU8> mName ;
+	String<STRU8> mString ;
+	SortedMap<INDEX> mArrayMap ;
+	SortedMap<String<STRU8>> mObjectMap ;
+	JustInt<JsonParserNodeType> mType ;
+	INDEX mParent ;
+	INDEX mBrother ;
+	INDEX mChild ;
+} ;
+
+struct JsonParserImplLayout {
 	Array<JsonParserNode> mTree ;
 	INDEX mRoot ;
 } ;
 
-class MakeJsonParser {
-protected:
+struct MakeJsonParserLayout {
 	RegularReader mReader ;
 	LENGTH mRecursiveCounter ;
 	List<JsonParserNode> mTree ;
-	INDEX mRoot ;
 	SortedMap<INDEX> mArrayMap ;
 	SortedMap<String<STRU8>> mObjectMap ;
 	INDEX mLastIndex ;
 	String<STRU8> mLastString ;
+} ;
+
+class MakeJsonParser implement MakeJsonParserLayout {
+protected:
+	using MakeJsonParserLayout::mReader ;
+	using MakeJsonParserLayout::mRecursiveCounter ;
+	using MakeJsonParserLayout::mTree ;
+	using MakeJsonParserLayout::mArrayMap ;
+	using MakeJsonParserLayout::mObjectMap ;
+	using MakeJsonParserLayout::mLastIndex ;
+	using MakeJsonParserLayout::mLastString ;
 
 public:
-	implicit MakeJsonParser () = delete ;
+	implicit MakeJsonParser () = default ;
 
 	explicit MakeJsonParser (RREF<Ref<RefBuffer<BYTE>>> stream) {
 		mReader = RegularReader (move (stream) ,5) ;
 		mReader.use_text () ;
 	}
 
-	JsonParserPureLayout poll () {
-		JsonParserPureLayout ret ;
+	JsonParserImplLayout poll () {
+		JsonParserImplLayout ret ;
 		ret.mTree = Array<JsonParserNode> (mTree.length ()) ;
 		const auto r1x = Array<INDEX>::make (mTree.range ()) ;
 		for (auto &&i : iter (0 ,r1x.length ())) {
@@ -844,7 +888,12 @@ public:
 			ret.mTree[i].mArrayMap.remap () ;
 			ret.mTree[i].mObjectMap.remap () ;
 		}
-		ret.mRoot = mRoot ;
+		ret.mRoot = NONE ;
+		if ifdo (TRUE) {
+			if (r1x.length () == 0)
+				discard ;
+			ret.mRoot = 0 ;
+		}
 		return move (ret) ;
 	}
 
@@ -853,7 +902,7 @@ public:
 		//@info: $1->${scalar}
 		//@info: $2->true|false|null
 		//@info: $3->"${string}"
-		//@info: $4->$1|$2|$2x|$3|$6|$9
+		//@info: $4->$1|$2|$3|$6|$9
 		//@info: $5->$4|$4 , $5
 		//@info: $6->[ ]|[ $5 ]
 		//@info: $7->$3 : $4
@@ -879,7 +928,7 @@ public:
 
 	//@info: $1->${scalar}
 	void read_shift_e1 () {
-		mReader >> ScalarText (mLastString) ;
+		mReader >> ScalarText::from (mLastString) ;
 	}
 
 	//@info: $2->true|false|null
@@ -910,16 +959,16 @@ public:
 
 	//@info: $3->"${string}"
 	void read_shift_e3 () {
-		mReader >> EscapeText (mLastString) ;
+		mReader >> EscapeText::from (mLastString) ;
 	}
 
-	//@info: $4->$1|$2|$2x|$3|$6|$9
+	//@info: $4->$1|$2|$3|$6|$9
 	void read_shift_e4 (CREF<INDEX> curr) {
-		Scope<VREF<ScopeCounter>> anonymous (ScopeCounter::from (mRecursiveCounter)) ;
+		Scope<ScopeCounter> anonymous (ScopeCounter::from (mRecursiveCounter)) ;
 		INDEX ix = NONE ;
 		auto act = TRUE ;
 		if ifdo (act) {
-			if (!(is_first_of_number ()))
+			if ((!is_first_of_number ()))
 				discard ;
 			ix = mTree.insert () ;
 			read_shift_e1 () ;
@@ -930,21 +979,11 @@ public:
 			mTree[ix].mChild = NONE ;
 		}
 		if ifdo (act) {
-			if (!(is_first_of_boolean ()))
+			if ((!is_first_of_const ()))
 				discard ;
 			ix = mTree.insert () ;
 			read_shift_e2 () ;
 			mTree[ix].mString = move (mLastString) ;
-			mTree[ix].mType = JsonParserNodeType::Value ;
-			mTree[ix].mParent = curr ;
-			mTree[ix].mBrother = NONE ;
-			mTree[ix].mChild = NONE ;
-		}
-		if ifdo (act) {
-			if (mReader[0] != STRU32 ('n'))
-				discard ;
-			ix = mTree.insert () ;
-			read_shift_e2 () ;
 			mTree[ix].mType = JsonParserNodeType::Value ;
 			mTree[ix].mParent = curr ;
 			mTree[ix].mBrother = NONE ;
@@ -990,10 +1029,12 @@ public:
 		return FALSE ;
 	}
 
-	BOOL is_first_of_boolean () const {
+	BOOL is_first_of_const () const {
 		if (mReader[0] == STRU32 ('t'))
 			return TRUE ;
 		if (mReader[0] == STRU32 ('f'))
+			return TRUE ;
+		if (mReader[0] == STRU32 ('n'))
 			return TRUE ;
 		return FALSE ;
 	}
@@ -1027,7 +1068,7 @@ public:
 
 	//@info: $6->[ ]|[ $5 ]
 	void read_shift_e6 (CREF<INDEX> curr) {
-		Scope<VREF<ScopeCounter>> anonymous (ScopeCounter::from (mRecursiveCounter)) ;
+		Scope<ScopeCounter> anonymous (ScopeCounter::from (mRecursiveCounter)) ;
 		mReader >> slice ("[") ;
 		INDEX ix = mTree.insert () ;
 		mTree[ix].mArrayMap = mArrayMap.share () ;
@@ -1085,7 +1126,7 @@ public:
 
 	//@info: $9->{ }|{ $8 }
 	void read_shift_e9 (CREF<INDEX> curr) {
-		Scope<VREF<ScopeCounter>> anonymous (ScopeCounter::from (mRecursiveCounter)) ;
+		Scope<ScopeCounter> anonymous (ScopeCounter::from (mRecursiveCounter)) ;
 		mReader >> slice ("{") ;
 		INDEX ix = mTree.insert () ;
 		mTree[ix].mObjectMap = mObjectMap.share () ;
@@ -1132,7 +1173,7 @@ class JsonParserImplHolder implement Fat<JsonParserHolder ,JsonParserLayout> {
 public:
 	void initialize (CREF<RefBuffer<BYTE>> stream) override {
 		auto rax = MakeJsonParser (Ref<RefBuffer<BYTE>>::reference (Pointer::make (address (stream)))) ;
-		fake.mThis = Ref<JsonParserPureLayout>::make (rax.poll ()) ;
+		fake.mThis = Ref<JsonParserImplLayout>::make (rax.poll ()) ;
 		fake.mIndex = fake.mThis->mRoot ;
 	}
 
@@ -1152,7 +1193,7 @@ public:
 	JsonParserLayout root () const override {
 		JsonParserLayout ret ;
 		if ifdo (TRUE) {
-			if (!(exist ()))
+			if ((!exist ()))
 				discard ;
 			ret.mThis = fake.mThis.share () ;
 			ret.mIndex = fake.mThis->mRoot ;
@@ -1163,7 +1204,7 @@ public:
 	JsonParserLayout parent () const override {
 		JsonParserLayout ret ;
 		if ifdo (TRUE) {
-			if (!(exist ()))
+			if ((!exist ()))
 				discard ;
 			ret.mThis = fake.mThis.share () ;
 			ret.mIndex = fake.mThis->mTree[fake.mIndex].mParent ;
@@ -1174,7 +1215,7 @@ public:
 	JsonParserLayout brother () const override {
 		JsonParserLayout ret ;
 		if ifdo (TRUE) {
-			if (!(exist ()))
+			if ((!exist ()))
 				discard ;
 			ret.mThis = fake.mThis.share () ;
 			ret.mIndex = fake.mThis->mTree[fake.mIndex].mBrother ;
@@ -1185,7 +1226,7 @@ public:
 	JsonParserLayout child () const override {
 		JsonParserLayout ret ;
 		if ifdo (TRUE) {
-			if (!(exist ()))
+			if ((!exist ()))
 				discard ;
 			ret.mThis = fake.mThis.share () ;
 			ret.mIndex = fake.mThis->mTree[fake.mIndex].mChild ;
@@ -1196,7 +1237,7 @@ public:
 	JsonParserLayout child (CREF<INDEX> index) const override {
 		JsonParserLayout ret ;
 		if ifdo (TRUE) {
-			if (!(exist ()))
+			if ((!exist ()))
 				discard ;
 			ret.mThis = fake.mThis.share () ;
 			ret.mIndex = fake.mThis->mTree[fake.mIndex].mArrayMap.map (index) ;
@@ -1207,7 +1248,7 @@ public:
 	JsonParserLayout child (CREF<Slice> name) const override {
 		JsonParserLayout ret ;
 		if ifdo (TRUE) {
-			if (!(exist ()))
+			if ((!exist ()))
 				discard ;
 			ret.mThis = fake.mThis.share () ;
 			ret.mIndex = fake.mThis->mTree[fake.mIndex].mObjectMap.map (name) ;
@@ -1218,7 +1259,7 @@ public:
 	JsonParserLayout child (CREF<String<STRU8>> name) const override {
 		JsonParserLayout ret ;
 		if ifdo (TRUE) {
-			if (!(exist ()))
+			if ((!exist ()))
 				discard ;
 			ret.mThis = fake.mThis.share () ;
 			ret.mIndex = fake.mThis->mTree[fake.mIndex].mObjectMap.map (name) ;
@@ -1229,7 +1270,7 @@ public:
 	Array<JsonParserLayout> list () const override {
 		Array<JsonParserLayout> ret ;
 		if ifdo (TRUE) {
-			if (!(exist ()))
+			if ((!exist ()))
 				discard ;
 			const auto r1x = fake.mThis->mTree[fake.mIndex].mArrayMap.length () ;
 			ret = Array<JsonParserLayout> (r1x) ;
@@ -1244,7 +1285,7 @@ public:
 	Array<JsonParserLayout> list (CREF<LENGTH> size_) const override {
 		Array<JsonParserLayout> ret = Array<JsonParserLayout> (size_) ;
 		if ifdo (TRUE) {
-			if (!(exist ()))
+			if ((!exist ()))
 				discard ;
 			const auto r1x = fake.mThis->mTree[fake.mIndex].mArrayMap.length () ;
 			const auto r2x = inline_min (r1x ,size_) ;
@@ -1260,7 +1301,7 @@ public:
 		const auto r1x = inline_compr (fake.mThis.exist () ,that.mThis.exist ()) ;
 		if (r1x != ZERO)
 			return FALSE ;
-		if (!(fake.mThis.exist ()))
+		if ((!fake.mThis.exist ()))
 			return TRUE ;
 		if (address (fake.mThis.self) != address (that.mThis.self))
 			return FALSE ;
@@ -1270,7 +1311,7 @@ public:
 	}
 
 	BOOL fetch (CREF<BOOL> def) const override {
-		if (!(exist ()))
+		if ((!exist ()))
 			return def ;
 		try {
 			return StringParse<BOOL>::make (fake.mThis->mTree[fake.mIndex].mString) ;
@@ -1281,7 +1322,7 @@ public:
 	}
 
 	VAL32 fetch (CREF<VAL32> def) const override {
-		if (!(exist ()))
+		if ((!exist ()))
 			return def ;
 		try {
 			return StringParse<VAL32>::make (fake.mThis->mTree[fake.mIndex].mString) ;
@@ -1292,7 +1333,7 @@ public:
 	}
 
 	VAL64 fetch (CREF<VAL64> def) const override {
-		if (!(exist ()))
+		if ((!exist ()))
 			return def ;
 		try {
 			return StringParse<VAL64>::make (fake.mThis->mTree[fake.mIndex].mString) ;
@@ -1303,7 +1344,7 @@ public:
 	}
 
 	FLT32 fetch (CREF<FLT32> def) const override {
-		if (!(exist ()))
+		if ((!exist ()))
 			return def ;
 		try {
 			return StringParse<FLT32>::make (fake.mThis->mTree[fake.mIndex].mString) ;
@@ -1314,7 +1355,7 @@ public:
 	}
 
 	FLT64 fetch (CREF<FLT64> def) const override {
-		if (!(exist ()))
+		if ((!exist ()))
 			return def ;
 		try {
 			return StringParse<FLT64>::make (fake.mThis->mTree[fake.mIndex].mString) ;
@@ -1325,58 +1366,58 @@ public:
 	}
 
 	String<STRA> fetch (CREF<String<STRA>> def) const override {
-		if (!(exist ()))
-			return def ;
+		if ((!exist ()))
+			return def.clone () ;
 		try {
 			return StringProc::stra_from_stru (fake.mThis->mTree[fake.mIndex].mString) ;
 		} catch (CREF<Exception> e) {
 			noop (e) ;
 		}
-		return def ;
+		return def.clone () ;
 	}
 
 	String<STRW> fetch (CREF<String<STRW>> def) const override {
-		if (!(exist ()))
-			return def ;
+		if ((!exist ()))
+			return def.clone () ;
 		try {
 			return StringProc::strw_from_stru (fake.mThis->mTree[fake.mIndex].mString) ;
 		} catch (CREF<Exception> e) {
 			noop (e) ;
 		}
-		return def ;
+		return def.clone () ;
 	}
 
 	String<STRU8> fetch (CREF<String<STRU8>> def) const override {
-		if (!(exist ()))
-			return def ;
+		if ((!exist ()))
+			return def.clone () ;
 		try {
-			return fake.mThis->mTree[fake.mIndex].mString ;
+			return fake.mThis->mTree[fake.mIndex].mString.clone () ;
 		} catch (CREF<Exception> e) {
 			noop (e) ;
 		}
-		return def ;
+		return def.clone () ;
 	}
 
 	String<STRU16> fetch (CREF<String<STRU16>> def) const override {
-		if (!(exist ()))
-			return def ;
+		if ((!exist ()))
+			return def.clone () ;
 		try {
 			return StringProc::stru16_from_stru8 (fake.mThis->mTree[fake.mIndex].mString) ;
 		} catch (CREF<Exception> e) {
 			noop (e) ;
 		}
-		return def ;
+		return def.clone () ;
 	}
 
 	String<STRU32> fetch (CREF<String<STRU32>> def) const override {
-		if (!(exist ()))
-			return def ;
+		if ((!exist ()))
+			return def.clone () ;
 		try {
 			return StringProc::stru32_from_stru8 (fake.mThis->mTree[fake.mIndex].mString) ;
 		} catch (CREF<Exception> e) {
 			noop (e) ;
 		}
-		return def ;
+		return def.clone () ;
 	}
 
 	Array<BOOL> fetch (CREF<BOOL> def ,CREF<LENGTH> size_) const override {
@@ -1421,7 +1462,8 @@ public:
 
 	template <class ARG1>
 	Array<ARG1> fetch_impl (CREF<ARG1> def ,CREF<LENGTH> size_) const {
-		const auto r1x = list (size_) ;
+		const auto r1x = list () ;
+		assume (r1x.size () == size_) ;
 		Array<ARG1> ret = Array<ARG1> (r1x.size ()) ;
 		for (auto &&i : iter (0 ,ret.size ()))
 			ret[i] = fetch (def) ;
@@ -1437,10 +1479,26 @@ exports CFat<JsonParserHolder> JsonParserHolder::create (CREF<JsonParserLayout> 
 	return CFat<JsonParserHolder> (JsonParserImplHolder () ,that) ;
 }
 
+struct PlyParserDataType {
+	enum {
+		Bool ,
+		Val32 ,
+		Val64 ,
+		Flt32 ,
+		Flt64 ,
+		Byte ,
+		Word ,
+		Char ,
+		Quad ,
+		Null ,
+		ETC
+	} ;
+} ;
+
 struct PlyParserProperty {
 	String<STRU8> mName ;
-	FLAG mType ;
-	FLAG mListType ;
+	JustInt<PlyParserDataType> mType ;
+	JustInt<PlyParserDataType> mListType ;
 } ;
 
 struct PlyParserElement {
@@ -1458,27 +1516,11 @@ struct PlyParserHeader {
 } ;
 
 struct PlyParserBody {
-	FLAG mType ;
+	JustInt<PlyParserDataType> mType ;
 	Array<Tuple<INDEX ,INDEX>> mLine ;
 } ;
 
-struct PlyParserBodyType {
-	enum {
-		Bool ,
-		Val32 ,
-		Val64 ,
-		Flt32 ,
-		Flt64 ,
-		Byte ,
-		Word ,
-		Char ,
-		Quad ,
-		Null ,
-		ETC
-	} ;
-} ;
-
-struct PlyParserPureLayout {
+struct PlyParserImplLayout {
 	PlyParserHeader mHeader ;
 	Array<Array<PlyParserBody>> mBody ;
 	Array<BYTE> mPlyBYTE ;
@@ -1487,8 +1529,7 @@ struct PlyParserPureLayout {
 	Array<QUAD> mPlyQUAD ;
 } ;
 
-class MakePlyParser {
-protected:
+struct MakePlyParserLayout {
 	RegularReader mReader ;
 	PlyParserHeader mHeader ;
 	Array<Array<PlyParserBody>> mBody ;
@@ -1500,17 +1541,32 @@ protected:
 	INDEX mLastIndex ;
 	String<STRU8> mLastType ;
 	String<STRU8> mLastString ;
+} ;
+
+class MakePlyParser implement MakePlyParserLayout {
+protected:
+	using MakePlyParserLayout::mReader ;
+	using MakePlyParserLayout::mHeader ;
+	using MakePlyParserLayout::mBody ;
+	using MakePlyParserLayout::mBitwiseReverseFlag ;
+	using MakePlyParserLayout::mPlyBYTE ;
+	using MakePlyParserLayout::mPlyWORD ;
+	using MakePlyParserLayout::mPlyCHAR ;
+	using MakePlyParserLayout::mPlyQUAD ;
+	using MakePlyParserLayout::mLastIndex ;
+	using MakePlyParserLayout::mLastType ;
+	using MakePlyParserLayout::mLastString ;
 
 public:
-	implicit MakePlyParser () = delete ;
+	implicit MakePlyParser () = default ;
 
 	explicit MakePlyParser (RREF<Ref<RefBuffer<BYTE>>> stream) {
 		mReader = RegularReader (move (stream) ,5) ;
 		mReader.use_text () ;
 	}
 
-	PlyParserPureLayout poll () {
-		PlyParserPureLayout ret ;
+	PlyParserImplLayout poll () {
+		PlyParserImplLayout ret ;
 		ret.mHeader = move (mHeader) ;
 		ret.mBody = move (mBody) ;
 		ret.mPlyBYTE = Array<BYTE>::make (mPlyBYTE) ;
@@ -1531,7 +1587,7 @@ public:
 		if ifdo (act) {
 			if (mHeader.mFormat != slice ("binary_big_endian"))
 				discard ;
-			mBitwiseReverseFlag = !(StreamProc::big_endian ()) ;
+			mBitwiseReverseFlag = (!StreamProc::big_endian ()) ;
 			read_body_binary () ;
 		}
 		if ifdo (act) {
@@ -1552,33 +1608,33 @@ public:
 		mReader >> GAP ;
 		mReader >> slice ("format") ;
 		mReader >> GAP ;
-		mReader >> IdentifierText (mLastString) ;
-		mHeader.mFormat = mLastString ;
-		mReader >> NotEndlineText (mLastString) ;
+		mReader >> IdentifierText::from (mLastString) ;
+		mHeader.mFormat = mLastString.clone () ;
+		mReader >> EndlineText::from (mLastString) ;
 		mReader >> GAP ;
 		INDEX ix = NONE ;
 		INDEX iy = NONE ;
 		const auto r1x = invoke ([&] () {
 			Set<String<STRU8>> ret = Set<String<STRU8>> (100) ;
-			ret.add (slice ("float") ,PlyParserBodyType::Flt32) ;
-			ret.add (slice ("double") ,PlyParserBodyType::Flt64) ;
-			ret.add (slice ("int") ,PlyParserBodyType::Val32) ;
-			ret.add (slice ("int64") ,PlyParserBodyType::Val64) ;
-			ret.add (slice ("uchar") ,PlyParserBodyType::Byte) ;
-			ret.add (slice ("uint16") ,PlyParserBodyType::Word) ;
-			ret.add (slice ("uint32") ,PlyParserBodyType::Char) ;
-			ret.add (slice ("uint64") ,PlyParserBodyType::Quad) ;
+			ret.add (slice ("float") ,PlyParserDataType::Flt32) ;
+			ret.add (slice ("double") ,PlyParserDataType::Flt64) ;
+			ret.add (slice ("int") ,PlyParserDataType::Val32) ;
+			ret.add (slice ("int64") ,PlyParserDataType::Val64) ;
+			ret.add (slice ("uchar") ,PlyParserDataType::Byte) ;
+			ret.add (slice ("uint16") ,PlyParserDataType::Word) ;
+			ret.add (slice ("uint32") ,PlyParserDataType::Char) ;
+			ret.add (slice ("uint64") ,PlyParserDataType::Quad) ;
 			return move (ret) ;
 		}) ;
 		const auto r2x = invoke ([&] () {
 			Set<String<STRU8>> ret = Set<String<STRU8>> (100) ;
-			ret.add (slice ("uchar") ,PlyParserBodyType::Byte) ;
-			ret.add (slice ("uint16") ,PlyParserBodyType::Word) ;
-			ret.add (slice ("uint32") ,PlyParserBodyType::Char) ;
+			ret.add (slice ("uchar") ,PlyParserDataType::Byte) ;
+			ret.add (slice ("uint16") ,PlyParserDataType::Word) ;
+			ret.add (slice ("uint32") ,PlyParserDataType::Char) ;
 			return move (ret) ;
 		}) ;
 		while (TRUE) {
-			mReader >> IdentifierText (mLastString) ;
+			mReader >> IdentifierText::from (mLastString) ;
 			if (mLastString == slice ("end_header"))
 				break ;
 			mReader >> GAP ;
@@ -1587,10 +1643,10 @@ public:
 				if (mLastString != slice ("element"))
 					discard ;
 				ix = mHeader.mElementList.insert () ;
-				mReader >> IdentifierText (mLastString) ;
-				mHeader.mElementList[ix].mName = mLastString ;
+				mReader >> IdentifierText::from (mLastString) ;
+				mHeader.mElementList[ix].mName = mLastString.clone () ;
 				mReader >> GAP ;
-				mReader >> ScalarText (mLastString) ;
+				mReader >> ScalarText::from (mLastString) ;
 				const auto r3x = StringParse<LENGTH>::make (mLastString) ;
 				assume (r3x >= 0) ;
 				mHeader.mElementList[ix].mSize = r3x ;
@@ -1601,23 +1657,23 @@ public:
 				if (mLastString != slice ("property"))
 					discard ;
 				assume (ix != NONE) ;
-				mReader >> IdentifierText (mLastType) ;
+				mReader >> IdentifierText::from (mLastType) ;
 				mReader >> GAP ;
 				if (mLastType != slice ("list"))
 					discard ;
 				iy = mHeader.mElementList[ix].mPropertyList.insert () ;
-				mReader >> IdentifierText (mLastString) ;
+				mReader >> IdentifierText::from (mLastString) ;
 				const auto r4x = r2x.map (mLastString) ;
 				assume (r4x != NONE) ;
 				mHeader.mElementList[ix].mPropertyList[iy].mType = r4x ;
 				mReader >> GAP ;
-				mReader >> IdentifierText (mLastString) ;
+				mReader >> IdentifierText::from (mLastString) ;
 				const auto r5x = r1x.map (mLastString) ;
 				assume (r5x != NONE) ;
 				mHeader.mElementList[ix].mPropertyList[iy].mListType = r5x ;
 				mReader >> GAP ;
-				mReader >> IdentifierText (mLastString) ;
-				mHeader.mElementList[ix].mPropertyList[iy].mName = mLastString ;
+				mReader >> IdentifierText::from (mLastString) ;
+				mHeader.mElementList[ix].mPropertyList[iy].mName = mLastString.clone () ;
 				mReader >> GAP ;
 			}
 			if ifdo (act) {
@@ -1629,15 +1685,15 @@ public:
 				assume (r6x != NONE) ;
 				mHeader.mElementList[ix].mPropertyList[iy].mType = r6x ;
 				mReader >> GAP ;
-				mHeader.mElementList[ix].mPropertyList[iy].mListType = PlyParserBodyType::Null ;
-				mReader >> IdentifierText (mLastString) ;
-				mHeader.mElementList[ix].mPropertyList[iy].mName = mLastString ;
+				mHeader.mElementList[ix].mPropertyList[iy].mListType = PlyParserDataType::Null ;
+				mReader >> IdentifierText::from (mLastString) ;
+				mHeader.mElementList[ix].mPropertyList[iy].mName = mLastString.clone () ;
 				mReader >> GAP ;
 			}
 			if ifdo (act) {
 				if (mLastString != slice ("comment"))
 					discard ;
-				mReader >> NotEndlineText (mLastString) ;
+				mReader >> EndlineText::from (mLastString) ;
 				mReader >> GAP ;
 			}
 			if ifdo (act) {
@@ -1654,11 +1710,11 @@ public:
 		assume (mReader[0] == STRU32 ('\n')) ;
 		mHeader.mBodyOffset = ZERO ;
 		for (auto &&i : mHeader.mElementList.range ()) {
-			auto &&it = mHeader.mElementList[i] ;
-			it.mPropertyList.remap () ;
-			it.mPropertySet = Set<String<STRU8>> (it.mPropertyList.length ()) ;
-			for (auto &&j : it.mPropertyList.range ())
-				it.mPropertySet.add (it.mPropertyList[j].mName ,j) ;
+			auto &&tmp = mHeader.mElementList[i] ;
+			tmp.mPropertyList.remap () ;
+			tmp.mPropertySet = Set<String<STRU8>> (tmp.mPropertyList.length ()) ;
+			for (auto &&j : tmp.mPropertyList.range ())
+				tmp.mPropertySet.add (tmp.mPropertyList[j].mName ,j) ;
 		}
 		if ifdo (TRUE) {
 			mHeader.mElementList.remap () ;
@@ -1675,7 +1731,7 @@ public:
 		for (auto &&i : mHeader.mElementList.range ()) {
 			mBody[i] = Array<PlyParserBody> (mHeader.mElementList[i].mPropertyList.length ()) ;
 			for (auto &&j : mHeader.mElementList[i].mPropertyList.range ()) {
-				mBody[i][j].mType = PlyParserBodyType::Null ;
+				mBody[i][j].mType = PlyParserDataType::Null ;
 				mBody[i][j].mLine = Array<Tuple<INDEX ,INDEX>> (mHeader.mElementList[i].mSize) ;
 			}
 			for (auto &&j : iter (0 ,mHeader.mElementList[i].mSize)) {
@@ -1693,10 +1749,10 @@ public:
 		const auto r1x = mHeader.mElementList[element].mPropertyList[property].mType ;
 		auto act = TRUE ;
 		if ifdo (act) {
-			if (r1x != PlyParserBodyType::Flt32)
+			if (r1x != PlyParserDataType::Flt32)
 				discard ;
 			INDEX ix = mPlyCHAR.tail () ;
-			mBody[element][property].mType = PlyParserBodyType::Char ;
+			mBody[element][property].mType = PlyParserDataType::Char ;
 			mBody[element][property].mLine[line].m1st = ix + 1 ;
 			mBody[element][property].mLine[line].m2nd = ix + 2 ;
 			const auto r2x = mReader.poll (TYPE<FLT32>::expr) ;
@@ -1704,10 +1760,10 @@ public:
 			mReader >> GAP ;
 		}
 		if ifdo (act) {
-			if (r1x != PlyParserBodyType::Flt64)
+			if (r1x != PlyParserDataType::Flt64)
 				discard ;
 			INDEX ix = mPlyQUAD.tail () ;
-			mBody[element][property].mType = PlyParserBodyType::Quad ;
+			mBody[element][property].mType = PlyParserDataType::Quad ;
 			mBody[element][property].mLine[line].m1st = ix + 1 ;
 			mBody[element][property].mLine[line].m2nd = ix + 2 ;
 			const auto r3x = mReader.poll (TYPE<FLT64>::expr) ;
@@ -1715,10 +1771,10 @@ public:
 			mReader >> GAP ;
 		}
 		if ifdo (act) {
-			if (r1x != PlyParserBodyType::Val32)
+			if (r1x != PlyParserDataType::Val32)
 				discard ;
 			INDEX ix = mPlyCHAR.tail () ;
-			mBody[element][property].mType = PlyParserBodyType::Char ;
+			mBody[element][property].mType = PlyParserDataType::Char ;
 			mBody[element][property].mLine[line].m1st = ix + 1 ;
 			mBody[element][property].mLine[line].m2nd = ix + 2 ;
 			const auto r4x = mReader.poll (TYPE<VAL32>::expr) ;
@@ -1726,10 +1782,10 @@ public:
 			mReader >> GAP ;
 		}
 		if ifdo (act) {
-			if (r1x != PlyParserBodyType::Val64)
+			if (r1x != PlyParserDataType::Val64)
 				discard ;
 			INDEX ix = mPlyQUAD.tail () ;
-			mBody[element][property].mType = PlyParserBodyType::Quad ;
+			mBody[element][property].mType = PlyParserDataType::Quad ;
 			mBody[element][property].mLine[line].m1st = ix + 1 ;
 			mBody[element][property].mLine[line].m2nd = ix + 2 ;
 			const auto r5x = mReader.poll (TYPE<VAL64>::expr) ;
@@ -1737,7 +1793,7 @@ public:
 			mReader >> GAP ;
 		}
 		if ifdo (act) {
-			if (r1x != PlyParserBodyType::Byte)
+			if (r1x != PlyParserDataType::Byte)
 				discard ;
 			INDEX ix = mPlyBYTE.tail () ;
 			mBody[element][property].mType = r1x ;
@@ -1749,7 +1805,7 @@ public:
 			mReader >> GAP ;
 		}
 		if ifdo (act) {
-			if (r1x != PlyParserBodyType::Word)
+			if (r1x != PlyParserDataType::Word)
 				discard ;
 			INDEX ix = mPlyWORD.tail () ;
 			mBody[element][property].mType = r1x ;
@@ -1761,7 +1817,7 @@ public:
 			mReader >> GAP ;
 		}
 		if ifdo (act) {
-			if (r1x != PlyParserBodyType::Char)
+			if (r1x != PlyParserDataType::Char)
 				discard ;
 			INDEX ix = mPlyCHAR.tail () ;
 			mBody[element][property].mType = r1x ;
@@ -1773,7 +1829,7 @@ public:
 			mReader >> GAP ;
 		}
 		if ifdo (act) {
-			if (r1x != PlyParserBodyType::Quad)
+			if (r1x != PlyParserDataType::Quad)
 				discard ;
 			INDEX ix = mPlyQUAD.tail () ;
 			mBody[element][property].mType = r1x ;
@@ -1788,24 +1844,24 @@ public:
 
 	void read_body_text_list (CREF<INDEX> element ,CREF<INDEX> property ,CREF<INDEX> line) {
 		const auto r1x = mHeader.mElementList[element].mPropertyList[property].mListType ;
-		if (r1x == PlyParserBodyType::Null)
+		if (r1x == PlyParserDataType::Null)
 			return ;
 		const auto r2x = invoke ([&] () {
-			if (mBody[element][property].mType == PlyParserBodyType::Byte)
+			if (mBody[element][property].mType == PlyParserDataType::Byte)
 				return LENGTH (mPlyBYTE[mBody[element][property].mLine[line].m1st]) ;
-			if (mBody[element][property].mType == PlyParserBodyType::Word)
+			if (mBody[element][property].mType == PlyParserDataType::Word)
 				return LENGTH (mPlyWORD[mBody[element][property].mLine[line].m1st]) ;
-			if (mBody[element][property].mType == PlyParserBodyType::Char)
+			if (mBody[element][property].mType == PlyParserDataType::Char)
 				return LENGTH (mPlyCHAR[mBody[element][property].mLine[line].m1st]) ;
 			assume (FALSE) ;
 			return ZERO ;
 		}) ;
 		auto act = TRUE ;
 		if ifdo (act) {
-			if (r1x != PlyParserBodyType::Flt32)
+			if (r1x != PlyParserDataType::Flt32)
 				discard ;
 			INDEX ix = mPlyCHAR.tail () ;
-			mBody[element][property].mType = PlyParserBodyType::Char ;
+			mBody[element][property].mType = PlyParserDataType::Char ;
 			mBody[element][property].mLine[line].m1st = ix + 1 ;
 			mBody[element][property].mLine[line].m2nd = ix + r2x + 1 ;
 			mReader >> GAP ;
@@ -1817,10 +1873,10 @@ public:
 			}
 		}
 		if ifdo (act) {
-			if (r1x != PlyParserBodyType::Flt64)
+			if (r1x != PlyParserDataType::Flt64)
 				discard ;
 			INDEX ix = mPlyQUAD.tail () ;
-			mBody[element][property].mType = PlyParserBodyType::Quad ;
+			mBody[element][property].mType = PlyParserDataType::Quad ;
 			mBody[element][property].mLine[line].m1st = ix + 1 ;
 			mBody[element][property].mLine[line].m2nd = ix + r2x + 1 ;
 			mReader >> GAP ;
@@ -1832,10 +1888,10 @@ public:
 			}
 		}
 		if ifdo (act) {
-			if (r1x != PlyParserBodyType::Val32)
+			if (r1x != PlyParserDataType::Val32)
 				discard ;
 			INDEX ix = mPlyCHAR.tail () ;
-			mBody[element][property].mType = PlyParserBodyType::Char ;
+			mBody[element][property].mType = PlyParserDataType::Char ;
 			mBody[element][property].mLine[line].m1st = ix + 1 ;
 			mBody[element][property].mLine[line].m2nd = ix + r2x + 1 ;
 			mReader >> GAP ;
@@ -1847,10 +1903,10 @@ public:
 			}
 		}
 		if ifdo (act) {
-			if (r1x != PlyParserBodyType::Val64)
+			if (r1x != PlyParserDataType::Val64)
 				discard ;
 			INDEX ix = mPlyQUAD.tail () ;
-			mBody[element][property].mType = PlyParserBodyType::Quad ;
+			mBody[element][property].mType = PlyParserDataType::Quad ;
 			mBody[element][property].mLine[line].m1st = ix + 1 ;
 			mBody[element][property].mLine[line].m2nd = ix + r2x + 1 ;
 			mReader >> GAP ;
@@ -1862,7 +1918,7 @@ public:
 			}
 		}
 		if ifdo (act) {
-			if (r1x != PlyParserBodyType::Byte)
+			if (r1x != PlyParserDataType::Byte)
 				discard ;
 			INDEX ix = mPlyBYTE.tail () ;
 			mBody[element][property].mType = r1x ;
@@ -1878,7 +1934,7 @@ public:
 			}
 		}
 		if ifdo (act) {
-			if (r1x != PlyParserBodyType::Word)
+			if (r1x != PlyParserDataType::Word)
 				discard ;
 			INDEX ix = mPlyWORD.tail () ;
 			mBody[element][property].mType = r1x ;
@@ -1894,7 +1950,7 @@ public:
 			}
 		}
 		if ifdo (act) {
-			if (r1x != PlyParserBodyType::Char)
+			if (r1x != PlyParserDataType::Char)
 				discard ;
 			INDEX ix = mPlyCHAR.tail () ;
 			mBody[element][property].mType = r1x ;
@@ -1910,7 +1966,7 @@ public:
 			}
 		}
 		if ifdo (act) {
-			if (r1x != PlyParserBodyType::Quad)
+			if (r1x != PlyParserDataType::Quad)
 				discard ;
 			INDEX ix = mPlyQUAD.tail () ;
 			mBody[element][property].mType = r1x ;
@@ -1933,7 +1989,7 @@ public:
 		for (auto &&i : mHeader.mElementList.range ()) {
 			mBody[i] = Array<PlyParserBody> (mHeader.mElementList[i].mPropertyList.length ()) ;
 			for (auto &&j : mHeader.mElementList[i].mPropertyList.range ()) {
-				mBody[i][j].mType = PlyParserBodyType::Null ;
+				mBody[i][j].mType = PlyParserDataType::Null ;
 				mBody[i][j].mLine = Array<Tuple<INDEX ,INDEX>> (mHeader.mElementList[i].mSize) ;
 			}
 			for (auto &&j : iter (0 ,mHeader.mElementList[i].mSize)) {
@@ -1950,10 +2006,10 @@ public:
 		const auto r1x = mHeader.mElementList[element].mPropertyList[property].mType ;
 		auto act = TRUE ;
 		if ifdo (act) {
-			if (r1x != PlyParserBodyType::Flt32)
+			if (r1x != PlyParserDataType::Flt32)
 				discard ;
 			INDEX ix = mPlyCHAR.tail () ;
-			mBody[element][property].mType = PlyParserBodyType::Char ;
+			mBody[element][property].mType = PlyParserDataType::Char ;
 			mBody[element][property].mLine[line].m1st = ix + 1 ;
 			mBody[element][property].mLine[line].m2nd = ix + 2 ;
 			const auto r2x = mReader.poll (TYPE<FLT32>::expr) ;
@@ -1961,10 +2017,10 @@ public:
 			mPlyCHAR.add (bitwise_reverse (r3x)) ;
 		}
 		if ifdo (act) {
-			if (r1x != PlyParserBodyType::Flt64)
+			if (r1x != PlyParserDataType::Flt64)
 				discard ;
 			INDEX ix = mPlyQUAD.tail () ;
-			mBody[element][property].mType = PlyParserBodyType::Quad ;
+			mBody[element][property].mType = PlyParserDataType::Quad ;
 			mBody[element][property].mLine[line].m1st = ix + 1 ;
 			mBody[element][property].mLine[line].m2nd = ix + 2 ;
 			const auto r4x = mReader.poll (TYPE<FLT64>::expr) ;
@@ -1972,10 +2028,10 @@ public:
 			mPlyQUAD.add (bitwise_reverse (r5x)) ;
 		}
 		if ifdo (act) {
-			if (r1x != PlyParserBodyType::Val32)
+			if (r1x != PlyParserDataType::Val32)
 				discard ;
 			INDEX ix = mPlyCHAR.tail () ;
-			mBody[element][property].mType = PlyParserBodyType::Char ;
+			mBody[element][property].mType = PlyParserDataType::Char ;
 			mBody[element][property].mLine[line].m1st = ix + 1 ;
 			mBody[element][property].mLine[line].m2nd = ix + 2 ;
 			const auto r6x = mReader.poll (TYPE<VAL32>::expr) ;
@@ -1983,10 +2039,10 @@ public:
 			mPlyCHAR.add (bitwise_reverse (r7x)) ;
 		}
 		if ifdo (act) {
-			if (r1x != PlyParserBodyType::Val64)
+			if (r1x != PlyParserDataType::Val64)
 				discard ;
 			INDEX ix = mPlyQUAD.tail () ;
-			mBody[element][property].mType = PlyParserBodyType::Quad ;
+			mBody[element][property].mType = PlyParserDataType::Quad ;
 			mBody[element][property].mLine[line].m1st = ix + 1 ;
 			mBody[element][property].mLine[line].m2nd = ix + 2 ;
 			const auto r8x = mReader.poll (TYPE<VAL64>::expr) ;
@@ -1994,7 +2050,7 @@ public:
 			mPlyQUAD.add (bitwise_reverse (r9x)) ;
 		}
 		if ifdo (act) {
-			if (r1x != PlyParserBodyType::Byte)
+			if (r1x != PlyParserDataType::Byte)
 				discard ;
 			INDEX ix = mPlyBYTE.tail () ;
 			mBody[element][property].mType = r1x ;
@@ -2004,7 +2060,7 @@ public:
 			mPlyBYTE.add (bitwise_reverse (r10x)) ;
 		}
 		if ifdo (act) {
-			if (r1x != PlyParserBodyType::Word)
+			if (r1x != PlyParserDataType::Word)
 				discard ;
 			INDEX ix = mPlyWORD.tail () ;
 			mBody[element][property].mType = r1x ;
@@ -2014,7 +2070,7 @@ public:
 			mPlyWORD.add (bitwise_reverse (r11x)) ;
 		}
 		if ifdo (act) {
-			if (r1x != PlyParserBodyType::Char)
+			if (r1x != PlyParserDataType::Char)
 				discard ;
 			INDEX ix = mPlyCHAR.tail () ;
 			mBody[element][property].mType = r1x ;
@@ -2024,7 +2080,7 @@ public:
 			mPlyCHAR.add (bitwise_reverse (r12x)) ;
 		}
 		if ifdo (act) {
-			if (r1x != PlyParserBodyType::Quad)
+			if (r1x != PlyParserDataType::Quad)
 				discard ;
 			INDEX ix = mPlyQUAD.tail () ;
 			mBody[element][property].mType = r1x ;
@@ -2037,24 +2093,24 @@ public:
 
 	void read_body_binary_list (CREF<INDEX> element ,CREF<INDEX> property ,CREF<INDEX> line) {
 		const auto r1x = mHeader.mElementList[element].mPropertyList[property].mListType ;
-		if (r1x == PlyParserBodyType::Null)
+		if (r1x == PlyParserDataType::Null)
 			return ;
 		const auto r2x = invoke ([&] () {
-			if (mBody[element][property].mType == PlyParserBodyType::Byte)
+			if (mBody[element][property].mType == PlyParserDataType::Byte)
 				return LENGTH (mPlyBYTE[mBody[element][property].mLine[line].m1st]) ;
-			if (mBody[element][property].mType == PlyParserBodyType::Word)
+			if (mBody[element][property].mType == PlyParserDataType::Word)
 				return LENGTH (mPlyWORD[mBody[element][property].mLine[line].m1st]) ;
-			if (mBody[element][property].mType == PlyParserBodyType::Char)
+			if (mBody[element][property].mType == PlyParserDataType::Char)
 				return LENGTH (mPlyCHAR[mBody[element][property].mLine[line].m1st]) ;
 			assume (FALSE) ;
 			return ZERO ;
 		}) ;
 		auto act = TRUE ;
 		if ifdo (act) {
-			if (r1x != PlyParserBodyType::Flt32)
+			if (r1x != PlyParserDataType::Flt32)
 				discard ;
 			INDEX ix = mPlyCHAR.tail () ;
-			mBody[element][property].mType = PlyParserBodyType::Char ;
+			mBody[element][property].mType = PlyParserDataType::Char ;
 			mBody[element][property].mLine[line].m1st = ix + 1 ;
 			mBody[element][property].mLine[line].m2nd = ix + r2x + 1 ;
 			for (auto &&i : iter (0 ,r2x)) {
@@ -2065,10 +2121,10 @@ public:
 			}
 		}
 		if ifdo (act) {
-			if (r1x != PlyParserBodyType::Flt64)
+			if (r1x != PlyParserDataType::Flt64)
 				discard ;
 			INDEX ix = mPlyQUAD.tail () ;
-			mBody[element][property].mType = PlyParserBodyType::Quad ;
+			mBody[element][property].mType = PlyParserDataType::Quad ;
 			mBody[element][property].mLine[line].m1st = ix + 1 ;
 			mBody[element][property].mLine[line].m2nd = ix + r2x + 1 ;
 			for (auto &&i : iter (0 ,r2x)) {
@@ -2079,10 +2135,10 @@ public:
 			}
 		}
 		if ifdo (act) {
-			if (r1x != PlyParserBodyType::Val32)
+			if (r1x != PlyParserDataType::Val32)
 				discard ;
 			INDEX ix = mPlyCHAR.tail () ;
-			mBody[element][property].mType = PlyParserBodyType::Char ;
+			mBody[element][property].mType = PlyParserDataType::Char ;
 			mBody[element][property].mLine[line].m1st = ix + 1 ;
 			mBody[element][property].mLine[line].m2nd = ix + r2x + 1 ;
 			for (auto &&i : iter (0 ,r2x)) {
@@ -2093,10 +2149,10 @@ public:
 			}
 		}
 		if ifdo (act) {
-			if (r1x != PlyParserBodyType::Val64)
+			if (r1x != PlyParserDataType::Val64)
 				discard ;
 			INDEX ix = mPlyQUAD.tail () ;
-			mBody[element][property].mType = PlyParserBodyType::Quad ;
+			mBody[element][property].mType = PlyParserDataType::Quad ;
 			mBody[element][property].mLine[line].m1st = ix + 1 ;
 			mBody[element][property].mLine[line].m2nd = ix + r2x + 1 ;
 			for (auto &&i : iter (0 ,r2x)) {
@@ -2107,7 +2163,7 @@ public:
 			}
 		}
 		if ifdo (act) {
-			if (r1x != PlyParserBodyType::Byte)
+			if (r1x != PlyParserDataType::Byte)
 				discard ;
 			INDEX ix = mPlyBYTE.tail () ;
 			mBody[element][property].mType = r1x ;
@@ -2120,7 +2176,7 @@ public:
 			}
 		}
 		if ifdo (act) {
-			if (r1x != PlyParserBodyType::Word)
+			if (r1x != PlyParserDataType::Word)
 				discard ;
 			INDEX ix = mPlyWORD.tail () ;
 			mBody[element][property].mType = r1x ;
@@ -2133,7 +2189,7 @@ public:
 			}
 		}
 		if ifdo (act) {
-			if (r1x != PlyParserBodyType::Char)
+			if (r1x != PlyParserDataType::Char)
 				discard ;
 			INDEX ix = mPlyCHAR.tail () ;
 			mBody[element][property].mType = r1x ;
@@ -2146,7 +2202,7 @@ public:
 			}
 		}
 		if ifdo (act) {
-			if (r1x != PlyParserBodyType::Quad)
+			if (r1x != PlyParserDataType::Quad)
 				discard ;
 			INDEX ix = mPlyQUAD.tail () ;
 			mBody[element][property].mType = r1x ;
@@ -2161,25 +2217,25 @@ public:
 	}
 
 	BYTE bitwise_reverse (CREF<BYTE> a) const {
-		if (!(mBitwiseReverseFlag))
+		if ((!mBitwiseReverseFlag))
 			return a ;
 		return ByteProc::bit_reverse (a) ;
 	}
 
 	WORD bitwise_reverse (CREF<WORD> a) const {
-		if (!(mBitwiseReverseFlag))
+		if ((!mBitwiseReverseFlag))
 			return a ;
 		return ByteProc::bit_reverse (a) ;
 	}
 
 	CHAR bitwise_reverse (CREF<CHAR> a) const {
-		if (!(mBitwiseReverseFlag))
+		if ((!mBitwiseReverseFlag))
 			return a ;
 		return ByteProc::bit_reverse (a) ;
 	}
 
 	QUAD bitwise_reverse (CREF<QUAD> a) const {
-		if (!(mBitwiseReverseFlag))
+		if ((!mBitwiseReverseFlag))
 			return a ;
 		return ByteProc::bit_reverse (a) ;
 	}
@@ -2189,7 +2245,7 @@ class PlyParserImplHolder implement Fat<PlyParserHolder ,PlyParserLayout> {
 public:
 	void initialize (CREF<RefBuffer<BYTE>> stream) override {
 		auto rax = MakePlyParser (Ref<RefBuffer<BYTE>>::reference (Pointer::make (address (stream)))) ;
-		fake.mThis = Ref<PlyParserPureLayout>::make (rax.poll ()) ;
+		fake.mThis = Ref<PlyParserImplLayout>::make (rax.poll ()) ;
 		fake.mGuide.mElement = NONE ;
 	}
 
@@ -2265,7 +2321,7 @@ public:
 		}
 		if ifdo (TRUE) {
 			fake.mGuide.mPlyType = fake.mThis->mHeader.mElementList[ix].mPropertyList[jx].mListType ;
-			if (fake.mGuide.mPlyType != PlyParserBodyType::Null)
+			if (fake.mGuide.mPlyType != PlyParserDataType::Null)
 				discard ;
 			fake.mGuide.mPlyType = fake.mThis->mHeader.mElementList[ix].mPropertyList[jx].mType ;
 		}
@@ -2273,55 +2329,55 @@ public:
 
 	void read (VREF<BOOL> item) override {
 		guide_jmp () ;
-		assume (fake.mGuide.mPlyType == PlyParserBodyType::Bool) ;
+		assume (fake.mGuide.mPlyType == PlyParserDataType::Bool) ;
 		item = bitwise[TYPE<BOOL>::expr] (fake.mThis->mPlyBYTE[fake.mGuide.mPlyIndex]) ;
 	}
 
 	void read (VREF<VAL32> item) override {
 		guide_jmp () ;
-		assume (fake.mGuide.mPlyType == PlyParserBodyType::Val32) ;
+		assume (fake.mGuide.mPlyType == PlyParserDataType::Val32) ;
 		item = bitwise[TYPE<VAL32>::expr] (fake.mThis->mPlyCHAR[fake.mGuide.mPlyIndex]) ;
 	}
 
 	void read (VREF<VAL64> item) override {
 		guide_jmp () ;
-		assume (fake.mGuide.mPlyType == PlyParserBodyType::Val64) ;
+		assume (fake.mGuide.mPlyType == PlyParserDataType::Val64) ;
 		item = bitwise[TYPE<VAL64>::expr] (fake.mThis->mPlyQUAD[fake.mGuide.mPlyIndex]) ;
 	}
 
 	void read (VREF<FLT32> item) override {
 		guide_jmp () ;
-		assume (fake.mGuide.mPlyType == PlyParserBodyType::Flt32) ;
+		assume (fake.mGuide.mPlyType == PlyParserDataType::Flt32) ;
 		item = bitwise[TYPE<FLT32>::expr] (fake.mThis->mPlyCHAR[fake.mGuide.mPlyIndex]) ;
 	}
 
 	void read (VREF<FLT64> item) override {
 		guide_jmp () ;
-		assume (fake.mGuide.mPlyType == PlyParserBodyType::Flt64) ;
+		assume (fake.mGuide.mPlyType == PlyParserDataType::Flt64) ;
 		item = bitwise[TYPE<FLT64>::expr] (fake.mThis->mPlyQUAD[fake.mGuide.mPlyIndex]) ;
 	}
 
 	void read (VREF<BYTE> item) override {
 		guide_jmp () ;
-		assume (fake.mGuide.mPlyType == PlyParserBodyType::Byte) ;
+		assume (fake.mGuide.mPlyType == PlyParserDataType::Byte) ;
 		item = fake.mThis->mPlyBYTE[fake.mGuide.mPlyIndex] ;
 	}
 
 	void read (VREF<WORD> item) override {
 		guide_jmp () ;
-		assume (fake.mGuide.mPlyType == PlyParserBodyType::Word) ;
+		assume (fake.mGuide.mPlyType == PlyParserDataType::Word) ;
 		item = fake.mThis->mPlyWORD[fake.mGuide.mPlyIndex] ;
 	}
 
 	void read (VREF<CHAR> item) override {
 		guide_jmp () ;
-		assume (fake.mGuide.mPlyType == PlyParserBodyType::Char) ;
+		assume (fake.mGuide.mPlyType == PlyParserDataType::Char) ;
 		item = fake.mThis->mPlyCHAR[fake.mGuide.mPlyIndex] ;
 	}
 
 	void read (VREF<QUAD> item) override {
 		guide_jmp () ;
-		assume (fake.mGuide.mPlyType == PlyParserBodyType::Quad) ;
+		assume (fake.mGuide.mPlyType == PlyParserDataType::Quad) ;
 		item = fake.mThis->mPlyQUAD[fake.mGuide.mPlyIndex] ;
 	}
 } ;

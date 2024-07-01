@@ -133,7 +133,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <AdditionalIncludeDirectories>D:\Depends\include;D:\Depends\eigen;D:\Depends\opencv\build\install\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <LanguageStandard>stdcpplatest</LanguageStandard>
+      <LanguageStandard>stdcpp14</LanguageStandard>
       <WarningLevel>Level3</WarningLevel>
       <PreprocessorDefinitions>__clang__;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
@@ -148,6 +148,7 @@
       <AdditionalIncludeDirectories>D:\Depends\include;D:\Depends\eigen;D:\Depends\opencv\build\install\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <WarningLevel>Level3</WarningLevel>
       <LanguageStandard>stdcpplatest</LanguageStandard>
+      <ExceptionHandling>Async</ExceptionHandling>
     </ClCompile>
     <PreBuildEvent />
     <Bscmake>
@@ -161,7 +162,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
       <AdditionalIncludeDirectories>D:\Depends\include;D:\Depends\eigen;D:\Depends\opencv\build\install\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <LanguageStandard>stdcpplatest</LanguageStandard>
+      <LanguageStandard>stdcpp14</LanguageStandard>
       <WarningLevel>Level3</WarningLevel>
       <PreprocessorDefinitions>__clang__;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
@@ -175,6 +176,7 @@
       <AdditionalIncludeDirectories>D:\Depends\include;D:\Depends\eigen;D:\Depends\opencv\build\install\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <WarningLevel>Level3</WarningLevel>
       <LanguageStandard>stdcpplatest</LanguageStandard>
+      <ExceptionHandling>Async</ExceptionHandling>
     </ClCompile>
     <Link>
       <AdditionalLibraryDirectories>D:\Depends\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>

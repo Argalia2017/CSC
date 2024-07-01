@@ -16,14 +16,14 @@
 
 namespace CSC {
 struct CoroutineFriend implement Interface {
-	virtual void before () = 0 ;
-	virtual BOOL tick () = 0 ;
-	virtual void after () = 0 ;
+	virtual void before () const = 0 ;
+	virtual BOOL tick () const = 0 ;
+	virtual void after () const = 0 ;
 } ;
 
 template <class A>
 class CoroutineFriendBinder implement Fat<CoroutineFriend ,A> {
-protected:
+public:
 	imports VFat<CoroutineFriend> create (VREF<A> that) {
 		return VFat<CoroutineFriend> (CoroutineFriendBinder () ,that) ;
 	}
@@ -41,10 +41,10 @@ protected:
 	}
 } ;
 
-class WorkThreadImplement ;
+struct WorkThreadImplLayout ;
 
 struct WorkThreadLayout {
-	SharedRef<WorkThreadImplement> mThis ;
+	SharedRef<WorkThreadImplLayout> mThis ;
 } ;
 
 struct WorkThreadHolder implement Interface {
@@ -80,7 +80,7 @@ public:
 	}
 
 	void start (CREF<Function<CREF<INDEX>>> func) const {
-		return WorkThreadHolder::create (thiz)->start (move (func)) ;
+		return WorkThreadHolder::create (thiz)->start (func) ;
 	}
 
 	void post (CREF<INDEX> item) const {
@@ -108,12 +108,21 @@ struct CalcSolution {
 	INDEX mIndex ;
 	FLT64 mError ;
 	BitSet mInput ;
+
+public:
+	CalcSolution clone () const {
+		CalcSolution ret ;
+		ret.mIndex = mIndex ;
+		ret.mError = mError ;
+		ret.mInput = mInput.clone () ;
+		return move (ret) ;
+	}
 } ;
 
-class CalcThreadImplement ;
+struct CalcThreadImplLayout ;
 
 struct CalcThreadLayout {
-	SharedRef<CalcThreadImplement> mThis ;
+	SharedRef<CalcThreadImplLayout> mThis ;
 } ;
 
 struct CalcThreadHolder implement Interface {
@@ -124,6 +133,7 @@ struct CalcThreadHolder implement Interface {
 	virtual void set_thread_size (CREF<LENGTH> size_) const = 0 ;
 	virtual void start (CREF<Function<CREF<CalcSolution> ,VREF<CalcSolution>>> func) const = 0 ;
 	virtual CalcSolution best () const = 0 ;
+	virtual void join () const = 0 ;
 	virtual void suspend () const = 0 ;
 	virtual void resume () const = 0 ;
 	virtual void stop () const = 0 ;
@@ -143,11 +153,15 @@ public:
 	}
 
 	void start (CREF<Function<CREF<CalcSolution> ,VREF<CalcSolution>>> func) const {
-		return CalcThreadHolder::create (thiz)->start (move (func)) ;
+		return CalcThreadHolder::create (thiz)->start (func) ;
 	}
 
 	CalcSolution best () const {
 		return CalcThreadHolder::create (thiz)->best () ;
+	}
+
+	void join () const {
+		return CalcThreadHolder::create (thiz)->join () ;
 	}
 
 	void suspend () const {
@@ -163,10 +177,10 @@ public:
 	}
 } ;
 
-class PromiseImplement ;
+struct PromiseImplLayout ;
 
 struct PromiseLayout {
-	SharedRef<PromiseImplement> mThis ;
+	SharedRef<PromiseImplLayout> mThis ;
 } ;
 
 struct PromiseHolder implement Interface {
@@ -174,13 +188,15 @@ struct PromiseHolder implement Interface {
 	imports CFat<PromiseHolder> create (CREF<PromiseLayout> that) ;
 
 	virtual void initialize () = 0 ;
+	virtual void set_retry (CREF<BOOL> flag) const = 0 ;
 	virtual void start () const = 0 ;
-	virtual void start (RREF<FunctionLayout> func) const = 0 ;
+	virtual void start (CREF<Function<>> func) const = 0 ;
 	virtual void post (RREF<AutoRef<Pointer>> item) const = 0 ;
 	virtual void rethrow (CREF<Exception> e) const = 0 ;
-	virtual void signal () const = 0 ;
 	virtual BOOL ready () const = 0 ;
+	virtual BOOL running () const = 0 ;
 	virtual AutoRef<Pointer> poll () const = 0 ;
+	virtual void signal () const = 0 ;
 	virtual void stop () const = 0 ;
 } ;
 
@@ -194,32 +210,48 @@ public:
 		PromiseHolder::create (thiz)->initialize () ;
 	}
 
+	void set_retry (CREF<BOOL> flag) const {
+		return PromiseHolder::create (thiz)->set_retry (flag) ;
+	}
+
 	void start () const {
 		return PromiseHolder::create (thiz)->start () ;
 	}
 
-	void start (CREF<Function<VREF<AutoRef<A>>>> func) const {
-		return PromiseHolder::create (thiz)->start (move (func)) ;
+	void start (CREF<Function<>> func) const {
+		return PromiseHolder::create (thiz)->start (func) ;
 	}
 
-	void post (RREF<AutoRef<Pointer>> item) const {
-		return PromiseHolder::create (thiz)->post (move (item)) ;
+	void post (CREF<A> item) const {
+		return post (move (item)) ;
+	}
+
+	void post (RREF<A> item) const {
+		auto rax = AutoRef<A>::make (move (item)) ;
+		return PromiseHolder::create (thiz)->post (move (rax)) ;
 	}
 
 	void rethrow (CREF<Exception> e) const {
 		return PromiseHolder::create (thiz)->rethrow (e) ;
 	}
 
-	void signal () const {
-		return PromiseHolder::create (thiz)->signal () ;
-	}
-
 	BOOL ready () const {
 		return PromiseHolder::create (thiz)->ready () ;
 	}
 
-	AutoRef<A> poll () const {
-		return PromiseHolder::create (thiz)->poll () ;
+	BOOL running () const {
+		return PromiseHolder::create (thiz)->running () ;
+	}
+
+	Optional<A> poll () const {
+		auto rax = PromiseHolder::create (thiz)->poll () ;
+		if ((!rax.exist ()))
+			return Optional<A>::error (1) ;
+		return move (rax.rebind (TYPE<A>::expr).self) ;
+	}
+
+	void signal () const {
+		return PromiseHolder::create (thiz)->signal () ;
 	}
 
 	void stop () const {
@@ -227,10 +259,69 @@ public:
 	}
 } ;
 
-template <class ARG1>
-inline Promise<ARG1> AsyncPromise (CREF<Function<VREF<AutoRef<ARG1>>>> func) {
-	Promise<ARG1> ret ;
-	ret.start (move (func)) ;
-	return move (ret) ;
-}
+struct ExpressionImplLayout ;
+
+struct ExpressionLayout {
+	SharedRef<ExpressionImplLayout> mThis ;
+	INDEX mIndex ;
+} ;
+
+struct ExpressionHolder implement Interface {
+	imports VFat<ExpressionHolder> create (VREF<ExpressionLayout> that) ;
+	imports CFat<ExpressionHolder> create (CREF<ExpressionLayout> that) ;
+
+	virtual void initialize (RREF<AutoRef<Pointer>> item) = 0 ;
+	virtual LENGTH rank () const = 0 ;
+	virtual ExpressionLayout add (CREF<ExpressionLayout> that) const = 0 ;
+	virtual ExpressionLayout sub (CREF<ExpressionLayout> that) const = 0 ;
+	virtual CREF<AutoRef<Pointer>> eval () const leftvalue = 0 ;
+} ;
+
+class Expression implement ExpressionLayout {
+protected:
+	using ExpressionLayout::mThis ;
+	using ExpressionLayout::mIndex ;
+
+public:
+	implicit Expression () = default ;
+
+	template <class ARG1>
+	explicit Expression (RREF<AutoRef<ARG1>> item) {
+		ExpressionHolder::create (thiz)->initialize (move (item)) ;
+	}
+
+	LENGTH rank () const {
+		return ExpressionHolder::create (thiz)->rank () ;
+	}
+
+	Expression add (CREF<Expression> that) const {
+		ExpressionLayout ret = ExpressionHolder::create (thiz)->add (that) ;
+		return move (keep[TYPE<Expression>::expr] (ret)) ;
+	}
+
+	forceinline Expression operator+ (CREF<Expression> that) const {
+		return add (that) ;
+	}
+
+	forceinline void operator+= (CREF<Expression> that) {
+		thiz = add (that) ;
+	}
+
+	Expression sub (CREF<Expression> that) const {
+		ExpressionLayout ret = ExpressionHolder::create (thiz)->sub (that) ;
+		return move (keep[TYPE<Expression>::expr] (ret)) ;
+	}
+
+	forceinline Expression operator- (CREF<Expression> that) const {
+		return sub (that) ;
+	}
+
+	forceinline void operator-= (CREF<Expression> that) {
+		thiz = sub (that) ;
+	}
+
+	CREF<AutoRef<Pointer>> eval () const leftvalue {
+		return ExpressionHolder::create (thiz)->eval () ;
+	}
+} ;
 } ;

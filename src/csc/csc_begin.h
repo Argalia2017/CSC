@@ -10,13 +10,33 @@
 #pragma clang diagnostic pop
 #endif
 
-#include "csc_end.h"
+#undef implicit
+#undef exports
+#undef imports
+#undef forceinline
+#undef leftvalue
+#undef rightvalue
+#undef thiz
+#undef self
+#undef fake
+#undef expr
+#undef trait
+#undef implement
+#undef require
+#undef anonymous
+#undef slice
+#undef assert
+#undef assume
+#undef barrier
+#undef ifdo
+#undef discard
+#undef typeof
+#undef nullof
 
 #define implicit
 #define exports __macro_exports
 #define imports static
 #define forceinline __macro_forceinline
-#define declspec __macro_declspec
 #define leftvalue &
 #define rightvalue &&
 #define thiz (*this)
@@ -25,7 +45,7 @@
 #define expr expr_m ()
 #define trait struct
 #define implement :public
-#define require __macro_requires
+#define require __macro_require
 #define anonymous __macro_anonymous
 #define slice __macro_slice
 #define assert __macro_assert
@@ -34,6 +54,7 @@
 #define ifdo __macro_ifdo
 #define discard break
 #define typeof __macro_typeof
+#define nullof __macro_nullof
 
 #ifdef NULL
 #define csc_push_macro
@@ -51,16 +72,4 @@
 #undef IDEN
 #undef NONE
 #undef USED
-#endif
-
-#ifdef __CSC_COMPILER_MSVC__
-#pragma warning (pop)
-#endif
-
-#ifdef __CSC_COMPILER_GNUC__
-#pragma GCC diagnostic pop
-#endif
-
-#ifdef __CSC_COMPILER_CLANG__
-#pragma clang diagnostic pop
 #endif

@@ -13,100 +13,63 @@
 #include "csc_stream.hpp"
 
 namespace CSC {
-class IdentifierText implement StreamReaderFriend {
+struct CommaImplLayout ;
+
+struct CommaLayout {
+	SharedRef<CommaImplLayout> mThis ;
+} ;
+
+struct CommaHolder implement Interface {
+	imports VFat<CommaHolder> create (VREF<CommaLayout> that) ;
+	imports CFat<CommaHolder> create (CREF<CommaLayout> that) ;
+
+	virtual void initialize (CREF<Slice> indent ,CREF<Slice> comma ,CREF<Slice> endline) = 0 ;
+	virtual void friend_write (VREF<StreamWriter> writer) const = 0 ;
+	virtual void increase () const = 0 ;
+	virtual void decrease () const = 0 ;
+	virtual void tight () const = 0 ;
+} ;
+
+class Comma implement CommaLayout {
 protected:
-	PTR<VREF<String<STRU8>>> mText ;
+	using CommaLayout::mThis ;
 
 public:
-	implicit IdentifierText () = delete ;
+	implicit Comma () = default ;
 
-	explicit IdentifierText (VREF<String<STRU8>> text) :mText ((&text)) {}
+	explicit Comma (CREF<Slice> indent ,CREF<Slice> comma ,CREF<Slice> endline) {
+		CommaHolder::create (thiz)->initialize (indent ,comma ,endline) ;
+	}
 
-	void friend_read (VREF<StreamReader> reader) override {
-		unimplemented () ;
+	void friend_write (VREF<StreamWriter> writer) const {
+		return CommaHolder::create (thiz)->friend_write (writer) ;
+	}
+
+	void increase () const {
+		return CommaHolder::create (thiz)->increase () ;
+	}
+
+	forceinline void operator++ (int) const {
+		increase () ;
+	}
+
+	void decrease () const {
+		return CommaHolder::create (thiz)->decrease () ;
+	}
+
+	forceinline void operator-- (int) const {
+		decrease () ;
+	}
+
+	void tight () const {
+		return CommaHolder::create (thiz)->tight () ;
 	}
 } ;
 
-class ScalarText implement StreamReaderFriend {
-protected:
-	PTR<VREF<String<STRU8>>> mText ;
-
-public:
-	implicit ScalarText () = delete ;
-
-	explicit ScalarText (VREF<String<STRU8>> text) :mText ((&text)) {}
-
-	void friend_read (VREF<StreamReader> reader) override {
-		unimplemented () ;
-	}
-} ;
-
-class EscapeText implement StreamReaderFriend ,public StreamWriterFriend {
-protected:
-	PTR<VREF<String<STRU8>>> mText ;
-
-public:
-	implicit EscapeText () = delete ;
-
-	explicit EscapeText (VREF<String<STRU8>> text) :mText ((&text)) {}
-
-	void friend_read (VREF<StreamReader> reader) override {
-		unimplemented () ;
-	}
-
-	void friend_write (VREF<StreamWriter> writer) const override {
-		unimplemented () ;
-	}
-} ;
-
-class NotEndlineText implement StreamReaderFriend {
-protected:
-	PTR<VREF<String<STRU8>>> mText ;
-
-public:
-	implicit NotEndlineText () = delete ;
-
-	explicit NotEndlineText (VREF<String<STRU8>> text) :mText ((&text)) {}
-
-	void friend_read (VREF<StreamReader> reader) override {
-		unimplemented () ;
-	}
-} ;
-
-class AlignedText implement StreamWriterFriend {
-protected:
-	VAL64 mText ;
-	VAL64 mAlign ;
-
-public:
-	implicit AlignedText () = delete ;
-
-	explicit AlignedText (CREF<VAL64> text ,CREF<VAL64> align) {
-		assert (text >= 0) ;
-		assert (align >= 1) ;
-		mText = text ;
-		mAlign = align ;
-	}
-
-	void friend_write (VREF<StreamWriter> writer) const override {
-		auto rax = LENGTH (1) ;
-		for (auto &&i : iter (0 ,mAlign - 1)) {
-			noop (i) ;
-			rax *= 10 ;
-			if (mText >= rax)
-				continue ;
-			writer.write (STRU32 ('0')) ;
-		}
-		rax *= 10 ;
-		const auto r1x = mText % rax ;
-		writer.write (r1x) ;
-	}
-} ;
-
-struct XmlParserPureLayout ;
+struct XmlParserImplLayout ;
 
 struct XmlParserLayout {
-	Ref<XmlParserPureLayout> mThis ;
+	Ref<XmlParserImplLayout> mThis ;
 	INDEX mIndex ;
 } ;
 
@@ -213,13 +176,13 @@ public:
 	}
 
 	Array<XmlParser> list () const {
-		Array<XmlParserLayout> ret = XmlParserHolder::create (thiz)->list () ;
-		return move (keep[TYPE<Array<XmlParser>>::expr] (keep[TYPE<ArrayLayout>::expr] (ret))) ;
+		ArrayLayout ret = XmlParserHolder::create (thiz)->list () ;
+		return move (keep[TYPE<Array<XmlParser>>::expr] (ret)) ;
 	}
 
 	Array<XmlParser> list (CREF<LENGTH> size_) const {
-		Array<XmlParserLayout> ret = XmlParserHolder::create (thiz)->list (size_) ;
-		return move (keep[TYPE<Array<XmlParser>>::expr] (keep[TYPE<ArrayLayout>::expr] (ret))) ;
+		ArrayLayout ret = XmlParserHolder::create (thiz)->list (size_) ;
+		return move (keep[TYPE<Array<XmlParser>>::expr] (ret)) ;
 	}
 
 	BOOL equal (CREF<XmlParser> that) const {
@@ -231,7 +194,7 @@ public:
 	}
 
 	forceinline BOOL operator!= (CREF<XmlParser> that) const {
-		return !(equal (that)) ;
+		return (!equal (that)) ;
 	}
 
 	BOOL fetch (CREF<BOOL> def) const {
@@ -315,10 +278,10 @@ public:
 	}
 } ;
 
-struct JsonParserPureLayout ;
+struct JsonParserImplLayout ;
 
 struct JsonParserLayout {
-	Ref<JsonParserPureLayout> mThis ;
+	Ref<JsonParserImplLayout> mThis ;
 	INDEX mIndex ;
 } ;
 
@@ -425,13 +388,13 @@ public:
 	}
 
 	Array<JsonParser> list () const {
-		Array<JsonParserLayout> ret = JsonParserHolder::create (thiz)->list () ;
-		return move (keep[TYPE<Array<JsonParser>>::expr] (keep[TYPE<ArrayLayout>::expr] (ret))) ;
+		ArrayLayout ret = JsonParserHolder::create (thiz)->list () ;
+		return move (keep[TYPE<Array<JsonParser>>::expr] (ret)) ;
 	}
 
 	Array<JsonParser> list (CREF<LENGTH> size_) const {
-		Array<JsonParserLayout> ret = JsonParserHolder::create (thiz)->list (size_) ;
-		return move (keep[TYPE<Array<JsonParser>>::expr] (keep[TYPE<ArrayLayout>::expr] (ret))) ;
+		ArrayLayout ret = JsonParserHolder::create (thiz)->list (size_) ;
+		return move (keep[TYPE<Array<JsonParser>>::expr] (ret)) ;
 	}
 
 	BOOL equal (CREF<JsonParser> that) const {
@@ -443,7 +406,7 @@ public:
 	}
 
 	forceinline BOOL operator!= (CREF<JsonParser> that) const {
-		return !(equal (that)) ;
+		return (!equal (that)) ;
 	}
 
 	BOOL fetch (CREF<BOOL> def) const {
@@ -536,10 +499,10 @@ struct PlyParserGuide {
 	FLAG mPlyType ;
 } ;
 
-struct PlyParserPureLayout ;
+struct PlyParserImplLayout ;
 
 struct PlyParserLayout {
-	Ref<PlyParserPureLayout> mThis ;
+	Ref<PlyParserImplLayout> mThis ;
 	PlyParserGuide mGuide ;
 } ;
 
@@ -568,6 +531,7 @@ struct PlyParserHolder implement Interface {
 class PlyParser implement PlyParserLayout {
 protected:
 	using PlyParserLayout::mThis ;
+	using PlyParserLayout::mGuide ;
 
 public:
 	implicit PlyParser () = default ;

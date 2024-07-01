@@ -13,50 +13,33 @@ public:
 		const auto r1x = RFat<ReflectSize> (element) ;
 		noop (r1x) ;
 		assert (r1x->type_size () == that.mWidth.mStep) ;
-		assert (r1x->type_size () / r1x->type_align () == that.mWidth.mChannel) ;
 		fake = move (that) ;
 	}
 
-	void initialize (CREF<Unknown> element ,CREF<LENGTH> cx_ ,CREF<LENGTH> cy_) override {
+	void initialize (CREF<Unknown> element ,CREF<LENGTH> cx_ ,CREF<LENGTH> cy_ ,CREF<LENGTH> step_) override {
 		const auto r1x = RFat<ReflectSize> (element) ;
-		const auto r2x = cx_ * cy_ * (r1x->type_size () / r1x->type_align ()) ;
-		auto act = TRUE ;
-		if ifdo (act) {
-			if (r1x->type_align () != SIZE_OF<BYTE>::expr)
-				discard ;
-			RefBufferHolder::create (fake.mImage)->initialize (RefUnknownBinder<BYTE> () ,r2x) ;
-		}
-		if ifdo (act) {
-			if (r1x->type_align () != SIZE_OF<WORD>::expr)
-				discard ;
-			RefBufferHolder::create (fake.mImage)->initialize (RefUnknownBinder<WORD> () ,r2x) ;
-		}
-		if ifdo (act) {
-			if (r1x->type_align () != SIZE_OF<CHAR>::expr)
-				discard ;
-			RefBufferHolder::create (fake.mImage)->initialize (RefUnknownBinder<CHAR> () ,r2x) ;
-		}
-		if ifdo (act) {
-			if (r1x->type_align () != SIZE_OF<QUAD>::expr)
-				discard ;
-			RefBufferHolder::create (fake.mImage)->initialize (RefUnknownBinder<QUAD> () ,r2x) ;
-		}
-		if ifdo (act) {
-			assert (FALSE) ;
-		}
+		const auto r2x = cx_ * cy_ * step_ ;
+		const auto r3x = inline_alignas (r2x ,r1x->type_size ()) / r1x->type_size () ;
+		RefBufferHolder::create (fake.mImage)->initialize (element ,r3x) ;
+		auto &&tmp = keep[TYPE<RefBufferLayout>::expr] (fake.mImage) ;
+		tmp.mSize = cx_ * cy_ ;
+		tmp.mStep = step_ ;
 		fake.mWidth.mCX = cx_ ;
 		fake.mWidth.mCY = cy_ ;
-		fake.mWidth.mStep = r1x->type_size () ;
-		fake.mWidth.mChannel = r1x->type_size () / r1x->type_align () ;
+		fake.mWidth.mStep = step_ ;
 		reset () ;
 	}
 
-	void initialize (CREF<Unknown> element ,CREF<ImageWidth> width) override {
-		const auto r1x = RFat<ReflectSize> (element) ;
-		noop (r1x) ;
-		assert (r1x->type_size () == width.mStep) ;
-		assert (r1x->type_size () / r1x->type_align () == width.mChannel) ;
-		initialize (element ,width.mCX ,width.mCY) ;
+	ImageLayout clone () const override {
+		ImageLayout ret ;
+		if ifdo (TRUE) {
+			const auto r1x = width () ;
+			if (r1x.area () == 0)
+				discard ;
+			ImageHolder::create (ret)->initialize (fake.mImage.unknown () ,r1x.mCX ,r1x.mCY ,r1x.mStep) ;
+			ImageHolder::create (ret)->splice (0 ,0 ,fake) ;
+		}
+		return move (ret) ;
 	}
 
 	BOOL exist () const override {
@@ -72,31 +55,25 @@ public:
 	}
 
 	LENGTH cx () const override {
-		if (!(fake.mImage.exist ()))
+		if ((!fake.mImage.exist ()))
 			return 0 ;
 		return fake.mCX ;
 	}
 
 	LENGTH cy () const override {
-		if (!(fake.mImage.exist ()))
+		if ((!fake.mImage.exist ()))
 			return 0 ;
 		return fake.mCY ;
 	}
 
-	LENGTH sx () const override {
-		if (!(fake.mImage.exist ()))
+	LENGTH strip () const override {
+		if ((!fake.mImage.exist ()))
 			return 0 ;
-		return fake.mSX ;
-	}
-
-	LENGTH sy () const override {
-		if (!(fake.mImage.exist ()))
-			return 0 ;
-		return fake.mSY ;
+		return fake.mStrip ;
 	}
 
 	LENGTH offset () const override {
-		if (!(fake.mImage.exist ()))
+		if ((!fake.mImage.exist ()))
 			return 0 ;
 		return fake.mOffset ;
 	}
@@ -105,24 +82,21 @@ public:
 		ImageWidth ret ;
 		ret.mCX = cx () ;
 		ret.mCY = cy () ;
-		ret.mStep = fake.mWidth.mStep ;
-		ret.mChannel = fake.mWidth.mChannel ;
+		ret.mStep = step () ;
 		return move (ret) ;
 	}
 
 	void reset () override {
 		fake.mCX = fake.mWidth.mCX ;
 		fake.mCY = fake.mWidth.mCY ;
-		fake.mSX = fake.mWidth.mChannel ;
-		fake.mSY = fake.mWidth.mCX * fake.mWidth.mChannel ;
+		fake.mStrip = fake.mWidth.mCX ;
 		fake.mOffset = 0 ;
 	}
 
-	void reset (CREF<INDEX> cx_ ,CREF<INDEX> cy_ ,CREF<INDEX> sx_ ,CREF<INDEX> sy_ ,CREF<INDEX> offset_) override {
+	void reset (CREF<INDEX> cx_ ,CREF<INDEX> cy_ ,CREF<INDEX> strip_ ,CREF<INDEX> offset_) override {
 		fake.mCX = cx_ ;
 		fake.mCY = cy_ ;
-		fake.mSX = sx_ ;
-		fake.mSY = sy_ ;
+		fake.mStrip = strip_ ;
 		fake.mOffset = offset_ ;
 	}
 
@@ -137,40 +111,24 @@ public:
 	VREF<Pointer> at (CREF<INDEX> x ,CREF<INDEX> y) leftvalue override {
 		assert (inline_between (x ,0 ,cx ())) ;
 		assert (inline_between (y ,0 ,cy ())) ;
-		INDEX ix = x * fake.mSX + y * fake.mSY + fake.mOffset ;
+		INDEX ix = x + y * fake.mStrip + fake.mOffset ;
 		return fake.mImage.at (ix) ;
 	}
 
 	CREF<Pointer> at (CREF<INDEX> x ,CREF<INDEX> y) const leftvalue override {
 		assert (inline_between (x ,0 ,cx ())) ;
 		assert (inline_between (y ,0 ,cy ())) ;
-		INDEX ix = x * fake.mSX + y * fake.mSY + fake.mOffset ;
+		INDEX ix = x + y * fake.mStrip + fake.mOffset ;
 		return fake.mImage.at (ix) ;
 	}
 
 	void fill (CREF<Pointer> item) override {
-		auto act = TRUE ;
-		if ifdo (act) {
-			if (sx () != fake.mWidth.mChannel)
-				discard ;
+		if ifdo (TRUE) {
 			if (cy () == 0)
 				discard ;
-			fill_fast (item) ;
-		}
-		if ifdo (act) {
-			fill_slow (item) ;
-		}
-	}
-
-	void fill_slow (CREF<Pointer> item) {
-		for (auto &&i : iter (0 ,cx () ,0 ,cy ())) {
-			inline_memcpy (at (i.mX ,i.mY) ,item ,fake.mWidth.mStep) ;
-		}
-	}
-
-	void fill_fast (CREF<Pointer> item) {
-		for (auto &&i : iter (0 ,cx ())) {
-			inline_memcpy (at (i ,0) ,item ,fake.mWidth.mStep) ;
+			for (auto &&i : iter (0 ,cx ())) {
+				inline_memcpy (at (i ,0) ,item ,fake.mWidth.mStep) ;
+			}
 		}
 		const auto r1x = cx () * fake.mWidth.mStep ;
 		for (auto &&i : iter (1 ,cy ())) {
@@ -188,37 +146,11 @@ public:
 		assert (x + r1x <= cx ()) ;
 		assert (y + r2x <= cy ()) ;
 		assert (fake.mWidth.mStep == item.mWidth.mStep) ;
-		assert (fake.mWidth.mChannel == item.mWidth.mChannel) ;
-		auto act = TRUE ;
-		if ifdo (act) {
-			if (sx () != fake.mWidth.mChannel)
-				discard ;
-			if (ImageHolder::create (item)->sx () != fake.mWidth.mChannel)
-				discard ;
-			splice_fast (x ,y ,item) ;
-		}
-		if ifdo (act) {
-			splice_slow (x ,y ,item) ;
-		}
-	}
-
-	void splice_slow (CREF<INDEX> x ,CREF<INDEX> y ,CREF<ImageLayout> item) {
-		const auto r1x = ImageHolder::create (item)->cx () ;
-		const auto r2x = ImageHolder::create (item)->cy () ;
-		for (auto &&i : iter (0 ,r1x ,0 ,r2x)) {
-			INDEX ix = x + i.mX ;
-			INDEX iy = y + i.mY ;
-			inline_memcpy (at (ix ,iy) ,ImageHolder::create (item)->at (i.mX ,i.mY) ,fake.mWidth.mStep) ;
-		}
-	}
-
-	void splice_fast (CREF<INDEX> x ,CREF<INDEX> y ,CREF<ImageLayout> item) {
-		const auto r1x = ImageHolder::create (item)->cx () ;
-		const auto r2x = ImageHolder::create (item)->cy () ;
 		const auto r3x = r1x * fake.mWidth.mStep ;
 		for (auto &&i : iter (0 ,r2x)) {
+			INDEX ix = x + 0 ;
 			INDEX iy = y + i ;
-			inline_memcpy (at (0 ,iy) ,ImageHolder::create (item)->at (0 ,i) ,r3x) ;
+			inline_memcpy (at (ix ,iy) ,ImageHolder::create (item)->at (0 ,i) ,r3x) ;
 		}
 	}
 } ;
@@ -234,11 +166,11 @@ exports CFat<ImageHolder> ImageHolder::create (CREF<ImageLayout> that) {
 template class External<ImageProcHolder ,ImageProcLayout> ;
 
 exports VFat<ImageProcHolder> ImageProcHolder::create (VREF<ImageProcLayout> that) {
-	return VFat<ImageProcHolder> (External<ImageProcHolder ,ImageProcLayout>::create () ,that) ;
+	return VFat<ImageProcHolder> (External<ImageProcHolder ,ImageProcLayout>::instance () ,that) ;
 }
 
 exports CFat<ImageProcHolder> ImageProcHolder::create (CREF<ImageProcLayout> that) {
-	return CFat<ImageProcHolder> (External<ImageProcHolder ,ImageProcLayout>::create () ,that) ;
+	return CFat<ImageProcHolder> (External<ImageProcHolder ,ImageProcLayout>::instance () ,that) ;
 }
 
 class SparseImplHolder implement Fat<SparseHolder ,SparseLayout> {
@@ -460,9 +392,10 @@ public:
 	}
 
 	Array<INDEX> sort (CREF<Array<VAL32>> love) override {
+		assert (fake.mMatch.size () > 0) ;
 		assert (love.size () == MathProc::square (fake.mSize)) ;
 		solve () ;
-		return fake.mMatch ;
+		return fake.mMatch.clone () ;
 	}
 
 	void solve () {
@@ -474,7 +407,7 @@ public:
 		}
 		for (auto &&i : iter (0 ,fake.mSize)) {
 			fake.mLack.fill (fake.mInfinity) ;
-			while (true) {
+			while (TRUE) {
 				fake.mUserVisit.clear () ;
 				fake.mWorkVisit.clear () ;
 				if (dfs (i))
@@ -489,12 +422,19 @@ public:
 					return move (ret) ;
 				}) ;
 				for (auto &&j : iter (0 ,fake.mSize)) {
-					if (fake.mUserVisit[j]) {
+					if ifdo (TRUE) {
+						if ((!fake.mUserVisit[j]))
+							discard ;
 						fake.mUser[j] -= r1x ;
 					}
-					if (fake.mWorkVisit[j]) {
+					if ifdo (TRUE) {
+						if ((!fake.mWorkVisit[j]))
+							discard ;
 						fake.mWork[j] += r1x ;
-					} else {
+					}
+					if ifdo (TRUE) {
+						if (fake.mWorkVisit[j])
+							discard ;
 						fake.mLack[j] -= r1x ;
 					}
 				}
@@ -503,24 +443,31 @@ public:
 	}
 
 	BOOL dfs (CREF<INDEX> user) {
-		fake.mUserVisit[user] = TRUE;
+		fake.mUserVisit[user] = TRUE ;
 		for (auto &&i : iter (0 ,fake.mSize)) {
 			if (fake.mWorkVisit[i])
 				continue ;
 			const auto r1x = fake.mUser[user] + fake.mWork[i] - fake.mLove[user * fake.mSize + i] ;
-			const auto r2x = fake.mMatch[i] ;
-			if (r1x == 0) {
-				fake.mWorkVisit[i] = TRUE ;
-				if (r2x == NONE) {
-					fake.mMatch[i] = user ;
-					return TRUE ;
-				}
-				if (dfs (r2x)) {
-					fake.mMatch[i] = user ;
-					return TRUE ;
-				}
-			} else {
+			if ifdo (TRUE) {
+				if (r1x == 0)
+					discard ;
 				fake.mLack[i] = MathProc::min_of (fake.mLack[i] ,r1x) ;
+			}
+			if (r1x != 0)
+				continue ;
+			fake.mWorkVisit[i] = TRUE ;
+			const auto r2x = fake.mMatch[i] ;
+			if ifdo (TRUE) {
+				if (r2x != NONE)
+					discard ;
+				fake.mMatch[i] = user ;
+				return TRUE ;
+			}
+			if ifdo (TRUE) {
+				if ((!dfs (r2x)))
+					discard ;
+				fake.mMatch[i] = user ;
+				return TRUE ;
 			}
 		}
 		return FALSE ;

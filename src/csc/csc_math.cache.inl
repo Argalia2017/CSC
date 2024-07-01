@@ -4,11 +4,19 @@
 #error "∑(っ°Д° ;)っ : require module"
 #endif
 
-#include "csc_math.hpp"
-
 #ifdef __CSC_COMPILER_MSVC__
 #pragma system_header
 #endif
+
+#ifdef __CSC_COMPILER_GNUC__
+#pragma GCC system_header
+#endif
+
+#ifdef __CSC_COMPILER_CLANG__
+#pragma clang system_header
+#endif
+
+#include "csc_math.hpp"
 
 namespace CSC {
 class FEXP2CacheImplHolder implement Fat<FEXP2CacheHolder ,FEXP2CacheLayout> {

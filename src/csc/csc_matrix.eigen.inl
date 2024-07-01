@@ -4,11 +4,19 @@
 #error "∑(っ°Д° ;)っ : require module"
 #endif
 
-#include "csc_matrix.hpp"
-
 #ifdef __CSC_COMPILER_MSVC__
 #pragma system_header
 #endif
+
+#ifdef __CSC_COMPILER_GNUC__
+#pragma GCC system_header
+#endif
+
+#ifdef __CSC_COMPILER_CLANG__
+#pragma clang system_header
+#endif
+
+#include "csc_matrix.hpp"
 
 #include "csc_end.h"
 #ifdef __CSC_COMPILER_MSVC__
@@ -27,19 +35,32 @@ public:
 		noop () ;
 	}
 
-	XTRResult solve_xtr (CREF<Matrix> a) const override {
-		XTRResult ret ;
-		ret.mX = a.homogenize () ;
+	TRSResult solve_trs (CREF<Matrix> a) const override {
+		TRSResult ret ;
+		const auto r1x = a * Vector::axis_x () ;
+		const auto r2x = a * Vector::axis_y () ;
+		const auto r3x = a * Vector::axis_z () ;
+		const auto r4x = a * Vector::axis_w () ;
+		const auto r5x = Matrix (r1x.normalize () ,r2x.normalize () ,r3x.normalize () ,Vector::axis_w ()) ;
+		ret.mT = TranslationMatrix (r4x) ;
+		ret.mR = Quaternion (r5x).matrix () ;
+		ret.mS = DiagMatrix (r1x.magnitude () ,r2x.magnitude () ,r3x.magnitude ()) ;
+		return move (ret) ;
+	}
+
+	KRTResult solve_krt (CREF<Matrix> a) const override {
+		KRTResult ret ;
+		ret.mK = a.homogenize () ;
 		ret.mR = Matrix::identity () ;
 		ret.mT = Matrix::identity () ;
 		auto rax = TRUE ;
 		while (TRUE) {
 			rax = FALSE ;
 			if ifdo (TRUE) {
-				if (MathProc::inverse (ret.mX[1][0]) == 0)
+				if (MathProc::inverse (ret.mK[1][0]) == 0)
 					discard ;
-				const auto r1x = ret.mX[1][0] ;
-				const auto r2x = ret.mX[1][1] ;
+				const auto r1x = ret.mK[1][0] ;
+				const auto r2x = ret.mK[1][1] ;
 				const auto r3x = MathProc::inverse (Vector (r1x ,r2x ,0 ,0).magnitude ()) ;
 				const auto r4x = invoke ([&] () {
 					Matrix ret = Matrix::identity () ;
@@ -49,15 +70,15 @@ public:
 					ret[1][0] = -ret[0][1] ;
 					return move (ret) ;
 				}) ;
-				ret.mX = ret.mX * r4x ;
+				ret.mK = ret.mK * r4x ;
 				ret.mR = r4x.transpose () * ret.mR ;
 				rax = TRUE ;
 			}
 			if ifdo (TRUE) {
-				if (MathProc::inverse (ret.mX[2][0]) == 0)
+				if (MathProc::inverse (ret.mK[2][0]) == 0)
 					discard ;
-				const auto r5x = ret.mX[2][0] ;
-				const auto r6x = ret.mX[2][2] ;
+				const auto r5x = ret.mK[2][0] ;
+				const auto r6x = ret.mK[2][2] ;
 				const auto r7x = MathProc::inverse (Vector (r5x ,r6x ,0 ,0).magnitude ()) ;
 				const auto r8x = invoke ([&] () {
 					Matrix ret = Matrix::identity () ;
@@ -67,15 +88,15 @@ public:
 					ret[2][0] = -ret[0][2] ;
 					return move (ret) ;
 				}) ;
-				ret.mX = ret.mX * r8x ;
+				ret.mK = ret.mK * r8x ;
 				ret.mR = r8x.transpose () * ret.mR ;
 				rax = TRUE ;
 			}
 			if ifdo (TRUE) {
-				if (MathProc::inverse (ret.mX[2][1]) == 0)
+				if (MathProc::inverse (ret.mK[2][1]) == 0)
 					discard ;
-				const auto r9x = ret.mX[2][1] ;
-				const auto r10x = ret.mX[2][2] ;
+				const auto r9x = ret.mK[2][1] ;
+				const auto r10x = ret.mK[2][2] ;
 				const auto r11x = MathProc::inverse (Vector (r9x ,r10x ,0 ,0).magnitude ()) ;
 				const auto r12x = invoke ([&] () {
 					Matrix ret = Matrix::identity () ;
@@ -85,11 +106,11 @@ public:
 					ret[2][1] = -ret[1][2] ;
 					return move (ret) ;
 				}) ;
-				ret.mX = ret.mX * r12x ;
+				ret.mK = ret.mK * r12x ;
 				ret.mR = r12x.transpose () * ret.mR ;
 				rax = TRUE ;
 			}
-			if (!(rax))
+			if ((!rax))
 				break ;
 		}
 		return move (ret) ;
@@ -117,17 +138,15 @@ public:
 		Matrix ret ;
 		for (auto &&i : iter (0 ,4 ,0 ,4)) {
 			ret[i] = a (i.mY ,i.mX) ;
-			assume (!(isnan (ret[i]))) ;
+			assume ((!isnan (ret[i]))) ;
 		}
 		return move (ret) ;
 	}
 } ;
 
-static const auto anonymous = External<MatrixProcHolder ,MatrixProcLayout>::declare ([] () {
-	return inline_hold (MatrixProcImplHolder ()) ;
-}) ;
+static const auto mMatrixProcExternal = External<MatrixProcHolder ,MatrixProcLayout>::declare (MatrixProcImplHolder ()) ;
 
-class SolveProcImplHolder implement Fat<SolveProcHolder ,SolveProcLayout> {
+class LinearProcImplHolder implement Fat<LinearProcHolder ,LinearProcLayout> {
 public:
 	void initialize () override {
 		noop () ;
@@ -140,7 +159,7 @@ public:
 		INDEX ix = MathProc::min_of (INDEX (rax.rank ()) ,a.cx () - 1) ;
 		assume (ix >= 0) ;
 		const auto r3x = cvt_csc_matrix (rax.matrixV ()) ;
-		for (auto &&i : iter (0 ,4))
+		for (auto &&i : iter (0 ,ret.cy ()))
 			ret[i][0] = r3x[i][ix] ;
 		return move (ret) ;
 	}
@@ -148,14 +167,15 @@ public:
 	Image<FLT64> solve_lsm (CREF<Image<FLT64>> a ,CREF<Image<FLT64>> b) const override {
 		const auto r1x = cvt_eigen_matrix (a) ;
 		const auto r2x = cvt_eigen_matrix (b) ;
-		const auto r4x = r1x.transpose () * r1x ;
-		const auto r3x = r1x.transpose () * r2x ;
+		const auto r4x = Eigen::MatrixXd (r1x.transpose () * r1x) ;
+		const auto r3x = Eigen::MatrixXd (r1x.transpose () * r2x) ;
 		auto rax = Eigen::JacobiSVD<Eigen::MatrixXd> (r4x ,Eigen::ComputeFullU | Eigen::ComputeFullV) ;
-		const auto r5x = rax.matrixV () ;
+		const auto r5x = Eigen::MatrixXd (rax.matrixV ()) ;
 		const auto r6x = cvt_eigen_matrix (rax.singularValues ()) ;
-		const auto r7x = rax.matrixU ().transpose () ;
-		const auto r8x = r5x * pesedo_inverse (r6x) * r7x * r3x ;
-		return cvt_csc_matrix (r8x) ;
+		const auto r7x = Eigen::MatrixXd (rax.matrixU ()) ;
+		const auto r8x = Eigen::MatrixXd (r5x * pesedo_inverse (r6x) * r7x.transpose ()) ;
+		const auto r9x = r8x * r3x ;
+		return cvt_csc_matrix (r9x) ;
 	}
 
 	Eigen::MatrixXd pesedo_inverse (CREF<Eigen::MatrixXd> a) const {
@@ -173,7 +193,7 @@ public:
 	}
 
 	Eigen::MatrixXd cvt_eigen_matrix (CREF<Image<FLT64>> a) const {
-		Eigen::MatrixXd ret = Eigen::MatrixXd (a.cx () ,a.cy ()) ;
+		Eigen::MatrixXd ret = Eigen::MatrixXd (a.cy () ,a.cx ()) ;
 		for (auto &&i : a.range ())
 			ret (i.mY ,i.mX) = a[i] ;
 		return move (ret) ;
@@ -187,7 +207,5 @@ public:
 	}
 } ;
 
-static const auto anonymous = External<MatrixProcHolder ,MatrixProcLayout>::declare ([] () {
-	return inline_hold (MatrixProcImplHolder ()) ;
-}) ;
+static const auto mLinearProcExternal = External<LinearProcHolder ,LinearProcLayout>::declare (LinearProcImplHolder ()) ;
 } ;

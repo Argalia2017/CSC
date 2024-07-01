@@ -82,9 +82,6 @@
 #endif
 #endif
 
-#ifdef __CSC_COMPILER_GNUC__
-#endif
-
 #ifdef __CSC_COMPILER_MSVC__
 #pragma warning (disable :4068) //@info: warning C4068: reflect pragma
 #pragma warning (disable :4100) //@info: warning C4100: 'xxx': unreferenced formal parameter
@@ -151,28 +148,6 @@
 #define __is_trivially_destructible __has_trivial_destructor
 #endif
 
-#ifdef __CSC_COMPILER_MSVC__
-class type_info ;
-
-namespace std {
-using ::type_info ;
-} ;
-#endif
-
-#ifdef __CSC_COMPILER_GNUC__
-namespace std {
-class type_info ;
-} ;
-#endif
-
-#ifdef __CSC_COMPILER_CLANG__
-class type_info ;
-
-namespace std {
-using ::type_info ;
-} ;
-#endif
-
 namespace std {
 template <class>
 class initializer_list ;
@@ -201,7 +176,7 @@ struct is_trivially_default_constructible :integral_constant<bool ,__has_trivial
 #endif
 
 #ifdef __CSC_COMPILER_CLANG__
-#define __macro_exports __attribute__ ((visibility ("default")))
+#define __macro_exports
 #endif
 #endif
 
@@ -215,21 +190,7 @@ struct is_trivially_default_constructible :integral_constant<bool ,__has_trivial
 #endif
 
 #ifdef __CSC_COMPILER_CLANG__
-#define __macro_forceinline inline __attribute__ ((always_inline))
-#endif
-#endif
-
-#ifndef __macro_declspec
-#ifdef __CSC_COMPILER_MSVC__
-#define __macro_declspec(...) __declspec (__VA_ARGS__)
-#endif
-
-#ifdef __CSC_COMPILER_GNUC__
-#define __macro_declspec(...) __attribute__ ((__VA_ARGS__))
-#endif
-
-#ifdef __CSC_COMPILER_CLANG__
-#define __macro_declspec(...) __attribute__ ((__VA_ARGS__))
+#define __macro_forceinline inline
 #endif
 #endif
 
@@ -243,8 +204,8 @@ struct is_trivially_default_constructible :integral_constant<bool ,__has_trivial
 #define __macro_cat(A ,B) __macro_cat_impl (A ,B)
 #endif
 
-#ifndef __macro_requires
-#define __macro_requires(...) static_assert (CSC::DEF<__VA_ARGS__>::expr ,"requires : " __macro_str (__VA_ARGS__))
+#ifndef __macro_require
+#define __macro_require(...) static_assert (CSC::DEF<__VA_ARGS__>::expr ,"require : " __macro_str (__VA_ARGS__))
 #endif
 
 #ifndef __macro_anonymous
@@ -291,25 +252,25 @@ struct is_trivially_default_constructible :integral_constant<bool ,__has_trivial
 
 #ifndef __macro_assume
 #ifdef __CSC_VER_DEBUG__
-#define __macro_assume(...) do { if (__VA_ARGS__) break ; CSC::Exception (slice (__macro_str (__VA_ARGS__)) ,CSC::Slice (__macro_funcion) ,slice (__FILE__) ,slice (__macro_str (__LINE__))).raise () ; } while (false)
+#define __macro_assume(...) do { if (__VA_ARGS__) break ; throw CSC::Exception (slice (__macro_str (__VA_ARGS__)) ,CSC::Slice (__macro_funcion) ,slice (__FILE__) ,slice (__macro_str (__LINE__))) ; } while (false)
 #endif
 
 #ifdef __CSC_VER_UNITTEST__
-#define __macro_assume(...) do { if (__VA_ARGS__) break ; CSC::Exception (slice (__macro_str (__VA_ARGS__)) ,CSC::Slice (__macro_funcion) ,slice (__FILE__) ,slice (__macro_str (__LINE__))).raise () ; } while (false)
+#define __macro_assume(...) do { if (__VA_ARGS__) break ; throw CSC::Exception (slice (__macro_str (__VA_ARGS__)) ,CSC::Slice (__macro_funcion) ,slice (__FILE__) ,slice (__macro_str (__LINE__))) ; } while (false)
 #endif
 
 #ifdef __CSC_VER_RELEASE__
-#define __macro_assume(...) do { if (__VA_ARGS__) break ; CSC::Exception (slice (__macro_str (__VA_ARGS__)) ,CSC::Slice (__FUNCTION__)).raise () ; } while (false)
+#define __macro_assume(...) do { if (__VA_ARGS__) break ; throw CSC::Exception (slice (__macro_str (__VA_ARGS__)) ,CSC::Slice (__FUNCTION__)) ; } while (false)
 #endif
 #endif
 
 #ifndef __macro_barrier
 #ifdef __CSC_VER_DEBUG__
-#define __macro_barrier(...) do { struct LINE ; CSC::inline_barrier (TYPE<LINE>::expr ,(&__VA_ARGS__)) ; } while (false)
+#define __macro_barrier(...) do { struct LINE ; CSC::inline_barrier (TYPE<LINE>::expr ,CSC::csc_pointer_t ((&__VA_ARGS__))) ; } while (false)
 #endif
 
 #ifdef __CSC_VER_UNITTEST__
-#define __macro_barrier(...) do { struct LINE ; CSC::inline_barrier (TYPE<LINE>::expr ,(&__VA_ARGS__)) ; } while (false)
+#define __macro_barrier(...) do { struct LINE ; CSC::inline_barrier (TYPE<LINE>::expr ,CSC::csc_pointer_t ((&__VA_ARGS__))) ; } while (false)
 #endif
 
 #ifdef __CSC_VER_RELEASE__
@@ -322,7 +283,11 @@ struct is_trivially_default_constructible :integral_constant<bool ,__has_trivial
 #endif
 
 #ifndef __macro_typeof
-#define __macro_typeof(...) CSC::REMOVE_REF<decltype (__VA_ARGS__)>
+#define __macro_typeof(...) CSC::REMOVE_CVR<decltype (__VA_ARGS__)>
+#endif
+
+#ifndef __macro_nullof
+#define __macro_nullof(...) (*CSC::DEF<CSC::REMOVE_CVR<__VA_ARGS__> *> (CSC::NULL))
 #endif
 
 namespace CSC {
@@ -399,9 +364,6 @@ using csc_enum_t = int ;
 class Pointer ;
 
 using csc_pointer_t = DEF<void *> ;
-using csc_const_pointer_t = DEF<const void *> ;
-
-using csc_type_info_t = std::type_info ;
 
 template <class A>
 using csc_initializer_list_t = std::initializer_list<A> ;
@@ -465,48 +427,51 @@ template <class A ,class B>
 using IS_SAME = typename IS_SAME_HELP<A ,B>::RET ;
 
 template <class...>
-trait REMOVE_REF_HELP ;
+trait REMOVE_CVR_HELP ;
 
 template <class A>
-trait REMOVE_REF_HELP<A> {
+trait REMOVE_CVR_HELP<A> {
 	using RET = A ;
 } ;
 
 template <class A>
-trait REMOVE_REF_HELP<DEF<A &>> {
+trait REMOVE_CVR_HELP<DEF<A &>> {
 	using RET = A ;
 } ;
 
 template <class A>
-trait REMOVE_REF_HELP<DEF<A &&>> {
+trait REMOVE_CVR_HELP<DEF<A &&>> {
 	using RET = A ;
 } ;
 
 template <class A>
-trait REMOVE_REF_HELP<DEF<const A>> {
+trait REMOVE_CVR_HELP<DEF<const A>> {
 	using RET = A ;
 } ;
 
 template <class A>
-trait REMOVE_REF_HELP<DEF<const A &>> {
+trait REMOVE_CVR_HELP<DEF<const A &>> {
 	using RET = A ;
 } ;
 
 template <class A>
-trait REMOVE_REF_HELP<DEF<const A &&>> {
+trait REMOVE_CVR_HELP<DEF<const A &&>> {
 	using RET = A ;
 } ;
 
 template <class A>
-using REMOVE_REF = typename REMOVE_REF_HELP<A>::RET ;
+using REMOVE_CVR = typename REMOVE_CVR_HELP<A>::RET ;
 
-template <class A ,class = REQUIRE<IS_SAME<A ,REMOVE_REF<A>>>>
+template <class A>
+using CHECK_CVR = IS_SAME<A ,REMOVE_CVR<A>> ;
+
+template <class A ,class = CHECK_CVR<A>>
 using VREF = DEF<A &> ;
 
-template <class A ,class = REQUIRE<IS_SAME<A ,REMOVE_REF<A>>>>
+template <class A ,class = CHECK_CVR<A>>
 using CREF = DEF<const A &> ;
 
-template <class A ,class = REQUIRE<IS_SAME<A ,REMOVE_REF<A>>>>
+template <class A ,class = CHECK_CVR<A>>
 using RREF = DEF<A &&> ;
 
 template <class A>

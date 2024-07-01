@@ -25,10 +25,10 @@ struct TimeCalendar {
 	LENGTH mSecond ;
 } ;
 
-struct TimePureLayout ;
+struct TimeImplLayout ;
 
 struct TimeLayout {
-	Ref<TimePureLayout> mThis ;
+	Box<TimeImplLayout ,Storage<ENUM<8> ,ENUM<8>>> mThis ;
 } ;
 
 struct TimeHolder implement Interface {
@@ -37,10 +37,11 @@ struct TimeHolder implement Interface {
 
 	virtual void initialize () = 0 ;
 	virtual void initialize (CREF<LENGTH> milliseconds_) = 0 ;
+	virtual void initialize (CREF<LENGTH> milliseconds_ ,CREF<LENGTH> nanoseconds_) = 0 ;
 	virtual void initialize (CREF<TimeCalendar> calendar_) = 0 ;
 	virtual void initialize (CREF<TimeLayout> that) = 0 ;
-	virtual LENGTH hours () const = 0 ;
-	virtual LENGTH minutes () const = 0 ;
+	virtual LENGTH megaseconds () const = 0 ;
+	virtual LENGTH kiloseconds () const = 0 ;
 	virtual LENGTH seconds () const = 0 ;
 	virtual LENGTH milliseconds () const = 0 ;
 	virtual LENGTH microseconds () const = 0 ;
@@ -61,6 +62,10 @@ public:
 		TimeHolder::create (thiz)->initialize (milliseconds_) ;
 	}
 
+	explicit Time (CREF<LENGTH> milliseconds_ ,CREF<LENGTH> nanoseconds_) {
+		TimeHolder::create (thiz)->initialize (milliseconds_ ,nanoseconds_) ;
+	}
+
 	explicit Time (CREF<TimeCalendar> calendar_) {
 		TimeHolder::create (thiz)->initialize (calendar_) ;
 	}
@@ -77,12 +82,12 @@ public:
 
 	forceinline VREF<Time> operator= (RREF<Time> that) = default ;
 
-	LENGTH hours () const {
-		return TimeHolder::create (thiz)->hours () ;
+	LENGTH megaseconds () const {
+		return TimeHolder::create (thiz)->megaseconds () ;
 	}
 
-	LENGTH minutes () const {
-		return TimeHolder::create (thiz)->minutes () ;
+	LENGTH kiloseconds () const {
+		return TimeHolder::create (thiz)->kiloseconds () ;
 	}
 
 	LENGTH seconds () const {
@@ -138,10 +143,8 @@ inline Time CurrentTime () {
 	return move (ret) ;
 }
 
-struct RuntimeProcPureLayout ;
-
 struct RuntimeProcLayout {
-	Ref<RuntimeProcPureLayout> mThis ;
+	RefLayout mThis ;
 } ;
 
 struct RuntimeProcHolder implement Interface {
@@ -215,10 +218,10 @@ public:
 	}
 } ;
 
-struct AtomicPureLayout ;
+struct AtomicImplLayout ;
 
 struct AtomicLayout {
-	Ref<AtomicPureLayout> mThis ;
+	Box<AtomicImplLayout ,Storage<ENUM<8> ,ENUM<8>>> mThis ;
 } ;
 
 struct AtomicHolder implement Interface {
@@ -283,10 +286,10 @@ public:
 	}
 } ;
 
-struct MutexPureLayout ;
+struct MutexImplLayout ;
 
 struct MutexLayout {
-	Ref<MutexPureLayout> mThis ;
+	Ref<MutexImplLayout> mThis ;
 } ;
 
 struct MutexHolder implement Interface {
@@ -294,9 +297,9 @@ struct MutexHolder implement Interface {
 	imports CFat<MutexHolder> create (CREF<MutexLayout> that) ;
 
 	virtual void initialize () = 0 ;
-	virtual Ref<MutexPureLayout> borrow () const = 0 ;
-	virtual void enter () const = 0 ;
-	virtual void leave () const = 0 ;
+	virtual Ref<MutexImplLayout> borrow () const = 0 ;
+	virtual void enter () = 0 ;
+	virtual void leave () = 0 ;
 } ;
 
 class Mutex implement MutexLayout {
@@ -306,15 +309,15 @@ protected:
 public:
 	implicit Mutex () = default ;
 
-	Ref<MutexPureLayout> borrow () const {
+	Ref<MutexImplLayout> borrow () const {
 		return MutexHolder::create (thiz)->borrow () ;
 	}
 
-	void enter () const {
+	void enter () {
 		return MutexHolder::create (thiz)->enter () ;
 	}
 
-	void leave () const {
+	void leave () {
 		return MutexHolder::create (thiz)->leave () ;
 	}
 } ;
@@ -353,10 +356,10 @@ inline Mutex UniqueMutex () {
 	return move (ret) ;
 }
 
-struct SharedLockPureLayout ;
+struct SharedLockImplLayout ;
 
 struct SharedLockLayout {
-	Ref<SharedLockPureLayout> mThis ;
+	Box<SharedLockImplLayout ,Storage<ENUM<32> ,ENUM<8>>> mThis ;
 } ;
 
 struct SharedLockHolder implement Interface {
@@ -365,8 +368,8 @@ struct SharedLockHolder implement Interface {
 
 	virtual void initialize (CREF<Mutex> mutex) = 0 ;
 	virtual BOOL busy () const = 0 ;
-	virtual void enter () const = 0 ;
-	virtual void leave () const = 0 ;
+	virtual void enter () = 0 ;
+	virtual void leave () = 0 ;
 } ;
 
 class SharedLock implement SharedLockLayout {
@@ -374,7 +377,7 @@ protected:
 	using SharedLockLayout::mThis ;
 
 public:
-	implicit SharedLock () = delete ;
+	implicit SharedLock () = default ;
 
 	explicit SharedLock (CREF<Mutex> mutex) {
 		SharedLockHolder::create (thiz)->initialize (mutex) ;
@@ -384,19 +387,19 @@ public:
 		return SharedLockHolder::create (thiz)->busy () ;
 	}
 
-	void enter () const {
+	void enter () {
 		return SharedLockHolder::create (thiz)->enter () ;
 	}
 
-	void leave () const {
+	void leave () {
 		return SharedLockHolder::create (thiz)->leave () ;
 	}
 } ;
 
-struct UniqueLockPureLayout ;
+struct UniqueLockImplLayout ;
 
 struct UniqueLockLayout {
-	Ref<UniqueLockPureLayout> mThis ;
+	Box<UniqueLockImplLayout ,Storage<ENUM<32> ,ENUM<8>>> mThis ;
 } ;
 
 struct UniqueLockHolder implement Interface {
@@ -415,7 +418,7 @@ protected:
 	using UniqueLockLayout::mThis ;
 
 public:
-	implicit UniqueLock () = delete ;
+	implicit UniqueLock () = default ;
 
 	explicit UniqueLock (CREF<Mutex> mutex) {
 		UniqueLockHolder::create (thiz)->initialize (mutex) ;
@@ -454,10 +457,10 @@ public:
 	}
 } ;
 
-struct ThreadPureLayout ;
+struct ThreadImplLayout ;
 
 struct ThreadLayout {
-	Ref<ThreadPureLayout> mThis ;
+	Ref<ThreadImplLayout> mThis ;
 } ;
 
 struct ThreadHolder implement Interface {
@@ -494,10 +497,10 @@ public:
 	}
 } ;
 
-struct ProcessPureLayout ;
+struct ProcessImplLayout ;
 
 struct ProcessLayout {
-	Ref<ProcessPureLayout> mThis ;
+	Ref<ProcessImplLayout> mThis ;
 } ;
 
 struct ProcessHolder implement Interface {
@@ -535,7 +538,7 @@ public:
 	}
 
 	forceinline BOOL operator!= (CREF<Process> that) const {
-		return !(equal (that)) ;
+		return (!equal (that)) ;
 	}
 
 	FLAG process_uid () const {
@@ -547,10 +550,10 @@ public:
 	}
 } ;
 
-struct ModulePureLayout ;
+struct ModuleImplLayout ;
 
 struct ModuleLayout {
-	Ref<ModulePureLayout> mThis ;
+	Ref<ModuleImplLayout> mThis ;
 } ;
 
 struct ModuleHolder implement Interface {
@@ -582,10 +585,10 @@ public:
 	}
 } ;
 
-struct SystemPureLayout ;
+struct SystemImplLayout ;
 
 struct SystemLayout {
-	Ref<SystemPureLayout> mThis ;
+	Ref<SystemImplLayout> mThis ;
 } ;
 
 struct SystemHolder implement Interface {
@@ -613,10 +616,10 @@ public:
 	}
 } ;
 
-struct RandomPureLayout ;
+struct RandomImplLayout ;
 
 struct RandomLayout {
-	Ref<RandomPureLayout> mThis ;
+	Ref<RandomImplLayout> mThis ;
 } ;
 
 struct RandomHolder implement Interface {
@@ -673,10 +676,10 @@ public:
 	}
 } ;
 
-struct SingletonProcPureLayout ;
+struct SingletonProcImplLayout ;
 
 struct SingletonProcLayout {
-	SharedRef<SingletonProcPureLayout> mThis ;
+	SharedRef<SingletonProcImplLayout> mThis ;
 } ;
 
 struct SingletonProcHolder implement Interface {
@@ -729,11 +732,11 @@ public:
 	}
 } ;
 
-struct GlobalPureLayout ;
+struct GlobalImplLayout ;
 
 struct GlobalLayout {
 	Mutex mMutex ;
-	SharedRef<GlobalPureLayout> mThis ;
+	SharedRef<GlobalImplLayout> mThis ;
 } ;
 
 struct GlobalHolder implement Interface {
@@ -741,9 +744,18 @@ struct GlobalHolder implement Interface {
 	imports CFat<GlobalHolder> create (CREF<GlobalLayout> that) ;
 
 	virtual void initialize () = 0 ;
-	virtual void startup () const = 0 ;
-	virtual RefLayout borrow (CREF<Slice> name ,RREF<UnknownHolder> value) const = 0 ;
-	virtual void shutdown () const = 0 ;
+	virtual RefLayout borrow (CREF<Slice> name ,CREF<Clazz> clazz ,CREF<Unknown> reflect) const = 0 ;
+} ;
+
+class GlobalRoot implement Proxy {
+public:
+	imports CREF<GlobalLayout> instance () {
+		return memorize ([&] () {
+			GlobalLayout ret ;
+			GlobalHolder::create (ret)->initialize () ;
+			return move (ret) ;
+		}) ;
+	}
 } ;
 
 template <class A>
@@ -754,44 +766,32 @@ protected:
 
 public:
 	imports CREF<Global> instance () {
-		return memorize ([&] () {
-			Global ret ;
-			GlobalHolder::create (ret)->initialize () ;
-			return move (ret) ;
-		}) ;
-	}
-
-	void startup () const {
-		return GlobalHolder::create (thiz)->startup () ;
+		return keep[TYPE<Global>::expr] (GlobalRoot::instance ()) ;
 	}
 
 	Ref<A> borrow (CREF<Slice> name) const {
-		RefLayout ret = GlobalHolder::create (thiz)->borrow (name ,AutoRef<A>::expression ()) ;
+		const auto r1x = SimpleUnknownBinder<ReflectRemakeBinder<AutoRef<A>>>::create () ;
+		RefLayout ret = GlobalHolder::create (thiz)->borrow (name ,Clazz (TYPE<A>::expr) ,r1x) ;
 		return move (keep[TYPE<Ref<A>>::expr] (ret)) ;
-	}
-
-	void shutdown () const {
-		return GlobalHolder::create (thiz)->shutdown () ;
 	}
 } ;
 
-struct PathPureLayout ;
+struct PathImplLayout ;
 
 struct PathLayout {
-	Ref<PathPureLayout> mThis ;
+	Ref<PathImplLayout> mThis ;
 } ;
 
 struct PathHolder implement Interface {
 	imports VFat<PathHolder> create (VREF<PathLayout> that) ;
 	imports CFat<PathHolder> create (CREF<PathLayout> that) ;
 
-	virtual void initialize (RREF<String<STR>> pathname_) = 0 ;
+	virtual void initialize (RREF<String<STR>> pathname) = 0 ;
 	virtual void initialize (CREF<PathLayout> that) = 0 ;
+	virtual String<STR> poll () const = 0 ;
 	virtual PathLayout root () const = 0 ;
-	virtual PathLayout parent () const = 0 ;
-	virtual PathLayout brother () const = 0 ;
-	virtual PathLayout child () const = 0 ;
 	virtual PathLayout child (CREF<Slice> name) const = 0 ;
+	virtual PathLayout child (CREF<Format> name) const = 0 ;
 	virtual PathLayout child (CREF<String<STR>> name) const = 0 ;
 	virtual Array<PathLayout> list () const = 0 ;
 	virtual Array<PathLayout> list (CREF<LENGTH> size_) const = 0 ;
@@ -800,7 +800,6 @@ struct PathHolder implement Interface {
 	virtual BOOL is_dire () const = 0 ;
 	virtual BOOL is_link () const = 0 ;
 	virtual Deque<String<STR>> decouple () const = 0 ;
-	virtual String<STR> absolute () const = 0 ;
 	virtual String<STR> path () const = 0 ;
 	virtual String<STR> name () const = 0 ;
 	virtual String<STR> stem () const = 0 ;
@@ -814,12 +813,12 @@ protected:
 public:
 	implicit Path () = default ;
 
-	explicit Path (CREF<String<STR>> pathname_) {
-		PathHolder::create (thiz)->initialize (move (pathname_)) ;
+	explicit Path (CREF<String<STR>> pathname) {
+		PathHolder::create (thiz)->initialize (move (pathname)) ;
 	}
 
-	explicit Path (RREF<String<STR>> pathname_) {
-		PathHolder::create (thiz)->initialize (move (pathname_)) ;
+	explicit Path (RREF<String<STR>> pathname) {
+		PathHolder::create (thiz)->initialize (move (pathname)) ;
 	}
 
 	implicit Path (CREF<Path> that) {
@@ -834,27 +833,25 @@ public:
 
 	forceinline VREF<Path> operator= (RREF<Path> that) = default ;
 
+	String<STR> poll () const {
+		return PathHolder::create (thiz)->poll () ;
+	}
+
+	forceinline operator String<STR> () const {
+		return poll () ;
+	}
+
 	PathLayout root () const {
 		PathLayout ret = PathHolder::create (thiz)->root () ;
 		return move (keep[TYPE<Path>::expr] (ret)) ;
 	}
 
-	Path parent () const {
-		PathLayout ret = PathHolder::create (thiz)->parent () ;
-		return move (keep[TYPE<Path>::expr] (ret)) ;
-	}
-
-	Path brother () const {
-		PathLayout ret = PathHolder::create (thiz)->brother () ;
-		return move (keep[TYPE<Path>::expr] (ret)) ;
-	}
-
-	Path child () const {
-		PathLayout ret = PathHolder::create (thiz)->child () ;
-		return move (keep[TYPE<Path>::expr] (ret)) ;
-	}
-
 	Path child (CREF<Slice> name) const {
+		PathLayout ret = PathHolder::create (thiz)->child (name) ;
+		return move (keep[TYPE<Path>::expr] (ret)) ;
+	}
+
+	Path child (CREF<Format> name) const {
 		PathLayout ret = PathHolder::create (thiz)->child (name) ;
 		return move (keep[TYPE<Path>::expr] (ret)) ;
 	}
@@ -865,13 +862,13 @@ public:
 	}
 
 	Array<Path> list () const {
-		Array<PathLayout> ret = PathHolder::create (thiz)->list () ;
-		return move (keep[TYPE<Array<Path>>::expr] (keep[TYPE<ArrayLayout>::expr] (ret))) ;
+		ArrayLayout ret = PathHolder::create (thiz)->list () ;
+		return move (keep[TYPE<Array<Path>>::expr] (ret)) ;
 	}
 
 	Array<Path> list (CREF<LENGTH> size_) const {
-		Array<PathLayout> ret = PathHolder::create (thiz)->list (size_) ;
-		return move (keep[TYPE<Array<Path>>::expr] (keep[TYPE<ArrayLayout>::expr] (ret))) ;
+		ArrayLayout ret = PathHolder::create (thiz)->list (size_) ;
+		return move (keep[TYPE<Array<Path>>::expr] (ret)) ;
 	}
 
 	BOOL equal (CREF<Path> that) const {
@@ -883,7 +880,7 @@ public:
 	}
 
 	forceinline BOOL operator!= (CREF<Path> that) const {
-		return !(equal (that)) ;
+		return (!equal (that)) ;
 	}
 
 	BOOL is_file () const {
@@ -900,10 +897,6 @@ public:
 
 	Deque<String<STR>> decouple () const {
 		return PathHolder::create (thiz)->decouple () ;
-	}
-
-	String<STR> absolute () const {
-		return PathHolder::create (thiz)->absolute () ;
 	}
 
 	String<STR> path () const {
@@ -923,10 +916,10 @@ public:
 	}
 } ;
 
-struct FileProcPureLayout ;
+struct FileProcImplLayout ;
 
 struct FileProcLayout {
-	Ref<FileProcPureLayout> mThis ;
+	Ref<FileProcImplLayout> mThis ;
 } ;
 
 struct FileProcHolder implement Interface {
@@ -1005,17 +998,17 @@ public:
 	}
 } ;
 
-class StreamFileImplement ;
+struct StreamFileImplLayout ;
 
 struct StreamFileLayout {
-	Ref<StreamFileImplement> mThis ;
+	Ref<StreamFileImplLayout> mThis ;
 } ;
 
 struct StreamFileHolder implement Interface {
 	imports VFat<StreamFileHolder> create (VREF<StreamFileLayout> that) ;
 	imports CFat<StreamFileHolder> create (CREF<StreamFileLayout> that) ;
 
-	virtual void initialize (CREF<String<STR>> file) = 0 ;
+	virtual void initialize (RREF<String<STR>> file) = 0 ;
 	virtual void open_r () = 0 ;
 	virtual void open_w (CREF<LENGTH> count) = 0 ;
 	virtual void open_a () = 0 ;
@@ -1033,7 +1026,11 @@ public:
 	implicit StreamFile () = default ;
 
 	explicit StreamFile (CREF<String<STR>> file) {
-		StreamFileHolder::create (thiz)->initialize (file) ;
+		StreamFileHolder::create (thiz)->initialize (move (file)) ;
+	}
+
+	explicit StreamFile (RREF<String<STR>> file) {
+		StreamFileHolder::create (thiz)->initialize (move (file)) ;
 	}
 
 	void open_r () {
@@ -1065,17 +1062,101 @@ public:
 	}
 } ;
 
-class BufferFileImplement ;
+struct StreamFileByteWriterLayout implement ByteWriter {
+	StreamFile mStreamFile ;
+	RefBuffer<BYTE> mStreamFileBuffer ;
+} ;
+
+struct StreamFileByteWriterHolder implement Interface {
+	imports VFat<StreamFileByteWriterHolder> create (VREF<StreamFileByteWriterLayout> that) ;
+	imports CFat<StreamFileByteWriterHolder> create (CREF<StreamFileByteWriterLayout> that) ;
+
+	virtual void initialize (CREF<String<STR>> file) = 0 ;
+	virtual void close () = 0 ;
+} ;
+
+class StreamFileByteWriter implement StreamFileByteWriterLayout {
+protected:
+	using StreamFileByteWriterLayout::mStreamFile ;
+	using StreamFileByteWriterLayout::mStreamFileBuffer ;
+
+public:
+	implicit StreamFileByteWriter () = delete ;
+
+	explicit StreamFileByteWriter (CREF<String<STR>> file) {
+		StreamFileByteWriterHolder::create (thiz)->initialize (file) ;
+	}
+
+	implicit ~StreamFileByteWriter () noexcept {
+		close () ;
+	}
+
+	implicit StreamFileByteWriter (CREF<StreamFileByteWriter> that) = default ;
+
+	forceinline VREF<StreamFileByteWriter> operator= (CREF<StreamFileByteWriter> that) = default ;
+
+	implicit StreamFileByteWriter (RREF<StreamFileByteWriter> that) = default ;
+
+	forceinline VREF<StreamFileByteWriter> operator= (RREF<StreamFileByteWriter> that) = default ;
+
+	void close () {
+		StreamFileByteWriterHolder::create (thiz)->close () ;
+	}
+} ;
+
+struct StreamFileTextWriterLayout implement TextWriter {
+	StreamFile mStreamFile ;
+	RefBuffer<BYTE> mStreamFileBuffer ;
+} ;
+
+struct StreamFileTextWriterHolder implement Interface {
+	imports VFat<StreamFileTextWriterHolder> create (VREF<StreamFileTextWriterLayout> that) ;
+	imports CFat<StreamFileTextWriterHolder> create (CREF<StreamFileTextWriterLayout> that) ;
+
+	virtual void initialize (CREF<String<STR>> file) = 0 ;
+	virtual void close () = 0 ;
+} ;
+
+class StreamFileTextWriter implement StreamFileTextWriterLayout {
+protected:
+	using StreamFileTextWriterLayout::mStreamFile ;
+	using StreamFileTextWriterLayout::mStreamFileBuffer ;
+
+public:
+	implicit StreamFileTextWriter () = delete ;
+
+	explicit StreamFileTextWriter (CREF<String<STR>> file) {
+		StreamFileTextWriterHolder::create (thiz)->initialize (file) ;
+	}
+
+	implicit ~StreamFileTextWriter () noexcept {
+		close () ;
+	}
+
+	implicit StreamFileTextWriter (CREF<StreamFileTextWriter> that) = default ;
+
+	forceinline VREF<StreamFileTextWriter> operator= (CREF<StreamFileTextWriter> that) = default ;
+
+	implicit StreamFileTextWriter (RREF<StreamFileTextWriter> that) = default ;
+
+	forceinline VREF<StreamFileTextWriter> operator= (RREF<StreamFileTextWriter> that) = default ;
+
+	void close () {
+		StreamFileTextWriterHolder::create (thiz)->close () ;
+	}
+} ;
+
+struct BufferFileImplLayout ;
 
 struct BufferFileLayout {
-	Ref<BufferFileImplement> mThis ;
+	Ref<BufferFileImplLayout> mThis ;
 } ;
 
 struct BufferFileHolder implement Interface {
 	imports VFat<BufferFileHolder> create (VREF<BufferFileLayout> that) ;
 	imports CFat<BufferFileHolder> create (CREF<BufferFileLayout> that) ;
 
-	virtual void initialize (CREF<String<STR>> file) = 0 ;
+	virtual void initialize (RREF<String<STR>> file) = 0 ;
 	virtual void set_block_step (CREF<LENGTH> size_) = 0 ;
 	virtual void set_cache_size (CREF<LENGTH> size_) = 0 ;
 	virtual void open_r () = 0 ;
@@ -1095,7 +1176,11 @@ public:
 	implicit BufferFile () = default ;
 
 	explicit BufferFile (CREF<String<STR>> file) {
-		BufferFileHolder::create (thiz)->initialize (file) ;
+		BufferFileHolder::create (thiz)->initialize (move (file)) ;
+	}
+
+	explicit BufferFile (RREF<String<STR>> file) {
+		BufferFileHolder::create (thiz)->initialize (move (file)) ;
 	}
 
 	void set_block_step (CREF<LENGTH> size_) {
@@ -1149,11 +1234,11 @@ struct ConsoleOption {
 	} ;
 } ;
 
-struct ConsolePureLayout ;
+struct ConsoleImplLayout ;
 
 struct ConsoleLayout {
 	Mutex mMutex ;
-	SharedRef<ConsolePureLayout> mThis ;
+	SharedRef<ConsoleImplLayout> mThis ;
 } ;
 
 struct ConsoleHolder implement Interface {
@@ -1161,7 +1246,7 @@ struct ConsoleHolder implement Interface {
 	imports CFat<ConsoleHolder> create (CREF<ConsoleLayout> that) ;
 
 	virtual void initialize () = 0 ;
-	virtual void set_option (CREF<FLAG> option) const = 0 ;
+	virtual void set_option (CREF<JustInt<ConsoleOption>> option) const = 0 ;
 	virtual void print (CREF<Format> msg) const = 0 ;
 	virtual void fatal (CREF<Format> msg) const = 0 ;
 	virtual void error (CREF<Format> msg) const = 0 ;
@@ -1190,7 +1275,7 @@ public:
 		}) ;
 	}
 
-	void set_option (CREF<FLAG> option) const {
+	void set_option (CREF<JustInt<ConsoleOption>> option) const {
 		return ConsoleHolder::create (thiz)->set_option (option) ;
 	}
 

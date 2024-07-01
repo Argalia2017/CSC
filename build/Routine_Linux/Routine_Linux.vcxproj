@@ -31,11 +31,11 @@
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x86'" Label="Configuration">
     <UseDebugLibraries>true</UseDebugLibraries>
-    <RemoteRootDir>~/home/projects</RemoteRootDir>
+    <RemoteRootDir>~/projects</RemoteRootDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x86'" Label="Configuration">
     <UseDebugLibraries>false</UseDebugLibraries>
-    <RemoteRootDir>~/home/projects</RemoteRootDir>
+    <RemoteRootDir>~/projects</RemoteRootDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <UseDebugLibraries>true</UseDebugLibraries>
@@ -57,6 +57,7 @@
     <TargetExt>.exe</TargetExt>
     <OutDir>$(SolutionDir)lib\$(Platform)\$(Configuration)\</OutDir>
     <IntDir>$(SolutionDir)obj\$(ProjectName)\$(Platform)\$(Configuration)\</IntDir>
+    <IncludePath>C:\Users\Administrator\AppData\Local\Microsoft\Linux\HeaderCache\1.0\1223681760\usr\include</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <RemoteIntRelDir>$(RemoteProjectRelDir)/obj/$(ProjectName)/$(Configuration)/$(Platform)/</RemoteIntRelDir>
@@ -64,18 +65,25 @@
     <TargetExt>.exe</TargetExt>
     <OutDir>$(SolutionDir)lib\$(Platform)\$(Configuration)\</OutDir>
     <IntDir>$(SolutionDir)obj\$(ProjectName)\$(Platform)\$(Configuration)\</IntDir>
+    <IncludePath>C:\Users\Administrator\AppData\Local\Microsoft\Linux\HeaderCache\1.0\1223681760\usr\include</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x86'">
     <TargetExt>.exe</TargetExt>
-    <RemoteIntRelDir>$(RemoteDeployDir)/obj/$(ProjectName)/$(Configuration)/$(Platform)/</RemoteIntRelDir>
-    <RemoteOutRelDir>$(RemoteDeployDir)/lib/$(Configuration)/$(Platform)</RemoteOutRelDir>
-    <RemoteDeployDir>$(RemoteRootDir)/$(ProjectName)/bin</RemoteDeployDir>
+    <RemoteIntRelDir>$(RemoteProjectRelDir)/obj/$(ProjectName)/$(Configuration)/$(Platform)/</RemoteIntRelDir>
+    <RemoteOutRelDir>$(RemoteProjectRelDir)/lib/$(Configuration)/$(Platform)</RemoteOutRelDir>
+    <RemoteDeployDir>$(RemoteRootDir)/$(ProjectName)</RemoteDeployDir>
+    <OutDir>$(SolutionDir)lib\$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>$(SolutionDir)obj\$(ProjectName)\$(Platform)\$(Configuration)\</IntDir>
+    <IncludePath>C:\Users\Administrator\AppData\Local\Microsoft\Linux\HeaderCache\1.0\1223681760\usr\include</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x86'">
     <TargetExt>.exe</TargetExt>
-    <RemoteIntRelDir>$(RemoteDeployDir)/obj/$(ProjectName)/$(Configuration)/$(Platform)/</RemoteIntRelDir>
-    <RemoteOutRelDir>$(RemoteDeployDir)/lib/$(Configuration)/$(Platform)</RemoteOutRelDir>
-    <RemoteDeployDir>$(RemoteRootDir)/$(ProjectName)/bin</RemoteDeployDir>
+    <RemoteIntRelDir>$(RemoteProjectRelDir)/obj/$(ProjectName)/$(Configuration)/$(Platform)/</RemoteIntRelDir>
+    <RemoteOutRelDir>$(RemoteProjectRelDir)/lib/$(Configuration)/$(Platform)</RemoteOutRelDir>
+    <RemoteDeployDir>$(RemoteRootDir)/$(ProjectName)</RemoteDeployDir>
+    <OutDir>$(SolutionDir)lib\$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>$(SolutionDir)obj\$(ProjectName)\$(Platform)\$(Configuration)\</IntDir>
+    <IncludePath>C:\Users\Administrator\AppData\Local\Microsoft\Linux\HeaderCache\1.0\1223681760\usr\include</IncludePath>
   </PropertyGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\inl.cpp" />
@@ -94,6 +102,7 @@
     <ClInclude Include="..\..\src\csc\csc_matrix.hpp" />
     <ClInclude Include="..\..\src\csc\csc_runtime.hpp" />
     <ClInclude Include="..\..\src\csc\csc_stream.hpp" />
+    <ClInclude Include="..\..\src\csc\csc_string.hpp" />
     <ClInclude Include="..\..\src\csc\csc_thread.hpp" />
     <ClInclude Include="..\..\src\csc\csc_type.hpp" />
     <ClInclude Include="..\..\src\util.h" />
@@ -113,6 +122,7 @@
     <None Include="..\..\src\csc\csc_runtime.linux.inl" />
     <None Include="..\..\src\csc\csc_runtime.windows.inl" />
     <None Include="..\..\src\csc\csc_stream.inl" />
+    <None Include="..\..\src\csc\csc_string.inl" />
     <None Include="..\..\src\csc\csc_thread.inl" />
   </ItemGroup>
   <ItemGroup>
@@ -122,22 +132,28 @@
     <ClCompile>
       <CppLanguageStandard>gnu++17</CppLanguageStandard>
       <Verbose>true</Verbose>
+      <SymbolsHiddenByDefault>true</SymbolsHiddenByDefault>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
       <CppLanguageStandard>gnu++17</CppLanguageStandard>
       <Verbose>true</Verbose>
+      <SymbolsHiddenByDefault>true</SymbolsHiddenByDefault>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x86'">
     <ClCompile>
       <Verbose>true</Verbose>
+      <CppLanguageStandard>gnu++17</CppLanguageStandard>
+      <SymbolsHiddenByDefault>true</SymbolsHiddenByDefault>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x86'">
     <ClCompile>
       <Verbose>true</Verbose>
+      <CppLanguageStandard>gnu++17</CppLanguageStandard>
+      <SymbolsHiddenByDefault>true</SymbolsHiddenByDefault>
     </ClCompile>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
