@@ -28,18 +28,20 @@ public:
 } ;
 
 template <class A>
-class ArrayIterator implement RefProxy<A> {
+class ArrayIterator {
 private:
 	using ITEM = REF<typeof (nullof (A).at (0)) ,REFLECT_REF<A>> ;
 
 protected:
-	using RefProxy<A>::mThat ;
+	XREF<A> mThat ;
 	INDEX mBegin ;
 	INDEX mEnd ;
 	INDEX mPeek ;
 
 public:
-	explicit ArrayIterator (XREF<A> that) :RefProxy<A> (that) {
+	implicit ArrayIterator () = delete ;
+
+	explicit ArrayIterator (XREF<A> that) :mThat (that) {
 		mBegin = mThat.ibegin () ;
 		mEnd = mThat.iend () ;
 		mPeek = mBegin ;
@@ -183,8 +185,8 @@ template <class A>
 class ArrayRealLayout implement ArrayLayout {
 public:
 	implicit ArrayRealLayout () noexcept {
-		auto &&tmp = keep[TYPE<RefBuffer<A>>::expr] (Pointer::from (thiz.mArray)) ;
-		tmp = RefBuffer<A> () ;
+		auto &&rax = keep[TYPE<RefBufferLayout>::expr] (thiz.mArray) ;
+		rax = RefBuffer<A> () ;
 	}
 } ;
 
@@ -581,8 +583,8 @@ template <class A>
 class StringRealLayout implement StringLayout {
 public:
 	implicit StringRealLayout () noexcept {
-		auto &&tmp = keep[TYPE<RefBuffer<A>>::expr] (Pointer::from (thiz.mString)) ;
-		tmp = RefBuffer<A> () ;
+		auto &&rax = keep[TYPE<RefBufferLayout>::expr] (thiz.mString) ;
+		rax = RefBuffer<A> () ;
 	}
 } ;
 
@@ -792,6 +794,7 @@ struct DequeHolder implement Interface {
 	virtual void take () = 0 ;
 	virtual void push (RREF<BoxLayout> item) = 0 ;
 	virtual void pop () = 0 ;
+	virtual void ring (CREF<LENGTH> size_) = 0 ;
 } ;
 
 template <class A>
@@ -816,8 +819,8 @@ template <class A>
 class DequeRealLayout implement DequeLayout {
 public:
 	implicit DequeRealLayout () noexcept {
-		auto &&tmp = keep[TYPE<RefBuffer<A>>::expr] (Pointer::from (thiz.mDeque)) ;
-		tmp = RefBuffer<A> () ;
+		auto &&rax = keep[TYPE<RefBufferLayout>::expr] (thiz.mDeque) ;
+		rax = RefBuffer<A> () ;
 	}
 } ;
 
@@ -935,6 +938,10 @@ public:
 	void pop () {
 		return DequeHolder::create (thiz)->pop () ;
 	}
+
+	void ring (CREF<LENGTH> size_) {
+		return DequeHolder::create (thiz)->ring (size_) ;
+	}
 } ;
 
 struct PriorityNode {
@@ -999,8 +1006,8 @@ template <class A>
 class PriorityRealLayout implement PriorityLayout {
 public:
 	implicit PriorityRealLayout () noexcept {
-		auto &&tmp = keep[TYPE<RefBuffer<Tuple<A ,PriorityNode>>>::expr] (Pointer::from (thiz.mPriority)) ;
-		tmp = RefBuffer<Tuple<A ,PriorityNode>> () ;
+		auto &&rax = keep[TYPE<RefBufferLayout>::expr] (thiz.mPriority) ;
+		rax = RefBuffer<Tuple<A ,PriorityNode>> () ;
 	}
 } ;
 
@@ -1153,7 +1160,7 @@ template <class A>
 class ListUnknownBinder implement Unknown {
 public:
 	FLAG reflect (CREF<FLAG> uuid) const override {
-		using R1X = MainTuple<A ,ListNode> ;
+		using R1X = TupleNode<A ,ListNode> ;
 		if (uuid == ReflectSizeBinder<R1X>::expr)
 			return inline_hold (ReflectSizeBinder<R1X> ()) ;
 		if (uuid == ReflectCreateBinder<R1X>::expr)
@@ -1174,8 +1181,8 @@ template <class A>
 class ListRealLayout implement ListLayout {
 public:
 	implicit ListRealLayout () noexcept {
-		auto &&tmp = keep[TYPE<Allocator<A ,ListNode>>::expr] (Pointer::from (thiz.mList)) ;
-		tmp = Allocator<A ,ListNode> () ;
+		auto &&rax = keep[TYPE<AllocatorLayout>::expr] (thiz.mList) ;
+		rax = Allocator<A ,ListNode> () ;
 	}
 } ;
 
@@ -1346,7 +1353,7 @@ template <class A>
 class ArrayListUnknownBinder implement Unknown {
 public:
 	FLAG reflect (CREF<FLAG> uuid) const override {
-		using R1X = MainTuple<A ,ArrayListNode> ;
+		using R1X = TupleNode<A ,ArrayListNode> ;
 		if (uuid == ReflectSizeBinder<R1X>::expr)
 			return inline_hold (ReflectSizeBinder<R1X> ()) ;
 		if (uuid == ReflectCreateBinder<R1X>::expr)
@@ -1367,8 +1374,8 @@ template <class A>
 class ArrayListRealLayout implement ArrayListLayout {
 public:
 	implicit ArrayListRealLayout () noexcept {
-		auto &&tmp = keep[TYPE<Allocator<A ,ArrayListNode>>::expr] (Pointer::from (thiz.mList)) ;
-		tmp = Allocator<A ,ArrayListNode> () ;
+		auto &&rax = keep[TYPE<AllocatorLayout>::expr] (thiz.mList) ;
+		rax = Allocator<A ,ArrayListNode> () ;
 	}
 } ;
 
@@ -1549,8 +1556,8 @@ template <class A>
 class SortedMapRealLayout implement SortedMapLayout {
 public:
 	implicit SortedMapRealLayout () noexcept {
-		auto &&tmp = keep[TYPE<Ref<SortedMapImplLayout<A>>>::expr] (Pointer::from (thiz.mThis)) ;
-		tmp = Ref<SortedMapImplLayout<A>> () ;
+		auto &&rax = keep[TYPE<RefLayout>::expr] (thiz.mThis) ;
+		rax = Ref<SortedMapImplLayout<Tuple<A ,SortedMapNode>>> () ;
 	}
 } ;
 
@@ -1706,7 +1713,7 @@ template <class A>
 class SetUnknownBinder implement Unknown {
 public:
 	FLAG reflect (CREF<FLAG> uuid) const override {
-		using R1X = MainTuple<A ,SetNode> ;
+		using R1X = TupleNode<A ,SetNode> ;
 		if (uuid == ReflectSizeBinder<R1X>::expr)
 			return inline_hold (ReflectSizeBinder<R1X> ()) ;
 		if (uuid == ReflectCreateBinder<R1X>::expr)
@@ -1733,8 +1740,8 @@ template <class A>
 class SetRealLayout implement SetLayout {
 public:
 	implicit SetRealLayout () noexcept {
-		auto &&tmp = keep[TYPE<Allocator<A ,SetNode>>::expr] (Pointer::from (thiz.mSet)) ;
-		tmp = Allocator<A ,SetNode> () ;
+		auto &&rax = keep[TYPE<AllocatorLayout>::expr] (thiz.mSet) ;
+		rax = Allocator<A ,SetNode> () ;
 	}
 } ;
 
@@ -1893,7 +1900,7 @@ template <class A>
 class HashSetUnknownBinder implement Unknown {
 public:
 	FLAG reflect (CREF<FLAG> uuid) const override {
-		using R1X = MainTuple<A ,HashSetNode> ;
+		using R1X = TupleNode<A ,HashSetNode> ;
 		if (uuid == ReflectSizeBinder<R1X>::expr)
 			return inline_hold (ReflectSizeBinder<R1X> ()) ;
 		if (uuid == ReflectCreateBinder<R1X>::expr)
@@ -1918,8 +1925,8 @@ template <class A>
 class HashSetRealLayout implement HashSetLayout {
 public:
 	implicit HashSetRealLayout () noexcept {
-		auto &&tmp = keep[TYPE<Allocator<A ,HashSetNode>>::expr] (Pointer::from (thiz.mSet)) ;
-		tmp = Allocator<A ,HashSetNode> () ;
+		auto &&rax = keep[TYPE<AllocatorLayout>::expr] (thiz.mSet) ;
+		rax = Allocator<A ,HashSetNode> () ;
 	}
 } ;
 
@@ -2038,13 +2045,15 @@ public:
 } ;
 
 template <class A>
-class BitProxy implement RefProxy<A> {
+class BitProxy {
 protected:
-	using RefProxy<A>::mThat ;
+	XREF<A> mThat ;
 	INDEX mIndex ;
 
 public:
-	explicit BitProxy (XREF<A> that ,CREF<INDEX> index) :RefProxy<A> (that) {
+	implicit BitProxy () = delete ;
+
+	explicit BitProxy (XREF<A> that ,CREF<INDEX> index) :mThat (that) {
 		mIndex = index ;
 	}
 

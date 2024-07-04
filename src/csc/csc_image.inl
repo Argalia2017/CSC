@@ -21,9 +21,9 @@ public:
 		const auto r2x = cx_ * cy_ * step_ ;
 		const auto r3x = inline_alignas (r2x ,r1x->type_size ()) / r1x->type_size () ;
 		RefBufferHolder::create (fake.mImage)->initialize (element ,r3x) ;
-		auto &&tmp = keep[TYPE<RefBufferLayout>::expr] (fake.mImage) ;
-		tmp.mSize = cx_ * cy_ ;
-		tmp.mStep = step_ ;
+		auto &&rax = keep[TYPE<RefBufferLayout>::expr] (fake.mImage) ;
+		rax.mSize = cx_ * cy_ ;
+		rax.mStep = step_ ;
 		fake.mWidth.mCX = cx_ ;
 		fake.mWidth.mCY = cy_ ;
 		fake.mWidth.mStep = step_ ;
@@ -55,25 +55,25 @@ public:
 	}
 
 	LENGTH cx () const override {
-		if ((!fake.mImage.exist ()))
+		if (!fake.mImage.exist ())
 			return 0 ;
 		return fake.mCX ;
 	}
 
 	LENGTH cy () const override {
-		if ((!fake.mImage.exist ()))
+		if (!fake.mImage.exist ())
 			return 0 ;
 		return fake.mCY ;
 	}
 
 	LENGTH strip () const override {
-		if ((!fake.mImage.exist ()))
+		if (!fake.mImage.exist ())
 			return 0 ;
 		return fake.mStrip ;
 	}
 
 	LENGTH offset () const override {
-		if ((!fake.mImage.exist ()))
+		if (!fake.mImage.exist ())
 			return 0 ;
 		return fake.mOffset ;
 	}
@@ -138,9 +138,11 @@ public:
 
 	void splice (CREF<INDEX> x ,CREF<INDEX> y ,CREF<ImageLayout> item) override {
 		const auto r1x = ImageHolder::create (item)->cx () ;
-		noop (r1x) ;
 		const auto r2x = ImageHolder::create (item)->cy () ;
-		noop (r2x) ;
+		if (r1x == 0)
+			return ;
+		if (r2x == 0)
+			return ;
 		assert (inline_between (x ,0 ,cx ())) ;
 		assert (inline_between (y ,0 ,cy ())) ;
 		assert (x + r1x <= cx ()) ;
@@ -423,12 +425,12 @@ public:
 				}) ;
 				for (auto &&j : iter (0 ,fake.mSize)) {
 					if ifdo (TRUE) {
-						if ((!fake.mUserVisit[j]))
+						if (!fake.mUserVisit[j])
 							discard ;
 						fake.mUser[j] -= r1x ;
 					}
 					if ifdo (TRUE) {
-						if ((!fake.mWorkVisit[j]))
+						if (!fake.mWorkVisit[j])
 							discard ;
 						fake.mWork[j] += r1x ;
 					}
@@ -464,7 +466,7 @@ public:
 				return TRUE ;
 			}
 			if ifdo (TRUE) {
-				if ((!dfs (r2x)))
+				if (!dfs (r2x))
 					discard ;
 				fake.mMatch[i] = user ;
 				return TRUE ;

@@ -21,18 +21,6 @@
 #include <random>
 #include "csc_begin.h"
 
-namespace std {
-//@fatal: fuck LWG-3268
-#ifndef __CSC_CXX_LATEST__
-using std::memory_order::memory_order_relaxed ;
-using std::memory_order::memory_order_consume ;
-using std::memory_order::memory_order_acquire ;
-using std::memory_order::memory_order_release ;
-using std::memory_order::memory_order_acq_rel ;
-using std::memory_order::memory_order_seq_cst ;
-#endif
-} ;
-
 namespace CSC {
 #ifdef __CSC_COMPILER_MSVC__
 struct FUNCTION_calendar_from_timepoint {
@@ -49,7 +37,7 @@ struct FUNCTION_calendar_from_timepoint {
 struct FUNCTION_calendar_from_timepoint {
 	inline std::tm operator() (CREF<std::time_t> time) const {
 		std::tm ret ;
-		const auto r1x = FLAG (std::localtime ((&time))) ;
+		const auto r1x = FLAG (std::localtime (&time)) ;
 		inline_memcpy (Pointer::from (ret) ,Pointer::make (r1x) ,SIZE_OF<std::tm>::expr) ;
 		return move (ret) ;
 	}
@@ -87,13 +75,6 @@ public:
 		fake.mThis->mTime = std::chrono::duration_cast<std::chrono::system_clock::duration> (r1x) ;
 	}
 
-	void initialize (CREF<LENGTH> milliseconds_ ,CREF<LENGTH> nanoseconds_) override {
-		fake.mThis = Box<TimeImplLayout>::make () ;
-		const auto r1x = std::chrono::milliseconds (milliseconds_) ;
-		const auto r2x = std::chrono::nanoseconds (nanoseconds_) ;
-		fake.mThis->mTime = std::chrono::duration_cast<std::chrono::system_clock::duration> (r1x + r2x) ;
-	}
-
 	void initialize (CREF<TimeCalendar> calendar_) override {
 		auto rax = std::tm () ;
 		const auto r1x = calendar_.mYear - 1900 ;
@@ -109,7 +90,7 @@ public:
 		rax.tm_min = VAL32 (calendar_.mMinute) ;
 		rax.tm_sec = VAL32 (calendar_.mSecond) ;
 		rax.tm_isdst = 0 ;
-		const auto r5x = std::mktime ((&rax)) ;
+		const auto r5x = std::mktime (&rax) ;
 		const auto r6x = std::chrono::system_clock::from_time_t (r5x) ;
 		fake.mThis = Box<TimeImplLayout>::make () ;
 		fake.mThis->mTime = r6x.time_since_epoch () ;
@@ -204,46 +185,46 @@ exports CFat<RuntimeProcHolder> RuntimeProcHolder::create (CREF<RuntimeProcLayou
 }
 
 struct AtomicImplLayout {
-	Pin<std::atomic<VAL>> mAtomic ;
+	Pin<std::atomic<VAL>> mValue ;
 } ;
 
 class AtomicImplHolder implement Fat<AtomicHolder ,AtomicLayout> {
 public:
 	void initialize () override {
 		fake.mThis = Box<AtomicImplLayout>::make () ;
-		fake.mThis->mAtomic = NULL ;
-		fake.mThis->mAtomic->store (0) ;
+		fake.mThis->mValue.remake () ;
+		fake.mThis->mValue->store (0) ;
 	}
 
 	VAL fetch () const override {
 		if (fake.mThis == NULL)
 			return 0 ;
-		return fake.mThis->mAtomic->load (std::memory_order_relaxed) ;
+		return fake.mThis->mValue->load (std::memory_order_relaxed) ;
 	}
 
 	void store (CREF<VAL> item) const override {
-		return fake.mThis->mAtomic->store (item ,std::memory_order_relaxed) ;
+		return fake.mThis->mValue->store (item ,std::memory_order_relaxed) ;
 	}
 
 	VAL exchange (CREF<VAL> item) const override {
-		return fake.mThis->mAtomic->exchange (item ,std::memory_order_relaxed) ;
+		return fake.mThis->mValue->exchange (item ,std::memory_order_relaxed) ;
 	}
 
 	BOOL change (VREF<VAL> expect ,CREF<VAL> item) const override {
-		return fake.mThis->mAtomic->compare_exchange_weak (expect ,item ,std::memory_order_relaxed) ;
+		return fake.mThis->mValue->compare_exchange_weak (expect ,item ,std::memory_order_relaxed) ;
 	}
 
 	void replace (CREF<VAL> expect ,CREF<VAL> item) const override {
 		auto rax = expect ;
-		fake.mThis->mAtomic->compare_exchange_strong (rax ,item ,std::memory_order_relaxed) ;
+		fake.mThis->mValue->compare_exchange_strong (rax ,item ,std::memory_order_relaxed) ;
 	}
 
 	void increase () const override {
-		fake.mThis->mAtomic->fetch_add (1 ,std::memory_order_relaxed) ;
+		fake.mThis->mValue->fetch_add (1 ,std::memory_order_relaxed) ;
 	}
 
 	void decrease () const override {
-		fake.mThis->mAtomic->fetch_sub (1 ,std::memory_order_relaxed) ;
+		fake.mThis->mValue->fetch_sub (1 ,std::memory_order_relaxed) ;
 	}
 } ;
 
@@ -266,7 +247,7 @@ struct MutexType {
 } ;
 
 struct MutexImplLayout {
-	JustInt<MutexType> mMutexType ;
+	Just<MutexType> mType ;
 	Pin<std::mutex> mMutex ;
 	Pin<std::recursive_mutex> mRecursive ;
 	Atomic mShared ;
@@ -277,10 +258,10 @@ class MutexImplHolder implement Fat<MutexHolder ,MutexLayout> {
 public:
 	void initialize () override {
 		fake.mThis = Ref<MutexImplLayout>::make () ;
-		fake.mThis->mMutexType = MutexType::Make ;
-		fake.mThis->mMutex = NULL ;
-		fake.mThis->mRecursive = NULL ;
-		fake.mThis->mUnique = NULL ;
+		fake.mThis->mType = MutexType::Make ;
+		fake.mThis->mMutex.remake () ;
+		fake.mThis->mRecursive.remake () ;
+		fake.mThis->mUnique.remake () ;
 	}
 
 	Ref<MutexImplLayout> borrow () const override {
@@ -293,7 +274,7 @@ public:
 			return ;
 		auto act = TRUE ;
 		if ifdo (act) {
-			if (fake.mThis->mMutexType != MutexType::Recursive)
+			if (fake.mThis->mType != MutexType::Recursive)
 				discard ;
 			fake.mThis->mRecursive->lock () ;
 		}
@@ -307,7 +288,7 @@ public:
 			return ;
 		auto act = TRUE ;
 		if ifdo (act) {
-			if (fake.mThis->mMutexType != MutexType::Recursive)
+			if (fake.mThis->mType != MutexType::Recursive)
 				discard ;
 			fake.mThis->mRecursive->unlock () ;
 		}
@@ -333,18 +314,18 @@ public:
 
 	void RecursiveMutex_initialize () override {
 		MutexHolder::create (fake)->initialize () ;
-		fake.mThis->mMutexType = MutexType::Recursive ;
+		fake.mThis->mType = MutexType::Recursive ;
 	}
 
 	void SharedMutex_initialize () override {
 		MutexHolder::create (fake)->initialize () ;
-		fake.mThis->mMutexType = MutexType::Shared ;
+		fake.mThis->mType = MutexType::Shared ;
 		fake.mThis->mShared = NULL ;
 	}
 
 	void UniqueMutex_initialize () override {
 		MutexHolder::create (fake)->initialize () ;
-		fake.mThis->mMutexType = MutexType::Unique ;
+		fake.mThis->mType = MutexType::Unique ;
 	}
 } ;
 
@@ -388,7 +369,7 @@ public:
 	void initialize (CREF<Mutex> mutex) override {
 		fake.mThis = Box<SharedLockImplLayout>::make () ;
 		fake.mThis->mMutex = mutex.borrow () ;
-		assert (fake.mThis->mMutex->mMutexType == MutexType::Shared) ;
+		assert (fake.mThis->mMutex->mType == MutexType::Shared) ;
 		shared_enter () ;
 		fake.mThis->mLock = std::unique_lock<SharedAtomicMutex> (SharedAtomicMutex::from (fake.mThis->mMutex->mShared)) ;
 	}
@@ -451,7 +432,7 @@ public:
 	void initialize (CREF<Mutex> mutex) override {
 		fake.mThis = Box<UniqueLockImplLayout>::make () ;
 		fake.mThis->mMutex = mutex.borrow () ;
-		assert (fake.mThis->mMutex->mMutexType == MutexType::Unique) ;
+		assert (fake.mThis->mMutex->mType == MutexType::Unique) ;
 		fake.mThis->mLock = std::unique_lock<std::mutex> (fake.mThis->mMutex->mMutex.self) ;
 	}
 
@@ -460,8 +441,8 @@ public:
 	}
 
 	void wait (CREF<Time> time) override {
-		auto &&tmp = keep[TYPE<TimeLayout>::expr] (time) ;
-		fake.mThis->mMutex->mUnique->wait_for (fake.mThis->mLock ,tmp.mThis->mTime) ;
+		auto &&rax = keep[TYPE<TimeLayout>::expr] (time) ;
+		fake.mThis->mMutex->mUnique->wait_for (fake.mThis->mLock ,rax.mThis->mTime) ;
 	}
 
 	void notify () override {
@@ -504,10 +485,10 @@ public:
 	}
 
 	void start () override {
-		auto &&tmp = fake.mThis.self ;
+		auto &&rax = fake.mThis.self ;
 		fake.mThis->mThread = std::thread ([&] () {
-			tmp.mUid = RuntimeProc::thread_uid () ;
-			tmp.mExecutor->friend_execute (tmp.mSlot) ;
+			rax.mUid = RuntimeProc::thread_uid () ;
+			rax.mExecutor->friend_execute (rax.mSlot) ;
 		}) ;
 	}
 
@@ -572,9 +553,16 @@ exports CFat<SystemHolder> SystemHolder::create (CREF<SystemLayout> that) {
 	return CFat<SystemHolder> (SystemImplHolder () ,that) ;
 }
 
+struct RandomNormal {
+	BOOL mOdd ;
+	FLT64 mNX ;
+	FLT64 mNY ;
+} ;
+
 struct RandomImplLayout {
 	FLAG mSeed ;
 	Pin<std::mt19937_64> mRandom ;
+	SharedRef<RandomNormal> mNormal ;
 } ;
 
 class RandomImplHolder implement Fat<RandomHolder ,RandomLayout> {
@@ -582,8 +570,10 @@ public:
 	void initialize (CREF<FLAG> seed) override {
 		fake.mThis = Ref<RandomImplLayout>::make () ;
 		fake.mThis->mSeed = seed ;
-		fake.mThis->mRandom = NULL ;
+		fake.mThis->mRandom.remake () ;
 		fake.mThis->mRandom.self = std::mt19937_64 (seed) ;
+		fake.mThis->mNormal = SharedRef<RandomNormal>::make () ;
+		fake.mThis->mNormal->mOdd = FALSE ;
 	}
 
 	FLAG seed () const override {
@@ -654,6 +644,25 @@ public:
 			return TRUE ;
 		return FALSE ;
 	}
+
+	FLT64 random_normal () const override {
+		if ifdo (TRUE) {
+			if (fake.mThis->mNormal->mOdd)
+				discard ;
+			const auto r1x = random_value (1 ,10000) ;
+			const auto r2x = FLT64 (r1x) * MathProc::inverse (FLT64 (10000)) ;
+			const auto r3x = random_value (0 ,10000) ;
+			const auto r4x = FLT64 (r3x) * MathProc::inverse (FLT64 (10000)) ;
+			const auto r5x = MathProc::sqrt (FLT64 (-2) * MathProc::log (r2x)) ;
+			const auto r6x = MATH_PI * 2 * r4x ;
+			fake.mThis->mNormal->mNX = r5x * MathProc::cos (r6x) ;
+			fake.mThis->mNormal->mNY = r5x * MathProc::sin (r6x) ;
+			fake.mThis->mNormal->mOdd = TRUE ;
+			return fake.mThis->mNormal->mNX ;
+		}
+		fake.mThis->mNormal->mOdd = FALSE ;
+		return fake.mThis->mNormal->mNY ;
+	}
 } ;
 
 exports VFat<RandomHolder> RandomHolder::create (VREF<RandomLayout> that) {
@@ -693,7 +702,7 @@ struct FUNCTION_dump_memory_leaks {
 static constexpr auto dump_memory_leaks = FUNCTION_dump_memory_leaks () ;
 
 struct GlobalNode {
-	Clazz mClazz ;
+	BOOL mConst ;
 	AutoRef<Pointer> mValue ;
 } ;
 
@@ -710,20 +719,36 @@ public:
 		dump_memory_leaks () ;
 	}
 
-	RefLayout borrow (CREF<Slice> name ,CREF<Clazz> clazz ,CREF<Unknown> reflect) const override {
+	CREF<AutoRef<Pointer>> fetch (CREF<Slice> name) const override {
 		Scope<Mutex> anonymous (fake.mMutex) ;
 		INDEX ix = fake.mThis->mGlobalNameSet.map (name) ;
-		if ifdo (TRUE) {
+		assert (ix != NONE) ;
+		return fake.mThis->mGlobalList[ix].mValue ;
+	}
+
+	void store (CREF<Slice> name ,RREF<AutoRef<Pointer>> item) const override {
+		Scope<Mutex> anonymous (fake.mMutex) ;
+		INDEX ix = fake.mThis->mGlobalNameSet.map (name) ;
+		auto act = TRUE ;
+		if ifdo (act) {
 			if (ix != NONE)
 				discard ;
 			ix = fake.mThis->mGlobalList.insert () ;
 			fake.mThis->mGlobalNameSet.add (name ,ix) ;
-			fake.mThis->mGlobalList[ix].mClazz = clazz ;
-			const auto r1x = RFat<ReflectRemake> (reflect) ;
-			r1x->remake (Pointer::from (fake.mThis->mGlobalList[ix].mValue)) ;
+			fake.mThis->mGlobalList[ix].mConst = TRUE ;
 		}
-		assert (clazz == fake.mThis->mGlobalList[ix].mClazz) ;
-		return Ref<Pointer>::reference (fake.mThis->mGlobalList[ix].mValue) ;
+		if ifdo (act) {
+			assume (!fake.mThis->mGlobalList[ix].mConst) ;
+		}
+		fake.mThis->mGlobalList[ix].mValue = move (item) ;
+	}
+
+	void abuse (CREF<Slice> name) const override {
+		Scope<Mutex> anonymous (fake.mMutex) ;
+		INDEX ix = fake.mThis->mGlobalNameSet.map (name) ;
+		if (ix == NONE)
+			return ;
+		fake.mThis->mGlobalList[ix].mConst = FALSE ;
 	}
 } ;
 
@@ -777,9 +802,9 @@ public:
 	void set_writer (VREF<ByteWriter> writer) {
 		writer = ByteWriter (Ref<RefBuffer<BYTE>>::reference (fake.mStreamFileBuffer)) ;
 		fake.use_overflow ([&] (VREF<ByteWriter> writer) {
-			auto &&tmp = keep[TYPE<StreamFileByteWriterLayout>::expr] (writer) ;
-			tmp.mStreamFile.write (tmp.mStreamFileBuffer) ;
-			tmp.reset () ;
+			auto &&rax = keep[TYPE<StreamFileByteWriterLayout>::expr] (writer) ;
+			rax.mStreamFile.write (rax.mStreamFileBuffer) ;
+			rax.reset () ;
 		}) ;
 	}
 
@@ -814,9 +839,9 @@ public:
 	void set_writer (VREF<TextWriter> writer) {
 		writer = TextWriter (Ref<RefBuffer<BYTE>>::reference (fake.mStreamFileBuffer)) ;
 		fake.use_overflow ([&] (VREF<TextWriter> writer) {
-			auto &&tmp = keep[TYPE<StreamFileTextWriterLayout>::expr] (writer) ;
-			tmp.mStreamFile.write (tmp.mStreamFileBuffer) ;
-			tmp.reset () ;
+			auto &&rax = keep[TYPE<StreamFileTextWriterLayout>::expr] (writer) ;
+			rax.mStreamFile.write (rax.mStreamFileBuffer) ;
+			rax.reset () ;
 		}) ;
 	}
 

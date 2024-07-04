@@ -1968,7 +1968,7 @@ protected:
 public:
 	implicit AlignedText () = delete ;
 
-	explicit AlignedText (CREF<VAL64> number ,CREF<VAL64> align) {
+	explicit AlignedText (CREF<VAL64> number ,CREF<LENGTH> align) {
 		mNumber = number ;
 		mAlign = align ;
 	}

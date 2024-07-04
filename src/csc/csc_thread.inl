@@ -19,7 +19,7 @@ struct ThreadFlag {
 
 struct WorkThreadImplLayout {
 	Mutex mThreadMutex ;
-	JustInt<ThreadFlag> mThreadFlag ;
+	Just<ThreadFlag> mThreadFlag ;
 	Array<Thread> mThread ;
 	BitSet mThreadJoin ;
 	Array<Deque<INDEX>> mThreadQueue ;
@@ -86,7 +86,7 @@ public:
 		mThreadFlag = ThreadFlag::Running ;
 		mThreadFunc = func ;
 		mThreadFriend = Box<VFat<ThreadFriend>>::make (ThreadFriendBinder<WorkThreadImplement>::create (thiz)) ;
-		for (auto &&i : iter (0 ,mThread.size ())) {
+		for (auto &&i : mThread.range ()) {
 			mThread[i] = Thread (Ref<ThreadFriend>::reference (mThreadFriend.self) ,i) ;
 			mThread[i].start () ;
 		}
@@ -102,7 +102,7 @@ public:
 		try {
 			while (TRUE) {
 				if ifdo (TRUE) {
-					if ((!mThreadQueue[slot].empty ()))
+					if (!mThreadQueue[slot].empty ())
 						discard ;
 					poll (slot) ;
 				}
@@ -120,7 +120,7 @@ public:
 		auto rax = UniqueLock (mThreadMutex) ;
 		while (TRUE) {
 			assume (mThreadFlag == ThreadFlag::Running) ;
-			if ((!mItemQueue.empty ()))
+			if (!mItemQueue.empty ())
 				break ;
 			if ifdo (TRUE) {
 				if (mThreadJoin[slot])
@@ -189,7 +189,7 @@ public:
 			rax = UniqueLock () ;
 			predicate (rbx) ;
 			rax = UniqueLock (mThreadMutex) ;
-			if ((!rbx))
+			if (!rbx)
 				return FALSE ;
 			rax.wait (interval) ;
 		}
@@ -198,7 +198,7 @@ public:
 
 	void stop () {
 		crash () ;
-		for (auto &&i : iter (0 ,mThread.size ()))
+		for (auto &&i : mThread.range ())
 			mThread[i].stop () ;
 		mThread = Array<Thread> () ;
 		mThreadFunc = Function<CREF<INDEX>> () ;
@@ -264,7 +264,7 @@ exports CFat<WorkThreadHolder> WorkThreadHolder::create (CREF<WorkThreadLayout> 
 
 struct CalcThreadImplLayout {
 	Mutex mThreadMutex ;
-	JustInt<ThreadFlag> mThreadFlag ;
+	Just<ThreadFlag> mThreadFlag ;
 	BOOL mSuspendFlag ;
 	Array<Thread> mThread ;
 	BitSet mThreadJoin ;
@@ -325,7 +325,7 @@ public:
 		mSuspendFlag = FALSE ;
 		mThreadFunc = func ;
 		mThreadFriend = Box<VFat<ThreadFriend>>::make (ThreadFriendBinder<CalcThreadImplement>::create (thiz)) ;
-		for (auto &&i : iter (0 ,mThread.size ())) {
+		for (auto &&i : mThread.range ()) {
 			mThread[i] = Thread (Ref<ThreadFriend>::reference (mThreadFriend.self) ,i) ;
 			mThread[i].start () ;
 		}
@@ -425,7 +425,7 @@ public:
 		auto rax = UniqueLock (mThreadMutex) ;
 		while (TRUE) {
 			assume (mThreadFlag == ThreadFlag::Running) ;
-			if ((!mSuspendFlag))
+			if (!mSuspendFlag)
 				break ;
 			if ifdo (TRUE) {
 				if (mThreadJoin[slot])
@@ -461,7 +461,7 @@ public:
 		rax.notify () ;
 		while (TRUE) {
 			assume (mThreadFlag == ThreadFlag::Running) ;
-			if ((!mSuspendFlag))
+			if (!mSuspendFlag)
 				break ;
 			if (mThreadJoin.length () >= mThread.length ())
 				break ;
@@ -478,7 +478,7 @@ public:
 
 	void stop () {
 		crash () ;
-		for (auto &&i : iter (0 ,mThread.size ()))
+		for (auto &&i : mThread.range ())
 			mThread[i].stop () ;
 		mThread = Array<Thread> () ;
 		mThreadFunc = Function<CREF<CalcSolution> ,VREF<CalcSolution>> () ;
@@ -540,7 +540,7 @@ exports CFat<CalcThreadHolder> CalcThreadHolder::create (CREF<CalcThreadLayout> 
 
 struct PromiseImplLayout {
 	Mutex mThreadMutex ;
-	JustInt<ThreadFlag> mThreadFlag ;
+	Just<ThreadFlag> mThreadFlag ;
 	Ref<Thread> mThread ;
 	Function<> mThreadFunc ;
 	Function<> mRunningFunc ;
@@ -618,7 +618,7 @@ public:
 				rethrow (e) ;
 			}
 			const auto r2x = wait_future () ;
-			if ((!r2x))
+			if (!r2x)
 				break ;
 		}
 		crash () ;
@@ -666,8 +666,10 @@ public:
 
 	void rethrow (CREF<Exception> e) {
 		auto rax = UniqueLock (mThreadMutex) ;
-		assume (mThreadFlag == ThreadFlag::Running) ;
-		assume (mException == NULL) ;
+		if (mThreadFlag != ThreadFlag::Running)
+			return ;
+		if (mException != NULL)
+			return ;
 		mException = Box<Exception>::make (e) ;
 		mThreadFlag = ThreadFlag::Finishing ;
 		rax.notify () ;

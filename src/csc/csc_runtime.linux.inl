@@ -48,19 +48,21 @@
 #include <random>
 #include "csc_begin.h"
 
-namespace CSC {
-namespace std {
-using namespace ::std ;
+#ifndef USE_LINUX_HANDLE
+#define USE_LINUX_HANDLE
 
+using HMODULE = CSC::csc_pointer_t ;
+using HANDLE = CSC::csc_pointer_t ;
+using HFILE = int ;
+#endif
+
+namespace std {
+inline namespace extand {
 using ::open ;
 using ::close ;
 using ::read ;
 using ::write ;
 } ;
-
-using HMODULE = csc_pointer_t ;
-using HANDLE = csc_pointer_t ;
-using HFILE = int ;
 } ;
 
 namespace CSC {
@@ -80,8 +82,8 @@ public:
 	}
 
 	void thread_sleep (CREF<Time> time) const override {
-		auto &&tmp = keep[TYPE<TimeLayout>::expr] (time) ;
-		std::this_thread::sleep_for (tmp.mThis->mTime) ;
+		auto &&rax = keep[TYPE<TimeLayout>::expr] (time) ;
+		std::this_thread::sleep_for (rax.mThis->mTime) ;
 	}
 
 	void thread_yield () const override {
@@ -108,7 +110,7 @@ public:
 				discard ;
 			ret.clear () ;
 		}
-		ret = Path (ret).child (slice (".")).path () ;
+		ret = Path (ret).poll () ;
 		return move (ret) ;
 	}
 
@@ -235,13 +237,13 @@ public:
 
 	BOOL equal (CREF<ProcessLayout> that) const override {
 		const auto r1x = inline_equal (fake.mThis->mUid ,that.mThis->mUid) ;
-		if ((!r1x))
+		if (!r1x)
 			return r1x ;
 		const auto r2x = inline_equal (fake.mThis->mProcessCode ,that.mThis->mProcessCode) ;
-		if ((!r2x))
+		if (!r2x)
 			return r2x ;
 		const auto r3x = inline_equal (fake.mThis->mProcessTime ,that.mThis->mProcessTime) ;
-		if ((!r3x))
+		if (!r3x)
 			return r3x ;
 		return TRUE ;
 	}
@@ -471,7 +473,7 @@ static const auto mSingletonProcExternal = External<SingletonProcHolder ,Singlet
 
 struct PathImplLayout {
 	String<STR> mPathName ;
-	LENGTH mLength ;
+	Deque<INDEX> mSeparator ;
 } ;
 
 class PathImplHolder implement Fat<PathHolder ,PathLayout> {
@@ -482,21 +484,29 @@ private:
 
 public:
 	void initialize (RREF<String<STR>> pathname) override {
-		assert (pathname.step () == SIZE_OF<STR>::expr) ;
 		fake.mThis = Ref<PathImplLayout>::make () ;
 		fake.mThis->mPathName = move (pathname) ;
-		fake.mThis->mLength = fake.mThis->mPathName.length () ;
+		fake.mThis->mSeparator.add (NONE) ;
+		const auto r1x = fake.mThis->mPathName.length () ;
+		assume (r1x > 0) ;
+		for (auto &&i : iter (0 ,r1x)) {
+			if (!is_separator (fake.mThis->mPathName[i]))
+				continue ;
+			fake.mThis->mSeparator.add (i) ;
+			fake.mThis->mPathName[i] = STR ('/') ;
+		}
+		fake.mThis->mSeparator.add (r1x) ;
 		if ifdo (TRUE) {
-			if (fake.mThis->mLength > 0)
+			if (fake.mThis->mSeparator[1] != 0)
 				discard ;
-			fake.mThis->mPathName = slice (".") ;
+			fake.mThis->mSeparator.take () ;
 		}
 		if ifdo (TRUE) {
-			INDEX ix = fake.mThis->mLength - 1 ;
-			if ((!is_separator (fake.mThis->mPathName[ix])))
+			INDEX ix = fake.mThis->mSeparator[fake.mThis->mSeparator.length () - 1] ;
+			if (ix != r1x - 1)
 				discard ;
 			fake.mThis->mPathName.trunc (ix) ;
-			fake.mThis->mLength = ix ;
+			fake.mThis->mSeparator.pop () ;
 		}
 	}
 
@@ -519,7 +529,7 @@ public:
 	PathLayout root () const override {
 		PathLayout ret ;
 		if ifdo (TRUE) {
-			if ((!StreamProc::is_alpha (fake.mThis->mPathName[0])))
+			if (!StreamProc::is_alpha (fake.mThis->mPathName[0]))
 				discard ;
 			if (fake.mThis->mPathName[1] != STRU32 (':'))
 				discard ;
@@ -572,7 +582,7 @@ public:
 			}
 		}
 		Array<PathLayout> ret = Array<PathLayout> (rbx.length ()) ;
-		for (auto &&i : iter (0 ,rbx.length ()))
+		for (auto &&i : ret.range ())
 			ret[i] = child (rbx[i]) ;
 		return move (ret) ;
 	}
@@ -634,7 +644,7 @@ public:
 		const auto r1x = stat (fake.mThis->mPathName ,(&rax)) ;
 		if (r1x != 0)
 			return FALSE ;
-		if ((!S_ISDIR (rax.st_mode)))
+		if (!S_ISDIR (rax.st_mode))
 			return FALSE ;
 		return TRUE ;
 	}
@@ -645,40 +655,26 @@ public:
 		const auto r1x = stat (fake.mThis->mPathName ,(&rax)) ;
 		if (r1x != 0)
 			return FALSE ;
-		if ((!S_ISLNK (rax.st_mode)))
+		if (!S_ISLNK (rax.st_mode))
 			return FALSE ;
 		return TRUE ;
 	}
 
 	Deque<String<STR>> decouple () const override {
-		Deque<String<STR>> ret ;
+		Deque<String<STR>> ret = Deque<String<STR>> (fake.mThis->mSeparator.length ()) ;
 		INDEX ix = 0 ;
-		const auto r1x = fake.mThis->mLength ;
-		for (auto &&i : iter (0 ,r1x)) {
-			if ((!is_separator (fake.mThis->mPathName[i])))
-				continue ;
-			const auto r2x = i - ix ;
-			if (r2x <= 0)
-				continue ;
-			const auto r3x = address (fake.mThis->mPathName.at (ix)) ;
-			const auto r4x = Slice (r3x ,r2x ,SIZE_OF<STR>::expr) ;
+		for (auto &&i : iter (1 ,fake.mThis->mSeparator.length ())) {
+			const auto r1x = fake.mThis->mSeparator[i - 1] + 1 ;
+			const auto r2x = fake.mThis->mSeparator[i] ;
+			const auto r3x = address (fake.mThis->mPathName.at (r1x)) ;
+			const auto r4x = Slice (r3x ,r2x - r1x ,SIZE_OF<STR>::expr) ;
 			ret.add (r4x) ;
-			ix = i + 1 ;
-		}
-		if ifdo (TRUE) {
-			const auto r5x = r1x - ix ;
-			if (r5x <= 0)
-				discard ;
-			const auto r6x = address (fake.mThis->mPathName.at (ix)) ;
-			const auto r7x = Slice (r6x ,r5x ,SIZE_OF<STR>::expr) ;
-			ret.add (r7x) ;
-			ix = r1x + 1 ;
 		}
 		return move (ret) ;
 	}
 
 	String<STR> path () const override {
-		const auto r1x = find_last_quat () + 1 ;
+		const auto r1x = fake.mThis->mSeparator[fake.mThis->mSeparator.length () - 2] + 1 ;
 		String<STR> ret = String<STR> (r1x) ;
 		INDEX ix = 0 ;
 		for (auto &&i : iter (0 ,r1x)) {
@@ -690,11 +686,11 @@ public:
 	}
 
 	String<STR> name () const override {
-		const auto r1x = find_last_quat () + 1 ;
-		const auto r2x = fake.mThis->mLength - r1x ;
-		String<STR> ret = String<STR> (r2x) ;
+		const auto r1x = fake.mThis->mSeparator[fake.mThis->mSeparator.length () - 2] + 1 ;
+		const auto r2x = fake.mThis->mSeparator[fake.mThis->mSeparator.length () - 1] ;
+		String<STR> ret = String<STR> (r2x - r1x) ;
 		INDEX ix = 0 ;
-		for (auto &&i : iter (r1x ,fake.mThis->mLength)) {
+		for (auto &&i : iter (r1x ,r2x)) {
 			ret[ix] = fake.mThis->mPathName[i] ;
 			ix++ ;
 		}
@@ -702,23 +698,10 @@ public:
 		return move (ret) ;
 	}
 
-	INDEX find_last_quat () const {
-		INDEX ix = fake.mThis->mLength ;
-		while (TRUE) {
-			if (ix <= 0)
-				break ;
-			if (is_separator (fake.mThis->mPathName[ix]))
-				return ix ;
-			ix-- ;
-		}
-		return 0 ;
-	}
-
 	String<STR> stem () const override {
-		const auto r1x = find_last_quat () + 1 ;
+		const auto r1x = fake.mThis->mSeparator[fake.mThis->mSeparator.length () - 2] + 1 ;
 		const auto r2x = find_last_dot_word () ;
-		const auto r3x = inline_max (r2x - r1x ,0) ;
-		String<STR> ret = String<STR> (r3x) ;
+		String<STR> ret = String<STR> (r2x - r1x) ;
 		INDEX ix = 0 ;
 		for (auto &&i : iter (r1x ,r2x)) {
 			ret[ix] = fake.mThis->mPathName[i] ;
@@ -730,10 +713,10 @@ public:
 
 	String<STR> extension () const override {
 		const auto r1x = find_last_dot_word () ;
-		const auto r2x = fake.mThis->mLength - r1x ;
-		String<STR> ret = String<STR> (r2x) ;
+		const auto r2x = fake.mThis->mSeparator[fake.mThis->mSeparator.length () - 1] ;
+		String<STR> ret = String<STR> (r2x - r1x) ;
 		INDEX ix = 0 ;
-		for (auto &&i : iter (r1x ,fake.mThis->mLength)) {
+		for (auto &&i : iter (r1x ,r2x)) {
 			ret[ix] = fake.mThis->mPathName[i] ;
 			ix++ ;
 		}
@@ -742,17 +725,17 @@ public:
 	}
 
 	INDEX find_last_dot_word () const {
-		INDEX ix = fake.mThis->mLength - 1 ;
+		INDEX ix = fake.mThis->mSeparator[fake.mThis->mSeparator.length () - 1] - 1 ;
 		while (TRUE) {
 			if (ix <= 0)
 				break ;
 			if (fake.mThis->mPathName[ix] == STRU32 ('.'))
 				return ix ;
-			if ((!StreamProc::is_word (fake.mThis->mPathName[ix])))
+			if (!StreamProc::is_word (fake.mThis->mPathName[ix]))
 				break ;
 			ix-- ;
 		}
-		return fake.mThis->mLength ;
+		return fake.mThis->mSeparator[fake.mThis->mSeparator.length () - 1] ;
 	}
 } ;
 
@@ -904,7 +887,7 @@ public:
 			INDEX ix = rax.tail () ;
 			auto act = TRUE ;
 			if ifdo (act) {
-				if ((!rax[ix].m2nd))
+				if (!rax[ix].m2nd)
 					discard ;
 				rax[ix].m2nd = FALSE ;
 				clear_dire_push (rax ,ix) ;
@@ -921,17 +904,17 @@ public:
 		for (auto &&i : r1x) {
 			auto act = TRUE ;
 			if ifdo (act) {
-				if ((!i.is_link ()))
+				if (!i.is_link ())
 					discard ;
 				erase_file (i) ;
 			}
 			if ifdo (act) {
-				if ((!i.is_file ()))
+				if (!i.is_file ())
 					discard ;
 				erase_file (i) ;
 			}
 			if ifdo (act) {
-				if ((!i.is_dire ()))
+				if (!i.is_dire ())
 					discard ;
 				queue.add ({i ,TRUE}) ;
 			}
@@ -993,8 +976,8 @@ public:
 	}
 
 	void open_r () override {
-		assert ((!fake.mThis->mReadPipe.exist ())) ;
-		assert ((!fake.mThis->mWritePipe.exist ())) ;
+		assert (!fake.mThis->mReadPipe.exist ()) ;
+		assert (!fake.mThis->mWritePipe.exist ()) ;
 		fake.mThis->mReadPipe = UniqueRef<HFILE> ([&] (VREF<HFILE> me) {
 			const auto r1x = csc_enum_t (S_IRWXU | S_IRWXG | S_IRWXO) ;
 			me = std::open (fake.mThis->mFile ,O_RDONLY ,r1x) ;
@@ -1008,8 +991,8 @@ public:
 	}
 
 	void open_w (CREF<LENGTH> count) override {
-		assert ((!fake.mThis->mReadPipe.exist ())) ;
-		assert ((!fake.mThis->mWritePipe.exist ())) ;
+		assert (!fake.mThis->mReadPipe.exist ()) ;
+		assert (!fake.mThis->mWritePipe.exist ()) ;
 		fake.mThis->mWritePipe = UniqueRef<HFILE> ([&] (VREF<HFILE> me) {
 			const auto r1x = csc_enum_t (O_CREAT | O_WRONLY | O_TRUNC) ;
 			const auto r2x = csc_enum_t (S_IRWXU | S_IRWXG | S_IRWXO) ;
@@ -1024,8 +1007,8 @@ public:
 	}
 
 	void open_a () override {
-		assert ((!fake.mThis->mReadPipe.exist ())) ;
-		assert ((!fake.mThis->mWritePipe.exist ())) ;
+		assert (!fake.mThis->mReadPipe.exist ()) ;
+		assert (!fake.mThis->mWritePipe.exist ()) ;
 		fake.mThis->mReadPipe = UniqueRef<HFILE> ([&] (VREF<HFILE> me) {
 			const auto r1x = csc_enum_t (O_CREAT | O_RDONLY) ;
 			const auto r2x = csc_enum_t (S_IRWXU | S_IRWXG | S_IRWXO) ;
@@ -1103,7 +1086,7 @@ public:
 	}
 
 	void flush () override {
-		if ((!fake.mThis->mWritePipe.exist ()))
+		if (!fake.mThis->mWritePipe.exist ())
 			return ;
 		fsync (fake.mThis->mWritePipe) ;
 	}
@@ -1165,12 +1148,14 @@ public:
 	}
 
 	void set_cache_size (CREF<LENGTH> size_) override {
-		return fake.mThis->set_cache_size (size_) ;
+		fake.mThis->mCacheSet = Set<VAL64> (size_) ;
+		fake.mThis->mCacheList = List<BufferFileChunk> (size_) ;
+		fake.mThis->mCacheTimer = 0 ;
 	}
 
 	void open_r () override {
-		assert ((!fake.mThis->mPipe.exist ())) ;
-		assert ((!fake.mThis->mMapping.exist ())) ;
+		assert (!fake.mThis->mPipe.exist ()) ;
+		assert (!fake.mThis->mMapping.exist ()) ;
 		fake.mThis->mPipe = UniqueRef<HFILE> ([&] (VREF<HFILE> me) {
 			const auto r1x = csc_enum_t (S_IRWXU | S_IRWXG | S_IRWXO) ;
 			me = std::open (fake.mThis->mFile ,O_RDONLY ,r1x) ;
@@ -1189,8 +1174,8 @@ public:
 	}
 
 	void open_w (CREF<LENGTH> count) override {
-		assert ((!fake.mThis->mPipe.exist ())) ;
-		assert ((!fake.mThis->mMapping.exist ())) ;
+		assert (!fake.mThis->mPipe.exist ()) ;
+		assert (!fake.mThis->mMapping.exist ()) ;
 		fake.mThis->mPipe = UniqueRef<HFILE> ([&] (VREF<HFILE> me) {
 			const auto r1x = csc_enum_t (O_CREAT | O_RDWR | O_TRUNC) ;
 			const auto r2x = csc_enum_t (S_IRWXU | S_IRWXG | S_IRWXO) ;
@@ -1201,7 +1186,7 @@ public:
 		}) ;
 		const auto r3x = count * fake.mThis->mBlockStepSize ;
 		const auto r4x = CHUNK_STEP_SIZE::expr / fake.mThis->mBlockStepSize ;
-		const auto r5x = inline_alignas (r3x ,r4x) / r4x ;
+		const auto r5x = (r3x + r4x - 1) / r4x ;
 		fake.mThis->mFileSize = HEADER_SIZE::expr + r5x * CHUNK_STEP_SIZE::expr ;
 		fake.mThis->mMapping = UniqueRef<LENGTH> ([&] (VREF<LENGTH> me) {
 			me = ftruncate64 (fake.mThis->mPipe ,fake.mThis->mFileSize) ;
@@ -1214,8 +1199,8 @@ public:
 	}
 
 	void open_a () override {
-		assert ((!fake.mThis->mPipe.exist ())) ;
-		assert ((!fake.mThis->mMapping.exist ())) ;
+		assert (!fake.mThis->mPipe.exist ()) ;
+		assert (!fake.mThis->mMapping.exist ()) ;
 		assume (fake.mThis->mHeader != NULL) ;
 		fake.mThis->mPipe = UniqueRef<HFILE> ([&] (VREF<HFILE> me) {
 			const auto r1x = csc_enum_t (O_CREAT | O_RDWR) ;
@@ -1345,26 +1330,26 @@ public:
 
 	void read (CREF<INDEX> index ,VREF<RefBuffer<BYTE>> item) override {
 		assert (fake.mThis->mPipe.exist ()) ;
-		assert (inline_between (index ,0 ,fake.mThis->mHeader->mBlockCount)) ;
+		assert (inline_between (index ,0 ,LENGTH (fake.mThis->mHeader->mBlockCount))) ;
 		assert (item.size () == fake.mThis->mHeader->mBlockStepSize) ;
 		const auto r1x = index / fake.mThis->mHeader->mChunkCapacity ;
 		const auto r2x = index % fake.mThis->mHeader->mChunkCapacity * fake.mThis->mHeader->mBlockStepSize ;
 		const auto r3x = HEADER_SIZE::expr + r1x * fake.mThis->mHeader->mChunkStepSize ;
-		INDEX ix = load (r3x ,fake.mThis->mHeader->mChunkStepSize) ;
-		const auto r4x = fake.mThis->mCacheList[ix].mBuffer->m1st + r2x ;
-		inline_memcpy (Pointer::from (item.self) ,Pointer::make (r4x) ,fake.mThis->mHeader->mBlockStepSize) ;
+		INDEX ix = load (r3x ,LENGTH (fake.mThis->mHeader->mChunkStepSize)) ;
+		const auto r4x = fake.mThis->mCacheList[ix].mBuffer->m1st + LENGTH (r2x) ;
+		inline_memcpy (Pointer::from (item.self) ,Pointer::make (r4x) ,LENGTH (fake.mThis->mHeader->mBlockStepSize)) ;
 	}
 
 	void write (CREF<INDEX> index ,CREF<RefBuffer<BYTE>> item) override {
 		assert (fake.mThis->mPipe.exist ()) ;
-		assert (inline_between (index ,0 ,fake.mThis->mHeader->mBlockCount)) ;
+		assert (inline_between (index ,0 ,LENGTH (fake.mThis->mHeader->mBlockCount))) ;
 		assert (item.size () == fake.mThis->mHeader->mBlockStepSize) ;
 		const auto r1x = index / fake.mThis->mHeader->mChunkCapacity ;
 		const auto r2x = index % fake.mThis->mHeader->mChunkCapacity * fake.mThis->mHeader->mBlockStepSize ;
 		const auto r3x = HEADER_SIZE::expr + r1x * fake.mThis->mHeader->mChunkStepSize ;
-		INDEX ix = load (r3x ,fake.mThis->mHeader->mChunkStepSize) ;
-		const auto r4x = fake.mThis->mCacheList[ix].mBuffer->m1st + r2x ;
-		inline_memcpy (Pointer::make (r4x) ,Pointer::from (item.self) ,fake.mThis->mHeader->mBlockStepSize) ;
+		INDEX ix = load (r3x ,LENGTH (fake.mThis->mHeader->mChunkStepSize)) ;
+		const auto r4x = fake.mThis->mCacheList[ix].mBuffer->m1st + LENGTH (r2x) ;
+		inline_memcpy (Pointer::make (r4x) ,Pointer::from (item.self) ,LENGTH (fake.mThis->mHeader->mBlockStepSize)) ;
 	}
 
 	INDEX load (CREF<VAL64> offset ,CREF<LENGTH> size_) {
@@ -1413,7 +1398,7 @@ public:
 	}
 
 	void flush () override {
-		if ((!fake.mThis->mPipe.exist ()))
+		if (!fake.mThis->mPipe.exist ())
 			return ;
 		fake.mThis->mCacheSet.clear () ;
 		fake.mThis->mCacheList.clear () ;
@@ -1447,7 +1432,7 @@ public:
 		fake.mThis->mWriter = TextWriter (fake.mThis->mWriterBuffer.borrow ()) ;
 	}
 
-	void set_option (CREF<JustInt<ConsoleOption>> option) const override {
+	void set_option (CREF<Just<ConsoleOption>> option) const override {
 		Scope<Mutex> anonymous (fake.mMutex) ;
 		auto act = TRUE ;
 		if ifdo (act) {
@@ -1477,7 +1462,6 @@ public:
 		fake.mThis->mWriter << msg ;
 		fake.mThis->mWriter << GAP ;
 		fake.mThis->mWriter << EOS ;
-		log_file () ;
 	}
 
 	void print (CREF<Format> msg) const override {
@@ -1487,7 +1471,7 @@ public:
 		log (slice ("Print") ,msg) ;
 		if ifdo (TRUE) {
 			const auto r1x = String<STRA> (slice ("%s\n")) ;
-			auto rax = PTR<CREF<STRA>> ((&fake.mThis->mWriterBuffer[0])) ;
+			auto rax = csc_pointer_t (&fake.mThis->mWriterBuffer[0]) ;
 			printf (r1x ,rax) ;
 		}
 	}
@@ -1497,9 +1481,10 @@ public:
 		if (fake.mThis->mOption[ConsoleOption::NoFatal])
 			return ;
 		log (slice ("Fatal") ,msg) ;
+		log_file () ;
 		if ifdo (TRUE) {
 			const auto r1x = String<STRA> (slice ("\033[1;34m%s\033[0m\n")) ;
-			auto rax = PTR<CREF<STRA>> ((&fake.mThis->mWriterBuffer[0])) ;
+			auto rax = csc_pointer_t (&fake.mThis->mWriterBuffer[0]) ;
 			printf (r1x ,rax) ;
 		}
 	}
@@ -1509,9 +1494,10 @@ public:
 		if (fake.mThis->mOption[ConsoleOption::NoError])
 			return ;
 		log (slice ("Error") ,msg) ;
+		log_file () ;
 		if ifdo (TRUE) {
 			const auto r1x = String<STRA> (slice ("\033[1;31m%s\033[0m\n")) ;
-			auto rax = PTR<CREF<STRA>> ((&fake.mThis->mWriterBuffer[0])) ;
+			auto rax = csc_pointer_t (&fake.mThis->mWriterBuffer[0]) ;
 			printf (r1x ,rax) ;
 		}
 	}
@@ -1521,9 +1507,10 @@ public:
 		if (fake.mThis->mOption[ConsoleOption::NoWarn])
 			return ;
 		log (slice ("Warn") ,msg) ;
+		log_file () ;
 		if ifdo (TRUE) {
 			const auto r1x = String<STRA> (slice ("\033[1;33m%s\033[0m\n")) ;
-			auto rax = PTR<CREF<STRA>> ((&fake.mThis->mWriterBuffer[0])) ;
+			auto rax = csc_pointer_t (&fake.mThis->mWriterBuffer[0]) ;
 			printf (r1x ,rax) ;
 		}
 	}
@@ -1533,9 +1520,10 @@ public:
 		if (fake.mThis->mOption[ConsoleOption::NoInfo])
 			return ;
 		log (slice ("Info") ,msg) ;
+		log_file () ;
 		if ifdo (TRUE) {
 			const auto r1x = String<STRA> (slice ("\033[1;32m%s\033[0m\n")) ;
-			auto rax = PTR<CREF<STRA>> ((&fake.mThis->mWriterBuffer[0])) ;
+			auto rax = csc_pointer_t (&fake.mThis->mWriterBuffer[0]) ;
 			printf (r1x ,rax) ;
 		}
 	}
@@ -1545,21 +1533,23 @@ public:
 		if (fake.mThis->mOption[ConsoleOption::NoDebug])
 			return ;
 		log (slice ("Debug") ,msg) ;
+		log_file () ;
 		if ifdo (TRUE) {
 			const auto r1x = String<STRA> (slice ("\033[1;36m%s\033[0m\n")) ;
-			auto rax = PTR<CREF<STRA>> ((&fake.mThis->mWriterBuffer[0])) ;
+			auto rax = csc_pointer_t (&fake.mThis->mWriterBuffer[0]) ;
 			printf (r1x ,rax) ;
 		}
 	}
 
-	void verbose (CREF<Format> msg) const override {
+	void trace (CREF<Format> msg) const override {
 		Scope<Mutex> anonymous (fake.mMutex) ;
-		if (fake.mThis->mOption[ConsoleOption::NoVarbose])
+		if (fake.mThis->mOption[ConsoleOption::NoTrace])
 			return ;
-		log (slice ("Varbose") ,msg) ;
+		log (slice ("Trace") ,msg) ;
+		log_file () ;
 		if ifdo (TRUE) {
 			const auto r1x = String<STRA> (slice ("\033[1;37m%s\033[0m\n")) ;
-			auto rax = PTR<CREF<STRA>> ((&fake.mThis->mWriterBuffer[0])) ;
+			auto rax = csc_pointer_t (&fake.mThis->mWriterBuffer[0]) ;
 			printf (r1x ,rax) ;
 		}
 	}

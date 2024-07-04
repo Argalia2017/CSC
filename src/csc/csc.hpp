@@ -133,6 +133,7 @@
 #pragma clang diagnostic ignored "-Wunused-parameter"
 #pragma clang diagnostic ignored "-Wunused-function"
 #pragma clang diagnostic ignored "-Wmicrosoft-template"
+#pragma clang diagnostic ignored "-Wdefaulted-function-deleted"
 #endif
 
 #include "csc_end.h"
@@ -228,7 +229,7 @@ struct is_trivially_default_constructible :integral_constant<bool ,__has_trivial
 #endif
 
 #ifdef __CSC_VER_UNITTEST__
-#define __macro_assert(...) do { if (__VA_ARGS__) break ; CSC::inline_abort () ; } while (false)
+#define __macro_assert(...) do { if (__VA_ARGS__) break ; CSC::inline_break () ; } while (false)
 #endif
 
 #ifdef __CSC_VER_RELEASE__
@@ -266,11 +267,11 @@ struct is_trivially_default_constructible :integral_constant<bool ,__has_trivial
 
 #ifndef __macro_barrier
 #ifdef __CSC_VER_DEBUG__
-#define __macro_barrier(...) do { struct LINE ; CSC::inline_barrier (TYPE<LINE>::expr ,CSC::csc_pointer_t ((&__VA_ARGS__))) ; } while (false)
+#define __macro_barrier(...) do { struct LINE ; CSC::inline_barrier (TYPE<LINE>::expr ,CSC::csc_pointer_t (&__VA_ARGS__)) ; } while (false)
 #endif
 
 #ifdef __CSC_VER_UNITTEST__
-#define __macro_barrier(...) do { struct LINE ; CSC::inline_barrier (TYPE<LINE>::expr ,CSC::csc_pointer_t ((&__VA_ARGS__))) ; } while (false)
+#define __macro_barrier(...) do { struct LINE ; CSC::inline_barrier (TYPE<LINE>::expr ,CSC::csc_pointer_t (&__VA_ARGS__)) ; } while (false)
 #endif
 
 #ifdef __CSC_VER_RELEASE__

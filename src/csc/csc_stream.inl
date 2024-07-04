@@ -17,10 +17,8 @@
 #pragma warning (disable :4996)
 #endif
 
-namespace CSC {
 namespace std {
-using namespace ::std ;
-
+inline namespace extand {
 using ::setlocale ;
 } ;
 } ;
@@ -51,7 +49,6 @@ public:
 		fake.mThis->mBlankSet.add (STRU32 ('\r') ,GapType::Endline) ;
 		fake.mThis->mBlankSet.add (STRU32 ('\n') ,GapType::Endline) ;
 		fake.mThis->mBlankSet.add (STRU32 ('\f') ,GapType::Endline) ;
-		escape_list_add (STRU32 ('\\') ,STRU32 ('\\')) ;
 		escape_list_add (STRU32 ('\\') ,STRU32 ('\\')) ;
 		escape_list_add (STRU32 ('/') ,STRU32 ('/')) ;
 		escape_list_add (STRU32 ('t') ,STRU32 ('\t')) ;
@@ -291,7 +288,7 @@ public:
 		auto rax = Buffer<BYTE ,SIZE_OF<ARG1>> () ;
 		auto act = TRUE ;
 		if ifdo (act) {
-			if ((!StreamProc::big_endian ()))
+			if (!StreamProc::big_endian ())
 				discard ;
 			for (auto &&i : iter (0 ,rax.size ())) {
 				INDEX ix = i ;
@@ -493,7 +490,7 @@ public:
 			item = rbx.mMantissa ;
 		}
 		if ifdo (TRUE) {
-			if ((!r1x))
+			if (!r1x)
 				discard ;
 			item = -item ;
 		}
@@ -505,7 +502,7 @@ public:
 		const auto r1x = FloatProc::value_precision () ;
 		if ifdo (TRUE) {
 			while (TRUE) {
-				if ((!StreamProc::is_digit (top)))
+				if (!StreamProc::is_digit (top))
 					break ;
 				if (fexp10.mPrecision > r1x - 1)
 					break ;
@@ -515,7 +512,7 @@ public:
 				read (top) ;
 			}
 			if ifdo (TRUE) {
-				if ((!StreamProc::is_digit (top)))
+				if (!StreamProc::is_digit (top))
 					discard ;
 				const auto r2x = fexp10.mMantissa * 10 + StreamProc::hex_from_str (top) ;
 				if (r2x < 0)
@@ -525,7 +522,7 @@ public:
 				read (top) ;
 			}
 			while (TRUE) {
-				if ((!StreamProc::is_digit (top)))
+				if (!StreamProc::is_digit (top))
 					break ;
 				fexp10.mExponent++ ;
 				read (top) ;
@@ -567,7 +564,7 @@ public:
 			item = FloatProc::encode (rbx) ;
 		}
 		if ifdo (TRUE) {
-			if ((!r1x))
+			if (!r1x)
 				discard ;
 			item = -item ;
 		}
@@ -583,7 +580,7 @@ public:
 				discard ;
 			read (top) ;
 			while (TRUE) {
-				if ((!StreamProc::is_digit (top)))
+				if (!StreamProc::is_digit (top))
 					break ;
 				if (fexp10.mPrecision > r1x - 1)
 					break ;
@@ -594,7 +591,7 @@ public:
 				read (top) ;
 			}
 			while (TRUE) {
-				if ((!StreamProc::is_digit (top)))
+				if (!StreamProc::is_digit (top))
 					break ;
 				read (top) ;
 			}
@@ -680,8 +677,8 @@ public:
 				discard ;
 			if (fake.mRead >= fake.mWrite)
 				discard ;
-			auto &&tmp = keep[TYPE<RefBuffer<STRU8>>::expr] (keep[TYPE<RefBufferLayout>::expr] (fake.mStream.self)) ;
-			item = tmp[fake.mRead] ;
+			auto &&rax = keep[TYPE<RefBuffer<STRU8>>::expr] (keep[TYPE<RefBufferLayout>::expr] (fake.mStream.self)) ;
+			item = rax[fake.mRead] ;
 			fake.mRead++ ;
 		}
 		if ifdo (act) {
@@ -689,8 +686,8 @@ public:
 				discard ;
 			if (fake.mRead >= fake.mWrite)
 				discard ;
-			auto &&tmp = keep[TYPE<RefBuffer<STRU16>>::expr] (keep[TYPE<RefBufferLayout>::expr] (fake.mStream.self)) ;
-			item = tmp[fake.mRead] ;
+			auto &&rax = keep[TYPE<RefBuffer<STRU16>>::expr] (keep[TYPE<RefBufferLayout>::expr] (fake.mStream.self)) ;
+			item = rax[fake.mRead] ;
 			fake.mRead++ ;
 		}
 		if ifdo (act) {
@@ -698,8 +695,8 @@ public:
 				discard ;
 			if (fake.mRead >= fake.mWrite)
 				discard ;
-			auto &&tmp = keep[TYPE<RefBuffer<STRU32>>::expr] (keep[TYPE<RefBufferLayout>::expr] (fake.mStream.self)) ;
-			item = tmp[fake.mRead] ;
+			auto &&rax = keep[TYPE<RefBuffer<STRU32>>::expr] (keep[TYPE<RefBufferLayout>::expr] (fake.mStream.self)) ;
+			item = rax[fake.mRead] ;
 			fake.mRead++ ;
 		}
 		if ifdo (act) {
@@ -766,28 +763,41 @@ public:
 
 	void read (CREF<typeof (BOM)>) override {
 		auto rax = STRU32 () ;
+		const auto r1x = fake.mRead ;
+		const auto r2x = fake.mWrite ;
 		auto act = TRUE ;
 		if ifdo (act) {
-			if (fake.mStream->step () == SIZE_OF<STRU8>::expr)
+			if (fake.mStream->step () != SIZE_OF<STRU8>::expr)
 				discard ;
 			read (rax) ;
-			assume (rax == STRU32 (0XEF)) ;
+			if (rax != STRU32 (0XEF))
+				discard ;
 			read (rax) ;
-			assume (rax == STRU32 (0XBB)) ;
+			if (rax != STRU32 (0XBB))
+				discard ;
 			read (rax) ;
-			assume (rax == STRU32 (0XBF)) ;
+			if (rax != STRU32 (0XBF))
+				discard ;
+			noop (rax) ;
 		}
 		if ifdo (act) {
-			if (fake.mStream->step () == SIZE_OF<STRU16>::expr)
+			if (fake.mStream->step () != SIZE_OF<STRU16>::expr)
 				discard ;
 			read (rax) ;
-			assume (rax == STRU32 (0XFEFF)) ;
+			if (rax != STRU32 (0XFEFF))
+				discard ;
+			noop (rax) ;
 		}
 		if ifdo (act) {
-			if (fake.mStream->step () == SIZE_OF<STRU32>::expr)
+			if (fake.mStream->step () != SIZE_OF<STRU32>::expr)
 				discard ;
 			read (rax) ;
-			assume (rax == STRU32 (0X0000FEFF)) ;
+			if (rax != STRU32 (0X0000FEFF))
+				discard ;
+			noop (rax) ;
+		}
+		if ifdo (act) {
+			reset (r1x ,r2x) ;
 		}
 	}
 
@@ -797,7 +807,7 @@ public:
 		while (TRUE) {
 			if (rax == STRU32 (0X00))
 				break ;
-			if ((!StreamProc::is_blank (rax)))
+			if (!StreamProc::is_blank (rax))
 				break ;
 			read (rax) ;
 		}
@@ -918,7 +928,7 @@ public:
 		const auto r1x = bitwise[TYPE<Buffer<BYTE ,SIZE_OF<ARG1>>>::expr] (item) ;
 		auto act = TRUE ;
 		if ifdo (act) {
-			if ((!StreamProc::big_endian ()))
+			if (!StreamProc::big_endian ())
 				discard ;
 			for (auto &&i : iter (0 ,r1x.size ())) {
 				INDEX ix = i ;
@@ -1053,7 +1063,7 @@ public:
 	void write (CREF<BOOL> item) override {
 		auto act = TRUE ;
 		if ifdo (act) {
-			if ((!item))
+			if (!item)
 				discard ;
 			write (slice ("true")) ;
 		}
@@ -1086,7 +1096,7 @@ public:
 			rax.mMantissa = MathProc::abs (item) ;
 			rax.mDownflow = 0 ;
 			rax.mExponent = 0 ;
-			rax.mPrecision = MathProc::log10 (rax.mMantissa) ;
+			rax.mPrecision = LENGTH (MathProc::log10 (rax.mMantissa)) ;
 			auto rbx = WriteValueBuffer () ;
 			rbx.mWrite = rbx.mBuffer.size () ;
 			write_value (rax ,rbx) ;
@@ -1118,7 +1128,7 @@ public:
 			}
 		}
 		if ifdo (TRUE) {
-			if ((!fexp10.mSign))
+			if (!fexp10.mSign)
 				discard ;
 			wvb.mWrite-- ;
 			wvb.mBuffer[wvb.mWrite] = STRU32 ('-') ;
@@ -1138,14 +1148,14 @@ public:
 		}
 		auto act = TRUE ;
 		if ifdo (act) {
-			if ((!MathProc::is_inf (item)))
+			if (!MathProc::is_inf (item))
 				discard ;
 			write (slice ("infinity")) ;
 		}
 		if ifdo (act) {
 			auto rax = FloatProc::decode (MathProc::abs (item)) ;
 			rax = FloatProc::fexp10_from_fexp2 (rax) ;
-			rax.mPrecision = MathProc::log10 (rax.mMantissa) ;
+			rax.mPrecision = LENGTH (MathProc::log10 (rax.mMantissa)) ;
 			auto rbx = WriteValueBuffer () ;
 			rbx.mWrite = rbx.mBuffer.size () ;
 			write_float (rax ,rbx) ;
@@ -1205,7 +1215,7 @@ public:
 			rax.mMantissa = MathProc::abs (r6x) ;
 			rax.mDownflow = 0 ;
 			rax.mExponent = 0 ;
-			rax.mPrecision = MathProc::log10 (rax.mMantissa) ;
+			rax.mPrecision = LENGTH (MathProc::log10 (rax.mMantissa)) ;
 			write_value (rax ,wvb) ;
 			wvb.mWrite-- ;
 			wvb.mBuffer[wvb.mWrite] = STRU32 ('E') ;
@@ -1369,8 +1379,8 @@ public:
 				discard ;
 			if (fake.mWrite >= fake.mRead)
 				discard ;
-			auto &&tmp = keep[TYPE<RefBuffer<STRU8>>::expr] (keep[TYPE<RefBufferLayout>::expr] (fake.mStream.self)) ;
-			tmp[fake.mWrite] = STRU8 (item) ;
+			auto &&rax = keep[TYPE<RefBuffer<STRU8>>::expr] (keep[TYPE<RefBufferLayout>::expr] (fake.mStream.self)) ;
+			rax[fake.mWrite] = STRU8 (item) ;
 			fake.mWrite++ ;
 		}
 		if ifdo (act) {
@@ -1378,8 +1388,8 @@ public:
 				discard ;
 			if (fake.mWrite >= fake.mRead)
 				discard ;
-			auto &&tmp = keep[TYPE<RefBuffer<STRU16>>::expr] (keep[TYPE<RefBufferLayout>::expr] (fake.mStream.self)) ;
-			tmp[fake.mWrite] = STRU16 (item) ;
+			auto &&rax = keep[TYPE<RefBuffer<STRU16>>::expr] (keep[TYPE<RefBufferLayout>::expr] (fake.mStream.self)) ;
+			rax[fake.mWrite] = STRU16 (item) ;
 			fake.mWrite++ ;
 		}
 		if ifdo (act) {
@@ -1387,8 +1397,8 @@ public:
 				discard ;
 			if (fake.mWrite >= fake.mRead)
 				discard ;
-			auto &&tmp = keep[TYPE<RefBuffer<STRU32>>::expr] (keep[TYPE<RefBufferLayout>::expr] (fake.mStream.self)) ;
-			tmp[fake.mWrite] = STRU32 (item) ;
+			auto &&rax = keep[TYPE<RefBuffer<STRU32>>::expr] (keep[TYPE<RefBufferLayout>::expr] (fake.mStream.self)) ;
+			rax[fake.mWrite] = STRU32 (item) ;
 			fake.mWrite++ ;
 		}
 		if ifdo (act) {
@@ -1485,37 +1495,37 @@ public:
 	}
 
 	void friend_write (VREF<StreamWriter> writer) const override {
-		auto rax = JustInt<FLAG> (0) ;
+		auto rax = Just<FLAG> (0) ;
 		for (auto &&i : iter (0 ,fake.mFormat.size ())) {
 			auto act = TRUE ;
 			if ifdo (act) {
-				if (rax != JustInt<FLAG> (0))
+				if (rax != Just<FLAG> (0))
 					discard ;
 				if (fake.mFormat[i] != STRU32 ('$'))
 					discard ;
-				rax = JustInt<FLAG> (2) ;
+				rax = Just<FLAG> (2) ;
 			}
 			if ifdo (act) {
-				if (rax != JustInt<FLAG> (2))
+				if (rax != Just<FLAG> (2))
 					discard ;
 				if (fake.mFormat[i] != STRU32 ('{'))
 					discard ;
-				rax = JustInt<FLAG> (1) ;
+				rax = Just<FLAG> (1) ;
 			}
 			if ifdo (act) {
-				if (rax != JustInt<FLAG> (2))
+				if (rax != Just<FLAG> (2))
 					discard ;
 				if ifdo (TRUE) {
 					const auto r1x = StreamProc::hex_from_str (fake.mFormat[i]) ;
-					if ((!inline_between (r1x ,0 ,fake.mTop)))
+					if (!inline_between (r1x ,0 ,fake.mTop))
 						discard ;
 					const auto r2x = keep[TYPE<CFat<FormatFriend>>::expr] (Pointer::from (fake.mParams[r1x])) ;
 					r2x->friend_write (writer) ;
 				}
-				rax = JustInt<FLAG> (0) ;
+				rax = Just<FLAG> (0) ;
 			}
 			if ifdo (act) {
-				if (rax != JustInt<FLAG> (1))
+				if (rax != Just<FLAG> (1))
 					discard ;
 				if (fake.mFormat[i] != STRU32 ('*'))
 					discard ;
@@ -1523,28 +1533,28 @@ public:
 					const auto r3x = keep[TYPE<CFat<FormatFriend>>::expr] (Pointer::from (fake.mParams[j])) ;
 					r3x->friend_write (writer) ;
 				}
-				rax = JustInt<FLAG> (3) ;
+				rax = Just<FLAG> (3) ;
 			}
 			if ifdo (act) {
-				if (rax != JustInt<FLAG> (1))
+				if (rax != Just<FLAG> (1))
 					discard ;
 				if ifdo (TRUE) {
 					const auto r4x = StreamProc::hex_from_str (fake.mFormat[i]) ;
-					if ((!inline_between (r4x ,0 ,fake.mTop)))
+					if (!inline_between (r4x ,0 ,fake.mTop))
 						discard ;
 					const auto r5x = keep[TYPE<CFat<FormatFriend>>::expr] (Pointer::from (fake.mParams[r4x])) ;
 					r5x->friend_write (writer) ;
 				}
-				rax = JustInt<FLAG> (3) ;
+				rax = Just<FLAG> (3) ;
 			}
 			if ifdo (act) {
-				if (rax != JustInt<FLAG> (3))
+				if (rax != Just<FLAG> (3))
 					discard ;
 				assert (fake.mFormat[i] == STRU32 ('}')) ;
-				rax = JustInt<FLAG> (0) ;
+				rax = Just<FLAG> (0) ;
 			}
 			if ifdo (act) {
-				assume (rax == JustInt<FLAG> (0)) ;
+				assume (rax == Just<FLAG> (0)) ;
 				writer.write (fake.mFormat[i]) ;
 			}
 		}
@@ -1654,14 +1664,14 @@ public:
 	String<STRU8> stru8_from_stru16 (CREF<String<STRU16>> a) const override {
 		String<STRU8> ret = String<STRU8> (a.length () * 3) ;
 		INDEX ix = 0 ;
-		auto rax = JustInt<FLAG> (0) ;
+		auto rax = Just<FLAG> (0) ;
 		auto rbx = STRU32 () ;
 		for (auto &&i : a.range ()) {
-			if (rax == JustInt<FLAG> (99))
+			if (rax == Just<FLAG> (99))
 				continue ;
 			auto act = TRUE ;
 			if ifdo (act) {
-				if (rax != JustInt<FLAG> (0))
+				if (rax != Just<FLAG> (0))
 					discard ;
 				if (a[i] > STRU16 (0X007F))
 					discard ;
@@ -1669,7 +1679,7 @@ public:
 				ix++ ;
 			}
 			if ifdo (act) {
-				if (rax != JustInt<FLAG> (0))
+				if (rax != Just<FLAG> (0))
 					discard ;
 				if (a[i] > STRU16 (0X07FF))
 					discard ;
@@ -1679,17 +1689,17 @@ public:
 				ix++ ;
 			}
 			if ifdo (act) {
-				if (rax != JustInt<FLAG> (0))
+				if (rax != Just<FLAG> (0))
 					discard ;
 				if (a[i] < STRU16 (0XD800))
 					discard ;
 				if (a[i] > STRU16 (0XDBFF))
 					discard ;
 				rbx = STRU32 (a[i] & STRU16 (0X03FF)) ;
-				rax = JustInt<FLAG> (1) ;
+				rax = Just<FLAG> (1) ;
 			}
 			if ifdo (act) {
-				if (rax != JustInt<FLAG> (0))
+				if (rax != Just<FLAG> (0))
 					discard ;
 				ret[ix] = (STRU8 (a[i] >> 12) & STRU8 (0X0F)) | STRU8 (0XE0) ;
 				ix++ ;
@@ -1699,7 +1709,7 @@ public:
 				ix++ ;
 			}
 			if ifdo (act) {
-				if (rax != JustInt<FLAG> (1))
+				if (rax != Just<FLAG> (1))
 					discard ;
 				if (a[i] < STRU16 (0XDC00))
 					discard ;
@@ -1714,15 +1724,15 @@ public:
 				ix++ ;
 				ret[ix] = (STRU8 (rbx) & STRU8 (0X3F)) | STRU8 (0X80) ;
 				ix++ ;
-				rax = JustInt<FLAG> (0) ;
+				rax = Just<FLAG> (0) ;
 			}
 			if ifdo (act) {
 				ret.clear () ;
-				rax = JustInt<FLAG> (99) ;
+				rax = Just<FLAG> (99) ;
 			}
 		}
 		if ifdo (TRUE) {
-			if (rax == JustInt<FLAG> (0))
+			if (rax == Just<FLAG> (0))
 				discard ;
 			ret[ix] = STRU8 (0X3F) ;
 			ix++ ;
@@ -1740,13 +1750,13 @@ public:
 		//@info: 6 bytes [0x4000000,0X7FFFFFFF] 1111110x 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx
 		String<STRU8> ret = String<STRU8> (a.length () * 6) ;
 		INDEX ix = 0 ;
-		auto rax = JustInt<FLAG> (0) ;
+		auto rax = Just<FLAG> (0) ;
 		for (auto &&i : a.range ()) {
-			if (rax == JustInt<FLAG> (99))
+			if (rax == Just<FLAG> (99))
 				continue ;
 			auto act = TRUE ;
 			if ifdo (act) {
-				if (rax != JustInt<FLAG> (0))
+				if (rax != Just<FLAG> (0))
 					discard ;
 				if (a[i] > STRU32 (0X0000007F))
 					discard ;
@@ -1754,7 +1764,7 @@ public:
 				ix++ ;
 			}
 			if ifdo (act) {
-				if (rax != JustInt<FLAG> (0))
+				if (rax != Just<FLAG> (0))
 					discard ;
 				if (a[i] > STRU32 (0X000007FF))
 					discard ;
@@ -1764,7 +1774,7 @@ public:
 				ix++ ;
 			}
 			if ifdo (act) {
-				if (rax != JustInt<FLAG> (0))
+				if (rax != Just<FLAG> (0))
 					discard ;
 				if (a[i] > STRU32 (0X0000FFFF))
 					discard ;
@@ -1776,7 +1786,7 @@ public:
 				ix++ ;
 			}
 			if ifdo (act) {
-				if (rax != JustInt<FLAG> (0))
+				if (rax != Just<FLAG> (0))
 					discard ;
 				if (a[i] > STRU32 (0X001FFFFF))
 					discard ;
@@ -1790,7 +1800,7 @@ public:
 				ix++ ;
 			}
 			if ifdo (act) {
-				if (rax != JustInt<FLAG> (0))
+				if (rax != Just<FLAG> (0))
 					discard ;
 				if (a[i] > STRU32 (0X03FFFFFF))
 					discard ;
@@ -1806,7 +1816,7 @@ public:
 				ix++ ;
 			}
 			if ifdo (act) {
-				if (rax != JustInt<FLAG> (0))
+				if (rax != Just<FLAG> (0))
 					discard ;
 				if (a[i] > STRU32 (0X7FFFFFFF))
 					discard ;
@@ -1825,7 +1835,7 @@ public:
 			}
 			if ifdo (act) {
 				ret.clear () ;
-				rax = JustInt<FLAG> (99) ;
+				rax = Just<FLAG> (99) ;
 			}
 		}
 		ret.trunc (ix) ;
@@ -1835,15 +1845,15 @@ public:
 	String<STRU16> stru16_from_stru8 (CREF<String<STRU8>> a) const override {
 		String<STRU16> ret = String<STRU16> (a.length ()) ;
 		INDEX ix = 0 ;
-		auto rax = JustInt<FLAG> (0) ;
+		auto rax = Just<FLAG> (0) ;
 		auto rbx = STRU32 () ;
 		for (auto &&i : a.range ()) {
-			if (rax == JustInt<FLAG> (99))
+			if (rax == Just<FLAG> (99))
 				continue ;
 			if ifdo (TRUE) {
 				auto act = TRUE ;
 				if ifdo (act) {
-					if (rax != JustInt<FLAG> (0))
+					if (rax != Just<FLAG> (0))
 						discard ;
 					if (a[i] > STRU8 (0X7F))
 						discard ;
@@ -1851,55 +1861,55 @@ public:
 					ix++ ;
 				}
 				if ifdo (act) {
-					if (rax != JustInt<FLAG> (0))
+					if (rax != Just<FLAG> (0))
 						discard ;
 					if (a[i] > STRU8 (0XDF))
 						discard ;
 					rbx = STRU32 (a[i] & STRU8 (0X1F)) ;
-					rax = JustInt<FLAG> (1) ;
+					rax = Just<FLAG> (1) ;
 				}
 				if ifdo (act) {
-					if (rax != JustInt<FLAG> (0))
+					if (rax != Just<FLAG> (0))
 						discard ;
 					if (a[i] > STRU8 (0XEF))
 						discard ;
 					rbx = STRU32 (a[i] & STRU8 (0X0F)) ;
-					rax = JustInt<FLAG> (2) ;
+					rax = Just<FLAG> (2) ;
 				}
 				if ifdo (act) {
-					if (rax != JustInt<FLAG> (0))
+					if (rax != Just<FLAG> (0))
 						discard ;
 					if (a[i] > STRU8 (0XF7))
 						discard ;
 					rbx = STRU32 (a[i] & STRU8 (0X07)) ;
-					rax = JustInt<FLAG> (3) ;
+					rax = Just<FLAG> (3) ;
 				}
 				if ifdo (act) {
-					if (rax != JustInt<FLAG> (0))
+					if (rax != Just<FLAG> (0))
 						discard ;
 					if (a[i] > STRU8 (0XFB))
 						discard ;
 					rbx = STRU32 (a[i] & STRU8 (0X03)) ;
-					rax = JustInt<FLAG> (4) ;
+					rax = Just<FLAG> (4) ;
 				}
 				if ifdo (act) {
-					if (rax != JustInt<FLAG> (0))
+					if (rax != Just<FLAG> (0))
 						discard ;
 					if (a[i] > STRU8 (0XFD))
 						discard ;
 					rbx = STRU32 (a[i] & STRU8 (0X01)) ;
-					rax = JustInt<FLAG> (5) ;
+					rax = Just<FLAG> (5) ;
 				}
 				if ifdo (act) {
-					if (rax != JustInt<FLAG> (1))
+					if (rax != Just<FLAG> (1))
 						discard ;
 					if (a[i] > STRU8 (0XBF))
 						discard ;
 					rbx = STRU32 ((rbx << 6) | (a[i] & STRU8 (0X3F))) ;
-					rax = JustInt<FLAG> (10) ;
+					rax = Just<FLAG> (10) ;
 				}
 				if ifdo (act) {
-					if ((!inline_between (rax ,2 ,6)))
+					if (!inline_between (rax ,2 ,6))
 						discard ;
 					if (a[i] > STRU8 (0XBF))
 						discard ;
@@ -1908,11 +1918,11 @@ public:
 				}
 				if ifdo (act) {
 					ret.clear () ;
-					rax = JustInt<FLAG> (99) ;
+					rax = Just<FLAG> (99) ;
 				}
 			}
 			if ifdo (TRUE) {
-				if (rax != JustInt<FLAG> (10))
+				if (rax != Just<FLAG> (10))
 					discard ;
 				auto act = TRUE ;
 				if ifdo (act) {
@@ -1920,7 +1930,7 @@ public:
 						discard ;
 					ret[ix] = STRU16 (rbx) ;
 					ix++ ;
-					rax = JustInt<FLAG> (0) ;
+					rax = Just<FLAG> (0) ;
 				}
 				if ifdo (act) {
 					if (rbx > STRU32 (0X0010FFFF))
@@ -1930,23 +1940,23 @@ public:
 					ix++ ;
 					ret[ix] = (STRU16 (rbx) & STRU16 (0X03FF)) | STRU16 (0XDC00) ;
 					ix++ ;
-					rax = JustInt<FLAG> (0) ;
+					rax = Just<FLAG> (0) ;
 				}
 				if ifdo (act) {
 					if (rbx > STRU32 (0X7FFFFFFF))
 						discard ;
 					ret[ix] = STRU16 (0X3F) ;
 					ix++ ;
-					rax = JustInt<FLAG> (0) ;
+					rax = Just<FLAG> (0) ;
 				}
 				if ifdo (act) {
 					ret.clear () ;
-					rax = JustInt<FLAG> (99) ;
+					rax = Just<FLAG> (99) ;
 				}
 			}
 		}
 		if ifdo (TRUE) {
-			if (rax == JustInt<FLAG> (0))
+			if (rax == Just<FLAG> (0))
 				discard ;
 			ret[ix] = STRU16 (0X3F) ;
 			ix++ ;
@@ -1960,13 +1970,13 @@ public:
 		//@info: utf32 [0X10000,0X10FFFF]-[0,0XFFFFF] 0000xxxx xxxxxxxx xxxxxxxx
 		String<STRU16> ret = String<STRU16> (a.length () * 2) ;
 		INDEX ix = 0 ;
-		auto rax = JustInt<FLAG> (0) ;
+		auto rax = Just<FLAG> (0) ;
 		for (auto &&i : a.range ()) {
-			if (rax == JustInt<FLAG> (99))
+			if (rax == Just<FLAG> (99))
 				continue ;
 			auto act = TRUE ;
 			if ifdo (act) {
-				if (rax != JustInt<FLAG> (0))
+				if (rax != Just<FLAG> (0))
 					discard ;
 				if (a[i] > STRU32 (0X0000FFFF))
 					discard ;
@@ -1974,7 +1984,7 @@ public:
 				ix++ ;
 			}
 			if ifdo (act) {
-				if (rax != JustInt<FLAG> (0))
+				if (rax != Just<FLAG> (0))
 					discard ;
 				if (a[i] > STRU32 (0X0010FFFF))
 					discard ;
@@ -1984,7 +1994,7 @@ public:
 				ix++ ;
 			}
 			if ifdo (act) {
-				if (rax != JustInt<FLAG> (0))
+				if (rax != Just<FLAG> (0))
 					discard ;
 				if (a[i] > STRU32 (0X7FFFFFFF))
 					discard ;
@@ -1993,7 +2003,7 @@ public:
 			}
 			if ifdo (act) {
 				ret.clear () ;
-				rax = JustInt<FLAG> (99) ;
+				rax = Just<FLAG> (99) ;
 			}
 		}
 		ret.trunc (ix) ;
@@ -2009,14 +2019,14 @@ public:
 		//@info: 6 bytes [0x4000000,0X7FFFFFFF] 1111110x 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx
 		String<STRU32> ret = String<STRU32> (a.length ()) ;
 		INDEX ix = 0 ;
-		auto rax = JustInt<FLAG> (0) ;
+		auto rax = Just<FLAG> (0) ;
 		auto rbx = STRU32 () ;
 		for (auto &&i : a.range ()) {
-			if (rax == JustInt<FLAG> (99))
+			if (rax == Just<FLAG> (99))
 				continue ;
 			auto act = TRUE ;
 			if ifdo (act) {
-				if (rax != JustInt<FLAG> (0))
+				if (rax != Just<FLAG> (0))
 					discard ;
 				if (a[i] > STRU8 (0X7F))
 					discard ;
@@ -2024,57 +2034,57 @@ public:
 				ix++ ;
 			}
 			if ifdo (act) {
-				if (rax != JustInt<FLAG> (0))
+				if (rax != Just<FLAG> (0))
 					discard ;
 				if (a[i] > STRU8 (0XDF))
 					discard ;
 				rbx = STRU32 (a[i] & STRU8 (0X1F)) ;
-				rax = JustInt<FLAG> (1) ;
+				rax = Just<FLAG> (1) ;
 			}
 			if ifdo (act) {
-				if (rax != JustInt<FLAG> (0))
+				if (rax != Just<FLAG> (0))
 					discard ;
 				if (a[i] > STRU8 (0XEF))
 					discard ;
 				rbx = STRU32 (a[i] & STRU8 (0X0F)) ;
-				rax = JustInt<FLAG> (2) ;
+				rax = Just<FLAG> (2) ;
 			}
 			if ifdo (act) {
-				if (rax != JustInt<FLAG> (0))
+				if (rax != Just<FLAG> (0))
 					discard ;
 				if (a[i] > STRU8 (0XF7))
 					discard ;
 				rbx = STRU32 (a[i] & STRU8 (0X07)) ;
-				rax = JustInt<FLAG> (3) ;
+				rax = Just<FLAG> (3) ;
 			}
 			if ifdo (act) {
-				if (rax != JustInt<FLAG> (0))
+				if (rax != Just<FLAG> (0))
 					discard ;
 				if (a[i] > STRU8 (0XFB))
 					discard ;
 				rbx = STRU32 (a[i] & STRU8 (0X03)) ;
-				rax = JustInt<FLAG> (4) ;
+				rax = Just<FLAG> (4) ;
 			}
 			if ifdo (act) {
-				if (rax != JustInt<FLAG> (0))
+				if (rax != Just<FLAG> (0))
 					discard ;
 				if (a[i] > STRU8 (0XFD))
 					discard ;
 				rbx = STRU32 (a[i] & STRU8 (0X01)) ;
-				rax = JustInt<FLAG> (5) ;
+				rax = Just<FLAG> (5) ;
 			}
 			if ifdo (act) {
-				if (rax != JustInt<FLAG> (1))
+				if (rax != Just<FLAG> (1))
 					discard ;
 				if (a[i] > STRU8 (0XBF))
 					discard ;
 				rbx = STRU32 ((rbx << 6) | (a[i] & STRU8 (0X3F))) ;
 				ret[ix] = rbx ;
 				ix++ ;
-				rax = JustInt<FLAG> (0) ;
+				rax = Just<FLAG> (0) ;
 			}
 			if ifdo (act) {
-				if ((!inline_between (rax ,2 ,6)))
+				if (!inline_between (rax ,2 ,6))
 					discard ;
 				if (a[i] > STRU8 (0XBF))
 					discard ;
@@ -2083,11 +2093,11 @@ public:
 			}
 			if ifdo (act) {
 				ret.clear () ;
-				rax = JustInt<FLAG> (99) ;
+				rax = Just<FLAG> (99) ;
 			}
 		}
 		if ifdo (TRUE) {
-			if (rax == JustInt<FLAG> (0))
+			if (rax == Just<FLAG> (0))
 				discard ;
 			ret[ix] = STRU32 ('?') ;
 			ix++ ;
@@ -2101,14 +2111,14 @@ public:
 		//@info: utf32 [0X10000,0X10FFFF]-[0,0XFFFFF] 0000xxxx xxxxxxxx xxxxxxxx
 		String<STRU32> ret = String<STRU32> (a.length ()) ;
 		INDEX ix = 0 ;
-		auto rax = JustInt<FLAG> (0) ;
+		auto rax = Just<FLAG> (0) ;
 		auto rbx = STRU32 () ;
 		for (auto &&i : a.range ()) {
-			if (rax == JustInt<FLAG> (99))
+			if (rax == Just<FLAG> (99))
 				continue ;
 			auto act = TRUE ;
 			if ifdo (act) {
-				if (rax != JustInt<FLAG> (0))
+				if (rax != Just<FLAG> (0))
 					discard ;
 				if (a[i] > STRU16 (0X07FF))
 					discard ;
@@ -2116,23 +2126,23 @@ public:
 				ix++ ;
 			}
 			if ifdo (act) {
-				if (rax != JustInt<FLAG> (0))
+				if (rax != Just<FLAG> (0))
 					discard ;
 				if (a[i] < STRU16 (0XD800))
 					discard ;
 				if (a[i] > STRU16 (0XDBFF))
 					discard ;
 				rbx = STRU32 (a[i] & STRU16 (0X03FF)) ;
-				rax = JustInt<FLAG> (1) ;
+				rax = Just<FLAG> (1) ;
 			}
 			if ifdo (act) {
-				if (rax != JustInt<FLAG> (0))
+				if (rax != Just<FLAG> (0))
 					discard ;
 				ret[ix] = STRU32 (a[i]) ;
 				ix++ ;
 			}
 			if ifdo (act) {
-				if (rax != JustInt<FLAG> (1))
+				if (rax != Just<FLAG> (1))
 					discard ;
 				if (a[i] < STRU16 (0XDC00))
 					discard ;
@@ -2141,15 +2151,15 @@ public:
 				rbx = STRU32 (((rbx << 10) | (a[i] & STRU16 (0X03FF))) + STRU32 (0X00010000)) ;
 				ret[ix] = rbx ;
 				ix++ ;
-				rax = JustInt<FLAG> (0) ;
+				rax = Just<FLAG> (0) ;
 			}
 			if ifdo (act) {
 				ret.clear () ;
-				rax = JustInt<FLAG> (99) ;
+				rax = Just<FLAG> (99) ;
 			}
 		}
 		if ifdo (TRUE) {
-			if (rax == JustInt<FLAG> (0))
+			if (rax == Just<FLAG> (0))
 				discard ;
 			ret[ix] = STRU32 ('?') ;
 			ix++ ;
@@ -2270,13 +2280,13 @@ public:
 	BOOL search (CREF<String<STR>> text) override {
 		const auto r1x = text.self ;
 		const auto r2x = std::regex_search (r1x ,fake.mThis->mMatch ,fake.mThis->mRegex) ;
-		if ((!r2x))
+		if (!r2x)
 			return FALSE ;
 		return TRUE ;
 	}
 
 	String<STR> brace (CREF<INDEX> index) const override {
-		assert ((!fake.mThis->mMatch.empty ())) ;
+		assert (!fake.mThis->mMatch.empty ()) ;
 		INDEX ix = index + 1 ;
 		const auto r1x = FLAG (fake.mThis->mMatch[ix].first) ;
 		const auto r2x = FLAG (fake.mThis->mMatch[ix].second) ;
@@ -2303,17 +2313,17 @@ public:
 	void read_identifer (VREF<StreamReader> reader ,VREF<String<STRU8>> item) const override {
 		auto rax = STRU32 () ;
 		auto rbx = ZERO ;
+		reader.backup () ;
 		if ifdo (TRUE) {
-			reader.backup () ;
 			reader.read (rax) ;
 			while (TRUE) {
-				if ((!StreamProc::is_word (rax)))
+				if (!StreamProc::is_word (rax))
 					break ;
 				rbx++ ;
 				reader.read (rax) ;
 			}
-			reader.recover () ;
 		}
+		reader.recover () ;
 		item = String<STRU8> (rbx) ;
 		reader.read (item) ;
 	}
@@ -2321,8 +2331,8 @@ public:
 	void read_scalar (VREF<StreamReader> reader ,VREF<String<STRU8>> item) const override {
 		auto rax = STRU32 () ;
 		auto rbx = ZERO ;
+		reader.backup () ;
 		if ifdo (TRUE) {
-			reader.backup () ;
 			reader.read (rax) ;
 			if ifdo (TRUE) {
 				if (rax != STRU32 ('+'))
@@ -2332,10 +2342,22 @@ public:
 				reader.read (rax) ;
 			}
 			while (TRUE) {
-				if ((!StreamProc::is_digit (rax)))
+				if (!StreamProc::is_digit (rax))
 					break ;
 				rbx++ ;
 				reader.read (rax) ;
+			}
+			if ifdo (TRUE) {
+				if (rax != STRU32 ('.'))
+					discard ;
+				rbx++ ;
+				reader.read (rax) ;
+				while (TRUE) {
+					if (!StreamProc::is_digit (rax))
+						break ;
+					rbx++ ;
+					reader.read (rax) ;
+				}
 			}
 			if (rax != STRU32 ('E'))
 				if (rax != STRU32 ('e'))
@@ -2350,13 +2372,13 @@ public:
 				reader.read (rax) ;
 			}
 			while (TRUE) {
-				if ((!StreamProc::is_digit (rax)))
+				if (!StreamProc::is_digit (rax))
 					break ;
 				rbx++ ;
 				reader.read (rax) ;
 			}
-			reader.recover () ;
 		}
+		reader.recover () ;
 		item = String<STRU8> (rbx) ;
 		reader.read (item) ;
 	}
@@ -2364,15 +2386,15 @@ public:
 	void read_escape (VREF<StreamReader> reader ,VREF<String<STRU8>> item) const override {
 		auto rax = STRU32 () ;
 		auto rbx = ZERO ;
+		reader.backup () ;
 		if ifdo (TRUE) {
-			reader.backup () ;
 			reader.read (rax) ;
-			assume (rax == STRU32 ('"')) ;
+			assume (rax == STRU32 ('\"')) ;
 			reader.read (rax) ;
 			while (TRUE) {
 				if (rax == STRU32 (0X00))
 					break ;
-				if (rax == STRU32 ('"'))
+				if (rax == STRU32 ('\"'))
 					break ;
 				if ifdo (TRUE) {
 					if (rax != STRU32 ('\\'))
@@ -2382,33 +2404,30 @@ public:
 				rbx++ ;
 				reader.read (rax) ;
 			}
-			assume (rax == STRU32 ('"')) ;
-			reader.recover () ;
+			assume (rax == STRU32 ('\"')) ;
 		}
+		reader.recover () ;
 		item = String<STRU8> (rbx) ;
-		INDEX ix = 0 ;
 		reader.read (rax) ;
-		while (TRUE) {
-			if (rax == STRU32 ('"'))
-				break ;
+		for (auto &&i : iter (0 ,rbx)) {
+			reader.read (rax) ;
 			if ifdo (TRUE) {
 				if (rax != STRU32 ('\\'))
 					discard ;
 				reader.read (rax) ;
 				rax = StreamProc::ctrl_from_word (rax) ;
 			}
-			item[ix] = STRU8 (rax) ;
-			ix++ ;
-			reader.read (rax) ;
+			item[i] = STRU8 (rax) ;
 		}
+		reader.read (rax) ;
 	}
 
 	void write_escape (VREF<StreamWriter> writer ,CREF<String<STRU8>> item) const override {
-		writer.write (STRU32 ('"')) ;
+		writer.write (STRU32 ('\"')) ;
 		for (auto &&i : item) {
 			auto act = TRUE ;
 			if ifdo (act) {
-				if ((!StreamProc::is_ctrl (i)))
+				if (!StreamProc::is_ctrl (i))
 					discard ;
 				const auto r1x = StreamProc::word_from_ctrl (i) ;
 				writer.write (STRU32 ('\\')) ;
@@ -2418,14 +2437,14 @@ public:
 				writer.write (STRU32 (i)) ;
 			}
 		}
-		writer.write (STRU32 ('"')) ;
+		writer.write (STRU32 ('\"')) ;
 	}
 
 	void read_endline (VREF<StreamReader> reader ,VREF<String<STRU8>> item) const override {
 		auto rax = STRU32 () ;
 		auto rbx = ZERO ;
+		reader.backup () ;
 		if ifdo (TRUE) {
-			reader.backup () ;
 			reader.read (rax) ;
 			while (TRUE) {
 				if (rax == STRU32 (0X00))
@@ -2435,24 +2454,26 @@ public:
 				rbx++ ;
 				reader.read (rax) ;
 			}
-			reader.recover () ;
 		}
+		reader.recover () ;
 		item = String<STRU8> (rbx) ;
 		reader.read (item) ;
 	}
 
 	void write_aligned (VREF<StreamWriter> writer ,CREF<VAL64> number ,CREF<LENGTH> align) const override {
-		auto rax = LENGTH (1) ;
-		for (auto &&i : iter (0 ,align - 1)) {
+		auto rax = WriteValueBuffer () ;
+		assert (inline_between (align ,0 ,rax.mBuffer.size ())) ;
+		rax.mWrite = rax.mBuffer.size () ;
+		auto rbx = MathProc::abs (number) ;
+		for (auto &&i : iter (0 ,align)) {
 			noop (i) ;
-			rax *= 10 ;
-			if (number >= rax)
-				continue ;
-			writer.write (STRU32 ('0')) ;
+			rax.mWrite-- ;
+			rax.mBuffer[rax.mWrite] = STRU8 (STRU32 ('0') + rbx % 10) ;
+			rbx /= 10 ;
 		}
-		rax *= 10 ;
-		const auto r1x = number % rax ;
-		writer.write (r1x) ;
+		for (auto &&i : iter (rax.mWrite ,rax.mBuffer.size ())) {
+			writer.write (STRU32 (rax.mBuffer[i])) ;
+		}
 	}
 } ;
 

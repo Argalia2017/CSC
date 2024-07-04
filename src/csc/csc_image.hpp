@@ -37,20 +37,22 @@ static constexpr auto COLOR_RED = Color3B ({BYTE (0X00) ,BYTE (0X00) ,BYTE (0XFF
 static constexpr auto COLOR_GREEN = Color3B ({BYTE (0X00) ,BYTE (0XFF) ,BYTE (0X00)}) ;
 static constexpr auto COLOR_BLUE = Color3B ({BYTE (0XFF) ,BYTE (0X00) ,BYTE (0X00)}) ;
 static constexpr auto COLOR_YELLOW = Color3B ({BYTE (0X00) ,BYTE (0XFF) ,BYTE (0XFF)}) ;
-static constexpr auto COLOR_PURPLE = Color3B ({BYTE (0XFF) ,BYTE (0X00) ,BYTE (0X00)}) ;
+static constexpr auto COLOR_PURPLE = Color3B ({BYTE (0XFF) ,BYTE (0X00) ,BYTE (0XFF)}) ;
 static constexpr auto COLOR_CYAN = Color3B ({BYTE (0XFF) ,BYTE (0XFF) ,BYTE (0X00)}) ;
 
 template <class A>
-class RowProxy implement RefProxy<A> {
+class RowProxy {
 private:
 	using ITEM = REF<typeof (nullof (A).at (0 ,0)) ,REFLECT_REF<A>> ;
 
 protected:
-	using RefProxy<A>::mThat ;
+	XREF<A> mThat ;
 	INDEX mY ;
 
 public:
-	explicit RowProxy (XREF<A> that ,CREF<INDEX> y) :RefProxy<A> (that) {
+	implicit RowProxy () = delete ;
+
+	explicit RowProxy (XREF<A> that ,CREF<INDEX> y) :mThat (that) {
 		mY = y ;
 	}
 
@@ -124,8 +126,8 @@ template <class A>
 class ImageRealLayout implement ImageLayout {
 public:
 	implicit ImageRealLayout () noexcept {
-		auto &&tmp = keep[TYPE<RefBuffer<A>>::expr] (Pointer::from (thiz.mImage)) ;
-		tmp = RefBuffer<A> () ;
+		auto &&rax = keep[TYPE<RefBufferLayout>::expr] (thiz.mImage) ;
+		rax = RefBuffer<A> () ;
 	}
 } ;
 

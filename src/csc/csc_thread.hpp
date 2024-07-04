@@ -245,7 +245,7 @@ public:
 
 	Optional<A> poll () const {
 		auto rax = PromiseHolder::create (thiz)->poll () ;
-		if ((!rax.exist ()))
+		if (!rax.exist ())
 			return Optional<A>::error (1) ;
 		return move (rax.rebind (TYPE<A>::expr).self) ;
 	}
@@ -320,8 +320,10 @@ public:
 		thiz = sub (that) ;
 	}
 
-	CREF<AutoRef<Pointer>> eval () const leftvalue {
-		return ExpressionHolder::create (thiz)->eval () ;
+	template <class ARG1>
+	CREF<AutoRef<ARG1>> eval (TYPE<ARG1>) const leftvalue {
+		auto &&rax = ExpressionHolder::create (thiz)->eval () ;
+		return rax.rebind (TYPE<ARG1>::expr).self ;
 	}
 } ;
 } ;

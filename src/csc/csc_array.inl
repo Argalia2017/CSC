@@ -14,9 +14,9 @@ namespace CSC {
 struct FUNCTION_buffer_from_initializer_list {
 	forceinline RefBuffer<Pointer> operator() (CREF<WrapperLayout> params ,CREF<Unknown> element) const {
 		RefBuffer<Pointer> ret ;
-		auto &&tmp = keep[TYPE<Wrapper<CREF<Pointer>>>::expr] (Pointer::from (params)) ;
-		tmp ([&] (CREF<Pointer> a) {
-			const auto r1x = RFat<ReflectElement> (element)->unknown () ;
+		auto &&rax = keep[TYPE<Wrapper<CREF<Pointer>>>::expr] (Pointer::from (params)) ;
+		rax ([&] (CREF<Pointer> a) {
+			const auto r1x = RFat<ReflectElement> (element)->element () ;
 			const auto r2x = RFat<ReflectSize> (r1x) ;
 			const auto r3x = r2x->type_size () ;
 			const auto r4x = inline_list_begin (a ,r3x) ;
@@ -24,7 +24,7 @@ struct FUNCTION_buffer_from_initializer_list {
 			const auto r6x = (r5x - r4x) / r3x ;
 			ret = RefBuffer<Pointer>::reference (r4x ,r6x ,r1x) ;
 		}) ;
-		return move (keep[TYPE<RefBuffer<Pointer>>::expr] (ret)) ;
+		return move (ret) ;
 	}
 } ;
 
@@ -40,7 +40,6 @@ public:
 		auto rax = buffer_from_initializer_list (params ,element) ;
 		initialize (element ,rax.size ()) ;
 		const auto r1x = RFat<ReflectAssign> (element) ;
-		const auto r2x = RFat<ReflectElement> (element)->unknown () ;
 		for (auto &&i : iter (0 ,rax.size ())) {
 			r1x->xmove (BoxHolder::create (item)->self ,rax[i]) ;
 			r1x->xmove (at (i) ,BoxHolder::create (item)->self) ;
@@ -99,7 +98,7 @@ public:
 		const auto r3x = RFat<ReflectEqual> (fake.mArray.unknown ()) ;
 		for (auto &&i : iter (0 ,r1x)) {
 			const auto r4x = r3x->equal (at (i) ,ArrayHolder::create (that)->at (i)) ;
-			if ((!r4x))
+			if (!r4x)
 				return r4x ;
 		}
 		return TRUE ;
@@ -175,21 +174,22 @@ public:
 		if ifdo (act) {
 			if (step_ != SIZE_OF<STRU8>::expr)
 				discard ;
-			auto &&tmp = keep[TYPE<RefBufferLayout>::expr] (fake.mString) ;
-			tmp = RefBuffer<STRU8> (r1x) ;
+			auto &&rax = keep[TYPE<RefBufferLayout>::expr] (fake.mString) ;
+			rax = RefBuffer<STRU8> (r1x) ;
+			clear () ;
 		}
 		if ifdo (act) {
 			if (step_ != SIZE_OF<STRU16>::expr)
 				discard ;
-			auto &&tmp = keep[TYPE<RefBufferLayout>::expr] (fake.mString) ;
-			tmp = RefBuffer<STRU16> (r1x) ;
+			auto &&rax = keep[TYPE<RefBufferLayout>::expr] (fake.mString) ;
+			rax = RefBuffer<STRU16> (r1x) ;
 			clear () ;
 		}
 		if ifdo (act) {
 			if (step_ != SIZE_OF<STRU32>::expr)
 				discard ;
-			auto &&tmp = keep[TYPE<RefBufferLayout>::expr] (fake.mString) ;
-			tmp = RefBuffer<STRU32> (r1x) ;
+			auto &&rax = keep[TYPE<RefBufferLayout>::expr] (fake.mString) ;
+			rax = RefBuffer<STRU32> (r1x) ;
 			clear () ;
 		}
 		if ifdo (act) {
@@ -216,7 +216,7 @@ public:
 	}
 
 	LENGTH size () const override {
-		if ((!fake.mString.exist ()))
+		if (!fake.mString.exist ())
 			return 0 ;
 		return fake.mString.size () - 1 ;
 	}
@@ -256,20 +256,20 @@ public:
 		if ifdo (act) {
 			if (step () != SIZE_OF<STRU8>::expr)
 				discard ;
-			auto &&tmp = keep[TYPE<RefBuffer<STRU8>>::expr] (keep[TYPE<RefBufferLayout>::expr] (fake.mString)) ;
-			item = tmp[index] ;
+			auto &&rax = keep[TYPE<RefBuffer<STRU8>>::expr] (keep[TYPE<RefBufferLayout>::expr] (fake.mString)) ;
+			item = rax[index] ;
 		}
 		if ifdo (act) {
 			if (step () != SIZE_OF<STRU16>::expr)
 				discard ;
-			auto &&tmp = keep[TYPE<RefBuffer<STRU8>>::expr] (keep[TYPE<RefBufferLayout>::expr] (fake.mString)) ;
-			item = tmp[index] ;
+			auto &&rax = keep[TYPE<RefBuffer<STRU8>>::expr] (keep[TYPE<RefBufferLayout>::expr] (fake.mString)) ;
+			item = rax[index] ;
 		}
 		if ifdo (act) {
 			if (step () != SIZE_OF<STRU32>::expr)
 				discard ;
-			auto &&tmp = keep[TYPE<RefBuffer<STRU8>>::expr] (keep[TYPE<RefBufferLayout>::expr] (fake.mString)) ;
-			item = tmp[index] ;
+			auto &&rax = keep[TYPE<RefBuffer<STRU8>>::expr] (keep[TYPE<RefBufferLayout>::expr] (fake.mString)) ;
+			item = rax[index] ;
 		}
 		if ifdo (act) {
 			assert (FALSE) ;
@@ -281,20 +281,20 @@ public:
 		if ifdo (act) {
 			if (step () != SIZE_OF<STRU8>::expr)
 				discard ;
-			auto &&tmp = keep[TYPE<RefBuffer<STRU8>>::expr] (keep[TYPE<RefBufferLayout>::expr] (fake.mString)) ;
-			tmp[index] = STRU8 (item) ;
+			auto &&rax = keep[TYPE<RefBuffer<STRU8>>::expr] (keep[TYPE<RefBufferLayout>::expr] (fake.mString)) ;
+			rax[index] = STRU8 (item) ;
 		}
 		if ifdo (act) {
 			if (step () != SIZE_OF<STRU16>::expr)
 				discard ;
-			auto &&tmp = keep[TYPE<RefBuffer<STRU16>>::expr] (keep[TYPE<RefBufferLayout>::expr] (fake.mString)) ;
-			tmp[index] = STRU16 (item) ;
+			auto &&rax = keep[TYPE<RefBuffer<STRU16>>::expr] (keep[TYPE<RefBufferLayout>::expr] (fake.mString)) ;
+			rax[index] = STRU16 (item) ;
 		}
 		if ifdo (act) {
 			if (step () != SIZE_OF<STRU32>::expr)
 				discard ;
-			auto &&tmp = keep[TYPE<RefBuffer<STRU32>>::expr] (keep[TYPE<RefBufferLayout>::expr] (fake.mString)) ;
-			tmp[index] = STRU32 (item) ;
+			auto &&rax = keep[TYPE<RefBuffer<STRU32>>::expr] (keep[TYPE<RefBufferLayout>::expr] (fake.mString)) ;
+			rax[index] = STRU32 (item) ;
 		}
 		if ifdo (act) {
 			assert (FALSE) ;
@@ -329,7 +329,7 @@ public:
 		for (auto &&i : iter (0 ,r3x)) {
 			get (i ,rax) ;
 			const auto r4x = inline_equal (rax ,that[i]) ;
-			if ((!r4x))
+			if (!r4x)
 				return r4x ;
 			if (rax == 0)
 				return TRUE ;
@@ -347,7 +347,7 @@ public:
 			get (i ,rax) ;
 			StringHolder::create (that)->get (i ,rbx) ;
 			const auto r4x = inline_equal (rax ,rbx) ;
-			if ((!r4x))
+			if (!r4x)
 				return r4x ;
 			if (rax == 0)
 				return TRUE ;
@@ -404,9 +404,9 @@ public:
 	}
 
 	void trunc (CREF<INDEX> index) override {
-		if ((!inline_between (index ,0 ,fake.mString.size ())))
+		if (!inline_between (index ,0 ,fake.mString.size ()))
 			return ;
-		set (index ,0) ;
+		set (index ,STRU32 (0X00)) ;
 	}
 
 	void fill (CREF<STRU32> item) override {
@@ -427,6 +427,8 @@ public:
 
 	void splice (CREF<INDEX> index ,CREF<StringLayout> item) override {
 		const auto r1x = StringHolder::create (item)->length () ;
+		if (r1x == 0)
+			return ;
 		assert (inline_between (index ,0 ,size ())) ;
 		const auto r2x = index + r1x ;
 		assert (index + r1x <= size ()) ;
@@ -462,7 +464,6 @@ public:
 		auto rax = buffer_from_initializer_list (params ,element) ;
 		initialize (element ,rax.size ()) ;
 		const auto r1x = RFat<ReflectAssign> (element) ;
-		const auto r2x = RFat<ReflectElement> (element)->unknown () ;
 		for (auto &&i : iter (0 ,rax.size ())) {
 			r1x->xmove (BoxHolder::create (item)->self ,rax[i]) ;
 			add (move (item)) ;
@@ -483,7 +484,7 @@ public:
 	}
 
 	LENGTH length () const override {
-		if ((!fake.mDeque.exist ()))
+		if (!fake.mDeque.exist ())
 			return 0 ;
 		return fake.mWrite - fake.mRead ;
 	}
@@ -515,7 +516,7 @@ public:
 	}
 
 	BOOL empty () const override {
-		if ((!fake.mDeque.exist ()))
+		if (!fake.mDeque.exist ())
 			return TRUE ;
 		return fake.mRead == fake.mWrite ;
 	}
@@ -540,10 +541,6 @@ public:
 	void take () override {
 		const auto r1x = fake.mDeque.size () ;
 		assert (r1x > 0) ;
-		INDEX ix = fake.mRead % r1x ;
-		INDEX iy = fake.mWrite % r1x ;
-		const auto r2x = RFat<ReflectAssign> (fake.mDeque.unknown ()) ;
-		r2x->xmove (fake.mDeque.at (ix) ,fake.mDeque.at (iy)) ;
 		fake.mRead++ ;
 		check_bound () ;
 	}
@@ -561,11 +558,14 @@ public:
 	void pop () override {
 		const auto r1x = fake.mDeque.size () ;
 		assert (r1x > 0) ;
-		INDEX ix = (fake.mWrite - 1 + r1x) % r1x ;
-		INDEX iy = fake.mWrite % r1x ;
-		const auto r2x = RFat<ReflectAssign> (fake.mDeque.unknown ()) ;
-		r2x->xmove (fake.mDeque.at (ix) ,fake.mDeque.at (iy)) ;
 		fake.mWrite-- ;
+	}
+
+	void ring (CREF<LENGTH> size_) override {
+		if (size () <= 0)
+			return ;
+		assert (length () + size_ < size ()) ;
+		fake.mWrite += size_ ;
 	}
 
 	void check_bound () {
@@ -631,7 +631,6 @@ public:
 		auto rax = buffer_from_initializer_list (params ,element) ;
 		initialize (element ,rax.size ()) ;
 		const auto r1x = RFat<ReflectAssign> (element) ;
-		const auto r2x = RFat<ReflectElement> (element)->unknown () ;
 		for (auto &&i : iter (0 ,rax.size ())) {
 			r1x->xmove (BoxHolder::create (item)->self ,rax[i]) ;
 			add (move (item) ,NONE) ;
@@ -644,7 +643,7 @@ public:
 	}
 
 	LENGTH size () const override {
-		if ((!fake.mPriority.exist ()))
+		if (!fake.mPriority.exist ())
 			return 0 ;
 		return fake.mPriority.size () ;
 	}
@@ -654,7 +653,7 @@ public:
 	}
 
 	LENGTH length () const override {
-		if ((!fake.mPriority.exist ()))
+		if (!fake.mPriority.exist ())
 			return 0 ;
 		return fake.mWrite ;
 	}
@@ -663,20 +662,20 @@ public:
 		return fake.mPriority.at (index) ;
 	}
 
+	imports VREF<PriorityNode> xbt (VREF<PriorityLayout> layout ,CREF<INDEX> index) {
+		return layout.mPriority.bt (index) ;
+	}
+
+	imports CREF<PriorityNode> xbt (CREF<PriorityLayout> layout ,CREF<INDEX> index) {
+		return layout.mPriority.bt (index) ;
+	}
+
 	void get (CREF<INDEX> index ,VREF<INDEX> map_) const override {
-		map_ = ptr (fake ,index).mMap ;
+		map_ = xbt (fake ,index).mMap ;
 	}
 
 	void set (CREF<INDEX> index ,CREF<INDEX> map_) override {
-		ptr (fake ,index).mMap = map_ ;
-	}
-
-	imports VREF<PriorityNode> ptr (VREF<PriorityLayout> layout ,CREF<INDEX> index) {
-		return layout.mPriority.bt (index) ;
-	}
-
-	imports CREF<PriorityNode> ptr (CREF<PriorityLayout> layout ,CREF<INDEX> index) {
-		return layout.mPriority.bt (index) ;
+		xbt (fake ,index).mMap = map_ ;
 	}
 
 	INDEX ibegin () const override {
@@ -692,7 +691,7 @@ public:
 	}
 
 	BOOL empty () const override {
-		if ((!fake.mPriority.exist ()))
+		if (!fake.mPriority.exist ())
 			return TRUE ;
 		return fake.mWrite == 0 ;
 	}
@@ -706,17 +705,17 @@ public:
 		INDEX ix = fake.mWrite ;
 		const auto r1x = RFat<ReflectAssign> (fake.mPriority.unknown ()) ;
 		r1x->xmove (fake.mPriority.at (ix) ,BoxHolder::create (item)->self) ;
-		ptr (fake ,ix).mMap = map_ ;
+		xbt (fake ,ix).mMap = map_ ;
 		fake.mWrite++ ;
 		update_insert (ix) ;
 	}
 
 	void take () override {
-		assert ((!empty ())) ;
+		assert (!empty ()) ;
 		INDEX ix = fake.mWrite - 1 ;
 		const auto r1x = RFat<ReflectAssign> (fake.mPriority.unknown ()) ;
 		r1x->xmove (fake.mPriority.at (0) ,fake.mPriority.at (ix)) ;
-		ptr (fake ,0).mMap = ptr (fake ,ix).mMap ;
+		xbt (fake ,0).mMap = xbt (fake ,ix).mMap ;
 		fake.mWrite = ix ;
 		update_insert (0) ;
 	}
@@ -735,7 +734,7 @@ public:
 		const auto r1x = RFat<ReflectAssign> (fake.mPriority.unknown ()) ;
 		const auto r2x = RFat<ReflectCompr> (fake.mPriority.unknown ()) ;
 		r1x->xmove (fake.mPriority.at (jy) ,fake.mPriority.at (ix)) ;
-		ptr (fake ,jy) = ptr (fake ,ix) ;
+		xbt (fake ,jy) = xbt (fake ,ix) ;
 		while (TRUE) {
 			INDEX iy = parent (ix) ;
 			if (iy < 0)
@@ -744,7 +743,7 @@ public:
 			if (r3x >= 0)
 				break ;
 			r1x->xmove (fake.mPriority.at (ix) ,fake.mPriority.at (iy)) ;
-			ptr (fake ,ix) = ptr (fake ,iy) ;
+			xbt (fake ,ix) = xbt (fake ,iy) ;
 			ix = iy ;
 		}
 		while (TRUE) {
@@ -770,11 +769,11 @@ public:
 			if (jx == ix)
 				break ;
 			r1x->xmove (fake.mPriority.at (ix) ,fake.mPriority.at (jx)) ;
-			ptr (fake ,ix) = ptr (fake ,jx) ;
+			xbt (fake ,ix) = xbt (fake ,jx) ;
 			ix = jx ;
 		}
 		r1x->xmove (fake.mPriority.at (ix) ,fake.mPriority.at (jy)) ;
-		ptr (fake ,ix) = ptr (fake ,jy) ;
+		xbt (fake ,ix) = xbt (fake ,jy) ;
 	}
 
 	INDEX parent (CREF<INDEX> curr) const {
@@ -818,7 +817,6 @@ public:
 		auto rax = buffer_from_initializer_list (params ,element) ;
 		initialize (element ,rax.size ()) ;
 		const auto r1x = RFat<ReflectAssign> (element) ;
-		const auto r2x = RFat<ReflectElement> (element)->unknown () ;
 		for (auto &&i : iter (0 ,rax.size ())) {
 			r1x->xmove (BoxHolder::create (item)->self ,rax[i]) ;
 			add (move (item)) ;
@@ -852,7 +850,7 @@ public:
 	}
 
 	INDEX ibegin () const override {
-		if ((!fake.mList.exist ()))
+		if (!fake.mList.exist ())
 			return NONE ;
 		return fake.mFirst ;
 	}
@@ -866,7 +864,7 @@ public:
 	}
 
 	BOOL empty () const override {
-		if ((!fake.mList.exist ()))
+		if (!fake.mList.exist ())
 			return TRUE ;
 		return fake.mFirst != NONE ;
 	}
@@ -888,7 +886,7 @@ public:
 	}
 
 	void take () override {
-		assert ((!empty ())) ;
+		assert (!empty ()) ;
 		INDEX ix = fake.mFirst ;
 		INDEX iy = fake.mList.bt (ix).mRight ;
 		curr_next (NONE) = iy ;
@@ -905,7 +903,7 @@ public:
 	}
 
 	void pop () override {
-		assert ((!empty ())) ;
+		assert (!empty ()) ;
 		INDEX ix = fake.mLast ;
 		INDEX iy = fake.mList.bt (ix).mLeft ;
 		curr_next (iy) = NONE ;
@@ -934,7 +932,7 @@ public:
 	}
 
 	void remove (CREF<INDEX> index) override {
-		assert ((!empty ())) ;
+		assert (!empty ()) ;
 		INDEX ix = fake.mList.bt (index).mLeft ;
 		INDEX iy = fake.mList.bt (index).mRight ;
 		curr_next (ix) = iy ;
@@ -996,7 +994,6 @@ public:
 		auto rax = buffer_from_initializer_list (params ,element) ;
 		initialize (element ,rax.size ()) ;
 		const auto r1x = RFat<ReflectAssign> (element) ;
-		const auto r2x = RFat<ReflectElement> (element)->unknown () ;
 		for (auto &&i : iter (0 ,rax.size ())) {
 			r1x->xmove (BoxHolder::create (item)->self ,rax[i]) ;
 			add (move (item)) ;
@@ -1072,7 +1069,7 @@ public:
 
 	INDEX insert (CREF<INDEX> index ,RREF<BoxLayout> item) override {
 		assert (inline_between (index ,0 ,fake.mRange.size ())) ;
-		assert ((!fake.mList.used (fake.mRange[index]))) ;
+		assert (!fake.mList.used (fake.mRange[index])) ;
 		INDEX ix = fake.mList.alloc (move (item)) ;
 		check_resize () ;
 		INDEX ret = index ;
@@ -1184,7 +1181,6 @@ public:
 		auto rax = buffer_from_initializer_list (params ,element) ;
 		initialize (element ,rax.size ()) ;
 		const auto r1x = RFat<ReflectAssign> (element) ;
-		const auto r2x = RFat<ReflectElement> (element)->unknown () ;
 		for (auto &&i : iter (0 ,rax.size ())) {
 			r1x->xmove (BoxHolder::create (item)->self ,rax[i]) ;
 			add (move (item) ,NONE) ;
@@ -1212,7 +1208,7 @@ public:
 	}
 
 	LENGTH length () const override {
-		if ((!fake.mThis.exist ()))
+		if (!fake.mThis.exist ())
 			return 0 ;
 		return fake.mWrite ;
 	}
@@ -1221,12 +1217,12 @@ public:
 		return fake.mThis->mList.at (fake.mRange[index]) ;
 	}
 
-	imports VREF<SortedMapNode> ptr (VREF<SortedMapLayout> layout ,CREF<INDEX> index) {
-		return layout.mThis->mList.bt (index) ;
+	imports VREF<SortedMapNode> xbt (VREF<SortedMapLayout> layout ,CREF<INDEX> index) {
+		return layout.mThis->mList.bt (layout.mRange[index]) ;
 	}
 
-	imports CREF<SortedMapNode> ptr (CREF<SortedMapLayout> layout ,CREF<INDEX> index) {
-		return layout.mThis->mList.bt (index) ;
+	imports CREF<SortedMapNode> xbt (CREF<SortedMapLayout> layout ,CREF<INDEX> index) {
+		return layout.mThis->mList.bt (layout.mRange[index]) ;
 	}
 
 	INDEX ibegin () const override {
@@ -1243,18 +1239,16 @@ public:
 
 	void add (RREF<BoxLayout> item ,CREF<INDEX> map_) override {
 		check_resize () ;
-		INDEX ix = fake.mThis->mWrite ;
+		INDEX ix = fake.mWrite ;
 		const auto r1x = RFat<ReflectAssign> (fake.mThis->mList.unknown ()) ;
-		r1x->xmove (fake.mThis->mList.at (ix) ,BoxHolder::create (item)->self) ;
-		fake.mThis->mWrite++ ;
-		ptr (fake ,ix).mMap = map_ ;
-		fake.mRange[fake.mWrite] = ix ;
+		r1x->xmove (fake.mThis->mList.at (fake.mRange[ix]) ,BoxHolder::create (item)->self) ;
+		xbt (fake ,ix).mMap = map_ ;
 		fake.mWrite++ ;
 		fake.mSorted = FALSE ;
 	}
 
 	INDEX find (CREF<Pointer> item) const override {
-		if ((!fake.mThis.exist ()))
+		if (!fake.mThis.exist ())
 			return NONE ;
 		assert (fake.mSorted) ;
 		INDEX ix = 0 ;
@@ -1289,11 +1283,11 @@ public:
 		INDEX ix = find (item) ;
 		if (ix == NONE)
 			return NONE ;
-		return ptr (fake ,ix).mMap ;
+		return xbt (fake ,ix).mMap ;
 	}
 
 	void remap () override {
-		if ((!fake.mRange.exist ()))
+		if (!fake.mRange.exist ())
 			return ;
 		const auto r1x = RFat<ReflectCompr> (fake.mThis->mList.unknown ()) ;
 		const auto r2x = RFat<ReflectEqual> (fake.mThis->mList.unknown ()) ;
@@ -1315,15 +1309,23 @@ public:
 	}
 
 	void check_resize () {
-		const auto r1x = fake.mThis->mList.size () ;
-		const auto r2x = inline_max (r1x * 2 ,ALLOCATOR_MIN_SIZE::expr) ;
-		RefBufferHolder::create (fake.mThis->mList)->resize (r2x) ;
 		if (length () < size ())
 			return ;
-		const auto r3x = length () ;
-		const auto r4x = inline_max (r3x * 2 ,ALLOCATOR_MIN_SIZE::expr) ;
+		const auto r1x = length () ;
+		const auto r2x = inline_max (r1x * 2 ,ALLOCATOR_MIN_SIZE::expr) ;
 		RefBufferHolder::create (fake.mRange)->initialize (BufferUnknownBinder<INDEX> ()) ;
-		fake.mRange.resize (r4x) ;
+		fake.mRange.resize (r2x) ;
+		for (auto &&i : iter (r1x ,fake.mRange.size ())) {
+			if ifdo (TRUE) {
+				const auto r3x = fake.mThis->mList.size () ;
+				if (fake.mThis->mWrite < r3x)
+					discard ;
+				const auto r4x = inline_max (r3x * 2 ,ALLOCATOR_MIN_SIZE::expr) ;
+				RefBufferHolder::create (fake.mThis->mList)->resize (r4x) ;
+			}
+			fake.mRange[i] = fake.mThis->mWrite ;
+			fake.mThis->mWrite++ ;
+		}
 	}
 } ;
 
@@ -1358,7 +1360,6 @@ public:
 		auto rax = buffer_from_initializer_list (params ,element) ;
 		initialize (element ,rax.size ()) ;
 		const auto r1x = RFat<ReflectAssign> (element) ;
-		const auto r2x = RFat<ReflectElement> (element)->unknown () ;
 		for (auto &&i : iter (0 ,rax.size ())) {
 			r1x->xmove (BoxHolder::create (item)->self ,rax[i]) ;
 			add (move (item) ,NONE) ;
@@ -1460,7 +1461,7 @@ public:
 		INDEX ix = curr ;
 		INDEX iy = fake.mSet.bt (ix).mUp ;
 		while (TRUE) {
-			if ((!red_node (iy)))
+			if (!red_node (iy))
 				break ;
 			auto act = TRUE ;
 			if ifdo (act) {
@@ -1484,7 +1485,7 @@ public:
 		auto act = TRUE ;
 		if ifdo (act) {
 			INDEX jx = fake.mSet.bt (iy).mRight ;
-			if ((!red_node (jx)))
+			if (!red_node (jx))
 				discard ;
 			fake.mSet.bt (jx).mRed = FALSE ;
 			fake.mSet.bt (ix).mRed = FALSE ;
@@ -1492,7 +1493,7 @@ public:
 			fake.mTop = iy ;
 		}
 		if ifdo (act) {
-			if ((!fake.mSet.bt (curr).mBin))
+			if (!fake.mSet.bt (curr).mBin)
 				discard ;
 			rotate_left (fake.mSet.bt (iy).mLeft) ;
 			fake.mSet.bt (curr).mRed = FALSE ;
@@ -1514,7 +1515,7 @@ public:
 		auto act = TRUE ;
 		if ifdo (act) {
 			INDEX jx = fake.mSet.bt (iy).mLeft ;
-			if ((!red_node (jx)))
+			if (!red_node (jx))
 				discard ;
 			fake.mSet.bt (jx).mRed = FALSE ;
 			fake.mSet.bt (ix).mRed = FALSE ;
@@ -1539,7 +1540,7 @@ public:
 	}
 
 	INDEX find (CREF<Pointer> item) const override {
-		if ((!fake.mSet.exist ()))
+		if (!fake.mSet.exist ())
 			return NONE ;
 		INDEX ret = fake.mRoot ;
 		const auto r1x = RFat<ReflectCompr> (fake.mSet.unknown ()) ;
@@ -1662,7 +1663,7 @@ public:
 	void update_remove_left (CREF<INDEX> curr) {
 		INDEX ix = fake.mSet.bt (curr).mRight ;
 		if ifdo (TRUE) {
-			if ((!red_node (ix)))
+			if (!red_node (ix))
 				discard ;
 			fake.mSet.bt (ix).mRed = FALSE ;
 			fake.mSet.bt (curr).mRed = TRUE ;
@@ -1707,7 +1708,7 @@ public:
 	void update_remove_right (CREF<INDEX> curr) {
 		INDEX ix = fake.mSet.bt (curr).mLeft ;
 		if ifdo (TRUE) {
-			if ((!red_node (ix)))
+			if (!red_node (ix))
 				discard ;
 			fake.mSet.bt (ix).mRed = FALSE ;
 			fake.mSet.bt (curr).mRed = TRUE ;
@@ -1843,7 +1844,7 @@ public:
 			return fake.mSet.bt (index).mUp ;
 		}
 		if ifdo (TRUE) {
-			if ((!binary))
+			if (!binary)
 				discard ;
 			fake.mSet.bt (index).mBin = binary ;
 			return fake.mSet.bt (index).mUp ;
@@ -1951,7 +1952,6 @@ public:
 		auto rax = buffer_from_initializer_list (params ,element) ;
 		initialize (element ,rax.size ()) ;
 		const auto r1x = RFat<ReflectAssign> (element) ;
-		const auto r2x = RFat<ReflectElement> (element)->unknown () ;
 		for (auto &&i : iter (0 ,rax.size ())) {
 			r1x->xmove (BoxHolder::create (item)->self ,rax[i]) ;
 			add (move (item) ,NONE) ;
@@ -2051,7 +2051,7 @@ public:
 	}
 
 	INDEX find (CREF<Pointer> item) const override {
-		if ((!fake.mSet.exist ()))
+		if (!fake.mSet.exist ())
 			return NONE ;
 		if (fake.mRange.size () == 0)
 			return NONE ;
@@ -2067,7 +2067,7 @@ public:
 				if (fake.mSet.bt (ix).mHash != r1x)
 					discard ;
 				const auto r3x = r2x->equal (item ,fake.mSet.at (ix)) ;
-				if ((!r3x))
+				if (!r3x)
 					discard ;
 				ret = ix ;
 			}
@@ -2132,7 +2132,7 @@ public:
 		for (auto &&i : iter (0 ,fake.mSet.size ())) {
 			if (i == curr)
 				continue ;
-			if ((!fake.mSet.used (i)))
+			if (!fake.mSet.used (i))
 				continue ;
 			update_emplace (i) ;
 		}
@@ -2162,7 +2162,6 @@ public:
 		auto rax = buffer_from_initializer_list (params ,element) ;
 		initialize (rax.size ()) ;
 		const auto r1x = RFat<ReflectAssign> (element) ;
-		const auto r2x = RFat<ReflectElement> (element)->unknown () ;
 		for (auto &&i : iter (0 ,rax.size ())) {
 			r1x->xmove (BoxHolder::create (item)->self ,rax[i]) ;
 			add (move (item)) ;
@@ -2209,7 +2208,7 @@ public:
 		const auto r1x = ByteProc::bit_pow (index % 8) ;
 		auto act = TRUE ;
 		if ifdo (act) {
-			if ((!item))
+			if (!item)
 				discard ;
 			fake.mSet[index / 8] |= BYTE (r1x) ;
 		}
@@ -2269,7 +2268,7 @@ public:
 			return FALSE ;
 		for (auto &&i : iter (0 ,r1x)) {
 			const auto r3x = inline_equal (fake.mSet[i] ,that.mSet[i]) ;
-			if ((!r3x))
+			if (!r3x)
 				return r3x ;
 		}
 		return TRUE ;
@@ -2306,7 +2305,7 @@ public:
 
 	BOOL contain (CREF<Pointer> item) const override {
 		const auto r1x = bitwise[TYPE<INDEX>::expr] (item) ;
-		if ((!inline_between (r1x ,0 ,size ())))
+		if (!inline_between (r1x ,0 ,size ()))
 			return FALSE ;
 		auto rax = FALSE ;
 		get (r1x ,rax) ;
@@ -2315,7 +2314,7 @@ public:
 
 	void erase (CREF<Pointer> item) override {
 		const auto r1x = bitwise[TYPE<INDEX>::expr] (item) ;
-		if ((!inline_between (r1x ,0 ,size ())))
+		if (!inline_between (r1x ,0 ,size ()))
 			return ;
 		set (r1x ,FALSE) ;
 	}

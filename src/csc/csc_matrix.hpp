@@ -35,12 +35,14 @@ struct Line3F {
 } ;
 
 template <class A>
-class XYZProxy implement RefProxy<A> {
+class XYZProxy {
 protected:
-	using RefProxy<A>::mThat ;
+	XREF<A> mThat ;
 
 public:
-	explicit XYZProxy (XREF<A> that) :RefProxy<A> (that) {}
+	implicit XYZProxy () = delete ;
+
+	explicit XYZProxy (XREF<A> that) :mThat (that) {}
 
 	forceinline operator Point2F () rightvalue {
 		Point2F ret ;
@@ -615,7 +617,7 @@ struct MakeMatrixHolder implement Interface {
 	virtual void PerspectiveMatrix_initialize (CREF<FLT64> fx ,CREF<FLT64> fy ,CREF<FLT64> wx ,CREF<FLT64> wy) = 0 ;
 	virtual void ProjectionMatrix_initialize (CREF<Vector> normal ,CREF<Vector> center ,CREF<Vector> light) = 0 ;
 	virtual void ViewMatrix_initialize (CREF<Vector> vx ,CREF<Vector> vy) = 0 ;
-	virtual void ViewMatrix_initialize (CREF<Vector> vx ,CREF<Vector> vy ,CREF<JustInt<ViewMatrixOption>> option) = 0 ;
+	virtual void ViewMatrix_initialize (CREF<Vector> vx ,CREF<Vector> vy ,CREF<Just<ViewMatrixOption>> option) = 0 ;
 	virtual void CrossProductMatrix_initialize (CREF<Vector> xyz) = 0 ;
 	virtual void SymmetryMatrix_initialize (CREF<Vector> x ,CREF<Vector> y) = 0 ;
 	virtual void AffineMatrix_initialize (CREF<Buffer<FLT64 ,ENUM<16>>> a) = 0 ;
@@ -723,49 +725,6 @@ inline Matrix AffineMatrix (CREF<Buffer<FLT64 ,ENUM<16>>> a) {
 	return move (ret) ;
 }
 
-struct DuplexMatrixLayout {
-	Buffer2<Matrix> mBiMatrix ;
-} ;
-
-class DuplexMatrix implement DuplexMatrixLayout {
-protected:
-	using DuplexMatrixLayout::mBiMatrix ;
-
-public:
-	implicit DuplexMatrix () = default ;
-
-	implicit DuplexMatrix (CREF<Matrix> that) {
-		mBiMatrix[0] = that ;
-		mBiMatrix[1] = mBiMatrix[0].inverse () ;
-		if ifdo (TRUE) {
-			if (mBiMatrix[0][3][0] != 0)
-				discard ;
-			if (mBiMatrix[0][3][1] != 0)
-				discard ;
-			if (mBiMatrix[0][3][2] != 0)
-				discard ;
-			if (mBiMatrix[0][3][3] != 1)
-				discard ;
-			mBiMatrix[1][3][3] = 1 ;
-		}
-	}
-
-	CREF<Matrix> at (CREF<INDEX> index) const leftvalue {
-		return mBiMatrix[index] ;
-	}
-
-	forceinline CREF<Matrix> operator[] (CREF<INDEX> index) const leftvalue {
-		return at (index) ;
-	}
-
-	DuplexMatrix inverse () const {
-		DuplexMatrix ret ;
-		ret.mBiMatrix[0] = mBiMatrix[1] ;
-		ret.mBiMatrix[1] = mBiMatrix[0] ;
-		return move (ret) ;
-	}
-} ;
-
 struct TRSResult {
 	Matrix mR ;
 	Matrix mT ;
@@ -824,38 +783,40 @@ public:
 	}
 } ;
 
-struct LinearProcLayout {
-	RefLayout mThis ;
+struct DuplexMatrixLayout {
+	Buffer2<Matrix> mDuplexMatrix ;
 } ;
 
-struct LinearProcHolder implement Interface {
-	imports VFat<LinearProcHolder> create (VREF<LinearProcLayout> that) ;
-	imports CFat<LinearProcHolder> create (CREF<LinearProcLayout> that) ;
+struct DuplexMatrixHolder implement Interface {
+	imports VFat<DuplexMatrixHolder> create (VREF<DuplexMatrixLayout> that) ;
+	imports CFat<DuplexMatrixHolder> create (CREF<DuplexMatrixLayout> that) ;
 
-	virtual void initialize () = 0 ;
-	virtual Image<FLT64> solve_lsm (CREF<Image<FLT64>> a) const = 0 ;
-	virtual Image<FLT64> solve_lsm (CREF<Image<FLT64>> a ,CREF<Image<FLT64>> b) const = 0 ;
+	virtual void initialize (CREF<Matrix> that) = 0 ;
+	virtual DuplexMatrixLayout inverse () const = 0 ;
 } ;
 
-class LinearProc implement LinearProcLayout {
+class DuplexMatrix implement DuplexMatrixLayout {
 protected:
-	using LinearProcLayout::mThis ;
+	using DuplexMatrixLayout::mDuplexMatrix ;
 
 public:
-	imports CREF<LinearProc> instance () {
-		return memorize ([&] () {
-			LinearProc ret ;
-			LinearProcHolder::create (ret)->initialize () ;
-			return move (ret) ;
-		}) ;
+	implicit DuplexMatrix () = default ;
+
+	implicit DuplexMatrix (CREF<Matrix> that) {
+		DuplexMatrixHolder::create (thiz)->initialize (that) ;
 	}
 
-	imports Image<FLT64> solve_lsm (CREF<Image<FLT64>> a) {
-		return LinearProcHolder::create (instance ())->solve_lsm (a) ;
+	CREF<Matrix> at (CREF<INDEX> index) const leftvalue {
+		return mDuplexMatrix[index] ;
 	}
 
-	imports Image<FLT64> solve_lsm (CREF<Image<FLT64>> a ,CREF<Image<FLT64>> b) {
-		return LinearProcHolder::create (instance ())->solve_lsm (a ,b) ;
+	forceinline CREF<Matrix> operator[] (CREF<INDEX> index) const leftvalue {
+		return at (index) ;
+	}
+
+	DuplexMatrix inverse () const {
+		DuplexMatrixLayout ret = DuplexMatrixHolder::create (thiz)->inverse () ;
+		return move (keep[TYPE<DuplexMatrix>::expr] (ret)) ;
 	}
 } ;
 
@@ -965,6 +926,46 @@ public:
 	Matrix matrix () const {
 		MatrixLayout ret = QuaternionHolder::create (thiz)->matrix () ;
 		return move (keep[TYPE<Matrix>::expr] (ret)) ;
+	}
+} ;
+
+struct LinearProcLayout {
+	RefLayout mThis ;
+} ;
+
+struct LinearProcHolder implement Interface {
+	imports VFat<LinearProcHolder> create (VREF<LinearProcLayout> that) ;
+	imports CFat<LinearProcHolder> create (CREF<LinearProcLayout> that) ;
+
+	virtual void initialize () = 0 ;
+	virtual Image<FLT64> solve_lsm (CREF<Image<FLT64>> a) const = 0 ;
+	virtual Image<FLT64> solve_lsm (CREF<Image<FLT64>> a ,CREF<Image<FLT64>> b) const = 0 ;
+	virtual Image<FLT64> solve_inv (CREF<Image<FLT64>> a) const = 0 ;
+} ;
+
+class LinearProc implement LinearProcLayout {
+protected:
+	using LinearProcLayout::mThis ;
+
+public:
+	imports CREF<LinearProc> instance () {
+		return memorize ([&] () {
+			LinearProc ret ;
+			LinearProcHolder::create (ret)->initialize () ;
+			return move (ret) ;
+		}) ;
+	}
+
+	imports Image<FLT64> solve_lsm (CREF<Image<FLT64>> a) {
+		return LinearProcHolder::create (instance ())->solve_lsm (a) ;
+	}
+
+	imports Image<FLT64> solve_lsm (CREF<Image<FLT64>> a ,CREF<Image<FLT64>> b) {
+		return LinearProcHolder::create (instance ())->solve_lsm (a ,b) ;
+	}
+
+	imports Image<FLT64> solve_inv (CREF<Image<FLT64>> a) {
+		return LinearProcHolder::create (instance ())->solve_inv (a) ;
 	}
 } ;
 

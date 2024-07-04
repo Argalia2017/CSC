@@ -57,10 +57,10 @@ public:
 		const auto r2x = r1x.size () ;
 		const auto r3x = size_of_cvmat_depth (r1x.depth ()) ;
 		const auto r4x = r1x.channels () ;
-		auto &&tmp1 = keep[TYPE<RefBufferLayout>::expr] (ret.mImage) ;
-		tmp1.mBuffer = FLAG (r1x.data) ;
-		tmp1.mSize = r2x.area () ;
-		tmp1.mStep = r3x * r4x ;
+		auto &&rax = keep[TYPE<RefBufferLayout>::expr] (ret.mImage) ;
+		rax.mBuffer = FLAG (r1x.data) ;
+		rax.mSize = r2x.area () ;
+		rax.mStep = r3x * r4x ;
 		ret.mWidth.mCX = r2x.width ;
 		ret.mWidth.mCY = r2x.height ;
 		ret.mWidth.mStep = r3x * r4x ;
@@ -81,7 +81,7 @@ public:
 		auto rax = Box<Pin<cv::Mat>>::make () ;
 		const auto r1x = StringProc::stra_from_strs (file) ;
 		rax->self = cv::imread (r1x.self ,cv::IMREAD_UNCHANGED) ;
-		assume ((!rax->self.empty ())) ;
+		assume (!rax->self.empty ()) ;
 		return make_image (move (rax)) ;
 	}
 
@@ -211,8 +211,8 @@ public:
 		return move (ret) ;
 	}
 
-	Buffer3<FLT64> cvt_color4 (CREF<Color4B> a) const {
-		Buffer3<FLT64> ret ;
+	Buffer4<FLT64> cvt_color4 (CREF<Color4B> a) const {
+		Buffer4<FLT64> ret ;
 		ret[0] = FLT64 (a.mB) ;
 		ret[1] = FLT64 (a.mG) ;
 		ret[2] = FLT64 (a.mR) ;

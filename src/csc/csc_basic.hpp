@@ -40,6 +40,7 @@ struct OptionalHolder implement Interface {
 	virtual BOOL exist () const = 0 ;
 	virtual FLAG code () const = 0 ;
 	virtual void poll (VREF<BoxLayout> item) const = 0 ;
+	virtual void push (VREF<BoxLayout> item) const = 0 ;
 } ;
 
 template <class A>
@@ -47,7 +48,7 @@ class Optional implement OptionalLayout {
 protected:
 	using OptionalLayout::mCode ;
 	using OptionalLayout::mValue ;
-	Temp<A> mStorage ;
+	Union<A> mStorage ;
 
 public:
 	implicit Optional () = default ;
@@ -85,17 +86,17 @@ public:
 		if (exist ())
 			return ;
 		auto rax = Box<A>::make (move (item)) ;
-		OptionalHolder::create (thiz)->poll (rax) ;
+		OptionalHolder::create (thiz)->push (rax) ;
 	}
 
 	template <class ARG1>
 	void then (CREF<ARG1> func) const {
-		if ((!exist ()))
+		if (!exist ())
 			return ;
 		auto rax = Box<A> () ;
 		OptionalHolder::create (thiz)->poll (rax) ;
 		func (rax.self) ;
-		OptionalHolder::create (thiz)->poll (rax) ;
+		OptionalHolder::create (thiz)->push (rax) ;
 	}
 
 	template <class ARG1>
@@ -305,8 +306,8 @@ public:
 
 	void invoke (CREF<Pointer> func ,CREF<WrapperLayout> params) const override {
 		assert (params.mRank == rank ()) ;
-		auto &&tmp = wrapper_from (FUNCTION_PARAMS<A>::expr ,params) ;
-		return tmp (keep[TYPE<A>::expr] (func)) ;
+		auto &&rax = wrapper_from (FUNCTION_PARAMS<A>::expr ,params) ;
+		return rax (keep[TYPE<A>::expr] (func)) ;
 	}
 
 	template <class...ARG1>
@@ -325,7 +326,7 @@ struct FunctionHolder implement Interface {
 	imports VFat<FunctionHolder> create (VREF<FunctionLayout> that) ;
 	imports CFat<FunctionHolder> create (CREF<FunctionLayout> that) ;
 
-	virtual void initialize (RREF<BoxLayout> item ,CREF<Unknown> reflect) = 0 ;
+	virtual void initialize (RREF<BoxLayout> item ,CREF<Unknown> holder) = 0 ;
 	virtual void initialize (CREF<FunctionLayout> that) = 0 ;
 	virtual VREF<BoxLayout> raw () leftvalue = 0 ;
 	virtual CREF<BoxLayout> raw () const leftvalue = 0 ;
@@ -355,7 +356,7 @@ protected:
 public:
 	implicit Function () = default ;
 
-	template <class ARG1 ,class = REQUIRE<IS_NOT_EXTEND<FunctionLayout ,ARG1>>>
+	template <class ARG1 ,class = REQUIRE<ENUM_NOT<IS_EXTEND<FunctionLayout ,ARG1>>>>
 	implicit Function (RREF<ARG1> that) {
 		using R1X = FUNCTION_RETURN<ARG1> ;
 		using R2X = FUNCTION_PARAMS<ARG1> ;
@@ -410,8 +411,8 @@ template <class A ,class B>
 class ReflectRecastBinder implement ReflectRecast {
 public:
 	FLAG recast (CREF<FLAG> pointer) const override {
-		auto &&tmp = keep[TYPE<B>::expr] (Pointer::make (pointer)) ;
-		return offset_impl (PHX ,TYPE<A>::expr ,tmp) ;
+		auto &&rax = keep[TYPE<B>::expr] (Pointer::make (pointer)) ;
+		return offset_impl (PHX ,TYPE<A>::expr ,rax) ;
 	}
 
 	template <class ARG1 ,class ARG2 ,class = REQUIRE<IS_EXTEND<ARG1 ,ARG2>>>
@@ -419,7 +420,7 @@ public:
 		return FLAG (PTR<CREF<ARG1>> (&b)) ;
 	}
 
-	template <class ARG1 ,class ARG2 ,class = REQUIRE<HAS_SELF<ARG2>>>
+	template <class ARG1 ,class ARG2 ,class = REQUIRE<IS_RECAST<ARG1 ,ARG2>>>
 	forceinline FLAG offset_impl (CREF<typeof (PH2)> ,TYPE<ARG1> ,CREF<ARG2> b) const {
 		return address (b.self) ;
 	}
@@ -470,7 +471,7 @@ struct AutoRefHolder implement Interface {
 	virtual CREF<Pointer> self_m () const leftvalue = 0 ;
 	virtual VREF<Pointer> rebind (CREF<Clazz> clazz_) leftvalue = 0 ;
 	virtual CREF<Pointer> rebind (CREF<Clazz> clazz_) const leftvalue = 0 ;
-	virtual AutoRefLayout recast (CREF<Unknown> reflect) = 0 ;
+	virtual AutoRefLayout recast (CREF<Unknown> simple) = 0 ;
 } ;
 
 inline AutoRefLayout::~AutoRefLayout () noexcept {
@@ -606,7 +607,7 @@ struct SharedRefHolder implement Interface {
 	virtual CREF<BoxLayout> raw () const leftvalue = 0 ;
 	virtual FLAG counter () const = 0 ;
 	virtual VREF<Pointer> self_m () const leftvalue = 0 ;
-	virtual SharedRefLayout recast (CREF<Unknown> reflect) = 0 ;
+	virtual SharedRefLayout recast (CREF<Unknown> simple) = 0 ;
 } ;
 
 inline SharedRefLayout::~SharedRefLayout () noexcept {
@@ -727,7 +728,7 @@ struct UniqueRefHolder implement Interface {
 	virtual VREF<BoxLayout> raw () leftvalue = 0 ;
 	virtual CREF<BoxLayout> raw () const leftvalue = 0 ;
 	virtual CREF<Pointer> self_m () const leftvalue = 0 ;
-	virtual UniqueRefLayout recast (CREF<Unknown> reflect) = 0 ;
+	virtual UniqueRefLayout recast (CREF<Unknown> simple) = 0 ;
 } ;
 
 inline UniqueRefLayout::~UniqueRefLayout () noexcept {
@@ -800,7 +801,7 @@ public:
 } ;
 
 struct ReflectElement implement Interface {
-	virtual RFat<Unknown> unknown () const = 0 ;
+	virtual RFat<Unknown> element () const = 0 ;
 
 	imports forceinline consteval FLAG expr_m () noexcept {
 		return 202 ;
@@ -810,7 +811,7 @@ struct ReflectElement implement Interface {
 template <class A>
 class ReflectElementBinder implement ReflectElement {
 public:
-	RFat<Unknown> unknown () const override {
+	RFat<Unknown> element () const override {
 		return RFat<Unknown> (BoxUnknownBinder<A> () ,NULL) ;
 	}
 } ;
@@ -1020,8 +1021,8 @@ template <class A>
 class FarBufferRealLayout implement FarBufferLayout {
 public:
 	implicit FarBufferRealLayout () noexcept {
-		auto &&tmp = keep[TYPE<Ref<A>>::expr] (Pointer::from (thiz.mBuffer)) ;
-		tmp = Ref<A> () ;
+		auto &&rax = keep[TYPE<RefLayout>::expr] (thiz.mBuffer) ;
+		rax = Ref<A> () ;
 	}
 } ;
 
@@ -1080,7 +1081,7 @@ public:
 } ;
 
 template <class A ,class B>
-struct MainTuple implement Tuple<Temp<A> ,B> {} ;
+struct TupleNode implement Tuple<Union<A> ,B> {} ;
 
 struct AllocatorNode {
 	INDEX mNext ;
@@ -1147,7 +1148,7 @@ template <class A ,class B>
 class AllocatorUnknownBinder implement Unknown {
 public:
 	FLAG reflect (CREF<FLAG> uuid) const override {
-		using R1X = MainTuple<A ,B> ;
+		using R1X = TupleNode<A ,B> ;
 		if (uuid == ReflectSizeBinder<R1X>::expr)
 			return inline_hold (ReflectSizeBinder<R1X> ()) ;
 		if (uuid == ReflectCreateBinder<R1X>::expr)
@@ -1166,18 +1167,12 @@ public:
 
 template <class A ,class B>
 class AllocatorRealLayout implement AllocatorLayout {
-private:
-	using RealType = RefBuffer<Tuple<Temp<A> ,B>> ;
-
 public:
-	implicit AllocatorRealLayout () noexcept ;
+	implicit AllocatorRealLayout () noexcept {
+		auto &&rax = keep[TYPE<RefBufferLayout>::expr] (thiz.mAllocator) ;
+		rax = RefBuffer<TupleNode<A ,B>> () ;
+	}
 } ;
-
-template <class A ,class B>
-inline AllocatorRealLayout<A ,B>::AllocatorRealLayout () noexcept {
-	auto &&tmp = keep[TYPE<RealType>::expr] (Pointer::from (thiz.mAllocator)) ;
-	tmp = RealType () ;
-}
 
 using ALLOCATOR_MIN_SIZE = ENUM<256> ;
 

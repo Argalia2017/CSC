@@ -130,14 +130,14 @@
   </ItemGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
-      <CppLanguageStandard>gnu++17</CppLanguageStandard>
+      <CppLanguageStandard>gnu++20</CppLanguageStandard>
       <Verbose>true</Verbose>
       <SymbolsHiddenByDefault>true</SymbolsHiddenByDefault>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
-      <CppLanguageStandard>gnu++17</CppLanguageStandard>
+      <CppLanguageStandard>gnu++20</CppLanguageStandard>
       <Verbose>true</Verbose>
       <SymbolsHiddenByDefault>true</SymbolsHiddenByDefault>
     </ClCompile>

@@ -110,7 +110,7 @@ public:
 				ret.mR = r12x.transpose () * ret.mR ;
 				rax = TRUE ;
 			}
-			if ((!rax))
+			if (!rax)
 				break ;
 		}
 		return move (ret) ;
@@ -138,7 +138,7 @@ public:
 		Matrix ret ;
 		for (auto &&i : iter (0 ,4 ,0 ,4)) {
 			ret[i] = a (i.mY ,i.mX) ;
-			assume ((!isnan (ret[i]))) ;
+			assume (!isnan (ret[i])) ;
 		}
 		return move (ret) ;
 	}
@@ -176,6 +176,12 @@ public:
 		const auto r8x = Eigen::MatrixXd (r5x * pesedo_inverse (r6x) * r7x.transpose ()) ;
 		const auto r9x = r8x * r3x ;
 		return cvt_csc_matrix (r9x) ;
+	}
+
+	Image<FLT64> solve_inv (CREF<Image<FLT64>> a) const override {
+		const auto r1x = cvt_eigen_matrix (a) ;
+		const auto r2x = Eigen::MatrixXd (r1x.inverse ()) ;
+		return cvt_csc_matrix (r2x) ;
 	}
 
 	Eigen::MatrixXd pesedo_inverse (CREF<Eigen::MatrixXd> a) const {

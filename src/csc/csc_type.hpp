@@ -48,7 +48,7 @@ using LENGTH = VAL ;
 using FLAG = VAL ;
 
 template <class A>
-using JustInt = KILL<VAL ,A> ;
+using Just = KILL<VAL ,A> ;
 
 using FLT32 = csc_float32_t ;
 using FLT64 = csc_float64_t ;
@@ -662,21 +662,6 @@ struct Proxy {
 	forceinline VREF<Proxy> operator= (RREF<Proxy> that) = delete ;
 } ;
 
-template <class A>
-struct RefProxy {
-protected:
-	XREF<A> mThat ;
-
-public:
-	implicit RefProxy () = delete ;
-	explicit RefProxy (XREF<A> that) :mThat (that) {}
-	implicit ~RefProxy () = default ;
-	implicit RefProxy (CREF<RefProxy> that) = delete ;
-	forceinline VREF<RefProxy> operator= (CREF<RefProxy> that) = delete ;
-	implicit RefProxy (RREF<RefProxy> that) = default ;
-	forceinline VREF<RefProxy> operator= (RREF<RefProxy> that) = delete ;
-} ;
-
 struct Interface {
 	implicit Interface () = default ;
 	virtual ~Interface () = default ;
@@ -1266,8 +1251,21 @@ trait IS_EXTEND_HELP<A ,B ,ALWAYS> {
 template <class A ,class B>
 using IS_EXTEND = typename IS_EXTEND_HELP<A ,B ,ALWAYS>::RET ;
 
+template <class...>
+trait IS_RECAST_HELP ;
+
+template <class A ,class B ,class OTHERWISE>
+trait IS_RECAST_HELP<A ,B ,OTHERWISE> {
+	using RET = ENUM_FALSE ;
+} ;
+
 template <class A ,class B>
-using IS_NOT_EXTEND = ENUM_NOT<IS_EXTEND<A ,B>> ;
+trait IS_RECAST_HELP<A ,B ,REQUIRE<IS_SAME<A ,typeof (nullof (B).self)>>> {
+	using RET = ENUM_TRUE ;
+} ;
+
+template <class A ,class B>
+using IS_RECAST = typename IS_RECAST_HELP<A ,B ,ALWAYS>::RET ;
 
 template <class...>
 trait IS_INTERFACE_HELP ;
@@ -1410,7 +1408,7 @@ template <class SIZE ,class ALIGN = RANK1>
 using Storage = typename STORAGE_HELP<SIZE ,ALIGN ,ALWAYS>::RET ;
 
 template <class A>
-struct Temp {
+struct Union {
 	Storage<SIZE_OF<A> ,ALIGN_OF<A>> mUnused ;
 } ;
 
@@ -1465,22 +1463,6 @@ trait TUPLE_HELP<PARAMS ,REQUIRE<ENUM_EQUAL<RANK_OF<PARAMS> ,RANK3>>> {
 
 template <class...A>
 using Tuple = typename TUPLE_HELP<TYPE<A...> ,ALWAYS>::RET ;
-
-template <class...>
-trait HAS_SELF_HELP ;
-
-template <class A ,class OTHERWISE>
-trait HAS_SELF_HELP<A ,OTHERWISE> {
-	using RET = ENUM_FALSE ;
-} ;
-
-template <class A>
-trait HAS_SELF_HELP<A ,REQUIRE<KILL<ENUM_TRUE ,typeof (nullof (A).self)>>> {
-	using RET = ENUM_TRUE ;
-} ;
-
-template <class A>
-using HAS_SELF = typename HAS_SELF_HELP<A ,ALWAYS>::RET ;
 
 template <class...>
 trait HAS_M1ST_HELP ;

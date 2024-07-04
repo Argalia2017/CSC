@@ -52,7 +52,7 @@ public:
 	BOOL equal (CREF<VectorLayout> that) const override {
 		for (auto &&i : iter (0 ,4)) {
 			const auto r1x = inline_equal (fake.mVector[i] ,that.mVector[i]) ;
-			if ((!r1x))
+			if (!r1x)
 				return r1x ;
 		}
 		return TRUE ;
@@ -233,7 +233,7 @@ public:
 	BOOL equal (CREF<MatrixLayout> that) const override {
 		for (auto &&i : iter (0 ,16)) {
 			const auto r1x = inline_equal (fake.mMatrix[i] ,that.mMatrix[i]) ;
-			if ((!r1x))
+			if (!r1x)
 				return r1x ;
 		}
 		return TRUE ;
@@ -549,7 +549,7 @@ public:
 		fake = Matrix (r1x ,r4x ,r3x ,r5x) ;
 	}
 
-	void ViewMatrix_initialize (CREF<Vector> x ,CREF<Vector> y ,CREF<JustInt<ViewMatrixOption>> option) override {
+	void ViewMatrix_initialize (CREF<Vector> x ,CREF<Vector> y ,CREF<Just<ViewMatrixOption>> option) override {
 		ViewMatrix_initialize (x ,y) ;
 		auto act = TRUE ;
 		if ifdo (act) {
@@ -667,14 +667,38 @@ exports CFat<MatrixProcHolder> MatrixProcHolder::create (CREF<MatrixProcLayout> 
 	return CFat<MatrixProcHolder> (External<MatrixProcHolder ,MatrixProcLayout>::instance () ,that) ;
 }
 
-template class External<LinearProcHolder ,LinearProcLayout> ;
+class DuplexMatrixImplHolder implement Fat<DuplexMatrixHolder ,DuplexMatrixLayout> {
+public:
+	void initialize (CREF<Matrix> that) override {
+		fake.mDuplexMatrix[0] = that ;
+		fake.mDuplexMatrix[1] = fake.mDuplexMatrix[0].inverse () ;
+		if ifdo (TRUE) {
+			if (fake.mDuplexMatrix[0][3][0] != 0)
+				discard ;
+			if (fake.mDuplexMatrix[0][3][1] != 0)
+				discard ;
+			if (fake.mDuplexMatrix[0][3][2] != 0)
+				discard ;
+			if (fake.mDuplexMatrix[0][3][3] != 1)
+				discard ;
+			fake.mDuplexMatrix[1][3][3] = 1 ;
+		}
+	}
 
-exports VFat<LinearProcHolder> LinearProcHolder::create (VREF<LinearProcLayout> that) {
-	return VFat<LinearProcHolder> (External<LinearProcHolder ,LinearProcLayout>::instance () ,that) ;
+	DuplexMatrixLayout inverse () const override {
+		DuplexMatrixLayout ret ;
+		ret.mDuplexMatrix[0] = fake.mDuplexMatrix[1] ;
+		ret.mDuplexMatrix[1] = fake.mDuplexMatrix[0] ;
+		return move (ret) ;
+	}
+} ;
+
+exports VFat<DuplexMatrixHolder> DuplexMatrixHolder::create (VREF<DuplexMatrixLayout> that) {
+	return VFat<DuplexMatrixHolder> (DuplexMatrixImplHolder () ,that) ;
 }
 
-exports CFat<LinearProcHolder> LinearProcHolder::create (CREF<LinearProcLayout> that) {
-	return CFat<LinearProcHolder> (External<LinearProcHolder ,LinearProcLayout>::instance () ,that) ;
+exports CFat<DuplexMatrixHolder> DuplexMatrixHolder::create (CREF<DuplexMatrixLayout> that) {
+	return CFat<DuplexMatrixHolder> (DuplexMatrixImplHolder () ,that) ;
 }
 
 class QuaternionImplHolder implement Fat<QuaternionHolder ,QuaternionLayout> {
@@ -770,7 +794,7 @@ public:
 	BOOL equal (CREF<QuaternionLayout> that) const override {
 		for (auto &&i : iter (0 ,4)) {
 			const auto r1x = inline_equal (fake.mQuaternion[i] ,that.mQuaternion[i]) ;
-			if ((!r1x))
+			if (!r1x)
 				return r1x ;
 		}
 		return TRUE ;
@@ -839,18 +863,28 @@ exports CFat<QuaternionHolder> QuaternionHolder::create (CREF<QuaternionLayout> 
 	return CFat<QuaternionHolder> (QuaternionImplHolder () ,that) ;
 }
 
+template class External<LinearProcHolder ,LinearProcLayout> ;
+
+exports VFat<LinearProcHolder> LinearProcHolder::create (VREF<LinearProcLayout> that) {
+	return VFat<LinearProcHolder> (External<LinearProcHolder ,LinearProcLayout>::instance () ,that) ;
+}
+
+exports CFat<LinearProcHolder> LinearProcHolder::create (CREF<LinearProcLayout> that) {
+	return CFat<LinearProcHolder> (External<LinearProcHolder ,LinearProcLayout>::instance () ,that) ;
+}
+
 class PointCloudImplHolder implement Fat<PointCloudHolder ,PointCloudLayout> {
 public:
 	void initialize (RREF<Array<Point2F>> that) override {
 		fake.mRank = 2 ;
-		auto &&tmp = keep[TYPE<ArrayLayout>::expr] (Pointer::from (fake.mPointCloud)) ;
-		tmp = move (that) ;
+		auto &&rax = keep[TYPE<ArrayLayout>::expr] (Pointer::from (fake.mPointCloud)) ;
+		rax = move (that) ;
 	}
 
 	void initialize (RREF<Array<Point3F>> that) override {
 		fake.mRank = 3 ;
-		auto &&tmp = keep[TYPE<ArrayLayout>::expr] (Pointer::from (fake.mPointCloud)) ;
-		tmp = move (that) ;
+		auto &&rax = keep[TYPE<ArrayLayout>::expr] (Pointer::from (fake.mPointCloud)) ;
+		rax = move (that) ;
 	}
 
 	LENGTH size () const override {
@@ -882,7 +916,7 @@ public:
 
 	Vector center () const override {
 		Vector ret = Vector::axis_w () ;
-		for (auto &&i : iter (0 ,fake.mPointCloud.size ())) {
+		for (auto &&i : fake.mPointCloud.range ()) {
 			const auto r1x = get (i) ;
 			ret += r1x ;
 		}
@@ -894,7 +928,7 @@ public:
 		const auto r1x = center () ;
 		const auto r2x = invoke ([&] () {
 			Matrix ret = Matrix::zero () ;
-			for (auto &&i : iter (0 ,fake.mPointCloud.size ())) {
+			for (auto &&i : fake.mPointCloud.range ()) {
 				const auto r3x = get (i) ;
 				const auto r4x = (r3x - r1x).normalize () ;
 				ret[0][0] += MathProc::square (r4x[0]) ;
@@ -932,8 +966,8 @@ public:
 			Vector ret = Vector::zero () ;
 			INDEX ix = (size () - 1) / 2 ;
 			INDEX iy = size () / 2 ;
-			ret += Vector (fake.mPointCloud[ix]) ;
-			ret += Vector (fake.mPointCloud[iy]) ;
+			ret += get (ix) ;
+			ret += get (iy) ;
 			ret = ret.projection () ;
 			return move (ret) ;
 		}) ;
@@ -950,7 +984,7 @@ public:
 		ret.mMax.mX = -FLT64_INF ;
 		ret.mMax.mY = -FLT64_INF ;
 		ret.mMax.mZ = -FLT64_INF ;
-		for (auto &&i : iter (0 ,fake.mPointCloud.size ())) {
+		for (auto &&i : fake.mPointCloud.range ()) {
 			const auto r1x = get (i) ;
 			ret.mMin.mX = MathProc::min_of (ret.mMin.mX ,FLT32 (r1x[0])) ;
 			ret.mMin.mY = MathProc::min_of (ret.mMin.mY ,FLT32 (r1x[1])) ;
@@ -969,7 +1003,7 @@ public:
 			if (fake.mRank != 2)
 				discard ;
 			auto rax = Array<Point2F> (fake.mPointCloud.size ()) ;
-			for (auto &&i : iter (0 ,fake.mPointCloud.size ())) {
+			for (auto &&i : fake.mPointCloud.range ()) {
 				const auto r1x = get (i) ;
 				const auto r2x = r1x * mat ;
 				rax[i] = r2x.xyz () ;
@@ -980,7 +1014,7 @@ public:
 			if (fake.mRank != 2)
 				discard ;
 			auto rax = Array<Point3F> (fake.mPointCloud.size ()) ;
-			for (auto &&i : iter (0 ,fake.mPointCloud.size ())) {
+			for (auto &&i : fake.mPointCloud.range ()) {
 				const auto r1x = get (i) ;
 				const auto r2x = mat * r1x ;
 				rax[i] = r2x.xyz () ;

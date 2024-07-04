@@ -491,7 +491,7 @@ public:
 } ;
 
 struct PlyParserGuide {
-	INDEX mElement ;
+	INDEX mElementIndex ;
 	ArrayList<INDEX> mProperty ;
 	INDEX mPropertyIndex ;
 	INDEX mLineIndex ;
@@ -514,7 +514,7 @@ struct PlyParserHolder implement Interface {
 	virtual INDEX find_element (CREF<Slice> name) const = 0 ;
 	virtual LENGTH element_size (CREF<INDEX> element) const = 0 ;
 	virtual INDEX find_property (CREF<INDEX> element ,CREF<Slice> name) const = 0 ;
-	virtual LENGTH property_size (CREF<INDEX> element ,CREF<INDEX> line ,CREF<INDEX> property) const = 0 ;
+	virtual LENGTH property_size (CREF<INDEX> element ,CREF<INDEX> property) const = 0 ;
 	virtual void guide_new (CREF<INDEX> element) = 0 ;
 	virtual void guide_put (CREF<INDEX> property) = 0 ;
 	virtual void read (VREF<BOOL> item) = 0 ;
@@ -552,8 +552,8 @@ public:
 		return PlyParserHolder::create (thiz)->find_property (element ,name) ;
 	}
 
-	LENGTH property_size (CREF<INDEX> element ,CREF<INDEX> line ,CREF<INDEX> property) const {
-		return PlyParserHolder::create (thiz)->property_size (element ,line ,property) ;
+	LENGTH property_size (CREF<INDEX> element ,CREF<INDEX> property) const {
+		return PlyParserHolder::create (thiz)->property_size (element ,property) ;
 	}
 
 	void guide_new (CREF<INDEX> element) {
@@ -568,36 +568,81 @@ public:
 		return PlyParserHolder::create (thiz)->read (item) ;
 	}
 
+	forceinline VREF<PlyParser> operator>> (VREF<BOOL> item) {
+		read (item) ;
+		return thiz ;
+	}
+
 	void read (VREF<VAL32> item) {
 		return PlyParserHolder::create (thiz)->read (item) ;
+	}
+
+	forceinline VREF<PlyParser> operator>> (VREF<VAL32> item) {
+		read (item) ;
+		return thiz ;
 	}
 
 	void read (VREF<VAL64> item) {
 		return PlyParserHolder::create (thiz)->read (item) ;
 	}
 
+	forceinline VREF<PlyParser> operator>> (VREF<VAL64> item) {
+		read (item) ;
+		return thiz ;
+	}
+
 	void read (VREF<FLT32> item) {
 		return PlyParserHolder::create (thiz)->read (item) ;
+	}
+
+	forceinline VREF<PlyParser> operator>> (VREF<FLT32> item) {
+		read (item) ;
+		return thiz ;
 	}
 
 	void read (VREF<FLT64> item) {
 		return PlyParserHolder::create (thiz)->read (item) ;
 	}
 
+	forceinline VREF<PlyParser> operator>> (VREF<FLT64> item) {
+		read (item) ;
+		return thiz ;
+	}
+
 	void read (VREF<BYTE> item) {
 		return PlyParserHolder::create (thiz)->read (item) ;
+	}
+
+	forceinline VREF<PlyParser> operator>> (VREF<BYTE> item) {
+		read (item) ;
+		return thiz ;
 	}
 
 	void read (VREF<WORD> item) {
 		return PlyParserHolder::create (thiz)->read (item) ;
 	}
 
+	forceinline VREF<PlyParser> operator>> (VREF<WORD> item) {
+		read (item) ;
+		return thiz ;
+	}
+
 	void read (VREF<CHAR> item) {
 		return PlyParserHolder::create (thiz)->read (item) ;
 	}
 
+	forceinline VREF<PlyParser> operator>> (VREF<CHAR> item) {
+		read (item) ;
+		return thiz ;
+	}
+
 	void read (VREF<QUAD> item) {
 		return PlyParserHolder::create (thiz)->read (item) ;
+	}
+
+	forceinline VREF<PlyParser> operator>> (VREF<QUAD> item) {
+		read (item) ;
+		return thiz ;
 	}
 } ;
 } ;

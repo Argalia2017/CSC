@@ -8,7 +8,7 @@
 
 	<!--csc_type.hpp-->
 
-	<Type Name="CSC::Temp&lt;*&gt;">
+	<Type Name="CSC::Union&lt;*&gt;">
 		<Expand HideRawView="true">
 			<ExpandedItem>($T1*)&amp;mUnused</ExpandedItem>
 		</Expand>
@@ -79,6 +79,7 @@
 	</Type>
 
 	<Type Name="CSC::SliceLayout">
+		<DisplayString Condition="mStep==0">{{???}}</DisplayString>
 		<DisplayString Condition="mStep==1">{(char*)mBuffer,s}</DisplayString>
 		<DisplayString Condition="mStep==2">{(char16_t*)mBuffer,su}</DisplayString>
 		<DisplayString Condition="mStep==4">{(char32_t*)mBuffer,s32}</DisplayString>
@@ -86,6 +87,7 @@
 		<StringView Condition="mStep==2">(char16_t*)mBuffer,su</StringView>
 		<StringView Condition="mStep==4">(char32_t*)mBuffer,s32</StringView>
 		<Expand HideRawView="true">
+			<Item Name="[+]">this</Item>
 			<Item Name="[size]">mSize</Item>
 			<Item Name="[step]">mStep</Item>
 			<Item Name="[this]">this</Item>
@@ -212,7 +214,7 @@
 		</Expand>
 	</Type>
 
-	<Type Name="CSC::MainTuple&lt;*&gt;">
+	<Type Name="CSC::TupleNode&lt;*&gt;">
 		<Expand HideRawView="true">
 			<ExpandedItem Condition="((CSC::AllocatorNode*)&amp;m2nd)->mNext==-2">m1st</ExpandedItem>
 		</Expand>
@@ -227,7 +229,7 @@
 		<Expand HideRawView="true">
 			<ArrayItems>
 				<Size>mAllocator.mSize</Size>
-				<ValuePointer>(CSC::MainTuple&lt;$T1,$T2&gt;*)mAllocator.mBuffer</ValuePointer>
+				<ValuePointer>(CSC::TupleNode&lt;$T1,$T2&gt;*)mAllocator.mBuffer</ValuePointer>
 			</ArrayItems>
 		</Expand>
 	</Type>
@@ -243,11 +245,11 @@
 			<Item Name="[this]">mAllocator.mThis</Item>
 			<ArrayItems Condition="mAllocator.mSize&lt;10">
 				<Size>mAllocator.mSize</Size>
-				<ValuePointer>(CSC::MainTuple&lt;$T1,$T2&gt;*)mAllocator.mBuffer</ValuePointer>
+				<ValuePointer>(CSC::TupleNode&lt;$T1,$T2&gt;*)mAllocator.mBuffer</ValuePointer>
 			</ArrayItems>
 			<ArrayItems Condition="mAllocator.mSize&gt;=10">
 				<Size>10</Size>
-				<ValuePointer>(CSC::MainTuple&lt;$T1,$T2&gt;*)mAllocator.mBuffer</ValuePointer>
+				<ValuePointer>(CSC::TupleNode&lt;$T1,$T2&gt;*)mAllocator.mBuffer</ValuePointer>
 			</ArrayItems>
 			<Item Name="[+]" Condition="mAllocator.mSize&gt;=10">(CSC::AllocatorRealLayout&lt;$T1,$T2&gt;*)this</Item>
 		</Expand>
@@ -262,6 +264,7 @@
 	</Type>
 
 	<Type Name="CSC::String&lt;*&gt;">
+		<DisplayString Condition="mString.mStep==0">{{???}}</DisplayString>
 		<DisplayString Condition="mString.mStep==1">{(char*)mString.mBuffer,s}</DisplayString>
 		<DisplayString Condition="mString.mStep==2">{(char16_t*)mString.mBuffer,su}</DisplayString>
 		<DisplayString Condition="mString.mStep==4">{(char32_t*)mString.mBuffer,s32}</DisplayString>
@@ -269,6 +272,7 @@
 		<StringView Condition="mString.mStep==2">(char16_t*)mString.mBuffer,su</StringView>
 		<StringView Condition="mString.mStep==4">(char32_t*)mString.mBuffer,s32</StringView>
 		<Expand HideRawView="true">
+			<Item Name="[+]">this</Item>
 			<ExpandedItem>(CSC::RefBuffer&lt;$T1&gt;*)&amp;mString</ExpandedItem>
 		</Expand>
 	</Type>
@@ -308,7 +312,7 @@
 		<Expand HideRawView="true">
 			<Item Name="[range]">mRange</Item>
 			<Item Name="[write]">mWrite</Item>
-			<ExpandedItem>(CSC::RefBuffer&lt;CSC::TupleWrap2&lt;int,CSC::SortedMapNode&gt; &gt;*)&amp;(*(CSC::SortedMapImplLayout&lt;$T1&gt;*)mHeap.mPointer).mList</ExpandedItem>
+			<ExpandedItem>(CSC::RefBuffer&lt;CSC::TupleWrap2&lt;$T1,CSC::SortedMapNode&gt; &gt;*)&amp;(*(CSC::SortedMapImplLayout&lt;CSC::Pointer&gt;*)mThis.mPointer).mList</ExpandedItem>
 		</Expand>
 	</Type>
 
@@ -387,6 +391,34 @@
 
 	<Type Name="CSC::Path">
 		<Expand HideRawView="true">
+			<ExpandedItem>mThis</ExpandedItem>
+		</Expand>
+	</Type>
+
+	<!--csc_string.hpp-->
+
+	<Type Name="CSC::XmlParserImplLayout">
+		<Expand HideRawView="true">
+			<ExpandedItem>mTree</ExpandedItem>
+		</Expand>
+	</Type>
+
+	<Type Name="CSC::XmlParser">
+		<Expand HideRawView="true">
+			<Item Name="[index]">mIndex</Item>
+			<ExpandedItem>mThis</ExpandedItem>
+		</Expand>
+	</Type>
+
+	<Type Name="CSC::JsonParserImplLayout">
+		<Expand HideRawView="true">
+			<ExpandedItem>mTree</ExpandedItem>
+		</Expand>
+	</Type>
+
+	<Type Name="CSC::JsonParser">
+		<Expand HideRawView="true">
+			<Item Name="[index]">mIndex</Item>
 			<ExpandedItem>mThis</ExpandedItem>
 		</Expand>
 	</Type>

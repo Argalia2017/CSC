@@ -37,7 +37,6 @@ struct TimeHolder implement Interface {
 
 	virtual void initialize () = 0 ;
 	virtual void initialize (CREF<LENGTH> milliseconds_) = 0 ;
-	virtual void initialize (CREF<LENGTH> milliseconds_ ,CREF<LENGTH> nanoseconds_) = 0 ;
 	virtual void initialize (CREF<TimeCalendar> calendar_) = 0 ;
 	virtual void initialize (CREF<TimeLayout> that) = 0 ;
 	virtual LENGTH megaseconds () const = 0 ;
@@ -60,10 +59,6 @@ public:
 
 	explicit Time (CREF<LENGTH> milliseconds_) {
 		TimeHolder::create (thiz)->initialize (milliseconds_) ;
-	}
-
-	explicit Time (CREF<LENGTH> milliseconds_ ,CREF<LENGTH> nanoseconds_) {
-		TimeHolder::create (thiz)->initialize (milliseconds_ ,nanoseconds_) ;
 	}
 
 	explicit Time (CREF<TimeCalendar> calendar_) {
@@ -634,6 +629,7 @@ struct RandomHolder implement Interface {
 	virtual BitSet random_pick (CREF<LENGTH> count ,CREF<LENGTH> size_) const = 0 ;
 	virtual void random_pick (CREF<LENGTH> count ,CREF<LENGTH> size_ ,VREF<BitSet> result) const = 0 ;
 	virtual BOOL random_draw (CREF<FLT64> possibility) const = 0 ;
+	virtual FLT64 random_normal () const = 0 ;
 } ;
 
 class Random implement RandomLayout {
@@ -673,6 +669,10 @@ public:
 
 	BOOL random_draw (CREF<FLT64> possibility) const {
 		return RandomHolder::create (thiz)->random_draw (possibility) ;
+	}
+
+	FLT64 random_normal () const {
+		return RandomHolder::create (thiz)->random_normal () ;
 	}
 } ;
 
@@ -744,7 +744,9 @@ struct GlobalHolder implement Interface {
 	imports CFat<GlobalHolder> create (CREF<GlobalLayout> that) ;
 
 	virtual void initialize () = 0 ;
-	virtual RefLayout borrow (CREF<Slice> name ,CREF<Clazz> clazz ,CREF<Unknown> reflect) const = 0 ;
+	virtual CREF<AutoRef<Pointer>> fetch (CREF<Slice> name) const = 0 ;
+	virtual void store (CREF<Slice> name ,RREF<AutoRef<Pointer>> item) const = 0 ;
+	virtual void abuse (CREF<Slice> name) const = 0 ;
 } ;
 
 class GlobalRoot implement Proxy {
@@ -769,10 +771,18 @@ public:
 		return keep[TYPE<Global>::expr] (GlobalRoot::instance ()) ;
 	}
 
-	Ref<A> borrow (CREF<Slice> name) const {
-		const auto r1x = SimpleUnknownBinder<ReflectRemakeBinder<AutoRef<A>>>::create () ;
-		RefLayout ret = GlobalHolder::create (thiz)->borrow (name ,Clazz (TYPE<A>::expr) ,r1x) ;
-		return move (keep[TYPE<Ref<A>>::expr] (ret)) ;
+	A fetch (CREF<Slice> name) const {
+		auto &&rax = GlobalHolder::create (thiz)->fetch (name) ;
+		return rax.rebind (TYPE<A>::expr).self ;
+	}
+
+	void store (CREF<Slice> name ,RREF<A> item) const {
+		auto rax = AutoRef<A>::make (move (item)) ;
+		return GlobalHolder::create (thiz)->store (name ,move (rax)) ;
+	}
+
+	void abuse (CREF<Slice> name) const {
+		return GlobalHolder::create (thiz)->abuse (name) ;
 	}
 } ;
 
@@ -1229,7 +1239,7 @@ struct ConsoleOption {
 		NoWarn ,
 		NoInfo ,
 		NoDebug ,
-		NoVarbose ,
+		NoTrace ,
 		ETC
 	} ;
 } ;
@@ -1246,14 +1256,14 @@ struct ConsoleHolder implement Interface {
 	imports CFat<ConsoleHolder> create (CREF<ConsoleLayout> that) ;
 
 	virtual void initialize () = 0 ;
-	virtual void set_option (CREF<JustInt<ConsoleOption>> option) const = 0 ;
+	virtual void set_option (CREF<Just<ConsoleOption>> option) const = 0 ;
 	virtual void print (CREF<Format> msg) const = 0 ;
 	virtual void fatal (CREF<Format> msg) const = 0 ;
 	virtual void error (CREF<Format> msg) const = 0 ;
 	virtual void warn (CREF<Format> msg) const = 0 ;
 	virtual void info (CREF<Format> msg) const = 0 ;
 	virtual void debug (CREF<Format> msg) const = 0 ;
-	virtual void verbose (CREF<Format> msg) const = 0 ;
+	virtual void trace (CREF<Format> msg) const = 0 ;
 	virtual void open (CREF<String<STR>> dire) const = 0 ;
 	virtual void start () const = 0 ;
 	virtual void stop () const = 0 ;
@@ -1275,7 +1285,7 @@ public:
 		}) ;
 	}
 
-	void set_option (CREF<JustInt<ConsoleOption>> option) const {
+	void set_option (CREF<Just<ConsoleOption>> option) const {
 		return ConsoleHolder::create (thiz)->set_option (option) ;
 	}
 
@@ -1310,8 +1320,8 @@ public:
 	}
 
 	template <class...ARG1>
-	void verbose (CREF<ARG1>...params) const {
-		return ConsoleHolder::create (thiz)->verbose (PrintFormat (params...)) ;
+	void trace (CREF<ARG1>...params) const {
+		return ConsoleHolder::create (thiz)->trace (PrintFormat (params...)) ;
 	}
 
 	void open (CREF<String<STR>> dire) const {

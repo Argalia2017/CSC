@@ -227,7 +227,7 @@ public:
 	VAL64 lerp (CREF<FLT64> a ,CREF<VAL64> lb ,CREF<VAL64> rb) const override {
 		const auto r1x = rb - lb ;
 		assert (r1x > 0) ;
-		const auto r2x = VAL64 (round (r1x * a ,FLT64 (1))) ;
+		const auto r2x = VAL64 (round (FLT64 (r1x) * a ,FLT64 (1))) ;
 		return lb + (r2x % r1x + r1x) % r1x ;
 	}
 
@@ -340,10 +340,10 @@ public:
 	}
 
 	BOOL all_of (CREF<BOOL> a ,CREF<WrapperLayout> b) const override {
-		if ((!a))
+		if (!a)
 			return FALSE ;
 		for (auto &&i : WrapperIterator<BOOL> (b)) {
-			if ((!i))
+			if (!i)
 				return FALSE ;
 		}
 		return TRUE ;
@@ -469,7 +469,7 @@ public:
 			if (rax.mMantissa == 0)
 				discard ;
 			while (TRUE) {
-				if ((!ByteProc::bit_any (QUAD (rax.mMantissa) ,QUAD (0XFFE0000000000000))))
+				if (!ByteProc::bit_any (QUAD (rax.mMantissa) ,QUAD (0XFFE0000000000000)))
 					break ;
 				rax.mMantissa = VAL64 (QUAD (rax.mMantissa) >> 1) ;
 				rax.mDownflow = 0 ;
@@ -498,7 +498,7 @@ public:
 			rax.mExponent = 0 ;
 		}
 		const auto r2x = invoke ([&] () {
-			if ((!fexp2.mSign))
+			if (!fexp2.mSign)
 				return QUAD (0X00) ;
 			return QUAD (0X8000000000000000) ;
 		}) ;
@@ -917,7 +917,7 @@ public:
 			return FALSE ;
 		for (auto &&i : iter (0 ,r1x)) {
 			const auto r3x = inline_equal (fake.mInteger[i] ,that.mInteger[i]) ;
-			if ((!r3x))
+			if (!r3x)
 				return r3x ;
 		}
 		return TRUE ;
@@ -1124,9 +1124,9 @@ public:
 
 	CHAR fnvhash32 (CREF<Pointer> src ,CREF<LENGTH> size_ ,CREF<CHAR> curr) const override {
 		CHAR ret = curr ;
-		auto &&tmp = keep[TYPE<ARR<BYTE>>::expr] (src) ;
+		auto &&rax = keep[TYPE<ARR<BYTE>>::expr] (src) ;
 		for (auto &&i : iter (0 ,size_)) {
-			ret = ret ^ CHAR (tmp[i]) ;
+			ret = ret ^ CHAR (rax[i]) ;
 			ret = CHAR (VAL32 (ret) * VAL32 (16777619UL)) ;
 		}
 		return move (ret) ;
@@ -1138,9 +1138,9 @@ public:
 
 	QUAD fnvhash64 (CREF<Pointer> src ,CREF<LENGTH> size_ ,CREF<QUAD> curr) const override {
 		QUAD ret = curr ;
-		auto &&tmp = keep[TYPE<ARR<BYTE>>::expr] (src) ;
+		auto &&rax = keep[TYPE<ARR<BYTE>>::expr] (src) ;
 		for (auto &&i : iter (0 ,size_)) {
-			ret = ret ^ QUAD (tmp[i]) ;
+			ret = ret ^ QUAD (rax[i]) ;
 			ret = QUAD (VAL64 (ret) * VAL64 (1099511628211ULL)) ;
 		}
 		return move (ret) ;
@@ -1154,9 +1154,9 @@ public:
 		static const ARR<csc_uint8_t ,ENUM<256>> mCache {
 			0X00 ,0X5E ,0XBC ,0XE2 ,0X61 ,0X3F ,0XDD ,0X83 ,0XC2 ,0X9C ,0X7E ,0X20 ,0XA3 ,0XFD ,0X1F ,0X41 ,0X9D ,0XC3 ,0X21 ,0X7F ,0XFC ,0XA2 ,0X40 ,0X1E ,0X5F ,0X01 ,0XE3 ,0XBD ,0X3E ,0X60 ,0X82 ,0XDC ,0X23 ,0X7D ,0X9F ,0XC1 ,0X42 ,0X1C ,0XFE ,0XA0 ,0XE1 ,0XBF ,0X5D ,0X03 ,0X80 ,0XDE ,0X3C ,0X62 ,0XBE ,0XE0 ,0X02 ,0X5C ,0XDF ,0X81 ,0X63 ,0X3D ,0X7C ,0X22 ,0XC0 ,0X9E ,0X1D ,0X43 ,0XA1 ,0XFF ,0X46 ,0X18 ,0XFA ,0XA4 ,0X27 ,0X79 ,0X9B ,0XC5 ,0X84 ,0XDA ,0X38 ,0X66 ,0XE5 ,0XBB ,0X59 ,0X07 ,0XDB ,0X85 ,0X67 ,0X39 ,0XBA ,0XE4 ,0X06 ,0X58 ,0X19 ,0X47 ,0XA5 ,0XFB ,0X78 ,0X26 ,0XC4 ,0X9A ,0X65 ,0X3B ,0XD9 ,0X87 ,0X04 ,0X5A ,0XB8 ,0XE6 ,0XA7 ,0XF9 ,0X1B ,0X45 ,0XC6 ,0X98 ,0X7A ,0X24 ,0XF8 ,0XA6 ,0X44 ,0X1A ,0X99 ,0XC7 ,0X25 ,0X7B ,0X3A ,0X64 ,0X86 ,0XD8 ,0X5B ,0X05 ,0XE7 ,0XB9 ,0X8C ,0XD2 ,0X30 ,0X6E ,0XED ,0XB3 ,0X51 ,0X0F ,0X4E ,0X10 ,0XF2 ,0XAC ,0X2F ,0X71 ,0X93 ,0XCD ,0X11 ,0X4F ,0XAD ,0XF3 ,0X70 ,0X2E ,0XCC ,0X92 ,0XD3 ,0X8D ,0X6F ,0X31 ,0XB2 ,0XEC ,0X0E ,0X50 ,0XAF ,0XF1 ,0X13 ,0X4D ,0XCE ,0X90 ,0X72 ,0X2C ,0X6D ,0X33 ,0XD1 ,0X8F ,0X0C ,0X52 ,0XB0 ,0XEE ,0X32 ,0X6C ,0X8E ,0XD0 ,0X53 ,0X0D ,0XEF ,0XB1 ,0XF0 ,0XAE ,0X4C ,0X12 ,0X91 ,0XCF ,0X2D ,0X73 ,0XCA ,0X94 ,0X76 ,0X28 ,0XAB ,0XF5 ,0X17 ,0X49 ,0X08 ,0X56 ,0XB4 ,0XEA ,0X69 ,0X37 ,0XD5 ,0X8B ,0X57 ,0X09 ,0XEB ,0XB5 ,0X36 ,0X68 ,0X8A ,0XD4 ,0X95 ,0XCB ,0X29 ,0X77 ,0XF4 ,0XAA ,0X48 ,0X16 ,0XE9 ,0XB7 ,0X55 ,0X0B ,0X88 ,0XD6 ,0X34 ,0X6A ,0X2B ,0X75 ,0X97 ,0XC9 ,0X4A ,0X14 ,0XF6 ,0XA8 ,0X74 ,0X2A ,0XC8 ,0X96 ,0X15 ,0X4B ,0XA9 ,0XF7 ,0XB6 ,0XE8 ,0X0A ,0X54 ,0XD7 ,0X89 ,0X6B ,0X35} ;
 		BYTE ret = curr ;
-		auto &&tmp = keep[TYPE<ARR<BYTE>>::expr] (src) ;
+		auto &&rax = keep[TYPE<ARR<BYTE>>::expr] (src) ;
 		for (auto &&i : iter (0 ,size_)) {
-			const auto r1x = INDEX (ret ^ BYTE (tmp[i])) ;
+			const auto r1x = INDEX (ret ^ BYTE (rax[i])) ;
 			ret = BYTE (mCache[r1x]) ;
 		}
 		return move (ret) ;
@@ -1170,10 +1170,11 @@ public:
 		static const ARR<csc_uint16_t ,ENUM<256>> mCache {
 			0x0000 ,0x1021 ,0x2042 ,0x3063 ,0x4084 ,0x50A5 ,0x60C6 ,0x70E7 ,0x8108 ,0x9129 ,0xA14A ,0xB16B ,0xC18C ,0xD1AD ,0xE1CE ,0xF1EF ,0x1231 ,0x0210 ,0x3273 ,0x2252 ,0x52B5 ,0x4294 ,0x72F7 ,0x62D6 ,0x9339 ,0x8318 ,0xB37B ,0xA35A ,0xD3BD ,0xC39C ,0xF3FF ,0xE3DE ,0x2462 ,0x3443 ,0x0420 ,0x1401 ,0x64E6 ,0x74C7 ,0x44A4 ,0x5485 ,0xA56A ,0xB54B ,0x8528 ,0x9509 ,0xE5EE ,0xF5CF ,0xC5AC ,0xD58D ,0x3653 ,0x2672 ,0x1611 ,0x0630 ,0x76D7 ,0x66F6 ,0x5695 ,0x46B4 ,0xB75B ,0xA77A ,0x9719 ,0x8738 ,0xF7DF ,0xE7FE ,0xD79D ,0xC7BC ,0x48C4 ,0x58E5 ,0x6886 ,0x78A7 ,0x0840 ,0x1861 ,0x2802 ,0x3823 ,0xC9CC ,0xD9ED ,0xE98E ,0xF9AF ,0x8948 ,0x9969 ,0xA90A ,0xB92B ,0x5AF5 ,0x4AD4 ,0x7AB7 ,0x6A96 ,0x1A71 ,0x0A50 ,0x3A33 ,0x2A12 ,0xDBFD ,0xCBDC ,0xFBBF ,0xEB9E ,0x9B79 ,0x8B58 ,0xBB3B ,0xAB1A ,0x6CA6 ,0x7C87 ,0x4CE4 ,0x5CC5 ,0x2C22 ,0x3C03 ,0x0C60 ,0x1C41 ,0xEDAE ,0xFD8F ,0xCDEC ,0xDDCD ,0xAD2A ,0xBD0B ,0x8D68 ,0x9D49 ,0x7E97 ,0x6EB6 ,0x5ED5 ,0x4EF4 ,0x3E13 ,0x2E32 ,0x1E51 ,0x0E70 ,0xFF9F ,0xEFBE ,0xDFDD ,0xCFFC ,0xBF1B ,0xAF3A ,0x9F59 ,0x8F78 ,0x9188 ,0x81A9 ,0xB1CA ,0xA1EB ,0xD10C ,0xC12D ,0xF14E ,0xE16F ,0x1080 ,0x00A1 ,0x30C2 ,0x20E3 ,0x5004 ,0x4025 ,0x7046 ,0x6067 ,0x83B9 ,0x9398 ,0xA3FB ,0xB3DA ,0xC33D ,0xD31C ,0xE37F ,0xF35E ,0x02B1 ,0x1290 ,0x22F3 ,0x32D2 ,0x4235 ,0x5214 ,0x6277 ,0x7256 ,0xB5EA ,0xA5CB ,0x95A8 ,0x8589 ,0xF56E ,0xE54F ,0xD52C ,0xC50D ,0x34E2 ,0x24C3 ,0x14A0 ,0x0481 ,0x7466 ,0x6447 ,0x5424 ,0x4405 ,0xA7DB ,0xB7FA ,0x8799 ,0x97B8 ,0xE75F ,0xF77E ,0xC71D ,0xD73C ,0x26D3 ,0x36F2 ,0x0691 ,0x16B0 ,0x6657 ,0x7676 ,0x4615 ,0x5634 ,0xD94C ,0xC96D ,0xF90E ,0xE92F ,0x99C8 ,0x89E9 ,0xB98A ,0xA9AB ,0x5844 ,0x4865 ,0x7806 ,0x6827 ,0x18C0 ,0x08E1 ,0x3882 ,0x28A3 ,0xCB7D ,0xDB5C ,0xEB3F ,0xFB1E ,0x8BF9 ,0x9BD8 ,0xABBB ,0xBB9A ,0x4A75 ,0x5A54 ,0x6A37 ,0x7A16 ,0x0AF1 ,0x1AD0 ,0x2AB3 ,0x3A92 ,0xFD2E ,0xED0F ,0xDD6C ,0xCD4D ,0xBDAA ,0xAD8B ,0x9DE8 ,0x8DC9 ,0x7C26 ,0x6C07 ,0x5C64 ,0x4C45 ,0x3CA2 ,0x2C83 ,0x1CE0 ,0x0CC1 ,0xEF1F ,0xFF3E ,0xCF5D ,0xDF7C ,0xAF9B ,0xBFBA ,0x8FD9 ,0x9FF8 ,0x6E17 ,0x7E36 ,0x4E55 ,0x5E74 ,0x2E93 ,0x3EB2 ,0x0ED1 ,0x1EF0} ;
 		WORD ret = curr ;
-		auto &&tmp = keep[TYPE<ARR<BYTE>>::expr] (src) ;
+		auto &&rax = keep[TYPE<ARR<BYTE>>::expr] (src) ;
 		for (auto &&i : iter (0 ,size_)) {
-			const auto r1x = INDEX (((ret >> 8) ^ WORD (tmp[i])) & WORD (0XFF)) ;
-			ret = WORD (mCache[r1x]) ^ (ret << 8) ;
+			const auto r1x = (ret >> 8) ^ WORD (rax[i]) ;
+			const auto r2x = INDEX (r1x & WORD (0XFF)) ;
+			ret = WORD (mCache[r2x]) ^ (ret << 8) ;
 		}
 		return move (ret) ;
 	}
