@@ -287,6 +287,8 @@ public:
 		mReader = RegularReader (move (stream) ,5) ;
 		mReader.use_text () ;
 		mRecursiveCounter = 0 ;
+		mArrayMap = SortedMap<INDEX> (ALLOCATOR_MIN_SIZE::expr) ;
+		mObjectMap = SortedMap<String<STRU8>> (ALLOCATOR_MIN_SIZE::expr) ;
 	}
 
 	XmlParserImplLayout poll () {
@@ -946,6 +948,8 @@ public:
 		mReader = RegularReader (move (stream) ,5) ;
 		mReader.use_text () ;
 		mRecursiveCounter = 0 ;
+		mArrayMap = SortedMap<INDEX> (ALLOCATOR_MIN_SIZE::expr) ;
+		mObjectMap = SortedMap<String<STRU8>> (ALLOCATOR_MIN_SIZE::expr) ;
 	}
 
 	JsonParserImplLayout poll () {
@@ -1576,15 +1580,15 @@ struct PlyParserProperty {
 	Just<PlyParserDataType> mType ;
 	Just<PlyParserDataType> mListType ;
 	LENGTH mListSize ;
-	INDEX mBegin ;
-	INDEX mEnd ;
+	INDEX mPlyBegin ;
+	INDEX mPlyEnd ;
 } ;
 
 struct PlyParserElement {
 	String<STRU8> mName ;
-	LENGTH mLineStepSize ;
-	LENGTH mLineStepAlign ;
-	LENGTH mLineCount ;
+	LENGTH mLineSize ;
+	LENGTH mLineStep ;
+	LENGTH mLineLength ;
 	ArrayList<PlyParserProperty> mPropertyList ;
 	Set<String<STRU8>> mPropertySet ;
 	RefBuffer<BYTE> mPlyBuffer ;
@@ -1713,9 +1717,9 @@ public:
 				mTextReader >> ScalarText::from (mLastString) ;
 				const auto r3x = StringParse<LENGTH>::make (mLastString) ;
 				assume (r3x >= 0) ;
-				mElementList[ix].mLineStepSize = 0 ;
-				mElementList[ix].mLineStepAlign = 1 ;
-				mElementList[ix].mLineCount = r3x ;
+				mElementList[ix].mLineSize = r3x ;
+				mElementList[ix].mLineStep = 0 ;
+				mElementList[ix].mLineLength = 0 ;
 				mElementList[ix].mPropertyList = ArrayList<PlyParserProperty> (r3x) ;
 				mTextReader >> GAP ;
 			}
@@ -1732,11 +1736,10 @@ public:
 				const auto r4x = r2x.map (mLastString) ;
 				assume (r4x != NONE) ;
 				mElementList[ix].mPropertyList[iy].mType = r4x ;
-				mElementList[ix].mPropertyList[iy].mBegin = mElementList[ix].mLineStepSize ;
+				mElementList[ix].mPropertyList[iy].mPlyBegin = mElementList[ix].mLineStep ;
 				const auto r5x = ply_parser_data_type_size (r4x) ;
-				mElementList[ix].mLineStepSize += r5x ;
-				mElementList[ix].mLineStepAlign = MathProc::max_of (mElementList[ix].mLineStepAlign ,r5x) ;
-				mElementList[ix].mPropertyList[iy].mEnd = mElementList[ix].mLineStepSize ;
+				mElementList[ix].mLineStep += r5x ;
+				mElementList[ix].mPropertyList[iy].mPlyEnd = mElementList[ix].mLineStep ;
 				mTextReader >> GAP ;
 				mTextReader >> IdentifierText::from (mLastString) ;
 				const auto r6x = r1x.map (mLastString) ;
@@ -1756,11 +1759,10 @@ public:
 				const auto r7x = r1x.map (mLastType) ;
 				assume (r7x != NONE) ;
 				mElementList[ix].mPropertyList[iy].mType = r7x ;
-				mElementList[ix].mPropertyList[iy].mBegin = mElementList[ix].mLineStepSize ;
+				mElementList[ix].mPropertyList[iy].mPlyBegin = mElementList[ix].mLineStep ;
 				const auto r8x = ply_parser_data_type_size (r7x) ;
-				mElementList[ix].mLineStepSize += r8x ;
-				mElementList[ix].mLineStepAlign = MathProc::max_of (mElementList[ix].mLineStepAlign ,r8x) ;
-				mElementList[ix].mPropertyList[iy].mEnd = mElementList[ix].mLineStepSize ;
+				mElementList[ix].mLineStep += r8x ;
+				mElementList[ix].mPropertyList[iy].mPlyEnd = mElementList[ix].mLineStep ;
 				mTextReader >> GAP ;
 				mElementList[ix].mPropertyList[iy].mListType = PlyParserDataType::Null ;
 				mElementList[ix].mPropertyList[iy].mListSize = 0 ;
@@ -1806,7 +1808,7 @@ public:
 				mElementSet.add (mElementList[j].mName ,j) ;
 		}
 		for (auto &&i : mElementList.range ()) {
-			const auto r9x = mElementList[i].mLineCount * mElementList[i].mLineStepSize ;
+			const auto r9x = mElementList[i].mLineSize * mElementList[i].mLineStep ;
 			mElementList[i].mPlyBuffer = RefBuffer<BYTE> (r9x) ;
 			mElementList[i].mPlyIndex = address (mElementList[i].mPlyBuffer[0]) ;
 		}
@@ -1839,10 +1841,11 @@ public:
 		mTextReader.reset (mBodyOffset ,mStream->size ()) ;
 		mTextReader >> GAP ;
 		for (auto &&i : iter (0 ,mElementList.length ())) {
-			for (auto &&j : iter (0 ,mElementList[i].mLineCount)) {
+			for (auto &&j : iter (0 ,mElementList[i].mLineSize)) {
 				for (auto &&k : iter (0 ,mElementList[i].mPropertyList.length ())) {
 					read_body_text_item (mElementList[i] ,mElementList[i].mPropertyList[k] ,j) ;
 					read_body_text_list (mElementList[i] ,mElementList[i].mPropertyList[k] ,j) ;
+					mElementList[i].mLineLength++ ;
 				}
 			}
 		}
@@ -1939,7 +1942,7 @@ public:
 		const auto r1x = property.mListType ;
 		if (r1x == PlyParserDataType::Null)
 			return ;
-		const auto r2x = address (element.mPlyBuffer[property.mBegin]) ;
+		const auto r2x = address (element.mPlyBuffer[property.mPlyBegin]) ;
 		const auto r3x = invoke ([&] () {
 			if (property.mType == PlyParserDataType::Byte)
 				return LENGTH (bitwise[TYPE<BYTE>::expr] (Pointer::make (r2x))) ;
@@ -1955,22 +1958,21 @@ public:
 				discard ;
 			property.mListSize = r3x ;
 			const auto r4x = ply_parser_data_type_size (property.mListType) ;
-			const auto r5x = property.mEnd ;
+			const auto r5x = property.mPlyEnd ;
 			for (auto &&i : iter (0 ,element.mPropertyList.length ())) {
 				if ifdo (TRUE) {
-					if (element.mPropertyList[i].mBegin < r5x)
+					if (element.mPropertyList[i].mPlyBegin < r5x)
 						discard ;
-					element.mPropertyList[i].mBegin += r4x ;
+					element.mPropertyList[i].mPlyBegin += r4x ;
 				}
 				if ifdo (TRUE) {
-					if (element.mPropertyList[i].mEnd < r5x)
+					if (element.mPropertyList[i].mPlyEnd < r5x)
 						discard ;
-					element.mPropertyList[i].mEnd += r4x ;
+					element.mPropertyList[i].mPlyEnd += r4x ;
 				}
 			}
-			element.mLineStepSize += r4x ;
-			element.mLineStepAlign = MathProc::max_of (element.mLineStepAlign ,r4x) ;
-			const auto r6x = element.mLineCount * element.mLineStepSize ;
+			element.mLineStep += r4x ;
+			const auto r6x = element.mLineSize * element.mLineStep ;
 			element.mPlyBuffer.resize (r6x) ;
 		}
 		assume (property.mListSize == r3x) ;
@@ -2005,10 +2007,11 @@ public:
 		mByteReader = ByteReader (mStream.share ()) ;
 		mByteReader.reset (mBodyOffset ,mStream->size ()) ;
 		for (auto &&i : iter (0 ,mElementList.length ())) {
-			for (auto &&j : iter (0 ,mElementList[i].mLineCount)) {
+			for (auto &&j : iter (0 ,mElementList[i].mLineSize)) {
 				for (auto &&k : iter (0 ,mElementList[i].mPropertyList.length ())) {
 					read_body_byte_item (mElementList[i] ,mElementList[i].mPropertyList[k] ,j) ;
 					read_body_byte_list (mElementList[i] ,mElementList[i].mPropertyList[k] ,j) ;
+					mElementList[i].mLineLength++ ;
 				}
 			}
 		}
@@ -2096,7 +2099,7 @@ public:
 		const auto r1x = property.mListType ;
 		if (r1x == PlyParserDataType::Null)
 			return ;
-		const auto r2x = address (element.mPlyBuffer[property.mBegin]) ;
+		const auto r2x = address (element.mPlyBuffer[property.mPlyBegin]) ;
 		const auto r3x = invoke ([&] () {
 			if (property.mType == PlyParserDataType::Byte)
 				return LENGTH (bitwise[TYPE<BYTE>::expr] (Pointer::make (r2x))) ;
@@ -2112,22 +2115,21 @@ public:
 				discard ;
 			property.mListSize = r3x ;
 			const auto r4x = ply_parser_data_type_size (property.mListType) ;
-			const auto r5x = property.mEnd ;
+			const auto r5x = property.mPlyEnd ;
 			for (auto &&i : iter (0 ,element.mPropertyList.length ())) {
 				if ifdo (TRUE) {
-					if (element.mPropertyList[i].mBegin < r5x)
+					if (element.mPropertyList[i].mPlyBegin < r5x)
 						discard ;
-					element.mPropertyList[i].mBegin += r4x ;
+					element.mPropertyList[i].mPlyBegin += r4x ;
 				}
 				if ifdo (TRUE) {
-					if (element.mPropertyList[i].mEnd < r5x)
+					if (element.mPropertyList[i].mPlyEnd < r5x)
 						discard ;
-					element.mPropertyList[i].mEnd += r4x ;
+					element.mPropertyList[i].mPlyEnd += r4x ;
 				}
 			}
-			element.mLineStepSize += r4x ;
-			element.mLineStepAlign = MathProc::max_of (element.mLineStepAlign ,r4x) ;
-			const auto r6x = element.mLineCount * element.mLineStepSize ;
+			element.mLineStep += r4x ;
+			const auto r6x = element.mLineSize * element.mLineStep ;
 			element.mPlyBuffer.resize (r6x) ;
 		}
 		assume (property.mListSize == r3x) ;
@@ -2176,7 +2178,7 @@ public:
 	}
 
 	LENGTH element_size (CREF<INDEX> element) const override {
-		return fake.mThis->mElementList[element].mLineCount ;
+		return fake.mThis->mElementList[element].mLineSize ;
 	}
 
 	INDEX find_property (CREF<INDEX> element ,CREF<Slice> name) const override {
@@ -2214,14 +2216,14 @@ public:
 			fake.mGuide.mLineIndex = 0 ;
 			fake.mGuide.mPropertyIndex = 0 ;
 			assume (fake.mGuide.mPropertyIndex < fake.mGuide.mProperty.length ()) ;
-			assume (fake.mGuide.mLineIndex < fake.mThis->mElementList[ix].mLineCount) ;
+			assume (fake.mGuide.mLineIndex < fake.mThis->mElementList[ix].mLineSize) ;
 			jx = fake.mGuide.mProperty[fake.mGuide.mPropertyIndex] ;
-			const auto r1x = fake.mThis->mElementList[ix].mPropertyList[jx].mBegin ;
+			const auto r1x = fake.mThis->mElementList[ix].mPropertyList[jx].mPlyBegin ;
 			fake.mGuide.mPlyIndex = address (fake.mThis->mElementList[ix].mPlyBuffer[r1x]) ;
 		}
 		if ifdo (act) {
 			jx = fake.mGuide.mProperty[fake.mGuide.mPropertyIndex] ;
-			if (fake.mGuide.mPlyIndex >= fake.mThis->mElementList[ix].mPropertyList[jx].mEnd)
+			if (fake.mGuide.mPlyIndex >= fake.mThis->mElementList[ix].mPropertyList[jx].mPlyEnd)
 				discard ;
 		}
 		if ifdo (act) {
@@ -2229,16 +2231,16 @@ public:
 			if (fake.mGuide.mPropertyIndex >= fake.mGuide.mProperty.length ())
 				discard ;
 			jx = fake.mGuide.mProperty[fake.mGuide.mPropertyIndex] ;
-			const auto r2x = fake.mThis->mElementList[ix].mPropertyList[jx].mBegin ;
+			const auto r2x = fake.mThis->mElementList[ix].mPropertyList[jx].mPlyBegin ;
 			fake.mGuide.mPlyIndex = address (fake.mThis->mElementList[ix].mPlyBuffer[r2x]) ;
 		}
 		if ifdo (act) {
 			fake.mGuide.mLineIndex++ ;
 			fake.mGuide.mPropertyIndex = 0 ;
-			if (fake.mGuide.mLineIndex >= fake.mThis->mElementList[ix].mLineCount)
+			if (fake.mGuide.mLineIndex >= fake.mThis->mElementList[ix].mLineSize)
 				discard ;
 			jx = fake.mGuide.mProperty[fake.mGuide.mPropertyIndex] ;
-			const auto r3x = fake.mThis->mElementList[ix].mPropertyList[jx].mBegin ;
+			const auto r3x = fake.mThis->mElementList[ix].mPropertyList[jx].mPlyBegin ;
 			fake.mGuide.mPlyIndex = address (fake.mThis->mElementList[ix].mPlyBuffer[r3x]) ;
 		}
 		if ifdo (act) {

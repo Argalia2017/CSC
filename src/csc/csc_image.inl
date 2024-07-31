@@ -9,19 +9,22 @@
 namespace CSC {
 class ImageImplHolder implement Fat<ImageHolder ,ImageLayout> {
 public:
-	void initialize (CREF<Unknown> element ,RREF<ImageLayout> that) override {
-		const auto r1x = RFat<ReflectSize> (element) ;
-		noop (r1x) ;
-		assert (r1x->type_size () == that.mWidth.mStep) ;
+	void initialize (CREF<Unknown> holder ,RREF<ImageLayout> that) override {
+		const auto r1x = RFat<ReflectSize> (holder) ;
+		const auto r2x = r1x->type_size () ;
+		noop (r2x) ;
+		assert (r2x == that.mWidth.mStep) ;
+		assert (r2x == that.mImage.step ()) ;
 		fake = move (that) ;
 	}
 
-	void initialize (CREF<Unknown> element ,CREF<LENGTH> cx_ ,CREF<LENGTH> cy_ ,CREF<LENGTH> step_) override {
-		const auto r1x = RFat<ReflectSize> (element) ;
-		const auto r2x = cx_ * cy_ * step_ ;
-		const auto r3x = inline_alignas (r2x ,r1x->type_size ()) / r1x->type_size () ;
-		RefBufferHolder::create (fake.mImage)->initialize (element ,r3x) ;
+	void initialize (CREF<Unknown> holder ,CREF<LENGTH> cx_ ,CREF<LENGTH> cy_ ,CREF<LENGTH> step_) override {
+		const auto r1x = RFat<ReflectSize> (holder) ;
+		const auto r2x = r1x->type_size () ;
+		const auto r3x = cx_ * cy_ * step_ ;
+		const auto r4x = inline_alignas (r3x ,r2x) / r2x ;
 		auto &&rax = keep[TYPE<RefBufferLayout>::expr] (fake.mImage) ;
+		RefBufferHolder::create (rax)->initialize (holder ,r4x) ;
 		rax.mSize = cx_ * cy_ ;
 		rax.mStep = step_ ;
 		fake.mWidth.mCX = cx_ ;
@@ -66,16 +69,16 @@ public:
 		return fake.mCY ;
 	}
 
-	LENGTH strip () const override {
+	LENGTH tx () const override {
 		if (!fake.mImage.exist ())
 			return 0 ;
-		return fake.mStrip ;
+		return fake.mTX ;
 	}
 
-	LENGTH offset () const override {
+	LENGTH ty () const override {
 		if (!fake.mImage.exist ())
 			return 0 ;
-		return fake.mOffset ;
+		return fake.mTY ;
 	}
 
 	ImageWidth width () const override {
@@ -89,15 +92,15 @@ public:
 	void reset () override {
 		fake.mCX = fake.mWidth.mCX ;
 		fake.mCY = fake.mWidth.mCY ;
-		fake.mStrip = fake.mWidth.mCX ;
-		fake.mOffset = 0 ;
+		fake.mTX = 0 ;
+		fake.mTY = 0 ;
 	}
 
-	void reset (CREF<INDEX> cx_ ,CREF<INDEX> cy_ ,CREF<INDEX> strip_ ,CREF<INDEX> offset_) override {
+	void reset (CREF<INDEX> cx_ ,CREF<INDEX> cy_ ,CREF<INDEX> tx_ ,CREF<INDEX> ty_) override {
 		fake.mCX = cx_ ;
 		fake.mCY = cy_ ;
-		fake.mStrip = strip_ ;
-		fake.mOffset = offset_ ;
+		fake.mTX = tx_ ;
+		fake.mTY = ty_ ;
 	}
 
 	VREF<BoxLayout> raw () leftvalue override {
@@ -111,14 +114,14 @@ public:
 	VREF<Pointer> at (CREF<INDEX> x ,CREF<INDEX> y) leftvalue override {
 		assert (inline_between (x ,0 ,cx ())) ;
 		assert (inline_between (y ,0 ,cy ())) ;
-		INDEX ix = x + y * fake.mStrip + fake.mOffset ;
+		INDEX ix = (x + fake.mTX) + (y + fake.mTY) * fake.mWidth.mCX ;
 		return fake.mImage.at (ix) ;
 	}
 
 	CREF<Pointer> at (CREF<INDEX> x ,CREF<INDEX> y) const leftvalue override {
 		assert (inline_between (x ,0 ,cx ())) ;
 		assert (inline_between (y ,0 ,cy ())) ;
-		INDEX ix = x + y * fake.mStrip + fake.mOffset ;
+		INDEX ix = (x + fake.mTX) + (y + fake.mTY) * fake.mWidth.mCX ;
 		return fake.mImage.at (ix) ;
 	}
 

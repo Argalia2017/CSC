@@ -1491,7 +1491,7 @@ class FormatImplHolder implement Fat<FormatHolder ,FormatLayout> {
 public:
 	void initialize (CREF<Slice> format) override {
 		fake.mFormat = format ;
-		fake.mTop = 0 ;
+		fake.mWrite.self = 0 ;
 	}
 
 	void friend_write (VREF<StreamWriter> writer) const override {
@@ -1516,10 +1516,10 @@ public:
 				if (rax != Just<FLAG> (2))
 					discard ;
 				if ifdo (TRUE) {
-					const auto r1x = StreamProc::hex_from_str (fake.mFormat[i]) ;
-					if (!inline_between (r1x ,0 ,fake.mTop))
+					const auto r1x = StreamProc::hex_from_str (fake.mFormat[i]) - 1 ;
+					if (!inline_between (r1x ,0 ,fake.mWrite.self))
 						discard ;
-					const auto r2x = keep[TYPE<CFat<FormatFriend>>::expr] (Pointer::from (fake.mParams[r1x])) ;
+					const auto r2x = keep[TYPE<CFat<FormatFriend>>::expr] (Pointer::from (fake.mParams.self[r1x])) ;
 					r2x->friend_write (writer) ;
 				}
 				rax = Just<FLAG> (0) ;
@@ -1527,10 +1527,10 @@ public:
 			if ifdo (act) {
 				if (rax != Just<FLAG> (1))
 					discard ;
-				if (fake.mFormat[i] != STRU32 ('*'))
+				if (fake.mFormat[i] != STRU32 ('0'))
 					discard ;
-				for (auto &&j : iter (0 ,fake.mTop)) {
-					const auto r3x = keep[TYPE<CFat<FormatFriend>>::expr] (Pointer::from (fake.mParams[j])) ;
+				for (auto &&j : iter (0 ,fake.mWrite.self)) {
+					const auto r3x = keep[TYPE<CFat<FormatFriend>>::expr] (Pointer::from (fake.mParams.self[j])) ;
 					r3x->friend_write (writer) ;
 				}
 				rax = Just<FLAG> (3) ;
@@ -1539,10 +1539,10 @@ public:
 				if (rax != Just<FLAG> (1))
 					discard ;
 				if ifdo (TRUE) {
-					const auto r4x = StreamProc::hex_from_str (fake.mFormat[i]) ;
-					if (!inline_between (r4x ,0 ,fake.mTop))
+					const auto r4x = StreamProc::hex_from_str (fake.mFormat[i]) - 1 ;
+					if (!inline_between (r4x ,0 ,fake.mWrite.self))
 						discard ;
-					const auto r5x = keep[TYPE<CFat<FormatFriend>>::expr] (Pointer::from (fake.mParams[r4x])) ;
+					const auto r5x = keep[TYPE<CFat<FormatFriend>>::expr] (Pointer::from (fake.mParams.self[r4x])) ;
 					r5x->friend_write (writer) ;
 				}
 				rax = Just<FLAG> (3) ;
@@ -1560,11 +1560,11 @@ public:
 		}
 	}
 
-	void then (CREF<WrapperLayout> params) override {
-		fake.mTop = 0 ;
+	void then (CREF<WrapperLayout> params) const override {
+		fake.mWrite.self = 0 ;
 		for (auto &&i : WrapperIterator<FatLayout> (params)) {
-			fake.mParams[fake.mTop] = i ;
-			fake.mTop++ ;
+			fake.mParams.self[fake.mWrite.self] = i ;
+			fake.mWrite.self++ ;
 		}
 	}
 } ;
@@ -2277,19 +2277,21 @@ public:
 		fake.mThis->mRegex = std::basic_regex<STR> (format) ;
 	}
 
-	BOOL search (CREF<String<STR>> text) override {
-		const auto r1x = text.self ;
-		const auto r2x = std::regex_search (r1x ,fake.mThis->mMatch ,fake.mThis->mRegex) ;
+	INDEX search (CREF<String<STR>> text ,CREF<INDEX> offset) override {
+		const auto r1x = (&text.self[offset]) ;
+		const auto r2x = std::regex_search (r1x ,fake.mThis->mMatch ,fake.mThis->mRegex) ;		
 		if (!r2x)
-			return FALSE ;
-		return TRUE ;
+			return NONE ;
+		const auto r3x = FLAG (fake.mThis->mMatch[0].first) ;
+		const auto r4x = (r3x - FLAG (r1x)) / SIZE_OF<STR>::expr ;
+		return offset + r4x ;
 	}
 
-	String<STR> brace (CREF<INDEX> index) const override {
+	String<STR> match (CREF<INDEX> index) const override {
 		assert (!fake.mThis->mMatch.empty ()) ;
-		INDEX ix = index + 1 ;
-		const auto r1x = FLAG (fake.mThis->mMatch[ix].first) ;
-		const auto r2x = FLAG (fake.mThis->mMatch[ix].second) ;
+		assert (inline_between (index ,0 ,fake.mThis->mMatch.size ())) ;
+		const auto r1x = FLAG (fake.mThis->mMatch[index].first) ;
+		const auto r2x = FLAG (fake.mThis->mMatch[index].second) ;
 		const auto r3x = (r2x - r1x) / SIZE_OF<STR>::expr ;
 		const auto r4x = Slice (r1x ,r3x ,SIZE_OF<STR>::expr) ;
 		return String<STR> (r4x) ;

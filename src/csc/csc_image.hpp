@@ -93,27 +93,27 @@ struct ImageLayout {
 	ImageWidth mWidth ;
 	LENGTH mCX ;
 	LENGTH mCY ;
-	LENGTH mStrip ;
-	LENGTH mOffset ;
+	LENGTH mTX ;
+	LENGTH mTY ;
 } ;
 
 struct ImageHolder implement Interface {
 	imports VFat<ImageHolder> create (VREF<ImageLayout> that) ;
 	imports CFat<ImageHolder> create (CREF<ImageLayout> that) ;
 
-	virtual void initialize (CREF<Unknown> element ,RREF<ImageLayout> that) = 0 ;
-	virtual void initialize (CREF<Unknown> element ,CREF<LENGTH> cx_ ,CREF<LENGTH> cy_ ,CREF<LENGTH> step_) = 0 ;
+	virtual void initialize (CREF<Unknown> holder ,RREF<ImageLayout> that) = 0 ;
+	virtual void initialize (CREF<Unknown> holder ,CREF<LENGTH> cx_ ,CREF<LENGTH> cy_ ,CREF<LENGTH> step_) = 0 ;
 	virtual ImageLayout clone () const = 0 ;
 	virtual BOOL exist () const = 0 ;
 	virtual LENGTH size () const = 0 ;
 	virtual LENGTH step () const = 0 ;
 	virtual LENGTH cx () const = 0 ;
 	virtual LENGTH cy () const = 0 ;
-	virtual LENGTH strip () const = 0 ;
-	virtual LENGTH offset () const = 0 ;
+	virtual LENGTH tx () const = 0 ;
+	virtual LENGTH ty () const = 0 ;
 	virtual ImageWidth width () const = 0 ;
 	virtual void reset () = 0 ;
-	virtual void reset (CREF<INDEX> cx_ ,CREF<INDEX> cy_ ,CREF<INDEX> strip_ ,CREF<INDEX> offset_) = 0 ;
+	virtual void reset (CREF<INDEX> cx_ ,CREF<INDEX> cy_ ,CREF<INDEX> tx_ ,CREF<INDEX> ty_) = 0 ;
 	virtual VREF<BoxLayout> raw () leftvalue = 0 ;
 	virtual CREF<BoxLayout> raw () const leftvalue = 0 ;
 	virtual VREF<Pointer> at (CREF<INDEX> x ,CREF<INDEX> y) leftvalue = 0 ;
@@ -141,8 +141,8 @@ protected:
 	using ImageRealLayout<A>::mWidth ;
 	using ImageRealLayout<A>::mCX ;
 	using ImageRealLayout<A>::mCY ;
-	using ImageRealLayout<A>::mStrip ;
-	using ImageRealLayout<A>::mOffset ;
+	using ImageRealLayout<A>::mTX ;
+	using ImageRealLayout<A>::mTY ;
 
 public:
 	implicit Image () = default ;
@@ -180,12 +180,12 @@ public:
 		return ImageHolder::create (thiz)->cy () ;
 	}
 
-	LENGTH strip () const {
-		return ImageHolder::create (thiz)->strip () ;
+	LENGTH tx () const {
+		return ImageHolder::create (thiz)->tx () ;
 	}
 
-	LENGTH offset () const {
-		return ImageHolder::create (thiz)->offset () ;
+	LENGTH ty () const {
+		return ImageHolder::create (thiz)->ty () ;
 	}
 
 	ImageWidth width () const {
@@ -196,8 +196,8 @@ public:
 		return ImageHolder::create (thiz)->reset () ;
 	}
 
-	void reset (CREF<INDEX> cx_ ,CREF<INDEX> cy_ ,CREF<INDEX> strip_ ,CREF<INDEX> offset_) {
-		return ImageHolder::create (thiz)->reset (cx_ ,cy_ ,strip_ ,offset_) ;
+	void reset (CREF<INDEX> cx_ ,CREF<INDEX> cy_ ,CREF<INDEX> tx_ ,CREF<INDEX> ty_) {
+		return ImageHolder::create (thiz)->reset (cx_ ,cy_ ,tx_ ,ty_) ;
 	}
 
 	VREF<A> at (CREF<INDEX> x ,CREF<INDEX> y) leftvalue {

@@ -9,6 +9,13 @@
 namespace CSC {
 class VectorImplHolder implement Fat<VectorHolder ,VectorLayout> {
 public:
+	void initialize (CREF<Buffer<FLT64 ,RANK4>> that) override {
+		fake.mVector[0] = that[0] ;
+		fake.mVector[1] = that[1] ;
+		fake.mVector[2] = that[2] ;
+		fake.mVector[3] = that[3] ;
+	}
+
 	void initialize (CREF<FLT64> x ,CREF<FLT64> y ,CREF<FLT64> z ,CREF<FLT64> w) override {
 		fake.mVector[0] = x ;
 		fake.mVector[1] = y ;
@@ -205,6 +212,13 @@ exports CFat<VectorHolder> VectorHolder::create (CREF<VectorLayout> that) {
 
 class MatrixImplHolder implement Fat<MatrixHolder ,MatrixLayout> {
 public:
+	void initialize (CREF<Buffer<FLT64 ,ENUM<16>>> that) override {
+		for (auto &&i : iter (0 ,4 ,0 ,4)) {
+			INDEX ix = i.mY * 4 + i.mX ;
+			fake.mMatrix[mm (i.mX ,i.mY)] = that[ix] ;
+		}
+	}
+
 	void initialize (CREF<VectorLayout> x ,CREF<VectorLayout> y ,CREF<VectorLayout> z ,CREF<VectorLayout> w) override {
 		for (auto &&i : iter (0 ,4)) {
 			fake.mMatrix[mm (0 ,i)] = x.mVector[i] ;
@@ -639,11 +653,22 @@ public:
 		fake = move (ret) ;
 	}
 
-	void AffineMatrix_initialize (CREF<Buffer<FLT64 ,ENUM<16>>> a) override {
-		Matrix ret = Matrix::zero () ;
-		for (auto &&i : iter (0 ,4 ,0 ,4)) {
-			INDEX ix = i.mY * 4 + i.mX ;
-			ret[i] = a[ix] ;
+	void AffineMatrix_initialize (CREF<Array<FLT64>> a) override {
+		Matrix ret = Matrix::identity () ;
+		if ifdo (TRUE) {
+			if (a.length () < 3)
+				discard ;
+			ret *= TranslationMatrix (a[0] ,a[1] ,a[2]) ;
+		}
+		if ifdo (TRUE) {
+			if (a.length () < 7)
+				discard ;
+			ret *= Quaternion (a[4] ,a[5] ,a[6] ,a[7]).matrix () ;
+		}
+		if ifdo (TRUE) {
+			if (a.length () < 10)
+				discard ;
+			ret *= DiagMatrix (a[8] ,a[9] ,a[10]) ;
 		}
 		fake = move (ret) ;
 	}
@@ -708,6 +733,7 @@ public:
 		fake.mQuaternion[1] = y ;
 		fake.mQuaternion[2] = z ;
 		fake.mQuaternion[3] = w ;
+		normalized () ;
 	}
 
 	void initialize (CREF<VectorLayout> that) override {
@@ -720,6 +746,7 @@ public:
 		fake.mQuaternion[1] = r3x[1] * r4x ;
 		fake.mQuaternion[2] = r3x[2] * r4x ;
 		fake.mQuaternion[3] = r5x ;
+		normalized () ;
 	}
 
 	void initialize (CREF<MatrixLayout> that) override {
@@ -732,59 +759,61 @@ public:
 				discard ;
 			const auto r4x = MathProc::sqrt (r3x) ;
 			const auto r5x = MathProc::inverse (r4x) ;
-			const auto r6x = (r2x[2][1] - r2x[1][2]) * r5x ;
-			const auto r7x = (r2x[0][2] - r2x[2][0]) * r5x ;
-			const auto r8x = (r2x[1][0] - r2x[0][1]) * r5x ;
-			fake.mQuaternion[0] = r6x / 2 ;
-			fake.mQuaternion[1] = r7x / 2 ;
-			fake.mQuaternion[2] = r8x / 2 ;
-			fake.mQuaternion[3] = r4x / 2 ;
+			fake.mQuaternion[0] = (r2x[2][1] - r2x[1][2]) * r5x ;
+			fake.mQuaternion[1] = (r2x[0][2] - r2x[2][0]) * r5x ;
+			fake.mQuaternion[2] = (r2x[1][0] - r2x[0][1]) * r5x ;
+			fake.mQuaternion[3] = r4x ;
 		}
 		if ifdo (act) {
-			const auto r9x = 1 + r2x[0][0] - r2x[1][1] - r2x[2][2] ;
+			const auto r6x = 1 + r2x[0][0] - r2x[1][1] - r2x[2][2] ;
+			if (r6x < 1)
+				discard ;
+			const auto r7x = MathProc::sqrt (r6x) ;
+			const auto r8x = MathProc::inverse (r7x) ;
+			fake.mQuaternion[0] = r7x ;
+			fake.mQuaternion[1] = (r2x[1][0] + r2x[0][1]) * r8x ;
+			fake.mQuaternion[2] = (r2x[0][2] + r2x[2][0]) * r8x ;
+			fake.mQuaternion[3] = (r2x[2][1] - r2x[1][2]) * r8x ;
+		}
+		if ifdo (act) {
+			const auto r9x = 1 - r2x[0][0] + r2x[1][1] - r2x[2][2] ;
 			if (r9x < 1)
 				discard ;
 			const auto r10x = MathProc::sqrt (r9x) ;
 			const auto r11x = MathProc::inverse (r10x) ;
-			const auto r12x = (r2x[1][0] + r2x[0][1]) * r11x ;
-			const auto r13x = (r2x[0][2] + r2x[2][0]) * r11x ;
-			const auto r14x = (r2x[2][1] - r2x[1][2]) * r11x ;
-			fake.mQuaternion[0] = r10x / 2 ;
-			fake.mQuaternion[1] = r12x / 2 ;
-			fake.mQuaternion[2] = r13x / 2 ;
-			fake.mQuaternion[3] = r14x / 2 ;
+			fake.mQuaternion[0] = (r2x[1][0] + r2x[0][1]) * r11x ;
+			fake.mQuaternion[1] = r10x ;
+			fake.mQuaternion[2] = (r2x[2][1] + r2x[1][2]) * r11x ;
+			fake.mQuaternion[3] = (r2x[0][2] - r2x[2][0]) * r11x ;
 		}
 		if ifdo (act) {
-			const auto r15x = 1 - r2x[0][0] + r2x[1][1] - r2x[2][2] ;
-			if (r15x < 1)
+			const auto r12x = 1 - r2x[0][0] - r2x[1][1] + r2x[2][2] ;
+			if (r12x < 1)
 				discard ;
-			const auto r16x = MathProc::sqrt (r15x) ;
-			const auto r17x = MathProc::inverse (r16x) ;
-			const auto r18x = (r2x[1][0] + r2x[0][1]) * r17x ;
-			const auto r19x = (r2x[2][1] + r2x[1][2]) * r17x ;
-			const auto r20x = (r2x[0][2] - r2x[2][0]) * r17x ;
-			fake.mQuaternion[0] = r18x / 2 ;
-			fake.mQuaternion[1] = r16x / 2 ;
-			fake.mQuaternion[2] = r19x / 2 ;
-			fake.mQuaternion[3] = r20x / 2 ;
-		}
-		if ifdo (act) {
-			const auto r21x = 1 - r2x[0][0] - r2x[1][1] + r2x[2][2] ;
-			if (r21x < 1)
-				discard ;
-			const auto r22x = MathProc::sqrt (r21x) ;
-			const auto r23x = MathProc::inverse (r22x) ;
-			const auto r24x = (r2x[0][2] + r2x[2][0]) * r23x ;
-			const auto r25x = (r2x[2][1] + r2x[1][2]) * r23x ;
-			const auto r26x = (r2x[1][0] - r2x[0][1]) * r23x ;
-			fake.mQuaternion[0] = r24x / 2 ;
-			fake.mQuaternion[1] = r25x / 2 ;
-			fake.mQuaternion[2] = r22x / 2 ;
-			fake.mQuaternion[3] = r26x / 2 ;
+			const auto r13x = MathProc::sqrt (r12x) ;
+			const auto r14x = MathProc::inverse (r13x) ;
+			fake.mQuaternion[0] = (r2x[0][2] + r2x[2][0]) * r14x ;
+			fake.mQuaternion[1] = (r2x[2][1] + r2x[1][2]) * r14x ;
+			fake.mQuaternion[2] = r13x ;
+			fake.mQuaternion[3] = (r2x[1][0] - r2x[0][1]) * r14x ;
 		}
 		if ifdo (act) {
 			assert (FALSE) ;
 		}
+		normalized () ;
+	}
+
+	void normalized () {
+		const auto r1x = MathProc::square (fake.mQuaternion[0]) ;
+		const auto r2x = MathProc::square (fake.mQuaternion[1]) ;
+		const auto r3x = MathProc::square (fake.mQuaternion[2]) ;
+		const auto r4x = MathProc::square (fake.mQuaternion[3]) ;
+		const auto r5x = MathProc::sqrt (r1x + r2x + r3x + r4x) ;
+		const auto r6x = MathProc::inverse (r5x) ;
+		fake.mQuaternion[0] *= r6x ;
+		fake.mQuaternion[1] *= r6x ;
+		fake.mQuaternion[2] *= r6x ;
+		fake.mQuaternion[3] *= r6x ;
 	}
 
 	CREF<FLT64> at (CREF<INDEX> y) const leftvalue override {
@@ -819,8 +848,8 @@ public:
 
 	QuaternionLayout mul (CREF<QuaternionLayout> that) const override {
 		QuaternionLayout ret ;
-		const auto r1x = real (fake) ;
-		const auto r2x = real (that) ;
+		const auto r1x = axis (fake) ;
+		const auto r2x = axis (that) ;
 		const auto r3x = fake.mQuaternion[3] ;
 		const auto r4x = that.mQuaternion[3] ;
 		const auto r5x = r3x * r2x + r4x * r1x + (r1x ^ r2x) ;
@@ -832,24 +861,24 @@ public:
 		return move (ret) ;
 	}
 
-	imports Vector real (CREF<QuaternionLayout> q) {
+	imports Vector axis (CREF<QuaternionLayout> q) {
 		return Vector (q.mQuaternion[0] ,q.mQuaternion[1] ,q.mQuaternion[2] ,0) ;
 	}
 
 	FLT64 angle () const {
-		const auto r1x = real (fake).magnitude () ;
+		const auto r1x = axis (fake).magnitude () ;
 		const auto r2x = fake.mQuaternion[3] ;
 		return MathProc::arctan (r1x ,r2x) * 2 ;
 	}
 
 	VectorLayout vector () const override {
-		const auto r1x = real (fake).normalize () ;
+		const auto r1x = axis (fake).normalize () ;
 		const auto r2x = angle () ;
 		return r1x * r2x ;
 	}
 
 	MatrixLayout matrix () const override {
-		const auto r1x = real (fake).normalize () ;
+		const auto r1x = axis (fake).normalize () ;
 		const auto r2x = angle () ;
 		return RotationMatrix (r1x ,r2x) ;
 	}
@@ -915,7 +944,7 @@ public:
 	}
 
 	Vector center () const override {
-		Vector ret = Vector::axis_w () ;
+		Vector ret = Vector::zero () ;
 		for (auto &&i : fake.mPointCloud.range ()) {
 			const auto r1x = get (i) ;
 			ret += r1x ;
@@ -945,19 +974,14 @@ public:
 		}) ;
 		const auto r5x = MatrixProc::solve_svd (r2x) ;
 		const auto r6x = TranslationMatrix (r1x) ;
-		const auto r7x = DiagMatrix (MathProc::sqrt (r5x.mS[0][0]) ,MathProc::sqrt (r5x.mS[1][1]) ,MathProc::sqrt (r5x.mS[2][2])) ;
-		const auto r8x = r6x * r5x.mV * rank_fix (r7x) ;
+		const auto r7x = DiagMatrix (sqrt_fix (r5x.mS[0][0]) ,sqrt_fix (r5x.mS[1][1]) ,sqrt_fix (r5x.mS[2][2])) ;
+		const auto r8x = r6x * r5x.mV * r7x ;
 		return r8x ;
 	}
 
-	Matrix rank_fix (CREF<Matrix> a) const {
-		Matrix ret = a ;
-		for (auto &&i : iter (0 ,4)) {
-			if (MathProc::inverse (ret[i][i]) != 0)
-				continue ;
-			ret[i][i] = 1 ;
-		}
-		return move (ret) ;
+	FLT64 sqrt_fix (CREF<FLT64> a) const {
+		const auto r1x = FLT64 (FLT32_EPS) / 2 ;
+		return MathProc::sqrt (MathProc::max_of (a ,r1x)) ;
 	}
 
 	Matrix box_matrix () const override {
@@ -1015,9 +1039,9 @@ public:
 				discard ;
 			auto rax = Array<Point3F> (fake.mPointCloud.size ()) ;
 			for (auto &&i : fake.mPointCloud.range ()) {
-				const auto r1x = get (i) ;
-				const auto r2x = mat * r1x ;
-				rax[i] = r2x.xyz () ;
+				const auto r3x = get (i) ;
+				const auto r4x = mat * r3x ;
+				rax[i] = r4x.xyz () ;
 			}
 			ret = PointCloud (move (rax)) ;
 		}

@@ -265,17 +265,17 @@ struct is_trivially_default_constructible :integral_constant<bool ,__has_trivial
 #endif
 #endif
 
-#ifndef __macro_barrier
+#ifndef __macro_output
 #ifdef __CSC_VER_DEBUG__
-#define __macro_barrier(...) do { struct LINE ; CSC::inline_barrier (TYPE<LINE>::expr ,CSC::csc_pointer_t (&__VA_ARGS__)) ; } while (false)
+#define __macro_output(...) do { struct LINE ; CSC::inline_output (TYPE<LINE>::expr ,CSC::csc_pointer_t (&__VA_ARGS__)) ; } while (false)
 #endif
 
 #ifdef __CSC_VER_UNITTEST__
-#define __macro_barrier(...) do { struct LINE ; CSC::inline_barrier (TYPE<LINE>::expr ,CSC::csc_pointer_t (&__VA_ARGS__)) ; } while (false)
+#define __macro_output(...) do { struct LINE ; CSC::inline_output (TYPE<LINE>::expr ,CSC::csc_pointer_t (&__VA_ARGS__)) ; } while (false)
 #endif
 
 #ifdef __CSC_VER_RELEASE__
-#define __macro_barrier(...)
+#define __macro_output(...)
 #endif
 #endif
 

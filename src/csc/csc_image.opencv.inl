@@ -27,21 +27,25 @@
 #include "csc_begin.h"
 
 namespace CSC {
-template <class A>
-class CvMatBufferUnknownBinder implement Unknown {
+class PinnedMat implement Ref<Pin<cv::Mat>> {
+private:
+	using SUPER = Ref<Pin<cv::Mat>> ;
+
 public:
-	FLAG reflect (CREF<FLAG> uuid) const override {
-		if (uuid == ReflectSizeBinder<A>::expr)
-			return inline_hold (ReflectSizeBinder<A> ()) ;
-		if (uuid == ReflectCreateBinder<A>::expr)
-			return inline_hold (ReflectCreateBinder<A> ()) ;
-		if (uuid == ReflectDestroyBinder<A>::expr)
-			return inline_hold (ReflectDestroyBinder<A> ()) ;
-		if (uuid == ReflectAssignBinder<cv::Mat>::expr)
-			return inline_hold (ReflectAssignBinder<cv::Mat> ()) ;
-		if (uuid == ReflectElementBinder<cv::Mat>::expr)
-			return inline_hold (ReflectElementBinder<cv::Mat> ()) ;
-		return ZERO ;
+	explicit PinnedMat () {
+		auto &&rax = keep[TYPE<SUPER>::expr] (thiz) ;
+		rax = SUPER::make () ;
+		rax->remake () ;
+	}
+
+	VREF<cv::Mat> self_m () leftvalue {
+		auto &&rax = keep[TYPE<SUPER>::expr] (thiz) ;
+		return rax->self ;
+	}
+
+	CREF<cv::Mat> self_m () const leftvalue {
+		auto &&rax = keep[TYPE<SUPER>::expr] (thiz) ;
+		return rax->self ;
 	}
 } ;
 
@@ -53,24 +57,25 @@ public:
 
 	ImageLayout make_image (RREF<BoxLayout> image) const override {
 		ImageLayout ret ;
-		const auto r1x = keep[TYPE<Box<Pin<cv::Mat>>>::expr] (image)->self ;
+		const auto r1x = keep[TYPE<Box<PinnedMat>>::expr] (image)->self ;
 		const auto r2x = r1x.size () ;
-		const auto r3x = size_of_cvmat_depth (r1x.depth ()) ;
+		const auto r3x = align_of_cvmat_depth (r1x.depth ()) ;
 		const auto r4x = r1x.channels () ;
+		const auto r5x = choose_cvmat_unknown (r3x) ;
 		auto &&rax = keep[TYPE<RefBufferLayout>::expr] (ret.mImage) ;
+		RefBufferHolder::create (ret.mImage)->initialize (r5x ,move (image)) ;
 		rax.mBuffer = FLAG (r1x.data) ;
 		rax.mSize = r2x.area () ;
 		rax.mStep = r3x * r4x ;
 		ret.mWidth.mCX = r2x.width ;
 		ret.mWidth.mCY = r2x.height ;
 		ret.mWidth.mStep = r3x * r4x ;
-		RefBufferHolder::create (ret.mImage)->initialize (choose_cvmat_unknown (r3x) ,move (image)) ;
 		ImageHolder::create (ret)->reset () ;
 		return move (ret) ;
 	}
 
 	ImageLayout load_image (CREF<LENGTH> cx_ ,CREF<LENGTH> cy_ ,CREF<LENGTH> align ,CREF<LENGTH> channel) const override {
-		auto rax = Box<Pin<cv::Mat>>::make () ;
+		auto rax = Box<PinnedMat>::make () ;
 		const auto r1x = cvmat_depth_of_align (align) ;
 		const auto r2x = CV_MAKE_TYPE (VAL32 (r1x) ,VAL32 (channel)) ;
 		rax->self = cv::Mat (cv::Size (VAL32 (cx_) ,VAL32 (cy_)) ,r2x) ;
@@ -78,7 +83,7 @@ public:
 	}
 
 	ImageLayout load_image (CREF<String<STR>> file) const override {
-		auto rax = Box<Pin<cv::Mat>>::make () ;
+		auto rax = Box<PinnedMat>::make () ;
 		const auto r1x = StringProc::stra_from_strs (file) ;
 		rax->self = cv::imread (r1x.self ,cv::IMREAD_UNCHANGED) ;
 		assume (!rax->self.empty ()) ;
@@ -98,7 +103,7 @@ public:
 		return 0 ;
 	}
 
-	LENGTH size_of_cvmat_depth (CREF<LENGTH> depth) const {
+	LENGTH align_of_cvmat_depth (CREF<LENGTH> depth) const {
 		if (depth == CV_8U)
 			return 1 ;
 		if (depth == CV_16U)
@@ -119,22 +124,22 @@ public:
 		return 0 ;
 	}
 
-	RFat<Unknown> choose_cvmat_unknown (CREF<LENGTH> size_) const {
-		if (size_ == SIZE_OF<BYTE>::expr)
-			return RFat<Unknown> (CvMatBufferUnknownBinder<BYTE> () ,NULL) ;
-		if (size_ == SIZE_OF<WORD>::expr)
-			return RFat<Unknown> (CvMatBufferUnknownBinder<WORD> () ,NULL) ;
-		if (size_ == SIZE_OF<CHAR>::expr)
-			return RFat<Unknown> (CvMatBufferUnknownBinder<CHAR> () ,NULL) ;
-		if (size_ == SIZE_OF<QUAD>::expr)
-			return RFat<Unknown> (CvMatBufferUnknownBinder<QUAD> () ,NULL) ;
+	RFat<Unknown> choose_cvmat_unknown (CREF<LENGTH> align) const {
+		if (align == SIZE_OF<BYTE>::expr)
+			return RFat<Unknown> (BufferUnknownBinder<BYTE> () ,NULL) ;
+		if (align == SIZE_OF<WORD>::expr)
+			return RFat<Unknown> (BufferUnknownBinder<WORD> () ,NULL) ;
+		if (align == SIZE_OF<CHAR>::expr)
+			return RFat<Unknown> (BufferUnknownBinder<CHAR> () ,NULL) ;
+		if (align == SIZE_OF<QUAD>::expr)
+			return RFat<Unknown> (BufferUnknownBinder<QUAD> () ,NULL) ;
 		assume (FALSE) ;
-		return RFat<Unknown> (CvMatBufferUnknownBinder<BYTE> () ,NULL) ; ;
+		return RFat<Unknown> (BufferUnknownBinder<BYTE> () ,NULL) ; ;
 	}
 
 	void save_image (CREF<String<STR>> file ,CREF<ImageLayout> image) const override {
 		const auto r1x = StringProc::stra_from_strs (file) ;
-		const auto r2x = keep[TYPE<Box<cv::Mat>>::expr] (image.mImage.raw ()).self ;
+		const auto r2x = keep[TYPE<Box<PinnedMat>>::expr] (image.mImage.raw ())->self ;
 		cv::imwrite (r1x.self ,r2x) ;
 	}
 

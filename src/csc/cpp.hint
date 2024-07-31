@@ -15,7 +15,7 @@
 #define slice __macro_slice
 #define assert __macro_assert
 #define assume __macro_assume
-#define barrier __macro_barrier
+#define output __macro_output
 #define ifdo __macro_ifdo
 #define discard break
 #define typeof __macro_typeof

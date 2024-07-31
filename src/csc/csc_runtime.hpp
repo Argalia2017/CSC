@@ -624,10 +624,10 @@ struct RandomHolder implement Interface {
 	virtual void initialize (CREF<FLAG> seed) = 0 ;
 	virtual FLAG seed () const = 0 ;
 	virtual INDEX random_value (CREF<INDEX> lb ,CREF<INDEX> rb) const = 0 ;
-	virtual Array<INDEX> random_shuffle (CREF<LENGTH> count ,CREF<LENGTH> size_) const = 0 ;
-	virtual void random_shuffle (CREF<LENGTH> count ,CREF<LENGTH> size_ ,VREF<Array<INDEX>> result) const = 0 ;
-	virtual BitSet random_pick (CREF<LENGTH> count ,CREF<LENGTH> size_) const = 0 ;
-	virtual void random_pick (CREF<LENGTH> count ,CREF<LENGTH> size_ ,VREF<BitSet> result) const = 0 ;
+	virtual Array<INDEX> random_shuffle (CREF<LENGTH> length_ ,CREF<LENGTH> size_) const = 0 ;
+	virtual void random_shuffle (CREF<LENGTH> length_ ,CREF<LENGTH> size_ ,VREF<Array<INDEX>> result) const = 0 ;
+	virtual BitSet random_pick (CREF<LENGTH> length_ ,CREF<LENGTH> size_) const = 0 ;
+	virtual void random_pick (CREF<LENGTH> length_ ,CREF<LENGTH> size_ ,VREF<BitSet> result) const = 0 ;
 	virtual BOOL random_draw (CREF<FLT64> possibility) const = 0 ;
 	virtual FLT64 random_normal () const = 0 ;
 } ;
@@ -651,20 +651,20 @@ public:
 		return RandomHolder::create (thiz)->random_value (lb ,rb) ;
 	}
 
-	Array<INDEX> random_shuffle (CREF<LENGTH> count ,CREF<LENGTH> size_) const {
-		return RandomHolder::create (thiz)->random_shuffle (count ,size_) ;
+	Array<INDEX> random_shuffle (CREF<LENGTH> length_ ,CREF<LENGTH> size_) const {
+		return RandomHolder::create (thiz)->random_shuffle (length_ ,size_) ;
 	}
 
-	void random_shuffle (CREF<LENGTH> count ,CREF<LENGTH> size_ ,VREF<Array<INDEX>> result) const {
-		return RandomHolder::create (thiz)->random_shuffle (count ,size_ ,result) ;
+	void random_shuffle (CREF<LENGTH> length_ ,CREF<LENGTH> size_ ,VREF<Array<INDEX>> result) const {
+		return RandomHolder::create (thiz)->random_shuffle (length_ ,size_ ,result) ;
 	}
 
-	BitSet random_pick (CREF<LENGTH> count ,CREF<LENGTH> size_) const {
-		return RandomHolder::create (thiz)->random_pick (count ,size_) ;
+	BitSet random_pick (CREF<LENGTH> length_ ,CREF<LENGTH> size_) const {
+		return RandomHolder::create (thiz)->random_pick (length_ ,size_) ;
 	}
 
-	void random_pick (CREF<LENGTH> count ,CREF<LENGTH> size_ ,VREF<BitSet> result) const {
-		return RandomHolder::create (thiz)->random_pick (count ,size_ ,result) ;
+	void random_pick (CREF<LENGTH> length_ ,CREF<LENGTH> size_ ,VREF<BitSet> result) const {
+		return RandomHolder::create (thiz)->random_pick (length_ ,size_ ,result) ;
 	}
 
 	BOOL random_draw (CREF<FLT64> possibility) const {
@@ -798,7 +798,7 @@ struct PathHolder implement Interface {
 
 	virtual void initialize (RREF<String<STR>> pathname) = 0 ;
 	virtual void initialize (CREF<PathLayout> that) = 0 ;
-	virtual String<STR> poll () const = 0 ;
+	virtual String<STR> fetch () const = 0 ;
 	virtual PathLayout root () const = 0 ;
 	virtual PathLayout child (CREF<Slice> name) const = 0 ;
 	virtual PathLayout child (CREF<Format> name) const = 0 ;
@@ -843,12 +843,12 @@ public:
 
 	forceinline VREF<Path> operator= (RREF<Path> that) = default ;
 
-	String<STR> poll () const {
-		return PathHolder::create (thiz)->poll () ;
+	String<STR> fetch () const {
+		return PathHolder::create (thiz)->fetch () ;
 	}
 
 	forceinline operator String<STR> () const {
-		return poll () ;
+		return fetch () ;
 	}
 
 	PathLayout root () const {
@@ -1020,7 +1020,7 @@ struct StreamFileHolder implement Interface {
 
 	virtual void initialize (RREF<String<STR>> file) = 0 ;
 	virtual void open_r () = 0 ;
-	virtual void open_w (CREF<LENGTH> count) = 0 ;
+	virtual void open_w (CREF<LENGTH> size_) = 0 ;
 	virtual void open_a () = 0 ;
 	virtual LENGTH file_size () const = 0 ;
 	virtual void read (VREF<RefBuffer<BYTE>> item) = 0 ;
@@ -1047,8 +1047,8 @@ public:
 		return StreamFileHolder::create (thiz)->open_r () ;
 	}
 
-	void open_w (CREF<LENGTH> count) {
-		return StreamFileHolder::create (thiz)->open_w (count) ;
+	void open_w (CREF<LENGTH> size_) {
+		return StreamFileHolder::create (thiz)->open_w (size_) ;
 	}
 
 	void open_a () {
@@ -1073,8 +1073,8 @@ public:
 } ;
 
 struct StreamFileByteWriterLayout implement ByteWriter {
-	StreamFile mStreamFile ;
-	RefBuffer<BYTE> mStreamFileBuffer ;
+	StreamFile mFile ;
+	RefBuffer<BYTE> mFileBuffer ;
 } ;
 
 struct StreamFileByteWriterHolder implement Interface {
@@ -1087,8 +1087,8 @@ struct StreamFileByteWriterHolder implement Interface {
 
 class StreamFileByteWriter implement StreamFileByteWriterLayout {
 protected:
-	using StreamFileByteWriterLayout::mStreamFile ;
-	using StreamFileByteWriterLayout::mStreamFileBuffer ;
+	using StreamFileByteWriterLayout::mFile ;
+	using StreamFileByteWriterLayout::mFileBuffer ;
 
 public:
 	implicit StreamFileByteWriter () = delete ;
@@ -1115,8 +1115,8 @@ public:
 } ;
 
 struct StreamFileTextWriterLayout implement TextWriter {
-	StreamFile mStreamFile ;
-	RefBuffer<BYTE> mStreamFileBuffer ;
+	StreamFile mFile ;
+	RefBuffer<BYTE> mFileBuffer ;
 } ;
 
 struct StreamFileTextWriterHolder implement Interface {
@@ -1129,8 +1129,8 @@ struct StreamFileTextWriterHolder implement Interface {
 
 class StreamFileTextWriter implement StreamFileTextWriterLayout {
 protected:
-	using StreamFileTextWriterLayout::mStreamFile ;
-	using StreamFileTextWriterLayout::mStreamFileBuffer ;
+	using StreamFileTextWriterLayout::mFile ;
+	using StreamFileTextWriterLayout::mFileBuffer ;
 
 public:
 	implicit StreamFileTextWriter () = delete ;
@@ -1167,10 +1167,10 @@ struct BufferFileHolder implement Interface {
 	imports CFat<BufferFileHolder> create (CREF<BufferFileLayout> that) ;
 
 	virtual void initialize (RREF<String<STR>> file) = 0 ;
-	virtual void set_block_step (CREF<LENGTH> size_) = 0 ;
+	virtual void set_block_step (CREF<LENGTH> step_) = 0 ;
 	virtual void set_cache_size (CREF<LENGTH> size_) = 0 ;
 	virtual void open_r () = 0 ;
-	virtual void open_w (CREF<LENGTH> count) = 0 ;
+	virtual void open_w (CREF<LENGTH> size_) = 0 ;
 	virtual void open_a () = 0 ;
 	virtual LENGTH file_size () const = 0 ;
 	virtual void read (CREF<INDEX> index ,VREF<RefBuffer<BYTE>> item) = 0 ;
@@ -1193,8 +1193,8 @@ public:
 		BufferFileHolder::create (thiz)->initialize (move (file)) ;
 	}
 
-	void set_block_step (CREF<LENGTH> size_) {
-		return BufferFileHolder::create (thiz)->set_block_step (size_) ;
+	void set_block_step (CREF<LENGTH> step_) {
+		return BufferFileHolder::create (thiz)->set_block_step (step_) ;
 	}
 
 	void set_cache_size (CREF<LENGTH> size_) {
@@ -1205,8 +1205,8 @@ public:
 		return BufferFileHolder::create (thiz)->open_r () ;
 	}
 
-	void open_w (CREF<LENGTH> count) {
-		return BufferFileHolder::create (thiz)->open_w (count) ;
+	void open_w (CREF<LENGTH> size_) {
+		return BufferFileHolder::create (thiz)->open_w (size_) ;
 	}
 
 	void open_a () {

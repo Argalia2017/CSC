@@ -16,9 +16,9 @@
 
 namespace CSC {
 struct CoroutineFriend implement Interface {
-	virtual void before () const = 0 ;
-	virtual BOOL tick () const = 0 ;
-	virtual void after () const = 0 ;
+	virtual void before () = 0 ;
+	virtual BOOL tick () = 0 ;
+	virtual void after () = 0 ;
 } ;
 
 template <class A>
@@ -195,7 +195,7 @@ struct PromiseHolder implement Interface {
 	virtual void rethrow (CREF<Exception> e) const = 0 ;
 	virtual BOOL ready () const = 0 ;
 	virtual BOOL running () const = 0 ;
-	virtual AutoRef<Pointer> poll () const = 0 ;
+	virtual AutoRef<Pointer> future () const = 0 ;
 	virtual void signal () const = 0 ;
 	virtual void stop () const = 0 ;
 } ;
@@ -243,8 +243,8 @@ public:
 		return PromiseHolder::create (thiz)->running () ;
 	}
 
-	Optional<A> poll () const {
-		auto rax = PromiseHolder::create (thiz)->poll () ;
+	Optional<A> future () const {
+		auto rax = PromiseHolder::create (thiz)->future () ;
 		if (!rax.exist ())
 			return Optional<A>::error (1) ;
 		return move (rax.rebind (TYPE<A>::expr).self) ;

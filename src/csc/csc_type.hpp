@@ -1252,20 +1252,20 @@ template <class A ,class B>
 using IS_EXTEND = typename IS_EXTEND_HELP<A ,B ,ALWAYS>::RET ;
 
 template <class...>
-trait IS_RECAST_HELP ;
+trait IS_VIRTUAL_HELP ;
 
 template <class A ,class B ,class OTHERWISE>
-trait IS_RECAST_HELP<A ,B ,OTHERWISE> {
+trait IS_VIRTUAL_HELP<A ,B ,OTHERWISE> {
 	using RET = ENUM_FALSE ;
 } ;
 
 template <class A ,class B>
-trait IS_RECAST_HELP<A ,B ,REQUIRE<IS_SAME<A ,typeof (nullof (B).self)>>> {
+trait IS_VIRTUAL_HELP<A ,B ,REQUIRE<IS_SAME<A ,typeof (nullof (B).self)>>> {
 	using RET = ENUM_TRUE ;
 } ;
 
 template <class A ,class B>
-using IS_RECAST = typename IS_RECAST_HELP<A ,B ,ALWAYS>::RET ;
+using IS_VIRTUAL = typename IS_VIRTUAL_HELP<A ,B ,ALWAYS>::RET ;
 
 template <class...>
 trait IS_INTERFACE_HELP ;

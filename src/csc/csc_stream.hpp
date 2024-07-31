@@ -1591,8 +1591,23 @@ public:
 
 struct FormatLayout {
 	Slice mFormat ;
-	BufferX<FatLayout> mParams ;
-	INDEX mTop ;
+	Pin<BufferX<FatLayout>> mParams ;
+	Pin<INDEX> mWrite ;
+
+public:
+	implicit FormatLayout () = default ;
+
+	implicit FormatLayout (CREF<FormatLayout> that) = delete ;
+
+	forceinline VREF<FormatLayout> operator= (CREF<FormatLayout> that) = delete ;
+
+	implicit FormatLayout (RREF<FormatLayout> that) noexcept :FormatLayout () {
+		swap (thiz ,that) ;
+	}
+
+	forceinline VREF<FormatLayout> operator= (RREF<FormatLayout> that) noexcept {
+		return assign (thiz ,that) ;
+	}
 } ;
 
 struct FormatHolder implement Interface {
@@ -1601,14 +1616,14 @@ struct FormatHolder implement Interface {
 
 	virtual void initialize (CREF<Slice> format) = 0 ;
 	virtual void friend_write (VREF<StreamWriter> writer) const = 0 ;
-	virtual void then (CREF<WrapperLayout> params) = 0 ;
+	virtual void then (CREF<WrapperLayout> params) const = 0 ;
 } ;
 
 class Format implement FormatLayout {
 protected:
 	using FormatLayout::mFormat ;
 	using FormatLayout::mParams ;
-	using FormatLayout::mTop ;
+	using FormatLayout::mWrite ;
 
 public:
 	implicit Format () = default ;
@@ -1622,12 +1637,12 @@ public:
 	}
 
 	template <class...ARG1>
-	void then (CREF<ARG1>...params) {
+	void then (CREF<ARG1>...params) const {
 		return FormatHolder::create (thiz)->then (MakeWrapper (FormatFriendBinder<ARG1>::create (params)...)) ;
 	}
 
 	template <class...ARG1>
-	VREF<Format> operator() (CREF<ARG1>...params) {
+	CREF<Format> operator() (CREF<ARG1>...params) const {
 		then (params...) ;
 		return thiz ;
 	}
@@ -1639,7 +1654,7 @@ inline CREF<Format> PrintFormat (CREF<Format> params) {
 
 template <class...ARG1>
 inline Format PrintFormat (CREF<ARG1>...params) {
-	Format ret = Format (slice ("${*}")) ;
+	Format ret = Format (slice ("${0}")) ;
 	ret (params...) ;
 	return move (ret) ;
 }
@@ -1805,8 +1820,8 @@ struct RegexHolder implement Interface {
 	imports CFat<RegexHolder> create (CREF<RegexLayout> that) ;
 
 	virtual void initialize (CREF<String<STR>> format) = 0 ;
-	virtual BOOL search (CREF<String<STR>> text) = 0 ;
-	virtual String<STR> brace (CREF<INDEX> index) const = 0 ;
+	virtual INDEX search (CREF<String<STR>> text ,CREF<INDEX> offset) = 0 ;
+	virtual String<STR> match (CREF<INDEX> index) const = 0 ;
 } ;
 
 class Regex implement RegexLayout {
@@ -1820,12 +1835,12 @@ public:
 		RegexHolder::create (thiz)->initialize (format) ;
 	}
 
-	BOOL search (CREF<String<STR>> text) {
-		return RegexHolder::create (thiz)->search (text) ;
+	INDEX search (CREF<String<STR>> text ,CREF<INDEX> offset) {
+		return RegexHolder::create (thiz)->search (text ,offset) ;
 	}
 
-	String<STR> brace (CREF<INDEX> index) const {
-		return RegexHolder::create (thiz)->brace (index) ;
+	String<STR> match (CREF<INDEX> index) const {
+		return RegexHolder::create (thiz)->match (index) ;
 	}
 } ;
 

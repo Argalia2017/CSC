@@ -110,7 +110,7 @@ public:
 				discard ;
 			ret.clear () ;
 		}
-		ret = Path (ret).poll () ;
+		ret = Path (ret).fetch () ;
 		return move (ret) ;
 	}
 
@@ -164,7 +164,7 @@ public:
 
 	String<STRU8> load_proc_file (CREF<FLAG> uid) const {
 		String<STRU8> ret = String<STRU8>::make () ;
-		const auto r1x = String<STR>::make (Format (slice ("/proc/$0/stat")) (uid)) ;
+		const auto r1x = String<STR>::make (Format (slice ("/proc/$1/stat")) (uid)) ;
 		auto rax = StreamFile (r1x) ;
 		rax.open_r () ;
 		auto rbx = ret.borrow () ;
@@ -317,7 +317,7 @@ public:
 		const auto r1x = FLAG (dlerror ()) ;
 		assume (r1x != ZERO) ;
 		const auto r2x = Slice (r1x ,SLICE_MAX_SIZE::expr ,1).eos () ;
-		ret = String<STR>::make (Format (slice ("LastError = $0 : $1")) (r1x ,r2x)) ;
+		ret = String<STR>::make (Format (slice ("LastError = $1 : $2")) (r1x ,r2x)) ;
 		return move (ret) ;
 	}
 } ;
@@ -522,7 +522,7 @@ public:
 		fake.mThis = that.mThis.share () ;
 	}
 
-	String<STR> poll () const override {
+	String<STR> fetch () const override {
 		return fake.mThis->mPathName.clone () ;
 	}
 
@@ -824,7 +824,7 @@ public:
 		assume (r5x != ZERO) ;
 		const auto r6x = r5x - r4x ;
 		assume (r6x >= 0) ;
-		return RefBuffer<BYTE>::reference (r4x ,r6x ,BufferUnknownBinder<BYTE> ()) ;
+		return RefBuffer<BYTE>::reference (r4x ,r6x) ;
 	}
 
 	void copy_file (CREF<String<STR>> dst ,CREF<String<STR>> src) const override {
@@ -990,7 +990,7 @@ public:
 		fake.mThis->mWrite = 0 ;
 	}
 
-	void open_w (CREF<LENGTH> count) override {
+	void open_w (CREF<LENGTH> size_) override {
 		assert (!fake.mThis->mReadPipe.exist ()) ;
 		assert (!fake.mThis->mWritePipe.exist ()) ;
 		fake.mThis->mWritePipe = UniqueRef<HFILE> ([&] (VREF<HFILE> me) {
@@ -1001,7 +1001,7 @@ public:
 		} ,[&] (VREF<HFILE> me) {
 			std::close (me) ;
 		}) ;
-		fake.mThis->mFileSize = count ;
+		fake.mThis->mFileSize = size_ ;
 		fake.mThis->mRead = 0 ;
 		fake.mThis->mWrite = 0 ;
 	}
@@ -1097,16 +1097,16 @@ static const auto mStreamFileExternal = External<StreamFileHolder ,StreamFileLay
 struct BufferFileHeader {
 	VAL64 mFileEndian ;
 	VAL64 mFileSize ;
-	VAL64 mBlockStepSize ;
-	VAL64 mBlockStepAlign ;
-	VAL64 mBlockCount ;
-	VAL64 mChunkStepSize ;
-	VAL64 mChunkCapacity ;
-	VAL64 mChunkCount ;
+	VAL64 mBlockSize ;
+	VAL64 mBlockStep ;
+	VAL64 mBlockLength ;
+	VAL64 mChunkStep ;
+	VAL64 mChunkSize ;
+	VAL64 mChunkLength ;
 } ;
 
 struct BufferFileChunk {
-	VAL64 mOffset ;
+	VAL64 mIndex ;
 	VAL64 mCacheTime ;
 	UniqueRef<Tuple<FLAG ,LENGTH>> mBuffer ;
 } ;
@@ -1116,8 +1116,8 @@ struct BufferFileImplLayout {
 	UniqueRef<HFILE> mPipe ;
 	UniqueRef<LENGTH> mMapping ;
 	VAL64 mFileSize ;
-	VAL64 mBlockStepSize ;
-	VAL64 mBlockStepAlign ;
+	VAL64 mBlockStep ;
+	VAL64 mChunkStep ;
 	csc_enum_t mFileMapFlag ;
 	Box<BufferFileHeader> mHeader ;
 	Set<VAL64> mCacheSet ;
@@ -1141,10 +1141,9 @@ public:
 		set_cache_size (1) ;
 	}
 
-	void set_block_step (CREF<LENGTH> size_) override {
-		fake.mThis->mCacheSet = Set<VAL64> (size_) ;
-		fake.mThis->mCacheList = List<BufferFileChunk> (size_) ;
-		fake.mThis->mCacheTimer = 0 ;
+	void set_block_step (CREF<LENGTH> step_) override {
+		fake.mThis->mBlockStep = step_ ;
+		fake.mThis->mChunkStep = CHUNK_STEP_SIZE::expr ;
 	}
 
 	void set_cache_size (CREF<LENGTH> size_) override {
@@ -1173,7 +1172,7 @@ public:
 		read_header () ;
 	}
 
-	void open_w (CREF<LENGTH> count) override {
+	void open_w (CREF<LENGTH> size_) override {
 		assert (!fake.mThis->mPipe.exist ()) ;
 		assert (!fake.mThis->mMapping.exist ()) ;
 		fake.mThis->mPipe = UniqueRef<HFILE> ([&] (VREF<HFILE> me) {
@@ -1184,10 +1183,9 @@ public:
 		} ,[&] (VREF<HFILE> me) {
 			std::close (me) ;
 		}) ;
-		const auto r3x = count * fake.mThis->mBlockStepSize ;
-		const auto r4x = CHUNK_STEP_SIZE::expr / fake.mThis->mBlockStepSize ;
-		const auto r5x = (r3x + r4x - 1) / r4x ;
-		fake.mThis->mFileSize = HEADER_SIZE::expr + r5x * CHUNK_STEP_SIZE::expr ;
+		const auto r3x = fake.mThis->mChunkStep / fake.mThis->mBlockStep ;
+		const auto r4x = (size_ + r3x - 1) / r3x ;
+		fake.mThis->mFileSize = HEADER_SIZE::expr + r4x * fake.mThis->mChunkStep ;
 		fake.mThis->mMapping = UniqueRef<LENGTH> ([&] (VREF<LENGTH> me) {
 			me = ftruncate64 (fake.mThis->mPipe ,fake.mThis->mFileSize) ;
 			assume (me == 0) ;
@@ -1224,8 +1222,7 @@ public:
 	void read_header () {
 		assert (fake.mThis->mHeader == NULL) ;
 		fake.mThis->mHeader = Box<BufferFileHeader>::make () ;
-		INDEX ix = load (0 ,HEADER_SIZE::expr) ;
-		auto rax = ByteReader (borrow (ix)) ;
+		auto rax = ByteReader (borrow_header ()) ;
 		rax >> slice ("CSC_BufferFile") ;
 		rax >> GAP ;
 		rax >> fake.mThis->mHeader->mFileEndian ;
@@ -1234,24 +1231,22 @@ public:
 		rax >> fake.mThis->mHeader->mFileSize ;
 		assume (fake.mThis->mHeader->mFileSize == fake.mThis->mFileSize) ;
 		rax >> GAP ;
-		rax >> fake.mThis->mHeader->mBlockStepSize ;
-		assume (fake.mThis->mHeader->mBlockStepSize == fake.mThis->mBlockStepSize) ;
+		rax >> fake.mThis->mHeader->mBlockSize ;
+		const auto r1x = fake.mThis->mChunkStep / fake.mThis->mBlockStep ;
+		assume (fake.mThis->mHeader->mBlockSize == r1x) ;
 		rax >> GAP ;
-		rax >> fake.mThis->mHeader->mBlockStepAlign ;
-		assume (fake.mThis->mHeader->mBlockStepAlign == fake.mThis->mBlockStepAlign) ;
+		rax >> fake.mThis->mHeader->mBlockStep ;
+		assume (fake.mThis->mHeader->mBlockStep == fake.mThis->mBlockStep) ;
 		rax >> GAP ;
-		rax >> fake.mThis->mHeader->mBlockCount ;
-		assume (fake.mThis->mHeader->mBlockCount >= 0) ;
+		rax >> fake.mThis->mHeader->mBlockLength ;
 		rax >> GAP ;
-		rax >> fake.mThis->mHeader->mChunkStepSize ;
-		assume (fake.mThis->mHeader->mChunkStepSize == CHUNK_STEP_SIZE::expr) ;
+		rax >> fake.mThis->mHeader->mChunkSize ;
+		assume (fake.mThis->mHeader->mChunkSize >= 0) ;
 		rax >> GAP ;
-		rax >> fake.mThis->mHeader->mChunkCapacity ;
-		const auto r1x = fake.mThis->mHeader->mChunkStepSize / fake.mThis->mHeader->mBlockStepSize ;
-		assume (fake.mThis->mHeader->mChunkCapacity == r1x) ;
+		rax >> fake.mThis->mHeader->mChunkStep ;
+		assume (fake.mThis->mHeader->mChunkStep == fake.mThis->mChunkStep) ;
 		rax >> GAP ;
-		rax >> fake.mThis->mHeader->mChunkCount ;
-		assume (fake.mThis->mHeader->mChunkCount >= 0) ;
+		rax >> fake.mThis->mHeader->mChunkLength ;
 		rax >> GAP ;
 	}
 
@@ -1262,40 +1257,39 @@ public:
 			fake.mThis->mHeader = Box<BufferFileHeader>::make () ;
 			fake.mThis->mHeader->mFileEndian = file_endian () ;
 			fake.mThis->mHeader->mFileSize = fake.mThis->mFileSize ;
-			fake.mThis->mHeader->mBlockStepSize = fake.mThis->mBlockStepSize ;
-			fake.mThis->mHeader->mBlockStepAlign = fake.mThis->mBlockStepAlign ;
-			fake.mThis->mHeader->mBlockCount = 0 ;
-			fake.mThis->mHeader->mChunkStepSize = CHUNK_STEP_SIZE::expr ;
-			assume (fake.mThis->mHeader->mChunkStepSize >= fake.mThis->mHeader->mBlockStepSize) ;
-			fake.mThis->mHeader->mChunkCapacity = fake.mThis->mHeader->mChunkStepSize / fake.mThis->mHeader->mBlockStepSize ;
-			fake.mThis->mHeader->mChunkCount = 0 ;
+			fake.mThis->mHeader->mBlockSize = fake.mThis->mChunkStep / fake.mThis->mBlockStep ;
+			fake.mThis->mHeader->mBlockStep = fake.mThis->mBlockStep ;
+			fake.mThis->mHeader->mBlockLength = 0 ;
+			fake.mThis->mHeader->mChunkSize = (fake.mThis->mFileSize - HEADER_SIZE::expr) / fake.mThis->mChunkStep ;
+			fake.mThis->mHeader->mChunkStep = fake.mThis->mChunkStep ;
+			fake.mThis->mHeader->mChunkLength = 0 ;
 		}
-		INDEX ix = load (0 ,HEADER_SIZE::expr) ;
-		auto rax = ByteWriter (borrow (ix)) ;
+		auto rax = ByteWriter (borrow_header ()) ;
 		rax << slice ("CSC_BufferFile") ;
 		rax << GAP ;
 		rax << fake.mThis->mHeader->mFileEndian ;
 		rax << GAP ;
 		rax << fake.mThis->mHeader->mFileSize ;
 		rax << GAP ;
-		rax << fake.mThis->mHeader->mBlockStepSize ;
+		rax << fake.mThis->mHeader->mBlockSize ;
 		rax << GAP ;
-		rax << fake.mThis->mHeader->mBlockStepAlign ;
+		rax << fake.mThis->mHeader->mBlockStep ;
 		rax << GAP ;
-		rax << fake.mThis->mHeader->mBlockCount ;
+		rax << fake.mThis->mHeader->mBlockLength ;
 		rax << GAP ;
-		rax << fake.mThis->mHeader->mChunkStepSize ;
+		rax << fake.mThis->mHeader->mChunkSize ;
 		rax << GAP ;
-		rax << fake.mThis->mHeader->mChunkCapacity ;
+		rax << fake.mThis->mHeader->mChunkStep ;
 		rax << GAP ;
-		rax << fake.mThis->mHeader->mChunkCount ;
+		rax << fake.mThis->mHeader->mChunkLength ;
 		rax << GAP ;
 		flush () ;
 	}
 
-	Ref<RefBuffer<BYTE>> borrow (CREF<INDEX> index) const {
+	Ref<RefBuffer<BYTE>> borrow_header () {
 		Ref<RefBuffer<BYTE>> ret = Ref<RefBuffer<BYTE>>::make () ;
-		ret.self = RefBuffer<BYTE>::reference (fake.mThis->mCacheList[index].mBuffer->m1st ,HEADER_SIZE::expr ,BufferUnknownBinder<BYTE> ()) ;
+		INDEX ix = load (0 ,HEADER_SIZE::expr) ;
+		ret.self = RefBuffer<BYTE>::reference (fake.mThis->mCacheList[ix].mBuffer->m1st ,HEADER_SIZE::expr) ;
 		return move (ret) ;
 	}
 
@@ -1330,39 +1324,39 @@ public:
 
 	void read (CREF<INDEX> index ,VREF<RefBuffer<BYTE>> item) override {
 		assert (fake.mThis->mPipe.exist ()) ;
-		assert (inline_between (index ,0 ,LENGTH (fake.mThis->mHeader->mBlockCount))) ;
-		assert (item.size () == fake.mThis->mHeader->mBlockStepSize) ;
-		const auto r1x = index / fake.mThis->mHeader->mChunkCapacity ;
-		const auto r2x = index % fake.mThis->mHeader->mChunkCapacity * fake.mThis->mHeader->mBlockStepSize ;
-		const auto r3x = HEADER_SIZE::expr + r1x * fake.mThis->mHeader->mChunkStepSize ;
-		INDEX ix = load (r3x ,LENGTH (fake.mThis->mHeader->mChunkStepSize)) ;
+		assert (inline_between (index ,0 ,LENGTH (fake.mThis->mHeader->mBlockSize))) ;
+		assert (item.size () == fake.mThis->mHeader->mBlockStep) ;
+		const auto r1x = index / fake.mThis->mHeader->mBlockSize ;
+		const auto r2x = index % fake.mThis->mHeader->mBlockSize * fake.mThis->mHeader->mBlockStep ;
+		const auto r3x = HEADER_SIZE::expr + r1x * fake.mThis->mHeader->mChunkStep ;
+		INDEX ix = load (r3x ,LENGTH (fake.mThis->mHeader->mChunkStep)) ;
 		const auto r4x = fake.mThis->mCacheList[ix].mBuffer->m1st + LENGTH (r2x) ;
-		inline_memcpy (Pointer::from (item.self) ,Pointer::make (r4x) ,LENGTH (fake.mThis->mHeader->mBlockStepSize)) ;
+		inline_memcpy (Pointer::from (item.self) ,Pointer::make (r4x) ,LENGTH (fake.mThis->mHeader->mBlockStep)) ;
 	}
 
 	void write (CREF<INDEX> index ,CREF<RefBuffer<BYTE>> item) override {
 		assert (fake.mThis->mPipe.exist ()) ;
-		assert (inline_between (index ,0 ,LENGTH (fake.mThis->mHeader->mBlockCount))) ;
-		assert (item.size () == fake.mThis->mHeader->mBlockStepSize) ;
-		const auto r1x = index / fake.mThis->mHeader->mChunkCapacity ;
-		const auto r2x = index % fake.mThis->mHeader->mChunkCapacity * fake.mThis->mHeader->mBlockStepSize ;
-		const auto r3x = HEADER_SIZE::expr + r1x * fake.mThis->mHeader->mChunkStepSize ;
-		INDEX ix = load (r3x ,LENGTH (fake.mThis->mHeader->mChunkStepSize)) ;
+		assert (inline_between (index ,0 ,LENGTH (fake.mThis->mHeader->mBlockSize))) ;
+		assert (item.size () == fake.mThis->mHeader->mBlockStep) ;
+		const auto r1x = index / fake.mThis->mHeader->mBlockSize ;
+		const auto r2x = index % fake.mThis->mHeader->mBlockSize * fake.mThis->mHeader->mBlockStep ;
+		const auto r3x = HEADER_SIZE::expr + r1x * fake.mThis->mHeader->mChunkStep ;
+		INDEX ix = load (r3x ,LENGTH (fake.mThis->mHeader->mChunkStep)) ;
 		const auto r4x = fake.mThis->mCacheList[ix].mBuffer->m1st + LENGTH (r2x) ;
-		inline_memcpy (Pointer::make (r4x) ,Pointer::from (item.self) ,LENGTH (fake.mThis->mHeader->mBlockStepSize)) ;
+		inline_memcpy (Pointer::make (r4x) ,Pointer::from (item.self) ,LENGTH (fake.mThis->mHeader->mBlockStep)) ;
 	}
 
-	INDEX load (CREF<VAL64> offset ,CREF<LENGTH> size_) {
-		INDEX ret = fake.mThis->mCacheSet.map (offset) ;
+	INDEX load (CREF<VAL64> index ,CREF<LENGTH> size_) {
+		INDEX ret = fake.mThis->mCacheSet.map (index) ;
 		if ifdo (TRUE) {
 			if (ret != NONE)
 				discard ;
 			update_overflow () ;
 			ret = fake.mThis->mCacheList.insert () ;
-			fake.mThis->mCacheSet.add (offset ,ret) ;
-			fake.mThis->mCacheList[ret].mOffset = offset ;
+			fake.mThis->mCacheSet.add (index ,ret) ;
+			fake.mThis->mCacheList[ret].mIndex = index ;
 			fake.mThis->mCacheList[ret].mBuffer = UniqueRef<Tuple<FLAG ,LENGTH>> ([&] (VREF<Tuple<FLAG ,LENGTH>> me) {
-				const auto r1x = mmap64 (NULL ,size_ ,fake.mThis->mFileMapFlag ,MAP_SHARED ,fake.mThis->mPipe ,offset) ;
+				const auto r1x = mmap64 (NULL ,size_ ,fake.mThis->mFileMapFlag ,MAP_SHARED ,fake.mThis->mPipe ,index) ;
 				assume (r1x != MAP_FAILED) ;
 				me.m1st = FLAG (r1x) ;
 				me.m2nd = size_ ;
@@ -1393,7 +1387,7 @@ public:
 			return move (ret) ;
 		}) ;
 		assert (r1x != NONE) ;
-		fake.mThis->mCacheSet.erase (fake.mThis->mCacheList[r1x].mOffset) ;
+		fake.mThis->mCacheSet.erase (fake.mThis->mCacheList[r1x].mIndex) ;
 		fake.mThis->mCacheList.remove (r1x) ;
 	}
 
@@ -1571,8 +1565,9 @@ public:
 	void log_file () const {
 		if (fake.mThis->mLogFile.length () == 0)
 			return ;
-		const auto r1x = (fake.mThis->mWriter.length () - 1) * SIZE_OF<STR>::expr ;
-		auto rax = RefBuffer<BYTE>::reference (FLAG (fake.mThis->mWriterBuffer.self) ,r1x ,BufferUnknownBinder<BYTE> ()) ;
+		const auto r1x = FLAG (fake.mThis->mWriterBuffer.self) ;
+		const auto r2x = (fake.mThis->mWriter.length () - 1) * SIZE_OF<STR>::expr ;
+		auto rax = RefBuffer<BYTE>::reference (r1x ,r2x) ;
 		fake.mThis->mLogFileWriter.write (rax) ;
 	}
 

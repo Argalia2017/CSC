@@ -76,6 +76,7 @@ struct VectorHolder implement Interface {
 	imports VFat<VectorHolder> create (VREF<VectorLayout> that) ;
 	imports CFat<VectorHolder> create (CREF<VectorLayout> that) ;
 
+	virtual void initialize (CREF<Buffer<FLT64 ,RANK4>> that) = 0 ;
 	virtual void initialize (CREF<FLT64> x ,CREF<FLT64> y ,CREF<FLT64> z ,CREF<FLT64> w) = 0 ;
 	virtual void initialize (CREF<Pixel> point) = 0 ;
 	virtual void initialize (CREF<Point2F> point) = 0 ;
@@ -106,6 +107,10 @@ protected:
 
 public:
 	implicit Vector () = default ;
+
+	explicit Vector (CREF<Buffer<FLT64 ,RANK4>> that) {
+		VectorHolder::create (thiz)->initialize (that) ;
+	}
 
 	explicit Vector (CREF<FLT64> x ,CREF<FLT64> y ,CREF<FLT64> z ,CREF<FLT64> w) {
 		VectorHolder::create (thiz)->initialize (x ,y ,z ,w) ;
@@ -337,6 +342,7 @@ struct MatrixHolder implement Interface {
 	imports VFat<MatrixHolder> create (VREF<MatrixLayout> that) ;
 	imports CFat<MatrixHolder> create (CREF<MatrixLayout> that) ;
 
+	virtual void initialize (CREF<Buffer<FLT64 ,ENUM<16>>> that) = 0 ;
 	virtual void initialize (CREF<VectorLayout> x ,CREF<VectorLayout> y ,CREF<VectorLayout> z ,CREF<VectorLayout> w) = 0 ;
 	virtual VREF<FLT64> at (CREF<INDEX> x ,CREF<INDEX> y) leftvalue = 0 ;
 	virtual CREF<FLT64> at (CREF<INDEX> x ,CREF<INDEX> y) const leftvalue = 0 ;
@@ -366,6 +372,10 @@ protected:
 
 public:
 	implicit Matrix () = default ;
+
+	explicit Matrix (CREF<Buffer<FLT64 ,ENUM<16>>> that) {
+		MatrixHolder::create (thiz)->initialize (that) ;
+	}
 
 	explicit Matrix (CREF<Vector> x ,CREF<Vector> y ,CREF<Vector> z ,CREF<Vector> w) {
 		MatrixHolder::create (thiz)->initialize (x ,y ,z ,w) ;
@@ -620,7 +630,7 @@ struct MakeMatrixHolder implement Interface {
 	virtual void ViewMatrix_initialize (CREF<Vector> vx ,CREF<Vector> vy ,CREF<Just<ViewMatrixOption>> option) = 0 ;
 	virtual void CrossProductMatrix_initialize (CREF<Vector> xyz) = 0 ;
 	virtual void SymmetryMatrix_initialize (CREF<Vector> x ,CREF<Vector> y) = 0 ;
-	virtual void AffineMatrix_initialize (CREF<Buffer<FLT64 ,ENUM<16>>> a) = 0 ;
+	virtual void AffineMatrix_initialize (CREF<Array<FLT64>> a) = 0 ;
 } ;
 
 inline Matrix DiagMatrix (CREF<FLT64> x ,CREF<FLT64> y ,CREF<FLT64> z) {
@@ -719,7 +729,7 @@ inline Matrix SymmetryMatrix (CREF<Vector> x ,CREF<Vector> y) {
 	return move (ret) ;
 }
 
-inline Matrix AffineMatrix (CREF<Buffer<FLT64 ,ENUM<16>>> a) {
+inline Matrix AffineMatrix (CREF<Array<FLT64>> a) {
 	Matrix ret ;
 	MakeMatrixHolder::create (ret)->AffineMatrix_initialize (a) ;
 	return move (ret) ;

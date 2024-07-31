@@ -220,8 +220,9 @@ public:
 	VAL32 lerp (CREF<FLT64> a ,CREF<VAL32> lb ,CREF<VAL32> rb) const override {
 		const auto r1x = rb - lb ;
 		assert (r1x > 0) ;
-		const auto r2x = VAL32 (round (r1x * a ,FLT64 (1))) ;
-		return lb + (r2x % r1x + r1x) % r1x ;
+		const auto r2x = FLT64 (r1x) * abs (a) ;
+		const auto r3x = VAL32 (round (r2x ,FLT64 (1))) ;
+		return clamp (r3x ,lb ,rb) ;
 	}
 
 	VAL64 lerp (CREF<FLT64> a ,CREF<VAL64> lb ,CREF<VAL64> rb) const override {
@@ -743,36 +744,36 @@ public:
 		return (QUAD (high) << 32) | QUAD (low) ;
 	}
 
-	BOOL bit_any (CREF<BYTE> base ,CREF<BYTE> mask) const override {
-		return (base & mask) != BYTE (0X00) ;
+	BOOL bit_any (CREF<BYTE> curr ,CREF<BYTE> mask) const override {
+		return (curr & mask) != BYTE (0X00) ;
 	}
 
-	BOOL bit_any (CREF<WORD> base ,CREF<WORD> mask) const override {
-		return (base & mask) != WORD (0X00) ;
+	BOOL bit_any (CREF<WORD> curr ,CREF<WORD> mask) const override {
+		return (curr & mask) != WORD (0X00) ;
 	}
 
-	BOOL bit_any (CREF<CHAR> base ,CREF<CHAR> mask) const override {
-		return (base & mask) != CHAR (0X00) ;
+	BOOL bit_any (CREF<CHAR> curr ,CREF<CHAR> mask) const override {
+		return (curr & mask) != CHAR (0X00) ;
 	}
 
-	BOOL bit_any (CREF<QUAD> base ,CREF<QUAD> mask) const override {
-		return (base & mask) != QUAD (0X00) ;
+	BOOL bit_any (CREF<QUAD> curr ,CREF<QUAD> mask) const override {
+		return (curr & mask) != QUAD (0X00) ;
 	}
 
-	BOOL bit_all (CREF<BYTE> base ,CREF<BYTE> mask) const override {
-		return (base & mask) == mask ;
+	BOOL bit_all (CREF<BYTE> curr ,CREF<BYTE> mask) const override {
+		return (curr & mask) == mask ;
 	}
 
-	BOOL bit_all (CREF<WORD> base ,CREF<WORD> mask) const override {
-		return (base & mask) == mask ;
+	BOOL bit_all (CREF<WORD> curr ,CREF<WORD> mask) const override {
+		return (curr & mask) == mask ;
 	}
 
-	BOOL bit_all (CREF<CHAR> base ,CREF<CHAR> mask) const override {
-		return (base & mask) == mask ;
+	BOOL bit_all (CREF<CHAR> curr ,CREF<CHAR> mask) const override {
+		return (curr & mask) == mask ;
 	}
 
-	BOOL bit_all (CREF<QUAD> base ,CREF<QUAD> mask) const override {
-		return (base & mask) == mask ;
+	BOOL bit_all (CREF<QUAD> curr ,CREF<QUAD> mask) const override {
+		return (curr & mask) == mask ;
 	}
 
 	BYTE bit_reverse (CREF<BYTE> a) const override {
@@ -860,7 +861,7 @@ class IntegerImplHolder implement Fat<IntegerHolder ,IntegerLayout> {
 public:
 	void initialize (CREF<LENGTH> size_ ,CREF<VAL64> item) override {
 		fake.mInteger = RefBuffer<BYTE> (size_) ;
-		set (item) ;
+		store (item) ;
 	}
 
 	LENGTH size () const override {
@@ -885,16 +886,17 @@ public:
 		return NONE ;
 	}
 
-	void get (VREF<VAL64> item) const override {
-		item = 0 ;
+	VAL64 fetch () const override {
+		VAL64 ret = 0 ;
 		const auto r1x = MathProc::min_of (fake.mInteger.size () ,SIZE_OF<VAL64>::expr) ;
 		for (auto &&i : iter (0 ,r1x)) {
 			const auto r2x = QUAD (fake.mInteger[i]) << (i * 8) ;
-			item = VAL64 (QUAD (item) | r2x) ;
+			ret = VAL64 (QUAD (ret) | r2x) ;
 		}
+		return move (ret) ;
 	}
 
-	void set (CREF<VAL64> item) override {
+	void store (CREF<VAL64> item) override {
 		const auto r1x = MathProc::min_of (fake.mInteger.size () ,SIZE_OF<VAL64>::expr) ;
 		const auto r2x = QUAD (item) ;
 		for (auto &&i : iter (0 ,r1x)) {

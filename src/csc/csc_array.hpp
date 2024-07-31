@@ -22,8 +22,12 @@ public:
 		mSize = size_ ;
 	}
 
-	forceinline operator LENGTH () const {
+	LENGTH fetch () const {
 		return mSize ;
+	}
+
+	forceinline operator LENGTH () const {
+		return fetch () ;
 	}
 } ;
 
@@ -137,8 +141,8 @@ struct ArrayHolder implement Interface {
 	imports VFat<ArrayHolder> create (VREF<ArrayLayout> that) ;
 	imports CFat<ArrayHolder> create (CREF<ArrayLayout> that) ;
 
-	virtual void initialize (CREF<Unknown> element ,CREF<LENGTH> size_) = 0 ;
-	virtual void initialize (CREF<Unknown> element ,CREF<WrapperLayout> params ,VREF<BoxLayout> item) = 0 ;
+	virtual void initialize (CREF<Unknown> holder ,CREF<LENGTH> size_) = 0 ;
+	virtual void initialize (CREF<Unknown> holder ,CREF<WrapperLayout> params ,VREF<BoxLayout> item) = 0 ;
 	virtual ArrayLayout clone () const = 0 ;
 	virtual LENGTH size () const = 0 ;
 	virtual LENGTH step () const = 0 ;
@@ -167,8 +171,6 @@ public:
 			return inline_hold (ReflectDestroyBinder<A> ()) ;
 		if (uuid == ReflectAssignBinder<A>::expr)
 			return inline_hold (ReflectAssignBinder<A> ()) ;
-		if (uuid == ReflectElementBinder<A>::expr)
-			return inline_hold (ReflectElementBinder<A> ()) ;
 		if (uuid == ReflectCloneBinder<A>::expr)
 			return inline_hold (ReflectCloneBinder<A> ()) ;
 		if (uuid == ReflectEqualBinder<A>::expr)
@@ -177,6 +179,8 @@ public:
 			return inline_hold (ReflectComprBinder<A> ()) ;
 		if (uuid == ReflectVisitBinder<A>::expr)
 			return inline_hold (ReflectVisitBinder<A> ()) ;
+		if (uuid == ReflectElementBinder<A>::expr)
+			return inline_hold (ReflectElementBinder<A> ()) ;
 		return ZERO ;
 	}
 } ;
@@ -775,9 +779,9 @@ struct DequeHolder implement Interface {
 	imports VFat<DequeHolder> create (VREF<DequeLayout> that) ;
 	imports CFat<DequeHolder> create (CREF<DequeLayout> that) ;
 
-	virtual void initialize (CREF<Unknown> element) = 0 ;
-	virtual void initialize (CREF<Unknown> element ,CREF<LENGTH> size_) = 0 ;
-	virtual void initialize (CREF<Unknown> element ,CREF<WrapperLayout> params ,VREF<BoxLayout> item) = 0 ;
+	virtual void initialize (CREF<Unknown> holder) = 0 ;
+	virtual void initialize (CREF<Unknown> holder ,CREF<LENGTH> size_) = 0 ;
+	virtual void initialize (CREF<Unknown> holder ,CREF<WrapperLayout> params ,VREF<BoxLayout> item) = 0 ;
 	virtual void clear () = 0 ;
 	virtual LENGTH size () const = 0 ;
 	virtual LENGTH step () const = 0 ;
@@ -950,6 +954,7 @@ struct PriorityNode {
 
 struct PriorityLayout {
 	RefBuffer<Pointer> mPriority ;
+	FLAG mOffset ;
 	INDEX mRead ;
 	INDEX mWrite ;
 } ;
@@ -958,9 +963,9 @@ struct PriorityHolder implement Interface {
 	imports VFat<PriorityHolder> create (VREF<PriorityLayout> that) ;
 	imports CFat<PriorityHolder> create (CREF<PriorityLayout> that) ;
 
-	virtual void initialize (CREF<Unknown> element) = 0 ;
-	virtual void initialize (CREF<Unknown> element ,CREF<LENGTH> size_) = 0 ;
-	virtual void initialize (CREF<Unknown> element ,CREF<WrapperLayout> params ,VREF<BoxLayout> item) = 0 ;
+	virtual void initialize (CREF<Unknown> holder) = 0 ;
+	virtual void initialize (CREF<Unknown> holder ,CREF<LENGTH> size_) = 0 ;
+	virtual void initialize (CREF<Unknown> holder ,CREF<WrapperLayout> params ,VREF<BoxLayout> item) = 0 ;
 	virtual void clear () = 0 ;
 	virtual LENGTH size () const = 0 ;
 	virtual LENGTH step () const = 0 ;
@@ -982,22 +987,22 @@ class PriorityUnknownBinder implement Unknown {
 public:
 	FLAG reflect (CREF<FLAG> uuid) const override {
 		using R1X = Tuple<A ,PriorityNode> ;
-		if (uuid == ReflectSizeBinder<R1X>::expr)
-			return inline_hold (ReflectSizeBinder<R1X> ()) ;
-		if (uuid == ReflectCreateBinder<R1X>::expr)
-			return inline_hold (ReflectCreateBinder<R1X> ()) ;
-		if (uuid == ReflectDestroyBinder<R1X>::expr)
-			return inline_hold (ReflectDestroyBinder<R1X> ()) ;
-		if (uuid == ReflectTupleBinder<R1X>::expr)
-			return inline_hold (ReflectTupleBinder<R1X> ()) ;
+		if (uuid == ReflectSizeBinder<A>::expr)
+			return inline_hold (ReflectSizeBinder<A> ()) ;
+		if (uuid == ReflectCreateBinder<A>::expr)
+			return inline_hold (ReflectCreateBinder<A> ()) ;
+		if (uuid == ReflectDestroyBinder<A>::expr)
+			return inline_hold (ReflectDestroyBinder<A> ()) ;
 		if (uuid == ReflectAssignBinder<A>::expr)
 			return inline_hold (ReflectAssignBinder<A> ()) ;
-		if (uuid == ReflectElementBinder<A>::expr)
-			return inline_hold (ReflectElementBinder<A> ()) ;
 		if (uuid == ReflectEqualBinder<A>::expr)
 			return inline_hold (ReflectEqualBinder<A> ()) ;
 		if (uuid == ReflectComprBinder<A>::expr)
 			return inline_hold (ReflectComprBinder<A> ()) ;
+		if (uuid == ReflectTupleBinder<R1X>::expr)
+			return inline_hold (ReflectTupleBinder<R1X> ()) ;
+		if (uuid == ReflectElementBinder<R1X>::expr)
+			return inline_hold (ReflectElementBinder<R1X> ()) ;
 		return ZERO ;
 	}
 } ;
@@ -1006,8 +1011,9 @@ template <class A>
 class PriorityRealLayout implement PriorityLayout {
 public:
 	implicit PriorityRealLayout () noexcept {
+		using R1X = Tuple<A ,PriorityNode> ;
 		auto &&rax = keep[TYPE<RefBufferLayout>::expr] (thiz.mPriority) ;
-		rax = RefBuffer<Tuple<A ,PriorityNode>> () ;
+		rax = RefBuffer<R1X> () ;
 	}
 } ;
 
@@ -1132,9 +1138,9 @@ struct ListHolder implement Interface {
 	imports VFat<ListHolder> create (VREF<ListLayout> that) ;
 	imports CFat<ListHolder> create (CREF<ListLayout> that) ;
 
-	virtual void initialize (CREF<Unknown> element) = 0 ;
-	virtual void initialize (CREF<Unknown> element ,CREF<LENGTH> size_) = 0 ;
-	virtual void initialize (CREF<Unknown> element ,CREF<WrapperLayout> params ,VREF<BoxLayout> item) = 0 ;
+	virtual void initialize (CREF<Unknown> holder) = 0 ;
+	virtual void initialize (CREF<Unknown> holder ,CREF<LENGTH> size_) = 0 ;
+	virtual void initialize (CREF<Unknown> holder ,CREF<WrapperLayout> params ,VREF<BoxLayout> item) = 0 ;
 	virtual void clear () = 0 ;
 	virtual LENGTH size () const = 0 ;
 	virtual LENGTH step () const = 0 ;
@@ -1161,18 +1167,16 @@ class ListUnknownBinder implement Unknown {
 public:
 	FLAG reflect (CREF<FLAG> uuid) const override {
 		using R1X = TupleNode<A ,ListNode> ;
-		if (uuid == ReflectSizeBinder<R1X>::expr)
-			return inline_hold (ReflectSizeBinder<R1X> ()) ;
-		if (uuid == ReflectCreateBinder<R1X>::expr)
-			return inline_hold (ReflectCreateBinder<R1X> ()) ;
-		if (uuid == ReflectDestroyBinder<R1X>::expr)
-			return inline_hold (ReflectDestroyBinder<R1X> ()) ;
-		if (uuid == ReflectTupleBinder<R1X>::expr)
-			return inline_hold (ReflectTupleBinder<R1X> ()) ;
+		if (uuid == ReflectSizeBinder<A>::expr)
+			return inline_hold (ReflectSizeBinder<A> ()) ;
+		if (uuid == ReflectDestroyBinder<A>::expr)
+			return inline_hold (ReflectDestroyBinder<A> ()) ;
 		if (uuid == ReflectAssignBinder<A>::expr)
 			return inline_hold (ReflectAssignBinder<A> ()) ;
-		if (uuid == ReflectElementBinder<A>::expr)
-			return inline_hold (ReflectElementBinder<A> ()) ;
+		if (uuid == ReflectTupleBinder<R1X>::expr)
+			return inline_hold (ReflectTupleBinder<R1X> ()) ;
+		if (uuid == ReflectElementBinder<R1X>::expr)
+			return inline_hold (ReflectElementBinder<R1X> ()) ;
 		return ZERO ;
 	}
 } ;
@@ -1330,9 +1334,9 @@ struct ArrayListHolder implement Interface {
 	imports VFat<ArrayListHolder> create (VREF<ArrayListLayout> that) ;
 	imports CFat<ArrayListHolder> create (CREF<ArrayListLayout> that) ;
 
-	virtual void initialize (CREF<Unknown> element) = 0 ;
-	virtual void initialize (CREF<Unknown> element ,CREF<LENGTH> size_) = 0 ;
-	virtual void initialize (CREF<Unknown> element ,CREF<WrapperLayout> params ,VREF<BoxLayout> item) = 0 ;
+	virtual void initialize (CREF<Unknown> holder) = 0 ;
+	virtual void initialize (CREF<Unknown> holder ,CREF<LENGTH> size_) = 0 ;
+	virtual void initialize (CREF<Unknown> holder ,CREF<WrapperLayout> params ,VREF<BoxLayout> item) = 0 ;
 	virtual void clear () = 0 ;
 	virtual LENGTH size () const = 0 ;
 	virtual LENGTH step () const = 0 ;
@@ -1354,18 +1358,16 @@ class ArrayListUnknownBinder implement Unknown {
 public:
 	FLAG reflect (CREF<FLAG> uuid) const override {
 		using R1X = TupleNode<A ,ArrayListNode> ;
-		if (uuid == ReflectSizeBinder<R1X>::expr)
-			return inline_hold (ReflectSizeBinder<R1X> ()) ;
-		if (uuid == ReflectCreateBinder<R1X>::expr)
-			return inline_hold (ReflectCreateBinder<R1X> ()) ;
-		if (uuid == ReflectDestroyBinder<R1X>::expr)
-			return inline_hold (ReflectDestroyBinder<R1X> ()) ;
-		if (uuid == ReflectTupleBinder<R1X>::expr)
-			return inline_hold (ReflectTupleBinder<R1X> ()) ;
+		if (uuid == ReflectSizeBinder<A>::expr)
+			return inline_hold (ReflectSizeBinder<A> ()) ;
+		if (uuid == ReflectDestroyBinder<A>::expr)
+			return inline_hold (ReflectDestroyBinder<A> ()) ;
 		if (uuid == ReflectAssignBinder<A>::expr)
 			return inline_hold (ReflectAssignBinder<A> ()) ;
-		if (uuid == ReflectElementBinder<A>::expr)
-			return inline_hold (ReflectElementBinder<A> ()) ;
+		if (uuid == ReflectTupleBinder<R1X>::expr)
+			return inline_hold (ReflectTupleBinder<R1X> ()) ;
+		if (uuid == ReflectElementBinder<R1X>::expr)
+			return inline_hold (ReflectElementBinder<R1X> ()) ;
 		return ZERO ;
 	}
 } ;
@@ -1485,18 +1487,17 @@ public:
 	}
 } ;
 
-struct SortedMapNode {
+struct SortedMapNode implement AllocatorNode {
 	INDEX mMap ;
 } ;
 
-template <class A>
 struct SortedMapImplLayout {
-	RefBuffer<A> mList ;
-	INDEX mWrite ;
+	Allocator<Pointer ,SortedMapNode> mList ;
+	INDEX mCheck ;
 } ;
 
 struct SortedMapLayout {
-	Ref<SortedMapImplLayout<Pointer>> mThis ;
+	Ref<SortedMapImplLayout> mThis ;
 	RefBuffer<INDEX> mRange ;
 	INDEX mWrite ;
 	BOOL mSorted ;
@@ -1506,9 +1507,9 @@ struct SortedMapHolder implement Interface {
 	imports VFat<SortedMapHolder> create (VREF<SortedMapLayout> that) ;
 	imports CFat<SortedMapHolder> create (CREF<SortedMapLayout> that) ;
 
-	virtual void initialize (CREF<Unknown> element) = 0 ;
-	virtual void initialize (CREF<Unknown> element ,CREF<LENGTH> size_) = 0 ;
-	virtual void initialize (CREF<Unknown> element ,CREF<WrapperLayout> params ,VREF<BoxLayout> item) = 0 ;
+	virtual void initialize (CREF<Unknown> holder) = 0 ;
+	virtual void initialize (CREF<Unknown> holder ,CREF<LENGTH> size_) = 0 ;
+	virtual void initialize (CREF<Unknown> holder ,CREF<WrapperLayout> params ,VREF<BoxLayout> item) = 0 ;
 	virtual SortedMapLayout share () const = 0 ;
 	virtual void clear () = 0 ;
 	virtual LENGTH size () const = 0 ;
@@ -1529,25 +1530,23 @@ template <class A>
 class SortedMapUnknownBinder implement Unknown {
 public:
 	FLAG reflect (CREF<FLAG> uuid) const override {
-		using R1X = Tuple<A ,SortedMapNode> ;
-		if (uuid == ReflectSizeBinder<R1X>::expr)
-			return inline_hold (ReflectSizeBinder<R1X> ()) ;
-		if (uuid == ReflectCreateBinder<R1X>::expr)
-			return inline_hold (ReflectCreateBinder<R1X> ()) ;
-		if (uuid == ReflectDestroyBinder<R1X>::expr)
-			return inline_hold (ReflectDestroyBinder<R1X> ()) ;
-		if (uuid == ReflectTupleBinder<R1X>::expr)
-			return inline_hold (ReflectTupleBinder<R1X> ()) ;
+		using R1X = TupleNode<A ,SortedMapNode> ;
+		if (uuid == ReflectSizeBinder<A>::expr)
+			return inline_hold (ReflectSizeBinder<A> ()) ;
+		if (uuid == ReflectDestroyBinder<A>::expr)
+			return inline_hold (ReflectDestroyBinder<A> ()) ;
 		if (uuid == ReflectAssignBinder<A>::expr)
 			return inline_hold (ReflectAssignBinder<A> ()) ;
-		if (uuid == ReflectElementBinder<A>::expr)
-			return inline_hold (ReflectElementBinder<A> ()) ;
 		if (uuid == ReflectEqualBinder<A>::expr)
 			return inline_hold (ReflectEqualBinder<A> ()) ;
 		if (uuid == ReflectComprBinder<A>::expr)
 			return inline_hold (ReflectComprBinder<A> ()) ;
 		if (uuid == ReflectVisitBinder<A>::expr)
 			return inline_hold (ReflectVisitBinder<A> ()) ;
+		if (uuid == ReflectTupleBinder<R1X>::expr)
+			return inline_hold (ReflectTupleBinder<R1X> ()) ;
+		if (uuid == ReflectElementBinder<R1X>::expr)
+			return inline_hold (ReflectElementBinder<R1X> ()) ;
 		return ZERO ;
 	}
 } ;
@@ -1556,8 +1555,10 @@ template <class A>
 class SortedMapRealLayout implement SortedMapLayout {
 public:
 	implicit SortedMapRealLayout () noexcept {
-		auto &&rax = keep[TYPE<RefLayout>::expr] (thiz.mThis) ;
-		rax = Ref<SortedMapImplLayout<Tuple<A ,SortedMapNode>>> () ;
+		if (thiz.mThis == NULL)
+			return ;
+		auto &&rax = keep[TYPE<AllocatorLayout>::expr] (thiz.mThis->mList) ;
+		rax = Allocator<A ,SortedMapNode> () ;
 	}
 } ;
 
@@ -1688,9 +1689,9 @@ struct SetHolder implement Interface {
 	imports VFat<SetHolder> create (VREF<SetLayout> that) ;
 	imports CFat<SetHolder> create (CREF<SetLayout> that) ;
 
-	virtual void initialize (CREF<Unknown> element) = 0 ;
-	virtual void initialize (CREF<Unknown> element ,CREF<LENGTH> size_) = 0 ;
-	virtual void initialize (CREF<Unknown> element ,CREF<WrapperLayout> params ,VREF<BoxLayout> item) = 0 ;
+	virtual void initialize (CREF<Unknown> holder) = 0 ;
+	virtual void initialize (CREF<Unknown> holder ,CREF<LENGTH> size_) = 0 ;
+	virtual void initialize (CREF<Unknown> holder ,CREF<WrapperLayout> params ,VREF<BoxLayout> item) = 0 ;
 	virtual void clear () = 0 ;
 	virtual LENGTH size () const = 0 ;
 	virtual LENGTH step () const = 0 ;
@@ -1714,24 +1715,22 @@ class SetUnknownBinder implement Unknown {
 public:
 	FLAG reflect (CREF<FLAG> uuid) const override {
 		using R1X = TupleNode<A ,SetNode> ;
-		if (uuid == ReflectSizeBinder<R1X>::expr)
-			return inline_hold (ReflectSizeBinder<R1X> ()) ;
-		if (uuid == ReflectCreateBinder<R1X>::expr)
-			return inline_hold (ReflectCreateBinder<R1X> ()) ;
-		if (uuid == ReflectDestroyBinder<R1X>::expr)
-			return inline_hold (ReflectDestroyBinder<R1X> ()) ;
-		if (uuid == ReflectTupleBinder<R1X>::expr)
-			return inline_hold (ReflectTupleBinder<R1X> ()) ;
+		if (uuid == ReflectSizeBinder<A>::expr)
+			return inline_hold (ReflectSizeBinder<A> ()) ;
+		if (uuid == ReflectDestroyBinder<A>::expr)
+			return inline_hold (ReflectDestroyBinder<A> ()) ;
 		if (uuid == ReflectAssignBinder<A>::expr)
 			return inline_hold (ReflectAssignBinder<A> ()) ;
-		if (uuid == ReflectElementBinder<A>::expr)
-			return inline_hold (ReflectElementBinder<A> ()) ;
 		if (uuid == ReflectEqualBinder<A>::expr)
 			return inline_hold (ReflectEqualBinder<A> ()) ;
 		if (uuid == ReflectComprBinder<A>::expr)
 			return inline_hold (ReflectComprBinder<A> ()) ;
 		if (uuid == ReflectVisitBinder<A>::expr)
 			return inline_hold (ReflectVisitBinder<A> ()) ;
+		if (uuid == ReflectTupleBinder<R1X>::expr)
+			return inline_hold (ReflectTupleBinder<R1X> ()) ;
+		if (uuid == ReflectElementBinder<R1X>::expr)
+			return inline_hold (ReflectElementBinder<R1X> ()) ;
 		return ZERO ;
 	}
 } ;
@@ -1875,9 +1874,9 @@ struct HashSetHolder implement Interface {
 	imports VFat<HashSetHolder> create (VREF<HashSetLayout> that) ;
 	imports CFat<HashSetHolder> create (CREF<HashSetLayout> that) ;
 
-	virtual void initialize (CREF<Unknown> element) = 0 ;
-	virtual void initialize (CREF<Unknown> element ,CREF<LENGTH> size_) = 0 ;
-	virtual void initialize (CREF<Unknown> element ,CREF<WrapperLayout> params ,VREF<BoxLayout> item) = 0 ;
+	virtual void initialize (CREF<Unknown> holder) = 0 ;
+	virtual void initialize (CREF<Unknown> holder ,CREF<LENGTH> size_) = 0 ;
+	virtual void initialize (CREF<Unknown> holder ,CREF<WrapperLayout> params ,VREF<BoxLayout> item) = 0 ;
 	virtual void clear () = 0 ;
 	virtual LENGTH size () const = 0 ;
 	virtual LENGTH step () const = 0 ;
@@ -1901,22 +1900,20 @@ class HashSetUnknownBinder implement Unknown {
 public:
 	FLAG reflect (CREF<FLAG> uuid) const override {
 		using R1X = TupleNode<A ,HashSetNode> ;
-		if (uuid == ReflectSizeBinder<R1X>::expr)
-			return inline_hold (ReflectSizeBinder<R1X> ()) ;
-		if (uuid == ReflectCreateBinder<R1X>::expr)
-			return inline_hold (ReflectCreateBinder<R1X> ()) ;
-		if (uuid == ReflectDestroyBinder<R1X>::expr)
-			return inline_hold (ReflectDestroyBinder<R1X> ()) ;
-		if (uuid == ReflectTupleBinder<R1X>::expr)
-			return inline_hold (ReflectTupleBinder<R1X> ()) ;
+		if (uuid == ReflectSizeBinder<A>::expr)
+			return inline_hold (ReflectSizeBinder<A> ()) ;
+		if (uuid == ReflectDestroyBinder<A>::expr)
+			return inline_hold (ReflectDestroyBinder<A> ()) ;
 		if (uuid == ReflectAssignBinder<A>::expr)
 			return inline_hold (ReflectAssignBinder<A> ()) ;
-		if (uuid == ReflectElementBinder<A>::expr)
-			return inline_hold (ReflectElementBinder<A> ()) ;
 		if (uuid == ReflectEqualBinder<A>::expr)
 			return inline_hold (ReflectEqualBinder<A> ()) ;
 		if (uuid == ReflectVisitBinder<A>::expr)
 			return inline_hold (ReflectVisitBinder<A> ()) ;
+		if (uuid == ReflectTupleBinder<R1X>::expr)
+			return inline_hold (ReflectTupleBinder<R1X> ()) ;
+		if (uuid == ReflectElementBinder<R1X>::expr)
+			return inline_hold (ReflectElementBinder<R1X> ()) ;
 		return ZERO ;
 	}
 } ;
@@ -2078,7 +2075,7 @@ struct BitSetHolder implement Interface {
 	imports CFat<BitSetHolder> create (CREF<BitSetLayout> that) ;
 
 	virtual void initialize (CREF<LENGTH> size_) = 0 ;
-	virtual void initialize (CREF<Unknown> element ,CREF<WrapperLayout> params ,VREF<BoxLayout> item) = 0 ;
+	virtual void initialize (CREF<Unknown> holder ,CREF<WrapperLayout> params ,VREF<BoxLayout> item) = 0 ;
 	virtual BitSetLayout clone () const = 0 ;
 	virtual void clear () = 0 ;
 	virtual LENGTH size () const = 0 ;

@@ -438,14 +438,14 @@ struct ByteProcHolder implement Interface {
 	virtual WORD bit_merge (CREF<BYTE> high ,CREF<BYTE> low) const = 0 ;
 	virtual CHAR bit_merge (CREF<WORD> high ,CREF<WORD> low) const = 0 ;
 	virtual QUAD bit_merge (CREF<CHAR> high ,CREF<CHAR> low) const = 0 ;
-	virtual BOOL bit_any (CREF<BYTE> base ,CREF<BYTE> mask) const = 0 ;
-	virtual BOOL bit_any (CREF<WORD> base ,CREF<WORD> mask) const = 0 ;
-	virtual BOOL bit_any (CREF<CHAR> base ,CREF<CHAR> mask) const = 0 ;
-	virtual BOOL bit_any (CREF<QUAD> base ,CREF<QUAD> mask) const = 0 ;
-	virtual BOOL bit_all (CREF<BYTE> base ,CREF<BYTE> mask) const = 0 ;
-	virtual BOOL bit_all (CREF<WORD> base ,CREF<WORD> mask) const = 0 ;
-	virtual BOOL bit_all (CREF<CHAR> base ,CREF<CHAR> mask) const = 0 ;
-	virtual BOOL bit_all (CREF<QUAD> base ,CREF<QUAD> mask) const = 0 ;
+	virtual BOOL bit_any (CREF<BYTE> curr ,CREF<BYTE> mask) const = 0 ;
+	virtual BOOL bit_any (CREF<WORD> curr ,CREF<WORD> mask) const = 0 ;
+	virtual BOOL bit_any (CREF<CHAR> curr ,CREF<CHAR> mask) const = 0 ;
+	virtual BOOL bit_any (CREF<QUAD> curr ,CREF<QUAD> mask) const = 0 ;
+	virtual BOOL bit_all (CREF<BYTE> curr ,CREF<BYTE> mask) const = 0 ;
+	virtual BOOL bit_all (CREF<WORD> curr ,CREF<WORD> mask) const = 0 ;
+	virtual BOOL bit_all (CREF<CHAR> curr ,CREF<CHAR> mask) const = 0 ;
+	virtual BOOL bit_all (CREF<QUAD> curr ,CREF<QUAD> mask) const = 0 ;
 	virtual BYTE bit_reverse (CREF<BYTE> a) const = 0 ;
 	virtual WORD bit_reverse (CREF<WORD> a) const = 0 ;
 	virtual CHAR bit_reverse (CREF<CHAR> a) const = 0 ;
@@ -505,13 +505,13 @@ public:
 	}
 
 	template <class ARG1 ,class ARG2 ,class = REQUIRE<IS_BYTE<ARG1>>>
-	imports BOOL bit_any (CREF<ARG1> base ,CREF<ARG2> mask) {
-		return ByteProcHolder::create (instance ())->bit_any (base ,ARG1 (mask)) ;
+	imports BOOL bit_any (CREF<ARG1> curr ,CREF<ARG2> mask) {
+		return ByteProcHolder::create (instance ())->bit_any (curr ,ARG1 (mask)) ;
 	}
 
 	template <class ARG1 ,class ARG2 ,class = REQUIRE<IS_BYTE<ARG1>>>
-	imports BOOL bit_all (CREF<ARG1> base ,CREF<ARG2> mask) {
-		return ByteProcHolder::create (instance ())->bit_all (base ,ARG1 (mask)) ;
+	imports BOOL bit_all (CREF<ARG1> curr ,CREF<ARG2> mask) {
+		return ByteProcHolder::create (instance ())->bit_all (curr ,ARG1 (mask)) ;
 	}
 
 	imports BYTE bit_reverse (CREF<BYTE> a) {
@@ -554,8 +554,8 @@ struct IntegerHolder implement Interface {
 	virtual void initialize (CREF<LENGTH> size_ ,CREF<VAL64> item) = 0 ;
 	virtual LENGTH size () const = 0 ;
 	virtual LENGTH precision () const = 0 ;
-	virtual void get (VREF<VAL64> item) const = 0 ;
-	virtual void set (CREF<VAL64> item) = 0 ;
+	virtual VAL64 fetch () const = 0 ;
+	virtual void store (CREF<VAL64> item) = 0 ;
 	virtual BOOL equal (CREF<IntegerLayout> that) const = 0 ;
 	virtual FLAG compr (CREF<IntegerLayout> that) const = 0 ;
 	virtual void visit (VREF<Visitor> visitor) const = 0 ;
@@ -590,12 +590,16 @@ public:
 		return IntegerHolder::create (thiz)->precision () ;
 	}
 
-	void get (VREF<VAL64> item) const {
-		return IntegerHolder::create (thiz)->get (item) ;
+	VAL64 fetch () const {
+		return IntegerHolder::create (thiz)->fetch () ;
 	}
 
-	void set (CREF<VAL64> item) {
-		return IntegerHolder::create (thiz)->set (item) ;
+	forceinline operator VAL64 () const {
+		return fetch () ;
+	}
+
+	void store (CREF<VAL64> item) {
+		return IntegerHolder::create (thiz)->store (item) ;
 	}
 
 	BOOL equal (CREF<Integer> that) const {

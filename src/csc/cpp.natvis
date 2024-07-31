@@ -201,15 +201,15 @@
 
 	<Type Name="CSC::FarBuffer&lt;*&gt;">
 		<Expand HideRawView="true">
-			<Item Name="[size]" Condition="mBuffer.mPointer==0">0</Item>
-			<Item Name="[size]" Condition="mBuffer.mPointer!=0">mSize</Item>
-			<Item Name="[step]" Condition="mBuffer.mPointer==0">0</Item>
-			<Item Name="[step]" Condition="mBuffer.mPointer!=0">mStep</Item>
-			<Item Name="[this]">mBuffer</Item>
+			<Item Name="[size]" Condition="mThis.mPointer==0">0</Item>
+			<Item Name="[size]" Condition="mThis.mPointer!=0">mSize</Item>
+			<Item Name="[step]" Condition="mThis.mPointer==0">0</Item>
+			<Item Name="[step]" Condition="mThis.mPointer!=0">mStep</Item>
+			<Item Name="[this]">mThis</Item>
 			<ArrayItems>
-				<Size Condition="mBuffer.mPointer==0">0</Size>
-				<Size Condition="mBuffer.mPointer!=0">1</Size>
-				<ValuePointer>($T1*)mBuffer.mPointer</ValuePointer>
+				<Size Condition="mThis.mPointer==0">0</Size>
+				<Size Condition="mThis.mPointer!=0">1</Size>
+				<ValuePointer>($T1*)mThis.mPointer</ValuePointer>
 			</ArrayItems>
 		</Expand>
 	</Type>
@@ -312,7 +312,7 @@
 		<Expand HideRawView="true">
 			<Item Name="[range]">mRange</Item>
 			<Item Name="[write]">mWrite</Item>
-			<ExpandedItem>(CSC::RefBuffer&lt;CSC::TupleWrap2&lt;$T1,CSC::SortedMapNode&gt; &gt;*)&amp;(*(CSC::SortedMapImplLayout&lt;CSC::Pointer&gt;*)mThis.mPointer).mList</ExpandedItem>
+			<ExpandedItem>(CSC::Allocator&lt;$T1,CSC::SortedMapNode&gt;*)mThis.mPointer</ExpandedItem>
 		</Expand>
 	</Type>
 
@@ -343,8 +343,8 @@
 		<Expand HideRawView="true">
 			<Item Name="[cx]">mCX</Item>
 			<Item Name="[cy]">mCY</Item>
-			<Item Name="[strip]">mStrip</Item>
-			<Item Name="[offset]">mOffset</Item>
+			<Item Name="[tx]">mTX</Item>
+			<Item Name="[ty]">mTY</Item>
 			<ExpandedItem>(CSC::RefBuffer&lt;$T1&gt;*)&amp;mImage</ExpandedItem>
 		</Expand>
 	</Type>

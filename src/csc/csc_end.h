@@ -16,7 +16,7 @@
 #undef slice
 #undef assert
 #undef assume
-#undef barrier
+#undef output
 #undef ifdo
 #undef discard
 #undef typeof

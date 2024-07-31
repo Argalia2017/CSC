@@ -591,20 +591,20 @@ public:
 		return INDEX (r2x % r1x + lb) ;
 	}
 
-	Array<INDEX> random_shuffle (CREF<LENGTH> count ,CREF<LENGTH> size_) const override {
+	Array<INDEX> random_shuffle (CREF<LENGTH> length_ ,CREF<LENGTH> size_) const override {
 		Array<INDEX> ret = Array<INDEX>::make (iter (0 ,size_)) ;
-		random_shuffle (count ,size_ ,ret) ;
+		random_shuffle (length_ ,size_ ,ret) ;
 		return move (ret) ;
 	}
 
-	void random_shuffle (CREF<LENGTH> count ,CREF<LENGTH> size_ ,VREF<Array<INDEX>> result) const override {
-		assert (count >= 0) ;
-		assert (count <= size_) ;
+	void random_shuffle (CREF<LENGTH> length_ ,CREF<LENGTH> size_ ,VREF<Array<INDEX>> result) const override {
+		assert (length_ >= 0) ;
+		assert (length_ <= size_) ;
 		assert (result.size () == size_) ;
 		const auto r1x = result.size () - 1 ;
 		INDEX ix = 0 ;
 		while (TRUE) {
-			if (ix >= count)
+			if (ix >= length_)
 				break ;
 			INDEX iy = random_value (ix ,r1x) ;
 			swap (result[ix] ,result[iy]) ;
@@ -612,27 +612,27 @@ public:
 		}
 	}
 
-	BitSet random_pick (CREF<LENGTH> count ,CREF<LENGTH> size_) const override {
+	BitSet random_pick (CREF<LENGTH> length_ ,CREF<LENGTH> size_) const override {
 		BitSet ret = BitSet (size_) ;
-		random_pick (count ,size_ ,ret) ;
+		random_pick (length_ ,size_ ,ret) ;
 		return move (ret) ;
 	}
 
-	void random_pick (CREF<LENGTH> count ,CREF<LENGTH> size_ ,VREF<BitSet> result) const override {
-		assert (count >= 0) ;
-		assert (count <= size_) ;
+	void random_pick (CREF<LENGTH> length_ ,CREF<LENGTH> size_ ,VREF<BitSet> result) const override {
+		assert (length_ >= 0) ;
+		assert (length_ <= size_) ;
 		assert (result.size () == size_) ;
 		auto act = TRUE ;
 		if ifdo (act) {
-			if (count >= size_ / 2)
+			if (length_ >= size_ / 2)
 				discard ;
-			const auto r1x = random_shuffle (count ,size_) ;
-			for (auto &&i : iter (0 ,count))
+			const auto r1x = random_shuffle (length_ ,size_) ;
+			for (auto &&i : iter (0 ,length_))
 				result.add (r1x[i]) ;
 		}
 		if ifdo (act) {
-			const auto r2x = random_shuffle (size_ - count ,size_) ;
-			for (auto &&i : iter (size_ - count ,size_))
+			const auto r2x = random_shuffle (size_ - length_ ,size_) ;
+			for (auto &&i : iter (size_ - length_ ,size_))
 				result.add (r2x[i]) ;
 		}
 	}
@@ -791,19 +791,22 @@ exports CFat<StreamFileHolder> StreamFileHolder::create (CREF<StreamFileLayout> 
 }
 
 class StreamFileByteWriterImplHolder implement Fat<StreamFileByteWriterHolder ,StreamFileByteWriterLayout> {
+private:
+	using STREAM_FILE_BUFFER_SIZE = ENUM<4096> ;
+
 public:
 	void initialize (CREF<String<STR>> file) override {
-		fake.mStreamFile = StreamFile (file) ;
-		fake.mStreamFile.open_w (0) ;
-		fake.mStreamFileBuffer = RefBuffer<BYTE> (1024 * 1024) ;
+		fake.mFile = StreamFile (file) ;
+		fake.mFile.open_w (0) ;
+		fake.mFileBuffer = RefBuffer<BYTE> (STREAM_FILE_BUFFER_SIZE::expr) ;
 		set_writer (fake) ;
 	}
 
 	void set_writer (VREF<ByteWriter> writer) {
-		writer = ByteWriter (Ref<RefBuffer<BYTE>>::reference (fake.mStreamFileBuffer)) ;
+		writer = ByteWriter (Ref<RefBuffer<BYTE>>::reference (fake.mFileBuffer)) ;
 		fake.use_overflow ([&] (VREF<ByteWriter> writer) {
 			auto &&rax = keep[TYPE<StreamFileByteWriterLayout>::expr] (writer) ;
-			rax.mStreamFile.write (rax.mStreamFileBuffer) ;
+			rax.mFile.write (rax.mFileBuffer) ;
 			rax.reset () ;
 		}) ;
 	}
@@ -812,10 +815,10 @@ public:
 		const auto r1x = fake.length () ;
 		if (r1x == 0)
 			return ;
-		const auto r2x = RefBuffer<BYTE>::reference (FLAG (fake.mStreamFileBuffer.self) ,r1x ,fake.mStreamFileBuffer.unknown ()) ;
-		fake.mStreamFile.write (r2x) ;
+		const auto r2x = RefBuffer<BYTE>::reference (FLAG (fake.mFileBuffer.self) ,r1x) ;
+		fake.mFile.write (r2x) ;
 		fake.reset () ;
-		fake.mStreamFile.flush () ;
+		fake.mFile.flush () ;
 	}
 } ;
 
@@ -828,19 +831,22 @@ exports CFat<StreamFileByteWriterHolder> StreamFileByteWriterHolder::create (CRE
 }
 
 class StreamFileTextWriterImplHolder implement Fat<StreamFileTextWriterHolder ,StreamFileTextWriterLayout> {
+private:
+	using STREAM_FILE_BUFFER_SIZE = ENUM<4096> ;
+
 public:
 	void initialize (CREF<String<STR>> file) override {
-		fake.mStreamFile = StreamFile (file) ;
-		fake.mStreamFile.open_w (0) ;
-		fake.mStreamFileBuffer = RefBuffer<BYTE> (1024 * 1024) ;
+		fake.mFile = StreamFile (file) ;
+		fake.mFile.open_w (0) ;
+		fake.mFileBuffer = RefBuffer<BYTE> (STREAM_FILE_BUFFER_SIZE::expr) ;
 		set_writer (fake) ;
 	}
 
 	void set_writer (VREF<TextWriter> writer) {
-		writer = TextWriter (Ref<RefBuffer<BYTE>>::reference (fake.mStreamFileBuffer)) ;
+		writer = TextWriter (Ref<RefBuffer<BYTE>>::reference (fake.mFileBuffer)) ;
 		fake.use_overflow ([&] (VREF<TextWriter> writer) {
 			auto &&rax = keep[TYPE<StreamFileTextWriterLayout>::expr] (writer) ;
-			rax.mStreamFile.write (rax.mStreamFileBuffer) ;
+			rax.mFile.write (rax.mFileBuffer) ;
 			rax.reset () ;
 		}) ;
 	}
@@ -849,10 +855,10 @@ public:
 		const auto r1x = fake.length () ;
 		if (r1x == 0)
 			return ;
-		const auto r2x = RefBuffer<BYTE>::reference (FLAG (fake.mStreamFileBuffer.self) ,r1x ,fake.mStreamFileBuffer.unknown ()) ;
-		fake.mStreamFile.write (r2x) ;
+		const auto r2x = RefBuffer<BYTE>::reference (FLAG (fake.mFileBuffer.self) ,r1x) ;
+		fake.mFile.write (r2x) ;
 		fake.reset () ;
-		fake.mStreamFile.flush () ;
+		fake.mFile.flush () ;
 	}
 } ;
 
