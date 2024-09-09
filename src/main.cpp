@@ -9,12 +9,9 @@
 using namespace SOLUTION ;
 
 /*
-Ref<[^\r]+>::reference
-RefBuffer::unknown
 implicit ~\w+(?<!Layout) \(\)
 (?<!CREF<\w+Proc> )instance \(\) \{
 Pointer::make \(address
-WrapperIterator
 */
 
 exports int main () {

@@ -247,13 +247,13 @@ public:
 	}
 
 	Ref<RefBuffer<BYTE>> borrow () const override {
-		Ref<RefBuffer<BYTE>> ret = Ref<RefBuffer<BYTE>>::make () ;
-		auto &&rax = keep[TYPE<RefBufferLayout>::expr] (ret.self) ;
+		assume (fake.mString.exist ()) ;
+		auto rax = RefBufferLayout () ;
 		RefBufferHolder::create (rax)->initialize (fake.mString.unknown ()) ;
 		rax.mBuffer = FLAG (fake.mString.self) ;
 		rax.mSize = fake.mString.size () ;
 		rax.mStep = fake.mString.step () ;
-		return move (ret) ;
+		return Ref<RefBuffer<BYTE>>::make (move (keep[TYPE<RefBuffer<BYTE>>::expr] (rax))) ;
 	}
 
 	void get (CREF<INDEX> index ,VREF<STRU32> item) const override {
@@ -1068,6 +1068,7 @@ public:
 		INDEX iy = find_free () ;
 		assert (fake.mRange[iy] == NONE) ;
 		fake.mRange[iy] = ix ;
+		fake.mSorted = FALSE ;
 	}
 
 	INDEX insert (RREF<BoxLayout> item) override {
@@ -1076,6 +1077,7 @@ public:
 		INDEX ret = find_free () ;
 		assert (fake.mRange[ret] == NONE) ;
 		fake.mRange[ret] = ix ;
+		fake.mSorted = FALSE ;
 		return move (ret) ;
 	}
 
@@ -1087,6 +1089,7 @@ public:
 		INDEX ret = index ;
 		assert (fake.mRange[ret] == NONE) ;
 		fake.mRange[ret] = ix ;
+		fake.mSorted = FALSE ;
 		return move (ret) ;
 	}
 
@@ -1094,6 +1097,7 @@ public:
 		INDEX ix = fake.mRange[index] ;
 		fake.mRange[index] = NONE ;
 		fake.mList.free (ix) ;
+		fake.mSorted = FALSE ;
 	}
 
 	void remap () override {
@@ -1114,6 +1118,7 @@ public:
 			fake.mRange[ix] = NONE ;
 			ix++ ;
 		}
+		fake.mSorted = TRUE ;
 	}
 
 	INDEX find_free () {
@@ -1180,7 +1185,7 @@ public:
 	}
 
 	void initialize (CREF<Unknown> holder ,CREF<LENGTH> size_) override {
-		fake.mThis = Ref<SortedMapImplLayout>::make () ;
+		fake.mThis = SharedRef<SortedMapImplLayout>::make () ;
 		AllocatorHolder::create (fake.mThis->mList)->initialize (holder ,size_) ;
 		fake.mThis->mCheck = 0 ;
 		clear () ;
@@ -1198,7 +1203,7 @@ public:
 
 	SortedMapLayout share () const override {
 		SortedMapLayout ret ;
-		ret.mThis = fake.mThis.share () ;
+		ret.mThis = fake.mThis ;
 		SortedMapHolder::create (ret)->clear () ;
 		return move (ret) ;
 	}
@@ -1295,13 +1300,14 @@ public:
 		const auto r1x = RFat<ReflectCompr> (fake.mThis->mList.unknown ()) ;
 		const auto r2x = RFat<ReflectEqual> (fake.mThis->mList.unknown ()) ;
 		const auto r3x = (&fake.mRange[0]) ;
-		std::sort (r3x ,r3x + fake.mWrite ,[&] (CREF<INDEX> a ,CREF<INDEX> b) {
+		const auto r4x = r3x + fake.mWrite ;
+		std::sort (r3x ,r4x ,[&] (CREF<INDEX> a ,CREF<INDEX> b) {
 			return r1x->compr (fake.mThis->mList[a] ,fake.mThis->mList[b]) < ZERO ;
 		}) ;
 		INDEX ix = 0 ;
 		for (auto &&i : iter (1 ,fake.mWrite)) {
-			const auto r4x = r2x->equal (fake.mThis->mList[fake.mRange[ix]] ,fake.mThis->mList[fake.mRange[i]]) ;
-			if (r4x)
+			const auto r5x = r2x->equal (fake.mThis->mList[fake.mRange[ix]] ,fake.mThis->mList[fake.mRange[i]]) ;
+			if (r5x)
 				continue ;
 			ix++ ;
 			fake.mRange[ix] = fake.mRange[i] ;

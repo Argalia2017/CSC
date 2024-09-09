@@ -535,7 +535,7 @@ exports CFat<CalcThreadHolder> CalcThreadHolder::create (CREF<CalcThreadLayout> 
 struct PromiseImplLayout {
 	Mutex mThreadMutex ;
 	Just<ThreadFlag> mThreadFlag ;
-	Ref<Thread> mThread ;
+	Array<Thread> mThread ;
 	Function<> mThreadFunc ;
 	Function<> mRunningFunc ;
 	Box<AutoRef<Pointer>> mItem ;
@@ -576,7 +576,7 @@ public:
 	void start () {
 		auto rax = UniqueLock (mThreadMutex) ;
 		assume (mThreadFlag == ThreadFlag::Preparing) ;
-		assume (mThread == NULL) ;
+		assume (mThread.size () == 0) ;
 		mThreadFlag = ThreadFlag::Running ;
 		mThreadFunc = Function<> () ;
 		mItem = NULL ;
@@ -587,15 +587,14 @@ public:
 	void start (CREF<Function<>> func) {
 		auto rax = UniqueLock (mThreadMutex) ;
 		assume (mThreadFlag == ThreadFlag::Preparing) ;
+		assume (mThread.size () == 0) ;
 		mThreadFlag = ThreadFlag::Running ;
 		mThreadFunc = func ;
 		mItem = NULL ;
 		mException = NULL ;
-		if ifdo (TRUE) {
-			if (mThread != NULL)
-				discard ;
-			mThread = Ref<Thread>::make (Ref<ThreadFriend>::reference (thiz) ,0) ;
-			mThread->start () ;
+		for (auto &&i : mThread.range ()) {
+			mThread[i] = Thread (Ref<ThreadFriend>::reference (thiz) ,0) ;
+			mThread[i].start () ;
 		}
 		rax.notify () ;
 	}
@@ -718,12 +717,9 @@ public:
 
 	void stop () {
 		crash () ;
-		if ifdo (TRUE) {
-			if (mThread == NULL)
-				discard ;
-			mThread->stop () ;
-			mThread = NULL ;
-		}
+		for (auto &&i : mThread.range ())
+			mThread[i].stop () ;
+		mThread = Array<Thread> () ;
 		mThreadFlag = ThreadFlag::Preparing ;
 		mThreadFunc = Function<> () ;
 		mItem = NULL ;
@@ -798,20 +794,20 @@ struct ExpressionNode {
 } ;
 
 struct ExpressionImplLayout {
-	List<ExpressionNode> mList ;
+	List<ExpressionNode> mTree ;
 } ;
 
 class ExpressionImplHolder implement Fat<ExpressionHolder ,ExpressionLayout> {
 public:
 	void initialize (RREF<AutoRef<Pointer>> item) override {
 		fake.mThis = SharedRef<ExpressionImplLayout>::make () ;
-		fake.mIndex = fake.mThis->mList.insert () ;
-		fake.mThis->mList[fake.mIndex].mValue = move (item) ;
+		fake.mIndex = fake.mThis->mTree.insert () ;
+		fake.mThis->mTree[fake.mIndex].mValue = move (item) ;
 	}
 
 	LENGTH rank () const override {
-		const auto r1x = FunctionHolder::create (fake.mThis->mList[fake.mIndex].mOperator)->rank () ;
-		const auto r2x = fake.mThis->mList[fake.mIndex].mOperand.length () ;
+		const auto r1x = FunctionHolder::create (fake.mThis->mTree[fake.mIndex].mOperator)->rank () ;
+		const auto r2x = fake.mThis->mTree[fake.mIndex].mOperand.length () ;
 		return r1x - r2x ;
 	}
 
@@ -828,7 +824,7 @@ public:
 	}
 
 	CREF<AutoRef<Pointer>> eval () const leftvalue override {
-		return fake.mThis->mList[fake.mIndex].mValue ;
+		return fake.mThis->mTree[fake.mIndex].mValue ;
 	}
 } ;
 

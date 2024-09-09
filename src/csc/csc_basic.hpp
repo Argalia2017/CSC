@@ -208,6 +208,17 @@ public:
 		mWrapper = that ;
 	}
 
+	template <class ARG1 = TYPE_M1ST_ITEM<TYPE<A...>>>
+	CREF<ARG1> at (CREF<INDEX> index) const leftvalue {
+		assert (inline_between (index ,0 ,mRank)) ;
+		return Pointer::make (mWrapper.self[index]) ;
+	}
+
+	template <class ARG1 = TYPE_M1ST_ITEM<TYPE<A...>>>
+	forceinline CREF<ARG1> operator[] (CREF<INDEX> index) const leftvalue {
+		return at (index) ;
+	}
+
 	template <class ARG1>
 	void invoke (CREF<ARG1> func) const {
 		return invoke_impl (func ,TYPE_SENQUENCE<RANK>::expr) ;
@@ -229,64 +240,6 @@ inline Wrapper<CREF<ARG1>...> MakeWrapper (CREF<ARG1>...params) {
 	using R1X = RANK_OF<TYPE<ARG1...>> ;
 	return Wrapper<CREF<ARG1>...> (Buffer<FLAG ,R1X> ({address (params)...})) ;
 }
-
-template <class A>
-class WrapperIterator implement IndexIteratorLayout {
-protected:
-	using IndexIteratorLayout::mBegin ;
-	using IndexIteratorLayout::mEnd ;
-	using IndexIteratorLayout::mPeek ;
-
-public:
-	implicit WrapperIterator () = delete ;
-
-	explicit WrapperIterator (CREF<WrapperLayout> that) {
-		mBegin = address (that) + SIZE_OF<WrapperLayout>::expr ;
-		mEnd = mBegin + that.mRank * SIZE_OF<FLAG>::expr ;
-		mPeek = mBegin ;
-	}
-
-	LENGTH length () const {
-		return (mEnd - mBegin) / SIZE_OF<FLAG>::expr ;
-	}
-
-	WrapperIterator begin () const {
-		return thiz ;
-	}
-
-	WrapperIterator end () const {
-		return thiz ;
-	}
-
-	BOOL good () const {
-		return mPeek != mEnd ;
-	}
-
-	forceinline BOOL operator== (CREF<WrapperIterator>) const {
-		return (!good ()) ;
-	}
-
-	forceinline BOOL operator!= (CREF<WrapperIterator>) const {
-		return good () ;
-	}
-
-	CREF<A> peek () const leftvalue {
-		const auto r1x = inline_hold (Pointer::make (mPeek)) ;
-		return Pointer::make (r1x) ;
-	}
-
-	forceinline CREF<A> operator* () const leftvalue {
-		return peek () ;
-	}
-
-	void next () {
-		mPeek += SIZE_OF<FLAG>::expr ;
-	}
-
-	forceinline void operator++ () {
-		next () ;
-	}
-} ;
 
 struct ReflectInvoke implement Interface {
 	virtual LENGTH rank () const = 0 ;
@@ -318,9 +271,7 @@ public:
 
 struct FunctionImplLayout ;
 
-struct FunctionLayout {
-	Ref<FunctionImplLayout> mThis ;
-} ;
+struct FunctionLayout implement ThisLayout<Ref<FunctionImplLayout>> {} ;
 
 struct FunctionHolder implement Interface {
 	imports VFat<FunctionHolder> create (VREF<FunctionLayout> that) ;
@@ -328,8 +279,6 @@ struct FunctionHolder implement Interface {
 
 	virtual void initialize (RREF<BoxLayout> item ,CREF<Unknown> holder) = 0 ;
 	virtual void initialize (CREF<FunctionLayout> that) = 0 ;
-	virtual VREF<BoxLayout> raw () leftvalue = 0 ;
-	virtual CREF<BoxLayout> raw () const leftvalue = 0 ;
 	virtual LENGTH rank () const = 0 ;
 	virtual void invoke (CREF<WrapperLayout> params) const = 0 ;
 } ;
@@ -377,14 +326,6 @@ public:
 	implicit Function (RREF<Function> that) = default ;
 
 	forceinline VREF<Function> operator= (RREF<Function> that) = default ;
-
-	VREF<BoxLayout> raw () leftvalue {
-		return FunctionHolder::create (thiz)->raw () ;
-	}
-
-	CREF<BoxLayout> raw () const leftvalue {
-		return FunctionHolder::create (thiz)->raw () ;
-	}
 
 	LENGTH rank () const {
 		return FunctionHolder::create (thiz)->rank () ;
@@ -461,6 +402,7 @@ struct AutoRefHolder implement Interface {
 	imports VFat<AutoRefHolder> create (VREF<AutoRefLayout> that) ;
 	imports CFat<AutoRefHolder> create (CREF<AutoRefLayout> that) ;
 
+	virtual void initialize (CREF<Unknown> holder) = 0 ;
 	virtual void initialize (RREF<BoxLayout> item ,CREF<Clazz> clazz_) = 0 ;
 	virtual void destroy () = 0 ;
 	virtual BOOL exist () const = 0 ;
@@ -489,6 +431,11 @@ public:
 
 	template <class ARG1 ,class = REQUIRE<IS_NOT_SAME<ARG1 ,A>>>
 	implicit AutoRef (RREF<AutoRef<ARG1>> that) :AutoRef (that.recast (TYPE<A>::expr)) {}
+
+	explicit AutoRef (CREF<Unknown> holder) {
+		require (IS_SAME<A ,Pointer>) ;
+		AutoRefHolder::create (thiz)->initialize (holder) ;
+	}
 
 	template <class...ARG1>
 	imports AutoRef make (XREF<ARG1>...initval) {
@@ -984,7 +931,7 @@ public:
 struct FarBufferLayout {
 	Function<CREF<INDEX> ,VREF<Pointer>> mGetter ;
 	Function<CREF<INDEX> ,CREF<Pointer>> mSetter ;
-	Ref<Pointer> mThis ;
+	Ref<Pointer> mLocal ;
 	INDEX mIndex ;
 	LENGTH mSize ;
 	LENGTH mStep ;
@@ -1013,7 +960,7 @@ class FarBuffer implement FarBufferRealLayout<A> {
 protected:
 	using FarBufferRealLayout<A>::mGetter ;
 	using FarBufferRealLayout<A>::mSetter ;
-	using FarBufferRealLayout<A>::mThis ;
+	using FarBufferRealLayout<A>::mLocal ;
 	using FarBufferRealLayout<A>::mIndex ;
 	using FarBufferRealLayout<A>::mSize ;
 	using FarBufferRealLayout<A>::mStep ;

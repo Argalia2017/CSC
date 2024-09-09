@@ -26,10 +26,9 @@ struct TimeCalendar {
 } ;
 
 struct TimeImplLayout ;
+using TimeImplStorage = Storage<ENUM<8> ,ENUM<8>> ;
 
-struct TimeLayout {
-	Box<TimeImplLayout ,Storage<ENUM<8> ,ENUM<8>>> mThis ;
-} ;
+struct TimeLayout implement ThisLayout<Box<TimeImplLayout ,TimeImplStorage>> {} ;
 
 struct TimeHolder implement Interface {
 	imports VFat<TimeHolder> create (VREF<TimeLayout> that) ;
@@ -138,9 +137,7 @@ inline Time CurrentTime () {
 	return move (ret) ;
 }
 
-struct RuntimeProcLayout {
-	RefLayout mThis ;
-} ;
+struct RuntimeProcLayout implement ThisLayout<RefLayout> {} ;
 
 struct RuntimeProcHolder implement Interface {
 	imports VFat<RuntimeProcHolder> create (VREF<RuntimeProcLayout> that) ;
@@ -214,10 +211,9 @@ public:
 } ;
 
 struct AtomicImplLayout ;
+using AtomicImplStorage = Storage<ENUM<8> ,ENUM<8>> ;
 
-struct AtomicLayout {
-	Box<AtomicImplLayout ,Storage<ENUM<8> ,ENUM<8>>> mThis ;
-} ;
+struct AtomicLayout implement ThisLayout<Box<AtomicImplLayout ,AtomicImplStorage>> {} ;
 
 struct AtomicHolder implement Interface {
 	imports VFat<AtomicHolder> create (VREF<AtomicLayout> that) ;
@@ -283,9 +279,7 @@ public:
 
 struct MutexImplLayout ;
 
-struct MutexLayout {
-	Ref<MutexImplLayout> mThis ;
-} ;
+struct MutexLayout implement ThisLayout<AutoRef<MutexImplLayout>> {} ;
 
 struct MutexHolder implement Interface {
 	imports VFat<MutexHolder> create (VREF<MutexLayout> that) ;
@@ -293,8 +287,8 @@ struct MutexHolder implement Interface {
 
 	virtual void initialize () = 0 ;
 	virtual Ref<MutexImplLayout> borrow () const = 0 ;
-	virtual void enter () = 0 ;
-	virtual void leave () = 0 ;
+	virtual void enter () const = 0 ;
+	virtual void leave () const = 0 ;
 } ;
 
 class Mutex implement MutexLayout {
@@ -308,11 +302,11 @@ public:
 		return MutexHolder::create (thiz)->borrow () ;
 	}
 
-	void enter () {
+	void enter () const {
 		return MutexHolder::create (thiz)->enter () ;
 	}
 
-	void leave () {
+	void leave () const {
 		return MutexHolder::create (thiz)->leave () ;
 	}
 } ;
@@ -352,10 +346,9 @@ inline Mutex UniqueMutex () {
 }
 
 struct SharedLockImplLayout ;
+using SharedLockImplStorage = Storage<ENUM<32> ,ENUM<8>> ;
 
-struct SharedLockLayout {
-	Box<SharedLockImplLayout ,Storage<ENUM<32> ,ENUM<8>>> mThis ;
-} ;
+struct SharedLockLayout implement ThisLayout<Box<SharedLockImplLayout ,SharedLockImplStorage>> {} ;
 
 struct SharedLockHolder implement Interface {
 	imports VFat<SharedLockHolder> create (VREF<SharedLockLayout> that) ;
@@ -363,8 +356,8 @@ struct SharedLockHolder implement Interface {
 
 	virtual void initialize (CREF<Mutex> mutex) = 0 ;
 	virtual BOOL busy () const = 0 ;
-	virtual void enter () = 0 ;
-	virtual void leave () = 0 ;
+	virtual void enter () const = 0 ;
+	virtual void leave () const = 0 ;
 } ;
 
 class SharedLock implement SharedLockLayout {
@@ -382,20 +375,19 @@ public:
 		return SharedLockHolder::create (thiz)->busy () ;
 	}
 
-	void enter () {
+	void enter () const {
 		return SharedLockHolder::create (thiz)->enter () ;
 	}
 
-	void leave () {
+	void leave () const {
 		return SharedLockHolder::create (thiz)->leave () ;
 	}
 } ;
 
 struct UniqueLockImplLayout ;
+using UniqueLockImplStorage = Storage<ENUM<32> ,ENUM<8>> ;
 
-struct UniqueLockLayout {
-	Box<UniqueLockImplLayout ,Storage<ENUM<32> ,ENUM<8>>> mThis ;
-} ;
+struct UniqueLockLayout implement ThisLayout<Box<UniqueLockImplLayout ,UniqueLockImplStorage>> {} ;
 
 struct UniqueLockHolder implement Interface {
 	imports VFat<UniqueLockHolder> create (VREF<UniqueLockLayout> that) ;
@@ -454,9 +446,7 @@ public:
 
 struct ThreadImplLayout ;
 
-struct ThreadLayout {
-	Ref<ThreadImplLayout> mThis ;
-} ;
+struct ThreadLayout implement ThisLayout<AutoRef<ThreadImplLayout>> {} ;
 
 struct ThreadHolder implement Interface {
 	imports VFat<ThreadHolder> create (VREF<ThreadLayout> that) ;
@@ -494,9 +484,7 @@ public:
 
 struct ProcessImplLayout ;
 
-struct ProcessLayout {
-	Ref<ProcessImplLayout> mThis ;
-} ;
+struct ProcessLayout implement ThisLayout<AutoRef<ProcessImplLayout>> {} ;
 
 struct ProcessHolder implement Interface {
 	imports VFat<ProcessHolder> create (VREF<ProcessLayout> that) ;
@@ -547,9 +535,7 @@ public:
 
 struct ModuleImplLayout ;
 
-struct ModuleLayout {
-	Ref<ModuleImplLayout> mThis ;
-} ;
+struct ModuleLayout implement ThisLayout<AutoRef<ModuleImplLayout>> {} ;
 
 struct ModuleHolder implement Interface {
 	imports VFat<ModuleHolder> create (VREF<ModuleLayout> that) ;
@@ -582,9 +568,7 @@ public:
 
 struct SystemImplLayout ;
 
-struct SystemLayout {
-	Ref<SystemImplLayout> mThis ;
-} ;
+struct SystemLayout implement ThisLayout<AutoRef<SystemImplLayout>> {} ;
 
 struct SystemHolder implement Interface {
 	imports VFat<SystemHolder> create (VREF<SystemLayout> that) ;
@@ -613,9 +597,7 @@ public:
 
 struct RandomImplLayout ;
 
-struct RandomLayout {
-	Ref<RandomImplLayout> mThis ;
-} ;
+struct RandomLayout implement ThisLayout<AutoRef<RandomImplLayout>> {} ;
 
 struct RandomHolder implement Interface {
 	imports VFat<RandomHolder> create (VREF<RandomLayout> that) ;
@@ -678,9 +660,7 @@ public:
 
 struct SingletonProcImplLayout ;
 
-struct SingletonProcLayout {
-	SharedRef<SingletonProcImplLayout> mThis ;
-} ;
+struct SingletonProcLayout implement ThisLayout<SharedRef<SingletonProcImplLayout>> {} ;
 
 struct SingletonProcHolder implement Interface {
 	imports VFat<SingletonProcHolder> create (VREF<SingletonProcLayout> that) ;
@@ -735,8 +715,9 @@ public:
 struct GlobalImplLayout ;
 
 struct GlobalLayout {
-	Mutex mMutex ;
 	SharedRef<GlobalImplLayout> mThis ;
+	INDEX mIndex ;
+	INDEX mCheck ;
 } ;
 
 struct GlobalHolder implement Interface {
@@ -744,16 +725,17 @@ struct GlobalHolder implement Interface {
 	imports CFat<GlobalHolder> create (CREF<GlobalLayout> that) ;
 
 	virtual void initialize () = 0 ;
-	virtual CREF<AutoRef<Pointer>> fetch (CREF<Slice> name) const = 0 ;
-	virtual void store (CREF<Slice> name ,RREF<AutoRef<Pointer>> item) const = 0 ;
-	virtual void abuse (CREF<Slice> name) const = 0 ;
+	virtual void initialize (CREF<Slice> name ,CREF<Unknown> holder) = 0 ;
+	virtual BOOL exist () const = 0 ;
+	virtual AutoRef<Pointer> fetch () const = 0 ;
+	virtual void store (RREF<AutoRef<Pointer>> item) const = 0 ;
 } ;
 
-class GlobalRoot implement Proxy {
+class GlobalRoot implement GlobalLayout {
 public:
-	imports CREF<GlobalLayout> instance () {
+	imports CREF<GlobalRoot> instance () {
 		return memorize ([&] () {
-			GlobalLayout ret ;
+			GlobalRoot ret ;
 			GlobalHolder::create (ret)->initialize () ;
 			return move (ret) ;
 		}) ;
@@ -761,36 +743,56 @@ public:
 } ;
 
 template <class A>
+class GlobalUnknownBinder implement Unknown {
+public:
+	FLAG reflect (CREF<FLAG> uuid) const override {
+		if (uuid == ReflectSizeBinder<A>::expr)
+			return inline_hold (ReflectSizeBinder<A> ()) ;
+		if (uuid == ReflectCreateBinder<A>::expr)
+			return inline_hold (ReflectCreateBinder<A> ()) ;
+		if (uuid == ReflectDestroyBinder<A>::expr)
+			return inline_hold (ReflectDestroyBinder<A> ()) ;
+		if (uuid == ReflectGuidBinder<A>::expr)
+			return inline_hold (ReflectGuidBinder<A> ()) ;
+		if (uuid == ReflectNameBinder<A>::expr)
+			return inline_hold (ReflectNameBinder<A> ()) ;
+		if (uuid == ReflectCloneBinder<A>::expr)
+			return inline_hold (ReflectCloneBinder<A> ()) ;
+		return ZERO ;
+	}
+} ;
+
+template <class A>
 class Global implement GlobalLayout {
 protected:
-	using GlobalLayout::mMutex ;
 	using GlobalLayout::mThis ;
+	using GlobalLayout::mIndex ;
 
 public:
-	imports CREF<Global> instance () {
-		return keep[TYPE<Global>::expr] (GlobalRoot::instance ()) ;
+	implicit Global () = delete ;
+
+	explicit Global (CREF<Slice> name) {
+		GlobalHolder::create (thiz)->initialize (name ,GlobalUnknownBinder<A> ()) ;
 	}
 
-	A fetch (CREF<Slice> name) const {
-		auto &&rax = GlobalHolder::create (thiz)->fetch (name) ;
-		return rax.rebind (TYPE<A>::expr).self ;
+	BOOL exist () const {
+		return GlobalHolder::create (thiz)->exist () ;
 	}
 
-	void store (CREF<Slice> name ,RREF<A> item) const {
+	A fetch () const {
+		auto rax = GlobalHolder::create (thiz)->fetch () ;
+		return move (rax.rebind (TYPE<A>::expr).self) ;
+	}
+
+	void store (RREF<A> item) const {
 		auto rax = AutoRef<A>::make (move (item)) ;
-		return GlobalHolder::create (thiz)->store (name ,move (rax)) ;
-	}
-
-	void abuse (CREF<Slice> name) const {
-		return GlobalHolder::create (thiz)->abuse (name) ;
+		return GlobalHolder::create (thiz)->store (move (rax)) ;
 	}
 } ;
 
 struct PathImplLayout ;
 
-struct PathLayout {
-	Ref<PathImplLayout> mThis ;
-} ;
+struct PathLayout implement ThisLayout<Ref<PathImplLayout>> {} ;
 
 struct PathHolder implement Interface {
 	imports VFat<PathHolder> create (VREF<PathLayout> that) ;
@@ -928,9 +930,7 @@ public:
 
 struct FileProcImplLayout ;
 
-struct FileProcLayout {
-	Ref<FileProcImplLayout> mThis ;
-} ;
+struct FileProcLayout implement ThisLayout<AutoRef<FileProcImplLayout>> {} ;
 
 struct FileProcHolder implement Interface {
 	imports VFat<FileProcHolder> create (VREF<FileProcLayout> that) ;
@@ -1010,9 +1010,7 @@ public:
 
 struct StreamFileImplLayout ;
 
-struct StreamFileLayout {
-	Ref<StreamFileImplLayout> mThis ;
-} ;
+struct StreamFileLayout implement ThisLayout<AutoRef<StreamFileImplLayout>> {} ;
 
 struct StreamFileHolder implement Interface {
 	imports VFat<StreamFileHolder> create (VREF<StreamFileLayout> that) ;
@@ -1158,9 +1156,7 @@ public:
 
 struct BufferFileImplLayout ;
 
-struct BufferFileLayout {
-	Ref<BufferFileImplLayout> mThis ;
-} ;
+struct BufferFileLayout implement ThisLayout<AutoRef<BufferFileImplLayout>> {} ;
 
 struct BufferFileHolder implement Interface {
 	imports VFat<BufferFileHolder> create (VREF<BufferFileLayout> that) ;
@@ -1246,10 +1242,7 @@ struct ConsoleOption {
 
 struct ConsoleImplLayout ;
 
-struct ConsoleLayout {
-	Mutex mMutex ;
-	SharedRef<ConsoleImplLayout> mThis ;
-} ;
+struct ConsoleLayout implement ThisLayout<SharedRef<ConsoleImplLayout>> {} ;
 
 struct ConsoleHolder implement Interface {
 	imports VFat<ConsoleHolder> create (VREF<ConsoleLayout> that) ;
@@ -1273,7 +1266,6 @@ struct ConsoleHolder implement Interface {
 
 class Console implement ConsoleLayout {
 protected:
-	using ConsoleLayout::mMutex ;
 	using ConsoleLayout::mThis ;
 
 public:

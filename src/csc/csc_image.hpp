@@ -67,7 +67,7 @@ struct ImageWidth {
 	LENGTH mStep ;
 
 public:
-	LENGTH area () const {
+	LENGTH size () const {
 		return mCX * mCY ;
 	}
 
@@ -474,9 +474,7 @@ public:
 	}
 } ;
 
-struct ImageProcLayout {
-	RefLayout mThis ;
-} ;
+struct ImageProcLayout implement ThisLayout<RefLayout> {} ;
 
 struct ImageProcHolder implement Interface {
 	imports VFat<ImageProcHolder> create (VREF<ImageProcLayout> that) ;
@@ -484,7 +482,7 @@ struct ImageProcHolder implement Interface {
 
 	virtual void initialize () = 0 ;
 	virtual ImageLayout make_image (RREF<BoxLayout> image) const = 0 ;
-	virtual ImageLayout load_image (CREF<LENGTH> cx_ ,CREF<LENGTH> cy_ ,CREF<LENGTH> align ,CREF<LENGTH> channel) const = 0 ;
+	virtual ImageLayout make_image (CREF<LENGTH> cx_ ,CREF<LENGTH> cy_ ,CREF<LENGTH> align ,CREF<LENGTH> channel) const = 0 ;
 	virtual ImageLayout load_image (CREF<String<STR>> file) const = 0 ;
 	virtual void save_image (CREF<String<STR>> file ,CREF<ImageLayout> image) const = 0 ;
 	virtual Color3B sampler (CREF<Image<Color3B>> image ,CREF<FLT64> x ,CREF<FLT64> y) const = 0 ;
@@ -508,8 +506,8 @@ public:
 		return ImageProcHolder::create (instance ())->make_image (move (image)) ;
 	}
 
-	imports ImageLayout load_image (CREF<LENGTH> cx_ ,CREF<LENGTH> cy_ ,CREF<LENGTH> align ,CREF<LENGTH> channel) {
-		return ImageProcHolder::create (instance ())->load_image (cx_ ,cy_ ,align ,channel) ;
+	imports ImageLayout make_image (CREF<LENGTH> cx_ ,CREF<LENGTH> cy_ ,CREF<LENGTH> align ,CREF<LENGTH> channel) {
+		return ImageProcHolder::create (instance ())->make_image (cx_ ,cy_ ,align ,channel) ;
 	}
 
 	imports ImageLayout load_image (CREF<String<STR>> file) {
@@ -545,7 +543,7 @@ struct SparseHolder implement Interface {
 	virtual void initialize (CREF<LENGTH> size_) = 0 ;
 	virtual LENGTH size () const = 0 ;
 	virtual void joint (CREF<INDEX> from_ ,CREF<INDEX> to_) = 0 ;
-	virtual BOOL contain (CREF<INDEX> from_ ,CREF<INDEX> to_) const = 0 ;
+	virtual BOOL edge (CREF<INDEX> from_ ,CREF<INDEX> to_) const = 0 ;
 	virtual LENGTH depth (CREF<INDEX> from_) const = 0 ;
 	virtual Deque<INDEX> cluster (CREF<INDEX> from_) const = 0 ;
 } ;
@@ -569,8 +567,8 @@ public:
 		return SparseHolder::create (thiz)->joint (from_ ,to_) ;
 	}
 
-	BOOL contain (CREF<INDEX> from_ ,CREF<INDEX> to_) const {
-		return SparseHolder::create (thiz)->contain (from_ ,to_) ;
+	BOOL edge (CREF<INDEX> from_ ,CREF<INDEX> to_) const {
+		return SparseHolder::create (thiz)->edge (from_ ,to_) ;
 	}
 
 	LENGTH depth (CREF<INDEX> from_) const {
@@ -583,7 +581,7 @@ public:
 } ;
 
 struct DisjointLayout {
-	SharedRef<Array<INDEX>> mTable ;
+	Pin<Array<INDEX>> mTable ;
 } ;
 
 struct DisjointHolder implement Interface {
@@ -594,7 +592,7 @@ struct DisjointHolder implement Interface {
 	virtual LENGTH size () const = 0 ;
 	virtual INDEX lead (CREF<INDEX> from_) const = 0 ;
 	virtual void joint (CREF<INDEX> from_ ,CREF<INDEX> to_) = 0 ;
-	virtual BOOL contain (CREF<INDEX> from_ ,CREF<INDEX> to_) const = 0 ;
+	virtual BOOL edge (CREF<INDEX> from_ ,CREF<INDEX> to_) const = 0 ;
 	virtual LENGTH depth (CREF<INDEX> from_) const = 0 ;
 	virtual Deque<INDEX> cluster (CREF<INDEX> from_) const = 0 ;
 	virtual Array<INDEX> jump (CREF<INDEX> from_) const = 0 ;
@@ -619,8 +617,8 @@ public:
 		return DisjointHolder::create (thiz)->joint (from_ ,to_) ;
 	}
 
-	BOOL contain (CREF<INDEX> from_ ,CREF<INDEX> to_) const {
-		return DisjointHolder::create (thiz)->contain (from_ ,to_) ;
+	BOOL edge (CREF<INDEX> from_ ,CREF<INDEX> to_) const {
+		return DisjointHolder::create (thiz)->edge (from_ ,to_) ;
 	}
 
 	LENGTH depth (CREF<INDEX> from_) const {

@@ -155,7 +155,8 @@ public:
 	Image<FLT64> solve_lsm (CREF<Image<FLT64>> a) const override {
 		Image<FLT64> ret = Image<FLT64> (1 ,a.cx ()) ;
 		const auto r1x = cvt_eigen_matrix (a) ;
-		auto rax = Eigen::JacobiSVD<Eigen::MatrixXd> (r1x ,Eigen::ComputeFullV) ;
+		const auto r2x = Eigen::ComputeFullV ;
+		auto rax = Eigen::JacobiSVD<Eigen::MatrixXd> (r1x ,r2x) ;
 		INDEX ix = MathProc::min_of (INDEX (rax.rank ()) ,a.cx () - 1) ;
 		assume (ix >= 0) ;
 		const auto r3x = cvt_csc_matrix (rax.matrixV ()) ;
@@ -167,35 +168,18 @@ public:
 	Image<FLT64> solve_lsm (CREF<Image<FLT64>> a ,CREF<Image<FLT64>> b) const override {
 		const auto r1x = cvt_eigen_matrix (a) ;
 		const auto r2x = cvt_eigen_matrix (b) ;
-		const auto r4x = Eigen::MatrixXd (r1x.transpose () * r1x) ;
-		const auto r3x = Eigen::MatrixXd (r1x.transpose () * r2x) ;
-		auto rax = Eigen::JacobiSVD<Eigen::MatrixXd> (r4x ,Eigen::ComputeFullU | Eigen::ComputeFullV) ;
-		const auto r5x = Eigen::MatrixXd (rax.matrixV ()) ;
-		const auto r6x = cvt_eigen_matrix (rax.singularValues ()) ;
-		const auto r7x = Eigen::MatrixXd (rax.matrixU ()) ;
-		const auto r8x = Eigen::MatrixXd (r5x * pesedo_inverse (r6x) * r7x.transpose ()) ;
-		const auto r9x = r8x * r3x ;
-		return cvt_csc_matrix (r9x) ;
+		const auto r3x = Eigen::MatrixXd (r1x.transpose () * r1x) ;
+		const auto r4x = Eigen::MatrixXd (r1x.transpose () * r2x) ;
+		const auto r5x = Eigen::ComputeThinU | Eigen::ComputeThinV ;
+		auto rax = Eigen::JacobiSVD<Eigen::MatrixXd> (r3x ,r5x) ;
+		const auto r6x = rax.solve (r4x) ;
+		return cvt_csc_matrix (r6x) ;
 	}
 
 	Image<FLT64> solve_inv (CREF<Image<FLT64>> a) const override {
 		const auto r1x = cvt_eigen_matrix (a) ;
-		const auto r2x = Eigen::MatrixXd (r1x.inverse ()) ;
+		const auto r2x = Eigen::MatrixXd (r1x.completeOrthogonalDecomposition ().pseudoInverse ()) ;
 		return cvt_csc_matrix (r2x) ;
-	}
-
-	Eigen::MatrixXd pesedo_inverse (CREF<Eigen::MatrixXd> a) const {
-		Eigen::MatrixXd ret = Eigen::MatrixXd::Zero (a.rows () ,a.cols ()) ;
-		for (auto &&i : iter (0 ,a.rows ()))
-			ret (i ,i) = MathProc::inverse (a (i ,i)) ;
-		return move (ret) ;
-	}
-
-	Eigen::MatrixXd cvt_eigen_matrix (CREF<Eigen::VectorXd> a) const {
-		Eigen::MatrixXd ret = Eigen::MatrixXd::Zero (a.rows () ,a.rows ()) ;
-		for (auto &&i : iter (0 ,a.rows ()))
-			ret (i ,i) = a (i) ;
-		return move (ret) ;
 	}
 
 	Eigen::MatrixXd cvt_eigen_matrix (CREF<Image<FLT64>> a) const {

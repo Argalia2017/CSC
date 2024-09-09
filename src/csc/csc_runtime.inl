@@ -257,7 +257,7 @@ struct MutexImplLayout {
 class MutexImplHolder implement Fat<MutexHolder ,MutexLayout> {
 public:
 	void initialize () override {
-		fake.mThis = Ref<MutexImplLayout>::make () ;
+		fake.mThis = AutoRef<MutexImplLayout>::make () ;
 		fake.mThis->mType = MutexType::Make ;
 		fake.mThis->mMutex.remake () ;
 		fake.mThis->mRecursive.remake () ;
@@ -265,12 +265,12 @@ public:
 	}
 
 	Ref<MutexImplLayout> borrow () const override {
-		assert (fake.mThis != NULL) ;
-		return Ref<MutexImplLayout>::reference (Pointer::make (address (fake.mThis.self))) ;
+		assert (fake.mThis.exist ()) ;
+		return Ref<MutexImplLayout>::reference (fake.mThis.self) ;
 	}
 
-	void enter () override {
-		if (fake.mThis == NULL)
+	void enter () const override {
+		if (!fake.mThis.exist ())
 			return ;
 		auto act = TRUE ;
 		if ifdo (act) {
@@ -283,8 +283,8 @@ public:
 		}
 	}
 
-	void leave () override {
-		if (fake.mThis == NULL)
+	void leave () const override {
+		if (!fake.mThis.exist ())
 			return ;
 		auto act = TRUE ;
 		if ifdo (act) {
@@ -371,7 +371,8 @@ public:
 		fake.mThis->mMutex = mutex.borrow () ;
 		assert (fake.mThis->mMutex->mType == MutexType::Shared) ;
 		shared_enter () ;
-		fake.mThis->mLock = std::unique_lock<SharedAtomicMutex> (SharedAtomicMutex::from (fake.mThis->mMutex->mShared)) ;
+		const auto r1x = fake.mThis->mMutex.recycle () ;
+		fake.mThis->mLock = std::unique_lock<SharedAtomicMutex> (SharedAtomicMutex::from (r1x->self.mShared)) ;
 	}
 
 	void shared_enter () {
@@ -392,7 +393,7 @@ public:
 		return fake.mThis->mMutex->mShared.fetch () != IDEN ;
 	}
 
-	void enter () override {
+	void enter () const override {
 		fake.mThis->mMutex->mShared.decrease () ;
 		fake.mThis->mMutex->mMutex->lock () ;
 		if ifdo (TRUE) {
@@ -407,7 +408,7 @@ public:
 		}
 	}
 
-	void leave () override {
+	void leave () const override {
 		std::atomic_thread_fence (std::memory_order_release) ;
 		fake.mThis->mMutex->mShared.replace (NONE ,IDEN) ;
 		fake.mThis->mMutex->mMutex->unlock () ;
@@ -474,7 +475,7 @@ struct ThreadImplLayout {
 class ThreadImplHolder implement Fat<ThreadHolder ,ThreadLayout> {
 public:
 	void initialize (RREF<Ref<ThreadFriend>> executor ,CREF<INDEX> slot) override {
-		fake.mThis = Ref<ThreadImplLayout>::make () ;
+		fake.mThis = AutoRef<ThreadImplLayout>::make () ;
 		fake.mThis->mExecutor = move (executor) ;
 		fake.mThis->mUid = ZERO ;
 		fake.mThis->mSlot = slot ;
@@ -488,12 +489,13 @@ public:
 		auto &&rax = fake.mThis.self ;
 		fake.mThis->mThread = std::thread ([&] () {
 			rax.mUid = RuntimeProc::thread_uid () ;
-			rax.mExecutor->friend_execute (rax.mSlot) ;
+			const auto r1x = rax.mExecutor.recycle () ;
+			r1x->self.friend_execute (rax.mSlot) ;
 		}) ;
 	}
 
 	void stop () override {
-		if (fake.mThis == NULL)
+		if (!fake.mThis.exist ())
 			return ;
 		fake.mThis->mThread.join () ;
 		fake.mThis->mThread = std::thread () ;
@@ -568,7 +570,7 @@ struct RandomImplLayout {
 class RandomImplHolder implement Fat<RandomHolder ,RandomLayout> {
 public:
 	void initialize (CREF<FLAG> seed) override {
-		fake.mThis = Ref<RandomImplLayout>::make () ;
+		fake.mThis = AutoRef<RandomImplLayout>::make () ;
 		fake.mThis->mSeed = seed ;
 		fake.mThis->mRandom.remake () ;
 		fake.mThis->mRandom.self = std::mt19937_64 (seed) ;
@@ -702,11 +704,12 @@ struct FUNCTION_dump_memory_leaks {
 static constexpr auto dump_memory_leaks = FUNCTION_dump_memory_leaks () ;
 
 struct GlobalNode {
-	BOOL mConst ;
+	FLAG mHolder ;
 	AutoRef<Pointer> mValue ;
 } ;
 
 struct GlobalImplLayout {
+	Mutex mMutex ;
 	Set<Slice> mGlobalNameSet ;
 	List<GlobalNode> mGlobalList ;
 } ;
@@ -714,41 +717,59 @@ struct GlobalImplLayout {
 class GlobalImplHolder implement Fat<GlobalHolder ,GlobalLayout> {
 public:
 	void initialize () override {
-		fake.mMutex = RecursiveMutex () ;
 		fake.mThis = SharedRef<GlobalImplLayout>::make () ;
+		fake.mThis->mMutex = RecursiveMutex () ;
+		fake.mIndex = NONE ;
 		dump_memory_leaks () ;
 	}
 
-	CREF<AutoRef<Pointer>> fetch (CREF<Slice> name) const override {
-		Scope<Mutex> anonymous (fake.mMutex) ;
+	void initialize (CREF<Slice> name ,CREF<Unknown> holder) override {
+		fake.mThis = Singleton<GlobalRoot>::instance ().mThis ;
 		INDEX ix = fake.mThis->mGlobalNameSet.map (name) ;
-		assert (ix != NONE) ;
-		return fake.mThis->mGlobalList[ix].mValue ;
-	}
-
-	void store (CREF<Slice> name ,RREF<AutoRef<Pointer>> item) const override {
-		Scope<Mutex> anonymous (fake.mMutex) ;
-		INDEX ix = fake.mThis->mGlobalNameSet.map (name) ;
-		auto act = TRUE ;
-		if ifdo (act) {
+		if ifdo (TRUE) {
 			if (ix != NONE)
 				discard ;
 			ix = fake.mThis->mGlobalList.insert () ;
 			fake.mThis->mGlobalNameSet.add (name ,ix) ;
-			fake.mThis->mGlobalList[ix].mConst = TRUE ;
+			fake.mThis->mGlobalList[ix].mHolder = inline_hold (holder) ;
 		}
-		if ifdo (act) {
-			assume (!fake.mThis->mGlobalList[ix].mConst) ;
-		}
-		fake.mThis->mGlobalList[ix].mValue = move (item) ;
+		fake.mIndex = ix ;
+		fake.mCheck = inline_hold (holder) ;
 	}
 
-	void abuse (CREF<Slice> name) const override {
-		Scope<Mutex> anonymous (fake.mMutex) ;
-		INDEX ix = fake.mThis->mGlobalNameSet.map (name) ;
-		if (ix == NONE)
-			return ;
-		fake.mThis->mGlobalList[ix].mConst = FALSE ;
+	BOOL exist () const override {
+		Scope<Mutex> anonymous (fake.mThis->mMutex) ;
+		INDEX ix = fake.mIndex ;
+		const auto r1x = invoke ([&] () {
+			Clazz ret ;
+			ClazzHolder::create (ret)->initialize (unknown (fake.mCheck)) ;
+			return move (ret) ;
+		}) ;
+		const auto r2x = fake.mThis->mGlobalList[ix].mValue.clazz () ;
+		return r1x == r2x ;
+	}
+
+	AutoRef<Pointer> fetch () const override {
+		Scope<Mutex> anonymous (fake.mThis->mMutex) ;
+		INDEX ix = fake.mIndex ;
+		assume (fake.mThis->mGlobalList[ix].mValue.exist ()) ;
+		const auto r1x = unknown (fake.mThis->mGlobalList[ix].mHolder) ;
+		AutoRef<Pointer> ret = AutoRef<Pointer> (r1x) ;
+		const auto r2x = RFat<ReflectClone> (r1x) ;
+		r2x->clone (ret ,fake.mThis->mGlobalList[ix].mValue) ;
+		return move (ret) ;
+	}
+
+	RFat<Unknown> unknown (CREF<FLAG> holder) const {
+		auto &&rax = keep[TYPE<Unknown>::expr] (Pointer::from (holder)) ;
+		return RFat<Unknown> (rax ,NULL) ;
+	}
+
+	void store (RREF<AutoRef<Pointer>> item) const override {
+		Scope<Mutex> anonymous (fake.mThis->mMutex) ;
+		INDEX ix = fake.mIndex ;
+		assume (!fake.mThis->mGlobalList[ix].mValue.exist ()) ;
+		fake.mThis->mGlobalList[ix].mValue = move (item) ;
 	}
 } ;
 

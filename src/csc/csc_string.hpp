@@ -15,9 +15,7 @@
 namespace CSC {
 struct CommaImplLayout ;
 
-struct CommaLayout {
-	SharedRef<CommaImplLayout> mThis ;
-} ;
+struct CommaLayout implement ThisLayout<SharedRef<CommaImplLayout>> {} ;
 
 struct CommaHolder implement Interface {
 	imports VFat<CommaHolder> create (VREF<CommaLayout> that) ;
@@ -90,6 +88,7 @@ struct XmlParserHolder implement Interface {
 	virtual Array<XmlParserLayout> list () const = 0 ;
 	virtual Array<XmlParserLayout> list (CREF<LENGTH> size_) const = 0 ;
 	virtual BOOL equal (CREF<XmlParserLayout> that) const = 0 ;
+	virtual CREF<String<STRU8>> name () const leftvalue = 0 ;
 	virtual BOOL fetch (CREF<BOOL> def) const = 0 ;
 	virtual VAL32 fetch (CREF<VAL32> def) const = 0 ;
 	virtual VAL64 fetch (CREF<VAL64> def) const = 0 ;
@@ -197,6 +196,10 @@ public:
 		return (!equal (that)) ;
 	}
 
+	CREF<String<STRU8>> name () const leftvalue {
+		return XmlParserHolder::create (thiz)->name () ;
+	}
+
 	BOOL fetch (CREF<BOOL> def) const {
 		return XmlParserHolder::create (thiz)->fetch (def) ;
 	}
@@ -302,6 +305,7 @@ struct JsonParserHolder implement Interface {
 	virtual Array<JsonParserLayout> list () const = 0 ;
 	virtual Array<JsonParserLayout> list (CREF<LENGTH> size_) const = 0 ;
 	virtual BOOL equal (CREF<JsonParserLayout> that) const = 0 ;
+	virtual CREF<String<STRU8>> name () const leftvalue = 0 ;
 	virtual BOOL fetch (CREF<BOOL> def) const = 0 ;
 	virtual VAL32 fetch (CREF<VAL32> def) const = 0 ;
 	virtual VAL64 fetch (CREF<VAL64> def) const = 0 ;
@@ -409,6 +413,10 @@ public:
 		return (!equal (that)) ;
 	}
 
+	CREF<String<STRU8>> name () const leftvalue {
+		return JsonParserHolder::create (thiz)->name () ;
+	}
+
 	BOOL fetch (CREF<BOOL> def) const {
 		return JsonParserHolder::create (thiz)->fetch (def) ;
 	}
@@ -511,12 +519,10 @@ struct PlyParserHolder implement Interface {
 	imports CFat<PlyParserHolder> create (CREF<PlyParserLayout> that) ;
 
 	virtual void initialize (CREF<RefBuffer<BYTE>> stream) = 0 ;
-	virtual INDEX find_element (CREF<Slice> name) const = 0 ;
-	virtual LENGTH element_size (CREF<INDEX> element) const = 0 ;
-	virtual INDEX find_property (CREF<INDEX> element ,CREF<Slice> name) const = 0 ;
-	virtual LENGTH property_size (CREF<INDEX> element ,CREF<INDEX> property) const = 0 ;
-	virtual void guide_new (CREF<INDEX> element) = 0 ;
-	virtual void guide_put (CREF<INDEX> property) = 0 ;
+	virtual LENGTH element_size (CREF<Slice> element) const = 0 ;
+	virtual LENGTH property_size (CREF<Slice> element ,CREF<Slice> property) const = 0 ;
+	virtual void guide_new (CREF<Slice> element) = 0 ;
+	virtual void guide_put (CREF<Slice> property) = 0 ;
 	virtual void read (VREF<BOOL> item) = 0 ;
 	virtual void read (VREF<VAL32> item) = 0 ;
 	virtual void read (VREF<VAL64> item) = 0 ;
@@ -540,27 +546,19 @@ public:
 		PlyParserHolder::create (thiz)->initialize (stream) ;
 	}
 
-	INDEX find_element (CREF<Slice> name) const {
-		return PlyParserHolder::create (thiz)->find_element (name) ;
-	}
-
-	LENGTH element_size (CREF<INDEX> element) const {
+	LENGTH element_size (CREF<Slice> element) const {
 		return PlyParserHolder::create (thiz)->element_size (element) ;
 	}
 
-	INDEX find_property (CREF<INDEX> element ,CREF<Slice> name) const {
-		return PlyParserHolder::create (thiz)->find_property (element ,name) ;
-	}
-
-	LENGTH property_size (CREF<INDEX> element ,CREF<INDEX> property) const {
+	LENGTH property_size (CREF<Slice> element ,CREF<Slice> property) const {
 		return PlyParserHolder::create (thiz)->property_size (element ,property) ;
 	}
 
-	void guide_new (CREF<INDEX> element) {
+	void guide_new (CREF<Slice> element) {
 		return PlyParserHolder::create (thiz)->guide_new (element) ;
 	}
 
-	void guide_put (CREF<INDEX> property) {
+	void guide_put (CREF<Slice> property) {
 		return PlyParserHolder::create (thiz)->guide_put (property) ;
 	}
 

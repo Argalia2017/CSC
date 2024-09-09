@@ -173,7 +173,7 @@ public:
 		BoxHolder::create (ptr (fake).mValue)->initialize (holder) ;
 		fake.mPointer = address (BoxHolder::create (ptr (fake).mValue)->self) ;
 		const auto r9x = RFat<ReflectCreate> (holder) ;
-		r9x->create (self ,1) ;
+		r9x->create (Pointer::make (fake.mPointer) ,1) ;
 		ptr (fake).mCounter.self = 1 ;
 	}
 
@@ -222,31 +222,21 @@ public:
 		return BoxHolder::create (ptr (fake).mValue)->unknown () ;
 	}
 
-	VREF<Pointer> self_m () leftvalue override {
-		assert (exist ()) ;
-		return Pointer::make (fake.mPointer) ;
-	}
-
 	CREF<Pointer> self_m () const leftvalue override {
 		assert (exist ()) ;
 		return Pointer::make (fake.mPointer) ;
 	}
 
-	void recycle () override {
+	RefLayout recycle () const override {
+		RefLayout ret ;
 		if ifdo (TRUE) {
 			if (fake.mHandle == ZERO)
 				discard ;
-			const auto r1x = --ptr (fake).mCounter.self ;
-			if (r1x <= 0)
-				discard ;
-			fake.mHandle = ZERO ;
-			fake.mPointer = ZERO ;
+			const auto r1x = ptr (fake).mCounter->load () ;
+			assert (r1x == IDEN) ;
 		}
-		if ifdo (TRUE) {
-			if (fake.mHandle == ZERO)
-				discard ;
-			ptr (fake).mCounter.self = 1 ;
-		}
+		ret.mPointer = fake.mPointer ;
+		return move (ret) ;
 	}
 } ;
 
@@ -270,7 +260,7 @@ struct FUNCTION_memsize {
 struct FUNCTION_memsize {
 	forceinline LENGTH operator() (CREF<csc_pointer_t> addr) const {
 		return LENGTH (malloc_usable_size (addr)) ;
-}
+	}
 } ;
 #endif
 
@@ -476,14 +466,15 @@ struct ClazzImplLayout {
 class ClazzImplHolder implement Fat<ClazzHolder ,ClazzLayout> {
 public:
 	void initialize (CREF<Unknown> holder) override {
-		fake.mThis = Ref<ClazzImplLayout>::make () ;
+		auto rax = ClazzImplLayout () ;
 		const auto r1x = RFat<ReflectSize> (holder) ;
-		fake.mThis->mTypeSize = r1x->type_size () ;
-		fake.mThis->mTypeAlign = r1x->type_align () ;
+		rax.mTypeSize = r1x->type_size () ;
+		rax.mTypeAlign = r1x->type_align () ;
 		const auto r2x = RFat<ReflectGuid> (holder) ;
-		fake.mThis->mTypeGuid = r2x->type_guid () ;
+		rax.mTypeGuid = r2x->type_guid () ;
 		const auto r3x = RFat<ReflectName> (holder) ;
-		fake.mThis->mTypeName = r3x->type_name () ;
+		rax.mTypeName = r3x->type_name () ;
+		fake.mThis = Ref<ClazzImplLayout>::make (move (rax)) ;
 	}
 
 	void initialize (CREF<ClazzLayout> that) override {

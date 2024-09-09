@@ -74,7 +74,7 @@ public:
 		return move (ret) ;
 	}
 
-	ImageLayout load_image (CREF<LENGTH> cx_ ,CREF<LENGTH> cy_ ,CREF<LENGTH> align ,CREF<LENGTH> channel) const override {
+	ImageLayout make_image (CREF<LENGTH> cx_ ,CREF<LENGTH> cy_ ,CREF<LENGTH> align ,CREF<LENGTH> channel) const override {
 		auto rax = Box<PinnedMat>::make () ;
 		const auto r1x = cvmat_depth_of_align (align) ;
 		const auto r2x = CV_MAKE_TYPE (VAL32 (r1x) ,VAL32 (channel)) ;

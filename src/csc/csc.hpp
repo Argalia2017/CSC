@@ -233,7 +233,7 @@ struct is_trivially_default_constructible :integral_constant<bool ,__has_trivial
 #endif
 
 #ifdef __CSC_VER_RELEASE__
-#define __macro_assert(...)
+#define __macro_assert(...) do {} while (false)
 #endif
 #endif
 
@@ -275,7 +275,7 @@ struct is_trivially_default_constructible :integral_constant<bool ,__has_trivial
 #endif
 
 #ifdef __CSC_VER_RELEASE__
-#define __macro_output(...)
+#define __macro_output(...) do {} while (false)
 #endif
 #endif
 
@@ -299,14 +299,6 @@ using csc_bool_t = bool ;
 
 using csc_int32_t = int ;
 using csc_int64_t = DEF<long long> ;
-
-#ifdef __CSC_CONFIG_VAL32__
-using csc_value_t = csc_int32_t ;
-#endif
-
-#ifdef __CSC_CONFIG_VAL64__
-using csc_value_t = csc_int64_t ;
-#endif
 
 using csc_float32_t = float ;
 using csc_float64_t = double ;
@@ -369,9 +361,9 @@ using csc_pointer_t = DEF<void *> ;
 template <class A>
 using csc_initializer_list_t = std::initializer_list<A> ;
 
-template <csc_value_t A>
+template <csc_diff_t A>
 struct ENUM {
-	imports forceinline consteval csc_value_t expr_m () noexcept {
+	imports forceinline consteval csc_diff_t expr_m () noexcept {
 		return A ;
 	}
 } ;

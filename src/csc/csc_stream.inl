@@ -42,7 +42,7 @@ struct StreamProcImplLayout {
 class StreamProcImplHolder implement Fat<StreamProcHolder ,StreamProcLayout> {
 public:
 	void initialize () override {
-		fake.mThis = Ref<StreamProcImplLayout>::make () ;
+		fake.mThis = AutoRef<StreamProcImplLayout>::make () ;
 		fake.mThis->mBlankSet.add (STRU32 (' ') ,GapType::Space) ;
 		fake.mThis->mBlankSet.add (STRU32 ('\t') ,GapType::Space) ;
 		fake.mThis->mBlankSet.add (STRU32 ('\b') ,GapType::Space) ;
@@ -902,11 +902,12 @@ public:
 				discard ;
 			fake.mOverflow (fake) ;
 		}
+		const auto r1x = fake.mStream.recycle () ;
 		auto act = TRUE ;
 		if ifdo (act) {
 			if (fake.mWrite >= fake.mRead)
 				discard ;
-			fake.mStream.self[fake.mWrite] = item ;
+			r1x->self[fake.mWrite] = item ;
 			fake.mWrite++ ;
 		}
 	}
@@ -1373,13 +1374,14 @@ public:
 				discard ;
 			fake.mOverflow (fake) ;
 		}
+		const auto r1x = fake.mStream.recycle () ;
 		auto act = TRUE ;
 		if ifdo (act) {
 			if (fake.mStream->step () != SIZE_OF<STRU8>::expr)
 				discard ;
 			if (fake.mWrite >= fake.mRead)
 				discard ;
-			auto &&rax = keep[TYPE<RefBuffer<STRU8>>::expr] (keep[TYPE<RefBufferLayout>::expr] (fake.mStream.self)) ;
+			auto &&rax = keep[TYPE<RefBuffer<STRU8>>::expr] (keep[TYPE<RefBufferLayout>::expr] (r1x->self)) ;
 			rax[fake.mWrite] = STRU8 (item) ;
 			fake.mWrite++ ;
 		}
@@ -1388,7 +1390,7 @@ public:
 				discard ;
 			if (fake.mWrite >= fake.mRead)
 				discard ;
-			auto &&rax = keep[TYPE<RefBuffer<STRU16>>::expr] (keep[TYPE<RefBufferLayout>::expr] (fake.mStream.self)) ;
+			auto &&rax = keep[TYPE<RefBuffer<STRU16>>::expr] (keep[TYPE<RefBufferLayout>::expr] (r1x->self)) ;
 			rax[fake.mWrite] = STRU16 (item) ;
 			fake.mWrite++ ;
 		}
@@ -1397,7 +1399,7 @@ public:
 				discard ;
 			if (fake.mWrite >= fake.mRead)
 				discard ;
-			auto &&rax = keep[TYPE<RefBuffer<STRU32>>::expr] (keep[TYPE<RefBufferLayout>::expr] (fake.mStream.self)) ;
+			auto &&rax = keep[TYPE<RefBuffer<STRU32>>::expr] (keep[TYPE<RefBufferLayout>::expr] (r1x->self)) ;
 			rax[fake.mWrite] = STRU32 (item) ;
 			fake.mWrite++ ;
 		}
@@ -1560,10 +1562,11 @@ public:
 		}
 	}
 
-	void then (CREF<WrapperLayout> params) const override {
+	void once (CREF<WrapperLayout> params) const override {
 		fake.mWrite.self = 0 ;
-		for (auto &&i : WrapperIterator<FatLayout> (params)) {
-			fake.mParams.self[fake.mWrite.self] = i ;
+		auto &&rax = keep[TYPE<Wrapper<FatLayout>>::expr] (Pointer::from (params)) ;
+		for (auto &&i : iter (0 ,params.mRank)) {
+			fake.mParams.self[fake.mWrite.self] = rax[i] ;
 			fake.mWrite.self++ ;
 		}
 	}
@@ -2273,13 +2276,13 @@ struct RegexImplLayout {
 class RegexImplHolder implement Fat<RegexHolder ,RegexLayout> {
 public:
 	void initialize (CREF<String<STR>> format) override {
-		fake.mThis = Ref<RegexImplLayout>::make () ;
+		fake.mThis = AutoRef<RegexImplLayout>::make () ;
 		fake.mThis->mRegex = std::basic_regex<STR> (format) ;
 	}
 
 	INDEX search (CREF<String<STR>> text ,CREF<INDEX> offset) override {
 		const auto r1x = (&text.self[offset]) ;
-		const auto r2x = std::regex_search (r1x ,fake.mThis->mMatch ,fake.mThis->mRegex) ;		
+		const auto r2x = std::regex_search (r1x ,fake.mThis->mMatch ,fake.mThis->mRegex) ;
 		if (!r2x)
 			return NONE ;
 		const auto r3x = FLAG (fake.mThis->mMatch[0].first) ;

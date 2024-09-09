@@ -753,9 +753,7 @@ struct SVDResult {
 	Matrix mV ;
 } ;
 
-struct MatrixProcLayout {
-	RefLayout mThis ;
-} ;
+struct MatrixProcLayout implement ThisLayout<RefLayout> {} ;
 
 struct MatrixProcHolder implement Interface {
 	imports VFat<MatrixProcHolder> create (VREF<MatrixProcLayout> that) ;
@@ -939,9 +937,7 @@ public:
 	}
 } ;
 
-struct LinearProcLayout {
-	RefLayout mThis ;
-} ;
+struct LinearProcLayout implement ThisLayout<RefLayout> {} ;
 
 struct LinearProcHolder implement Interface {
 	imports VFat<LinearProcHolder> create (VREF<LinearProcLayout> that) ;
@@ -1029,14 +1025,14 @@ public:
 		return PointCloudHolder::create (thiz)->size () ;
 	}
 
-	Vector at (CREF<INDEX> index) const {
+	Vector get (CREF<INDEX> index) const {
 		Vector ret ;
 		PointCloudHolder::create (thiz)->get (index ,ret) ;
 		return move (ret) ;
 	}
 
 	forceinline Vector operator[] (CREF<INDEX> index) const {
-		return at (index) ;
+		return get (index) ;
 	}
 
 	Vector center () const {

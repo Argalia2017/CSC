@@ -118,6 +118,7 @@ public:
 	}
 
 	void use_byte () {
+		mTextReader = NULL ;
 		mByteReader = Box<ByteReader>::make (mStream.share ()) ;
 		mByteReader->reset (mRead ,mWrite) ;
 		mDeque.clear () ;
@@ -130,6 +131,7 @@ public:
 	}
 
 	void use_text () {
+		mByteReader = NULL ;
 		mTextReader = Box<TextReader>::make (mStream.share ()) ;
 		mTextReader->reset (mRead ,mWrite) ;
 		mDeque.clear () ;
@@ -141,12 +143,12 @@ public:
 		}
 	}
 
-	STRU32 at (CREF<INDEX> index) const {
+	STRU32 get (CREF<INDEX> index) const {
 		return mDeque[index] ;
 	}
 
 	forceinline STRU32 operator[] (CREF<INDEX> index) const {
-		return at (index) ;
+		return get (index) ;
 	}
 
 	template <class ARG1>
@@ -218,20 +220,20 @@ private:
 	using COUNTER_MAX_DEPTH = ENUM<256> ;
 
 protected:
-	LENGTH mThat ;
+	Pin<LENGTH> mThat ;
 
 public:
-	imports VREF<ScopeCounter> from (VREF<LENGTH> that) {
+	imports CREF<ScopeCounter> from (VREF<LENGTH> that) {
 		return Pointer::from (that) ;
 	}
 
-	void enter () {
-		mThat++ ;
-		assume (mThat < COUNTER_MAX_DEPTH::expr) ;
+	void enter () const {
+		mThat.self++ ;
+		assume (mThat.self < COUNTER_MAX_DEPTH::expr) ;
 	}
 
-	void leave () {
-		mThat-- ;
+	void leave () const {
+		mThat.self-- ;
 	}
 } ;
 
@@ -586,7 +588,7 @@ public:
 class XmlParserImplHolder implement Fat<XmlParserHolder ,XmlParserLayout> {
 public:
 	void initialize (CREF<RefBuffer<BYTE>> stream) override {
-		auto rax = MakeXmlParser (Ref<RefBuffer<BYTE>>::reference (Pointer::make (address (stream)))) ;
+		auto rax = MakeXmlParser (Ref<RefBuffer<BYTE>>::reference (stream)) ;
 		rax.generate () ;
 		fake.mThis = Ref<XmlParserImplLayout>::make (rax.poll ()) ;
 		fake.mIndex = fake.mThis->mRoot ;
@@ -723,6 +725,11 @@ public:
 		if (fake.mIndex != that.mIndex)
 			return FALSE ;
 		return FALSE ;
+	}
+
+	CREF<String<STRU8>> name () const leftvalue override {
+		assert (exist ()) ;
+		return fake.mThis->mTree[fake.mIndex].mName ;
 	}
 
 	BOOL fetch (CREF<BOOL> def) const override {
@@ -1190,6 +1197,8 @@ public:
 				mTree[iy].mBrother = mLastIndex ;
 				iy = mLastIndex ;
 			}
+			const auto r1x = mTree[curr].mArrayMap.length () ;
+			mTree[curr].mArrayMap.add (r1x ,iy) ;
 			mTree[curr].mObjectMap.add (mTree[iy].mName ,iy) ;
 			mReader >> GAP ;
 			if (mReader[0] != STRU32 (','))
@@ -1206,6 +1215,7 @@ public:
 		mReader >> slice ("{") ;
 		INDEX ix = mTree.insert () ;
 		mTree[ix].mName = move (mLastString) ;
+		mTree[ix].mArrayMap = mArrayMap.share () ;
 		mTree[ix].mObjectMap = mObjectMap.share () ;
 		mTree[ix].mType = JsonParserNodeType::Object ;
 		mTree[ix].mParent = curr ;
@@ -1249,7 +1259,7 @@ public:
 class JsonParserImplHolder implement Fat<JsonParserHolder ,JsonParserLayout> {
 public:
 	void initialize (CREF<RefBuffer<BYTE>> stream) override {
-		auto rax = MakeJsonParser (Ref<RefBuffer<BYTE>>::reference (Pointer::make (address (stream)))) ;
+		auto rax = MakeJsonParser (Ref<RefBuffer<BYTE>>::reference (stream)) ;
 		rax.generate () ;
 		fake.mThis = Ref<JsonParserImplLayout>::make (rax.poll ()) ;
 		fake.mIndex = fake.mThis->mRoot ;
@@ -1386,6 +1396,11 @@ public:
 		if (fake.mIndex != that.mIndex)
 			return FALSE ;
 		return FALSE ;
+	}
+
+	CREF<String<STRU8>> name () const leftvalue override {
+		assert (exist ()) ;
+		return fake.mThis->mTree[fake.mIndex].mName ;
 	}
 
 	BOOL fetch (CREF<BOOL> def) const override {
@@ -1613,6 +1628,8 @@ struct MakePlyParserLayout {
 	INDEX mLastIndex ;
 	String<STRU8> mLastType ;
 	String<STRU8> mLastString ;
+	Set<String<STRU8>> mPropertyType ;
+	Set<String<STRU8>> mPropertyListType ;
 } ;
 
 class MakePlyParser implement MakePlyParserLayout {
@@ -1627,12 +1644,26 @@ protected:
 	using MakePlyParserLayout::mLastIndex ;
 	using MakePlyParserLayout::mLastType ;
 	using MakePlyParserLayout::mLastString ;
+	using MakePlyParserLayout::mPropertyType ;
+	using MakePlyParserLayout::mPropertyListType ;
 
 public:
 	implicit MakePlyParser () = default ;
 
 	explicit MakePlyParser (RREF<Ref<RefBuffer<BYTE>>> stream) {
 		mStream = move (stream) ;
+		mPropertyType.add (slice ("bool") ,PlyParserDataType::Bool) ;
+		mPropertyType.add (slice ("int") ,PlyParserDataType::Val32) ;
+		mPropertyType.add (slice ("int64") ,PlyParserDataType::Val64) ;
+		mPropertyType.add (slice ("float") ,PlyParserDataType::Flt32) ;
+		mPropertyType.add (slice ("double") ,PlyParserDataType::Flt64) ;
+		mPropertyType.add (slice ("uchar") ,PlyParserDataType::Byte) ;
+		mPropertyType.add (slice ("ushort") ,PlyParserDataType::Word) ;
+		mPropertyType.add (slice ("uint") ,PlyParserDataType::Char) ;
+		mPropertyType.add (slice ("uint64") ,PlyParserDataType::Quad) ;
+		mPropertyListType.add (slice ("uchar") ,PlyParserDataType::Byte) ;
+		mPropertyListType.add (slice ("ushort") ,PlyParserDataType::Word) ;
+		mPropertyListType.add (slice ("uint") ,PlyParserDataType::Char) ;
 	}
 
 	PlyParserImplLayout poll () {
@@ -1681,26 +1712,6 @@ public:
 		mTextReader >> GAP ;
 		INDEX ix = NONE ;
 		INDEX iy = NONE ;
-		const auto r1x = invoke ([&] () {
-			Set<String<STRU8>> ret ;
-			ret.add (slice ("bool") ,PlyParserDataType::Bool) ;
-			ret.add (slice ("int") ,PlyParserDataType::Val32) ;
-			ret.add (slice ("int64") ,PlyParserDataType::Val64) ;
-			ret.add (slice ("float") ,PlyParserDataType::Flt32) ;
-			ret.add (slice ("double") ,PlyParserDataType::Flt64) ;
-			ret.add (slice ("uchar") ,PlyParserDataType::Byte) ;
-			ret.add (slice ("ushort") ,PlyParserDataType::Word) ;
-			ret.add (slice ("uint") ,PlyParserDataType::Char) ;
-			ret.add (slice ("uint64") ,PlyParserDataType::Quad) ;
-			return move (ret) ;
-		}) ;
-		const auto r2x = invoke ([&] () {
-			Set<String<STRU8>> ret ;
-			ret.add (slice ("uchar") ,PlyParserDataType::Byte) ;
-			ret.add (slice ("ushort") ,PlyParserDataType::Word) ;
-			ret.add (slice ("uint") ,PlyParserDataType::Char) ;
-			return move (ret) ;
-		}) ;
 		while (TRUE) {
 			mTextReader >> IdentifierText::from (mLastString) ;
 			if (mLastString == slice ("end_header"))
@@ -1715,12 +1726,12 @@ public:
 				mElementList[ix].mName = mLastString.clone () ;
 				mTextReader >> GAP ;
 				mTextReader >> ScalarText::from (mLastString) ;
-				const auto r3x = StringParse<LENGTH>::make (mLastString) ;
-				assume (r3x >= 0) ;
-				mElementList[ix].mLineSize = r3x ;
+				const auto r1x = StringParse<LENGTH>::make (mLastString) ;
+				assume (r1x >= 0) ;
+				mElementList[ix].mLineSize = r1x ;
 				mElementList[ix].mLineStep = 0 ;
 				mElementList[ix].mLineLength = 0 ;
-				mElementList[ix].mPropertyList = ArrayList<PlyParserProperty> (r3x) ;
+				mElementList[ix].mPropertyList = ArrayList<PlyParserProperty> (r1x) ;
 				mTextReader >> GAP ;
 			}
 			if ifdo (act) {
@@ -1733,18 +1744,18 @@ public:
 					discard ;
 				iy = mElementList[ix].mPropertyList.insert () ;
 				mTextReader >> IdentifierText::from (mLastString) ;
-				const auto r4x = r2x.map (mLastString) ;
-				assume (r4x != NONE) ;
-				mElementList[ix].mPropertyList[iy].mType = r4x ;
+				const auto r2x = mPropertyListType.map (mLastString) ;
+				assume (r2x != NONE) ;
+				mElementList[ix].mPropertyList[iy].mType = r2x ;
 				mElementList[ix].mPropertyList[iy].mPlyBegin = mElementList[ix].mLineStep ;
-				const auto r5x = ply_parser_data_type_size (r4x) ;
-				mElementList[ix].mLineStep += r5x ;
+				const auto r3x = ply_parser_data_type_size (r2x) ;
+				mElementList[ix].mLineStep += r3x ;
 				mElementList[ix].mPropertyList[iy].mPlyEnd = mElementList[ix].mLineStep ;
 				mTextReader >> GAP ;
 				mTextReader >> IdentifierText::from (mLastString) ;
-				const auto r6x = r1x.map (mLastString) ;
-				assume (r6x != NONE) ;
-				mElementList[ix].mPropertyList[iy].mListType = r6x ;
+				const auto r4x = mPropertyType.map (mLastString) ;
+				assume (r4x != NONE) ;
+				mElementList[ix].mPropertyList[iy].mListType = r4x ;
 				mElementList[ix].mPropertyList[iy].mListSize = 0 ;
 				mTextReader >> GAP ;
 				mTextReader >> IdentifierText::from (mLastString) ;
@@ -1756,12 +1767,12 @@ public:
 					discard ;
 				assume (ix != NONE) ;
 				iy = mElementList[ix].mPropertyList.insert () ;
-				const auto r7x = r1x.map (mLastType) ;
-				assume (r7x != NONE) ;
-				mElementList[ix].mPropertyList[iy].mType = r7x ;
+				const auto r5x = mPropertyType.map (mLastType) ;
+				assume (r5x != NONE) ;
+				mElementList[ix].mPropertyList[iy].mType = r5x ;
 				mElementList[ix].mPropertyList[iy].mPlyBegin = mElementList[ix].mLineStep ;
-				const auto r8x = ply_parser_data_type_size (r7x) ;
-				mElementList[ix].mLineStep += r8x ;
+				const auto r6x = ply_parser_data_type_size (r5x) ;
+				mElementList[ix].mLineStep += r6x ;
 				mElementList[ix].mPropertyList[iy].mPlyEnd = mElementList[ix].mLineStep ;
 				mTextReader >> GAP ;
 				mElementList[ix].mPropertyList[iy].mListType = PlyParserDataType::Null ;
@@ -1808,8 +1819,8 @@ public:
 				mElementSet.add (mElementList[j].mName ,j) ;
 		}
 		for (auto &&i : mElementList.range ()) {
-			const auto r9x = mElementList[i].mLineSize * mElementList[i].mLineStep ;
-			mElementList[i].mPlyBuffer = RefBuffer<BYTE> (r9x) ;
+			const auto r7x = mElementList[i].mLineSize * mElementList[i].mLineStep ;
+			mElementList[i].mPlyBuffer = RefBuffer<BYTE> (r7x) ;
 			mElementList[i].mPlyIndex = address (mElementList[i].mPlyBuffer[0]) ;
 		}
 	}
@@ -2167,42 +2178,46 @@ public:
 class PlyParserImplHolder implement Fat<PlyParserHolder ,PlyParserLayout> {
 public:
 	void initialize (CREF<RefBuffer<BYTE>> stream) override {
-		auto rax = MakePlyParser (Ref<RefBuffer<BYTE>>::reference (Pointer::make (address (stream)))) ;
+		auto rax = MakePlyParser (Ref<RefBuffer<BYTE>>::reference (stream)) ;
 		rax.generate () ;
 		fake.mThis = Ref<PlyParserImplLayout>::make (rax.poll ()) ;
 		fake.mGuide.mElementIndex = NONE ;
 	}
 
-	INDEX find_element (CREF<Slice> name) const override {
-		return fake.mThis->mElementSet.map (name) ;
+	LENGTH element_size (CREF<Slice> element) const override {
+		INDEX ix = fake.mThis->mElementSet.map (element) ;
+		if (ix == NONE)
+			return 0 ;
+		return fake.mThis->mElementList[ix].mLineSize ;
 	}
 
-	LENGTH element_size (CREF<INDEX> element) const override {
-		return fake.mThis->mElementList[element].mLineSize ;
+	LENGTH property_size (CREF<Slice> element ,CREF<Slice> property) const override {
+		INDEX ix = fake.mThis->mElementSet.map (element) ;
+		if (ix == NONE)
+			return 0 ;
+		INDEX jx = fake.mThis->mElementList[ix].mPropertySet.map (property) ;
+		if (jx == NONE)
+			return 0 ;
+		return fake.mThis->mElementList[ix].mPropertyList[jx].mListSize ;
 	}
 
-	INDEX find_property (CREF<INDEX> element ,CREF<Slice> name) const override {
-		return fake.mThis->mElementList[element].mPropertySet.map (name) ;
-	}
-
-	LENGTH property_size (CREF<INDEX> element ,CREF<INDEX> property) const override {
-		return fake.mThis->mElementList[element].mPropertyList[property].mListSize ;
-	}
-
-	void guide_new (CREF<INDEX> element) override {
-		assert (element != NONE) ;
-		fake.mGuide.mElementIndex = element ;
+	void guide_new (CREF<Slice> element) override {
+		INDEX ix = fake.mThis->mElementSet.map (element) ;
+		assume (ix != NONE) ;
+		fake.mGuide.mElementIndex = ix ;
 		fake.mGuide.mProperty.clear () ;
 		fake.mGuide.mPropertyIndex = 0 ;
 		fake.mGuide.mLineIndex = 0 ;
 		fake.mGuide.mPlyIndex = NONE ;
 	}
 
-	void guide_put (CREF<INDEX> property) override {
-		assert (property != NONE) ;
-		assert (fake.mGuide.mElementIndex != NONE) ;
+	void guide_put (CREF<Slice> property) override {
+		INDEX ix = fake.mGuide.mElementIndex ;
+		assume (ix != NONE) ;
+		INDEX jx = fake.mThis->mElementList[ix].mPropertySet.map (property) ;
+		assume (jx != NONE) ;
 		assert (fake.mGuide.mPlyIndex == NONE) ;
-		fake.mGuide.mProperty.add (property) ;
+		fake.mGuide.mProperty.add (jx) ;
 	}
 
 	void guide_jmp () {
@@ -2218,8 +2233,9 @@ public:
 			assume (fake.mGuide.mPropertyIndex < fake.mGuide.mProperty.length ()) ;
 			assume (fake.mGuide.mLineIndex < fake.mThis->mElementList[ix].mLineSize) ;
 			jx = fake.mGuide.mProperty[fake.mGuide.mPropertyIndex] ;
-			const auto r1x = fake.mThis->mElementList[ix].mPropertyList[jx].mPlyBegin ;
-			fake.mGuide.mPlyIndex = address (fake.mThis->mElementList[ix].mPlyBuffer[r1x]) ;
+			const auto r1x = fake.mGuide.mLineIndex * fake.mThis->mElementList[ix].mLineStep ;
+			const auto r2x = r1x + fake.mThis->mElementList[ix].mPropertyList[jx].mPlyBegin ;
+			fake.mGuide.mPlyIndex = address (fake.mThis->mElementList[ix].mPlyBuffer[r2x]) ;
 		}
 		if ifdo (act) {
 			jx = fake.mGuide.mProperty[fake.mGuide.mPropertyIndex] ;
@@ -2231,8 +2247,9 @@ public:
 			if (fake.mGuide.mPropertyIndex >= fake.mGuide.mProperty.length ())
 				discard ;
 			jx = fake.mGuide.mProperty[fake.mGuide.mPropertyIndex] ;
-			const auto r2x = fake.mThis->mElementList[ix].mPropertyList[jx].mPlyBegin ;
-			fake.mGuide.mPlyIndex = address (fake.mThis->mElementList[ix].mPlyBuffer[r2x]) ;
+			const auto r3x = fake.mGuide.mLineIndex * fake.mThis->mElementList[ix].mLineStep ;
+			const auto r4x = r3x + fake.mThis->mElementList[ix].mPropertyList[jx].mPlyBegin ;
+			fake.mGuide.mPlyIndex = address (fake.mThis->mElementList[ix].mPlyBuffer[r4x]) ;
 		}
 		if ifdo (act) {
 			fake.mGuide.mLineIndex++ ;
@@ -2240,8 +2257,9 @@ public:
 			if (fake.mGuide.mLineIndex >= fake.mThis->mElementList[ix].mLineSize)
 				discard ;
 			jx = fake.mGuide.mProperty[fake.mGuide.mPropertyIndex] ;
-			const auto r3x = fake.mThis->mElementList[ix].mPropertyList[jx].mPlyBegin ;
-			fake.mGuide.mPlyIndex = address (fake.mThis->mElementList[ix].mPlyBuffer[r3x]) ;
+			const auto r5x = fake.mGuide.mLineIndex * fake.mThis->mElementList[ix].mLineStep ;
+			const auto r6x = r5x + fake.mThis->mElementList[ix].mPropertyList[jx].mPlyBegin ;
+			fake.mGuide.mPlyIndex = address (fake.mThis->mElementList[ix].mPlyBuffer[r6x]) ;
 		}
 		if ifdo (act) {
 			assert (FALSE) ;

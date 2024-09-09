@@ -258,7 +258,7 @@ trait REFLECT_ENUM_HELP<A> {
 	using RET = ENUM_FALSE ;
 } ;
 
-template <csc_value_t A>
+template <csc_diff_t A>
 trait REFLECT_ENUM_HELP<ENUM<A>> {
 	using RET = ENUM_TRUE ;
 } ;
@@ -961,7 +961,7 @@ trait REFLECT_ARRAY_HELP<DEF<A[]>> {
 	using RET = ENUM_TRUE ;
 } ;
 
-template <class A ,csc_value_t B>
+template <class A ,csc_diff_t B>
 trait REFLECT_ARRAY_HELP<DEF<A[B]>> {
 	using ITEM = A ;
 	using SIZE = ENUM<B> ;

@@ -16,9 +16,7 @@ static constexpr auto MATH_SQRT2 = FLT64 (1.41421356237309504880) ;
 static constexpr auto MATH_PDF0 = FLT64 (0.39894228040143267794) ;
 static constexpr auto MATH_R = MATH_PI / FLT64 (180) ;
 
-struct MathProcLayout {
-	RefLayout mThis ;
-} ;
+struct MathProcLayout implement ThisLayout<RefLayout> {} ;
 
 struct MathProcHolder implement Interface {
 	imports VFat<MathProcHolder> create (VREF<MathProcLayout> that) ;
@@ -307,9 +305,7 @@ struct Notation {
 	VAL64 mExponent ;
 } ;
 
-struct FEXP2CacheLayout {
-	RefLayout mThis ;
-} ;
+struct FEXP2CacheLayout implement ThisLayout<RefLayout> {} ;
 
 struct FEXP2CacheHolder implement Interface {
 	imports VFat<FEXP2CacheHolder> create (VREF<FEXP2CacheLayout> that) ;
@@ -336,9 +332,7 @@ public:
 	}
 } ;
 
-struct FEXP10CacheLayout {
-	RefLayout mThis ;
-} ;
+struct FEXP10CacheLayout implement ThisLayout<RefLayout> {} ;
 
 struct FEXP10CacheHolder implement Interface {
 	imports VFat<FEXP10CacheHolder> create (VREF<FEXP10CacheLayout> that) ;
@@ -365,9 +359,7 @@ public:
 	}
 } ;
 
-struct FloatProcLayout {
-	RefLayout mThis ;
-} ;
+struct FloatProcLayout implement ThisLayout<RefLayout> {} ;
 
 struct FloatProcHolder implement Interface {
 	imports VFat<FloatProcHolder> create (VREF<FloatProcLayout> that) ;
@@ -420,9 +412,7 @@ public:
 	}
 } ;
 
-struct ByteProcLayout {
-	RefLayout mThis ;
-} ;
+struct ByteProcLayout implement ThisLayout<RefLayout> {} ;
 
 struct ByteProcHolder implement Interface {
 	imports VFat<ByteProcHolder> create (VREF<ByteProcLayout> that) ;
@@ -751,9 +741,7 @@ public:
 	}
 } ;
 
-struct HashProcLayout {
-	RefLayout mThis ;
-} ;
+struct HashProcLayout implement ThisLayout<RefLayout> {} ;
 
 struct HashProcHolder implement Interface {
 	imports VFat<HashProcHolder> create (VREF<HashProcLayout> that) ;

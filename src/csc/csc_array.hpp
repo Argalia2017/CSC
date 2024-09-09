@@ -1328,6 +1328,7 @@ struct ArrayListLayout {
 	Allocator<Pointer ,ArrayListNode> mList ;
 	RefBuffer<INDEX> mRange ;
 	INDEX mTop ;
+	BOOL mSorted ;
 } ;
 
 struct ArrayListHolder implement Interface {
@@ -1497,7 +1498,7 @@ struct SortedMapImplLayout {
 } ;
 
 struct SortedMapLayout {
-	Ref<SortedMapImplLayout> mThis ;
+	SharedRef<SortedMapImplLayout> mThis ;
 	RefBuffer<INDEX> mRange ;
 	INDEX mWrite ;
 	BOOL mSorted ;
@@ -1555,7 +1556,7 @@ template <class A>
 class SortedMapRealLayout implement SortedMapLayout {
 public:
 	implicit SortedMapRealLayout () noexcept {
-		if (thiz.mThis == NULL)
+		if (!thiz.mThis.exist ())
 			return ;
 		auto &&rax = keep[TYPE<AllocatorLayout>::expr] (thiz.mThis->mList) ;
 		rax = Allocator<A ,SortedMapNode> () ;

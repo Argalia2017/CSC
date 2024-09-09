@@ -876,64 +876,6 @@ public:
 	}
 } ;
 
-struct PinLayout {} ;
-
-template <class A>
-class Pin implement PinLayout {
-protected:
-	mutable Union<A> mStorage ;
-
-public:
-	implicit Pin () noexcept {
-		mStorage = zeroize () ;
-	}
-
-	implicit ~Pin () noexcept {
-		const auto r1x = zeroize () ;
-		if (inline_memcmp (mStorage ,r1x) == 0)
-			return ;
-		self.~A () ;
-		mStorage = r1x ;
-	}
-
-	imports Union<A> zeroize () {
-		Union<A> ret ;
-		inline_memset (ret) ;
-		return move (ret) ;
-	}
-
-	implicit Pin (CREF<Pin> that) :Pin () {
-		noop () ;
-	}
-
-	forceinline VREF<Pin> operator= (CREF<Pin> that) {
-		return thiz ;
-	}
-
-	implicit Pin (RREF<Pin> that) noexcept :Pin () {
-		noop () ;
-	}
-
-	forceinline VREF<Pin> operator= (RREF<Pin> that) noexcept {
-		return thiz ;
-	}
-
-	VREF<A> self_m () const leftvalue {
-		return Pointer::from (mStorage) ;
-	}
-
-	forceinline PTR<VREF<A>> operator-> () const leftvalue {
-		return (&self) ;
-	}
-
-	void remake () {
-		const auto r1x = zeroize () ;
-		if (inline_memcmp (mStorage ,r1x) != 0)
-			return ;
-		new (Pointer::from (mStorage)) A () ;
-	}
-} ;
-
 struct ReflectSize implement Interface {
 	virtual LENGTH type_size () const = 0 ;
 	virtual LENGTH type_align () const = 0 ;
@@ -1219,6 +1161,64 @@ public:
 	}
 } ;
 
+struct PinLayout {} ;
+
+template <class A>
+class Pin implement PinLayout {
+protected:
+	mutable Union<A> mStorage ;
+
+public:
+	implicit Pin () noexcept {
+		mStorage = zeroize () ;
+	}
+
+	implicit ~Pin () noexcept {
+		const auto r1x = zeroize () ;
+		if (inline_memcmp (mStorage ,r1x) == 0)
+			return ;
+		self.~A () ;
+		mStorage = r1x ;
+	}
+
+	imports Union<A> zeroize () {
+		Union<A> ret ;
+		inline_memset (ret) ;
+		return move (ret) ;
+	}
+
+	implicit Pin (CREF<Pin> that) :Pin () {
+		noop () ;
+	}
+
+	forceinline VREF<Pin> operator= (CREF<Pin> that) {
+		return thiz ;
+	}
+
+	implicit Pin (RREF<Pin> that) noexcept :Pin () {
+		noop () ;
+	}
+
+	forceinline VREF<Pin> operator= (RREF<Pin> that) noexcept {
+		return thiz ;
+	}
+
+	VREF<A> self_m () const leftvalue {
+		return Pointer::from (mStorage) ;
+	}
+
+	forceinline PTR<VREF<A>> operator-> () const leftvalue {
+		return (&self) ;
+	}
+
+	void remake () const {
+		const auto r1x = zeroize () ;
+		if (inline_memcmp (mStorage ,r1x) != 0)
+			return ;
+		new (Pointer::from (mStorage)) A () ;
+	}
+} ;
+
 struct RefLayout {
 	FLAG mHandle ;
 	FLAG mPointer ;
@@ -1254,9 +1254,8 @@ struct RefHolder implement Interface {
 	virtual RefLayout share () const = 0 ;
 	virtual BOOL exist () const = 0 ;
 	virtual RFat<Unknown> unknown () const = 0 ;
-	virtual VREF<Pointer> self_m () leftvalue = 0 ;
 	virtual CREF<Pointer> self_m () const leftvalue = 0 ;
-	virtual void recycle () = 0 ;
+	virtual RefLayout recycle () const = 0 ;
 } ;
 
 inline RefLayout::~RefLayout () noexcept {
@@ -1298,11 +1297,13 @@ public:
 		return move (ret) ;
 	}
 
-	imports Ref reference (VREF<A> that) {
+	imports Ref reference (CREF<A> that) {
 		Ref ret ;
 		ret.mPointer = address (that) ;
 		return move (ret) ;
 	}
+
+	imports Ref reference (RREF<A> that) = delete ;
 
 	Ref share () const {
 		RefLayout ret = RefHolder::create (thiz)->share () ;
@@ -1325,14 +1326,6 @@ public:
 		return RefHolder::create (thiz)->unknown () ;
 	}
 
-	VREF<A> self_m () leftvalue {
-		return RefHolder::create (thiz)->self ;
-	}
-
-	forceinline PTR<VREF<A>> operator-> () leftvalue {
-		return (&self) ;
-	}
-
 	CREF<A> self_m () const leftvalue {
 		return RefHolder::create (thiz)->self ;
 	}
@@ -1341,14 +1334,15 @@ public:
 		return (&self) ;
 	}
 
-	void recycle () {
-		return RefHolder::create (thiz)->recycle () ;
+	Ref<Pin<A>> recycle () const {
+		auto rax = RefHolder::create (thiz)->recycle () ;
+		return move (keep[TYPE<Ref<Pin<A>>>::expr] (rax)) ;
 	}
 } ;
 
 struct KeyLayout {
 	INDEX mIndex ;
-	mutable INDEX mCheck ;
+	INDEX mCheck ;
 
 public:
 	implicit KeyLayout () noexcept {
@@ -1365,6 +1359,10 @@ protected:
 
 public:
 	implicit Key () = default ;
+
+	implicit Key (CREF<typeof (NULL)>) {
+		noop () ;
+	}
 
 	BOOL equal (CREF<Key> that) const {
 		return inline_equal (mIndex ,that.mIndex) ;
@@ -1402,11 +1400,11 @@ public:
 		return inline_visit (visitor ,mIndex) ;
 	}
 
-	CREF<A> self_m () const leftvalue {
+	VREF<A> self_m () const leftvalue {
 		return A::lock (mIndex ,mCheck) ;
 	}
 
-	forceinline PTR<CREF<A>> operator-> () const leftvalue {
+	forceinline PTR<VREF<A>> operator-> () const leftvalue {
 		return (&self) ;
 	}
 } ;
@@ -1537,14 +1535,14 @@ public:
 		return SliceHolder::create (thiz)->step () ;
 	}
 
-	STRU32 at (CREF<INDEX> index) const {
+	STRU32 get (CREF<INDEX> index) const {
 		STRU32 ret ;
 		SliceHolder::create (thiz)->get (index ,ret) ;
 		return move (ret) ;
 	}
 
 	forceinline STRU32 operator[] (CREF<INDEX> index) const {
-		return at (index) ;
+		return get (index) ;
 	}
 
 	BOOL equal (CREF<Slice> that) const {
@@ -1756,15 +1754,18 @@ class ReflectNameBinder implement ReflectName {
 public:
 	Slice type_name () const override {
 		return Slice (__macro_funcion) ;
-}
+	}
 } ;
 #endif
 
+template <class A>
+struct ThisLayout {
+	A mThis ;
+} ;
+
 struct ClazzImplLayout ;
 
-struct ClazzLayout {
-	Ref<ClazzImplLayout> mThis ;
-} ;
+struct ClazzLayout implement ThisLayout<Ref<ClazzImplLayout>> {} ;
 
 struct ClazzHolder implement Interface {
 	imports VFat<ClazzHolder> create (VREF<ClazzLayout> that) ;
@@ -1891,7 +1892,7 @@ public:
 
 	explicit Scope (CREF<A> that) {
 		const auto r1x = address (that) ;
-		auto &&rax = keep[TYPE<A>::expr] (Pointer::make (r1x)) ;
+		auto &&rax = keep[TYPE<CREF<A>>::expr] (Pointer::make (r1x)) ;
 		rax.enter () ;
 		mPointer = r1x ;
 	}
@@ -1901,7 +1902,7 @@ public:
 	implicit ~Scope () noexcept {
 		if (mPointer == ZERO)
 			return ;
-		auto &&rax = keep[TYPE<A>::expr] (Pointer::make (mPointer)) ;
+		auto &&rax = keep[TYPE<CREF<A>>::expr] (Pointer::make (mPointer)) ;
 		rax.leave () ;
 		mPointer = ZERO ;
 	}

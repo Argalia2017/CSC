@@ -90,11 +90,10 @@
 			<Item Name="[+]">this</Item>
 			<Item Name="[size]">mSize</Item>
 			<Item Name="[step]">mStep</Item>
-			<Item Name="[this]">this</Item>
 		</Expand>
 	</Type>
 
-	<Type Name="CSC::Clazz">
+	<Type Name="CSC::ThisLayout&lt;*&gt;">
 		<Expand HideRawView="true">
 			<ExpandedItem>mThis</ExpandedItem>
 		</Expand>
@@ -106,12 +105,6 @@
 		<Expand HideRawView="true">
 			<Item Name="[error]">mCode</Item>
 			<ExpandedItem>mValue</ExpandedItem>
-		</Expand>
-	</Type>
-
-	<Type Name="CSC::FunctionLayout">
-		<Expand HideRawView="true">
-			<ExpandedItem>mThis</ExpandedItem>
 		</Expand>
 	</Type>
 
@@ -375,26 +368,6 @@
 		</Expand>
 	</Type>
 
-	<!--csc_runtime.hpp-->
-
-	<Type Name="CSC::Atomic">
-		<Expand HideRawView="true">
-			<ExpandedItem>mThis</ExpandedItem>
-		</Expand>
-	</Type>
-
-	<Type Name="CSC::Thread">
-		<Expand HideRawView="true">
-			<ExpandedItem>mThis</ExpandedItem>
-		</Expand>
-	</Type>
-
-	<Type Name="CSC::Path">
-		<Expand HideRawView="true">
-			<ExpandedItem>mThis</ExpandedItem>
-		</Expand>
-	</Type>
-
 	<!--csc_string.hpp-->
 
 	<Type Name="CSC::XmlParserImplLayout">
@@ -419,26 +392,6 @@
 	<Type Name="CSC::JsonParser">
 		<Expand HideRawView="true">
 			<Item Name="[index]">mIndex</Item>
-			<ExpandedItem>mThis</ExpandedItem>
-		</Expand>
-	</Type>
-
-	<!--csc_thread.hpp-->
-
-	<Type Name="CSC::WorkThreadLayout">
-		<Expand HideRawView="true">
-			<ExpandedItem>mThis</ExpandedItem>
-		</Expand>
-	</Type>
-
-	<Type Name="CSC::CalcThreadLayout">
-		<Expand HideRawView="true">
-			<ExpandedItem>mThis</ExpandedItem>
-		</Expand>
-	</Type>
-
-	<Type Name="CSC::PromiseLayout">
-		<Expand HideRawView="true">
 			<ExpandedItem>mThis</ExpandedItem>
 		</Expand>
 	</Type>

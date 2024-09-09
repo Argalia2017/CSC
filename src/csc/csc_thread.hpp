@@ -43,9 +43,7 @@ public:
 
 struct WorkThreadImplLayout ;
 
-struct WorkThreadLayout {
-	SharedRef<WorkThreadImplLayout> mThis ;
-} ;
+struct WorkThreadLayout implement ThisLayout<SharedRef<WorkThreadImplLayout>> {} ;
 
 struct WorkThreadHolder implement Interface {
 	imports VFat<WorkThreadHolder> create (VREF<WorkThreadLayout> that) ;
@@ -121,9 +119,7 @@ public:
 
 struct CalcThreadImplLayout ;
 
-struct CalcThreadLayout {
-	SharedRef<CalcThreadImplLayout> mThis ;
-} ;
+struct CalcThreadLayout implement ThisLayout<SharedRef<CalcThreadImplLayout>> {} ;
 
 struct CalcThreadHolder implement Interface {
 	imports VFat<CalcThreadHolder> create (VREF<CalcThreadLayout> that) ;
@@ -179,9 +175,7 @@ public:
 
 struct PromiseImplLayout ;
 
-struct PromiseLayout {
-	SharedRef<PromiseImplLayout> mThis ;
-} ;
+struct PromiseLayout implement ThisLayout<SharedRef<PromiseImplLayout>> {} ;
 
 struct PromiseHolder implement Interface {
 	imports VFat<PromiseHolder> create (VREF<PromiseLayout> that) ;
@@ -321,7 +315,7 @@ public:
 	}
 
 	template <class ARG1>
-	CREF<AutoRef<ARG1>> eval (TYPE<ARG1>) const leftvalue {
+	CREF<ARG1> eval (TYPE<ARG1>) const leftvalue {
 		auto &&rax = ExpressionHolder::create (thiz)->eval () ;
 		return rax.rebind (TYPE<ARG1>::expr).self ;
 	}

@@ -343,8 +343,9 @@ public:
 	BOOL all_of (CREF<BOOL> a ,CREF<WrapperLayout> b) const override {
 		if (!a)
 			return FALSE ;
-		for (auto &&i : WrapperIterator<BOOL> (b)) {
-			if (!i)
+		auto &&rax = keep[TYPE<Wrapper<BOOL>>::expr] (Pointer::from (b)) ;
+		for (auto &&i : iter (0 ,b.mRank)) {
+			if (!rax[i])
 				return FALSE ;
 		}
 		return TRUE ;
@@ -353,8 +354,9 @@ public:
 	BOOL any_of (CREF<BOOL> a ,CREF<WrapperLayout> b) const override {
 		if (a)
 			return TRUE ;
-		for (auto &&i : WrapperIterator<BOOL> (b)) {
-			if (i)
+		auto &&rax = keep[TYPE<Wrapper<BOOL>>::expr] (Pointer::from (b)) ;
+		for (auto &&i : iter (0 ,b.mRank)) {
+			if (rax[i])
 				return TRUE ;
 		}
 		return FALSE ;
@@ -379,10 +381,11 @@ public:
 	template <class ARG1>
 	ARG1 max_of_impl (CREF<ARG1> a ,CREF<WrapperLayout> b) const {
 		ARG1 ret = a ;
-		for (auto &&i : WrapperIterator<ARG1> (b)) {
-			if (ret >= i)
+		auto &&rax = keep[TYPE<Wrapper<ARG1>>::expr] (Pointer::from (b)) ;
+		for (auto &&i : iter (0 ,b.mRank)) {
+			if (ret >= rax[i])
 				continue ;
-			ret = i ;
+			ret = rax[i] ;
 		}
 		return move (ret) ;
 	}
@@ -406,10 +409,11 @@ public:
 	template <class ARG1>
 	ARG1 min_of_impl (CREF<ARG1> a ,CREF<WrapperLayout> b) const {
 		ARG1 ret = a ;
-		for (auto &&i : WrapperIterator<ARG1> (b)) {
-			if (ret <= i)
+		auto &&rax = keep[TYPE<Wrapper<ARG1>>::expr] (Pointer::from (b)) ;
+		for (auto &&i : iter (0 ,b.mRank)) {
+			if (ret <= rax[i])
 				continue ;
-			ret = i ;
+			ret = rax[i] ;
 		}
 		return move (ret) ;
 	}

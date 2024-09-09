@@ -110,7 +110,7 @@ private:
 
 public:
 	void initialize (CREF<FLAG> uid) override {
-		fake.mThis = Ref<ProcessImplLayout>::make () ;
+		fake.mThis = AutoRef<ProcessImplLayout>::make () ;
 		fake.mThis->mUid = uid ;
 		const auto r1x = UniqueRef<HANDLE> ([&] (VREF<HANDLE> me) {
 			me = OpenProcess (PROCESS_QUERY_INFORMATION ,FALSE ,csc_enum_t (uid)) ;
@@ -148,11 +148,11 @@ public:
 	}
 
 	void initialize (CREF<RefBuffer<BYTE>> snapshot_) override {
-		fake.mThis = Ref<ProcessImplLayout>::make () ;
+		fake.mThis = AutoRef<ProcessImplLayout>::make () ;
 		fake.mThis->mUid = 0 ;
 		try {
 			assume (snapshot_.size () == PROCESS_SNAPSHOT_SIZE::expr) ;
-			auto rax = ByteReader (Ref<RefBuffer<BYTE>>::reference (Pointer::make (address (snapshot_)))) ;
+			auto rax = ByteReader (Ref<RefBuffer<BYTE>>::reference (snapshot_)) ;
 			rax >> slice ("CSC_Process") ;
 			rax >> GAP ;
 			const auto r1x = rax.poll (TYPE<VAL32>::expr) ;
@@ -215,7 +215,7 @@ public:
 	void initialize (CREF<String<STR>> file) override {
 		const auto r1x = Path (file).name () ;
 		assert (r1x.length () > 0) ;
-		fake.mThis = Ref<ModuleImplLayout>::make () ;
+		fake.mThis = AutoRef<ModuleImplLayout>::make () ;
 		fake.mThis->mModule = UniqueRef<HMODULE> ([&] (VREF<HMODULE> me) {
 			me = GetModuleHandle (r1x) ;
 			if (me != NULL)
@@ -273,7 +273,7 @@ struct SingletonProcImplLayout {
 	FLAG mUid ;
 	String<STR> mName ;
 	UniqueRef<HANDLE> mPipe ;
-	Ref<SingletonHeap> mHeap ;
+	Ref<Pin<SingletonHeap>> mHeap ;
 } ;
 
 class SingletonProcImplHolder implement Fat<SingletonProcHolder ,SingletonProcLayout> {
@@ -311,7 +311,7 @@ public:
 			assume (r1x != ZERO) ;
 			if (address (fake.mThis->mHeap.self) == r1x)
 				return ;
-			fake.mThis->mHeap = Ref<SingletonHeap>::reference (Pointer::make (r1x)) ;
+			fake.mThis->mHeap = Ref<Pin<SingletonHeap>>::reference (Pointer::make (r1x)) ;
 		}
 	}
 
@@ -325,9 +325,9 @@ public:
 		} ,[&] (VREF<HANDLE> me) {
 			CloseHandle (me) ;
 		}) ;
-		fake.mThis->mHeap = Ref<SingletonHeap>::make () ;
-		fake.mThis->mHeap->mMutex = RecursiveMutex () ;
-		fake.mThis->mHeap->mClazzSet = Set<Clazz> () ;
+		fake.mThis->mHeap = Ref<Pin<SingletonHeap>>::make () ;
+		fake.mThis->mHeap->self.mMutex = RecursiveMutex () ;
+		fake.mThis->mHeap->self.mClazzSet = Set<Clazz> () ;
 	}
 
 	SingletonPipe load_pipe () const {
@@ -377,8 +377,8 @@ public:
 	}
 
 	FLAG load (CREF<Clazz> clazz) const override {
-		Scope<Mutex> anonymous (fake.mThis->mHeap->mMutex) ;
-		FLAG ret = fake.mThis->mHeap->mClazzSet.map (clazz) ;
+		Scope<Mutex> anonymous (fake.mThis->mHeap->self.mMutex) ;
+		FLAG ret = fake.mThis->mHeap->self.mClazzSet.map (clazz) ;
 		replace (ret ,NONE ,ZERO) ;
 		return move (ret) ;
 	}
@@ -386,8 +386,8 @@ public:
 	void save (CREF<Clazz> clazz ,CREF<FLAG> addr) const override {
 		assert (addr != ZERO) ;
 		assert (addr != NONE) ;
-		Scope<Mutex> anonymous (fake.mThis->mHeap->mMutex) ;
-		fake.mThis->mHeap->mClazzSet.add (clazz ,addr) ;
+		Scope<Mutex> anonymous (fake.mThis->mHeap->self.mMutex) ;
+		fake.mThis->mHeap->self.mClazzSet.add (clazz ,addr) ;
 	}
 } ;
 
@@ -401,30 +401,31 @@ struct PathImplLayout {
 class PathImplHolder implement Fat<PathHolder ,PathLayout> {
 public:
 	void initialize (RREF<String<STR>> pathname) override {
-		fake.mThis = Ref<PathImplLayout>::make () ;
-		fake.mThis->mPathName = move (pathname) ;
-		fake.mThis->mSeparator.add (NONE) ;
-		const auto r1x = fake.mThis->mPathName.length () ;
+		auto rax = PathImplLayout () ;
+		rax.mPathName = move (pathname) ;
+		rax.mSeparator.add (NONE) ;
+		const auto r1x = rax.mPathName.length () ;
 		assume (r1x > 0) ;
 		for (auto &&i : iter (0 ,r1x)) {
-			if (!is_separator (fake.mThis->mPathName[i]))
+			if (!is_separator (rax.mPathName[i]))
 				continue ;
-			fake.mThis->mSeparator.add (i) ;
-			fake.mThis->mPathName[i] = STR ('/') ;
+			rax.mSeparator.add (i) ;
+			rax.mPathName[i] = STR ('/') ;
 		}
-		fake.mThis->mSeparator.add (r1x) ;
+		rax.mSeparator.add (r1x) ;
 		if ifdo (TRUE) {
-			if (fake.mThis->mSeparator[1] != 0)
+			if (rax.mSeparator[1] != 0)
 				discard ;
-			fake.mThis->mSeparator.take () ;
+			rax.mSeparator.take () ;
 		}
 		if ifdo (TRUE) {
-			INDEX ix = fake.mThis->mSeparator[fake.mThis->mSeparator.length () - 1] ;
+			INDEX ix = rax.mSeparator[rax.mSeparator.length () - 1] ;
 			if (ix != r1x - 1)
 				discard ;
-			fake.mThis->mPathName.trunc (ix) ;
-			fake.mThis->mSeparator.pop () ;
+			rax.mPathName.trunc (ix) ;
+			rax.mSeparator.pop () ;
 		}
+		fake.mThis = Ref<PathImplLayout>::make (move (rax)) ;
 	}
 
 	BOOL is_separator (CREF<STRU32> str) const {
@@ -654,7 +655,7 @@ struct FileProcImplLayout {
 class FileProcImplHolder implement Fat<FileProcHolder ,FileProcLayout> {
 public:
 	void initialize () override {
-		fake.mThis = Ref<FileProcImplLayout>::make () ;
+		fake.mThis = AutoRef<FileProcImplLayout>::make () ;
 		fake.mThis->mMutex = MakeMutex () ;
 	}
 
@@ -851,7 +852,7 @@ struct StreamFileImplLayout {
 class StreamFileImplHolder implement Fat<StreamFileHolder ,StreamFileLayout> {
 public:
 	void initialize (RREF<String<STR>> file) override {
-		fake.mThis = Ref<StreamFileImplLayout>::make () ;
+		fake.mThis = AutoRef<StreamFileImplLayout>::make () ;
 		fake.mThis->mFile = move (file) ;
 		fake.mThis->mFileSize = 0 ;
 		fake.mThis->mRead = 0 ;
@@ -1014,7 +1015,7 @@ private:
 
 public:
 	void initialize (RREF<String<STR>> file) override {
-		fake.mThis = Ref<BufferFileImplLayout>::make () ;
+		fake.mThis = AutoRef<BufferFileImplLayout>::make () ;
 		fake.mThis->mFile = move (file) ;
 		fake.mThis->mFileSize = 0 ;
 		fake.mThis->mFileMapFlag = 0 ;
@@ -1175,10 +1176,9 @@ public:
 	}
 
 	Ref<RefBuffer<BYTE>> borrow_header () {
-		Ref<RefBuffer<BYTE>> ret = Ref<RefBuffer<BYTE>>::make () ;
 		INDEX ix = load (0 ,HEADER_SIZE::expr) ;
-		ret.self = RefBuffer<BYTE>::reference (fake.mThis->mCacheList[ix].mBuffer->m1st ,HEADER_SIZE::expr) ;
-		return move (ret) ;
+		auto rax = RefBuffer<BYTE>::reference (fake.mThis->mCacheList[ix].mBuffer->m1st ,HEADER_SIZE::expr) ;
+		return Ref<RefBuffer<BYTE>>::make (move (rax)) ;
 	}
 
 	VAL64 file_endian () const {
@@ -1289,6 +1289,7 @@ public:
 static const auto mBufferFileExternal = External<BufferFileHolder ,BufferFileLayout>::declare (BufferFileImplHolder ()) ;
 
 struct ConsoleImplLayout {
+	Mutex mMutex ;
 	BitSet mOption ;
 	UniqueRef<HANDLE> mConsole ;
 	String<STR> mWriterBuffer ;
@@ -1304,15 +1305,15 @@ private:
 
 public:
 	void initialize () override {
-		fake.mMutex = RecursiveMutex () ;
 		fake.mThis = SharedRef<ConsoleImplLayout>::make () ;
+		fake.mThis->mMutex = RecursiveMutex () ;
 		fake.mThis->mOption = BitSet (ConsoleOption::ETC) ;
 		fake.mThis->mWriterBuffer = String<STR> (CONSOLE_BUFFER_SIZE::expr) ;
 		fake.mThis->mWriter = TextWriter (fake.mThis->mWriterBuffer.borrow ()) ;
 	}
 
 	void set_option (CREF<Just<ConsoleOption>> option) const override {
-		Scope<Mutex> anonymous (fake.mMutex) ;
+		Scope<Mutex> anonymous (fake.mThis->mMutex) ;
 		auto act = TRUE ;
 		if ifdo (act) {
 			if (option != ConsoleOption::All)
@@ -1325,7 +1326,7 @@ public:
 	}
 
 	void log (CREF<String<STR>> tag ,CREF<Format> msg) const {
-		Scope<Mutex> anonymous (fake.mMutex) ;
+		Scope<Mutex> anonymous (fake.mThis->mMutex) ;
 		fake.mThis->mWriter << CLS ;
 		fake.mThis->mWriter << slice ("[") ;
 		const auto r1x = CurrentTime () ;
@@ -1344,7 +1345,7 @@ public:
 	}
 
 	void print (CREF<Format> msg) const override {
-		Scope<Mutex> anonymous (fake.mMutex) ;
+		Scope<Mutex> anonymous (fake.mThis->mMutex) ;
 		if (fake.mThis->mOption[ConsoleOption::NoPrint])
 			return ;
 		log (slice ("Print") ,msg) ;
@@ -1357,7 +1358,7 @@ public:
 	}
 
 	void fatal (CREF<Format> msg) const override {
-		Scope<Mutex> anonymous (fake.mMutex) ;
+		Scope<Mutex> anonymous (fake.mThis->mMutex) ;
 		if (fake.mThis->mOption[ConsoleOption::NoFatal])
 			return ;
 		log (slice ("Fatal") ,msg) ;
@@ -1371,7 +1372,7 @@ public:
 	}
 
 	void error (CREF<Format> msg) const override {
-		Scope<Mutex> anonymous (fake.mMutex) ;
+		Scope<Mutex> anonymous (fake.mThis->mMutex) ;
 		if (fake.mThis->mOption[ConsoleOption::NoError])
 			return ;
 		log (slice ("Error") ,msg) ;
@@ -1385,7 +1386,7 @@ public:
 	}
 
 	void warn (CREF<Format> msg) const override {
-		Scope<Mutex> anonymous (fake.mMutex) ;
+		Scope<Mutex> anonymous (fake.mThis->mMutex) ;
 		if (fake.mThis->mOption[ConsoleOption::NoWarn])
 			return ;
 		log (slice ("Warn") ,msg) ;
@@ -1399,7 +1400,7 @@ public:
 	}
 
 	void info (CREF<Format> msg) const override {
-		Scope<Mutex> anonymous (fake.mMutex) ;
+		Scope<Mutex> anonymous (fake.mThis->mMutex) ;
 		if (fake.mThis->mOption[ConsoleOption::NoInfo])
 			return ;
 		log (slice ("Info") ,msg) ;
@@ -1413,7 +1414,7 @@ public:
 	}
 
 	void debug (CREF<Format> msg) const override {
-		Scope<Mutex> anonymous (fake.mMutex) ;
+		Scope<Mutex> anonymous (fake.mThis->mMutex) ;
 		if (fake.mThis->mOption[ConsoleOption::NoDebug])
 			return ;
 		log (slice ("Debug") ,msg) ;
@@ -1427,7 +1428,7 @@ public:
 	}
 
 	void trace (CREF<Format> msg) const override {
-		Scope<Mutex> anonymous (fake.mMutex) ;
+		Scope<Mutex> anonymous (fake.mThis->mMutex) ;
 		if (fake.mThis->mOption[ConsoleOption::NoTrace])
 			return ;
 		log (slice ("Trace") ,msg) ;
@@ -1441,7 +1442,7 @@ public:
 	}
 
 	void open (CREF<String<STR>> dire) const override {
-		Scope<Mutex> anonymous (fake.mMutex) ;
+		Scope<Mutex> anonymous (fake.mThis->mMutex) ;
 		fake.mThis->mLogFile = Path (dire).child (slice ("console.log")) ;
 		fake.mThis->mOldLogFile = Path (dire).child (slice ("console.old.log")) ;
 		FileProc::erase_file (fake.mThis->mOldLogFile) ;
@@ -1464,7 +1465,7 @@ public:
 	}
 
 	void start () const override {
-		Scope<Mutex> anonymous (fake.mMutex) ;
+		Scope<Mutex> anonymous (fake.mThis->mMutex) ;
 		if (fake.mThis->mConsole.exist ())
 			if (fake.mThis->mConsole.self != INVALID_HANDLE_VALUE)
 				return ;
@@ -1478,12 +1479,12 @@ public:
 	}
 
 	void stop () const override {
-		Scope<Mutex> anonymous (fake.mMutex) ;
+		Scope<Mutex> anonymous (fake.mThis->mMutex) ;
 		fake.mThis->mConsole = UniqueRef<HANDLE>::make (INVALID_HANDLE_VALUE) ;
 	}
 
 	void pause () const override {
-		Scope<Mutex> anonymous (fake.mMutex) ;
+		Scope<Mutex> anonymous (fake.mThis->mMutex) ;
 		if ifdo (TRUE) {
 			const auto r1x = GetConsoleWindow () ;
 			if (r1x == NULL)
@@ -1498,7 +1499,7 @@ public:
 	}
 
 	void clear () const override {
-		Scope<Mutex> anonymous (fake.mMutex) ;
+		Scope<Mutex> anonymous (fake.mThis->mMutex) ;
 		const auto r1x = csc_uint16_t (FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE) ;
 		SetConsoleTextAttribute (fake.mThis->mConsole ,r1x) ;
 		const auto r2x = String<STRA> (slice ("cls")) ;

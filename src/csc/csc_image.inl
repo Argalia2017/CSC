@@ -37,7 +37,7 @@ public:
 		ImageLayout ret ;
 		if ifdo (TRUE) {
 			const auto r1x = width () ;
-			if (r1x.area () == 0)
+			if (r1x.size () == 0)
 				discard ;
 			ImageHolder::create (ret)->initialize (fake.mImage.unknown () ,r1x.mCX ,r1x.mCY ,r1x.mStep) ;
 			ImageHolder::create (ret)->splice (0 ,0 ,fake) ;
@@ -199,7 +199,7 @@ public:
 		fake.mTable[to_] = ix ;
 	}
 
-	BOOL contain (CREF<INDEX> from_ ,CREF<INDEX> to_) const override {
+	BOOL edge (CREF<INDEX> from_ ,CREF<INDEX> to_) const override {
 		INDEX ix = fake.mTable[from_] ;
 		while (TRUE) {
 			if (ix == NONE)
@@ -281,7 +281,6 @@ exports CFat<SparseHolder> SparseHolder::create (CREF<SparseLayout> that) {
 class DisjointImplHolder implement Fat<DisjointHolder ,DisjointLayout> {
 public:
 	void initialize (CREF<LENGTH> size_) override {
-		fake.mTable = SharedRef<Array<INDEX>>::make () ;
 		fake.mTable.self = Array<INDEX> (size_) ;
 		fake.mTable->fill (NONE) ;
 	}
@@ -327,7 +326,7 @@ public:
 		fake.mTable.self[iy] = ix ;
 	}
 
-	BOOL contain (CREF<INDEX> from_ ,CREF<INDEX> to_) const override {
+	BOOL edge (CREF<INDEX> from_ ,CREF<INDEX> to_) const override {
 		INDEX ix = lead (from_) ;
 		INDEX iy = lead (to_) ;
 		return ix == iy ;

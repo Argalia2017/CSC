@@ -14,9 +14,7 @@
 namespace CSC {
 struct StreamProcImplLayout ;
 
-struct StreamProcLayout {
-	Ref<StreamProcImplLayout> mThis ;
-} ;
+struct StreamProcLayout implement ThisLayout<AutoRef<StreamProcImplLayout>> {} ;
 
 struct StreamProcHolder implement Interface {
 	imports VFat<StreamProcHolder> create (VREF<StreamProcLayout> that) ;
@@ -1616,7 +1614,7 @@ struct FormatHolder implement Interface {
 
 	virtual void initialize (CREF<Slice> format) = 0 ;
 	virtual void friend_write (VREF<StreamWriter> writer) const = 0 ;
-	virtual void then (CREF<WrapperLayout> params) const = 0 ;
+	virtual void once (CREF<WrapperLayout> params) const = 0 ;
 } ;
 
 class Format implement FormatLayout {
@@ -1637,13 +1635,13 @@ public:
 	}
 
 	template <class...ARG1>
-	void then (CREF<ARG1>...params) const {
-		return FormatHolder::create (thiz)->then (MakeWrapper (FormatFriendBinder<ARG1>::create (params)...)) ;
+	void once (CREF<ARG1>...params) const {
+		return FormatHolder::create (thiz)->once (MakeWrapper (FormatFriendBinder<ARG1>::create (params)...)) ;
 	}
 
 	template <class...ARG1>
 	CREF<Format> operator() (CREF<ARG1>...params) const {
-		then (params...) ;
+		once (params...) ;
 		return thiz ;
 	}
 } ;
@@ -1659,9 +1657,7 @@ inline Format PrintFormat (CREF<ARG1>...params) {
 	return move (ret) ;
 }
 
-struct StringProcLayout {
-	RefLayout mThis ;
-} ;
+struct StringProcLayout implement ThisLayout<RefLayout> {} ;
 
 struct StringProcHolder implement Interface {
 	imports VFat<StringProcHolder> create (VREF<StringProcLayout> that) ;
@@ -1811,9 +1807,7 @@ public:
 
 struct RegexImplLayout ;
 
-struct RegexLayout {
-	Ref<RegexImplLayout> mThis ;
-} ;
+struct RegexLayout implement ThisLayout<AutoRef<RegexImplLayout>> {} ;
 
 struct RegexHolder implement Interface {
 	imports VFat<RegexHolder> create (VREF<RegexLayout> that) ;
@@ -1844,9 +1838,7 @@ public:
 	}
 } ;
 
-struct StreamTextProcLayout {
-	RefLayout mThis ;
-} ;
+struct StreamTextProcLayout implement ThisLayout<RefLayout> {} ;
 
 struct StreamTextProcHolder implement Interface {
 	imports VFat<StreamTextProcHolder> create (VREF<StreamTextProcLayout> that) ;
