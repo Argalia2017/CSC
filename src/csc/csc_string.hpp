@@ -48,7 +48,7 @@ public:
 	}
 
 	forceinline void operator++ (int) const {
-		increase () ;
+		return increase () ;
 	}
 
 	void decrease () const {
@@ -56,7 +56,7 @@ public:
 	}
 
 	forceinline void operator-- (int) const {
-		decrease () ;
+		return decrease () ;
 	}
 
 	void tight () const {
@@ -89,26 +89,26 @@ struct XmlParserHolder implement Interface {
 	virtual Array<XmlParserLayout> list (CREF<LENGTH> size_) const = 0 ;
 	virtual BOOL equal (CREF<XmlParserLayout> that) const = 0 ;
 	virtual CREF<String<STRU8>> name () const leftvalue = 0 ;
-	virtual BOOL fetch (CREF<BOOL> def) const = 0 ;
-	virtual VAL32 fetch (CREF<VAL32> def) const = 0 ;
-	virtual VAL64 fetch (CREF<VAL64> def) const = 0 ;
-	virtual FLT32 fetch (CREF<FLT32> def) const = 0 ;
-	virtual FLT64 fetch (CREF<FLT64> def) const = 0 ;
-	virtual String<STRA> fetch (CREF<String<STRA>> def) const = 0 ;
-	virtual String<STRW> fetch (CREF<String<STRW>> def) const = 0 ;
-	virtual String<STRU8> fetch (CREF<String<STRU8>> def) const = 0 ;
-	virtual String<STRU16> fetch (CREF<String<STRU16>> def) const = 0 ;
-	virtual String<STRU32> fetch (CREF<String<STRU32>> def) const = 0 ;
-	virtual Array<BOOL> fetch (CREF<BOOL> def ,CREF<LENGTH> size_) const = 0 ;
-	virtual Array<VAL32> fetch (CREF<VAL32> def ,CREF<LENGTH> size_) const = 0 ;
-	virtual Array<VAL64> fetch (CREF<VAL64> def ,CREF<LENGTH> size_) const = 0 ;
-	virtual Array<FLT32> fetch (CREF<FLT32> def ,CREF<LENGTH> size_) const = 0 ;
-	virtual Array<FLT64> fetch (CREF<FLT64> def ,CREF<LENGTH> size_) const = 0 ;
-	virtual Array<String<STRA>> fetch (CREF<String<STRA>> def ,CREF<LENGTH> size_) const = 0 ;
-	virtual Array<String<STRW>> fetch (CREF<String<STRW>> def ,CREF<LENGTH> size_) const = 0 ;
-	virtual Array<String<STRU8>> fetch (CREF<String<STRU8>> def ,CREF<LENGTH> size_) const = 0 ;
-	virtual Array<String<STRU16>> fetch (CREF<String<STRU16>> def ,CREF<LENGTH> size_) const = 0 ;
-	virtual Array<String<STRU32>> fetch (CREF<String<STRU32>> def ,CREF<LENGTH> size_) const = 0 ;
+	virtual BOOL parse (CREF<BOOL> def) const = 0 ;
+	virtual VAL32 parse (CREF<VAL32> def) const = 0 ;
+	virtual VAL64 parse (CREF<VAL64> def) const = 0 ;
+	virtual FLT32 parse (CREF<FLT32> def) const = 0 ;
+	virtual FLT64 parse (CREF<FLT64> def) const = 0 ;
+	virtual String<STRA> parse (CREF<String<STRA>> def) const = 0 ;
+	virtual String<STRW> parse (CREF<String<STRW>> def) const = 0 ;
+	virtual String<STRU8> parse (CREF<String<STRU8>> def) const = 0 ;
+	virtual String<STRU16> parse (CREF<String<STRU16>> def) const = 0 ;
+	virtual String<STRU32> parse (CREF<String<STRU32>> def) const = 0 ;
+	virtual Array<BOOL> parse (CREF<BOOL> def ,CREF<LENGTH> size_) const = 0 ;
+	virtual Array<VAL32> parse (CREF<VAL32> def ,CREF<LENGTH> size_) const = 0 ;
+	virtual Array<VAL64> parse (CREF<VAL64> def ,CREF<LENGTH> size_) const = 0 ;
+	virtual Array<FLT32> parse (CREF<FLT32> def ,CREF<LENGTH> size_) const = 0 ;
+	virtual Array<FLT64> parse (CREF<FLT64> def ,CREF<LENGTH> size_) const = 0 ;
+	virtual Array<String<STRA>> parse (CREF<String<STRA>> def ,CREF<LENGTH> size_) const = 0 ;
+	virtual Array<String<STRW>> parse (CREF<String<STRW>> def ,CREF<LENGTH> size_) const = 0 ;
+	virtual Array<String<STRU8>> parse (CREF<String<STRU8>> def ,CREF<LENGTH> size_) const = 0 ;
+	virtual Array<String<STRU16>> parse (CREF<String<STRU16>> def ,CREF<LENGTH> size_) const = 0 ;
+	virtual Array<String<STRU32>> parse (CREF<String<STRU32>> def ,CREF<LENGTH> size_) const = 0 ;
 } ;
 
 class XmlParser implement XmlParserLayout {
@@ -200,84 +200,84 @@ public:
 		return XmlParserHolder::create (thiz)->name () ;
 	}
 
-	BOOL fetch (CREF<BOOL> def) const {
-		return XmlParserHolder::create (thiz)->fetch (def) ;
+	BOOL parse (CREF<BOOL> def) const {
+		return XmlParserHolder::create (thiz)->parse (def) ;
 	}
 
-	VAL32 fetch (CREF<VAL32> def) const {
-		return XmlParserHolder::create (thiz)->fetch (def) ;
+	VAL32 parse (CREF<VAL32> def) const {
+		return XmlParserHolder::create (thiz)->parse (def) ;
 	}
 
-	VAL64 fetch (CREF<VAL64> def) const {
-		return XmlParserHolder::create (thiz)->fetch (def) ;
+	VAL64 parse (CREF<VAL64> def) const {
+		return XmlParserHolder::create (thiz)->parse (def) ;
 	}
 
-	FLT32 fetch (CREF<FLT32> def) const {
-		return XmlParserHolder::create (thiz)->fetch (def) ;
+	FLT32 parse (CREF<FLT32> def) const {
+		return XmlParserHolder::create (thiz)->parse (def) ;
 	}
 
-	FLT64 fetch (CREF<FLT64> def) const {
-		return XmlParserHolder::create (thiz)->fetch (def) ;
+	FLT64 parse (CREF<FLT64> def) const {
+		return XmlParserHolder::create (thiz)->parse (def) ;
 	}
 
-	String<STRA> fetch (CREF<String<STRA>> def) const {
-		return XmlParserHolder::create (thiz)->fetch (def) ;
+	String<STRA> parse (CREF<String<STRA>> def) const {
+		return XmlParserHolder::create (thiz)->parse (def) ;
 	}
 
-	String<STRW> fetch (CREF<String<STRW>> def) const {
-		return XmlParserHolder::create (thiz)->fetch (def) ;
+	String<STRW> parse (CREF<String<STRW>> def) const {
+		return XmlParserHolder::create (thiz)->parse (def) ;
 	}
 
-	String<STRU8> fetch (CREF<String<STRU8>> def) const {
-		return XmlParserHolder::create (thiz)->fetch (def) ;
+	String<STRU8> parse (CREF<String<STRU8>> def) const {
+		return XmlParserHolder::create (thiz)->parse (def) ;
 	}
 
-	String<STRU16> fetch (CREF<String<STRU16>> def) const {
-		return XmlParserHolder::create (thiz)->fetch (def) ;
+	String<STRU16> parse (CREF<String<STRU16>> def) const {
+		return XmlParserHolder::create (thiz)->parse (def) ;
 	}
 
-	String<STRU32> fetch (CREF<String<STRU32>> def) const {
-		return XmlParserHolder::create (thiz)->fetch (def) ;
+	String<STRU32> parse (CREF<String<STRU32>> def) const {
+		return XmlParserHolder::create (thiz)->parse (def) ;
 	}
 
-	Array<BOOL> fetch (CREF<BOOL> def ,CREF<LENGTH> size_) const {
-		return XmlParserHolder::create (thiz)->fetch (def ,size_) ;
+	Array<BOOL> parse (CREF<BOOL> def ,CREF<LENGTH> size_) const {
+		return XmlParserHolder::create (thiz)->parse (def ,size_) ;
 	}
 
-	Array<VAL32> fetch (CREF<VAL32> def ,CREF<LENGTH> size_) const {
-		return XmlParserHolder::create (thiz)->fetch (def ,size_) ;
+	Array<VAL32> parse (CREF<VAL32> def ,CREF<LENGTH> size_) const {
+		return XmlParserHolder::create (thiz)->parse (def ,size_) ;
 	}
 
-	Array<VAL64> fetch (CREF<VAL64> def ,CREF<LENGTH> size_) const {
-		return XmlParserHolder::create (thiz)->fetch (def ,size_) ;
+	Array<VAL64> parse (CREF<VAL64> def ,CREF<LENGTH> size_) const {
+		return XmlParserHolder::create (thiz)->parse (def ,size_) ;
 	}
 
-	Array<FLT32> fetch (CREF<FLT32> def ,CREF<LENGTH> size_) const {
-		return XmlParserHolder::create (thiz)->fetch (def ,size_) ;
+	Array<FLT32> parse (CREF<FLT32> def ,CREF<LENGTH> size_) const {
+		return XmlParserHolder::create (thiz)->parse (def ,size_) ;
 	}
 
-	Array<FLT64> fetch (CREF<FLT64> def ,CREF<LENGTH> size_) const {
-		return XmlParserHolder::create (thiz)->fetch (def ,size_) ;
+	Array<FLT64> parse (CREF<FLT64> def ,CREF<LENGTH> size_) const {
+		return XmlParserHolder::create (thiz)->parse (def ,size_) ;
 	}
 
-	Array<String<STRA>> fetch (CREF<String<STRA>> def ,CREF<LENGTH> size_) const {
-		return XmlParserHolder::create (thiz)->fetch (def ,size_) ;
+	Array<String<STRA>> parse (CREF<String<STRA>> def ,CREF<LENGTH> size_) const {
+		return XmlParserHolder::create (thiz)->parse (def ,size_) ;
 	}
 
-	Array<String<STRW>> fetch (CREF<String<STRW>> def ,CREF<LENGTH> size_) const {
-		return XmlParserHolder::create (thiz)->fetch (def ,size_) ;
+	Array<String<STRW>> parse (CREF<String<STRW>> def ,CREF<LENGTH> size_) const {
+		return XmlParserHolder::create (thiz)->parse (def ,size_) ;
 	}
 
-	Array<String<STRU8>> fetch (CREF<String<STRU8>> def ,CREF<LENGTH> size_) const {
-		return XmlParserHolder::create (thiz)->fetch (def ,size_) ;
+	Array<String<STRU8>> parse (CREF<String<STRU8>> def ,CREF<LENGTH> size_) const {
+		return XmlParserHolder::create (thiz)->parse (def ,size_) ;
 	}
 
-	Array<String<STRU16>> fetch (CREF<String<STRU16>> def ,CREF<LENGTH> size_) const {
-		return XmlParserHolder::create (thiz)->fetch (def ,size_) ;
+	Array<String<STRU16>> parse (CREF<String<STRU16>> def ,CREF<LENGTH> size_) const {
+		return XmlParserHolder::create (thiz)->parse (def ,size_) ;
 	}
 
-	Array<String<STRU32>> fetch (CREF<String<STRU32>> def ,CREF<LENGTH> size_) const {
-		return XmlParserHolder::create (thiz)->fetch (def ,size_) ;
+	Array<String<STRU32>> parse (CREF<String<STRU32>> def ,CREF<LENGTH> size_) const {
+		return XmlParserHolder::create (thiz)->parse (def ,size_) ;
 	}
 } ;
 
@@ -306,26 +306,26 @@ struct JsonParserHolder implement Interface {
 	virtual Array<JsonParserLayout> list (CREF<LENGTH> size_) const = 0 ;
 	virtual BOOL equal (CREF<JsonParserLayout> that) const = 0 ;
 	virtual CREF<String<STRU8>> name () const leftvalue = 0 ;
-	virtual BOOL fetch (CREF<BOOL> def) const = 0 ;
-	virtual VAL32 fetch (CREF<VAL32> def) const = 0 ;
-	virtual VAL64 fetch (CREF<VAL64> def) const = 0 ;
-	virtual FLT32 fetch (CREF<FLT32> def) const = 0 ;
-	virtual FLT64 fetch (CREF<FLT64> def) const = 0 ;
-	virtual String<STRA> fetch (CREF<String<STRA>> def) const = 0 ;
-	virtual String<STRW> fetch (CREF<String<STRW>> def) const = 0 ;
-	virtual String<STRU8> fetch (CREF<String<STRU8>> def) const = 0 ;
-	virtual String<STRU16> fetch (CREF<String<STRU16>> def) const = 0 ;
-	virtual String<STRU32> fetch (CREF<String<STRU32>> def) const = 0 ;
-	virtual Array<BOOL> fetch (CREF<BOOL> def ,CREF<LENGTH> size_) const = 0 ;
-	virtual Array<VAL32> fetch (CREF<VAL32> def ,CREF<LENGTH> size_) const = 0 ;
-	virtual Array<VAL64> fetch (CREF<VAL64> def ,CREF<LENGTH> size_) const = 0 ;
-	virtual Array<FLT32> fetch (CREF<FLT32> def ,CREF<LENGTH> size_) const = 0 ;
-	virtual Array<FLT64> fetch (CREF<FLT64> def ,CREF<LENGTH> size_) const = 0 ;
-	virtual Array<String<STRA>> fetch (CREF<String<STRA>> def ,CREF<LENGTH> size_) const = 0 ;
-	virtual Array<String<STRW>> fetch (CREF<String<STRW>> def ,CREF<LENGTH> size_) const = 0 ;
-	virtual Array<String<STRU8>> fetch (CREF<String<STRU8>> def ,CREF<LENGTH> size_) const = 0 ;
-	virtual Array<String<STRU16>> fetch (CREF<String<STRU16>> def ,CREF<LENGTH> size_) const = 0 ;
-	virtual Array<String<STRU32>> fetch (CREF<String<STRU32>> def ,CREF<LENGTH> size_) const = 0 ;
+	virtual BOOL parse (CREF<BOOL> def) const = 0 ;
+	virtual VAL32 parse (CREF<VAL32> def) const = 0 ;
+	virtual VAL64 parse (CREF<VAL64> def) const = 0 ;
+	virtual FLT32 parse (CREF<FLT32> def) const = 0 ;
+	virtual FLT64 parse (CREF<FLT64> def) const = 0 ;
+	virtual String<STRA> parse (CREF<String<STRA>> def) const = 0 ;
+	virtual String<STRW> parse (CREF<String<STRW>> def) const = 0 ;
+	virtual String<STRU8> parse (CREF<String<STRU8>> def) const = 0 ;
+	virtual String<STRU16> parse (CREF<String<STRU16>> def) const = 0 ;
+	virtual String<STRU32> parse (CREF<String<STRU32>> def) const = 0 ;
+	virtual Array<BOOL> parse (CREF<BOOL> def ,CREF<LENGTH> size_) const = 0 ;
+	virtual Array<VAL32> parse (CREF<VAL32> def ,CREF<LENGTH> size_) const = 0 ;
+	virtual Array<VAL64> parse (CREF<VAL64> def ,CREF<LENGTH> size_) const = 0 ;
+	virtual Array<FLT32> parse (CREF<FLT32> def ,CREF<LENGTH> size_) const = 0 ;
+	virtual Array<FLT64> parse (CREF<FLT64> def ,CREF<LENGTH> size_) const = 0 ;
+	virtual Array<String<STRA>> parse (CREF<String<STRA>> def ,CREF<LENGTH> size_) const = 0 ;
+	virtual Array<String<STRW>> parse (CREF<String<STRW>> def ,CREF<LENGTH> size_) const = 0 ;
+	virtual Array<String<STRU8>> parse (CREF<String<STRU8>> def ,CREF<LENGTH> size_) const = 0 ;
+	virtual Array<String<STRU16>> parse (CREF<String<STRU16>> def ,CREF<LENGTH> size_) const = 0 ;
+	virtual Array<String<STRU32>> parse (CREF<String<STRU32>> def ,CREF<LENGTH> size_) const = 0 ;
 } ;
 
 class JsonParser implement JsonParserLayout {
@@ -417,84 +417,84 @@ public:
 		return JsonParserHolder::create (thiz)->name () ;
 	}
 
-	BOOL fetch (CREF<BOOL> def) const {
-		return JsonParserHolder::create (thiz)->fetch (def) ;
+	BOOL parse (CREF<BOOL> def) const {
+		return JsonParserHolder::create (thiz)->parse (def) ;
 	}
 
-	VAL32 fetch (CREF<VAL32> def) const {
-		return JsonParserHolder::create (thiz)->fetch (def) ;
+	VAL32 parse (CREF<VAL32> def) const {
+		return JsonParserHolder::create (thiz)->parse (def) ;
 	}
 
-	VAL64 fetch (CREF<VAL64> def) const {
-		return JsonParserHolder::create (thiz)->fetch (def) ;
+	VAL64 parse (CREF<VAL64> def) const {
+		return JsonParserHolder::create (thiz)->parse (def) ;
 	}
 
-	FLT32 fetch (CREF<FLT32> def) const {
-		return JsonParserHolder::create (thiz)->fetch (def) ;
+	FLT32 parse (CREF<FLT32> def) const {
+		return JsonParserHolder::create (thiz)->parse (def) ;
 	}
 
-	FLT64 fetch (CREF<FLT64> def) const {
-		return JsonParserHolder::create (thiz)->fetch (def) ;
+	FLT64 parse (CREF<FLT64> def) const {
+		return JsonParserHolder::create (thiz)->parse (def) ;
 	}
 
-	String<STRA> fetch (CREF<String<STRA>> def) const {
-		return JsonParserHolder::create (thiz)->fetch (def) ;
+	String<STRA> parse (CREF<String<STRA>> def) const {
+		return JsonParserHolder::create (thiz)->parse (def) ;
 	}
 
-	String<STRW> fetch (CREF<String<STRW>> def) const {
-		return JsonParserHolder::create (thiz)->fetch (def) ;
+	String<STRW> parse (CREF<String<STRW>> def) const {
+		return JsonParserHolder::create (thiz)->parse (def) ;
 	}
 
-	String<STRU8> fetch (CREF<String<STRU8>> def) const {
-		return JsonParserHolder::create (thiz)->fetch (def) ;
+	String<STRU8> parse (CREF<String<STRU8>> def) const {
+		return JsonParserHolder::create (thiz)->parse (def) ;
 	}
 
-	String<STRU16> fetch (CREF<String<STRU16>> def) const {
-		return JsonParserHolder::create (thiz)->fetch (def) ;
+	String<STRU16> parse (CREF<String<STRU16>> def) const {
+		return JsonParserHolder::create (thiz)->parse (def) ;
 	}
 
-	String<STRU32> fetch (CREF<String<STRU32>> def) const {
-		return JsonParserHolder::create (thiz)->fetch (def) ;
+	String<STRU32> parse (CREF<String<STRU32>> def) const {
+		return JsonParserHolder::create (thiz)->parse (def) ;
 	}
 
-	Array<BOOL> fetch (CREF<BOOL> def ,CREF<LENGTH> size_) const {
-		return JsonParserHolder::create (thiz)->fetch (def ,size_) ;
+	Array<BOOL> parse (CREF<BOOL> def ,CREF<LENGTH> size_) const {
+		return JsonParserHolder::create (thiz)->parse (def ,size_) ;
 	}
 
-	Array<VAL32> fetch (CREF<VAL32> def ,CREF<LENGTH> size_) const {
-		return JsonParserHolder::create (thiz)->fetch (def ,size_) ;
+	Array<VAL32> parse (CREF<VAL32> def ,CREF<LENGTH> size_) const {
+		return JsonParserHolder::create (thiz)->parse (def ,size_) ;
 	}
 
-	Array<VAL64> fetch (CREF<VAL64> def ,CREF<LENGTH> size_) const {
-		return JsonParserHolder::create (thiz)->fetch (def ,size_) ;
+	Array<VAL64> parse (CREF<VAL64> def ,CREF<LENGTH> size_) const {
+		return JsonParserHolder::create (thiz)->parse (def ,size_) ;
 	}
 
-	Array<FLT32> fetch (CREF<FLT32> def ,CREF<LENGTH> size_) const {
-		return JsonParserHolder::create (thiz)->fetch (def ,size_) ;
+	Array<FLT32> parse (CREF<FLT32> def ,CREF<LENGTH> size_) const {
+		return JsonParserHolder::create (thiz)->parse (def ,size_) ;
 	}
 
-	Array<FLT64> fetch (CREF<FLT64> def ,CREF<LENGTH> size_) const {
-		return JsonParserHolder::create (thiz)->fetch (def ,size_) ;
+	Array<FLT64> parse (CREF<FLT64> def ,CREF<LENGTH> size_) const {
+		return JsonParserHolder::create (thiz)->parse (def ,size_) ;
 	}
 
-	Array<String<STRA>> fetch (CREF<String<STRA>> def ,CREF<LENGTH> size_) const {
-		return JsonParserHolder::create (thiz)->fetch (def ,size_) ;
+	Array<String<STRA>> parse (CREF<String<STRA>> def ,CREF<LENGTH> size_) const {
+		return JsonParserHolder::create (thiz)->parse (def ,size_) ;
 	}
 
-	Array<String<STRW>> fetch (CREF<String<STRW>> def ,CREF<LENGTH> size_) const {
-		return JsonParserHolder::create (thiz)->fetch (def ,size_) ;
+	Array<String<STRW>> parse (CREF<String<STRW>> def ,CREF<LENGTH> size_) const {
+		return JsonParserHolder::create (thiz)->parse (def ,size_) ;
 	}
 
-	Array<String<STRU8>> fetch (CREF<String<STRU8>> def ,CREF<LENGTH> size_) const {
-		return JsonParserHolder::create (thiz)->fetch (def ,size_) ;
+	Array<String<STRU8>> parse (CREF<String<STRU8>> def ,CREF<LENGTH> size_) const {
+		return JsonParserHolder::create (thiz)->parse (def ,size_) ;
 	}
 
-	Array<String<STRU16>> fetch (CREF<String<STRU16>> def ,CREF<LENGTH> size_) const {
-		return JsonParserHolder::create (thiz)->fetch (def ,size_) ;
+	Array<String<STRU16>> parse (CREF<String<STRU16>> def ,CREF<LENGTH> size_) const {
+		return JsonParserHolder::create (thiz)->parse (def ,size_) ;
 	}
 
-	Array<String<STRU32>> fetch (CREF<String<STRU32>> def ,CREF<LENGTH> size_) const {
-		return JsonParserHolder::create (thiz)->fetch (def ,size_) ;
+	Array<String<STRU32>> parse (CREF<String<STRU32>> def ,CREF<LENGTH> size_) const {
+		return JsonParserHolder::create (thiz)->parse (def ,size_) ;
 	}
 } ;
 

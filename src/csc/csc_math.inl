@@ -218,18 +218,19 @@ public:
 	}
 
 	VAL32 lerp (CREF<FLT64> a ,CREF<VAL32> lb ,CREF<VAL32> rb) const override {
-		const auto r1x = rb - lb ;
-		assert (r1x > 0) ;
-		const auto r2x = FLT64 (r1x) * abs (a) ;
-		const auto r3x = VAL32 (round (r2x ,FLT64 (1))) ;
-		return clamp (r3x ,lb ,rb) ;
+		const auto r1x = MathProc::abs (a) ;
+		const auto r2x = r1x - MathProc::floor (r1x / 2 ,FLT64 (1)) * 2 ;
+		const auto r3x = FLT64 (rb - lb) * r2x ;
+		const auto r4x = VAL32 (round (r3x ,FLT64 (1))) ;
+		return lb + r4x ;
 	}
 
 	VAL64 lerp (CREF<FLT64> a ,CREF<VAL64> lb ,CREF<VAL64> rb) const override {
-		const auto r1x = rb - lb ;
-		assert (r1x > 0) ;
-		const auto r2x = VAL64 (round (FLT64 (r1x) * a ,FLT64 (1))) ;
-		return lb + (r2x % r1x + r1x) % r1x ;
+		const auto r1x = MathProc::abs (a) ;
+		const auto r2x = r1x - MathProc::floor (r1x / 2 ,FLT64 (1)) * 2 ;
+		const auto r3x = FLT64 (rb - lb) * r2x ;
+		const auto r4x = VAL64 (round (r3x ,FLT64 (1))) ;
+		return lb + r4x ;
 	}
 
 	FLT32 cos (CREF<FLT32> a) const override {
@@ -294,30 +295,6 @@ public:
 
 	FLT64 log (CREF<FLT64> a) const override {
 		return std::log (a) ;
-	}
-
-	VAL32 log10 (CREF<VAL32> a) const override {
-		VAL32 ret = 0 ;
-		auto rax = a ;
-		while (TRUE) {
-			if (rax == 0)
-				break ;
-			ret++ ;
-			rax /= 10 ;
-		}
-		return move (ret) ;
-	}
-
-	VAL64 log10 (CREF<VAL64> a) const override {
-		VAL64 ret = 0 ;
-		auto rax = a ;
-		while (TRUE) {
-			if (rax == 0)
-				break ;
-			ret++ ;
-			rax /= 10 ;
-		}
-		return move (ret) ;
 	}
 
 	FLT32 pdf (CREF<FLT32> a) const override {
@@ -962,7 +939,7 @@ public:
 		visitor.end () ;
 	}
 
-	IntegerLayout add (CREF<IntegerLayout> that) const override {
+	IntegerLayout sadd (CREF<IntegerLayout> that) const override {
 		assert (fake.mInteger.size () == that.mInteger.size ()) ;
 		IntegerLayout ret ;
 		ret.mInteger = RefBuffer<BYTE> (fake.mInteger.size ()) ;
@@ -976,7 +953,7 @@ public:
 		return move (ret) ;
 	}
 
-	IntegerLayout sub (CREF<IntegerLayout> that) const override {
+	IntegerLayout ssub (CREF<IntegerLayout> that) const override {
 		assert (fake.mInteger.size () == that.mInteger.size ()) ;
 		IntegerLayout ret ;
 		ret.mInteger = RefBuffer<BYTE> (fake.mInteger.size ()) ;
@@ -992,7 +969,7 @@ public:
 		return move (ret) ;
 	}
 
-	IntegerLayout mul (CREF<IntegerLayout> that) const override {
+	IntegerLayout smul (CREF<IntegerLayout> that) const override {
 		assert (fake.mInteger.size () == that.mInteger.size ()) ;
 		IntegerLayout ret ;
 		ret.mInteger = RefBuffer<BYTE> (fake.mInteger.size ()) ;
@@ -1009,7 +986,7 @@ public:
 		return move (ret) ;
 	}
 
-	IntegerLayout mul (CREF<VAL64> scale) const override {
+	IntegerLayout smul (CREF<VAL64> scale) const override {
 		IntegerLayout ret ;
 		ret.mInteger = RefBuffer<BYTE> (fake.mInteger.size ()) ;
 		auto rax = VAL64 (0) ;
@@ -1034,7 +1011,7 @@ public:
 		return move (ret) ;
 	}
 
-	IntegerLayout div (CREF<VAL64> scale) const override {
+	IntegerLayout sdiv (CREF<VAL64> scale) const override {
 		assert (scale != ZERO) ;
 		IntegerLayout ret ;
 		ret.mInteger = RefBuffer<BYTE> (fake.mInteger.size ()) ;
@@ -1054,7 +1031,7 @@ public:
 		return move (ret) ;
 	}
 
-	IntegerLayout mod (CREF<VAL64> scale) const override {
+	IntegerLayout smod (CREF<VAL64> scale) const override {
 		assert (scale != ZERO) ;
 		auto rax = VAL64 (0) ;
 		const auto r1x = find_highest () + 1 ;

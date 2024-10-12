@@ -69,6 +69,11 @@ enum class WORD :csc_uint16_t ;
 enum class CHAR :csc_uint32_t ;
 enum class QUAD :csc_uint64_t ;
 
+static constexpr auto BYTE_ENDIAN = BYTE (0X0F) ;
+static constexpr auto WORD_ENDIAN = WORD (0X00FF) ;
+static constexpr auto CHAR_ENDIAN = CHAR (0X0000FFFF) ;
+static constexpr auto QUAD_ENDIAN = QUAD (0X00000000FFFFFFFF) ;
+
 forceinline constexpr BYTE operator| (CREF<BYTE> a ,CREF<BYTE> b) noexcept {
 	return BYTE (csc_uint8_t (a) | csc_uint8_t (b)) ;
 }
@@ -383,7 +388,6 @@ trait ENUM_COMPR_HELP<A ,B ,ALWAYS> {
 	using R1X = ENUM<(A::expr < B::expr)> ;
 	using R2X = ENUM<(A::expr > B::expr)> ;
 	using R3X = CONDITIONAL<R1X ,ENUM<(-1)> ,CONDITIONAL<R2X ,ENUM<(+1)> ,ENUM<(+0)>>> ;
-
 	using RET = ENUM<(R3X::expr)> ;
 } ;
 
@@ -719,7 +723,6 @@ template <class A>
 trait IS_VALUE_HELP<A ,ALWAYS> {
 	using R1X = IS_SAME<A ,VAL32> ;
 	using R2X = IS_SAME<A ,VAL64> ;
-
 	using RET = ENUM_ANY<R1X ,R2X> ;
 } ;
 
@@ -733,7 +736,6 @@ template <class A>
 trait IS_FLOAT_HELP<A ,ALWAYS> {
 	using R1X = IS_SAME<A ,FLT32> ;
 	using R2X = IS_SAME<A ,FLT64> ;
-
 	using RET = ENUM_ANY<R1X ,R2X> ;
 } ;
 
@@ -750,7 +752,6 @@ trait IS_TEXT_HELP<A ,ALWAYS> {
 	using R3X = IS_SAME<A ,STRU8> ;
 	using R4X = IS_SAME<A ,STRU16> ;
 	using R5X = IS_SAME<A ,STRU32> ;
-
 	using RET = ENUM_ANY<R1X ,R2X ,R3X ,R4X ,R5X> ;
 } ;
 
@@ -766,7 +767,6 @@ trait IS_BYTE_HELP<A ,ALWAYS> {
 	using R2X = IS_SAME<A ,WORD> ;
 	using R3X = IS_SAME<A ,CHAR> ;
 	using R4X = IS_SAME<A ,QUAD> ;
-
 	using RET = ENUM_ANY<R1X ,R2X ,R3X ,R4X> ;
 } ;
 
@@ -786,7 +786,6 @@ template <class A>
 trait IS_SCALAR_HELP<A ,ALWAYS> {
 	using R1X = IS_VALUE<A> ;
 	using R2X = IS_FLOAT<A> ;
-
 	using RET = ENUM_ANY<R1X ,R2X> ;
 } ;
 
@@ -804,7 +803,6 @@ trait IS_BASIC_HELP<A ,ALWAYS> {
 	using R4X = IS_TEXT<A> ;
 	using R5X = IS_BYTE<A> ;
 	using R6X = IS_NULL<A> ;
-
 	using RET = ENUM_ANY<R1X ,R2X ,R3X ,R4X ,R5X ,R6X> ;
 } ;
 
@@ -1061,7 +1059,6 @@ trait IS_UNDER_HELP<A ,REQUIRE<ENUM_NOT<IS_BASIC<A>>>> {
 	using R7X = IS_SAME<A ,csc_diff_t> ;
 	using R8X = IS_SAME<A ,csc_size_t> ;
 	using R9X = IS_SAME<A ,csc_enum_t> ;
-
 	using RET = ENUM_ANY<R1X ,R2X ,R3X ,R4X ,R5X ,R6X ,R7X ,R8X ,R9X> ;
 } ;
 
@@ -1078,7 +1075,6 @@ trait IS_CLASS_HELP<A ,ALWAYS> {
 	using R4X = ENUM_NOT<IS_TYPE<A>> ;
 	using R5X = ENUM_NOT<IS_BASIC<A>> ;
 	using R6X = ENUM_NOT<IS_UNDER<A>> ;
-
 	using RET = ENUM_ALL<R1X ,R3X ,R4X ,R5X ,R6X> ;
 } ;
 
@@ -1094,7 +1090,6 @@ trait IS_DEFAULT_HELP<A ,ALWAYS> {
 	using R2X = MACRO_IS_DESTRUCTIBLE<A> ;
 	using R3X = MACRO_IS_MOVE_CONSTRUCTIBLE<A> ;
 	using R4X = MACRO_IS_MOVE_ASSIGNABLE<A> ;
-
 	using RET = ENUM_ALL<R1X ,R2X ,R3X ,R4X> ;
 } ;
 
@@ -1108,7 +1103,6 @@ template <class A>
 trait IS_TRIVIAL_HELP<A ,ALWAYS> {
 	using R1X = MACRO_IS_TRIVIAL_CONSTRUCTIBLE<A> ;
 	using R2X = MACRO_IS_TRIVIAL_DESTRUCTIBLE<A> ;
-
 	using RET = ENUM_ALL<R1X ,R2X> ;
 } ;
 
@@ -1124,7 +1118,6 @@ trait IS_COPYABLE_HELP<A ,ALWAYS> {
 	using R2X = MACRO_IS_COPY_ASSIGNABLE<A> ;
 	using R3X = MACRO_IS_MOVE_CONSTRUCTIBLE<A> ;
 	using R4X = MACRO_IS_MOVE_ASSIGNABLE<A> ;
-
 	using RET = ENUM_ALL<R1X ,R2X ,R3X ,R4X> ;
 } ;
 
@@ -1244,7 +1237,6 @@ template <class A ,class B>
 trait IS_EXTEND_HELP<A ,B ,ALWAYS> {
 	using R1X = IS_SAME<A ,B> ;
 	using R2X = MACRO_IS_EXTEND<A ,B> ;
-
 	using RET = ENUM_ANY<R1X ,R2X> ;
 } ;
 
@@ -1275,7 +1267,6 @@ trait IS_INTERFACE_HELP<A ,REQUIRE<IS_CLASS<A>>> {
 	using R1X = IS_EXTEND<Interface ,A> ;
 	using R3X = ENUM_EQUAL<SIZE_OF<A> ,SIZE_OF<Interface>> ;
 	using R4X = ENUM_EQUAL<ALIGN_OF<A> ,ALIGN_OF<Interface>> ;
-
 	using RET = ENUM_ALL<R1X ,R3X ,R4X> ;
 } ;
 
@@ -1295,7 +1286,6 @@ trait IS_OBJECT_HELP<A ,ALWAYS> {
 	using R1X = IS_BASIC<A> ;
 	using R2X = IS_UNDER<A> ;
 	using R3X = IS_CLASS<A> ;
-
 	using RET = ENUM_ANY<R1X ,R2X ,R3X> ;
 } ;
 

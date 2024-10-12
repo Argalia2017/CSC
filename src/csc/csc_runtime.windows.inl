@@ -54,8 +54,8 @@ public:
 	}
 
 	void thread_sleep (CREF<Time> time) const override {
-		auto &&rax = keep[TYPE<TimeLayout>::expr] (time) ;
-		std::this_thread::sleep_for (rax.mThis->mTime) ;
+		const auto r1x = time.borrow () ;
+		std::this_thread::sleep_for (r1x->mTime) ;
 	}
 
 	void thread_yield () const override {
@@ -257,8 +257,8 @@ public:
 static const auto mModuleExternal = External<ModuleHolder ,ModuleLayout>::declare (ModuleImplHolder ()) ;
 
 struct SingletonHeap {
-	Mutex mMutex ;
-	Set<Clazz> mClazzSet ;
+	Pin<Mutex> mMutex ;
+	Pin<Set<Clazz>> mClazzSet ;
 } ;
 
 struct SingletonPipe {
@@ -273,7 +273,7 @@ struct SingletonProcImplLayout {
 	FLAG mUid ;
 	String<STR> mName ;
 	UniqueRef<HANDLE> mPipe ;
-	Ref<Pin<SingletonHeap>> mHeap ;
+	Ref<SingletonHeap> mHeap ;
 } ;
 
 class SingletonProcImplHolder implement Fat<SingletonProcHolder ,SingletonProcLayout> {
@@ -311,7 +311,7 @@ public:
 			assume (r1x != ZERO) ;
 			if (address (fake.mThis->mHeap.self) == r1x)
 				return ;
-			fake.mThis->mHeap = Ref<Pin<SingletonHeap>>::reference (Pointer::make (r1x)) ;
+			fake.mThis->mHeap = Ref<SingletonHeap>::reference (Pointer::make (r1x)) ;
 		}
 	}
 
@@ -325,9 +325,9 @@ public:
 		} ,[&] (VREF<HANDLE> me) {
 			CloseHandle (me) ;
 		}) ;
-		fake.mThis->mHeap = Ref<Pin<SingletonHeap>>::make () ;
-		fake.mThis->mHeap->self.mMutex = RecursiveMutex () ;
-		fake.mThis->mHeap->self.mClazzSet = Set<Clazz> () ;
+		fake.mThis->mHeap = Ref<SingletonHeap>::make () ;
+		fake.mThis->mHeap->mMutex.self = RecursiveMutex () ;
+		fake.mThis->mHeap->mClazzSet.self = Set<Clazz> () ;
 	}
 
 	SingletonPipe load_pipe () const {
@@ -377,8 +377,8 @@ public:
 	}
 
 	FLAG load (CREF<Clazz> clazz) const override {
-		Scope<Mutex> anonymous (fake.mThis->mHeap->self.mMutex) ;
-		FLAG ret = fake.mThis->mHeap->self.mClazzSet.map (clazz) ;
+		Scope<Mutex> anonymous (fake.mThis->mHeap->mMutex.self) ;
+		FLAG ret = fake.mThis->mHeap->mClazzSet->map (clazz) ;
 		replace (ret ,NONE ,ZERO) ;
 		return move (ret) ;
 	}
@@ -386,8 +386,8 @@ public:
 	void save (CREF<Clazz> clazz ,CREF<FLAG> addr) const override {
 		assert (addr != ZERO) ;
 		assert (addr != NONE) ;
-		Scope<Mutex> anonymous (fake.mThis->mHeap->self.mMutex) ;
-		fake.mThis->mHeap->self.mClazzSet.add (clazz ,addr) ;
+		Scope<Mutex> anonymous (fake.mThis->mHeap->mMutex.self) ;
+		fake.mThis->mHeap->mClazzSet->add (clazz ,addr) ;
 	}
 } ;
 
@@ -441,7 +441,7 @@ public:
 	}
 
 	String<STR> fetch () const override {
-		return fake.mThis->mPathName.clone () ;
+		return fake.mThis->mPathName ;
 	}
 
 	PathLayout root () const override {
@@ -990,7 +990,7 @@ struct BufferFileHeader {
 struct BufferFileChunk {
 	VAL64 mIndex ;
 	VAL64 mCacheTime ;
-	UniqueRef<Tuple<FLAG ,LENGTH>> mBuffer ;
+	UniqueRef<Tuple<FLAG ,LENGTH>> mBlock ;
 } ;
 
 struct BufferFileImplLayout {
@@ -1177,7 +1177,7 @@ public:
 
 	Ref<RefBuffer<BYTE>> borrow_header () {
 		INDEX ix = load (0 ,HEADER_SIZE::expr) ;
-		auto rax = RefBuffer<BYTE>::reference (fake.mThis->mCacheList[ix].mBuffer->m1st ,HEADER_SIZE::expr) ;
+		auto rax = RefBuffer<BYTE>::reference (fake.mThis->mCacheList[ix].mBlock->m1st ,HEADER_SIZE::expr) ;
 		return Ref<RefBuffer<BYTE>>::make (move (rax)) ;
 	}
 
@@ -1213,7 +1213,7 @@ public:
 		const auto r2x = index % fake.mThis->mHeader->mBlockSize * fake.mThis->mHeader->mBlockStep ;
 		const auto r3x = HEADER_SIZE::expr + r1x * fake.mThis->mHeader->mChunkStep ;
 		INDEX ix = load (r3x ,LENGTH (fake.mThis->mHeader->mChunkStep)) ;
-		const auto r4x = fake.mThis->mCacheList[ix].mBuffer->m1st + LENGTH (r2x) ;
+		const auto r4x = fake.mThis->mCacheList[ix].mBlock->m1st + LENGTH (r2x) ;
 		inline_memcpy (Pointer::from (item.self) ,Pointer::make (r4x) ,LENGTH (fake.mThis->mHeader->mBlockStep)) ;
 	}
 
@@ -1225,7 +1225,7 @@ public:
 		const auto r2x = index % fake.mThis->mHeader->mBlockSize * fake.mThis->mHeader->mBlockStep ;
 		const auto r3x = HEADER_SIZE::expr + r1x * fake.mThis->mHeader->mChunkStep ;
 		INDEX ix = load (r3x ,LENGTH (fake.mThis->mHeader->mChunkStep)) ;
-		const auto r4x = fake.mThis->mCacheList[ix].mBuffer->m1st + LENGTH (r2x) ;
+		const auto r4x = fake.mThis->mCacheList[ix].mBlock->m1st + LENGTH (r2x) ;
 		inline_memcpy (Pointer::make (r4x) ,Pointer::from (item.self) ,LENGTH (fake.mThis->mHeader->mBlockStep)) ;
 	}
 
@@ -1238,7 +1238,7 @@ public:
 			ret = fake.mThis->mCacheList.insert () ;
 			fake.mThis->mCacheSet.add (index ,ret) ;
 			fake.mThis->mCacheList[ret].mIndex = index ;
-			fake.mThis->mCacheList[ret].mBuffer = UniqueRef<Tuple<FLAG ,LENGTH>> ([&] (VREF<Tuple<FLAG ,LENGTH>> me) {
+			fake.mThis->mCacheList[ret].mBlock = UniqueRef<Tuple<FLAG ,LENGTH>> ([&] (VREF<Tuple<FLAG ,LENGTH>> me) {
 				const auto r1x = csc_enum_t (ByteProc::bit_high (QUAD (index))) ;
 				const auto r2x = csc_enum_t (ByteProc::bit_low (QUAD (index))) ;
 				const auto r3x = MapViewOfFile (fake.mThis->mMapping ,fake.mThis->mFileMapFlag ,r1x ,r2x ,size_) ;

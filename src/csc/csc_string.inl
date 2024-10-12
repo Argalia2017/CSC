@@ -143,12 +143,14 @@ public:
 		}
 	}
 
-	STRU32 get (CREF<INDEX> index) const {
-		return mDeque[index] ;
+	void get (CREF<INDEX> index ,VREF<STRU32> item) const {
+		item = mDeque[index] ;
 	}
 
 	forceinline STRU32 operator[] (CREF<INDEX> index) const {
-		return get (index) ;
+		STRU32 ret ;
+		get (index ,ret) ;
+		return move (ret) ;
 	}
 
 	template <class ARG1>
@@ -732,7 +734,7 @@ public:
 		return fake.mThis->mTree[fake.mIndex].mName ;
 	}
 
-	BOOL fetch (CREF<BOOL> def) const override {
+	BOOL parse (CREF<BOOL> def) const override {
 		if (!exist ())
 			return def ;
 		try {
@@ -743,7 +745,7 @@ public:
 		return def ;
 	}
 
-	VAL32 fetch (CREF<VAL32> def) const override {
+	VAL32 parse (CREF<VAL32> def) const override {
 		if (!exist ())
 			return def ;
 		try {
@@ -754,7 +756,7 @@ public:
 		return def ;
 	}
 
-	VAL64 fetch (CREF<VAL64> def) const override {
+	VAL64 parse (CREF<VAL64> def) const override {
 		if (!exist ())
 			return def ;
 		try {
@@ -765,7 +767,7 @@ public:
 		return def ;
 	}
 
-	FLT32 fetch (CREF<FLT32> def) const override {
+	FLT32 parse (CREF<FLT32> def) const override {
 		if (!exist ())
 			return def ;
 		try {
@@ -776,7 +778,7 @@ public:
 		return def ;
 	}
 
-	FLT64 fetch (CREF<FLT64> def) const override {
+	FLT64 parse (CREF<FLT64> def) const override {
 		if (!exist ())
 			return def ;
 		try {
@@ -787,109 +789,109 @@ public:
 		return def ;
 	}
 
-	String<STRA> fetch (CREF<String<STRA>> def) const override {
+	String<STRA> parse (CREF<String<STRA>> def) const override {
 		if (!exist ())
-			return def.clone () ;
+			return def ;
 		try {
 			return StringProc::stra_from_stru (fake.mThis->mTree[fake.mIndex].mValue) ;
 		} catch (CREF<Exception> e) {
 			noop (e) ;
 		}
-		return def.clone () ;
+		return def ;
 	}
 
-	String<STRW> fetch (CREF<String<STRW>> def) const override {
+	String<STRW> parse (CREF<String<STRW>> def) const override {
 		if (!exist ())
-			return def.clone () ;
+			return def ;
 		try {
 			return StringProc::strw_from_stru (fake.mThis->mTree[fake.mIndex].mValue) ;
 		} catch (CREF<Exception> e) {
 			noop (e) ;
 		}
-		return def.clone () ;
+		return def ;
 	}
 
-	String<STRU8> fetch (CREF<String<STRU8>> def) const override {
+	String<STRU8> parse (CREF<String<STRU8>> def) const override {
 		if (!exist ())
-			return def.clone () ;
+			return def ;
 		try {
-			return fake.mThis->mTree[fake.mIndex].mValue.clone () ;
+			return fake.mThis->mTree[fake.mIndex].mValue ;
 		} catch (CREF<Exception> e) {
 			noop (e) ;
 		}
-		return def.clone () ;
+		return def ;
 	}
 
-	String<STRU16> fetch (CREF<String<STRU16>> def) const override {
+	String<STRU16> parse (CREF<String<STRU16>> def) const override {
 		if (!exist ())
-			return def.clone () ;
+			return def ;
 		try {
 			return StringProc::stru16_from_stru8 (fake.mThis->mTree[fake.mIndex].mValue) ;
 		} catch (CREF<Exception> e) {
 			noop (e) ;
 		}
-		return def.clone () ;
+		return def ;
 	}
 
-	String<STRU32> fetch (CREF<String<STRU32>> def) const override {
+	String<STRU32> parse (CREF<String<STRU32>> def) const override {
 		if (!exist ())
-			return def.clone () ;
+			return def ;
 		try {
 			return StringProc::stru32_from_stru8 (fake.mThis->mTree[fake.mIndex].mValue) ;
 		} catch (CREF<Exception> e) {
 			noop (e) ;
 		}
-		return def.clone () ;
+		return def ;
 	}
 
-	Array<BOOL> fetch (CREF<BOOL> def ,CREF<LENGTH> size_) const override {
-		return fetch_impl (def ,size_) ;
+	Array<BOOL> parse (CREF<BOOL> def ,CREF<LENGTH> size_) const override {
+		return parse_impl (def ,size_) ;
 	}
 
-	Array<VAL32> fetch (CREF<VAL32> def ,CREF<LENGTH> size_) const override {
-		return fetch_impl (def ,size_) ;
+	Array<VAL32> parse (CREF<VAL32> def ,CREF<LENGTH> size_) const override {
+		return parse_impl (def ,size_) ;
 	}
 
-	Array<VAL64> fetch (CREF<VAL64> def ,CREF<LENGTH> size_) const override {
-		return fetch_impl (def ,size_) ;
+	Array<VAL64> parse (CREF<VAL64> def ,CREF<LENGTH> size_) const override {
+		return parse_impl (def ,size_) ;
 	}
 
-	Array<FLT32> fetch (CREF<FLT32> def ,CREF<LENGTH> size_) const override {
-		return fetch_impl (def ,size_) ;
+	Array<FLT32> parse (CREF<FLT32> def ,CREF<LENGTH> size_) const override {
+		return parse_impl (def ,size_) ;
 	}
 
-	Array<FLT64> fetch (CREF<FLT64> def ,CREF<LENGTH> size_) const override {
-		return fetch_impl (def ,size_) ;
+	Array<FLT64> parse (CREF<FLT64> def ,CREF<LENGTH> size_) const override {
+		return parse_impl (def ,size_) ;
 	}
 
-	Array<String<STRA>> fetch (CREF<String<STRA>> def ,CREF<LENGTH> size_) const override {
-		return fetch_impl (def ,size_) ;
+	Array<String<STRA>> parse (CREF<String<STRA>> def ,CREF<LENGTH> size_) const override {
+		return parse_impl (def ,size_) ;
 	}
 
-	Array<String<STRW>> fetch (CREF<String<STRW>> def ,CREF<LENGTH> size_) const override {
-		return fetch_impl (def ,size_) ;
+	Array<String<STRW>> parse (CREF<String<STRW>> def ,CREF<LENGTH> size_) const override {
+		return parse_impl (def ,size_) ;
 	}
 
-	Array<String<STRU8>> fetch (CREF<String<STRU8>> def ,CREF<LENGTH> size_) const override {
-		return fetch_impl (def ,size_) ;
+	Array<String<STRU8>> parse (CREF<String<STRU8>> def ,CREF<LENGTH> size_) const override {
+		return parse_impl (def ,size_) ;
 	}
 
-	Array<String<STRU16>> fetch (CREF<String<STRU16>> def ,CREF<LENGTH> size_) const override {
-		return fetch_impl (def ,size_) ;
+	Array<String<STRU16>> parse (CREF<String<STRU16>> def ,CREF<LENGTH> size_) const override {
+		return parse_impl (def ,size_) ;
 	}
 
-	Array<String<STRU32>> fetch (CREF<String<STRU32>> def ,CREF<LENGTH> size_) const override {
-		return fetch_impl (def ,size_) ;
+	Array<String<STRU32>> parse (CREF<String<STRU32>> def ,CREF<LENGTH> size_) const override {
+		return parse_impl (def ,size_) ;
 	}
 
 	template <class ARG1>
-	Array<ARG1> fetch_impl (CREF<ARG1> def ,CREF<LENGTH> size_) const {
+	Array<ARG1> parse_impl (CREF<ARG1> def ,CREF<LENGTH> size_) const {
 		const auto r1x = list () ;
 		assume (r1x.size () == size_) ;
 		Array<ARG1> ret = Array<ARG1> (r1x.size ()) ;
 		for (auto &&i : ret.range ()) {
 			const auto r2x = XmlParserHolder::create (fake)->child (i) ;
-			ret[i] = XmlParserHolder::create (r2x)->fetch (def) ;
+			ret[i] = XmlParserHolder::create (r2x)->parse (def) ;
 		}
 		return move (ret) ;
 	}
@@ -1403,7 +1405,7 @@ public:
 		return fake.mThis->mTree[fake.mIndex].mName ;
 	}
 
-	BOOL fetch (CREF<BOOL> def) const override {
+	BOOL parse (CREF<BOOL> def) const override {
 		if (!exist ())
 			return def ;
 		try {
@@ -1414,7 +1416,7 @@ public:
 		return def ;
 	}
 
-	VAL32 fetch (CREF<VAL32> def) const override {
+	VAL32 parse (CREF<VAL32> def) const override {
 		if (!exist ())
 			return def ;
 		try {
@@ -1425,7 +1427,7 @@ public:
 		return def ;
 	}
 
-	VAL64 fetch (CREF<VAL64> def) const override {
+	VAL64 parse (CREF<VAL64> def) const override {
 		if (!exist ())
 			return def ;
 		try {
@@ -1436,7 +1438,7 @@ public:
 		return def ;
 	}
 
-	FLT32 fetch (CREF<FLT32> def) const override {
+	FLT32 parse (CREF<FLT32> def) const override {
 		if (!exist ())
 			return def ;
 		try {
@@ -1447,7 +1449,7 @@ public:
 		return def ;
 	}
 
-	FLT64 fetch (CREF<FLT64> def) const override {
+	FLT64 parse (CREF<FLT64> def) const override {
 		if (!exist ())
 			return def ;
 		try {
@@ -1458,109 +1460,109 @@ public:
 		return def ;
 	}
 
-	String<STRA> fetch (CREF<String<STRA>> def) const override {
+	String<STRA> parse (CREF<String<STRA>> def) const override {
 		if (!exist ())
-			return def.clone () ;
+			return def ;
 		try {
 			return StringProc::stra_from_stru (fake.mThis->mTree[fake.mIndex].mValue) ;
 		} catch (CREF<Exception> e) {
 			noop (e) ;
 		}
-		return def.clone () ;
+		return def ;
 	}
 
-	String<STRW> fetch (CREF<String<STRW>> def) const override {
+	String<STRW> parse (CREF<String<STRW>> def) const override {
 		if (!exist ())
-			return def.clone () ;
+			return def ;
 		try {
 			return StringProc::strw_from_stru (fake.mThis->mTree[fake.mIndex].mValue) ;
 		} catch (CREF<Exception> e) {
 			noop (e) ;
 		}
-		return def.clone () ;
+		return def ;
 	}
 
-	String<STRU8> fetch (CREF<String<STRU8>> def) const override {
+	String<STRU8> parse (CREF<String<STRU8>> def) const override {
 		if (!exist ())
-			return def.clone () ;
+			return def ;
 		try {
-			return fake.mThis->mTree[fake.mIndex].mValue.clone () ;
+			return fake.mThis->mTree[fake.mIndex].mValue ;
 		} catch (CREF<Exception> e) {
 			noop (e) ;
 		}
-		return def.clone () ;
+		return def ;
 	}
 
-	String<STRU16> fetch (CREF<String<STRU16>> def) const override {
+	String<STRU16> parse (CREF<String<STRU16>> def) const override {
 		if (!exist ())
-			return def.clone () ;
+			return def ;
 		try {
 			return StringProc::stru16_from_stru8 (fake.mThis->mTree[fake.mIndex].mValue) ;
 		} catch (CREF<Exception> e) {
 			noop (e) ;
 		}
-		return def.clone () ;
+		return def ;
 	}
 
-	String<STRU32> fetch (CREF<String<STRU32>> def) const override {
+	String<STRU32> parse (CREF<String<STRU32>> def) const override {
 		if (!exist ())
-			return def.clone () ;
+			return def ;
 		try {
 			return StringProc::stru32_from_stru8 (fake.mThis->mTree[fake.mIndex].mValue) ;
 		} catch (CREF<Exception> e) {
 			noop (e) ;
 		}
-		return def.clone () ;
+		return def ;
 	}
 
-	Array<BOOL> fetch (CREF<BOOL> def ,CREF<LENGTH> size_) const override {
-		return fetch_impl (def ,size_) ;
+	Array<BOOL> parse (CREF<BOOL> def ,CREF<LENGTH> size_) const override {
+		return parse_impl (def ,size_) ;
 	}
 
-	Array<VAL32> fetch (CREF<VAL32> def ,CREF<LENGTH> size_) const override {
-		return fetch_impl (def ,size_) ;
+	Array<VAL32> parse (CREF<VAL32> def ,CREF<LENGTH> size_) const override {
+		return parse_impl (def ,size_) ;
 	}
 
-	Array<VAL64> fetch (CREF<VAL64> def ,CREF<LENGTH> size_) const override {
-		return fetch_impl (def ,size_) ;
+	Array<VAL64> parse (CREF<VAL64> def ,CREF<LENGTH> size_) const override {
+		return parse_impl (def ,size_) ;
 	}
 
-	Array<FLT32> fetch (CREF<FLT32> def ,CREF<LENGTH> size_) const override {
-		return fetch_impl (def ,size_) ;
+	Array<FLT32> parse (CREF<FLT32> def ,CREF<LENGTH> size_) const override {
+		return parse_impl (def ,size_) ;
 	}
 
-	Array<FLT64> fetch (CREF<FLT64> def ,CREF<LENGTH> size_) const override {
-		return fetch_impl (def ,size_) ;
+	Array<FLT64> parse (CREF<FLT64> def ,CREF<LENGTH> size_) const override {
+		return parse_impl (def ,size_) ;
 	}
 
-	Array<String<STRA>> fetch (CREF<String<STRA>> def ,CREF<LENGTH> size_) const override {
-		return fetch_impl (def ,size_) ;
+	Array<String<STRA>> parse (CREF<String<STRA>> def ,CREF<LENGTH> size_) const override {
+		return parse_impl (def ,size_) ;
 	}
 
-	Array<String<STRW>> fetch (CREF<String<STRW>> def ,CREF<LENGTH> size_) const override {
-		return fetch_impl (def ,size_) ;
+	Array<String<STRW>> parse (CREF<String<STRW>> def ,CREF<LENGTH> size_) const override {
+		return parse_impl (def ,size_) ;
 	}
 
-	Array<String<STRU8>> fetch (CREF<String<STRU8>> def ,CREF<LENGTH> size_) const override {
-		return fetch_impl (def ,size_) ;
+	Array<String<STRU8>> parse (CREF<String<STRU8>> def ,CREF<LENGTH> size_) const override {
+		return parse_impl (def ,size_) ;
 	}
 
-	Array<String<STRU16>> fetch (CREF<String<STRU16>> def ,CREF<LENGTH> size_) const override {
-		return fetch_impl (def ,size_) ;
+	Array<String<STRU16>> parse (CREF<String<STRU16>> def ,CREF<LENGTH> size_) const override {
+		return parse_impl (def ,size_) ;
 	}
 
-	Array<String<STRU32>> fetch (CREF<String<STRU32>> def ,CREF<LENGTH> size_) const override {
-		return fetch_impl (def ,size_) ;
+	Array<String<STRU32>> parse (CREF<String<STRU32>> def ,CREF<LENGTH> size_) const override {
+		return parse_impl (def ,size_) ;
 	}
 
 	template <class ARG1>
-	Array<ARG1> fetch_impl (CREF<ARG1> def ,CREF<LENGTH> size_) const {
+	Array<ARG1> parse_impl (CREF<ARG1> def ,CREF<LENGTH> size_) const {
 		const auto r1x = list () ;
 		assume (r1x.size () == size_) ;
 		Array<ARG1> ret = Array<ARG1> (r1x.size ()) ;
 		for (auto &&i : ret.range ()) {
 			const auto r2x = JsonParserHolder::create (fake)->child (i) ;
-			ret[i] = JsonParserHolder::create (r2x)->fetch (def) ;
+			ret[i] = JsonParserHolder::create (r2x)->parse (def) ;
 		}
 		return move (ret) ;
 	}
@@ -1707,7 +1709,7 @@ public:
 		mTextReader >> slice ("format") ;
 		mTextReader >> GAP ;
 		mTextReader >> IdentifierText::from (mLastString) ;
-		mFormat = mLastString.clone () ;
+		mFormat = mLastString ;
 		mTextReader >> EndlineText::from (mLastString) ;
 		mTextReader >> GAP ;
 		INDEX ix = NONE ;
@@ -1723,7 +1725,7 @@ public:
 					discard ;
 				ix = mElementList.insert () ;
 				mTextReader >> IdentifierText::from (mLastString) ;
-				mElementList[ix].mName = mLastString.clone () ;
+				mElementList[ix].mName = mLastString ;
 				mTextReader >> GAP ;
 				mTextReader >> ScalarText::from (mLastString) ;
 				const auto r1x = StringParse<LENGTH>::make (mLastString) ;
@@ -1759,7 +1761,7 @@ public:
 				mElementList[ix].mPropertyList[iy].mListSize = 0 ;
 				mTextReader >> GAP ;
 				mTextReader >> IdentifierText::from (mLastString) ;
-				mElementList[ix].mPropertyList[iy].mName = mLastString.clone () ;
+				mElementList[ix].mPropertyList[iy].mName = mLastString ;
 				mTextReader >> GAP ;
 			}
 			if ifdo (act) {
@@ -1779,7 +1781,7 @@ public:
 				mElementList[ix].mPropertyList[iy].mListSize = 0 ;
 				mTextReader >> GAP ;
 				mTextReader >> IdentifierText::from (mLastString) ;
-				mElementList[ix].mPropertyList[iy].mName = mLastString.clone () ;
+				mElementList[ix].mPropertyList[iy].mName = mLastString ;
 				mTextReader >> GAP ;
 			}
 			if ifdo (act) {
@@ -1819,9 +1821,10 @@ public:
 				mElementSet.add (mElementList[j].mName ,j) ;
 		}
 		for (auto &&i : mElementList.range ()) {
-			const auto r7x = mElementList[i].mLineSize * mElementList[i].mLineStep ;
-			mElementList[i].mPlyBuffer = RefBuffer<BYTE> (r7x) ;
-			mElementList[i].mPlyIndex = address (mElementList[i].mPlyBuffer[0]) ;
+			auto &&rax = mElementList[i] ;
+			const auto r7x = rax.mLineSize * rax.mLineStep ;
+			rax.mPlyBuffer = RefBuffer<BYTE> (r7x) ;
+			rax.mPlyIndex = address (rax.mPlyBuffer[0]) ;
 		}
 	}
 

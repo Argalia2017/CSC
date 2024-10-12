@@ -13,8 +13,8 @@ public:
 		const auto r1x = RFat<ReflectSize> (holder) ;
 		const auto r2x = r1x->type_size () ;
 		noop (r2x) ;
-		assert (r2x == that.mWidth.mStep) ;
-		assert (r2x == that.mImage.step ()) ;
+		assume (r2x == that.mWidth.mStep) ;
+		assume (r2x == that.mImage.step ()) ;
 		fake = move (that) ;
 	}
 
@@ -33,16 +33,12 @@ public:
 		reset () ;
 	}
 
-	ImageLayout clone () const override {
-		ImageLayout ret ;
-		if ifdo (TRUE) {
-			const auto r1x = width () ;
-			if (r1x.size () == 0)
-				discard ;
-			ImageHolder::create (ret)->initialize (fake.mImage.unknown () ,r1x.mCX ,r1x.mCY ,r1x.mStep) ;
-			ImageHolder::create (ret)->splice (0 ,0 ,fake) ;
-		}
-		return move (ret) ;
+	void initialize (CREF<ImageLayout> that) override {
+		const auto r1x = ImageHolder::create (that)->width () ;
+		if (r1x.size () == 0)
+			return ;
+		initialize (that.mImage.unknown () ,r1x.mCX ,r1x.mCY ,r1x.mStep) ;
+		splice (0 ,0 ,that) ;
 	}
 
 	BOOL exist () const override {
@@ -278,15 +274,19 @@ exports CFat<SparseHolder> SparseHolder::create (CREF<SparseLayout> that) {
 	return CFat<SparseHolder> (SparseImplHolder () ,that) ;
 }
 
+struct DisjointImplLayout {
+	Pin<Array<INDEX>> mTable ;
+} ;
+
 class DisjointImplHolder implement Fat<DisjointHolder ,DisjointLayout> {
 public:
 	void initialize (CREF<LENGTH> size_) override {
-		fake.mTable.self = Array<INDEX> (size_) ;
-		fake.mTable->fill (NONE) ;
+		fake.mThis->mTable.self = Array<INDEX> (size_) ;
+		fake.mThis->mTable->fill (NONE) ;
 	}
 
 	LENGTH size () const override {
-		return fake.mTable->size () ;
+		return fake.mThis->mTable->size () ;
 	}
 
 	INDEX lead (CREF<INDEX> from_) const override {
@@ -306,7 +306,7 @@ public:
 				if (ix == NONE)
 					break ;
 				iy = parent (ix) ;
-				fake.mTable.self[ix] = ret ;
+				fake.mThis->mTable.self[ix] = ret ;
 				ix = iy ;
 			}
 		}
@@ -314,16 +314,16 @@ public:
 	}
 
 	INDEX parent (CREF<INDEX> curr) const {
-		if (curr == fake.mTable.self[curr])
+		if (curr == fake.mThis->mTable.self[curr])
 			return NONE ;
-		return fake.mTable.self[curr] ;
+		return fake.mThis->mTable.self[curr] ;
 	}
 
 	void joint (CREF<INDEX> from_ ,CREF<INDEX> to_) override {
 		INDEX ix = lead (from_) ;
 		INDEX iy = lead (to_) ;
-		fake.mTable.self[ix] = ix ;
-		fake.mTable.self[iy] = ix ;
+		fake.mThis->mTable.self[ix] = ix ;
+		fake.mThis->mTable.self[iy] = ix ;
 	}
 
 	BOOL edge (CREF<INDEX> from_ ,CREF<INDEX> to_) const override {
@@ -357,9 +357,9 @@ public:
 	}
 
 	Array<INDEX> jump (CREF<INDEX> from_) const override {
-		Array<INDEX> ret = Array<INDEX> (fake.mTable->size ()) ;
+		Array<INDEX> ret = Array<INDEX> (fake.mThis->mTable->size ()) ;
 		ret.fill (NONE) ;
-		for (auto &&i : iter (0 ,fake.mTable->size ())) {
+		for (auto &&i : iter (0 ,fake.mThis->mTable->size ())) {
 			INDEX ix = lead (i) ;
 			if (ix == NONE)
 				continue ;
@@ -399,7 +399,7 @@ public:
 		assert (fake.mMatch.size () > 0) ;
 		assert (love.size () == MathProc::square (fake.mSize)) ;
 		solve () ;
-		return fake.mMatch.clone () ;
+		return fake.mMatch ;
 	}
 
 	void solve () {

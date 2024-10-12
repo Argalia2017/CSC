@@ -12,6 +12,10 @@
 #include "csc_array.hpp"
 
 namespace CSC {
+struct Color1B {
+	BYTE mB ;
+} ;
+
 struct Color2B {
 	BYTE mB ;
 	BYTE mG ;
@@ -103,7 +107,7 @@ struct ImageHolder implement Interface {
 
 	virtual void initialize (CREF<Unknown> holder ,RREF<ImageLayout> that) = 0 ;
 	virtual void initialize (CREF<Unknown> holder ,CREF<LENGTH> cx_ ,CREF<LENGTH> cy_ ,CREF<LENGTH> step_) = 0 ;
-	virtual ImageLayout clone () const = 0 ;
+	virtual void initialize (CREF<ImageLayout> that) = 0 ;
 	virtual BOOL exist () const = 0 ;
 	virtual LENGTH size () const = 0 ;
 	virtual LENGTH step () const = 0 ;
@@ -155,9 +159,20 @@ public:
 		ImageHolder::create (thiz)->initialize (BufferUnknownBinder<A> () ,cx_ ,cy_ ,SIZE_OF<A>::expr) ;
 	}
 
-	Image clone () const {
-		ImageLayout ret = ImageHolder::create (thiz)->clone () ;
-		return move (keep[TYPE<Image>::expr] (ret)) ;
+	implicit Image (CREF<Image> that) {
+		ImageHolder::create (thiz)->initialize (that) ;
+	}
+
+	forceinline VREF<Image> operator= (CREF<Image> that) {
+		return assign (thiz ,that) ;
+	}
+
+	implicit Image (RREF<Image> that) noexcept {
+		swap (thiz ,that) ;
+	}
+
+	forceinline VREF<Image> operator= (RREF<Image> that) noexcept {
+		return assign (thiz ,that) ;
 	}
 
 	BOOL exist () const {
@@ -256,7 +271,7 @@ public:
 		return splice (index.mX ,index.mY ,item) ;
 	}
 
-	Image add (CREF<Image> that) const {
+	Image sadd (CREF<Image> that) const {
 		const auto r1x = width () ;
 		const auto r2x = that.width () ;
 		assert (r1x == r2x) ;
@@ -268,14 +283,14 @@ public:
 	}
 
 	forceinline Image operator+ (CREF<Image> that) const {
-		return add (that) ;
+		return sadd (that) ;
 	}
 
 	forceinline void operator+= (CREF<Image> that) {
-		thiz = add (that) ;
+		thiz = sadd (that) ;
 	}
 
-	Image sub (CREF<Image> that) const {
+	Image ssub (CREF<Image> that) const {
 		const auto r1x = width () ;
 		const auto r2x = that.width () ;
 		assert (r1x == r2x) ;
@@ -287,14 +302,14 @@ public:
 	}
 
 	forceinline Image operator- (CREF<Image> that) const {
-		return sub (that) ;
+		return ssub (that) ;
 	}
 
 	forceinline void operator-= (CREF<Image> that) {
-		thiz = sub (that) ;
+		thiz = ssub (that) ;
 	}
 
-	Image mul (CREF<Image> that) const {
+	Image smul (CREF<Image> that) const {
 		const auto r1x = width () ;
 		const auto r2x = that.width () ;
 		assert (r1x == r2x) ;
@@ -306,14 +321,14 @@ public:
 	}
 
 	forceinline Image operator* (CREF<Image> that) const {
-		return mul (that) ;
+		return smul (that) ;
 	}
 
 	forceinline void operator*= (CREF<Image> that) {
-		thiz = mul (that) ;
+		thiz = smul (that) ;
 	}
 
-	Image div (CREF<Image> that) const {
+	Image sdiv (CREF<Image> that) const {
 		const auto r1x = width () ;
 		const auto r2x = that.width () ;
 		assert (r1x == r2x) ;
@@ -325,14 +340,14 @@ public:
 	}
 
 	forceinline Image operator/ (CREF<Image> that) const {
-		return div (that) ;
+		return sdiv (that) ;
 	}
 
 	forceinline void operator/= (CREF<Image> that) {
-		thiz = div (that) ;
+		thiz = sdiv (that) ;
 	}
 
-	Image mod (CREF<Image> that) const {
+	Image smod (CREF<Image> that) const {
 		const auto r1x = width () ;
 		const auto r2x = that.width () ;
 		assert (r1x == r2x) ;
@@ -344,11 +359,11 @@ public:
 	}
 
 	forceinline Image operator% (CREF<Image> that) const {
-		return mod (that) ;
+		return smod (that) ;
 	}
 
 	forceinline void operator%= (CREF<Image> that) {
-		thiz = mod (that) ;
+		thiz = smod (that) ;
 	}
 
 	Image plus () const {
@@ -377,7 +392,7 @@ public:
 		return minus () ;
 	}
 
-	Image band (CREF<Image> that) const {
+	Image sand (CREF<Image> that) const {
 		const auto r1x = width () ;
 		const auto r2x = that.width () ;
 		assert (r1x == r2x) ;
@@ -389,14 +404,14 @@ public:
 	}
 
 	forceinline Image operator& (CREF<Image> that) const {
-		return band (that) ;
+		return sand (that) ;
 	}
 
 	forceinline void operator&= (CREF<Image> that) {
-		thiz = band (that) ;
+		thiz = sand (that) ;
 	}
 
-	Image bor (CREF<Image> that) const {
+	Image sor (CREF<Image> that) const {
 		const auto r1x = width () ;
 		const auto r2x = that.width () ;
 		assert (r1x == r2x) ;
@@ -408,14 +423,14 @@ public:
 	}
 
 	forceinline Image operator| (CREF<Image> that) const {
-		return bor (that) ;
+		return sor (that) ;
 	}
 
 	forceinline void operator|= (CREF<Image> that) {
-		thiz = bor (that) ;
+		thiz = sor (that) ;
 	}
 
-	Image bxor (CREF<Image> that) const {
+	Image sxor (CREF<Image> that) const {
 		const auto r1x = width () ;
 		const auto r2x = that.width () ;
 		assert (r1x == r2x) ;
@@ -427,14 +442,14 @@ public:
 	}
 
 	forceinline Image operator^ (CREF<Image> that) const {
-		return bxor (that) ;
+		return sxor (that) ;
 	}
 
 	forceinline void operator^= (CREF<Image> that) {
-		thiz = bxor (that) ;
+		thiz = sxor (that) ;
 	}
 
-	Image bnot () const {
+	Image snot () const {
 		const auto r1x = width () ;
 		Image ret = Image (r1x.mCX ,r1x.mCY) ;
 		for (auto &&i : iter (0 ,r1x.mCX ,0 ,r1x.mCY)) {
@@ -444,10 +459,10 @@ public:
 	}
 
 	forceinline Image operator~ () const {
-		return bnot () ;
+		return snot () ;
 	}
 
-	Image blshift (CREF<LENGTH> scale) const {
+	Image sleft (CREF<LENGTH> scale) const {
 		const auto r1x = width () ;
 		Image ret = Image (r1x.mCX ,r1x.mCY) ;
 		for (auto &&i : iter (0 ,r1x.mCX ,0 ,r1x.mCY)) {
@@ -457,10 +472,10 @@ public:
 	}
 
 	forceinline Image operator<< (CREF<LENGTH> scale) const {
-		return blshift (scale) ;
+		return sleft (scale) ;
 	}
 
-	Image brshift (CREF<LENGTH> scale) const {
+	Image sright (CREF<LENGTH> scale) const {
 		const auto r1x = width () ;
 		Image ret = Image (r1x.mCX ,r1x.mCY) ;
 		for (auto &&i : iter (0 ,r1x.mCX ,0 ,r1x.mCY)) {
@@ -470,7 +485,7 @@ public:
 	}
 
 	forceinline Image operator>> (CREF<LENGTH> scale) const {
-		return brshift (scale) ;
+		return sright (scale) ;
 	}
 } ;
 
@@ -485,6 +500,8 @@ struct ImageProcHolder implement Interface {
 	virtual ImageLayout make_image (CREF<LENGTH> cx_ ,CREF<LENGTH> cy_ ,CREF<LENGTH> align ,CREF<LENGTH> channel) const = 0 ;
 	virtual ImageLayout load_image (CREF<String<STR>> file) const = 0 ;
 	virtual void save_image (CREF<String<STR>> file ,CREF<ImageLayout> image) const = 0 ;
+	virtual Color1B sampler (CREF<Image<Color1B>> image ,CREF<FLT64> x ,CREF<FLT64> y) const = 0 ;
+	virtual Color2B sampler (CREF<Image<Color2B>> image ,CREF<FLT64> x ,CREF<FLT64> y) const = 0 ;
 	virtual Color3B sampler (CREF<Image<Color3B>> image ,CREF<FLT64> x ,CREF<FLT64> y) const = 0 ;
 	virtual Color4B sampler (CREF<Image<Color4B>> image ,CREF<FLT64> x ,CREF<FLT64> y) const = 0 ;
 } ;
@@ -580,9 +597,9 @@ public:
 	}
 } ;
 
-struct DisjointLayout {
-	Pin<Array<INDEX>> mTable ;
-} ;
+struct DisjointImplLayout ;
+
+struct DisjointLayout implement ThisLayout<Ref<DisjointImplLayout>> {} ;
 
 struct DisjointHolder implement Interface {
 	imports VFat<DisjointHolder> create (VREF<DisjointLayout> that) ;
@@ -600,7 +617,7 @@ struct DisjointHolder implement Interface {
 
 class Disjoint implement DisjointLayout {
 protected:
-	using DisjointLayout::mTable ;
+	using DisjointLayout::mThis ;
 
 public:
 	implicit Disjoint () = default ;

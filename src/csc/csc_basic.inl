@@ -111,11 +111,11 @@ public:
 	void initialize (CREF<Unknown> holder) override {
 		assert (!exist ()) ;
 		RefHolder::create (fake.mThis)->initialize (RefUnknownBinder<AutoRefImplLayout> () ,holder ,1) ;
-		const auto r1x = fake.mThis.recycle () ;
-		ClazzHolder::create (r1x->self.mClazz)->initialize (holder) ;
+		auto &&rax = fake.mThis.deref () ;
+		ClazzHolder::create (rax.mClazz)->initialize (holder) ;
 		BoxHolder::create (raw ())->initialize (holder) ;
-		const auto r2x = RFat<ReflectCreate> (holder) ;
-		r2x->create (BoxHolder::create (raw ())->self ,1) ;
+		const auto r1x = RFat<ReflectCreate> (holder) ;
+		r1x->create (BoxHolder::create (raw ())->self ,1) ;
 		fake.mPointer = address (BoxHolder::create (raw ())->self) ;
 	}
 
@@ -123,8 +123,8 @@ public:
 		assert (!exist ()) ;
 		const auto r1x = BoxHolder::create (item)->unknown () ;
 		RefHolder::create (fake.mThis)->initialize (RefUnknownBinder<AutoRefImplLayout> () ,r1x ,1) ;
-		const auto r2x = fake.mThis.recycle () ;
-		r2x->self.mClazz = clazz_ ;
+		auto &&rax = fake.mThis.deref () ;
+		rax.mClazz = clazz_ ;
 		BoxHolder::create (raw ())->acquire (item) ;
 		BoxHolder::create (item)->release () ;
 		fake.mPointer = address (BoxHolder::create (raw ())->self) ;
@@ -178,11 +178,10 @@ public:
 		return Pointer::from (fake) ;
 	}
 
-	AutoRefLayout recast (CREF<Unknown> simple) override {
+	AutoRefLayout recast (CREF<ReflectRecast> simple) override {
 		AutoRefLayout ret ;
 		ret.mThis = move (fake.mThis) ;
-		const auto r1x = RFat<ReflectRecast> (simple) ;
-		ret.mPointer = r1x->recast (fake.mPointer) ;
+		ret.mPointer = simple.recast (fake.mPointer) ;
 		return move (ret) ;
 	}
 } ;
@@ -374,11 +373,10 @@ public:
 		return Pointer::make (fake.mPointer) ;
 	}
 
-	SharedRefLayout recast (CREF<Unknown> simple) override {
+	SharedRefLayout recast (CREF<ReflectRecast> simple) override {
 		SharedRefLayout ret ;
 		ret.mThis = move (fake.mThis) ;
-		const auto r1x = RFat<ReflectRecast> (simple) ;
-		ret.mPointer = r1x->recast (fake.mPointer) ;
+		ret.mPointer = simple.recast (fake.mPointer) ;
 		return move (ret) ;
 	}
 } ;
@@ -402,8 +400,8 @@ public:
 		assert (!exist ()) ;
 		const auto r1x = BoxHolder::create (item)->unknown () ;
 		RefHolder::create (fake.mThis)->initialize (RefUnknownBinder<UniqueRefImplLayout> () ,r1x ,1) ;
-		const auto r2x = fake.mThis.recycle () ;
-		r2x->self.mOwner = move (keep[TYPE<Function<VREF<Pointer>>>::expr] (dtor)) ;
+		auto &&rax = fake.mThis.deref () ;
+		rax.mOwner = move (keep[TYPE<Function<VREF<Pointer>>>::expr] (dtor)) ;
 		BoxHolder::create (raw ())->acquire (item) ;
 		BoxHolder::create (item)->release () ;
 		fake.mPointer = address (BoxHolder::create (raw ())->self) ;
@@ -435,11 +433,10 @@ public:
 		return Pointer::make (fake.mPointer) ;
 	}
 
-	UniqueRefLayout recast (CREF<Unknown> simple) override {
+	UniqueRefLayout recast (CREF<ReflectRecast> simple) override {
 		UniqueRefLayout ret ;
 		ret.mThis = move (fake.mThis) ;
-		const auto r1x = RFat<ReflectRecast> (simple) ;
-		ret.mPointer = r1x->recast (fake.mPointer) ;
+		ret.mPointer = simple.recast (fake.mPointer) ;
 		return move (ret) ;
 	}
 } ;
@@ -480,8 +477,8 @@ public:
 		fake.mStep = r2x->type_size () ;
 		const auto r3x = RFat<ReflectCreate> (r1x) ;
 		r3x->create (self ,size_) ;
-		const auto r4x = fake.mThis.recycle () ;
-		r4x->self.mWidth = size_ ;
+		auto &&rax = fake.mThis.deref () ;
+		rax.mWidth = size_ ;
 	}
 
 	void initialize (CREF<Unknown> holder ,RREF<BoxLayout> item) override {
@@ -491,8 +488,8 @@ public:
 		RefHolder::create (fake.mThis)->initialize (RefUnknownBinder<RefBufferImplLayout> () ,r1x ,1) ;
 		BoxHolder::create (raw ())->acquire (item) ;
 		BoxHolder::create (item)->release () ;
-		const auto r2x = fake.mThis.recycle () ;
-		r2x->self.mWidth = USED ;
+		auto &&rax = fake.mThis.deref () ;
+		rax.mWidth = USED ;
 	}
 
 	void destroy () override {
@@ -572,21 +569,21 @@ public:
 		RefHolder::create (rax)->initialize (RefUnknownBinder<RefBufferImplLayout> () ,r2x ,size_) ;
 		const auto r3x = RFat<ReflectSize> (r2x) ;
 		const auto r4x = r3x->type_size () * r1x ;
-		BoxHolder::create (rax->mValue.self)->initialize (r2x) ;
-		const auto r6x = address (BoxHolder::create (rax->mValue.self)->self) ;
-		inline_memcpy (Pointer::make (r6x) ,self ,r4x) ;
-		const auto r7x = r6x + r4x ;
-		const auto r8x = RFat<ReflectCreate> (r2x) ;
-		r8x->create (Pointer::make (r7x) ,size_ - r1x) ;
-		const auto r5x = rax.recycle () ;
-		r5x->self.mWidth = size_ ;
+		auto &&rbx = rax.deref () ;
+		BoxHolder::create (rbx.mValue.self)->initialize (r2x) ;
+		const auto r5x = address (BoxHolder::create (rbx.mValue.self)->self) ;
+		inline_memcpy (Pointer::make (r5x) ,self ,r4x) ;
+		const auto r6x = r5x + r4x ;
+		const auto r7x = RFat<ReflectCreate> (r2x) ;
+		r7x->create (Pointer::make (r6x) ,size_ - r1x) ;
+		rbx.mWidth = size_ ;
 		if ifdo (TRUE) {
 			if (fake.mThis == NULL)
 				discard ;
 			BoxHolder::create (raw ())->release () ;
 		}
 		swap (fake.mThis ,rax) ;
-		fake.mBuffer = r6x ;
+		fake.mBuffer = r5x ;
 		fake.mSize = size_ ;
 		fake.mStep = r3x->type_size () ;
 	}
@@ -605,7 +602,8 @@ public:
 	void initialize (CREF<Unknown> holder ,CREF<LENGTH> size_) override {
 		assert (!exist ()) ;
 		const auto r1x = RFat<ReflectElement> (holder)->element () ;
-		RefHolder::create (fake.mLocal)->initialize (r1x ,r1x ,0) ;
+		RefHolder::create (fake.mThis)->initialize (r1x ,r1x ,0) ;
+		fake.mBuffer = address (fake.mThis.self) ;
 		fake.mIndex = NONE ;
 		fake.mSize = size_ ;
 		const auto r2x = RFat<ReflectSize> (holder) ;
@@ -621,11 +619,11 @@ public:
 	}
 
 	BOOL exist () const override {
-		return fake.mLocal.exist () ;
+		return fake.mThis.exist () ;
 	}
 
 	RFat<Unknown> unknown () const override {
-		return fake.mLocal.unknown () ;
+		return fake.mThis.unknown () ;
 	}
 
 	LENGTH size () const override {
@@ -640,28 +638,28 @@ public:
 		return fake.mStep ;
 	}
 
-	VREF<Pointer> raw () leftvalue {
-		return Pointer::make (address (fake.mLocal.self)) ;
+	VREF<Pointer> self_m () leftvalue {
+		return Pointer::make (fake.mBuffer) ;
 	}
 
 	VREF<Pointer> at (CREF<INDEX> index) leftvalue override {
 		assert (inline_between (index ,0 ,size ())) ;
 		update_sync (index) ;
-		return raw () ;
+		return self ;
 	}
 
 	void update_sync (CREF<INDEX> index) {
 		if (fake.mIndex == index)
 			return ;
 		refresh () ;
-		fake.mGetter (index ,raw ()) ;
+		fake.mGetter (index ,self) ;
 		fake.mIndex = index ;
 	}
 
 	void refresh () override {
 		if (fake.mIndex == NONE)
 			return ;
-		fake.mSetter (fake.mIndex ,raw ()) ;
+		fake.mSetter (fake.mIndex ,self) ;
 		fake.mIndex = NONE ;
 	}
 } ;

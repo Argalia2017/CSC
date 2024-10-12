@@ -307,7 +307,7 @@ public:
 		mThreadSolution = Array<CalcSolution> (size_) ;
 		mSearchSolution = Array<CalcSolution> (size_) ;
 		mBestSolution.mIndex = NONE ;
-		mBestSolution.mError = FLT64_INF ;
+		mBestSolution.mError = infinity ;
 		mBestSolution.mInput = BitSet () ;
 		mHasBestSolution = FALSE ;
 	}
@@ -374,9 +374,9 @@ public:
 
 	BitSet bitset_xor (CREF<BitSet> bitset1 ,CREF<BitSet> bitset2) const {
 		if (bitset1.size () == 0)
-			return bitset2.clone () ;
+			return bitset2 ;
 		if (bitset2.size () == 0)
-			return bitset1.clone () ;
+			return bitset1 ;
 		return bitset1 ^ bitset2 ;
 	}
 
@@ -384,7 +384,7 @@ public:
 		Scope<Mutex> anonymous (mThreadMutex) ;
 		if (mThreadSolution[slot].mIndex == mBestSolution.mIndex)
 			return ;
-		mThreadSolution[slot] = mBestSolution.clone () ;
+		mThreadSolution[slot] = mBestSolution ;
 	}
 
 	BOOL accept_solution (CREF<INDEX> slot) {
@@ -396,7 +396,7 @@ public:
 					discard ;
 			mBestSolution.mIndex++ ;
 			mBestSolution.mError = mSearchSolution[slot].mError ;
-			mBestSolution.mInput = mSearchSolution[slot].mInput.clone () ;
+			mBestSolution.mInput = mSearchSolution[slot].mInput ;
 			mHasBestSolution = TRUE ;
 			rax.notify () ;
 		}
@@ -434,7 +434,7 @@ public:
 
 	CalcSolution best () {
 		Scope<Mutex> anonymous (mThreadMutex) ;
-		return mBestSolution.clone () ;
+		return mBestSolution ;
 	}
 
 	void join () {
@@ -785,54 +785,5 @@ exports VFat<PromiseHolder> PromiseHolder::create (VREF<PromiseLayout> that) {
 
 exports CFat<PromiseHolder> PromiseHolder::create (CREF<PromiseLayout> that) {
 	return CFat<PromiseHolder> (PromiseImplHolder () ,that) ;
-}
-
-struct ExpressionNode {
-	FunctionLayout mOperator ;
-	Deque<INDEX> mOperand ;
-	AutoRef<Pointer> mValue ;
-} ;
-
-struct ExpressionImplLayout {
-	List<ExpressionNode> mTree ;
-} ;
-
-class ExpressionImplHolder implement Fat<ExpressionHolder ,ExpressionLayout> {
-public:
-	void initialize (RREF<AutoRef<Pointer>> item) override {
-		fake.mThis = SharedRef<ExpressionImplLayout>::make () ;
-		fake.mIndex = fake.mThis->mTree.insert () ;
-		fake.mThis->mTree[fake.mIndex].mValue = move (item) ;
-	}
-
-	LENGTH rank () const override {
-		const auto r1x = FunctionHolder::create (fake.mThis->mTree[fake.mIndex].mOperator)->rank () ;
-		const auto r2x = fake.mThis->mTree[fake.mIndex].mOperand.length () ;
-		return r1x - r2x ;
-	}
-
-	ExpressionLayout add (CREF<ExpressionLayout> that) const override {
-		ExpressionLayout ret ;
-		unimplemented () ;
-		return move (ret) ;
-	}
-
-	ExpressionLayout sub (CREF<ExpressionLayout> that) const override {
-		ExpressionLayout ret ;
-		unimplemented () ;
-		return move (ret) ;
-	}
-
-	CREF<AutoRef<Pointer>> eval () const leftvalue override {
-		return fake.mThis->mTree[fake.mIndex].mValue ;
-	}
-} ;
-
-exports VFat<ExpressionHolder> ExpressionHolder::create (VREF<ExpressionLayout> that) {
-	return VFat<ExpressionHolder> (ExpressionImplHolder () ,that) ;
-}
-
-exports CFat<ExpressionHolder> ExpressionHolder::create (CREF<ExpressionLayout> that) {
-	return CFat<ExpressionHolder> (ExpressionImplHolder () ,that) ;
 }
 } ;

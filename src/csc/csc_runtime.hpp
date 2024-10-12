@@ -38,6 +38,7 @@ struct TimeHolder implement Interface {
 	virtual void initialize (CREF<LENGTH> milliseconds_) = 0 ;
 	virtual void initialize (CREF<TimeCalendar> calendar_) = 0 ;
 	virtual void initialize (CREF<TimeLayout> that) = 0 ;
+	virtual Ref<TimeImplLayout> borrow () const = 0 ;
 	virtual LENGTH megaseconds () const = 0 ;
 	virtual LENGTH kiloseconds () const = 0 ;
 	virtual LENGTH seconds () const = 0 ;
@@ -45,8 +46,8 @@ struct TimeHolder implement Interface {
 	virtual LENGTH microseconds () const = 0 ;
 	virtual LENGTH nanoseconds () const = 0 ;
 	virtual TimeCalendar calendar () const = 0 ;
-	virtual TimeLayout add (CREF<TimeLayout> that) const = 0 ;
-	virtual TimeLayout sub (CREF<TimeLayout> that) const = 0 ;
+	virtual TimeLayout sadd (CREF<TimeLayout> that) const = 0 ;
+	virtual TimeLayout ssub (CREF<TimeLayout> that) const = 0 ;
 } ;
 
 class Time implement TimeLayout {
@@ -76,6 +77,10 @@ public:
 
 	forceinline VREF<Time> operator= (RREF<Time> that) = default ;
 
+	Ref<TimeImplLayout> borrow () const {
+		return TimeHolder::create (thiz)->borrow () ;
+	}
+
 	LENGTH megaseconds () const {
 		return TimeHolder::create (thiz)->megaseconds () ;
 	}
@@ -104,30 +109,30 @@ public:
 		return TimeHolder::create (thiz)->calendar () ;
 	}
 
-	Time add (CREF<Time> that) const {
-		TimeLayout ret = TimeHolder::create (thiz)->add (that) ;
+	Time sadd (CREF<Time> that) const {
+		TimeLayout ret = TimeHolder::create (thiz)->sadd (that) ;
 		return move (keep[TYPE<Time>::expr] (ret)) ;
 	}
 
 	Time operator+ (CREF<Time> that) const {
-		return add (that) ;
+		return sadd (that) ;
 	}
 
 	forceinline void operator+= (CREF<Time> that) {
-		thiz = add (that) ;
+		thiz = sadd (that) ;
 	}
 
-	Time sub (CREF<Time> that) const {
-		TimeLayout ret = TimeHolder::create (thiz)->sub (that) ;
+	Time ssub (CREF<Time> that) const {
+		TimeLayout ret = TimeHolder::create (thiz)->ssub (that) ;
 		return move (keep[TYPE<Time>::expr] (ret)) ;
 	}
 
 	Time operator- (CREF<Time> that) const {
-		return sub (that) ;
+		return ssub (that) ;
 	}
 
 	forceinline void operator-= (CREF<Time> that) {
-		thiz = sub (that) ;
+		thiz = ssub (that) ;
 	}
 } ;
 
@@ -244,6 +249,10 @@ public:
 		return AtomicHolder::create (thiz)->fetch () ;
 	}
 
+	forceinline operator VAL () const {
+		return fetch () ;
+	}
+
 	void store (CREF<VAL> item) const {
 		return AtomicHolder::create (thiz)->store (item) ;
 	}
@@ -265,7 +274,7 @@ public:
 	}
 
 	void operator++ (int) const {
-		increase () ;
+		return increase () ;
 	}
 
 	void decrease () const {
@@ -273,7 +282,7 @@ public:
 	}
 
 	void operator-- (int) const {
-		decrease () ;
+		return decrease () ;
 	}
 } ;
 
@@ -725,7 +734,7 @@ struct GlobalHolder implement Interface {
 	imports CFat<GlobalHolder> create (CREF<GlobalLayout> that) ;
 
 	virtual void initialize () = 0 ;
-	virtual void initialize (CREF<Slice> name ,CREF<Unknown> holder) = 0 ;
+	virtual void initialize (CREF<Slice> name ,CREF<Unknown> holder ,CREF<GlobalLayout> root) = 0 ;
 	virtual BOOL exist () const = 0 ;
 	virtual AutoRef<Pointer> fetch () const = 0 ;
 	virtual void store (RREF<AutoRef<Pointer>> item) const = 0 ;
@@ -762,7 +771,7 @@ public:
 	}
 } ;
 
-template <class A>
+template <class A ,class B = Singleton<GlobalRoot>>
 class Global implement GlobalLayout {
 protected:
 	using GlobalLayout::mThis ;
@@ -772,7 +781,7 @@ public:
 	implicit Global () = delete ;
 
 	explicit Global (CREF<Slice> name) {
-		GlobalHolder::create (thiz)->initialize (name ,GlobalUnknownBinder<A> ()) ;
+		GlobalHolder::create (thiz)->initialize (name ,GlobalUnknownBinder<A> () ,B::instance ()) ;
 	}
 
 	BOOL exist () const {
@@ -782,6 +791,10 @@ public:
 	A fetch () const {
 		auto rax = GlobalHolder::create (thiz)->fetch () ;
 		return move (rax.rebind (TYPE<A>::expr).self) ;
+	}
+
+	forceinline operator A () const {
+		return fetch () ;
 	}
 
 	void store (RREF<A> item) const {

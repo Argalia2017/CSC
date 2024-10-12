@@ -136,6 +136,7 @@ template <class A>
 using HAS_FRIEND_READ = typename HAS_FRIEND_READ_HELP<A ,ALWAYS>::RET ;
 
 struct StreamReader implement Interface {
+	virtual BOOL good () const = 0 ;
 	virtual void backup () = 0 ;
 	virtual void recover () = 0 ;
 	virtual void read (VREF<BOOL> item) = 0 ;
@@ -170,6 +171,10 @@ class StreamReaderBinder implement Fat<StreamReader ,A> {
 public:
 	imports VFat<StreamReader> create (VREF<A> that) {
 		return VFat<StreamReader> (StreamReaderBinder () ,that) ;
+	}
+
+	BOOL good () const override {
+		return thiz.fake.good () ;
 	}
 
 	void backup () override {
@@ -280,6 +285,7 @@ struct ByteReaderHolder implement Interface {
 	virtual LENGTH length () const = 0 ;
 	virtual void reset () = 0 ;
 	virtual void reset (CREF<INDEX> read_ ,CREF<INDEX> write_) = 0 ;
+	virtual BOOL good () const = 0 ;
 	virtual void backup () = 0 ;
 	virtual void recover () = 0 ;
 	virtual void read (VREF<BOOL> item) = 0 ;
@@ -337,6 +343,10 @@ public:
 
 	void reset (CREF<INDEX> read_ ,CREF<INDEX> write_) {
 		return ByteReaderHolder::create (thiz)->reset (read_ ,write_) ;
+	}
+
+	BOOL good () const {
+		return ByteReaderHolder::create (thiz)->good () ;
 	}
 
 	void backup () {
@@ -565,6 +575,7 @@ struct TextReaderHolder implement Interface {
 	virtual LENGTH length () const = 0 ;
 	virtual void reset () = 0 ;
 	virtual void reset (CREF<INDEX> read_ ,CREF<INDEX> write_) = 0 ;
+	virtual BOOL good () const = 0 ;
 	virtual void backup () = 0 ;
 	virtual void recover () = 0 ;
 	virtual void read (VREF<BOOL> item) = 0 ;
@@ -622,6 +633,10 @@ public:
 
 	void reset (CREF<INDEX> read_ ,CREF<INDEX> write_) {
 		return TextReaderHolder::create (thiz)->reset (read_ ,write_) ;
+	}
+
+	BOOL good () const {
+		return TextReaderHolder::create (thiz)->good () ;
 	}
 
 	void backup () {
@@ -850,6 +865,7 @@ template <class A>
 using HAS_FRIEND_WRITE = typename HAS_FRIEND_WRITE_HELP<A ,ALWAYS>::RET ;
 
 struct StreamWriter implement Interface {
+	virtual BOOL good () const = 0 ;
 	virtual void backup () = 0 ;
 	virtual void recover () = 0 ;
 	virtual void write (CREF<BOOL> item) = 0 ;
@@ -884,6 +900,10 @@ class StreamWriterBinder implement Fat<StreamWriter ,A> {
 public:
 	imports VFat<StreamWriter> create (VREF<A> that) {
 		return VFat<StreamWriter> (StreamWriterBinder () ,that) ;
+	}
+
+	BOOL good () const override {
+		return thiz.fake.good () ;
 	}
 
 	void backup () override {
@@ -994,6 +1014,7 @@ struct ByteWriterHolder implement Interface {
 	virtual LENGTH length () const = 0 ;
 	virtual void reset () = 0 ;
 	virtual void reset (CREF<INDEX> read_ ,CREF<INDEX> write_) = 0 ;
+	virtual BOOL good () const = 0 ;
 	virtual void backup () = 0 ;
 	virtual void recover () = 0 ;
 	virtual void write (CREF<BOOL> item) = 0 ;
@@ -1051,6 +1072,10 @@ public:
 
 	void reset (CREF<INDEX> read_ ,CREF<INDEX> write_) {
 		return ByteWriterHolder::create (thiz)->reset (read_ ,write_) ;
+	}
+
+	BOOL good () const {
+		return ByteWriterHolder::create (thiz)->good () ;
 	}
 
 	void backup () {
@@ -1272,6 +1297,7 @@ struct TextWriterHolder implement Interface {
 	virtual LENGTH length () const = 0 ;
 	virtual void reset () = 0 ;
 	virtual void reset (CREF<INDEX> read_ ,CREF<INDEX> write_) = 0 ;
+	virtual BOOL good () const = 0 ;
 	virtual void backup () = 0 ;
 	virtual void recover () = 0 ;
 	virtual void write (CREF<BOOL> item) = 0 ;
@@ -1329,6 +1355,10 @@ public:
 
 	void reset (CREF<INDEX> read_ ,CREF<INDEX> write_) {
 		return TextWriterHolder::create (thiz)->reset (read_ ,write_) ;
+	}
+
+	BOOL good () const {
+		return TextWriterHolder::create (thiz)->good () ;
 	}
 
 	void backup () {

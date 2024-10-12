@@ -79,8 +79,6 @@ struct MathProcHolder implement Interface {
 	virtual FLT64 exp (CREF<FLT64> a) const = 0 ;
 	virtual FLT32 log (CREF<FLT32> a) const = 0 ;
 	virtual FLT64 log (CREF<FLT64> a) const = 0 ;
-	virtual VAL32 log10 (CREF<VAL32> a) const = 0 ;
-	virtual VAL64 log10 (CREF<VAL64> a) const = 0 ;
 	virtual FLT32 pdf (CREF<FLT32> a) const = 0 ;
 	virtual FLT64 pdf (CREF<FLT64> a) const = 0 ;
 	virtual FLT32 cbf (CREF<FLT32> a) const = 0 ;
@@ -175,9 +173,9 @@ public:
 		return MathProcHolder::create (instance ())->clamp (a ,lb ,rb) ;
 	}
 
-	template <class ARG1 ,class ARG2 ,class = REQUIRE<IS_VALUE<ARG2>>>
-	imports ARG2 lerp (CREF<ARG1> a ,CREF<ARG2> lb ,CREF<ARG2> rb) {
-		return MathProcHolder::create (instance ())->lerp (FLT64 (a) ,lb ,rb) ;
+	template <class ARG1 ,class = REQUIRE<IS_VALUE<ARG1>>>
+	imports ARG1 lerp (CREF<FLT64> a ,CREF<ARG1> lb ,CREF<ARG1> rb) {
+		return MathProcHolder::create (instance ())->lerp (a ,lb ,rb) ;
 	}
 
 	template <class ARG1 ,class = REQUIRE<IS_FLOAT<ARG1>>>
@@ -220,11 +218,6 @@ public:
 		return MathProcHolder::create (instance ())->log (a) ;
 	}
 
-	template <class ARG1 ,class = REQUIRE<IS_VALUE<ARG1>>>
-	imports ARG1 log10 (CREF<ARG1> a) {
-		return MathProcHolder::create (instance ())->log10 (a) ;
-	}
-
 	template <class ARG1 ,class = REQUIRE<IS_FLOAT<ARG1>>>
 	imports ARG1 pdf (CREF<ARG1> a) {
 		return MathProcHolder::create (instance ())->pdf (a) ;
@@ -235,22 +228,22 @@ public:
 		return MathProcHolder::create (instance ())->cbf (a) ;
 	}
 
-	template <class ARG1 ,class...ARG2 ,class = REQUIRE<IS_BOOL<ARG1>> ,class = REQUIRE<ENUM_ALL<IS_BOOL<ARG2>...>>>
+	template <class ARG1 ,class...ARG2 ,class = REQUIRE<IS_BOOL<ARG1>> ,class = REQUIRE<ENUM_ALL<IS_SAME<ARG1 ,ARG2>...>>>
 	imports BOOL all_of (CREF<ARG1> a ,CREF<ARG2>...b) {
 		return MathProcHolder::create (instance ())->all_of (a ,MakeWrapper (b...)) ;
 	}
 
-	template <class ARG1 ,class...ARG2 ,class = REQUIRE<IS_BOOL<ARG1>> ,class = REQUIRE<ENUM_ALL<IS_BOOL<ARG2>...>>>
+	template <class ARG1 ,class...ARG2 ,class = REQUIRE<IS_BOOL<ARG1>> ,class = REQUIRE<ENUM_ALL<IS_SAME<ARG1 ,ARG2>...>>>
 	imports BOOL any_of (CREF<ARG1> a ,CREF<ARG2>...b) {
 		return MathProcHolder::create (instance ())->any_of (a ,MakeWrapper (b...)) ;
 	}
 
-	template <class ARG1 ,class...ARG2 ,class = REQUIRE<IS_SCALAR<ARG1>> ,class = REQUIRE<ENUM_ALL<IS_SCALAR<ARG2>...>>>
+	template <class ARG1 ,class...ARG2 ,class = REQUIRE<IS_SCALAR<ARG1>> ,class = REQUIRE<ENUM_ALL<IS_SAME<ARG1 ,ARG2>...>>>
 	imports ARG1 max_of (CREF<ARG1> a ,CREF<ARG2>...b) {
 		return MathProcHolder::create (instance ())->max_of (a ,MakeWrapper (b...)) ;
 	}
 
-	template <class ARG1 ,class...ARG2 ,class = REQUIRE<IS_SCALAR<ARG1>> ,class = REQUIRE<ENUM_ALL<IS_SCALAR<ARG2>...>>>
+	template <class ARG1 ,class...ARG2 ,class = REQUIRE<IS_SCALAR<ARG1>> ,class = REQUIRE<ENUM_ALL<IS_SAME<ARG1 ,ARG2>...>>>
 	imports ARG1 min_of (CREF<ARG1> a ,CREF<ARG2>...b) {
 		return MathProcHolder::create (instance ())->min_of (a ,MakeWrapper (b...)) ;
 	}
@@ -549,12 +542,12 @@ struct IntegerHolder implement Interface {
 	virtual BOOL equal (CREF<IntegerLayout> that) const = 0 ;
 	virtual FLAG compr (CREF<IntegerLayout> that) const = 0 ;
 	virtual void visit (VREF<Visitor> visitor) const = 0 ;
-	virtual IntegerLayout add (CREF<IntegerLayout> that) const = 0 ;
-	virtual IntegerLayout sub (CREF<IntegerLayout> that) const = 0 ;
-	virtual IntegerLayout mul (CREF<IntegerLayout> that) const = 0 ;
-	virtual IntegerLayout mul (CREF<VAL64> scale) const = 0 ;
-	virtual IntegerLayout div (CREF<VAL64> scale) const = 0 ;
-	virtual IntegerLayout mod (CREF<VAL64> scale) const = 0 ;
+	virtual IntegerLayout sadd (CREF<IntegerLayout> that) const = 0 ;
+	virtual IntegerLayout ssub (CREF<IntegerLayout> that) const = 0 ;
+	virtual IntegerLayout smul (CREF<IntegerLayout> that) const = 0 ;
+	virtual IntegerLayout smul (CREF<VAL64> scale) const = 0 ;
+	virtual IntegerLayout sdiv (CREF<VAL64> scale) const = 0 ;
+	virtual IntegerLayout smod (CREF<VAL64> scale) const = 0 ;
 	virtual IntegerLayout plus () const = 0 ;
 	virtual IntegerLayout minus () const = 0 ;
 	virtual void increase () = 0 ;
@@ -596,11 +589,11 @@ public:
 		return IntegerHolder::create (thiz)->equal (that) ;
 	}
 
-	inline BOOL operator== (CREF<Integer> that) const {
+	forceinline BOOL operator== (CREF<Integer> that) const {
 		return equal (that) ;
 	}
 
-	inline BOOL operator!= (CREF<Integer> that) const {
+	forceinline BOOL operator!= (CREF<Integer> that) const {
 		return (!equal (that)) ;
 	}
 
@@ -608,19 +601,19 @@ public:
 		return IntegerHolder::create (thiz)->compr (that) ;
 	}
 
-	inline BOOL operator< (CREF<Integer> that) const {
+	forceinline BOOL operator< (CREF<Integer> that) const {
 		return compr (that) < ZERO ;
 	}
 
-	inline BOOL operator<= (CREF<Integer> that) const {
+	forceinline BOOL operator<= (CREF<Integer> that) const {
 		return compr (that) <= ZERO ;
 	}
 
-	inline BOOL operator> (CREF<Integer> that) const {
+	forceinline BOOL operator> (CREF<Integer> that) const {
 		return compr (that) > ZERO ;
 	}
 
-	inline BOOL operator>= (CREF<Integer> that) const {
+	forceinline BOOL operator>= (CREF<Integer> that) const {
 		return compr (that) >= ZERO ;
 	}
 
@@ -628,82 +621,82 @@ public:
 		return IntegerHolder::create (thiz)->visit (visitor) ;
 	}
 
-	Integer add (CREF<Integer> that) const {
-		IntegerLayout ret = IntegerHolder::create (thiz)->add (that) ;
+	Integer sadd (CREF<Integer> that) const {
+		IntegerLayout ret = IntegerHolder::create (thiz)->sadd (that) ;
 		return move (keep[TYPE<Integer>::expr] (ret)) ;
 	}
 
-	inline Integer operator+ (CREF<Integer> that) const {
-		return add (that) ;
+	forceinline Integer operator+ (CREF<Integer> that) const {
+		return sadd (that) ;
 	}
 
-	inline void operator+= (CREF<Integer> that) {
-		thiz = add (that) ;
+	forceinline void operator+= (CREF<Integer> that) {
+		thiz = sadd (that) ;
 	}
 
-	Integer sub (CREF<Integer> that) const {
-		IntegerLayout ret = IntegerHolder::create (thiz)->sub (that) ;
+	Integer ssub (CREF<Integer> that) const {
+		IntegerLayout ret = IntegerHolder::create (thiz)->ssub (that) ;
 		return move (keep[TYPE<Integer>::expr] (ret)) ;
 	}
 
-	inline Integer operator- (CREF<Integer> that) const {
-		return sub (that) ;
+	forceinline Integer operator- (CREF<Integer> that) const {
+		return ssub (that) ;
 	}
 
-	inline void operator-= (CREF<Integer> that) {
-		thiz = sub (that) ;
+	forceinline void operator-= (CREF<Integer> that) {
+		thiz = ssub (that) ;
 	}
 
-	Integer mul (CREF<Integer> that) const {
-		IntegerLayout ret = IntegerHolder::create (thiz)->mul (that) ;
+	Integer smul (CREF<Integer> that) const {
+		IntegerLayout ret = IntegerHolder::create (thiz)->smul (that) ;
 		return move (keep[TYPE<Integer>::expr] (ret)) ;
 	}
 
-	inline Integer operator* (CREF<Integer> that) const {
-		return mul (that) ;
+	forceinline Integer operator* (CREF<Integer> that) const {
+		return smul (that) ;
 	}
 
-	inline void operator*= (CREF<Integer> that) {
-		thiz = mul (that) ;
+	forceinline void operator*= (CREF<Integer> that) {
+		thiz = smul (that) ;
 	}
 
-	Integer mul (CREF<VAL64> scale) const {
-		IntegerLayout ret = IntegerHolder::create (thiz)->mul (scale) ;
+	Integer smul (CREF<VAL64> scale) const {
+		IntegerLayout ret = IntegerHolder::create (thiz)->smul (scale) ;
 		return move (keep[TYPE<Integer>::expr] (ret)) ;
 	}
 
-	inline Integer operator* (CREF<VAL64> scale) const {
-		return mul (scale) ;
+	forceinline Integer operator* (CREF<VAL64> scale) const {
+		return smul (scale) ;
 	}
 
-	inline void operator*= (CREF<VAL64> scale) {
-		thiz = mul (scale) ;
+	forceinline void operator*= (CREF<VAL64> scale) {
+		thiz = smul (scale) ;
 	}
 
-	Integer div (CREF<VAL64> scale) const {
-		IntegerLayout ret = IntegerHolder::create (thiz)->div (scale) ;
+	Integer sdiv (CREF<VAL64> scale) const {
+		IntegerLayout ret = IntegerHolder::create (thiz)->sdiv (scale) ;
 		return move (keep[TYPE<Integer>::expr] (ret)) ;
 	}
 
-	inline Integer operator/ (CREF<VAL64> scale) const {
-		return div (scale) ;
+	forceinline Integer operator/ (CREF<VAL64> scale) const {
+		return sdiv (scale) ;
 	}
 
-	inline void operator/= (CREF<VAL64> scale) {
-		thiz = div (scale) ;
+	forceinline void operator/= (CREF<VAL64> scale) {
+		thiz = sdiv (scale) ;
 	}
 
-	Integer mod (CREF<VAL64> scale) const {
-		IntegerLayout ret = IntegerHolder::create (thiz)->mod (scale) ;
+	Integer smod (CREF<VAL64> scale) const {
+		IntegerLayout ret = IntegerHolder::create (thiz)->smod (scale) ;
 		return move (keep[TYPE<Integer>::expr] (ret)) ;
 	}
 
-	inline Integer operator% (CREF<VAL64> scale) const {
-		return mod (scale) ;
+	forceinline Integer operator% (CREF<VAL64> scale) const {
+		return smod (scale) ;
 	}
 
-	inline void operator%= (CREF<VAL64> scale) {
-		thiz = mod (scale) ;
+	forceinline void operator%= (CREF<VAL64> scale) {
+		thiz = smod (scale) ;
 	}
 
 	Integer plus () const {
@@ -711,7 +704,7 @@ public:
 		return move (keep[TYPE<Integer>::expr] (ret)) ;
 	}
 
-	inline Integer operator+ () const {
+	forceinline Integer operator+ () const {
 		return plus () ;
 	}
 
@@ -720,7 +713,7 @@ public:
 		return move (keep[TYPE<Integer>::expr] (ret)) ;
 	}
 
-	inline Integer operator- () const {
+	forceinline Integer operator- () const {
 		return minus () ;
 	}
 
@@ -728,16 +721,16 @@ public:
 		return IntegerHolder::create (thiz)->increase () ;
 	}
 
-	inline void operator++ (VAL32) {
-		increase () ;
+	forceinline void operator++ (int) {
+		return increase () ;
 	}
 
 	void decrease () {
 		return IntegerHolder::create (thiz)->decrease () ;
 	}
 
-	inline void operator-- (VAL32) {
-		decrease () ;
+	forceinline void operator-- (int) {
+		return decrease () ;
 	}
 } ;
 

@@ -173,7 +173,7 @@ public:
 		BoxHolder::create (ptr (fake).mValue)->initialize (holder) ;
 		fake.mPointer = address (BoxHolder::create (ptr (fake).mValue)->self) ;
 		const auto r9x = RFat<ReflectCreate> (holder) ;
-		r9x->create (Pointer::make (fake.mPointer) ,1) ;
+		r9x->create (self ,1) ;
 		ptr (fake).mCounter.self = 1 ;
 	}
 
@@ -222,21 +222,25 @@ public:
 		return BoxHolder::create (ptr (fake).mValue)->unknown () ;
 	}
 
+	VREF<Pointer> self_m () leftvalue {
+		assert (exist ()) ;
+		return Pointer::make (fake.mPointer) ;
+	}
+
 	CREF<Pointer> self_m () const leftvalue override {
 		assert (exist ()) ;
 		return Pointer::make (fake.mPointer) ;
 	}
 
-	RefLayout recycle () const override {
-		RefLayout ret ;
+	VREF<Pointer> deref () const leftvalue override {
 		if ifdo (TRUE) {
 			if (fake.mHandle == ZERO)
 				discard ;
 			const auto r1x = ptr (fake).mCounter->load () ;
 			assert (r1x == IDEN) ;
 		}
-		ret.mPointer = fake.mPointer ;
-		return move (ret) ;
+		assert (exist ()) ;
+		return Pointer::make (fake.mPointer) ;
 	}
 } ;
 

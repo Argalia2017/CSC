@@ -143,7 +143,7 @@ struct ArrayHolder implement Interface {
 
 	virtual void initialize (CREF<Unknown> holder ,CREF<LENGTH> size_) = 0 ;
 	virtual void initialize (CREF<Unknown> holder ,CREF<WrapperLayout> params ,VREF<BoxLayout> item) = 0 ;
-	virtual ArrayLayout clone () const = 0 ;
+	virtual void initialize (CREF<ArrayLayout> that) = 0 ;
 	virtual LENGTH size () const = 0 ;
 	virtual LENGTH step () const = 0 ;
 	virtual LENGTH length () const = 0 ;
@@ -222,9 +222,20 @@ public:
 		return move (ret) ;
 	}
 
-	Array clone () const {
-		ArrayLayout ret = ArrayHolder::create (thiz)->clone () ;
-		return move (keep[TYPE<Array>::expr] (ret)) ;
+	implicit Array (CREF<Array> that) {
+		ArrayHolder::create (thiz)->initialize (that) ;
+	}
+
+	forceinline VREF<Array> operator= (CREF<Array> that) {
+		return assign (thiz ,that) ;
+	}
+
+	implicit Array (RREF<Array> that) noexcept {
+		swap (thiz ,that) ;
+	}
+
+	forceinline VREF<Array> operator= (RREF<Array> that) noexcept {
+		return assign (thiz ,that) ;
 	}
 
 	LENGTH size () const {
@@ -322,223 +333,6 @@ public:
 	void splice (CREF<INDEX> index ,CREF<Array> item) {
 		return ArrayHolder::create (thiz)->splice (index ,item) ;
 	}
-
-	Array add (CREF<Array> that) const {
-		const auto r1x = length () ;
-		const auto r2x = that.length () ;
-		assert (r1x == r2x) ;
-		Array ret = Array (r1x) ;
-		for (auto &&i : iter (0 ,r1x)) {
-			ret[i] = thiz[i] + that[i] ;
-		}
-		return move (ret) ;
-	}
-
-	forceinline Array operator+ (CREF<Array> that) const {
-		return add (that) ;
-	}
-
-	forceinline void operator+= (CREF<Array> that) {
-		thiz = add (that) ;
-	}
-
-	Array sub (CREF<Array> that) const {
-		const auto r1x = length () ;
-		const auto r2x = that.length () ;
-		assert (r1x == r2x) ;
-		Array ret = Array (r1x) ;
-		for (auto &&i : iter (0 ,r1x)) {
-			ret[i] = thiz[i] - that[i] ;
-		}
-		return move (ret) ;
-	}
-
-	forceinline Array operator- (CREF<Array> that) const {
-		return sub (that) ;
-	}
-
-	forceinline void operator-= (CREF<Array> that) {
-		thiz = sub (that) ;
-	}
-
-	Array mul (CREF<Array> that) const {
-		const auto r1x = length () ;
-		const auto r2x = that.length () ;
-		assert (r1x == r2x) ;
-		Array ret = Array (r1x) ;
-		for (auto &&i : iter (0 ,r1x)) {
-			ret[i] = thiz[i] * that[i] ;
-		}
-		return move (ret) ;
-	}
-
-	forceinline Array operator* (CREF<Array> that) const {
-		return mul (that) ;
-	}
-
-	forceinline void operator*= (CREF<Array> that) {
-		thiz = mul (that) ;
-	}
-
-	Array div (CREF<Array> that) const {
-		const auto r1x = length () ;
-		const auto r2x = that.length () ;
-		assert (r1x == r2x) ;
-		Array ret = Array (r1x) ;
-		for (auto &&i : iter (0 ,r1x)) {
-			ret[i] = thiz[i] / that[i] ;
-		}
-		return move (ret) ;
-	}
-
-	forceinline Array operator/ (CREF<Array> that) const {
-		return div (that) ;
-	}
-
-	forceinline void operator/= (CREF<Array> that) {
-		thiz = div (that) ;
-	}
-
-	Array mod (CREF<Array> that) const {
-		const auto r1x = length () ;
-		const auto r2x = that.length () ;
-		assert (r1x == r2x) ;
-		Array ret = Array (r1x) ;
-		for (auto &&i : iter (0 ,r1x)) {
-			ret[i] = thiz[i] % that[i] ;
-		}
-		return move (ret) ;
-	}
-
-	forceinline Array operator% (CREF<Array> that) const {
-		return mod (that) ;
-	}
-
-	forceinline void operator%= (CREF<Array> that) {
-		thiz = mod (that) ;
-	}
-
-	Array plus () const {
-		const auto r1x = length () ;
-		Array ret = Array (r1x) ;
-		for (auto &&i : iter (0 ,r1x)) {
-			ret[i] = +thiz[i] ;
-		}
-		return move (ret) ;
-	}
-
-	forceinline Array operator+ () const {
-		return plus () ;
-	}
-
-	Array minus () const {
-		const auto r1x = length () ;
-		Array ret = Array (r1x) ;
-		for (auto &&i : iter (0 ,r1x)) {
-			ret[i] = -thiz[i] ;
-		}
-		return move (ret) ;
-	}
-
-	forceinline Array operator- () const {
-		return minus () ;
-	}
-
-	Array band (CREF<Array> that) const {
-		const auto r1x = length () ;
-		const auto r2x = that.length () ;
-		assert (r1x == r2x) ;
-		Array ret = Array (r1x) ;
-		for (auto &&i : iter (0 ,r1x)) {
-			ret[i] = thiz[i] & that[i] ;
-		}
-		return move (ret) ;
-	}
-
-	forceinline Array operator& (CREF<Array> that) const {
-		return band (that) ;
-	}
-
-	forceinline void operator&= (CREF<Array> that) {
-		thiz = band (that) ;
-	}
-
-	Array bor (CREF<Array> that) const {
-		const auto r1x = length () ;
-		const auto r2x = that.length () ;
-		assert (r1x == r2x) ;
-		Array ret = Array (r1x) ;
-		for (auto &&i : iter (0 ,r1x)) {
-			ret[i] = thiz[i] | that[i] ;
-		}
-		return move (ret) ;
-	}
-
-	forceinline Array operator| (CREF<Array> that) const {
-		return bor (that) ;
-	}
-
-	forceinline void operator|= (CREF<Array> that) {
-		thiz = bor (that) ;
-	}
-
-	Array bxor (CREF<Array> that) const {
-		const auto r1x = length () ;
-		const auto r2x = that.length () ;
-		assert (r1x == r2x) ;
-		Array ret = Array (r1x) ;
-		for (auto &&i : iter (0 ,r1x)) {
-			ret[i] = thiz[i] ^ that[i] ;
-		}
-		return move (ret) ;
-	}
-
-	forceinline Array operator^ (CREF<Array> that) const {
-		return bxor (that) ;
-	}
-
-	forceinline void operator^= (CREF<Array> that) {
-		thiz = bxor (that) ;
-	}
-
-	Array bnot () const {
-		const auto r1x = length () ;
-		Array ret = Array (r1x) ;
-		for (auto &&i : iter (0 ,r1x)) {
-			ret[i] = ~thiz[i] ;
-		}
-		return move (ret) ;
-	}
-
-	forceinline Array operator~ () const {
-		return bnot () ;
-	}
-
-	Array blshift (CREF<LENGTH> scale) const {
-		const auto r1x = length () ;
-		Array ret = Array (r1x) ;
-		for (auto &&i : iter (0 ,r1x)) {
-			ret[i] = thiz[i] << scale ;
-		}
-		return move (ret) ;
-	}
-
-	forceinline Array operator<< (CREF<LENGTH> scale) const {
-		return blshift (scale) ;
-	}
-
-	Array brshift (CREF<LENGTH> scale) const {
-		const auto r1x = length () ;
-		Array ret = Array (r1x) ;
-		for (auto &&i : iter (0 ,r1x)) {
-			ret[i] = thiz[i] >> scale ;
-		}
-		return move (ret) ;
-	}
-
-	forceinline Array operator>> (CREF<LENGTH> scale) const {
-		return brshift (scale) ;
-	}
 } ;
 
 template <class A>
@@ -557,7 +351,7 @@ struct StringHolder implement Interface {
 
 	virtual void initialize (CREF<Slice> that ,CREF<LENGTH> step_) = 0 ;
 	virtual void initialize (CREF<LENGTH> size_ ,CREF<LENGTH> step_) = 0 ;
-	virtual StringLayout clone () const = 0 ;
+	virtual void initialize (CREF<StringLayout> that) = 0 ;
 	virtual void clear () = 0 ;
 	virtual LENGTH size () const = 0 ;
 	virtual LENGTH step () const = 0 ;
@@ -623,9 +417,20 @@ public:
 		}) ;
 	}
 
-	String clone () const {
-		StringLayout ret = StringHolder::create (thiz)->clone () ;
-		return move (keep[TYPE<String>::expr] (ret)) ;
+	implicit String (CREF<String> that) {
+		StringHolder::create (thiz)->initialize (that) ;
+	}
+
+	forceinline VREF<String> operator= (CREF<String> that) {
+		return assign (thiz ,that) ;
+	}
+
+	implicit String (RREF<String> that) noexcept {
+		swap (thiz ,that) ;
+	}
+
+	forceinline VREF<String> operator= (RREF<String> that) noexcept {
+		return assign (thiz ,that) ;
 	}
 
 	void clear () {
@@ -1160,6 +965,7 @@ struct ListHolder implement Interface {
 	virtual INDEX insert (RREF<BoxLayout> item) = 0 ;
 	virtual INDEX insert (CREF<INDEX> index ,RREF<BoxLayout> item) = 0 ;
 	virtual void remove (CREF<INDEX> index) = 0 ;
+	virtual void order (CREF<Array<INDEX>> range_) = 0 ;
 } ;
 
 template <class A>
@@ -1320,6 +1126,10 @@ public:
 	void remove (CREF<INDEX> index) {
 		return ListHolder::create (thiz)->remove (index) ;
 	}
+
+	void order (CREF<Array<INDEX>> range_) {
+		return ListHolder::create (thiz)->order (range_) ;
+	}
 } ;
 
 struct ArrayListNode implement AllocatorNode {} ;
@@ -1351,6 +1161,7 @@ struct ArrayListHolder implement Interface {
 	virtual INDEX insert (RREF<BoxLayout> item) = 0 ;
 	virtual INDEX insert (CREF<INDEX> index ,RREF<BoxLayout> item) = 0 ;
 	virtual void remove (CREF<INDEX> index) = 0 ;
+	virtual void order (CREF<Array<INDEX>> range_) = 0 ;
 	virtual void remap () = 0 ;
 } ;
 
@@ -1481,6 +1292,10 @@ public:
 
 	void remove (CREF<INDEX> index) {
 		return ArrayListHolder::create (thiz)->remove (index) ;
+	}
+
+	void order (CREF<Array<INDEX>> range_) {
+		return ArrayListHolder::create (thiz)->order (range_) ;
 	}
 
 	void remap () {
@@ -2077,7 +1892,7 @@ struct BitSetHolder implement Interface {
 
 	virtual void initialize (CREF<LENGTH> size_) = 0 ;
 	virtual void initialize (CREF<Unknown> holder ,CREF<WrapperLayout> params ,VREF<BoxLayout> item) = 0 ;
-	virtual BitSetLayout clone () const = 0 ;
+	virtual void initialize (CREF<BitSetLayout> that) = 0 ;
 	virtual void clear () = 0 ;
 	virtual LENGTH size () const = 0 ;
 	virtual LENGTH length () const = 0 ;
@@ -2093,11 +1908,11 @@ struct BitSetHolder implement Interface {
 	virtual BOOL contain (CREF<Pointer> item) const = 0 ;
 	virtual void erase (CREF<Pointer> item) = 0 ;
 	virtual void fill (CREF<BYTE> item) = 0 ;
-	virtual BitSetLayout band (CREF<BitSetLayout> that) const = 0 ;
-	virtual BitSetLayout bor (CREF<BitSetLayout> that) const = 0 ;
-	virtual BitSetLayout bxor (CREF<BitSetLayout> that) const = 0 ;
-	virtual BitSetLayout bsub (CREF<BitSetLayout> that) const = 0 ;
-	virtual BitSetLayout bnot () const = 0 ;
+	virtual BitSetLayout sand (CREF<BitSetLayout> that) const = 0 ;
+	virtual BitSetLayout sor (CREF<BitSetLayout> that) const = 0 ;
+	virtual BitSetLayout sxor (CREF<BitSetLayout> that) const = 0 ;
+	virtual BitSetLayout ssub (CREF<BitSetLayout> that) const = 0 ;
+	virtual BitSetLayout snot () const = 0 ;
 } ;
 
 class BitSet implement BitSetLayout {
@@ -2120,9 +1935,20 @@ public:
 		BitSetHolder::create (thiz)->initialize (BufferUnknownBinder<A> () ,MakeWrapper (that) ,rax) ;
 	}
 
-	BitSet clone () const {
-		BitSetLayout ret = BitSetHolder::create (thiz)->clone () ;
-		return move (keep[TYPE<BitSet>::expr] (ret)) ;
+	implicit BitSet (CREF<BitSet> that) {
+		BitSetHolder::create (thiz)->initialize (that) ;
+	}
+
+	forceinline VREF<BitSet> operator= (CREF<BitSet> that) {
+		return assign (thiz ,that) ;
+	}
+
+	implicit BitSet (RREF<BitSet> that) noexcept {
+		swap (thiz ,that) ;
+	}
+
+	forceinline VREF<BitSet> operator= (RREF<BitSet> that) noexcept {
+		return assign (thiz ,that) ;
 	}
 
 	void clear () {
@@ -2234,65 +2060,65 @@ public:
 		return BitSetHolder::create (thiz)->fill (item) ;
 	}
 
-	BitSet band (CREF<BitSet> that) const {
-		BitSetLayout ret = BitSetHolder::create (thiz)->band (that) ;
+	BitSet sand (CREF<BitSet> that) const {
+		BitSetLayout ret = BitSetHolder::create (thiz)->sand (that) ;
 		return move (keep[TYPE<BitSet>::expr] (ret)) ;
 	}
 
 	forceinline BitSet operator& (CREF<BitSet> that) const {
-		return band (that) ;
+		return sand (that) ;
 	}
 
 	forceinline void operator&= (CREF<BitSet> that) {
-		thiz = band (that) ;
+		thiz = sand (that) ;
 	}
 
-	BitSet bor (CREF<BitSet> that) const {
-		BitSetLayout ret = BitSetHolder::create (thiz)->bor (that) ;
+	BitSet sor (CREF<BitSet> that) const {
+		BitSetLayout ret = BitSetHolder::create (thiz)->sor (that) ;
 		return move (keep[TYPE<BitSet>::expr] (ret)) ;
 	}
 
 	forceinline BitSet operator| (CREF<BitSet> that) const {
-		return bor (that) ;
+		return sor (that) ;
 	}
 
 	forceinline void operator|= (CREF<BitSet> that) {
-		thiz = bor (that) ;
+		thiz = sor (that) ;
 	}
 
-	BitSet bxor (CREF<BitSet> that) const {
-		BitSetLayout ret = BitSetHolder::create (thiz)->bxor (that) ;
+	BitSet sxor (CREF<BitSet> that) const {
+		BitSetLayout ret = BitSetHolder::create (thiz)->sxor (that) ;
 		return move (keep[TYPE<BitSet>::expr] (ret)) ;
 	}
 
 	forceinline BitSet operator^ (CREF<BitSet> that) const {
-		return bxor (that) ;
+		return sxor (that) ;
 	}
 
 	forceinline void operator^= (CREF<BitSet> that) {
-		thiz = bxor (that) ;
+		thiz = sxor (that) ;
 	}
 
-	BitSet bsub (CREF<BitSet> that) const {
-		BitSetLayout ret = BitSetHolder::create (thiz)->bsub (that) ;
+	BitSet ssub (CREF<BitSet> that) const {
+		BitSetLayout ret = BitSetHolder::create (thiz)->ssub (that) ;
 		return move (keep[TYPE<BitSet>::expr] (ret)) ;
 	}
 
 	forceinline BitSet operator- (CREF<BitSet> that) const {
-		return bsub (that) ;
+		return ssub (that) ;
 	}
 
 	forceinline void operator-= (CREF<BitSet> that) {
-		thiz = bsub (that) ;
+		thiz = ssub (that) ;
 	}
 
-	BitSet bnot () const {
-		BitSetLayout ret = BitSetHolder::create (thiz)->bnot () ;
+	BitSet snot () const {
+		BitSetLayout ret = BitSetHolder::create (thiz)->snot () ;
 		return move (keep[TYPE<BitSet>::expr] (ret)) ;
 	}
 
 	forceinline BitSet operator~ () const {
-		return bnot () ;
+		return snot () ;
 	}
 } ;
 } ;

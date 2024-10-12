@@ -106,15 +106,6 @@ struct CalcSolution {
 	INDEX mIndex ;
 	FLT64 mError ;
 	BitSet mInput ;
-
-public:
-	CalcSolution clone () const {
-		CalcSolution ret ;
-		ret.mIndex = mIndex ;
-		ret.mError = mError ;
-		ret.mInput = mInput.clone () ;
-		return move (ret) ;
-	}
 } ;
 
 struct CalcThreadImplLayout ;
@@ -250,74 +241,6 @@ public:
 
 	void stop () const {
 		return PromiseHolder::create (thiz)->stop () ;
-	}
-} ;
-
-struct ExpressionImplLayout ;
-
-struct ExpressionLayout {
-	SharedRef<ExpressionImplLayout> mThis ;
-	INDEX mIndex ;
-} ;
-
-struct ExpressionHolder implement Interface {
-	imports VFat<ExpressionHolder> create (VREF<ExpressionLayout> that) ;
-	imports CFat<ExpressionHolder> create (CREF<ExpressionLayout> that) ;
-
-	virtual void initialize (RREF<AutoRef<Pointer>> item) = 0 ;
-	virtual LENGTH rank () const = 0 ;
-	virtual ExpressionLayout add (CREF<ExpressionLayout> that) const = 0 ;
-	virtual ExpressionLayout sub (CREF<ExpressionLayout> that) const = 0 ;
-	virtual CREF<AutoRef<Pointer>> eval () const leftvalue = 0 ;
-} ;
-
-class Expression implement ExpressionLayout {
-protected:
-	using ExpressionLayout::mThis ;
-	using ExpressionLayout::mIndex ;
-
-public:
-	implicit Expression () = default ;
-
-	template <class ARG1>
-	explicit Expression (RREF<AutoRef<ARG1>> item) {
-		ExpressionHolder::create (thiz)->initialize (move (item)) ;
-	}
-
-	LENGTH rank () const {
-		return ExpressionHolder::create (thiz)->rank () ;
-	}
-
-	Expression add (CREF<Expression> that) const {
-		ExpressionLayout ret = ExpressionHolder::create (thiz)->add (that) ;
-		return move (keep[TYPE<Expression>::expr] (ret)) ;
-	}
-
-	forceinline Expression operator+ (CREF<Expression> that) const {
-		return add (that) ;
-	}
-
-	forceinline void operator+= (CREF<Expression> that) {
-		thiz = add (that) ;
-	}
-
-	Expression sub (CREF<Expression> that) const {
-		ExpressionLayout ret = ExpressionHolder::create (thiz)->sub (that) ;
-		return move (keep[TYPE<Expression>::expr] (ret)) ;
-	}
-
-	forceinline Expression operator- (CREF<Expression> that) const {
-		return sub (that) ;
-	}
-
-	forceinline void operator-= (CREF<Expression> that) {
-		thiz = sub (that) ;
-	}
-
-	template <class ARG1>
-	CREF<ARG1> eval (TYPE<ARG1>) const leftvalue {
-		auto &&rax = ExpressionHolder::create (thiz)->eval () ;
-		return rax.rebind (TYPE<ARG1>::expr).self ;
 	}
 } ;
 } ;

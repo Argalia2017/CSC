@@ -149,6 +149,7 @@
 
 	<Type Name="CSC::RefBuffer&lt;*&gt;">
 		<Expand HideRawView="true">
+			<Item Name="[hint]">CSC::BYTE_ENDIAN</Item>
 			<Item Name="[size]" Condition="mThis.mPointer==0">0</Item>
 			<Item Name="[size]" Condition="mThis.mPointer!=0">mSize</Item>
 			<Item Name="[step]" Condition="mThis.mPointer==0">0</Item>
@@ -165,30 +166,6 @@
 				<ValuePointer>($T1*)mBuffer</ValuePointer>
 			</ArrayItems>
 			<Item Name="[+]" Condition="mSize&gt;=10">(CSC::RefBufferRealLayout&lt;$T1&gt;*)this</Item>
-		</Expand>
-	</Type>
-
-	<Type Name="CSC::RefBuffer&lt;enum CSC::BYTE&gt;" Priority="High">
-		<Expand HideRawView="true">
-			<ExpandedItem>(CSC::RefBuffer&lt;unsigned char&gt;*)this</ExpandedItem>
-		</Expand>
-	</Type>
-
-	<Type Name="CSC::RefBuffer&lt;enum CSC::WORD&gt;" Priority="High">
-		<Expand HideRawView="true">
-			<ExpandedItem>(CSC::RefBuffer&lt;unsigned short&gt;*)this</ExpandedItem>
-		</Expand>
-	</Type>
-
-	<Type Name="CSC::RefBuffer&lt;enum CSC::CHAR&gt;" Priority="High">
-		<Expand HideRawView="true">
-			<ExpandedItem>(CSC::RefBuffer&lt;unsigned int&gt;*)this</ExpandedItem>
-		</Expand>
-	</Type>
-
-	<Type Name="CSC::RefBuffer&lt;enum CSC::QUAD&gt;" Priority="High">
-		<Expand HideRawView="true">
-			<ExpandedItem>(CSC::RefBuffer&lt;unsigned long long&gt;*)this</ExpandedItem>
 		</Expand>
 	</Type>
 

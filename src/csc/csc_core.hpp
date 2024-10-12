@@ -306,17 +306,7 @@ struct FUNCTION_move {
 
 	template <class ARG1>
 	forceinline ARG1 operator() (CREF<ARG1> a) const {
-		return copy_impl (PHX ,a) ;
-	}
-
-	template <class ARG1 ,class = REQUIRE<IS_COPYABLE<ARG1>>>
-	forceinline ARG1 copy_impl (CREF<typeof (PH2)> ,CREF<ARG1> b) const {
-		return static_cast<CREF<ARG1>> (b) ;
-	}
-
-	template <class ARG1 ,class = REQUIRE<HAS_CLONE<ARG1>>>
-	forceinline ARG1 copy_impl (CREF<typeof (PH1)> ,CREF<ARG1> b) const {
-		return b.clone () ;
+		return static_cast<CREF<ARG1>> (a) ;
 	}
 
 	template <class ARG1>
@@ -810,7 +800,6 @@ public:
 	}
 
 	CREF<A> self_m () const {
-		assert (mHolder != ZERO) ;
 		return Pointer::from (const_cast<CREF<CFat>> (thiz)) ;
 	}
 
@@ -859,20 +848,6 @@ public:
 
 	forceinline PTR<CREF<A>> operator-> () const {
 		return (&self) ;
-	}
-} ;
-
-template <class A>
-class SimpleUnknownBinder implement Unknown {
-public:
-	imports RFat<Unknown> create () {
-		return RFat<Unknown> (SimpleUnknownBinder () ,NULL) ;
-	}
-
-	FLAG reflect (CREF<FLAG> uuid) const override {
-		if (uuid == A::expr)
-			return inline_hold (A ()) ;
-		return ZERO ;
 	}
 } ;
 
@@ -958,9 +933,9 @@ public:
 	}
 } ;
 
-struct ReflectHold implement Interface {
-	virtual VREF<Interface> hold (VREF<Pointer> a) const = 0 ;
-	virtual CREF<Interface> hold (CREF<Pointer> a) const = 0 ;
+struct ReflectVirtual implement Interface {
+	virtual VREF<Interface> deref (VREF<Pointer> a) const = 0 ;
+	virtual CREF<Interface> deref (CREF<Pointer> a) const = 0 ;
 
 	imports forceinline consteval FLAG expr_m () noexcept {
 		return 104 ;
@@ -968,13 +943,13 @@ struct ReflectHold implement Interface {
 } ;
 
 template <class A>
-class ReflectHoldBinder implement ReflectHold {
+class ReflectVirtualBinder implement ReflectVirtual {
 public:
-	VREF<Interface> hold (VREF<Pointer> a) const override {
+	VREF<Interface> deref (VREF<Pointer> a) const override {
 		return keep[TYPE<A>::expr] (a) ;
 	}
 
-	CREF<Interface> hold (CREF<Pointer> a) const override {
+	CREF<Interface> deref (CREF<Pointer> a) const override {
 		return keep[TYPE<A>::expr] (a) ;
 	}
 } ;
@@ -1255,7 +1230,7 @@ struct RefHolder implement Interface {
 	virtual BOOL exist () const = 0 ;
 	virtual RFat<Unknown> unknown () const = 0 ;
 	virtual CREF<Pointer> self_m () const leftvalue = 0 ;
-	virtual RefLayout recycle () const = 0 ;
+	virtual VREF<Pointer> deref () const leftvalue = 0 ;
 } ;
 
 inline RefLayout::~RefLayout () noexcept {
@@ -1334,9 +1309,8 @@ public:
 		return (&self) ;
 	}
 
-	Ref<Pin<A>> recycle () const {
-		auto rax = RefHolder::create (thiz)->recycle () ;
-		return move (keep[TYPE<Ref<Pin<A>>>::expr] (rax)) ;
+	VREF<A> deref () const leftvalue {
+		return RefHolder::create (thiz)->deref () ;
 	}
 } ;
 
@@ -1401,7 +1375,7 @@ public:
 	}
 
 	VREF<A> self_m () const leftvalue {
-		return A::lock (mIndex ,mCheck) ;
+		return Pointer::make (mIndex) ;
 	}
 
 	forceinline PTR<VREF<A>> operator-> () const leftvalue {
@@ -1535,14 +1509,14 @@ public:
 		return SliceHolder::create (thiz)->step () ;
 	}
 
-	STRU32 get (CREF<INDEX> index) const {
-		STRU32 ret ;
-		SliceHolder::create (thiz)->get (index ,ret) ;
-		return move (ret) ;
+	void get (CREF<INDEX> index ,VREF<STRU32> item) const {
+		return SliceHolder::create (thiz)->get (index ,item) ;
 	}
 
 	forceinline STRU32 operator[] (CREF<INDEX> index) const {
-		return get (index) ;
+		STRU32 ret ;
+		get (index ,ret) ;
+		return move (ret) ;
 	}
 
 	BOOL equal (CREF<Slice> that) const {

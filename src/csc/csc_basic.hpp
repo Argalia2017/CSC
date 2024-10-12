@@ -90,6 +90,12 @@ public:
 	}
 
 	template <class ARG1>
+	forceinline CREF<Optional> operator() (RREF<ARG1> item) const {
+		once (move (item)) ;
+		return thiz ;
+	}
+
+	template <class ARG1>
 	void then (CREF<ARG1> func) const {
 		if (!exist ())
 			return ;
@@ -97,12 +103,6 @@ public:
 		OptionalHolder::create (thiz)->fetch (rax) ;
 		func (rax.self) ;
 		OptionalHolder::create (thiz)->store (rax) ;
-	}
-
-	template <class ARG1>
-	forceinline CREF<Optional> operator() (CREF<ARG1> func) const {
-		then (func) ;
-		return thiz ;
 	}
 } ;
 
@@ -413,7 +413,7 @@ struct AutoRefHolder implement Interface {
 	virtual CREF<Pointer> self_m () const leftvalue = 0 ;
 	virtual VREF<Pointer> rebind (CREF<Clazz> clazz_) leftvalue = 0 ;
 	virtual CREF<Pointer> rebind (CREF<Clazz> clazz_) const leftvalue = 0 ;
-	virtual AutoRefLayout recast (CREF<Unknown> simple) = 0 ;
+	virtual AutoRefLayout recast (CREF<ReflectRecast> simple) = 0 ;
 } ;
 
 inline AutoRefLayout::~AutoRefLayout () noexcept {
@@ -444,14 +444,6 @@ public:
 		AutoRefHolder::create (ret)->initialize (move (rax) ,Clazz (TYPE<A>::expr)) ;
 		return move (ret) ;
 	}
-
-	implicit AutoRef (CREF<AutoRef> that) = delete ;
-
-	forceinline VREF<AutoRef> operator= (CREF<AutoRef> that) = delete ;
-
-	implicit AutoRef (RREF<AutoRef> that) = default ;
-
-	forceinline VREF<AutoRef> operator= (RREF<AutoRef> that) = default ;
 
 	BOOL exist () const {
 		return AutoRefHolder::create (thiz)->exist () ;
@@ -509,7 +501,7 @@ public:
 
 	template <class ARG1>
 	AutoRef<ARG1> recast (TYPE<ARG1>) {
-		const auto r1x = SimpleUnknownBinder<ReflectRecastBinder<ARG1 ,A>>::create () ;
+		const auto r1x = ReflectRecastBinder<ARG1 ,A> () ;
 		AutoRefLayout ret = AutoRefHolder::create (thiz)->recast (r1x) ;
 		return move (keep[TYPE<AutoRef<ARG1>>::expr] (ret)) ;
 	}
@@ -554,7 +546,7 @@ struct SharedRefHolder implement Interface {
 	virtual CREF<BoxLayout> raw () const leftvalue = 0 ;
 	virtual LENGTH counter () const = 0 ;
 	virtual VREF<Pointer> self_m () const leftvalue = 0 ;
-	virtual SharedRefLayout recast (CREF<Unknown> simple) = 0 ;
+	virtual SharedRefLayout recast (CREF<ReflectRecast> simple) = 0 ;
 } ;
 
 inline SharedRefLayout::~SharedRefLayout () noexcept {
@@ -633,7 +625,7 @@ public:
 
 	template <class ARG1>
 	SharedRef<ARG1> recast (TYPE<ARG1>) {
-		const auto r1x = SimpleUnknownBinder<ReflectRecastBinder<ARG1 ,A>>::create () ;
+		const auto r1x = ReflectRecastBinder<ARG1 ,A> () ;
 		SharedRefLayout ret = SharedRefHolder::create (thiz)->recast (r1x) ;
 		return move (keep[TYPE<SharedRef<ARG1>>::expr] (ret)) ;
 	}
@@ -675,7 +667,7 @@ struct UniqueRefHolder implement Interface {
 	virtual VREF<BoxLayout> raw () leftvalue = 0 ;
 	virtual CREF<BoxLayout> raw () const leftvalue = 0 ;
 	virtual CREF<Pointer> self_m () const leftvalue = 0 ;
-	virtual UniqueRefLayout recast (CREF<Unknown> simple) = 0 ;
+	virtual UniqueRefLayout recast (CREF<ReflectRecast> simple) = 0 ;
 } ;
 
 inline UniqueRefLayout::~UniqueRefLayout () noexcept {
@@ -741,7 +733,7 @@ public:
 
 	template <class ARG1>
 	UniqueRef<ARG1> recast (TYPE<ARG1>) {
-		const auto r1x = SimpleUnknownBinder<ReflectRecastBinder<ARG1 ,A>>::create () ;
+		const auto r1x = ReflectRecastBinder<ARG1 ,A> () ;
 		UniqueRefLayout ret = UniqueRefHolder::create (thiz)->recast (r1x) ;
 		return move (keep[TYPE<UniqueRef<ARG1>>::expr] (ret)) ;
 	}
@@ -835,7 +827,14 @@ public:
 } ;
 
 template <class A>
-class RefBufferRealLayout implement RefBufferLayout {} ;
+class RefBufferRealLayout implement RefBufferLayout {
+public:
+	implicit RefBufferRealLayout () noexcept {
+		if (!thiz.mThis.exist ())
+			return ;
+		inline_output (TYPE<BYTE>::expr ,Pointer::from (BYTE_ENDIAN)) ;
+	}
+} ;
 
 template <class A>
 class RefBuffer implement RefBufferRealLayout<A> {
@@ -931,7 +930,8 @@ public:
 struct FarBufferLayout {
 	Function<CREF<INDEX> ,VREF<Pointer>> mGetter ;
 	Function<CREF<INDEX> ,CREF<Pointer>> mSetter ;
-	Ref<Pointer> mLocal ;
+	Ref<Pointer> mThis ;
+	FLAG mBuffer ;
 	INDEX mIndex ;
 	LENGTH mSize ;
 	LENGTH mStep ;
@@ -953,14 +953,22 @@ struct FarBufferHolder implement Interface {
 } ;
 
 template <class A>
-class FarBufferRealLayout implement FarBufferLayout {} ;
+class FarBufferRealLayout implement FarBufferLayout {
+public:
+	implicit FarBufferRealLayout () noexcept {
+		if (!thiz.mThis.exist ())
+			return ;
+		inline_output (TYPE<BYTE>::expr ,Pointer::from (BYTE_ENDIAN)) ;
+	}
+} ;
 
 template <class A>
 class FarBuffer implement FarBufferRealLayout<A> {
 protected:
 	using FarBufferRealLayout<A>::mGetter ;
 	using FarBufferRealLayout<A>::mSetter ;
-	using FarBufferRealLayout<A>::mLocal ;
+	using FarBufferRealLayout<A>::mThis ;
+	using FarBufferRealLayout<A>::mBuffer ;
 	using FarBufferRealLayout<A>::mIndex ;
 	using FarBufferRealLayout<A>::mSize ;
 	using FarBufferRealLayout<A>::mStep ;

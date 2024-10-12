@@ -49,16 +49,12 @@ public:
 		}
 	}
 
-	ArrayLayout clone () const override {
-		ArrayLayout ret ;
-		if ifdo (TRUE) {
-			const auto r1x = length () ;
-			if (r1x == 0)
-				discard ;
-			ArrayHolder::create (ret)->initialize (fake.mArray.unknown () ,r1x) ;
-			ArrayHolder::create (ret)->splice (0 ,fake) ;
-		}
-		return move (ret) ;
+	void initialize (CREF<ArrayLayout> that) override {
+		const auto r1x = ArrayHolder::create (that)->length () ;
+		if (r1x == 0)
+			return ;
+		initialize (that.mArray.unknown () ,r1x) ;
+		splice (0 ,that) ;
 	}
 
 	LENGTH size () const override {
@@ -140,6 +136,8 @@ public:
 
 	void splice (CREF<INDEX> index ,CREF<ArrayLayout> item) override {
 		const auto r1x = ArrayHolder::create (item)->size () ;
+		if (r1x == 0)
+			return ;
 		assert (inline_between (index ,0 ,size ())) ;
 		assert (index + r1x <= size ()) ;
 		const auto r2x = RFat<ReflectClone> (fake.mArray.unknown ()) ;
@@ -200,17 +198,13 @@ public:
 		}
 	}
 
-	StringLayout clone () const override {
-		StringLayout ret ;
-		if ifdo (TRUE) {
-			const auto r1x = length () ;
-			const auto r2x = step () ;
-			if (r1x == 0)
-				discard ;
-			StringHolder::create (ret)->initialize (r1x ,r2x) ;
-			StringHolder::create (ret)->splice (0 ,fake) ;
-		}
-		return move (ret) ;
+	void initialize (CREF<StringLayout> that) override {
+		const auto r1x = StringHolder::create (that)->length () ;
+		const auto r2x = StringHolder::create (that)->step () ;
+		if (r1x == 0)
+			return ;
+		initialize (r1x ,r2x) ;
+		splice (0 ,that) ;
 	}
 
 	void clear () override {
@@ -248,12 +242,8 @@ public:
 
 	Ref<RefBuffer<BYTE>> borrow () const override {
 		assume (fake.mString.exist ()) ;
-		auto rax = RefBufferLayout () ;
-		RefBufferHolder::create (rax)->initialize (fake.mString.unknown ()) ;
-		rax.mBuffer = FLAG (fake.mString.self) ;
-		rax.mSize = fake.mString.size () ;
-		rax.mStep = fake.mString.step () ;
-		return Ref<RefBuffer<BYTE>>::make (move (keep[TYPE<RefBuffer<BYTE>>::expr] (rax))) ;
+		auto &&rax = keep[TYPE<RefBuffer<BYTE>>::expr] (keep[TYPE<RefBufferLayout>::expr] (fake.mString)) ;
+		return Ref<RefBuffer<BYTE>>::reference (rax) ;
 	}
 
 	void get (CREF<INDEX> index ,VREF<STRU32> item) const override {
@@ -422,6 +412,8 @@ public:
 
 	void splice (CREF<INDEX> index ,CREF<Slice> item) override {
 		const auto r1x = SliceHolder::create (item)->size () ;
+		if (r1x == 0)
+			return ;
 		assert (inline_between (index ,0 ,size ())) ;
 		assert (index + r1x <= size ()) ;
 		for (auto &&i : iter (0 ,r1x)) {
@@ -952,19 +944,26 @@ public:
 		fake.mList.free (index) ;
 	}
 
-	void eswap (CREF<INDEX> index1 ,CREF<INDEX> index2) {
-		if (index1 == index2)
+	void order (CREF<Array<INDEX>> range_) override {
+		assert (length () == range_.length ()) ;
+		if (range_.length () == 0)
 			return ;
-		const auto r1x = fake.mList.bt (index1).mLeft ;
-		const auto r2x = fake.mList.bt (index1).mRight ;
-		const auto r3x = fake.mList.bt (index2).mLeft ;
-		const auto r4x = fake.mList.bt (index2).mRight ;
-		curr_next (r1x) = index2 ;
-		curr_prev (r2x) = index2 ;
-		curr_next (r3x) = index1 ;
-		curr_prev (r4x) = index1 ;
-		swap (fake.mList.bt (index1).mLeft ,fake.mList.bt (index2).mLeft) ;
-		swap (fake.mList.bt (index1).mRight ,fake.mList.bt (index2).mRight) ;
+		if ifdo (TRUE) {
+			INDEX ix = range_[0] ;
+			fake.mList.bt (ix).mLeft = NONE ;
+			fake.mFirst = ix ;
+		}
+		for (auto &&i : iter (1 ,range_.length ())) {
+			INDEX ix = range_[i - 1] ;
+			INDEX iy = range_[i] ;
+			fake.mList.bt (ix).mRight = iy ;
+			fake.mList.bt (iy).mLeft = ix ;
+		}
+		if ifdo (TRUE) {
+			INDEX ix = range_[range_.length () - 1] ;
+			fake.mList.bt (ix).mRight = NONE ;
+			fake.mLast = ix ;
+		}
 	}
 
 	VREF<INDEX> curr_next (CREF<INDEX> index) leftvalue {
@@ -1098,6 +1097,20 @@ public:
 		fake.mRange[index] = NONE ;
 		fake.mList.free (ix) ;
 		fake.mSorted = FALSE ;
+	}
+
+	void order (CREF<Array<INDEX>> range_) override {
+		assert (length () == range_.length ()) ;
+		if (range_.length () == 0)
+			return ;
+		auto rax = RefBuffer<INDEX> (fake.mRange.size ()) ;
+		for (auto &&i : range_.range ()) {
+			INDEX ix = range_[i] ;
+			rax[i] = fake.mRange[ix] ;
+		}
+		for (auto &&i : iter (range_.length () ,fake.mRange.size ()))
+			rax[i] = NONE ;
+		fake.mRange = move (rax) ;
 	}
 
 	void remap () override {
@@ -1871,7 +1884,7 @@ struct FUNCTION_fnvhash {
 	template <class ARG1>
 	forceinline CHAR operator() (CREF<ARG1> src ,CREF<CHAR> curr) const {
 		return HashProc::fnvhash32 (Pointer::from (src) ,SIZE_OF<ARG1>::expr ,curr) ;
-	}
+}
 } ;
 #endif
 
@@ -2168,17 +2181,13 @@ public:
 		}
 	}
 
-	BitSetLayout clone () const override {
-		BitSetLayout ret ;
-		if ifdo (TRUE) {
-			const auto r1x = size () ;
-			if (r1x == 0)
-				discard ;
-			BitSetHolder::create (ret)->initialize (r1x) ;
-			for (auto &&i : iter (0 ,fake.mSet.size ()))
-				ret.mSet[i] = fake.mSet[i] ;
-		}
-		return move (ret) ;
+	void initialize (CREF<BitSetLayout> that) override {
+		const auto r1x = BitSetHolder::create (that)->size () ;
+		if (r1x == 0)
+			return ;
+		initialize (r1x) ;
+		for (auto &&i : iter (0 ,that.mSet.size ()))
+			fake.mSet[i] = that.mSet[i] ;
 	}
 
 	void clear () override {
@@ -2326,7 +2335,7 @@ public:
 		check_mask (fake) ;
 	}
 
-	BitSetLayout band (CREF<BitSetLayout> that) const override {
+	BitSetLayout sand (CREF<BitSetLayout> that) const override {
 		assert (fake.mWidth == that.mWidth) ;
 		BitSetLayout ret ;
 		BitSetHolder::create (ret)->initialize (fake.mWidth) ;
@@ -2337,7 +2346,7 @@ public:
 		return move (ret) ;
 	}
 
-	BitSetLayout bor (CREF<BitSetLayout> that) const override {
+	BitSetLayout sor (CREF<BitSetLayout> that) const override {
 		assert (fake.mWidth == that.mWidth) ;
 		BitSetLayout ret ;
 		BitSetHolder::create (ret)->initialize (fake.mWidth) ;
@@ -2348,7 +2357,7 @@ public:
 		return move (ret) ;
 	}
 
-	BitSetLayout bxor (CREF<BitSetLayout> that) const override {
+	BitSetLayout sxor (CREF<BitSetLayout> that) const override {
 		assert (fake.mWidth == that.mWidth) ;
 		BitSetLayout ret ;
 		BitSetHolder::create (ret)->initialize (fake.mWidth) ;
@@ -2359,7 +2368,7 @@ public:
 		return move (ret) ;
 	}
 
-	BitSetLayout bsub (CREF<BitSetLayout> that) const override {
+	BitSetLayout ssub (CREF<BitSetLayout> that) const override {
 		assert (fake.mWidth == that.mWidth) ;
 		BitSetLayout ret ;
 		BitSetHolder::create (ret)->initialize (fake.mWidth) ;
@@ -2370,7 +2379,7 @@ public:
 		return move (ret) ;
 	}
 
-	BitSetLayout bnot () const override {
+	BitSetLayout snot () const override {
 		BitSetLayout ret ;
 		BitSetHolder::create (ret)->initialize (fake.mWidth) ;
 		for (auto &&i : iter (0 ,fake.mSet.size ())) {

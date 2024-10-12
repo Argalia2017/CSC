@@ -24,7 +24,7 @@
 namespace CSC {
 #ifdef __CSC_COMPILER_MSVC__
 struct FUNCTION_calendar_from_timepoint {
-	inline std::tm operator() (CREF<std::time_t> time) const {
+	forceinline std::tm operator() (CREF<std::time_t> time) const {
 		std::tm ret ;
 		inline_memset (ret) ;
 		localtime_s ((&ret) ,(&time)) ;
@@ -35,7 +35,7 @@ struct FUNCTION_calendar_from_timepoint {
 
 #ifdef __CSC_COMPILER_GNUC__
 struct FUNCTION_calendar_from_timepoint {
-	inline std::tm operator() (CREF<std::time_t> time) const {
+	forceinline std::tm operator() (CREF<std::time_t> time) const {
 		std::tm ret ;
 		const auto r1x = FLAG (std::localtime (&time)) ;
 		inline_memcpy (Pointer::from (ret) ,Pointer::make (r1x) ,SIZE_OF<std::tm>::expr) ;
@@ -46,7 +46,7 @@ struct FUNCTION_calendar_from_timepoint {
 
 #ifdef __CSC_COMPILER_CLANG__
 struct FUNCTION_calendar_from_timepoint {
-	inline std::tm operator() (CREF<std::time_t> time) const {
+	forceinline std::tm operator() (CREF<std::time_t> time) const {
 		std::tm ret ;
 		inline_memset (ret) ;
 		localtime_s ((&ret) ,(&time)) ;
@@ -103,14 +103,19 @@ public:
 		fake.mThis->mTime = that.mThis->mTime ;
 	}
 
+	Ref<TimeImplLayout> borrow () const override {
+		assert (fake.mThis.exist ()) ;
+		return Ref<TimeImplLayout>::reference (fake.mThis.self) ;
+	}
+
 	LENGTH megaseconds () const override {
-		using R1X = std::chrono::duration<DEF<long long> ,std::ratio<10000000>> ;
+		using R1X = std::chrono::duration<csc_int64_t ,std::ratio<10000000>> ;
 		const auto r1x = std::chrono::duration_cast<R1X> (fake.mThis->mTime) ;
 		return LENGTH (r1x.count ()) ;
 	}
 
 	LENGTH kiloseconds () const override {
-		using R1X = std::chrono::duration<DEF<long long> ,std::ratio<1000>> ;
+		using R1X = std::chrono::duration<csc_int64_t ,std::ratio<1000>> ;
 		const auto r1x = std::chrono::duration_cast<R1X> (fake.mThis->mTime) ;
 		return LENGTH (r1x.count ()) ;
 	}
@@ -151,14 +156,14 @@ public:
 		return move (ret) ;
 	}
 
-	TimeLayout add (CREF<TimeLayout> that) const override {
+	TimeLayout sadd (CREF<TimeLayout> that) const override {
 		TimeLayout ret ;
 		ret.mThis = Box<TimeImplLayout>::make () ;
 		ret.mThis->mTime = fake.mThis->mTime + that.mThis->mTime ;
 		return move (ret) ;
 	}
 
-	TimeLayout sub (CREF<TimeLayout> that) const override {
+	TimeLayout ssub (CREF<TimeLayout> that) const override {
 		TimeLayout ret ;
 		ret.mThis = Box<TimeImplLayout>::make () ;
 		ret.mThis->mTime = fake.mThis->mTime - that.mThis->mTime ;
@@ -371,8 +376,8 @@ public:
 		fake.mThis->mMutex = mutex.borrow () ;
 		assert (fake.mThis->mMutex->mType == MutexType::Shared) ;
 		shared_enter () ;
-		const auto r1x = fake.mThis->mMutex.recycle () ;
-		fake.mThis->mLock = std::unique_lock<SharedAtomicMutex> (SharedAtomicMutex::from (r1x->self.mShared)) ;
+		auto &&rax = fake.mThis->mMutex.deref () ;
+		fake.mThis->mLock = std::unique_lock<SharedAtomicMutex> (SharedAtomicMutex::from (rax.mShared)) ;
 	}
 
 	void shared_enter () {
@@ -442,8 +447,8 @@ public:
 	}
 
 	void wait (CREF<Time> time) override {
-		auto &&rax = keep[TYPE<TimeLayout>::expr] (time) ;
-		fake.mThis->mMutex->mUnique->wait_for (fake.mThis->mLock ,rax.mThis->mTime) ;
+		const auto r1x = time.borrow () ;
+		fake.mThis->mMutex->mUnique->wait_for (fake.mThis->mLock ,r1x->mTime) ;
 	}
 
 	void notify () override {
@@ -489,8 +494,8 @@ public:
 		auto &&rax = fake.mThis.self ;
 		fake.mThis->mThread = std::thread ([&] () {
 			rax.mUid = RuntimeProc::thread_uid () ;
-			const auto r1x = rax.mExecutor.recycle () ;
-			r1x->self.friend_execute (rax.mSlot) ;
+			auto &&rbx = rax.mExecutor.deref () ;
+			rbx.friend_execute (rax.mSlot) ;
 		}) ;
 	}
 
@@ -723,8 +728,8 @@ public:
 		dump_memory_leaks () ;
 	}
 
-	void initialize (CREF<Slice> name ,CREF<Unknown> holder) override {
-		fake.mThis = Singleton<GlobalRoot>::instance ().mThis ;
+	void initialize (CREF<Slice> name ,CREF<Unknown> holder ,CREF<GlobalLayout> root) override {
+		fake.mThis = root.mThis ;
 		INDEX ix = fake.mThis->mGlobalNameSet.map (name) ;
 		if ifdo (TRUE) {
 			if (ix != NONE)
