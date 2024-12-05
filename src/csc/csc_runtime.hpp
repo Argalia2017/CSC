@@ -31,14 +31,13 @@ using TimeImplStorage = Storage<ENUM<8> ,ENUM<8>> ;
 struct TimeLayout implement ThisLayout<Box<TimeImplLayout ,TimeImplStorage>> {} ;
 
 struct TimeHolder implement Interface {
-	imports VFat<TimeHolder> create (VREF<TimeLayout> that) ;
-	imports CFat<TimeHolder> create (CREF<TimeLayout> that) ;
+	imports VFat<TimeHolder> hold (VREF<TimeLayout> that) ;
+	imports CFat<TimeHolder> hold (CREF<TimeLayout> that) ;
 
-	virtual void initialize () = 0 ;
 	virtual void initialize (CREF<LENGTH> milliseconds_) = 0 ;
 	virtual void initialize (CREF<TimeCalendar> calendar_) = 0 ;
 	virtual void initialize (CREF<TimeLayout> that) = 0 ;
-	virtual Ref<TimeImplLayout> borrow () const = 0 ;
+	virtual Ref<TimeImplLayout> borrow () const leftvalue = 0 ;
 	virtual LENGTH megaseconds () const = 0 ;
 	virtual LENGTH kiloseconds () const = 0 ;
 	virtual LENGTH seconds () const = 0 ;
@@ -58,15 +57,15 @@ public:
 	implicit Time () = default ;
 
 	explicit Time (CREF<LENGTH> milliseconds_) {
-		TimeHolder::create (thiz)->initialize (milliseconds_) ;
+		TimeHolder::hold (thiz)->initialize (milliseconds_) ;
 	}
 
 	explicit Time (CREF<TimeCalendar> calendar_) {
-		TimeHolder::create (thiz)->initialize (calendar_) ;
+		TimeHolder::hold (thiz)->initialize (calendar_) ;
 	}
 
 	implicit Time (CREF<Time> that) {
-		TimeHolder::create (thiz)->initialize (that) ;
+		TimeHolder::hold (thiz)->initialize (that) ;
 	}
 
 	forceinline VREF<Time> operator= (CREF<Time> that) {
@@ -77,40 +76,40 @@ public:
 
 	forceinline VREF<Time> operator= (RREF<Time> that) = default ;
 
-	Ref<TimeImplLayout> borrow () const {
-		return TimeHolder::create (thiz)->borrow () ;
+	Ref<TimeImplLayout> borrow () const leftvalue {
+		return TimeHolder::hold (thiz)->borrow () ;
 	}
 
 	LENGTH megaseconds () const {
-		return TimeHolder::create (thiz)->megaseconds () ;
+		return TimeHolder::hold (thiz)->megaseconds () ;
 	}
 
 	LENGTH kiloseconds () const {
-		return TimeHolder::create (thiz)->kiloseconds () ;
+		return TimeHolder::hold (thiz)->kiloseconds () ;
 	}
 
 	LENGTH seconds () const {
-		return TimeHolder::create (thiz)->seconds () ;
+		return TimeHolder::hold (thiz)->seconds () ;
 	}
 
 	LENGTH milliseconds () const {
-		return TimeHolder::create (thiz)->milliseconds () ;
+		return TimeHolder::hold (thiz)->milliseconds () ;
 	}
 
 	LENGTH microseconds () const {
-		return TimeHolder::create (thiz)->microseconds () ;
+		return TimeHolder::hold (thiz)->microseconds () ;
 	}
 
 	LENGTH nanoseconds () const {
-		return TimeHolder::create (thiz)->nanoseconds () ;
+		return TimeHolder::hold (thiz)->nanoseconds () ;
 	}
 
 	TimeCalendar calendar () const {
-		return TimeHolder::create (thiz)->calendar () ;
+		return TimeHolder::hold (thiz)->calendar () ;
 	}
 
 	Time sadd (CREF<Time> that) const {
-		TimeLayout ret = TimeHolder::create (thiz)->sadd (that) ;
+		TimeLayout ret = TimeHolder::hold (thiz)->sadd (that) ;
 		return move (keep[TYPE<Time>::expr] (ret)) ;
 	}
 
@@ -123,7 +122,7 @@ public:
 	}
 
 	Time ssub (CREF<Time> that) const {
-		TimeLayout ret = TimeHolder::create (thiz)->ssub (that) ;
+		TimeLayout ret = TimeHolder::hold (thiz)->ssub (that) ;
 		return move (keep[TYPE<Time>::expr] (ret)) ;
 	}
 
@@ -136,17 +135,25 @@ public:
 	}
 } ;
 
+struct MakeTimeHolder implement Interface {
+	imports VFat<MakeTimeHolder> hold (VREF<TimeLayout> that) ;
+	imports CFat<MakeTimeHolder> hold (CREF<TimeLayout> that) ;
+
+	virtual void CurrentTime_initialize () = 0 ;
+} ;
+
 inline Time CurrentTime () {
 	Time ret ;
-	TimeHolder::create (ret)->initialize () ;
+	MakeTimeHolder::hold (ret)->CurrentTime_initialize () ;
 	return move (ret) ;
 }
 
-struct RuntimeProcLayout implement ThisLayout<RefLayout> {} ;
+struct RuntimeProcLayout implement ThisLayout<AutoRefLayout> {} ;
 
 struct RuntimeProcHolder implement Interface {
-	imports VFat<RuntimeProcHolder> create (VREF<RuntimeProcLayout> that) ;
-	imports CFat<RuntimeProcHolder> create (CREF<RuntimeProcLayout> that) ;
+	imports CREF<RuntimeProcLayout> instance () ;
+	imports VFat<RuntimeProcHolder> hold (VREF<RuntimeProcLayout> that) ;
+	imports CFat<RuntimeProcHolder> hold (CREF<RuntimeProcLayout> that) ;
 
 	virtual void initialize () = 0 ;
 	virtual LENGTH thread_concurrency () const = 0 ;
@@ -155,10 +162,9 @@ struct RuntimeProcHolder implement Interface {
 	virtual void thread_yield () const = 0 ;
 	virtual FLAG process_uid () const = 0 ;
 	virtual void process_exit () const = 0 ;
-	virtual FLAG random_seed () const = 0 ;
 	virtual String<STR> working_path () const = 0 ;
-	virtual String<STR> module_path () const = 0 ;
-	virtual String<STR> module_name () const = 0 ;
+	virtual String<STR> library_path () const = 0 ;
+	virtual String<STR> library_name () const = 0 ;
 } ;
 
 class RuntimeProc implement RuntimeProcLayout {
@@ -166,63 +172,55 @@ protected:
 	using RuntimeProcLayout::mThis ;
 
 public:
-	imports CREF<RuntimeProc> instance () {
-		return memorize ([&] () {
-			RuntimeProc ret ;
-			RuntimeProcHolder::create (ret)->initialize () ;
-			return move (ret) ;
-		}) ;
+	static CREF<RuntimeProc> instance () {
+		return keep[TYPE<RuntimeProc>::expr] (RuntimeProcHolder::instance ()) ;
 	}
 
-	imports LENGTH thread_concurrency () {
-		return RuntimeProcHolder::create (instance ())->thread_concurrency () ;
+	static LENGTH thread_concurrency () {
+		return RuntimeProcHolder::hold (instance ())->thread_concurrency () ;
 	}
 
-	imports FLAG thread_uid () {
-		return RuntimeProcHolder::create (instance ())->thread_uid () ;
+	static FLAG thread_uid () {
+		return RuntimeProcHolder::hold (instance ())->thread_uid () ;
 	}
 
-	imports void thread_sleep (CREF<Time> time) {
-		return RuntimeProcHolder::create (instance ())->thread_sleep (time) ;
+	static void thread_sleep (CREF<Time> time) {
+		return RuntimeProcHolder::hold (instance ())->thread_sleep (time) ;
 	}
 
-	imports void thread_yield () {
-		return RuntimeProcHolder::create (instance ())->thread_yield () ;
+	static void thread_yield () {
+		return RuntimeProcHolder::hold (instance ())->thread_yield () ;
 	}
 
-	imports FLAG process_uid () {
-		return RuntimeProcHolder::create (instance ())->process_uid () ;
+	static FLAG process_uid () {
+		return RuntimeProcHolder::hold (instance ())->process_uid () ;
 	}
 
-	imports void process_exit () {
-		return RuntimeProcHolder::create (instance ())->process_exit () ;
+	static void process_exit () {
+		return RuntimeProcHolder::hold (instance ())->process_exit () ;
 	}
 
-	imports FLAG random_seed () {
-		return RuntimeProcHolder::create (instance ())->random_seed () ;
+	static String<STR> working_path () {
+		return RuntimeProcHolder::hold (instance ())->working_path () ;
 	}
 
-	imports String<STR> working_path () {
-		return RuntimeProcHolder::create (instance ())->working_path () ;
+	static String<STR> library_path () {
+		return RuntimeProcHolder::hold (instance ())->library_path () ;
 	}
 
-	imports String<STR> module_path () {
-		return RuntimeProcHolder::create (instance ())->module_path () ;
-	}
-
-	imports String<STR> module_name () {
-		return RuntimeProcHolder::create (instance ())->module_name () ;
+	static String<STR> library_name () {
+		return RuntimeProcHolder::hold (instance ())->library_name () ;
 	}
 } ;
 
 struct AtomicImplLayout ;
-using AtomicImplStorage = Storage<ENUM<8> ,ENUM<8>> ;
+using AtomicImplStorage = Storage<SIZE_OF<VAL> ,ALIGN_OF<VAL>> ;
 
 struct AtomicLayout implement ThisLayout<Box<AtomicImplLayout ,AtomicImplStorage>> {} ;
 
 struct AtomicHolder implement Interface {
-	imports VFat<AtomicHolder> create (VREF<AtomicLayout> that) ;
-	imports CFat<AtomicHolder> create (CREF<AtomicLayout> that) ;
+	imports VFat<AtomicHolder> hold (VREF<AtomicLayout> that) ;
+	imports CFat<AtomicHolder> hold (CREF<AtomicLayout> that) ;
 
 	virtual void initialize () = 0 ;
 	virtual VAL fetch () const = 0 ;
@@ -242,11 +240,11 @@ public:
 	implicit Atomic () = default ;
 
 	implicit Atomic (CREF<typeof (NULL)>) {
-		AtomicHolder::create (thiz)->initialize () ;
+		AtomicHolder::hold (thiz)->initialize () ;
 	}
 
 	VAL fetch () const {
-		return AtomicHolder::create (thiz)->fetch () ;
+		return AtomicHolder::hold (thiz)->fetch () ;
 	}
 
 	forceinline operator VAL () const {
@@ -254,34 +252,34 @@ public:
 	}
 
 	void store (CREF<VAL> item) const {
-		return AtomicHolder::create (thiz)->store (item) ;
+		return AtomicHolder::hold (thiz)->store (item) ;
 	}
 
 	VAL exchange (CREF<VAL> item) const {
-		return AtomicHolder::create (thiz)->exchange (item) ;
+		return AtomicHolder::hold (thiz)->exchange (item) ;
 	}
 
 	BOOL change (VREF<VAL> expect ,CREF<VAL> item) const {
-		return AtomicHolder::create (thiz)->change (expect ,item) ;
+		return AtomicHolder::hold (thiz)->change (expect ,item) ;
 	}
 
 	void replace (CREF<VAL> expect ,CREF<VAL> item) const {
-		return AtomicHolder::create (thiz)->replace (expect ,item) ;
+		return AtomicHolder::hold (thiz)->replace (expect ,item) ;
 	}
 
 	void increase () const {
-		return AtomicHolder::create (thiz)->increase () ;
+		return AtomicHolder::hold (thiz)->increase () ;
 	}
 
-	void operator++ (int) const {
+	forceinline void operator++ (int) const {
 		return increase () ;
 	}
 
 	void decrease () const {
-		return AtomicHolder::create (thiz)->decrease () ;
+		return AtomicHolder::hold (thiz)->decrease () ;
 	}
 
-	void operator-- (int) const {
+	forceinline void operator-- (int) const {
 		return decrease () ;
 	}
 } ;
@@ -291,13 +289,14 @@ struct MutexImplLayout ;
 struct MutexLayout implement ThisLayout<AutoRef<MutexImplLayout>> {} ;
 
 struct MutexHolder implement Interface {
-	imports VFat<MutexHolder> create (VREF<MutexLayout> that) ;
-	imports CFat<MutexHolder> create (CREF<MutexLayout> that) ;
+	imports VFat<MutexHolder> hold (VREF<MutexLayout> that) ;
+	imports CFat<MutexHolder> hold (CREF<MutexLayout> that) ;
 
 	virtual void initialize () = 0 ;
-	virtual Ref<MutexImplLayout> borrow () const = 0 ;
+	virtual Ref<MutexImplLayout> borrow () const leftvalue = 0 ;
 	virtual void enter () const = 0 ;
 	virtual void leave () const = 0 ;
+	virtual BOOL done () const = 0 ;
 } ;
 
 class Mutex implement MutexLayout {
@@ -307,61 +306,62 @@ protected:
 public:
 	implicit Mutex () = default ;
 
-	Ref<MutexImplLayout> borrow () const {
-		return MutexHolder::create (thiz)->borrow () ;
+	implicit Mutex (CREF<typeof (NULL)>) {
+		MutexHolder::hold (thiz)->initialize () ;
+	}
+
+	Ref<MutexImplLayout> borrow () const leftvalue {
+		return MutexHolder::hold (thiz)->borrow () ;
 	}
 
 	void enter () const {
-		return MutexHolder::create (thiz)->enter () ;
+		return MutexHolder::hold (thiz)->enter () ;
 	}
 
 	void leave () const {
-		return MutexHolder::create (thiz)->leave () ;
+		return MutexHolder::hold (thiz)->leave () ;
+	}
+
+	BOOL done () const {
+		return MutexHolder::hold (thiz)->done () ;
 	}
 } ;
 
 struct MakeMutexHolder implement Interface {
-	imports VFat<MakeMutexHolder> create (VREF<MutexLayout> that) ;
-	imports CFat<MakeMutexHolder> create (CREF<MutexLayout> that) ;
+	imports VFat<MakeMutexHolder> hold (VREF<MutexLayout> that) ;
+	imports CFat<MakeMutexHolder> hold (CREF<MutexLayout> that) ;
 
-	virtual void MakeMutex_initialize () = 0 ;
-	virtual void RecursiveMutex_initialize () = 0 ;
+	virtual void OnceMutex_initialize () = 0 ;
 	virtual void SharedMutex_initialize () = 0 ;
 	virtual void UniqueMutex_initialize () = 0 ;
 } ;
 
-inline Mutex MakeMutex () {
+inline Mutex OnceMutex () {
 	Mutex ret ;
-	MakeMutexHolder::create (ret)->MakeMutex_initialize () ;
-	return move (ret) ;
-}
-
-inline Mutex RecursiveMutex () {
-	Mutex ret ;
-	MakeMutexHolder::create (ret)->RecursiveMutex_initialize () ;
+	MakeMutexHolder::hold (ret)->OnceMutex_initialize () ;
 	return move (ret) ;
 }
 
 inline Mutex SharedMutex () {
 	Mutex ret ;
-	MakeMutexHolder::create (ret)->SharedMutex_initialize () ;
+	MakeMutexHolder::hold (ret)->SharedMutex_initialize () ;
 	return move (ret) ;
 }
 
 inline Mutex UniqueMutex () {
 	Mutex ret ;
-	MakeMutexHolder::create (ret)->UniqueMutex_initialize () ;
+	MakeMutexHolder::hold (ret)->UniqueMutex_initialize () ;
 	return move (ret) ;
 }
 
 struct SharedLockImplLayout ;
-using SharedLockImplStorage = Storage<ENUM<32> ,ENUM<8>> ;
+using SharedLockImplStorage = Storage<ENUM_MUL<SIZE_OF<VAL> ,RANK4> ,ALIGN_OF<VAL>> ;
 
 struct SharedLockLayout implement ThisLayout<Box<SharedLockImplLayout ,SharedLockImplStorage>> {} ;
 
 struct SharedLockHolder implement Interface {
-	imports VFat<SharedLockHolder> create (VREF<SharedLockLayout> that) ;
-	imports CFat<SharedLockHolder> create (CREF<SharedLockLayout> that) ;
+	imports VFat<SharedLockHolder> hold (VREF<SharedLockLayout> that) ;
+	imports CFat<SharedLockHolder> hold (CREF<SharedLockLayout> that) ;
 
 	virtual void initialize (CREF<Mutex> mutex) = 0 ;
 	virtual BOOL busy () const = 0 ;
@@ -377,30 +377,30 @@ public:
 	implicit SharedLock () = default ;
 
 	explicit SharedLock (CREF<Mutex> mutex) {
-		SharedLockHolder::create (thiz)->initialize (mutex) ;
+		SharedLockHolder::hold (thiz)->initialize (mutex) ;
 	}
 
 	BOOL busy () const {
-		return SharedLockHolder::create (thiz)->busy () ;
+		return SharedLockHolder::hold (thiz)->busy () ;
 	}
 
 	void enter () const {
-		return SharedLockHolder::create (thiz)->enter () ;
+		return SharedLockHolder::hold (thiz)->enter () ;
 	}
 
 	void leave () const {
-		return SharedLockHolder::create (thiz)->leave () ;
+		return SharedLockHolder::hold (thiz)->leave () ;
 	}
 } ;
 
 struct UniqueLockImplLayout ;
-using UniqueLockImplStorage = Storage<ENUM<32> ,ENUM<8>> ;
+using UniqueLockImplStorage = Storage<ENUM_MUL<SIZE_OF<VAL> ,RANK4> ,ALIGN_OF<VAL>> ;
 
 struct UniqueLockLayout implement ThisLayout<Box<UniqueLockImplLayout ,UniqueLockImplStorage>> {} ;
 
 struct UniqueLockHolder implement Interface {
-	imports VFat<UniqueLockHolder> create (VREF<UniqueLockLayout> that) ;
-	imports CFat<UniqueLockHolder> create (CREF<UniqueLockLayout> that) ;
+	imports VFat<UniqueLockHolder> hold (VREF<UniqueLockLayout> that) ;
+	imports CFat<UniqueLockHolder> hold (CREF<UniqueLockLayout> that) ;
 
 	virtual void initialize (CREF<Mutex> mutex) = 0 ;
 	virtual void wait () = 0 ;
@@ -417,23 +417,23 @@ public:
 	implicit UniqueLock () = default ;
 
 	explicit UniqueLock (CREF<Mutex> mutex) {
-		UniqueLockHolder::create (thiz)->initialize (mutex) ;
+		UniqueLockHolder::hold (thiz)->initialize (mutex) ;
 	}
 
 	void wait () {
-		return UniqueLockHolder::create (thiz)->wait () ;
+		return UniqueLockHolder::hold (thiz)->wait () ;
 	}
 
 	void wait (CREF<Time> time) {
-		return UniqueLockHolder::create (thiz)->wait (time) ;
+		return UniqueLockHolder::hold (thiz)->wait (time) ;
 	}
 
 	void notify () {
-		return UniqueLockHolder::create (thiz)->notify () ;
+		return UniqueLockHolder::hold (thiz)->notify () ;
 	}
 
 	void yield () {
-		return UniqueLockHolder::create (thiz)->yield () ;
+		return UniqueLockHolder::hold (thiz)->yield () ;
 	}
 } ;
 
@@ -442,9 +442,9 @@ struct ThreadFriend implement Interface {
 } ;
 
 template <class A>
-class ThreadFriendBinder implement Fat<ThreadFriend ,A> {
+class ThreadFriendBinder final implement Fat<ThreadFriend ,A> {
 public:
-	imports VFat<ThreadFriend> create (VREF<A> that) {
+	static VFat<ThreadFriend> create (VREF<A> that) {
 		return VFat<ThreadFriend> (ThreadFriendBinder () ,that) ;
 	}
 
@@ -458,10 +458,10 @@ struct ThreadImplLayout ;
 struct ThreadLayout implement ThisLayout<AutoRef<ThreadImplLayout>> {} ;
 
 struct ThreadHolder implement Interface {
-	imports VFat<ThreadHolder> create (VREF<ThreadLayout> that) ;
-	imports CFat<ThreadHolder> create (CREF<ThreadLayout> that) ;
+	imports VFat<ThreadHolder> hold (VREF<ThreadLayout> that) ;
+	imports CFat<ThreadHolder> hold (CREF<ThreadLayout> that) ;
 
-	virtual void initialize (RREF<Ref<ThreadFriend>> executor ,CREF<INDEX> slot) = 0 ;
+	virtual void initialize (RREF<Ref<VFat<ThreadFriend>>> executor ,CREF<INDEX> slot) = 0 ;
 	virtual FLAG thread_uid () const = 0 ;
 	virtual void start () = 0 ;
 	virtual void stop () = 0 ;
@@ -474,20 +474,20 @@ protected:
 public:
 	implicit Thread () = default ;
 
-	explicit Thread (RREF<Ref<ThreadFriend>> executor ,CREF<INDEX> slot) {
-		ThreadHolder::create (thiz)->initialize (move (executor) ,slot) ;
+	explicit Thread (RREF<Ref<VFat<ThreadFriend>>> executor ,CREF<INDEX> slot) {
+		ThreadHolder::hold (thiz)->initialize (move (executor) ,slot) ;
 	}
 
 	FLAG thread_uid () const {
-		return ThreadHolder::create (thiz)->thread_uid () ;
+		return ThreadHolder::hold (thiz)->thread_uid () ;
 	}
 
 	void start () {
-		return ThreadHolder::create (thiz)->start () ;
+		return ThreadHolder::hold (thiz)->start () ;
 	}
 
 	void stop () {
-		return ThreadHolder::create (thiz)->stop () ;
+		return ThreadHolder::hold (thiz)->stop () ;
 	}
 } ;
 
@@ -496,8 +496,8 @@ struct ProcessImplLayout ;
 struct ProcessLayout implement ThisLayout<AutoRef<ProcessImplLayout>> {} ;
 
 struct ProcessHolder implement Interface {
-	imports VFat<ProcessHolder> create (VREF<ProcessLayout> that) ;
-	imports CFat<ProcessHolder> create (CREF<ProcessLayout> that) ;
+	imports VFat<ProcessHolder> hold (VREF<ProcessLayout> that) ;
+	imports CFat<ProcessHolder> hold (CREF<ProcessLayout> that) ;
 
 	virtual void initialize (CREF<FLAG> uid) = 0 ;
 	virtual void initialize (CREF<RefBuffer<BYTE>> snapshot_) = 0 ;
@@ -514,15 +514,15 @@ public:
 	implicit Process () = default ;
 
 	explicit Process (CREF<FLAG> uid) {
-		ProcessHolder::create (thiz)->initialize (uid) ;
+		ProcessHolder::hold (thiz)->initialize (uid) ;
 	}
 
 	explicit Process (CREF<RefBuffer<BYTE>> snapshot_) {
-		ProcessHolder::create (thiz)->initialize (snapshot_) ;
+		ProcessHolder::hold (thiz)->initialize (snapshot_) ;
 	}
 
 	BOOL equal (CREF<Process> that) const {
-		return ProcessHolder::create (thiz)->equal (that) ;
+		return ProcessHolder::hold (thiz)->equal (that) ;
 	}
 
 	forceinline BOOL operator== (CREF<Process> that) const {
@@ -534,44 +534,44 @@ public:
 	}
 
 	FLAG process_uid () const {
-		return ProcessHolder::create (thiz)->process_uid () ;
+		return ProcessHolder::hold (thiz)->process_uid () ;
 	}
 
 	RefBuffer<BYTE> snapshot () const {
-		return ProcessHolder::create (thiz)->snapshot () ;
+		return ProcessHolder::hold (thiz)->snapshot () ;
 	}
 } ;
 
-struct ModuleImplLayout ;
+struct LibraryImplLayout ;
 
-struct ModuleLayout implement ThisLayout<AutoRef<ModuleImplLayout>> {} ;
+struct LibraryLayout implement ThisLayout<AutoRef<LibraryImplLayout>> {} ;
 
-struct ModuleHolder implement Interface {
-	imports VFat<ModuleHolder> create (VREF<ModuleLayout> that) ;
-	imports CFat<ModuleHolder> create (CREF<ModuleLayout> that) ;
+struct LibraryHolder implement Interface {
+	imports VFat<LibraryHolder> hold (VREF<LibraryLayout> that) ;
+	imports CFat<LibraryHolder> hold (CREF<LibraryLayout> that) ;
 
 	virtual void initialize (CREF<String<STR>> file) = 0 ;
 	virtual FLAG load (CREF<String<STR>> name) = 0 ;
 	virtual String<STR> error () const = 0 ;
 } ;
 
-class Module implement ModuleLayout {
+class Library implement LibraryLayout {
 protected:
-	using ModuleLayout::mThis ;
+	using LibraryLayout::mThis ;
 
 public:
-	implicit Module () = default ;
+	implicit Library () = default ;
 
-	explicit Module (CREF<String<STR>> file) {
-		ModuleHolder::create (thiz)->initialize (file) ;
+	explicit Library (CREF<String<STR>> file) {
+		LibraryHolder::hold (thiz)->initialize (file) ;
 	}
 
 	FLAG load (CREF<String<STR>> name) {
-		return ModuleHolder::create (thiz)->load (name) ;
+		return LibraryHolder::hold (thiz)->load (name) ;
 	}
 
 	String<STR> error () const {
-		return ModuleHolder::create (thiz)->error () ;
+		return LibraryHolder::hold (thiz)->error () ;
 	}
 } ;
 
@@ -580,11 +580,11 @@ struct SystemImplLayout ;
 struct SystemLayout implement ThisLayout<AutoRef<SystemImplLayout>> {} ;
 
 struct SystemHolder implement Interface {
-	imports VFat<SystemHolder> create (VREF<SystemLayout> that) ;
-	imports CFat<SystemHolder> create (CREF<SystemLayout> that) ;
+	imports VFat<SystemHolder> hold (VREF<SystemLayout> that) ;
+	imports CFat<SystemHolder> hold (CREF<SystemLayout> that) ;
 
 	virtual void initialize () = 0 ;
-	virtual void set_locale (CREF<String<STR>> name) const = 0 ;
+	virtual void set_locale (CREF<String<STR>> name) = 0 ;
 	virtual FLAG execute (CREF<String<STR>> command) const = 0 ;
 } ;
 
@@ -595,23 +595,24 @@ protected:
 public:
 	implicit System () = default ;
 
-	void set_locale (CREF<String<STR>> name) const {
-		return SystemHolder::create (thiz)->set_locale (name) ;
+	void set_locale (CREF<String<STR>> name) {
+		return SystemHolder::hold (thiz)->set_locale (name) ;
 	}
 
 	FLAG execute (CREF<String<STR>> command) const {
-		return SystemHolder::create (thiz)->execute (command) ;
+		return SystemHolder::hold (thiz)->execute (command) ;
 	}
 } ;
 
 struct RandomImplLayout ;
 
-struct RandomLayout implement ThisLayout<AutoRef<RandomImplLayout>> {} ;
+struct RandomLayout implement ThisLayout<SharedRef<RandomImplLayout>> {} ;
 
 struct RandomHolder implement Interface {
-	imports VFat<RandomHolder> create (VREF<RandomLayout> that) ;
-	imports CFat<RandomHolder> create (CREF<RandomLayout> that) ;
+	imports VFat<RandomHolder> hold (VREF<RandomLayout> that) ;
+	imports CFat<RandomHolder> hold (CREF<RandomLayout> that) ;
 
+	virtual void initialize () = 0 ;
 	virtual void initialize (CREF<FLAG> seed) = 0 ;
 	virtual FLAG seed () const = 0 ;
 	virtual INDEX random_value (CREF<INDEX> lb ,CREF<INDEX> rb) const = 0 ;
@@ -631,53 +632,62 @@ public:
 	implicit Random () = default ;
 
 	explicit Random (CREF<FLAG> seed) {
-		RandomHolder::create (thiz)->initialize (seed) ;
+		RandomHolder::hold (thiz)->initialize (seed) ;
 	}
 
 	FLAG seed () const {
-		return RandomHolder::create (thiz)->seed () ;
+		return RandomHolder::hold (thiz)->seed () ;
 	}
 
 	INDEX random_value (CREF<INDEX> lb ,CREF<INDEX> rb) const {
-		return RandomHolder::create (thiz)->random_value (lb ,rb) ;
+		return RandomHolder::hold (thiz)->random_value (lb ,rb) ;
 	}
 
 	Array<INDEX> random_shuffle (CREF<LENGTH> length_ ,CREF<LENGTH> size_) const {
-		return RandomHolder::create (thiz)->random_shuffle (length_ ,size_) ;
+		return RandomHolder::hold (thiz)->random_shuffle (length_ ,size_) ;
 	}
 
 	void random_shuffle (CREF<LENGTH> length_ ,CREF<LENGTH> size_ ,VREF<Array<INDEX>> result) const {
-		return RandomHolder::create (thiz)->random_shuffle (length_ ,size_ ,result) ;
+		return RandomHolder::hold (thiz)->random_shuffle (length_ ,size_ ,result) ;
 	}
 
 	BitSet random_pick (CREF<LENGTH> length_ ,CREF<LENGTH> size_) const {
-		return RandomHolder::create (thiz)->random_pick (length_ ,size_) ;
+		return RandomHolder::hold (thiz)->random_pick (length_ ,size_) ;
 	}
 
 	void random_pick (CREF<LENGTH> length_ ,CREF<LENGTH> size_ ,VREF<BitSet> result) const {
-		return RandomHolder::create (thiz)->random_pick (length_ ,size_ ,result) ;
+		return RandomHolder::hold (thiz)->random_pick (length_ ,size_ ,result) ;
 	}
 
 	BOOL random_draw (CREF<FLT64> possibility) const {
-		return RandomHolder::create (thiz)->random_draw (possibility) ;
+		return RandomHolder::hold (thiz)->random_draw (possibility) ;
 	}
 
 	FLT64 random_normal () const {
-		return RandomHolder::create (thiz)->random_normal () ;
+		return RandomHolder::hold (thiz)->random_normal () ;
 	}
 } ;
 
+inline Random CurrentRandom () {
+	Random ret ;
+	RandomHolder::hold (ret)->initialize () ;
+	return move (ret) ;
+}
+
 struct SingletonProcImplLayout ;
 
-struct SingletonProcLayout implement ThisLayout<SharedRef<SingletonProcImplLayout>> {} ;
+struct SingletonProcLayout implement ThisLayout<AutoRef<SingletonProcImplLayout>> {} ;
 
 struct SingletonProcHolder implement Interface {
-	imports VFat<SingletonProcHolder> create (VREF<SingletonProcLayout> that) ;
-	imports CFat<SingletonProcHolder> create (CREF<SingletonProcLayout> that) ;
+	imports CREF<SingletonProcLayout> instance () ;
+	imports VFat<SingletonProcHolder> hold (VREF<SingletonProcLayout> that) ;
+	imports CFat<SingletonProcHolder> hold (CREF<SingletonProcLayout> that) ;
 
 	virtual void initialize () = 0 ;
+	virtual QUAD abi_reserve () const = 0 ;
+	virtual QUAD ctx_reserve () const = 0 ;
 	virtual FLAG load (CREF<Clazz> clazz) const = 0 ;
-	virtual void save (CREF<Clazz> clazz ,CREF<FLAG> addr) const = 0 ;
+	virtual void save (CREF<Clazz> clazz ,CREF<FLAG> pointer) const = 0 ;
 } ;
 
 class SingletonProc implement SingletonProcLayout {
@@ -685,27 +695,31 @@ protected:
 	using SingletonProcLayout::mThis ;
 
 public:
-	imports CREF<SingletonProc> instance () {
-		return memorize ([&] () {
-			SingletonProc ret ;
-			SingletonProcHolder::create (ret)->initialize () ;
-			return move (ret) ;
-		}) ;
+	static CREF<SingletonProc> instance () {
+		return keep[TYPE<SingletonProc>::expr] (SingletonProcHolder::instance ()) ;
 	}
 
-	imports FLAG load (CREF<Clazz> clazz) {
-		return SingletonProcHolder::create (instance ())->load (clazz) ;
+	static QUAD abi_reserve () {
+		return SingletonProcHolder::hold (instance ())->abi_reserve () ;
 	}
 
-	imports void save (CREF<Clazz> clazz ,CREF<FLAG> addr) {
-		return SingletonProcHolder::create (instance ())->save (clazz ,addr) ;
+	static QUAD ctx_reserve () {
+		return SingletonProcHolder::hold (instance ())->ctx_reserve () ;
+	}
+
+	static FLAG load (CREF<Clazz> clazz) {
+		return SingletonProcHolder::hold (instance ())->load (clazz) ;
+	}
+
+	static void save (CREF<Clazz> clazz ,CREF<FLAG> pointer) {
+		return SingletonProcHolder::hold (instance ())->save (clazz ,pointer) ;
 	}
 } ;
 
 template <class A>
 class Singleton implement Proxy {
 public:
-	imports CREF<A> instance () {
+	static CREF<A> instance () {
 		return memorize ([&] () {
 			const auto r1x = Clazz (TYPE<A>::expr) ;
 			auto rax = SingletonProc::load (r1x) ;
@@ -716,7 +730,8 @@ public:
 				SingletonProc::save (r1x ,rax) ;
 				rax = SingletonProc::load (r1x) ;
 			}
-			return Ref<A>::reference (Pointer::make (rax)) ;
+			auto &&rbx = keep[TYPE<A>::expr] (Pointer::make (rax)) ;
+			return Ref<A>::reference (rbx) ;
 		}).self ;
 	}
 } ;
@@ -726,15 +741,16 @@ struct GlobalImplLayout ;
 struct GlobalLayout {
 	SharedRef<GlobalImplLayout> mThis ;
 	INDEX mIndex ;
-	INDEX mCheck ;
+	Clazz mClazz ;
 } ;
 
 struct GlobalHolder implement Interface {
-	imports VFat<GlobalHolder> create (VREF<GlobalLayout> that) ;
-	imports CFat<GlobalHolder> create (CREF<GlobalLayout> that) ;
+	imports CREF<GlobalLayout> instance () ;
+	imports VFat<GlobalHolder> hold (VREF<GlobalLayout> that) ;
+	imports CFat<GlobalHolder> hold (CREF<GlobalLayout> that) ;
 
 	virtual void initialize () = 0 ;
-	virtual void initialize (CREF<Slice> name ,CREF<Unknown> holder ,CREF<GlobalLayout> root) = 0 ;
+	virtual void initialize (CREF<Slice> name ,CREF<Unknown> holder) = 0 ;
 	virtual BOOL exist () const = 0 ;
 	virtual AutoRef<Pointer> fetch () const = 0 ;
 	virtual void store (RREF<AutoRef<Pointer>> item) const = 0 ;
@@ -742,54 +758,50 @@ struct GlobalHolder implement Interface {
 
 class GlobalRoot implement GlobalLayout {
 public:
-	imports CREF<GlobalRoot> instance () {
-		return memorize ([&] () {
-			GlobalRoot ret ;
-			GlobalHolder::create (ret)->initialize () ;
-			return move (ret) ;
-		}) ;
+	static CREF<GlobalRoot> instance () {
+		return keep[TYPE<GlobalRoot>::expr] (GlobalHolder::instance ()) ;
 	}
 } ;
 
 template <class A>
-class GlobalUnknownBinder implement Unknown {
+class GlobalUnknownBinder implement UnknownFriend {
 public:
 	FLAG reflect (CREF<FLAG> uuid) const override {
 		if (uuid == ReflectSizeBinder<A>::expr)
-			return inline_hold (ReflectSizeBinder<A> ()) ;
+			return inline_vptr (ReflectSizeBinder<A> ()) ;
 		if (uuid == ReflectCreateBinder<A>::expr)
-			return inline_hold (ReflectCreateBinder<A> ()) ;
+			return inline_vptr (ReflectCreateBinder<A> ()) ;
 		if (uuid == ReflectDestroyBinder<A>::expr)
-			return inline_hold (ReflectDestroyBinder<A> ()) ;
+			return inline_vptr (ReflectDestroyBinder<A> ()) ;
 		if (uuid == ReflectGuidBinder<A>::expr)
-			return inline_hold (ReflectGuidBinder<A> ()) ;
+			return inline_vptr (ReflectGuidBinder<A> ()) ;
 		if (uuid == ReflectNameBinder<A>::expr)
-			return inline_hold (ReflectNameBinder<A> ()) ;
+			return inline_vptr (ReflectNameBinder<A> ()) ;
 		if (uuid == ReflectCloneBinder<A>::expr)
-			return inline_hold (ReflectCloneBinder<A> ()) ;
+			return inline_vptr (ReflectCloneBinder<A> ()) ;
 		return ZERO ;
 	}
 } ;
 
-template <class A ,class B = Singleton<GlobalRoot>>
+template <class A>
 class Global implement GlobalLayout {
 protected:
 	using GlobalLayout::mThis ;
 	using GlobalLayout::mIndex ;
 
 public:
-	implicit Global () = delete ;
+	implicit Global () = default ;
 
 	explicit Global (CREF<Slice> name) {
-		GlobalHolder::create (thiz)->initialize (name ,GlobalUnknownBinder<A> () ,B::instance ()) ;
+		GlobalHolder::hold (thiz)->initialize (name ,GlobalUnknownBinder<A> ()) ;
 	}
 
 	BOOL exist () const {
-		return GlobalHolder::create (thiz)->exist () ;
+		return GlobalHolder::hold (thiz)->exist () ;
 	}
 
 	A fetch () const {
-		auto rax = GlobalHolder::create (thiz)->fetch () ;
+		auto rax = GlobalHolder::hold (thiz)->fetch () ;
 		return move (rax.rebind (TYPE<A>::expr).self) ;
 	}
 
@@ -799,7 +811,7 @@ public:
 
 	void store (RREF<A> item) const {
 		auto rax = AutoRef<A>::make (move (item)) ;
-		return GlobalHolder::create (thiz)->store (move (rax)) ;
+		return GlobalHolder::hold (thiz)->store (move (rax)) ;
 	}
 } ;
 
@@ -808,8 +820,8 @@ struct PathImplLayout ;
 struct PathLayout implement ThisLayout<Ref<PathImplLayout>> {} ;
 
 struct PathHolder implement Interface {
-	imports VFat<PathHolder> create (VREF<PathLayout> that) ;
-	imports CFat<PathHolder> create (CREF<PathLayout> that) ;
+	imports VFat<PathHolder> hold (VREF<PathLayout> that) ;
+	imports CFat<PathHolder> hold (CREF<PathLayout> that) ;
 
 	virtual void initialize (RREF<String<STR>> pathname) = 0 ;
 	virtual void initialize (CREF<PathLayout> that) = 0 ;
@@ -839,15 +851,15 @@ public:
 	implicit Path () = default ;
 
 	explicit Path (CREF<String<STR>> pathname) {
-		PathHolder::create (thiz)->initialize (move (pathname)) ;
+		PathHolder::hold (thiz)->initialize (move (pathname)) ;
 	}
 
 	explicit Path (RREF<String<STR>> pathname) {
-		PathHolder::create (thiz)->initialize (move (pathname)) ;
+		PathHolder::hold (thiz)->initialize (move (pathname)) ;
 	}
 
 	implicit Path (CREF<Path> that) {
-		PathHolder::create (thiz)->initialize (that) ;
+		PathHolder::hold (thiz)->initialize (that) ;
 	}
 
 	forceinline VREF<Path> operator= (CREF<Path> that) {
@@ -859,7 +871,7 @@ public:
 	forceinline VREF<Path> operator= (RREF<Path> that) = default ;
 
 	String<STR> fetch () const {
-		return PathHolder::create (thiz)->fetch () ;
+		return PathHolder::hold (thiz)->fetch () ;
 	}
 
 	forceinline operator String<STR> () const {
@@ -867,37 +879,37 @@ public:
 	}
 
 	PathLayout root () const {
-		PathLayout ret = PathHolder::create (thiz)->root () ;
+		PathLayout ret = PathHolder::hold (thiz)->root () ;
 		return move (keep[TYPE<Path>::expr] (ret)) ;
 	}
 
 	Path child (CREF<Slice> name) const {
-		PathLayout ret = PathHolder::create (thiz)->child (name) ;
+		PathLayout ret = PathHolder::hold (thiz)->child (name) ;
 		return move (keep[TYPE<Path>::expr] (ret)) ;
 	}
 
 	Path child (CREF<Format> name) const {
-		PathLayout ret = PathHolder::create (thiz)->child (name) ;
+		PathLayout ret = PathHolder::hold (thiz)->child (name) ;
 		return move (keep[TYPE<Path>::expr] (ret)) ;
 	}
 
 	Path child (CREF<String<STR>> name) const {
-		PathLayout ret = PathHolder::create (thiz)->child (name) ;
+		PathLayout ret = PathHolder::hold (thiz)->child (name) ;
 		return move (keep[TYPE<Path>::expr] (ret)) ;
 	}
 
 	Array<Path> list () const {
-		ArrayLayout ret = PathHolder::create (thiz)->list () ;
+		ArrayLayout ret = PathHolder::hold (thiz)->list () ;
 		return move (keep[TYPE<Array<Path>>::expr] (ret)) ;
 	}
 
 	Array<Path> list (CREF<LENGTH> size_) const {
-		ArrayLayout ret = PathHolder::create (thiz)->list (size_) ;
+		ArrayLayout ret = PathHolder::hold (thiz)->list (size_) ;
 		return move (keep[TYPE<Array<Path>>::expr] (ret)) ;
 	}
 
 	BOOL equal (CREF<Path> that) const {
-		return PathHolder::create (thiz)->equal (that) ;
+		return PathHolder::hold (thiz)->equal (that) ;
 	}
 
 	forceinline BOOL operator== (CREF<Path> that) const {
@@ -909,35 +921,35 @@ public:
 	}
 
 	BOOL is_file () const {
-		return PathHolder::create (thiz)->is_file () ;
+		return PathHolder::hold (thiz)->is_file () ;
 	}
 
 	BOOL is_dire () const {
-		return PathHolder::create (thiz)->is_dire () ;
+		return PathHolder::hold (thiz)->is_dire () ;
 	}
 
 	BOOL is_link () const {
-		return PathHolder::create (thiz)->is_link () ;
+		return PathHolder::hold (thiz)->is_link () ;
 	}
 
 	Deque<String<STR>> decouple () const {
-		return PathHolder::create (thiz)->decouple () ;
+		return PathHolder::hold (thiz)->decouple () ;
 	}
 
 	String<STR> path () const {
-		return PathHolder::create (thiz)->path () ;
+		return PathHolder::hold (thiz)->path () ;
 	}
 
 	String<STR> name () const {
-		return PathHolder::create (thiz)->name () ;
+		return PathHolder::hold (thiz)->name () ;
 	}
 
 	String<STR> stem () const {
-		return PathHolder::create (thiz)->stem () ;
+		return PathHolder::hold (thiz)->stem () ;
 	}
 
 	String<STR> extension () const {
-		return PathHolder::create (thiz)->extension () ;
+		return PathHolder::hold (thiz)->extension () ;
 	}
 } ;
 
@@ -946,13 +958,14 @@ struct FileProcImplLayout ;
 struct FileProcLayout implement ThisLayout<AutoRef<FileProcImplLayout>> {} ;
 
 struct FileProcHolder implement Interface {
-	imports VFat<FileProcHolder> create (VREF<FileProcLayout> that) ;
-	imports CFat<FileProcHolder> create (CREF<FileProcLayout> that) ;
+	imports CREF<FileProcLayout> instance () ;
+	imports VFat<FileProcHolder> hold (VREF<FileProcLayout> that) ;
+	imports CFat<FileProcHolder> hold (CREF<FileProcLayout> that) ;
 
 	virtual void initialize () = 0 ;
 	virtual RefBuffer<BYTE> load_file (CREF<String<STR>> file) const = 0 ;
-	virtual void save_file (CREF<String<STR>> file ,CREF<RefBuffer<BYTE>> data) const = 0 ;
-	virtual RefBuffer<BYTE> load_asset (CREF<String<STR>> file) const = 0 ;
+	virtual void save_file (CREF<String<STR>> file ,CREF<RefBuffer<BYTE>> item) const = 0 ;
+	virtual Ref<RefBuffer<BYTE>> load_asset (CREF<String<STR>> file) const = 0 ;
 	virtual void copy_file (CREF<String<STR>> dst ,CREF<String<STR>> src) const = 0 ;
 	virtual void move_file (CREF<String<STR>> dst ,CREF<String<STR>> src) const = 0 ;
 	virtual void link_file (CREF<String<STR>> dst ,CREF<String<STR>> src) const = 0 ;
@@ -968,56 +981,52 @@ protected:
 	using FileProcLayout::mThis ;
 
 public:
-	imports CREF<FileProc> instance () {
-		return memorize ([&] () {
-			FileProc ret ;
-			FileProcHolder::create (ret)->initialize () ;
-			return move (ret) ;
-		}) ;
+	static CREF<FileProc> instance () {
+		return keep[TYPE<FileProc>::expr] (FileProcHolder::instance ()) ;
 	}
 
-	imports RefBuffer<BYTE> load_file (CREF<String<STR>> file) {
-		return FileProcHolder::create (instance ())->load_file (file) ;
+	static RefBuffer<BYTE> load_file (CREF<String<STR>> file) {
+		return FileProcHolder::hold (instance ())->load_file (file) ;
 	}
 
-	imports void save_file (CREF<String<STR>> file ,CREF<RefBuffer<BYTE>> data) {
-		return FileProcHolder::create (instance ())->save_file (file ,data) ;
+	static void save_file (CREF<String<STR>> file ,CREF<RefBuffer<BYTE>> item) {
+		return FileProcHolder::hold (instance ())->save_file (file ,item) ;
 	}
 
-	imports RefBuffer<BYTE> load_asset (CREF<String<STR>> file) {
-		return FileProcHolder::create (instance ())->load_asset (file) ;
+	static Ref<RefBuffer<BYTE>> load_asset (CREF<String<STR>> file) {
+		return FileProcHolder::hold (instance ())->load_asset (file) ;
 	}
 
-	imports void copy_file (CREF<String<STR>> dst ,CREF<String<STR>> src) {
-		return FileProcHolder::create (instance ())->copy_file (dst ,src) ;
+	static void copy_file (CREF<String<STR>> dst ,CREF<String<STR>> src) {
+		return FileProcHolder::hold (instance ())->copy_file (dst ,src) ;
 	}
 
-	imports void move_file (CREF<String<STR>> dst ,CREF<String<STR>> src) {
-		return FileProcHolder::create (instance ())->move_file (dst ,src) ;
+	static void move_file (CREF<String<STR>> dst ,CREF<String<STR>> src) {
+		return FileProcHolder::hold (instance ())->move_file (dst ,src) ;
 	}
 
-	imports void link_file (CREF<String<STR>> dst ,CREF<String<STR>> src) {
-		return FileProcHolder::create (instance ())->link_file (dst ,src) ;
+	static void link_file (CREF<String<STR>> dst ,CREF<String<STR>> src) {
+		return FileProcHolder::hold (instance ())->link_file (dst ,src) ;
 	}
 
-	imports void erase_file (CREF<String<STR>> file) {
-		return FileProcHolder::create (instance ())->erase_file (file) ;
+	static void erase_file (CREF<String<STR>> file) {
+		return FileProcHolder::hold (instance ())->erase_file (file) ;
 	}
 
-	imports void build_dire (CREF<String<STR>> dire) {
-		return FileProcHolder::create (instance ())->build_dire (dire) ;
+	static void build_dire (CREF<String<STR>> dire) {
+		return FileProcHolder::hold (instance ())->build_dire (dire) ;
 	}
 
-	imports void clear_dire (CREF<String<STR>> dire) {
-		return FileProcHolder::create (instance ())->clear_dire (dire) ;
+	static void clear_dire (CREF<String<STR>> dire) {
+		return FileProcHolder::hold (instance ())->clear_dire (dire) ;
 	}
 
-	imports void erase_dire (CREF<String<STR>> dire) {
-		return FileProcHolder::create (instance ())->erase_dire (dire) ;
+	static void erase_dire (CREF<String<STR>> dire) {
+		return FileProcHolder::hold (instance ())->erase_dire (dire) ;
 	}
 
-	imports BOOL lock_dire (CREF<String<STR>> dire) {
-		return FileProcHolder::create (instance ())->lock_dire (dire) ;
+	static BOOL lock_dire (CREF<String<STR>> dire) {
+		return FileProcHolder::hold (instance ())->lock_dire (dire) ;
 	}
 } ;
 
@@ -1026,8 +1035,8 @@ struct StreamFileImplLayout ;
 struct StreamFileLayout implement ThisLayout<AutoRef<StreamFileImplLayout>> {} ;
 
 struct StreamFileHolder implement Interface {
-	imports VFat<StreamFileHolder> create (VREF<StreamFileLayout> that) ;
-	imports CFat<StreamFileHolder> create (CREF<StreamFileLayout> that) ;
+	imports VFat<StreamFileHolder> hold (VREF<StreamFileLayout> that) ;
+	imports CFat<StreamFileHolder> hold (CREF<StreamFileLayout> that) ;
 
 	virtual void initialize (RREF<String<STR>> file) = 0 ;
 	virtual void open_r () = 0 ;
@@ -1039,6 +1048,8 @@ struct StreamFileHolder implement Interface {
 	virtual void flush () = 0 ;
 } ;
 
+using STREAMFILE_BUF_SIZE = ENUM<65536> ;
+
 class StreamFile implement StreamFileLayout {
 protected:
 	using StreamFileLayout::mThis ;
@@ -1047,123 +1058,131 @@ public:
 	implicit StreamFile () = default ;
 
 	explicit StreamFile (CREF<String<STR>> file) {
-		StreamFileHolder::create (thiz)->initialize (move (file)) ;
+		StreamFileHolder::hold (thiz)->initialize (move (file)) ;
 	}
 
 	explicit StreamFile (RREF<String<STR>> file) {
-		StreamFileHolder::create (thiz)->initialize (move (file)) ;
+		StreamFileHolder::hold (thiz)->initialize (move (file)) ;
 	}
 
 	void open_r () {
-		return StreamFileHolder::create (thiz)->open_r () ;
+		return StreamFileHolder::hold (thiz)->open_r () ;
 	}
 
 	void open_w (CREF<LENGTH> size_) {
-		return StreamFileHolder::create (thiz)->open_w (size_) ;
+		return StreamFileHolder::hold (thiz)->open_w (size_) ;
 	}
 
 	void open_a () {
-		return StreamFileHolder::create (thiz)->open_a () ;
+		return StreamFileHolder::hold (thiz)->open_a () ;
 	}
 
 	LENGTH file_size () const {
-		return StreamFileHolder::create (thiz)->file_size () ;
+		return StreamFileHolder::hold (thiz)->file_size () ;
 	}
 
 	void read (VREF<RefBuffer<BYTE>> item) {
-		return StreamFileHolder::create (thiz)->read (item) ;
+		return StreamFileHolder::hold (thiz)->read (item) ;
 	}
 
 	void write (CREF<RefBuffer<BYTE>> item) {
-		return StreamFileHolder::create (thiz)->write (item) ;
+		return StreamFileHolder::hold (thiz)->write (item) ;
 	}
 
 	void flush () {
-		return StreamFileHolder::create (thiz)->flush () ;
+		return StreamFileHolder::hold (thiz)->flush () ;
 	}
 } ;
 
-struct StreamFileByteWriterLayout implement ByteWriter {
-	StreamFile mFile ;
-	RefBuffer<BYTE> mFileBuffer ;
-} ;
+struct StreamFileByteWriterImplLayout ;
+
+struct StreamFileByteWriterLayout implement ThisLayout<AutoRef<StreamFileByteWriterImplLayout>> {} ;
 
 struct StreamFileByteWriterHolder implement Interface {
-	imports VFat<StreamFileByteWriterHolder> create (VREF<StreamFileByteWriterLayout> that) ;
-	imports CFat<StreamFileByteWriterHolder> create (CREF<StreamFileByteWriterLayout> that) ;
+	imports VFat<StreamFileByteWriterHolder> hold (VREF<StreamFileByteWriterLayout> that) ;
+	imports CFat<StreamFileByteWriterHolder> hold (CREF<StreamFileByteWriterLayout> that) ;
 
 	virtual void initialize (CREF<String<STR>> file) = 0 ;
+	virtual VREF<ByteWriter> self_m () leftvalue = 0 ;
+	virtual CREF<ByteWriter> self_m () const leftvalue = 0 ;
 	virtual void close () = 0 ;
 } ;
 
 class StreamFileByteWriter implement StreamFileByteWriterLayout {
 protected:
-	using StreamFileByteWriterLayout::mFile ;
-	using StreamFileByteWriterLayout::mFileBuffer ;
+	using StreamFileByteWriterLayout::mThis ;
 
 public:
-	implicit StreamFileByteWriter () = delete ;
+	implicit StreamFileByteWriter () = default ;
 
 	explicit StreamFileByteWriter (CREF<String<STR>> file) {
-		StreamFileByteWriterHolder::create (thiz)->initialize (file) ;
+		StreamFileByteWriterHolder::hold (thiz)->initialize (file) ;
 	}
 
-	implicit ~StreamFileByteWriter () noexcept {
-		close () ;
+	VREF<ByteWriter> self_m () leftvalue {
+		return StreamFileByteWriterHolder::hold (thiz)->self ;
 	}
 
-	implicit StreamFileByteWriter (CREF<StreamFileByteWriter> that) = default ;
+	forceinline operator VREF<ByteWriter> () leftvalue {
+		return self ;
+	}
 
-	forceinline VREF<StreamFileByteWriter> operator= (CREF<StreamFileByteWriter> that) = default ;
+	CREF<ByteWriter> self_m () const leftvalue {
+		return StreamFileByteWriterHolder::hold (thiz)->self ;
+	}
 
-	implicit StreamFileByteWriter (RREF<StreamFileByteWriter> that) = default ;
-
-	forceinline VREF<StreamFileByteWriter> operator= (RREF<StreamFileByteWriter> that) = default ;
+	forceinline operator CREF<ByteWriter> () const leftvalue {
+		return self ;
+	}
 
 	void close () {
-		StreamFileByteWriterHolder::create (thiz)->close () ;
+		StreamFileByteWriterHolder::hold (thiz)->close () ;
 	}
 } ;
 
-struct StreamFileTextWriterLayout implement TextWriter {
-	StreamFile mFile ;
-	RefBuffer<BYTE> mFileBuffer ;
-} ;
+struct StreamFileTextWriterImplLayout ;
+
+struct StreamFileTextWriterLayout implement ThisLayout<AutoRef<StreamFileTextWriterImplLayout>> {} ;
 
 struct StreamFileTextWriterHolder implement Interface {
-	imports VFat<StreamFileTextWriterHolder> create (VREF<StreamFileTextWriterLayout> that) ;
-	imports CFat<StreamFileTextWriterHolder> create (CREF<StreamFileTextWriterLayout> that) ;
+	imports VFat<StreamFileTextWriterHolder> hold (VREF<StreamFileTextWriterLayout> that) ;
+	imports CFat<StreamFileTextWriterHolder> hold (CREF<StreamFileTextWriterLayout> that) ;
 
 	virtual void initialize (CREF<String<STR>> file) = 0 ;
+	virtual VREF<TextWriter> self_m () leftvalue = 0 ;
+	virtual CREF<TextWriter> self_m () const leftvalue = 0 ;
 	virtual void close () = 0 ;
 } ;
 
 class StreamFileTextWriter implement StreamFileTextWriterLayout {
 protected:
-	using StreamFileTextWriterLayout::mFile ;
-	using StreamFileTextWriterLayout::mFileBuffer ;
+	using StreamFileTextWriterLayout::mThis ;
 
 public:
-	implicit StreamFileTextWriter () = delete ;
+	implicit StreamFileTextWriter () = default ;
 
 	explicit StreamFileTextWriter (CREF<String<STR>> file) {
-		StreamFileTextWriterHolder::create (thiz)->initialize (file) ;
+		StreamFileTextWriterHolder::hold (thiz)->initialize (file) ;
 	}
 
-	implicit ~StreamFileTextWriter () noexcept {
-		close () ;
+	VREF<TextWriter> self_m () leftvalue {
+		return StreamFileTextWriterHolder::hold (thiz)->self ;
 	}
 
-	implicit StreamFileTextWriter (CREF<StreamFileTextWriter> that) = default ;
+	forceinline operator VREF<TextWriter> () leftvalue {
+		return self ;
+	}
 
-	forceinline VREF<StreamFileTextWriter> operator= (CREF<StreamFileTextWriter> that) = default ;
+	CREF<TextWriter> self_m () const leftvalue {
+		return StreamFileTextWriterHolder::hold (thiz)->self ;
+	}
 
-	implicit StreamFileTextWriter (RREF<StreamFileTextWriter> that) = default ;
-
-	forceinline VREF<StreamFileTextWriter> operator= (RREF<StreamFileTextWriter> that) = default ;
+	forceinline operator CREF<TextWriter> () const leftvalue {
+		return self ;
+	}
 
 	void close () {
-		StreamFileTextWriterHolder::create (thiz)->close () ;
+		StreamFileTextWriterHolder::hold (thiz)->close () ;
 	}
 } ;
 
@@ -1172,8 +1191,8 @@ struct BufferFileImplLayout ;
 struct BufferFileLayout implement ThisLayout<AutoRef<BufferFileImplLayout>> {} ;
 
 struct BufferFileHolder implement Interface {
-	imports VFat<BufferFileHolder> create (VREF<BufferFileLayout> that) ;
-	imports CFat<BufferFileHolder> create (CREF<BufferFileLayout> that) ;
+	imports VFat<BufferFileHolder> hold (VREF<BufferFileLayout> that) ;
+	imports CFat<BufferFileHolder> hold (CREF<BufferFileLayout> that) ;
 
 	virtual void initialize (RREF<String<STR>> file) = 0 ;
 	virtual void set_block_step (CREF<LENGTH> step_) = 0 ;
@@ -1195,47 +1214,47 @@ public:
 	implicit BufferFile () = default ;
 
 	explicit BufferFile (CREF<String<STR>> file) {
-		BufferFileHolder::create (thiz)->initialize (move (file)) ;
+		BufferFileHolder::hold (thiz)->initialize (move (file)) ;
 	}
 
 	explicit BufferFile (RREF<String<STR>> file) {
-		BufferFileHolder::create (thiz)->initialize (move (file)) ;
+		BufferFileHolder::hold (thiz)->initialize (move (file)) ;
 	}
 
 	void set_block_step (CREF<LENGTH> step_) {
-		return BufferFileHolder::create (thiz)->set_block_step (step_) ;
+		return BufferFileHolder::hold (thiz)->set_block_step (step_) ;
 	}
 
 	void set_cache_size (CREF<LENGTH> size_) {
-		return BufferFileHolder::create (thiz)->set_cache_size (size_) ;
+		return BufferFileHolder::hold (thiz)->set_cache_size (size_) ;
 	}
 
 	void open_r () {
-		return BufferFileHolder::create (thiz)->open_r () ;
+		return BufferFileHolder::hold (thiz)->open_r () ;
 	}
 
 	void open_w (CREF<LENGTH> size_) {
-		return BufferFileHolder::create (thiz)->open_w (size_) ;
+		return BufferFileHolder::hold (thiz)->open_w (size_) ;
 	}
 
 	void open_a () {
-		return BufferFileHolder::create (thiz)->open_a () ;
+		return BufferFileHolder::hold (thiz)->open_a () ;
 	}
 
 	LENGTH file_size () const {
-		return BufferFileHolder::create (thiz)->file_size () ;
+		return BufferFileHolder::hold (thiz)->file_size () ;
 	}
 
 	void read (CREF<INDEX> index ,VREF<RefBuffer<BYTE>> item) {
-		return BufferFileHolder::create (thiz)->read (index ,item) ;
+		return BufferFileHolder::hold (thiz)->read (index ,item) ;
 	}
 
 	void write (CREF<INDEX> index ,CREF<RefBuffer<BYTE>> item) {
-		return BufferFileHolder::create (thiz)->write (index ,item) ;
+		return BufferFileHolder::hold (thiz)->write (index ,item) ;
 	}
 
 	void flush () {
-		return BufferFileHolder::create (thiz)->flush () ;
+		return BufferFileHolder::hold (thiz)->flush () ;
 	}
 } ;
 
@@ -1258,8 +1277,9 @@ struct ConsoleImplLayout ;
 struct ConsoleLayout implement ThisLayout<SharedRef<ConsoleImplLayout>> {} ;
 
 struct ConsoleHolder implement Interface {
-	imports VFat<ConsoleHolder> create (VREF<ConsoleLayout> that) ;
-	imports CFat<ConsoleHolder> create (CREF<ConsoleLayout> that) ;
+	imports CREF<ConsoleLayout> instance () ;
+	imports VFat<ConsoleHolder> hold (VREF<ConsoleLayout> that) ;
+	imports CFat<ConsoleHolder> hold (CREF<ConsoleLayout> that) ;
 
 	virtual void initialize () = 0 ;
 	virtual void set_option (CREF<Just<ConsoleOption>> option) const = 0 ;
@@ -1282,71 +1302,67 @@ protected:
 	using ConsoleLayout::mThis ;
 
 public:
-	imports CREF<Console> instance () {
-		return memorize ([&] () {
-			Console ret ;
-			ConsoleHolder::create (ret)->initialize () ;
-			return move (ret) ;
-		}) ;
+	static CREF<Console> instance () {
+		return keep[TYPE<Console>::expr] (ConsoleHolder::instance ()) ;
 	}
 
 	void set_option (CREF<Just<ConsoleOption>> option) const {
-		return ConsoleHolder::create (thiz)->set_option (option) ;
+		return ConsoleHolder::hold (thiz)->set_option (option) ;
 	}
 
 	template <class...ARG1>
 	void print (CREF<ARG1>...params) const {
-		return ConsoleHolder::create (thiz)->print (PrintFormat (params...)) ;
+		return ConsoleHolder::hold (thiz)->print (PrintFormat (params...)) ;
 	}
 
 	template <class...ARG1>
 	void fatal (CREF<ARG1>...params) const {
-		return ConsoleHolder::create (thiz)->fatal (PrintFormat (params...)) ;
+		return ConsoleHolder::hold (thiz)->fatal (PrintFormat (params...)) ;
 	}
 
 	template <class...ARG1>
 	void error (CREF<ARG1>...params) const {
-		return ConsoleHolder::create (thiz)->error (PrintFormat (params...)) ;
+		return ConsoleHolder::hold (thiz)->error (PrintFormat (params...)) ;
 	}
 
 	template <class...ARG1>
 	void warn (CREF<ARG1>...params) const {
-		return ConsoleHolder::create (thiz)->warn (PrintFormat (params...)) ;
+		return ConsoleHolder::hold (thiz)->warn (PrintFormat (params...)) ;
 	}
 
 	template <class...ARG1>
 	void info (CREF<ARG1>...params) const {
-		return ConsoleHolder::create (thiz)->info (PrintFormat (params...)) ;
+		return ConsoleHolder::hold (thiz)->info (PrintFormat (params...)) ;
 	}
 
 	template <class...ARG1>
 	void debug (CREF<ARG1>...params) const {
-		return ConsoleHolder::create (thiz)->debug (PrintFormat (params...)) ;
+		return ConsoleHolder::hold (thiz)->debug (PrintFormat (params...)) ;
 	}
 
 	template <class...ARG1>
 	void trace (CREF<ARG1>...params) const {
-		return ConsoleHolder::create (thiz)->trace (PrintFormat (params...)) ;
+		return ConsoleHolder::hold (thiz)->trace (PrintFormat (params...)) ;
 	}
 
 	void open (CREF<String<STR>> dire) const {
-		return ConsoleHolder::create (thiz)->open (dire) ;
+		return ConsoleHolder::hold (thiz)->open (dire) ;
 	}
 
 	void start () const {
-		return ConsoleHolder::create (thiz)->start () ;
+		return ConsoleHolder::hold (thiz)->start () ;
 	}
 
 	void stop () const {
-		return ConsoleHolder::create (thiz)->stop () ;
+		return ConsoleHolder::hold (thiz)->stop () ;
 	}
 
 	void pause () const {
-		return ConsoleHolder::create (thiz)->pause () ;
+		return ConsoleHolder::hold (thiz)->pause () ;
 	}
 
 	void clear () const {
-		return ConsoleHolder::create (thiz)->clear () ;
+		return ConsoleHolder::hold (thiz)->clear () ;
 	}
 } ;
 } ;

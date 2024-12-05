@@ -675,22 +675,22 @@ struct Interface {
 	forceinline VREF<Interface> operator= (RREF<Interface> that) = delete ;
 } ;
 
-struct Unknown implement Interface {
+struct UnknownFriend implement Interface {
 	virtual FLAG reflect (CREF<FLAG> uuid) const = 0 ;
 } ;
 
-struct PlaceHolderWrap0 {} ;
-
-template <class A>
-struct PlaceHolderWrap1 implement A {} ;
-
 template <class...>
 trait PLACEHOLDER_HELP ;
+
+struct PlaceHolderWrap0 {} ;
 
 template <class RANK>
 trait PLACEHOLDER_HELP<RANK ,REQUIRE<ENUM_EQ_ZERO<RANK>>> {
 	using RET = PlaceHolderWrap0 ;
 } ;
+
+template <class A>
+struct PlaceHolderWrap1 implement A {} ;
 
 template <class RANK>
 trait PLACEHOLDER_HELP<RANK ,REQUIRE<ENUM_GT_ZERO<RANK>>> {
@@ -809,51 +809,10 @@ trait IS_BASIC_HELP<A ,ALWAYS> {
 template <class A>
 using IS_BASIC = typename IS_BASIC_HELP<A ,ALWAYS>::RET ;
 
-template <class...>
-trait REFLECT_GUID_HELP ;
-
-template <class A ,class OTHERWISE>
-trait REFLECT_GUID_HELP<A ,OTHERWISE> {
-	using RET = RANK0 ;
-} ;
-
-template <class A>
-trait REFLECT_GUID_HELP<A ,REQUIRE<IS_BOOL<A>>> {
-	using RET = RANK1 ;
-} ;
-
-template <class A>
-trait REFLECT_GUID_HELP<A ,REQUIRE<IS_VALUE<A>>> {
-	using RET = RANK2 ;
-} ;
-
-template <class A>
-trait REFLECT_GUID_HELP<A ,REQUIRE<IS_FLOAT<A>>> {
-	using RET = RANK3 ;
-} ;
-
-template <class A>
-trait REFLECT_GUID_HELP<A ,REQUIRE<IS_TEXT<A>>> {
-	using RET = RANK4 ;
-} ;
-
-template <class A>
-trait REFLECT_GUID_HELP<A ,REQUIRE<IS_BYTE<A>>> {
-	using RET = RANK5 ;
-} ;
-
-template <class A>
-trait REFLECT_GUID_HELP<A ,REQUIRE<IS_NULL<A>>> {
-	using RET = RANK6 ;
-} ;
-
-template <class A>
-using REFLECT_GUID = typename REFLECT_GUID_HELP<A ,ALWAYS>::RET ;
-
-using ORDINARY = ENUM_FALSE ;
-using VARIABLE = ENUM<(-1)> ;
-using CONSTANT = ENUM<(-2)> ;
-using REGISTER = ENUM<(-3)> ;
+using ORDINARY = RANK0 ;
+using VARIABLE = RANK1 ;
+using CONSTANT = RANK2 ;
+using REGISTER = RANK3 ;
 
 template <class...>
 trait REFLECT_REF_HELP ;
@@ -882,27 +841,6 @@ template <class A>
 using REFLECT_REF = typename REFLECT_REF_HELP<REMOVE_CVR<A> ,A>::RET ;
 
 template <class...>
-trait REF_HELP ;
-
-template <class A ,class B>
-trait REF_HELP<A ,B ,REQUIRE<IS_SAME<B ,VARIABLE>>> {
-	using RET = VREF<A> ;
-} ;
-
-template <class A ,class B>
-trait REF_HELP<A ,B ,REQUIRE<IS_SAME<B ,CONSTANT>>> {
-	using RET = CREF<A> ;
-} ;
-
-template <class A ,class B>
-trait REF_HELP<A ,B ,REQUIRE<IS_SAME<B ,REGISTER>>> {
-	using RET = RREF<A> ;
-} ;
-
-template <class A ,class B>
-using REF = typename REF_HELP<REMOVE_CVR<A> ,B ,ALWAYS>::RET ;
-
-template <class...>
 trait REFLECT_POINTER_HELP ;
 
 template <class A>
@@ -925,11 +863,6 @@ using IS_POINTER = typename REFLECT_POINTER_HELP<REMOVE_CVR<A>>::RET ;
 
 template <class...>
 trait PTR_HELP ;
-
-template <class A ,class B>
-trait PTR_HELP<A ,B ,REQUIRE<IS_SAME<B ,ORDINARY>>> {
-	using RET = DEF<A *> ;
-} ;
 
 template <class A ,class B>
 trait PTR_HELP<A ,B ,REQUIRE<IS_SAME<B ,VARIABLE>>> {
@@ -1110,10 +1043,10 @@ template <class A>
 using IS_TRIVIAL = typename IS_TRIVIAL_HELP<A ,ALWAYS>::RET ;
 
 template <class...>
-trait IS_COPYABLE_HELP ;
+trait IS_CLONEABLE_HELP ;
 
 template <class A>
-trait IS_COPYABLE_HELP<A ,ALWAYS> {
+trait IS_CLONEABLE_HELP<A ,ALWAYS> {
 	using R1X = MACRO_IS_COPY_CONSTRUCTIBLE<A> ;
 	using R2X = MACRO_IS_COPY_ASSIGNABLE<A> ;
 	using R3X = MACRO_IS_MOVE_CONSTRUCTIBLE<A> ;
@@ -1122,7 +1055,7 @@ trait IS_COPYABLE_HELP<A ,ALWAYS> {
 } ;
 
 template <class A>
-using IS_COPYABLE = typename IS_COPYABLE_HELP<A ,ALWAYS>::RET ;
+using IS_CLONEABLE = typename IS_CLONEABLE_HELP<A ,ALWAYS>::RET ;
 
 template <class...>
 trait IS_EQUALABLE_HELP ;
@@ -1204,9 +1137,10 @@ trait HAS_COMPR_HELP<A ,REQUIRE<KILL<ENUM_TRUE ,typeof (nullof (A).compr (nullof
 template <class A>
 using HAS_COMPR = typename HAS_COMPR_HELP<A ,ALWAYS>::RET ;
 
-struct Visitor implement Interface {
-	virtual void begin () = 0 ;
-	virtual void end () = 0 ;
+struct VisitorFriend implement Interface {
+	virtual void reset () = 0 ;
+	virtual void enter () = 0 ;
+	virtual void leave () = 0 ;
 	virtual void push (CREF<BYTE> a) = 0 ;
 	virtual void push (CREF<WORD> a) = 0 ;
 	virtual void push (CREF<CHAR> a) = 0 ;
@@ -1223,7 +1157,7 @@ trait HAS_VISIT_HELP<A ,OTHERWISE> {
 } ;
 
 template <class A>
-trait HAS_VISIT_HELP<A ,REQUIRE<KILL<ENUM_TRUE ,typeof (nullof (A).visit (nullof (Visitor)))>>> {
+trait HAS_VISIT_HELP<A ,REQUIRE<KILL<ENUM_TRUE ,typeof (nullof (A).visit (nullof (VisitorFriend)))>>> {
 	using RET = ENUM_TRUE ;
 } ;
 
@@ -1356,78 +1290,27 @@ using TEXT_BASE = typename TEXT_BASE_HELP<SIZE_OF<A> ,ALIGN_OF<A> ,ALWAYS>::RET 
 using STRUA = TEXT_BASE<STRA> ;
 using STRUW = TEXT_BASE<STRW> ;
 
-template <class BASE ,class ALIGN>
-using ENUM_ALIGNAS = ENUM_MUL<ENUM_DIV<ENUM_ADD<BASE ,ENUM_DEC<ALIGN>> ,ALIGN> ,ALIGN> ;
-
-template <class...>
-trait STORAGE_HELP ;
-
-template <class SIZE ,class ALIGN>
-trait STORAGE_HELP<SIZE ,ALIGN ,REQUIRE<ENUM_EQUAL<ALIGN ,ALIGN_OF<BYTE>>>> {
-	using R1X = BYTE ;
-	using R2X = ENUM_DIV<ENUM_ALIGNAS<SIZE ,ALIGN> ,ALIGN> ;
-	require (ENUM_GT_ZERO<R2X>) ;
-	using RET = ARR<R1X ,R2X> ;
-} ;
-
-template <class SIZE ,class ALIGN>
-trait STORAGE_HELP<SIZE ,ALIGN ,REQUIRE<ENUM_EQUAL<ALIGN ,ALIGN_OF<WORD>>>> {
-	using R1X = WORD ;
-	using R2X = ENUM_DIV<ENUM_ALIGNAS<SIZE ,ALIGN> ,ALIGN> ;
-	require (ENUM_GT_ZERO<R2X>) ;
-	using RET = ARR<R1X ,R2X> ;
-} ;
-
-template <class SIZE ,class ALIGN>
-trait STORAGE_HELP<SIZE ,ALIGN ,REQUIRE<ENUM_EQUAL<ALIGN ,ALIGN_OF<CHAR>>>> {
-	using R1X = CHAR ;
-	using R2X = ENUM_DIV<ENUM_ALIGNAS<SIZE ,ALIGN> ,ALIGN> ;
-	require (ENUM_GT_ZERO<R2X>) ;
-	using RET = ARR<R1X ,R2X> ;
-} ;
-
-template <class SIZE ,class ALIGN>
-trait STORAGE_HELP<SIZE ,ALIGN ,REQUIRE<ENUM_EQUAL<ALIGN ,ALIGN_OF<QUAD>>>> {
-	using R1X = QUAD ;
-	using R2X = ENUM_DIV<ENUM_ALIGNAS<SIZE ,ALIGN> ,ALIGN> ;
-	require (ENUM_GT_ZERO<R2X>) ;
-	using RET = ARR<R1X ,R2X> ;
-} ;
-
 template <class SIZE ,class ALIGN = RANK1>
-using Storage = typename STORAGE_HELP<SIZE ,ALIGN ,ALWAYS>::RET ;
+struct Storage {
+	alignas (ALIGN::expr) ARR<BYTE ,SIZE> mUnused ;
+} ;
 
 template <class A>
-struct Union {
-	Storage<SIZE_OF<A> ,ALIGN_OF<A>> mUnused ;
-} ;
-
-struct TupleWrap0 {} ;
-
-template <class A>
-struct TupleWrap1 {
-	A m1st ;
-} ;
-
-template <class A ,class B>
-struct TupleWrap2 {
-	A m1st ;
-	B m2nd ;
-} ;
-
-template <class A ,class B ,class C>
-struct TupleWrap3 {
-	A m1st ;
-	B m2nd ;
-	C m3rd ;
-} ;
+struct Union implement Storage<SIZE_OF<A> ,ALIGN_OF<A>> {} ;
 
 template <class...>
 trait TUPLE_HELP ;
 
+struct TupleWrap0 {} ;
+
 template <class PARAMS>
 trait TUPLE_HELP<PARAMS ,REQUIRE<ENUM_EQ_ZERO<RANK_OF<PARAMS>>>> {
 	using RET = TupleWrap0 ;
+} ;
+
+template <class A>
+struct TupleWrap1 {
+	A m1st ;
 } ;
 
 template <class PARAMS>
@@ -1436,11 +1319,24 @@ trait TUPLE_HELP<PARAMS ,REQUIRE<ENUM_EQUAL<RANK_OF<PARAMS> ,RANK1>>> {
 	using RET = TupleWrap1<R1X> ;
 } ;
 
+template <class A ,class B>
+struct TupleWrap2 {
+	A m1st ;
+	B m2nd ;
+} ;
+
 template <class PARAMS>
 trait TUPLE_HELP<PARAMS ,REQUIRE<ENUM_EQUAL<RANK_OF<PARAMS> ,RANK2>>> {
 	using R1X = TYPE_M1ST_ITEM<PARAMS> ;
 	using R2X = TYPE_M2ND_ITEM<PARAMS> ;
 	using RET = TupleWrap2<R1X ,R2X> ;
+} ;
+
+template <class A ,class B ,class C>
+struct TupleWrap3 {
+	A m1st ;
+	B m2nd ;
+	C m3rd ;
 } ;
 
 template <class PARAMS>

@@ -30,8 +30,10 @@
 #define __CSC_API_WITH_SYS__
 
 #ifdef __CSC_COMPILER_MSVC__
+#ifdef __CSC_PLATFORM_X64__
 #define __CSC_API_WITH_OPENCV__
 #define __CSC_API_WITH_EIGEN__
+#endif
 #endif
 
 #include "csc/csc_math.cache.inl"

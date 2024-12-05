@@ -7,53 +7,51 @@
 #include "csc_core.hpp"
 
 #include "csc_end.h"
-#include <new>
-#include <atomic>
+#include <cstdlib>
 #include <cstring>
+#include <malloc.h>
 #include <typeinfo>
 #include <initializer_list>
-#include <malloc.h>
+#include <atomic>
 #include "csc_begin.h"
 
 namespace CSC {
+exports void FUNCTION_inline_abort::invoke () noexcept {
+	std::abort () ;
+}
+
 exports FLAG FUNCTION_inline_type_name::invoke (CREF<Pointer> squalor) noexcept {
 	auto &&rax = keep[TYPE<std::type_info>::expr] (squalor) ;
 	return FLAG (rax.name ()) ;
 }
 
 #ifdef __CSC_COMPILER_MSVC__
-exports FLAG FUNCTION_inline_list_begin::invoke (CREF<Pointer> squalor ,CREF<LENGTH> step_) noexcept {
+exports Tuple<FLAG ,FLAG> FUNCTION_inline_list_pair::invoke (CREF<Pointer> squalor ,CREF<LENGTH> step_) noexcept {
+	Tuple<FLAG ,FLAG> ret ;
 	auto &&rax = keep[TYPE<std::initializer_list<Pointer>>::expr] (squalor) ;
-	return FLAG (rax.begin ()) ;
-}
-
-exports FLAG FUNCTION_inline_list_end::invoke (CREF<Pointer> squalor ,CREF<LENGTH> step_) noexcept {
-	auto &&rax = keep[TYPE<std::initializer_list<Pointer>>::expr] (squalor) ;
-	return FLAG (rax.end ()) ;
+	ret.m1st = FLAG (rax.begin ()) ;
+	ret.m2nd = FLAG (rax.end ()) ;
+	return move (ret) ;
 }
 #endif
 
 #ifdef __CSC_COMPILER_GNUC__
-exports FLAG FUNCTION_inline_list_begin::invoke (CREF<Pointer> squalor ,CREF<LENGTH> step_) noexcept {
+exports Tuple<FLAG ,FLAG> FUNCTION_inline_list_pair::invoke (CREF<Pointer> squalor ,CREF<LENGTH> step_) noexcept {
+	Tuple<FLAG ,FLAG> ret ;
 	auto &&rax = keep[TYPE<std::initializer_list<Pointer>>::expr] (squalor) ;
-	return FLAG (rax.begin ()) ;
-}
-
-exports FLAG FUNCTION_inline_list_end::invoke (CREF<Pointer> squalor ,CREF<LENGTH> step_) noexcept {
-	auto &&rax = keep[TYPE<std::initializer_list<Pointer>>::expr] (squalor) ;
-	return FLAG (rax.begin ()) + LENGTH (rax.size ()) * step_ ;
+	ret.m1st = FLAG (rax.begin ()) ;
+	ret.m2nd = FLAG (rax.begin ()) + LENGTH (rax.size ()) * step_ ;
+	return move (ret) ;
 }
 #endif
 
 #ifdef __CSC_COMPILER_CLANG__
-exports FLAG FUNCTION_inline_list_begin::invoke (CREF<Pointer> squalor ,CREF<LENGTH> step_) noexcept {
+exports Tuple<FLAG ,FLAG> FUNCTION_inline_list_pair::invoke (CREF<Pointer> squalor ,CREF<LENGTH> step_) noexcept {
+	Tuple<FLAG ,FLAG> ret ;
 	auto &&rax = keep[TYPE<std::initializer_list<Pointer>>::expr] (squalor) ;
-	return FLAG (rax.begin ()) ;
-}
-
-exports FLAG FUNCTION_inline_list_end::invoke (CREF<Pointer> squalor ,CREF<LENGTH> step_) noexcept {
-	auto &&rax = keep[TYPE<std::initializer_list<Pointer>>::expr] (squalor) ;
-	return FLAG (rax.end ()) ;
+	ret.m1st = FLAG (rax.begin ()) ;
+	ret.m2nd = FLAG (rax.end ()) ;
+	return move (ret) ;
 }
 #endif
 
@@ -69,11 +67,11 @@ exports FLAG FUNCTION_inline_memcmp::invoke (CREF<Pointer> dst ,CREF<Pointer> sr
 	return FLAG (std::memcmp ((&dst) ,(&src) ,size_)) ;
 }
 
-class BoxImplHolder implement Fat<BoxHolder ,BoxLayout> {
+class BoxImplHolder final implement Fat<BoxHolder ,BoxLayout> {
 public:
 	void initialize (CREF<Unknown> holder) override {
 		assert (!exist ()) ;
-		fake.mHolder = inline_hold (holder) ;
+		fake.mHolder = inline_vptr (holder) ;
 	}
 
 	void destroy () override {
@@ -88,26 +86,33 @@ public:
 		return fake.mHolder != ZERO ;
 	}
 
-	RFat<Unknown> unknown () const override {
+	Unknown unknown () const override {
 		assert (exist ()) ;
-		auto &&rax = keep[TYPE<Unknown>::expr] (Pointer::from (fake.mHolder)) ;
-		return RFat<Unknown> (rax ,NULL) ;
+		return Unknown (fake.mHolder) ;
 	}
 
 	VREF<Pointer> self_m () leftvalue override {
-		assert (exist ()) ;
 		const auto r1x = RFat<ReflectSize> (unknown ()) ;
-		const auto r2x = inline_alignas (SIZE_OF<BoxLayout>::expr ,r1x->type_align ()) ;
-		const auto r3x = address (fake) + r2x ;
+		//@warn: different from mStorage due to alignment
+		const auto r2x = address (fake) + SIZE_OF<BoxLayout>::expr ;
+		const auto r3x = inline_alignas (r2x ,r1x->type_align ()) ;
 		return Pointer::make (r3x) ;
 	}
 
 	CREF<Pointer> self_m () const leftvalue override {
-		assert (exist ()) ;
 		const auto r1x = RFat<ReflectSize> (unknown ()) ;
-		const auto r2x = inline_alignas (SIZE_OF<BoxLayout>::expr ,r1x->type_align ()) ;
-		const auto r3x = address (fake) + r2x ;
+		//@warn: different from mStorage due to alignment
+		const auto r2x = address (fake) + SIZE_OF<BoxLayout>::expr ;
+		const auto r3x = inline_alignas (r2x ,r1x->type_align ()) ;
 		return Pointer::make (r3x) ;
+	}
+
+	void remake (CREF<Unknown> holder) override {
+		if (exist ())
+			return ;
+		fake.mHolder = inline_vptr (holder) ;
+		const auto r1x = RFat<ReflectSize> (unknown ()) ;
+		inline_memset (self ,r1x->type_size ()) ;
 	}
 
 	void acquire (CREF<BoxLayout> that) override {
@@ -116,8 +121,7 @@ public:
 			return ;
 		fake.mHolder = that.mHolder ;
 		const auto r1x = RFat<ReflectSize> (unknown ()) ;
-		const auto r2x = r1x->type_size () ;
-		inline_memcpy (self ,BoxHolder::create (that)->self ,r2x) ;
+		inline_memcpy (self ,BoxHolder::hold (that)->self ,r1x->type_size ()) ;
 	}
 
 	void release () override {
@@ -125,11 +129,11 @@ public:
 	}
 } ;
 
-exports VFat<BoxHolder> BoxHolder::create (VREF<BoxLayout> that) {
+exports VFat<BoxHolder> BoxHolder::hold (VREF<BoxLayout> that) {
 	return VFat<BoxHolder> (BoxImplHolder () ,that) ;
 }
 
-exports CFat<BoxHolder> BoxHolder::create (CREF<BoxLayout> that) {
+exports CFat<BoxHolder> BoxHolder::hold (CREF<BoxLayout> that) {
 	return CFat<BoxHolder> (BoxImplHolder () ,that) ;
 }
 
@@ -139,60 +143,66 @@ struct RefImplLayout implement Proxy {
 	BoxLayout mValue ;
 } ;
 
-class RefImplHolder implement Fat<RefHolder ,RefLayout> {
+static constexpr auto REFIMPLLAYOUT_MIN_HANDLE = FLAG (0X1000) ;
+
+class RefImplHolder final implement Fat<RefHolder ,RefLayout> {
 public:
 	void initialize (RREF<BoxLayout> item) override {
 		assert (!exist ()) ;
-		const auto r1x = RFat<ReflectSize> (BoxHolder::create (item)->unknown ()) ;
-		const auto r2x = r1x->type_size () ;
-		const auto r3x = inline_alignas (SIZE_OF<RefImplLayout>::expr ,r1x->type_align ()) ;
-		const auto r4x = r3x + r2x ;
-		const auto r5x = Heap () ;
-		fake.mHandle = r5x.alloc (r4x) ;
-		inline_memset (Pointer::make (fake.mHandle) ,r4x) ;
-		ptr (fake).mHeap = r5x ;
-		BoxHolder::create (ptr (fake).mValue)->acquire (item) ;
-		BoxHolder::create (item)->release () ;
-		fake.mPointer = address (BoxHolder::create (ptr (fake).mValue)->self) ;
+		const auto r1x = RFat<ReflectSize> (BoxHolder::hold (item)->unknown ()) ;
+		const auto r2x = inline_max (r1x->type_align () - ALIGN_OF<RefImplLayout>::expr ,0) ;
+		const auto r3x = SIZE_OF<RefImplLayout>::expr + r2x + r1x->type_size () ;
+		const auto r4x = Heap::instance () ;
+		fake.mHandle = r4x.alloc (r3x) ;
+		assert (fake.mHandle >= REFIMPLLAYOUT_MIN_HANDLE) ;
+		inline_memset (Pointer::make (fake.mHandle) ,SIZE_OF<RefImplLayout>::expr) ;
+		ptr (fake).mHeap = r4x ;
+		BoxHolder::hold (ptr (fake).mValue)->acquire (item) ;
+		BoxHolder::hold (item)->release () ;
+		fake.mPointer = address (BoxHolder::hold (ptr (fake).mValue)->self) ;
 		ptr (fake).mCounter.self = 1 ;
 	}
 
 	void initialize (CREF<Unknown> holder ,CREF<Unknown> extend ,CREF<LENGTH> size_) override {
 		assert (!exist ()) ;
 		const auto r1x = RFat<ReflectSize> (holder) ;
-		const auto r2x = r1x->type_size () ;
-		const auto r3x = RFat<ReflectSize> (extend) ;
-		const auto r4x = r3x->type_size () ;
-		const auto r5x = inline_alignas (SIZE_OF<RefImplLayout>::expr ,r1x->type_align ()) ;
-		const auto r6x = inline_alignas (r5x + r2x ,r3x->type_align ()) ;
-		const auto r7x = r6x + r4x * size_ ;
-		const auto r8x = Heap () ;
-		fake.mHandle = r8x.alloc (r7x) ;
-		inline_memset (Pointer::make (fake.mHandle) ,r7x) ;
-		ptr (fake).mHeap = r8x ;
-		BoxHolder::create (ptr (fake).mValue)->initialize (holder) ;
-		fake.mPointer = address (BoxHolder::create (ptr (fake).mValue)->self) ;
-		const auto r9x = RFat<ReflectCreate> (holder) ;
-		r9x->create (self ,1) ;
+		const auto r2x = RFat<ReflectSize> (extend) ;
+		const auto r3x = inline_max (r1x->type_align () - ALIGN_OF<RefImplLayout>::expr ,0) ;
+		const auto r4x = SIZE_OF<RefImplLayout>::expr + r3x + r1x->type_size () ;
+		const auto r5x = inline_max (r2x->type_align () - r1x->type_align () ,0) ;
+		const auto r6x = r4x + r5x + r2x->type_size () * size_ ;
+		const auto r7x = Heap::instance () ;
+		fake.mHandle = r7x.alloc (r6x) ;
+		assert (fake.mHandle >= REFIMPLLAYOUT_MIN_HANDLE) ;
+		inline_memset (Pointer::make (fake.mHandle) ,SIZE_OF<RefImplLayout>::expr) ;
+		ptr (fake).mHeap = r7x ;
+		BoxHolder::hold (ptr (fake).mValue)->initialize (holder) ;
+		fake.mPointer = address (BoxHolder::hold (ptr (fake).mValue)->self) ;
+		const auto r8x = RFat<ReflectCreate> (holder) ;
+		r8x->create (self ,1) ;
 		ptr (fake).mCounter.self = 1 ;
 	}
 
-	imports VREF<RefImplLayout> ptr (CREF<RefLayout> layout) {
+	static VREF<RefImplLayout> ptr (CREF<RefLayout> layout) {
 		return Pointer::make (layout.mHandle) ;
 	}
 
 	void destroy () override {
 		if ifdo (TRUE) {
-			if (fake.mHandle == ZERO)
+			if (fake.mHandle < REFIMPLLAYOUT_MIN_HANDLE)
 				discard ;
-			const auto r1x = --ptr (fake).mCounter.self ;
-			if (r1x > 0)
-				discard ;
-			BoxHolder::create (ptr (fake).mValue)->destroy () ;
-			const auto r2x = ptr (fake).mHeap ;
-			r2x.free (fake.mHandle) ;
+			assert (fake.mPointer != ZERO) ;
+			if ifdo (TRUE) {
+				const auto r1x = --ptr (fake).mCounter.self ;
+				if (r1x > 0)
+					discard ;
+				BoxHolder::hold (ptr (fake).mValue)->destroy () ;
+				const auto r2x = ptr (fake).mHeap ;
+				r2x.free (fake.mHandle) ;
+			}
 			fake.mHandle = ZERO ;
 		}
+		fake.mHandle = ZERO ;
 		fake.mPointer = ZERO ;
 	}
 
@@ -200,14 +210,16 @@ public:
 		RefLayout ret ;
 		auto act = TRUE ;
 		if ifdo (act) {
-			if (fake.mHandle == ZERO)
+			if (fake.mHandle < REFIMPLLAYOUT_MIN_HANDLE)
 				discard ;
 			const auto r1x = ++ptr (fake).mCounter.self ;
+			noop (r1x) ;
 			assert (r1x >= 2) ;
 			ret.mHandle = fake.mHandle ;
-			ret.mPointer = address (BoxHolder::create (ptr (fake).mValue)->self) ;
+			ret.mPointer = address (BoxHolder::hold (ptr (fake).mValue)->self) ;
 		}
 		if ifdo (act) {
+			ret.mHandle = fake.mHandle ;
 			ret.mPointer = fake.mPointer ;
 		}
 		return move (ret) ;
@@ -217,9 +229,9 @@ public:
 		return fake.mPointer != ZERO ;
 	}
 
-	RFat<Unknown> unknown () const override {
+	Unknown unknown () const override {
 		assert (exist ()) ;
-		return BoxHolder::create (ptr (fake).mValue)->unknown () ;
+		return BoxHolder::hold (ptr (fake).mValue)->unknown () ;
 	}
 
 	VREF<Pointer> self_m () leftvalue {
@@ -232,46 +244,70 @@ public:
 		return Pointer::make (fake.mPointer) ;
 	}
 
-	VREF<Pointer> deref () const leftvalue override {
-		if ifdo (TRUE) {
-			if (fake.mHandle == ZERO)
+	VREF<Pointer> leak () const leftvalue override {
+		assert (exist ()) ;
+		auto act = TRUE ;
+		if ifdo (act) {
+			if (fake.mHandle < REFIMPLLAYOUT_MIN_HANDLE)
 				discard ;
 			const auto r1x = ptr (fake).mCounter->load () ;
+			noop (r1x) ;
 			assert (r1x == IDEN) ;
 		}
-		assert (exist ()) ;
+		if ifdo (act) {
+			//@warn: reference instance are always unchecked except cv-qualifier
+			assert (fake.mHandle == VARIABLE::expr) ;
+		}
 		return Pointer::make (fake.mPointer) ;
 	}
 } ;
 
-exports VFat<RefHolder> RefHolder::create (VREF<RefLayout> that) {
+exports VFat<RefHolder> RefHolder::hold (VREF<RefLayout> that) {
 	return VFat<RefHolder> (RefImplHolder () ,that) ;
 }
 
-exports CFat<RefHolder> RefHolder::create (CREF<RefLayout> that) {
+exports CFat<RefHolder> RefHolder::hold (CREF<RefLayout> that) {
 	return CFat<RefHolder> (RefImplHolder () ,that) ;
 }
 
+#ifdef __CSC_SYSTEM_WINDOWS__
+struct FUNCTION_dump_memory_leaks {
+	forceinline void operator() () const {
+		_CrtSetDbgFlag (_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF) ;
+	}
+} ;
+#endif
+
+#ifdef __CSC_SYSTEM_LINUX__
+struct FUNCTION_dump_memory_leaks {
+	forceinline void operator() () const {
+		noop () ;
+	}
+} ;
+#endif
+
+static constexpr auto dump_memory_leaks = FUNCTION_dump_memory_leaks () ;
+
 #ifdef __CSC_COMPILER_MSVC__
 struct FUNCTION_memsize {
-	forceinline LENGTH operator() (CREF<csc_pointer_t> addr) const {
-		return LENGTH (_msize (addr)) ;
+	forceinline LENGTH operator() (CREF<csc_pointer_t> pointer) const {
+		return LENGTH (_msize (pointer)) ;
 	}
 } ;
 #endif
 
 #ifdef __CSC_COMPILER_GNUC__
 struct FUNCTION_memsize {
-	forceinline LENGTH operator() (CREF<csc_pointer_t> addr) const {
-		return LENGTH (malloc_usable_size (addr)) ;
+	forceinline LENGTH operator() (CREF<csc_pointer_t> pointer) const {
+		return LENGTH (malloc_usable_size (pointer)) ;
 	}
 } ;
 #endif
 
 #ifdef __CSC_COMPILER_CLANG__
 struct FUNCTION_memsize {
-	forceinline LENGTH operator() (CREF<csc_pointer_t> addr) const {
-		return LENGTH (_msize (addr)) ;
+	forceinline LENGTH operator() (CREF<csc_pointer_t> pointer) const {
+		return LENGTH (_msize (pointer)) ;
 	}
 } ;
 #endif
@@ -279,41 +315,43 @@ struct FUNCTION_memsize {
 static constexpr auto memsize = FUNCTION_memsize () ;
 
 struct HeapImplLayout {
-	BOOL mOnce ;
-	Pin<std::atomic<VAL>> mLength ;
+	Box<std::atomic<VAL>> mStack ;
+	Box<std::atomic<VAL>> mLength ;
+} ;
 
+class HeapImplRoot implement Pin<HeapImplLayout> {
 public:
-	imports CREF<HeapImplLayout> instance () {
+	static CREF<HeapImplRoot> instance () {
 		return memorize ([&] () {
-			HeapImplLayout ret ;
-			ret.mOnce = FALSE ;
-			return move (ret) ;
+			return HeapImplRoot () ;
 		}) ;
 	}
 } ;
 
-class HeapImplHolder implement Fat<HeapHolder ,HeapLayout> {
+class HeapImplHolder final implement Fat<HeapHolder ,HeapLayout> {
 public:
 	void initialize () override {
-		fake.mHolder = inline_hold (thiz) ;
-		if (ptr (fake).mOnce)
-			return ;
-		ptr (fake).mOnce = TRUE ;
+		ptr (fake).mStack.remake () ;
 		ptr (fake).mLength.remake () ;
-		ptr (fake).mLength.self = 0 ;
+		dump_memory_leaks () ;
 	}
 
-	imports VREF<HeapImplLayout> ptr (CREF<HeapLayout> layout) {
-		return Pointer::make (address (HeapImplLayout::instance ())) ;
+	static VREF<HeapImplLayout> ptr (CREF<HeapLayout> layout) {
+		return HeapImplRoot::instance ().self ;
+	}
+
+	INDEX stack () const override {
+		INDEX ret = ptr (fake).mStack.self++ ;
+		if ifdo (TRUE) {
+			if (ret >= 0)
+				discard ;
+			ret = ret & VAL_MAX ;
+		}
+		return move (ret) ;
 	}
 
 	LENGTH length () const override {
 		return ptr (fake).mLength.self ;
-	}
-
-	FLAG stack (CREF<LENGTH> size_) const override {
-		unimplemented () ;
-		return ZERO ;
 	}
 
 	FLAG alloc (CREF<LENGTH> size_) const override {
@@ -325,29 +363,36 @@ public:
 		return move (ret) ;
 	}
 
-	void free (CREF<FLAG> addr) const override {
-		const auto r1x = csc_pointer_t (addr) ;
+	void free (CREF<FLAG> pointer) const override {
+		const auto r1x = csc_pointer_t (pointer) ;
 		const auto r2x = memsize (r1x) ;
 		ptr (fake).mLength.self -= r2x ;
 		operator delete (r1x ,std::nothrow) ;
 	}
 } ;
 
-exports VFat<HeapHolder> HeapHolder::create (VREF<HeapLayout> that) {
-	if (that.mHolder == ZERO)
-		return VFat<HeapHolder> (HeapImplHolder () ,that) ;
+exports CREF<HeapLayout> HeapHolder::instance () {
+	return memorize ([&] () {
+		HeapLayout ret ;
+		ret.mHolder = inline_vptr (HeapImplHolder ()) ;
+		HeapHolder::hold (ret)->initialize () ;
+		return move (ret) ;
+	}) ;
+}
+
+exports VFat<HeapHolder> HeapHolder::hold (VREF<HeapLayout> that) {
+	assert (that.mHolder != ZERO) ;
 	auto &&rax = keep[TYPE<HeapImplHolder>::expr] (Pointer::from (that.mHolder)) ;
 	return VFat<HeapHolder> (rax ,that) ;
 }
 
-exports CFat<HeapHolder> HeapHolder::create (CREF<HeapLayout> that) {
-	if (that.mHolder == ZERO)
-		return CFat<HeapHolder> (HeapImplHolder () ,that) ;
+exports CFat<HeapHolder> HeapHolder::hold (CREF<HeapLayout> that) {
+	assert (that.mHolder != ZERO) ;
 	auto &&rax = keep[TYPE<HeapImplHolder>::expr] (Pointer::from (that.mHolder)) ;
 	return CFat<HeapHolder> (rax ,that) ;
 }
 
-class SliceImplHolder implement Fat<SliceHolder ,SliceLayout> {
+class SliceImplHolder final implement Fat<SliceHolder ,SliceLayout> {
 public:
 	void initialize (CREF<FLAG> buffer ,CREF<LENGTH> size_ ,CREF<LENGTH> step_) override {
 		fake.mBuffer = buffer ;
@@ -393,14 +438,14 @@ public:
 
 	BOOL equal (CREF<SliceLayout> that) const override {
 		const auto r1x = size () ;
-		const auto r2x = SliceHolder::create (that)->size () ;
+		const auto r2x = SliceHolder::hold (that)->size () ;
 		if (r1x != r2x)
 			return FALSE ;
 		auto rax = STRU32 () ;
 		auto rbx = STRU32 () ;
 		for (auto &&i : iter (0 ,r1x)) {
 			get (i ,rax) ;
-			SliceHolder::create (that)->get (i ,rbx) ;
+			SliceHolder::hold (that)->get (i ,rbx) ;
 			const auto r3x = inline_equal (rax ,rbx) ;
 			if (!r3x)
 				return r3x ;
@@ -410,13 +455,13 @@ public:
 
 	FLAG compr (CREF<SliceLayout> that) const override {
 		const auto r1x = size () ;
-		const auto r2x = SliceHolder::create (that)->size () ;
+		const auto r2x = SliceHolder::hold (that)->size () ;
 		const auto r3x = inline_min (r1x ,r2x) ;
 		auto rax = STRU32 () ;
 		auto rbx = STRU32 () ;
 		for (auto &&i : iter (0 ,r3x)) {
 			get (i ,rax) ;
-			SliceHolder::create (that)->get (i ,rbx) ;
+			SliceHolder::hold (that)->get (i ,rbx) ;
 			const auto r4x = inline_compr (rax ,rbx) ;
 			if (r4x != ZERO)
 				return r4x ;
@@ -424,15 +469,15 @@ public:
 		return ZERO ;
 	}
 
-	void visit (VREF<Visitor> visitor) const override {
-		visitor.begin () ;
+	void visit (VREF<VisitorFriend> visitor) const override {
+		visitor.enter () ;
 		const auto r1x = size () ;
 		auto rax = STRU32 () ;
 		for (auto &&i : iter (0 ,r1x)) {
 			get (i ,rax) ;
 			inline_visit (visitor ,rax) ;
 		}
-		visitor.end () ;
+		visitor.leave () ;
 	}
 
 	SliceLayout eos () const override {
@@ -452,11 +497,11 @@ public:
 	}
 } ;
 
-exports VFat<SliceHolder> SliceHolder::create (VREF<SliceLayout> that) {
+exports VFat<SliceHolder> SliceHolder::hold (VREF<SliceLayout> that) {
 	return VFat<SliceHolder> (SliceImplHolder () ,that) ;
 }
 
-exports CFat<SliceHolder> SliceHolder::create (CREF<SliceLayout> that) {
+exports CFat<SliceHolder> SliceHolder::hold (CREF<SliceLayout> that) {
 	return CFat<SliceHolder> (SliceImplHolder () ,that) ;
 }
 
@@ -467,7 +512,7 @@ struct ClazzImplLayout {
 	Slice mTypeName ;
 } ;
 
-class ClazzImplHolder implement Fat<ClazzHolder ,ClazzLayout> {
+class ClazzImplHolder final implement Fat<ClazzHolder ,ClazzLayout> {
 public:
 	void initialize (CREF<Unknown> holder) override {
 		auto rax = ClazzImplLayout () ;
@@ -510,44 +555,38 @@ public:
 	}
 
 	BOOL equal (CREF<ClazzLayout> that) const override {
-		if (type_size () != ClazzHolder::create (that)->type_size ())
+		if (type_size () != ClazzHolder::hold (that)->type_size ())
 			return FALSE ;
-		if (type_align () != ClazzHolder::create (that)->type_align ())
+		if (type_align () != ClazzHolder::hold (that)->type_align ())
 			return FALSE ;
-		if (type_guid () != ZERO)
-			if (type_guid () == ClazzHolder::create (that)->type_guid ())
+		if (type_guid () != 0)
+			if (type_guid () == ClazzHolder::hold (that)->type_guid ())
 				return TRUE ;
-		return inline_equal (type_name () ,ClazzHolder::create (that)->type_name ()) ;
+		return inline_equal (type_name () ,ClazzHolder::hold (that)->type_name ()) ;
 	}
 
 	FLAG compr (CREF<ClazzLayout> that) const override {
-		const auto r1x = inline_compr (type_size () ,ClazzHolder::create (that)->type_size ()) ;
-		if (r1x != ZERO)
-			return r1x ;
-		const auto r2x = inline_compr (type_align () ,ClazzHolder::create (that)->type_align ()) ;
-		if (r2x != ZERO)
-			return r2x ;
-		if (type_guid () != ZERO)
-			if (type_guid () == ClazzHolder::create (that)->type_guid ())
+		if (type_guid () != 0)
+			if (type_guid () == ClazzHolder::hold (that)->type_guid ())
 				return ZERO ;
-		return inline_compr (type_name () ,ClazzHolder::create (that)->type_name ()) ;
+		return inline_compr (type_name () ,ClazzHolder::hold (that)->type_name ()) ;
 	}
 
-	void visit (VREF<Visitor> visitor) const override {
-		visitor.begin () ;
+	void visit (VREF<VisitorFriend> visitor) const override {
+		visitor.enter () ;
 		inline_visit (visitor ,type_size ()) ;
 		inline_visit (visitor ,type_align ()) ;
 		inline_visit (visitor ,type_guid ()) ;
 		inline_visit (visitor ,type_name ()) ;
-		visitor.end () ;
+		visitor.leave () ;
 	}
 } ;
 
-exports VFat<ClazzHolder> ClazzHolder::create (VREF<ClazzLayout> that) {
+exports VFat<ClazzHolder> ClazzHolder::hold (VREF<ClazzLayout> that) {
 	return VFat<ClazzHolder> (ClazzImplHolder () ,that) ;
 }
 
-exports CFat<ClazzHolder> ClazzHolder::create (CREF<ClazzLayout> that) {
+exports CFat<ClazzHolder> ClazzHolder::hold (CREF<ClazzLayout> that) {
 	return CFat<ClazzHolder> (ClazzImplHolder () ,that) ;
 }
 } ;

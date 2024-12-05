@@ -7,7 +7,7 @@
 #include "csc_matrix.hpp"
 
 namespace CSC {
-class VectorImplHolder implement Fat<VectorHolder ,VectorLayout> {
+class VectorImplHolder final implement Fat<VectorHolder ,VectorLayout> {
 public:
 	void initialize (CREF<Buffer<FLT64 ,RANK4>> that) override {
 		fake.mVector[0] = that[0] ;
@@ -52,7 +52,7 @@ public:
 		return fake.mVector[y] ;
 	}
 
-	imports INDEX mm (CREF<INDEX> x ,CREF<INDEX> y) {
+	static INDEX mm (CREF<INDEX> x ,CREF<INDEX> y) {
 		return x + y * 4 ;
 	}
 
@@ -74,12 +74,12 @@ public:
 		return ZERO ;
 	}
 
-	void visit (VREF<Visitor> visitor) const override {
-		visitor.begin () ;
+	void visit (VREF<VisitorFriend> visitor) const override {
+		visitor.enter () ;
 		for (auto &&i : iter (0 ,4)) {
 			inline_visit (visitor ,fake.mVector[i]) ;
 		}
-		visitor.end () ;
+		visitor.leave () ;
 	}
 
 	VectorLayout sadd (CREF<VectorLayout> that) const override {
@@ -146,10 +146,10 @@ public:
 		return move (ret) ;
 	}
 
-	VectorLayout plus () const override {
+	VectorLayout sabs () const override {
 		VectorLayout ret ;
 		for (auto &&i : iter (0 ,4)) {
-			ret.mVector[i] = +fake.mVector[i] ;
+			ret.mVector[i] = MathProc::abs (fake.mVector[i]) ;
 		}
 		return move (ret) ;
 	}
@@ -202,15 +202,15 @@ public:
 	}
 } ;
 
-exports VFat<VectorHolder> VectorHolder::create (VREF<VectorLayout> that) {
+exports VFat<VectorHolder> VectorHolder::hold (VREF<VectorLayout> that) {
 	return VFat<VectorHolder> (VectorImplHolder () ,that) ;
 }
 
-exports CFat<VectorHolder> VectorHolder::create (CREF<VectorLayout> that) {
+exports CFat<VectorHolder> VectorHolder::hold (CREF<VectorLayout> that) {
 	return CFat<VectorHolder> (VectorImplHolder () ,that) ;
 }
 
-class MatrixImplHolder implement Fat<MatrixHolder ,MatrixLayout> {
+class MatrixImplHolder final implement Fat<MatrixHolder ,MatrixLayout> {
 public:
 	void initialize (CREF<Buffer<FLT64 ,ENUM<16>>> that) override {
 		for (auto &&i : iter (0 ,4 ,0 ,4)) {
@@ -240,7 +240,7 @@ public:
 		return fake.mMatrix[mm (x ,y)] ;
 	}
 
-	imports INDEX mm (CREF<INDEX> x ,CREF<INDEX> y) {
+	static INDEX mm (CREF<INDEX> x ,CREF<INDEX> y) {
 		return x + y * 4 ;
 	}
 
@@ -262,12 +262,12 @@ public:
 		return ZERO ;
 	}
 
-	void visit (VREF<Visitor> visitor) const override {
-		visitor.begin () ;
+	void visit (VREF<VisitorFriend> visitor) const override {
+		visitor.enter () ;
 		for (auto &&i : iter (0 ,16)) {
 			inline_visit (visitor ,fake.mMatrix[i]) ;
 		}
-		visitor.end () ;
+		visitor.leave () ;
 	}
 
 	MatrixLayout sadd (CREF<MatrixLayout> that) const override {
@@ -328,10 +328,10 @@ public:
 		return move (ret) ;
 	}
 
-	MatrixLayout plus () const override {
+	MatrixLayout sabs () const override {
 		MatrixLayout ret ;
 		for (auto &&i : iter (0 ,16)) {
-			ret.mMatrix[i] = +fake.mMatrix[i] ;
+			ret.mMatrix[i] = MathProc::abs (fake.mMatrix[i]) ;
 		}
 		return move (ret) ;
 	}
@@ -439,7 +439,7 @@ public:
 		const auto r1x = MathProc::inverse (det ()) ;
 		assume (r1x != 0) ;
 		MatrixLayout ret = adjoint () ;
-		ret = MatrixHolder::create (ret)->smul (r1x) ;
+		ret = MatrixHolder::hold (ret)->smul (r1x) ;
 		return move (ret) ;
 	}
 
@@ -452,15 +452,15 @@ public:
 	}
 } ;
 
-exports VFat<MatrixHolder> MatrixHolder::create (VREF<MatrixLayout> that) {
+exports VFat<MatrixHolder> MatrixHolder::hold (VREF<MatrixLayout> that) {
 	return VFat<MatrixHolder> (MatrixImplHolder () ,that) ;
 }
 
-exports CFat<MatrixHolder> MatrixHolder::create (CREF<MatrixLayout> that) {
+exports CFat<MatrixHolder> MatrixHolder::hold (CREF<MatrixLayout> that) {
 	return CFat<MatrixHolder> (MatrixImplHolder () ,that) ;
 }
 
-class MakeMatrixImplHolder implement Fat<MakeMatrixHolder ,MatrixLayout> {
+class MakeMatrixImplHolder final implement Fat<MakeMatrixHolder ,MatrixLayout> {
 public:
 	void DiagMatrix_initialize (CREF<FLT64> x ,CREF<FLT64> y ,CREF<FLT64> z ,CREF<FLT64> w) override {
 		Matrix ret = Matrix::zero () ;
@@ -574,7 +574,7 @@ public:
 			const auto r3x = Vector::axis_z () ;
 			const auto r4x = Vector::axis_w () ;
 			const auto r5x = Matrix (r1x ,r2x ,r3x ,r4x) ;
-			fake = MatrixHolder::create (fake)->smul (r5x) ;
+			fake = MatrixHolder::hold (fake)->smul (r5x) ;
 		}
 		if ifdo (act) {
 			if (option != ViewMatrixOption::XZY)
@@ -584,7 +584,7 @@ public:
 			const auto r8x = Vector::axis_y () ;
 			const auto r9x = Vector::axis_w () ;
 			const auto r10x = Matrix (r6x ,r7x ,r8x ,r9x) ;
-			fake = MatrixHolder::create (fake)->smul (r10x) ;
+			fake = MatrixHolder::hold (fake)->smul (r10x) ;
 		}
 		if ifdo (act) {
 			if (option != ViewMatrixOption::YXZ)
@@ -594,7 +594,7 @@ public:
 			const auto r13x = -Vector::axis_z () ;
 			const auto r14x = Vector::axis_w () ;
 			const auto r15x = Matrix (r11x ,r12x ,r13x ,r14x) ;
-			fake = MatrixHolder::create (fake)->smul (r15x) ;
+			fake = MatrixHolder::hold (fake)->smul (r15x) ;
 		}
 		if ifdo (act) {
 			if (option != ViewMatrixOption::YZX)
@@ -604,7 +604,7 @@ public:
 			const auto r18x = Vector::axis_y () ;
 			const auto r19x = Vector::axis_w () ;
 			const auto r20x = Matrix (r16x ,r17x ,r18x ,r19x) ;
-			fake = MatrixHolder::create (fake)->smul (r20x) ;
+			fake = MatrixHolder::hold (fake)->smul (r20x) ;
 		}
 		if ifdo (act) {
 			if (option != ViewMatrixOption::ZXY)
@@ -614,7 +614,7 @@ public:
 			const auto r23x = Vector::axis_x () ;
 			const auto r24x = Vector::axis_w () ;
 			const auto r25x = Matrix (r21x ,r22x ,r23x ,r24x) ;
-			fake = MatrixHolder::create (fake)->smul (r25x) ;
+			fake = MatrixHolder::hold (fake)->smul (r25x) ;
 		}
 		if ifdo (act) {
 			if (option != ViewMatrixOption::ZYX)
@@ -624,7 +624,7 @@ public:
 			const auto r28x = Vector::axis_x () ;
 			const auto r29x = Vector::axis_w () ;
 			const auto r30x = Matrix (r26x ,r27x ,r28x ,r29x) ;
-			fake = MatrixHolder::create (fake)->smul (r30x) ;
+			fake = MatrixHolder::hold (fake)->smul (r30x) ;
 		}
 		if ifdo (act) {
 			assert (FALSE) ;
@@ -674,25 +674,33 @@ public:
 	}
 } ;
 
-exports VFat<MakeMatrixHolder> MakeMatrixHolder::create (VREF<MatrixLayout> that) {
+exports VFat<MakeMatrixHolder> MakeMatrixHolder::hold (VREF<MatrixLayout> that) {
 	return VFat<MakeMatrixHolder> (MakeMatrixImplHolder () ,that) ;
 }
 
-exports CFat<MakeMatrixHolder> MakeMatrixHolder::create (CREF<MatrixLayout> that) {
+exports CFat<MakeMatrixHolder> MakeMatrixHolder::hold (CREF<MatrixLayout> that) {
 	return CFat<MakeMatrixHolder> (MakeMatrixImplHolder () ,that) ;
 }
 
 template class External<MatrixProcHolder ,MatrixProcLayout> ;
 
-exports VFat<MatrixProcHolder> MatrixProcHolder::create (VREF<MatrixProcLayout> that) {
-	return VFat<MatrixProcHolder> (External<MatrixProcHolder ,MatrixProcLayout>::instance () ,that) ;
+exports CREF<MatrixProcLayout> MatrixProcHolder::instance () {
+	return memorize ([&] () {
+		MatrixProcLayout ret ;
+		MatrixProcHolder::hold (ret)->initialize () ;
+		return move (ret) ;
+	}) ;
 }
 
-exports CFat<MatrixProcHolder> MatrixProcHolder::create (CREF<MatrixProcLayout> that) {
-	return CFat<MatrixProcHolder> (External<MatrixProcHolder ,MatrixProcLayout>::instance () ,that) ;
+exports VFat<MatrixProcHolder> MatrixProcHolder::hold (VREF<MatrixProcLayout> that) {
+	return VFat<MatrixProcHolder> (External<MatrixProcHolder ,MatrixProcLayout>::linkage () ,that) ;
 }
 
-class DuplexMatrixImplHolder implement Fat<DuplexMatrixHolder ,DuplexMatrixLayout> {
+exports CFat<MatrixProcHolder> MatrixProcHolder::hold (CREF<MatrixProcLayout> that) {
+	return CFat<MatrixProcHolder> (External<MatrixProcHolder ,MatrixProcLayout>::linkage () ,that) ;
+}
+
+class DuplexMatrixImplHolder final implement Fat<DuplexMatrixHolder ,DuplexMatrixLayout> {
 public:
 	void initialize (CREF<Matrix> that) override {
 		fake.mDuplexMatrix[0] = that ;
@@ -718,15 +726,15 @@ public:
 	}
 } ;
 
-exports VFat<DuplexMatrixHolder> DuplexMatrixHolder::create (VREF<DuplexMatrixLayout> that) {
+exports VFat<DuplexMatrixHolder> DuplexMatrixHolder::hold (VREF<DuplexMatrixLayout> that) {
 	return VFat<DuplexMatrixHolder> (DuplexMatrixImplHolder () ,that) ;
 }
 
-exports CFat<DuplexMatrixHolder> DuplexMatrixHolder::create (CREF<DuplexMatrixLayout> that) {
+exports CFat<DuplexMatrixHolder> DuplexMatrixHolder::hold (CREF<DuplexMatrixLayout> that) {
 	return CFat<DuplexMatrixHolder> (DuplexMatrixImplHolder () ,that) ;
 }
 
-class QuaternionImplHolder implement Fat<QuaternionHolder ,QuaternionLayout> {
+class QuaternionImplHolder final implement Fat<QuaternionHolder ,QuaternionLayout> {
 public:
 	void initialize (CREF<FLT64> x ,CREF<FLT64> y ,CREF<FLT64> z ,CREF<FLT64> w) override {
 		fake.mQuaternion[0] = x ;
@@ -838,12 +846,12 @@ public:
 		return ZERO ;
 	}
 
-	void visit (VREF<Visitor> visitor) const override {
-		visitor.begin () ;
+	void visit (VREF<VisitorFriend> visitor) const override {
+		visitor.enter () ;
 		for (auto &&i : iter (0 ,4)) {
 			inline_visit (visitor ,fake.mQuaternion[i]) ;
 		}
-		visitor.end () ;
+		visitor.leave () ;
 	}
 
 	QuaternionLayout smul (CREF<QuaternionLayout> that) const override {
@@ -861,7 +869,7 @@ public:
 		return move (ret) ;
 	}
 
-	imports Vector axis (CREF<QuaternionLayout> q) {
+	static Vector axis (CREF<QuaternionLayout> q) {
 		return Vector (q.mQuaternion[0] ,q.mQuaternion[1] ,q.mQuaternion[2] ,0) ;
 	}
 
@@ -884,36 +892,44 @@ public:
 	}
 } ;
 
-exports VFat<QuaternionHolder> QuaternionHolder::create (VREF<QuaternionLayout> that) {
+exports VFat<QuaternionHolder> QuaternionHolder::hold (VREF<QuaternionLayout> that) {
 	return VFat<QuaternionHolder> (QuaternionImplHolder () ,that) ;
 }
 
-exports CFat<QuaternionHolder> QuaternionHolder::create (CREF<QuaternionLayout> that) {
+exports CFat<QuaternionHolder> QuaternionHolder::hold (CREF<QuaternionLayout> that) {
 	return CFat<QuaternionHolder> (QuaternionImplHolder () ,that) ;
 }
 
 template class External<LinearProcHolder ,LinearProcLayout> ;
 
-exports VFat<LinearProcHolder> LinearProcHolder::create (VREF<LinearProcLayout> that) {
-	return VFat<LinearProcHolder> (External<LinearProcHolder ,LinearProcLayout>::instance () ,that) ;
+exports CREF<LinearProcLayout> LinearProcHolder::instance () {
+	return memorize ([&] () {
+		LinearProcLayout ret ;
+		LinearProcHolder::hold (ret)->initialize () ;
+		return move (ret) ;
+	}) ;
 }
 
-exports CFat<LinearProcHolder> LinearProcHolder::create (CREF<LinearProcLayout> that) {
-	return CFat<LinearProcHolder> (External<LinearProcHolder ,LinearProcLayout>::instance () ,that) ;
+exports VFat<LinearProcHolder> LinearProcHolder::hold (VREF<LinearProcLayout> that) {
+	return VFat<LinearProcHolder> (External<LinearProcHolder ,LinearProcLayout>::linkage () ,that) ;
 }
 
-class PointCloudImplHolder implement Fat<PointCloudHolder ,PointCloudLayout> {
+exports CFat<LinearProcHolder> LinearProcHolder::hold (CREF<LinearProcLayout> that) {
+	return CFat<LinearProcHolder> (External<LinearProcHolder ,LinearProcLayout>::linkage () ,that) ;
+}
+
+class PointCloudImplHolder final implement Fat<PointCloudHolder ,PointCloudLayout> {
 public:
 	void initialize (RREF<Ref<Array<Point2F>>> that) override {
 		fake.mRank = 2 ;
-		auto &&rax = keep[TYPE<RefLayout>::expr] (fake.mPointCloud) ;
+		auto &&rax = keep[TYPE<Ref<Array<Point2F>>>::expr] (Pointer::from (fake.mPointCloud)) ;
 		rax = move (that) ;
 		fake.mWorld = Matrix::identity () ;
 	}
 
 	void initialize (RREF<Ref<Array<Point3F>>> that) override {
 		fake.mRank = 3 ;
-		auto &&rax = keep[TYPE<RefLayout>::expr] (fake.mPointCloud) ;
+		auto &&rax = keep[TYPE<Ref<Array<Point3F>>>::expr] (Pointer::from (fake.mPointCloud)) ;
 		rax = move (that) ;
 		fake.mWorld = Matrix::identity () ;
 	}
@@ -1045,11 +1061,11 @@ public:
 	}
 } ;
 
-exports VFat<PointCloudHolder> PointCloudHolder::create (VREF<PointCloudLayout> that) {
+exports VFat<PointCloudHolder> PointCloudHolder::hold (VREF<PointCloudLayout> that) {
 	return VFat<PointCloudHolder> (PointCloudImplHolder () ,that) ;
 }
 
-exports CFat<PointCloudHolder> PointCloudHolder::create (CREF<PointCloudLayout> that) {
+exports CFat<PointCloudHolder> PointCloudHolder::hold (CREF<PointCloudLayout> that) {
 	return CFat<PointCloudHolder> (PointCloudImplHolder () ,that) ;
 }
 } ;

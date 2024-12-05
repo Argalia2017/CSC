@@ -239,3 +239,4 @@ ModelManifest.xml
 .fake/
 /CppDependOut
 /Routine.cdproj
+/doc

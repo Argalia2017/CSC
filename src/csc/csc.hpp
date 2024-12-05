@@ -223,13 +223,27 @@ struct is_trivially_default_constructible :integral_constant<bool ,__has_trivial
 #endif
 #endif
 
+#ifndef __macro_break
+#ifdef __CSC_COMPILER_MSVC__
+#define __macro_break __debugbreak
+#endif
+
+#ifdef __CSC_COMPILER_GNUC__
+#define __macro_break __builtin_trap
+#endif
+
+#ifdef __CSC_COMPILER_CLANG__
+#define __macro_break __builtin_trap
+#endif
+#endif
+
 #ifndef __macro_assert
 #ifdef __CSC_VER_DEBUG__
-#define __macro_assert(...) do { if (__VA_ARGS__) break ; CSC::inline_break () ; } while (false)
+#define __macro_assert(...) do { if (__VA_ARGS__) break ; __macro_break () ; } while (false)
 #endif
 
 #ifdef __CSC_VER_UNITTEST__
-#define __macro_assert(...) do { if (__VA_ARGS__) break ; CSC::inline_break () ; } while (false)
+#define __macro_assert(...) do { if (__VA_ARGS__) break ; inline_abort () ; } while (false)
 #endif
 
 #ifdef __CSC_VER_RELEASE__
@@ -237,27 +251,27 @@ struct is_trivially_default_constructible :integral_constant<bool ,__has_trivial
 #endif
 #endif
 
-#ifndef __macro_funcion
+#ifndef __macro_function
 #ifdef __CSC_COMPILER_MSVC__
-#define __macro_funcion __FUNCSIG__
+#define __macro_function __FUNCSIG__
 #endif
 
 #ifdef __CSC_COMPILER_GNUC__
-#define __macro_funcion __PRETTY_FUNCTION__
+#define __macro_function __PRETTY_FUNCTION__
 #endif
 
 #ifdef __CSC_COMPILER_CLANG__
-#define __macro_funcion __PRETTY_FUNCTION__
+#define __macro_function __PRETTY_FUNCTION__
 #endif
 #endif
 
 #ifndef __macro_assume
 #ifdef __CSC_VER_DEBUG__
-#define __macro_assume(...) do { if (__VA_ARGS__) break ; throw CSC::Exception (slice (__macro_str (__VA_ARGS__)) ,CSC::Slice (__macro_funcion) ,slice (__FILE__) ,slice (__macro_str (__LINE__))) ; } while (false)
+#define __macro_assume(...) do { if (__VA_ARGS__) break ; throw CSC::Exception (slice (__macro_str (__VA_ARGS__)) ,CSC::Slice (__macro_function) ,slice (__FILE__) ,slice (__macro_str (__LINE__))) ; } while (false)
 #endif
 
 #ifdef __CSC_VER_UNITTEST__
-#define __macro_assume(...) do { if (__VA_ARGS__) break ; throw CSC::Exception (slice (__macro_str (__VA_ARGS__)) ,CSC::Slice (__macro_funcion) ,slice (__FILE__) ,slice (__macro_str (__LINE__))) ; } while (false)
+#define __macro_assume(...) do { if (__VA_ARGS__) break ; throw CSC::Exception (slice (__macro_str (__VA_ARGS__)) ,CSC::Slice (__macro_function) ,slice (__FILE__) ,slice (__macro_str (__LINE__))) ; } while (false)
 #endif
 
 #ifdef __CSC_VER_RELEASE__
@@ -288,7 +302,7 @@ struct is_trivially_default_constructible :integral_constant<bool ,__has_trivial
 #endif
 
 #ifndef __macro_nullof
-#define __macro_nullof(...) (*CSC::DEF<CSC::REMOVE_CVR<__VA_ARGS__> *> (CSC::NULL))
+#define __macro_nullof(...) (*CSC::DEF<typename CSC::REMOVE_CVR1_HELP<__VA_ARGS__>::RET *> (0X1000))
 #endif
 
 namespace CSC {
@@ -354,16 +368,18 @@ using csc_size_t = DEF<long unsigned int> ;
 using csc_enum_t = int ;
 #endif
 
-class Pointer ;
-
 using csc_pointer_t = DEF<void *> ;
+
+struct csc_placement_new_t {
+	csc_pointer_t mAddr ;
+} ;
 
 template <class A>
 using csc_initializer_list_t = std::initializer_list<A> ;
 
 template <csc_diff_t A>
 struct ENUM {
-	imports forceinline consteval csc_diff_t expr_m () noexcept {
+	forceinline static consteval csc_diff_t expr_m () noexcept {
 		return A ;
 	}
 } ;
@@ -374,7 +390,7 @@ using ENUM_FALSE = ENUM<false> ;
 
 template <class...A>
 struct TYPE {
-	imports forceinline consteval TYPE expr_m () noexcept {
+	forceinline static consteval TYPE expr_m () noexcept {
 		return TYPE () ;
 	}
 } ;
@@ -420,43 +436,46 @@ template <class A ,class B>
 using IS_SAME = typename IS_SAME_HELP<A ,B>::RET ;
 
 template <class...>
-trait REMOVE_CVR_HELP ;
+trait REMOVE_CVR1_HELP ;
 
 template <class A>
-trait REMOVE_CVR_HELP<A> {
+trait REMOVE_CVR1_HELP<A> {
 	using RET = A ;
 } ;
 
 template <class A>
-trait REMOVE_CVR_HELP<DEF<A &>> {
+trait REMOVE_CVR1_HELP<A &> {
 	using RET = A ;
 } ;
 
 template <class A>
-trait REMOVE_CVR_HELP<DEF<A &&>> {
+trait REMOVE_CVR1_HELP<A &&> {
+	using RET = A ;
+} ;
+
+template <class...>
+trait REMOVE_CVR2_HELP ;
+
+template <class A>
+trait REMOVE_CVR2_HELP<A> {
 	using RET = A ;
 } ;
 
 template <class A>
-trait REMOVE_CVR_HELP<DEF<const A>> {
+trait REMOVE_CVR2_HELP<const A> {
 	using RET = A ;
 } ;
 
 template <class A>
-trait REMOVE_CVR_HELP<DEF<const A &>> {
+trait REMOVE_CVR2_HELP<volatile A> {
 	using RET = A ;
 } ;
 
 template <class A>
-trait REMOVE_CVR_HELP<DEF<const A &&>> {
-	using RET = A ;
-} ;
+using REMOVE_CVR = typename REMOVE_CVR2_HELP<typename REMOVE_CVR1_HELP<A>::RET>::RET ;
 
 template <class A>
-using REMOVE_CVR = typename REMOVE_CVR_HELP<A>::RET ;
-
-template <class A>
-using CHECK_CVR = IS_SAME<A ,REMOVE_CVR<A>> ;
+using CHECK_CVR = REQUIRE<IS_SAME<A ,REMOVE_CVR<A>>> ;
 
 template <class A ,class = CHECK_CVR<A>>
 using VREF = DEF<A &> ;
@@ -507,10 +526,10 @@ template <class A ,class B>
 using MACRO_IS_EXTEND = ENUM<(__is_base_of (A ,B))> ;
 } ;
 
-forceinline CSC::csc_pointer_t operator new (CSC::csc_size_t ,CSC::VREF<CSC::Pointer> where_) noexcept {
-	return (&where_) ;
+forceinline CSC::csc_pointer_t operator new (CSC::csc_size_t ,CSC::csc_placement_new_t where_) noexcept {
+	return where_.mAddr ;
 }
 
-forceinline void operator delete (CSC::csc_pointer_t ,CSC::VREF<CSC::Pointer> where_) noexcept {
+forceinline void operator delete (CSC::csc_pointer_t ,CSC::csc_placement_new_t where_) noexcept {
 	return ;
 }

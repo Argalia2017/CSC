@@ -13,6 +13,18 @@
 #include "csc/csc_runtime.hpp"
 #include "csc/csc_thread.hpp"
 
+#ifndef DLLEXTERN
+#ifdef __CSC_COMPILER_MSVC__
+#define DLLEXTERN __declspec (dllexport)
+#define DLLAPI __stdcall
+#endif
+
+#ifdef __CSC_COMPILER_GNUC__
+#define DLLEXTERN __attribute__ ((visibility("default")))
+#define DLLAPI
+#endif
+#endif
+
 namespace SOLUTION {
 using namespace CSC ;
 

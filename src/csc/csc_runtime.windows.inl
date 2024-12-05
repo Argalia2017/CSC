@@ -8,14 +8,6 @@
 #pragma system_header
 #endif
 
-#ifdef __CSC_COMPILER_GNUC__
-#pragma GCC system_header
-#endif
-
-#ifdef __CSC_COMPILER_CLANG__
-#pragma clang system_header
-#endif
-
 #include "csc_runtime.hpp"
 
 #ifndef _INC_WINDOWS
@@ -25,9 +17,7 @@
 #include "csc_end.h"
 #include <cstdio>
 #include <cstdlib>
-#include <cstring>
 #include <clocale>
-#include <exception>
 #include <ctime>
 #include <chrono>
 #include <mutex>
@@ -38,7 +28,7 @@
 #include "csc_begin.h"
 
 namespace CSC {
-class RuntimeProcImplHolder implement Fat<RuntimeProcHolder ,RuntimeProcLayout> {
+class RuntimeProcImplHolder final implement Fat<RuntimeProcHolder ,RuntimeProcLayout> {
 public:
 	void initialize () override {
 		noop () ;
@@ -70,10 +60,6 @@ public:
 		std::quick_exit (0) ;
 	}
 
-	FLAG random_seed () const override {
-		return invoke (std::random_device ()) ;
-	}
-
 	String<STR> working_path () const override {
 		String<STR> ret = String<STR>::make () ;
 		GetCurrentDirectory (csc_enum_t (ret.size ()) ,ret) ;
@@ -81,14 +67,14 @@ public:
 		return move (ret) ;
 	}
 
-	String<STR> module_path () const override {
+	String<STR> library_path () const override {
 		String<STR> ret = String<STR>::make () ;
 		GetModuleFileName (NULL ,ret ,csc_enum_t (ret.size ())) ;
 		ret = Path (ret).path () ;
 		return move (ret) ;
 	}
 
-	String<STR> module_name () const override {
+	String<STR> library_name () const override {
 		String<STR> ret = String<STR>::make () ;
 		GetModuleFileName (NULL ,ret ,csc_enum_t (ret.size ())) ;
 		ret = Path (ret).name () ;
@@ -104,7 +90,7 @@ struct ProcessImplLayout {
 	QUAD mProcessTime ;
 } ;
 
-class ProcessImplHolder implement Fat<ProcessHolder ,ProcessLayout> {
+class ProcessImplHolder final implement Fat<ProcessHolder ,ProcessLayout> {
 private:
 	using PROCESS_SNAPSHOT_SIZE = ENUM<128> ;
 
@@ -205,18 +191,18 @@ public:
 
 static const auto mProcessExternal = External<ProcessHolder ,ProcessLayout>::declare (ProcessImplHolder ()) ;
 
-struct ModuleImplLayout {
-	UniqueRef<HMODULE> mModule ;
+struct LibraryImplLayout {
+	UniqueRef<HMODULE> mLibrary ;
 	FLAG mLastError ;
 } ;
 
-class ModuleImplHolder implement Fat<ModuleHolder ,ModuleLayout> {
+class LibraryImplHolder final implement Fat<LibraryHolder ,LibraryLayout> {
 public:
 	void initialize (CREF<String<STR>> file) override {
 		const auto r1x = Path (file).name () ;
 		assert (r1x.length () > 0) ;
-		fake.mThis = AutoRef<ModuleImplLayout>::make () ;
-		fake.mThis->mModule = UniqueRef<HMODULE> ([&] (VREF<HMODULE> me) {
+		fake.mThis = AutoRef<LibraryImplLayout>::make () ;
+		fake.mThis->mLibrary = UniqueRef<HMODULE> ([&] (VREF<HMODULE> me) {
 			me = GetModuleHandle (r1x) ;
 			if (me != NULL)
 				return ;
@@ -233,7 +219,7 @@ public:
 	FLAG load (CREF<String<STR>> name) override {
 		assert (name.length () > 0) ;
 		const auto r1x = StringProc::stra_from_strs (name) ;
-		FLAG ret = FLAG (GetProcAddress (fake.mThis->mModule ,r1x)) ;
+		FLAG ret = FLAG (GetProcAddress (fake.mThis->mLibrary ,r1x)) ;
 		if ifdo (TRUE) {
 			if (ret != ZERO)
 				discard ;
@@ -254,11 +240,20 @@ public:
 	}
 } ;
 
-static const auto mModuleExternal = External<ModuleHolder ,ModuleLayout>::declare (ModuleImplHolder ()) ;
+static const auto mLibraryExternal = External<LibraryHolder ,LibraryLayout>::declare (LibraryImplHolder ()) ;
 
-struct SingletonHeap {
-	Pin<Mutex> mMutex ;
+struct SingletonLayout {
+	Mutex mMutex ;
 	Pin<Set<Clazz>> mClazzSet ;
+} ;
+
+class SingletonRoot implement Pin<SingletonLayout> {
+public:
+	static CREF<SingletonRoot> instance () {
+		return memorize ([&] () {
+			return SingletonRoot () ;
+		}) ;
+	}
 } ;
 
 struct SingletonPipe {
@@ -273,25 +268,25 @@ struct SingletonProcImplLayout {
 	FLAG mUid ;
 	String<STR> mName ;
 	UniqueRef<HANDLE> mPipe ;
-	Ref<SingletonHeap> mHeap ;
+	Ref<SingletonLayout> mRoot ;
+	FLAG mAddress ;
 } ;
 
-class SingletonProcImplHolder implement Fat<SingletonProcHolder ,SingletonProcLayout> {
+class SingletonProcImplHolder final implement Fat<SingletonProcHolder ,SingletonProcLayout> {
 public:
 	void initialize () override {
-		fake.mThis = SharedRef<SingletonProcImplLayout>::make () ;
+		fake.mThis = AutoRef<SingletonProcImplLayout>::make () ;
 		fake.mThis->mUid = RuntimeProc::process_uid () ;
 		fake.mThis->mName = String<STR>::make (slice ("CSC_Singleton_") ,fake.mThis->mUid) ;
+		fake.mThis->mAddress = ZERO ;
 		link_pipe () ;
 	}
 
 	void link_pipe () {
-		auto rax = SingletonPipe () ;
 		auto act = TRUE ;
 		if ifdo (act) {
 			try {
-				init_pipe () ;
-				rax = load_pipe () ;
+				load_pipe () ;
 			} catch (CREF<Exception> e) {
 				noop (e) ;
 				discard ;
@@ -299,19 +294,21 @@ public:
 		}
 		if ifdo (act) {
 			try {
+				init_pipe () ;
 				save_pipe () ;
-				rax = load_pipe () ;
+				load_pipe () ;
 			} catch (CREF<Exception> e) {
 				noop (e) ;
 				discard ;
 			}
 		}
-		if ifdo (TRUE) {
-			const auto r1x = FLAG (rax.mAddress1) ;
-			assume (r1x != ZERO) ;
-			if (address (fake.mThis->mHeap.self) == r1x)
-				return ;
-			fake.mThis->mHeap = Ref<SingletonHeap>::reference (Pointer::make (r1x)) ;
+		if ifdo (act) {
+			try {
+				load_pipe () ;
+			} catch (CREF<Exception> e) {
+				noop (e) ;
+				discard ;
+			}
 		}
 	}
 
@@ -322,15 +319,17 @@ public:
 			const auto r1x = csc_enum_t (SIZE_OF<SingletonPipe>::expr) ;
 			me = CreateFileMapping (INVALID_HANDLE_VALUE ,NULL ,PAGE_READWRITE ,0 ,r1x ,fake.mThis->mName) ;
 			assume (me != NULL) ;
+			const auto r2x = GetLastError () ;
+			assume (r2x != ERROR_ALREADY_EXISTS) ;
 		} ,[&] (VREF<HANDLE> me) {
 			CloseHandle (me) ;
 		}) ;
-		fake.mThis->mHeap = Ref<SingletonHeap>::make () ;
-		fake.mThis->mHeap->mMutex.self = RecursiveMutex () ;
-		fake.mThis->mHeap->mClazzSet.self = Set<Clazz> () ;
+		fake.mThis->mAddress = address (SingletonRoot::instance ().self) ;
+		auto &&rax = keep[TYPE<SingletonRoot>::expr] (Pointer::make (fake.mThis->mAddress)) ;
+		rax->mMutex = NULL ;
 	}
 
-	SingletonPipe load_pipe () const {
+	void load_pipe () {
 		const auto r1x = UniqueRef<HANDLE> ([&] (VREF<HANDLE> me) {
 			me = OpenFileMapping (FILE_MAP_READ ,FALSE ,fake.mThis->mName) ;
 			assume (me != NULL) ;
@@ -344,16 +343,19 @@ public:
 			UnmapViewOfFile (me) ;
 		}) ;
 		const auto r3x = FLAG (r2x.self) ;
-		SingletonPipe ret ;
-		inline_memcpy (Pointer::from (ret) ,Pointer::make (r3x) ,SIZE_OF<SingletonPipe>::expr) ;
-		assume (ret.mReserve1 == QUAD (0X1122334455667788)) ;
-		assume (ret.mReserve3 == QUAD (0XAAAABBBBCCCCDDDD)) ;
-		assume (ret.mReserve2 == QUAD (fake.mThis->mUid)) ;
-		assume (ret.mAddress1 == ret.mAddress2) ;
-		return move (ret) ;
+		auto rax = SingletonPipe () ;
+		inline_memcpy (Pointer::from (rax) ,Pointer::make (r3x) ,SIZE_OF<SingletonPipe>::expr) ;
+		assume (rax.mReserve1 == QUAD (fake.mThis->mUid)) ;
+		assume (rax.mReserve2 == abi_reserve ()) ;
+		assume (rax.mReserve3 == ctx_reserve ()) ;
+		assume (rax.mAddress1 == rax.mAddress2) ;
+		const auto r4x = FLAG (rax.mAddress1) ;
+		assume (r4x != ZERO) ;
+		auto &&rbx = keep[TYPE<SingletonLayout>::expr] (Pointer::make (r4x)) ;
+		fake.mThis->mRoot = Ref<SingletonLayout>::reference (rbx) ;
 	}
 
-	void save_pipe () const {
+	void save_pipe () {
 		const auto r1x = UniqueRef<HANDLE> ([&] (VREF<HANDLE> me) {
 			me = OpenFileMapping (FILE_MAP_WRITE ,FALSE ,fake.mThis->mName) ;
 			assume (me != NULL) ;
@@ -368,26 +370,85 @@ public:
 		}) ;
 		const auto r3x = FLAG (r2x.self) ;
 		auto rax = SingletonPipe () ;
-		rax.mReserve1 = QUAD (0X1122334455667788) ;
-		rax.mAddress1 = QUAD (address (fake.mThis->mHeap.self)) ;
-		rax.mReserve2 = QUAD (fake.mThis->mUid) ;
-		rax.mAddress2 = QUAD (address (fake.mThis->mHeap.self)) ;
-		rax.mReserve3 = QUAD (0XAAAABBBBCCCCDDDD) ;
+		rax.mReserve1 = QUAD (fake.mThis->mUid) ;
+		rax.mAddress1 = QUAD (fake.mThis->mAddress) ;
+		rax.mReserve2 = abi_reserve () ;
+		rax.mAddress2 = QUAD (fake.mThis->mAddress) ;
+		rax.mReserve3 = ctx_reserve () ;
 		inline_memcpy (Pointer::make (r3x) ,Pointer::from (rax) ,SIZE_OF<SingletonPipe>::expr) ;
 	}
 
+	QUAD abi_reserve () const override {
+		QUAD ret = QUAD (0X00) ;
+#ifdef __CSC_VER_DEBUG__
+		ret |= QUAD (0X00000001) ;
+#elif defined __CSC_VER_UNITTEST__
+		ret |= QUAD (0X00000001) ;
+#elif defined __CSC_VER_RELEASE__
+		ret |= QUAD (0X00000001) ;
+#endif
+#ifdef __CSC_COMPILER_MSVC__
+		ret |= QUAD (0X00000010) ;
+#elif defined __CSC_COMPILER_GNUC__
+		ret |= QUAD (0X00000020) ;
+#elif defined __CSC_COMPILER_CLANG__
+		ret |= QUAD (0X00000040) ;
+#endif
+#ifdef __CSC_SYSTEM_WINDOWS__
+		ret |= QUAD (0X00000100) ;
+#elif defined __CSC_SYSTEM_LINUX__
+		ret |= QUAD (0X00000200) ;
+#endif
+#ifdef __CSC_TARGET_EXE__
+		ret |= QUAD (0X00001000) ;
+#elif defined __CSC_TARGET_DLL__
+		ret |= QUAD (0X00001000) ;
+#elif defined __CSC_TARGET_LIB__
+		ret |= QUAD (0X00001000) ;
+#endif
+#ifdef __CSC_PLATFORM_X86__
+		ret |= QUAD (0X00010000) ;
+#elif defined __CSC_PLATFORM_X64__
+		ret |= QUAD (0X00020000) ;
+#elif defined __CSC_PLATFORM_ARM__
+		ret |= QUAD (0X00030000) ;
+#elif defined __CSC_PLATFORM_ARM64__
+		ret |= QUAD (0X00040000) ;
+#endif
+#ifdef __CSC_CONFIG_VAL32__
+		ret |= QUAD (0X00100000) ;
+#elif defined __CSC_CONFIG_VAL64__
+		ret |= QUAD (0X00200000) ;
+#endif
+#ifdef __CSC_CONFIG_STRA__
+		ret |= QUAD (0X01000000) ;
+#elif defined __CSC_CONFIG_STRW__
+		ret |= QUAD (0X02000000) ;
+#endif
+#ifdef __CSC_CXX_LATEST__
+		ret |= QUAD (0X10000000) ;
+#else
+		ret |= QUAD (0X10000000) ;
+#endif
+		return move (ret) ;
+	}
+
+	QUAD ctx_reserve () const override {
+		return QUAD (0XAAAABBBBCCCCDDDD) ;
+	}
+
 	FLAG load (CREF<Clazz> clazz) const override {
-		Scope<Mutex> anonymous (fake.mThis->mHeap->mMutex.self) ;
-		FLAG ret = fake.mThis->mHeap->mClazzSet->map (clazz) ;
+		Scope<Mutex> anonymous (fake.mThis->mRoot->mMutex) ;
+		FLAG ret = fake.mThis->mRoot->mClazzSet->map (clazz) ;
 		replace (ret ,NONE ,ZERO) ;
 		return move (ret) ;
 	}
 
-	void save (CREF<Clazz> clazz ,CREF<FLAG> addr) const override {
-		assert (addr != ZERO) ;
-		assert (addr != NONE) ;
-		Scope<Mutex> anonymous (fake.mThis->mHeap->mMutex.self) ;
-		fake.mThis->mHeap->mClazzSet->add (clazz ,addr) ;
+	void save (CREF<Clazz> clazz ,CREF<FLAG> pointer) const override {
+		assert (pointer != ZERO) ;
+		assert (pointer != NONE) ;
+		Scope<Mutex> anonymous (fake.mThis->mRoot->mMutex) ;
+		fake.mThis->mRoot->mClazzSet->add (clazz ,pointer) ;
 	}
 } ;
 
@@ -398,7 +459,7 @@ struct PathImplLayout {
 	Deque<INDEX> mSeparator ;
 } ;
 
-class PathImplHolder implement Fat<PathHolder ,PathLayout> {
+class PathImplHolder final implement Fat<PathHolder ,PathLayout> {
 public:
 	void initialize (RREF<String<STR>> pathname) override {
 		auto rax = PathImplLayout () ;
@@ -537,7 +598,7 @@ public:
 		for (auto &&i : iter (0 ,r4x))
 			ret[i] = child (rbx[i]) ;
 		for (auto &&i : iter (r4x ,size_))
-			PathHolder::create (ret[i])->initialize (fake) ;
+			PathHolder::hold (ret[i])->initialize (fake) ;
 		return move (ret) ;
 	}
 
@@ -568,7 +629,6 @@ public:
 
 	Deque<String<STR>> decouple () const override {
 		Deque<String<STR>> ret = Deque<String<STR>> (fake.mThis->mSeparator.length ()) ;
-		INDEX ix = 0 ;
 		for (auto &&i : iter (1 ,fake.mThis->mSeparator.length ())) {
 			const auto r1x = fake.mThis->mSeparator[i - 1] + 1 ;
 			const auto r2x = fake.mThis->mSeparator[i] ;
@@ -652,11 +712,11 @@ struct FileProcImplLayout {
 	Pin<List<UniqueRef<String<STR>>>> mLockDirectory ;
 } ;
 
-class FileProcImplHolder implement Fat<FileProcHolder ,FileProcLayout> {
+class FileProcImplHolder final implement Fat<FileProcHolder ,FileProcLayout> {
 public:
 	void initialize () override {
 		fake.mThis = AutoRef<FileProcImplLayout>::make () ;
-		fake.mThis->mMutex = MakeMutex () ;
+		fake.mThis->mMutex = NULL ;
 	}
 
 	RefBuffer<BYTE> load_file (CREF<String<STR>> file) const override {
@@ -668,7 +728,7 @@ public:
 			CloseHandle (me) ;
 		}) ;
 		const auto r2x = file_size (r1x) ;
-		assume (r2x <= VAL32_MAX) ;
+		assume (r2x < VAL32_MAX) ;
 		const auto r3x = LENGTH (r2x) ;
 		RefBuffer<BYTE> ret = RefBuffer<BYTE> (r3x) ;
 		auto rax = r3x ;
@@ -692,8 +752,8 @@ public:
 		return r1x ;
 	}
 
-	void save_file (CREF<String<STR>> file ,CREF<RefBuffer<BYTE>> data) const override {
-		assert (data.size () <= VAL32_MAX) ;
+	void save_file (CREF<String<STR>> file ,CREF<RefBuffer<BYTE>> item) const override {
+		assert (item.size () < VAL32_MAX) ;
 		const auto r1x = UniqueRef<HANDLE> ([&] (VREF<HANDLE> me) {
 			me = CreateFile (file ,GENERIC_WRITE ,0 ,NULL ,CREATE_ALWAYS ,FILE_ATTRIBUTE_NORMAL ,NULL) ;
 			replace (me ,INVALID_HANDLE_VALUE ,NULL) ;
@@ -701,20 +761,20 @@ public:
 		} ,[&] (VREF<HANDLE> me) {
 			CloseHandle (me) ;
 		}) ;
-		const auto r2x = data.size () ;
+		const auto r2x = item.size () ;
 		auto rax = r2x ;
 		while (TRUE) {
 			if (rax == 0)
 				break ;
 			auto rbx = csc_enum_t (rax) ;
-			const auto r3x = WriteFile (r1x ,(&data[r2x - rax]) ,rbx ,(&rbx) ,NULL) ;
+			const auto r3x = WriteFile (r1x ,(&item[r2x - rax]) ,rbx ,(&rbx) ,NULL) ;
 			assume (r3x) ;
 			rax -= LENGTH (rbx) ;
 		}
 		assume (rax == 0) ;
 	}
 
-	RefBuffer<BYTE> load_asset (CREF<String<STR>> file) const override {
+	Ref<RefBuffer<BYTE>> load_asset (CREF<String<STR>> file) const override {
 		const auto r1x = String<STR> (slice (".bin")) ;
 		const auto r2x = FindResource (NULL ,file ,r1x) ;
 		assume (r2x != NULL) ;
@@ -723,7 +783,7 @@ public:
 		const auto r4x = LoadResource (NULL ,r2x) ;
 		assume (r4x != NULL) ;
 		const auto r5x = FLAG (LockResource (r4x)) ;
-		return RefBuffer<BYTE>::reference (r5x ,r3x) ;
+		return Ref<RefBuffer<BYTE>>::make (RefBuffer<BYTE>::reference (r5x ,r3x)) ;
 	}
 
 	void copy_file (CREF<String<STR>> dst ,CREF<String<STR>> src) const override {
@@ -849,7 +909,7 @@ struct StreamFileImplLayout {
 	VAL64 mWrite ;
 } ;
 
-class StreamFileImplHolder implement Fat<StreamFileHolder ,StreamFileLayout> {
+class StreamFileImplHolder final implement Fat<StreamFileHolder ,StreamFileLayout> {
 public:
 	void initialize (RREF<String<STR>> file) override {
 		fake.mThis = AutoRef<StreamFileImplLayout>::make () ;
@@ -924,6 +984,7 @@ public:
 	}
 
 	LENGTH file_size () const override {
+		assume (fake.mThis->mFileSize < VAL32_MAX) ;
 		return LENGTH (fake.mThis->mFileSize) ;
 	}
 
@@ -937,7 +998,7 @@ public:
 
 	void read (VREF<RefBuffer<BYTE>> item) override {
 		assert (fake.mThis->mReadPipe.exist ()) ;
-		assert (item.size () <= VAL32_MAX) ;
+		assert (item.size () < VAL32_MAX) ;
 		const auto r1x = item.size () ;
 		auto rax = r1x ;
 		while (TRUE) {
@@ -953,7 +1014,7 @@ public:
 
 	void write (CREF<RefBuffer<BYTE>> item) override {
 		assert (fake.mThis->mWritePipe.exist ()) ;
-		assert (item.size () <= VAL32_MAX) ;
+		assert (item.size () < VAL32_MAX) ;
 		const auto r1x = item.size () ;
 		auto rax = r1x ;
 		while (TRUE) {
@@ -990,7 +1051,7 @@ struct BufferFileHeader {
 struct BufferFileChunk {
 	VAL64 mIndex ;
 	VAL64 mCacheTime ;
-	UniqueRef<Tuple<FLAG ,LENGTH>> mBlock ;
+	UniqueRef<Tuple<FLAG ,FLAG>> mBlock ;
 } ;
 
 struct BufferFileImplLayout {
@@ -1007,7 +1068,7 @@ struct BufferFileImplLayout {
 	VAL64 mCacheTimer ;
 } ;
 
-class BufferFileImplHolder implement Fat<BufferFileHolder ,BufferFileLayout> {
+class BufferFileImplHolder final implement Fat<BufferFileHolder ,BufferFileLayout> {
 private:
 	using BLOCK_STEP_SIZE = ENUM<1024> ;
 	using CHUNK_STEP_SIZE = ENUM<4194304> ;
@@ -1105,7 +1166,7 @@ public:
 			CloseHandle (me) ;
 		}) ;
 		fake.mThis->mFileMapFlag = csc_enum_t (FILE_MAP_READ | FILE_MAP_WRITE) ;
-		write_header () ;
+		read_header () ;
 	}
 
 	void read_header () {
@@ -1176,9 +1237,10 @@ public:
 	}
 
 	Ref<RefBuffer<BYTE>> borrow_header () {
-		INDEX ix = load (0 ,HEADER_SIZE::expr) ;
-		auto rax = RefBuffer<BYTE>::reference (fake.mThis->mCacheList[ix].mBlock->m1st ,HEADER_SIZE::expr) ;
-		return Ref<RefBuffer<BYTE>>::make (move (rax)) ;
+		INDEX ix = mmap_cache (0 ,HEADER_SIZE::expr) ;
+		const auto r1x = fake.mThis->mCacheList[ix].mBlock->m1st ;
+		const auto r2x = HEADER_SIZE::expr ;
+		return Ref<RefBuffer<BYTE>>::make (RefBuffer<BYTE>::reference (r1x ,r2x)) ;
 	}
 
 	VAL64 file_endian () const {
@@ -1194,6 +1256,7 @@ public:
 	}
 
 	LENGTH file_size () const override {
+		assume (fake.mThis->mFileSize < VAL32_MAX) ;
 		return LENGTH (fake.mThis->mFileSize) ;
 	}
 
@@ -1212,7 +1275,7 @@ public:
 		const auto r1x = index / fake.mThis->mHeader->mBlockSize ;
 		const auto r2x = index % fake.mThis->mHeader->mBlockSize * fake.mThis->mHeader->mBlockStep ;
 		const auto r3x = HEADER_SIZE::expr + r1x * fake.mThis->mHeader->mChunkStep ;
-		INDEX ix = load (r3x ,LENGTH (fake.mThis->mHeader->mChunkStep)) ;
+		INDEX ix = mmap_cache (r3x ,LENGTH (fake.mThis->mHeader->mChunkStep)) ;
 		const auto r4x = fake.mThis->mCacheList[ix].mBlock->m1st + LENGTH (r2x) ;
 		inline_memcpy (Pointer::from (item.self) ,Pointer::make (r4x) ,LENGTH (fake.mThis->mHeader->mBlockStep)) ;
 	}
@@ -1224,12 +1287,12 @@ public:
 		const auto r1x = index / fake.mThis->mHeader->mBlockSize ;
 		const auto r2x = index % fake.mThis->mHeader->mBlockSize * fake.mThis->mHeader->mBlockStep ;
 		const auto r3x = HEADER_SIZE::expr + r1x * fake.mThis->mHeader->mChunkStep ;
-		INDEX ix = load (r3x ,LENGTH (fake.mThis->mHeader->mChunkStep)) ;
+		INDEX ix = mmap_cache (r3x ,LENGTH (fake.mThis->mHeader->mChunkStep)) ;
 		const auto r4x = fake.mThis->mCacheList[ix].mBlock->m1st + LENGTH (r2x) ;
 		inline_memcpy (Pointer::make (r4x) ,Pointer::from (item.self) ,LENGTH (fake.mThis->mHeader->mBlockStep)) ;
 	}
 
-	INDEX load (CREF<VAL64> index ,CREF<LENGTH> size_) {
+	INDEX mmap_cache (CREF<VAL64> index ,CREF<LENGTH> size_) {
 		INDEX ret = fake.mThis->mCacheSet.map (index) ;
 		if ifdo (TRUE) {
 			if (ret != NONE)
@@ -1238,21 +1301,30 @@ public:
 			ret = fake.mThis->mCacheList.insert () ;
 			fake.mThis->mCacheSet.add (index ,ret) ;
 			fake.mThis->mCacheList[ret].mIndex = index ;
-			fake.mThis->mCacheList[ret].mBlock = UniqueRef<Tuple<FLAG ,LENGTH>> ([&] (VREF<Tuple<FLAG ,LENGTH>> me) {
+			fake.mThis->mCacheList[ret].mBlock = UniqueRef<Tuple<FLAG ,FLAG>> ([&] (VREF<Tuple<FLAG ,FLAG>> me) {
 				const auto r1x = csc_enum_t (ByteProc::bit_high (QUAD (index))) ;
 				const auto r2x = csc_enum_t (ByteProc::bit_low (QUAD (index))) ;
 				const auto r3x = MapViewOfFile (fake.mThis->mMapping ,fake.mThis->mFileMapFlag ,r1x ,r2x ,size_) ;
 				assume (r3x != NULL) ;
 				me.m1st = FLAG (r3x) ;
-				me.m2nd = size_ ;
-			} ,[&] (VREF<Tuple<FLAG ,LENGTH>> me) {
+				me.m2nd = me.m1st + size_ ;
+			} ,[&] (VREF<Tuple<FLAG ,FLAG>> me) {
 				const auto r4x = csc_pointer_t (me.m1st) ;
-				FlushViewOfFile (r4x ,me.m2nd) ;
+				const auto r5x = me.m2nd - me.m1st ;
+				FlushViewOfFile (r4x ,r5x) ;
 				UnmapViewOfFile (r4x) ;
 			}) ;
 		}
 		fake.mThis->mCacheList[ret].mCacheTime = fake.mThis->mCacheTimer ;
 		fake.mThis->mCacheTimer++ ;
+		if ifdo (TRUE) {
+			if (fake.mThis->mCacheTimer < VAL32_MAX)
+				discard ;
+			for (auto &&i : fake.mThis->mCacheList.range ())
+				fake.mThis->mCacheList[i].mCacheTime = 0 ;
+			fake.mThis->mCacheList[ret].mCacheTime = 1 ;
+			fake.mThis->mCacheTimer = 2 ;
+		}
 		return move (ret) ;
 	}
 
@@ -1292,24 +1364,21 @@ struct ConsoleImplLayout {
 	Mutex mMutex ;
 	BitSet mOption ;
 	UniqueRef<HANDLE> mConsole ;
-	String<STR> mWriterBuffer ;
-	TextWriter mWriter ;
+	String<STR> mLogBuffer ;
+	TextWriter mLogWriter ;
 	String<STR> mLogFile ;
 	String<STR> mOldLogFile ;
-	StreamFile mLogFileWriter ;
+	StreamFile mLogStreamFile ;
 } ;
 
-class ConsoleImplHolder implement Fat<ConsoleHolder ,ConsoleLayout> {
-private:
-	using CONSOLE_BUFFER_SIZE = ENUM<4194304> ;
-
+class ConsoleImplHolder final implement Fat<ConsoleHolder ,ConsoleLayout> {
 public:
 	void initialize () override {
 		fake.mThis = SharedRef<ConsoleImplLayout>::make () ;
-		fake.mThis->mMutex = RecursiveMutex () ;
+		fake.mThis->mMutex = NULL ;
 		fake.mThis->mOption = BitSet (ConsoleOption::ETC) ;
-		fake.mThis->mWriterBuffer = String<STR> (CONSOLE_BUFFER_SIZE::expr) ;
-		fake.mThis->mWriter = TextWriter (fake.mThis->mWriterBuffer.borrow ()) ;
+		fake.mThis->mLogBuffer = String<STR> (STREAMFILE_BUF_SIZE::expr) ;
+		fake.mThis->mLogWriter = TextWriter (fake.mThis->mLogBuffer.borrow ()) ;
 	}
 
 	void set_option (CREF<Just<ConsoleOption>> option) const override {
@@ -1326,34 +1395,35 @@ public:
 	}
 
 	void log (CREF<String<STR>> tag ,CREF<Format> msg) const {
-		Scope<Mutex> anonymous (fake.mThis->mMutex) ;
-		fake.mThis->mWriter << CLS ;
-		fake.mThis->mWriter << slice ("[") ;
+		fake.mThis->mLogWriter << CLS ;
+		fake.mThis->mLogWriter << slice ("[") ;
 		const auto r1x = CurrentTime () ;
 		const auto r2x = r1x.calendar () ;
-		fake.mThis->mWriter << AlignedText (r2x.mHour ,2) ;
-		fake.mThis->mWriter << slice (":") ;
-		fake.mThis->mWriter << AlignedText (r2x.mMinute ,2) ;
-		fake.mThis->mWriter << slice (":") ;
-		fake.mThis->mWriter << AlignedText (r2x.mSecond ,2) ;
-		fake.mThis->mWriter << slice ("][") ;
-		fake.mThis->mWriter << tag ;
-		fake.mThis->mWriter << slice ("] : ") ;
-		fake.mThis->mWriter << msg ;
-		fake.mThis->mWriter << GAP ;
-		fake.mThis->mWriter << EOS ;
+		fake.mThis->mLogWriter << AlignedText (r2x.mHour ,2) ;
+		fake.mThis->mLogWriter << slice (":") ;
+		fake.mThis->mLogWriter << AlignedText (r2x.mMinute ,2) ;
+		fake.mThis->mLogWriter << slice (":") ;
+		fake.mThis->mLogWriter << AlignedText (r2x.mSecond ,2) ;
+		fake.mThis->mLogWriter << slice ("][") ;
+		fake.mThis->mLogWriter << tag ;
+		fake.mThis->mLogWriter << slice ("] : ") ;
+		fake.mThis->mLogWriter << msg ;
+		fake.mThis->mLogWriter << GAP ;
+		fake.mThis->mLogWriter << EOS ;
 	}
 
 	void print (CREF<Format> msg) const override {
 		Scope<Mutex> anonymous (fake.mThis->mMutex) ;
 		if (fake.mThis->mOption[ConsoleOption::NoPrint])
 			return ;
-		log (slice ("Print") ,msg) ;
+		fake.mThis->mLogWriter << CLS ;
+		fake.mThis->mLogWriter << msg ;
+		fake.mThis->mLogWriter << EOS ;
 		if ifdo (TRUE) {
 			const auto r1x = csc_uint16_t (FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE) ;
 			SetConsoleTextAttribute (fake.mThis->mConsole ,r1x) ;
-			auto rax = csc_enum_t (fake.mThis->mWriter.length () - 1) ;
-			WriteConsole (fake.mThis->mConsole ,fake.mThis->mWriterBuffer ,rax ,(&rax) ,NULL) ;
+			auto rax = csc_enum_t (fake.mThis->mLogWriter.length () - 1) ;
+			WriteConsole (fake.mThis->mConsole ,fake.mThis->mLogBuffer ,rax ,(&rax) ,NULL) ;
 		}
 	}
 
@@ -1366,8 +1436,8 @@ public:
 		if ifdo (TRUE) {
 			const auto r1x = csc_uint16_t (FOREGROUND_BLUE | FOREGROUND_INTENSITY) ;
 			SetConsoleTextAttribute (fake.mThis->mConsole ,r1x) ;
-			auto rax = csc_enum_t (fake.mThis->mWriter.length () - 1) ;
-			WriteConsole (fake.mThis->mConsole ,fake.mThis->mWriterBuffer ,rax ,(&rax) ,NULL) ;
+			auto rax = csc_enum_t (fake.mThis->mLogWriter.length () - 1) ;
+			WriteConsole (fake.mThis->mConsole ,fake.mThis->mLogBuffer ,rax ,(&rax) ,NULL) ;
 		}
 	}
 
@@ -1380,8 +1450,8 @@ public:
 		if ifdo (TRUE) {
 			const auto r1x = csc_uint16_t (FOREGROUND_RED | FOREGROUND_INTENSITY) ;
 			SetConsoleTextAttribute (fake.mThis->mConsole ,r1x) ;
-			auto rax = csc_enum_t (fake.mThis->mWriter.length () - 1) ;
-			WriteConsole (fake.mThis->mConsole ,fake.mThis->mWriterBuffer ,rax ,(&rax) ,NULL) ;
+			auto rax = csc_enum_t (fake.mThis->mLogWriter.length () - 1) ;
+			WriteConsole (fake.mThis->mConsole ,fake.mThis->mLogBuffer ,rax ,(&rax) ,NULL) ;
 		}
 	}
 
@@ -1394,8 +1464,8 @@ public:
 		if ifdo (TRUE) {
 			const auto r1x = csc_uint16_t (FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_INTENSITY) ;
 			SetConsoleTextAttribute (fake.mThis->mConsole ,r1x) ;
-			auto rax = csc_enum_t (fake.mThis->mWriter.length () - 1) ;
-			WriteConsole (fake.mThis->mConsole ,fake.mThis->mWriterBuffer ,rax ,(&rax) ,NULL) ;
+			auto rax = csc_enum_t (fake.mThis->mLogWriter.length () - 1) ;
+			WriteConsole (fake.mThis->mConsole ,fake.mThis->mLogBuffer ,rax ,(&rax) ,NULL) ;
 		}
 	}
 
@@ -1408,8 +1478,8 @@ public:
 		if ifdo (TRUE) {
 			const auto r1x = csc_uint16_t (FOREGROUND_GREEN | FOREGROUND_INTENSITY) ;
 			SetConsoleTextAttribute (fake.mThis->mConsole ,r1x) ;
-			auto rax = csc_enum_t (fake.mThis->mWriter.length () - 1) ;
-			WriteConsole (fake.mThis->mConsole ,fake.mThis->mWriterBuffer ,rax ,(&rax) ,NULL) ;
+			auto rax = csc_enum_t (fake.mThis->mLogWriter.length () - 1) ;
+			WriteConsole (fake.mThis->mConsole ,fake.mThis->mLogBuffer ,rax ,(&rax) ,NULL) ;
 		}
 	}
 
@@ -1422,8 +1492,8 @@ public:
 		if ifdo (TRUE) {
 			const auto r1x = csc_uint16_t (FOREGROUND_GREEN | FOREGROUND_BLUE | FOREGROUND_INTENSITY) ;
 			SetConsoleTextAttribute (fake.mThis->mConsole ,r1x) ;
-			auto rax = csc_enum_t (fake.mThis->mWriter.length () - 1) ;
-			WriteConsole (fake.mThis->mConsole ,fake.mThis->mWriterBuffer ,rax ,(&rax) ,NULL) ;
+			auto rax = csc_enum_t (fake.mThis->mLogWriter.length () - 1) ;
+			WriteConsole (fake.mThis->mConsole ,fake.mThis->mLogBuffer ,rax ,(&rax) ,NULL) ;
 		}
 	}
 
@@ -1436,8 +1506,8 @@ public:
 		if ifdo (TRUE) {
 			const auto r1x = csc_uint16_t (FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE | FOREGROUND_INTENSITY) ;
 			SetConsoleTextAttribute (fake.mThis->mConsole ,r1x) ;
-			auto rax = csc_enum_t (fake.mThis->mWriter.length () - 1) ;
-			WriteConsole (fake.mThis->mConsole ,fake.mThis->mWriterBuffer ,rax ,(&rax) ,NULL) ;
+			auto rax = csc_enum_t (fake.mThis->mLogWriter.length () - 1) ;
+			WriteConsole (fake.mThis->mConsole ,fake.mThis->mLogBuffer ,rax ,(&rax) ,NULL) ;
 		}
 	}
 
@@ -1447,21 +1517,20 @@ public:
 		fake.mThis->mOldLogFile = Path (dire).child (slice ("console.old.log")) ;
 		FileProc::erase_file (fake.mThis->mOldLogFile) ;
 		FileProc::move_file (fake.mThis->mOldLogFile ,fake.mThis->mLogFile) ;
-		fake.mThis->mLogFileWriter = StreamFile (fake.mThis->mLogFile) ;
-		fake.mThis->mLogFileWriter.open_w (0) ;
-		fake.mThis->mWriter << CLS ;
-		fake.mThis->mWriter << BOM ;
-		fake.mThis->mWriter << EOS ;
+		fake.mThis->mLogStreamFile = StreamFile (fake.mThis->mLogFile) ;
+		fake.mThis->mLogStreamFile.open_w (0) ;
+		fake.mThis->mLogWriter << CLS ;
+		fake.mThis->mLogWriter << BOM ;
+		fake.mThis->mLogWriter << EOS ;
 		log_file () ;
 	}
 
 	void log_file () const {
 		if (fake.mThis->mLogFile.length () == 0)
 			return ;
-		const auto r1x = FLAG (fake.mThis->mWriterBuffer.self) ;
-		const auto r2x = (fake.mThis->mWriter.length () - 1) * SIZE_OF<STR>::expr ;
-		auto rax = RefBuffer<BYTE>::reference (r1x ,r2x) ;
-		fake.mThis->mLogFileWriter.write (rax) ;
+		const auto r1x = FLAG (fake.mThis->mLogBuffer.self) ;
+		const auto r2x = (fake.mThis->mLogWriter.length () - 1) * SIZE_OF<STR>::expr ;
+		fake.mThis->mLogStreamFile.write (RefBuffer<BYTE>::reference (r1x ,r2x)) ;
 	}
 
 	void start () const override {

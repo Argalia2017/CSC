@@ -13,54 +13,165 @@
 #include "csc_stream.hpp"
 
 namespace CSC {
-struct CommaImplLayout ;
+struct StringProcImplLayout ;
 
-struct CommaLayout implement ThisLayout<SharedRef<CommaImplLayout>> {} ;
+struct StringProcLayout implement ThisLayout<AutoRef<StringProcImplLayout>> {} ;
 
-struct CommaHolder implement Interface {
-	imports VFat<CommaHolder> create (VREF<CommaLayout> that) ;
-	imports CFat<CommaHolder> create (CREF<CommaLayout> that) ;
+struct StringProcHolder implement Interface {
+	imports CREF<StringProcLayout> instance () ;
+	imports VFat<StringProcHolder> hold (VREF<StringProcLayout> that) ;
+	imports CFat<StringProcHolder> hold (CREF<StringProcLayout> that) ;
 
-	virtual void initialize (CREF<Slice> indent ,CREF<Slice> comma ,CREF<Slice> endline) = 0 ;
-	virtual void friend_write (VREF<StreamWriter> writer) const = 0 ;
-	virtual void increase () const = 0 ;
-	virtual void decrease () const = 0 ;
-	virtual void tight () const = 0 ;
+	virtual void initialize () = 0 ;
+	virtual String<STRA> stra_from_strw (CREF<String<STRW>> a) const = 0 ;
+	virtual String<STRA> stra_from_strs (CREF<String<STR>> a) const = 0 ;
+	virtual String<STRW> strw_from_stra (CREF<String<STRA>> a) const = 0 ;
+	virtual String<STRW> strw_from_strs (CREF<String<STR>> a) const = 0 ;
+	virtual String<STR> strs_from_stra (CREF<String<STRA>> a) const = 0 ;
+	virtual String<STR> strs_from_strw (CREF<String<STRW>> a) const = 0 ;
+	virtual String<STRU8> stru8_from_stru16 (CREF<String<STRU16>> a) const = 0 ;
+	virtual String<STRU8> stru8_from_stru32 (CREF<String<STRU32>> a) const = 0 ;
+	virtual String<STRU16> stru16_from_stru8 (CREF<String<STRU8>> a) const = 0 ;
+	virtual String<STRU16> stru16_from_stru32 (CREF<String<STRU32>> a) const = 0 ;
+	virtual String<STRU32> stru32_from_stru8 (CREF<String<STRU8>> a) const = 0 ;
+	virtual String<STRU32> stru32_from_stru16 (CREF<String<STRU16>> a) const = 0 ;
+	virtual String<STRUA> strua_from_stra (RREF<String<STRA>> a) const = 0 ;
+	virtual String<STRA> stra_from_strua (RREF<String<STRUA>> a) const = 0 ;
+	virtual String<STRUW> struw_from_strw (RREF<String<STRW>> a) const = 0 ;
+	virtual String<STRW> strw_from_struw (RREF<String<STRUW>> a) const = 0 ;
+	virtual String<STRA> stra_from_stru (CREF<String<STRU8>> a) const = 0 ;
+	virtual String<STRA> stra_from_stru (CREF<String<STRU16>> a) const = 0 ;
+	virtual String<STRA> stra_from_stru (CREF<String<STRU32>> a) const = 0 ;
+	virtual String<STRW> strw_from_stru (CREF<String<STRU8>> a) const = 0 ;
+	virtual String<STRW> strw_from_stru (CREF<String<STRU16>> a) const = 0 ;
+	virtual String<STRW> strw_from_stru (CREF<String<STRU32>> a) const = 0 ;
+	virtual String<STR> strs_from_stru (CREF<String<STRU8>> a) const = 0 ;
+	virtual String<STR> strs_from_stru (CREF<String<STRU16>> a) const = 0 ;
+	virtual String<STR> strs_from_stru (CREF<String<STRU32>> a) const = 0 ;
+	virtual String<STRU8> stru8_from_strw (CREF<String<STRW>> a) const = 0 ;
+	virtual String<STRU16> stru16_from_strw (CREF<String<STRW>> a) const = 0 ;
+	virtual String<STRU32> stru32_from_strw (CREF<String<STRW>> a) const = 0 ;
 } ;
 
-class Comma implement CommaLayout {
+class StringProc implement StringProcLayout {
 protected:
-	using CommaLayout::mThis ;
+	using StringProcLayout::mThis ;
 
 public:
-	implicit Comma () = default ;
-
-	explicit Comma (CREF<Slice> indent ,CREF<Slice> comma ,CREF<Slice> endline) {
-		CommaHolder::create (thiz)->initialize (indent ,comma ,endline) ;
+	static CREF<StringProc> instance () {
+		return keep[TYPE<StringProc>::expr] (StringProcHolder::instance ()) ;
 	}
 
-	void friend_write (VREF<StreamWriter> writer) const {
-		return CommaHolder::create (thiz)->friend_write (writer) ;
+	static String<STRA> stra_from_strw (CREF<String<STRW>> a) {
+		return StringProcHolder::hold (instance ())->stra_from_strw (a) ;
 	}
 
-	void increase () const {
-		return CommaHolder::create (thiz)->increase () ;
+	static String<STRA> stra_from_strs (CREF<String<STR>> a) {
+		return StringProcHolder::hold (instance ())->stra_from_strs (a) ;
 	}
 
-	forceinline void operator++ (int) const {
-		return increase () ;
+	static String<STRW> strw_from_stra (CREF<String<STRA>> a) {
+		return StringProcHolder::hold (instance ())->strw_from_stra (a) ;
 	}
 
-	void decrease () const {
-		return CommaHolder::create (thiz)->decrease () ;
+	static String<STRW> strw_from_strs (CREF<String<STR>> a) {
+		return StringProcHolder::hold (instance ())->strw_from_strs (a) ;
 	}
 
-	forceinline void operator-- (int) const {
-		return decrease () ;
+	static String<STR> strs_from_stra (CREF<String<STRA>> a) {
+		return StringProcHolder::hold (instance ())->strs_from_stra (a) ;
 	}
 
-	void tight () const {
-		return CommaHolder::create (thiz)->tight () ;
+	static String<STR> strs_from_strw (CREF<String<STRW>> a) {
+		return StringProcHolder::hold (instance ())->strs_from_strw (a) ;
+	}
+
+	static String<STRU8> stru8_from_stru16 (CREF<String<STRU16>> a) {
+		return StringProcHolder::hold (instance ())->stru8_from_stru16 (a) ;
+	}
+
+	static String<STRU8> stru8_from_stru32 (CREF<String<STRU32>> a) {
+		return StringProcHolder::hold (instance ())->stru8_from_stru32 (a) ;
+	}
+
+	static String<STRU16> stru16_from_stru8 (CREF<String<STRU8>> a) {
+		return StringProcHolder::hold (instance ())->stru16_from_stru8 (a) ;
+	}
+
+	static String<STRU16> stru16_from_stru32 (CREF<String<STRU32>> a) {
+		return StringProcHolder::hold (instance ())->stru16_from_stru32 (a) ;
+	}
+
+	static String<STRU32> stru32_from_stru8 (CREF<String<STRU8>> a) {
+		return StringProcHolder::hold (instance ())->stru32_from_stru8 (a) ;
+	}
+
+	static String<STRU32> stru32_from_stru16 (CREF<String<STRU16>> a) {
+		return StringProcHolder::hold (instance ())->stru32_from_stru16 (a) ;
+	}
+
+	static String<STRUA> strua_from_stra (RREF<String<STRA>> a) {
+		return StringProcHolder::hold (instance ())->strua_from_stra (move (a)) ;
+	}
+
+	static String<STRA> stra_from_strua (RREF<String<STRUA>> a) {
+		return StringProcHolder::hold (instance ())->stra_from_strua (move (a)) ;
+	}
+
+	static String<STRUW> struw_from_strw (RREF<String<STRW>> a) {
+		return StringProcHolder::hold (instance ())->struw_from_strw (move (a)) ;
+	}
+
+	static String<STRW> strw_from_struw (RREF<String<STRUW>> a) {
+		return StringProcHolder::hold (instance ())->strw_from_struw (move (a)) ;
+	}
+
+	static String<STRA> stra_from_stru (CREF<String<STRU8>> a) {
+		return StringProcHolder::hold (instance ())->stra_from_stru (a) ;
+	}
+
+	static String<STRA> stra_from_stru (CREF<String<STRU16>> a) {
+		return StringProcHolder::hold (instance ())->stra_from_stru (a) ;
+	}
+
+	static String<STRA> stra_from_stru (CREF<String<STRU32>> a) {
+		return StringProcHolder::hold (instance ())->stra_from_stru (a) ;
+	}
+
+	static String<STRW> strw_from_stru (CREF<String<STRU8>> a) {
+		return StringProcHolder::hold (instance ())->strw_from_stru (a) ;
+	}
+
+	static String<STRW> strw_from_stru (CREF<String<STRU16>> a) {
+		return StringProcHolder::hold (instance ())->strw_from_stru (a) ;
+	}
+
+	static String<STRW> strw_from_stru (CREF<String<STRU32>> a) {
+		return StringProcHolder::hold (instance ())->strw_from_stru (a) ;
+	}
+
+	static String<STR> strs_from_stru (CREF<String<STRU8>> a) {
+		return StringProcHolder::hold (instance ())->strs_from_stru (a) ;
+	}
+
+	static String<STR> strs_from_stru (CREF<String<STRU16>> a) {
+		return StringProcHolder::hold (instance ())->strs_from_stru (a) ;
+	}
+
+	static String<STR> strs_from_stru (CREF<String<STRU32>> a) {
+		return StringProcHolder::hold (instance ())->strs_from_stru (a) ;
+	}
+
+	static String<STRU8> stru8_from_strw (CREF<String<STRW>> a) {
+		return StringProcHolder::hold (instance ())->stru8_from_strw (a) ;
+	}
+
+	static String<STRU16> stru16_from_strw (CREF<String<STRW>> a) {
+		return StringProcHolder::hold (instance ())->stru16_from_strw (a) ;
+	}
+
+	static String<STRU32> stru32_from_strw (CREF<String<STRW>> a) {
+		return StringProcHolder::hold (instance ())->stru32_from_strw (a) ;
 	}
 } ;
 
@@ -72,8 +183,8 @@ struct XmlParserLayout {
 } ;
 
 struct XmlParserHolder implement Interface {
-	imports VFat<XmlParserHolder> create (VREF<XmlParserLayout> that) ;
-	imports CFat<XmlParserHolder> create (CREF<XmlParserLayout> that) ;
+	imports VFat<XmlParserHolder> hold (VREF<XmlParserLayout> that) ;
+	imports CFat<XmlParserHolder> hold (CREF<XmlParserLayout> that) ;
 
 	virtual void initialize (CREF<RefBuffer<BYTE>> stream) = 0 ;
 	virtual void initialize (CREF<XmlParserLayout> that) = 0 ;
@@ -120,11 +231,11 @@ public:
 	implicit XmlParser () = default ;
 
 	explicit XmlParser (CREF<RefBuffer<BYTE>> stream) {
-		XmlParserHolder::create (thiz)->initialize (stream) ;
+		XmlParserHolder::hold (thiz)->initialize (stream) ;
 	}
 
 	implicit XmlParser (CREF<XmlParser> that) {
-		XmlParserHolder::create (thiz)->initialize (that) ;
+		XmlParserHolder::hold (thiz)->initialize (that) ;
 	}
 
 	forceinline VREF<XmlParser> operator= (CREF<XmlParser> that) {
@@ -136,56 +247,56 @@ public:
 	forceinline VREF<XmlParser> operator= (RREF<XmlParser> that) = default ;
 
 	BOOL exist () const {
-		return XmlParserHolder::create (thiz)->exist () ;
+		return XmlParserHolder::hold (thiz)->exist () ;
 	}
 
 	XmlParser root () const {
-		XmlParserLayout ret = XmlParserHolder::create (thiz)->root () ;
+		XmlParserLayout ret = XmlParserHolder::hold (thiz)->root () ;
 		return move (keep[TYPE<XmlParser>::expr] (ret)) ;
 	}
 
 	XmlParser parent () const {
-		XmlParserLayout ret = XmlParserHolder::create (thiz)->parent () ;
+		XmlParserLayout ret = XmlParserHolder::hold (thiz)->parent () ;
 		return move (keep[TYPE<XmlParser>::expr] (ret)) ;
 	}
 
 	XmlParser brother () const {
-		XmlParserLayout ret = XmlParserHolder::create (thiz)->brother () ;
+		XmlParserLayout ret = XmlParserHolder::hold (thiz)->brother () ;
 		return move (keep[TYPE<XmlParser>::expr] (ret)) ;
 	}
 
 	XmlParser child () const {
-		XmlParserLayout ret = XmlParserHolder::create (thiz)->child () ;
+		XmlParserLayout ret = XmlParserHolder::hold (thiz)->child () ;
 		return move (keep[TYPE<XmlParser>::expr] (ret)) ;
 	}
 
 	XmlParser child (CREF<INDEX> index) const {
-		XmlParserLayout ret = XmlParserHolder::create (thiz)->child (index) ;
+		XmlParserLayout ret = XmlParserHolder::hold (thiz)->child (index) ;
 		return move (keep[TYPE<XmlParser>::expr] (ret)) ;
 	}
 
 	XmlParser child (CREF<Slice> name) const {
-		XmlParserLayout ret = XmlParserHolder::create (thiz)->child (name) ;
+		XmlParserLayout ret = XmlParserHolder::hold (thiz)->child (name) ;
 		return move (keep[TYPE<XmlParser>::expr] (ret)) ;
 	}
 
 	XmlParser child (CREF<String<STRU8>> name) const {
-		XmlParserLayout ret = XmlParserHolder::create (thiz)->child (name) ;
+		XmlParserLayout ret = XmlParserHolder::hold (thiz)->child (name) ;
 		return move (keep[TYPE<XmlParser>::expr] (ret)) ;
 	}
 
 	Array<XmlParser> list () const {
-		ArrayLayout ret = XmlParserHolder::create (thiz)->list () ;
+		ArrayLayout ret = XmlParserHolder::hold (thiz)->list () ;
 		return move (keep[TYPE<Array<XmlParser>>::expr] (ret)) ;
 	}
 
 	Array<XmlParser> list (CREF<LENGTH> size_) const {
-		ArrayLayout ret = XmlParserHolder::create (thiz)->list (size_) ;
+		ArrayLayout ret = XmlParserHolder::hold (thiz)->list (size_) ;
 		return move (keep[TYPE<Array<XmlParser>>::expr] (ret)) ;
 	}
 
 	BOOL equal (CREF<XmlParser> that) const {
-		return XmlParserHolder::create (thiz)->equal (that) ;
+		return XmlParserHolder::hold (thiz)->equal (that) ;
 	}
 
 	forceinline BOOL operator== (CREF<XmlParser> that) const {
@@ -197,87 +308,87 @@ public:
 	}
 
 	CREF<String<STRU8>> name () const leftvalue {
-		return XmlParserHolder::create (thiz)->name () ;
+		return XmlParserHolder::hold (thiz)->name () ;
 	}
 
 	BOOL parse (CREF<BOOL> def) const {
-		return XmlParserHolder::create (thiz)->parse (def) ;
+		return XmlParserHolder::hold (thiz)->parse (def) ;
 	}
 
 	VAL32 parse (CREF<VAL32> def) const {
-		return XmlParserHolder::create (thiz)->parse (def) ;
+		return XmlParserHolder::hold (thiz)->parse (def) ;
 	}
 
 	VAL64 parse (CREF<VAL64> def) const {
-		return XmlParserHolder::create (thiz)->parse (def) ;
+		return XmlParserHolder::hold (thiz)->parse (def) ;
 	}
 
 	FLT32 parse (CREF<FLT32> def) const {
-		return XmlParserHolder::create (thiz)->parse (def) ;
+		return XmlParserHolder::hold (thiz)->parse (def) ;
 	}
 
 	FLT64 parse (CREF<FLT64> def) const {
-		return XmlParserHolder::create (thiz)->parse (def) ;
+		return XmlParserHolder::hold (thiz)->parse (def) ;
 	}
 
 	String<STRA> parse (CREF<String<STRA>> def) const {
-		return XmlParserHolder::create (thiz)->parse (def) ;
+		return XmlParserHolder::hold (thiz)->parse (def) ;
 	}
 
 	String<STRW> parse (CREF<String<STRW>> def) const {
-		return XmlParserHolder::create (thiz)->parse (def) ;
+		return XmlParserHolder::hold (thiz)->parse (def) ;
 	}
 
 	String<STRU8> parse (CREF<String<STRU8>> def) const {
-		return XmlParserHolder::create (thiz)->parse (def) ;
+		return XmlParserHolder::hold (thiz)->parse (def) ;
 	}
 
 	String<STRU16> parse (CREF<String<STRU16>> def) const {
-		return XmlParserHolder::create (thiz)->parse (def) ;
+		return XmlParserHolder::hold (thiz)->parse (def) ;
 	}
 
 	String<STRU32> parse (CREF<String<STRU32>> def) const {
-		return XmlParserHolder::create (thiz)->parse (def) ;
+		return XmlParserHolder::hold (thiz)->parse (def) ;
 	}
 
 	Array<BOOL> parse (CREF<BOOL> def ,CREF<LENGTH> size_) const {
-		return XmlParserHolder::create (thiz)->parse (def ,size_) ;
+		return XmlParserHolder::hold (thiz)->parse (def ,size_) ;
 	}
 
 	Array<VAL32> parse (CREF<VAL32> def ,CREF<LENGTH> size_) const {
-		return XmlParserHolder::create (thiz)->parse (def ,size_) ;
+		return XmlParserHolder::hold (thiz)->parse (def ,size_) ;
 	}
 
 	Array<VAL64> parse (CREF<VAL64> def ,CREF<LENGTH> size_) const {
-		return XmlParserHolder::create (thiz)->parse (def ,size_) ;
+		return XmlParserHolder::hold (thiz)->parse (def ,size_) ;
 	}
 
 	Array<FLT32> parse (CREF<FLT32> def ,CREF<LENGTH> size_) const {
-		return XmlParserHolder::create (thiz)->parse (def ,size_) ;
+		return XmlParserHolder::hold (thiz)->parse (def ,size_) ;
 	}
 
 	Array<FLT64> parse (CREF<FLT64> def ,CREF<LENGTH> size_) const {
-		return XmlParserHolder::create (thiz)->parse (def ,size_) ;
+		return XmlParserHolder::hold (thiz)->parse (def ,size_) ;
 	}
 
 	Array<String<STRA>> parse (CREF<String<STRA>> def ,CREF<LENGTH> size_) const {
-		return XmlParserHolder::create (thiz)->parse (def ,size_) ;
+		return XmlParserHolder::hold (thiz)->parse (def ,size_) ;
 	}
 
 	Array<String<STRW>> parse (CREF<String<STRW>> def ,CREF<LENGTH> size_) const {
-		return XmlParserHolder::create (thiz)->parse (def ,size_) ;
+		return XmlParserHolder::hold (thiz)->parse (def ,size_) ;
 	}
 
 	Array<String<STRU8>> parse (CREF<String<STRU8>> def ,CREF<LENGTH> size_) const {
-		return XmlParserHolder::create (thiz)->parse (def ,size_) ;
+		return XmlParserHolder::hold (thiz)->parse (def ,size_) ;
 	}
 
 	Array<String<STRU16>> parse (CREF<String<STRU16>> def ,CREF<LENGTH> size_) const {
-		return XmlParserHolder::create (thiz)->parse (def ,size_) ;
+		return XmlParserHolder::hold (thiz)->parse (def ,size_) ;
 	}
 
 	Array<String<STRU32>> parse (CREF<String<STRU32>> def ,CREF<LENGTH> size_) const {
-		return XmlParserHolder::create (thiz)->parse (def ,size_) ;
+		return XmlParserHolder::hold (thiz)->parse (def ,size_) ;
 	}
 } ;
 
@@ -289,8 +400,8 @@ struct JsonParserLayout {
 } ;
 
 struct JsonParserHolder implement Interface {
-	imports VFat<JsonParserHolder> create (VREF<JsonParserLayout> that) ;
-	imports CFat<JsonParserHolder> create (CREF<JsonParserLayout> that) ;
+	imports VFat<JsonParserHolder> hold (VREF<JsonParserLayout> that) ;
+	imports CFat<JsonParserHolder> hold (CREF<JsonParserLayout> that) ;
 
 	virtual void initialize (CREF<RefBuffer<BYTE>> stream) = 0 ;
 	virtual void initialize (CREF<JsonParserLayout> that) = 0 ;
@@ -337,11 +448,11 @@ public:
 	implicit JsonParser () = default ;
 
 	explicit JsonParser (CREF<RefBuffer<BYTE>> stream) {
-		JsonParserHolder::create (thiz)->initialize (stream) ;
+		JsonParserHolder::hold (thiz)->initialize (stream) ;
 	}
 
 	implicit JsonParser (CREF<JsonParser> that) {
-		JsonParserHolder::create (thiz)->initialize (that) ;
+		JsonParserHolder::hold (thiz)->initialize (that) ;
 	}
 
 	forceinline VREF<JsonParser> operator= (CREF<JsonParser> that) {
@@ -353,56 +464,56 @@ public:
 	forceinline VREF<JsonParser> operator= (RREF<JsonParser> that) = default ;
 
 	BOOL exist () const {
-		return JsonParserHolder::create (thiz)->exist () ;
+		return JsonParserHolder::hold (thiz)->exist () ;
 	}
 
 	JsonParser root () const {
-		JsonParserLayout ret = JsonParserHolder::create (thiz)->root () ;
+		JsonParserLayout ret = JsonParserHolder::hold (thiz)->root () ;
 		return move (keep[TYPE<JsonParser>::expr] (ret)) ;
 	}
 
 	JsonParser parent () const {
-		JsonParserLayout ret = JsonParserHolder::create (thiz)->parent () ;
+		JsonParserLayout ret = JsonParserHolder::hold (thiz)->parent () ;
 		return move (keep[TYPE<JsonParser>::expr] (ret)) ;
 	}
 
 	JsonParser brother () const {
-		JsonParserLayout ret = JsonParserHolder::create (thiz)->brother () ;
+		JsonParserLayout ret = JsonParserHolder::hold (thiz)->brother () ;
 		return move (keep[TYPE<JsonParser>::expr] (ret)) ;
 	}
 
 	JsonParser child () const {
-		JsonParserLayout ret = JsonParserHolder::create (thiz)->child () ;
+		JsonParserLayout ret = JsonParserHolder::hold (thiz)->child () ;
 		return move (keep[TYPE<JsonParser>::expr] (ret)) ;
 	}
 
 	JsonParser child (CREF<INDEX> index) const {
-		JsonParserLayout ret = JsonParserHolder::create (thiz)->child (index) ;
+		JsonParserLayout ret = JsonParserHolder::hold (thiz)->child (index) ;
 		return move (keep[TYPE<JsonParser>::expr] (ret)) ;
 	}
 
 	JsonParser child (CREF<Slice> name) const {
-		JsonParserLayout ret = JsonParserHolder::create (thiz)->child (name) ;
+		JsonParserLayout ret = JsonParserHolder::hold (thiz)->child (name) ;
 		return move (keep[TYPE<JsonParser>::expr] (ret)) ;
 	}
 
 	JsonParser child (CREF<String<STRU8>> name) const {
-		JsonParserLayout ret = JsonParserHolder::create (thiz)->child (name) ;
+		JsonParserLayout ret = JsonParserHolder::hold (thiz)->child (name) ;
 		return move (keep[TYPE<JsonParser>::expr] (ret)) ;
 	}
 
 	Array<JsonParser> list () const {
-		ArrayLayout ret = JsonParserHolder::create (thiz)->list () ;
+		ArrayLayout ret = JsonParserHolder::hold (thiz)->list () ;
 		return move (keep[TYPE<Array<JsonParser>>::expr] (ret)) ;
 	}
 
 	Array<JsonParser> list (CREF<LENGTH> size_) const {
-		ArrayLayout ret = JsonParserHolder::create (thiz)->list (size_) ;
+		ArrayLayout ret = JsonParserHolder::hold (thiz)->list (size_) ;
 		return move (keep[TYPE<Array<JsonParser>>::expr] (ret)) ;
 	}
 
 	BOOL equal (CREF<JsonParser> that) const {
-		return JsonParserHolder::create (thiz)->equal (that) ;
+		return JsonParserHolder::hold (thiz)->equal (that) ;
 	}
 
 	forceinline BOOL operator== (CREF<JsonParser> that) const {
@@ -414,87 +525,87 @@ public:
 	}
 
 	CREF<String<STRU8>> name () const leftvalue {
-		return JsonParserHolder::create (thiz)->name () ;
+		return JsonParserHolder::hold (thiz)->name () ;
 	}
 
 	BOOL parse (CREF<BOOL> def) const {
-		return JsonParserHolder::create (thiz)->parse (def) ;
+		return JsonParserHolder::hold (thiz)->parse (def) ;
 	}
 
 	VAL32 parse (CREF<VAL32> def) const {
-		return JsonParserHolder::create (thiz)->parse (def) ;
+		return JsonParserHolder::hold (thiz)->parse (def) ;
 	}
 
 	VAL64 parse (CREF<VAL64> def) const {
-		return JsonParserHolder::create (thiz)->parse (def) ;
+		return JsonParserHolder::hold (thiz)->parse (def) ;
 	}
 
 	FLT32 parse (CREF<FLT32> def) const {
-		return JsonParserHolder::create (thiz)->parse (def) ;
+		return JsonParserHolder::hold (thiz)->parse (def) ;
 	}
 
 	FLT64 parse (CREF<FLT64> def) const {
-		return JsonParserHolder::create (thiz)->parse (def) ;
+		return JsonParserHolder::hold (thiz)->parse (def) ;
 	}
 
 	String<STRA> parse (CREF<String<STRA>> def) const {
-		return JsonParserHolder::create (thiz)->parse (def) ;
+		return JsonParserHolder::hold (thiz)->parse (def) ;
 	}
 
 	String<STRW> parse (CREF<String<STRW>> def) const {
-		return JsonParserHolder::create (thiz)->parse (def) ;
+		return JsonParserHolder::hold (thiz)->parse (def) ;
 	}
 
 	String<STRU8> parse (CREF<String<STRU8>> def) const {
-		return JsonParserHolder::create (thiz)->parse (def) ;
+		return JsonParserHolder::hold (thiz)->parse (def) ;
 	}
 
 	String<STRU16> parse (CREF<String<STRU16>> def) const {
-		return JsonParserHolder::create (thiz)->parse (def) ;
+		return JsonParserHolder::hold (thiz)->parse (def) ;
 	}
 
 	String<STRU32> parse (CREF<String<STRU32>> def) const {
-		return JsonParserHolder::create (thiz)->parse (def) ;
+		return JsonParserHolder::hold (thiz)->parse (def) ;
 	}
 
 	Array<BOOL> parse (CREF<BOOL> def ,CREF<LENGTH> size_) const {
-		return JsonParserHolder::create (thiz)->parse (def ,size_) ;
+		return JsonParserHolder::hold (thiz)->parse (def ,size_) ;
 	}
 
 	Array<VAL32> parse (CREF<VAL32> def ,CREF<LENGTH> size_) const {
-		return JsonParserHolder::create (thiz)->parse (def ,size_) ;
+		return JsonParserHolder::hold (thiz)->parse (def ,size_) ;
 	}
 
 	Array<VAL64> parse (CREF<VAL64> def ,CREF<LENGTH> size_) const {
-		return JsonParserHolder::create (thiz)->parse (def ,size_) ;
+		return JsonParserHolder::hold (thiz)->parse (def ,size_) ;
 	}
 
 	Array<FLT32> parse (CREF<FLT32> def ,CREF<LENGTH> size_) const {
-		return JsonParserHolder::create (thiz)->parse (def ,size_) ;
+		return JsonParserHolder::hold (thiz)->parse (def ,size_) ;
 	}
 
 	Array<FLT64> parse (CREF<FLT64> def ,CREF<LENGTH> size_) const {
-		return JsonParserHolder::create (thiz)->parse (def ,size_) ;
+		return JsonParserHolder::hold (thiz)->parse (def ,size_) ;
 	}
 
 	Array<String<STRA>> parse (CREF<String<STRA>> def ,CREF<LENGTH> size_) const {
-		return JsonParserHolder::create (thiz)->parse (def ,size_) ;
+		return JsonParserHolder::hold (thiz)->parse (def ,size_) ;
 	}
 
 	Array<String<STRW>> parse (CREF<String<STRW>> def ,CREF<LENGTH> size_) const {
-		return JsonParserHolder::create (thiz)->parse (def ,size_) ;
+		return JsonParserHolder::hold (thiz)->parse (def ,size_) ;
 	}
 
 	Array<String<STRU8>> parse (CREF<String<STRU8>> def ,CREF<LENGTH> size_) const {
-		return JsonParserHolder::create (thiz)->parse (def ,size_) ;
+		return JsonParserHolder::hold (thiz)->parse (def ,size_) ;
 	}
 
 	Array<String<STRU16>> parse (CREF<String<STRU16>> def ,CREF<LENGTH> size_) const {
-		return JsonParserHolder::create (thiz)->parse (def ,size_) ;
+		return JsonParserHolder::hold (thiz)->parse (def ,size_) ;
 	}
 
 	Array<String<STRU32>> parse (CREF<String<STRU32>> def ,CREF<LENGTH> size_) const {
-		return JsonParserHolder::create (thiz)->parse (def ,size_) ;
+		return JsonParserHolder::hold (thiz)->parse (def ,size_) ;
 	}
 } ;
 
@@ -515,8 +626,8 @@ struct PlyParserLayout {
 } ;
 
 struct PlyParserHolder implement Interface {
-	imports VFat<PlyParserHolder> create (VREF<PlyParserLayout> that) ;
-	imports CFat<PlyParserHolder> create (CREF<PlyParserLayout> that) ;
+	imports VFat<PlyParserHolder> hold (VREF<PlyParserLayout> that) ;
+	imports CFat<PlyParserHolder> hold (CREF<PlyParserLayout> that) ;
 
 	virtual void initialize (CREF<RefBuffer<BYTE>> stream) = 0 ;
 	virtual LENGTH element_size (CREF<Slice> element) const = 0 ;
@@ -543,27 +654,27 @@ public:
 	implicit PlyParser () = default ;
 
 	explicit PlyParser (CREF<RefBuffer<BYTE>> stream) {
-		PlyParserHolder::create (thiz)->initialize (stream) ;
+		PlyParserHolder::hold (thiz)->initialize (stream) ;
 	}
 
 	LENGTH element_size (CREF<Slice> element) const {
-		return PlyParserHolder::create (thiz)->element_size (element) ;
+		return PlyParserHolder::hold (thiz)->element_size (element) ;
 	}
 
 	LENGTH property_size (CREF<Slice> element ,CREF<Slice> property) const {
-		return PlyParserHolder::create (thiz)->property_size (element ,property) ;
+		return PlyParserHolder::hold (thiz)->property_size (element ,property) ;
 	}
 
 	void guide_new (CREF<Slice> element) {
-		return PlyParserHolder::create (thiz)->guide_new (element) ;
+		return PlyParserHolder::hold (thiz)->guide_new (element) ;
 	}
 
 	void guide_put (CREF<Slice> property) {
-		return PlyParserHolder::create (thiz)->guide_put (property) ;
+		return PlyParserHolder::hold (thiz)->guide_put (property) ;
 	}
 
 	void read (VREF<BOOL> item) {
-		return PlyParserHolder::create (thiz)->read (item) ;
+		return PlyParserHolder::hold (thiz)->read (item) ;
 	}
 
 	forceinline VREF<PlyParser> operator>> (VREF<BOOL> item) {
@@ -572,7 +683,7 @@ public:
 	}
 
 	void read (VREF<VAL32> item) {
-		return PlyParserHolder::create (thiz)->read (item) ;
+		return PlyParserHolder::hold (thiz)->read (item) ;
 	}
 
 	forceinline VREF<PlyParser> operator>> (VREF<VAL32> item) {
@@ -581,7 +692,7 @@ public:
 	}
 
 	void read (VREF<VAL64> item) {
-		return PlyParserHolder::create (thiz)->read (item) ;
+		return PlyParserHolder::hold (thiz)->read (item) ;
 	}
 
 	forceinline VREF<PlyParser> operator>> (VREF<VAL64> item) {
@@ -590,7 +701,7 @@ public:
 	}
 
 	void read (VREF<FLT32> item) {
-		return PlyParserHolder::create (thiz)->read (item) ;
+		return PlyParserHolder::hold (thiz)->read (item) ;
 	}
 
 	forceinline VREF<PlyParser> operator>> (VREF<FLT32> item) {
@@ -599,7 +710,7 @@ public:
 	}
 
 	void read (VREF<FLT64> item) {
-		return PlyParserHolder::create (thiz)->read (item) ;
+		return PlyParserHolder::hold (thiz)->read (item) ;
 	}
 
 	forceinline VREF<PlyParser> operator>> (VREF<FLT64> item) {
@@ -608,7 +719,7 @@ public:
 	}
 
 	void read (VREF<BYTE> item) {
-		return PlyParserHolder::create (thiz)->read (item) ;
+		return PlyParserHolder::hold (thiz)->read (item) ;
 	}
 
 	forceinline VREF<PlyParser> operator>> (VREF<BYTE> item) {
@@ -617,7 +728,7 @@ public:
 	}
 
 	void read (VREF<WORD> item) {
-		return PlyParserHolder::create (thiz)->read (item) ;
+		return PlyParserHolder::hold (thiz)->read (item) ;
 	}
 
 	forceinline VREF<PlyParser> operator>> (VREF<WORD> item) {
@@ -626,7 +737,7 @@ public:
 	}
 
 	void read (VREF<CHAR> item) {
-		return PlyParserHolder::create (thiz)->read (item) ;
+		return PlyParserHolder::hold (thiz)->read (item) ;
 	}
 
 	forceinline VREF<PlyParser> operator>> (VREF<CHAR> item) {
@@ -635,7 +746,7 @@ public:
 	}
 
 	void read (VREF<QUAD> item) {
-		return PlyParserHolder::create (thiz)->read (item) ;
+		return PlyParserHolder::hold (thiz)->read (item) ;
 	}
 
 	forceinline VREF<PlyParser> operator>> (VREF<QUAD> item) {

@@ -8,14 +8,6 @@
 #pragma system_header
 #endif
 
-#ifdef __CSC_COMPILER_GNUC__
-#pragma GCC system_header
-#endif
-
-#ifdef __CSC_COMPILER_CLANG__
-#pragma clang system_header
-#endif
-
 #include "csc_image.hpp"
 
 #include "csc_end.h"
@@ -27,26 +19,7 @@
 #include "csc_begin.h"
 
 namespace CSC {
-class PinnedMat implement ThisLayout<Ref<Pin<cv::Mat>>> {
-private:
-	using ThisLayout<Ref<Pin<cv::Mat>>>::mThis ;
-
-public:
-	explicit PinnedMat () {
-		mThis = Ref<Pin<cv::Mat>>::make () ;
-		mThis->remake () ;
-	}
-
-	VREF<cv::Mat> self_m () leftvalue {
-		return mThis->self ;
-	}
-
-	CREF<cv::Mat> self_m () const leftvalue {
-		return mThis->self ;
-	}
-} ;
-
-class ImageProcImplHolder implement Fat<ImageProcHolder ,ImageProcLayout> {
+class ImageProcImplHolder final implement Fat<ImageProcHolder ,ImageProcLayout> {
 public:
 	void initialize () override {
 		noop () ;
@@ -54,37 +27,49 @@ public:
 
 	ImageLayout make_image (RREF<BoxLayout> image) const override {
 		ImageLayout ret ;
-		const auto r1x = keep[TYPE<Box<PinnedMat>>::expr] (image)->self ;
-		const auto r2x = r1x.size () ;
-		const auto r3x = align_of_cvmat_depth (r1x.depth ()) ;
-		const auto r4x = r1x.channels () ;
-		const auto r5x = choose_cvmat_unknown (r3x) ;
-		auto &&rax = keep[TYPE<RefBufferLayout>::expr] (ret.mImage) ;
-		RefBufferHolder::create (rax)->initialize (r5x ,move (image)) ;
-		rax.mBuffer = FLAG (r1x.data) ;
-		rax.mSize = r2x.area () ;
-		rax.mStep = r3x * r4x ;
-		ret.mWidth.mCX = r2x.width ;
-		ret.mWidth.mCY = r2x.height ;
-		ret.mWidth.mStep = r3x * r4x ;
-		ImageHolder::create (ret)->reset () ;
+		auto &&rax = keep[TYPE<Box<cv::Mat>>::expr] (image).self ;
+		const auto r1x = rax.size () ;
+		const auto r2x = align_of_cvmat_depth (rax.depth ()) ;
+		const auto r3x = r2x * rax.channels () ;
+		const auto r4x = choose_cvmat_unknown (r2x) ;
+		const auto r5x = FLAG (rax.data) ;
+		const auto r6x = Slice (r5x ,r1x.area () ,r3x) ;
+		RefBufferHolder::hold (ret.mImage)->initialize (r4x ,r6x ,Box<Pin<cv::Mat>>::make ()) ;
+		auto &&rbx = keep[TYPE<Box<cv::Mat>>::expr] (RefBufferHolder::hold (ret.mImage)->raw ()).self ;
+		assign (rbx ,rax) ;
+		ret.mWidth.mCX = r1x.width ;
+		ret.mWidth.mCY = r1x.height ;
+		ret.mWidth.mStep = r3x ;
+		ImageHolder::hold (ret)->reset () ;
 		return move (ret) ;
 	}
 
 	ImageLayout make_image (CREF<LENGTH> cx_ ,CREF<LENGTH> cy_ ,CREF<LENGTH> align ,CREF<LENGTH> channel) const override {
-		auto rax = Box<PinnedMat>::make () ;
+		auto rax = Box<cv::Mat> () ;
 		const auto r1x = cvmat_depth_of_align (align) ;
 		const auto r2x = CV_MAKE_TYPE (VAL32 (r1x) ,VAL32 (channel)) ;
-		rax->self = cv::Mat (cv::Size (VAL32 (cx_) ,VAL32 (cy_)) ,r2x) ;
+		rax.remake (cv::Mat (cv::Size (VAL32 (cx_) ,VAL32 (cy_)) ,r2x)) ;
 		return make_image (move (rax)) ;
 	}
 
 	ImageLayout load_image (CREF<String<STR>> file) const override {
-		auto rax = Box<PinnedMat>::make () ;
+		auto rax = Box<cv::Mat> () ;
 		const auto r1x = StringProc::stra_from_strs (file) ;
-		rax->self = cv::imread (r1x.self ,cv::IMREAD_UNCHANGED) ;
-		assume (!rax->self.empty ()) ;
+		rax.remake (cv::imread (r1x.self ,cv::IMREAD_UNCHANGED)) ;
+		assume (!rax->empty ()) ;
 		return make_image (move (rax)) ;
+	}
+
+	VREF<Pointer> peek_image (VREF<ImageLayout> image) const override {
+		//@info: unchecked
+		auto &&rax = keep[TYPE<Box<cv::Mat>>::expr] (ImageHolder::hold (image)->raw ()) ;
+		return Pointer::from (rax.self) ;
+	}
+
+	CREF<Pointer> peek_image (CREF<ImageLayout> image) const override {
+		//@info: unchecked
+		auto &&rax = keep[TYPE<Box<cv::Mat>>::expr] (ImageHolder::hold (image)->raw ()) ;
+		return Pointer::from (rax.self) ;
 	}
 
 	LENGTH cvmat_depth_of_align (CREF<LENGTH> align) const {
@@ -121,43 +106,43 @@ public:
 		return 0 ;
 	}
 
-	RFat<Unknown> choose_cvmat_unknown (CREF<LENGTH> align) const {
+	Unknown choose_cvmat_unknown (CREF<LENGTH> align) const {
 		if (align == SIZE_OF<BYTE>::expr)
-			return RFat<Unknown> (BufferUnknownBinder<BYTE> () ,NULL) ;
+			return BufferUnknownBinder<BYTE> () ;
 		if (align == SIZE_OF<WORD>::expr)
-			return RFat<Unknown> (BufferUnknownBinder<WORD> () ,NULL) ;
+			return BufferUnknownBinder<WORD> () ;
 		if (align == SIZE_OF<CHAR>::expr)
-			return RFat<Unknown> (BufferUnknownBinder<CHAR> () ,NULL) ;
+			return BufferUnknownBinder<CHAR> () ;
 		if (align == SIZE_OF<QUAD>::expr)
-			return RFat<Unknown> (BufferUnknownBinder<QUAD> () ,NULL) ;
+			return BufferUnknownBinder<QUAD> () ;
 		assume (FALSE) ;
-		return RFat<Unknown> (BufferUnknownBinder<BYTE> () ,NULL) ; ;
+		return BufferUnknownBinder<BYTE> () ;
 	}
 
 	void save_image (CREF<String<STR>> file ,CREF<ImageLayout> image) const override {
 		const auto r1x = StringProc::stra_from_strs (file) ;
-		const auto r2x = keep[TYPE<Box<PinnedMat>>::expr] (image.mImage.raw ())->self ;
-		cv::imwrite (r1x.self ,r2x) ;
+		auto &&rax = keep[TYPE<Box<cv::Mat>>::expr] (image.mImage.raw ()).self ;
+		cv::imwrite (r1x.self ,rax) ;
 	}
 
 	Color1B sampler (CREF<Image<Color1B>> image ,CREF<FLT64> x ,CREF<FLT64> y) const override {
-		return sampler_impl (image ,TYPE<Color1B>::expr ,FLT32 (x) ,FLT32 (y)) ;
+		return sampler_impl (image ,FLT32 (x) ,FLT32 (y)) ;
 	}
 
 	Color2B sampler (CREF<Image<Color2B>> image ,CREF<FLT64> x ,CREF<FLT64> y) const override {
-		return sampler_impl (image ,TYPE<Color2B>::expr ,FLT32 (x) ,FLT32 (y)) ;
+		return sampler_impl (image ,FLT32 (x) ,FLT32 (y)) ;
 	}
 
 	Color3B sampler (CREF<Image<Color3B>> image ,CREF<FLT64> x ,CREF<FLT64> y) const override {
-		return sampler_impl (image ,TYPE<Color3B>::expr ,FLT32 (x) ,FLT32 (y)) ;
+		return sampler_impl (image ,FLT32 (x) ,FLT32 (y)) ;
 	}
 
 	Color4B sampler (CREF<Image<Color4B>> image ,CREF<FLT64> x ,CREF<FLT64> y) const override {
-		return sampler_impl (image ,TYPE<Color4B>::expr ,FLT32 (x) ,FLT32 (y)) ;
+		return sampler_impl (image ,FLT32 (x) ,FLT32 (y)) ;
 	}
 
 	template <class ARG1>
-	ARG1 sampler_impl (CREF<Image<ARG1>> image ,TYPE<ARG1> ,CREF<FLT32> x ,CREF<FLT32> y) const {
+	forceinline ARG1 sampler_impl (CREF<Image<ARG1>> image ,CREF<FLT32> x ,CREF<FLT32> y) const {
 		ARG1 ret ;
 		const auto r1x = VAL (MathProc::round (x ,FLT32 (1))) ;
 		const auto r2x = VAL (MathProc::round (y ,FLT32 (1))) ;
@@ -245,6 +230,42 @@ public:
 		ret.mG = BYTE (VAL32 (a[1])) ;
 		ret.mR = BYTE (VAL32 (a[2])) ;
 		ret.mA = BYTE (VAL32 (a[3])) ;
+		return move (ret) ;
+	}
+
+	FLT32 sampler (CREF<Image<FLT32>> image ,CREF<FLT64> x ,CREF<FLT64> y) const override {
+		return sampler_impl (image ,x ,y) ;
+	}
+
+	FLT64 sampler (CREF<Image<FLT64>> image ,CREF<FLT64> x ,CREF<FLT64> y) const override {
+		return sampler_impl (image ,x ,y) ;
+	}
+
+	template <class ARG1>
+	forceinline ARG1 sampler_impl (CREF<Image<ARG1>> image ,CREF<FLT64> x ,CREF<FLT64> y) const {
+		ARG1 ret ;
+		const auto r1x = VAL (MathProc::round (x ,FLT64 (1))) ;
+		const auto r2x = VAL (MathProc::round (y ,FLT64 (1))) ;
+		const auto r3x = MathProc::clamp (r1x ,ZERO ,image.cx () - 1) ;
+		const auto r4x = MathProc::clamp (r2x ,ZERO ,image.cy () - 1) ;
+		const auto r5x = MathProc::max_of (r3x - 1 ,ZERO) ;
+		const auto r6x = MathProc::max_of (r4x - 1 ,ZERO) ;
+		const auto r7x = FLT64 (r3x) + FLT64 (0.5) - x ;
+		const auto r8x = FLT64 (r4x) + FLT64 (0.5) - y ;
+		const auto r9x = 1 - r7x ;
+		const auto r10x = 1 - r8x ;
+		if ifdo (TRUE) {
+			const auto r11x = image.at (r5x ,r6x) ;
+			const auto r12x = image.at (r5x ,r4x) ;
+			const auto r13x = image.at (r3x ,r4x) ;
+			const auto r14x = image.at (r3x ,r6x) ;
+			FLT64 ret = FLT64 (0) ;
+			ret += r11x * (r7x * r8x) ;
+			ret += r12x * (r7x * r10x) ;
+			ret += r13x * (r9x * r10x) ;
+			ret += r14x * (r9x * r8x) ;
+			ret = MathProc::clamp (ret ,FLT64 (0) ,FLT64 (255)) ;
+		}
 		return move (ret) ;
 	}
 } ;

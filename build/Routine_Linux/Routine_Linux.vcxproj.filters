@@ -3,7 +3,6 @@
   <ItemGroup>
     <ClCompile Include="..\..\src\inl.cpp" />
     <ClCompile Include="..\..\src\main.cpp" />
-    <ClCompile Include="..\..\src\test.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\util.h" />
@@ -31,6 +30,9 @@
     <ClInclude Include="..\..\src\csc\csc_math.hpp">
       <Filter>csc</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\csc\csc_matrix.eigen.fix.h">
+      <Filter>csc</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\src\csc\csc_matrix.hpp">
       <Filter>csc</Filter>
     </ClInclude>
@@ -40,17 +42,15 @@
     <ClInclude Include="..\..\src\csc\csc_stream.hpp">
       <Filter>csc</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\csc\csc_string.hpp">
+      <Filter>csc</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\src\csc\csc_thread.hpp">
       <Filter>csc</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\csc\csc_type.hpp">
       <Filter>csc</Filter>
     </ClInclude>
-  </ItemGroup>
-  <ItemGroup>
-    <Filter Include="csc">
-      <UniqueIdentifier>{9669c8e6-1304-411a-a6b2-c826be330c83}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\src\csc\cpp.hint">
@@ -95,9 +95,17 @@
     <None Include="..\..\src\csc\csc_stream.inl">
       <Filter>csc</Filter>
     </None>
+    <None Include="..\..\src\csc\csc_string.inl">
+      <Filter>csc</Filter>
+    </None>
     <None Include="..\..\src\csc\csc_thread.inl">
       <Filter>csc</Filter>
     </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="csc">
+      <UniqueIdentifier>{79b7f5d7-5e91-45d3-9cb4-fd1686649956}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Natvis Include="..\..\src\csc\cpp.natvis">

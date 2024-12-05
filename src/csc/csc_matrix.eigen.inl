@@ -8,14 +8,6 @@
 #pragma system_header
 #endif
 
-#ifdef __CSC_COMPILER_GNUC__
-#pragma GCC system_header
-#endif
-
-#ifdef __CSC_COMPILER_CLANG__
-#pragma clang system_header
-#endif
-
 #include "csc_matrix.hpp"
 
 #include "csc_end.h"
@@ -29,7 +21,7 @@
 #include "csc_begin.h"
 
 namespace CSC {
-class MatrixProcImplHolder implement Fat<MatrixProcHolder ,MatrixProcLayout> {
+class MatrixProcImplHolder final implement Fat<MatrixProcHolder ,MatrixProcLayout> {
 public:
 	void initialize () override {
 		noop () ;
@@ -146,7 +138,7 @@ public:
 
 static const auto mMatrixProcExternal = External<MatrixProcHolder ,MatrixProcLayout>::declare (MatrixProcImplHolder ()) ;
 
-class LinearProcImplHolder implement Fat<LinearProcHolder ,LinearProcLayout> {
+class LinearProcImplHolder final implement Fat<LinearProcHolder ,LinearProcLayout> {
 public:
 	void initialize () override {
 		noop () ;

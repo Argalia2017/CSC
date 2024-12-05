@@ -8,18 +8,10 @@
 #pragma system_header
 #endif
 
-#ifdef __CSC_COMPILER_GNUC__
-#pragma GCC system_header
-#endif
-
-#ifdef __CSC_COMPILER_CLANG__
-#pragma clang system_header
-#endif
-
 #include "csc_math.hpp"
 
 namespace CSC {
-class FEXP2CacheImplHolder implement Fat<FEXP2CacheHolder ,FEXP2CacheLayout> {
+class FEXP2CacheImplHolder final implement Fat<FEXP2CacheHolder ,FEXP2CacheLayout> {
 private:
 	using SIZE = ENUM<693> ;
 
@@ -52,15 +44,9 @@ public:
 	}
 } ;
 
-exports VFat<FEXP2CacheHolder> FEXP2CacheHolder::create (VREF<FEXP2CacheLayout> that) {
-	return VFat<FEXP2CacheHolder> (FEXP2CacheImplHolder () ,that) ;
-}
+static const auto mFEXP2CacheExternal = External<FEXP2CacheHolder ,FEXP2CacheLayout>::declare (FEXP2CacheImplHolder ()) ;
 
-exports CFat<FEXP2CacheHolder> FEXP2CacheHolder::create (CREF<FEXP2CacheLayout> that) {
-	return CFat<FEXP2CacheHolder> (FEXP2CacheImplHolder () ,that) ;
-}
-
-class FEXP10CacheImplHolder implement Fat<FEXP10CacheHolder ,FEXP10CacheLayout> {
+class FEXP10CacheImplHolder final implement Fat<FEXP10CacheHolder ,FEXP10CacheLayout> {
 private:
 	using SIZE = ENUM<2175> ;
 
@@ -93,11 +79,5 @@ public:
 	}
 } ;
 
-exports VFat<FEXP10CacheHolder> FEXP10CacheHolder::create (VREF<FEXP10CacheLayout> that) {
-	return VFat<FEXP10CacheHolder> (FEXP10CacheImplHolder () ,that) ;
-}
-
-exports CFat<FEXP10CacheHolder> FEXP10CacheHolder::create (CREF<FEXP10CacheLayout> that) {
-	return CFat<FEXP10CacheHolder> (FEXP10CacheImplHolder () ,that) ;
-}
+static const auto mFEXP10CacheExternal = External<FEXP10CacheHolder ,FEXP10CacheLayout>::declare (FEXP10CacheImplHolder ()) ;
 } ;

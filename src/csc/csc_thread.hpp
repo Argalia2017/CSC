@@ -22,9 +22,9 @@ struct CoroutineFriend implement Interface {
 } ;
 
 template <class A>
-class CoroutineFriendBinder implement Fat<CoroutineFriend ,A> {
+class CoroutineFriendBinder final implement Fat<CoroutineFriend ,A> {
 public:
-	imports VFat<CoroutineFriend> create (VREF<A> that) {
+	static VFat<CoroutineFriend> create (VREF<A> that) {
 		return VFat<CoroutineFriend> (CoroutineFriendBinder () ,that) ;
 	}
 
@@ -41,20 +41,23 @@ public:
 	}
 } ;
 
+struct BlueprintFriend implement Interface {
+	virtual void reduce () = 0 ;
+} ;
+
 struct WorkThreadImplLayout ;
 
 struct WorkThreadLayout implement ThisLayout<SharedRef<WorkThreadImplLayout>> {} ;
 
 struct WorkThreadHolder implement Interface {
-	imports VFat<WorkThreadHolder> create (VREF<WorkThreadLayout> that) ;
-	imports CFat<WorkThreadHolder> create (CREF<WorkThreadLayout> that) ;
+	imports VFat<WorkThreadHolder> hold (VREF<WorkThreadLayout> that) ;
+	imports CFat<WorkThreadHolder> hold (CREF<WorkThreadLayout> that) ;
 
 	virtual void initialize () = 0 ;
 	virtual void set_thread_size (CREF<LENGTH> size_) const = 0 ;
 	virtual void set_queue_size (CREF<LENGTH> size_) const = 0 ;
 	virtual void start (CREF<Function<CREF<INDEX>>> func) const = 0 ;
-	virtual void post (CREF<INDEX> item) const = 0 ;
-	virtual void post (CREF<Array<INDEX>> item) const = 0 ;
+	virtual void post (CREF<INDEX> begin_ ,CREF<INDEX> end_) const = 0 ;
 	virtual void join () const = 0 ;
 	virtual BOOL join (CREF<Time> interval ,CREF<Function<VREF<BOOL>>> predicate) const = 0 ;
 	virtual void stop () const = 0 ;
@@ -65,40 +68,38 @@ protected:
 	using WorkThreadLayout::mThis ;
 
 public:
-	explicit WorkThread () {
-		WorkThreadHolder::create (thiz)->initialize () ;
+	implicit WorkThread () = default ;
+
+	implicit WorkThread (CREF<typeof (NULL)>) {
+		WorkThreadHolder::hold (thiz)->initialize () ;
 	}
 
 	void set_thread_size (CREF<LENGTH> size_) const {
-		return WorkThreadHolder::create (thiz)->set_thread_size (size_) ;
+		return WorkThreadHolder::hold (thiz)->set_thread_size (size_) ;
 	}
 
 	void set_queue_size (CREF<LENGTH> size_) const {
-		return WorkThreadHolder::create (thiz)->set_queue_size (size_) ;
+		return WorkThreadHolder::hold (thiz)->set_queue_size (size_) ;
 	}
 
 	void start (CREF<Function<CREF<INDEX>>> func) const {
-		return WorkThreadHolder::create (thiz)->start (func) ;
+		return WorkThreadHolder::hold (thiz)->start (func) ;
 	}
 
-	void post (CREF<INDEX> item) const {
-		return WorkThreadHolder::create (thiz)->post (item) ;
-	}
-
-	void post (CREF<Array<INDEX>> item) const {
-		return WorkThreadHolder::create (thiz)->post (item) ;
+	void post (CREF<INDEX> begin_ ,CREF<INDEX> end_) const {
+		return WorkThreadHolder::hold (thiz)->post (begin_ ,end_) ;
 	}
 
 	void join () const {
-		return WorkThreadHolder::create (thiz)->join () ;
+		return WorkThreadHolder::hold (thiz)->join () ;
 	}
 
 	BOOL join (CREF<Time> interval ,CREF<Function<VREF<BOOL>>> predicate) const {
-		return WorkThreadHolder::create (thiz)->join (interval ,predicate) ;
+		return WorkThreadHolder::hold (thiz)->join (interval ,predicate) ;
 	}
 
 	void stop () const {
-		return WorkThreadHolder::create (thiz)->stop () ;
+		return WorkThreadHolder::hold (thiz)->stop () ;
 	}
 } ;
 
@@ -113,13 +114,13 @@ struct CalcThreadImplLayout ;
 struct CalcThreadLayout implement ThisLayout<SharedRef<CalcThreadImplLayout>> {} ;
 
 struct CalcThreadHolder implement Interface {
-	imports VFat<CalcThreadHolder> create (VREF<CalcThreadLayout> that) ;
-	imports CFat<CalcThreadHolder> create (CREF<CalcThreadLayout> that) ;
+	imports VFat<CalcThreadHolder> hold (VREF<CalcThreadLayout> that) ;
+	imports CFat<CalcThreadHolder> hold (CREF<CalcThreadLayout> that) ;
 
 	virtual void initialize () = 0 ;
 	virtual void set_thread_size (CREF<LENGTH> size_) const = 0 ;
 	virtual void start (CREF<Function<CREF<CalcSolution> ,VREF<CalcSolution>>> func) const = 0 ;
-	virtual CalcSolution best () const = 0 ;
+	virtual CalcSolution poll () const = 0 ;
 	virtual void join () const = 0 ;
 	virtual void suspend () const = 0 ;
 	virtual void resume () const = 0 ;
@@ -131,36 +132,38 @@ protected:
 	using CalcThreadLayout::mThis ;
 
 public:
-	explicit CalcThread () {
-		CalcThreadHolder::create (thiz)->initialize () ;
+	implicit CalcThread () = default ;
+
+	implicit CalcThread (CREF<typeof (NULL)>) {
+		CalcThreadHolder::hold (thiz)->initialize () ;
 	}
 
 	void set_thread_size (CREF<LENGTH> size_) const {
-		return CalcThreadHolder::create (thiz)->set_thread_size (size_) ;
+		return CalcThreadHolder::hold (thiz)->set_thread_size (size_) ;
 	}
 
 	void start (CREF<Function<CREF<CalcSolution> ,VREF<CalcSolution>>> func) const {
-		return CalcThreadHolder::create (thiz)->start (func) ;
+		return CalcThreadHolder::hold (thiz)->start (func) ;
 	}
 
-	CalcSolution best () const {
-		return CalcThreadHolder::create (thiz)->best () ;
+	CalcSolution poll () const {
+		return CalcThreadHolder::hold (thiz)->poll () ;
 	}
 
 	void join () const {
-		return CalcThreadHolder::create (thiz)->join () ;
+		return CalcThreadHolder::hold (thiz)->join () ;
 	}
 
 	void suspend () const {
-		return CalcThreadHolder::create (thiz)->suspend () ;
+		return CalcThreadHolder::hold (thiz)->suspend () ;
 	}
 
 	void resume () const {
-		return CalcThreadHolder::create (thiz)->resume () ;
+		return CalcThreadHolder::hold (thiz)->resume () ;
 	}
 
 	void stop () const {
-		return CalcThreadHolder::create (thiz)->stop () ;
+		return CalcThreadHolder::hold (thiz)->stop () ;
 	}
 } ;
 
@@ -169,8 +172,8 @@ struct PromiseImplLayout ;
 struct PromiseLayout implement ThisLayout<SharedRef<PromiseImplLayout>> {} ;
 
 struct PromiseHolder implement Interface {
-	imports VFat<PromiseHolder> create (VREF<PromiseLayout> that) ;
-	imports CFat<PromiseHolder> create (CREF<PromiseLayout> that) ;
+	imports VFat<PromiseHolder> hold (VREF<PromiseLayout> that) ;
+	imports CFat<PromiseHolder> hold (CREF<PromiseLayout> that) ;
 
 	virtual void initialize () = 0 ;
 	virtual void set_retry (CREF<BOOL> flag) const = 0 ;
@@ -191,20 +194,22 @@ protected:
 	using PromiseLayout::mThis ;
 
 public:
-	explicit Promise () {
-		PromiseHolder::create (thiz)->initialize () ;
+	implicit Promise () = default ;
+
+	implicit Promise (CREF<typeof (NULL)>) {
+		PromiseHolder::hold (thiz)->initialize () ;
 	}
 
 	void set_retry (CREF<BOOL> flag) const {
-		return PromiseHolder::create (thiz)->set_retry (flag) ;
+		return PromiseHolder::hold (thiz)->set_retry (flag) ;
 	}
 
 	void start () const {
-		return PromiseHolder::create (thiz)->start () ;
+		return PromiseHolder::hold (thiz)->start () ;
 	}
 
 	void start (CREF<Function<>> func) const {
-		return PromiseHolder::create (thiz)->start (func) ;
+		return PromiseHolder::hold (thiz)->start (func) ;
 	}
 
 	void post (CREF<A> item) const {
@@ -213,34 +218,34 @@ public:
 
 	void post (RREF<A> item) const {
 		auto rax = AutoRef<A>::make (move (item)) ;
-		return PromiseHolder::create (thiz)->post (move (rax)) ;
+		return PromiseHolder::hold (thiz)->post (move (rax)) ;
 	}
 
 	void rethrow (CREF<Exception> e) const {
-		return PromiseHolder::create (thiz)->rethrow (e) ;
+		return PromiseHolder::hold (thiz)->rethrow (e) ;
 	}
 
 	BOOL ready () const {
-		return PromiseHolder::create (thiz)->ready () ;
+		return PromiseHolder::hold (thiz)->ready () ;
 	}
 
 	BOOL running () const {
-		return PromiseHolder::create (thiz)->running () ;
+		return PromiseHolder::hold (thiz)->running () ;
 	}
 
 	Optional<A> future () const {
-		auto rax = PromiseHolder::create (thiz)->future () ;
+		auto rax = PromiseHolder::hold (thiz)->future () ;
 		if (!rax.exist ())
 			return Optional<A>::error (1) ;
 		return move (rax.rebind (TYPE<A>::expr).self) ;
 	}
 
 	void signal () const {
-		return PromiseHolder::create (thiz)->signal () ;
+		return PromiseHolder::hold (thiz)->signal () ;
 	}
 
 	void stop () const {
-		return PromiseHolder::create (thiz)->stop () ;
+		return PromiseHolder::hold (thiz)->stop () ;
 	}
 } ;
 } ;

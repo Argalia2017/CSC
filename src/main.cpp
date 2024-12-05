@@ -1,22 +1,34 @@
 ﻿#include "util.h"
 
+#include "Common/export.h"
+
 #include "csc/csc_end.h"
+#ifdef __CSC_COMPILER_MSVC__
+#include <intrin.h>
+#include <yvals.h>
+#endif
+
 #include <initializer_list>
 #include <type_traits>
-#include <mutex>
+#include <typeinfo>
+#include <cstdio>
+#include <exception>
+#include <string>
+#include <atomic>
+#include <assert.h>
+#include <signal.h>
 #include "csc/csc_begin.h"
 
 using namespace SOLUTION ;
 
 /*
-implicit ~\w+(?<!Layout) \(\)
-(?<!CREF<\w+Proc> )instance \(\) \{
-Pointer::make \(address
+1. Pin & Ref
 */
 
-exports int main () {
+int main () {
 	Singleton<Console>::instance ().start () ;
 	Singleton<Console>::instance ().open (slice (".")) ;
+	Singleton<Console>::instance ().info (slice ("main")) ;
 
 	return 0 ;
 }
