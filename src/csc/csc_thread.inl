@@ -78,14 +78,14 @@ public:
 	void start (CREF<Function<CREF<INDEX>>> func) {
 		Scope<Mutex> anonymous (mThreadMutex) ;
 		assume (mThreadFlag == ThreadFlag::Preparing) ;
-		assume (mThread.length () > 0) ;
+		assume (mThread.size () > 0) ;
 		mThreadLoadLength.fill (0) ;
 		mItemLoadLength = 0 ;
 		mThreadFlag = ThreadFlag::Running ;
 		mThreadFunc = func ;
-		const auto r1x = Ref<VFat<ThreadFriend>>::make (ThreadFriendBinder<WorkThreadImpl>::create (thiz)) ;
+		const auto r1x = Ref<VFat<ThreadBinder>>::make (FriendThreadBinder<WorkThreadImpl>::hold (thiz)) ;
 		for (auto &&i : mThread.range ()) {
-			mThread[i] = Thread (r1x.share () ,i) ;
+			mThread[i] = Thread (move (r1x) ,i) ;
 			mThread[i].start () ;
 		}
 	}
@@ -117,7 +117,8 @@ public:
 	void poll (CREF<INDEX> slot) {
 		auto rax = UniqueLock (mThreadMutex) ;
 		while (TRUE) {
-			assume (mThreadFlag == ThreadFlag::Running) ;
+			if (mThreadFlag != ThreadFlag::Running)
+				break ;
 			if (!mItemQueue.empty ())
 				break ;
 			if ifdo (TRUE) {
@@ -128,17 +129,18 @@ public:
 			}
 			rax.wait () ;
 		}
+		assume (mThreadFlag == ThreadFlag::Running) ;
 		mThreadJoin.erase (slot) ;
 		mItemLoadLength -= mThreadLoadLength[slot] ;
 		INDEX ix = mItemQueue.head () ;
-		const auto r2x = inline_alignas (mItemLoadLength ,mThread.size ()) / mThread.size () ;
-		const auto r3x = MathProc::max_of (r2x / 2 ,LENGTH (1)) ;
-		const auto r4x = MathProc::min_of (r3x ,mItemQueue[ix].length ()) ;
-		mThreadLoadLength[slot] = r4x ;
+		const auto r1x = inline_alignas (mItemLoadLength ,mThread.size ()) / mThread.size () ;
+		const auto r2x = MathProc::max_of (r1x / 2 ,LENGTH (1)) ;
+		const auto r3x = MathProc::min_of (r2x ,mItemQueue[ix].length ()) ;
+		mThreadLoadLength[slot] = r3x ;
 		mItemLoadLength += mThreadLoadLength[slot] ;
 		auto &&rbx = keep[TYPE<IndexIteratorLayout>::expr] (mItemQueue[ix]) ;
-		mThreadQueue[slot] = IndexIterator (rbx.mBegin ,rbx.mBegin + r4x) ;
-		mItemQueue[ix] = IndexIterator (rbx.mBegin + r4x ,rbx.mEnd) ;
+		mThreadQueue[slot] = IndexIterator (rbx.mBegin ,rbx.mBegin + r3x) ;
+		mItemQueue[ix] = IndexIterator (rbx.mBegin + r3x ,rbx.mEnd) ;
 		if ifdo (TRUE) {
 			if (mItemQueue[ix].good ())
 				discard ;
@@ -151,6 +153,13 @@ public:
 		if (begin_ >= end_)
 			return ;
 		auto rax = UniqueLock (mThreadMutex) ;
+		while (TRUE) {
+			if (mThreadFlag != ThreadFlag::Running)
+				break ;
+			if (mItemQueue.length () < mItemQueue.size ())
+				break ;
+			rax.wait () ;
+		}
 		assume (mThreadFlag == ThreadFlag::Running) ;
 		const auto r1x = IndexIterator (begin_ ,end_) ;
 		mItemQueue.add (r1x) ;
@@ -161,29 +170,31 @@ public:
 	void join () {
 		auto rax = UniqueLock (mThreadMutex) ;
 		while (TRUE) {
-			assume (mThreadFlag == ThreadFlag::Running) ;
+			if (mThreadFlag != ThreadFlag::Running)
+				break ;
 			if (mItemQueue.empty ())
 				if (mThreadJoin.length () >= mThread.length ())
 					break ;
 			rax.wait () ;
 		}
+		assume (mThreadFlag == ThreadFlag::Running) ;
 	}
 
-	BOOL join (CREF<Time> interval ,CREF<Function<VREF<BOOL>>> predicate) {
+	BOOL join (CREF<Time> interval) {
 		auto rax = UniqueLock (mThreadMutex) ;
+		auto rbx = TRUE ;
 		while (TRUE) {
-			assume (mThreadFlag == ThreadFlag::Running) ;
+			if (mThreadFlag != ThreadFlag::Running)
+				break ;
 			if (mItemQueue.empty () == 0)
 				if (mThreadJoin.length () >= mThread.length ())
 					break ;
-			auto rbx = FALSE ;
-			rax = UniqueLock () ;
-			predicate (rbx) ;
-			rax = UniqueLock (mThreadMutex) ;
 			if (!rbx)
 				return FALSE ;
+			rbx = FALSE ;
 			rax.wait (interval) ;
 		}
+		assume (mThreadFlag == ThreadFlag::Running) ;
 		return TRUE ;
 	}
 
@@ -204,8 +215,6 @@ public:
 class WorkThreadImplHolder final implement Fat<WorkThreadHolder ,WorkThreadLayout> {
 public:
 	void initialize () override {
-		if (fake.mThis.exist ())
-			return ;
 		fake.mThis = SharedRef<WorkThreadImpl>::make () ;
 		ptr (fake).initialize () ;
 	}
@@ -234,8 +243,8 @@ public:
 		return ptr (fake).join () ;
 	}
 
-	BOOL join (CREF<Time> interval ,CREF<Function<VREF<BOOL>>> predicate) const override {
-		return ptr (fake).join (interval ,predicate) ;
+	BOOL join (CREF<Time> interval) const override {
+		return ptr (fake).join (interval) ;
 	}
 
 	void stop () const override {
@@ -258,6 +267,9 @@ struct CalcThreadImplLayout {
 	Array<Thread> mThread ;
 	BitSet mThreadJoin ;
 	Function<CREF<CalcSolution> ,VREF<CalcSolution>> mThreadFunc ;
+	Array<FLT64> mConfidence ;
+	FLT64 mConfidencePow ;
+	FLT64 mConfidenceFator ;
 	Array<CalcSolution> mThreadSolution ;
 	Array<CalcSolution> mSearchSolution ;
 	CalcSolution mBestSolution ;
@@ -294,26 +306,43 @@ public:
 	void set_thread_size (CREF<LENGTH> size_) {
 		Scope<Mutex> anonymous (mThreadMutex) ;
 		assume (mThreadFlag == ThreadFlag::Preparing) ;
+		assume (mThreadSolution.size () == 0) ;
 		mThread = Array<Thread> (size_) ;
 		mThreadJoin = BitSet (size_) ;
-		mThreadSolution = Array<CalcSolution> (size_) ;
 		mSearchSolution = Array<CalcSolution> (size_) ;
-		mBestSolution.mIndex = NONE ;
-		mBestSolution.mError = infinity ;
-		mBestSolution.mInput = BitSet () ;
+		mThreadSolution = Array<CalcSolution> (size_) ;
 		mNewSolution = FALSE ;
+	}
+
+	void set_base_input (CREF<BitSet> base) {
+		Scope<Mutex> anonymous (mThreadMutex) ;
+		assume (mThreadFlag == ThreadFlag::Preparing) ;
+		assume (mThread.size () > 0) ;
+		mBestSolution.mIteration = ZERO ;
+		mBestSolution.mAvgError = infinity ;
+		mBestSolution.mStdError = 0 ;
+		mBestSolution.mInput = base ;
+		for (auto &&i : mThreadSolution.range ())
+			mThreadSolution[i].mIteration = NONE ;
+		mConfidence = Array<FLT64> (1000) ;
+		mConfidencePow = 0.9545 ;
+		mConfidenceFator = FLT64 (mConfidence.size ()) * MathProc::inverse (FLT64 (base.size ())) ;
+		mConfidence[0] = 1 ;
+		for (auto &&i : iter (1 ,mConfidence.length ())) {
+			mConfidence[i] = mConfidencePow * mConfidence[i - 1] ;
+		}
 	}
 
 	void start (CREF<Function<CREF<CalcSolution> ,VREF<CalcSolution>>> func) {
 		Scope<Mutex> anonymous (mThreadMutex) ;
 		assume (mThreadFlag == ThreadFlag::Preparing) ;
-		assume (mThread.length () > 0) ;
+		assume (mThread.size () > 0) ;
 		mThreadFlag = ThreadFlag::Running ;
 		mSuspendFlag = FALSE ;
 		mThreadFunc = func ;
-		const auto r1x = Ref<VFat<ThreadFriend>>::make (ThreadFriendBinder<CalcThreadImpl>::create (thiz)) ;
+		const auto r1x = Ref<VFat<ThreadBinder>>::make (FriendThreadBinder<CalcThreadImpl>::hold (thiz)) ;
 		for (auto &&i : mThread.range ()) {
-			mThread[i] = Thread (r1x.share () ,i) ;
+			mThread[i] = Thread (move (r1x) ,i) ;
 			mThread[i].start () ;
 		}
 	}
@@ -341,13 +370,14 @@ public:
 			wait_solution (slot) ;
 			while (TRUE) {
 				wait_suspend (slot) ;
+				mSearchSolution[slot].mIteration = NONE ;
 				mThreadFunc (mThreadSolution[slot] ,mSearchSolution[slot]) ;
-				if (mSearchSolution[slot].mIndex == NONE)
+				if (mSearchSolution[slot].mIteration == NONE)
 					break ;
-				if (mSearchSolution[slot].mError < mThreadSolution[slot].mError)
+				if (is_better (mSearchSolution[slot] ,mThreadSolution[slot]))
 					break ;
 			}
-			if (mSearchSolution[slot].mIndex != NONE)
+			if (mSearchSolution[slot].mIteration != NONE)
 				break ;
 		}
 	}
@@ -357,12 +387,55 @@ public:
 			const auto r1x = accept_solution (slot) ;
 			if (r1x)
 				break ;
+			mSearchSolution[slot].mIteration = mThreadSolution[slot].mIteration ;
 			mThreadFunc (mThreadSolution[slot] ,mSearchSolution[slot]) ;
-			if (mSearchSolution[slot].mIndex == NONE)
+			if (mSearchSolution[slot].mIteration == NONE)
 				break ;
-			if (mSearchSolution[slot].mError >= mThreadSolution[slot].mError)
+			if (!is_better (mSearchSolution[slot] ,mThreadSolution[slot]))
 				break ;
 		}
+	}
+
+	BOOL is_better (CREF<CalcSolution> a ,CREF<CalcSolution> b) const {
+		const auto r1x = INDEX (FLT64 (a.mIteration) * mConfidenceFator) ;
+		INDEX ix = MathProc::clamp (r1x ,ZERO ,mConfidence.length ()) ;
+		const auto r2x = a.mAvgError - a.mStdError * mConfidence[ix] ;
+		const auto r3x = b.mAvgError - b.mStdError * mConfidence[ix] ;
+		if (r2x < r3x)
+			return TRUE ;
+		return FALSE ;
+	}
+
+	void wait_solution (CREF<INDEX> slot) {
+		Scope<Mutex> anonymous (mThreadMutex) ;
+		if (mBestSolution.mIteration != NONE)
+			if (mThreadSolution[slot].mIteration == mBestSolution.mIteration)
+				return ;
+		mThreadSolution[slot] = mBestSolution ;
+	}
+
+	BOOL accept_solution (CREF<INDEX> slot) {
+		auto rax = UniqueLock (mThreadMutex) ;
+		auto act = TRUE ;
+		if ifdo (act) {
+			if (mThreadSolution[slot].mIteration != mBestSolution.mIteration)
+				if (is_better (mSearchSolution[slot] ,mBestSolution))
+					discard ;
+			assert (mSearchSolution[slot].mInput.size () > 0) ;
+			mBestSolution = move (mSearchSolution[slot]) ;
+			mNewSolution = TRUE ;
+			rax.notify () ;
+			return TRUE ;
+		}
+		if ifdo (act) {
+			assume (mBestSolution.mIteration != NONE) ;
+			const auto r1x = bitset_xor (mThreadSolution[slot].mInput ,mSearchSolution[slot].mInput) ;
+			mThreadSolution[slot] = move (mSearchSolution[slot]) ;
+			mSearchSolution[slot].mAvgError = infinity ;
+			mSearchSolution[slot].mStdError = 0 ;
+			mSearchSolution[slot].mInput = bitset_xor (mBestSolution.mInput ,r1x) ;
+		}
+		return FALSE ;
 	}
 
 	BitSet bitset_xor (CREF<BitSet> bitset1 ,CREF<BitSet> bitset2) const {
@@ -373,45 +446,11 @@ public:
 		return bitset1 ^ bitset2 ;
 	}
 
-	void wait_solution (CREF<INDEX> slot) {
-		Scope<Mutex> anonymous (mThreadMutex) ;
-		if (mThreadSolution[slot].mIndex == mBestSolution.mIndex)
-			return ;
-		mThreadSolution[slot] = mBestSolution ;
-	}
-
-	BOOL accept_solution (CREF<INDEX> slot) {
-		auto rax = UniqueLock (mThreadMutex) ;
-		auto act = TRUE ;
-		if ifdo (act) {
-			if (mThreadSolution[slot].mIndex != mBestSolution.mIndex)
-				if (mSearchSolution[slot].mError >= mBestSolution.mError)
-					discard ;
-			mBestSolution.mIndex++ ;
-			mBestSolution.mError = mSearchSolution[slot].mError ;
-			mBestSolution.mInput = mSearchSolution[slot].mInput ;
-			mNewSolution = TRUE ;
-			rax.notify () ;
-		}
-		if ifdo (act) {
-			assume (mBestSolution.mIndex != NONE) ;
-			const auto r1x = bitset_xor (mThreadSolution[slot].mInput ,mSearchSolution[slot].mInput) ;
-			const auto r2x = bitset_xor (mThreadSolution[slot].mInput ,mBestSolution.mInput) ;
-			const auto r3x = (r1x & r2x).length () ;
-			if (r3x == 0)
-				discard ;
-			mThreadSolution[slot].mIndex = mBestSolution.mIndex ;
-			mThreadSolution[slot].mError = mBestSolution.mError ;
-			mThreadSolution[slot].mInput = bitset_xor (mBestSolution.mInput ,r1x) ;
-			return TRUE ;
-		}
-		return FALSE ;
-	}
-
 	void wait_suspend (CREF<INDEX> slot) {
 		auto rax = UniqueLock (mThreadMutex) ;
 		while (TRUE) {
-			assume (mThreadFlag == ThreadFlag::Running) ;
+			if (mThreadFlag != ThreadFlag::Running)
+				break ;
 			if (!mSuspendFlag)
 				break ;
 			if ifdo (TRUE) {
@@ -422,24 +461,27 @@ public:
 			}
 			rax.wait () ;
 		}
+		assume (mThreadFlag == ThreadFlag::Running) ;
 		mThreadJoin.erase (slot) ;
 	}
 
-	CalcSolution poll () {
+	BOOL ready () const {
 		Scope<Mutex> anonymous (mThreadMutex) ;
-		mNewSolution = FALSE ;
-		return mBestSolution ;
+		return mNewSolution ;
 	}
 
-	void join () {
+	CalcSolution poll () {
 		auto rax = UniqueLock (mThreadMutex) ;
 		while (TRUE) {
-			assume (mThreadFlag == ThreadFlag::Running) ;
+			if (mThreadFlag != ThreadFlag::Running)
+				break ;
 			if (mNewSolution)
 				break ;
 			rax.wait () ;
 		}
+		assume (mThreadFlag == ThreadFlag::Running) ;
 		mNewSolution = FALSE ;
+		return mBestSolution ;
 	}
 
 	void suspend () {
@@ -448,13 +490,15 @@ public:
 		mSuspendFlag = TRUE ;
 		rax.notify () ;
 		while (TRUE) {
-			assume (mThreadFlag == ThreadFlag::Running) ;
+			if (mThreadFlag != ThreadFlag::Running)
+				break ;
 			if (!mSuspendFlag)
 				break ;
 			if (mThreadJoin.length () >= mThread.length ())
 				break ;
 			rax.wait () ;
 		}
+		assume (mThreadFlag == ThreadFlag::Running) ;
 	}
 
 	void resume () {
@@ -481,8 +525,6 @@ public:
 class CalcThreadImplHolder final implement Fat<CalcThreadHolder ,CalcThreadLayout> {
 public:
 	void initialize () override {
-		if (fake.mThis.exist ())
-			return ;
 		fake.mThis = SharedRef<CalcThreadImpl>::make () ;
 		ptr (fake).initialize () ;
 	}
@@ -495,16 +537,20 @@ public:
 		return ptr (fake).set_thread_size (size_) ;
 	}
 
+	void set_base_input (CREF<BitSet> base) const override {
+		return ptr (fake).set_base_input (base) ;
+	}
+
 	void start (CREF<Function<CREF<CalcSolution> ,VREF<CalcSolution>>> func) const override {
 		return ptr (fake).start (func) ;
 	}
 
-	CalcSolution poll () const override {
-		return ptr (fake).poll () ;
+	BOOL ready () const override {
+		return ptr (fake).ready () ;
 	}
 
-	void join () const override {
-		return ptr (fake).join () ;
+	CalcSolution poll () const override {
+		return ptr (fake).poll () ;
 	}
 
 	void suspend () const override {
@@ -583,15 +629,19 @@ public:
 	void start (CREF<Function<>> func) {
 		auto rax = UniqueLock (mThreadMutex) ;
 		assume (mThreadFlag == ThreadFlag::Preparing) ;
-		assume (mThread.size () == 0) ;
 		mThreadFlag = ThreadFlag::Running ;
 		mThreadFunc = func ;
 		mItem = NULL ;
 		mException = NULL ;
-		const auto r1x = Ref<VFat<ThreadFriend>>::make (ThreadFriendBinder<PromiseImpl>::create (thiz)) ;
-		for (auto &&i : mThread.range ()) {
-			mThread[i] = Thread (r1x.share () ,0) ;
-			mThread[i].start () ;
+		if ifdo (TRUE) {
+			if (mThread.size () > 0)
+				discard ;
+			mThread = Array<Thread> (1) ;
+			const auto r1x = Ref<VFat<ThreadBinder>>::make (FriendThreadBinder<PromiseImpl>::hold (thiz)) ;
+			for (auto &&i : mThread.range ()) {
+				mThread[i] = Thread (move (r1x) ,0) ;
+				mThread[i].start () ;
+			}
 		}
 		rax.notify () ;
 	}
@@ -604,8 +654,8 @@ public:
 			} catch (CREF<Exception> e) {
 				rethrow (e) ;
 			}
-			const auto r2x = wait_future () ;
-			if (!r2x)
+			const auto r1x = wait_future () ;
+			if (!r1x)
 				break ;
 		}
 		crash () ;
@@ -662,14 +712,14 @@ public:
 		rax.notify () ;
 	}
 
-	BOOL ready () {
+	BOOL ready () const {
 		Scope<Mutex> anonymous (mThreadMutex) ;
 		if (mThreadFlag == ThreadFlag::Finishing)
 			return TRUE ;
 		return FALSE ;
 	}
 
-	BOOL running () {
+	BOOL running () const {
 		Scope<Mutex> anonymous (mThreadMutex) ;
 		if (mThreadFlag == ThreadFlag::Running)
 			return TRUE ;
@@ -678,7 +728,7 @@ public:
 		return FALSE ;
 	}
 
-	AutoRef<Pointer> future () {
+	AutoRef<Pointer> poll () {
 		auto rax = UniqueLock (mThreadMutex) ;
 		while (TRUE) {
 			if (mThreadFlag != ThreadFlag::Running)
@@ -703,7 +753,7 @@ public:
 		return move (ret) ;
 	}
 
-	void signal () {
+	void future () {
 		auto rax = UniqueLock (mThreadMutex) ;
 		if (mThreadFlag == ThreadFlag::Preparing)
 			return ;
@@ -727,8 +777,6 @@ public:
 class PromiseImplHolder final implement Fat<PromiseHolder ,PromiseLayout> {
 public:
 	void initialize () override {
-		if (fake.mThis.exist ())
-			return ;
 		fake.mThis = SharedRef<PromiseImpl>::make () ;
 		ptr (fake).initialize () ;
 	}
@@ -765,12 +813,12 @@ public:
 		return ptr (fake).running () ;
 	}
 
-	AutoRef<Pointer> future () const override {
-		return ptr (fake).future () ;
+	AutoRef<Pointer> poll () const override {
+		return ptr (fake).poll () ;
 	}
 
-	void signal () const override {
-		return ptr (fake).signal () ;
+	void future () const override {
+		return ptr (fake).future () ;
 	}
 
 	void stop () const override {

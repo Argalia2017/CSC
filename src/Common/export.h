@@ -1,25 +1,30 @@
-#include "../util.h"
+﻿#include "../util.h"
 
 namespace CSC {
-struct ConfigHolder implement Interface {
-	imports DLLEXTERN AutoRef<ConfigHolder> DLLAPI create () ;
+struct ConfigProcImplLayout ;
+
+struct ConfigProcLayout implement ThisLayout<SharedRef<ConfigProcImplLayout>> {} ;
+
+struct ConfigProcHolder implement Interface {
+	imports CREF<ConfigProcLayout> instance () ;
+	imports VFat<ConfigProcHolder> hold (VREF<ConfigProcLayout> me) ;
+	imports CFat<ConfigProcHolder> hold (CREF<ConfigProcLayout> me) ;
 
 	virtual void initialize () = 0 ;
-	virtual void execute () = 0 ;
+	virtual void set_data_dire (CREF<String<STR>> path) const = 0 ;
 } ;
 
-class Config {
+class ConfigProc implement ConfigProcLayout {
 protected:
-	AutoRef<ConfigHolder> mThis ;
+	using ConfigProcLayout::mThis ;
 
 public:
-	explicit Config () {
-		mThis = ConfigHolder::create () ;
-		mThis->initialize () ;
+	static CREF<ConfigProc> instance () {
+		return keep[TYPE<ConfigProc>::expr] (ConfigProcHolder::instance ()) ;
 	}
 
-	void execute () {
-		return mThis->execute () ;
+	static void set_data_dire (CREF<String<STR>> dire) {
+		return ConfigProcHolder::hold (instance ())->set_data_dire (dire) ;
 	}
 } ;
 } ;

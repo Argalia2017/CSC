@@ -2,7 +2,7 @@
 
 #define _CRT_SECURE_NO_WARNINGS
 
-#include "csc/csc_end.h"
+#include <csc_end.h>
 #ifdef __CSC_SYSTEM_WINDOWS__
 #ifndef NOMINMAX
 #define NOMINMAX
@@ -14,44 +14,70 @@
 
 #include <Windows.h>
 #endif
-#include "csc/csc_begin.h"
+#include <csc_begin.h>
 
-#include "csc/csc_core.inl"
-#include "csc/csc_basic.inl"
-#include "csc/csc_math.inl"
-#include "csc/csc_array.inl"
-#include "csc/csc_image.inl"
-#include "csc/csc_matrix.inl"
-#include "csc/csc_stream.inl"
-#include "csc/csc_string.inl"
-#include "csc/csc_runtime.inl"
-#include "csc/csc_thread.inl"
+#include <csc_core.inl>
+#include <csc_basic.inl>
+#include <csc_math.inl>
+#include <csc_array.inl>
+#include <csc_image.inl>
+#include <csc_matrix.inl>
+#include <csc_stream.inl>
+#include <csc_string.inl>
+#include <csc_runtime.inl>
+#include <csc_file.inl>
+#include <csc_thread.inl>
 
 #define __CSC_API_WITH_SYS__
 
 #ifdef __CSC_COMPILER_MSVC__
-#ifdef __CSC_PLATFORM_X64__
-#define __CSC_API_WITH_OPENCV__
 #define __CSC_API_WITH_EIGEN__
+
+#ifdef __CSC_VER_DEBUG__
+#define __CSC_API_WITH_FREEIMAGE__
+#endif
+
+#ifndef __CSC_VER_DEBUG__
+#define __CSC_API_WITH_OPENCV__
 #endif
 #endif
 
-#include "csc/csc_math.cache.inl"
+#include <csc_math.cache.inl>
 
 #ifdef __CSC_API_WITH_SYS__
 #ifdef __CSC_SYSTEM_WINDOWS__
-#include "csc/csc_runtime.windows.inl"
+#include <csc_runtime.windows.inl>
+#include <csc_file.windows.inl>
 #endif
 
 #ifdef __CSC_SYSTEM_LINUX__
-#include "csc/csc_runtime.linux.inl"
+#include <csc_runtime.linux.inl>
+#include <csc_file.linux.inl>
+#endif
+#endif
+
+#ifdef __CSC_API_WITH_EIGEN__
+#ifdef __CSC_PLATFORM_X64__
+#include <csc_matrix.eigen.inl>
 #endif
 #endif
 
 #ifdef __CSC_API_WITH_OPENCV__
-#include "csc/csc_image.opencv.inl"
+#ifdef __CSC_PLATFORM_X64__
+#include <csc_image.opencv.inl>
+
+#ifdef __CSC_PLATFORM_X64__
+#pragma comment (lib ,"opencv_world470.lib")
+#endif
+#endif
 #endif
 
-#ifdef __CSC_API_WITH_EIGEN__
-#include "csc/csc_matrix.eigen.inl"
+#ifdef __CSC_API_WITH_FREEIMAGE__
+#ifdef __CSC_PLATFORM_X64__
+#include <csc_image.freeimage.inl>
+
+#ifdef __CSC_PLATFORM_X64__
+#pragma comment (lib ,"FreeImage.lib")
+#endif
+#endif
 #endif

@@ -94,7 +94,8 @@ public:
 
 struct ImageLayout {
 	RefBuffer<Pointer> mImage ;
-	ImageWidth mWidth ;
+	LENGTH mWidth ;
+	LENGTH mStride ;
 	LENGTH mBX ;
 	LENGTH mBY ;
 	LENGTH mCX ;
@@ -108,17 +109,18 @@ struct ImageHolder implement Interface {
 	virtual void initialize (CREF<Unknown> holder ,RREF<ImageLayout> that) = 0 ;
 	virtual void initialize (CREF<Unknown> holder ,CREF<LENGTH> cx_ ,CREF<LENGTH> cy_ ,CREF<LENGTH> step_) = 0 ;
 	virtual void initialize (CREF<ImageLayout> that) = 0 ;
-	virtual BOOL exist () const = 0 ;
 	virtual BOOL fixed () const = 0 ;
 	virtual LENGTH size () const = 0 ;
 	virtual LENGTH step () const = 0 ;
+	virtual LENGTH stride () const = 0 ;
+	virtual BOOL continous () const = 0 ;
 	virtual LENGTH bx () const = 0 ;
 	virtual LENGTH by () const = 0 ;
 	virtual LENGTH cx () const = 0 ;
 	virtual LENGTH cy () const = 0 ;
 	virtual ImageWidth width () const = 0 ;
 	virtual void reset () = 0 ;
-	virtual void reset (CREF<INDEX> bx_ ,CREF<INDEX> by_ ,CREF<INDEX> cx_ ,CREF<INDEX> cy_) = 0 ;
+	virtual void reset (CREF<LENGTH> bx_ ,CREF<LENGTH> by_ ,CREF<LENGTH> cx_ ,CREF<LENGTH> cy_) = 0 ;
 	virtual VREF<BoxLayout> raw () leftvalue = 0 ;
 	virtual CREF<BoxLayout> raw () const leftvalue = 0 ;
 	virtual VREF<Pointer> at (CREF<INDEX> x ,CREF<INDEX> y) leftvalue = 0 ;
@@ -143,6 +145,7 @@ private:
 protected:
 	using ImageRealLayout<A>::mImage ;
 	using ImageRealLayout<A>::mWidth ;
+	using ImageRealLayout<A>::mStride ;
 	using ImageRealLayout<A>::mBX ;
 	using ImageRealLayout<A>::mBY ;
 	using ImageRealLayout<A>::mCX ;
@@ -153,6 +156,10 @@ public:
 
 	implicit Image (RREF<ImageLayout> that) {
 		ImageHolder::hold (thiz)->initialize (BufferUnknownBinder<A> () ,move (that)) ;
+	}
+
+	explicit Image (CREF<ImageWidth> size_) {
+		ImageHolder::hold (thiz)->initialize (BufferUnknownBinder<A> () ,size_.mCX ,size_.mCY ,SIZE_OF<A>::expr) ;
 	}
 
 	explicit Image (CREF<LENGTH> cx_ ,CREF<LENGTH> cy_) {
@@ -175,10 +182,6 @@ public:
 		return move (thiz) ;
 	}
 
-	BOOL exist () const {
-		return ImageHolder::hold (thiz)->exist () ;
-	}
-
 	BOOL fixed () const {
 		return ImageHolder::hold (thiz)->fixed () ;
 	}
@@ -189,6 +192,14 @@ public:
 
 	LENGTH step () const {
 		return ImageHolder::hold (thiz)->step () ;
+	}
+
+	LENGTH stride () const {
+		return ImageHolder::hold (thiz)->stride () ;
+	}
+
+	BOOL continous () const {
+		return ImageHolder::hold (thiz)->continous () ;
 	}
 
 	LENGTH bx () const {
@@ -215,7 +226,7 @@ public:
 		return ImageHolder::hold (thiz)->reset () ;
 	}
 
-	void reset (CREF<INDEX> bx_ ,CREF<INDEX> by_ ,CREF<INDEX> cx_ ,CREF<INDEX> cy_) {
+	void reset (CREF<LENGTH> bx_ ,CREF<LENGTH> by_ ,CREF<LENGTH> cx_ ,CREF<LENGTH> cy_) {
 		return ImageHolder::hold (thiz)->reset (bx_ ,by_ ,cx_ ,cy_) ;
 	}
 
@@ -393,7 +404,9 @@ public:
 	}
 } ;
 
-struct ImageProcLayout implement ThisLayout<AutoRefLayout> {} ;
+struct ImageProcImplLayout ;
+
+struct ImageProcLayout implement ThisLayout<Ref<ImageProcImplLayout>> {} ;
 
 struct ImageProcHolder implement Interface {
 	imports CREF<ImageProcLayout> instance () ;
@@ -402,7 +415,8 @@ struct ImageProcHolder implement Interface {
 
 	virtual void initialize () = 0 ;
 	virtual ImageLayout make_image (RREF<BoxLayout> image) const = 0 ;
-	virtual ImageLayout make_image (CREF<LENGTH> cx_ ,CREF<LENGTH> cy_ ,CREF<LENGTH> align ,CREF<LENGTH> channel) const = 0 ;
+	virtual ImageLayout make_image (CREF<ImageWidth> width) const = 0 ;
+	virtual ImageLayout make_image (CREF<ImageWidth> width ,CREF<Clazz> clazz ,CREF<LENGTH> channel) const = 0 ;
 	virtual VREF<Pointer> peek_image (VREF<ImageLayout> image) const = 0 ;
 	virtual CREF<Pointer> peek_image (CREF<ImageLayout> image) const = 0 ;
 	virtual ImageLayout load_image (CREF<String<STR>> file) const = 0 ;
@@ -428,8 +442,12 @@ public:
 		return ImageProcHolder::hold (instance ())->make_image (move (image)) ;
 	}
 
-	static ImageLayout make_image (CREF<LENGTH> cx_ ,CREF<LENGTH> cy_ ,CREF<LENGTH> align ,CREF<LENGTH> channel) {
-		return ImageProcHolder::hold (instance ())->make_image (cx_ ,cy_ ,align ,channel) ;
+	static ImageLayout make_image (CREF<ImageWidth> width) {
+		return ImageProcHolder::hold (instance ())->make_image (width) ;
+	}
+
+	static ImageLayout make_image (CREF<ImageWidth> width ,CREF<Clazz> clazz ,CREF<LENGTH> channel) {
+		return ImageProcHolder::hold (instance ())->make_image (width ,clazz ,channel) ;
 	}
 
 	template <class A>
@@ -458,24 +476,27 @@ public:
 
 struct TensorDataType {
 	enum {
-		Val32 ,
-		Val64 ,
 		Flt32 ,
 		Flt64 ,
+		Complex32 ,
+		Complex64 ,
 		ETC
 	} ;
 } ;
 
 struct TensorLayout {
 	RefBuffer<BYTE> mTensor ;
-	LENGTH mSize ;
+	LENGTH mOffset ;
+	LENGTH mWidth ;
 	Just<TensorDataType> mType ;
 	LENGTH mSX ;
 	LENGTH mSY ;
 	LENGTH mSZ ;
+	LENGTH mSW ;
 	LENGTH mCX ;
 	LENGTH mCY ;
 	LENGTH mCZ ;
+	LENGTH mCW ;
 } ;
 
 struct TensorHolder implement Interface {
@@ -488,35 +509,30 @@ struct TensorHolder implement Interface {
 	virtual LENGTH cx () const = 0 ;
 	virtual LENGTH cy () const = 0 ;
 	virtual LENGTH cz () const = 0 ;
+	virtual LENGTH cw () const = 0 ;
 	virtual TensorLayout recast (CREF<Just<TensorDataType>> type_) = 0 ;
-	virtual void shape (CREF<LENGTH> cx_ ,CREF<LENGTH> cy_ ,CREF<LENGTH> cz_) = 0 ;
+	virtual void reset () = 0 ;
+	virtual void reset (CREF<LENGTH> cx_ ,CREF<LENGTH> cy_ ,CREF<LENGTH> cz_ ,CREF<LENGTH> cw_) = 0 ;
 	virtual VREF<Pointer> self_m () leftvalue = 0 ;
 	virtual CREF<Pointer> self_m () const leftvalue = 0 ;
 	virtual Ref<RefBuffer<BYTE>> borrow () leftvalue = 0 ;
 	virtual Ref<RefBuffer<BYTE>> borrow () const leftvalue = 0 ;
 } ;
 
-template <class A>
-class TensorUnknownBinder implement UnknownFriend {
-public:
-	FLAG reflect (CREF<FLAG> uuid) const override {
-		if (uuid == ReflectSizeBinder<A>::expr)
-			return inline_vptr (ReflectSizeBinder<A> ()) ;
-		if (uuid == ReflectDestroyBinder<A>::expr)
-			return inline_vptr (ReflectDestroyBinder<A> ()) ;
-		if (uuid == ReflectElementBinder<A>::expr)
-			return inline_vptr (ReflectElementBinder<A> ()) ;
-		return ZERO ;
-	}
-} ;
-
 class Tensor implement TensorLayout {
 protected:
 	using TensorLayout::mTensor ;
+	using TensorLayout::mOffset ;
+	using TensorLayout::mWidth ;
 	using TensorLayout::mType ;
+	using TensorLayout::mSX ;
+	using TensorLayout::mSY ;
+	using TensorLayout::mSZ ;
+	using TensorLayout::mSW ;
 	using TensorLayout::mCX ;
 	using TensorLayout::mCY ;
 	using TensorLayout::mCZ ;
+	using TensorLayout::mCW ;
 
 public:
 	implicit Tensor () = default ;
@@ -545,13 +561,21 @@ public:
 		return TensorHolder::hold (thiz)->cz () ;
 	}
 
+	LENGTH cw () const {
+		return TensorHolder::hold (thiz)->cw () ;
+	}
+
 	Tensor recast (CREF<Just<TensorDataType>> type_) {
 		TensorLayout ret = TensorHolder::hold (thiz)->recast (type_) ;
 		return move (keep[TYPE<Tensor>::expr] (ret)) ;
 	}
 
-	void shape (CREF<LENGTH> cx_ ,CREF<LENGTH> cy_ ,CREF<LENGTH> cz_) {
-		return TensorHolder::hold (thiz)->shape (cx_ ,cy_ ,cz_) ;
+	void reset () {
+		return TensorHolder::hold (thiz)->reset () ;
+	}
+
+	void reset (CREF<LENGTH> cx_ ,CREF<LENGTH> cy_ ,CREF<LENGTH> cz_ ,CREF<LENGTH> cw_) {
+		return TensorHolder::hold (thiz)->reset (cx_ ,cy_ ,cz_ ,cw_) ;
 	}
 
 	VREF<ARR<STRA>> self_m () leftvalue {
@@ -627,14 +651,14 @@ public:
 
 struct KMMatchLayout {
 	LENGTH mSize ;
-	VAL32 mInfinity ;
-	Array<VAL32> mLove ;
-	Array<VAL32> mUser ;
-	Array<VAL32> mWork ;
+	FLT32 mThreshold ;
+	Array<FLT32> mLove ;
+	Array<FLT32> mUser ;
+	Array<FLT32> mWork ;
 	BitSet mUserVisit ;
 	BitSet mWorkVisit ;
 	Array<INDEX> mMatch ;
-	Array<VAL32> mLack ;
+	Array<FLT32> mLack ;
 } ;
 
 struct KMMatchHolder implement Interface {
@@ -642,13 +666,15 @@ struct KMMatchHolder implement Interface {
 	imports CFat<KMMatchHolder> hold (CREF<KMMatchLayout> that) ;
 
 	virtual void initialize (CREF<LENGTH> size_) = 0 ;
-	virtual Array<INDEX> sort (CREF<Array<VAL32>> love) = 0 ;
+	virtual void set_threshold (CREF<FLT64> threshold) = 0 ;
+	virtual LENGTH size () const = 0 ;
+	virtual Array<INDEX> sort (RREF<Array<FLT32>> love) = 0 ;
 } ;
 
 class KMMatch implement KMMatchLayout {
 protected:
 	using KMMatchLayout::mSize ;
-	using KMMatchLayout::mInfinity ;
+	using KMMatchLayout::mThreshold ;
 	using KMMatchLayout::mLove ;
 	using KMMatchLayout::mUser ;
 	using KMMatchLayout::mWork ;
@@ -664,8 +690,16 @@ public:
 		KMMatchHolder::hold (thiz)->initialize (size_) ;
 	}
 
-	Array<INDEX> sort (CREF<Array<VAL32>> love) {
-		return KMMatchHolder::hold (thiz)->sort (love) ;
+	void set_threshold (CREF<FLT64> threshold) {
+		return KMMatchHolder::hold (thiz)->set_threshold (threshold) ;
+	}
+
+	LENGTH size () const {
+		return KMMatchHolder::hold (thiz)->size () ;
+	}
+
+	Array<INDEX> sort (RREF<Array<FLT32>> love) {
+		return KMMatchHolder::hold (thiz)->sort (move (love)) ;
 	}
 } ;
 } ;

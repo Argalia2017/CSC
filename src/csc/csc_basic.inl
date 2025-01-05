@@ -15,14 +15,16 @@ struct HeapMutexImplLayout {
 	Box<std::recursive_mutex> mMutex ;
 } ;
 
-class HeapMutexImplRoot implement Pin<HeapMutexImplLayout> {
+class HeapMutexImplHead implement Pin<HeapMutexImplLayout> {
 public:
-	static CREF<HeapMutexImplRoot> instance () {
-		return memorize ([&] () {
-			return HeapMutexImplRoot () ;
-		}) ;
-	}
+	imports CREF<HeapMutexImplHead> instance () ;
 } ;
+
+exports CREF<HeapMutexImplHead> HeapMutexImplHead::instance () {
+	return memorize ([&] () {
+		return HeapMutexImplHead () ;
+	}) ;
+}
 
 class HeapMutexImplHolder final implement Fat<HeapMutexHolder ,HeapMutexLayout> {
 public:
@@ -31,7 +33,7 @@ public:
 	}
 
 	static VREF<HeapMutexImplLayout> ptr (CREF<HeapMutexLayout> layout) {
-		return HeapMutexImplRoot::instance ().self ;
+		return HeapMutexImplHead::instance ().self ;
 	}
 
 	void enter () const override {
@@ -64,234 +66,10 @@ exports CFat<HeapMutexHolder> HeapMutexHolder::hold (CREF<HeapMutexLayout> that)
 	return CFat<HeapMutexHolder> (rax ,that) ;
 }
 
-struct KeyNodeImplLayout implement Proxy {
-	FLAG mRoot ;
-	FLAG mNext ;
-	FLAG mKeyId ;
-	BoxLayout mValue ;
-} ;
-
-struct KeyRootImplLayout implement Proxy {
-	KeyNodeImplLayout mNode ;
-	FLAG mNext ;
-	FLAG mHash ;
-	Heap mHeap ;
-	BOOL mFinalize ;
-} ;
-
-class KeyNodeImplHolder final implement Fat<KeyNodeHolder ,KeyNodeLayout> {
-private:
-	using GCROOTIMPLLAYOUT_HASH_GROUP = ENUM<1024> ;
-
-public:
-	void initialize () override {
-		if (fake.mHandle != ZERO)
-			return ;
-		auto rax = ZERO ;
-		if ifdo (TRUE) {
-			const auto r1x = Heap::instance () ;
-			rax = r1x.alloc (SIZE_OF<KeyRootImplLayout>::expr) ;
-			root_ptr (rax).mNext = rax ;
-			root_ptr (rax).mHash = ZERO ;
-			root_ptr (rax).mHeap = r1x ;
-			root_ptr (rax).mFinalize = FALSE ;
-			const auto r2x = address (root_ptr (rax).mNode) ;
-			node_ptr (r2x).mRoot = rax ;
-			node_ptr (r2x).mNext = r2x ;
-			node_ptr (r2x).mKeyId = ZERO ;
-		}
-		fake.mHandle = address (root_ptr (rax).mNode) ;
-	}
-
-	void initialize (CREF<Unknown> holder ,CREF<FLAG> pointer) override {
-		const auto r1x = RFat<ReflectSize> (holder) ;
-		const auto r2x = ALIGN_OF<KeyNodeImplLayout>::expr ;
-		const auto r3x = r1x->type_align () ;
-		const auto r4x = invoke ([&] () {
-			for (auto &&i : iter (0 ,r3x / r2x)) {
-				const auto r5x = pointer - SIZE_OF<KeyNodeImplLayout>::expr - i * r2x ;
-				const auto r6x = node_ptr (r5x).mValue.mHolder ;
-				if (r6x != ZERO)
-					return i ;
-			}
-			assert (FALSE) ;
-			return ZERO ;
-		}) ;
-		const auto r7x = pointer - SIZE_OF<KeyNodeImplLayout>::expr - r4x * r2x ;
-		const auto r8x = address (BoxHolder::hold (node_ptr (r7x).mValue)->self) ;
-		noop (r8x) ;
-		assert (r8x == pointer) ;
-		fake.mHandle = r7x ;
-	}
-
-	void destroy () override {
-		if (fake.mHandle == ZERO)
-			return ;
-		if ifdo (TRUE) {
-			const auto r1x = node_ptr (fake.mHandle).mRoot ;
-			const auto r2x = address (root_ptr (r1x).mNode) ;
-			if (fake.mHandle != r2x)
-				discard ;
-			remove_root (r1x) ;
-		}
-		fake.mHandle = ZERO ;
-	}
-
-	static VREF<KeyNodeImplLayout> node_ptr (CREF<FLAG> handle) {
-		return Pointer::make (handle) ;
-	}
-
-	static VREF<KeyRootImplLayout> root_ptr (CREF<FLAG> handle) {
-		return Pointer::make (handle) ;
-	}
-
-	FLAG keyid () const override {
-		if (fake.mHandle == ZERO)
-			return ZERO ;
-		return node_ptr (fake.mHandle).mKeyId ;
-	}
-
-	FLAG keyap () const override {
-		const auto r1x = fake.mHandle ;
-		assert (r1x != ZERO) ;
-		assert (r1x != address (root_ptr (node_ptr (r1x).mRoot).mNode)) ;
-		return address (BoxHolder::hold (node_ptr (r1x).mValue)->self) ;
-	}
-
-	FLAG keyap (CREF<Unknown> holder ,CREF<FLAG> id) const override {
-		assert (fake.mHandle != ZERO) ;
-		const auto r1x = hashcode (id) ;
-		const auto r2x = insert_root (r1x) ;
-		const auto r3x = insert_node (holder ,id ,r2x) ;
-		if ifdo (TRUE) {
-			if (BoxHolder::hold (node_ptr (r3x).mValue)->exist ())
-				discard ;
-			BoxHolder::hold (node_ptr (r3x).mValue)->initialize (holder) ;
-			const auto r4x = RFat<ReflectCreate> (holder) ;
-			const auto r5x = address (BoxHolder::hold (node_ptr (r3x).mValue)->self) ;
-			const auto r6x = r3x + SIZE_OF<KeyNodeImplLayout>::expr ;
-			inline_memset (Pointer::make (r6x) ,r5x - r6x) ;
-			r4x->create (Pointer::make (r5x) ,1) ;
-		}
-		return address (BoxHolder::hold (node_ptr (r3x).mValue)->self) ;
-	}
-
-	FLAG hashcode (CREF<FLAG> id) const {
-		const auto r1x = id & VAL_MAX ;
-		const auto r2x = r1x % GCROOTIMPLLAYOUT_HASH_GROUP::expr ;
-		return r2x ;
-	}
-
-	FLAG insert_root (CREF<FLAG> hash) const {
-		const auto r1x = node_ptr (fake.mHandle).mRoot ;
-		FLAG ret = r1x ;
-		while (TRUE) {
-			if (root_ptr (ret).mHash == hash)
-				break ;
-			ret = root_ptr (ret).mNext ;
-			if (ret == r1x)
-				break ;
-		}
-		if ifdo (TRUE) {
-			if (root_ptr (ret).mHash == hash)
-				discard ;
-			const auto r2x = root_ptr (r1x).mHeap ;
-			ret = r2x.alloc (SIZE_OF<KeyRootImplLayout>::expr) ;
-			root_ptr (ret).mNext = root_ptr (r1x).mNext ;
-			root_ptr (r1x).mNext = ret ;
-			root_ptr (ret).mHash = hash ;
-			root_ptr (ret).mHeap = r2x ;
-			root_ptr (ret).mFinalize = FALSE ;
-			const auto r3x = address (root_ptr (ret).mNode) ;
-			node_ptr (r3x).mRoot = ret ;
-			node_ptr (r3x).mNext = r3x ;
-			node_ptr (r3x).mKeyId = ZERO ;
-		}
-		assert (!root_ptr (ret).mFinalize) ;
-		return move (ret) ;
-	}
-
-	FLAG insert_node (CREF<Unknown> holder ,CREF<FLAG> id ,CREF<FLAG> root) const {
-		const auto r1x = address (root_ptr (root).mNode) ;
-		FLAG ret = r1x ;
-		while (TRUE) {
-			if (node_ptr (ret).mKeyId == id)
-				break ;
-			ret = node_ptr (ret).mNext ;
-			if (ret == r1x)
-				break ;
-		}
-		if ifdo (TRUE) {
-			if (node_ptr (ret).mKeyId == id)
-				discard ;
-			const auto r2x = root_ptr (root).mHeap ;
-			ret = alloc_node (r2x ,holder) ;
-			node_ptr (ret).mRoot = root ;
-			node_ptr (ret).mNext = node_ptr (r1x).mNext ;
-			node_ptr (r1x).mNext = ret ;
-			node_ptr (ret).mKeyId = id ;
-		}
-		return move (ret) ;
-	}
-
-	FLAG alloc_node (CREF<Heap> heap ,CREF<Unknown> holder) const {
-		const auto r1x = RFat<ReflectSize> (holder) ;
-		const auto r2x = inline_max (r1x->type_align () - ALIGN_OF<KeyNodeImplLayout>::expr ,0) ;
-		const auto r3x = SIZE_OF<KeyNodeImplLayout>::expr + r2x + r1x->type_size () ;
-		const auto r4x = heap.alloc (r3x) ;
-		inline_memset (Pointer::make (r4x) ,SIZE_OF<KeyNodeImplLayout>::expr) ;
-		return r4x ;
-	}
-
-	void remove_root (CREF<FLAG> root) {
-		auto rax = root ;
-		while (TRUE) {
-			root_ptr (rax).mFinalize = TRUE ;
-			rax = root_ptr (rax).mNext ;
-			if (rax == root)
-				break ;
-		}
-		auto rbx = root_ptr (rax).mNext ;
-		while (TRUE) {
-			const auto r1x = root_ptr (rax).mHeap ;
-			remove_node (rax) ;
-			r1x.free (rax) ;
-			rax = rbx ;
-			rbx = root_ptr (rax).mNext ;
-			if (rax == root)
-				break ;
-		}
-	}
-
-	void remove_node (CREF<FLAG> root) {
-		const auto r1x = root_ptr (root).mHeap ;
-		const auto r2x = address (root_ptr (root).mNode) ;
-		auto rax = node_ptr (r2x).mNext ;
-		auto rbx = node_ptr (rax).mNext ;
-		while (TRUE) {
-			if (rax == r2x)
-				break ;
-			BoxHolder::hold (node_ptr (rax).mValue)->destroy () ;
-			r1x.free (rax) ;
-			rax = rbx ;
-			rbx = node_ptr (rax).mNext ;
-		}
-		node_ptr (r2x).mNext = r2x ;
-	}
-} ;
-
-exports VFat<KeyNodeHolder> KeyNodeHolder::hold (VREF<KeyNodeLayout> that) {
-	return VFat<KeyNodeHolder> (KeyNodeImplHolder () ,that) ;
-}
-
-exports CFat<KeyNodeHolder> KeyNodeHolder::hold (CREF<KeyNodeLayout> that) {
-	return CFat<KeyNodeHolder> (KeyNodeImplHolder () ,that) ;
-}
-
 class OptionalImplHolder final implement Fat<OptionalHolder ,OptionalLayout> {
 public:
 	void initialize (RREF<BoxLayout> item) override {
-		store (item) ;
+		set (item) ;
 	}
 
 	void initialize (CREF<FLAG> code) override {
@@ -299,22 +77,25 @@ public:
 	}
 
 	BOOL exist () const override {
-		return BoxHolder::hold (fake.mValue.self)->exist () ;
+		auto &&rax = keep[TYPE<BoxLayout>::expr] (fake.mValue.self) ;
+		return BoxHolder::hold (rax)->exist () ;
 	}
 
 	FLAG code () const override {
 		return fake.mCode ;
 	}
 
-	void fetch (VREF<BoxLayout> item) const override {
+	void get (VREF<BoxLayout> item) const override {
 		assume (exist ()) ;
-		BoxHolder::hold (item)->acquire (fake.mValue.self) ;
-		BoxHolder::hold (fake.mValue.self)->release () ;
+		auto &&rax = keep[TYPE<BoxLayout>::expr] (fake.mValue.self) ;
+		BoxHolder::hold (item)->acquire (rax) ;
+		BoxHolder::hold (rax)->release () ;
 	}
 
-	void store (VREF<BoxLayout> item) const override {
+	void set (VREF<BoxLayout> item) const override {
 		assume (!exist ()) ;
-		BoxHolder::hold (fake.mValue.self)->acquire (item) ;
+		auto &&rax = keep[TYPE<BoxLayout>::expr] (fake.mValue.self) ;
+		BoxHolder::hold (rax)->acquire (item) ;
 		BoxHolder::hold (item)->release () ;
 	}
 } ;
@@ -340,10 +121,6 @@ public:
 		BoxHolder::hold (raw ())->release () ;
 		BoxHolder::hold (raw ())->initialize (holder) ;
 		BoxHolder::hold (item)->release () ;
-	}
-
-	void initialize (CREF<FunctionLayout> that) override {
-		fake.mThis = that.mThis.share () ;
 	}
 
 	VREF<BoxLayout> raw () leftvalue {
@@ -387,7 +164,7 @@ public:
 	void initialize (CREF<Unknown> holder) override {
 		assert (!exist ()) ;
 		RefHolder::hold (fake.mThis)->initialize (RefUnknownBinder<AutoRefImplLayout> () ,holder ,1) ;
-		auto &&rax = fake.mThis.leak () ;
+		auto &&rax = keep[TYPE<AutoRefImplLayout>::expr] (fake.mThis.pin ().self) ;
 		ClazzHolder::hold (rax.mClazz)->initialize (holder) ;
 		BoxHolder::hold (raw ())->initialize (holder) ;
 		const auto r1x = RFat<ReflectCreate> (holder) ;
@@ -399,7 +176,7 @@ public:
 		assert (!exist ()) ;
 		const auto r1x = BoxHolder::hold (item)->unknown () ;
 		RefHolder::hold (fake.mThis)->initialize (RefUnknownBinder<AutoRefImplLayout> () ,r1x ,1) ;
-		auto &&rax = fake.mThis.leak () ;
+		auto &&rax = keep[TYPE<AutoRefImplLayout>::expr] (fake.mThis.pin ().self) ;
 		rax.mClazz = clazz_ ;
 		BoxHolder::hold (raw ())->acquire (item) ;
 		BoxHolder::hold (item)->release () ;
@@ -454,10 +231,11 @@ public:
 		return Pointer::from (fake) ;
 	}
 
-	AutoRefLayout recast (CREF<ReflectRecast> simple) override {
+	AutoRefLayout recast (CREF<Unknown> simple) override {
 		AutoRefLayout ret ;
 		ret.mThis = move (fake.mThis) ;
-		ret.mPointer = simple.recast (fake.mPointer) ;
+		const auto r1x = RFat<ReflectRecast> (simple) ;
+		ret.mPointer = r1x->recast (fake.mPointer) ;
 		return move (ret) ;
 	}
 } ;
@@ -469,8 +247,6 @@ exports VFat<AutoRefHolder> AutoRefHolder::hold (VREF<AutoRefLayout> that) {
 exports CFat<AutoRefHolder> AutoRefHolder::hold (CREF<AutoRefLayout> that) {
 	return CFat<AutoRefHolder> (AutoRefImplHolder () ,that) ;
 }
-
-struct RefImplLayout ;
 
 #ifdef __CSC_CONFIG_VAL32__
 static constexpr auto SHADERREFIMPLLAYOUT_HEADER = FLAG (0X07654321) ;
@@ -493,12 +269,12 @@ public:
 		assert (!exist ()) ;
 		const auto r1x = BoxHolder::hold (item)->unknown () ;
 		RefHolder::hold (fake.mThis)->initialize (RefUnknownBinder<SharedRefImplLayout> () ,r1x ,1) ;
-		auto &&rax = fake.mThis.leak () ;
+		auto &&rax = keep[TYPE<SharedRefImplLayout>::expr] (fake.mThis.pin ().self) ;
 		rax.mHeader = SHADERREFIMPLLAYOUT_HEADER ;
 		rax.mMutex = HeapMutex::instance () ;
 		BoxHolder::hold (raw ())->acquire (item) ;
 		BoxHolder::hold (item)->release () ;
-		fake.mThis->mCounter.self++ ;
+		increase (fake.mThis->mCounter) ;
 		fake.mPointer = address (BoxHolder::hold (raw ())->self) ;
 		const auto r2x = address (rax) + SIZE_OF<SharedRefImplLayout>::expr ;
 		inline_memset (Pointer::make (r2x) ,fake.mPointer - r2x) ;
@@ -510,8 +286,8 @@ public:
 			if (that.mThis == NULL)
 				discard ;
 			Scope<HeapMutex> anonymous (that.mThis->mMutex) ;
-			fake.mThis = that.mThis.share () ;
-			fake.mThis->mCounter.self++ ;
+			fake.mThis = that.mThis ;
+			increase (fake.mThis->mCounter) ;
 			fake.mPointer = address (BoxHolder::hold (raw ())->self) ;
 		}
 	}
@@ -532,22 +308,14 @@ public:
 		}) ;
 		const auto r6x = r2x - r3x * ALIGN_OF<SharedRefImplLayout>::expr ;
 		auto &&rax = keep[TYPE<SharedRefImplLayout>::expr] (Pointer::make (r6x)) ;
-		const auto r7x = address (BoxHolder::hold (rax.mValue.self)->self) ;
-		if (r7x != pointer)
-			return ;
+		auto &&rbx = keep[TYPE<BoxLayout>::expr] (rax.mValue.self) ;
+		const auto r7x = address (BoxHolder::hold (rbx)->self) ;
+		assert (r7x == pointer) ;
 		Scope<HeapMutex> anonymous (rax.mMutex) ;
-		if (rax.mCounter.self <= 0)
-			return ;
-		assert (ALIGN_OF<SharedRefImplLayout>::expr <= ALIGN_OF<RefImplLayout>::expr) ;
-		const auto r8x = r6x - SIZE_OF<RefImplLayout>::expr ;
-		auto &&rbx = keep[TYPE<RefImplLayout>::expr] (Pointer::make (r8x)) ;
-		if (rbx.mCounter.self <= 0)
-			return ;
-		auto &&rcx = keep[TYPE<RefLayout>::expr] (fake.mThis) ;
-		rcx.mHandle = address (rbx) ;
-		rcx.mPointer = address (rax) ;
-		rbx.mCounter.self++ ;
-		fake.mThis->mCounter.self++ ;
+		const auto r8x = unchange (rax.mCounter) ;
+		assert (r8x > 0) ;
+		RefHolder::hold (fake.mThis)->initialize (RefUnknownBinder<SharedRefImplLayout> () ,r6x) ;
+		increase (fake.mThis->mCounter) ;
 		fake.mPointer = pointer ;
 	}
 
@@ -557,10 +325,32 @@ public:
 		if (!BoxHolder::hold (raw ())->exist ())
 			return ;
 		Scope<HeapMutex> anonymous (fake.mThis->mMutex) ;
-		const auto r1x = --fake.mThis->mCounter.self ;
+		const auto r1x = decrease (fake.mThis->mCounter) ;
 		if (r1x > 0)
 			return ;
 		BoxHolder::hold (raw ())->destroy () ;
+	}
+
+	LENGTH unchange (CREF<Pin<LENGTH>> counter) const {
+		LENGTH ret ;
+		counter.get (ret) ;
+		return move (ret) ;
+	}
+
+	LENGTH increase (CREF<Pin<LENGTH>> counter) const {
+		LENGTH ret ;
+		counter.get (ret) ;
+		ret++ ;
+		counter.set (ret) ;
+		return move (ret) ;
+	}
+
+	LENGTH decrease (CREF<Pin<LENGTH>> counter) const {
+		LENGTH ret ;
+		counter.get (ret) ;
+		ret-- ;
+		counter.set (ret) ;
+		return move (ret) ;
 	}
 
 	BOOL exist () const override {
@@ -579,7 +369,7 @@ public:
 		if (!exist ())
 			return 0 ;
 		Scope<HeapMutex> anonymous (fake.mThis->mMutex) ;
-		return fake.mThis->mCounter.self ;
+		return unchange (fake.mThis->mCounter) ;
 	}
 
 	VREF<Pointer> self_m () const leftvalue override {
@@ -587,10 +377,11 @@ public:
 		return Pointer::make (fake.mPointer) ;
 	}
 
-	SharedRefLayout recast (CREF<ReflectRecast> simple) override {
+	SharedRefLayout recast (CREF<Unknown> simple) override {
 		SharedRefLayout ret ;
 		ret.mThis = move (fake.mThis) ;
-		ret.mPointer = simple.recast (fake.mPointer) ;
+		const auto r1x = RFat<ReflectRecast> (simple) ;
+		ret.mPointer = r1x->recast (fake.mPointer) ;
 		return move (ret) ;
 	}
 } ;
@@ -605,6 +396,7 @@ exports CFat<SharedRefHolder> SharedRefHolder::hold (CREF<SharedRefLayout> that)
 
 struct UniqueRefImplLayout {
 	Function<VREF<Pointer>> mOwner ;
+	Pin<UniqueRefLayout> mUpper ;
 	Pin<BoxLayout> mValue ;
 } ;
 
@@ -619,18 +411,19 @@ public:
 		fake.mPointer = address (BoxHolder::hold (raw ())->self) ;
 	}
 
-	void acquire (RREF<FunctionLayout> dtor) override {
-		auto &&rax = fake.mThis.leak () ;
-		rax.mOwner = move (keep[TYPE<Function<VREF<Pointer>>>::expr] (dtor)) ;
-	}
-
 	void destroy () override {
 		if (!exist ())
 			return ;
+		fake.mThis->mUpper.~Pin () ;
 		if (!BoxHolder::hold (raw ())->exist ())
 			return ;
 		fake.mThis->mOwner (BoxHolder::hold (raw ())->self) ;
 		BoxHolder::hold (raw ())->destroy () ;
+	}
+
+	void use_owner (CREF<FunctionLayout> owner) override {
+		auto &&rax = keep[TYPE<UniqueRefImplLayout>::expr] (fake.mThis.pin ().self) ;
+		rax.mOwner = move (keep[TYPE<Function<VREF<Pointer>>>::expr] (owner)) ;
 	}
 
 	BOOL exist () const override {
@@ -650,10 +443,21 @@ public:
 		return Pointer::make (fake.mPointer) ;
 	}
 
-	UniqueRefLayout recast (CREF<ReflectRecast> simple) override {
+	void depend (VREF<UniqueRefLayout> that) const override {
+		auto &&rax = keep[TYPE<UniqueRefImplLayout>::expr] (that.mThis.pin ().self) ;
+		auto rbx = UniqueRefLayout () ;
+		rax.mUpper.get (rbx) ;
+		assert (!rbx.mThis.exist ()) ;
+		rbx.mThis = fake.mThis ;
+		rbx.mPointer = fake.mPointer ;
+		rax.mUpper.set (rbx) ;
+	}
+
+	UniqueRefLayout recast (CREF<Unknown> simple) override {
 		UniqueRefLayout ret ;
 		ret.mThis = move (fake.mThis) ;
-		ret.mPointer = simple.recast (fake.mPointer) ;
+		const auto r1x = RFat<ReflectRecast> (simple) ;
+		ret.mPointer = r1x->recast (fake.mPointer) ;
 		return move (ret) ;
 	}
 } ;
@@ -667,7 +471,7 @@ exports CFat<UniqueRefHolder> UniqueRefHolder::hold (CREF<UniqueRefLayout> that)
 }
 
 struct RefBufferImplLayout {
-	LENGTH mWidth ;
+	LENGTH mCapacity ;
 	Pin<BoxLayout> mValue ;
 } ;
 
@@ -693,8 +497,8 @@ public:
 		fake.mStep = r2x->type_size () ;
 		const auto r3x = RFat<ReflectCreate> (r1x) ;
 		r3x->create (self ,size_) ;
-		auto &&rax = fake.mThis.leak () ;
-		rax.mWidth = size_ ;
+		auto &&rax = keep[TYPE<RefBufferImplLayout>::expr] (fake.mThis.pin ().self) ;
+		rax.mCapacity = size_ ;
 	}
 
 	void initialize (CREF<Unknown> holder ,CREF<SliceLayout> buffer) override {
@@ -715,8 +519,8 @@ public:
 		fake.mBuffer = buffer.mBuffer ;
 		fake.mSize = buffer.mSize ;
 		fake.mStep = buffer.mStep ;
-		auto &&rax = fake.mThis.leak () ;
-		rax.mWidth = USED ;
+		auto &&rax = keep[TYPE<RefBufferImplLayout>::expr] (fake.mThis.pin ().self) ;
+		rax.mCapacity = USED ;
 	}
 
 	void destroy () override {
@@ -724,11 +528,11 @@ public:
 			return ;
 		if (fake.mThis == NULL)
 			return ;
-		if (fake.mThis->mWidth == USED)
+		if (fake.mThis->mCapacity == USED)
 			return ;
 		const auto r1x = RFat<ReflectElement> (unknown ())->element () ;
 		const auto r2x = RFat<ReflectDestroy> (r1x) ;
-		r2x->destroy (self ,fake.mThis->mWidth) ;
+		r2x->destroy (self ,fake.mThis->mCapacity) ;
 		BoxHolder::hold (raw ())->release () ;
 	}
 
@@ -739,7 +543,7 @@ public:
 	BOOL fixed () const override {
 		if (fake.mThis == NULL)
 			return FALSE ;
-		if (fake.mThis->mWidth != USED)
+		if (fake.mThis->mCapacity != USED)
 			return FALSE ;
 		return TRUE ;
 	}
@@ -790,32 +594,36 @@ public:
 	}
 
 	void resize (CREF<LENGTH> size_) override {
-		const auto r1x = size () ;
-		if (size_ <= r1x)
+		if (size_ == size ())
 			return ;
 		assert (!fixed ()) ;
+		const auto r1x = inline_min (size_ ,size ()) ;
 		auto rax = Ref<RefBufferImplLayout> () ;
 		const auto r2x = RFat<ReflectElement> (unknown ())->element () ;
 		RefHolder::hold (rax)->initialize (RefUnknownBinder<RefBufferImplLayout> () ,r2x ,size_) ;
 		const auto r3x = RFat<ReflectSize> (r2x) ;
 		const auto r4x = r3x->type_size () * r1x ;
-		auto &&rbx = rax.leak () ;
-		BoxHolder::hold (rbx.mValue.self)->initialize (r2x) ;
-		const auto r5x = address (BoxHolder::hold (rbx.mValue.self)->self) ;
+		auto &&rbx = keep[TYPE<BoxLayout>::expr] (rax->mValue.self) ;
+		BoxHolder::hold (rbx)->initialize (r2x) ;
+		const auto r5x = address (BoxHolder::hold (rbx)->self) ;
 		inline_memcpy (Pointer::make (r5x) ,self ,r4x) ;
 		const auto r6x = r5x + r4x ;
 		const auto r7x = RFat<ReflectCreate> (r2x) ;
 		r7x->create (Pointer::make (r6x) ,size_ - r1x) ;
-		rbx.mWidth = size_ ;
 		if ifdo (TRUE) {
 			if (fake.mThis == NULL)
 				discard ;
+			const auto r8x = address (self) + r4x ;
+			const auto r9x = RFat<ReflectDestroy> (r2x) ;
+			r9x->destroy (Pointer::make (r8x) ,size () - r1x) ;
 			BoxHolder::hold (raw ())->release () ;
 		}
 		swap (fake.mThis ,rax) ;
 		fake.mBuffer = r5x ;
 		fake.mSize = size_ ;
 		fake.mStep = r3x->type_size () ;
+		auto &&rcx = keep[TYPE<RefBufferImplLayout>::expr] (fake.mThis.pin ().self) ;
+		rcx.mCapacity = size_ ;
 	}
 } ;
 
@@ -890,7 +698,7 @@ public:
 		if (fake.mIndex == NONE)
 			return ;
 		fake.mSetter (fake.mIndex ,self) ;
-		fake.mIndex = NONE ;
+		fake.mGetter (fake.mIndex ,self) ;
 	}
 } ;
 
@@ -910,7 +718,7 @@ public:
 		RefBufferHolder::hold (fake.mAllocator)->prepare (holder) ;
 		const auto r1x = RFat<ReflectTuple> (holder) ;
 		fake.mOffset = r1x->tuple_m2nd () ;
-		fake.mRest = 0 ;
+		fake.mWidth = 0 ;
 		fake.mLength = 0 ;
 		fake.mFree = NONE ;
 	}
@@ -920,7 +728,7 @@ public:
 		RefBufferHolder::hold (fake.mAllocator)->initialize (holder ,size_) ;
 		const auto r1x = RFat<ReflectTuple> (holder) ;
 		fake.mOffset = r1x->tuple_m2nd () ;
-		fake.mRest = 0 ;
+		fake.mWidth = 0 ;
 		fake.mLength = 0 ;
 		fake.mFree = NONE ;
 	}
@@ -928,10 +736,10 @@ public:
 	void destroy () override {
 		if (!exist ())
 			return ;
-		const auto r1x = inline_min (fake.mRest ,size ()) ;
+		const auto r1x = inline_min (fake.mWidth ,size ()) ;
 		const auto r2x = RFat<ReflectDestroy> (unknown ()) ;
 		for (auto &&i : iter (0 ,r1x)) {
-			if (xbt (fake ,i).mNext != USED)
+			if (ptr (fake ,i).mNext != USED)
 				continue ;
 			r2x->destroy (fake.mAllocator.at (i) ,1) ;
 		}
@@ -955,7 +763,7 @@ public:
 
 	void clear () override {
 		destroy () ;
-		fake.mRest = 0 ;
+		fake.mWidth = 0 ;
 		fake.mLength = 0 ;
 		fake.mFree = NONE ;
 	}
@@ -986,20 +794,20 @@ public:
 
 	VREF<Pointer> bt (CREF<INDEX> index) leftvalue override {
 		assert (used (index)) ;
-		return Pointer::from (xbt (fake ,index)) ;
+		return Pointer::from (ptr (fake ,index)) ;
 	}
 
 	CREF<Pointer> bt (CREF<INDEX> index) const leftvalue override {
 		assert (used (index)) ;
-		return Pointer::from (xbt (fake ,index)) ;
+		return Pointer::from (ptr (fake ,index)) ;
 	}
 
-	static VREF<AllocatorNode> xbt (VREF<AllocatorLayout> layout ,CREF<INDEX> index) {
+	static VREF<AllocatorNode> ptr (VREF<AllocatorLayout> layout ,CREF<INDEX> index) {
 		const auto r1x = address (layout.mAllocator.at (index)) + layout.mOffset ;
 		return Pointer::make (r1x) ;
 	}
 
-	static CREF<AllocatorNode> xbt (CREF<AllocatorLayout> layout ,CREF<INDEX> index) {
+	static CREF<AllocatorNode> ptr (CREF<AllocatorLayout> layout ,CREF<INDEX> index) {
 		const auto r1x = address (layout.mAllocator.at (index)) + layout.mOffset ;
 		return Pointer::make (r1x) ;
 	}
@@ -1007,10 +815,10 @@ public:
 	INDEX alloc () override {
 		check_resize () ;
 		INDEX ret = fake.mFree ;
-		fake.mFree = xbt (fake ,ret).mNext ;
+		fake.mFree = ptr (fake ,ret).mNext ;
 		const auto r1x = RFat<ReflectCreate> (unknown ()) ;
 		r1x->create (fake.mAllocator.at (ret) ,1) ;
-		xbt (fake ,ret).mNext = USED ;
+		ptr (fake ,ret).mNext = USED ;
 		fake.mLength++ ;
 		return move (ret) ;
 	}
@@ -1018,11 +826,11 @@ public:
 	INDEX alloc (RREF<BoxLayout> item) override {
 		check_resize () ;
 		INDEX ret = fake.mFree ;
-		fake.mFree = xbt (fake ,ret).mNext ;
+		fake.mFree = ptr (fake ,ret).mNext ;
 		const auto r1x = RFat<ReflectSize> (unknown ()) ;
 		inline_memcpy (fake.mAllocator.at (ret) ,BoxHolder::hold (item)->self ,r1x->type_size ()) ;
 		BoxHolder::hold (item)->release () ;
-		xbt (fake ,ret).mNext = USED ;
+		ptr (fake ,ret).mNext = USED ;
 		fake.mLength++ ;
 		return move (ret) ;
 	}
@@ -1032,15 +840,15 @@ public:
 		assert (used (r1x)) ;
 		const auto r2x = RFat<ReflectDestroy> (unknown ()) ;
 		r2x->destroy (fake.mAllocator.at (r1x) ,1) ;
-		xbt (fake ,r1x).mNext = fake.mFree ;
+		ptr (fake ,r1x).mNext = fake.mFree ;
 		fake.mFree = r1x ;
 		fake.mLength-- ;
 	}
 
 	BOOL used (CREF<INDEX> index) const override {
-		if (!inline_between (index ,0 ,fake.mRest))
+		if (!inline_between (index ,0 ,fake.mWidth))
 			return FALSE ;
-		const auto r1x = xbt (fake ,index).mNext ;
+		const auto r1x = ptr (fake ,index).mNext ;
 		return r1x == USED ;
 	}
 
@@ -1051,18 +859,18 @@ public:
 	void check_resize () {
 		assert (exist ()) ;
 		if ifdo (TRUE) {
-			if (fake.mRest != 0)
+			if (fake.mWidth != 0)
 				if (fake.mFree != NONE)
 					discard ;
 			if ifdo (TRUE) {
-				if (fake.mRest < size ())
+				if (fake.mWidth < size ())
 					discard ;
-				const auto r1x = inline_max (fake.mRest * 2 ,ALLOCATOR_MIN_SIZE::expr) ;
+				const auto r1x = inline_max (fake.mWidth * 2 ,ALLOCATOR_MIN_SIZE::expr) ;
 				resize (r1x) ;
 			}
-			fake.mFree = fake.mRest ;
-			xbt (fake ,fake.mFree).mNext = NONE ;
-			fake.mRest++ ;
+			fake.mFree = fake.mWidth ;
+			ptr (fake ,fake.mFree).mNext = NONE ;
+			fake.mWidth++ ;
 		}
 	}
 } ;

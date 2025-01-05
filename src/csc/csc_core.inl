@@ -7,8 +7,14 @@
 #include "csc_core.hpp"
 
 #include "csc_end.h"
+#ifdef __CSC_SYSTEM_WINDOWS__
+#include <debugapi.h>
+#endif
+
+#include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <new>
 #include <malloc.h>
 #include <typeinfo>
 #include <initializer_list>
@@ -16,54 +22,136 @@
 #include "csc_begin.h"
 
 namespace CSC {
-exports void FUNCTION_inline_abort::invoke () noexcept {
-	std::abort () ;
-}
+#ifdef __CSC_SYSTEM_WINDOWS__
+struct FUNCTION_has_debugger {
+	forceinline BOOL operator() () const noexcept {
+		return IsDebuggerPresent () ;
+	}
+} ;
+#endif
 
-exports FLAG FUNCTION_inline_type_name::invoke (CREF<Pointer> squalor) noexcept {
-	auto &&rax = keep[TYPE<std::type_info>::expr] (squalor) ;
-	return FLAG (rax.name ()) ;
-}
+#ifdef __CSC_SYSTEM_LINUX__
+struct FUNCTION_has_debugger {
+	forceinline BOOL operator() () const noexcept {
+		return FALSE ;
+	}
+} ;
+#endif
+
+static constexpr auto has_debugger = FUNCTION_has_debugger () ;
+
+exports BOOL FUNCTION_inline_unittest::invoke () {
+	return has_debugger () ;
+} ;
+
+exports void FUNCTION_inline_abort::invoke () {
+	std::abort () ;
+} ;
 
 #ifdef __CSC_COMPILER_MSVC__
-exports Tuple<FLAG ,FLAG> FUNCTION_inline_list_pair::invoke (CREF<Pointer> squalor ,CREF<LENGTH> step_) noexcept {
-	Tuple<FLAG ,FLAG> ret ;
-	auto &&rax = keep[TYPE<std::initializer_list<Pointer>>::expr] (squalor) ;
-	ret.m1st = FLAG (rax.begin ()) ;
-	ret.m2nd = FLAG (rax.end ()) ;
-	return move (ret) ;
-}
+struct FUNCTION_side_effect {
+	forceinline void operator() (csc_pointer_t src) const noexcept {
+		_ReadWriteBarrier () ;
+	}
+} ;
 #endif
 
 #ifdef __CSC_COMPILER_GNUC__
-exports Tuple<FLAG ,FLAG> FUNCTION_inline_list_pair::invoke (CREF<Pointer> squalor ,CREF<LENGTH> step_) noexcept {
-	Tuple<FLAG ,FLAG> ret ;
-	auto &&rax = keep[TYPE<std::initializer_list<Pointer>>::expr] (squalor) ;
-	ret.m1st = FLAG (rax.begin ()) ;
-	ret.m2nd = FLAG (rax.begin ()) + LENGTH (rax.size ()) * step_ ;
-	return move (ret) ;
-}
+struct FUNCTION_side_effect {
+	forceinline void operator() (csc_pointer_t src) const noexcept {
+		asm volatile ("" : : "r" (src) : "memory") ;
+	}
+} ;
 #endif
 
 #ifdef __CSC_COMPILER_CLANG__
-exports Tuple<FLAG ,FLAG> FUNCTION_inline_list_pair::invoke (CREF<Pointer> squalor ,CREF<LENGTH> step_) noexcept {
-	Tuple<FLAG ,FLAG> ret ;
-	auto &&rax = keep[TYPE<std::initializer_list<Pointer>>::expr] (squalor) ;
-	ret.m1st = FLAG (rax.begin ()) ;
-	ret.m2nd = FLAG (rax.end ()) ;
-	return move (ret) ;
-}
+struct FUNCTION_side_effect {
+	forceinline void operator() (csc_pointer_t src) const noexcept {
+		asm volatile ("" : : "r" (src) : "memory") ;
+	}
+} ;
 #endif
 
-exports void FUNCTION_inline_memset::invoke (VREF<Pointer> dst ,CREF<LENGTH> size_) noexcept {
+static constexpr auto side_effect = FUNCTION_side_effect () ;
+
+exports void FUNCTION_inline_watch::invoke (VREF<Pointer> src) {
+	side_effect ((&src)) ;
+}
+
+#ifdef __CSC_CXX_RTTI__
+struct FUNCTION_core_type_name {
+	forceinline FLAG operator() (CREF<Interface> squalor) const noexcept {
+		return FLAG (typeid (squalor).name ()) ;
+	}
+} ;
+#endif
+
+#ifndef __CSC_CXX_RTTI__
+struct FUNCTION_core_type_name {
+	forceinline FLAG operator() (CREF<Interface> squalor) const noexcept {
+		assert (FALSE) ;
+		return ZERO ;
+	}
+} ;
+#endif
+
+static constexpr auto core_type_name = FUNCTION_core_type_name () ;
+
+exports FLAG FUNCTION_inline_type_name::invoke (CREF<Interface> squalor) {
+	return core_type_name (squalor) ;
+}
+
+#ifdef __CSC_COMPILER_MSVC__
+struct FUNCTION_core_list_pair {
+	forceinline Tuple<FLAG ,FLAG> operator() (CREF<Pointer> squalor ,CREF<LENGTH> step_) const noexcept {
+		Tuple<FLAG ,FLAG> ret ;
+		auto &&rax = keep[TYPE<std::initializer_list<Pointer>>::expr] (squalor) ;
+		ret.m1st = FLAG (rax.begin ()) ;
+		ret.m2nd = FLAG (rax.end ()) ;
+		return move (ret) ;
+	}
+} ;
+#endif
+
+#ifdef __CSC_COMPILER_GNUC__
+struct FUNCTION_core_list_pair {
+	forceinline Tuple<FLAG ,FLAG> operator() (CREF<Pointer> squalor ,CREF<LENGTH> step_) const noexcept {
+		Tuple<FLAG ,FLAG> ret ;
+		auto &&rax = keep[TYPE<std::initializer_list<Pointer>>::expr] (squalor) ;
+		ret.m1st = FLAG (rax.begin ()) ;
+		ret.m2nd = FLAG (rax.begin ()) + LENGTH (rax.size ()) * step_ ;
+		return move (ret) ;
+	}
+} ;
+#endif
+
+#ifdef __CSC_COMPILER_CLANG__
+struct FUNCTION_core_list_pair {
+	forceinline Tuple<FLAG ,FLAG> operator() (CREF<Pointer> squalor ,CREF<LENGTH> step_) const noexcept {
+		Tuple<FLAG ,FLAG> ret ;
+		auto &&rax = keep[TYPE<std::initializer_list<Pointer>>::expr] (squalor) ;
+		ret.m1st = FLAG (rax.begin ()) ;
+		ret.m2nd = FLAG (rax.end ()) ;
+		return move (ret) ;
+	}
+} ;
+#endif
+
+static constexpr auto core_list_pair = FUNCTION_core_list_pair () ;
+
+exports Tuple<FLAG ,FLAG> FUNCTION_inline_list_pair::invoke (CREF<Pointer> squalor ,CREF<LENGTH> step_) {
+	return core_list_pair (squalor ,step_) ;
+}
+
+exports void FUNCTION_inline_memset::invoke (VREF<Pointer> dst ,CREF<LENGTH> size_) {
 	std::memset ((&dst) ,0 ,size_) ;
 }
 
-exports void FUNCTION_inline_memcpy::invoke (VREF<Pointer> dst ,CREF<Pointer> src ,CREF<LENGTH> size_) noexcept {
+exports void FUNCTION_inline_memcpy::invoke (VREF<Pointer> dst ,CREF<Pointer> src ,CREF<LENGTH> size_) {
 	std::memcpy ((&dst) ,(&src) ,size_) ;
 }
 
-exports FLAG FUNCTION_inline_memcmp::invoke (CREF<Pointer> dst ,CREF<Pointer> src ,CREF<LENGTH> size_) noexcept {
+exports FLAG FUNCTION_inline_memcmp::invoke (CREF<Pointer> dst ,CREF<Pointer> src ,CREF<LENGTH> size_) {
 	return FLAG (std::memcmp ((&dst) ,(&src) ,size_)) ;
 }
 
@@ -139,7 +227,7 @@ exports CFat<BoxHolder> BoxHolder::hold (CREF<BoxLayout> that) {
 
 struct RefImplLayout implement Proxy {
 	Heap mHeap ;
-	Pin<std::atomic<VAL>> mCounter ;
+	std::atomic<VAL> mCounter ;
 	BoxLayout mValue ;
 } ;
 
@@ -160,7 +248,24 @@ public:
 		BoxHolder::hold (ptr (fake).mValue)->acquire (item) ;
 		BoxHolder::hold (item)->release () ;
 		fake.mPointer = address (BoxHolder::hold (ptr (fake).mValue)->self) ;
-		ptr (fake).mCounter.self = 1 ;
+		ptr (fake).mCounter = 1 ;
+	}
+
+	void initialize (CREF<RefLayout> that) override {
+		auto act = TRUE ;
+		if ifdo (act) {
+			if (that.mHandle < REFIMPLLAYOUT_MIN_HANDLE)
+				discard ;
+			const auto r1x = ++ptr (that).mCounter ;
+			noop (r1x) ;
+			assert (r1x >= 2) ;
+			fake.mHandle = that.mHandle ;
+			fake.mPointer = address (BoxHolder::hold (ptr (that).mValue)->self) ;
+		}
+		if ifdo (act) {
+			fake.mHandle = that.mHandle ;
+			fake.mPointer = that.mPointer ;
+		}
 	}
 
 	void initialize (CREF<Unknown> holder ,CREF<Unknown> extend ,CREF<LENGTH> size_) override {
@@ -180,11 +285,21 @@ public:
 		fake.mPointer = address (BoxHolder::hold (ptr (fake).mValue)->self) ;
 		const auto r8x = RFat<ReflectCreate> (holder) ;
 		r8x->create (self ,1) ;
-		ptr (fake).mCounter.self = 1 ;
+		ptr (fake).mCounter = 1 ;
 	}
 
-	static VREF<RefImplLayout> ptr (CREF<RefLayout> layout) {
-		return Pointer::make (layout.mHandle) ;
+	void initialize (CREF<Unknown> holder ,CREF<FLAG> pointer) override {
+		assert (!exist ()) ;
+		const auto r1x = RFat<ReflectSize> (holder) ;
+		const auto r2x = r1x->type_align () ;
+		noop (r2x) ;
+		assert (r2x <= ALIGN_OF<RefImplLayout>::expr) ;
+		const auto r3x = pointer - SIZE_OF<RefImplLayout>::expr ;
+		auto &&rax = keep[TYPE<RefImplLayout>::expr] (Pointer::make (r3x)) ;
+		assert (rax.mCounter > 0) ;
+		fake.mHandle = r3x ;
+		fake.mPointer = pointer ;
+		ptr (fake).mCounter++ ;
 	}
 
 	void destroy () override {
@@ -193,7 +308,7 @@ public:
 				discard ;
 			assert (fake.mPointer != ZERO) ;
 			if ifdo (TRUE) {
-				const auto r1x = --ptr (fake).mCounter.self ;
+				const auto r1x = --ptr (fake).mCounter ;
 				if (r1x > 0)
 					discard ;
 				BoxHolder::hold (ptr (fake).mValue)->destroy () ;
@@ -206,23 +321,8 @@ public:
 		fake.mPointer = ZERO ;
 	}
 
-	RefLayout share () const override {
-		RefLayout ret ;
-		auto act = TRUE ;
-		if ifdo (act) {
-			if (fake.mHandle < REFIMPLLAYOUT_MIN_HANDLE)
-				discard ;
-			const auto r1x = ++ptr (fake).mCounter.self ;
-			noop (r1x) ;
-			assert (r1x >= 2) ;
-			ret.mHandle = fake.mHandle ;
-			ret.mPointer = address (BoxHolder::hold (ptr (fake).mValue)->self) ;
-		}
-		if ifdo (act) {
-			ret.mHandle = fake.mHandle ;
-			ret.mPointer = fake.mPointer ;
-		}
-		return move (ret) ;
+	static VREF<RefImplLayout> ptr (CREF<RefLayout> layout) {
+		return Pointer::make (layout.mHandle) ;
 	}
 
 	BOOL exist () const override {
@@ -244,13 +344,13 @@ public:
 		return Pointer::make (fake.mPointer) ;
 	}
 
-	VREF<Pointer> leak () const leftvalue override {
+	CREF<Pointer> pin () const leftvalue override {
 		assert (exist ()) ;
 		auto act = TRUE ;
 		if ifdo (act) {
 			if (fake.mHandle < REFIMPLLAYOUT_MIN_HANDLE)
 				discard ;
-			const auto r1x = ptr (fake).mCounter->load () ;
+			const auto r1x = ptr (fake).mCounter.load () ;
 			noop (r1x) ;
 			assert (r1x == IDEN) ;
 		}
@@ -270,7 +370,7 @@ exports CFat<RefHolder> RefHolder::hold (CREF<RefLayout> that) {
 	return CFat<RefHolder> (RefImplHolder () ,that) ;
 }
 
-#ifdef __CSC_SYSTEM_WINDOWS__
+#ifdef __CSC_COMPILER_MSVC__
 struct FUNCTION_dump_memory_leaks {
 	forceinline void operator() () const {
 		_CrtSetDbgFlag (_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF) ;
@@ -278,7 +378,15 @@ struct FUNCTION_dump_memory_leaks {
 } ;
 #endif
 
-#ifdef __CSC_SYSTEM_LINUX__
+#ifdef __CSC_COMPILER_GNUC__
+struct FUNCTION_dump_memory_leaks {
+	forceinline void operator() () const {
+		noop () ;
+	}
+} ;
+#endif
+
+#ifdef __CSC_COMPILER_CLANG__
 struct FUNCTION_dump_memory_leaks {
 	forceinline void operator() () const {
 		noop () ;
@@ -288,7 +396,7 @@ struct FUNCTION_dump_memory_leaks {
 
 static constexpr auto dump_memory_leaks = FUNCTION_dump_memory_leaks () ;
 
-#ifdef __CSC_COMPILER_MSVC__
+#ifdef __CSC_SYSTEM_WINDOWS__
 struct FUNCTION_memsize {
 	forceinline LENGTH operator() (CREF<csc_pointer_t> pointer) const {
 		return LENGTH (_msize (pointer)) ;
@@ -296,18 +404,10 @@ struct FUNCTION_memsize {
 } ;
 #endif
 
-#ifdef __CSC_COMPILER_GNUC__
+#ifdef __CSC_SYSTEM_LINUX__
 struct FUNCTION_memsize {
 	forceinline LENGTH operator() (CREF<csc_pointer_t> pointer) const {
 		return LENGTH (malloc_usable_size (pointer)) ;
-	}
-} ;
-#endif
-
-#ifdef __CSC_COMPILER_CLANG__
-struct FUNCTION_memsize {
-	forceinline LENGTH operator() (CREF<csc_pointer_t> pointer) const {
-		return LENGTH (_msize (pointer)) ;
 	}
 } ;
 #endif
@@ -321,12 +421,14 @@ struct HeapImplLayout {
 
 class HeapImplRoot implement Pin<HeapImplLayout> {
 public:
-	static CREF<HeapImplRoot> instance () {
-		return memorize ([&] () {
-			return HeapImplRoot () ;
-		}) ;
-	}
+	imports CREF<HeapImplRoot> instance () ;
 } ;
+
+exports CREF<HeapImplRoot> HeapImplRoot::instance () {
+	return memorize ([&] () {
+		return HeapImplRoot () ;
+	}) ;
+}
 
 class HeapImplHolder final implement Fat<HeapHolder ,HeapLayout> {
 public:
@@ -390,6 +492,235 @@ exports CFat<HeapHolder> HeapHolder::hold (CREF<HeapLayout> that) {
 	assert (that.mHolder != ZERO) ;
 	auto &&rax = keep[TYPE<HeapImplHolder>::expr] (Pointer::from (that.mHolder)) ;
 	return CFat<HeapHolder> (rax ,that) ;
+}
+
+struct KeyNodeImplLayout implement Proxy {
+	FLAG mHead ;
+	BOOL mMarked ;
+	FLAG mPointer ;
+	INDEX mCheck ;
+} ;
+
+struct KeyHeadImplLayout implement Proxy {
+	FLAG mRoot ;
+	FLAG mNext ;
+	INDEX mIndex ;
+	FLAG mBegin ;
+	FLAG mEnd ;
+} ;
+
+struct KeyRootImplLayout implement Proxy {
+	FLAG mHead ;
+	FLAG mKeyNode ;
+	FLAG mDefNode ;
+	Heap mHeap ;
+	BOOL mFinalize ;
+} ;
+
+class KeyNodeImplHolder final implement Fat<KeyNodeHolder ,KeyNodeLayout> {
+private:
+	using GCROOTIMPLLAYOUT_GROUP_SIZE = ENUM<1024> ;
+
+public:
+	void initialize () override {
+		if (fake.mHandle != ZERO)
+			return ;
+		auto rax = ZERO ;
+		auto rbx = ZERO ;
+		if ifdo (TRUE) {
+			const auto r1x = Heap::instance () ;
+			rax = r1x.alloc (SIZE_OF<KeyRootImplLayout>::expr) ;
+			root_ptr (rax).mHeap = r1x ;
+			root_ptr (rax).mFinalize = FALSE ;
+			const auto r2x = SIZE_OF<KeyHeadImplLayout>::expr + 2 * SIZE_OF<KeyNodeImplLayout>::expr ;
+			rbx = r1x.alloc (r2x) ;
+			inline_memset (Pointer::make (rbx) ,r2x) ;
+			const auto r3x = rbx + SIZE_OF<KeyHeadImplLayout>::expr ;
+			const auto r4x = r3x + SIZE_OF<KeyNodeImplLayout>::expr ;
+			head_ptr (rbx).mRoot = rax ;
+			head_ptr (rbx).mNext = rbx ;
+			head_ptr (rbx).mIndex = NONE ;
+			head_ptr (rbx).mBegin = r3x ;
+			head_ptr (rbx).mEnd = r3x + 2 * SIZE_OF<KeyNodeImplLayout>::expr ;
+			node_ptr (r3x).mHead = rbx ;
+			node_ptr (r3x).mCheck = NONE ;
+			node_ptr (r4x).mHead = rbx ;
+			node_ptr (r4x).mCheck = NONE ;
+			root_ptr (rax).mHead = rbx ;
+			root_ptr (rax).mKeyNode = r3x ;
+			root_ptr (rax).mDefNode = r4x ;
+		}
+		fake.mHandle = root_ptr (rax).mKeyNode ;
+	}
+
+	void initialize (CREF<KeyNodeLayout> root ,CREF<FLAG> pointer) override {
+		assert (fake.mHandle == ZERO) ;
+		assert (address (fake) == pointer) ;
+		const auto r1x = node_ptr (root.mHandle).mHead ;
+		const auto r2x = head_ptr (r1x).mRoot ;
+		const auto r3x = root_ptr (r2x).mDefNode ;
+		fake.mHandle = r3x ;
+	}
+
+	void destroy () override {
+		if (fake.mHandle == ZERO)
+			return ;
+		const auto r1x = node_ptr (fake.mHandle).mHead ;
+		const auto r2x = head_ptr (r1x).mRoot ;
+		const auto r3x = root_ptr (r2x).mDefNode ;
+		node_ptr (fake.mHandle).mPointer = node_ptr (r3x).mPointer ;
+		node_ptr (fake.mHandle).mCheck++ ;
+		if ifdo (TRUE) {
+			const auto r4x = root_ptr (r2x).mKeyNode ;
+			if (fake.mHandle != r4x)
+				discard ;
+			root_ptr (r2x).mFinalize = TRUE ;
+			remove_all_head (r2x) ;
+			remove_root (r2x) ;
+		}
+		fake.mHandle = ZERO ;
+	}
+
+	static VREF<KeyNodeImplLayout> node_ptr (CREF<FLAG> handle) {
+		return Pointer::make (handle) ;
+	}
+
+	static VREF<KeyHeadImplLayout> head_ptr (CREF<FLAG> handle) {
+		return Pointer::make (handle) ;
+	}
+
+	static VREF<KeyRootImplLayout> root_ptr (CREF<FLAG> handle) {
+		return Pointer::make (handle) ;
+	}
+
+	INDEX get_index () const override {
+		if (fake.mHandle == ZERO)
+			return NONE ;
+		const auto r1x = node_ptr (fake.mHandle).mHead ;
+		if (head_ptr (r1x).mIndex < 0)
+			return NONE ;
+		const auto r2x = (fake.mHandle - head_ptr (r1x).mBegin) / SIZE_OF<KeyNodeImplLayout>::expr ;
+		return head_ptr (r1x).mIndex + r2x ;
+	}
+
+	INDEX get_check () const override {
+		if (fake.mHandle == ZERO)
+			return ZERO ;
+		return node_ptr (fake.mHandle).mCheck ;
+	}
+
+	void set_key (CREF<INDEX> index) override {
+		assert (fake.mHandle != ZERO) ;
+		const auto r1x = spwan (index) ;
+		node_ptr (r1x).mPointer = address (fake) ;
+		fake.mHandle = r1x ;
+	}
+
+	void set_def () override {
+		assert (fake.mHandle != ZERO) ;
+		const auto r1x = node_ptr (fake.mHandle).mHead ;
+		const auto r2x = head_ptr (r1x).mRoot ;
+		const auto r3x = root_ptr (r2x).mDefNode ;
+		node_ptr (r3x).mPointer = address (fake) ;
+		fake.mHandle = r3x ;
+	}
+
+	VREF<KeyNodeLayout> lock (CREF<INDEX> check) leftvalue override {
+		assert (fake.mHandle != ZERO) ;
+		const auto r1x = node_ptr (fake.mHandle).mPointer ;
+		const auto r2x = node_ptr (fake.mHandle).mCheck ;
+		if ifdo (TRUE) {
+			if (r2x >= 0)
+				if (r2x == check)
+					discard ;
+			const auto r3x = node_ptr (fake.mHandle).mHead ;
+			const auto r4x = head_ptr (r3x).mRoot ;
+			const auto r5x = root_ptr (r4x).mDefNode ;
+			fake.mHandle = r5x ;
+			const auto r6x = node_ptr (fake.mHandle).mPointer ;
+			return Pointer::make (r6x) ;
+		}
+		return Pointer::make (r1x) ;
+	}
+
+	FLAG spwan () const override {
+		assert (fake.mHandle != ZERO) ;
+		return fake.mHandle ;
+	}
+
+	FLAG spwan (CREF<INDEX> index) const override {
+		assert (fake.mHandle != ZERO) ;
+		const auto r1x = node_ptr (fake.mHandle).mHead ;
+		const auto r2x = head_ptr (r1x).mRoot ;
+		const auto r3x = root_ptr (r2x).mDefNode ;
+		if (index < 0)
+			return r3x ;
+		assert (!root_ptr (r2x).mFinalize) ;
+		const auto r4x = insert_head (index ,r2x) ;
+		const auto r5x = head_ptr (r4x).mBegin + index % GCROOTIMPLLAYOUT_GROUP_SIZE::expr * SIZE_OF<KeyNodeImplLayout>::expr ;
+		if ifdo (TRUE) {
+			if (node_ptr (r5x).mHead != ZERO)
+				discard ;
+			node_ptr (r5x).mHead = r4x ;
+			node_ptr (r5x).mPointer = node_ptr (r3x).mPointer ;
+		}
+		return r5x ;
+	}
+
+	FLAG insert_head (CREF<INDEX> index ,CREF<FLAG> root) const {
+		const auto r1x = index / GCROOTIMPLLAYOUT_GROUP_SIZE::expr * GCROOTIMPLLAYOUT_GROUP_SIZE::expr ;
+		const auto r2x = root_ptr (root).mHead ;
+		FLAG ret = r2x ;
+		while (TRUE) {
+			if (head_ptr (ret).mIndex == r1x)
+				break ;
+			ret = head_ptr (ret).mNext ;
+			if (ret == r2x)
+				break ;
+		}
+		if ifdo (TRUE) {
+			if (head_ptr (ret).mIndex == r1x)
+				discard ;
+			const auto r3x = root_ptr (root).mHeap ;
+			const auto r4x = SIZE_OF<KeyHeadImplLayout>::expr + GCROOTIMPLLAYOUT_GROUP_SIZE::expr * SIZE_OF<KeyNodeImplLayout>::expr ;
+			ret = r3x.alloc (r4x) ;
+			inline_memset (Pointer::make (ret) ,r4x) ;
+			const auto r5x = ret + SIZE_OF<KeyHeadImplLayout>::expr ;
+			head_ptr (ret).mRoot = root ;
+			head_ptr (ret).mNext = head_ptr (r2x).mNext ;
+			head_ptr (r2x).mNext = ret ;
+			head_ptr (ret).mIndex = r1x ;
+			head_ptr (ret).mBegin = r5x ;
+			head_ptr (ret).mEnd = r5x + GCROOTIMPLLAYOUT_GROUP_SIZE::expr * SIZE_OF<KeyNodeImplLayout>::expr ;
+		}
+		return move (ret) ;
+	}
+
+	void remove_root (CREF<FLAG> root) {
+		const auto r1x = root_ptr (root).mHeap ;
+		r1x.free (root) ;
+	}
+
+	void remove_all_head (CREF<FLAG> root) {
+		const auto r1x = root_ptr (root).mHead ;
+		const auto r2x = root_ptr (root).mHeap ;
+		auto rax = r1x ;
+		while (TRUE) {
+			const auto r3x = head_ptr (rax).mNext ;
+			r2x.free (rax) ;
+			rax = r3x ;
+			if (rax == r1x)
+				break ;
+		}
+	}
+} ;
+
+exports VFat<KeyNodeHolder> KeyNodeHolder::hold (VREF<KeyNodeLayout> that) {
+	return VFat<KeyNodeHolder> (KeyNodeImplHolder () ,that) ;
+}
+
+exports CFat<KeyNodeHolder> KeyNodeHolder::hold (CREF<KeyNodeLayout> that) {
+	return CFat<KeyNodeHolder> (KeyNodeImplHolder () ,that) ;
 }
 
 class SliceImplHolder final implement Fat<SliceHolder ,SliceLayout> {
@@ -469,7 +800,7 @@ public:
 		return ZERO ;
 	}
 
-	void visit (VREF<VisitorFriend> visitor) const override {
+	void visit (VREF<VisitorBinder> visitor) const override {
 		visitor.enter () ;
 		const auto r1x = size () ;
 		auto rax = STRU32 () ;
@@ -505,6 +836,49 @@ exports CFat<SliceHolder> SliceHolder::hold (CREF<SliceLayout> that) {
 	return CFat<SliceHolder> (SliceImplHolder () ,that) ;
 }
 
+class ExceptionImplHolder final implement Fat<ExceptionHolder ,ExceptionLayout> {
+public:
+	void initialize (CREF<Slice> what_ ,CREF<Slice> func_ ,CREF<Slice> file_ ,CREF<Slice> line_) override {
+		fake.mWhat = what_ ;
+		fake.mFunc = func_ ;
+		fake.mFile = file_ ;
+		fake.mLine = line_ ;
+	}
+
+	Slice what () const override {
+		return fake.mWhat ;
+	}
+
+	Slice func () const override {
+		return fake.mFunc ;
+	}
+
+	Slice file () const override {
+		return fake.mFile ;
+	}
+
+	Slice line () const override {
+		return fake.mLine ;
+	}
+
+	void event () const override {
+		unimplemented () ;
+	}
+
+	void raise () const override {
+		auto &&rax = keep[TYPE<Exception>::expr] (fake) ;
+		throw rax ;
+	}
+} ;
+
+exports VFat<ExceptionHolder> ExceptionHolder::hold (VREF<ExceptionLayout> that) {
+	return VFat<ExceptionHolder> (ExceptionImplHolder () ,that) ;
+}
+
+exports CFat<ExceptionHolder> ExceptionHolder::hold (CREF<ExceptionLayout> that) {
+	return CFat<ExceptionHolder> (ExceptionImplHolder () ,that) ;
+}
+
 struct ClazzImplLayout {
 	LENGTH mTypeSize ;
 	LENGTH mTypeAlign ;
@@ -524,10 +898,6 @@ public:
 		const auto r3x = RFat<ReflectName> (holder) ;
 		rax.mTypeName = r3x->type_name () ;
 		fake.mThis = Ref<ClazzImplLayout>::make (move (rax)) ;
-	}
-
-	void initialize (CREF<ClazzLayout> that) override {
-		fake.mThis = that.mThis.share () ;
 	}
 
 	LENGTH type_size () const override {
@@ -572,7 +942,7 @@ public:
 		return inline_compr (type_name () ,ClazzHolder::hold (that)->type_name ()) ;
 	}
 
-	void visit (VREF<VisitorFriend> visitor) const override {
+	void visit (VREF<VisitorBinder> visitor) const override {
 		visitor.enter () ;
 		inline_visit (visitor ,type_size ()) ;
 		inline_visit (visitor ,type_align ()) ;

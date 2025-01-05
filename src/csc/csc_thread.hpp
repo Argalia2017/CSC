@@ -15,34 +15,46 @@
 #include "csc_runtime.hpp"
 
 namespace CSC {
-struct CoroutineFriend implement Interface {
+struct CoroutineBinder implement Interface {
 	virtual void before () = 0 ;
-	virtual BOOL tick () = 0 ;
+	virtual BOOL tick (CREF<FLT64> deltatime) = 0 ;
+	virtual BOOL idle () = 0 ;
 	virtual void after () = 0 ;
+	virtual void execute () = 0 ;
 } ;
 
 template <class A>
-class CoroutineFriendBinder final implement Fat<CoroutineFriend ,A> {
+class FriendCoroutineBinder final implement Fat<CoroutineBinder ,A> {
 public:
-	static VFat<CoroutineFriend> create (VREF<A> that) {
-		return VFat<CoroutineFriend> (CoroutineFriendBinder () ,that) ;
+	static VFat<CoroutineBinder> hold (VREF<A> that) {
+		return VFat<CoroutineBinder> (FriendCoroutineBinder () ,that) ;
 	}
 
 	void before () override {
 		return thiz.fake.before () ;
 	}
 
-	BOOL tick () override {
-		return thiz.fake.tick () ;
+	BOOL tick (CREF<FLT64> deltatime) override {
+		return thiz.fake.tick (deltatime) ;
+	}
+
+	BOOL idle () override {
+		return thiz.fake.idle () ;
 	}
 
 	void after () override {
 		return thiz.fake.after () ;
 	}
-} ;
 
-struct BlueprintFriend implement Interface {
-	virtual void reduce () = 0 ;
+	void execute () override {
+		thiz.fake.before () ;
+		while (TRUE) {
+			while (thiz.fake.tick (0)) ;
+			if (!thiz.fake.idle ())
+				break ;
+		}
+		thiz.fake.after () ;
+	}
 } ;
 
 struct WorkThreadImplLayout ;
@@ -59,7 +71,7 @@ struct WorkThreadHolder implement Interface {
 	virtual void start (CREF<Function<CREF<INDEX>>> func) const = 0 ;
 	virtual void post (CREF<INDEX> begin_ ,CREF<INDEX> end_) const = 0 ;
 	virtual void join () const = 0 ;
-	virtual BOOL join (CREF<Time> interval ,CREF<Function<VREF<BOOL>>> predicate) const = 0 ;
+	virtual BOOL join (CREF<Time> interval) const = 0 ;
 	virtual void stop () const = 0 ;
 } ;
 
@@ -94,8 +106,8 @@ public:
 		return WorkThreadHolder::hold (thiz)->join () ;
 	}
 
-	BOOL join (CREF<Time> interval ,CREF<Function<VREF<BOOL>>> predicate) const {
-		return WorkThreadHolder::hold (thiz)->join (interval ,predicate) ;
+	BOOL join (CREF<Time> interval) const {
+		return WorkThreadHolder::hold (thiz)->join (interval) ;
 	}
 
 	void stop () const {
@@ -104,8 +116,9 @@ public:
 } ;
 
 struct CalcSolution {
-	INDEX mIndex ;
-	FLT64 mError ;
+	INDEX mIteration ;
+	FLT64 mAvgError ;
+	FLT64 mStdError ;
 	BitSet mInput ;
 } ;
 
@@ -119,9 +132,10 @@ struct CalcThreadHolder implement Interface {
 
 	virtual void initialize () = 0 ;
 	virtual void set_thread_size (CREF<LENGTH> size_) const = 0 ;
+	virtual void set_base_input (CREF<BitSet> base) const = 0 ;
 	virtual void start (CREF<Function<CREF<CalcSolution> ,VREF<CalcSolution>>> func) const = 0 ;
+	virtual BOOL ready () const = 0 ;
 	virtual CalcSolution poll () const = 0 ;
-	virtual void join () const = 0 ;
 	virtual void suspend () const = 0 ;
 	virtual void resume () const = 0 ;
 	virtual void stop () const = 0 ;
@@ -142,16 +156,20 @@ public:
 		return CalcThreadHolder::hold (thiz)->set_thread_size (size_) ;
 	}
 
+	void set_base_input (CREF<BitSet> base) const {
+		return CalcThreadHolder::hold (thiz)->set_base_input (base) ;
+	}
+
 	void start (CREF<Function<CREF<CalcSolution> ,VREF<CalcSolution>>> func) const {
 		return CalcThreadHolder::hold (thiz)->start (func) ;
 	}
 
-	CalcSolution poll () const {
-		return CalcThreadHolder::hold (thiz)->poll () ;
+	BOOL ready () const {
+		return CalcThreadHolder::hold (thiz)->ready () ;
 	}
 
-	void join () const {
-		return CalcThreadHolder::hold (thiz)->join () ;
+	CalcSolution poll () const {
+		return CalcThreadHolder::hold (thiz)->poll () ;
 	}
 
 	void suspend () const {
@@ -183,8 +201,8 @@ struct PromiseHolder implement Interface {
 	virtual void rethrow (CREF<Exception> e) const = 0 ;
 	virtual BOOL ready () const = 0 ;
 	virtual BOOL running () const = 0 ;
-	virtual AutoRef<Pointer> future () const = 0 ;
-	virtual void signal () const = 0 ;
+	virtual AutoRef<Pointer> poll () const = 0 ;
+	virtual void future () const = 0 ;
 	virtual void stop () const = 0 ;
 } ;
 
@@ -233,15 +251,15 @@ public:
 		return PromiseHolder::hold (thiz)->running () ;
 	}
 
-	Optional<A> future () const {
-		auto rax = PromiseHolder::hold (thiz)->future () ;
+	Optional<A> poll () const {
+		auto rax = PromiseHolder::hold (thiz)->poll () ;
 		if (!rax.exist ())
 			return Optional<A>::error (1) ;
 		return move (rax.rebind (TYPE<A>::expr).self) ;
 	}
 
-	void signal () const {
-		return PromiseHolder::hold (thiz)->signal () ;
+	void future () const {
+		return PromiseHolder::hold (thiz)->future () ;
 	}
 
 	void stop () const {

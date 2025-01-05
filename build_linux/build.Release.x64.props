@@ -1,0 +1,23 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ImportGroup Label="PropertySheets" />
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <_PropertySheetDisplayName>build.Release.x64</_PropertySheetDisplayName>
+    <OutDir>$(SolutionDir)lib_Linux\$(Configuration)\$(Platform)\</OutDir>
+    <IntDir>$(SolutionDir)obj_Linux\$(ProjectName)\$(Configuration)\$(Platform)\</IntDir>
+  </PropertyGroup>
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <AdditionalOptions>%(AdditionalOptions)</AdditionalOptions>
+      <PreprocessorDefinitions>_UNITTEST;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <StrictAliasing>true</StrictAliasing>
+      <HideInlineMethods>true</HideInlineMethods>
+      <SymbolsHiddenByDefault>true</SymbolsHiddenByDefault>
+    </ClCompile>
+    <Link>
+      <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalOptions>-Wl,--exclude-libs,ALL -Wl,--export-dynamic -Wl,-Bsymbolic %(AdditionalOptions)</AdditionalOptions>
+    </Link>
+  </ItemDefinitionGroup>
+</Project>
