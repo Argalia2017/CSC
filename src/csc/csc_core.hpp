@@ -961,20 +961,25 @@ public:
 	}
 } ;
 
-struct ReflectReduce implement Interface {
-	virtual void reduce (CREF<Pointer> a ,CREF<Interface> b) const = 0 ;
+template <class A>
+struct ReflectFriend implement Interface {
+	virtual VFat<A> hold (CREF<Pointer> a) const = 0 ;
+	virtual CFat<A> hold (CREF<Pointer> a) const = 0 ;
 
 	forceinline static consteval FLAG expr_m () noexcept {
 		return 104 ;
 	}
 } ;
 
-template <class A>
-class ReflectReduceBinder implement ReflectReduce {
+template <class A ,class B>
+class ReflectFriendBinder implement ReflectFriend<A> {
 public:
-	void reduce (CREF<Pointer> a ,CREF<Interface> b) const override {
-		auto &&rax = keep[TYPE<A>::expr] (a) ;
-		rax.reduce (b) ;
+	VFat<A> hold (CREF<Pointer> a) const override {
+		return B::hold (keep[TYPE<A>::expr] (a)) ;
+	}
+
+	CFat<A> hold (CREF<Pointer> a) const override {
+		return B::hold (keep[TYPE<A>::expr] (a)) ;
 	}
 } ;
 

@@ -450,7 +450,7 @@ struct ThreadHolder implement Interface {
 	imports VFat<ThreadHolder> hold (VREF<ThreadLayout> that) ;
 	imports CFat<ThreadHolder> hold (CREF<ThreadLayout> that) ;
 
-	virtual void initialize (RREF<Ref<VFat<ThreadBinder>>> executor ,CREF<INDEX> slot) = 0 ;
+	virtual void initialize (RREF<Box<VFat<ThreadBinder>>> executor ,CREF<INDEX> slot) = 0 ;
 	virtual FLAG thread_uid () const = 0 ;
 	virtual void start () = 0 ;
 	virtual void stop () = 0 ;
@@ -463,7 +463,7 @@ protected:
 public:
 	implicit Thread () = default ;
 
-	explicit Thread (RREF<Ref<VFat<ThreadBinder>>> executor ,CREF<INDEX> slot) {
+	explicit Thread (RREF<Box<VFat<ThreadBinder>>> executor ,CREF<INDEX> slot) {
 		ThreadHolder::hold (thiz)->initialize (move (executor) ,slot) ;
 	}
 

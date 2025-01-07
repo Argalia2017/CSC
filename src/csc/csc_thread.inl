@@ -83,9 +83,9 @@ public:
 		mItemLoadLength = 0 ;
 		mThreadFlag = ThreadFlag::Running ;
 		mThreadFunc = func ;
-		const auto r1x = Ref<VFat<ThreadBinder>>::make (FriendThreadBinder<WorkThreadImpl>::hold (thiz)) ;
+		const auto r1x = FriendThreadBinder<WorkThreadImpl>::hold (thiz) ;
 		for (auto &&i : mThread.range ()) {
-			mThread[i] = Thread (move (r1x) ,i) ;
+			mThread[i] = Thread (Box<VFat<ThreadBinder>>::make (r1x) ,i) ;
 			mThread[i].start () ;
 		}
 	}
@@ -340,9 +340,9 @@ public:
 		mThreadFlag = ThreadFlag::Running ;
 		mSuspendFlag = FALSE ;
 		mThreadFunc = func ;
-		const auto r1x = Ref<VFat<ThreadBinder>>::make (FriendThreadBinder<CalcThreadImpl>::hold (thiz)) ;
+		const auto r1x = FriendThreadBinder<CalcThreadImpl>::hold (thiz) ;
 		for (auto &&i : mThread.range ()) {
-			mThread[i] = Thread (move (r1x) ,i) ;
+			mThread[i] = Thread (Box<VFat<ThreadBinder>>::make (r1x) ,i) ;
 			mThread[i].start () ;
 		}
 	}
@@ -637,9 +637,9 @@ public:
 			if (mThread.size () > 0)
 				discard ;
 			mThread = Array<Thread> (1) ;
-			const auto r1x = Ref<VFat<ThreadBinder>>::make (FriendThreadBinder<PromiseImpl>::hold (thiz)) ;
+			const auto r1x = FriendThreadBinder<PromiseImpl>::hold (thiz) ;
 			for (auto &&i : mThread.range ()) {
-				mThread[i] = Thread (move (r1x) ,0) ;
+				mThread[i] = Thread (Box<VFat<ThreadBinder>>::make (r1x) ,0) ;
 				mThread[i].start () ;
 			}
 		}

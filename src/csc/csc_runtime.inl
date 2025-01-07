@@ -459,7 +459,7 @@ exports CFat<UniqueLockHolder> UniqueLockHolder::hold (CREF<UniqueLockLayout> th
 }
 
 struct ThreadImplLayout {
-	Ref<VFat<ThreadBinder>> mExecutor ;
+	Box<VFat<ThreadBinder>> mExecutor ;
 	FLAG mUid ;
 	INDEX mSlot ;
 	Box<std::thread> mThread ;
@@ -474,7 +474,7 @@ public:
 
 class ThreadImplHolder final implement Fat<ThreadHolder ,ThreadLayout> {
 public:
-	void initialize (RREF<Ref<VFat<ThreadBinder>>> executor ,CREF<INDEX> slot) override {
+	void initialize (RREF<Box<VFat<ThreadBinder>>> executor ,CREF<INDEX> slot) override {
 		fake.mThis = AutoRef<ThreadImplLayout>::make () ;
 		fake.mThis->mExecutor = move (executor) ;
 		fake.mThis->mUid = ZERO ;
@@ -489,7 +489,7 @@ public:
 		auto &&rax = fake.mThis.self ;
 		fake.mThis->mThread = Box<std::thread>::make ([&] () {
 			rax.mUid = RuntimeProc::thread_uid () ;
-			rax.mExecutor->self.friend_execute (rax.mSlot) ;
+			rax.mExecutor.self->friend_execute (rax.mSlot) ;
 		}) ;
 	}
 
