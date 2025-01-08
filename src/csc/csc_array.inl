@@ -2051,7 +2051,7 @@ public:
 		const auto r1x = FriendHashcodeVisitorBinder::hold (fake.mVisitor) ;
 		r1x->reset () ;
 		const auto r2x = RFat<ReflectVisit> (fake.mSet.unknown ()) ;
-		r2x->visit (r1x ,item) ;
+		r2x->visit (r1x.self ,item) ;
 		return r1x->fetch () ;
 	}
 

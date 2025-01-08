@@ -767,10 +767,6 @@ public:
 		return Pointer::from (const_cast<VREF<VFat>> (thiz)) ;
 	}
 
-	forceinline operator VREF<A> () const {
-		return self ;
-	}
-
 	forceinline PTR<VREF<A>> operator-> () const {
 		return (&self) ;
 	}
@@ -804,10 +800,6 @@ public:
 		return Pointer::from (const_cast<CREF<CFat>> (thiz)) ;
 	}
 
-	forceinline operator CREF<A> () const {
-		return self ;
-	}
-
 	forceinline PTR<CREF<A>> operator-> () const {
 		return (&self) ;
 	}
@@ -833,10 +825,6 @@ public:
 
 	CREF<A> self_m () const {
 		return Pointer::from (const_cast<CREF<RFat>> (thiz)) ;
-	}
-
-	forceinline operator CREF<A> () const {
-		return self ;
 	}
 
 	forceinline PTR<CREF<A>> operator-> () const {
