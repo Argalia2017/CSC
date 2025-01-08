@@ -375,7 +375,7 @@ public:
 } ;
 
 struct ReflectRecast implement Interface {
-	virtual FLAG recast (CREF<FLAG> pointer) const = 0 ;
+	virtual FLAG recast (CREF<FLAG> layout) const = 0 ;
 
 	forceinline static consteval FLAG expr_m () noexcept {
 		return 201 ;
@@ -385,8 +385,8 @@ struct ReflectRecast implement Interface {
 template <class A ,class B>
 class ReflectRecastBinder implement ReflectRecast {
 public:
-	FLAG recast (CREF<FLAG> pointer) const override {
-		auto &&rax = keep[TYPE<B>::expr] (Pointer::make (pointer)) ;
+	FLAG recast (CREF<FLAG> layout) const override {
+		auto &&rax = keep[TYPE<B>::expr] (Pointer::make (layout)) ;
 		return recast_impl (PHX ,TYPE<A>::expr ,rax) ;
 	}
 
@@ -410,11 +410,11 @@ struct AutoRefImplLayout ;
 
 struct AutoRefLayout {
 	Ref<AutoRefImplLayout> mThis ;
-	FLAG mPointer ;
+	FLAG mLayout ;
 
 public:
 	implicit AutoRefLayout () noexcept {
-		mPointer = ZERO ;
+		mLayout = ZERO ;
 	}
 
 	implicit ~AutoRefLayout () noexcept ;
@@ -458,7 +458,7 @@ template <class A>
 class AutoRef implement AutoRefLayout {
 protected:
 	using AutoRefLayout::mThis ;
-	using AutoRefLayout::mPointer ;
+	using AutoRefLayout::mLayout ;
 
 public:
 	implicit AutoRef () = default ;
@@ -545,11 +545,11 @@ struct SharedRefImplLayout ;
 
 struct SharedRefLayout {
 	Ref<SharedRefImplLayout> mThis ;
-	FLAG mPointer ;
+	FLAG mLayout ;
 
 public:
 	implicit SharedRefLayout () noexcept {
-		mPointer = ZERO ;
+		mLayout = ZERO ;
 	}
 
 	implicit ~SharedRefLayout () noexcept ;
@@ -573,7 +573,7 @@ struct SharedRefHolder implement Interface {
 
 	virtual void initialize (RREF<BoxLayout> item) = 0 ;
 	virtual void initialize (CREF<SharedRefLayout> that) = 0 ;
-	virtual void initialize (CREF<Unknown> holder ,CREF<FLAG> pointer) = 0 ;
+	virtual void initialize (CREF<Unknown> holder ,CREF<FLAG> layout) = 0 ;
 	virtual void destroy () = 0 ;
 	virtual BOOL exist () const = 0 ;
 	virtual VREF<BoxLayout> raw () leftvalue = 0 ;
@@ -591,7 +591,7 @@ template <class A>
 class SharedRef implement SharedRefLayout {
 protected:
 	using SharedRefLayout::mThis ;
-	using SharedRefLayout::mPointer ;
+	using SharedRefLayout::mLayout ;
 
 public:
 	implicit SharedRef () = default ;
@@ -673,11 +673,11 @@ struct UniqueRefImplLayout ;
 
 struct UniqueRefLayout {
 	Ref<UniqueRefImplLayout> mThis ;
-	FLAG mPointer ;
+	FLAG mLayout ;
 
 public:
 	implicit UniqueRefLayout () noexcept {
-		mPointer = ZERO ;
+		mLayout = ZERO ;
 	}
 
 	implicit ~UniqueRefLayout () noexcept ;
@@ -718,7 +718,7 @@ template <class A>
 class UniqueRef implement UniqueRefLayout {
 protected:
 	using UniqueRefLayout::mThis ;
-	using UniqueRefLayout::mPointer ;
+	using UniqueRefLayout::mLayout ;
 
 public:
 	implicit UniqueRef () = default ;

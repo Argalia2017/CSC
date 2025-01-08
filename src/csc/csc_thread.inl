@@ -314,19 +314,19 @@ public:
 		mNewSolution = FALSE ;
 	}
 
-	void set_base_input (CREF<BitSet> base) {
+	void set_start_input (CREF<BitSet> input) {
 		Scope<Mutex> anonymous (mThreadMutex) ;
 		assume (mThreadFlag == ThreadFlag::Preparing) ;
 		assume (mThread.size () > 0) ;
 		mBestSolution.mIteration = ZERO ;
 		mBestSolution.mAvgError = infinity ;
 		mBestSolution.mStdError = 0 ;
-		mBestSolution.mInput = base ;
+		mBestSolution.mInput = input ;
 		for (auto &&i : mThreadSolution.range ())
 			mThreadSolution[i].mIteration = NONE ;
 		mConfidence = Array<FLT64> (1000) ;
 		mConfidencePow = 0.9545 ;
-		mConfidenceFator = FLT64 (mConfidence.size ()) * MathProc::inverse (FLT64 (base.size ())) ;
+		mConfidenceFator = FLT64 (mConfidence.size ()) * MathProc::inverse (FLT64 (input.size ())) ;
 		mConfidence[0] = 1 ;
 		for (auto &&i : iter (1 ,mConfidence.length ())) {
 			mConfidence[i] = mConfidencePow * mConfidence[i - 1] ;
@@ -537,8 +537,8 @@ public:
 		return ptr (fake).set_thread_size (size_) ;
 	}
 
-	void set_base_input (CREF<BitSet> base) const override {
-		return ptr (fake).set_base_input (base) ;
+	void set_start_input (CREF<BitSet> input) const override {
+		return ptr (fake).set_start_input (input) ;
 	}
 
 	void start (CREF<Function<CREF<CalcSolution> ,VREF<CalcSolution>>> func) const override {

@@ -718,7 +718,7 @@ static constexpr auto iter = FUNCTION_iter () ;
 
 struct FatLayout {
 	FLAG mHolder ;
-	FLAG mPointer ;
+	FLAG mLayout ;
 } ;
 
 template <class A ,class B>
@@ -727,15 +727,15 @@ private:
 	require (IS_INTERFACE<A>) ;
 
 protected:
-	FLAG mPointer ;
+	FLAG mLayout ;
 
 public:
 	VREF<B> fake_m () leftvalue {
-		return Pointer::make (mPointer) ;
+		return Pointer::make (mLayout) ;
 	}
 
 	CREF<B> fake_m () const leftvalue {
-		return Pointer::make (mPointer) ;
+		return Pointer::make (mLayout) ;
 	}
 } ;
 
@@ -746,7 +746,7 @@ private:
 
 protected:
 	using FatLayout::mHolder ;
-	using FatLayout::mPointer ;
+	using FatLayout::mLayout ;
 
 public:
 	implicit VFat () = delete ;
@@ -760,7 +760,7 @@ public:
 		require (ENUM_EQUAL<SIZE_OF<R1X> ,SIZE_OF<ARG2>>) ;
 		require (ENUM_EQUAL<ALIGN_OF<R1X> ,ALIGN_OF<ARG2>>) ;
 		mHolder = inline_vptr (holder) ;
-		mPointer = address (that) ;
+		mLayout = address (that) ;
 	}
 
 	VREF<A> self_m () const {
@@ -783,7 +783,7 @@ private:
 
 protected:
 	using FatLayout::mHolder ;
-	using FatLayout::mPointer ;
+	using FatLayout::mLayout ;
 
 public:
 	implicit CFat () = delete ;
@@ -797,7 +797,7 @@ public:
 		require (ENUM_EQUAL<SIZE_OF<R1X> ,SIZE_OF<ARG2>>) ;
 		require (ENUM_EQUAL<ALIGN_OF<R1X> ,ALIGN_OF<ARG2>>) ;
 		mHolder = inline_vptr (holder) ;
-		mPointer = address (that) ;
+		mLayout = address (that) ;
 	}
 
 	CREF<A> self_m () const {
@@ -820,7 +820,7 @@ private:
 
 protected:
 	using FatLayout::mHolder ;
-	using FatLayout::mPointer ;
+	using FatLayout::mLayout ;
 
 public:
 	implicit RFat () = delete ;
@@ -828,7 +828,7 @@ public:
 	explicit RFat (CREF<ReflectUnknown> unknown) {
 		mHolder = unknown.reflect (A::expr) ;
 		assert (mHolder != ZERO) ;
-		mPointer = ZERO ;
+		mLayout = ZERO ;
 	}
 
 	CREF<A> self_m () const {
@@ -1237,12 +1237,12 @@ public:
 
 struct RefLayout {
 	FLAG mHandle ;
-	FLAG mPointer ;
+	FLAG mLayout ;
 
 public:
 	implicit RefLayout () noexcept {
 		mHandle = ZERO ;
-		mPointer = ZERO ;
+		mLayout = ZERO ;
 	}
 
 	implicit ~RefLayout () noexcept ;
@@ -1267,7 +1267,7 @@ struct RefHolder implement Interface {
 	virtual void initialize (RREF<BoxLayout> item) = 0 ;
 	virtual void initialize (CREF<RefLayout> that) = 0 ;
 	virtual void initialize (CREF<Unknown> holder ,CREF<Unknown> extend ,CREF<LENGTH> size_) = 0 ;
-	virtual void initialize (CREF<Unknown> holder ,CREF<FLAG> pointer) = 0 ;
+	virtual void initialize (CREF<Unknown> holder ,CREF<FLAG> layout) = 0 ;
 	virtual void destroy () = 0 ;
 	virtual BOOL exist () const = 0 ;
 	virtual Unknown unknown () const = 0 ;
@@ -1297,7 +1297,7 @@ template <class A>
 class Ref implement RefLayout {
 protected:
 	using RefLayout::mHandle ;
-	using RefLayout::mPointer ;
+	using RefLayout::mLayout ;
 
 public:
 	implicit Ref () = default ;
@@ -1317,14 +1317,14 @@ public:
 	static Ref reference (VREF<A> that) {
 		Ref ret ;
 		ret.mHandle = VARIABLE::expr ;
-		ret.mPointer = address (that) ;
+		ret.mLayout = address (that) ;
 		return move (ret) ;
 	}
 
 	static Ref reference (CREF<A> that) {
 		Ref ret ;
 		ret.mHandle = CONSTANT::expr ;
-		ret.mPointer = address (that) ;
+		ret.mLayout = address (that) ;
 		return move (ret) ;
 	}
 
@@ -1403,7 +1403,7 @@ struct HeapHolder implement Interface {
 	virtual INDEX stack () const = 0 ;
 	virtual LENGTH length () const = 0 ;
 	virtual FLAG alloc (CREF<LENGTH> size_) const = 0 ;
-	virtual void free (CREF<FLAG> pointer) const = 0 ;
+	virtual void free (CREF<FLAG> layout) const = 0 ;
 } ;
 
 class Heap implement HeapLayout {
@@ -1427,8 +1427,8 @@ public:
 		return HeapHolder::hold (thiz)->alloc (size_) ;
 	}
 
-	void free (CREF<FLAG> pointer) const {
-		return HeapHolder::hold (thiz)->free (pointer) ;
+	void free (CREF<FLAG> layout) const {
+		return HeapHolder::hold (thiz)->free (layout) ;
 	}
 } ;
 
@@ -1460,7 +1460,7 @@ struct KeyNodeHolder implement Interface {
 	imports CFat<KeyNodeHolder> hold (CREF<KeyNodeLayout> that) ;
 
 	virtual void initialize () = 0 ;
-	virtual void initialize (CREF<KeyNodeLayout> root ,CREF<FLAG> pointer) = 0 ;
+	virtual void initialize (CREF<KeyNodeLayout> root ,CREF<FLAG> layout) = 0 ;
 	virtual void destroy () = 0 ;
 	virtual INDEX get_index () const = 0 ;
 	virtual INDEX get_check () const = 0 ;
@@ -2023,18 +2023,18 @@ public:
 } ;
 
 struct ScopeLayout {
-	FLAG mPointer ;
+	FLAG mLayout ;
 
 public:
 	implicit ScopeLayout () noexcept {
-		mPointer = ZERO ;
+		mLayout = ZERO ;
 	}
 } ;
 
 template <class A>
 class Scope implement ScopeLayout {
 protected:
-	using ScopeLayout::mPointer ;
+	using ScopeLayout::mLayout ;
 
 public:
 	implicit Scope () = delete ;
@@ -2043,17 +2043,17 @@ public:
 		const auto r1x = address (that) ;
 		auto &&rax = keep[TYPE<CREF<A>>::expr] (Pointer::make (r1x)) ;
 		rax.enter () ;
-		mPointer = r1x ;
+		mLayout = r1x ;
 	}
 
 	explicit Scope (RREF<A> that) = delete ;
 
 	implicit ~Scope () noexcept {
-		if (mPointer == ZERO)
+		if (mLayout == ZERO)
 			return ;
-		auto &&rax = keep[TYPE<CREF<A>>::expr] (Pointer::make (mPointer)) ;
+		auto &&rax = keep[TYPE<CREF<A>>::expr] (Pointer::make (mLayout)) ;
 		rax.leave () ;
-		mPointer = ZERO ;
+		mLayout = ZERO ;
 	}
 
 	implicit Scope (CREF<Scope> that) = delete ;

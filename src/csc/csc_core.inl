@@ -247,7 +247,7 @@ public:
 		ptr (fake).mHeap = r4x ;
 		BoxHolder::hold (ptr (fake).mValue)->acquire (item) ;
 		BoxHolder::hold (item)->release () ;
-		fake.mPointer = address (BoxHolder::hold (ptr (fake).mValue)->self) ;
+		fake.mLayout = address (BoxHolder::hold (ptr (fake).mValue)->self) ;
 		ptr (fake).mCounter = 1 ;
 	}
 
@@ -260,11 +260,11 @@ public:
 			noop (r1x) ;
 			assert (r1x >= 2) ;
 			fake.mHandle = that.mHandle ;
-			fake.mPointer = address (BoxHolder::hold (ptr (that).mValue)->self) ;
+			fake.mLayout = address (BoxHolder::hold (ptr (that).mValue)->self) ;
 		}
 		if ifdo (act) {
 			fake.mHandle = that.mHandle ;
-			fake.mPointer = that.mPointer ;
+			fake.mLayout = that.mLayout ;
 		}
 	}
 
@@ -282,23 +282,23 @@ public:
 		inline_memset (Pointer::make (fake.mHandle) ,SIZE_OF<RefImplLayout>::expr) ;
 		ptr (fake).mHeap = r7x ;
 		BoxHolder::hold (ptr (fake).mValue)->initialize (holder) ;
-		fake.mPointer = address (BoxHolder::hold (ptr (fake).mValue)->self) ;
+		fake.mLayout = address (BoxHolder::hold (ptr (fake).mValue)->self) ;
 		const auto r8x = RFat<ReflectCreate> (holder) ;
 		r8x->create (self ,1) ;
 		ptr (fake).mCounter = 1 ;
 	}
 
-	void initialize (CREF<Unknown> holder ,CREF<FLAG> pointer) override {
+	void initialize (CREF<Unknown> holder ,CREF<FLAG> layout) override {
 		assert (!exist ()) ;
 		const auto r1x = RFat<ReflectSize> (holder) ;
 		const auto r2x = r1x->type_align () ;
 		noop (r2x) ;
 		assert (r2x <= ALIGN_OF<RefImplLayout>::expr) ;
-		const auto r3x = pointer - SIZE_OF<RefImplLayout>::expr ;
+		const auto r3x = layout - SIZE_OF<RefImplLayout>::expr ;
 		auto &&rax = keep[TYPE<RefImplLayout>::expr] (Pointer::make (r3x)) ;
 		assert (rax.mCounter > 0) ;
 		fake.mHandle = r3x ;
-		fake.mPointer = pointer ;
+		fake.mLayout = layout ;
 		ptr (fake).mCounter++ ;
 	}
 
@@ -306,7 +306,7 @@ public:
 		if ifdo (TRUE) {
 			if (fake.mHandle < REFIMPLLAYOUT_MIN_HANDLE)
 				discard ;
-			assert (fake.mPointer != ZERO) ;
+			assert (fake.mLayout != ZERO) ;
 			if ifdo (TRUE) {
 				const auto r1x = --ptr (fake).mCounter ;
 				if (r1x > 0)
@@ -318,7 +318,7 @@ public:
 			fake.mHandle = ZERO ;
 		}
 		fake.mHandle = ZERO ;
-		fake.mPointer = ZERO ;
+		fake.mLayout = ZERO ;
 	}
 
 	static VREF<RefImplLayout> ptr (CREF<RefLayout> layout) {
@@ -326,7 +326,7 @@ public:
 	}
 
 	BOOL exist () const override {
-		return fake.mPointer != ZERO ;
+		return fake.mLayout != ZERO ;
 	}
 
 	Unknown unknown () const override {
@@ -336,12 +336,12 @@ public:
 
 	VREF<Pointer> self_m () leftvalue {
 		assert (exist ()) ;
-		return Pointer::make (fake.mPointer) ;
+		return Pointer::make (fake.mLayout) ;
 	}
 
 	CREF<Pointer> self_m () const leftvalue override {
 		assert (exist ()) ;
-		return Pointer::make (fake.mPointer) ;
+		return Pointer::make (fake.mLayout) ;
 	}
 
 	CREF<Pointer> pin () const leftvalue override {
@@ -358,7 +358,7 @@ public:
 			//@warn: reference instance are always unchecked except cv-qualifier
 			assert (fake.mHandle == VARIABLE::expr) ;
 		}
-		return Pointer::make (fake.mPointer) ;
+		return Pointer::make (fake.mLayout) ;
 	}
 } ;
 
@@ -398,16 +398,16 @@ static constexpr auto dump_memory_leaks = FUNCTION_dump_memory_leaks () ;
 
 #ifdef __CSC_SYSTEM_WINDOWS__
 struct FUNCTION_memsize {
-	forceinline LENGTH operator() (CREF<csc_pointer_t> pointer) const {
-		return LENGTH (_msize (pointer)) ;
+	forceinline LENGTH operator() (CREF<csc_pointer_t> layout) const {
+		return LENGTH (_msize (layout)) ;
 	}
 } ;
 #endif
 
 #ifdef __CSC_SYSTEM_LINUX__
 struct FUNCTION_memsize {
-	forceinline LENGTH operator() (CREF<csc_pointer_t> pointer) const {
-		return LENGTH (malloc_usable_size (pointer)) ;
+	forceinline LENGTH operator() (CREF<csc_pointer_t> layout) const {
+		return LENGTH (malloc_usable_size (layout)) ;
 	}
 } ;
 #endif
@@ -465,8 +465,8 @@ public:
 		return move (ret) ;
 	}
 
-	void free (CREF<FLAG> pointer) const override {
-		const auto r1x = csc_pointer_t (pointer) ;
+	void free (CREF<FLAG> layout) const override {
+		const auto r1x = csc_pointer_t (layout) ;
 		const auto r2x = memsize (r1x) ;
 		ptr (fake).mLength.self -= r2x ;
 		operator delete (r1x ,std::nothrow) ;
@@ -497,7 +497,7 @@ exports CFat<HeapHolder> HeapHolder::hold (CREF<HeapLayout> that) {
 struct KeyNodeImplLayout implement Proxy {
 	FLAG mHead ;
 	BOOL mMarked ;
-	FLAG mPointer ;
+	FLAG mLayout ;
 	INDEX mCheck ;
 } ;
 
@@ -553,9 +553,9 @@ public:
 		fake.mHandle = root_ptr (rax).mKeyNode ;
 	}
 
-	void initialize (CREF<KeyNodeLayout> root ,CREF<FLAG> pointer) override {
+	void initialize (CREF<KeyNodeLayout> root ,CREF<FLAG> layout) override {
 		assert (fake.mHandle == ZERO) ;
-		assert (address (fake) == pointer) ;
+		assert (address (fake) == layout) ;
 		const auto r1x = node_ptr (root.mHandle).mHead ;
 		const auto r2x = head_ptr (r1x).mRoot ;
 		const auto r3x = root_ptr (r2x).mDefNode ;
@@ -568,7 +568,7 @@ public:
 		const auto r1x = node_ptr (fake.mHandle).mHead ;
 		const auto r2x = head_ptr (r1x).mRoot ;
 		const auto r3x = root_ptr (r2x).mDefNode ;
-		node_ptr (fake.mHandle).mPointer = node_ptr (r3x).mPointer ;
+		node_ptr (fake.mHandle).mLayout = node_ptr (r3x).mLayout ;
 		node_ptr (fake.mHandle).mCheck++ ;
 		if ifdo (TRUE) {
 			const auto r4x = root_ptr (r2x).mKeyNode ;
@@ -612,7 +612,7 @@ public:
 	void set_key (CREF<INDEX> index) override {
 		assert (fake.mHandle != ZERO) ;
 		const auto r1x = spwan (index) ;
-		node_ptr (r1x).mPointer = address (fake) ;
+		node_ptr (r1x).mLayout = address (fake) ;
 		fake.mHandle = r1x ;
 	}
 
@@ -621,13 +621,13 @@ public:
 		const auto r1x = node_ptr (fake.mHandle).mHead ;
 		const auto r2x = head_ptr (r1x).mRoot ;
 		const auto r3x = root_ptr (r2x).mDefNode ;
-		node_ptr (r3x).mPointer = address (fake) ;
+		node_ptr (r3x).mLayout = address (fake) ;
 		fake.mHandle = r3x ;
 	}
 
 	VREF<KeyNodeLayout> lock (CREF<INDEX> check) leftvalue override {
 		assert (fake.mHandle != ZERO) ;
-		const auto r1x = node_ptr (fake.mHandle).mPointer ;
+		const auto r1x = node_ptr (fake.mHandle).mLayout ;
 		const auto r2x = node_ptr (fake.mHandle).mCheck ;
 		if ifdo (TRUE) {
 			if (r2x >= 0)
@@ -637,7 +637,7 @@ public:
 			const auto r4x = head_ptr (r3x).mRoot ;
 			const auto r5x = root_ptr (r4x).mDefNode ;
 			fake.mHandle = r5x ;
-			const auto r6x = node_ptr (fake.mHandle).mPointer ;
+			const auto r6x = node_ptr (fake.mHandle).mLayout ;
 			return Pointer::make (r6x) ;
 		}
 		return Pointer::make (r1x) ;
@@ -662,7 +662,7 @@ public:
 			if (node_ptr (r5x).mHead != ZERO)
 				discard ;
 			node_ptr (r5x).mHead = r4x ;
-			node_ptr (r5x).mPointer = node_ptr (r3x).mPointer ;
+			node_ptr (r5x).mLayout = node_ptr (r3x).mLayout ;
 		}
 		return r5x ;
 	}

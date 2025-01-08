@@ -685,7 +685,7 @@ struct SingletonProcHolder implement Interface {
 	virtual QUAD abi_reserve () const = 0 ;
 	virtual QUAD ctx_reserve () const = 0 ;
 	virtual FLAG load (CREF<Clazz> clazz) const = 0 ;
-	virtual void save (CREF<Clazz> clazz ,CREF<FLAG> pointer) const = 0 ;
+	virtual void save (CREF<Clazz> clazz ,CREF<FLAG> layout) const = 0 ;
 } ;
 
 class SingletonProc implement SingletonProcLayout {
@@ -709,8 +709,8 @@ public:
 		return SingletonProcHolder::hold (instance ())->load (clazz) ;
 	}
 
-	static void save (CREF<Clazz> clazz ,CREF<FLAG> pointer) {
-		return SingletonProcHolder::hold (instance ())->save (clazz ,pointer) ;
+	static void save (CREF<Clazz> clazz ,CREF<FLAG> layout) {
+		return SingletonProcHolder::hold (instance ())->save (clazz ,layout) ;
 	}
 } ;
 

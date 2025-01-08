@@ -493,14 +493,14 @@ public:
 		return move (ret) ;
 	}
 
-	void save (CREF<Clazz> clazz ,CREF<FLAG> pointer) const override {
-		assert (pointer != ZERO) ;
-		assert (pointer != NONE) ;
+	void save (CREF<Clazz> clazz ,CREF<FLAG> layout) const override {
+		assert (layout != ZERO) ;
+		assert (layout != NONE) ;
 		Scope<Mutex> anonymous (fake.mThis->mRoot->mMutex) ;
 		assume (fake.mThis->mPipe.exist ()) ;
 		auto rax = Set<Clazz> () ;
 		fake.mThis->mRoot->mClazzSet.get (rax) ;
-		rax.add (clazz ,pointer) ;
+		rax.add (clazz ,layout) ;
 		fake.mThis->mRoot->mClazzSet.set (rax) ;
 	}
 } ;
