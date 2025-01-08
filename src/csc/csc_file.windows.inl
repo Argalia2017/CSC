@@ -175,12 +175,10 @@ public:
 	}
 
 	BOOL equal (CREF<PathLayout> that) const override {
-		if (fake.mThis == NULL)
-			if (that.mThis == NULL)
-				return TRUE ;
-		if (fake.mThis == NULL)
+		const auto r1x = inline_compr (fake.mThis.exist () ,that.mThis.exist ()) ;
+		if (r1x != ZERO)
 			return FALSE ;
-		if (that.mThis == NULL)
+		if (!fake.mThis.exist ())
 			return FALSE ;
 		return fake->mPathName == that.mThis->mPathName ;
 	}

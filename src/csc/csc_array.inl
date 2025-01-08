@@ -1299,16 +1299,15 @@ public:
 			return ;
 		if (fake.mWrite == 0)
 			return ;
-		auto &&rax = fake.mThis.self ;
-		const auto r1x = RFat<ReflectCompr> (rax.mList.unknown ()) ;
-		const auto r2x = RFat<ReflectEqual> (rax.mList.unknown ()) ;
+		const auto r1x = RFat<ReflectCompr> (fake->mList.unknown ()) ;
+		const auto r2x = RFat<ReflectEqual> (fake->mList.unknown ()) ;
 		if ifdo (TRUE) {
 			fake.mRange = RefBuffer<INDEX> (fake.mWrite) ;
 			INDEX ix = fake.mRoot ;
 			for (auto &&i : iter (0 ,fake.mWrite)) {
 				assert (ix != NONE) ;
 				fake.mRange[i] = ix ;
-				ix = rax.mList.bt (ix).mDown ;
+				ix = fake->mList.bt (ix).mDown ;
 			}
 			assert (ix == NONE) ;
 		}
@@ -1316,13 +1315,13 @@ public:
 			const auto r3x = (&fake.mRange[0]) ;
 			const auto r4x = r3x + fake.mRange.size () ;
 			std::sort (r3x ,r4x ,[&] (CREF<INDEX> a ,CREF<INDEX> b) {
-				return r1x->compr (rax.mList[a] ,rax.mList[b]) < ZERO ;
+				return r1x->compr (fake->mList[a] ,fake->mList[b]) < ZERO ;
 			}) ;
 		}
 		if ifdo (TRUE) {
 			INDEX ix = 0 ;
 			for (auto &&i : iter (1 ,fake.mWrite)) {
-				const auto r5x = r2x->equal (rax.mList[fake.mRange[ix]] ,rax.mList[fake.mRange[i]]) ;
+				const auto r5x = r2x->equal (fake->mList[fake.mRange[ix]] ,fake->mList[fake.mRange[i]]) ;
 				if (r5x)
 					continue ;
 				ix++ ;
@@ -1337,10 +1336,10 @@ public:
 		if ifdo (TRUE) {
 			fake.mRoot = fake.mRange[0] ;
 			for (auto &&i : iter (0 ,fake.mWrite - 1)) {
-				rax.mList.bt (fake.mRange[i]).mDown = fake.mRange[i + 1] ;
+				fake->mList.bt (fake.mRange[i]).mDown = fake.mRange[i + 1] ;
 			}
 			INDEX ix = fake.mRange[fake.mWrite - 1] ;
-			rax.mList.bt (ix).mDown = NONE ;
+			fake->mList.bt (ix).mDown = NONE ;
 		}
 		fake.mRemap = TRUE ;
 	}

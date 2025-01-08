@@ -211,12 +211,10 @@ public:
 	}
 
 	BOOL equal (CREF<PathLayout> that) const override {
-		if (fake.mThis == NULL)
-			if (that.mThis == NULL)
-				return TRUE ;
-		if (fake.mThis == NULL)
+		const auto r1x = inline_compr (fake.mThis.exist () ,that.mThis.exist ()) ;
+		if (r1x != ZERO)
 			return FALSE ;
-		if (that.mThis == NULL)
+		if (!fake.mThis.exist ())
 			return FALSE ;
 		return fake->mPathName == that.mThis->mPathName ;
 	}
@@ -1246,7 +1244,7 @@ public:
 		fake->mLogWriter << EOS ;
 		if ifdo (TRUE) {
 			const auto r1x = String<STR> (slice ("%s")) ;
-			std::printf (r1x ,fake->mLogBuffer.self) ;
+			std::printf (r1x.self ,fake->mLogBuffer.self) ;
 		}
 	}
 
@@ -1258,7 +1256,7 @@ public:
 		log_file () ;
 		if ifdo (TRUE) {
 			const auto r1x = String<STR> (slice ("\033[1;34m%s\033[0m")) ;
-			std::printf (r1x ,fake->mLogBuffer.self) ;
+			std::printf (r1x.self ,fake->mLogBuffer.self) ;
 		}
 	}
 
@@ -1270,7 +1268,7 @@ public:
 		log_file () ;
 		if ifdo (TRUE) {
 			const auto r1x = String<STR> (slice ("\033[1;31m%s\033[0m")) ;
-			std::printf (r1x ,fake->mLogBuffer.self) ;
+			std::printf (r1x.self ,fake->mLogBuffer.self) ;
 		}
 	}
 
@@ -1282,7 +1280,7 @@ public:
 		log_file () ;
 		if ifdo (TRUE) {
 			const auto r1x = String<STR> (slice ("\033[1;33m%s\033[0m")) ;
-			std::printf (r1x ,fake->mLogBuffer.self) ;
+			std::printf (r1x.self ,fake->mLogBuffer.self) ;
 		}
 	}
 
@@ -1294,7 +1292,7 @@ public:
 		log_file () ;
 		if ifdo (TRUE) {
 			const auto r1x = String<STR> (slice ("\033[1;32m%s\033[0m")) ;
-			std::printf (r1x ,fake->mLogBuffer.self) ;
+			std::printf (r1x.self ,fake->mLogBuffer.self) ;
 		}
 	}
 
@@ -1306,7 +1304,7 @@ public:
 		log_file () ;
 		if ifdo (TRUE) {
 			const auto r1x = String<STR> (slice ("\033[1;36m%s\033[0m")) ;
-			std::printf (r1x ,fake->mLogBuffer.self) ;
+			std::printf (r1x.self ,fake->mLogBuffer.self) ;
 		}
 	}
 
@@ -1318,7 +1316,7 @@ public:
 		log_file () ;
 		if ifdo (TRUE) {
 			const auto r1x = String<STR> (slice ("\033[1;37m%s\033[0m")) ;
-			std::printf (r1x ,fake->mLogBuffer.self) ;
+			std::printf (r1x.self ,fake->mLogBuffer.self) ;
 		}
 	}
 

@@ -1451,7 +1451,7 @@ public:
 			return FALSE ;
 		if (!fake.mThis.exist ())
 			return TRUE ;
-		if (address (fake.mThis.self) != address (that.mThis.self))
+		if (address (fake->mTree) != address (that->mTree))
 			return FALSE ;
 		if (fake.mIndex != that.mIndex)
 			return FALSE ;
@@ -2109,7 +2109,7 @@ public:
 			return FALSE ;
 		if (!fake.mThis.exist ())
 			return TRUE ;
-		if (address (fake.mThis.self) != address (that.mThis.self))
+		if (address (fake->mTree) != address (that->mTree))
 			return FALSE ;
 		if (fake.mIndex != that.mIndex)
 			return FALSE ;

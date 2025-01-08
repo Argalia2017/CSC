@@ -274,9 +274,9 @@ struct MutexHolder implement Interface {
 
 	virtual void initialize () = 0 ;
 	virtual Ref<MutexImplLayout> borrow () const leftvalue = 0 ;
+	virtual BOOL done () const = 0 ;
 	virtual void enter () const = 0 ;
 	virtual void leave () const = 0 ;
-	virtual BOOL done () const = 0 ;
 } ;
 
 class Mutex implement MutexLayout {
@@ -291,16 +291,16 @@ public:
 		return MutexHolder::hold (thiz)->borrow () ;
 	}
 
+	BOOL done () const {
+		return MutexHolder::hold (thiz)->done () ;
+	}
+
 	void enter () const {
 		return MutexHolder::hold (thiz)->enter () ;
 	}
 
 	void leave () const {
 		return MutexHolder::hold (thiz)->leave () ;
-	}
-
-	BOOL done () const {
-		return MutexHolder::hold (thiz)->done () ;
 	}
 } ;
 

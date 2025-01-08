@@ -124,11 +124,11 @@ public:
 	}
 
 	VREF<BoxLayout> raw () leftvalue {
-		return fake.mThis->mValue.self ;
+		return fake->mValue.self ;
 	}
 
 	CREF<BoxLayout> raw () const leftvalue {
-		return fake.mThis->mValue.self ;
+		return fake->mValue.self ;
 	}
 
 	LENGTH rank () const override {
@@ -196,17 +196,17 @@ public:
 	}
 
 	VREF<BoxLayout> raw () leftvalue override {
-		return fake.mThis->mValue.self ;
+		return fake->mValue.self ;
 	}
 
 	CREF<BoxLayout> raw () const leftvalue override {
-		return fake.mThis->mValue.self ;
+		return fake->mValue.self ;
 	}
 
 	Clazz clazz () const override {
 		if (!exist ())
 			return Clazz () ;
-		return fake.mThis->mClazz ;
+		return fake->mClazz ;
 	}
 
 	VREF<Pointer> self_m () leftvalue override {
@@ -274,7 +274,7 @@ public:
 		rax.mMutex = HeapMutex::instance () ;
 		BoxHolder::hold (raw ())->acquire (item) ;
 		BoxHolder::hold (item)->release () ;
-		increase (fake.mThis->mCounter) ;
+		increase (fake->mCounter) ;
 		fake.mLayout = address (BoxHolder::hold (raw ())->self) ;
 		const auto r2x = address (rax) + SIZE_OF<SharedRefImplLayout>::expr ;
 		inline_memset (Pointer::make (r2x) ,fake.mLayout - r2x) ;
@@ -287,7 +287,7 @@ public:
 				discard ;
 			Scope<HeapMutex> anonymous (that.mThis->mMutex) ;
 			fake.mThis = that.mThis ;
-			increase (fake.mThis->mCounter) ;
+			increase (fake->mCounter) ;
 			fake.mLayout = address (BoxHolder::hold (raw ())->self) ;
 		}
 	}
@@ -315,7 +315,7 @@ public:
 		const auto r8x = unchange (rax.mCounter) ;
 		assert (r8x > 0) ;
 		RefHolder::hold (fake.mThis)->initialize (RefUnknownBinder<SharedRefImplLayout> () ,r6x) ;
-		increase (fake.mThis->mCounter) ;
+		increase (fake->mCounter) ;
 		fake.mLayout = layout ;
 	}
 
@@ -324,8 +324,8 @@ public:
 			return ;
 		if (!BoxHolder::hold (raw ())->exist ())
 			return ;
-		Scope<HeapMutex> anonymous (fake.mThis->mMutex) ;
-		const auto r1x = decrease (fake.mThis->mCounter) ;
+		Scope<HeapMutex> anonymous (fake->mMutex) ;
+		const auto r1x = decrease (fake->mCounter) ;
 		if (r1x > 0)
 			return ;
 		BoxHolder::hold (raw ())->destroy () ;
@@ -358,18 +358,18 @@ public:
 	}
 
 	VREF<BoxLayout> raw () leftvalue override {
-		return fake.mThis->mValue.self ;
+		return fake->mValue.self ;
 	}
 
 	CREF<BoxLayout> raw () const leftvalue override {
-		return fake.mThis->mValue.self ;
+		return fake->mValue.self ;
 	}
 
 	LENGTH counter () const override {
 		if (!exist ())
 			return 0 ;
-		Scope<HeapMutex> anonymous (fake.mThis->mMutex) ;
-		return unchange (fake.mThis->mCounter) ;
+		Scope<HeapMutex> anonymous (fake->mMutex) ;
+		return unchange (fake->mCounter) ;
 	}
 
 	VREF<Pointer> self_m () const leftvalue override {
@@ -414,10 +414,10 @@ public:
 	void destroy () override {
 		if (!exist ())
 			return ;
-		fake.mThis->mUpper.~Pin () ;
+		fake->mUpper.~Pin () ;
 		if (!BoxHolder::hold (raw ())->exist ())
 			return ;
-		fake.mThis->mOwner (BoxHolder::hold (raw ())->self) ;
+		fake->mOwner (BoxHolder::hold (raw ())->self) ;
 		BoxHolder::hold (raw ())->destroy () ;
 	}
 
@@ -431,11 +431,11 @@ public:
 	}
 
 	VREF<BoxLayout> raw () leftvalue override {
-		return fake.mThis->mValue.self ;
+		return fake->mValue.self ;
 	}
 
 	CREF<BoxLayout> raw () const leftvalue override {
-		return fake.mThis->mValue.self ;
+		return fake->mValue.self ;
 	}
 
 	CREF<Pointer> self_m () const leftvalue override {
@@ -528,11 +528,11 @@ public:
 			return ;
 		if (fake.mThis == NULL)
 			return ;
-		if (fake.mThis->mCapacity == USED)
+		if (fake->mCapacity == USED)
 			return ;
 		const auto r1x = RFat<ReflectElement> (unknown ())->element () ;
 		const auto r2x = RFat<ReflectDestroy> (r1x) ;
-		r2x->destroy (self ,fake.mThis->mCapacity) ;
+		r2x->destroy (self ,fake->mCapacity) ;
 		BoxHolder::hold (raw ())->release () ;
 	}
 
@@ -543,7 +543,7 @@ public:
 	BOOL fixed () const override {
 		if (fake.mThis == NULL)
 			return FALSE ;
-		if (fake.mThis->mCapacity != USED)
+		if (fake->mCapacity != USED)
 			return FALSE ;
 		return TRUE ;
 	}
@@ -554,11 +554,11 @@ public:
 	}
 
 	VREF<BoxLayout> raw () leftvalue override {
-		return fake.mThis->mValue.self ;
+		return fake->mValue.self ;
 	}
 
 	CREF<BoxLayout> raw () const leftvalue override {
-		return fake.mThis->mValue.self ;
+		return fake->mValue.self ;
 	}
 
 	LENGTH size () const override {
@@ -676,8 +676,7 @@ public:
 	}
 
 	VREF<Pointer> self_m () leftvalue {
-		const auto r1x = address (fake.mThis.self) ;
-		return Pointer::make (r1x) ;
+		return fake.mThis.pin ().self ;
 	}
 
 	VREF<Pointer> at (CREF<INDEX> index) leftvalue override {

@@ -266,6 +266,14 @@ public:
 		return Ref<MutexImplLayout>::reference (fake.mThis.self) ;
 	}
 
+	BOOL done () const override {
+		if (!fake.mThis.exist ())
+			return TRUE ;
+		if (fake->mType == MutexType::OnceDone)
+			return TRUE ;
+		return FALSE ;
+	}
+
 	void enter () const override {
 		if (done ())
 			return ;
@@ -277,14 +285,6 @@ public:
 			return ;
 		replace (fake->mType ,FLAG (MutexType::Once) ,MutexType::OnceDone) ;
 		fake->mBasic->unlock () ;
-	}
-
-	BOOL done () const override {
-		if (!fake.mThis.exist ())
-			return TRUE ;
-		if (fake->mType == MutexType::OnceDone)
-			return TRUE ;
-		return FALSE ;
 	}
 } ;
 

@@ -405,8 +405,7 @@ public:
 
 struct AutoRefImplLayout ;
 
-struct AutoRefLayout {
-	Ref<AutoRefImplLayout> mThis ;
+struct AutoRefLayout implement ThisLayout<Ref<AutoRefImplLayout>> {
 	FLAG mLayout ;
 
 public:
@@ -540,8 +539,7 @@ public:
 
 struct SharedRefImplLayout ;
 
-struct SharedRefLayout {
-	Ref<SharedRefImplLayout> mThis ;
+struct SharedRefLayout implement ThisLayout<Ref<SharedRefImplLayout>> {
 	FLAG mLayout ;
 
 public:
@@ -668,8 +666,7 @@ public:
 
 struct UniqueRefImplLayout ;
 
-struct UniqueRefLayout {
-	Ref<UniqueRefImplLayout> mThis ;
+struct UniqueRefLayout implement ThisLayout<Ref<UniqueRefImplLayout>> {
 	FLAG mLayout ;
 
 public:
@@ -798,8 +795,7 @@ public:
 
 struct RefBufferImplLayout ;
 
-struct RefBufferLayout {
-	Ref<RefBufferImplLayout> mThis ;
+struct RefBufferLayout implement ThisLayout<Ref<RefBufferImplLayout>> {
 	FLAG mHolder ;
 	FLAG mBuffer ;
 	LENGTH mSize ;
@@ -970,10 +966,9 @@ public:
 	}
 } ;
 
-struct FarBufferLayout {
+struct FarBufferLayout implement ThisLayout<Ref<Pointer>> {
 	Function<CREF<INDEX> ,VREF<Pointer>> mGetter ;
 	Function<CREF<INDEX> ,CREF<Pointer>> mSetter ;
-	Ref<Pointer> mThis ;
 	LENGTH mSize ;
 	LENGTH mStep ;
 	INDEX mIndex ;
