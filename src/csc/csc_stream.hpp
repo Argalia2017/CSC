@@ -42,9 +42,6 @@ struct StreamProcHolder implement Interface {
 } ;
 
 class StreamProc implement StreamProcLayout {
-protected:
-	using StreamProcLayout::mThis ;
-
 public:
 	static CREF<StreamProc> instance () {
 		return keep[TYPE<StreamProc>::expr] (StreamProcHolder::instance ()) ;
@@ -1689,7 +1686,7 @@ inline Format PrintFormat (CREF<ARG1>...params) {
 	return move (ret) ;
 }
 
-struct StreamTextProcLayout implement ThisLayout<RefLayout> {} ;
+struct StreamTextProcLayout {} ;
 
 struct StreamTextProcHolder implement Interface {
 	imports CREF<StreamTextProcLayout> instance () ;
@@ -1707,9 +1704,6 @@ struct StreamTextProcHolder implement Interface {
 } ;
 
 class StreamTextProc implement StreamTextProcLayout {
-protected:
-	using StreamTextProcLayout::mThis ;
-
 public:
 	static CREF<StreamTextProc> instance () {
 		return keep[TYPE<StreamTextProc>::expr] (StreamTextProcHolder::instance ()) ;
@@ -1872,9 +1866,6 @@ struct CommaHolder implement Interface {
 } ;
 
 class Comma implement CommaLayout {
-protected:
-	using CommaLayout::mThis ;
-
 public:
 	implicit Comma () = default ;
 
@@ -1921,9 +1912,6 @@ struct RegexHolder implement Interface {
 } ;
 
 class Regex implement RegexLayout {
-protected:
-	using RegexLayout::mThis ;
-
 public:
 	implicit Regex () = default ;
 

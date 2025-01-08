@@ -1359,8 +1359,7 @@ struct SortedMapImplLayout {
 	INDEX mCheck ;
 } ;
 
-struct SortedMapLayout {
-	SharedRef<SortedMapImplLayout> mThis ;
+struct SortedMapLayout implement ThisLayout<SharedRef<SortedMapImplLayout>> {
 	INDEX mRoot ;
 	RefBuffer<INDEX> mRange ;
 	INDEX mWrite ;

@@ -76,9 +76,6 @@ struct WorkThreadHolder implement Interface {
 } ;
 
 class WorkThread implement WorkThreadLayout {
-protected:
-	using WorkThreadLayout::mThis ;
-
 public:
 	implicit WorkThread () = default ;
 
@@ -142,9 +139,6 @@ struct CalcThreadHolder implement Interface {
 } ;
 
 class CalcThread implement CalcThreadLayout {
-protected:
-	using CalcThreadLayout::mThis ;
-
 public:
 	implicit CalcThread () = default ;
 
@@ -208,9 +202,6 @@ struct PromiseHolder implement Interface {
 
 template <class A>
 class Promise implement PromiseLayout {
-protected:
-	using PromiseLayout::mThis ;
-
 public:
 	implicit Promise () = default ;
 

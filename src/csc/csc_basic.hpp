@@ -345,9 +345,6 @@ public:
 
 template <class...A>
 class Function implement FunctionLayout {
-protected:
-	using FunctionLayout::mThis ;
-
 public:
 	implicit Function () = default ;
 

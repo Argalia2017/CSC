@@ -124,7 +124,7 @@ public:
 
 	String<STRA> stra_from_strw (CREF<String<STRW>> a) const override {
 		String<STRA> ret = String<STRA> (a.length () * 2 + 1) ;
-		string_stra_from_strw (ret ,a ,fake.mThis->mStringLocale) ;
+		string_stra_from_strw (ret ,a ,fake->mStringLocale) ;
 		return move (ret) ;
 	}
 
@@ -139,7 +139,7 @@ public:
 
 	String<STRW> strw_from_stra (CREF<String<STRA>> a) const override {
 		String<STRW> ret = String<STRW> (a.length () + 1) ;
-		string_strw_from_stra (ret ,a ,fake.mThis->mStringLocale) ;
+		string_strw_from_stra (ret ,a ,fake->mStringLocale) ;
 		return move (ret) ;
 	}
 
@@ -1327,7 +1327,7 @@ public:
 		auto rax = MakeXmlParser (Ref<RefBuffer<BYTE>>::reference (stream)) ;
 		rax.generate () ;
 		fake.mThis = Ref<XmlParserImplLayout>::make (rax.poll ()) ;
-		fake.mIndex = fake.mThis->mRoot ;
+		fake.mIndex = fake->mRoot ;
 	}
 
 	BOOL exist () const override {
@@ -1344,7 +1344,7 @@ public:
 			if (!exist ())
 				discard ;
 			ret.mThis = fake.mThis ;
-			ret.mIndex = fake.mThis->mRoot ;
+			ret.mIndex = fake->mRoot ;
 		}
 		return move (ret) ;
 	}
@@ -1355,7 +1355,7 @@ public:
 			if (!exist ())
 				discard ;
 			ret.mThis = fake.mThis ;
-			ret.mIndex = fake.mThis->mTree[fake.mIndex].mParent ;
+			ret.mIndex = fake->mTree[fake.mIndex].mParent ;
 		}
 		return move (ret) ;
 	}
@@ -1366,7 +1366,7 @@ public:
 			if (!exist ())
 				discard ;
 			ret.mThis = fake.mThis ;
-			ret.mIndex = fake.mThis->mTree[fake.mIndex].mBrother ;
+			ret.mIndex = fake->mTree[fake.mIndex].mBrother ;
 		}
 		return move (ret) ;
 	}
@@ -1377,7 +1377,7 @@ public:
 			if (!exist ())
 				discard ;
 			ret.mThis = fake.mThis ;
-			ret.mIndex = fake.mThis->mTree[fake.mIndex].mChild ;
+			ret.mIndex = fake->mTree[fake.mIndex].mChild ;
 		}
 		return move (ret) ;
 	}
@@ -1388,7 +1388,7 @@ public:
 			if (!exist ())
 				discard ;
 			ret.mThis = fake.mThis ;
-			ret.mIndex = fake.mThis->mTree[fake.mIndex].mArrayMap.map (index) ;
+			ret.mIndex = fake->mTree[fake.mIndex].mArrayMap.map (index) ;
 		}
 		return move (ret) ;
 	}
@@ -1399,7 +1399,7 @@ public:
 			if (!exist ())
 				discard ;
 			ret.mThis = fake.mThis ;
-			ret.mIndex = fake.mThis->mTree[fake.mIndex].mObjectMap.map (name) ;
+			ret.mIndex = fake->mTree[fake.mIndex].mObjectMap.map (name) ;
 		}
 		return move (ret) ;
 	}
@@ -1410,7 +1410,7 @@ public:
 			if (!exist ())
 				discard ;
 			ret.mThis = fake.mThis ;
-			ret.mIndex = fake.mThis->mTree[fake.mIndex].mObjectMap.map (name) ;
+			ret.mIndex = fake->mTree[fake.mIndex].mObjectMap.map (name) ;
 		}
 		return move (ret) ;
 	}
@@ -1420,11 +1420,11 @@ public:
 		if ifdo (TRUE) {
 			if (!exist ())
 				discard ;
-			const auto r1x = fake.mThis->mTree[fake.mIndex].mArrayMap.length () ;
+			const auto r1x = fake->mTree[fake.mIndex].mArrayMap.length () ;
 			ret = Array<XmlParserLayout> (r1x) ;
 			for (auto &&i : iter (0 ,r1x)) {
 				ret[i].mThis = fake.mThis ;
-				ret[i].mIndex = fake.mThis->mTree[fake.mIndex].mArrayMap[i] ;
+				ret[i].mIndex = fake->mTree[fake.mIndex].mArrayMap[i] ;
 			}
 		}
 		return move (ret) ;
@@ -1435,11 +1435,11 @@ public:
 		if ifdo (TRUE) {
 			if (!exist ())
 				discard ;
-			const auto r1x = fake.mThis->mTree[fake.mIndex].mArrayMap.length () ;
+			const auto r1x = fake->mTree[fake.mIndex].mArrayMap.length () ;
 			const auto r2x = inline_min (r1x ,size_) ;
 			for (auto &&i : iter (0 ,r2x)) {
 				ret[i].mThis = fake.mThis ;
-				ret[i].mIndex = fake.mThis->mTree[fake.mIndex].mArrayMap[i] ;
+				ret[i].mIndex = fake->mTree[fake.mIndex].mArrayMap[i] ;
 			}
 		}
 		return move (ret) ;
@@ -1460,14 +1460,14 @@ public:
 
 	CREF<String<STRU8>> name () const leftvalue override {
 		assert (exist ()) ;
-		return fake.mThis->mTree[fake.mIndex].mName ;
+		return fake->mTree[fake.mIndex].mName ;
 	}
 
 	BOOL parse (CREF<BOOL> def) const override {
 		if (!exist ())
 			return def ;
 		try {
-			return StringParse<BOOL>::make (fake.mThis->mTree[fake.mIndex].mValue) ;
+			return StringParse<BOOL>::make (fake->mTree[fake.mIndex].mValue) ;
 		} catch (CREF<Exception> e) {
 			noop (e) ;
 		}
@@ -1478,7 +1478,7 @@ public:
 		if (!exist ())
 			return def ;
 		try {
-			return StringParse<VAL32>::make (fake.mThis->mTree[fake.mIndex].mValue) ;
+			return StringParse<VAL32>::make (fake->mTree[fake.mIndex].mValue) ;
 		} catch (CREF<Exception> e) {
 			noop (e) ;
 		}
@@ -1489,7 +1489,7 @@ public:
 		if (!exist ())
 			return def ;
 		try {
-			return StringParse<VAL64>::make (fake.mThis->mTree[fake.mIndex].mValue) ;
+			return StringParse<VAL64>::make (fake->mTree[fake.mIndex].mValue) ;
 		} catch (CREF<Exception> e) {
 			noop (e) ;
 		}
@@ -1500,7 +1500,7 @@ public:
 		if (!exist ())
 			return def ;
 		try {
-			return StringParse<FLT32>::make (fake.mThis->mTree[fake.mIndex].mValue) ;
+			return StringParse<FLT32>::make (fake->mTree[fake.mIndex].mValue) ;
 		} catch (CREF<Exception> e) {
 			noop (e) ;
 		}
@@ -1511,7 +1511,7 @@ public:
 		if (!exist ())
 			return def ;
 		try {
-			return StringParse<FLT64>::make (fake.mThis->mTree[fake.mIndex].mValue) ;
+			return StringParse<FLT64>::make (fake->mTree[fake.mIndex].mValue) ;
 		} catch (CREF<Exception> e) {
 			noop (e) ;
 		}
@@ -1522,7 +1522,7 @@ public:
 		if (!exist ())
 			return def ;
 		try {
-			return StringProc::stra_from_stru (fake.mThis->mTree[fake.mIndex].mValue) ;
+			return StringProc::stra_from_stru (fake->mTree[fake.mIndex].mValue) ;
 		} catch (CREF<Exception> e) {
 			noop (e) ;
 		}
@@ -1533,7 +1533,7 @@ public:
 		if (!exist ())
 			return def ;
 		try {
-			return StringProc::strw_from_stru (fake.mThis->mTree[fake.mIndex].mValue) ;
+			return StringProc::strw_from_stru (fake->mTree[fake.mIndex].mValue) ;
 		} catch (CREF<Exception> e) {
 			noop (e) ;
 		}
@@ -1544,7 +1544,7 @@ public:
 		if (!exist ())
 			return def ;
 		try {
-			return fake.mThis->mTree[fake.mIndex].mValue ;
+			return fake->mTree[fake.mIndex].mValue ;
 		} catch (CREF<Exception> e) {
 			noop (e) ;
 		}
@@ -1555,7 +1555,7 @@ public:
 		if (!exist ())
 			return def ;
 		try {
-			return StringProc::stru16_from_stru8 (fake.mThis->mTree[fake.mIndex].mValue) ;
+			return StringProc::stru16_from_stru8 (fake->mTree[fake.mIndex].mValue) ;
 		} catch (CREF<Exception> e) {
 			noop (e) ;
 		}
@@ -1566,7 +1566,7 @@ public:
 		if (!exist ())
 			return def ;
 		try {
-			return StringProc::stru32_from_stru8 (fake.mThis->mTree[fake.mIndex].mValue) ;
+			return StringProc::stru32_from_stru8 (fake->mTree[fake.mIndex].mValue) ;
 		} catch (CREF<Exception> e) {
 			noop (e) ;
 		}
@@ -1985,7 +1985,7 @@ public:
 		auto rax = MakeJsonParser (Ref<RefBuffer<BYTE>>::reference (stream)) ;
 		rax.generate () ;
 		fake.mThis = Ref<JsonParserImplLayout>::make (rax.poll ()) ;
-		fake.mIndex = fake.mThis->mRoot ;
+		fake.mIndex = fake->mRoot ;
 	}
 
 	BOOL exist () const override {
@@ -2002,7 +2002,7 @@ public:
 			if (!exist ())
 				discard ;
 			ret.mThis = fake.mThis ;
-			ret.mIndex = fake.mThis->mRoot ;
+			ret.mIndex = fake->mRoot ;
 		}
 		return move (ret) ;
 	}
@@ -2013,7 +2013,7 @@ public:
 			if (!exist ())
 				discard ;
 			ret.mThis = fake.mThis ;
-			ret.mIndex = fake.mThis->mTree[fake.mIndex].mParent ;
+			ret.mIndex = fake->mTree[fake.mIndex].mParent ;
 		}
 		return move (ret) ;
 	}
@@ -2024,7 +2024,7 @@ public:
 			if (!exist ())
 				discard ;
 			ret.mThis = fake.mThis ;
-			ret.mIndex = fake.mThis->mTree[fake.mIndex].mBrother ;
+			ret.mIndex = fake->mTree[fake.mIndex].mBrother ;
 		}
 		return move (ret) ;
 	}
@@ -2035,7 +2035,7 @@ public:
 			if (!exist ())
 				discard ;
 			ret.mThis = fake.mThis ;
-			ret.mIndex = fake.mThis->mTree[fake.mIndex].mChild ;
+			ret.mIndex = fake->mTree[fake.mIndex].mChild ;
 		}
 		return move (ret) ;
 	}
@@ -2046,7 +2046,7 @@ public:
 			if (!exist ())
 				discard ;
 			ret.mThis = fake.mThis ;
-			ret.mIndex = fake.mThis->mTree[fake.mIndex].mArrayMap.map (index) ;
+			ret.mIndex = fake->mTree[fake.mIndex].mArrayMap.map (index) ;
 		}
 		return move (ret) ;
 	}
@@ -2057,7 +2057,7 @@ public:
 			if (!exist ())
 				discard ;
 			ret.mThis = fake.mThis ;
-			ret.mIndex = fake.mThis->mTree[fake.mIndex].mObjectMap.map (name) ;
+			ret.mIndex = fake->mTree[fake.mIndex].mObjectMap.map (name) ;
 		}
 		return move (ret) ;
 	}
@@ -2068,7 +2068,7 @@ public:
 			if (!exist ())
 				discard ;
 			ret.mThis = fake.mThis ;
-			ret.mIndex = fake.mThis->mTree[fake.mIndex].mObjectMap.map (name) ;
+			ret.mIndex = fake->mTree[fake.mIndex].mObjectMap.map (name) ;
 		}
 		return move (ret) ;
 	}
@@ -2078,11 +2078,11 @@ public:
 		if ifdo (TRUE) {
 			if (!exist ())
 				discard ;
-			const auto r1x = fake.mThis->mTree[fake.mIndex].mArrayMap.length () ;
+			const auto r1x = fake->mTree[fake.mIndex].mArrayMap.length () ;
 			ret = Array<JsonParserLayout> (r1x) ;
 			for (auto &&i : iter (0 ,r1x)) {
 				ret[i].mThis = fake.mThis ;
-				ret[i].mIndex = fake.mThis->mTree[fake.mIndex].mArrayMap[i] ;
+				ret[i].mIndex = fake->mTree[fake.mIndex].mArrayMap[i] ;
 			}
 		}
 		return move (ret) ;
@@ -2093,11 +2093,11 @@ public:
 		if ifdo (TRUE) {
 			if (!exist ())
 				discard ;
-			const auto r1x = fake.mThis->mTree[fake.mIndex].mArrayMap.length () ;
+			const auto r1x = fake->mTree[fake.mIndex].mArrayMap.length () ;
 			const auto r2x = inline_min (r1x ,size_) ;
 			for (auto &&i : iter (0 ,r2x)) {
 				ret[i].mThis = fake.mThis ;
-				ret[i].mIndex = fake.mThis->mTree[fake.mIndex].mArrayMap[i] ;
+				ret[i].mIndex = fake->mTree[fake.mIndex].mArrayMap[i] ;
 			}
 		}
 		return move (ret) ;
@@ -2118,14 +2118,14 @@ public:
 
 	CREF<String<STRU8>> name () const leftvalue override {
 		assert (exist ()) ;
-		return fake.mThis->mTree[fake.mIndex].mName ;
+		return fake->mTree[fake.mIndex].mName ;
 	}
 
 	BOOL parse (CREF<BOOL> def) const override {
 		if (!exist ())
 			return def ;
 		try {
-			return StringParse<BOOL>::make (fake.mThis->mTree[fake.mIndex].mValue) ;
+			return StringParse<BOOL>::make (fake->mTree[fake.mIndex].mValue) ;
 		} catch (CREF<Exception> e) {
 			noop (e) ;
 		}
@@ -2136,7 +2136,7 @@ public:
 		if (!exist ())
 			return def ;
 		try {
-			return StringParse<VAL32>::make (fake.mThis->mTree[fake.mIndex].mValue) ;
+			return StringParse<VAL32>::make (fake->mTree[fake.mIndex].mValue) ;
 		} catch (CREF<Exception> e) {
 			noop (e) ;
 		}
@@ -2147,7 +2147,7 @@ public:
 		if (!exist ())
 			return def ;
 		try {
-			return StringParse<VAL64>::make (fake.mThis->mTree[fake.mIndex].mValue) ;
+			return StringParse<VAL64>::make (fake->mTree[fake.mIndex].mValue) ;
 		} catch (CREF<Exception> e) {
 			noop (e) ;
 		}
@@ -2158,7 +2158,7 @@ public:
 		if (!exist ())
 			return def ;
 		try {
-			return StringParse<FLT32>::make (fake.mThis->mTree[fake.mIndex].mValue) ;
+			return StringParse<FLT32>::make (fake->mTree[fake.mIndex].mValue) ;
 		} catch (CREF<Exception> e) {
 			noop (e) ;
 		}
@@ -2169,7 +2169,7 @@ public:
 		if (!exist ())
 			return def ;
 		try {
-			return StringParse<FLT64>::make (fake.mThis->mTree[fake.mIndex].mValue) ;
+			return StringParse<FLT64>::make (fake->mTree[fake.mIndex].mValue) ;
 		} catch (CREF<Exception> e) {
 			noop (e) ;
 		}
@@ -2180,7 +2180,7 @@ public:
 		if (!exist ())
 			return def ;
 		try {
-			return StringProc::stra_from_stru (fake.mThis->mTree[fake.mIndex].mValue) ;
+			return StringProc::stra_from_stru (fake->mTree[fake.mIndex].mValue) ;
 		} catch (CREF<Exception> e) {
 			noop (e) ;
 		}
@@ -2191,7 +2191,7 @@ public:
 		if (!exist ())
 			return def ;
 		try {
-			return StringProc::strw_from_stru (fake.mThis->mTree[fake.mIndex].mValue) ;
+			return StringProc::strw_from_stru (fake->mTree[fake.mIndex].mValue) ;
 		} catch (CREF<Exception> e) {
 			noop (e) ;
 		}
@@ -2202,7 +2202,7 @@ public:
 		if (!exist ())
 			return def ;
 		try {
-			return fake.mThis->mTree[fake.mIndex].mValue ;
+			return fake->mTree[fake.mIndex].mValue ;
 		} catch (CREF<Exception> e) {
 			noop (e) ;
 		}
@@ -2213,7 +2213,7 @@ public:
 		if (!exist ())
 			return def ;
 		try {
-			return StringProc::stru16_from_stru8 (fake.mThis->mTree[fake.mIndex].mValue) ;
+			return StringProc::stru16_from_stru8 (fake->mTree[fake.mIndex].mValue) ;
 		} catch (CREF<Exception> e) {
 			noop (e) ;
 		}
@@ -2224,7 +2224,7 @@ public:
 		if (!exist ())
 			return def ;
 		try {
-			return StringProc::stru32_from_stru8 (fake.mThis->mTree[fake.mIndex].mValue) ;
+			return StringProc::stru32_from_stru8 (fake->mTree[fake.mIndex].mValue) ;
 		} catch (CREF<Exception> e) {
 			noop (e) ;
 		}
@@ -2902,24 +2902,24 @@ public:
 	}
 
 	LENGTH element_size (CREF<Slice> element) const override {
-		INDEX ix = fake.mThis->mElementSet.map (element) ;
+		INDEX ix = fake->mElementSet.map (element) ;
 		if (ix == NONE)
 			return 0 ;
-		return fake.mThis->mElementList[ix].mLineSize ;
+		return fake->mElementList[ix].mLineSize ;
 	}
 
 	LENGTH property_size (CREF<Slice> element ,CREF<Slice> property) const override {
-		INDEX ix = fake.mThis->mElementSet.map (element) ;
+		INDEX ix = fake->mElementSet.map (element) ;
 		if (ix == NONE)
 			return 0 ;
-		INDEX jx = fake.mThis->mElementList[ix].mPropertySet.map (property) ;
+		INDEX jx = fake->mElementList[ix].mPropertySet.map (property) ;
 		if (jx == NONE)
 			return 0 ;
-		return fake.mThis->mElementList[ix].mPropertyList[jx].mListSize ;
+		return fake->mElementList[ix].mPropertyList[jx].mListSize ;
 	}
 
 	void guide_new (CREF<Slice> element) override {
-		INDEX ix = fake.mThis->mElementSet.map (element) ;
+		INDEX ix = fake->mElementSet.map (element) ;
 		assume (ix != NONE) ;
 		fake.mGuide.mElementIndex = ix ;
 		fake.mGuide.mProperty.clear () ;
@@ -2934,7 +2934,7 @@ public:
 	void guide_put (CREF<Slice> property) override {
 		INDEX ix = fake.mGuide.mElementIndex ;
 		assume (ix != NONE) ;
-		INDEX jx = fake.mThis->mElementList[ix].mPropertySet.map (property) ;
+		INDEX jx = fake->mElementList[ix].mPropertySet.map (property) ;
 		assume (jx != NONE) ;
 		assert (fake.mGuide.mLineIndex == NONE) ;
 		fake.mGuide.mProperty.add (jx) ;
@@ -2951,11 +2951,11 @@ public:
 			fake.mGuide.mLineIndex = 0 ;
 			fake.mGuide.mPropertyIndex = 0 ;
 			assume (fake.mGuide.mPropertyIndex < fake.mGuide.mProperty.length ()) ;
-			assume (fake.mGuide.mLineIndex < fake.mThis->mElementList[ix].mLineSize) ;
+			assume (fake.mGuide.mLineIndex < fake->mElementList[ix].mLineSize) ;
 			jx = fake.mGuide.mProperty[fake.mGuide.mPropertyIndex] ;
-			const auto r1x = fake.mGuide.mLineIndex * fake.mThis->mElementList[ix].mLineStep ;
-			fake.mGuide.mPlyBegin = r1x + fake.mThis->mElementList[ix].mPropertyList[jx].mPlyBegin ;
-			fake.mGuide.mPlyEnd = r1x + fake.mThis->mElementList[ix].mPropertyList[jx].mPlyEnd ;
+			const auto r1x = fake.mGuide.mLineIndex * fake->mElementList[ix].mLineStep ;
+			fake.mGuide.mPlyBegin = r1x + fake->mElementList[ix].mPropertyList[jx].mPlyBegin ;
+			fake.mGuide.mPlyEnd = r1x + fake->mElementList[ix].mPropertyList[jx].mPlyEnd ;
 			fake.mGuide.mPlyIndex = fake.mGuide.mPlyBegin ;
 			fake.mGuide.mPlyListMode = FALSE ;
 		}
@@ -2964,11 +2964,11 @@ public:
 			if ifdo (TRUE) {
 				if (fake.mGuide.mPlyListMode)
 					discard ;
-				if (fake.mThis->mElementList[ix].mPropertyList[jx].mListType == PlyParserDataType::Null)
+				if (fake->mElementList[ix].mPropertyList[jx].mListType == PlyParserDataType::Null)
 					discard ;
-				fake.mGuide.mPlyBegin = bitwise[TYPE<LENGTH>::expr] (Pointer::from (fake.mThis->mElementList[ix].mPlyBuffer[fake.mGuide.mPlyIndex])) ;
+				fake.mGuide.mPlyBegin = bitwise[TYPE<LENGTH>::expr] (Pointer::from (fake->mElementList[ix].mPlyBuffer[fake.mGuide.mPlyIndex])) ;
 				fake.mGuide.mPlyIndex += SIZE_OF<LENGTH>::expr ;
-				fake.mGuide.mPlyEnd = bitwise[TYPE<LENGTH>::expr] (Pointer::from (fake.mThis->mElementList[ix].mPlyBuffer[fake.mGuide.mPlyIndex])) ;
+				fake.mGuide.mPlyEnd = bitwise[TYPE<LENGTH>::expr] (Pointer::from (fake->mElementList[ix].mPlyBuffer[fake.mGuide.mPlyIndex])) ;
 				fake.mGuide.mPlyIndex = fake.mGuide.mPlyBegin ;
 				fake.mGuide.mPlyListMode = TRUE ;
 			}
@@ -2980,21 +2980,21 @@ public:
 			if (fake.mGuide.mPropertyIndex >= fake.mGuide.mProperty.length ())
 				discard ;
 			jx = fake.mGuide.mProperty[fake.mGuide.mPropertyIndex] ;
-			const auto r2x = fake.mGuide.mLineIndex * fake.mThis->mElementList[ix].mLineStep ;
-			fake.mGuide.mPlyBegin = r2x + fake.mThis->mElementList[ix].mPropertyList[jx].mPlyBegin ;
-			fake.mGuide.mPlyEnd = r2x + fake.mThis->mElementList[ix].mPropertyList[jx].mPlyEnd ;
+			const auto r2x = fake.mGuide.mLineIndex * fake->mElementList[ix].mLineStep ;
+			fake.mGuide.mPlyBegin = r2x + fake->mElementList[ix].mPropertyList[jx].mPlyBegin ;
+			fake.mGuide.mPlyEnd = r2x + fake->mElementList[ix].mPropertyList[jx].mPlyEnd ;
 			fake.mGuide.mPlyIndex = fake.mGuide.mPlyBegin ;
 			fake.mGuide.mPlyListMode = FALSE ;
 		}
 		if ifdo (act) {
 			fake.mGuide.mLineIndex++ ;
 			fake.mGuide.mPropertyIndex = 0 ;
-			if (fake.mGuide.mLineIndex >= fake.mThis->mElementList[ix].mLineSize)
+			if (fake.mGuide.mLineIndex >= fake->mElementList[ix].mLineSize)
 				discard ;
 			jx = fake.mGuide.mProperty[fake.mGuide.mPropertyIndex] ;
-			const auto r3x = fake.mGuide.mLineIndex * fake.mThis->mElementList[ix].mLineStep ;
-			fake.mGuide.mPlyBegin = r3x + fake.mThis->mElementList[ix].mPropertyList[jx].mPlyBegin ;
-			fake.mGuide.mPlyEnd = r3x + fake.mThis->mElementList[ix].mPropertyList[jx].mPlyEnd ;
+			const auto r3x = fake.mGuide.mLineIndex * fake->mElementList[ix].mLineStep ;
+			fake.mGuide.mPlyBegin = r3x + fake->mElementList[ix].mPropertyList[jx].mPlyBegin ;
+			fake.mGuide.mPlyEnd = r3x + fake->mElementList[ix].mPropertyList[jx].mPlyEnd ;
 			fake.mGuide.mPlyIndex = fake.mGuide.mPlyBegin ;
 			fake.mGuide.mPlyListMode = FALSE ;
 		}
@@ -3007,7 +3007,7 @@ public:
 		guide_jmp () ;
 		INDEX ix = fake.mGuide.mElementIndex ;
 		INDEX jx = fake.mGuide.mProperty[fake.mGuide.mPropertyIndex] ;
-		auto &&rax = fake.mThis->mElementList[ix] ;
+		auto &&rax = fake->mElementList[ix] ;
 		assume (rax.mPropertyList[jx].mType == PlyParserDataType::Bool) ;
 		item = bitwise[TYPE<BOOL>::expr] (Pointer::from (rax.mPlyBuffer[fake.mGuide.mPlyIndex])) ;
 		fake.mGuide.mPlyIndex += SIZE_OF<BOOL>::expr ;
@@ -3021,13 +3021,13 @@ public:
 		if ifdo (act) {
 			if (fake.mGuide.mPlyListMode)
 				discard ;
-			auto &&rax = fake.mThis->mElementList[ix] ;
+			auto &&rax = fake->mElementList[ix] ;
 			assume (rax.mPropertyList[jx].mType == PlyParserDataType::Val32) ;
 			item = bitwise[TYPE<VAL32>::expr] (Pointer::from (rax.mPlyBuffer[fake.mGuide.mPlyIndex])) ;
 			fake.mGuide.mPlyIndex += SIZE_OF<VAL32>::expr ;
 		}
 		if ifdo (act) {
-			auto &&rax = fake.mThis->mElementList[ix] ;
+			auto &&rax = fake->mElementList[ix] ;
 			assume (rax.mPropertyList[jx].mListType == PlyParserDataType::Val32) ;
 			item = bitwise[TYPE<VAL32>::expr] (Pointer::from (rax.mExtBuffer[fake.mGuide.mPlyIndex])) ;
 			fake.mGuide.mPlyIndex += SIZE_OF<VAL32>::expr ;
@@ -3042,13 +3042,13 @@ public:
 		if ifdo (act) {
 			if (fake.mGuide.mPlyListMode)
 				discard ;
-			auto &&rax = fake.mThis->mElementList[ix] ;
+			auto &&rax = fake->mElementList[ix] ;
 			assume (rax.mPropertyList[jx].mType == PlyParserDataType::Val64) ;
 			item = bitwise[TYPE<VAL64>::expr] (Pointer::from (rax.mPlyBuffer[fake.mGuide.mPlyIndex])) ;
 			fake.mGuide.mPlyIndex += SIZE_OF<VAL64>::expr ;
 		}
 		if ifdo (act) {
-			auto &&rax = fake.mThis->mElementList[ix] ;
+			auto &&rax = fake->mElementList[ix] ;
 			assume (rax.mPropertyList[jx].mListType == PlyParserDataType::Val64) ;
 			item = bitwise[TYPE<VAL64>::expr] (Pointer::from (rax.mExtBuffer[fake.mGuide.mPlyIndex])) ;
 			fake.mGuide.mPlyIndex += SIZE_OF<VAL64>::expr ;
@@ -3059,7 +3059,7 @@ public:
 		guide_jmp () ;
 		INDEX ix = fake.mGuide.mElementIndex ;
 		INDEX jx = fake.mGuide.mProperty[fake.mGuide.mPropertyIndex] ;
-		auto &&rax = fake.mThis->mElementList[ix] ;
+		auto &&rax = fake->mElementList[ix] ;
 		assume (rax.mPropertyList[jx].mType == PlyParserDataType::Flt32) ;
 		item = bitwise[TYPE<FLT32>::expr] (Pointer::from (rax.mPlyBuffer[fake.mGuide.mPlyIndex])) ;
 		fake.mGuide.mPlyIndex += SIZE_OF<FLT32>::expr ;
@@ -3069,7 +3069,7 @@ public:
 		guide_jmp () ;
 		INDEX ix = fake.mGuide.mElementIndex ;
 		INDEX jx = fake.mGuide.mProperty[fake.mGuide.mPropertyIndex] ;
-		auto &&rax = fake.mThis->mElementList[ix] ;
+		auto &&rax = fake->mElementList[ix] ;
 		assume (rax.mPropertyList[jx].mType == PlyParserDataType::Flt64) ;
 		item = bitwise[TYPE<FLT64>::expr] (Pointer::from (rax.mPlyBuffer[fake.mGuide.mPlyIndex])) ;
 		fake.mGuide.mPlyIndex += SIZE_OF<FLT64>::expr ;
@@ -3079,7 +3079,7 @@ public:
 		guide_jmp () ;
 		INDEX ix = fake.mGuide.mElementIndex ;
 		INDEX jx = fake.mGuide.mProperty[fake.mGuide.mPropertyIndex] ;
-		auto &&rax = fake.mThis->mElementList[ix] ;
+		auto &&rax = fake->mElementList[ix] ;
 		assume (rax.mPropertyList[jx].mType == PlyParserDataType::Byte) ;
 		item = bitwise[TYPE<BYTE>::expr] (Pointer::from (rax.mPlyBuffer[fake.mGuide.mPlyIndex])) ;
 		fake.mGuide.mPlyIndex += SIZE_OF<BYTE>::expr ;
@@ -3089,7 +3089,7 @@ public:
 		guide_jmp () ;
 		INDEX ix = fake.mGuide.mElementIndex ;
 		INDEX jx = fake.mGuide.mProperty[fake.mGuide.mPropertyIndex] ;
-		auto &&rax = fake.mThis->mElementList[ix] ;
+		auto &&rax = fake->mElementList[ix] ;
 		assume (rax.mPropertyList[jx].mType == PlyParserDataType::Word) ;
 		item = bitwise[TYPE<WORD>::expr] (Pointer::from (rax.mPlyBuffer[fake.mGuide.mPlyIndex])) ;
 		fake.mGuide.mPlyIndex += SIZE_OF<WORD>::expr ;
@@ -3099,7 +3099,7 @@ public:
 		guide_jmp () ;
 		INDEX ix = fake.mGuide.mElementIndex ;
 		INDEX jx = fake.mGuide.mProperty[fake.mGuide.mPropertyIndex] ;
-		auto &&rax = fake.mThis->mElementList[ix] ;
+		auto &&rax = fake->mElementList[ix] ;
 		assume (rax.mPropertyList[jx].mType == PlyParserDataType::Char) ;
 		item = bitwise[TYPE<CHAR>::expr] (Pointer::from (rax.mPlyBuffer[fake.mGuide.mPlyIndex])) ;
 		fake.mGuide.mPlyIndex += SIZE_OF<CHAR>::expr ;
@@ -3109,7 +3109,7 @@ public:
 		guide_jmp () ;
 		INDEX ix = fake.mGuide.mElementIndex ;
 		INDEX jx = fake.mGuide.mProperty[fake.mGuide.mPropertyIndex] ;
-		auto &&rax = fake.mThis->mElementList[ix] ;
+		auto &&rax = fake->mElementList[ix] ;
 		assume (rax.mPropertyList[jx].mType == PlyParserDataType::Quad) ;
 		item = bitwise[TYPE<QUAD>::expr] (Pointer::from (rax.mPlyBuffer[fake.mGuide.mPlyIndex])) ;
 		fake.mGuide.mPlyIndex += SIZE_OF<QUAD>::expr ;

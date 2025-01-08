@@ -106,7 +106,7 @@ public:
 	}
 
 	VREF<ByteWriter> self_m () leftvalue override {
-		return fake.mThis->mFileWriter ;
+		return fake->mFileWriter ;
 	}
 
 	void flush () override {
@@ -179,7 +179,7 @@ public:
 	}
 
 	VREF<TextWriter> self_m () leftvalue override {
-		return fake.mThis->mFileWriter ;
+		return fake->mFileWriter ;
 	}
 
 	void flush () override {

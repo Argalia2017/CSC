@@ -45,9 +45,6 @@ struct PathHolder implement Interface {
 } ;
 
 class Path implement PathLayout {
-protected:
-	using PathLayout::mThis ;
-
 public:
 	implicit Path () = default ;
 
@@ -176,9 +173,6 @@ struct FileProcHolder implement Interface {
 } ;
 
 class FileProc implement FileProcLayout {
-protected:
-	using FileProcLayout::mThis ;
-
 public:
 	static CREF<FileProc> instance () {
 		return keep[TYPE<FileProc>::expr] (FileProcHolder::instance ()) ;
@@ -256,9 +250,6 @@ struct StreamFileHolder implement Interface {
 using STREAMFILE_BUF_SIZE = ENUM<65536> ;
 
 class StreamFile implement StreamFileLayout {
-protected:
-	using StreamFileLayout::mThis ;
-
 public:
 	implicit StreamFile () = default ;
 
@@ -317,9 +308,6 @@ struct StreamFileByteWriterHolder implement Interface {
 } ;
 
 class StreamFileByteWriter implement StreamFileByteWriterLayout {
-protected:
-	using StreamFileByteWriterLayout::mThis ;
-
 public:
 	implicit StreamFileByteWriter () = default ;
 
@@ -354,9 +342,6 @@ struct StreamFileTextWriterHolder implement Interface {
 } ;
 
 class StreamFileTextWriter implement StreamFileTextWriterLayout {
-protected:
-	using StreamFileTextWriterLayout::mThis ;
-
 public:
 	implicit StreamFileTextWriter () = default ;
 
@@ -398,9 +383,6 @@ struct BufferFileHolder implement Interface {
 } ;
 
 class BufferFile implement BufferFileLayout {
-protected:
-	using BufferFileLayout::mThis ;
-
 public:
 	implicit BufferFile () = default ;
 
@@ -462,9 +444,6 @@ struct UartFileHolder implement Interface {
 } ;
 
 class UartFile implement UartFileLayout {
-protected:
-	using UartFileLayout::mThis ;
-
 public:
 	implicit UartFile () = default ;
 
@@ -533,9 +512,6 @@ struct ConsoleHolder implement Interface {
 } ;
 
 class Console implement ConsoleLayout {
-protected:
-	using ConsoleLayout::mThis ;
-
 public:
 	static CREF<Console> instance () {
 		return keep[TYPE<Console>::expr] (ConsoleHolder::instance ()) ;

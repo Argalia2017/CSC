@@ -51,9 +51,6 @@ struct TimeHolder implement Interface {
 } ;
 
 class Time implement TimeLayout {
-protected:
-	using TimeLayout::mThis ;
-
 public:
 	implicit Time () = default ;
 
@@ -142,7 +139,7 @@ inline Time CurrentTime () {
 	return move (ret) ;
 }
 
-struct RuntimeProcLayout implement ThisLayout<RefLayout> {} ;
+struct RuntimeProcLayout {} ;
 
 struct RuntimeProcHolder implement Interface {
 	imports CREF<RuntimeProcLayout> instance () ;
@@ -161,9 +158,6 @@ struct RuntimeProcHolder implement Interface {
 } ;
 
 class RuntimeProc implement RuntimeProcLayout {
-protected:
-	using RuntimeProcLayout::mThis ;
-
 public:
 	static CREF<RuntimeProc> instance () {
 		return keep[TYPE<RuntimeProc>::expr] (RuntimeProcHolder::instance ()) ;
@@ -222,9 +216,6 @@ struct AtomicHolder implement Interface {
 } ;
 
 class Atomic implement AtomicLayout {
-protected:
-	using AtomicLayout::mThis ;
-
 public:
 	implicit Atomic () = default ;
 
@@ -289,9 +280,6 @@ struct MutexHolder implement Interface {
 } ;
 
 class Mutex implement MutexLayout {
-protected:
-	using MutexLayout::mThis ;
-
 public:
 	implicit Mutex () = default ;
 
@@ -359,9 +347,6 @@ struct SharedLockHolder implement Interface {
 } ;
 
 class SharedLock implement SharedLockLayout {
-protected:
-	using SharedLockLayout::mThis ;
-
 public:
 	implicit SharedLock () = default ;
 
@@ -399,9 +384,6 @@ struct UniqueLockHolder implement Interface {
 } ;
 
 class UniqueLock implement UniqueLockLayout {
-protected:
-	using UniqueLockLayout::mThis ;
-
 public:
 	implicit UniqueLock () = default ;
 
@@ -457,9 +439,6 @@ struct ThreadHolder implement Interface {
 } ;
 
 class Thread implement ThreadLayout {
-protected:
-	using ThreadLayout::mThis ;
-
 public:
 	implicit Thread () = default ;
 
@@ -496,9 +475,6 @@ struct ProcessHolder implement Interface {
 } ;
 
 class Process implement ProcessLayout {
-protected:
-	using ProcessLayout::mThis ;
-
 public:
 	implicit Process () = default ;
 
@@ -546,9 +522,6 @@ struct LibraryHolder implement Interface {
 } ;
 
 class Library implement LibraryLayout {
-protected:
-	using LibraryLayout::mThis ;
-
 public:
 	implicit Library () = default ;
 
@@ -583,9 +556,6 @@ struct SystemHolder implement Interface {
 } ;
 
 class System implement SystemLayout {
-protected:
-	using SystemLayout::mThis ;
-
 public:
 	implicit System () = default ;
 
@@ -623,9 +593,6 @@ struct RandomHolder implement Interface {
 } ;
 
 class Random implement RandomLayout {
-protected:
-	using RandomLayout::mThis ;
-
 public:
 	implicit Random () = default ;
 
@@ -689,9 +656,6 @@ struct SingletonProcHolder implement Interface {
 } ;
 
 class SingletonProc implement SingletonProcLayout {
-protected:
-	using SingletonProcLayout::mThis ;
-
 public:
 	static CREF<SingletonProc> instance () {
 		return keep[TYPE<SingletonProc>::expr] (SingletonProcHolder::instance ()) ;
@@ -739,8 +703,7 @@ inline CREF<A> Singleton<A>::instance () {
 
 struct GlobalImplLayout ;
 
-struct GlobalLayout {
-	SharedRef<GlobalImplLayout> mThis ;
+struct GlobalLayout implement ThisLayout<SharedRef<GlobalImplLayout>> {
 	INDEX mIndex ;
 	Clazz mClazz ;
 } ;
@@ -799,6 +762,7 @@ class Global implement GlobalLayout {
 protected:
 	using GlobalLayout::mThis ;
 	using GlobalLayout::mIndex ;
+	using GlobalLayout::mClazz ;
 
 public:
 	implicit Global () = default ;

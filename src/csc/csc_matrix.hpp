@@ -745,7 +745,7 @@ struct SVDResult {
 	Matrix mV ;
 } ;
 
-struct MatrixProcLayout implement ThisLayout<RefLayout> {} ;
+struct MatrixProcLayout {} ;
 
 struct MatrixProcHolder implement Interface {
 	imports CREF<MatrixProcLayout> instance () ;
@@ -759,9 +759,6 @@ struct MatrixProcHolder implement Interface {
 } ;
 
 class MatrixProc implement MatrixProcLayout {
-protected:
-	using MatrixProcLayout::mThis ;
-
 public:
 	static CREF<MatrixProc> instance () {
 		return keep[TYPE<MatrixProc>::expr] (MatrixProcHolder::instance ()) ;
@@ -930,7 +927,7 @@ public:
 	}
 } ;
 
-struct LinearProcLayout implement ThisLayout<RefLayout> {} ;
+struct LinearProcLayout {} ;
 
 struct LinearProcHolder implement Interface {
 	imports CREF<LinearProcLayout> instance () ;
@@ -944,9 +941,6 @@ struct LinearProcHolder implement Interface {
 } ;
 
 class LinearProc implement LinearProcLayout {
-protected:
-	using LinearProcLayout::mThis ;
-
 public:
 	static CREF<LinearProc> instance () {
 		return keep[TYPE<LinearProc>::expr] (LinearProcHolder::instance ()) ;

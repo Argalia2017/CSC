@@ -40,7 +40,7 @@ public:
 	}
 
 	BOOL is_blank (CREF<STRU32> str) const override {
-		const auto r1x = fake.mThis->mBlankSlice ;
+		const auto r1x = fake->mBlankSlice ;
 		for (auto &&i : iter (0 ,r1x.size ())) {
 			if (r1x[i] == str)
 				return TRUE ;
@@ -71,7 +71,7 @@ public:
 	}
 
 	BOOL is_punct (CREF<STRU32> str) const override {
-		const auto r1x = fake.mThis->mPunctSlice ;
+		const auto r1x = fake->mPunctSlice ;
 		for (auto &&i : iter (0 ,r1x.size ())) {
 			if (r1x[i] == str)
 				return TRUE ;
@@ -159,7 +159,7 @@ public:
 	}
 
 	BOOL is_ctrl (CREF<STRU32> str) const override {
-		const auto r1x = fake.mThis->mEscapeCtrlSlice ;
+		const auto r1x = fake->mEscapeCtrlSlice ;
 		for (auto &&i : iter (0 ,r1x.size ())) {
 			if (r1x[i] == str)
 				return TRUE ;
@@ -168,8 +168,8 @@ public:
 	}
 
 	STRU32 word_from_ctrl (CREF<STRU32> str) const override {
-		const auto r1x = fake.mThis->mEscapeWordSlice ;
-		const auto r2x = fake.mThis->mEscapeCtrlSlice ;
+		const auto r1x = fake->mEscapeWordSlice ;
+		const auto r2x = fake->mEscapeCtrlSlice ;
 		for (auto &&i : iter (0 ,r2x.size ())) {
 			if (r2x[i] == str)
 				return r1x[i] ;
@@ -179,8 +179,8 @@ public:
 	}
 
 	STRU32 ctrl_from_word (CREF<STRU32> str) const override {
-		const auto r1x = fake.mThis->mEscapeWordSlice ;
-		const auto r2x = fake.mThis->mEscapeCtrlSlice ;
+		const auto r1x = fake->mEscapeWordSlice ;
+		const auto r2x = fake->mEscapeCtrlSlice ;
 		for (auto &&i : iter (0 ,r1x.size ())) {
 			if (r1x[i] == str)
 				return r2x[i] ;
@@ -1861,61 +1861,61 @@ class CommaImplHolder final implement Fat<CommaHolder ,CommaLayout> {
 public:
 	void initialize (CREF<Slice> indent ,CREF<Slice> comma ,CREF<Slice> endline) override {
 		fake.mThis = SharedRef<CommaImplLayout>::make () ;
-		fake.mThis->mIndent = indent ;
-		fake.mThis->mComma = comma ;
-		fake.mThis->mEndline = endline ;
-		fake.mThis->mDepth = 0 ;
-		fake.mThis->mTight = 255 ;
-		fake.mThis->mLastTight = 0 ;
+		fake->mIndent = indent ;
+		fake->mComma = comma ;
+		fake->mEndline = endline ;
+		fake->mDepth = 0 ;
+		fake->mTight = 255 ;
+		fake->mLastTight = 0 ;
 	}
 
 	void friend_write (VREF<WriterBinder> writer) const override {
 		if ifdo (TRUE) {
-			if (fake.mThis->mDepth >= fake.mThis->mTight + fake.mThis->mLastTight)
+			if (fake->mDepth >= fake->mTight + fake->mLastTight)
 				discard ;
-			writer.write (fake.mThis->mEndline) ;
+			writer.write (fake->mEndline) ;
 		}
 		if ifdo (TRUE) {
-			if (fake.mThis->mFirst.empty ())
+			if (fake->mFirst.empty ())
 				discard ;
-			INDEX ix = fake.mThis->mFirst.tail () ;
+			INDEX ix = fake->mFirst.tail () ;
 			if ifdo (TRUE) {
-				if (fake.mThis->mFirst[ix])
+				if (fake->mFirst[ix])
 					discard ;
-				writer.write (fake.mThis->mComma) ;
+				writer.write (fake->mComma) ;
 			}
-			fake.mThis->mFirst[ix] = FALSE ;
+			fake->mFirst[ix] = FALSE ;
 		}
 		if ifdo (TRUE) {
-			if (fake.mThis->mDepth >= fake.mThis->mTight + fake.mThis->mLastTight)
+			if (fake->mDepth >= fake->mTight + fake->mLastTight)
 				discard ;
-			for (auto &&i : iter (0 ,fake.mThis->mDepth)) {
+			for (auto &&i : iter (0 ,fake->mDepth)) {
 				noop (i) ;
-				writer.write (fake.mThis->mIndent) ;
+				writer.write (fake->mIndent) ;
 			}
 		}
-		fake.mThis->mLastTight = 0 ;
+		fake->mLastTight = 0 ;
 	}
 
 	void increase () const override {
-		fake.mThis->mDepth++ ;
+		fake->mDepth++ ;
 		if ifdo (TRUE) {
-			if (fake.mThis->mFirst.empty ())
+			if (fake->mFirst.empty ())
 				discard ;
-			fake.mThis->mFirst[fake.mThis->mFirst.tail ()] = TRUE ;
+			fake->mFirst[fake->mFirst.tail ()] = TRUE ;
 		}
-		fake.mThis->mFirst.add (TRUE) ;
+		fake->mFirst.add (TRUE) ;
 	}
 
 	void decrease () const override {
-		fake.mThis->mFirst.pop () ;
-		fake.mThis->mDepth-- ;
-		fake.mThis->mLastTight = fake.mThis->mTight - 256 ;
-		fake.mThis->mTight = 255 ;
+		fake->mFirst.pop () ;
+		fake->mDepth-- ;
+		fake->mLastTight = fake->mTight - 256 ;
+		fake->mTight = 255 ;
 	}
 
 	void tight () const override {
-		fake.mThis->mTight = inline_min (fake.mThis->mTight ,fake.mThis->mDepth) ;
+		fake->mTight = inline_min (fake->mTight ,fake->mDepth) ;
 	}
 } ;
 
@@ -1937,25 +1937,25 @@ class RegexImplHolder final implement Fat<RegexHolder ,RegexLayout> {
 public:
 	void initialize (CREF<String<STR>> format) override {
 		fake.mThis = AutoRef<RegexImplLayout>::make () ;
-		fake.mThis->mRegex = std::basic_regex<STR> (format) ;
+		fake->mRegex = std::basic_regex<STR> (format) ;
 	}
 
 	INDEX search (RREF<Ref<String<STR>>> text ,CREF<INDEX> offset) override {
-		fake.mThis->mText = move (text) ;
-		const auto r1x = (&fake.mThis->mText.self[offset]) ;
-		const auto r2x = std::regex_search (r1x ,fake.mThis->mMatch ,fake.mThis->mRegex) ;
+		fake->mText = move (text) ;
+		const auto r1x = (&fake->mText.self[offset]) ;
+		const auto r2x = std::regex_search (r1x ,fake->mMatch ,fake->mRegex) ;
 		if (!r2x)
 			return NONE ;
-		const auto r3x = FLAG (fake.mThis->mMatch[0].first) ;
+		const auto r3x = FLAG (fake->mMatch[0].first) ;
 		const auto r4x = (r3x - FLAG (r1x)) / SIZE_OF<STR>::expr ;
 		return offset + r4x ;
 	}
 
 	Slice match (CREF<INDEX> index) const override {
-		assert (!fake.mThis->mMatch.empty ()) ;
-		assert (inline_between (index ,0 ,fake.mThis->mMatch.size ())) ;
-		const auto r1x = FLAG (fake.mThis->mMatch[index].first) ;
-		const auto r2x = FLAG (fake.mThis->mMatch[index].second) ;
+		assert (!fake->mMatch.empty ()) ;
+		assert (inline_between (index ,0 ,fake->mMatch.size ())) ;
+		const auto r1x = FLAG (fake->mMatch[index].first) ;
+		const auto r2x = FLAG (fake->mMatch[index].second) ;
 		const auto r3x = (r2x - r1x) / SIZE_OF<STR>::expr ;
 		return Slice (r1x ,r3x ,SIZE_OF<STR>::expr) ;
 	}

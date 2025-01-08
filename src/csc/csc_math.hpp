@@ -18,7 +18,7 @@ static constexpr auto MATH_R = MATH_PI / FLT64 (180) ;
 static constexpr auto MATH_LN2 = FLT64 (0.693147180559945309417) ;
 static constexpr auto MATH_LN10 = FLT64 (2.30258509299404568402) ;
 
-struct MathProcLayout implement ThisLayout<RefLayout> {} ;
+struct MathProcLayout {} ;
 
 struct MathProcHolder implement Interface {
 	imports CREF<MathProcLayout> instance () ;
@@ -105,9 +105,6 @@ struct MathProcHolder implement Interface {
 } ;
 
 class MathProc implement MathProcLayout {
-protected:
-	using MathProcLayout::mThis ;
-
 public:
 	static CREF<MathProc> instance () {
 		return keep[TYPE<MathProc>::expr] (MathProcHolder::instance ()) ;
@@ -323,7 +320,7 @@ struct Notation {
 	VAL64 mExponent ;
 } ;
 
-struct FEXP2CacheLayout implement ThisLayout<RefLayout> {} ;
+struct FEXP2CacheLayout {} ;
 
 struct FEXP2CacheHolder implement Interface {
 	imports CREF<FEXP2CacheLayout> instance () ;
@@ -347,7 +344,7 @@ public:
 	}
 } ;
 
-struct FEXP10CacheLayout implement ThisLayout<RefLayout> {} ;
+struct FEXP10CacheLayout {} ;
 
 struct FEXP10CacheHolder implement Interface {
 	imports CREF<FEXP10CacheLayout> instance () ;
@@ -371,7 +368,7 @@ public:
 	}
 } ;
 
-struct FloatProcLayout implement ThisLayout<RefLayout> {} ;
+struct FloatProcLayout {} ;
 
 struct FloatProcHolder implement Interface {
 	imports CREF<FloatProcLayout> instance () ;
@@ -388,9 +385,6 @@ struct FloatProcHolder implement Interface {
 } ;
 
 class FloatProc implement FloatProcLayout {
-protected:
-	using FloatProcLayout::mThis ;
-
 public:
 	static CREF<FloatProc> instance () {
 		return keep[TYPE<FloatProc>::expr] (FloatProcHolder::instance ()) ;
@@ -421,7 +415,7 @@ public:
 	}
 } ;
 
-struct ByteProcLayout implement ThisLayout<RefLayout> {} ;
+struct ByteProcLayout {} ;
 
 struct ByteProcHolder implement Interface {
 	imports CREF<ByteProcLayout> instance () ;
@@ -460,9 +454,6 @@ struct ByteProcHolder implement Interface {
 } ;
 
 class ByteProc implement ByteProcLayout {
-protected:
-	using ByteProcLayout::mThis ;
-
 public:
 	static CREF<ByteProc> instance () {
 		return keep[TYPE<ByteProc>::expr] (ByteProcHolder::instance ()) ;
@@ -986,7 +977,7 @@ public:
 	}
 } ;
 
-struct HashProcLayout implement ThisLayout<RefLayout> {} ;
+struct HashProcLayout {} ;
 
 struct HashProcHolder implement Interface {
 	imports CREF<HashProcLayout> instance () ;

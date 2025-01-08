@@ -430,9 +430,6 @@ struct ImageProcHolder implement Interface {
 } ;
 
 class ImageProc implement ImageProcLayout {
-protected:
-	using ImageProcLayout::mThis ;
-
 public:
 	static CREF<ImageProc> instance () {
 		return keep[TYPE<ImageProc>::expr] (ImageProcHolder::instance ()) ;

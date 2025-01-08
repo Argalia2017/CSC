@@ -60,9 +60,6 @@ struct StringProcHolder implement Interface {
 } ;
 
 class StringProc implement StringProcLayout {
-protected:
-	using StringProcLayout::mThis ;
-
 public:
 	static CREF<StringProc> instance () {
 		return keep[TYPE<StringProc>::expr] (StringProcHolder::instance ()) ;
@@ -207,8 +204,7 @@ public:
 
 struct XmlParserImplLayout ;
 
-struct XmlParserLayout {
-	Ref<XmlParserImplLayout> mThis ;
+struct XmlParserLayout implement ThisLayout<Ref<XmlParserImplLayout>> {
 	INDEX mIndex ;
 } ;
 
@@ -411,8 +407,7 @@ public:
 
 struct JsonParserImplLayout ;
 
-struct JsonParserLayout {
-	Ref<JsonParserImplLayout> mThis ;
+struct JsonParserLayout implement ThisLayout<Ref<JsonParserImplLayout>> {
 	INDEX mIndex ;
 } ;
 
@@ -626,8 +621,7 @@ struct PlyParserGuide {
 
 struct PlyParserImplLayout ;
 
-struct PlyParserLayout {
-	Ref<PlyParserImplLayout> mThis ;
+struct PlyParserLayout implement ThisLayout<Ref<PlyParserImplLayout>> {
 	PlyParserGuide mGuide ;
 } ;
 

@@ -903,25 +903,25 @@ public:
 	LENGTH type_size () const override {
 		if (fake.mThis == NULL)
 			return 0 ;
-		return fake.mThis->mTypeSize ;
+		return fake->mTypeSize ;
 	}
 
 	LENGTH type_align () const override {
 		if (fake.mThis == NULL)
 			return 0 ;
-		return fake.mThis->mTypeAlign ;
+		return fake->mTypeAlign ;
 	}
 
 	FLAG type_guid () const override {
 		if (fake.mThis == NULL)
 			return ZERO ;
-		return fake.mThis->mTypeGuid ;
+		return fake->mTypeGuid ;
 	}
 
 	Slice type_name () const override {
 		if (fake.mThis == NULL)
 			return Slice () ;
-		return fake.mThis->mTypeName ;
+		return fake->mTypeName ;
 	}
 
 	BOOL equal (CREF<ClazzLayout> that) const override {

@@ -1177,8 +1177,8 @@ public:
 
 	void initialize (CREF<Unknown> holder ,CREF<LENGTH> size_) override {
 		fake.mThis = SharedRef<SortedMapImplLayout>::make () ;
-		AllocatorHolder::hold (fake.mThis->mList)->initialize (holder ,size_) ;
-		fake.mThis->mCheck = 0 ;
+		AllocatorHolder::hold (fake->mList)->initialize (holder ,size_) ;
+		fake->mCheck = 0 ;
 		clear () ;
 	}
 
@@ -1226,7 +1226,7 @@ public:
 	}
 
 	CREF<INDEX> at (CREF<INDEX> index) const leftvalue override {
-		return fake.mThis->mList.bt (fake.mRange[index]).mMap ;
+		return fake->mList.bt (fake.mRange[index]).mMap ;
 	}
 
 	INDEX ibegin () const override {
@@ -1244,10 +1244,10 @@ public:
 	}
 
 	void add (RREF<BoxLayout> item ,CREF<INDEX> map_) override {
-		INDEX ix = fake.mThis->mList.alloc (move (item)) ;
-		fake.mThis->mCheck++ ;
-		fake.mThis->mList.bt (ix).mMap = map_ ;
-		fake.mThis->mList.bt (ix).mDown = fake.mRoot ;
+		INDEX ix = fake->mList.alloc (move (item)) ;
+		fake->mCheck++ ;
+		fake->mList.bt (ix).mMap = map_ ;
+		fake->mList.bt (ix).mDown = fake.mRoot ;
 		fake.mRoot = ix ;
 		fake.mWrite++ ;
 		fake.mRemap = FALSE ;
@@ -1260,12 +1260,12 @@ public:
 		INDEX ix = 0 ;
 		INDEX iy = length () - 1 ;
 		INDEX iz = 0 ;
-		const auto r1x = RFat<ReflectCompr> (fake.mThis->mList.unknown ()) ;
+		const auto r1x = RFat<ReflectCompr> (fake->mList.unknown ()) ;
 		while (TRUE) {
 			if (ix > iy)
 				break ;
 			iz = ix + (iy - ix) / 2 ;
-			const auto r2x = r1x->compr (item ,fake.mThis->mList.at (fake.mRange[iz])) ;
+			const auto r2x = r1x->compr (item ,fake->mList.at (fake.mRange[iz])) ;
 			if (r2x == ZERO)
 				return iz ;
 			auto act = TRUE ;

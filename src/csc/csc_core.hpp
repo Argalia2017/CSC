@@ -1911,6 +1911,26 @@ public:
 template <class A>
 struct ThisLayout {
 	A mThis ;
+
+public:
+	using VREF_ITEM = decltype (nullof (A).self) ;
+	using CREF_ITEM = decltype (keep[TYPE<CREF<A>>::expr] (nullof (A)).self) ;
+
+	XREF<VREF_ITEM> self_m () leftvalue {
+		return mThis.self ;
+	}
+
+	forceinline PTR<XREF<VREF_ITEM>> operator-> () leftvalue {
+		return (&self) ;
+	}
+
+	XREF<CREF_ITEM> self_m () const leftvalue {
+		return mThis.self ;
+	}
+
+	forceinline PTR<XREF<CREF_ITEM>> operator-> () const leftvalue {
+		return (&self) ;
+	}
 } ;
 
 struct ClazzImplLayout ;
@@ -1946,9 +1966,6 @@ public:
 } ;
 
 class Clazz implement ClazzLayout {
-protected:
-	using ClazzLayout::mThis ;
-
 public:
 	implicit Clazz () = default ;
 
