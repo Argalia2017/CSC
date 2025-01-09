@@ -14,7 +14,7 @@ namespace CSC {
 struct FUNCTION_from_initializer_list {
 	forceinline RefBuffer<Pointer> operator() (CREF<WrapperLayout> params ,CREF<Unknown> holder) const {
 		RefBuffer<Pointer> ret ;
-		auto &&rax = keep[TYPE<Wrapper<CREF<Pointer>>>::expr] (Pointer::from (params)) ;
+		auto &&rax = keep[TYPE<Wrapper<CREF<Pointer>>>::expr] (params) ;
 		rax ([&] (CREF<Pointer> a) {
 			const auto r1x = RFat<ReflectSize> (holder) ;
 			const auto r2x = r1x->type_size () ;

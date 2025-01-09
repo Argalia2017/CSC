@@ -354,7 +354,7 @@ public:
 	BOOL all_of (CREF<BOOL> a ,CREF<WrapperLayout> b) const override {
 		if (!a)
 			return FALSE ;
-		auto &&rax = keep[TYPE<Wrapper<BOOL>>::expr] (Pointer::from (b)) ;
+		auto &&rax = keep[TYPE<Wrapper<BOOL>>::expr] (b) ;
 		for (auto &&i : iter (0 ,rax.rank ())) {
 			if (!rax[i])
 				return FALSE ;
@@ -365,7 +365,7 @@ public:
 	BOOL any_of (CREF<BOOL> a ,CREF<WrapperLayout> b) const override {
 		if (a)
 			return TRUE ;
-		auto &&rax = keep[TYPE<Wrapper<BOOL>>::expr] (Pointer::from (b)) ;
+		auto &&rax = keep[TYPE<Wrapper<BOOL>>::expr] (b) ;
 		for (auto &&i : iter (0 ,rax.rank ())) {
 			if (rax[i])
 				return TRUE ;
@@ -392,7 +392,7 @@ public:
 	template <class ARG1>
 	forceinline ARG1 max_of_impl (CREF<ARG1> a ,CREF<WrapperLayout> b) const {
 		ARG1 ret = a ;
-		auto &&rax = keep[TYPE<Wrapper<ARG1>>::expr] (Pointer::from (b)) ;
+		auto &&rax = keep[TYPE<Wrapper<ARG1>>::expr] (b) ;
 		for (auto &&i : iter (0 ,rax.rank ())) {
 			if (ret >= rax[i])
 				continue ;
@@ -420,7 +420,7 @@ public:
 	template <class ARG1>
 	forceinline ARG1 min_of_impl (CREF<ARG1> a ,CREF<WrapperLayout> b) const {
 		ARG1 ret = a ;
-		auto &&rax = keep[TYPE<Wrapper<ARG1>>::expr] (Pointer::from (b)) ;
+		auto &&rax = keep[TYPE<Wrapper<ARG1>>::expr] (b) ;
 		for (auto &&i : iter (0 ,rax.rank ())) {
 			if (ret <= rax[i])
 				continue ;
@@ -1405,355 +1405,451 @@ exports CFat<IntegerHolder> IntegerHolder::hold (CREF<IntegerLayout> that) {
 
 class JetImplHolder final implement Fat<JetHolder ,JetLayout> {
 public:
-	void initialize (CREF<LENGTH> size_) override {
+	void initialize (CREF<LENGTH> size_ ,CREF<FLT64> item) override {
 		assert (size_ > 0) ;
-		fake.mDX = RefBuffer<FLT64> (size_) ;
-		inline_memset (Pointer::from (fake.mDX.self) ,fake.mDX.size () * SIZE_OF<FLT64>::expr) ;
+		fake.mThis = Ref<JetNode>::make () ;
+		ptr (fake).mFX = item ;
+		ptr (fake).mEX = 0 ;
+		ptr (fake).mDX = RefBuffer<FLT64> (size_) ;
+		inline_memset (Pointer::from (ptr (fake).mDX.self) ,ptr (fake).mDX.size () * SIZE_OF<FLT64>::expr) ;
+		ptr (fake).mSlot = NONE ;
 	}
 
 	void initialize (CREF<LENGTH> size_ ,CREF<FLT64> item ,CREF<INDEX> slot) override {
-		initialize (size_) ;
-		fake.mFX = item ;
-		fake.mEX = 0 ;
-		if ifdo (TRUE) {
-			if (slot == NONE)
-				discard ;
-			fake.mDX[slot] = 1 ;
-		}
-		check_fx (fake) ;
+		assert (inline_between (slot ,0 ,size_)) ;
+		initialize (size_ ,item) ;
+		ptr (fake).mSlot = slot ;
+		ptr (fake).mFunc = JetEvalFunction ([] (VREF<JetNode> node ,CREF<WrapperLayout> params) {
+			if (node.mSlot == NONE)
+				return ;
+			auto &&rax = keep[TYPE<Wrapper<FLT64>>::expr] (params) ;
+			assume (node.mSlot < rax.rank ()) ;
+			node.mFX = rax[node.mSlot] ;
+			node.mEX = 0 ;
+			inline_memset (Pointer::from (node.mDX.self) ,node.mDX.size () * SIZE_OF<FLT64>::expr) ;
+			node.mDX[node.mSlot] = 1 ;
+			check_fx (node) ;
+		}) ;
 	}
 
-	void initialize (CREF<JetLayout> that) override {
-		initialize (that.mDX.size ()) ;
-		fake.mFX = that.mFX ;
-		fake.mEX = that.mEX ;
-		for (auto &&i : iter (0 ,that.mDX.size ()))
-			fake.mDX[i] = that.mDX[i] ;
+	static VREF<JetNode> ptr (CREF<JetLayout> layout) {
+		return layout.mThis.pin ().self ;
 	}
 
 	FLT64 fx () const override {
-		return fake.mFX ;
+		return fake->mFX ;
 	}
 
 	FLT64 ex () const override {
-		return fake.mEX ;
+		return fake->mEX ;
 	}
 
 	FLT64 dx (CREF<INDEX> slot) const override {
-		return fake.mDX[slot] ;
+		return fake->mDX[slot] ;
+	}
+	
+	void once (CREF<WrapperLayout> params) override {
+		once (fake.mThis ,params) ;
+	}
+
+	void once (CREF<Ref<JetNode>> node ,CREF<WrapperLayout> params) {
+		if (node == NULL)
+			return ;
+		once (node->mFake ,params) ;
+		once (node->mThat ,params) ;
+		node->mFunc (node.pin ().self ,params) ;
 	}
 
 	JetLayout sadd (CREF<JetLayout> that) const override {
-		assert (fake.mDX.size () == that.mDX.size ()) ;
+		assert (fake->mDX.size () == that->mDX.size ()) ;
 		JetLayout ret ;
-		auto act = TRUE ;
-		if ifdo (act) {
-			if (fake.mEX != that.mEX)
-				discard ;
-			JetHolder::hold (ret)->initialize (fake.mDX.size ()) ;
-			ret.mFX = fake.mFX + that.mFX ;
-			ret.mEX = fake.mEX ;
-			for (auto &&i : iter (0 ,fake.mDX.size ()))
-				ret.mDX[i] = fake.mDX[i] + that.mDX[i] ;
-		}
-		if ifdo (act) {
-			if (fake.mEX < that.mEX)
-				discard ;
-			JetHolder::hold (ret)->initialize (fake) ;
-		}
-		if ifdo (act) {
-			JetHolder::hold (ret)->initialize (that) ;
-		}
-		check_fx (ret) ;
+		JetHolder::hold (ret)->initialize (fake->mDX.size () ,0) ;
+		ptr (ret).mFunc = JetEvalFunction ([] (VREF<JetNode> node ,CREF<WrapperLayout> params) {
+			auto act = TRUE ;
+			if ifdo (act) {
+				if (node.mFake->mEX != node.mThat->mEX)
+					discard ;
+				node.mFX = node.mFake->mFX + node.mThat->mFX ;
+				node.mEX = node.mFake->mEX ;
+				for (auto &&i : iter (0 ,node.mDX.size ()))
+					node.mDX[i] = node.mFake->mDX[i] + node.mThat->mDX[i] ;
+			}
+			if ifdo (act) {
+				if (node.mFake->mEX < node.mThat->mEX)
+					discard ;
+				copy_node (node ,node.mFake.self ,+1) ;
+			}
+			if ifdo (act) {
+				copy_node (node ,node.mThat.self ,+1) ;
+			}
+			check_fx (node) ;
+		}) ;
+		ptr (ret).mFake = fake.mThis ;
+		ptr (ret).mThat = that.mThis ;
 		return move (ret) ;
 	}
 
 	JetLayout ssub (CREF<JetLayout> that) const override {
-		assert (fake.mDX.size () == that.mDX.size ()) ;
+		assert (fake->mDX.size () == that->mDX.size ()) ;
 		JetLayout ret ;
-		auto act = TRUE ;
-		if ifdo (act) {
-			if (fake.mEX != that.mEX)
-				discard ;
-			JetHolder::hold (ret)->initialize (fake.mDX.size ()) ;
-			ret.mFX = fake.mFX - that.mFX ;
-			ret.mEX = fake.mEX ;
-			for (auto &&i : iter (0 ,fake.mDX.size ()))
-				ret.mDX[i] = fake.mDX[i] - that.mDX[i] ;
-		}
-		if ifdo (act) {
-			if (fake.mEX < that.mEX)
-				discard ;
-			JetHolder::hold (ret)->initialize (fake) ;
-		}
-		if ifdo (act) {
-			ret = minus () ;
-		}
-		check_fx (ret) ;
+		JetHolder::hold (ret)->initialize (fake->mDX.size () ,0) ;
+		ptr (ret).mFunc = JetEvalFunction ([] (VREF<JetNode> node ,CREF<WrapperLayout> params) {
+			auto act = TRUE ;
+			if ifdo (act) {
+				if (node.mFake->mEX != node.mThat->mEX)
+					discard ;
+				node.mFX = node.mFake->mFX - node.mThat->mFX ;
+				node.mEX = node.mFake->mEX ;
+				for (auto &&i : iter (0 ,node.mDX.size ()))
+					node.mDX[i] = node.mFake->mDX[i] - node.mThat->mDX[i] ;
+			}
+			if ifdo (act) {
+				if (node.mFake->mEX < node.mThat->mEX)
+					discard ;
+				copy_node (node ,node.mFake.self ,+1) ;
+			}
+			if ifdo (act) {
+				copy_node (node ,node.mThat.self ,-1) ;
+			}
+			check_fx (node) ;
+		}) ;
+		ptr (ret).mFake = fake.mThis ;
+		ptr (ret).mThat = that.mThis ;
 		return move (ret) ;
 	}
 
 	JetLayout smul (CREF<JetLayout> that) const override {
-		assert (fake.mDX.size () == that.mDX.size ()) ;
+		assert (fake->mDX.size () == that->mDX.size ()) ;
 		JetLayout ret ;
-		JetHolder::hold (ret)->initialize (fake.mDX.size ()) ;
-		ret.mFX = fake.mFX * that.mFX ;
-		ret.mEX = round_ex (fake.mEX + that.mEX) ;
-		const auto r1x = that.mFX ;
-		const auto r2x = fake.mFX ;
-		for (auto &&i : iter (0 ,fake.mDX.size ()))
-			ret.mDX[i] = r1x * fake.mDX[i] + r2x * that.mDX[i] ;
-		check_fx (ret) ;
+		JetHolder::hold (ret)->initialize (fake->mDX.size () ,0) ;
+		ptr (ret).mFunc = JetEvalFunction ([] (VREF<JetNode> node ,CREF<WrapperLayout> params) {
+			node.mFX = node.mFake->mFX * node.mThat->mFX ;
+			node.mEX = round_ex (node.mFake->mEX + node.mThat->mEX) ;
+			const auto r1x = node.mThat->mFX ;
+			const auto r2x = node.mFake->mFX ;
+			for (auto &&i : iter (0 ,node.mDX.size ()))
+				node.mDX[i] = r1x * node.mFake->mDX[i] + r2x * node.mThat->mDX[i] ;
+			check_fx (node) ;
+		}) ;
+		ptr (ret).mFake = fake.mThis ;
+		ptr (ret).mThat = that.mThis ;
 		return move (ret) ;
 	}
 
 	JetLayout sdiv (CREF<JetLayout> that) const override {
-		assert (fake.mDX.size () == that.mDX.size ()) ;
+		assert (fake->mDX.size () == that->mDX.size ()) ;
 		JetLayout ret ;
-		JetHolder::hold (ret)->initialize (fake.mDX.size ()) ;
-		const auto r1x = 1 / that.mFX ;
-		ret.mFX = fake.mFX * r1x ;
-		ret.mEX = round_ex (fake.mEX - that.mEX) ;
-		const auto r2x = MathProc::square (r1x) ;
-		const auto r3x = r2x * that.mFX ;
-		const auto r4x = -r2x * fake.mFX ;
-		for (auto &&i : iter (0 ,fake.mDX.size ()))
-			ret.mDX[i] = r3x * fake.mDX[i] + r4x * that.mDX[i] ;
-		check_fx (ret) ;
+		JetHolder::hold (ret)->initialize (fake->mDX.size () ,0) ;
+		ptr (ret).mFunc = JetEvalFunction ([] (VREF<JetNode> node ,CREF<WrapperLayout> params) {
+			const auto r1x = 1 / node.mThat->mFX ;
+			node.mFX = node.mFake->mFX * r1x ;
+			node.mEX = round_ex (node.mFake->mEX - node.mThat->mEX) ;
+			const auto r2x = MathProc::square (r1x) ;
+			const auto r3x = r2x * node.mThat->mFX ;
+			const auto r4x = -r2x * node.mFake->mFX ;
+			for (auto &&i : iter (0 ,node.mDX.size ()))
+				node.mDX[i] = r3x * node.mFake->mDX[i] + r4x * node.mThat->mDX[i] ;
+			check_fx (node) ;
+		}) ;
+		ptr (ret).mFake = fake.mThis ;
+		ptr (ret).mThat = that.mThis ;
 		return move (ret) ;
 	}
 
 	JetLayout inverse () const override {
 		JetLayout ret ;
-		JetHolder::hold (ret)->initialize (fake.mDX.size ()) ;
-		const auto r1x = 1 / fake.mFX ;
-		ret.mFX = r1x ;
-		ret.mEX = -fake.mEX ;
-		const auto r2x = -MathProc::square (r1x) ;
-		for (auto &&i : iter (0 ,fake.mDX.size ()))
-			ret.mDX[i] = r2x * fake.mDX[i] ;
-		check_fx (ret) ;
+		JetHolder::hold (ret)->initialize (fake->mDX.size () ,0) ;
+		ptr (ret).mFunc = JetEvalFunction ([] (VREF<JetNode> node ,CREF<WrapperLayout> params) {
+			const auto r1x = 1 / node.mFake->mFX ;
+			node.mFX = r1x ;
+			node.mEX = -node.mFake->mEX ;
+			const auto r2x = -MathProc::square (r1x) ;
+			for (auto &&i : iter (0 ,node.mDX.size ()))
+				node.mDX[i] = r2x * node.mFake->mDX[i] ;
+			check_fx (node) ;
+		}) ;
+		ptr (ret).mFake = fake.mThis ;
 		return move (ret) ;
 	}
 
 	JetLayout ssqrt () const override {
 		JetLayout ret ;
-		JetHolder::hold (ret)->initialize (fake.mDX.size ()) ;
-		ret.mFX = MathProc::sqrt (fake.mFX) ;
-		ret.mEX = round_ex (fake.mEX / 2) ;
-		const auto r1x = 1 / (2 * ret.mFX) ;
-		for (auto &&i : iter (0 ,fake.mDX.size ()))
-			ret.mDX[i] = r1x * fake.mDX[i] ;
-		check_fx (ret) ;
+		JetHolder::hold (ret)->initialize (fake->mDX.size () ,0) ;
+		ptr (ret).mFunc = JetEvalFunction ([] (VREF<JetNode> node ,CREF<WrapperLayout> params) {
+			node.mFX = MathProc::sqrt (node.mFake->mFX) ;
+			node.mEX = round_ex (node.mFake->mEX / 2) ;
+			const auto r1x = 1 / (2 * node.mFX) ;
+			for (auto &&i : iter (0 ,node.mDX.size ()))
+				node.mDX[i] = r1x * node.mFake->mDX[i] ;
+			check_fx (node) ;
+		}) ;
+		ptr (ret).mFake = fake.mThis ;
 		return move (ret) ;
 	}
 
 	JetLayout scbrt () const override {
 		JetLayout ret ;
-		JetHolder::hold (ret)->initialize (fake.mDX.size ()) ;
-		ret.mFX = MathProc::cbrt (fake.mFX) ;
-		ret.mEX = round_ex (fake.mEX / 3) ;
-		const auto r1x = 1 / (3 * MathProc::square (ret.mFX)) ;
-		for (auto &&i : iter (0 ,fake.mDX.size ()))
-			ret.mDX[i] = r1x * fake.mDX[i] ;
-		check_fx (ret) ;
+		JetHolder::hold (ret)->initialize (fake->mDX.size () ,0) ;
+		ptr (ret).mFunc = JetEvalFunction ([] (VREF<JetNode> node ,CREF<WrapperLayout> params) {
+			node.mFX = MathProc::cbrt (node.mFake->mFX) ;
+			node.mEX = round_ex (node.mFake->mEX / 3) ;
+			const auto r1x = 1 / (3 * MathProc::square (node.mFX)) ;
+			for (auto &&i : iter (0 ,node.mDX.size ()))
+				node.mDX[i] = r1x * node.mFake->mDX[i] ;
+			check_fx (node) ;
+		}) ;
+		ptr (ret).mFake = fake.mThis ;
 		return move (ret) ;
 	}
 
 	JetLayout spow (CREF<VAL32> that) const override {
 		JetLayout ret ;
-		JetHolder::hold (ret)->initialize (fake.mDX.size ()) ;
-		const auto r1x = MathProc::pow (fake.mFX ,that - 1) ;
-		ret.mFX = r1x * fake.mFX ;
-		ret.mEX = round_ex (fake.mEX * FLT64 (that)) ;
-		const auto r2x = r1x * FLT64 (that) ;
-		for (auto &&i : iter (0 ,fake.mDX.size ()))
-			ret.mDX[i] = r2x * fake.mDX[i] ;
-		check_fx (ret) ;
+		JetHolder::hold (ret)->initialize (fake->mDX.size () ,0) ;
+		ptr (ret).mFunc = JetEvalFunction ([] (VREF<JetNode> node ,CREF<WrapperLayout> params) {
+			const auto r1x = node.mThat->mFX ;
+			const auto r2x = VAL32 (MathProc::round (r1x - 1 ,FLT64 (1))) ;
+			const auto r3x = MathProc::pow (node.mFake->mFX ,r2x) ;
+			node.mFX = r3x * node.mFake->mFX ;
+			node.mEX = round_ex (node.mFake->mEX * r1x) ;
+			const auto r4x = r3x * r1x ;
+			for (auto &&i : iter (0 ,node.mDX.size ()))
+				node.mDX[i] = r4x * node.mFake->mDX[i] ;
+			check_fx (node) ;
+		}) ;
+		ptr (ret).mFake = fake.mThis ;
+		auto rax = JetNode () ;
+		rax.mFX = that ;
+		ptr (ret).mThat = Ref<JetNode>::make (move (rax)) ;
 		return move (ret) ;
 	}
 
 	JetLayout shypot (CREF<JetLayout> that) const override {
-		assert (fake.mDX.size () == that.mDX.size ()) ;
+		assert (fake->mDX.size () == that->mDX.size ()) ;
 		JetLayout ret ;
-		auto act = TRUE ;
-		if ifdo (act) {
-			if (fake.mEX != that.mEX)
-				discard ;
-			JetHolder::hold (ret)->initialize (fake.mDX.size ()) ;
-			ret.mFX = MathProc::hypot (fake.mFX ,that.mFX) ;
-			ret.mEX = fake.mEX ;
-			const auto r1x = 1 / ret.mFX ;
-			const auto r2x = r1x * fake.mFX ;
-			const auto r3x = r1x * that.mFX ;
-			for (auto &&i : iter (0 ,fake.mDX.size ()))
-				ret.mDX[i] = r2x * fake.mDX[i] + r3x * that.mDX[i] ;
-		}
-		if ifdo (act) {
-			if (fake.mEX < that.mEX)
-				discard ;
-			JetHolder::hold (ret)->initialize (fake) ;
-		}
-		if ifdo (act) {
-			JetHolder::hold (ret)->initialize (that) ;
-		}
-		check_fx (ret) ;
+		JetHolder::hold (ret)->initialize (fake->mDX.size () ,0) ;
+		ptr (ret).mFunc = JetEvalFunction ([] (VREF<JetNode> node ,CREF<WrapperLayout> params) {
+			auto act = TRUE ;
+			if ifdo (act) {
+				if (node.mFake->mEX != node.mThat->mEX)
+					discard ;
+				node.mFX = MathProc::hypot (node.mFake->mFX ,node.mThat->mFX) ;
+				node.mEX = node.mFake->mEX ;
+				const auto r1x = 1 / node.mFX ;
+				const auto r2x = r1x * node.mFake->mFX ;
+				const auto r3x = r1x * node.mThat->mFX ;
+				for (auto &&i : iter (0 ,node.mDX.size ()))
+					node.mDX[i] = r2x * node.mFake->mDX[i] + r3x * node.mThat->mDX[i] ;
+			}
+			if ifdo (act) {
+				if (node.mFake->mEX < node.mThat->mEX)
+					discard ;
+				copy_node (node ,node.mFake.self ,+1) ;
+			}
+			if ifdo (act) {
+				copy_node (node ,node.mThat.self ,+1) ;
+			}
+			check_fx (node) ;
+		}) ;
+		ptr (ret).mFake = fake.mThis ;
+		ptr (ret).mThat = that.mThis ;
 		return move (ret) ;
 	}
 
 	JetLayout sabs () const override {
-		if (fake.mFX < 0)
-			return minus () ;
 		JetLayout ret ;
-		JetHolder::hold (ret)->initialize (fake) ;
-		check_fx (ret) ;
+		JetHolder::hold (ret)->initialize (fake->mDX.size () ,0) ;
+		ptr (ret).mFunc = JetEvalFunction ([] (VREF<JetNode> node ,CREF<WrapperLayout> params) {
+			auto act = TRUE ;
+			if ifdo (act) {
+				if (node.mFake->mFX >= 0)
+					discard ;
+				copy_node (node ,node.mFake.self ,+1) ;
+			}
+			if ifdo (act) {
+				copy_node (node ,node.mFake.self ,-1) ;
+			}
+		}) ;
+		ptr (ret).mFake = fake.mThis ;
 		return move (ret) ;
 	}
 
 	JetLayout minus () const override {
 		JetLayout ret ;
-		JetHolder::hold (ret)->initialize (fake.mDX.size ()) ;
-		ret.mFX = -fake.mFX ;
-		ret.mEX = fake.mEX ;
-		for (auto &&i : iter (0 ,fake.mDX.size ()))
-			ret.mDX[i] = -fake.mDX[i] ;
-		check_fx (ret) ;
+		JetHolder::hold (ret)->initialize (fake->mDX.size () ,0) ;
+		ptr (ret).mFunc = JetEvalFunction ([] (VREF<JetNode> node ,CREF<WrapperLayout> params) {
+			copy_node (node ,node.mFake.self ,-1) ;
+		}) ;
+		ptr (ret).mFake = fake.mThis ;
 		return move (ret) ;
 	}
 
 	JetLayout ssin () const override {
 		JetLayout ret ;
-		assume (fake.mEX == 0) ;
-		JetHolder::hold (ret)->initialize (fake.mDX.size ()) ;
-		ret.mFX = MathProc::sin (fake.mFX) ;
-		ret.mEX = fake.mEX ;
-		const auto r1x = MathProc::cos (fake.mFX) ;
-		for (auto &&i : iter (0 ,fake.mDX.size ()))
-			ret.mDX[i] = r1x * fake.mDX[i] ;
-		check_fx (ret) ;
+		JetHolder::hold (ret)->initialize (fake->mDX.size () ,0) ;
+		ptr (ret).mFunc = JetEvalFunction ([] (VREF<JetNode> node ,CREF<WrapperLayout> params) {
+			assume (node.mFake->mEX == 0) ;
+			node.mFX = MathProc::sin (node.mFake->mFX) ;
+			node.mEX = node.mFake->mEX ;
+			const auto r1x = MathProc::cos (node.mFake->mFX) ;
+			for (auto &&i : iter (0 ,node.mDX.size ()))
+				node.mDX[i] = r1x * node.mFake->mDX[i] ;
+			check_fx (node) ;
+		}) ;
+		ptr (ret).mFake = fake.mThis ;
 		return move (ret) ;
 	}
 
 	JetLayout scos () const override {
 		JetLayout ret ;
-		assume (fake.mEX == 0) ;
-		JetHolder::hold (ret)->initialize (fake.mDX.size ()) ;
-		ret.mFX = MathProc::cos (fake.mFX) ;
-		ret.mEX = fake.mEX ;
-		const auto r1x = -MathProc::sin (fake.mFX) ;
-		for (auto &&i : iter (0 ,fake.mDX.size ()))
-			ret.mDX[i] = r1x * fake.mDX[i] ;
-		check_fx (ret) ;
+		JetHolder::hold (ret)->initialize (fake->mDX.size () ,0) ;
+		ptr (ret).mFunc = JetEvalFunction ([] (VREF<JetNode> node ,CREF<WrapperLayout> params) {
+			assume (node.mFake->mEX == 0) ;
+			node.mFX = MathProc::cos (node.mFake->mFX) ;
+			node.mEX = node.mFake->mEX ;
+			const auto r1x = -MathProc::sin (node.mFake->mFX) ;
+			for (auto &&i : iter (0 ,node.mDX.size ()))
+				node.mDX[i] = r1x * node.mFake->mDX[i] ;
+			check_fx (node) ;
+		}) ;
+		ptr (ret).mFake = fake.mThis ;
 		return move (ret) ;
 	}
 
 	JetLayout stan () const override {
 		JetLayout ret ;
-		assume (fake.mEX == 0) ;
-		JetHolder::hold (ret)->initialize (fake.mDX.size ()) ;
-		ret.mFX = MathProc::tan (fake.mFX) ;
-		ret.mEX = fake.mEX ;
-		const auto r1x = 1 + MathProc::square (ret.mFX) ;
-		for (auto &&i : iter (0 ,fake.mDX.size ()))
-			ret.mDX[i] = r1x * fake.mDX[i] ;
-		check_fx (ret) ;
+		JetHolder::hold (ret)->initialize (fake->mDX.size () ,0) ;
+		ptr (ret).mFunc = JetEvalFunction ([] (VREF<JetNode> node ,CREF<WrapperLayout> params) {
+			assume (node.mFake->mEX == 0) ;
+			node.mFX = MathProc::tan (node.mFake->mFX) ;
+			node.mEX = node.mFake->mEX ;
+			const auto r1x = 1 + MathProc::square (node.mFX) ;
+			for (auto &&i : iter (0 ,node.mDX.size ()))
+				node.mDX[i] = r1x * node.mFake->mDX[i] ;
+			check_fx (node) ;
+		}) ;
+		ptr (ret).mFake = fake.mThis ;
 		return move (ret) ;
 	}
 
 	JetLayout sasin () const override {
 		JetLayout ret ;
-		assume (fake.mEX == 0) ;
-		JetHolder::hold (ret)->initialize (fake.mDX.size ()) ;
-		ret.mFX = MathProc::asin (fake.mFX) ;
-		ret.mEX = fake.mEX ;
-		const auto r1x = MathProc::sqrt (1 - MathProc::square (fake.mFX)) ;
-		const auto r2x = 1 / r1x ;
-		for (auto &&i : iter (0 ,fake.mDX.size ()))
-			ret.mDX[i] = r2x * fake.mDX[i] ;
-		check_fx (ret) ;
+		JetHolder::hold (ret)->initialize (fake->mDX.size () ,0) ;
+		ptr (ret).mFunc = JetEvalFunction ([] (VREF<JetNode> node ,CREF<WrapperLayout> params) {
+			assume (node.mFake->mEX == 0) ;
+			node.mFX = MathProc::asin (node.mFake->mFX) ;
+			node.mEX = node.mFake->mEX ;
+			const auto r1x = MathProc::sqrt (1 - MathProc::square (node.mFake->mFX)) ;
+			const auto r2x = 1 / r1x ;
+			for (auto &&i : iter (0 ,node.mDX.size ()))
+				node.mDX[i] = r2x * node.mFake->mDX[i] ;
+			check_fx (node) ;
+		}) ;
+		ptr (ret).mFake = fake.mThis ;
 		return move (ret) ;
 	}
 
 	JetLayout sacos () const override {
 		JetLayout ret ;
-		assume (fake.mEX == 0) ;
-		JetHolder::hold (ret)->initialize (fake.mDX.size ()) ;
-		ret.mFX = MathProc::acos (fake.mFX) ;
-		ret.mEX = fake.mEX ;
-		const auto r1x = -MathProc::sqrt (1 - MathProc::square (fake.mFX)) ;
-		const auto r2x = 1 / r1x ;
-		for (auto &&i : iter (0 ,fake.mDX.size ()))
-			ret.mDX[i] = r2x * fake.mDX[i] ;
-		check_fx (ret) ;
+		JetHolder::hold (ret)->initialize (fake->mDX.size () ,0) ;
+		ptr (ret).mFunc = JetEvalFunction ([] (VREF<JetNode> node ,CREF<WrapperLayout> params) {
+			assume (node.mFake->mEX == 0) ;
+			node.mFX = MathProc::acos (node.mFake->mFX) ;
+			node.mEX = node.mFake->mEX ;
+			const auto r1x = -MathProc::sqrt (1 - MathProc::square (node.mFake->mFX)) ;
+			const auto r2x = 1 / r1x ;
+			for (auto &&i : iter (0 ,node.mDX.size ()))
+				node.mDX[i] = r2x * node.mFake->mDX[i] ;
+			check_fx (node) ;
+		}) ;
+		ptr (ret).mFake = fake.mThis ;
 		return move (ret) ;
 	}
 
 	JetLayout satan (CREF<JetLayout> that) const override {
-		assert (fake.mDX.size () == that.mDX.size ()) ;
+		assert (fake->mDX.size () == that->mDX.size ()) ;
 		JetLayout ret ;
-		assume (fake.mEX == 0) ;
-		assume (that.mEX == 0) ;
-		JetHolder::hold (ret)->initialize (fake.mDX.size ()) ;
-		ret.mFX = MathProc::atan (fake.mFX ,that.mFX) ;
-		ret.mEX = fake.mEX ;
-		const auto r1x = MathProc::square (fake.mFX) + MathProc::square (that.mFX) ;
-		const auto r2x = 1 / r1x ;
-		const auto r3x = -r2x * that.mFX ;
-		const auto r4x = r2x * fake.mFX ;
-		for (auto &&i : iter (0 ,fake.mDX.size ()))
-			ret.mDX[i] = r3x * fake.mDX[i] + r4x * that.mDX[i] ;
-		check_fx (ret) ;
+		JetHolder::hold (ret)->initialize (fake->mDX.size () ,0) ;
+		ptr (ret).mFunc = JetEvalFunction ([] (VREF<JetNode> node ,CREF<WrapperLayout> params) {
+			assume (node.mFake->mEX == 0) ;
+			assume (node.mThat->mEX == 0) ;
+			node.mFX = MathProc::atan (node.mFake->mFX ,node.mThat->mFX) ;
+			node.mEX = node.mFake->mEX ;
+			const auto r1x = MathProc::square (node.mFake->mFX) + MathProc::square (node.mThat->mFX) ;
+			const auto r2x = 1 / r1x ;
+			const auto r3x = -r2x * node.mThat->mFX ;
+			const auto r4x = r2x * node.mFake->mFX ;
+			for (auto &&i : iter (0 ,node.mDX.size ()))
+				node.mDX[i] = r3x * node.mFake->mDX[i] + r4x * node.mThat->mDX[i] ;
+			check_fx (node) ;
+		}) ;
+		ptr (ret).mFake = fake.mThis ;
+		ptr (ret).mThat = that.mThis ;
 		return move (ret) ;
 	}
 
 	JetLayout sexp () const override {
 		JetLayout ret ;
-		assume (fake.mEX == 0) ;
-		JetHolder::hold (ret)->initialize (fake.mDX.size ()) ;
-		const auto r1x = MathProc::exp (fake.mFX) ;
-		ret.mFX = r1x ;
-		ret.mEX = fake.mEX ;
-		for (auto &&i : iter (0 ,fake.mDX.size ()))
-			ret.mDX[i] = r1x * fake.mDX[i] ;
-		check_fx (ret) ;
+		JetHolder::hold (ret)->initialize (fake->mDX.size () ,0) ;
+		ptr (ret).mFunc = JetEvalFunction ([] (VREF<JetNode> node ,CREF<WrapperLayout> params) {
+			assume (node.mFake->mEX == 0) ;
+			const auto r1x = MathProc::exp (node.mFake->mFX) ;
+			node.mFX = r1x ;
+			node.mEX = node.mFake->mEX ;
+			for (auto &&i : iter (0 ,node.mDX.size ()))
+				node.mDX[i] = r1x * node.mFake->mDX[i] ;
+			check_fx (node) ;
+		}) ;
+		ptr (ret).mFake = fake.mThis ;
 		return move (ret) ;
 	}
 
 	JetLayout slog () const override {
 		JetLayout ret ;
-		JetHolder::hold (ret)->initialize (fake.mDX.size ()) ;
-		ret.mFX = MathProc::log (fake.mFX) ;
-		ret.mEX = round_ex (MathProc::sign (fake.mEX) * MathProc::step (MathProc::abs (fake.mEX))) ;
-		const auto r1x = 1 / fake.mFX ;
-		for (auto &&i : iter (0 ,fake.mDX.size ()))
-			ret.mDX[i] = r1x * fake.mDX[i] ;
-		check_fx (ret) ;
+		JetHolder::hold (ret)->initialize (fake->mDX.size () ,0) ;
+		ptr (ret).mFunc = JetEvalFunction ([] (VREF<JetNode> node ,CREF<WrapperLayout> params) {
+			node.mFX = MathProc::log (node.mFake->mFX) ;
+			const auto r1x = MathProc::sign (node.mFake->mEX) ;
+			const auto r2x = MathProc::step (MathProc::abs (node.mFake->mEX)) ;
+			node.mEX = round_ex (r1x * r2x) ;
+			const auto r3x = 1 / node.mFake->mFX ;
+			for (auto &&i : iter (0 ,node.mDX.size ()))
+				node.mDX[i] = r3x * node.mFake->mDX[i] ;
+			check_fx (node) ;
+		}) ;
+		ptr (ret).mFake = fake.mThis ;
 		return move (ret) ;
 	}
 
-	FLT64 round_ex (CREF<FLT64> ex) const {
-		const auto r1x = MathProc::round (ex ,FLT64 (0.0001)) ;
+	static void copy_node (VREF<JetNode> dst ,CREF<JetNode> src ,CREF<FLT64> si) {
+		dst.mFX = si * src.mFX ;
+		dst.mEX = src.mEX ;
+		for (auto &&i : iter (0 ,dst.mDX.size ()))
+			dst.mDX[i] = si * src.mDX[i] ;
+	}
+
+	static FLT64 round_ex (CREF<FLT64> ex) {
+		const auto r1x = MathProc::round (ex ,FLT64 (0.01)) ;
 		const auto r2x = MathProc::inverse (ex - r1x) ;
 		assume (r2x == 0) ;
 		return r1x ;
 	}
 
-	void check_fx (VREF<JetLayout> a) const {
+	static void check_fx (VREF<JetNode> node) {
 		auto act = TRUE ;
 		if ifdo (act) {
-			if (!MathProc::is_low (a.mFX))
+			if (!MathProc::is_low (node.mFX))
 				discard ;
-			a.mFX = 1 ;
-			a.mEX-- ;
-			inline_memset (Pointer::from (a.mDX.self) ,a.mDX.size () * SIZE_OF<FLT64>::expr) ;
+			node.mFX = 1 ;
+			node.mEX-- ;
+			inline_memset (Pointer::from (node.mDX.self) ,node.mDX.size () * SIZE_OF<FLT64>::expr) ;
 		}
 		if ifdo (act) {
-			const auto r1x = 1 / a.mFX ;
+			const auto r1x = 1 / node.mFX ;
 			if (!MathProc::is_low (r1x))
 				discard ;
-			a.mFX = 1 ;
-			a.mEX++ ;
-			inline_memset (Pointer::from (a.mDX.self) ,a.mDX.size () * SIZE_OF<FLT64>::expr) ;
+			node.mFX = 1 ;
+			node.mEX++ ;
+			inline_memset (Pointer::from (node.mDX.self) ,node.mDX.size () * SIZE_OF<FLT64>::expr) ;
 		}
 	}
 } ;

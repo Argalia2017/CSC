@@ -763,22 +763,31 @@ public:
 	}
 } ;
 
-struct JetLayout {
+struct JetNode ;
+using JetEvalFunction = Function<VREF<JetNode> ,CREF<WrapperLayout>> ;
+
+struct JetNode {
 	FLT64 mFX ;
 	FLT64 mEX ;
 	RefBuffer<FLT64> mDX ;
+	INDEX mSlot ;
+	JetEvalFunction mFunc ;
+	Ref<JetNode> mFake ;
+	Ref<JetNode> mThat ;
 } ;
+
+struct JetLayout implement ThisLayout<Ref<JetNode>> {} ;
 
 struct JetHolder implement Interface {
 	imports VFat<JetHolder> hold (VREF<JetLayout> that) ;
 	imports CFat<JetHolder> hold (CREF<JetLayout> that) ;
 
-	virtual void initialize (CREF<LENGTH> size_) = 0 ;
+	virtual void initialize (CREF<LENGTH> size_ ,CREF<FLT64> item) = 0 ;
 	virtual void initialize (CREF<LENGTH> size_ ,CREF<FLT64> item ,CREF<INDEX> slot) = 0 ;
-	virtual void initialize (CREF<JetLayout> that) = 0 ;
 	virtual FLT64 fx () const = 0 ;
 	virtual FLT64 ex () const = 0 ;
 	virtual FLT64 dx (CREF<INDEX> slot) const = 0 ;
+	virtual void once (CREF<WrapperLayout> params) = 0 ;
 	virtual JetLayout sadd (CREF<JetLayout> that) const = 0 ;
 	virtual JetLayout ssub (CREF<JetLayout> that) const = 0 ;
 	virtual JetLayout smul (CREF<JetLayout> that) const = 0 ;
@@ -802,35 +811,15 @@ struct JetHolder implement Interface {
 
 template <class A>
 class Jet implement JetLayout {
-protected:
-	using JetLayout::mFX ;
-	using JetLayout::mDX ;
-
 public:
 	implicit Jet () = default ;
 
 	implicit Jet (CREF<FLT64> item) {
-		JetHolder::hold (thiz)->initialize (A::expr ,item ,NONE) ;
+		JetHolder::hold (thiz)->initialize (A::expr ,item) ;
 	}
 
-	implicit Jet (CREF<FLT64> item ,CREF<INDEX> slot) {
+	explicit Jet (CREF<FLT64> item ,CREF<INDEX> slot) {
 		JetHolder::hold (thiz)->initialize (A::expr ,item ,slot) ;
-	}
-
-	implicit Jet (CREF<Jet> that) {
-		JetHolder::hold (thiz)->initialize (that) ;
-	}
-
-	forceinline VREF<Jet> operator= (CREF<Jet> that) {
-		return assign (thiz ,that) ;
-	}
-
-	implicit Jet (RREF<Jet> that) = default ;
-
-	forceinline VREF<Jet> operator= (RREF<Jet> that) = default ;
-
-	Jet clone () const {
-		return move (thiz) ;
 	}
 
 	FLT64 fx () const {
@@ -843,6 +832,17 @@ public:
 
 	FLT64 dx (CREF<INDEX> slot) const {
 		return JetHolder::hold (thiz)->dx (slot) ;
+	}
+
+	template <class...ARG1 ,class = REQUIRE<ENUM_ALL<IS_SAME<FLT64 ,ARG1>...>>>
+	void once (CREF<ARG1>...params) {
+		require (ENUM_EQUAL<RANK_OF<TYPE<ARG1...>> ,A>) ;
+		return JetHolder::hold (thiz)->once (MakeWrapper (params...)) ;
+	}
+
+	template <class...ARG1 ,class = REQUIRE<ENUM_ALL<IS_SAME<FLT64 ,ARG1>...>>>
+	forceinline void operator() (CREF<ARG1>...params) {
+		return once (params...) ;
 	}
 
 	Jet sadd (CREF<Jet> that) const {
