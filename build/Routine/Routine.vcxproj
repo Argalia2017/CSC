@@ -55,6 +55,7 @@
     <None Include="..\..\src\csc\csc_math.inl" />
     <None Include="..\..\src\csc\csc_matrix.eigen.inl" />
     <None Include="..\..\src\csc\csc_matrix.inl" />
+    <None Include="..\..\src\csc\csc_matrix.nanoflann.inl" />
     <None Include="..\..\src\csc\csc_runtime.inl" />
     <None Include="..\..\src\csc\csc_runtime.linux.inl" />
     <None Include="..\..\src\csc\csc_runtime.windows.inl" />

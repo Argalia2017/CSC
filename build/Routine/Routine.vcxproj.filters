@@ -113,6 +113,9 @@
     <None Include="..\..\src\csc\csc_file.windows.inl">
       <Filter>csc</Filter>
     </None>
+    <None Include="..\..\src\csc\csc_matrix.nanoflann.inl">
+      <Filter>csc</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="csc">

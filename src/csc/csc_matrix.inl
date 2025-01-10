@@ -918,6 +918,16 @@ exports CFat<LinearProcHolder> LinearProcHolder::hold (CREF<LinearProcLayout> th
 	return CFat<LinearProcHolder> (External<LinearProcHolder ,LinearProcLayout>::declare () ,that) ;
 }
 
+template class External<PointCloudKDTreeHolder ,PointCloudKDTreeLayout> ;
+
+exports VFat<PointCloudKDTreeHolder> PointCloudKDTreeHolder::hold (VREF<PointCloudKDTreeLayout> that) {
+	return VFat<PointCloudKDTreeHolder> (External<PointCloudKDTreeHolder ,PointCloudKDTreeLayout>::declare () ,that) ;
+}
+
+exports CFat<PointCloudKDTreeHolder> PointCloudKDTreeHolder::hold (CREF<PointCloudKDTreeLayout> that) {
+	return CFat<PointCloudKDTreeHolder> (External<PointCloudKDTreeHolder ,PointCloudKDTreeLayout>::declare () ,that) ;
+}
+
 class PointCloudImplHolder final implement Fat<PointCloudHolder ,PointCloudLayout> {
 public:
 	void initialize (RREF<Ref<Array<Point2F>>> that) override {
@@ -1049,15 +1059,23 @@ public:
 	}
 
 	Array<INDEX> search (CREF<Vector> center ,CREF<LENGTH> neighbor) const override {
-		Array<INDEX> ret ;
-		unimplemented () ;
-		return move (ret) ;
+		auto &&rax = keep[TYPE<PointCloudKDTreeLayout>::expr] (fake.mKDTree.self) ;
+		if ifdo (TRUE) {
+			if (rax.mThis.exist ())
+				discard ;
+			PointCloudKDTreeHolder::hold (rax)->initialize (fake.mPointCloud.self) ;
+		}
+		return PointCloudKDTreeHolder::hold (rax)->search (center ,neighbor) ;
 	}
 
 	Array<INDEX> search (CREF<Vector> center ,CREF<LENGTH> neighbor ,CREF<FLT64> radius) const override {
-		Array<INDEX> ret ;
-		unimplemented () ;
-		return move (ret) ;
+		auto &&rax = keep[TYPE<PointCloudKDTreeLayout>::expr] (fake.mKDTree.self) ;
+		if ifdo (TRUE) {
+			if (rax.mThis.exist ())
+				discard ;
+			PointCloudKDTreeHolder::hold (rax)->initialize (fake.mPointCloud.self) ;
+		}
+		return PointCloudKDTreeHolder::hold (rax)->search (center ,neighbor ,radius) ;
 	}
 } ;
 

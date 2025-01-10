@@ -959,10 +959,24 @@ public:
 	}
 } ;
 
+struct PointCloudKDTreeImplLayout ;
+
+struct PointCloudKDTreeLayout implement ThisLayout<AutoRef<PointCloudKDTreeImplLayout>> {} ;
+
+struct PointCloudKDTreeHolder implement Interface {
+	imports VFat<PointCloudKDTreeHolder> hold (VREF<PointCloudKDTreeLayout> that) ;
+	imports CFat<PointCloudKDTreeHolder> hold (CREF<PointCloudKDTreeLayout> that) ;
+
+	virtual void initialize (CREF<Array<Pointer>> pointcloud) = 0 ;
+	virtual Array<INDEX> search (CREF<Vector> center ,CREF<LENGTH> neighbor) const = 0 ;
+	virtual Array<INDEX> search (CREF<Vector> center ,CREF<LENGTH> neighbor ,CREF<FLT64> radius) const = 0 ;
+} ;
+
 struct PointCloudLayout {
 	LENGTH mRank ;
 	Ref<Array<Pointer>> mPointCloud ;
 	Matrix mWorld ;
+	Pin<PointCloudKDTreeLayout> mKDTree ;
 } ;
 
 struct PointCloudHolder implement Interface {
@@ -987,6 +1001,7 @@ protected:
 	using PointCloudLayout::mRank ;
 	using PointCloudLayout::mPointCloud ;
 	using PointCloudLayout::mWorld ;
+	using PointCloudLayout::mKDTree ;
 
 public:
 	implicit PointCloud () = default ;
