@@ -175,7 +175,7 @@ class initializer_list ;
 #endif
 
 #ifdef __CSC_COMPILER_CLANG__
-#define __macro_dllextern
+#define __macro_dllextern __declspec (dllexport)
 #endif
 #endif
 

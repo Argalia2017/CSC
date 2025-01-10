@@ -12,6 +12,7 @@ struct ConfigProcHolder implement Interface {
 
 	virtual void initialize () = 0 ;
 	virtual void set_data_dire (CREF<String<STR>> path) const = 0 ;
+	virtual void set_cxx_signal () const = 0 ;
 } ;
 
 class ConfigProc implement ConfigProcLayout {
@@ -25,6 +26,10 @@ public:
 
 	static void set_data_dire (CREF<String<STR>> dire) {
 		return ConfigProcHolder::hold (instance ())->set_data_dire (dire) ;
+	}
+
+	static void set_cxx_signal () {
+		return ConfigProcHolder::hold (instance ())->set_cxx_signal () ;
 	}
 } ;
 } ;

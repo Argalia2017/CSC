@@ -259,8 +259,7 @@ public:
 	}
 
 	PathLayout symbolic () const override {
-		PathLayout ret ;
-		PathHolder::hold (ret)->initialize (fake) ;
+		PathLayout ret = fake ;
 		if ifdo (TRUE) {
 			if (!is_link ())
 				discard ;

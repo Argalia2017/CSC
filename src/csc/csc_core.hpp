@@ -951,7 +951,7 @@ public:
 
 template <class A>
 struct ReflectFriend implement Interface {
-	virtual VFat<A> hold (CREF<Pointer> a) const = 0 ;
+	virtual VFat<A> hold (VREF<Pointer> a) const = 0 ;
 	virtual CFat<A> hold (CREF<Pointer> a) const = 0 ;
 
 	forceinline static consteval FLAG expr_m () noexcept {
@@ -962,7 +962,7 @@ struct ReflectFriend implement Interface {
 template <class A ,class B>
 class ReflectFriendBinder implement ReflectFriend<A> {
 public:
-	VFat<A> hold (CREF<Pointer> a) const override {
+	VFat<A> hold (VREF<Pointer> a) const override {
 		return B::hold (keep[TYPE<A>::expr] (a)) ;
 	}
 
@@ -1722,10 +1722,6 @@ public:
 
 	explicit Exception (CREF<Slice> what_) {
 		ExceptionHolder::hold (thiz)->initialize (what_ ,Slice () ,Slice () ,Slice ()) ;
-	}
-
-	explicit Exception (CREF<Slice> what_ ,CREF<Slice> func_) {
-		ExceptionHolder::hold (thiz)->initialize (what_ ,func_ ,Slice () ,Slice ()) ;
 	}
 
 	explicit Exception (CREF<Slice> what_ ,CREF<Slice> func_ ,CREF<Slice> file_ ,CREF<Slice> line_) {
