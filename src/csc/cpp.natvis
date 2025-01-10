@@ -321,8 +321,9 @@
 
   <Type Name="CSC::Priority&lt;*&gt;">
     <Expand HideRawView="true">
+      <Item Name="[read]">mRead</Item>
       <Item Name="[write]">mWrite</Item>
-      <ExpandedItem>(CSC::RefBuffer&lt;CSC::TupleWrap2&lt;$T1,CSC::PriorityNode&gt; &gt;*)&amp;mPriority</ExpandedItem>
+      <ExpandedItem>(CSC::RefBuffer&lt;$T1&gt;*)&amp;mPriority</ExpandedItem>
     </Expand>
   </Type>
 

@@ -526,6 +526,13 @@ public:
 		return fake.mRead == fake.mWrite ;
 	}
 
+	BOOL full () const override {
+		const auto r1x = size () ;
+		if (r1x == 0)
+			return FALSE ;
+		return length () >= r1x ;
+	}
+
 	INDEX head () const override {
 		return 0 ;
 	}
@@ -698,6 +705,13 @@ public:
 		return fake.mRead == fake.mWrite ;
 	}
 
+	BOOL full () const override {
+		const auto r1x = size () ;
+		if (r1x == 0)
+			return FALSE ;
+		return length () >= r1x ;
+	}
+
 	INDEX head () const override {
 		return 0 ;
 	}
@@ -864,6 +878,13 @@ public:
 		if (!fake.mList.exist ())
 			return TRUE ;
 		return fake.mFirst == NONE ;
+	}
+
+	BOOL full () const override {
+		const auto r1x = size () ;
+		if (r1x == 0)
+			return FALSE ;
+		return length () >= r1x ;
 	}
 
 	INDEX head () const override {

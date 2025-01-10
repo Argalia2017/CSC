@@ -602,6 +602,7 @@ struct DequeHolder implement Interface {
 	virtual INDEX iend () const = 0 ;
 	virtual INDEX inext (CREF<INDEX> index) const = 0 ;
 	virtual BOOL empty () const = 0 ;
+	virtual BOOL full () const = 0 ;
 	virtual INDEX head () const = 0 ;
 	virtual INDEX tail () const = 0 ;
 	virtual void add (RREF<BoxLayout> item) = 0 ;
@@ -714,6 +715,10 @@ public:
 
 	BOOL empty () const {
 		return DequeHolder::hold (thiz)->empty () ;
+	}
+
+	BOOL full () const {
+		return DequeHolder::hold (thiz)->full () ;
 	}
 
 	INDEX head () const {
@@ -834,6 +839,7 @@ struct PriorityHolder implement Interface {
 	virtual INDEX iend () const = 0 ;
 	virtual INDEX inext (CREF<INDEX> index) const = 0 ;
 	virtual BOOL empty () const = 0 ;
+	virtual BOOL full () const = 0 ;
 	virtual INDEX head () const = 0 ;
 	virtual void add (RREF<BoxLayout> item) = 0 ;
 	virtual void take () = 0 ;
@@ -942,6 +948,10 @@ public:
 		return PriorityHolder::hold (thiz)->empty () ;
 	}
 
+	BOOL full () const {
+		return PriorityHolder::hold (thiz)->full () ;
+	}
+
 	INDEX head () const {
 		return PriorityHolder::hold (thiz)->head () ;
 	}
@@ -994,6 +1004,7 @@ struct ListHolder implement Interface {
 	virtual INDEX iend () const = 0 ;
 	virtual INDEX inext (CREF<INDEX> index) const = 0 ;
 	virtual BOOL empty () const = 0 ;
+	virtual BOOL full () const = 0 ;
 	virtual INDEX head () const = 0 ;
 	virtual INDEX tail () const = 0 ;
 	virtual void add (RREF<BoxLayout> item) = 0 ;
@@ -1110,6 +1121,10 @@ public:
 
 	BOOL empty () const {
 		return ListHolder::hold (thiz)->empty () ;
+	}
+
+	BOOL full () const {
+		return ListHolder::hold (thiz)->full () ;
 	}
 
 	INDEX head () const {

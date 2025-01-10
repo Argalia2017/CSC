@@ -870,7 +870,7 @@ public:
 		mTextReader->reset (mBackup) ;
 		mDeque.clear () ;
 		while (TRUE) {
-			if (mDeque.length () >= mDeque.size ())
+			if (mDeque.full ())
 				break ;
 			mTextReader.self >> mTop ;
 			mDeque.add (mTop) ;
@@ -894,7 +894,7 @@ public:
 		mBackup = mTextReader->backup () ;
 		mDeque.clear () ;
 		while (TRUE) {
-			if (mDeque.length () >= mDeque.size ())
+			if (mDeque.full ())
 				break ;
 			mTextReader.self >> mTop ;
 			mDeque.add (mTop) ;

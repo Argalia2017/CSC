@@ -69,6 +69,7 @@ public:
 	}
 
 	void set_queue_size (CREF<LENGTH> size_) {
+		assert (size_ > 0) ;
 		Scope<Mutex> anonymous (mThreadMutex) ;
 		assume (mThreadFlag == ThreadFlag::Preparing) ;
 		assume (mItemQueue.empty ()) ;
@@ -156,7 +157,7 @@ public:
 		while (TRUE) {
 			if (mThreadFlag != ThreadFlag::Running)
 				break ;
-			if (mItemQueue.length () < mItemQueue.size ())
+			if (!mItemQueue.full ())
 				break ;
 			rax.wait () ;
 		}

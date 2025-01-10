@@ -273,7 +273,7 @@ class initializer_list ;
 #endif
 
 #ifdef __CSC_VER_UNITTEST__
-#define __macro_assert(...) do { if (__VA_ARGS__) break ; if (inline_unittest ()) { __macro_break () ; } inline_abort () ; } while (false)
+#define __macro_assert(...) do { if (__VA_ARGS__) break ; if (inline_unittest ()) { __macro_break () ; } else { inline_abort () ; } } while (false)
 #endif
 
 #ifdef __CSC_VER_RELEASE__

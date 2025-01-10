@@ -770,6 +770,7 @@ public:
 	}
 
 	void set_cache_size (CREF<LENGTH> size_) override {
+		assert (size_ > 0) ;
 		fake->mCacheSet = Set<VAL64> (size_) ;
 		fake->mCacheList = List<BufferFileChunk> (size_) ;
 		fake->mCacheTimer = 0 ;
@@ -1000,7 +1001,7 @@ public:
 	}
 
 	void update_overflow () {
-		if (fake->mCacheList.length () < fake->mCacheList.size ())
+		if (!fake->mCacheList.full ())
 			return ;
 		const auto r1x = invoke ([&] () {
 			INDEX ret = NONE ;

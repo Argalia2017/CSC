@@ -1006,16 +1006,8 @@ protected:
 public:
 	implicit PointCloud () = default ;
 
-	explicit PointCloud (CREF<Array<Point2F>> that) {
-		PointCloudHolder::hold (thiz)->initialize (Ref<Array<Point2F>>::make (move (that))) ;
-	}
-
 	explicit PointCloud (RREF<Ref<Array<Point2F>>> that) {
 		PointCloudHolder::hold (thiz)->initialize (move (that)) ;
-	}
-
-	explicit PointCloud (CREF<Array<Point3F>> that) {
-		PointCloudHolder::hold (thiz)->initialize (Ref<Array<Point3F>>::make (move (that))) ;
 	}
 
 	explicit PointCloud (RREF<Ref<Array<Point3F>>> that) {

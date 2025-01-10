@@ -41,7 +41,9 @@ struct FUNCTION_has_debugger {
 static constexpr auto has_debugger = FUNCTION_has_debugger () ;
 
 exports BOOL FUNCTION_inline_unittest::invoke () {
-	return has_debugger () ;
+	return memorize ([&] () {
+		return has_debugger () ;
+	}) ;
 } ;
 
 exports void FUNCTION_inline_abort::invoke () {
