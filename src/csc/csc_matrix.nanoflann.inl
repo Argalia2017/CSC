@@ -20,30 +20,32 @@
 namespace CSC {
 struct KDTreePointCloudAdaptor {
 	RefBuffer<FLT32> mPointCloud ;
-	LENGTH mDimension ;
-	LENGTH mSize ;
+	csc_size_t mDimension ;
+	csc_size_t mSize ;
 
 public:
-	inline size_t kdtree_get_point_count () const {
+	csc_size_t kdtree_get_point_count () const {
 		return mSize ;
 	}
 
-	inline FLT32 kdtree_distance (const FLT32 *pt ,size_t idx_p2 ,size_t size_) const {
-		FLT32 ret = 0 ;
+	FLT32 kdtree_distance (const FLT32 *pt ,csc_size_t idx ,csc_size_t size_) const {
+		auto rax = FLT64 (0) ;
 		for (auto &&i : iter (0 ,LENGTH (size_))) {
-			const auto r1x = pt[i] - mPointCloud[idx_p2 * mDimension + i] ;
-			ret += MathProc::square (r1x) ;
+			const auto r1x = pt[i] - mPointCloud[idx * mDimension + i] ;
+			rax += MathProc::square (r1x) ;
 		}
-		return ret ;
+		return FLT32 (rax) ;
 	}
 
-	inline FLT32 kdtree_get_pt (size_t idx ,size_t dim) const {
-		INDEX ix = INDEX (idx) * mDimension + INDEX (dim) ;
+	FLT32 kdtree_get_pt (csc_size_t idx ,csc_size_t dim) const {
+		if (dim >= mDimension)
+			return 0 ;
+		INDEX ix = INDEX (idx * mDimension + dim) ;
 		return mPointCloud[ix] ;
 	}
 
 	template <class BBOX>
-	bool kdtree_get_bbox (BBOX &) const {
+	BOOL kdtree_get_bbox (BBOX &) const {
 		return false ;
 	}
 } ;
@@ -54,12 +56,15 @@ public:
 	using IndexType = INDEX ;
 
 public:
-	DistanceType mRadius ;
+	FLT32 mRadius ;
 	Priority<IndexPair<FLT32>> mResult ;
+
+public:
+	implicit KDTreeResultAdaptor () = delete ;
 
 	explicit KDTreeResultAdaptor (CREF<LENGTH> capacity ,CREF<FLT32> radius_) {
 		mRadius = radius_ ;
-		mResult = Priority<IndexPair<FLT32>> (capacity) ;
+		mResult = Priority<IndexPair<FLT32>> (capacity + 1) ;
 		clear () ;
 	}
 
@@ -67,40 +72,38 @@ public:
 		mResult.clear () ;
 	}
 
-	size_t size () const {
+	csc_size_t size () const {
 		return mResult.length () ;
 	}
 
-	size_t empty () const {
+	csc_size_t empty () const {
 		return mResult.empty () ;
 	}
 
-	bool full () const {
+	BOOL full () const {
 		return true ;
 	}
 
-	bool addPoint (DistanceType dist ,IndexType index) {
+	BOOL addPoint (FLT32 dist ,INDEX index) {
 		if (dist >= mRadius)
 			return true ;
-		if ifdo (TRUE) {
-			if (mResult.full ())
-				discard ;
-			mResult.add ({-dist ,index}) ;
-			return true ;
-		}
-		mResult.take () ;
 		mResult.add ({-dist ,index}) ;
-		mRadius = MathProc::min_of (mRadius ,-mResult[0].mItem) ;
+		if ifdo (TRUE) {
+			if (!mResult.full ())
+				discard ;
+			mResult.take () ;
+			mRadius = MathProc::min_of (mRadius ,-mResult[0].mItem) ;
+		}
 		return true ;
 	}
 
-	DistanceType worstDist () const {
+	FLT32 worstDist () const {
 		return mRadius ;
 	}
 
-	nanoflann::ResultItem<IndexType ,DistanceType> worst_item () const {
+	nanoflann::ResultItem<INDEX ,FLT32> worst_item () const {
 		assume (mResult.length () > 0) ;
-		nanoflann::ResultItem<IndexType ,DistanceType> ret ;
+		nanoflann::ResultItem<INDEX ,FLT32> ret ;
 		ret.first = mResult[0].mIndex ;
 		ret.second = -mResult[0].mItem ;
 		return move (ret) ;
@@ -109,7 +112,7 @@ public:
 
 inline namespace {
 using KDTreeDistance = nanoflann::L2_Simple_Adaptor<FLT32 ,KDTreePointCloudAdaptor ,FLT32 ,INDEX> ;
-using KDTree = nanoflann::KDTreeSingleIndexAdaptor<KDTreeDistance ,KDTreePointCloudAdaptor ,-1 ,INDEX> ;
+using KDTree = nanoflann::KDTreeSingleIndexAdaptor<KDTreeDistance ,KDTreePointCloudAdaptor ,3 ,INDEX> ;
 } ;
 
 struct PointCloudKDTreeImplLayout {
@@ -134,12 +137,12 @@ public:
 	}
 
 	Array<INDEX> search (CREF<Vector> center ,CREF<LENGTH> neighbor) const override {
+		assert (neighbor > 0) ;
 		const auto r1x = Point3F (center.xyz ()) ;
 		const auto r2x = nanoflann::SearchParameters (0 ,false) ;
 		auto rax = KDTreeResultAdaptor (neighbor ,infinity) ;
 		fake->mKDTree->findNeighbors (rax ,(&r1x.mX) ,r2x) ;
-		const auto r3x = rax.mResult.length () ;
-		assert (r3x <= neighbor) ;
+		const auto r3x = inline_min (rax.mResult.length () ,neighbor) ;
 		Array<INDEX> ret = Array<INDEX> (r3x) ;
 		for (auto &&i : iter (0 ,r3x)) {
 			INDEX ix = r3x - 1 - i ;
@@ -150,12 +153,12 @@ public:
 	}
 
 	Array<INDEX> search (CREF<Vector> center ,CREF<LENGTH> neighbor ,CREF<FLT64> radius) const override {
+		assert (neighbor > 0) ;
 		const auto r1x = Point3F (center.xyz ()) ;
 		const auto r2x = nanoflann::SearchParameters (0 ,false) ;
 		auto rax = KDTreeResultAdaptor (neighbor ,FLT32 (MathProc::square (radius))) ;
 		fake->mKDTree->radiusSearchCustomCallback ((&r1x.mX) ,rax ,r2x) ;
-		const auto r3x = rax.mResult.length () ;
-		assert (r3x <= neighbor) ;
+		const auto r3x = inline_min (rax.mResult.length () ,neighbor) ;
 		Array<INDEX> ret = Array<INDEX> (r3x) ;
 		for (auto &&i : iter (0 ,r3x)) {
 			INDEX ix = r3x - 1 - i ;

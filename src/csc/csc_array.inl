@@ -2336,9 +2336,9 @@ public:
 		const auto r1x = bitwise[TYPE<INDEX>::expr] (item) ;
 		if (!inline_between (r1x ,0 ,size ()))
 			return FALSE ;
-		auto rax = FALSE ;
-		get (r1x ,rax) ;
-		return move (rax) ;
+		BOOL ret = FALSE ;
+		get (r1x ,ret) ;
+		return move (ret) ;
 	}
 
 	void erase (CREF<Pointer> item) override {
