@@ -614,6 +614,7 @@ struct MakeMatrixHolder implement Interface {
 
 	virtual void make_DiagMatrix (CREF<FLT64> x ,CREF<FLT64> y ,CREF<FLT64> z ,CREF<FLT64> w) = 0 ;
 	virtual void make_ShearMatrix (CREF<Vector> x ,CREF<Vector> y ,CREF<Vector> z) = 0 ;
+	virtual void make_RotationMatrix (CREF<FLAG> axis ,CREF<FLT64> angle) = 0 ;
 	virtual void make_RotationMatrix (CREF<Vector> normal ,CREF<FLT64> angle) = 0 ;
 	virtual void make_TranslationMatrix (CREF<FLT64> x ,CREF<FLT64> y ,CREF<FLT64> z) = 0 ;
 	virtual void make_PerspectiveMatrix (CREF<FLT64> fx ,CREF<FLT64> fy ,CREF<FLT64> wx ,CREF<FLT64> wy) = 0 ;
@@ -640,6 +641,12 @@ inline Matrix DiagMatrix (CREF<FLT64> x ,CREF<FLT64> y ,CREF<FLT64> z ,CREF<FLT6
 inline Matrix ShearMatrix (CREF<Vector> x ,CREF<Vector> y ,CREF<Vector> z) {
 	Matrix ret ;
 	MakeMatrixHolder::hold (ret)->make_ShearMatrix (x ,y ,z) ;
+	return move (ret) ;
+}
+
+inline Matrix RotationMatrix (CREF<FLAG> axis ,CREF<FLT64> angle) {
+	Matrix ret ;
+	MakeMatrixHolder::hold (ret)->make_RotationMatrix (axis ,angle) ;
 	return move (ret) ;
 }
 
@@ -814,6 +821,13 @@ public:
 	}
 } ;
 
+struct EulerAngle {
+	Just<ViewMatrixOption> mType ;
+	FLT64 mPitch ;
+	FLT64 mYaw ;
+	FLT64 mRoll ;
+} ;
+
 struct QuaternionLayout {
 	Buffer<FLT64 ,RANK4> mQuaternion ;
 } ;
@@ -823,15 +837,17 @@ struct QuaternionHolder implement Interface {
 	imports CFat<QuaternionHolder> hold (CREF<QuaternionLayout> that) ;
 
 	virtual void initialize (CREF<FLT64> x ,CREF<FLT64> y ,CREF<FLT64> z ,CREF<FLT64> w) = 0 ;
-	virtual void initialize (CREF<VectorLayout> that) = 0 ;
-	virtual void initialize (CREF<MatrixLayout> that) = 0 ;
+	virtual void initialize (CREF<Vector> that) = 0 ;
+	virtual void initialize (CREF<Matrix> that) = 0 ;
+	virtual void initialize (CREF<EulerAngle> that) = 0 ;
 	virtual CREF<FLT64> at (CREF<INDEX> y) const leftvalue = 0 ;
 	virtual BOOL equal (CREF<QuaternionLayout> that) const = 0 ;
 	virtual FLAG compr (CREF<QuaternionLayout> that) const = 0 ;
 	virtual void visit (VREF<VisitorBinder> visitor) const = 0 ;
 	virtual QuaternionLayout smul (CREF<QuaternionLayout> that) const = 0 ;
-	virtual VectorLayout vector () const = 0 ;
-	virtual MatrixLayout matrix () const = 0 ;
+	virtual Vector vector () const = 0 ;
+	virtual Matrix matrix () const = 0 ;
+	virtual EulerAngle euler (CREF<Just<ViewMatrixOption>> type) const = 0 ;
 } ;
 
 class Quaternion implement QuaternionLayout {
@@ -850,6 +866,10 @@ public:
 	}
 
 	explicit Quaternion (CREF<Matrix> that) {
+		QuaternionHolder::hold (thiz)->initialize (that) ;
+	}
+
+	explicit Quaternion (CREF<EulerAngle> that) {
 		QuaternionHolder::hold (thiz)->initialize (that) ;
 	}
 
@@ -917,13 +937,15 @@ public:
 	}
 
 	Vector vector () const {
-		VectorLayout ret = QuaternionHolder::hold (thiz)->vector () ;
-		return move (keep[TYPE<Vector>::expr] (ret)) ;
+		return QuaternionHolder::hold (thiz)->vector () ;
 	}
 
 	Matrix matrix () const {
-		MatrixLayout ret = QuaternionHolder::hold (thiz)->matrix () ;
-		return move (keep[TYPE<Matrix>::expr] (ret)) ;
+		return QuaternionHolder::hold (thiz)->matrix () ;
+	}
+
+	EulerAngle euler (CREF<Just<ViewMatrixOption>> type) const {
+		return QuaternionHolder::hold (thiz)->euler (type) ;
 	}
 } ;
 
