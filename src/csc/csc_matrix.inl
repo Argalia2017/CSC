@@ -831,6 +831,12 @@ public:
 		if ifdo (act) {
 			if (that.mType != ViewMatrixOption::XYZ)
 				discard ;
+			//@info: we are using intrinsic rotation
+			//@info: first, rotation RXi = RX
+			//@info: second, rotation RYi = RXi * RY * RXi.inverse
+			//@info: third, rotation RZi = (RYi * RXi) * RZ * (RYi * RXi).inverse
+			//@info: finally, rotation RZi * RYi * RXi = RX * RY * RZ
+			//@info: so, XYZ means RX is first rotation
 			const auto r4x = r1x * r2x * r3x ;
 			initialize (r4x) ;
 		}
@@ -948,77 +954,134 @@ public:
 
 	EulerAngle euler (CREF<Just<ViewMatrixOption>> type) const override {
 		EulerAngle ret ;
-		ret.mType = type ;
 		const auto r1x = matrix () ;
+		const auto r2x = DiagMatrix (+1 ,-1 ,-1) ;
+		const auto r3x = DiagMatrix (-1 ,+1 ,-1) ;
+		const auto r4x = DiagMatrix (-1 ,-1 ,+1) ;
+		const auto r5x = Buffer3<Matrix> ({r2x ,r3x ,r4x}) ;
+		auto rax = Buffer3<Matrix> () ;
 		auto act = TRUE ;
 		if ifdo (act) {
 			if (type != ViewMatrixOption::XYZ)
 				discard ;
-			const auto r2x = euler_decompose (r1x ,0 ,1 ,2) ;
-			ret.mPitch = r2x[0] ;
-			ret.mYaw = r2x[1] ;
-			ret.mRoll = r2x[2] ;
+			rax = euler_decompose (r1x ,0 ,1 ,2) ;
+			if ifdo (TRUE) {
+				if (rax[0][1][1] >= 0)
+					discard ;
+				rax[0] = rax[0] * r5x[0] ;
+				rax[1] = r5x[0] * rax[1] ;
+			}
+			if ifdo (TRUE) {
+				if (rax[1][1][1] >= 0)
+					discard ;
+				rax[1] = rax[1] * r5x[2] ;
+				rax[2] = r5x[2] * rax[2] ;
+			}
 		}
 		if ifdo (act) {
 			if (type != ViewMatrixOption::XZY)
 				discard ;
-			const auto r3x = euler_decompose (r1x ,0 ,2 ,1) ;
-			ret.mPitch = r3x[0] ;
-			ret.mYaw = r3x[1] ;
-			ret.mRoll = r3x[2] ;
+			rax = euler_decompose (r1x ,0 ,2 ,1) ;
+			if ifdo (TRUE) {
+				if (rax[0][1][1] >= 0)
+					discard ;
+				rax[0] = rax[0] * r5x[0] ;
+				rax[2] = r5x[0] * rax[2] ;
+			}
+			if ifdo (TRUE) {
+				if (rax[2][2][2] >= 0)
+					discard ;
+				rax[2] = rax[2] * r5x[1] ;
+				rax[1] = r5x[1] * rax[1] ;
+			}
 		}
 		if ifdo (act) {
 			if (type != ViewMatrixOption::YXZ)
 				discard ;
-			const auto r4x = euler_decompose (r1x ,1 ,0 ,2) ;
-			ret.mPitch = r4x[0] ;
-			ret.mYaw = r4x[1] ;
-			ret.mRoll = r4x[2] ;
+			rax = euler_decompose (r1x ,1 ,0 ,2) ;
+			if ifdo (TRUE) {
+				if (rax[0][1][1] >= 0)
+					discard ;
+				rax[1] = rax[1] * r5x[1] ;
+				rax[0] = r5x[1] * rax[0] ;
+				rax[0] = rax[0] * r5x[2] ;
+				rax[2] = r5x[2] * rax[2] ;
+			}
 		}
 		if ifdo (act) {
 			if (type != ViewMatrixOption::YZX)
 				discard ;
-			const auto r5x = euler_decompose (r1x ,1 ,2 ,0) ;
-			ret.mPitch = r5x[0] ;
-			ret.mYaw = r5x[1] ;
-			ret.mRoll = r5x[2] ;
+			rax = euler_decompose (r1x ,1 ,2 ,0) ;
+			if ifdo (TRUE) {
+				if (rax[0][1][1] >= 0)
+					discard ;
+				rax[2] = rax[2] * r5x[0] ;
+				rax[0] = r5x[0] * rax[0] ;
+			}
+			if ifdo (TRUE) {
+				if (rax[2][2][2] >= 0)
+					discard ;
+				rax[1] = rax[1] * r5x[1] ;
+				rax[2] = r5x[1] * rax[2] ;
+			}
 		}
 		if ifdo (act) {
 			if (type != ViewMatrixOption::ZXY)
 				discard ;
-			const auto r6x = euler_decompose (r1x ,2 ,0 ,1) ;
-			ret.mPitch = r6x[0] ;
-			ret.mYaw = r6x[1] ;
-			ret.mRoll = r6x[2] ;
+			rax = euler_decompose (r1x ,2 ,0 ,1) ;
+			if ifdo (TRUE) {
+				if (rax[0][1][1] >= 0)
+					discard ;
+				rax[2] = rax[2] * r5x[2] ;
+				rax[0] = r5x[2] * rax[0] ;
+				rax[0] = rax[0] * r5x[1] ;
+				rax[1] = r5x[1] * rax[1] ;
+			}
 		}
 		if ifdo (act) {
 			if (type != ViewMatrixOption::ZYX)
 				discard ;
-			const auto r7x = euler_decompose (r1x ,2 ,1 ,0) ;
-			ret.mPitch = r7x[0] ;
-			ret.mYaw = r7x[1] ;
-			ret.mRoll = r7x[2] ;
+			rax = euler_decompose (r1x ,2 ,1 ,0) ;
+			if ifdo (TRUE) {
+				if (rax[0][1][1] >= 0)
+					discard ;
+				rax[1] = rax[1] * r5x[0] ;
+				rax[0] = r5x[0] * rax[0] ;
+			}
+			if ifdo (TRUE) {
+				if (rax[1][1][1] >= 0)
+					discard ;
+				rax[2] = rax[2] * r5x[2] ;
+				rax[1] = r5x[2] * rax[1] ;
+			}
 		}
+		assert (MathProc::abs (rax[0][0][0] - 1) < FLT32_EPS) ;
+		assert (MathProc::abs (rax[1][1][1] - 1) < FLT32_EPS) ;
+		assert (MathProc::abs (rax[2][2][2] - 1) < FLT32_EPS) ;
+		ret.mType = type ;
+		ret.mPitch = MathProc::atan (rax[0][2][1] ,rax[0][1][1]) ;
+		ret.mYaw = MathProc::atan (rax[1][0][2] ,rax[1][2][2]) ;
+		ret.mRoll = MathProc::atan (rax[2][1][0] ,rax[2][0][0]) ;
 		return move (ret) ;
 	}
 
-	Buffer3<FLT64> euler_decompose (CREF<Matrix> rot ,CREF<INDEX> x ,CREF<INDEX> y ,CREF<INDEX> z) const {
-		Buffer3<FLT64> ret ;
+	Buffer3<Matrix> euler_decompose (CREF<Matrix> rot ,CREF<INDEX> x ,CREF<INDEX> y ,CREF<INDEX> z) const {
+		Buffer3<Matrix> ret ;
 		const auto r1x = Buffer3<Vector> ({
 			Vector::axis_x () ,
 			Vector::axis_y () ,
 			Vector::axis_z ()}) ;
 		const auto r2x = rot * r1x[z] ;
 		const auto r3x = rotate_angle (r2x ,r1x[x] ,r1x[y]) ;
-		ret[x] = -r3x.fetch () ;
-		const auto r4x = RotationMatrix (x ,-ret[x]) ;
-		const auto r5x = r4x * rot ;
-		ret[y] = MathProc::atan (r5x[x][z] ,r5x[z][z]) * rotate_sign (y ,z) ;
-		const auto r6x = RotationMatrix (y ,-ret[y]) ;
-		const auto r7x = r6x * r5x ;
-		ret[z] = MathProc::atan (r7x[y][x] ,r7x[x][x]) * rotate_sign (z ,x) ;
-		const auto r8x = RotationMatrix (z ,-ret[z]) ;
-		const auto r9x = r8x * r7x ;
+		const auto r4x = -r3x.fetch () ;
+		ret[x] = RotationMatrix (x ,r4x) ;
+		const auto r5x = ret[x].transpose () * rot ;
+		const auto r6x = MathProc::atan (r5x[x][z] ,r5x[z][z]) * rotate_sign (y ,z) ;
+		ret[y] = RotationMatrix (y ,r6x) ;
+		const auto r7x = ret[y].transpose () * r5x ;
+		const auto r8x = MathProc::atan (r7x[y][x] ,r7x[x][x]) * rotate_sign (z ,x) ;
+		ret[z] = RotationMatrix (z ,r8x) ;
+		const auto r9x = ret[z].transpose () * r7x ;
 		for (auto &&j : iter (0 ,4 ,0 ,4)) {
 			const auto r10x = LENGTH (j.mX == j.mY) ;
 			assert (MathProc::abs (r9x[j] - r10x) < FLT32_EPS) ;
