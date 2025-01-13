@@ -594,11 +594,29 @@ public:
 		return QUAD (fake->mRandom.self ()) ;
 	}
 
-	INDEX random_value (CREF<INDEX> min_ ,CREF<INDEX> max_) const override {
+	VAL32 random_value (CREF<VAL32> min_ ,CREF<VAL32> max_) const override {
+		assert (min_ <= max_) ;
+		const auto r1x = VAL32 (max_) - VAL32 (min_) + 1 ;
+		assert (r1x > 0) ;
+		const auto r2x = VAL32 (random_byte ()) & VAL32_MAX ;
+		const auto r3x = r2x % r1x + min_ ;
+		return r3x ;
+	}
+
+	VAL64 random_value (CREF<VAL64> min_ ,CREF<VAL64> max_) const override {
 		assert (min_ <= max_) ;
 		const auto r1x = VAL64 (max_) - VAL64 (min_) + 1 ;
+		assert (r1x > 0) ;
 		const auto r2x = VAL64 (random_byte ()) & VAL64_MAX ;
-		const auto r3x = INDEX (r2x % r1x) + min_ ;
+		const auto r3x = r2x % r1x + min_ ;
+		return r3x ;
+	}
+
+	FLT64 random_float (CREF<FLT64> scale) const override {
+		const auto r1x = VAL64 (scale) ;
+		assert (r1x > 0) ;
+		const auto r2x = FLT64 (random_value (ZERO ,r1x)) ;
+		const auto r3x = r2x * MathProc::inverse (FLT64 (r1x)) ;
 		return r3x ;
 	}
 
@@ -651,9 +669,7 @@ public:
 	}
 
 	BOOL random_draw (CREF<FLT64> possibility) const override {
-		const auto r1x = random_value (0 ,10000) ;
-		const auto r2x = FLT64 (r1x) * MathProc::inverse (FLT64 (10000)) ;
-		if (r2x < possibility)
+		if (random_float (10000) < possibility)
 			return TRUE ;
 		return FALSE ;
 	}
@@ -662,14 +678,13 @@ public:
 		if ifdo (TRUE) {
 			if (fake->mNormal.mOdd)
 				discard ;
-			const auto r1x = random_value (1 ,10000) ;
-			const auto r2x = FLT64 (r1x) * MathProc::inverse (FLT64 (10000)) ;
-			const auto r3x = random_value (0 ,10000) ;
-			const auto r4x = FLT64 (r3x) * MathProc::inverse (FLT64 (10000)) ;
-			const auto r5x = MathProc::sqrt (FLT64 (-2) * MathProc::log (r2x)) ;
-			const auto r6x = MATH_PI * 2 * r4x ;
-			fake->mNormal.mNX = r5x * MathProc::cos (r6x) ;
-			fake->mNormal.mNY = r5x * MathProc::sin (r6x) ;
+			const auto r1x = VAL64 (10000) ;
+			const auto r2x = MathProc::min_of (random_float (r1x) + FLT64_EPS ,FLT64 (1)) ;
+			const auto r3x = random_float (r1x) ;
+			const auto r4x = MathProc::sqrt (FLT64 (-2) * MathProc::log (r2x)) ;
+			const auto r5x = MATH_PI * 2 * r3x ;
+			fake->mNormal.mNX = r4x * MathProc::cos (r5x) ;
+			fake->mNormal.mNY = r4x * MathProc::sin (r5x) ;
 			fake->mNormal.mOdd = TRUE ;
 			return fake->mNormal.mNX ;
 		}

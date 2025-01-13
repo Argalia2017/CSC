@@ -563,7 +563,9 @@ struct RandomHolder implement Interface {
 	virtual void initialize () = 0 ;
 	virtual void initialize (CREF<FLAG> seed) = 0 ;
 	virtual FLAG seed () const = 0 ;
-	virtual INDEX random_value (CREF<INDEX> min_ ,CREF<INDEX> max_) const = 0 ;
+	virtual VAL32 random_value (CREF<VAL32> min_ ,CREF<VAL32> max_) const = 0 ;
+	virtual VAL64 random_value (CREF<VAL64> min_ ,CREF<VAL64> max_) const = 0 ;
+	virtual FLT64 random_float (CREF<FLT64> scale) const = 0 ;
 	virtual Array<INDEX> random_shuffle (CREF<LENGTH> length_ ,CREF<LENGTH> size_) const = 0 ;
 	virtual void random_shuffle (CREF<LENGTH> length_ ,CREF<LENGTH> size_ ,VREF<Array<INDEX>> result) const = 0 ;
 	virtual BitSet random_pick (CREF<LENGTH> length_ ,CREF<LENGTH> size_) const = 0 ;
@@ -584,8 +586,13 @@ public:
 		return RandomHolder::hold (thiz)->seed () ;
 	}
 
-	INDEX random_value (CREF<INDEX> min_ ,CREF<INDEX> max_) const {
+	template <class ARG1 ,class = REQUIRE<IS_VALUE<ARG1>>>
+	ARG1 random_value (CREF<ARG1> min_ ,CREF<ARG1> max_) const {
 		return RandomHolder::hold (thiz)->random_value (min_ ,max_) ;
+	}
+
+	FLT64 random_float (CREF<FLT64> scale) const {
+		return RandomHolder::hold (thiz)->random_float (scale) ;
 	}
 
 	Array<INDEX> random_shuffle (CREF<LENGTH> length_ ,CREF<LENGTH> size_) const {

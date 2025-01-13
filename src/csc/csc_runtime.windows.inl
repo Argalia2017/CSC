@@ -256,15 +256,15 @@ struct SingletonProcLayout {
 	String<STR> mName ;
 	UniqueRef<HANDLE> mPipe ;
 	SingletonPipe mLocal ;
-	Ref<SingletonRoot> mRoot ;
+	Ref<SingletonRoot> mThix ;
 
 public:
 	implicit SingletonProcLayout () = default ;
 
 	implicit ~SingletonProcLayout () noexcept {
-		if (mRoot == NULL)
+		if (mThix == NULL)
 			return ;
-		mRoot.pin ().~Pin () ;
+		mThix.pin ().~Pin () ;
 	}
 } ;
 
@@ -301,7 +301,7 @@ public:
 			const auto r1x = FLAG (fake->mLocal.mAddress1) ;
 			assume (r1x != ZERO) ;
 			auto &&rax = keep[TYPE<SingletonRoot>::expr] (Pointer::make (r1x)) ;
-			fake->mRoot = Ref<SingletonRoot>::reference (rax) ;
+			fake->mThix = Ref<SingletonRoot>::reference (rax) ;
 		}
 	}
 
@@ -425,11 +425,11 @@ public:
 	}
 
 	FLAG load (CREF<Clazz> clazz) const override {
-		Scope<Mutex> anonymous (fake->mRoot->mMutex) ;
+		Scope<Mutex> anonymous (fake->mThix->mMutex) ;
 		auto rax = Set<Clazz> () ;
-		fake->mRoot->mClazzSet.get (rax) ;
+		fake->mThix->mClazzSet.get (rax) ;
 		FLAG ret = rax.map (clazz) ;
-		fake->mRoot->mClazzSet.set (rax) ;
+		fake->mThix->mClazzSet.set (rax) ;
 		replace (ret ,NONE ,ZERO) ;
 		return move (ret) ;
 	}
@@ -437,12 +437,12 @@ public:
 	void save (CREF<Clazz> clazz ,CREF<FLAG> layout) const override {
 		assert (layout != ZERO) ;
 		assert (layout != NONE) ;
-		Scope<Mutex> anonymous (fake->mRoot->mMutex) ;
+		Scope<Mutex> anonymous (fake->mThix->mMutex) ;
 		assume (fake->mPipe.exist ()) ;
 		auto rax = Set<Clazz> () ;
-		fake->mRoot->mClazzSet.get (rax) ;
+		fake->mThix->mClazzSet.get (rax) ;
 		rax.add (clazz ,layout) ;
-		fake->mRoot->mClazzSet.set (rax) ;
+		fake->mThix->mClazzSet.set (rax) ;
 	}
 } ;
 

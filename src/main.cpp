@@ -4,7 +4,6 @@
 
 #include <csc_end.h>
 #include <initializer_list>
-#include <csignal>
 #include <csc_begin.h>
 
 using namespace SOLUTION ;
@@ -16,7 +15,6 @@ int main () {
 	ConfigProc::set_data_dire (slice (".")) ;
 	ConfigProc::set_cxx_signal () ;
 
-
-	GlobalService::shutdown () ;
+	GlobalProc::shutdown () ;
 	return 0 ;
 }

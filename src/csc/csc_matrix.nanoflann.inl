@@ -120,7 +120,7 @@ struct PointCloudKDTreeLayout {
 	Box<KDTree> mKDTree ;
 } ;
 
-class PointCloudKDTreeImplHolder implement Fat<PointCloudKDTreeHolder ,AutoRef<PointCloudKDTreeLayout>> {
+class PointCloudKDTreeImplHolder final implement Fat<PointCloudKDTreeHolder ,AutoRef<PointCloudKDTreeLayout>> {
 public:
 	void initialize (CREF<Array<Pointer>> pointcloud) override {
 		fake = AutoRef<PointCloudKDTreeLayout>::make () ;
