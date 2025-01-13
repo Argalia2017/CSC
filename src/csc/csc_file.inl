@@ -101,8 +101,8 @@ public:
 		ptr (fake).initialize (file) ;
 	}
 
-	static VREF<StreamFileByteWriterImpl> ptr (VREF<StreamFileByteWriterLayout> layout) {
-		return keep[TYPE<StreamFileByteWriterImpl>::expr] (layout.mThis.self) ;
+	static VREF<StreamFileByteWriterImpl> ptr (VREF<StreamFileByteWriterLayout> that) {
+		return keep[TYPE<StreamFileByteWriterImpl>::expr] (that.mThis.self) ;
 	}
 
 	VREF<ByteWriter> self_m () leftvalue override {
@@ -174,8 +174,8 @@ public:
 		ptr (fake).initialize (file) ;
 	}
 
-	static VREF<StreamFileTextWriterImpl> ptr (VREF<StreamFileTextWriterLayout> layout) {
-		return keep[TYPE<StreamFileTextWriterImpl>::expr] (layout.mThis.self) ;
+	static VREF<StreamFileTextWriterImpl> ptr (VREF<StreamFileTextWriterLayout> that) {
+		return keep[TYPE<StreamFileTextWriterImpl>::expr] (that.mThis.self) ;
 	}
 
 	VREF<TextWriter> self_m () leftvalue override {

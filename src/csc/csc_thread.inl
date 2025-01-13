@@ -220,8 +220,8 @@ public:
 		ptr (fake).initialize () ;
 	}
 
-	static VREF<WorkThreadImpl> ptr (CREF<WorkThreadLayout> layout) {
-		return keep[TYPE<WorkThreadImpl>::expr] (layout.mThis.self) ;
+	static VREF<WorkThreadImpl> ptr (CREF<WorkThreadLayout> that) {
+		return keep[TYPE<WorkThreadImpl>::expr] (that.mThis.self) ;
 	}
 
 	void set_thread_size (CREF<LENGTH> size_) const override {
@@ -530,8 +530,8 @@ public:
 		ptr (fake).initialize () ;
 	}
 
-	static VREF<CalcThreadImpl> ptr (CREF<CalcThreadLayout> layout) {
-		return keep[TYPE<CalcThreadImpl>::expr] (layout.mThis.self) ;
+	static VREF<CalcThreadImpl> ptr (CREF<CalcThreadLayout> that) {
+		return keep[TYPE<CalcThreadImpl>::expr] (that.mThis.self) ;
 	}
 
 	void set_thread_size (CREF<LENGTH> size_) const override {
@@ -782,8 +782,8 @@ public:
 		ptr (fake).initialize () ;
 	}
 
-	static VREF<PromiseImpl> ptr (CREF<PromiseLayout> layout) {
-		return keep[TYPE<PromiseImpl>::expr] (layout.mThis.self) ;
+	static VREF<PromiseImpl> ptr (CREF<PromiseLayout> that) {
+		return keep[TYPE<PromiseImpl>::expr] (that.mThis.self) ;
 	}
 
 	void set_retry (CREF<BOOL> flag) const override {

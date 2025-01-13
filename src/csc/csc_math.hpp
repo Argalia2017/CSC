@@ -289,20 +289,10 @@ struct NormalErrorHolder implement Interface {
 } ;
 
 class NormalError implement NormalErrorLayout {
-protected:
-	using NormalErrorLayout::mCount ;
-	using NormalErrorLayout::mMaxError ;
-	using NormalErrorLayout::mAvgError ;
-	using NormalErrorLayout::mStdError ;
-
 public:
 	implicit NormalError () = default ;
 
-	CREF<NormalErrorLayout> layout () const leftvalue {
-		return thiz ;
-	}
-
-	void concat (CREF<FLT64> error) {
+	void concat (CREF<FLT64> error) { 
 		return NormalErrorHolder::hold (thiz)->concat (error) ;
 	}
 

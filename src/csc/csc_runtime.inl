@@ -193,8 +193,8 @@ public:
 		store (ZERO) ;
 	}
 
-	static VREF<std::atomic<VAL>> ptr (CREF<AtomicLayout> layout) {
-		return layout.mThis->mAtomic.self ;
+	static VREF<std::atomic<VAL>> ptr (CREF<AtomicLayout> that) {
+		return that.mThis->mAtomic.self ;
 	}
 
 	VAL fetch () const override {
@@ -360,8 +360,8 @@ public:
 		fake->mLock = std::unique_lock<SharedAtomicMutex> (SharedAtomicMutex::from (ptr (fake).mShared)) ;
 	}
 
-	static VREF<MutexImplLayout> ptr (CREF<SharedLockLayout> layout) {
-		return layout.mThis->mMutex.pin ().self ;
+	static VREF<MutexImplLayout> ptr (CREF<SharedLockLayout> that) {
+		return that.mThis->mMutex.pin ().self ;
 	}
 
 	void shared_enter () {
@@ -426,8 +426,8 @@ public:
 		fake->mLock = std::unique_lock<std::mutex> (ptr (fake).mBasic.self) ;
 	}
 
-	static VREF<MutexImplLayout> ptr (CREF<UniqueLockLayout> layout) {
-		return layout.mThis->mMutex.pin ().self ;
+	static VREF<MutexImplLayout> ptr (CREF<UniqueLockLayout> that) {
+		return that.mThis->mMutex.pin ().self ;
 	}
 
 	void wait () override {

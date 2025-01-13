@@ -2418,13 +2418,13 @@ public:
 		return move (ret) ;
 	}
 
-	static void check_mask (VREF<BitSetLayout> layout) {
-		INDEX ix = layout.mSet.size () - 1 ;
+	static void check_mask (VREF<BitSetLayout> that) {
+		INDEX ix = that.mSet.size () - 1 ;
 		if (ix <= 0)
 			return ;
-		const auto r1x = layout.mWidth % 8 + 1 ;
+		const auto r1x = that.mWidth % 8 + 1 ;
 		const auto r2x = ByteProc::pow_bit (r1x) - 1 ;
-		layout.mSet[ix] &= BYTE (r2x) ;
+		that.mSet[ix] &= BYTE (r2x) ;
 	}
 } ;
 

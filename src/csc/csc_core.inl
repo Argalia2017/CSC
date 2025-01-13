@@ -323,8 +323,8 @@ public:
 		fake.mLayout = ZERO ;
 	}
 
-	static VREF<RefImplLayout> ptr (CREF<RefLayout> layout) {
-		return Pointer::make (layout.mHandle) ;
+	static VREF<RefImplLayout> ptr (CREF<RefLayout> that) {
+		return Pointer::make (that.mHandle) ;
 	}
 
 	BOOL exist () const override {
@@ -400,16 +400,16 @@ static constexpr auto dump_memory_leaks = FUNCTION_dump_memory_leaks () ;
 
 #ifdef __CSC_SYSTEM_WINDOWS__
 struct FUNCTION_memsize {
-	forceinline LENGTH operator() (CREF<csc_pointer_t> layout) const {
-		return LENGTH (_msize (layout)) ;
+	forceinline LENGTH operator() (CREF<csc_pointer_t> a) const {
+		return LENGTH (_msize (a)) ;
 	}
 } ;
 #endif
 
 #ifdef __CSC_SYSTEM_LINUX__
 struct FUNCTION_memsize {
-	forceinline LENGTH operator() (CREF<csc_pointer_t> layout) const {
-		return LENGTH (malloc_usable_size (layout)) ;
+	forceinline LENGTH operator() (CREF<csc_pointer_t> a) const {
+		return LENGTH (malloc_usable_size (a)) ;
 	}
 } ;
 #endif
@@ -440,7 +440,7 @@ public:
 		dump_memory_leaks () ;
 	}
 
-	static VREF<HeapImplLayout> ptr (CREF<HeapLayout> layout) {
+	static VREF<HeapImplLayout> ptr (CREF<HeapLayout> that) {
 		return HeapImplRoot::instance ().self ;
 	}
 

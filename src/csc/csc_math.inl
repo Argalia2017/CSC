@@ -969,9 +969,9 @@ public:
 			fake.mInteger[i] = that.mInteger[i] ;
 	}
 
-	static BYTE get (CREF<IntegerLayout> layout ,CREF<INDEX> index) {
-		INDEX ix = MathProc::min_of (index ,layout.mWidth - 1) ;
-		return layout.mInteger[ix] ;
+	static BYTE get (CREF<IntegerLayout> that ,CREF<INDEX> index) {
+		INDEX ix = MathProc::min_of (index ,that.mWidth - 1) ;
+		return that.mInteger[ix] ;
 	}
 
 	LENGTH size () const override {
@@ -1358,39 +1358,39 @@ public:
 		check_mask (fake) ;
 	}
 
-	static void check_mask (VREF<IntegerLayout> layout) {
+	static void check_mask (VREF<IntegerLayout> that) {
 		if ifdo (TRUE) {
-			INDEX ix = layout.mWidth - 1 ;
-			const auto r1x = layout.mInteger[ix] ;
+			INDEX ix = that.mWidth - 1 ;
+			const auto r1x = that.mInteger[ix] ;
 			if (r1x == BYTE (0X00))
 				discard ;
 			if (r1x == BYTE (0XFF))
 				discard ;
 			if ifdo (TRUE) {
-				if (ix + 1 < layout.mInteger.size ())
+				if (ix + 1 < that.mInteger.size ())
 					discard ;
-				const auto r2x = layout.mInteger.size () + INTEGER_MIN_SIZE::expr ;
-				layout.mInteger.resize (r2x) ;
+				const auto r2x = that.mInteger.size () + INTEGER_MIN_SIZE::expr ;
+				that.mInteger.resize (r2x) ;
 			}
 			ix++ ;
-			layout.mInteger[ix] = ByteProc::binary (r1x & BYTE (0X80)) ;
+			that.mInteger[ix] = ByteProc::binary (r1x & BYTE (0X80)) ;
 			ix++ ;
-			layout.mWidth = ix ;
+			that.mWidth = ix ;
 		}
 		if ifdo (TRUE) {
-			INDEX ix = layout.mWidth - 1 ;
-			const auto r3x = layout.mInteger[ix] ;
+			INDEX ix = that.mWidth - 1 ;
+			const auto r3x = that.mInteger[ix] ;
 			ix-- ;
 			while (TRUE) {
 				if (ix < 0)
 					break ;
-				if (layout.mInteger[ix] != r3x)
+				if (that.mInteger[ix] != r3x)
 					break ;
 				ix-- ;
 			}
 			ix++ ;
 			ix++ ;
-			layout.mWidth = ix ;
+			that.mWidth = ix ;
 		}
 	}
 } ;
@@ -1432,8 +1432,8 @@ public:
 		}) ;
 	}
 
-	static VREF<JetNode> ptr (CREF<JetLayout> layout) {
-		return layout.mThis.pin ().self ;
+	static VREF<JetNode> ptr (CREF<JetLayout> that) {
+		return that.mThis.pin ().self ;
 	}
 
 	FLT64 fx () const override {

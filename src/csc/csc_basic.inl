@@ -32,7 +32,7 @@ public:
 		ptr (fake).mMutex.remake () ;
 	}
 
-	static VREF<HeapMutexImplLayout> ptr (CREF<HeapMutexLayout> layout) {
+	static VREF<HeapMutexImplLayout> ptr (CREF<HeapMutexLayout> that) {
 		return HeapMutexImplHead::instance ().self ;
 	}
 
@@ -801,13 +801,13 @@ public:
 		return Pointer::from (ptr (fake ,index)) ;
 	}
 
-	static VREF<AllocatorNode> ptr (VREF<AllocatorLayout> layout ,CREF<INDEX> index) {
-		const auto r1x = address (layout.mAllocator.at (index)) + layout.mOffset ;
+	static VREF<AllocatorNode> ptr (VREF<AllocatorLayout> that ,CREF<INDEX> index) {
+		const auto r1x = address (that.mAllocator.at (index)) + that.mOffset ;
 		return Pointer::make (r1x) ;
 	}
 
-	static CREF<AllocatorNode> ptr (CREF<AllocatorLayout> layout ,CREF<INDEX> index) {
-		const auto r1x = address (layout.mAllocator.at (index)) + layout.mOffset ;
+	static CREF<AllocatorNode> ptr (CREF<AllocatorLayout> that ,CREF<INDEX> index) {
+		const auto r1x = address (that.mAllocator.at (index)) + that.mOffset ;
 		return Pointer::make (r1x) ;
 	}
 
