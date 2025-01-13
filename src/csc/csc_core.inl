@@ -227,7 +227,7 @@ exports CFat<BoxHolder> BoxHolder::hold (CREF<BoxLayout> that) {
 	return CFat<BoxHolder> (BoxImplHolder () ,that) ;
 }
 
-struct RefImplLayout implement Proxy {
+struct RefRootLayout implement Proxy {
 	Heap mHeap ;
 	std::atomic<VAL> mCounter ;
 	BoxLayout mValue ;
@@ -240,12 +240,12 @@ public:
 	void initialize (RREF<BoxLayout> item) override {
 		assert (!exist ()) ;
 		const auto r1x = RFat<ReflectSize> (BoxHolder::hold (item)->unknown ()) ;
-		const auto r2x = inline_max (r1x->type_align () - ALIGN_OF<RefImplLayout>::expr ,0) ;
-		const auto r3x = SIZE_OF<RefImplLayout>::expr + r2x + r1x->type_size () ;
+		const auto r2x = inline_max (r1x->type_align () - ALIGN_OF<RefRootLayout>::expr ,0) ;
+		const auto r3x = SIZE_OF<RefRootLayout>::expr + r2x + r1x->type_size () ;
 		const auto r4x = Heap::instance () ;
 		fake.mHandle = r4x.alloc (r3x) ;
 		assert (fake.mHandle >= REFIMPLLAYOUT_MIN_HANDLE) ;
-		inline_memset (Pointer::make (fake.mHandle) ,SIZE_OF<RefImplLayout>::expr) ;
+		inline_memset (Pointer::make (fake.mHandle) ,SIZE_OF<RefRootLayout>::expr) ;
 		ptr (fake).mHeap = r4x ;
 		BoxHolder::hold (ptr (fake).mValue)->acquire (item) ;
 		BoxHolder::hold (item)->release () ;
@@ -274,14 +274,14 @@ public:
 		assert (!exist ()) ;
 		const auto r1x = RFat<ReflectSize> (holder) ;
 		const auto r2x = RFat<ReflectSize> (extend) ;
-		const auto r3x = inline_max (r1x->type_align () - ALIGN_OF<RefImplLayout>::expr ,0) ;
-		const auto r4x = SIZE_OF<RefImplLayout>::expr + r3x + r1x->type_size () ;
+		const auto r3x = inline_max (r1x->type_align () - ALIGN_OF<RefRootLayout>::expr ,0) ;
+		const auto r4x = SIZE_OF<RefRootLayout>::expr + r3x + r1x->type_size () ;
 		const auto r5x = inline_max (r2x->type_align () - r1x->type_align () ,0) ;
 		const auto r6x = r4x + r5x + r2x->type_size () * size_ ;
 		const auto r7x = Heap::instance () ;
 		fake.mHandle = r7x.alloc (r6x) ;
 		assert (fake.mHandle >= REFIMPLLAYOUT_MIN_HANDLE) ;
-		inline_memset (Pointer::make (fake.mHandle) ,SIZE_OF<RefImplLayout>::expr) ;
+		inline_memset (Pointer::make (fake.mHandle) ,SIZE_OF<RefRootLayout>::expr) ;
 		ptr (fake).mHeap = r7x ;
 		BoxHolder::hold (ptr (fake).mValue)->initialize (holder) ;
 		fake.mLayout = address (BoxHolder::hold (ptr (fake).mValue)->self) ;
@@ -295,9 +295,9 @@ public:
 		const auto r1x = RFat<ReflectSize> (holder) ;
 		const auto r2x = r1x->type_align () ;
 		noop (r2x) ;
-		assert (r2x <= ALIGN_OF<RefImplLayout>::expr) ;
-		const auto r3x = layout - SIZE_OF<RefImplLayout>::expr ;
-		auto &&rax = keep[TYPE<RefImplLayout>::expr] (Pointer::make (r3x)) ;
+		assert (r2x <= ALIGN_OF<RefRootLayout>::expr) ;
+		const auto r3x = layout - SIZE_OF<RefRootLayout>::expr ;
+		auto &&rax = keep[TYPE<RefRootLayout>::expr] (Pointer::make (r3x)) ;
 		assert (rax.mCounter > 0) ;
 		fake.mHandle = r3x ;
 		fake.mLayout = layout ;
@@ -323,7 +323,7 @@ public:
 		fake.mLayout = ZERO ;
 	}
 
-	static VREF<RefImplLayout> ptr (CREF<RefLayout> that) {
+	static VREF<RefRootLayout> ptr (CREF<RefLayout> that) {
 		return Pointer::make (that.mHandle) ;
 	}
 
@@ -416,19 +416,19 @@ struct FUNCTION_memsize {
 
 static constexpr auto memsize = FUNCTION_memsize () ;
 
-struct HeapImplLayout {
+struct HeapRoot {
 	Box<std::atomic<VAL>> mStack ;
 	Box<std::atomic<VAL>> mLength ;
 } ;
 
-class HeapImplRoot implement Pin<HeapImplLayout> {
+class HeapService implement Pin<HeapRoot> {
 public:
-	imports CREF<HeapImplRoot> instance () ;
+	imports CREF<HeapService> instance () ;
 } ;
 
-exports CREF<HeapImplRoot> HeapImplRoot::instance () {
+exports CREF<HeapService> HeapService::instance () {
 	return memorize ([&] () {
-		return HeapImplRoot () ;
+		return HeapService () ;
 	}) ;
 }
 
@@ -440,8 +440,8 @@ public:
 		dump_memory_leaks () ;
 	}
 
-	static VREF<HeapImplLayout> ptr (CREF<HeapLayout> that) {
-		return HeapImplRoot::instance ().self ;
+	static VREF<HeapRoot> ptr (CREF<HeapLayout> that) {
+		return HeapService::instance ().self ;
 	}
 
 	INDEX stack () const override {
@@ -496,14 +496,14 @@ exports CFat<HeapHolder> HeapHolder::hold (CREF<HeapLayout> that) {
 	return CFat<HeapHolder> (rax ,that) ;
 }
 
-struct KeyNodeImplLayout implement Proxy {
+struct KeyNodeLayout implement Proxy {
 	FLAG mHead ;
 	BOOL mMarked ;
 	FLAG mLayout ;
 	INDEX mCheck ;
 } ;
 
-struct KeyHeadImplLayout implement Proxy {
+struct KeyHeadLayout implement Proxy {
 	FLAG mRoot ;
 	FLAG mNext ;
 	INDEX mIndex ;
@@ -511,7 +511,7 @@ struct KeyHeadImplLayout implement Proxy {
 	FLAG mEnd ;
 } ;
 
-struct KeyRootImplLayout implement Proxy {
+struct KeyRootLayout implement Proxy {
 	FLAG mHead ;
 	FLAG mKeyNode ;
 	FLAG mDefNode ;
@@ -519,7 +519,7 @@ struct KeyRootImplLayout implement Proxy {
 	BOOL mFinalize ;
 } ;
 
-class KeyNodeImplHolder final implement Fat<KeyNodeHolder ,KeyNodeLayout> {
+class KeyImplHolder final implement Fat<KeyHolder ,KeyLayout> {
 private:
 	using GCROOTIMPLLAYOUT_GROUP_SIZE = ENUM<1024> ;
 
@@ -531,19 +531,19 @@ public:
 		auto rbx = ZERO ;
 		if ifdo (TRUE) {
 			const auto r1x = Heap::instance () ;
-			rax = r1x.alloc (SIZE_OF<KeyRootImplLayout>::expr) ;
+			rax = r1x.alloc (SIZE_OF<KeyRootLayout>::expr) ;
 			root_ptr (rax).mHeap = r1x ;
 			root_ptr (rax).mFinalize = FALSE ;
-			const auto r2x = SIZE_OF<KeyHeadImplLayout>::expr + 2 * SIZE_OF<KeyNodeImplLayout>::expr ;
+			const auto r2x = SIZE_OF<KeyHeadLayout>::expr + 2 * SIZE_OF<KeyNodeLayout>::expr ;
 			rbx = r1x.alloc (r2x) ;
 			inline_memset (Pointer::make (rbx) ,r2x) ;
-			const auto r3x = rbx + SIZE_OF<KeyHeadImplLayout>::expr ;
-			const auto r4x = r3x + SIZE_OF<KeyNodeImplLayout>::expr ;
+			const auto r3x = rbx + SIZE_OF<KeyHeadLayout>::expr ;
+			const auto r4x = r3x + SIZE_OF<KeyNodeLayout>::expr ;
 			head_ptr (rbx).mRoot = rax ;
 			head_ptr (rbx).mNext = rbx ;
 			head_ptr (rbx).mIndex = NONE ;
 			head_ptr (rbx).mBegin = r3x ;
-			head_ptr (rbx).mEnd = r3x + 2 * SIZE_OF<KeyNodeImplLayout>::expr ;
+			head_ptr (rbx).mEnd = r3x + 2 * SIZE_OF<KeyNodeLayout>::expr ;
 			node_ptr (r3x).mHead = rbx ;
 			node_ptr (r3x).mCheck = NONE ;
 			node_ptr (r4x).mHead = rbx ;
@@ -555,7 +555,7 @@ public:
 		fake.mHandle = root_ptr (rax).mKeyNode ;
 	}
 
-	void initialize (CREF<KeyNodeLayout> root ,CREF<FLAG> layout) override {
+	void initialize (CREF<KeyLayout> root ,CREF<FLAG> layout) override {
 		assert (fake.mHandle == ZERO) ;
 		assert (address (fake) == layout) ;
 		const auto r1x = node_ptr (root.mHandle).mHead ;
@@ -583,15 +583,15 @@ public:
 		fake.mHandle = ZERO ;
 	}
 
-	static VREF<KeyNodeImplLayout> node_ptr (CREF<FLAG> handle) {
+	static VREF<KeyNodeLayout> node_ptr (CREF<FLAG> handle) {
 		return Pointer::make (handle) ;
 	}
 
-	static VREF<KeyHeadImplLayout> head_ptr (CREF<FLAG> handle) {
+	static VREF<KeyHeadLayout> head_ptr (CREF<FLAG> handle) {
 		return Pointer::make (handle) ;
 	}
 
-	static VREF<KeyRootImplLayout> root_ptr (CREF<FLAG> handle) {
+	static VREF<KeyRootLayout> root_ptr (CREF<FLAG> handle) {
 		return Pointer::make (handle) ;
 	}
 
@@ -601,7 +601,7 @@ public:
 		const auto r1x = node_ptr (fake.mHandle).mHead ;
 		if (head_ptr (r1x).mIndex < 0)
 			return NONE ;
-		const auto r2x = (fake.mHandle - head_ptr (r1x).mBegin) / SIZE_OF<KeyNodeImplLayout>::expr ;
+		const auto r2x = (fake.mHandle - head_ptr (r1x).mBegin) / SIZE_OF<KeyNodeLayout>::expr ;
 		return head_ptr (r1x).mIndex + r2x ;
 	}
 
@@ -627,7 +627,7 @@ public:
 		fake.mHandle = r3x ;
 	}
 
-	VREF<KeyNodeLayout> lock (CREF<INDEX> check) leftvalue override {
+	VREF<KeyLayout> lock (CREF<INDEX> check) leftvalue override {
 		assert (fake.mHandle != ZERO) ;
 		const auto r1x = node_ptr (fake.mHandle).mLayout ;
 		const auto r2x = node_ptr (fake.mHandle).mCheck ;
@@ -659,7 +659,7 @@ public:
 			return r3x ;
 		assert (!root_ptr (r2x).mFinalize) ;
 		const auto r4x = insert_head (index ,r2x) ;
-		const auto r5x = head_ptr (r4x).mBegin + index % GCROOTIMPLLAYOUT_GROUP_SIZE::expr * SIZE_OF<KeyNodeImplLayout>::expr ;
+		const auto r5x = head_ptr (r4x).mBegin + index % GCROOTIMPLLAYOUT_GROUP_SIZE::expr * SIZE_OF<KeyNodeLayout>::expr ;
 		if ifdo (TRUE) {
 			if (node_ptr (r5x).mHead != ZERO)
 				discard ;
@@ -684,16 +684,16 @@ public:
 			if (head_ptr (ret).mIndex == r1x)
 				discard ;
 			const auto r3x = root_ptr (root).mHeap ;
-			const auto r4x = SIZE_OF<KeyHeadImplLayout>::expr + GCROOTIMPLLAYOUT_GROUP_SIZE::expr * SIZE_OF<KeyNodeImplLayout>::expr ;
+			const auto r4x = SIZE_OF<KeyHeadLayout>::expr + GCROOTIMPLLAYOUT_GROUP_SIZE::expr * SIZE_OF<KeyNodeLayout>::expr ;
 			ret = r3x.alloc (r4x) ;
 			inline_memset (Pointer::make (ret) ,r4x) ;
-			const auto r5x = ret + SIZE_OF<KeyHeadImplLayout>::expr ;
+			const auto r5x = ret + SIZE_OF<KeyHeadLayout>::expr ;
 			head_ptr (ret).mRoot = root ;
 			head_ptr (ret).mNext = head_ptr (r2x).mNext ;
 			head_ptr (r2x).mNext = ret ;
 			head_ptr (ret).mIndex = r1x ;
 			head_ptr (ret).mBegin = r5x ;
-			head_ptr (ret).mEnd = r5x + GCROOTIMPLLAYOUT_GROUP_SIZE::expr * SIZE_OF<KeyNodeImplLayout>::expr ;
+			head_ptr (ret).mEnd = r5x + GCROOTIMPLLAYOUT_GROUP_SIZE::expr * SIZE_OF<KeyNodeLayout>::expr ;
 		}
 		return move (ret) ;
 	}
@@ -717,12 +717,12 @@ public:
 	}
 } ;
 
-exports VFat<KeyNodeHolder> KeyNodeHolder::hold (VREF<KeyNodeLayout> that) {
-	return VFat<KeyNodeHolder> (KeyNodeImplHolder () ,that) ;
+exports VFat<KeyHolder> KeyHolder::hold (VREF<KeyLayout> that) {
+	return VFat<KeyHolder> (KeyImplHolder () ,that) ;
 }
 
-exports CFat<KeyNodeHolder> KeyNodeHolder::hold (CREF<KeyNodeLayout> that) {
-	return CFat<KeyNodeHolder> (KeyNodeImplHolder () ,that) ;
+exports CFat<KeyHolder> KeyHolder::hold (CREF<KeyLayout> that) {
+	return CFat<KeyHolder> (KeyImplHolder () ,that) ;
 }
 
 class SliceImplHolder final implement Fat<SliceHolder ,SliceLayout> {
@@ -881,17 +881,17 @@ exports CFat<ExceptionHolder> ExceptionHolder::hold (CREF<ExceptionLayout> that)
 	return CFat<ExceptionHolder> (ExceptionImplHolder () ,that) ;
 }
 
-struct ClazzImplLayout {
+struct ClazzLayout {
 	LENGTH mTypeSize ;
 	LENGTH mTypeAlign ;
 	FLAG mTypeGuid ;
 	Slice mTypeName ;
 } ;
 
-class ClazzImplHolder final implement Fat<ClazzHolder ,ClazzLayout> {
+class ClazzImplHolder final implement Fat<ClazzHolder ,Ref<ClazzLayout>> {
 public:
 	void initialize (CREF<Unknown> holder) override {
-		auto rax = ClazzImplLayout () ;
+		auto rax = ClazzLayout () ;
 		const auto r1x = RFat<ReflectSize> (holder) ;
 		rax.mTypeSize = r1x->type_size () ;
 		rax.mTypeAlign = r1x->type_align () ;
@@ -899,34 +899,34 @@ public:
 		rax.mTypeGuid = r2x->type_guid () ;
 		const auto r3x = RFat<ReflectName> (holder) ;
 		rax.mTypeName = r3x->type_name () ;
-		fake.mThis = Ref<ClazzImplLayout>::make (move (rax)) ;
+		fake = Ref<ClazzLayout>::make (move (rax)) ;
 	}
 
 	LENGTH type_size () const override {
-		if (fake.mThis == NULL)
+		if (fake == NULL)
 			return 0 ;
 		return fake->mTypeSize ;
 	}
 
 	LENGTH type_align () const override {
-		if (fake.mThis == NULL)
+		if (fake == NULL)
 			return 0 ;
 		return fake->mTypeAlign ;
 	}
 
 	FLAG type_guid () const override {
-		if (fake.mThis == NULL)
+		if (fake == NULL)
 			return ZERO ;
 		return fake->mTypeGuid ;
 	}
 
 	Slice type_name () const override {
-		if (fake.mThis == NULL)
+		if (fake == NULL)
 			return Slice () ;
 		return fake->mTypeName ;
 	}
 
-	BOOL equal (CREF<ClazzLayout> that) const override {
+	BOOL equal (CREF<Ref<ClazzLayout>> that) const override {
 		if (type_size () != ClazzHolder::hold (that)->type_size ())
 			return FALSE ;
 		if (type_align () != ClazzHolder::hold (that)->type_align ())
@@ -937,7 +937,7 @@ public:
 		return inline_equal (type_name () ,ClazzHolder::hold (that)->type_name ()) ;
 	}
 
-	FLAG compr (CREF<ClazzLayout> that) const override {
+	FLAG compr (CREF<Ref<ClazzLayout>> that) const override {
 		if (type_guid () != 0)
 			if (type_guid () == ClazzHolder::hold (that)->type_guid ())
 				return ZERO ;
@@ -954,11 +954,11 @@ public:
 	}
 } ;
 
-exports VFat<ClazzHolder> ClazzHolder::hold (VREF<ClazzLayout> that) {
+exports VFat<ClazzHolder> ClazzHolder::hold (VREF<Ref<ClazzLayout>> that) {
 	return VFat<ClazzHolder> (ClazzImplHolder () ,that) ;
 }
 
-exports CFat<ClazzHolder> ClazzHolder::hold (CREF<ClazzLayout> that) {
+exports CFat<ClazzHolder> ClazzHolder::hold (CREF<Ref<ClazzLayout>> that) {
 	return CFat<ClazzHolder> (ClazzImplHolder () ,that) ;
 }
 } ;

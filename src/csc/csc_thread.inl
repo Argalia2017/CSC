@@ -17,7 +17,7 @@ struct ThreadFlag {
 	} ;
 } ;
 
-struct WorkThreadImplLayout {
+struct WorkThreadLayout {
 	Mutex mThreadMutex ;
 	Just<ThreadFlag> mThreadFlag ;
 	Array<Thread> mThread ;
@@ -29,20 +29,20 @@ struct WorkThreadImplLayout {
 	LENGTH mItemLoadLength ;
 } ;
 
-class WorkThreadImpl implement WorkThreadImplLayout {
+class WorkThreadImpl implement WorkThreadLayout {
 private:
 	using THREAD_QUEUE_SIZE = ENUM<65536> ;
 
 protected:
-	using WorkThreadImplLayout::mThreadMutex ;
-	using WorkThreadImplLayout::mThreadFlag ;
-	using WorkThreadImplLayout::mThread ;
-	using WorkThreadImplLayout::mThreadJoin ;
-	using WorkThreadImplLayout::mThreadQueue ;
-	using WorkThreadImplLayout::mThreadLoadLength ;
-	using WorkThreadImplLayout::mThreadFunc ;
-	using WorkThreadImplLayout::mItemQueue ;
-	using WorkThreadImplLayout::mItemLoadLength ;
+	using WorkThreadLayout::mThreadMutex ;
+	using WorkThreadLayout::mThreadFlag ;
+	using WorkThreadLayout::mThread ;
+	using WorkThreadLayout::mThreadJoin ;
+	using WorkThreadLayout::mThreadQueue ;
+	using WorkThreadLayout::mThreadLoadLength ;
+	using WorkThreadLayout::mThreadFunc ;
+	using WorkThreadLayout::mItemQueue ;
+	using WorkThreadLayout::mItemLoadLength ;
 
 public:
 	implicit WorkThreadImpl () = default ;
@@ -213,15 +213,15 @@ public:
 	}
 } ;
 
-class WorkThreadImplHolder final implement Fat<WorkThreadHolder ,WorkThreadLayout> {
+class WorkThreadImplHolder final implement Fat<WorkThreadHolder ,SharedRef<WorkThreadLayout>> {
 public:
 	void initialize () override {
-		fake.mThis = SharedRef<WorkThreadImpl>::make () ;
+		fake = SharedRef<WorkThreadImpl>::make () ;
 		ptr (fake).initialize () ;
 	}
 
-	static VREF<WorkThreadImpl> ptr (CREF<WorkThreadLayout> that) {
-		return keep[TYPE<WorkThreadImpl>::expr] (that.mThis.self) ;
+	static VREF<WorkThreadImpl> ptr (CREF<SharedRef<WorkThreadLayout>> that) {
+		return keep[TYPE<WorkThreadImpl>::expr] (that.self) ;
 	}
 
 	void set_thread_size (CREF<LENGTH> size_) const override {
@@ -253,15 +253,15 @@ public:
 	}
 } ;
 
-exports VFat<WorkThreadHolder> WorkThreadHolder::hold (VREF<WorkThreadLayout> that) {
+exports VFat<WorkThreadHolder> WorkThreadHolder::hold (VREF<SharedRef<WorkThreadLayout>> that) {
 	return VFat<WorkThreadHolder> (WorkThreadImplHolder () ,that) ;
 }
 
-exports CFat<WorkThreadHolder> WorkThreadHolder::hold (CREF<WorkThreadLayout> that) {
+exports CFat<WorkThreadHolder> WorkThreadHolder::hold (CREF<SharedRef<WorkThreadLayout>> that) {
 	return CFat<WorkThreadHolder> (WorkThreadImplHolder () ,that) ;
 }
 
-struct CalcThreadImplLayout {
+struct CalcThreadLayout {
 	Mutex mThreadMutex ;
 	Just<ThreadFlag> mThreadFlag ;
 	BOOL mSuspendFlag ;
@@ -277,18 +277,18 @@ struct CalcThreadImplLayout {
 	BOOL mNewSolution ;
 } ;
 
-class CalcThreadImpl implement CalcThreadImplLayout {
+class CalcThreadImpl implement CalcThreadLayout {
 protected:
-	using CalcThreadImplLayout::mThreadMutex ;
-	using CalcThreadImplLayout::mThreadFlag ;
-	using CalcThreadImplLayout::mSuspendFlag ;
-	using CalcThreadImplLayout::mThread ;
-	using CalcThreadImplLayout::mThreadJoin ;
-	using CalcThreadImplLayout::mThreadFunc ;
-	using CalcThreadImplLayout::mThreadSolution ;
-	using CalcThreadImplLayout::mSearchSolution ;
-	using CalcThreadImplLayout::mBestSolution ;
-	using CalcThreadImplLayout::mNewSolution ;
+	using CalcThreadLayout::mThreadMutex ;
+	using CalcThreadLayout::mThreadFlag ;
+	using CalcThreadLayout::mSuspendFlag ;
+	using CalcThreadLayout::mThread ;
+	using CalcThreadLayout::mThreadJoin ;
+	using CalcThreadLayout::mThreadFunc ;
+	using CalcThreadLayout::mThreadSolution ;
+	using CalcThreadLayout::mSearchSolution ;
+	using CalcThreadLayout::mBestSolution ;
+	using CalcThreadLayout::mNewSolution ;
 
 public:
 	implicit CalcThreadImpl () = default ;
@@ -523,15 +523,15 @@ public:
 	}
 } ;
 
-class CalcThreadImplHolder final implement Fat<CalcThreadHolder ,CalcThreadLayout> {
+class CalcThreadImplHolder final implement Fat<CalcThreadHolder ,SharedRef<CalcThreadLayout>> {
 public:
 	void initialize () override {
-		fake.mThis = SharedRef<CalcThreadImpl>::make () ;
+		fake = SharedRef<CalcThreadImpl>::make () ;
 		ptr (fake).initialize () ;
 	}
 
-	static VREF<CalcThreadImpl> ptr (CREF<CalcThreadLayout> that) {
-		return keep[TYPE<CalcThreadImpl>::expr] (that.mThis.self) ;
+	static VREF<CalcThreadImpl> ptr (CREF<SharedRef<CalcThreadLayout>> that) {
+		return keep[TYPE<CalcThreadImpl>::expr] (that.self) ;
 	}
 
 	void set_thread_size (CREF<LENGTH> size_) const override {
@@ -567,15 +567,15 @@ public:
 	}
 } ;
 
-exports VFat<CalcThreadHolder> CalcThreadHolder::hold (VREF<CalcThreadLayout> that) {
+exports VFat<CalcThreadHolder> CalcThreadHolder::hold (VREF<SharedRef<CalcThreadLayout>> that) {
 	return VFat<CalcThreadHolder> (CalcThreadImplHolder () ,that) ;
 }
 
-exports CFat<CalcThreadHolder> CalcThreadHolder::hold (CREF<CalcThreadLayout> that) {
+exports CFat<CalcThreadHolder> CalcThreadHolder::hold (CREF<SharedRef<CalcThreadLayout>> that) {
 	return CFat<CalcThreadHolder> (CalcThreadImplHolder () ,that) ;
 }
 
-struct PromiseImplLayout {
+struct PromiseLayout {
 	Mutex mThreadMutex ;
 	Just<ThreadFlag> mThreadFlag ;
 	Array<Thread> mThread ;
@@ -586,16 +586,16 @@ struct PromiseImplLayout {
 	BOOL mRetryFlag ;
 } ;
 
-class PromiseImpl implement PromiseImplLayout {
+class PromiseImpl implement PromiseLayout {
 protected:
-	using PromiseImplLayout::mThreadMutex ;
-	using PromiseImplLayout::mThreadFlag ;
-	using PromiseImplLayout::mThread ;
-	using PromiseImplLayout::mThreadFunc ;
-	using PromiseImplLayout::mRunningFunc ;
-	using PromiseImplLayout::mItem ;
-	using PromiseImplLayout::mException ;
-	using PromiseImplLayout::mRetryFlag ;
+	using PromiseLayout::mThreadMutex ;
+	using PromiseLayout::mThreadFlag ;
+	using PromiseLayout::mThread ;
+	using PromiseLayout::mThreadFunc ;
+	using PromiseLayout::mRunningFunc ;
+	using PromiseLayout::mItem ;
+	using PromiseLayout::mException ;
+	using PromiseLayout::mRetryFlag ;
 
 public:
 	implicit PromiseImpl () = default ;
@@ -775,15 +775,15 @@ public:
 	}
 } ;
 
-class PromiseImplHolder final implement Fat<PromiseHolder ,PromiseLayout> {
+class PromiseImplHolder final implement Fat<PromiseHolder ,SharedRef<PromiseLayout>> {
 public:
 	void initialize () override {
-		fake.mThis = SharedRef<PromiseImpl>::make () ;
+		fake = SharedRef<PromiseImpl>::make () ;
 		ptr (fake).initialize () ;
 	}
 
-	static VREF<PromiseImpl> ptr (CREF<PromiseLayout> that) {
-		return keep[TYPE<PromiseImpl>::expr] (that.mThis.self) ;
+	static VREF<PromiseImpl> ptr (CREF<SharedRef<PromiseLayout>> that) {
+		return keep[TYPE<PromiseImpl>::expr] (that.self) ;
 	}
 
 	void set_retry (CREF<BOOL> flag) const override {
@@ -827,11 +827,11 @@ public:
 	}
 } ;
 
-exports VFat<PromiseHolder> PromiseHolder::hold (VREF<PromiseLayout> that) {
+exports VFat<PromiseHolder> PromiseHolder::hold (VREF<SharedRef<PromiseLayout>> that) {
 	return VFat<PromiseHolder> (PromiseImplHolder () ,that) ;
 }
 
-exports CFat<PromiseHolder> PromiseHolder::hold (CREF<PromiseLayout> that) {
+exports CFat<PromiseHolder> PromiseHolder::hold (CREF<SharedRef<PromiseLayout>> that) {
 	return CFat<PromiseHolder> (PromiseImplHolder () ,that) ;
 }
 } ;

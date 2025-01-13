@@ -1369,12 +1369,13 @@ struct SortedMapNode implement AllocatorNode {
 	INDEX mDown ;
 } ;
 
-struct SortedMapImplLayout {
+struct SortedMapRoot {
 	Allocator<Pointer ,SortedMapNode> mList ;
 	INDEX mCheck ;
 } ;
 
-struct SortedMapLayout implement ThisLayout<SharedRef<SortedMapImplLayout>> {
+struct SortedMapLayout {
+	SharedRef<SortedMapRoot> mThix ;
 	INDEX mRoot ;
 	RefBuffer<INDEX> mRange ;
 	INDEX mWrite ;
@@ -1440,7 +1441,7 @@ public:
 template <class A>
 class SortedMap implement SortedMapRealLayout<A> {
 protected:
-	using SortedMapRealLayout<A>::mThis ;
+	using SortedMapRealLayout<A>::mThix ;
 	using SortedMapRealLayout<A>::mRoot ;
 	using SortedMapRealLayout<A>::mRange ;
 	using SortedMapRealLayout<A>::mWrite ;

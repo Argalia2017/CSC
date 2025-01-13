@@ -15,28 +15,26 @@
 #include "csc_runtime.hpp"
 
 namespace CSC {
-struct PathImplLayout ;
-
-struct PathLayout implement ThisLayout<Ref<PathImplLayout>> {} ;
+struct PathLayout ;
 
 struct PathHolder implement Interface {
-	imports VFat<PathHolder> hold (VREF<PathLayout> that) ;
-	imports CFat<PathHolder> hold (CREF<PathLayout> that) ;
+	imports VFat<PathHolder> hold (VREF<Ref<PathLayout>> that) ;
+	imports CFat<PathHolder> hold (CREF<Ref<PathLayout>> that) ;
 
 	virtual void initialize (RREF<String<STR>> pathname) = 0 ;
 	virtual void initialize (CREF<Deque<String<STR>>> pathname) = 0 ;
 	virtual String<STR> fetch () const = 0 ;
-	virtual PathLayout child (CREF<Slice> name) const = 0 ;
-	virtual PathLayout child (CREF<Format> name) const = 0 ;
-	virtual PathLayout child (CREF<String<STR>> name) const = 0 ;
-	virtual Array<PathLayout> list () const = 0 ;
-	virtual Array<PathLayout> list (CREF<LENGTH> size_) const = 0 ;
-	virtual BOOL equal (CREF<PathLayout> that) const = 0 ;
+	virtual Ref<PathLayout> child (CREF<Slice> name) const = 0 ;
+	virtual Ref<PathLayout> child (CREF<Format> name) const = 0 ;
+	virtual Ref<PathLayout> child (CREF<String<STR>> name) const = 0 ;
+	virtual Array<Ref<PathLayout>> list () const = 0 ;
+	virtual Array<Ref<PathLayout>> list (CREF<LENGTH> size_) const = 0 ;
+	virtual BOOL equal (CREF<Ref<PathLayout>> that) const = 0 ;
 	virtual BOOL is_file () const = 0 ;
 	virtual BOOL is_dire () const = 0 ;
 	virtual BOOL is_link () const = 0 ;
-	virtual PathLayout symbolic () const = 0 ;
-	virtual PathLayout absolute () const = 0 ;
+	virtual Ref<PathLayout> symbolic () const = 0 ;
+	virtual Ref<PathLayout> absolute () const = 0 ;
 	virtual Deque<String<STR>> decouple () const = 0 ;
 	virtual String<STR> path () const = 0 ;
 	virtual String<STR> name () const = 0 ;
@@ -44,7 +42,7 @@ struct PathHolder implement Interface {
 	virtual String<STR> extension () const = 0 ;
 } ;
 
-class Path implement PathLayout {
+class Path implement OfThis<Ref<PathLayout>> {
 public:
 	implicit Path () = default ;
 
@@ -69,17 +67,17 @@ public:
 	}
 
 	Path child (CREF<Slice> name) const {
-		PathLayout ret = PathHolder::hold (thiz)->child (name) ;
+		OfThis<Ref<PathLayout>> ret = PathHolder::hold (thiz)->child (name) ;
 		return move (keep[TYPE<Path>::expr] (ret)) ;
 	}
 
 	Path child (CREF<Format> name) const {
-		PathLayout ret = PathHolder::hold (thiz)->child (name) ;
+		OfThis<Ref<PathLayout>> ret = PathHolder::hold (thiz)->child (name) ;
 		return move (keep[TYPE<Path>::expr] (ret)) ;
 	}
 
 	Path child (CREF<String<STR>> name) const {
-		PathLayout ret = PathHolder::hold (thiz)->child (name) ;
+		OfThis<Ref<PathLayout>> ret = PathHolder::hold (thiz)->child (name) ;
 		return move (keep[TYPE<Path>::expr] (ret)) ;
 	}
 
@@ -118,12 +116,12 @@ public:
 	}
 
 	Path symbolic () const {
-		PathLayout ret = PathHolder::hold (thiz)->symbolic () ;
+		OfThis<Ref<PathLayout>> ret = PathHolder::hold (thiz)->symbolic () ;
 		return move (keep[TYPE<Path>::expr] (ret)) ;
 	}
 
 	Path absolute () const {
-		PathLayout ret = PathHolder::hold (thiz)->absolute () ;
+		OfThis<Ref<PathLayout>> ret = PathHolder::hold (thiz)->absolute () ;
 		return move (keep[TYPE<Path>::expr] (ret)) ;
 	}
 
@@ -148,14 +146,12 @@ public:
 	}
 } ;
 
-struct FileProcImplLayout ;
-
-struct FileProcLayout implement ThisLayout<Ref<FileProcImplLayout>> {} ;
+struct FileProcLayout ;
 
 struct FileProcHolder implement Interface {
-	imports CREF<FileProcLayout> instance () ;
-	imports VFat<FileProcHolder> hold (VREF<FileProcLayout> that) ;
-	imports CFat<FileProcHolder> hold (CREF<FileProcLayout> that) ;
+	imports CREF<Ref<FileProcLayout>> instance () ;
+	imports VFat<FileProcHolder> hold (VREF<Ref<FileProcLayout>> that) ;
+	imports CFat<FileProcHolder> hold (CREF<Ref<FileProcLayout>> that) ;
 
 	virtual void initialize () = 0 ;
 	virtual RefBuffer<BYTE> load_file (CREF<String<STR>> file) const = 0 ;
@@ -172,10 +168,10 @@ struct FileProcHolder implement Interface {
 	virtual BOOL lock_dire (CREF<String<STR>> dire) const = 0 ;
 } ;
 
-class FileProc implement FileProcLayout {
+class FileProc implement OfThis<Ref<FileProcLayout>> {
 public:
 	static CREF<FileProc> instance () {
-		return keep[TYPE<FileProc>::expr] (FileProcHolder::instance ()) ;
+		return Pointer::from (FileProcHolder::instance ()) ;
 	}
 
 	static RefBuffer<BYTE> load_file (CREF<String<STR>> file) {
@@ -227,13 +223,11 @@ public:
 	}
 } ;
 
-struct StreamFileImplLayout ;
-
-struct StreamFileLayout implement ThisLayout<AutoRef<StreamFileImplLayout>> {} ;
+struct StreamFileLayout ;
 
 struct StreamFileHolder implement Interface {
-	imports VFat<StreamFileHolder> hold (VREF<StreamFileLayout> that) ;
-	imports CFat<StreamFileHolder> hold (CREF<StreamFileLayout> that) ;
+	imports VFat<StreamFileHolder> hold (VREF<AutoRef<StreamFileLayout>> that) ;
+	imports CFat<StreamFileHolder> hold (CREF<AutoRef<StreamFileLayout>> that) ;
 
 	virtual void initialize (CREF<String<STR>> file) = 0 ;
 	virtual void set_short_read (CREF<BOOL> flag) = 0 ;
@@ -249,7 +243,7 @@ struct StreamFileHolder implement Interface {
 
 using STREAMFILE_BUF_SIZE = ENUM<65536> ;
 
-class StreamFile implement StreamFileLayout {
+class StreamFile implement OfThis<AutoRef<StreamFileLayout>> {
 public:
 	implicit StreamFile () = default ;
 
@@ -294,20 +288,18 @@ public:
 	}
 } ;
 
-struct StreamFileByteWriterImplLayout ;
-
-struct StreamFileByteWriterLayout implement ThisLayout<AutoRef<StreamFileByteWriterImplLayout>> {} ;
+struct StreamFileByteWriterLayout ;
 
 struct StreamFileByteWriterHolder implement Interface {
-	imports VFat<StreamFileByteWriterHolder> hold (VREF<StreamFileByteWriterLayout> that) ;
-	imports CFat<StreamFileByteWriterHolder> hold (CREF<StreamFileByteWriterLayout> that) ;
+	imports VFat<StreamFileByteWriterHolder> hold (VREF<AutoRef<StreamFileByteWriterLayout>> that) ;
+	imports CFat<StreamFileByteWriterHolder> hold (CREF<AutoRef<StreamFileByteWriterLayout>> that) ;
 
 	virtual void initialize (CREF<String<STR>> file) = 0 ;
 	virtual VREF<ByteWriter> self_m () leftvalue = 0 ;
 	virtual void flush () = 0 ;
 } ;
 
-class StreamFileByteWriter implement StreamFileByteWriterLayout {
+class StreamFileByteWriter implement OfThis<AutoRef<StreamFileByteWriterLayout>> {
 public:
 	implicit StreamFileByteWriter () = default ;
 
@@ -328,20 +320,18 @@ public:
 	}
 } ;
 
-struct StreamFileTextWriterImplLayout ;
-
-struct StreamFileTextWriterLayout implement ThisLayout<AutoRef<StreamFileTextWriterImplLayout>> {} ;
+struct StreamFileTextWriterLayout ;
 
 struct StreamFileTextWriterHolder implement Interface {
-	imports VFat<StreamFileTextWriterHolder> hold (VREF<StreamFileTextWriterLayout> that) ;
-	imports CFat<StreamFileTextWriterHolder> hold (CREF<StreamFileTextWriterLayout> that) ;
+	imports VFat<StreamFileTextWriterHolder> hold (VREF<AutoRef<StreamFileTextWriterLayout>> that) ;
+	imports CFat<StreamFileTextWriterHolder> hold (CREF<AutoRef<StreamFileTextWriterLayout>> that) ;
 
 	virtual void initialize (CREF<String<STR>> file) = 0 ;
 	virtual VREF<TextWriter> self_m () leftvalue = 0 ;
 	virtual void flush () = 0 ;
 } ;
 
-class StreamFileTextWriter implement StreamFileTextWriterLayout {
+class StreamFileTextWriter implement OfThis<AutoRef<StreamFileTextWriterLayout>> {
 public:
 	implicit StreamFileTextWriter () = default ;
 
@@ -362,13 +352,11 @@ public:
 	}
 } ;
 
-struct BufferFileImplLayout ;
-
-struct BufferFileLayout implement ThisLayout<AutoRef<BufferFileImplLayout>> {} ;
+struct BufferFileLayout ;
 
 struct BufferFileHolder implement Interface {
-	imports VFat<BufferFileHolder> hold (VREF<BufferFileLayout> that) ;
-	imports CFat<BufferFileHolder> hold (CREF<BufferFileLayout> that) ;
+	imports VFat<BufferFileHolder> hold (VREF<AutoRef<BufferFileLayout>> that) ;
+	imports CFat<BufferFileHolder> hold (CREF<AutoRef<BufferFileLayout>> that) ;
 
 	virtual void initialize (CREF<String<STR>> file) = 0 ;
 	virtual void set_block_step (CREF<LENGTH> step_) = 0 ;
@@ -382,7 +370,7 @@ struct BufferFileHolder implement Interface {
 	virtual void flush () = 0 ;
 } ;
 
-class BufferFile implement BufferFileLayout {
+class BufferFile implement OfThis<AutoRef<BufferFileLayout>> {
 public:
 	implicit BufferFile () = default ;
 
@@ -427,13 +415,11 @@ public:
 	}
 } ;
 
-struct UartFileImplLayout ;
-
-struct UartFileLayout implement ThisLayout<AutoRef<UartFileImplLayout>> {} ;
+struct UartFileLayout ;
 
 struct UartFileHolder implement Interface {
-	imports VFat<UartFileHolder> hold (VREF<UartFileLayout> that) ;
-	imports CFat<UartFileHolder> hold (CREF<UartFileLayout> that) ;
+	imports VFat<UartFileHolder> hold (VREF<AutoRef<UartFileLayout>> that) ;
+	imports CFat<UartFileHolder> hold (CREF<AutoRef<UartFileLayout>> that) ;
 
 	virtual void initialize () = 0 ;
 	virtual void set_port_name (CREF<String<STR>> name) = 0 ;
@@ -443,7 +429,7 @@ struct UartFileHolder implement Interface {
 	virtual void read (VREF<RefBuffer<BYTE>> buffer ,CREF<INDEX> offset ,CREF<LENGTH> size_) = 0 ;
 } ;
 
-class UartFile implement UartFileLayout {
+class UartFile implement OfThis<AutoRef<UartFileLayout>> {
 public:
 	implicit UartFile () = default ;
 
@@ -486,14 +472,12 @@ struct ConsoleOption {
 	} ;
 } ;
 
-struct ConsoleImplLayout ;
-
-struct ConsoleLayout implement ThisLayout<SharedRef<ConsoleImplLayout>> {} ;
+struct ConsoleLayout ;
 
 struct ConsoleHolder implement Interface {
-	imports CREF<ConsoleLayout> instance () ;
-	imports VFat<ConsoleHolder> hold (VREF<ConsoleLayout> that) ;
-	imports CFat<ConsoleHolder> hold (CREF<ConsoleLayout> that) ;
+	imports CREF<SharedRef<ConsoleLayout>> instance () ;
+	imports VFat<ConsoleHolder> hold (VREF<SharedRef<ConsoleLayout>> that) ;
+	imports CFat<ConsoleHolder> hold (CREF<SharedRef<ConsoleLayout>> that) ;
 
 	virtual void initialize () = 0 ;
 	virtual void set_option (CREF<Just<ConsoleOption>> option) const = 0 ;
@@ -511,10 +495,10 @@ struct ConsoleHolder implement Interface {
 	virtual void clear () const = 0 ;
 } ;
 
-class Console implement ConsoleLayout {
+class Console implement OfThis<SharedRef<ConsoleLayout>> {
 public:
 	static CREF<Console> instance () {
-		return keep[TYPE<Console>::expr] (ConsoleHolder::instance ()) ;
+		return Pointer::from (ConsoleHolder::instance ()) ;
 	}
 
 	void set_option (CREF<Just<ConsoleOption>> option) const {

@@ -12,14 +12,12 @@
 #include "csc_array.hpp"
 
 namespace CSC {
-struct StreamProcImplLayout ;
-
-struct StreamProcLayout implement ThisLayout<Ref<StreamProcImplLayout>> {} ;
+struct StreamProcLayout ;
 
 struct StreamProcHolder implement Interface {
-	imports CREF<StreamProcLayout> instance () ;
-	imports VFat<StreamProcHolder> hold (VREF<StreamProcLayout> that) ;
-	imports CFat<StreamProcHolder> hold (CREF<StreamProcLayout> that) ;
+	imports CREF<Ref<StreamProcLayout>> instance () ;
+	imports VFat<StreamProcHolder> hold (VREF<Ref<StreamProcLayout>> that) ;
+	imports CFat<StreamProcHolder> hold (CREF<Ref<StreamProcLayout>> that) ;
 
 	virtual void initialize () = 0 ;
 	virtual BOOL big_endian () const = 0 ;
@@ -41,10 +39,10 @@ struct StreamProcHolder implement Interface {
 	virtual STRU32 ctrl_from_word (CREF<STRU32> str) const = 0 ;
 } ;
 
-class StreamProc implement StreamProcLayout {
+class StreamProc implement OfThis<Ref<StreamProcLayout>> {
 public:
 	static CREF<StreamProc> instance () {
-		return keep[TYPE<StreamProc>::expr] (StreamProcHolder::instance ()) ;
+		return Pointer::from (StreamProcHolder::instance ()) ;
 	}
 
 	static BOOL big_endian () {
@@ -293,7 +291,7 @@ struct ByteReaderHolder implement Interface {
 	imports CFat<ByteReaderHolder> hold (CREF<ByteReaderLayout> that) ;
 
 	virtual void initialize (RREF<Ref<RefBuffer<BYTE>>> stream) = 0 ;
-	virtual void use_overflow (CREF<FunctionLayout> overflow) = 0 ;
+	virtual void use_overflow (CREF<Function<VREF<ByteReaderLayout>>> overflow) = 0 ;
 	virtual LENGTH size () const = 0 ;
 	virtual LENGTH length () const = 0 ;
 	virtual void reset () = 0 ;
@@ -338,7 +336,7 @@ public:
 	}
 
 	void use_overflow (CREF<Function<VREF<ByteReader>>> overflow) {
-		return ByteReaderHolder::hold (thiz)->use_overflow (overflow) ;
+		return ByteReaderHolder::hold (thiz)->use_overflow (Pointer::from (overflow)) ;
 	}
 
 	LENGTH size () const {
@@ -578,7 +576,7 @@ struct TextReaderHolder implement Interface {
 	imports CFat<TextReaderHolder> hold (CREF<TextReaderLayout> that) ;
 
 	virtual void initialize (RREF<Ref<RefBuffer<BYTE>>> stream) = 0 ;
-	virtual void use_overflow (CREF<FunctionLayout> overflow) = 0 ;
+	virtual void use_overflow (CREF<Function<VREF<TextReaderLayout>>> overflow) = 0 ;
 	virtual LENGTH size () const = 0 ;
 	virtual LENGTH length () const = 0 ;
 	virtual void reset () = 0 ;
@@ -623,7 +621,7 @@ public:
 	}
 
 	void use_overflow (CREF<Function<VREF<TextReader>>> overflow) {
-		return TextReaderHolder::hold (thiz)->use_overflow (overflow) ;
+		return TextReaderHolder::hold (thiz)->use_overflow (Pointer::from (overflow)) ;
 	}
 
 	LENGTH size () const {
@@ -1017,7 +1015,7 @@ struct ByteWriterHolder implement Interface {
 	imports CFat<ByteWriterHolder> hold (CREF<ByteWriterLayout> that) ;
 
 	virtual void initialize (RREF<Ref<RefBuffer<BYTE>>> stream) = 0 ;
-	virtual void use_overflow (CREF<FunctionLayout> overflow) = 0 ;
+	virtual void use_overflow (CREF<Function<VREF<ByteWriterLayout>>> overflow) = 0 ;
 	virtual LENGTH size () const = 0 ;
 	virtual LENGTH length () const = 0 ;
 	virtual void reset () = 0 ;
@@ -1062,7 +1060,7 @@ public:
 	}
 
 	void use_overflow (CREF<Function<VREF<ByteWriter>>> overflow) {
-		return ByteWriterHolder::hold (thiz)->use_overflow (overflow) ;
+		return ByteWriterHolder::hold (thiz)->use_overflow (Pointer::from (overflow)) ;
 	}
 
 	LENGTH size () const {
@@ -1295,7 +1293,7 @@ struct TextWriterHolder implement Interface {
 	imports CFat<TextWriterHolder> hold (CREF<TextWriterLayout> that) ;
 
 	virtual void initialize (RREF<Ref<RefBuffer<BYTE>>> stream) = 0 ;
-	virtual void use_overflow (CREF<FunctionLayout> overflow) = 0 ;
+	virtual void use_overflow (CREF<Function<VREF<TextWriterLayout>>> overflow) = 0 ;
 	virtual LENGTH size () const = 0 ;
 	virtual LENGTH length () const = 0 ;
 	virtual void reset () = 0 ;
@@ -1340,7 +1338,7 @@ public:
 	}
 
 	void use_overflow (CREF<Function<VREF<TextWriter>>> overflow) {
-		return TextWriterHolder::hold (thiz)->use_overflow (overflow) ;
+		return TextWriterHolder::hold (thiz)->use_overflow (Pointer::from (overflow)) ;
 	}
 
 	LENGTH size () const {
@@ -1706,7 +1704,7 @@ struct StreamTextProcHolder implement Interface {
 class StreamTextProc implement StreamTextProcLayout {
 public:
 	static CREF<StreamTextProc> instance () {
-		return keep[TYPE<StreamTextProc>::expr] (StreamTextProcHolder::instance ()) ;
+		return Pointer::from (StreamTextProcHolder::instance ()) ;
 	}
 
 	static void read_keyword (VREF<ReaderBinder> reader ,VREF<String<STRU8>> item) {
@@ -1850,13 +1848,11 @@ public:
 	}
 } ;
 
-struct CommaImplLayout ;
-
-struct CommaLayout implement ThisLayout<SharedRef<CommaImplLayout>> {} ;
+struct CommaLayout ;
 
 struct CommaHolder implement Interface {
-	imports VFat<CommaHolder> hold (VREF<CommaLayout> that) ;
-	imports CFat<CommaHolder> hold (CREF<CommaLayout> that) ;
+	imports VFat<CommaHolder> hold (VREF<SharedRef<CommaLayout>> that) ;
+	imports CFat<CommaHolder> hold (CREF<SharedRef<CommaLayout>> that) ;
 
 	virtual void initialize (CREF<Slice> indent ,CREF<Slice> comma ,CREF<Slice> endline) = 0 ;
 	virtual void friend_write (VREF<WriterBinder> writer) const = 0 ;
@@ -1865,7 +1861,7 @@ struct CommaHolder implement Interface {
 	virtual void tight () const = 0 ;
 } ;
 
-class Comma implement CommaLayout {
+class Comma implement OfThis<SharedRef<CommaLayout>> {
 public:
 	implicit Comma () = default ;
 
@@ -1898,20 +1894,18 @@ public:
 	}
 } ;
 
-struct RegexImplLayout ;
-
-struct RegexLayout implement ThisLayout<AutoRef<RegexImplLayout>> {} ;
+struct RegexLayout ;
 
 struct RegexHolder implement Interface {
-	imports VFat<RegexHolder> hold (VREF<RegexLayout> that) ;
-	imports CFat<RegexHolder> hold (CREF<RegexLayout> that) ;
+	imports VFat<RegexHolder> hold (VREF<AutoRef<RegexLayout>> that) ;
+	imports CFat<RegexHolder> hold (CREF<AutoRef<RegexLayout>> that) ;
 
 	virtual void initialize (CREF<String<STR>> format) = 0 ;
 	virtual INDEX search (RREF<Ref<String<STR>>> text ,CREF<INDEX> offset) = 0 ;
 	virtual Slice match (CREF<INDEX> index) const = 0 ;
 } ;
 
-class Regex implement RegexLayout {
+class Regex implement OfThis<AutoRef<RegexLayout>> {
 public:
 	implicit Regex () = default ;
 

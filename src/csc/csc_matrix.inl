@@ -1157,14 +1157,14 @@ exports CFat<LinearProcHolder> LinearProcHolder::hold (CREF<LinearProcLayout> th
 	return CFat<LinearProcHolder> (External<LinearProcHolder ,LinearProcLayout>::declare () ,that) ;
 }
 
-template class External<PointCloudKDTreeHolder ,PointCloudKDTreeLayout> ;
+template class External<PointCloudKDTreeHolder ,AutoRef<PointCloudKDTreeLayout>> ;
 
-exports VFat<PointCloudKDTreeHolder> PointCloudKDTreeHolder::hold (VREF<PointCloudKDTreeLayout> that) {
-	return VFat<PointCloudKDTreeHolder> (External<PointCloudKDTreeHolder ,PointCloudKDTreeLayout>::declare () ,that) ;
+exports VFat<PointCloudKDTreeHolder> PointCloudKDTreeHolder::hold (VREF<AutoRef<PointCloudKDTreeLayout>> that) {
+	return VFat<PointCloudKDTreeHolder> (External<PointCloudKDTreeHolder ,AutoRef<PointCloudKDTreeLayout>>::declare () ,that) ;
 }
 
-exports CFat<PointCloudKDTreeHolder> PointCloudKDTreeHolder::hold (CREF<PointCloudKDTreeLayout> that) {
-	return CFat<PointCloudKDTreeHolder> (External<PointCloudKDTreeHolder ,PointCloudKDTreeLayout>::declare () ,that) ;
+exports CFat<PointCloudKDTreeHolder> PointCloudKDTreeHolder::hold (CREF<AutoRef<PointCloudKDTreeLayout>> that) {
+	return CFat<PointCloudKDTreeHolder> (External<PointCloudKDTreeHolder ,AutoRef<PointCloudKDTreeLayout>>::declare () ,that) ;
 }
 
 class PointCloudImplHolder final implement Fat<PointCloudHolder ,PointCloudLayout> {
@@ -1298,9 +1298,9 @@ public:
 	}
 
 	Array<INDEX> search (CREF<Vector> center ,CREF<LENGTH> neighbor) const override {
-		auto &&rax = keep[TYPE<PointCloudKDTreeLayout>::expr] (fake.mKDTree.self) ;
+		auto &&rax = keep[TYPE<AutoRef<PointCloudKDTreeLayout>>::expr] (fake.mKDTree.self) ;
 		if ifdo (TRUE) {
-			if (rax.mThis.exist ())
+			if (rax.exist ())
 				discard ;
 			PointCloudKDTreeHolder::hold (rax)->initialize (fake.mPointCloud.self) ;
 		}
@@ -1308,9 +1308,9 @@ public:
 	}
 
 	Array<INDEX> search (CREF<Vector> center ,CREF<LENGTH> neighbor ,CREF<FLT64> radius) const override {
-		auto &&rax = keep[TYPE<PointCloudKDTreeLayout>::expr] (fake.mKDTree.self) ;
+		auto &&rax = keep[TYPE<AutoRef<PointCloudKDTreeLayout>>::expr] (fake.mKDTree.self) ;
 		if ifdo (TRUE) {
-			if (rax.mThis.exist ())
+			if (rax.exist ())
 				discard ;
 			PointCloudKDTreeHolder::hold (rax)->initialize (fake.mPointCloud.self) ;
 		}

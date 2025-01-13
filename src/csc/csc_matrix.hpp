@@ -768,7 +768,7 @@ struct MatrixProcHolder implement Interface {
 class MatrixProc implement MatrixProcLayout {
 public:
 	static CREF<MatrixProc> instance () {
-		return keep[TYPE<MatrixProc>::expr] (MatrixProcHolder::instance ()) ;
+		return Pointer::from (MatrixProcHolder::instance ()) ;
 	}
 
 	static TRSResult solve_trs (CREF<Matrix> a) {
@@ -965,7 +965,7 @@ struct LinearProcHolder implement Interface {
 class LinearProc implement LinearProcLayout {
 public:
 	static CREF<LinearProc> instance () {
-		return keep[TYPE<LinearProc>::expr] (LinearProcHolder::instance ()) ;
+		return Pointer::from (LinearProcHolder::instance ()) ;
 	}
 
 	static Image<FLT64> solve_lsm (CREF<Image<FLT64>> a) {
@@ -981,13 +981,11 @@ public:
 	}
 } ;
 
-struct PointCloudKDTreeImplLayout ;
-
-struct PointCloudKDTreeLayout implement ThisLayout<AutoRef<PointCloudKDTreeImplLayout>> {} ;
+struct PointCloudKDTreeLayout ;
 
 struct PointCloudKDTreeHolder implement Interface {
-	imports VFat<PointCloudKDTreeHolder> hold (VREF<PointCloudKDTreeLayout> that) ;
-	imports CFat<PointCloudKDTreeHolder> hold (CREF<PointCloudKDTreeLayout> that) ;
+	imports VFat<PointCloudKDTreeHolder> hold (VREF<AutoRef<PointCloudKDTreeLayout>> that) ;
+	imports CFat<PointCloudKDTreeHolder> hold (CREF<AutoRef<PointCloudKDTreeLayout>> that) ;
 
 	virtual void initialize (CREF<Array<Pointer>> pointcloud) = 0 ;
 	virtual Array<INDEX> search (CREF<Vector> center ,CREF<LENGTH> neighbor) const = 0 ;
@@ -998,7 +996,7 @@ struct PointCloudLayout {
 	LENGTH mRank ;
 	Ref<Array<Pointer>> mPointCloud ;
 	Matrix mWorld ;
-	Pin<PointCloudKDTreeLayout> mKDTree ;
+	Pin<AutoRef<PointCloudKDTreeLayout>> mKDTree ;
 } ;
 
 struct PointCloudHolder implement Interface {

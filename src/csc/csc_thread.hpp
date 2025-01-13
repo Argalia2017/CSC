@@ -57,13 +57,11 @@ public:
 	}
 } ;
 
-struct WorkThreadImplLayout ;
-
-struct WorkThreadLayout implement ThisLayout<SharedRef<WorkThreadImplLayout>> {} ;
+struct WorkThreadLayout ;
 
 struct WorkThreadHolder implement Interface {
-	imports VFat<WorkThreadHolder> hold (VREF<WorkThreadLayout> that) ;
-	imports CFat<WorkThreadHolder> hold (CREF<WorkThreadLayout> that) ;
+	imports VFat<WorkThreadHolder> hold (VREF<SharedRef<WorkThreadLayout>> that) ;
+	imports CFat<WorkThreadHolder> hold (CREF<SharedRef<WorkThreadLayout>> that) ;
 
 	virtual void initialize () = 0 ;
 	virtual void set_thread_size (CREF<LENGTH> size_) const = 0 ;
@@ -75,7 +73,7 @@ struct WorkThreadHolder implement Interface {
 	virtual void stop () const = 0 ;
 } ;
 
-class WorkThread implement WorkThreadLayout {
+class WorkThread implement OfThis<SharedRef<WorkThreadLayout>> {
 public:
 	implicit WorkThread () = default ;
 
@@ -119,13 +117,11 @@ struct CalcSolution {
 	BitSet mInput ;
 } ;
 
-struct CalcThreadImplLayout ;
-
-struct CalcThreadLayout implement ThisLayout<SharedRef<CalcThreadImplLayout>> {} ;
+struct CalcThreadLayout ;
 
 struct CalcThreadHolder implement Interface {
-	imports VFat<CalcThreadHolder> hold (VREF<CalcThreadLayout> that) ;
-	imports CFat<CalcThreadHolder> hold (CREF<CalcThreadLayout> that) ;
+	imports VFat<CalcThreadHolder> hold (VREF<SharedRef<CalcThreadLayout>> that) ;
+	imports CFat<CalcThreadHolder> hold (CREF<SharedRef<CalcThreadLayout>> that) ;
 
 	virtual void initialize () = 0 ;
 	virtual void set_thread_size (CREF<LENGTH> size_) const = 0 ;
@@ -138,7 +134,7 @@ struct CalcThreadHolder implement Interface {
 	virtual void stop () const = 0 ;
 } ;
 
-class CalcThread implement CalcThreadLayout {
+class CalcThread implement OfThis<SharedRef<CalcThreadLayout>> {
 public:
 	implicit CalcThread () = default ;
 
@@ -179,13 +175,11 @@ public:
 	}
 } ;
 
-struct PromiseImplLayout ;
-
-struct PromiseLayout implement ThisLayout<SharedRef<PromiseImplLayout>> {} ;
+struct PromiseLayout ;
 
 struct PromiseHolder implement Interface {
-	imports VFat<PromiseHolder> hold (VREF<PromiseLayout> that) ;
-	imports CFat<PromiseHolder> hold (CREF<PromiseLayout> that) ;
+	imports VFat<PromiseHolder> hold (VREF<SharedRef<PromiseLayout>> that) ;
+	imports CFat<PromiseHolder> hold (CREF<SharedRef<PromiseLayout>> that) ;
 
 	virtual void initialize () = 0 ;
 	virtual void set_retry (CREF<BOOL> flag) const = 0 ;
@@ -201,7 +195,7 @@ struct PromiseHolder implement Interface {
 } ;
 
 template <class A>
-class Promise implement PromiseLayout {
+class Promise implement OfThis<SharedRef<PromiseLayout>> {
 public:
 	implicit Promise () = default ;
 

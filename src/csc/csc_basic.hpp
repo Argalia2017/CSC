@@ -34,7 +34,7 @@ protected:
 
 public:
 	static CREF<HeapMutex> instance () {
-		return keep[TYPE<HeapMutex>::expr] (HeapMutexHolder::instance ()) ;
+		return Pointer::from (HeapMutexHolder::instance ()) ;
 	}
 
 	void enter () const {
@@ -316,13 +316,11 @@ public:
 	}
 } ;
 
-struct FunctionImplLayout ;
-
-struct FunctionLayout implement ThisLayout<Ref<FunctionImplLayout>> {} ;
+struct FunctionLayout ;
 
 struct FunctionHolder implement Interface {
-	imports VFat<FunctionHolder> hold (VREF<FunctionLayout> that) ;
-	imports CFat<FunctionHolder> hold (CREF<FunctionLayout> that) ;
+	imports VFat<FunctionHolder> hold (VREF<Ref<FunctionLayout>> that) ;
+	imports CFat<FunctionHolder> hold (CREF<Ref<FunctionLayout>> that) ;
 
 	virtual void initialize (RREF<BoxLayout> item ,CREF<Unknown> holder) = 0 ;
 	virtual LENGTH rank () const = 0 ;
@@ -344,11 +342,11 @@ public:
 } ;
 
 template <class...A>
-class Function implement FunctionLayout {
+class Function implement OfThis<Ref<FunctionLayout>> {
 public:
 	implicit Function () = default ;
 
-	template <class ARG1 ,class = REQUIRE<ENUM_NOT<IS_EXTEND<FunctionLayout ,ARG1>>>>
+	template <class ARG1 ,class = REQUIRE<ENUM_NOT<IS_EXTEND<Ref<FunctionLayout> ,ARG1>>>>
 	implicit Function (RREF<ARG1> that) {
 		using R1X = FUNCTION_RETURN<ARG1> ;
 		using R2X = FUNCTION_PARAMS<ARG1> ;
@@ -403,9 +401,10 @@ public:
 	}
 } ;
 
-struct AutoRefImplLayout ;
+struct AutoRefRoot ;
 
-struct AutoRefLayout implement ThisLayout<Ref<AutoRefImplLayout>> {
+struct AutoRefLayout {
+	Ref<AutoRefRoot> mThix ;
 	FLAG mLayout ;
 
 public:
@@ -453,7 +452,7 @@ inline AutoRefLayout::~AutoRefLayout () noexcept {
 template <class A>
 class AutoRef implement AutoRefLayout {
 protected:
-	using AutoRefLayout::mThis ;
+	using AutoRefLayout::mThix ;
 	using AutoRefLayout::mLayout ;
 
 public:
@@ -537,9 +536,10 @@ public:
 	}
 } ;
 
-struct SharedRefImplLayout ;
+struct SharedRefRoot ;
 
-struct SharedRefLayout implement ThisLayout<Ref<SharedRefImplLayout>> {
+struct SharedRefLayout {
+	Ref<SharedRefRoot> mThix ;
 	FLAG mLayout ;
 
 public:
@@ -585,7 +585,7 @@ inline SharedRefLayout::~SharedRefLayout () noexcept {
 template <class A>
 class SharedRef implement SharedRefLayout {
 protected:
-	using SharedRefLayout::mThis ;
+	using SharedRefLayout::mThix ;
 	using SharedRefLayout::mLayout ;
 
 public:
@@ -664,9 +664,10 @@ public:
 	}
 } ;
 
-struct UniqueRefImplLayout ;
+struct UniqueRefRoot ;
 
-struct UniqueRefLayout implement ThisLayout<Ref<UniqueRefImplLayout>> {
+struct UniqueRefLayout {
+	Ref<UniqueRefRoot> mThix ;
 	FLAG mLayout ;
 
 public:
@@ -695,7 +696,7 @@ struct UniqueRefHolder implement Interface {
 
 	virtual void initialize (RREF<BoxLayout> item) = 0 ;
 	virtual void destroy () = 0 ;
-	virtual void use_owner (CREF<FunctionLayout> owner) = 0 ;
+	virtual void use_owner (CREF<Function<VREF<Pointer>>> owner) = 0 ;
 	virtual BOOL exist () const = 0 ;
 	virtual VREF<BoxLayout> raw () leftvalue = 0 ;
 	virtual CREF<BoxLayout> raw () const leftvalue = 0 ;
@@ -711,7 +712,7 @@ inline UniqueRefLayout::~UniqueRefLayout () noexcept {
 template <class A>
 class UniqueRef implement UniqueRefLayout {
 protected:
-	using UniqueRefLayout::mThis ;
+	using UniqueRefLayout::mThix ;
 	using UniqueRefLayout::mLayout ;
 
 public:
@@ -726,7 +727,7 @@ public:
 		auto rbx = Function<VREF<A>> (move (dtor)) ;
 		UniqueRefHolder::hold (thiz)->initialize (move (rax)) ;
 		ctor (BoxHolder::hold (raw ())->self) ;
-		UniqueRefHolder::hold (thiz)->use_owner (rbx) ;
+		UniqueRefHolder::hold (thiz)->use_owner (Pointer::from (rbx)) ;
 	}
 
 	template <class...ARG1>
@@ -793,9 +794,10 @@ public:
 	}
 } ;
 
-struct RefBufferImplLayout ;
+struct RefBufferRoot ;
 
-struct RefBufferLayout implement ThisLayout<Ref<RefBufferImplLayout>> {
+struct RefBufferLayout {
+	Ref<RefBufferRoot> mThix ;
 	FLAG mHolder ;
 	FLAG mBuffer ;
 	LENGTH mSize ;
@@ -876,7 +878,7 @@ public:
 template <class A>
 class RefBuffer implement RefBufferRealLayout<A> {
 protected:
-	using RefBufferRealLayout<A>::mThis ;
+	using RefBufferRealLayout<A>::mThix ;
 	using RefBufferRealLayout<A>::mHolder ;
 	using RefBufferRealLayout<A>::mBuffer ;
 	using RefBufferRealLayout<A>::mSize ;
@@ -966,7 +968,8 @@ public:
 	}
 } ;
 
-struct FarBufferLayout implement ThisLayout<Ref<Pointer>> {
+struct FarBufferLayout {
+	Ref<Pointer> mThix ;
 	Function<CREF<INDEX> ,VREF<Pointer>> mGetter ;
 	Function<CREF<INDEX> ,CREF<Pointer>> mSetter ;
 	LENGTH mSize ;
@@ -981,8 +984,8 @@ struct FarBufferHolder implement Interface {
 	virtual void initialize (CREF<Unknown> holder ,CREF<LENGTH> size_) = 0 ;
 	virtual BOOL exist () const = 0 ;
 	virtual Unknown unknown () const = 0 ;
-	virtual void use_getter (CREF<FunctionLayout> getter) = 0 ;
-	virtual void use_setter (CREF<FunctionLayout> setter) = 0 ;
+	virtual void use_getter (CREF<Function<CREF<INDEX> ,VREF<Pointer>>> getter) = 0 ;
+	virtual void use_setter (CREF<Function<CREF<INDEX> ,CREF<Pointer>>> setter) = 0 ;
 	virtual LENGTH size () const = 0 ;
 	virtual LENGTH step () const = 0 ;
 	virtual VREF<Pointer> at (CREF<INDEX> index) leftvalue = 0 ;
@@ -1002,7 +1005,7 @@ class FarBuffer implement FarBufferRealLayout<A> {
 protected:
 	using FarBufferRealLayout<A>::mGetter ;
 	using FarBufferRealLayout<A>::mSetter ;
-	using FarBufferRealLayout<A>::mThis ;
+	using FarBufferRealLayout<A>::mThix ;
 	using FarBufferRealLayout<A>::mSize ;
 	using FarBufferRealLayout<A>::mStep ;
 	using FarBufferRealLayout<A>::mIndex ;
@@ -1015,11 +1018,11 @@ public:
 	}
 
 	void use_getter (CREF<Function<CREF<INDEX> ,VREF<A>>> getter) {
-		return FarBufferHolder::hold (thiz)->use_getter (getter) ;
+		return FarBufferHolder::hold (thiz)->use_getter (Pointer::from (getter)) ;
 	}
 
 	void use_setter (CREF<Function<CREF<INDEX> ,CREF<A>>> setter) {
-		return FarBufferHolder::hold (thiz)->use_setter (setter) ;
+		return FarBufferHolder::hold (thiz)->use_setter (Pointer::from (setter)) ;
 	}
 
 	BOOL exist () const {

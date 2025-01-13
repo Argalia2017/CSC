@@ -6,15 +6,15 @@
 #include <csc_begin.h>
 
 namespace CSC {
-struct ConfigProcImplLayout {
+struct ConfigProcLayout {
 	Path mDataPath ;
 } ;
 
-class ConfigProcImplHolder final implement Fat<ConfigProcHolder ,ConfigProcLayout> {
+class ConfigProcImplHolder final implement Fat<ConfigProcHolder ,SharedRef<ConfigProcLayout>> {
 public:
 	void initialize () override {
 		Singleton<Console>::instance ().debug (slice ("library_file = ") ,RuntimeProc::library_file ()) ;
-		fake.mThis = SharedRef<ConfigProcImplLayout>::make () ;
+		fake = SharedRef<ConfigProcLayout>::make () ;
 	}
 
 	void set_data_dire (CREF<String<STR>> dire) const override {
@@ -57,19 +57,19 @@ public:
 	}
 } ;
 
-exports CREF<ConfigProcLayout> ConfigProcHolder::instance () {
+exports CREF<SharedRef<ConfigProcLayout>> ConfigProcHolder::instance () {
 	return memorize ([&] () {
-		ConfigProcLayout ret ;
+		SharedRef<ConfigProcLayout> ret ;
 		ConfigProcHolder::hold (ret)->initialize () ;
 		return move (ret) ;
 	}) ;
 }
 
-exports VFat<ConfigProcHolder> ConfigProcHolder::hold (VREF<ConfigProcLayout> that) {
+exports VFat<ConfigProcHolder> ConfigProcHolder::hold (VREF<SharedRef<ConfigProcLayout>> that) {
 	return VFat<ConfigProcHolder> (ConfigProcImplHolder () ,that) ;
 }
 
-exports CFat<ConfigProcHolder> ConfigProcHolder::hold (CREF<ConfigProcLayout> that) {
+exports CFat<ConfigProcHolder> ConfigProcHolder::hold (CREF<SharedRef<ConfigProcLayout>> that) {
 	return CFat<ConfigProcHolder> (ConfigProcImplHolder () ,that) ;
 }
 } ;

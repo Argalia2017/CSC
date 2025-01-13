@@ -1400,7 +1400,7 @@ protected:
 
 public:
 	static CREF<Heap> instance () {
-		return keep[TYPE<Heap>::expr] (HeapHolder::instance ()) ;
+		return Pointer::from (HeapHolder::instance ()) ;
 	}
 
 	INDEX stack () const {
@@ -1420,111 +1420,111 @@ public:
 	}
 } ;
 
-struct KeyNodeLayout {
+struct KeyLayout {
 	FLAG mHandle ;
 
 public:
-	implicit KeyNodeLayout () noexcept {
+	implicit KeyLayout () noexcept {
 		mHandle = ZERO ;
 	}
 
-	implicit ~KeyNodeLayout () noexcept ;
+	implicit ~KeyLayout () noexcept ;
 
-	implicit KeyNodeLayout (CREF<KeyNodeLayout> that) = delete ;
+	implicit KeyLayout (CREF<KeyLayout> that) = delete ;
 
-	forceinline VREF<KeyNodeLayout> operator= (CREF<KeyNodeLayout> that) = delete ;
+	forceinline VREF<KeyLayout> operator= (CREF<KeyLayout> that) = delete ;
 
-	implicit KeyNodeLayout (RREF<KeyNodeLayout> that) noexcept :KeyNodeLayout () {
+	implicit KeyLayout (RREF<KeyLayout> that) noexcept :KeyLayout () {
 		swap (thiz ,that) ;
 	}
 
-	forceinline VREF<KeyNodeLayout> operator= (RREF<KeyNodeLayout> that) noexcept {
+	forceinline VREF<KeyLayout> operator= (RREF<KeyLayout> that) noexcept {
 		return assign (thiz ,that) ;
 	}
 } ;
 
-struct KeyNodeHolder implement Interface {
-	imports VFat<KeyNodeHolder> hold (VREF<KeyNodeLayout> that) ;
-	imports CFat<KeyNodeHolder> hold (CREF<KeyNodeLayout> that) ;
+struct KeyHolder implement Interface {
+	imports VFat<KeyHolder> hold (VREF<KeyLayout> that) ;
+	imports CFat<KeyHolder> hold (CREF<KeyLayout> that) ;
 
 	virtual void initialize () = 0 ;
-	virtual void initialize (CREF<KeyNodeLayout> root ,CREF<FLAG> layout) = 0 ;
+	virtual void initialize (CREF<KeyLayout> root ,CREF<FLAG> layout) = 0 ;
 	virtual void destroy () = 0 ;
 	virtual INDEX get_index () const = 0 ;
 	virtual INDEX get_check () const = 0 ;
 	virtual void set_key (CREF<INDEX> index) = 0 ;
 	virtual void set_def () = 0 ;
-	virtual VREF<KeyNodeLayout> lock (CREF<INDEX> check) leftvalue = 0 ;
+	virtual VREF<KeyLayout> lock (CREF<INDEX> check) leftvalue = 0 ;
 	virtual FLAG spwan () const = 0 ;
 	virtual FLAG spwan (CREF<INDEX> index) const = 0 ;
 } ;
 
-inline KeyNodeLayout::~KeyNodeLayout () noexcept {
-	KeyNodeHolder::hold (thiz)->destroy () ;
+inline KeyLayout::~KeyLayout () noexcept {
+	KeyHolder::hold (thiz)->destroy () ;
 }
 
 template <class A>
-class KeyRoot implement KeyNodeLayout {
+class KeyService implement KeyLayout {
 public:
-	static CREF<KeyRoot> instance () ;
+	static CREF<KeyService> instance () ;
 } ;
 
 template <class A>
-class KeyNode implement KeyNodeLayout {
+class KeyObject implement KeyLayout {
 protected:
-	using KeyNodeLayout::mHandle ;
+	using KeyLayout::mHandle ;
 
 public:
-	explicit KeyNode () {
+	explicit KeyObject () {
 		auto &&rax = keep[TYPE<A>::expr] (thiz) ;
-		KeyNodeHolder::hold (thiz)->initialize (KeyRoot<A>::instance () ,address (rax)) ;
+		KeyHolder::hold (thiz)->initialize (KeyService<A>::instance () ,address (rax)) ;
 	}
 
 	INDEX get_index () const {
-		return KeyNodeHolder::hold (thiz)->get_index () ;
+		return KeyHolder::hold (thiz)->get_index () ;
 	}
 
 	INDEX get_check () const {
-		return KeyNodeHolder::hold (thiz)->get_check () ;
+		return KeyHolder::hold (thiz)->get_check () ;
 	}
 
 	void set_key (CREF<INDEX> index) {
-		return KeyNodeHolder::hold (thiz)->set_key (index) ;
+		return KeyHolder::hold (thiz)->set_key (index) ;
 	}
 
 	void set_def () {
-		return KeyNodeHolder::hold (thiz)->set_def () ;
+		return KeyHolder::hold (thiz)->set_def () ;
 	}
 } ;
 
-struct KeyLayout {
+struct KeyExtLayout {
 	mutable FLAG mHandle ;
 	INDEX mCheck ;
 
 public:
-	implicit KeyLayout () noexcept {
+	implicit KeyExtLayout () noexcept {
 		mHandle = ZERO ;
 		mCheck = 0 ;
 	}
 } ;
 
 template <class A>
-class Key implement KeyLayout {
+class Key implement KeyExtLayout {
 protected:
-	using KeyLayout::mHandle ;
-	using KeyLayout::mCheck ;
+	using KeyExtLayout::mHandle ;
+	using KeyExtLayout::mCheck ;
 
 public:
 	implicit Key () = default ;
 
-	implicit Key (VREF<KeyNode<A>> node_) {
-		mHandle = KeyNodeHolder::hold (node_)->spwan () ;
-		mCheck = KeyNodeHolder::hold (node ())->get_check () ;
+	implicit Key (VREF<KeyObject<A>> node_) {
+		mHandle = KeyHolder::hold (node_)->spwan () ;
+		mCheck = KeyHolder::hold (node ())->get_check () ;
 	}
 
 	explicit Key (CREF<INDEX> index) {
-		mHandle = KeyNodeHolder::hold (KeyRoot<A>::instance ())->spwan (index) ;
-		mCheck = KeyNodeHolder::hold (node ())->get_check () ;
+		mHandle = KeyHolder::hold (KeyService<A>::instance ())->spwan (index) ;
+		mCheck = KeyHolder::hold (node ())->get_check () ;
 	}
 
 	BOOL equal (CREF<Key> that) const {
@@ -1566,7 +1566,7 @@ public:
 	}
 
 	VREF<A> self_m () const leftvalue {
-		auto &&rax = KeyNodeHolder::hold (node ())->lock (mCheck) ;
+		auto &&rax = KeyHolder::hold (node ())->lock (mCheck) ;
 		return Pointer::from (rax) ;
 	}
 
@@ -1575,7 +1575,7 @@ public:
 	}
 
 private:
-	VREF<KeyNode<A>> node () const leftvalue {
+	VREF<KeyObject<A>> node () const leftvalue {
 		return Pointer::from (mHandle) ;
 	}
 } ;
@@ -1905,45 +1905,47 @@ public:
 #endif
 
 template <class A>
-struct ThisLayout {
+class OfThis {
+protected:
 	A mThis ;
 
 public:
-	using VREF_ITEM = decltype (nullof (A).self) ;
-	using CREF_ITEM = decltype (keep[TYPE<CREF<A>>::expr] (nullof (A)).self) ;
+	implicit OfThis () = default ;
 
-	XREF<VREF_ITEM> self_m () leftvalue {
-		return mThis.self ;
+	implicit OfThis (RREF<A> that) {
+		mThis = move (that) ;
 	}
 
-	forceinline PTR<XREF<VREF_ITEM>> operator-> () leftvalue {
-		return (&self) ;
+	VREF<A> self_m () leftvalue {
+		return mThis ;
 	}
 
-	XREF<CREF_ITEM> self_m () const leftvalue {
-		return mThis.self ;
+	forceinline operator VREF<A> () leftvalue {
+		return self ;
 	}
 
-	forceinline PTR<XREF<CREF_ITEM>> operator-> () const leftvalue {
-		return (&self) ;
+	CREF<A> self_m () const leftvalue {
+		return mThis ;
+	}
+
+	forceinline operator CREF<A> () const leftvalue {
+		return self ;
 	}
 } ;
 
-struct ClazzImplLayout ;
-
-struct ClazzLayout implement ThisLayout<Ref<ClazzImplLayout>> {} ;
+struct ClazzLayout ;
 
 struct ClazzHolder implement Interface {
-	imports VFat<ClazzHolder> hold (VREF<ClazzLayout> that) ;
-	imports CFat<ClazzHolder> hold (CREF<ClazzLayout> that) ;
+	imports VFat<ClazzHolder> hold (VREF<Ref<ClazzLayout>> that) ;
+	imports CFat<ClazzHolder> hold (CREF<Ref<ClazzLayout>> that) ;
 
 	virtual void initialize (CREF<Unknown> holder) = 0 ;
 	virtual LENGTH type_size () const = 0 ;
 	virtual LENGTH type_align () const = 0 ;
 	virtual FLAG type_guid () const = 0 ;
 	virtual Slice type_name () const = 0 ;
-	virtual BOOL equal (CREF<ClazzLayout> that) const = 0 ;
-	virtual FLAG compr (CREF<ClazzLayout> that) const = 0 ;
+	virtual BOOL equal (CREF<Ref<ClazzLayout>> that) const = 0 ;
+	virtual FLAG compr (CREF<Ref<ClazzLayout>> that) const = 0 ;
 	virtual void visit (VREF<VisitorBinder> visitor) const = 0 ;
 } ;
 
@@ -1961,7 +1963,7 @@ public:
 	}
 } ;
 
-class Clazz implement ClazzLayout {
+class Clazz implement OfThis<Ref<ClazzLayout>> {
 public:
 	implicit Clazz () = default ;
 

@@ -11,55 +11,55 @@
 #include "csc_begin.h"
 
 namespace CSC {
-template class External<PathHolder ,PathLayout> ;
+template class External<PathHolder ,Ref<PathLayout>> ;
 
-exports VFat<PathHolder> PathHolder::hold (VREF<PathLayout> that) {
-	return VFat<PathHolder> (External<PathHolder ,PathLayout>::declare () ,that) ;
+exports VFat<PathHolder> PathHolder::hold (VREF<Ref<PathLayout>> that) {
+	return VFat<PathHolder> (External<PathHolder ,Ref<PathLayout>>::declare () ,that) ;
 }
 
-exports CFat<PathHolder> PathHolder::hold (CREF<PathLayout> that) {
-	return CFat<PathHolder> (External<PathHolder ,PathLayout>::declare () ,that) ;
+exports CFat<PathHolder> PathHolder::hold (CREF<Ref<PathLayout>> that) {
+	return CFat<PathHolder> (External<PathHolder ,Ref<PathLayout>>::declare () ,that) ;
 }
 
-template class External<FileProcHolder ,FileProcLayout> ;
+template class External<FileProcHolder ,Ref<FileProcLayout>> ;
 
-exports CREF<FileProcLayout> FileProcHolder::instance () {
+exports CREF<Ref<FileProcLayout>> FileProcHolder::instance () {
 	return memorize ([&] () {
-		FileProcLayout ret ;
+		Ref<FileProcLayout> ret ;
 		FileProcHolder::hold (ret)->initialize () ;
 		return move (ret) ;
 	}) ;
 }
 
-exports VFat<FileProcHolder> FileProcHolder::hold (VREF<FileProcLayout> that) {
-	return VFat<FileProcHolder> (External<FileProcHolder ,FileProcLayout>::declare () ,that) ;
+exports VFat<FileProcHolder> FileProcHolder::hold (VREF<Ref<FileProcLayout>> that) {
+	return VFat<FileProcHolder> (External<FileProcHolder ,Ref<FileProcLayout>>::declare () ,that) ;
 }
 
-exports CFat<FileProcHolder> FileProcHolder::hold (CREF<FileProcLayout> that) {
-	return CFat<FileProcHolder> (External<FileProcHolder ,FileProcLayout>::declare () ,that) ;
+exports CFat<FileProcHolder> FileProcHolder::hold (CREF<Ref<FileProcLayout>> that) {
+	return CFat<FileProcHolder> (External<FileProcHolder ,Ref<FileProcLayout>>::declare () ,that) ;
 }
 
-template class External<StreamFileHolder ,StreamFileLayout> ;
+template class External<StreamFileHolder ,AutoRef<StreamFileLayout>> ;
 
-exports VFat<StreamFileHolder> StreamFileHolder::hold (VREF<StreamFileLayout> that) {
-	return VFat<StreamFileHolder> (External<StreamFileHolder ,StreamFileLayout>::declare () ,that) ;
+exports VFat<StreamFileHolder> StreamFileHolder::hold (VREF<AutoRef<StreamFileLayout>> that) {
+	return VFat<StreamFileHolder> (External<StreamFileHolder ,AutoRef<StreamFileLayout>>::declare () ,that) ;
 }
 
-exports CFat<StreamFileHolder> StreamFileHolder::hold (CREF<StreamFileLayout> that) {
-	return CFat<StreamFileHolder> (External<StreamFileHolder ,StreamFileLayout>::declare () ,that) ;
+exports CFat<StreamFileHolder> StreamFileHolder::hold (CREF<AutoRef<StreamFileLayout>> that) {
+	return CFat<StreamFileHolder> (External<StreamFileHolder ,AutoRef<StreamFileLayout>>::declare () ,that) ;
 }
 
-struct StreamFileByteWriterImplLayout {
+struct StreamFileByteWriterLayout {
 	StreamFile mStreamFile ;
 	RefBuffer<BYTE> mFileBuffer ;
 	ByteWriter mFileWriter ;
 } ;
 
-class StreamFileByteWriterImpl implement StreamFileByteWriterImplLayout {
+class StreamFileByteWriterImpl implement StreamFileByteWriterLayout {
 protected:
-	using StreamFileByteWriterImplLayout::mStreamFile ;
-	using StreamFileByteWriterImplLayout::mFileBuffer ;
-	using StreamFileByteWriterImplLayout::mFileWriter ;
+	using StreamFileByteWriterLayout::mStreamFile ;
+	using StreamFileByteWriterLayout::mFileBuffer ;
+	using StreamFileByteWriterLayout::mFileWriter ;
 
 public:
 	implicit StreamFileByteWriterImpl () = default ;
@@ -94,15 +94,15 @@ public:
 	}
 } ;
 
-class StreamFileByteWriterImplHolder final implement Fat<StreamFileByteWriterHolder ,StreamFileByteWriterLayout> {
+class StreamFileByteWriterImplHolder final implement Fat<StreamFileByteWriterHolder ,AutoRef<StreamFileByteWriterLayout>> {
 public:
 	void initialize (CREF<String<STR>> file) override {
-		fake.mThis = AutoRef<StreamFileByteWriterImpl>::make () ;
+		fake = AutoRef<StreamFileByteWriterImpl>::make () ;
 		ptr (fake).initialize (file) ;
 	}
 
-	static VREF<StreamFileByteWriterImpl> ptr (VREF<StreamFileByteWriterLayout> that) {
-		return keep[TYPE<StreamFileByteWriterImpl>::expr] (that.mThis.self) ;
+	static VREF<StreamFileByteWriterImpl> ptr (VREF<AutoRef<StreamFileByteWriterLayout>> that) {
+		return keep[TYPE<StreamFileByteWriterImpl>::expr] (that.self) ;
 	}
 
 	VREF<ByteWriter> self_m () leftvalue override {
@@ -114,25 +114,25 @@ public:
 	}
 } ;
 
-exports VFat<StreamFileByteWriterHolder> StreamFileByteWriterHolder::hold (VREF<StreamFileByteWriterLayout> that) {
+exports VFat<StreamFileByteWriterHolder> StreamFileByteWriterHolder::hold (VREF<AutoRef<StreamFileByteWriterLayout>> that) {
 	return VFat<StreamFileByteWriterHolder> (StreamFileByteWriterImplHolder () ,that) ;
 }
 
-exports CFat<StreamFileByteWriterHolder> StreamFileByteWriterHolder::hold (CREF<StreamFileByteWriterLayout> that) {
+exports CFat<StreamFileByteWriterHolder> StreamFileByteWriterHolder::hold (CREF<AutoRef<StreamFileByteWriterLayout>> that) {
 	return CFat<StreamFileByteWriterHolder> (StreamFileByteWriterImplHolder () ,that) ;
 }
 
-struct StreamFileTextWriterImplLayout {
+struct StreamFileTextWriterLayout {
 	StreamFile mStreamFile ;
 	RefBuffer<BYTE> mFileBuffer ;
 	TextWriter mFileWriter ;
 } ;
 
-class StreamFileTextWriterImpl implement StreamFileTextWriterImplLayout {
+class StreamFileTextWriterImpl implement StreamFileTextWriterLayout {
 protected:
-	using StreamFileTextWriterImplLayout::mStreamFile ;
-	using StreamFileTextWriterImplLayout::mFileBuffer ;
-	using StreamFileTextWriterImplLayout::mFileWriter ;
+	using StreamFileTextWriterLayout::mStreamFile ;
+	using StreamFileTextWriterLayout::mFileBuffer ;
+	using StreamFileTextWriterLayout::mFileWriter ;
 
 public:
 	implicit StreamFileTextWriterImpl () = default ;
@@ -167,15 +167,15 @@ public:
 	}
 } ;
 
-class StreamFileTextWriterImplHolder final implement Fat<StreamFileTextWriterHolder ,StreamFileTextWriterLayout> {
+class StreamFileTextWriterImplHolder final implement Fat<StreamFileTextWriterHolder ,AutoRef<StreamFileTextWriterLayout>> {
 public:
 	void initialize (CREF<String<STR>> file) override {
-		fake.mThis = AutoRef<StreamFileTextWriterImpl>::make () ;
+		fake = AutoRef<StreamFileTextWriterImpl>::make () ;
 		ptr (fake).initialize (file) ;
 	}
 
-	static VREF<StreamFileTextWriterImpl> ptr (VREF<StreamFileTextWriterLayout> that) {
-		return keep[TYPE<StreamFileTextWriterImpl>::expr] (that.mThis.self) ;
+	static VREF<StreamFileTextWriterImpl> ptr (VREF<AutoRef<StreamFileTextWriterLayout>> that) {
+		return keep[TYPE<StreamFileTextWriterImpl>::expr] (that.self) ;
 	}
 
 	VREF<TextWriter> self_m () leftvalue override {
@@ -187,49 +187,49 @@ public:
 	}
 } ;
 
-exports VFat<StreamFileTextWriterHolder> StreamFileTextWriterHolder::hold (VREF<StreamFileTextWriterLayout> that) {
+exports VFat<StreamFileTextWriterHolder> StreamFileTextWriterHolder::hold (VREF<AutoRef<StreamFileTextWriterLayout>> that) {
 	return VFat<StreamFileTextWriterHolder> (StreamFileTextWriterImplHolder () ,that) ;
 }
 
-exports CFat<StreamFileTextWriterHolder> StreamFileTextWriterHolder::hold (CREF<StreamFileTextWriterLayout> that) {
+exports CFat<StreamFileTextWriterHolder> StreamFileTextWriterHolder::hold (CREF<AutoRef<StreamFileTextWriterLayout>> that) {
 	return CFat<StreamFileTextWriterHolder> (StreamFileTextWriterImplHolder () ,that) ;
 }
 
-template class External<BufferFileHolder ,BufferFileLayout> ;
+template class External<BufferFileHolder ,AutoRef<BufferFileLayout>> ;
 
-exports VFat<BufferFileHolder> BufferFileHolder::hold (VREF<BufferFileLayout> that) {
-	return VFat<BufferFileHolder> (External<BufferFileHolder ,BufferFileLayout>::declare () ,that) ;
+exports VFat<BufferFileHolder> BufferFileHolder::hold (VREF<AutoRef<BufferFileLayout>> that) {
+	return VFat<BufferFileHolder> (External<BufferFileHolder ,AutoRef<BufferFileLayout>>::declare () ,that) ;
 }
 
-exports CFat<BufferFileHolder> BufferFileHolder::hold (CREF<BufferFileLayout> that) {
-	return CFat<BufferFileHolder> (External<BufferFileHolder ,BufferFileLayout>::declare () ,that) ;
+exports CFat<BufferFileHolder> BufferFileHolder::hold (CREF<AutoRef<BufferFileLayout>> that) {
+	return CFat<BufferFileHolder> (External<BufferFileHolder ,AutoRef<BufferFileLayout>>::declare () ,that) ;
 }
 
-template class External<UartFileHolder ,UartFileLayout> ;
+template class External<UartFileHolder ,AutoRef<UartFileLayout>> ;
 
-exports VFat<UartFileHolder> UartFileHolder::hold (VREF<UartFileLayout> that) {
-	return VFat<UartFileHolder> (External<UartFileHolder ,UartFileLayout>::declare () ,that) ;
+exports VFat<UartFileHolder> UartFileHolder::hold (VREF<AutoRef<UartFileLayout>> that) {
+	return VFat<UartFileHolder> (External<UartFileHolder ,AutoRef<UartFileLayout>>::declare () ,that) ;
 }
 
-exports CFat<UartFileHolder> UartFileHolder::hold (CREF<UartFileLayout> that) {
-	return CFat<UartFileHolder> (External<UartFileHolder ,UartFileLayout>::declare () ,that) ;
+exports CFat<UartFileHolder> UartFileHolder::hold (CREF<AutoRef<UartFileLayout>> that) {
+	return CFat<UartFileHolder> (External<UartFileHolder ,AutoRef<UartFileLayout>>::declare () ,that) ;
 }
 
-template class External<ConsoleHolder ,ConsoleLayout> ;
+template class External<ConsoleHolder ,SharedRef<ConsoleLayout>> ;
 
-exports CREF<ConsoleLayout> ConsoleHolder::instance () {
+exports CREF<SharedRef<ConsoleLayout>> ConsoleHolder::instance () {
 	return memorize ([&] () {
-		ConsoleLayout ret ;
+		SharedRef<ConsoleLayout> ret ;
 		ConsoleHolder::hold (ret)->initialize () ;
 		return move (ret) ;
 	}) ;
 }
 
-exports VFat<ConsoleHolder> ConsoleHolder::hold (VREF<ConsoleLayout> that) {
-	return VFat<ConsoleHolder> (External<ConsoleHolder ,ConsoleLayout>::declare () ,that) ;
+exports VFat<ConsoleHolder> ConsoleHolder::hold (VREF<SharedRef<ConsoleLayout>> that) {
+	return VFat<ConsoleHolder> (External<ConsoleHolder ,SharedRef<ConsoleLayout>>::declare () ,that) ;
 }
 
-exports CFat<ConsoleHolder> ConsoleHolder::hold (CREF<ConsoleLayout> that) {
-	return CFat<ConsoleHolder> (External<ConsoleHolder ,ConsoleLayout>::declare () ,that) ;
+exports CFat<ConsoleHolder> ConsoleHolder::hold (CREF<SharedRef<ConsoleLayout>> that) {
+	return CFat<ConsoleHolder> (External<ConsoleHolder ,SharedRef<ConsoleLayout>>::declare () ,that) ;
 }
 } ;

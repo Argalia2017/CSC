@@ -16,6 +16,7 @@ int main () {
 	ConfigProc::set_data_dire (slice (".")) ;
 	ConfigProc::set_cxx_signal () ;
 
-	GlobalRoot::shutdown () ;
+
+	GlobalService::shutdown () ;
 	return 0 ;
 }

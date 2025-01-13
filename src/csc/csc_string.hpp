@@ -13,14 +13,12 @@
 #include "csc_stream.hpp"
 
 namespace CSC {
-struct StringProcImplLayout ;
-
-struct StringProcLayout implement ThisLayout<Ref<StringProcImplLayout>> {} ;
+struct StringProcLayout ;
 
 struct StringProcHolder implement Interface {
-	imports CREF<StringProcLayout> instance () ;
-	imports VFat<StringProcHolder> hold (VREF<StringProcLayout> that) ;
-	imports CFat<StringProcHolder> hold (CREF<StringProcLayout> that) ;
+	imports CREF<Ref<StringProcLayout>> instance () ;
+	imports VFat<StringProcHolder> hold (VREF<Ref<StringProcLayout>> that) ;
+	imports CFat<StringProcHolder> hold (CREF<Ref<StringProcLayout>> that) ;
 
 	virtual void initialize () = 0 ;
 	virtual String<STRA> stra_from_strw (CREF<String<STRW>> a) const = 0 ;
@@ -59,10 +57,10 @@ struct StringProcHolder implement Interface {
 	virtual String<STRU32> stru32_from_strs (CREF<String<STRW>> a) const = 0 ;
 } ;
 
-class StringProc implement StringProcLayout {
+class StringProc implement OfThis<Ref<StringProcLayout>> {
 public:
 	static CREF<StringProc> instance () {
-		return keep[TYPE<StringProc>::expr] (StringProcHolder::instance ()) ;
+		return Pointer::from (StringProcHolder::instance ()) ;
 	}
 
 	static String<STRA> stra_from_strw (CREF<String<STRW>> a) {
@@ -202,9 +200,10 @@ public:
 	}
 } ;
 
-struct XmlParserImplLayout ;
+struct XmlParserRoot ;
 
-struct XmlParserLayout implement ThisLayout<Ref<XmlParserImplLayout>> {
+struct XmlParserLayout {
+	Ref<XmlParserRoot> mThix ;
 	INDEX mIndex ;
 } ;
 
@@ -249,7 +248,7 @@ struct XmlParserHolder implement Interface {
 
 class XmlParser implement XmlParserLayout {
 protected:
-	using XmlParserLayout::mThis ;
+	using XmlParserLayout::mThix ;
 	using XmlParserLayout::mIndex ;
 
 public:
@@ -405,9 +404,10 @@ public:
 	}
 } ;
 
-struct JsonParserImplLayout ;
+struct JsonParserRoot ;
 
-struct JsonParserLayout implement ThisLayout<Ref<JsonParserImplLayout>> {
+struct JsonParserLayout {
+	Ref<JsonParserRoot> mThix ;
 	INDEX mIndex ;
 } ;
 
@@ -452,7 +452,7 @@ struct JsonParserHolder implement Interface {
 
 class JsonParser implement JsonParserLayout {
 protected:
-	using JsonParserLayout::mThis ;
+	using JsonParserLayout::mThix ;
 	using JsonParserLayout::mIndex ;
 
 public:
@@ -619,9 +619,10 @@ struct PlyParserGuide {
 	BOOL mPlyListMode ;
 } ;
 
-struct PlyParserImplLayout ;
+struct PlyParserRoot ;
 
-struct PlyParserLayout implement ThisLayout<Ref<PlyParserImplLayout>> {
+struct PlyParserLayout {
+	Ref<PlyParserRoot> mThix ;
 	PlyParserGuide mGuide ;
 } ;
 
@@ -647,7 +648,7 @@ struct PlyParserHolder implement Interface {
 
 class PlyParser implement PlyParserLayout {
 protected:
-	using PlyParserLayout::mThis ;
+	using PlyParserLayout::mThix ;
 	using PlyParserLayout::mGuide ;
 
 public:

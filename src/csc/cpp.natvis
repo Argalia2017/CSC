@@ -68,7 +68,7 @@
 
   <Type Name="CSC::RefLayout">
     <Expand HideRawView="true">
-      <ExpandedItem Condition="mHolder!=0">(CSC::RefImplLayout*)mHandle</ExpandedItem>
+      <ExpandedItem Condition="mHolder!=0">(CSC::RefLayout*)mHandle</ExpandedItem>
     </Expand>
   </Type>
 
@@ -79,35 +79,35 @@
     </Expand>
   </Type>
 
-  <Type Name="CSC::KeyNodeImplLayout">
+  <Type Name="CSC::KeyNodeLayout">
     <Expand HideRawView="true">
-      <Item Name="[head]">(CSC::KeyHeadImplLayout*)mHead</Item>
+      <Item Name="[head]">(CSC::KeyHeadLayout*)mHead</Item>
       <Item Name="[marked]">mMarked</Item>
       <Item Name="[layout]">mLayout,x</Item>
       <Item Name="[check]">mCheck</Item>
     </Expand>
   </Type>
 
-  <Type Name="CSC::KeyHeadImplLayout">
+  <Type Name="CSC::KeyHeadLayout">
     <Expand HideRawView="true">
-      <Item Name="[root]">(CSC::KeyRootImplLayout*)mRoot</Item>
-      <Item Name="[next]">(CSC::KeyHeadImplLayout*)mNext</Item>
+      <Item Name="[root]">(CSC::KeyRootLayout*)mRoot</Item>
+      <Item Name="[next]">(CSC::KeyHeadLayout*)mNext</Item>
       <Item Name="[index]">mIndex</Item>
       <Item Name="[begin]">mBegin,x</Item>
       <Item Name="[end]">mEnd,x</Item>
     </Expand>
   </Type>
 
-  <Type Name="CSC::KeyNodeLayout" Inheritable="false">
+  <Type Name="CSC::KeyLayout" Inheritable="false">
     <Expand HideRawView="true">
-      <ExpandedItem Condition="mHandle!=0">(CSC::KeyNodeImplLayout*)mHandle</ExpandedItem>
+      <ExpandedItem Condition="mHandle!=0">(CSC::KeyNodeLayout*)mHandle</ExpandedItem>
     </Expand>
   </Type>
 
   <Type Name="CSC::Key&lt;*&gt;">
     <DisplayString Condition="mHandle==0">{{???}}</DisplayString>
     <Expand HideRawView="true">
-      <Item Name="[+]" Condition="mHandle!=0">*($T1*)(*(CSC::KeyNodeImplLayout*)mHandle).mLayout</Item>
+      <Item Name="[+]" Condition="mHandle!=0">*($T1*)(*(CSC::KeyNodeLayout*)mHandle).mLayout</Item>
     </Expand>
   </Type>
 
@@ -126,7 +126,7 @@
     </Expand>
   </Type>
 
-  <Type Name="CSC::ThisLayout&lt;*&gt;">
+  <Type Name="CSC::OfThis&lt;*&gt;">
     <Expand HideRawView="true">
       <ExpandedItem>mThis</ExpandedItem>
     </Expand>
@@ -142,23 +142,23 @@
   </Type>
 
   <Type Name="CSC::AutoRef&lt;*&gt;">
-    <DisplayString Condition="mThis.mLayout==0">{{???}}</DisplayString>
+    <DisplayString Condition="mThix.mLayout==0">{{???}}</DisplayString>
     <Expand HideRawView="true">
-      <Item Name="[+]" Condition="mThis.mLayout!=0">*($T1*)mLayout</Item>
+      <Item Name="[+]" Condition="mThix.mLayout!=0">*($T1*)mLayout</Item>
     </Expand>
   </Type>
 
   <Type Name="CSC::SharedRef&lt;*&gt;">
-    <DisplayString Condition="mThis.mLayout==0">{{???}}</DisplayString>
+    <DisplayString Condition="mThix.mLayout==0">{{???}}</DisplayString>
     <Expand HideRawView="true">
-      <Item Name="[+]" Condition="mThis.mLayout!=0">*($T1*)mLayout</Item>
+      <Item Name="[+]" Condition="mThix.mLayout!=0">*($T1*)mLayout</Item>
     </Expand>
   </Type>
 
   <Type Name="CSC::UniqueRef&lt;*&gt;">
-    <DisplayString Condition="mThis.mLayout==0">{{???}}</DisplayString>
+    <DisplayString Condition="mThix.mLayout==0">{{???}}</DisplayString>
     <Expand HideRawView="true">
-      <Item Name="[+]" Condition="mThis.mLayout!=0">*($T1*)mLayout</Item>
+      <Item Name="[+]" Condition="mThix.mLayout!=0">*($T1*)mLayout</Item>
     </Expand>
   </Type>
 
@@ -191,11 +191,11 @@
 
   <Type Name="CSC::RefBuffer&lt;*&gt;">
     <Expand HideRawView="true">
-      <Item Name="[size]" Condition="mThis.mLayout==0">0</Item>
-      <Item Name="[size]" Condition="mThis.mLayout!=0">mSize</Item>
-      <Item Name="[step]" Condition="mThis.mLayout==0">0</Item>
-      <Item Name="[step]" Condition="mThis.mLayout!=0">mStep</Item>
-      <Item Name="[fixed]">mThis</Item>
+      <Item Name="[size]" Condition="mThix.mLayout==0">0</Item>
+      <Item Name="[size]" Condition="mThix.mLayout!=0">mSize</Item>
+      <Item Name="[step]" Condition="mThix.mLayout==0">0</Item>
+      <Item Name="[step]" Condition="mThix.mLayout!=0">mStep</Item>
+      <Item Name="[fixed]">mThix</Item>
       <Item Name="[hint]" Condition="false">CSC::BYTE_ENDIAN</Item>
       <ArrayItems>
         <Size>mSize&lt;10?mSize:10</Size>
@@ -207,14 +207,14 @@
 
   <Type Name="CSC::FarBuffer&lt;*&gt;">
     <Expand HideRawView="true">
-      <Item Name="[size]" Condition="mThis.mLayout==0">0</Item>
-      <Item Name="[size]" Condition="mThis.mLayout!=0">mSize</Item>
-      <Item Name="[step]" Condition="mThis.mLayout==0">0</Item>
-      <Item Name="[step]" Condition="mThis.mLayout!=0">mStep</Item>
-      <Item Name="[fixed]">mThis</Item>
+      <Item Name="[size]" Condition="mThix.mLayout==0">0</Item>
+      <Item Name="[size]" Condition="mThix.mLayout!=0">mSize</Item>
+      <Item Name="[step]" Condition="mThix.mLayout==0">0</Item>
+      <Item Name="[step]" Condition="mThix.mLayout!=0">mStep</Item>
+      <Item Name="[fixed]">mThix</Item>
       <ArrayItems>
         <Size>1</Size>
-        <ValuePointer>($T1*)mThis.mLayout</ValuePointer>
+        <ValuePointer>($T1*)mThix.mLayout</ValuePointer>
       </ArrayItems>
     </Expand>
   </Type>
@@ -241,13 +241,13 @@
 
   <Type Name="CSC::Allocator&lt;*&gt;">
     <Expand HideRawView="true">
-      <Item Name="[length]" Condition="mAllocator.mThis.mLayout==0">0</Item>
-      <Item Name="[length]" Condition="mAllocator.mThis.mLayout!=0">mLength</Item>
-      <Item Name="[size]" Condition="mAllocator.mThis.mLayout==0">0</Item>
-      <Item Name="[size]" Condition="mAllocator.mThis.mLayout!=0">mAllocator.mSize</Item>
-      <Item Name="[step]" Condition="mAllocator.mThis.mLayout==0">0</Item>
-      <Item Name="[step]" Condition="mAllocator.mThis.mLayout!=0">mAllocator.mStep</Item>
-      <Item Name="[fixed]">mAllocator.mThis</Item>
+      <Item Name="[length]" Condition="mAllocator.mThix.mLayout==0">0</Item>
+      <Item Name="[length]" Condition="mAllocator.mThix.mLayout!=0">mLength</Item>
+      <Item Name="[size]" Condition="mAllocator.mThix.mLayout==0">0</Item>
+      <Item Name="[size]" Condition="mAllocator.mThix.mLayout!=0">mAllocator.mSize</Item>
+      <Item Name="[step]" Condition="mAllocator.mThix.mLayout==0">0</Item>
+      <Item Name="[step]" Condition="mAllocator.mThix.mLayout!=0">mAllocator.mStep</Item>
+      <Item Name="[fixed]">mAllocator.mThix</Item>
       <ArrayItems>
         <Size>mAllocator.mSize&lt;10?mAllocator.mSize:10</Size>
         <ValuePointer>(CSC::TupleNode&lt;$T1,$T2&gt;*)mAllocator.mBuffer</ValuePointer>
@@ -271,7 +271,7 @@
     </Expand>
   </Type>
 
-  <Type Name="CSC::JetLayout">
+  <Type Name="JetLayout">
     <Expand HideRawView="true">
       <Item Name="[fx]">mFX</Item>
       <Item Name="[ex]">mEX</Item>
@@ -346,21 +346,21 @@
     <Expand HideRawView="true">
       <IndexListItems>
         <Size>mWrite</Size>
-        <ValueNode>((CSC::TupleNode&lt;$T1,CSC::SortedMapNode&gt;*)(*(CSC::SortedMapImplLayout*)mThis.mLayout).mList.mAllocator.mBuffer)[mRange[$i]].m2nd.mMap</ValueNode>
+        <ValueNode>((CSC::TupleNode&lt;$T1,CSC::SortedMapNode&gt;*)(*(CSC::SortedMapRoot*)mThix.mLayout).mList.mAllocator.mBuffer)[mRange[$i]].m2nd.mMap</ValueNode>
       </IndexListItems>
     </Expand>
   </Type>
 
   <Type Name="CSC::SortedMap&lt;*&gt;">
     <Expand HideRawView="true">
-      <Item Name="[size]" Condition="mThis.mLayout==0">0</Item>
-      <Item Name="[size]" Condition="mThis.mLayout!=0">mWrite</Item>
-      <Item Name="[step]" Condition="mThis.mLayout==0">0</Item>
-      <Item Name="[step]" Condition="mThis.mLayout!=0">mRange.mStep</Item>
-      <Item Name="[fixed]">mThis</Item>
+      <Item Name="[size]" Condition="mThix.mLayout==0">0</Item>
+      <Item Name="[size]" Condition="mThix.mLayout!=0">mWrite</Item>
+      <Item Name="[step]" Condition="mThix.mLayout==0">0</Item>
+      <Item Name="[step]" Condition="mThix.mLayout!=0">mRange.mStep</Item>
+      <Item Name="[fixed]">mThix</Item>
       <IndexListItems Condition="mWrite&lt;10">
         <Size>mWrite&lt;10?mWrite:10</Size>
-        <ValueNode>((CSC::TupleNode&lt;$T1,CSC::SortedMapNode&gt;*)(*(CSC::SortedMapImplLayout*)mThis.mLayout).mList.mAllocator.mBuffer)[mRange[$i]].m2nd.mMap</ValueNode>
+        <ValueNode>((CSC::TupleNode&lt;$T1,CSC::SortedMapNode&gt;*)(*(CSC::SortedMapRoot*)mThix.mLayout).mList.mAllocator.mBuffer)[mRange[$i]].m2nd.mMap</ValueNode>
       </IndexListItems>
       <Item Name="[+]">*(CSC::SortedMapRealLayout&lt;$T1&gt;*)this</Item>
     </Expand>
@@ -428,7 +428,7 @@
 
   <!--csc_string.hpp-->
 
-  <Type Name="CSC::XmlParserImplLayout">
+  <Type Name="CSC::XmlParserRoot">
     <Expand HideRawView="true">
       <ExpandedItem>mTree</ExpandedItem>
     </Expand>
@@ -437,12 +437,12 @@
   <Type Name="CSC::XmlParser">
     <Expand HideRawView="true">
       <Item Name="[index]">mIndex</Item>
-      <ExpandedItem>mThis</ExpandedItem>
-      <ExpandedItem Condition="mThis.mLayout!=0">((CSC::XmlParserNode*)(*(CSC::XmlParserImplLayout*)mThis.mLayout).mTree.mArray.mBuffer)[mIndex]</ExpandedItem>
+      <ExpandedItem>mThix</ExpandedItem>
+      <ExpandedItem Condition="mThix.mLayout!=0">((CSC::XmlParserNode*)(*(CSC::XmlParserRoot*)mThix.mLayout).mTree.mArray.mBuffer)[mIndex]</ExpandedItem>
     </Expand>
   </Type>
 
-  <Type Name="CSC::JsonParserImplLayout">
+  <Type Name="CSC::JsonParserRoot">
     <Expand HideRawView="true">
       <ExpandedItem>mTree</ExpandedItem>
     </Expand>
@@ -451,8 +451,8 @@
   <Type Name="CSC::JsonParser">
     <Expand HideRawView="true">
       <Item Name="[index]">mIndex</Item>
-      <ExpandedItem>mThis</ExpandedItem>
-      <ExpandedItem Condition="mThis.mLayout!=0">((CSC::JsonParserNode*)(*(CSC::JsonParserImplLayout*)mThis.mLayout).mTree.mArray.mBuffer)[mIndex]</ExpandedItem>
+      <ExpandedItem>mThix</ExpandedItem>
+      <ExpandedItem Condition="mThix.mLayout!=0">((CSC::JsonParserNode*)(*(CSC::JsonParserRoot*)mThix.mLayout).mTree.mArray.mBuffer)[mIndex]</ExpandedItem>
     </Expand>
   </Type>
 

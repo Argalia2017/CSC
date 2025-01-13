@@ -53,15 +53,15 @@ using ::lstat ;
 } ;
 
 namespace CSC {
-struct PathImplLayout {
+struct PathLayout {
 	String<STR> mPathName ;
 	Deque<INDEX> mSeparator ;
 } ;
 
-class PathImplHolder final implement Fat<PathHolder ,PathLayout> {
+class PathImplHolder final implement Fat<PathHolder ,Ref<PathLayout>> {
 public:
 	void initialize (RREF<String<STR>> pathname) override {
-		auto rax = PathImplLayout () ;
+		auto rax = PathLayout () ;
 		rax.mPathName = move (pathname) ;
 		rax.mSeparator.add (NONE) ;
 		const auto r1x = rax.mPathName.length () ;
@@ -92,7 +92,7 @@ public:
 			rax.mSeparator.add (iy + 2) ;
 		}
 		assume (rax.mSeparator.length () >= 2) ;
-		fake.mThis = Ref<PathImplLayout>::make (move (rax)) ;
+		fake = Ref<PathLayout>::make (move (rax)) ;
 	}
 
 	void initialize (CREF<Deque<String<STR>>> pathname) override {
@@ -120,30 +120,30 @@ public:
 	}
 
 	String<STR> fetch () const override {
-		if (fake.mThis == NULL)
+		if (fake == NULL)
 			return String<STR>::zero () ;
 		return fake->mPathName ;
 	}
 
-	PathLayout child (CREF<Slice> name) const override {
-		if (fake.mThis == NULL)
+	Ref<PathLayout> child (CREF<Slice> name) const override {
+		if (fake == NULL)
 			return Path (name) ;
 		return Path (String<STR>::make (fake->mPathName ,slice ("/") ,name)) ;
 	}
 
-	PathLayout child (CREF<Format> name) const override {
-		if (fake.mThis == NULL)
+	Ref<PathLayout> child (CREF<Format> name) const override {
+		if (fake == NULL)
 			return Path (String<STR>::make (name)) ;
 		return Path (String<STR>::make (fake->mPathName ,slice ("/") ,name)) ;
 	}
 
-	PathLayout child (CREF<String<STR>> name) const override {
-		if (fake.mThis == NULL)
+	Ref<PathLayout> child (CREF<String<STR>> name) const override {
+		if (fake == NULL)
 			return Path (name) ;
 		return Path (String<STR>::make (fake->mPathName ,slice ("/") ,name)) ;
 	}
 
-	Array<PathLayout> list () const override {
+	Array<Ref<PathLayout>> list () const override {
 		auto rax = HDIRENT (NULL) ;
 		const auto r1x = UniqueRef<HDIR> ([&] (VREF<HDIR> me) {
 			me = opendir (fake->mPathName) ;
@@ -169,13 +169,13 @@ public:
 				rbx.add (Slice (rax->d_name)) ;
 			}
 		}
-		Array<PathLayout> ret = Array<PathLayout> (rbx.length ()) ;
+		Array<Ref<PathLayout>> ret = Array<Ref<PathLayout>> (rbx.length ()) ;
 		for (auto &&i : ret.range ())
 			ret[i] = child (rbx[i]) ;
 		return move (ret) ;
 	}
 
-	Array<PathLayout> list (CREF<LENGTH> size_) const override {
+	Array<Ref<PathLayout>> list (CREF<LENGTH> size_) const override {
 		auto rax = HDIRENT (NULL) ;
 		const auto r1x = UniqueRef<HDIR> ([&] (VREF<HDIR> me) {
 			me = opendir (fake->mPathName) ;
@@ -204,23 +204,23 @@ public:
 			}
 		}
 		assume (rbx.length () == size_) ;
-		Array<PathLayout> ret = Array<PathLayout> (size_) ;
+		Array<Ref<PathLayout>> ret = Array<Ref<PathLayout>> (size_) ;
 		for (auto &&i : iter (0 ,size_))
 			ret[i] = child (rbx[i]) ;
 		return move (ret) ;
 	}
 
-	BOOL equal (CREF<PathLayout> that) const override {
-		const auto r1x = inline_compr (fake.mThis.exist () ,that.mThis.exist ()) ;
+	BOOL equal (CREF<Ref<PathLayout>> that) const override {
+		const auto r1x = inline_compr (fake.exist () ,that.exist ()) ;
 		if (r1x != ZERO)
 			return FALSE ;
-		if (!fake.mThis.exist ())
+		if (!fake.exist ())
 			return FALSE ;
-		return fake->mPathName == that.mThis->mPathName ;
+		return fake->mPathName == that->mPathName ;
 	}
 
 	BOOL is_file () const override {
-		if (fake.mThis == NULL)
+		if (fake == NULL)
 			return FALSE ;
 		auto rax = STAT_INFO () ;
 		inline_memset (rax) ;
@@ -233,7 +233,7 @@ public:
 	}
 
 	BOOL is_dire () const override {
-		if (fake.mThis == NULL)
+		if (fake == NULL)
 			return FALSE ;
 		auto rax = STAT_INFO () ;
 		inline_memset (rax) ;
@@ -246,7 +246,7 @@ public:
 	}
 
 	BOOL is_link () const override {
-		if (fake.mThis == NULL)
+		if (fake == NULL)
 			return FALSE ;
 		auto rax = STAT_INFO () ;
 		inline_memset (rax) ;
@@ -258,8 +258,8 @@ public:
 		return TRUE ;
 	}
 
-	PathLayout symbolic () const override {
-		PathLayout ret = fake ;
+	Ref<PathLayout> symbolic () const override {
+		Ref<PathLayout> ret = fake ;
 		if ifdo (TRUE) {
 			if (!is_link ())
 				discard ;
@@ -271,7 +271,7 @@ public:
 		return move (ret) ;
 	}
 
-	PathLayout absolute () const override {
+	Ref<PathLayout> absolute () const override {
 		auto rax = Deque<String<STR>> () ;
 		auto rbx = decouple () ;
 		while (TRUE) {
@@ -395,22 +395,22 @@ public:
 	}
 } ;
 
-static const auto mPathExternal = External<PathHolder ,PathLayout> (PathImplHolder ()) ;
+static const auto mPathExternal = External<PathHolder ,Ref<PathLayout>> (PathImplHolder ()) ;
 
-struct FileProcImplLayout {
+struct FileProcLayout {
 	Mutex mMutex ;
 	Pin<List<UniqueRef<String<STR>>>> mLockDirectory ;
 } ;
 
-class FileProcImplHolder final implement Fat<FileProcHolder ,FileProcLayout> {
+class FileProcImplHolder final implement Fat<FileProcHolder ,Ref<FileProcLayout>> {
 private:
 	using FILEPROC_RETRY_TIME = RANK3 ;
 
 public:
 	void initialize () override {
-		auto rax = FileProcImplLayout () ;
+		auto rax = FileProcLayout () ;
 		rax.mMutex = NULL ;
-		fake.mThis = Ref<FileProcImplLayout>::make (move (rax)) ;
+		fake = Ref<FileProcLayout>::make (move (rax)) ;
 	}
 
 	RefBuffer<BYTE> load_file (CREF<String<STR>> file) const override {
@@ -630,9 +630,9 @@ public:
 	}
 } ;
 
-static const auto mFileProcExternal = External<FileProcHolder ,FileProcLayout> (FileProcImplHolder ()) ;
+static const auto mFileProcExternal = External<FileProcHolder ,Ref<FileProcLayout>> (FileProcImplHolder ()) ;
 
-struct StreamFileImplLayout {
+struct StreamFileLayout {
 	String<STR> mFile ;
 	UniqueRef<HFILE> mReadPipe ;
 	UniqueRef<HFILE> mWritePipe ;
@@ -643,10 +643,10 @@ struct StreamFileImplLayout {
 	LENGTH mShortSize ;
 } ;
 
-class StreamFileImplHolder final implement Fat<StreamFileHolder ,StreamFileLayout> {
+class StreamFileImplHolder final implement Fat<StreamFileHolder ,AutoRef<StreamFileLayout>> {
 public:
 	void initialize (CREF<String<STR>> file) override {
-		fake.mThis = AutoRef<StreamFileImplLayout>::make () ;
+		fake = AutoRef<StreamFileLayout>::make () ;
 		fake->mFile = move (file) ;
 		fake->mFileSize = 0 ;
 		fake->mRead = 0 ;
@@ -785,7 +785,7 @@ public:
 	}
 } ;
 
-static const auto mStreamFileExternal = External<StreamFileHolder ,StreamFileLayout> (StreamFileImplHolder ()) ;
+static const auto mStreamFileExternal = External<StreamFileHolder ,AutoRef<StreamFileLayout>> (StreamFileImplHolder ()) ;
 
 struct BufferFileHeader {
 	QUAD mFileEndian ;
@@ -804,7 +804,7 @@ struct BufferFileChunk {
 	UniqueRef<Tuple<FLAG ,FLAG>> mBlock ;
 } ;
 
-struct BufferFileImplLayout {
+struct BufferFileLayout {
 	String<STR> mFile ;
 	UniqueRef<HFILE> mPipe ;
 	UniqueRef<LENGTH> mMapping ;
@@ -818,7 +818,7 @@ struct BufferFileImplLayout {
 	VAL64 mCacheTimer ;
 } ;
 
-class BufferFileImplHolder final implement Fat<BufferFileHolder ,BufferFileLayout> {
+class BufferFileImplHolder final implement Fat<BufferFileHolder ,AutoRef<BufferFileLayout>> {
 private:
 	using BLOCK_STEP_SIZE = ENUM<1024> ;
 	using CHUNK_STEP_SIZE = ENUM<4194304> ;
@@ -826,7 +826,7 @@ private:
 
 public:
 	void initialize (CREF<String<STR>> file) override {
-		fake.mThis = AutoRef<BufferFileImplLayout>::make () ;
+		fake = AutoRef<BufferFileLayout>::make () ;
 		fake->mFile = move (file) ;
 		fake->mFileSize = 0 ;
 		fake->mFileMapFlag = 0 ;
@@ -1096,9 +1096,9 @@ public:
 	}
 } ;
 
-static const auto mBufferFileExternal = External<BufferFileHolder ,BufferFileLayout> (BufferFileImplHolder ()) ;
+static const auto mBufferFileExternal = External<BufferFileHolder ,AutoRef<BufferFileLayout>> (BufferFileImplHolder ()) ;
 
-struct UartFileImplLayout {
+struct UartFileLayout {
 	String<STR> mPortName ;
 	LENGTH mPortRate ;
 	UniqueRef<HFILE> mPipe ;
@@ -1107,10 +1107,10 @@ struct UartFileImplLayout {
 	INDEX mRingRead ;
 } ;
 
-class UartFileImplHolder final implement Fat<UartFileHolder ,UartFileLayout> {
+class UartFileImplHolder final implement Fat<UartFileHolder ,AutoRef<UartFileLayout>> {
 private:
 	void initialize () override {
-		fake.mThis = AutoRef<UartFileImplLayout>::make () ;
+		fake = AutoRef<UartFileLayout>::make () ;
 		fake->mPortRate = 0 ;
 	}
 
@@ -1179,9 +1179,9 @@ private:
 	}
 } ;
 
-static const auto mUartFileExternal = External<UartFileHolder ,UartFileLayout> (UartFileImplHolder ()) ;
+static const auto mUartFileExternal = External<UartFileHolder ,AutoRef<UartFileLayout>> (UartFileImplHolder ()) ;
 
-struct ConsoleImplLayout {
+struct ConsoleLayout {
 	Mutex mMutex ;
 	BitSet mOption ;
 	UniqueRef<HANDLE> mConsole ;
@@ -1193,10 +1193,10 @@ struct ConsoleImplLayout {
 	System mCommand ;
 } ;
 
-class ConsoleImplHolder final implement Fat<ConsoleHolder ,ConsoleLayout> {
+class ConsoleImplHolder final implement Fat<ConsoleHolder ,SharedRef<ConsoleLayout>> {
 public:
 	void initialize () override {
-		fake.mThis = SharedRef<ConsoleImplLayout>::make () ;
+		fake = SharedRef<ConsoleLayout>::make () ;
 		fake->mMutex = NULL ;
 		fake->mOption = BitSet (ConsoleOption::ETC) ;
 		fake->mLogBuffer = String<STR> (STREAMFILE_BUF_SIZE::expr) ;
@@ -1369,5 +1369,5 @@ public:
 	}
 } ;
 
-static const auto mConsoleExternal = External<ConsoleHolder ,ConsoleLayout> (ConsoleImplHolder ()) ;
+static const auto mConsoleExternal = External<ConsoleHolder ,SharedRef<ConsoleLayout>> (ConsoleImplHolder ()) ;
 } ;

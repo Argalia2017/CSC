@@ -88,19 +88,19 @@ public:
 
 static const auto mRuntimeProcExternal = External<RuntimeProcHolder ,RuntimeProcLayout> (RuntimeProcImplHolder ()) ;
 
-struct ProcessImplLayout {
+struct ProcessLayout {
 	FLAG mUid ;
 	QUAD mProcessCode ;
 	QUAD mProcessTime ;
 } ;
 
-class ProcessImplHolder final implement Fat<ProcessHolder ,ProcessLayout> {
+class ProcessImplHolder final implement Fat<ProcessHolder ,AutoRef<ProcessLayout>> {
 private:
 	using PROCESS_SNAPSHOT_SIZE = ENUM<128> ;
 
 public:
 	void initialize (CREF<FLAG> uid) override {
-		fake.mThis = AutoRef<ProcessImplLayout>::make () ;
+		fake = AutoRef<ProcessLayout>::make () ;
 		fake->mUid = uid ;
 		const auto r1x = load_proc_file (uid) ;
 		fake->mProcessCode = process_code (r1x ,uid) ;
@@ -163,7 +163,7 @@ public:
 	}
 
 	void initialize (CREF<RefBuffer<BYTE>> snapshot_) override {
-		fake.mThis = AutoRef<ProcessImplLayout>::make () ;
+		fake = AutoRef<ProcessLayout>::make () ;
 		fake->mUid = 0 ;
 		try {
 			assume (snapshot_.size () == PROCESS_SNAPSHOT_SIZE::expr) ;
@@ -183,14 +183,14 @@ public:
 		}
 	}
 
-	BOOL equal (CREF<ProcessLayout> that) const override {
-		const auto r1x = inline_equal (fake->mUid ,that.mThis->mUid) ;
+	BOOL equal (CREF<AutoRef<ProcessLayout>> that) const override {
+		const auto r1x = inline_equal (fake->mUid ,that->mUid) ;
 		if (!r1x)
 			return r1x ;
-		const auto r2x = inline_equal (fake->mProcessCode ,that.mThis->mProcessCode) ;
+		const auto r2x = inline_equal (fake->mProcessCode ,that->mProcessCode) ;
 		if (!r2x)
 			return r2x ;
-		const auto r3x = inline_equal (fake->mProcessTime ,that.mThis->mProcessTime) ;
+		const auto r3x = inline_equal (fake->mProcessTime ,that->mProcessTime) ;
 		if (!r3x)
 			return r3x ;
 		return TRUE ;
@@ -218,18 +218,18 @@ public:
 	}
 } ;
 
-static const auto mProcessExternal = External<ProcessHolder ,ProcessLayout> (ProcessImplHolder ()) ;
+static const auto mProcessExternal = External<ProcessHolder ,AutoRef<ProcessLayout>> (ProcessImplHolder ()) ;
 
-struct LibraryImplLayout {
+struct LibraryLayout {
 	String<STR> mFile ;
 	UniqueRef<HMODULE> mLibrary ;
 	FLAG mLastError ;
 } ;
 
-class LibraryImplHolder final implement Fat<LibraryHolder ,LibraryLayout> {
+class LibraryImplHolder final implement Fat<LibraryHolder ,AutoRef<LibraryLayout>> {
 public:
 	void initialize (CREF<String<STR>> file) override {
-		fake.mThis = AutoRef<LibraryImplLayout>::make () ;
+		fake = AutoRef<LibraryLayout>::make () ;
 		fake->mFile = move (file) ;
 		assert (fake->mFile.length () > 0) ;
 		fake->mLibrary = UniqueRef<HMODULE> ([&] (VREF<HMODULE> me) {
@@ -274,21 +274,21 @@ public:
 	}
 } ;
 
-static const auto mLibraryExternal = External<LibraryHolder ,LibraryLayout> (LibraryImplHolder ()) ;
+static const auto mLibraryExternal = External<LibraryHolder ,AutoRef<LibraryLayout>> (LibraryImplHolder ()) ;
 
 struct SingletonLayout {
 	Mutex mMutex ;
 	Pin<Set<Clazz>> mClazzSet ;
 } ;
 
-class SingletonRoot implement Pin<SingletonLayout> {
+class SingletonService implement Pin<SingletonLayout> {
 public:
-	imports CREF<SingletonRoot> instance () ;
+	imports CREF<SingletonService> instance () ;
 } ;
 
-exports CREF<SingletonRoot> SingletonRoot::instance () {
+exports CREF<SingletonService> SingletonService::instance () {
 	return memorize ([&] () {
-		return SingletonRoot () ;
+		return SingletonService () ;
 	}) ;
 }
 
@@ -300,7 +300,7 @@ struct SingletonPipe {
 	QUAD mReserve3 ;
 } ;
 
-struct SingletonProcImplLayout {
+struct SingletonProcLayout {
 	FLAG mUid ;
 	String<STR> mName ;
 	UniqueRef<Tuple<HFILE ,String<STR>>> mPipe ;
@@ -308,19 +308,19 @@ struct SingletonProcImplLayout {
 	Ref<SingletonLayout> mRoot ;
 
 public:
-	implicit SingletonProcImplLayout () = default ;
+	implicit SingletonProcLayout () = default ;
 
-	implicit ~SingletonProcImplLayout () noexcept {
+	implicit ~SingletonProcLayout () noexcept {
 		if (mRoot == NULL)
 			return ;
 		mRoot.pin ().~Pin () ;
 	}
 } ;
 
-class SingletonProcImplHolder final implement Fat<SingletonProcHolder ,SingletonProcLayout> {
+class SingletonProcImplHolder final implement Fat<SingletonProcHolder ,AutoRef<SingletonProcLayout>> {
 public:
 	void initialize () override {
-		fake.mThis = AutoRef<SingletonProcImplLayout>::make () ;
+		fake = AutoRef<SingletonProcLayout>::make () ;
 		fake->mUid = RuntimeProc::process_uid () ;
 		fake->mName = String<STR>::make (slice ("/CSC_Singleton_") ,fake->mUid) ;
 		inline_memset (fake->mLocal) ;
@@ -373,7 +373,7 @@ public:
 		} ,[&] (VREF<LENGTH> me) {
 			noop () ;
 		}) ;
-		const auto r4x = address (SingletonRoot::instance ().self) ;
+		const auto r4x = address (SingletonService::instance ().self) ;
 		auto &&rax = keep[TYPE<SingletonLayout>::expr] (Pointer::make (r4x)) ;
 		rax.mMutex = NULL ;
 		fake->mLocal.mReserve1 = QUAD (fake->mUid) ;
@@ -505,5 +505,5 @@ public:
 	}
 } ;
 
-static const auto mSingletonProcExternal = External<SingletonProcHolder ,SingletonProcLayout> (SingletonProcImplHolder ()) ;
+static const auto mSingletonProcExternal = External<SingletonProcHolder ,AutoRef<SingletonProcLayout>> (SingletonProcImplHolder ()) ;
 } ;
