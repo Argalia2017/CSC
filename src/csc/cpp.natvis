@@ -98,7 +98,7 @@
     </Expand>
   </Type>
 
-  <Type Name="CSC::KeyLayout" Inheritable="false">
+  <Type Name="CSC::KeyBaseLayout" Inheritable="false">
     <Expand HideRawView="true">
       <ExpandedItem Condition="mHandle!=0">(CSC::KeyNodeLayout*)mHandle</ExpandedItem>
     </Expand>

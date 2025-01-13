@@ -15,14 +15,13 @@ struct HeapMutexRoot {
 	Box<std::recursive_mutex> mMutex ;
 } ;
 
-class HeapMutexService implement Pin<HeapMutexRoot> {
-public:
-	imports CREF<HeapMutexService> instance () ;
+struct HeapMutexRootHolder implement Interface {
+	imports CREF<Pin<HeapMutexRoot>> instance () ;
 } ;
 
-exports CREF<HeapMutexService> HeapMutexService::instance () {
+exports CREF<Pin<HeapMutexRoot>> HeapMutexRootHolder::instance () {
 	return memorize ([&] () {
-		return HeapMutexService () ;
+		return Pin<HeapMutexRoot> () ;
 	}) ;
 }
 
@@ -33,7 +32,7 @@ public:
 	}
 
 	static VREF<HeapMutexRoot> ptr (CREF<HeapMutexLayout> that) {
-		return HeapMutexService::instance ().self ;
+		return HeapMutexRootHolder::instance ().self ;
 	}
 
 	void enter () const override {

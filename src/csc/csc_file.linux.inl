@@ -820,9 +820,9 @@ struct BufferFileLayout {
 
 class BufferFileImplHolder final implement Fat<BufferFileHolder ,AutoRef<BufferFileLayout>> {
 private:
-	using BLOCK_STEP_SIZE = ENUM<1024> ;
-	using CHUNK_STEP_SIZE = ENUM<4194304> ;
-	using HEADER_SIZE = ENUM<65536> ;
+	using BUFFERFILE_BLOCK_STEP = ENUM<1024> ;
+	using BUFFERFILE_CHUNK_STEP = ENUM<4194304> ;
+	using BUFFERFILE_HEADER_STEP = ENUM<65536> ;
 
 public:
 	void initialize (CREF<String<STR>> file) override {
@@ -830,13 +830,13 @@ public:
 		fake->mFile = move (file) ;
 		fake->mFileSize = 0 ;
 		fake->mFileMapFlag = 0 ;
-		set_block_step (BLOCK_STEP_SIZE::expr) ;
+		set_block_step (BUFFERFILE_BLOCK_STEP::expr) ;
 		set_cache_size (1) ;
 	}
 
 	void set_block_step (CREF<LENGTH> step_) override {
 		fake->mBlockStep = step_ ;
-		fake->mChunkStep = CHUNK_STEP_SIZE::expr ;
+		fake->mChunkStep = BUFFERFILE_CHUNK_STEP::expr ;
 	}
 
 	void set_cache_size (CREF<LENGTH> size_) override {
@@ -880,7 +880,7 @@ public:
 		}) ;
 		const auto r3x = fake->mChunkStep / fake->mBlockStep ;
 		const auto r4x = (size_ + r3x - 1) / r3x ;
-		fake->mFileSize = HEADER_SIZE::expr + r4x * fake->mChunkStep ;
+		fake->mFileSize = BUFFERFILE_HEADER_STEP::expr + r4x * fake->mChunkStep ;
 		fake->mMapping = UniqueRef<LENGTH> ([&] (VREF<LENGTH> me) {
 			me = ftruncate64 (fake->mPipe ,fake->mFileSize) ;
 			assume (me == 0) ;
@@ -957,7 +957,7 @@ public:
 			fake->mHeader->mBlockSize = fake->mChunkStep / fake->mBlockStep ;
 			fake->mHeader->mBlockStep = fake->mBlockStep ;
 			fake->mHeader->mBlockLength = 0 ;
-			fake->mHeader->mChunkSize = (fake->mFileSize - HEADER_SIZE::expr) / fake->mChunkStep ;
+			fake->mHeader->mChunkSize = (fake->mFileSize - BUFFERFILE_HEADER_STEP::expr) / fake->mChunkStep ;
 			fake->mHeader->mChunkStep = fake->mChunkStep ;
 			fake->mHeader->mChunkLength = 0 ;
 		}
@@ -984,9 +984,9 @@ public:
 	}
 
 	Ref<RefBuffer<BYTE>> borrow_header () {
-		INDEX ix = mmap_cache (0 ,HEADER_SIZE::expr) ;
+		INDEX ix = mmap_cache (0 ,BUFFERFILE_HEADER_STEP::expr) ;
 		const auto r1x = fake->mCacheList[ix].mBlock->m1st ;
-		const auto r2x = HEADER_SIZE::expr ;
+		const auto r2x = BUFFERFILE_HEADER_STEP::expr ;
 		return Ref<RefBuffer<BYTE>>::make (RefBuffer<BYTE>::reference (r1x ,r2x)) ;
 	}
 
@@ -1014,7 +1014,7 @@ public:
 		assert (item.size () == fake->mHeader->mBlockStep) ;
 		const auto r1x = index / fake->mHeader->mBlockSize ;
 		const auto r2x = index % fake->mHeader->mBlockSize * fake->mHeader->mBlockStep ;
-		const auto r3x = HEADER_SIZE::expr + r1x * fake->mHeader->mChunkStep ;
+		const auto r3x = BUFFERFILE_HEADER_STEP::expr + r1x * fake->mHeader->mChunkStep ;
 		INDEX ix = mmap_cache (r3x ,LENGTH (fake->mHeader->mChunkStep)) ;
 		const auto r4x = fake->mCacheList[ix].mBlock->m1st + LENGTH (r2x) ;
 		inline_memcpy (Pointer::from (item.self) ,Pointer::make (r4x) ,LENGTH (fake->mHeader->mBlockStep)) ;
@@ -1026,7 +1026,7 @@ public:
 		assert (item.size () == fake->mHeader->mBlockStep) ;
 		const auto r1x = index / fake->mHeader->mBlockSize ;
 		const auto r2x = index % fake->mHeader->mBlockSize * fake->mHeader->mBlockStep ;
-		const auto r3x = HEADER_SIZE::expr + r1x * fake->mHeader->mChunkStep ;
+		const auto r3x = BUFFERFILE_HEADER_STEP::expr + r1x * fake->mHeader->mChunkStep ;
 		INDEX ix = mmap_cache (r3x ,LENGTH (fake->mHeader->mChunkStep)) ;
 		const auto r4x = fake->mCacheList[ix].mBlock->m1st + LENGTH (r2x) ;
 		inline_memcpy (Pointer::make (r4x) ,Pointer::from (item.self) ,LENGTH (fake->mHeader->mBlockStep)) ;
@@ -1199,7 +1199,7 @@ public:
 		fake = SharedRef<ConsoleLayout>::make () ;
 		fake->mMutex = NULL ;
 		fake->mOption = BitSet (ConsoleOption::ETC) ;
-		fake->mLogBuffer = String<STR> (STREAMFILE_BUF_SIZE::expr) ;
+		fake->mLogBuffer = String<STR> (STREAMFILE_CHUNK_STEP::expr) ;
 		fake->mLogWriter = TextWriter (fake->mLogBuffer.borrow ()) ;
 		fake->mCommand = NULL ;
 	}

@@ -71,7 +71,7 @@ public:
 	void initialize (CREF<String<STR>> file) {
 		mStreamFile = StreamFile (file) ;
 		mStreamFile.open_w (0) ;
-		mFileBuffer = RefBuffer<BYTE> (STREAMFILE_BUF_SIZE::expr) ;
+		mFileBuffer = RefBuffer<BYTE> (STREAMFILE_CHUNK_STEP::expr) ;
 		set_writer () ;
 	}
 
@@ -144,7 +144,7 @@ public:
 	void initialize (CREF<String<STR>> file) {
 		mStreamFile = StreamFile (file) ;
 		mStreamFile.open_w (0) ;
-		mFileBuffer = RefBuffer<BYTE> (STREAMFILE_BUF_SIZE::expr) ;
+		mFileBuffer = RefBuffer<BYTE> (STREAMFILE_CHUNK_STEP::expr) ;
 		set_writer () ;
 	}
 

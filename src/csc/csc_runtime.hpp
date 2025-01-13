@@ -701,9 +701,9 @@ struct GlobalHolder implement Interface {
 	virtual void store (RREF<AutoRef<Pointer>> item) const = 0 ;
 } ;
 
-class GlobalService implement GlobalLayout {
+class GlobalProc implement GlobalLayout {
 public:
-	static CREF<GlobalService> instance () {
+	static CREF<GlobalProc> instance () {
 		return Pointer::from (GlobalHolder::instance ()) ;
 	}
 

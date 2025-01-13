@@ -96,7 +96,7 @@ struct ProcessLayout {
 
 class ProcessImplHolder final implement Fat<ProcessHolder ,AutoRef<ProcessLayout>> {
 private:
-	using PROCESS_SNAPSHOT_SIZE = ENUM<128> ;
+	using PROCESS_SNAPSHOT_STEP = ENUM<128> ;
 
 public:
 	void initialize (CREF<FLAG> uid) override {
@@ -166,7 +166,7 @@ public:
 		fake = AutoRef<ProcessLayout>::make () ;
 		fake->mUid = 0 ;
 		try {
-			assume (snapshot_.size () == PROCESS_SNAPSHOT_SIZE::expr) ;
+			assume (snapshot_.size () == PROCESS_SNAPSHOT_STEP::expr) ;
 			auto rax = ByteReader (Ref<RefBuffer<BYTE>>::reference (snapshot_)) ;
 			rax >> slice ("CSC_Process") ;
 			rax >> GAP ;
@@ -201,7 +201,7 @@ public:
 	}
 
 	RefBuffer<BYTE> snapshot () const override {
-		RefBuffer<BYTE> ret = RefBuffer<BYTE> (PROCESS_SNAPSHOT_SIZE::expr) ;
+		RefBuffer<BYTE> ret = RefBuffer<BYTE> (PROCESS_SNAPSHOT_STEP::expr) ;
 		auto rax = ByteWriter (Ref<RefBuffer<BYTE>>::reference (ret)) ;
 		if ifdo (TRUE) {
 			rax << slice ("CSC_Process") ;
@@ -276,19 +276,18 @@ public:
 
 static const auto mLibraryExternal = External<LibraryHolder ,AutoRef<LibraryLayout>> (LibraryImplHolder ()) ;
 
-struct SingletonLayout {
+struct SingletonRoot {
 	Mutex mMutex ;
 	Pin<Set<Clazz>> mClazzSet ;
 } ;
 
-class SingletonService implement Pin<SingletonLayout> {
-public:
-	imports CREF<SingletonService> instance () ;
+struct SingletonRootHolder implement Interface {
+	imports CREF<Pin<SingletonRoot>> instance () ;
 } ;
 
-exports CREF<SingletonService> SingletonService::instance () {
+exports CREF<Pin<SingletonRoot>> SingletonRootHolder::instance () {
 	return memorize ([&] () {
-		return SingletonService () ;
+		return Pin<SingletonRoot> () ;
 	}) ;
 }
 
@@ -305,7 +304,7 @@ struct SingletonProcLayout {
 	String<STR> mName ;
 	UniqueRef<Tuple<HFILE ,String<STR>>> mPipe ;
 	SingletonPipe mLocal ;
-	Ref<SingletonLayout> mRoot ;
+	Ref<SingletonRoot> mRoot ;
 
 public:
 	implicit SingletonProcLayout () = default ;
@@ -350,8 +349,8 @@ public:
 		if ifdo (TRUE) {
 			const auto r1x = FLAG (fake->mLocal.mAddress1) ;
 			assume (r1x != ZERO) ;
-			auto &&rax = keep[TYPE<SingletonLayout>::expr] (Pointer::make (r1x)) ;
-			fake->mRoot = Ref<SingletonLayout>::reference (rax) ;
+			auto &&rax = keep[TYPE<SingletonRoot>::expr] (Pointer::make (r1x)) ;
+			fake->mRoot = Ref<SingletonRoot>::reference (rax) ;
 		}
 	}
 
@@ -373,13 +372,12 @@ public:
 		} ,[&] (VREF<LENGTH> me) {
 			noop () ;
 		}) ;
-		const auto r4x = address (SingletonService::instance ().self) ;
-		auto &&rax = keep[TYPE<SingletonLayout>::expr] (Pointer::make (r4x)) ;
+		auto &&rax = keep[TYPE<SingletonRoot>::expr] (SingletonRootHolder::instance ().self) ;
 		rax.mMutex = NULL ;
 		fake->mLocal.mReserve1 = QUAD (fake->mUid) ;
-		fake->mLocal.mAddress1 = QUAD (r4x) ;
+		fake->mLocal.mAddress1 = QUAD (address (rax)) ;
 		fake->mLocal.mReserve2 = abi_reserve () ;
-		fake->mLocal.mAddress2 = QUAD (r4x) ;
+		fake->mLocal.mAddress2 = QUAD (address (rax)) ;
 		fake->mLocal.mReserve3 = ctx_reserve () ;
 	}
 

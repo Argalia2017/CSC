@@ -608,6 +608,8 @@ public:
 	}
 } ;
 
+struct PlyParserRoot ;
+
 struct PlyParserGuide {
 	INDEX mElementIndex ;
 	Deque<INDEX> mProperty ;
@@ -618,8 +620,6 @@ struct PlyParserGuide {
 	INDEX mPlyIndex ;
 	BOOL mPlyListMode ;
 } ;
-
-struct PlyParserRoot ;
 
 struct PlyParserLayout {
 	Ref<PlyParserRoot> mThix ;

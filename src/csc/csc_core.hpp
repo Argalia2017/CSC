@@ -1420,111 +1420,110 @@ public:
 	}
 } ;
 
-struct KeyLayout {
+struct KeyBaseLayout {
 	FLAG mHandle ;
 
 public:
-	implicit KeyLayout () noexcept {
+	implicit KeyBaseLayout () noexcept {
 		mHandle = ZERO ;
 	}
 
-	implicit ~KeyLayout () noexcept ;
+	implicit ~KeyBaseLayout () noexcept ;
 
-	implicit KeyLayout (CREF<KeyLayout> that) = delete ;
+	implicit KeyBaseLayout (CREF<KeyBaseLayout> that) = delete ;
 
-	forceinline VREF<KeyLayout> operator= (CREF<KeyLayout> that) = delete ;
+	forceinline VREF<KeyBaseLayout> operator= (CREF<KeyBaseLayout> that) = delete ;
 
-	implicit KeyLayout (RREF<KeyLayout> that) noexcept :KeyLayout () {
+	implicit KeyBaseLayout (RREF<KeyBaseLayout> that) noexcept :KeyBaseLayout () {
 		swap (thiz ,that) ;
 	}
 
-	forceinline VREF<KeyLayout> operator= (RREF<KeyLayout> that) noexcept {
+	forceinline VREF<KeyBaseLayout> operator= (RREF<KeyBaseLayout> that) noexcept {
 		return assign (thiz ,that) ;
 	}
 } ;
 
-struct KeyHolder implement Interface {
-	imports VFat<KeyHolder> hold (VREF<KeyLayout> that) ;
-	imports CFat<KeyHolder> hold (CREF<KeyLayout> that) ;
+struct KeyBaseHolder implement Interface {
+	imports VFat<KeyBaseHolder> hold (VREF<KeyBaseLayout> that) ;
+	imports CFat<KeyBaseHolder> hold (CREF<KeyBaseLayout> that) ;
 
 	virtual void initialize () = 0 ;
-	virtual void initialize (CREF<KeyLayout> root ,CREF<FLAG> layout) = 0 ;
+	virtual void initialize (CREF<KeyBaseLayout> root ,CREF<FLAG> layout) = 0 ;
 	virtual void destroy () = 0 ;
 	virtual INDEX get_index () const = 0 ;
 	virtual INDEX get_check () const = 0 ;
 	virtual void set_key (CREF<INDEX> index) = 0 ;
 	virtual void set_def () = 0 ;
-	virtual VREF<KeyLayout> lock (CREF<INDEX> check) leftvalue = 0 ;
+	virtual VREF<KeyBaseLayout> lock (CREF<INDEX> check) leftvalue = 0 ;
 	virtual FLAG spwan () const = 0 ;
 	virtual FLAG spwan (CREF<INDEX> index) const = 0 ;
 } ;
 
-inline KeyLayout::~KeyLayout () noexcept {
-	KeyHolder::hold (thiz)->destroy () ;
+inline KeyBaseLayout::~KeyBaseLayout () noexcept {
+	KeyBaseHolder::hold (thiz)->destroy () ;
 }
 
 template <class A>
-class KeyService implement KeyLayout {
-public:
-	static CREF<KeyService> instance () ;
+struct KeyRootHolder implement Interface {
+	imports CREF<Pin<KeyBaseLayout>> instance () ;
 } ;
 
 template <class A>
-class KeyObject implement KeyLayout {
+class KeyBase implement KeyBaseLayout {
 protected:
-	using KeyLayout::mHandle ;
+	using KeyBaseLayout::mHandle ;
 
 public:
-	explicit KeyObject () {
+	explicit KeyBase () {
 		auto &&rax = keep[TYPE<A>::expr] (thiz) ;
-		KeyHolder::hold (thiz)->initialize (KeyService<A>::instance () ,address (rax)) ;
+		KeyBaseHolder::hold (thiz)->initialize (KeyRootHolder<A>::instance () ,address (rax)) ;
 	}
 
 	INDEX get_index () const {
-		return KeyHolder::hold (thiz)->get_index () ;
+		return KeyBaseHolder::hold (thiz)->get_index () ;
 	}
 
 	INDEX get_check () const {
-		return KeyHolder::hold (thiz)->get_check () ;
+		return KeyBaseHolder::hold (thiz)->get_check () ;
 	}
 
 	void set_key (CREF<INDEX> index) {
-		return KeyHolder::hold (thiz)->set_key (index) ;
+		return KeyBaseHolder::hold (thiz)->set_key (index) ;
 	}
 
 	void set_def () {
-		return KeyHolder::hold (thiz)->set_def () ;
+		return KeyBaseHolder::hold (thiz)->set_def () ;
 	}
 } ;
 
-struct KeyExtLayout {
+struct KeyLayout {
 	mutable FLAG mHandle ;
 	INDEX mCheck ;
 
 public:
-	implicit KeyExtLayout () noexcept {
+	implicit KeyLayout () noexcept {
 		mHandle = ZERO ;
 		mCheck = 0 ;
 	}
 } ;
 
 template <class A>
-class Key implement KeyExtLayout {
+class Key implement KeyLayout {
 protected:
-	using KeyExtLayout::mHandle ;
-	using KeyExtLayout::mCheck ;
+	using KeyLayout::mHandle ;
+	using KeyLayout::mCheck ;
 
 public:
 	implicit Key () = default ;
 
-	implicit Key (VREF<KeyObject<A>> node_) {
-		mHandle = KeyHolder::hold (node_)->spwan () ;
-		mCheck = KeyHolder::hold (node ())->get_check () ;
+	implicit Key (VREF<KeyBase<A>> node_) {
+		mHandle = KeyBaseHolder::hold (node_)->spwan () ;
+		mCheck = KeyBaseHolder::hold (node ())->get_check () ;
 	}
 
 	explicit Key (CREF<INDEX> index) {
-		mHandle = KeyHolder::hold (KeyService<A>::instance ())->spwan (index) ;
-		mCheck = KeyHolder::hold (node ())->get_check () ;
+		mHandle = KeyBaseHolder::hold (KeyRootHolder<A>::instance ())->spwan (index) ;
+		mCheck = KeyBaseHolder::hold (node ())->get_check () ;
 	}
 
 	BOOL equal (CREF<Key> that) const {
@@ -1566,7 +1565,7 @@ public:
 	}
 
 	VREF<A> self_m () const leftvalue {
-		auto &&rax = KeyHolder::hold (node ())->lock (mCheck) ;
+		auto &&rax = KeyBaseHolder::hold (node ())->lock (mCheck) ;
 		return Pointer::from (rax) ;
 	}
 
@@ -1575,7 +1574,7 @@ public:
 	}
 
 private:
-	VREF<KeyObject<A>> node () const leftvalue {
+	VREF<KeyBase<A>> node () const leftvalue {
 		return Pointer::from (mHandle) ;
 	}
 } ;

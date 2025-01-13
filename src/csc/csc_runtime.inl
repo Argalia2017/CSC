@@ -726,7 +726,7 @@ public:
 	}
 
 	void initialize (CREF<Slice> name ,CREF<Unknown> holder) override {
-		fake.mThix = Singleton<GlobalService>::instance ().mThix ;
+		fake.mThix = Singleton<GlobalProc>::instance ().mThix ;
 		assert (!fake.mThix->mFinalize) ;
 		Scope<Mutex> anonymous (fake.mThix->mMutex) ;
 		INDEX ix = fake.mThix->mGlobalNameSet.map (name) ;
@@ -742,12 +742,12 @@ public:
 	}
 
 	void startup () const override {
-		auto &&rax = Singleton<GlobalService>::instance ().mThix.self ;
+		auto &&rax = Singleton<GlobalProc>::instance ().mThix.self ;
 		assume (!rax.mFinalize) ;
 	}
 
 	void shutdown () const override {
-		auto &&rax = Singleton<GlobalService>::instance ().mThix.self ;
+		auto &&rax = Singleton<GlobalProc>::instance ().mThix.self ;
 		if (rax.mFinalize)
 			return ;
 		rax.mFinalize = TRUE ;

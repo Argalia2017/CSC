@@ -421,14 +421,13 @@ struct HeapRoot {
 	Box<std::atomic<VAL>> mLength ;
 } ;
 
-class HeapService implement Pin<HeapRoot> {
-public:
-	imports CREF<HeapService> instance () ;
+struct HeapRootHolder implement Interface {
+	imports CREF<Pin<HeapRoot>> instance () ;
 } ;
 
-exports CREF<HeapService> HeapService::instance () {
+exports CREF<Pin<HeapRoot>> HeapRootHolder::instance () {
 	return memorize ([&] () {
-		return HeapService () ;
+		return Pin<HeapRoot> () ;
 	}) ;
 }
 
@@ -441,7 +440,7 @@ public:
 	}
 
 	static VREF<HeapRoot> ptr (CREF<HeapLayout> that) {
-		return HeapService::instance ().self ;
+		return HeapRootHolder::instance ().self ;
 	}
 
 	INDEX stack () const override {
@@ -519,9 +518,9 @@ struct KeyRootLayout implement Proxy {
 	BOOL mFinalize ;
 } ;
 
-class KeyImplHolder final implement Fat<KeyHolder ,KeyLayout> {
+class KeyBaseImplHolder final implement Fat<KeyBaseHolder ,KeyBaseLayout> {
 private:
-	using GCROOTIMPLLAYOUT_GROUP_SIZE = ENUM<1024> ;
+	using KEYHEAD_GROUP_SIZE = ENUM<1024> ;
 
 public:
 	void initialize () override {
@@ -555,7 +554,7 @@ public:
 		fake.mHandle = root_ptr (rax).mKeyNode ;
 	}
 
-	void initialize (CREF<KeyLayout> root ,CREF<FLAG> layout) override {
+	void initialize (CREF<KeyBaseLayout> root ,CREF<FLAG> layout) override {
 		assert (fake.mHandle == ZERO) ;
 		assert (address (fake) == layout) ;
 		const auto r1x = node_ptr (root.mHandle).mHead ;
@@ -627,7 +626,7 @@ public:
 		fake.mHandle = r3x ;
 	}
 
-	VREF<KeyLayout> lock (CREF<INDEX> check) leftvalue override {
+	VREF<KeyBaseLayout> lock (CREF<INDEX> check) leftvalue override {
 		assert (fake.mHandle != ZERO) ;
 		const auto r1x = node_ptr (fake.mHandle).mLayout ;
 		const auto r2x = node_ptr (fake.mHandle).mCheck ;
@@ -659,7 +658,7 @@ public:
 			return r3x ;
 		assert (!root_ptr (r2x).mFinalize) ;
 		const auto r4x = insert_head (index ,r2x) ;
-		const auto r5x = head_ptr (r4x).mBegin + index % GCROOTIMPLLAYOUT_GROUP_SIZE::expr * SIZE_OF<KeyNodeLayout>::expr ;
+		const auto r5x = head_ptr (r4x).mBegin + index % KEYHEAD_GROUP_SIZE::expr * SIZE_OF<KeyNodeLayout>::expr ;
 		if ifdo (TRUE) {
 			if (node_ptr (r5x).mHead != ZERO)
 				discard ;
@@ -670,7 +669,7 @@ public:
 	}
 
 	FLAG insert_head (CREF<INDEX> index ,CREF<FLAG> root) const {
-		const auto r1x = index / GCROOTIMPLLAYOUT_GROUP_SIZE::expr * GCROOTIMPLLAYOUT_GROUP_SIZE::expr ;
+		const auto r1x = index / KEYHEAD_GROUP_SIZE::expr * KEYHEAD_GROUP_SIZE::expr ;
 		const auto r2x = root_ptr (root).mHead ;
 		FLAG ret = r2x ;
 		while (TRUE) {
@@ -684,7 +683,7 @@ public:
 			if (head_ptr (ret).mIndex == r1x)
 				discard ;
 			const auto r3x = root_ptr (root).mHeap ;
-			const auto r4x = SIZE_OF<KeyHeadLayout>::expr + GCROOTIMPLLAYOUT_GROUP_SIZE::expr * SIZE_OF<KeyNodeLayout>::expr ;
+			const auto r4x = SIZE_OF<KeyHeadLayout>::expr + KEYHEAD_GROUP_SIZE::expr * SIZE_OF<KeyNodeLayout>::expr ;
 			ret = r3x.alloc (r4x) ;
 			inline_memset (Pointer::make (ret) ,r4x) ;
 			const auto r5x = ret + SIZE_OF<KeyHeadLayout>::expr ;
@@ -693,7 +692,7 @@ public:
 			head_ptr (r2x).mNext = ret ;
 			head_ptr (ret).mIndex = r1x ;
 			head_ptr (ret).mBegin = r5x ;
-			head_ptr (ret).mEnd = r5x + GCROOTIMPLLAYOUT_GROUP_SIZE::expr * SIZE_OF<KeyNodeLayout>::expr ;
+			head_ptr (ret).mEnd = r5x + KEYHEAD_GROUP_SIZE::expr * SIZE_OF<KeyNodeLayout>::expr ;
 		}
 		return move (ret) ;
 	}
@@ -717,12 +716,12 @@ public:
 	}
 } ;
 
-exports VFat<KeyHolder> KeyHolder::hold (VREF<KeyLayout> that) {
-	return VFat<KeyHolder> (KeyImplHolder () ,that) ;
+exports VFat<KeyBaseHolder> KeyBaseHolder::hold (VREF<KeyBaseLayout> that) {
+	return VFat<KeyBaseHolder> (KeyBaseImplHolder () ,that) ;
 }
 
-exports CFat<KeyHolder> KeyHolder::hold (CREF<KeyLayout> that) {
-	return CFat<KeyHolder> (KeyImplHolder () ,that) ;
+exports CFat<KeyBaseHolder> KeyBaseHolder::hold (CREF<KeyBaseLayout> that) {
+	return CFat<KeyBaseHolder> (KeyBaseImplHolder () ,that) ;
 }
 
 class SliceImplHolder final implement Fat<SliceHolder ,SliceLayout> {

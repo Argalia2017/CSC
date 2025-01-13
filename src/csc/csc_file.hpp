@@ -241,7 +241,7 @@ struct StreamFileHolder implement Interface {
 	virtual void flush () = 0 ;
 } ;
 
-using STREAMFILE_BUF_SIZE = ENUM<65536> ;
+using STREAMFILE_CHUNK_STEP = ENUM<65536> ;
 
 class StreamFile implement OfThis<AutoRef<StreamFileLayout>> {
 public:
