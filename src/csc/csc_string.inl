@@ -865,7 +865,7 @@ public:
 	}
 
 	void use_text () {
-		mTextReader = Box<TextReader>::make (mStream.share ()) ;
+		mTextReader = Box<TextReader>::make (Ref<RefBuffer<BYTE>> (mStream)) ;
 		mTextReader->reset (mBackup) ;
 		mDeque.clear () ;
 		while (TRUE) {
@@ -2420,7 +2420,7 @@ public:
 	}
 
 	void read_header () {
-		mTextReader = TextReader (mStream.share ()) ;
+		mTextReader = TextReader (Ref<RefBuffer<BYTE>> (mStream)) ;
 		mTextReader >> BOM ;
 		mTextReader >> slice ("ply") ;
 		mTextReader >> GAP ;
@@ -2581,7 +2581,7 @@ public:
 	}
 
 	void read_body_text () {
-		mTextReader = TextReader (mStream.share ()) ;
+		mTextReader = TextReader (Ref<RefBuffer<BYTE>> (mStream)) ;
 		mTextReader.reset (mBodyBackup) ;
 		mTextReader >> GAP ;
 		for (auto &&i : iter (0 ,mElementList.length ())) {
@@ -2745,7 +2745,7 @@ public:
 	}
 
 	void read_body_byte () {
-		mByteReader = ByteReader (mStream.share ()) ;
+		mByteReader = ByteReader (Ref<RefBuffer<BYTE>> (mStream)) ;
 		mByteReader.reset (mBodyBackup) ;
 		if ifdo (TRUE) {
 			if (!mDiffEndianFlag)

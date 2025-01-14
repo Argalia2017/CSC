@@ -1331,10 +1331,6 @@ public:
 
 	forceinline VREF<Ref> operator= (RREF<Ref> that) = default ;
 
-	Ref share () const {
-		return move (thiz) ;
-	}
-
 	BOOL exist () const {
 		return RefHolder::hold (thiz)->exist () ;
 	}
@@ -1474,7 +1470,7 @@ inline KeyBaseLayout::~KeyBaseLayout () noexcept {
 
 template <class A>
 struct KeyRootHolder implement Interface {
-	imports CREF<Pin<KeyBaseLayout>> instance () ;
+	imports CREF<KeyBaseLayout> instance () ;
 } ;
 
 template <class A>
@@ -1483,7 +1479,7 @@ protected:
 	using KeyBaseLayout::mHandle ;
 
 public:
-	explicit KeyBase () {
+	implicit KeyBase () noexcept {
 		auto &&rax = keep[TYPE<A>::expr] (thiz) ;
 		KeyBaseHolder::hold (thiz)->initialize (KeyRootHolder<A>::instance () ,address (rax)) ;
 	}

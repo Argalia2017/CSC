@@ -1394,6 +1394,7 @@ struct SortedMapHolder implement Interface {
 	virtual LENGTH size () const = 0 ;
 	virtual LENGTH step () const = 0 ;
 	virtual LENGTH length () const = 0 ;
+	virtual VREF<INDEX> at (CREF<INDEX> index) leftvalue = 0 ;
 	virtual CREF<INDEX> at (CREF<INDEX> index) const leftvalue = 0 ;
 	virtual INDEX ibegin () const = 0 ;
 	virtual INDEX iend () const = 0 ;
@@ -1478,6 +1479,14 @@ public:
 
 	LENGTH length () const {
 		return SortedMapHolder::hold (thiz)->length () ;
+	}
+
+	VREF<INDEX> at (CREF<INDEX> index) leftvalue {
+		return SortedMapHolder::hold (thiz)->at (index) ;
+	}
+
+	forceinline VREF<INDEX> operator[] (CREF<INDEX> index) leftvalue {
+		return at (index) ;
 	}
 
 	CREF<INDEX> at (CREF<INDEX> index) const leftvalue {

@@ -1246,6 +1246,10 @@ public:
 		return fake.mWrite ;
 	}
 
+	VREF<INDEX> at (CREF<INDEX> index) leftvalue override {
+		return fake.mThix->mList.bt (fake.mRange[index]).mMap ;
+	}
+
 	CREF<INDEX> at (CREF<INDEX> index) const leftvalue override {
 		return fake.mThix->mList.bt (fake.mRange[index]).mMap ;
 	}

@@ -620,10 +620,6 @@ public:
 
 	forceinline VREF<SharedRef> operator= (RREF<SharedRef> that) = default ;
 
-	SharedRef share () const {
-		return move (thiz) ;
-	}
-
 	BOOL exist () const {
 		return SharedRefHolder::hold (thiz)->exist () ;
 	}

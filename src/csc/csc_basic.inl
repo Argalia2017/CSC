@@ -326,28 +326,6 @@ public:
 		BoxHolder::hold (raw ())->destroy () ;
 	}
 
-	LENGTH unchange (CREF<Pin<LENGTH>> counter) const {
-		LENGTH ret ;
-		counter.get (ret) ;
-		return move (ret) ;
-	}
-
-	LENGTH increase (CREF<Pin<LENGTH>> counter) const {
-		LENGTH ret ;
-		counter.get (ret) ;
-		ret++ ;
-		counter.set (ret) ;
-		return move (ret) ;
-	}
-
-	LENGTH decrease (CREF<Pin<LENGTH>> counter) const {
-		LENGTH ret ;
-		counter.get (ret) ;
-		ret-- ;
-		counter.set (ret) ;
-		return move (ret) ;
-	}
-
 	BOOL exist () const override {
 		return fake.mThix != NULL ;
 	}
