@@ -23,38 +23,37 @@ struct PathLayout {
 class PathImplHolder final implement Fat<PathHolder ,Ref<PathLayout>> {
 public:
 	void initialize (RREF<String<STR>> pathname) override {
-		auto rax = PathLayout () ;
-		rax.mPathName = move (pathname) ;
-		rax.mSeparator.add (NONE) ;
-		const auto r1x = rax.mPathName.length () ;
+		fake = Ref<PathLayout>::make () ;
+		fake->mPathName = move (pathname) ;
+		fake->mSeparator.add (NONE) ;
+		const auto r1x = fake->mPathName.length () ;
 		for (auto &&i : iter (0 ,r1x)) {
-			if (!is_separator (rax.mPathName[i]))
+			if (!is_separator (fake->mPathName[i]))
 				continue ;
-			rax.mSeparator.add (i) ;
-			rax.mPathName[i] = STR ('\\') ;
+			fake->mSeparator.add (i) ;
+			fake->mPathName[i] = STR ('\\') ;
 		}
-		rax.mSeparator.add (r1x) ;
+		fake->mSeparator.add (r1x) ;
 		if ifdo (TRUE) {
 			if (r1x == 0)
 				discard ;
-			INDEX ix = rax.mSeparator[rax.mSeparator.length () - 2] ;
+			INDEX ix = fake->mSeparator[fake->mSeparator.length () - 2] ;
 			if (ix != r1x - 1)
 				discard ;
-			rax.mPathName.trunc (ix) ;
-			rax.mSeparator.pop () ;
+			fake->mPathName.trunc (ix) ;
+			fake->mSeparator.pop () ;
 		}
 		if ifdo (TRUE) {
-			if (rax.mSeparator.length () != 2)
+			if (fake->mSeparator.length () != 2)
 				discard ;
-			INDEX ix = rax.mSeparator[0] + 1 ;
-			INDEX iy = rax.mSeparator[1] ;
-			if (!is_root (rax.mPathName.segment (ix ,iy)))
+			INDEX ix = fake->mSeparator[0] + 1 ;
+			INDEX iy = fake->mSeparator[1] ;
+			if (!is_root (fake->mPathName.segment (ix ,iy)))
 				discard ;
-			rax.mPathName = String<STR>::make (rax.mPathName ,slice ("\\") ,slice (".")) ;
-			rax.mSeparator.add (iy + 2) ;
+			fake->mPathName = String<STR>::make (fake->mPathName ,slice ("\\") ,slice (".")) ;
+			fake->mSeparator.add (iy + 2) ;
 		}
-		assume (rax.mSeparator.length () >= 2) ;
-		fake = Ref<PathLayout>::make (move (rax)) ;
+		assume (fake->mSeparator.length () >= 2) ;
 	}
 
 	void initialize (CREF<Deque<String<STR>>> pathname) override {
@@ -365,9 +364,8 @@ private:
 
 public:
 	void initialize () override {
-		auto rax = FileProcLayout () ;
-		rax.mMutex = NULL ;
-		fake = Ref<FileProcLayout>::make (move (rax)) ;
+		fake = Ref<FileProcLayout>::make () ;
+		fake->mMutex = NULL ;
 	}
 
 	RefBuffer<BYTE> load_file (CREF<String<STR>> file) const override {

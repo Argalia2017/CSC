@@ -68,7 +68,7 @@
 
   <Type Name="CSC::RefLayout">
     <Expand HideRawView="true">
-      <ExpandedItem Condition="mHolder!=0">(CSC::RefLayout*)mHandle</ExpandedItem>
+      <ExpandedItem Condition="mHandle!=0">(CSC::RefRootLayout*)mHandle</ExpandedItem>
     </Expand>
   </Type>
 

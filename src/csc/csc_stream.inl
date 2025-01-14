@@ -23,14 +23,13 @@ struct StreamProcLayout {
 class StreamProcImplHolder final implement Fat<StreamProcHolder ,Ref<StreamProcLayout>> {
 public:
 	void initialize () override {
-		auto rax = StreamProcLayout () ;
-		rax.mBlankSlice = slice ("\b\t\n\v\f\r ") ;
-		rax.mPunctSlice = slice ("!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~") ;
-		rax.mAlphaSlice = slice ("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz") ;
-		rax.mDigitSlice = slice ("0123456789") ;
-		rax.mEscapeWordSlice = slice ("\\/tvbrnf\'\"?u") ;
-		rax.mEscapeCtrlSlice = slice ("\\/\t\v\b\r\n\f\'\"?\a") ;
-		fake = Ref<StreamProcLayout>::make (move (rax)) ;
+		fake = Ref<StreamProcLayout>::make () ;
+		fake->mBlankSlice = slice ("\b\t\n\v\f\r ") ;
+		fake->mPunctSlice = slice ("!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~") ;
+		fake->mAlphaSlice = slice ("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz") ;
+		fake->mDigitSlice = slice ("0123456789") ;
+		fake->mEscapeWordSlice = slice ("\\/tvbrnf\'\"?u") ;
+		fake->mEscapeCtrlSlice = slice ("\\/\t\v\b\r\n\f\'\"?\a") ;
 	}
 
 	BOOL big_endian () const override {
@@ -871,6 +870,7 @@ public:
 		assert (stream != NULL) ;
 		assert (stream->step () == 1) ;
 		fake.mStream = move (stream) ;
+		assert (fake.mStream.variability ()) ;
 		fake.mDiffEndian = FALSE ;
 		reset () ;
 	}
@@ -943,7 +943,7 @@ public:
 		if ifdo (act) {
 			if (fake.mWrite >= fake.mRead)
 				discard ;
-			auto &&rax = keep[TYPE<RefBuffer<BYTE>>::expr] (fake.mStream.pin ().self) ;
+			auto &&rax = keep[TYPE<RefBuffer<BYTE>>::expr] (Pointer::from (fake.mStream.self)) ;
 			rax[fake.mWrite] = item ;
 			fake.mWrite++ ;
 		}
@@ -1065,6 +1065,7 @@ public:
 		assert (stream != NULL) ;
 		assert (stream->step () <= 4) ;
 		fake.mStream = move (stream) ;
+		assert (fake.mStream.variability ()) ;
 		fake.mDiffEndian = FALSE ;
 		reset () ;
 	}
@@ -1433,7 +1434,7 @@ public:
 				discard ;
 			if (fake.mWrite >= fake.mRead)
 				discard ;
-			auto &&rax = keep[TYPE<RefBuffer<STRU8>>::expr] (fake.mStream.pin ().self) ;
+			auto &&rax = keep[TYPE<RefBuffer<STRU8>>::expr] (Pointer::from (fake.mStream.self)) ;
 			rax[fake.mWrite] = STRU8 (item) ;
 			fake.mWrite++ ;
 		}
@@ -1442,7 +1443,7 @@ public:
 				discard ;
 			if (fake.mWrite >= fake.mRead)
 				discard ;
-			auto &&rax = keep[TYPE<RefBuffer<STRU16>>::expr] (fake.mStream.pin ().self) ;
+			auto &&rax = keep[TYPE<RefBuffer<STRU16>>::expr] (Pointer::from (fake.mStream.self)) ;
 			rax[fake.mWrite] = STRU16 (item) ;
 			fake.mWrite++ ;
 		}
@@ -1451,7 +1452,7 @@ public:
 				discard ;
 			if (fake.mWrite >= fake.mRead)
 				discard ;
-			auto &&rax = keep[TYPE<RefBuffer<STRU32>>::expr] (fake.mStream.pin ().self) ;
+			auto &&rax = keep[TYPE<RefBuffer<STRU32>>::expr] (Pointer::from (fake.mStream.self)) ;
 			rax[fake.mWrite] = STRU32 (item) ;
 			fake.mWrite++ ;
 		}

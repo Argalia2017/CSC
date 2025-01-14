@@ -264,14 +264,14 @@ public:
 	implicit ~SingletonProcLayout () noexcept {
 		if (mThix == NULL)
 			return ;
-		mThix.pin ().~Pin () ;
+		mThix->~SingletonRoot () ;
 	}
 } ;
 
-class SingletonProcImplHolder final implement Fat<SingletonProcHolder ,AutoRef<SingletonProcLayout>> {
+class SingletonProcImplHolder final implement Fat<SingletonProcHolder ,Ref<SingletonProcLayout>> {
 public:
 	void initialize () override {
-		fake = AutoRef<SingletonProcLayout>::make () ;
+		fake = Ref<SingletonProcLayout>::make () ;
 		fake->mUid = RuntimeProc::process_uid () ;
 		fake->mName = String<STR>::make (slice ("CSC_Singleton_") ,fake->mUid) ;
 		inline_memset (fake->mLocal) ;
@@ -446,5 +446,5 @@ public:
 	}
 } ;
 
-static const auto mSingletonProcExternal = External<SingletonProcHolder ,AutoRef<SingletonProcLayout>> (SingletonProcImplHolder ()) ;
+static const auto mSingletonProcExternal = External<SingletonProcHolder ,Ref<SingletonProcLayout>> (SingletonProcImplHolder ()) ;
 } ;

@@ -233,7 +233,7 @@ struct RefRootLayout implement Proxy {
 	BoxLayout mValue ;
 } ;
 
-static constexpr auto REFIMPLLAYOUT_MIN_HANDLE = FLAG (0X1000) ;
+static constexpr auto REFIMPLLAYOUT_MIN_HANDLE = 8 ;
 
 class RefImplHolder final implement Fat<RefHolder ,RefLayout> {
 public:
@@ -265,6 +265,8 @@ public:
 			fake.mLayout = address (BoxHolder::hold (ptr (that).mValue)->self) ;
 		}
 		if ifdo (act) {
+			if (fake.mHandle != CONSTANT::expr)
+				discard ;
 			fake.mHandle = that.mHandle ;
 			fake.mLayout = that.mLayout ;
 		}
@@ -336,7 +338,7 @@ public:
 		return BoxHolder::hold (ptr (fake).mValue)->unknown () ;
 	}
 
-	VREF<Pointer> self_m () leftvalue {
+	VREF<Pointer> self_m () leftvalue override {
 		assert (exist ()) ;
 		return Pointer::make (fake.mLayout) ;
 	}
@@ -346,21 +348,22 @@ public:
 		return Pointer::make (fake.mLayout) ;
 	}
 
-	CREF<Pointer> pin () const leftvalue override {
+	BOOL variability () const override {
 		assert (exist ()) ;
 		auto act = TRUE ;
 		if ifdo (act) {
 			if (fake.mHandle < REFIMPLLAYOUT_MIN_HANDLE)
 				discard ;
 			const auto r1x = ptr (fake).mCounter.load () ;
-			noop (r1x) ;
-			assert (r1x == IDEN) ;
+			return r1x == IDEN ;
 		}
 		if ifdo (act) {
 			//@warn: reference instance are always unchecked except cv-qualifier
-			assert (fake.mHandle == VARIABLE::expr) ;
+			if (fake.mHandle != VARIABLE::expr)
+				discard ;
+			return TRUE ;
 		}
-		return Pointer::make (fake.mLayout) ;
+		return FALSE ;
 	}
 } ;
 
@@ -890,15 +893,14 @@ struct ClazzLayout {
 class ClazzImplHolder final implement Fat<ClazzHolder ,Ref<ClazzLayout>> {
 public:
 	void initialize (CREF<Unknown> holder) override {
-		auto rax = ClazzLayout () ;
+		fake = Ref<ClazzLayout>::make () ;
 		const auto r1x = RFat<ReflectSize> (holder) ;
-		rax.mTypeSize = r1x->type_size () ;
-		rax.mTypeAlign = r1x->type_align () ;
+		fake->mTypeSize = r1x->type_size () ;
+		fake->mTypeAlign = r1x->type_align () ;
 		const auto r2x = RFat<ReflectGuid> (holder) ;
-		rax.mTypeGuid = r2x->type_guid () ;
+		fake->mTypeGuid = r2x->type_guid () ;
 		const auto r3x = RFat<ReflectName> (holder) ;
-		rax.mTypeName = r3x->type_name () ;
-		fake = Ref<ClazzLayout>::make (move (rax)) ;
+		fake->mTypeName = r3x->type_name () ;
 	}
 
 	LENGTH type_size () const override {

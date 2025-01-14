@@ -353,13 +353,14 @@ public:
 	void initialize (CREF<Mutex> mutex) override {
 		fake = Box<SharedLockLayout>::make () ;
 		fake->mMutex = mutex.borrow () ;
+		assert (fake->mMutex.variability ()) ;
 		assert (ptr (fake).mType == MutexType::Shared) ;
 		shared_enter () ;
 		fake->mLock = std::unique_lock<SharedAtomicMutex> (SharedAtomicMutex::from (ptr (fake).mShared)) ;
 	}
 
 	static VREF<MutexLayout> ptr (CREF<Box<SharedLockLayout ,SharedLockStorage>> that) {
-		return that->mMutex.pin ().self ;
+		return Pointer::make (address (that->mMutex.self)) ;
 	}
 
 	void shared_enter () {
@@ -420,12 +421,13 @@ public:
 	void initialize (CREF<Mutex> mutex) override {
 		fake = Box<UniqueLockLayout>::make () ;
 		fake->mMutex = mutex.borrow () ;
+		assert (fake->mMutex.variability ()) ;
 		assert (ptr (fake).mType == MutexType::Unique) ;
 		fake->mLock = std::unique_lock<std::mutex> (ptr (fake).mBasic.self) ;
 	}
 
 	static VREF<MutexLayout> ptr (CREF<Box<UniqueLockLayout ,UniqueLockStorage>> that) {
-		return that->mMutex.pin ().self ;
+		return Pointer::make (address (that->mMutex.self)) ;
 	}
 
 	void wait () override {
@@ -701,22 +703,22 @@ exports CFat<RandomHolder> RandomHolder::hold (CREF<SharedRef<RandomLayout>> tha
 	return CFat<RandomHolder> (RandomImplHolder () ,that) ;
 }
 
-template class External<SingletonProcHolder ,AutoRef<SingletonProcLayout>> ;
+template class External<SingletonProcHolder ,Ref<SingletonProcLayout>> ;
 
-exports CREF<AutoRef<SingletonProcLayout>> SingletonProcHolder::instance () {
+exports CREF<Ref<SingletonProcLayout>> SingletonProcHolder::instance () {
 	return memorize ([&] () {
-		AutoRef<SingletonProcLayout> ret ;
+		Ref<SingletonProcLayout> ret ;
 		SingletonProcHolder::hold (ret)->initialize () ;
 		return move (ret) ;
 	}) ;
 }
 
-exports VFat<SingletonProcHolder> SingletonProcHolder::hold (VREF<AutoRef<SingletonProcLayout>> that) {
-	return VFat<SingletonProcHolder> (External<SingletonProcHolder ,AutoRef<SingletonProcLayout>>::declare () ,that) ;
+exports VFat<SingletonProcHolder> SingletonProcHolder::hold (VREF<Ref<SingletonProcLayout>> that) {
+	return VFat<SingletonProcHolder> (External<SingletonProcHolder ,Ref<SingletonProcLayout>>::declare () ,that) ;
 }
 
-exports CFat<SingletonProcHolder> SingletonProcHolder::hold (CREF<AutoRef<SingletonProcLayout>> that) {
-	return CFat<SingletonProcHolder> (External<SingletonProcHolder ,AutoRef<SingletonProcLayout>>::declare () ,that) ;
+exports CFat<SingletonProcHolder> SingletonProcHolder::hold (CREF<Ref<SingletonProcLayout>> that) {
+	return CFat<SingletonProcHolder> (External<SingletonProcHolder ,Ref<SingletonProcLayout>>::declare () ,that) ;
 }
 
 struct GlobalNode {

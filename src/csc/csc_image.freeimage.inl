@@ -26,14 +26,13 @@ struct ImageProcLayout {
 class ImageProcImplHolder final implement Fat<ImageProcHolder ,Ref<ImageProcLayout>> {
 public:
 	void initialize () override {
-		auto rax = ImageProcLayout () ;
-		rax.mContext = UniqueRef<BOOL> ([&] (VREF<BOOL> me) {
+		fake = Ref<ImageProcLayout>::make () ;
+		fake->mContext = UniqueRef<BOOL> ([&] (VREF<BOOL> me) {
 			FreeImage_Initialise () ;
 			me = TRUE ;
 		} ,[&] (VREF<BOOL> me) {
 			FreeImage_DeInitialise () ;
 		}) ;
-		fake = Ref<ImageProcLayout>::make (move (rax)) ;
 	}
 
 	ImageLayout make_image (RREF<BoxLayout> image) const override {

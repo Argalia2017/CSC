@@ -117,9 +117,8 @@ struct StringProcLayout {
 class StringProcImplHolder final implement Fat<StringProcHolder ,Ref<StringProcLayout>> {
 public:
 	void initialize () override {
-		auto rax = StringProcLayout () ;
-		rax.mStringLocale = string_locale () ;
-		fake = Ref<StringProcLayout>::make (move (rax)) ;
+		fake = Ref<StringProcLayout>::make () ;
+		fake->mStringLocale = string_locale () ;
 	}
 
 	String<STRA> stra_from_strw (CREF<String<STRW>> a) const override {

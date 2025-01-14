@@ -629,9 +629,9 @@ inline Random CurrentRandom () {
 struct SingletonProcLayout ;
 
 struct SingletonProcHolder implement Interface {
-	imports CREF<AutoRef<SingletonProcLayout>> instance () ;
-	imports VFat<SingletonProcHolder> hold (VREF<AutoRef<SingletonProcLayout>> that) ;
-	imports CFat<SingletonProcHolder> hold (CREF<AutoRef<SingletonProcLayout>> that) ;
+	imports CREF<Ref<SingletonProcLayout>> instance () ;
+	imports VFat<SingletonProcHolder> hold (VREF<Ref<SingletonProcLayout>> that) ;
+	imports CFat<SingletonProcHolder> hold (CREF<Ref<SingletonProcLayout>> that) ;
 
 	virtual void initialize () = 0 ;
 	virtual QUAD abi_reserve () const = 0 ;
@@ -640,7 +640,7 @@ struct SingletonProcHolder implement Interface {
 	virtual void save (CREF<Clazz> clazz ,CREF<FLAG> layout) const = 0 ;
 } ;
 
-class SingletonProc implement OfThis<AutoRef<SingletonProcLayout>> {
+class SingletonProc implement OfThis<Ref<SingletonProcLayout>> {
 public:
 	static CREF<SingletonProc> instance () {
 		return Pointer::from (SingletonProcHolder::instance ()) ;

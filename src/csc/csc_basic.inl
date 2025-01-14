@@ -108,7 +108,7 @@ exports CFat<OptionalHolder> OptionalHolder::hold (CREF<OptionalLayout> that) {
 }
 
 struct FunctionLayout {
-	Pin<BoxLayout> mValue ;
+	BoxLayout mValue ;
 } ;
 
 class FunctionImplHolder final implement Fat<FunctionHolder ,Ref<FunctionLayout>> {
@@ -123,11 +123,11 @@ public:
 	}
 
 	VREF<BoxLayout> raw () leftvalue {
-		return fake->mValue.self ;
+		return fake->mValue ;
 	}
 
 	CREF<BoxLayout> raw () const leftvalue {
-		return fake->mValue.self ;
+		return fake->mValue ;
 	}
 
 	LENGTH rank () const override {
@@ -155,7 +155,7 @@ exports CFat<FunctionHolder> FunctionHolder::hold (CREF<Ref<FunctionLayout>> tha
 
 struct AutoRefRoot {
 	Clazz mClazz ;
-	Pin<BoxLayout> mValue ;
+	BoxLayout mValue ;
 } ;
 
 class AutoRefImplHolder final implement Fat<AutoRefHolder ,AutoRefLayout> {
@@ -163,8 +163,7 @@ public:
 	void initialize (CREF<Unknown> holder) override {
 		assert (!exist ()) ;
 		RefHolder::hold (fake.mThix)->initialize (RefUnknownBinder<AutoRefRoot> () ,holder ,1) ;
-		auto &&rax = keep[TYPE<AutoRefRoot>::expr] (fake.mThix.pin ().self) ;
-		ClazzHolder::hold (rax.mClazz)->initialize (holder) ;
+		ClazzHolder::hold (fake.mThix->mClazz)->initialize (holder) ;
 		BoxHolder::hold (raw ())->initialize (holder) ;
 		const auto r1x = RFat<ReflectCreate> (holder) ;
 		r1x->create (BoxHolder::hold (raw ())->self ,1) ;
@@ -175,8 +174,7 @@ public:
 		assert (!exist ()) ;
 		const auto r1x = BoxHolder::hold (item)->unknown () ;
 		RefHolder::hold (fake.mThix)->initialize (RefUnknownBinder<AutoRefRoot> () ,r1x ,1) ;
-		auto &&rax = keep[TYPE<AutoRefRoot>::expr] (fake.mThix.pin ().self) ;
-		rax.mClazz = clazz_ ;
+		fake.mThix->mClazz = clazz_ ;
 		BoxHolder::hold (raw ())->acquire (item) ;
 		BoxHolder::hold (item)->release () ;
 		fake.mLayout = address (BoxHolder::hold (raw ())->self) ;
@@ -195,11 +193,11 @@ public:
 	}
 
 	VREF<BoxLayout> raw () leftvalue override {
-		return fake.mThix->mValue.self ;
+		return fake.mThix->mValue ;
 	}
 
 	CREF<BoxLayout> raw () const leftvalue override {
-		return fake.mThix->mValue.self ;
+		return fake.mThix->mValue ;
 	}
 
 	Clazz clazz () const override {
@@ -258,8 +256,8 @@ static constexpr auto SHADERREFIMPLLAYOUT_HEADER = FLAG (0X0FDCEBA907654321) ;
 struct SharedRefRoot {
 	FLAG mHeader ;
 	HeapMutex mMutex ;
-	Pin<LENGTH> mCounter ;
-	Pin<BoxLayout> mValue ;
+	LENGTH mCounter ;
+	BoxLayout mValue ;
 } ;
 
 class SharedRefImplHolder final implement Fat<SharedRefHolder ,SharedRefLayout> {
@@ -268,14 +266,13 @@ public:
 		assert (!exist ()) ;
 		const auto r1x = BoxHolder::hold (item)->unknown () ;
 		RefHolder::hold (fake.mThix)->initialize (RefUnknownBinder<SharedRefRoot> () ,r1x ,1) ;
-		auto &&rax = keep[TYPE<SharedRefRoot>::expr] (fake.mThix.pin ().self) ;
-		rax.mHeader = SHADERREFIMPLLAYOUT_HEADER ;
-		rax.mMutex = HeapMutex::instance () ;
+		fake.mThix->mHeader = SHADERREFIMPLLAYOUT_HEADER ;
+		fake.mThix->mMutex = HeapMutex::instance () ;
 		BoxHolder::hold (raw ())->acquire (item) ;
 		BoxHolder::hold (item)->release () ;
-		increase (fake.mThix->mCounter) ;
 		fake.mLayout = address (BoxHolder::hold (raw ())->self) ;
-		const auto r2x = address (rax) + SIZE_OF<SharedRefRoot>::expr ;
+		fake.mThix->mCounter = 1 ;
+		const auto r2x = address (fake.mThix.self) + SIZE_OF<SharedRefRoot>::expr ;
 		inline_memset (Pointer::make (r2x) ,fake.mLayout - r2x) ;
 	}
 
@@ -286,8 +283,8 @@ public:
 				discard ;
 			Scope<HeapMutex> anonymous (that.mThix->mMutex) ;
 			fake.mThix = that.mThix ;
-			increase (fake.mThix->mCounter) ;
 			fake.mLayout = address (BoxHolder::hold (raw ())->self) ;
+			fake.mThix->mCounter++ ;
 		}
 	}
 
@@ -307,15 +304,14 @@ public:
 		}) ;
 		const auto r6x = r2x - r3x * ALIGN_OF<SharedRefRoot>::expr ;
 		auto &&rax = keep[TYPE<SharedRefRoot>::expr] (Pointer::make (r6x)) ;
-		auto &&rbx = keep[TYPE<BoxLayout>::expr] (rax.mValue.self) ;
-		const auto r7x = address (BoxHolder::hold (rbx)->self) ;
+		const auto r7x = address (BoxHolder::hold (rax.mValue)->self) ;
 		assert (r7x == layout) ;
 		Scope<HeapMutex> anonymous (rax.mMutex) ;
-		const auto r8x = unchange (rax.mCounter) ;
+		const auto r8x = rax.mCounter ;
 		assert (r8x > 0) ;
 		RefHolder::hold (fake.mThix)->initialize (RefUnknownBinder<SharedRefRoot> () ,r6x) ;
-		increase (fake.mThix->mCounter) ;
 		fake.mLayout = layout ;
+		fake.mThix->mCounter++ ;
 	}
 
 	void destroy () override {
@@ -324,7 +320,7 @@ public:
 		if (!BoxHolder::hold (raw ())->exist ())
 			return ;
 		Scope<HeapMutex> anonymous (fake.mThix->mMutex) ;
-		const auto r1x = decrease (fake.mThix->mCounter) ;
+		const auto r1x = --fake.mThix->mCounter ;
 		if (r1x > 0)
 			return ;
 		BoxHolder::hold (raw ())->destroy () ;
@@ -357,18 +353,18 @@ public:
 	}
 
 	VREF<BoxLayout> raw () leftvalue override {
-		return fake.mThix->mValue.self ;
+		return fake.mThix->mValue ;
 	}
 
 	CREF<BoxLayout> raw () const leftvalue override {
-		return fake.mThix->mValue.self ;
+		return fake.mThix->mValue ;
 	}
 
 	LENGTH counter () const override {
 		if (!exist ())
 			return 0 ;
 		Scope<HeapMutex> anonymous (fake.mThix->mMutex) ;
-		return unchange (fake.mThix->mCounter) ;
+		return fake.mThix->mCounter ;
 	}
 
 	VREF<Pointer> self_m () const leftvalue override {
@@ -396,7 +392,7 @@ exports CFat<SharedRefHolder> SharedRefHolder::hold (CREF<SharedRefLayout> that)
 struct UniqueRefRoot {
 	Function<VREF<Pointer>> mOwner ;
 	Pin<UniqueRefLayout> mUpper ;
-	Pin<BoxLayout> mValue ;
+	BoxLayout mValue ;
 } ;
 
 class UniqueRefImplHolder final implement Fat<UniqueRefHolder ,UniqueRefLayout> {
@@ -413,7 +409,10 @@ public:
 	void destroy () override {
 		if (!exist ())
 			return ;
-		fake.mThix->mUpper.~Pin () ;
+		if ifdo (TRUE) {
+			auto rax = UniqueRefLayout () ;
+			fake.mThix->mUpper.get (rax) ;
+		}
 		if (!BoxHolder::hold (raw ())->exist ())
 			return ;
 		fake.mThix->mOwner (BoxHolder::hold (raw ())->self) ;
@@ -421,8 +420,7 @@ public:
 	}
 
 	void use_owner (CREF<Function<VREF<Pointer>>> owner) override {
-		auto &&rax = keep[TYPE<UniqueRefRoot>::expr] (fake.mThix.pin ().self) ;
-		rax.mOwner = owner ;
+		fake.mThix->mOwner = owner ;
 	}
 
 	BOOL exist () const override {
@@ -430,11 +428,11 @@ public:
 	}
 
 	VREF<BoxLayout> raw () leftvalue override {
-		return fake.mThix->mValue.self ;
+		return fake.mThix->mValue ;
 	}
 
 	CREF<BoxLayout> raw () const leftvalue override {
-		return fake.mThix->mValue.self ;
+		return fake.mThix->mValue ;
 	}
 
 	CREF<Pointer> self_m () const leftvalue override {
@@ -443,13 +441,12 @@ public:
 	}
 
 	void depend (VREF<UniqueRefLayout> that) const override {
-		auto &&rax = keep[TYPE<UniqueRefRoot>::expr] (that.mThix.pin ().self) ;
-		auto rbx = UniqueRefLayout () ;
-		rax.mUpper.get (rbx) ;
-		assert (!rbx.mThix.exist ()) ;
-		rbx.mThix = fake.mThix ;
-		rbx.mLayout = fake.mLayout ;
-		rax.mUpper.set (rbx) ;
+		auto rax = UniqueRefLayout () ;
+		that.mThix->mUpper.get (rax) ;
+		assert (!rax.mThix.exist ()) ;
+		rax.mThix = fake.mThix ;
+		rax.mLayout = fake.mLayout ;
+		that.mThix->mUpper.set (rax) ;
 	}
 
 	UniqueRefLayout recast (CREF<Unknown> simple) override {
@@ -471,7 +468,7 @@ exports CFat<UniqueRefHolder> UniqueRefHolder::hold (CREF<UniqueRefLayout> that)
 
 struct RefBufferRoot {
 	LENGTH mCapacity ;
-	Pin<BoxLayout> mValue ;
+	BoxLayout mValue ;
 } ;
 
 class RefBufferImplHolder final implement Fat<RefBufferHolder ,RefBufferLayout> {
@@ -496,8 +493,7 @@ public:
 		fake.mStep = r2x->type_size () ;
 		const auto r3x = RFat<ReflectCreate> (r1x) ;
 		r3x->create (self ,size_) ;
-		auto &&rax = keep[TYPE<RefBufferRoot>::expr] (fake.mThix.pin ().self) ;
-		rax.mCapacity = size_ ;
+		fake.mThix->mCapacity = size_ ;
 	}
 
 	void initialize (CREF<Unknown> holder ,CREF<SliceLayout> buffer) override {
@@ -518,8 +514,7 @@ public:
 		fake.mBuffer = buffer.mBuffer ;
 		fake.mSize = buffer.mSize ;
 		fake.mStep = buffer.mStep ;
-		auto &&rax = keep[TYPE<RefBufferRoot>::expr] (fake.mThix.pin ().self) ;
-		rax.mCapacity = USED ;
+		fake.mThix->mCapacity = USED ;
 	}
 
 	void destroy () override {
@@ -553,11 +548,11 @@ public:
 	}
 
 	VREF<BoxLayout> raw () leftvalue override {
-		return fake.mThix->mValue.self ;
+		return fake.mThix->mValue ;
 	}
 
 	CREF<BoxLayout> raw () const leftvalue override {
-		return fake.mThix->mValue.self ;
+		return fake.mThix->mValue ;
 	}
 
 	LENGTH size () const override {
@@ -602,9 +597,8 @@ public:
 		RefHolder::hold (rax)->initialize (RefUnknownBinder<RefBufferRoot> () ,r2x ,size_) ;
 		const auto r3x = RFat<ReflectSize> (r2x) ;
 		const auto r4x = r3x->type_size () * r1x ;
-		auto &&rbx = keep[TYPE<BoxLayout>::expr] (rax->mValue.self) ;
-		BoxHolder::hold (rbx)->initialize (r2x) ;
-		const auto r5x = address (BoxHolder::hold (rbx)->self) ;
+		BoxHolder::hold (rax->mValue)->initialize (r2x) ;
+		const auto r5x = address (BoxHolder::hold (rax->mValue)->self) ;
 		inline_memcpy (Pointer::make (r5x) ,self ,r4x) ;
 		const auto r6x = r5x + r4x ;
 		const auto r7x = RFat<ReflectCreate> (r2x) ;
@@ -621,8 +615,7 @@ public:
 		fake.mBuffer = r5x ;
 		fake.mSize = size_ ;
 		fake.mStep = r3x->type_size () ;
-		auto &&rcx = keep[TYPE<RefBufferRoot>::expr] (fake.mThix.pin ().self) ;
-		rcx.mCapacity = size_ ;
+		fake.mThix->mCapacity = size_ ;
 	}
 } ;
 
@@ -675,7 +668,7 @@ public:
 	}
 
 	VREF<Pointer> self_m () leftvalue {
-		return fake.mThix.pin ().self ;
+		return fake.mThix.self ;
 	}
 
 	VREF<Pointer> at (CREF<INDEX> index) leftvalue override {

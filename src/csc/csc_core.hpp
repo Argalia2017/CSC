@@ -1259,8 +1259,9 @@ struct RefHolder implement Interface {
 	virtual void destroy () = 0 ;
 	virtual BOOL exist () const = 0 ;
 	virtual Unknown unknown () const = 0 ;
+	virtual VREF<Pointer> self_m () leftvalue = 0 ;
 	virtual CREF<Pointer> self_m () const leftvalue = 0 ;
-	virtual CREF<Pointer> pin () const leftvalue = 0 ;
+	virtual BOOL variability () const = 0 ;
 } ;
 
 inline RefLayout::~RefLayout () noexcept {
@@ -1350,6 +1351,14 @@ public:
 		return RefHolder::hold (thiz)->unknown () ;
 	}
 
+	VREF<A> self_m () leftvalue {
+		return RefHolder::hold (thiz)->self ;
+	}
+
+	forceinline PTR<VREF<A>> operator-> () leftvalue {
+		return (&self) ;
+	}
+
 	CREF<A> self_m () const leftvalue {
 		return RefHolder::hold (thiz)->self ;
 	}
@@ -1358,8 +1367,8 @@ public:
 		return (&self) ;
 	}
 
-	CREF<Pin<A>> pin () const leftvalue {
-		return RefHolder::hold (thiz)->pin () ;
+	BOOL variability () const {
+		return RefHolder::hold (thiz)->variability () ;
 	}
 } ;
 
