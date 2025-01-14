@@ -18,12 +18,12 @@ static constexpr auto MATH_R = MATH_PI / FLT64 (180) ;
 static constexpr auto MATH_LN2 = FLT64 (0.693147180559945309417) ;
 static constexpr auto MATH_LN10 = FLT64 (2.30258509299404568402) ;
 
-struct MathProcLayout {} ;
+struct MathProcLayout ;
 
 struct MathProcHolder implement Interface {
-	imports CREF<MathProcLayout> instance () ;
-	imports VFat<MathProcHolder> hold (VREF<MathProcLayout> that) ;
-	imports CFat<MathProcHolder> hold (CREF<MathProcLayout> that) ;
+	imports CREF<Ref<MathProcLayout>> instance () ;
+	imports VFat<MathProcHolder> hold (VREF<Ref<MathProcLayout>> that) ;
+	imports CFat<MathProcHolder> hold (CREF<Ref<MathProcLayout>> that) ;
 
 	virtual void initialize () = 0 ;
 	virtual BOOL is_inf (CREF<FLT32> a) const = 0 ;
@@ -104,7 +104,7 @@ struct MathProcHolder implement Interface {
 	virtual FLT64 min_of (CREF<FLT64> a ,CREF<WrapperLayout> b) const = 0 ;
 } ;
 
-class MathProc implement MathProcLayout {
+class MathProc implement OfThis<Ref<MathProcLayout>> {
 public:
 	static CREF<MathProc> instance () {
 		return Pointer::from (MathProcHolder::instance ()) ;
@@ -310,18 +310,18 @@ struct Notation {
 	VAL64 mExponent ;
 } ;
 
-struct FEXP2CacheLayout {} ;
+struct FEXP2CacheLayout ;
 
 struct FEXP2CacheHolder implement Interface {
-	imports CREF<FEXP2CacheLayout> instance () ;
-	imports VFat<FEXP2CacheHolder> hold (VREF<FEXP2CacheLayout> that) ;
-	imports CFat<FEXP2CacheHolder> hold (CREF<FEXP2CacheLayout> that) ;
+	imports CREF<Ref<FEXP2CacheLayout>> instance () ;
+	imports VFat<FEXP2CacheHolder> hold (VREF<Ref<FEXP2CacheLayout>> that) ;
+	imports CFat<FEXP2CacheHolder> hold (CREF<Ref<FEXP2CacheLayout>> that) ;
 
 	virtual void initialize () = 0 ;
 	virtual void get (CREF<VAL64> index ,VREF<Notation> item) const = 0 ;
 } ;
 
-class FEXP2Cache implement FEXP2CacheLayout {
+class FEXP2Cache implement OfThis<Ref<FEXP2CacheLayout>> {
 public:
 	static CREF<FEXP2Cache> instance () {
 		return Pointer::from (FEXP2CacheHolder::instance ()) ;
@@ -334,18 +334,18 @@ public:
 	}
 } ;
 
-struct FEXP10CacheLayout {} ;
+struct FEXP10CacheLayout ;
 
 struct FEXP10CacheHolder implement Interface {
-	imports CREF<FEXP10CacheLayout> instance () ;
-	imports VFat<FEXP10CacheHolder> hold (VREF<FEXP10CacheLayout> that) ;
-	imports CFat<FEXP10CacheHolder> hold (CREF<FEXP10CacheLayout> that) ;
+	imports CREF<Ref<FEXP10CacheLayout>> instance () ;
+	imports VFat<FEXP10CacheHolder> hold (VREF<Ref<FEXP10CacheLayout>> that) ;
+	imports CFat<FEXP10CacheHolder> hold (CREF<Ref<FEXP10CacheLayout>> that) ;
 
 	virtual void initialize () = 0 ;
 	virtual void get (CREF<VAL64> index ,VREF<Notation> item) const = 0 ;
 } ;
 
-class FEXP10Cache implement FEXP10CacheLayout {
+class FEXP10Cache implement OfThis<Ref<FEXP10CacheLayout>> {
 public:
 	static CREF<FEXP10Cache> instance () {
 		return Pointer::from (FEXP10CacheHolder::instance ()) ;
@@ -358,12 +358,12 @@ public:
 	}
 } ;
 
-struct FloatProcLayout {} ;
+struct FloatProcLayout ;
 
 struct FloatProcHolder implement Interface {
-	imports CREF<FloatProcLayout> instance () ;
-	imports VFat<FloatProcHolder> hold (VREF<FloatProcLayout> that) ;
-	imports CFat<FloatProcHolder> hold (CREF<FloatProcLayout> that) ;
+	imports CREF<Ref<FloatProcLayout>> instance () ;
+	imports VFat<FloatProcHolder> hold (VREF<Ref<FloatProcLayout>> that) ;
+	imports CFat<FloatProcHolder> hold (CREF<Ref<FloatProcLayout>> that) ;
 
 	virtual void initialize () = 0 ;
 	virtual LENGTH value_precision () const = 0 ;
@@ -374,7 +374,7 @@ struct FloatProcHolder implement Interface {
 	virtual Notation fexp10_from_fexp2 (CREF<Notation> fexp2) const = 0 ;
 } ;
 
-class FloatProc implement FloatProcLayout {
+class FloatProc implement OfThis<Ref<FloatProcLayout>> {
 public:
 	static CREF<FloatProc> instance () {
 		return Pointer::from (FloatProcHolder::instance ()) ;
@@ -405,12 +405,12 @@ public:
 	}
 } ;
 
-struct ByteProcLayout {} ;
+struct ByteProcLayout ;
 
 struct ByteProcHolder implement Interface {
-	imports CREF<ByteProcLayout> instance () ;
-	imports VFat<ByteProcHolder> hold (VREF<ByteProcLayout> that) ;
-	imports CFat<ByteProcHolder> hold (CREF<ByteProcLayout> that) ;
+	imports CREF<Ref<ByteProcLayout>> instance () ;
+	imports VFat<ByteProcHolder> hold (VREF<Ref<ByteProcLayout>> that) ;
+	imports CFat<ByteProcHolder> hold (CREF<Ref<ByteProcLayout>> that) ;
 
 	virtual void initialize () = 0 ;
 	virtual BYTE split_low (CREF<WORD> a) const = 0 ;
@@ -426,14 +426,14 @@ struct ByteProcHolder implement Interface {
 	virtual WORD reverse (CREF<WORD> a) const = 0 ;
 	virtual CHAR reverse (CREF<CHAR> a) const = 0 ;
 	virtual QUAD reverse (CREF<QUAD> a) const = 0 ;
-	virtual BOOL any_bit (CREF<BYTE> curr ,CREF<BYTE> mask) const = 0 ;
-	virtual BOOL any_bit (CREF<WORD> curr ,CREF<WORD> mask) const = 0 ;
-	virtual BOOL any_bit (CREF<CHAR> curr ,CREF<CHAR> mask) const = 0 ;
-	virtual BOOL any_bit (CREF<QUAD> curr ,CREF<QUAD> mask) const = 0 ;
-	virtual BOOL all_bit (CREF<BYTE> curr ,CREF<BYTE> mask) const = 0 ;
-	virtual BOOL all_bit (CREF<WORD> curr ,CREF<WORD> mask) const = 0 ;
-	virtual BOOL all_bit (CREF<CHAR> curr ,CREF<CHAR> mask) const = 0 ;
-	virtual BOOL all_bit (CREF<QUAD> curr ,CREF<QUAD> mask) const = 0 ;
+	virtual BOOL any_bit (CREF<BYTE> a ,CREF<BYTE> mask) const = 0 ;
+	virtual BOOL any_bit (CREF<WORD> a ,CREF<WORD> mask) const = 0 ;
+	virtual BOOL any_bit (CREF<CHAR> a ,CREF<CHAR> mask) const = 0 ;
+	virtual BOOL any_bit (CREF<QUAD> a ,CREF<QUAD> mask) const = 0 ;
+	virtual BOOL all_bit (CREF<BYTE> a ,CREF<BYTE> mask) const = 0 ;
+	virtual BOOL all_bit (CREF<WORD> a ,CREF<WORD> mask) const = 0 ;
+	virtual BOOL all_bit (CREF<CHAR> a ,CREF<CHAR> mask) const = 0 ;
+	virtual BOOL all_bit (CREF<QUAD> a ,CREF<QUAD> mask) const = 0 ;
 	virtual BYTE binary (CREF<BYTE> a) const = 0 ;
 	virtual WORD binary (CREF<WORD> a) const = 0 ;
 	virtual CHAR binary (CREF<CHAR> a) const = 0 ;
@@ -443,7 +443,7 @@ struct ByteProcHolder implement Interface {
 	virtual LENGTH lowcount (CREF<BYTE> a) const = 0 ;
 } ;
 
-class ByteProc implement ByteProcLayout {
+class ByteProc implement OfThis<Ref<ByteProcLayout>> {
 public:
 	static CREF<ByteProc> instance () {
 		return Pointer::from (ByteProcHolder::instance ()) ;
@@ -491,13 +491,13 @@ public:
 	}
 
 	template <class ARG1 ,class ARG2 ,class = REQUIRE<IS_BYTE<ARG1>>>
-	static BOOL any_bit (CREF<ARG1> curr ,CREF<ARG2> mask) {
-		return ByteProcHolder::hold (instance ())->any_bit (curr ,ARG1 (mask)) ;
+	static BOOL any_bit (CREF<ARG1> a ,CREF<ARG2> mask) {
+		return ByteProcHolder::hold (instance ())->any_bit (a ,ARG1 (mask)) ;
 	}
 
 	template <class ARG1 ,class ARG2 ,class = REQUIRE<IS_BYTE<ARG1>>>
-	static BOOL all_bit (CREF<ARG1> curr ,CREF<ARG2> mask) {
-		return ByteProcHolder::hold (instance ())->all_bit (curr ,ARG1 (mask)) ;
+	static BOOL all_bit (CREF<ARG1> a ,CREF<ARG2> mask) {
+		return ByteProcHolder::hold (instance ())->all_bit (a ,ARG1 (mask)) ;
 	}
 
 	template <class ARG1 ,class = REQUIRE<IS_BYTE<ARG1>>>
@@ -965,25 +965,25 @@ public:
 	}
 } ;
 
-struct HashProcLayout {} ;
+struct HashProcLayout ;
 
 struct HashProcHolder implement Interface {
-	imports CREF<HashProcLayout> instance () ;
-	imports VFat<HashProcHolder> hold (VREF<HashProcLayout> that) ;
-	imports CFat<HashProcHolder> hold (CREF<HashProcLayout> that) ;
+	imports CREF<Ref<HashProcLayout>> instance () ;
+	imports VFat<HashProcHolder> hold (VREF<Ref<HashProcLayout>> that) ;
+	imports CFat<HashProcHolder> hold (CREF<Ref<HashProcLayout>> that) ;
 
 	virtual void initialize () = 0 ;
 	virtual CHAR fnvhash32 (CREF<Pointer> src ,CREF<LENGTH> size_) const = 0 ;
-	virtual CHAR fnvhash32 (CREF<Pointer> src ,CREF<LENGTH> size_ ,CREF<CHAR> curr) const = 0 ;
+	virtual CHAR fnvhash32 (CREF<Pointer> src ,CREF<LENGTH> size_ ,CREF<CHAR> val) const = 0 ;
 	virtual QUAD fnvhash64 (CREF<Pointer> src ,CREF<LENGTH> size_) const = 0 ;
-	virtual QUAD fnvhash64 (CREF<Pointer> src ,CREF<LENGTH> size_ ,CREF<QUAD> curr) const = 0 ;
+	virtual QUAD fnvhash64 (CREF<Pointer> src ,CREF<LENGTH> size_ ,CREF<QUAD> val) const = 0 ;
 	virtual BYTE crchash8 (CREF<Pointer> src ,CREF<LENGTH> size_) const = 0 ;
-	virtual BYTE crchash8 (CREF<Pointer> src ,CREF<LENGTH> size_ ,CREF<BYTE> curr) const = 0 ;
+	virtual BYTE crchash8 (CREF<Pointer> src ,CREF<LENGTH> size_ ,CREF<BYTE> val) const = 0 ;
 	virtual WORD crchash16 (CREF<Pointer> src ,CREF<LENGTH> size_) const = 0 ;
-	virtual WORD crchash16 (CREF<Pointer> src ,CREF<LENGTH> size_ ,CREF<WORD> curr) const = 0 ;
+	virtual WORD crchash16 (CREF<Pointer> src ,CREF<LENGTH> size_ ,CREF<WORD> val) const = 0 ;
 } ;
 
-class HashProc implement HashProcLayout {
+class HashProc implement OfThis<Ref<HashProcLayout>> {
 public:
 	static CREF<HashProc> instance () {
 		return Pointer::from (HashProcHolder::instance ()) ;
@@ -993,32 +993,32 @@ public:
 		return HashProcHolder::hold (instance ())->fnvhash32 (src ,size_) ;
 	}
 
-	static CHAR fnvhash32 (CREF<Pointer> src ,CREF<LENGTH> size_ ,CREF<CHAR> curr) {
-		return HashProcHolder::hold (instance ())->fnvhash32 (src ,size_ ,curr) ;
+	static CHAR fnvhash32 (CREF<Pointer> src ,CREF<LENGTH> size_ ,CREF<CHAR> val) {
+		return HashProcHolder::hold (instance ())->fnvhash32 (src ,size_ ,val) ;
 	}
 
 	static QUAD fnvhash64 (CREF<Pointer> src ,CREF<LENGTH> size_) {
 		return HashProcHolder::hold (instance ())->fnvhash64 (src ,size_) ;
 	}
 
-	static QUAD fnvhash64 (CREF<Pointer> src ,CREF<LENGTH> size_ ,CREF<QUAD> curr) {
-		return HashProcHolder::hold (instance ())->fnvhash64 (src ,size_ ,curr) ;
+	static QUAD fnvhash64 (CREF<Pointer> src ,CREF<LENGTH> size_ ,CREF<QUAD> val) {
+		return HashProcHolder::hold (instance ())->fnvhash64 (src ,size_ ,val) ;
 	}
 
 	static BYTE crchash8 (CREF<Pointer> src ,CREF<LENGTH> size_) {
 		return HashProcHolder::hold (instance ())->crchash8 (src ,size_) ;
 	}
 
-	static BYTE crchash8 (CREF<Pointer> src ,CREF<LENGTH> size_ ,CREF<BYTE> curr) {
-		return HashProcHolder::hold (instance ())->crchash8 (src ,size_ ,curr) ;
+	static BYTE crchash8 (CREF<Pointer> src ,CREF<LENGTH> size_ ,CREF<BYTE> val) {
+		return HashProcHolder::hold (instance ())->crchash8 (src ,size_ ,val) ;
 	}
 
 	static WORD crchash16 (CREF<Pointer> src ,CREF<LENGTH> size_) {
 		return HashProcHolder::hold (instance ())->crchash16 (src ,size_) ;
 	}
 
-	static WORD crchash16 (CREF<Pointer> src ,CREF<LENGTH> size_ ,CREF<WORD> curr) {
-		return HashProcHolder::hold (instance ())->crchash16 (src ,size_ ,curr) ;
+	static WORD crchash16 (CREF<Pointer> src ,CREF<LENGTH> size_ ,CREF<WORD> val) {
+		return HashProcHolder::hold (instance ())->crchash16 (src ,size_ ,val) ;
 	}
 } ;
 } ;

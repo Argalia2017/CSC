@@ -1684,12 +1684,12 @@ inline Format PrintFormat (CREF<ARG1>...params) {
 	return move (ret) ;
 }
 
-struct StreamTextProcLayout {} ;
+struct StreamTextProcLayout ;
 
 struct StreamTextProcHolder implement Interface {
-	imports CREF<StreamTextProcLayout> instance () ;
-	imports VFat<StreamTextProcHolder> hold (VREF<StreamTextProcLayout> that) ;
-	imports CFat<StreamTextProcHolder> hold (CREF<StreamTextProcLayout> that) ;
+	imports CREF<Ref<StreamTextProcLayout>> instance () ;
+	imports VFat<StreamTextProcHolder> hold (VREF<Ref<StreamTextProcLayout>> that) ;
+	imports CFat<StreamTextProcHolder> hold (CREF<Ref<StreamTextProcLayout>> that) ;
 
 	virtual void initialize () = 0 ;
 	virtual void read_keyword (VREF<ReaderBinder> reader ,VREF<String<STRU8>> item) const = 0 ;
@@ -1701,7 +1701,7 @@ struct StreamTextProcHolder implement Interface {
 	virtual void write_aligned (VREF<WriterBinder> writer ,CREF<VAL64> number ,CREF<LENGTH> align) const = 0 ;
 } ;
 
-class StreamTextProc implement StreamTextProcLayout {
+class StreamTextProc implement OfThis<Ref<StreamTextProcLayout>> {
 public:
 	static CREF<StreamTextProc> instance () {
 		return Pointer::from (StreamTextProcHolder::instance ()) ;

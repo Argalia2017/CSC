@@ -36,7 +36,7 @@ using HFILE = int ;
 } ;
 
 namespace CSC {
-class RuntimeProcImplHolder final implement Fat<RuntimeProcHolder ,RuntimeProcLayout> {
+class RuntimeProcImplHolder final implement Fat<RuntimeProcHolder ,Ref<RuntimeProcLayout>> {
 public:
 	void initialize () override {
 		noop () ;
@@ -86,7 +86,7 @@ public:
 	}
 } ;
 
-static const auto mRuntimeProcExternal = External<RuntimeProcHolder ,RuntimeProcLayout> (RuntimeProcImplHolder ()) ;
+static const auto mRuntimeProcExternal = External<RuntimeProcHolder ,Ref<RuntimeProcLayout>> (RuntimeProcImplHolder ()) ;
 
 struct ProcessLayout {
 	FLAG mUid ;

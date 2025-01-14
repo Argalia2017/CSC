@@ -413,10 +413,10 @@ struct FUNCTION_inline_max {
 static constexpr auto inline_max = FUNCTION_inline_max () ;
 
 struct FUNCTION_inline_between {
-	forceinline BOOL operator() (CREF<VAL> curr ,CREF<VAL> begin_ ,CREF<VAL> end_) const noexcept {
-		if (curr < begin_)
+	forceinline BOOL operator() (CREF<VAL> val ,CREF<VAL> begin_ ,CREF<VAL> end_) const noexcept {
+		if (val < begin_)
 			return FALSE ;
-		if (curr >= end_)
+		if (val >= end_)
 			return FALSE ;
 		return TRUE ;
 	}
@@ -425,10 +425,10 @@ struct FUNCTION_inline_between {
 static constexpr auto inline_between = FUNCTION_inline_between () ;
 
 struct FUNCTION_inline_alignas {
-	forceinline VAL operator() (CREF<VAL> curr ,CREF<VAL> align) const noexcept {
+	forceinline VAL operator() (CREF<VAL> val ,CREF<VAL> align) const noexcept {
 		assert (align > 0) ;
-		const auto r1x = curr / align * align ;
-		if (r1x == curr)
+		const auto r1x = val / align * align ;
+		if (r1x == val)
 			return r1x ;
 		return r1x + align ;
 	}

@@ -1155,6 +1155,7 @@ private:
 
 protected:
 	using AllocatorRealLayout<A ,B>::mAllocator ;
+	using AllocatorRealLayout<A ,B>::mOffset ;
 	using AllocatorRealLayout<A ,B>::mWidth ;
 	using AllocatorRealLayout<A ,B>::mLength ;
 	using AllocatorRealLayout<A ,B>::mFree ;

@@ -1197,7 +1197,7 @@ public:
 	}
 
 	void initialize (CREF<Unknown> holder ,CREF<LENGTH> size_) override {
-		fake.mThix = SharedRef<SortedMapRoot>::make () ;
+		fake.mThix = Ref<SortedMapRoot>::make () ;
 		AllocatorHolder::hold (fake.mThix->mList)->initialize (holder ,size_) ;
 		fake.mThix->mCheck = 0 ;
 		clear () ;
@@ -1910,8 +1910,8 @@ struct FUNCTION_fnvhash {
 	}
 
 	template <class ARG1>
-	forceinline CHAR operator() (CREF<ARG1> src ,CREF<CHAR> curr) const {
-		return HashProc::fnvhash32 (Pointer::from (src) ,SIZE_OF<ARG1>::expr ,curr) ;
+	forceinline CHAR operator() (CREF<ARG1> src ,CREF<CHAR> val) const {
+		return HashProc::fnvhash32 (Pointer::from (src) ,SIZE_OF<ARG1>::expr ,val) ;
 	}
 } ;
 #endif
@@ -1924,8 +1924,8 @@ struct FUNCTION_fnvhash {
 	}
 
 	template <class ARG1>
-	forceinline QUAD operator() (CREF<ARG1> src ,CREF<QUAD> curr) const {
-		return HashProc::fnvhash64 (Pointer::from (src) ,SIZE_OF<ARG1>::expr ,curr) ;
+	forceinline QUAD operator() (CREF<ARG1> src ,CREF<QUAD> val) const {
+		return HashProc::fnvhash64 (Pointer::from (src) ,SIZE_OF<ARG1>::expr ,val) ;
 	}
 } ;
 #endif

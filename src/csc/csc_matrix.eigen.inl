@@ -21,7 +21,7 @@
 #include "csc_begin.h"
 
 namespace CSC {
-class MatrixProcImplHolder final implement Fat<MatrixProcHolder ,MatrixProcLayout> {
+class MatrixProcImplHolder final implement Fat<MatrixProcHolder ,Ref<MatrixProcLayout>> {
 public:
 	void initialize () override {
 		noop () ;
@@ -136,9 +136,9 @@ public:
 	}
 } ;
 
-static const auto mMatrixProcExternal = External<MatrixProcHolder ,MatrixProcLayout> (MatrixProcImplHolder ()) ;
+static const auto mMatrixProcExternal = External<MatrixProcHolder ,Ref<MatrixProcLayout>> (MatrixProcImplHolder ()) ;
 
-class LinearProcImplHolder final implement Fat<LinearProcHolder ,LinearProcLayout> {
+class LinearProcImplHolder final implement Fat<LinearProcHolder ,Ref<LinearProcLayout>> {
 public:
 	void initialize () override {
 		noop () ;
@@ -189,5 +189,5 @@ public:
 	}
 } ;
 
-static const auto mLinearProcExternal = External<LinearProcHolder ,LinearProcLayout> (LinearProcImplHolder ()) ;
+static const auto mLinearProcExternal = External<LinearProcHolder ,Ref<LinearProcLayout>> (LinearProcImplHolder ()) ;
 } ;

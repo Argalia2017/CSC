@@ -137,12 +137,12 @@ inline Time CurrentTime () {
 	return move (ret) ;
 }
 
-struct RuntimeProcLayout {} ;
+struct RuntimeProcLayout ;
 
 struct RuntimeProcHolder implement Interface {
-	imports CREF<RuntimeProcLayout> instance () ;
-	imports VFat<RuntimeProcHolder> hold (VREF<RuntimeProcLayout> that) ;
-	imports CFat<RuntimeProcHolder> hold (CREF<RuntimeProcLayout> that) ;
+	imports CREF<Ref<RuntimeProcLayout>> instance () ;
+	imports VFat<RuntimeProcHolder> hold (VREF<Ref<RuntimeProcLayout>> that) ;
+	imports CFat<RuntimeProcHolder> hold (CREF<Ref<RuntimeProcLayout>> that) ;
 
 	virtual void initialize () = 0 ;
 	virtual LENGTH thread_concurrency () const = 0 ;
@@ -155,7 +155,7 @@ struct RuntimeProcHolder implement Interface {
 	virtual String<STR> library_main () const = 0 ;
 } ;
 
-class RuntimeProc implement RuntimeProcLayout {
+class RuntimeProc implement OfThis<Ref<RuntimeProcLayout>> {
 public:
 	static CREF<RuntimeProc> instance () {
 		return Pointer::from (RuntimeProcHolder::instance ()) ;
@@ -689,7 +689,7 @@ inline CREF<A> Singleton<A>::instance () {
 struct GlobalRoot ;
 
 struct GlobalLayout {
-	SharedRef<GlobalRoot> mThix ;
+	Ref<GlobalRoot> mThix ;
 	INDEX mIndex ;
 	Clazz mClazz ;
 } ;

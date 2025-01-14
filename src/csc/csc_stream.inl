@@ -1634,7 +1634,7 @@ exports CFat<FormatHolder> FormatHolder::hold (CREF<FormatLayout> that) {
 	return CFat<FormatHolder> (FormatImplHolder () ,that) ;
 }
 
-class StreamTextProcImplHolder final implement Fat<StreamTextProcHolder ,StreamTextProcLayout> {
+class StreamTextProcImplHolder final implement Fat<StreamTextProcHolder ,Ref<StreamTextProcLayout>> {
 public:
 	void initialize () override {
 		noop () ;
@@ -1832,19 +1832,19 @@ public:
 	}
 } ;
 
-exports CREF<StreamTextProcLayout> StreamTextProcHolder::instance () {
+exports CREF<Ref<StreamTextProcLayout>> StreamTextProcHolder::instance () {
 	return memorize ([&] () {
-		StreamTextProcLayout ret ;
+		Ref<StreamTextProcLayout> ret ;
 		StreamTextProcHolder::hold (ret)->initialize () ;
 		return move (ret) ;
 	}) ;
 }
 
-exports VFat<StreamTextProcHolder> StreamTextProcHolder::hold (VREF<StreamTextProcLayout> that) {
+exports VFat<StreamTextProcHolder> StreamTextProcHolder::hold (VREF<Ref<StreamTextProcLayout>> that) {
 	return VFat<StreamTextProcHolder> (StreamTextProcImplHolder () ,that) ;
 }
 
-exports CFat<StreamTextProcHolder> StreamTextProcHolder::hold (CREF<StreamTextProcLayout> that) {
+exports CFat<StreamTextProcHolder> StreamTextProcHolder::hold (CREF<Ref<StreamTextProcLayout>> that) {
 	return CFat<StreamTextProcHolder> (StreamTextProcImplHolder () ,that) ;
 }
 

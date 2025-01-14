@@ -752,12 +752,12 @@ struct SVDResult {
 	Matrix mV ;
 } ;
 
-struct MatrixProcLayout {} ;
+struct MatrixProcLayout ;
 
 struct MatrixProcHolder implement Interface {
-	imports CREF<MatrixProcLayout> instance () ;
-	imports VFat<MatrixProcHolder> hold (VREF<MatrixProcLayout> that) ;
-	imports CFat<MatrixProcHolder> hold (CREF<MatrixProcLayout> that) ;
+	imports CREF<Ref<MatrixProcLayout>> instance () ;
+	imports VFat<MatrixProcHolder> hold (VREF<Ref<MatrixProcLayout>> that) ;
+	imports CFat<MatrixProcHolder> hold (CREF<Ref<MatrixProcLayout>> that) ;
 
 	virtual void initialize () = 0 ;
 	virtual TRSResult solve_trs (CREF<Matrix> a) const = 0 ;
@@ -765,7 +765,7 @@ struct MatrixProcHolder implement Interface {
 	virtual SVDResult solve_svd (CREF<Matrix> a) const = 0 ;
 } ;
 
-class MatrixProc implement MatrixProcLayout {
+class MatrixProc implement OfThis<Ref<MatrixProcLayout>> {
 public:
 	static CREF<MatrixProc> instance () {
 		return Pointer::from (MatrixProcHolder::instance ()) ;
@@ -949,12 +949,12 @@ public:
 	}
 } ;
 
-struct LinearProcLayout {} ;
+struct LinearProcLayout ;
 
 struct LinearProcHolder implement Interface {
-	imports CREF<LinearProcLayout> instance () ;
-	imports VFat<LinearProcHolder> hold (VREF<LinearProcLayout> that) ;
-	imports CFat<LinearProcHolder> hold (CREF<LinearProcLayout> that) ;
+	imports CREF<Ref<LinearProcLayout>> instance () ;
+	imports VFat<LinearProcHolder> hold (VREF<Ref<LinearProcLayout>> that) ;
+	imports CFat<LinearProcHolder> hold (CREF<Ref<LinearProcLayout>> that) ;
 
 	virtual void initialize () = 0 ;
 	virtual Image<FLT64> solve_lsm (CREF<Image<FLT64>> a) const = 0 ;
@@ -962,7 +962,7 @@ struct LinearProcHolder implement Interface {
 	virtual Image<FLT64> solve_inv (CREF<Image<FLT64>> a) const = 0 ;
 } ;
 
-class LinearProc implement LinearProcLayout {
+class LinearProc implement OfThis<Ref<LinearProcLayout>> {
 public:
 	static CREF<LinearProc> instance () {
 		return Pointer::from (LinearProcHolder::instance ()) ;

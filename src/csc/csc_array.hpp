@@ -1375,7 +1375,7 @@ struct SortedMapRoot {
 } ;
 
 struct SortedMapLayout {
-	SharedRef<SortedMapRoot> mThix ;
+	Ref<SortedMapRoot> mThix ;
 	INDEX mRoot ;
 	RefBuffer<INDEX> mRange ;
 	INDEX mWrite ;

@@ -162,22 +162,22 @@ exports CFat<TimeHolder> TimeHolder::hold (CREF<Box<TimeLayout ,TimeStorage>> th
 	return CFat<TimeHolder> (TimeImplHolder () ,that) ;
 }
 
-template class External<RuntimeProcHolder ,RuntimeProcLayout> ;
+template class External<RuntimeProcHolder ,Ref<RuntimeProcLayout>> ;
 
-exports CREF<RuntimeProcLayout> RuntimeProcHolder::instance () {
+exports CREF<Ref<RuntimeProcLayout>> RuntimeProcHolder::instance () {
 	return memorize ([&] () {
-		RuntimeProcLayout ret ;
+		Ref<RuntimeProcLayout> ret ;
 		RuntimeProcHolder::hold (ret)->initialize () ;
 		return move (ret) ;
 	}) ;
 }
 
-exports VFat<RuntimeProcHolder> RuntimeProcHolder::hold (VREF<RuntimeProcLayout> that) {
-	return VFat<RuntimeProcHolder> (External<RuntimeProcHolder ,RuntimeProcLayout>::declare () ,that) ;
+exports VFat<RuntimeProcHolder> RuntimeProcHolder::hold (VREF<Ref<RuntimeProcLayout>> that) {
+	return VFat<RuntimeProcHolder> (External<RuntimeProcHolder ,Ref<RuntimeProcLayout>>::declare () ,that) ;
 }
 
-exports CFat<RuntimeProcHolder> RuntimeProcHolder::hold (CREF<RuntimeProcLayout> that) {
-	return CFat<RuntimeProcHolder> (External<RuntimeProcHolder ,RuntimeProcLayout>::declare () ,that) ;
+exports CFat<RuntimeProcHolder> RuntimeProcHolder::hold (CREF<Ref<RuntimeProcLayout>> that) {
+	return CFat<RuntimeProcHolder> (External<RuntimeProcHolder ,Ref<RuntimeProcLayout>>::declare () ,that) ;
 }
 
 struct AtomicLayout {
@@ -723,7 +723,7 @@ exports CFat<SingletonProcHolder> SingletonProcHolder::hold (CREF<Ref<SingletonP
 
 struct GlobalNode {
 	FLAG mHolder ;
-	AutoRef<Pointer> mValue ;
+	Pin<AutoRef<Pointer>> mValue ;
 } ;
 
 struct GlobalRoot {
@@ -736,7 +736,7 @@ struct GlobalRoot {
 class GlobalImplHolder final implement Fat<GlobalHolder ,GlobalLayout> {
 public:
 	void initialize () override {
-		fake.mThix = SharedRef<GlobalRoot>::make () ;
+		fake.mThix = Ref<GlobalRoot>::make () ;
 		fake.mThix->mMutex = NULL ;
 		fake.mThix->mFinalize = FALSE ;
 		fake.mIndex = NONE ;
@@ -759,43 +759,44 @@ public:
 	}
 
 	void startup () const override {
-		auto &&rax = Singleton<GlobalProc>::instance ().mThix.self ;
-		assume (!rax.mFinalize) ;
+		auto rax = Singleton<GlobalProc>::instance ().mThix ;
+		assume (!rax->mFinalize) ;
 	}
 
 	void shutdown () const override {
-		auto &&rax = Singleton<GlobalProc>::instance ().mThix.self ;
-		if (rax.mFinalize)
+		auto rax = Singleton<GlobalProc>::instance ().mThix ;
+		if (rax->mFinalize)
 			return ;
-		rax.mFinalize = TRUE ;
-		rax.mGlobalNameSet.clear () ;
-		rax.mGlobalList.clear () ;
+		rax->mFinalize = TRUE ;
+		rax->mGlobalNameSet.clear () ;
+		rax->mGlobalList.clear () ;
 	}
 
 	BOOL exist () const override {
 		Scope<Mutex> anonymous (fake.mThix->mMutex) ;
 		INDEX ix = fake.mIndex ;
-		const auto r1x = fake.mClazz ;
-		const auto r2x = fake.mThix->mGlobalList[ix].mValue.clazz () ;
-		return r1x == r2x ;
+		auto &&rax = keep[TYPE<AutoRef<Pointer>>::expr] (fake.mThix->mGlobalList[ix].mValue.self) ;
+		return fake.mClazz == rax.clazz () ;
 	}
 
 	AutoRef<Pointer> fetch () const override {
 		Scope<Mutex> anonymous (fake.mThix->mMutex) ;
 		INDEX ix = fake.mIndex ;
-		assume (fake.mThix->mGlobalList[ix].mValue.exist ()) ;
+		auto &&rax = keep[TYPE<AutoRef<Pointer>>::expr] (fake.mThix->mGlobalList[ix].mValue.self) ;
+		assume (rax.exist ()) ;
 		const auto r1x = Unknown (fake.mThix->mGlobalList[ix].mHolder) ;
 		AutoRef<Pointer> ret = AutoRef<Pointer> (r1x) ;
 		const auto r2x = RFat<ReflectClone> (r1x) ;
-		r2x->clone (ret ,fake.mThix->mGlobalList[ix].mValue) ;
+		r2x->clone (ret.self ,rax.self) ;
 		return move (ret) ;
 	}
 
 	void store (RREF<AutoRef<Pointer>> item) const override {
 		Scope<Mutex> anonymous (fake.mThix->mMutex) ;
 		INDEX ix = fake.mIndex ;
-		assume (!fake.mThix->mGlobalList[ix].mValue.exist ()) ;
-		fake.mThix->mGlobalList[ix].mValue = move (item) ;
+		auto &&rax = keep[TYPE<AutoRef<Pointer>>::expr] (fake.mThix->mGlobalList[ix].mValue.self) ;
+		assume (!rax.exist ()) ;
+		rax = move (item) ;
 	}
 } ;
 
