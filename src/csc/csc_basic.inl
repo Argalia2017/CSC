@@ -15,32 +15,24 @@ struct HeapMutexRoot {
 	Box<std::recursive_mutex> mMutex ;
 } ;
 
-struct HeapMutexRootHolder implement Interface {
-	imports CREF<Pin<HeapMutexRoot>> instance () ;
-} ;
-
-exports CREF<Pin<HeapMutexRoot>> HeapMutexRootHolder::instance () {
-	return memorize ([&] () {
-		return Pin<HeapMutexRoot> () ;
-	}) ;
-}
-
 class HeapMutexImplHolder final implement Fat<HeapMutexHolder ,HeapMutexLayout> {
 public:
 	void initialize () override {
-		ptr (fake).mMutex.remake () ;
+		pin_ptr (fake).mMutex.remake () ;
 	}
 
-	static VREF<HeapMutexRoot> ptr (CREF<HeapMutexLayout> that) {
-		return HeapMutexRootHolder::instance ().self ;
+	static VREF<HeapMutexRoot> pin_ptr (CREF<HeapMutexLayout> that) {
+		return memorize ([&] () {
+			return Pin<HeapMutexRoot> () ;
+		}).self ;
 	}
 
 	void enter () const override {
-		return ptr (fake).mMutex->lock () ;
+		return pin_ptr (fake).mMutex->lock () ;
 	}
 
 	void leave () const override {
-		return ptr (fake).mMutex->unlock () ;
+		return pin_ptr (fake).mMutex->unlock () ;
 	}
 } ;
 

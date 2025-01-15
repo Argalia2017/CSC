@@ -754,21 +754,10 @@ public:
 } ;
 
 struct JetLayout ;
-using JetEvalFunction = Function<VREF<JetLayout> ,CREF<WrapperLayout>> ;
-
-struct JetLayout {
-	FLT64 mFX ;
-	FLT64 mEX ;
-	RefBuffer<FLT64> mDX ;
-	INDEX mSlot ;
-	JetEvalFunction mEval ;
-	SharedRef<JetLayout> mFake ;
-	SharedRef<JetLayout> mThat ;
-} ;
 
 struct JetHolder implement Interface {
-	imports VFat<JetHolder> hold (VREF<SharedRef<JetLayout>> that) ;
-	imports CFat<JetHolder> hold (CREF<SharedRef<JetLayout>> that) ;
+	imports VFat<JetHolder> hold (VREF<Ref<JetLayout>> that) ;
+	imports CFat<JetHolder> hold (CREF<Ref<JetLayout>> that) ;
 
 	virtual void initialize (CREF<LENGTH> size_ ,CREF<FLT64> item) = 0 ;
 	virtual void initialize (CREF<LENGTH> size_ ,CREF<FLT64> item ,CREF<INDEX> slot) = 0 ;
@@ -776,29 +765,29 @@ struct JetHolder implement Interface {
 	virtual FLT64 ex () const = 0 ;
 	virtual FLT64 dx (CREF<INDEX> slot) const = 0 ;
 	virtual void once (CREF<WrapperLayout> params) const = 0 ;
-	virtual SharedRef<JetLayout> sadd (CREF<SharedRef<JetLayout>> that) const = 0 ;
-	virtual SharedRef<JetLayout> ssub (CREF<SharedRef<JetLayout>> that) const = 0 ;
-	virtual SharedRef<JetLayout> smul (CREF<SharedRef<JetLayout>> that) const = 0 ;
-	virtual SharedRef<JetLayout> sdiv (CREF<SharedRef<JetLayout>> that) const = 0 ;
-	virtual SharedRef<JetLayout> inverse () const = 0 ;
-	virtual SharedRef<JetLayout> ssqrt () const = 0 ;
-	virtual SharedRef<JetLayout> scbrt () const = 0 ;
-	virtual SharedRef<JetLayout> spow (CREF<VAL32> that) const = 0 ;
-	virtual SharedRef<JetLayout> shypot (CREF<SharedRef<JetLayout>> that) const = 0 ;
-	virtual SharedRef<JetLayout> sabs () const = 0 ;
-	virtual SharedRef<JetLayout> minus () const = 0 ;
-	virtual SharedRef<JetLayout> ssin () const = 0 ;
-	virtual SharedRef<JetLayout> scos () const = 0 ;
-	virtual SharedRef<JetLayout> stan () const = 0 ;
-	virtual SharedRef<JetLayout> sasin () const = 0 ;
-	virtual SharedRef<JetLayout> sacos () const = 0 ;
-	virtual SharedRef<JetLayout> satan (CREF<SharedRef<JetLayout>> that) const = 0 ;
-	virtual SharedRef<JetLayout> sexp () const = 0 ;
-	virtual SharedRef<JetLayout> slog () const = 0 ;
+	virtual Ref<JetLayout> sadd (CREF<Ref<JetLayout>> that) const = 0 ;
+	virtual Ref<JetLayout> ssub (CREF<Ref<JetLayout>> that) const = 0 ;
+	virtual Ref<JetLayout> smul (CREF<Ref<JetLayout>> that) const = 0 ;
+	virtual Ref<JetLayout> sdiv (CREF<Ref<JetLayout>> that) const = 0 ;
+	virtual Ref<JetLayout> inverse () const = 0 ;
+	virtual Ref<JetLayout> ssqrt () const = 0 ;
+	virtual Ref<JetLayout> scbrt () const = 0 ;
+	virtual Ref<JetLayout> spow (CREF<VAL32> that) const = 0 ;
+	virtual Ref<JetLayout> shypot (CREF<Ref<JetLayout>> that) const = 0 ;
+	virtual Ref<JetLayout> sabs () const = 0 ;
+	virtual Ref<JetLayout> minus () const = 0 ;
+	virtual Ref<JetLayout> ssin () const = 0 ;
+	virtual Ref<JetLayout> scos () const = 0 ;
+	virtual Ref<JetLayout> stan () const = 0 ;
+	virtual Ref<JetLayout> sasin () const = 0 ;
+	virtual Ref<JetLayout> sacos () const = 0 ;
+	virtual Ref<JetLayout> satan (CREF<Ref<JetLayout>> that) const = 0 ;
+	virtual Ref<JetLayout> sexp () const = 0 ;
+	virtual Ref<JetLayout> slog () const = 0 ;
 } ;
 
 template <class A>
-class Jet implement OfThis<SharedRef<JetLayout>> {
+class Jet implement OfThis<Ref<JetLayout>> {
 public:
 	implicit Jet () = default ;
 
@@ -834,7 +823,7 @@ public:
 	}
 
 	Jet sadd (CREF<Jet> that) const {
-		OfThis<SharedRef<JetLayout>> ret = JetHolder::hold (thiz)->sadd (that) ;
+		OfThis<Ref<JetLayout>> ret = JetHolder::hold (thiz)->sadd (that) ;
 		return move (keep[TYPE<Jet>::expr] (ret)) ;
 	}
 
@@ -847,7 +836,7 @@ public:
 	}
 
 	Jet ssub (CREF<Jet> that) const {
-		OfThis<SharedRef<JetLayout>> ret = JetHolder::hold (thiz)->ssub (that) ;
+		OfThis<Ref<JetLayout>> ret = JetHolder::hold (thiz)->ssub (that) ;
 		return move (keep[TYPE<Jet>::expr] (ret)) ;
 	}
 
@@ -860,7 +849,7 @@ public:
 	}
 
 	Jet smul (CREF<Jet> that) const {
-		OfThis<SharedRef<JetLayout>> ret = JetHolder::hold (thiz)->smul (that) ;
+		OfThis<Ref<JetLayout>> ret = JetHolder::hold (thiz)->smul (that) ;
 		return move (keep[TYPE<Jet>::expr] (ret)) ;
 	}
 
@@ -873,7 +862,7 @@ public:
 	}
 
 	Jet sdiv (CREF<Jet> that) const {
-		OfThis<SharedRef<JetLayout>> ret = JetHolder::hold (thiz)->sdiv (that) ;
+		OfThis<Ref<JetLayout>> ret = JetHolder::hold (thiz)->sdiv (that) ;
 		return move (keep[TYPE<Jet>::expr] (ret)) ;
 	}
 
@@ -886,37 +875,37 @@ public:
 	}
 
 	Jet inverse () const {
-		OfThis<SharedRef<JetLayout>> ret = JetHolder::hold (thiz)->inverse () ;
+		OfThis<Ref<JetLayout>> ret = JetHolder::hold (thiz)->inverse () ;
 		return move (keep[TYPE<Jet>::expr] (ret)) ;
 	}
 
 	Jet ssqrt () const {
-		OfThis<SharedRef<JetLayout>> ret = JetHolder::hold (thiz)->ssqrt () ;
+		OfThis<Ref<JetLayout>> ret = JetHolder::hold (thiz)->ssqrt () ;
 		return move (keep[TYPE<Jet>::expr] (ret)) ;
 	}
 
 	Jet scbrt () const {
-		OfThis<SharedRef<JetLayout>> ret = JetHolder::hold (thiz)->scbrt () ;
+		OfThis<Ref<JetLayout>> ret = JetHolder::hold (thiz)->scbrt () ;
 		return move (keep[TYPE<Jet>::expr] (ret)) ;
 	}
 
 	Jet spow (CREF<VAL32> that) const {
-		OfThis<SharedRef<JetLayout>> ret = JetHolder::hold (thiz)->spow (that) ;
+		OfThis<Ref<JetLayout>> ret = JetHolder::hold (thiz)->spow (that) ;
 		return move (keep[TYPE<Jet>::expr] (ret)) ;
 	}
 
 	Jet shypot (CREF<Jet> that) const {
-		OfThis<SharedRef<JetLayout>> ret = JetHolder::hold (thiz)->shypot (that) ;
+		OfThis<Ref<JetLayout>> ret = JetHolder::hold (thiz)->shypot (that) ;
 		return move (keep[TYPE<Jet>::expr] (ret)) ;
 	}
 
 	Jet sabs () const {
-		OfThis<SharedRef<JetLayout>> ret = JetHolder::hold (thiz)->sabs () ;
+		OfThis<Ref<JetLayout>> ret = JetHolder::hold (thiz)->sabs () ;
 		return move (keep[TYPE<Jet>::expr] (ret)) ;
 	}
 
 	Jet minus () const {
-		OfThis<SharedRef<JetLayout>> ret = JetHolder::hold (thiz)->minus () ;
+		OfThis<Ref<JetLayout>> ret = JetHolder::hold (thiz)->minus () ;
 		return move (keep[TYPE<Jet>::expr] (ret)) ;
 	}
 
@@ -925,42 +914,42 @@ public:
 	}
 
 	Jet ssin () const {
-		OfThis<SharedRef<JetLayout>> ret = JetHolder::hold (thiz)->ssin () ;
+		OfThis<Ref<JetLayout>> ret = JetHolder::hold (thiz)->ssin () ;
 		return move (keep[TYPE<Jet>::expr] (ret)) ;
 	}
 
 	Jet scos () const {
-		OfThis<SharedRef<JetLayout>> ret = JetHolder::hold (thiz)->scos () ;
+		OfThis<Ref<JetLayout>> ret = JetHolder::hold (thiz)->scos () ;
 		return move (keep[TYPE<Jet>::expr] (ret)) ;
 	}
 
 	Jet stan () const {
-		OfThis<SharedRef<JetLayout>> ret = JetHolder::hold (thiz)->stan () ;
+		OfThis<Ref<JetLayout>> ret = JetHolder::hold (thiz)->stan () ;
 		return move (keep[TYPE<Jet>::expr] (ret)) ;
 	}
 
 	Jet sasin () const {
-		OfThis<SharedRef<JetLayout>> ret = JetHolder::hold (thiz)->sasin () ;
+		OfThis<Ref<JetLayout>> ret = JetHolder::hold (thiz)->sasin () ;
 		return move (keep[TYPE<Jet>::expr] (ret)) ;
 	}
 
 	Jet sacos () const {
-		OfThis<SharedRef<JetLayout>> ret = JetHolder::hold (thiz)->sacos () ;
+		OfThis<Ref<JetLayout>> ret = JetHolder::hold (thiz)->sacos () ;
 		return move (keep[TYPE<Jet>::expr] (ret)) ;
 	}
 
-	Jet satan (CREF<SharedRef<JetLayout>> that) const {
-		OfThis<SharedRef<JetLayout>> ret = JetHolder::hold (thiz)->satan (that) ;
+	Jet satan (CREF<Ref<JetLayout>> that) const {
+		OfThis<Ref<JetLayout>> ret = JetHolder::hold (thiz)->satan (that) ;
 		return move (keep[TYPE<Jet>::expr] (ret)) ;
 	}
 
 	Jet sexp () const {
-		OfThis<SharedRef<JetLayout>> ret = JetHolder::hold (thiz)->sexp () ;
+		OfThis<Ref<JetLayout>> ret = JetHolder::hold (thiz)->sexp () ;
 		return move (keep[TYPE<Jet>::expr] (ret)) ;
 	}
 
 	Jet slog () const {
-		OfThis<SharedRef<JetLayout>> ret = JetHolder::hold (thiz)->slog () ;
+		OfThis<Ref<JetLayout>> ret = JetHolder::hold (thiz)->slog () ;
 		return move (keep[TYPE<Jet>::expr] (ret)) ;
 	}
 } ;

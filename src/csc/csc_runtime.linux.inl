@@ -280,16 +280,6 @@ struct SingletonRoot {
 	Pin<Set<Clazz>> mClazzSet ;
 } ;
 
-struct SingletonRootHolder implement Interface {
-	imports CREF<Pin<SingletonRoot>> instance () ;
-} ;
-
-exports CREF<Pin<SingletonRoot>> SingletonRootHolder::instance () {
-	return memorize ([&] () {
-		return Pin<SingletonRoot> () ;
-	}) ;
-}
-
 struct SingletonPipe {
 	QUAD mReserve1 ;
 	QUAD mAddress1 ;
@@ -323,6 +313,12 @@ public:
 		fake->mName = String<STR>::make (slice ("/CSC_Singleton_") ,fake->mUid) ;
 		inline_memset (fake->mLocal) ;
 		link_pipe () ;
+	}
+
+	static VREF<SingletonRoot> pin_ptr (CREF<SingletonProcLayout> that) {
+		return memorize ([&] () {
+			return Pin<SingletonRoot> () ;
+		}).self ;
 	}
 
 	void link_pipe () {
@@ -371,7 +367,7 @@ public:
 		} ,[&] (VREF<LENGTH> me) {
 			noop () ;
 		}) ;
-		auto &&rax = keep[TYPE<SingletonRoot>::expr] (SingletonRootHolder::instance ().self) ;
+		auto &&rax = keep[TYPE<SingletonRoot>::expr] (pin_ptr (fake.self)) ;
 		rax.mMutex = NULL ;
 		fake->mLocal.mReserve1 = QUAD (fake->mUid) ;
 		fake->mLocal.mAddress1 = QUAD (address (rax)) ;

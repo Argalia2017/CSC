@@ -422,30 +422,22 @@ struct HeapRoot {
 	Box<std::atomic<VAL>> mLength ;
 } ;
 
-struct HeapRootHolder implement Interface {
-	imports CREF<Pin<HeapRoot>> instance () ;
-} ;
-
-exports CREF<Pin<HeapRoot>> HeapRootHolder::instance () {
-	return memorize ([&] () {
-		return Pin<HeapRoot> () ;
-	}) ;
-}
-
 class HeapImplHolder final implement Fat<HeapHolder ,HeapLayout> {
 public:
 	void initialize () override {
-		ptr (fake).mStack.remake () ;
-		ptr (fake).mLength.remake () ;
+		pin_ptr (fake).mStack.remake () ;
+		pin_ptr (fake).mLength.remake () ;
 		dump_memory_leaks () ;
 	}
 
-	static VREF<HeapRoot> ptr (CREF<HeapLayout> that) {
-		return HeapRootHolder::instance ().self ;
+	static VREF<HeapRoot> pin_ptr (CREF<HeapLayout> that) {
+		return memorize ([&] () {
+			return Pin<HeapRoot> () ;
+		}).self ;
 	}
 
 	INDEX stack () const override {
-		INDEX ret = ptr (fake).mStack.self++ ;
+		INDEX ret = pin_ptr (fake).mStack.self++ ;
 		if ifdo (TRUE) {
 			if (ret >= 0)
 				discard ;
@@ -455,7 +447,7 @@ public:
 	}
 
 	LENGTH length () const override {
-		return ptr (fake).mLength.self ;
+		return pin_ptr (fake).mLength.self ;
 	}
 
 	FLAG alloc (CREF<LENGTH> size_) const override {
@@ -463,14 +455,14 @@ public:
 		assume (ret != ZERO) ;
 		const auto r1x = csc_pointer_t (ret) ;
 		const auto r2x = memsize (r1x) ;
-		ptr (fake).mLength.self += r2x ;
+		pin_ptr (fake).mLength.self += r2x ;
 		return move (ret) ;
 	}
 
 	void free (CREF<FLAG> layout) const override {
 		const auto r1x = csc_pointer_t (layout) ;
 		const auto r2x = memsize (r1x) ;
-		ptr (fake).mLength.self -= r2x ;
+		pin_ptr (fake).mLength.self -= r2x ;
 		operator delete (r1x ,std::nothrow) ;
 	}
 } ;

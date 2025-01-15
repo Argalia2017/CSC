@@ -1339,8 +1339,9 @@ public:
 		if ifdo (TRUE) {
 			const auto r3x = (&fake.mRange[0]) ;
 			const auto r4x = r3x + fake.mRange.size () ;
+			auto &&rax = fake.mThix.self ;
 			std::sort (r3x ,r4x ,[&] (CREF<INDEX> a ,CREF<INDEX> b) {
-				return r1x->compr (fake.mThix->mList[a] ,fake.mThix->mList[b]) < ZERO ;
+				return r1x->compr (rax.mList[a] ,rax.mList[b]) < ZERO ;
 			}) ;
 		}
 		if ifdo (TRUE) {
