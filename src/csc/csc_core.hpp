@@ -117,10 +117,10 @@ struct FUNCTION_inline_watch {
 static constexpr auto inline_watch = FUNCTION_inline_watch () ;
 
 struct FUNCTION_inline_type_name {
-	imports FLAG invoke (CREF<Interface> squalor) ;
+	imports FLAG invoke (CREF<Pointer> squalor ,CREF<FLAG> func_) ;
 
-	forceinline FLAG operator() (CREF<Interface> squalor) const noexcept {
-		return invoke (squalor) ;
+	forceinline FLAG operator() (CREF<Pointer> squalor ,CREF<FLAG> func_) const noexcept {
+		return invoke (squalor ,func_) ;
 	}
 } ;
 
@@ -140,7 +140,7 @@ struct FUNCTION_inline_memset {
 	imports void invoke (VREF<Pointer> dst ,CREF<LENGTH> size_) ;
 
 	forceinline void operator() (VREF<Pointer> dst ,CREF<LENGTH> size_) const noexcept {
-		return invoke (dst ,size_) ;
+		return __macro_memset (dst ,size_) ;
 	}
 
 	template <class ARG1 ,class = REQUIRE<IS_TRIVIAL<ARG1>>>
@@ -155,7 +155,7 @@ struct FUNCTION_inline_memcpy {
 	imports void invoke (VREF<Pointer> dst ,CREF<Pointer> src ,CREF<LENGTH> size_) ;
 
 	forceinline void operator() (VREF<Pointer> dst ,CREF<Pointer> src ,CREF<LENGTH> size_) const noexcept {
-		return invoke (dst ,src ,size_) ;
+		return __macro_memcpy (dst ,src ,size_) ;
 	}
 
 	template <class ARG1 ,class = REQUIRE<IS_TRIVIAL<ARG1>>>
@@ -170,7 +170,7 @@ struct FUNCTION_inline_memcmp {
 	imports FLAG invoke (CREF<Pointer> dst ,CREF<Pointer> src ,CREF<LENGTH> size_) ;
 
 	forceinline FLAG operator() (CREF<Pointer> dst ,CREF<Pointer> src ,CREF<LENGTH> size_) const noexcept {
-		return invoke (dst ,src ,size_) ;
+		return __macro_memcmp (dst ,src ,size_) ;
 	}
 
 	template <class ARG1 ,class = REQUIRE<IS_TRIVIAL<ARG1>>>
@@ -374,7 +374,6 @@ struct FUNCTION_bitwise_impl {
 		return move (ret) ;
 	}
 } ;
-
 struct FUNCTION_bitwise {
 	template <class ARG1>
 	forceinline consteval FUNCTION_bitwise_impl<ARG1> operator[] (TYPE<ARG1>) const noexcept {
@@ -1885,27 +1884,14 @@ struct ReflectName implement Interface {
 	}
 } ;
 
-#ifdef __CSC_CXX_RTTI__
 template <class A>
 class ReflectNameBinder implement ReflectName {
 public:
 	Slice type_name () const override {
-		const auto r1x = inline_type_name (thiz) ;
+		const auto r1x = inline_type_name (Pointer::from (thiz) ,address (__macro_type_rtti)) ;
 		return Slice (r1x ,SLICE_MAX_SIZE::expr ,1).eos () ;
 	}
 } ;
-#endif
-
-#ifndef __CSC_CXX_RTTI__
-template <class A>
-class ReflectNameBinder implement ReflectName {
-public:
-	Slice type_name () const override {
-		//@fatal: nvcc is so bad
-		return Slice (__macro_function) ;
-	}
-} ;
-#endif
 
 template <class A>
 class OfThis {

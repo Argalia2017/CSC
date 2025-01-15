@@ -50,99 +50,74 @@ exports void FUNCTION_inline_abort::invoke () {
 	std::abort () ;
 } ;
 
-#ifdef __CSC_COMPILER_MSVC__
-struct FUNCTION_side_effect {
-	forceinline void operator() (csc_pointer_t src) const noexcept {
-		_ReadWriteBarrier () ;
-	}
-} ;
-#endif
-
-#ifdef __CSC_COMPILER_GNUC__
-struct FUNCTION_side_effect {
-	forceinline void operator() (csc_pointer_t src) const noexcept {
-		asm volatile ("" : : "r" (src) : "memory") ;
-	}
-} ;
-#endif
-
-#ifdef __CSC_COMPILER_CLANG__
-struct FUNCTION_side_effect {
-	forceinline void operator() (csc_pointer_t src) const noexcept {
-		asm volatile ("" : : "r" (src) : "memory") ;
-	}
-} ;
-#endif
-
-static constexpr auto side_effect = FUNCTION_side_effect () ;
-
 exports void FUNCTION_inline_watch::invoke (VREF<Pointer> src) {
-	side_effect ((&src)) ;
+	//@warn: make side effect
+	inline_memcpy (src ,src ,1) ;
 }
 
 #ifdef __CSC_CXX_RTTI__
-struct FUNCTION_core_type_name {
-	forceinline FLAG operator() (CREF<Interface> squalor) const noexcept {
+struct FUNCTION_stl_type_name {
+	forceinline FLAG operator() (CREF<Interface> squalor ,CREF<FLAG> func_) const noexcept {
 		return FLAG (typeid (squalor).name ()) ;
 	}
 } ;
 #endif
 
 #ifndef __CSC_CXX_RTTI__
-struct FUNCTION_core_type_name {
-	forceinline FLAG operator() (CREF<Interface> squalor) const noexcept {
-		assert (FALSE) ;
-		return ZERO ;
+#ifdef __CSC_COMPILER_NVCC__
+#pragma message "NVCC would not generate type_name without rtti"
+#endif
+
+struct FUNCTION_stl_type_name {
+	forceinline FLAG operator() (CREF<Interface> squalor ,CREF<FLAG> func_) const noexcept {
+		return func_ ;
 	}
 } ;
 #endif
 
-static constexpr auto core_type_name = FUNCTION_core_type_name () ;
+static constexpr auto stl_type_name = FUNCTION_stl_type_name () ;
 
-exports FLAG FUNCTION_inline_type_name::invoke (CREF<Interface> squalor) {
-	return core_type_name (squalor) ;
+exports FLAG FUNCTION_inline_type_name::invoke (CREF<Pointer> squalor ,CREF<FLAG> func_) {
+	return stl_type_name (squalor ,func_) ;
 }
 
 #ifdef __CSC_COMPILER_MSVC__
-struct FUNCTION_core_list_pair {
-	forceinline Tuple<FLAG ,FLAG> operator() (CREF<Pointer> squalor ,CREF<LENGTH> step_) const noexcept {
+struct FUNCTION_stl_list_pair {
+	forceinline Tuple<FLAG ,FLAG> operator() (CREF<csc_initializer_list_t<Pointer>> squalor ,CREF<LENGTH> step_) const noexcept {
 		Tuple<FLAG ,FLAG> ret ;
-		auto &&rax = keep[TYPE<std::initializer_list<Pointer>>::expr] (squalor) ;
-		ret.m1st = FLAG (rax.begin ()) ;
-		ret.m2nd = FLAG (rax.end ()) ;
+		ret.m1st = FLAG (squalor.begin ()) ;
+		ret.m2nd = FLAG (squalor.end ()) ;
 		return move (ret) ;
 	}
 } ;
 #endif
 
 #ifdef __CSC_COMPILER_GNUC__
-struct FUNCTION_core_list_pair {
-	forceinline Tuple<FLAG ,FLAG> operator() (CREF<Pointer> squalor ,CREF<LENGTH> step_) const noexcept {
+struct FUNCTION_stl_list_pair {
+	forceinline Tuple<FLAG ,FLAG> operator() (CREF<csc_initializer_list_t<Pointer>> squalor ,CREF<LENGTH> step_) const noexcept {
 		Tuple<FLAG ,FLAG> ret ;
-		auto &&rax = keep[TYPE<std::initializer_list<Pointer>>::expr] (squalor) ;
-		ret.m1st = FLAG (rax.begin ()) ;
-		ret.m2nd = FLAG (rax.begin ()) + LENGTH (rax.size ()) * step_ ;
+		ret.m1st = FLAG (squalor.begin ()) ;
+		ret.m2nd = FLAG (squalor.begin ()) + LENGTH (squalor.size ()) * step_ ;
 		return move (ret) ;
 	}
 } ;
 #endif
 
 #ifdef __CSC_COMPILER_CLANG__
-struct FUNCTION_core_list_pair {
-	forceinline Tuple<FLAG ,FLAG> operator() (CREF<Pointer> squalor ,CREF<LENGTH> step_) const noexcept {
+struct FUNCTION_stl_list_pair {
+	forceinline Tuple<FLAG ,FLAG> operator() (CREF<csc_initializer_list_t<Pointer>> squalor ,CREF<LENGTH> step_) const noexcept {
 		Tuple<FLAG ,FLAG> ret ;
-		auto &&rax = keep[TYPE<std::initializer_list<Pointer>>::expr] (squalor) ;
-		ret.m1st = FLAG (rax.begin ()) ;
-		ret.m2nd = FLAG (rax.end ()) ;
+		ret.m1st = FLAG (squalor.begin ()) ;
+		ret.m2nd = FLAG (squalor.end ()) ;
 		return move (ret) ;
 	}
 } ;
 #endif
 
-static constexpr auto core_list_pair = FUNCTION_core_list_pair () ;
+static constexpr auto stl_list_pair = FUNCTION_stl_list_pair () ;
 
 exports Tuple<FLAG ,FLAG> FUNCTION_inline_list_pair::invoke (CREF<Pointer> squalor ,CREF<LENGTH> step_) {
-	return core_list_pair (squalor ,step_) ;
+	return stl_list_pair (squalor ,step_) ;
 }
 
 exports void FUNCTION_inline_memset::invoke (VREF<Pointer> dst ,CREF<LENGTH> size_) {

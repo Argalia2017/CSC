@@ -1083,7 +1083,7 @@ public:
 		ret[z] = RotationMatrix (z ,r8x) ;
 		const auto r9x = ret[z].transpose () * r7x ;
 		for (auto &&j : iter (0 ,4 ,0 ,4)) {
-			const auto r10x = LENGTH (j.mX == j.mY) ;
+			const auto r10x = FLT64 (j.mX == j.mY) ;
 			assert (MathProc::abs (r9x[j] - r10x) < FLT32_EPS) ;
 		}
 		return move (ret) ;

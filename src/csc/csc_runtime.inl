@@ -617,7 +617,7 @@ public:
 	FLT64 random_float (CREF<FLT64> scale) const override {
 		const auto r1x = VAL64 (scale) ;
 		assert (r1x > 0) ;
-		const auto r2x = FLT64 (random_value (ZERO ,r1x)) ;
+		const auto r2x = FLT64 (random_value (VAL64 (0) ,r1x)) ;
 		const auto r3x = r2x * MathProc::inverse (FLT64 (r1x)) ;
 		return r3x ;
 	}
