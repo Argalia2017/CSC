@@ -82,7 +82,6 @@
   <Type Name="CSC::KeyNodeLayout">
     <Expand HideRawView="true">
       <Item Name="[head]">(CSC::KeyHeadLayout*)mHead</Item>
-      <Item Name="[marked]">mMarked</Item>
       <Item Name="[layout]">mLayout,x</Item>
       <Item Name="[check]">mCheck</Item>
     </Expand>
@@ -95,6 +94,14 @@
       <Item Name="[index]">mIndex</Item>
       <Item Name="[begin]">mBegin,x</Item>
       <Item Name="[end]">mEnd,x</Item>
+    </Expand>
+  </Type>
+
+  <Type Name="CSC::KeyRootLayout">
+    <Expand HideRawView="true">
+      <Item Name="[head]">(CSC::KeyHeadLayout*)mHead</Item>
+      <Item Name="[ref_node]">(CSC::KeyNodeLayout*)mRefNode</Item>
+      <Item Name="[def_node]">(CSC::KeyNodeLayout*)mDefNode</Item>
     </Expand>
   </Type>
 
@@ -197,7 +204,7 @@
       <Item Name="[step]" Condition="mThix.mLayout!=0">mStep</Item>
       <Item Name="[fixed]">mThix</Item>
       <Item Name="[hint]" Condition="false">CSC::BYTE_ENDIAN</Item>
-      <ArrayItems>
+      <ArrayItems Condition="mThix.mLayout!=0">
         <Size>mSize&lt;10?mSize:10</Size>
         <ValuePointer>($T1*)mBuffer</ValuePointer>
       </ArrayItems>
@@ -248,7 +255,7 @@
       <Item Name="[step]" Condition="mAllocator.mThix.mLayout==0">0</Item>
       <Item Name="[step]" Condition="mAllocator.mThix.mLayout!=0">mAllocator.mStep</Item>
       <Item Name="[fixed]">mAllocator.mThix</Item>
-      <ArrayItems>
+      <ArrayItems Condition="mAllocator.mThix.mLayout!=0">
         <Size>mAllocator.mSize&lt;10?mAllocator.mSize:10</Size>
         <ValuePointer>(CSC::TupleNode&lt;$T1,$T2&gt;*)mAllocator.mBuffer</ValuePointer>
       </ArrayItems>
@@ -353,12 +360,12 @@
 
   <Type Name="CSC::SortedMap&lt;*&gt;">
     <Expand HideRawView="true">
-      <Item Name="[size]" Condition="mThix.mLayout==0">0</Item>
-      <Item Name="[size]" Condition="mThix.mLayout!=0">mWrite</Item>
-      <Item Name="[step]" Condition="mThix.mLayout==0">0</Item>
-      <Item Name="[step]" Condition="mThix.mLayout!=0">mRange.mStep</Item>
+      <Item Name="[size]" Condition="mRange.mThix.mLayout==0">0</Item>
+      <Item Name="[size]" Condition="mRange.mThix.mLayout!=0">mWrite</Item>
+      <Item Name="[step]" Condition="mRange.mThix.mLayout==0">0</Item>
+      <Item Name="[step]" Condition="mRange.mThix.mLayout!=0">mRange.mStep</Item>
       <Item Name="[fixed]">mThix</Item>
-      <IndexListItems Condition="mWrite&lt;10">
+      <IndexListItems Condition="mRange.mThix.mLayout!=0">
         <Size>mWrite&lt;10?mWrite:10</Size>
         <ValueNode>((CSC::TupleNode&lt;$T1,CSC::SortedMapNode&gt;*)(*(CSC::SortedMapRoot*)mThix.mLayout).mList.mAllocator.mBuffer)[mRange[$i]].m2nd.mMap</ValueNode>
       </IndexListItems>

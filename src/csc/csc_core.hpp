@@ -1459,7 +1459,7 @@ struct KeyBaseHolder implement Interface {
 	virtual INDEX get_check () const = 0 ;
 	virtual void set_key (CREF<INDEX> index) = 0 ;
 	virtual void set_def () = 0 ;
-	virtual VREF<KeyBaseLayout> lock (CREF<INDEX> check) leftvalue = 0 ;
+	virtual VREF<Pointer> lock (CREF<INDEX> check) leftvalue = 0 ;
 	virtual FLAG spwan () const = 0 ;
 	virtual FLAG spwan (CREF<INDEX> index) const = 0 ;
 } ;
@@ -1570,8 +1570,7 @@ public:
 	}
 
 	VREF<A> self_m () const leftvalue {
-		auto &&rax = KeyBaseHolder::hold (node ())->lock (mCheck) ;
-		return Pointer::from (rax) ;
+		return KeyBaseHolder::hold (node ())->lock (mCheck) ;
 	}
 
 	forceinline PTR<VREF<A>> operator-> () const leftvalue {

@@ -265,8 +265,6 @@ public:
 			fake.mLayout = address (BoxHolder::hold (ptr (that).mValue)->self) ;
 		}
 		if ifdo (act) {
-			if (fake.mHandle != CONSTANT::expr)
-				discard ;
 			fake.mHandle = that.mHandle ;
 			fake.mLayout = that.mLayout ;
 		}
@@ -500,7 +498,6 @@ exports CFat<HeapHolder> HeapHolder::hold (CREF<HeapLayout> that) {
 
 struct KeyNodeLayout implement Proxy {
 	FLAG mHead ;
-	BOOL mMarked ;
 	FLAG mLayout ;
 	INDEX mCheck ;
 } ;
@@ -508,14 +505,14 @@ struct KeyNodeLayout implement Proxy {
 struct KeyHeadLayout implement Proxy {
 	FLAG mRoot ;
 	FLAG mNext ;
-	INDEX mIndex ;
+	FLAG mHash ;
 	FLAG mBegin ;
 	FLAG mEnd ;
 } ;
 
 struct KeyRootLayout implement Proxy {
 	FLAG mHead ;
-	FLAG mKeyNode ;
+	FLAG mRefNode ;
 	FLAG mDefNode ;
 	Heap mHeap ;
 	BOOL mFinalize ;
@@ -536,25 +533,26 @@ public:
 			rax = r1x.alloc (SIZE_OF<KeyRootLayout>::expr) ;
 			root_ptr (rax).mHeap = r1x ;
 			root_ptr (rax).mFinalize = FALSE ;
-			const auto r2x = SIZE_OF<KeyHeadLayout>::expr + 2 * SIZE_OF<KeyNodeLayout>::expr ;
+			const auto r5x = 2 * SIZE_OF<KeyNodeLayout>::expr ;
+			const auto r2x = SIZE_OF<KeyHeadLayout>::expr + r5x ;
 			rbx = r1x.alloc (r2x) ;
 			inline_memset (Pointer::make (rbx) ,r2x) ;
 			const auto r3x = rbx + SIZE_OF<KeyHeadLayout>::expr ;
 			const auto r4x = r3x + SIZE_OF<KeyNodeLayout>::expr ;
 			head_ptr (rbx).mRoot = rax ;
 			head_ptr (rbx).mNext = rbx ;
-			head_ptr (rbx).mIndex = NONE ;
+			head_ptr (rbx).mHash = NONE ;
 			head_ptr (rbx).mBegin = r3x ;
-			head_ptr (rbx).mEnd = r3x + 2 * SIZE_OF<KeyNodeLayout>::expr ;
+			head_ptr (rbx).mEnd = r3x + r5x ;
 			node_ptr (r3x).mHead = rbx ;
 			node_ptr (r3x).mCheck = NONE ;
 			node_ptr (r4x).mHead = rbx ;
 			node_ptr (r4x).mCheck = NONE ;
 			root_ptr (rax).mHead = rbx ;
-			root_ptr (rax).mKeyNode = r3x ;
+			root_ptr (rax).mRefNode = r3x ;
 			root_ptr (rax).mDefNode = r4x ;
 		}
-		fake.mHandle = root_ptr (rax).mKeyNode ;
+		fake.mHandle = root_ptr (rax).mRefNode ;
 	}
 
 	void initialize (CREF<KeyBaseLayout> root ,CREF<FLAG> layout) override {
@@ -575,7 +573,7 @@ public:
 		node_ptr (fake.mHandle).mLayout = node_ptr (r3x).mLayout ;
 		node_ptr (fake.mHandle).mCheck++ ;
 		if ifdo (TRUE) {
-			const auto r4x = root_ptr (r2x).mKeyNode ;
+			const auto r4x = root_ptr (r2x).mRefNode ;
 			if (fake.mHandle != r4x)
 				discard ;
 			root_ptr (r2x).mFinalize = TRUE ;
@@ -601,10 +599,10 @@ public:
 		if (fake.mHandle == ZERO)
 			return NONE ;
 		const auto r1x = node_ptr (fake.mHandle).mHead ;
-		if (head_ptr (r1x).mIndex < 0)
+		if (head_ptr (r1x).mHash < 0)
 			return NONE ;
 		const auto r2x = (fake.mHandle - head_ptr (r1x).mBegin) / SIZE_OF<KeyNodeLayout>::expr ;
-		return head_ptr (r1x).mIndex + r2x ;
+		return head_ptr (r1x).mHash + r2x ;
 	}
 
 	INDEX get_check () const override {
@@ -629,7 +627,7 @@ public:
 		fake.mHandle = r3x ;
 	}
 
-	VREF<KeyBaseLayout> lock (CREF<INDEX> check) leftvalue override {
+	VREF<Pointer> lock (CREF<INDEX> check) leftvalue override {
 		assert (fake.mHandle != ZERO) ;
 		const auto r1x = node_ptr (fake.mHandle).mLayout ;
 		const auto r2x = node_ptr (fake.mHandle).mCheck ;
@@ -660,42 +658,45 @@ public:
 		if (index < 0)
 			return r3x ;
 		assert (!root_ptr (r2x).mFinalize) ;
-		const auto r4x = insert_head (index ,r2x) ;
-		const auto r5x = head_ptr (r4x).mBegin + index % KEYHEAD_GROUP_SIZE::expr * SIZE_OF<KeyNodeLayout>::expr ;
+		const auto r4x = index / KEYHEAD_GROUP_SIZE::expr ;
+		const auto r5x = index % KEYHEAD_GROUP_SIZE::expr ;
+		const auto r6x = insert_head (r4x ,r2x) ;
+		const auto r7x = head_ptr (r6x).mBegin + r5x * SIZE_OF<KeyNodeLayout>::expr ;
 		if ifdo (TRUE) {
-			if (node_ptr (r5x).mHead != ZERO)
+			if (node_ptr (r7x).mHead != ZERO)
 				discard ;
-			node_ptr (r5x).mHead = r4x ;
-			node_ptr (r5x).mLayout = node_ptr (r3x).mLayout ;
+			node_ptr (r7x).mHead = r6x ;
+			node_ptr (r7x).mLayout = node_ptr (r3x).mLayout ;
 		}
-		return r5x ;
+		return r7x ;
 	}
 
 	FLAG insert_head (CREF<INDEX> index ,CREF<FLAG> root) const {
-		const auto r1x = index / KEYHEAD_GROUP_SIZE::expr * KEYHEAD_GROUP_SIZE::expr ;
+		const auto r1x = index * KEYHEAD_GROUP_SIZE::expr ;
 		const auto r2x = root_ptr (root).mHead ;
 		FLAG ret = r2x ;
 		while (TRUE) {
-			if (head_ptr (ret).mIndex == r1x)
+			if (head_ptr (ret).mHash == r1x)
 				break ;
 			ret = head_ptr (ret).mNext ;
 			if (ret == r2x)
 				break ;
 		}
 		if ifdo (TRUE) {
-			if (head_ptr (ret).mIndex == r1x)
+			if (head_ptr (ret).mHash == r1x)
 				discard ;
 			const auto r3x = root_ptr (root).mHeap ;
-			const auto r4x = SIZE_OF<KeyHeadLayout>::expr + KEYHEAD_GROUP_SIZE::expr * SIZE_OF<KeyNodeLayout>::expr ;
-			ret = r3x.alloc (r4x) ;
-			inline_memset (Pointer::make (ret) ,r4x) ;
-			const auto r5x = ret + SIZE_OF<KeyHeadLayout>::expr ;
+			const auto r4x = KEYHEAD_GROUP_SIZE::expr * SIZE_OF<KeyNodeLayout>::expr ;
+			const auto r5x = SIZE_OF<KeyHeadLayout>::expr + r4x ;
+			ret = r3x.alloc (r5x) ;
+			inline_memset (Pointer::make (ret) ,r5x) ;
+			const auto r6x = ret + SIZE_OF<KeyHeadLayout>::expr ;
 			head_ptr (ret).mRoot = root ;
 			head_ptr (ret).mNext = head_ptr (r2x).mNext ;
 			head_ptr (r2x).mNext = ret ;
-			head_ptr (ret).mIndex = r1x ;
-			head_ptr (ret).mBegin = r5x ;
-			head_ptr (ret).mEnd = r5x + KEYHEAD_GROUP_SIZE::expr * SIZE_OF<KeyNodeLayout>::expr ;
+			head_ptr (ret).mHash = r1x ;
+			head_ptr (ret).mBegin = r6x ;
+			head_ptr (ret).mEnd = r6x + r4x ;
 		}
 		return move (ret) ;
 	}
