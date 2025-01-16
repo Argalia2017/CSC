@@ -471,8 +471,10 @@ struct KeyNodeLayout implement Proxy {
 
 struct KeyHeadLayout implement Proxy {
 	FLAG mRoot ;
-	FLAG mNext ;
-	FLAG mHash ;
+	FLAG mL1Next ;
+	FLAG mL2Next ;
+	FLAG mL1Hash ;
+	FLAG mL2Hash ;
 	FLAG mBegin ;
 	FLAG mEnd ;
 } ;
@@ -487,7 +489,8 @@ struct KeyRootLayout implement Proxy {
 
 class KeyBaseImplHolder final implement Fat<KeyBaseHolder ,KeyBaseLayout> {
 private:
-	using KEYHEAD_GROUP_SIZE = ENUM<1024> ;
+	using KEYHEAD_LEVEL1_SIZE = ENUM<1024> ;
+	using KEYHEAD_LEVEL2_SIZE = ENUM<64> ;
 
 public:
 	void initialize () override {
@@ -500,24 +503,26 @@ public:
 			rax = r1x.alloc (SIZE_OF<KeyRootLayout>::expr) ;
 			root_ptr (rax).mHeap = r1x ;
 			root_ptr (rax).mFinalize = FALSE ;
-			const auto r5x = 2 * SIZE_OF<KeyNodeLayout>::expr ;
-			const auto r2x = SIZE_OF<KeyHeadLayout>::expr + r5x ;
-			rbx = r1x.alloc (r2x) ;
-			inline_memset (Pointer::make (rbx) ,r2x) ;
-			const auto r3x = rbx + SIZE_OF<KeyHeadLayout>::expr ;
-			const auto r4x = r3x + SIZE_OF<KeyNodeLayout>::expr ;
+			const auto r2x = 2 * SIZE_OF<KeyNodeLayout>::expr ;
+			const auto r3x = SIZE_OF<KeyHeadLayout>::expr + r2x ;
+			rbx = r1x.alloc (r3x) ;
+			inline_memset (Pointer::make (rbx) ,r3x) ;
+			const auto r4x = rbx + SIZE_OF<KeyHeadLayout>::expr ;
+			const auto r5x = r4x + SIZE_OF<KeyNodeLayout>::expr ;
 			head_ptr (rbx).mRoot = rax ;
-			head_ptr (rbx).mNext = rbx ;
-			head_ptr (rbx).mHash = NONE ;
-			head_ptr (rbx).mBegin = r3x ;
-			head_ptr (rbx).mEnd = r3x + r5x ;
-			node_ptr (r3x).mHead = rbx ;
-			node_ptr (r3x).mCheck = NONE ;
+			head_ptr (rbx).mL1Next = rbx ;
+			head_ptr (rbx).mL2Next = rbx ;
+			head_ptr (rbx).mL1Hash = NONE ;
+			head_ptr (rbx).mL2Hash = NONE ;
+			head_ptr (rbx).mBegin = r4x ;
+			head_ptr (rbx).mEnd = r4x + r2x ;
 			node_ptr (r4x).mHead = rbx ;
 			node_ptr (r4x).mCheck = NONE ;
+			node_ptr (r5x).mHead = rbx ;
+			node_ptr (r5x).mCheck = NONE ;
 			root_ptr (rax).mHead = rbx ;
-			root_ptr (rax).mRefNode = r3x ;
-			root_ptr (rax).mDefNode = r4x ;
+			root_ptr (rax).mRefNode = r4x ;
+			root_ptr (rax).mDefNode = r5x ;
 		}
 		fake.mHandle = root_ptr (rax).mRefNode ;
 	}
@@ -566,10 +571,11 @@ public:
 		if (fake.mHandle == ZERO)
 			return NONE ;
 		const auto r1x = node_ptr (fake.mHandle).mHead ;
-		if (head_ptr (r1x).mHash < 0)
+		if (head_ptr (r1x).mL1Hash < 0)
 			return NONE ;
 		const auto r2x = (fake.mHandle - head_ptr (r1x).mBegin) / SIZE_OF<KeyNodeLayout>::expr ;
-		return head_ptr (r1x).mHash + r2x ;
+		const auto r3x = head_ptr (r1x).mL1Hash * KEYHEAD_LEVEL1_SIZE::expr ;
+		return r3x + r2x ;
 	}
 
 	INDEX get_check () const override {
@@ -625,8 +631,8 @@ public:
 		if (index < 0)
 			return r3x ;
 		assert (!root_ptr (r2x).mFinalize) ;
-		const auto r4x = index / KEYHEAD_GROUP_SIZE::expr ;
-		const auto r5x = index % KEYHEAD_GROUP_SIZE::expr ;
+		const auto r4x = index / KEYHEAD_LEVEL1_SIZE::expr ;
+		const auto r5x = index % KEYHEAD_LEVEL1_SIZE::expr ;
 		const auto r6x = insert_head (r4x ,r2x) ;
 		const auto r7x = head_ptr (r6x).mBegin + r5x * SIZE_OF<KeyNodeLayout>::expr ;
 		if ifdo (TRUE) {
@@ -638,32 +644,61 @@ public:
 		return r7x ;
 	}
 
-	FLAG insert_head (CREF<INDEX> index ,CREF<FLAG> root) const {
-		const auto r1x = index * KEYHEAD_GROUP_SIZE::expr ;
+	FLAG insert_head (CREF<FLAG> hash ,CREF<FLAG> root) const {
+		const auto r1x = hash / KEYHEAD_LEVEL2_SIZE::expr ;
 		const auto r2x = root_ptr (root).mHead ;
-		FLAG ret = r2x ;
+		auto rax = r2x ;
 		while (TRUE) {
-			if (head_ptr (ret).mHash == r1x)
+			const auto r3x = head_ptr (rax).mL2Next ;
+			if (r3x == r2x)
 				break ;
-			ret = head_ptr (ret).mNext ;
-			if (ret == r2x)
+			if (head_ptr (r3x).mL2Hash >= r1x)
 				break ;
+			rax = r3x ;
 		}
+		auto rbx = rax ;
+		while (TRUE) {
+			const auto r4x = head_ptr (rbx).mL1Next ;
+			if (r4x == r2x)
+				break ;
+			if (head_ptr (r4x).mL1Hash >= hash)
+				break ;
+			rbx = r4x ;
+		}
+		FLAG ret = head_ptr (rbx).mL1Next ;
 		if ifdo (TRUE) {
-			if (head_ptr (ret).mHash == r1x)
+			if (head_ptr (ret).mL1Hash == hash)
 				discard ;
-			const auto r3x = root_ptr (root).mHeap ;
-			const auto r4x = KEYHEAD_GROUP_SIZE::expr * SIZE_OF<KeyNodeLayout>::expr ;
-			const auto r5x = SIZE_OF<KeyHeadLayout>::expr + r4x ;
-			ret = r3x.alloc (r5x) ;
-			inline_memset (Pointer::make (ret) ,r5x) ;
-			const auto r6x = ret + SIZE_OF<KeyHeadLayout>::expr ;
+			const auto r5x = root_ptr (root).mHeap ;
+			const auto r6x = KEYHEAD_LEVEL1_SIZE::expr * SIZE_OF<KeyNodeLayout>::expr ;
+			const auto r7x = SIZE_OF<KeyHeadLayout>::expr + r6x ;
+			ret = r5x.alloc (r7x) ;
+			inline_memset (Pointer::make (ret) ,r7x) ;
+			const auto r8x = ret + SIZE_OF<KeyHeadLayout>::expr ;
 			head_ptr (ret).mRoot = root ;
-			head_ptr (ret).mNext = head_ptr (r2x).mNext ;
-			head_ptr (r2x).mNext = ret ;
-			head_ptr (ret).mHash = r1x ;
-			head_ptr (ret).mBegin = r6x ;
-			head_ptr (ret).mEnd = r6x + r4x ;
+			head_ptr (ret).mL1Next = head_ptr (rbx).mL1Next ;
+			head_ptr (rbx).mL1Next = ret ;
+			const auto r9x = head_ptr (rax).mL2Next ;
+			auto act = TRUE ;
+			if ifdo (act) {
+				if (head_ptr (r9x).mL2Hash == r1x)
+					discard ;
+				head_ptr (ret).mL2Next = r9x ;
+				head_ptr (rax).mL2Next = ret ;
+			}
+			if ifdo (act) {
+				if (head_ptr (r9x).mL1Hash <= hash)
+					discard ;
+				head_ptr (ret).mL2Next = head_ptr (r9x).mL2Next ;
+				head_ptr (rax).mL2Next = ret ;
+			}
+			if ifdo (act) {
+				head_ptr (ret).mL2Next = head_ptr (r9x).mL2Next ;
+			}
+			head_ptr (ret).mL1Hash = hash ;
+			head_ptr (ret).mL2Hash = r1x ;
+			head_ptr (ret).mBegin = r8x ;
+			head_ptr (ret).mEnd = r8x + r6x ;
 		}
 		return move (ret) ;
 	}
@@ -678,7 +713,7 @@ public:
 		const auto r2x = root_ptr (root).mHeap ;
 		auto rax = r1x ;
 		while (TRUE) {
-			const auto r3x = head_ptr (rax).mNext ;
+			const auto r3x = head_ptr (rax).mL1Next ;
 			r2x.free (rax) ;
 			rax = r3x ;
 			if (rax == r1x)
