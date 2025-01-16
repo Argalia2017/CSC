@@ -203,7 +203,7 @@ public:
 struct XmlParserRoot ;
 
 struct XmlParserLayout {
-	Ref<XmlParserRoot> mThix ;
+	Ref<XmlParserRoot> mThis ;
 	INDEX mIndex ;
 } ;
 
@@ -248,7 +248,7 @@ struct XmlParserHolder implement Interface {
 
 class XmlParser implement XmlParserLayout {
 protected:
-	using XmlParserLayout::mThix ;
+	using XmlParserLayout::mThis ;
 	using XmlParserLayout::mIndex ;
 
 public:
@@ -407,7 +407,7 @@ public:
 struct JsonParserRoot ;
 
 struct JsonParserLayout {
-	Ref<JsonParserRoot> mThix ;
+	Ref<JsonParserRoot> mThis ;
 	INDEX mIndex ;
 } ;
 
@@ -452,7 +452,7 @@ struct JsonParserHolder implement Interface {
 
 class JsonParser implement JsonParserLayout {
 protected:
-	using JsonParserLayout::mThix ;
+	using JsonParserLayout::mThis ;
 	using JsonParserLayout::mIndex ;
 
 public:
@@ -622,7 +622,7 @@ struct PlyParserGuide {
 } ;
 
 struct PlyParserLayout {
-	Ref<PlyParserRoot> mThix ;
+	Ref<PlyParserRoot> mThis ;
 	PlyParserGuide mGuide ;
 } ;
 
@@ -648,7 +648,7 @@ struct PlyParserHolder implement Interface {
 
 class PlyParser implement PlyParserLayout {
 protected:
-	using PlyParserLayout::mThix ;
+	using PlyParserLayout::mThis ;
 	using PlyParserLayout::mGuide ;
 
 public:

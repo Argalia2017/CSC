@@ -689,7 +689,7 @@ inline CREF<A> Singleton<A>::instance () {
 struct GlobalRoot ;
 
 struct GlobalLayout {
-	Ref<GlobalRoot> mThix ;
+	Ref<GlobalRoot> mThis ;
 	INDEX mIndex ;
 	Clazz mClazz ;
 } ;
@@ -746,7 +746,7 @@ public:
 template <class A>
 class Global implement GlobalLayout {
 protected:
-	using GlobalLayout::mThix ;
+	using GlobalLayout::mThis ;
 	using GlobalLayout::mIndex ;
 	using GlobalLayout::mClazz ;
 

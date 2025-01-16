@@ -404,7 +404,7 @@ public:
 struct AutoRefRoot ;
 
 struct AutoRefLayout {
-	Ref<AutoRefRoot> mThix ;
+	Ref<AutoRefRoot> mThis ;
 	FLAG mLayout ;
 
 public:
@@ -452,7 +452,7 @@ inline AutoRefLayout::~AutoRefLayout () noexcept {
 template <class A>
 class AutoRef implement AutoRefLayout {
 protected:
-	using AutoRefLayout::mThix ;
+	using AutoRefLayout::mThis ;
 	using AutoRefLayout::mLayout ;
 
 public:
@@ -539,7 +539,7 @@ public:
 struct SharedRefRoot ;
 
 struct SharedRefLayout {
-	Ref<SharedRefRoot> mThix ;
+	Ref<SharedRefRoot> mThis ;
 	FLAG mLayout ;
 
 public:
@@ -585,7 +585,7 @@ inline SharedRefLayout::~SharedRefLayout () noexcept {
 template <class A>
 class SharedRef implement SharedRefLayout {
 protected:
-	using SharedRefLayout::mThix ;
+	using SharedRefLayout::mThis ;
 	using SharedRefLayout::mLayout ;
 
 public:
@@ -663,7 +663,7 @@ public:
 struct UniqueRefRoot ;
 
 struct UniqueRefLayout {
-	Ref<UniqueRefRoot> mThix ;
+	Ref<UniqueRefRoot> mThis ;
 	FLAG mLayout ;
 
 public:
@@ -708,7 +708,7 @@ inline UniqueRefLayout::~UniqueRefLayout () noexcept {
 template <class A>
 class UniqueRef implement UniqueRefLayout {
 protected:
-	using UniqueRefLayout::mThix ;
+	using UniqueRefLayout::mThis ;
 	using UniqueRefLayout::mLayout ;
 
 public:
@@ -793,7 +793,7 @@ public:
 struct RefBufferRoot ;
 
 struct RefBufferLayout {
-	Ref<RefBufferRoot> mThix ;
+	Ref<RefBufferRoot> mThis ;
 	FLAG mHolder ;
 	FLAG mBuffer ;
 	LENGTH mSize ;
@@ -874,7 +874,7 @@ public:
 template <class A>
 class RefBuffer implement RefBufferRealLayout<A> {
 protected:
-	using RefBufferRealLayout<A>::mThix ;
+	using RefBufferRealLayout<A>::mThis ;
 	using RefBufferRealLayout<A>::mHolder ;
 	using RefBufferRealLayout<A>::mBuffer ;
 	using RefBufferRealLayout<A>::mSize ;
@@ -965,7 +965,7 @@ public:
 } ;
 
 struct FarBufferLayout {
-	Ref<Pointer> mThix ;
+	Ref<Pointer> mThis ;
 	Function<CREF<INDEX> ,VREF<Pointer>> mGetter ;
 	Function<CREF<INDEX> ,CREF<Pointer>> mSetter ;
 	LENGTH mSize ;
@@ -1001,7 +1001,7 @@ class FarBuffer implement FarBufferRealLayout<A> {
 protected:
 	using FarBufferRealLayout<A>::mGetter ;
 	using FarBufferRealLayout<A>::mSetter ;
-	using FarBufferRealLayout<A>::mThix ;
+	using FarBufferRealLayout<A>::mThis ;
 	using FarBufferRealLayout<A>::mSize ;
 	using FarBufferRealLayout<A>::mStep ;
 	using FarBufferRealLayout<A>::mIndex ;

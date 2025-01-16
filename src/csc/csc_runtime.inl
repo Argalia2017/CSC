@@ -736,35 +736,35 @@ struct GlobalRoot {
 class GlobalImplHolder final implement Fat<GlobalHolder ,GlobalLayout> {
 public:
 	void initialize () override {
-		fake.mThix = Ref<GlobalRoot>::make () ;
-		fake.mThix->mMutex = NULL ;
-		fake.mThix->mFinalize = FALSE ;
+		fake.mThis = Ref<GlobalRoot>::make () ;
+		fake.mThis->mMutex = NULL ;
+		fake.mThis->mFinalize = FALSE ;
 		fake.mIndex = NONE ;
 	}
 
 	void initialize (CREF<Slice> name ,CREF<Unknown> holder) override {
-		fake.mThix = Singleton<GlobalProc>::instance ().mThix ;
-		assert (!fake.mThix->mFinalize) ;
-		Scope<Mutex> anonymous (fake.mThix->mMutex) ;
-		INDEX ix = fake.mThix->mGlobalNameSet.map (name) ;
+		fake.mThis = Singleton<GlobalProc>::instance ().mThis ;
+		assert (!fake.mThis->mFinalize) ;
+		Scope<Mutex> anonymous (fake.mThis->mMutex) ;
+		INDEX ix = fake.mThis->mGlobalNameSet.map (name) ;
 		if ifdo (TRUE) {
 			if (ix != NONE)
 				discard ;
-			ix = fake.mThix->mGlobalList.insert () ;
-			fake.mThix->mGlobalNameSet.add (name ,ix) ;
-			fake.mThix->mGlobalList[ix].mHolder = inline_vptr (holder) ;
+			ix = fake.mThis->mGlobalList.insert () ;
+			fake.mThis->mGlobalNameSet.add (name ,ix) ;
+			fake.mThis->mGlobalList[ix].mHolder = inline_vptr (holder) ;
 		}
 		fake.mIndex = ix ;
 		ClazzHolder::hold (fake.mClazz)->initialize (holder) ;
 	}
 
 	void startup () const override {
-		auto rax = Singleton<GlobalProc>::instance ().mThix ;
+		auto rax = Singleton<GlobalProc>::instance ().mThis ;
 		assume (!rax->mFinalize) ;
 	}
 
 	void shutdown () const override {
-		auto rax = Singleton<GlobalProc>::instance ().mThix ;
+		auto rax = Singleton<GlobalProc>::instance ().mThis ;
 		if (rax->mFinalize)
 			return ;
 		rax->mFinalize = TRUE ;
@@ -773,18 +773,18 @@ public:
 	}
 
 	BOOL exist () const override {
-		Scope<Mutex> anonymous (fake.mThix->mMutex) ;
+		Scope<Mutex> anonymous (fake.mThis->mMutex) ;
 		INDEX ix = fake.mIndex ;
-		auto &&rax = keep[TYPE<AutoRef<Pointer>>::expr] (fake.mThix->mGlobalList[ix].mValue.self) ;
+		auto &&rax = keep[TYPE<AutoRef<Pointer>>::expr] (fake.mThis->mGlobalList[ix].mValue.self) ;
 		return fake.mClazz == rax.clazz () ;
 	}
 
 	AutoRef<Pointer> fetch () const override {
-		Scope<Mutex> anonymous (fake.mThix->mMutex) ;
+		Scope<Mutex> anonymous (fake.mThis->mMutex) ;
 		INDEX ix = fake.mIndex ;
-		auto &&rax = keep[TYPE<AutoRef<Pointer>>::expr] (fake.mThix->mGlobalList[ix].mValue.self) ;
+		auto &&rax = keep[TYPE<AutoRef<Pointer>>::expr] (fake.mThis->mGlobalList[ix].mValue.self) ;
 		assume (rax.exist ()) ;
-		const auto r1x = Unknown (fake.mThix->mGlobalList[ix].mHolder) ;
+		const auto r1x = Unknown (fake.mThis->mGlobalList[ix].mHolder) ;
 		AutoRef<Pointer> ret = AutoRef<Pointer> (r1x) ;
 		const auto r2x = RFat<ReflectClone> (r1x) ;
 		r2x->clone (ret.self ,rax.self) ;
@@ -792,9 +792,9 @@ public:
 	}
 
 	void store (RREF<AutoRef<Pointer>> item) const override {
-		Scope<Mutex> anonymous (fake.mThix->mMutex) ;
+		Scope<Mutex> anonymous (fake.mThis->mMutex) ;
 		INDEX ix = fake.mIndex ;
-		auto &&rax = keep[TYPE<AutoRef<Pointer>>::expr] (fake.mThix->mGlobalList[ix].mValue.self) ;
+		auto &&rax = keep[TYPE<AutoRef<Pointer>>::expr] (fake.mThis->mGlobalList[ix].mValue.self) ;
 		assume (!rax.exist ()) ;
 		rax = move (item) ;
 	}

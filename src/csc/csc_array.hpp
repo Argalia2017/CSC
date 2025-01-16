@@ -1402,7 +1402,7 @@ struct SortedMapRoot {
 } ;
 
 struct SortedMapLayout {
-	Ref<SortedMapRoot> mThix ;
+	Ref<SortedMapRoot> mThis ;
 	INDEX mRoot ;
 	RefBuffer<INDEX> mRange ;
 	INDEX mWrite ;
@@ -1469,7 +1469,7 @@ public:
 template <class A>
 class SortedMap implement SortedMapRealLayout<A> {
 protected:
-	using SortedMapRealLayout<A>::mThix ;
+	using SortedMapRealLayout<A>::mThis ;
 	using SortedMapRealLayout<A>::mRoot ;
 	using SortedMapRealLayout<A>::mRange ;
 	using SortedMapRealLayout<A>::mWrite ;

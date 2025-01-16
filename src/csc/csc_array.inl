@@ -1205,15 +1205,15 @@ exports CFat<ArrayListHolder> ArrayListHolder::hold (CREF<ArrayListLayout> that)
 class SortedMapImplHolder final implement Fat<SortedMapHolder ,SortedMapLayout> {
 public:
 	void prepare (CREF<Unknown> holder) override {
-		if (fake.mThix.exist ())
+		if (fake.mThis.exist ())
 			return ;
 		assume (FALSE) ;
 	}
 
 	void initialize (CREF<Unknown> holder ,CREF<LENGTH> size_) override {
-		fake.mThix = Ref<SortedMapRoot>::make () ;
-		AllocatorHolder::hold (fake.mThix->mList)->initialize (holder ,size_) ;
-		fake.mThix->mCheck = 0 ;
+		fake.mThis = Ref<SortedMapRoot>::make () ;
+		AllocatorHolder::hold (fake.mThis->mList)->initialize (holder ,size_) ;
+		fake.mThis->mCheck = 0 ;
 		clear () ;
 	}
 
@@ -1231,7 +1231,7 @@ public:
 	SortedMapLayout share () const override {
 		assert (fake.mRoot == NONE) ;
 		SortedMapLayout ret ;
-		ret.mThix = fake.mThix ;
+		ret.mThis = fake.mThis ;
 		ret.mRoot = NONE ;
 		ret.mRange = RefBuffer<INDEX> () ;
 		ret.mWrite = 0 ;
@@ -1255,17 +1255,17 @@ public:
 	}
 
 	LENGTH length () const override {
-		if (!fake.mThix.exist ())
+		if (!fake.mThis.exist ())
 			return 0 ;
 		return fake.mWrite ;
 	}
 
 	VREF<INDEX> at (CREF<INDEX> index) leftvalue override {
-		return fake.mThix->mList.bt (fake.mRange[index]).mMap ;
+		return fake.mThis->mList.bt (fake.mRange[index]).mMap ;
 	}
 
 	CREF<INDEX> at (CREF<INDEX> index) const leftvalue override {
-		return fake.mThix->mList.bt (fake.mRange[index]).mMap ;
+		return fake.mThis->mList.bt (fake.mRange[index]).mMap ;
 	}
 
 	INDEX ibegin () const override {
@@ -1283,28 +1283,28 @@ public:
 	}
 
 	void add (RREF<BoxLayout> item ,CREF<INDEX> map_) override {
-		INDEX ix = fake.mThix->mList.alloc (move (item)) ;
-		fake.mThix->mCheck++ ;
-		fake.mThix->mList.bt (ix).mMap = map_ ;
-		fake.mThix->mList.bt (ix).mDown = fake.mRoot ;
+		INDEX ix = fake.mThis->mList.alloc (move (item)) ;
+		fake.mThis->mCheck++ ;
+		fake.mThis->mList.bt (ix).mMap = map_ ;
+		fake.mThis->mList.bt (ix).mDown = fake.mRoot ;
 		fake.mRoot = ix ;
 		fake.mWrite++ ;
 		fake.mRemap = FALSE ;
 	}
 
 	INDEX find (CREF<Pointer> item) const override {
-		if (!fake.mThix.exist ())
+		if (!fake.mThis.exist ())
 			return NONE ;
 		assert (fake.mRemap) ;
 		INDEX ix = 0 ;
 		INDEX iy = length () - 1 ;
 		INDEX iz = 0 ;
-		const auto r1x = RFat<ReflectCompr> (fake.mThix->mList.unknown ()) ;
+		const auto r1x = RFat<ReflectCompr> (fake.mThis->mList.unknown ()) ;
 		while (TRUE) {
 			if (ix > iy)
 				break ;
 			iz = ix + (iy - ix) / 2 ;
-			const auto r2x = r1x->compr (item ,fake.mThix->mList.at (fake.mRange[iz])) ;
+			const auto r2x = r1x->compr (item ,fake.mThis->mList.at (fake.mRange[iz])) ;
 			if (r2x == ZERO)
 				return iz ;
 			auto act = TRUE ;
@@ -1332,13 +1332,13 @@ public:
 	}
 
 	void remap () override {
-		if (!fake.mThix.exist ())
+		if (!fake.mThis.exist ())
 			return ;
 		if (fake.mRemap)
 			return ;
 		if (fake.mWrite == 0)
 			return ;
-		auto &&rax = fake.mThix.self ;
+		auto &&rax = fake.mThis.self ;
 		const auto r1x = RFat<ReflectCompr> (rax.mList.unknown ()) ;
 		const auto r2x = RFat<ReflectEqual> (rax.mList.unknown ()) ;
 		if ifdo (TRUE) {
