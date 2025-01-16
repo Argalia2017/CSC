@@ -831,12 +831,12 @@ public:
 		if ifdo (act) {
 			if (that.mType != ViewMatrixOption::XYZ)
 				discard ;
-			//@info: we are using intrinsic rotation
-			//@info: first, rotation RXi = RX
-			//@info: second, rotation RYi = RXi * RY * RXi.inverse
-			//@info: third, rotation RZi = (RYi * RXi) * RZ * (RYi * RXi).inverse
-			//@info: finally, rotation RZi * RYi * RXi = RX * RY * RZ
-			//@info: so, XYZ means RX is first rotation
+			//@info: We are using intrinsic rotation
+			//@info: First, rotation RXi = RX
+			//@info: Second, rotation RYi = RXi * RY * RXi.inverse
+			//@info: Third, rotation RZi = (RYi * RXi) * RZ * (RYi * RXi).inverse
+			//@info: Finally, rotation RZi * RYi * RXi = RX * RY * RZ
+			//@info: So, in the XYZ rotation order, RX is the first rotation, but RZ is applied last
 			const auto r4x = r1x * r2x * r3x ;
 			initialize (r4x) ;
 		}
@@ -1081,10 +1081,9 @@ public:
 		const auto r7x = ret[y].transpose () * r5x ;
 		const auto r8x = MathProc::atan (r7x[y][x] ,r7x[x][x]) * rotate_sign (z ,x) ;
 		ret[z] = RotationMatrix (z ,r8x) ;
-		const auto r9x = ret[z].transpose () * r7x ;
+		const auto r9x = ret[z].transpose () * r7x - Matrix::identity () ;
 		for (auto &&j : iter (0 ,4 ,0 ,4)) {
-			const auto r10x = FLT64 (j.mX == j.mY) ;
-			assert (MathProc::abs (r9x[j] - r10x) < FLT32_EPS) ;
+			assert (MathProc::abs (r9x[j]) < FLT32_EPS) ;
 		}
 		return move (ret) ;
 	}

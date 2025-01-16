@@ -143,6 +143,8 @@ struct ArrayHolder implement Interface {
 	virtual LENGTH size () const = 0 ;
 	virtual LENGTH step () const = 0 ;
 	virtual LENGTH length () const = 0 ;
+	virtual VREF<Pointer> self_m () leftvalue = 0 ;
+	virtual CREF<Pointer> self_m () const leftvalue = 0 ;
 	virtual VREF<Pointer> at (CREF<INDEX> index) leftvalue = 0 ;
 	virtual CREF<Pointer> at (CREF<INDEX> index) const leftvalue = 0 ;
 	virtual INDEX ibegin () const = 0 ;
@@ -243,6 +245,22 @@ public:
 
 	LENGTH length () const {
 		return ArrayHolder::hold (thiz)->length () ;
+	}
+
+	VREF<ARR<A>> self_m () leftvalue {
+		return ArrayHolder::hold (thiz)->self ;
+	}
+
+	forceinline operator VREF<ARR<A>> () leftvalue {
+		return self ;
+	}
+
+	CREF<ARR<A>> self_m () const leftvalue {
+		return ArrayHolder::hold (thiz)->self ;
+	}
+
+	forceinline operator CREF<ARR<A>> () const leftvalue {
+		return self ;
 	}
 
 	VREF<A> at (CREF<INDEX> index) leftvalue {
@@ -349,6 +367,7 @@ struct StringHolder implement Interface {
 	virtual void initialize (CREF<LENGTH> size_ ,CREF<LENGTH> step_) = 0 ;
 	virtual void initialize (CREF<StringLayout> that) = 0 ;
 	virtual void clear () = 0 ;
+	virtual FLAG encode () const = 0 ;
 	virtual LENGTH size () const = 0 ;
 	virtual LENGTH step () const = 0 ;
 	virtual LENGTH length () const = 0 ;
@@ -432,6 +451,10 @@ public:
 
 	void clear () {
 		return StringHolder::hold (thiz)->clear () ;
+	}
+
+	FLAG encode () const {
+		return StringHolder::hold (thiz)->encode () ;
 	}
 
 	LENGTH size () const {
@@ -572,6 +595,10 @@ public:
 
 	void splice (CREF<INDEX> index ,CREF<String> item) {
 		return StringHolder::hold (thiz)->splice (index ,item) ;
+	}
+
+	Slice segment () const {
+		return segment (0 ,length ()) ;
 	}
 
 	Slice segment (CREF<INDEX> begin_ ,CREF<INDEX> end_) const {

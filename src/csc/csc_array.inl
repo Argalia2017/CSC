@@ -66,6 +66,14 @@ public:
 		return fake.mArray.size () ;
 	}
 
+	VREF<Pointer> self_m () leftvalue override {
+		return RefBufferHolder::hold (fake.mArray)->self ;
+	}
+
+	CREF<Pointer> self_m () const leftvalue override {
+		return RefBufferHolder::hold (fake.mArray)->self ;
+	}
+
 	VREF<Pointer> at (CREF<INDEX> index) leftvalue override {
 		return fake.mArray.at (index) ;
 	}
@@ -205,6 +213,12 @@ public:
 	void clear () override {
 		trunc (0) ;
 		trunc (size ()) ;
+	}
+
+	FLAG encode () const override {
+		if (!fake.mString.exist ())
+			return 0 ;
+		return fake.mEncode ;
 	}
 
 	LENGTH size () const override {
@@ -1324,22 +1338,22 @@ public:
 			return ;
 		if (fake.mWrite == 0)
 			return ;
-		const auto r1x = RFat<ReflectCompr> (fake.mThix->mList.unknown ()) ;
-		const auto r2x = RFat<ReflectEqual> (fake.mThix->mList.unknown ()) ;
+		auto &&rax = fake.mThix.self ;
+		const auto r1x = RFat<ReflectCompr> (rax.mList.unknown ()) ;
+		const auto r2x = RFat<ReflectEqual> (rax.mList.unknown ()) ;
 		if ifdo (TRUE) {
 			fake.mRange = RefBuffer<INDEX> (fake.mWrite) ;
 			INDEX ix = fake.mRoot ;
 			for (auto &&i : iter (0 ,fake.mWrite)) {
 				assert (ix != NONE) ;
 				fake.mRange[i] = ix ;
-				ix = fake.mThix->mList.bt (ix).mDown ;
+				ix = rax.mList.bt (ix).mDown ;
 			}
 			assert (ix == NONE) ;
 		}
 		if ifdo (TRUE) {
 			const auto r3x = (&fake.mRange[0]) ;
 			const auto r4x = r3x + fake.mRange.size () ;
-			auto &&rax = fake.mThix.self ;
 			std::sort (r3x ,r4x ,[&] (CREF<INDEX> a ,CREF<INDEX> b) {
 				return r1x->compr (rax.mList[a] ,rax.mList[b]) < ZERO ;
 			}) ;
@@ -1347,7 +1361,7 @@ public:
 		if ifdo (TRUE) {
 			INDEX ix = 0 ;
 			for (auto &&i : iter (1 ,fake.mWrite)) {
-				const auto r5x = r2x->equal (fake.mThix->mList[fake.mRange[ix]] ,fake.mThix->mList[fake.mRange[i]]) ;
+				const auto r5x = r2x->equal (rax.mList[fake.mRange[ix]] ,rax.mList[fake.mRange[i]]) ;
 				if (r5x)
 					continue ;
 				ix++ ;
@@ -1362,10 +1376,10 @@ public:
 		if ifdo (TRUE) {
 			fake.mRoot = fake.mRange[0] ;
 			for (auto &&i : iter (0 ,fake.mWrite - 1)) {
-				fake.mThix->mList.bt (fake.mRange[i]).mDown = fake.mRange[i + 1] ;
+				rax.mList.bt (fake.mRange[i]).mDown = fake.mRange[i + 1] ;
 			}
 			INDEX ix = fake.mRange[fake.mWrite - 1] ;
-			fake.mThix->mList.bt (ix).mDown = NONE ;
+			rax.mList.bt (ix).mDown = NONE ;
 		}
 		fake.mRemap = TRUE ;
 	}

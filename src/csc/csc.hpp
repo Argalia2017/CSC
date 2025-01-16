@@ -126,9 +126,10 @@
 #pragma warning (disable :26447) //@info: warning C26447: The function is declared 'noexcept' but calls function 'xxx' which may throw exceptions (f.6).
 #pragma warning (disable :26475) //@info: warning C26475: Do not use function style casts (es.49). Prefer 'Type{value}' over 'Type(value)'..
 #pragma warning (disable :26485) //@info: warning C26485: Expression 'xxx': No array to pointer decay (bounds.3).
+#pragma warning (disable :26490) //@info: warning C26490: Don't use reinterpret_cast (type.1).
 #pragma warning (disable :26493) //@info: warning C26494: Don't use C-style casts (type.4).
 #pragma warning (disable :26495) //@info: warning C26495: Variable 'xxx' is uninitialized. Always initialize a member variable (type.6).
-#pragma warning (disable :26495) //@info: warning C26495: You can attempt to make 'xxx' constexpr unless it contains any undefined behavior (f.4).
+#pragma warning (disable :26497) //@info: warning C26497: You can attempt to make 'xxx' constexpr unless it contains any undefined behavior (f.4).
 #pragma warning (disable :26496) //@info: warning C26496: The variable 'xxx' does not change after construction, mark it as const (con.4).
 #pragma warning (disable :26814) //@info: warning C26814: The const variable 'r5x' can be computed at compile-time. Consider using constexpr (con.5).
 #pragma warning (disable :26820) //@info: warning C26820: This is a potentially expensive copy operation. Consider using a reference unless a copy is required (p.9).
