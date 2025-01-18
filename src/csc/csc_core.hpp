@@ -1893,6 +1893,10 @@ struct OfThis {
 	A mThis ;
 
 public:
+	forceinline operator A () rightvalue {
+		return move (mThis) ;
+	}
+
 	using VREF_ITEM = decltype (keep[TYPE<VREF<A>>::expr] (nullof (A)).self) ;
 	using CREF_ITEM = decltype (keep[TYPE<CREF<A>>::expr] (nullof (A)).self) ;
 

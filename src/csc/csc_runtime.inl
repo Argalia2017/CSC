@@ -530,6 +530,12 @@ exports CFat<ThreadHolder> ThreadHolder::hold (CREF<ThreadImplLayout> that) {
 
 template class External<ProcessHolder ,ProcessImplLayout> ;
 
+exports ProcessLayout ProcessHolder::create () {
+	ProcessLayout ret ;
+	ret.mThis = AutoRef<ProcessImplLayout>::make () ;
+	return move (ret) ;
+}
+
 exports VFat<ProcessHolder> ProcessHolder::hold (VREF<ProcessImplLayout> that) {
 	return VFat<ProcessHolder> (External<ProcessHolder ,ProcessImplLayout>::declare () ,that) ;
 }
@@ -539,6 +545,12 @@ exports CFat<ProcessHolder> ProcessHolder::hold (CREF<ProcessImplLayout> that) {
 }
 
 template class External<LibraryHolder ,LibraryImplLayout> ;
+
+exports LibraryLayout LibraryHolder::create () {
+	LibraryLayout ret ;
+	ret.mThis = AutoRef<LibraryImplLayout>::make () ;
+	return move (ret) ;
+}
 
 exports VFat<LibraryHolder> LibraryHolder::hold (VREF<LibraryImplLayout> that) {
 	return VFat<LibraryHolder> (External<LibraryHolder ,LibraryImplLayout>::declare () ,that) ;

@@ -168,9 +168,5 @@ public:
 	}
 } ;
 
-exports AutoRef<PointCloudKDTreeLayout> PointCloudKDTreeHolder::create () {
-	return AutoRef<PointCloudKDTreeLayout>::make () ;
-}
-
 static const auto mPointCloudKDTreecExternal = External<PointCloudKDTreeHolder ,PointCloudKDTreeLayout> (PointCloudKDTreeImplHolder ()) ;
 } ;

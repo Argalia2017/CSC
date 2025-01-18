@@ -705,12 +705,6 @@ public:
 	}
 } ;
 
-exports StreamFileLayout StreamFileHolder::create () {
-	StreamFileLayout ret ;
-	ret.mThis = AutoRef<StreamFileImplLayout>::make () ;
-	return move (ret) ;
-}
-
 static const auto mStreamFileExternal = External<StreamFileHolder ,StreamFileImplLayout> (StreamFileImplHolder ()) ;
 
 struct BufferFileHeader {
@@ -1025,12 +1019,6 @@ public:
 	}
 } ;
 
-exports BufferFileLayout BufferFileHolder::create () {
-	BufferFileLayout ret ;
-	ret.mThis = AutoRef<BufferFileImplLayout>::make () ;
-	return move (ret) ;
-}
-
 static const auto mBufferFileExternal = External<BufferFileHolder ,BufferFileImplLayout> (BufferFileImplHolder ()) ;
 
 struct UartFileImplLayout {
@@ -1106,12 +1094,6 @@ private:
 		}
 	}
 } ;
-
-exports UartFileLayout UartFileHolder::create () {
-	UartFileLayout ret ;
-	ret.mThis = AutoRef<UartFileImplLayout>::make () ;
-	return move (ret) ;
-}
 
 static const auto mUartFileExternal = External<UartFileHolder ,UartFileImplLayout> (UartFileImplHolder ()) ;
 
@@ -1328,12 +1310,6 @@ public:
 		fake.mCommand.execute (slice ("cls")) ;
 	}
 } ;
-
-exports ConsoleLayout ConsoleHolder::create () {
-	ConsoleLayout ret ;
-	ret.mThis = SharedRef<ConsoleImplLayout>::make () ;
-	return move (ret) ;
-}
 
 static const auto mConsoleExternal = External<ConsoleHolder ,ConsoleImplLayout> (ConsoleImplHolder ()) ;
 } ;

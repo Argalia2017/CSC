@@ -217,12 +217,6 @@ public:
 	}
 } ;
 
-exports ProcessLayout ProcessHolder::create () {
-	ProcessLayout ret ;
-	ret.mThis = AutoRef<ProcessImplLayout>::make () ;
-	return move (ret) ;
-}
-
 static const auto mProcessExternal = External<ProcessHolder ,ProcessImplLayout> (ProcessImplHolder ()) ;
 
 struct LibraryImplLayout {
@@ -277,12 +271,6 @@ public:
 		return move (ret) ;
 	}
 } ;
-
-exports LibraryLayout LibraryHolder::create () {
-	LibraryLayout ret ;
-	ret.mThis = AutoRef<LibraryImplLayout>::make () ;
-	return move (ret) ;
-}
 
 static const auto mLibraryExternal = External<LibraryHolder ,LibraryImplLayout> (LibraryImplHolder ()) ;
 

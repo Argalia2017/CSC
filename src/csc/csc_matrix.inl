@@ -1160,6 +1160,10 @@ exports CFat<LinearProcHolder> LinearProcHolder::hold (CREF<LinearProcImplLayout
 
 template class External<PointCloudKDTreeHolder ,PointCloudKDTreeLayout> ;
 
+exports AutoRef<PointCloudKDTreeLayout> PointCloudKDTreeHolder::create () {
+	return AutoRef<PointCloudKDTreeLayout>::make () ;
+}
+
 exports VFat<PointCloudKDTreeHolder> PointCloudKDTreeHolder::hold (VREF<PointCloudKDTreeLayout> that) {
 	return VFat<PointCloudKDTreeHolder> (External<PointCloudKDTreeHolder ,PointCloudKDTreeLayout>::declare () ,that) ;
 }

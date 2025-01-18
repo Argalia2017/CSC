@@ -50,7 +50,7 @@ struct TimeHolder implement Interface {
 	virtual TimeLayout ssub (CREF<TimeImplLayout> that) const = 0 ;
 } ;
 
-class Time implement OfThis<TimeLayout> {
+class Time implement TimeLayout {
 public:
 	implicit Time () = default ;
 
@@ -219,7 +219,7 @@ struct AtomicHolder implement Interface {
 	virtual void decrease () const = 0 ;
 } ;
 
-class Atomic implement OfThis<AtomicLayout> {
+class Atomic implement AtomicLayout {
 public:
 	implicit Atomic () = default ;
 
@@ -352,7 +352,7 @@ struct SharedLockHolder implement Interface {
 	virtual void leave () const = 0 ;
 } ;
 
-class SharedLock implement OfThis<SharedLockLayout> {
+class SharedLock implement SharedLockLayout {
 public:
 	implicit SharedLock () = default ;
 
@@ -390,7 +390,7 @@ struct UniqueLockHolder implement Interface {
 	virtual void yield () = 0 ;
 } ;
 
-class UniqueLock implement OfThis<UniqueLockLayout> {
+class UniqueLock implement UniqueLockLayout {
 public:
 	implicit UniqueLock () = default ;
 

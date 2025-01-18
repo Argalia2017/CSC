@@ -42,6 +42,12 @@ exports CFat<FileProcHolder> FileProcHolder::hold (CREF<FileProcImplLayout> that
 
 template class External<StreamFileHolder ,StreamFileImplLayout> ;
 
+exports StreamFileLayout StreamFileHolder::create () {
+	StreamFileLayout ret ;
+	ret.mThis = AutoRef<StreamFileImplLayout>::make () ;
+	return move (ret) ;
+}
+
 exports VFat<StreamFileHolder> StreamFileHolder::hold (VREF<StreamFileImplLayout> that) {
 	return VFat<StreamFileHolder> (External<StreamFileHolder ,StreamFileImplLayout>::declare () ,that) ;
 }
@@ -158,6 +164,12 @@ exports CFat<StreamFileTextWriterHolder> StreamFileTextWriterHolder::hold (CREF<
 
 template class External<BufferFileHolder ,BufferFileImplLayout> ;
 
+exports BufferFileLayout BufferFileHolder::create () {
+	BufferFileLayout ret ;
+	ret.mThis = AutoRef<BufferFileImplLayout>::make () ;
+	return move (ret) ;
+}
+
 exports VFat<BufferFileHolder> BufferFileHolder::hold (VREF<BufferFileImplLayout> that) {
 	return VFat<BufferFileHolder> (External<BufferFileHolder ,BufferFileImplLayout>::declare () ,that) ;
 }
@@ -167,6 +179,12 @@ exports CFat<BufferFileHolder> BufferFileHolder::hold (CREF<BufferFileImplLayout
 }
 
 template class External<UartFileHolder ,UartFileImplLayout> ;
+
+exports UartFileLayout UartFileHolder::create () {
+	UartFileLayout ret ;
+	ret.mThis = AutoRef<UartFileImplLayout>::make () ;
+	return move (ret) ;
+}
 
 exports VFat<UartFileHolder> UartFileHolder::hold (VREF<UartFileImplLayout> that) {
 	return VFat<UartFileHolder> (External<UartFileHolder ,UartFileImplLayout>::declare () ,that) ;
