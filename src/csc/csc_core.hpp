@@ -374,6 +374,7 @@ struct FUNCTION_bitwise_impl {
 		return move (ret) ;
 	}
 } ;
+
 struct FUNCTION_bitwise {
 	template <class ARG1>
 	forceinline consteval FUNCTION_bitwise_impl<ARG1> operator[] (TYPE<ARG1>) const noexcept {
@@ -382,6 +383,16 @@ struct FUNCTION_bitwise {
 } ;
 
 static constexpr auto bitwise = FUNCTION_bitwise () ;
+
+struct FUNCTION_memorize {
+	template <class ARG1>
+	forceinline CREF<FUNCTION_RETURN<ARG1>> operator() (CREF<ARG1> func) const {
+		static const auto mInstance = func () ;
+		return mInstance ;
+	}
+} ;
+
+static constexpr auto memorize = FUNCTION_memorize () ;
 
 struct FUNCTION_inline_vptr {
 	forceinline FLAG operator() (CREF<Interface> binder) const noexcept {
@@ -1318,18 +1329,6 @@ public:
 
 	static Ref reference (RREF<A> that) = delete ;
 
-	implicit Ref (CREF<Ref> that) {
-		RefHolder::hold (thiz)->initialize (that) ;
-	}
-
-	forceinline VREF<Ref> operator= (CREF<Ref> that) {
-		return assign (thiz ,that) ;
-	}
-
-	implicit Ref (RREF<Ref> that) = default ;
-
-	forceinline VREF<Ref> operator= (RREF<Ref> that) = default ;
-
 	BOOL exist () const {
 		return RefHolder::hold (thiz)->exist () ;
 	}
@@ -1365,17 +1364,13 @@ public:
 	BOOL variability () const {
 		return RefHolder::hold (thiz)->variability () ;
 	}
-} ;
 
-struct FUNCTION_memorize {
-	template <class ARG1>
-	forceinline CREF<FUNCTION_RETURN<ARG1>> operator() (CREF<ARG1> func) const {
-		static const auto mInstance = func () ;
-		return mInstance ;
+	Ref share () const {
+		Ref ret ;
+		RefHolder::hold (ret)->initialize (thiz) ;
+		return move (ret) ;
 	}
 } ;
-
-static constexpr auto memorize = FUNCTION_memorize () ;
 
 struct HeapLayout {
 	FLAG mHolder ;
@@ -1404,7 +1399,7 @@ protected:
 
 public:
 	static CREF<Heap> instance () {
-		return Pointer::from (HeapHolder::instance ()) ;
+		return keep[TYPE<Heap>::expr] (HeapHolder::instance ()) ;
 	}
 
 	INDEX stack () const {
@@ -1894,47 +1889,62 @@ public:
 } ;
 
 template <class A>
-class OfThis {
-protected:
+struct OfThis {
 	A mThis ;
 
 public:
-	implicit OfThis () = default ;
+	using VREF_ITEM = decltype (keep[TYPE<VREF<A>>::expr] (nullof (A)).self) ;
+	using CREF_ITEM = decltype (keep[TYPE<CREF<A>>::expr] (nullof (A)).self) ;
 
-	implicit OfThis (RREF<A> that) {
-		mThis = move (that) ;
+	XREF<VREF_ITEM> self_m () leftvalue {
+		return mThis.self ;
 	}
 
-	VREF<A> self_m () leftvalue {
-		return mThis ;
-	}
-
-	forceinline operator VREF<A> () leftvalue {
+	forceinline operator XREF<VREF_ITEM> () leftvalue {
 		return self ;
 	}
 
-	CREF<A> self_m () const leftvalue {
-		return mThis ;
+	XREF<CREF_ITEM> self_m () const leftvalue {
+		return mThis.self ;
 	}
 
-	forceinline operator CREF<A> () const leftvalue {
+	forceinline operator XREF<CREF_ITEM> () const leftvalue {
 		return self ;
 	}
 } ;
 
-struct ClazzLayout ;
+struct ClazzRoot ;
+
+struct ClazzLayout {
+	Ref<ClazzRoot> mThis ;
+
+public:
+	implicit ClazzLayout () = default ;
+
+	implicit ClazzLayout (CREF<ClazzLayout> that) {
+		mThis = that.mThis.share () ;
+	}
+
+	forceinline VREF<ClazzLayout> operator= (CREF<ClazzLayout> that) {
+		return assign (thiz ,that) ;
+	}
+
+	implicit ClazzLayout (RREF<ClazzLayout> that) = default ;
+
+	forceinline VREF<ClazzLayout> operator= (RREF<ClazzLayout> that) = default ;
+} ;
 
 struct ClazzHolder implement Interface {
-	imports VFat<ClazzHolder> hold (VREF<Ref<ClazzLayout>> that) ;
-	imports CFat<ClazzHolder> hold (CREF<Ref<ClazzLayout>> that) ;
+	imports VFat<ClazzHolder> hold (VREF<ClazzLayout> that) ;
+	imports CFat<ClazzHolder> hold (CREF<ClazzLayout> that) ;
 
 	virtual void initialize (CREF<Unknown> holder) = 0 ;
 	virtual LENGTH type_size () const = 0 ;
 	virtual LENGTH type_align () const = 0 ;
 	virtual FLAG type_guid () const = 0 ;
 	virtual Slice type_name () const = 0 ;
-	virtual BOOL equal (CREF<Ref<ClazzLayout>> that) const = 0 ;
-	virtual FLAG compr (CREF<Ref<ClazzLayout>> that) const = 0 ;
+	virtual BOOL equal (CREF<ClazzLayout> that) const = 0 ;
+	virtual FLAG compr (CREF<ClazzLayout> that) const = 0 ;
 	virtual void visit (VREF<VisitorBinder> visitor) const = 0 ;
 } ;
 
@@ -1952,7 +1962,7 @@ public:
 	}
 } ;
 
-class Clazz implement OfThis<Ref<ClazzLayout>> {
+class Clazz implement ClazzLayout {
 public:
 	implicit Clazz () = default ;
 

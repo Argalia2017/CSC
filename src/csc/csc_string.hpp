@@ -13,12 +13,13 @@
 #include "csc_stream.hpp"
 
 namespace CSC {
-struct StringProcLayout ;
+struct StringProcImplLayout ;
+struct StringProcLayout implement OfThis<Ref<StringProcImplLayout>> {} ;
 
 struct StringProcHolder implement Interface {
-	imports CREF<Ref<StringProcLayout>> instance () ;
-	imports VFat<StringProcHolder> hold (VREF<Ref<StringProcLayout>> that) ;
-	imports CFat<StringProcHolder> hold (CREF<Ref<StringProcLayout>> that) ;
+	imports CREF<StringProcLayout> instance () ;
+	imports VFat<StringProcHolder> hold (VREF<StringProcImplLayout> that) ;
+	imports CFat<StringProcHolder> hold (CREF<StringProcImplLayout> that) ;
 
 	virtual void initialize () = 0 ;
 	virtual String<STRA> stra_from_strw (CREF<String<STRW>> a) const = 0 ;
@@ -57,10 +58,10 @@ struct StringProcHolder implement Interface {
 	virtual String<STRU32> stru32_from_strs (CREF<String<STRW>> a) const = 0 ;
 } ;
 
-class StringProc implement OfThis<Ref<StringProcLayout>> {
+class StringProc implement StringProcLayout {
 public:
 	static CREF<StringProc> instance () {
-		return Pointer::from (StringProcHolder::instance ()) ;
+		return keep[TYPE<StringProc>::expr] (StringProcHolder::instance ()) ;
 	}
 
 	static String<STRA> stra_from_strw (CREF<String<STRW>> a) {

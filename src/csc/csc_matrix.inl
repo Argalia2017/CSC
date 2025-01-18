@@ -696,22 +696,23 @@ exports CFat<MakeMatrixHolder> MakeMatrixHolder::hold (CREF<MatrixLayout> that) 
 	return CFat<MakeMatrixHolder> (MakeMatrixImplHolder () ,that) ;
 }
 
-template class External<MatrixProcHolder ,Ref<MatrixProcLayout>> ;
+template class External<MatrixProcHolder ,MatrixProcImplLayout> ;
 
-exports CREF<Ref<MatrixProcLayout>> MatrixProcHolder::instance () {
+exports CREF<MatrixProcLayout> MatrixProcHolder::instance () {
 	return memorize ([&] () {
-		Ref<MatrixProcLayout> ret ;
+		MatrixProcLayout ret ;
+		ret.mThis = Ref<MatrixProcImplLayout>::make () ;
 		MatrixProcHolder::hold (ret)->initialize () ;
 		return move (ret) ;
 	}) ;
 }
 
-exports VFat<MatrixProcHolder> MatrixProcHolder::hold (VREF<Ref<MatrixProcLayout>> that) {
-	return VFat<MatrixProcHolder> (External<MatrixProcHolder ,Ref<MatrixProcLayout>>::declare () ,that) ;
+exports VFat<MatrixProcHolder> MatrixProcHolder::hold (VREF<MatrixProcImplLayout> that) {
+	return VFat<MatrixProcHolder> (External<MatrixProcHolder ,MatrixProcImplLayout>::declare () ,that) ;
 }
 
-exports CFat<MatrixProcHolder> MatrixProcHolder::hold (CREF<Ref<MatrixProcLayout>> that) {
-	return CFat<MatrixProcHolder> (External<MatrixProcHolder ,Ref<MatrixProcLayout>>::declare () ,that) ;
+exports CFat<MatrixProcHolder> MatrixProcHolder::hold (CREF<MatrixProcImplLayout> that) {
+	return CFat<MatrixProcHolder> (External<MatrixProcHolder ,MatrixProcImplLayout>::declare () ,that) ;
 }
 
 class DuplexMatrixImplHolder final implement Fat<DuplexMatrixHolder ,DuplexMatrixLayout> {
@@ -1138,32 +1139,33 @@ exports CFat<QuaternionHolder> QuaternionHolder::hold (CREF<QuaternionLayout> th
 	return CFat<QuaternionHolder> (QuaternionImplHolder () ,that) ;
 }
 
-template class External<LinearProcHolder ,Ref<LinearProcLayout>> ;
+template class External<LinearProcHolder ,LinearProcImplLayout> ;
 
-exports CREF<Ref<LinearProcLayout>> LinearProcHolder::instance () {
+exports CREF<LinearProcLayout> LinearProcHolder::instance () {
 	return memorize ([&] () {
-		Ref<LinearProcLayout> ret ;
+		LinearProcLayout ret ;
+		ret.mThis = Ref<LinearProcImplLayout>::make () ;
 		LinearProcHolder::hold (ret)->initialize () ;
 		return move (ret) ;
 	}) ;
 }
 
-exports VFat<LinearProcHolder> LinearProcHolder::hold (VREF<Ref<LinearProcLayout>> that) {
-	return VFat<LinearProcHolder> (External<LinearProcHolder ,Ref<LinearProcLayout>>::declare () ,that) ;
+exports VFat<LinearProcHolder> LinearProcHolder::hold (VREF<LinearProcImplLayout> that) {
+	return VFat<LinearProcHolder> (External<LinearProcHolder ,LinearProcImplLayout>::declare () ,that) ;
 }
 
-exports CFat<LinearProcHolder> LinearProcHolder::hold (CREF<Ref<LinearProcLayout>> that) {
-	return CFat<LinearProcHolder> (External<LinearProcHolder ,Ref<LinearProcLayout>>::declare () ,that) ;
+exports CFat<LinearProcHolder> LinearProcHolder::hold (CREF<LinearProcImplLayout> that) {
+	return CFat<LinearProcHolder> (External<LinearProcHolder ,LinearProcImplLayout>::declare () ,that) ;
 }
 
-template class External<PointCloudKDTreeHolder ,AutoRef<PointCloudKDTreeLayout>> ;
+template class External<PointCloudKDTreeHolder ,PointCloudKDTreeLayout> ;
 
-exports VFat<PointCloudKDTreeHolder> PointCloudKDTreeHolder::hold (VREF<AutoRef<PointCloudKDTreeLayout>> that) {
-	return VFat<PointCloudKDTreeHolder> (External<PointCloudKDTreeHolder ,AutoRef<PointCloudKDTreeLayout>>::declare () ,that) ;
+exports VFat<PointCloudKDTreeHolder> PointCloudKDTreeHolder::hold (VREF<PointCloudKDTreeLayout> that) {
+	return VFat<PointCloudKDTreeHolder> (External<PointCloudKDTreeHolder ,PointCloudKDTreeLayout>::declare () ,that) ;
 }
 
-exports CFat<PointCloudKDTreeHolder> PointCloudKDTreeHolder::hold (CREF<AutoRef<PointCloudKDTreeLayout>> that) {
-	return CFat<PointCloudKDTreeHolder> (External<PointCloudKDTreeHolder ,AutoRef<PointCloudKDTreeLayout>>::declare () ,that) ;
+exports CFat<PointCloudKDTreeHolder> PointCloudKDTreeHolder::hold (CREF<PointCloudKDTreeLayout> that) {
+	return CFat<PointCloudKDTreeHolder> (External<PointCloudKDTreeHolder ,PointCloudKDTreeLayout>::declare () ,that) ;
 }
 
 class PointCloudImplHolder final implement Fat<PointCloudHolder ,PointCloudLayout> {
@@ -1291,7 +1293,7 @@ public:
 	PointCloudLayout smul (CREF<Matrix> mat) const override {
 		PointCloudLayout ret ;
 		ret.mRank = fake.mRank ;
-		ret.mPointCloud = fake.mPointCloud ;
+		ret.mPointCloud = fake.mPointCloud.share () ;
 		ret.mWorld *= mat ;
 		return move (ret) ;
 	}

@@ -12,12 +12,13 @@
 #include "csc_array.hpp"
 
 namespace CSC {
-struct StreamProcLayout ;
+struct StreamProcImplLayout ;
+struct StreamProcLayout implement OfThis<Ref<StreamProcImplLayout>> {} ;
 
 struct StreamProcHolder implement Interface {
-	imports CREF<Ref<StreamProcLayout>> instance () ;
-	imports VFat<StreamProcHolder> hold (VREF<Ref<StreamProcLayout>> that) ;
-	imports CFat<StreamProcHolder> hold (CREF<Ref<StreamProcLayout>> that) ;
+	imports CREF<StreamProcLayout> instance () ;
+	imports VFat<StreamProcHolder> hold (VREF<StreamProcImplLayout> that) ;
+	imports CFat<StreamProcHolder> hold (CREF<StreamProcImplLayout> that) ;
 
 	virtual void initialize () = 0 ;
 	virtual BOOL big_endian () const = 0 ;
@@ -39,10 +40,10 @@ struct StreamProcHolder implement Interface {
 	virtual STRU32 ctrl_from_word (CREF<STRU32> str) const = 0 ;
 } ;
 
-class StreamProc implement OfThis<Ref<StreamProcLayout>> {
+class StreamProc implement StreamProcLayout {
 public:
 	static CREF<StreamProc> instance () {
-		return Pointer::from (StreamProcHolder::instance ()) ;
+		return keep[TYPE<StreamProc>::expr] (StreamProcHolder::instance ()) ;
 	}
 
 	static BOOL big_endian () {
@@ -1684,12 +1685,13 @@ inline Format PrintFormat (CREF<ARG1>...params) {
 	return move (ret) ;
 }
 
-struct StreamTextProcLayout ;
+struct StreamTextProcImplLayout ;
+struct StreamTextProcLayout implement OfThis<Ref<StreamTextProcImplLayout>> {} ;
 
 struct StreamTextProcHolder implement Interface {
-	imports CREF<Ref<StreamTextProcLayout>> instance () ;
-	imports VFat<StreamTextProcHolder> hold (VREF<Ref<StreamTextProcLayout>> that) ;
-	imports CFat<StreamTextProcHolder> hold (CREF<Ref<StreamTextProcLayout>> that) ;
+	imports CREF<StreamTextProcLayout> instance () ;
+	imports VFat<StreamTextProcHolder> hold (VREF<StreamTextProcImplLayout> that) ;
+	imports CFat<StreamTextProcHolder> hold (CREF<StreamTextProcImplLayout> that) ;
 
 	virtual void initialize () = 0 ;
 	virtual void read_keyword (VREF<ReaderBinder> reader ,VREF<String<STRU8>> item) const = 0 ;
@@ -1701,10 +1703,10 @@ struct StreamTextProcHolder implement Interface {
 	virtual void write_aligned (VREF<WriterBinder> writer ,CREF<VAL64> number ,CREF<LENGTH> align) const = 0 ;
 } ;
 
-class StreamTextProc implement OfThis<Ref<StreamTextProcLayout>> {
+class StreamTextProc implement StreamTextProcLayout {
 public:
 	static CREF<StreamTextProc> instance () {
-		return Pointer::from (StreamTextProcHolder::instance ()) ;
+		return keep[TYPE<StreamTextProc>::expr] (StreamTextProcHolder::instance ()) ;
 	}
 
 	static void read_keyword (VREF<ReaderBinder> reader ,VREF<String<STRU8>> item) {
@@ -1848,24 +1850,27 @@ public:
 	}
 } ;
 
-struct CommaLayout ;
+struct CommaImplLayout ;
+struct CommaLayout implement OfThis<SharedRef<CommaImplLayout>> {} ;
 
 struct CommaHolder implement Interface {
-	imports VFat<CommaHolder> hold (VREF<SharedRef<CommaLayout>> that) ;
-	imports CFat<CommaHolder> hold (CREF<SharedRef<CommaLayout>> that) ;
+	imports CommaLayout create () ;
+	imports VFat<CommaHolder> hold (VREF<CommaImplLayout> that) ;
+	imports CFat<CommaHolder> hold (CREF<CommaImplLayout> that) ;
 
 	virtual void initialize (CREF<Slice> indent ,CREF<Slice> comma ,CREF<Slice> endline) = 0 ;
-	virtual void friend_write (VREF<WriterBinder> writer) const = 0 ;
-	virtual void increase () const = 0 ;
-	virtual void decrease () const = 0 ;
-	virtual void tight () const = 0 ;
+	virtual void friend_write (VREF<WriterBinder> writer) = 0 ;
+	virtual void increase () = 0 ;
+	virtual void decrease () = 0 ;
+	virtual void tight () = 0 ;
 } ;
 
-class Comma implement OfThis<SharedRef<CommaLayout>> {
+class Comma implement CommaLayout {
 public:
 	implicit Comma () = default ;
 
 	explicit Comma (CREF<Slice> indent ,CREF<Slice> comma ,CREF<Slice> endline) {
+		mThis = CommaHolder::create () ;
 		CommaHolder::hold (thiz)->initialize (indent ,comma ,endline) ;
 	}
 
@@ -1894,22 +1899,25 @@ public:
 	}
 } ;
 
-struct RegexLayout ;
+struct RegexImplLayout ;
+struct RegexLayout implement OfThis<AutoRef<RegexImplLayout>> {} ;
 
 struct RegexHolder implement Interface {
-	imports VFat<RegexHolder> hold (VREF<AutoRef<RegexLayout>> that) ;
-	imports CFat<RegexHolder> hold (CREF<AutoRef<RegexLayout>> that) ;
+	imports RegexLayout create () ;
+	imports VFat<RegexHolder> hold (VREF<RegexImplLayout> that) ;
+	imports CFat<RegexHolder> hold (CREF<RegexImplLayout> that) ;
 
 	virtual void initialize (CREF<String<STR>> format) = 0 ;
 	virtual INDEX search (RREF<Ref<String<STR>>> text ,CREF<INDEX> offset) = 0 ;
 	virtual Slice match (CREF<INDEX> index) const = 0 ;
 } ;
 
-class Regex implement OfThis<AutoRef<RegexLayout>> {
+class Regex implement RegexLayout {
 public:
 	implicit Regex () = default ;
 
 	explicit Regex (CREF<String<STR>> format) {
+		mThis = RegexHolder::create () ;
 		RegexHolder::hold (thiz)->initialize (format) ;
 	}
 

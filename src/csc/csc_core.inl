@@ -886,51 +886,51 @@ exports CFat<ExceptionHolder> ExceptionHolder::hold (CREF<ExceptionLayout> that)
 	return CFat<ExceptionHolder> (ExceptionImplHolder () ,that) ;
 }
 
-struct ClazzLayout {
+struct ClazzRoot {
 	LENGTH mTypeSize ;
 	LENGTH mTypeAlign ;
 	FLAG mTypeGuid ;
 	Slice mTypeName ;
 } ;
 
-class ClazzImplHolder final implement Fat<ClazzHolder ,Ref<ClazzLayout>> {
+class ClazzImplHolder final implement Fat<ClazzHolder ,ClazzLayout> {
 public:
 	void initialize (CREF<Unknown> holder) override {
-		fake = Ref<ClazzLayout>::make () ;
+		fake.mThis = Ref<ClazzRoot>::make () ;
 		const auto r1x = RFat<ReflectSize> (holder) ;
-		fake->mTypeSize = r1x->type_size () ;
-		fake->mTypeAlign = r1x->type_align () ;
+		fake.mThis->mTypeSize = r1x->type_size () ;
+		fake.mThis->mTypeAlign = r1x->type_align () ;
 		const auto r2x = RFat<ReflectGuid> (holder) ;
-		fake->mTypeGuid = r2x->type_guid () ;
+		fake.mThis->mTypeGuid = r2x->type_guid () ;
 		const auto r3x = RFat<ReflectName> (holder) ;
-		fake->mTypeName = r3x->type_name () ;
+		fake.mThis->mTypeName = r3x->type_name () ;
 	}
 
 	LENGTH type_size () const override {
-		if (fake == NULL)
+		if (fake.mThis == NULL)
 			return 0 ;
-		return fake->mTypeSize ;
+		return fake.mThis->mTypeSize ;
 	}
 
 	LENGTH type_align () const override {
-		if (fake == NULL)
+		if (fake.mThis == NULL)
 			return 0 ;
-		return fake->mTypeAlign ;
+		return fake.mThis->mTypeAlign ;
 	}
 
 	FLAG type_guid () const override {
-		if (fake == NULL)
+		if (fake.mThis == NULL)
 			return ZERO ;
-		return fake->mTypeGuid ;
+		return fake.mThis->mTypeGuid ;
 	}
 
 	Slice type_name () const override {
-		if (fake == NULL)
+		if (fake.mThis == NULL)
 			return Slice () ;
-		return fake->mTypeName ;
+		return fake.mThis->mTypeName ;
 	}
 
-	BOOL equal (CREF<Ref<ClazzLayout>> that) const override {
+	BOOL equal (CREF<ClazzLayout> that) const override {
 		if (type_size () != ClazzHolder::hold (that)->type_size ())
 			return FALSE ;
 		if (type_align () != ClazzHolder::hold (that)->type_align ())
@@ -941,7 +941,7 @@ public:
 		return inline_equal (type_name () ,ClazzHolder::hold (that)->type_name ()) ;
 	}
 
-	FLAG compr (CREF<Ref<ClazzLayout>> that) const override {
+	FLAG compr (CREF<ClazzLayout> that) const override {
 		if (type_guid () != 0)
 			if (type_guid () == ClazzHolder::hold (that)->type_guid ())
 				return ZERO ;
@@ -958,11 +958,11 @@ public:
 	}
 } ;
 
-exports VFat<ClazzHolder> ClazzHolder::hold (VREF<Ref<ClazzLayout>> that) {
+exports VFat<ClazzHolder> ClazzHolder::hold (VREF<ClazzLayout> that) {
 	return VFat<ClazzHolder> (ClazzImplHolder () ,that) ;
 }
 
-exports CFat<ClazzHolder> ClazzHolder::hold (CREF<Ref<ClazzLayout>> that) {
+exports CFat<ClazzHolder> ClazzHolder::hold (CREF<ClazzLayout> that) {
 	return CFat<ClazzHolder> (ClazzImplHolder () ,that) ;
 }
 } ;

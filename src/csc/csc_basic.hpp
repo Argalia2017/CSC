@@ -9,32 +9,32 @@
 #include "csc_core.hpp"
 
 namespace CSC {
-struct HeapMutexLayout {
+struct HeapMutexImplLayout {
 	FLAG mHolder ;
 
 public:
-	implicit HeapMutexLayout () noexcept {
+	implicit HeapMutexImplLayout () noexcept {
 		mHolder = ZERO ;
 	}
 } ;
 
 struct HeapMutexHolder implement Interface {
-	imports CREF<HeapMutexLayout> instance () ;
-	imports VFat<HeapMutexHolder> hold (VREF<HeapMutexLayout> that) ;
-	imports CFat<HeapMutexHolder> hold (CREF<HeapMutexLayout> that) ;
+	imports CREF<HeapMutexImplLayout> instance () ;
+	imports VFat<HeapMutexHolder> hold (VREF<HeapMutexImplLayout> that) ;
+	imports CFat<HeapMutexHolder> hold (CREF<HeapMutexImplLayout> that) ;
 
 	virtual void initialize () = 0 ;
 	virtual void enter () const = 0 ;
 	virtual void leave () const = 0 ;
 } ;
 
-class HeapMutex implement HeapMutexLayout {
+class HeapMutex implement HeapMutexImplLayout {
 protected:
-	using HeapMutexLayout::mHolder ;
+	using HeapMutexImplLayout::mHolder ;
 
 public:
 	static CREF<HeapMutex> instance () {
-		return Pointer::from (HeapMutexHolder::instance ()) ;
+		return keep[TYPE<HeapMutex>::expr] (HeapMutexHolder::instance ()) ;
 	}
 
 	void enter () const {
@@ -316,11 +316,30 @@ public:
 	}
 } ;
 
-struct FunctionLayout ;
+struct FunctionRoot ;
+
+struct FunctionLayout {
+	Ref<FunctionRoot> mThis ;
+
+public:
+	implicit FunctionLayout () = default ;
+
+	implicit FunctionLayout (CREF<FunctionLayout> that) {
+		mThis = that.mThis.share () ;
+	}
+
+	forceinline VREF<FunctionLayout> operator= (CREF<FunctionLayout> that) {
+		return assign (thiz ,that) ;
+	}
+
+	implicit FunctionLayout (RREF<FunctionLayout> that) = default ;
+
+	forceinline VREF<FunctionLayout> operator= (RREF<FunctionLayout> that) = default ;
+} ;
 
 struct FunctionHolder implement Interface {
-	imports VFat<FunctionHolder> hold (VREF<Ref<FunctionLayout>> that) ;
-	imports CFat<FunctionHolder> hold (CREF<Ref<FunctionLayout>> that) ;
+	imports VFat<FunctionHolder> hold (VREF<FunctionLayout> that) ;
+	imports CFat<FunctionHolder> hold (CREF<FunctionLayout> that) ;
 
 	virtual void initialize (RREF<BoxLayout> item ,CREF<Unknown> holder) = 0 ;
 	virtual LENGTH rank () const = 0 ;
@@ -342,11 +361,11 @@ public:
 } ;
 
 template <class...A>
-class Function implement OfThis<Ref<FunctionLayout>> {
+class Function implement FunctionLayout {
 public:
 	implicit Function () = default ;
 
-	template <class ARG1 ,class = REQUIRE<ENUM_NOT<IS_EXTEND<Ref<FunctionLayout> ,ARG1>>>>
+	template <class ARG1 ,class = REQUIRE<ENUM_NOT<IS_EXTEND<FunctionLayout ,ARG1>>>>
 	implicit Function (RREF<ARG1> that) {
 		using R1X = FUNCTION_RETURN<ARG1> ;
 		using R2X = FUNCTION_PARAMS<ARG1> ;

@@ -404,12 +404,13 @@ public:
 	}
 } ;
 
-struct ImageProcLayout ;
+struct ImageProcImplLayout ;
+struct ImageProcLayout implement OfThis<Ref<ImageProcImplLayout>> {} ;
 
 struct ImageProcHolder implement Interface {
-	imports CREF<Ref<ImageProcLayout>> instance () ;
-	imports VFat<ImageProcHolder> hold (VREF<Ref<ImageProcLayout>> that) ;
-	imports CFat<ImageProcHolder> hold (CREF<Ref<ImageProcLayout>> that) ;
+	imports CREF<ImageProcLayout> instance () ;
+	imports VFat<ImageProcHolder> hold (VREF<ImageProcImplLayout> that) ;
+	imports CFat<ImageProcHolder> hold (CREF<ImageProcImplLayout> that) ;
 
 	virtual void initialize () = 0 ;
 	virtual ImageLayout make_image (RREF<BoxLayout> image) const = 0 ;
@@ -427,10 +428,10 @@ struct ImageProcHolder implement Interface {
 	virtual FLT64 sampler (CREF<Image<FLT64>> image ,CREF<FLT64> x ,CREF<FLT64> y) const = 0 ;
 } ;
 
-class ImageProc implement OfThis<Ref<ImageProcLayout>> {
+class ImageProc implement ImageProcLayout {
 public:
 	static CREF<ImageProc> instance () {
-		return Pointer::from (ImageProcHolder::instance ()) ;
+		return keep[TYPE<ImageProc>::expr] (ImageProcHolder::instance ()) ;
 	}
 
 	static ImageLayout make_image (RREF<BoxLayout> image) {

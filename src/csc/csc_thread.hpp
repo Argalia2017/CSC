@@ -57,27 +57,30 @@ public:
 	}
 } ;
 
-struct WorkThreadLayout ;
+struct WorkThreadImplLayout ;
+struct WorkThreadLayout implement OfThis<SharedRef<WorkThreadImplLayout>> {} ;
 
 struct WorkThreadHolder implement Interface {
-	imports VFat<WorkThreadHolder> hold (VREF<SharedRef<WorkThreadLayout>> that) ;
-	imports CFat<WorkThreadHolder> hold (CREF<SharedRef<WorkThreadLayout>> that) ;
+	imports WorkThreadLayout create () ;
+	imports VFat<WorkThreadHolder> hold (VREF<WorkThreadImplLayout> that) ;
+	imports CFat<WorkThreadHolder> hold (CREF<WorkThreadImplLayout> that) ;
 
 	virtual void initialize () = 0 ;
-	virtual void set_thread_size (CREF<LENGTH> size_) const = 0 ;
-	virtual void set_queue_size (CREF<LENGTH> size_) const = 0 ;
-	virtual void start (CREF<Function<CREF<INDEX>>> func) const = 0 ;
-	virtual void post (CREF<INDEX> begin_ ,CREF<INDEX> end_) const = 0 ;
-	virtual void join () const = 0 ;
-	virtual BOOL join (CREF<Time> interval) const = 0 ;
-	virtual void stop () const = 0 ;
+	virtual void set_thread_size (CREF<LENGTH> size_) = 0 ;
+	virtual void set_queue_size (CREF<LENGTH> size_) = 0 ;
+	virtual void start (CREF<Function<CREF<INDEX>>> func) = 0 ;
+	virtual void post (CREF<INDEX> begin_ ,CREF<INDEX> end_) = 0 ;
+	virtual void join () = 0 ;
+	virtual BOOL join (CREF<Time> interval) = 0 ;
+	virtual void stop () = 0 ;
 } ;
 
-class WorkThread implement OfThis<SharedRef<WorkThreadLayout>> {
+class WorkThread implement WorkThreadLayout {
 public:
 	implicit WorkThread () = default ;
 
 	implicit WorkThread (CREF<typeof (NULL)>) {
+		mThis = WorkThreadHolder::create () ;
 		WorkThreadHolder::hold (thiz)->initialize () ;
 	}
 
@@ -117,28 +120,31 @@ struct CalcSolution {
 	BitSet mInput ;
 } ;
 
-struct CalcThreadLayout ;
+struct CalcThreadImplLayout ;
+struct CalcThreadLayout implement OfThis<SharedRef<CalcThreadImplLayout>> {} ;
 
 struct CalcThreadHolder implement Interface {
-	imports VFat<CalcThreadHolder> hold (VREF<SharedRef<CalcThreadLayout>> that) ;
-	imports CFat<CalcThreadHolder> hold (CREF<SharedRef<CalcThreadLayout>> that) ;
+	imports CalcThreadLayout create () ;
+	imports VFat<CalcThreadHolder> hold (VREF<CalcThreadImplLayout> that) ;
+	imports CFat<CalcThreadHolder> hold (CREF<CalcThreadImplLayout> that) ;
 
 	virtual void initialize () = 0 ;
-	virtual void set_thread_size (CREF<LENGTH> size_) const = 0 ;
-	virtual void set_start_input (CREF<BitSet> input) const = 0 ;
-	virtual void start (CREF<Function<CREF<CalcSolution> ,VREF<CalcSolution>>> func) const = 0 ;
+	virtual void set_thread_size (CREF<LENGTH> size_) = 0 ;
+	virtual void set_start_input (CREF<BitSet> input) = 0 ;
+	virtual void start (CREF<Function<CREF<CalcSolution> ,VREF<CalcSolution>>> func) = 0 ;
 	virtual BOOL ready () const = 0 ;
-	virtual CalcSolution poll () const = 0 ;
-	virtual void suspend () const = 0 ;
-	virtual void resume () const = 0 ;
-	virtual void stop () const = 0 ;
+	virtual CalcSolution poll () = 0 ;
+	virtual void suspend () = 0 ;
+	virtual void resume () = 0 ;
+	virtual void stop () = 0 ;
 } ;
 
-class CalcThread implement OfThis<SharedRef<CalcThreadLayout>> {
+class CalcThread implement CalcThreadLayout {
 public:
 	implicit CalcThread () = default ;
 
 	implicit CalcThread (CREF<typeof (NULL)>) {
+		mThis = CalcThreadHolder::create () ;
 		CalcThreadHolder::hold (thiz)->initialize () ;
 	}
 
@@ -175,31 +181,34 @@ public:
 	}
 } ;
 
-struct PromiseLayout ;
+struct PromiseImplLayout ;
+struct PromiseLayout implement OfThis<SharedRef<PromiseImplLayout>> {} ;
 
 struct PromiseHolder implement Interface {
-	imports VFat<PromiseHolder> hold (VREF<SharedRef<PromiseLayout>> that) ;
-	imports CFat<PromiseHolder> hold (CREF<SharedRef<PromiseLayout>> that) ;
+	imports PromiseLayout create () ;
+	imports VFat<PromiseHolder> hold (VREF<PromiseImplLayout> that) ;
+	imports CFat<PromiseHolder> hold (CREF<PromiseImplLayout> that) ;
 
 	virtual void initialize () = 0 ;
-	virtual void set_retry (CREF<BOOL> flag) const = 0 ;
-	virtual void start () const = 0 ;
-	virtual void start (CREF<Function<>> func) const = 0 ;
-	virtual void post (RREF<AutoRef<Pointer>> item) const = 0 ;
-	virtual void rethrow (CREF<Exception> e) const = 0 ;
+	virtual void set_retry (CREF<BOOL> flag) = 0 ;
+	virtual void start () = 0 ;
+	virtual void start (CREF<Function<>> func) = 0 ;
+	virtual void post (RREF<AutoRef<Pointer>> item) = 0 ;
+	virtual void rethrow (CREF<Exception> e) = 0 ;
 	virtual BOOL ready () const = 0 ;
 	virtual BOOL running () const = 0 ;
-	virtual AutoRef<Pointer> poll () const = 0 ;
-	virtual void future () const = 0 ;
-	virtual void stop () const = 0 ;
+	virtual AutoRef<Pointer> poll () = 0 ;
+	virtual void future () = 0 ;
+	virtual void stop () = 0 ;
 } ;
 
 template <class A>
-class Promise implement OfThis<SharedRef<PromiseLayout>> {
+class Promise implement PromiseLayout {
 public:
 	implicit Promise () = default ;
 
 	implicit Promise (CREF<typeof (NULL)>) {
+		mThis = PromiseHolder::create () ;
 		PromiseHolder::hold (thiz)->initialize () ;
 	}
 

@@ -15,13 +15,13 @@ struct HeapMutexRoot {
 	Box<std::recursive_mutex> mMutex ;
 } ;
 
-class HeapMutexImplHolder final implement Fat<HeapMutexHolder ,HeapMutexLayout> {
+class HeapMutexImplHolder final implement Fat<HeapMutexHolder ,HeapMutexImplLayout> {
 public:
 	void initialize () override {
 		pin_ptr (fake).mMutex.remake () ;
 	}
 
-	static VREF<HeapMutexRoot> pin_ptr (CREF<HeapMutexLayout> that) {
+	static VREF<HeapMutexRoot> pin_ptr (CREF<HeapMutexImplLayout> that) {
 		return memorize ([&] () {
 			return Pin<HeapMutexRoot> () ;
 		}).self ;
@@ -36,22 +36,22 @@ public:
 	}
 } ;
 
-exports CREF<HeapMutexLayout> HeapMutexHolder::instance () {
+exports CREF<HeapMutexImplLayout> HeapMutexHolder::instance () {
 	return memorize ([&] () {
-		HeapMutexLayout ret ;
+		HeapMutexImplLayout ret ;
 		ret.mHolder = inline_vptr (HeapMutexImplHolder ()) ;
 		HeapMutexHolder::hold (ret)->initialize () ;
 		return move (ret) ;
 	}) ;
 }
 
-exports VFat<HeapMutexHolder> HeapMutexHolder::hold (VREF<HeapMutexLayout> that) {
+exports VFat<HeapMutexHolder> HeapMutexHolder::hold (VREF<HeapMutexImplLayout> that) {
 	assert (that.mHolder != ZERO) ;
 	auto &&rax = keep[TYPE<HeapMutexImplHolder>::expr] (Pointer::from (that.mHolder)) ;
 	return VFat<HeapMutexHolder> (rax ,that) ;
 }
 
-exports CFat<HeapMutexHolder> HeapMutexHolder::hold (CREF<HeapMutexLayout> that) {
+exports CFat<HeapMutexHolder> HeapMutexHolder::hold (CREF<HeapMutexImplLayout> that) {
 	assert (that.mHolder != ZERO) ;
 	auto &&rax = keep[TYPE<HeapMutexImplHolder>::expr] (Pointer::from (that.mHolder)) ;
 	return CFat<HeapMutexHolder> (rax ,that) ;
@@ -99,15 +99,15 @@ exports CFat<OptionalHolder> OptionalHolder::hold (CREF<OptionalLayout> that) {
 	return CFat<OptionalHolder> (OptionalImplHolder () ,that) ;
 }
 
-struct FunctionLayout {
+struct FunctionRoot {
 	BoxLayout mValue ;
 } ;
 
-class FunctionImplHolder final implement Fat<FunctionHolder ,Ref<FunctionLayout>> {
+class FunctionImplHolder final implement Fat<FunctionHolder ,FunctionLayout> {
 public:
 	void initialize (RREF<BoxLayout> item ,CREF<Unknown> holder) override {
 		const auto r1x = BoxHolder::hold (item)->unknown () ;
-		RefHolder::hold (fake)->initialize (RefUnknownBinder<FunctionLayout> () ,r1x ,1) ;
+		RefHolder::hold (fake.mThis)->initialize (RefUnknownBinder<FunctionLayout> () ,r1x ,1) ;
 		BoxHolder::hold (raw ())->acquire (item) ;
 		BoxHolder::hold (raw ())->release () ;
 		BoxHolder::hold (raw ())->initialize (holder) ;
@@ -115,33 +115,33 @@ public:
 	}
 
 	VREF<BoxLayout> raw () leftvalue {
-		return fake->mValue ;
+		return fake.mThis->mValue ;
 	}
 
 	CREF<BoxLayout> raw () const leftvalue {
-		return fake->mValue ;
+		return fake.mThis->mValue ;
 	}
 
 	LENGTH rank () const override {
-		if (fake == NULL)
+		if (fake.mThis == NULL)
 			return 0 ;
 		const auto r1x = RFat<ReflectInvoke> (BoxHolder::hold (raw ())->unknown ()) ;
 		return r1x->rank () ;
 	}
 
 	void invoke (CREF<WrapperLayout> params) const override {
-		if (fake == NULL)
+		if (fake.mThis == NULL)
 			return ;
 		const auto r1x = RFat<ReflectInvoke> (BoxHolder::hold (raw ())->unknown ()) ;
 		return r1x->invoke (BoxHolder::hold (raw ())->self ,params) ;
 	}
 } ;
 
-exports VFat<FunctionHolder> FunctionHolder::hold (VREF<Ref<FunctionLayout>> that) {
+exports VFat<FunctionHolder> FunctionHolder::hold (VREF<FunctionLayout> that) {
 	return VFat<FunctionHolder> (FunctionImplHolder () ,that) ;
 }
 
-exports CFat<FunctionHolder> FunctionHolder::hold (CREF<Ref<FunctionLayout>> that) {
+exports CFat<FunctionHolder> FunctionHolder::hold (CREF<FunctionLayout> that) {
 	return CFat<FunctionHolder> (FunctionImplHolder () ,that) ;
 }
 
@@ -274,7 +274,7 @@ public:
 			if (that.mThis == NULL)
 				discard ;
 			Scope<HeapMutex> anonymous (that.mThis->mMutex) ;
-			fake.mThis = that.mThis ;
+			fake.mThis = that.mThis.share () ;
 			fake.mLayout = address (BoxHolder::hold (raw ())->self) ;
 			fake.mThis->mCounter++ ;
 		}
@@ -414,7 +414,7 @@ public:
 		auto rax = UniqueRefLayout () ;
 		that.mThis->mUpper.get (rax) ;
 		assert (!rax.mThis.exist ()) ;
-		rax.mThis = fake.mThis ;
+		rax.mThis = fake.mThis.share () ;
 		rax.mLayout = fake.mLayout ;
 		that.mThis->mUpper.set (rax) ;
 	}

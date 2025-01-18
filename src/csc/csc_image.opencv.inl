@@ -19,7 +19,9 @@
 #include "csc_begin.h"
 
 namespace CSC {
-class ImageProcImplHolder final implement Fat<ImageProcHolder ,Ref<ImageProcLayout>> {
+struct ImageProcImplLayout {} ;
+
+class ImageProcImplHolder final implement Fat<ImageProcHolder ,ImageProcImplLayout> {
 public:
 	void initialize () override {
 		noop () ;
@@ -285,5 +287,5 @@ public:
 	}
 } ;
 
-static const auto mImageProcExternal = External<ImageProcHolder ,Ref<ImageProcLayout>> (ImageProcImplHolder ()) ;
+static const auto mImageProcExternal = External<ImageProcHolder ,ImageProcImplLayout> (ImageProcImplHolder ()) ;
 } ;

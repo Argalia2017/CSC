@@ -11,7 +11,7 @@
 #include "csc_begin.h"
 
 namespace CSC {
-struct StreamProcLayout {
+struct StreamProcImplLayout {
 	Slice mBlankSlice ;
 	Slice mPunctSlice ;
 	Slice mAlphaSlice ;
@@ -20,16 +20,15 @@ struct StreamProcLayout {
 	Slice mEscapeCtrlSlice ;
 } ;
 
-class StreamProcImplHolder final implement Fat<StreamProcHolder ,Ref<StreamProcLayout>> {
+class StreamProcImplHolder final implement Fat<StreamProcHolder ,StreamProcImplLayout> {
 public:
 	void initialize () override {
-		fake = Ref<StreamProcLayout>::make () ;
-		fake->mBlankSlice = slice ("\b\t\n\v\f\r ") ;
-		fake->mPunctSlice = slice ("!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~") ;
-		fake->mAlphaSlice = slice ("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz") ;
-		fake->mDigitSlice = slice ("0123456789") ;
-		fake->mEscapeWordSlice = slice ("\\/tvbrnf\'\"?u") ;
-		fake->mEscapeCtrlSlice = slice ("\\/\t\v\b\r\n\f\'\"?\a") ;
+		fake.mBlankSlice = slice ("\b\t\n\v\f\r ") ;
+		fake.mPunctSlice = slice ("!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~") ;
+		fake.mAlphaSlice = slice ("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz") ;
+		fake.mDigitSlice = slice ("0123456789") ;
+		fake.mEscapeWordSlice = slice ("\\/tvbrnf\'\"?u") ;
+		fake.mEscapeCtrlSlice = slice ("\\/\t\v\b\r\n\f\'\"?\a") ;
 	}
 
 	BOOL big_endian () const override {
@@ -39,7 +38,7 @@ public:
 	}
 
 	BOOL is_blank (CREF<STRU32> str) const override {
-		const auto r1x = fake->mBlankSlice ;
+		const auto r1x = fake.mBlankSlice ;
 		for (auto &&i : iter (0 ,r1x.size ())) {
 			if (r1x[i] == str)
 				return TRUE ;
@@ -70,7 +69,7 @@ public:
 	}
 
 	BOOL is_punct (CREF<STRU32> str) const override {
-		const auto r1x = fake->mPunctSlice ;
+		const auto r1x = fake.mPunctSlice ;
 		for (auto &&i : iter (0 ,r1x.size ())) {
 			if (r1x[i] == str)
 				return TRUE ;
@@ -158,7 +157,7 @@ public:
 	}
 
 	BOOL is_ctrl (CREF<STRU32> str) const override {
-		const auto r1x = fake->mEscapeCtrlSlice ;
+		const auto r1x = fake.mEscapeCtrlSlice ;
 		for (auto &&i : iter (0 ,r1x.size ())) {
 			if (r1x[i] == str)
 				return TRUE ;
@@ -167,8 +166,8 @@ public:
 	}
 
 	STRU32 word_from_ctrl (CREF<STRU32> str) const override {
-		const auto r1x = fake->mEscapeWordSlice ;
-		const auto r2x = fake->mEscapeCtrlSlice ;
+		const auto r1x = fake.mEscapeWordSlice ;
+		const auto r2x = fake.mEscapeCtrlSlice ;
 		for (auto &&i : iter (0 ,r2x.size ())) {
 			if (r2x[i] == str)
 				return r1x[i] ;
@@ -178,8 +177,8 @@ public:
 	}
 
 	STRU32 ctrl_from_word (CREF<STRU32> str) const override {
-		const auto r1x = fake->mEscapeWordSlice ;
-		const auto r2x = fake->mEscapeCtrlSlice ;
+		const auto r1x = fake.mEscapeWordSlice ;
+		const auto r2x = fake.mEscapeCtrlSlice ;
 		for (auto &&i : iter (0 ,r1x.size ())) {
 			if (r1x[i] == str)
 				return r2x[i] ;
@@ -189,19 +188,20 @@ public:
 	}
 } ;
 
-exports CREF<Ref<StreamProcLayout>> StreamProcHolder::instance () {
+exports CREF<StreamProcLayout> StreamProcHolder::instance () {
 	return memorize ([&] () {
-		Ref<StreamProcLayout> ret ;
+		StreamProcLayout ret ;
+		ret.mThis = Ref<StreamProcImplLayout>::make () ;
 		StreamProcHolder::hold (ret)->initialize () ;
 		return move (ret) ;
 	}) ;
 }
 
-exports VFat<StreamProcHolder> StreamProcHolder::hold (VREF<Ref<StreamProcLayout>> that) {
+exports VFat<StreamProcHolder> StreamProcHolder::hold (VREF<StreamProcImplLayout> that) {
 	return VFat<StreamProcHolder> (StreamProcImplHolder () ,that) ;
 }
 
-exports CFat<StreamProcHolder> StreamProcHolder::hold (CREF<Ref<StreamProcLayout>> that) {
+exports CFat<StreamProcHolder> StreamProcHolder::hold (CREF<StreamProcImplLayout> that) {
 	return CFat<StreamProcHolder> (StreamProcImplHolder () ,that) ;
 }
 
@@ -1634,7 +1634,9 @@ exports CFat<FormatHolder> FormatHolder::hold (CREF<FormatLayout> that) {
 	return CFat<FormatHolder> (FormatImplHolder () ,that) ;
 }
 
-class StreamTextProcImplHolder final implement Fat<StreamTextProcHolder ,Ref<StreamTextProcLayout>> {
+struct StreamTextProcImplLayout {} ;
+
+class StreamTextProcImplHolder final implement Fat<StreamTextProcHolder ,StreamTextProcImplLayout> {
 public:
 	void initialize () override {
 		noop () ;
@@ -1832,23 +1834,24 @@ public:
 	}
 } ;
 
-exports CREF<Ref<StreamTextProcLayout>> StreamTextProcHolder::instance () {
+exports CREF<StreamTextProcLayout> StreamTextProcHolder::instance () {
 	return memorize ([&] () {
-		Ref<StreamTextProcLayout> ret ;
+		StreamTextProcLayout ret ;
+		ret.mThis = Ref<StreamTextProcImplLayout>::make () ;
 		StreamTextProcHolder::hold (ret)->initialize () ;
 		return move (ret) ;
 	}) ;
 }
 
-exports VFat<StreamTextProcHolder> StreamTextProcHolder::hold (VREF<Ref<StreamTextProcLayout>> that) {
+exports VFat<StreamTextProcHolder> StreamTextProcHolder::hold (VREF<StreamTextProcImplLayout> that) {
 	return VFat<StreamTextProcHolder> (StreamTextProcImplHolder () ,that) ;
 }
 
-exports CFat<StreamTextProcHolder> StreamTextProcHolder::hold (CREF<Ref<StreamTextProcLayout>> that) {
+exports CFat<StreamTextProcHolder> StreamTextProcHolder::hold (CREF<StreamTextProcImplLayout> that) {
 	return CFat<StreamTextProcHolder> (StreamTextProcImplHolder () ,that) ;
 }
 
-struct CommaLayout {
+struct CommaImplLayout {
 	Slice mIndent ;
 	Slice mComma ;
 	Slice mEndline ;
@@ -1858,115 +1861,125 @@ struct CommaLayout {
 	LENGTH mLastTight ;
 } ;
 
-class CommaImplHolder final implement Fat<CommaHolder ,SharedRef<CommaLayout>> {
+class CommaImplHolder final implement Fat<CommaHolder ,CommaImplLayout> {
 public:
 	void initialize (CREF<Slice> indent ,CREF<Slice> comma ,CREF<Slice> endline) override {
-		fake = SharedRef<CommaLayout>::make () ;
-		fake->mIndent = indent ;
-		fake->mComma = comma ;
-		fake->mEndline = endline ;
-		fake->mDepth = 0 ;
-		fake->mTight = 255 ;
-		fake->mLastTight = 0 ;
+		fake.mIndent = indent ;
+		fake.mComma = comma ;
+		fake.mEndline = endline ;
+		fake.mDepth = 0 ;
+		fake.mTight = 255 ;
+		fake.mLastTight = 0 ;
 	}
 
-	void friend_write (VREF<WriterBinder> writer) const override {
+	void friend_write (VREF<WriterBinder> writer) override {
 		if ifdo (TRUE) {
-			if (fake->mDepth >= fake->mTight + fake->mLastTight)
+			if (fake.mDepth >= fake.mTight + fake.mLastTight)
 				discard ;
-			writer.write (fake->mEndline) ;
+			writer.write (fake.mEndline) ;
 		}
 		if ifdo (TRUE) {
-			if (fake->mFirst.empty ())
+			if (fake.mFirst.empty ())
 				discard ;
-			INDEX ix = fake->mFirst.tail () ;
+			INDEX ix = fake.mFirst.tail () ;
 			if ifdo (TRUE) {
-				if (fake->mFirst[ix])
+				if (fake.mFirst[ix])
 					discard ;
-				writer.write (fake->mComma) ;
+				writer.write (fake.mComma) ;
 			}
-			fake->mFirst[ix] = FALSE ;
+			fake.mFirst[ix] = FALSE ;
 		}
 		if ifdo (TRUE) {
-			if (fake->mDepth >= fake->mTight + fake->mLastTight)
+			if (fake.mDepth >= fake.mTight + fake.mLastTight)
 				discard ;
-			for (auto &&i : iter (0 ,fake->mDepth)) {
+			for (auto &&i : iter (0 ,fake.mDepth)) {
 				noop (i) ;
-				writer.write (fake->mIndent) ;
+				writer.write (fake.mIndent) ;
 			}
 		}
-		fake->mLastTight = 0 ;
+		fake.mLastTight = 0 ;
 	}
 
-	void increase () const override {
-		fake->mDepth++ ;
+	void increase () override {
+		fake.mDepth++ ;
 		if ifdo (TRUE) {
-			if (fake->mFirst.empty ())
+			if (fake.mFirst.empty ())
 				discard ;
-			fake->mFirst[fake->mFirst.tail ()] = TRUE ;
+			fake.mFirst[fake.mFirst.tail ()] = TRUE ;
 		}
-		fake->mFirst.add (TRUE) ;
+		fake.mFirst.add (TRUE) ;
 	}
 
-	void decrease () const override {
-		fake->mFirst.pop () ;
-		fake->mDepth-- ;
-		fake->mLastTight = fake->mTight - 256 ;
-		fake->mTight = 255 ;
+	void decrease () override {
+		fake.mFirst.pop () ;
+		fake.mDepth-- ;
+		fake.mLastTight = fake.mTight - 256 ;
+		fake.mTight = 255 ;
 	}
 
-	void tight () const override {
-		fake->mTight = inline_min (fake->mTight ,fake->mDepth) ;
+	void tight () override {
+		fake.mTight = inline_min (fake.mTight ,fake.mDepth) ;
 	}
 } ;
 
-exports VFat<CommaHolder> CommaHolder::hold (VREF<SharedRef<CommaLayout>> that) {
+exports CommaLayout CommaHolder::create () {
+	CommaLayout ret ;
+	ret.mThis = SharedRef<CommaImplLayout>::make () ;
+	return move (ret) ;
+}
+
+exports VFat<CommaHolder> CommaHolder::hold (VREF<CommaImplLayout> that) {
 	return VFat<CommaHolder> (CommaImplHolder () ,that) ;
 }
 
-exports CFat<CommaHolder> CommaHolder::hold (CREF<SharedRef<CommaLayout>> that) {
+exports CFat<CommaHolder> CommaHolder::hold (CREF<CommaImplLayout> that) {
 	return CFat<CommaHolder> (CommaImplHolder () ,that) ;
 }
 
-struct RegexLayout {
+struct RegexImplLayout {
 	std::basic_regex<STR> mRegex ;
 	std::match_results<PTR<CREF<STR>>> mMatch ;
 	Ref<String<STR>> mText ;
 } ;
 
-class RegexImplHolder final implement Fat<RegexHolder ,AutoRef<RegexLayout>> {
+class RegexImplHolder final implement Fat<RegexHolder ,RegexImplLayout> {
 public:
 	void initialize (CREF<String<STR>> format) override {
-		fake = AutoRef<RegexLayout>::make () ;
-		fake->mRegex = std::basic_regex<STR> (format) ;
+		fake.mRegex = std::basic_regex<STR> (format) ;
 	}
 
 	INDEX search (RREF<Ref<String<STR>>> text ,CREF<INDEX> offset) override {
-		fake->mText = move (text) ;
-		const auto r1x = (&fake->mText.self[offset]) ;
-		const auto r2x = std::regex_search (r1x ,fake->mMatch ,fake->mRegex) ;
+		fake.mText = move (text) ;
+		const auto r1x = (&fake.mText.self[offset]) ;
+		const auto r2x = std::regex_search (r1x ,fake.mMatch ,fake.mRegex) ;
 		if (!r2x)
 			return NONE ;
-		const auto r3x = FLAG (fake->mMatch[0].first) ;
+		const auto r3x = FLAG (fake.mMatch[0].first) ;
 		const auto r4x = (r3x - FLAG (r1x)) / SIZE_OF<STR>::expr ;
 		return offset + r4x ;
 	}
 
 	Slice match (CREF<INDEX> index) const override {
-		assert (!fake->mMatch.empty ()) ;
-		assert (inline_between (index ,0 ,fake->mMatch.size ())) ;
-		const auto r1x = FLAG (fake->mMatch[index].first) ;
-		const auto r2x = FLAG (fake->mMatch[index].second) ;
+		assert (!fake.mMatch.empty ()) ;
+		assert (inline_between (index ,0 ,fake.mMatch.size ())) ;
+		const auto r1x = FLAG (fake.mMatch[index].first) ;
+		const auto r2x = FLAG (fake.mMatch[index].second) ;
 		const auto r3x = (r2x - r1x) / SIZE_OF<STR>::expr ;
 		return Slice (r1x ,r3x ,SIZE_OF<STR>::expr) ;
 	}
 } ;
 
-exports VFat<RegexHolder> RegexHolder::hold (VREF<AutoRef<RegexLayout>> that) {
+exports RegexLayout RegexHolder::create () {
+	RegexLayout ret ;
+	ret.mThis = AutoRef<RegexImplLayout>::make () ;
+	return move (ret) ;
+}
+
+exports VFat<RegexHolder> RegexHolder::hold (VREF<RegexImplLayout> that) {
 	return VFat<RegexHolder> (RegexImplHolder () ,that) ;
 }
 
-exports CFat<RegexHolder> RegexHolder::hold (CREF<AutoRef<RegexLayout>> that) {
+exports CFat<RegexHolder> RegexHolder::hold (CREF<RegexImplLayout> that) {
 	return CFat<RegexHolder> (RegexImplHolder () ,that) ;
 }
 } ;

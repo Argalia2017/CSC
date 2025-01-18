@@ -110,20 +110,19 @@ static constexpr auto string_locale = FUNCTION_string_locale () ;
 static constexpr auto string_stra_from_strw = FUNCTION_string_stra_from_strw () ;
 static constexpr auto string_strw_from_stra = FUNCTION_string_strw_from_stra () ;
 
-struct StringProcLayout {
+struct StringProcImplLayout {
 	UniqueRef<csc_locale_t> mStringLocale ;
 } ;
 
-class StringProcImplHolder final implement Fat<StringProcHolder ,Ref<StringProcLayout>> {
+class StringProcImplHolder final implement Fat<StringProcHolder ,StringProcImplLayout> {
 public:
 	void initialize () override {
-		fake = Ref<StringProcLayout>::make () ;
-		fake->mStringLocale = string_locale () ;
+		fake.mStringLocale = string_locale () ;
 	}
 
 	String<STRA> stra_from_strw (CREF<String<STRW>> a) const override {
 		String<STRA> ret = String<STRA> (a.length () * 2 + 1) ;
-		string_stra_from_strw (ret ,a ,fake->mStringLocale) ;
+		string_stra_from_strw (ret ,a ,fake.mStringLocale) ;
 		return move (ret) ;
 	}
 
@@ -138,7 +137,7 @@ public:
 
 	String<STRW> strw_from_stra (CREF<String<STRA>> a) const override {
 		String<STRW> ret = String<STRW> (a.length () + 1) ;
-		string_strw_from_stra (ret ,a ,fake->mStringLocale) ;
+		string_strw_from_stra (ret ,a ,fake.mStringLocale) ;
 		return move (ret) ;
 	}
 
@@ -822,19 +821,20 @@ public:
 	}
 } ;
 
-exports CREF<Ref<StringProcLayout>> StringProcHolder::instance () {
+exports CREF<StringProcLayout> StringProcHolder::instance () {
 	return memorize ([&] () {
-		Ref<StringProcLayout> ret ;
+		StringProcLayout ret ;
+		ret.mThis = Ref<StringProcImplLayout>::make () ;
 		StringProcHolder::hold (ret)->initialize () ;
 		return move (ret) ;
 	}) ;
 }
 
-exports VFat<StringProcHolder> StringProcHolder::hold (VREF<Ref<StringProcLayout>> that) {
+exports VFat<StringProcHolder> StringProcHolder::hold (VREF<StringProcImplLayout> that) {
 	return VFat<StringProcHolder> (StringProcImplHolder () ,that) ;
 }
 
-exports CFat<StringProcHolder> StringProcHolder::hold (CREF<Ref<StringProcLayout>> that) {
+exports CFat<StringProcHolder> StringProcHolder::hold (CREF<StringProcImplLayout> that) {
 	return CFat<StringProcHolder> (StringProcImplHolder () ,that) ;
 }
 
@@ -865,7 +865,7 @@ public:
 	}
 
 	void use_text () {
-		mTextReader = Box<TextReader>::make (Ref<RefBuffer<BYTE>> (mStream)) ;
+		mTextReader = Box<TextReader>::make (mStream.share ()) ;
 		mTextReader->reset (mBackup) ;
 		mDeque.clear () ;
 		while (TRUE) {
@@ -1342,7 +1342,7 @@ public:
 		if ifdo (TRUE) {
 			if (!exist ())
 				discard ;
-			ret.mThis = fake.mThis ;
+			ret.mThis = fake.mThis.share () ;
 			ret.mIndex = fake.mThis->mRoot ;
 		}
 		return move (ret) ;
@@ -1353,7 +1353,7 @@ public:
 		if ifdo (TRUE) {
 			if (!exist ())
 				discard ;
-			ret.mThis = fake.mThis ;
+			ret.mThis = fake.mThis.share () ;
 			ret.mIndex = fake.mThis->mTree[fake.mIndex].mParent ;
 		}
 		return move (ret) ;
@@ -1364,7 +1364,7 @@ public:
 		if ifdo (TRUE) {
 			if (!exist ())
 				discard ;
-			ret.mThis = fake.mThis ;
+			ret.mThis = fake.mThis.share () ;
 			ret.mIndex = fake.mThis->mTree[fake.mIndex].mBrother ;
 		}
 		return move (ret) ;
@@ -1375,7 +1375,7 @@ public:
 		if ifdo (TRUE) {
 			if (!exist ())
 				discard ;
-			ret.mThis = fake.mThis ;
+			ret.mThis = fake.mThis.share () ;
 			ret.mIndex = fake.mThis->mTree[fake.mIndex].mChild ;
 		}
 		return move (ret) ;
@@ -1386,7 +1386,7 @@ public:
 		if ifdo (TRUE) {
 			if (!exist ())
 				discard ;
-			ret.mThis = fake.mThis ;
+			ret.mThis = fake.mThis.share () ;
 			ret.mIndex = fake.mThis->mTree[fake.mIndex].mArrayMap.map (index) ;
 		}
 		return move (ret) ;
@@ -1397,7 +1397,7 @@ public:
 		if ifdo (TRUE) {
 			if (!exist ())
 				discard ;
-			ret.mThis = fake.mThis ;
+			ret.mThis = fake.mThis.share () ;
 			ret.mIndex = fake.mThis->mTree[fake.mIndex].mObjectMap.map (name) ;
 		}
 		return move (ret) ;
@@ -1408,7 +1408,7 @@ public:
 		if ifdo (TRUE) {
 			if (!exist ())
 				discard ;
-			ret.mThis = fake.mThis ;
+			ret.mThis = fake.mThis.share () ;
 			ret.mIndex = fake.mThis->mTree[fake.mIndex].mObjectMap.map (name) ;
 		}
 		return move (ret) ;
@@ -1422,7 +1422,7 @@ public:
 			const auto r1x = fake.mThis->mTree[fake.mIndex].mArrayMap.length () ;
 			ret = Array<XmlParserLayout> (r1x) ;
 			for (auto &&i : iter (0 ,r1x)) {
-				ret[i].mThis = fake.mThis ;
+				ret[i].mThis = fake.mThis.share () ;
 				ret[i].mIndex = fake.mThis->mTree[fake.mIndex].mArrayMap[i] ;
 			}
 		}
@@ -1437,7 +1437,7 @@ public:
 			const auto r1x = fake.mThis->mTree[fake.mIndex].mArrayMap.length () ;
 			const auto r2x = inline_min (r1x ,size_) ;
 			for (auto &&i : iter (0 ,r2x)) {
-				ret[i].mThis = fake.mThis ;
+				ret[i].mThis = fake.mThis.share () ;
 				ret[i].mIndex = fake.mThis->mTree[fake.mIndex].mArrayMap[i] ;
 			}
 		}
@@ -2000,7 +2000,7 @@ public:
 		if ifdo (TRUE) {
 			if (!exist ())
 				discard ;
-			ret.mThis = fake.mThis ;
+			ret.mThis = fake.mThis.share () ;
 			ret.mIndex = fake.mThis->mRoot ;
 		}
 		return move (ret) ;
@@ -2011,7 +2011,7 @@ public:
 		if ifdo (TRUE) {
 			if (!exist ())
 				discard ;
-			ret.mThis = fake.mThis ;
+			ret.mThis = fake.mThis.share () ;
 			ret.mIndex = fake.mThis->mTree[fake.mIndex].mParent ;
 		}
 		return move (ret) ;
@@ -2022,7 +2022,7 @@ public:
 		if ifdo (TRUE) {
 			if (!exist ())
 				discard ;
-			ret.mThis = fake.mThis ;
+			ret.mThis = fake.mThis.share () ;
 			ret.mIndex = fake.mThis->mTree[fake.mIndex].mBrother ;
 		}
 		return move (ret) ;
@@ -2033,7 +2033,7 @@ public:
 		if ifdo (TRUE) {
 			if (!exist ())
 				discard ;
-			ret.mThis = fake.mThis ;
+			ret.mThis = fake.mThis.share () ;
 			ret.mIndex = fake.mThis->mTree[fake.mIndex].mChild ;
 		}
 		return move (ret) ;
@@ -2044,7 +2044,7 @@ public:
 		if ifdo (TRUE) {
 			if (!exist ())
 				discard ;
-			ret.mThis = fake.mThis ;
+			ret.mThis = fake.mThis.share () ;
 			ret.mIndex = fake.mThis->mTree[fake.mIndex].mArrayMap.map (index) ;
 		}
 		return move (ret) ;
@@ -2055,7 +2055,7 @@ public:
 		if ifdo (TRUE) {
 			if (!exist ())
 				discard ;
-			ret.mThis = fake.mThis ;
+			ret.mThis = fake.mThis.share () ;
 			ret.mIndex = fake.mThis->mTree[fake.mIndex].mObjectMap.map (name) ;
 		}
 		return move (ret) ;
@@ -2066,7 +2066,7 @@ public:
 		if ifdo (TRUE) {
 			if (!exist ())
 				discard ;
-			ret.mThis = fake.mThis ;
+			ret.mThis = fake.mThis.share () ;
 			ret.mIndex = fake.mThis->mTree[fake.mIndex].mObjectMap.map (name) ;
 		}
 		return move (ret) ;
@@ -2080,7 +2080,7 @@ public:
 			const auto r1x = fake.mThis->mTree[fake.mIndex].mArrayMap.length () ;
 			ret = Array<JsonParserLayout> (r1x) ;
 			for (auto &&i : iter (0 ,r1x)) {
-				ret[i].mThis = fake.mThis ;
+				ret[i].mThis = fake.mThis.share () ;
 				ret[i].mIndex = fake.mThis->mTree[fake.mIndex].mArrayMap[i] ;
 			}
 		}
@@ -2095,7 +2095,7 @@ public:
 			const auto r1x = fake.mThis->mTree[fake.mIndex].mArrayMap.length () ;
 			const auto r2x = inline_min (r1x ,size_) ;
 			for (auto &&i : iter (0 ,r2x)) {
-				ret[i].mThis = fake.mThis ;
+				ret[i].mThis = fake.mThis.share () ;
 				ret[i].mIndex = fake.mThis->mTree[fake.mIndex].mArrayMap[i] ;
 			}
 		}
@@ -2420,7 +2420,7 @@ public:
 	}
 
 	void read_header () {
-		mTextReader = TextReader (Ref<RefBuffer<BYTE>> (mStream)) ;
+		mTextReader = TextReader (mStream.share ()) ;
 		mTextReader >> BOM ;
 		mTextReader >> slice ("ply") ;
 		mTextReader >> GAP ;
@@ -2581,7 +2581,7 @@ public:
 	}
 
 	void read_body_text () {
-		mTextReader = TextReader (Ref<RefBuffer<BYTE>> (mStream)) ;
+		mTextReader = TextReader (mStream.share ()) ;
 		mTextReader.reset (mBodyBackup) ;
 		mTextReader >> GAP ;
 		for (auto &&i : iter (0 ,mElementList.length ())) {
@@ -2745,7 +2745,7 @@ public:
 	}
 
 	void read_body_byte () {
-		mByteReader = ByteReader (Ref<RefBuffer<BYTE>> (mStream)) ;
+		mByteReader = ByteReader (mStream.share ()) ;
 		mByteReader.reset (mBodyBackup) ;
 		if ifdo (TRUE) {
 			if (!mDiffEndianFlag)

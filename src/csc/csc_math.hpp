@@ -18,12 +18,13 @@ static constexpr auto MATH_R = MATH_PI / FLT64 (180) ;
 static constexpr auto MATH_LN2 = FLT64 (0.693147180559945309417) ;
 static constexpr auto MATH_LN10 = FLT64 (2.30258509299404568402) ;
 
-struct MathProcLayout ;
+struct MathProcImplLayout ;
+struct MathProcLayout implement OfThis<Ref<MathProcImplLayout>> {} ;
 
 struct MathProcHolder implement Interface {
-	imports CREF<Ref<MathProcLayout>> instance () ;
-	imports VFat<MathProcHolder> hold (VREF<Ref<MathProcLayout>> that) ;
-	imports CFat<MathProcHolder> hold (CREF<Ref<MathProcLayout>> that) ;
+	imports CREF<MathProcLayout> instance () ;
+	imports VFat<MathProcHolder> hold (VREF<MathProcImplLayout> that) ;
+	imports CFat<MathProcHolder> hold (CREF<MathProcImplLayout> that) ;
 
 	virtual void initialize () = 0 ;
 	virtual BOOL is_inf (CREF<FLT32> a) const = 0 ;
@@ -104,10 +105,10 @@ struct MathProcHolder implement Interface {
 	virtual FLT64 min_of (CREF<FLT64> a ,CREF<WrapperLayout> b) const = 0 ;
 } ;
 
-class MathProc implement OfThis<Ref<MathProcLayout>> {
+class MathProc implement MathProcLayout {
 public:
 	static CREF<MathProc> instance () {
-		return Pointer::from (MathProcHolder::instance ()) ;
+		return keep[TYPE<MathProc>::expr] (MathProcHolder::instance ()) ;
 	}
 
 	template <class ARG1 ,class = REQUIRE<IS_FLOAT<ARG1>>>
@@ -310,21 +311,22 @@ struct Notation {
 	VAL64 mExponent ;
 } ;
 
-struct FEXP2CacheLayout ;
+struct FEXP2CacheImplLayout ;
+struct FEXP2CacheLayout implement OfThis<Ref<FEXP2CacheImplLayout>> {} ;
 
 struct FEXP2CacheHolder implement Interface {
-	imports CREF<Ref<FEXP2CacheLayout>> instance () ;
-	imports VFat<FEXP2CacheHolder> hold (VREF<Ref<FEXP2CacheLayout>> that) ;
-	imports CFat<FEXP2CacheHolder> hold (CREF<Ref<FEXP2CacheLayout>> that) ;
+	imports CREF<FEXP2CacheLayout> instance () ;
+	imports VFat<FEXP2CacheHolder> hold (VREF<FEXP2CacheImplLayout> that) ;
+	imports CFat<FEXP2CacheHolder> hold (CREF<FEXP2CacheImplLayout> that) ;
 
 	virtual void initialize () = 0 ;
 	virtual void get (CREF<VAL64> index ,VREF<Notation> item) const = 0 ;
 } ;
 
-class FEXP2Cache implement OfThis<Ref<FEXP2CacheLayout>> {
+class FEXP2Cache implement FEXP2CacheLayout {
 public:
 	static CREF<FEXP2Cache> instance () {
-		return Pointer::from (FEXP2CacheHolder::instance ()) ;
+		return keep[TYPE<FEXP2Cache>::expr] (FEXP2CacheHolder::instance ()) ;
 	}
 
 	forceinline Notation operator[] (CREF<VAL64> index) const {
@@ -334,21 +336,22 @@ public:
 	}
 } ;
 
-struct FEXP10CacheLayout ;
+struct FEXP10CacheImplLayout ;
+struct FEXP10CacheLayout implement OfThis<Ref<FEXP10CacheImplLayout>> {} ;
 
 struct FEXP10CacheHolder implement Interface {
-	imports CREF<Ref<FEXP10CacheLayout>> instance () ;
-	imports VFat<FEXP10CacheHolder> hold (VREF<Ref<FEXP10CacheLayout>> that) ;
-	imports CFat<FEXP10CacheHolder> hold (CREF<Ref<FEXP10CacheLayout>> that) ;
+	imports CREF<FEXP10CacheLayout> instance () ;
+	imports VFat<FEXP10CacheHolder> hold (VREF<FEXP10CacheImplLayout> that) ;
+	imports CFat<FEXP10CacheHolder> hold (CREF<FEXP10CacheImplLayout> that) ;
 
 	virtual void initialize () = 0 ;
 	virtual void get (CREF<VAL64> index ,VREF<Notation> item) const = 0 ;
 } ;
 
-class FEXP10Cache implement OfThis<Ref<FEXP10CacheLayout>> {
+class FEXP10Cache implement FEXP10CacheLayout {
 public:
 	static CREF<FEXP10Cache> instance () {
-		return Pointer::from (FEXP10CacheHolder::instance ()) ;
+		return keep[TYPE<FEXP10Cache>::expr] (FEXP10CacheHolder::instance ()) ;
 	}
 
 	forceinline Notation operator[] (CREF<VAL64> index) const {
@@ -358,12 +361,13 @@ public:
 	}
 } ;
 
-struct FloatProcLayout ;
+struct FloatProcImplLayout ;
+struct FloatProcLayout implement OfThis<Ref<FloatProcImplLayout>> {} ;
 
 struct FloatProcHolder implement Interface {
-	imports CREF<Ref<FloatProcLayout>> instance () ;
-	imports VFat<FloatProcHolder> hold (VREF<Ref<FloatProcLayout>> that) ;
-	imports CFat<FloatProcHolder> hold (CREF<Ref<FloatProcLayout>> that) ;
+	imports CREF<FloatProcLayout> instance () ;
+	imports VFat<FloatProcHolder> hold (VREF<FloatProcImplLayout> that) ;
+	imports CFat<FloatProcHolder> hold (CREF<FloatProcImplLayout> that) ;
 
 	virtual void initialize () = 0 ;
 	virtual LENGTH value_precision () const = 0 ;
@@ -374,10 +378,10 @@ struct FloatProcHolder implement Interface {
 	virtual Notation fexp10_from_fexp2 (CREF<Notation> fexp2) const = 0 ;
 } ;
 
-class FloatProc implement OfThis<Ref<FloatProcLayout>> {
+class FloatProc implement FloatProcLayout {
 public:
 	static CREF<FloatProc> instance () {
-		return Pointer::from (FloatProcHolder::instance ()) ;
+		return keep[TYPE<FloatProc>::expr] (FloatProcHolder::instance ()) ;
 	}
 
 	static LENGTH value_precision () {
@@ -405,12 +409,13 @@ public:
 	}
 } ;
 
-struct ByteProcLayout ;
+struct ByteProcImplLayout ;
+struct ByteProcLayout implement OfThis<Ref<ByteProcImplLayout>> {} ;
 
 struct ByteProcHolder implement Interface {
-	imports CREF<Ref<ByteProcLayout>> instance () ;
-	imports VFat<ByteProcHolder> hold (VREF<Ref<ByteProcLayout>> that) ;
-	imports CFat<ByteProcHolder> hold (CREF<Ref<ByteProcLayout>> that) ;
+	imports CREF<ByteProcLayout> instance () ;
+	imports VFat<ByteProcHolder> hold (VREF<ByteProcImplLayout> that) ;
+	imports CFat<ByteProcHolder> hold (CREF<ByteProcImplLayout> that) ;
 
 	virtual void initialize () = 0 ;
 	virtual BYTE split_low (CREF<WORD> a) const = 0 ;
@@ -443,10 +448,10 @@ struct ByteProcHolder implement Interface {
 	virtual LENGTH lowcount (CREF<BYTE> a) const = 0 ;
 } ;
 
-class ByteProc implement OfThis<Ref<ByteProcLayout>> {
+class ByteProc implement ByteProcLayout {
 public:
 	static CREF<ByteProc> instance () {
-		return Pointer::from (ByteProcHolder::instance ()) ;
+		return keep[TYPE<ByteProc>::expr] (ByteProcHolder::instance ()) ;
 	}
 
 	static BYTE split_low (CREF<WORD> a) {
@@ -753,11 +758,15 @@ public:
 	}
 } ;
 
-struct JetLayout ;
+struct JetNode ;
+
+struct JetLayout {
+	Ref<JetNode> mThis ;
+} ;
 
 struct JetHolder implement Interface {
-	imports VFat<JetHolder> hold (VREF<Ref<JetLayout>> that) ;
-	imports CFat<JetHolder> hold (CREF<Ref<JetLayout>> that) ;
+	imports VFat<JetHolder> hold (VREF<JetLayout> that) ;
+	imports CFat<JetHolder> hold (CREF<JetLayout> that) ;
 
 	virtual void initialize (CREF<LENGTH> size_ ,CREF<FLT64> item) = 0 ;
 	virtual void initialize (CREF<LENGTH> size_ ,CREF<FLT64> item ,CREF<INDEX> slot) = 0 ;
@@ -765,29 +774,29 @@ struct JetHolder implement Interface {
 	virtual FLT64 ex () const = 0 ;
 	virtual FLT64 dx (CREF<INDEX> slot) const = 0 ;
 	virtual void once (CREF<WrapperLayout> params) const = 0 ;
-	virtual Ref<JetLayout> sadd (CREF<Ref<JetLayout>> that) const = 0 ;
-	virtual Ref<JetLayout> ssub (CREF<Ref<JetLayout>> that) const = 0 ;
-	virtual Ref<JetLayout> smul (CREF<Ref<JetLayout>> that) const = 0 ;
-	virtual Ref<JetLayout> sdiv (CREF<Ref<JetLayout>> that) const = 0 ;
-	virtual Ref<JetLayout> inverse () const = 0 ;
-	virtual Ref<JetLayout> ssqrt () const = 0 ;
-	virtual Ref<JetLayout> scbrt () const = 0 ;
-	virtual Ref<JetLayout> spow (CREF<VAL32> that) const = 0 ;
-	virtual Ref<JetLayout> shypot (CREF<Ref<JetLayout>> that) const = 0 ;
-	virtual Ref<JetLayout> sabs () const = 0 ;
-	virtual Ref<JetLayout> minus () const = 0 ;
-	virtual Ref<JetLayout> ssin () const = 0 ;
-	virtual Ref<JetLayout> scos () const = 0 ;
-	virtual Ref<JetLayout> stan () const = 0 ;
-	virtual Ref<JetLayout> sasin () const = 0 ;
-	virtual Ref<JetLayout> sacos () const = 0 ;
-	virtual Ref<JetLayout> satan (CREF<Ref<JetLayout>> that) const = 0 ;
-	virtual Ref<JetLayout> sexp () const = 0 ;
-	virtual Ref<JetLayout> slog () const = 0 ;
+	virtual JetLayout sadd (CREF<JetLayout> that) const = 0 ;
+	virtual JetLayout ssub (CREF<JetLayout> that) const = 0 ;
+	virtual JetLayout smul (CREF<JetLayout> that) const = 0 ;
+	virtual JetLayout sdiv (CREF<JetLayout> that) const = 0 ;
+	virtual JetLayout inverse () const = 0 ;
+	virtual JetLayout ssqrt () const = 0 ;
+	virtual JetLayout scbrt () const = 0 ;
+	virtual JetLayout spow (CREF<VAL32> that) const = 0 ;
+	virtual JetLayout shypot (CREF<JetLayout> that) const = 0 ;
+	virtual JetLayout sabs () const = 0 ;
+	virtual JetLayout minus () const = 0 ;
+	virtual JetLayout ssin () const = 0 ;
+	virtual JetLayout scos () const = 0 ;
+	virtual JetLayout stan () const = 0 ;
+	virtual JetLayout sasin () const = 0 ;
+	virtual JetLayout sacos () const = 0 ;
+	virtual JetLayout satan (CREF<JetLayout> that) const = 0 ;
+	virtual JetLayout sexp () const = 0 ;
+	virtual JetLayout slog () const = 0 ;
 } ;
 
 template <class A>
-class Jet implement OfThis<Ref<JetLayout>> {
+class Jet implement JetLayout {
 public:
 	implicit Jet () = default ;
 
@@ -823,7 +832,7 @@ public:
 	}
 
 	Jet sadd (CREF<Jet> that) const {
-		OfThis<Ref<JetLayout>> ret = JetHolder::hold (thiz)->sadd (that) ;
+		JetLayout ret = JetHolder::hold (thiz)->sadd (that) ;
 		return move (keep[TYPE<Jet>::expr] (ret)) ;
 	}
 
@@ -836,7 +845,7 @@ public:
 	}
 
 	Jet ssub (CREF<Jet> that) const {
-		OfThis<Ref<JetLayout>> ret = JetHolder::hold (thiz)->ssub (that) ;
+		JetLayout ret = JetHolder::hold (thiz)->ssub (that) ;
 		return move (keep[TYPE<Jet>::expr] (ret)) ;
 	}
 
@@ -849,7 +858,7 @@ public:
 	}
 
 	Jet smul (CREF<Jet> that) const {
-		OfThis<Ref<JetLayout>> ret = JetHolder::hold (thiz)->smul (that) ;
+		JetLayout ret = JetHolder::hold (thiz)->smul (that) ;
 		return move (keep[TYPE<Jet>::expr] (ret)) ;
 	}
 
@@ -862,7 +871,7 @@ public:
 	}
 
 	Jet sdiv (CREF<Jet> that) const {
-		OfThis<Ref<JetLayout>> ret = JetHolder::hold (thiz)->sdiv (that) ;
+		JetLayout ret = JetHolder::hold (thiz)->sdiv (that) ;
 		return move (keep[TYPE<Jet>::expr] (ret)) ;
 	}
 
@@ -875,37 +884,37 @@ public:
 	}
 
 	Jet inverse () const {
-		OfThis<Ref<JetLayout>> ret = JetHolder::hold (thiz)->inverse () ;
+		JetLayout ret = JetHolder::hold (thiz)->inverse () ;
 		return move (keep[TYPE<Jet>::expr] (ret)) ;
 	}
 
 	Jet ssqrt () const {
-		OfThis<Ref<JetLayout>> ret = JetHolder::hold (thiz)->ssqrt () ;
+		JetLayout ret = JetHolder::hold (thiz)->ssqrt () ;
 		return move (keep[TYPE<Jet>::expr] (ret)) ;
 	}
 
 	Jet scbrt () const {
-		OfThis<Ref<JetLayout>> ret = JetHolder::hold (thiz)->scbrt () ;
+		JetLayout ret = JetHolder::hold (thiz)->scbrt () ;
 		return move (keep[TYPE<Jet>::expr] (ret)) ;
 	}
 
 	Jet spow (CREF<VAL32> that) const {
-		OfThis<Ref<JetLayout>> ret = JetHolder::hold (thiz)->spow (that) ;
+		JetLayout ret = JetHolder::hold (thiz)->spow (that) ;
 		return move (keep[TYPE<Jet>::expr] (ret)) ;
 	}
 
 	Jet shypot (CREF<Jet> that) const {
-		OfThis<Ref<JetLayout>> ret = JetHolder::hold (thiz)->shypot (that) ;
+		JetLayout ret = JetHolder::hold (thiz)->shypot (that) ;
 		return move (keep[TYPE<Jet>::expr] (ret)) ;
 	}
 
 	Jet sabs () const {
-		OfThis<Ref<JetLayout>> ret = JetHolder::hold (thiz)->sabs () ;
+		JetLayout ret = JetHolder::hold (thiz)->sabs () ;
 		return move (keep[TYPE<Jet>::expr] (ret)) ;
 	}
 
 	Jet minus () const {
-		OfThis<Ref<JetLayout>> ret = JetHolder::hold (thiz)->minus () ;
+		JetLayout ret = JetHolder::hold (thiz)->minus () ;
 		return move (keep[TYPE<Jet>::expr] (ret)) ;
 	}
 
@@ -914,52 +923,53 @@ public:
 	}
 
 	Jet ssin () const {
-		OfThis<Ref<JetLayout>> ret = JetHolder::hold (thiz)->ssin () ;
+		JetLayout ret = JetHolder::hold (thiz)->ssin () ;
 		return move (keep[TYPE<Jet>::expr] (ret)) ;
 	}
 
 	Jet scos () const {
-		OfThis<Ref<JetLayout>> ret = JetHolder::hold (thiz)->scos () ;
+		JetLayout ret = JetHolder::hold (thiz)->scos () ;
 		return move (keep[TYPE<Jet>::expr] (ret)) ;
 	}
 
 	Jet stan () const {
-		OfThis<Ref<JetLayout>> ret = JetHolder::hold (thiz)->stan () ;
+		JetLayout ret = JetHolder::hold (thiz)->stan () ;
 		return move (keep[TYPE<Jet>::expr] (ret)) ;
 	}
 
 	Jet sasin () const {
-		OfThis<Ref<JetLayout>> ret = JetHolder::hold (thiz)->sasin () ;
+		JetLayout ret = JetHolder::hold (thiz)->sasin () ;
 		return move (keep[TYPE<Jet>::expr] (ret)) ;
 	}
 
 	Jet sacos () const {
-		OfThis<Ref<JetLayout>> ret = JetHolder::hold (thiz)->sacos () ;
+		JetLayout ret = JetHolder::hold (thiz)->sacos () ;
 		return move (keep[TYPE<Jet>::expr] (ret)) ;
 	}
 
-	Jet satan (CREF<Ref<JetLayout>> that) const {
-		OfThis<Ref<JetLayout>> ret = JetHolder::hold (thiz)->satan (that) ;
+	Jet satan (CREF<JetLayout> that) const {
+		JetLayout ret = JetHolder::hold (thiz)->satan (that) ;
 		return move (keep[TYPE<Jet>::expr] (ret)) ;
 	}
 
 	Jet sexp () const {
-		OfThis<Ref<JetLayout>> ret = JetHolder::hold (thiz)->sexp () ;
+		JetLayout ret = JetHolder::hold (thiz)->sexp () ;
 		return move (keep[TYPE<Jet>::expr] (ret)) ;
 	}
 
 	Jet slog () const {
-		OfThis<Ref<JetLayout>> ret = JetHolder::hold (thiz)->slog () ;
+		JetLayout ret = JetHolder::hold (thiz)->slog () ;
 		return move (keep[TYPE<Jet>::expr] (ret)) ;
 	}
 } ;
 
-struct HashProcLayout ;
+struct HashProcImplLayout ;
+struct HashProcLayout implement OfThis<Ref<HashProcImplLayout>> {} ;
 
 struct HashProcHolder implement Interface {
-	imports CREF<Ref<HashProcLayout>> instance () ;
-	imports VFat<HashProcHolder> hold (VREF<Ref<HashProcLayout>> that) ;
-	imports CFat<HashProcHolder> hold (CREF<Ref<HashProcLayout>> that) ;
+	imports CREF<HashProcLayout> instance () ;
+	imports VFat<HashProcHolder> hold (VREF<HashProcImplLayout> that) ;
+	imports CFat<HashProcHolder> hold (CREF<HashProcImplLayout> that) ;
 
 	virtual void initialize () = 0 ;
 	virtual CHAR fnvhash32 (CREF<Pointer> src ,CREF<LENGTH> size_) const = 0 ;
@@ -972,10 +982,10 @@ struct HashProcHolder implement Interface {
 	virtual WORD crchash16 (CREF<Pointer> src ,CREF<LENGTH> size_ ,CREF<WORD> val) const = 0 ;
 } ;
 
-class HashProc implement OfThis<Ref<HashProcLayout>> {
+class HashProc implement HashProcLayout {
 public:
 	static CREF<HashProc> instance () {
-		return Pointer::from (HashProcHolder::instance ()) ;
+		return keep[TYPE<HashProc>::expr] (HashProcHolder::instance ()) ;
 	}
 
 	static CHAR fnvhash32 (CREF<Pointer> src ,CREF<LENGTH> size_) {

@@ -5,12 +5,12 @@ struct ConfigProcLayout ;
 
 struct ConfigProcHolder implement Interface {
 	imports CREF<SharedRef<ConfigProcLayout>> instance () ;
-	imports VFat<ConfigProcHolder> hold (VREF<SharedRef<ConfigProcLayout>> me) ;
-	imports CFat<ConfigProcHolder> hold (CREF<SharedRef<ConfigProcLayout>> me) ;
+	imports VFat<ConfigProcHolder> hold (VREF<ConfigProcLayout> me) ;
+	imports CFat<ConfigProcHolder> hold (CREF<ConfigProcLayout> me) ;
 
 	virtual void initialize () = 0 ;
-	virtual void set_data_dire (CREF<String<STR>> path) const = 0 ;
-	virtual void set_cxx_signal () const = 0 ;
+	virtual void set_data_dire (CREF<String<STR>> path) = 0 ;
+	virtual void set_cxx_signal () = 0 ;
 } ;
 
 class ConfigProc implement OfThis<SharedRef<ConfigProcLayout>> {

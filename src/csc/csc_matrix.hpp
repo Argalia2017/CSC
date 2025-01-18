@@ -752,12 +752,13 @@ struct SVDResult {
 	Matrix mV ;
 } ;
 
-struct MatrixProcLayout ;
+struct MatrixProcImplLayout ;
+struct MatrixProcLayout implement OfThis<Ref<MatrixProcImplLayout>> {} ;
 
 struct MatrixProcHolder implement Interface {
-	imports CREF<Ref<MatrixProcLayout>> instance () ;
-	imports VFat<MatrixProcHolder> hold (VREF<Ref<MatrixProcLayout>> that) ;
-	imports CFat<MatrixProcHolder> hold (CREF<Ref<MatrixProcLayout>> that) ;
+	imports CREF<MatrixProcLayout> instance () ;
+	imports VFat<MatrixProcHolder> hold (VREF<MatrixProcImplLayout> that) ;
+	imports CFat<MatrixProcHolder> hold (CREF<MatrixProcImplLayout> that) ;
 
 	virtual void initialize () = 0 ;
 	virtual TRSResult solve_trs (CREF<Matrix> a) const = 0 ;
@@ -765,10 +766,10 @@ struct MatrixProcHolder implement Interface {
 	virtual SVDResult solve_svd (CREF<Matrix> a) const = 0 ;
 } ;
 
-class MatrixProc implement OfThis<Ref<MatrixProcLayout>> {
+class MatrixProc implement MatrixProcLayout {
 public:
 	static CREF<MatrixProc> instance () {
-		return Pointer::from (MatrixProcHolder::instance ()) ;
+		return keep[TYPE<MatrixProc>::expr] (MatrixProcHolder::instance ()) ;
 	}
 
 	static TRSResult solve_trs (CREF<Matrix> a) {
@@ -949,12 +950,13 @@ public:
 	}
 } ;
 
-struct LinearProcLayout ;
+struct LinearProcImplLayout ;
+struct LinearProcLayout implement OfThis<Ref<LinearProcImplLayout>> {} ;
 
 struct LinearProcHolder implement Interface {
-	imports CREF<Ref<LinearProcLayout>> instance () ;
-	imports VFat<LinearProcHolder> hold (VREF<Ref<LinearProcLayout>> that) ;
-	imports CFat<LinearProcHolder> hold (CREF<Ref<LinearProcLayout>> that) ;
+	imports CREF<LinearProcLayout> instance () ;
+	imports VFat<LinearProcHolder> hold (VREF<LinearProcImplLayout> that) ;
+	imports CFat<LinearProcHolder> hold (CREF<LinearProcImplLayout> that) ;
 
 	virtual void initialize () = 0 ;
 	virtual Image<FLT64> solve_lsm (CREF<Image<FLT64>> a) const = 0 ;
@@ -962,10 +964,10 @@ struct LinearProcHolder implement Interface {
 	virtual Image<FLT64> solve_inv (CREF<Image<FLT64>> a) const = 0 ;
 } ;
 
-class LinearProc implement OfThis<Ref<LinearProcLayout>> {
+class LinearProc implement LinearProcLayout {
 public:
 	static CREF<LinearProc> instance () {
-		return Pointer::from (LinearProcHolder::instance ()) ;
+		return keep[TYPE<LinearProc>::expr] (LinearProcHolder::instance ()) ;
 	}
 
 	static Image<FLT64> solve_lsm (CREF<Image<FLT64>> a) {
@@ -984,8 +986,9 @@ public:
 struct PointCloudKDTreeLayout ;
 
 struct PointCloudKDTreeHolder implement Interface {
-	imports VFat<PointCloudKDTreeHolder> hold (VREF<AutoRef<PointCloudKDTreeLayout>> that) ;
-	imports CFat<PointCloudKDTreeHolder> hold (CREF<AutoRef<PointCloudKDTreeLayout>> that) ;
+	imports AutoRef<PointCloudKDTreeLayout> create () ;
+	imports VFat<PointCloudKDTreeHolder> hold (VREF<PointCloudKDTreeLayout> that) ;
+	imports CFat<PointCloudKDTreeHolder> hold (CREF<PointCloudKDTreeLayout> that) ;
 
 	virtual void initialize (CREF<Array<Pointer>> pointcloud) = 0 ;
 	virtual Array<INDEX> search (CREF<Vector> center ,CREF<LENGTH> neighbor) const = 0 ;

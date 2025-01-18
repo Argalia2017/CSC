@@ -10,20 +10,19 @@ struct ConfigProcLayout {
 	Path mDataPath ;
 } ;
 
-class ConfigProcImplHolder final implement Fat<ConfigProcHolder ,SharedRef<ConfigProcLayout>> {
+class ConfigProcImplHolder final implement Fat<ConfigProcHolder ,ConfigProcLayout> {
 public:
 	void initialize () override {
 		Singleton<Console>::instance ().debug (slice ("library_file = ") ,RuntimeProc::library_file ()) ;
-		fake = SharedRef<ConfigProcLayout>::make () ;
 	}
 
-	void set_data_dire (CREF<String<STR>> dire) const override {
-		fake->mDataPath = Path (dire) ;
-		const auto r1x = FileProc::lock_dire (fake->mDataPath) ;
+	void set_data_dire (CREF<String<STR>> dire) override {
+		fake.mDataPath = Path (dire) ;
+		const auto r1x = FileProc::lock_dire (fake.mDataPath) ;
 		assume (r1x) ;
 	}
 
-	void set_cxx_signal () const override {
+	void set_cxx_signal () override {
 		std::signal (SIGINT ,cxx_signal_handle) ;
 		std::signal (SIGILL ,cxx_signal_handle) ;
 		std::signal (SIGFPE ,cxx_signal_handle) ;
@@ -59,17 +58,17 @@ public:
 
 exports CREF<SharedRef<ConfigProcLayout>> ConfigProcHolder::instance () {
 	return memorize ([&] () {
-		SharedRef<ConfigProcLayout> ret ;
+		SharedRef<ConfigProcLayout> ret = SharedRef<ConfigProcLayout>::make () ;
 		ConfigProcHolder::hold (ret)->initialize () ;
 		return move (ret) ;
 	}) ;
 }
 
-exports VFat<ConfigProcHolder> ConfigProcHolder::hold (VREF<SharedRef<ConfigProcLayout>> that) {
+exports VFat<ConfigProcHolder> ConfigProcHolder::hold (VREF<ConfigProcLayout> that) {
 	return VFat<ConfigProcHolder> (ConfigProcImplHolder () ,that) ;
 }
 
-exports CFat<ConfigProcHolder> ConfigProcHolder::hold (CREF<SharedRef<ConfigProcLayout>> that) {
+exports CFat<ConfigProcHolder> ConfigProcHolder::hold (CREF<ConfigProcLayout> that) {
 	return CFat<ConfigProcHolder> (ConfigProcImplHolder () ,that) ;
 }
 } ;

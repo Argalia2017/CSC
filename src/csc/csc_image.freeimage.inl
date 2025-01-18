@@ -19,15 +19,14 @@ using HFIBITMAP = CSC::DEF<FIBITMAP *> ;
 } ;
 
 namespace CSC {
-struct ImageProcLayout {
+struct ImageProcImplLayout {
 	UniqueRef<BOOL> mContext ;
 } ;
 
-class ImageProcImplHolder final implement Fat<ImageProcHolder ,Ref<ImageProcLayout>> {
+class ImageProcImplHolder final implement Fat<ImageProcHolder ,ImageProcImplLayout> {
 public:
 	void initialize () override {
-		fake = Ref<ImageProcLayout>::make () ;
-		fake->mContext = UniqueRef<BOOL> ([&] (VREF<BOOL> me) {
+		fake.mContext = UniqueRef<BOOL> ([&] (VREF<BOOL> me) {
 			FreeImage_Initialise () ;
 			me = TRUE ;
 		} ,[&] (VREF<BOOL> me) {
@@ -340,5 +339,5 @@ public:
 	}
 } ;
 
-static const auto mImageProcExternal = External<ImageProcHolder ,Ref<ImageProcLayout>> (ImageProcImplHolder ()) ;
+static const auto mImageProcExternal = External<ImageProcHolder ,ImageProcImplLayout> (ImageProcImplHolder ()) ;
 } ;

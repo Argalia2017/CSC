@@ -200,22 +200,23 @@ exports CFat<ImageHolder> ImageHolder::hold (CREF<ImageLayout> that) {
 	return CFat<ImageHolder> (ImageImplHolder () ,that) ;
 }
 
-template class External<ImageProcHolder ,Ref<ImageProcLayout>> ;
+template class External<ImageProcHolder ,ImageProcImplLayout> ;
 
-exports CREF<Ref<ImageProcLayout>> ImageProcHolder::instance () {
+exports CREF<ImageProcLayout> ImageProcHolder::instance () {
 	return memorize ([&] () {
-		Ref<ImageProcLayout> ret ;
+		ImageProcLayout ret ;
+		ret.mThis = Ref<ImageProcImplLayout>::make () ;
 		ImageProcHolder::hold (ret)->initialize () ;
 		return move (ret) ;
 	}) ;
 }
 
-exports VFat<ImageProcHolder> ImageProcHolder::hold (VREF<Ref<ImageProcLayout>> that) {
-	return VFat<ImageProcHolder> (External<ImageProcHolder ,Ref<ImageProcLayout>>::declare () ,that) ;
+exports VFat<ImageProcHolder> ImageProcHolder::hold (VREF<ImageProcImplLayout> that) {
+	return VFat<ImageProcHolder> (External<ImageProcHolder ,ImageProcImplLayout>::declare () ,that) ;
 }
 
-exports CFat<ImageProcHolder> ImageProcHolder::hold (CREF<Ref<ImageProcLayout>> that) {
-	return CFat<ImageProcHolder> (External<ImageProcHolder ,Ref<ImageProcLayout>>::declare () ,that) ;
+exports CFat<ImageProcHolder> ImageProcHolder::hold (CREF<ImageProcImplLayout> that) {
+	return CFat<ImageProcHolder> (External<ImageProcHolder ,ImageProcImplLayout>::declare () ,that) ;
 }
 
 struct ReflectTensorCopy implement Interface {
