@@ -60,6 +60,13 @@ struct StreamFileByteWriterImplLayout {
 	StreamFile mStreamFile ;
 	RefBuffer<BYTE> mFileBuffer ;
 	ByteWriter mFileWriter ;
+
+public:
+	implicit StreamFileByteWriterImplLayout () = default ;
+
+	implicit ~StreamFileByteWriterImplLayout () noexcept {
+		StreamFileByteWriterHolder::hold (thiz)->flush () ;
+	}
 } ;
 
 class StreamFileByteWriterImplHolder final implement Fat<StreamFileByteWriterHolder ,StreamFileByteWriterImplLayout> {
@@ -113,6 +120,13 @@ struct StreamFileTextWriterImplLayout {
 	StreamFile mStreamFile ;
 	RefBuffer<BYTE> mFileBuffer ;
 	TextWriter mFileWriter ;
+
+public:
+	implicit StreamFileTextWriterImplLayout () = default ;
+
+	implicit ~StreamFileTextWriterImplLayout () noexcept {
+		StreamFileTextWriterHolder::hold (thiz)->flush () ;
+	}
 } ;
 
 class StreamFileTextWriterImplHolder final implement Fat<StreamFileTextWriterHolder ,StreamFileTextWriterImplLayout> {

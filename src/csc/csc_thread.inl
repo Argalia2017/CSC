@@ -27,6 +27,17 @@ struct WorkThreadImplLayout {
 	Function<CREF<INDEX>> mThreadFunc ;
 	Deque<IndexIterator> mItemQueue ;
 	LENGTH mItemLoadLength ;
+
+public:
+	implicit WorkThreadImplLayout () = default ;
+
+	implicit ~WorkThreadImplLayout () noexcept {
+		WorkThreadHolder::hold (thiz)->stop () ;
+	}
+
+	void friend_execute (CREF<INDEX> slot) {
+		WorkThreadHolder::hold (thiz)->friend_execute (slot) ;
+	}
 } ;
 
 class WorkThreadImplHolder final implement Fat<WorkThreadHolder ,WorkThreadImplLayout> {
@@ -34,7 +45,7 @@ private:
 	using THREAD_QUEUE_SIZE = ENUM<65536> ;
 
 public:
-	void initialize () {
+	void initialize () override {
 		fake.mThreadMutex = UniqueMutex () ;
 		fake.mThreadFlag = ThreadFlag::Preparing ;
 		const auto r1x = RuntimeProc::thread_concurrency () ;
@@ -67,14 +78,14 @@ public:
 		fake.mItemLoadLength = 0 ;
 		fake.mThreadFlag = ThreadFlag::Running ;
 		fake.mThreadFunc = func ;
-		const auto r1x = FriendThreadBinder<WorkThreadImplHolder>::hold (thiz) ;
+		const auto r1x = FriendThreadBinder<WorkThreadImplLayout>::hold (fake) ;
 		for (auto &&i : fake.mThread.range ()) {
 			fake.mThread[i] = Thread (Box<VFat<ThreadBinder>>::make (r1x) ,i) ;
 			fake.mThread[i].start () ;
 		}
 	}
 
-	void friend_execute (CREF<INDEX> slot) {
+	void friend_execute (CREF<INDEX> slot) override {
 		try {
 			while (TRUE) {
 				if ifdo (TRUE) {
@@ -224,11 +235,22 @@ struct CalcThreadImplLayout {
 	Array<CalcSolution> mSearchSolution ;
 	CalcSolution mBestSolution ;
 	BOOL mNewSolution ;
+
+public:
+	implicit CalcThreadImplLayout () = default ;
+
+	implicit ~CalcThreadImplLayout () noexcept {
+		CalcThreadHolder::hold (thiz)->stop () ;
+	}
+
+	void friend_execute (CREF<INDEX> slot) {
+		CalcThreadHolder::hold (thiz)->friend_execute (slot) ;
+	}
 } ;
 
 class CalcThreadImplHolder final implement Fat<CalcThreadHolder ,CalcThreadImplLayout> {
 public:
-	void initialize () {
+	void initialize () override {
 		fake.mThreadMutex = UniqueMutex () ;
 		fake.mThreadFlag = ThreadFlag::Preparing ;
 		const auto r1x = RuntimeProc::thread_concurrency () ;
@@ -272,14 +294,14 @@ public:
 		fake.mThreadFlag = ThreadFlag::Running ;
 		fake.mSuspendFlag = FALSE ;
 		fake.mThreadFunc = func ;
-		const auto r1x = FriendThreadBinder<CalcThreadImplHolder>::hold (thiz) ;
+		const auto r1x = FriendThreadBinder<CalcThreadImplLayout>::hold (fake) ;
 		for (auto &&i : fake.mThread.range ()) {
 			fake.mThread[i] = Thread (Box<VFat<ThreadBinder>>::make (r1x) ,i) ;
 			fake.mThread[i].start () ;
 		}
 	}
 
-	void friend_execute (CREF<INDEX> slot) {
+	void friend_execute (CREF<INDEX> slot) override {
 		try {
 			while (TRUE) {
 				search_new (slot) ;
@@ -477,11 +499,22 @@ struct PromiseImplLayout {
 	Box<AutoRef<Pointer>> mItem ;
 	Box<Exception> mException ;
 	BOOL mRetryFlag ;
+
+public:
+	implicit PromiseImplLayout () = default ;
+
+	implicit ~PromiseImplLayout () noexcept {
+		PromiseHolder::hold (thiz)->stop () ;
+	}
+
+	void friend_execute (CREF<INDEX> slot) {
+		PromiseHolder::hold (thiz)->friend_execute (slot) ;
+	}
 } ;
 
 class PromiseImplHolder final implement Fat<PromiseHolder ,PromiseImplLayout> {
 public:
-	void initialize () {
+	void initialize () override {
 		fake.mThreadMutex = UniqueMutex () ;
 		fake.mThreadFlag = ThreadFlag::Preparing ;
 		set_retry (FALSE) ;
@@ -515,7 +548,7 @@ public:
 			if (fake.mThread.size () > 0)
 				discard ;
 			fake.mThread = Array<Thread> (1) ;
-			const auto r1x = FriendThreadBinder<PromiseImplHolder>::hold (thiz) ;
+			const auto r1x = FriendThreadBinder<PromiseImplLayout>::hold (fake) ;
 			for (auto &&i : fake.mThread.range ()) {
 				fake.mThread[i] = Thread (Box<VFat<ThreadBinder>>::make (r1x) ,0) ;
 				fake.mThread[i].start () ;
@@ -524,7 +557,7 @@ public:
 		rax.notify () ;
 	}
 
-	void friend_execute (CREF<INDEX> slot) {
+	void friend_execute (CREF<INDEX> slot) override {
 		while (TRUE) {
 			try {
 				fake.mRunningFunc = fake.mThreadFunc ;

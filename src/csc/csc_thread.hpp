@@ -69,6 +69,7 @@ struct WorkThreadHolder implement Interface {
 	virtual void set_thread_size (CREF<LENGTH> size_) = 0 ;
 	virtual void set_queue_size (CREF<LENGTH> size_) = 0 ;
 	virtual void start (CREF<Function<CREF<INDEX>>> func) = 0 ;
+	virtual void friend_execute (CREF<INDEX> slot) = 0 ;
 	virtual void post (CREF<INDEX> begin_ ,CREF<INDEX> end_) = 0 ;
 	virtual void join () = 0 ;
 	virtual BOOL join (CREF<Time> interval) = 0 ;
@@ -132,6 +133,7 @@ struct CalcThreadHolder implement Interface {
 	virtual void set_thread_size (CREF<LENGTH> size_) = 0 ;
 	virtual void set_start_input (CREF<BitSet> input) = 0 ;
 	virtual void start (CREF<Function<CREF<CalcSolution> ,VREF<CalcSolution>>> func) = 0 ;
+	virtual void friend_execute (CREF<INDEX> slot) = 0 ;
 	virtual BOOL ready () const = 0 ;
 	virtual CalcSolution poll () = 0 ;
 	virtual void suspend () = 0 ;
@@ -193,6 +195,7 @@ struct PromiseHolder implement Interface {
 	virtual void set_retry (CREF<BOOL> flag) = 0 ;
 	virtual void start () = 0 ;
 	virtual void start (CREF<Function<>> func) = 0 ;
+	virtual void friend_execute (CREF<INDEX> slot) = 0 ;
 	virtual void post (RREF<AutoRef<Pointer>> item) = 0 ;
 	virtual void rethrow (CREF<Exception> e) = 0 ;
 	virtual BOOL ready () const = 0 ;

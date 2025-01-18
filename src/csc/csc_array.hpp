@@ -1287,6 +1287,7 @@ protected:
 	using ArrayListRealLayout<A>::mList ;
 	using ArrayListRealLayout<A>::mRange ;
 	using ArrayListRealLayout<A>::mTop ;
+	using ArrayListRealLayout<A>::mRemap ;
 
 public:
 	implicit ArrayList () = default ;
