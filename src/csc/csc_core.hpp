@@ -1917,10 +1917,10 @@ public:
 	}
 } ;
 
-struct ClazzRoot ;
+struct ClazzImplLayout ;
 
 struct ClazzLayout {
-	Ref<ClazzRoot> mThis ;
+	Ref<ClazzImplLayout> mThis ;
 
 public:
 	implicit ClazzLayout () = default ;

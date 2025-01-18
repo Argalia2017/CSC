@@ -266,7 +266,7 @@ public:
 		link_pipe () ;
 	}
 
-	static VREF<SingletonRoot> pin_ptr (CREF<SingletonProcImplLayout> that) {
+	static VREF<SingletonRoot> root_ptr (CREF<SingletonProcImplLayout> that) {
 		return memorize ([&] () {
 			return Pin<SingletonRoot> () ;
 		}).self ;
@@ -311,7 +311,7 @@ public:
 		} ,[&] (VREF<HANDLE> me) {
 			CloseHandle (me) ;
 		}) ;
-		auto &&rax = keep[TYPE<SingletonRoot>::expr] (pin_ptr (fake)) ;
+		auto &&rax = keep[TYPE<SingletonRoot>::expr] (root_ptr (fake)) ;
 		rax.mMutex = NULL ;
 		fake.mLocal.mReserve1 = QUAD (fake.mUid) ;
 		fake.mLocal.mAddress1 = QUAD (address (rax)) ;

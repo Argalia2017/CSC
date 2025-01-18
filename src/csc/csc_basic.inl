@@ -15,43 +15,43 @@ struct HeapMutexRoot {
 	Box<std::recursive_mutex> mMutex ;
 } ;
 
-class HeapMutexImplHolder final implement Fat<HeapMutexHolder ,HeapMutexImplLayout> {
+class HeapMutexImplHolder final implement Fat<HeapMutexHolder ,HeapMutexLayout> {
 public:
 	void initialize () override {
-		pin_ptr (fake).mMutex.remake () ;
+		root_ptr (fake).mMutex.remake () ;
 	}
 
-	static VREF<HeapMutexRoot> pin_ptr (CREF<HeapMutexImplLayout> that) {
+	static VREF<HeapMutexRoot> root_ptr (CREF<HeapMutexLayout> that) {
 		return memorize ([&] () {
 			return Pin<HeapMutexRoot> () ;
 		}).self ;
 	}
 
 	void enter () const override {
-		return pin_ptr (fake).mMutex->lock () ;
+		return root_ptr (fake).mMutex->lock () ;
 	}
 
 	void leave () const override {
-		return pin_ptr (fake).mMutex->unlock () ;
+		return root_ptr (fake).mMutex->unlock () ;
 	}
 } ;
 
-exports CREF<HeapMutexImplLayout> HeapMutexHolder::instance () {
+exports CREF<HeapMutexLayout> HeapMutexHolder::instance () {
 	return memorize ([&] () {
-		HeapMutexImplLayout ret ;
+		HeapMutexLayout ret ;
 		ret.mHolder = inline_vptr (HeapMutexImplHolder ()) ;
 		HeapMutexHolder::hold (ret)->initialize () ;
 		return move (ret) ;
 	}) ;
 }
 
-exports VFat<HeapMutexHolder> HeapMutexHolder::hold (VREF<HeapMutexImplLayout> that) {
+exports VFat<HeapMutexHolder> HeapMutexHolder::hold (VREF<HeapMutexLayout> that) {
 	assert (that.mHolder != ZERO) ;
 	auto &&rax = keep[TYPE<HeapMutexImplHolder>::expr] (Pointer::from (that.mHolder)) ;
 	return VFat<HeapMutexHolder> (rax ,that) ;
 }
 
-exports CFat<HeapMutexHolder> HeapMutexHolder::hold (CREF<HeapMutexImplLayout> that) {
+exports CFat<HeapMutexHolder> HeapMutexHolder::hold (CREF<HeapMutexLayout> that) {
 	assert (that.mHolder != ZERO) ;
 	auto &&rax = keep[TYPE<HeapMutexImplHolder>::expr] (Pointer::from (that.mHolder)) ;
 	return CFat<HeapMutexHolder> (rax ,that) ;
@@ -99,7 +99,7 @@ exports CFat<OptionalHolder> OptionalHolder::hold (CREF<OptionalLayout> that) {
 	return CFat<OptionalHolder> (OptionalImplHolder () ,that) ;
 }
 
-struct FunctionRoot {
+struct FunctionImplLayout {
 	BoxLayout mValue ;
 } ;
 
@@ -107,7 +107,7 @@ class FunctionImplHolder final implement Fat<FunctionHolder ,FunctionLayout> {
 public:
 	void initialize (RREF<BoxLayout> item ,CREF<Unknown> holder) override {
 		const auto r1x = BoxHolder::hold (item)->unknown () ;
-		RefHolder::hold (fake.mThis)->initialize (RefUnknownBinder<FunctionLayout> () ,r1x ,1) ;
+		RefHolder::hold (fake.mThis)->initialize (RefUnknownBinder<FunctionImplLayout> () ,r1x ,1) ;
 		BoxHolder::hold (raw ())->acquire (item) ;
 		BoxHolder::hold (raw ())->release () ;
 		BoxHolder::hold (raw ())->initialize (holder) ;
@@ -145,7 +145,7 @@ exports CFat<FunctionHolder> FunctionHolder::hold (CREF<FunctionLayout> that) {
 	return CFat<FunctionHolder> (FunctionImplHolder () ,that) ;
 }
 
-struct AutoRefRoot {
+struct AutoRefImplLayout {
 	Clazz mClazz ;
 	BoxLayout mValue ;
 } ;
@@ -154,7 +154,7 @@ class AutoRefImplHolder final implement Fat<AutoRefHolder ,AutoRefLayout> {
 public:
 	void initialize (CREF<Unknown> holder) override {
 		assert (!exist ()) ;
-		RefHolder::hold (fake.mThis)->initialize (RefUnknownBinder<AutoRefRoot> () ,holder ,1) ;
+		RefHolder::hold (fake.mThis)->initialize (RefUnknownBinder<AutoRefImplLayout> () ,holder ,1) ;
 		ClazzHolder::hold (fake.mThis->mClazz)->initialize (holder) ;
 		BoxHolder::hold (raw ())->initialize (holder) ;
 		const auto r1x = RFat<ReflectCreate> (holder) ;
@@ -165,7 +165,7 @@ public:
 	void initialize (RREF<BoxLayout> item ,CREF<Clazz> clazz_) override {
 		assert (!exist ()) ;
 		const auto r1x = BoxHolder::hold (item)->unknown () ;
-		RefHolder::hold (fake.mThis)->initialize (RefUnknownBinder<AutoRefRoot> () ,r1x ,1) ;
+		RefHolder::hold (fake.mThis)->initialize (RefUnknownBinder<AutoRefImplLayout> () ,r1x ,1) ;
 		fake.mThis->mClazz = clazz_ ;
 		BoxHolder::hold (raw ())->acquire (item) ;
 		BoxHolder::hold (item)->release () ;
@@ -245,7 +245,7 @@ static constexpr auto SHADERREFIMPLLAYOUT_HEADER = FLAG (0X07654321) ;
 static constexpr auto SHADERREFIMPLLAYOUT_HEADER = FLAG (0X0FDCEBA907654321) ;
 #endif
 
-struct SharedRefRoot {
+struct SharedRefImplLayout {
 	FLAG mHeader ;
 	HeapMutex mMutex ;
 	LENGTH mCounter ;
@@ -257,14 +257,14 @@ public:
 	void initialize (RREF<BoxLayout> item) override {
 		assert (!exist ()) ;
 		const auto r1x = BoxHolder::hold (item)->unknown () ;
-		RefHolder::hold (fake.mThis)->initialize (RefUnknownBinder<SharedRefRoot> () ,r1x ,1) ;
+		RefHolder::hold (fake.mThis)->initialize (RefUnknownBinder<SharedRefImplLayout> () ,r1x ,1) ;
 		fake.mThis->mHeader = SHADERREFIMPLLAYOUT_HEADER ;
 		fake.mThis->mMutex = HeapMutex::instance () ;
 		BoxHolder::hold (raw ())->acquire (item) ;
 		BoxHolder::hold (item)->release () ;
 		fake.mLayout = address (BoxHolder::hold (raw ())->self) ;
 		fake.mThis->mCounter = 1 ;
-		const auto r2x = address (fake.mThis.self) + SIZE_OF<SharedRefRoot>::expr ;
+		const auto r2x = address (fake.mThis.self) + SIZE_OF<SharedRefImplLayout>::expr ;
 		inline_memset (Pointer::make (r2x) ,fake.mLayout - r2x) ;
 	}
 
@@ -283,25 +283,25 @@ public:
 	void initialize (CREF<Unknown> holder ,CREF<FLAG> layout) override {
 		assert (!exist ()) ;
 		const auto r1x = RFat<ReflectSize> (holder) ;
-		const auto r2x = layout - SIZE_OF<SharedRefRoot>::expr ;
+		const auto r2x = layout - SIZE_OF<SharedRefImplLayout>::expr ;
 		const auto r3x = invoke ([&] () {
-			const auto r4x = r1x->type_align () / ALIGN_OF<SharedRefRoot>::expr ;
+			const auto r4x = r1x->type_align () / ALIGN_OF<SharedRefImplLayout>::expr ;
 			for (auto &&i : iter (0 ,r4x)) {
-				const auto r5x = r2x - i * ALIGN_OF<SharedRefRoot>::expr ;
-				auto &&rax = keep[TYPE<SharedRefRoot>::expr] (Pointer::make (r5x)) ;
+				const auto r5x = r2x - i * ALIGN_OF<SharedRefImplLayout>::expr ;
+				auto &&rax = keep[TYPE<SharedRefImplLayout>::expr] (Pointer::make (r5x)) ;
 				if (rax.mHeader == SHADERREFIMPLLAYOUT_HEADER)
 					return i ;
 			}
 			return ZERO ;
 		}) ;
-		const auto r6x = r2x - r3x * ALIGN_OF<SharedRefRoot>::expr ;
-		auto &&rax = keep[TYPE<SharedRefRoot>::expr] (Pointer::make (r6x)) ;
+		const auto r6x = r2x - r3x * ALIGN_OF<SharedRefImplLayout>::expr ;
+		auto &&rax = keep[TYPE<SharedRefImplLayout>::expr] (Pointer::make (r6x)) ;
 		const auto r7x = address (BoxHolder::hold (rax.mValue)->self) ;
 		assert (r7x == layout) ;
 		Scope<HeapMutex> anonymous (rax.mMutex) ;
 		const auto r8x = rax.mCounter ;
 		assert (r8x > 0) ;
-		RefHolder::hold (fake.mThis)->initialize (RefUnknownBinder<SharedRefRoot> () ,r6x) ;
+		RefHolder::hold (fake.mThis)->initialize (RefUnknownBinder<SharedRefImplLayout> () ,r6x) ;
 		fake.mLayout = layout ;
 		fake.mThis->mCounter++ ;
 	}
@@ -359,7 +359,7 @@ exports CFat<SharedRefHolder> SharedRefHolder::hold (CREF<SharedRefLayout> that)
 	return CFat<SharedRefHolder> (SharedRefImplHolder () ,that) ;
 }
 
-struct UniqueRefRoot {
+struct UniqueRefImplLayout {
 	Function<VREF<Pointer>> mOwner ;
 	Pin<UniqueRefLayout> mUpper ;
 	BoxLayout mValue ;
@@ -370,7 +370,7 @@ public:
 	void initialize (RREF<BoxLayout> item) override {
 		assert (!exist ()) ;
 		const auto r1x = BoxHolder::hold (item)->unknown () ;
-		RefHolder::hold (fake.mThis)->initialize (RefUnknownBinder<UniqueRefRoot> () ,r1x ,1) ;
+		RefHolder::hold (fake.mThis)->initialize (RefUnknownBinder<UniqueRefImplLayout> () ,r1x ,1) ;
 		BoxHolder::hold (raw ())->acquire (item) ;
 		BoxHolder::hold (item)->release () ;
 		fake.mLayout = address (BoxHolder::hold (raw ())->self) ;
@@ -436,7 +436,7 @@ exports CFat<UniqueRefHolder> UniqueRefHolder::hold (CREF<UniqueRefLayout> that)
 	return CFat<UniqueRefHolder> (UniqueRefImplHolder () ,that) ;
 }
 
-struct RefBufferRoot {
+struct RefBufferImplLayout {
 	LENGTH mCapacity ;
 	BoxLayout mValue ;
 } ;
@@ -455,7 +455,7 @@ public:
 		if (size_ <= 0)
 			return ;
 		const auto r1x = RFat<ReflectElement> (unknown ())->element () ;
-		RefHolder::hold (fake.mThis)->initialize (RefUnknownBinder<RefBufferRoot> () ,r1x ,size_) ;
+		RefHolder::hold (fake.mThis)->initialize (RefUnknownBinder<RefBufferImplLayout> () ,r1x ,size_) ;
 		BoxHolder::hold (raw ())->initialize (r1x) ;
 		fake.mBuffer = address (BoxHolder::hold (raw ())->self) ;
 		fake.mSize = size_ ;
@@ -478,7 +478,7 @@ public:
 		assert (!exist ()) ;
 		fake.mHolder = inline_vptr (holder) ;
 		const auto r1x = BoxHolder::hold (item)->unknown () ;
-		RefHolder::hold (fake.mThis)->initialize (RefUnknownBinder<RefBufferRoot> () ,r1x ,1) ;
+		RefHolder::hold (fake.mThis)->initialize (RefUnknownBinder<RefBufferImplLayout> () ,r1x ,1) ;
 		BoxHolder::hold (raw ())->acquire (item) ;
 		BoxHolder::hold (item)->release () ;
 		fake.mBuffer = buffer.mBuffer ;
@@ -562,9 +562,9 @@ public:
 			return ;
 		assert (!fixed ()) ;
 		const auto r1x = inline_min (size_ ,size ()) ;
-		auto rax = Ref<RefBufferRoot> () ;
+		auto rax = Ref<RefBufferImplLayout> () ;
 		const auto r2x = RFat<ReflectElement> (unknown ())->element () ;
-		RefHolder::hold (rax)->initialize (RefUnknownBinder<RefBufferRoot> () ,r2x ,size_) ;
+		RefHolder::hold (rax)->initialize (RefUnknownBinder<RefBufferImplLayout> () ,r2x ,size_) ;
 		const auto r3x = RFat<ReflectSize> (r2x) ;
 		const auto r4x = r3x->type_size () * r1x ;
 		BoxHolder::hold (rax->mValue)->initialize (r2x) ;

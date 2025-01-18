@@ -971,7 +971,7 @@ struct XmlParserNode {
 	INDEX mChild ;
 } ;
 
-struct XmlParserRoot {
+struct XmlParserImplLayout {
 	Array<XmlParserNode> mTree ;
 	INDEX mRoot ;
 } ;
@@ -1009,8 +1009,8 @@ public:
 		mObjectMap = SortedMap<String<STRU8>> (ALLOCATOR_MIN_SIZE::expr) ;
 	}
 
-	XmlParserRoot poll () {
-		XmlParserRoot ret ;
+	XmlParserImplLayout poll () {
+		XmlParserImplLayout ret ;
 		ret.mTree = Array<XmlParserNode> (mTree.length ()) ;
 		const auto r1x = Array<INDEX>::make (mTree.range ()) ;
 		for (auto &&i : ret.mTree.range ()) {
@@ -1325,7 +1325,7 @@ public:
 	void initialize (CREF<RefBuffer<BYTE>> stream) override {
 		auto rax = MakeXmlParser (Ref<RefBuffer<BYTE>>::reference (stream)) ;
 		rax.generate () ;
-		fake.mThis = Ref<XmlParserRoot>::make (rax.poll ()) ;
+		fake.mThis = Ref<XmlParserImplLayout>::make (rax.poll ()) ;
 		fake.mIndex = fake.mThis->mRoot ;
 	}
 
@@ -1653,7 +1653,7 @@ struct JsonParserNode {
 	INDEX mChild ;
 } ;
 
-struct JsonParserRoot {
+struct JsonParserImplLayout {
 	Array<JsonParserNode> mTree ;
 	INDEX mRoot ;
 } ;
@@ -1689,8 +1689,8 @@ public:
 		mObjectMap = SortedMap<String<STRU8>> (ALLOCATOR_MIN_SIZE::expr) ;
 	}
 
-	JsonParserRoot poll () {
-		JsonParserRoot ret ;
+	JsonParserImplLayout poll () {
+		JsonParserImplLayout ret ;
 		ret.mTree = Array<JsonParserNode> (mTree.length ()) ;
 		const auto r1x = Array<INDEX>::make (mTree.range ()) ;
 		for (auto &&i : ret.mTree.range ()) {
@@ -1983,7 +1983,7 @@ public:
 	void initialize (CREF<RefBuffer<BYTE>> stream) override {
 		auto rax = MakeJsonParser (Ref<RefBuffer<BYTE>>::reference (stream)) ;
 		rax.generate () ;
-		fake.mThis = Ref<JsonParserRoot>::make (rax.poll ()) ;
+		fake.mThis = Ref<JsonParserImplLayout>::make (rax.poll ()) ;
 		fake.mIndex = fake.mThis->mRoot ;
 	}
 
@@ -2330,7 +2330,7 @@ struct PlyParserElement {
 	INDEX mExtIndex ;
 } ;
 
-struct PlyParserRoot {
+struct PlyParserImplLayout {
 	String<STRU8> mFormat ;
 	ArrayList<PlyParserElement> mElementList ;
 	Set<String<STRU8>> mElementSet ;
@@ -2386,8 +2386,8 @@ public:
 		mPropertyListType.add (slice ("uint") ,PlyParserDataType::Char) ;
 	}
 
-	PlyParserRoot poll () {
-		PlyParserRoot ret ;
+	PlyParserImplLayout poll () {
+		PlyParserImplLayout ret ;
 		ret.mFormat = move (mFormat) ;
 		ret.mElementList = move (mElementList) ;
 		ret.mElementSet = move (mElementSet) ;
@@ -2896,7 +2896,7 @@ public:
 	void initialize (CREF<RefBuffer<BYTE>> stream) override {
 		auto rax = MakePlyParser (Ref<RefBuffer<BYTE>>::reference (stream)) ;
 		rax.generate () ;
-		fake.mThis = Ref<PlyParserRoot>::make (rax.poll ()) ;
+		fake.mThis = Ref<PlyParserImplLayout>::make (rax.poll ()) ;
 		fake.mGuide.mElementIndex = NONE ;
 	}
 

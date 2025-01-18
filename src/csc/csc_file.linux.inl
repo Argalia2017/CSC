@@ -53,7 +53,7 @@ using ::lstat ;
 } ;
 
 namespace CSC {
-struct PathRoot {
+struct PathImplLayout {
 	String<STR> mPathName ;
 	Deque<INDEX> mSeparator ;
 } ;
@@ -61,7 +61,7 @@ struct PathRoot {
 class PathImplHolder final implement Fat<PathHolder ,PathLayout> {
 public:
 	void initialize (RREF<String<STR>> pathname) override {
-		fake.mThis = Ref<PathRoot>::make () ;
+		fake.mThis = Ref<PathImplLayout>::make () ;
 		fake.mThis->mPathName = move (pathname) ;
 		fake.mThis->mSeparator.add (NONE) ;
 		const auto r1x = fake.mThis->mPathName.length () ;

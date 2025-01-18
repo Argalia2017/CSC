@@ -1414,19 +1414,6 @@ exports CFat<IntegerHolder> IntegerHolder::hold (CREF<IntegerLayout> that) {
 	return CFat<IntegerHolder> (IntegerImplHolder () ,that) ;
 }
 
-struct JetNode ;
-using JetEvalFunction = Function<VREF<JetNode> ,CREF<WrapperLayout>> ;
-
-struct JetNode {
-	FLT64 mFX ;
-	FLT64 mEX ;
-	RefBuffer<FLT64> mDX ;
-	INDEX mSlot ;
-	JetEvalFunction mEval ;
-	Ref<JetNode> mFake ;
-	Ref<JetNode> mThat ;
-} ;
-
 class JetImplHolder final implement Fat<JetHolder ,JetLayout> {
 public:
 	void initialize (CREF<LENGTH> size_ ,CREF<FLT64> item) override {

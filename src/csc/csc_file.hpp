@@ -15,10 +15,10 @@
 #include "csc_runtime.hpp"
 
 namespace CSC {
-struct PathRoot ;
+struct PathImplLayout ;
 
 struct PathLayout {
-	Ref<PathRoot> mThis ;
+	Ref<PathImplLayout> mThis ;
 
 public:
 	implicit PathLayout () = default ;

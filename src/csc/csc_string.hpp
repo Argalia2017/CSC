@@ -201,10 +201,10 @@ public:
 	}
 } ;
 
-struct XmlParserRoot ;
+struct XmlParserImplLayout ;
 
 struct XmlParserLayout {
-	Ref<XmlParserRoot> mThis ;
+	Ref<XmlParserImplLayout> mThis ;
 	INDEX mIndex ;
 } ;
 
@@ -405,10 +405,10 @@ public:
 	}
 } ;
 
-struct JsonParserRoot ;
+struct JsonParserImplLayout ;
 
 struct JsonParserLayout {
-	Ref<JsonParserRoot> mThis ;
+	Ref<JsonParserImplLayout> mThis ;
 	INDEX mIndex ;
 } ;
 
@@ -609,7 +609,7 @@ public:
 	}
 } ;
 
-struct PlyParserRoot ;
+struct PlyParserImplLayout ;
 
 struct PlyParserGuide {
 	INDEX mElementIndex ;
@@ -623,7 +623,7 @@ struct PlyParserGuide {
 } ;
 
 struct PlyParserLayout {
-	Ref<PlyParserRoot> mThis ;
+	Ref<PlyParserImplLayout> mThis ;
 	PlyParserGuide mGuide ;
 } ;
 

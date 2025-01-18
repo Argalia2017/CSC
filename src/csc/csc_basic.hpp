@@ -9,28 +9,28 @@
 #include "csc_core.hpp"
 
 namespace CSC {
-struct HeapMutexImplLayout {
+struct HeapMutexLayout {
 	FLAG mHolder ;
 
 public:
-	implicit HeapMutexImplLayout () noexcept {
+	implicit HeapMutexLayout () noexcept {
 		mHolder = ZERO ;
 	}
 } ;
 
 struct HeapMutexHolder implement Interface {
-	imports CREF<HeapMutexImplLayout> instance () ;
-	imports VFat<HeapMutexHolder> hold (VREF<HeapMutexImplLayout> that) ;
-	imports CFat<HeapMutexHolder> hold (CREF<HeapMutexImplLayout> that) ;
+	imports CREF<HeapMutexLayout> instance () ;
+	imports VFat<HeapMutexHolder> hold (VREF<HeapMutexLayout> that) ;
+	imports CFat<HeapMutexHolder> hold (CREF<HeapMutexLayout> that) ;
 
 	virtual void initialize () = 0 ;
 	virtual void enter () const = 0 ;
 	virtual void leave () const = 0 ;
 } ;
 
-class HeapMutex implement HeapMutexImplLayout {
+class HeapMutex implement HeapMutexLayout {
 protected:
-	using HeapMutexImplLayout::mHolder ;
+	using HeapMutexLayout::mHolder ;
 
 public:
 	static CREF<HeapMutex> instance () {
@@ -316,10 +316,10 @@ public:
 	}
 } ;
 
-struct FunctionRoot ;
+struct FunctionImplLayout ;
 
 struct FunctionLayout {
-	Ref<FunctionRoot> mThis ;
+	Ref<FunctionImplLayout> mThis ;
 
 public:
 	implicit FunctionLayout () = default ;
@@ -420,10 +420,10 @@ public:
 	}
 } ;
 
-struct AutoRefRoot ;
+struct AutoRefImplLayout ;
 
 struct AutoRefLayout {
-	Ref<AutoRefRoot> mThis ;
+	Ref<AutoRefImplLayout> mThis ;
 	FLAG mLayout ;
 
 public:
@@ -555,10 +555,10 @@ public:
 	}
 } ;
 
-struct SharedRefRoot ;
+struct SharedRefImplLayout ;
 
 struct SharedRefLayout {
-	Ref<SharedRefRoot> mThis ;
+	Ref<SharedRefImplLayout> mThis ;
 	FLAG mLayout ;
 
 public:
@@ -679,10 +679,10 @@ public:
 	}
 } ;
 
-struct UniqueRefRoot ;
+struct UniqueRefImplLayout ;
 
 struct UniqueRefLayout {
-	Ref<UniqueRefRoot> mThis ;
+	Ref<UniqueRefImplLayout> mThis ;
 	FLAG mLayout ;
 
 public:
@@ -809,10 +809,10 @@ public:
 	}
 } ;
 
-struct RefBufferRoot ;
+struct RefBufferImplLayout ;
 
 struct RefBufferLayout {
-	Ref<RefBufferRoot> mThis ;
+	Ref<RefBufferImplLayout> mThis ;
 	FLAG mHolder ;
 	FLAG mBuffer ;
 	LENGTH mSize ;

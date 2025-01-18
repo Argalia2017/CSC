@@ -759,6 +759,17 @@ public:
 } ;
 
 struct JetNode ;
+using JetEvalFunction = Function<VREF<JetNode> ,CREF<WrapperLayout>> ;
+
+struct JetNode {
+	FLT64 mFX ;
+	FLT64 mEX ;
+	RefBuffer<FLT64> mDX ;
+	INDEX mSlot ;
+	JetEvalFunction mEval ;
+	Ref<JetNode> mFake ;
+	Ref<JetNode> mThat ;
+} ;
 
 struct JetLayout {
 	Ref<JetNode> mThis ;

@@ -138,6 +138,7 @@ public:
 
 inline Time CurrentTime () {
 	Time ret ;
+	ret.mThis = TimeHolder::create () ;
 	TimeHolder::hold (ret)->initialize () ;
 	return move (ret) ;
 }
@@ -656,6 +657,7 @@ public:
 
 inline Random CurrentRandom () {
 	Random ret ;
+	ret.mThis = RandomHolder::create () ;
 	RandomHolder::hold (ret)->initialize () ;
 	return move (ret) ;
 }
@@ -721,10 +723,10 @@ inline CREF<A> Singleton<A>::instance () {
 	}).self ;
 }
 
-struct GlobalRoot ;
+struct GlobalImplLayout ;
 
 struct GlobalLayout {
-	Ref<GlobalRoot> mThis ;
+	Ref<GlobalImplLayout> mThis ;
 	INDEX mIndex ;
 	Clazz mClazz ;
 } ;

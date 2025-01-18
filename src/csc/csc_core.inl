@@ -202,7 +202,7 @@ exports CFat<BoxHolder> BoxHolder::hold (CREF<BoxLayout> that) {
 	return CFat<BoxHolder> (BoxImplHolder () ,that) ;
 }
 
-struct RefRootLayout implement Proxy {
+struct RefImplLayout implement Proxy {
 	Heap mHeap ;
 	std::atomic<VAL> mCounter ;
 	BoxLayout mValue ;
@@ -215,12 +215,12 @@ public:
 	void initialize (RREF<BoxLayout> item) override {
 		assert (!exist ()) ;
 		const auto r1x = RFat<ReflectSize> (BoxHolder::hold (item)->unknown ()) ;
-		const auto r2x = inline_max (r1x->type_align () - ALIGN_OF<RefRootLayout>::expr ,0) ;
-		const auto r3x = SIZE_OF<RefRootLayout>::expr + r2x + r1x->type_size () ;
+		const auto r2x = inline_max (r1x->type_align () - ALIGN_OF<RefImplLayout>::expr ,0) ;
+		const auto r3x = SIZE_OF<RefImplLayout>::expr + r2x + r1x->type_size () ;
 		const auto r4x = Heap::instance () ;
 		fake.mHandle = r4x.alloc (r3x) ;
 		assert (fake.mHandle >= REFIMPLLAYOUT_MIN_HANDLE) ;
-		inline_memset (Pointer::make (fake.mHandle) ,SIZE_OF<RefRootLayout>::expr) ;
+		inline_memset (Pointer::make (fake.mHandle) ,SIZE_OF<RefImplLayout>::expr) ;
 		ptr (fake).mHeap = r4x ;
 		BoxHolder::hold (ptr (fake).mValue)->acquire (item) ;
 		BoxHolder::hold (item)->release () ;
@@ -249,14 +249,14 @@ public:
 		assert (!exist ()) ;
 		const auto r1x = RFat<ReflectSize> (holder) ;
 		const auto r2x = RFat<ReflectSize> (extend) ;
-		const auto r3x = inline_max (r1x->type_align () - ALIGN_OF<RefRootLayout>::expr ,0) ;
-		const auto r4x = SIZE_OF<RefRootLayout>::expr + r3x + r1x->type_size () ;
+		const auto r3x = inline_max (r1x->type_align () - ALIGN_OF<RefImplLayout>::expr ,0) ;
+		const auto r4x = SIZE_OF<RefImplLayout>::expr + r3x + r1x->type_size () ;
 		const auto r5x = inline_max (r2x->type_align () - r1x->type_align () ,0) ;
 		const auto r6x = r4x + r5x + r2x->type_size () * size_ ;
 		const auto r7x = Heap::instance () ;
 		fake.mHandle = r7x.alloc (r6x) ;
 		assert (fake.mHandle >= REFIMPLLAYOUT_MIN_HANDLE) ;
-		inline_memset (Pointer::make (fake.mHandle) ,SIZE_OF<RefRootLayout>::expr) ;
+		inline_memset (Pointer::make (fake.mHandle) ,SIZE_OF<RefImplLayout>::expr) ;
 		ptr (fake).mHeap = r7x ;
 		BoxHolder::hold (ptr (fake).mValue)->initialize (holder) ;
 		fake.mLayout = address (BoxHolder::hold (ptr (fake).mValue)->self) ;
@@ -270,9 +270,9 @@ public:
 		const auto r1x = RFat<ReflectSize> (holder) ;
 		const auto r2x = r1x->type_align () ;
 		noop (r2x) ;
-		assert (r2x <= ALIGN_OF<RefRootLayout>::expr) ;
-		const auto r3x = layout - SIZE_OF<RefRootLayout>::expr ;
-		auto &&rax = keep[TYPE<RefRootLayout>::expr] (Pointer::make (r3x)) ;
+		assert (r2x <= ALIGN_OF<RefImplLayout>::expr) ;
+		const auto r3x = layout - SIZE_OF<RefImplLayout>::expr ;
+		auto &&rax = keep[TYPE<RefImplLayout>::expr] (Pointer::make (r3x)) ;
 		assert (rax.mCounter > 0) ;
 		fake.mHandle = r3x ;
 		fake.mLayout = layout ;
@@ -298,7 +298,7 @@ public:
 		fake.mLayout = ZERO ;
 	}
 
-	static VREF<RefRootLayout> ptr (CREF<RefLayout> that) {
+	static VREF<RefImplLayout> ptr (CREF<RefLayout> that) {
 		return Pointer::make (that.mHandle) ;
 	}
 
@@ -400,19 +400,19 @@ struct HeapRoot {
 class HeapImplHolder final implement Fat<HeapHolder ,HeapLayout> {
 public:
 	void initialize () override {
-		pin_ptr (fake).mStack.remake () ;
-		pin_ptr (fake).mLength.remake () ;
+		root_ptr (fake).mStack.remake () ;
+		root_ptr (fake).mLength.remake () ;
 		dump_memory_leaks () ;
 	}
 
-	static VREF<HeapRoot> pin_ptr (CREF<HeapLayout> that) {
+	static VREF<HeapRoot> root_ptr (CREF<HeapLayout> that) {
 		return memorize ([&] () {
 			return Pin<HeapRoot> () ;
 		}).self ;
 	}
 
 	INDEX stack () const override {
-		INDEX ret = pin_ptr (fake).mStack.self++ ;
+		INDEX ret = root_ptr (fake).mStack.self++ ;
 		if ifdo (TRUE) {
 			if (ret >= 0)
 				discard ;
@@ -422,7 +422,7 @@ public:
 	}
 
 	LENGTH length () const override {
-		return pin_ptr (fake).mLength.self ;
+		return root_ptr (fake).mLength.self ;
 	}
 
 	FLAG alloc (CREF<LENGTH> size_) const override {
@@ -430,14 +430,14 @@ public:
 		assume (ret != ZERO) ;
 		const auto r1x = csc_pointer_t (ret) ;
 		const auto r2x = memsize (r1x) ;
-		pin_ptr (fake).mLength.self += r2x ;
+		root_ptr (fake).mLength.self += r2x ;
 		return move (ret) ;
 	}
 
 	void free (CREF<FLAG> layout) const override {
 		const auto r1x = csc_pointer_t (layout) ;
 		const auto r2x = memsize (r1x) ;
-		pin_ptr (fake).mLength.self -= r2x ;
+		root_ptr (fake).mLength.self -= r2x ;
 		operator delete (r1x ,std::nothrow) ;
 	}
 } ;
@@ -886,7 +886,7 @@ exports CFat<ExceptionHolder> ExceptionHolder::hold (CREF<ExceptionLayout> that)
 	return CFat<ExceptionHolder> (ExceptionImplHolder () ,that) ;
 }
 
-struct ClazzRoot {
+struct ClazzImplLayout {
 	LENGTH mTypeSize ;
 	LENGTH mTypeAlign ;
 	FLAG mTypeGuid ;
@@ -896,7 +896,7 @@ struct ClazzRoot {
 class ClazzImplHolder final implement Fat<ClazzHolder ,ClazzLayout> {
 public:
 	void initialize (CREF<Unknown> holder) override {
-		fake.mThis = Ref<ClazzRoot>::make () ;
+		fake.mThis = Ref<ClazzImplLayout>::make () ;
 		const auto r1x = RFat<ReflectSize> (holder) ;
 		fake.mThis->mTypeSize = r1x->type_size () ;
 		fake.mThis->mTypeAlign = r1x->type_align () ;

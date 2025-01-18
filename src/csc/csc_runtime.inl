@@ -767,7 +767,7 @@ struct GlobalNode {
 	Pin<AutoRef<Pointer>> mValue ;
 } ;
 
-struct GlobalRoot {
+struct GlobalImplLayout {
 	Mutex mMutex ;
 	Set<Slice> mGlobalNameSet ;
 	List<GlobalNode> mGlobalList ;
@@ -777,7 +777,7 @@ struct GlobalRoot {
 class GlobalImplHolder final implement Fat<GlobalHolder ,GlobalLayout> {
 public:
 	void initialize () override {
-		fake.mThis = Ref<GlobalRoot>::make () ;
+		fake.mThis = Ref<GlobalImplLayout>::make () ;
 		fake.mThis->mMutex = NULL ;
 		fake.mThis->mFinalize = FALSE ;
 		fake.mIndex = NONE ;
