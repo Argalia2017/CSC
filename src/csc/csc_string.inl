@@ -924,7 +924,7 @@ public:
 
 class ScopeCounter implement Proxy {
 private:
-	using COUNTER_MAX_DEPTH = ENUM<256> ;
+	using SCOPECOUNTER_MAX_DEPTH = ENUM<256> ;
 
 protected:
 	Pin<LENGTH> mThat ;
@@ -938,7 +938,7 @@ public:
 		auto rax = LENGTH () ;
 		mThat.get (rax) ;
 		rax++ ;
-		assume (rax < COUNTER_MAX_DEPTH::expr) ;
+		assume (rax < SCOPECOUNTER_MAX_DEPTH::expr) ;
 		mThat.set (rax) ;
 	}
 

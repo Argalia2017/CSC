@@ -15,6 +15,7 @@
 #endif
 
 #include "csc_end.h"
+#ifdef __CSC_SYSTEM_LINUX__
 #include <unistd.h>
 #include <dirent.h>
 #include <fcntl.h>
@@ -22,9 +23,8 @@
 
 #include <sys/mman.h>
 #include <sys/syscall.h>
-#include "csc_begin.h"
+#endif
 
-#include "csc_end.h"
 #include <cstdlib>
 #include <thread>
 #include "csc_begin.h"

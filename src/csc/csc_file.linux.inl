@@ -15,6 +15,7 @@
 #endif
 
 #include "csc_end.h"
+#ifdef __CSC_SYSTEM_LINUX__
 #include <unistd.h>
 #include <dirent.h>
 #include <fcntl.h>
@@ -25,9 +26,8 @@
 #include <sys/file.h>
 #include <sys/mman.h>
 #include <sys/sendfile.h>
-#include "csc_begin.h"
+#endif
 
-#include "csc_end.h"
 #include <cstdio>
 #include "csc_begin.h"
 

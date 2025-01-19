@@ -268,7 +268,7 @@ public:
 		fake.mNewSolution = FALSE ;
 	}
 
-	void set_start_input (CREF<BitSet> input) override {
+	void set_start_input (CREF<BitSet> input ,CREF<FLT64> factor) override {
 		Scope<Mutex> anonymous (fake.mThreadMutex) ;
 		assume (fake.mThreadFlag == ThreadFlag::Preparing) ;
 		assume (fake.mThread.size () > 0) ;
@@ -280,7 +280,7 @@ public:
 			fake.mThreadSolution[i].mIteration = NONE ;
 		fake.mConfidence = Array<FLT64> (1000) ;
 		fake.mConfidencePow = 0.9545 ;
-		fake.mConfidenceFator = FLT64 (fake.mConfidence.size ()) * MathProc::inverse (FLT64 (input.size ())) ;
+		fake.mConfidenceFator = MathProc::clamp (factor ,FLT64 (0) ,FLT64 (1)) ;
 		fake.mConfidence[0] = 1 ;
 		for (auto &&i : iter (1 ,fake.mConfidence.length ())) {
 			fake.mConfidence[i] = fake.mConfidencePow * fake.mConfidence[i - 1] ;

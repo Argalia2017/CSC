@@ -131,7 +131,7 @@ struct CalcThreadHolder implement Interface {
 
 	virtual void initialize () = 0 ;
 	virtual void set_thread_size (CREF<LENGTH> size_) = 0 ;
-	virtual void set_start_input (CREF<BitSet> input) = 0 ;
+	virtual void set_start_input (CREF<BitSet> input ,CREF<FLT64> factor) = 0 ;
 	virtual void start (CREF<Function<CREF<CalcSolution> ,VREF<CalcSolution>>> func) = 0 ;
 	virtual void friend_execute (CREF<INDEX> slot) = 0 ;
 	virtual BOOL ready () const = 0 ;
@@ -154,8 +154,8 @@ public:
 		return CalcThreadHolder::hold (thiz)->set_thread_size (size_) ;
 	}
 
-	void set_start_input (CREF<BitSet> input) const {
-		return CalcThreadHolder::hold (thiz)->set_start_input (input) ;
+	void set_start_input (CREF<BitSet> input ,CREF<FLT64> factor) const {
+		return CalcThreadHolder::hold (thiz)->set_start_input (input ,factor) ;
 	}
 
 	void start (CREF<Function<CREF<CalcSolution> ,VREF<CalcSolution>>> func) const {
