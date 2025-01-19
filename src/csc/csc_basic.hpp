@@ -320,21 +320,6 @@ struct FunctionImplLayout ;
 
 struct FunctionLayout {
 	Ref<FunctionImplLayout> mThis ;
-
-public:
-	implicit FunctionLayout () = default ;
-
-	implicit FunctionLayout (CREF<FunctionLayout> that) {
-		mThis = that.mThis.share () ;
-	}
-
-	forceinline VREF<FunctionLayout> operator= (CREF<FunctionLayout> that) {
-		return assign (thiz ,that) ;
-	}
-
-	implicit FunctionLayout (RREF<FunctionLayout> that) = default ;
-
-	forceinline VREF<FunctionLayout> operator= (RREF<FunctionLayout> that) = default ;
 } ;
 
 struct FunctionHolder implement Interface {

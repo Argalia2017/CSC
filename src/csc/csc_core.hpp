@@ -1327,6 +1327,22 @@ public:
 
 	static Ref reference (RREF<A> that) = delete ;
 
+	implicit Ref (CREF<Ref> that) {
+		RefHolder::hold (thiz)->initialize (that) ;
+	}
+
+	forceinline VREF<Ref> operator= (CREF<Ref> that) {
+		return assign (thiz ,that) ;
+	}
+
+	implicit Ref (RREF<Ref> that) = default ;
+
+	forceinline VREF<Ref> operator= (RREF<Ref> that) = default ;
+
+	Ref share () const {
+		return move (thiz) ;
+	}
+
 	BOOL exist () const {
 		return RefHolder::hold (thiz)->exist () ;
 	}
@@ -1361,12 +1377,6 @@ public:
 
 	BOOL variability () const {
 		return RefHolder::hold (thiz)->variability () ;
-	}
-
-	Ref share () const {
-		Ref ret ;
-		RefHolder::hold (ret)->initialize (thiz) ;
-		return move (ret) ;
 	}
 } ;
 
@@ -1919,21 +1929,6 @@ struct ClazzImplLayout ;
 
 struct ClazzLayout {
 	Ref<ClazzImplLayout> mThis ;
-
-public:
-	implicit ClazzLayout () = default ;
-
-	implicit ClazzLayout (CREF<ClazzLayout> that) {
-		mThis = that.mThis.share () ;
-	}
-
-	forceinline VREF<ClazzLayout> operator= (CREF<ClazzLayout> that) {
-		return assign (thiz ,that) ;
-	}
-
-	implicit ClazzLayout (RREF<ClazzLayout> that) = default ;
-
-	forceinline VREF<ClazzLayout> operator= (RREF<ClazzLayout> that) = default ;
 } ;
 
 struct ClazzHolder implement Interface {

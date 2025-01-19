@@ -1455,7 +1455,7 @@ public:
 	
 	void once (CREF<WrapperLayout> params) const override {
 		//@warn: it breaks Ref::variability to copy and write
-		auto rax = fake.mThis.share () ;
+		auto rax = fake.mThis ;
 		once (rax ,params) ;
 	}
 
@@ -1491,8 +1491,8 @@ public:
 			}
 			check_fx (node) ;
 		}) ;
-		ret.mThis->mFake = fake.mThis.share () ;
-		ret.mThis->mThat = that.mThis.share () ;
+		ret.mThis->mFake = fake.mThis ;
+		ret.mThis->mThat = that.mThis ;
 		return move (ret) ;
 	}
 
@@ -1520,8 +1520,8 @@ public:
 			}
 			check_fx (node) ;
 		}) ;
-		ret.mThis->mFake = fake.mThis.share () ;
-		ret.mThis->mThat = that.mThis.share () ;
+		ret.mThis->mFake = fake.mThis ;
+		ret.mThis->mThat = that.mThis ;
 		return move (ret) ;
 	}
 
@@ -1538,8 +1538,8 @@ public:
 				node.mDX[i] = r1x * node.mFake->mDX[i] + r2x * node.mThat->mDX[i] ;
 			check_fx (node) ;
 		}) ;
-		ret.mThis->mFake = fake.mThis.share () ;
-		ret.mThis->mThat = that.mThis.share () ;
+		ret.mThis->mFake = fake.mThis ;
+		ret.mThis->mThat = that.mThis ;
 		return move (ret) ;
 	}
 
@@ -1558,8 +1558,8 @@ public:
 				node.mDX[i] = r3x * node.mFake->mDX[i] + r4x * node.mThat->mDX[i] ;
 			check_fx (node) ;
 		}) ;
-		ret.mThis->mFake = fake.mThis.share () ;
-		ret.mThis->mThat = that.mThis.share () ;
+		ret.mThis->mFake = fake.mThis ;
+		ret.mThis->mThat = that.mThis ;
 		return move (ret) ;
 	}
 
@@ -1575,7 +1575,7 @@ public:
 				node.mDX[i] = r2x * node.mFake->mDX[i] ;
 			check_fx (node) ;
 		}) ;
-		ret.mThis->mFake = fake.mThis.share () ;
+		ret.mThis->mFake = fake.mThis ;
 		return move (ret) ;
 	}
 
@@ -1590,7 +1590,7 @@ public:
 				node.mDX[i] = r1x * node.mFake->mDX[i] ;
 			check_fx (node) ;
 		}) ;
-		ret.mThis->mFake = fake.mThis.share () ;
+		ret.mThis->mFake = fake.mThis ;
 		return move (ret) ;
 	}
 
@@ -1605,7 +1605,7 @@ public:
 				node.mDX[i] = r1x * node.mFake->mDX[i] ;
 			check_fx (node) ;
 		}) ;
-		ret.mThis->mFake = fake.mThis.share () ;
+		ret.mThis->mFake = fake.mThis ;
 		return move (ret) ;
 	}
 
@@ -1623,7 +1623,7 @@ public:
 				node.mDX[i] = r4x * node.mFake->mDX[i] ;
 			check_fx (node) ;
 		}) ;
-		ret.mThis->mFake = fake.mThis.share () ;
+		ret.mThis->mFake = fake.mThis ;
 		ret.mThis->mThat = Ref<JetNode>::make () ;
 		ret.mThis->mThat->mFX = that ;
 		ret.mThis->mThat->mSlot = NONE ;
@@ -1657,8 +1657,8 @@ public:
 			}
 			check_fx (node) ;
 		}) ;
-		ret.mThis->mFake = fake.mThis.share () ;
-		ret.mThis->mThat = that.mThis.share () ;
+		ret.mThis->mFake = fake.mThis ;
+		ret.mThis->mThat = that.mThis ;
 		return move (ret) ;
 	}
 
@@ -1676,7 +1676,7 @@ public:
 				copy_node (node ,node.mFake.self ,-1) ;
 			}
 		}) ;
-		ret.mThis->mFake = fake.mThis.share () ;
+		ret.mThis->mFake = fake.mThis ;
 		return move (ret) ;
 	}
 
@@ -1686,7 +1686,7 @@ public:
 		ret.mThis->mEval = JetEvalFunction ([] (VREF<JetNode> node ,CREF<WrapperLayout> params) {
 			copy_node (node ,node.mFake.self ,-1) ;
 		}) ;
-		ret.mThis->mFake = fake.mThis.share () ;
+		ret.mThis->mFake = fake.mThis ;
 		return move (ret) ;
 	}
 
@@ -1702,7 +1702,7 @@ public:
 				node.mDX[i] = r1x * node.mFake->mDX[i] ;
 			check_fx (node) ;
 		}) ;
-		ret.mThis->mFake = fake.mThis.share () ;
+		ret.mThis->mFake = fake.mThis ;
 		return move (ret) ;
 	}
 
@@ -1718,7 +1718,7 @@ public:
 				node.mDX[i] = r1x * node.mFake->mDX[i] ;
 			check_fx (node) ;
 		}) ;
-		ret.mThis->mFake = fake.mThis.share () ;
+		ret.mThis->mFake = fake.mThis ;
 		return move (ret) ;
 	}
 
@@ -1734,7 +1734,7 @@ public:
 				node.mDX[i] = r1x * node.mFake->mDX[i] ;
 			check_fx (node) ;
 		}) ;
-		ret.mThis->mFake = fake.mThis.share () ;
+		ret.mThis->mFake = fake.mThis ;
 		return move (ret) ;
 	}
 
@@ -1751,7 +1751,7 @@ public:
 				node.mDX[i] = r2x * node.mFake->mDX[i] ;
 			check_fx (node) ;
 		}) ;
-		ret.mThis->mFake = fake.mThis.share () ;
+		ret.mThis->mFake = fake.mThis ;
 		return move (ret) ;
 	}
 
@@ -1768,7 +1768,7 @@ public:
 				node.mDX[i] = r2x * node.mFake->mDX[i] ;
 			check_fx (node) ;
 		}) ;
-		ret.mThis->mFake = fake.mThis.share () ;
+		ret.mThis->mFake = fake.mThis ;
 		return move (ret) ;
 	}
 
@@ -1789,8 +1789,8 @@ public:
 				node.mDX[i] = r3x * node.mFake->mDX[i] + r4x * node.mThat->mDX[i] ;
 			check_fx (node) ;
 		}) ;
-		ret.mThis->mFake = fake.mThis.share () ;
-		ret.mThis->mThat = that.mThis.share () ;
+		ret.mThis->mFake = fake.mThis ;
+		ret.mThis->mThat = that.mThis ;
 		return move (ret) ;
 	}
 
@@ -1806,7 +1806,7 @@ public:
 				node.mDX[i] = r1x * node.mFake->mDX[i] ;
 			check_fx (node) ;
 		}) ;
-		ret.mThis->mFake = fake.mThis.share () ;
+		ret.mThis->mFake = fake.mThis ;
 		return move (ret) ;
 	}
 
@@ -1823,7 +1823,7 @@ public:
 				node.mDX[i] = r3x * node.mFake->mDX[i] ;
 			check_fx (node) ;
 		}) ;
-		ret.mThis->mFake = fake.mThis.share () ;
+		ret.mThis->mFake = fake.mThis ;
 		return move (ret) ;
 	}
 

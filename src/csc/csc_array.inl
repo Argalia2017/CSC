@@ -1231,7 +1231,7 @@ public:
 	SortedMapLayout share () const override {
 		assert (fake.mRoot == NONE) ;
 		SortedMapLayout ret ;
-		ret.mThis = fake.mThis.share () ;
+		ret.mThis = fake.mThis ;
 		ret.mRoot = NONE ;
 		ret.mRange = RefBuffer<INDEX> () ;
 		ret.mWrite = 0 ;

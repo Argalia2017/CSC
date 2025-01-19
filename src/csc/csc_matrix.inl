@@ -1295,7 +1295,7 @@ public:
 	PointCloudLayout smul (CREF<Matrix> mat) const override {
 		PointCloudLayout ret ;
 		ret.mRank = fake.mRank ;
-		ret.mPointCloud = fake.mPointCloud.share () ;
+		ret.mPointCloud = fake.mPointCloud ;
 		ret.mWorld *= mat ;
 		return move (ret) ;
 	}

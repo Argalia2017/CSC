@@ -778,7 +778,7 @@ public:
 	}
 
 	void initialize (CREF<Slice> name ,CREF<Unknown> holder) override {
-		fake.mThis = Singleton<GlobalProc>::instance ().mThis.share () ;
+		fake.mThis = Singleton<GlobalProc>::instance ().mThis ;
 		assert (!fake.mThis->mFinalize) ;
 		Scope<Mutex> anonymous (fake.mThis->mMutex) ;
 		INDEX ix = fake.mThis->mGlobalNameSet.map (name) ;
@@ -794,12 +794,12 @@ public:
 	}
 
 	void startup () const override {
-		auto rax = Singleton<GlobalProc>::instance ().mThis.share () ;
+		auto rax = Singleton<GlobalProc>::instance ().mThis ;
 		assume (!rax->mFinalize) ;
 	}
 
 	void shutdown () const override {
-		auto rax = Singleton<GlobalProc>::instance ().mThis.share () ;
+		auto rax = Singleton<GlobalProc>::instance ().mThis ;
 		if (rax->mFinalize)
 			return ;
 		rax->mFinalize = TRUE ;

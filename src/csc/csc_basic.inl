@@ -274,7 +274,7 @@ public:
 			if (that.mThis == NULL)
 				discard ;
 			Scope<HeapMutex> anonymous (that.mThis->mMutex) ;
-			fake.mThis = that.mThis.share () ;
+			fake.mThis = that.mThis ;
 			fake.mLayout = address (BoxHolder::hold (raw ())->self) ;
 			fake.mThis->mCounter++ ;
 		}
@@ -414,7 +414,7 @@ public:
 		auto rax = UniqueRefLayout () ;
 		that.mThis->mUpper.get (rax) ;
 		assert (!rax.mThis.exist ()) ;
-		rax.mThis = fake.mThis.share () ;
+		rax.mThis = fake.mThis ;
 		rax.mLayout = fake.mLayout ;
 		that.mThis->mUpper.set (rax) ;
 	}

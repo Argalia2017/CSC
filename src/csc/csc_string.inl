@@ -1342,7 +1342,7 @@ public:
 		if ifdo (TRUE) {
 			if (!exist ())
 				discard ;
-			ret.mThis = fake.mThis.share () ;
+			ret.mThis = fake.mThis ;
 			ret.mIndex = fake.mThis->mRoot ;
 		}
 		return move (ret) ;
@@ -1353,7 +1353,7 @@ public:
 		if ifdo (TRUE) {
 			if (!exist ())
 				discard ;
-			ret.mThis = fake.mThis.share () ;
+			ret.mThis = fake.mThis ;
 			ret.mIndex = fake.mThis->mTree[fake.mIndex].mParent ;
 		}
 		return move (ret) ;
@@ -1364,7 +1364,7 @@ public:
 		if ifdo (TRUE) {
 			if (!exist ())
 				discard ;
-			ret.mThis = fake.mThis.share () ;
+			ret.mThis = fake.mThis ;
 			ret.mIndex = fake.mThis->mTree[fake.mIndex].mBrother ;
 		}
 		return move (ret) ;
@@ -1375,7 +1375,7 @@ public:
 		if ifdo (TRUE) {
 			if (!exist ())
 				discard ;
-			ret.mThis = fake.mThis.share () ;
+			ret.mThis = fake.mThis ;
 			ret.mIndex = fake.mThis->mTree[fake.mIndex].mChild ;
 		}
 		return move (ret) ;
@@ -1386,7 +1386,7 @@ public:
 		if ifdo (TRUE) {
 			if (!exist ())
 				discard ;
-			ret.mThis = fake.mThis.share () ;
+			ret.mThis = fake.mThis ;
 			ret.mIndex = fake.mThis->mTree[fake.mIndex].mArrayMap.map (index) ;
 		}
 		return move (ret) ;
@@ -1397,7 +1397,7 @@ public:
 		if ifdo (TRUE) {
 			if (!exist ())
 				discard ;
-			ret.mThis = fake.mThis.share () ;
+			ret.mThis = fake.mThis ;
 			ret.mIndex = fake.mThis->mTree[fake.mIndex].mObjectMap.map (name) ;
 		}
 		return move (ret) ;
@@ -1408,7 +1408,7 @@ public:
 		if ifdo (TRUE) {
 			if (!exist ())
 				discard ;
-			ret.mThis = fake.mThis.share () ;
+			ret.mThis = fake.mThis ;
 			ret.mIndex = fake.mThis->mTree[fake.mIndex].mObjectMap.map (name) ;
 		}
 		return move (ret) ;
@@ -1422,7 +1422,7 @@ public:
 			const auto r1x = fake.mThis->mTree[fake.mIndex].mArrayMap.length () ;
 			ret = Array<XmlParserLayout> (r1x) ;
 			for (auto &&i : iter (0 ,r1x)) {
-				ret[i].mThis = fake.mThis.share () ;
+				ret[i].mThis = fake.mThis ;
 				ret[i].mIndex = fake.mThis->mTree[fake.mIndex].mArrayMap[i] ;
 			}
 		}
@@ -1437,7 +1437,7 @@ public:
 			const auto r1x = fake.mThis->mTree[fake.mIndex].mArrayMap.length () ;
 			const auto r2x = inline_min (r1x ,size_) ;
 			for (auto &&i : iter (0 ,r2x)) {
-				ret[i].mThis = fake.mThis.share () ;
+				ret[i].mThis = fake.mThis ;
 				ret[i].mIndex = fake.mThis->mTree[fake.mIndex].mArrayMap[i] ;
 			}
 		}
@@ -2000,7 +2000,7 @@ public:
 		if ifdo (TRUE) {
 			if (!exist ())
 				discard ;
-			ret.mThis = fake.mThis.share () ;
+			ret.mThis = fake.mThis ;
 			ret.mIndex = fake.mThis->mRoot ;
 		}
 		return move (ret) ;
@@ -2011,7 +2011,7 @@ public:
 		if ifdo (TRUE) {
 			if (!exist ())
 				discard ;
-			ret.mThis = fake.mThis.share () ;
+			ret.mThis = fake.mThis ;
 			ret.mIndex = fake.mThis->mTree[fake.mIndex].mParent ;
 		}
 		return move (ret) ;
@@ -2022,7 +2022,7 @@ public:
 		if ifdo (TRUE) {
 			if (!exist ())
 				discard ;
-			ret.mThis = fake.mThis.share () ;
+			ret.mThis = fake.mThis ;
 			ret.mIndex = fake.mThis->mTree[fake.mIndex].mBrother ;
 		}
 		return move (ret) ;
@@ -2033,7 +2033,7 @@ public:
 		if ifdo (TRUE) {
 			if (!exist ())
 				discard ;
-			ret.mThis = fake.mThis.share () ;
+			ret.mThis = fake.mThis ;
 			ret.mIndex = fake.mThis->mTree[fake.mIndex].mChild ;
 		}
 		return move (ret) ;
@@ -2044,7 +2044,7 @@ public:
 		if ifdo (TRUE) {
 			if (!exist ())
 				discard ;
-			ret.mThis = fake.mThis.share () ;
+			ret.mThis = fake.mThis ;
 			ret.mIndex = fake.mThis->mTree[fake.mIndex].mArrayMap.map (index) ;
 		}
 		return move (ret) ;
@@ -2055,7 +2055,7 @@ public:
 		if ifdo (TRUE) {
 			if (!exist ())
 				discard ;
-			ret.mThis = fake.mThis.share () ;
+			ret.mThis = fake.mThis ;
 			ret.mIndex = fake.mThis->mTree[fake.mIndex].mObjectMap.map (name) ;
 		}
 		return move (ret) ;
@@ -2066,7 +2066,7 @@ public:
 		if ifdo (TRUE) {
 			if (!exist ())
 				discard ;
-			ret.mThis = fake.mThis.share () ;
+			ret.mThis = fake.mThis ;
 			ret.mIndex = fake.mThis->mTree[fake.mIndex].mObjectMap.map (name) ;
 		}
 		return move (ret) ;
@@ -2080,7 +2080,7 @@ public:
 			const auto r1x = fake.mThis->mTree[fake.mIndex].mArrayMap.length () ;
 			ret = Array<JsonParserLayout> (r1x) ;
 			for (auto &&i : iter (0 ,r1x)) {
-				ret[i].mThis = fake.mThis.share () ;
+				ret[i].mThis = fake.mThis ;
 				ret[i].mIndex = fake.mThis->mTree[fake.mIndex].mArrayMap[i] ;
 			}
 		}
@@ -2095,7 +2095,7 @@ public:
 			const auto r1x = fake.mThis->mTree[fake.mIndex].mArrayMap.length () ;
 			const auto r2x = inline_min (r1x ,size_) ;
 			for (auto &&i : iter (0 ,r2x)) {
-				ret[i].mThis = fake.mThis.share () ;
+				ret[i].mThis = fake.mThis ;
 				ret[i].mIndex = fake.mThis->mTree[fake.mIndex].mArrayMap[i] ;
 			}
 		}

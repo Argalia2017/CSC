@@ -19,21 +19,6 @@ struct PathImplLayout ;
 
 struct PathLayout {
 	Ref<PathImplLayout> mThis ;
-
-public:
-	implicit PathLayout () = default ;
-
-	implicit PathLayout (CREF<PathLayout> that) {
-		mThis = that.mThis.share () ;
-	}
-
-	forceinline VREF<PathLayout> operator= (CREF<PathLayout> that) {
-		return assign (thiz ,that) ;
-	}
-
-	implicit PathLayout (RREF<PathLayout> that) = default ;
-
-	forceinline VREF<PathLayout> operator= (RREF<PathLayout> that) = default ;
 } ;
 
 struct PathHolder implement Interface {
