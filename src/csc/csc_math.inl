@@ -435,7 +435,7 @@ public:
 exports CREF<MathProcLayout> MathProcHolder::instance () {
 	return memorize ([&] () {
 		MathProcLayout ret ;
-		ret.mThis = Ref<MathProcImplLayout>::make () ;
+		ret.mThis = UniqueRef<MathProcImplLayout>::make () ;
 		MathProcHolder::hold (ret)->initialize () ;
 		return move (ret) ;
 	}) ;
@@ -721,7 +721,7 @@ public:
 exports CREF<FloatProcLayout> FloatProcHolder::instance () {
 	return memorize ([&] () {
 		FloatProcLayout ret ;
-		ret.mThis = Ref<FloatProcImplLayout>::make () ;
+		ret.mThis = UniqueRef<FloatProcImplLayout>::make () ;
 		FloatProcHolder::hold (ret)->initialize () ;
 		return move (ret) ;
 	}) ;
@@ -739,8 +739,8 @@ template class External<FEXP2CacheHolder ,FEXP2CacheImplLayout> ;
 
 exports CREF<FEXP2CacheLayout> FEXP2CacheHolder::instance () {
 	return memorize ([&] () {
-		FEXP2CacheLayout ret = External<FEXP2CacheHolder ,FEXP2CacheImplLayout>::declare ().xcreate () ;
-		ret.mThis = Ref<FEXP2CacheImplLayout>::make () ;
+		FEXP2CacheLayout ret ;
+		ret.mThis = External<FEXP2CacheHolder ,FEXP2CacheImplLayout>::declare ().xmake () ;
 		FEXP2CacheHolder::hold (ret)->initialize () ;
 		return move (ret) ;
 	}) ;
@@ -758,7 +758,8 @@ template class External<FEXP10CacheHolder ,FEXP10CacheImplLayout> ;
 
 exports CREF<FEXP10CacheLayout> FEXP10CacheHolder::instance () {
 	return memorize ([&] () {
-		FEXP10CacheLayout ret = External<FEXP10CacheHolder ,FEXP10CacheImplLayout>::declare ().xcreate () ;
+		FEXP10CacheLayout ret ;
+		ret.mThis = External<FEXP10CacheHolder ,FEXP10CacheImplLayout>::declare ().xmake () ;
 		FEXP10CacheHolder::hold (ret)->initialize () ;
 		return move (ret) ;
 	}) ;
@@ -948,7 +949,7 @@ public:
 exports CREF<ByteProcLayout> ByteProcHolder::instance () {
 	return memorize ([&] () {
 		ByteProcLayout ret ;
-		ret.mThis = Ref<ByteProcImplLayout>::make () ;
+		ret.mThis = UniqueRef<ByteProcImplLayout>::make () ;
 		ByteProcHolder::hold (ret)->initialize () ;
 		return move (ret) ;
 	}) ;
@@ -1942,7 +1943,7 @@ public:
 exports CREF<HashProcLayout> HashProcHolder::instance () {
 	return memorize ([&] () {
 		HashProcLayout ret ;
-		ret.mThis = Ref<HashProcImplLayout>::make () ;
+		ret.mThis = UniqueRef<HashProcImplLayout>::make () ;
 		HashProcHolder::hold (ret)->initialize () ;
 		return move (ret) ;
 	}) ;

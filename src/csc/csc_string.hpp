@@ -14,7 +14,7 @@
 
 namespace CSC {
 struct StringProcImplLayout ;
-struct StringProcLayout implement OfThis<Ref<StringProcImplLayout>> {} ;
+struct StringProcLayout implement OfThis<UniqueRef<StringProcImplLayout>> {} ;
 
 struct StringProcHolder implement Interface {
 	imports CREF<StringProcLayout> instance () ;

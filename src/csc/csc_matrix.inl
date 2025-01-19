@@ -700,7 +700,8 @@ template class External<MatrixProcHolder ,MatrixProcImplLayout> ;
 
 exports CREF<MatrixProcLayout> MatrixProcHolder::instance () {
 	return memorize ([&] () {
-		MatrixProcLayout ret = External<MatrixProcHolder ,MatrixProcImplLayout>::declare ().xcreate () ;
+		MatrixProcLayout ret ;
+		ret.mThis = External<MatrixProcHolder ,MatrixProcImplLayout>::declare ().xmake () ;
 		MatrixProcHolder::hold (ret)->initialize () ;
 		return move (ret) ;
 	}) ;
@@ -1142,7 +1143,8 @@ template class External<LinearProcHolder ,LinearProcImplLayout> ;
 
 exports CREF<LinearProcLayout> LinearProcHolder::instance () {
 	return memorize ([&] () {
-		LinearProcLayout ret = External<LinearProcHolder ,LinearProcImplLayout>::declare ().xcreate () ;
+		LinearProcLayout ret ;
+		ret.mThis = External<LinearProcHolder ,LinearProcImplLayout>::declare ().xmake () ;
 		LinearProcHolder::hold (ret)->initialize () ;
 		return move (ret) ;
 	}) ;
@@ -1159,7 +1161,9 @@ exports CFat<LinearProcHolder> LinearProcHolder::hold (CREF<LinearProcImplLayout
 template class External<PointCloudKDTreeHolder ,PointCloudKDTreeImplLayout> ;
 
 exports PointCloudKDTreeLayout PointCloudKDTreeHolder::create () {
-	return External<PointCloudKDTreeHolder ,PointCloudKDTreeImplLayout>::declare ().xcreate () ;
+	PointCloudKDTreeLayout ret ;
+	ret.mThis = External<PointCloudKDTreeHolder ,PointCloudKDTreeImplLayout>::declare ().xmake () ;
+	return move (ret) ;
 }
 
 exports VFat<PointCloudKDTreeHolder> PointCloudKDTreeHolder::hold (VREF<PointCloudKDTreeImplLayout> that) {

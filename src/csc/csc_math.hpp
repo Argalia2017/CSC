@@ -19,7 +19,7 @@ static constexpr auto MATH_LN2 = FLT64 (0.693147180559945309417) ;
 static constexpr auto MATH_LN10 = FLT64 (2.30258509299404568402) ;
 
 struct MathProcImplLayout ;
-struct MathProcLayout implement OfThis<Ref<MathProcImplLayout>> {} ;
+struct MathProcLayout implement OfThis<UniqueRef<MathProcImplLayout>> {} ;
 
 struct MathProcHolder implement Interface {
 	imports CREF<MathProcLayout> instance () ;
@@ -312,14 +312,14 @@ struct Notation {
 } ;
 
 struct FEXP2CacheImplLayout ;
-struct FEXP2CacheLayout implement OfThis<Ref<FEXP2CacheImplLayout>> {} ;
+struct FEXP2CacheLayout implement OfThis<UniqueRef<FEXP2CacheImplLayout>> {} ;
 
 struct FEXP2CacheHolder implement Interface {
 	imports CREF<FEXP2CacheLayout> instance () ;
 	imports VFat<FEXP2CacheHolder> hold (VREF<FEXP2CacheImplLayout> that) ;
 	imports CFat<FEXP2CacheHolder> hold (CREF<FEXP2CacheImplLayout> that) ;
 
-	virtual FEXP2CacheLayout xcreate () const = 0 ;
+	virtual UniqueRef<FEXP2CacheImplLayout> xmake () const = 0 ;
 	virtual void initialize () = 0 ;
 	virtual void get (CREF<VAL64> index ,VREF<Notation> item) const = 0 ;
 } ;
@@ -338,14 +338,14 @@ public:
 } ;
 
 struct FEXP10CacheImplLayout ;
-struct FEXP10CacheLayout implement OfThis<Ref<FEXP10CacheImplLayout>> {} ;
+struct FEXP10CacheLayout implement OfThis<UniqueRef<FEXP10CacheImplLayout>> {} ;
 
 struct FEXP10CacheHolder implement Interface {
 	imports CREF<FEXP10CacheLayout> instance () ;
 	imports VFat<FEXP10CacheHolder> hold (VREF<FEXP10CacheImplLayout> that) ;
 	imports CFat<FEXP10CacheHolder> hold (CREF<FEXP10CacheImplLayout> that) ;
 
-	virtual FEXP10CacheLayout xcreate () const = 0 ;
+	virtual UniqueRef<FEXP10CacheImplLayout> xmake () const = 0 ;
 	virtual void initialize () = 0 ;
 	virtual void get (CREF<VAL64> index ,VREF<Notation> item) const = 0 ;
 } ;
@@ -364,7 +364,7 @@ public:
 } ;
 
 struct FloatProcImplLayout ;
-struct FloatProcLayout implement OfThis<Ref<FloatProcImplLayout>> {} ;
+struct FloatProcLayout implement OfThis<UniqueRef<FloatProcImplLayout>> {} ;
 
 struct FloatProcHolder implement Interface {
 	imports CREF<FloatProcLayout> instance () ;
@@ -412,7 +412,7 @@ public:
 } ;
 
 struct ByteProcImplLayout ;
-struct ByteProcLayout implement OfThis<Ref<ByteProcImplLayout>> {} ;
+struct ByteProcLayout implement OfThis<UniqueRef<ByteProcImplLayout>> {} ;
 
 struct ByteProcHolder implement Interface {
 	imports CREF<ByteProcLayout> instance () ;
@@ -980,7 +980,7 @@ public:
 } ;
 
 struct HashProcImplLayout ;
-struct HashProcLayout implement OfThis<Ref<HashProcImplLayout>> {} ;
+struct HashProcLayout implement OfThis<UniqueRef<HashProcImplLayout>> {} ;
 
 struct HashProcHolder implement Interface {
 	imports CREF<HashProcLayout> instance () ;

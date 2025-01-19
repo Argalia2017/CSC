@@ -405,14 +405,14 @@ public:
 } ;
 
 struct ImageProcImplLayout ;
-struct ImageProcLayout implement OfThis<Ref<ImageProcImplLayout>> {} ;
+struct ImageProcLayout implement OfThis<UniqueRef<ImageProcImplLayout>> {} ;
 
 struct ImageProcHolder implement Interface {
 	imports CREF<ImageProcLayout> instance () ;
 	imports VFat<ImageProcHolder> hold (VREF<ImageProcImplLayout> that) ;
 	imports CFat<ImageProcHolder> hold (CREF<ImageProcImplLayout> that) ;
 
-	virtual ImageProcLayout xcreate () const = 0 ;
+	virtual UniqueRef<ImageProcImplLayout> xmake () const = 0 ;
 	virtual void initialize () = 0 ;
 	virtual ImageLayout make_image (RREF<BoxLayout> image) const = 0 ;
 	virtual ImageLayout make_image (CREF<ImageWidth> width) const = 0 ;

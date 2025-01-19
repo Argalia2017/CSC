@@ -191,7 +191,7 @@ public:
 exports CREF<StreamProcLayout> StreamProcHolder::instance () {
 	return memorize ([&] () {
 		StreamProcLayout ret ;
-		ret.mThis = Ref<StreamProcImplLayout>::make () ;
+		ret.mThis = UniqueRef<StreamProcImplLayout>::make () ;
 		StreamProcHolder::hold (ret)->initialize () ;
 		return move (ret) ;
 	}) ;
@@ -1837,7 +1837,7 @@ public:
 exports CREF<StreamTextProcLayout> StreamTextProcHolder::instance () {
 	return memorize ([&] () {
 		StreamTextProcLayout ret ;
-		ret.mThis = Ref<StreamTextProcImplLayout>::make () ;
+		ret.mThis = UniqueRef<StreamTextProcImplLayout>::make () ;
 		StreamTextProcHolder::hold (ret)->initialize () ;
 		return move (ret) ;
 	}) ;

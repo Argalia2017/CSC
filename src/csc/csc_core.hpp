@@ -1905,11 +1905,11 @@ public:
 		return move (mThis) ;
 	}
 
-	using VREF_ITEM = decltype (keep[TYPE<VREF<A>>::expr] (nullof (A)).self) ;
+	using VREF_ITEM = VREF<typeof (nullof (A).self)> ;
 	using CREF_ITEM = decltype (keep[TYPE<CREF<A>>::expr] (nullof (A)).self) ;
 
 	XREF<VREF_ITEM> self_m () leftvalue {
-		return mThis.self ;
+		return Pointer::make (address (mThis.self)) ;
 	}
 
 	forceinline operator XREF<VREF_ITEM> () leftvalue {

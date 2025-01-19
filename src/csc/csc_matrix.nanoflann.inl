@@ -122,10 +122,8 @@ struct PointCloudKDTreeImplLayout {
 
 class PointCloudKDTreeImplHolder final implement Fat<PointCloudKDTreeHolder ,PointCloudKDTreeImplLayout> {
 public:
-	PointCloudKDTreeLayout xcreate () const override {
-		PointCloudKDTreeLayout ret ;
-		ret.mThis = AutoRef<PointCloudKDTreeImplLayout>::make () ;
-		return move (ret) ;
+	AutoRef<PointCloudKDTreeImplLayout> xmake () const override {
+		return AutoRef<PointCloudKDTreeImplLayout>::make () ;
 	}
 
 	void initialize (CREF<Array<Pointer>> pointcloud) override {

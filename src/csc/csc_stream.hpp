@@ -13,7 +13,7 @@
 
 namespace CSC {
 struct StreamProcImplLayout ;
-struct StreamProcLayout implement OfThis<Ref<StreamProcImplLayout>> {} ;
+struct StreamProcLayout implement OfThis<UniqueRef<StreamProcImplLayout>> {} ;
 
 struct StreamProcHolder implement Interface {
 	imports CREF<StreamProcLayout> instance () ;
@@ -1686,7 +1686,7 @@ inline Format PrintFormat (CREF<ARG1>...params) {
 }
 
 struct StreamTextProcImplLayout ;
-struct StreamTextProcLayout implement OfThis<Ref<StreamTextProcImplLayout>> {} ;
+struct StreamTextProcLayout implement OfThis<UniqueRef<StreamTextProcImplLayout>> {} ;
 
 struct StreamTextProcHolder implement Interface {
 	imports CREF<StreamTextProcLayout> instance () ;

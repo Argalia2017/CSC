@@ -25,10 +25,8 @@ struct MatrixProcImplLayout {} ;
 
 class MatrixProcImplHolder final implement Fat<MatrixProcHolder ,MatrixProcImplLayout> {
 public:
-	MatrixProcLayout xcreate () const override {
-		MatrixProcLayout ret ;
-		ret.mThis = Ref<MatrixProcImplLayout>::make () ;
-		return move (ret) ;
+	UniqueRef<MatrixProcImplLayout> xmake () const override {
+		return UniqueRef<MatrixProcImplLayout>::make () ;
 	}
 
 	void initialize () override {
@@ -150,10 +148,8 @@ struct LinearProcImplLayout {} ;
 
 class LinearProcImplHolder final implement Fat<LinearProcHolder ,LinearProcImplLayout> {
 public:
-	LinearProcLayout xcreate () const override {
-		LinearProcLayout ret ;
-		ret.mThis = Ref<LinearProcImplLayout>::make () ;
-		return move (ret) ;
+	UniqueRef<LinearProcImplLayout> xmake () const override {
+		return UniqueRef<LinearProcImplLayout>::make () ;
 	}
 
 	void initialize () override {

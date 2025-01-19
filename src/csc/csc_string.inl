@@ -824,7 +824,7 @@ public:
 exports CREF<StringProcLayout> StringProcHolder::instance () {
 	return memorize ([&] () {
 		StringProcLayout ret ;
-		ret.mThis = Ref<StringProcImplLayout>::make () ;
+		ret.mThis = UniqueRef<StringProcImplLayout>::make () ;
 		StringProcHolder::hold (ret)->initialize () ;
 		return move (ret) ;
 	}) ;

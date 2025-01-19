@@ -146,14 +146,14 @@ inline Time CurrentTime () {
 }
 
 struct RuntimeProcImplLayout ;
-struct RuntimeProcLayout implement OfThis<Ref<RuntimeProcImplLayout>> {} ;
+struct RuntimeProcLayout implement OfThis<UniqueRef<RuntimeProcImplLayout>> {} ;
 
 struct RuntimeProcHolder implement Interface {
 	imports CREF<RuntimeProcLayout> instance () ;
 	imports VFat<RuntimeProcHolder> hold (VREF<RuntimeProcImplLayout> that) ;
 	imports CFat<RuntimeProcHolder> hold (CREF<RuntimeProcImplLayout> that) ;
 
-	virtual RuntimeProcLayout xcreate () const = 0 ;
+	virtual UniqueRef<RuntimeProcImplLayout> xmake () const = 0 ;
 	virtual void initialize () = 0 ;
 	virtual LENGTH thread_concurrency () const = 0 ;
 	virtual FLAG thread_uid () const = 0 ;
@@ -342,8 +342,8 @@ inline Mutex UniqueMutex () {
 }
 
 struct SharedLockImplLayout ;
-using SharedLockStorage = Storage<ENUM_MUL<SIZE_OF<VAL> ,RANK4> ,ALIGN_OF<VAL>> ;
-struct SharedLockLayout implement OfThis<Box<SharedLockImplLayout ,SharedLockStorage>> {} ;
+using SharedLockImplStorage = Storage<ENUM_MUL<SIZE_OF<VAL> ,RANK4> ,ALIGN_OF<VAL>> ;
+struct SharedLockLayout implement OfThis<Box<SharedLockImplLayout ,SharedLockImplStorage>> {} ;
 
 struct SharedLockHolder implement Interface {
 	imports SharedLockLayout create () ;
@@ -480,7 +480,7 @@ struct ProcessHolder implement Interface {
 	imports VFat<ProcessHolder> hold (VREF<ProcessImplLayout> that) ;
 	imports CFat<ProcessHolder> hold (CREF<ProcessImplLayout> that) ;
 
-	virtual ProcessLayout xcreate () const = 0 ;
+	virtual AutoRef<ProcessImplLayout> xmake () const = 0 ;
 	virtual void initialize (CREF<FLAG> uid) = 0 ;
 	virtual void initialize (CREF<RefBuffer<BYTE>> snapshot_) = 0 ;
 	virtual BOOL equal (CREF<ProcessImplLayout> that) const = 0 ;
@@ -531,7 +531,7 @@ struct LibraryHolder implement Interface {
 	imports VFat<LibraryHolder> hold (VREF<LibraryImplLayout> that) ;
 	imports CFat<LibraryHolder> hold (CREF<LibraryImplLayout> that) ;
 
-	virtual LibraryLayout xcreate () const = 0 ;
+	virtual AutoRef<LibraryImplLayout> xmake () const = 0 ;
 	virtual void initialize (CREF<String<STR>> file) = 0 ;
 	virtual String<STR> library_file () const = 0 ;
 	virtual FLAG load (CREF<String<STR>> name) = 0 ;
@@ -668,14 +668,14 @@ inline Random CurrentRandom () {
 }
 
 struct SingletonProcImplLayout ;
-struct SingletonProcLayout implement OfThis<Ref<SingletonProcImplLayout>> {} ;
+struct SingletonProcLayout implement OfThis<UniqueRef<SingletonProcImplLayout>> {} ;
 
 struct SingletonProcHolder implement Interface {
 	imports CREF<SingletonProcLayout> instance () ;
 	imports VFat<SingletonProcHolder> hold (VREF<SingletonProcImplLayout> that) ;
 	imports CFat<SingletonProcHolder> hold (CREF<SingletonProcImplLayout> that) ;
 
-	virtual SingletonProcLayout xcreate () const = 0 ;
+	virtual UniqueRef<SingletonProcImplLayout> xmake () const = 0 ;
 	virtual void initialize () = 0 ;
 	virtual QUAD abi_reserve () const = 0 ;
 	virtual QUAD ctx_reserve () const = 0 ;

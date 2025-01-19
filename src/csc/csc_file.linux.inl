@@ -400,10 +400,8 @@ private:
 	using FILEPROC_RETRY_TIME = RANK3 ;
 
 public:
-	FileProcLayout xcreate () const override {
-		FileProcLayout ret ;
-		ret.mThis = Ref<FileProcImplLayout>::make () ;
-		return move (ret) ;
+	UniqueRef<FileProcImplLayout> xmake () const override {
+		return UniqueRef<FileProcImplLayout>::make () ;
 	}
 
 	void initialize () override {
@@ -642,10 +640,8 @@ struct StreamFileImplLayout {
 
 class StreamFileImplHolder final implement Fat<StreamFileHolder ,StreamFileImplLayout> {
 public:
-	StreamFileLayout xcreate () const override {
-		StreamFileLayout ret ;
-		ret.mThis = AutoRef<StreamFileImplLayout>::make () ;
-		return move (ret) ;
+	AutoRef<StreamFileImplLayout> xmake () const override {
+		return AutoRef<StreamFileImplLayout>::make () ;
 	}
 
 	void initialize (CREF<String<STR>> file) override {
@@ -827,10 +823,8 @@ private:
 	using BUFFERFILE_HEADER_STEP = ENUM<65536> ;
 
 public:
-	BufferFileLayout xcreate () const override {
-		BufferFileLayout ret ;
-		ret.mThis = AutoRef<BufferFileImplLayout>::make () ;
-		return move (ret) ;
+	AutoRef<BufferFileImplLayout> xmake () const override {
+		return AutoRef<BufferFileImplLayout>::make () ;
 	}
 
 	void initialize (CREF<String<STR>> file) override {
@@ -1116,10 +1110,8 @@ struct UartFileImplLayout {
 
 class UartFileImplHolder final implement Fat<UartFileHolder ,UartFileImplLayout> {
 private:
-	UartFileLayout xcreate () const override {
-		UartFileLayout ret ;
-		ret.mThis = AutoRef<UartFileImplLayout>::make () ;
-		return move (ret) ;
+	AutoRef<UartFileImplLayout> xmake () const override {
+		return AutoRef<UartFileImplLayout>::make () ;
 	}
 
 	void initialize () override {
@@ -1207,10 +1199,8 @@ struct ConsoleImplLayout {
 
 class ConsoleImplHolder final implement Fat<ConsoleHolder ,ConsoleImplLayout> {
 public:
-	ConsoleLayout xcreate () const override {
-		ConsoleLayout ret ;
-		ret.mThis = SharedRef<ConsoleImplLayout>::make () ;
-		return move (ret) ;
+	SharedRef<ConsoleImplLayout> xmake () const override {
+		return SharedRef<ConsoleImplLayout>::make () ;
 	}
 
 	void initialize () override {

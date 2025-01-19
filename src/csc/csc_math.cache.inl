@@ -18,10 +18,8 @@ private:
 	using FEXP2CACHE_SIZE = ENUM<693> ;
 
 public:
-	FEXP2CacheLayout xcreate () const override {
-		FEXP2CacheLayout ret ;
-		ret.mThis = Ref<FEXP2CacheImplLayout>::make () ;
-		return move (ret) ;
+	UniqueRef<FEXP2CacheImplLayout> xmake () const override {
+		return UniqueRef<FEXP2CacheImplLayout>::make () ;
 	}
 
 	void initialize () override {
@@ -61,10 +59,8 @@ private:
 	using FEXP10CACHE_SIZE = ENUM<2175> ;
 
 public:
-	FEXP10CacheLayout xcreate () const override {
-		FEXP10CacheLayout ret ;
-		ret.mThis = Ref<FEXP10CacheImplLayout>::make () ;
-		return move (ret) ;
+	UniqueRef<FEXP10CacheImplLayout> xmake () const override {
+		return UniqueRef<FEXP10CacheImplLayout>::make () ;
 	}
 
 	void initialize () override {
