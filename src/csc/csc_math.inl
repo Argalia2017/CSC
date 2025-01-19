@@ -1454,7 +1454,7 @@ public:
 	}
 	
 	void once (CREF<WrapperLayout> params) const override {
-		//@warn: it breaks Ref::variability to copy and write
+		//@warn: it breaks Ref::exclusive to copy and write
 		auto rax = fake.mThis ;
 		once (rax ,params) ;
 	}

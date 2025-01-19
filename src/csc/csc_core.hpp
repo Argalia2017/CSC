@@ -1269,7 +1269,7 @@ struct RefHolder implement Interface {
 	virtual Unknown unknown () const = 0 ;
 	virtual VREF<Pointer> self_m () leftvalue = 0 ;
 	virtual CREF<Pointer> self_m () const leftvalue = 0 ;
-	virtual BOOL variability () const = 0 ;
+	virtual BOOL exclusive () const = 0 ;
 } ;
 
 inline RefLayout::~RefLayout () noexcept {
@@ -1375,8 +1375,8 @@ public:
 		return (&self) ;
 	}
 
-	BOOL variability () const {
-		return RefHolder::hold (thiz)->variability () ;
+	BOOL exclusive () const {
+		return RefHolder::hold (thiz)->exclusive () ;
 	}
 } ;
 
@@ -1960,6 +1960,9 @@ public:
 } ;
 
 class Clazz implement ClazzLayout {
+protected:
+	using ClazzLayout::mThis ;
+
 public:
 	implicit Clazz () = default ;
 

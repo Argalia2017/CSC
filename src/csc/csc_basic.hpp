@@ -347,6 +347,9 @@ public:
 
 template <class...A>
 class Function implement FunctionLayout {
+protected:
+	using FunctionLayout::mThis ;
+
 public:
 	implicit Function () = default ;
 
@@ -1003,9 +1006,9 @@ public:
 template <class A>
 class FarBuffer implement FarBufferRealLayout<A> {
 protected:
+	using FarBufferRealLayout<A>::mThis ;
 	using FarBufferRealLayout<A>::mGetter ;
 	using FarBufferRealLayout<A>::mSetter ;
-	using FarBufferRealLayout<A>::mThis ;
 	using FarBufferRealLayout<A>::mSize ;
 	using FarBufferRealLayout<A>::mStep ;
 	using FarBufferRealLayout<A>::mIndex ;

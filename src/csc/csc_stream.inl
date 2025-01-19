@@ -870,7 +870,7 @@ public:
 		assert (stream != NULL) ;
 		assert (stream->step () == 1) ;
 		fake.mStream = move (stream) ;
-		assert (fake.mStream.variability ()) ;
+		assert (fake.mStream.exclusive ()) ;
 		fake.mDiffEndian = FALSE ;
 		reset () ;
 	}
@@ -1065,7 +1065,7 @@ public:
 		assert (stream != NULL) ;
 		assert (stream->step () <= 4) ;
 		fake.mStream = move (stream) ;
-		assert (fake.mStream.variability ()) ;
+		assert (fake.mStream.exclusive ()) ;
 		fake.mDiffEndian = FALSE ;
 		reset () ;
 	}

@@ -355,7 +355,7 @@ class SharedLockImplHolder final implement Fat<SharedLockHolder ,SharedLockImplL
 public:
 	void initialize (CREF<Mutex> mutex) override {
 		fake.mMutex = mutex.borrow () ;
-		assert (fake.mMutex.variability ()) ;
+		assert (fake.mMutex.exclusive ()) ;
 		assert (ptr (fake).mType == MutexType::Shared) ;
 		shared_enter () ;
 		fake.mLock = std::unique_lock<SharedAtomicMutex> (SharedAtomicMutex::from (ptr (fake).mShared)) ;
@@ -428,7 +428,7 @@ class UniqueLockImplHolder final implement Fat<UniqueLockHolder ,UniqueLockImplL
 public:
 	void initialize (CREF<Mutex> mutex) override {
 		fake.mMutex = mutex.borrow () ;
-		assert (fake.mMutex.variability ()) ;
+		assert (fake.mMutex.exclusive ()) ;
 		assert (ptr (fake).mType == MutexType::Unique) ;
 		fake.mLock = std::unique_lock<std::mutex> (ptr (fake).mBasic.self) ;
 	}

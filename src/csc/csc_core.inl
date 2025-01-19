@@ -321,7 +321,7 @@ public:
 		return Pointer::make (fake.mLayout) ;
 	}
 
-	BOOL variability () const override {
+	BOOL exclusive () const override {
 		assert (exist ()) ;
 		auto act = TRUE ;
 		if ifdo (act) {

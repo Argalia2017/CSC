@@ -810,6 +810,9 @@ struct JetHolder implement Interface {
 
 template <class A>
 class Jet implement JetLayout {
+protected:
+	using JetLayout::mThis ;
+
 public:
 	implicit Jet () = default ;
 

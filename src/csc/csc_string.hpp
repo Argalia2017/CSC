@@ -612,10 +612,10 @@ public:
 struct PlyParserImplLayout ;
 
 struct PlyParserGuide {
-	INDEX mElementIndex ;
+	INDEX mElement ;
 	Deque<INDEX> mProperty ;
-	INDEX mPropertyIndex ;
-	INDEX mLineIndex ;
+	INDEX mCol ;
+	INDEX mRow ;
 	INDEX mPlyBegin ;
 	INDEX mPlyEnd ;
 	INDEX mPlyIndex ;

@@ -175,8 +175,6 @@ public:
 	void destroy () override {
 		if (!exist ())
 			return ;
-		if (!BoxHolder::hold (raw ())->exist ())
-			return ;
 		BoxHolder::hold (raw ())->destroy () ;
 	}
 
@@ -309,8 +307,6 @@ public:
 	void destroy () override {
 		if (!exist ())
 			return ;
-		if (!BoxHolder::hold (raw ())->exist ())
-			return ;
 		Scope<HeapMutex> anonymous (fake.mThis->mMutex) ;
 		const auto r1x = --fake.mThis->mCounter ;
 		if (r1x > 0)
@@ -383,13 +379,12 @@ public:
 			auto rax = UniqueRefLayout () ;
 			fake.mThis->mUpper.get (rax) ;
 		}
-		if (!BoxHolder::hold (raw ())->exist ())
-			return ;
 		fake.mThis->mOwner (BoxHolder::hold (raw ())->self) ;
-		BoxHolder::hold (raw ())->destroy () ;
+		fake.mThis->mOwner = Function<VREF<Pointer>> () ;
 	}
 
 	void use_owner (CREF<Function<VREF<Pointer>>> owner) override {
+		assert (BoxHolder::hold (raw ())->exist ()) ;
 		fake.mThis->mOwner = owner ;
 	}
 

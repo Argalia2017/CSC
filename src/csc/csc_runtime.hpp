@@ -65,6 +65,8 @@ public:
 	}
 
 	implicit Time (CREF<Time> that) {
+		if (!that.mThis.exist ())
+			return ;
 		mThis = TimeHolder::create () ;
 		TimeHolder::hold (thiz)->initialize (that) ;
 	}

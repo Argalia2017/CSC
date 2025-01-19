@@ -47,6 +47,9 @@ struct PathHolder implement Interface {
 } ;
 
 class Path implement PathLayout {
+protected:
+	using PathLayout::mThis ;
+
 public:
 	implicit Path () = default ;
 
