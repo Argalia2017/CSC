@@ -165,8 +165,7 @@ template class External<RuntimeProcHolder ,RuntimeProcImplLayout> ;
 
 exports CREF<RuntimeProcLayout> RuntimeProcHolder::instance () {
 	return memorize ([&] () {
-		RuntimeProcLayout ret ;
-		ret.mThis = Ref<RuntimeProcImplLayout>::make () ;
+		RuntimeProcLayout ret = External<RuntimeProcHolder ,RuntimeProcImplLayout>::declare ().xcreate () ;
 		RuntimeProcHolder::hold (ret)->initialize () ;
 		return move (ret) ;
 	}) ;
@@ -531,9 +530,7 @@ exports CFat<ThreadHolder> ThreadHolder::hold (CREF<ThreadImplLayout> that) {
 template class External<ProcessHolder ,ProcessImplLayout> ;
 
 exports ProcessLayout ProcessHolder::create () {
-	ProcessLayout ret ;
-	ret.mThis = AutoRef<ProcessImplLayout>::make () ;
-	return move (ret) ;
+	return External<ProcessHolder ,ProcessImplLayout>::declare ().xcreate () ;
 }
 
 exports VFat<ProcessHolder> ProcessHolder::hold (VREF<ProcessImplLayout> that) {
@@ -547,9 +544,7 @@ exports CFat<ProcessHolder> ProcessHolder::hold (CREF<ProcessImplLayout> that) {
 template class External<LibraryHolder ,LibraryImplLayout> ;
 
 exports LibraryLayout LibraryHolder::create () {
-	LibraryLayout ret ;
-	ret.mThis = AutoRef<LibraryImplLayout>::make () ;
-	return move (ret) ;
+	return External<LibraryHolder ,LibraryImplLayout>::declare ().xcreate () ;
 }
 
 exports VFat<LibraryHolder> LibraryHolder::hold (VREF<LibraryImplLayout> that) {
@@ -747,8 +742,7 @@ template class External<SingletonProcHolder ,SingletonProcImplLayout> ;
 
 exports CREF<SingletonProcLayout> SingletonProcHolder::instance () {
 	return memorize ([&] () {
-		SingletonProcLayout ret ;
-		ret.mThis = Ref<SingletonProcImplLayout>::make () ;
+		SingletonProcLayout ret = External<SingletonProcHolder ,SingletonProcImplLayout>::declare ().xcreate () ;
 		SingletonProcHolder::hold (ret)->initialize () ;
 		return move (ret) ;
 	}) ;

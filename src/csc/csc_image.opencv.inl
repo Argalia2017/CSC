@@ -23,6 +23,12 @@ struct ImageProcImplLayout {} ;
 
 class ImageProcImplHolder final implement Fat<ImageProcHolder ,ImageProcImplLayout> {
 public:
+	ImageProcLayout xcreate () const override {
+		ImageProcLayout ret ;
+		ret.mThis = Ref<ImageProcImplLayout>::make () ;
+		return move (ret) ;
+	}
+
 	void initialize () override {
 		noop () ;
 	}

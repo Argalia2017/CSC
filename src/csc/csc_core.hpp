@@ -767,8 +767,7 @@ public:
 		require (ENUM_EQUAL<SIZE_OF<ARG1> ,SIZE_OF<VFat>>) ;
 		require (ENUM_EQUAL<ALIGN_OF<ARG1> ,ALIGN_OF<VFat>>) ;
 		using R1X = typeof (nullof (ARG1).fake) ;
-		require (ENUM_EQUAL<SIZE_OF<R1X> ,SIZE_OF<ARG2>>) ;
-		require (ENUM_EQUAL<ALIGN_OF<R1X> ,ALIGN_OF<ARG2>>) ;
+		require (IS_SAME<R1X ,ARG2>) ;
 		mHolder = inline_vptr (holder) ;
 		mLayout = address (that) ;
 	}
@@ -800,8 +799,7 @@ public:
 		require (ENUM_EQUAL<SIZE_OF<ARG1> ,SIZE_OF<CFat>>) ;
 		require (ENUM_EQUAL<ALIGN_OF<ARG1> ,ALIGN_OF<CFat>>) ;
 		using R1X = typeof (nullof (ARG1).fake) ;
-		require (ENUM_EQUAL<SIZE_OF<R1X> ,SIZE_OF<ARG2>>) ;
-		require (ENUM_EQUAL<ALIGN_OF<R1X> ,ALIGN_OF<ARG2>>) ;
+		require (IS_SAME<R1X ,ARG2>) ;
 		mHolder = inline_vptr (holder) ;
 		mLayout = address (that) ;
 	}

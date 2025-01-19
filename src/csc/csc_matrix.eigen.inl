@@ -25,6 +25,12 @@ struct MatrixProcImplLayout {} ;
 
 class MatrixProcImplHolder final implement Fat<MatrixProcHolder ,MatrixProcImplLayout> {
 public:
+	MatrixProcLayout xcreate () const override {
+		MatrixProcLayout ret ;
+		ret.mThis = Ref<MatrixProcImplLayout>::make () ;
+		return move (ret) ;
+	}
+
 	void initialize () override {
 		noop () ;
 	}
@@ -144,6 +150,12 @@ struct LinearProcImplLayout {} ;
 
 class LinearProcImplHolder final implement Fat<LinearProcHolder ,LinearProcImplLayout> {
 public:
+	LinearProcLayout xcreate () const override {
+		LinearProcLayout ret ;
+		ret.mThis = Ref<LinearProcImplLayout>::make () ;
+		return move (ret) ;
+	}
+
 	void initialize () override {
 		noop () ;
 	}

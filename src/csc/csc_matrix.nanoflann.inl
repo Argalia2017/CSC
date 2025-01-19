@@ -115,13 +115,19 @@ using KDTreeDistance = nanoflann::L2_Simple_Adaptor<FLT32 ,KDTreePointCloudAdapt
 using KDTree = nanoflann::KDTreeSingleIndexAdaptor<KDTreeDistance ,KDTreePointCloudAdaptor ,3 ,INDEX> ;
 } ;
 
-struct PointCloudKDTreeLayout {
+struct PointCloudKDTreeImplLayout {
 	KDTreePointCloudAdaptor mAdaptor ;
 	Box<KDTree> mKDTree ;
 } ;
 
-class PointCloudKDTreeImplHolder final implement Fat<PointCloudKDTreeHolder ,PointCloudKDTreeLayout> {
+class PointCloudKDTreeImplHolder final implement Fat<PointCloudKDTreeHolder ,PointCloudKDTreeImplLayout> {
 public:
+	PointCloudKDTreeLayout xcreate () const override {
+		PointCloudKDTreeLayout ret ;
+		ret.mThis = AutoRef<PointCloudKDTreeImplLayout>::make () ;
+		return move (ret) ;
+	}
+
 	void initialize (CREF<Array<Pointer>> pointcloud) override {
 		const auto r1x = address (pointcloud[0]) ;
 		const auto r2x = pointcloud.step () / SIZE_OF<FLT32>::expr ;
@@ -168,5 +174,5 @@ public:
 	}
 } ;
 
-static const auto mPointCloudKDTreecExternal = External<PointCloudKDTreeHolder ,PointCloudKDTreeLayout> (PointCloudKDTreeImplHolder ()) ;
+static const auto mPointCloudKDTreecExternal = External<PointCloudKDTreeHolder ,PointCloudKDTreeImplLayout> (PointCloudKDTreeImplHolder ()) ;
 } ;

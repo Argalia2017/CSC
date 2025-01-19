@@ -357,6 +357,12 @@ private:
 	using FILEPROC_RETRY_TIME = RANK3 ;
 
 public:
+	FileProcLayout xcreate () const override {
+		FileProcLayout ret ;
+		ret.mThis = Ref<FileProcImplLayout>::make () ;
+		return move (ret) ;
+	}
+
 	void initialize () override {
 		fake.mMutex = NULL ;
 	}
@@ -568,6 +574,12 @@ struct StreamFileImplLayout {
 
 class StreamFileImplHolder final implement Fat<StreamFileHolder ,StreamFileImplLayout> {
 public:
+	StreamFileLayout xcreate () const override {
+		StreamFileLayout ret ;
+		ret.mThis = AutoRef<StreamFileImplLayout>::make () ;
+		return move (ret) ;
+	}
+
 	void initialize (CREF<String<STR>> file) override {
 		fake.mFile = move (file) ;
 		fake.mFileSize = 0 ;
@@ -745,6 +757,12 @@ private:
 	using BUFFERFILE_HEADER_STEP = ENUM<65536> ;
 
 public:
+	BufferFileLayout xcreate () const override {
+		BufferFileLayout ret ;
+		ret.mThis = AutoRef<BufferFileImplLayout>::make () ;
+		return move (ret) ;
+	}
+
 	void initialize (CREF<String<STR>> file) override {
 		fake.mFile = move (file) ;
 		fake.mFileSize = 0 ;
@@ -1034,6 +1052,12 @@ struct UartFileImplLayout {
 
 class UartFileImplHolder final implement Fat<UartFileHolder ,UartFileImplLayout> {
 private:
+	UartFileLayout xcreate () const override {
+		UartFileLayout ret ;
+		ret.mThis = AutoRef<UartFileImplLayout>::make () ;
+		return move (ret) ;
+	}
+
 	void initialize () override {
 		fake.mPortRate = 0 ;
 	}
@@ -1111,6 +1135,12 @@ struct ConsoleImplLayout {
 
 class ConsoleImplHolder final implement Fat<ConsoleHolder ,ConsoleImplLayout> {
 public:
+	ConsoleLayout xcreate () const override {
+		ConsoleLayout ret ;
+		ret.mThis = SharedRef<ConsoleImplLayout>::make () ;
+		return move (ret) ;
+	}
+
 	void initialize () override {
 		fake.mMutex = NULL ;
 		fake.mOption = BitSet (ConsoleOption::ETC) ;

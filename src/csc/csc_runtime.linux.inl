@@ -40,6 +40,12 @@ struct RuntimeProcImplLayout {} ;
 
 class RuntimeProcImplHolder final implement Fat<RuntimeProcHolder ,RuntimeProcImplLayout> {
 public:
+	RuntimeProcLayout xcreate () const override {
+		RuntimeProcLayout ret ;
+		ret.mThis = Ref<RuntimeProcImplLayout>::make () ;
+		return move (ret) ;
+	}
+
 	void initialize () override {
 		noop () ;
 	}
@@ -101,6 +107,12 @@ private:
 	using PROCESS_SNAPSHOT_STEP = ENUM<128> ;
 
 public:
+	ProcessLayout xcreate () const override {
+		ProcessLayout ret ;
+		ret.mThis = AutoRef<ProcessImplLayout>::make () ;
+		return move (ret) ;
+	}
+
 	void initialize (CREF<FLAG> uid) override {
 		fake.mUid = uid ;
 		const auto r1x = load_proc_file (uid) ;
@@ -227,6 +239,12 @@ struct LibraryImplLayout {
 
 class LibraryImplHolder final implement Fat<LibraryHolder ,LibraryImplLayout> {
 public:
+	LibraryLayout xcreate () const override {
+		LibraryLayout ret ;
+		ret.mThis = AutoRef<LibraryImplLayout>::make () ;
+		return move (ret) ;
+	}
+
 	void initialize (CREF<String<STR>> file) override {
 		fake.mFile = move (file) ;
 		assert (fake.mFile.length () > 0) ;
@@ -306,6 +324,12 @@ public:
 
 class SingletonProcImplHolder final implement Fat<SingletonProcHolder ,SingletonProcImplLayout> {
 public:
+	SingletonProcLayout xcreate () const override {
+		SingletonProcLayout ret ;
+		ret.mThis = Ref<SingletonProcImplLayout>::make () ;
+		return move (ret) ;
+	}
+
 	void initialize () override {
 		fake.mUid = RuntimeProc::process_uid () ;
 		fake.mName = String<STR>::make (slice ("/CSC_Singleton_") ,fake.mUid) ;

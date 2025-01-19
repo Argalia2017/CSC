@@ -18,6 +18,12 @@ private:
 	using SIZE = ENUM<693> ;
 
 public:
+	FEXP2CacheLayout xcreate () const override {
+		FEXP2CacheLayout ret ;
+		ret.mThis = Ref<FEXP2CacheImplLayout>::make () ;
+		return move (ret) ;
+	}
+
 	void initialize () override {
 		noop () ;
 	}
@@ -55,6 +61,12 @@ private:
 	using SIZE = ENUM<2175> ;
 
 public:
+	FEXP10CacheLayout xcreate () const override {
+		FEXP10CacheLayout ret ;
+		ret.mThis = Ref<FEXP10CacheImplLayout>::make () ;
+		return move (ret) ;
+	}
+
 	void initialize () override {
 		noop () ;
 	}

@@ -25,8 +25,7 @@ template class External<FileProcHolder ,FileProcImplLayout> ;
 
 exports CREF<FileProcLayout> FileProcHolder::instance () {
 	return memorize ([&] () {
-		FileProcLayout ret ;
-		ret.mThis = Ref<FileProcImplLayout>::make () ;
+		FileProcLayout ret = External<FileProcHolder ,FileProcImplLayout>::declare ().xcreate () ;
 		FileProcHolder::hold (ret)->initialize () ;
 		return move (ret) ;
 	}) ;
@@ -43,9 +42,7 @@ exports CFat<FileProcHolder> FileProcHolder::hold (CREF<FileProcImplLayout> that
 template class External<StreamFileHolder ,StreamFileImplLayout> ;
 
 exports StreamFileLayout StreamFileHolder::create () {
-	StreamFileLayout ret ;
-	ret.mThis = AutoRef<StreamFileImplLayout>::make () ;
-	return move (ret) ;
+	return External<StreamFileHolder ,StreamFileImplLayout>::declare ().xcreate () ;
 }
 
 exports VFat<StreamFileHolder> StreamFileHolder::hold (VREF<StreamFileImplLayout> that) {
@@ -179,9 +176,7 @@ exports CFat<StreamFileTextWriterHolder> StreamFileTextWriterHolder::hold (CREF<
 template class External<BufferFileHolder ,BufferFileImplLayout> ;
 
 exports BufferFileLayout BufferFileHolder::create () {
-	BufferFileLayout ret ;
-	ret.mThis = AutoRef<BufferFileImplLayout>::make () ;
-	return move (ret) ;
+	return External<BufferFileHolder ,BufferFileImplLayout>::declare ().xcreate () ;
 }
 
 exports VFat<BufferFileHolder> BufferFileHolder::hold (VREF<BufferFileImplLayout> that) {
@@ -195,9 +190,7 @@ exports CFat<BufferFileHolder> BufferFileHolder::hold (CREF<BufferFileImplLayout
 template class External<UartFileHolder ,UartFileImplLayout> ;
 
 exports UartFileLayout UartFileHolder::create () {
-	UartFileLayout ret ;
-	ret.mThis = AutoRef<UartFileImplLayout>::make () ;
-	return move (ret) ;
+	return External<UartFileHolder ,UartFileImplLayout>::declare ().xcreate () ;
 }
 
 exports VFat<UartFileHolder> UartFileHolder::hold (VREF<UartFileImplLayout> that) {
@@ -212,8 +205,7 @@ template class External<ConsoleHolder ,ConsoleImplLayout> ;
 
 exports CREF<ConsoleLayout> ConsoleHolder::instance () {
 	return memorize ([&] () {
-		ConsoleLayout ret ;
-		ret.mThis = SharedRef<ConsoleImplLayout>::make () ;
+		ConsoleLayout ret = External<ConsoleHolder ,ConsoleImplLayout>::declare ().xcreate () ;
 		ConsoleHolder::hold (ret)->initialize () ;
 		return move (ret) ;
 	}) ;

@@ -204,8 +204,7 @@ template class External<ImageProcHolder ,ImageProcImplLayout> ;
 
 exports CREF<ImageProcLayout> ImageProcHolder::instance () {
 	return memorize ([&] () {
-		ImageProcLayout ret ;
-		ret.mThis = Ref<ImageProcImplLayout>::make () ;
+		ImageProcLayout ret = External<ImageProcHolder ,ImageProcImplLayout>::declare ().xcreate () ;
 		ImageProcHolder::hold (ret)->initialize () ;
 		return move (ret) ;
 	}) ;

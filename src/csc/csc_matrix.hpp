@@ -760,6 +760,7 @@ struct MatrixProcHolder implement Interface {
 	imports VFat<MatrixProcHolder> hold (VREF<MatrixProcImplLayout> that) ;
 	imports CFat<MatrixProcHolder> hold (CREF<MatrixProcImplLayout> that) ;
 
+	virtual MatrixProcLayout xcreate () const = 0 ;
 	virtual void initialize () = 0 ;
 	virtual TRSResult solve_trs (CREF<Matrix> a) const = 0 ;
 	virtual KRTResult solve_krt (CREF<Matrix> a) const = 0 ;
@@ -958,6 +959,7 @@ struct LinearProcHolder implement Interface {
 	imports VFat<LinearProcHolder> hold (VREF<LinearProcImplLayout> that) ;
 	imports CFat<LinearProcHolder> hold (CREF<LinearProcImplLayout> that) ;
 
+	virtual LinearProcLayout xcreate () const = 0 ;
 	virtual void initialize () = 0 ;
 	virtual Image<FLT64> solve_lsm (CREF<Image<FLT64>> a) const = 0 ;
 	virtual Image<FLT64> solve_lsm (CREF<Image<FLT64>> a ,CREF<Image<FLT64>> b) const = 0 ;
@@ -983,13 +985,15 @@ public:
 	}
 } ;
 
-struct PointCloudKDTreeLayout ;
+struct PointCloudKDTreeImplLayout ;
+struct PointCloudKDTreeLayout implement OfThis<AutoRef<PointCloudKDTreeImplLayout>> {} ;
 
 struct PointCloudKDTreeHolder implement Interface {
-	imports AutoRef<PointCloudKDTreeLayout> create () ;
-	imports VFat<PointCloudKDTreeHolder> hold (VREF<PointCloudKDTreeLayout> that) ;
-	imports CFat<PointCloudKDTreeHolder> hold (CREF<PointCloudKDTreeLayout> that) ;
+	imports PointCloudKDTreeLayout create () ;
+	imports VFat<PointCloudKDTreeHolder> hold (VREF<PointCloudKDTreeImplLayout> that) ;
+	imports CFat<PointCloudKDTreeHolder> hold (CREF<PointCloudKDTreeImplLayout> that) ;
 
+	virtual PointCloudKDTreeLayout xcreate () const = 0 ;
 	virtual void initialize (CREF<Array<Pointer>> pointcloud) = 0 ;
 	virtual Array<INDEX> search (CREF<Vector> center ,CREF<LENGTH> neighbor) const = 0 ;
 	virtual Array<INDEX> search (CREF<Vector> center ,CREF<LENGTH> neighbor ,CREF<FLT64> radius) const = 0 ;
@@ -999,7 +1003,7 @@ struct PointCloudLayout {
 	LENGTH mRank ;
 	Ref<Array<Pointer>> mPointCloud ;
 	Matrix mWorld ;
-	Pin<AutoRef<PointCloudKDTreeLayout>> mKDTree ;
+	Pin<PointCloudKDTreeLayout> mKDTree ;
 } ;
 
 struct PointCloudHolder implement Interface {

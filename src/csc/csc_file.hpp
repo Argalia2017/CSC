@@ -173,6 +173,7 @@ struct FileProcHolder implement Interface {
 	imports VFat<FileProcHolder> hold (VREF<FileProcImplLayout> that) ;
 	imports CFat<FileProcHolder> hold (CREF<FileProcImplLayout> that) ;
 
+	virtual FileProcLayout xcreate () const = 0 ;
 	virtual void initialize () = 0 ;
 	virtual RefBuffer<BYTE> load_file (CREF<String<STR>> file) const = 0 ;
 	virtual void save_file (CREF<String<STR>> file ,CREF<RefBuffer<BYTE>> item) const = 0 ;
@@ -251,6 +252,7 @@ struct StreamFileHolder implement Interface {
 	imports VFat<StreamFileHolder> hold (VREF<StreamFileImplLayout> that) ;
 	imports CFat<StreamFileHolder> hold (CREF<StreamFileImplLayout> that) ;
 
+	virtual StreamFileLayout xcreate () const = 0 ;
 	virtual void initialize (CREF<String<STR>> file) = 0 ;
 	virtual void set_short_read (CREF<BOOL> flag) = 0 ;
 	virtual void open_r () = 0 ;
@@ -388,7 +390,8 @@ struct BufferFileHolder implement Interface {
 	imports BufferFileLayout create () ;
 	imports VFat<BufferFileHolder> hold (VREF<BufferFileImplLayout> that) ;
 	imports CFat<BufferFileHolder> hold (CREF<BufferFileImplLayout> that) ;
-
+	
+	virtual BufferFileLayout xcreate () const = 0 ;
 	virtual void initialize (CREF<String<STR>> file) = 0 ;
 	virtual void set_block_step (CREF<LENGTH> step_) = 0 ;
 	virtual void set_cache_size (CREF<LENGTH> size_) = 0 ;
@@ -455,6 +458,7 @@ struct UartFileHolder implement Interface {
 	imports VFat<UartFileHolder> hold (VREF<UartFileImplLayout> that) ;
 	imports CFat<UartFileHolder> hold (CREF<UartFileImplLayout> that) ;
 
+	virtual UartFileLayout xcreate () const = 0 ;
 	virtual void initialize () = 0 ;
 	virtual void set_port_name (CREF<String<STR>> name) = 0 ;
 	virtual void set_port_rate (CREF<LENGTH> rate) = 0 ;
@@ -515,6 +519,7 @@ struct ConsoleHolder implement Interface {
 	imports VFat<ConsoleHolder> hold (VREF<ConsoleImplLayout> that) ;
 	imports CFat<ConsoleHolder> hold (CREF<ConsoleImplLayout> that) ;
 
+	virtual ConsoleLayout xcreate () const = 0 ;
 	virtual void initialize () = 0 ;
 	virtual void set_option (CREF<Just<ConsoleOption>> option) = 0 ;
 	virtual void print (CREF<Format> msg) = 0 ;
