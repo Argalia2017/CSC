@@ -19,6 +19,10 @@
 #include <thread>
 #include "csc_begin.h"
 
+inline namespace {
+using HFILEPIPE = HANDLE ;
+} ;
+
 namespace CSC {
 struct RuntimeProcImplLayout {} ;
 
@@ -255,7 +259,7 @@ struct SingletonPipe {
 struct SingletonProcImplLayout {
 	FLAG mUid ;
 	String<STR> mName ;
-	UniqueRef<HANDLE> mPipe ;
+	UniqueRef<HANDLE> mMapping ;
 	SingletonPipe mLocal ;
 	Ref<SingletonRoot> mThis ;
 
@@ -316,9 +320,9 @@ public:
 	}
 
 	void init_pipe () {
-		if (fake.mPipe.exist ())
+		if (fake.mMapping.exist ())
 			return ;
-		fake.mPipe = UniqueRef<HANDLE> ([&] (VREF<HANDLE> me) {
+		fake.mMapping = UniqueRef<HANDLE> ([&] (VREF<HANDLE> me) {
 			const auto r1x = csc_enum_t (SIZE_OF<SingletonPipe>::expr) ;
 			me = CreateFileMapping (INVALID_HANDLE_VALUE ,NULL ,PAGE_READWRITE ,0 ,r1x ,fake.mName) ;
 			assume (me != NULL) ;
@@ -448,7 +452,7 @@ public:
 		assert (layout != ZERO) ;
 		assert (layout != NONE) ;
 		Scope<Mutex> anonymous (fake.mThis->mMutex) ;
-		assume (fake.mPipe.exist ()) ;
+		assume (fake.mThis.exist ()) ;
 		auto rax = Set<Clazz> () ;
 		fake.mThis->mClazzSet.get (rax) ;
 		rax.add (clazz ,layout) ;

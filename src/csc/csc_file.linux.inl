@@ -34,7 +34,7 @@
 inline namespace {
 using HMODULE = CSC::csc_pointer_t ;
 using HANDLE = CSC::csc_pointer_t ;
-using HFILE = int ;
+using HFILEPIPE = int ;
 using HDIR = CSC::DEF<DIR *> ;
 using HDIRENT = CSC::DEF<dirent * > ;
 using STAT_INFO = struct stat ;
@@ -409,10 +409,10 @@ public:
 	}
 
 	RefBuffer<BYTE> load_file (CREF<String<STR>> file) const override {
-		const auto r1x = UniqueRef<HFILE> ([&] (VREF<HFILE> me) {
+		const auto r1x = UniqueRef<HFILEPIPE> ([&] (VREF<HFILEPIPE> me) {
 			me = std::open (file ,O_RDONLY) ;
 			assume (me != NONE) ;
-		} ,[&] (VREF<HFILE> me) {
+		} ,[&] (VREF<HFILEPIPE> me) {
 			std::close (me) ;
 		}) ;
 		const auto r2x = file_size (r1x) ;
@@ -433,7 +433,7 @@ public:
 		return move (ret) ;
 	}
 
-	VAL64 file_size (CREF<HFILE> handle) const {
+	VAL64 file_size (CREF<HFILEPIPE> handle) const {
 		const auto r1x = VAL64 (lseek64 (handle ,0 ,SEEK_END)) ;
 		const auto r2x = VAL64 (lseek64 (handle ,0 ,SEEK_SET)) ;
 		//@warn: file in '/proc' is zero size
@@ -448,12 +448,12 @@ public:
 
 	void save_file (CREF<String<STR>> file ,CREF<RefBuffer<BYTE>> item) const override {
 		assert (item.size () < VAL32_MAX) ;
-		const auto r1x = UniqueRef<HFILE> ([&] (VREF<HFILE> me) {
+		const auto r1x = UniqueRef<HFILEPIPE> ([&] (VREF<HFILEPIPE> me) {
 			const auto r2x = csc_enum_t (O_CREAT | O_WRONLY | O_TRUNC) ;
 			const auto r3x = csc_enum_t (S_IRWXU | S_IRWXG | S_IRWXO) ;
 			me = std::open (file ,r2x ,r3x) ;
 			assume (me != NONE) ;
-		} ,[&] (VREF<HFILE> me) {
+		} ,[&] (VREF<HFILEPIPE> me) {
 			std::close (me) ;
 		}) ;
 		const auto r4x = item.size () ;
@@ -485,18 +485,18 @@ public:
 	}
 
 	void copy_file (CREF<String<STR>> dst ,CREF<String<STR>> src) const override {
-		const auto r1x = UniqueRef<HFILE> ([&] (VREF<HFILE> me) {
+		const auto r1x = UniqueRef<HFILEPIPE> ([&] (VREF<HFILEPIPE> me) {
 			me = std::open (src ,O_RDONLY) ;
 			assume (me != NONE) ;
-		} ,[&] (VREF<HFILE> me) {
+		} ,[&] (VREF<HFILEPIPE> me) {
 			std::close (me) ;
 		}) ;
-		const auto r2x = UniqueRef<HFILE> ([&] (VREF<HFILE> me) {
+		const auto r2x = UniqueRef<HFILEPIPE> ([&] (VREF<HFILEPIPE> me) {
 			const auto r3x = csc_enum_t (O_CREAT | O_WRONLY | O_TRUNC) ;
 			const auto r4x = csc_enum_t (S_IRWXU | S_IRWXG | S_IRWXO) ;
 			me = std::open (dst ,r3x ,r4x) ;
 			assume (me != NONE) ;
-		} ,[&] (VREF<HFILE> me) {
+		} ,[&] (VREF<HFILEPIPE> me) {
 			std::close (me) ;
 		}) ;
 		const auto r5x = file_size (r1x) ;
@@ -629,8 +629,8 @@ static const auto mFileProcExternal = External<FileProcHolder ,FileProcImplLayou
 
 struct StreamFileImplLayout {
 	String<STR> mFile ;
-	UniqueRef<HFILE> mReadPipe ;
-	UniqueRef<HFILE> mWritePipe ;
+	UniqueRef<HFILEPIPE> mReadPipe ;
+	UniqueRef<HFILEPIPE> mWritePipe ;
 	VAL64 mFileSize ;
 	VAL64 mRead ;
 	VAL64 mWrite ;
@@ -660,11 +660,11 @@ public:
 	void open_r () override {
 		assert (!fake.mReadPipe.exist ()) ;
 		assert (!fake.mWritePipe.exist ()) ;
-		fake.mReadPipe = UniqueRef<HFILE> ([&] (VREF<HFILE> me) {
+		fake.mReadPipe = UniqueRef<HFILEPIPE> ([&] (VREF<HFILEPIPE> me) {
 			const auto r1x = csc_enum_t (S_IRWXU | S_IRWXG | S_IRWXO) ;
 			me = std::open (fake.mFile ,O_RDONLY ,r1x) ;
 			assume (me != NONE) ;
-		} ,[&] (VREF<HFILE> me) {
+		} ,[&] (VREF<HFILEPIPE> me) {
 			std::close (me) ;
 		}) ;
 		fake.mFileSize = file_size (fake.mReadPipe) ;
@@ -675,12 +675,12 @@ public:
 	void open_w (CREF<LENGTH> size_) override {
 		assert (!fake.mReadPipe.exist ()) ;
 		assert (!fake.mWritePipe.exist ()) ;
-		fake.mWritePipe = UniqueRef<HFILE> ([&] (VREF<HFILE> me) {
+		fake.mWritePipe = UniqueRef<HFILEPIPE> ([&] (VREF<HFILEPIPE> me) {
 			const auto r1x = csc_enum_t (O_CREAT | O_WRONLY | O_TRUNC) ;
 			const auto r2x = csc_enum_t (S_IRWXU | S_IRWXG | S_IRWXO) ;
 			me = std::open (fake.mFile ,r1x ,r2x) ;
 			assume (me != NONE) ;
-		} ,[&] (VREF<HFILE> me) {
+		} ,[&] (VREF<HFILEPIPE> me) {
 			std::close (me) ;
 		}) ;
 		fake.mFileSize = size_ ;
@@ -691,20 +691,20 @@ public:
 	void open_a () override {
 		assert (!fake.mReadPipe.exist ()) ;
 		assert (!fake.mWritePipe.exist ()) ;
-		fake.mReadPipe = UniqueRef<HFILE> ([&] (VREF<HFILE> me) {
+		fake.mReadPipe = UniqueRef<HFILEPIPE> ([&] (VREF<HFILEPIPE> me) {
 			const auto r1x = csc_enum_t (O_CREAT | O_RDONLY) ;
 			const auto r2x = csc_enum_t (S_IRWXU | S_IRWXG | S_IRWXO) ;
 			me = std::open (fake.mFile ,r1x ,r2x) ;
 			assume (me != NONE) ;
-		} ,[&] (VREF<HFILE> me) {
+		} ,[&] (VREF<HFILEPIPE> me) {
 			std::close (me) ;
 		}) ;
-		fake.mWritePipe = UniqueRef<HFILE> ([&] (VREF<HFILE> me) {
+		fake.mWritePipe = UniqueRef<HFILEPIPE> ([&] (VREF<HFILEPIPE> me) {
 			const auto r3x = csc_enum_t (O_CREAT | O_WRONLY) ;
 			const auto r4x = csc_enum_t (S_IRWXU | S_IRWXG | S_IRWXO) ;
 			me = std::open (fake.mFile ,r3x ,r4x) ;
 			assume (me != NONE) ;
-		} ,[&] (VREF<HFILE> me) {
+		} ,[&] (VREF<HFILEPIPE> me) {
 			std::close (me) ;
 		}) ;
 		fake.mFileSize = file_size (fake.mReadPipe) ;
@@ -723,7 +723,7 @@ public:
 		return LENGTH (fake.mFileSize) ;
 	}
 
-	VAL64 file_size (CREF<HFILE> handle) const {
+	VAL64 file_size (CREF<HFILEPIPE> handle) const {
 		const auto r1x = VAL64 (lseek64 (handle ,0 ,SEEK_END)) ;
 		const auto r2x = VAL64 (lseek64 (handle ,0 ,SEEK_SET)) ;
 		//@warn: file in '/proc' is zero size
@@ -804,8 +804,8 @@ struct BufferFileChunk {
 
 struct BufferFileImplLayout {
 	String<STR> mFile ;
-	UniqueRef<HFILE> mPipe ;
-	UniqueRef<LENGTH> mMapping ;
+	UniqueRef<HFILEPIPE> mPipe ;
+	UniqueRef<HANDLE> mMapping ;
 	VAL64 mFileSize ;
 	VAL64 mBlockStep ;
 	VAL64 mChunkStep ;
@@ -850,17 +850,17 @@ public:
 	void open_r () override {
 		assert (!fake.mPipe.exist ()) ;
 		assert (!fake.mMapping.exist ()) ;
-		fake.mPipe = UniqueRef<HFILE> ([&] (VREF<HFILE> me) {
+		fake.mPipe = UniqueRef<HFILEPIPE> ([&] (VREF<HFILEPIPE> me) {
 			const auto r1x = csc_enum_t (S_IRWXU | S_IRWXG | S_IRWXO) ;
 			me = std::open (fake.mFile ,O_RDONLY ,r1x) ;
 			assume (me != NONE) ;
-		} ,[&] (VREF<HFILE> me) {
+		} ,[&] (VREF<HFILEPIPE> me) {
 			std::close (me) ;
 		}) ;
 		fake.mFileSize = file_size (fake.mPipe) ;
-		fake.mMapping = UniqueRef<LENGTH> ([&] (VREF<LENGTH> me) {
-			me = 0 ;
-		} ,[&] (VREF<LENGTH> me) {
+		fake.mMapping = UniqueRef<HANDLE> ([&] (VREF<HANDLE> me) {
+			me = HANDLE (fake.mFile.self) ;
+		} ,[&] (VREF<HANDLE> me) {
 			noop () ;
 		}) ;
 		fake.mMapping.depend (fake.mPipe) ;
@@ -871,21 +871,22 @@ public:
 	void open_w (CREF<LENGTH> size_) override {
 		assert (!fake.mPipe.exist ()) ;
 		assert (!fake.mMapping.exist ()) ;
-		fake.mPipe = UniqueRef<HFILE> ([&] (VREF<HFILE> me) {
+		fake.mPipe = UniqueRef<HFILEPIPE> ([&] (VREF<HFILEPIPE> me) {
 			const auto r1x = csc_enum_t (O_CREAT | O_RDWR | O_TRUNC) ;
 			const auto r2x = csc_enum_t (S_IRWXU | S_IRWXG | S_IRWXO) ;
 			me = std::open (fake.mFile ,r1x ,r2x) ;
 			assume (me != NONE) ;
-		} ,[&] (VREF<HFILE> me) {
+		} ,[&] (VREF<HFILEPIPE> me) {
 			std::close (me) ;
 		}) ;
 		const auto r3x = fake.mChunkStep / fake.mBlockStep ;
 		const auto r4x = (size_ + r3x - 1) / r3x ;
 		fake.mFileSize = BUFFERFILE_HEADER_STEP::expr + r4x * fake.mChunkStep ;
-		fake.mMapping = UniqueRef<LENGTH> ([&] (VREF<LENGTH> me) {
-			me = ftruncate64 (fake.mPipe ,fake.mFileSize) ;
-			assume (me == 0) ;
-		} ,[&] (VREF<LENGTH> me) {
+		fake.mMapping = UniqueRef<HANDLE> ([&] (VREF<HANDLE> me) {
+			const auto r5x = ftruncate64 (fake.mPipe ,fake.mFileSize) ;
+			assume (r5x == 0) ;
+			me = HANDLE (fake.mFile.self) ;
+		} ,[&] (VREF<HANDLE> me) {
 			noop () ;
 		}) ;
 		fake.mMapping.depend (fake.mPipe) ;
@@ -897,19 +898,20 @@ public:
 		assert (!fake.mPipe.exist ()) ;
 		assert (!fake.mMapping.exist ()) ;
 		assume (fake.mHeader != NULL) ;
-		fake.mPipe = UniqueRef<HFILE> ([&] (VREF<HFILE> me) {
+		fake.mPipe = UniqueRef<HFILEPIPE> ([&] (VREF<HFILEPIPE> me) {
 			const auto r1x = csc_enum_t (O_CREAT | O_RDWR) ;
 			const auto r2x = csc_enum_t (S_IRWXU | S_IRWXG | S_IRWXO) ;
 			me = std::open (fake.mFile ,r1x ,r2x) ;
 			assume (me != NONE) ;
-		} ,[&] (VREF<HFILE> me) {
+		} ,[&] (VREF<HFILEPIPE> me) {
 			std::close (me) ;
 		}) ;
 		fake.mFileSize = fake.mHeader->mFileSize ;
-		fake.mMapping = UniqueRef<LENGTH> ([&] (VREF<LENGTH> me) {
-			me = ftruncate64 (fake.mPipe ,fake.mFileSize) ;
-			assume (me == 0) ;
-		} ,[&] (VREF<LENGTH> me) {
+		fake.mMapping = UniqueRef<HANDLE> ([&] (VREF<HANDLE> me) {
+			const auto r3x = ftruncate64 (fake.mPipe ,fake.mFileSize) ;
+			assume (r3x == 0) ;
+			me = HANDLE (fake.mFile.self) ;
+		} ,[&] (VREF<HANDLE> me) {
 			noop () ;
 		}) ;
 		fake.mMapping.depend (fake.mPipe) ;
@@ -996,7 +998,7 @@ public:
 		return LENGTH (fake.mFileSize) ;
 	}
 
-	VAL64 file_size (CREF<HFILE> handle) const {
+	VAL64 file_size (CREF<HFILEPIPE> handle) const {
 		const auto r1x = VAL64 (lseek64 (handle ,0 ,SEEK_END)) ;
 		const auto r2x = VAL64 (lseek64 (handle ,0 ,SEEK_SET)) ;
 		//@warn: file in '/proc' is zero size
@@ -1102,7 +1104,7 @@ static const auto mBufferFileExternal = External<BufferFileHolder ,BufferFileImp
 struct UartFileImplLayout {
 	String<STR> mPortName ;
 	LENGTH mPortRate ;
-	UniqueRef<HFILE> mPipe ;
+	UniqueRef<HFILEPIPE> mPipe ;
 	TERMIOS_INFO mSerialStat ;
 	RefBuffer<BYTE> mRingBuffer ;
 	INDEX mRingRead ;
@@ -1134,11 +1136,11 @@ private:
 	void open () override {
 		assert (fake.mPortName.length () > 0) ;
 		assert (fake.mRingBuffer.size () > 0) ;
-		fake.mPipe = UniqueRef<HFILE> ([&] (VREF<HFILE> me) {
+		fake.mPipe = UniqueRef<HFILEPIPE> ([&] (VREF<HFILEPIPE> me) {
 			const auto r1x = csc_enum_t (O_RDWR | O_NOCTTY | O_SYNC) ;
 			me = std::open (fake.mPortName ,r1x) ;
 			assume (me != NONE) ;
-		} ,[&] (VREF<HFILE> me) {
+		} ,[&] (VREF<HFILEPIPE> me) {
 			std::close (me) ;
 		}) ;
 		const auto r2x = tcgetattr (fake.mPipe ,(&fake.mSerialStat)) ;

@@ -32,7 +32,7 @@
 inline namespace {
 using HMODULE = CSC::csc_pointer_t ;
 using HANDLE = CSC::csc_pointer_t ;
-using HFILE = int ;
+using HFILEPIPE = int ;
 } ;
 
 namespace CSC {
@@ -302,7 +302,7 @@ struct SingletonPipe {
 struct SingletonProcImplLayout {
 	FLAG mUid ;
 	String<STR> mName ;
-	UniqueRef<Tuple<HFILE ,String<STR>>> mPipe ;
+	UniqueRef<HANDLE> mMapping ;
 	SingletonPipe mLocal ;
 	Ref<SingletonRoot> mThis ;
 
@@ -364,22 +364,18 @@ public:
 	}
 
 	void init_pipe () {
-		if (fake.mPipe.exist ())
+		if (fake.mMapping.exist ())
 			return ;
-		fake.mPipe = UniqueRef<Tuple<HFILE ,String<STR>>> ([&] (VREF<Tuple<HFILE ,String<STR>>> me) {
+		fake.mMapping = UniqueRef<HANDLE> ([&] (VREF<HANDLE> me) {
 			const auto r1x = csc_enum_t (O_CREAT | O_RDWR | O_EXCL) ;
 			const auto r2x = csc_enum_t (S_IRWXU | S_IRWXG | S_IRWXO) ;
-			me.m1st = shm_open (fake.mName ,r1x ,r2x) ;
-			assume (me.m1st != NONE) ;
-			me.m2nd = fake.mName ;
-		} ,[&] (VREF<Tuple<HFILE ,String<STR>>> me) {
-			shm_unlink (me.m2nd) ;
-		}) ;
-		const auto r3x = UniqueRef<LENGTH> ([&] (VREF<LENGTH> me) {
-			me = ftruncate (fake.mPipe->m1st ,SIZE_OF<SingletonPipe>::expr) ;
-			assume (me == 0) ;
-		} ,[&] (VREF<LENGTH> me) {
-			noop () ;
+			const auto r3x = shm_open (fake.mName ,r1x ,r2x) ;
+			assume (r3x != NONE) ;
+			const auto r4x = ftruncate (r3x ,SIZE_OF<SingletonPipe>::expr) ;
+			assume (r4x == 0) ;
+			me = HANDLE (fake.mName.self) ;
+		} ,[&] (VREF<HANDLE> me) {
+			shm_unlink (DEF<const char *> (me)) ;
 		}) ;
 		auto &&rax = keep[TYPE<SingletonRoot>::expr] (root_ptr (fake)) ;
 		rax.mMutex = NULL ;
@@ -391,10 +387,10 @@ public:
 	}
 
 	void load_pipe () {
-		const auto r1x = UniqueRef<HFILE> ([&] (VREF<HFILE> me) {
+		const auto r1x = UniqueRef<HFILEPIPE> ([&] (VREF<HFILEPIPE> me) {
 			me = shm_open (fake.mName ,O_RDONLY ,0) ;
 			assume (me != NONE) ;
-		} ,[&] (VREF<HFILE> me) {
+		} ,[&] (VREF<HFILEPIPE> me) {
 			noop () ;
 		}) ;
 		const auto r2x = UniqueRef<HANDLE> ([&] (VREF<HANDLE> me) {
@@ -416,10 +412,10 @@ public:
 	}
 
 	void save_pipe () {
-		const auto r1x = UniqueRef<HFILE> ([&] (VREF<HFILE> me) {
+		const auto r1x = UniqueRef<HFILEPIPE> ([&] (VREF<HFILEPIPE> me) {
 			me = shm_open (fake.mName ,O_RDWR ,0) ;
 			assume (me != NONE) ;
-		} ,[&] (VREF<HFILE> me) {
+		} ,[&] (VREF<HFILEPIPE> me) {
 			noop () ;
 		}) ;
 		const auto r2x = UniqueRef<HANDLE> ([&] (VREF<HANDLE> me) {
@@ -504,7 +500,7 @@ public:
 		assert (layout != ZERO) ;
 		assert (layout != NONE) ;
 		Scope<Mutex> anonymous (fake.mThis->mMutex) ;
-		assume (fake.mPipe.exist ()) ;
+		assume (fake.mThis.exist ()) ;
 		auto rax = Set<Clazz> () ;
 		fake.mThis->mClazzSet.get (rax) ;
 		rax.add (clazz ,layout) ;

@@ -14,6 +14,10 @@
 #error "∑(っ°Д° ;)っ : require windows.h"
 #endif
 
+inline namespace {
+using HFILEPIPE = HANDLE ;
+} ;
+
 namespace CSC {
 struct PathImplLayout {
 	String<STR> mPathName ;
@@ -209,11 +213,11 @@ public:
 			if (!is_link ())
 				discard ;
 			auto rax = String<STR>::make () ;
-			const auto r1x = UniqueRef<HANDLE> ([&] (VREF<HANDLE> me) {
+			const auto r1x = UniqueRef<HFILEPIPE> ([&] (VREF<HFILEPIPE> me) {
 				me = CreateFile (fake.mThis->mPathName ,GENERIC_READ ,FILE_SHARE_READ ,NULL ,OPEN_EXISTING ,FILE_FLAG_BACKUP_SEMANTICS ,NULL) ;
 				replace (me ,INVALID_HANDLE_VALUE ,NULL) ;
 				assume (me != NULL) ;
-			} ,[&] (VREF<HANDLE> me) {
+			} ,[&] (VREF<HFILEPIPE> me) {
 				CloseHandle (me) ;
 			}) ;
 			GetFinalPathNameByHandle (r1x ,rax ,csc_enum_t (rax.size ()) ,FILE_NAME_OPENED) ;
@@ -366,11 +370,11 @@ public:
 	}
 
 	RefBuffer<BYTE> load_file (CREF<String<STR>> file) const override {
-		const auto r1x = UniqueRef<HANDLE> ([&] (VREF<HANDLE> me) {
+		const auto r1x = UniqueRef<HFILEPIPE> ([&] (VREF<HFILEPIPE> me) {
 			me = CreateFile (file ,GENERIC_READ ,FILE_SHARE_READ ,NULL ,OPEN_EXISTING ,FILE_ATTRIBUTE_NORMAL ,NULL) ;
 			replace (me ,INVALID_HANDLE_VALUE ,NULL) ;
 			assume (me != NULL) ;
-		} ,[&] (VREF<HANDLE> me) {
+		} ,[&] (VREF<HFILEPIPE> me) {
 			CloseHandle (me) ;
 		}) ;
 		const auto r2x = file_size (r1x) ;
@@ -401,11 +405,11 @@ public:
 
 	void save_file (CREF<String<STR>> file ,CREF<RefBuffer<BYTE>> item) const override {
 		assert (item.size () < VAL32_MAX) ;
-		const auto r1x = UniqueRef<HANDLE> ([&] (VREF<HANDLE> me) {
+		const auto r1x = UniqueRef<HFILEPIPE> ([&] (VREF<HFILEPIPE> me) {
 			me = CreateFile (file ,GENERIC_WRITE ,0 ,NULL ,CREATE_ALWAYS ,FILE_ATTRIBUTE_NORMAL ,NULL) ;
 			replace (me ,INVALID_HANDLE_VALUE ,NULL) ;
 			assume (me != NULL) ;
-		} ,[&] (VREF<HANDLE> me) {
+		} ,[&] (VREF<HFILEPIPE> me) {
 			CloseHandle (me) ;
 		}) ;
 		const auto r2x = item.size () ;
@@ -561,8 +565,8 @@ static const auto mFileProcExternal = External<FileProcHolder ,FileProcImplLayou
 
 struct StreamFileImplLayout {
 	String<STR> mFile ;
-	UniqueRef<HANDLE> mReadPipe ;
-	UniqueRef<HANDLE> mWritePipe ;
+	UniqueRef<HFILEPIPE> mReadPipe ;
+	UniqueRef<HFILEPIPE> mWritePipe ;
 	VAL64 mFileSize ;
 	VAL64 mRead ;
 	VAL64 mWrite ;
@@ -592,12 +596,12 @@ public:
 	void open_r () override {
 		assert (!fake.mReadPipe.exist ()) ;
 		assert (!fake.mWritePipe.exist ()) ;
-		fake.mReadPipe = UniqueRef<HANDLE> ([&] (VREF<HANDLE> me) {
+		fake.mReadPipe = UniqueRef<HFILEPIPE> ([&] (VREF<HFILEPIPE> me) {
 			const auto r1x = csc_enum_t (FILE_SHARE_READ | FILE_SHARE_WRITE) ;
 			me = CreateFile (fake.mFile ,GENERIC_READ ,r1x ,NULL ,OPEN_EXISTING ,FILE_FLAG_SEQUENTIAL_SCAN ,NULL) ;
 			replace (me ,INVALID_HANDLE_VALUE ,NULL) ;
 			assume (me != NULL) ;
-		} ,[&] (VREF<HANDLE> me) {
+		} ,[&] (VREF<HFILEPIPE> me) {
 			CloseHandle (me) ;
 		}) ;
 		fake.mFileSize = file_size (fake.mReadPipe) ;
@@ -608,12 +612,12 @@ public:
 	void open_w (CREF<LENGTH> size_) override {
 		assert (!fake.mReadPipe.exist ()) ;
 		assert (!fake.mWritePipe.exist ()) ;
-		fake.mWritePipe = UniqueRef<HANDLE> ([&] (VREF<HANDLE> me) {
+		fake.mWritePipe = UniqueRef<HFILEPIPE> ([&] (VREF<HFILEPIPE> me) {
 			const auto r1x = csc_enum_t (FILE_SHARE_READ | FILE_SHARE_WRITE) ;
 			me = CreateFile (fake.mFile ,GENERIC_WRITE ,r1x ,NULL ,CREATE_ALWAYS ,FILE_FLAG_SEQUENTIAL_SCAN ,NULL) ;
 			replace (me ,INVALID_HANDLE_VALUE ,NULL) ;
 			assume (me != NULL) ;
-		} ,[&] (VREF<HANDLE> me) {
+		} ,[&] (VREF<HFILEPIPE> me) {
 			CloseHandle (me) ;
 		}) ;
 		fake.mFileSize = size_ ;
@@ -624,20 +628,20 @@ public:
 	void open_a () override {
 		assert (!fake.mReadPipe.exist ()) ;
 		assert (!fake.mWritePipe.exist ()) ;
-		fake.mReadPipe = UniqueRef<HANDLE> ([&] (VREF<HANDLE> me) {
+		fake.mReadPipe = UniqueRef<HFILEPIPE> ([&] (VREF<HFILEPIPE> me) {
 			const auto r1x = csc_enum_t (FILE_SHARE_READ | FILE_SHARE_WRITE) ;
 			me = CreateFile (fake.mFile ,GENERIC_READ ,r1x ,NULL ,OPEN_ALWAYS ,FILE_FLAG_SEQUENTIAL_SCAN ,NULL) ;
 			replace (me ,INVALID_HANDLE_VALUE ,NULL) ;
 			assume (me != NULL) ;
-		} ,[&] (VREF<HANDLE> me) {
+		} ,[&] (VREF<HFILEPIPE> me) {
 			CloseHandle (me) ;
 		}) ;
-		fake.mWritePipe = UniqueRef<HANDLE> ([&] (VREF<HANDLE> me) {
+		fake.mWritePipe = UniqueRef<HFILEPIPE> ([&] (VREF<HFILEPIPE> me) {
 			const auto r2x = csc_enum_t (FILE_SHARE_READ | FILE_SHARE_WRITE) ;
 			me = CreateFile (fake.mFile ,GENERIC_WRITE ,r2x ,NULL ,OPEN_ALWAYS ,FILE_FLAG_SEQUENTIAL_SCAN ,NULL) ;
 			replace (me ,INVALID_HANDLE_VALUE ,NULL) ;
 			assume (me != NULL) ;
-		} ,[&] (VREF<HANDLE> me) {
+		} ,[&] (VREF<HFILEPIPE> me) {
 			CloseHandle (me) ;
 		}) ;
 		fake.mFileSize = file_size (fake.mReadPipe) ;
@@ -734,7 +738,7 @@ struct BufferFileChunk {
 
 struct BufferFileImplLayout {
 	String<STR> mFile ;
-	UniqueRef<HANDLE> mPipe ;
+	UniqueRef<HFILEPIPE> mPipe ;
 	UniqueRef<HANDLE> mMapping ;
 	VAL64 mFileSize ;
 	VAL64 mBlockStep ;
@@ -780,11 +784,11 @@ public:
 	void open_r () override {
 		assert (!fake.mPipe.exist ()) ;
 		assert (!fake.mMapping.exist ()) ;
-		fake.mPipe = UniqueRef<HANDLE> ([&] (VREF<HANDLE> me) {
+		fake.mPipe = UniqueRef<HFILEPIPE> ([&] (VREF<HFILEPIPE> me) {
 			me = CreateFile (fake.mFile ,GENERIC_READ ,FILE_SHARE_READ ,NULL ,OPEN_EXISTING ,FILE_ATTRIBUTE_NORMAL ,NULL) ;
 			replace (me ,INVALID_HANDLE_VALUE ,NULL) ;
 			assume (me != NULL) ;
-		} ,[&] (VREF<HANDLE> me) {
+		} ,[&] (VREF<HFILEPIPE> me) {
 			CloseHandle (me) ;
 		}) ;
 		fake.mFileSize = file_size (fake.mPipe) ;
@@ -804,12 +808,12 @@ public:
 	void open_w (CREF<LENGTH> size_) override {
 		assert (!fake.mPipe.exist ()) ;
 		assert (!fake.mMapping.exist ()) ;
-		fake.mPipe = UniqueRef<HANDLE> ([&] (VREF<HANDLE> me) {
+		fake.mPipe = UniqueRef<HFILEPIPE> ([&] (VREF<HFILEPIPE> me) {
 			const auto r1x = csc_enum_t (GENERIC_READ | GENERIC_WRITE) ;
 			me = CreateFile (fake.mFile ,r1x ,0 ,NULL ,CREATE_ALWAYS ,FILE_ATTRIBUTE_NORMAL ,NULL) ;
 			replace (me ,INVALID_HANDLE_VALUE ,NULL) ;
 			assume (me != NULL) ;
-		} ,[&] (VREF<HANDLE> me) {
+		} ,[&] (VREF<HFILEPIPE> me) {
 			CloseHandle (me) ;
 		}) ;
 		const auto r2x = fake.mChunkStep / fake.mBlockStep ;
@@ -832,12 +836,12 @@ public:
 		assert (!fake.mPipe.exist ()) ;
 		assert (!fake.mMapping.exist ()) ;
 		assume (fake.mHeader != NULL) ;
-		fake.mPipe = UniqueRef<HANDLE> ([&] (VREF<HANDLE> me) {
+		fake.mPipe = UniqueRef<HFILEPIPE> ([&] (VREF<HFILEPIPE> me) {
 			const auto r1x = csc_enum_t (GENERIC_READ | GENERIC_WRITE) ;
 			me = CreateFile (fake.mFile ,r1x ,0 ,NULL ,OPEN_ALWAYS ,FILE_ATTRIBUTE_NORMAL ,NULL) ;
 			replace (me ,INVALID_HANDLE_VALUE ,NULL) ;
 			assume (me != NULL) ;
-		} ,[&] (VREF<HANDLE> me) {
+		} ,[&] (VREF<HFILEPIPE> me) {
 			CloseHandle (me) ;
 		}) ;
 		fake.mFileSize = fake.mHeader->mFileSize ;
@@ -1036,7 +1040,7 @@ static const auto mBufferFileExternal = External<BufferFileHolder ,BufferFileImp
 struct UartFileImplLayout {
 	String<STR> mPortName ;
 	LENGTH mPortRate ;
-	UniqueRef<HANDLE> mPipe ;
+	UniqueRef<HFILEPIPE> mPipe ;
 	DCB mSerialParams ;
 	COMSTAT mSerialStat ;
 	csc_enum_t mSerialError ;
@@ -1070,11 +1074,11 @@ private:
 	void open () override {
 		assert (fake.mPortName.length () > 0) ;
 		assert (fake.mRingBuffer.size () > 0) ;
-		fake.mPipe = UniqueRef<HANDLE> ([&] (VREF<HANDLE> me) {
+		fake.mPipe = UniqueRef<HFILEPIPE> ([&] (VREF<HFILEPIPE> me) {
 			me = CreateFile (fake.mPortName ,GENERIC_READ | GENERIC_WRITE ,0 ,0 ,OPEN_EXISTING ,FILE_ATTRIBUTE_NORMAL ,0) ;
 			replace (me ,INVALID_HANDLE_VALUE ,NULL) ;
 			assume (me != NULL) ;
-		} ,[&] (VREF<HANDLE> me) {
+		} ,[&] (VREF<HFILEPIPE> me) {
 			CloseHandle (me) ;
 		}) ;
 		inline_memset (fake.mSerialParams) ;
