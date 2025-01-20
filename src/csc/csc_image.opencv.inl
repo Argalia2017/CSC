@@ -23,10 +23,6 @@ struct ImageProcImplLayout {} ;
 
 class ImageProcImplHolder final implement Fat<ImageProcHolder ,ImageProcImplLayout> {
 public:
-	UniqueRef<ImageProcImplLayout> xmake () const override {
-		return UniqueRef<ImageProcImplLayout>::make () ;
-	}
-
 	void initialize () override {
 		noop () ;
 	}
@@ -291,5 +287,5 @@ public:
 	}
 } ;
 
-static const auto mImageProcExternal = External<ImageProcHolder ,ImageProcImplLayout> (ImageProcImplHolder ()) ;
+static const auto mImageProcExternal = External<ImageProcHolder ,ImageProcLayout> (ImageProcImplHolder ()) ;
 } ;

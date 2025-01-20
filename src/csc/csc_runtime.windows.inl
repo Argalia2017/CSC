@@ -28,10 +28,6 @@ struct RuntimeProcImplLayout {} ;
 
 class RuntimeProcImplHolder final implement Fat<RuntimeProcHolder ,RuntimeProcImplLayout> {
 public:
-	UniqueRef<RuntimeProcImplLayout> xmake () const override {
-		return UniqueRef<RuntimeProcImplLayout>::make () ;
-	}
-
 	void initialize () override {
 		noop () ;
 	}
@@ -83,7 +79,7 @@ public:
 	}
 } ;
 
-static const auto mRuntimeProcExternal = External<RuntimeProcHolder ,RuntimeProcImplLayout> (RuntimeProcImplHolder ()) ;
+static const auto mRuntimeProcExternal = External<RuntimeProcHolder ,RuntimeProcLayout> (RuntimeProcImplHolder ()) ;
 
 struct ProcessImplLayout {
 	FLAG mUid ;
@@ -96,10 +92,6 @@ private:
 	using PROCESS_SNAPSHOT_STEP = ENUM<128> ;
 
 public:
-	AutoRef<ProcessImplLayout> xmake () const override {
-		return AutoRef<ProcessImplLayout>::make () ;
-	}
-
 	void initialize (CREF<FLAG> uid) override {
 		fake.mUid = uid ;
 		const auto r1x = UniqueRef<HANDLE> ([&] (VREF<HANDLE> me) {
@@ -182,7 +174,7 @@ public:
 	}
 } ;
 
-static const auto mProcessExternal = External<ProcessHolder ,ProcessImplLayout> (ProcessImplHolder ()) ;
+static const auto mProcessExternal = External<ProcessHolder ,ProcessLayout> (ProcessImplHolder ()) ;
 
 struct LibraryImplLayout {
 	String<STR> mFile ;
@@ -192,10 +184,6 @@ struct LibraryImplLayout {
 
 class LibraryImplHolder final implement Fat<LibraryHolder ,LibraryImplLayout> {
 public:
-	AutoRef<LibraryImplLayout> xmake () const override {
-		return AutoRef<LibraryImplLayout>::make () ;
-	}
-
 	void initialize (CREF<String<STR>> file) override {
 		fake.mFile = move (file) ;
 		assert (fake.mFile.length () > 0) ;
@@ -241,7 +229,7 @@ public:
 	}
 } ;
 
-static const auto mLibraryExternal = External<LibraryHolder ,LibraryImplLayout> (LibraryImplHolder ()) ;
+static const auto mLibraryExternal = External<LibraryHolder ,LibraryLayout> (LibraryImplHolder ()) ;
 
 struct SingletonRoot {
 	Mutex mMutex ;
@@ -275,10 +263,6 @@ public:
 
 class SingletonProcImplHolder final implement Fat<SingletonProcHolder ,SingletonProcImplLayout> {
 public:
-	UniqueRef<SingletonProcImplLayout> xmake () const override {
-		return UniqueRef<SingletonProcImplLayout>::make () ;
-	}
-
 	void initialize () override {
 		fake.mUid = RuntimeProc::process_uid () ;
 		fake.mName = String<STR>::make (slice ("CSC_Singleton_") ,fake.mUid) ;
@@ -460,5 +444,5 @@ public:
 	}
 } ;
 
-static const auto mSingletonProcExternal = External<SingletonProcHolder ,SingletonProcImplLayout> (SingletonProcImplHolder ()) ;
+static const auto mSingletonProcExternal = External<SingletonProcHolder ,SingletonProcLayout> (SingletonProcImplHolder ()) ;
 } ;

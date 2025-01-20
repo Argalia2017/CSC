@@ -18,10 +18,6 @@ private:
 	using FEXP2CACHE_SIZE = ENUM<693> ;
 
 public:
-	UniqueRef<FEXP2CacheImplLayout> xmake () const override {
-		return UniqueRef<FEXP2CacheImplLayout>::make () ;
-	}
-
 	void initialize () override {
 		noop () ;
 	}
@@ -50,7 +46,7 @@ public:
 	}
 } ;
 
-static const auto mFEXP2CacheExternal = External<FEXP2CacheHolder ,FEXP2CacheImplLayout> (FEXP2CacheImplHolder ()) ;
+static const auto mFEXP2CacheExternal = External<FEXP2CacheHolder ,FEXP2CacheLayout> (FEXP2CacheImplHolder ()) ;
 
 struct FEXP10CacheImplLayout {} ;
 
@@ -59,10 +55,6 @@ private:
 	using FEXP10CACHE_SIZE = ENUM<2175> ;
 
 public:
-	UniqueRef<FEXP10CacheImplLayout> xmake () const override {
-		return UniqueRef<FEXP10CacheImplLayout>::make () ;
-	}
-
 	void initialize () override {
 		noop () ;
 	}
@@ -91,5 +83,5 @@ public:
 	}
 } ;
 
-static const auto mFEXP10CacheExternal = External<FEXP10CacheHolder ,FEXP10CacheImplLayout> (FEXP10CacheImplHolder ()) ;
+static const auto mFEXP10CacheExternal = External<FEXP10CacheHolder ,FEXP10CacheLayout> (FEXP10CacheImplHolder ()) ;
 } ;

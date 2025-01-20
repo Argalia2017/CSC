@@ -122,10 +122,6 @@ struct PointCloudKDTreeImplLayout {
 
 class PointCloudKDTreeImplHolder final implement Fat<PointCloudKDTreeHolder ,PointCloudKDTreeImplLayout> {
 public:
-	AutoRef<PointCloudKDTreeImplLayout> xmake () const override {
-		return AutoRef<PointCloudKDTreeImplLayout>::make () ;
-	}
-
 	void initialize (CREF<Array<Pointer>> pointcloud) override {
 		const auto r1x = address (pointcloud[0]) ;
 		const auto r2x = pointcloud.step () / SIZE_OF<FLT32>::expr ;
@@ -172,5 +168,5 @@ public:
 	}
 } ;
 
-static const auto mPointCloudKDTreecExternal = External<PointCloudKDTreeHolder ,PointCloudKDTreeImplLayout> (PointCloudKDTreeImplHolder ()) ;
+static const auto mPointCloudKDTreecExternal = External<PointCloudKDTreeHolder ,PointCloudKDTreeLayout> (PointCloudKDTreeImplHolder ()) ;
 } ;

@@ -25,10 +25,6 @@ struct ImageProcImplLayout {
 
 class ImageProcImplHolder final implement Fat<ImageProcHolder ,ImageProcImplLayout> {
 public:
-	UniqueRef<ImageProcImplLayout> xmake () const override {
-		return UniqueRef<ImageProcImplLayout>::make () ;
-	}
-
 	void initialize () override {
 		fake.mContext = UniqueRef<BOOL> ([&] (VREF<BOOL> me) {
 			FreeImage_Initialise () ;
@@ -343,5 +339,5 @@ public:
 	}
 } ;
 
-static const auto mImageProcExternal = External<ImageProcHolder ,ImageProcImplLayout> (ImageProcImplHolder ()) ;
+static const auto mImageProcExternal = External<ImageProcHolder ,ImageProcLayout> (ImageProcImplHolder ()) ;
 } ;

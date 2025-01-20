@@ -1766,34 +1766,109 @@ struct FUNCTION_unimplemented {
 
 static constexpr auto unimplemented = FUNCTION_unimplemented () ;
 
-template <class A ,class B>
-class External implement Pin<FatLayout> {
+template <class A>
+struct OfThis {
+	A mThis ;
+
+public:
+	forceinline operator A () rightvalue {
+		return move (mThis) ;
+	}
+
+	using VREF_ITEM = VREF<typeof (nullof (A).self)> ;
+	using CREF_ITEM = decltype (keep[TYPE<CREF<A>>::expr] (nullof (A)).self) ;
+
+	XREF<VREF_ITEM> self_m () leftvalue {
+		return Pointer::make (address (mThis.self)) ;
+	}
+
+	forceinline operator XREF<VREF_ITEM> () leftvalue {
+		return self ;
+	}
+
+	XREF<CREF_ITEM> self_m () const leftvalue {
+		return mThis.self ;
+	}
+
+	forceinline operator XREF<CREF_ITEM> () const leftvalue {
+		return self ;
+	}
+} ;
+
+template <class...>
+trait UNWARP_SELF_HELP ;
+
+template <class A ,class OTHERWISE>
+trait UNWARP_SELF_HELP<A ,OTHERWISE> {
+	using RET = A ;
+} ;
+
+template <class A>
+trait UNWARP_SELF_HELP<A ,REQUIRE<KILL<ENUM_TRUE ,typeof (nullof (A).self)>>> {
+	using RET = typeof (nullof (A).self) ;
+} ;
+
+template <class A>
+using UNWARP_SELF = typename UNWARP_SELF_HELP<A ,ALWAYS>::RET ;
+
+struct FriendExternal implement Interface {
+	virtual void create (VREF<Pointer> a) const = 0 ;
+} ;
+
+template <class A>
+class FriendExternalBinder implement Fat<FriendExternal ,A> {
+public:
+	void create (VREF<Pointer> a) const override {
+		using R1X = typeof (A::mThis) ;
+		auto &&rax = keep[TYPE<A>::expr] (a) ;
+		rax.mThis = R1X::make () ;
+	}
+} ;
+
+struct ExternalLayout {
+	Pin<FatLayout> mImplHolder ;
+	Pin<FatLayout> mImplLayout ;
+} ;
+
+template <class A ,class B ,class C = UNWARP_SELF<B>>
+class External implement ExternalLayout {
 public:
 	implicit External () = default ;
 
 	template <class ARG1>
-	implicit External (CREF<ARG1> holder) {
-		require (IS_EXTEND<Fat<A ,B> ,ARG1>) ;
+	explicit External (CREF<ARG1> holder) :External (holder ,FriendExternalBinder<B> ()) {}
+
+	template <class ARG1 ,class ARG2>
+	explicit External (CREF<ARG1> holder ,CREF<ARG2> layout) {
+		require (IS_EXTEND<Fat<A ,C> ,ARG1>) ;
 		require (ENUM_EQUAL<SIZE_OF<ARG1> ,SIZE_OF<FatLayout>>) ;
 		require (ENUM_EQUAL<ALIGN_OF<ARG1> ,ALIGN_OF<FatLayout>>) ;
-		inline_memcpy (instance ().self ,Pointer::from (holder) ,SIZE_OF<FatLayout>::expr) ;
+		require (IS_EXTEND<Fat<FriendExternal ,B> ,ARG2>) ;
+		require (ENUM_EQUAL<SIZE_OF<ARG2> ,SIZE_OF<FatLayout>>) ;
+		require (ENUM_EQUAL<ALIGN_OF<ARG2> ,ALIGN_OF<FatLayout>>) ;
+		inline_memcpy (instance ().mImplHolder ,Pointer::from (holder) ,SIZE_OF<FatLayout>::expr) ;
+		inline_memcpy (instance ().mImplLayout ,Pointer::from (layout) ,SIZE_OF<FatLayout>::expr) ;
 	}
 
-	static CREF<Fat<A ,B>> declare () {
-		auto rax = FatLayout () ;
-		instance ().get (rax) ;
-		assume (rax.mHolder != ZERO) ;
-		return instance ().self ;
+	static CREF<Fat<A ,C>> declare () {
+		return instance ().mImplHolder.self ;
+	}
+
+	static B create () {
+		B ret ;
+		auto &&rax = VFat<FriendExternal> (instance ().mImplLayout.self) ;
+		rax->create (Pointer::from (ret)) ;
+		return move (ret) ;
 	}
 
 private:
 	static CREF<External> instance () ;
 } ;
 
-template <class A ,class B>
-inline CREF<External<A ,B>> External<A ,B>::instance () {
+template <class A ,class B ,class C>
+inline CREF<External<A ,B ,C>> External<A ,B ,C>::instance () {
 	return memorize ([&] () {
-		return External<A ,B> () ;
+		return External<A ,B ,C> () ;
 	}) ;
 }
 
@@ -1893,35 +1968,6 @@ public:
 	Slice type_name () const override {
 		const auto r1x = inline_type_name (Pointer::from (thiz) ,address (__macro_type_rtti)) ;
 		return Slice (r1x ,SLICE_MAX_SIZE::expr ,1).eos () ;
-	}
-} ;
-
-template <class A>
-struct OfThis {
-	A mThis ;
-
-public:
-	forceinline operator A () rightvalue {
-		return move (mThis) ;
-	}
-
-	using VREF_ITEM = VREF<typeof (nullof (A).self)> ;
-	using CREF_ITEM = decltype (keep[TYPE<CREF<A>>::expr] (nullof (A)).self) ;
-
-	XREF<VREF_ITEM> self_m () leftvalue {
-		return Pointer::make (address (mThis.self)) ;
-	}
-
-	forceinline operator XREF<VREF_ITEM> () leftvalue {
-		return self ;
-	}
-
-	XREF<CREF_ITEM> self_m () const leftvalue {
-		return mThis.self ;
-	}
-
-	forceinline operator XREF<CREF_ITEM> () const leftvalue {
-		return self ;
 	}
 } ;
 

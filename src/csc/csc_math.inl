@@ -735,42 +735,42 @@ exports CFat<FloatProcHolder> FloatProcHolder::hold (CREF<FloatProcImplLayout> t
 	return CFat<FloatProcHolder> (FloatProcImplHolder () ,that) ;
 }
 
-template class External<FEXP2CacheHolder ,FEXP2CacheImplLayout> ;
+template class External<FEXP2CacheHolder ,FEXP2CacheLayout> ;
 
 exports CREF<FEXP2CacheLayout> FEXP2CacheHolder::instance () {
 	return memorize ([&] () {
 		FEXP2CacheLayout ret ;
-		ret.mThis = External<FEXP2CacheHolder ,FEXP2CacheImplLayout>::declare ().xmake () ;
+		ret.mThis = External<FEXP2CacheHolder ,FEXP2CacheLayout>::create () ;
 		FEXP2CacheHolder::hold (ret)->initialize () ;
 		return move (ret) ;
 	}) ;
 }
 
 exports VFat<FEXP2CacheHolder> FEXP2CacheHolder::hold (VREF<FEXP2CacheImplLayout> that) {
-	return VFat<FEXP2CacheHolder> (External<FEXP2CacheHolder ,FEXP2CacheImplLayout>::declare () ,that) ;
+	return VFat<FEXP2CacheHolder> (External<FEXP2CacheHolder ,FEXP2CacheLayout>::declare () ,that) ;
 }
 
 exports CFat<FEXP2CacheHolder> FEXP2CacheHolder::hold (CREF<FEXP2CacheImplLayout> that) {
-	return CFat<FEXP2CacheHolder> (External<FEXP2CacheHolder ,FEXP2CacheImplLayout>::declare () ,that) ;
+	return CFat<FEXP2CacheHolder> (External<FEXP2CacheHolder ,FEXP2CacheLayout>::declare () ,that) ;
 }
 
-template class External<FEXP10CacheHolder ,FEXP10CacheImplLayout> ;
+template class External<FEXP10CacheHolder ,FEXP10CacheLayout> ;
 
 exports CREF<FEXP10CacheLayout> FEXP10CacheHolder::instance () {
 	return memorize ([&] () {
 		FEXP10CacheLayout ret ;
-		ret.mThis = External<FEXP10CacheHolder ,FEXP10CacheImplLayout>::declare ().xmake () ;
+		ret.mThis = External<FEXP10CacheHolder ,FEXP10CacheLayout>::create () ;
 		FEXP10CacheHolder::hold (ret)->initialize () ;
 		return move (ret) ;
 	}) ;
 }
 
 exports VFat<FEXP10CacheHolder> FEXP10CacheHolder::hold (VREF<FEXP10CacheImplLayout> that) {
-	return VFat<FEXP10CacheHolder> (External<FEXP10CacheHolder ,FEXP10CacheImplLayout>::declare () ,that) ;
+	return VFat<FEXP10CacheHolder> (External<FEXP10CacheHolder ,FEXP10CacheLayout>::declare () ,that) ;
 }
 
 exports CFat<FEXP10CacheHolder> FEXP10CacheHolder::hold (CREF<FEXP10CacheImplLayout> that) {
-	return CFat<FEXP10CacheHolder> (External<FEXP10CacheHolder ,FEXP10CacheImplLayout>::declare () ,that) ;
+	return CFat<FEXP10CacheHolder> (External<FEXP10CacheHolder ,FEXP10CacheLayout>::declare () ,that) ;
 }
 
 struct ByteProcImplLayout {} ;

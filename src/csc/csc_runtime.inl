@@ -161,23 +161,23 @@ exports CFat<TimeHolder> TimeHolder::hold (CREF<TimeImplLayout> that) {
 	return CFat<TimeHolder> (TimeImplHolder () ,that) ;
 }
 
-template class External<RuntimeProcHolder ,RuntimeProcImplLayout> ;
+template class External<RuntimeProcHolder ,RuntimeProcLayout> ;
 
 exports CREF<RuntimeProcLayout> RuntimeProcHolder::instance () {
 	return memorize ([&] () {
 		RuntimeProcLayout ret ;
-		ret.mThis = External<RuntimeProcHolder ,RuntimeProcImplLayout>::declare ().xmake () ;
+		ret.mThis = External<RuntimeProcHolder ,RuntimeProcLayout>::create () ;
 		RuntimeProcHolder::hold (ret)->initialize () ;
 		return move (ret) ;
 	}) ;
 }
 
 exports VFat<RuntimeProcHolder> RuntimeProcHolder::hold (VREF<RuntimeProcImplLayout> that) {
-	return VFat<RuntimeProcHolder> (External<RuntimeProcHolder ,RuntimeProcImplLayout>::declare () ,that) ;
+	return VFat<RuntimeProcHolder> (External<RuntimeProcHolder ,RuntimeProcLayout>::declare () ,that) ;
 }
 
 exports CFat<RuntimeProcHolder> RuntimeProcHolder::hold (CREF<RuntimeProcImplLayout> that) {
-	return CFat<RuntimeProcHolder> (External<RuntimeProcHolder ,RuntimeProcImplLayout>::declare () ,that) ;
+	return CFat<RuntimeProcHolder> (External<RuntimeProcHolder ,RuntimeProcLayout>::declare () ,that) ;
 }
 
 struct AtomicImplLayout {
@@ -528,36 +528,36 @@ exports CFat<ThreadHolder> ThreadHolder::hold (CREF<ThreadImplLayout> that) {
 	return CFat<ThreadHolder> (ThreadImplHolder () ,that) ;
 }
 
-template class External<ProcessHolder ,ProcessImplLayout> ;
+template class External<ProcessHolder ,ProcessLayout> ;
 
 exports ProcessLayout ProcessHolder::create () {
 	ProcessLayout ret ;
-	ret.mThis = External<ProcessHolder ,ProcessImplLayout>::declare ().xmake () ;
+	ret.mThis = External<ProcessHolder ,ProcessLayout>::create () ;
 	return move (ret) ;
 }
 
 exports VFat<ProcessHolder> ProcessHolder::hold (VREF<ProcessImplLayout> that) {
-	return VFat<ProcessHolder> (External<ProcessHolder ,ProcessImplLayout>::declare () ,that) ;
+	return VFat<ProcessHolder> (External<ProcessHolder ,ProcessLayout>::declare () ,that) ;
 }
 
 exports CFat<ProcessHolder> ProcessHolder::hold (CREF<ProcessImplLayout> that) {
-	return CFat<ProcessHolder> (External<ProcessHolder ,ProcessImplLayout>::declare () ,that) ;
+	return CFat<ProcessHolder> (External<ProcessHolder ,ProcessLayout>::declare () ,that) ;
 }
 
-template class External<LibraryHolder ,LibraryImplLayout> ;
+template class External<LibraryHolder ,LibraryLayout> ;
 
 exports LibraryLayout LibraryHolder::create () {
 	LibraryLayout ret ;
-	ret.mThis = External<LibraryHolder ,LibraryImplLayout>::declare ().xmake () ;
+	ret.mThis = External<LibraryHolder ,LibraryLayout>::create () ;
 	return move (ret) ;
 }
 
 exports VFat<LibraryHolder> LibraryHolder::hold (VREF<LibraryImplLayout> that) {
-	return VFat<LibraryHolder> (External<LibraryHolder ,LibraryImplLayout>::declare () ,that) ;
+	return VFat<LibraryHolder> (External<LibraryHolder ,LibraryLayout>::declare () ,that) ;
 }
 
 exports CFat<LibraryHolder> LibraryHolder::hold (CREF<LibraryImplLayout> that) {
-	return CFat<LibraryHolder> (External<LibraryHolder ,LibraryImplLayout>::declare () ,that) ;
+	return CFat<LibraryHolder> (External<LibraryHolder ,LibraryLayout>::declare () ,that) ;
 }
 
 struct SystemImplLayout {
@@ -743,23 +743,23 @@ exports CFat<RandomHolder> RandomHolder::hold (CREF<RandomImplLayout> that) {
 	return CFat<RandomHolder> (RandomImplHolder () ,that) ;
 }
 
-template class External<SingletonProcHolder ,SingletonProcImplLayout> ;
+template class External<SingletonProcHolder ,SingletonProcLayout> ;
 
 exports CREF<SingletonProcLayout> SingletonProcHolder::instance () {
 	return memorize ([&] () {
 		SingletonProcLayout ret ;
-		ret.mThis = External<SingletonProcHolder ,SingletonProcImplLayout>::declare ().xmake () ;
+		ret.mThis = External<SingletonProcHolder ,SingletonProcLayout>::create () ;
 		SingletonProcHolder::hold (ret)->initialize () ;
 		return move (ret) ;
 	}) ;
 }
 
 exports VFat<SingletonProcHolder> SingletonProcHolder::hold (VREF<SingletonProcImplLayout> that) {
-	return VFat<SingletonProcHolder> (External<SingletonProcHolder ,SingletonProcImplLayout>::declare () ,that) ;
+	return VFat<SingletonProcHolder> (External<SingletonProcHolder ,SingletonProcLayout>::declare () ,that) ;
 }
 
 exports CFat<SingletonProcHolder> SingletonProcHolder::hold (CREF<SingletonProcImplLayout> that) {
-	return CFat<SingletonProcHolder> (External<SingletonProcHolder ,SingletonProcImplLayout>::declare () ,that) ;
+	return CFat<SingletonProcHolder> (External<SingletonProcHolder ,SingletonProcLayout>::declare () ,that) ;
 }
 
 struct GlobalNode {

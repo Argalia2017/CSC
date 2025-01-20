@@ -25,10 +25,6 @@ struct MatrixProcImplLayout {} ;
 
 class MatrixProcImplHolder final implement Fat<MatrixProcHolder ,MatrixProcImplLayout> {
 public:
-	UniqueRef<MatrixProcImplLayout> xmake () const override {
-		return UniqueRef<MatrixProcImplLayout>::make () ;
-	}
-
 	void initialize () override {
 		noop () ;
 	}
@@ -142,16 +138,12 @@ public:
 	}
 } ;
 
-static const auto mMatrixProcExternal = External<MatrixProcHolder ,MatrixProcImplLayout> (MatrixProcImplHolder ()) ;
+static const auto mMatrixProcExternal = External<MatrixProcHolder ,MatrixProcLayout> (MatrixProcImplHolder ()) ;
 
 struct LinearProcImplLayout {} ;
 
 class LinearProcImplHolder final implement Fat<LinearProcHolder ,LinearProcImplLayout> {
 public:
-	UniqueRef<LinearProcImplLayout> xmake () const override {
-		return UniqueRef<LinearProcImplLayout>::make () ;
-	}
-
 	void initialize () override {
 		noop () ;
 	}
@@ -201,5 +193,5 @@ public:
 	}
 } ;
 
-static const auto mLinearProcExternal = External<LinearProcHolder ,LinearProcImplLayout> (LinearProcImplHolder ()) ;
+static const auto mLinearProcExternal = External<LinearProcHolder ,LinearProcLayout> (LinearProcImplHolder ()) ;
 } ;

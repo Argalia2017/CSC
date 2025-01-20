@@ -400,10 +400,6 @@ private:
 	using FILEPROC_RETRY_TIME = RANK3 ;
 
 public:
-	UniqueRef<FileProcImplLayout> xmake () const override {
-		return UniqueRef<FileProcImplLayout>::make () ;
-	}
-
 	void initialize () override {
 		fake.mMutex = NULL ;
 	}
@@ -625,7 +621,7 @@ public:
 	}
 } ;
 
-static const auto mFileProcExternal = External<FileProcHolder ,FileProcImplLayout> (FileProcImplHolder ()) ;
+static const auto mFileProcExternal = External<FileProcHolder ,FileProcLayout> (FileProcImplHolder ()) ;
 
 struct StreamFileImplLayout {
 	String<STR> mFile ;
@@ -640,10 +636,6 @@ struct StreamFileImplLayout {
 
 class StreamFileImplHolder final implement Fat<StreamFileHolder ,StreamFileImplLayout> {
 public:
-	AutoRef<StreamFileImplLayout> xmake () const override {
-		return AutoRef<StreamFileImplLayout>::make () ;
-	}
-
 	void initialize (CREF<String<STR>> file) override {
 		fake.mFile = move (file) ;
 		fake.mFileSize = 0 ;
@@ -783,7 +775,7 @@ public:
 	}
 } ;
 
-static const auto mStreamFileExternal = External<StreamFileHolder ,StreamFileImplLayout> (StreamFileImplHolder ()) ;
+static const auto mStreamFileExternal = External<StreamFileHolder ,StreamFileLayout> (StreamFileImplHolder ()) ;
 
 struct BufferFileHeader {
 	QUAD mFileEndian ;
@@ -823,10 +815,6 @@ private:
 	using BUFFERFILE_HEADER_STEP = ENUM<65536> ;
 
 public:
-	AutoRef<BufferFileImplLayout> xmake () const override {
-		return AutoRef<BufferFileImplLayout>::make () ;
-	}
-
 	void initialize (CREF<String<STR>> file) override {
 		fake.mFile = move (file) ;
 		fake.mFileSize = 0 ;
@@ -1099,7 +1087,7 @@ public:
 	}
 } ;
 
-static const auto mBufferFileExternal = External<BufferFileHolder ,BufferFileImplLayout> (BufferFileImplHolder ()) ;
+static const auto mBufferFileExternal = External<BufferFileHolder ,BufferFileLayout> (BufferFileImplHolder ()) ;
 
 struct UartFileImplLayout {
 	String<STR> mPortName ;
@@ -1112,10 +1100,6 @@ struct UartFileImplLayout {
 
 class UartFileImplHolder final implement Fat<UartFileHolder ,UartFileImplLayout> {
 private:
-	AutoRef<UartFileImplLayout> xmake () const override {
-		return AutoRef<UartFileImplLayout>::make () ;
-	}
-
 	void initialize () override {
 		fake.mPortRate = 0 ;
 	}
@@ -1185,7 +1169,7 @@ private:
 	}
 } ;
 
-static const auto mUartFileExternal = External<UartFileHolder ,UartFileImplLayout> (UartFileImplHolder ()) ;
+static const auto mUartFileExternal = External<UartFileHolder ,UartFileLayout> (UartFileImplHolder ()) ;
 
 struct ConsoleImplLayout {
 	Mutex mMutex ;
@@ -1201,10 +1185,6 @@ struct ConsoleImplLayout {
 
 class ConsoleImplHolder final implement Fat<ConsoleHolder ,ConsoleImplLayout> {
 public:
-	SharedRef<ConsoleImplLayout> xmake () const override {
-		return SharedRef<ConsoleImplLayout>::make () ;
-	}
-
 	void initialize () override {
 		fake.mMutex = NULL ;
 		fake.mOption = BitSet (ConsoleOption::ETC) ;
@@ -1378,5 +1358,5 @@ public:
 	}
 } ;
 
-static const auto mConsoleExternal = External<ConsoleHolder ,ConsoleImplLayout> (ConsoleImplHolder ()) ;
+static const auto mConsoleExternal = External<ConsoleHolder ,ConsoleLayout> (ConsoleImplHolder ()) ;
 } ;

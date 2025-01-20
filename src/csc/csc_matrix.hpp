@@ -760,7 +760,6 @@ struct MatrixProcHolder implement Interface {
 	imports VFat<MatrixProcHolder> hold (VREF<MatrixProcImplLayout> that) ;
 	imports CFat<MatrixProcHolder> hold (CREF<MatrixProcImplLayout> that) ;
 
-	virtual UniqueRef<MatrixProcImplLayout> xmake () const = 0 ;
 	virtual void initialize () = 0 ;
 	virtual TRSResult solve_trs (CREF<Matrix> a) const = 0 ;
 	virtual KRTResult solve_krt (CREF<Matrix> a) const = 0 ;
@@ -959,7 +958,6 @@ struct LinearProcHolder implement Interface {
 	imports VFat<LinearProcHolder> hold (VREF<LinearProcImplLayout> that) ;
 	imports CFat<LinearProcHolder> hold (CREF<LinearProcImplLayout> that) ;
 
-	virtual UniqueRef<LinearProcImplLayout> xmake () const = 0 ;
 	virtual void initialize () = 0 ;
 	virtual Image<FLT64> solve_lsm (CREF<Image<FLT64>> a) const = 0 ;
 	virtual Image<FLT64> solve_lsm (CREF<Image<FLT64>> a ,CREF<Image<FLT64>> b) const = 0 ;
@@ -993,7 +991,6 @@ struct PointCloudKDTreeHolder implement Interface {
 	imports VFat<PointCloudKDTreeHolder> hold (VREF<PointCloudKDTreeImplLayout> that) ;
 	imports CFat<PointCloudKDTreeHolder> hold (CREF<PointCloudKDTreeImplLayout> that) ;
 
-	virtual AutoRef<PointCloudKDTreeImplLayout> xmake () const = 0 ;
 	virtual void initialize (CREF<Array<Pointer>> pointcloud) = 0 ;
 	virtual Array<INDEX> search (CREF<Vector> center ,CREF<LENGTH> neighbor) const = 0 ;
 	virtual Array<INDEX> search (CREF<Vector> center ,CREF<LENGTH> neighbor ,CREF<FLT64> radius) const = 0 ;

@@ -153,7 +153,6 @@ struct RuntimeProcHolder implement Interface {
 	imports VFat<RuntimeProcHolder> hold (VREF<RuntimeProcImplLayout> that) ;
 	imports CFat<RuntimeProcHolder> hold (CREF<RuntimeProcImplLayout> that) ;
 
-	virtual UniqueRef<RuntimeProcImplLayout> xmake () const = 0 ;
 	virtual void initialize () = 0 ;
 	virtual LENGTH thread_concurrency () const = 0 ;
 	virtual FLAG thread_uid () const = 0 ;
@@ -480,7 +479,6 @@ struct ProcessHolder implement Interface {
 	imports VFat<ProcessHolder> hold (VREF<ProcessImplLayout> that) ;
 	imports CFat<ProcessHolder> hold (CREF<ProcessImplLayout> that) ;
 
-	virtual AutoRef<ProcessImplLayout> xmake () const = 0 ;
 	virtual void initialize (CREF<FLAG> uid) = 0 ;
 	virtual void initialize (CREF<RefBuffer<BYTE>> snapshot_) = 0 ;
 	virtual BOOL equal (CREF<ProcessImplLayout> that) const = 0 ;
@@ -531,7 +529,6 @@ struct LibraryHolder implement Interface {
 	imports VFat<LibraryHolder> hold (VREF<LibraryImplLayout> that) ;
 	imports CFat<LibraryHolder> hold (CREF<LibraryImplLayout> that) ;
 
-	virtual AutoRef<LibraryImplLayout> xmake () const = 0 ;
 	virtual void initialize (CREF<String<STR>> file) = 0 ;
 	virtual String<STR> library_file () const = 0 ;
 	virtual FLAG load (CREF<String<STR>> name) = 0 ;
@@ -675,7 +672,6 @@ struct SingletonProcHolder implement Interface {
 	imports VFat<SingletonProcHolder> hold (VREF<SingletonProcImplLayout> that) ;
 	imports CFat<SingletonProcHolder> hold (CREF<SingletonProcImplLayout> that) ;
 
-	virtual UniqueRef<SingletonProcImplLayout> xmake () const = 0 ;
 	virtual void initialize () = 0 ;
 	virtual QUAD abi_reserve () const = 0 ;
 	virtual QUAD ctx_reserve () const = 0 ;

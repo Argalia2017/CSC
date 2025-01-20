@@ -21,39 +21,39 @@ exports CFat<PathHolder> PathHolder::hold (CREF<PathLayout> that) {
 	return CFat<PathHolder> (External<PathHolder ,PathLayout>::declare () ,that) ;
 }
 
-template class External<FileProcHolder ,FileProcImplLayout> ;
+template class External<FileProcHolder ,FileProcLayout> ;
 
 exports CREF<FileProcLayout> FileProcHolder::instance () {
 	return memorize ([&] () {
 		FileProcLayout ret ;
-		ret.mThis = External<FileProcHolder ,FileProcImplLayout>::declare ().xmake () ;
+		ret.mThis = External<FileProcHolder ,FileProcLayout>::create () ;
 		FileProcHolder::hold (ret)->initialize () ;
 		return move (ret) ;
 	}) ;
 }
 
 exports VFat<FileProcHolder> FileProcHolder::hold (VREF<FileProcImplLayout> that) {
-	return VFat<FileProcHolder> (External<FileProcHolder ,FileProcImplLayout>::declare () ,that) ;
+	return VFat<FileProcHolder> (External<FileProcHolder ,FileProcLayout>::declare () ,that) ;
 }
 
 exports CFat<FileProcHolder> FileProcHolder::hold (CREF<FileProcImplLayout> that) {
-	return CFat<FileProcHolder> (External<FileProcHolder ,FileProcImplLayout>::declare () ,that) ;
+	return CFat<FileProcHolder> (External<FileProcHolder ,FileProcLayout>::declare () ,that) ;
 }
 
-template class External<StreamFileHolder ,StreamFileImplLayout> ;
+template class External<StreamFileHolder ,StreamFileLayout> ;
 
 exports StreamFileLayout StreamFileHolder::create () {
 	StreamFileLayout ret ;
-	ret.mThis = External<StreamFileHolder ,StreamFileImplLayout>::declare ().xmake () ;
+	ret.mThis = External<StreamFileHolder ,StreamFileLayout>::create () ;
 	return move (ret) ;
 }
 
 exports VFat<StreamFileHolder> StreamFileHolder::hold (VREF<StreamFileImplLayout> that) {
-	return VFat<StreamFileHolder> (External<StreamFileHolder ,StreamFileImplLayout>::declare () ,that) ;
+	return VFat<StreamFileHolder> (External<StreamFileHolder ,StreamFileLayout>::declare () ,that) ;
 }
 
 exports CFat<StreamFileHolder> StreamFileHolder::hold (CREF<StreamFileImplLayout> that) {
-	return CFat<StreamFileHolder> (External<StreamFileHolder ,StreamFileImplLayout>::declare () ,that) ;
+	return CFat<StreamFileHolder> (External<StreamFileHolder ,StreamFileLayout>::declare () ,that) ;
 }
 
 struct StreamFileByteWriterImplLayout {
@@ -176,54 +176,54 @@ exports CFat<StreamFileTextWriterHolder> StreamFileTextWriterHolder::hold (CREF<
 	return CFat<StreamFileTextWriterHolder> (StreamFileTextWriterImplHolder () ,that) ;
 }
 
-template class External<BufferFileHolder ,BufferFileImplLayout> ;
+template class External<BufferFileHolder ,BufferFileLayout> ;
 
 exports BufferFileLayout BufferFileHolder::create () {
 	BufferFileLayout ret ;
-	ret.mThis = External<BufferFileHolder ,BufferFileImplLayout>::declare ().xmake () ;
+	ret.mThis = External<BufferFileHolder ,BufferFileLayout>::create () ;
 	return move (ret) ;
 }
 
 exports VFat<BufferFileHolder> BufferFileHolder::hold (VREF<BufferFileImplLayout> that) {
-	return VFat<BufferFileHolder> (External<BufferFileHolder ,BufferFileImplLayout>::declare () ,that) ;
+	return VFat<BufferFileHolder> (External<BufferFileHolder ,BufferFileLayout>::declare () ,that) ;
 }
 
 exports CFat<BufferFileHolder> BufferFileHolder::hold (CREF<BufferFileImplLayout> that) {
-	return CFat<BufferFileHolder> (External<BufferFileHolder ,BufferFileImplLayout>::declare () ,that) ;
+	return CFat<BufferFileHolder> (External<BufferFileHolder ,BufferFileLayout>::declare () ,that) ;
 }
 
-template class External<UartFileHolder ,UartFileImplLayout> ;
+template class External<UartFileHolder ,UartFileLayout> ;
 
 exports UartFileLayout UartFileHolder::create () {
 	UartFileLayout ret ;
-	ret.mThis = External<UartFileHolder ,UartFileImplLayout>::declare ().xmake () ;
+	ret.mThis = External<UartFileHolder ,UartFileLayout>::create () ;
 	return move (ret) ;
 }
 
 exports VFat<UartFileHolder> UartFileHolder::hold (VREF<UartFileImplLayout> that) {
-	return VFat<UartFileHolder> (External<UartFileHolder ,UartFileImplLayout>::declare () ,that) ;
+	return VFat<UartFileHolder> (External<UartFileHolder ,UartFileLayout>::declare () ,that) ;
 }
 
 exports CFat<UartFileHolder> UartFileHolder::hold (CREF<UartFileImplLayout> that) {
-	return CFat<UartFileHolder> (External<UartFileHolder ,UartFileImplLayout>::declare () ,that) ;
+	return CFat<UartFileHolder> (External<UartFileHolder ,UartFileLayout>::declare () ,that) ;
 }
 
-template class External<ConsoleHolder ,ConsoleImplLayout> ;
+template class External<ConsoleHolder ,ConsoleLayout> ;
 
 exports CREF<ConsoleLayout> ConsoleHolder::instance () {
 	return memorize ([&] () {
 		ConsoleLayout ret ;
-		ret.mThis = External<ConsoleHolder ,ConsoleImplLayout>::declare ().xmake () ;
+		ret.mThis = External<ConsoleHolder ,ConsoleLayout>::create () ;
 		ConsoleHolder::hold (ret)->initialize () ;
 		return move (ret) ;
 	}) ;
 }
 
 exports VFat<ConsoleHolder> ConsoleHolder::hold (VREF<ConsoleImplLayout> that) {
-	return VFat<ConsoleHolder> (External<ConsoleHolder ,ConsoleImplLayout>::declare () ,that) ;
+	return VFat<ConsoleHolder> (External<ConsoleHolder ,ConsoleLayout>::declare () ,that) ;
 }
 
 exports CFat<ConsoleHolder> ConsoleHolder::hold (CREF<ConsoleImplLayout> that) {
-	return CFat<ConsoleHolder> (External<ConsoleHolder ,ConsoleImplLayout>::declare () ,that) ;
+	return CFat<ConsoleHolder> (External<ConsoleHolder ,ConsoleLayout>::declare () ,that) ;
 }
 } ;
