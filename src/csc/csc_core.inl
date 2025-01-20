@@ -280,6 +280,8 @@ public:
 	}
 
 	void destroy () override {
+		if (fake.mLayout == ZERO)
+			return ;
 		if ifdo (TRUE) {
 			if (fake.mHandle < REFIMPLLAYOUT_MIN_HANDLE)
 				discard ;
@@ -292,7 +294,6 @@ public:
 				const auto r2x = ptr (fake).mHeap ;
 				r2x.free (fake.mHandle) ;
 			}
-			fake.mHandle = ZERO ;
 		}
 		fake.mHandle = ZERO ;
 		fake.mLayout = ZERO ;

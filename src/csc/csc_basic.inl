@@ -442,6 +442,9 @@ public:
 		if (exist ())
 			return ;
 		fake.mHolder = inline_vptr (holder) ;
+		fake.mBuffer = ZERO ;
+		fake.mSize = 0 ;
+		fake.mStep = 0 ;
 	}
 
 	void initialize (CREF<Unknown> holder ,CREF<LENGTH> size_) override {
@@ -483,16 +486,19 @@ public:
 	}
 
 	void destroy () override {
-		if (!exist ())
+		if (fake.mHolder == ZERO)
 			return ;
-		if (fake.mThis == NULL)
-			return ;
-		if (fake.mThis->mCapacity == USED)
-			return ;
-		const auto r1x = RFat<ReflectElement> (unknown ())->element () ;
-		const auto r2x = RFat<ReflectDestroy> (r1x) ;
-		r2x->destroy (self ,fake.mThis->mCapacity) ;
-		BoxHolder::hold (raw ())->release () ;
+		if ifdo (TRUE) {
+			if (fake.mThis == NULL)
+				discard ;
+			if (fake.mThis->mCapacity <= 0)
+				discard ;
+			const auto r1x = RFat<ReflectElement> (unknown ())->element () ;
+			const auto r2x = RFat<ReflectDestroy> (r1x) ;
+			r2x->destroy (self ,fake.mThis->mCapacity) ;
+			BoxHolder::hold (raw ())->release () ;
+		}
+		fake.mHolder = ZERO ;
 	}
 
 	BOOL exist () const override {
@@ -557,30 +563,23 @@ public:
 			return ;
 		assert (!fixed ()) ;
 		const auto r1x = inline_min (size_ ,size ()) ;
-		auto rax = Ref<RefBufferImplLayout> () ;
+		auto rax = RefBufferLayout () ;
+		rax.mHolder = fake.mHolder ;
 		const auto r2x = RFat<ReflectElement> (unknown ())->element () ;
-		RefHolder::hold (rax)->initialize (RefUnknownBinder<RefBufferImplLayout> () ,r2x ,size_) ;
+		RefHolder::hold (rax.mThis)->initialize (RefUnknownBinder<RefBufferImplLayout> () ,r2x ,size_) ;
+		BoxHolder::hold (rax.mThis->mValue)->initialize (r2x) ;
+		rax.mBuffer = address (BoxHolder::hold (rax.mThis->mValue)->self) ;
+		rax.mSize = size_ ;
 		const auto r3x = RFat<ReflectSize> (r2x) ;
+		rax.mStep = r3x->type_size () ;
 		const auto r4x = r3x->type_size () * r1x ;
-		BoxHolder::hold (rax->mValue)->initialize (r2x) ;
-		const auto r5x = address (BoxHolder::hold (rax->mValue)->self) ;
-		inline_memcpy (Pointer::make (r5x) ,self ,r4x) ;
-		const auto r6x = r5x + r4x ;
+		inline_memcpy (Pointer::make (rax.mBuffer) ,self ,r4x) ;
+		inline_memset (self ,r4x) ;
+		const auto r6x = rax.mBuffer + r4x ;
 		const auto r7x = RFat<ReflectCreate> (r2x) ;
 		r7x->create (Pointer::make (r6x) ,size_ - r1x) ;
-		if ifdo (TRUE) {
-			if (fake.mThis == NULL)
-				discard ;
-			const auto r8x = address (self) + r4x ;
-			const auto r9x = RFat<ReflectDestroy> (r2x) ;
-			r9x->destroy (Pointer::make (r8x) ,size () - r1x) ;
-			BoxHolder::hold (raw ())->release () ;
-		}
-		swap (fake.mThis ,rax) ;
-		fake.mBuffer = r5x ;
-		fake.mSize = size_ ;
-		fake.mStep = r3x->type_size () ;
-		fake.mThis->mCapacity = size_ ;
+		rax.mThis->mCapacity = size_ ;
+		swap (fake ,rax) ;
 	}
 } ;
 
