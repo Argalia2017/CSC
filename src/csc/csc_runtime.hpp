@@ -324,18 +324,21 @@ struct MakeMutexHolder implement Interface {
 
 inline Mutex OnceMutex () {
 	Mutex ret ;
+	ret.mThis = MutexHolder::create () ;
 	MakeMutexHolder::hold (ret)->make_OnceMutex () ;
 	return move (ret) ;
 }
 
 inline Mutex SharedMutex () {
 	Mutex ret ;
+	ret.mThis = MutexHolder::create () ;
 	MakeMutexHolder::hold (ret)->make_SharedMutex () ;
 	return move (ret) ;
 }
 
 inline Mutex UniqueMutex () {
 	Mutex ret ;
+	ret.mThis = MutexHolder::create () ;
 	MakeMutexHolder::hold (ret)->make_UniqueMutex () ;
 	return move (ret) ;
 }

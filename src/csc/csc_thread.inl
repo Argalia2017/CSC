@@ -88,14 +88,10 @@ public:
 	void friend_execute (CREF<INDEX> slot) override {
 		try {
 			while (TRUE) {
-				if ifdo (TRUE) {
-					if (fake.mThreadQueue[slot].good ())
-						discard ;
-					poll (slot) ;
+				poll (slot) ;
+				for (auto &&i : fake.mThreadQueue[slot]) {
+					fake.mThreadFunc (i) ;
 				}
-				INDEX ix = fake.mThreadQueue[slot].peek () ;
-				fake.mThreadFunc (ix) ;
-				fake.mThreadQueue[slot].next () ;
 			}
 		} catch (CREF<Exception> e) {
 			noop (e) ;
@@ -132,7 +128,6 @@ public:
 		const auto r2x = MathProc::max_of (r1x / 2 ,LENGTH (1)) ;
 		const auto r3x = MathProc::min_of (r2x ,fake.mItemQueue[ix].length ()) ;
 		fake.mThreadLoadLength[slot] = r3x ;
-		fake.mItemLoadLength += fake.mThreadLoadLength[slot] ;
 		auto &&rbx = keep[TYPE<IndexIteratorLayout>::expr] (fake.mItemQueue[ix]) ;
 		fake.mThreadQueue[slot] = IndexIterator (rbx.mBegin ,rbx.mBegin + r3x) ;
 		fake.mItemQueue[ix] = IndexIterator (rbx.mBegin + r3x ,rbx.mEnd) ;
