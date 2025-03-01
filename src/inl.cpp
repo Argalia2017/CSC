@@ -32,6 +32,7 @@
 
 #ifdef __CSC_COMPILER_MSVC__
 #define __CSC_API_WITH_EIGEN__
+#define __CSC_API_WITH_NANOFLANN__
 
 #ifdef __CSC_VER_DEBUG__
 #define __CSC_API_WITH_FREEIMAGE__
@@ -59,6 +60,12 @@
 #ifdef __CSC_API_WITH_EIGEN__
 #ifdef __CSC_PLATFORM_X64__
 #include <csc_matrix.eigen.inl>
+#endif
+#endif
+
+#ifdef __CSC_API_WITH_NANOFLANN__
+#ifdef __CSC_PLATFORM_X64__
+#include <csc_matrix.nanoflann.inl>
 #endif
 #endif
 

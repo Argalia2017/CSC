@@ -55,6 +55,7 @@
     <None Include="..\..\src\csc\csc_math.inl" />
     <None Include="..\..\src\csc\csc_matrix.eigen.inl" />
     <None Include="..\..\src\csc\csc_matrix.inl" />
+    <None Include="..\..\src\csc\csc_matrix.nanoflann.inl" />
     <None Include="..\..\src\csc\csc_runtime.inl" />
     <None Include="..\..\src\csc\csc_runtime.linux.inl" />
     <None Include="..\..\src\csc\csc_runtime.windows.inl" />
@@ -175,6 +176,7 @@
       <WarningLevel>Level3</WarningLevel>
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <PreprocessorDefinitions>_UNITTEST;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <OpenMPSupport>true</OpenMPSupport>
     </ClCompile>
     <Link />
     <PreBuildEvent />

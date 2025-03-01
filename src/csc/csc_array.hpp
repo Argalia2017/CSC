@@ -143,6 +143,8 @@ struct ArrayHolder implement Interface {
 	virtual LENGTH size () const = 0 ;
 	virtual LENGTH step () const = 0 ;
 	virtual LENGTH length () const = 0 ;
+	virtual VREF<Pointer> self_m () leftvalue = 0 ;
+	virtual CREF<Pointer> self_m () const leftvalue = 0 ;
 	virtual VREF<Pointer> at (CREF<INDEX> index) leftvalue = 0 ;
 	virtual CREF<Pointer> at (CREF<INDEX> index) const leftvalue = 0 ;
 	virtual INDEX ibegin () const = 0 ;
@@ -243,6 +245,22 @@ public:
 
 	LENGTH length () const {
 		return ArrayHolder::hold (thiz)->length () ;
+	}
+
+	VREF<ARR<A>> self_m () leftvalue {
+		return ArrayHolder::hold (thiz)->self ;
+	}
+
+	forceinline operator VREF<ARR<A>> () leftvalue {
+		return self ;
+	}
+
+	CREF<ARR<A>> self_m () const leftvalue {
+		return ArrayHolder::hold (thiz)->self ;
+	}
+
+	forceinline operator CREF<ARR<A>> () const leftvalue {
+		return self ;
 	}
 
 	VREF<A> at (CREF<INDEX> index) leftvalue {
@@ -349,6 +367,7 @@ struct StringHolder implement Interface {
 	virtual void initialize (CREF<LENGTH> size_ ,CREF<LENGTH> step_) = 0 ;
 	virtual void initialize (CREF<StringLayout> that) = 0 ;
 	virtual void clear () = 0 ;
+	virtual FLAG encode () const = 0 ;
 	virtual LENGTH size () const = 0 ;
 	virtual LENGTH step () const = 0 ;
 	virtual LENGTH length () const = 0 ;
@@ -432,6 +451,10 @@ public:
 
 	void clear () {
 		return StringHolder::hold (thiz)->clear () ;
+	}
+
+	FLAG encode () const {
+		return StringHolder::hold (thiz)->encode () ;
 	}
 
 	LENGTH size () const {
@@ -574,6 +597,10 @@ public:
 		return StringHolder::hold (thiz)->splice (index ,item) ;
 	}
 
+	Slice segment () const {
+		return segment (0 ,length ()) ;
+	}
+
 	Slice segment (CREF<INDEX> begin_ ,CREF<INDEX> end_) const {
 		return StringHolder::hold (thiz)->segment (begin_ ,end_) ;
 	}
@@ -602,6 +629,7 @@ struct DequeHolder implement Interface {
 	virtual INDEX iend () const = 0 ;
 	virtual INDEX inext (CREF<INDEX> index) const = 0 ;
 	virtual BOOL empty () const = 0 ;
+	virtual BOOL full () const = 0 ;
 	virtual INDEX head () const = 0 ;
 	virtual INDEX tail () const = 0 ;
 	virtual void add (RREF<BoxLayout> item) = 0 ;
@@ -714,6 +742,10 @@ public:
 
 	BOOL empty () const {
 		return DequeHolder::hold (thiz)->empty () ;
+	}
+
+	BOOL full () const {
+		return DequeHolder::hold (thiz)->full () ;
 	}
 
 	INDEX head () const {
@@ -834,6 +866,7 @@ struct PriorityHolder implement Interface {
 	virtual INDEX iend () const = 0 ;
 	virtual INDEX inext (CREF<INDEX> index) const = 0 ;
 	virtual BOOL empty () const = 0 ;
+	virtual BOOL full () const = 0 ;
 	virtual INDEX head () const = 0 ;
 	virtual void add (RREF<BoxLayout> item) = 0 ;
 	virtual void take () = 0 ;
@@ -942,6 +975,10 @@ public:
 		return PriorityHolder::hold (thiz)->empty () ;
 	}
 
+	BOOL full () const {
+		return PriorityHolder::hold (thiz)->full () ;
+	}
+
 	INDEX head () const {
 		return PriorityHolder::hold (thiz)->head () ;
 	}
@@ -994,6 +1031,7 @@ struct ListHolder implement Interface {
 	virtual INDEX iend () const = 0 ;
 	virtual INDEX inext (CREF<INDEX> index) const = 0 ;
 	virtual BOOL empty () const = 0 ;
+	virtual BOOL full () const = 0 ;
 	virtual INDEX head () const = 0 ;
 	virtual INDEX tail () const = 0 ;
 	virtual void add (RREF<BoxLayout> item) = 0 ;
@@ -1110,6 +1148,10 @@ public:
 
 	BOOL empty () const {
 		return ListHolder::hold (thiz)->empty () ;
+	}
+
+	BOOL full () const {
+		return ListHolder::hold (thiz)->full () ;
 	}
 
 	INDEX head () const {
@@ -1245,6 +1287,7 @@ protected:
 	using ArrayListRealLayout<A>::mList ;
 	using ArrayListRealLayout<A>::mRange ;
 	using ArrayListRealLayout<A>::mTop ;
+	using ArrayListRealLayout<A>::mRemap ;
 
 public:
 	implicit ArrayList () = default ;
@@ -1354,13 +1397,13 @@ struct SortedMapNode implement AllocatorNode {
 	INDEX mDown ;
 } ;
 
-struct SortedMapImplLayout {
+struct SortedMapRoot {
 	Allocator<Pointer ,SortedMapNode> mList ;
 	INDEX mCheck ;
 } ;
 
 struct SortedMapLayout {
-	SharedRef<SortedMapImplLayout> mThis ;
+	Ref<SortedMapRoot> mThis ;
 	INDEX mRoot ;
 	RefBuffer<INDEX> mRange ;
 	INDEX mWrite ;
@@ -1379,6 +1422,7 @@ struct SortedMapHolder implement Interface {
 	virtual LENGTH size () const = 0 ;
 	virtual LENGTH step () const = 0 ;
 	virtual LENGTH length () const = 0 ;
+	virtual VREF<INDEX> at (CREF<INDEX> index) leftvalue = 0 ;
 	virtual CREF<INDEX> at (CREF<INDEX> index) const leftvalue = 0 ;
 	virtual INDEX ibegin () const = 0 ;
 	virtual INDEX iend () const = 0 ;
@@ -1463,6 +1507,14 @@ public:
 
 	LENGTH length () const {
 		return SortedMapHolder::hold (thiz)->length () ;
+	}
+
+	VREF<INDEX> at (CREF<INDEX> index) leftvalue {
+		return SortedMapHolder::hold (thiz)->at (index) ;
+	}
+
+	forceinline VREF<INDEX> operator[] (CREF<INDEX> index) leftvalue {
+		return at (index) ;
 	}
 
 	CREF<INDEX> at (CREF<INDEX> index) const leftvalue {

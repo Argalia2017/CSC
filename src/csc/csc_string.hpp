@@ -14,13 +14,12 @@
 
 namespace CSC {
 struct StringProcImplLayout ;
-
-struct StringProcLayout implement ThisLayout<Ref<StringProcImplLayout>> {} ;
+struct StringProcLayout implement OfThis<UniqueRef<StringProcImplLayout>> {} ;
 
 struct StringProcHolder implement Interface {
 	imports CREF<StringProcLayout> instance () ;
-	imports VFat<StringProcHolder> hold (VREF<StringProcLayout> that) ;
-	imports CFat<StringProcHolder> hold (CREF<StringProcLayout> that) ;
+	imports VFat<StringProcHolder> hold (VREF<StringProcImplLayout> that) ;
+	imports CFat<StringProcHolder> hold (CREF<StringProcImplLayout> that) ;
 
 	virtual void initialize () = 0 ;
 	virtual String<STRA> stra_from_strw (CREF<String<STRW>> a) const = 0 ;
@@ -60,9 +59,6 @@ struct StringProcHolder implement Interface {
 } ;
 
 class StringProc implement StringProcLayout {
-protected:
-	using StringProcLayout::mThis ;
-
 public:
 	static CREF<StringProc> instance () {
 		return keep[TYPE<StringProc>::expr] (StringProcHolder::instance ()) ;
@@ -613,18 +609,18 @@ public:
 	}
 } ;
 
+struct PlyParserImplLayout ;
+
 struct PlyParserGuide {
-	INDEX mElementIndex ;
+	INDEX mElement ;
 	Deque<INDEX> mProperty ;
-	INDEX mPropertyIndex ;
-	INDEX mLineIndex ;
+	INDEX mCol ;
+	INDEX mRow ;
 	INDEX mPlyBegin ;
 	INDEX mPlyEnd ;
 	INDEX mPlyIndex ;
 	BOOL mPlyListMode ;
 } ;
-
-struct PlyParserImplLayout ;
 
 struct PlyParserLayout {
 	Ref<PlyParserImplLayout> mThis ;

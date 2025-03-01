@@ -122,8 +122,17 @@
 #pragma warning (disable :5045) //@info: warning C5045: 'xxx': move assignment operator was implicitly defined as deleted
 #pragma warning (disable :5246) //@info: warning C5246: 'xxx': the initialization of a subobject should be wrapped in braces
 #pragma warning (disable :5039) //@info: warning C5039: 'xxx': pointer or reference to potentially throwing function passed to 'xxx' function under -EHc. Undefined behavior may occur if this function throws an exception.
-#pragma warning (disable :26495) //@info: Variable 'xxx' is uninitialized. Always initialize a member variable (type.6).
-#pragma warning (disable :26820) //@info: This is a potentially expensive copy operation. Consider using a reference unless a copy is required (p.9).
+#pragma warning (disable :26440) //@info: warning C26440: Function 'xxx' can be declared 'noexcept' (f.6).
+#pragma warning (disable :26447) //@info: warning C26447: The function is declared 'noexcept' but calls function 'xxx' which may throw exceptions (f.6).
+#pragma warning (disable :26475) //@info: warning C26475: Do not use function style casts (es.49). Prefer 'Type{value}' over 'Type(value)'..
+#pragma warning (disable :26485) //@info: warning C26485: Expression 'xxx': No array to pointer decay (bounds.3).
+#pragma warning (disable :26490) //@info: warning C26490: Don't use reinterpret_cast (type.1).
+#pragma warning (disable :26493) //@info: warning C26494: Don't use C-style casts (type.4).
+#pragma warning (disable :26495) //@info: warning C26495: Variable 'xxx' is uninitialized. Always initialize a member variable (type.6).
+#pragma warning (disable :26497) //@info: warning C26497: You can attempt to make 'xxx' constexpr unless it contains any undefined behavior (f.4).
+#pragma warning (disable :26496) //@info: warning C26496: The variable 'xxx' does not change after construction, mark it as const (con.4).
+#pragma warning (disable :26814) //@info: warning C26814: The const variable 'r5x' can be computed at compile-time. Consider using constexpr (con.5).
+#pragma warning (disable :26820) //@info: warning C26820: This is a potentially expensive copy operation. Consider using a reference unless a copy is required (p.9).
 #endif
 
 #ifdef __CSC_COMPILER_GNUC__
@@ -145,6 +154,7 @@
 #endif
 
 #include "csc_end.h"
+
 #ifdef __CSC_COMPILER_GNUC__
 #if __GLIBCXX__ <= 20230528L
 //@fatal: GCC is so bad
@@ -175,7 +185,7 @@ class initializer_list ;
 #endif
 
 #ifdef __CSC_COMPILER_CLANG__
-#define __macro_dllextern
+#define __macro_dllextern __declspec (dllexport)
 #endif
 #endif
 
@@ -273,7 +283,7 @@ class initializer_list ;
 #endif
 
 #ifdef __CSC_VER_UNITTEST__
-#define __macro_assert(...) do { if (__VA_ARGS__) break ; if (inline_unittest ()) { __macro_break () ; } inline_abort () ; } while (false)
+#define __macro_assert(...) do { if (__VA_ARGS__) break ; if (inline_unittest ()) { __macro_break () ; } else { inline_abort () ; } } while (false)
 #endif
 
 #ifdef __CSC_VER_RELEASE__
@@ -583,6 +593,36 @@ using MACRO_IS_TRIVIAL_DESTRUCTIBLE = ENUM<(__is_trivially_destructible (A))> ;
 
 template <class A ,class B>
 using MACRO_IS_EXTEND = ENUM<(__is_base_of (A ,B))> ;
+
+#ifndef __macro_memcpy
+#ifdef __CSC_COMPILER_MSVC__
+#define __macro_memcpy invoke
+#define __macro_memset invoke
+#define __macro_memcmp invoke
+#endif
+
+#ifdef __CSC_COMPILER_GNUC__
+#define __macro_memcpy(a ,b ,c) (void) __builtin_memcpy ((&a) ,(&b) ,c)
+#define __macro_memset(a ,b) (void) __builtin_memset ((&a) ,0 ,b)
+#define __macro_memcmp(a ,b ,c) CSC::FLAG (__builtin_memcmp ((&a) ,(&b) ,c))
+#endif
+
+#ifdef __CSC_COMPILER_CLANG__
+#define __macro_memcpy(a ,b ,c) (void) __builtin_memcpy ((&a) ,(&b) ,c)
+#define __macro_memset(a ,b) (void) __builtin_memset ((&a) ,0 ,b)
+#define __macro_memcmp(a ,b ,c) CSC::FLAG (__builtin_memcmp ((&a) ,(&b) ,c))
+#endif
+#endif
+
+#ifndef __macro_type_rtti
+#ifdef __CSC_CXX_RTTI__
+#define __macro_type_rtti ""
+#endif
+
+#ifndef __CSC_CXX_RTTI__
+#define __macro_type_rtti __macro_function
+#endif
+#endif
 } ;
 
 forceinline CSC::csc_pointer_t operator new (CSC::csc_size_t ,CSC::csc_placement_new_t where_) noexcept {

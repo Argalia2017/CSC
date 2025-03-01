@@ -205,16 +205,17 @@ template class External<ImageProcHolder ,ImageProcLayout> ;
 exports CREF<ImageProcLayout> ImageProcHolder::instance () {
 	return memorize ([&] () {
 		ImageProcLayout ret ;
+		ret.mThis = External<ImageProcHolder ,ImageProcLayout>::create () ;
 		ImageProcHolder::hold (ret)->initialize () ;
 		return move (ret) ;
 	}) ;
 }
 
-exports VFat<ImageProcHolder> ImageProcHolder::hold (VREF<ImageProcLayout> that) {
+exports VFat<ImageProcHolder> ImageProcHolder::hold (VREF<ImageProcImplLayout> that) {
 	return VFat<ImageProcHolder> (External<ImageProcHolder ,ImageProcLayout>::declare () ,that) ;
 }
 
-exports CFat<ImageProcHolder> ImageProcHolder::hold (CREF<ImageProcLayout> that) {
+exports CFat<ImageProcHolder> ImageProcHolder::hold (CREF<ImageProcImplLayout> that) {
 	return CFat<ImageProcHolder> (External<ImageProcHolder ,ImageProcLayout>::declare () ,that) ;
 }
 

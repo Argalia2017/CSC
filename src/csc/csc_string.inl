@@ -114,17 +114,15 @@ struct StringProcImplLayout {
 	UniqueRef<csc_locale_t> mStringLocale ;
 } ;
 
-class StringProcImplHolder final implement Fat<StringProcHolder ,StringProcLayout> {
+class StringProcImplHolder final implement Fat<StringProcHolder ,StringProcImplLayout> {
 public:
 	void initialize () override {
-		auto rax = StringProcImplLayout () ;
-		rax.mStringLocale = string_locale () ;
-		fake.mThis = Ref<StringProcImplLayout>::make (move (rax)) ;
+		fake.mStringLocale = string_locale () ;
 	}
 
 	String<STRA> stra_from_strw (CREF<String<STRW>> a) const override {
 		String<STRA> ret = String<STRA> (a.length () * 2 + 1) ;
-		string_stra_from_strw (ret ,a ,fake.mThis->mStringLocale) ;
+		string_stra_from_strw (ret ,a ,fake.mStringLocale) ;
 		return move (ret) ;
 	}
 
@@ -139,7 +137,7 @@ public:
 
 	String<STRW> strw_from_stra (CREF<String<STRA>> a) const override {
 		String<STRW> ret = String<STRW> (a.length () + 1) ;
-		string_strw_from_stra (ret ,a ,fake.mThis->mStringLocale) ;
+		string_strw_from_stra (ret ,a ,fake.mStringLocale) ;
 		return move (ret) ;
 	}
 
@@ -826,16 +824,17 @@ public:
 exports CREF<StringProcLayout> StringProcHolder::instance () {
 	return memorize ([&] () {
 		StringProcLayout ret ;
+		ret.mThis = UniqueRef<StringProcImplLayout>::make () ;
 		StringProcHolder::hold (ret)->initialize () ;
 		return move (ret) ;
 	}) ;
 }
 
-exports VFat<StringProcHolder> StringProcHolder::hold (VREF<StringProcLayout> that) {
+exports VFat<StringProcHolder> StringProcHolder::hold (VREF<StringProcImplLayout> that) {
 	return VFat<StringProcHolder> (StringProcImplHolder () ,that) ;
 }
 
-exports CFat<StringProcHolder> StringProcHolder::hold (CREF<StringProcLayout> that) {
+exports CFat<StringProcHolder> StringProcHolder::hold (CREF<StringProcImplLayout> that) {
 	return CFat<StringProcHolder> (StringProcImplHolder () ,that) ;
 }
 
@@ -870,7 +869,7 @@ public:
 		mTextReader->reset (mBackup) ;
 		mDeque.clear () ;
 		while (TRUE) {
-			if (mDeque.length () >= mDeque.size ())
+			if (mDeque.full ())
 				break ;
 			mTextReader.self >> mTop ;
 			mDeque.add (mTop) ;
@@ -894,7 +893,7 @@ public:
 		mBackup = mTextReader->backup () ;
 		mDeque.clear () ;
 		while (TRUE) {
-			if (mDeque.length () >= mDeque.size ())
+			if (mDeque.full ())
 				break ;
 			mTextReader.self >> mTop ;
 			mDeque.add (mTop) ;
@@ -925,7 +924,7 @@ public:
 
 class ScopeCounter implement Proxy {
 private:
-	using COUNTER_MAX_DEPTH = ENUM<256> ;
+	using SCOPECOUNTER_MAX_DEPTH = ENUM<256> ;
 
 protected:
 	Pin<LENGTH> mThat ;
@@ -939,7 +938,7 @@ public:
 		auto rax = LENGTH () ;
 		mThat.get (rax) ;
 		rax++ ;
-		assume (rax < COUNTER_MAX_DEPTH::expr) ;
+		assume (rax < SCOPECOUNTER_MAX_DEPTH::expr) ;
 		mThat.set (rax) ;
 	}
 
@@ -1451,7 +1450,7 @@ public:
 			return FALSE ;
 		if (!fake.mThis.exist ())
 			return TRUE ;
-		if (address (fake.mThis.self) != address (that.mThis.self))
+		if (address (fake.mThis->mTree) != address (that.mThis->mTree))
 			return FALSE ;
 		if (fake.mIndex != that.mIndex)
 			return FALSE ;
@@ -2109,7 +2108,7 @@ public:
 			return FALSE ;
 		if (!fake.mThis.exist ())
 			return TRUE ;
-		if (address (fake.mThis.self) != address (that.mThis.self))
+		if (address (fake.mThis->mTree) != address (that.mThis->mTree))
 			return FALSE ;
 		if (fake.mIndex != that.mIndex)
 			return FALSE ;
@@ -2898,7 +2897,7 @@ public:
 		auto rax = MakePlyParser (Ref<RefBuffer<BYTE>>::reference (stream)) ;
 		rax.generate () ;
 		fake.mThis = Ref<PlyParserImplLayout>::make (rax.poll ()) ;
-		fake.mGuide.mElementIndex = NONE ;
+		fake.mGuide.mElement = NONE ;
 	}
 
 	LENGTH element_size (CREF<Slice> element) const override {
@@ -2921,10 +2920,10 @@ public:
 	void guide_new (CREF<Slice> element) override {
 		INDEX ix = fake.mThis->mElementSet.map (element) ;
 		assume (ix != NONE) ;
-		fake.mGuide.mElementIndex = ix ;
+		fake.mGuide.mElement = ix ;
 		fake.mGuide.mProperty.clear () ;
-		fake.mGuide.mPropertyIndex = 0 ;
-		fake.mGuide.mLineIndex = NONE ;
+		fake.mGuide.mCol = 0 ;
+		fake.mGuide.mRow = NONE ;
 		fake.mGuide.mPlyBegin = 0 ;
 		fake.mGuide.mPlyEnd = 0 ;
 		fake.mGuide.mPlyIndex = 0 ;
@@ -2932,35 +2931,35 @@ public:
 	}
 
 	void guide_put (CREF<Slice> property) override {
-		INDEX ix = fake.mGuide.mElementIndex ;
+		INDEX ix = fake.mGuide.mElement ;
 		assume (ix != NONE) ;
 		INDEX jx = fake.mThis->mElementList[ix].mPropertySet.map (property) ;
 		assume (jx != NONE) ;
-		assert (fake.mGuide.mLineIndex == NONE) ;
+		assert (fake.mGuide.mRow == NONE) ;
 		fake.mGuide.mProperty.add (jx) ;
 	}
 
 	void guide_jmp () {
-		assert (fake.mGuide.mElementIndex != NONE) ;
-		INDEX ix = fake.mGuide.mElementIndex ;
+		assert (fake.mGuide.mElement != NONE) ;
+		INDEX ix = fake.mGuide.mElement ;
 		INDEX jx = NONE ;
 		auto act = TRUE ;
 		if ifdo (act) {
-			if (fake.mGuide.mLineIndex != NONE)
+			if (fake.mGuide.mRow != NONE)
 				discard ;
-			fake.mGuide.mLineIndex = 0 ;
-			fake.mGuide.mPropertyIndex = 0 ;
-			assume (fake.mGuide.mPropertyIndex < fake.mGuide.mProperty.length ()) ;
-			assume (fake.mGuide.mLineIndex < fake.mThis->mElementList[ix].mLineSize) ;
-			jx = fake.mGuide.mProperty[fake.mGuide.mPropertyIndex] ;
-			const auto r1x = fake.mGuide.mLineIndex * fake.mThis->mElementList[ix].mLineStep ;
+			fake.mGuide.mRow = 0 ;
+			fake.mGuide.mCol = 0 ;
+			assume (fake.mGuide.mCol < fake.mGuide.mProperty.length ()) ;
+			assume (fake.mGuide.mRow < fake.mThis->mElementList[ix].mLineSize) ;
+			jx = fake.mGuide.mProperty[fake.mGuide.mCol] ;
+			const auto r1x = fake.mGuide.mRow * fake.mThis->mElementList[ix].mLineStep ;
 			fake.mGuide.mPlyBegin = r1x + fake.mThis->mElementList[ix].mPropertyList[jx].mPlyBegin ;
 			fake.mGuide.mPlyEnd = r1x + fake.mThis->mElementList[ix].mPropertyList[jx].mPlyEnd ;
 			fake.mGuide.mPlyIndex = fake.mGuide.mPlyBegin ;
 			fake.mGuide.mPlyListMode = FALSE ;
 		}
 		if ifdo (act) {
-			jx = fake.mGuide.mProperty[fake.mGuide.mPropertyIndex] ;
+			jx = fake.mGuide.mProperty[fake.mGuide.mCol] ;
 			if ifdo (TRUE) {
 				if (fake.mGuide.mPlyListMode)
 					discard ;
@@ -2976,23 +2975,23 @@ public:
 				discard ;
 		}
 		if ifdo (act) {
-			fake.mGuide.mPropertyIndex++ ;
-			if (fake.mGuide.mPropertyIndex >= fake.mGuide.mProperty.length ())
+			fake.mGuide.mCol++ ;
+			if (fake.mGuide.mCol >= fake.mGuide.mProperty.length ())
 				discard ;
-			jx = fake.mGuide.mProperty[fake.mGuide.mPropertyIndex] ;
-			const auto r2x = fake.mGuide.mLineIndex * fake.mThis->mElementList[ix].mLineStep ;
+			jx = fake.mGuide.mProperty[fake.mGuide.mCol] ;
+			const auto r2x = fake.mGuide.mRow * fake.mThis->mElementList[ix].mLineStep ;
 			fake.mGuide.mPlyBegin = r2x + fake.mThis->mElementList[ix].mPropertyList[jx].mPlyBegin ;
 			fake.mGuide.mPlyEnd = r2x + fake.mThis->mElementList[ix].mPropertyList[jx].mPlyEnd ;
 			fake.mGuide.mPlyIndex = fake.mGuide.mPlyBegin ;
 			fake.mGuide.mPlyListMode = FALSE ;
 		}
 		if ifdo (act) {
-			fake.mGuide.mLineIndex++ ;
-			fake.mGuide.mPropertyIndex = 0 ;
-			if (fake.mGuide.mLineIndex >= fake.mThis->mElementList[ix].mLineSize)
+			fake.mGuide.mRow++ ;
+			fake.mGuide.mCol = 0 ;
+			if (fake.mGuide.mRow >= fake.mThis->mElementList[ix].mLineSize)
 				discard ;
-			jx = fake.mGuide.mProperty[fake.mGuide.mPropertyIndex] ;
-			const auto r3x = fake.mGuide.mLineIndex * fake.mThis->mElementList[ix].mLineStep ;
+			jx = fake.mGuide.mProperty[fake.mGuide.mCol] ;
+			const auto r3x = fake.mGuide.mRow * fake.mThis->mElementList[ix].mLineStep ;
 			fake.mGuide.mPlyBegin = r3x + fake.mThis->mElementList[ix].mPropertyList[jx].mPlyBegin ;
 			fake.mGuide.mPlyEnd = r3x + fake.mThis->mElementList[ix].mPropertyList[jx].mPlyEnd ;
 			fake.mGuide.mPlyIndex = fake.mGuide.mPlyBegin ;
@@ -3005,8 +3004,8 @@ public:
 
 	void read (VREF<BOOL> item) override {
 		guide_jmp () ;
-		INDEX ix = fake.mGuide.mElementIndex ;
-		INDEX jx = fake.mGuide.mProperty[fake.mGuide.mPropertyIndex] ;
+		INDEX ix = fake.mGuide.mElement ;
+		INDEX jx = fake.mGuide.mProperty[fake.mGuide.mCol] ;
 		auto &&rax = fake.mThis->mElementList[ix] ;
 		assume (rax.mPropertyList[jx].mType == PlyParserDataType::Bool) ;
 		item = bitwise[TYPE<BOOL>::expr] (Pointer::from (rax.mPlyBuffer[fake.mGuide.mPlyIndex])) ;
@@ -3015,8 +3014,8 @@ public:
 
 	void read (VREF<VAL32> item) override {
 		guide_jmp () ;
-		INDEX ix = fake.mGuide.mElementIndex ;
-		INDEX jx = fake.mGuide.mProperty[fake.mGuide.mPropertyIndex] ;
+		INDEX ix = fake.mGuide.mElement ;
+		INDEX jx = fake.mGuide.mProperty[fake.mGuide.mCol] ;
 		auto act = TRUE ;
 		if ifdo (act) {
 			if (fake.mGuide.mPlyListMode)
@@ -3036,8 +3035,8 @@ public:
 
 	void read (VREF<VAL64> item) override {
 		guide_jmp () ;
-		INDEX ix = fake.mGuide.mElementIndex ;
-		INDEX jx = fake.mGuide.mProperty[fake.mGuide.mPropertyIndex] ;
+		INDEX ix = fake.mGuide.mElement ;
+		INDEX jx = fake.mGuide.mProperty[fake.mGuide.mCol] ;
 		auto act = TRUE ;
 		if ifdo (act) {
 			if (fake.mGuide.mPlyListMode)
@@ -3057,8 +3056,8 @@ public:
 
 	void read (VREF<FLT32> item) override {
 		guide_jmp () ;
-		INDEX ix = fake.mGuide.mElementIndex ;
-		INDEX jx = fake.mGuide.mProperty[fake.mGuide.mPropertyIndex] ;
+		INDEX ix = fake.mGuide.mElement ;
+		INDEX jx = fake.mGuide.mProperty[fake.mGuide.mCol] ;
 		auto &&rax = fake.mThis->mElementList[ix] ;
 		assume (rax.mPropertyList[jx].mType == PlyParserDataType::Flt32) ;
 		item = bitwise[TYPE<FLT32>::expr] (Pointer::from (rax.mPlyBuffer[fake.mGuide.mPlyIndex])) ;
@@ -3067,8 +3066,8 @@ public:
 
 	void read (VREF<FLT64> item) override {
 		guide_jmp () ;
-		INDEX ix = fake.mGuide.mElementIndex ;
-		INDEX jx = fake.mGuide.mProperty[fake.mGuide.mPropertyIndex] ;
+		INDEX ix = fake.mGuide.mElement ;
+		INDEX jx = fake.mGuide.mProperty[fake.mGuide.mCol] ;
 		auto &&rax = fake.mThis->mElementList[ix] ;
 		assume (rax.mPropertyList[jx].mType == PlyParserDataType::Flt64) ;
 		item = bitwise[TYPE<FLT64>::expr] (Pointer::from (rax.mPlyBuffer[fake.mGuide.mPlyIndex])) ;
@@ -3077,8 +3076,8 @@ public:
 
 	void read (VREF<BYTE> item) override {
 		guide_jmp () ;
-		INDEX ix = fake.mGuide.mElementIndex ;
-		INDEX jx = fake.mGuide.mProperty[fake.mGuide.mPropertyIndex] ;
+		INDEX ix = fake.mGuide.mElement ;
+		INDEX jx = fake.mGuide.mProperty[fake.mGuide.mCol] ;
 		auto &&rax = fake.mThis->mElementList[ix] ;
 		assume (rax.mPropertyList[jx].mType == PlyParserDataType::Byte) ;
 		item = bitwise[TYPE<BYTE>::expr] (Pointer::from (rax.mPlyBuffer[fake.mGuide.mPlyIndex])) ;
@@ -3087,8 +3086,8 @@ public:
 
 	void read (VREF<WORD> item) override {
 		guide_jmp () ;
-		INDEX ix = fake.mGuide.mElementIndex ;
-		INDEX jx = fake.mGuide.mProperty[fake.mGuide.mPropertyIndex] ;
+		INDEX ix = fake.mGuide.mElement ;
+		INDEX jx = fake.mGuide.mProperty[fake.mGuide.mCol] ;
 		auto &&rax = fake.mThis->mElementList[ix] ;
 		assume (rax.mPropertyList[jx].mType == PlyParserDataType::Word) ;
 		item = bitwise[TYPE<WORD>::expr] (Pointer::from (rax.mPlyBuffer[fake.mGuide.mPlyIndex])) ;
@@ -3097,8 +3096,8 @@ public:
 
 	void read (VREF<CHAR> item) override {
 		guide_jmp () ;
-		INDEX ix = fake.mGuide.mElementIndex ;
-		INDEX jx = fake.mGuide.mProperty[fake.mGuide.mPropertyIndex] ;
+		INDEX ix = fake.mGuide.mElement ;
+		INDEX jx = fake.mGuide.mProperty[fake.mGuide.mCol] ;
 		auto &&rax = fake.mThis->mElementList[ix] ;
 		assume (rax.mPropertyList[jx].mType == PlyParserDataType::Char) ;
 		item = bitwise[TYPE<CHAR>::expr] (Pointer::from (rax.mPlyBuffer[fake.mGuide.mPlyIndex])) ;
@@ -3107,8 +3106,8 @@ public:
 
 	void read (VREF<QUAD> item) override {
 		guide_jmp () ;
-		INDEX ix = fake.mGuide.mElementIndex ;
-		INDEX jx = fake.mGuide.mProperty[fake.mGuide.mPropertyIndex] ;
+		INDEX ix = fake.mGuide.mElement ;
+		INDEX jx = fake.mGuide.mProperty[fake.mGuide.mCol] ;
 		auto &&rax = fake.mThis->mElementList[ix] ;
 		assume (rax.mPropertyList[jx].mType == PlyParserDataType::Quad) ;
 		item = bitwise[TYPE<QUAD>::expr] (Pointer::from (rax.mPlyBuffer[fake.mGuide.mPlyIndex])) ;

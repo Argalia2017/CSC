@@ -318,7 +318,9 @@ public:
 
 struct FunctionImplLayout ;
 
-struct FunctionLayout implement ThisLayout<Ref<FunctionImplLayout>> {} ;
+struct FunctionLayout {
+	Ref<FunctionImplLayout> mThis ;
+} ;
 
 struct FunctionHolder implement Interface {
 	imports VFat<FunctionHolder> hold (VREF<FunctionLayout> that) ;
@@ -375,7 +377,7 @@ public:
 } ;
 
 struct ReflectRecast implement Interface {
-	virtual FLAG recast (CREF<FLAG> pointer) const = 0 ;
+	virtual FLAG recast (CREF<FLAG> layout) const = 0 ;
 
 	forceinline static consteval FLAG expr_m () noexcept {
 		return 201 ;
@@ -385,8 +387,8 @@ struct ReflectRecast implement Interface {
 template <class A ,class B>
 class ReflectRecastBinder implement ReflectRecast {
 public:
-	FLAG recast (CREF<FLAG> pointer) const override {
-		auto &&rax = keep[TYPE<B>::expr] (Pointer::make (pointer)) ;
+	FLAG recast (CREF<FLAG> layout) const override {
+		auto &&rax = keep[TYPE<B>::expr] (Pointer::make (layout)) ;
 		return recast_impl (PHX ,TYPE<A>::expr ,rax) ;
 	}
 
@@ -410,11 +412,11 @@ struct AutoRefImplLayout ;
 
 struct AutoRefLayout {
 	Ref<AutoRefImplLayout> mThis ;
-	FLAG mPointer ;
+	FLAG mLayout ;
 
 public:
 	implicit AutoRefLayout () noexcept {
-		mPointer = ZERO ;
+		mLayout = ZERO ;
 	}
 
 	implicit ~AutoRefLayout () noexcept ;
@@ -458,7 +460,7 @@ template <class A>
 class AutoRef implement AutoRefLayout {
 protected:
 	using AutoRefLayout::mThis ;
-	using AutoRefLayout::mPointer ;
+	using AutoRefLayout::mLayout ;
 
 public:
 	implicit AutoRef () = default ;
@@ -545,11 +547,11 @@ struct SharedRefImplLayout ;
 
 struct SharedRefLayout {
 	Ref<SharedRefImplLayout> mThis ;
-	FLAG mPointer ;
+	FLAG mLayout ;
 
 public:
 	implicit SharedRefLayout () noexcept {
-		mPointer = ZERO ;
+		mLayout = ZERO ;
 	}
 
 	implicit ~SharedRefLayout () noexcept ;
@@ -573,7 +575,7 @@ struct SharedRefHolder implement Interface {
 
 	virtual void initialize (RREF<BoxLayout> item) = 0 ;
 	virtual void initialize (CREF<SharedRefLayout> that) = 0 ;
-	virtual void initialize (CREF<Unknown> holder ,CREF<FLAG> pointer) = 0 ;
+	virtual void initialize (CREF<Unknown> holder ,CREF<FLAG> layout) = 0 ;
 	virtual void destroy () = 0 ;
 	virtual BOOL exist () const = 0 ;
 	virtual VREF<BoxLayout> raw () leftvalue = 0 ;
@@ -591,7 +593,7 @@ template <class A>
 class SharedRef implement SharedRefLayout {
 protected:
 	using SharedRefLayout::mThis ;
-	using SharedRefLayout::mPointer ;
+	using SharedRefLayout::mLayout ;
 
 public:
 	implicit SharedRef () = default ;
@@ -624,10 +626,6 @@ public:
 	implicit SharedRef (RREF<SharedRef> that) = default ;
 
 	forceinline VREF<SharedRef> operator= (RREF<SharedRef> that) = default ;
-
-	SharedRef share () const {
-		return move (thiz) ;
-	}
 
 	BOOL exist () const {
 		return SharedRefHolder::hold (thiz)->exist () ;
@@ -673,11 +671,11 @@ struct UniqueRefImplLayout ;
 
 struct UniqueRefLayout {
 	Ref<UniqueRefImplLayout> mThis ;
-	FLAG mPointer ;
+	FLAG mLayout ;
 
 public:
 	implicit UniqueRefLayout () noexcept {
-		mPointer = ZERO ;
+		mLayout = ZERO ;
 	}
 
 	implicit ~UniqueRefLayout () noexcept ;
@@ -701,7 +699,7 @@ struct UniqueRefHolder implement Interface {
 
 	virtual void initialize (RREF<BoxLayout> item) = 0 ;
 	virtual void destroy () = 0 ;
-	virtual void use_owner (CREF<FunctionLayout> owner) = 0 ;
+	virtual void use_owner (CREF<Function<VREF<Pointer>>> owner) = 0 ;
 	virtual BOOL exist () const = 0 ;
 	virtual VREF<BoxLayout> raw () leftvalue = 0 ;
 	virtual CREF<BoxLayout> raw () const leftvalue = 0 ;
@@ -718,7 +716,7 @@ template <class A>
 class UniqueRef implement UniqueRefLayout {
 protected:
 	using UniqueRefLayout::mThis ;
-	using UniqueRefLayout::mPointer ;
+	using UniqueRefLayout::mLayout ;
 
 public:
 	implicit UniqueRef () = default ;
@@ -732,7 +730,7 @@ public:
 		auto rbx = Function<VREF<A>> (move (dtor)) ;
 		UniqueRefHolder::hold (thiz)->initialize (move (rax)) ;
 		ctor (BoxHolder::hold (raw ())->self) ;
-		UniqueRefHolder::hold (thiz)->use_owner (rbx) ;
+		UniqueRefHolder::hold (thiz)->use_owner (Pointer::from (rbx)) ;
 	}
 
 	template <class...ARG1>
@@ -974,9 +972,9 @@ public:
 } ;
 
 struct FarBufferLayout {
+	Ref<Pointer> mThis ;
 	Function<CREF<INDEX> ,VREF<Pointer>> mGetter ;
 	Function<CREF<INDEX> ,CREF<Pointer>> mSetter ;
-	Ref<Pointer> mThis ;
 	LENGTH mSize ;
 	LENGTH mStep ;
 	INDEX mIndex ;
@@ -989,8 +987,8 @@ struct FarBufferHolder implement Interface {
 	virtual void initialize (CREF<Unknown> holder ,CREF<LENGTH> size_) = 0 ;
 	virtual BOOL exist () const = 0 ;
 	virtual Unknown unknown () const = 0 ;
-	virtual void use_getter (CREF<FunctionLayout> getter) = 0 ;
-	virtual void use_setter (CREF<FunctionLayout> setter) = 0 ;
+	virtual void use_getter (CREF<Function<CREF<INDEX> ,VREF<Pointer>>> getter) = 0 ;
+	virtual void use_setter (CREF<Function<CREF<INDEX> ,CREF<Pointer>>> setter) = 0 ;
 	virtual LENGTH size () const = 0 ;
 	virtual LENGTH step () const = 0 ;
 	virtual VREF<Pointer> at (CREF<INDEX> index) leftvalue = 0 ;
@@ -1008,9 +1006,9 @@ public:
 template <class A>
 class FarBuffer implement FarBufferRealLayout<A> {
 protected:
+	using FarBufferRealLayout<A>::mThis ;
 	using FarBufferRealLayout<A>::mGetter ;
 	using FarBufferRealLayout<A>::mSetter ;
-	using FarBufferRealLayout<A>::mThis ;
 	using FarBufferRealLayout<A>::mSize ;
 	using FarBufferRealLayout<A>::mStep ;
 	using FarBufferRealLayout<A>::mIndex ;
@@ -1023,11 +1021,11 @@ public:
 	}
 
 	void use_getter (CREF<Function<CREF<INDEX> ,VREF<A>>> getter) {
-		return FarBufferHolder::hold (thiz)->use_getter (getter) ;
+		return FarBufferHolder::hold (thiz)->use_getter (Pointer::from (getter)) ;
 	}
 
 	void use_setter (CREF<Function<CREF<INDEX> ,CREF<A>>> setter) {
-		return FarBufferHolder::hold (thiz)->use_setter (setter) ;
+		return FarBufferHolder::hold (thiz)->use_setter (Pointer::from (setter)) ;
 	}
 
 	BOOL exist () const {
@@ -1160,6 +1158,7 @@ private:
 
 protected:
 	using AllocatorRealLayout<A ,B>::mAllocator ;
+	using AllocatorRealLayout<A ,B>::mOffset ;
 	using AllocatorRealLayout<A ,B>::mWidth ;
 	using AllocatorRealLayout<A ,B>::mLength ;
 	using AllocatorRealLayout<A ,B>::mFree ;
