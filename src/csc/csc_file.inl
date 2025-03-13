@@ -72,33 +72,33 @@ public:
 class StreamFileByteWriterImplHolder final implement Fat<StreamFileByteWriterHolder ,StreamFileByteWriterImplLayout> {
 public:
 	void initialize (CREF<String<STR>> file) override {
-		fake.mStreamFile = StreamFile (file) ;
-		fake.mStreamFile.open_w (0) ;
-		fake.mFileBuffer = RefBuffer<BYTE> (STREAMFILE_CHUNK_STEP::expr) ;
+		self.mStreamFile = StreamFile (file) ;
+		self.mStreamFile.open_w (0) ;
+		self.mFileBuffer = RefBuffer<BYTE> (STREAMFILE_CHUNK_STEP::expr) ;
 		set_writer () ;
 	}
 
 	void set_writer () {
-		fake.mFileWriter = ByteWriter (Ref<RefBuffer<BYTE>>::reference (fake.mFileBuffer)) ;
-		auto &&rax = fake ;
-		fake.mFileWriter.use_overflow ([&] (VREF<ByteWriter> writer) {
+		self.mFileWriter = ByteWriter (Ref<RefBuffer<BYTE>>::reference (self.mFileBuffer)) ;
+		auto &&rax = self ;
+		self.mFileWriter.use_overflow ([&] (VREF<ByteWriter> writer) {
 			rax.mStreamFile.write (rax.mFileBuffer) ;
 			rax.mFileWriter.reset () ;
 		}) ;
 	}
 
-	VREF<ByteWriter> self_m () leftvalue override {
-		return fake.mFileWriter ;
+	VREF<ByteWriter> deref_m () leftvalue override {
+		return self.mFileWriter ;
 	}
 
 	void flush () override {
-		const auto r1x = fake.mFileWriter.length () ;
+		const auto r1x = self.mFileWriter.length () ;
 		if (r1x == 0)
 			return ;
-		const auto r2x = FLAG (fake.mFileBuffer.self) ;
-		fake.mStreamFile.write (RefBuffer<BYTE>::reference (r2x ,r1x)) ;
-		fake.mFileWriter.reset () ;
-		fake.mStreamFile.flush () ;
+		const auto r2x = FLAG (self.mFileBuffer.deref) ;
+		self.mStreamFile.write (RefBuffer<BYTE>::reference (r2x ,r1x)) ;
+		self.mFileWriter.reset () ;
+		self.mStreamFile.flush () ;
 	}
 } ;
 
@@ -132,33 +132,33 @@ public:
 class StreamFileTextWriterImplHolder final implement Fat<StreamFileTextWriterHolder ,StreamFileTextWriterImplLayout> {
 public:
 	void initialize (CREF<String<STR>> file) override {
-		fake.mStreamFile = StreamFile (file) ;
-		fake.mStreamFile.open_w (0) ;
-		fake.mFileBuffer = RefBuffer<BYTE> (STREAMFILE_CHUNK_STEP::expr) ;
+		self.mStreamFile = StreamFile (file) ;
+		self.mStreamFile.open_w (0) ;
+		self.mFileBuffer = RefBuffer<BYTE> (STREAMFILE_CHUNK_STEP::expr) ;
 		set_writer () ;
 	}
 
 	void set_writer () {
-		fake.mFileWriter = TextWriter (Ref<RefBuffer<BYTE>>::reference (fake.mFileBuffer)) ;
-		auto &&rax = fake ;
-		fake.mFileWriter.use_overflow ([&] (VREF<TextWriter> writer) {
+		self.mFileWriter = TextWriter (Ref<RefBuffer<BYTE>>::reference (self.mFileBuffer)) ;
+		auto &&rax = self ;
+		self.mFileWriter.use_overflow ([&] (VREF<TextWriter> writer) {
 			rax.mStreamFile.write (rax.mFileBuffer) ;
 			rax.mFileWriter.reset () ;
 		}) ;
 	}
 
-	VREF<TextWriter> self_m () leftvalue override {
-		return fake.mFileWriter ;
+	VREF<TextWriter> deref_m () leftvalue override {
+		return self.mFileWriter ;
 	}
 
 	void flush () override {
-		const auto r1x = fake.mFileWriter.length () ;
+		const auto r1x = self.mFileWriter.length () ;
 		if (r1x == 0)
 			return ;
-		const auto r2x = FLAG (fake.mFileBuffer.self) ;
-		fake.mStreamFile.write (RefBuffer<BYTE>::reference (r2x ,r1x)) ;
-		fake.mFileWriter.reset () ;
-		fake.mStreamFile.flush () ;
+		const auto r2x = FLAG (self.mFileBuffer.deref) ;
+		self.mStreamFile.write (RefBuffer<BYTE>::reference (r2x ,r1x)) ;
+		self.mFileWriter.reset () ;
+		self.mStreamFile.flush () ;
 	}
 } ;
 

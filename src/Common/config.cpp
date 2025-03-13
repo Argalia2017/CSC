@@ -17,8 +17,8 @@ public:
 	}
 
 	void set_data_dire (CREF<String<STR>> dire) override {
-		fake.mDataPath = Path (dire) ;
-		const auto r1x = FileProc::lock_dire (fake.mDataPath) ;
+		self.mDataPath = Path (dire) ;
+		const auto r1x = FileProc::lock_dire (self.mDataPath) ;
 		assume (r1x) ;
 	}
 

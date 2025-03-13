@@ -183,99 +183,99 @@ public:
 	}
 
 	void reset () override {
-		return thiz.fake.reset () ;
+		return thiz.self.reset () ;
 	}
 
 	void reset (CREF<StreamShape> shape) override {
-		return thiz.fake.reset (shape) ;
+		return thiz.self.reset (shape) ;
 	}
 
 	StreamShape backup () const override {
-		return thiz.fake.backup () ;
+		return thiz.self.backup () ;
 	}
 
 	BOOL good () const override {
-		return thiz.fake.good () ;
+		return thiz.self.good () ;
 	}
 
 	void read (VREF<BOOL> item) override {
-		return thiz.fake.read (item) ;
+		return thiz.self.read (item) ;
 	}
 
 	void read (VREF<VAL32> item) override {
-		return thiz.fake.read (item) ;
+		return thiz.self.read (item) ;
 	}
 
 	void read (VREF<VAL64> item) override {
-		return thiz.fake.read (item) ;
+		return thiz.self.read (item) ;
 	}
 
 	void read (VREF<FLT32> item) override {
-		return thiz.fake.read (item) ;
+		return thiz.self.read (item) ;
 	}
 
 	void read (VREF<FLT64> item) override {
-		return thiz.fake.read (item) ;
+		return thiz.self.read (item) ;
 	}
 
 	void read (VREF<BYTE> item) override {
-		return thiz.fake.read (item) ;
+		return thiz.self.read (item) ;
 	}
 
 	void read (VREF<WORD> item) override {
-		return thiz.fake.read (item) ;
+		return thiz.self.read (item) ;
 	}
 
 	void read (VREF<CHAR> item) override {
-		return thiz.fake.read (item) ;
+		return thiz.self.read (item) ;
 	}
 
 	void read (VREF<QUAD> item) override {
-		return thiz.fake.read (item) ;
+		return thiz.self.read (item) ;
 	}
 
 	void read (VREF<STRU32> item) override {
-		return thiz.fake.read (item) ;
+		return thiz.self.read (item) ;
 	}
 
 	void read (CREF<Slice> item) override {
-		return thiz.fake.read (item) ;
+		return thiz.self.read (item) ;
 	}
 
 	void read (VREF<String<STRA>> item) override {
-		return thiz.fake.read (item) ;
+		return thiz.self.read (item) ;
 	}
 
 	void read (VREF<String<STRW>> item) override {
-		return thiz.fake.read (item) ;
+		return thiz.self.read (item) ;
 	}
 
 	void read (VREF<String<STRU8>> item) override {
-		return thiz.fake.read (item) ;
+		return thiz.self.read (item) ;
 	}
 
 	void read (VREF<String<STRU16>> item) override {
-		return thiz.fake.read (item) ;
+		return thiz.self.read (item) ;
 	}
 
 	void read (VREF<String<STRU32>> item) override {
-		return thiz.fake.read (item) ;
+		return thiz.self.read (item) ;
 	}
 
 	void read (CREF<typeof (CLS)> item) override {
-		return thiz.fake.read (item) ;
+		return thiz.self.read (item) ;
 	}
 
 	void read (CREF<typeof (BOM)> item) override {
-		return thiz.fake.read (item) ;
+		return thiz.self.read (item) ;
 	}
 
 	void read (CREF<typeof (GAP)> item) override {
-		return thiz.fake.read (item) ;
+		return thiz.self.read (item) ;
 	}
 
 	void read (CREF<typeof (EOS)> item) override {
-		return thiz.fake.read (item) ;
+		return thiz.self.read (item) ;
 	}
 } ;
 
@@ -554,7 +554,7 @@ public:
 	template <class ARG1 ,class = REQUIRE<HAS_FRIEND_READ<ARG1>>>
 	void read (VREF<ARG1> item) {
 		const auto r1x = FriendReaderBinder<ByteReader>::hold (thiz) ;
-		item.friend_read (r1x.self) ;
+		item.friend_read (r1x.deref) ;
 	}
 
 	template <class ARG1 ,class = REQUIRE<HAS_FRIEND_READ<ARG1>>>
@@ -839,7 +839,7 @@ public:
 	template <class ARG1 ,class = REQUIRE<HAS_FRIEND_READ<ARG1>>>
 	void read (VREF<ARG1> item) {
 		const auto r1x = FriendReaderBinder<TextReader>::hold (thiz) ;
-		item.friend_read (r1x.self) ;
+		item.friend_read (r1x.deref) ;
 	}
 
 	template <class ARG1 ,class = REQUIRE<HAS_FRIEND_READ<ARG1>>>
@@ -907,99 +907,99 @@ public:
 	}
 
 	void reset () override {
-		return thiz.fake.reset () ;
+		return thiz.self.reset () ;
 	}
 
 	void reset (CREF<StreamShape> shape) override {
-		return thiz.fake.reset (shape) ;
+		return thiz.self.reset (shape) ;
 	}
 
 	StreamShape backup () const override {
-		return thiz.fake.backup () ;
+		return thiz.self.backup () ;
 	}
 
 	BOOL good () const override {
-		return thiz.fake.good () ;
+		return thiz.self.good () ;
 	}
 
 	void write (CREF<BOOL> item) override {
-		return thiz.fake.write (item) ;
+		return thiz.self.write (item) ;
 	}
 
 	void write (CREF<VAL32> item) override {
-		return thiz.fake.write (item) ;
+		return thiz.self.write (item) ;
 	}
 
 	void write (CREF<VAL64> item) override {
-		return thiz.fake.write (item) ;
+		return thiz.self.write (item) ;
 	}
 
 	void write (CREF<FLT32> item) override {
-		return thiz.fake.write (item) ;
+		return thiz.self.write (item) ;
 	}
 
 	void write (CREF<FLT64> item) override {
-		return thiz.fake.write (item) ;
+		return thiz.self.write (item) ;
 	}
 
 	void write (CREF<BYTE> item) override {
-		return thiz.fake.write (item) ;
+		return thiz.self.write (item) ;
 	}
 
 	void write (CREF<WORD> item) override {
-		return thiz.fake.write (item) ;
+		return thiz.self.write (item) ;
 	}
 
 	void write (CREF<CHAR> item) override {
-		return thiz.fake.write (item) ;
+		return thiz.self.write (item) ;
 	}
 
 	void write (CREF<QUAD> item) override {
-		return thiz.fake.write (item) ;
+		return thiz.self.write (item) ;
 	}
 
 	void write (CREF<STRU32> item) override {
-		return thiz.fake.write (item) ;
+		return thiz.self.write (item) ;
 	}
 
 	void write (CREF<Slice> item) override {
-		return thiz.fake.write (item) ;
+		return thiz.self.write (item) ;
 	}
 
 	void write (CREF<String<STRA>> item) override {
-		return thiz.fake.write (item) ;
+		return thiz.self.write (item) ;
 	}
 
 	void write (CREF<String<STRW>> item) override {
-		return thiz.fake.write (item) ;
+		return thiz.self.write (item) ;
 	}
 
 	void write (CREF<String<STRU8>> item) override {
-		return thiz.fake.write (item) ;
+		return thiz.self.write (item) ;
 	}
 
 	void write (CREF<String<STRU16>> item) override {
-		return thiz.fake.write (item) ;
+		return thiz.self.write (item) ;
 	}
 
 	void write (CREF<String<STRU32>> item) override {
-		return thiz.fake.write (item) ;
+		return thiz.self.write (item) ;
 	}
 
 	void write (CREF<typeof (BOM)> item) override {
-		return thiz.fake.write (item) ;
+		return thiz.self.write (item) ;
 	}
 
 	void write (CREF<typeof (CLS)> item) override {
-		return thiz.fake.write (item) ;
+		return thiz.self.write (item) ;
 	}
 
 	void write (CREF<typeof (GAP)> item) override {
-		return thiz.fake.write (item) ;
+		return thiz.self.write (item) ;
 	}
 
 	void write (CREF<typeof (EOS)> item) override {
-		return thiz.fake.write (item) ;
+		return thiz.self.write (item) ;
 	}
 } ;
 
@@ -1271,7 +1271,7 @@ public:
 	template <class ARG1 ,class = REQUIRE<HAS_FRIEND_WRITE<ARG1>>>
 	void write (CREF<ARG1> item) {
 		const auto r1x = FriendWriterBinder<ByteWriter>::hold (thiz) ;
-		item.friend_write (r1x.self) ;
+		item.friend_write (r1x.deref) ;
 	}
 
 	template <class ARG1 ,class = REQUIRE<HAS_FRIEND_WRITE<ARG1>>>
@@ -1549,7 +1549,7 @@ public:
 	template <class ARG1 ,class = REQUIRE<HAS_FRIEND_WRITE<ARG1>>>
 	void write (CREF<ARG1> item) {
 		const auto r1x = FriendWriterBinder<TextWriter>::hold (thiz) ;
-		item.friend_write (r1x.self) ;
+		item.friend_write (r1x.deref) ;
 	}
 
 	template <class ARG1 ,class = REQUIRE<HAS_FRIEND_WRITE<ARG1>>>
@@ -1611,7 +1611,7 @@ public:
 	}
 
 	void friend_write (VREF<WriterBinder> writer) const override {
-		writer.write (thiz.fake) ;
+		writer.write (thiz.self) ;
 	}
 } ;
 
@@ -1750,7 +1750,7 @@ public:
 	template <class ARG1>
 	void friend_read (VREF<ARG1> reader) {
 		const auto r1x = FriendReaderBinder<ARG1>::hold (reader) ;
-		return StreamTextProc::read_keyword (r1x.self ,mThat) ;
+		return StreamTextProc::read_keyword (r1x.deref ,mThat) ;
 	}
 } ;
 
@@ -1766,7 +1766,7 @@ public:
 	template <class ARG1>
 	void friend_read (VREF<ARG1> reader) {
 		const auto r1x = FriendReaderBinder<ARG1>::hold (reader) ;
-		return StreamTextProc::read_scalar (r1x.self ,mThat) ;
+		return StreamTextProc::read_scalar (r1x.deref ,mThat) ;
 	}
 } ;
 
@@ -1788,13 +1788,13 @@ public:
 	template <class ARG1>
 	void friend_read (VREF<ARG1> reader) {
 		const auto r1x = FriendReaderBinder<ARG1>::hold (reader) ;
-		return StreamTextProc::read_escape (r1x.self ,mThat) ;
+		return StreamTextProc::read_escape (r1x.deref ,mThat) ;
 	}
 
 	template <class ARG1>
 	void friend_write (VREF<ARG1> writer) const {
 		const auto r1x = FriendWriterBinder<ARG1>::hold (writer) ;
-		return StreamTextProc::write_escape (r1x.self ,mThat) ;
+		return StreamTextProc::write_escape (r1x.deref ,mThat) ;
 	}
 } ;
 
@@ -1810,7 +1810,7 @@ public:
 	template <class ARG1>
 	void friend_read (VREF<ARG1> reader) {
 		const auto r1x = FriendReaderBinder<ARG1>::hold (reader) ;
-		return StreamTextProc::read_blank (r1x.self ,mThat) ;
+		return StreamTextProc::read_blank (r1x.deref ,mThat) ;
 	}
 } ;
 
@@ -1826,7 +1826,7 @@ public:
 	template <class ARG1>
 	void friend_read (VREF<ARG1> reader) {
 		const auto r1x = FriendReaderBinder<ARG1>::hold (reader) ;
-		return StreamTextProc::read_endline (r1x.self ,mThat) ;
+		return StreamTextProc::read_endline (r1x.deref ,mThat) ;
 	}
 } ;
 
@@ -1846,7 +1846,7 @@ public:
 	template <class ARG1>
 	void friend_write (VREF<ARG1> writer) const {
 		const auto r1x = FriendWriterBinder<ARG1>::hold (writer) ;
-		return StreamTextProc::write_aligned (r1x.self ,mNumber ,mAlign) ;
+		return StreamTextProc::write_aligned (r1x.deref ,mNumber ,mAlign) ;
 	}
 } ;
 

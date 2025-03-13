@@ -434,7 +434,7 @@ public:
 	}
 
 	void friend_execute (CREF<INDEX> slot) override {
-		thiz.fake.friend_execute (slot) ;
+		thiz.self.friend_execute (slot) ;
 	}
 } ;
 
@@ -725,7 +725,7 @@ inline CREF<A> Singleton<A>::instance () {
 		}
 		auto &&rbx = keep[TYPE<A>::expr] (Pointer::make (rax)) ;
 		return Ref<A>::reference (rbx) ;
-	}).self ;
+	}).deref ;
 }
 
 struct GlobalImplLayout ;
@@ -805,7 +805,7 @@ public:
 
 	A fetch () const {
 		auto rax = GlobalHolder::hold (thiz)->fetch () ;
-		return move (rax.rebind (TYPE<A>::expr).self) ;
+		return move (rax.rebind (TYPE<A>::expr).deref) ;
 	}
 
 	forceinline operator A () const {

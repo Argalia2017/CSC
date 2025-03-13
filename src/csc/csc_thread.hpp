@@ -31,29 +31,29 @@ public:
 	}
 
 	void before () override {
-		return thiz.fake.before () ;
+		return thiz.self.before () ;
 	}
 
 	BOOL tick (CREF<FLT64> deltatime) override {
-		return thiz.fake.tick (deltatime) ;
+		return thiz.self.tick (deltatime) ;
 	}
 
 	BOOL idle () override {
-		return thiz.fake.idle () ;
+		return thiz.self.idle () ;
 	}
 
 	void after () override {
-		return thiz.fake.after () ;
+		return thiz.self.after () ;
 	}
 
 	void execute () override {
-		thiz.fake.before () ;
+		thiz.self.before () ;
 		while (TRUE) {
-			while (thiz.fake.tick (0)) ;
-			if (!thiz.fake.idle ())
+			while (thiz.self.tick (0)) ;
+			if (!thiz.self.idle ())
 				break ;
 		}
-		thiz.fake.after () ;
+		thiz.self.after () ;
 	}
 } ;
 
@@ -252,7 +252,7 @@ public:
 		auto rax = PromiseHolder::hold (thiz)->poll () ;
 		if (!rax.exist ())
 			return Optional<A>::error (1) ;
-		return move (rax.rebind (TYPE<A>::expr).self) ;
+		return move (rax.rebind (TYPE<A>::expr).deref) ;
 	}
 
 	void future () const {
