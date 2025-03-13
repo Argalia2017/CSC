@@ -698,20 +698,20 @@ exports CFat<MakeMatrixHolder> MakeMatrixHolder::hold (CREF<MatrixLayout> that) 
 
 template class External<MatrixProcHolder ,MatrixProcLayout> ;
 
-exports CREF<MatrixProcLayout> MatrixProcHolder::instance () {
+exports CREF<OfThis<UniqueRef<MatrixProcLayout>>> MatrixProcHolder::instance () {
 	return memorize ([&] () {
-		MatrixProcLayout ret ;
+		OfThis<UniqueRef<MatrixProcLayout>> ret ;
 		ret.mThis = External<MatrixProcHolder ,MatrixProcLayout>::create () ;
 		MatrixProcHolder::hold (ret)->initialize () ;
 		return move (ret) ;
 	}) ;
 }
 
-exports VFat<MatrixProcHolder> MatrixProcHolder::hold (VREF<MatrixProcImplLayout> that) {
+exports VFat<MatrixProcHolder> MatrixProcHolder::hold (VREF<MatrixProcLayout> that) {
 	return VFat<MatrixProcHolder> (External<MatrixProcHolder ,MatrixProcLayout>::declare () ,that) ;
 }
 
-exports CFat<MatrixProcHolder> MatrixProcHolder::hold (CREF<MatrixProcImplLayout> that) {
+exports CFat<MatrixProcHolder> MatrixProcHolder::hold (CREF<MatrixProcLayout> that) {
 	return CFat<MatrixProcHolder> (External<MatrixProcHolder ,MatrixProcLayout>::declare () ,that) ;
 }
 
@@ -1141,36 +1141,36 @@ exports CFat<QuaternionHolder> QuaternionHolder::hold (CREF<QuaternionLayout> th
 
 template class External<LinearProcHolder ,LinearProcLayout> ;
 
-exports CREF<LinearProcLayout> LinearProcHolder::instance () {
+exports CREF<OfThis<UniqueRef<LinearProcLayout>>> LinearProcHolder::instance () {
 	return memorize ([&] () {
-		LinearProcLayout ret ;
+		OfThis<UniqueRef<LinearProcLayout>> ret ;
 		ret.mThis = External<LinearProcHolder ,LinearProcLayout>::create () ;
 		LinearProcHolder::hold (ret)->initialize () ;
 		return move (ret) ;
 	}) ;
 }
 
-exports VFat<LinearProcHolder> LinearProcHolder::hold (VREF<LinearProcImplLayout> that) {
+exports VFat<LinearProcHolder> LinearProcHolder::hold (VREF<LinearProcLayout> that) {
 	return VFat<LinearProcHolder> (External<LinearProcHolder ,LinearProcLayout>::declare () ,that) ;
 }
 
-exports CFat<LinearProcHolder> LinearProcHolder::hold (CREF<LinearProcImplLayout> that) {
+exports CFat<LinearProcHolder> LinearProcHolder::hold (CREF<LinearProcLayout> that) {
 	return CFat<LinearProcHolder> (External<LinearProcHolder ,LinearProcLayout>::declare () ,that) ;
 }
 
 template class External<PointCloudKDTreeHolder ,PointCloudKDTreeLayout> ;
 
-exports PointCloudKDTreeLayout PointCloudKDTreeHolder::create () {
-	PointCloudKDTreeLayout ret ;
+exports OfThis<AutoRef<PointCloudKDTreeLayout>> PointCloudKDTreeHolder::create () {
+	OfThis<AutoRef<PointCloudKDTreeLayout>> ret ;
 	ret.mThis = External<PointCloudKDTreeHolder ,PointCloudKDTreeLayout>::create () ;
 	return move (ret) ;
 }
 
-exports VFat<PointCloudKDTreeHolder> PointCloudKDTreeHolder::hold (VREF<PointCloudKDTreeImplLayout> that) {
+exports VFat<PointCloudKDTreeHolder> PointCloudKDTreeHolder::hold (VREF<PointCloudKDTreeLayout> that) {
 	return VFat<PointCloudKDTreeHolder> (External<PointCloudKDTreeHolder ,PointCloudKDTreeLayout>::declare () ,that) ;
 }
 
-exports CFat<PointCloudKDTreeHolder> PointCloudKDTreeHolder::hold (CREF<PointCloudKDTreeImplLayout> that) {
+exports CFat<PointCloudKDTreeHolder> PointCloudKDTreeHolder::hold (CREF<PointCloudKDTreeLayout> that) {
 	return CFat<PointCloudKDTreeHolder> (External<PointCloudKDTreeHolder ,PointCloudKDTreeLayout>::declare () ,that) ;
 }
 
@@ -1305,7 +1305,7 @@ public:
 	}
 
 	Array<INDEX> search (CREF<Vector> center ,CREF<LENGTH> neighbor) const override {
-		auto &&rax = keep[TYPE<PointCloudKDTreeLayout>::expr] (self.mKDTree.deref) ;
+		auto &&rax = keep[TYPE<OfThis<AutoRef<PointCloudKDTreeLayout>>>::expr] (self.mKDTree.deref) ;
 		if ifdo (TRUE) {
 			if (rax.mThis.exist ())
 				discard ;
@@ -1315,7 +1315,7 @@ public:
 	}
 
 	Array<INDEX> search (CREF<Vector> center ,CREF<LENGTH> neighbor ,CREF<FLT64> radius) const override {
-		auto &&rax = keep[TYPE<PointCloudKDTreeLayout>::expr] (self.mKDTree.deref) ;
+		auto &&rax = keep[TYPE<OfThis<AutoRef<PointCloudKDTreeLayout>>>::expr] (self.mKDTree.deref) ;
 		if ifdo (TRUE) {
 			if (rax.mThis.exist ())
 				discard ;

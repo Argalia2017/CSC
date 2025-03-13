@@ -53,7 +53,7 @@ using ::lstat ;
 } ;
 
 namespace CSC {
-struct PathImplLayout {
+struct PathTree {
 	String<STR> mPathName ;
 	Deque<INDEX> mSeparator ;
 } ;
@@ -61,7 +61,7 @@ struct PathImplLayout {
 class PathImplHolder final implement Fat<PathHolder ,PathLayout> {
 public:
 	void initialize (RREF<String<STR>> pathname) override {
-		self.mThis = Ref<PathImplLayout>::make () ;
+		self.mThis = Ref<PathTree>::make () ;
 		self.mThis->mPathName = move (pathname) ;
 		self.mThis->mSeparator.add (NONE) ;
 		const auto r1x = self.mThis->mPathName.length () ;
@@ -388,14 +388,14 @@ public:
 	}
 } ;
 
-static const auto mPathExternal = External<PathHolder ,PathLayout> (PathImplHolder ()) ;
+static const auto mPathExternal = External<PathHolder ,PathTree> (PathImplHolder ()) ;
 
-struct FileProcImplLayout {
+struct FileProcLayout {
 	Mutex mMutex ;
 	Pin<List<UniqueRef<String<STR>>>> mLockDirectory ;
 } ;
 
-class FileProcImplHolder final implement Fat<FileProcHolder ,FileProcImplLayout> {
+class FileProcImplHolder final implement Fat<FileProcHolder ,FileProcLayout> {
 private:
 	using FILEPROC_RETRY_TIME = RANK3 ;
 
@@ -623,7 +623,7 @@ public:
 
 static const auto mFileProcExternal = External<FileProcHolder ,FileProcLayout> (FileProcImplHolder ()) ;
 
-struct StreamFileImplLayout {
+struct StreamFileLayout {
 	String<STR> mFile ;
 	UniqueRef<HFILEPIPE> mReadPipe ;
 	UniqueRef<HFILEPIPE> mWritePipe ;
@@ -634,7 +634,7 @@ struct StreamFileImplLayout {
 	LENGTH mShortSize ;
 } ;
 
-class StreamFileImplHolder final implement Fat<StreamFileHolder ,StreamFileImplLayout> {
+class StreamFileImplHolder final implement Fat<StreamFileHolder ,StreamFileLayout> {
 public:
 	void initialize (CREF<String<STR>> file) override {
 		self.mFile = move (file) ;
@@ -794,7 +794,7 @@ struct BufferFileChunk {
 	UniqueRef<Tuple<FLAG ,FLAG>> mBlock ;
 } ;
 
-struct BufferFileImplLayout {
+struct BufferFileLayout {
 	String<STR> mFile ;
 	UniqueRef<HFILEPIPE> mPipe ;
 	UniqueRef<HANDLE> mMapping ;
@@ -808,7 +808,7 @@ struct BufferFileImplLayout {
 	VAL64 mCacheTimer ;
 } ;
 
-class BufferFileImplHolder final implement Fat<BufferFileHolder ,BufferFileImplLayout> {
+class BufferFileImplHolder final implement Fat<BufferFileHolder ,BufferFileLayout> {
 private:
 	using BUFFERFILE_BLOCK_STEP = ENUM<1024> ;
 	using BUFFERFILE_CHUNK_STEP = ENUM<4194304> ;
@@ -1089,7 +1089,7 @@ public:
 
 static const auto mBufferFileExternal = External<BufferFileHolder ,BufferFileLayout> (BufferFileImplHolder ()) ;
 
-struct UartFileImplLayout {
+struct UartFileLayout {
 	String<STR> mPortName ;
 	LENGTH mPortRate ;
 	UniqueRef<HFILEPIPE> mPipe ;
@@ -1098,7 +1098,7 @@ struct UartFileImplLayout {
 	INDEX mRingRead ;
 } ;
 
-class UartFileImplHolder final implement Fat<UartFileHolder ,UartFileImplLayout> {
+class UartFileImplHolder final implement Fat<UartFileHolder ,UartFileLayout> {
 private:
 	void initialize () override {
 		self.mPortRate = 0 ;
@@ -1171,7 +1171,7 @@ private:
 
 static const auto mUartFileExternal = External<UartFileHolder ,UartFileLayout> (UartFileImplHolder ()) ;
 
-struct ConsoleImplLayout {
+struct ConsoleLayout {
 	Mutex mMutex ;
 	BitSet mOption ;
 	UniqueRef<HANDLE> mConsole ;
@@ -1183,7 +1183,7 @@ struct ConsoleImplLayout {
 	System mCommand ;
 } ;
 
-class ConsoleImplHolder final implement Fat<ConsoleHolder ,ConsoleImplLayout> {
+class ConsoleImplHolder final implement Fat<ConsoleHolder ,ConsoleLayout> {
 public:
 	void initialize () override {
 		self.mMutex = NULL ;

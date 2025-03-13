@@ -11,7 +11,7 @@
 #include "csc_begin.h"
 
 namespace CSC {
-struct StreamProcImplLayout {
+struct StreamProcLayout {
 	Slice mBlankSlice ;
 	Slice mPunctSlice ;
 	Slice mAlphaSlice ;
@@ -20,7 +20,7 @@ struct StreamProcImplLayout {
 	Slice mEscapeCtrlSlice ;
 } ;
 
-class StreamProcImplHolder final implement Fat<StreamProcHolder ,StreamProcImplLayout> {
+class StreamProcImplHolder final implement Fat<StreamProcHolder ,StreamProcLayout> {
 public:
 	void initialize () override {
 		self.mBlankSlice = slice ("\b\t\n\v\f\r ") ;
@@ -188,20 +188,20 @@ public:
 	}
 } ;
 
-exports CREF<StreamProcLayout> StreamProcHolder::instance () {
+exports CREF<OfThis<UniqueRef<StreamProcLayout>>> StreamProcHolder::instance () {
 	return memorize ([&] () {
-		StreamProcLayout ret ;
-		ret.mThis = UniqueRef<StreamProcImplLayout>::make () ;
+		OfThis<UniqueRef<StreamProcLayout>> ret ;
+		ret.mThis = UniqueRef<StreamProcLayout>::make () ;
 		StreamProcHolder::hold (ret)->initialize () ;
 		return move (ret) ;
 	}) ;
 }
 
-exports VFat<StreamProcHolder> StreamProcHolder::hold (VREF<StreamProcImplLayout> that) {
+exports VFat<StreamProcHolder> StreamProcHolder::hold (VREF<StreamProcLayout> that) {
 	return VFat<StreamProcHolder> (StreamProcImplHolder () ,that) ;
 }
 
-exports CFat<StreamProcHolder> StreamProcHolder::hold (CREF<StreamProcImplLayout> that) {
+exports CFat<StreamProcHolder> StreamProcHolder::hold (CREF<StreamProcLayout> that) {
 	return CFat<StreamProcHolder> (StreamProcImplHolder () ,that) ;
 }
 
@@ -1634,9 +1634,9 @@ exports CFat<FormatHolder> FormatHolder::hold (CREF<FormatLayout> that) {
 	return CFat<FormatHolder> (FormatImplHolder () ,that) ;
 }
 
-struct StreamTextProcImplLayout {} ;
+struct StreamTextProcLayout {} ;
 
-class StreamTextProcImplHolder final implement Fat<StreamTextProcHolder ,StreamTextProcImplLayout> {
+class StreamTextProcImplHolder final implement Fat<StreamTextProcHolder ,StreamTextProcLayout> {
 public:
 	void initialize () override {
 		noop () ;
@@ -1834,24 +1834,24 @@ public:
 	}
 } ;
 
-exports CREF<StreamTextProcLayout> StreamTextProcHolder::instance () {
+exports CREF<OfThis<UniqueRef<StreamTextProcLayout>>> StreamTextProcHolder::instance () {
 	return memorize ([&] () {
-		StreamTextProcLayout ret ;
-		ret.mThis = UniqueRef<StreamTextProcImplLayout>::make () ;
+		OfThis<UniqueRef<StreamTextProcLayout>> ret ;
+		ret.mThis = UniqueRef<StreamTextProcLayout>::make () ;
 		StreamTextProcHolder::hold (ret)->initialize () ;
 		return move (ret) ;
 	}) ;
 }
 
-exports VFat<StreamTextProcHolder> StreamTextProcHolder::hold (VREF<StreamTextProcImplLayout> that) {
+exports VFat<StreamTextProcHolder> StreamTextProcHolder::hold (VREF<StreamTextProcLayout> that) {
 	return VFat<StreamTextProcHolder> (StreamTextProcImplHolder () ,that) ;
 }
 
-exports CFat<StreamTextProcHolder> StreamTextProcHolder::hold (CREF<StreamTextProcImplLayout> that) {
+exports CFat<StreamTextProcHolder> StreamTextProcHolder::hold (CREF<StreamTextProcLayout> that) {
 	return CFat<StreamTextProcHolder> (StreamTextProcImplHolder () ,that) ;
 }
 
-struct CommaImplLayout {
+struct CommaLayout {
 	Slice mIndent ;
 	Slice mComma ;
 	Slice mEndline ;
@@ -1861,7 +1861,7 @@ struct CommaImplLayout {
 	LENGTH mLastTight ;
 } ;
 
-class CommaImplHolder final implement Fat<CommaHolder ,CommaImplLayout> {
+class CommaImplHolder final implement Fat<CommaHolder ,CommaLayout> {
 public:
 	void initialize (CREF<Slice> indent ,CREF<Slice> comma ,CREF<Slice> endline) override {
 		self.mIndent = indent ;
@@ -1922,27 +1922,27 @@ public:
 	}
 } ;
 
-exports CommaLayout CommaHolder::create () {
-	CommaLayout ret ;
-	ret.mThis = SharedRef<CommaImplLayout>::make () ;
+exports OfThis<SharedRef<CommaLayout>> CommaHolder::create () {
+	OfThis<SharedRef<CommaLayout>> ret ;
+	ret.mThis = SharedRef<CommaLayout>::make () ;
 	return move (ret) ;
 }
 
-exports VFat<CommaHolder> CommaHolder::hold (VREF<CommaImplLayout> that) {
+exports VFat<CommaHolder> CommaHolder::hold (VREF<CommaLayout> that) {
 	return VFat<CommaHolder> (CommaImplHolder () ,that) ;
 }
 
-exports CFat<CommaHolder> CommaHolder::hold (CREF<CommaImplLayout> that) {
+exports CFat<CommaHolder> CommaHolder::hold (CREF<CommaLayout> that) {
 	return CFat<CommaHolder> (CommaImplHolder () ,that) ;
 }
 
-struct RegexImplLayout {
+struct RegexLayout {
 	std::basic_regex<STR> mRegex ;
 	std::match_results<PTR<CREF<STR>>> mMatch ;
 	Ref<String<STR>> mText ;
 } ;
 
-class RegexImplHolder final implement Fat<RegexHolder ,RegexImplLayout> {
+class RegexImplHolder final implement Fat<RegexHolder ,RegexLayout> {
 public:
 	void initialize (CREF<String<STR>> format) override {
 		self.mRegex = std::basic_regex<STR> (format) ;
@@ -1969,17 +1969,17 @@ public:
 	}
 } ;
 
-exports RegexLayout RegexHolder::create () {
-	RegexLayout ret ;
-	ret.mThis = AutoRef<RegexImplLayout>::make () ;
+exports OfThis<AutoRef<RegexLayout>> RegexHolder::create () {
+	OfThis<AutoRef<RegexLayout>> ret ;
+	ret.mThis = AutoRef<RegexLayout>::make () ;
 	return move (ret) ;
 }
 
-exports VFat<RegexHolder> RegexHolder::hold (VREF<RegexImplLayout> that) {
+exports VFat<RegexHolder> RegexHolder::hold (VREF<RegexLayout> that) {
 	return VFat<RegexHolder> (RegexImplHolder () ,that) ;
 }
 
-exports CFat<RegexHolder> RegexHolder::hold (CREF<RegexImplLayout> that) {
+exports CFat<RegexHolder> RegexHolder::hold (CREF<RegexLayout> that) {
 	return CFat<RegexHolder> (RegexImplHolder () ,that) ;
 }
 } ;

@@ -322,10 +322,10 @@ public:
 	}
 } ;
 
-struct FunctionImplLayout ;
+struct FunctionTree ;
 
 struct FunctionLayout {
-	Ref<FunctionImplLayout> mThis ;
+	Ref<FunctionTree> mThis ;
 } ;
 
 struct FunctionHolder implement Interface {
@@ -414,10 +414,10 @@ public:
 	}
 } ;
 
-struct AutoRefImplLayout ;
+struct AutoRefTree ;
 
 struct AutoRefLayout {
-	Ref<AutoRefImplLayout> mThis ;
+	Ref<AutoRefTree> mThis ;
 	FLAG mLayout ;
 
 public:
@@ -549,10 +549,10 @@ public:
 	}
 } ;
 
-struct SharedRefImplLayout ;
+struct SharedRefTree ;
 
 struct SharedRefLayout {
-	Ref<SharedRefImplLayout> mThis ;
+	Ref<SharedRefTree> mThis ;
 	FLAG mLayout ;
 
 public:
@@ -673,10 +673,10 @@ public:
 	}
 } ;
 
-struct UniqueRefImplLayout ;
+struct UniqueRefTree ;
 
 struct UniqueRefLayout {
-	Ref<UniqueRefImplLayout> mThis ;
+	Ref<UniqueRefTree> mThis ;
 	FLAG mLayout ;
 
 public:
@@ -803,10 +803,10 @@ public:
 	}
 } ;
 
-struct RefBufferImplLayout ;
+struct RefBufferTree ;
 
 struct RefBufferLayout {
-	Ref<RefBufferImplLayout> mThis ;
+	Ref<RefBufferTree> mThis ;
 	FLAG mHolder ;
 	FLAG mBuffer ;
 	LENGTH mSize ;

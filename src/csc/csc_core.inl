@@ -202,7 +202,7 @@ exports CFat<BoxHolder> BoxHolder::hold (CREF<BoxLayout> that) {
 	return CFat<BoxHolder> (BoxImplHolder () ,that) ;
 }
 
-struct RefImplLayout implement Proxy {
+struct RefTree implement Proxy {
 	Heap mHeap ;
 	std::atomic<VAL> mCounter ;
 	BoxLayout mValue ;
@@ -215,12 +215,12 @@ public:
 	void initialize (RREF<BoxLayout> item) override {
 		assert (!exist ()) ;
 		const auto r1x = RFat<ReflectSize> (BoxHolder::hold (item)->unknown ()) ;
-		const auto r2x = inline_max (r1x->type_align () - ALIGN_OF<RefImplLayout>::expr ,0) ;
-		const auto r3x = SIZE_OF<RefImplLayout>::expr + r2x + r1x->type_size () ;
+		const auto r2x = inline_max (r1x->type_align () - ALIGN_OF<RefTree>::expr ,0) ;
+		const auto r3x = SIZE_OF<RefTree>::expr + r2x + r1x->type_size () ;
 		const auto r4x = Heap::instance () ;
 		self.mHandle = r4x.alloc (r3x) ;
 		assert (self.mHandle >= REFIMPLLAYOUT_MIN_HANDLE) ;
-		inline_memset (Pointer::make (self.mHandle) ,SIZE_OF<RefImplLayout>::expr) ;
+		inline_memset (Pointer::make (self.mHandle) ,SIZE_OF<RefTree>::expr) ;
 		ptr (self).mHeap = r4x ;
 		BoxHolder::hold (ptr (self).mValue)->acquire (item) ;
 		BoxHolder::hold (item)->release () ;
@@ -249,14 +249,14 @@ public:
 		assert (!exist ()) ;
 		const auto r1x = RFat<ReflectSize> (holder) ;
 		const auto r2x = RFat<ReflectSize> (extend) ;
-		const auto r3x = inline_max (r1x->type_align () - ALIGN_OF<RefImplLayout>::expr ,0) ;
-		const auto r4x = SIZE_OF<RefImplLayout>::expr + r3x + r1x->type_size () ;
+		const auto r3x = inline_max (r1x->type_align () - ALIGN_OF<RefTree>::expr ,0) ;
+		const auto r4x = SIZE_OF<RefTree>::expr + r3x + r1x->type_size () ;
 		const auto r5x = inline_max (r2x->type_align () - r1x->type_align () ,0) ;
 		const auto r6x = r4x + r5x + r2x->type_size () * size_ ;
 		const auto r7x = Heap::instance () ;
 		self.mHandle = r7x.alloc (r6x) ;
 		assert (self.mHandle >= REFIMPLLAYOUT_MIN_HANDLE) ;
-		inline_memset (Pointer::make (self.mHandle) ,SIZE_OF<RefImplLayout>::expr) ;
+		inline_memset (Pointer::make (self.mHandle) ,SIZE_OF<RefTree>::expr) ;
 		ptr (self).mHeap = r7x ;
 		BoxHolder::hold (ptr (self).mValue)->initialize (holder) ;
 		self.mLayout = address (BoxHolder::hold (ptr (self).mValue)->deref) ;
@@ -270,9 +270,9 @@ public:
 		const auto r1x = RFat<ReflectSize> (holder) ;
 		const auto r2x = r1x->type_align () ;
 		noop (r2x) ;
-		assert (r2x <= ALIGN_OF<RefImplLayout>::expr) ;
-		const auto r3x = layout - SIZE_OF<RefImplLayout>::expr ;
-		auto &&rax = keep[TYPE<RefImplLayout>::expr] (Pointer::make (r3x)) ;
+		assert (r2x <= ALIGN_OF<RefTree>::expr) ;
+		const auto r3x = layout - SIZE_OF<RefTree>::expr ;
+		auto &&rax = keep[TYPE<RefTree>::expr] (Pointer::make (r3x)) ;
 		assert (rax.mCounter > 0) ;
 		self.mHandle = r3x ;
 		self.mLayout = layout ;
@@ -299,7 +299,7 @@ public:
 		self.mLayout = ZERO ;
 	}
 
-	static VREF<RefImplLayout> ptr (CREF<RefLayout> that) {
+	static VREF<RefTree> ptr (CREF<RefLayout> that) {
 		return Pointer::make (that.mHandle) ;
 	}
 
@@ -887,7 +887,7 @@ exports CFat<ExceptionHolder> ExceptionHolder::hold (CREF<ExceptionLayout> that)
 	return CFat<ExceptionHolder> (ExceptionImplHolder () ,that) ;
 }
 
-struct ClazzImplLayout {
+struct ClazzTree {
 	LENGTH mTypeSize ;
 	LENGTH mTypeAlign ;
 	FLAG mTypeGuid ;
@@ -897,7 +897,7 @@ struct ClazzImplLayout {
 class ClazzImplHolder final implement Fat<ClazzHolder ,ClazzLayout> {
 public:
 	void initialize (CREF<Unknown> holder) override {
-		self.mThis = Ref<ClazzImplLayout>::make () ;
+		self.mThis = Ref<ClazzTree>::make () ;
 		const auto r1x = RFat<ReflectSize> (holder) ;
 		self.mThis->mTypeSize = r1x->type_size () ;
 		self.mThis->mTypeAlign = r1x->type_align () ;

@@ -42,11 +42,11 @@ struct FUNCTION_calendar_from_timepoint {
 
 static constexpr auto calendar_from_timepoint = FUNCTION_calendar_from_timepoint () ;
 
-struct TimeImplLayout {
+struct TimeLayout {
 	std::chrono::system_clock::duration mTime ;
 } ;
 
-class TimeImplHolder final implement Fat<TimeHolder ,TimeImplLayout> {
+class TimeImplHolder final implement Fat<TimeHolder ,TimeLayout> {
 public:
 	void initialize () override {
 		const auto r1x = std::chrono::system_clock::now () ;
@@ -78,12 +78,12 @@ public:
 		self.mTime = r6x.time_since_epoch () ;
 	}
 
-	void initialize (CREF<TimeImplLayout> that) override {
+	void initialize (CREF<TimeLayout> that) override {
 		self.mTime = that.mTime ;
 	}
 
-	Ref<TimeImplLayout> borrow () const leftvalue override {
-		return Ref<TimeImplLayout>::reference (self) ;
+	Ref<TimeLayout> borrow () const leftvalue override {
+		return Ref<TimeLayout>::reference (self) ;
 	}
 
 	LENGTH megaseconds () const override {
@@ -134,63 +134,63 @@ public:
 		return move (ret) ;
 	}
 
-	TimeLayout sadd (CREF<TimeImplLayout> that) const override {
-		TimeLayout ret = TimeHolder::create () ;
+	OfThis<Box<TimeLayout ,TimeStorage>> sadd (CREF<TimeLayout> that) const override {
+		OfThis<Box<TimeLayout ,TimeStorage>> ret = TimeHolder::create () ;
 		ret.mThis->mTime = self.mTime + that.mTime ;
 		return move (ret) ;
 	}
 
-	TimeLayout ssub (CREF<TimeImplLayout> that) const override {
-		TimeLayout ret = TimeHolder::create () ;
+	OfThis<Box<TimeLayout ,TimeStorage>> ssub (CREF<TimeLayout> that) const override {
+		OfThis<Box<TimeLayout ,TimeStorage>> ret = TimeHolder::create () ;
 		ret.mThis->mTime = self.mTime - that.mTime ;
 		return move (ret) ;
 	}
 } ;
 
-exports TimeLayout TimeHolder::create () {
-	TimeLayout ret ;
-	ret.mThis = Box<TimeImplLayout>::make () ;
+exports OfThis<Box<TimeLayout ,TimeStorage>> TimeHolder::create () {
+	OfThis<Box<TimeLayout ,TimeStorage>> ret ;
+	ret.mThis = Box<TimeLayout>::make () ;
 	return move (ret) ;
 }
 
-exports VFat<TimeHolder> TimeHolder::hold (VREF<TimeImplLayout> that) {
+exports VFat<TimeHolder> TimeHolder::hold (VREF<TimeLayout> that) {
 	return VFat<TimeHolder> (TimeImplHolder () ,that) ;
 }
 
-exports CFat<TimeHolder> TimeHolder::hold (CREF<TimeImplLayout> that) {
+exports CFat<TimeHolder> TimeHolder::hold (CREF<TimeLayout> that) {
 	return CFat<TimeHolder> (TimeImplHolder () ,that) ;
 }
 
 template class External<RuntimeProcHolder ,RuntimeProcLayout> ;
 
-exports CREF<RuntimeProcLayout> RuntimeProcHolder::instance () {
+exports CREF<OfThis<UniqueRef<RuntimeProcLayout>>> RuntimeProcHolder::instance () {
 	return memorize ([&] () {
-		RuntimeProcLayout ret ;
+		OfThis<UniqueRef<RuntimeProcLayout>> ret ;
 		ret.mThis = External<RuntimeProcHolder ,RuntimeProcLayout>::create () ;
 		RuntimeProcHolder::hold (ret)->initialize () ;
 		return move (ret) ;
 	}) ;
 }
 
-exports VFat<RuntimeProcHolder> RuntimeProcHolder::hold (VREF<RuntimeProcImplLayout> that) {
+exports VFat<RuntimeProcHolder> RuntimeProcHolder::hold (VREF<RuntimeProcLayout> that) {
 	return VFat<RuntimeProcHolder> (External<RuntimeProcHolder ,RuntimeProcLayout>::declare () ,that) ;
 }
 
-exports CFat<RuntimeProcHolder> RuntimeProcHolder::hold (CREF<RuntimeProcImplLayout> that) {
+exports CFat<RuntimeProcHolder> RuntimeProcHolder::hold (CREF<RuntimeProcLayout> that) {
 	return CFat<RuntimeProcHolder> (External<RuntimeProcHolder ,RuntimeProcLayout>::declare () ,that) ;
 }
 
-struct AtomicImplLayout {
+struct AtomicLayout {
 	Pin<std::atomic<VAL>> mAtomic ;
 } ;
 
-class AtomicImplHolder final implement Fat<AtomicHolder ,AtomicImplLayout> {
+class AtomicImplHolder final implement Fat<AtomicHolder ,AtomicLayout> {
 public:
 	void initialize () override {
 		store (ZERO) ;
 	}
 
-	static VREF<std::atomic<VAL>> ptr (CREF<AtomicImplLayout> that) {
+	static VREF<std::atomic<VAL>> ptr (CREF<AtomicLayout> that) {
 		return that.mAtomic.deref ;
 	}
 
@@ -224,17 +224,17 @@ public:
 	}
 } ;
 
-exports AtomicLayout AtomicHolder::create () {
-	AtomicLayout ret ;
-	ret.mThis = Box<AtomicImplLayout>::make () ;
+exports OfThis<Box<AtomicLayout ,AtomicStorage>> AtomicHolder::create () {
+	OfThis<Box<AtomicLayout ,AtomicStorage>> ret ;
+	ret.mThis = Box<AtomicLayout>::make () ;
 	return move (ret) ;
 }
 
-exports VFat<AtomicHolder> AtomicHolder::hold (VREF<AtomicImplLayout> that) {
+exports VFat<AtomicHolder> AtomicHolder::hold (VREF<AtomicLayout> that) {
 	return VFat<AtomicHolder> (AtomicImplHolder () ,that) ;
 }
 
-exports CFat<AtomicHolder> AtomicHolder::hold (CREF<AtomicImplLayout> that) {
+exports CFat<AtomicHolder> AtomicHolder::hold (CREF<AtomicLayout> that) {
 	return CFat<AtomicHolder> (AtomicImplHolder () ,that) ;
 }
 
@@ -249,22 +249,22 @@ struct MutexType {
 	} ;
 } ;
 
-struct MutexImplLayout {
+struct MutexLayout {
 	Just<MutexType> mType ;
 	Box<std::mutex> mBasic ;
 	Atomic mShared ;
 	Box<std::condition_variable> mUnique ;
 } ;
 
-class MutexImplHolder final implement Fat<MutexHolder ,MutexImplLayout> {
+class MutexImplHolder final implement Fat<MutexHolder ,MutexLayout> {
 public:
 	void initialize () override {
 		self.mType = MutexType::Basic ;
 		self.mBasic.remake () ;
 	}
 
-	Ref<MutexImplLayout> borrow () leftvalue override {
-		return Ref<MutexImplLayout>::reference (self) ;
+	Ref<MutexLayout> borrow () leftvalue override {
+		return Ref<MutexLayout>::reference (self) ;
 	}
 
 	BOOL done () override {
@@ -287,21 +287,21 @@ public:
 	}
 } ;
 
-exports MutexLayout MutexHolder::create () {
-	MutexLayout ret ;
-	ret.mThis = SharedRef<MutexImplLayout>::make () ;
+exports OfThis<SharedRef<MutexLayout>> MutexHolder::create () {
+	OfThis<SharedRef<MutexLayout>> ret ;
+	ret.mThis = SharedRef<MutexLayout>::make () ;
 	return move (ret) ;
 }
 
-exports VFat<MutexHolder> MutexHolder::hold (VREF<MutexImplLayout> that) {
+exports VFat<MutexHolder> MutexHolder::hold (VREF<MutexLayout> that) {
 	return VFat<MutexHolder> (MutexImplHolder () ,that) ;
 }
 
-exports CFat<MutexHolder> MutexHolder::hold (CREF<MutexImplLayout> that) {
+exports CFat<MutexHolder> MutexHolder::hold (CREF<MutexLayout> that) {
 	return CFat<MutexHolder> (MutexImplHolder () ,that) ;
 }
 
-class MakeMutexImplHolder final implement Fat<MakeMutexHolder ,MutexImplLayout> {
+class MakeMutexImplHolder final implement Fat<MakeMutexHolder ,MutexLayout> {
 public:
 	void make_OnceMutex () override {
 		self.mType = MutexType::Once ;
@@ -321,11 +321,11 @@ public:
 	}
 } ;
 
-exports VFat<MakeMutexHolder> MakeMutexHolder::hold (VREF<MutexImplLayout> that) {
+exports VFat<MakeMutexHolder> MakeMutexHolder::hold (VREF<MutexLayout> that) {
 	return VFat<MakeMutexHolder> (MakeMutexImplHolder () ,that) ;
 }
 
-exports CFat<MakeMutexHolder> MakeMutexHolder::hold (CREF<MutexImplLayout> that) {
+exports CFat<MakeMutexHolder> MakeMutexHolder::hold (CREF<MutexLayout> that) {
 	return CFat<MakeMutexHolder> (MakeMutexImplHolder () ,that) ;
 }
 
@@ -347,12 +347,12 @@ public:
 	}
 } ;
 
-struct SharedLockImplLayout {
-	Ref<MutexImplLayout> mMutex ;
+struct SharedLockLayout {
+	Ref<MutexLayout> mMutex ;
 	std::unique_lock<SharedAtomicMutex> mLock ;
 } ;
 
-class SharedLockImplHolder final implement Fat<SharedLockHolder ,SharedLockImplLayout> {
+class SharedLockImplHolder final implement Fat<SharedLockHolder ,SharedLockLayout> {
 public:
 	void initialize (CREF<Mutex> mutex) override {
 		self.mMutex = mutex.borrow () ;
@@ -362,7 +362,7 @@ public:
 		self.mLock = std::unique_lock<SharedAtomicMutex> (SharedAtomicMutex::from (ptr (self).mShared)) ;
 	}
 
-	static VREF<MutexImplLayout> ptr (CREF<SharedLockImplLayout> that) {
+	static VREF<MutexLayout> ptr (CREF<SharedLockLayout> that) {
 		return Pointer::make (address (that.mMutex.deref)) ;
 	}
 
@@ -406,26 +406,26 @@ public:
 	}
 } ;
 
-exports SharedLockLayout SharedLockHolder::create () {
-	SharedLockLayout ret ;
-	ret.mThis = Box<SharedLockImplLayout>::make () ;
+exports OfThis<Box<SharedLockLayout ,SharedLockStorage>> SharedLockHolder::create () {
+	OfThis<Box<SharedLockLayout ,SharedLockStorage>> ret ;
+	ret.mThis = Box<SharedLockLayout>::make () ;
 	return move (ret) ;
 }
 
-exports VFat<SharedLockHolder> SharedLockHolder::hold (VREF<SharedLockImplLayout> that) {
+exports VFat<SharedLockHolder> SharedLockHolder::hold (VREF<SharedLockLayout> that) {
 	return VFat<SharedLockHolder> (SharedLockImplHolder () ,that) ;
 }
 
-exports CFat<SharedLockHolder> SharedLockHolder::hold (CREF<SharedLockImplLayout> that) {
+exports CFat<SharedLockHolder> SharedLockHolder::hold (CREF<SharedLockLayout> that) {
 	return CFat<SharedLockHolder> (SharedLockImplHolder () ,that) ;
 }
 
-struct UniqueLockImplLayout {
-	Ref<MutexImplLayout> mMutex ;
+struct UniqueLockLayout {
+	Ref<MutexLayout> mMutex ;
 	std::unique_lock<std::mutex> mLock ;
 } ;
 
-class UniqueLockImplHolder final implement Fat<UniqueLockHolder ,UniqueLockImplLayout> {
+class UniqueLockImplHolder final implement Fat<UniqueLockHolder ,UniqueLockLayout> {
 public:
 	void initialize (CREF<Mutex> mutex) override {
 		self.mMutex = mutex.borrow () ;
@@ -434,7 +434,7 @@ public:
 		self.mLock = std::unique_lock<std::mutex> (ptr (self).mBasic.deref) ;
 	}
 
-	static VREF<MutexImplLayout> ptr (CREF<UniqueLockImplLayout> that) {
+	static VREF<MutexLayout> ptr (CREF<UniqueLockLayout> that) {
 		return Pointer::make (address (that.mMutex.deref)) ;
 	}
 
@@ -458,35 +458,35 @@ public:
 	}
 } ;
 
-exports UniqueLockLayout UniqueLockHolder::create () {
-	UniqueLockLayout ret ;
-	ret.mThis = Box<UniqueLockImplLayout>::make () ;
+exports OfThis<Box<UniqueLockLayout ,UniqueLockStorage>> UniqueLockHolder::create () {
+	OfThis<Box<UniqueLockLayout ,UniqueLockStorage>> ret ;
+	ret.mThis = Box<UniqueLockLayout>::make () ;
 	return move (ret) ;
 }
 
-exports VFat<UniqueLockHolder> UniqueLockHolder::hold (VREF<UniqueLockImplLayout> that) {
+exports VFat<UniqueLockHolder> UniqueLockHolder::hold (VREF<UniqueLockLayout> that) {
 	return VFat<UniqueLockHolder> (UniqueLockImplHolder () ,that) ;
 }
 
-exports CFat<UniqueLockHolder> UniqueLockHolder::hold (CREF<UniqueLockImplLayout> that) {
+exports CFat<UniqueLockHolder> UniqueLockHolder::hold (CREF<UniqueLockLayout> that) {
 	return CFat<UniqueLockHolder> (UniqueLockImplHolder () ,that) ;
 }
 
-struct ThreadImplLayout {
+struct ThreadLayout {
 	Box<VFat<ThreadBinder>> mExecutor ;
 	FLAG mUid ;
 	INDEX mSlot ;
 	Box<std::thread> mThread ;
 
 public:
-	implicit ThreadImplLayout () = default ;
+	implicit ThreadLayout () = default ;
 
-	implicit ~ThreadImplLayout () noexcept {
+	implicit ~ThreadLayout () noexcept {
 		assert (mThread == NULL) ;
 	}
 } ;
 
-class ThreadImplHolder final implement Fat<ThreadHolder ,ThreadImplLayout> {
+class ThreadImplHolder final implement Fat<ThreadHolder ,ThreadLayout> {
 public:
 	void initialize (RREF<Box<VFat<ThreadBinder>>> executor ,CREF<INDEX> slot) override {
 		self.mExecutor = move (executor) ;
@@ -514,57 +514,57 @@ public:
 	}
 } ;
 
-exports ThreadLayout ThreadHolder::create () {
-	ThreadLayout ret ;
-	ret.mThis = AutoRef<ThreadImplLayout>::make () ;
+exports OfThis<AutoRef<ThreadLayout>> ThreadHolder::create () {
+	OfThis<AutoRef<ThreadLayout>> ret ;
+	ret.mThis = AutoRef<ThreadLayout>::make () ;
 	return move (ret) ;
 }
 
-exports VFat<ThreadHolder> ThreadHolder::hold (VREF<ThreadImplLayout> that) {
+exports VFat<ThreadHolder> ThreadHolder::hold (VREF<ThreadLayout> that) {
 	return VFat<ThreadHolder> (ThreadImplHolder () ,that) ;
 }
 
-exports CFat<ThreadHolder> ThreadHolder::hold (CREF<ThreadImplLayout> that) {
+exports CFat<ThreadHolder> ThreadHolder::hold (CREF<ThreadLayout> that) {
 	return CFat<ThreadHolder> (ThreadImplHolder () ,that) ;
 }
 
 template class External<ProcessHolder ,ProcessLayout> ;
 
-exports ProcessLayout ProcessHolder::create () {
-	ProcessLayout ret ;
+exports OfThis<AutoRef<ProcessLayout>> ProcessHolder::create () {
+	OfThis<AutoRef<ProcessLayout>> ret ;
 	ret.mThis = External<ProcessHolder ,ProcessLayout>::create () ;
 	return move (ret) ;
 }
 
-exports VFat<ProcessHolder> ProcessHolder::hold (VREF<ProcessImplLayout> that) {
+exports VFat<ProcessHolder> ProcessHolder::hold (VREF<ProcessLayout> that) {
 	return VFat<ProcessHolder> (External<ProcessHolder ,ProcessLayout>::declare () ,that) ;
 }
 
-exports CFat<ProcessHolder> ProcessHolder::hold (CREF<ProcessImplLayout> that) {
+exports CFat<ProcessHolder> ProcessHolder::hold (CREF<ProcessLayout> that) {
 	return CFat<ProcessHolder> (External<ProcessHolder ,ProcessLayout>::declare () ,that) ;
 }
 
 template class External<LibraryHolder ,LibraryLayout> ;
 
-exports LibraryLayout LibraryHolder::create () {
-	LibraryLayout ret ;
+exports OfThis<AutoRef<LibraryLayout>> LibraryHolder::create () {
+	OfThis<AutoRef<LibraryLayout>> ret ;
 	ret.mThis = External<LibraryHolder ,LibraryLayout>::create () ;
 	return move (ret) ;
 }
 
-exports VFat<LibraryHolder> LibraryHolder::hold (VREF<LibraryImplLayout> that) {
+exports VFat<LibraryHolder> LibraryHolder::hold (VREF<LibraryLayout> that) {
 	return VFat<LibraryHolder> (External<LibraryHolder ,LibraryLayout>::declare () ,that) ;
 }
 
-exports CFat<LibraryHolder> LibraryHolder::hold (CREF<LibraryImplLayout> that) {
+exports CFat<LibraryHolder> LibraryHolder::hold (CREF<LibraryLayout> that) {
 	return CFat<LibraryHolder> (External<LibraryHolder ,LibraryLayout>::declare () ,that) ;
 }
 
-struct SystemImplLayout {
+struct SystemLayout {
 	std::locale mLocale ;
 } ;
 
-class SystemImplHolder final implement Fat<SystemHolder ,SystemImplLayout> {
+class SystemImplHolder final implement Fat<SystemHolder ,SystemLayout> {
 public:
 	void initialize () override {
 		noop () ;
@@ -582,17 +582,17 @@ public:
 	}
 } ;
 
-exports SystemLayout SystemHolder::create () {
-	SystemLayout ret ;
-	ret.mThis = AutoRef<SystemImplLayout>::make () ;
+exports OfThis<AutoRef<SystemLayout>> SystemHolder::create () {
+	OfThis<AutoRef<SystemLayout>> ret ;
+	ret.mThis = AutoRef<SystemLayout>::make () ;
 	return move (ret) ;
 }
 
-exports VFat<SystemHolder> SystemHolder::hold (VREF<SystemImplLayout> that) {
+exports VFat<SystemHolder> SystemHolder::hold (VREF<SystemLayout> that) {
 	return VFat<SystemHolder> (SystemImplHolder () ,that) ;
 }
 
-exports CFat<SystemHolder> SystemHolder::hold (CREF<SystemImplLayout> that) {
+exports CFat<SystemHolder> SystemHolder::hold (CREF<SystemLayout> that) {
 	return CFat<SystemHolder> (SystemImplHolder () ,that) ;
 }
 
@@ -602,13 +602,13 @@ struct RandomNormal {
 	FLT64 mNY ;
 } ;
 
-struct RandomImplLayout {
+struct RandomLayout {
 	FLAG mSeed ;
 	Box<std::mt19937_64> mRandom ;
 	RandomNormal mNormal ;
 } ;
 
-class RandomImplHolder final implement Fat<RandomHolder ,RandomImplLayout> {
+class RandomImplHolder final implement Fat<RandomHolder ,RandomLayout> {
 public:
 	void initialize () override {
 		const auto r1x = invoke (std::random_device ()) ;
@@ -729,36 +729,36 @@ public:
 	}
 } ;
 
-exports RandomLayout RandomHolder::create () {
-	RandomLayout ret ;
-	ret.mThis = SharedRef<RandomImplLayout>::make () ;
+exports OfThis<SharedRef<RandomLayout>> RandomHolder::create () {
+	OfThis<SharedRef<RandomLayout>> ret ;
+	ret.mThis = SharedRef<RandomLayout>::make () ;
 	return move (ret) ;
 }
 
-exports VFat<RandomHolder> RandomHolder::hold (VREF<RandomImplLayout> that) {
+exports VFat<RandomHolder> RandomHolder::hold (VREF<RandomLayout> that) {
 	return VFat<RandomHolder> (RandomImplHolder () ,that) ;
 }
 
-exports CFat<RandomHolder> RandomHolder::hold (CREF<RandomImplLayout> that) {
+exports CFat<RandomHolder> RandomHolder::hold (CREF<RandomLayout> that) {
 	return CFat<RandomHolder> (RandomImplHolder () ,that) ;
 }
 
 template class External<SingletonProcHolder ,SingletonProcLayout> ;
 
-exports CREF<SingletonProcLayout> SingletonProcHolder::instance () {
+exports CREF<OfThis<UniqueRef<SingletonProcLayout>>> SingletonProcHolder::instance () {
 	return memorize ([&] () {
-		SingletonProcLayout ret ;
+		OfThis<UniqueRef<SingletonProcLayout>> ret ;
 		ret.mThis = External<SingletonProcHolder ,SingletonProcLayout>::create () ;
 		SingletonProcHolder::hold (ret)->initialize () ;
 		return move (ret) ;
 	}) ;
 }
 
-exports VFat<SingletonProcHolder> SingletonProcHolder::hold (VREF<SingletonProcImplLayout> that) {
+exports VFat<SingletonProcHolder> SingletonProcHolder::hold (VREF<SingletonProcLayout> that) {
 	return VFat<SingletonProcHolder> (External<SingletonProcHolder ,SingletonProcLayout>::declare () ,that) ;
 }
 
-exports CFat<SingletonProcHolder> SingletonProcHolder::hold (CREF<SingletonProcImplLayout> that) {
+exports CFat<SingletonProcHolder> SingletonProcHolder::hold (CREF<SingletonProcLayout> that) {
 	return CFat<SingletonProcHolder> (External<SingletonProcHolder ,SingletonProcLayout>::declare () ,that) ;
 }
 
@@ -767,7 +767,7 @@ struct GlobalNode {
 	Pin<AutoRef<Pointer>> mValue ;
 } ;
 
-struct GlobalImplLayout {
+struct GlobalTree {
 	Mutex mMutex ;
 	Set<Slice> mGlobalNameSet ;
 	List<GlobalNode> mGlobalList ;
@@ -777,7 +777,7 @@ struct GlobalImplLayout {
 class GlobalImplHolder final implement Fat<GlobalHolder ,GlobalLayout> {
 public:
 	void initialize () override {
-		self.mThis = Ref<GlobalImplLayout>::make () ;
+		self.mThis = Ref<GlobalTree>::make () ;
 		self.mThis->mMutex = NULL ;
 		self.mThis->mFinalize = FALSE ;
 		self.mIndex = NONE ;

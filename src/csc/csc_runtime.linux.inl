@@ -36,9 +36,9 @@ using HFILEPIPE = int ;
 } ;
 
 namespace CSC {
-struct RuntimeProcImplLayout {} ;
+struct RuntimeProcLayout {} ;
 
-class RuntimeProcImplHolder final implement Fat<RuntimeProcHolder ,RuntimeProcImplLayout> {
+class RuntimeProcImplHolder final implement Fat<RuntimeProcHolder ,RuntimeProcLayout> {
 public:
 	void initialize () override {
 		noop () ;
@@ -90,13 +90,13 @@ public:
 
 static const auto mRuntimeProcExternal = External<RuntimeProcHolder ,RuntimeProcLayout> (RuntimeProcImplHolder ()) ;
 
-struct ProcessImplLayout {
+struct ProcessLayout {
 	FLAG mUid ;
 	QUAD mProcessCode ;
 	QUAD mProcessTime ;
 } ;
 
-class ProcessImplHolder final implement Fat<ProcessHolder ,ProcessImplLayout> {
+class ProcessImplHolder final implement Fat<ProcessHolder ,ProcessLayout> {
 private:
 	using PROCESS_SNAPSHOT_STEP = ENUM<128> ;
 
@@ -182,7 +182,7 @@ public:
 		}
 	}
 
-	BOOL equal (CREF<ProcessImplLayout> that) const override {
+	BOOL equal (CREF<ProcessLayout> that) const override {
 		const auto r1x = inline_equal (self.mUid ,that.mUid) ;
 		if (!r1x)
 			return r1x ;
@@ -219,13 +219,13 @@ public:
 
 static const auto mProcessExternal = External<ProcessHolder ,ProcessLayout> (ProcessImplHolder ()) ;
 
-struct LibraryImplLayout {
+struct LibraryLayout {
 	String<STR> mFile ;
 	UniqueRef<HMODULE> mLibrary ;
 	FLAG mLastError ;
 } ;
 
-class LibraryImplHolder final implement Fat<LibraryHolder ,LibraryImplLayout> {
+class LibraryImplHolder final implement Fat<LibraryHolder ,LibraryLayout> {
 public:
 	void initialize (CREF<String<STR>> file) override {
 		self.mFile = move (file) ;
@@ -287,7 +287,7 @@ struct SingletonPipe {
 	QUAD mReserve3 ;
 } ;
 
-struct SingletonProcImplLayout {
+struct SingletonProcLayout {
 	FLAG mUid ;
 	String<STR> mName ;
 	UniqueRef<HANDLE> mMapping ;
@@ -295,16 +295,16 @@ struct SingletonProcImplLayout {
 	Ref<SingletonRoot> mThis ;
 
 public:
-	implicit SingletonProcImplLayout () = default ;
+	implicit SingletonProcLayout () = default ;
 
-	implicit ~SingletonProcImplLayout () noexcept {
+	implicit ~SingletonProcLayout () noexcept {
 		if (mThis == NULL)
 			return ;
 		mThis->~SingletonRoot () ;
 	}
 } ;
 
-class SingletonProcImplHolder final implement Fat<SingletonProcHolder ,SingletonProcImplLayout> {
+class SingletonProcImplHolder final implement Fat<SingletonProcHolder ,SingletonProcLayout> {
 public:
 	void initialize () override {
 		self.mUid = RuntimeProc::process_uid () ;
@@ -313,7 +313,7 @@ public:
 		link_pipe () ;
 	}
 
-	static VREF<SingletonRoot> root_ptr (CREF<SingletonProcImplLayout> that) {
+	static VREF<SingletonRoot> root_ptr (CREF<SingletonProcLayout> that) {
 		return memorize ([&] () {
 			return Pin<SingletonRoot> () ;
 		}).deref ;

@@ -11,9 +11,9 @@
 #include "csc_math.hpp"
 
 namespace CSC {
-struct FEXP2CacheImplLayout {} ;
+struct FEXP2CacheLayout {} ;
 
-class FEXP2CacheImplHolder final implement Fat<FEXP2CacheHolder ,FEXP2CacheImplLayout> {
+class FEXP2CacheImplHolder final implement Fat<FEXP2CacheHolder ,FEXP2CacheLayout> {
 private:
 	using FEXP2CACHE_SIZE = ENUM<693> ;
 
@@ -48,9 +48,9 @@ public:
 
 static const auto mFEXP2CacheExternal = External<FEXP2CacheHolder ,FEXP2CacheLayout> (FEXP2CacheImplHolder ()) ;
 
-struct FEXP10CacheImplLayout {} ;
+struct FEXP10CacheLayout {} ;
 
-class FEXP10CacheImplHolder final implement Fat<FEXP10CacheHolder ,FEXP10CacheImplLayout> {
+class FEXP10CacheImplHolder final implement Fat<FEXP10CacheHolder ,FEXP10CacheLayout> {
 private:
 	using FEXP10CACHE_SIZE = ENUM<2175> ;
 

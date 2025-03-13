@@ -110,11 +110,11 @@ static constexpr auto string_locale = FUNCTION_string_locale () ;
 static constexpr auto string_stra_from_strw = FUNCTION_string_stra_from_strw () ;
 static constexpr auto string_strw_from_stra = FUNCTION_string_strw_from_stra () ;
 
-struct StringProcImplLayout {
+struct StringProcLayout {
 	UniqueRef<csc_locale_t> mStringLocale ;
 } ;
 
-class StringProcImplHolder final implement Fat<StringProcHolder ,StringProcImplLayout> {
+class StringProcImplHolder final implement Fat<StringProcHolder ,StringProcLayout> {
 public:
 	void initialize () override {
 		self.mStringLocale = string_locale () ;
@@ -821,20 +821,20 @@ public:
 	}
 } ;
 
-exports CREF<StringProcLayout> StringProcHolder::instance () {
+exports CREF<OfThis<UniqueRef<StringProcLayout>>> StringProcHolder::instance () {
 	return memorize ([&] () {
-		StringProcLayout ret ;
-		ret.mThis = UniqueRef<StringProcImplLayout>::make () ;
+		OfThis<UniqueRef<StringProcLayout>> ret ;
+		ret.mThis = UniqueRef<StringProcLayout>::make () ;
 		StringProcHolder::hold (ret)->initialize () ;
 		return move (ret) ;
 	}) ;
 }
 
-exports VFat<StringProcHolder> StringProcHolder::hold (VREF<StringProcImplLayout> that) {
+exports VFat<StringProcHolder> StringProcHolder::hold (VREF<StringProcLayout> that) {
 	return VFat<StringProcHolder> (StringProcImplHolder () ,that) ;
 }
 
-exports CFat<StringProcHolder> StringProcHolder::hold (CREF<StringProcImplLayout> that) {
+exports CFat<StringProcHolder> StringProcHolder::hold (CREF<StringProcLayout> that) {
 	return CFat<StringProcHolder> (StringProcImplHolder () ,that) ;
 }
 
@@ -971,7 +971,7 @@ struct XmlParserNode {
 	INDEX mChild ;
 } ;
 
-struct XmlParserImplLayout {
+struct XmlParserTree {
 	Array<XmlParserNode> mTree ;
 	INDEX mRoot ;
 } ;
@@ -1009,8 +1009,8 @@ public:
 		mObjectMap = SortedMap<String<STRU8>> (ALLOCATOR_MIN_SIZE::expr) ;
 	}
 
-	XmlParserImplLayout poll () {
-		XmlParserImplLayout ret ;
+	XmlParserTree poll () {
+		XmlParserTree ret ;
 		ret.mTree = Array<XmlParserNode> (mTree.length ()) ;
 		const auto r1x = Array<INDEX>::make (mTree.range ()) ;
 		for (auto &&i : ret.mTree.range ()) {
@@ -1325,7 +1325,7 @@ public:
 	void initialize (CREF<RefBuffer<BYTE>> stream) override {
 		auto rax = MakeXmlParser (Ref<RefBuffer<BYTE>>::reference (stream)) ;
 		rax.generate () ;
-		self.mThis = Ref<XmlParserImplLayout>::make (rax.poll ()) ;
+		self.mThis = Ref<XmlParserTree>::make (rax.poll ()) ;
 		self.mIndex = self.mThis->mRoot ;
 	}
 
@@ -1653,7 +1653,7 @@ struct JsonParserNode {
 	INDEX mChild ;
 } ;
 
-struct JsonParserImplLayout {
+struct JsonParserTree {
 	Array<JsonParserNode> mTree ;
 	INDEX mRoot ;
 } ;
@@ -1689,8 +1689,8 @@ public:
 		mObjectMap = SortedMap<String<STRU8>> (ALLOCATOR_MIN_SIZE::expr) ;
 	}
 
-	JsonParserImplLayout poll () {
-		JsonParserImplLayout ret ;
+	JsonParserTree poll () {
+		JsonParserTree ret ;
 		ret.mTree = Array<JsonParserNode> (mTree.length ()) ;
 		const auto r1x = Array<INDEX>::make (mTree.range ()) ;
 		for (auto &&i : ret.mTree.range ()) {
@@ -1983,7 +1983,7 @@ public:
 	void initialize (CREF<RefBuffer<BYTE>> stream) override {
 		auto rax = MakeJsonParser (Ref<RefBuffer<BYTE>>::reference (stream)) ;
 		rax.generate () ;
-		self.mThis = Ref<JsonParserImplLayout>::make (rax.poll ()) ;
+		self.mThis = Ref<JsonParserTree>::make (rax.poll ()) ;
 		self.mIndex = self.mThis->mRoot ;
 	}
 
@@ -2330,7 +2330,7 @@ struct PlyParserElement {
 	INDEX mExtIndex ;
 } ;
 
-struct PlyParserImplLayout {
+struct PlyParserTree {
 	String<STRU8> mFormat ;
 	ArrayList<PlyParserElement> mElementList ;
 	Set<String<STRU8>> mElementSet ;
@@ -2386,8 +2386,8 @@ public:
 		mPropertyListType.add (slice ("uint") ,PlyParserDataType::Char) ;
 	}
 
-	PlyParserImplLayout poll () {
-		PlyParserImplLayout ret ;
+	PlyParserTree poll () {
+		PlyParserTree ret ;
 		ret.mFormat = move (mFormat) ;
 		ret.mElementList = move (mElementList) ;
 		ret.mElementSet = move (mElementSet) ;
@@ -2896,7 +2896,7 @@ public:
 	void initialize (CREF<RefBuffer<BYTE>> stream) override {
 		auto rax = MakePlyParser (Ref<RefBuffer<BYTE>>::reference (stream)) ;
 		rax.generate () ;
-		self.mThis = Ref<PlyParserImplLayout>::make (rax.poll ()) ;
+		self.mThis = Ref<PlyParserTree>::make (rax.poll ()) ;
 		self.mGuide.mElement = NONE ;
 	}
 

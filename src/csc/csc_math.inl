@@ -11,9 +11,9 @@
 #include "csc_begin.h"
 
 namespace CSC {
-struct MathProcImplLayout {} ;
+struct MathProcLayout {} ;
 
-class MathProcImplHolder final implement Fat<MathProcHolder ,MathProcImplLayout> {
+class MathProcImplHolder final implement Fat<MathProcHolder ,MathProcLayout> {
 public:
 	void initialize () override {
 		noop () ;
@@ -432,20 +432,20 @@ public:
 	}
 } ;
 
-exports CREF<MathProcLayout> MathProcHolder::instance () {
+exports CREF<OfThis<UniqueRef<MathProcLayout>>> MathProcHolder::instance () {
 	return memorize ([&] () {
-		MathProcLayout ret ;
-		ret.mThis = UniqueRef<MathProcImplLayout>::make () ;
+		OfThis<UniqueRef<MathProcLayout>> ret ;
+		ret.mThis = UniqueRef<MathProcLayout>::make () ;
 		MathProcHolder::hold (ret)->initialize () ;
 		return move (ret) ;
 	}) ;
 }
 
-exports VFat<MathProcHolder> MathProcHolder::hold (VREF<MathProcImplLayout> that) {
+exports VFat<MathProcHolder> MathProcHolder::hold (VREF<MathProcLayout> that) {
 	return VFat<MathProcHolder> (MathProcImplHolder () ,that) ;
 }
 
-exports CFat<MathProcHolder> MathProcHolder::hold (CREF<MathProcImplLayout> that) {
+exports CFat<MathProcHolder> MathProcHolder::hold (CREF<MathProcLayout> that) {
 	return CFat<MathProcHolder> (MathProcImplHolder () ,that) ;
 }
 
@@ -471,9 +471,9 @@ exports CFat<NormalErrorHolder> NormalErrorHolder::hold (CREF<NormalErrorLayout>
 	return CFat<NormalErrorHolder> (NormalErrorImplHolder () ,that) ;
 }
 
-struct FloatProcImplLayout {} ;
+struct FloatProcLayout {} ;
 
-class FloatProcImplHolder final implement Fat<FloatProcHolder ,FloatProcImplLayout> {
+class FloatProcImplHolder final implement Fat<FloatProcHolder ,FloatProcLayout> {
 public:
 	void initialize () override {
 		noop () ;
@@ -718,64 +718,64 @@ public:
 	}
 } ;
 
-exports CREF<FloatProcLayout> FloatProcHolder::instance () {
+exports CREF<OfThis<UniqueRef<FloatProcLayout>>> FloatProcHolder::instance () {
 	return memorize ([&] () {
-		FloatProcLayout ret ;
-		ret.mThis = UniqueRef<FloatProcImplLayout>::make () ;
+		OfThis<UniqueRef<FloatProcLayout>> ret ;
+		ret.mThis = UniqueRef<FloatProcLayout>::make () ;
 		FloatProcHolder::hold (ret)->initialize () ;
 		return move (ret) ;
 	}) ;
 }
 
-exports VFat<FloatProcHolder> FloatProcHolder::hold (VREF<FloatProcImplLayout> that) {
+exports VFat<FloatProcHolder> FloatProcHolder::hold (VREF<FloatProcLayout> that) {
 	return VFat<FloatProcHolder> (FloatProcImplHolder () ,that) ;
 }
 
-exports CFat<FloatProcHolder> FloatProcHolder::hold (CREF<FloatProcImplLayout> that) {
+exports CFat<FloatProcHolder> FloatProcHolder::hold (CREF<FloatProcLayout> that) {
 	return CFat<FloatProcHolder> (FloatProcImplHolder () ,that) ;
 }
 
 template class External<FEXP2CacheHolder ,FEXP2CacheLayout> ;
 
-exports CREF<FEXP2CacheLayout> FEXP2CacheHolder::instance () {
+exports CREF<OfThis<UniqueRef<FEXP2CacheLayout>>> FEXP2CacheHolder::instance () {
 	return memorize ([&] () {
-		FEXP2CacheLayout ret ;
+		OfThis<UniqueRef<FEXP2CacheLayout>> ret ;
 		ret.mThis = External<FEXP2CacheHolder ,FEXP2CacheLayout>::create () ;
 		FEXP2CacheHolder::hold (ret)->initialize () ;
 		return move (ret) ;
 	}) ;
 }
 
-exports VFat<FEXP2CacheHolder> FEXP2CacheHolder::hold (VREF<FEXP2CacheImplLayout> that) {
+exports VFat<FEXP2CacheHolder> FEXP2CacheHolder::hold (VREF<FEXP2CacheLayout> that) {
 	return VFat<FEXP2CacheHolder> (External<FEXP2CacheHolder ,FEXP2CacheLayout>::declare () ,that) ;
 }
 
-exports CFat<FEXP2CacheHolder> FEXP2CacheHolder::hold (CREF<FEXP2CacheImplLayout> that) {
+exports CFat<FEXP2CacheHolder> FEXP2CacheHolder::hold (CREF<FEXP2CacheLayout> that) {
 	return CFat<FEXP2CacheHolder> (External<FEXP2CacheHolder ,FEXP2CacheLayout>::declare () ,that) ;
 }
 
 template class External<FEXP10CacheHolder ,FEXP10CacheLayout> ;
 
-exports CREF<FEXP10CacheLayout> FEXP10CacheHolder::instance () {
+exports CREF<OfThis<UniqueRef<FEXP10CacheLayout>>> FEXP10CacheHolder::instance () {
 	return memorize ([&] () {
-		FEXP10CacheLayout ret ;
+		OfThis<UniqueRef<FEXP10CacheLayout>> ret ;
 		ret.mThis = External<FEXP10CacheHolder ,FEXP10CacheLayout>::create () ;
 		FEXP10CacheHolder::hold (ret)->initialize () ;
 		return move (ret) ;
 	}) ;
 }
 
-exports VFat<FEXP10CacheHolder> FEXP10CacheHolder::hold (VREF<FEXP10CacheImplLayout> that) {
+exports VFat<FEXP10CacheHolder> FEXP10CacheHolder::hold (VREF<FEXP10CacheLayout> that) {
 	return VFat<FEXP10CacheHolder> (External<FEXP10CacheHolder ,FEXP10CacheLayout>::declare () ,that) ;
 }
 
-exports CFat<FEXP10CacheHolder> FEXP10CacheHolder::hold (CREF<FEXP10CacheImplLayout> that) {
+exports CFat<FEXP10CacheHolder> FEXP10CacheHolder::hold (CREF<FEXP10CacheLayout> that) {
 	return CFat<FEXP10CacheHolder> (External<FEXP10CacheHolder ,FEXP10CacheLayout>::declare () ,that) ;
 }
 
-struct ByteProcImplLayout {} ;
+struct ByteProcLayout {} ;
 
-class ByteProcImplHolder final implement Fat<ByteProcHolder ,ByteProcImplLayout> {
+class ByteProcImplHolder final implement Fat<ByteProcHolder ,ByteProcLayout> {
 public:
 	void initialize () override {
 		noop () ;
@@ -946,20 +946,20 @@ public:
 	}
 } ;
 
-exports CREF<ByteProcLayout> ByteProcHolder::instance () {
+exports CREF<OfThis<UniqueRef<ByteProcLayout>>> ByteProcHolder::instance () {
 	return memorize ([&] () {
-		ByteProcLayout ret ;
-		ret.mThis = UniqueRef<ByteProcImplLayout>::make () ;
+		OfThis<UniqueRef<ByteProcLayout>> ret ;
+		ret.mThis = UniqueRef<ByteProcLayout>::make () ;
 		ByteProcHolder::hold (ret)->initialize () ;
 		return move (ret) ;
 	}) ;
 }
 
-exports VFat<ByteProcHolder> ByteProcHolder::hold (VREF<ByteProcImplLayout> that) {
+exports VFat<ByteProcHolder> ByteProcHolder::hold (VREF<ByteProcLayout> that) {
 	return VFat<ByteProcHolder> (ByteProcImplHolder () ,that) ;
 }
 
-exports CFat<ByteProcHolder> ByteProcHolder::hold (CREF<ByteProcImplLayout> that) {
+exports CFat<ByteProcHolder> ByteProcHolder::hold (CREF<ByteProcLayout> that) {
 	return CFat<ByteProcHolder> (ByteProcImplHolder () ,that) ;
 }
 
@@ -1870,9 +1870,9 @@ exports CFat<JetHolder> JetHolder::hold (CREF<JetLayout> that) {
 	return CFat<JetHolder> (JetImplHolder () ,that) ;
 }
 
-struct HashProcImplLayout {} ;
+struct HashProcLayout {} ;
 
-class HashProcImplHolder final implement Fat<HashProcHolder ,HashProcImplLayout> {
+class HashProcImplHolder final implement Fat<HashProcHolder ,HashProcLayout> {
 public:
 	void initialize () override {
 		noop () ;
@@ -1940,20 +1940,20 @@ public:
 	}
 } ;
 
-exports CREF<HashProcLayout> HashProcHolder::instance () {
+exports CREF<OfThis<UniqueRef<HashProcLayout>>> HashProcHolder::instance () {
 	return memorize ([&] () {
-		HashProcLayout ret ;
-		ret.mThis = UniqueRef<HashProcImplLayout>::make () ;
+		OfThis<UniqueRef<HashProcLayout>> ret ;
+		ret.mThis = UniqueRef<HashProcLayout>::make () ;
 		HashProcHolder::hold (ret)->initialize () ;
 		return move (ret) ;
 	}) ;
 }
 
-exports VFat<HashProcHolder> HashProcHolder::hold (VREF<HashProcImplLayout> that) {
+exports VFat<HashProcHolder> HashProcHolder::hold (VREF<HashProcLayout> that) {
 	return VFat<HashProcHolder> (HashProcImplHolder () ,that) ;
 }
 
-exports CFat<HashProcHolder> HashProcHolder::hold (CREF<HashProcImplLayout> that) {
+exports CFat<HashProcHolder> HashProcHolder::hold (CREF<HashProcLayout> that) {
 	return CFat<HashProcHolder> (HashProcImplHolder () ,that) ;
 }
 } ;

@@ -12,13 +12,12 @@
 #include "csc_array.hpp"
 
 namespace CSC {
-struct StreamProcImplLayout ;
-struct StreamProcLayout implement OfThis<UniqueRef<StreamProcImplLayout>> {} ;
+struct StreamProcLayout ;
 
 struct StreamProcHolder implement Interface {
-	imports CREF<StreamProcLayout> instance () ;
-	imports VFat<StreamProcHolder> hold (VREF<StreamProcImplLayout> that) ;
-	imports CFat<StreamProcHolder> hold (CREF<StreamProcImplLayout> that) ;
+	imports CREF<OfThis<UniqueRef<StreamProcLayout>>> instance () ;
+	imports VFat<StreamProcHolder> hold (VREF<StreamProcLayout> that) ;
+	imports CFat<StreamProcHolder> hold (CREF<StreamProcLayout> that) ;
 
 	virtual void initialize () = 0 ;
 	virtual BOOL big_endian () const = 0 ;
@@ -40,7 +39,7 @@ struct StreamProcHolder implement Interface {
 	virtual STRU32 ctrl_from_word (CREF<STRU32> str) const = 0 ;
 } ;
 
-class StreamProc implement StreamProcLayout {
+class StreamProc implement OfThis<UniqueRef<StreamProcLayout>> {
 public:
 	static CREF<StreamProc> instance () {
 		return keep[TYPE<StreamProc>::expr] (StreamProcHolder::instance ()) ;
@@ -1685,13 +1684,12 @@ inline Format PrintFormat (CREF<ARG1>...params) {
 	return move (ret) ;
 }
 
-struct StreamTextProcImplLayout ;
-struct StreamTextProcLayout implement OfThis<UniqueRef<StreamTextProcImplLayout>> {} ;
+struct StreamTextProcLayout ;
 
 struct StreamTextProcHolder implement Interface {
-	imports CREF<StreamTextProcLayout> instance () ;
-	imports VFat<StreamTextProcHolder> hold (VREF<StreamTextProcImplLayout> that) ;
-	imports CFat<StreamTextProcHolder> hold (CREF<StreamTextProcImplLayout> that) ;
+	imports CREF<OfThis<UniqueRef<StreamTextProcLayout>>> instance () ;
+	imports VFat<StreamTextProcHolder> hold (VREF<StreamTextProcLayout> that) ;
+	imports CFat<StreamTextProcHolder> hold (CREF<StreamTextProcLayout> that) ;
 
 	virtual void initialize () = 0 ;
 	virtual void read_keyword (VREF<ReaderBinder> reader ,VREF<String<STRU8>> item) const = 0 ;
@@ -1703,7 +1701,7 @@ struct StreamTextProcHolder implement Interface {
 	virtual void write_aligned (VREF<WriterBinder> writer ,CREF<VAL64> number ,CREF<LENGTH> align) const = 0 ;
 } ;
 
-class StreamTextProc implement StreamTextProcLayout {
+class StreamTextProc implement OfThis<UniqueRef<StreamTextProcLayout>> {
 public:
 	static CREF<StreamTextProc> instance () {
 		return keep[TYPE<StreamTextProc>::expr] (StreamTextProcHolder::instance ()) ;
@@ -1850,13 +1848,12 @@ public:
 	}
 } ;
 
-struct CommaImplLayout ;
-struct CommaLayout implement OfThis<SharedRef<CommaImplLayout>> {} ;
+struct CommaLayout ;
 
 struct CommaHolder implement Interface {
-	imports CommaLayout create () ;
-	imports VFat<CommaHolder> hold (VREF<CommaImplLayout> that) ;
-	imports CFat<CommaHolder> hold (CREF<CommaImplLayout> that) ;
+	imports OfThis<SharedRef<CommaLayout>> create () ;
+	imports VFat<CommaHolder> hold (VREF<CommaLayout> that) ;
+	imports CFat<CommaHolder> hold (CREF<CommaLayout> that) ;
 
 	virtual void initialize (CREF<Slice> indent ,CREF<Slice> comma ,CREF<Slice> endline) = 0 ;
 	virtual void friend_write (VREF<WriterBinder> writer) = 0 ;
@@ -1865,7 +1862,7 @@ struct CommaHolder implement Interface {
 	virtual void tight () = 0 ;
 } ;
 
-class Comma implement CommaLayout {
+class Comma implement OfThis<SharedRef<CommaLayout>> {
 public:
 	implicit Comma () = default ;
 
@@ -1899,20 +1896,19 @@ public:
 	}
 } ;
 
-struct RegexImplLayout ;
-struct RegexLayout implement OfThis<AutoRef<RegexImplLayout>> {} ;
+struct RegexLayout ;
 
 struct RegexHolder implement Interface {
-	imports RegexLayout create () ;
-	imports VFat<RegexHolder> hold (VREF<RegexImplLayout> that) ;
-	imports CFat<RegexHolder> hold (CREF<RegexImplLayout> that) ;
+	imports OfThis<AutoRef<RegexLayout>> create () ;
+	imports VFat<RegexHolder> hold (VREF<RegexLayout> that) ;
+	imports CFat<RegexHolder> hold (CREF<RegexLayout> that) ;
 
 	virtual void initialize (CREF<String<STR>> format) = 0 ;
 	virtual INDEX search (RREF<Ref<String<STR>>> text ,CREF<INDEX> offset) = 0 ;
 	virtual Slice match (CREF<INDEX> index) const = 0 ;
 } ;
 
-class Regex implement RegexLayout {
+class Regex implement OfThis<AutoRef<RegexLayout>> {
 public:
 	implicit Regex () = default ;
 

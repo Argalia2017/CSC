@@ -17,7 +17,7 @@ struct ThreadFlag {
 	} ;
 } ;
 
-struct WorkThreadImplLayout {
+struct WorkThreadLayout {
 	Mutex mThreadMutex ;
 	Just<ThreadFlag> mThreadFlag ;
 	Array<Thread> mThread ;
@@ -29,9 +29,9 @@ struct WorkThreadImplLayout {
 	LENGTH mItemLoadLength ;
 
 public:
-	implicit WorkThreadImplLayout () = default ;
+	implicit WorkThreadLayout () = default ;
 
-	implicit ~WorkThreadImplLayout () noexcept {
+	implicit ~WorkThreadLayout () noexcept {
 		WorkThreadHolder::hold (thiz)->stop () ;
 	}
 
@@ -40,7 +40,7 @@ public:
 	}
 } ;
 
-class WorkThreadImplHolder final implement Fat<WorkThreadHolder ,WorkThreadImplLayout> {
+class WorkThreadImplHolder final implement Fat<WorkThreadHolder ,WorkThreadLayout> {
 private:
 	using THREAD_QUEUE_SIZE = ENUM<65536> ;
 
@@ -78,7 +78,7 @@ public:
 		self.mItemLoadLength = 0 ;
 		self.mThreadFlag = ThreadFlag::Running ;
 		self.mThreadFunc = func ;
-		const auto r1x = FriendThreadBinder<WorkThreadImplLayout>::hold (self) ;
+		const auto r1x = FriendThreadBinder<WorkThreadLayout>::hold (self) ;
 		for (auto &&i : self.mThread.range ()) {
 			self.mThread[i] = Thread (Box<VFat<ThreadBinder>>::make (r1x) ,i) ;
 			self.mThread[i].start () ;
@@ -202,21 +202,21 @@ public:
 	}
 } ;
 
-exports WorkThreadLayout WorkThreadHolder::create () {
-	WorkThreadLayout ret ;
-	ret.mThis = SharedRef<WorkThreadImplLayout>::make () ;
+exports OfThis<SharedRef<WorkThreadLayout>> WorkThreadHolder::create () {
+	OfThis<SharedRef<WorkThreadLayout>> ret ;
+	ret.mThis = SharedRef<WorkThreadLayout>::make () ;
 	return move (ret) ;
 }
 
-exports VFat<WorkThreadHolder> WorkThreadHolder::hold (VREF<WorkThreadImplLayout> that) {
+exports VFat<WorkThreadHolder> WorkThreadHolder::hold (VREF<WorkThreadLayout> that) {
 	return VFat<WorkThreadHolder> (WorkThreadImplHolder () ,that) ;
 }
 
-exports CFat<WorkThreadHolder> WorkThreadHolder::hold (CREF<WorkThreadImplLayout> that) {
+exports CFat<WorkThreadHolder> WorkThreadHolder::hold (CREF<WorkThreadLayout> that) {
 	return CFat<WorkThreadHolder> (WorkThreadImplHolder () ,that) ;
 }
 
-struct CalcThreadImplLayout {
+struct CalcThreadLayout {
 	Mutex mThreadMutex ;
 	Just<ThreadFlag> mThreadFlag ;
 	BOOL mSuspendFlag ;
@@ -232,9 +232,9 @@ struct CalcThreadImplLayout {
 	BOOL mNewSolution ;
 
 public:
-	implicit CalcThreadImplLayout () = default ;
+	implicit CalcThreadLayout () = default ;
 
-	implicit ~CalcThreadImplLayout () noexcept {
+	implicit ~CalcThreadLayout () noexcept {
 		CalcThreadHolder::hold (thiz)->stop () ;
 	}
 
@@ -243,7 +243,7 @@ public:
 	}
 } ;
 
-class CalcThreadImplHolder final implement Fat<CalcThreadHolder ,CalcThreadImplLayout> {
+class CalcThreadImplHolder final implement Fat<CalcThreadHolder ,CalcThreadLayout> {
 public:
 	void initialize () override {
 		self.mThreadMutex = UniqueMutex () ;
@@ -289,7 +289,7 @@ public:
 		self.mThreadFlag = ThreadFlag::Running ;
 		self.mSuspendFlag = FALSE ;
 		self.mThreadFunc = func ;
-		const auto r1x = FriendThreadBinder<CalcThreadImplLayout>::hold (self) ;
+		const auto r1x = FriendThreadBinder<CalcThreadLayout>::hold (self) ;
 		for (auto &&i : self.mThread.range ()) {
 			self.mThread[i] = Thread (Box<VFat<ThreadBinder>>::make (r1x) ,i) ;
 			self.mThread[i].start () ;
@@ -471,21 +471,21 @@ public:
 	}
 } ;
 
-exports CalcThreadLayout CalcThreadHolder::create () {
-	CalcThreadLayout ret ;
-	ret.mThis = SharedRef<CalcThreadImplLayout>::make () ;
+exports OfThis<SharedRef<CalcThreadLayout>> CalcThreadHolder::create () {
+	OfThis<SharedRef<CalcThreadLayout>> ret ;
+	ret.mThis = SharedRef<CalcThreadLayout>::make () ;
 	return move (ret) ;
 }
 
-exports VFat<CalcThreadHolder> CalcThreadHolder::hold (VREF<CalcThreadImplLayout> that) {
+exports VFat<CalcThreadHolder> CalcThreadHolder::hold (VREF<CalcThreadLayout> that) {
 	return VFat<CalcThreadHolder> (CalcThreadImplHolder () ,that) ;
 }
 
-exports CFat<CalcThreadHolder> CalcThreadHolder::hold (CREF<CalcThreadImplLayout> that) {
+exports CFat<CalcThreadHolder> CalcThreadHolder::hold (CREF<CalcThreadLayout> that) {
 	return CFat<CalcThreadHolder> (CalcThreadImplHolder () ,that) ;
 }
 
-struct PromiseImplLayout {
+struct PromiseLayout {
 	Mutex mThreadMutex ;
 	Just<ThreadFlag> mThreadFlag ;
 	Array<Thread> mThread ;
@@ -496,9 +496,9 @@ struct PromiseImplLayout {
 	BOOL mRetryFlag ;
 
 public:
-	implicit PromiseImplLayout () = default ;
+	implicit PromiseLayout () = default ;
 
-	implicit ~PromiseImplLayout () noexcept {
+	implicit ~PromiseLayout () noexcept {
 		PromiseHolder::hold (thiz)->stop () ;
 	}
 
@@ -507,7 +507,7 @@ public:
 	}
 } ;
 
-class PromiseImplHolder final implement Fat<PromiseHolder ,PromiseImplLayout> {
+class PromiseImplHolder final implement Fat<PromiseHolder ,PromiseLayout> {
 public:
 	void initialize () override {
 		self.mThreadMutex = UniqueMutex () ;
@@ -543,7 +543,7 @@ public:
 			if (self.mThread.size () > 0)
 				discard ;
 			self.mThread = Array<Thread> (1) ;
-			const auto r1x = FriendThreadBinder<PromiseImplLayout>::hold (self) ;
+			const auto r1x = FriendThreadBinder<PromiseLayout>::hold (self) ;
 			for (auto &&i : self.mThread.range ()) {
 				self.mThread[i] = Thread (Box<VFat<ThreadBinder>>::make (r1x) ,0) ;
 				self.mThread[i].start () ;
@@ -680,17 +680,17 @@ public:
 	}
 } ;
 
-exports PromiseLayout PromiseHolder::create () {
-	PromiseLayout ret ;
-	ret.mThis = SharedRef<PromiseImplLayout>::make () ;
+exports OfThis<SharedRef<PromiseLayout>> PromiseHolder::create () {
+	OfThis<SharedRef<PromiseLayout>> ret ;
+	ret.mThis = SharedRef<PromiseLayout>::make () ;
 	return move (ret) ;
 }
 
-exports VFat<PromiseHolder> PromiseHolder::hold (VREF<PromiseImplLayout> that) {
+exports VFat<PromiseHolder> PromiseHolder::hold (VREF<PromiseLayout> that) {
 	return VFat<PromiseHolder> (PromiseImplHolder () ,that) ;
 }
 
-exports CFat<PromiseHolder> PromiseHolder::hold (CREF<PromiseImplLayout> that) {
+exports CFat<PromiseHolder> PromiseHolder::hold (CREF<PromiseLayout> that) {
 	return CFat<PromiseHolder> (PromiseImplHolder () ,that) ;
 }
 } ;

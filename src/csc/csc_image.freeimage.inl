@@ -19,11 +19,11 @@ using HFIBITMAP = CSC::DEF<FIBITMAP *> ;
 } ;
 
 namespace CSC {
-struct ImageProcImplLayout {
+struct ImageProcLayout {
 	UniqueRef<BOOL> mContext ;
 } ;
 
-class ImageProcImplHolder final implement Fat<ImageProcHolder ,ImageProcImplLayout> {
+class ImageProcImplHolder final implement Fat<ImageProcHolder ,ImageProcLayout> {
 public:
 	void initialize () override {
 		self.mContext = UniqueRef<BOOL> ([&] (VREF<BOOL> me) {
