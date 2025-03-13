@@ -282,23 +282,6 @@ struct FUNCTION_keep {
 
 static constexpr auto keep = FUNCTION_keep () ;
 
-struct FUNCTION_copy {
-	template <class ARG1>
-	forceinline CREF<ARG1> operator() (VREF<ARG1> a) const noexcept {
-		return a ;
-	}
-
-	template <class ARG1>
-	forceinline CREF<ARG1> operator() (CREF<ARG1> a) const noexcept {
-		return a ;
-	}
-
-	template <class ARG1>
-	forceinline CREF<ARG1> operator() (RREF<ARG1> a) const noexcept = delete ;
-} ;
-
-static constexpr auto copy = FUNCTION_copy () ;
-
 struct FUNCTION_move {
 	template <class ARG1>
 	forceinline RREF<ARG1> operator() (VREF<ARG1> a) const noexcept {
@@ -1787,7 +1770,7 @@ public:
 	}
 
 	using VREF_ITEM = VREF<typeof (nullof (A).self)> ;
-	using CREF_ITEM = decltype (copy (nullof (A)).self) ;
+	using CREF_ITEM = decltype (keep[TYPE<CREF<A>>::expr] (nullof (A)).self) ;
 
 	XREF<VREF_ITEM> self_m () leftvalue {
 		return Pointer::make (address (mThis.self)) ;

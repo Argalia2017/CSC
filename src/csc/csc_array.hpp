@@ -1180,7 +1180,7 @@ public:
 	}
 
 	void push (CREF<A> item) {
-		move (move (item)) ;
+		push (move (item)) ;
 	}
 
 	void push (RREF<A> item) {
