@@ -282,6 +282,23 @@ struct FUNCTION_keep {
 
 static constexpr auto keep = FUNCTION_keep () ;
 
+struct FUNCTION_copy {
+	template <class ARG1>
+	forceinline CREF<ARG1> operator() (VREF<ARG1> a) const noexcept {
+		return a ;
+	}
+
+	template <class ARG1>
+	forceinline CREF<ARG1> operator() (CREF<ARG1> a) const noexcept {
+		return a ;
+	}
+
+	template <class ARG1>
+	forceinline CREF<ARG1> operator() (RREF<ARG1> a) const noexcept = delete ;
+} ;
+
+static constexpr auto copy = FUNCTION_copy () ;
+
 struct FUNCTION_move {
 	template <class ARG1>
 	forceinline RREF<ARG1> operator() (VREF<ARG1> a) const noexcept {
@@ -562,13 +579,11 @@ static constexpr auto inline_visit = FUNCTION_inline_visit () ;
 struct IndexIteratorLayout {
 	INDEX mBegin ;
 	INDEX mEnd ;
-	INDEX mPeek ;
 
 public:
 	implicit IndexIteratorLayout () noexcept {
 		mBegin = 0 ;
 		mEnd = 0 ;
-		mPeek = 0 ;
 	}
 } ;
 
@@ -576,7 +591,6 @@ class IndexIterator implement IndexIteratorLayout {
 protected:
 	using IndexIteratorLayout::mBegin ;
 	using IndexIteratorLayout::mEnd ;
-	using IndexIteratorLayout::mPeek ;
 
 public:
 	implicit IndexIterator () = default ;
@@ -584,7 +598,9 @@ public:
 	explicit IndexIterator (CREF<INDEX> begin_ ,CREF<INDEX> end_) {
 		mBegin = begin_ ;
 		mEnd = inline_max (begin_ ,end_) ;
-		mPeek = mBegin ;
+		if (length () > 0)
+			return ;
+		mBegin = mEnd ;
 	}
 
 	LENGTH length () const {
@@ -600,7 +616,7 @@ public:
 	}
 
 	BOOL good () const {
-		return mPeek != mEnd ;
+		return mBegin != mEnd ;
 	}
 
 	forceinline BOOL operator== (CREF<IndexIterator>) const {
@@ -612,7 +628,7 @@ public:
 	}
 
 	CREF<INDEX> peek () const leftvalue {
-		return mPeek ;
+		return mBegin ;
 	}
 
 	forceinline CREF<INDEX> operator* () const leftvalue {
@@ -620,7 +636,7 @@ public:
 	}
 
 	void next () {
-		mPeek++ ;
+		mBegin++ ;
 	}
 
 	forceinline void operator++ () {
@@ -636,7 +652,6 @@ struct Pixel {
 struct PixelIteratorLayout {
 	Pixel mBegin ;
 	Pixel mEnd ;
-	Pixel mPeek ;
 
 public:
 	implicit PixelIteratorLayout () noexcept {
@@ -644,8 +659,6 @@ public:
 		mBegin.mY = 0 ;
 		mEnd.mX = 0 ;
 		mEnd.mY = 0 ;
-		mPeek.mX = 0 ;
-		mPeek.mY = 0 ;
 	}
 } ;
 
@@ -653,7 +666,6 @@ class PixelIterator implement PixelIteratorLayout {
 protected:
 	using PixelIteratorLayout::mBegin ;
 	using PixelIteratorLayout::mEnd ;
-	using PixelIteratorLayout::mPeek ;
 
 public:
 	implicit PixelIterator () = default ;
@@ -663,10 +675,9 @@ public:
 		mBegin.mY = begin_y ;
 		mEnd.mX = inline_max (begin_x ,end_x) ;
 		mEnd.mY = inline_max (begin_y ,end_y) ;
-		mPeek = mBegin ;
 		if (length () > 0)
 			return ;
-		mPeek = mEnd ;
+		mBegin = mEnd ;
 	}
 
 	LENGTH length () const {
@@ -682,7 +693,7 @@ public:
 	}
 
 	BOOL good () const {
-		return mPeek.mY != mEnd.mY ;
+		return mBegin.mY != mEnd.mY ;
 	}
 
 	forceinline BOOL operator== (CREF<PixelIterator>) const {
@@ -694,7 +705,7 @@ public:
 	}
 
 	CREF<Pixel> peek () const leftvalue {
-		return mPeek ;
+		return mBegin ;
 	}
 
 	forceinline CREF<Pixel> operator* () const leftvalue {
@@ -702,11 +713,11 @@ public:
 	}
 
 	void next () {
-		mPeek.mX++ ;
-		if (mPeek.mX < mEnd.mX)
+		mBegin.mX++ ;
+		if (mBegin.mX < mEnd.mX)
 			return ;
-		mPeek.mX = 0 ;
-		mPeek.mY++ ;
+		mBegin.mX = 0 ;
+		mBegin.mY++ ;
 	}
 
 	forceinline void operator++ () {
@@ -1776,7 +1787,7 @@ public:
 	}
 
 	using VREF_ITEM = VREF<typeof (nullof (A).self)> ;
-	using CREF_ITEM = decltype (keep[TYPE<CREF<A>>::expr] (nullof (A)).self) ;
+	using CREF_ITEM = decltype (copy (nullof (A)).self) ;
 
 	XREF<VREF_ITEM> self_m () leftvalue {
 		return Pointer::make (address (mThis.self)) ;
