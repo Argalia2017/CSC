@@ -16,6 +16,15 @@ int main () {
 	ConfigProc::set_data_dire (slice (".")) ;
 	ConfigProc::set_cxx_signal () ;
 
+	const auto r1x = Path (slice ("")).decouple () ;
+	const auto r2x = Path (slice ("D:")).decouple () ;
+	const auto r3x = Path (slice ("\\A")).decouple () ;
+	const auto r4x = Path (slice ("B")).decouple () ;
+	watch (r1x) ;
+	watch (r2x) ;
+	watch (r3x) ;
+	watch (r4x) ;
+
 	GlobalProc::shutdown () ;
 	return 0 ;
 }
