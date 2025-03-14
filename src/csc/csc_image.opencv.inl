@@ -23,6 +23,10 @@ struct ImageProcLayout {} ;
 
 class ImageProcImplHolder final implement Fat<ImageProcHolder ,ImageProcLayout> {
 public:
+	void create (VREF<UniqueRef<ImageProcLayout>> that) const override {
+		that = UniqueRef<ImageProcLayout>::make () ;
+	}
+
 	void initialize () override {
 		noop () ;
 	}

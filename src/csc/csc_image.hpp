@@ -321,6 +321,7 @@ struct ImageProcHolder implement Interface {
 	imports VFat<ImageProcHolder> hold (VREF<ImageProcLayout> that) ;
 	imports CFat<ImageProcHolder> hold (CREF<ImageProcLayout> that) ;
 
+	virtual void create (VREF<UniqueRef<ImageProcLayout>> that) const = 0 ;
 	virtual void initialize () = 0 ;
 	virtual ImageLayout make_image (RREF<BoxLayout> image) const = 0 ;
 	virtual ImageLayout make_image (CREF<ImageShape> shape) const = 0 ;

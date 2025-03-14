@@ -11,14 +11,14 @@
 #include "csc_begin.h"
 
 namespace CSC {
-template class External<PathHolder ,PathTree> ;
+template class External<PathHolder ,PathLayout> ;
 
 exports VFat<PathHolder> PathHolder::hold (VREF<PathLayout> that) {
-	return VFat<PathHolder> (External<PathHolder ,PathTree>::declare () ,that) ;
+	return VFat<PathHolder> (External<PathHolder ,PathLayout>::declare () ,that) ;
 }
 
 exports CFat<PathHolder> PathHolder::hold (CREF<PathLayout> that) {
-	return CFat<PathHolder> (External<PathHolder ,PathTree>::declare () ,that) ;
+	return CFat<PathHolder> (External<PathHolder ,PathLayout>::declare () ,that) ;
 }
 
 template class External<FileProcHolder ,FileProcLayout> ;
@@ -26,7 +26,7 @@ template class External<FileProcHolder ,FileProcLayout> ;
 exports CREF<OfThis<UniqueRef<FileProcLayout>>> FileProcHolder::instance () {
 	return memorize ([&] () {
 		OfThis<UniqueRef<FileProcLayout>> ret ;
-		ret.mThis = External<FileProcHolder ,FileProcLayout>::create () ;
+		External<FileProcHolder ,FileProcLayout>::declare ().create (ret.mThis) ;
 		FileProcHolder::hold (ret)->initialize () ;
 		return move (ret) ;
 	}) ;
@@ -44,7 +44,7 @@ template class External<StreamFileHolder ,StreamFileLayout> ;
 
 exports OfThis<AutoRef<StreamFileLayout>> StreamFileHolder::create () {
 	OfThis<AutoRef<StreamFileLayout>> ret ;
-	ret.mThis = External<StreamFileHolder ,StreamFileLayout>::create () ;
+	External<StreamFileHolder ,StreamFileLayout>::declare ().create (ret.mThis) ;
 	return move (ret) ;
 }
 
@@ -180,7 +180,7 @@ template class External<BufferFileHolder ,BufferFileLayout> ;
 
 exports OfThis<AutoRef<BufferFileLayout>> BufferFileHolder::create () {
 	OfThis<AutoRef<BufferFileLayout>> ret ;
-	ret.mThis = External<BufferFileHolder ,BufferFileLayout>::create () ;
+	External<BufferFileHolder ,BufferFileLayout>::declare ().create (ret.mThis) ;
 	return move (ret) ;
 }
 
@@ -196,7 +196,7 @@ template class External<UartFileHolder ,UartFileLayout> ;
 
 exports OfThis<AutoRef<UartFileLayout>> UartFileHolder::create () {
 	OfThis<AutoRef<UartFileLayout>> ret ;
-	ret.mThis = External<UartFileHolder ,UartFileLayout>::create () ;
+	External<UartFileHolder ,UartFileLayout>::declare ().create (ret.mThis) ;
 	return move (ret) ;
 }
 
@@ -213,7 +213,7 @@ template class External<ConsoleHolder ,ConsoleLayout> ;
 exports CREF<OfThis<SharedRef<ConsoleLayout>>> ConsoleHolder::instance () {
 	return memorize ([&] () {
 		OfThis<SharedRef<ConsoleLayout>> ret ;
-		ret.mThis = External<ConsoleHolder ,ConsoleLayout>::create () ;
+		External<ConsoleHolder ,ConsoleLayout>::declare ().create (ret.mThis) ;
 		ConsoleHolder::hold (ret)->initialize () ;
 		return move (ret) ;
 	}) ;

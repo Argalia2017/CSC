@@ -317,6 +317,7 @@ struct FEXP2CacheHolder implement Interface {
 	imports VFat<FEXP2CacheHolder> hold (VREF<FEXP2CacheLayout> that) ;
 	imports CFat<FEXP2CacheHolder> hold (CREF<FEXP2CacheLayout> that) ;
 
+	virtual void create (VREF<UniqueRef<FEXP2CacheLayout>> that) const = 0 ;
 	virtual void initialize () = 0 ;
 	virtual void get (CREF<VAL64> index ,VREF<Notation> item) const = 0 ;
 } ;
@@ -341,6 +342,7 @@ struct FEXP10CacheHolder implement Interface {
 	imports VFat<FEXP10CacheHolder> hold (VREF<FEXP10CacheLayout> that) ;
 	imports CFat<FEXP10CacheHolder> hold (CREF<FEXP10CacheLayout> that) ;
 
+	virtual void create (VREF<UniqueRef<FEXP10CacheLayout>> that) const = 0 ;
 	virtual void initialize () = 0 ;
 	virtual void get (CREF<VAL64> index ,VREF<Notation> item) const = 0 ;
 } ;

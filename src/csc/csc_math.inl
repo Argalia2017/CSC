@@ -740,7 +740,7 @@ template class External<FEXP2CacheHolder ,FEXP2CacheLayout> ;
 exports CREF<OfThis<UniqueRef<FEXP2CacheLayout>>> FEXP2CacheHolder::instance () {
 	return memorize ([&] () {
 		OfThis<UniqueRef<FEXP2CacheLayout>> ret ;
-		ret.mThis = External<FEXP2CacheHolder ,FEXP2CacheLayout>::create () ;
+		External<FEXP2CacheHolder ,FEXP2CacheLayout>::declare ().create (ret.mThis) ;
 		FEXP2CacheHolder::hold (ret)->initialize () ;
 		return move (ret) ;
 	}) ;
@@ -759,7 +759,7 @@ template class External<FEXP10CacheHolder ,FEXP10CacheLayout> ;
 exports CREF<OfThis<UniqueRef<FEXP10CacheLayout>>> FEXP10CacheHolder::instance () {
 	return memorize ([&] () {
 		OfThis<UniqueRef<FEXP10CacheLayout>> ret ;
-		ret.mThis = External<FEXP10CacheHolder ,FEXP10CacheLayout>::create () ;
+		External<FEXP10CacheHolder ,FEXP10CacheLayout>::declare ().create (ret.mThis) ;
 		FEXP10CacheHolder::hold (ret)->initialize () ;
 		return move (ret) ;
 	}) ;

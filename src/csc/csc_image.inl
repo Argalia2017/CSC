@@ -207,7 +207,7 @@ template class External<ImageProcHolder ,ImageProcLayout> ;
 exports CREF<OfThis<UniqueRef<ImageProcLayout>>> ImageProcHolder::instance () {
 	return memorize ([&] () {
 		OfThis<UniqueRef<ImageProcLayout>> ret ;
-		ret.mThis = External<ImageProcHolder ,ImageProcLayout>::create () ;
+		External<ImageProcHolder ,ImageProcLayout>::declare ().create (ret.mThis) ;
 		ImageProcHolder::hold (ret)->initialize () ;
 		return move (ret) ;
 	}) ;

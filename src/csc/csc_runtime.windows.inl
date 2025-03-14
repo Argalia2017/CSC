@@ -28,6 +28,10 @@ struct RuntimeProcLayout {} ;
 
 class RuntimeProcImplHolder final implement Fat<RuntimeProcHolder ,RuntimeProcLayout> {
 public:
+	void create (VREF<UniqueRef<RuntimeProcLayout>> that) const override {
+		that = UniqueRef<RuntimeProcLayout>::make () ;
+	}
+
 	void initialize () override {
 		noop () ;
 	}
@@ -92,6 +96,10 @@ private:
 	using PROCESS_SNAPSHOT_STEP = ENUM<128> ;
 
 public:
+	void create (VREF<AutoRef<ProcessLayout>> that) const override {
+		that = AutoRef<ProcessLayout>::make () ;
+	}
+
 	void initialize (CREF<FLAG> uid) override {
 		self.mUid = uid ;
 		const auto r1x = UniqueRef<HANDLE> ([&] (VREF<HANDLE> me) {
@@ -184,6 +192,10 @@ struct LibraryLayout {
 
 class LibraryImplHolder final implement Fat<LibraryHolder ,LibraryLayout> {
 public:
+	void create (VREF<AutoRef<LibraryLayout>> that) const override {
+		that = AutoRef<LibraryLayout>::make () ;
+	}
+
 	void initialize (CREF<String<STR>> file) override {
 		self.mFile = move (file) ;
 		assert (self.mFile.length () > 0) ;
@@ -263,6 +275,10 @@ public:
 
 class SingletonProcImplHolder final implement Fat<SingletonProcHolder ,SingletonProcLayout> {
 public:
+	void create (VREF<UniqueRef<SingletonProcLayout>> that) const override {
+		that = UniqueRef<SingletonProcLayout>::make () ;
+	}
+
 	void initialize () override {
 		self.mUid = RuntimeProc::process_uid () ;
 		self.mName = String<STR>::make (slice ("CSC_Singleton_") ,self.mUid) ;

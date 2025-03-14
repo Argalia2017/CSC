@@ -166,7 +166,7 @@ template class External<RuntimeProcHolder ,RuntimeProcLayout> ;
 exports CREF<OfThis<UniqueRef<RuntimeProcLayout>>> RuntimeProcHolder::instance () {
 	return memorize ([&] () {
 		OfThis<UniqueRef<RuntimeProcLayout>> ret ;
-		ret.mThis = External<RuntimeProcHolder ,RuntimeProcLayout>::create () ;
+		External<RuntimeProcHolder ,RuntimeProcLayout>::declare ().create (ret.mThis) ;
 		RuntimeProcHolder::hold (ret)->initialize () ;
 		return move (ret) ;
 	}) ;
@@ -532,7 +532,7 @@ template class External<ProcessHolder ,ProcessLayout> ;
 
 exports OfThis<AutoRef<ProcessLayout>> ProcessHolder::create () {
 	OfThis<AutoRef<ProcessLayout>> ret ;
-	ret.mThis = External<ProcessHolder ,ProcessLayout>::create () ;
+	External<ProcessHolder ,ProcessLayout>::declare ().create (ret.mThis) ;
 	return move (ret) ;
 }
 
@@ -548,7 +548,7 @@ template class External<LibraryHolder ,LibraryLayout> ;
 
 exports OfThis<AutoRef<LibraryLayout>> LibraryHolder::create () {
 	OfThis<AutoRef<LibraryLayout>> ret ;
-	ret.mThis = External<LibraryHolder ,LibraryLayout>::create () ;
+	External<LibraryHolder ,LibraryLayout>::declare ().create (ret.mThis) ;
 	return move (ret) ;
 }
 
@@ -748,7 +748,7 @@ template class External<SingletonProcHolder ,SingletonProcLayout> ;
 exports CREF<OfThis<UniqueRef<SingletonProcLayout>>> SingletonProcHolder::instance () {
 	return memorize ([&] () {
 		OfThis<UniqueRef<SingletonProcLayout>> ret ;
-		ret.mThis = External<SingletonProcHolder ,SingletonProcLayout>::create () ;
+		External<SingletonProcHolder ,SingletonProcLayout>::declare ().create (ret.mThis) ;
 		SingletonProcHolder::hold (ret)->initialize () ;
 		return move (ret) ;
 	}) ;

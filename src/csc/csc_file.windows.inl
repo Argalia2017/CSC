@@ -349,7 +349,7 @@ public:
 	}
 } ;
 
-static const auto mPathExternal = External<PathHolder ,PathTree> (PathImplHolder ()) ;
+static const auto mPathExternal = External<PathHolder ,PathLayout> (PathImplHolder ()) ;
 
 struct FileProcLayout {
 	Mutex mMutex ;
@@ -361,6 +361,10 @@ private:
 	using FILEPROC_RETRY_TIME = RANK3 ;
 
 public:
+	void create (VREF<UniqueRef<FileProcLayout>> that) const override {
+		that = UniqueRef<FileProcLayout>::make () ;
+	}
+
 	void initialize () override {
 		self.mMutex = NULL ;
 	}
@@ -572,6 +576,10 @@ struct StreamFileLayout {
 
 class StreamFileImplHolder final implement Fat<StreamFileHolder ,StreamFileLayout> {
 public:
+	void create (VREF<AutoRef<StreamFileLayout>> that) const override {
+		that = AutoRef<StreamFileLayout>::make () ;
+	}
+
 	void initialize (CREF<String<STR>> file) override {
 		self.mFile = move (file) ;
 		self.mFileSize = 0 ;
@@ -749,6 +757,10 @@ private:
 	using BUFFERFILE_HEADER_STEP = ENUM<65536> ;
 
 public:
+	void create (VREF<AutoRef<BufferFileLayout>> that) const override {
+		that = AutoRef<BufferFileLayout>::make () ;
+	}
+
 	void initialize (CREF<String<STR>> file) override {
 		self.mFile = move (file) ;
 		self.mFileSize = 0 ;
@@ -1038,6 +1050,10 @@ struct UartFileLayout {
 
 class UartFileImplHolder final implement Fat<UartFileHolder ,UartFileLayout> {
 private:
+	void create (VREF<AutoRef<UartFileLayout>> that) const override {
+		that = AutoRef<UartFileLayout>::make () ;
+	}
+
 	void initialize () override {
 		self.mPortRate = 0 ;
 	}
@@ -1115,6 +1131,10 @@ struct ConsoleLayout {
 
 class ConsoleImplHolder final implement Fat<ConsoleHolder ,ConsoleLayout> {
 public:
+	void create (VREF<SharedRef<ConsoleLayout>> that) const override {
+		that = SharedRef<ConsoleLayout>::make () ;
+	}
+
 	void initialize () override {
 		self.mMutex = NULL ;
 		self.mOption = BitSet (ConsoleOption::ETC) ;

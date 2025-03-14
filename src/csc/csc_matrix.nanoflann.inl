@@ -122,6 +122,10 @@ struct PointCloudKDTreeLayout {
 
 class PointCloudKDTreeImplHolder final implement Fat<PointCloudKDTreeHolder ,PointCloudKDTreeLayout> {
 public:
+	void create (VREF<AutoRef<PointCloudKDTreeLayout>> that) const override {
+		that = AutoRef<PointCloudKDTreeLayout>::make () ;
+	}
+
 	void initialize (CREF<Array<Pointer>> pointcloud) override {
 		const auto r1x = address (pointcloud[0]) ;
 		const auto r2x = pointcloud.step () / SIZE_OF<FLT32>::expr ;

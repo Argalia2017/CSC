@@ -18,6 +18,10 @@ private:
 	using FEXP2CACHE_SIZE = ENUM<693> ;
 
 public:
+	void create (VREF<UniqueRef<FEXP2CacheLayout>> that) const override {
+		that = UniqueRef<FEXP2CacheLayout>::make () ;
+	}
+
 	void initialize () override {
 		noop () ;
 	}
@@ -55,6 +59,10 @@ private:
 	using FEXP10CACHE_SIZE = ENUM<2175> ;
 
 public:
+	void create (VREF<UniqueRef<FEXP10CacheLayout>> that) const override {
+		that = UniqueRef<FEXP10CacheLayout>::make () ;
+	}
+
 	void initialize () override {
 		noop () ;
 	}

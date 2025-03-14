@@ -25,6 +25,10 @@ struct ImageProcLayout {
 
 class ImageProcImplHolder final implement Fat<ImageProcHolder ,ImageProcLayout> {
 public:
+	void create (VREF<UniqueRef<ImageProcLayout>> that) const override {
+		that = UniqueRef<ImageProcLayout>::make () ;
+	}
+
 	void initialize () override {
 		self.mContext = UniqueRef<BOOL> ([&] (VREF<BOOL> me) {
 			FreeImage_Initialise () ;
