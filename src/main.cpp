@@ -20,10 +20,27 @@ int main () {
 	const auto r2x = Path (slice ("D:")).decouple () ;
 	const auto r3x = Path (slice ("\\A")).decouple () ;
 	const auto r4x = Path (slice ("B")).decouple () ;
-	watch (r1x) ;
-	watch (r2x) ;
-	watch (r3x) ;
-	watch (r4x) ;
+
+	Singleton<Console>::instance ().info (slice ("r1x = {")) ;
+	for (auto &&i : r1x) {
+		Singleton<Console>::instance ().info (Format (slice ("\t\"$1\"")) (i)) ;
+	}
+	Singleton<Console>::instance ().info (slice ("}")) ;
+	Singleton<Console>::instance ().info (slice ("r2x = {")) ;
+	for (auto &&i : r2x) {
+		Singleton<Console>::instance ().info (Format (slice ("\t\"$1\"")) (i)) ;
+	}
+	Singleton<Console>::instance ().info (slice ("}")) ;
+	Singleton<Console>::instance ().info (slice ("r3x = {")) ;
+	for (auto &&i : r3x) {
+		Singleton<Console>::instance ().info (Format (slice ("\t\"$1\"")) (i)) ;
+	}
+	Singleton<Console>::instance ().info (slice ("}")) ;
+	Singleton<Console>::instance ().info (slice ("r4x = {")) ;
+	for (auto &&i : r4x) {
+		Singleton<Console>::instance ().info (Format (slice ("\t\"$1\"")) (i)) ;
+	}
+	Singleton<Console>::instance ().info (slice ("}")) ;
 
 	GlobalProc::shutdown () ;
 	return 0 ;

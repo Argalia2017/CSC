@@ -56,9 +56,10 @@ public:
 	}
 } ;
 
-exports CREF<SharedRef<ConfigProcLayout>> ConfigProcHolder::instance () {
+exports CREF<OfThis<SharedRef<ConfigProcLayout>>> ConfigProcHolder::instance () {
 	return memorize ([&] () {
-		SharedRef<ConfigProcLayout> ret = SharedRef<ConfigProcLayout>::make () ;
+		OfThis<SharedRef<ConfigProcLayout>> ret ;
+		ret.mThis = SharedRef<ConfigProcLayout>::make () ;
 		ConfigProcHolder::hold (ret)->initialize () ;
 		return move (ret) ;
 	}) ;

@@ -525,7 +525,6 @@ public:
 
 	void build_dire (CREF<String<STR>> dire) const override {
 		const auto r1x = Path (dire).decouple () ;
-		const auto r1x = Path (dire).decouple () ;
 		if (r1x.length () == 0)
 			return ;
 		auto rax = Path (r1x[0]) ;

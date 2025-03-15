@@ -398,6 +398,12 @@
 
   <!--csc_image.hpp-->
 
+	<Type Name="CSC::ImageShape">
+		<Expand HideRawView="true">
+			<ExpandedItem>(CSC::ImageShapeLayout*)this</ExpandedItem>
+		</Expand>
+	</Type>
+
   <Type Name="CSC::Image&lt;*&gt;">
     <Expand HideRawView="true">
       <Item Name="[stride]">mStride</Item>

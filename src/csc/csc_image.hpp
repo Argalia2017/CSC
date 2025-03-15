@@ -82,14 +82,10 @@ public:
 	}
 } ;
 
-struct ImageShape {
-	LENGTH mBX ;
-	LENGTH mBY ;
-	LENGTH mCX ;
-	LENGTH mCY ;
-	LENGTH mStep ;
-
+class ImageShape implement ImageShapeLayout {
 public:
+	implicit ImageShape () = default ;
+
 	LENGTH size () const {
 		return mCX * mCY ;
 	}
