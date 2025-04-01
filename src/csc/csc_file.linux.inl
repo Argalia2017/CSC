@@ -32,13 +32,10 @@
 #include "csc_begin.h"
 
 inline namespace {
-using HMODULE = CSC::csc_pointer_t ;
-using HANDLE = CSC::csc_pointer_t ;
-using HFILEPIPE = int ;
 using HDIR = CSC::DEF<DIR *> ;
-using HDIRENT = CSC::DEF<dirent * > ;
-using STAT_INFO = struct stat ;
-using TERMIOS_INFO = struct termios ;
+using HDIRENT = CSC::DEF<dirent *> ;
+using STAT_INFO = CSC::DEF<struct stat> ;
+using TERMIOS_INFO = CSC::DEF<struct termios> ;
 } ;
 
 namespace std {
@@ -53,7 +50,7 @@ using ::lstat ;
 } ;
 
 namespace CSC {
-struct PathImplLayout {
+struct PathTree {
 	String<STR> mPathName ;
 	Deque<INDEX> mSeparator ;
 } ;
@@ -61,37 +58,37 @@ struct PathImplLayout {
 class PathImplHolder final implement Fat<PathHolder ,PathLayout> {
 public:
 	void initialize (RREF<String<STR>> pathname) override {
-		fake.mThis = Ref<PathImplLayout>::make () ;
-		fake.mThis->mPathName = move (pathname) ;
-		fake.mThis->mSeparator.add (NONE) ;
-		const auto r1x = fake.mThis->mPathName.length () ;
+		self.mThis = Ref<PathTree>::make () ;
+		self.mThis->mPathName = move (pathname) ;
+		self.mThis->mSeparator.add (NONE) ;
+		const auto r1x = self.mThis->mPathName.length () ;
 		for (auto &&i : iter (0 ,r1x)) {
-			if (!is_separator (fake.mThis->mPathName[i]))
+			if (!is_separator (self.mThis->mPathName[i]))
 				continue ;
-			fake.mThis->mSeparator.add (i) ;
-			fake.mThis->mPathName[i] = STR ('/') ;
+			self.mThis->mSeparator.add (i) ;
+			self.mThis->mPathName[i] = STR ('/') ;
 		}
-		fake.mThis->mSeparator.add (r1x) ;
+		self.mThis->mSeparator.add (r1x) ;
 		if ifdo (TRUE) {
 			if (r1x == 0)
 				discard ;
-			INDEX ix = fake.mThis->mSeparator[fake.mThis->mSeparator.length () - 2] ;
+			INDEX ix = self.mThis->mSeparator[self.mThis->mSeparator.length () - 2] ;
 			if (ix != r1x - 1)
 				discard ;
-			fake.mThis->mPathName.trunc (ix) ;
-			fake.mThis->mSeparator.pop () ;
+			self.mThis->mPathName.trunc (ix) ;
+			self.mThis->mSeparator.pop () ;
 		}
 		if ifdo (TRUE) {
-			if (fake.mThis->mSeparator.length () != 2)
+			if (self.mThis->mSeparator.length () != 2)
 				discard ;
-			INDEX ix = fake.mThis->mSeparator[0] + 1 ;
-			INDEX iy = fake.mThis->mSeparator[1] ;
-			if (!is_root (fake.mThis->mPathName.segment (ix ,iy)))
+			INDEX ix = self.mThis->mSeparator[0] + 1 ;
+			INDEX iy = self.mThis->mSeparator[1] ;
+			if (!is_root (self.mThis->mPathName.segment (ix ,iy)))
 				discard ;
-			fake.mThis->mPathName = String<STR>::make (fake.mThis->mPathName ,slice ("/") ,slice (".")) ;
-			fake.mThis->mSeparator.add (iy + 2) ;
+			self.mThis->mPathName = String<STR>::make (self.mThis->mPathName ,slice ("/") ,slice (".")) ;
+			self.mThis->mSeparator.add (iy + 2) ;
 		}
-		assume (fake.mThis->mSeparator.length () >= 2) ;
+		assume (self.mThis->mSeparator.length () >= 2) ;
 	}
 
 	void initialize (CREF<Deque<String<STR>>> pathname) override {
@@ -119,9 +116,9 @@ public:
 	}
 
 	String<STR> fetch () const override {
-		if (fake.mThis == NULL)
+		if (self.mThis == NULL)
 			return String<STR>::zero () ;
-		return fake.mThis->mPathName ;
+		return self.mThis->mPathName ;
 	}
 
 	PathLayout child (CREF<Slice> name) const override {
@@ -139,7 +136,7 @@ public:
 	Array<PathLayout> list () const override {
 		auto rax = HDIRENT (NULL) ;
 		const auto r1x = UniqueRef<HDIR> ([&] (VREF<HDIR> me) {
-			me = opendir (fake.mThis->mPathName) ;
+			me = opendir (self.mThis->mPathName) ;
 		} ,[&] (VREF<HDIR> me) {
 			if (me == NULL)
 				return ;
@@ -171,7 +168,7 @@ public:
 	Array<PathLayout> list (CREF<LENGTH> size_) const override {
 		auto rax = HDIRENT (NULL) ;
 		const auto r1x = UniqueRef<HDIR> ([&] (VREF<HDIR> me) {
-			me = opendir (fake.mThis->mPathName) ;
+			me = opendir (self.mThis->mPathName) ;
 		} ,[&] (VREF<HDIR> me) {
 			if (me == NULL)
 				return ;
@@ -204,20 +201,20 @@ public:
 	}
 
 	BOOL equal (CREF<PathLayout> that) const override {
-		const auto r1x = inline_compr (fake.mThis.exist () ,that.mThis.exist ()) ;
+		const auto r1x = inline_compr (self.mThis.exist () ,that.mThis.exist ()) ;
 		if (r1x != ZERO)
 			return FALSE ;
-		if (!fake.mThis.exist ())
+		if (!self.mThis.exist ())
 			return FALSE ;
-		return fake.mThis->mPathName == that.mThis->mPathName ;
+		return self.mThis->mPathName == that.mThis->mPathName ;
 	}
 
 	BOOL is_file () const override {
-		if (fake.mThis == NULL)
+		if (self.mThis == NULL)
 			return FALSE ;
 		auto rax = STAT_INFO () ;
 		inline_memset (rax) ;
-		const auto r1x = std::stat (fake.mThis->mPathName ,(&rax)) ;
+		const auto r1x = std::stat (self.mThis->mPathName ,(&rax)) ;
 		if (r1x != 0)
 			return FALSE ;
 		if (S_ISDIR (rax.st_mode))
@@ -226,11 +223,11 @@ public:
 	}
 
 	BOOL is_dire () const override {
-		if (fake.mThis == NULL)
+		if (self.mThis == NULL)
 			return FALSE ;
 		auto rax = STAT_INFO () ;
 		inline_memset (rax) ;
-		const auto r1x = std::stat (fake.mThis->mPathName ,(&rax)) ;
+		const auto r1x = std::stat (self.mThis->mPathName ,(&rax)) ;
 		if (r1x != 0)
 			return FALSE ;
 		if (!S_ISDIR (rax.st_mode))
@@ -239,11 +236,11 @@ public:
 	}
 
 	BOOL is_link () const override {
-		if (fake.mThis == NULL)
+		if (self.mThis == NULL)
 			return FALSE ;
 		auto rax = STAT_INFO () ;
 		inline_memset (rax) ;
-		const auto r1x = std::lstat (fake.mThis->mPathName ,(&rax)) ;
+		const auto r1x = std::lstat (self.mThis->mPathName ,(&rax)) ;
 		if (r1x != 0)
 			return FALSE ;
 		if (!S_ISLNK (rax.st_mode))
@@ -252,12 +249,12 @@ public:
 	}
 
 	PathLayout symbolic () const override {
-		PathLayout ret = fake ;
+		PathLayout ret = self ;
 		if ifdo (TRUE) {
 			if (!is_link ())
 				discard ;
 			auto rax = String<STR>::make () ;
-			const auto r1x = INDEX (readlink (fake.mThis->mPathName ,rax ,csc_size_t (rax.size ()))) ;
+			const auto r1x = INDEX (readlink (self.mThis->mPathName ,rax ,csc_size_t (rax.size ()))) ;
 			rax.trunc (r1x) ;
 			ret = Path (rax) ;
 		}
@@ -333,82 +330,77 @@ public:
 	}
 
 	Deque<String<STR>> decouple () const override {
-		const auto r1x = fake.mThis->mSeparator.length () ;
+		const auto r1x = self.mThis->mSeparator.length () ;
 		Deque<String<STR>> ret = Deque<String<STR>> (r1x) ;
 		for (auto &&i : iter (0 ,r1x - 1)) {
-			INDEX ix = fake.mThis->mSeparator[i] + 1 ;
-			INDEX iy = fake.mThis->mSeparator[i + 1] ;
-			const auto r2x = fake.mThis->mPathName.segment (ix ,iy) ;
+			INDEX ix = self.mThis->mSeparator[i] + 1 ;
+			INDEX iy = self.mThis->mSeparator[i + 1] ;
+			const auto r2x = self.mThis->mPathName.segment (ix ,iy) ;
 			ret.add (r2x) ;
 		}
 		return move (ret) ;
 	}
 
 	String<STR> path () const override {
-		const auto r1x = fake.mThis->mSeparator.length () ;
-		INDEX ix = fake.mThis->mSeparator[0] + 1 ;
-		INDEX iy = fake.mThis->mSeparator[r1x - 2] + 1 ;
-		return fake.mThis->mPathName.segment (ix ,iy) ;
+		const auto r1x = self.mThis->mSeparator.length () ;
+		INDEX ix = self.mThis->mSeparator[0] + 1 ;
+		INDEX iy = self.mThis->mSeparator[r1x - 2] + 1 ;
+		return self.mThis->mPathName.segment (ix ,iy) ;
 	}
 
 	String<STR> name () const override {
-		const auto r1x = fake.mThis->mSeparator.length () ;
-		INDEX ix = fake.mThis->mSeparator[r1x - 2] + 1 ;
-		INDEX iy = fake.mThis->mSeparator[r1x - 1] ;
-		return fake.mThis->mPathName.segment (ix ,iy) ;
+		const auto r1x = self.mThis->mSeparator.length () ;
+		INDEX ix = self.mThis->mSeparator[r1x - 2] + 1 ;
+		INDEX iy = self.mThis->mSeparator[r1x - 1] ;
+		return self.mThis->mPathName.segment (ix ,iy) ;
 	}
 
 	String<STR> stem () const override {
-		const auto r1x = fake.mThis->mSeparator.length () ;
-		INDEX ix = fake.mThis->mSeparator[r1x - 2] + 1 ;
+		const auto r1x = self.mThis->mSeparator.length () ;
+		INDEX ix = self.mThis->mSeparator[r1x - 2] + 1 ;
 		INDEX iy = find_last_dot_word () ;
-		return fake.mThis->mPathName.segment (ix ,iy) ;
+		return self.mThis->mPathName.segment (ix ,iy) ;
 	}
 
 	String<STR> extension () const override {
-		const auto r1x = fake.mThis->mSeparator.length () ;
+		const auto r1x = self.mThis->mSeparator.length () ;
 		INDEX ix = find_last_dot_word () ;
-		INDEX iy = fake.mThis->mSeparator[r1x - 1] ;
-		return fake.mThis->mPathName.segment (ix ,iy) ;
+		INDEX iy = self.mThis->mSeparator[r1x - 1] ;
+		return self.mThis->mPathName.segment (ix ,iy) ;
 	}
 
 	INDEX find_last_dot_word () const {
-		const auto r1x = fake.mThis->mSeparator.length () ;
-		INDEX ix = fake.mThis->mSeparator[r1x - 1] - 1 ;
+		const auto r1x = self.mThis->mSeparator.length () ;
+		INDEX ix = self.mThis->mSeparator[r1x - 1] - 1 ;
 		while (TRUE) {
 			if (ix <= 0)
 				break ;
-			if (fake.mThis->mPathName[ix] == STRU32 ('.'))
+			if (self.mThis->mPathName[ix] == STRU32 ('.'))
 				return ix ;
-			if (!StreamProc::is_word (fake.mThis->mPathName[ix]))
+			if (!StreamProc::is_word (self.mThis->mPathName[ix]))
 				break ;
 			ix-- ;
 		}
-		return fake.mThis->mSeparator[r1x - 1] ;
+		return self.mThis->mSeparator[r1x - 1] ;
 	}
 } ;
 
 static const auto mPathExternal = External<PathHolder ,PathLayout> (PathImplHolder ()) ;
 
-struct FileProcImplLayout {
-	Mutex mMutex ;
-	Pin<List<UniqueRef<String<STR>>>> mLockDirectory ;
-} ;
-
-class FileProcImplHolder final implement Fat<FileProcHolder ,FileProcImplLayout> {
+class FileProcImplHolder final implement Fat<FileProcHolder ,FileProcLayout> {
 private:
 	using FILEPROC_RETRY_TIME = RANK3 ;
 
 public:
 	void initialize () override {
-		fake.mMutex = NULL ;
+		self.mMutex = NULL ;
 	}
 
 	RefBuffer<BYTE> load_file (CREF<String<STR>> file) const override {
-		const auto r1x = UniqueRef<HFILEPIPE> ([&] (VREF<HFILEPIPE> me) {
+		const auto r1x = UniqueRef<csc_pipe_t> ([&] (VREF<csc_pipe_t> me) {
 			me = std::open (file ,O_RDONLY) ;
 			assume (me != NONE) ;
-		} ,[&] (VREF<HFILEPIPE> me) {
+		} ,[&] (VREF<csc_pipe_t> me) {
 			std::close (me) ;
 		}) ;
 		const auto r2x = file_size (r1x) ;
@@ -429,7 +421,7 @@ public:
 		return move (ret) ;
 	}
 
-	VAL64 file_size (CREF<HFILEPIPE> handle) const {
+	VAL64 file_size (CREF<csc_pipe_t> handle) const {
 		const auto r1x = VAL64 (lseek64 (handle ,0 ,SEEK_END)) ;
 		const auto r2x = VAL64 (lseek64 (handle ,0 ,SEEK_SET)) ;
 		//@warn: file in '/proc' is zero size
@@ -444,12 +436,12 @@ public:
 
 	void save_file (CREF<String<STR>> file ,CREF<RefBuffer<BYTE>> item) const override {
 		assert (item.size () < VAL32_MAX) ;
-		const auto r1x = UniqueRef<HFILEPIPE> ([&] (VREF<HFILEPIPE> me) {
+		const auto r1x = UniqueRef<csc_pipe_t> ([&] (VREF<csc_pipe_t> me) {
 			const auto r2x = csc_enum_t (O_CREAT | O_WRONLY | O_TRUNC) ;
 			const auto r3x = csc_enum_t (S_IRWXU | S_IRWXG | S_IRWXO) ;
 			me = std::open (file ,r2x ,r3x) ;
 			assume (me != NONE) ;
-		} ,[&] (VREF<HFILEPIPE> me) {
+		} ,[&] (VREF<csc_pipe_t> me) {
 			std::close (me) ;
 		}) ;
 		const auto r4x = item.size () ;
@@ -481,18 +473,18 @@ public:
 	}
 
 	void copy_file (CREF<String<STR>> dst ,CREF<String<STR>> src) const override {
-		const auto r1x = UniqueRef<HFILEPIPE> ([&] (VREF<HFILEPIPE> me) {
+		const auto r1x = UniqueRef<csc_pipe_t> ([&] (VREF<csc_pipe_t> me) {
 			me = std::open (src ,O_RDONLY) ;
 			assume (me != NONE) ;
-		} ,[&] (VREF<HFILEPIPE> me) {
+		} ,[&] (VREF<csc_pipe_t> me) {
 			std::close (me) ;
 		}) ;
-		const auto r2x = UniqueRef<HFILEPIPE> ([&] (VREF<HFILEPIPE> me) {
+		const auto r2x = UniqueRef<csc_pipe_t> ([&] (VREF<csc_pipe_t> me) {
 			const auto r3x = csc_enum_t (O_CREAT | O_WRONLY | O_TRUNC) ;
 			const auto r4x = csc_enum_t (S_IRWXU | S_IRWXG | S_IRWXO) ;
 			me = std::open (dst ,r3x ,r4x) ;
 			assume (me != NONE) ;
-		} ,[&] (VREF<HFILEPIPE> me) {
+		} ,[&] (VREF<csc_pipe_t> me) {
 			std::close (me) ;
 		}) ;
 		const auto r5x = file_size (r1x) ;
@@ -521,10 +513,16 @@ public:
 
 	void build_dire (CREF<String<STR>> dire) const override {
 		const auto r1x = Path (dire).decouple () ;
+		if (r1x.length () == 0)
+			return ;
+		auto rax = Path (r1x[0]) ;
 		const auto r2x = csc_enum_t (S_IRWXU | S_IRWXG | S_IRWXO) ;
-		auto rax = Path () ;
 		for (auto &&i : r1x.range ()) {
-			rax = rax.child (r1x[i]) ;
+			if ifdo (TRUE) {
+				if (i == 0)
+					discard ;
+				rax = rax.child (r1x[i]) ;
+			}
 			const auto r3x = rax.fetch () ;
 			mkdir (r3x ,r2x) ;
 		}
@@ -607,7 +605,7 @@ public:
 	}
 
 	void lock_dire_push (CREF<Path> file ,CREF<RefBuffer<BYTE>> snapshot_) const {
-		Scope<Mutex> anonymous (fake.mMutex) ;
+		Scope<Mutex> anonymous (self.mMutex) ;
 		auto rax = UniqueRef<String<STR>> ([&] (VREF<String<STR>> me) {
 			me = file ;
 			FileProc::save_file (me ,snapshot_) ;
@@ -615,107 +613,96 @@ public:
 			FileProc::erase_file (me) ;
 		}) ;
 		auto rbx = List<UniqueRef<String<STR>>> () ;
-		fake.mLockDirectory.get (rbx) ;
+		self.mLockDirectory.get (rbx) ;
 		rbx.add (move (rax)) ;
-		fake.mLockDirectory.set (rbx) ;
+		self.mLockDirectory.set (rbx) ;
 	}
 } ;
 
 static const auto mFileProcExternal = External<FileProcHolder ,FileProcLayout> (FileProcImplHolder ()) ;
 
-struct StreamFileImplLayout {
-	String<STR> mFile ;
-	UniqueRef<HFILEPIPE> mReadPipe ;
-	UniqueRef<HFILEPIPE> mWritePipe ;
-	VAL64 mFileSize ;
-	VAL64 mRead ;
-	VAL64 mWrite ;
-	BOOL mShortRead ;
-	LENGTH mShortSize ;
-} ;
-
-class StreamFileImplHolder final implement Fat<StreamFileHolder ,StreamFileImplLayout> {
+class StreamFileImplHolder final implement Fat<StreamFileHolder ,StreamFileLayout> {
 public:
 	void initialize (CREF<String<STR>> file) override {
-		fake.mFile = move (file) ;
-		fake.mFileSize = 0 ;
-		fake.mRead = 0 ;
-		fake.mWrite = 0 ;
-		fake.mShortRead = FALSE ;
-		fake.mShortSize = 0 ;
+		self.mFile = move (file) ;
+		self.mFileSize = 0 ;
+		self.mRead = 0 ;
+		self.mWrite = 0 ;
+		self.mShortRead = FALSE ;
+		self.mShortSize = 0 ;
 	}
 
 	void set_short_read (CREF<BOOL> flag) override {
-		fake.mShortRead = flag ;
+		self.mShortRead = flag ;
 	}
 
 	void open_r () override {
-		assert (!fake.mReadPipe.exist ()) ;
-		assert (!fake.mWritePipe.exist ()) ;
-		fake.mReadPipe = UniqueRef<HFILEPIPE> ([&] (VREF<HFILEPIPE> me) {
+		assert (!self.mReadPipe.exist ()) ;
+		assert (!self.mWritePipe.exist ()) ;
+		self.mReadPipe = UniqueRef<csc_pipe_t> ([&] (VREF<csc_pipe_t> me) {
 			const auto r1x = csc_enum_t (S_IRWXU | S_IRWXG | S_IRWXO) ;
-			me = std::open (fake.mFile ,O_RDONLY ,r1x) ;
+			me = std::open (self.mFile ,O_RDONLY ,r1x) ;
 			assume (me != NONE) ;
-		} ,[&] (VREF<HFILEPIPE> me) {
+		} ,[&] (VREF<csc_pipe_t> me) {
 			std::close (me) ;
 		}) ;
-		fake.mFileSize = file_size (fake.mReadPipe) ;
-		fake.mRead = 0 ;
-		fake.mWrite = 0 ;
+		self.mFileSize = file_size (self.mReadPipe) ;
+		self.mRead = 0 ;
+		self.mWrite = 0 ;
 	}
 
 	void open_w (CREF<LENGTH> size_) override {
-		assert (!fake.mReadPipe.exist ()) ;
-		assert (!fake.mWritePipe.exist ()) ;
-		fake.mWritePipe = UniqueRef<HFILEPIPE> ([&] (VREF<HFILEPIPE> me) {
+		assert (!self.mReadPipe.exist ()) ;
+		assert (!self.mWritePipe.exist ()) ;
+		self.mWritePipe = UniqueRef<csc_pipe_t> ([&] (VREF<csc_pipe_t> me) {
 			const auto r1x = csc_enum_t (O_CREAT | O_WRONLY | O_TRUNC) ;
 			const auto r2x = csc_enum_t (S_IRWXU | S_IRWXG | S_IRWXO) ;
-			me = std::open (fake.mFile ,r1x ,r2x) ;
+			me = std::open (self.mFile ,r1x ,r2x) ;
 			assume (me != NONE) ;
-		} ,[&] (VREF<HFILEPIPE> me) {
+		} ,[&] (VREF<csc_pipe_t> me) {
 			std::close (me) ;
 		}) ;
-		fake.mFileSize = size_ ;
-		fake.mRead = 0 ;
-		fake.mWrite = 0 ;
+		self.mFileSize = size_ ;
+		self.mRead = 0 ;
+		self.mWrite = 0 ;
 	}
 
 	void open_a () override {
-		assert (!fake.mReadPipe.exist ()) ;
-		assert (!fake.mWritePipe.exist ()) ;
-		fake.mReadPipe = UniqueRef<HFILEPIPE> ([&] (VREF<HFILEPIPE> me) {
+		assert (!self.mReadPipe.exist ()) ;
+		assert (!self.mWritePipe.exist ()) ;
+		self.mReadPipe = UniqueRef<csc_pipe_t> ([&] (VREF<csc_pipe_t> me) {
 			const auto r1x = csc_enum_t (O_CREAT | O_RDONLY) ;
 			const auto r2x = csc_enum_t (S_IRWXU | S_IRWXG | S_IRWXO) ;
-			me = std::open (fake.mFile ,r1x ,r2x) ;
+			me = std::open (self.mFile ,r1x ,r2x) ;
 			assume (me != NONE) ;
-		} ,[&] (VREF<HFILEPIPE> me) {
+		} ,[&] (VREF<csc_pipe_t> me) {
 			std::close (me) ;
 		}) ;
-		fake.mWritePipe = UniqueRef<HFILEPIPE> ([&] (VREF<HFILEPIPE> me) {
+		self.mWritePipe = UniqueRef<csc_pipe_t> ([&] (VREF<csc_pipe_t> me) {
 			const auto r3x = csc_enum_t (O_CREAT | O_WRONLY) ;
 			const auto r4x = csc_enum_t (S_IRWXU | S_IRWXG | S_IRWXO) ;
-			me = std::open (fake.mFile ,r3x ,r4x) ;
+			me = std::open (self.mFile ,r3x ,r4x) ;
 			assume (me != NONE) ;
-		} ,[&] (VREF<HFILEPIPE> me) {
+		} ,[&] (VREF<csc_pipe_t> me) {
 			std::close (me) ;
 		}) ;
-		fake.mFileSize = file_size (fake.mReadPipe) ;
-		fake.mRead = 0 ;
-		fake.mWrite = 0 ;
+		self.mFileSize = file_size (self.mReadPipe) ;
+		self.mRead = 0 ;
+		self.mWrite = 0 ;
 		if ifdo (TRUE) {
-			const auto r5x = VAL64 (lseek64 (fake.mWritePipe ,0 ,SEEK_END)) ;
+			const auto r5x = VAL64 (lseek64 (self.mWritePipe ,0 ,SEEK_END)) ;
 			if (r5x <= 0)
 				discard ;
-			fake.mWrite += r5x ;
+			self.mWrite += r5x ;
 		}
 	}
 
 	LENGTH file_size () const override {
-		assume (fake.mFileSize < VAL32_MAX) ;
-		return LENGTH (fake.mFileSize) ;
+		assume (self.mFileSize < VAL32_MAX) ;
+		return LENGTH (self.mFileSize) ;
 	}
 
-	VAL64 file_size (CREF<HFILEPIPE> handle) const {
+	VAL64 file_size (CREF<csc_pipe_t> handle) const {
 		const auto r1x = VAL64 (lseek64 (handle ,0 ,SEEK_END)) ;
 		const auto r2x = VAL64 (lseek64 (handle ,0 ,SEEK_SET)) ;
 		//@warn: file in '/proc' is zero size
@@ -729,86 +716,55 @@ public:
 	}
 
 	LENGTH short_size () const override {
-		return fake.mShortSize ;
+		return self.mShortSize ;
 	}
 
 	void read (VREF<RefBuffer<BYTE>> item) override {
-		assert (fake.mReadPipe.exist ()) ;
+		assert (self.mReadPipe.exist ()) ;
 		assert (item.size () < VAL32_MAX) ;
 		const auto r1x = item.size () ;
 		auto rax = r1x ;
 		if ifdo (TRUE) {
 			auto rbx = csc_size_t (rax) ;
-			rbx = std::read (fake.mReadPipe ,(&item[r1x - rax]) ,rbx) ;
+			rbx = std::read (self.mReadPipe ,(&item[r1x - rax]) ,rbx) ;
 			assume (rbx >= 0) ;
 			rax -= LENGTH (rbx) ;
 			if (rax == 0)
 				discard ;
-			assume (fake.mShortRead) ;
+			assume (self.mShortRead) ;
 		}
-		fake.mShortSize = r1x - rax ;
-		fake.mRead += fake.mShortSize ;
+		self.mShortSize = r1x - rax ;
+		self.mRead += self.mShortSize ;
 	}
 
 	void write (CREF<RefBuffer<BYTE>> item) override {
-		assert (fake.mWritePipe.exist ()) ;
+		assert (self.mWritePipe.exist ()) ;
 		assert (item.size () < VAL32_MAX) ;
 		const auto r1x = item.size () ;
 		auto rax = r1x ;
 		if ifdo (TRUE) {
 			auto rbx = csc_size_t (rax) ;
-			rbx = std::write (fake.mWritePipe ,(&item[r1x - rax]) ,rbx) ;
+			rbx = std::write (self.mWritePipe ,(&item[r1x - rax]) ,rbx) ;
 			assume (rbx >= 0) ;
 			rax -= LENGTH (rbx) ;
 			if (rax == 0)
 				discard ;
-			assume (fake.mShortRead) ;
+			assume (self.mShortRead) ;
 		}
-		fake.mShortSize = r1x - rax ;
-		fake.mWrite += fake.mShortSize ;
+		self.mShortSize = r1x - rax ;
+		self.mWrite += self.mShortSize ;
 	}
 
 	void flush () override {
-		if (!fake.mWritePipe.exist ())
+		if (!self.mWritePipe.exist ())
 			return ;
-		fsync (fake.mWritePipe) ;
+		fsync (self.mWritePipe) ;
 	}
 } ;
 
 static const auto mStreamFileExternal = External<StreamFileHolder ,StreamFileLayout> (StreamFileImplHolder ()) ;
 
-struct BufferFileHeader {
-	QUAD mFileEndian ;
-	VAL64 mFileSize ;
-	VAL64 mBlockSize ;
-	VAL64 mBlockStep ;
-	VAL64 mBlockLength ;
-	VAL64 mChunkStep ;
-	VAL64 mChunkSize ;
-	VAL64 mChunkLength ;
-} ;
-
-struct BufferFileChunk {
-	VAL64 mIndex ;
-	VAL64 mCacheTime ;
-	UniqueRef<Tuple<FLAG ,FLAG>> mBlock ;
-} ;
-
-struct BufferFileImplLayout {
-	String<STR> mFile ;
-	UniqueRef<HFILEPIPE> mPipe ;
-	UniqueRef<HANDLE> mMapping ;
-	VAL64 mFileSize ;
-	VAL64 mBlockStep ;
-	VAL64 mChunkStep ;
-	csc_enum_t mFileMapFlag ;
-	Box<BufferFileHeader> mHeader ;
-	Set<VAL64> mCacheSet ;
-	List<BufferFileChunk> mCacheList ;
-	VAL64 mCacheTimer ;
-} ;
-
-class BufferFileImplHolder final implement Fat<BufferFileHolder ,BufferFileImplLayout> {
+class BufferFileImplHolder final implement Fat<BufferFileHolder ,BufferFileLayout> {
 private:
 	using BUFFERFILE_BLOCK_STEP = ENUM<1024> ;
 	using BUFFERFILE_CHUNK_STEP = ENUM<4194304> ;
@@ -816,177 +772,177 @@ private:
 
 public:
 	void initialize (CREF<String<STR>> file) override {
-		fake.mFile = move (file) ;
-		fake.mFileSize = 0 ;
-		fake.mFileMapFlag = 0 ;
+		self.mFile = move (file) ;
+		self.mFileSize = 0 ;
+		self.mFileMapFlag = 0 ;
 		set_block_step (BUFFERFILE_BLOCK_STEP::expr) ;
 		set_cache_size (1) ;
 	}
 
 	void set_block_step (CREF<LENGTH> step_) override {
-		fake.mBlockStep = step_ ;
-		fake.mChunkStep = BUFFERFILE_CHUNK_STEP::expr ;
+		self.mBlockStep = step_ ;
+		self.mChunkStep = BUFFERFILE_CHUNK_STEP::expr ;
 	}
 
 	void set_cache_size (CREF<LENGTH> size_) override {
 		assert (size_ > 0) ;
-		fake.mCacheSet = Set<VAL64> (size_) ;
-		fake.mCacheList = List<BufferFileChunk> (size_) ;
-		fake.mCacheTimer = 0 ;
+		self.mCacheSet = Set<VAL64> (size_) ;
+		self.mCacheList = List<BufferFileChunk> (size_) ;
+		self.mCacheTimer = 0 ;
 	}
 
 	void open_r () override {
-		assert (!fake.mPipe.exist ()) ;
-		assert (!fake.mMapping.exist ()) ;
-		fake.mPipe = UniqueRef<HFILEPIPE> ([&] (VREF<HFILEPIPE> me) {
+		assert (!self.mPipe.exist ()) ;
+		assert (!self.mMapping.exist ()) ;
+		self.mPipe = UniqueRef<csc_pipe_t> ([&] (VREF<csc_pipe_t> me) {
 			const auto r1x = csc_enum_t (S_IRWXU | S_IRWXG | S_IRWXO) ;
-			me = std::open (fake.mFile ,O_RDONLY ,r1x) ;
+			me = std::open (self.mFile ,O_RDONLY ,r1x) ;
 			assume (me != NONE) ;
-		} ,[&] (VREF<HFILEPIPE> me) {
+		} ,[&] (VREF<csc_pipe_t> me) {
 			std::close (me) ;
 		}) ;
-		fake.mFileSize = file_size (fake.mPipe) ;
-		fake.mMapping = UniqueRef<HANDLE> ([&] (VREF<HANDLE> me) {
-			me = HANDLE (fake.mFile.self) ;
-		} ,[&] (VREF<HANDLE> me) {
+		self.mFileSize = file_size (self.mPipe) ;
+		self.mMapping = UniqueRef<csc_handle_t> ([&] (VREF<csc_handle_t> me) {
+			me = csc_handle_t (self.mFile.deref) ;
+		} ,[&] (VREF<csc_handle_t> me) {
 			noop () ;
 		}) ;
-		fake.mMapping.depend (fake.mPipe) ;
-		fake.mFileMapFlag = csc_enum_t (PROT_READ) ;
+		self.mMapping.depend (self.mPipe) ;
+		self.mFileMapFlag = csc_enum_t (PROT_READ) ;
 		read_header () ;
 	}
 
 	void open_w (CREF<LENGTH> size_) override {
-		assert (!fake.mPipe.exist ()) ;
-		assert (!fake.mMapping.exist ()) ;
-		fake.mPipe = UniqueRef<HFILEPIPE> ([&] (VREF<HFILEPIPE> me) {
+		assert (!self.mPipe.exist ()) ;
+		assert (!self.mMapping.exist ()) ;
+		self.mPipe = UniqueRef<csc_pipe_t> ([&] (VREF<csc_pipe_t> me) {
 			const auto r1x = csc_enum_t (O_CREAT | O_RDWR | O_TRUNC) ;
 			const auto r2x = csc_enum_t (S_IRWXU | S_IRWXG | S_IRWXO) ;
-			me = std::open (fake.mFile ,r1x ,r2x) ;
+			me = std::open (self.mFile ,r1x ,r2x) ;
 			assume (me != NONE) ;
-		} ,[&] (VREF<HFILEPIPE> me) {
+		} ,[&] (VREF<csc_pipe_t> me) {
 			std::close (me) ;
 		}) ;
-		const auto r3x = fake.mChunkStep / fake.mBlockStep ;
+		const auto r3x = self.mChunkStep / self.mBlockStep ;
 		const auto r4x = (size_ + r3x - 1) / r3x ;
-		fake.mFileSize = BUFFERFILE_HEADER_STEP::expr + r4x * fake.mChunkStep ;
-		fake.mMapping = UniqueRef<HANDLE> ([&] (VREF<HANDLE> me) {
-			const auto r5x = ftruncate64 (fake.mPipe ,fake.mFileSize) ;
+		self.mFileSize = BUFFERFILE_HEADER_STEP::expr + r4x * self.mChunkStep ;
+		self.mMapping = UniqueRef<csc_handle_t> ([&] (VREF<csc_handle_t> me) {
+			const auto r5x = ftruncate64 (self.mPipe ,self.mFileSize) ;
 			assume (r5x == 0) ;
-			me = HANDLE (fake.mFile.self) ;
-		} ,[&] (VREF<HANDLE> me) {
+			me = csc_handle_t (self.mFile.deref) ;
+		} ,[&] (VREF<csc_handle_t> me) {
 			noop () ;
 		}) ;
-		fake.mMapping.depend (fake.mPipe) ;
-		fake.mFileMapFlag = csc_enum_t (PROT_READ | PROT_WRITE) ;
+		self.mMapping.depend (self.mPipe) ;
+		self.mFileMapFlag = csc_enum_t (PROT_READ | PROT_WRITE) ;
 		write_header () ;
 	}
 
 	void open_a () override {
-		assert (!fake.mPipe.exist ()) ;
-		assert (!fake.mMapping.exist ()) ;
-		assume (fake.mHeader != NULL) ;
-		fake.mPipe = UniqueRef<HFILEPIPE> ([&] (VREF<HFILEPIPE> me) {
+		assert (!self.mPipe.exist ()) ;
+		assert (!self.mMapping.exist ()) ;
+		assume (self.mHeader != NULL) ;
+		self.mPipe = UniqueRef<csc_pipe_t> ([&] (VREF<csc_pipe_t> me) {
 			const auto r1x = csc_enum_t (O_CREAT | O_RDWR) ;
 			const auto r2x = csc_enum_t (S_IRWXU | S_IRWXG | S_IRWXO) ;
-			me = std::open (fake.mFile ,r1x ,r2x) ;
+			me = std::open (self.mFile ,r1x ,r2x) ;
 			assume (me != NONE) ;
-		} ,[&] (VREF<HFILEPIPE> me) {
+		} ,[&] (VREF<csc_pipe_t> me) {
 			std::close (me) ;
 		}) ;
-		fake.mFileSize = fake.mHeader->mFileSize ;
-		fake.mMapping = UniqueRef<HANDLE> ([&] (VREF<HANDLE> me) {
-			const auto r3x = ftruncate64 (fake.mPipe ,fake.mFileSize) ;
+		self.mFileSize = self.mHeader->mFileSize ;
+		self.mMapping = UniqueRef<csc_handle_t> ([&] (VREF<csc_handle_t> me) {
+			const auto r3x = ftruncate64 (self.mPipe ,self.mFileSize) ;
 			assume (r3x == 0) ;
-			me = HANDLE (fake.mFile.self) ;
-		} ,[&] (VREF<HANDLE> me) {
+			me = csc_handle_t (self.mFile.deref) ;
+		} ,[&] (VREF<csc_handle_t> me) {
 			noop () ;
 		}) ;
-		fake.mMapping.depend (fake.mPipe) ;
-		fake.mFileMapFlag = csc_enum_t (PROT_READ | PROT_WRITE) ;
+		self.mMapping.depend (self.mPipe) ;
+		self.mFileMapFlag = csc_enum_t (PROT_READ | PROT_WRITE) ;
 		read_header () ;
 	}
 
 	void read_header () {
-		assert (fake.mHeader == NULL) ;
-		fake.mHeader = Box<BufferFileHeader>::make () ;
+		assert (self.mHeader == NULL) ;
+		self.mHeader = Box<BufferFileHeader>::make () ;
 		auto rax = ByteReader (borrow_header ()) ;
 		rax >> slice ("CSC_BufferFile") ;
 		rax >> GAP ;
-		rax >> fake.mHeader->mFileEndian ;
-		assume (fake.mHeader->mFileEndian == QUAD_ENDIAN) ;
+		rax >> self.mHeader->mFileEndian ;
+		assume (self.mHeader->mFileEndian == QUAD_ENDIAN) ;
 		rax >> GAP ;
-		rax >> fake.mHeader->mFileSize ;
-		assume (fake.mHeader->mFileSize == fake.mFileSize) ;
+		rax >> self.mHeader->mFileSize ;
+		assume (self.mHeader->mFileSize == self.mFileSize) ;
 		rax >> GAP ;
-		rax >> fake.mHeader->mBlockSize ;
-		const auto r1x = fake.mChunkStep / fake.mBlockStep ;
-		assume (fake.mHeader->mBlockSize == r1x) ;
+		rax >> self.mHeader->mBlockSize ;
+		const auto r1x = self.mChunkStep / self.mBlockStep ;
+		assume (self.mHeader->mBlockSize == r1x) ;
 		rax >> GAP ;
-		rax >> fake.mHeader->mBlockStep ;
-		assume (fake.mHeader->mBlockStep == fake.mBlockStep) ;
+		rax >> self.mHeader->mBlockStep ;
+		assume (self.mHeader->mBlockStep == self.mBlockStep) ;
 		rax >> GAP ;
-		rax >> fake.mHeader->mBlockLength ;
+		rax >> self.mHeader->mBlockLength ;
 		rax >> GAP ;
-		rax >> fake.mHeader->mChunkSize ;
-		assume (fake.mHeader->mChunkSize >= 0) ;
+		rax >> self.mHeader->mChunkSize ;
+		assume (self.mHeader->mChunkSize >= 0) ;
 		rax >> GAP ;
-		rax >> fake.mHeader->mChunkStep ;
-		assume (fake.mHeader->mChunkStep == fake.mChunkStep) ;
+		rax >> self.mHeader->mChunkStep ;
+		assume (self.mHeader->mChunkStep == self.mChunkStep) ;
 		rax >> GAP ;
-		rax >> fake.mHeader->mChunkLength ;
+		rax >> self.mHeader->mChunkLength ;
 		rax >> GAP ;
 	}
 
 	void write_header () {
 		if ifdo (TRUE) {
-			if (fake.mHeader != NULL)
+			if (self.mHeader != NULL)
 				discard ;
-			fake.mHeader = Box<BufferFileHeader>::make () ;
-			fake.mHeader->mFileEndian = QUAD_ENDIAN ;
-			fake.mHeader->mFileSize = fake.mFileSize ;
-			fake.mHeader->mBlockSize = fake.mChunkStep / fake.mBlockStep ;
-			fake.mHeader->mBlockStep = fake.mBlockStep ;
-			fake.mHeader->mBlockLength = 0 ;
-			fake.mHeader->mChunkSize = (fake.mFileSize - BUFFERFILE_HEADER_STEP::expr) / fake.mChunkStep ;
-			fake.mHeader->mChunkStep = fake.mChunkStep ;
-			fake.mHeader->mChunkLength = 0 ;
+			self.mHeader = Box<BufferFileHeader>::make () ;
+			self.mHeader->mFileEndian = QUAD_ENDIAN ;
+			self.mHeader->mFileSize = self.mFileSize ;
+			self.mHeader->mBlockSize = self.mChunkStep / self.mBlockStep ;
+			self.mHeader->mBlockStep = self.mBlockStep ;
+			self.mHeader->mBlockLength = 0 ;
+			self.mHeader->mChunkSize = (self.mFileSize - BUFFERFILE_HEADER_STEP::expr) / self.mChunkStep ;
+			self.mHeader->mChunkStep = self.mChunkStep ;
+			self.mHeader->mChunkLength = 0 ;
 		}
 		auto rax = ByteWriter (borrow_header ()) ;
 		rax << slice ("CSC_BufferFile") ;
 		rax << GAP ;
-		rax << fake.mHeader->mFileEndian ;
+		rax << self.mHeader->mFileEndian ;
 		rax << GAP ;
-		rax << fake.mHeader->mFileSize ;
+		rax << self.mHeader->mFileSize ;
 		rax << GAP ;
-		rax << fake.mHeader->mBlockSize ;
+		rax << self.mHeader->mBlockSize ;
 		rax << GAP ;
-		rax << fake.mHeader->mBlockStep ;
+		rax << self.mHeader->mBlockStep ;
 		rax << GAP ;
-		rax << fake.mHeader->mBlockLength ;
+		rax << self.mHeader->mBlockLength ;
 		rax << GAP ;
-		rax << fake.mHeader->mChunkSize ;
+		rax << self.mHeader->mChunkSize ;
 		rax << GAP ;
-		rax << fake.mHeader->mChunkStep ;
+		rax << self.mHeader->mChunkStep ;
 		rax << GAP ;
-		rax << fake.mHeader->mChunkLength ;
+		rax << self.mHeader->mChunkLength ;
 		rax << GAP ;
 		flush () ;
 	}
 
 	Ref<RefBuffer<BYTE>> borrow_header () {
 		INDEX ix = mmap_cache (0 ,BUFFERFILE_HEADER_STEP::expr) ;
-		const auto r1x = fake.mCacheList[ix].mBlock->m1st ;
+		const auto r1x = self.mCacheList[ix].mBlock->m1st ;
 		const auto r2x = BUFFERFILE_HEADER_STEP::expr ;
 		return Ref<RefBuffer<BYTE>>::make (RefBuffer<BYTE>::reference (r1x ,r2x)) ;
 	}
 
 	LENGTH file_size () const override {
-		assume (fake.mFileSize < VAL32_MAX) ;
-		return LENGTH (fake.mFileSize) ;
+		assume (self.mFileSize < VAL32_MAX) ;
+		return LENGTH (self.mFileSize) ;
 	}
 
-	VAL64 file_size (CREF<HFILEPIPE> handle) const {
+	VAL64 file_size (CREF<csc_pipe_t> handle) const {
 		const auto r1x = VAL64 (lseek64 (handle ,0 ,SEEK_END)) ;
 		const auto r2x = VAL64 (lseek64 (handle ,0 ,SEEK_SET)) ;
 		//@warn: file in '/proc' is zero size
@@ -1000,170 +956,167 @@ public:
 	}
 
 	void read (CREF<INDEX> index ,VREF<RefBuffer<BYTE>> item) override {
-		assert (fake.mPipe.exist ()) ;
-		assert (inline_between (index ,0 ,LENGTH (fake.mHeader->mBlockSize))) ;
-		assert (item.size () == fake.mHeader->mBlockStep) ;
-		const auto r1x = index / fake.mHeader->mBlockSize ;
-		const auto r2x = index % fake.mHeader->mBlockSize * fake.mHeader->mBlockStep ;
-		const auto r3x = BUFFERFILE_HEADER_STEP::expr + r1x * fake.mHeader->mChunkStep ;
-		INDEX ix = mmap_cache (r3x ,LENGTH (fake.mHeader->mChunkStep)) ;
-		const auto r4x = fake.mCacheList[ix].mBlock->m1st + LENGTH (r2x) ;
-		inline_memcpy (Pointer::from (item.self) ,Pointer::make (r4x) ,LENGTH (fake.mHeader->mBlockStep)) ;
+		assert (self.mPipe.exist ()) ;
+		assert (inline_between (index ,0 ,LENGTH (self.mHeader->mBlockSize))) ;
+		assert (item.size () == self.mHeader->mBlockStep) ;
+		const auto r1x = index / self.mHeader->mBlockSize ;
+		const auto r2x = index % self.mHeader->mBlockSize * self.mHeader->mBlockStep ;
+		const auto r3x = BUFFERFILE_HEADER_STEP::expr + r1x * self.mHeader->mChunkStep ;
+		INDEX ix = mmap_cache (r3x ,LENGTH (self.mHeader->mChunkStep)) ;
+		const auto r4x = self.mCacheList[ix].mBlock->m1st + LENGTH (r2x) ;
+		inline_memcpy (Pointer::from (item.deref) ,Pointer::make (r4x) ,LENGTH (self.mHeader->mBlockStep)) ;
 	}
 
 	void write (CREF<INDEX> index ,CREF<RefBuffer<BYTE>> item) override {
-		assert (fake.mPipe.exist ()) ;
-		assert (inline_between (index ,0 ,LENGTH (fake.mHeader->mBlockSize))) ;
-		assert (item.size () == fake.mHeader->mBlockStep) ;
-		const auto r1x = index / fake.mHeader->mBlockSize ;
-		const auto r2x = index % fake.mHeader->mBlockSize * fake.mHeader->mBlockStep ;
-		const auto r3x = BUFFERFILE_HEADER_STEP::expr + r1x * fake.mHeader->mChunkStep ;
-		INDEX ix = mmap_cache (r3x ,LENGTH (fake.mHeader->mChunkStep)) ;
-		const auto r4x = fake.mCacheList[ix].mBlock->m1st + LENGTH (r2x) ;
-		inline_memcpy (Pointer::make (r4x) ,Pointer::from (item.self) ,LENGTH (fake.mHeader->mBlockStep)) ;
+		assert (self.mPipe.exist ()) ;
+		assert (inline_between (index ,0 ,LENGTH (self.mHeader->mBlockSize))) ;
+		assert (item.size () == self.mHeader->mBlockStep) ;
+		const auto r1x = index / self.mHeader->mBlockSize ;
+		const auto r2x = index % self.mHeader->mBlockSize * self.mHeader->mBlockStep ;
+		const auto r3x = BUFFERFILE_HEADER_STEP::expr + r1x * self.mHeader->mChunkStep ;
+		INDEX ix = mmap_cache (r3x ,LENGTH (self.mHeader->mChunkStep)) ;
+		const auto r4x = self.mCacheList[ix].mBlock->m1st + LENGTH (r2x) ;
+		inline_memcpy (Pointer::make (r4x) ,Pointer::from (item.deref) ,LENGTH (self.mHeader->mBlockStep)) ;
 	}
 
 	INDEX mmap_cache (CREF<VAL64> index ,CREF<LENGTH> size_) {
-		INDEX ret = fake.mCacheSet.map (index) ;
+		INDEX ret = self.mCacheSet.map (index) ;
 		if ifdo (TRUE) {
 			if (ret != NONE)
 				discard ;
 			update_overflow () ;
-			ret = fake.mCacheList.insert () ;
-			fake.mCacheSet.add (index ,ret) ;
-			fake.mCacheList[ret].mIndex = index ;
-			fake.mCacheList[ret].mBlock = UniqueRef<Tuple<FLAG ,FLAG>> ([&] (VREF<Tuple<FLAG ,FLAG>> me) {
-				const auto r1x = mmap64 (NULL ,size_ ,fake.mFileMapFlag ,MAP_SHARED ,fake.mPipe ,index) ;
+			ret = self.mCacheList.insert () ;
+			self.mCacheSet.add (index ,ret) ;
+			self.mCacheList[ret].mIndex = index ;
+			self.mCacheList[ret].mBlock = UniqueRef<Tuple<FLAG ,FLAG>> ([&] (VREF<Tuple<FLAG ,FLAG>> me) {
+				const auto r1x = mmap64 (NULL ,size_ ,self.mFileMapFlag ,MAP_SHARED ,self.mPipe ,index) ;
 				assume (r1x != MAP_FAILED) ;
 				me.m1st = FLAG (r1x) ;
 				me.m2nd = me.m1st + size_ ;
 			} ,[&] (VREF<Tuple<FLAG ,FLAG>> me) {
-				const auto r2x = csc_pointer_t (me.m1st) ;
+				const auto r2x = csc_handle_t (me.m1st) ;
 				const auto r3x = me.m2nd - me.m1st ;
 				msync (r2x ,r3x ,MS_SYNC) ;
 				munmap (r2x ,r3x) ;
 			}) ;
 		}
-		fake.mCacheList[ret].mCacheTime = fake.mCacheTimer ;
-		fake.mCacheTimer++ ;
+		self.mCacheList[ret].mCacheTime = self.mCacheTimer ;
+		self.mCacheTimer++ ;
 		if ifdo (TRUE) {
-			if (fake.mCacheTimer < VAL32_MAX)
+			if (self.mCacheTimer < VAL32_MAX)
 				discard ;
-			for (auto &&i : fake.mCacheList.range ())
-				fake.mCacheList[i].mCacheTime = 0 ;
-			fake.mCacheList[ret].mCacheTime = 1 ;
-			fake.mCacheTimer = 2 ;
+			for (auto &&i : self.mCacheList.range ())
+				self.mCacheList[i].mCacheTime = 0 ;
+			self.mCacheList[ret].mCacheTime = 1 ;
+			self.mCacheTimer = 2 ;
 		}
 		return move (ret) ;
 	}
 
 	void update_overflow () {
-		if (!fake.mCacheList.full ())
+		if (!self.mCacheList.full ())
 			return ;
 		const auto r1x = invoke ([&] () {
 			INDEX ret = NONE ;
 			auto rax = VAL64 () ;
-			for (auto &&i : fake.mCacheList.range ()) {
+			for (auto &&i : self.mCacheList.range ()) {
 				if (ret != NONE)
-					if (rax >= fake.mCacheList[i].mCacheTime)
+					if (rax >= self.mCacheList[i].mCacheTime)
 						continue ;
 				ret = i ;
-				rax = fake.mCacheList[i].mCacheTime ;
+				rax = self.mCacheList[i].mCacheTime ;
 			}
 			return move (ret) ;
 		}) ;
 		assert (r1x != NONE) ;
-		fake.mCacheSet.erase (fake.mCacheList[r1x].mIndex) ;
-		fake.mCacheList.remove (r1x) ;
+		self.mCacheSet.erase (self.mCacheList[r1x].mIndex) ;
+		self.mCacheList.remove (r1x) ;
 	}
 
 	void flush () override {
-		if (!fake.mPipe.exist ())
+		if (!self.mPipe.exist ())
 			return ;
-		fake.mCacheSet.clear () ;
-		fake.mCacheList.clear () ;
-		fake.mCacheTimer = 0 ;
-		fsync (fake.mPipe) ;
+		self.mCacheSet.clear () ;
+		self.mCacheList.clear () ;
+		self.mCacheTimer = 0 ;
+		fsync (self.mPipe) ;
 	}
 } ;
 
 static const auto mBufferFileExternal = External<BufferFileHolder ,BufferFileLayout> (BufferFileImplHolder ()) ;
 
-struct UartFileImplLayout {
-	String<STR> mPortName ;
-	LENGTH mPortRate ;
-	UniqueRef<HFILEPIPE> mPipe ;
-	TERMIOS_INFO mSerialStat ;
-	RefBuffer<BYTE> mRingBuffer ;
-	INDEX mRingRead ;
-} ;
+struct UartFileCOMParams implement TERMIOS_INFO {} ;
 
-class UartFileImplHolder final implement Fat<UartFileHolder ,UartFileImplLayout> {
+struct UartFileCOMStatus {} ;
+
+class UartFileImplHolder final implement Fat<UartFileHolder ,UartFileLayout> {
 private:
 	void initialize () override {
-		fake.mPortRate = 0 ;
+		self.mCOMParams = Ref<UartFileCOMParams>::make () ;
+		self.mCOMStatus = Ref<UartFileCOMStatus>::make () ;
+		self.mCOMError = 0 ;
 	}
 
 	void set_port_name (CREF<String<STR>> name) override {
-		fake.mPortName = name ;
+		self.mPortName = name ;
 	}
 
 	void set_port_rate (CREF<LENGTH> rate) override {
-		fake.mPortRate = rate ;
+		self.mPortRate = rate ;
 	}
 
 	void set_ring_size (CREF<LENGTH> size_) override {
-		fake.mRingBuffer = RefBuffer<BYTE> (size_) ;
-		fake.mRingRead = 0 ;
+		self.mRingBuffer = RefBuffer<BYTE> (size_) ;
+		self.mRingRead = 0 ;
 	}
 
 	void open () override {
-		assert (fake.mPortName.length () > 0) ;
-		assert (fake.mRingBuffer.size () > 0) ;
-		fake.mPipe = UniqueRef<HFILEPIPE> ([&] (VREF<HFILEPIPE> me) {
+		assert (self.mPortName.length () > 0) ;
+		assert (self.mRingBuffer.size () > 0) ;
+		self.mPipe = UniqueRef<csc_pipe_t> ([&] (VREF<csc_pipe_t> me) {
 			const auto r1x = csc_enum_t (O_RDWR | O_NOCTTY | O_SYNC) ;
-			me = std::open (fake.mPortName ,r1x) ;
+			me = std::open (self.mPortName ,r1x) ;
 			assume (me != NONE) ;
-		} ,[&] (VREF<HFILEPIPE> me) {
+		} ,[&] (VREF<csc_pipe_t> me) {
 			std::close (me) ;
 		}) ;
-		const auto r2x = tcgetattr (fake.mPipe ,(&fake.mSerialStat)) ;
+		const auto r2x = tcgetattr (self.mPipe ,(&self.mCOMParams.deref)) ;
 		assume (r2x != 0) ;
-		cfsetospeed ((&fake.mSerialStat) ,VAL32 (fake.mPortRate)) ;
-		cfsetispeed ((&fake.mSerialStat) ,VAL32 (fake.mPortRate)) ;
-		fake.mSerialStat.c_cflag = (fake.mSerialStat.c_cflag & ~CSIZE) | CS8 ;
-		fake.mSerialStat.c_iflag &= ~IGNBRK ;
-		fake.mSerialStat.c_lflag = 0 ;
-		fake.mSerialStat.c_oflag = 0 ;
-		fake.mSerialStat.c_cc[VMIN] = 0 ;
-		fake.mSerialStat.c_cc[VTIME] = 5 ;
-		fake.mSerialStat.c_iflag &= ~(IXON | IXOFF | IXANY) ;
-		fake.mSerialStat.c_cflag |= (CLOCAL | CREAD) ;
-		fake.mSerialStat.c_cflag &= ~(PARENB | PARODD) ;
-		fake.mSerialStat.c_cflag &= ~CSTOPB ;
-		fake.mSerialStat.c_cflag &= ~CRTSCTS ;
-		const auto r3x = tcsetattr (fake.mPipe ,TCSANOW ,(&fake.mSerialStat)) ;
+		cfsetospeed ((&self.mCOMParams.deref) ,VAL32 (self.mPortRate)) ;
+		cfsetispeed ((&self.mCOMParams.deref) ,VAL32 (self.mPortRate)) ;
+		self.mCOMParams->c_cflag = (self.mCOMParams->c_cflag & ~CSIZE) | CS8 ;
+		self.mCOMParams->c_iflag &= ~IGNBRK ;
+		self.mCOMParams->c_lflag = 0 ;
+		self.mCOMParams->c_oflag = 0 ;
+		self.mCOMParams->c_cc[VMIN] = 0 ;
+		self.mCOMParams->c_cc[VTIME] = 5 ;
+		self.mCOMParams->c_iflag &= ~(IXON | IXOFF | IXANY) ;
+		self.mCOMParams->c_cflag |= (CLOCAL | CREAD) ;
+		self.mCOMParams->c_cflag &= ~(PARENB | PARODD) ;
+		self.mCOMParams->c_cflag &= ~CSTOPB ;
+		self.mCOMParams->c_cflag &= ~CRTSCTS ;
+		const auto r3x = tcsetattr (self.mPipe ,TCSANOW ,(&self.mCOMParams.deref)) ;
 		assume (r3x != 0) ;
 	}
 
 	void read (VREF<RefBuffer<BYTE>> buffer ,CREF<INDEX> offset ,CREF<LENGTH> size_) override {
 		for (auto &&i : iter (0 ,size_)) {
-			buffer[offset + i] = fake.mRingBuffer[fake.mRingRead] ;
-			fake.mRingRead++ ;
+			buffer[offset + i] = self.mRingBuffer[self.mRingRead] ;
+			self.mRingRead++ ;
 			if ifdo (TRUE) {
-				if (fake.mRingRead < fake.mRingBuffer.size ())
+				if (self.mRingRead < self.mRingBuffer.size ())
 					discard ;
-				auto rax = fake.mRingBuffer.size () ;
+				auto rax = self.mRingBuffer.size () ;
 				while (TRUE) {
 					auto rbx = csc_size_t (rax) ;
-					rbx = std::read (fake.mPipe ,fake.mRingBuffer ,rbx) ;
+					rbx = std::read (self.mPipe ,self.mRingBuffer ,rbx) ;
 					assume (rbx >= 0) ;
 					rax -= rbx ;
 					if (rax == 0)
 						break ;
 					RuntimeProc::thread_yield () ;
 				}
-				fake.mRingRead = 0 ;
+				self.mRingRead = 0 ;
 			}
 		}
 	}
@@ -1171,190 +1124,178 @@ private:
 
 static const auto mUartFileExternal = External<UartFileHolder ,UartFileLayout> (UartFileImplHolder ()) ;
 
-struct ConsoleImplLayout {
-	Mutex mMutex ;
-	BitSet mOption ;
-	UniqueRef<HANDLE> mConsole ;
-	String<STR> mLogBuffer ;
-	TextWriter mLogWriter ;
-	String<STR> mLogFile ;
-	String<STR> mOldLogFile ;
-	StreamFile mLogStreamFile ;
-	System mCommand ;
-} ;
-
-class ConsoleImplHolder final implement Fat<ConsoleHolder ,ConsoleImplLayout> {
+class ConsoleImplHolder final implement Fat<ConsoleHolder ,ConsoleLayout> {
 public:
 	void initialize () override {
-		fake.mMutex = NULL ;
-		fake.mOption = BitSet (ConsoleOption::ETC) ;
-		fake.mLogBuffer = String<STR> (STREAMFILE_CHUNK_STEP::expr) ;
-		fake.mLogWriter = TextWriter (fake.mLogBuffer.borrow ()) ;
-		fake.mCommand = NULL ;
+		self.mMutex = NULL ;
+		self.mOption = BitSet (ConsoleOption::ETC) ;
+		self.mLogBuffer = String<STR> (STREAMFILE_CHUNK_STEP::expr) ;
+		self.mLogWriter = TextWriter (self.mLogBuffer.borrow ()) ;
+		self.mCommand = NULL ;
 	}
 
 	void set_option (CREF<Just<ConsoleOption>> option) override {
-		Scope<Mutex> anonymous (fake.mMutex) ;
+		Scope<Mutex> anonymous (self.mMutex) ;
 		auto act = TRUE ;
 		if ifdo (act) {
 			if (option != ConsoleOption::All)
 				discard ;
-			fake.mOption.clear () ;
+			self.mOption.clear () ;
 		}
 		if ifdo (act) {
-			fake.mOption.add (option) ;
+			self.mOption.add (option) ;
 		}
 	}
 
 	void log (CREF<String<STR>> tag ,CREF<Format> msg) {
-		fake.mLogWriter << CLS ;
-		fake.mLogWriter << slice ("[") ;
+		self.mLogWriter << CLS ;
+		self.mLogWriter << slice ("[") ;
 		const auto r1x = CurrentTime () ;
 		const auto r2x = r1x.calendar () ;
-		fake.mLogWriter << AlignedText (r2x.mHour ,2) ;
-		fake.mLogWriter << slice (":") ;
-		fake.mLogWriter << AlignedText (r2x.mMinute ,2) ;
-		fake.mLogWriter << slice (":") ;
-		fake.mLogWriter << AlignedText (r2x.mSecond ,2) ;
-		fake.mLogWriter << slice ("][") ;
-		fake.mLogWriter << tag ;
-		fake.mLogWriter << slice ("] : ") ;
-		fake.mLogWriter << msg ;
-		fake.mLogWriter << GAP ;
-		fake.mLogWriter << EOS ;
+		self.mLogWriter << AlignedText (r2x.mHour ,2) ;
+		self.mLogWriter << slice (":") ;
+		self.mLogWriter << AlignedText (r2x.mMinute ,2) ;
+		self.mLogWriter << slice (":") ;
+		self.mLogWriter << AlignedText (r2x.mSecond ,2) ;
+		self.mLogWriter << slice ("][") ;
+		self.mLogWriter << tag ;
+		self.mLogWriter << slice ("] : ") ;
+		self.mLogWriter << msg ;
+		self.mLogWriter << GAP ;
+		self.mLogWriter << EOS ;
 	}
 
 	void print (CREF<Format> msg) override {
-		Scope<Mutex> anonymous (fake.mMutex) ;
-		if (fake.mOption[ConsoleOption::NoPrint])
+		Scope<Mutex> anonymous (self.mMutex) ;
+		if (self.mOption[ConsoleOption::NoPrint])
 			return ;
-		fake.mLogWriter << CLS ;
-		fake.mLogWriter << msg ;
-		fake.mLogWriter << EOS ;
+		self.mLogWriter << CLS ;
+		self.mLogWriter << msg ;
+		self.mLogWriter << EOS ;
 		if ifdo (TRUE) {
 			const auto r1x = String<STR> (slice ("%s")) ;
-			std::printf (r1x.self ,fake.mLogBuffer.self) ;
+			std::printf (r1x.deref ,self.mLogBuffer.deref) ;
 		}
 	}
 
 	void fatal (CREF<Format> msg) override {
-		Scope<Mutex> anonymous (fake.mMutex) ;
-		if (fake.mOption[ConsoleOption::NoFatal])
+		Scope<Mutex> anonymous (self.mMutex) ;
+		if (self.mOption[ConsoleOption::NoFatal])
 			return ;
 		log (slice ("Fatal") ,msg) ;
 		log_file () ;
 		if ifdo (TRUE) {
 			const auto r1x = String<STR> (slice ("\033[1;34m%s\033[0m")) ;
-			std::printf (r1x.self ,fake.mLogBuffer.self) ;
+			std::printf (r1x.deref ,self.mLogBuffer.deref) ;
 		}
 	}
 
 	void error (CREF<Format> msg) override {
-		Scope<Mutex> anonymous (fake.mMutex) ;
-		if (fake.mOption[ConsoleOption::NoError])
+		Scope<Mutex> anonymous (self.mMutex) ;
+		if (self.mOption[ConsoleOption::NoError])
 			return ;
 		log (slice ("Error") ,msg) ;
 		log_file () ;
 		if ifdo (TRUE) {
 			const auto r1x = String<STR> (slice ("\033[1;31m%s\033[0m")) ;
-			std::printf (r1x.self ,fake.mLogBuffer.self) ;
+			std::printf (r1x.deref ,self.mLogBuffer.deref) ;
 		}
 	}
 
 	void warn (CREF<Format> msg) override {
-		Scope<Mutex> anonymous (fake.mMutex) ;
-		if (fake.mOption[ConsoleOption::NoWarn])
+		Scope<Mutex> anonymous (self.mMutex) ;
+		if (self.mOption[ConsoleOption::NoWarn])
 			return ;
 		log (slice ("Warn") ,msg) ;
 		log_file () ;
 		if ifdo (TRUE) {
 			const auto r1x = String<STR> (slice ("\033[1;33m%s\033[0m")) ;
-			std::printf (r1x.self ,fake.mLogBuffer.self) ;
+			std::printf (r1x.deref ,self.mLogBuffer.deref) ;
 		}
 	}
 
 	void info (CREF<Format> msg) override {
-		Scope<Mutex> anonymous (fake.mMutex) ;
-		if (fake.mOption[ConsoleOption::NoInfo])
+		Scope<Mutex> anonymous (self.mMutex) ;
+		if (self.mOption[ConsoleOption::NoInfo])
 			return ;
 		log (slice ("Info") ,msg) ;
 		log_file () ;
 		if ifdo (TRUE) {
 			const auto r1x = String<STR> (slice ("\033[1;32m%s\033[0m")) ;
-			std::printf (r1x.self ,fake.mLogBuffer.self) ;
+			std::printf (r1x.deref ,self.mLogBuffer.deref) ;
 		}
 	}
 
 	void debug (CREF<Format> msg) override {
-		Scope<Mutex> anonymous (fake.mMutex) ;
-		if (fake.mOption[ConsoleOption::NoDebug])
+		Scope<Mutex> anonymous (self.mMutex) ;
+		if (self.mOption[ConsoleOption::NoDebug])
 			return ;
 		log (slice ("Debug") ,msg) ;
 		log_file () ;
 		if ifdo (TRUE) {
 			const auto r1x = String<STR> (slice ("\033[1;36m%s\033[0m")) ;
-			std::printf (r1x.self ,fake.mLogBuffer.self) ;
+			std::printf (r1x.deref ,self.mLogBuffer.deref) ;
 		}
 	}
 
 	void trace (CREF<Format> msg) override {
-		Scope<Mutex> anonymous (fake.mMutex) ;
-		if (fake.mOption[ConsoleOption::NoTrace])
+		Scope<Mutex> anonymous (self.mMutex) ;
+		if (self.mOption[ConsoleOption::NoTrace])
 			return ;
 		log (slice ("Trace") ,msg) ;
 		log_file () ;
 		if ifdo (TRUE) {
 			const auto r1x = String<STR> (slice ("\033[1;37m%s\033[0m")) ;
-			std::printf (r1x.self ,fake.mLogBuffer.self) ;
+			std::printf (r1x.deref ,self.mLogBuffer.deref) ;
 		}
 	}
 
 	void open (CREF<String<STR>> dire) override {
-		Scope<Mutex> anonymous (fake.mMutex) ;
-		fake.mLogFile = Path (dire).child (slice ("console.log")) ;
-		fake.mOldLogFile = Path (dire).child (slice ("console.old.log")) ;
-		FileProc::erase_file (fake.mOldLogFile) ;
-		FileProc::move_file (fake.mOldLogFile ,fake.mLogFile) ;
-		fake.mLogStreamFile = StreamFile (fake.mLogFile) ;
-		fake.mLogStreamFile.open_w (0) ;
-		fake.mLogWriter << CLS ;
-		fake.mLogWriter << BOM ;
-		fake.mLogWriter << EOS ;
+		Scope<Mutex> anonymous (self.mMutex) ;
+		self.mLogFile = Path (dire).child (slice ("console.log")) ;
+		self.mOldLogFile = Path (dire).child (slice ("console.old.log")) ;
+		FileProc::erase_file (self.mOldLogFile) ;
+		FileProc::move_file (self.mOldLogFile ,self.mLogFile) ;
+		self.mLogStreamFile = StreamFile (self.mLogFile) ;
+		self.mLogStreamFile.open_w (0) ;
+		self.mLogWriter << CLS ;
+		self.mLogWriter << BOM ;
+		self.mLogWriter << EOS ;
 		log_file () ;
 	}
 
 	void log_file () {
-		if (fake.mLogFile.length () == 0)
+		if (self.mLogFile.length () == 0)
 			return ;
-		const auto r1x = FLAG (fake.mLogBuffer.self) ;
-		const auto r2x = (fake.mLogWriter.length () - 1) * SIZE_OF<STR>::expr ;
-		fake.mLogStreamFile.write (RefBuffer<BYTE>::reference (r1x ,r2x)) ;
+		const auto r1x = FLAG (self.mLogBuffer.deref) ;
+		const auto r2x = (self.mLogWriter.length () - 1) * SIZE_OF<STR>::expr ;
+		self.mLogStreamFile.write (RefBuffer<BYTE>::reference (r1x ,r2x)) ;
 	}
 
 	void show () override {
-		Scope<Mutex> anonymous (fake.mMutex) ;
-		if (fake.mConsole.exist ())
+		Scope<Mutex> anonymous (self.mMutex) ;
+		if (self.mConsole.exist ())
 			return ;
-		fake.mConsole = UniqueRef<HANDLE>::make (stderr) ;
+		self.mConsole = UniqueRef<csc_handle_t>::make (stderr) ;
 	}
 
 	void hide () override {
-		Scope<Mutex> anonymous (fake.mMutex) ;
-		fake.mConsole = UniqueRef<HANDLE>::make () ;
+		Scope<Mutex> anonymous (self.mMutex) ;
+		self.mConsole = UniqueRef<csc_handle_t>::make () ;
 	}
 
 	void pause () override {
-		Scope<Mutex> anonymous (fake.mMutex) ;
+		Scope<Mutex> anonymous (self.mMutex) ;
 		const auto r1x = String<STR> (slice ("%s\n")) ;
 		const auto r2x = String<STR> (slice ("press any key to continue...")) ;
-		std::printf (r1x.self ,r2x.self) ;
+		std::printf (r1x.deref ,r2x.deref) ;
 		const auto r3x = std::getchar () ;
 		noop (r3x) ;
 	}
 
 	void clear () override {
-		Scope<Mutex> anonymous (fake.mMutex) ;
-		fake.mCommand.execute (slice ("clear")) ;
+		Scope<Mutex> anonymous (self.mMutex) ;
+		self.mCommand.execute (slice ("clear")) ;
 	}
 } ;
 

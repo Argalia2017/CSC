@@ -6,8 +6,8 @@
 #undef leftvalue
 #undef rightvalue
 #undef thiz
+#undef deref
 #undef self
-#undef fake
 #undef expr
 #undef trait
 #undef implement
@@ -16,7 +16,7 @@
 #undef slice
 #undef assert
 #undef assume
-#undef watch
+#undef notice
 #undef ifdo
 #undef discard
 #undef typeof

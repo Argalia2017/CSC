@@ -24,7 +24,7 @@
 
   <Type Name="CSC::Fat&lt;*&gt;">
     <Expand HideRawView="true">
-      <Item Name="[fake]" Condition="mLayout!=0">($T2*)mLayout</Item>
+      <Item Name="[self]" Condition="mLayout!=0">($T2*)mLayout</Item>
       <ExpandedItem>($T2*)mLayout</ExpandedItem>
     </Expand>
   </Type>
@@ -68,7 +68,7 @@
 
   <Type Name="CSC::RefLayout">
     <Expand HideRawView="true">
-      <ExpandedItem Condition="mHandle!=0">(CSC::RefImplLayout*)mHandle</ExpandedItem>
+      <ExpandedItem Condition="mHandle!=0">(CSC::RefTree*)mHandle</ExpandedItem>
     </Expand>
   </Type>
 
@@ -228,7 +228,7 @@
     </Expand>
   </Type>
 
-  <Type Name="CSC::TupleNode&lt;*&gt;">
+  <Type Name="CSC::UnionPair&lt;*&gt;">
     <Expand HideRawView="true">
       <ExpandedItem Condition="(*(CSC::AllocatorNode*)&amp;m2nd).mNext==-2">m1st</ExpandedItem>
     </Expand>
@@ -259,7 +259,7 @@
       <Item Name="[fixed]">mAllocator.mThis</Item>
       <ArrayItems Condition="mAllocator.mThis.mLayout!=0">
         <Size>mAllocator.mSize&lt;10?mAllocator.mSize:10</Size>
-        <ValuePointer>(CSC::TupleNode&lt;$T1,$T2&gt;*)mAllocator.mBuffer</ValuePointer>
+        <ValuePointer>(CSC::UnionPair&lt;$T1,$T2&gt;*)mAllocator.mBuffer</ValuePointer>
       </ArrayItems>
       <Item Name="[+]">*(CSC::AllocatorRealLayout&lt;$T1,$T2&gt;*)this</Item>
     </Expand>
@@ -355,7 +355,7 @@
     <Expand HideRawView="true">
       <IndexListItems>
         <Size>mWrite</Size>
-        <ValueNode>((CSC::TupleNode&lt;$T1,CSC::SortedMapNode&gt;*)(*(CSC::SortedMapRoot*)mThis.mLayout).mList.mAllocator.mBuffer)[mRange[$i]].m2nd.mMap</ValueNode>
+        <ValueNode>((CSC::UnionPair&lt;$T1,CSC::SortedMapNode&gt;*)(*(CSC::SortedMapTree*)mThis.mLayout).mList.mAllocator.mBuffer)[mRange[$i]].m2nd.mMap</ValueNode>
       </IndexListItems>
     </Expand>
   </Type>
@@ -369,7 +369,7 @@
       <Item Name="[fixed]">mThis</Item>
       <IndexListItems Condition="mRange.mThis.mLayout!=0">
         <Size>mWrite&lt;10?mWrite:10</Size>
-        <ValueNode>((CSC::TupleNode&lt;$T1,CSC::SortedMapNode&gt;*)(*(CSC::SortedMapRoot*)mThis.mLayout).mList.mAllocator.mBuffer)[mRange[$i]].m2nd.mMap</ValueNode>
+        <ValueNode>((CSC::UnionPair&lt;$T1,CSC::SortedMapNode&gt;*)(*(CSC::SortedMapTree*)mThis.mLayout).mList.mAllocator.mBuffer)[mRange[$i]].m2nd.mMap</ValueNode>
       </IndexListItems>
       <Item Name="[+]">*(CSC::SortedMapRealLayout&lt;$T1&gt;*)this</Item>
     </Expand>
@@ -397,6 +397,12 @@
   </Type>
 
   <!--csc_image.hpp-->
+
+	<Type Name="CSC::ImageShape">
+		<Expand HideRawView="true">
+			<ExpandedItem>(CSC::ImageShapeLayout*)this</ExpandedItem>
+		</Expand>
+	</Type>
 
   <Type Name="CSC::Image&lt;*&gt;">
     <Expand HideRawView="true">
@@ -437,7 +443,7 @@
 
   <!--csc_string.hpp-->
 
-  <Type Name="CSC::XmlParserImplLayout">
+  <Type Name="CSC::XmlParserTree">
     <Expand HideRawView="true">
       <ExpandedItem>mTree</ExpandedItem>
     </Expand>
@@ -447,11 +453,11 @@
     <Expand HideRawView="true">
       <Item Name="[index]">mIndex</Item>
       <ExpandedItem>mThis</ExpandedItem>
-      <ExpandedItem Condition="mThis.mLayout!=0">((CSC::XmlParserNode*)(*(CSC::XmlParserImplLayout*)mThis.mLayout).mTree.mArray.mBuffer)[mIndex]</ExpandedItem>
+      <ExpandedItem Condition="mThis.mLayout!=0">((CSC::XmlParserNode*)(*(CSC::XmlParserTree*)mThis.mLayout).mTree.mArray.mBuffer)[mIndex]</ExpandedItem>
     </Expand>
   </Type>
 
-  <Type Name="CSC::JsonParserImplLayout">
+  <Type Name="CSC::JsonParserTree">
     <Expand HideRawView="true">
       <ExpandedItem>mTree</ExpandedItem>
     </Expand>
@@ -461,7 +467,7 @@
     <Expand HideRawView="true">
       <Item Name="[index]">mIndex</Item>
       <ExpandedItem>mThis</ExpandedItem>
-      <ExpandedItem Condition="mThis.mLayout!=0">((CSC::JsonParserNode*)(*(CSC::JsonParserImplLayout*)mThis.mLayout).mTree.mArray.mBuffer)[mIndex]</ExpandedItem>
+      <ExpandedItem Condition="mThis.mLayout!=0">((CSC::JsonParserNode*)(*(CSC::JsonParserTree*)mThis.mLayout).mTree.mArray.mBuffer)[mIndex]</ExpandedItem>
     </Expand>
   </Type>
 

@@ -3,17 +3,17 @@
   <ImportGroup Label="PropertySheets" />
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup>
-    <_PropertySheetDisplayName>build.Debug.x64</_PropertySheetDisplayName>
-    <OutDir>$(SolutionDir)lib_Linux\$(Configuration)\$(Platform)\</OutDir>
-    <IntDir>$(SolutionDir)obj_Linux\$(ProjectName)\$(Configuration)\$(Platform)\</IntDir>
+    <OutDir>$(SolutionDir)lib\Linux\$(Configuration)\$(Platform)\</OutDir>
+    <IntDir>$(SolutionDir)obj\Linux\$(ProjectName)\$(Configuration)\$(Platform)\</IntDir>
   </PropertyGroup>
   <ItemDefinitionGroup>
     <ClCompile>
-      <AdditionalOptions>%(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>-fopenmp %(AdditionalOptions)</AdditionalOptions>
       <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StrictAliasing>true</StrictAliasing>
       <HideInlineMethods>true</HideInlineMethods>
       <SymbolsHiddenByDefault>true</SymbolsHiddenByDefault>
+      <CppLanguageStandard>c++20</CppLanguageStandard>
     </ClCompile>
     <Link>
       <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>

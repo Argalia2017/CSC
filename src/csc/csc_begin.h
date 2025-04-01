@@ -18,8 +18,8 @@
 #undef leftvalue
 #undef rightvalue
 #undef thiz
+#undef deref
 #undef self
-#undef fake
 #undef expr
 #undef trait
 #undef implement
@@ -28,7 +28,7 @@
 #undef slice
 #undef assert
 #undef assume
-#undef watch
+#undef notice
 #undef ifdo
 #undef discard
 #undef typeof
@@ -41,8 +41,8 @@
 #define leftvalue &
 #define rightvalue &&
 #define thiz (*this)
+#define deref deref_m ()
 #define self self_m ()
-#define fake fake_m ()
 #define expr expr_m ()
 #define trait struct
 #define implement :public
@@ -51,7 +51,7 @@
 #define slice __macro_slice
 #define assert __macro_assert
 #define assume __macro_assume
-#define watch __macro_watch
+#define notice __macro_notice
 #define ifdo __macro_ifdo
 #define discard break
 #define typeof __macro_typeof

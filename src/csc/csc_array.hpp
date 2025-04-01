@@ -36,7 +36,6 @@ protected:
 	XREF<A> mThat ;
 	INDEX mBegin ;
 	INDEX mEnd ;
-	INDEX mPeek ;
 
 public:
 	implicit ArrayIterator () = delete ;
@@ -44,7 +43,6 @@ public:
 	explicit ArrayIterator (XREF<A> that) :mThat (that) {
 		mBegin = mThat.ibegin () ;
 		mEnd = mThat.iend () ;
-		mPeek = mBegin ;
 	}
 
 	LENGTH length () const {
@@ -60,7 +58,7 @@ public:
 	}
 
 	BOOL good () const {
-		return mPeek != mEnd ;
+		return mBegin != mEnd ;
 	}
 
 	forceinline BOOL operator== (CREF<ArrayIterator>) const {
@@ -72,7 +70,7 @@ public:
 	}
 
 	XREF<ITEM> peek () const leftvalue {
-		return mThat.at (mPeek) ;
+		return mThat.at (mBegin) ;
 	}
 
 	forceinline XREF<ITEM> operator* () const leftvalue {
@@ -80,7 +78,7 @@ public:
 	}
 
 	void next () {
-		mPeek = mThat.inext (mPeek) ;
+		mBegin = mThat.inext (mBegin) ;
 	}
 
 	forceinline void operator++ () {
@@ -129,9 +127,14 @@ public:
 	}
 } ;
 
-struct ArrayLayout {
-	RefBuffer<Pointer> mArray ;
+struct ArrayLayout ;
+
+template <class A>
+struct ArrayRealLayout implement OfBase<ArrayLayout> {
+	RefBuffer<A> mArray ;
 } ;
+
+struct ArrayLayout implement ArrayRealLayout<Pointer> {} ;
 
 struct ArrayHolder implement Interface {
 	imports VFat<ArrayHolder> hold (VREF<ArrayLayout> that) ;
@@ -143,8 +146,8 @@ struct ArrayHolder implement Interface {
 	virtual LENGTH size () const = 0 ;
 	virtual LENGTH step () const = 0 ;
 	virtual LENGTH length () const = 0 ;
-	virtual VREF<Pointer> self_m () leftvalue = 0 ;
-	virtual CREF<Pointer> self_m () const leftvalue = 0 ;
+	virtual VREF<Pointer> deref_m () leftvalue = 0 ;
+	virtual CREF<Pointer> deref_m () const leftvalue = 0 ;
 	virtual VREF<Pointer> at (CREF<INDEX> index) leftvalue = 0 ;
 	virtual CREF<Pointer> at (CREF<INDEX> index) const leftvalue = 0 ;
 	virtual INDEX ibegin () const = 0 ;
@@ -158,7 +161,7 @@ struct ArrayHolder implement Interface {
 } ;
 
 template <class A>
-class ArrayUnknownBinder implement ReflectUnknown {
+class ArrayUnknownBinder final implement Fat<ReflectUnknown ,Proxy> {
 public:
 	FLAG reflect (CREF<FLAG> uuid) const override {
 		if (uuid == ReflectSizeBinder<A>::expr)
@@ -180,14 +183,6 @@ public:
 		if (uuid == ReflectElementBinder<A>::expr)
 			return inline_vptr (ReflectElementBinder<A> ()) ;
 		return ZERO ;
-	}
-} ;
-
-template <class A>
-class ArrayRealLayout implement ArrayLayout {
-public:
-	implicit ArrayRealLayout () noexcept {
-		noop (RefBuffer<A> ()) ;
 	}
 } ;
 
@@ -247,20 +242,20 @@ public:
 		return ArrayHolder::hold (thiz)->length () ;
 	}
 
-	VREF<ARR<A>> self_m () leftvalue {
-		return ArrayHolder::hold (thiz)->self ;
+	VREF<ARR<A>> deref_m () leftvalue {
+		return ArrayHolder::hold (thiz)->deref ;
 	}
 
 	forceinline operator VREF<ARR<A>> () leftvalue {
-		return self ;
+		return deref ;
 	}
 
-	CREF<ARR<A>> self_m () const leftvalue {
-		return ArrayHolder::hold (thiz)->self ;
+	CREF<ARR<A>> deref_m () const leftvalue {
+		return ArrayHolder::hold (thiz)->deref ;
 	}
 
 	forceinline operator CREF<ARR<A>> () const leftvalue {
-		return self ;
+		return deref ;
 	}
 
 	VREF<A> at (CREF<INDEX> index) leftvalue {
@@ -354,10 +349,15 @@ class StringParse ;
 template <class A>
 class StringBuild ;
 
-struct StringLayout {
-	RefBuffer<Pointer> mString ;
+struct StringLayout ;
+
+template <class A>
+struct StringRealLayout implement OfBase<StringLayout> {
+	RefBuffer<A> mString ;
 	FLAG mEncode ;
 } ;
+
+struct StringLayout implement StringRealLayout<Pointer> {} ;
 
 struct StringHolder implement Interface {
 	imports VFat<StringHolder> hold (VREF<StringLayout> that) ;
@@ -371,8 +371,8 @@ struct StringHolder implement Interface {
 	virtual LENGTH size () const = 0 ;
 	virtual LENGTH step () const = 0 ;
 	virtual LENGTH length () const = 0 ;
-	virtual VREF<Pointer> self_m () leftvalue = 0 ;
-	virtual CREF<Pointer> self_m () const leftvalue = 0 ;
+	virtual VREF<Pointer> deref_m () leftvalue = 0 ;
+	virtual CREF<Pointer> deref_m () const leftvalue = 0 ;
 	virtual Ref<RefBuffer<BYTE>> borrow () leftvalue = 0 ;
 	virtual Ref<RefBuffer<BYTE>> borrow () const leftvalue = 0 ;
 	virtual void get (CREF<INDEX> index ,VREF<STRU32> item) const = 0 ;
@@ -392,14 +392,6 @@ struct StringHolder implement Interface {
 	virtual void splice (CREF<INDEX> index ,CREF<Slice> item) = 0 ;
 	virtual void splice (CREF<INDEX> index ,CREF<StringLayout> item) = 0 ;
 	virtual Slice segment (CREF<INDEX> begin_ ,CREF<INDEX> end_) const = 0 ;
-} ;
-
-template <class A>
-class StringRealLayout implement StringLayout {
-public:
-	implicit StringRealLayout () noexcept {
-		noop (RefBuffer<A> ()) ;
-	}
 } ;
 
 template <class A>
@@ -469,20 +461,20 @@ public:
 		return StringHolder::hold (thiz)->length () ;
 	}
 
-	VREF<ARR<A>> self_m () leftvalue {
-		return StringHolder::hold (thiz)->self ;
+	VREF<ARR<A>> deref_m () leftvalue {
+		return StringHolder::hold (thiz)->deref ;
 	}
 
 	forceinline operator VREF<ARR<A>> () leftvalue {
-		return self ;
+		return deref ;
 	}
 
-	CREF<ARR<A>> self_m () const leftvalue {
-		return StringHolder::hold (thiz)->self ;
+	CREF<ARR<A>> deref_m () const leftvalue {
+		return StringHolder::hold (thiz)->deref ;
 	}
 
 	forceinline operator CREF<ARR<A>> () const leftvalue {
-		return self ;
+		return deref ;
 	}
 
 	Ref<RefBuffer<BYTE>> borrow () leftvalue {
@@ -606,11 +598,16 @@ public:
 	}
 } ;
 
-struct DequeLayout {
-	RefBuffer<Pointer> mDeque ;
+struct DequeLayout ;
+
+template <class A>
+struct DequeRealLayout implement OfBase<DequeLayout> {
+	RefBuffer<A> mDeque ;
 	INDEX mRead ;
 	INDEX mWrite ;
 } ;
+
+struct DequeLayout implement DequeRealLayout<Pointer> {} ;
 
 struct DequeHolder implement Interface {
 	imports VFat<DequeHolder> hold (VREF<DequeLayout> that) ;
@@ -640,7 +637,7 @@ struct DequeHolder implement Interface {
 } ;
 
 template <class A>
-class DequeUnknownBinder implement ReflectUnknown {
+class DequeUnknownBinder final implement Fat<ReflectUnknown ,Proxy> {
 public:
 	FLAG reflect (CREF<FLAG> uuid) const override {
 		if (uuid == ReflectSizeBinder<A>::expr)
@@ -654,14 +651,6 @@ public:
 		if (uuid == ReflectElementBinder<A>::expr)
 			return inline_vptr (ReflectElementBinder<A> ()) ;
 		return ZERO ;
-	}
-} ;
-
-template <class A>
-class DequeRealLayout implement DequeLayout {
-public:
-	implicit DequeRealLayout () noexcept {
-		noop (RefBuffer<A> ()) ;
 	}
 } ;
 
@@ -800,13 +789,10 @@ public:
 } ;
 
 template <class A>
-struct IndexPair {
-	A mItem ;
-	INDEX mIndex ;
-
+class IndexPair implement Tuple<A ,INDEX> {
 public:
 	BOOL equal (CREF<IndexPair> that) const {
-		return inline_equal (mItem ,that.mItem) ;
+		return inline_equal (thiz.m1st ,that.m1st) ;
 	}
 
 	forceinline BOOL operator== (CREF<IndexPair> that) const {
@@ -818,7 +804,7 @@ public:
 	}
 
 	FLAG compr (CREF<IndexPair> that) const {
-		return inline_compr (mItem ,that.mItem) ;
+		return inline_compr (thiz.m1st ,that.m1st) ;
 	}
 
 	forceinline BOOL operator< (CREF<IndexPair> that) const {
@@ -839,16 +825,21 @@ public:
 
 	void visit (VREF<VisitorBinder> visitor) const {
 		visitor.enter () ;
-		inline_visit (visitor ,mItem) ;
+		inline_visit (visitor ,thiz.m1st) ;
 		visitor.leave () ;
 	}
 } ;
 
-struct PriorityLayout {
-	RefBuffer<Pointer> mPriority ;
+struct PriorityLayout ;
+
+template <class A>
+struct PriorityRealLayout implement OfBase<PriorityLayout> {
+	RefBuffer<A> mPriority ;
 	INDEX mRead ;
 	INDEX mWrite ;
 } ;
+
+struct PriorityLayout implement PriorityRealLayout<Pointer> {} ;
 
 struct PriorityHolder implement Interface {
 	imports VFat<PriorityHolder> hold (VREF<PriorityLayout> that) ;
@@ -873,7 +864,7 @@ struct PriorityHolder implement Interface {
 } ;
 
 template <class A>
-class PriorityUnknownBinder implement ReflectUnknown {
+class PriorityUnknownBinder final implement Fat<ReflectUnknown ,Proxy> {
 public:
 	FLAG reflect (CREF<FLAG> uuid) const override {
 		if (uuid == ReflectSizeBinder<A>::expr)
@@ -893,14 +884,6 @@ public:
 		if (uuid == ReflectElementBinder<A>::expr)
 			return inline_vptr (ReflectElementBinder<A> ()) ;
 		return ZERO ;
-	}
-} ;
-
-template <class A>
-class PriorityRealLayout implement PriorityLayout {
-public:
-	implicit PriorityRealLayout () noexcept {
-		noop (RefBuffer<A> ()) ;
 	}
 } ;
 
@@ -1008,11 +991,16 @@ struct ListNode implement AllocatorNode {
 	INDEX mRight ;
 } ;
 
-struct ListLayout {
-	Allocator<Pointer ,ListNode> mList ;
+struct ListLayout ;
+
+template <class A>
+struct ListRealLayout implement OfBase<ListLayout> {
+	Allocator<A ,ListNode> mList ;
 	INDEX mFirst ;
 	INDEX mLast ;
 } ;
+
+struct ListLayout implement ListRealLayout<Pointer> {} ;
 
 struct ListHolder implement Interface {
 	imports VFat<ListHolder> hold (VREF<ListLayout> that) ;
@@ -1045,10 +1033,10 @@ struct ListHolder implement Interface {
 } ;
 
 template <class A>
-class ListUnknownBinder implement ReflectUnknown {
+class ListUnknownBinder final implement Fat<ReflectUnknown ,Proxy> {
 public:
 	FLAG reflect (CREF<FLAG> uuid) const override {
-		using R1X = TupleNode<A ,ListNode> ;
+		using R1X = UnionPair<A ,ListNode> ;
 		if (uuid == ReflectSizeBinder<A>::expr)
 			return inline_vptr (ReflectSizeBinder<A> ()) ;
 		if (uuid == ReflectDestroyBinder<A>::expr)
@@ -1060,14 +1048,6 @@ public:
 		if (uuid == ReflectElementBinder<R1X>::expr)
 			return inline_vptr (ReflectElementBinder<R1X> ()) ;
 		return ZERO ;
-	}
-} ;
-
-template <class A>
-class ListRealLayout implement ListLayout {
-public:
-	implicit ListRealLayout () noexcept {
-		noop (Allocator<A ,ListNode> ()) ;
 	}
 } ;
 
@@ -1182,7 +1162,7 @@ public:
 	}
 
 	void push (CREF<A> item) {
-		move (move (item)) ;
+		push (move (item)) ;
 	}
 
 	void push (RREF<A> item) {
@@ -1223,12 +1203,17 @@ public:
 
 struct ArrayListNode implement AllocatorNode {} ;
 
-struct ArrayListLayout {
-	Allocator<Pointer ,ArrayListNode> mList ;
+struct ArrayListLayout ;
+
+template <class A>
+struct ArrayListRealLayout implement OfBase<ArrayListLayout> {
+	Allocator<A ,ArrayListNode> mList ;
 	RefBuffer<INDEX> mRange ;
 	INDEX mTop ;
 	BOOL mRemap ;
 } ;
+
+struct ArrayListLayout implement ArrayListRealLayout<Pointer> {} ;
 
 struct ArrayListHolder implement Interface {
 	imports VFat<ArrayListHolder> hold (VREF<ArrayListLayout> that) ;
@@ -1255,10 +1240,10 @@ struct ArrayListHolder implement Interface {
 } ;
 
 template <class A>
-class ArrayListUnknownBinder implement ReflectUnknown {
+class ArrayListUnknownBinder final implement Fat<ReflectUnknown ,Proxy> {
 public:
 	FLAG reflect (CREF<FLAG> uuid) const override {
-		using R1X = TupleNode<A ,ArrayListNode> ;
+		using R1X = UnionPair<A ,ArrayListNode> ;
 		if (uuid == ReflectSizeBinder<A>::expr)
 			return inline_vptr (ReflectSizeBinder<A> ()) ;
 		if (uuid == ReflectDestroyBinder<A>::expr)
@@ -1270,14 +1255,6 @@ public:
 		if (uuid == ReflectElementBinder<R1X>::expr)
 			return inline_vptr (ReflectElementBinder<R1X> ()) ;
 		return ZERO ;
-	}
-} ;
-
-template <class A>
-class ArrayListRealLayout implement ArrayListLayout {
-public:
-	implicit ArrayListRealLayout () noexcept {
-		noop (Allocator<A ,ArrayListNode> ()) ;
 	}
 } ;
 
@@ -1397,13 +1374,13 @@ struct SortedMapNode implement AllocatorNode {
 	INDEX mDown ;
 } ;
 
-struct SortedMapRoot {
+struct SortedMapTree {
 	Allocator<Pointer ,SortedMapNode> mList ;
 	INDEX mCheck ;
 } ;
 
 struct SortedMapLayout {
-	Ref<SortedMapRoot> mThis ;
+	Ref<SortedMapTree> mThis ;
 	INDEX mRoot ;
 	RefBuffer<INDEX> mRange ;
 	INDEX mWrite ;
@@ -1435,10 +1412,10 @@ struct SortedMapHolder implement Interface {
 } ;
 
 template <class A>
-class SortedMapUnknownBinder implement ReflectUnknown {
+class SortedMapUnknownBinder final implement Fat<ReflectUnknown ,Proxy> {
 public:
 	FLAG reflect (CREF<FLAG> uuid) const override {
-		using R1X = TupleNode<A ,SortedMapNode> ;
+		using R1X = UnionPair<A ,SortedMapNode> ;
 		if (uuid == ReflectSizeBinder<A>::expr)
 			return inline_vptr (ReflectSizeBinder<A> ()) ;
 		if (uuid == ReflectDestroyBinder<A>::expr)
@@ -1460,21 +1437,13 @@ public:
 } ;
 
 template <class A>
-class SortedMapRealLayout implement SortedMapLayout {
-public:
-	implicit SortedMapRealLayout () noexcept {
-		noop (Allocator<A ,SortedMapNode> ()) ;
-	}
-} ;
-
-template <class A>
-class SortedMap implement SortedMapRealLayout<A> {
+class SortedMap implement SortedMapLayout {
 protected:
-	using SortedMapRealLayout<A>::mThis ;
-	using SortedMapRealLayout<A>::mRoot ;
-	using SortedMapRealLayout<A>::mRange ;
-	using SortedMapRealLayout<A>::mWrite ;
-	using SortedMapRealLayout<A>::mRemap ;
+	using SortedMapLayout::mThis ;
+	using SortedMapLayout::mRoot ;
+	using SortedMapLayout::mRange ;
+	using SortedMapLayout::mWrite ;
+	using SortedMapLayout::mRemap ;
 
 public:
 	implicit SortedMap () = default ;
@@ -1593,11 +1562,16 @@ struct SetNode implement AllocatorNode {
 	INDEX mRight ;
 } ;
 
-struct SetLayout {
-	Allocator<Pointer ,SetNode> mSet ;
+struct SetLayout ;
+
+template <class A>
+struct SetRealLayout implement OfBase<SetLayout> {
+	Allocator<A ,SetNode> mSet ;
 	INDEX mRoot ;
 	INDEX mTop ;
 } ;
+
+struct SetLayout implement SetRealLayout<Pointer> {} ;
 
 struct SetHolder implement Interface {
 	imports VFat<SetHolder> hold (VREF<SetLayout> that) ;
@@ -1625,10 +1599,10 @@ struct SetHolder implement Interface {
 } ;
 
 template <class A>
-class SetUnknownBinder implement ReflectUnknown {
+class SetUnknownBinder final implement Fat<ReflectUnknown ,Proxy> {
 public:
 	FLAG reflect (CREF<FLAG> uuid) const override {
-		using R1X = TupleNode<A ,SetNode> ;
+		using R1X = UnionPair<A ,SetNode> ;
 		if (uuid == ReflectSizeBinder<A>::expr)
 			return inline_vptr (ReflectSizeBinder<A> ()) ;
 		if (uuid == ReflectDestroyBinder<A>::expr)
@@ -1646,14 +1620,6 @@ public:
 		if (uuid == ReflectElementBinder<R1X>::expr)
 			return inline_vptr (ReflectElementBinder<R1X> ()) ;
 		return ZERO ;
-	}
-} ;
-
-template <class A>
-class SetRealLayout implement SetLayout {
-public:
-	implicit SetRealLayout () noexcept {
-		noop (Allocator<A ,SetNode> ()) ;
 	}
 } ;
 
@@ -1782,11 +1748,16 @@ struct HashSetNode implement AllocatorNode {
 	INDEX mDown ;
 } ;
 
-struct HashSetLayout {
-	Allocator<Pointer ,HashSetNode> mSet ;
+struct HashSetLayout ;
+
+template <class A>
+struct HashSetRealLayout implement OfBase<HashSetLayout> {
+	Allocator<A ,HashSetNode> mSet ;
 	RefBuffer<INDEX> mRange ;
 	SharedRef<HashcodeVisitor> mVisitor ;
 } ;
+
+struct HashSetLayout implement HashSetRealLayout<Pointer> {} ;
 
 struct HashSetHolder implement Interface {
 	imports VFat<HashSetHolder> hold (VREF<HashSetLayout> that) ;
@@ -1814,10 +1785,10 @@ struct HashSetHolder implement Interface {
 } ;
 
 template <class A>
-class HashSetUnknownBinder implement ReflectUnknown {
+class HashSetUnknownBinder final implement Fat<ReflectUnknown ,Proxy> {
 public:
 	FLAG reflect (CREF<FLAG> uuid) const override {
-		using R1X = TupleNode<A ,HashSetNode> ;
+		using R1X = UnionPair<A ,HashSetNode> ;
 		if (uuid == ReflectSizeBinder<A>::expr)
 			return inline_vptr (ReflectSizeBinder<A> ()) ;
 		if (uuid == ReflectDestroyBinder<A>::expr)
@@ -1833,14 +1804,6 @@ public:
 		if (uuid == ReflectElementBinder<R1X>::expr)
 			return inline_vptr (ReflectElementBinder<R1X> ()) ;
 		return ZERO ;
-	}
-} ;
-
-template <class A>
-class HashSetRealLayout implement HashSetLayout {
-public:
-	implicit HashSetRealLayout () noexcept {
-		noop (Allocator<A ,HashSetNode> ()) ;
 	}
 } ;
 

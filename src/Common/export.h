@@ -4,7 +4,7 @@ namespace CSC {
 struct ConfigProcLayout ;
 
 struct ConfigProcHolder implement Interface {
-	imports CREF<SharedRef<ConfigProcLayout>> instance () ;
+	imports CREF<OfThis<SharedRef<ConfigProcLayout>>> instance () ;
 	imports VFat<ConfigProcHolder> hold (VREF<ConfigProcLayout> me) ;
 	imports CFat<ConfigProcHolder> hold (CREF<ConfigProcLayout> me) ;
 
@@ -16,7 +16,7 @@ struct ConfigProcHolder implement Interface {
 class ConfigProc implement OfThis<SharedRef<ConfigProcLayout>> {
 public:
 	static CREF<ConfigProc> instance () {
-		return Pointer::from (ConfigProcHolder::instance ()) ;
+		return keep[TYPE<ConfigProc>::expr] (ConfigProcHolder::instance ()) ;
 	}
 
 	static void set_data_dire (CREF<String<STR>> dire) {

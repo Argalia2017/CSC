@@ -19,14 +19,10 @@ using HFIBITMAP = CSC::DEF<FIBITMAP *> ;
 } ;
 
 namespace CSC {
-struct ImageProcImplLayout {
-	UniqueRef<BOOL> mContext ;
-} ;
-
-class ImageProcImplHolder final implement Fat<ImageProcHolder ,ImageProcImplLayout> {
+class ImageProcImplHolder final implement Fat<ImageProcHolder ,ImageProcLayout> {
 public:
 	void initialize () override {
-		fake.mContext = UniqueRef<BOOL> ([&] (VREF<BOOL> me) {
+		self.mContext = UniqueRef<BOOL> ([&] (VREF<BOOL> me) {
 			FreeImage_Initialise () ;
 			me = TRUE ;
 		} ,[&] (VREF<BOOL> me) {
@@ -36,7 +32,7 @@ public:
 
 	ImageLayout make_image (RREF<BoxLayout> image) const override {
 		ImageLayout ret ;
-		auto &&rax = keep[TYPE<Box<UniqueRef<HFIBITMAP>>>::expr] (image).self ;
+		auto &&rax = keep[TYPE<Box<UniqueRef<HFIBITMAP>>>::expr] (image).deref ;
 		const auto r1x = LENGTH (FreeImage_GetWidth (rax)) ;
 		const auto r2x = LENGTH (FreeImage_GetHeight (rax)) ;
 		const auto r3x = align_of_fibitmap_type (FreeImage_GetImageType (rax)) ;
@@ -73,11 +69,11 @@ public:
 		return move (ret) ;
 	}
 
-	ImageLayout make_image (CREF<ImageWidth> width) const override {
+	ImageLayout make_image (CREF<ImageShape> shape) const override {
 		auto rax = Box<UniqueRef<HFIBITMAP>>::make () ;
-		const auto r1x = width.mStep * 8 ;
-		rax.self = UniqueRef<HFIBITMAP> ([&] (VREF<HFIBITMAP> me) {
-			me = FreeImage_Allocate (VAL32 (width.mCX) ,VAL32 (width.mCY) ,VAL32 (r1x)) ;
+		const auto r1x = shape.mStep * 8 ;
+		rax.deref = UniqueRef<HFIBITMAP> ([&] (VREF<HFIBITMAP> me) {
+			me = FreeImage_Allocate (VAL32 (shape.mCX) ,VAL32 (shape.mCY) ,VAL32 (r1x)) ;
 			assume (me != NULL) ;
 		} ,[&] (VREF<HFIBITMAP> me) {
 			FreeImage_Unload (me) ;
@@ -85,12 +81,12 @@ public:
 		return make_image (move (rax)) ;
 	}
 
-	ImageLayout make_image (CREF<ImageWidth> width ,CREF<Clazz> clazz ,CREF<LENGTH> channel) const override {
+	ImageLayout make_image (CREF<ImageShape> shape ,CREF<Clazz> clazz ,CREF<LENGTH> channel) const override {
 		auto rax = Box<UniqueRef<HFIBITMAP>>::make () ;
 		const auto r1x = fibitmap_type_of_clazz (clazz) ;
 		const auto r2x = align_of_fibitmap_type (r1x) * channel * 8 ;
-		rax.self = UniqueRef<HFIBITMAP> ([&] (VREF<HFIBITMAP> me) {
-			me = FreeImage_AllocateT (r1x ,VAL32 (width.mCX) ,VAL32 (width.mCY) ,VAL32 (r2x)) ;
+		rax.deref = UniqueRef<HFIBITMAP> ([&] (VREF<HFIBITMAP> me) {
+			me = FreeImage_AllocateT (r1x ,VAL32 (shape.mCX) ,VAL32 (shape.mCY) ,VAL32 (r2x)) ;
 			assume (me != NULL) ;
 		} ,[&] (VREF<HFIBITMAP> me) {
 			FreeImage_Unload (me) ;
@@ -157,22 +153,22 @@ public:
 	VREF<Pointer> peek_image (VREF<ImageLayout> image) const override {
 		assert (ImageHolder::hold (image)->fixed ()) ;
 		auto &&rax = keep[TYPE<Box<UniqueRef<HFIBITMAP>>>::expr] (ImageHolder::hold (image)->raw ()) ;
-		return Pointer::from (rax.self) ;
+		return Pointer::from (rax.deref) ;
 	}
 
 	CREF<Pointer> peek_image (CREF<ImageLayout> image) const override {
 		assert (ImageHolder::hold (image)->fixed ()) ;
 		auto &&rax = keep[TYPE<Box<UniqueRef<HFIBITMAP>>>::expr] (ImageHolder::hold (image)->raw ()) ;
-		return Pointer::from (rax.self) ;
+		return Pointer::from (rax.deref) ;
 	}
 
 	ImageLayout load_image (CREF<String<STR>> file) const override {
 		auto rax = Box<UniqueRef<HFIBITMAP>>::make () ;
 		const auto r1x = StringProc::stra_from_strs (file) ;
-		const auto r2x = FreeImage_GetFIFFromFilename (r1x.self) ;
+		const auto r2x = FreeImage_GetFIFFromFilename (r1x.deref) ;
 		assume (r2x != FIF_UNKNOWN) ;
-		rax.self = UniqueRef<HFIBITMAP> ([&] (VREF<HFIBITMAP> me) {
-			me = FreeImage_Load (r2x ,r1x.self) ;
+		rax.deref = UniqueRef<HFIBITMAP> ([&] (VREF<HFIBITMAP> me) {
+			me = FreeImage_Load (r2x ,r1x.deref) ;
 			assume (me != NULL) ;
 		} ,[&] (VREF<HFIBITMAP> me) {
 			FreeImage_Unload (me) ;
@@ -182,20 +178,20 @@ public:
 
 	void save_image (CREF<String<STR>> file ,CREF<ImageLayout> image) const override {
 		const auto r1x = StringProc::stra_from_strs (file) ;
-		const auto r2x = FreeImage_GetFIFFromFilename (r1x.self) ;
+		const auto r2x = FreeImage_GetFIFFromFilename (r1x.deref) ;
 		assume (r2x != FIF_UNKNOWN) ;
 		const auto r3x = ImageHolder::hold (image)->bx () ;
 		const auto r4x = ImageHolder::hold (image)->by () ;
 		const auto r5x = r3x + ImageHolder::hold (image)->cx () ;
 		const auto r6x = r4x + ImageHolder::hold (image)->cy () ;
-		auto &&rax = keep[TYPE<Box<UniqueRef<HFIBITMAP>>>::expr] (image.mImage.raw ()).self ;
+		auto &&rax = keep[TYPE<Box<UniqueRef<HFIBITMAP>>>::expr] (image.mImage.raw ()).deref ;
 		auto rbx = UniqueRef<HFIBITMAP> ([&] (VREF<HFIBITMAP> me) {
 			me = FreeImage_CreateView (rax ,VAL32 (r3x) ,VAL32 (r4x) ,VAL32 (r5x) ,VAL32 (r6x)) ;
 			assume (me != NULL) ;
 		} ,[&] (VREF<HFIBITMAP> me) {
 			FreeImage_Unload (me) ;
 		}) ;
-		FreeImage_Save (r2x ,rbx ,r1x.self) ;
+		FreeImage_Save (r2x ,rbx ,r1x.deref) ;
 	}
 
 	Color1B sampler (CREF<Image<Color1B>> image ,CREF<FLT64> x ,CREF<FLT64> y) const override {

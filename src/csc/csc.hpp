@@ -319,17 +319,17 @@ class initializer_list ;
 #endif
 #endif
 
-#ifndef __macro_watch
+#ifndef __macro_notice
 #ifdef __CSC_VER_DEBUG__
-#define __macro_watch(...) do { struct LINE ; CSC::inline_watch (TYPE<LINE>::expr ,__VA_ARGS__) ; } while (false)
+#define __macro_notice(...) do { struct LINE ; CSC::inline_notice (TYPE<LINE>::expr ,__VA_ARGS__) ; } while (false)
 #endif
 
 #ifdef __CSC_VER_UNITTEST__
-#define __macro_watch(...) do { struct LINE ; CSC::inline_watch (TYPE<LINE>::expr ,__VA_ARGS__) ; } while (false)
+#define __macro_notice(...) do { struct LINE ; CSC::inline_notice (TYPE<LINE>::expr ,__VA_ARGS__) ; } while (false)
 #endif
 
 #ifdef __CSC_VER_RELEASE__
-#define __macro_watch(...) do {} while (false)
+#define __macro_notice(...) do {} while (false)
 #endif
 #endif
 
@@ -342,7 +342,7 @@ class initializer_list ;
 #endif
 
 #ifndef __macro_nullof
-#define __macro_nullof(...) (*CSC::DEF<typename CSC::REMOVE_CVR1_HELP<__VA_ARGS__>::RET *> (0X1000))
+#define __macro_nullof(...) CSC::FUNCTION_nullof::invoke<CSC::DEF<__VA_ARGS__> &> ()
 #endif
 
 #ifndef __macro_for_bind
@@ -361,6 +361,8 @@ class initializer_list ;
 #define __macro_for_bind_impl(F ,...) __macro_ex (__macro_for_bind_choose(F ,__VA_ARGS__ ,__macro_for_bind_X ,__macro_for_bind_9 ,__macro_for_bind_8 ,__macro_for_bind_7 ,__macro_for_bind_6 ,__macro_for_bind_5 ,__macro_for_bind_4 ,__macro_for_bind_3 ,__macro_for_bind_2 ,__macro_for_bind_1 ,__macro_for_bind_0) (F ,__VA_ARGS__))
 #define __macro_for_bind(F ,...) __macro_ex (__macro_for_bind_impl (F ,__VA_ARGS__))
 #endif
+
+struct HINSTANCE__ ;
 
 namespace CSC {
 template <class A>
@@ -410,12 +412,18 @@ using csc_char32_t = char32_t ;
 using csc_diff_t = int ;
 using csc_size_t = DEF<unsigned int> ;
 using csc_enum_t = DEF<unsigned long> ;
+using csc_handle_t = DEF<void *> ;
+using csc_device_t = DEF<HINSTANCE__ *> ;
+using csc_pipe_t = DEF<void *> ;
 #endif
 
 #ifdef __CSC_CONFIG_VAL64__
 using csc_diff_t = DEF<long long> ;
 using csc_size_t = DEF<unsigned long long> ;
 using csc_enum_t = DEF<unsigned long> ;
+using csc_handle_t = DEF<void *> ;
+using csc_device_t = DEF<HINSTANCE__ *> ;
+using csc_pipe_t = DEF<void *> ;
 #endif
 #endif
 
@@ -423,16 +431,18 @@ using csc_enum_t = DEF<unsigned long> ;
 using csc_diff_t = DEF<long int> ;
 using csc_size_t = DEF<long unsigned int> ;
 using csc_enum_t = int ;
+using csc_handle_t = DEF<void *> ;
+using csc_device_t = DEF<HINSTANCE__ *> ;
+using csc_pipe_t = int ;
 #endif
-
-using csc_pointer_t = DEF<void *> ;
-
-struct csc_placement_new_t {
-	csc_pointer_t mAddr ;
-} ;
 
 template <class A>
 using csc_initializer_list_t = std::initializer_list<A> ;
+
+struct FUNCTION_nullof {
+	template <class A>
+	forceinline static consteval A invoke () noexcept ;
+} ;
 
 template <csc_diff_t A>
 struct ENUM {
@@ -625,10 +635,10 @@ using MACRO_IS_EXTEND = ENUM<(__is_base_of (A ,B))> ;
 #endif
 } ;
 
-forceinline CSC::csc_pointer_t operator new (CSC::csc_size_t ,CSC::csc_placement_new_t where_) noexcept {
-	return where_.mAddr ;
+forceinline CSC::csc_handle_t operator new (CSC::csc_size_t ,CSC::csc_device_t where_) noexcept {
+	return CSC::csc_handle_t (where_) ;
 }
 
-forceinline void operator delete (CSC::csc_pointer_t ,CSC::csc_placement_new_t where_) noexcept {
+forceinline void operator delete (CSC::csc_handle_t ,CSC::csc_device_t where_) noexcept {
 	return ;
 }

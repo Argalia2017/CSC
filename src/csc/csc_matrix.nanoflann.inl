@@ -18,11 +18,13 @@
 #include "csc_begin.h"
 
 namespace CSC {
-struct KDTreePointCloudAdaptor {
+struct KDTreeDatasetLayout {
 	RefBuffer<FLT32> mPointCloud ;
 	csc_size_t mDimension ;
 	csc_size_t mSize ;
+} ;
 
+class KDTreeDataset implement KDTreeDatasetLayout {
 public:
 	csc_size_t kdtree_get_point_count () const {
 		return mSize ;
@@ -50,19 +52,20 @@ public:
 	}
 } ;
 
-class KDTreeResultAdaptor {
+struct KDTreeResultLayout {
+	FLT32 mRadius ;
+	Priority<IndexPair<FLT32>> mResult ;
+} ;
+
+class KDTreeResult implement KDTreeResultLayout {
 public:
 	using DistanceType = FLT32 ;
 	using IndexType = INDEX ;
 
 public:
-	FLT32 mRadius ;
-	Priority<IndexPair<FLT32>> mResult ;
+	implicit KDTreeResult () = delete ;
 
-public:
-	implicit KDTreeResultAdaptor () = delete ;
-
-	explicit KDTreeResultAdaptor (CREF<LENGTH> capacity ,CREF<FLT32> radius_) {
+	explicit KDTreeResult (CREF<LENGTH> capacity ,CREF<FLT32> radius_) {
 		mRadius = radius_ ;
 		mResult = Priority<IndexPair<FLT32>> (capacity + 1) ;
 		clear () ;
@@ -92,7 +95,7 @@ public:
 			if (!mResult.full ())
 				discard ;
 			mResult.take () ;
-			mRadius = MathProc::min_of (mRadius ,-mResult[0].mItem) ;
+			mRadius = MathProc::min_of (mRadius ,-mResult[0].m1st) ;
 		}
 		return true ;
 	}
@@ -104,48 +107,49 @@ public:
 	nanoflann::ResultItem<INDEX ,FLT32> worst_item () const {
 		assume (mResult.length () > 0) ;
 		nanoflann::ResultItem<INDEX ,FLT32> ret ;
-		ret.first = mResult[0].mIndex ;
-		ret.second = -mResult[0].mItem ;
+		ret.first = mResult[0].m2nd ;
+		ret.second = -mResult[0].m1st ;
 		return move (ret) ;
 	}
 } ;
 
-inline namespace {
-using KDTreeDistance = nanoflann::L2_Simple_Adaptor<FLT32 ,KDTreePointCloudAdaptor ,FLT32 ,INDEX> ;
-using KDTree = nanoflann::KDTreeSingleIndexAdaptor<KDTreeDistance ,KDTreePointCloudAdaptor ,3 ,INDEX> ;
+using KDTreeDistance = nanoflann::L2_Simple_Adaptor<FLT32 ,KDTreeDataset ,FLT32 ,INDEX> ;
+using KDTreeKNNAdaptor = nanoflann::KDTreeSingleIndexAdaptor<KDTreeDistance ,KDTreeDataset ,3 ,INDEX> ;
+
+class KDTreeKNNSearch implement KDTreeKNNAdaptor {
+public:
+	implicit KDTreeKNNSearch () = delete ;
+
+	using KDTreeKNNAdaptor::KDTreeKNNAdaptor ;
 } ;
 
-struct PointCloudKDTreeImplLayout {
-	KDTreePointCloudAdaptor mAdaptor ;
-	Box<KDTree> mKDTree ;
-} ;
-
-class PointCloudKDTreeImplHolder final implement Fat<PointCloudKDTreeHolder ,PointCloudKDTreeImplLayout> {
+class PointCloudKDTreeImplHolder final implement Fat<PointCloudKDTreeHolder ,PointCloudKDTreeLayout> {
 public:
 	void initialize (CREF<Array<Pointer>> pointcloud) override {
 		const auto r1x = address (pointcloud[0]) ;
 		const auto r2x = pointcloud.step () / SIZE_OF<FLT32>::expr ;
 		assume (inline_between (r2x ,1 ,4)) ;
 		const auto r3x = pointcloud.size () * r2x ;
-		fake.mAdaptor.mPointCloud = RefBuffer<FLT32>::reference (r1x ,r3x) ;
-		fake.mAdaptor.mDimension = r2x ;
-		fake.mAdaptor.mSize = pointcloud.length () ;
+		self.mDataset = Ref<KDTreeDataset>::make () ;
+		self.mDataset->mPointCloud = RefBuffer<FLT32>::reference (r1x ,r3x) ;
+		self.mDataset->mDimension = r2x ;
+		self.mDataset->mSize = pointcloud.length () ;
 		const auto r4x = nanoflann::KDTreeSingleIndexAdaptorParams () ;
-		fake.mKDTree = Box<KDTree>::make (VAL32 (r2x) ,fake.mAdaptor ,r4x) ;
-		fake.mKDTree->buildIndex () ;
+		self.mKNNSearch = Ref<KDTreeKNNSearch>::make (VAL32 (r2x) ,self.mDataset.deref ,r4x) ;
+		self.mKNNSearch->buildIndex () ;
 	}
 
 	Array<INDEX> search (CREF<Vector> center ,CREF<LENGTH> neighbor) const override {
 		assert (neighbor > 0) ;
 		const auto r1x = Point3F (center.xyz ()) ;
 		const auto r2x = nanoflann::SearchParameters (0 ,false) ;
-		auto rax = KDTreeResultAdaptor (neighbor ,infinity) ;
-		fake.mKDTree->findNeighbors (rax ,(&r1x.mX) ,r2x) ;
+		auto rax = KDTreeResult (neighbor ,infinity) ;
+		self.mKNNSearch->findNeighbors (rax ,(&r1x.mX) ,r2x) ;
 		const auto r3x = inline_min (rax.mResult.length () ,neighbor) ;
 		Array<INDEX> ret = Array<INDEX> (r3x) ;
 		for (auto &&i : iter (0 ,r3x)) {
 			INDEX ix = r3x - 1 - i ;
-			ret[ix] = rax.mResult[0].mIndex ;
+			ret[ix] = rax.mResult[0].m2nd ;
 			rax.mResult.take () ;
 		}
 		return move (ret) ;
@@ -155,13 +159,13 @@ public:
 		assert (neighbor > 0) ;
 		const auto r1x = Point3F (center.xyz ()) ;
 		const auto r2x = nanoflann::SearchParameters (0 ,false) ;
-		auto rax = KDTreeResultAdaptor (neighbor ,FLT32 (MathProc::square (radius))) ;
-		fake.mKDTree->radiusSearchCustomCallback ((&r1x.mX) ,rax ,r2x) ;
+		auto rax = KDTreeResult (neighbor ,FLT32 (MathProc::square (radius))) ;
+		self.mKNNSearch->radiusSearchCustomCallback ((&r1x.mX) ,rax ,r2x) ;
 		const auto r3x = inline_min (rax.mResult.length () ,neighbor) ;
 		Array<INDEX> ret = Array<INDEX> (r3x) ;
 		for (auto &&i : iter (0 ,r3x)) {
 			INDEX ix = r3x - 1 - i ;
-			ret[ix] = rax.mResult[0].mIndex ;
+			ret[ix] = rax.mResult[0].m2nd ;
 			rax.mResult.take () ;
 		}
 		return move (ret) ;

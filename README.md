@@ -1,7 +1,6 @@
-CSC
-=====================================
+<h1 align=center font-weight:100>CSC</h1>
 
-A lightweight, modern C++ library, providing a consistent interface for **Windows|Linux** and **MSVC|GCC|CLANG**. Since this project is built using paradigms focused on memory layout and ownership, it can offer a stable binary interface for projects involving multiple threads and multiple dynamic link libraries.
+A lightweight, modern C++ library, providing a consistent interface for **Windows|Linux** and **MSVC|GCC|CLANG|NVCC**. Since this project is built using paradigms focused on memory layout and ownership, it can offer a stable binary interface for projects involving multiple threads and multiple dynamic link libraries.
 
 # Introduction
 
@@ -17,7 +16,8 @@ A lightweight, modern C++ library, providing a consistent interface for **Window
 | **[csc_matrix.hpp](src/csc/csc_matrix.hpp)** | Math  | Vector and Matrix types for linear algebra
 | **[csc_stream.hpp](src/csc/csc_stream.hpp)** | String  | Text and binary parsers
 | **[csc_string.hpp](src/csc/csc_string.hpp)** | String  | Parsers for XML, JSON, and PLY
-| **[csc_runtime.hpp](src/csc/csc_runtime.hpp)** | System | Wrapper of operating systems
+| **[csc_runtime.hpp](src/csc/csc_runtime.hpp)** | System | Cross-platform wrapper
+| **[csc_file.hpp](src/csc/csc_file.hpp)** | System | Cross-platform wrapper
 | **[csc_thread.hpp](src/csc/csc_thread.hpp)** | Execution  | Multi-threading synchronization framework
 
 # Build
@@ -33,9 +33,10 @@ Pre-configured Visual Studio 2022 projects are also available in the `${root}/bu
 
 ````
 int main () {
-	Singleton<Console>::instance ().start () ;
-	Singleton<Console>::instance ().info (Format (slice ("Hello World $1 $2")) (slice ("C++") ,20)) ;
-	Singleton<Console>::instance ().pause () ;
+	const auto r1x = Singleton<Console>::instance () ;
+	r1x.start () ;
+	r1x.info (Format (slice ("Hello World $1 $2")) (slice ("C++") ,20)) ;
+	r1x.pause () ;
 	return 0 ;
 }
 ````

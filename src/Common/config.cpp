@@ -17,8 +17,8 @@ public:
 	}
 
 	void set_data_dire (CREF<String<STR>> dire) override {
-		fake.mDataPath = Path (dire) ;
-		const auto r1x = FileProc::lock_dire (fake.mDataPath) ;
+		self.mDataPath = Path (dire) ;
+		const auto r1x = FileProc::lock_dire (self.mDataPath) ;
 		assume (r1x) ;
 	}
 
@@ -56,9 +56,10 @@ public:
 	}
 } ;
 
-exports CREF<SharedRef<ConfigProcLayout>> ConfigProcHolder::instance () {
+exports CREF<OfThis<SharedRef<ConfigProcLayout>>> ConfigProcHolder::instance () {
 	return memorize ([&] () {
-		SharedRef<ConfigProcLayout> ret = SharedRef<ConfigProcLayout>::make () ;
+		OfThis<SharedRef<ConfigProcLayout>> ret ;
+		ret.mThis = SharedRef<ConfigProcLayout>::make () ;
 		ConfigProcHolder::hold (ret)->initialize () ;
 		return move (ret) ;
 	}) ;

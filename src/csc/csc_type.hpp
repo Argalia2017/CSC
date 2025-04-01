@@ -1194,6 +1194,22 @@ template <class A ,class B>
 using IS_EXTEND = typename IS_EXTEND_HELP<A ,B ,ALWAYS>::RET ;
 
 template <class...>
+trait IS_RELATE_HELP ;
+
+template <class A ,class B ,class OTHERWISE>
+trait IS_RELATE_HELP<A ,B ,OTHERWISE> {
+	using RET = ENUM_FALSE ;
+} ;
+
+template <class A ,class B>
+trait IS_RELATE_HELP<A ,B ,REQUIRE<KILL<ENUM_TRUE ,typeof (static_cast<A> (nullof (B)))>>> {
+	using RET = ENUM_TRUE ;
+} ;
+
+template <class A ,class B>
+using IS_RELATE = typename IS_RELATE_HELP<XREF<A> ,XREF<B> ,ALWAYS>::RET ;
+
+template <class...>
 trait IS_VIRTUAL_HELP ;
 
 template <class A ,class B ,class OTHERWISE>
@@ -1202,7 +1218,7 @@ trait IS_VIRTUAL_HELP<A ,B ,OTHERWISE> {
 } ;
 
 template <class A ,class B>
-trait IS_VIRTUAL_HELP<A ,B ,REQUIRE<IS_SAME<A ,typeof (nullof (B).self)>>> {
+trait IS_VIRTUAL_HELP<A ,B ,REQUIRE<IS_SAME<A ,typeof (nullof (B).deref)>>> {
 	using RET = ENUM_TRUE ;
 } ;
 
@@ -1413,4 +1429,45 @@ trait HAS_M3RD_HELP<A ,REQUIRE<KILL<ENUM_TRUE ,typeof (nullof (A).m3rd)>>> {
 
 template <class A>
 using HAS_M3RD = typename HAS_M3RD_HELP<A ,ALWAYS>::RET ;
+
+class Pointer implement Proxy {
+public:
+	static VREF<Pointer> make (CREF<FLAG> that) noexcept {
+		return *(reinterpret_cast<PTR<VREF<Pointer>>> (that)) ;
+	}
+
+	template <class ARG1>
+	static VREF<Pointer> from (VREF<ARG1> that) noexcept {
+		return reinterpret_cast<VREF<Pointer>> (that) ;
+	}
+
+	template <class ARG1>
+	static CREF<Pointer> from (CREF<ARG1> that) noexcept {
+		return reinterpret_cast<CREF<Pointer>> (that) ;
+	}
+
+	template <class ARG1>
+	static RREF<Pointer> from (RREF<ARG1> that) noexcept = delete ;
+
+	template <class ARG1>
+	forceinline operator VREF<ARG1> () leftvalue noexcept {
+		return reinterpret_cast<VREF<ARG1>> (thiz) ;
+	}
+
+	template <class ARG1>
+	forceinline operator CREF<ARG1> () leftvalue noexcept {
+		return reinterpret_cast<CREF<ARG1>> (thiz) ;
+	}
+
+	template <class ARG1>
+	forceinline operator ARG1 () leftvalue noexcept = delete ;
+
+	template <class ARG1>
+	forceinline operator CREF<ARG1> () const leftvalue noexcept {
+		return reinterpret_cast<CREF<ARG1>> (thiz) ;
+	}
+
+	template <class ARG1>
+	forceinline operator ARG1 () const leftvalue noexcept = delete ;
+} ;
 } ;

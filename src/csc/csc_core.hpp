@@ -8,47 +8,6 @@
 #include "csc_type.hpp"
 
 namespace CSC {
-class Pointer implement Proxy {
-public:
-	static VREF<Pointer> make (CREF<FLAG> that) {
-		return *(reinterpret_cast<PTR<VREF<Pointer>>> (that)) ;
-	}
-
-	template <class ARG1>
-	static VREF<Pointer> from (VREF<ARG1> that) {
-		return reinterpret_cast<VREF<Pointer>> (that) ;
-	}
-
-	template <class ARG1>
-	static CREF<Pointer> from (CREF<ARG1> that) {
-		return reinterpret_cast<CREF<Pointer>> (that) ;
-	}
-
-	template <class ARG1>
-	static RREF<Pointer> from (RREF<ARG1> that) = delete ;
-
-	template <class ARG1>
-	forceinline operator VREF<ARG1> () leftvalue {
-		return reinterpret_cast<VREF<ARG1>> (thiz) ;
-	}
-
-	template <class ARG1>
-	forceinline operator CREF<ARG1> () leftvalue {
-		return reinterpret_cast<CREF<ARG1>> (thiz) ;
-	}
-
-	template <class ARG1>
-	forceinline operator ARG1 () leftvalue = delete ;
-
-	template <class ARG1>
-	forceinline operator CREF<ARG1> () const leftvalue {
-		return reinterpret_cast<CREF<ARG1>> (thiz) ;
-	}
-
-	template <class ARG1>
-	forceinline operator ARG1 () const leftvalue = delete ;
-} ;
-
 struct FUNCTION_noop {
 	forceinline void operator() () const noexcept {
 		return ;
@@ -104,7 +63,7 @@ struct FUNCTION_inline_abort {
 
 static constexpr auto inline_abort = FUNCTION_inline_abort () ;
 
-struct FUNCTION_inline_watch {
+struct FUNCTION_inline_notice {
 	imports void invoke (VREF<Pointer> src) ;
 
 	template <class ARG1 ,class ARG2>
@@ -114,7 +73,7 @@ struct FUNCTION_inline_watch {
 	}
 } ;
 
-static constexpr auto inline_watch = FUNCTION_inline_watch () ;
+static constexpr auto inline_notice = FUNCTION_inline_notice () ;
 
 struct FUNCTION_inline_type_name {
 	imports FLAG invoke (CREF<Pointer> squalor ,CREF<FLAG> func_) ;
@@ -186,17 +145,17 @@ trait FUNCTION_keep_impl_HELP ;
 
 template <class A>
 struct FUNCTION_keep_impl0 {
-	template <class ARG1>
+	template <class ARG1 ,class = REQUIRE<IS_RELATE<VREF<A> ,VREF<ARG1>>>>
 	forceinline VREF<A> operator() (VREF<ARG1> a) const noexcept {
 		return static_cast<VREF<A>> (a) ;
 	}
 
-	template <class ARG1>
+	template <class ARG1 ,class = REQUIRE<IS_RELATE<CREF<A> ,CREF<ARG1>>>>
 	forceinline CREF<A> operator() (CREF<ARG1> a) const noexcept {
 		return static_cast<CREF<A>> (a) ;
 	}
 
-	template <class ARG1>
+	template <class ARG1 ,class = REQUIRE<IS_RELATE<RREF<A> ,RREF<ARG1>>>>
 	forceinline RREF<A> operator() (RREF<ARG1> a) const noexcept {
 		return static_cast<RREF<A>> (a) ;
 	}
@@ -209,7 +168,7 @@ trait FUNCTION_keep_impl_HELP<A ,B ,REQUIRE<IS_SAME<B ,ORDINARY>>> {
 
 template <class A>
 struct FUNCTION_keep_impl1 {
-	template <class ARG1>
+	template <class ARG1 ,class = REQUIRE<IS_RELATE<VREF<A> ,VREF<ARG1>>>>
 	forceinline VREF<A> operator() (VREF<ARG1> a) const noexcept {
 		return static_cast<VREF<A>> (a) ;
 	}
@@ -228,20 +187,18 @@ trait FUNCTION_keep_impl_HELP<A ,B ,REQUIRE<IS_SAME<B ,VARIABLE>>> {
 
 template <class A>
 struct FUNCTION_keep_impl2 {
-	template <class ARG1>
+	template <class ARG1 ,class = REQUIRE<IS_RELATE<CREF<A> ,VREF<ARG1>>>>
 	forceinline CREF<A> operator() (VREF<ARG1> a) const noexcept {
 		return static_cast<CREF<A>> (a) ;
 	}
 
-	template <class ARG1>
+	template <class ARG1 ,class = REQUIRE<IS_RELATE<CREF<A> ,CREF<ARG1>>>>
 	forceinline CREF<A> operator() (CREF<ARG1> a) const noexcept {
 		return static_cast<CREF<A>> (a) ;
 	}
 
 	template <class ARG1>
-	forceinline CREF<A> operator() (RREF<ARG1> a) const noexcept {
-		return static_cast<CREF<A>> (a) ;
-	}
+	forceinline CREF<A> operator() (RREF<ARG1> a) const noexcept = delete ;
 } ;
 
 template <class A ,class B>
@@ -251,7 +208,7 @@ trait FUNCTION_keep_impl_HELP<A ,B ,REQUIRE<IS_SAME<B ,CONSTANT>>> {
 
 template <class A>
 struct FUNCTION_keep_impl3 {
-	template <class ARG1>
+	template <class ARG1 ,class = REQUIRE<IS_RELATE<RREF<A> ,VREF<ARG1>>>>
 	forceinline RREF<A> operator() (VREF<ARG1> a) const noexcept {
 		return static_cast<RREF<A>> (a) ;
 	}
@@ -259,7 +216,7 @@ struct FUNCTION_keep_impl3 {
 	template <class ARG1>
 	forceinline RREF<A> operator() (CREF<ARG1> a) const noexcept = delete ;
 
-	template <class ARG1>
+	template <class ARG1 ,class = REQUIRE<IS_RELATE<RREF<A> ,RREF<ARG1>>>>
 	forceinline RREF<A> operator() (RREF<ARG1> a) const noexcept {
 		return static_cast<RREF<A>> (a) ;
 	}
@@ -322,7 +279,7 @@ struct FUNCTION_assign {
 		if (address (a) == address (b))
 			return a ;
 		a.~ARG1 () ;
-		new (csc_placement_new_t {(&a)}) ARG1 (move (b)) ;
+		new (csc_device_t (&a)) ARG1 (move (b)) ;
 		return a ;
 	}
 
@@ -331,7 +288,7 @@ struct FUNCTION_assign {
 		if (address (a) == address (b))
 			return a ;
 		a.~ARG1 () ;
-		new (csc_placement_new_t {(&a)}) ARG1 (move (b)) ;
+		new (csc_device_t (&a)) ARG1 (move (b)) ;
 		return a ;
 	}
 
@@ -562,13 +519,11 @@ static constexpr auto inline_visit = FUNCTION_inline_visit () ;
 struct IndexIteratorLayout {
 	INDEX mBegin ;
 	INDEX mEnd ;
-	INDEX mPeek ;
 
 public:
 	implicit IndexIteratorLayout () noexcept {
 		mBegin = 0 ;
 		mEnd = 0 ;
-		mPeek = 0 ;
 	}
 } ;
 
@@ -576,7 +531,6 @@ class IndexIterator implement IndexIteratorLayout {
 protected:
 	using IndexIteratorLayout::mBegin ;
 	using IndexIteratorLayout::mEnd ;
-	using IndexIteratorLayout::mPeek ;
 
 public:
 	implicit IndexIterator () = default ;
@@ -584,7 +538,9 @@ public:
 	explicit IndexIterator (CREF<INDEX> begin_ ,CREF<INDEX> end_) {
 		mBegin = begin_ ;
 		mEnd = inline_max (begin_ ,end_) ;
-		mPeek = mBegin ;
+		if (length () > 0)
+			return ;
+		mBegin = mEnd ;
 	}
 
 	LENGTH length () const {
@@ -600,7 +556,7 @@ public:
 	}
 
 	BOOL good () const {
-		return mPeek != mEnd ;
+		return mBegin != mEnd ;
 	}
 
 	forceinline BOOL operator== (CREF<IndexIterator>) const {
@@ -612,7 +568,7 @@ public:
 	}
 
 	CREF<INDEX> peek () const leftvalue {
-		return mPeek ;
+		return mBegin ;
 	}
 
 	forceinline CREF<INDEX> operator* () const leftvalue {
@@ -620,7 +576,7 @@ public:
 	}
 
 	void next () {
-		mPeek++ ;
+		mBegin++ ;
 	}
 
 	forceinline void operator++ () {
@@ -636,7 +592,6 @@ struct Pixel {
 struct PixelIteratorLayout {
 	Pixel mBegin ;
 	Pixel mEnd ;
-	Pixel mPeek ;
 
 public:
 	implicit PixelIteratorLayout () noexcept {
@@ -644,8 +599,6 @@ public:
 		mBegin.mY = 0 ;
 		mEnd.mX = 0 ;
 		mEnd.mY = 0 ;
-		mPeek.mX = 0 ;
-		mPeek.mY = 0 ;
 	}
 } ;
 
@@ -653,7 +606,6 @@ class PixelIterator implement PixelIteratorLayout {
 protected:
 	using PixelIteratorLayout::mBegin ;
 	using PixelIteratorLayout::mEnd ;
-	using PixelIteratorLayout::mPeek ;
 
 public:
 	implicit PixelIterator () = default ;
@@ -663,10 +615,9 @@ public:
 		mBegin.mY = begin_y ;
 		mEnd.mX = inline_max (begin_x ,end_x) ;
 		mEnd.mY = inline_max (begin_y ,end_y) ;
-		mPeek = mBegin ;
 		if (length () > 0)
 			return ;
-		mPeek = mEnd ;
+		mBegin = mEnd ;
 	}
 
 	LENGTH length () const {
@@ -682,7 +633,7 @@ public:
 	}
 
 	BOOL good () const {
-		return mPeek.mY != mEnd.mY ;
+		return mBegin.mY != mEnd.mY ;
 	}
 
 	forceinline BOOL operator== (CREF<PixelIterator>) const {
@@ -694,7 +645,7 @@ public:
 	}
 
 	CREF<Pixel> peek () const leftvalue {
-		return mPeek ;
+		return mBegin ;
 	}
 
 	forceinline CREF<Pixel> operator* () const leftvalue {
@@ -702,11 +653,11 @@ public:
 	}
 
 	void next () {
-		mPeek.mX++ ;
-		if (mPeek.mX < mEnd.mX)
+		mBegin.mX++ ;
+		if (mBegin.mX < mEnd.mX)
 			return ;
-		mPeek.mX = 0 ;
-		mPeek.mY++ ;
+		mBegin.mX = 0 ;
+		mBegin.mY++ ;
 	}
 
 	forceinline void operator++ () {
@@ -740,11 +691,11 @@ protected:
 	FLAG mLayout ;
 
 public:
-	VREF<B> fake_m () leftvalue {
+	VREF<B> self_m () leftvalue {
 		return Pointer::make (mLayout) ;
 	}
 
-	CREF<B> fake_m () const leftvalue {
+	CREF<B> self_m () const leftvalue {
 		return Pointer::make (mLayout) ;
 	}
 } ;
@@ -766,18 +717,18 @@ public:
 		require (IS_EXTEND<A ,ARG1>) ;
 		require (ENUM_EQUAL<SIZE_OF<ARG1> ,SIZE_OF<VFat>>) ;
 		require (ENUM_EQUAL<ALIGN_OF<ARG1> ,ALIGN_OF<VFat>>) ;
-		using R1X = typeof (nullof (ARG1).fake) ;
+		using R1X = typeof (nullof (ARG1).self) ;
 		require (IS_SAME<R1X ,ARG2>) ;
 		mHolder = inline_vptr (holder) ;
 		mLayout = address (that) ;
 	}
 
-	VREF<A> self_m () const {
+	VREF<A> deref_m () const {
 		return Pointer::from (const_cast<VREF<VFat>> (thiz)) ;
 	}
 
 	forceinline PTR<VREF<A>> operator-> () const {
-		return (&self) ;
+		return (&deref) ;
 	}
 } ;
 
@@ -798,18 +749,18 @@ public:
 		require (IS_EXTEND<A ,ARG1>) ;
 		require (ENUM_EQUAL<SIZE_OF<ARG1> ,SIZE_OF<CFat>>) ;
 		require (ENUM_EQUAL<ALIGN_OF<ARG1> ,ALIGN_OF<CFat>>) ;
-		using R1X = typeof (nullof (ARG1).fake) ;
+		using R1X = typeof (nullof (ARG1).self) ;
 		require (IS_SAME<R1X ,ARG2>) ;
 		mHolder = inline_vptr (holder) ;
 		mLayout = address (that) ;
 	}
 
-	CREF<A> self_m () const {
+	CREF<A> deref_m () const {
 		return Pointer::from (const_cast<CREF<CFat>> (thiz)) ;
 	}
 
 	forceinline PTR<CREF<A>> operator-> () const {
-		return (&self) ;
+		return (&deref) ;
 	}
 } ;
 
@@ -831,17 +782,18 @@ public:
 		mLayout = ZERO ;
 	}
 
-	CREF<A> self_m () const {
+	CREF<A> deref_m () const {
 		return Pointer::from (const_cast<CREF<RFat>> (thiz)) ;
 	}
 
 	forceinline PTR<CREF<A>> operator-> () const {
-		return (&self) ;
+		return (&deref) ;
 	}
 } ;
 
 template <class A>
-struct SimpleUnknownBinder implement ReflectUnknown {
+class SimpleUnknownBinder final implement Fat<ReflectUnknown ,Proxy> {
+public:
 	FLAG reflect (CREF<FLAG> uuid) const override {
 		if (uuid == A::expr)
 			return inline_vptr (A ()) ;
@@ -879,7 +831,7 @@ struct ReflectSize implement Interface {
 } ;
 
 template <class A>
-class ReflectSizeBinder implement ReflectSize {
+class ReflectSizeBinder final implement Fat<ReflectSize ,Proxy> {
 public:
 	LENGTH type_size () const override {
 		return SIZE_OF<A>::expr ;
@@ -899,7 +851,7 @@ struct ReflectCreate implement Interface {
 } ;
 
 template <class A>
-class ReflectCreateBinder implement ReflectCreate {
+class ReflectCreateBinder final implement Fat<ReflectCreate ,Proxy> {
 private:
 	require (IS_DEFAULT<A>) ;
 
@@ -909,7 +861,7 @@ public:
 			return ;
 		auto &&rax = keep[TYPE<ARR<A>>::expr] (a) ;
 		for (auto &&i : iter (0 ,size_)) {
-			new (csc_placement_new_t {(&rax[i])}) A () ;
+			new (csc_device_t (&rax[i])) A () ;
 		}
 	}
 } ;
@@ -923,7 +875,7 @@ struct ReflectDestroy implement Interface {
 } ;
 
 template <class A>
-class ReflectDestroyBinder implement ReflectDestroy {
+class ReflectDestroyBinder final implement Fat<ReflectDestroy ,Proxy> {
 public:
 	void destroy (VREF<Pointer> a ,CREF<LENGTH> size_) const noexcept override {
 		if (MACRO_IS_TRIVIAL_DESTRUCTIBLE<A>::expr)
@@ -945,7 +897,7 @@ struct ReflectAssign implement Interface {
 } ;
 
 template <class A>
-class ReflectAssignBinder implement ReflectAssign {
+class ReflectAssignBinder final implement Fat<ReflectAssign ,Proxy> {
 public:
 	void assign (VREF<Pointer> a) const noexcept override {
 		auto rax = A () ;
@@ -968,7 +920,7 @@ struct ReflectFriend implement Interface {
 } ;
 
 template <class A ,class B>
-class ReflectFriendBinder implement ReflectFriend<A> {
+class ReflectFriendBinder final implement Fat<ReflectFriend<A> ,Proxy> {
 public:
 	VFat<A> hold (VREF<Pointer> a) const override {
 		return B::hold (keep[TYPE<A>::expr] (a)) ;
@@ -990,7 +942,7 @@ struct ReflectTuple implement Interface {
 } ;
 
 template <class A>
-class ReflectTupleBinder implement ReflectTuple {
+class ReflectTupleBinder final implement Fat<ReflectTuple ,Proxy> {
 public:
 	LENGTH tuple_m1st () const override {
 		return tuple_m1st_impl (PHX ,TYPE<A>::expr) ;
@@ -998,7 +950,8 @@ public:
 
 	template <class ARG1 ,class = REQUIRE<HAS_M1ST<ARG1>>>
 	forceinline LENGTH tuple_m1st_impl (CREF<typeof (PH2)> ,TYPE<ARG1>) const {
-		return address (nullof (A).m1st) - address (nullof (A)) ;
+		auto &&rax = keep[TYPE<A>::expr] (Pointer::make (SIZE_OF<A>::expr)) ;
+		return address (rax.m1st) - address (rax) ;
 	}
 
 	template <class ARG1>
@@ -1013,7 +966,8 @@ public:
 
 	template <class ARG1 ,class = REQUIRE<HAS_M2ND<ARG1>>>
 	forceinline LENGTH tuple_m2nd_impl (CREF<typeof (PH2)> ,TYPE<ARG1>) const {
-		return address (nullof (A).m2nd) - address (nullof (A)) ;
+		auto &&rax = keep[TYPE<A>::expr] (Pointer::make (SIZE_OF<A>::expr)) ;
+		return address (rax.m2nd) - address (rax) ;
 	}
 
 	template <class ARG1>
@@ -1028,7 +982,8 @@ public:
 
 	template <class ARG1 ,class = REQUIRE<HAS_M3RD<ARG1>>>
 	forceinline LENGTH tuple_m3rd_impl (CREF<typeof (PH2)> ,TYPE<ARG1>) const {
-		return address (nullof (A).m3rd) - address (nullof (A)) ;
+		auto &&rax = keep[TYPE<A>::expr] (Pointer::make (SIZE_OF<A>::expr)) ;
+		return address (rax.m3rd) - address (rax) ;
 	}
 
 	template <class ARG1>
@@ -1069,8 +1024,8 @@ struct BoxHolder implement Interface {
 	virtual void destroy () = 0 ;
 	virtual BOOL exist () const = 0 ;
 	virtual Unknown unknown () const = 0 ;
-	virtual VREF<Pointer> self_m () leftvalue = 0 ;
-	virtual CREF<Pointer> self_m () const leftvalue = 0 ;
+	virtual VREF<Pointer> deref_m () leftvalue = 0 ;
+	virtual CREF<Pointer> deref_m () const leftvalue = 0 ;
 	virtual void remake (CREF<Unknown> holder) = 0 ;
 	virtual void acquire (CREF<BoxLayout> that) = 0 ;
 	virtual void release () = 0 ;
@@ -1081,7 +1036,7 @@ inline BoxLayout::~BoxLayout () noexcept {
 }
 
 template <class A>
-class BoxUnknownBinder implement ReflectUnknown {
+class BoxUnknownBinder final implement Fat<ReflectUnknown ,Proxy> {
 public:
 	FLAG reflect (CREF<FLAG> uuid) const override {
 		if (uuid == ReflectSizeBinder<A>::expr)
@@ -1136,27 +1091,27 @@ public:
 		return BoxHolder::hold (thiz)->unknown () ;
 	}
 
-	VREF<A> self_m () leftvalue {
-		return BoxHolder::hold (thiz)->self ;
+	VREF<A> deref_m () leftvalue {
+		return BoxHolder::hold (thiz)->deref ;
 	}
 
 	forceinline PTR<VREF<A>> operator-> () leftvalue {
-		return (&self) ;
+		return (&deref) ;
 	}
 
-	CREF<A> self_m () const leftvalue {
-		return BoxHolder::hold (thiz)->self ;
+	CREF<A> deref_m () const leftvalue {
+		return BoxHolder::hold (thiz)->deref ;
 	}
 
 	forceinline PTR<CREF<A>> operator-> () const leftvalue {
-		return (&self) ;
+		return (&deref) ;
 	}
 
 	template <class...ARG1>
 	void remake (XREF<ARG1>...initval) {
 		if (exist ())
 			return ;
-		new (csc_placement_new_t {(&mStorage)}) A (keep[TYPE<XREF<ARG1>>::expr] (initval)...) ;
+		new (csc_device_t (&mStorage)) A (keep[TYPE<XREF<ARG1>>::expr] (initval)...) ;
 		BoxHolder::hold (thiz)->initialize (BoxUnknownBinder<A> ()) ;
 	}
 
@@ -1185,7 +1140,7 @@ public:
 		const auto r1x = zeroize () ;
 		if (inline_memcmp (mStorage ,r1x) == 0)
 			return ;
-		auto &&rax = keep[TYPE<A>::expr] (self) ;
+		auto &&rax = keep[TYPE<A>::expr] (deref) ;
 		rax.~A () ;
 		mStorage = r1x ;
 	}
@@ -1212,21 +1167,21 @@ public:
 		return thiz ;
 	}
 
-	VREF<Pointer> self_m () const leftvalue {
+	VREF<Pointer> deref_m () const leftvalue {
 		return Pointer::from (mStorage) ;
 	}
 
 	forceinline operator VREF<Pointer> () const leftvalue {
-		return self ;
+		return deref ;
 	}
 
 	void get (VREF<A> item) const {
-		auto &&rax = keep[TYPE<A>::expr] (self) ;
+		auto &&rax = keep[TYPE<A>::expr] (deref) ;
 		item = move (rax) ;
 	}
 
 	void set (VREF<A> item) const {
-		auto &&rax = keep[TYPE<A>::expr] (self) ;
+		auto &&rax = keep[TYPE<A>::expr] (deref) ;
 		rax = move (item) ;
 	}
 } ;
@@ -1267,8 +1222,8 @@ struct RefHolder implement Interface {
 	virtual void destroy () = 0 ;
 	virtual BOOL exist () const = 0 ;
 	virtual Unknown unknown () const = 0 ;
-	virtual VREF<Pointer> self_m () leftvalue = 0 ;
-	virtual CREF<Pointer> self_m () const leftvalue = 0 ;
+	virtual VREF<Pointer> deref_m () leftvalue = 0 ;
+	virtual CREF<Pointer> deref_m () const leftvalue = 0 ;
 	virtual BOOL exclusive () const = 0 ;
 } ;
 
@@ -1277,7 +1232,7 @@ inline RefLayout::~RefLayout () noexcept {
 }
 
 template <class A>
-class RefUnknownBinder implement ReflectUnknown {
+class RefUnknownBinder final implement Fat<ReflectUnknown ,Proxy> {
 public:
 	FLAG reflect (CREF<FLAG> uuid) const override {
 		if (uuid == ReflectSizeBinder<A>::expr)
@@ -1359,20 +1314,20 @@ public:
 		return RefHolder::hold (thiz)->unknown () ;
 	}
 
-	VREF<A> self_m () leftvalue {
-		return RefHolder::hold (thiz)->self ;
+	VREF<A> deref_m () leftvalue {
+		return RefHolder::hold (thiz)->deref ;
 	}
 
 	forceinline PTR<VREF<A>> operator-> () leftvalue {
-		return (&self) ;
+		return (&deref) ;
 	}
 
-	CREF<A> self_m () const leftvalue {
-		return RefHolder::hold (thiz)->self ;
+	CREF<A> deref_m () const leftvalue {
+		return RefHolder::hold (thiz)->deref ;
 	}
 
 	forceinline PTR<CREF<A>> operator-> () const leftvalue {
-		return (&self) ;
+		return (&deref) ;
 	}
 
 	BOOL exclusive () const {
@@ -1534,7 +1489,7 @@ public:
 	}
 
 	BOOL equal (CREF<Key> that) const {
-		return inline_equal (address (thiz.self) ,address (that.self)) ;
+		return inline_equal (address (thiz.deref) ,address (that.deref)) ;
 	}
 
 	forceinline BOOL operator== (CREF<Key> that) const {
@@ -1546,7 +1501,7 @@ public:
 	}
 
 	FLAG compr (CREF<Key> that) const {
-		return inline_compr (address (thiz.self) ,address (that.self)) ;
+		return inline_compr (address (thiz.deref) ,address (that.deref)) ;
 	}
 
 	forceinline BOOL operator< (CREF<Key> that) const {
@@ -1567,16 +1522,16 @@ public:
 
 	void visit (VREF<VisitorBinder> visitor) const {
 		visitor.enter () ;
-		inline_visit (visitor ,address (thiz.self)) ;
+		inline_visit (visitor ,address (thiz.deref)) ;
 		visitor.leave () ;
 	}
 
-	VREF<A> self_m () const leftvalue {
+	VREF<A> deref_m () const leftvalue {
 		return KeyBaseHolder::hold (node ())->lock (mCheck) ;
 	}
 
 	forceinline PTR<VREF<A>> operator-> () const leftvalue {
-		return (&self) ;
+		return (&deref) ;
 	}
 
 private:
@@ -1767,6 +1722,21 @@ struct FUNCTION_unimplemented {
 static constexpr auto unimplemented = FUNCTION_unimplemented () ;
 
 template <class A>
+struct OfBase {
+	forceinline operator VREF<A> () leftvalue noexcept {
+		return Pointer::from (thiz) ;
+	}
+
+	forceinline operator CREF<A> () const leftvalue noexcept {
+		return Pointer::from (thiz) ;
+	}
+
+	forceinline operator RREF<A> () rightvalue noexcept {
+		return move (operator VREF<A> ()) ;
+	}
+} ;
+
+template <class A>
 struct OfThis {
 	A mThis ;
 
@@ -1775,100 +1745,49 @@ public:
 		return move (mThis) ;
 	}
 
-	using VREF_ITEM = VREF<typeof (nullof (A).self)> ;
-	using CREF_ITEM = decltype (keep[TYPE<CREF<A>>::expr] (nullof (A)).self) ;
+	using ITEM = typeof (nullof (A).deref) ;
 
-	XREF<VREF_ITEM> self_m () leftvalue {
-		return Pointer::make (address (mThis.self)) ;
+	VREF<ITEM> deref_m () const leftvalue {
+		return const_cast<VREF<ITEM>> (mThis.deref) ;
 	}
 
-	forceinline operator XREF<VREF_ITEM> () leftvalue {
-		return self ;
-	}
-
-	XREF<CREF_ITEM> self_m () const leftvalue {
-		return mThis.self ;
-	}
-
-	forceinline operator XREF<CREF_ITEM> () const leftvalue {
-		return self ;
-	}
-} ;
-
-template <class...>
-trait UNWARP_SELF_HELP ;
-
-template <class A ,class OTHERWISE>
-trait UNWARP_SELF_HELP<A ,OTHERWISE> {
-	using RET = A ;
-} ;
-
-template <class A>
-trait UNWARP_SELF_HELP<A ,REQUIRE<KILL<ENUM_TRUE ,typeof (nullof (A).self)>>> {
-	using RET = typeof (nullof (A).self) ;
-} ;
-
-template <class A>
-using UNWARP_SELF = typename UNWARP_SELF_HELP<A ,ALWAYS>::RET ;
-
-struct FriendExternal implement Interface {
-	virtual void create (VREF<Pointer> a) const = 0 ;
-} ;
-
-template <class A>
-class FriendExternalBinder implement Fat<FriendExternal ,A> {
-public:
-	void create (VREF<Pointer> a) const override {
-		using R1X = typeof (A::mThis) ;
-		auto &&rax = keep[TYPE<A>::expr] (a) ;
-		rax.mThis = R1X::make () ;
+	forceinline operator VREF<ITEM> () const leftvalue {
+		return deref ;
 	}
 } ;
 
 struct ExternalLayout {
 	Pin<FatLayout> mImplHolder ;
-	Pin<FatLayout> mImplLayout ;
 } ;
 
-template <class A ,class B ,class C = UNWARP_SELF<B>>
+template <class A ,class B>
 class External implement ExternalLayout {
 public:
 	implicit External () = default ;
 
 	template <class ARG1>
-	explicit External (CREF<ARG1> holder) :External (holder ,FriendExternalBinder<B> ()) {}
-
-	template <class ARG1 ,class ARG2>
-	explicit External (CREF<ARG1> holder ,CREF<ARG2> layout) {
-		require (IS_EXTEND<Fat<A ,C> ,ARG1>) ;
+	explicit External (CREF<ARG1> holder) {
+		require (IS_EXTEND<A ,ARG1>) ;
 		require (ENUM_EQUAL<SIZE_OF<ARG1> ,SIZE_OF<FatLayout>>) ;
 		require (ENUM_EQUAL<ALIGN_OF<ARG1> ,ALIGN_OF<FatLayout>>) ;
-		require (IS_EXTEND<Fat<FriendExternal ,B> ,ARG2>) ;
-		require (ENUM_EQUAL<SIZE_OF<ARG2> ,SIZE_OF<FatLayout>>) ;
-		require (ENUM_EQUAL<ALIGN_OF<ARG2> ,ALIGN_OF<FatLayout>>) ;
+		using R1X = typeof (nullof (ARG1).self) ;
+		require (ENUM_EQUAL<SIZE_OF<R1X> ,SIZE_OF<B>>) ;
+		require (ENUM_EQUAL<ALIGN_OF<R1X> ,ALIGN_OF<B>>) ;
 		inline_memcpy (instance ().mImplHolder ,Pointer::from (holder) ,SIZE_OF<FatLayout>::expr) ;
-		inline_memcpy (instance ().mImplLayout ,Pointer::from (layout) ,SIZE_OF<FatLayout>::expr) ;
 	}
 
-	static CREF<Fat<A ,C>> declare () {
-		return instance ().mImplHolder.self ;
-	}
-
-	static B create () {
-		B ret ;
-		auto &&rax = VFat<FriendExternal> (instance ().mImplLayout.self) ;
-		rax->create (Pointer::from (ret)) ;
-		return move (ret) ;
+	static CREF<Fat<A ,B>> declare () {
+		return instance ().mImplHolder.deref ;
 	}
 
 private:
 	static CREF<External> instance () ;
 } ;
 
-template <class A ,class B ,class C>
-inline CREF<External<A ,B ,C>> External<A ,B ,C>::instance () {
+template <class A ,class B>
+inline CREF<External<A ,B>> External<A ,B>::instance () {
 	return memorize ([&] () {
-		return External<A ,B ,C> () ;
+		return External<A ,B> () ;
 	}) ;
 }
 
@@ -1881,7 +1800,7 @@ struct ReflectClone implement Interface {
 } ;
 
 template <class A>
-class ReflectCloneBinder implement ReflectClone {
+class ReflectCloneBinder final implement Fat<ReflectClone ,Proxy> {
 public:
 	void clone (VREF<Pointer> a ,CREF<Pointer> b) const override {
 		return inline_clone (keep[TYPE<A>::expr] (a) ,keep[TYPE<A>::expr] (b)) ;
@@ -1897,7 +1816,7 @@ struct ReflectEqual implement Interface {
 } ;
 
 template <class A>
-class ReflectEqualBinder implement ReflectEqual {
+class ReflectEqualBinder final implement Fat<ReflectEqual ,Proxy> {
 public:
 	BOOL equal (CREF<Pointer> a ,CREF<Pointer> b) const override {
 		return inline_equal (keep[TYPE<A>::expr] (a) ,keep[TYPE<A>::expr] (b)) ;
@@ -1913,7 +1832,7 @@ struct ReflectCompr implement Interface {
 } ;
 
 template <class A>
-class ReflectComprBinder implement ReflectCompr {
+class ReflectComprBinder final implement Fat<ReflectCompr ,Proxy> {
 public:
 	FLAG compr (CREF<Pointer> a ,CREF<Pointer> b) const override {
 		return inline_compr (keep[TYPE<A>::expr] (a) ,keep[TYPE<A>::expr] (b)) ;
@@ -1929,7 +1848,7 @@ struct ReflectVisit implement Interface {
 } ;
 
 template <class A>
-class ReflectVisitBinder implement ReflectVisit {
+class ReflectVisitBinder final implement Fat<ReflectVisit ,Proxy> {
 public:
 	void visit (VREF<VisitorBinder> visitor ,CREF<Pointer> a) const override {
 		return inline_visit (visitor ,keep[TYPE<A>::expr] (a)) ;
@@ -1945,7 +1864,7 @@ struct ReflectGuid implement Interface {
 } ;
 
 template <class A>
-class ReflectGuidBinder implement ReflectGuid {
+class ReflectGuidBinder final implement Fat<ReflectGuid ,Proxy> {
 public:
 	FLAG type_guid () const override {
 		return memorize ([&] () {
@@ -1963,7 +1882,7 @@ struct ReflectName implement Interface {
 } ;
 
 template <class A>
-class ReflectNameBinder implement ReflectName {
+class ReflectNameBinder final implement Fat<ReflectName ,Proxy> {
 public:
 	Slice type_name () const override {
 		const auto r1x = inline_type_name (Pointer::from (thiz) ,address (__macro_type_rtti)) ;
@@ -1971,10 +1890,10 @@ public:
 	}
 } ;
 
-struct ClazzImplLayout ;
+struct ClazzTree ;
 
 struct ClazzLayout {
-	Ref<ClazzImplLayout> mThis ;
+	Ref<ClazzTree> mThis ;
 } ;
 
 struct ClazzHolder implement Interface {
@@ -1992,7 +1911,7 @@ struct ClazzHolder implement Interface {
 } ;
 
 template <class A>
-class ClazzUnknownBinder implement ReflectUnknown {
+class ClazzUnknownBinder final implement Fat<ReflectUnknown ,Proxy> {
 public:
 	FLAG reflect (CREF<FLAG> uuid) const override {
 		if (uuid == ReflectSizeBinder<A>::expr)
