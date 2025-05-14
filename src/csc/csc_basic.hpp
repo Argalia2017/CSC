@@ -72,7 +72,6 @@ struct OptionalHolder implement Interface {
 	imports VFat<OptionalHolder> hold (VREF<OptionalLayout> that) ;
 	imports CFat<OptionalHolder> hold (CREF<OptionalLayout> that) ;
 
-	virtual void initialize (RREF<BoxLayout> item) = 0 ;
 	virtual void initialize (CREF<FLAG> code) = 0 ;
 	virtual BOOL exist () const = 0 ;
 	virtual FLAG code () const = 0 ;
@@ -93,8 +92,7 @@ public:
 	implicit Optional (CREF<A> that) :Optional (move (that)) {}
 
 	implicit Optional (RREF<A> that) {
-		auto rax = Box<A>::make (move (that)) ;
-		OptionalHolder::hold (thiz)->initialize (move (rax)) ;
+		once (move (that)) ;
 	}
 
 	static Optional error (CREF<FLAG> code) {
@@ -331,7 +329,9 @@ struct FunctionHolder implement Interface {
 	imports VFat<FunctionHolder> hold (VREF<FunctionLayout> that) ;
 	imports CFat<FunctionHolder> hold (CREF<FunctionLayout> that) ;
 
-	virtual void initialize (RREF<BoxLayout> item ,CREF<Unknown> holder) = 0 ;
+	virtual void initialize (CREF<Unknown> holder) = 0 ;
+	virtual VREF<BoxLayout> raw () leftvalue = 0 ;
+	virtual CREF<BoxLayout> raw () const leftvalue = 0 ;
 	virtual LENGTH rank () const = 0 ;
 	virtual void invoke (CREF<WrapperLayout> params) const = 0 ;
 } ;
@@ -364,8 +364,16 @@ public:
 		using R2X = FUNCTION_PARAMS<ARG1> ;
 		require (IS_VOID<R1X>) ;
 		require (IS_SAME<R2X ,TYPE<A...>>) ;
-		auto rax = Box<ARG1>::make (move (that)) ;
-		FunctionHolder::hold (thiz)->initialize (move (rax) ,FunctionUnknownBinder<ARG1> ()) ;
+		FunctionHolder::hold (thiz)->initialize (FunctionUnknownBinder<ARG1> ()) ;
+		keep[TYPE<Box<ARG1>>::expr] (raw ()).remake (move (that)) ;
+	}
+
+	VREF<BoxLayout> raw () leftvalue {
+		return FunctionHolder::hold (thiz)->raw () ;
+	}
+
+	CREF<BoxLayout> raw () const leftvalue {
+		return FunctionHolder::hold (thiz)->raw () ;
 	}
 
 	LENGTH rank () const {
@@ -444,7 +452,7 @@ struct AutoRefHolder implement Interface {
 	imports CFat<AutoRefHolder> hold (CREF<AutoRefLayout> that) ;
 
 	virtual void initialize (CREF<Unknown> holder) = 0 ;
-	virtual void initialize (RREF<BoxLayout> item ,CREF<Clazz> clazz_) = 0 ;
+	virtual void initialize (CREF<Unknown> holder ,CREF<Clazz> clazz_) = 0 ;
 	virtual void destroy () = 0 ;
 	virtual BOOL exist () const = 0 ;
 	virtual VREF<BoxLayout> raw () leftvalue = 0 ;
@@ -474,15 +482,14 @@ public:
 	implicit AutoRef (RREF<AutoRef<ARG1>> that) :AutoRef (that.recast (TYPE<A>::expr)) {}
 
 	explicit AutoRef (CREF<Unknown> holder) {
-		require (IS_SAME<A ,Pointer>) ;
 		AutoRefHolder::hold (thiz)->initialize (holder) ;
 	}
 
 	template <class...ARG1>
 	static AutoRef make (XREF<ARG1>...initval) {
 		AutoRef ret ;
-		auto rax = Box<A>::make (keep[TYPE<XREF<ARG1>>::expr] (initval)...) ;
-		AutoRefHolder::hold (ret)->initialize (move (rax) ,Clazz (TYPE<A>::expr)) ;
+		AutoRefHolder::hold (ret)->initialize (BoxUnknownBinder<A> () ,Clazz (TYPE<A>::expr)) ;
+		keep[TYPE<Box<A>>::expr] (ret.raw ()).remake (keep[TYPE<XREF<ARG1>>::expr] (initval)...) ;
 		return move (ret) ;
 	}
 
@@ -578,9 +585,9 @@ struct SharedRefHolder implement Interface {
 	imports VFat<SharedRefHolder> hold (VREF<SharedRefLayout> that) ;
 	imports CFat<SharedRefHolder> hold (CREF<SharedRefLayout> that) ;
 
-	virtual void initialize (RREF<BoxLayout> item) = 0 ;
-	virtual void initialize (CREF<SharedRefLayout> that) = 0 ;
+	virtual void initialize (CREF<Unknown> holder) = 0 ;
 	virtual void initialize (CREF<Unknown> holder ,CREF<FLAG> layout) = 0 ;
+	virtual void initialize (CREF<SharedRefLayout> that) = 0 ;
 	virtual void destroy () = 0 ;
 	virtual BOOL exist () const = 0 ;
 	virtual VREF<BoxLayout> raw () leftvalue = 0 ;
@@ -606,17 +613,15 @@ public:
 	template <class ARG1 ,class = REQUIRE<IS_NOT_SAME<ARG1 ,A>>>
 	implicit SharedRef (RREF<SharedRef<ARG1>> that) :SharedRef (that.recast (TYPE<A>::expr)) {}
 
+	explicit SharedRef (VREF<A> item) {
+		SharedRefHolder::hold (thiz)->initialize (BoxUnknownBinder<A> () ,address (item)) ;
+	}
+
 	template <class...ARG1>
 	static SharedRef make (XREF<ARG1>...initval) {
 		SharedRef ret ;
-		auto rax = Box<A>::make (keep[TYPE<XREF<ARG1>>::expr] (initval)...) ;
-		SharedRefHolder::hold (ret)->initialize (move (rax)) ;
-		return move (ret) ;
-	}
-
-	static SharedRef intrusive (VREF<A> that) {
-		SharedRef ret ;
-		SharedRefHolder::hold (ret)->initialize (BoxUnknownBinder<A> () ,address (that)) ;
+		SharedRefHolder::hold (ret)->initialize (BoxUnknownBinder<A> ()) ;
+		keep[TYPE<Box<A>>::expr] (ret.raw ()).remake (keep[TYPE<XREF<ARG1>>::expr] (initval)...) ;
 		return move (ret) ;
 	}
 
@@ -702,9 +707,8 @@ struct UniqueRefHolder implement Interface {
 	imports VFat<UniqueRefHolder> hold (VREF<UniqueRefLayout> that) ;
 	imports CFat<UniqueRefHolder> hold (CREF<UniqueRefLayout> that) ;
 
-	virtual void initialize (RREF<BoxLayout> item) = 0 ;
+	virtual void initialize (CREF<Unknown> holder ,CREF<Function<VREF<Pointer>>> owner) = 0 ;
 	virtual void destroy () = 0 ;
-	virtual void use_owner (CREF<Function<VREF<Pointer>>> owner) = 0 ;
 	virtual BOOL exist () const = 0 ;
 	virtual VREF<BoxLayout> raw () leftvalue = 0 ;
 	virtual CREF<BoxLayout> raw () const leftvalue = 0 ;
@@ -731,18 +735,18 @@ public:
 
 	template <class ARG1 ,class ARG2>
 	explicit UniqueRef (RREF<ARG1> ctor ,RREF<ARG2> dtor) {
-		auto rax = Box<A>::make () ;
-		auto rbx = Function<VREF<A>> (move (dtor)) ;
-		UniqueRefHolder::hold (thiz)->initialize (move (rax)) ;
+		auto rax = Function<VREF<A>> (move (dtor)) ;
+		UniqueRefHolder::hold (thiz)->initialize (BoxUnknownBinder<A> () ,Pointer::from (rax)) ;
+		keep[TYPE<Box<A>>::expr] (raw ()).remake () ;
 		ctor (BoxHolder::hold (raw ())->deref) ;
-		UniqueRefHolder::hold (thiz)->use_owner (Pointer::from (rbx)) ;
 	}
 
 	template <class...ARG1>
 	static UniqueRef make (XREF<ARG1>...initval) {
 		UniqueRef ret ;
-		auto rax = Box<A>::make (keep[TYPE<XREF<ARG1>>::expr] (initval)...) ;
-		UniqueRefHolder::hold (ret)->initialize (move (rax)) ;
+		auto rax = Function<VREF<A>> () ;
+		UniqueRefHolder::hold (ret)->initialize (BoxUnknownBinder<A> () ,Pointer::from (rax)) ;
+		keep[TYPE<Box<A>>::expr] (ret.raw ()).remake (keep[TYPE<XREF<ARG1>>::expr] (initval)...) ;
 		return move (ret) ;
 	}
 

@@ -137,6 +137,8 @@ public:
 	void initialize (CREF<Unknown> holder) override {
 		assert (!exist ()) ;
 		self.mHolder = inline_vptr (holder) ;
+		const auto r1x = RFat<ReflectSize> (unknown ()) ;
+		inline_memset (deref ,r1x->type_size ()) ;
 	}
 
 	void destroy () override {
@@ -176,8 +178,6 @@ public:
 		if (exist ())
 			return ;
 		self.mHolder = inline_vptr (holder) ;
-		const auto r1x = RFat<ReflectSize> (unknown ()) ;
-		inline_memset (deref ,r1x->type_size ()) ;
 	}
 
 	void acquire (CREF<BoxLayout> that) override {

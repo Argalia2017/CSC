@@ -816,6 +816,7 @@ public:
 	implicit Unknown () = delete ;
 
 	explicit Unknown (CREF<FLAG> that) {
+		assert (that != ZERO) ;
 		mHolder = that ;
 	}
 
@@ -1119,7 +1120,7 @@ public:
 		if (exist ())
 			return ;
 		new (csc_device_t (&mStorage)) A (keep[TYPE<XREF<ARG1>>::expr] (initval)...) ;
-		BoxHolder::hold (thiz)->initialize (BoxUnknownBinder<A> ()) ;
+		BoxHolder::hold (thiz)->remake (BoxUnknownBinder<A> ()) ;
 	}
 
 	void acquire (CREF<BoxLayout> that) {

@@ -40,7 +40,7 @@ public:
 		initialize (holder ,rax.size ()) ;
 		const auto r1x = RFat<ReflectAssign> (holder) ;
 		for (auto &&i : iter (0 ,rax.size ())) {
-			BoxHolder::hold (item)->remake (holder) ;
+			BoxHolder::hold (item)->initialize (holder) ;
 			r1x->assign (BoxHolder::hold (item)->deref ,rax[i]) ;
 			r1x->assign (at (i) ,BoxHolder::hold (item)->deref) ;
 		}
@@ -483,7 +483,7 @@ public:
 		initialize (holder ,rax.size ()) ;
 		const auto r1x = RFat<ReflectAssign> (holder) ;
 		for (auto &&i : iter (0 ,rax.size ())) {
-			BoxHolder::hold (item)->remake (holder) ;
+			BoxHolder::hold (item)->initialize (holder) ;
 			r1x->assign (BoxHolder::hold (item)->deref ,rax[i]) ;
 			add (move (item)) ;
 		}
@@ -670,7 +670,7 @@ public:
 		initialize (holder ,rax.size ()) ;
 		const auto r1x = RFat<ReflectAssign> (holder) ;
 		for (auto &&i : iter (0 ,rax.size ())) {
-			BoxHolder::hold (item)->remake (holder) ;
+			BoxHolder::hold (item)->initialize (holder) ;
 			r1x->assign (BoxHolder::hold (item)->deref ,rax[i]) ;
 			add (move (item)) ;
 		}
@@ -842,7 +842,7 @@ public:
 		initialize (holder ,rax.size ()) ;
 		const auto r1x = RFat<ReflectAssign> (holder) ;
 		for (auto &&i : iter (0 ,rax.size ())) {
-			BoxHolder::hold (item)->remake (holder) ;
+			BoxHolder::hold (item)->initialize (holder) ;
 			r1x->assign (BoxHolder::hold (item)->deref ,rax[i]) ;
 			add (move (item)) ;
 		}
@@ -1034,7 +1034,7 @@ public:
 		initialize (holder ,rax.size ()) ;
 		const auto r1x = RFat<ReflectAssign> (holder) ;
 		for (auto &&i : iter (0 ,rax.size ())) {
-			BoxHolder::hold (item)->remake (holder) ;
+			BoxHolder::hold (item)->initialize (holder) ;
 			r1x->assign (BoxHolder::hold (item)->deref ,rax[i]) ;
 			add (move (item)) ;
 		}
@@ -1222,7 +1222,7 @@ public:
 		initialize (holder ,rax.size ()) ;
 		const auto r1x = RFat<ReflectAssign> (holder) ;
 		for (auto &&i : iter (0 ,rax.size ())) {
-			BoxHolder::hold (item)->remake (holder) ;
+			BoxHolder::hold (item)->initialize (holder) ;
 			r1x->assign (BoxHolder::hold (item)->deref ,rax[i]) ;
 			add (move (item) ,NONE) ;
 		}
@@ -1419,7 +1419,7 @@ public:
 		initialize (holder ,rax.size ()) ;
 		const auto r1x = RFat<ReflectAssign> (holder) ;
 		for (auto &&i : iter (0 ,rax.size ())) {
-			BoxHolder::hold (item)->remake (holder) ;
+			BoxHolder::hold (item)->initialize (holder) ;
 			r1x->assign (BoxHolder::hold (item)->deref ,rax[i]) ;
 			add (move (item) ,NONE) ;
 		}
@@ -2016,7 +2016,7 @@ public:
 		initialize (holder ,rax.size ()) ;
 		const auto r1x = RFat<ReflectAssign> (holder) ;
 		for (auto &&i : iter (0 ,rax.size ())) {
-			BoxHolder::hold (item)->remake (holder) ;
+			BoxHolder::hold (item)->initialize (holder) ;
 			r1x->assign (BoxHolder::hold (item)->deref ,rax[i]) ;
 			add (move (item) ,NONE) ;
 		}
@@ -2217,7 +2217,7 @@ public:
 		initialize (size_) ;
 		const auto r2x = RFat<ReflectAssign> (r1x) ;
 		for (auto &&i : iter (0 ,rax.size ())) {
-			BoxHolder::hold (item)->remake (r1x) ;
+			BoxHolder::hold (item)->initialize (r1x) ;
 			r2x->assign (BoxHolder::hold (item)->deref ,rax[i]) ;
 			add (move (item)) ;
 		}
