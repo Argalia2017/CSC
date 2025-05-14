@@ -541,6 +541,7 @@ public:
 	explicit IndexIterator (CREF<INDEX> begin_ ,CREF<INDEX> end_) {
 		mBegin = begin_ ;
 		mEnd = inline_max (begin_ ,end_) ;
+		mPeek = mBegin ;
 		if (length () > 0)
 			return ;
 		mPeek = mEnd ;
@@ -622,6 +623,7 @@ public:
 		mBegin.mY = begin_y ;
 		mEnd.mX = inline_max (begin_x ,end_x) ;
 		mEnd.mY = inline_max (begin_y ,end_y) ;
+		mPeek = mBegin ;
 		if (length () > 0)
 			return ;
 		mPeek = mEnd ;
