@@ -400,7 +400,7 @@ public:
 		return move (ret) ;
 	}
 
-	FLT64 det () const override {
+	FLT64 determinant () const override {
 		const auto r1x = triangular () ;
 		FLT64 ret = 1 ;
 		for (auto &&i : iter (0 ,4))
@@ -431,7 +431,7 @@ public:
 	}
 
 	MatrixLayout inverse () const override {
-		const auto r1x = MathProc::inverse (det ()) ;
+		const auto r1x = MathProc::inverse (determinant ()) ;
 		assume (r1x != 0) ;
 		MatrixLayout ret = adjoint () ;
 		ret = MatrixHolder::hold (ret)->smul (r1x) ;
@@ -484,20 +484,6 @@ public:
 		ret[1][2] = r8x ;
 		ret[2][3] = r9x ;
 		ret[3][3] = 1 ;
-		self = move (ret) ;
-	}
-
-	void make_RotationMatrix (CREF<FLAG> axis ,CREF<FLT64> angle) override {
-		Matrix ret = Matrix::identity () ;
-		const auto r1x = MathProc::cos (angle) ;
-		const auto r2x = MathProc::sin (angle) ;
-		INDEX ix = axis ;
-		INDEX iy = (ix + 1) % 3 ;
-		INDEX iz = (iy + 1) % 3 ;
-		ret[iy][iy] = r1x ;
-		ret[iz][iy] = +r2x ;
-		ret[iy][iz] = -r2x ;
-		ret[iz][iz] = r1x ;
 		self = move (ret) ;
 	}
 
@@ -652,7 +638,7 @@ public:
 		self = move (ret) ;
 	}
 
-	void make_SymmetryMatrix (CREF<Vector> x ,CREF<Vector> y) override {
+	void make_OuterProductMatrix (CREF<Vector> x ,CREF<Vector> y) override {
 		Matrix ret = Matrix::zero () ;
 		const auto r1x = x ;
 		const auto r2x = y ;
@@ -822,9 +808,10 @@ public:
 	}
 
 	void initialize (CREF<EulerAngle> that) override {
-		const auto r1x = RotationMatrix (0 ,that.mPitch) ;
-		const auto r2x = RotationMatrix (1 ,that.mYaw) ;
-		const auto r3x = RotationMatrix (2 ,that.mRoll) ;
+		const auto r1x = axis_of_index () ;
+		const auto r2x = RotationMatrix (r1x[0] ,that.mPitch) ;
+		const auto r3x = RotationMatrix (r1x[1] ,that.mYaw) ;
+		const auto r4x = RotationMatrix (r1x[2] ,that.mRoll) ;
 		auto act = TRUE ;
 		if ifdo (act) {
 			if (that.mType != ViewMatrixOption::XYZ)
@@ -835,38 +822,38 @@ public:
 			//@info: Third, rotation RZi = (RYi * RXi) * RZ * (RYi * RXi).inverse
 			//@info: Finally, rotation RZi * RYi * RXi = RX * RY * RZ
 			//@info: So, in the XYZ rotation order, RX is the first rotation, but RZ is applied last
-			const auto r4x = r1x * r2x * r3x ;
-			initialize (r4x) ;
+			const auto r5x = r2x * r3x * r4x ;
+			initialize (r5x) ;
 		}
 		if ifdo (act) {
 			if (that.mType != ViewMatrixOption::XZY)
 				discard ;
-			const auto r5x = r1x * r3x * r2x ;
-			initialize (r5x) ;
+			const auto r6x = r2x * r4x * r3x ;
+			initialize (r6x) ;
 		}
 		if ifdo (act) {
 			if (that.mType != ViewMatrixOption::YXZ)
 				discard ;
-			const auto r6x = r2x * r1x * r3x ;
-			initialize (r6x) ;
+			const auto r7x = r3x * r2x * r4x ;
+			initialize (r7x) ;
 		}
 		if ifdo (act) {
 			if (that.mType != ViewMatrixOption::YZX)
 				discard ;
-			const auto r7x = r2x * r3x * r1x ;
-			initialize (r7x) ;
+			const auto r8x = r3x * r4x * r2x ;
+			initialize (r8x) ;
 		}
 		if ifdo (act) {
 			if (that.mType != ViewMatrixOption::ZXY)
 				discard ;
-			const auto r8x = r3x * r1x * r2x ;
-			initialize (r8x) ;
+			const auto r9x = r4x * r2x * r3x ;
+			initialize (r9x) ;
 		}
 		if ifdo (act) {
 			if (that.mType != ViewMatrixOption::ZYX)
 				discard ;
-			const auto r9x = r3x * r2x * r1x ;
-			initialize (r9x) ;
+			const auto r10x = r4x * r3x * r2x ;
+			initialize (r10x) ;
 		}
 	}
 
@@ -1065,24 +1052,29 @@ public:
 
 	Buffer3<Matrix> euler_decompose (CREF<Matrix> rot ,CREF<INDEX> x ,CREF<INDEX> y ,CREF<INDEX> z) const {
 		Buffer3<Matrix> ret ;
-		const auto r1x = Buffer3<Vector> ({
-			Vector::axis_x () ,
-			Vector::axis_y () ,
-			Vector::axis_z ()}) ;
+		const auto r1x = axis_of_index () ;
 		const auto r2x = rot * r1x[z] ;
 		const auto r3x = rotate_angle (r2x ,r1x[x] ,r1x[y]) ;
 		const auto r4x = -r3x.fetch () ;
-		ret[x] = RotationMatrix (x ,r4x) ;
+		ret[x] = RotationMatrix (r1x[x] ,r4x) ;
 		const auto r5x = ret[x].transpose () * rot ;
 		const auto r6x = MathProc::atan (r5x[x][z] ,r5x[z][z]) * rotate_sign (y ,z) ;
-		ret[y] = RotationMatrix (y ,r6x) ;
+		ret[y] = RotationMatrix (r1x[y] ,r6x) ;
 		const auto r7x = ret[y].transpose () * r5x ;
 		const auto r8x = MathProc::atan (r7x[y][x] ,r7x[x][x]) * rotate_sign (z ,x) ;
-		ret[z] = RotationMatrix (z ,r8x) ;
+		ret[z] = RotationMatrix (r1x[z] ,r8x) ;
 		const auto r9x = ret[z].transpose () * r7x - Matrix::identity () ;
 		for (auto &&j : iter (0 ,4 ,0 ,4)) {
 			assert (MathProc::abs (r9x[j]) < FLT32_EPS) ;
 		}
+		return move (ret) ;
+	}
+
+	Buffer3<Vector> axis_of_index () const {
+		Buffer3<Vector> ret ;
+		ret[0] = Vector::axis_x () ;
+		ret[1] = Vector::axis_y () ;
+		ret[2] = Vector::axis_z () ;
 		return move (ret) ;
 	}
 

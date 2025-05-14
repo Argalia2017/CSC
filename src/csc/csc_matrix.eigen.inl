@@ -11,12 +11,7 @@
 #include "csc_matrix.hpp"
 
 #include "csc_end.h"
-#ifdef __CSC_COMPILER_MSVC__
-#define EIGEN_HAS_STD_RESULT_OF 0
-//@warn: actually eigen do not have 'EIGEN_HAS_STD_NEGATORS' ,you need merge 'csc_matrix.eigen.fix.h' to 'Eigen/src/Core/functors/StlFunctors.h'
-#define EIGEN_HAS_STD_NEGATORS 0
-#endif
-
+#include "csc_matrix.eigen.fix.h"
 #include <Eigen/Dense>
 #include "csc_begin.h"
 

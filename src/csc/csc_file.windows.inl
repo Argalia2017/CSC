@@ -1100,6 +1100,8 @@ public:
 		self.mLogWriter << msg ;
 		self.mLogWriter << EOS ;
 		if ifdo (TRUE) {
+			if (!self.mConsole.exist ())
+				discard ;
 			const auto r1x = csc_uint16_t (FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE) ;
 			SetConsoleTextAttribute (self.mConsole ,r1x) ;
 			auto rax = csc_enum_t (self.mLogWriter.length () - 1) ;
@@ -1114,6 +1116,8 @@ public:
 		log (slice ("Fatal") ,msg) ;
 		log_file () ;
 		if ifdo (TRUE) {
+			if (!self.mConsole.exist ())
+				discard ;
 			const auto r1x = csc_uint16_t (FOREGROUND_BLUE | FOREGROUND_INTENSITY) ;
 			SetConsoleTextAttribute (self.mConsole ,r1x) ;
 			auto rax = csc_enum_t (self.mLogWriter.length () - 1) ;
@@ -1128,6 +1132,8 @@ public:
 		log (slice ("Error") ,msg) ;
 		log_file () ;
 		if ifdo (TRUE) {
+			if (!self.mConsole.exist ())
+				discard ;
 			const auto r1x = csc_uint16_t (FOREGROUND_RED | FOREGROUND_INTENSITY) ;
 			SetConsoleTextAttribute (self.mConsole ,r1x) ;
 			auto rax = csc_enum_t (self.mLogWriter.length () - 1) ;
@@ -1142,6 +1148,8 @@ public:
 		log (slice ("Warn") ,msg) ;
 		log_file () ;
 		if ifdo (TRUE) {
+			if (!self.mConsole.exist ())
+				discard ;
 			const auto r1x = csc_uint16_t (FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_INTENSITY) ;
 			SetConsoleTextAttribute (self.mConsole ,r1x) ;
 			auto rax = csc_enum_t (self.mLogWriter.length () - 1) ;
@@ -1156,6 +1164,8 @@ public:
 		log (slice ("Info") ,msg) ;
 		log_file () ;
 		if ifdo (TRUE) {
+			if (!self.mConsole.exist ())
+				discard ;
 			const auto r1x = csc_uint16_t (FOREGROUND_GREEN | FOREGROUND_INTENSITY) ;
 			SetConsoleTextAttribute (self.mConsole ,r1x) ;
 			auto rax = csc_enum_t (self.mLogWriter.length () - 1) ;
@@ -1170,6 +1180,8 @@ public:
 		log (slice ("Debug") ,msg) ;
 		log_file () ;
 		if ifdo (TRUE) {
+			if (!self.mConsole.exist ())
+				discard ;
 			const auto r1x = csc_uint16_t (FOREGROUND_GREEN | FOREGROUND_BLUE | FOREGROUND_INTENSITY) ;
 			SetConsoleTextAttribute (self.mConsole ,r1x) ;
 			auto rax = csc_enum_t (self.mLogWriter.length () - 1) ;
@@ -1184,6 +1196,8 @@ public:
 		log (slice ("Trace") ,msg) ;
 		log_file () ;
 		if ifdo (TRUE) {
+			if (!self.mConsole.exist ())
+				discard ;
 			const auto r1x = csc_uint16_t (FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE | FOREGROUND_INTENSITY) ;
 			SetConsoleTextAttribute (self.mConsole ,r1x) ;
 			auto rax = csc_enum_t (self.mLogWriter.length () - 1) ;
@@ -1216,8 +1230,7 @@ public:
 	void show () override {
 		Scope<Mutex> anonymous (self.mMutex) ;
 		if (self.mConsole.exist ())
-			if (self.mConsole.deref != INVALID_HANDLE_VALUE)
-				return ;
+			return ;
 		self.mConsole = UniqueRef<csc_handle_t> ([&] (VREF<csc_handle_t> me) {
 			AllocConsole () ;
 			me = GetStdHandle (STD_OUTPUT_HANDLE) ;
@@ -1229,7 +1242,7 @@ public:
 
 	void hide () override {
 		Scope<Mutex> anonymous (self.mMutex) ;
-		self.mConsole = UniqueRef<csc_handle_t>::make (INVALID_HANDLE_VALUE) ;
+		self.mConsole = UniqueRef<csc_handle_t> () ;
 	}
 
 	void pause () override {
@@ -1240,15 +1253,23 @@ public:
 				discard ;
 			FlashWindow (r1x ,TRUE) ;
 		}
-		const auto r2x = csc_uint16_t (FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE) ;
-		SetConsoleTextAttribute (self.mConsole ,r2x) ;
+		if ifdo (TRUE) {
+			if (!self.mConsole.exist ())
+				discard ;
+			const auto r2x = csc_uint16_t (FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE) ;
+			SetConsoleTextAttribute (self.mConsole ,r2x) ;
+		}
 		self.mCommand.execute (slice ("pause")) ;
 	}
 
 	void clear () override {
 		Scope<Mutex> anonymous (self.mMutex) ;
-		const auto r1x = csc_uint16_t (FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE) ;
-		SetConsoleTextAttribute (self.mConsole ,r1x) ;
+		if ifdo (TRUE) {
+			if (!self.mConsole.exist ())
+				discard ;
+			const auto r1x = csc_uint16_t (FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE) ;
+			SetConsoleTextAttribute (self.mConsole ,r1x) ;
+		}
 		self.mCommand.execute (slice ("cls")) ;
 	}
 } ;

@@ -374,10 +374,10 @@ public:
 
 struct TensorDataType {
 	enum {
+		Flt16 ,
 		Flt32 ,
 		Flt64 ,
-		Complex32 ,
-		Complex64 ,
+		Flt128 ,
 		ETC
 	} ;
 } ;

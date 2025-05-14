@@ -1173,8 +1173,10 @@ public:
 		self.mLogWriter << msg ;
 		self.mLogWriter << EOS ;
 		if ifdo (TRUE) {
+			if (!self.mConsole.exist ())
+				discard ;
 			const auto r1x = String<STR> (slice ("%s")) ;
-			std::printf (r1x.deref ,self.mLogBuffer.deref) ;
+			std::fprintf (self.mConsole ,r1x.deref ,self.mLogBuffer.deref) ;
 		}
 	}
 
@@ -1185,8 +1187,10 @@ public:
 		log (slice ("Fatal") ,msg) ;
 		log_file () ;
 		if ifdo (TRUE) {
+			if (!self.mConsole.exist ())
+				discard ;
 			const auto r1x = String<STR> (slice ("\033[1;34m%s\033[0m")) ;
-			std::printf (r1x.deref ,self.mLogBuffer.deref) ;
+			std::fprintf (self.mConsole ,r1x.deref ,self.mLogBuffer.deref) ;
 		}
 	}
 
@@ -1197,8 +1201,10 @@ public:
 		log (slice ("Error") ,msg) ;
 		log_file () ;
 		if ifdo (TRUE) {
+			if (!self.mConsole.exist ())
+				discard ;
 			const auto r1x = String<STR> (slice ("\033[1;31m%s\033[0m")) ;
-			std::printf (r1x.deref ,self.mLogBuffer.deref) ;
+			std::fprintf (self.mConsole ,r1x.deref ,self.mLogBuffer.deref) ;
 		}
 	}
 
@@ -1209,8 +1215,10 @@ public:
 		log (slice ("Warn") ,msg) ;
 		log_file () ;
 		if ifdo (TRUE) {
+			if (!self.mConsole.exist ())
+				discard ;
 			const auto r1x = String<STR> (slice ("\033[1;33m%s\033[0m")) ;
-			std::printf (r1x.deref ,self.mLogBuffer.deref) ;
+			std::fprintf (self.mConsole ,r1x.deref ,self.mLogBuffer.deref) ;
 		}
 	}
 
@@ -1221,8 +1229,10 @@ public:
 		log (slice ("Info") ,msg) ;
 		log_file () ;
 		if ifdo (TRUE) {
+			if (!self.mConsole.exist ())
+				discard ;
 			const auto r1x = String<STR> (slice ("\033[1;32m%s\033[0m")) ;
-			std::printf (r1x.deref ,self.mLogBuffer.deref) ;
+			std::fprintf (self.mConsole ,r1x.deref ,self.mLogBuffer.deref) ;
 		}
 	}
 
@@ -1233,8 +1243,10 @@ public:
 		log (slice ("Debug") ,msg) ;
 		log_file () ;
 		if ifdo (TRUE) {
+			if (!self.mConsole.exist ())
+				discard ;
 			const auto r1x = String<STR> (slice ("\033[1;36m%s\033[0m")) ;
-			std::printf (r1x.deref ,self.mLogBuffer.deref) ;
+			std::fprintf (self.mConsole ,r1x.deref ,self.mLogBuffer.deref) ;
 		}
 	}
 
@@ -1245,8 +1257,10 @@ public:
 		log (slice ("Trace") ,msg) ;
 		log_file () ;
 		if ifdo (TRUE) {
+			if (!self.mConsole.exist ())
+				discard ;
 			const auto r1x = String<STR> (slice ("\033[1;37m%s\033[0m")) ;
-			std::printf (r1x.deref ,self.mLogBuffer.deref) ;
+			std::fprintf (self.mConsole ,r1x.deref ,self.mLogBuffer.deref) ;
 		}
 	}
 
@@ -1281,14 +1295,18 @@ public:
 
 	void hide () override {
 		Scope<Mutex> anonymous (self.mMutex) ;
-		self.mConsole = UniqueRef<csc_handle_t>::make () ;
+		self.mConsole = UniqueRef<csc_handle_t> () ;
 	}
 
 	void pause () override {
 		Scope<Mutex> anonymous (self.mMutex) ;
-		const auto r1x = String<STR> (slice ("%s\n")) ;
-		const auto r2x = String<STR> (slice ("press any key to continue...")) ;
-		std::printf (r1x.deref ,r2x.deref) ;
+		if ifdo (TRUE) {
+			if (!self.mConsole.exist ())
+				discard ;
+			const auto r1x = String<STR> (slice ("%s\n")) ;
+			const auto r2x = String<STR> (slice ("press any key to continue...")) ;
+			std::fprintf (self.mConsole ,r1x.deref ,r2x.deref) ;
+		}
 		const auto r3x = std::getchar () ;
 		noop (r3x) ;
 	}

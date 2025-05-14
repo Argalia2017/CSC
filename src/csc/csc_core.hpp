@@ -519,11 +519,13 @@ static constexpr auto inline_visit = FUNCTION_inline_visit () ;
 struct IndexIteratorLayout {
 	INDEX mBegin ;
 	INDEX mEnd ;
+	INDEX mPeek ;
 
 public:
 	implicit IndexIteratorLayout () noexcept {
 		mBegin = 0 ;
 		mEnd = 0 ;
+		mPeek = 0 ;
 	}
 } ;
 
@@ -531,6 +533,7 @@ class IndexIterator implement IndexIteratorLayout {
 protected:
 	using IndexIteratorLayout::mBegin ;
 	using IndexIteratorLayout::mEnd ;
+	using IndexIteratorLayout::mPeek ;
 
 public:
 	implicit IndexIterator () = default ;
@@ -540,7 +543,7 @@ public:
 		mEnd = inline_max (begin_ ,end_) ;
 		if (length () > 0)
 			return ;
-		mBegin = mEnd ;
+		mPeek = mEnd ;
 	}
 
 	LENGTH length () const {
@@ -556,7 +559,7 @@ public:
 	}
 
 	BOOL good () const {
-		return mBegin != mEnd ;
+		return mPeek != mEnd ;
 	}
 
 	forceinline BOOL operator== (CREF<IndexIterator>) const {
@@ -568,7 +571,7 @@ public:
 	}
 
 	CREF<INDEX> peek () const leftvalue {
-		return mBegin ;
+		return mPeek ;
 	}
 
 	forceinline CREF<INDEX> operator* () const leftvalue {
@@ -576,7 +579,7 @@ public:
 	}
 
 	void next () {
-		mBegin++ ;
+		mPeek++ ;
 	}
 
 	forceinline void operator++ () {
@@ -592,6 +595,7 @@ struct Pixel {
 struct PixelIteratorLayout {
 	Pixel mBegin ;
 	Pixel mEnd ;
+	Pixel mPeek ;
 
 public:
 	implicit PixelIteratorLayout () noexcept {
@@ -599,6 +603,8 @@ public:
 		mBegin.mY = 0 ;
 		mEnd.mX = 0 ;
 		mEnd.mY = 0 ;
+		mPeek.mX = 0 ;
+		mPeek.mY = 0 ;
 	}
 } ;
 
@@ -606,6 +612,7 @@ class PixelIterator implement PixelIteratorLayout {
 protected:
 	using PixelIteratorLayout::mBegin ;
 	using PixelIteratorLayout::mEnd ;
+	using PixelIteratorLayout::mPeek ;
 
 public:
 	implicit PixelIterator () = default ;
@@ -617,7 +624,7 @@ public:
 		mEnd.mY = inline_max (begin_y ,end_y) ;
 		if (length () > 0)
 			return ;
-		mBegin = mEnd ;
+		mPeek = mEnd ;
 	}
 
 	LENGTH length () const {
@@ -633,7 +640,7 @@ public:
 	}
 
 	BOOL good () const {
-		return mBegin.mY != mEnd.mY ;
+		return mPeek.mY != mEnd.mY ;
 	}
 
 	forceinline BOOL operator== (CREF<PixelIterator>) const {
@@ -645,7 +652,7 @@ public:
 	}
 
 	CREF<Pixel> peek () const leftvalue {
-		return mBegin ;
+		return mPeek ;
 	}
 
 	forceinline CREF<Pixel> operator* () const leftvalue {
@@ -653,11 +660,11 @@ public:
 	}
 
 	void next () {
-		mBegin.mX++ ;
-		if (mBegin.mX < mEnd.mX)
+		mPeek.mX++ ;
+		if (mPeek.mX < mEnd.mX)
 			return ;
-		mBegin.mX = 0 ;
-		mBegin.mY++ ;
+		mPeek.mX = mBegin.mX ;
+		mPeek.mY++ ;
 	}
 
 	forceinline void operator++ () {

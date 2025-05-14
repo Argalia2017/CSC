@@ -356,7 +356,7 @@ struct MatrixHolder implement Interface {
 	virtual MatrixLayout transpose () const = 0 ;
 	virtual MatrixLayout triangular () const = 0 ;
 	virtual MatrixLayout homogenize () const = 0 ;
-	virtual FLT64 det () const = 0 ;
+	virtual FLT64 determinant () const = 0 ;
 	virtual MatrixLayout adjoint () const = 0 ;
 	virtual MatrixLayout inverse () const = 0 ;
 	virtual FLT64 trace () const = 0 ;
@@ -577,8 +577,8 @@ public:
 		return move (keep[TYPE<Matrix>::expr] (ret)) ;
 	}
 
-	FLT64 det () const {
-		return MatrixHolder::hold (thiz)->det () ;
+	FLT64 determinant () const {
+		return MatrixHolder::hold (thiz)->determinant () ;
 	}
 
 	Matrix adjoint () const {
@@ -614,7 +614,6 @@ struct MakeMatrixHolder implement Interface {
 
 	virtual void make_DiagMatrix (CREF<FLT64> x ,CREF<FLT64> y ,CREF<FLT64> z ,CREF<FLT64> w) = 0 ;
 	virtual void make_ShearMatrix (CREF<Vector> x ,CREF<Vector> y ,CREF<Vector> z) = 0 ;
-	virtual void make_RotationMatrix (CREF<FLAG> axis ,CREF<FLT64> angle) = 0 ;
 	virtual void make_RotationMatrix (CREF<Vector> normal ,CREF<FLT64> angle) = 0 ;
 	virtual void make_TranslationMatrix (CREF<FLT64> x ,CREF<FLT64> y ,CREF<FLT64> z) = 0 ;
 	virtual void make_PerspectiveMatrix (CREF<FLT64> fx ,CREF<FLT64> fy ,CREF<FLT64> wx ,CREF<FLT64> wy) = 0 ;
@@ -622,7 +621,7 @@ struct MakeMatrixHolder implement Interface {
 	virtual void make_ViewMatrix (CREF<Vector> vx ,CREF<Vector> vy) = 0 ;
 	virtual void make_ViewMatrix (CREF<Vector> vx ,CREF<Vector> vy ,CREF<Just<ViewMatrixOption>> option) = 0 ;
 	virtual void make_CrossProductMatrix (CREF<Vector> xyz) = 0 ;
-	virtual void make_SymmetryMatrix (CREF<Vector> x ,CREF<Vector> y) = 0 ;
+	virtual void make_OuterProductMatrix (CREF<Vector> x ,CREF<Vector> y) = 0 ;
 	virtual void make_AffineMatrix (CREF<Array<FLT64>> a) = 0 ;
 } ;
 
@@ -641,12 +640,6 @@ inline Matrix DiagMatrix (CREF<FLT64> x ,CREF<FLT64> y ,CREF<FLT64> z ,CREF<FLT6
 inline Matrix ShearMatrix (CREF<Vector> x ,CREF<Vector> y ,CREF<Vector> z) {
 	Matrix ret ;
 	MakeMatrixHolder::hold (ret)->make_ShearMatrix (x ,y ,z) ;
-	return move (ret) ;
-}
-
-inline Matrix RotationMatrix (CREF<FLAG> axis ,CREF<FLT64> angle) {
-	Matrix ret ;
-	MakeMatrixHolder::hold (ret)->make_RotationMatrix (axis ,angle) ;
 	return move (ret) ;
 }
 
@@ -724,7 +717,7 @@ inline Matrix CrossProductMatrix (CREF<Vector> xyz) {
 
 inline Matrix SymmetryMatrix (CREF<Vector> x ,CREF<Vector> y) {
 	Matrix ret ;
-	MakeMatrixHolder::hold (ret)->make_SymmetryMatrix (x ,y) ;
+	MakeMatrixHolder::hold (ret)->make_OuterProductMatrix (x ,y) ;
 	return move (ret) ;
 }
 
@@ -744,7 +737,8 @@ struct KRTResult {
 	Matrix mK ;
 	Matrix mR ;
 	Matrix mT ;
-	Matrix mP ;
+	Vector mN ;
+	Vector mC ;
 } ;
 
 struct SVDResult {
