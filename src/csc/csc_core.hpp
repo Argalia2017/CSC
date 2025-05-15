@@ -898,7 +898,6 @@ public:
 } ;
 
 struct ReflectAssign implement Interface {
-	virtual void assign (VREF<Pointer> a) const noexcept = 0 ;
 	virtual void assign (VREF<Pointer> a ,VREF<Pointer> b) const noexcept = 0 ;
 
 	forceinline static consteval FLAG expr_m () noexcept {
@@ -909,11 +908,6 @@ struct ReflectAssign implement Interface {
 template <class A>
 class ReflectAssignBinder final implement Fat<ReflectAssign ,Proxy> {
 public:
-	void assign (VREF<Pointer> a) const noexcept override {
-		auto rax = A () ;
-		assign (a ,Pointer::from (rax)) ;
-	}
-
 	void assign (VREF<Pointer> a ,VREF<Pointer> b) const noexcept override {
 		CSC::assign (keep[TYPE<A>::expr] (a) ,keep[TYPE<A>::expr] (b)) ;
 	}

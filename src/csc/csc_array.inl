@@ -39,8 +39,8 @@ public:
 		auto rax = from_initializer_list (params ,holder) ;
 		initialize (holder ,rax.size ()) ;
 		const auto r1x = RFat<ReflectAssign> (holder) ;
+		BoxHolder::hold (item)->initialize (holder) ;
 		for (auto &&i : iter (0 ,rax.size ())) {
-			BoxHolder::hold (item)->initialize (holder) ;
 			r1x->assign (BoxHolder::hold (item)->deref ,rax[i]) ;
 			r1x->assign (at (i) ,BoxHolder::hold (item)->deref) ;
 		}
@@ -486,6 +486,7 @@ public:
 			BoxHolder::hold (item)->initialize (holder) ;
 			r1x->assign (BoxHolder::hold (item)->deref ,rax[i]) ;
 			add (move (item)) ;
+			BoxHolder::hold (item)->destroy () ;
 		}
 	}
 
@@ -569,8 +570,10 @@ public:
 		noop (r1x) ;
 		assert (r1x > 0) ;
 		INDEX ix = self.mRead ;
-		const auto r2x = RFat<ReflectAssign> (self.mDeque.unknown ()) ;
-		r2x->assign (self.mDeque[ix]) ;
+		const auto r2x = RFat<ReflectCreate> (self.mDeque.unknown ()) ;
+		const auto r3x = RFat<ReflectDestroy> (self.mDeque.unknown ()) ;
+		r3x->destroy (self.mDeque[ix] ,1) ;
+		r2x->create (self.mDeque[ix] ,1) ;
 		self.mRead++ ;
 		check_bound () ;
 	}
@@ -590,8 +593,10 @@ public:
 		noop (r1x) ;
 		assert (r1x > 0) ;
 		INDEX ix = self.mWrite - 1 ;
-		const auto r2x = RFat<ReflectAssign> (self.mDeque.unknown ()) ;
-		r2x->assign (self.mDeque[ix]) ;
+		const auto r2x = RFat<ReflectCreate> (self.mDeque.unknown ()) ;
+		const auto r3x = RFat<ReflectDestroy> (self.mDeque.unknown ()) ;
+		r3x->destroy (self.mDeque[ix] ,1) ;
+		r2x->create (self.mDeque[ix] ,1) ;
 		self.mWrite-- ;
 	}
 
@@ -673,6 +678,7 @@ public:
 			BoxHolder::hold (item)->initialize (holder) ;
 			r1x->assign (BoxHolder::hold (item)->deref ,rax[i]) ;
 			add (move (item)) ;
+			BoxHolder::hold (item)->destroy () ;
 		}
 	}
 
@@ -845,6 +851,7 @@ public:
 			BoxHolder::hold (item)->initialize (holder) ;
 			r1x->assign (BoxHolder::hold (item)->deref ,rax[i]) ;
 			add (move (item)) ;
+			BoxHolder::hold (item)->destroy () ;
 		}
 	}
 
@@ -1037,6 +1044,7 @@ public:
 			BoxHolder::hold (item)->initialize (holder) ;
 			r1x->assign (BoxHolder::hold (item)->deref ,rax[i]) ;
 			add (move (item)) ;
+			BoxHolder::hold (item)->destroy () ;
 		}
 	}
 
@@ -1225,6 +1233,7 @@ public:
 			BoxHolder::hold (item)->initialize (holder) ;
 			r1x->assign (BoxHolder::hold (item)->deref ,rax[i]) ;
 			add (move (item) ,NONE) ;
+			BoxHolder::hold (item)->destroy () ;
 		}
 	}
 
@@ -1422,6 +1431,7 @@ public:
 			BoxHolder::hold (item)->initialize (holder) ;
 			r1x->assign (BoxHolder::hold (item)->deref ,rax[i]) ;
 			add (move (item) ,NONE) ;
+			BoxHolder::hold (item)->destroy () ;
 		}
 	}
 
@@ -2019,6 +2029,7 @@ public:
 			BoxHolder::hold (item)->initialize (holder) ;
 			r1x->assign (BoxHolder::hold (item)->deref ,rax[i]) ;
 			add (move (item) ,NONE) ;
+			BoxHolder::hold (item)->destroy () ;
 		}
 	}
 
@@ -2220,6 +2231,7 @@ public:
 			BoxHolder::hold (item)->initialize (r1x) ;
 			r2x->assign (BoxHolder::hold (item)->deref ,rax[i]) ;
 			add (move (item)) ;
+			BoxHolder::hold (item)->destroy () ;
 		}
 	}
 
