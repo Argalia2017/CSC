@@ -1851,7 +1851,7 @@ public:
 struct CommaLayout ;
 
 struct CommaHolder implement Interface {
-	imports OfThis<SharedRef<CommaLayout>> create () ;
+	imports SharedRef<CommaLayout> create () ;
 	imports VFat<CommaHolder> hold (VREF<CommaLayout> that) ;
 	imports CFat<CommaHolder> hold (CREF<CommaLayout> that) ;
 
@@ -1899,7 +1899,7 @@ public:
 struct RegexLayout ;
 
 struct RegexHolder implement Interface {
-	imports OfThis<AutoRef<RegexLayout>> create () ;
+	imports AutoRef<RegexLayout> create () ;
 	imports VFat<RegexHolder> hold (VREF<RegexLayout> that) ;
 	imports CFat<RegexHolder> hold (CREF<RegexLayout> that) ;
 

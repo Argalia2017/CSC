@@ -60,7 +60,7 @@ public:
 struct WorkThreadLayout ;
 
 struct WorkThreadHolder implement Interface {
-	imports OfThis<SharedRef<WorkThreadLayout>> create () ;
+	imports SharedRef<WorkThreadLayout> create () ;
 	imports VFat<WorkThreadHolder> hold (VREF<WorkThreadLayout> that) ;
 	imports CFat<WorkThreadHolder> hold (CREF<WorkThreadLayout> that) ;
 
@@ -125,7 +125,7 @@ struct CalcSolution {
 struct CalcThreadLayout ;
 
 struct CalcThreadHolder implement Interface {
-	imports OfThis<SharedRef<CalcThreadLayout>> create () ;
+	imports SharedRef<CalcThreadLayout> create () ;
 	imports VFat<CalcThreadHolder> hold (VREF<CalcThreadLayout> that) ;
 	imports CFat<CalcThreadHolder> hold (CREF<CalcThreadLayout> that) ;
 
@@ -188,7 +188,7 @@ public:
 struct PromiseLayout ;
 
 struct PromiseHolder implement Interface {
-	imports OfThis<SharedRef<PromiseLayout>> create () ;
+	imports SharedRef<PromiseLayout> create () ;
 	imports VFat<PromiseHolder> hold (VREF<PromiseLayout> that) ;
 	imports CFat<PromiseHolder> hold (CREF<PromiseLayout> that) ;
 

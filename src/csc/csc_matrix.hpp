@@ -979,7 +979,7 @@ public:
 struct PointCloudKDTreeLayout ;
 
 struct PointCloudKDTreeHolder implement Interface {
-	imports OfThis<AutoRef<PointCloudKDTreeLayout>> create () ;
+	imports AutoRef<PointCloudKDTreeLayout> create () ;
 	imports VFat<PointCloudKDTreeHolder> hold (VREF<PointCloudKDTreeLayout> that) ;
 	imports CFat<PointCloudKDTreeHolder> hold (CREF<PointCloudKDTreeLayout> that) ;
 

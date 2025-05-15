@@ -58,10 +58,8 @@ struct StreamFileLayout {
 	LENGTH mShortSize ;
 } ;
 
-exports OfThis<AutoRef<StreamFileLayout>> StreamFileHolder::create () {
-	OfThis<AutoRef<StreamFileLayout>> ret ;
-	ret.mThis = AutoRef<StreamFileLayout>::make () ;
-	return move (ret) ;
+exports AutoRef<StreamFileLayout> StreamFileHolder::create () {
+	return AutoRef<StreamFileLayout>::make () ;
 }
 
 exports VFat<StreamFileHolder> StreamFileHolder::hold (VREF<StreamFileLayout> that) {
@@ -118,10 +116,8 @@ public:
 	}
 } ;
 
-exports OfThis<AutoRef<StreamFileByteWriterLayout>> StreamFileByteWriterHolder::create () {
-	OfThis<AutoRef<StreamFileByteWriterLayout>> ret ;
-	ret.mThis = AutoRef<StreamFileByteWriterLayout>::make () ;
-	return move (ret) ;
+exports AutoRef<StreamFileByteWriterLayout> StreamFileByteWriterHolder::create () {
+	return AutoRef<StreamFileByteWriterLayout>::make () ;
 }
 
 exports VFat<StreamFileByteWriterHolder> StreamFileByteWriterHolder::hold (VREF<StreamFileByteWriterLayout> that) {
@@ -178,10 +174,8 @@ public:
 	}
 } ;
 
-exports OfThis<AutoRef<StreamFileTextWriterLayout>> StreamFileTextWriterHolder::create () {
-	OfThis<AutoRef<StreamFileTextWriterLayout>> ret ;
-	ret.mThis = AutoRef<StreamFileTextWriterLayout>::make () ;
-	return move (ret) ;
+exports AutoRef<StreamFileTextWriterLayout> StreamFileTextWriterHolder::create () {
+	return AutoRef<StreamFileTextWriterLayout>::make () ;
 }
 
 exports VFat<StreamFileTextWriterHolder> StreamFileTextWriterHolder::hold (VREF<StreamFileTextWriterLayout> that) {
@@ -225,10 +219,8 @@ struct BufferFileLayout {
 	VAL64 mCacheTimer ;
 } ;
 
-exports OfThis<AutoRef<BufferFileLayout>> BufferFileHolder::create () {
-	OfThis<AutoRef<BufferFileLayout>> ret ;
-	ret.mThis = AutoRef<BufferFileLayout>::make () ;
-	return move (ret) ;
+exports AutoRef<BufferFileLayout> BufferFileHolder::create () {
+	return AutoRef<BufferFileLayout>::make () ;
 }
 
 exports VFat<BufferFileHolder> BufferFileHolder::hold (VREF<BufferFileLayout> that) {
@@ -255,10 +247,8 @@ struct UartFileLayout {
 	INDEX mRingRead ;
 } ;
 
-exports OfThis<AutoRef<UartFileLayout>> UartFileHolder::create () {
-	OfThis<AutoRef<UartFileLayout>> ret ;
-	ret.mThis = AutoRef<UartFileLayout>::make () ;
-	return move (ret) ;
+exports AutoRef<UartFileLayout> UartFileHolder::create () {
+	return AutoRef<UartFileLayout>::make () ;
 }
 
 exports VFat<UartFileHolder> UartFileHolder::hold (VREF<UartFileLayout> that) {

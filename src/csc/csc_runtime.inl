@@ -147,10 +147,8 @@ public:
 	}
 } ;
 
-exports OfThis<Box<TimeLayout ,TimeStorage>> TimeHolder::create () {
-	OfThis<Box<TimeLayout ,TimeStorage>> ret ;
-	ret.mThis = Box<TimeLayout>::make () ;
-	return move (ret) ;
+exports Box<TimeLayout ,TimeStorage> TimeHolder::create () {
+	return Box<TimeLayout>::make () ;
 }
 
 exports VFat<TimeHolder> TimeHolder::hold (VREF<TimeLayout> that) {
@@ -226,10 +224,8 @@ public:
 	}
 } ;
 
-exports OfThis<Box<AtomicLayout ,AtomicStorage>> AtomicHolder::create () {
-	OfThis<Box<AtomicLayout ,AtomicStorage>> ret ;
-	ret.mThis = Box<AtomicLayout>::make () ;
-	return move (ret) ;
+exports Box<AtomicLayout ,AtomicStorage> AtomicHolder::create () {
+	return Box<AtomicLayout>::make () ;
 }
 
 exports VFat<AtomicHolder> AtomicHolder::hold (VREF<AtomicLayout> that) {
@@ -289,10 +285,8 @@ public:
 	}
 } ;
 
-exports OfThis<SharedRef<MutexLayout>> MutexHolder::create () {
-	OfThis<SharedRef<MutexLayout>> ret ;
-	ret.mThis = SharedRef<MutexLayout>::make () ;
-	return move (ret) ;
+exports SharedRef<MutexLayout> MutexHolder::create () {
+	return SharedRef<MutexLayout>::make () ;
 }
 
 exports VFat<MutexHolder> MutexHolder::hold (VREF<MutexLayout> that) {
@@ -408,10 +402,8 @@ public:
 	}
 } ;
 
-exports OfThis<Box<SharedLockLayout ,SharedLockStorage>> SharedLockHolder::create () {
-	OfThis<Box<SharedLockLayout ,SharedLockStorage>> ret ;
-	ret.mThis = Box<SharedLockLayout>::make () ;
-	return move (ret) ;
+exports Box<SharedLockLayout ,SharedLockStorage> SharedLockHolder::create () {
+	return Box<SharedLockLayout>::make () ;
 }
 
 exports VFat<SharedLockHolder> SharedLockHolder::hold (VREF<SharedLockLayout> that) {
@@ -460,10 +452,8 @@ public:
 	}
 } ;
 
-exports OfThis<Box<UniqueLockLayout ,UniqueLockStorage>> UniqueLockHolder::create () {
-	OfThis<Box<UniqueLockLayout ,UniqueLockStorage>> ret ;
-	ret.mThis = Box<UniqueLockLayout>::make () ;
-	return move (ret) ;
+exports Box<UniqueLockLayout ,UniqueLockStorage> UniqueLockHolder::create () {
+	return Box<UniqueLockLayout>::make () ;
 }
 
 exports VFat<UniqueLockHolder> UniqueLockHolder::hold (VREF<UniqueLockLayout> that) {
@@ -516,10 +506,8 @@ public:
 	}
 } ;
 
-exports OfThis<AutoRef<ThreadLayout>> ThreadHolder::create () {
-	OfThis<AutoRef<ThreadLayout>> ret ;
-	ret.mThis = AutoRef<ThreadLayout>::make () ;
-	return move (ret) ;
+exports AutoRef<ThreadLayout> ThreadHolder::create () {
+	return AutoRef<ThreadLayout>::make () ;
 }
 
 exports VFat<ThreadHolder> ThreadHolder::hold (VREF<ThreadLayout> that) {
@@ -538,10 +526,8 @@ struct ProcessLayout {
 	QUAD mProcessTime ;
 } ;
 
-exports OfThis<AutoRef<ProcessLayout>> ProcessHolder::create () {
-	OfThis<AutoRef<ProcessLayout>> ret ;
-	ret.mThis = AutoRef<ProcessLayout>::make () ;
-	return move (ret) ;
+exports AutoRef<ProcessLayout> ProcessHolder::create () {
+	return AutoRef<ProcessLayout>::make () ;
 }
 
 exports VFat<ProcessHolder> ProcessHolder::hold (VREF<ProcessLayout> that) {
@@ -560,10 +546,8 @@ struct LibraryLayout {
 	FLAG mLastError ;
 } ;
 
-exports OfThis<AutoRef<LibraryLayout>> LibraryHolder::create () {
-	OfThis<AutoRef<LibraryLayout>> ret ;
-	ret.mThis = AutoRef<LibraryLayout>::make () ;
-	return move (ret) ;
+exports AutoRef<LibraryLayout> LibraryHolder::create () {
+	return AutoRef<LibraryLayout>::make () ;
 }
 
 exports VFat<LibraryHolder> LibraryHolder::hold (VREF<LibraryLayout> that) {
@@ -596,10 +580,8 @@ public:
 	}
 } ;
 
-exports OfThis<AutoRef<SystemLayout>> SystemHolder::create () {
-	OfThis<AutoRef<SystemLayout>> ret ;
-	ret.mThis = AutoRef<SystemLayout>::make () ;
-	return move (ret) ;
+exports AutoRef<SystemLayout> SystemHolder::create () {
+	return AutoRef<SystemLayout>::make () ;
 }
 
 exports VFat<SystemHolder> SystemHolder::hold (VREF<SystemLayout> that) {
@@ -743,10 +725,8 @@ public:
 	}
 } ;
 
-exports OfThis<SharedRef<RandomLayout>> RandomHolder::create () {
-	OfThis<SharedRef<RandomLayout>> ret ;
-	ret.mThis = SharedRef<RandomLayout>::make () ;
-	return move (ret) ;
+exports SharedRef<RandomLayout> RandomHolder::create () {
+	return SharedRef<RandomLayout>::make () ;
 }
 
 exports VFat<RandomHolder> RandomHolder::hold (VREF<RandomLayout> that) {

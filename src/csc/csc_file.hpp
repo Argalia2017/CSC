@@ -233,7 +233,7 @@ public:
 struct StreamFileLayout ;
 
 struct StreamFileHolder implement Interface {
-	imports OfThis<AutoRef<StreamFileLayout>> create () ;
+	imports AutoRef<StreamFileLayout> create () ;
 	imports VFat<StreamFileHolder> hold (VREF<StreamFileLayout> that) ;
 	imports CFat<StreamFileHolder> hold (CREF<StreamFileLayout> that) ;
 
@@ -300,7 +300,7 @@ public:
 struct StreamFileByteWriterLayout ;
 
 struct StreamFileByteWriterHolder implement Interface {
-	imports OfThis<AutoRef<StreamFileByteWriterLayout>> create () ;
+	imports AutoRef<StreamFileByteWriterLayout> create () ;
 	imports VFat<StreamFileByteWriterHolder> hold (VREF<StreamFileByteWriterLayout> that) ;
 	imports CFat<StreamFileByteWriterHolder> hold (CREF<StreamFileByteWriterLayout> that) ;
 
@@ -334,7 +334,7 @@ public:
 struct StreamFileTextWriterLayout ;
 
 struct StreamFileTextWriterHolder implement Interface {
-	imports OfThis<AutoRef<StreamFileTextWriterLayout>> create () ;
+	imports AutoRef<StreamFileTextWriterLayout> create () ;
 	imports VFat<StreamFileTextWriterHolder> hold (VREF<StreamFileTextWriterLayout> that) ;
 	imports CFat<StreamFileTextWriterHolder> hold (CREF<StreamFileTextWriterLayout> that) ;
 
@@ -368,7 +368,7 @@ public:
 struct BufferFileLayout ;
 
 struct BufferFileHolder implement Interface {
-	imports OfThis<AutoRef<BufferFileLayout>> create () ;
+	imports AutoRef<BufferFileLayout> create () ;
 	imports VFat<BufferFileHolder> hold (VREF<BufferFileLayout> that) ;
 	imports CFat<BufferFileHolder> hold (CREF<BufferFileLayout> that) ;
 
@@ -433,7 +433,7 @@ public:
 struct UartFileLayout ;
 
 struct UartFileHolder implement Interface {
-	imports OfThis<AutoRef<UartFileLayout>> create () ;
+	imports AutoRef<UartFileLayout> create () ;
 	imports VFat<UartFileHolder> hold (VREF<UartFileLayout> that) ;
 	imports CFat<UartFileHolder> hold (CREF<UartFileLayout> that) ;
 

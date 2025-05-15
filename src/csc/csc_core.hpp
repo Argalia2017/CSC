@@ -1745,9 +1745,9 @@ struct OfThis {
 	A mThis ;
 
 public:
-	forceinline operator A () rightvalue {
-		return move (mThis) ;
-	}
+	implicit OfThis () = default ;
+
+	implicit OfThis (RREF<A> that) :mThis (move (that)) {}
 
 	using ITEM = typeof (nullof (A).deref) ;
 

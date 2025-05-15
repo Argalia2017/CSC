@@ -202,10 +202,8 @@ public:
 	}
 } ;
 
-exports OfThis<SharedRef<WorkThreadLayout>> WorkThreadHolder::create () {
-	OfThis<SharedRef<WorkThreadLayout>> ret ;
-	ret.mThis = SharedRef<WorkThreadLayout>::make () ;
-	return move (ret) ;
+exports SharedRef<WorkThreadLayout> WorkThreadHolder::create () {
+	return SharedRef<WorkThreadLayout>::make () ;
 }
 
 exports VFat<WorkThreadHolder> WorkThreadHolder::hold (VREF<WorkThreadLayout> that) {
@@ -471,10 +469,8 @@ public:
 	}
 } ;
 
-exports OfThis<SharedRef<CalcThreadLayout>> CalcThreadHolder::create () {
-	OfThis<SharedRef<CalcThreadLayout>> ret ;
-	ret.mThis = SharedRef<CalcThreadLayout>::make () ;
-	return move (ret) ;
+exports SharedRef<CalcThreadLayout> CalcThreadHolder::create () {
+	return SharedRef<CalcThreadLayout>::make () ;
 }
 
 exports VFat<CalcThreadHolder> CalcThreadHolder::hold (VREF<CalcThreadLayout> that) {
@@ -680,10 +676,8 @@ public:
 	}
 } ;
 
-exports OfThis<SharedRef<PromiseLayout>> PromiseHolder::create () {
-	OfThis<SharedRef<PromiseLayout>> ret ;
-	ret.mThis = SharedRef<PromiseLayout>::make () ;
-	return move (ret) ;
+exports SharedRef<PromiseLayout> PromiseHolder::create () {
+	return SharedRef<PromiseLayout>::make () ;
 }
 
 exports VFat<PromiseHolder> PromiseHolder::hold (VREF<PromiseLayout> that) {

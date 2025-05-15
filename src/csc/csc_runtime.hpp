@@ -29,7 +29,7 @@ struct TimeLayout ;
 struct TimeStorage implement Storage<ENUM<8> ,ENUM<8>> {} ;
 
 struct TimeHolder implement Interface {
-	imports OfThis<Box<TimeLayout ,TimeStorage>> create () ;
+	imports Box<TimeLayout ,TimeStorage> create () ;
 	imports VFat<TimeHolder> hold (VREF<TimeLayout> that) ;
 	imports CFat<TimeHolder> hold (CREF<TimeLayout> that) ;
 
@@ -205,7 +205,7 @@ struct AtomicLayout ;
 struct AtomicStorage implement Storage<SIZE_OF<VAL> ,ENUM<8>> {} ;
 
 struct AtomicHolder implement Interface {
-	imports OfThis<Box<AtomicLayout ,AtomicStorage>> create () ;
+	imports Box<AtomicLayout ,AtomicStorage> create () ;
 	imports VFat<AtomicHolder> hold (VREF<AtomicLayout> that) ;
 	imports CFat<AtomicHolder> hold (CREF<AtomicLayout> that) ;
 
@@ -272,7 +272,7 @@ public:
 struct MutexLayout ;
 
 struct MutexHolder implement Interface {
-	imports OfThis<SharedRef<MutexLayout>> create () ;
+	imports SharedRef<MutexLayout> create () ;
 	imports VFat<MutexHolder> hold (VREF<MutexLayout> that) ;
 	imports CFat<MutexHolder> hold (CREF<MutexLayout> that) ;
 
@@ -343,7 +343,7 @@ struct SharedLockLayout ;
 struct SharedLockStorage implement Storage<ENUM_MUL<SIZE_OF<VAL> ,RANK4> ,ENUM<8>> {} ;
 
 struct SharedLockHolder implement Interface {
-	imports OfThis<Box<SharedLockLayout ,SharedLockStorage>> create () ;
+	imports Box<SharedLockLayout ,SharedLockStorage> create () ;
 	imports VFat<SharedLockHolder> hold (VREF<SharedLockLayout> that) ;
 	imports CFat<SharedLockHolder> hold (CREF<SharedLockLayout> that) ;
 
@@ -379,7 +379,7 @@ struct UniqueLockLayout ;
 struct UniqueLockStorage implement Storage<ENUM_MUL<SIZE_OF<VAL> ,RANK4> ,ENUM<8>> {} ;
 
 struct UniqueLockHolder implement Interface {
-	imports OfThis<Box<UniqueLockLayout ,UniqueLockStorage>> create () ;
+	imports Box<UniqueLockLayout ,UniqueLockStorage> create () ;
 	imports VFat<UniqueLockHolder> hold (VREF<UniqueLockLayout> that) ;
 	imports CFat<UniqueLockHolder> hold (CREF<UniqueLockLayout> that) ;
 
@@ -435,7 +435,7 @@ public:
 struct ThreadLayout ;
 
 struct ThreadHolder implement Interface {
-	imports OfThis<AutoRef<ThreadLayout>> create () ;
+	imports AutoRef<ThreadLayout> create () ;
 	imports VFat<ThreadHolder> hold (VREF<ThreadLayout> that) ;
 	imports CFat<ThreadHolder> hold (CREF<ThreadLayout> that) ;
 
@@ -472,7 +472,7 @@ public:
 struct ProcessLayout ;
 
 struct ProcessHolder implement Interface {
-	imports OfThis<AutoRef<ProcessLayout>> create () ;
+	imports AutoRef<ProcessLayout> create () ;
 	imports VFat<ProcessHolder> hold (VREF<ProcessLayout> that) ;
 	imports CFat<ProcessHolder> hold (CREF<ProcessLayout> that) ;
 
@@ -521,7 +521,7 @@ public:
 struct LibraryLayout ;
 
 struct LibraryHolder implement Interface {
-	imports OfThis<AutoRef<LibraryLayout>> create () ;
+	imports AutoRef<LibraryLayout> create () ;
 	imports VFat<LibraryHolder> hold (VREF<LibraryLayout> that) ;
 	imports CFat<LibraryHolder> hold (CREF<LibraryLayout> that) ;
 
@@ -556,7 +556,7 @@ public:
 struct SystemLayout ;
 
 struct SystemHolder implement Interface {
-	imports OfThis<AutoRef<SystemLayout>> create () ;
+	imports AutoRef<SystemLayout> create () ;
 	imports VFat<SystemHolder> hold (VREF<SystemLayout> that) ;
 	imports CFat<SystemHolder> hold (CREF<SystemLayout> that) ;
 
@@ -586,7 +586,7 @@ public:
 struct RandomLayout ;
 
 struct RandomHolder implement Interface {
-	imports OfThis<SharedRef<RandomLayout>> create () ;
+	imports SharedRef<RandomLayout> create () ;
 	imports VFat<RandomHolder> hold (VREF<RandomLayout> that) ;
 	imports CFat<RandomHolder> hold (CREF<RandomLayout> that) ;
 

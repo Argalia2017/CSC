@@ -1922,10 +1922,8 @@ public:
 	}
 } ;
 
-exports OfThis<SharedRef<CommaLayout>> CommaHolder::create () {
-	OfThis<SharedRef<CommaLayout>> ret ;
-	ret.mThis = SharedRef<CommaLayout>::make () ;
-	return move (ret) ;
+exports SharedRef<CommaLayout> CommaHolder::create () {
+	return SharedRef<CommaLayout>::make () ;
 }
 
 exports VFat<CommaHolder> CommaHolder::hold (VREF<CommaLayout> that) {
@@ -1969,10 +1967,8 @@ public:
 	}
 } ;
 
-exports OfThis<AutoRef<RegexLayout>> RegexHolder::create () {
-	OfThis<AutoRef<RegexLayout>> ret ;
-	ret.mThis = AutoRef<RegexLayout>::make () ;
-	return move (ret) ;
+exports AutoRef<RegexLayout> RegexHolder::create () {
+	return AutoRef<RegexLayout>::make () ;
 }
 
 exports VFat<RegexHolder> RegexHolder::hold (VREF<RegexLayout> that) {

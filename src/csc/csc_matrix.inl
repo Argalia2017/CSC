@@ -1159,10 +1159,8 @@ struct PointCloudKDTreeLayout {
 	Ref<KDTreeKNNSearch> mKNNSearch ;
 } ;
 
-exports OfThis<AutoRef<PointCloudKDTreeLayout>> PointCloudKDTreeHolder::create () {
-	OfThis<AutoRef<PointCloudKDTreeLayout>> ret ;
-	ret.mThis = AutoRef<PointCloudKDTreeLayout>::make () ;
-	return move (ret) ;
+exports AutoRef<PointCloudKDTreeLayout> PointCloudKDTreeHolder::create () {
+	return AutoRef<PointCloudKDTreeLayout>::make () ;
 }
 
 exports VFat<PointCloudKDTreeHolder> PointCloudKDTreeHolder::hold (VREF<PointCloudKDTreeLayout> that) {
