@@ -39,7 +39,7 @@ public:
 		const auto r8x = FLAG (rax.data) ;
 		const auto r9x = r7x * LENGTH (r1x.height) ;
 		const auto r10x = Slice (r8x ,r9x ,r5x) ;
-		RefBufferHolder::hold (ret.mImage)->initialize (r4x ,r10x ,Box<Pin<cv::Mat>>::make ()) ;
+		RefBufferHolder::hold (ret.mImage)->initialize (r4x ,r10x ,Box<cv::Mat>::zeroize ()) ;
 		auto &&rbx = keep[TYPE<Box<cv::Mat>>::expr] (RefBufferHolder::hold (ret.mImage)->raw ()).deref ;
 		assign (rbx ,rax) ;
 		ret.mWidth = LENGTH (r1x.width) ;
@@ -49,19 +49,17 @@ public:
 	}
 
 	ImageLayout make_image (CREF<ImageShape> shape) const override {
-		auto rax = Box<Pin<cv::Mat>>::make () ;
+		auto rax = Box<cv::Mat>::zeroize () ;
 		const auto r1x = CV_MAKE_TYPE (CV_8U ,VAL32 (shape.mStep)) ;
-		auto rbx = cv::Mat (cv::Size (VAL32 (shape.mCX) ,VAL32 (shape.mCY)) ,r1x) ;
-		rax->set (rbx) ;
+		rax.deref = cv::Mat (cv::Size (VAL32 (shape.mCX) ,VAL32 (shape.mCY)) ,r1x) ;
 		return make_image (move (rax)) ;
 	}
 
 	ImageLayout make_image (CREF<ImageShape> shape ,CREF<Clazz> clazz ,CREF<LENGTH> channel) const override {
-		auto rax = Box<Pin<cv::Mat>>::make () ;
+		auto rax = Box<cv::Mat>::zeroize () ;
 		const auto r1x = cvmat_depth_of_clazz (clazz) ;
 		const auto r2x = CV_MAKE_TYPE (VAL32 (r1x) ,VAL32 (channel)) ;
-		auto rbx = cv::Mat (cv::Size (VAL32 (shape.mCX) ,VAL32 (shape.mCY)) ,r2x) ;
-		rax->set (rbx) ;
+		rax.deref = cv::Mat (cv::Size (VAL32 (shape.mCX) ,VAL32 (shape.mCY)) ,r2x) ;
 		return make_image (move (rax)) ;
 	}
 
@@ -113,22 +111,21 @@ public:
 
 	VREF<Pointer> peek_image (VREF<ImageLayout> image) const override {
 		assert (ImageHolder::hold (image)->fixed ()) ;
-		auto &&rax = keep[TYPE<Box<Pin<cv::Mat>>>::expr] (ImageHolder::hold (image)->raw ()) ;
-		return rax.deref ;
+		auto &&rax = keep[TYPE<Box<cv::Mat>>::expr] (ImageHolder::hold (image)->raw ()) ;
+		return Pointer::from (rax.deref) ;
 	}
 
 	CREF<Pointer> peek_image (CREF<ImageLayout> image) const override {
 		assert (ImageHolder::hold (image)->fixed ()) ;
-		auto &&rax = keep[TYPE<Box<Pin<cv::Mat>>>::expr] (ImageHolder::hold (image)->raw ()) ;
-		return rax.deref ;
+		auto &&rax = keep[TYPE<Box<cv::Mat>>::expr] (ImageHolder::hold (image)->raw ()) ;
+		return Pointer::from (rax.deref) ;
 	}
 
 	ImageLayout load_image (CREF<String<STR>> file) const override {
-		auto rax = Box<Pin<cv::Mat>>::make () ;
+		auto rax = Box<cv::Mat>::zeroize () ;
 		const auto r1x = StringProc::stra_from_strs (file) ;
-		auto rbx = cv::imread (r1x.deref ,cv::IMREAD_UNCHANGED) ;
-		assume (!rbx.empty ()) ;
-		rax->set (rbx) ;
+		rax.deref = cv::imread (r1x.deref ,cv::IMREAD_UNCHANGED) ;
+		assume (!rax->empty ()) ;
 		return make_image (move (rax)) ;
 	}
 

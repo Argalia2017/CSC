@@ -1079,6 +1079,12 @@ public:
 		return move (ret) ;
 	}
 
+	static Box zeroize () {
+		Box ret ;
+		BoxHolder::hold (ret)->initialize (BoxUnknownBinder<A> ()) ;
+		return move (ret) ;
+	}
+
 	BOOL exist () const {
 		return BoxHolder::hold (thiz)->exist () ;
 	}
