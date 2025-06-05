@@ -135,7 +135,7 @@ public:
 		self.mDataset->mDimension = r2x ;
 		self.mDataset->mSize = pointcloud.length () ;
 		const auto r4x = nanoflann::KDTreeSingleIndexAdaptorParams () ;
-		self.mKNNSearch = Ref<KDTreeKNNSearch>::make (VAL32 (r2x) ,self.mDataset.deref ,r4x) ;
+		self.mKNNSearch = Ref<KDTreeKNNSearch>::make (VAL32 (r2x) ,self.mDataset.ref ,r4x) ;
 		self.mKNNSearch->buildIndex () ;
 	}
 

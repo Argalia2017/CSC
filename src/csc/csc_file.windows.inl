@@ -548,7 +548,7 @@ public:
 		} ,[&] (VREF<String<STR>> me) {
 			FileProc::erase_file (me) ;
 		}) ;
-		self.mPin.deref.mLockDirectory.add (move (rax)) ;
+		self.mPin.ref.mLockDirectory.add (move (rax)) ;
 	}
 } ;
 
@@ -895,7 +895,7 @@ public:
 		const auto r3x = BUFFERFILE_HEADER_STEP::expr + r1x * self.mHeader->mChunkStep ;
 		INDEX ix = mmap_cache (r3x ,LENGTH (self.mHeader->mChunkStep)) ;
 		const auto r4x = self.mCacheList[ix].mBlock->m1st + LENGTH (r2x) ;
-		inline_memcpy (Pointer::from (item.deref) ,Pointer::make (r4x) ,LENGTH (self.mHeader->mBlockStep)) ;
+		inline_memcpy (Pointer::from (item.ref) ,Pointer::make (r4x) ,LENGTH (self.mHeader->mBlockStep)) ;
 	}
 
 	void write (CREF<INDEX> index ,CREF<RefBuffer<BYTE>> item) override {
@@ -907,7 +907,7 @@ public:
 		const auto r3x = BUFFERFILE_HEADER_STEP::expr + r1x * self.mHeader->mChunkStep ;
 		INDEX ix = mmap_cache (r3x ,LENGTH (self.mHeader->mChunkStep)) ;
 		const auto r4x = self.mCacheList[ix].mBlock->m1st + LENGTH (r2x) ;
-		inline_memcpy (Pointer::make (r4x) ,Pointer::from (item.deref) ,LENGTH (self.mHeader->mBlockStep)) ;
+		inline_memcpy (Pointer::make (r4x) ,Pointer::from (item.ref) ,LENGTH (self.mHeader->mBlockStep)) ;
 	}
 
 	INDEX mmap_cache (CREF<VAL64> index ,CREF<LENGTH> size_) {
@@ -1013,15 +1013,15 @@ private:
 		} ,[&] (VREF<csc_pipe_t> me) {
 			CloseHandle (me) ;
 		}) ;
-		inline_memset (self.mCOMParams.deref) ;
+		inline_memset (self.mCOMParams.ref) ;
 		self.mCOMParams->DCBlength = csc_enum_t (SIZE_OF<DCB>::expr) ;
-		GetCommState (self.mPipe ,(&self.mCOMParams.deref)) ;
+		GetCommState (self.mPipe ,(&self.mCOMParams.ref)) ;
 		self.mCOMParams->BaudRate = csc_enum_t (self.mPortRate) ;
 		self.mCOMParams->ByteSize = 8 ;
 		self.mCOMParams->StopBits = ONESTOPBIT ;
 		self.mCOMParams->Parity = NOPARITY ;
-		SetCommState (self.mPipe ,(&self.mCOMParams.deref)) ;
-		ClearCommError (self.mPipe ,(&self.mCOMError) ,(&self.mCOMStatus.deref)) ;
+		SetCommState (self.mPipe ,(&self.mCOMParams.ref)) ;
+		ClearCommError (self.mPipe ,(&self.mCOMError) ,(&self.mCOMStatus.ref)) ;
 	}
 
 	void read (VREF<RefBuffer<BYTE>> buffer ,CREF<INDEX> offset ,CREF<LENGTH> size_) override {
@@ -1220,7 +1220,7 @@ public:
 	void log_file () {
 		if (self.mLogFile.length () == 0)
 			return ;
-		const auto r1x = FLAG (self.mLogBuffer.deref) ;
+		const auto r1x = FLAG (self.mLogBuffer.ref) ;
 		const auto r2x = (self.mLogWriter.length () - 1) * SIZE_OF<STR>::expr ;
 		self.mLogStreamFile.write (RefBuffer<BYTE>::reference (r1x ,r2x)) ;
 	}

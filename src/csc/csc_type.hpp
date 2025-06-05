@@ -1218,7 +1218,7 @@ trait IS_VIRTUAL_HELP<A ,B ,OTHERWISE> {
 } ;
 
 template <class A ,class B>
-trait IS_VIRTUAL_HELP<A ,B ,REQUIRE<IS_SAME<A ,typeof (nullof (B).deref)>>> {
+trait IS_VIRTUAL_HELP<A ,B ,REQUIRE<IS_SAME<A ,typeof (nullof (B).ref)>>> {
 	using RET = ENUM_TRUE ;
 } ;
 

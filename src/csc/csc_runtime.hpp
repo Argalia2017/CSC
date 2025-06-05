@@ -711,7 +711,7 @@ public:
 			}
 			auto &&rbx = keep[TYPE<A>::expr] (Pointer::make (rax)) ;
 			return Ref<A>::reference (rbx) ;
-		}).deref ;
+		}).ref ;
 	}
 } ;
 
@@ -792,7 +792,7 @@ public:
 
 	A fetch () const {
 		auto rax = GlobalHolder::hold (thiz)->fetch () ;
-		return move (rax.rebind (TYPE<A>::expr).deref) ;
+		return move (rax.rebind (TYPE<A>::expr).ref) ;
 	}
 
 	forceinline operator A () const {

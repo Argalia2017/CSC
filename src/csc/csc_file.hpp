@@ -305,7 +305,7 @@ struct StreamFileByteWriterHolder implement Interface {
 	imports CFat<StreamFileByteWriterHolder> hold (CREF<StreamFileByteWriterLayout> that) ;
 
 	virtual void initialize (CREF<String<STR>> file) = 0 ;
-	virtual VREF<ByteWriter> deref_m () leftvalue = 0 ;
+	virtual VREF<ByteWriter> ref_m () leftvalue = 0 ;
 	virtual void flush () = 0 ;
 } ;
 
@@ -318,12 +318,12 @@ public:
 		StreamFileByteWriterHolder::hold (thiz)->initialize (file) ;
 	}
 
-	VREF<ByteWriter> deref_m () leftvalue {
-		return StreamFileByteWriterHolder::hold (thiz)->deref ;
+	VREF<ByteWriter> ref_m () leftvalue {
+		return StreamFileByteWriterHolder::hold (thiz)->ref ;
 	}
 
 	forceinline operator VREF<ByteWriter> () leftvalue {
-		return deref ;
+		return ref ;
 	}
 
 	void flush () {
@@ -339,7 +339,7 @@ struct StreamFileTextWriterHolder implement Interface {
 	imports CFat<StreamFileTextWriterHolder> hold (CREF<StreamFileTextWriterLayout> that) ;
 
 	virtual void initialize (CREF<String<STR>> file) = 0 ;
-	virtual VREF<TextWriter> deref_m () leftvalue = 0 ;
+	virtual VREF<TextWriter> ref_m () leftvalue = 0 ;
 	virtual void flush () = 0 ;
 } ;
 
@@ -352,12 +352,12 @@ public:
 		StreamFileTextWriterHolder::hold (thiz)->initialize (file) ;
 	}
 
-	VREF<TextWriter> deref_m () leftvalue {
-		return StreamFileTextWriterHolder::hold (thiz)->deref ;
+	VREF<TextWriter> ref_m () leftvalue {
+		return StreamFileTextWriterHolder::hold (thiz)->ref ;
 	}
 
 	forceinline operator VREF<TextWriter> () leftvalue {
-		return deref ;
+		return ref ;
 	}
 
 	void flush () {

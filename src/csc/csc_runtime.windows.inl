@@ -227,7 +227,7 @@ public:
 			SingletonRoot ret ;
 			ret.mPin.pin (ret) ;
 			return move (ret) ;
-		}).mPin.deref ;
+		}).mPin.ref ;
 	}
 
 	void sync_local () {
@@ -290,7 +290,7 @@ public:
 		} ,[&] (VREF<csc_handle_t> me) {
 			UnmapViewOfFile (me) ;
 		}) ;
-		const auto r3x = FLAG (r2x.deref) ;
+		const auto r3x = FLAG (r2x.ref) ;
 		auto rax = SingletonLocal () ;
 		inline_memcpy (Pointer::from (rax) ,Pointer::make (r3x) ,SIZE_OF<SingletonLocal>::expr) ;
 		assume (rax.mReserve1 == QUAD (self.mUid)) ;
@@ -314,7 +314,7 @@ public:
 		} ,[&] (VREF<csc_handle_t> me) {
 			UnmapViewOfFile (me) ;
 		}) ;
-		const auto r3x = FLAG (r2x.deref) ;
+		const auto r3x = FLAG (r2x.ref) ;
 		auto rax = self.mLocal ;
 		assume (rax.mReserve1 == QUAD (self.mUid)) ;
 		assume (rax.mAddress1 != QUAD (0X00)) ;
@@ -388,7 +388,7 @@ public:
 		assert (layout != NONE) ;
 		assume (self.mRoot.exist ()) ;
 		Scope<Mutex> anonymous (self.mRoot->mMutex) ;
-		self.mRoot->mPin.deref.mClazzSet.add (clazz ,layout) ;
+		self.mRoot->mPin.ref.mClazzSet.add (clazz ,layout) ;
 	}
 } ;
 

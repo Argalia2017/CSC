@@ -1067,7 +1067,7 @@ public:
 		IntegerLayout ret ;
 		const auto r1x = inline_max (self.mWidth + that.mWidth - 2 ,1) ;
 		IntegerHolder::hold (ret)->initialize (r1x) ;
-		inline_memset (Pointer::from (ret.mInteger.deref) ,r1x) ;
+		inline_memset (Pointer::from (ret.mInteger.ref) ,r1x) ;
 		for (auto &&i : iter (0 ,r1x)) {
 			auto rax = VAL32 (0) ;
 			for (auto &&j : iter (0 ,r1x)) {
@@ -1201,9 +1201,9 @@ public:
 		const auto r1x = inline_max (dividend.mWidth ,divisor.mWidth) ;
 		const auto r2x = r1x + 1 ;
 		IntegerHolder::hold (quotient)->initialize (r2x) ;
-		inline_memset (Pointer::from (quotient.mInteger.deref) ,r2x) ;
+		inline_memset (Pointer::from (quotient.mInteger.ref) ,r2x) ;
 		IntegerHolder::hold (remainder)->initialize (r2x) ;
-		inline_memset (Pointer::from (remainder.mInteger.deref) ,r2x) ;
+		inline_memset (Pointer::from (remainder.mInteger.ref) ,r2x) ;
 		for (auto &&i : iter (0 ,r1x)) {
 			INDEX ix = r1x - 1 - i ;
 			for (auto &&j : iter (0 ,8)) {
@@ -1407,7 +1407,7 @@ public:
 		self.mThis->mFX = item ;
 		self.mThis->mEX = 0 ;
 		self.mThis->mDX = RefBuffer<FLT64> (size_) ;
-		inline_memset (Pointer::from (self.mThis->mDX.deref) ,self.mThis->mDX.size () * SIZE_OF<FLT64>::expr) ;
+		inline_memset (Pointer::from (self.mThis->mDX.ref) ,self.mThis->mDX.size () * SIZE_OF<FLT64>::expr) ;
 		self.mThis->mSlot = NONE ;
 	}
 
@@ -1422,7 +1422,7 @@ public:
 			assume (node.mSlot < rax.rank ()) ;
 			node.mFX = rax[node.mSlot] ;
 			node.mEX = 0 ;
-			inline_memset (Pointer::from (node.mDX.deref) ,node.mDX.size () * SIZE_OF<FLT64>::expr) ;
+			inline_memset (Pointer::from (node.mDX.ref) ,node.mDX.size () * SIZE_OF<FLT64>::expr) ;
 			node.mDX[node.mSlot] = 1 ;
 			check_fx (node) ;
 		}) ;
@@ -1451,7 +1451,7 @@ public:
 			return ;
 		once (node->mFake ,params) ;
 		once (node->mThat ,params) ;
-		node->mEval (node.deref ,params) ;
+		node->mEval (node.ref ,params) ;
 	}
 
 	JetLayout sadd (CREF<JetLayout> that) const override {
@@ -1471,10 +1471,10 @@ public:
 			if ifdo (act) {
 				if (node.mFake->mEX < node.mThat->mEX)
 					discard ;
-				copy_node (node ,node.mFake.deref ,+1) ;
+				copy_node (node ,node.mFake.ref ,+1) ;
 			}
 			if ifdo (act) {
-				copy_node (node ,node.mThat.deref ,+1) ;
+				copy_node (node ,node.mThat.ref ,+1) ;
 			}
 			check_fx (node) ;
 		}) ;
@@ -1500,10 +1500,10 @@ public:
 			if ifdo (act) {
 				if (node.mFake->mEX < node.mThat->mEX)
 					discard ;
-				copy_node (node ,node.mFake.deref ,+1) ;
+				copy_node (node ,node.mFake.ref ,+1) ;
 			}
 			if ifdo (act) {
-				copy_node (node ,node.mThat.deref ,-1) ;
+				copy_node (node ,node.mThat.ref ,-1) ;
 			}
 			check_fx (node) ;
 		}) ;
@@ -1637,10 +1637,10 @@ public:
 			if ifdo (act) {
 				if (node.mFake->mEX < node.mThat->mEX)
 					discard ;
-				copy_node (node ,node.mFake.deref ,+1) ;
+				copy_node (node ,node.mFake.ref ,+1) ;
 			}
 			if ifdo (act) {
-				copy_node (node ,node.mThat.deref ,+1) ;
+				copy_node (node ,node.mThat.ref ,+1) ;
 			}
 			check_fx (node) ;
 		}) ;
@@ -1657,10 +1657,10 @@ public:
 			if ifdo (act) {
 				if (node.mFake->mFX >= 0)
 					discard ;
-				copy_node (node ,node.mFake.deref ,+1) ;
+				copy_node (node ,node.mFake.ref ,+1) ;
 			}
 			if ifdo (act) {
-				copy_node (node ,node.mFake.deref ,-1) ;
+				copy_node (node ,node.mFake.ref ,-1) ;
 			}
 		}) ;
 		ret.mThis->mFake = self.mThis ;
@@ -1671,7 +1671,7 @@ public:
 		JetLayout ret ;
 		JetHolder::hold (ret)->initialize (self.mThis->mDX.size () ,0) ;
 		ret.mThis->mEval = JetEvalFunction ([] (VREF<JetNode> node ,CREF<WrapperLayout> params) {
-			copy_node (node ,node.mFake.deref ,-1) ;
+			copy_node (node ,node.mFake.ref ,-1) ;
 		}) ;
 		ret.mThis->mFake = self.mThis ;
 		return move (ret) ;
@@ -1834,7 +1834,7 @@ public:
 				discard ;
 			node.mFX = 1 ;
 			node.mEX-- ;
-			inline_memset (Pointer::from (node.mDX.deref) ,node.mDX.size () * SIZE_OF<FLT64>::expr) ;
+			inline_memset (Pointer::from (node.mDX.ref) ,node.mDX.size () * SIZE_OF<FLT64>::expr) ;
 		}
 		if ifdo (act) {
 			const auto r1x = 1 / node.mFX ;
@@ -1842,7 +1842,7 @@ public:
 				discard ;
 			node.mFX = 1 ;
 			node.mEX++ ;
-			inline_memset (Pointer::from (node.mDX.deref) ,node.mDX.size () * SIZE_OF<FLT64>::expr) ;
+			inline_memset (Pointer::from (node.mDX.ref) ,node.mDX.size () * SIZE_OF<FLT64>::expr) ;
 		}
 	}
 } ;

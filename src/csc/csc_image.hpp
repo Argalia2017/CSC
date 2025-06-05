@@ -409,8 +409,8 @@ struct TensorHolder implement Interface {
 	virtual TensorLayout recast (CREF<Just<TensorDataType>> type_) = 0 ;
 	virtual void reset () = 0 ;
 	virtual void reset (CREF<LENGTH> cx_ ,CREF<LENGTH> cy_ ,CREF<LENGTH> cz_ ,CREF<LENGTH> cw_) = 0 ;
-	virtual VREF<Pointer> deref_m () leftvalue = 0 ;
-	virtual CREF<Pointer> deref_m () const leftvalue = 0 ;
+	virtual VREF<Pointer> ref_m () leftvalue = 0 ;
+	virtual CREF<Pointer> ref_m () const leftvalue = 0 ;
 	virtual Ref<RefBuffer<BYTE>> borrow () leftvalue = 0 ;
 	virtual Ref<RefBuffer<BYTE>> borrow () const leftvalue = 0 ;
 } ;
@@ -474,12 +474,12 @@ public:
 		return TensorHolder::hold (thiz)->reset (cx_ ,cy_ ,cz_ ,cw_) ;
 	}
 
-	VREF<ARR<STRA>> deref_m () leftvalue {
-		return TensorHolder::hold (thiz)->deref ;
+	VREF<ARR<STRA>> ref_m () leftvalue {
+		return TensorHolder::hold (thiz)->ref ;
 	}
 
-	CREF<ARR<STRA>> deref_m () const leftvalue {
-		return TensorHolder::hold (thiz)->deref ;
+	CREF<ARR<STRA>> ref_m () const leftvalue {
+		return TensorHolder::hold (thiz)->ref ;
 	}
 
 	Ref<RefBuffer<BYTE>> borrow () leftvalue {

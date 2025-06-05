@@ -373,12 +373,12 @@ public:
 		self.mSW = self.mSZ * self.mCZ ;
 	}
 
-	VREF<Pointer> deref_m () leftvalue override {
-		return RefBufferHolder::hold (self.mTensor)->deref ;
+	VREF<Pointer> ref_m () leftvalue override {
+		return RefBufferHolder::hold (self.mTensor)->ref ;
 	}
 
-	CREF<Pointer> deref_m () const leftvalue override {
-		return RefBufferHolder::hold (self.mTensor)->deref ;
+	CREF<Pointer> ref_m () const leftvalue override {
+		return RefBufferHolder::hold (self.mTensor)->ref ;
 	}
 
 	Ref<RefBuffer<BYTE>> borrow () leftvalue override {

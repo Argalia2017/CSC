@@ -732,12 +732,12 @@ public:
 		mLayout = address (that) ;
 	}
 
-	VREF<A> deref_m () const {
+	VREF<A> ref_m () const {
 		return Pointer::from (const_cast<VREF<VFat>> (thiz)) ;
 	}
 
 	forceinline PTR<VREF<A>> operator-> () const {
-		return (&deref) ;
+		return (&ref) ;
 	}
 } ;
 
@@ -764,12 +764,12 @@ public:
 		mLayout = address (that) ;
 	}
 
-	CREF<A> deref_m () const {
+	CREF<A> ref_m () const {
 		return Pointer::from (const_cast<CREF<CFat>> (thiz)) ;
 	}
 
 	forceinline PTR<CREF<A>> operator-> () const {
-		return (&deref) ;
+		return (&ref) ;
 	}
 } ;
 
@@ -791,12 +791,12 @@ public:
 		mLayout = ZERO ;
 	}
 
-	CREF<A> deref_m () const {
+	CREF<A> ref_m () const {
 		return Pointer::from (const_cast<CREF<RFat>> (thiz)) ;
 	}
 
 	forceinline PTR<CREF<A>> operator-> () const {
-		return (&deref) ;
+		return (&ref) ;
 	}
 } ;
 
@@ -1028,8 +1028,8 @@ struct BoxHolder implement Interface {
 	virtual void destroy () = 0 ;
 	virtual BOOL exist () const = 0 ;
 	virtual Unknown unknown () const = 0 ;
-	virtual VREF<Pointer> deref_m () leftvalue = 0 ;
-	virtual CREF<Pointer> deref_m () const leftvalue = 0 ;
+	virtual VREF<Pointer> ref_m () leftvalue = 0 ;
+	virtual CREF<Pointer> ref_m () const leftvalue = 0 ;
 	virtual void remake (CREF<Unknown> holder) = 0 ;
 	virtual void acquire (CREF<BoxLayout> that) = 0 ;
 	virtual void release () = 0 ;
@@ -1101,20 +1101,20 @@ public:
 		return BoxHolder::hold (thiz)->unknown () ;
 	}
 
-	VREF<A> deref_m () leftvalue {
-		return BoxHolder::hold (thiz)->deref ;
+	VREF<A> ref_m () leftvalue {
+		return BoxHolder::hold (thiz)->ref ;
 	}
 
 	forceinline PTR<VREF<A>> operator-> () leftvalue {
-		return (&deref) ;
+		return (&ref) ;
 	}
 
-	CREF<A> deref_m () const leftvalue {
-		return BoxHolder::hold (thiz)->deref ;
+	CREF<A> ref_m () const leftvalue {
+		return BoxHolder::hold (thiz)->ref ;
 	}
 
 	forceinline PTR<CREF<A>> operator-> () const leftvalue {
-		return (&deref) ;
+		return (&ref) ;
 	}
 
 	template <class...ARG1>
@@ -1171,13 +1171,13 @@ public:
 
 	}
 
-	VREF<A> deref_m () const leftvalue {
+	VREF<A> ref_m () const leftvalue {
 		const auto r1x = address (thiz) + mOffset ;
 		return Pointer::make (r1x) ;
 	}
 
 	forceinline PTR<VREF<A>> operator-> () const leftvalue {
-		return (&deref) ;
+		return (&ref) ;
 	}
 } ;
 
@@ -1217,8 +1217,8 @@ struct RefHolder implement Interface {
 	virtual void destroy () = 0 ;
 	virtual BOOL exist () const = 0 ;
 	virtual Unknown unknown () const = 0 ;
-	virtual VREF<Pointer> deref_m () leftvalue = 0 ;
-	virtual CREF<Pointer> deref_m () const leftvalue = 0 ;
+	virtual VREF<Pointer> ref_m () leftvalue = 0 ;
+	virtual CREF<Pointer> ref_m () const leftvalue = 0 ;
 	virtual BOOL exclusive () const = 0 ;
 } ;
 
@@ -1309,20 +1309,20 @@ public:
 		return RefHolder::hold (thiz)->unknown () ;
 	}
 
-	VREF<A> deref_m () leftvalue {
-		return RefHolder::hold (thiz)->deref ;
+	VREF<A> ref_m () leftvalue {
+		return RefHolder::hold (thiz)->ref ;
 	}
 
 	forceinline PTR<VREF<A>> operator-> () leftvalue {
-		return (&deref) ;
+		return (&ref) ;
 	}
 
-	CREF<A> deref_m () const leftvalue {
-		return RefHolder::hold (thiz)->deref ;
+	CREF<A> ref_m () const leftvalue {
+		return RefHolder::hold (thiz)->ref ;
 	}
 
 	forceinline PTR<CREF<A>> operator-> () const leftvalue {
-		return (&deref) ;
+		return (&ref) ;
 	}
 
 	BOOL exclusive () const {
@@ -1567,14 +1567,14 @@ public:
 
 	implicit OfThis (RREF<A> that) :mThis (move (that)) {}
 
-	using ITEM = typeof (nullof (A).deref) ;
+	using ITEM = typeof (nullof (A).ref) ;
 
-	VREF<ITEM> deref_m () const leftvalue {
-		return const_cast<VREF<ITEM>> (mThis.deref) ;
+	VREF<ITEM> ref_m () const leftvalue {
+		return const_cast<VREF<ITEM>> (mThis.ref) ;
 	}
 
 	forceinline operator VREF<ITEM> () const leftvalue {
-		return deref ;
+		return ref ;
 	}
 } ;
 
@@ -1612,7 +1612,7 @@ inline VREF<ExternalLayout> External<A ,B>::root_ptr () {
 		ExternalLayout ret ;
 		ret.mPin.pin (ret) ;
 		return move (ret) ;
-	}).mPin.deref ;
+	}).mPin.ref ;
 }
 
 struct ReflectClone implement Interface {

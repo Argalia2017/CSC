@@ -102,7 +102,7 @@ public:
 		}) ;
 	}
 
-	VREF<ByteWriter> deref_m () leftvalue override {
+	VREF<ByteWriter> ref_m () leftvalue override {
 		return self.mFileWriter ;
 	}
 
@@ -110,7 +110,7 @@ public:
 		const auto r1x = self.mFileWriter.length () ;
 		if (r1x == 0)
 			return ;
-		const auto r2x = FLAG (self.mFileBuffer.deref) ;
+		const auto r2x = FLAG (self.mFileBuffer.ref) ;
 		self.mStreamFile.write (RefBuffer<BYTE>::reference (r2x ,r1x)) ;
 		self.mFileWriter.reset () ;
 		self.mStreamFile.flush () ;
@@ -160,7 +160,7 @@ public:
 		}) ;
 	}
 
-	VREF<TextWriter> deref_m () leftvalue override {
+	VREF<TextWriter> ref_m () leftvalue override {
 		return self.mFileWriter ;
 	}
 
@@ -168,7 +168,7 @@ public:
 		const auto r1x = self.mFileWriter.length () ;
 		if (r1x == 0)
 			return ;
-		const auto r2x = FLAG (self.mFileBuffer.deref) ;
+		const auto r2x = FLAG (self.mFileBuffer.ref) ;
 		self.mStreamFile.write (RefBuffer<BYTE>::reference (r2x ,r1x)) ;
 		self.mFileWriter.reset () ;
 		self.mStreamFile.flush () ;

@@ -86,7 +86,7 @@ struct FUNCTION_string_stra_from_strw {
 		auto rax = mbstate_t () ;
 		inline_memset (rax) ;
 		uselocale (loc) ;
-		auto rbx = src.deref ;
+		auto rbx = src.ref ;
 		const auto r1x = LENGTH (wcsrtombs (dst ,(&rbx) ,dst.size () ,(&rax))) ;
 		assume (r1x >= 0) ;
 		dst.trunc (r1x) ;
@@ -98,7 +98,7 @@ struct FUNCTION_string_strw_from_stra {
 		auto rax = mbstate_t () ;
 		inline_memset (rax) ;
 		uselocale (loc) ;
-		auto rbx = src.deref ;
+		auto rbx = src.ref ;
 		const auto r1x = LENGTH (mbsrtowcs (dst ,(&rbx) ,dst.size () ,(&rax))) ;
 		assume (r1x >= 0) ;
 		dst.trunc (r1x) ;
@@ -871,7 +871,7 @@ public:
 		while (TRUE) {
 			if (mDeque.full ())
 				break ;
-			mTextReader.deref >> mTop ;
+			mTextReader.ref >> mTop ;
 			mDeque.add (mTop) ;
 		}
 	}
@@ -889,13 +889,13 @@ public:
 	template <class ARG1>
 	void read (XREF<ARG1> item) {
 		mTextReader->reset (mBackup) ;
-		mTextReader.deref >> item ;
+		mTextReader.ref >> item ;
 		mBackup = mTextReader->backup () ;
 		mDeque.clear () ;
 		while (TRUE) {
 			if (mDeque.full ())
 				break ;
-			mTextReader.deref >> mTop ;
+			mTextReader.ref >> mTop ;
 			mDeque.add (mTop) ;
 		}
 	}
@@ -907,7 +907,7 @@ public:
 	}
 
 	void next () {
-		mTextReader.deref >> mTop ;
+		mTextReader.ref >> mTop ;
 		if ifdo (TRUE) {
 			if (mTop == STRU32 (0X00))
 				discard ;
@@ -940,12 +940,12 @@ public:
 	}
 
 	void enter () const {
-		mThat.mPin.deref.mCounter++ ;
+		mThat.mPin.ref.mCounter++ ;
 		assume (mThat.mCounter < SCOPECOUNTER_MAX_DEPTH::expr) ;
 	}
 
 	void leave () const {
-		mThat.mPin.deref.mCounter-- ;
+		mThat.mPin.ref.mCounter-- ;
 		assume (mThat.mCounter >= ZERO) ;
 	}
 } ;

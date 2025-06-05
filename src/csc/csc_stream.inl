@@ -288,7 +288,7 @@ public:
 		if ifdo (act) {
 			if (self.mRead >= self.mWrite)
 				discard ;
-			item = self.mStream.deref[self.mRead] ;
+			item = self.mStream.ref[self.mRead] ;
 			self.mRead++ ;
 		}
 		if ifdo (act) {
@@ -711,7 +711,7 @@ public:
 				discard ;
 			if (self.mRead >= self.mWrite)
 				discard ;
-			auto &&rax = keep[TYPE<RefBuffer<STRU8>>::expr] (Pointer::from (self.mStream.deref)) ;
+			auto &&rax = keep[TYPE<RefBuffer<STRU8>>::expr] (Pointer::from (self.mStream.ref)) ;
 			item = rax[self.mRead] ;
 			self.mRead++ ;
 		}
@@ -720,7 +720,7 @@ public:
 				discard ;
 			if (self.mRead >= self.mWrite)
 				discard ;
-			auto &&rax = keep[TYPE<RefBuffer<STRU16>>::expr] (Pointer::from (self.mStream.deref)) ;
+			auto &&rax = keep[TYPE<RefBuffer<STRU16>>::expr] (Pointer::from (self.mStream.ref)) ;
 			item = rax[self.mRead] ;
 			self.mRead++ ;
 		}
@@ -729,7 +729,7 @@ public:
 				discard ;
 			if (self.mRead >= self.mWrite)
 				discard ;
-			auto &&rax = keep[TYPE<RefBuffer<STRU32>>::expr] (Pointer::from (self.mStream.deref)) ;
+			auto &&rax = keep[TYPE<RefBuffer<STRU32>>::expr] (Pointer::from (self.mStream.ref)) ;
 			item = rax[self.mRead] ;
 			self.mRead++ ;
 		}
@@ -943,7 +943,7 @@ public:
 		if ifdo (act) {
 			if (self.mWrite >= self.mRead)
 				discard ;
-			auto &&rax = keep[TYPE<RefBuffer<BYTE>>::expr] (Pointer::from (self.mStream.deref)) ;
+			auto &&rax = keep[TYPE<RefBuffer<BYTE>>::expr] (Pointer::from (self.mStream.ref)) ;
 			rax[self.mWrite] = item ;
 			self.mWrite++ ;
 		}
@@ -1434,7 +1434,7 @@ public:
 				discard ;
 			if (self.mWrite >= self.mRead)
 				discard ;
-			auto &&rax = keep[TYPE<RefBuffer<STRU8>>::expr] (Pointer::from (self.mStream.deref)) ;
+			auto &&rax = keep[TYPE<RefBuffer<STRU8>>::expr] (Pointer::from (self.mStream.ref)) ;
 			rax[self.mWrite] = STRU8 (item) ;
 			self.mWrite++ ;
 		}
@@ -1443,7 +1443,7 @@ public:
 				discard ;
 			if (self.mWrite >= self.mRead)
 				discard ;
-			auto &&rax = keep[TYPE<RefBuffer<STRU16>>::expr] (Pointer::from (self.mStream.deref)) ;
+			auto &&rax = keep[TYPE<RefBuffer<STRU16>>::expr] (Pointer::from (self.mStream.ref)) ;
 			rax[self.mWrite] = STRU16 (item) ;
 			self.mWrite++ ;
 		}
@@ -1452,7 +1452,7 @@ public:
 				discard ;
 			if (self.mWrite >= self.mRead)
 				discard ;
-			auto &&rax = keep[TYPE<RefBuffer<STRU32>>::expr] (Pointer::from (self.mStream.deref)) ;
+			auto &&rax = keep[TYPE<RefBuffer<STRU32>>::expr] (Pointer::from (self.mStream.ref)) ;
 			rax[self.mWrite] = STRU32 (item) ;
 			self.mWrite++ ;
 		}
@@ -1616,10 +1616,10 @@ public:
 		INDEX ix = 0 ;
 		for (auto &&i : iter (0 ,params.mRank)) {
 			auto rbx = rax[i] ;
-			self.mPin.deref.mParams[ix] = rbx ;
+			self.mPin.ref.mParams[ix] = rbx ;
 			ix++ ;
 		}
-		self.mPin.deref.mWrite = ix ;
+		self.mPin.ref.mWrite = ix ;
 	}
 } ;
 
@@ -1945,7 +1945,7 @@ public:
 
 	INDEX search (RREF<Ref<String<STR>>> text ,CREF<INDEX> offset) override {
 		self.mText = move (text) ;
-		const auto r1x = (&self.mText.deref[offset]) ;
+		const auto r1x = (&self.mText.ref[offset]) ;
 		const auto r2x = std::regex_search (r1x ,self.mMatch ,self.mRegex) ;
 		if (!r2x)
 			return NONE ;

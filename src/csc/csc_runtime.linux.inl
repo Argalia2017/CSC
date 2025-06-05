@@ -103,7 +103,7 @@ public:
 			rax.open_r () ;
 			auto rbx = ret.borrow () ;
 			rax.set_short_read (TRUE) ;
-			rax.read (rbx.deref) ;
+			rax.read (rbx.ref) ;
 		} catch (CREF<Exception> e) {
 			noop (e) ;
 			ret.clear () ;
@@ -268,7 +268,7 @@ public:
 			SingletonRoot ret ;
 			ret.mPin.pin (ret) ;
 			return move (ret) ;
-		}).mPin.deref ;
+		}).mPin.ref ;
 	}
 
 	void sync_local () {
@@ -309,7 +309,7 @@ public:
 			assume (r3x != NONE) ;
 			const auto r4x = ftruncate (r3x ,SIZE_OF<SingletonLocal>::expr) ;
 			assume (r4x == 0) ;
-			me = csc_handle_t (self.mName.deref) ;
+			me = csc_handle_t (self.mName.ref) ;
 		} ,[&] (VREF<csc_handle_t> me) {
 			shm_unlink (DEF<const char *> (me)) ;
 		}) ;
@@ -335,7 +335,7 @@ public:
 		} ,[&] (VREF<csc_handle_t> me) {
 			munmap (me ,SIZE_OF<SingletonLocal>::expr) ;
 		}) ;
-		const auto r3x = FLAG (r2x.deref) ;
+		const auto r3x = FLAG (r2x.ref) ;
 		auto rax = SingletonLocal () ;
 		inline_memcpy (Pointer::from (rax) ,Pointer::make (r3x) ,SIZE_OF<SingletonLocal>::expr) ;
 		assume (rax.mReserve1 == QUAD (self.mUid)) ;
@@ -360,7 +360,7 @@ public:
 		} ,[&] (VREF<csc_handle_t> me) {
 			munmap (me ,SIZE_OF<SingletonLocal>::expr) ;
 		}) ;
-		const auto r3x = FLAG (r2x.deref) ;
+		const auto r3x = FLAG (r2x.ref) ;
 		auto rax = self.mLocal ;
 		assume (rax.mReserve1 == QUAD (self.mUid)) ;
 		assume (rax.mAddress1 != QUAD (0X00)) ;

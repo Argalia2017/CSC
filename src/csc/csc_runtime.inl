@@ -197,28 +197,28 @@ public:
 	}
 
 	void store (CREF<VAL> item) const override {
-		return self.mPin.deref.mAtomic.store (item ,std::memory_order_relaxed) ;
+		return self.mPin.ref.mAtomic.store (item ,std::memory_order_relaxed) ;
 	}
 
 	VAL exchange (CREF<VAL> item) const override {
-		return self.mPin.deref.mAtomic.exchange (item ,std::memory_order_relaxed) ;
+		return self.mPin.ref.mAtomic.exchange (item ,std::memory_order_relaxed) ;
 	}
 
 	BOOL change (VREF<VAL> expect ,CREF<VAL> item) const override {
-		return self.mPin.deref.mAtomic.compare_exchange_weak (expect ,item ,std::memory_order_relaxed) ;
+		return self.mPin.ref.mAtomic.compare_exchange_weak (expect ,item ,std::memory_order_relaxed) ;
 	}
 
 	void replace (CREF<VAL> expect ,CREF<VAL> item) const override {
 		auto rax = expect ;
-		self.mPin.deref.mAtomic.compare_exchange_strong (rax ,item ,std::memory_order_relaxed) ;
+		self.mPin.ref.mAtomic.compare_exchange_strong (rax ,item ,std::memory_order_relaxed) ;
 	}
 
 	void increase () const override {
-		self.mPin.deref.mAtomic.fetch_add (1 ,std::memory_order_relaxed) ;
+		self.mPin.ref.mAtomic.fetch_add (1 ,std::memory_order_relaxed) ;
 	}
 
 	void decrease () const override {
-		self.mPin.deref.mAtomic.fetch_sub (1 ,std::memory_order_relaxed) ;
+		self.mPin.ref.mAtomic.fetch_sub (1 ,std::memory_order_relaxed) ;
 	}
 } ;
 
@@ -357,7 +357,7 @@ public:
 	}
 
 	static VREF<MutexLayout> ptr (CREF<SharedLockLayout> that) {
-		return Pointer::make (address (that.mMutex.deref)) ;
+		return Pointer::make (address (that.mMutex.ref)) ;
 	}
 
 	void shared_enter () {
@@ -423,11 +423,11 @@ public:
 		self.mMutex = mutex.borrow () ;
 		assert (self.mMutex.exclusive ()) ;
 		assert (ptr (self).mType == MutexType::Unique) ;
-		self.mLock = std::unique_lock<std::mutex> (ptr (self).mBasic.deref) ;
+		self.mLock = std::unique_lock<std::mutex> (ptr (self).mBasic.ref) ;
 	}
 
 	static VREF<MutexLayout> ptr (CREF<UniqueLockLayout> that) {
-		return Pointer::make (address (that.mMutex.deref)) ;
+		return Pointer::make (address (that.mMutex.ref)) ;
 	}
 
 	void wait () override {
@@ -446,7 +446,7 @@ public:
 	void yield () override {
 		self.mLock = std::unique_lock<std::mutex> () ;
 		std::this_thread::yield () ;
-		self.mLock = std::unique_lock<std::mutex> (ptr (self).mBasic.deref) ;
+		self.mLock = std::unique_lock<std::mutex> (ptr (self).mBasic.ref) ;
 	}
 } ;
 
@@ -492,7 +492,7 @@ public:
 		auto &&rax = self ;
 		self.mThread = Box<std::thread>::make ([&] () {
 			rax.mUid = RuntimeProc::thread_uid () ;
-			rax.mExecutor.deref->friend_execute (rax.mSlot) ;
+			rax.mExecutor.ref->friend_execute (rax.mSlot) ;
 		}) ;
 	}
 
@@ -612,7 +612,7 @@ public:
 	void initialize (CREF<FLAG> seed) override {
 		self.mSeed = seed ;
 		self.mRandom.remake () ;
-		self.mRandom.deref = std::mt19937_64 (seed) ;
+		self.mRandom.ref = std::mt19937_64 (seed) ;
 		self.mNormal.mOdd = FALSE ;
 	}
 
@@ -621,7 +621,7 @@ public:
 	}
 
 	QUAD random_byte () {
-		return QUAD (self.mRandom.deref ()) ;
+		return QUAD (self.mRandom.ref ()) ;
 	}
 
 	VAL32 random_value (CREF<VAL32> min_ ,CREF<VAL32> max_) override {
@@ -853,14 +853,14 @@ public:
 		const auto r1x = Unknown (self.mThis->mGlobalList[ix].mHolder) ;
 		AutoRef<Pointer> ret = AutoRef<Pointer> (r1x) ;
 		const auto r2x = RFat<ReflectClone> (r1x) ;
-		r2x->clone (ret.deref ,rax.deref) ;
+		r2x->clone (ret.ref ,rax.ref) ;
 		return move (ret) ;
 	}
 
 	void store (RREF<AutoRef<Pointer>> item) const override {
 		Scope<Mutex> anonymous (self.mThis->mMutex) ;
 		INDEX ix = self.mIndex ;
-		auto &&rax = self.mThis->mGlobalList[ix].mPin.deref.mValue ;
+		auto &&rax = self.mThis->mGlobalList[ix].mPin.ref.mValue ;
 		assume (!rax.exist ()) ;
 		rax = move (item) ;
 	}

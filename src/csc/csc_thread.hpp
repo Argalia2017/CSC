@@ -253,7 +253,7 @@ public:
 		auto rax = PromiseHolder::hold (thiz)->poll () ;
 		if (!rax.exist ())
 			return Optional<A>::error (1) ;
-		return move (rax.rebind (TYPE<A>::expr).deref) ;
+		return move (rax.rebind (TYPE<A>::expr).ref) ;
 	}
 
 	void future () const {

@@ -1198,13 +1198,13 @@ public:
 		if ifdo (act) {
 			if (self.mRank != 2)
 				discard ;
-			item = Vector (keep[TYPE<Point2F>::expr] (self.mPointCloud.deref[index])) ;
+			item = Vector (keep[TYPE<Point2F>::expr] (self.mPointCloud.ref[index])) ;
 			item = self.mWorld * item ;
 		}
 		if ifdo (act) {
 			if (self.mRank != 3)
 				discard ;
-			item = Vector (keep[TYPE<Point3F>::expr] (self.mPointCloud.deref[index])) ;
+			item = Vector (keep[TYPE<Point3F>::expr] (self.mPointCloud.ref[index])) ;
 			item = self.mWorld * item ;
 		}
 		if ifdo (act) {
@@ -1307,7 +1307,7 @@ public:
 		if ifdo (TRUE) {
 			if (self.mKDTree.mThis.exist ())
 				discard ;
-			PointCloudKDTreeHolder::hold (self.mPin.deref.mKDTree)->initialize (self.mPointCloud.deref) ;
+			PointCloudKDTreeHolder::hold (self.mPin.ref.mKDTree)->initialize (self.mPointCloud.ref) ;
 		}
 		return PointCloudKDTreeHolder::hold (self.mKDTree)->search (center ,neighbor) ;
 	}
@@ -1316,7 +1316,7 @@ public:
 		if ifdo (TRUE) {
 			if (self.mKDTree.mThis.exist ())
 				discard ;
-			PointCloudKDTreeHolder::hold (self.mPin.deref.mKDTree)->initialize (self.mPointCloud.deref) ;
+			PointCloudKDTreeHolder::hold (self.mPin.ref.mKDTree)->initialize (self.mPointCloud.ref) ;
 		}
 		return PointCloudKDTreeHolder::hold (self.mKDTree)->search (center ,neighbor ,radius) ;
 	}

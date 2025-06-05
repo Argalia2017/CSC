@@ -647,7 +647,7 @@ public:
 		if ifdo (TRUE) {
 			if (self.mItem == NULL)
 				discard ;
-			ret = move (self.mItem.deref) ;
+			ret = move (self.mItem.ref) ;
 			self.mItem = NULL ;
 		}
 		self.mThreadFlag = ThreadFlag::Preparing ;

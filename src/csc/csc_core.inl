@@ -138,14 +138,14 @@ public:
 		assert (!exist ()) ;
 		self.mHolder = inline_vptr (holder) ;
 		const auto r1x = RFat<ReflectSize> (unknown ()) ;
-		inline_memset (deref ,r1x->type_size ()) ;
+		inline_memset (ref ,r1x->type_size ()) ;
 	}
 
 	void destroy () override {
 		if (self.mHolder == ZERO)
 			return ;
 		const auto r1x = RFat<ReflectDestroy> (unknown ()) ;
-		r1x->destroy (deref ,1) ;
+		r1x->destroy (ref ,1) ;
 		self.mHolder = ZERO ;
 	}
 
@@ -158,7 +158,7 @@ public:
 		return Unknown (self.mHolder) ;
 	}
 
-	VREF<Pointer> deref_m () leftvalue override {
+	VREF<Pointer> ref_m () leftvalue override {
 		const auto r1x = RFat<ReflectSize> (unknown ()) ;
 		//@warn: different from mStorage due to alignment
 		const auto r2x = address (self) + SIZE_OF<BoxLayout>::expr ;
@@ -166,7 +166,7 @@ public:
 		return Pointer::make (r3x) ;
 	}
 
-	CREF<Pointer> deref_m () const leftvalue override {
+	CREF<Pointer> ref_m () const leftvalue override {
 		const auto r1x = RFat<ReflectSize> (unknown ()) ;
 		//@warn: different from mStorage due to alignment
 		const auto r2x = address (self) + SIZE_OF<BoxLayout>::expr ;
@@ -186,7 +186,7 @@ public:
 			return ;
 		self.mHolder = that.mHolder ;
 		const auto r1x = RFat<ReflectSize> (unknown ()) ;
-		inline_memcpy (deref ,BoxHolder::hold (that)->deref ,r1x->type_size ()) ;
+		inline_memcpy (ref ,BoxHolder::hold (that)->ref ,r1x->type_size ()) ;
 	}
 
 	void release () override {
@@ -224,7 +224,7 @@ public:
 		ptr (self).mHeap = r4x ;
 		BoxHolder::hold (ptr (self).mValue)->acquire (item) ;
 		BoxHolder::hold (item)->release () ;
-		self.mLayout = address (BoxHolder::hold (ptr (self).mValue)->deref) ;
+		self.mLayout = address (BoxHolder::hold (ptr (self).mValue)->ref) ;
 		ptr (self).mCounter = 1 ;
 	}
 
@@ -237,7 +237,7 @@ public:
 			noop (r1x) ;
 			assert (r1x >= 2) ;
 			self.mHandle = that.mHandle ;
-			self.mLayout = address (BoxHolder::hold (ptr (that).mValue)->deref) ;
+			self.mLayout = address (BoxHolder::hold (ptr (that).mValue)->ref) ;
 		}
 		if ifdo (act) {
 			self.mHandle = that.mHandle ;
@@ -259,9 +259,9 @@ public:
 		inline_memset (Pointer::make (self.mHandle) ,SIZE_OF<RefTree>::expr) ;
 		ptr (self).mHeap = r7x ;
 		BoxHolder::hold (ptr (self).mValue)->initialize (holder) ;
-		self.mLayout = address (BoxHolder::hold (ptr (self).mValue)->deref) ;
+		self.mLayout = address (BoxHolder::hold (ptr (self).mValue)->ref) ;
 		const auto r8x = RFat<ReflectCreate> (holder) ;
-		r8x->create (deref ,1) ;
+		r8x->create (ref ,1) ;
 		ptr (self).mCounter = 1 ;
 	}
 
@@ -312,12 +312,12 @@ public:
 		return BoxHolder::hold (ptr (self).mValue)->unknown () ;
 	}
 
-	VREF<Pointer> deref_m () leftvalue override {
+	VREF<Pointer> ref_m () leftvalue override {
 		assert (exist ()) ;
 		return Pointer::make (self.mLayout) ;
 	}
 
-	CREF<Pointer> deref_m () const leftvalue override {
+	CREF<Pointer> ref_m () const leftvalue override {
 		assert (exist ()) ;
 		return Pointer::make (self.mLayout) ;
 	}
@@ -412,11 +412,11 @@ public:
 			HeapRoot ret ;
 			ret.mPin.pin (ret) ;
 			return move (ret) ;
-		}).mPin.deref ;
+		}).mPin.ref ;
 	}
 
 	INDEX stack () const override {
-		INDEX ret = root_ptr ().mStack.deref++ ;
+		INDEX ret = root_ptr ().mStack.ref++ ;
 		if ifdo (TRUE) {
 			if (ret >= 0)
 				discard ;
@@ -426,7 +426,7 @@ public:
 	}
 
 	LENGTH length () const override {
-		return root_ptr ().mLength.deref ;
+		return root_ptr ().mLength.ref ;
 	}
 
 	FLAG alloc (CREF<LENGTH> size_) const override {
@@ -434,14 +434,14 @@ public:
 		assume (ret != ZERO) ;
 		const auto r1x = csc_handle_t (ret) ;
 		const auto r2x = memsize (r1x) ;
-		root_ptr ().mLength.deref += r2x ;
+		root_ptr ().mLength.ref += r2x ;
 		return move (ret) ;
 	}
 
 	void free (CREF<FLAG> layout) const override {
 		const auto r1x = csc_handle_t (layout) ;
 		const auto r2x = memsize (r1x) ;
-		root_ptr ().mLength.deref -= r2x ;
+		root_ptr ().mLength.ref -= r2x ;
 		operator delete (r1x ,std::nothrow) ;
 	}
 } ;

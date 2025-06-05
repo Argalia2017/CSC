@@ -553,7 +553,7 @@ public:
 	template <class ARG1 ,class = REQUIRE<HAS_FRIEND_READ<ARG1>>>
 	void read (VREF<ARG1> item) {
 		const auto r1x = FriendReaderBinder<ByteReader>::hold (thiz) ;
-		item.friend_read (r1x.deref) ;
+		item.friend_read (r1x.ref) ;
 	}
 
 	template <class ARG1 ,class = REQUIRE<HAS_FRIEND_READ<ARG1>>>
@@ -838,7 +838,7 @@ public:
 	template <class ARG1 ,class = REQUIRE<HAS_FRIEND_READ<ARG1>>>
 	void read (VREF<ARG1> item) {
 		const auto r1x = FriendReaderBinder<TextReader>::hold (thiz) ;
-		item.friend_read (r1x.deref) ;
+		item.friend_read (r1x.ref) ;
 	}
 
 	template <class ARG1 ,class = REQUIRE<HAS_FRIEND_READ<ARG1>>>
@@ -1270,7 +1270,7 @@ public:
 	template <class ARG1 ,class = REQUIRE<HAS_FRIEND_WRITE<ARG1>>>
 	void write (CREF<ARG1> item) {
 		const auto r1x = FriendWriterBinder<ByteWriter>::hold (thiz) ;
-		item.friend_write (r1x.deref) ;
+		item.friend_write (r1x.ref) ;
 	}
 
 	template <class ARG1 ,class = REQUIRE<HAS_FRIEND_WRITE<ARG1>>>
@@ -1548,7 +1548,7 @@ public:
 	template <class ARG1 ,class = REQUIRE<HAS_FRIEND_WRITE<ARG1>>>
 	void write (CREF<ARG1> item) {
 		const auto r1x = FriendWriterBinder<TextWriter>::hold (thiz) ;
-		item.friend_write (r1x.deref) ;
+		item.friend_write (r1x.ref) ;
 	}
 
 	template <class ARG1 ,class = REQUIRE<HAS_FRIEND_WRITE<ARG1>>>
@@ -1735,7 +1735,7 @@ public:
 	template <class ARG1>
 	void friend_read (VREF<ARG1> reader) {
 		const auto r1x = FriendReaderBinder<ARG1>::hold (reader) ;
-		return StreamTextProc::read_keyword (r1x.deref ,mThat) ;
+		return StreamTextProc::read_keyword (r1x.ref ,mThat) ;
 	}
 } ;
 
@@ -1751,7 +1751,7 @@ public:
 	template <class ARG1>
 	void friend_read (VREF<ARG1> reader) {
 		const auto r1x = FriendReaderBinder<ARG1>::hold (reader) ;
-		return StreamTextProc::read_scalar (r1x.deref ,mThat) ;
+		return StreamTextProc::read_scalar (r1x.ref ,mThat) ;
 	}
 } ;
 
@@ -1773,13 +1773,13 @@ public:
 	template <class ARG1>
 	void friend_read (VREF<ARG1> reader) {
 		const auto r1x = FriendReaderBinder<ARG1>::hold (reader) ;
-		return StreamTextProc::read_escape (r1x.deref ,mThat) ;
+		return StreamTextProc::read_escape (r1x.ref ,mThat) ;
 	}
 
 	template <class ARG1>
 	void friend_write (VREF<ARG1> writer) const {
 		const auto r1x = FriendWriterBinder<ARG1>::hold (writer) ;
-		return StreamTextProc::write_escape (r1x.deref ,mThat) ;
+		return StreamTextProc::write_escape (r1x.ref ,mThat) ;
 	}
 } ;
 
@@ -1795,7 +1795,7 @@ public:
 	template <class ARG1>
 	void friend_read (VREF<ARG1> reader) {
 		const auto r1x = FriendReaderBinder<ARG1>::hold (reader) ;
-		return StreamTextProc::read_blank (r1x.deref ,mThat) ;
+		return StreamTextProc::read_blank (r1x.ref ,mThat) ;
 	}
 } ;
 
@@ -1811,7 +1811,7 @@ public:
 	template <class ARG1>
 	void friend_read (VREF<ARG1> reader) {
 		const auto r1x = FriendReaderBinder<ARG1>::hold (reader) ;
-		return StreamTextProc::read_endline (r1x.deref ,mThat) ;
+		return StreamTextProc::read_endline (r1x.ref ,mThat) ;
 	}
 } ;
 
@@ -1831,7 +1831,7 @@ public:
 	template <class ARG1>
 	void friend_write (VREF<ARG1> writer) const {
 		const auto r1x = FriendWriterBinder<ARG1>::hold (writer) ;
-		return StreamTextProc::write_aligned (r1x.deref ,mNumber ,mAlign) ;
+		return StreamTextProc::write_aligned (r1x.ref ,mNumber ,mAlign) ;
 	}
 } ;
 

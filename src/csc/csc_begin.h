@@ -18,7 +18,7 @@
 #undef leftvalue
 #undef rightvalue
 #undef thiz
-#undef deref
+#undef ref
 #undef self
 #undef expr
 #undef trait
@@ -41,7 +41,7 @@
 #define leftvalue &
 #define rightvalue &&
 #define thiz (*this)
-#define deref deref_m ()
+#define ref ref_m ()
 #define self self_m ()
 #define expr expr_m ()
 #define trait struct

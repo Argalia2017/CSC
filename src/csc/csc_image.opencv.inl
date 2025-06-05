@@ -27,7 +27,7 @@ public:
 
 	ImageLayout make_image (RREF<BoxLayout> image) const override {
 		ImageLayout ret ;
-		auto &&rax = keep[TYPE<Box<cv::Mat>>::expr] (image).deref ;
+		auto &&rax = keep[TYPE<Box<cv::Mat>>::expr] (image).ref ;
 		const auto r1x = rax.size () ;
 		const auto r2x = LENGTH (rax.depth ()) ;
 		const auto r3x = align_of_cvmat_depth (r2x) ;
@@ -40,7 +40,7 @@ public:
 		const auto r9x = r7x * LENGTH (r1x.height) ;
 		const auto r10x = Slice (r8x ,r9x ,r5x) ;
 		RefBufferHolder::hold (ret.mImage)->initialize (r4x ,r10x ,Box<cv::Mat>::zeroize ()) ;
-		auto &&rbx = keep[TYPE<Box<cv::Mat>>::expr] (RefBufferHolder::hold (ret.mImage)->raw ()).deref ;
+		auto &&rbx = keep[TYPE<Box<cv::Mat>>::expr] (RefBufferHolder::hold (ret.mImage)->raw ()).ref ;
 		assign (rbx ,rax) ;
 		ret.mWidth = LENGTH (r1x.width) ;
 		ret.mStride = r7x ;
@@ -51,7 +51,7 @@ public:
 	ImageLayout make_image (CREF<ImageShape> shape) const override {
 		auto rax = Box<cv::Mat>::zeroize () ;
 		const auto r1x = CV_MAKE_TYPE (CV_8U ,VAL32 (shape.mStep)) ;
-		rax.deref = cv::Mat (cv::Size (VAL32 (shape.mCX) ,VAL32 (shape.mCY)) ,r1x) ;
+		rax.ref = cv::Mat (cv::Size (VAL32 (shape.mCX) ,VAL32 (shape.mCY)) ,r1x) ;
 		return make_image (move (rax)) ;
 	}
 
@@ -59,7 +59,7 @@ public:
 		auto rax = Box<cv::Mat>::zeroize () ;
 		const auto r1x = cvmat_depth_of_clazz (clazz) ;
 		const auto r2x = CV_MAKE_TYPE (VAL32 (r1x) ,VAL32 (channel)) ;
-		rax.deref = cv::Mat (cv::Size (VAL32 (shape.mCX) ,VAL32 (shape.mCY)) ,r2x) ;
+		rax.ref = cv::Mat (cv::Size (VAL32 (shape.mCX) ,VAL32 (shape.mCY)) ,r2x) ;
 		return make_image (move (rax)) ;
 	}
 
@@ -112,19 +112,19 @@ public:
 	VREF<Pointer> peek_image (VREF<ImageLayout> image) const override {
 		assert (ImageHolder::hold (image)->fixed ()) ;
 		auto &&rax = keep[TYPE<Box<cv::Mat>>::expr] (ImageHolder::hold (image)->raw ()) ;
-		return Pointer::from (rax.deref) ;
+		return Pointer::from (rax.ref) ;
 	}
 
 	CREF<Pointer> peek_image (CREF<ImageLayout> image) const override {
 		assert (ImageHolder::hold (image)->fixed ()) ;
 		auto &&rax = keep[TYPE<Box<cv::Mat>>::expr] (ImageHolder::hold (image)->raw ()) ;
-		return Pointer::from (rax.deref) ;
+		return Pointer::from (rax.ref) ;
 	}
 
 	ImageLayout load_image (CREF<String<STR>> file) const override {
 		auto rax = Box<cv::Mat>::zeroize () ;
 		const auto r1x = StringProc::stra_from_strs (file) ;
-		rax.deref = cv::imread (r1x.deref ,cv::IMREAD_UNCHANGED) ;
+		rax.ref = cv::imread (r1x.ref ,cv::IMREAD_UNCHANGED) ;
 		assume (!rax->empty ()) ;
 		return make_image (move (rax)) ;
 	}
@@ -135,10 +135,10 @@ public:
 		const auto r3x = ImageHolder::hold (image)->by () ;
 		const auto r4x = ImageHolder::hold (image)->cx () ;
 		const auto r5x = ImageHolder::hold (image)->cy () ;
-		auto &&rax = keep[TYPE<Box<cv::Mat>>::expr] (image.mImage.raw ()).deref ;
+		auto &&rax = keep[TYPE<Box<cv::Mat>>::expr] (image.mImage.raw ()).ref ;
 		const auto r6x = cv::Rect (VAL32 (r2x) ,VAL32 (r3x) ,VAL32 (r4x) ,VAL32 (r5x)) ;
 		auto rbx = rax (r6x) ;
-		cv::imwrite (r1x.deref ,rbx) ;
+		cv::imwrite (r1x.ref ,rbx) ;
 	}
 
 	Color1B sampler (CREF<Image<Color1B>> image ,CREF<FLT64> x ,CREF<FLT64> y) const override {
