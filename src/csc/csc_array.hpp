@@ -129,14 +129,12 @@ public:
 	}
 } ;
 
-struct ArrayLayout ;
-
-template <class A>
-struct ArrayRealLayout implement OfBase<ArrayLayout> {
-	RefBuffer<A> mArray ;
+struct ArrayLayout {
+	RefBuffer<Pointer> mArray ;
 } ;
 
-struct ArrayLayout implement ArrayRealLayout<Pointer> {} ;
+template <class A>
+struct ArrayDebugLayout implement ArrayLayout {} ;
 
 struct ArrayHolder implement Interface {
 	imports VFat<ArrayHolder> hold (VREF<ArrayLayout> that) ;
@@ -189,9 +187,9 @@ public:
 } ;
 
 template <class A>
-class Array implement ArrayRealLayout<A> {
+class Array implement ArrayDebugLayout<A> {
 protected:
-	using ArrayRealLayout<A>::mArray ;
+	using ArrayDebugLayout<A>::mArray ;
 
 public:
 	implicit Array () = default ;
@@ -351,15 +349,13 @@ class StringParse ;
 template <class A>
 class StringBuild ;
 
-struct StringLayout ;
-
-template <class A>
-struct StringRealLayout implement OfBase<StringLayout> {
-	RefBuffer<A> mString ;
+struct StringLayout {
+	RefBuffer<Pointer> mString ;
 	FLAG mEncode ;
 } ;
 
-struct StringLayout implement StringRealLayout<Pointer> {} ;
+template <class A>
+struct StringDebugLayout implement StringLayout {} ;
 
 struct StringHolder implement Interface {
 	imports VFat<StringHolder> hold (VREF<StringLayout> that) ;
@@ -397,12 +393,12 @@ struct StringHolder implement Interface {
 } ;
 
 template <class A>
-class String implement StringRealLayout<A> {
+class String implement StringDebugLayout<A> {
 private:
 	require (IS_TRIVIAL<A>) ;
 
 protected:
-	using StringRealLayout<A>::mString ;
+	using StringDebugLayout<A>::mString ;
 
 public:
 	implicit String () = default ;
@@ -600,16 +596,14 @@ public:
 	}
 } ;
 
-struct DequeLayout ;
-
-template <class A>
-struct DequeRealLayout implement OfBase<DequeLayout> {
-	RefBuffer<A> mDeque ;
+struct DequeLayout {
+	RefBuffer<Pointer> mDeque ;
 	INDEX mRead ;
 	INDEX mWrite ;
 } ;
 
-struct DequeLayout implement DequeRealLayout<Pointer> {} ;
+template <class A>
+struct DequeDebugLayout implement DequeLayout {} ;
 
 struct DequeHolder implement Interface {
 	imports VFat<DequeHolder> hold (VREF<DequeLayout> that) ;
@@ -657,11 +651,11 @@ public:
 } ;
 
 template <class A>
-class Deque implement DequeRealLayout<A> {
+class Deque implement DequeDebugLayout<A> {
 protected:
-	using DequeRealLayout<A>::mDeque ;
-	using DequeRealLayout<A>::mRead ;
-	using DequeRealLayout<A>::mWrite ;
+	using DequeDebugLayout<A>::mDeque ;
+	using DequeDebugLayout<A>::mRead ;
+	using DequeDebugLayout<A>::mWrite ;
 
 public:
 	implicit Deque () = default ;
@@ -832,16 +826,14 @@ public:
 	}
 } ;
 
-struct PriorityLayout ;
-
-template <class A>
-struct PriorityRealLayout implement OfBase<PriorityLayout> {
-	RefBuffer<A> mPriority ;
+struct PriorityLayout {
+	RefBuffer<Pointer> mPriority ;
 	INDEX mRead ;
 	INDEX mWrite ;
 } ;
 
-struct PriorityLayout implement PriorityRealLayout<Pointer> {} ;
+template <class A>
+struct PriorityDebugLayout implement PriorityLayout {} ;
 
 struct PriorityHolder implement Interface {
 	imports VFat<PriorityHolder> hold (VREF<PriorityLayout> that) ;
@@ -890,11 +882,11 @@ public:
 } ;
 
 template <class A>
-class Priority implement PriorityRealLayout<A> {
+class Priority implement PriorityDebugLayout<A> {
 protected:
-	using PriorityRealLayout<A>::mPriority ;
-	using PriorityRealLayout<A>::mRead ;
-	using PriorityRealLayout<A>::mWrite ;
+	using PriorityDebugLayout<A>::mPriority ;
+	using PriorityDebugLayout<A>::mRead ;
+	using PriorityDebugLayout<A>::mWrite ;
 
 public:
 	implicit Priority () = default ;
@@ -993,16 +985,14 @@ struct ListNode implement AllocatorNode {
 	INDEX mRight ;
 } ;
 
-struct ListLayout ;
-
-template <class A>
-struct ListRealLayout implement OfBase<ListLayout> {
-	Allocator<A ,ListNode> mList ;
+struct ListLayout {
+	Allocator<Pointer ,ListNode> mList ;
 	INDEX mFirst ;
 	INDEX mLast ;
 } ;
 
-struct ListLayout implement ListRealLayout<Pointer> {} ;
+template <class A>
+struct ListDebugLayout implement ListLayout {} ;
 
 struct ListHolder implement Interface {
 	imports VFat<ListHolder> hold (VREF<ListLayout> that) ;
@@ -1054,11 +1044,11 @@ public:
 } ;
 
 template <class A>
-class List implement ListRealLayout<A> {
+class List implement ListDebugLayout<A> {
 protected:
-	using ListRealLayout<A>::mList ;
-	using ListRealLayout<A>::mFirst ;
-	using ListRealLayout<A>::mLast ;
+	using ListDebugLayout<A>::mList ;
+	using ListDebugLayout<A>::mFirst ;
+	using ListDebugLayout<A>::mLast ;
 
 public:
 	implicit List () = default ;
@@ -1205,17 +1195,15 @@ public:
 
 struct ArrayListNode implement AllocatorNode {} ;
 
-struct ArrayListLayout ;
-
-template <class A>
-struct ArrayListRealLayout implement OfBase<ArrayListLayout> {
-	Allocator<A ,ArrayListNode> mList ;
+struct ArrayListLayout {
+	Allocator<Pointer ,ArrayListNode> mList ;
 	RefBuffer<INDEX> mRange ;
 	INDEX mTop ;
 	BOOL mRemap ;
 } ;
 
-struct ArrayListLayout implement ArrayListRealLayout<Pointer> {} ;
+template <class A>
+struct ArrayListDebugLayout implement ArrayListLayout {} ;
 
 struct ArrayListHolder implement Interface {
 	imports VFat<ArrayListHolder> hold (VREF<ArrayListLayout> that) ;
@@ -1261,12 +1249,12 @@ public:
 } ;
 
 template <class A>
-class ArrayList implement ArrayListRealLayout<A> {
+class ArrayList implement ArrayListDebugLayout<A> {
 protected:
-	using ArrayListRealLayout<A>::mList ;
-	using ArrayListRealLayout<A>::mRange ;
-	using ArrayListRealLayout<A>::mTop ;
-	using ArrayListRealLayout<A>::mRemap ;
+	using ArrayListDebugLayout<A>::mList ;
+	using ArrayListDebugLayout<A>::mRange ;
+	using ArrayListDebugLayout<A>::mTop ;
+	using ArrayListDebugLayout<A>::mRemap ;
 
 public:
 	implicit ArrayList () = default ;
@@ -1564,16 +1552,14 @@ struct SetNode implement AllocatorNode {
 	INDEX mRight ;
 } ;
 
-struct SetLayout ;
-
-template <class A>
-struct SetRealLayout implement OfBase<SetLayout> {
-	Allocator<A ,SetNode> mSet ;
+struct SetLayout {
+	Allocator<Pointer ,SetNode> mSet ;
 	INDEX mRoot ;
 	INDEX mTop ;
 } ;
 
-struct SetLayout implement SetRealLayout<Pointer> {} ;
+template <class A>
+struct SetDebugLayout implement SetLayout {} ;
 
 struct SetHolder implement Interface {
 	imports VFat<SetHolder> hold (VREF<SetLayout> that) ;
@@ -1626,11 +1612,11 @@ public:
 } ;
 
 template <class A>
-class Set implement SetRealLayout<A> {
+class Set implement SetDebugLayout<A> {
 protected:
-	using SetRealLayout<A>::mSet ;
-	using SetRealLayout<A>::mRoot ;
-	using SetRealLayout<A>::mTop ;
+	using SetDebugLayout<A>::mSet ;
+	using SetDebugLayout<A>::mRoot ;
+	using SetDebugLayout<A>::mTop ;
 
 public:
 	implicit Set () = default ;
@@ -1750,16 +1736,14 @@ struct HashSetNode implement AllocatorNode {
 	INDEX mDown ;
 } ;
 
-struct HashSetLayout ;
-
-template <class A>
-struct HashSetRealLayout implement OfBase<HashSetLayout> {
-	Allocator<A ,HashSetNode> mSet ;
+struct HashSetLayout {
+	Allocator<Pointer ,HashSetNode> mSet ;
 	RefBuffer<INDEX> mRange ;
 	SharedRef<HashcodeVisitor> mVisitor ;
 } ;
 
-struct HashSetLayout implement HashSetRealLayout<Pointer> {} ;
+template <class A>
+struct HashSetDebugLayout implement HashSetLayout {} ;
 
 struct HashSetHolder implement Interface {
 	imports VFat<HashSetHolder> hold (VREF<HashSetLayout> that) ;
@@ -1810,11 +1794,11 @@ public:
 } ;
 
 template <class A>
-class HashSet implement HashSetRealLayout<A> {
+class HashSet implement HashSetDebugLayout<A> {
 protected:
-	using HashSetRealLayout<A>::mSet ;
-	using HashSetRealLayout<A>::mRange ;
-	using HashSetRealLayout<A>::mVisitor ;
+	using HashSetDebugLayout<A>::mSet ;
+	using HashSetDebugLayout<A>::mRange ;
+	using HashSetDebugLayout<A>::mVisitor ;
 
 public:
 	implicit HashSet () = default ;

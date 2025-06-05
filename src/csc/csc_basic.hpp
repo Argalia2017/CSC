@@ -870,21 +870,21 @@ public:
 } ;
 
 template <class A>
-struct RefBufferRealLayout implement RefBufferLayout {
+struct RefBufferDebugLayout implement RefBufferLayout {
 public:
-	implicit RefBufferRealLayout () noexcept {
+	implicit RefBufferDebugLayout () noexcept {
 		noop (PTR<VREF<A>> (NULL)) ;
 	}
 } ;
 
 template <class A>
-class RefBuffer implement RefBufferRealLayout<A> {
+class RefBuffer implement RefBufferDebugLayout<A> {
 protected:
-	using RefBufferRealLayout<A>::mThis ;
-	using RefBufferRealLayout<A>::mHolder ;
-	using RefBufferRealLayout<A>::mBuffer ;
-	using RefBufferRealLayout<A>::mSize ;
-	using RefBufferRealLayout<A>::mStep ;
+	using RefBufferDebugLayout<A>::mThis ;
+	using RefBufferDebugLayout<A>::mHolder ;
+	using RefBufferDebugLayout<A>::mBuffer ;
+	using RefBufferDebugLayout<A>::mSize ;
+	using RefBufferDebugLayout<A>::mStep ;
 
 public:
 	implicit RefBuffer () = default ;
@@ -1133,9 +1133,9 @@ public:
 } ;
 
 template <class A ,class B>
-struct AllocatorRealLayout implement AllocatorLayout {
+struct AllocatorDebugLayout implement AllocatorLayout {
 public:
-	implicit AllocatorRealLayout () noexcept {
+	implicit AllocatorDebugLayout () noexcept {
 		noop (RefBuffer<UnionPair<A ,B>> ()) ;
 	}
 } ;
@@ -1143,16 +1143,16 @@ public:
 using ALLOCATOR_MIN_SIZE = ENUM<256> ;
 
 template <class A ,class B>
-class Allocator implement AllocatorRealLayout<A ,B> {
+class Allocator implement AllocatorDebugLayout<A ,B> {
 private:
 	require (IS_TRIVIAL<B>) ;
 
 protected:
-	using AllocatorRealLayout<A ,B>::mAllocator ;
-	using AllocatorRealLayout<A ,B>::mOffset ;
-	using AllocatorRealLayout<A ,B>::mWidth ;
-	using AllocatorRealLayout<A ,B>::mLength ;
-	using AllocatorRealLayout<A ,B>::mFree ;
+	using AllocatorDebugLayout<A ,B>::mAllocator ;
+	using AllocatorDebugLayout<A ,B>::mOffset ;
+	using AllocatorDebugLayout<A ,B>::mWidth ;
+	using AllocatorDebugLayout<A ,B>::mLength ;
+	using AllocatorDebugLayout<A ,B>::mFree ;
 
 public:
 	implicit Allocator () = default ;

@@ -1559,21 +1559,6 @@ struct FUNCTION_unimplemented {
 static constexpr auto unimplemented = FUNCTION_unimplemented () ;
 
 template <class A>
-struct OfBase {
-	forceinline operator VREF<A> () leftvalue noexcept {
-		return Pointer::from (thiz) ;
-	}
-
-	forceinline operator CREF<A> () const leftvalue noexcept {
-		return Pointer::from (thiz) ;
-	}
-
-	forceinline operator RREF<A> () rightvalue noexcept {
-		return move (operator VREF<A> ()) ;
-	}
-} ;
-
-template <class A>
 struct OfThis {
 	A mThis ;
 

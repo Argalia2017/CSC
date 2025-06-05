@@ -111,11 +111,8 @@ public:
 	}
 } ;
 
-struct ImageLayout ;
-
-template <class A>
-struct ImageRealLayout implement OfBase<ImageLayout> {
-	RefBuffer<A> mImage ;
+struct ImageLayout {
+	RefBuffer<Pointer> mImage ;
 	LENGTH mWidth ;
 	LENGTH mStride ;
 	LENGTH mBX ;
@@ -124,7 +121,8 @@ struct ImageRealLayout implement OfBase<ImageLayout> {
 	LENGTH mCY ;
 } ;
 
-struct ImageLayout implement ImageRealLayout<Pointer> {} ;
+template <class A>
+struct ImageDebugLayout implement ImageLayout {} ;
 
 struct ImageHolder implement Interface {
 	imports VFat<ImageHolder> hold (VREF<ImageLayout> that) ;
@@ -154,18 +152,18 @@ struct ImageHolder implement Interface {
 } ;
 
 template <class A>
-class Image implement ImageRealLayout<A> {
+class Image implement ImageDebugLayout<A> {
 private:
 	require (IS_TRIVIAL<A>) ;
 
 protected:
-	using ImageRealLayout<A>::mImage ;
-	using ImageRealLayout<A>::mWidth ;
-	using ImageRealLayout<A>::mStride ;
-	using ImageRealLayout<A>::mBX ;
-	using ImageRealLayout<A>::mBY ;
-	using ImageRealLayout<A>::mCX ;
-	using ImageRealLayout<A>::mCY ;
+	using ImageDebugLayout<A>::mImage ;
+	using ImageDebugLayout<A>::mWidth ;
+	using ImageDebugLayout<A>::mStride ;
+	using ImageDebugLayout<A>::mBX ;
+	using ImageDebugLayout<A>::mBY ;
+	using ImageDebugLayout<A>::mCX ;
+	using ImageDebugLayout<A>::mCY ;
 
 public:
 	implicit Image () = default ;
