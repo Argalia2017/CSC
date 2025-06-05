@@ -1615,24 +1615,10 @@ public:
 } ;
 
 struct FormatLayout {
+	Pin<FormatLayout> mPin ;
 	Slice mFormat ;
-	BufferX<Pin<FatLayout>> mParams ;
-	Pin<INDEX> mWrite ;
-
-public:
-	implicit FormatLayout () = default ;
-
-	implicit FormatLayout (CREF<FormatLayout> that) = delete ;
-
-	forceinline VREF<FormatLayout> operator= (CREF<FormatLayout> that) = delete ;
-
-	implicit FormatLayout (RREF<FormatLayout> that) noexcept :FormatLayout () {
-		swap (thiz ,that) ;
-	}
-
-	forceinline VREF<FormatLayout> operator= (RREF<FormatLayout> that) noexcept {
-		return assign (thiz ,that) ;
-	}
+	BufferX<FatLayout> mParams ;
+	INDEX mWrite ;
 } ;
 
 struct FormatHolder implement Interface {
@@ -1646,6 +1632,7 @@ struct FormatHolder implement Interface {
 
 class Format implement FormatLayout {
 protected:
+	using FormatLayout::mPin ;
 	using FormatLayout::mFormat ;
 	using FormatLayout::mParams ;
 	using FormatLayout::mWrite ;

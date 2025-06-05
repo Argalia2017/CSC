@@ -202,7 +202,7 @@ public:
 } ;
 
 struct AtomicLayout ;
-struct AtomicStorage implement Storage<SIZE_OF<VAL> ,ENUM<8>> {} ;
+struct AtomicStorage implement Storage<ENUM_MUL<SIZE_OF<VAL> ,RANK2> ,ENUM<8>> {} ;
 
 struct AtomicHolder implement Interface {
 	imports Box<AtomicLayout ,AtomicStorage> create () ;

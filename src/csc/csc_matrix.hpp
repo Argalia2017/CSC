@@ -991,10 +991,11 @@ struct PointCloudKDTreeHolder implement Interface {
 class PointCloudKDTree implement OfThis<AutoRef<PointCloudKDTreeLayout>> {} ;
 
 struct PointCloudLayout {
+	Pin<PointCloudLayout> mPin ;
 	LENGTH mRank ;
 	Ref<Array<Pointer>> mPointCloud ;
 	Matrix mWorld ;
-	Pin<PointCloudKDTree> mKDTree ;
+	PointCloudKDTree mKDTree ;
 } ;
 
 struct PointCloudHolder implement Interface {
@@ -1016,6 +1017,7 @@ struct PointCloudHolder implement Interface {
 
 class PointCloud implement PointCloudLayout {
 protected:
+	using PointCloudLayout::mPin ;
 	using PointCloudLayout::mRank ;
 	using PointCloudLayout::mPointCloud ;
 	using PointCloudLayout::mWorld ;

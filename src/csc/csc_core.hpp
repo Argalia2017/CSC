@@ -1134,32 +1134,22 @@ public:
 	}
 } ;
 
-struct PinLayout {} ;
+struct PinLayout {
+	FLAG mOffset ;
+
+public:
+	implicit PinLayout () noexcept {
+		mOffset = ZERO ;
+	}
+} ;
 
 template <class A>
 class Pin implement PinLayout {
 protected:
-	mutable Union<A> mStorage ;
+	using PinLayout::mOffset ;
 
 public:
-	implicit Pin () noexcept {
-		mStorage = zeroize () ;
-	}
-
-	implicit ~Pin () noexcept {
-		const auto r1x = zeroize () ;
-		if (inline_memcmp (mStorage ,r1x) == 0)
-			return ;
-		auto &&rax = keep[TYPE<A>::expr] (deref) ;
-		rax.~A () ;
-		mStorage = r1x ;
-	}
-
-	static Union<A> zeroize () {
-		Union<A> ret ;
-		inline_memset (ret) ;
-		return move (ret) ;
-	}
+	implicit Pin () = default ;
 
 	implicit Pin (CREF<Pin> that) :Pin () {
 		noop () ;
@@ -1177,22 +1167,17 @@ public:
 		return thiz ;
 	}
 
-	VREF<Pointer> deref_m () const leftvalue {
-		return Pointer::from (mStorage) ;
+	void pin (VREF<A> that) {
+
 	}
 
-	forceinline operator VREF<Pointer> () const leftvalue {
-		return deref ;
+	VREF<A> deref_m () const leftvalue {
+		const auto r1x = address (thiz) + mOffset ;
+		return Pointer::make (r1x) ;
 	}
 
-	void get (VREF<A> item) const {
-		auto &&rax = keep[TYPE<A>::expr] (deref) ;
-		item = move (rax) ;
-	}
-
-	void set (VREF<A> item) const {
-		auto &&rax = keep[TYPE<A>::expr] (deref) ;
-		rax = move (item) ;
+	forceinline PTR<VREF<A>> operator-> () const leftvalue {
+		return (&deref) ;
 	}
 } ;
 
@@ -1767,7 +1752,8 @@ public:
 } ;
 
 struct ExternalLayout {
-	Pin<FatLayout> mImplHolder ;
+	Pin<ExternalLayout> mPin ;
+	FatLayout mImplHolder ;
 } ;
 
 template <class A ,class B>
@@ -1783,22 +1769,23 @@ public:
 		using R1X = typeof (nullof (ARG1).self) ;
 		require (ENUM_EQUAL<SIZE_OF<R1X> ,SIZE_OF<B>>) ;
 		require (ENUM_EQUAL<ALIGN_OF<R1X> ,ALIGN_OF<B>>) ;
-		inline_memcpy (instance ().mImplHolder ,Pointer::from (holder) ,SIZE_OF<FatLayout>::expr) ;
+		inline_memcpy (Pointer::from (root_ptr ().mImplHolder) ,Pointer::from (holder) ,SIZE_OF<FatLayout>::expr) ;
 	}
+
+	static VREF<ExternalLayout> root_ptr () ;
 
 	static CREF<Fat<A ,B>> declare () {
-		return instance ().mImplHolder.deref ;
+		return Pointer::from (root_ptr ().mImplHolder) ;
 	}
-
-private:
-	static CREF<External> instance () ;
 } ;
 
 template <class A ,class B>
-inline CREF<External<A ,B>> External<A ,B>::instance () {
+inline VREF<ExternalLayout> External<A ,B>::root_ptr () {
 	return memorize ([&] () {
-		return External<A ,B> () ;
-	}) ;
+		ExternalLayout ret ;
+		ret.mPin.pin (ret) ;
+		return move (ret) ;
+	}).mPin.deref ;
 }
 
 struct ReflectClone implement Interface {

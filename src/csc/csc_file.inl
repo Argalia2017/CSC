@@ -24,8 +24,9 @@ exports CFat<PathHolder> PathHolder::hold (CREF<PathLayout> that) {
 template class External<FileProcHolder ,FileProcLayout> ;
 
 struct FileProcLayout {
+	Pin<FileProcLayout> mPin ;
 	Mutex mMutex ;
-	Pin<List<UniqueRef<String<STR>>>> mLockDirectory ;
+	List<UniqueRef<String<STR>>> mLockDirectory ;
 } ;
 
 exports CREF<OfThis<UniqueRef<FileProcLayout>>> FileProcHolder::instance () {

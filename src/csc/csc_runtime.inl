@@ -181,46 +181,44 @@ exports CFat<RuntimeProcHolder> RuntimeProcHolder::hold (CREF<RuntimeProcLayout>
 }
 
 struct AtomicLayout {
-	Pin<std::atomic<VAL>> mAtomic ;
+	Pin<AtomicLayout> mPin ;
+	std::atomic<VAL> mAtomic ;
 } ;
 
 class AtomicImplHolder final implement Fat<AtomicHolder ,AtomicLayout> {
 public:
 	void initialize () override {
+		self.mPin.pin (self) ;
 		store (ZERO) ;
 	}
 
-	static VREF<std::atomic<VAL>> ptr (CREF<AtomicLayout> that) {
-		return that.mAtomic.deref ;
-	}
-
 	VAL fetch () const override {
-		return ptr (self).load (std::memory_order_relaxed) ;
+		return self.mAtomic.load (std::memory_order_relaxed) ;
 	}
 
 	void store (CREF<VAL> item) const override {
-		return ptr (self).store (item ,std::memory_order_relaxed) ;
+		return self.mPin.deref.mAtomic.store (item ,std::memory_order_relaxed) ;
 	}
 
 	VAL exchange (CREF<VAL> item) const override {
-		return ptr (self).exchange (item ,std::memory_order_relaxed) ;
+		return self.mPin.deref.mAtomic.exchange (item ,std::memory_order_relaxed) ;
 	}
 
 	BOOL change (VREF<VAL> expect ,CREF<VAL> item) const override {
-		return ptr (self).compare_exchange_weak (expect ,item ,std::memory_order_relaxed) ;
+		return self.mPin.deref.mAtomic.compare_exchange_weak (expect ,item ,std::memory_order_relaxed) ;
 	}
 
 	void replace (CREF<VAL> expect ,CREF<VAL> item) const override {
 		auto rax = expect ;
-		ptr (self).compare_exchange_strong (rax ,item ,std::memory_order_relaxed) ;
+		self.mPin.deref.mAtomic.compare_exchange_strong (rax ,item ,std::memory_order_relaxed) ;
 	}
 
 	void increase () const override {
-		ptr (self).fetch_add (1 ,std::memory_order_relaxed) ;
+		self.mPin.deref.mAtomic.fetch_add (1 ,std::memory_order_relaxed) ;
 	}
 
 	void decrease () const override {
-		ptr (self).fetch_sub (1 ,std::memory_order_relaxed) ;
+		self.mPin.deref.mAtomic.fetch_sub (1 ,std::memory_order_relaxed) ;
 	}
 } ;
 
@@ -740,8 +738,9 @@ exports CFat<RandomHolder> RandomHolder::hold (CREF<RandomLayout> that) {
 template class External<SingletonProcHolder ,SingletonProcLayout> ;
 
 struct SingletonRoot {
+	Pin<SingletonRoot> mPin ;
 	Mutex mMutex ;
-	Pin<Set<Clazz>> mClazzSet ;
+	Set<Clazz> mClazzSet ;
 } ;
 
 struct SingletonLocal {
@@ -787,8 +786,9 @@ exports CFat<SingletonProcHolder> SingletonProcHolder::hold (CREF<SingletonProcL
 }
 
 struct GlobalNode {
+	Pin<GlobalNode> mPin ;
 	FLAG mHolder ;
-	Pin<AutoRef<Pointer>> mValue ;
+	AutoRef<Pointer> mValue ;
 } ;
 
 struct GlobalTree {
@@ -817,6 +817,7 @@ public:
 				discard ;
 			ix = self.mThis->mGlobalList.insert () ;
 			self.mThis->mGlobalNameSet.add (name ,ix) ;
+			self.mThis->mGlobalList[ix].mPin.pin (self.mThis->mGlobalList[ix]) ;
 			self.mThis->mGlobalList[ix].mHolder = inline_vptr (holder) ;
 		}
 		self.mIndex = ix ;
@@ -840,14 +841,14 @@ public:
 	BOOL exist () const override {
 		Scope<Mutex> anonymous (self.mThis->mMutex) ;
 		INDEX ix = self.mIndex ;
-		auto &&rax = keep[TYPE<AutoRef<Pointer>>::expr] (self.mThis->mGlobalList[ix].mValue.deref) ;
+		auto &&rax = self.mThis->mGlobalList[ix].mValue ;
 		return self.mClazz == rax.clazz () ;
 	}
 
 	AutoRef<Pointer> fetch () const override {
 		Scope<Mutex> anonymous (self.mThis->mMutex) ;
 		INDEX ix = self.mIndex ;
-		auto &&rax = keep[TYPE<AutoRef<Pointer>>::expr] (self.mThis->mGlobalList[ix].mValue.deref) ;
+		auto &&rax = self.mThis->mGlobalList[ix].mValue ;
 		assume (rax.exist ()) ;
 		const auto r1x = Unknown (self.mThis->mGlobalList[ix].mHolder) ;
 		AutoRef<Pointer> ret = AutoRef<Pointer> (r1x) ;
@@ -859,7 +860,7 @@ public:
 	void store (RREF<AutoRef<Pointer>> item) const override {
 		Scope<Mutex> anonymous (self.mThis->mMutex) ;
 		INDEX ix = self.mIndex ;
-		auto &&rax = keep[TYPE<AutoRef<Pointer>>::expr] (self.mThis->mGlobalList[ix].mValue.deref) ;
+		auto &&rax = self.mThis->mGlobalList[ix].mPin.deref.mValue ;
 		assume (!rax.exist ()) ;
 		rax = move (item) ;
 	}

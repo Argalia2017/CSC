@@ -1174,6 +1174,7 @@ exports CFat<PointCloudKDTreeHolder> PointCloudKDTreeHolder::hold (CREF<PointClo
 class PointCloudImplHolder final implement Fat<PointCloudHolder ,PointCloudLayout> {
 public:
 	void initialize (RREF<Ref<Array<Point2F>>> pointcloud) override {
+		self.mPin.pin (self) ;
 		self.mRank = 2 ;
 		auto &&rax = keep[TYPE<Ref<Array<Point2F>>>::expr] (Pointer::from (self.mPointCloud)) ;
 		rax = move (pointcloud) ;
@@ -1181,6 +1182,7 @@ public:
 	}
 
 	void initialize (RREF<Ref<Array<Point3F>>> pointcloud) override {
+		self.mPin.pin (self) ;
 		self.mRank = 3 ;
 		auto &&rax = keep[TYPE<Ref<Array<Point3F>>>::expr] (Pointer::from (self.mPointCloud)) ;
 		rax = move (pointcloud) ;
@@ -1302,23 +1304,21 @@ public:
 	}
 
 	Array<INDEX> search (CREF<Vector> center ,CREF<LENGTH> neighbor) const override {
-		auto &&rax = keep[TYPE<PointCloudKDTree>::expr] (self.mKDTree.deref) ;
 		if ifdo (TRUE) {
-			if (rax.mThis.exist ())
+			if (self.mKDTree.mThis.exist ())
 				discard ;
-			PointCloudKDTreeHolder::hold (rax)->initialize (self.mPointCloud.deref) ;
+			PointCloudKDTreeHolder::hold (self.mPin.deref.mKDTree)->initialize (self.mPointCloud.deref) ;
 		}
-		return PointCloudKDTreeHolder::hold (rax)->search (center ,neighbor) ;
+		return PointCloudKDTreeHolder::hold (self.mKDTree)->search (center ,neighbor) ;
 	}
 
 	Array<INDEX> search (CREF<Vector> center ,CREF<LENGTH> neighbor ,CREF<FLT64> radius) const override {
-		auto &&rax = keep[TYPE<PointCloudKDTree>::expr] (self.mKDTree.deref) ;
 		if ifdo (TRUE) {
-			if (rax.mThis.exist ())
+			if (self.mKDTree.mThis.exist ())
 				discard ;
-			PointCloudKDTreeHolder::hold (rax)->initialize (self.mPointCloud.deref) ;
+			PointCloudKDTreeHolder::hold (self.mPin.deref.mKDTree)->initialize (self.mPointCloud.deref) ;
 		}
-		return PointCloudKDTreeHolder::hold (rax)->search (center ,neighbor ,radius) ;
+		return PointCloudKDTreeHolder::hold (self.mKDTree)->search (center ,neighbor ,radius) ;
 	}
 } ;
 

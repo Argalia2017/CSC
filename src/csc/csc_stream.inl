@@ -1541,12 +1541,12 @@ exports CFat<TextWriterHolder> TextWriterHolder::hold (CREF<TextWriterLayout> th
 class FormatImplHolder final implement Fat<FormatHolder ,FormatLayout> {
 public:
 	void initialize (CREF<Slice> format) override {
+		self.mPin.pin (self) ;
 		self.mFormat = format ;
 	}
 
 	void friend_write (VREF<WriterBinder> writer) const override {
 		auto rax = FLAG (0) ;
-		auto rbx = FatLayout () ;
 		for (auto &&i : iter (0 ,self.mFormat.size ())) {
 			auto act = TRUE ;
 			if ifdo (act) {
@@ -1568,10 +1568,9 @@ public:
 					discard ;
 				if ifdo (TRUE) {
 					const auto r1x = StreamProc::hex_from_str (self.mFormat[i]) - 1 ;
-					if (!inline_between (r1x ,0 ,self.mWrite.deref))
+					if (!inline_between (r1x ,0 ,self.mWrite))
 						discard ;
-					self.mParams[r1x].get (rbx) ;
-					const auto r2x = keep[TYPE<CFat<FormatBinder>>::expr] (rbx) ;
+					const auto r2x = keep[TYPE<CFat<FormatBinder>>::expr] (self.mParams[r1x]) ;
 					r2x->friend_write (writer) ;
 				}
 				rax = FLAG (0) ;
@@ -1581,9 +1580,8 @@ public:
 					discard ;
 				if (self.mFormat[i] != STRU32 ('0'))
 					discard ;
-				for (auto &&j : iter (0 ,self.mWrite.deref)) {
-					self.mParams[j].get (rbx) ;
-					const auto r3x = keep[TYPE<CFat<FormatBinder>>::expr] (rbx) ;
+				for (auto &&j : iter (0 ,self.mWrite)) {
+					const auto r3x = keep[TYPE<CFat<FormatBinder>>::expr] (self.mParams[j]) ;
 					r3x->friend_write (writer) ;
 				}
 				rax = FLAG (3) ;
@@ -1593,10 +1591,9 @@ public:
 					discard ;
 				if ifdo (TRUE) {
 					const auto r4x = StreamProc::hex_from_str (self.mFormat[i]) - 1 ;
-					if (!inline_between (r4x ,0 ,self.mWrite.deref))
+					if (!inline_between (r4x ,0 ,self.mWrite))
 						discard ;
-					self.mParams[r4x].get (rbx) ;
-					const auto r5x = keep[TYPE<CFat<FormatBinder>>::expr] (rbx) ;
+					const auto r5x = keep[TYPE<CFat<FormatBinder>>::expr] (self.mParams[r4x]) ;
 					r5x->friend_write (writer) ;
 				}
 				rax = FLAG (3) ;
@@ -1619,10 +1616,10 @@ public:
 		INDEX ix = 0 ;
 		for (auto &&i : iter (0 ,params.mRank)) {
 			auto rbx = rax[i] ;
-			self.mParams[ix].set (rbx) ;
+			self.mPin.deref.mParams[ix] = rbx ;
 			ix++ ;
 		}
-		self.mWrite.set (ix) ;
+		self.mPin.deref.mWrite = ix ;
 	}
 } ;
 

@@ -922,31 +922,31 @@ public:
 	}
 } ;
 
+struct PinnedCounter {
+	Pin<PinnedCounter> mPin ;
+	LENGTH mCounter ;
+} ;
+
 class ScopeCounter implement Proxy {
 private:
 	using SCOPECOUNTER_MAX_DEPTH = ENUM<256> ;
 
 protected:
-	Pin<LENGTH> mThat ;
+	PinnedCounter mThat ;
 
 public:
-	static CREF<ScopeCounter> from (VREF<LENGTH> that) {
+	static CREF<ScopeCounter> from (CREF<PinnedCounter> that) {
 		return Pointer::from (that) ;
 	}
 
 	void enter () const {
-		auto rax = LENGTH () ;
-		mThat.get (rax) ;
-		rax++ ;
-		assume (rax < SCOPECOUNTER_MAX_DEPTH::expr) ;
-		mThat.set (rax) ;
+		mThat.mPin.deref.mCounter++ ;
+		assume (mThat.mCounter < SCOPECOUNTER_MAX_DEPTH::expr) ;
 	}
 
 	void leave () const {
-		auto rax = LENGTH () ;
-		mThat.get (rax) ;
-		rax-- ;
-		mThat.set (rax) ;
+		mThat.mPin.deref.mCounter-- ;
+		assume (mThat.mCounter >= ZERO) ;
 	}
 } ;
 
@@ -978,7 +978,7 @@ struct XmlParserTree {
 
 struct MakeXmlParserLayout {
 	RegularReader mReader ;
-	LENGTH mRecursiveCounter ;
+	PinnedCounter mPinnedCounter ;
 	List<XmlParserNode> mList ;
 	SortedMap<INDEX> mArrayMap ;
 	List<INDEX> mArrayMemberList ;
@@ -991,7 +991,7 @@ struct MakeXmlParserLayout {
 class MakeXmlParser implement MakeXmlParserLayout {
 protected:
 	using MakeXmlParserLayout::mReader ;
-	using MakeXmlParserLayout::mRecursiveCounter ;
+	using MakeXmlParserLayout::mPinnedCounter ;
 	using MakeXmlParserLayout::mList ;
 	using MakeXmlParserLayout::mArrayMap ;
 	using MakeXmlParserLayout::mObjectMap ;
@@ -1004,7 +1004,8 @@ public:
 	explicit MakeXmlParser (RREF<Ref<RefBuffer<BYTE>>> stream) {
 		mReader = RegularReader (move (stream) ,5) ;
 		mReader.use_text () ;
-		mRecursiveCounter = 0 ;
+		mPinnedCounter.mCounter = 0 ;
+		mPinnedCounter.mPin.pin (mPinnedCounter) ;
 		mArrayMap = SortedMap<INDEX> (ALLOCATOR_MIN_SIZE::expr) ;
 		mObjectMap = SortedMap<String<STRU8>> (ALLOCATOR_MIN_SIZE::expr) ;
 	}
@@ -1109,7 +1110,7 @@ public:
 
 	//@info: $5-><$1 $4 />|<$1 $4 > $8 </$1 >
 	void read_shift_e5 (CREF<INDEX> curr) {
-		Scope<ScopeCounter> anonymous (ScopeCounter::from (mRecursiveCounter)) ;
+		Scope<ScopeCounter> anonymous (ScopeCounter::from (mPinnedCounter)) ;
 		mReader >> slice ("<") ;
 		INDEX ix = mList.insert () ;
 		read_shift_e1 () ;
@@ -1193,7 +1194,7 @@ public:
 
 	//@info: $8->$5 $8|$6 $8|$7 $8
 	void read_shift_e8 (CREF<INDEX> curr ,CREF<INDEX> first) {
-		Scope<ScopeCounter> anonymous (ScopeCounter::from (mRecursiveCounter)) ;
+		Scope<ScopeCounter> anonymous (ScopeCounter::from (mPinnedCounter)) ;
 		INDEX ix = first ;
 		INDEX iy = first ;
 		INDEX kx = mList[curr].mMember ;
@@ -1660,7 +1661,7 @@ struct JsonParserTree {
 
 struct MakeJsonParserLayout {
 	RegularReader mReader ;
-	LENGTH mRecursiveCounter ;
+	PinnedCounter mPinnedCounter ;
 	List<JsonParserNode> mList ;
 	SortedMap<INDEX> mArrayMap ;
 	SortedMap<String<STRU8>> mObjectMap ;
@@ -1671,7 +1672,7 @@ struct MakeJsonParserLayout {
 class MakeJsonParser implement MakeJsonParserLayout {
 protected:
 	using MakeJsonParserLayout::mReader ;
-	using MakeJsonParserLayout::mRecursiveCounter ;
+	using MakeJsonParserLayout::mPinnedCounter ;
 	using MakeJsonParserLayout::mList ;
 	using MakeJsonParserLayout::mArrayMap ;
 	using MakeJsonParserLayout::mObjectMap ;
@@ -1684,7 +1685,8 @@ public:
 	explicit MakeJsonParser (RREF<Ref<RefBuffer<BYTE>>> stream) {
 		mReader = RegularReader (move (stream) ,5) ;
 		mReader.use_text () ;
-		mRecursiveCounter = 0 ;
+		mPinnedCounter.mCounter = 0 ;
+		mPinnedCounter.mPin.pin (mPinnedCounter) ;
 		mArrayMap = SortedMap<INDEX> (ALLOCATOR_MIN_SIZE::expr) ;
 		mObjectMap = SortedMap<String<STRU8>> (ALLOCATOR_MIN_SIZE::expr) ;
 	}
@@ -1776,7 +1778,7 @@ public:
 
 	//@info: $4->$1|$2|$3|$6|$9
 	void read_shift_e4 (CREF<INDEX> curr) {
-		Scope<ScopeCounter> anonymous (ScopeCounter::from (mRecursiveCounter)) ;
+		Scope<ScopeCounter> anonymous (ScopeCounter::from (mPinnedCounter)) ;
 		INDEX ix = NONE ;
 		auto act = TRUE ;
 		if ifdo (act) {
@@ -1875,7 +1877,7 @@ public:
 
 	//@info: $6->[ ]|[ $5 ]
 	void read_shift_e6 (CREF<INDEX> curr) {
-		Scope<ScopeCounter> anonymous (ScopeCounter::from (mRecursiveCounter)) ;
+		Scope<ScopeCounter> anonymous (ScopeCounter::from (mPinnedCounter)) ;
 		mReader >> slice ("[") ;
 		INDEX ix = mList.insert () ;
 		mList[ix].mName = move (mLastString) ;
@@ -1933,7 +1935,7 @@ public:
 
 	//@info: $9->{ }|{ $8 }
 	void read_shift_e9 (CREF<INDEX> curr) {
-		Scope<ScopeCounter> anonymous (ScopeCounter::from (mRecursiveCounter)) ;
+		Scope<ScopeCounter> anonymous (ScopeCounter::from (mPinnedCounter)) ;
 		mReader >> slice ("{") ;
 		INDEX ix = mList.insert () ;
 		mList[ix].mName = move (mLastString) ;

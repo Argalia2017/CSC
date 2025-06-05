@@ -47,24 +47,13 @@ public:
 } ;
 
 struct OptionalLayout {
+	Pin<OptionalLayout> mPin ;
 	FLAG mCode ;
-	Pin<BoxLayout> mValue ;
+	BoxLayout mValue ;
 
 public:
 	implicit OptionalLayout () noexcept {
 		mCode = 0 ;
-	}
-
-	implicit OptionalLayout (CREF<OptionalLayout> that) = delete ;
-
-	forceinline VREF<OptionalLayout> operator= (CREF<OptionalLayout> that) = delete ;
-
-	implicit OptionalLayout (RREF<OptionalLayout> that) noexcept :OptionalLayout () {
-		swap (thiz ,that) ;
-	}
-
-	forceinline VREF<OptionalLayout> operator= (RREF<OptionalLayout> that) noexcept {
-		return assign (thiz ,that) ;
 	}
 } ;
 
@@ -82,6 +71,7 @@ struct OptionalHolder implement Interface {
 template <class A>
 class Optional implement OptionalLayout {
 protected:
+	using OptionalLayout::mPin ;
 	using OptionalLayout::mCode ;
 	using OptionalLayout::mValue ;
 	Union<A> mStorage ;

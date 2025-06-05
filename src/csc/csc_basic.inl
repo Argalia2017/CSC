@@ -12,27 +12,30 @@
 
 namespace CSC {
 struct HeapMutexRoot {
+	Pin<HeapMutexRoot> mPin ;
 	Box<std::recursive_mutex> mMutex ;
 } ;
 
 class HeapMutexImplHolder final implement Fat<HeapMutexHolder ,HeapMutexLayout> {
 public:
 	void initialize () override {
-		root_ptr (self).mMutex.remake () ;
+		root_ptr ().mMutex.remake () ;
 	}
 
-	static VREF<HeapMutexRoot> root_ptr (CREF<HeapMutexLayout> that) {
+	static VREF<HeapMutexRoot> root_ptr () {
 		return memorize ([&] () {
-			return Pin<HeapMutexRoot> () ;
-		}).deref ;
+			HeapMutexRoot ret ;
+			ret.mPin.pin (ret) ;
+			return move (ret) ;
+		}).mPin.deref ;
 	}
 
 	void enter () const override {
-		return root_ptr (self).mMutex->lock () ;
+		return root_ptr ().mMutex->lock () ;
 	}
 
 	void leave () const override {
-		return root_ptr (self).mMutex->unlock () ;
+		return root_ptr ().mMutex->unlock () ;
 	}
 } ;
 
@@ -60,12 +63,12 @@ exports CFat<HeapMutexHolder> HeapMutexHolder::hold (CREF<HeapMutexLayout> that)
 class OptionalImplHolder final implement Fat<OptionalHolder ,OptionalLayout> {
 public:
 	void initialize (CREF<FLAG> code) override {
+		self.mPin.pin (self) ;
 		self.mCode = code ;
 	}
 
 	BOOL exist () const override {
-		auto &&rax = keep[TYPE<BoxLayout>::expr] (self.mValue.deref) ;
-		return BoxHolder::hold (rax)->exist () ;
+		return BoxHolder::hold (self.mValue)->exist () ;
 	}
 
 	FLAG code () const override {
@@ -74,14 +77,14 @@ public:
 
 	void get (VREF<BoxLayout> item) const override {
 		assume (exist ()) ;
-		auto &&rax = keep[TYPE<BoxLayout>::expr] (self.mValue.deref) ;
+		auto &&rax = self.mPin.deref.mValue ;
 		BoxHolder::hold (item)->acquire (rax) ;
 		BoxHolder::hold (rax)->release () ;
 	}
 
 	void set (VREF<BoxLayout> item) const override {
 		assume (!exist ()) ;
-		auto &&rax = keep[TYPE<BoxLayout>::expr] (self.mValue.deref) ;
+		auto &&rax = self.mPin.deref.mValue ;
 		BoxHolder::hold (rax)->acquire (item) ;
 		BoxHolder::hold (item)->release () ;
 	}
@@ -350,7 +353,7 @@ exports CFat<SharedRefHolder> SharedRefHolder::hold (CREF<SharedRefLayout> that)
 
 struct UniqueRefTree {
 	Function<VREF<Pointer>> mOwner ;
-	Pin<UniqueRefLayout> mUpper ;
+	UniqueRefLayout mUpper ;
 	BoxLayout mValue ;
 } ;
 
@@ -369,8 +372,8 @@ public:
 		if (!exist ())
 			return ;
 		if ifdo (TRUE) {
-			auto rax = UniqueRefLayout () ;
-			self.mThis->mUpper.get (rax) ;
+			auto rax = move (self.mThis->mUpper) ;
+			noop (rax) ;
 		}
 		if ifdo (TRUE) {
 			if (!BoxHolder::hold (raw ())->exist ())
@@ -398,12 +401,11 @@ public:
 	}
 
 	void depend (VREF<UniqueRefLayout> that) const override {
-		auto rax = UniqueRefLayout () ;
-		that.mThis->mUpper.get (rax) ;
+		auto rax = move (that.mThis->mUpper) ;
 		assert (!rax.mThis.exist ()) ;
 		rax.mThis = self.mThis ;
 		rax.mLayout = self.mLayout ;
-		that.mThis->mUpper.set (rax) ;
+		that.mThis->mUpper = move (rax) ;
 	}
 
 	UniqueRefLayout recast (CREF<Unknown> simple) override {
