@@ -208,7 +208,7 @@ struct ImageProcLayout {
 	UniqueRef<BOOL> mContext ;
 } ;
 
-exports CREF<OfThis<UniqueRef<ImageProcLayout>>> ImageProcHolder::instance () {
+exports CREF<OfThis<UniqueRef<ImageProcLayout>>> ImageProcHolder::expr_m () {
 	return memorize ([&] () {
 		OfThis<UniqueRef<ImageProcLayout>> ret ;
 		ret.mThis = UniqueRef<ImageProcLayout>::make () ;
@@ -218,11 +218,11 @@ exports CREF<OfThis<UniqueRef<ImageProcLayout>>> ImageProcHolder::instance () {
 }
 
 exports VFat<ImageProcHolder> ImageProcHolder::hold (VREF<ImageProcLayout> that) {
-	return VFat<ImageProcHolder> (External<ImageProcHolder ,ImageProcLayout>::declare () ,that) ;
+	return VFat<ImageProcHolder> (External<ImageProcHolder ,ImageProcLayout>::expr ,that) ;
 }
 
 exports CFat<ImageProcHolder> ImageProcHolder::hold (CREF<ImageProcLayout> that) {
-	return CFat<ImageProcHolder> (External<ImageProcHolder ,ImageProcLayout>::declare () ,that) ;
+	return CFat<ImageProcHolder> (External<ImageProcHolder ,ImageProcLayout>::expr ,that) ;
 }
 
 struct ReflectTensorCopy implement Interface {

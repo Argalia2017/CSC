@@ -681,7 +681,7 @@ template class External<MatrixProcHolder ,MatrixProcLayout> ;
 
 struct MatrixProcLayout {} ;
 
-exports CREF<OfThis<UniqueRef<MatrixProcLayout>>> MatrixProcHolder::instance () {
+exports CREF<OfThis<UniqueRef<MatrixProcLayout>>> MatrixProcHolder::expr_m () {
 	return memorize ([&] () {
 		OfThis<UniqueRef<MatrixProcLayout>> ret ;
 		ret.mThis = UniqueRef<MatrixProcLayout>::make () ;
@@ -691,11 +691,11 @@ exports CREF<OfThis<UniqueRef<MatrixProcLayout>>> MatrixProcHolder::instance () 
 }
 
 exports VFat<MatrixProcHolder> MatrixProcHolder::hold (VREF<MatrixProcLayout> that) {
-	return VFat<MatrixProcHolder> (External<MatrixProcHolder ,MatrixProcLayout>::declare () ,that) ;
+	return VFat<MatrixProcHolder> (External<MatrixProcHolder ,MatrixProcLayout>::expr ,that) ;
 }
 
 exports CFat<MatrixProcHolder> MatrixProcHolder::hold (CREF<MatrixProcLayout> that) {
-	return CFat<MatrixProcHolder> (External<MatrixProcHolder ,MatrixProcLayout>::declare () ,that) ;
+	return CFat<MatrixProcHolder> (External<MatrixProcHolder ,MatrixProcLayout>::expr ,that) ;
 }
 
 class DuplexMatrixImplHolder final implement Fat<DuplexMatrixHolder ,DuplexMatrixLayout> {
@@ -1132,7 +1132,7 @@ template class External<LinearProcHolder ,LinearProcLayout> ;
 
 struct LinearProcLayout {} ;
 
-exports CREF<OfThis<UniqueRef<LinearProcLayout>>> LinearProcHolder::instance () {
+exports CREF<OfThis<UniqueRef<LinearProcLayout>>> LinearProcHolder::expr_m () {
 	return memorize ([&] () {
 		OfThis<UniqueRef<LinearProcLayout>> ret ;
 		ret.mThis = UniqueRef<LinearProcLayout>::make () ;
@@ -1142,11 +1142,11 @@ exports CREF<OfThis<UniqueRef<LinearProcLayout>>> LinearProcHolder::instance () 
 }
 
 exports VFat<LinearProcHolder> LinearProcHolder::hold (VREF<LinearProcLayout> that) {
-	return VFat<LinearProcHolder> (External<LinearProcHolder ,LinearProcLayout>::declare () ,that) ;
+	return VFat<LinearProcHolder> (External<LinearProcHolder ,LinearProcLayout>::expr ,that) ;
 }
 
 exports CFat<LinearProcHolder> LinearProcHolder::hold (CREF<LinearProcLayout> that) {
-	return CFat<LinearProcHolder> (External<LinearProcHolder ,LinearProcLayout>::declare () ,that) ;
+	return CFat<LinearProcHolder> (External<LinearProcHolder ,LinearProcLayout>::expr ,that) ;
 }
 
 template class External<PointCloudKDTreeHolder ,PointCloudKDTreeLayout> ;
@@ -1164,11 +1164,11 @@ exports AutoRef<PointCloudKDTreeLayout> PointCloudKDTreeHolder::create () {
 }
 
 exports VFat<PointCloudKDTreeHolder> PointCloudKDTreeHolder::hold (VREF<PointCloudKDTreeLayout> that) {
-	return VFat<PointCloudKDTreeHolder> (External<PointCloudKDTreeHolder ,PointCloudKDTreeLayout>::declare () ,that) ;
+	return VFat<PointCloudKDTreeHolder> (External<PointCloudKDTreeHolder ,PointCloudKDTreeLayout>::expr ,that) ;
 }
 
 exports CFat<PointCloudKDTreeHolder> PointCloudKDTreeHolder::hold (CREF<PointCloudKDTreeLayout> that) {
-	return CFat<PointCloudKDTreeHolder> (External<PointCloudKDTreeHolder ,PointCloudKDTreeLayout>::declare () ,that) ;
+	return CFat<PointCloudKDTreeHolder> (External<PointCloudKDTreeHolder ,PointCloudKDTreeLayout>::expr ,that) ;
 }
 
 class PointCloudImplHolder final implement Fat<PointCloudHolder ,PointCloudLayout> {

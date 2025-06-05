@@ -55,7 +55,7 @@ public:
 		String<STR> ret = String<STR>::make () ;
 		const auto r1x = invoke ([&] () {
 			const auto r2x = csc_enum_t (GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT) ;
-			auto &&rax = keep[TYPE<HeapLayout>::expr] (Heap::instance ()) ;
+			auto &&rax = keep[TYPE<HeapLayout>::expr] (Heap::expr) ;
 			const auto r3x = LPTSTR (rax.mHolder) ;
 			csc_device_t ret = NULL ;
 			const auto r4x = GetModuleHandleEx (r2x ,r3x ,(&ret)) ;

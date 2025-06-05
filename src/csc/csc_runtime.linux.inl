@@ -62,7 +62,7 @@ public:
 	}
 
 	String<STR> library_file () const override {
-		auto &&rax = keep[TYPE<HeapLayout>::expr] (Heap::instance ()) ;
+		auto &&rax = keep[TYPE<HeapLayout>::expr] (Heap::expr) ;
 		const auto r1x = csc_handle_t (rax.mHolder) ;
 		auto rbx = Dl_info () ;
 		const auto r2x = dladdr (r1x ,(&rbx)) ;

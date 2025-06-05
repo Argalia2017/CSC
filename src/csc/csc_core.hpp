@@ -1340,7 +1340,7 @@ public:
 } ;
 
 struct HeapHolder implement Interface {
-	imports CREF<HeapLayout> instance () ;
+	imports CREF<HeapLayout> expr_m () ;
 	imports VFat<HeapHolder> hold (VREF<HeapLayout> that) ;
 	imports CFat<HeapHolder> hold (CREF<HeapLayout> that) ;
 
@@ -1356,8 +1356,8 @@ protected:
 	using HeapLayout::mHolder ;
 
 public:
-	static CREF<Heap> instance () {
-		return keep[TYPE<Heap>::expr] (HeapHolder::instance ()) ;
+	static CREF<Heap> expr_m () {
+		return keep[TYPE<Heap>::expr] (HeapHolder::expr) ;
 	}
 
 	INDEX stack () const {
@@ -1422,7 +1422,7 @@ inline KeyBaseLayout::~KeyBaseLayout () noexcept {
 
 template <class A>
 struct KeyRootHolder implement Interface {
-	imports CREF<KeyBaseLayout> instance () ;
+	imports CREF<KeyBaseLayout> expr_m () ;
 } ;
 
 template <class A>
@@ -1433,7 +1433,7 @@ protected:
 public:
 	implicit KeyBase () noexcept {
 		auto &&rax = keep[TYPE<A>::expr] (thiz) ;
-		KeyBaseHolder::hold (thiz)->initialize (KeyRootHolder<A>::instance () ,address (rax)) ;
+		KeyBaseHolder::hold (thiz)->initialize (KeyRootHolder<A>::expr ,address (rax)) ;
 	}
 
 	INDEX get_index () const {
@@ -1479,7 +1479,7 @@ public:
 	}
 
 	explicit Key (CREF<INDEX> index) {
-		mHandle = KeyBaseHolder::hold (KeyRootHolder<A>::instance ())->spwan (index) ;
+		mHandle = KeyBaseHolder::hold (KeyRootHolder<A>::expr)->spwan (index) ;
 		mCheck = KeyBaseHolder::hold (node ())->get_check () ;
 	}
 
@@ -1774,7 +1774,7 @@ public:
 
 	static VREF<ExternalLayout> root_ptr () ;
 
-	static CREF<Fat<A ,B>> declare () {
+	static CREF<Fat<A ,B>> expr_m () {
 		return Pointer::from (root_ptr ().mImplHolder) ;
 	}
 } ;

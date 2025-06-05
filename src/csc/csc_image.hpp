@@ -310,7 +310,7 @@ public:
 struct ImageProcLayout ;
 
 struct ImageProcHolder implement Interface {
-	imports CREF<OfThis<UniqueRef<ImageProcLayout>>> instance () ;
+	imports CREF<OfThis<UniqueRef<ImageProcLayout>>> expr_m () ;
 	imports VFat<ImageProcHolder> hold (VREF<ImageProcLayout> that) ;
 	imports CFat<ImageProcHolder> hold (CREF<ImageProcLayout> that) ;
 
@@ -332,43 +332,43 @@ struct ImageProcHolder implement Interface {
 
 class ImageProc implement OfThis<UniqueRef<ImageProcLayout>> {
 public:
-	static CREF<ImageProc> instance () {
-		return keep[TYPE<ImageProc>::expr] (ImageProcHolder::instance ()) ;
+	static CREF<ImageProc> expr_m () {
+		return keep[TYPE<ImageProc>::expr] (ImageProcHolder::expr) ;
 	}
 
 	static ImageLayout make_image (RREF<BoxLayout> image) {
-		return ImageProcHolder::hold (instance ())->make_image (move (image)) ;
+		return ImageProcHolder::hold (expr)->make_image (move (image)) ;
 	}
 
 	static ImageLayout make_image (CREF<ImageShape> shape) {
-		return ImageProcHolder::hold (instance ())->make_image (shape) ;
+		return ImageProcHolder::hold (expr)->make_image (shape) ;
 	}
 
 	static ImageLayout make_image (CREF<ImageShape> shape ,CREF<Clazz> clazz ,CREF<LENGTH> channel) {
-		return ImageProcHolder::hold (instance ())->make_image (shape ,clazz ,channel) ;
+		return ImageProcHolder::hold (expr)->make_image (shape ,clazz ,channel) ;
 	}
 
 	template <class A>
 	static VREF<A> peek_image (VREF<ImageLayout> image ,TYPE<A>) {
-		return ImageProcHolder::hold (instance ())->peek_image (image) ;
+		return ImageProcHolder::hold (expr)->peek_image (image) ;
 	}
 
 	template <class A>
 	static CREF<A> peek_image (CREF<ImageLayout> image ,TYPE<A>) {
-		return ImageProcHolder::hold (instance ())->peek_image (image) ;
+		return ImageProcHolder::hold (expr)->peek_image (image) ;
 	}
 
 	static ImageLayout load_image (CREF<String<STR>> file) {
-		return ImageProcHolder::hold (instance ())->load_image (file) ;
+		return ImageProcHolder::hold (expr)->load_image (file) ;
 	}
 
 	static void save_image (CREF<String<STR>> file ,CREF<ImageLayout> image) {
-		return ImageProcHolder::hold (instance ())->save_image (file ,image) ;
+		return ImageProcHolder::hold (expr)->save_image (file ,image) ;
 	}
 
 	template <class ARG1>
 	static ARG1 sampler (CREF<Image<ARG1>> image ,CREF<FLT64> x ,CREF<FLT64> y) {
-		return ImageProcHolder::hold (instance ())->sampler (image ,x ,y) ;
+		return ImageProcHolder::hold (expr)->sampler (image ,x ,y) ;
 	}
 } ;
 

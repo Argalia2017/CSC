@@ -13,7 +13,7 @@ struct ConfigProcLayout {
 class ConfigProcImplHolder final implement Fat<ConfigProcHolder ,ConfigProcLayout> {
 public:
 	void initialize () override {
-		Singleton<Console>::instance ().debug (slice ("library_file = ") ,RuntimeProc::library_file ()) ;
+		Singleton<Console>::expr.debug (slice ("library_file = ") ,RuntimeProc::library_file ()) ;
 	}
 
 	void set_data_dire (CREF<String<STR>> dire) override {
@@ -32,10 +32,10 @@ public:
 	}
 
 	static void cxx_signal_handle (int code) {
-		Singleton<Console>::instance ().trace () ;
-		Singleton<Console>::instance ().fatal (slice ("signal error")) ;
-		Singleton<Console>::instance ().fatal (slice ("code = ") ,build_code (code)) ;
-		Singleton<Console>::instance ().trace () ;
+		Singleton<Console>::expr.trace () ;
+		Singleton<Console>::expr.fatal (slice ("signal error")) ;
+		Singleton<Console>::expr.fatal (slice ("code = ") ,build_code (code)) ;
+		Singleton<Console>::expr.trace () ;
 		RuntimeProc::process_exit () ;
 	}
 
@@ -56,7 +56,7 @@ public:
 	}
 } ;
 
-exports CREF<OfThis<SharedRef<ConfigProcLayout>>> ConfigProcHolder::instance () {
+exports CREF<OfThis<SharedRef<ConfigProcLayout>>> ConfigProcHolder::expr_m () {
 	return memorize ([&] () {
 		OfThis<SharedRef<ConfigProcLayout>> ret ;
 		ret.mThis = SharedRef<ConfigProcLayout>::make () ;

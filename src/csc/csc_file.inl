@@ -14,11 +14,11 @@ namespace CSC {
 template class External<PathHolder ,PathLayout> ;
 
 exports VFat<PathHolder> PathHolder::hold (VREF<PathLayout> that) {
-	return VFat<PathHolder> (External<PathHolder ,PathLayout>::declare () ,that) ;
+	return VFat<PathHolder> (External<PathHolder ,PathLayout>::expr ,that) ;
 }
 
 exports CFat<PathHolder> PathHolder::hold (CREF<PathLayout> that) {
-	return CFat<PathHolder> (External<PathHolder ,PathLayout>::declare () ,that) ;
+	return CFat<PathHolder> (External<PathHolder ,PathLayout>::expr ,that) ;
 }
 
 template class External<FileProcHolder ,FileProcLayout> ;
@@ -29,7 +29,7 @@ struct FileProcLayout {
 	List<UniqueRef<String<STR>>> mLockDirectory ;
 } ;
 
-exports CREF<OfThis<UniqueRef<FileProcLayout>>> FileProcHolder::instance () {
+exports CREF<OfThis<UniqueRef<FileProcLayout>>> FileProcHolder::expr_m () {
 	return memorize ([&] () {
 		OfThis<UniqueRef<FileProcLayout>> ret ;
 		ret.mThis = UniqueRef<FileProcLayout>::make () ;
@@ -39,11 +39,11 @@ exports CREF<OfThis<UniqueRef<FileProcLayout>>> FileProcHolder::instance () {
 }
 
 exports VFat<FileProcHolder> FileProcHolder::hold (VREF<FileProcLayout> that) {
-	return VFat<FileProcHolder> (External<FileProcHolder ,FileProcLayout>::declare () ,that) ;
+	return VFat<FileProcHolder> (External<FileProcHolder ,FileProcLayout>::expr ,that) ;
 }
 
 exports CFat<FileProcHolder> FileProcHolder::hold (CREF<FileProcLayout> that) {
-	return CFat<FileProcHolder> (External<FileProcHolder ,FileProcLayout>::declare () ,that) ;
+	return CFat<FileProcHolder> (External<FileProcHolder ,FileProcLayout>::expr ,that) ;
 }
 
 template class External<StreamFileHolder ,StreamFileLayout> ;
@@ -64,11 +64,11 @@ exports AutoRef<StreamFileLayout> StreamFileHolder::create () {
 }
 
 exports VFat<StreamFileHolder> StreamFileHolder::hold (VREF<StreamFileLayout> that) {
-	return VFat<StreamFileHolder> (External<StreamFileHolder ,StreamFileLayout>::declare () ,that) ;
+	return VFat<StreamFileHolder> (External<StreamFileHolder ,StreamFileLayout>::expr ,that) ;
 }
 
 exports CFat<StreamFileHolder> StreamFileHolder::hold (CREF<StreamFileLayout> that) {
-	return CFat<StreamFileHolder> (External<StreamFileHolder ,StreamFileLayout>::declare () ,that) ;
+	return CFat<StreamFileHolder> (External<StreamFileHolder ,StreamFileLayout>::expr ,that) ;
 }
 
 struct StreamFileByteWriterLayout {
@@ -225,11 +225,11 @@ exports AutoRef<BufferFileLayout> BufferFileHolder::create () {
 }
 
 exports VFat<BufferFileHolder> BufferFileHolder::hold (VREF<BufferFileLayout> that) {
-	return VFat<BufferFileHolder> (External<BufferFileHolder ,BufferFileLayout>::declare () ,that) ;
+	return VFat<BufferFileHolder> (External<BufferFileHolder ,BufferFileLayout>::expr ,that) ;
 }
 
 exports CFat<BufferFileHolder> BufferFileHolder::hold (CREF<BufferFileLayout> that) {
-	return CFat<BufferFileHolder> (External<BufferFileHolder ,BufferFileLayout>::declare () ,that) ;
+	return CFat<BufferFileHolder> (External<BufferFileHolder ,BufferFileLayout>::expr ,that) ;
 }
 
 template class External<UartFileHolder ,UartFileLayout> ;
@@ -253,11 +253,11 @@ exports AutoRef<UartFileLayout> UartFileHolder::create () {
 }
 
 exports VFat<UartFileHolder> UartFileHolder::hold (VREF<UartFileLayout> that) {
-	return VFat<UartFileHolder> (External<UartFileHolder ,UartFileLayout>::declare () ,that) ;
+	return VFat<UartFileHolder> (External<UartFileHolder ,UartFileLayout>::expr ,that) ;
 }
 
 exports CFat<UartFileHolder> UartFileHolder::hold (CREF<UartFileLayout> that) {
-	return CFat<UartFileHolder> (External<UartFileHolder ,UartFileLayout>::declare () ,that) ;
+	return CFat<UartFileHolder> (External<UartFileHolder ,UartFileLayout>::expr ,that) ;
 }
 
 template class External<ConsoleHolder ,ConsoleLayout> ;
@@ -274,7 +274,7 @@ struct ConsoleLayout {
 	System mCommand ;
 } ;
 
-exports CREF<OfThis<SharedRef<ConsoleLayout>>> ConsoleHolder::instance () {
+exports CREF<OfThis<SharedRef<ConsoleLayout>>> ConsoleHolder::expr_m () {
 	return memorize ([&] () {
 		OfThis<SharedRef<ConsoleLayout>> ret ;
 		ret.mThis = SharedRef<ConsoleLayout>::make () ;
@@ -284,10 +284,10 @@ exports CREF<OfThis<SharedRef<ConsoleLayout>>> ConsoleHolder::instance () {
 }
 
 exports VFat<ConsoleHolder> ConsoleHolder::hold (VREF<ConsoleLayout> that) {
-	return VFat<ConsoleHolder> (External<ConsoleHolder ,ConsoleLayout>::declare () ,that) ;
+	return VFat<ConsoleHolder> (External<ConsoleHolder ,ConsoleLayout>::expr ,that) ;
 }
 
 exports CFat<ConsoleHolder> ConsoleHolder::hold (CREF<ConsoleLayout> that) {
-	return CFat<ConsoleHolder> (External<ConsoleHolder ,ConsoleLayout>::declare () ,that) ;
+	return CFat<ConsoleHolder> (External<ConsoleHolder ,ConsoleLayout>::expr ,that) ;
 }
 } ;

@@ -188,7 +188,7 @@ public:
 	}
 } ;
 
-exports CREF<OfThis<UniqueRef<StreamProcLayout>>> StreamProcHolder::instance () {
+exports CREF<OfThis<UniqueRef<StreamProcLayout>>> StreamProcHolder::expr_m () {
 	return memorize ([&] () {
 		OfThis<UniqueRef<StreamProcLayout>> ret ;
 		ret.mThis = UniqueRef<StreamProcLayout>::make () ;
@@ -1831,7 +1831,7 @@ public:
 	}
 } ;
 
-exports CREF<OfThis<UniqueRef<StreamTextProcLayout>>> StreamTextProcHolder::instance () {
+exports CREF<OfThis<UniqueRef<StreamTextProcLayout>>> StreamTextProcHolder::expr_m () {
 	return memorize ([&] () {
 		OfThis<UniqueRef<StreamTextProcLayout>> ret ;
 		ret.mThis = UniqueRef<StreamTextProcLayout>::make () ;

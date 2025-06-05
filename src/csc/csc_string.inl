@@ -821,7 +821,7 @@ public:
 	}
 } ;
 
-exports CREF<OfThis<UniqueRef<StringProcLayout>>> StringProcHolder::instance () {
+exports CREF<OfThis<UniqueRef<StringProcLayout>>> StringProcHolder::expr_m () {
 	return memorize ([&] () {
 		OfThis<UniqueRef<StringProcLayout>> ret ;
 		ret.mThis = UniqueRef<StringProcLayout>::make () ;

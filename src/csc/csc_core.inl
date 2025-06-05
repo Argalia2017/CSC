@@ -217,7 +217,7 @@ public:
 		const auto r1x = RFat<ReflectSize> (BoxHolder::hold (item)->unknown ()) ;
 		const auto r2x = inline_max (r1x->type_align () - ALIGN_OF<RefTree>::expr ,0) ;
 		const auto r3x = SIZE_OF<RefTree>::expr + r2x + r1x->type_size () ;
-		const auto r4x = Heap::instance () ;
+		const auto r4x = Heap::expr ;
 		self.mHandle = r4x.alloc (r3x) ;
 		assert (self.mHandle >= REFIMPLLAYOUT_MIN_HANDLE) ;
 		inline_memset (Pointer::make (self.mHandle) ,SIZE_OF<RefTree>::expr) ;
@@ -253,7 +253,7 @@ public:
 		const auto r4x = SIZE_OF<RefTree>::expr + r3x + r1x->type_size () ;
 		const auto r5x = inline_max (r2x->type_align () - r1x->type_align () ,0) ;
 		const auto r6x = r4x + r5x + r2x->type_size () * size_ ;
-		const auto r7x = Heap::instance () ;
+		const auto r7x = Heap::expr ;
 		self.mHandle = r7x.alloc (r6x) ;
 		assert (self.mHandle >= REFIMPLLAYOUT_MIN_HANDLE) ;
 		inline_memset (Pointer::make (self.mHandle) ,SIZE_OF<RefTree>::expr) ;
@@ -446,7 +446,7 @@ public:
 	}
 } ;
 
-exports CREF<HeapLayout> HeapHolder::instance () {
+exports CREF<HeapLayout> HeapHolder::expr_m () {
 	return memorize ([&] () {
 		HeapLayout ret ;
 		ret.mHolder = inline_vptr (HeapImplHolder ()) ;
@@ -503,7 +503,7 @@ public:
 		auto rax = ZERO ;
 		auto rbx = ZERO ;
 		if ifdo (TRUE) {
-			const auto r1x = Heap::instance () ;
+			const auto r1x = Heap::expr ;
 			rax = r1x.alloc (SIZE_OF<KeyRootLayout>::expr) ;
 			root_ptr (rax).mHeap = r1x ;
 			root_ptr (rax).mFinalize = FALSE ;

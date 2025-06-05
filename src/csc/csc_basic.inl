@@ -39,7 +39,7 @@ public:
 	}
 } ;
 
-exports CREF<HeapMutexLayout> HeapMutexHolder::instance () {
+exports CREF<HeapMutexLayout> HeapMutexHolder::expr_m () {
 	return memorize ([&] () {
 		HeapMutexLayout ret ;
 		ret.mHolder = inline_vptr (HeapMutexImplHolder ()) ;
@@ -253,7 +253,7 @@ public:
 		assert (!exist ()) ;
 		RefHolder::hold (self.mThis)->initialize (RefUnknownBinder<SharedRefTree> () ,holder ,1) ;
 		self.mThis->mHeader = SHADERREFIMPLLAYOUT_HEADER ;
-		self.mThis->mMutex = HeapMutex::instance () ;
+		self.mThis->mMutex = HeapMutex::expr ;
 		BoxHolder::hold (raw ())->initialize (holder) ;
 		self.mLayout = address (BoxHolder::hold (raw ())->deref) ;
 		BoxHolder::hold (raw ())->release () ;

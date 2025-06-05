@@ -19,7 +19,7 @@ public:
 } ;
 
 struct HeapMutexHolder implement Interface {
-	imports CREF<HeapMutexLayout> instance () ;
+	imports CREF<HeapMutexLayout> expr_m () ;
 	imports VFat<HeapMutexHolder> hold (VREF<HeapMutexLayout> that) ;
 	imports CFat<HeapMutexHolder> hold (CREF<HeapMutexLayout> that) ;
 
@@ -33,8 +33,8 @@ protected:
 	using HeapMutexLayout::mHolder ;
 
 public:
-	static CREF<HeapMutex> instance () {
-		return keep[TYPE<HeapMutex>::expr] (HeapMutexHolder::instance ()) ;
+	static CREF<HeapMutex> expr_m () {
+		return keep[TYPE<HeapMutex>::expr] (HeapMutexHolder::expr) ;
 	}
 
 	void enter () const {

@@ -163,7 +163,7 @@ template class External<RuntimeProcHolder ,RuntimeProcLayout> ;
 
 struct RuntimeProcLayout {} ;
 
-exports CREF<OfThis<UniqueRef<RuntimeProcLayout>>> RuntimeProcHolder::instance () {
+exports CREF<OfThis<UniqueRef<RuntimeProcLayout>>> RuntimeProcHolder::expr_m () {
 	return memorize ([&] () {
 		OfThis<UniqueRef<RuntimeProcLayout>> ret ;
 		ret.mThis = UniqueRef<RuntimeProcLayout>::make () ;
@@ -173,11 +173,11 @@ exports CREF<OfThis<UniqueRef<RuntimeProcLayout>>> RuntimeProcHolder::instance (
 }
 
 exports VFat<RuntimeProcHolder> RuntimeProcHolder::hold (VREF<RuntimeProcLayout> that) {
-	return VFat<RuntimeProcHolder> (External<RuntimeProcHolder ,RuntimeProcLayout>::declare () ,that) ;
+	return VFat<RuntimeProcHolder> (External<RuntimeProcHolder ,RuntimeProcLayout>::expr ,that) ;
 }
 
 exports CFat<RuntimeProcHolder> RuntimeProcHolder::hold (CREF<RuntimeProcLayout> that) {
-	return CFat<RuntimeProcHolder> (External<RuntimeProcHolder ,RuntimeProcLayout>::declare () ,that) ;
+	return CFat<RuntimeProcHolder> (External<RuntimeProcHolder ,RuntimeProcLayout>::expr ,that) ;
 }
 
 struct AtomicLayout {
@@ -529,11 +529,11 @@ exports AutoRef<ProcessLayout> ProcessHolder::create () {
 }
 
 exports VFat<ProcessHolder> ProcessHolder::hold (VREF<ProcessLayout> that) {
-	return VFat<ProcessHolder> (External<ProcessHolder ,ProcessLayout>::declare () ,that) ;
+	return VFat<ProcessHolder> (External<ProcessHolder ,ProcessLayout>::expr ,that) ;
 }
 
 exports CFat<ProcessHolder> ProcessHolder::hold (CREF<ProcessLayout> that) {
-	return CFat<ProcessHolder> (External<ProcessHolder ,ProcessLayout>::declare () ,that) ;
+	return CFat<ProcessHolder> (External<ProcessHolder ,ProcessLayout>::expr ,that) ;
 }
 
 template class External<LibraryHolder ,LibraryLayout> ;
@@ -549,11 +549,11 @@ exports AutoRef<LibraryLayout> LibraryHolder::create () {
 }
 
 exports VFat<LibraryHolder> LibraryHolder::hold (VREF<LibraryLayout> that) {
-	return VFat<LibraryHolder> (External<LibraryHolder ,LibraryLayout>::declare () ,that) ;
+	return VFat<LibraryHolder> (External<LibraryHolder ,LibraryLayout>::expr ,that) ;
 }
 
 exports CFat<LibraryHolder> LibraryHolder::hold (CREF<LibraryLayout> that) {
-	return CFat<LibraryHolder> (External<LibraryHolder ,LibraryLayout>::declare () ,that) ;
+	return CFat<LibraryHolder> (External<LibraryHolder ,LibraryLayout>::expr ,that) ;
 }
 
 struct SystemLayout {
@@ -768,7 +768,7 @@ public:
 	}
 } ;
 
-exports CREF<OfThis<UniqueRef<SingletonProcLayout>>> SingletonProcHolder::instance () {
+exports CREF<OfThis<UniqueRef<SingletonProcLayout>>> SingletonProcHolder::expr_m () {
 	return memorize ([&] () {
 		OfThis<UniqueRef<SingletonProcLayout>> ret ;
 		ret.mThis = UniqueRef<SingletonProcLayout>::make () ;
@@ -778,11 +778,11 @@ exports CREF<OfThis<UniqueRef<SingletonProcLayout>>> SingletonProcHolder::instan
 }
 
 exports VFat<SingletonProcHolder> SingletonProcHolder::hold (VREF<SingletonProcLayout> that) {
-	return VFat<SingletonProcHolder> (External<SingletonProcHolder ,SingletonProcLayout>::declare () ,that) ;
+	return VFat<SingletonProcHolder> (External<SingletonProcHolder ,SingletonProcLayout>::expr ,that) ;
 }
 
 exports CFat<SingletonProcHolder> SingletonProcHolder::hold (CREF<SingletonProcLayout> that) {
-	return CFat<SingletonProcHolder> (External<SingletonProcHolder ,SingletonProcLayout>::declare () ,that) ;
+	return CFat<SingletonProcHolder> (External<SingletonProcHolder ,SingletonProcLayout>::expr ,that) ;
 }
 
 struct GlobalNode {
@@ -808,7 +808,7 @@ public:
 	}
 
 	void initialize (CREF<Slice> name ,CREF<Unknown> holder) override {
-		self.mThis = Singleton<GlobalProc>::instance ().mThis ;
+		self.mThis = Singleton<GlobalProc>::expr.mThis ;
 		assert (!self.mThis->mFinalize) ;
 		Scope<Mutex> anonymous (self.mThis->mMutex) ;
 		INDEX ix = self.mThis->mGlobalNameSet.map (name) ;
@@ -825,12 +825,12 @@ public:
 	}
 
 	void startup () const override {
-		auto rax = Singleton<GlobalProc>::instance ().mThis ;
+		auto rax = Singleton<GlobalProc>::expr.mThis ;
 		assume (!rax->mFinalize) ;
 	}
 
 	void shutdown () const override {
-		auto rax = Singleton<GlobalProc>::instance ().mThis ;
+		auto rax = Singleton<GlobalProc>::expr.mThis ;
 		if (rax->mFinalize)
 			return ;
 		rax->mFinalize = TRUE ;
@@ -866,7 +866,7 @@ public:
 	}
 } ;
 
-exports CREF<GlobalLayout> GlobalHolder::instance () {
+exports CREF<GlobalLayout> GlobalHolder::expr_m () {
 	return memorize ([&] () {
 		GlobalLayout ret ;
 		GlobalHolder::hold (ret)->initialize () ;

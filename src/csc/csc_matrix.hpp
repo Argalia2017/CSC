@@ -750,7 +750,7 @@ struct SVDResult {
 struct MatrixProcLayout ;
 
 struct MatrixProcHolder implement Interface {
-	imports CREF<OfThis<UniqueRef<MatrixProcLayout>>> instance () ;
+	imports CREF<OfThis<UniqueRef<MatrixProcLayout>>> expr_m () ;
 	imports VFat<MatrixProcHolder> hold (VREF<MatrixProcLayout> that) ;
 	imports CFat<MatrixProcHolder> hold (CREF<MatrixProcLayout> that) ;
 
@@ -762,20 +762,20 @@ struct MatrixProcHolder implement Interface {
 
 class MatrixProc implement OfThis<UniqueRef<MatrixProcLayout>> {
 public:
-	static CREF<MatrixProc> instance () {
-		return keep[TYPE<MatrixProc>::expr] (MatrixProcHolder::instance ()) ;
+	static CREF<MatrixProc> expr_m () {
+		return keep[TYPE<MatrixProc>::expr] (MatrixProcHolder::expr) ;
 	}
 
 	static TRSResult solve_trs (CREF<Matrix> a) {
-		return MatrixProcHolder::hold (instance ())->solve_trs (a) ;
+		return MatrixProcHolder::hold (expr)->solve_trs (a) ;
 	}
 
 	static KRTResult solve_krt (CREF<Matrix> a) {
-		return MatrixProcHolder::hold (instance ())->solve_krt (a) ;
+		return MatrixProcHolder::hold (expr)->solve_krt (a) ;
 	}
 
 	static SVDResult solve_svd (CREF<Matrix> a) {
-		return MatrixProcHolder::hold (instance ())->solve_svd (a) ;
+		return MatrixProcHolder::hold (expr)->solve_svd (a) ;
 	}
 } ;
 
@@ -947,7 +947,7 @@ public:
 struct LinearProcLayout ;
 
 struct LinearProcHolder implement Interface {
-	imports CREF<OfThis<UniqueRef<LinearProcLayout>>> instance () ;
+	imports CREF<OfThis<UniqueRef<LinearProcLayout>>> expr_m () ;
 	imports VFat<LinearProcHolder> hold (VREF<LinearProcLayout> that) ;
 	imports CFat<LinearProcHolder> hold (CREF<LinearProcLayout> that) ;
 
@@ -959,20 +959,20 @@ struct LinearProcHolder implement Interface {
 
 class LinearProc implement OfThis<UniqueRef<LinearProcLayout>> {
 public:
-	static CREF<LinearProc> instance () {
-		return keep[TYPE<LinearProc>::expr] (LinearProcHolder::instance ()) ;
+	static CREF<LinearProc> expr_m () {
+		return keep[TYPE<LinearProc>::expr] (LinearProcHolder::expr) ;
 	}
 
 	static Image<FLT64> solve_lsm (CREF<Image<FLT64>> a) {
-		return LinearProcHolder::hold (instance ())->solve_lsm (a) ;
+		return LinearProcHolder::hold (expr)->solve_lsm (a) ;
 	}
 
 	static Image<FLT64> solve_lsm (CREF<Image<FLT64>> a ,CREF<Image<FLT64>> b) {
-		return LinearProcHolder::hold (instance ())->solve_lsm (a ,b) ;
+		return LinearProcHolder::hold (expr)->solve_lsm (a ,b) ;
 	}
 
 	static Image<FLT64> solve_inv (CREF<Image<FLT64>> a) {
-		return LinearProcHolder::hold (instance ())->solve_inv (a) ;
+		return LinearProcHolder::hold (expr)->solve_inv (a) ;
 	}
 } ;
 
