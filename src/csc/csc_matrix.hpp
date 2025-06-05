@@ -384,7 +384,7 @@ public:
 		}) ;
 	}
 
-	static CREF<Matrix> identity () {
+	static CREF<Matrix> iden () {
 		return memorize ([&] () {
 			const auto r1x = Vector::axis_x () ;
 			const auto r2x = Vector::axis_y () ;
@@ -715,6 +715,12 @@ inline Matrix CrossProductMatrix (CREF<Vector> xyz) {
 	return move (ret) ;
 }
 
+inline Matrix OuterProductMatrix (CREF<Vector> x ,CREF<Vector> y) {
+	Matrix ret ;
+	MakeMatrixHolder::hold (ret)->make_OuterProductMatrix (x ,y) ;
+	return move (ret) ;
+}
+
 inline Matrix SymmetryMatrix (CREF<Vector> x ,CREF<Vector> y) {
 	Matrix ret ;
 	MakeMatrixHolder::hold (ret)->make_OuterProductMatrix (x ,y) ;
@@ -868,7 +874,7 @@ public:
 		QuaternionHolder::hold (thiz)->initialize (that) ;
 	}
 
-	static CREF<Quaternion> identity () {
+	static CREF<Quaternion> iden () {
 		return memorize ([&] () {
 			return Quaternion (0 ,0 ,0 ,1) ;
 		}) ;

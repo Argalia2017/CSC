@@ -507,7 +507,7 @@ public:
 	}
 
 	void make_TranslationMatrix (CREF<FLT64> x ,CREF<FLT64> y ,CREF<FLT64> z) override {
-		Matrix ret = Matrix::identity () ;
+		Matrix ret = Matrix::iden () ;
 		ret[0][3] = x ;
 		ret[1][3] = y ;
 		ret[2][3] = z ;
@@ -649,7 +649,7 @@ public:
 	}
 
 	void make_AffineMatrix (CREF<Array<FLT64>> a) override {
-		Matrix ret = Matrix::identity () ;
+		Matrix ret = Matrix::iden () ;
 		if ifdo (TRUE) {
 			if (a.length () < 3)
 				discard ;
@@ -1063,7 +1063,7 @@ public:
 		const auto r7x = ret[y].transpose () * r5x ;
 		const auto r8x = MathProc::atan (r7x[y][x] ,r7x[x][x]) * rotate_sign (z ,x) ;
 		ret[z] = RotationMatrix (r1x[z] ,r8x) ;
-		const auto r9x = ret[z].transpose () * r7x - Matrix::identity () ;
+		const auto r9x = ret[z].transpose () * r7x - Matrix::iden () ;
 		for (auto &&j : iter (0 ,4 ,0 ,4)) {
 			assert (MathProc::abs (r9x[j]) < FLT32_EPS) ;
 		}
@@ -1094,7 +1094,7 @@ public:
 	Optional<FLT64> rotate_angle (CREF<Vector> dir ,CREF<Vector> rot_axis ,CREF<Vector> normal) const {
 		const auto r1x = CrossProductMatrix (rot_axis) ;
 		const auto r2x = r1x * r1x ;
-		const auto r3x = normal * (Matrix::identity () + r2x) * dir ;
+		const auto r3x = normal * (Matrix::iden () + r2x) * dir ;
 		const auto r4x = normal * r1x * dir ;
 		const auto r5x = -(normal * r2x * dir) ;
 		const auto r6x = MathProc::inverse (MathProc::hypot (r4x ,r5x)) ;
@@ -1178,7 +1178,7 @@ public:
 		self.mRank = 2 ;
 		auto &&rax = keep[TYPE<Ref<Array<Point2F>>>::expr] (Pointer::from (self.mPointCloud)) ;
 		rax = move (pointcloud) ;
-		self.mWorld = Matrix::identity () ;
+		self.mWorld = Matrix::iden () ;
 	}
 
 	void initialize (RREF<Ref<Array<Point3F>>> pointcloud) override {
@@ -1186,7 +1186,7 @@ public:
 		self.mRank = 3 ;
 		auto &&rax = keep[TYPE<Ref<Array<Point3F>>>::expr] (Pointer::from (self.mPointCloud)) ;
 		rax = move (pointcloud) ;
-		self.mWorld = Matrix::identity () ;
+		self.mWorld = Matrix::iden () ;
 	}
 
 	LENGTH size () const override {

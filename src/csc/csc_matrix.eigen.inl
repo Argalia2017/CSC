@@ -38,8 +38,8 @@ public:
 	KRTResult solve_krt (CREF<Matrix> a) const override {
 		KRTResult ret ;
 		ret.mK = a.homogenize () ;
-		ret.mR = Matrix::identity () ;
-		ret.mT = Matrix::identity () ;
+		ret.mR = Matrix::iden () ;
+		ret.mT = Matrix::iden () ;
 		auto rax = TRUE ;
 		while (TRUE) {
 			rax = FALSE ;
@@ -50,7 +50,7 @@ public:
 				const auto r2x = ret.mK[1][1] ;
 				const auto r3x = MathProc::inverse (Vector (r1x ,r2x ,0 ,0).magnitude ()) ;
 				const auto r4x = invoke ([&] () {
-					Matrix ret = Matrix::identity () ;
+					Matrix ret = Matrix::iden () ;
 					ret[0][0] = r2x * r3x ;
 					ret[1][1] = ret[0][0] ;
 					ret[0][1] = r1x * r3x ;
@@ -68,7 +68,7 @@ public:
 				const auto r6x = ret.mK[2][2] ;
 				const auto r7x = MathProc::inverse (Vector (r5x ,r6x ,0 ,0).magnitude ()) ;
 				const auto r8x = invoke ([&] () {
-					Matrix ret = Matrix::identity () ;
+					Matrix ret = Matrix::iden () ;
 					ret[0][0] = r6x * r7x ;
 					ret[2][2] = ret[0][0] ;
 					ret[0][2] = r5x * r7x ;
@@ -86,7 +86,7 @@ public:
 				const auto r10x = ret.mK[2][2] ;
 				const auto r11x = MathProc::inverse (Vector (r9x ,r10x ,0 ,0).magnitude ()) ;
 				const auto r12x = invoke ([&] () {
-					Matrix ret = Matrix::identity () ;
+					Matrix ret = Matrix::iden () ;
 					ret[1][1] = r10x * r11x ;
 					ret[2][2] = ret[1][1] ;
 					ret[1][2] = r9x * r11x ;
