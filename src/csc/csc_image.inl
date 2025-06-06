@@ -247,9 +247,8 @@ class TensorImplHolder final implement Fat<TensorHolder ,TensorLayout> {
 public:
 	void initialize (CREF<LENGTH> size_ ,CREF<Just<TensorDataType>> type_) override {
 		const auto r1x = size_of_tensor_type (type_) ;
-		const auto r2x = size_ * r1x ;
-		const auto r3x = inline_alignas (r2x ,SIZE_OF<QUAD>::expr) ;
-		self.mTensor = RefBuffer<BYTE> (r3x) ;
+		const auto r2x = size_ * r1x + 16 ;
+		self.mTensor = RefBuffer<BYTE> (r2x) ;
 		const auto r4x = address (self.mTensor[0]) ;
 		self.mOffset = inline_alignas (r4x ,16) - r4x ;
 		self.mWidth = size_ ;
@@ -284,25 +283,25 @@ public:
 	LENGTH cx () const override {
 		if (!self.mTensor.exist ())
 			return 0 ;
-		return self.mCX ;
+		return self.mShape[1] / self.mShape[0] ;
 	}
 
 	LENGTH cy () const override {
 		if (!self.mTensor.exist ())
 			return 0 ;
-		return self.mCY ;
+		return self.mShape[2] / self.mShape[1] ;
 	}
 
 	LENGTH cz () const override {
 		if (!self.mTensor.exist ())
 			return 0 ;
-		return self.mCZ ;
+		return self.mShape[3] / self.mShape[2] ;
 	}
 
 	LENGTH cw () const override {
 		if (!self.mTensor.exist ())
 			return 0 ;
-		return self.mCW ;
+		return self.mShape[4] / self.mShape[3] ;
 	}
 
 	TensorLayout recast (CREF<Just<TensorDataType>> type_) override {
@@ -316,8 +315,8 @@ public:
 		const auto r4x = address (ret.mTensor[ret.mOffset]) ;
 		const auto r5x = address (self.mTensor[self.mOffset]) ;
 		for (auto &&i : iter (0 ,r1x)) {
-			const auto r6x = r4x + i * ret.mSX ;
-			const auto r7x = r5x + i * self.mSX ;
+			const auto r6x = r4x + i * ret.mShape[0] ;
+			const auto r7x = r5x + i * self.mShape[0] ;
 			r3x->xcopy (Pointer::make (r6x) ,Pointer::make (r7x)) ;
 		}
 		return move (ret) ;
@@ -341,14 +340,8 @@ public:
 	}
 
 	void reset () override {
-		self.mSX = 0 ;
-		self.mSY = 0 ;
-		self.mSZ = 0 ;
-		self.mSW = 0 ;
-		self.mCX = 0 ;
-		self.mCY = 0 ;
-		self.mCZ = 0 ;
-		self.mCW = 0 ;
+		for (auto &&i : iter (0 ,self.mShape.size ()))
+			self.mShape[i] = 0 ;
 		if (self.mTensor.size () == 0)
 			return ;
 		reset (size () ,1 ,1 ,1) ;
@@ -363,14 +356,11 @@ public:
 		const auto r1x = cx_ * cy_ * cz_ * cw_ ;
 		noop (r1x) ;
 		assert (r1x == size ()) ;
-		self.mCX = cx_ ;
-		self.mCY = cy_ ;
-		self.mCZ = cz_ ;
-		self.mCW = cz_ ;
-		self.mSX = size_of_tensor_type (type ()) ;
-		self.mSY = self.mSX * self.mCX ;
-		self.mSZ = self.mSY * self.mCY ;
-		self.mSW = self.mSZ * self.mCZ ;
+		self.mShape[0] = size_of_tensor_type (type ()) ;
+		self.mShape[1] = self.mShape[0] * cx_ ;
+		self.mShape[2] = self.mShape[1] * cy_ ;
+		self.mShape[3] = self.mShape[2] * cz_ ;
+		self.mShape[4] = self.mShape[3] * cw_ ;
 	}
 
 	VREF<Pointer> ref_m () leftvalue override {

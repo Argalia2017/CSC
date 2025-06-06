@@ -36,6 +36,7 @@ using HDIR = CSC::DEF<DIR *> ;
 using HDIRENT = CSC::DEF<dirent *> ;
 using STAT_INFO = CSC::DEF<struct stat> ;
 using TERMIOS_INFO = CSC::DEF<struct termios> ;
+using HIOF = CSC::DEF<FILE *> ;
 } ;
 
 namespace std {
@@ -1174,7 +1175,7 @@ public:
 			if (!self.mConsole.exist ())
 				discard ;
 			const auto r1x = String<STR> (slice ("%s")) ;
-			std::fprintf (self.mConsole ,r1x.ref ,self.mLogBuffer.ref) ;
+			std::fprintf (HIOF (self.mConsole.ref) ,r1x.ref ,self.mLogBuffer.ref) ;
 		}
 	}
 
@@ -1188,7 +1189,7 @@ public:
 			if (!self.mConsole.exist ())
 				discard ;
 			const auto r1x = String<STR> (slice ("\033[1;34m%s\033[0m")) ;
-			std::fprintf (self.mConsole ,r1x.ref ,self.mLogBuffer.ref) ;
+			std::fprintf (HIOF (self.mConsole.ref) ,r1x.ref ,self.mLogBuffer.ref) ;
 		}
 	}
 
@@ -1202,7 +1203,7 @@ public:
 			if (!self.mConsole.exist ())
 				discard ;
 			const auto r1x = String<STR> (slice ("\033[1;31m%s\033[0m")) ;
-			std::fprintf (self.mConsole ,r1x.ref ,self.mLogBuffer.ref) ;
+			std::fprintf (HIOF (self.mConsole.ref) ,r1x.ref ,self.mLogBuffer.ref) ;
 		}
 	}
 
@@ -1216,7 +1217,7 @@ public:
 			if (!self.mConsole.exist ())
 				discard ;
 			const auto r1x = String<STR> (slice ("\033[1;33m%s\033[0m")) ;
-			std::fprintf (self.mConsole ,r1x.ref ,self.mLogBuffer.ref) ;
+			std::fprintf (HIOF (self.mConsole.ref) ,r1x.ref ,self.mLogBuffer.ref) ;
 		}
 	}
 
@@ -1230,7 +1231,7 @@ public:
 			if (!self.mConsole.exist ())
 				discard ;
 			const auto r1x = String<STR> (slice ("\033[1;32m%s\033[0m")) ;
-			std::fprintf (self.mConsole ,r1x.ref ,self.mLogBuffer.ref) ;
+			std::fprintf (HIOF (self.mConsole.ref) ,r1x.ref ,self.mLogBuffer.ref) ;
 		}
 	}
 
@@ -1244,7 +1245,7 @@ public:
 			if (!self.mConsole.exist ())
 				discard ;
 			const auto r1x = String<STR> (slice ("\033[1;36m%s\033[0m")) ;
-			std::fprintf (self.mConsole ,r1x.ref ,self.mLogBuffer.ref) ;
+			std::fprintf (HIOF (self.mConsole.ref) ,r1x.ref ,self.mLogBuffer.ref) ;
 		}
 	}
 
@@ -1258,7 +1259,7 @@ public:
 			if (!self.mConsole.exist ())
 				discard ;
 			const auto r1x = String<STR> (slice ("\033[1;37m%s\033[0m")) ;
-			std::fprintf (self.mConsole ,r1x.ref ,self.mLogBuffer.ref) ;
+			std::fprintf (HIOF (self.mConsole.ref) ,r1x.ref ,self.mLogBuffer.ref) ;
 		}
 	}
 
@@ -1303,7 +1304,7 @@ public:
 				discard ;
 			const auto r1x = String<STR> (slice ("%s\n")) ;
 			const auto r2x = String<STR> (slice ("press any key to continue...")) ;
-			std::fprintf (self.mConsole ,r1x.ref ,r2x.ref) ;
+			std::fprintf (HIOF (self.mConsole.ref) ,r1x.ref ,r2x.ref) ;
 		}
 		const auto r3x = std::getchar () ;
 		noop (r3x) ;

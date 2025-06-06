@@ -434,7 +434,7 @@ public:
 		assert (layout != NONE) ;
 		assume (self.mRoot.exist ()) ;
 		Scope<Mutex> anonymous (self.mRoot->mMutex) ;
-		self.mRoot->mClazzSet.add (clazz ,layout) ;
+		self.mRoot->mPin.ref.mClazzSet.add (clazz ,layout) ;
 	}
 } ;
 

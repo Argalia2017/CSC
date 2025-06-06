@@ -385,14 +385,7 @@ struct TensorLayout {
 	LENGTH mOffset ;
 	LENGTH mWidth ;
 	Just<TensorDataType> mType ;
-	LENGTH mSX ;
-	LENGTH mSY ;
-	LENGTH mSZ ;
-	LENGTH mSW ;
-	LENGTH mCX ;
-	LENGTH mCY ;
-	LENGTH mCZ ;
-	LENGTH mCW ;
+	Buffer5<LENGTH> mShape ;
 } ;
 
 struct TensorHolder implement Interface {
@@ -421,14 +414,7 @@ protected:
 	using TensorLayout::mOffset ;
 	using TensorLayout::mWidth ;
 	using TensorLayout::mType ;
-	using TensorLayout::mSX ;
-	using TensorLayout::mSY ;
-	using TensorLayout::mSZ ;
-	using TensorLayout::mSW ;
-	using TensorLayout::mCX ;
-	using TensorLayout::mCY ;
-	using TensorLayout::mCZ ;
-	using TensorLayout::mCW ;
+	using TensorLayout::mShape ;
 
 public:
 	implicit Tensor () = default ;
