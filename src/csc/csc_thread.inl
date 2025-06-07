@@ -80,7 +80,7 @@ public:
 		self.mThreadFunc = func ;
 		const auto r1x = FriendThreadBinder<WorkThreadLayout>::hold (self) ;
 		for (auto &&i : self.mThread.range ()) {
-			self.mThread[i] = Thread (Box<VFat<ThreadBinder>>::make (r1x) ,i) ;
+			self.mThread[i] = Thread (Box<VFat<FriendThread>>::make (r1x) ,i) ;
 			self.mThread[i].start () ;
 		}
 	}
@@ -289,7 +289,7 @@ public:
 		self.mThreadFunc = func ;
 		const auto r1x = FriendThreadBinder<CalcThreadLayout>::hold (self) ;
 		for (auto &&i : self.mThread.range ()) {
-			self.mThread[i] = Thread (Box<VFat<ThreadBinder>>::make (r1x) ,i) ;
+			self.mThread[i] = Thread (Box<VFat<FriendThread>>::make (r1x) ,i) ;
 			self.mThread[i].start () ;
 		}
 	}
@@ -541,7 +541,7 @@ public:
 			self.mThread = Array<Thread> (1) ;
 			const auto r1x = FriendThreadBinder<PromiseLayout>::hold (self) ;
 			for (auto &&i : self.mThread.range ()) {
-				self.mThread[i] = Thread (Box<VFat<ThreadBinder>>::make (r1x) ,0) ;
+				self.mThread[i] = Thread (Box<VFat<FriendThread>>::make (r1x) ,0) ;
 				self.mThread[i].start () ;
 			}
 		}

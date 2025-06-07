@@ -535,7 +535,7 @@ struct IntegerHolder implement Interface {
 	virtual void store (CREF<VAL64> item) = 0 ;
 	virtual BOOL equal (CREF<IntegerLayout> that) const = 0 ;
 	virtual FLAG compr (CREF<IntegerLayout> that) const = 0 ;
-	virtual void visit (VREF<VisitorBinder> visitor) const = 0 ;
+	virtual void visit (VREF<FriendVisitor> visitor) const = 0 ;
 	virtual IntegerLayout sadd (CREF<IntegerLayout> that) const = 0 ;
 	virtual IntegerLayout ssub (CREF<IntegerLayout> that) const = 0 ;
 	virtual IntegerLayout smul (CREF<IntegerLayout> that) const = 0 ;
@@ -631,7 +631,7 @@ public:
 		return compr (that) >= ZERO ;
 	}
 
-	void visit (VREF<VisitorBinder> visitor) const {
+	void visit (VREF<FriendVisitor> visitor) const {
 		return IntegerHolder::hold (thiz)->visit (visitor) ;
 	}
 

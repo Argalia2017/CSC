@@ -1545,7 +1545,7 @@ public:
 		self.mFormat = format ;
 	}
 
-	void friend_write (VREF<WriterBinder> writer) const override {
+	void friend_write (VREF<FriendWriter> writer) const override {
 		auto rax = FLAG (0) ;
 		for (auto &&i : iter (0 ,self.mFormat.size ())) {
 			auto act = TRUE ;
@@ -1570,7 +1570,7 @@ public:
 					const auto r1x = StreamProc::hex_from_str (self.mFormat[i]) - 1 ;
 					if (!inline_between (r1x ,0 ,self.mWrite))
 						discard ;
-					const auto r2x = keep[TYPE<CFat<FormatBinder>>::expr] (self.mParams[r1x]) ;
+					const auto r2x = keep[TYPE<CFat<FriendFormat>>::expr] (self.mParams[r1x]) ;
 					r2x->friend_write (writer) ;
 				}
 				rax = FLAG (0) ;
@@ -1581,7 +1581,7 @@ public:
 				if (self.mFormat[i] != STRU32 ('0'))
 					discard ;
 				for (auto &&j : iter (0 ,self.mWrite)) {
-					const auto r3x = keep[TYPE<CFat<FormatBinder>>::expr] (self.mParams[j]) ;
+					const auto r3x = keep[TYPE<CFat<FriendFormat>>::expr] (self.mParams[j]) ;
 					r3x->friend_write (writer) ;
 				}
 				rax = FLAG (3) ;
@@ -1593,7 +1593,7 @@ public:
 					const auto r4x = StreamProc::hex_from_str (self.mFormat[i]) - 1 ;
 					if (!inline_between (r4x ,0 ,self.mWrite))
 						discard ;
-					const auto r5x = keep[TYPE<CFat<FormatBinder>>::expr] (self.mParams[r4x]) ;
+					const auto r5x = keep[TYPE<CFat<FriendFormat>>::expr] (self.mParams[r4x]) ;
 					r5x->friend_write (writer) ;
 				}
 				rax = FLAG (3) ;
@@ -1639,7 +1639,7 @@ public:
 		noop () ;
 	}
 
-	void read_keyword (VREF<ReaderBinder> reader ,VREF<String<STRU8>> item) const override {
+	void read_keyword (VREF<FriendReader> reader ,VREF<String<STRU8>> item) const override {
 		auto rax = STRU32 () ;
 		auto rbx = ZERO ;
 		const auto r1x = reader.backup () ;
@@ -1662,7 +1662,7 @@ public:
 		reader.read (item) ;
 	}
 
-	void read_scalar (VREF<ReaderBinder> reader ,VREF<String<STRU8>> item) const override {
+	void read_scalar (VREF<FriendReader> reader ,VREF<String<STRU8>> item) const override {
 		auto rax = STRU32 () ;
 		auto rbx = ZERO ;
 		const auto r1x = reader.backup () ;
@@ -1717,7 +1717,7 @@ public:
 		reader.read (item) ;
 	}
 
-	void read_escape (VREF<ReaderBinder> reader ,VREF<String<STRU8>> item) const override {
+	void read_escape (VREF<FriendReader> reader ,VREF<String<STRU8>> item) const override {
 		auto rax = STRU32 () ;
 		auto rbx = ZERO ;
 		const auto r1x = reader.backup () ;
@@ -1756,7 +1756,7 @@ public:
 		reader.read (rax) ;
 	}
 
-	void write_escape (VREF<WriterBinder> writer ,CREF<String<STRU8>> item) const override {
+	void write_escape (VREF<FriendWriter> writer ,CREF<String<STRU8>> item) const override {
 		writer.write (STRU32 ('\"')) ;
 		for (auto &&i : item) {
 			auto act = TRUE ;
@@ -1774,7 +1774,7 @@ public:
 		writer.write (STRU32 ('\"')) ;
 	}
 
-	void read_blank (VREF<ReaderBinder> reader ,VREF<String<STRU8>> item) const override {
+	void read_blank (VREF<FriendReader> reader ,VREF<String<STRU8>> item) const override {
 		auto rax = STRU32 () ;
 		auto rbx = ZERO ;
 		const auto r1x = reader.backup () ;
@@ -1794,7 +1794,7 @@ public:
 		reader.read (item) ;
 	}
 
-	void read_endline (VREF<ReaderBinder> reader ,VREF<String<STRU8>> item) const override {
+	void read_endline (VREF<FriendReader> reader ,VREF<String<STRU8>> item) const override {
 		auto rax = STRU32 () ;
 		auto rbx = ZERO ;
 		const auto r1x = reader.backup () ;
@@ -1814,7 +1814,7 @@ public:
 		reader.read (item) ;
 	}
 
-	void write_aligned (VREF<WriterBinder> writer ,CREF<VAL64> number ,CREF<LENGTH> align) const override {
+	void write_aligned (VREF<FriendWriter> writer ,CREF<VAL64> number ,CREF<LENGTH> align) const override {
 		auto rax = WriteValueBuffer () ;
 		assert (inline_between (align ,0 ,rax.mBuffer.size ())) ;
 		rax.mWrite = rax.mBuffer.size () ;
@@ -1869,7 +1869,7 @@ public:
 		self.mLastTight = 0 ;
 	}
 
-	void friend_write (VREF<WriterBinder> writer) override {
+	void friend_write (VREF<FriendWriter> writer) override {
 		if ifdo (TRUE) {
 			if (self.mDepth >= self.mTight + self.mLastTight)
 				discard ;

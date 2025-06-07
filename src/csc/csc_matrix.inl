@@ -74,7 +74,7 @@ public:
 		return ZERO ;
 	}
 
-	void visit (VREF<VisitorBinder> visitor) const override {
+	void visit (VREF<FriendVisitor> visitor) const override {
 		visitor.enter () ;
 		for (auto &&i : iter (0 ,4)) {
 			inline_visit (visitor ,self.mVector[i]) ;
@@ -262,7 +262,7 @@ public:
 		return ZERO ;
 	}
 
-	void visit (VREF<VisitorBinder> visitor) const override {
+	void visit (VREF<FriendVisitor> visitor) const override {
 		visitor.enter () ;
 		for (auto &&i : iter (0 ,16)) {
 			inline_visit (visitor ,self.mMatrix[i]) ;
@@ -892,7 +892,7 @@ public:
 		return ZERO ;
 	}
 
-	void visit (VREF<VisitorBinder> visitor) const override {
+	void visit (VREF<FriendVisitor> visitor) const override {
 		visitor.enter () ;
 		for (auto &&i : iter (0 ,4)) {
 			inline_visit (visitor ,self.mQuaternion[i]) ;

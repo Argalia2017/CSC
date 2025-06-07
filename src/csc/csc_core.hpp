@@ -493,23 +493,23 @@ static constexpr auto inline_compr = FUNCTION_inline_compr () ;
 
 struct FUNCTION_inline_visit {
 	template <class ARG1>
-	forceinline void operator() (VREF<VisitorBinder> visitor ,CREF<ARG1> a) const noexcept {
+	forceinline void operator() (VREF<FriendVisitor> visitor ,CREF<ARG1> a) const noexcept {
 		return visit_impl (PHX ,visitor ,a) ;
 	}
 
 	template <class ARG1 ,class = REQUIRE<IS_BASIC<ARG1>>>
-	forceinline void visit_impl (CREF<typeof (PH3)> ,VREF<VisitorBinder> visitor ,CREF<ARG1> a) const {
+	forceinline void visit_impl (CREF<typeof (PH3)> ,VREF<FriendVisitor> visitor ,CREF<ARG1> a) const {
 		const auto r1x = bitwise[TYPE<BYTE_BASE<ARG1>>::expr] (a) ;
 		visitor.push (r1x) ;
 	}
 
 	template <class ARG1 ,class = REQUIRE<HAS_VISIT<ARG1>>>
-	forceinline void visit_impl (CREF<typeof (PH2)> ,VREF<VisitorBinder> visitor ,CREF<ARG1> a) const {
+	forceinline void visit_impl (CREF<typeof (PH2)> ,VREF<FriendVisitor> visitor ,CREF<ARG1> a) const {
 		return a.visit (visitor) ;
 	}
 
 	template <class ARG1>
-	forceinline void visit_impl (CREF<typeof (PH1)> ,VREF<VisitorBinder> visitor ,CREF<ARG1> a) const {
+	forceinline void visit_impl (CREF<typeof (PH1)> ,VREF<FriendVisitor> visitor ,CREF<ARG1> a) const {
 		assert (FALSE) ;
 	}
 } ;
@@ -927,11 +927,13 @@ template <class A ,class B>
 class ReflectFriendBinder final implement Fat<ReflectFriend<A> ,Proxy> {
 public:
 	VFat<A> hold (VREF<Pointer> a) const override {
-		return B::hold (keep[TYPE<A>::expr] (a)) ;
+		using R1X = typeof (nullof (B).self) ;
+		return B::hold (keep[TYPE<R1X>::expr] (a)) ;
 	}
 
 	CFat<A> hold (CREF<Pointer> a) const override {
-		return B::hold (keep[TYPE<A>::expr] (a)) ;
+		using R1X = typeof (nullof (B).self) ;
+		return B::hold (keep[TYPE<R1X>::expr] (a)) ;
 	}
 } ;
 
@@ -1384,7 +1386,7 @@ struct SliceHolder implement Interface {
 	virtual void get (CREF<INDEX> index ,VREF<STRU32> item) const = 0 ;
 	virtual BOOL equal (CREF<SliceLayout> that) const = 0 ;
 	virtual FLAG compr (CREF<SliceLayout> that) const = 0 ;
-	virtual void visit (VREF<VisitorBinder> visitor) const = 0 ;
+	virtual void visit (VREF<FriendVisitor> visitor) const = 0 ;
 	virtual SliceLayout eos () const = 0 ;
 } ;
 
@@ -1461,7 +1463,7 @@ public:
 		return compr (that) >= ZERO ;
 	}
 
-	void visit (VREF<VisitorBinder> visitor) const {
+	void visit (VREF<FriendVisitor> visitor) const {
 		return SliceHolder::hold (thiz)->visit (visitor) ;
 	}
 
@@ -1648,7 +1650,7 @@ public:
 } ;
 
 struct ReflectVisit implement Interface {
-	virtual void visit (VREF<VisitorBinder> visitor ,CREF<Pointer> a) const = 0 ;
+	virtual void visit (VREF<FriendVisitor> visitor ,CREF<Pointer> a) const = 0 ;
 
 	forceinline static consteval FLAG expr_m () noexcept {
 		return 113 ;
@@ -1658,7 +1660,7 @@ struct ReflectVisit implement Interface {
 template <class A>
 class ReflectVisitBinder final implement Fat<ReflectVisit ,Proxy> {
 public:
-	void visit (VREF<VisitorBinder> visitor ,CREF<Pointer> a) const override {
+	void visit (VREF<FriendVisitor> visitor ,CREF<Pointer> a) const override {
 		return inline_visit (visitor ,keep[TYPE<A>::expr] (a)) ;
 	}
 } ;
@@ -1715,7 +1717,7 @@ struct ClazzHolder implement Interface {
 	virtual Slice type_name () const = 0 ;
 	virtual BOOL equal (CREF<ClazzLayout> that) const = 0 ;
 	virtual FLAG compr (CREF<ClazzLayout> that) const = 0 ;
-	virtual void visit (VREF<VisitorBinder> visitor) const = 0 ;
+	virtual void visit (VREF<FriendVisitor> visitor) const = 0 ;
 } ;
 
 template <class A>
@@ -1792,7 +1794,7 @@ public:
 		return compr (that) >= ZERO ;
 	}
 
-	void visit (VREF<VisitorBinder> visitor) const {
+	void visit (VREF<FriendVisitor> visitor) const {
 		return ClazzHolder::hold (thiz)->visit (visitor) ;
 	}
 } ;

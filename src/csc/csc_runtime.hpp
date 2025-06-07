@@ -416,15 +416,15 @@ public:
 	}
 } ;
 
-struct ThreadBinder implement Interface {
+struct FriendThread implement Interface {
 	virtual void friend_execute (CREF<INDEX> slot) = 0 ;
 } ;
 
 template <class A>
-class FriendThreadBinder final implement Fat<ThreadBinder ,A> {
+class FriendThreadBinder final implement Fat<FriendThread ,A> {
 public:
-	static VFat<ThreadBinder> hold (VREF<A> that) {
-		return VFat<ThreadBinder> (FriendThreadBinder () ,that) ;
+	static VFat<FriendThread> hold (VREF<A> that) {
+		return VFat<FriendThread> (FriendThreadBinder () ,that) ;
 	}
 
 	void friend_execute (CREF<INDEX> slot) override {
@@ -439,7 +439,7 @@ struct ThreadHolder implement Interface {
 	imports VFat<ThreadHolder> hold (VREF<ThreadLayout> that) ;
 	imports CFat<ThreadHolder> hold (CREF<ThreadLayout> that) ;
 
-	virtual void initialize (RREF<Box<VFat<ThreadBinder>>> executor ,CREF<INDEX> slot) = 0 ;
+	virtual void initialize (RREF<Box<VFat<FriendThread>>> executor ,CREF<INDEX> slot) = 0 ;
 	virtual FLAG thread_uid () const = 0 ;
 	virtual void start () = 0 ;
 	virtual void stop () = 0 ;
@@ -449,7 +449,7 @@ class Thread implement OfThis<AutoRef<ThreadLayout>> {
 public:
 	implicit Thread () = default ;
 
-	explicit Thread (RREF<Box<VFat<ThreadBinder>>> executor ,CREF<INDEX> slot) {
+	explicit Thread (RREF<Box<VFat<FriendThread>>> executor ,CREF<INDEX> slot) {
 		mThis = ThreadHolder::create () ;
 		ThreadHolder::hold (thiz)->initialize (move (executor) ,slot) ;
 	}

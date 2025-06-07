@@ -15,7 +15,7 @@
 #include "csc_runtime.hpp"
 
 namespace CSC {
-struct CoroutineBinder implement Interface {
+struct FriendCoroutine implement Interface {
 	virtual void before () = 0 ;
 	virtual BOOL tick (CREF<FLT64> deltatime) = 0 ;
 	virtual BOOL idle () = 0 ;
@@ -24,10 +24,10 @@ struct CoroutineBinder implement Interface {
 } ;
 
 template <class A>
-class FriendCoroutineBinder final implement Fat<CoroutineBinder ,A> {
+class FriendCoroutineBinder final implement Fat<FriendCoroutine ,A> {
 public:
-	static VFat<CoroutineBinder> hold (VREF<A> that) {
-		return VFat<CoroutineBinder> (FriendCoroutineBinder () ,that) ;
+	static VFat<FriendCoroutine> hold (VREF<A> that) {
+		return VFat<FriendCoroutine> (FriendCoroutineBinder () ,that) ;
 	}
 
 	void before () override {

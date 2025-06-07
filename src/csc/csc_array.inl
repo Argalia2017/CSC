@@ -121,7 +121,7 @@ public:
 		return inline_compr (r1x ,r2x) ;
 	}
 
-	void visit (VREF<VisitorBinder> visitor) const override {
+	void visit (VREF<FriendVisitor> visitor) const override {
 		visitor.enter () ;
 		const auto r1x = size () ;
 		const auto r2x = RFat<ReflectVisit> (self.mArray.unknown ()) ;
@@ -399,7 +399,7 @@ public:
 		return inline_compr (r1x ,r2x) ;
 	}
 
-	void visit (VREF<VisitorBinder> visitor) const override {
+	void visit (VREF<FriendVisitor> visitor) const override {
 		visitor.enter () ;
 		const auto r1x = size () ;
 		auto rax = STRU32 () ;
@@ -1963,10 +1963,10 @@ struct FUNCTION_fnvhash {
 
 static constexpr auto fnvhash = FUNCTION_fnvhash () ;
 
-class FriendHashcodeVisitorBinder final implement Fat<VisitorBinder ,HashcodeVisitor> {
+class FriendHashcodeVisitorBinder final implement Fat<FriendVisitor ,HashcodeVisitor> {
 public:
-	static VFat<VisitorBinder> hold (VREF<HashcodeVisitor> that) {
-		return VFat<VisitorBinder> (FriendHashcodeVisitorBinder () ,that) ;
+	static VFat<FriendVisitor> hold (VREF<HashcodeVisitor> that) {
+		return VFat<FriendVisitor> (FriendHashcodeVisitorBinder () ,that) ;
 	}
 
 	void reset () override {
@@ -2350,7 +2350,7 @@ public:
 		return ZERO ;
 	}
 
-	void visit (VREF<VisitorBinder> visitor) const override {
+	void visit (VREF<FriendVisitor> visitor) const override {
 		visitor.enter () ;
 		const auto r1x = self.mSet.size () ;
 		for (auto &&i : iter (0 ,r1x)) {

@@ -81,7 +81,7 @@ struct VectorHolder implement Interface {
 	virtual CREF<FLT64> at (CREF<INDEX> y) const leftvalue = 0 ;
 	virtual BOOL equal (CREF<VectorLayout> that) const = 0 ;
 	virtual FLAG compr (CREF<VectorLayout> that) const = 0 ;
-	virtual void visit (VREF<VisitorBinder> visitor) const = 0 ;
+	virtual void visit (VREF<FriendVisitor> visitor) const = 0 ;
 	virtual VectorLayout sadd (CREF<VectorLayout> that) const = 0 ;
 	virtual VectorLayout ssub (CREF<VectorLayout> that) const = 0 ;
 	virtual VectorLayout smul (CREF<FLT64> scale) const = 0 ;
@@ -206,7 +206,7 @@ public:
 		return compr (that) >= ZERO ;
 	}
 
-	void visit (VREF<VisitorBinder> visitor) const {
+	void visit (VREF<FriendVisitor> visitor) const {
 		return VectorHolder::hold (thiz)->visit (visitor) ;
 	}
 
@@ -344,7 +344,7 @@ struct MatrixHolder implement Interface {
 	virtual CREF<FLT64> at (CREF<INDEX> x ,CREF<INDEX> y) const leftvalue = 0 ;
 	virtual BOOL equal (CREF<MatrixLayout> that) const = 0 ;
 	virtual FLAG compr (CREF<MatrixLayout> that) const = 0 ;
-	virtual void visit (VREF<VisitorBinder> visitor) const = 0 ;
+	virtual void visit (VREF<FriendVisitor> visitor) const = 0 ;
 	virtual MatrixLayout sadd (CREF<MatrixLayout> that) const = 0 ;
 	virtual MatrixLayout ssub (CREF<MatrixLayout> that) const = 0 ;
 	virtual MatrixLayout smul (CREF<FLT64> scale) const = 0 ;
@@ -466,7 +466,7 @@ public:
 		return compr (that) >= ZERO ;
 	}
 
-	void visit (VREF<VisitorBinder> visitor) const {
+	void visit (VREF<FriendVisitor> visitor) const {
 		return MatrixHolder::hold (thiz)->visit (visitor) ;
 	}
 
@@ -844,7 +844,7 @@ struct QuaternionHolder implement Interface {
 	virtual CREF<FLT64> at (CREF<INDEX> y) const leftvalue = 0 ;
 	virtual BOOL equal (CREF<QuaternionLayout> that) const = 0 ;
 	virtual FLAG compr (CREF<QuaternionLayout> that) const = 0 ;
-	virtual void visit (VREF<VisitorBinder> visitor) const = 0 ;
+	virtual void visit (VREF<FriendVisitor> visitor) const = 0 ;
 	virtual QuaternionLayout smul (CREF<QuaternionLayout> that) const = 0 ;
 	virtual Vector vector () const = 0 ;
 	virtual Matrix matrix () const = 0 ;
@@ -920,7 +920,7 @@ public:
 		return compr (that) >= ZERO ;
 	}
 
-	void visit (VREF<VisitorBinder> visitor) const {
+	void visit (VREF<FriendVisitor> visitor) const {
 		return QuaternionHolder::hold (thiz)->visit (visitor) ;
 	}
 

@@ -1023,7 +1023,7 @@ public:
 		return ZERO ;
 	}
 
-	void visit (VREF<VisitorBinder> visitor) const override {
+	void visit (VREF<FriendVisitor> visitor) const override {
 		visitor.enter () ;
 		const auto r1x = self.mWidth ;
 		for (auto &&i : iter (0 ,r1x)) {

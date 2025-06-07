@@ -155,7 +155,7 @@ struct ArrayHolder implement Interface {
 	virtual INDEX inext (CREF<INDEX> index) const = 0 ;
 	virtual BOOL equal (CREF<ArrayLayout> that) const = 0 ;
 	virtual FLAG compr (CREF<ArrayLayout> that) const = 0 ;
-	virtual void visit (VREF<VisitorBinder> visitor) const = 0 ;
+	virtual void visit (VREF<FriendVisitor> visitor) const = 0 ;
 	virtual void fill (CREF<Pointer> item) = 0 ;
 	virtual void splice (CREF<INDEX> index ,CREF<ArrayLayout> item) = 0 ;
 } ;
@@ -330,7 +330,7 @@ public:
 		return compr (that) >= ZERO ;
 	}
 
-	void visit (VREF<VisitorBinder> visitor) const {
+	void visit (VREF<FriendVisitor> visitor) const {
 		return ArrayHolder::hold (thiz)->visit (visitor) ;
 	}
 
@@ -384,7 +384,7 @@ struct StringHolder implement Interface {
 	virtual BOOL equal (CREF<StringLayout> that) const = 0 ;
 	virtual FLAG compr (CREF<Slice> that) const = 0 ;
 	virtual FLAG compr (CREF<StringLayout> that) const = 0 ;
-	virtual void visit (VREF<VisitorBinder> visitor) const = 0 ;
+	virtual void visit (VREF<FriendVisitor> visitor) const = 0 ;
 	virtual void trunc (CREF<INDEX> index) = 0 ;
 	virtual void fill (CREF<STRU32> item) = 0 ;
 	virtual void splice (CREF<INDEX> index ,CREF<Slice> item) = 0 ;
@@ -399,6 +399,7 @@ private:
 
 protected:
 	using StringDebugLayout<A>::mString ;
+	using StringDebugLayout<A>::mEncode ;
 
 public:
 	implicit String () = default ;
@@ -567,7 +568,7 @@ public:
 		return compr (that) >= ZERO ;
 	}
 
-	void visit (VREF<VisitorBinder> visitor) const {
+	void visit (VREF<FriendVisitor> visitor) const {
 		return StringHolder::hold (thiz)->visit (visitor) ;
 	}
 
@@ -819,7 +820,7 @@ public:
 		return compr (that) >= ZERO ;
 	}
 
-	void visit (VREF<VisitorBinder> visitor) const {
+	void visit (VREF<FriendVisitor> visitor) const {
 		visitor.enter () ;
 		inline_visit (visitor ,thiz.m1st) ;
 		visitor.leave () ;
@@ -1953,7 +1954,7 @@ struct BitSetHolder implement Interface {
 	virtual INDEX inext (CREF<INDEX> index) const = 0 ;
 	virtual BOOL equal (CREF<BitSetLayout> that) const = 0 ;
 	virtual FLAG compr (CREF<BitSetLayout> that) const = 0 ;
-	virtual void visit (VREF<VisitorBinder> visitor) const = 0 ;
+	virtual void visit (VREF<FriendVisitor> visitor) const = 0 ;
 	virtual void add (RREF<BoxLayout> item) = 0 ;
 	virtual BOOL contain (CREF<Pointer> item) const = 0 ;
 	virtual void erase (CREF<Pointer> item) = 0 ;
@@ -2089,7 +2090,7 @@ public:
 		return compr (that) >= ZERO ;
 	}
 
-	void visit (VREF<VisitorBinder> visitor) const {
+	void visit (VREF<FriendVisitor> visitor) const {
 		return BitSetHolder::hold (thiz)->visit (visitor) ;
 	}
 
