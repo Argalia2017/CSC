@@ -939,6 +939,8 @@ public:
 		return Pointer::from (that) ;
 	}
 
+	static CREF<ScopeCounter> from (RREF<PinnedCounter> that) = delete ;
+
 	void enter () const {
 		mThat.mPin.ref.mCounter++ ;
 		assume (mThat.mCounter < SCOPECOUNTER_MAX_DEPTH::expr) ;
@@ -2944,6 +2946,7 @@ public:
 	void guide_jmp () {
 		assert (self.mGuide.mElement != NONE) ;
 		INDEX ix = self.mGuide.mElement ;
+		auto &&rax = self.mThis->mElementList[ix] ;
 		INDEX jx = NONE ;
 		auto act = TRUE ;
 		if ifdo (act) {
@@ -2952,11 +2955,11 @@ public:
 			self.mGuide.mRow = 0 ;
 			self.mGuide.mCol = 0 ;
 			assume (self.mGuide.mCol < self.mGuide.mProperty.length ()) ;
-			assume (self.mGuide.mRow < self.mThis->mElementList[ix].mLineSize) ;
+			assume (self.mGuide.mRow < rax.mLineSize) ;
 			jx = self.mGuide.mProperty[self.mGuide.mCol] ;
-			const auto r1x = self.mGuide.mRow * self.mThis->mElementList[ix].mLineStep ;
-			self.mGuide.mPlyBegin = r1x + self.mThis->mElementList[ix].mPropertyList[jx].mPlyBegin ;
-			self.mGuide.mPlyEnd = r1x + self.mThis->mElementList[ix].mPropertyList[jx].mPlyEnd ;
+			const auto r1x = self.mGuide.mRow * rax.mLineStep ;
+			self.mGuide.mPlyBegin = r1x + rax.mPropertyList[jx].mPlyBegin ;
+			self.mGuide.mPlyEnd = r1x + rax.mPropertyList[jx].mPlyEnd ;
 			self.mGuide.mPlyIndex = self.mGuide.mPlyBegin ;
 			self.mGuide.mPlyListMode = FALSE ;
 		}
@@ -2965,11 +2968,11 @@ public:
 			if ifdo (TRUE) {
 				if (self.mGuide.mPlyListMode)
 					discard ;
-				if (self.mThis->mElementList[ix].mPropertyList[jx].mListType == PlyParserDataType::Null)
+				if (rax.mPropertyList[jx].mListType == PlyParserDataType::Null)
 					discard ;
-				self.mGuide.mPlyBegin = bitwise[TYPE<LENGTH>::expr] (Pointer::from (self.mThis->mElementList[ix].mPlyBuffer[self.mGuide.mPlyIndex])) ;
+				self.mGuide.mPlyBegin = bitwise[TYPE<LENGTH>::expr] (Pointer::from (rax.mPlyBuffer[self.mGuide.mPlyIndex])) ;
 				self.mGuide.mPlyIndex += SIZE_OF<LENGTH>::expr ;
-				self.mGuide.mPlyEnd = bitwise[TYPE<LENGTH>::expr] (Pointer::from (self.mThis->mElementList[ix].mPlyBuffer[self.mGuide.mPlyIndex])) ;
+				self.mGuide.mPlyEnd = bitwise[TYPE<LENGTH>::expr] (Pointer::from (rax.mPlyBuffer[self.mGuide.mPlyIndex])) ;
 				self.mGuide.mPlyIndex = self.mGuide.mPlyBegin ;
 				self.mGuide.mPlyListMode = TRUE ;
 			}
@@ -2981,21 +2984,21 @@ public:
 			if (self.mGuide.mCol >= self.mGuide.mProperty.length ())
 				discard ;
 			jx = self.mGuide.mProperty[self.mGuide.mCol] ;
-			const auto r2x = self.mGuide.mRow * self.mThis->mElementList[ix].mLineStep ;
-			self.mGuide.mPlyBegin = r2x + self.mThis->mElementList[ix].mPropertyList[jx].mPlyBegin ;
-			self.mGuide.mPlyEnd = r2x + self.mThis->mElementList[ix].mPropertyList[jx].mPlyEnd ;
+			const auto r2x = self.mGuide.mRow * rax.mLineStep ;
+			self.mGuide.mPlyBegin = r2x + rax.mPropertyList[jx].mPlyBegin ;
+			self.mGuide.mPlyEnd = r2x + rax.mPropertyList[jx].mPlyEnd ;
 			self.mGuide.mPlyIndex = self.mGuide.mPlyBegin ;
 			self.mGuide.mPlyListMode = FALSE ;
 		}
 		if ifdo (act) {
 			self.mGuide.mRow++ ;
 			self.mGuide.mCol = 0 ;
-			if (self.mGuide.mRow >= self.mThis->mElementList[ix].mLineSize)
+			if (self.mGuide.mRow >= rax.mLineSize)
 				discard ;
 			jx = self.mGuide.mProperty[self.mGuide.mCol] ;
-			const auto r3x = self.mGuide.mRow * self.mThis->mElementList[ix].mLineStep ;
-			self.mGuide.mPlyBegin = r3x + self.mThis->mElementList[ix].mPropertyList[jx].mPlyBegin ;
-			self.mGuide.mPlyEnd = r3x + self.mThis->mElementList[ix].mPropertyList[jx].mPlyEnd ;
+			const auto r3x = self.mGuide.mRow * rax.mLineStep ;
+			self.mGuide.mPlyBegin = r3x + rax.mPropertyList[jx].mPlyBegin ;
+			self.mGuide.mPlyEnd = r3x + rax.mPropertyList[jx].mPlyEnd ;
 			self.mGuide.mPlyIndex = self.mGuide.mPlyBegin ;
 			self.mGuide.mPlyListMode = FALSE ;
 		}

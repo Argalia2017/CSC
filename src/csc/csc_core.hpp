@@ -913,27 +913,26 @@ public:
 	}
 } ;
 
-template <class A>
-struct ReflectFriend implement Interface {
-	virtual VFat<A> hold (VREF<Pointer> a) const = 0 ;
-	virtual CFat<A> hold (CREF<Pointer> a) const = 0 ;
+struct ReflectMonad implement Interface {
+	virtual void hold (VREF<Pointer> a) const = 0 ;
+	virtual void hold (CREF<Pointer> a) const = 0 ;
 
 	forceinline static consteval FLAG expr_m () noexcept {
 		return 104 ;
 	}
 } ;
 
-template <class A ,class B>
-class ReflectFriendBinder final implement Fat<ReflectFriend<A> ,Proxy> {
+template <class A>
+class ReflectMonadBinder final implement Fat<ReflectMonad ,Proxy> {
 public:
-	VFat<A> hold (VREF<Pointer> a) const override {
-		using R1X = typeof (nullof (B).self) ;
-		return B::hold (keep[TYPE<R1X>::expr] (a)) ;
+	void hold (VREF<Pointer> a) const override {
+		using R1X = typeof (nullof (A).self) ;
+		return A::hold (keep[TYPE<R1X>::expr] (a)) ;
 	}
 
-	CFat<A> hold (CREF<Pointer> a) const override {
-		using R1X = typeof (nullof (B).self) ;
-		return B::hold (keep[TYPE<R1X>::expr] (a)) ;
+	void hold (CREF<Pointer> a) const override {
+		using R1X = typeof (nullof (A).self) ;
+		return A::hold (keep[TYPE<R1X>::expr] (a)) ;
 	}
 } ;
 

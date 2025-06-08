@@ -20,7 +20,17 @@ struct FriendCoroutine implement Interface {
 	virtual BOOL tick (CREF<FLT64> deltatime) = 0 ;
 	virtual BOOL idle () = 0 ;
 	virtual void after () = 0 ;
-	virtual void execute () = 0 ;
+
+	void execute () {
+		thiz.before () ;
+		while (TRUE) {
+			while (thiz.tick (0))
+				noop () ;
+			if (!thiz.idle ())
+				break ;
+		}
+		thiz.after () ;
+	}
 } ;
 
 template <class A>
@@ -44,16 +54,6 @@ public:
 
 	void after () override {
 		return thiz.self.after () ;
-	}
-
-	void execute () override {
-		thiz.self.before () ;
-		while (TRUE) {
-			while (thiz.self.tick (0)) ;
-			if (!thiz.self.idle ())
-				break ;
-		}
-		thiz.self.after () ;
 	}
 } ;
 
