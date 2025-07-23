@@ -1614,7 +1614,6 @@ public:
 } ;
 
 struct FormatLayout {
-	Pin<FormatLayout> mPin ;
 	Slice mFormat ;
 	BufferX<FatLayout> mParams ;
 	INDEX mWrite ;
@@ -1631,7 +1630,6 @@ struct FormatHolder implement Interface {
 
 class Format implement FormatLayout {
 protected:
-	using FormatLayout::mPin ;
 	using FormatLayout::mFormat ;
 	using FormatLayout::mParams ;
 	using FormatLayout::mWrite ;

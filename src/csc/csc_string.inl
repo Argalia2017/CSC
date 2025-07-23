@@ -923,7 +923,6 @@ public:
 } ;
 
 struct PinnedCounter {
-	Pin<PinnedCounter> mPin ;
 	LENGTH mCounter ;
 } ;
 
@@ -942,13 +941,14 @@ public:
 	static CREF<ScopeCounter> from (RREF<PinnedCounter> that) = delete ;
 
 	void enter () const {
-		mThat.mPin.ref.mCounter++ ;
-		assume (mThat.mCounter < SCOPECOUNTER_MAX_DEPTH::expr) ;
+		const auto r1x = Pin<PinnedCounter> (mThat) ;
+		r1x->mCounter++ ;
+		assume (r1x->mCounter < SCOPECOUNTER_MAX_DEPTH::expr) ;
 	}
 
 	void leave () const {
-		mThat.mPin.ref.mCounter-- ;
-		assume (mThat.mCounter >= ZERO) ;
+		const auto r1x = Pin<PinnedCounter> (mThat) ;
+		assume (r1x->mCounter >= ZERO) ;
 	}
 } ;
 
@@ -1007,7 +1007,6 @@ public:
 		mReader = RegularReader (move (stream) ,5) ;
 		mReader.use_text () ;
 		mPinnedCounter.mCounter = 0 ;
-		mPinnedCounter.mPin.pin (mPinnedCounter) ;
 		mArrayMap = SortedMap<INDEX> (ALLOCATOR_MIN_SIZE::expr) ;
 		mObjectMap = SortedMap<String<STRU8>> (ALLOCATOR_MIN_SIZE::expr) ;
 	}
@@ -1688,7 +1687,6 @@ public:
 		mReader = RegularReader (move (stream) ,5) ;
 		mReader.use_text () ;
 		mPinnedCounter.mCounter = 0 ;
-		mPinnedCounter.mPin.pin (mPinnedCounter) ;
 		mArrayMap = SortedMap<INDEX> (ALLOCATOR_MIN_SIZE::expr) ;
 		mObjectMap = SortedMap<String<STRU8>> (ALLOCATOR_MIN_SIZE::expr) ;
 	}

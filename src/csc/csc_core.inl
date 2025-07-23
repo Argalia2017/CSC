@@ -396,7 +396,6 @@ struct FUNCTION_memsize {
 static constexpr auto memsize = FUNCTION_memsize () ;
 
 struct HeapRoot {
-	Pin<HeapRoot> mPin ;
 	Box<std::atomic<VAL>> mStack ;
 	Box<std::atomic<VAL>> mLength ;
 } ;
@@ -410,11 +409,8 @@ public:
 	}
 
 	static VREF<HeapRoot> root_ptr () {
-		return memorize ([&] () {
-			HeapRoot ret ;
-			ret.mPin.pin (ret) ;
-			return move (ret) ;
-		}).mPin.ref ;
+		static auto mInstance = HeapRoot () ;
+		return mInstance ;
 	}
 
 	INDEX stack () const override {

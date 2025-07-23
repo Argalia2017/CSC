@@ -402,7 +402,6 @@ private:
 
 public:
 	void initialize () override {
-		self.mPin.pin (self) ;
 		self.mMutex = NULL ;
 	}
 
@@ -622,7 +621,8 @@ public:
 		} ,[&] (VREF<String<STR>> me) {
 			FileProc::erase_file (me) ;
 		}) ;
-		self.mPin.ref.mLockDirectory.add (move (rax)) ;
+		const auto r1x = Pin<List<UniqueRef<String<STR>>>> (self.mLockDirectory) ;
+		r1x->add (move (rax)) ;
 	}
 } ;
 

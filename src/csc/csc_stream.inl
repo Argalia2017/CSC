@@ -1541,7 +1541,6 @@ exports CFat<TextWriterHolder> TextWriterHolder::hold (CREF<TextWriterLayout> th
 class FormatImplHolder final implement Fat<FormatHolder ,FormatLayout> {
 public:
 	void initialize (CREF<Slice> format) override {
-		self.mPin.pin (self) ;
 		self.mFormat = format ;
 	}
 
@@ -1612,14 +1611,15 @@ public:
 	}
 
 	void once (CREF<WrapperLayout> params) const override {
+		const auto r1x = Pin<BufferX<FatLayout>> (self.mParams) ;
+		const auto r2x = Pin<LENGTH> (self.mWrite) ;
 		auto &&rax = keep[TYPE<Wrapper<FatLayout>>::expr] (params) ;
 		INDEX ix = 0 ;
 		for (auto &&i : iter (0 ,params.mRank)) {
-			auto rbx = rax[i] ;
-			self.mPin.ref.mParams[ix] = rbx ;
+			r1x.ref[ix] = rax[i] ;
 			ix++ ;
 		}
-		self.mPin.ref.mWrite = ix ;
+		r2x.ref = ix ;
 	}
 } ;
 

@@ -47,7 +47,6 @@ public:
 } ;
 
 struct OptionalLayout {
-	Pin<OptionalLayout> mPin ;
 	FLAG mCode ;
 	BoxLayout mValue ;
 
@@ -71,7 +70,6 @@ struct OptionalHolder implement Interface {
 template <class A>
 class Optional implement OptionalLayout {
 protected:
-	using OptionalLayout::mPin ;
 	using OptionalLayout::mCode ;
 	using OptionalLayout::mValue ;
 	Union<A> mStorage ;

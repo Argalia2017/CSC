@@ -12,7 +12,6 @@
 
 namespace CSC {
 struct HeapMutexRoot {
-	Pin<HeapMutexRoot> mPin ;
 	Box<std::recursive_mutex> mMutex ;
 } ;
 
@@ -23,11 +22,8 @@ public:
 	}
 
 	static VREF<HeapMutexRoot> root_ptr () {
-		return memorize ([&] () {
-			HeapMutexRoot ret ;
-			ret.mPin.pin (ret) ;
-			return move (ret) ;
-		}).mPin.ref ;
+		static auto mInstance = HeapMutexRoot () ;
+		return mInstance ;
 	}
 
 	void enter () const override {
@@ -63,7 +59,6 @@ exports CFat<HeapMutexHolder> HeapMutexHolder::hold (CREF<HeapMutexLayout> that)
 class OptionalImplHolder final implement Fat<OptionalHolder ,OptionalLayout> {
 public:
 	void initialize (CREF<FLAG> code) override {
-		self.mPin.pin (self) ;
 		self.mCode = code ;
 	}
 
@@ -77,15 +72,15 @@ public:
 
 	void get (VREF<BoxLayout> item) const override {
 		assume (exist ()) ;
-		auto &&rax = self.mPin.ref.mValue ;
-		BoxHolder::hold (item)->acquire (rax) ;
-		BoxHolder::hold (rax)->release () ;
+		const auto r1x = Pin<BoxLayout> (self.mValue) ;
+		BoxHolder::hold (item)->acquire (r1x.ref) ;
+		BoxHolder::hold (r1x.ref)->release () ;
 	}
 
 	void set (VREF<BoxLayout> item) const override {
 		assume (!exist ()) ;
-		auto &&rax = self.mPin.ref.mValue ;
-		BoxHolder::hold (rax)->acquire (item) ;
+		const auto r1x = Pin<BoxLayout> (self.mValue) ;
+		BoxHolder::hold (r1x.ref)->acquire (item) ;
 		BoxHolder::hold (item)->release () ;
 	}
 } ;
