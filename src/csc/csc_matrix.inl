@@ -1298,7 +1298,7 @@ public:
 	PointCloudLayout smul (CREF<Matrix> mat) const override {
 		PointCloudLayout ret ;
 		ret.mRank = self.mRank ;
-		ret.mPointCloud = self.mPointCloud ;
+		ret.mPointCloud = self.mPointCloud.share () ;
 		ret.mWorld = self.mWorld * mat ;
 		return move (ret) ;
 	}

@@ -808,7 +808,7 @@ public:
 	}
 
 	void initialize (CREF<Slice> name ,CREF<Unknown> holder) override {
-		self.mThis = Singleton<GlobalProc>::expr.mThis ;
+		self.mThis = Singleton<GlobalProc>::expr.mThis.share () ;
 		assert (!self.mThis->mFinalize) ;
 		Scope<Mutex> anonymous (self.mThis->mMutex) ;
 		INDEX ix = self.mThis->mGlobalNameSet.map (name) ;
@@ -825,12 +825,12 @@ public:
 	}
 
 	void startup () const override {
-		auto rax = Singleton<GlobalProc>::expr.mThis ;
+		auto rax = Singleton<GlobalProc>::expr.mThis.share () ;
 		assume (!rax->mFinalize) ;
 	}
 
 	void shutdown () const override {
-		auto rax = Singleton<GlobalProc>::expr.mThis ;
+		auto rax = Singleton<GlobalProc>::expr.mThis.share () ;
 		if (rax->mFinalize)
 			return ;
 		rax->mFinalize = TRUE ;

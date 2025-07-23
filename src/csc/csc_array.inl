@@ -1240,7 +1240,7 @@ public:
 	SortedMapLayout share () const override {
 		assert (self.mRoot == NONE) ;
 		SortedMapLayout ret ;
-		ret.mThis = self.mThis ;
+		ret.mThis = self.mThis.share () ;
 		ret.mRoot = NONE ;
 		ret.mRange = RefBuffer<INDEX> () ;
 		ret.mWrite = 0 ;

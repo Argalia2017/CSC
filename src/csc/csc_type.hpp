@@ -544,7 +544,7 @@ trait TYPE_REPEAT_HELP<A ,SIZE ,REQUIRE<ENUM_GT_ZERO<SIZE>>> {
 } ;
 
 template <class A ,class SIZE>
-using TYPE_BUFFER = typename TYPE_REPEAT_HELP<A ,SIZE ,ALWAYS>::RET ;
+using TYPE_REPEAT = typename TYPE_REPEAT_HELP<A ,SIZE ,ALWAYS>::RET ;
 
 template <class...>
 trait TYPE_SENQUENCE_HELP ;

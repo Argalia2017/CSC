@@ -108,6 +108,10 @@ public:
 		initialize (move (rax)) ;
 	}
 
+	void initialize (CREF<PathLayout> that) override {
+		self.mThis = that.mThis.share () ;
+	}
+
 	BOOL is_separator (CREF<STRU32> str) const {
 		if (str == STRU32 ('\\'))
 			return TRUE ;
@@ -250,14 +254,18 @@ public:
 	}
 
 	PathLayout symbolic () const override {
-		PathLayout ret = self ;
-		if ifdo (TRUE) {
+		PathLayout ret ;
+		auto act = TRUE ;
+		if ifdo (act) {
 			if (!is_link ())
 				discard ;
 			auto rax = String<STR>::make () ;
 			const auto r1x = INDEX (readlink (self.mThis->mPathName ,rax ,csc_size_t (rax.size ()))) ;
 			rax.trunc (r1x) ;
 			ret = Path (rax) ;
+		}
+		if ifdo (act) {
+			ret.mThis = self.mThis.share () ;
 		}
 		return move (ret) ;
 	}
@@ -806,7 +814,6 @@ public:
 		} ,[&] (VREF<csc_handle_t> me) {
 			noop () ;
 		}) ;
-		self.mMapping.depend (self.mPipe) ;
 		self.mFileMapFlag = csc_enum_t (PROT_READ) ;
 		read_header () ;
 	}
@@ -832,7 +839,6 @@ public:
 		} ,[&] (VREF<csc_handle_t> me) {
 			noop () ;
 		}) ;
-		self.mMapping.depend (self.mPipe) ;
 		self.mFileMapFlag = csc_enum_t (PROT_READ | PROT_WRITE) ;
 		write_header () ;
 	}
@@ -857,7 +863,6 @@ public:
 		} ,[&] (VREF<csc_handle_t> me) {
 			noop () ;
 		}) ;
-		self.mMapping.depend (self.mPipe) ;
 		self.mFileMapFlag = csc_enum_t (PROT_READ | PROT_WRITE) ;
 		read_header () ;
 	}

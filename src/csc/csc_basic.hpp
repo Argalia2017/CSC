@@ -320,6 +320,7 @@ struct FunctionHolder implement Interface {
 	imports CFat<FunctionHolder> hold (CREF<FunctionLayout> that) ;
 
 	virtual void initialize (CREF<Unknown> holder) = 0 ;
+	virtual void initialize (CREF<FunctionLayout> that) = 0 ;
 	virtual VREF<BoxLayout> raw () leftvalue = 0 ;
 	virtual CREF<BoxLayout> raw () const leftvalue = 0 ;
 	virtual LENGTH rank () const = 0 ;
@@ -357,6 +358,18 @@ public:
 		FunctionHolder::hold (thiz)->initialize (FunctionUnknownBinder<ARG1> ()) ;
 		keep[TYPE<Box<ARG1>>::expr] (raw ()).remake (move (that)) ;
 	}
+
+	implicit Function (CREF<Function> that) {
+		FunctionHolder::hold (thiz)->initialize (that) ;
+	}
+
+	forceinline VREF<Function> operator= (CREF<Function> that) {
+		return assign (thiz ,that) ;
+	}
+
+	implicit Function (RREF<Function> that) = default ;
+
+	forceinline VREF<Function> operator= (RREF<Function> that) = default ;
 
 	VREF<BoxLayout> raw () leftvalue {
 		return FunctionHolder::hold (thiz)->raw () ;
@@ -698,11 +711,11 @@ struct UniqueRefHolder implement Interface {
 	imports CFat<UniqueRefHolder> hold (CREF<UniqueRefLayout> that) ;
 
 	virtual void initialize (CREF<Unknown> holder ,CREF<Function<VREF<Pointer>>> owner) = 0 ;
+	virtual void initialize (CREF<UniqueRefLayout> that) = 0 ;
 	virtual void destroy () = 0 ;
 	virtual BOOL exist () const = 0 ;
 	virtual VREF<BoxLayout> raw () leftvalue = 0 ;
 	virtual CREF<BoxLayout> raw () const leftvalue = 0 ;
-	virtual void depend (VREF<UniqueRefLayout> that) const = 0 ;
 	virtual CREF<Pointer> ref_m () const leftvalue = 0 ;
 	virtual UniqueRefLayout recast (CREF<Unknown> simple) = 0 ;
 } ;
@@ -740,6 +753,18 @@ public:
 		return move (ret) ;
 	}
 
+	implicit UniqueRef (CREF<UniqueRef> that) {
+		UniqueRefHolder::hold (thiz)->initialize (that) ;
+	}
+
+	forceinline VREF<UniqueRef> operator= (CREF<UniqueRef> that) {
+		return assign (thiz ,that) ;
+	}
+
+	implicit UniqueRef (RREF<UniqueRef> that) = default ;
+
+	forceinline VREF<UniqueRef> operator= (RREF<UniqueRef> that) = default ;
+
 	BOOL exist () const {
 		return UniqueRefHolder::hold (thiz)->exist () ;
 	}
@@ -767,10 +792,6 @@ public:
 	forceinline BOOL operator== (CREF<UniqueRef> that) = delete ;
 
 	forceinline BOOL operator!= (CREF<UniqueRef> that) = delete ;
-
-	void depend (VREF<UniqueRefLayout> that) const {
-		return UniqueRefHolder::hold (thiz)->depend (that) ;
-	}
 
 	template <class ARG1>
 	UniqueRef<ARG1> recast (TYPE<ARG1>) {
@@ -1049,7 +1070,7 @@ public:
 } ;
 
 template <class A ,class B>
-class UnionPair implement Tuple<Union<A> ,B> {} ;
+struct UnionPair implement Tuple<Union<A> ,B> {} ;
 
 struct AllocatorNode {
 	INDEX mNext ;

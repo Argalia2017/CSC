@@ -1196,10 +1196,10 @@ struct RefHolder implement Interface {
 	imports CFat<RefHolder> hold (CREF<RefLayout> that) ;
 
 	virtual void initialize (RREF<BoxLayout> item) = 0 ;
-	virtual void initialize (CREF<RefLayout> that) = 0 ;
 	virtual void initialize (CREF<Unknown> holder ,CREF<Unknown> extend ,CREF<LENGTH> size_) = 0 ;
 	virtual void initialize (CREF<Unknown> holder ,CREF<FLAG> layout) = 0 ;
 	virtual void destroy () = 0 ;
+	virtual RefLayout share () const = 0 ;
 	virtual BOOL exist () const = 0 ;
 	virtual Unknown unknown () const = 0 ;
 	virtual VREF<Pointer> ref_m () leftvalue = 0 ;
@@ -1262,20 +1262,9 @@ public:
 
 	static Ref reference (RREF<A> that) = delete ;
 
-	implicit Ref (CREF<Ref> that) {
-		RefHolder::hold (thiz)->initialize (that) ;
-	}
-
-	forceinline VREF<Ref> operator= (CREF<Ref> that) {
-		return assign (thiz ,that) ;
-	}
-
-	implicit Ref (RREF<Ref> that) = default ;
-
-	forceinline VREF<Ref> operator= (RREF<Ref> that) = default ;
-
 	Ref share () const {
-		return move (thiz) ;
+		RefLayout ret = RefHolder::hold (thiz)->share () ;
+		return move (keep[TYPE<Ref>::expr] (ret)) ;
 	}
 
 	BOOL exist () const {
@@ -1710,6 +1699,7 @@ struct ClazzHolder implement Interface {
 	imports CFat<ClazzHolder> hold (CREF<ClazzLayout> that) ;
 
 	virtual void initialize (CREF<Unknown> holder) = 0 ;
+	virtual void initialize (CREF<ClazzLayout> that) = 0 ;
 	virtual LENGTH type_size () const = 0 ;
 	virtual LENGTH type_align () const = 0 ;
 	virtual FLAG type_guid () const = 0 ;
@@ -1744,6 +1734,18 @@ public:
 	explicit Clazz (TYPE<ARG1>) {
 		ClazzHolder::hold (thiz)->initialize (ClazzUnknownBinder<ARG1> ()) ;
 	}
+
+	implicit Clazz (CREF<Clazz> that) {
+		ClazzHolder::hold (thiz)->initialize (that) ;
+	}
+
+	forceinline VREF<Clazz> operator= (CREF<Clazz> that) {
+		return assign (thiz ,that) ;
+	}
+
+	implicit Clazz (RREF<Clazz> that) = default ;
+
+	forceinline VREF<Clazz> operator= (RREF<Clazz> that) = default ;
 
 	LENGTH type_size () const {
 		return ClazzHolder::hold (thiz)->type_size () ;

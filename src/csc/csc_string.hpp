@@ -203,7 +203,7 @@ public:
 struct XmlParserTree ;
 
 struct XmlParserLayout {
-	Ref<XmlParserTree> mThis ;
+	UniqueRef<XmlParserTree> mThis ;
 	INDEX mIndex ;
 } ;
 
@@ -407,7 +407,7 @@ public:
 struct JsonParserTree ;
 
 struct JsonParserLayout {
-	Ref<JsonParserTree> mThis ;
+	UniqueRef<JsonParserTree> mThis ;
 	INDEX mIndex ;
 } ;
 
@@ -622,7 +622,7 @@ struct PlyParserGuide {
 } ;
 
 struct PlyParserLayout {
-	Ref<PlyParserTree> mThis ;
+	UniqueRef<PlyParserTree> mThis ;
 	PlyParserGuide mGuide ;
 } ;
 

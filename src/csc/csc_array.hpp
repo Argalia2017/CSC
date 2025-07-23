@@ -134,7 +134,12 @@ struct ArrayLayout {
 } ;
 
 template <class A>
-struct ArrayPureLayout implement ArrayLayout {} ;
+struct ArrayPureLayout implement ArrayLayout {
+public:
+	implicit ArrayPureLayout () noexcept {
+		noop (RefBuffer<A> ()) ;
+	}
+} ;
 
 struct ArrayHolder implement Interface {
 	imports VFat<ArrayHolder> hold (VREF<ArrayLayout> that) ;
@@ -355,7 +360,12 @@ struct StringLayout {
 } ;
 
 template <class A>
-struct StringPureLayout implement StringLayout {} ;
+struct StringPureLayout implement StringLayout {
+public:
+	implicit StringPureLayout () noexcept {
+		noop (RefBuffer<A> ()) ;
+	}
+} ;
 
 struct StringHolder implement Interface {
 	imports VFat<StringHolder> hold (VREF<StringLayout> that) ;
@@ -604,7 +614,12 @@ struct DequeLayout {
 } ;
 
 template <class A>
-struct DequePureLayout implement DequeLayout {} ;
+struct DequePureLayout implement DequeLayout {
+public:
+	implicit DequePureLayout () noexcept {
+		noop (RefBuffer<A> ()) ;
+	}
+} ;
 
 struct DequeHolder implement Interface {
 	imports VFat<DequeHolder> hold (VREF<DequeLayout> that) ;
@@ -786,7 +801,7 @@ public:
 } ;
 
 template <class A>
-class IndexPair implement Tuple<A ,INDEX> {
+struct IndexPair implement Tuple<A ,INDEX> {
 public:
 	BOOL equal (CREF<IndexPair> that) const {
 		return inline_equal (thiz.m1st ,that.m1st) ;
@@ -834,7 +849,12 @@ struct PriorityLayout {
 } ;
 
 template <class A>
-struct PriorityPureLayout implement PriorityLayout {} ;
+struct PriorityPureLayout implement PriorityLayout {
+public:
+	implicit PriorityPureLayout () noexcept {
+		noop (RefBuffer<A> ()) ;
+	}
+} ;
 
 struct PriorityHolder implement Interface {
 	imports VFat<PriorityHolder> hold (VREF<PriorityLayout> that) ;
@@ -993,7 +1013,12 @@ struct ListLayout {
 } ;
 
 template <class A>
-struct ListPureLayout implement ListLayout {} ;
+struct ListPureLayout implement ListLayout {
+public:
+	implicit ListPureLayout () noexcept {
+		noop (Allocator<A ,ListNode> ()) ;
+	}
+} ;
 
 struct ListHolder implement Interface {
 	imports VFat<ListHolder> hold (VREF<ListLayout> that) ;
@@ -1204,7 +1229,12 @@ struct ArrayListLayout {
 } ;
 
 template <class A>
-struct ArrayListPureLayout implement ArrayListLayout {} ;
+struct ArrayListPureLayout implement ArrayListLayout {
+public:
+	implicit ArrayListPureLayout () noexcept {
+		noop (Allocator<A ,ArrayListNode> ()) ;
+	}
+} ;
 
 struct ArrayListHolder implement Interface {
 	imports VFat<ArrayListHolder> hold (VREF<ArrayListLayout> that) ;
@@ -1378,6 +1408,14 @@ struct SortedMapLayout {
 	BOOL mRemap ;
 } ;
 
+template <class A>
+struct SortedMapPureLayout implement SortedMapLayout {
+public:
+	implicit SortedMapPureLayout () noexcept {
+		noop (Allocator<A ,SortedMapNode> ()) ;
+	}
+} ;
+
 struct SortedMapHolder implement Interface {
 	imports VFat<SortedMapHolder> hold (VREF<SortedMapLayout> that) ;
 	imports CFat<SortedMapHolder> hold (CREF<SortedMapLayout> that) ;
@@ -1428,13 +1466,13 @@ public:
 } ;
 
 template <class A>
-class SortedMap implement SortedMapLayout {
+class SortedMap implement SortedMapPureLayout<A> {
 protected:
-	using SortedMapLayout::mThis ;
-	using SortedMapLayout::mRoot ;
-	using SortedMapLayout::mRange ;
-	using SortedMapLayout::mWrite ;
-	using SortedMapLayout::mRemap ;
+	using SortedMapPureLayout<A>::mThis ;
+	using SortedMapPureLayout<A>::mRoot ;
+	using SortedMapPureLayout<A>::mRange ;
+	using SortedMapPureLayout<A>::mWrite ;
+	using SortedMapPureLayout<A>::mRemap ;
 
 public:
 	implicit SortedMap () = default ;
@@ -1560,7 +1598,12 @@ struct SetLayout {
 } ;
 
 template <class A>
-struct SetPureLayout implement SetLayout {} ;
+struct SetPureLayout implement SetLayout {
+public:
+	implicit SetPureLayout () noexcept {
+		noop (Allocator<A ,SetNode> ()) ;
+	}
+} ;
 
 struct SetHolder implement Interface {
 	imports VFat<SetHolder> hold (VREF<SetLayout> that) ;
@@ -1744,7 +1787,12 @@ struct HashSetLayout {
 } ;
 
 template <class A>
-struct HashSetPureLayout implement HashSetLayout {} ;
+struct HashSetPureLayout implement HashSetLayout {
+public:
+	implicit HashSetPureLayout () noexcept {
+		noop (Allocator<A ,HashSetNode> ()) ;
+	}
+} ;
 
 struct HashSetHolder implement Interface {
 	imports VFat<HashSetHolder> hold (VREF<HashSetLayout> that) ;

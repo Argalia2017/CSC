@@ -228,23 +228,6 @@ public:
 		ptr (self).mCounter = 1 ;
 	}
 
-	void initialize (CREF<RefLayout> that) override {
-		auto act = TRUE ;
-		if ifdo (act) {
-			if (that.mHandle < REFIMPLLAYOUT_MIN_HANDLE)
-				discard ;
-			const auto r1x = ++ptr (that).mCounter ;
-			noop (r1x) ;
-			assert (r1x >= 2) ;
-			self.mHandle = that.mHandle ;
-			self.mLayout = address (BoxHolder::hold (ptr (that).mValue)->ref) ;
-		}
-		if ifdo (act) {
-			self.mHandle = that.mHandle ;
-			self.mLayout = that.mLayout ;
-		}
-	}
-
 	void initialize (CREF<Unknown> holder ,CREF<Unknown> extend ,CREF<LENGTH> size_) override {
 		assert (!exist ()) ;
 		const auto r1x = RFat<ReflectSize> (holder) ;
@@ -301,6 +284,25 @@ public:
 
 	static VREF<RefTree> ptr (CREF<RefLayout> that) {
 		return Pointer::make (that.mHandle) ;
+	}
+
+	RefLayout share () const override {
+		RefLayout ret ;
+		auto act = TRUE ;
+		if ifdo (act) {
+			if (self.mHandle < REFIMPLLAYOUT_MIN_HANDLE)
+				discard ;
+			const auto r1x = ++ptr (self).mCounter ;
+			noop (r1x) ;
+			assert (r1x >= 2) ;
+			ret.mHandle = self.mHandle ;
+			ret.mLayout = address (BoxHolder::hold (ptr (self).mValue)->ref) ;
+		}
+		if ifdo (act) {
+			ret.mHandle = self.mHandle ;
+			ret.mLayout = self.mLayout ;
+		}
+		return move (ret) ;
 	}
 
 	BOOL exist () const override {
@@ -641,6 +643,10 @@ public:
 		self.mThis->mTypeGuid = r2x->type_guid () ;
 		const auto r3x = RFat<ReflectName> (holder) ;
 		self.mThis->mTypeName = r3x->type_name () ;
+	}
+
+	void initialize (CREF<ClazzLayout> that) override {
+		self.mThis = that.mThis.share () ;
 	}
 
 	LENGTH type_size () const override {

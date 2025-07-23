@@ -122,7 +122,12 @@ struct ImageLayout {
 } ;
 
 template <class A>
-struct ImagePureLayout implement ImageLayout {} ;
+struct ImagePureLayout implement ImageLayout {
+public:
+	implicit ImagePureLayout () noexcept {
+		noop (RefBuffer<A> ()) ;
+	}
+} ;
 
 struct ImageHolder implement Interface {
 	imports VFat<ImageHolder> hold (VREF<ImageLayout> that) ;

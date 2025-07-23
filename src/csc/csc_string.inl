@@ -1328,12 +1328,12 @@ public:
 	void initialize (CREF<RefBuffer<BYTE>> stream) override {
 		auto rax = MakeXmlParser (Ref<RefBuffer<BYTE>>::reference (stream)) ;
 		rax.generate () ;
-		self.mThis = Ref<XmlParserTree>::make (rax.poll ()) ;
+		self.mThis = UniqueRef<XmlParserTree>::make (rax.poll ()) ;
 		self.mIndex = self.mThis->mRoot ;
 	}
 
 	BOOL exist () const override {
-		if (self.mThis == NULL)
+		if (!self.mThis.exist ())
 			return FALSE ;
 		if (self.mIndex == NONE)
 			return FALSE ;
@@ -1987,12 +1987,12 @@ public:
 	void initialize (CREF<RefBuffer<BYTE>> stream) override {
 		auto rax = MakeJsonParser (Ref<RefBuffer<BYTE>>::reference (stream)) ;
 		rax.generate () ;
-		self.mThis = Ref<JsonParserTree>::make (rax.poll ()) ;
+		self.mThis = UniqueRef<JsonParserTree>::make (rax.poll ()) ;
 		self.mIndex = self.mThis->mRoot ;
 	}
 
 	BOOL exist () const override {
-		if (self.mThis == NULL)
+		if (!self.mThis.exist ())
 			return FALSE ;
 		if (self.mIndex == NONE)
 			return FALSE ;
@@ -2900,7 +2900,7 @@ public:
 	void initialize (CREF<RefBuffer<BYTE>> stream) override {
 		auto rax = MakePlyParser (Ref<RefBuffer<BYTE>>::reference (stream)) ;
 		rax.generate () ;
-		self.mThis = Ref<PlyParserTree>::make (rax.poll ()) ;
+		self.mThis = UniqueRef<PlyParserTree>::make (rax.poll ()) ;
 		self.mGuide.mElement = NONE ;
 	}
 

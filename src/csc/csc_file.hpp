@@ -27,6 +27,7 @@ struct PathHolder implement Interface {
 
 	virtual void initialize (RREF<String<STR>> pathname) = 0 ;
 	virtual void initialize (CREF<Deque<String<STR>>> pathname) = 0 ;
+	virtual void initialize (CREF<PathLayout> that) = 0 ;
 	virtual String<STR> fetch () const = 0 ;
 	virtual PathLayout child (CREF<Slice> name) const = 0 ;
 	virtual PathLayout child (CREF<Format> name) const = 0 ;
@@ -64,6 +65,18 @@ public:
 	explicit Path (CREF<Deque<String<STR>>> pathname) {
 		PathHolder::hold (thiz)->initialize (pathname) ;
 	}
+
+	implicit Path (CREF<Path> that) {
+		PathHolder::hold (thiz)->initialize (that) ;
+	}
+
+	forceinline VREF<Path> operator= (CREF<Path> that) {
+		return assign (thiz ,that) ;
+	}
+
+	implicit Path (RREF<Path> that) = default ;
+
+	forceinline VREF<Path> operator= (RREF<Path> that) = default ;
 
 	String<STR> fetch () const {
 		return PathHolder::hold (thiz)->fetch () ;

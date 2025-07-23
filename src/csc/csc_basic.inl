@@ -112,6 +112,10 @@ public:
 		BoxHolder::hold (raw ())->release () ;
 	}
 
+	void initialize (CREF<FunctionLayout> that) override {
+		self.mThis = that.mThis.share () ;
+	}
+
 	VREF<BoxLayout> raw () leftvalue override {
 		return self.mThis->mValue ;
 	}
@@ -294,7 +298,7 @@ public:
 			if (that.mThis == NULL)
 				discard ;
 			Scope<HeapMutex> anonymous (that.mThis->mMutex) ;
-			self.mThis = that.mThis ;
+			self.mThis = that.mThis.share () ;
 			self.mLayout = address (BoxHolder::hold (raw ())->ref) ;
 			self.mThis->mCounter++ ;
 		}
@@ -353,7 +357,6 @@ exports CFat<SharedRefHolder> SharedRefHolder::hold (CREF<SharedRefLayout> that)
 
 struct UniqueRefTree {
 	Function<VREF<Pointer>> mOwner ;
-	UniqueRefLayout mUpper ;
 	BoxLayout mValue ;
 } ;
 
@@ -368,13 +371,15 @@ public:
 		self.mThis->mOwner = owner ;
 	}
 
+	void initialize (CREF<UniqueRefLayout> that) override {
+		self.mThis = that.mThis.share () ;
+	}
+
 	void destroy () override {
 		if (!exist ())
 			return ;
-		if ifdo (TRUE) {
-			auto rax = move (self.mThis->mUpper) ;
-			noop (rax) ;
-		}
+		if (!self.mThis.exclusive ())
+			return ;
 		if ifdo (TRUE) {
 			if (!BoxHolder::hold (raw ())->exist ())
 				discard ;
@@ -398,14 +403,6 @@ public:
 	CREF<Pointer> ref_m () const leftvalue override {
 		assert (exist ()) ;
 		return Pointer::make (self.mLayout) ;
-	}
-
-	void depend (VREF<UniqueRefLayout> that) const override {
-		auto rax = move (that.mThis->mUpper) ;
-		assert (!rax.mThis.exist ()) ;
-		rax.mThis = self.mThis ;
-		rax.mLayout = self.mLayout ;
-		that.mThis->mUpper = move (rax) ;
 	}
 
 	UniqueRefLayout recast (CREF<Unknown> simple) override {

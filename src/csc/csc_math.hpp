@@ -772,6 +772,7 @@ struct JetHolder implement Interface {
 
 	virtual void initialize (CREF<LENGTH> size_ ,CREF<FLT64> item) = 0 ;
 	virtual void initialize (CREF<LENGTH> size_ ,CREF<FLT64> item ,CREF<INDEX> slot) = 0 ;
+	virtual void initialize (CREF<JetLayout> that) = 0 ;
 	virtual FLT64 fx () const = 0 ;
 	virtual FLT64 ex () const = 0 ;
 	virtual FLT64 dx (CREF<INDEX> slot) const = 0 ;
@@ -812,6 +813,18 @@ public:
 	explicit Jet (CREF<FLT64> item ,CREF<INDEX> slot) {
 		JetHolder::hold (thiz)->initialize (A::expr ,item ,slot) ;
 	}
+
+	implicit Jet (CREF<Jet> that) {
+		JetHolder::hold (thiz)->initialize (that) ;
+	}
+
+	forceinline VREF<Jet> operator= (CREF<Jet> that) {
+		return assign (thiz ,that) ;
+	}
+
+	implicit Jet (RREF<Jet> that) = default ;
+
+	forceinline VREF<Jet> operator= (RREF<Jet> that) = default ;
 
 	FLT64 fx () const {
 		return JetHolder::hold (thiz)->fx () ;
