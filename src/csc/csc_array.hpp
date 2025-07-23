@@ -36,6 +36,7 @@ protected:
 	XREF<A> mThat ;
 	INDEX mBegin ;
 	INDEX mEnd ;
+	INDEX mPeek ;
 
 public:
 	implicit ArrayIterator () = delete ;
@@ -43,6 +44,7 @@ public:
 	explicit ArrayIterator (XREF<A> that) :mThat (that) {
 		mBegin = mThat.ibegin () ;
 		mEnd = mThat.iend () ;
+		mPeek = mBegin ;
 	}
 
 	LENGTH length () const {
@@ -58,7 +60,7 @@ public:
 	}
 
 	BOOL good () const {
-		return mBegin != mEnd ;
+		return mPeek != mEnd ;
 	}
 
 	forceinline BOOL operator== (CREF<ArrayIterator>) const {
@@ -70,7 +72,7 @@ public:
 	}
 
 	XREF<ITEM> peek () const leftvalue {
-		return mThat.at (mBegin) ;
+		return mThat.at (mPeek) ;
 	}
 
 	forceinline XREF<ITEM> operator* () const leftvalue {
@@ -78,7 +80,7 @@ public:
 	}
 
 	void next () {
-		mBegin = mThat.inext (mBegin) ;
+		mPeek = mThat.inext (mPeek) ;
 	}
 
 	forceinline void operator++ () {
@@ -127,14 +129,12 @@ public:
 	}
 } ;
 
-struct ArrayLayout ;
-
-template <class A>
-struct ArrayRealLayout implement OfBase<ArrayLayout> {
-	RefBuffer<A> mArray ;
+struct ArrayLayout {
+	RefBuffer<Pointer> mArray ;
 } ;
 
-struct ArrayLayout implement ArrayRealLayout<Pointer> {} ;
+template <class A>
+struct ArrayPureLayout implement ArrayLayout {} ;
 
 struct ArrayHolder implement Interface {
 	imports VFat<ArrayHolder> hold (VREF<ArrayLayout> that) ;
@@ -146,8 +146,8 @@ struct ArrayHolder implement Interface {
 	virtual LENGTH size () const = 0 ;
 	virtual LENGTH step () const = 0 ;
 	virtual LENGTH length () const = 0 ;
-	virtual VREF<Pointer> deref_m () leftvalue = 0 ;
-	virtual CREF<Pointer> deref_m () const leftvalue = 0 ;
+	virtual VREF<Pointer> ref_m () leftvalue = 0 ;
+	virtual CREF<Pointer> ref_m () const leftvalue = 0 ;
 	virtual VREF<Pointer> at (CREF<INDEX> index) leftvalue = 0 ;
 	virtual CREF<Pointer> at (CREF<INDEX> index) const leftvalue = 0 ;
 	virtual INDEX ibegin () const = 0 ;
@@ -155,7 +155,7 @@ struct ArrayHolder implement Interface {
 	virtual INDEX inext (CREF<INDEX> index) const = 0 ;
 	virtual BOOL equal (CREF<ArrayLayout> that) const = 0 ;
 	virtual FLAG compr (CREF<ArrayLayout> that) const = 0 ;
-	virtual void visit (VREF<VisitorBinder> visitor) const = 0 ;
+	virtual void visit (VREF<FriendVisitor> visitor) const = 0 ;
 	virtual void fill (CREF<Pointer> item) = 0 ;
 	virtual void splice (CREF<INDEX> index ,CREF<ArrayLayout> item) = 0 ;
 } ;
@@ -187,9 +187,9 @@ public:
 } ;
 
 template <class A>
-class Array implement ArrayRealLayout<A> {
+class Array implement ArrayPureLayout<A> {
 protected:
-	using ArrayRealLayout<A>::mArray ;
+	using ArrayPureLayout<A>::mArray ;
 
 public:
 	implicit Array () = default ;
@@ -242,20 +242,20 @@ public:
 		return ArrayHolder::hold (thiz)->length () ;
 	}
 
-	VREF<ARR<A>> deref_m () leftvalue {
-		return ArrayHolder::hold (thiz)->deref ;
+	VREF<ARR<A>> ref_m () leftvalue {
+		return ArrayHolder::hold (thiz)->ref ;
 	}
 
 	forceinline operator VREF<ARR<A>> () leftvalue {
-		return deref ;
+		return ref ;
 	}
 
-	CREF<ARR<A>> deref_m () const leftvalue {
-		return ArrayHolder::hold (thiz)->deref ;
+	CREF<ARR<A>> ref_m () const leftvalue {
+		return ArrayHolder::hold (thiz)->ref ;
 	}
 
 	forceinline operator CREF<ARR<A>> () const leftvalue {
-		return deref ;
+		return ref ;
 	}
 
 	VREF<A> at (CREF<INDEX> index) leftvalue {
@@ -330,7 +330,7 @@ public:
 		return compr (that) >= ZERO ;
 	}
 
-	void visit (VREF<VisitorBinder> visitor) const {
+	void visit (VREF<FriendVisitor> visitor) const {
 		return ArrayHolder::hold (thiz)->visit (visitor) ;
 	}
 
@@ -349,15 +349,13 @@ class StringParse ;
 template <class A>
 class StringBuild ;
 
-struct StringLayout ;
-
-template <class A>
-struct StringRealLayout implement OfBase<StringLayout> {
-	RefBuffer<A> mString ;
+struct StringLayout {
+	RefBuffer<Pointer> mString ;
 	FLAG mEncode ;
 } ;
 
-struct StringLayout implement StringRealLayout<Pointer> {} ;
+template <class A>
+struct StringPureLayout implement StringLayout {} ;
 
 struct StringHolder implement Interface {
 	imports VFat<StringHolder> hold (VREF<StringLayout> that) ;
@@ -371,8 +369,8 @@ struct StringHolder implement Interface {
 	virtual LENGTH size () const = 0 ;
 	virtual LENGTH step () const = 0 ;
 	virtual LENGTH length () const = 0 ;
-	virtual VREF<Pointer> deref_m () leftvalue = 0 ;
-	virtual CREF<Pointer> deref_m () const leftvalue = 0 ;
+	virtual VREF<Pointer> ref_m () leftvalue = 0 ;
+	virtual CREF<Pointer> ref_m () const leftvalue = 0 ;
 	virtual Ref<RefBuffer<BYTE>> borrow () leftvalue = 0 ;
 	virtual Ref<RefBuffer<BYTE>> borrow () const leftvalue = 0 ;
 	virtual void get (CREF<INDEX> index ,VREF<STRU32> item) const = 0 ;
@@ -386,7 +384,7 @@ struct StringHolder implement Interface {
 	virtual BOOL equal (CREF<StringLayout> that) const = 0 ;
 	virtual FLAG compr (CREF<Slice> that) const = 0 ;
 	virtual FLAG compr (CREF<StringLayout> that) const = 0 ;
-	virtual void visit (VREF<VisitorBinder> visitor) const = 0 ;
+	virtual void visit (VREF<FriendVisitor> visitor) const = 0 ;
 	virtual void trunc (CREF<INDEX> index) = 0 ;
 	virtual void fill (CREF<STRU32> item) = 0 ;
 	virtual void splice (CREF<INDEX> index ,CREF<Slice> item) = 0 ;
@@ -395,12 +393,13 @@ struct StringHolder implement Interface {
 } ;
 
 template <class A>
-class String implement StringRealLayout<A> {
+class String implement StringPureLayout<A> {
 private:
 	require (IS_TRIVIAL<A>) ;
 
 protected:
-	using StringRealLayout<A>::mString ;
+	using StringPureLayout<A>::mString ;
+	using StringPureLayout<A>::mEncode ;
 
 public:
 	implicit String () = default ;
@@ -461,20 +460,20 @@ public:
 		return StringHolder::hold (thiz)->length () ;
 	}
 
-	VREF<ARR<A>> deref_m () leftvalue {
-		return StringHolder::hold (thiz)->deref ;
+	VREF<ARR<A>> ref_m () leftvalue {
+		return StringHolder::hold (thiz)->ref ;
 	}
 
 	forceinline operator VREF<ARR<A>> () leftvalue {
-		return deref ;
+		return ref ;
 	}
 
-	CREF<ARR<A>> deref_m () const leftvalue {
-		return StringHolder::hold (thiz)->deref ;
+	CREF<ARR<A>> ref_m () const leftvalue {
+		return StringHolder::hold (thiz)->ref ;
 	}
 
 	forceinline operator CREF<ARR<A>> () const leftvalue {
-		return deref ;
+		return ref ;
 	}
 
 	Ref<RefBuffer<BYTE>> borrow () leftvalue {
@@ -569,7 +568,7 @@ public:
 		return compr (that) >= ZERO ;
 	}
 
-	void visit (VREF<VisitorBinder> visitor) const {
+	void visit (VREF<FriendVisitor> visitor) const {
 		return StringHolder::hold (thiz)->visit (visitor) ;
 	}
 
@@ -598,16 +597,14 @@ public:
 	}
 } ;
 
-struct DequeLayout ;
-
-template <class A>
-struct DequeRealLayout implement OfBase<DequeLayout> {
-	RefBuffer<A> mDeque ;
+struct DequeLayout {
+	RefBuffer<Pointer> mDeque ;
 	INDEX mRead ;
 	INDEX mWrite ;
 } ;
 
-struct DequeLayout implement DequeRealLayout<Pointer> {} ;
+template <class A>
+struct DequePureLayout implement DequeLayout {} ;
 
 struct DequeHolder implement Interface {
 	imports VFat<DequeHolder> hold (VREF<DequeLayout> that) ;
@@ -655,11 +652,11 @@ public:
 } ;
 
 template <class A>
-class Deque implement DequeRealLayout<A> {
+class Deque implement DequePureLayout<A> {
 protected:
-	using DequeRealLayout<A>::mDeque ;
-	using DequeRealLayout<A>::mRead ;
-	using DequeRealLayout<A>::mWrite ;
+	using DequePureLayout<A>::mDeque ;
+	using DequePureLayout<A>::mRead ;
+	using DequePureLayout<A>::mWrite ;
 
 public:
 	implicit Deque () = default ;
@@ -823,23 +820,21 @@ public:
 		return compr (that) >= ZERO ;
 	}
 
-	void visit (VREF<VisitorBinder> visitor) const {
+	void visit (VREF<FriendVisitor> visitor) const {
 		visitor.enter () ;
 		inline_visit (visitor ,thiz.m1st) ;
 		visitor.leave () ;
 	}
 } ;
 
-struct PriorityLayout ;
-
-template <class A>
-struct PriorityRealLayout implement OfBase<PriorityLayout> {
-	RefBuffer<A> mPriority ;
+struct PriorityLayout {
+	RefBuffer<Pointer> mPriority ;
 	INDEX mRead ;
 	INDEX mWrite ;
 } ;
 
-struct PriorityLayout implement PriorityRealLayout<Pointer> {} ;
+template <class A>
+struct PriorityPureLayout implement PriorityLayout {} ;
 
 struct PriorityHolder implement Interface {
 	imports VFat<PriorityHolder> hold (VREF<PriorityLayout> that) ;
@@ -888,11 +883,11 @@ public:
 } ;
 
 template <class A>
-class Priority implement PriorityRealLayout<A> {
+class Priority implement PriorityPureLayout<A> {
 protected:
-	using PriorityRealLayout<A>::mPriority ;
-	using PriorityRealLayout<A>::mRead ;
-	using PriorityRealLayout<A>::mWrite ;
+	using PriorityPureLayout<A>::mPriority ;
+	using PriorityPureLayout<A>::mRead ;
+	using PriorityPureLayout<A>::mWrite ;
 
 public:
 	implicit Priority () = default ;
@@ -991,16 +986,14 @@ struct ListNode implement AllocatorNode {
 	INDEX mRight ;
 } ;
 
-struct ListLayout ;
-
-template <class A>
-struct ListRealLayout implement OfBase<ListLayout> {
-	Allocator<A ,ListNode> mList ;
+struct ListLayout {
+	Allocator<Pointer ,ListNode> mList ;
 	INDEX mFirst ;
 	INDEX mLast ;
 } ;
 
-struct ListLayout implement ListRealLayout<Pointer> {} ;
+template <class A>
+struct ListPureLayout implement ListLayout {} ;
 
 struct ListHolder implement Interface {
 	imports VFat<ListHolder> hold (VREF<ListLayout> that) ;
@@ -1052,11 +1045,11 @@ public:
 } ;
 
 template <class A>
-class List implement ListRealLayout<A> {
+class List implement ListPureLayout<A> {
 protected:
-	using ListRealLayout<A>::mList ;
-	using ListRealLayout<A>::mFirst ;
-	using ListRealLayout<A>::mLast ;
+	using ListPureLayout<A>::mList ;
+	using ListPureLayout<A>::mFirst ;
+	using ListPureLayout<A>::mLast ;
 
 public:
 	implicit List () = default ;
@@ -1203,17 +1196,15 @@ public:
 
 struct ArrayListNode implement AllocatorNode {} ;
 
-struct ArrayListLayout ;
-
-template <class A>
-struct ArrayListRealLayout implement OfBase<ArrayListLayout> {
-	Allocator<A ,ArrayListNode> mList ;
+struct ArrayListLayout {
+	Allocator<Pointer ,ArrayListNode> mList ;
 	RefBuffer<INDEX> mRange ;
 	INDEX mTop ;
 	BOOL mRemap ;
 } ;
 
-struct ArrayListLayout implement ArrayListRealLayout<Pointer> {} ;
+template <class A>
+struct ArrayListPureLayout implement ArrayListLayout {} ;
 
 struct ArrayListHolder implement Interface {
 	imports VFat<ArrayListHolder> hold (VREF<ArrayListLayout> that) ;
@@ -1259,12 +1250,12 @@ public:
 } ;
 
 template <class A>
-class ArrayList implement ArrayListRealLayout<A> {
+class ArrayList implement ArrayListPureLayout<A> {
 protected:
-	using ArrayListRealLayout<A>::mList ;
-	using ArrayListRealLayout<A>::mRange ;
-	using ArrayListRealLayout<A>::mTop ;
-	using ArrayListRealLayout<A>::mRemap ;
+	using ArrayListPureLayout<A>::mList ;
+	using ArrayListPureLayout<A>::mRange ;
+	using ArrayListPureLayout<A>::mTop ;
+	using ArrayListPureLayout<A>::mRemap ;
 
 public:
 	implicit ArrayList () = default ;
@@ -1562,16 +1553,14 @@ struct SetNode implement AllocatorNode {
 	INDEX mRight ;
 } ;
 
-struct SetLayout ;
-
-template <class A>
-struct SetRealLayout implement OfBase<SetLayout> {
-	Allocator<A ,SetNode> mSet ;
+struct SetLayout {
+	Allocator<Pointer ,SetNode> mSet ;
 	INDEX mRoot ;
 	INDEX mTop ;
 } ;
 
-struct SetLayout implement SetRealLayout<Pointer> {} ;
+template <class A>
+struct SetPureLayout implement SetLayout {} ;
 
 struct SetHolder implement Interface {
 	imports VFat<SetHolder> hold (VREF<SetLayout> that) ;
@@ -1624,11 +1613,11 @@ public:
 } ;
 
 template <class A>
-class Set implement SetRealLayout<A> {
+class Set implement SetPureLayout<A> {
 protected:
-	using SetRealLayout<A>::mSet ;
-	using SetRealLayout<A>::mRoot ;
-	using SetRealLayout<A>::mTop ;
+	using SetPureLayout<A>::mSet ;
+	using SetPureLayout<A>::mRoot ;
+	using SetPureLayout<A>::mTop ;
 
 public:
 	implicit Set () = default ;
@@ -1748,16 +1737,14 @@ struct HashSetNode implement AllocatorNode {
 	INDEX mDown ;
 } ;
 
-struct HashSetLayout ;
-
-template <class A>
-struct HashSetRealLayout implement OfBase<HashSetLayout> {
-	Allocator<A ,HashSetNode> mSet ;
+struct HashSetLayout {
+	Allocator<Pointer ,HashSetNode> mSet ;
 	RefBuffer<INDEX> mRange ;
 	SharedRef<HashcodeVisitor> mVisitor ;
 } ;
 
-struct HashSetLayout implement HashSetRealLayout<Pointer> {} ;
+template <class A>
+struct HashSetPureLayout implement HashSetLayout {} ;
 
 struct HashSetHolder implement Interface {
 	imports VFat<HashSetHolder> hold (VREF<HashSetLayout> that) ;
@@ -1808,11 +1795,11 @@ public:
 } ;
 
 template <class A>
-class HashSet implement HashSetRealLayout<A> {
+class HashSet implement HashSetPureLayout<A> {
 protected:
-	using HashSetRealLayout<A>::mSet ;
-	using HashSetRealLayout<A>::mRange ;
-	using HashSetRealLayout<A>::mVisitor ;
+	using HashSetPureLayout<A>::mSet ;
+	using HashSetPureLayout<A>::mRange ;
+	using HashSetPureLayout<A>::mVisitor ;
 
 public:
 	implicit HashSet () = default ;
@@ -1967,7 +1954,7 @@ struct BitSetHolder implement Interface {
 	virtual INDEX inext (CREF<INDEX> index) const = 0 ;
 	virtual BOOL equal (CREF<BitSetLayout> that) const = 0 ;
 	virtual FLAG compr (CREF<BitSetLayout> that) const = 0 ;
-	virtual void visit (VREF<VisitorBinder> visitor) const = 0 ;
+	virtual void visit (VREF<FriendVisitor> visitor) const = 0 ;
 	virtual void add (RREF<BoxLayout> item) = 0 ;
 	virtual BOOL contain (CREF<Pointer> item) const = 0 ;
 	virtual void erase (CREF<Pointer> item) = 0 ;
@@ -2103,7 +2090,7 @@ public:
 		return compr (that) >= ZERO ;
 	}
 
-	void visit (VREF<VisitorBinder> visitor) const {
+	void visit (VREF<FriendVisitor> visitor) const {
 		return BitSetHolder::hold (thiz)->visit (visitor) ;
 	}
 

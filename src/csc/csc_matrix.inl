@@ -74,7 +74,7 @@ public:
 		return ZERO ;
 	}
 
-	void visit (VREF<VisitorBinder> visitor) const override {
+	void visit (VREF<FriendVisitor> visitor) const override {
 		visitor.enter () ;
 		for (auto &&i : iter (0 ,4)) {
 			inline_visit (visitor ,self.mVector[i]) ;
@@ -262,7 +262,7 @@ public:
 		return ZERO ;
 	}
 
-	void visit (VREF<VisitorBinder> visitor) const override {
+	void visit (VREF<FriendVisitor> visitor) const override {
 		visitor.enter () ;
 		for (auto &&i : iter (0 ,16)) {
 			inline_visit (visitor ,self.mMatrix[i]) ;
@@ -400,7 +400,7 @@ public:
 		return move (ret) ;
 	}
 
-	FLT64 det () const override {
+	FLT64 determinant () const override {
 		const auto r1x = triangular () ;
 		FLT64 ret = 1 ;
 		for (auto &&i : iter (0 ,4))
@@ -431,7 +431,7 @@ public:
 	}
 
 	MatrixLayout inverse () const override {
-		const auto r1x = MathProc::inverse (det ()) ;
+		const auto r1x = MathProc::inverse (determinant ()) ;
 		assume (r1x != 0) ;
 		MatrixLayout ret = adjoint () ;
 		ret = MatrixHolder::hold (ret)->smul (r1x) ;
@@ -487,20 +487,6 @@ public:
 		self = move (ret) ;
 	}
 
-	void make_RotationMatrix (CREF<FLAG> axis ,CREF<FLT64> angle) override {
-		Matrix ret = Matrix::identity () ;
-		const auto r1x = MathProc::cos (angle) ;
-		const auto r2x = MathProc::sin (angle) ;
-		INDEX ix = axis ;
-		INDEX iy = (ix + 1) % 3 ;
-		INDEX iz = (iy + 1) % 3 ;
-		ret[iy][iy] = r1x ;
-		ret[iz][iy] = +r2x ;
-		ret[iy][iz] = -r2x ;
-		ret[iz][iz] = r1x ;
-		self = move (ret) ;
-	}
-
 	void make_RotationMatrix (CREF<Vector> normal ,CREF<FLT64> angle) override {
 		Matrix ret = Matrix::zero () ;
 		const auto r1x = normal.normalize () ;
@@ -521,7 +507,7 @@ public:
 	}
 
 	void make_TranslationMatrix (CREF<FLT64> x ,CREF<FLT64> y ,CREF<FLT64> z) override {
-		Matrix ret = Matrix::identity () ;
+		Matrix ret = Matrix::iden () ;
 		ret[0][3] = x ;
 		ret[1][3] = y ;
 		ret[2][3] = z ;
@@ -652,7 +638,7 @@ public:
 		self = move (ret) ;
 	}
 
-	void make_SymmetryMatrix (CREF<Vector> x ,CREF<Vector> y) override {
+	void make_OuterProductMatrix (CREF<Vector> x ,CREF<Vector> y) override {
 		Matrix ret = Matrix::zero () ;
 		const auto r1x = x ;
 		const auto r2x = y ;
@@ -663,7 +649,7 @@ public:
 	}
 
 	void make_AffineMatrix (CREF<Array<FLT64>> a) override {
-		Matrix ret = Matrix::identity () ;
+		Matrix ret = Matrix::iden () ;
 		if ifdo (TRUE) {
 			if (a.length () < 3)
 				discard ;
@@ -695,7 +681,7 @@ template class External<MatrixProcHolder ,MatrixProcLayout> ;
 
 struct MatrixProcLayout {} ;
 
-exports CREF<OfThis<UniqueRef<MatrixProcLayout>>> MatrixProcHolder::instance () {
+exports CREF<OfThis<UniqueRef<MatrixProcLayout>>> MatrixProcHolder::expr_m () {
 	return memorize ([&] () {
 		OfThis<UniqueRef<MatrixProcLayout>> ret ;
 		ret.mThis = UniqueRef<MatrixProcLayout>::make () ;
@@ -705,11 +691,11 @@ exports CREF<OfThis<UniqueRef<MatrixProcLayout>>> MatrixProcHolder::instance () 
 }
 
 exports VFat<MatrixProcHolder> MatrixProcHolder::hold (VREF<MatrixProcLayout> that) {
-	return VFat<MatrixProcHolder> (External<MatrixProcHolder ,MatrixProcLayout>::declare () ,that) ;
+	return VFat<MatrixProcHolder> (External<MatrixProcHolder ,MatrixProcLayout>::expr ,that) ;
 }
 
 exports CFat<MatrixProcHolder> MatrixProcHolder::hold (CREF<MatrixProcLayout> that) {
-	return CFat<MatrixProcHolder> (External<MatrixProcHolder ,MatrixProcLayout>::declare () ,that) ;
+	return CFat<MatrixProcHolder> (External<MatrixProcHolder ,MatrixProcLayout>::expr ,that) ;
 }
 
 class DuplexMatrixImplHolder final implement Fat<DuplexMatrixHolder ,DuplexMatrixLayout> {
@@ -822,9 +808,10 @@ public:
 	}
 
 	void initialize (CREF<EulerAngle> that) override {
-		const auto r1x = RotationMatrix (0 ,that.mPitch) ;
-		const auto r2x = RotationMatrix (1 ,that.mYaw) ;
-		const auto r3x = RotationMatrix (2 ,that.mRoll) ;
+		const auto r1x = axis_of_index () ;
+		const auto r2x = RotationMatrix (r1x[0] ,that.mPitch) ;
+		const auto r3x = RotationMatrix (r1x[1] ,that.mYaw) ;
+		const auto r4x = RotationMatrix (r1x[2] ,that.mRoll) ;
 		auto act = TRUE ;
 		if ifdo (act) {
 			if (that.mType != ViewMatrixOption::XYZ)
@@ -835,38 +822,38 @@ public:
 			//@info: Third, rotation RZi = (RYi * RXi) * RZ * (RYi * RXi).inverse
 			//@info: Finally, rotation RZi * RYi * RXi = RX * RY * RZ
 			//@info: So, in the XYZ rotation order, RX is the first rotation, but RZ is applied last
-			const auto r4x = r1x * r2x * r3x ;
-			initialize (r4x) ;
+			const auto r5x = r2x * r3x * r4x ;
+			initialize (r5x) ;
 		}
 		if ifdo (act) {
 			if (that.mType != ViewMatrixOption::XZY)
 				discard ;
-			const auto r5x = r1x * r3x * r2x ;
-			initialize (r5x) ;
+			const auto r6x = r2x * r4x * r3x ;
+			initialize (r6x) ;
 		}
 		if ifdo (act) {
 			if (that.mType != ViewMatrixOption::YXZ)
 				discard ;
-			const auto r6x = r2x * r1x * r3x ;
-			initialize (r6x) ;
+			const auto r7x = r3x * r2x * r4x ;
+			initialize (r7x) ;
 		}
 		if ifdo (act) {
 			if (that.mType != ViewMatrixOption::YZX)
 				discard ;
-			const auto r7x = r2x * r3x * r1x ;
-			initialize (r7x) ;
+			const auto r8x = r3x * r4x * r2x ;
+			initialize (r8x) ;
 		}
 		if ifdo (act) {
 			if (that.mType != ViewMatrixOption::ZXY)
 				discard ;
-			const auto r8x = r3x * r1x * r2x ;
-			initialize (r8x) ;
+			const auto r9x = r4x * r2x * r3x ;
+			initialize (r9x) ;
 		}
 		if ifdo (act) {
 			if (that.mType != ViewMatrixOption::ZYX)
 				discard ;
-			const auto r9x = r3x * r2x * r1x ;
-			initialize (r9x) ;
+			const auto r10x = r4x * r3x * r2x ;
+			initialize (r10x) ;
 		}
 	}
 
@@ -905,7 +892,7 @@ public:
 		return ZERO ;
 	}
 
-	void visit (VREF<VisitorBinder> visitor) const override {
+	void visit (VREF<FriendVisitor> visitor) const override {
 		visitor.enter () ;
 		for (auto &&i : iter (0 ,4)) {
 			inline_visit (visitor ,self.mQuaternion[i]) ;
@@ -1065,24 +1052,29 @@ public:
 
 	Buffer3<Matrix> euler_decompose (CREF<Matrix> rot ,CREF<INDEX> x ,CREF<INDEX> y ,CREF<INDEX> z) const {
 		Buffer3<Matrix> ret ;
-		const auto r1x = Buffer3<Vector> ({
-			Vector::axis_x () ,
-			Vector::axis_y () ,
-			Vector::axis_z ()}) ;
+		const auto r1x = axis_of_index () ;
 		const auto r2x = rot * r1x[z] ;
 		const auto r3x = rotate_angle (r2x ,r1x[x] ,r1x[y]) ;
 		const auto r4x = -r3x.fetch () ;
-		ret[x] = RotationMatrix (x ,r4x) ;
+		ret[x] = RotationMatrix (r1x[x] ,r4x) ;
 		const auto r5x = ret[x].transpose () * rot ;
 		const auto r6x = MathProc::atan (r5x[x][z] ,r5x[z][z]) * rotate_sign (y ,z) ;
-		ret[y] = RotationMatrix (y ,r6x) ;
+		ret[y] = RotationMatrix (r1x[y] ,r6x) ;
 		const auto r7x = ret[y].transpose () * r5x ;
 		const auto r8x = MathProc::atan (r7x[y][x] ,r7x[x][x]) * rotate_sign (z ,x) ;
-		ret[z] = RotationMatrix (z ,r8x) ;
-		const auto r9x = ret[z].transpose () * r7x - Matrix::identity () ;
+		ret[z] = RotationMatrix (r1x[z] ,r8x) ;
+		const auto r9x = ret[z].transpose () * r7x - Matrix::iden () ;
 		for (auto &&j : iter (0 ,4 ,0 ,4)) {
 			assert (MathProc::abs (r9x[j]) < FLT32_EPS) ;
 		}
+		return move (ret) ;
+	}
+
+	Buffer3<Vector> axis_of_index () const {
+		Buffer3<Vector> ret ;
+		ret[0] = Vector::axis_x () ;
+		ret[1] = Vector::axis_y () ;
+		ret[2] = Vector::axis_z () ;
 		return move (ret) ;
 	}
 
@@ -1102,7 +1094,7 @@ public:
 	Optional<FLT64> rotate_angle (CREF<Vector> dir ,CREF<Vector> rot_axis ,CREF<Vector> normal) const {
 		const auto r1x = CrossProductMatrix (rot_axis) ;
 		const auto r2x = r1x * r1x ;
-		const auto r3x = normal * (Matrix::identity () + r2x) * dir ;
+		const auto r3x = normal * (Matrix::iden () + r2x) * dir ;
 		const auto r4x = normal * r1x * dir ;
 		const auto r5x = -(normal * r2x * dir) ;
 		const auto r6x = MathProc::inverse (MathProc::hypot (r4x ,r5x)) ;
@@ -1140,7 +1132,7 @@ template class External<LinearProcHolder ,LinearProcLayout> ;
 
 struct LinearProcLayout {} ;
 
-exports CREF<OfThis<UniqueRef<LinearProcLayout>>> LinearProcHolder::instance () {
+exports CREF<OfThis<UniqueRef<LinearProcLayout>>> LinearProcHolder::expr_m () {
 	return memorize ([&] () {
 		OfThis<UniqueRef<LinearProcLayout>> ret ;
 		ret.mThis = UniqueRef<LinearProcLayout>::make () ;
@@ -1150,11 +1142,11 @@ exports CREF<OfThis<UniqueRef<LinearProcLayout>>> LinearProcHolder::instance () 
 }
 
 exports VFat<LinearProcHolder> LinearProcHolder::hold (VREF<LinearProcLayout> that) {
-	return VFat<LinearProcHolder> (External<LinearProcHolder ,LinearProcLayout>::declare () ,that) ;
+	return VFat<LinearProcHolder> (External<LinearProcHolder ,LinearProcLayout>::expr ,that) ;
 }
 
 exports CFat<LinearProcHolder> LinearProcHolder::hold (CREF<LinearProcLayout> that) {
-	return CFat<LinearProcHolder> (External<LinearProcHolder ,LinearProcLayout>::declare () ,that) ;
+	return CFat<LinearProcHolder> (External<LinearProcHolder ,LinearProcLayout>::expr ,that) ;
 }
 
 template class External<PointCloudKDTreeHolder ,PointCloudKDTreeLayout> ;
@@ -1167,34 +1159,34 @@ struct PointCloudKDTreeLayout {
 	Ref<KDTreeKNNSearch> mKNNSearch ;
 } ;
 
-exports OfThis<AutoRef<PointCloudKDTreeLayout>> PointCloudKDTreeHolder::create () {
-	OfThis<AutoRef<PointCloudKDTreeLayout>> ret ;
-	ret.mThis = AutoRef<PointCloudKDTreeLayout>::make () ;
-	return move (ret) ;
+exports AutoRef<PointCloudKDTreeLayout> PointCloudKDTreeHolder::create () {
+	return AutoRef<PointCloudKDTreeLayout>::make () ;
 }
 
 exports VFat<PointCloudKDTreeHolder> PointCloudKDTreeHolder::hold (VREF<PointCloudKDTreeLayout> that) {
-	return VFat<PointCloudKDTreeHolder> (External<PointCloudKDTreeHolder ,PointCloudKDTreeLayout>::declare () ,that) ;
+	return VFat<PointCloudKDTreeHolder> (External<PointCloudKDTreeHolder ,PointCloudKDTreeLayout>::expr ,that) ;
 }
 
 exports CFat<PointCloudKDTreeHolder> PointCloudKDTreeHolder::hold (CREF<PointCloudKDTreeLayout> that) {
-	return CFat<PointCloudKDTreeHolder> (External<PointCloudKDTreeHolder ,PointCloudKDTreeLayout>::declare () ,that) ;
+	return CFat<PointCloudKDTreeHolder> (External<PointCloudKDTreeHolder ,PointCloudKDTreeLayout>::expr ,that) ;
 }
 
 class PointCloudImplHolder final implement Fat<PointCloudHolder ,PointCloudLayout> {
 public:
 	void initialize (RREF<Ref<Array<Point2F>>> pointcloud) override {
+		self.mPin.pin (self) ;
 		self.mRank = 2 ;
 		auto &&rax = keep[TYPE<Ref<Array<Point2F>>>::expr] (Pointer::from (self.mPointCloud)) ;
 		rax = move (pointcloud) ;
-		self.mWorld = Matrix::identity () ;
+		self.mWorld = Matrix::iden () ;
 	}
 
 	void initialize (RREF<Ref<Array<Point3F>>> pointcloud) override {
+		self.mPin.pin (self) ;
 		self.mRank = 3 ;
 		auto &&rax = keep[TYPE<Ref<Array<Point3F>>>::expr] (Pointer::from (self.mPointCloud)) ;
 		rax = move (pointcloud) ;
-		self.mWorld = Matrix::identity () ;
+		self.mWorld = Matrix::iden () ;
 	}
 
 	LENGTH size () const override {
@@ -1206,13 +1198,13 @@ public:
 		if ifdo (act) {
 			if (self.mRank != 2)
 				discard ;
-			item = Vector (keep[TYPE<Point2F>::expr] (self.mPointCloud.deref[index])) ;
+			item = Vector (keep[TYPE<Point2F>::expr] (self.mPointCloud.ref[index])) ;
 			item = self.mWorld * item ;
 		}
 		if ifdo (act) {
 			if (self.mRank != 3)
 				discard ;
-			item = Vector (keep[TYPE<Point3F>::expr] (self.mPointCloud.deref[index])) ;
+			item = Vector (keep[TYPE<Point3F>::expr] (self.mPointCloud.ref[index])) ;
 			item = self.mWorld * item ;
 		}
 		if ifdo (act) {
@@ -1312,23 +1304,21 @@ public:
 	}
 
 	Array<INDEX> search (CREF<Vector> center ,CREF<LENGTH> neighbor) const override {
-		auto &&rax = keep[TYPE<PointCloudKDTree>::expr] (self.mKDTree.deref) ;
 		if ifdo (TRUE) {
-			if (rax.mThis.exist ())
+			if (self.mKDTree.mThis.exist ())
 				discard ;
-			PointCloudKDTreeHolder::hold (rax)->initialize (self.mPointCloud.deref) ;
+			PointCloudKDTreeHolder::hold (self.mPin.ref.mKDTree)->initialize (self.mPointCloud.ref) ;
 		}
-		return PointCloudKDTreeHolder::hold (rax)->search (center ,neighbor) ;
+		return PointCloudKDTreeHolder::hold (self.mKDTree)->search (center ,neighbor) ;
 	}
 
 	Array<INDEX> search (CREF<Vector> center ,CREF<LENGTH> neighbor ,CREF<FLT64> radius) const override {
-		auto &&rax = keep[TYPE<PointCloudKDTree>::expr] (self.mKDTree.deref) ;
 		if ifdo (TRUE) {
-			if (rax.mThis.exist ())
+			if (self.mKDTree.mThis.exist ())
 				discard ;
-			PointCloudKDTreeHolder::hold (rax)->initialize (self.mPointCloud.deref) ;
+			PointCloudKDTreeHolder::hold (self.mPin.ref.mKDTree)->initialize (self.mPointCloud.ref) ;
 		}
-		return PointCloudKDTreeHolder::hold (rax)->search (center ,neighbor ,radius) ;
+		return PointCloudKDTreeHolder::hold (self.mKDTree)->search (center ,neighbor ,radius) ;
 	}
 } ;
 

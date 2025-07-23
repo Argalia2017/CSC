@@ -315,7 +315,7 @@ class initializer_list ;
 #endif
 
 #ifdef __CSC_VER_RELEASE__
-#define __macro_assume(...) do { if (__VA_ARGS__) break ; throw CSC::Exception (slice (__macro_sz (__VA_ARGS__)) ,CSC::Slice (__FUNCTION__)) ; } while (false)
+#define __macro_assume(...) do { if (__VA_ARGS__) break ; throw CSC::Exception (slice (__macro_sz (__VA_ARGS__)) ,CSC::Slice (__FUNCTION__) ,CSC::Slice () ,CSC::Slice ()) ; } while (false)
 #endif
 #endif
 

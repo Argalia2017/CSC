@@ -414,7 +414,7 @@ public:
 	}
 } ;
 
-exports CREF<OfThis<UniqueRef<MathProcLayout>>> MathProcHolder::instance () {
+exports CREF<OfThis<UniqueRef<MathProcLayout>>> MathProcHolder::expr_m () {
 	return memorize ([&] () {
 		OfThis<UniqueRef<MathProcLayout>> ret ;
 		ret.mThis = UniqueRef<MathProcLayout>::make () ;
@@ -609,7 +609,7 @@ public:
 		ret.mMantissa = fexp10.mMantissa ;
 		ret.mDownflow = 0 ;
 		ret.mExponent = 0 ;
-		const auto r1x = FEXP2Cache::instance ()[fexp10.mExponent] ;
+		const auto r1x = FEXP2Cache::expr[fexp10.mExponent] ;
 		ret = fexp2_multiply (ret ,r1x) ;
 		return move (ret) ;
 	}
@@ -694,13 +694,13 @@ public:
 		ret.mMantissa = fexp2.mMantissa ;
 		ret.mDownflow = 0 ;
 		ret.mExponent = 0 ;
-		const auto r1x = FEXP10Cache::instance ()[fexp2.mExponent] ;
+		const auto r1x = FEXP10Cache::expr[fexp2.mExponent] ;
 		ret = fexp10_multiply (ret ,r1x) ;
 		return move (ret) ;
 	}
 } ;
 
-exports CREF<OfThis<UniqueRef<FloatProcLayout>>> FloatProcHolder::instance () {
+exports CREF<OfThis<UniqueRef<FloatProcLayout>>> FloatProcHolder::expr_m () {
 	return memorize ([&] () {
 		OfThis<UniqueRef<FloatProcLayout>> ret ;
 		ret.mThis = UniqueRef<FloatProcLayout>::make () ;
@@ -721,7 +721,7 @@ template class External<FEXP2CacheHolder ,FEXP2CacheLayout> ;
 
 struct FEXP2CacheLayout {} ;
 
-exports CREF<OfThis<UniqueRef<FEXP2CacheLayout>>> FEXP2CacheHolder::instance () {
+exports CREF<OfThis<UniqueRef<FEXP2CacheLayout>>> FEXP2CacheHolder::expr_m () {
 	return memorize ([&] () {
 		OfThis<UniqueRef<FEXP2CacheLayout>> ret ;
 		ret.mThis = UniqueRef<FEXP2CacheLayout>::make () ;
@@ -731,18 +731,18 @@ exports CREF<OfThis<UniqueRef<FEXP2CacheLayout>>> FEXP2CacheHolder::instance () 
 }
 
 exports VFat<FEXP2CacheHolder> FEXP2CacheHolder::hold (VREF<FEXP2CacheLayout> that) {
-	return VFat<FEXP2CacheHolder> (External<FEXP2CacheHolder ,FEXP2CacheLayout>::declare () ,that) ;
+	return VFat<FEXP2CacheHolder> (External<FEXP2CacheHolder ,FEXP2CacheLayout>::expr ,that) ;
 }
 
 exports CFat<FEXP2CacheHolder> FEXP2CacheHolder::hold (CREF<FEXP2CacheLayout> that) {
-	return CFat<FEXP2CacheHolder> (External<FEXP2CacheHolder ,FEXP2CacheLayout>::declare () ,that) ;
+	return CFat<FEXP2CacheHolder> (External<FEXP2CacheHolder ,FEXP2CacheLayout>::expr ,that) ;
 }
 
 template class External<FEXP10CacheHolder ,FEXP10CacheLayout> ;
 
 struct FEXP10CacheLayout {} ;
 
-exports CREF<OfThis<UniqueRef<FEXP10CacheLayout>>> FEXP10CacheHolder::instance () {
+exports CREF<OfThis<UniqueRef<FEXP10CacheLayout>>> FEXP10CacheHolder::expr_m () {
 	return memorize ([&] () {
 		OfThis<UniqueRef<FEXP10CacheLayout>> ret ;
 		ret.mThis = UniqueRef<FEXP10CacheLayout>::make () ;
@@ -752,11 +752,11 @@ exports CREF<OfThis<UniqueRef<FEXP10CacheLayout>>> FEXP10CacheHolder::instance (
 }
 
 exports VFat<FEXP10CacheHolder> FEXP10CacheHolder::hold (VREF<FEXP10CacheLayout> that) {
-	return VFat<FEXP10CacheHolder> (External<FEXP10CacheHolder ,FEXP10CacheLayout>::declare () ,that) ;
+	return VFat<FEXP10CacheHolder> (External<FEXP10CacheHolder ,FEXP10CacheLayout>::expr ,that) ;
 }
 
 exports CFat<FEXP10CacheHolder> FEXP10CacheHolder::hold (CREF<FEXP10CacheLayout> that) {
-	return CFat<FEXP10CacheHolder> (External<FEXP10CacheHolder ,FEXP10CacheLayout>::declare () ,that) ;
+	return CFat<FEXP10CacheHolder> (External<FEXP10CacheHolder ,FEXP10CacheLayout>::expr ,that) ;
 }
 
 struct ByteProcLayout {} ;
@@ -932,7 +932,7 @@ public:
 	}
 } ;
 
-exports CREF<OfThis<UniqueRef<ByteProcLayout>>> ByteProcHolder::instance () {
+exports CREF<OfThis<UniqueRef<ByteProcLayout>>> ByteProcHolder::expr_m () {
 	return memorize ([&] () {
 		OfThis<UniqueRef<ByteProcLayout>> ret ;
 		ret.mThis = UniqueRef<ByteProcLayout>::make () ;
@@ -1023,7 +1023,7 @@ public:
 		return ZERO ;
 	}
 
-	void visit (VREF<VisitorBinder> visitor) const override {
+	void visit (VREF<FriendVisitor> visitor) const override {
 		visitor.enter () ;
 		const auto r1x = self.mWidth ;
 		for (auto &&i : iter (0 ,r1x)) {
@@ -1067,7 +1067,7 @@ public:
 		IntegerLayout ret ;
 		const auto r1x = inline_max (self.mWidth + that.mWidth - 2 ,1) ;
 		IntegerHolder::hold (ret)->initialize (r1x) ;
-		inline_memset (Pointer::from (ret.mInteger.deref) ,r1x) ;
+		inline_memset (Pointer::from (ret.mInteger.ref) ,r1x) ;
 		for (auto &&i : iter (0 ,r1x)) {
 			auto rax = VAL32 (0) ;
 			for (auto &&j : iter (0 ,r1x)) {
@@ -1201,9 +1201,9 @@ public:
 		const auto r1x = inline_max (dividend.mWidth ,divisor.mWidth) ;
 		const auto r2x = r1x + 1 ;
 		IntegerHolder::hold (quotient)->initialize (r2x) ;
-		inline_memset (Pointer::from (quotient.mInteger.deref) ,r2x) ;
+		inline_memset (Pointer::from (quotient.mInteger.ref) ,r2x) ;
 		IntegerHolder::hold (remainder)->initialize (r2x) ;
-		inline_memset (Pointer::from (remainder.mInteger.deref) ,r2x) ;
+		inline_memset (Pointer::from (remainder.mInteger.ref) ,r2x) ;
 		for (auto &&i : iter (0 ,r1x)) {
 			INDEX ix = r1x - 1 - i ;
 			for (auto &&j : iter (0 ,8)) {
@@ -1407,7 +1407,7 @@ public:
 		self.mThis->mFX = item ;
 		self.mThis->mEX = 0 ;
 		self.mThis->mDX = RefBuffer<FLT64> (size_) ;
-		inline_memset (Pointer::from (self.mThis->mDX.deref) ,self.mThis->mDX.size () * SIZE_OF<FLT64>::expr) ;
+		inline_memset (Pointer::from (self.mThis->mDX.ref) ,self.mThis->mDX.size () * SIZE_OF<FLT64>::expr) ;
 		self.mThis->mSlot = NONE ;
 	}
 
@@ -1422,7 +1422,7 @@ public:
 			assume (node.mSlot < rax.rank ()) ;
 			node.mFX = rax[node.mSlot] ;
 			node.mEX = 0 ;
-			inline_memset (Pointer::from (node.mDX.deref) ,node.mDX.size () * SIZE_OF<FLT64>::expr) ;
+			inline_memset (Pointer::from (node.mDX.ref) ,node.mDX.size () * SIZE_OF<FLT64>::expr) ;
 			node.mDX[node.mSlot] = 1 ;
 			check_fx (node) ;
 		}) ;
@@ -1451,7 +1451,7 @@ public:
 			return ;
 		once (node->mFake ,params) ;
 		once (node->mThat ,params) ;
-		node->mEval (node.deref ,params) ;
+		node->mEval (node.ref ,params) ;
 	}
 
 	JetLayout sadd (CREF<JetLayout> that) const override {
@@ -1471,10 +1471,10 @@ public:
 			if ifdo (act) {
 				if (node.mFake->mEX < node.mThat->mEX)
 					discard ;
-				copy_node (node ,node.mFake.deref ,+1) ;
+				copy_node (node ,node.mFake.ref ,+1) ;
 			}
 			if ifdo (act) {
-				copy_node (node ,node.mThat.deref ,+1) ;
+				copy_node (node ,node.mThat.ref ,+1) ;
 			}
 			check_fx (node) ;
 		}) ;
@@ -1500,10 +1500,10 @@ public:
 			if ifdo (act) {
 				if (node.mFake->mEX < node.mThat->mEX)
 					discard ;
-				copy_node (node ,node.mFake.deref ,+1) ;
+				copy_node (node ,node.mFake.ref ,+1) ;
 			}
 			if ifdo (act) {
-				copy_node (node ,node.mThat.deref ,-1) ;
+				copy_node (node ,node.mThat.ref ,-1) ;
 			}
 			check_fx (node) ;
 		}) ;
@@ -1637,10 +1637,10 @@ public:
 			if ifdo (act) {
 				if (node.mFake->mEX < node.mThat->mEX)
 					discard ;
-				copy_node (node ,node.mFake.deref ,+1) ;
+				copy_node (node ,node.mFake.ref ,+1) ;
 			}
 			if ifdo (act) {
-				copy_node (node ,node.mThat.deref ,+1) ;
+				copy_node (node ,node.mThat.ref ,+1) ;
 			}
 			check_fx (node) ;
 		}) ;
@@ -1657,10 +1657,10 @@ public:
 			if ifdo (act) {
 				if (node.mFake->mFX >= 0)
 					discard ;
-				copy_node (node ,node.mFake.deref ,+1) ;
+				copy_node (node ,node.mFake.ref ,+1) ;
 			}
 			if ifdo (act) {
-				copy_node (node ,node.mFake.deref ,-1) ;
+				copy_node (node ,node.mFake.ref ,-1) ;
 			}
 		}) ;
 		ret.mThis->mFake = self.mThis ;
@@ -1671,7 +1671,7 @@ public:
 		JetLayout ret ;
 		JetHolder::hold (ret)->initialize (self.mThis->mDX.size () ,0) ;
 		ret.mThis->mEval = JetEvalFunction ([] (VREF<JetNode> node ,CREF<WrapperLayout> params) {
-			copy_node (node ,node.mFake.deref ,-1) ;
+			copy_node (node ,node.mFake.ref ,-1) ;
 		}) ;
 		ret.mThis->mFake = self.mThis ;
 		return move (ret) ;
@@ -1834,7 +1834,7 @@ public:
 				discard ;
 			node.mFX = 1 ;
 			node.mEX-- ;
-			inline_memset (Pointer::from (node.mDX.deref) ,node.mDX.size () * SIZE_OF<FLT64>::expr) ;
+			inline_memset (Pointer::from (node.mDX.ref) ,node.mDX.size () * SIZE_OF<FLT64>::expr) ;
 		}
 		if ifdo (act) {
 			const auto r1x = 1 / node.mFX ;
@@ -1842,7 +1842,7 @@ public:
 				discard ;
 			node.mFX = 1 ;
 			node.mEX++ ;
-			inline_memset (Pointer::from (node.mDX.deref) ,node.mDX.size () * SIZE_OF<FLT64>::expr) ;
+			inline_memset (Pointer::from (node.mDX.ref) ,node.mDX.size () * SIZE_OF<FLT64>::expr) ;
 		}
 	}
 } ;
@@ -1925,7 +1925,7 @@ public:
 	}
 } ;
 
-exports CREF<OfThis<UniqueRef<HashProcLayout>>> HashProcHolder::instance () {
+exports CREF<OfThis<UniqueRef<HashProcLayout>>> HashProcHolder::expr_m () {
 	return memorize ([&] () {
 		OfThis<UniqueRef<HashProcLayout>> ret ;
 		ret.mThis = UniqueRef<HashProcLayout>::make () ;

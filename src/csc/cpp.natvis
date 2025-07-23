@@ -79,47 +79,6 @@
     </Expand>
   </Type>
 
-  <Type Name="CSC::KeyNodeLayout">
-    <Expand HideRawView="true">
-      <Item Name="[head]">(CSC::KeyHeadLayout*)mHead</Item>
-      <Item Name="[layout]">mLayout,x</Item>
-      <Item Name="[check]">mCheck</Item>
-    </Expand>
-  </Type>
-
-  <Type Name="CSC::KeyHeadLayout">
-    <Expand HideRawView="true">
-      <Item Name="[root]">(CSC::KeyRootLayout*)mRoot</Item>
-      <Item Name="[L1_next]">(CSC::KeyHeadLayout*)mL1Next</Item>
-      <Item Name="[L2_next]">(CSC::KeyHeadLayout*)mL2Next</Item>
-      <Item Name="[L1_hash]">mL1Hash</Item>
-      <Item Name="[L2_hash]">mL2Hash</Item>
-      <Item Name="[begin]">mBegin,x</Item>
-      <Item Name="[end]">mEnd,x</Item>
-    </Expand>
-  </Type>
-
-  <Type Name="CSC::KeyRootLayout">
-    <Expand HideRawView="true">
-      <Item Name="[head]">(CSC::KeyHeadLayout*)mHead</Item>
-      <Item Name="[ref_node]">(CSC::KeyNodeLayout*)mRefNode</Item>
-      <Item Name="[def_node]">(CSC::KeyNodeLayout*)mDefNode</Item>
-    </Expand>
-  </Type>
-
-  <Type Name="CSC::KeyBaseLayout" Inheritable="false">
-    <Expand HideRawView="true">
-      <ExpandedItem Condition="mHandle!=0">(CSC::KeyNodeLayout*)mHandle</ExpandedItem>
-    </Expand>
-  </Type>
-
-  <Type Name="CSC::Key&lt;*&gt;">
-    <DisplayString Condition="mHandle==0">{{???}}</DisplayString>
-    <Expand HideRawView="true">
-      <Item Name="[+]" Condition="mHandle!=0">*($T1*)(*(CSC::KeyNodeLayout*)mHandle).mLayout</Item>
-    </Expand>
-  </Type>
-
   <Type Name="CSC::SliceLayout">
     <DisplayString Condition="mStep==0">{{???}}</DisplayString>
     <DisplayString Condition="mStep==1">{(char*)mBuffer,s}</DisplayString>
@@ -188,7 +147,7 @@
     </Expand>
   </Type>
 
-  <Type Name="CSC::RefBufferRealLayout&lt;*&gt;" Inheritable="false">
+  <Type Name="CSC::RefBufferPureLayout&lt;*&gt;" Inheritable="false">
     <Expand HideRawView="true">
       <Item Name="[hint]" Condition="false">CSC::BYTE_ENDIAN</Item>
       <ArrayItems>
@@ -210,7 +169,7 @@
         <Size>mSize&lt;10?mSize:10</Size>
         <ValuePointer>($T1*)mBuffer</ValuePointer>
       </ArrayItems>
-      <Item Name="[+]">*(CSC::RefBufferRealLayout&lt;$T1&gt;*)this</Item>
+      <Item Name="[+]">*(CSC::RefBufferPureLayout&lt;$T1&gt;*)this</Item>
     </Expand>
   </Type>
 
@@ -239,7 +198,7 @@
     <DisplayString Condition="mNext!=-2">{{???}}</DisplayString>
   </Type>
 
-  <Type Name="CSC::AllocatorRealLayout&lt;*&gt;" Inheritable="false">
+  <Type Name="CSC::AllocatorPureLayout&lt;*&gt;" Inheritable="false">
     <Expand HideRawView="true">
       <IndexListItems>
         <Size>mAllocator.mSize</Size>
@@ -261,7 +220,7 @@
         <Size>mAllocator.mSize&lt;10?mAllocator.mSize:10</Size>
         <ValuePointer>(CSC::UnionPair&lt;$T1,$T2&gt;*)mAllocator.mBuffer</ValuePointer>
       </ArrayItems>
-      <Item Name="[+]">*(CSC::AllocatorRealLayout&lt;$T1,$T2&gt;*)this</Item>
+      <Item Name="[+]">*(CSC::AllocatorPureLayout&lt;$T1,$T2&gt;*)this</Item>
     </Expand>
   </Type>
 
@@ -284,7 +243,7 @@
     <Expand HideRawView="true">
       <Item Name="[fx]">mFX</Item>
       <Item Name="[ex]">mEX</Item>
-      <Item Name="[dx]">*(CSC::RefBufferRealLayout&lt;double&gt;*)&amp;mDX</Item>
+      <Item Name="[dx]">*(CSC::RefBufferPureLayout&lt;double&gt;*)&amp;mDX</Item>
     </Expand>
   </Type>
 
@@ -351,7 +310,7 @@
     </Expand>
   </Type>
 
-  <Type Name="CSC::SortedMapRealLayout&lt;*&gt;" Inheritable="false">
+  <Type Name="CSC::SortedMapPureLayout&lt;*&gt;" Inheritable="false">
     <Expand HideRawView="true">
       <IndexListItems>
         <Size>mWrite</Size>
@@ -371,7 +330,7 @@
         <Size>mWrite&lt;10?mWrite:10</Size>
         <ValueNode>((CSC::UnionPair&lt;$T1,CSC::SortedMapNode&gt;*)(*(CSC::SortedMapTree*)mThis.mLayout).mList.mAllocator.mBuffer)[mRange[$i]].m2nd.mMap</ValueNode>
       </IndexListItems>
-      <Item Name="[+]">*(CSC::SortedMapRealLayout&lt;$T1&gt;*)this</Item>
+      <Item Name="[+]">*(CSC::SortedMapPureLayout&lt;$T1&gt;*)this</Item>
     </Expand>
   </Type>
 

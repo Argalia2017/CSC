@@ -353,6 +353,7 @@ private:
 
 public:
 	void initialize () override {
+		self.mPin.pin (self) ;
 		self.mMutex = NULL ;
 	}
 
@@ -547,10 +548,7 @@ public:
 		} ,[&] (VREF<String<STR>> me) {
 			FileProc::erase_file (me) ;
 		}) ;
-		auto rbx = List<UniqueRef<String<STR>>> () ;
-		self.mLockDirectory.get (rbx) ;
-		rbx.add (move (rax)) ;
-		self.mLockDirectory.set (rbx) ;
+		self.mPin.ref.mLockDirectory.add (move (rax)) ;
 	}
 } ;
 
@@ -897,7 +895,7 @@ public:
 		const auto r3x = BUFFERFILE_HEADER_STEP::expr + r1x * self.mHeader->mChunkStep ;
 		INDEX ix = mmap_cache (r3x ,LENGTH (self.mHeader->mChunkStep)) ;
 		const auto r4x = self.mCacheList[ix].mBlock->m1st + LENGTH (r2x) ;
-		inline_memcpy (Pointer::from (item.deref) ,Pointer::make (r4x) ,LENGTH (self.mHeader->mBlockStep)) ;
+		inline_memcpy (Pointer::from (item.ref) ,Pointer::make (r4x) ,LENGTH (self.mHeader->mBlockStep)) ;
 	}
 
 	void write (CREF<INDEX> index ,CREF<RefBuffer<BYTE>> item) override {
@@ -909,7 +907,7 @@ public:
 		const auto r3x = BUFFERFILE_HEADER_STEP::expr + r1x * self.mHeader->mChunkStep ;
 		INDEX ix = mmap_cache (r3x ,LENGTH (self.mHeader->mChunkStep)) ;
 		const auto r4x = self.mCacheList[ix].mBlock->m1st + LENGTH (r2x) ;
-		inline_memcpy (Pointer::make (r4x) ,Pointer::from (item.deref) ,LENGTH (self.mHeader->mBlockStep)) ;
+		inline_memcpy (Pointer::make (r4x) ,Pointer::from (item.ref) ,LENGTH (self.mHeader->mBlockStep)) ;
 	}
 
 	INDEX mmap_cache (CREF<VAL64> index ,CREF<LENGTH> size_) {
@@ -1015,15 +1013,15 @@ private:
 		} ,[&] (VREF<csc_pipe_t> me) {
 			CloseHandle (me) ;
 		}) ;
-		inline_memset (self.mCOMParams.deref) ;
+		inline_memset (self.mCOMParams.ref) ;
 		self.mCOMParams->DCBlength = csc_enum_t (SIZE_OF<DCB>::expr) ;
-		GetCommState (self.mPipe ,(&self.mCOMParams.deref)) ;
+		GetCommState (self.mPipe ,(&self.mCOMParams.ref)) ;
 		self.mCOMParams->BaudRate = csc_enum_t (self.mPortRate) ;
 		self.mCOMParams->ByteSize = 8 ;
 		self.mCOMParams->StopBits = ONESTOPBIT ;
 		self.mCOMParams->Parity = NOPARITY ;
-		SetCommState (self.mPipe ,(&self.mCOMParams.deref)) ;
-		ClearCommError (self.mPipe ,(&self.mCOMError) ,(&self.mCOMStatus.deref)) ;
+		SetCommState (self.mPipe ,(&self.mCOMParams.ref)) ;
+		ClearCommError (self.mPipe ,(&self.mCOMError) ,(&self.mCOMStatus.ref)) ;
 	}
 
 	void read (VREF<RefBuffer<BYTE>> buffer ,CREF<INDEX> offset ,CREF<LENGTH> size_) override {
@@ -1100,6 +1098,8 @@ public:
 		self.mLogWriter << msg ;
 		self.mLogWriter << EOS ;
 		if ifdo (TRUE) {
+			if (!self.mConsole.exist ())
+				discard ;
 			const auto r1x = csc_uint16_t (FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE) ;
 			SetConsoleTextAttribute (self.mConsole ,r1x) ;
 			auto rax = csc_enum_t (self.mLogWriter.length () - 1) ;
@@ -1114,6 +1114,8 @@ public:
 		log (slice ("Fatal") ,msg) ;
 		log_file () ;
 		if ifdo (TRUE) {
+			if (!self.mConsole.exist ())
+				discard ;
 			const auto r1x = csc_uint16_t (FOREGROUND_BLUE | FOREGROUND_INTENSITY) ;
 			SetConsoleTextAttribute (self.mConsole ,r1x) ;
 			auto rax = csc_enum_t (self.mLogWriter.length () - 1) ;
@@ -1128,6 +1130,8 @@ public:
 		log (slice ("Error") ,msg) ;
 		log_file () ;
 		if ifdo (TRUE) {
+			if (!self.mConsole.exist ())
+				discard ;
 			const auto r1x = csc_uint16_t (FOREGROUND_RED | FOREGROUND_INTENSITY) ;
 			SetConsoleTextAttribute (self.mConsole ,r1x) ;
 			auto rax = csc_enum_t (self.mLogWriter.length () - 1) ;
@@ -1142,6 +1146,8 @@ public:
 		log (slice ("Warn") ,msg) ;
 		log_file () ;
 		if ifdo (TRUE) {
+			if (!self.mConsole.exist ())
+				discard ;
 			const auto r1x = csc_uint16_t (FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_INTENSITY) ;
 			SetConsoleTextAttribute (self.mConsole ,r1x) ;
 			auto rax = csc_enum_t (self.mLogWriter.length () - 1) ;
@@ -1156,6 +1162,8 @@ public:
 		log (slice ("Info") ,msg) ;
 		log_file () ;
 		if ifdo (TRUE) {
+			if (!self.mConsole.exist ())
+				discard ;
 			const auto r1x = csc_uint16_t (FOREGROUND_GREEN | FOREGROUND_INTENSITY) ;
 			SetConsoleTextAttribute (self.mConsole ,r1x) ;
 			auto rax = csc_enum_t (self.mLogWriter.length () - 1) ;
@@ -1170,6 +1178,8 @@ public:
 		log (slice ("Debug") ,msg) ;
 		log_file () ;
 		if ifdo (TRUE) {
+			if (!self.mConsole.exist ())
+				discard ;
 			const auto r1x = csc_uint16_t (FOREGROUND_GREEN | FOREGROUND_BLUE | FOREGROUND_INTENSITY) ;
 			SetConsoleTextAttribute (self.mConsole ,r1x) ;
 			auto rax = csc_enum_t (self.mLogWriter.length () - 1) ;
@@ -1184,6 +1194,8 @@ public:
 		log (slice ("Trace") ,msg) ;
 		log_file () ;
 		if ifdo (TRUE) {
+			if (!self.mConsole.exist ())
+				discard ;
 			const auto r1x = csc_uint16_t (FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE | FOREGROUND_INTENSITY) ;
 			SetConsoleTextAttribute (self.mConsole ,r1x) ;
 			auto rax = csc_enum_t (self.mLogWriter.length () - 1) ;
@@ -1208,7 +1220,7 @@ public:
 	void log_file () {
 		if (self.mLogFile.length () == 0)
 			return ;
-		const auto r1x = FLAG (self.mLogBuffer.deref) ;
+		const auto r1x = FLAG (self.mLogBuffer.ref) ;
 		const auto r2x = (self.mLogWriter.length () - 1) * SIZE_OF<STR>::expr ;
 		self.mLogStreamFile.write (RefBuffer<BYTE>::reference (r1x ,r2x)) ;
 	}
@@ -1216,8 +1228,7 @@ public:
 	void show () override {
 		Scope<Mutex> anonymous (self.mMutex) ;
 		if (self.mConsole.exist ())
-			if (self.mConsole.deref != INVALID_HANDLE_VALUE)
-				return ;
+			return ;
 		self.mConsole = UniqueRef<csc_handle_t> ([&] (VREF<csc_handle_t> me) {
 			AllocConsole () ;
 			me = GetStdHandle (STD_OUTPUT_HANDLE) ;
@@ -1229,7 +1240,7 @@ public:
 
 	void hide () override {
 		Scope<Mutex> anonymous (self.mMutex) ;
-		self.mConsole = UniqueRef<csc_handle_t>::make (INVALID_HANDLE_VALUE) ;
+		self.mConsole = UniqueRef<csc_handle_t> () ;
 	}
 
 	void pause () override {
@@ -1240,15 +1251,23 @@ public:
 				discard ;
 			FlashWindow (r1x ,TRUE) ;
 		}
-		const auto r2x = csc_uint16_t (FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE) ;
-		SetConsoleTextAttribute (self.mConsole ,r2x) ;
+		if ifdo (TRUE) {
+			if (!self.mConsole.exist ())
+				discard ;
+			const auto r2x = csc_uint16_t (FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE) ;
+			SetConsoleTextAttribute (self.mConsole ,r2x) ;
+		}
 		self.mCommand.execute (slice ("pause")) ;
 	}
 
 	void clear () override {
 		Scope<Mutex> anonymous (self.mMutex) ;
-		const auto r1x = csc_uint16_t (FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE) ;
-		SetConsoleTextAttribute (self.mConsole ,r1x) ;
+		if ifdo (TRUE) {
+			if (!self.mConsole.exist ())
+				discard ;
+			const auto r1x = csc_uint16_t (FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE) ;
+			SetConsoleTextAttribute (self.mConsole ,r1x) ;
+		}
 		self.mCommand.execute (slice ("cls")) ;
 	}
 } ;

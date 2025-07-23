@@ -39,10 +39,10 @@ public:
 		auto rax = from_initializer_list (params ,holder) ;
 		initialize (holder ,rax.size ()) ;
 		const auto r1x = RFat<ReflectAssign> (holder) ;
+		BoxHolder::hold (item)->initialize (holder) ;
 		for (auto &&i : iter (0 ,rax.size ())) {
-			BoxHolder::hold (item)->remake (holder) ;
-			r1x->assign (BoxHolder::hold (item)->deref ,rax[i]) ;
-			r1x->assign (at (i) ,BoxHolder::hold (item)->deref) ;
+			r1x->assign (BoxHolder::hold (item)->ref ,rax[i]) ;
+			r1x->assign (at (i) ,BoxHolder::hold (item)->ref) ;
 		}
 	}
 
@@ -66,12 +66,12 @@ public:
 		return self.mArray.size () ;
 	}
 
-	VREF<Pointer> deref_m () leftvalue override {
-		return RefBufferHolder::hold (self.mArray)->deref ;
+	VREF<Pointer> ref_m () leftvalue override {
+		return RefBufferHolder::hold (self.mArray)->ref ;
 	}
 
-	CREF<Pointer> deref_m () const leftvalue override {
-		return RefBufferHolder::hold (self.mArray)->deref ;
+	CREF<Pointer> ref_m () const leftvalue override {
+		return RefBufferHolder::hold (self.mArray)->ref ;
 	}
 
 	VREF<Pointer> at (CREF<INDEX> index) leftvalue override {
@@ -121,7 +121,7 @@ public:
 		return inline_compr (r1x ,r2x) ;
 	}
 
-	void visit (VREF<VisitorBinder> visitor) const override {
+	void visit (VREF<FriendVisitor> visitor) const override {
 		visitor.enter () ;
 		const auto r1x = size () ;
 		const auto r2x = RFat<ReflectVisit> (self.mArray.unknown ()) ;
@@ -241,12 +241,12 @@ public:
 		return size () ;
 	}
 
-	VREF<Pointer> deref_m () leftvalue override {
-		return RefBufferHolder::hold (self.mString)->deref ;
+	VREF<Pointer> ref_m () leftvalue override {
+		return RefBufferHolder::hold (self.mString)->ref ;
 	}
 
-	CREF<Pointer> deref_m () const leftvalue override {
-		return RefBufferHolder::hold (self.mString)->deref ;
+	CREF<Pointer> ref_m () const leftvalue override {
+		return RefBufferHolder::hold (self.mString)->ref ;
 	}
 
 	Ref<RefBuffer<BYTE>> borrow () leftvalue override {
@@ -399,7 +399,7 @@ public:
 		return inline_compr (r1x ,r2x) ;
 	}
 
-	void visit (VREF<VisitorBinder> visitor) const override {
+	void visit (VREF<FriendVisitor> visitor) const override {
 		visitor.enter () ;
 		const auto r1x = size () ;
 		auto rax = STRU32 () ;
@@ -483,9 +483,10 @@ public:
 		initialize (holder ,rax.size ()) ;
 		const auto r1x = RFat<ReflectAssign> (holder) ;
 		for (auto &&i : iter (0 ,rax.size ())) {
-			BoxHolder::hold (item)->remake (holder) ;
-			r1x->assign (BoxHolder::hold (item)->deref ,rax[i]) ;
+			BoxHolder::hold (item)->initialize (holder) ;
+			r1x->assign (BoxHolder::hold (item)->ref ,rax[i]) ;
 			add (move (item)) ;
+			BoxHolder::hold (item)->destroy () ;
 		}
 	}
 
@@ -560,7 +561,7 @@ public:
 		const auto r1x = self.mDeque.size () ;
 		INDEX ix = self.mWrite % r1x ;
 		const auto r2x = RFat<ReflectAssign> (self.mDeque.unknown ()) ;
-		r2x->assign (self.mDeque.at (ix) ,BoxHolder::hold (item)->deref) ;
+		r2x->assign (self.mDeque.at (ix) ,BoxHolder::hold (item)->ref) ;
 		self.mWrite++ ;
 	}
 
@@ -569,8 +570,10 @@ public:
 		noop (r1x) ;
 		assert (r1x > 0) ;
 		INDEX ix = self.mRead ;
-		const auto r2x = RFat<ReflectAssign> (self.mDeque.unknown ()) ;
-		r2x->assign (self.mDeque[ix]) ;
+		const auto r2x = RFat<ReflectCreate> (self.mDeque.unknown ()) ;
+		const auto r3x = RFat<ReflectDestroy> (self.mDeque.unknown ()) ;
+		r3x->destroy (self.mDeque[ix] ,1) ;
+		r2x->create (self.mDeque[ix] ,1) ;
 		self.mRead++ ;
 		check_bound () ;
 	}
@@ -580,7 +583,7 @@ public:
 		const auto r1x = self.mDeque.size () ;
 		INDEX ix = (self.mRead - 1 + r1x) % r1x ;
 		const auto r2x = RFat<ReflectAssign> (self.mDeque.unknown ()) ;
-		r2x->assign (self.mDeque.at (ix) ,BoxHolder::hold (item)->deref) ;
+		r2x->assign (self.mDeque.at (ix) ,BoxHolder::hold (item)->ref) ;
 		self.mRead-- ;
 		check_bound () ;
 	}
@@ -590,8 +593,10 @@ public:
 		noop (r1x) ;
 		assert (r1x > 0) ;
 		INDEX ix = self.mWrite - 1 ;
-		const auto r2x = RFat<ReflectAssign> (self.mDeque.unknown ()) ;
-		r2x->assign (self.mDeque[ix]) ;
+		const auto r2x = RFat<ReflectCreate> (self.mDeque.unknown ()) ;
+		const auto r3x = RFat<ReflectDestroy> (self.mDeque.unknown ()) ;
+		r3x->destroy (self.mDeque[ix] ,1) ;
+		r2x->create (self.mDeque[ix] ,1) ;
 		self.mWrite-- ;
 	}
 
@@ -670,9 +675,10 @@ public:
 		initialize (holder ,rax.size ()) ;
 		const auto r1x = RFat<ReflectAssign> (holder) ;
 		for (auto &&i : iter (0 ,rax.size ())) {
-			BoxHolder::hold (item)->remake (holder) ;
-			r1x->assign (BoxHolder::hold (item)->deref ,rax[i]) ;
+			BoxHolder::hold (item)->initialize (holder) ;
+			r1x->assign (BoxHolder::hold (item)->ref ,rax[i]) ;
 			add (move (item)) ;
+			BoxHolder::hold (item)->destroy () ;
 		}
 	}
 
@@ -734,7 +740,7 @@ public:
 		check_resize () ;
 		INDEX ix = self.mWrite ;
 		const auto r1x = RFat<ReflectAssign> (self.mPriority.unknown ()) ;
-		r1x->assign (self.mPriority.at (ix) ,BoxHolder::hold (item)->deref) ;
+		r1x->assign (self.mPriority.at (ix) ,BoxHolder::hold (item)->ref) ;
 		self.mWrite++ ;
 		update_insert (ix) ;
 	}
@@ -842,9 +848,10 @@ public:
 		initialize (holder ,rax.size ()) ;
 		const auto r1x = RFat<ReflectAssign> (holder) ;
 		for (auto &&i : iter (0 ,rax.size ())) {
-			BoxHolder::hold (item)->remake (holder) ;
-			r1x->assign (BoxHolder::hold (item)->deref ,rax[i]) ;
+			BoxHolder::hold (item)->initialize (holder) ;
+			r1x->assign (BoxHolder::hold (item)->ref ,rax[i]) ;
 			add (move (item)) ;
+			BoxHolder::hold (item)->destroy () ;
 		}
 	}
 
@@ -1034,9 +1041,10 @@ public:
 		initialize (holder ,rax.size ()) ;
 		const auto r1x = RFat<ReflectAssign> (holder) ;
 		for (auto &&i : iter (0 ,rax.size ())) {
-			BoxHolder::hold (item)->remake (holder) ;
-			r1x->assign (BoxHolder::hold (item)->deref ,rax[i]) ;
+			BoxHolder::hold (item)->initialize (holder) ;
+			r1x->assign (BoxHolder::hold (item)->ref ,rax[i]) ;
 			add (move (item)) ;
+			BoxHolder::hold (item)->destroy () ;
 		}
 	}
 
@@ -1222,9 +1230,10 @@ public:
 		initialize (holder ,rax.size ()) ;
 		const auto r1x = RFat<ReflectAssign> (holder) ;
 		for (auto &&i : iter (0 ,rax.size ())) {
-			BoxHolder::hold (item)->remake (holder) ;
-			r1x->assign (BoxHolder::hold (item)->deref ,rax[i]) ;
+			BoxHolder::hold (item)->initialize (holder) ;
+			r1x->assign (BoxHolder::hold (item)->ref ,rax[i]) ;
 			add (move (item) ,NONE) ;
+			BoxHolder::hold (item)->destroy () ;
 		}
 	}
 
@@ -1339,7 +1348,7 @@ public:
 		if ifdo (TRUE) {
 			if (self.mWrite == 0)
 				discard ;
-			auto &&rax = self.mThis.deref ;
+			auto &&rax = self.mThis.ref ;
 			const auto r1x = RFat<ReflectCompr> (rax.mList.unknown ()) ;
 			const auto r2x = RFat<ReflectEqual> (rax.mList.unknown ()) ;
 			if ifdo (TRUE) {
@@ -1419,9 +1428,10 @@ public:
 		initialize (holder ,rax.size ()) ;
 		const auto r1x = RFat<ReflectAssign> (holder) ;
 		for (auto &&i : iter (0 ,rax.size ())) {
-			BoxHolder::hold (item)->remake (holder) ;
-			r1x->assign (BoxHolder::hold (item)->deref ,rax[i]) ;
+			BoxHolder::hold (item)->initialize (holder) ;
+			r1x->assign (BoxHolder::hold (item)->ref ,rax[i]) ;
 			add (move (item) ,NONE) ;
+			BoxHolder::hold (item)->destroy () ;
 		}
 	}
 
@@ -1481,7 +1491,7 @@ public:
 
 	void add (RREF<BoxLayout> item ,CREF<INDEX> map_) override {
 		if ifdo (TRUE) {
-			INDEX ix = find (BoxHolder::hold (item)->deref) ;
+			INDEX ix = find (BoxHolder::hold (item)->ref) ;
 			if (ix != NONE)
 				discard ;
 			ix = self.mSet.alloc (move (item)) ;
@@ -1953,10 +1963,10 @@ struct FUNCTION_fnvhash {
 
 static constexpr auto fnvhash = FUNCTION_fnvhash () ;
 
-class FriendHashcodeVisitorBinder final implement Fat<VisitorBinder ,HashcodeVisitor> {
+class FriendHashcodeVisitorBinder final implement Fat<FriendVisitor ,HashcodeVisitor> {
 public:
-	static VFat<VisitorBinder> hold (VREF<HashcodeVisitor> that) {
-		return VFat<VisitorBinder> (FriendHashcodeVisitorBinder () ,that) ;
+	static VFat<FriendVisitor> hold (VREF<HashcodeVisitor> that) {
+		return VFat<FriendVisitor> (FriendHashcodeVisitorBinder () ,that) ;
 	}
 
 	void reset () override {
@@ -2016,9 +2026,10 @@ public:
 		initialize (holder ,rax.size ()) ;
 		const auto r1x = RFat<ReflectAssign> (holder) ;
 		for (auto &&i : iter (0 ,rax.size ())) {
-			BoxHolder::hold (item)->remake (holder) ;
-			r1x->assign (BoxHolder::hold (item)->deref ,rax[i]) ;
+			BoxHolder::hold (item)->initialize (holder) ;
+			r1x->assign (BoxHolder::hold (item)->ref ,rax[i]) ;
 			add (move (item) ,NONE) ;
+			BoxHolder::hold (item)->destroy () ;
 		}
 	}
 
@@ -2077,7 +2088,7 @@ public:
 
 	void add (RREF<BoxLayout> item ,CREF<INDEX> map_) override {
 		if ifdo (TRUE) {
-			INDEX ix = find (BoxHolder::hold (item)->deref) ;
+			INDEX ix = find (BoxHolder::hold (item)->ref) ;
 			if (ix != NONE)
 				discard ;
 			ix = self.mSet.alloc (move (item)) ;
@@ -2092,7 +2103,7 @@ public:
 		const auto r1x = FriendHashcodeVisitorBinder::hold (self.mVisitor) ;
 		r1x->reset () ;
 		const auto r2x = RFat<ReflectVisit> (self.mSet.unknown ()) ;
-		r2x->visit (r1x.deref ,item) ;
+		r2x->visit (r1x.ref ,item) ;
 		return r1x->fetch () ;
 	}
 
@@ -2217,9 +2228,10 @@ public:
 		initialize (size_) ;
 		const auto r2x = RFat<ReflectAssign> (r1x) ;
 		for (auto &&i : iter (0 ,rax.size ())) {
-			BoxHolder::hold (item)->remake (r1x) ;
-			r2x->assign (BoxHolder::hold (item)->deref ,rax[i]) ;
+			BoxHolder::hold (item)->initialize (r1x) ;
+			r2x->assign (BoxHolder::hold (item)->ref ,rax[i]) ;
 			add (move (item)) ;
+			BoxHolder::hold (item)->destroy () ;
 		}
 	}
 
@@ -2338,7 +2350,7 @@ public:
 		return ZERO ;
 	}
 
-	void visit (VREF<VisitorBinder> visitor) const override {
+	void visit (VREF<FriendVisitor> visitor) const override {
 		visitor.enter () ;
 		const auto r1x = self.mSet.size () ;
 		for (auto &&i : iter (0 ,r1x)) {
@@ -2348,7 +2360,7 @@ public:
 	}
 
 	void add (RREF<BoxLayout> item) override {
-		const auto r1x = bitwise[TYPE<INDEX>::expr] (BoxHolder::hold (item)->deref) ;
+		const auto r1x = bitwise[TYPE<INDEX>::expr] (BoxHolder::hold (item)->ref) ;
 		assume (inline_between (r1x ,0 ,size ())) ;
 		set (r1x ,TRUE) ;
 	}

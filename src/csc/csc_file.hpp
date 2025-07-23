@@ -156,7 +156,7 @@ public:
 struct FileProcLayout ;
 
 struct FileProcHolder implement Interface {
-	imports CREF<OfThis<UniqueRef<FileProcLayout>>> instance () ;
+	imports CREF<OfThis<UniqueRef<FileProcLayout>>> expr_m () ;
 	imports VFat<FileProcHolder> hold (VREF<FileProcLayout> that) ;
 	imports CFat<FileProcHolder> hold (CREF<FileProcLayout> that) ;
 
@@ -177,63 +177,63 @@ struct FileProcHolder implement Interface {
 
 class FileProc implement OfThis<UniqueRef<FileProcLayout>> {
 public:
-	static CREF<FileProc> instance () {
-		return keep[TYPE<FileProc>::expr] (FileProcHolder::instance ()) ;
+	static CREF<FileProc> expr_m () {
+		return keep[TYPE<FileProc>::expr] (FileProcHolder::expr) ;
 	}
 
 	static RefBuffer<BYTE> load_file (CREF<String<STR>> file) {
-		return FileProcHolder::hold (instance ())->load_file (file) ;
+		return FileProcHolder::hold (expr)->load_file (file) ;
 	}
 
 	static void save_file (CREF<String<STR>> file ,CREF<RefBuffer<BYTE>> item) {
-		return FileProcHolder::hold (instance ())->save_file (file ,item) ;
+		return FileProcHolder::hold (expr)->save_file (file ,item) ;
 	}
 
 	static Ref<RefBuffer<BYTE>> load_asset (CREF<String<STR>> file) {
-		return FileProcHolder::hold (instance ())->load_asset (file) ;
+		return FileProcHolder::hold (expr)->load_asset (file) ;
 	}
 
 	static void copy_file (CREF<String<STR>> dst ,CREF<String<STR>> src) {
-		return FileProcHolder::hold (instance ())->copy_file (dst ,src) ;
+		return FileProcHolder::hold (expr)->copy_file (dst ,src) ;
 	}
 
 	static void move_file (CREF<String<STR>> dst ,CREF<String<STR>> src) {
-		return FileProcHolder::hold (instance ())->move_file (dst ,src) ;
+		return FileProcHolder::hold (expr)->move_file (dst ,src) ;
 	}
 
 	static void link_file (CREF<String<STR>> dst ,CREF<String<STR>> src) {
-		return FileProcHolder::hold (instance ())->link_file (dst ,src) ;
+		return FileProcHolder::hold (expr)->link_file (dst ,src) ;
 	}
 
 	static void erase_file (CREF<String<STR>> file) {
-		return FileProcHolder::hold (instance ())->erase_file (file) ;
+		return FileProcHolder::hold (expr)->erase_file (file) ;
 	}
 
 	static void build_dire (CREF<String<STR>> dire) {
-		return FileProcHolder::hold (instance ())->build_dire (dire) ;
+		return FileProcHolder::hold (expr)->build_dire (dire) ;
 	}
 
 	static void link_dire (CREF<String<STR>> dst ,CREF<String<STR>> src) {
-		return FileProcHolder::hold (instance ())->link_dire (dst ,src) ;
+		return FileProcHolder::hold (expr)->link_dire (dst ,src) ;
 	}
 
 	static void clear_dire (CREF<String<STR>> dire) {
-		return FileProcHolder::hold (instance ())->clear_dire (dire) ;
+		return FileProcHolder::hold (expr)->clear_dire (dire) ;
 	}
 
 	static void erase_dire (CREF<String<STR>> dire) {
-		return FileProcHolder::hold (instance ())->erase_dire (dire) ;
+		return FileProcHolder::hold (expr)->erase_dire (dire) ;
 	}
 
 	static BOOL lock_dire (CREF<String<STR>> dire) {
-		return FileProcHolder::hold (instance ())->lock_dire (dire) ;
+		return FileProcHolder::hold (expr)->lock_dire (dire) ;
 	}
 } ;
 
 struct StreamFileLayout ;
 
 struct StreamFileHolder implement Interface {
-	imports OfThis<AutoRef<StreamFileLayout>> create () ;
+	imports AutoRef<StreamFileLayout> create () ;
 	imports VFat<StreamFileHolder> hold (VREF<StreamFileLayout> that) ;
 	imports CFat<StreamFileHolder> hold (CREF<StreamFileLayout> that) ;
 
@@ -300,12 +300,12 @@ public:
 struct StreamFileByteWriterLayout ;
 
 struct StreamFileByteWriterHolder implement Interface {
-	imports OfThis<AutoRef<StreamFileByteWriterLayout>> create () ;
+	imports AutoRef<StreamFileByteWriterLayout> create () ;
 	imports VFat<StreamFileByteWriterHolder> hold (VREF<StreamFileByteWriterLayout> that) ;
 	imports CFat<StreamFileByteWriterHolder> hold (CREF<StreamFileByteWriterLayout> that) ;
 
 	virtual void initialize (CREF<String<STR>> file) = 0 ;
-	virtual VREF<ByteWriter> deref_m () leftvalue = 0 ;
+	virtual VREF<ByteWriter> ref_m () leftvalue = 0 ;
 	virtual void flush () = 0 ;
 } ;
 
@@ -318,12 +318,12 @@ public:
 		StreamFileByteWriterHolder::hold (thiz)->initialize (file) ;
 	}
 
-	VREF<ByteWriter> deref_m () leftvalue {
-		return StreamFileByteWriterHolder::hold (thiz)->deref ;
+	VREF<ByteWriter> ref_m () leftvalue {
+		return StreamFileByteWriterHolder::hold (thiz)->ref ;
 	}
 
 	forceinline operator VREF<ByteWriter> () leftvalue {
-		return deref ;
+		return ref ;
 	}
 
 	void flush () {
@@ -334,12 +334,12 @@ public:
 struct StreamFileTextWriterLayout ;
 
 struct StreamFileTextWriterHolder implement Interface {
-	imports OfThis<AutoRef<StreamFileTextWriterLayout>> create () ;
+	imports AutoRef<StreamFileTextWriterLayout> create () ;
 	imports VFat<StreamFileTextWriterHolder> hold (VREF<StreamFileTextWriterLayout> that) ;
 	imports CFat<StreamFileTextWriterHolder> hold (CREF<StreamFileTextWriterLayout> that) ;
 
 	virtual void initialize (CREF<String<STR>> file) = 0 ;
-	virtual VREF<TextWriter> deref_m () leftvalue = 0 ;
+	virtual VREF<TextWriter> ref_m () leftvalue = 0 ;
 	virtual void flush () = 0 ;
 } ;
 
@@ -352,12 +352,12 @@ public:
 		StreamFileTextWriterHolder::hold (thiz)->initialize (file) ;
 	}
 
-	VREF<TextWriter> deref_m () leftvalue {
-		return StreamFileTextWriterHolder::hold (thiz)->deref ;
+	VREF<TextWriter> ref_m () leftvalue {
+		return StreamFileTextWriterHolder::hold (thiz)->ref ;
 	}
 
 	forceinline operator VREF<TextWriter> () leftvalue {
-		return deref ;
+		return ref ;
 	}
 
 	void flush () {
@@ -368,7 +368,7 @@ public:
 struct BufferFileLayout ;
 
 struct BufferFileHolder implement Interface {
-	imports OfThis<AutoRef<BufferFileLayout>> create () ;
+	imports AutoRef<BufferFileLayout> create () ;
 	imports VFat<BufferFileHolder> hold (VREF<BufferFileLayout> that) ;
 	imports CFat<BufferFileHolder> hold (CREF<BufferFileLayout> that) ;
 
@@ -433,7 +433,7 @@ public:
 struct UartFileLayout ;
 
 struct UartFileHolder implement Interface {
-	imports OfThis<AutoRef<UartFileLayout>> create () ;
+	imports AutoRef<UartFileLayout> create () ;
 	imports VFat<UartFileHolder> hold (VREF<UartFileLayout> that) ;
 	imports CFat<UartFileHolder> hold (CREF<UartFileLayout> that) ;
 
@@ -492,7 +492,7 @@ struct ConsoleOption {
 struct ConsoleLayout ;
 
 struct ConsoleHolder implement Interface {
-	imports CREF<OfThis<SharedRef<ConsoleLayout>>> instance () ;
+	imports CREF<OfThis<SharedRef<ConsoleLayout>>> expr_m () ;
 	imports VFat<ConsoleHolder> hold (VREF<ConsoleLayout> that) ;
 	imports CFat<ConsoleHolder> hold (CREF<ConsoleLayout> that) ;
 
@@ -514,8 +514,8 @@ struct ConsoleHolder implement Interface {
 
 class Console implement OfThis<SharedRef<ConsoleLayout>> {
 public:
-	static CREF<Console> instance () {
-		return keep[TYPE<Console>::expr] (ConsoleHolder::instance ()) ;
+	static CREF<Console> expr_m () {
+		return keep[TYPE<Console>::expr] (ConsoleHolder::expr) ;
 	}
 
 	void set_option (CREF<Just<ConsoleOption>> option) const {

@@ -80,7 +80,7 @@ public:
 		self.mThreadFunc = func ;
 		const auto r1x = FriendThreadBinder<WorkThreadLayout>::hold (self) ;
 		for (auto &&i : self.mThread.range ()) {
-			self.mThread[i] = Thread (Box<VFat<ThreadBinder>>::make (r1x) ,i) ;
+			self.mThread[i] = Thread (Box<VFat<FriendThread>>::make (r1x) ,i) ;
 			self.mThread[i].start () ;
 		}
 	}
@@ -202,10 +202,8 @@ public:
 	}
 } ;
 
-exports OfThis<SharedRef<WorkThreadLayout>> WorkThreadHolder::create () {
-	OfThis<SharedRef<WorkThreadLayout>> ret ;
-	ret.mThis = SharedRef<WorkThreadLayout>::make () ;
-	return move (ret) ;
+exports SharedRef<WorkThreadLayout> WorkThreadHolder::create () {
+	return SharedRef<WorkThreadLayout>::make () ;
 }
 
 exports VFat<WorkThreadHolder> WorkThreadHolder::hold (VREF<WorkThreadLayout> that) {
@@ -291,7 +289,7 @@ public:
 		self.mThreadFunc = func ;
 		const auto r1x = FriendThreadBinder<CalcThreadLayout>::hold (self) ;
 		for (auto &&i : self.mThread.range ()) {
-			self.mThread[i] = Thread (Box<VFat<ThreadBinder>>::make (r1x) ,i) ;
+			self.mThread[i] = Thread (Box<VFat<FriendThread>>::make (r1x) ,i) ;
 			self.mThread[i].start () ;
 		}
 	}
@@ -471,10 +469,8 @@ public:
 	}
 } ;
 
-exports OfThis<SharedRef<CalcThreadLayout>> CalcThreadHolder::create () {
-	OfThis<SharedRef<CalcThreadLayout>> ret ;
-	ret.mThis = SharedRef<CalcThreadLayout>::make () ;
-	return move (ret) ;
+exports SharedRef<CalcThreadLayout> CalcThreadHolder::create () {
+	return SharedRef<CalcThreadLayout>::make () ;
 }
 
 exports VFat<CalcThreadHolder> CalcThreadHolder::hold (VREF<CalcThreadLayout> that) {
@@ -545,7 +541,7 @@ public:
 			self.mThread = Array<Thread> (1) ;
 			const auto r1x = FriendThreadBinder<PromiseLayout>::hold (self) ;
 			for (auto &&i : self.mThread.range ()) {
-				self.mThread[i] = Thread (Box<VFat<ThreadBinder>>::make (r1x) ,0) ;
+				self.mThread[i] = Thread (Box<VFat<FriendThread>>::make (r1x) ,0) ;
 				self.mThread[i].start () ;
 			}
 		}
@@ -651,7 +647,7 @@ public:
 		if ifdo (TRUE) {
 			if (self.mItem == NULL)
 				discard ;
-			ret = move (self.mItem.deref) ;
+			ret = move (self.mItem.ref) ;
 			self.mItem = NULL ;
 		}
 		self.mThreadFlag = ThreadFlag::Preparing ;
@@ -680,10 +676,8 @@ public:
 	}
 } ;
 
-exports OfThis<SharedRef<PromiseLayout>> PromiseHolder::create () {
-	OfThis<SharedRef<PromiseLayout>> ret ;
-	ret.mThis = SharedRef<PromiseLayout>::make () ;
-	return move (ret) ;
+exports SharedRef<PromiseLayout> PromiseHolder::create () {
+	return SharedRef<PromiseLayout>::make () ;
 }
 
 exports VFat<PromiseHolder> PromiseHolder::hold (VREF<PromiseLayout> that) {

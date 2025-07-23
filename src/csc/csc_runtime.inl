@@ -147,10 +147,8 @@ public:
 	}
 } ;
 
-exports OfThis<Box<TimeLayout ,TimeStorage>> TimeHolder::create () {
-	OfThis<Box<TimeLayout ,TimeStorage>> ret ;
-	ret.mThis = Box<TimeLayout>::make () ;
-	return move (ret) ;
+exports Box<TimeLayout ,TimeStorage> TimeHolder::create () {
+	return Box<TimeLayout>::make () ;
 }
 
 exports VFat<TimeHolder> TimeHolder::hold (VREF<TimeLayout> that) {
@@ -165,7 +163,7 @@ template class External<RuntimeProcHolder ,RuntimeProcLayout> ;
 
 struct RuntimeProcLayout {} ;
 
-exports CREF<OfThis<UniqueRef<RuntimeProcLayout>>> RuntimeProcHolder::instance () {
+exports CREF<OfThis<UniqueRef<RuntimeProcLayout>>> RuntimeProcHolder::expr_m () {
 	return memorize ([&] () {
 		OfThis<UniqueRef<RuntimeProcLayout>> ret ;
 		ret.mThis = UniqueRef<RuntimeProcLayout>::make () ;
@@ -175,61 +173,57 @@ exports CREF<OfThis<UniqueRef<RuntimeProcLayout>>> RuntimeProcHolder::instance (
 }
 
 exports VFat<RuntimeProcHolder> RuntimeProcHolder::hold (VREF<RuntimeProcLayout> that) {
-	return VFat<RuntimeProcHolder> (External<RuntimeProcHolder ,RuntimeProcLayout>::declare () ,that) ;
+	return VFat<RuntimeProcHolder> (External<RuntimeProcHolder ,RuntimeProcLayout>::expr ,that) ;
 }
 
 exports CFat<RuntimeProcHolder> RuntimeProcHolder::hold (CREF<RuntimeProcLayout> that) {
-	return CFat<RuntimeProcHolder> (External<RuntimeProcHolder ,RuntimeProcLayout>::declare () ,that) ;
+	return CFat<RuntimeProcHolder> (External<RuntimeProcHolder ,RuntimeProcLayout>::expr ,that) ;
 }
 
 struct AtomicLayout {
-	Pin<std::atomic<VAL>> mAtomic ;
+	Pin<AtomicLayout> mPin ;
+	std::atomic<VAL> mAtomic ;
 } ;
 
 class AtomicImplHolder final implement Fat<AtomicHolder ,AtomicLayout> {
 public:
 	void initialize () override {
+		self.mPin.pin (self) ;
 		store (ZERO) ;
 	}
 
-	static VREF<std::atomic<VAL>> ptr (CREF<AtomicLayout> that) {
-		return that.mAtomic.deref ;
-	}
-
 	VAL fetch () const override {
-		return ptr (self).load (std::memory_order_relaxed) ;
+		return self.mAtomic.load (std::memory_order_relaxed) ;
 	}
 
 	void store (CREF<VAL> item) const override {
-		return ptr (self).store (item ,std::memory_order_relaxed) ;
+		return self.mPin.ref.mAtomic.store (item ,std::memory_order_relaxed) ;
 	}
 
 	VAL exchange (CREF<VAL> item) const override {
-		return ptr (self).exchange (item ,std::memory_order_relaxed) ;
+		return self.mPin.ref.mAtomic.exchange (item ,std::memory_order_relaxed) ;
 	}
 
 	BOOL change (VREF<VAL> expect ,CREF<VAL> item) const override {
-		return ptr (self).compare_exchange_weak (expect ,item ,std::memory_order_relaxed) ;
+		return self.mPin.ref.mAtomic.compare_exchange_weak (expect ,item ,std::memory_order_relaxed) ;
 	}
 
 	void replace (CREF<VAL> expect ,CREF<VAL> item) const override {
 		auto rax = expect ;
-		ptr (self).compare_exchange_strong (rax ,item ,std::memory_order_relaxed) ;
+		self.mPin.ref.mAtomic.compare_exchange_strong (rax ,item ,std::memory_order_relaxed) ;
 	}
 
 	void increase () const override {
-		ptr (self).fetch_add (1 ,std::memory_order_relaxed) ;
+		self.mPin.ref.mAtomic.fetch_add (1 ,std::memory_order_relaxed) ;
 	}
 
 	void decrease () const override {
-		ptr (self).fetch_sub (1 ,std::memory_order_relaxed) ;
+		self.mPin.ref.mAtomic.fetch_sub (1 ,std::memory_order_relaxed) ;
 	}
 } ;
 
-exports OfThis<Box<AtomicLayout ,AtomicStorage>> AtomicHolder::create () {
-	OfThis<Box<AtomicLayout ,AtomicStorage>> ret ;
-	ret.mThis = Box<AtomicLayout>::make () ;
-	return move (ret) ;
+exports Box<AtomicLayout ,AtomicStorage> AtomicHolder::create () {
+	return Box<AtomicLayout>::make () ;
 }
 
 exports VFat<AtomicHolder> AtomicHolder::hold (VREF<AtomicLayout> that) {
@@ -289,10 +283,8 @@ public:
 	}
 } ;
 
-exports OfThis<SharedRef<MutexLayout>> MutexHolder::create () {
-	OfThis<SharedRef<MutexLayout>> ret ;
-	ret.mThis = SharedRef<MutexLayout>::make () ;
-	return move (ret) ;
+exports SharedRef<MutexLayout> MutexHolder::create () {
+	return SharedRef<MutexLayout>::make () ;
 }
 
 exports VFat<MutexHolder> MutexHolder::hold (VREF<MutexLayout> that) {
@@ -365,7 +357,7 @@ public:
 	}
 
 	static VREF<MutexLayout> ptr (CREF<SharedLockLayout> that) {
-		return Pointer::make (address (that.mMutex.deref)) ;
+		return Pointer::make (address (that.mMutex.ref)) ;
 	}
 
 	void shared_enter () {
@@ -408,10 +400,8 @@ public:
 	}
 } ;
 
-exports OfThis<Box<SharedLockLayout ,SharedLockStorage>> SharedLockHolder::create () {
-	OfThis<Box<SharedLockLayout ,SharedLockStorage>> ret ;
-	ret.mThis = Box<SharedLockLayout>::make () ;
-	return move (ret) ;
+exports Box<SharedLockLayout ,SharedLockStorage> SharedLockHolder::create () {
+	return Box<SharedLockLayout>::make () ;
 }
 
 exports VFat<SharedLockHolder> SharedLockHolder::hold (VREF<SharedLockLayout> that) {
@@ -433,11 +423,11 @@ public:
 		self.mMutex = mutex.borrow () ;
 		assert (self.mMutex.exclusive ()) ;
 		assert (ptr (self).mType == MutexType::Unique) ;
-		self.mLock = std::unique_lock<std::mutex> (ptr (self).mBasic.deref) ;
+		self.mLock = std::unique_lock<std::mutex> (ptr (self).mBasic.ref) ;
 	}
 
 	static VREF<MutexLayout> ptr (CREF<UniqueLockLayout> that) {
-		return Pointer::make (address (that.mMutex.deref)) ;
+		return Pointer::make (address (that.mMutex.ref)) ;
 	}
 
 	void wait () override {
@@ -456,14 +446,12 @@ public:
 	void yield () override {
 		self.mLock = std::unique_lock<std::mutex> () ;
 		std::this_thread::yield () ;
-		self.mLock = std::unique_lock<std::mutex> (ptr (self).mBasic.deref) ;
+		self.mLock = std::unique_lock<std::mutex> (ptr (self).mBasic.ref) ;
 	}
 } ;
 
-exports OfThis<Box<UniqueLockLayout ,UniqueLockStorage>> UniqueLockHolder::create () {
-	OfThis<Box<UniqueLockLayout ,UniqueLockStorage>> ret ;
-	ret.mThis = Box<UniqueLockLayout>::make () ;
-	return move (ret) ;
+exports Box<UniqueLockLayout ,UniqueLockStorage> UniqueLockHolder::create () {
+	return Box<UniqueLockLayout>::make () ;
 }
 
 exports VFat<UniqueLockHolder> UniqueLockHolder::hold (VREF<UniqueLockLayout> that) {
@@ -475,7 +463,7 @@ exports CFat<UniqueLockHolder> UniqueLockHolder::hold (CREF<UniqueLockLayout> th
 }
 
 struct ThreadLayout {
-	Box<VFat<ThreadBinder>> mExecutor ;
+	Box<VFat<FriendThread>> mExecutor ;
 	FLAG mUid ;
 	INDEX mSlot ;
 	Box<std::thread> mThread ;
@@ -490,7 +478,7 @@ public:
 
 class ThreadImplHolder final implement Fat<ThreadHolder ,ThreadLayout> {
 public:
-	void initialize (RREF<Box<VFat<ThreadBinder>>> executor ,CREF<INDEX> slot) override {
+	void initialize (RREF<Box<VFat<FriendThread>>> executor ,CREF<INDEX> slot) override {
 		self.mExecutor = move (executor) ;
 		self.mUid = ZERO ;
 		self.mSlot = slot ;
@@ -504,7 +492,7 @@ public:
 		auto &&rax = self ;
 		self.mThread = Box<std::thread>::make ([&] () {
 			rax.mUid = RuntimeProc::thread_uid () ;
-			rax.mExecutor.deref->friend_execute (rax.mSlot) ;
+			rax.mExecutor.ref->friend_execute (rax.mSlot) ;
 		}) ;
 	}
 
@@ -516,10 +504,8 @@ public:
 	}
 } ;
 
-exports OfThis<AutoRef<ThreadLayout>> ThreadHolder::create () {
-	OfThis<AutoRef<ThreadLayout>> ret ;
-	ret.mThis = AutoRef<ThreadLayout>::make () ;
-	return move (ret) ;
+exports AutoRef<ThreadLayout> ThreadHolder::create () {
+	return AutoRef<ThreadLayout>::make () ;
 }
 
 exports VFat<ThreadHolder> ThreadHolder::hold (VREF<ThreadLayout> that) {
@@ -538,18 +524,16 @@ struct ProcessLayout {
 	QUAD mProcessTime ;
 } ;
 
-exports OfThis<AutoRef<ProcessLayout>> ProcessHolder::create () {
-	OfThis<AutoRef<ProcessLayout>> ret ;
-	ret.mThis = AutoRef<ProcessLayout>::make () ;
-	return move (ret) ;
+exports AutoRef<ProcessLayout> ProcessHolder::create () {
+	return AutoRef<ProcessLayout>::make () ;
 }
 
 exports VFat<ProcessHolder> ProcessHolder::hold (VREF<ProcessLayout> that) {
-	return VFat<ProcessHolder> (External<ProcessHolder ,ProcessLayout>::declare () ,that) ;
+	return VFat<ProcessHolder> (External<ProcessHolder ,ProcessLayout>::expr ,that) ;
 }
 
 exports CFat<ProcessHolder> ProcessHolder::hold (CREF<ProcessLayout> that) {
-	return CFat<ProcessHolder> (External<ProcessHolder ,ProcessLayout>::declare () ,that) ;
+	return CFat<ProcessHolder> (External<ProcessHolder ,ProcessLayout>::expr ,that) ;
 }
 
 template class External<LibraryHolder ,LibraryLayout> ;
@@ -560,18 +544,16 @@ struct LibraryLayout {
 	FLAG mLastError ;
 } ;
 
-exports OfThis<AutoRef<LibraryLayout>> LibraryHolder::create () {
-	OfThis<AutoRef<LibraryLayout>> ret ;
-	ret.mThis = AutoRef<LibraryLayout>::make () ;
-	return move (ret) ;
+exports AutoRef<LibraryLayout> LibraryHolder::create () {
+	return AutoRef<LibraryLayout>::make () ;
 }
 
 exports VFat<LibraryHolder> LibraryHolder::hold (VREF<LibraryLayout> that) {
-	return VFat<LibraryHolder> (External<LibraryHolder ,LibraryLayout>::declare () ,that) ;
+	return VFat<LibraryHolder> (External<LibraryHolder ,LibraryLayout>::expr ,that) ;
 }
 
 exports CFat<LibraryHolder> LibraryHolder::hold (CREF<LibraryLayout> that) {
-	return CFat<LibraryHolder> (External<LibraryHolder ,LibraryLayout>::declare () ,that) ;
+	return CFat<LibraryHolder> (External<LibraryHolder ,LibraryLayout>::expr ,that) ;
 }
 
 struct SystemLayout {
@@ -596,10 +578,8 @@ public:
 	}
 } ;
 
-exports OfThis<AutoRef<SystemLayout>> SystemHolder::create () {
-	OfThis<AutoRef<SystemLayout>> ret ;
-	ret.mThis = AutoRef<SystemLayout>::make () ;
-	return move (ret) ;
+exports AutoRef<SystemLayout> SystemHolder::create () {
+	return AutoRef<SystemLayout>::make () ;
 }
 
 exports VFat<SystemHolder> SystemHolder::hold (VREF<SystemLayout> that) {
@@ -632,7 +612,7 @@ public:
 	void initialize (CREF<FLAG> seed) override {
 		self.mSeed = seed ;
 		self.mRandom.remake () ;
-		self.mRandom.deref = std::mt19937_64 (seed) ;
+		self.mRandom.ref = std::mt19937_64 (seed) ;
 		self.mNormal.mOdd = FALSE ;
 	}
 
@@ -641,7 +621,7 @@ public:
 	}
 
 	QUAD random_byte () {
-		return QUAD (self.mRandom.deref ()) ;
+		return QUAD (self.mRandom.ref ()) ;
 	}
 
 	VAL32 random_value (CREF<VAL32> min_ ,CREF<VAL32> max_) override {
@@ -743,10 +723,8 @@ public:
 	}
 } ;
 
-exports OfThis<SharedRef<RandomLayout>> RandomHolder::create () {
-	OfThis<SharedRef<RandomLayout>> ret ;
-	ret.mThis = SharedRef<RandomLayout>::make () ;
-	return move (ret) ;
+exports SharedRef<RandomLayout> RandomHolder::create () {
+	return SharedRef<RandomLayout>::make () ;
 }
 
 exports VFat<RandomHolder> RandomHolder::hold (VREF<RandomLayout> that) {
@@ -760,8 +738,9 @@ exports CFat<RandomHolder> RandomHolder::hold (CREF<RandomLayout> that) {
 template class External<SingletonProcHolder ,SingletonProcLayout> ;
 
 struct SingletonRoot {
+	Pin<SingletonRoot> mPin ;
 	Mutex mMutex ;
-	Pin<Set<Clazz>> mClazzSet ;
+	Set<Clazz> mClazzSet ;
 } ;
 
 struct SingletonLocal {
@@ -789,7 +768,7 @@ public:
 	}
 } ;
 
-exports CREF<OfThis<UniqueRef<SingletonProcLayout>>> SingletonProcHolder::instance () {
+exports CREF<OfThis<UniqueRef<SingletonProcLayout>>> SingletonProcHolder::expr_m () {
 	return memorize ([&] () {
 		OfThis<UniqueRef<SingletonProcLayout>> ret ;
 		ret.mThis = UniqueRef<SingletonProcLayout>::make () ;
@@ -799,16 +778,17 @@ exports CREF<OfThis<UniqueRef<SingletonProcLayout>>> SingletonProcHolder::instan
 }
 
 exports VFat<SingletonProcHolder> SingletonProcHolder::hold (VREF<SingletonProcLayout> that) {
-	return VFat<SingletonProcHolder> (External<SingletonProcHolder ,SingletonProcLayout>::declare () ,that) ;
+	return VFat<SingletonProcHolder> (External<SingletonProcHolder ,SingletonProcLayout>::expr ,that) ;
 }
 
 exports CFat<SingletonProcHolder> SingletonProcHolder::hold (CREF<SingletonProcLayout> that) {
-	return CFat<SingletonProcHolder> (External<SingletonProcHolder ,SingletonProcLayout>::declare () ,that) ;
+	return CFat<SingletonProcHolder> (External<SingletonProcHolder ,SingletonProcLayout>::expr ,that) ;
 }
 
 struct GlobalNode {
+	Pin<GlobalNode> mPin ;
 	FLAG mHolder ;
-	Pin<AutoRef<Pointer>> mValue ;
+	AutoRef<Pointer> mValue ;
 } ;
 
 struct GlobalTree {
@@ -828,7 +808,7 @@ public:
 	}
 
 	void initialize (CREF<Slice> name ,CREF<Unknown> holder) override {
-		self.mThis = Singleton<GlobalProc>::instance ().mThis ;
+		self.mThis = Singleton<GlobalProc>::expr.mThis ;
 		assert (!self.mThis->mFinalize) ;
 		Scope<Mutex> anonymous (self.mThis->mMutex) ;
 		INDEX ix = self.mThis->mGlobalNameSet.map (name) ;
@@ -837,6 +817,7 @@ public:
 				discard ;
 			ix = self.mThis->mGlobalList.insert () ;
 			self.mThis->mGlobalNameSet.add (name ,ix) ;
+			self.mThis->mGlobalList[ix].mPin.pin (self.mThis->mGlobalList[ix]) ;
 			self.mThis->mGlobalList[ix].mHolder = inline_vptr (holder) ;
 		}
 		self.mIndex = ix ;
@@ -844,12 +825,12 @@ public:
 	}
 
 	void startup () const override {
-		auto rax = Singleton<GlobalProc>::instance ().mThis ;
+		auto rax = Singleton<GlobalProc>::expr.mThis ;
 		assume (!rax->mFinalize) ;
 	}
 
 	void shutdown () const override {
-		auto rax = Singleton<GlobalProc>::instance ().mThis ;
+		auto rax = Singleton<GlobalProc>::expr.mThis ;
 		if (rax->mFinalize)
 			return ;
 		rax->mFinalize = TRUE ;
@@ -860,32 +841,32 @@ public:
 	BOOL exist () const override {
 		Scope<Mutex> anonymous (self.mThis->mMutex) ;
 		INDEX ix = self.mIndex ;
-		auto &&rax = keep[TYPE<AutoRef<Pointer>>::expr] (self.mThis->mGlobalList[ix].mValue.deref) ;
+		auto &&rax = self.mThis->mGlobalList[ix].mValue ;
 		return self.mClazz == rax.clazz () ;
 	}
 
 	AutoRef<Pointer> fetch () const override {
 		Scope<Mutex> anonymous (self.mThis->mMutex) ;
 		INDEX ix = self.mIndex ;
-		auto &&rax = keep[TYPE<AutoRef<Pointer>>::expr] (self.mThis->mGlobalList[ix].mValue.deref) ;
+		auto &&rax = self.mThis->mGlobalList[ix].mValue ;
 		assume (rax.exist ()) ;
 		const auto r1x = Unknown (self.mThis->mGlobalList[ix].mHolder) ;
 		AutoRef<Pointer> ret = AutoRef<Pointer> (r1x) ;
 		const auto r2x = RFat<ReflectClone> (r1x) ;
-		r2x->clone (ret.deref ,rax.deref) ;
+		r2x->clone (ret.ref ,rax.ref) ;
 		return move (ret) ;
 	}
 
 	void store (RREF<AutoRef<Pointer>> item) const override {
 		Scope<Mutex> anonymous (self.mThis->mMutex) ;
 		INDEX ix = self.mIndex ;
-		auto &&rax = keep[TYPE<AutoRef<Pointer>>::expr] (self.mThis->mGlobalList[ix].mValue.deref) ;
+		auto &&rax = self.mThis->mGlobalList[ix].mPin.ref.mValue ;
 		assume (!rax.exist ()) ;
 		rax = move (item) ;
 	}
 } ;
 
-exports CREF<GlobalLayout> GlobalHolder::instance () {
+exports CREF<GlobalLayout> GlobalHolder::expr_m () {
 	return memorize ([&] () {
 		GlobalLayout ret ;
 		GlobalHolder::hold (ret)->initialize () ;

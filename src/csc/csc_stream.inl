@@ -188,7 +188,7 @@ public:
 	}
 } ;
 
-exports CREF<OfThis<UniqueRef<StreamProcLayout>>> StreamProcHolder::instance () {
+exports CREF<OfThis<UniqueRef<StreamProcLayout>>> StreamProcHolder::expr_m () {
 	return memorize ([&] () {
 		OfThis<UniqueRef<StreamProcLayout>> ret ;
 		ret.mThis = UniqueRef<StreamProcLayout>::make () ;
@@ -288,7 +288,7 @@ public:
 		if ifdo (act) {
 			if (self.mRead >= self.mWrite)
 				discard ;
-			item = self.mStream.deref[self.mRead] ;
+			item = self.mStream.ref[self.mRead] ;
 			self.mRead++ ;
 		}
 		if ifdo (act) {
@@ -711,7 +711,7 @@ public:
 				discard ;
 			if (self.mRead >= self.mWrite)
 				discard ;
-			auto &&rax = keep[TYPE<RefBuffer<STRU8>>::expr] (Pointer::from (self.mStream.deref)) ;
+			auto &&rax = keep[TYPE<RefBuffer<STRU8>>::expr] (Pointer::from (self.mStream.ref)) ;
 			item = rax[self.mRead] ;
 			self.mRead++ ;
 		}
@@ -720,7 +720,7 @@ public:
 				discard ;
 			if (self.mRead >= self.mWrite)
 				discard ;
-			auto &&rax = keep[TYPE<RefBuffer<STRU16>>::expr] (Pointer::from (self.mStream.deref)) ;
+			auto &&rax = keep[TYPE<RefBuffer<STRU16>>::expr] (Pointer::from (self.mStream.ref)) ;
 			item = rax[self.mRead] ;
 			self.mRead++ ;
 		}
@@ -729,7 +729,7 @@ public:
 				discard ;
 			if (self.mRead >= self.mWrite)
 				discard ;
-			auto &&rax = keep[TYPE<RefBuffer<STRU32>>::expr] (Pointer::from (self.mStream.deref)) ;
+			auto &&rax = keep[TYPE<RefBuffer<STRU32>>::expr] (Pointer::from (self.mStream.ref)) ;
 			item = rax[self.mRead] ;
 			self.mRead++ ;
 		}
@@ -943,7 +943,7 @@ public:
 		if ifdo (act) {
 			if (self.mWrite >= self.mRead)
 				discard ;
-			auto &&rax = keep[TYPE<RefBuffer<BYTE>>::expr] (Pointer::from (self.mStream.deref)) ;
+			auto &&rax = keep[TYPE<RefBuffer<BYTE>>::expr] (Pointer::from (self.mStream.ref)) ;
 			rax[self.mWrite] = item ;
 			self.mWrite++ ;
 		}
@@ -1434,7 +1434,7 @@ public:
 				discard ;
 			if (self.mWrite >= self.mRead)
 				discard ;
-			auto &&rax = keep[TYPE<RefBuffer<STRU8>>::expr] (Pointer::from (self.mStream.deref)) ;
+			auto &&rax = keep[TYPE<RefBuffer<STRU8>>::expr] (Pointer::from (self.mStream.ref)) ;
 			rax[self.mWrite] = STRU8 (item) ;
 			self.mWrite++ ;
 		}
@@ -1443,7 +1443,7 @@ public:
 				discard ;
 			if (self.mWrite >= self.mRead)
 				discard ;
-			auto &&rax = keep[TYPE<RefBuffer<STRU16>>::expr] (Pointer::from (self.mStream.deref)) ;
+			auto &&rax = keep[TYPE<RefBuffer<STRU16>>::expr] (Pointer::from (self.mStream.ref)) ;
 			rax[self.mWrite] = STRU16 (item) ;
 			self.mWrite++ ;
 		}
@@ -1452,7 +1452,7 @@ public:
 				discard ;
 			if (self.mWrite >= self.mRead)
 				discard ;
-			auto &&rax = keep[TYPE<RefBuffer<STRU32>>::expr] (Pointer::from (self.mStream.deref)) ;
+			auto &&rax = keep[TYPE<RefBuffer<STRU32>>::expr] (Pointer::from (self.mStream.ref)) ;
 			rax[self.mWrite] = STRU32 (item) ;
 			self.mWrite++ ;
 		}
@@ -1541,12 +1541,12 @@ exports CFat<TextWriterHolder> TextWriterHolder::hold (CREF<TextWriterLayout> th
 class FormatImplHolder final implement Fat<FormatHolder ,FormatLayout> {
 public:
 	void initialize (CREF<Slice> format) override {
+		self.mPin.pin (self) ;
 		self.mFormat = format ;
 	}
 
-	void friend_write (VREF<WriterBinder> writer) const override {
+	void friend_write (VREF<FriendWriter> writer) const override {
 		auto rax = FLAG (0) ;
-		auto rbx = FatLayout () ;
 		for (auto &&i : iter (0 ,self.mFormat.size ())) {
 			auto act = TRUE ;
 			if ifdo (act) {
@@ -1568,10 +1568,9 @@ public:
 					discard ;
 				if ifdo (TRUE) {
 					const auto r1x = StreamProc::hex_from_str (self.mFormat[i]) - 1 ;
-					if (!inline_between (r1x ,0 ,self.mWrite.deref))
+					if (!inline_between (r1x ,0 ,self.mWrite))
 						discard ;
-					self.mParams[r1x].get (rbx) ;
-					const auto r2x = keep[TYPE<CFat<FormatBinder>>::expr] (rbx) ;
+					const auto r2x = keep[TYPE<CFat<FriendFormat>>::expr] (self.mParams[r1x]) ;
 					r2x->friend_write (writer) ;
 				}
 				rax = FLAG (0) ;
@@ -1581,9 +1580,8 @@ public:
 					discard ;
 				if (self.mFormat[i] != STRU32 ('0'))
 					discard ;
-				for (auto &&j : iter (0 ,self.mWrite.deref)) {
-					self.mParams[j].get (rbx) ;
-					const auto r3x = keep[TYPE<CFat<FormatBinder>>::expr] (rbx) ;
+				for (auto &&j : iter (0 ,self.mWrite)) {
+					const auto r3x = keep[TYPE<CFat<FriendFormat>>::expr] (self.mParams[j]) ;
 					r3x->friend_write (writer) ;
 				}
 				rax = FLAG (3) ;
@@ -1593,10 +1591,9 @@ public:
 					discard ;
 				if ifdo (TRUE) {
 					const auto r4x = StreamProc::hex_from_str (self.mFormat[i]) - 1 ;
-					if (!inline_between (r4x ,0 ,self.mWrite.deref))
+					if (!inline_between (r4x ,0 ,self.mWrite))
 						discard ;
-					self.mParams[r4x].get (rbx) ;
-					const auto r5x = keep[TYPE<CFat<FormatBinder>>::expr] (rbx) ;
+					const auto r5x = keep[TYPE<CFat<FriendFormat>>::expr] (self.mParams[r4x]) ;
 					r5x->friend_write (writer) ;
 				}
 				rax = FLAG (3) ;
@@ -1619,10 +1616,10 @@ public:
 		INDEX ix = 0 ;
 		for (auto &&i : iter (0 ,params.mRank)) {
 			auto rbx = rax[i] ;
-			self.mParams[ix].set (rbx) ;
+			self.mPin.ref.mParams[ix] = rbx ;
 			ix++ ;
 		}
-		self.mWrite.set (ix) ;
+		self.mPin.ref.mWrite = ix ;
 	}
 } ;
 
@@ -1642,7 +1639,7 @@ public:
 		noop () ;
 	}
 
-	void read_keyword (VREF<ReaderBinder> reader ,VREF<String<STRU8>> item) const override {
+	void read_keyword (VREF<FriendReader> reader ,VREF<String<STRU8>> item) const override {
 		auto rax = STRU32 () ;
 		auto rbx = ZERO ;
 		const auto r1x = reader.backup () ;
@@ -1665,7 +1662,7 @@ public:
 		reader.read (item) ;
 	}
 
-	void read_scalar (VREF<ReaderBinder> reader ,VREF<String<STRU8>> item) const override {
+	void read_scalar (VREF<FriendReader> reader ,VREF<String<STRU8>> item) const override {
 		auto rax = STRU32 () ;
 		auto rbx = ZERO ;
 		const auto r1x = reader.backup () ;
@@ -1720,7 +1717,7 @@ public:
 		reader.read (item) ;
 	}
 
-	void read_escape (VREF<ReaderBinder> reader ,VREF<String<STRU8>> item) const override {
+	void read_escape (VREF<FriendReader> reader ,VREF<String<STRU8>> item) const override {
 		auto rax = STRU32 () ;
 		auto rbx = ZERO ;
 		const auto r1x = reader.backup () ;
@@ -1759,7 +1756,7 @@ public:
 		reader.read (rax) ;
 	}
 
-	void write_escape (VREF<WriterBinder> writer ,CREF<String<STRU8>> item) const override {
+	void write_escape (VREF<FriendWriter> writer ,CREF<String<STRU8>> item) const override {
 		writer.write (STRU32 ('\"')) ;
 		for (auto &&i : item) {
 			auto act = TRUE ;
@@ -1777,7 +1774,7 @@ public:
 		writer.write (STRU32 ('\"')) ;
 	}
 
-	void read_blank (VREF<ReaderBinder> reader ,VREF<String<STRU8>> item) const override {
+	void read_blank (VREF<FriendReader> reader ,VREF<String<STRU8>> item) const override {
 		auto rax = STRU32 () ;
 		auto rbx = ZERO ;
 		const auto r1x = reader.backup () ;
@@ -1797,7 +1794,7 @@ public:
 		reader.read (item) ;
 	}
 
-	void read_endline (VREF<ReaderBinder> reader ,VREF<String<STRU8>> item) const override {
+	void read_endline (VREF<FriendReader> reader ,VREF<String<STRU8>> item) const override {
 		auto rax = STRU32 () ;
 		auto rbx = ZERO ;
 		const auto r1x = reader.backup () ;
@@ -1817,7 +1814,7 @@ public:
 		reader.read (item) ;
 	}
 
-	void write_aligned (VREF<WriterBinder> writer ,CREF<VAL64> number ,CREF<LENGTH> align) const override {
+	void write_aligned (VREF<FriendWriter> writer ,CREF<VAL64> number ,CREF<LENGTH> align) const override {
 		auto rax = WriteValueBuffer () ;
 		assert (inline_between (align ,0 ,rax.mBuffer.size ())) ;
 		rax.mWrite = rax.mBuffer.size () ;
@@ -1834,7 +1831,7 @@ public:
 	}
 } ;
 
-exports CREF<OfThis<UniqueRef<StreamTextProcLayout>>> StreamTextProcHolder::instance () {
+exports CREF<OfThis<UniqueRef<StreamTextProcLayout>>> StreamTextProcHolder::expr_m () {
 	return memorize ([&] () {
 		OfThis<UniqueRef<StreamTextProcLayout>> ret ;
 		ret.mThis = UniqueRef<StreamTextProcLayout>::make () ;
@@ -1872,7 +1869,7 @@ public:
 		self.mLastTight = 0 ;
 	}
 
-	void friend_write (VREF<WriterBinder> writer) override {
+	void friend_write (VREF<FriendWriter> writer) override {
 		if ifdo (TRUE) {
 			if (self.mDepth >= self.mTight + self.mLastTight)
 				discard ;
@@ -1922,10 +1919,8 @@ public:
 	}
 } ;
 
-exports OfThis<SharedRef<CommaLayout>> CommaHolder::create () {
-	OfThis<SharedRef<CommaLayout>> ret ;
-	ret.mThis = SharedRef<CommaLayout>::make () ;
-	return move (ret) ;
+exports SharedRef<CommaLayout> CommaHolder::create () {
+	return SharedRef<CommaLayout>::make () ;
 }
 
 exports VFat<CommaHolder> CommaHolder::hold (VREF<CommaLayout> that) {
@@ -1950,7 +1945,7 @@ public:
 
 	INDEX search (RREF<Ref<String<STR>>> text ,CREF<INDEX> offset) override {
 		self.mText = move (text) ;
-		const auto r1x = (&self.mText.deref[offset]) ;
+		const auto r1x = (&self.mText.ref[offset]) ;
 		const auto r2x = std::regex_search (r1x ,self.mMatch ,self.mRegex) ;
 		if (!r2x)
 			return NONE ;
@@ -1969,10 +1964,8 @@ public:
 	}
 } ;
 
-exports OfThis<AutoRef<RegexLayout>> RegexHolder::create () {
-	OfThis<AutoRef<RegexLayout>> ret ;
-	ret.mThis = AutoRef<RegexLayout>::make () ;
-	return move (ret) ;
+exports AutoRef<RegexLayout> RegexHolder::create () {
+	return AutoRef<RegexLayout>::make () ;
 }
 
 exports VFat<RegexHolder> RegexHolder::hold (VREF<RegexLayout> that) {

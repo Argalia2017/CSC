@@ -81,7 +81,7 @@ struct VectorHolder implement Interface {
 	virtual CREF<FLT64> at (CREF<INDEX> y) const leftvalue = 0 ;
 	virtual BOOL equal (CREF<VectorLayout> that) const = 0 ;
 	virtual FLAG compr (CREF<VectorLayout> that) const = 0 ;
-	virtual void visit (VREF<VisitorBinder> visitor) const = 0 ;
+	virtual void visit (VREF<FriendVisitor> visitor) const = 0 ;
 	virtual VectorLayout sadd (CREF<VectorLayout> that) const = 0 ;
 	virtual VectorLayout ssub (CREF<VectorLayout> that) const = 0 ;
 	virtual VectorLayout smul (CREF<FLT64> scale) const = 0 ;
@@ -206,7 +206,7 @@ public:
 		return compr (that) >= ZERO ;
 	}
 
-	void visit (VREF<VisitorBinder> visitor) const {
+	void visit (VREF<FriendVisitor> visitor) const {
 		return VectorHolder::hold (thiz)->visit (visitor) ;
 	}
 
@@ -344,7 +344,7 @@ struct MatrixHolder implement Interface {
 	virtual CREF<FLT64> at (CREF<INDEX> x ,CREF<INDEX> y) const leftvalue = 0 ;
 	virtual BOOL equal (CREF<MatrixLayout> that) const = 0 ;
 	virtual FLAG compr (CREF<MatrixLayout> that) const = 0 ;
-	virtual void visit (VREF<VisitorBinder> visitor) const = 0 ;
+	virtual void visit (VREF<FriendVisitor> visitor) const = 0 ;
 	virtual MatrixLayout sadd (CREF<MatrixLayout> that) const = 0 ;
 	virtual MatrixLayout ssub (CREF<MatrixLayout> that) const = 0 ;
 	virtual MatrixLayout smul (CREF<FLT64> scale) const = 0 ;
@@ -356,7 +356,7 @@ struct MatrixHolder implement Interface {
 	virtual MatrixLayout transpose () const = 0 ;
 	virtual MatrixLayout triangular () const = 0 ;
 	virtual MatrixLayout homogenize () const = 0 ;
-	virtual FLT64 det () const = 0 ;
+	virtual FLT64 determinant () const = 0 ;
 	virtual MatrixLayout adjoint () const = 0 ;
 	virtual MatrixLayout inverse () const = 0 ;
 	virtual FLT64 trace () const = 0 ;
@@ -384,7 +384,7 @@ public:
 		}) ;
 	}
 
-	static CREF<Matrix> identity () {
+	static CREF<Matrix> iden () {
 		return memorize ([&] () {
 			const auto r1x = Vector::axis_x () ;
 			const auto r2x = Vector::axis_y () ;
@@ -466,7 +466,7 @@ public:
 		return compr (that) >= ZERO ;
 	}
 
-	void visit (VREF<VisitorBinder> visitor) const {
+	void visit (VREF<FriendVisitor> visitor) const {
 		return MatrixHolder::hold (thiz)->visit (visitor) ;
 	}
 
@@ -577,8 +577,8 @@ public:
 		return move (keep[TYPE<Matrix>::expr] (ret)) ;
 	}
 
-	FLT64 det () const {
-		return MatrixHolder::hold (thiz)->det () ;
+	FLT64 determinant () const {
+		return MatrixHolder::hold (thiz)->determinant () ;
 	}
 
 	Matrix adjoint () const {
@@ -614,7 +614,6 @@ struct MakeMatrixHolder implement Interface {
 
 	virtual void make_DiagMatrix (CREF<FLT64> x ,CREF<FLT64> y ,CREF<FLT64> z ,CREF<FLT64> w) = 0 ;
 	virtual void make_ShearMatrix (CREF<Vector> x ,CREF<Vector> y ,CREF<Vector> z) = 0 ;
-	virtual void make_RotationMatrix (CREF<FLAG> axis ,CREF<FLT64> angle) = 0 ;
 	virtual void make_RotationMatrix (CREF<Vector> normal ,CREF<FLT64> angle) = 0 ;
 	virtual void make_TranslationMatrix (CREF<FLT64> x ,CREF<FLT64> y ,CREF<FLT64> z) = 0 ;
 	virtual void make_PerspectiveMatrix (CREF<FLT64> fx ,CREF<FLT64> fy ,CREF<FLT64> wx ,CREF<FLT64> wy) = 0 ;
@@ -622,7 +621,7 @@ struct MakeMatrixHolder implement Interface {
 	virtual void make_ViewMatrix (CREF<Vector> vx ,CREF<Vector> vy) = 0 ;
 	virtual void make_ViewMatrix (CREF<Vector> vx ,CREF<Vector> vy ,CREF<Just<ViewMatrixOption>> option) = 0 ;
 	virtual void make_CrossProductMatrix (CREF<Vector> xyz) = 0 ;
-	virtual void make_SymmetryMatrix (CREF<Vector> x ,CREF<Vector> y) = 0 ;
+	virtual void make_OuterProductMatrix (CREF<Vector> x ,CREF<Vector> y) = 0 ;
 	virtual void make_AffineMatrix (CREF<Array<FLT64>> a) = 0 ;
 } ;
 
@@ -641,12 +640,6 @@ inline Matrix DiagMatrix (CREF<FLT64> x ,CREF<FLT64> y ,CREF<FLT64> z ,CREF<FLT6
 inline Matrix ShearMatrix (CREF<Vector> x ,CREF<Vector> y ,CREF<Vector> z) {
 	Matrix ret ;
 	MakeMatrixHolder::hold (ret)->make_ShearMatrix (x ,y ,z) ;
-	return move (ret) ;
-}
-
-inline Matrix RotationMatrix (CREF<FLAG> axis ,CREF<FLT64> angle) {
-	Matrix ret ;
-	MakeMatrixHolder::hold (ret)->make_RotationMatrix (axis ,angle) ;
 	return move (ret) ;
 }
 
@@ -722,9 +715,15 @@ inline Matrix CrossProductMatrix (CREF<Vector> xyz) {
 	return move (ret) ;
 }
 
+inline Matrix OuterProductMatrix (CREF<Vector> x ,CREF<Vector> y) {
+	Matrix ret ;
+	MakeMatrixHolder::hold (ret)->make_OuterProductMatrix (x ,y) ;
+	return move (ret) ;
+}
+
 inline Matrix SymmetryMatrix (CREF<Vector> x ,CREF<Vector> y) {
 	Matrix ret ;
-	MakeMatrixHolder::hold (ret)->make_SymmetryMatrix (x ,y) ;
+	MakeMatrixHolder::hold (ret)->make_OuterProductMatrix (x ,y) ;
 	return move (ret) ;
 }
 
@@ -744,7 +743,8 @@ struct KRTResult {
 	Matrix mK ;
 	Matrix mR ;
 	Matrix mT ;
-	Matrix mP ;
+	Vector mN ;
+	Vector mC ;
 } ;
 
 struct SVDResult {
@@ -756,7 +756,7 @@ struct SVDResult {
 struct MatrixProcLayout ;
 
 struct MatrixProcHolder implement Interface {
-	imports CREF<OfThis<UniqueRef<MatrixProcLayout>>> instance () ;
+	imports CREF<OfThis<UniqueRef<MatrixProcLayout>>> expr_m () ;
 	imports VFat<MatrixProcHolder> hold (VREF<MatrixProcLayout> that) ;
 	imports CFat<MatrixProcHolder> hold (CREF<MatrixProcLayout> that) ;
 
@@ -768,20 +768,20 @@ struct MatrixProcHolder implement Interface {
 
 class MatrixProc implement OfThis<UniqueRef<MatrixProcLayout>> {
 public:
-	static CREF<MatrixProc> instance () {
-		return keep[TYPE<MatrixProc>::expr] (MatrixProcHolder::instance ()) ;
+	static CREF<MatrixProc> expr_m () {
+		return keep[TYPE<MatrixProc>::expr] (MatrixProcHolder::expr) ;
 	}
 
 	static TRSResult solve_trs (CREF<Matrix> a) {
-		return MatrixProcHolder::hold (instance ())->solve_trs (a) ;
+		return MatrixProcHolder::hold (expr)->solve_trs (a) ;
 	}
 
 	static KRTResult solve_krt (CREF<Matrix> a) {
-		return MatrixProcHolder::hold (instance ())->solve_krt (a) ;
+		return MatrixProcHolder::hold (expr)->solve_krt (a) ;
 	}
 
 	static SVDResult solve_svd (CREF<Matrix> a) {
-		return MatrixProcHolder::hold (instance ())->solve_svd (a) ;
+		return MatrixProcHolder::hold (expr)->solve_svd (a) ;
 	}
 } ;
 
@@ -844,7 +844,7 @@ struct QuaternionHolder implement Interface {
 	virtual CREF<FLT64> at (CREF<INDEX> y) const leftvalue = 0 ;
 	virtual BOOL equal (CREF<QuaternionLayout> that) const = 0 ;
 	virtual FLAG compr (CREF<QuaternionLayout> that) const = 0 ;
-	virtual void visit (VREF<VisitorBinder> visitor) const = 0 ;
+	virtual void visit (VREF<FriendVisitor> visitor) const = 0 ;
 	virtual QuaternionLayout smul (CREF<QuaternionLayout> that) const = 0 ;
 	virtual Vector vector () const = 0 ;
 	virtual Matrix matrix () const = 0 ;
@@ -874,7 +874,7 @@ public:
 		QuaternionHolder::hold (thiz)->initialize (that) ;
 	}
 
-	static CREF<Quaternion> identity () {
+	static CREF<Quaternion> iden () {
 		return memorize ([&] () {
 			return Quaternion (0 ,0 ,0 ,1) ;
 		}) ;
@@ -920,7 +920,7 @@ public:
 		return compr (that) >= ZERO ;
 	}
 
-	void visit (VREF<VisitorBinder> visitor) const {
+	void visit (VREF<FriendVisitor> visitor) const {
 		return QuaternionHolder::hold (thiz)->visit (visitor) ;
 	}
 
@@ -953,7 +953,7 @@ public:
 struct LinearProcLayout ;
 
 struct LinearProcHolder implement Interface {
-	imports CREF<OfThis<UniqueRef<LinearProcLayout>>> instance () ;
+	imports CREF<OfThis<UniqueRef<LinearProcLayout>>> expr_m () ;
 	imports VFat<LinearProcHolder> hold (VREF<LinearProcLayout> that) ;
 	imports CFat<LinearProcHolder> hold (CREF<LinearProcLayout> that) ;
 
@@ -965,27 +965,27 @@ struct LinearProcHolder implement Interface {
 
 class LinearProc implement OfThis<UniqueRef<LinearProcLayout>> {
 public:
-	static CREF<LinearProc> instance () {
-		return keep[TYPE<LinearProc>::expr] (LinearProcHolder::instance ()) ;
+	static CREF<LinearProc> expr_m () {
+		return keep[TYPE<LinearProc>::expr] (LinearProcHolder::expr) ;
 	}
 
 	static Image<FLT64> solve_lsm (CREF<Image<FLT64>> a) {
-		return LinearProcHolder::hold (instance ())->solve_lsm (a) ;
+		return LinearProcHolder::hold (expr)->solve_lsm (a) ;
 	}
 
 	static Image<FLT64> solve_lsm (CREF<Image<FLT64>> a ,CREF<Image<FLT64>> b) {
-		return LinearProcHolder::hold (instance ())->solve_lsm (a ,b) ;
+		return LinearProcHolder::hold (expr)->solve_lsm (a ,b) ;
 	}
 
 	static Image<FLT64> solve_inv (CREF<Image<FLT64>> a) {
-		return LinearProcHolder::hold (instance ())->solve_inv (a) ;
+		return LinearProcHolder::hold (expr)->solve_inv (a) ;
 	}
 } ;
 
 struct PointCloudKDTreeLayout ;
 
 struct PointCloudKDTreeHolder implement Interface {
-	imports OfThis<AutoRef<PointCloudKDTreeLayout>> create () ;
+	imports AutoRef<PointCloudKDTreeLayout> create () ;
 	imports VFat<PointCloudKDTreeHolder> hold (VREF<PointCloudKDTreeLayout> that) ;
 	imports CFat<PointCloudKDTreeHolder> hold (CREF<PointCloudKDTreeLayout> that) ;
 
@@ -997,10 +997,11 @@ struct PointCloudKDTreeHolder implement Interface {
 class PointCloudKDTree implement OfThis<AutoRef<PointCloudKDTreeLayout>> {} ;
 
 struct PointCloudLayout {
+	Pin<PointCloudLayout> mPin ;
 	LENGTH mRank ;
 	Ref<Array<Pointer>> mPointCloud ;
 	Matrix mWorld ;
-	Pin<PointCloudKDTree> mKDTree ;
+	PointCloudKDTree mKDTree ;
 } ;
 
 struct PointCloudHolder implement Interface {
@@ -1022,6 +1023,7 @@ struct PointCloudHolder implement Interface {
 
 class PointCloud implement PointCloudLayout {
 protected:
+	using PointCloudLayout::mPin ;
 	using PointCloudLayout::mRank ;
 	using PointCloudLayout::mPointCloud ;
 	using PointCloudLayout::mWorld ;

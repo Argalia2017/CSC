@@ -111,11 +111,8 @@ public:
 	}
 } ;
 
-struct ImageLayout ;
-
-template <class A>
-struct ImageRealLayout implement OfBase<ImageLayout> {
-	RefBuffer<A> mImage ;
+struct ImageLayout {
+	RefBuffer<Pointer> mImage ;
 	LENGTH mWidth ;
 	LENGTH mStride ;
 	LENGTH mBX ;
@@ -124,7 +121,8 @@ struct ImageRealLayout implement OfBase<ImageLayout> {
 	LENGTH mCY ;
 } ;
 
-struct ImageLayout implement ImageRealLayout<Pointer> {} ;
+template <class A>
+struct ImagePureLayout implement ImageLayout {} ;
 
 struct ImageHolder implement Interface {
 	imports VFat<ImageHolder> hold (VREF<ImageLayout> that) ;
@@ -154,18 +152,18 @@ struct ImageHolder implement Interface {
 } ;
 
 template <class A>
-class Image implement ImageRealLayout<A> {
+class Image implement ImagePureLayout<A> {
 private:
 	require (IS_TRIVIAL<A>) ;
 
 protected:
-	using ImageRealLayout<A>::mImage ;
-	using ImageRealLayout<A>::mWidth ;
-	using ImageRealLayout<A>::mStride ;
-	using ImageRealLayout<A>::mBX ;
-	using ImageRealLayout<A>::mBY ;
-	using ImageRealLayout<A>::mCX ;
-	using ImageRealLayout<A>::mCY ;
+	using ImagePureLayout<A>::mImage ;
+	using ImagePureLayout<A>::mWidth ;
+	using ImagePureLayout<A>::mStride ;
+	using ImagePureLayout<A>::mBX ;
+	using ImagePureLayout<A>::mBY ;
+	using ImagePureLayout<A>::mCX ;
+	using ImagePureLayout<A>::mCY ;
 
 public:
 	implicit Image () = default ;
@@ -310,7 +308,7 @@ public:
 struct ImageProcLayout ;
 
 struct ImageProcHolder implement Interface {
-	imports CREF<OfThis<UniqueRef<ImageProcLayout>>> instance () ;
+	imports CREF<OfThis<UniqueRef<ImageProcLayout>>> expr_m () ;
 	imports VFat<ImageProcHolder> hold (VREF<ImageProcLayout> that) ;
 	imports CFat<ImageProcHolder> hold (CREF<ImageProcLayout> that) ;
 
@@ -332,52 +330,52 @@ struct ImageProcHolder implement Interface {
 
 class ImageProc implement OfThis<UniqueRef<ImageProcLayout>> {
 public:
-	static CREF<ImageProc> instance () {
-		return keep[TYPE<ImageProc>::expr] (ImageProcHolder::instance ()) ;
+	static CREF<ImageProc> expr_m () {
+		return keep[TYPE<ImageProc>::expr] (ImageProcHolder::expr) ;
 	}
 
 	static ImageLayout make_image (RREF<BoxLayout> image) {
-		return ImageProcHolder::hold (instance ())->make_image (move (image)) ;
+		return ImageProcHolder::hold (expr)->make_image (move (image)) ;
 	}
 
 	static ImageLayout make_image (CREF<ImageShape> shape) {
-		return ImageProcHolder::hold (instance ())->make_image (shape) ;
+		return ImageProcHolder::hold (expr)->make_image (shape) ;
 	}
 
 	static ImageLayout make_image (CREF<ImageShape> shape ,CREF<Clazz> clazz ,CREF<LENGTH> channel) {
-		return ImageProcHolder::hold (instance ())->make_image (shape ,clazz ,channel) ;
+		return ImageProcHolder::hold (expr)->make_image (shape ,clazz ,channel) ;
 	}
 
 	template <class A>
 	static VREF<A> peek_image (VREF<ImageLayout> image ,TYPE<A>) {
-		return ImageProcHolder::hold (instance ())->peek_image (image) ;
+		return ImageProcHolder::hold (expr)->peek_image (image) ;
 	}
 
 	template <class A>
 	static CREF<A> peek_image (CREF<ImageLayout> image ,TYPE<A>) {
-		return ImageProcHolder::hold (instance ())->peek_image (image) ;
+		return ImageProcHolder::hold (expr)->peek_image (image) ;
 	}
 
 	static ImageLayout load_image (CREF<String<STR>> file) {
-		return ImageProcHolder::hold (instance ())->load_image (file) ;
+		return ImageProcHolder::hold (expr)->load_image (file) ;
 	}
 
 	static void save_image (CREF<String<STR>> file ,CREF<ImageLayout> image) {
-		return ImageProcHolder::hold (instance ())->save_image (file ,image) ;
+		return ImageProcHolder::hold (expr)->save_image (file ,image) ;
 	}
 
 	template <class ARG1>
 	static ARG1 sampler (CREF<Image<ARG1>> image ,CREF<FLT64> x ,CREF<FLT64> y) {
-		return ImageProcHolder::hold (instance ())->sampler (image ,x ,y) ;
+		return ImageProcHolder::hold (expr)->sampler (image ,x ,y) ;
 	}
 } ;
 
 struct TensorDataType {
 	enum {
+		Flt16 ,
 		Flt32 ,
 		Flt64 ,
-		Complex32 ,
-		Complex64 ,
+		Flt128 ,
 		ETC
 	} ;
 } ;
@@ -387,14 +385,7 @@ struct TensorLayout {
 	LENGTH mOffset ;
 	LENGTH mWidth ;
 	Just<TensorDataType> mType ;
-	LENGTH mSX ;
-	LENGTH mSY ;
-	LENGTH mSZ ;
-	LENGTH mSW ;
-	LENGTH mCX ;
-	LENGTH mCY ;
-	LENGTH mCZ ;
-	LENGTH mCW ;
+	Buffer5<LENGTH> mShape ;
 } ;
 
 struct TensorHolder implement Interface {
@@ -411,8 +402,8 @@ struct TensorHolder implement Interface {
 	virtual TensorLayout recast (CREF<Just<TensorDataType>> type_) = 0 ;
 	virtual void reset () = 0 ;
 	virtual void reset (CREF<LENGTH> cx_ ,CREF<LENGTH> cy_ ,CREF<LENGTH> cz_ ,CREF<LENGTH> cw_) = 0 ;
-	virtual VREF<Pointer> deref_m () leftvalue = 0 ;
-	virtual CREF<Pointer> deref_m () const leftvalue = 0 ;
+	virtual VREF<Pointer> ref_m () leftvalue = 0 ;
+	virtual CREF<Pointer> ref_m () const leftvalue = 0 ;
 	virtual Ref<RefBuffer<BYTE>> borrow () leftvalue = 0 ;
 	virtual Ref<RefBuffer<BYTE>> borrow () const leftvalue = 0 ;
 } ;
@@ -423,14 +414,7 @@ protected:
 	using TensorLayout::mOffset ;
 	using TensorLayout::mWidth ;
 	using TensorLayout::mType ;
-	using TensorLayout::mSX ;
-	using TensorLayout::mSY ;
-	using TensorLayout::mSZ ;
-	using TensorLayout::mSW ;
-	using TensorLayout::mCX ;
-	using TensorLayout::mCY ;
-	using TensorLayout::mCZ ;
-	using TensorLayout::mCW ;
+	using TensorLayout::mShape ;
 
 public:
 	implicit Tensor () = default ;
@@ -476,12 +460,12 @@ public:
 		return TensorHolder::hold (thiz)->reset (cx_ ,cy_ ,cz_ ,cw_) ;
 	}
 
-	VREF<ARR<STRA>> deref_m () leftvalue {
-		return TensorHolder::hold (thiz)->deref ;
+	VREF<ARR<STRA>> ref_m () leftvalue {
+		return TensorHolder::hold (thiz)->ref ;
 	}
 
-	CREF<ARR<STRA>> deref_m () const leftvalue {
-		return TensorHolder::hold (thiz)->deref ;
+	CREF<ARR<STRA>> ref_m () const leftvalue {
+		return TensorHolder::hold (thiz)->ref ;
 	}
 
 	Ref<RefBuffer<BYTE>> borrow () leftvalue {

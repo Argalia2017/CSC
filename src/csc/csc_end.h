@@ -6,7 +6,7 @@
 #undef leftvalue
 #undef rightvalue
 #undef thiz
-#undef deref
+#undef ref
 #undef self
 #undef expr
 #undef trait

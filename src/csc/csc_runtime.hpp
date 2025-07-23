@@ -29,7 +29,7 @@ struct TimeLayout ;
 struct TimeStorage implement Storage<ENUM<8> ,ENUM<8>> {} ;
 
 struct TimeHolder implement Interface {
-	imports OfThis<Box<TimeLayout ,TimeStorage>> create () ;
+	imports Box<TimeLayout ,TimeStorage> create () ;
 	imports VFat<TimeHolder> hold (VREF<TimeLayout> that) ;
 	imports CFat<TimeHolder> hold (CREF<TimeLayout> that) ;
 
@@ -147,7 +147,7 @@ inline Time CurrentTime () {
 struct RuntimeProcLayout ;
 
 struct RuntimeProcHolder implement Interface {
-	imports CREF<OfThis<UniqueRef<RuntimeProcLayout>>> instance () ;
+	imports CREF<OfThis<UniqueRef<RuntimeProcLayout>>> expr_m () ;
 	imports VFat<RuntimeProcHolder> hold (VREF<RuntimeProcLayout> that) ;
 	imports CFat<RuntimeProcHolder> hold (CREF<RuntimeProcLayout> that) ;
 
@@ -164,48 +164,48 @@ struct RuntimeProcHolder implement Interface {
 
 class RuntimeProc implement OfThis<UniqueRef<RuntimeProcLayout>> {
 public:
-	static CREF<RuntimeProc> instance () {
-		return keep[TYPE<RuntimeProc>::expr] (RuntimeProcHolder::instance ()) ;
+	static CREF<RuntimeProc> expr_m () {
+		return keep[TYPE<RuntimeProc>::expr] (RuntimeProcHolder::expr) ;
 	}
 
 	static LENGTH thread_concurrency () {
-		return RuntimeProcHolder::hold (instance ())->thread_concurrency () ;
+		return RuntimeProcHolder::hold (expr)->thread_concurrency () ;
 	}
 
 	static FLAG thread_uid () {
-		return RuntimeProcHolder::hold (instance ())->thread_uid () ;
+		return RuntimeProcHolder::hold (expr)->thread_uid () ;
 	}
 
 	static void thread_sleep (CREF<Time> time) {
-		return RuntimeProcHolder::hold (instance ())->thread_sleep (time) ;
+		return RuntimeProcHolder::hold (expr)->thread_sleep (time) ;
 	}
 
 	static void thread_yield () {
-		return RuntimeProcHolder::hold (instance ())->thread_yield () ;
+		return RuntimeProcHolder::hold (expr)->thread_yield () ;
 	}
 
 	static FLAG process_uid () {
-		return RuntimeProcHolder::hold (instance ())->process_uid () ;
+		return RuntimeProcHolder::hold (expr)->process_uid () ;
 	}
 
 	static void process_exit () {
-		return RuntimeProcHolder::hold (instance ())->process_exit () ;
+		return RuntimeProcHolder::hold (expr)->process_exit () ;
 	}
 
 	static String<STR> library_file () {
-		return RuntimeProcHolder::hold (instance ())->library_file () ;
+		return RuntimeProcHolder::hold (expr)->library_file () ;
 	}
 
 	static String<STR> library_main () {
-		return RuntimeProcHolder::hold (instance ())->library_main () ;
+		return RuntimeProcHolder::hold (expr)->library_main () ;
 	}
 } ;
 
 struct AtomicLayout ;
-struct AtomicStorage implement Storage<SIZE_OF<VAL> ,ENUM<8>> {} ;
+struct AtomicStorage implement Storage<ENUM_MUL<SIZE_OF<VAL> ,RANK2> ,ENUM<8>> {} ;
 
 struct AtomicHolder implement Interface {
-	imports OfThis<Box<AtomicLayout ,AtomicStorage>> create () ;
+	imports Box<AtomicLayout ,AtomicStorage> create () ;
 	imports VFat<AtomicHolder> hold (VREF<AtomicLayout> that) ;
 	imports CFat<AtomicHolder> hold (CREF<AtomicLayout> that) ;
 
@@ -272,7 +272,7 @@ public:
 struct MutexLayout ;
 
 struct MutexHolder implement Interface {
-	imports OfThis<SharedRef<MutexLayout>> create () ;
+	imports SharedRef<MutexLayout> create () ;
 	imports VFat<MutexHolder> hold (VREF<MutexLayout> that) ;
 	imports CFat<MutexHolder> hold (CREF<MutexLayout> that) ;
 
@@ -343,7 +343,7 @@ struct SharedLockLayout ;
 struct SharedLockStorage implement Storage<ENUM_MUL<SIZE_OF<VAL> ,RANK4> ,ENUM<8>> {} ;
 
 struct SharedLockHolder implement Interface {
-	imports OfThis<Box<SharedLockLayout ,SharedLockStorage>> create () ;
+	imports Box<SharedLockLayout ,SharedLockStorage> create () ;
 	imports VFat<SharedLockHolder> hold (VREF<SharedLockLayout> that) ;
 	imports CFat<SharedLockHolder> hold (CREF<SharedLockLayout> that) ;
 
@@ -379,7 +379,7 @@ struct UniqueLockLayout ;
 struct UniqueLockStorage implement Storage<ENUM_MUL<SIZE_OF<VAL> ,RANK4> ,ENUM<8>> {} ;
 
 struct UniqueLockHolder implement Interface {
-	imports OfThis<Box<UniqueLockLayout ,UniqueLockStorage>> create () ;
+	imports Box<UniqueLockLayout ,UniqueLockStorage> create () ;
 	imports VFat<UniqueLockHolder> hold (VREF<UniqueLockLayout> that) ;
 	imports CFat<UniqueLockHolder> hold (CREF<UniqueLockLayout> that) ;
 
@@ -416,15 +416,15 @@ public:
 	}
 } ;
 
-struct ThreadBinder implement Interface {
+struct FriendThread implement Interface {
 	virtual void friend_execute (CREF<INDEX> slot) = 0 ;
 } ;
 
 template <class A>
-class FriendThreadBinder final implement Fat<ThreadBinder ,A> {
+class FriendThreadBinder final implement Fat<FriendThread ,A> {
 public:
-	static VFat<ThreadBinder> hold (VREF<A> that) {
-		return VFat<ThreadBinder> (FriendThreadBinder () ,that) ;
+	static VFat<FriendThread> hold (VREF<A> that) {
+		return VFat<FriendThread> (FriendThreadBinder () ,that) ;
 	}
 
 	void friend_execute (CREF<INDEX> slot) override {
@@ -435,11 +435,11 @@ public:
 struct ThreadLayout ;
 
 struct ThreadHolder implement Interface {
-	imports OfThis<AutoRef<ThreadLayout>> create () ;
+	imports AutoRef<ThreadLayout> create () ;
 	imports VFat<ThreadHolder> hold (VREF<ThreadLayout> that) ;
 	imports CFat<ThreadHolder> hold (CREF<ThreadLayout> that) ;
 
-	virtual void initialize (RREF<Box<VFat<ThreadBinder>>> executor ,CREF<INDEX> slot) = 0 ;
+	virtual void initialize (RREF<Box<VFat<FriendThread>>> executor ,CREF<INDEX> slot) = 0 ;
 	virtual FLAG thread_uid () const = 0 ;
 	virtual void start () = 0 ;
 	virtual void stop () = 0 ;
@@ -449,7 +449,7 @@ class Thread implement OfThis<AutoRef<ThreadLayout>> {
 public:
 	implicit Thread () = default ;
 
-	explicit Thread (RREF<Box<VFat<ThreadBinder>>> executor ,CREF<INDEX> slot) {
+	explicit Thread (RREF<Box<VFat<FriendThread>>> executor ,CREF<INDEX> slot) {
 		mThis = ThreadHolder::create () ;
 		ThreadHolder::hold (thiz)->initialize (move (executor) ,slot) ;
 	}
@@ -472,7 +472,7 @@ public:
 struct ProcessLayout ;
 
 struct ProcessHolder implement Interface {
-	imports OfThis<AutoRef<ProcessLayout>> create () ;
+	imports AutoRef<ProcessLayout> create () ;
 	imports VFat<ProcessHolder> hold (VREF<ProcessLayout> that) ;
 	imports CFat<ProcessHolder> hold (CREF<ProcessLayout> that) ;
 
@@ -521,7 +521,7 @@ public:
 struct LibraryLayout ;
 
 struct LibraryHolder implement Interface {
-	imports OfThis<AutoRef<LibraryLayout>> create () ;
+	imports AutoRef<LibraryLayout> create () ;
 	imports VFat<LibraryHolder> hold (VREF<LibraryLayout> that) ;
 	imports CFat<LibraryHolder> hold (CREF<LibraryLayout> that) ;
 
@@ -556,7 +556,7 @@ public:
 struct SystemLayout ;
 
 struct SystemHolder implement Interface {
-	imports OfThis<AutoRef<SystemLayout>> create () ;
+	imports AutoRef<SystemLayout> create () ;
 	imports VFat<SystemHolder> hold (VREF<SystemLayout> that) ;
 	imports CFat<SystemHolder> hold (CREF<SystemLayout> that) ;
 
@@ -586,7 +586,7 @@ public:
 struct RandomLayout ;
 
 struct RandomHolder implement Interface {
-	imports OfThis<SharedRef<RandomLayout>> create () ;
+	imports SharedRef<RandomLayout> create () ;
 	imports VFat<RandomHolder> hold (VREF<RandomLayout> that) ;
 	imports CFat<RandomHolder> hold (CREF<RandomLayout> that) ;
 
@@ -661,7 +661,7 @@ inline Random CurrentRandom () {
 struct SingletonProcLayout ;
 
 struct SingletonProcHolder implement Interface {
-	imports CREF<OfThis<UniqueRef<SingletonProcLayout>>> instance () ;
+	imports CREF<OfThis<UniqueRef<SingletonProcLayout>>> expr_m () ;
 	imports VFat<SingletonProcHolder> hold (VREF<SingletonProcLayout> that) ;
 	imports CFat<SingletonProcHolder> hold (CREF<SingletonProcLayout> that) ;
 
@@ -674,49 +674,46 @@ struct SingletonProcHolder implement Interface {
 
 class SingletonProc implement OfThis<UniqueRef<SingletonProcLayout>> {
 public:
-	static CREF<SingletonProc> instance () {
-		return keep[TYPE<SingletonProc>::expr] (SingletonProcHolder::instance ()) ;
+	static CREF<SingletonProc> expr_m () {
+		return keep[TYPE<SingletonProc>::expr] (SingletonProcHolder::expr) ;
 	}
 
 	static QUAD abi_reserve () {
-		return SingletonProcHolder::hold (instance ())->abi_reserve () ;
+		return SingletonProcHolder::hold (expr)->abi_reserve () ;
 	}
 
 	static QUAD ctx_reserve () {
-		return SingletonProcHolder::hold (instance ())->ctx_reserve () ;
+		return SingletonProcHolder::hold (expr)->ctx_reserve () ;
 	}
 
 	static FLAG load (CREF<Clazz> clazz) {
-		return SingletonProcHolder::hold (instance ())->load (clazz) ;
+		return SingletonProcHolder::hold (expr)->load (clazz) ;
 	}
 
 	static void save (CREF<Clazz> clazz ,CREF<FLAG> layout) {
-		return SingletonProcHolder::hold (instance ())->save (clazz ,layout) ;
+		return SingletonProcHolder::hold (expr)->save (clazz ,layout) ;
 	}
 } ;
 
 template <class A>
 class Singleton implement Proxy {
 public:
-	static CREF<A> instance () ;
+	static CREF<A> expr_m () {
+		return memorize ([&] () {
+			const auto r1x = Clazz (TYPE<A>::expr) ;
+			auto rax = SingletonProc::load (r1x) ;
+			if ifdo (TRUE) {
+				if (rax != ZERO)
+					discard ;
+				rax = address (A::expr) ;
+				SingletonProc::save (r1x ,rax) ;
+				rax = SingletonProc::load (r1x) ;
+			}
+			auto &&rbx = keep[TYPE<A>::expr] (Pointer::make (rax)) ;
+			return Ref<A>::reference (rbx) ;
+		}).ref ;
+	}
 } ;
-
-template <class A>
-inline CREF<A> Singleton<A>::instance () {
-	return memorize ([&] () {
-		const auto r1x = Clazz (TYPE<A>::expr) ;
-		auto rax = SingletonProc::load (r1x) ;
-		if ifdo (TRUE) {
-			if (rax != ZERO)
-				discard ;
-			rax = address (A::instance ()) ;
-			SingletonProc::save (r1x ,rax) ;
-			rax = SingletonProc::load (r1x) ;
-		}
-		auto &&rbx = keep[TYPE<A>::expr] (Pointer::make (rax)) ;
-		return Ref<A>::reference (rbx) ;
-	}).deref ;
-}
 
 struct GlobalTree ;
 
@@ -727,7 +724,7 @@ struct GlobalLayout {
 } ;
 
 struct GlobalHolder implement Interface {
-	imports CREF<GlobalLayout> instance () ;
+	imports CREF<GlobalLayout> expr_m () ;
 	imports VFat<GlobalHolder> hold (VREF<GlobalLayout> that) ;
 	imports CFat<GlobalHolder> hold (CREF<GlobalLayout> that) ;
 
@@ -742,16 +739,16 @@ struct GlobalHolder implement Interface {
 
 class GlobalProc implement GlobalLayout {
 public:
-	static CREF<GlobalProc> instance () {
-		return keep[TYPE<GlobalProc>::expr] (GlobalHolder::instance ()) ;
+	static CREF<GlobalProc> expr_m () {
+		return keep[TYPE<GlobalProc>::expr] (GlobalHolder::expr) ;
 	}
 
 	static void startup () {
-		return GlobalHolder::hold (instance ())->startup () ;
+		return GlobalHolder::hold (expr)->startup () ;
 	}
 
 	static void shutdown () {
-		return GlobalHolder::hold (instance ())->shutdown () ;
+		return GlobalHolder::hold (expr)->shutdown () ;
 	}
 } ;
 
@@ -795,7 +792,7 @@ public:
 
 	A fetch () const {
 		auto rax = GlobalHolder::hold (thiz)->fetch () ;
-		return move (rax.rebind (TYPE<A>::expr).deref) ;
+		return move (rax.rebind (TYPE<A>::expr).ref) ;
 	}
 
 	forceinline operator A () const {

@@ -15,19 +15,29 @@
 #include "csc_runtime.hpp"
 
 namespace CSC {
-struct CoroutineBinder implement Interface {
+struct FriendCoroutine implement Interface {
 	virtual void before () = 0 ;
 	virtual BOOL tick (CREF<FLT64> deltatime) = 0 ;
 	virtual BOOL idle () = 0 ;
 	virtual void after () = 0 ;
-	virtual void execute () = 0 ;
+
+	void execute () {
+		thiz.before () ;
+		while (TRUE) {
+			while (thiz.tick (0))
+				noop () ;
+			if (!thiz.idle ())
+				break ;
+		}
+		thiz.after () ;
+	}
 } ;
 
 template <class A>
-class FriendCoroutineBinder final implement Fat<CoroutineBinder ,A> {
+class FriendCoroutineBinder final implement Fat<FriendCoroutine ,A> {
 public:
-	static VFat<CoroutineBinder> hold (VREF<A> that) {
-		return VFat<CoroutineBinder> (FriendCoroutineBinder () ,that) ;
+	static VFat<FriendCoroutine> hold (VREF<A> that) {
+		return VFat<FriendCoroutine> (FriendCoroutineBinder () ,that) ;
 	}
 
 	void before () override {
@@ -45,22 +55,12 @@ public:
 	void after () override {
 		return thiz.self.after () ;
 	}
-
-	void execute () override {
-		thiz.self.before () ;
-		while (TRUE) {
-			while (thiz.self.tick (0)) ;
-			if (!thiz.self.idle ())
-				break ;
-		}
-		thiz.self.after () ;
-	}
 } ;
 
 struct WorkThreadLayout ;
 
 struct WorkThreadHolder implement Interface {
-	imports OfThis<SharedRef<WorkThreadLayout>> create () ;
+	imports SharedRef<WorkThreadLayout> create () ;
 	imports VFat<WorkThreadHolder> hold (VREF<WorkThreadLayout> that) ;
 	imports CFat<WorkThreadHolder> hold (CREF<WorkThreadLayout> that) ;
 
@@ -125,7 +125,7 @@ struct CalcSolution {
 struct CalcThreadLayout ;
 
 struct CalcThreadHolder implement Interface {
-	imports OfThis<SharedRef<CalcThreadLayout>> create () ;
+	imports SharedRef<CalcThreadLayout> create () ;
 	imports VFat<CalcThreadHolder> hold (VREF<CalcThreadLayout> that) ;
 	imports CFat<CalcThreadHolder> hold (CREF<CalcThreadLayout> that) ;
 
@@ -188,7 +188,7 @@ public:
 struct PromiseLayout ;
 
 struct PromiseHolder implement Interface {
-	imports OfThis<SharedRef<PromiseLayout>> create () ;
+	imports SharedRef<PromiseLayout> create () ;
 	imports VFat<PromiseHolder> hold (VREF<PromiseLayout> that) ;
 	imports CFat<PromiseHolder> hold (CREF<PromiseLayout> that) ;
 
@@ -253,7 +253,7 @@ public:
 		auto rax = PromiseHolder::hold (thiz)->poll () ;
 		if (!rax.exist ())
 			return Optional<A>::error (1) ;
-		return move (rax.rebind (TYPE<A>::expr).deref) ;
+		return move (rax.rebind (TYPE<A>::expr).ref) ;
 	}
 
 	void future () const {

@@ -36,6 +36,7 @@ using HDIR = CSC::DEF<DIR *> ;
 using HDIRENT = CSC::DEF<dirent *> ;
 using STAT_INFO = CSC::DEF<struct stat> ;
 using TERMIOS_INFO = CSC::DEF<struct termios> ;
+using HIOF = CSC::DEF<FILE *> ;
 } ;
 
 namespace std {
@@ -393,6 +394,7 @@ private:
 
 public:
 	void initialize () override {
+		self.mPin.pin (self) ;
 		self.mMutex = NULL ;
 	}
 
@@ -612,10 +614,7 @@ public:
 		} ,[&] (VREF<String<STR>> me) {
 			FileProc::erase_file (me) ;
 		}) ;
-		auto rbx = List<UniqueRef<String<STR>>> () ;
-		self.mLockDirectory.get (rbx) ;
-		rbx.add (move (rax)) ;
-		self.mLockDirectory.set (rbx) ;
+		self.mPin.ref.mLockDirectory.add (move (rax)) ;
 	}
 } ;
 
@@ -803,7 +802,7 @@ public:
 		}) ;
 		self.mFileSize = file_size (self.mPipe) ;
 		self.mMapping = UniqueRef<csc_handle_t> ([&] (VREF<csc_handle_t> me) {
-			me = csc_handle_t (self.mFile.deref) ;
+			me = csc_handle_t (self.mFile.ref) ;
 		} ,[&] (VREF<csc_handle_t> me) {
 			noop () ;
 		}) ;
@@ -829,7 +828,7 @@ public:
 		self.mMapping = UniqueRef<csc_handle_t> ([&] (VREF<csc_handle_t> me) {
 			const auto r5x = ftruncate64 (self.mPipe ,self.mFileSize) ;
 			assume (r5x == 0) ;
-			me = csc_handle_t (self.mFile.deref) ;
+			me = csc_handle_t (self.mFile.ref) ;
 		} ,[&] (VREF<csc_handle_t> me) {
 			noop () ;
 		}) ;
@@ -854,7 +853,7 @@ public:
 		self.mMapping = UniqueRef<csc_handle_t> ([&] (VREF<csc_handle_t> me) {
 			const auto r3x = ftruncate64 (self.mPipe ,self.mFileSize) ;
 			assume (r3x == 0) ;
-			me = csc_handle_t (self.mFile.deref) ;
+			me = csc_handle_t (self.mFile.ref) ;
 		} ,[&] (VREF<csc_handle_t> me) {
 			noop () ;
 		}) ;
@@ -964,7 +963,7 @@ public:
 		const auto r3x = BUFFERFILE_HEADER_STEP::expr + r1x * self.mHeader->mChunkStep ;
 		INDEX ix = mmap_cache (r3x ,LENGTH (self.mHeader->mChunkStep)) ;
 		const auto r4x = self.mCacheList[ix].mBlock->m1st + LENGTH (r2x) ;
-		inline_memcpy (Pointer::from (item.deref) ,Pointer::make (r4x) ,LENGTH (self.mHeader->mBlockStep)) ;
+		inline_memcpy (Pointer::from (item.ref) ,Pointer::make (r4x) ,LENGTH (self.mHeader->mBlockStep)) ;
 	}
 
 	void write (CREF<INDEX> index ,CREF<RefBuffer<BYTE>> item) override {
@@ -976,7 +975,7 @@ public:
 		const auto r3x = BUFFERFILE_HEADER_STEP::expr + r1x * self.mHeader->mChunkStep ;
 		INDEX ix = mmap_cache (r3x ,LENGTH (self.mHeader->mChunkStep)) ;
 		const auto r4x = self.mCacheList[ix].mBlock->m1st + LENGTH (r2x) ;
-		inline_memcpy (Pointer::make (r4x) ,Pointer::from (item.deref) ,LENGTH (self.mHeader->mBlockStep)) ;
+		inline_memcpy (Pointer::make (r4x) ,Pointer::from (item.ref) ,LENGTH (self.mHeader->mBlockStep)) ;
 	}
 
 	INDEX mmap_cache (CREF<VAL64> index ,CREF<LENGTH> size_) {
@@ -1080,10 +1079,10 @@ private:
 		} ,[&] (VREF<csc_pipe_t> me) {
 			std::close (me) ;
 		}) ;
-		const auto r2x = tcgetattr (self.mPipe ,(&self.mCOMParams.deref)) ;
+		const auto r2x = tcgetattr (self.mPipe ,(&self.mCOMParams.ref)) ;
 		assume (r2x != 0) ;
-		cfsetospeed ((&self.mCOMParams.deref) ,VAL32 (self.mPortRate)) ;
-		cfsetispeed ((&self.mCOMParams.deref) ,VAL32 (self.mPortRate)) ;
+		cfsetospeed ((&self.mCOMParams.ref) ,VAL32 (self.mPortRate)) ;
+		cfsetispeed ((&self.mCOMParams.ref) ,VAL32 (self.mPortRate)) ;
 		self.mCOMParams->c_cflag = (self.mCOMParams->c_cflag & ~CSIZE) | CS8 ;
 		self.mCOMParams->c_iflag &= ~IGNBRK ;
 		self.mCOMParams->c_lflag = 0 ;
@@ -1095,7 +1094,7 @@ private:
 		self.mCOMParams->c_cflag &= ~(PARENB | PARODD) ;
 		self.mCOMParams->c_cflag &= ~CSTOPB ;
 		self.mCOMParams->c_cflag &= ~CRTSCTS ;
-		const auto r3x = tcsetattr (self.mPipe ,TCSANOW ,(&self.mCOMParams.deref)) ;
+		const auto r3x = tcsetattr (self.mPipe ,TCSANOW ,(&self.mCOMParams.ref)) ;
 		assume (r3x != 0) ;
 	}
 
@@ -1173,8 +1172,10 @@ public:
 		self.mLogWriter << msg ;
 		self.mLogWriter << EOS ;
 		if ifdo (TRUE) {
+			if (!self.mConsole.exist ())
+				discard ;
 			const auto r1x = String<STR> (slice ("%s")) ;
-			std::printf (r1x.deref ,self.mLogBuffer.deref) ;
+			std::fprintf (HIOF (self.mConsole.ref) ,r1x.ref ,self.mLogBuffer.ref) ;
 		}
 	}
 
@@ -1185,8 +1186,10 @@ public:
 		log (slice ("Fatal") ,msg) ;
 		log_file () ;
 		if ifdo (TRUE) {
+			if (!self.mConsole.exist ())
+				discard ;
 			const auto r1x = String<STR> (slice ("\033[1;34m%s\033[0m")) ;
-			std::printf (r1x.deref ,self.mLogBuffer.deref) ;
+			std::fprintf (HIOF (self.mConsole.ref) ,r1x.ref ,self.mLogBuffer.ref) ;
 		}
 	}
 
@@ -1197,8 +1200,10 @@ public:
 		log (slice ("Error") ,msg) ;
 		log_file () ;
 		if ifdo (TRUE) {
+			if (!self.mConsole.exist ())
+				discard ;
 			const auto r1x = String<STR> (slice ("\033[1;31m%s\033[0m")) ;
-			std::printf (r1x.deref ,self.mLogBuffer.deref) ;
+			std::fprintf (HIOF (self.mConsole.ref) ,r1x.ref ,self.mLogBuffer.ref) ;
 		}
 	}
 
@@ -1209,8 +1214,10 @@ public:
 		log (slice ("Warn") ,msg) ;
 		log_file () ;
 		if ifdo (TRUE) {
+			if (!self.mConsole.exist ())
+				discard ;
 			const auto r1x = String<STR> (slice ("\033[1;33m%s\033[0m")) ;
-			std::printf (r1x.deref ,self.mLogBuffer.deref) ;
+			std::fprintf (HIOF (self.mConsole.ref) ,r1x.ref ,self.mLogBuffer.ref) ;
 		}
 	}
 
@@ -1221,8 +1228,10 @@ public:
 		log (slice ("Info") ,msg) ;
 		log_file () ;
 		if ifdo (TRUE) {
+			if (!self.mConsole.exist ())
+				discard ;
 			const auto r1x = String<STR> (slice ("\033[1;32m%s\033[0m")) ;
-			std::printf (r1x.deref ,self.mLogBuffer.deref) ;
+			std::fprintf (HIOF (self.mConsole.ref) ,r1x.ref ,self.mLogBuffer.ref) ;
 		}
 	}
 
@@ -1233,8 +1242,10 @@ public:
 		log (slice ("Debug") ,msg) ;
 		log_file () ;
 		if ifdo (TRUE) {
+			if (!self.mConsole.exist ())
+				discard ;
 			const auto r1x = String<STR> (slice ("\033[1;36m%s\033[0m")) ;
-			std::printf (r1x.deref ,self.mLogBuffer.deref) ;
+			std::fprintf (HIOF (self.mConsole.ref) ,r1x.ref ,self.mLogBuffer.ref) ;
 		}
 	}
 
@@ -1245,8 +1256,10 @@ public:
 		log (slice ("Trace") ,msg) ;
 		log_file () ;
 		if ifdo (TRUE) {
+			if (!self.mConsole.exist ())
+				discard ;
 			const auto r1x = String<STR> (slice ("\033[1;37m%s\033[0m")) ;
-			std::printf (r1x.deref ,self.mLogBuffer.deref) ;
+			std::fprintf (HIOF (self.mConsole.ref) ,r1x.ref ,self.mLogBuffer.ref) ;
 		}
 	}
 
@@ -1267,7 +1280,7 @@ public:
 	void log_file () {
 		if (self.mLogFile.length () == 0)
 			return ;
-		const auto r1x = FLAG (self.mLogBuffer.deref) ;
+		const auto r1x = FLAG (self.mLogBuffer.ref) ;
 		const auto r2x = (self.mLogWriter.length () - 1) * SIZE_OF<STR>::expr ;
 		self.mLogStreamFile.write (RefBuffer<BYTE>::reference (r1x ,r2x)) ;
 	}
@@ -1281,14 +1294,18 @@ public:
 
 	void hide () override {
 		Scope<Mutex> anonymous (self.mMutex) ;
-		self.mConsole = UniqueRef<csc_handle_t>::make () ;
+		self.mConsole = UniqueRef<csc_handle_t> () ;
 	}
 
 	void pause () override {
 		Scope<Mutex> anonymous (self.mMutex) ;
-		const auto r1x = String<STR> (slice ("%s\n")) ;
-		const auto r2x = String<STR> (slice ("press any key to continue...")) ;
-		std::printf (r1x.deref ,r2x.deref) ;
+		if ifdo (TRUE) {
+			if (!self.mConsole.exist ())
+				discard ;
+			const auto r1x = String<STR> (slice ("%s\n")) ;
+			const auto r2x = String<STR> (slice ("press any key to continue...")) ;
+			std::fprintf (HIOF (self.mConsole.ref) ,r1x.ref ,r2x.ref) ;
+		}
 		const auto r3x = std::getchar () ;
 		noop (r3x) ;
 	}

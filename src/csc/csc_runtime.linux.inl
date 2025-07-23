@@ -62,7 +62,7 @@ public:
 	}
 
 	String<STR> library_file () const override {
-		auto &&rax = keep[TYPE<HeapLayout>::expr] (Heap::instance ()) ;
+		auto &&rax = keep[TYPE<HeapLayout>::expr] (Heap::expr) ;
 		const auto r1x = csc_handle_t (rax.mHolder) ;
 		auto rbx = Dl_info () ;
 		const auto r2x = dladdr (r1x ,(&rbx)) ;
@@ -103,7 +103,7 @@ public:
 			rax.open_r () ;
 			auto rbx = ret.borrow () ;
 			rax.set_short_read (TRUE) ;
-			rax.read (rbx.deref) ;
+			rax.read (rbx.ref) ;
 		} catch (CREF<Exception> e) {
 			noop (e) ;
 			ret.clear () ;
@@ -263,10 +263,12 @@ public:
 		sync_local () ;
 	}
 
-	static VREF<SingletonRoot> root_ptr (CREF<SingletonProcLayout> that) {
+	static VREF<SingletonRoot> root_ptr () {
 		return memorize ([&] () {
-			return Pin<SingletonRoot> () ;
-		}).deref ;
+			SingletonRoot ret ;
+			ret.mPin.pin (ret) ;
+			return move (ret) ;
+		}).mPin.ref ;
 	}
 
 	void sync_local () {
@@ -307,16 +309,15 @@ public:
 			assume (r3x != NONE) ;
 			const auto r4x = ftruncate (r3x ,SIZE_OF<SingletonLocal>::expr) ;
 			assume (r4x == 0) ;
-			me = csc_handle_t (self.mName.deref) ;
+			me = csc_handle_t (self.mName.ref) ;
 		} ,[&] (VREF<csc_handle_t> me) {
 			shm_unlink (DEF<const char *> (me)) ;
 		}) ;
-		auto &&rax = keep[TYPE<SingletonRoot>::expr] (root_ptr (self)) ;
-		rax.mMutex = NULL ;
+		root_ptr ().mMutex = NULL ;
 		self.mLocal.mReserve1 = QUAD (self.mUid) ;
-		self.mLocal.mAddress1 = QUAD (address (rax)) ;
+		self.mLocal.mAddress1 = QUAD (address (root_ptr ())) ;
 		self.mLocal.mReserve2 = abi_reserve () ;
-		self.mLocal.mAddress2 = QUAD (address (rax)) ;
+		self.mLocal.mAddress2 = QUAD (address (root_ptr ())) ;
 		self.mLocal.mReserve3 = ctx_reserve () ;
 	}
 
@@ -334,7 +335,7 @@ public:
 		} ,[&] (VREF<csc_handle_t> me) {
 			munmap (me ,SIZE_OF<SingletonLocal>::expr) ;
 		}) ;
-		const auto r3x = FLAG (r2x.deref) ;
+		const auto r3x = FLAG (r2x.ref) ;
 		auto rax = SingletonLocal () ;
 		inline_memcpy (Pointer::from (rax) ,Pointer::make (r3x) ,SIZE_OF<SingletonLocal>::expr) ;
 		assume (rax.mReserve1 == QUAD (self.mUid)) ;
@@ -359,7 +360,7 @@ public:
 		} ,[&] (VREF<csc_handle_t> me) {
 			munmap (me ,SIZE_OF<SingletonLocal>::expr) ;
 		}) ;
-		const auto r3x = FLAG (r2x.deref) ;
+		const auto r3x = FLAG (r2x.ref) ;
 		auto rax = self.mLocal ;
 		assume (rax.mReserve1 == QUAD (self.mUid)) ;
 		assume (rax.mAddress1 != QUAD (0X00)) ;
@@ -421,11 +422,9 @@ public:
 	}
 
 	FLAG load (CREF<Clazz> clazz) const override {
+		assume (self.mRoot.exist ()) ;
 		Scope<Mutex> anonymous (self.mRoot->mMutex) ;
-		auto rax = Set<Clazz> () ;
-		self.mRoot->mClazzSet.get (rax) ;
-		FLAG ret = rax.map (clazz) ;
-		self.mRoot->mClazzSet.set (rax) ;
+		FLAG ret = self.mRoot->mClazzSet.map (clazz) ;
 		replace (ret ,NONE ,ZERO) ;
 		return move (ret) ;
 	}
@@ -433,12 +432,9 @@ public:
 	void save (CREF<Clazz> clazz ,CREF<FLAG> layout) const override {
 		assert (layout != ZERO) ;
 		assert (layout != NONE) ;
-		Scope<Mutex> anonymous (self.mRoot->mMutex) ;
 		assume (self.mRoot.exist ()) ;
-		auto rax = Set<Clazz> () ;
-		self.mRoot->mClazzSet.get (rax) ;
-		rax.add (clazz ,layout) ;
-		self.mRoot->mClazzSet.set (rax) ;
+		Scope<Mutex> anonymous (self.mRoot->mMutex) ;
+		self.mRoot->mPin.ref.mClazzSet.add (clazz ,layout) ;
 	}
 } ;
 

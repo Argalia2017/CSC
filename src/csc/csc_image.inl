@@ -208,7 +208,7 @@ struct ImageProcLayout {
 	UniqueRef<BOOL> mContext ;
 } ;
 
-exports CREF<OfThis<UniqueRef<ImageProcLayout>>> ImageProcHolder::instance () {
+exports CREF<OfThis<UniqueRef<ImageProcLayout>>> ImageProcHolder::expr_m () {
 	return memorize ([&] () {
 		OfThis<UniqueRef<ImageProcLayout>> ret ;
 		ret.mThis = UniqueRef<ImageProcLayout>::make () ;
@@ -218,11 +218,11 @@ exports CREF<OfThis<UniqueRef<ImageProcLayout>>> ImageProcHolder::instance () {
 }
 
 exports VFat<ImageProcHolder> ImageProcHolder::hold (VREF<ImageProcLayout> that) {
-	return VFat<ImageProcHolder> (External<ImageProcHolder ,ImageProcLayout>::declare () ,that) ;
+	return VFat<ImageProcHolder> (External<ImageProcHolder ,ImageProcLayout>::expr ,that) ;
 }
 
 exports CFat<ImageProcHolder> ImageProcHolder::hold (CREF<ImageProcLayout> that) {
-	return CFat<ImageProcHolder> (External<ImageProcHolder ,ImageProcLayout>::declare () ,that) ;
+	return CFat<ImageProcHolder> (External<ImageProcHolder ,ImageProcLayout>::expr ,that) ;
 }
 
 struct ReflectTensorCopy implement Interface {
@@ -234,7 +234,7 @@ struct ReflectTensorCopy implement Interface {
 } ;
 
 template <class A ,class B>
-class ReflectTensorCopyBinderWrap1 final implement Fat<ReflectTensorCopy ,Proxy> {
+class ReflectTensorCopyBinder final implement Fat<ReflectTensorCopy ,Proxy> {
 public:
 	void xcopy (VREF<Pointer> dst ,CREF<Pointer> src) const override {
 		auto &&rax = keep[TYPE<A>::expr] (dst) ;
@@ -243,75 +243,27 @@ public:
 	}
 } ;
 
-template <class A ,class B>
-class ReflectTensorCopyBinderWrap2 final implement Fat<ReflectTensorCopy ,Proxy> {
-public:
-	void xcopy (VREF<Pointer> dst ,CREF<Pointer> src) const override {
-		using R1X = typename A::value_type ;
-		auto &&rax = keep[TYPE<A>::expr] (dst) ;
-		auto &&rbx = keep[TYPE<B>::expr] (src) ;
-		rax = R1X (rbx) ;
-	}
-} ;
-
-template <class A ,class B>
-class ReflectTensorCopyBinderWrap3 final implement Fat<ReflectTensorCopy ,Proxy> {
-public:
-	void xcopy (VREF<Pointer> dst ,CREF<Pointer> src) const override {
-		auto &&rax = keep[TYPE<A>::expr] (dst) ;
-		auto &&rbx = keep[TYPE<B>::expr] (src) ;
-		rax = A (rbx.real ()) ;
-	}
-} ;
-
-template <class...>
-trait REFLECT_TENSORCOPY_HELP ;
-
-template <class A ,class B>
-trait REFLECT_TENSORCOPY_HELP<A ,B ,REQUIRE<ENUM_ALL<IS_FLOAT<A> ,IS_FLOAT<B>>>> {
-	using RET = ReflectTensorCopyBinderWrap1<A ,B> ;
-} ;
-
-template <class A ,class B>
-trait REFLECT_TENSORCOPY_HELP<A ,B ,REQUIRE<ENUM_ALL<ENUM_NOT<IS_FLOAT<A>> ,IS_FLOAT<B>>>> {
-	using RET = ReflectTensorCopyBinderWrap2<A ,B> ;
-} ;
-
-template <class A ,class B>
-trait REFLECT_TENSORCOPY_HELP<A ,B ,REQUIRE<ENUM_ALL<IS_FLOAT<A> ,ENUM_NOT<IS_FLOAT<B>>>>> {
-	using RET = ReflectTensorCopyBinderWrap3<A ,B> ;
-} ;
-
-template <class A ,class B>
-trait REFLECT_TENSORCOPY_HELP<A ,B ,REQUIRE<ENUM_ALL<ENUM_NOT<IS_FLOAT<A>> ,ENUM_NOT<IS_FLOAT<B>>>>> {
-	using RET = ReflectTensorCopyBinderWrap1<A ,B> ;
-} ;
-
-template <class A ,class B>
-using REFLECT_TENSORCOPY = typename REFLECT_TENSORCOPY_HELP<A ,B ,ALWAYS>::RET ;
-
 class TensorImplHolder final implement Fat<TensorHolder ,TensorLayout> {
 public:
 	void initialize (CREF<LENGTH> size_ ,CREF<Just<TensorDataType>> type_) override {
 		const auto r1x = size_of_tensor_type (type_) ;
-		const auto r2x = size_ * r1x ;
-		const auto r3x = inline_alignas (r2x ,SIZE_OF<QUAD>::expr) ;
-		self.mTensor = RefBuffer<BYTE> (r3x) ;
+		const auto r2x = size_ * r1x + 16 ;
+		self.mTensor = RefBuffer<BYTE> (r2x) ;
 		const auto r4x = address (self.mTensor[0]) ;
-		self.mOffset = inline_alignas (r4x ,8) - r4x ;
+		self.mOffset = inline_alignas (r4x ,16) - r4x ;
 		self.mWidth = size_ ;
 		self.mType = type_ ;
 		reset () ;
 	}
 
 	LENGTH size_of_tensor_type (CREF<Just<TensorDataType>> type_) const {
+		if (type_ == TensorDataType::Flt16)
+			return 2 ;
 		if (type_ == TensorDataType::Flt32)
 			return 4 ;
 		if (type_ == TensorDataType::Flt64)
 			return 8 ;
-		if (type_ == TensorDataType::Complex32)
-			return 8 ;
-		if (type_ == TensorDataType::Complex64)
+		if (type_ == TensorDataType::Flt128)
 			return 16 ;
 		return 0 ;
 	}
@@ -331,25 +283,25 @@ public:
 	LENGTH cx () const override {
 		if (!self.mTensor.exist ())
 			return 0 ;
-		return self.mCX ;
+		return self.mShape[1] / self.mShape[0] ;
 	}
 
 	LENGTH cy () const override {
 		if (!self.mTensor.exist ())
 			return 0 ;
-		return self.mCY ;
+		return self.mShape[2] / self.mShape[1] ;
 	}
 
 	LENGTH cz () const override {
 		if (!self.mTensor.exist ())
 			return 0 ;
-		return self.mCZ ;
+		return self.mShape[3] / self.mShape[2] ;
 	}
 
 	LENGTH cw () const override {
 		if (!self.mTensor.exist ())
 			return 0 ;
-		return self.mCW ;
+		return self.mShape[4] / self.mShape[3] ;
 	}
 
 	TensorLayout recast (CREF<Just<TensorDataType>> type_) override {
@@ -363,77 +315,33 @@ public:
 		const auto r4x = address (ret.mTensor[ret.mOffset]) ;
 		const auto r5x = address (self.mTensor[self.mOffset]) ;
 		for (auto &&i : iter (0 ,r1x)) {
-			const auto r6x = r4x + i * ret.mSX ;
-			const auto r7x = r5x + i * self.mSX ;
+			const auto r6x = r4x + i * ret.mShape[0] ;
+			const auto r7x = r5x + i * self.mShape[0] ;
 			r3x->xcopy (Pointer::make (r6x) ,Pointer::make (r7x)) ;
 		}
 		return move (ret) ;
 	}
 
 	Unknown choose_tensor_copy (CREF<Just<TensorDataType>> dst ,CREF<Just<TensorDataType>> src) const {
-		using COMPLEX32 = std::complex<FLT32> ;
-		using COMPLEX64 = std::complex<FLT64> ;
 		if (dst == TensorDataType::Flt32)
 			if (src == TensorDataType::Flt32)
-				return SimpleUnknownBinder<REFLECT_TENSORCOPY<FLT32 ,FLT32>> () ;
+				return SimpleUnknownBinder<ReflectTensorCopyBinder<FLT32 ,FLT32>> () ;
 		if (dst == TensorDataType::Flt32)
 			if (src == TensorDataType::Flt64)
-				return SimpleUnknownBinder<REFLECT_TENSORCOPY<FLT32 ,FLT64>> () ;
-		if (dst == TensorDataType::Flt32)
-			if (src == TensorDataType::Complex32)
-				return SimpleUnknownBinder<REFLECT_TENSORCOPY<FLT32 ,COMPLEX32>> () ;
-		if (dst == TensorDataType::Flt32)
-			if (src == TensorDataType::Complex64)
-				return SimpleUnknownBinder<REFLECT_TENSORCOPY<FLT32 ,COMPLEX64>> () ;
+				return SimpleUnknownBinder<ReflectTensorCopyBinder<FLT32 ,FLT64>> () ;
 		if (dst == TensorDataType::Flt64)
 			if (src == TensorDataType::Flt32)
-				return SimpleUnknownBinder<REFLECT_TENSORCOPY<FLT64 ,FLT32>> () ;
+				return SimpleUnknownBinder<ReflectTensorCopyBinder<FLT64 ,FLT32>> () ;
 		if (dst == TensorDataType::Flt64)
 			if (src == TensorDataType::Flt64)
-				return SimpleUnknownBinder<REFLECT_TENSORCOPY<FLT64 ,FLT64>> () ;
-		if (dst == TensorDataType::Flt64)
-			if (src == TensorDataType::Complex32)
-				return SimpleUnknownBinder<REFLECT_TENSORCOPY<FLT64 ,COMPLEX32>> () ;
-		if (dst == TensorDataType::Flt64)
-			if (src == TensorDataType::Complex64)
-				return SimpleUnknownBinder<REFLECT_TENSORCOPY<FLT64 ,COMPLEX64>> () ;
-		if (dst == TensorDataType::Complex32)
-			if (src == TensorDataType::Flt32)
-				return SimpleUnknownBinder<REFLECT_TENSORCOPY<COMPLEX32 ,FLT32>> () ;
-		if (dst == TensorDataType::Complex32)
-			if (src == TensorDataType::Flt64)
-				return SimpleUnknownBinder<REFLECT_TENSORCOPY<COMPLEX32 ,FLT64>> () ;
-		if (dst == TensorDataType::Complex32)
-			if (src == TensorDataType::Complex32)
-				return SimpleUnknownBinder<REFLECT_TENSORCOPY<COMPLEX32 ,COMPLEX32>> () ;
-		if (dst == TensorDataType::Complex32)
-			if (src == TensorDataType::Complex64)
-				return SimpleUnknownBinder<REFLECT_TENSORCOPY<COMPLEX32 ,COMPLEX64>> () ;
-		if (dst == TensorDataType::Complex64)
-			if (src == TensorDataType::Flt32)
-				return SimpleUnknownBinder<REFLECT_TENSORCOPY<COMPLEX64 ,FLT32>> () ;
-		if (dst == TensorDataType::Complex64)
-			if (src == TensorDataType::Flt64)
-				return SimpleUnknownBinder<REFLECT_TENSORCOPY<COMPLEX64 ,FLT64>> () ;
-		if (dst == TensorDataType::Complex64)
-			if (src == TensorDataType::Complex32)
-				return SimpleUnknownBinder<REFLECT_TENSORCOPY<COMPLEX64 ,COMPLEX32>> () ;
-		if (dst == TensorDataType::Complex64)
-			if (src == TensorDataType::Complex64)
-				return SimpleUnknownBinder<REFLECT_TENSORCOPY<COMPLEX64 ,COMPLEX64>> () ;
+				return SimpleUnknownBinder<ReflectTensorCopyBinder<FLT64 ,FLT64>> () ;
 		assume (FALSE) ;
 		return Unknown (ZERO) ;
 	}
 
 	void reset () override {
-		self.mSX = 0 ;
-		self.mSY = 0 ;
-		self.mSZ = 0 ;
-		self.mSW = 0 ;
-		self.mCX = 0 ;
-		self.mCY = 0 ;
-		self.mCZ = 0 ;
-		self.mCW = 0 ;
+		for (auto &&i : iter (0 ,self.mShape.size ()))
+			self.mShape[i] = 0 ;
 		if (self.mTensor.size () == 0)
 			return ;
 		reset (size () ,1 ,1 ,1) ;
@@ -448,22 +356,19 @@ public:
 		const auto r1x = cx_ * cy_ * cz_ * cw_ ;
 		noop (r1x) ;
 		assert (r1x == size ()) ;
-		self.mCX = cx_ ;
-		self.mCY = cy_ ;
-		self.mCZ = cz_ ;
-		self.mCW = cz_ ;
-		self.mSX = size_of_tensor_type (type ()) ;
-		self.mSY = self.mSX * self.mCX ;
-		self.mSZ = self.mSY * self.mCY ;
-		self.mSW = self.mSZ * self.mCZ ;
+		self.mShape[0] = size_of_tensor_type (type ()) ;
+		self.mShape[1] = self.mShape[0] * cx_ ;
+		self.mShape[2] = self.mShape[1] * cy_ ;
+		self.mShape[3] = self.mShape[2] * cz_ ;
+		self.mShape[4] = self.mShape[3] * cw_ ;
 	}
 
-	VREF<Pointer> deref_m () leftvalue override {
-		return RefBufferHolder::hold (self.mTensor)->deref ;
+	VREF<Pointer> ref_m () leftvalue override {
+		return RefBufferHolder::hold (self.mTensor)->ref ;
 	}
 
-	CREF<Pointer> deref_m () const leftvalue override {
-		return RefBufferHolder::hold (self.mTensor)->deref ;
+	CREF<Pointer> ref_m () const leftvalue override {
+		return RefBufferHolder::hold (self.mTensor)->ref ;
 	}
 
 	Ref<RefBuffer<BYTE>> borrow () leftvalue override {

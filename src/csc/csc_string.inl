@@ -86,7 +86,7 @@ struct FUNCTION_string_stra_from_strw {
 		auto rax = mbstate_t () ;
 		inline_memset (rax) ;
 		uselocale (loc) ;
-		auto rbx = src.deref ;
+		auto rbx = src.ref ;
 		const auto r1x = LENGTH (wcsrtombs (dst ,(&rbx) ,dst.size () ,(&rax))) ;
 		assume (r1x >= 0) ;
 		dst.trunc (r1x) ;
@@ -98,7 +98,7 @@ struct FUNCTION_string_strw_from_stra {
 		auto rax = mbstate_t () ;
 		inline_memset (rax) ;
 		uselocale (loc) ;
-		auto rbx = src.deref ;
+		auto rbx = src.ref ;
 		const auto r1x = LENGTH (mbsrtowcs (dst ,(&rbx) ,dst.size () ,(&rax))) ;
 		assume (r1x >= 0) ;
 		dst.trunc (r1x) ;
@@ -821,7 +821,7 @@ public:
 	}
 } ;
 
-exports CREF<OfThis<UniqueRef<StringProcLayout>>> StringProcHolder::instance () {
+exports CREF<OfThis<UniqueRef<StringProcLayout>>> StringProcHolder::expr_m () {
 	return memorize ([&] () {
 		OfThis<UniqueRef<StringProcLayout>> ret ;
 		ret.mThis = UniqueRef<StringProcLayout>::make () ;
@@ -871,7 +871,7 @@ public:
 		while (TRUE) {
 			if (mDeque.full ())
 				break ;
-			mTextReader.deref >> mTop ;
+			mTextReader.ref >> mTop ;
 			mDeque.add (mTop) ;
 		}
 	}
@@ -889,13 +889,13 @@ public:
 	template <class ARG1>
 	void read (XREF<ARG1> item) {
 		mTextReader->reset (mBackup) ;
-		mTextReader.deref >> item ;
+		mTextReader.ref >> item ;
 		mBackup = mTextReader->backup () ;
 		mDeque.clear () ;
 		while (TRUE) {
 			if (mDeque.full ())
 				break ;
-			mTextReader.deref >> mTop ;
+			mTextReader.ref >> mTop ;
 			mDeque.add (mTop) ;
 		}
 	}
@@ -907,7 +907,7 @@ public:
 	}
 
 	void next () {
-		mTextReader.deref >> mTop ;
+		mTextReader.ref >> mTop ;
 		if ifdo (TRUE) {
 			if (mTop == STRU32 (0X00))
 				discard ;
@@ -922,31 +922,33 @@ public:
 	}
 } ;
 
+struct PinnedCounter {
+	Pin<PinnedCounter> mPin ;
+	LENGTH mCounter ;
+} ;
+
 class ScopeCounter implement Proxy {
 private:
 	using SCOPECOUNTER_MAX_DEPTH = ENUM<256> ;
 
 protected:
-	Pin<LENGTH> mThat ;
+	PinnedCounter mThat ;
 
 public:
-	static CREF<ScopeCounter> from (VREF<LENGTH> that) {
+	static CREF<ScopeCounter> from (CREF<PinnedCounter> that) {
 		return Pointer::from (that) ;
 	}
 
+	static CREF<ScopeCounter> from (RREF<PinnedCounter> that) = delete ;
+
 	void enter () const {
-		auto rax = LENGTH () ;
-		mThat.get (rax) ;
-		rax++ ;
-		assume (rax < SCOPECOUNTER_MAX_DEPTH::expr) ;
-		mThat.set (rax) ;
+		mThat.mPin.ref.mCounter++ ;
+		assume (mThat.mCounter < SCOPECOUNTER_MAX_DEPTH::expr) ;
 	}
 
 	void leave () const {
-		auto rax = LENGTH () ;
-		mThat.get (rax) ;
-		rax-- ;
-		mThat.set (rax) ;
+		mThat.mPin.ref.mCounter-- ;
+		assume (mThat.mCounter >= ZERO) ;
 	}
 } ;
 
@@ -978,7 +980,7 @@ struct XmlParserTree {
 
 struct MakeXmlParserLayout {
 	RegularReader mReader ;
-	LENGTH mRecursiveCounter ;
+	PinnedCounter mPinnedCounter ;
 	List<XmlParserNode> mList ;
 	SortedMap<INDEX> mArrayMap ;
 	List<INDEX> mArrayMemberList ;
@@ -991,7 +993,7 @@ struct MakeXmlParserLayout {
 class MakeXmlParser implement MakeXmlParserLayout {
 protected:
 	using MakeXmlParserLayout::mReader ;
-	using MakeXmlParserLayout::mRecursiveCounter ;
+	using MakeXmlParserLayout::mPinnedCounter ;
 	using MakeXmlParserLayout::mList ;
 	using MakeXmlParserLayout::mArrayMap ;
 	using MakeXmlParserLayout::mObjectMap ;
@@ -1004,7 +1006,8 @@ public:
 	explicit MakeXmlParser (RREF<Ref<RefBuffer<BYTE>>> stream) {
 		mReader = RegularReader (move (stream) ,5) ;
 		mReader.use_text () ;
-		mRecursiveCounter = 0 ;
+		mPinnedCounter.mCounter = 0 ;
+		mPinnedCounter.mPin.pin (mPinnedCounter) ;
 		mArrayMap = SortedMap<INDEX> (ALLOCATOR_MIN_SIZE::expr) ;
 		mObjectMap = SortedMap<String<STRU8>> (ALLOCATOR_MIN_SIZE::expr) ;
 	}
@@ -1109,7 +1112,7 @@ public:
 
 	//@info: $5-><$1 $4 />|<$1 $4 > $8 </$1 >
 	void read_shift_e5 (CREF<INDEX> curr) {
-		Scope<ScopeCounter> anonymous (ScopeCounter::from (mRecursiveCounter)) ;
+		Scope<ScopeCounter> anonymous (ScopeCounter::from (mPinnedCounter)) ;
 		mReader >> slice ("<") ;
 		INDEX ix = mList.insert () ;
 		read_shift_e1 () ;
@@ -1193,7 +1196,7 @@ public:
 
 	//@info: $8->$5 $8|$6 $8|$7 $8
 	void read_shift_e8 (CREF<INDEX> curr ,CREF<INDEX> first) {
-		Scope<ScopeCounter> anonymous (ScopeCounter::from (mRecursiveCounter)) ;
+		Scope<ScopeCounter> anonymous (ScopeCounter::from (mPinnedCounter)) ;
 		INDEX ix = first ;
 		INDEX iy = first ;
 		INDEX kx = mList[curr].mMember ;
@@ -1660,7 +1663,7 @@ struct JsonParserTree {
 
 struct MakeJsonParserLayout {
 	RegularReader mReader ;
-	LENGTH mRecursiveCounter ;
+	PinnedCounter mPinnedCounter ;
 	List<JsonParserNode> mList ;
 	SortedMap<INDEX> mArrayMap ;
 	SortedMap<String<STRU8>> mObjectMap ;
@@ -1671,7 +1674,7 @@ struct MakeJsonParserLayout {
 class MakeJsonParser implement MakeJsonParserLayout {
 protected:
 	using MakeJsonParserLayout::mReader ;
-	using MakeJsonParserLayout::mRecursiveCounter ;
+	using MakeJsonParserLayout::mPinnedCounter ;
 	using MakeJsonParserLayout::mList ;
 	using MakeJsonParserLayout::mArrayMap ;
 	using MakeJsonParserLayout::mObjectMap ;
@@ -1684,7 +1687,8 @@ public:
 	explicit MakeJsonParser (RREF<Ref<RefBuffer<BYTE>>> stream) {
 		mReader = RegularReader (move (stream) ,5) ;
 		mReader.use_text () ;
-		mRecursiveCounter = 0 ;
+		mPinnedCounter.mCounter = 0 ;
+		mPinnedCounter.mPin.pin (mPinnedCounter) ;
 		mArrayMap = SortedMap<INDEX> (ALLOCATOR_MIN_SIZE::expr) ;
 		mObjectMap = SortedMap<String<STRU8>> (ALLOCATOR_MIN_SIZE::expr) ;
 	}
@@ -1776,7 +1780,7 @@ public:
 
 	//@info: $4->$1|$2|$3|$6|$9
 	void read_shift_e4 (CREF<INDEX> curr) {
-		Scope<ScopeCounter> anonymous (ScopeCounter::from (mRecursiveCounter)) ;
+		Scope<ScopeCounter> anonymous (ScopeCounter::from (mPinnedCounter)) ;
 		INDEX ix = NONE ;
 		auto act = TRUE ;
 		if ifdo (act) {
@@ -1875,7 +1879,7 @@ public:
 
 	//@info: $6->[ ]|[ $5 ]
 	void read_shift_e6 (CREF<INDEX> curr) {
-		Scope<ScopeCounter> anonymous (ScopeCounter::from (mRecursiveCounter)) ;
+		Scope<ScopeCounter> anonymous (ScopeCounter::from (mPinnedCounter)) ;
 		mReader >> slice ("[") ;
 		INDEX ix = mList.insert () ;
 		mList[ix].mName = move (mLastString) ;
@@ -1933,7 +1937,7 @@ public:
 
 	//@info: $9->{ }|{ $8 }
 	void read_shift_e9 (CREF<INDEX> curr) {
-		Scope<ScopeCounter> anonymous (ScopeCounter::from (mRecursiveCounter)) ;
+		Scope<ScopeCounter> anonymous (ScopeCounter::from (mPinnedCounter)) ;
 		mReader >> slice ("{") ;
 		INDEX ix = mList.insert () ;
 		mList[ix].mName = move (mLastString) ;
@@ -2942,6 +2946,7 @@ public:
 	void guide_jmp () {
 		assert (self.mGuide.mElement != NONE) ;
 		INDEX ix = self.mGuide.mElement ;
+		auto &&rax = self.mThis->mElementList[ix] ;
 		INDEX jx = NONE ;
 		auto act = TRUE ;
 		if ifdo (act) {
@@ -2950,11 +2955,11 @@ public:
 			self.mGuide.mRow = 0 ;
 			self.mGuide.mCol = 0 ;
 			assume (self.mGuide.mCol < self.mGuide.mProperty.length ()) ;
-			assume (self.mGuide.mRow < self.mThis->mElementList[ix].mLineSize) ;
+			assume (self.mGuide.mRow < rax.mLineSize) ;
 			jx = self.mGuide.mProperty[self.mGuide.mCol] ;
-			const auto r1x = self.mGuide.mRow * self.mThis->mElementList[ix].mLineStep ;
-			self.mGuide.mPlyBegin = r1x + self.mThis->mElementList[ix].mPropertyList[jx].mPlyBegin ;
-			self.mGuide.mPlyEnd = r1x + self.mThis->mElementList[ix].mPropertyList[jx].mPlyEnd ;
+			const auto r1x = self.mGuide.mRow * rax.mLineStep ;
+			self.mGuide.mPlyBegin = r1x + rax.mPropertyList[jx].mPlyBegin ;
+			self.mGuide.mPlyEnd = r1x + rax.mPropertyList[jx].mPlyEnd ;
 			self.mGuide.mPlyIndex = self.mGuide.mPlyBegin ;
 			self.mGuide.mPlyListMode = FALSE ;
 		}
@@ -2963,11 +2968,11 @@ public:
 			if ifdo (TRUE) {
 				if (self.mGuide.mPlyListMode)
 					discard ;
-				if (self.mThis->mElementList[ix].mPropertyList[jx].mListType == PlyParserDataType::Null)
+				if (rax.mPropertyList[jx].mListType == PlyParserDataType::Null)
 					discard ;
-				self.mGuide.mPlyBegin = bitwise[TYPE<LENGTH>::expr] (Pointer::from (self.mThis->mElementList[ix].mPlyBuffer[self.mGuide.mPlyIndex])) ;
+				self.mGuide.mPlyBegin = bitwise[TYPE<LENGTH>::expr] (Pointer::from (rax.mPlyBuffer[self.mGuide.mPlyIndex])) ;
 				self.mGuide.mPlyIndex += SIZE_OF<LENGTH>::expr ;
-				self.mGuide.mPlyEnd = bitwise[TYPE<LENGTH>::expr] (Pointer::from (self.mThis->mElementList[ix].mPlyBuffer[self.mGuide.mPlyIndex])) ;
+				self.mGuide.mPlyEnd = bitwise[TYPE<LENGTH>::expr] (Pointer::from (rax.mPlyBuffer[self.mGuide.mPlyIndex])) ;
 				self.mGuide.mPlyIndex = self.mGuide.mPlyBegin ;
 				self.mGuide.mPlyListMode = TRUE ;
 			}
@@ -2979,21 +2984,21 @@ public:
 			if (self.mGuide.mCol >= self.mGuide.mProperty.length ())
 				discard ;
 			jx = self.mGuide.mProperty[self.mGuide.mCol] ;
-			const auto r2x = self.mGuide.mRow * self.mThis->mElementList[ix].mLineStep ;
-			self.mGuide.mPlyBegin = r2x + self.mThis->mElementList[ix].mPropertyList[jx].mPlyBegin ;
-			self.mGuide.mPlyEnd = r2x + self.mThis->mElementList[ix].mPropertyList[jx].mPlyEnd ;
+			const auto r2x = self.mGuide.mRow * rax.mLineStep ;
+			self.mGuide.mPlyBegin = r2x + rax.mPropertyList[jx].mPlyBegin ;
+			self.mGuide.mPlyEnd = r2x + rax.mPropertyList[jx].mPlyEnd ;
 			self.mGuide.mPlyIndex = self.mGuide.mPlyBegin ;
 			self.mGuide.mPlyListMode = FALSE ;
 		}
 		if ifdo (act) {
 			self.mGuide.mRow++ ;
 			self.mGuide.mCol = 0 ;
-			if (self.mGuide.mRow >= self.mThis->mElementList[ix].mLineSize)
+			if (self.mGuide.mRow >= rax.mLineSize)
 				discard ;
 			jx = self.mGuide.mProperty[self.mGuide.mCol] ;
-			const auto r3x = self.mGuide.mRow * self.mThis->mElementList[ix].mLineStep ;
-			self.mGuide.mPlyBegin = r3x + self.mThis->mElementList[ix].mPropertyList[jx].mPlyBegin ;
-			self.mGuide.mPlyEnd = r3x + self.mThis->mElementList[ix].mPropertyList[jx].mPlyEnd ;
+			const auto r3x = self.mGuide.mRow * rax.mLineStep ;
+			self.mGuide.mPlyBegin = r3x + rax.mPropertyList[jx].mPlyBegin ;
+			self.mGuide.mPlyEnd = r3x + rax.mPropertyList[jx].mPlyEnd ;
 			self.mGuide.mPlyIndex = self.mGuide.mPlyBegin ;
 			self.mGuide.mPlyListMode = FALSE ;
 		}

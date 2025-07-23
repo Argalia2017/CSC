@@ -5,7 +5,7 @@
 #define leftvalue &
 #define rightvalue &&
 #define thiz (*this)
-#define deref deref_m ()
+#define ref ref_m ()
 #define self self_m ()
 #define expr expr_m ()
 #define trait struct
