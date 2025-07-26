@@ -1160,7 +1160,7 @@ template <class A>
 class Pin implement PinLayout {
 protected:
 	using PinLayout::mLayout ;
-	mutable Union<A> mValue ;
+	mutable Union<A> mStorage ;
 
 public:
 	implicit Pin () = delete ;
@@ -1168,14 +1168,14 @@ public:
 	explicit Pin (CREF<A> that) {
 		mLayout = address (that) ;
 		auto &&rax = keep[TYPE<Union<A>>::expr] (Pointer::make (mLayout)) ;
-		mValue = rax ;
+		mStorage = rax ;
 	}
 
 	implicit ~Pin () noexcept {
 		if (mLayout == ZERO)
 			return ;
 		auto &&rax = keep[TYPE<Union<A>>::expr] (Pointer::make (mLayout)) ;
-		rax = mValue ;
+		rax = mStorage ;
 	}
 
 	implicit Pin (CREF<Pin> that) = delete ;
@@ -1187,7 +1187,7 @@ public:
 	forceinline VREF<Pin> operator= (RREF<Pin> that) = default ;
 
 	VREF<A> ref_m () const leftvalue {
-		return Pointer::from (mValue) ;
+		return Pointer::from (mStorage) ;
 	}
 
 	forceinline PTR<VREF<A>> operator-> () const leftvalue {
