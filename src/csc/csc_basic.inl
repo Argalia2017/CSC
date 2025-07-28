@@ -70,17 +70,19 @@ public:
 		return self.mCode ;
 	}
 
+	static VREF<BoxLayout> ptr (CREF<OptionalLayout> that) {
+		return Pointer::make (address (that.mValue)) ;
+	}
+
 	void get (VREF<BoxLayout> item) const override {
 		assume (exist ()) ;
-		const auto r1x = Pin<BoxLayout> (self.mValue) ;
-		BoxHolder::hold (item)->acquire (r1x.ref) ;
-		BoxHolder::hold (r1x.ref)->release () ;
+		BoxHolder::hold (item)->acquire (ptr (self)) ;
+		BoxHolder::hold (ptr (self))->release () ;
 	}
 
 	void set (VREF<BoxLayout> item) const override {
 		assume (!exist ()) ;
-		const auto r1x = Pin<BoxLayout> (self.mValue) ;
-		BoxHolder::hold (r1x.ref)->acquire (item) ;
+		BoxHolder::hold (ptr (self))->acquire (item) ;
 		BoxHolder::hold (item)->release () ;
 	}
 } ;
