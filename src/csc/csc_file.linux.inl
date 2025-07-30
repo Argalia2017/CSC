@@ -1283,11 +1283,13 @@ public:
 	}
 
 	void log_file () {
-		if (self.mLogFile.length () == 0)
-			return ;
-		const auto r1x = FLAG (self.mLogBuffer.ref) ;
-		const auto r2x = (self.mLogWriter.length () - 1) * SIZE_OF<STR>::expr ;
-		self.mLogStreamFile.write (RefBuffer<BYTE>::reference (r1x ,r2x)) ;
+		if ifdo (TRUE) {
+			if (self.mLogFile.length () == 0)
+				discard ;
+			const auto r1x = FLAG (self.mLogBuffer.ref) ;
+			const auto r2x = (self.mLogWriter.length () - 1) * SIZE_OF<STR>::expr ;
+			self.mLogStreamFile.write (RefBuffer<BYTE>::reference (r1x ,r2x)) ;
+		}
 	}
 
 	void show () override {

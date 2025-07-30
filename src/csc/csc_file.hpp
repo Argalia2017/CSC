@@ -510,6 +510,7 @@ struct ConsoleHolder implement Interface {
 	imports CFat<ConsoleHolder> hold (CREF<ConsoleLayout> that) ;
 
 	virtual void initialize () = 0 ;
+	virtual void set_debug (CREF<BOOL> flag) = 0 ;
 	virtual void set_option (CREF<Just<ConsoleOption>> option) = 0 ;
 	virtual void print (CREF<Format> msg) = 0 ;
 	virtual void fatal (CREF<Format> msg) = 0 ;
@@ -529,6 +530,10 @@ class Console implement OfThis<SharedRef<ConsoleLayout>> {
 public:
 	static CREF<Console> expr_m () {
 		return keep[TYPE<Console>::expr] (ConsoleHolder::expr) ;
+	}
+
+	void set_debug (CREF<BOOL> flag) const {
+		return ConsoleHolder::hold (thiz)->set_debug (flag) ;
 	}
 
 	void set_option (CREF<Just<ConsoleOption>> option) const {

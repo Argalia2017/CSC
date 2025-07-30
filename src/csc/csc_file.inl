@@ -270,6 +270,7 @@ struct ConsoleLayout {
 	String<STR> mLogFile ;
 	String<STR> mOldLogFile ;
 	StreamFile mLogStreamFile ;
+	String<STR> mDebugPipe ;
 	System mCommand ;
 } ;
 
