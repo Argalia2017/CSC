@@ -1061,21 +1061,8 @@ public:
 		self.mOption = BitSet (ConsoleOption::ETC) ;
 		self.mLogBuffer = String<STR> (STREAMFILE_CHUNK_STEP::expr) ;
 		self.mLogWriter = TextWriter (self.mLogBuffer.borrow ()) ;
+		self.mDebugMode = inline_unittest () ;
 		self.mCommand = NULL ;
-	}
-	
-	void set_debug (CREF<BOOL> flag) override {
-		auto act = TRUE ;
-		if ifdo (act) {
-			if (!flag)
-				discard ;
-			self.mDebugPipe = slice ("DEBUG") ;
-		}
-		if ifdo (act) {
-			if (flag)
-				discard ;
-			self.mDebugPipe.clear () ;
-		}
 	}
 
 	void set_option (CREF<Just<ConsoleOption>> option) override {
@@ -1245,7 +1232,7 @@ public:
 			self.mLogStreamFile.write (RefBuffer<BYTE>::reference (r1x ,r2x)) ;
 		}
 		if ifdo (TRUE) {
-			if (self.mDebugPipe.length () == 0)
+			if (!self.mDebugMode)
 				discard ;
 			OutputDebugString (self.mLogBuffer) ;
 		}

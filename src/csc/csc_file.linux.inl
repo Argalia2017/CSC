@@ -1135,6 +1135,7 @@ public:
 		self.mOption = BitSet (ConsoleOption::ETC) ;
 		self.mLogBuffer = String<STR> (STREAMFILE_CHUNK_STEP::expr) ;
 		self.mLogWriter = TextWriter (self.mLogBuffer.borrow ()) ;
+		self.mDebugMode = inline_unittest () ;
 		self.mCommand = NULL ;
 	}
 
