@@ -677,16 +677,6 @@ public:
 	template <class ARG1>
 	forceinline void read_byte_impl (VREF<ARG1> item) {
 		auto rax = STRU32 () ;
-		if ifdo (TRUE) {
-			read (rax) ;
-			assume (rax == STRU32 ('0')) ;
-			read (rax) ;
-			if (rax == STRU32 ('x'))
-				discard ;
-			if (rax == STRU32 ('X'))
-				discard ;
-			assume (FALSE) ;
-		}
 		item = ARG1 (0X00) ;
 		for (auto &&i : iter (0 ,SIZE_OF<ARG1>::expr)) {
 			noop (i) ;
@@ -1409,7 +1399,6 @@ public:
 
 	template <class ARG1>
 	forceinline void write_byte_impl (CREF<ARG1> item) {
-		write (slice ("0X")) ;
 		INDEX ix = SIZE_OF<ARG1>::expr * 8 ;
 		for (auto &&i : iter (0 ,SIZE_OF<ARG1>::expr)) {
 			noop (i) ;
