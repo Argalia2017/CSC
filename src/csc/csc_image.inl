@@ -489,10 +489,10 @@ public:
 		return self.mSize ;
 	}
 
-	Array<INDEX> sort (RREF<Array<FLT32>> love) override {
+	Array<INDEX> sort (CREF<Image<FLT32>> love) override {
 		assert (self.mMatch.size () > 0) ;
 		assert (love.size () == MathProc::square (self.mSize)) ;
-		self.mLove = move (love) ;
+		self.mLove = Ref<Image<FLT32>>::reference (love) ;
 		self.mUser.fill (0) ;
 		self.mWork.fill (0) ;
 		self.mUserVisit.clear () ;
@@ -507,7 +507,8 @@ public:
 		for (auto &&i : iter (0 ,self.mSize)) {
 			self.mUser[i] = -infinity ;
 			for (auto &&j : iter (0 ,self.mSize)) {
-				self.mUser[i] = MathProc::max_of (self.mUser[i] ,self.mLove[i * self.mSize + j]) ;
+				const auto r1x = self.mLove.ref[i][j] ;
+				self.mUser[i] = MathProc::max_of (self.mUser[i] ,r1x) ;
 			}
 		}
 		for (auto &&i : iter (0 ,self.mSize)) {
@@ -517,7 +518,7 @@ public:
 				self.mWorkVisit.clear () ;
 				if (dfs (i))
 					break ;
-				const auto r1x = invoke ([&] () {
+				const auto r2x = invoke ([&] () {
 					FLT32 ret = infinity ;
 					for (auto &&j : iter (0 ,self.mSize)) {
 						if (self.mWorkVisit[j])
@@ -530,17 +531,17 @@ public:
 					if ifdo (TRUE) {
 						if (!self.mUserVisit[j])
 							discard ;
-						self.mUser[j] -= r1x ;
+						self.mUser[j] -= r2x ;
 					}
 					if ifdo (TRUE) {
 						if (!self.mWorkVisit[j])
 							discard ;
-						self.mWork[j] += r1x ;
+						self.mWork[j] += r2x ;
 					}
 					if ifdo (TRUE) {
 						if (self.mWorkVisit[j])
 							discard ;
-						self.mLack[j] -= r1x ;
+						self.mLack[j] -= r2x ;
 					}
 				}
 			}
@@ -552,24 +553,25 @@ public:
 		for (auto &&i : iter (0 ,self.mSize)) {
 			if (self.mWorkVisit[i])
 				continue ;
-			const auto r1x = self.mUser[user] + self.mWork[i] - self.mLove[user * self.mSize + i] ;
+			const auto r1x = self.mLove.ref[user][i] ;
+			const auto r2x = self.mUser[user] + self.mWork[i] - r1x ;
 			if ifdo (TRUE) {
-				if (r1x < self.mThreshold)
+				if (r2x < self.mThreshold)
 					discard ;
-				self.mLack[i] = MathProc::min_of (self.mLack[i] ,r1x) ;
+				self.mLack[i] = MathProc::min_of (self.mLack[i] ,r2x) ;
 			}
-			if (r1x >= self.mThreshold)
+			if (r2x >= self.mThreshold)
 				continue ;
 			self.mWorkVisit[i] = TRUE ;
-			const auto r2x = self.mMatch[i] ;
+			const auto r3x = self.mMatch[i] ;
 			if ifdo (TRUE) {
-				if (r2x != NONE)
+				if (r3x != NONE)
 					discard ;
 				self.mMatch[i] = user ;
 				return TRUE ;
 			}
 			if ifdo (TRUE) {
-				if (!dfs (r2x))
+				if (!dfs (r3x))
 					discard ;
 				self.mMatch[i] = user ;
 				return TRUE ;

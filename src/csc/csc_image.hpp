@@ -574,7 +574,7 @@ public:
 struct KMMatchLayout {
 	LENGTH mSize ;
 	FLT32 mThreshold ;
-	Array<FLT32> mLove ;
+	Ref<Image<FLT32>> mLove ;
 	Array<FLT32> mUser ;
 	Array<FLT32> mWork ;
 	BitSet mUserVisit ;
@@ -590,7 +590,7 @@ struct KMMatchHolder implement Interface {
 	virtual void initialize (CREF<LENGTH> size_) = 0 ;
 	virtual void set_threshold (CREF<FLT64> threshold) = 0 ;
 	virtual LENGTH size () const = 0 ;
-	virtual Array<INDEX> sort (RREF<Array<FLT32>> love) = 0 ;
+	virtual Array<INDEX> sort (CREF<Image<FLT32>> love) = 0 ;
 } ;
 
 class KMMatch implement KMMatchLayout {
@@ -620,8 +620,8 @@ public:
 		return KMMatchHolder::hold (thiz)->size () ;
 	}
 
-	Array<INDEX> sort (RREF<Array<FLT32>> love) {
-		return KMMatchHolder::hold (thiz)->sort (move (love)) ;
+	Array<INDEX> sort (CREF<Image<FLT32>> love) {
+		return KMMatchHolder::hold (thiz)->sort (love) ;
 	}
 } ;
 } ;
