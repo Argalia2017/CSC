@@ -1228,7 +1228,7 @@ public:
 			auto rax = Vector () ;
 			for (auto &&i : self.mPointCloud->range ()) {
 				get (i ,rax) ;
-				const auto r3x = (rax - r1x).normalize () ;
+				const auto r3x = rax - r1x ;
 				ret[0][0] += MathProc::square (r3x[0]) ;
 				ret[0][1] += r3x[0] * r3x[1] ;
 				ret[0][2] += r3x[0] * r3x[2] ;
