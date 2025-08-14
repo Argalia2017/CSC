@@ -1187,12 +1187,25 @@ public:
 		self.mWorld = Matrix::iden () ;
 	}
 
+	void initialize (RREF<Ref<Array<Vector>>> pointcloud) override {
+		self.mRank = 0 ;
+		auto &&rax = keep[TYPE<Ref<Array<Vector>>>::expr] (Pointer::from (self.mPointCloud)) ;
+		rax = move (pointcloud) ;
+		self.mWorld = Matrix::iden () ;
+	}
+
 	LENGTH size () const override {
 		return self.mPointCloud->size () ;
 	}
 
 	void get (CREF<INDEX> index ,VREF<Vector> item) const override {
 		auto act = TRUE ;
+		if ifdo (act) {
+			if (self.mRank != 0)
+				discard ;
+			item = Vector (keep[TYPE<Vector>::expr] (self.mPointCloud.ref[index])) ;
+			item = self.mWorld * item ;
+		}
 		if ifdo (act) {
 			if (self.mRank != 2)
 				discard ;
