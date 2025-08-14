@@ -516,7 +516,7 @@ public:
 			return FALSE ;
 		auto rax = STRU32 () ;
 		auto rbx = STRU32 () ;
-		for (auto &&i : iter (0 ,r1x)) {
+		for (auto &&i : range (0 ,r1x)) {
 			get (i ,rax) ;
 			SliceHolder::hold (that)->get (i ,rbx) ;
 			const auto r3x = inline_equal (rax ,rbx) ;
@@ -532,7 +532,7 @@ public:
 		const auto r3x = inline_min (r1x ,r2x) ;
 		auto rax = STRU32 () ;
 		auto rbx = STRU32 () ;
-		for (auto &&i : iter (0 ,r3x)) {
+		for (auto &&i : range (0 ,r3x)) {
 			get (i ,rax) ;
 			SliceHolder::hold (that)->get (i ,rbx) ;
 			const auto r4x = inline_compr (rax ,rbx) ;
@@ -546,7 +546,7 @@ public:
 		visitor.enter () ;
 		const auto r1x = size () ;
 		auto rax = STRU32 () ;
-		for (auto &&i : iter (0 ,r1x)) {
+		for (auto &&i : range (0 ,r1x)) {
 			get (i ,rax) ;
 			inline_visit (visitor ,rax) ;
 		}

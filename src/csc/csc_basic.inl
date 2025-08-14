@@ -269,7 +269,7 @@ public:
 		const auto r2x = layout - SIZE_OF<SharedRefTree>::expr ;
 		const auto r3x = invoke ([&] () {
 			const auto r4x = r1x->type_align () / ALIGN_OF<SharedRefTree>::expr ;
-			for (auto &&i : iter (0 ,r4x)) {
+			for (auto &&i : range (0 ,r4x)) {
 				const auto r5x = r2x - i * ALIGN_OF<SharedRefTree>::expr ;
 				auto &&rax = keep[TYPE<SharedRefTree>::expr] (Pointer::make (r5x)) ;
 				if (rax.mHeader == SHADERREFIMPLLAYOUT_HEADER)
@@ -681,7 +681,7 @@ public:
 			return ;
 		const auto r1x = inline_min (self.mWidth ,size ()) ;
 		const auto r2x = RFat<ReflectDestroy> (unknown ()) ;
-		for (auto &&i : iter (0 ,r1x)) {
+		for (auto &&i : range (0 ,r1x)) {
 			if (ptr (self ,i).mNext != USED)
 				continue ;
 			r2x->destroy (self.mAllocator.at (i) ,1) ;

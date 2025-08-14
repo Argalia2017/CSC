@@ -116,14 +116,14 @@ public:
 
 	Eigen::Matrix4d cvt_eigen_matrix (CREF<Matrix> a) const {
 		Eigen::Matrix4d ret ;
-		for (auto &&i : iter (0 ,4 ,0 ,4))
+		for (auto &&i : range (0 ,4 ,0 ,4))
 			ret (i.mY ,i.mX) = a[i] ;
 		return move (ret) ;
 	}
 
 	Matrix cvt_csc_matrix (CREF<Eigen::Matrix4d> a) const {
 		Matrix ret ;
-		for (auto &&i : iter (0 ,4 ,0 ,4)) {
+		for (auto &&i : range (0 ,4 ,0 ,4)) {
 			ret[i] = a (i.mY ,i.mX) ;
 			assume (!isnan (ret[i])) ;
 		}
@@ -147,7 +147,7 @@ public:
 		INDEX ix = MathProc::min_of (INDEX (rax.rank ()) ,a.cx () - 1) ;
 		assume (ix >= 0) ;
 		const auto r3x = cvt_csc_matrix (rax.matrixV ()) ;
-		for (auto &&i : iter (0 ,ret.cy ()))
+		for (auto &&i : range (0 ,ret.cy ()))
 			ret[i][0] = r3x[i][ix] ;
 		return move (ret) ;
 	}
@@ -171,14 +171,14 @@ public:
 
 	Eigen::MatrixXd cvt_eigen_matrix (CREF<Image<FLT64>> a) const {
 		Eigen::MatrixXd ret = Eigen::MatrixXd (a.cy () ,a.cx ()) ;
-		for (auto &&i : a.range ())
+		for (auto &&i : a.iter ())
 			ret (i.mY ,i.mX) = a[i] ;
 		return move (ret) ;
 	}
 
 	Image<FLT64> cvt_csc_matrix (CREF<Eigen::MatrixXd> a) const {
 		Image<FLT64> ret = Image<FLT64> (a.cols () ,a.rows ()) ;
-		for (auto &&i : ret.range ())
+		for (auto &&i : ret.iter ())
 			ret[i] = a (i.mY ,i.mX) ;
 		return move (ret) ;
 	}

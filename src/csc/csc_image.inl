@@ -162,12 +162,12 @@ public:
 		if ifdo (TRUE) {
 			if (cy () == 0)
 				discard ;
-			for (auto &&i : iter (0 ,cx ())) {
+			for (auto &&i : range (0 ,cx ())) {
 				inline_memcpy (at (i ,0) ,item ,r1x) ;
 			}
 		}
 		const auto r2x = cx () * r1x ;
-		for (auto &&i : iter (1 ,cy ())) {
+		for (auto &&i : range (1 ,cy ())) {
 			inline_memcpy (at (0 ,i) ,at (0 ,0) ,r2x) ;
 		}
 	}
@@ -186,7 +186,7 @@ public:
 		const auto r3x = ImageHolder::hold (item)->step () ;
 		assert (step () == r3x) ;
 		const auto r4x = r1x * r3x ;
-		for (auto &&i : iter (0 ,r2x)) {
+		for (auto &&i : range (0 ,r2x)) {
 			INDEX ix = x + 0 ;
 			INDEX iy = y + i ;
 			inline_memcpy (at (ix ,iy) ,ImageHolder::hold (item)->at (0 ,i) ,r4x) ;
@@ -304,7 +304,7 @@ public:
 		const auto r4x = address (ret.mTensor.ref[0]) ;
 		const auto r5x = address (self.mTensor.ref[0]) ;
 		const auto r6x = self.mStride.size () - 1 ;
-		for (auto &&i : iter (0 ,r1x)) {
+		for (auto &&i : range (0 ,r1x)) {
 			const auto r7x = r4x + i * ret.mStride[r6x] ;
 			const auto r8x = r5x + i * self.mStride[r6x] ;
 			r3x->xcopy (Pointer::make (r7x) ,Pointer::make (r8x)) ;
@@ -330,7 +330,7 @@ public:
 	}
 
 	void reset () override {
-		for (auto &&i : iter (0 ,self.mStride.size ()))
+		for (auto &&i : range (0 ,self.mStride.size ()))
 			self.mStride[i] = 1 ;
 		if (self.mTensor->size () == 0)
 			return ;
@@ -345,10 +345,10 @@ public:
 		assert (shape_.mRank <= r1x) ;
 		const auto r2x = inline_min (shape_.mRank ,r1x) ;
 		self.mStride[r1x] = size_of_tensor_type (type ()) ;
-		for (auto &&i : iter (0 ,r1x - r2x)) {
+		for (auto &&i : range (0 ,r1x - r2x)) {
 			self.mStride[r1x - i - 1] = self.mStride[r1x - i] ;
 		}
-		for (auto &&i : iter (r1x - r2x ,r1x)) {
+		for (auto &&i : range (r1x - r2x ,r1x)) {
 			self.mStride[r1x - i - 1] = self.mStride[r1x - i] * rax[r1x - i - 1] ;
 		}
 		const auto r3x = self.mStride[0] / self.mStride[r1x] ;
@@ -449,7 +449,7 @@ public:
 	Array<INDEX> jump (CREF<INDEX> from_) override {
 		Array<INDEX> ret = Array<INDEX> (self.mTable.size ()) ;
 		ret.fill (NONE) ;
-		for (auto &&i : iter (0 ,self.mTable.size ())) {
+		for (auto &&i : range (0 ,self.mTable.size ())) {
 			INDEX ix = lead (i) ;
 			if (ix == NONE)
 				continue ;
@@ -504,14 +504,14 @@ public:
 	}
 
 	void solve () {
-		for (auto &&i : iter (0 ,self.mSize)) {
+		for (auto &&i : range (0 ,self.mSize)) {
 			self.mUser[i] = -infinity ;
-			for (auto &&j : iter (0 ,self.mSize)) {
+			for (auto &&j : range (0 ,self.mSize)) {
 				const auto r1x = self.mLove.ref[i][j] ;
 				self.mUser[i] = MathProc::max_of (self.mUser[i] ,r1x) ;
 			}
 		}
-		for (auto &&i : iter (0 ,self.mSize)) {
+		for (auto &&i : range (0 ,self.mSize)) {
 			self.mLack.fill (infinity) ;
 			while (TRUE) {
 				self.mUserVisit.clear () ;
@@ -520,14 +520,14 @@ public:
 					break ;
 				const auto r2x = invoke ([&] () {
 					FLT32 ret = infinity ;
-					for (auto &&j : iter (0 ,self.mSize)) {
+					for (auto &&j : range (0 ,self.mSize)) {
 						if (self.mWorkVisit[j])
 							continue ;
 						ret = MathProc::min_of (ret ,self.mLack[j]) ;
 					}
 					return move (ret) ;
 				}) ;
-				for (auto &&j : iter (0 ,self.mSize)) {
+				for (auto &&j : range (0 ,self.mSize)) {
 					if ifdo (TRUE) {
 						if (!self.mUserVisit[j])
 							discard ;
@@ -550,7 +550,7 @@ public:
 
 	BOOL dfs (CREF<INDEX> user) {
 		self.mUserVisit[user] = TRUE ;
-		for (auto &&i : iter (0 ,self.mSize)) {
+		for (auto &&i : range (0 ,self.mSize)) {
 			if (self.mWorkVisit[i])
 				continue ;
 			const auto r1x = self.mLove.ref[user][i] ;

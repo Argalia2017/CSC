@@ -674,7 +674,7 @@ public:
 	}
 } ;
 
-struct FUNCTION_iter {
+struct FUNCTION_range {
 	forceinline IndexIterator operator() (CREF<INDEX> begin_ ,CREF<INDEX> end_) const noexcept {
 		return IndexIterator (begin_ ,end_) ;
 	}
@@ -684,7 +684,7 @@ struct FUNCTION_iter {
 	}
 } ;
 
-static constexpr auto iter = FUNCTION_iter () ;
+static constexpr auto range = FUNCTION_range () ;
 
 struct FatLayout {
 	FLAG mHolder ;
@@ -870,7 +870,7 @@ public:
 		if (MACRO_IS_TRIVIAL_CONSTRUCTIBLE<A>::expr)
 			return ;
 		auto &&rax = keep[TYPE<ARR<A>>::expr] (a) ;
-		for (auto &&i : iter (0 ,size_)) {
+		for (auto &&i : range (0 ,size_)) {
 			new (csc_device_t (&rax[i])) A () ;
 		}
 	}
@@ -891,7 +891,7 @@ public:
 		if (MACRO_IS_TRIVIAL_DESTRUCTIBLE<A>::expr)
 			return ;
 		auto &&rax = keep[TYPE<ARR<A>>::expr] (a) ;
-		for (auto &&i : iter (0 ,size_)) {
+		for (auto &&i : range (0 ,size_)) {
 			rax[i].~A () ;
 		}
 	}

@@ -649,7 +649,7 @@ public:
 	}
 
 	Array<INDEX> random_shuffle (CREF<LENGTH> length_ ,CREF<LENGTH> size_) override {
-		Array<INDEX> ret = Array<INDEX>::make (iter (0 ,size_)) ;
+		Array<INDEX> ret = Array<INDEX>::make (range (0 ,size_)) ;
 		random_shuffle (length_ ,size_ ,ret) ;
 		return move (ret) ;
 	}
@@ -685,13 +685,13 @@ public:
 				discard ;
 			result.clear () ;
 			const auto r1x = random_shuffle (length_ ,size_) ;
-			for (auto &&i : iter (0 ,length_))
+			for (auto &&i : range (0 ,length_))
 				result.add (r1x[i]) ;
 		}
 		if ifdo (act) {
 			result.fill (BYTE (0XFF)) ;
 			const auto r2x = random_shuffle (size_ - length_ ,size_) ;
-			for (auto &&i : iter (size_ - length_ ,size_))
+			for (auto &&i : range (size_ - length_ ,size_))
 				result.erase (r2x[i]) ;
 		}
 	}

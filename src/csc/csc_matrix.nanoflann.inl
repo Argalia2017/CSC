@@ -32,7 +32,7 @@ public:
 
 	FLT32 kdtree_distance (const FLT32 *pt ,csc_size_t idx ,csc_size_t size_) const {
 		auto rax = FLT64 (0) ;
-		for (auto &&i : iter (0 ,LENGTH (size_))) {
+		for (auto &&i : range (0 ,LENGTH (size_))) {
 			const auto r1x = pt[i] - mPointCloud[idx * mDimension + i] ;
 			rax += MathProc::square (r1x) ;
 		}
@@ -147,7 +147,7 @@ public:
 		self.mKNNSearch->findNeighbors (rax ,(&r1x.mX) ,r2x) ;
 		const auto r3x = inline_min (rax.mResult.length () ,neighbor) ;
 		Array<INDEX> ret = Array<INDEX> (r3x) ;
-		for (auto &&i : iter (0 ,r3x)) {
+		for (auto &&i : range (0 ,r3x)) {
 			INDEX ix = r3x - 1 - i ;
 			ret[ix] = rax.mResult[0].m2nd ;
 			rax.mResult.take () ;
@@ -163,7 +163,7 @@ public:
 		self.mKNNSearch->radiusSearchCustomCallback ((&r1x.mX) ,rax ,r2x) ;
 		const auto r3x = inline_min (rax.mResult.length () ,neighbor) ;
 		Array<INDEX> ret = Array<INDEX> (r3x) ;
-		for (auto &&i : iter (0 ,r3x)) {
+		for (auto &&i : range (0 ,r3x)) {
 			INDEX ix = r3x - 1 - i ;
 			ret[ix] = rax.mResult[0].m2nd ;
 			rax.mResult.take () ;

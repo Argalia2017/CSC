@@ -79,7 +79,7 @@ public:
 		self.mThreadFlag = ThreadFlag::Running ;
 		self.mThreadFunc = func ;
 		const auto r1x = FriendThreadBinder<WorkThreadLayout>::hold (self) ;
-		for (auto &&i : self.mThread.range ()) {
+		for (auto &&i : self.mThread.iter ()) {
 			self.mThread[i] = Thread (Box<VFat<FriendThread>>::make (r1x) ,i) ;
 			self.mThread[i].start () ;
 		}
@@ -190,7 +190,7 @@ public:
 
 	void stop () override {
 		crash () ;
-		for (auto &&i : self.mThread.range ())
+		for (auto &&i : self.mThread.iter ())
 			self.mThread[i].stop () ;
 		self.mThread = Array<Thread> () ;
 		self.mThreadFunc = Function<CREF<INDEX>> () ;
@@ -269,13 +269,13 @@ public:
 		self.mBestSolution.mAvgError = infinity ;
 		self.mBestSolution.mStdError = 0 ;
 		self.mBestSolution.mInput = input ;
-		for (auto &&i : self.mThreadSolution.range ())
+		for (auto &&i : self.mThreadSolution.iter ())
 			self.mThreadSolution[i].mIteration = NONE ;
 		self.mConfidence = Array<FLT64> (1000) ;
 		self.mConfidencePow = 0.9545 ;
 		self.mConfidenceFator = MathProc::clamp (factor ,FLT64 (0) ,FLT64 (1)) ;
 		self.mConfidence[0] = 1 ;
-		for (auto &&i : iter (1 ,self.mConfidence.length ())) {
+		for (auto &&i : range (1 ,self.mConfidence.length ())) {
 			self.mConfidence[i] = self.mConfidencePow * self.mConfidence[i - 1] ;
 		}
 	}
@@ -288,7 +288,7 @@ public:
 		self.mSuspendFlag = FALSE ;
 		self.mThreadFunc = func ;
 		const auto r1x = FriendThreadBinder<CalcThreadLayout>::hold (self) ;
-		for (auto &&i : self.mThread.range ()) {
+		for (auto &&i : self.mThread.iter ()) {
 			self.mThread[i] = Thread (Box<VFat<FriendThread>>::make (r1x) ,i) ;
 			self.mThread[i].start () ;
 		}
@@ -457,7 +457,7 @@ public:
 
 	void stop () override {
 		crash () ;
-		for (auto &&i : self.mThread.range ())
+		for (auto &&i : self.mThread.iter ())
 			self.mThread[i].stop () ;
 		self.mThread = Array<Thread> () ;
 		self.mThreadFunc = Function<CREF<CalcSolution> ,VREF<CalcSolution>> () ;
@@ -540,7 +540,7 @@ public:
 				discard ;
 			self.mThread = Array<Thread> (1) ;
 			const auto r1x = FriendThreadBinder<PromiseLayout>::hold (self) ;
-			for (auto &&i : self.mThread.range ()) {
+			for (auto &&i : self.mThread.iter ()) {
 				self.mThread[i] = Thread (Box<VFat<FriendThread>>::make (r1x) ,0) ;
 				self.mThread[i].start () ;
 			}
@@ -666,7 +666,7 @@ public:
 
 	void stop () override {
 		crash () ;
-		for (auto &&i : self.mThread.range ())
+		for (auto &&i : self.mThread.iter ())
 			self.mThread[i].stop () ;
 		self.mThread = Array<Thread> () ;
 		self.mThreadFlag = ThreadFlag::Preparing ;

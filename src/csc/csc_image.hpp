@@ -293,7 +293,7 @@ public:
 		return RowProxy<CREF<Image>> (thiz ,y) ;
 	}
 
-	PixelIterator range () const {
+	PixelIterator iter () const {
 		return PixelIterator (0 ,cx () ,0 ,cy ()) ;
 	}
 

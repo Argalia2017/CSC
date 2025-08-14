@@ -40,7 +40,7 @@ public:
 		initialize (holder ,rax.size ()) ;
 		const auto r1x = RFat<ReflectAssign> (holder) ;
 		BoxHolder::hold (item)->initialize (holder) ;
-		for (auto &&i : iter (0 ,rax.size ())) {
+		for (auto &&i : range (0 ,rax.size ())) {
 			r1x->assign (BoxHolder::hold (item)->ref ,rax[i]) ;
 			r1x->assign (at (i) ,BoxHolder::hold (item)->ref) ;
 		}
@@ -100,7 +100,7 @@ public:
 		if (r1x != r2x)
 			return FALSE ;
 		const auto r3x = RFat<ReflectEqual> (self.mArray.unknown ()) ;
-		for (auto &&i : iter (0 ,r1x)) {
+		for (auto &&i : range (0 ,r1x)) {
 			const auto r4x = r3x->equal (at (i) ,ArrayHolder::hold (that)->at (i)) ;
 			if (!r4x)
 				return r4x ;
@@ -113,7 +113,7 @@ public:
 		const auto r2x = ArrayHolder::hold (that)->length () ;
 		const auto r3x = inline_min (r1x ,r2x) ;
 		const auto r4x = RFat<ReflectCompr> (self.mArray.unknown ()) ;
-		for (auto &&i : iter (0 ,r3x)) {
+		for (auto &&i : range (0 ,r3x)) {
 			const auto r5x = r4x->compr (at (i) ,ArrayHolder::hold (that)->at (i)) ;
 			if (r5x != ZERO)
 				return r5x ;
@@ -125,7 +125,7 @@ public:
 		visitor.enter () ;
 		const auto r1x = size () ;
 		const auto r2x = RFat<ReflectVisit> (self.mArray.unknown ()) ;
-		for (auto &&i : iter (0 ,r1x)) {
+		for (auto &&i : range (0 ,r1x)) {
 			r2x->visit (visitor ,at (i)) ;
 		}
 		visitor.leave () ;
@@ -134,7 +134,7 @@ public:
 	void fill (CREF<Pointer> item) override {
 		const auto r1x = size () ;
 		const auto r2x = RFat<ReflectClone> (self.mArray.unknown ()) ;
-		for (auto &&i : iter (0 ,r1x)) {
+		for (auto &&i : range (0 ,r1x)) {
 			r2x->clone (at (i) ,item) ;
 		}
 	}
@@ -146,7 +146,7 @@ public:
 		assert (inline_between (index ,0 ,size ())) ;
 		assert (index + r1x <= size ()) ;
 		const auto r2x = RFat<ReflectClone> (self.mArray.unknown ()) ;
-		for (auto &&i : iter (0 ,r1x)) {
+		for (auto &&i : range (0 ,r1x)) {
 			INDEX ix = index + i ;
 			r2x->clone (at (ix) ,ArrayHolder::hold (item)->at (i)) ;
 		}
@@ -166,7 +166,7 @@ public:
 	void initialize (CREF<Slice> that ,CREF<LENGTH> step_) override {
 		const auto r1x = SliceHolder::hold (that)->size () ;
 		initialize (r1x ,step_) ;
-		for (auto &&i : iter (0 ,r1x)) {
+		for (auto &&i : range (0 ,r1x)) {
 			set (i ,that[i]) ;
 		}
 		trunc (r1x) ;
@@ -233,7 +233,7 @@ public:
 
 	LENGTH length () const override {
 		auto rax = STRU32 () ;
-		for (auto &&i : iter (0 ,size ())) {
+		for (auto &&i : range (0 ,size ())) {
 			get (i ,rax) ;
 			if (rax == 0)
 				return i ;
@@ -336,7 +336,7 @@ public:
 		const auto r2x = that.size () ;
 		const auto r3x = inline_min (r1x ,r2x) ;
 		auto rax = STRU32 () ;
-		for (auto &&i : iter (0 ,r3x)) {
+		for (auto &&i : range (0 ,r3x)) {
 			get (i ,rax) ;
 			const auto r4x = inline_equal (rax ,that[i]) ;
 			if (!r4x)
@@ -353,7 +353,7 @@ public:
 		const auto r3x = inline_min (r1x ,r2x) ;
 		auto rax = STRU32 () ;
 		auto rbx = STRU32 () ;
-		for (auto &&i : iter (0 ,r3x)) {
+		for (auto &&i : range (0 ,r3x)) {
 			get (i ,rax) ;
 			StringHolder::hold (that)->get (i ,rbx) ;
 			const auto r4x = inline_equal (rax ,rbx) ;
@@ -370,7 +370,7 @@ public:
 		const auto r2x = that.size () ;
 		const auto r3x = inline_min (r1x ,r2x) ;
 		auto rax = STRU32 () ;
-		for (auto &&i : iter (0 ,r3x)) {
+		for (auto &&i : range (0 ,r3x)) {
 			get (i ,rax) ;
 			const auto r4x = inline_compr (rax ,that[i]) ;
 			if (r4x != ZERO)
@@ -387,7 +387,7 @@ public:
 		const auto r3x = inline_min (r1x ,r2x) ;
 		auto rax = STRU32 () ;
 		auto rbx = STRU32 () ;
-		for (auto &&i : iter (0 ,r3x)) {
+		for (auto &&i : range (0 ,r3x)) {
 			get (i ,rax) ;
 			StringHolder::hold (that)->get (i ,rbx) ;
 			const auto r4x = inline_compr (rax ,rbx) ;
@@ -403,7 +403,7 @@ public:
 		visitor.enter () ;
 		const auto r1x = size () ;
 		auto rax = STRU32 () ;
-		for (auto &&i : iter (0 ,r1x)) {
+		for (auto &&i : range (0 ,r1x)) {
 			get (i ,rax) ;
 			if (rax == 0)
 				break ;
@@ -420,7 +420,7 @@ public:
 	}
 
 	void fill (CREF<STRU32> item) override {
-		for (auto &&i : iter (0 ,size ())) {
+		for (auto &&i : range (0 ,size ())) {
 			set (i ,item) ;
 		}
 	}
@@ -431,7 +431,7 @@ public:
 			return ;
 		assert (inline_between (index ,0 ,size ())) ;
 		assert (index + r1x <= size ()) ;
-		for (auto &&i : iter (0 ,r1x)) {
+		for (auto &&i : range (0 ,r1x)) {
 			INDEX ix = index + i ;
 			set (ix ,item[i]) ;
 		}
@@ -482,7 +482,7 @@ public:
 		auto rax = from_initializer_list (params ,holder) ;
 		initialize (holder ,rax.size ()) ;
 		const auto r1x = RFat<ReflectAssign> (holder) ;
-		for (auto &&i : iter (0 ,rax.size ())) {
+		for (auto &&i : range (0 ,rax.size ())) {
 			BoxHolder::hold (item)->initialize (holder) ;
 			r1x->assign (BoxHolder::hold (item)->ref ,rax[i]) ;
 			add (move (item)) ;
@@ -634,7 +634,7 @@ public:
 			if (self.mWrite <= r1x)
 				discard ;
 			const auto r3x = RFat<ReflectAssign> (self.mDeque.unknown ()) ;
-			for (auto &&i : iter (0 ,r1x - self.mRead)) {
+			for (auto &&i : range (0 ,r1x - self.mRead)) {
 				INDEX ix = r1x - 1 - i ;
 				INDEX iy = r2x - 1 - i ;
 				r3x->assign (self.mDeque.at (iy) ,self.mDeque.at (ix)) ;
@@ -674,7 +674,7 @@ public:
 		auto rax = from_initializer_list (params ,holder) ;
 		initialize (holder ,rax.size ()) ;
 		const auto r1x = RFat<ReflectAssign> (holder) ;
-		for (auto &&i : iter (0 ,rax.size ())) {
+		for (auto &&i : range (0 ,rax.size ())) {
 			BoxHolder::hold (item)->initialize (holder) ;
 			r1x->assign (BoxHolder::hold (item)->ref ,rax[i]) ;
 			add (move (item)) ;
@@ -847,7 +847,7 @@ public:
 		auto rax = from_initializer_list (params ,holder) ;
 		initialize (holder ,rax.size ()) ;
 		const auto r1x = RFat<ReflectAssign> (holder) ;
-		for (auto &&i : iter (0 ,rax.size ())) {
+		for (auto &&i : range (0 ,rax.size ())) {
 			BoxHolder::hold (item)->initialize (holder) ;
 			r1x->assign (BoxHolder::hold (item)->ref ,rax[i]) ;
 			add (move (item)) ;
@@ -988,7 +988,7 @@ public:
 			self.mList.bt (ix).mLeft = NONE ;
 			self.mFirst = ix ;
 		}
-		for (auto &&i : iter (1 ,range_.length ())) {
+		for (auto &&i : range (1 ,range_.length ())) {
 			INDEX ix = range_[i - 1] ;
 			INDEX iy = range_[i] ;
 			self.mList.bt (ix).mRight = iy ;
@@ -1040,7 +1040,7 @@ public:
 		auto rax = from_initializer_list (params ,holder) ;
 		initialize (holder ,rax.size ()) ;
 		const auto r1x = RFat<ReflectAssign> (holder) ;
-		for (auto &&i : iter (0 ,rax.size ())) {
+		for (auto &&i : range (0 ,rax.size ())) {
 			BoxHolder::hold (item)->initialize (holder) ;
 			r1x->assign (BoxHolder::hold (item)->ref ,rax[i]) ;
 			add (move (item)) ;
@@ -1141,11 +1141,11 @@ public:
 		if (range_.length () == 0)
 			return ;
 		auto rax = RefBuffer<INDEX> (self.mRange.size ()) ;
-		for (auto &&i : range_.range ()) {
+		for (auto &&i : range_.iter ()) {
 			INDEX ix = range_[i] ;
 			rax[i] = self.mRange[ix] ;
 		}
-		for (auto &&i : iter (range_.length () ,self.mRange.size ()))
+		for (auto &&i : range (range_.length () ,self.mRange.size ()))
 			rax[i] = NONE ;
 		self.mRange = move (rax) ;
 	}
@@ -1196,7 +1196,7 @@ public:
 			return ;
 		assert (r2x <= r1x) ;
 		self.mRange.resize (r1x) ;
-		for (auto &&i : iter (r2x ,r1x)) {
+		for (auto &&i : range (r2x ,r1x)) {
 			self.mRange[i] = NONE ;
 		}
 	}
@@ -1229,7 +1229,7 @@ public:
 		auto rax = from_initializer_list (params ,holder) ;
 		initialize (holder ,rax.size ()) ;
 		const auto r1x = RFat<ReflectAssign> (holder) ;
-		for (auto &&i : iter (0 ,rax.size ())) {
+		for (auto &&i : range (0 ,rax.size ())) {
 			BoxHolder::hold (item)->initialize (holder) ;
 			r1x->assign (BoxHolder::hold (item)->ref ,rax[i]) ;
 			add (move (item) ,NONE) ;
@@ -1354,7 +1354,7 @@ public:
 			if ifdo (TRUE) {
 				self.mRange = RefBuffer<INDEX> (self.mWrite) ;
 				INDEX ix = self.mRoot ;
-				for (auto &&i : iter (0 ,self.mWrite)) {
+				for (auto &&i : range (0 ,self.mWrite)) {
 					assert (ix != NONE) ;
 					self.mRange[i] = ix ;
 					ix = rax.mList.bt (ix).mDown ;
@@ -1370,7 +1370,7 @@ public:
 			}
 			if ifdo (TRUE) {
 				INDEX ix = 0 ;
-				for (auto &&i : iter (1 ,self.mWrite)) {
+				for (auto &&i : range (1 ,self.mWrite)) {
 					const auto r5x = r2x->equal (rax.mList[self.mRange[ix]] ,rax.mList[self.mRange[i]]) ;
 					if (r5x)
 						continue ;
@@ -1380,12 +1380,12 @@ public:
 				ix++ ;
 				//@warn: length would be decresed due to remove the same item
 				self.mWrite = ix ;
-				for (auto &&i : iter (self.mWrite ,self.mRange.size ()))
+				for (auto &&i : range (self.mWrite ,self.mRange.size ()))
 					self.mRange[i] = NONE ;
 			}
 			if ifdo (TRUE) {
 				self.mRoot = self.mRange[0] ;
-				for (auto &&i : iter (0 ,self.mWrite - 1)) {
+				for (auto &&i : range (0 ,self.mWrite - 1)) {
 					rax.mList.bt (self.mRange[i]).mDown = self.mRange[i + 1] ;
 				}
 				INDEX ix = self.mRange[self.mWrite - 1] ;
@@ -1427,7 +1427,7 @@ public:
 		auto rax = from_initializer_list (params ,holder) ;
 		initialize (holder ,rax.size ()) ;
 		const auto r1x = RFat<ReflectAssign> (holder) ;
-		for (auto &&i : iter (0 ,rax.size ())) {
+		for (auto &&i : range (0 ,rax.size ())) {
 			BoxHolder::hold (item)->initialize (holder) ;
 			r1x->assign (BoxHolder::hold (item)->ref ,rax[i]) ;
 			add (move (item) ,NONE) ;
@@ -2025,7 +2025,7 @@ public:
 		auto rax = from_initializer_list (params ,holder) ;
 		initialize (holder ,rax.size ()) ;
 		const auto r1x = RFat<ReflectAssign> (holder) ;
-		for (auto &&i : iter (0 ,rax.size ())) {
+		for (auto &&i : range (0 ,rax.size ())) {
 			BoxHolder::hold (item)->initialize (holder) ;
 			r1x->assign (BoxHolder::hold (item)->ref ,rax[i]) ;
 			add (move (item) ,NONE) ;
@@ -2191,9 +2191,9 @@ public:
 		if (r2x == r1x)
 			return ;
 		self.mRange = RefBuffer<INDEX> (r1x) ;
-		for (auto &&i : iter (0 ,r1x))
+		for (auto &&i : range (0 ,r1x))
 			self.mRange[i] = NONE ;
-		for (auto &&i : iter (0 ,self.mSet.size ())) {
+		for (auto &&i : range (0 ,self.mSet.size ())) {
 			if (i == curr)
 				continue ;
 			if (!self.mSet.used (i))
@@ -2227,7 +2227,7 @@ public:
 		auto rax = from_initializer_list (params ,r1x) ;
 		initialize (size_) ;
 		const auto r2x = RFat<ReflectAssign> (r1x) ;
-		for (auto &&i : iter (0 ,rax.size ())) {
+		for (auto &&i : range (0 ,rax.size ())) {
 			BoxHolder::hold (item)->initialize (r1x) ;
 			r2x->assign (BoxHolder::hold (item)->ref ,rax[i]) ;
 			add (move (item)) ;
@@ -2240,7 +2240,7 @@ public:
 		if (r1x == 0)
 			return ;
 		initialize (r1x) ;
-		for (auto &&i : iter (0 ,that.mSet.size ()))
+		for (auto &&i : range (0 ,that.mSet.size ()))
 			self.mSet[i] = that.mSet[i] ;
 	}
 
@@ -2256,7 +2256,7 @@ public:
 
 	LENGTH length () const override {
 		LENGTH ret = 0 ;
-		for (auto &&i : iter (0 ,self.mSet.size ()))
+		for (auto &&i : range (0 ,self.mSet.size ()))
 			ret += ByteProc::popcount (self.mSet[i]) ;
 		return move (ret) ;
 	}
@@ -2328,7 +2328,7 @@ public:
 		const auto r2x = that.mSet.size () ;
 		if (r1x != r2x)
 			return FALSE ;
-		for (auto &&i : iter (0 ,r1x)) {
+		for (auto &&i : range (0 ,r1x)) {
 			const auto r3x = inline_equal (self.mSet[i] ,that.mSet[i]) ;
 			if (!r3x)
 				return r3x ;
@@ -2342,7 +2342,7 @@ public:
 		const auto r3x = inline_compr (r1x ,r2x) ;
 		if (r3x != ZERO)
 			return r3x ;
-		for (auto &&i : iter (0 ,r1x)) {
+		for (auto &&i : range (0 ,r1x)) {
 			const auto r4x = inline_compr (self.mSet[i] ,that.mSet[i]) ;
 			if (r4x != ZERO)
 				return r4x ;
@@ -2353,7 +2353,7 @@ public:
 	void visit (VREF<FriendVisitor> visitor) const override {
 		visitor.enter () ;
 		const auto r1x = self.mSet.size () ;
-		for (auto &&i : iter (0 ,r1x)) {
+		for (auto &&i : range (0 ,r1x)) {
 			visitor.push (self.mSet[i]) ;
 		}
 		visitor.leave () ;
@@ -2382,7 +2382,7 @@ public:
 	}
 
 	void fill (CREF<BYTE> item) override {
-		for (auto &&i : iter (0 ,self.mSet.size ())) {
+		for (auto &&i : range (0 ,self.mSet.size ())) {
 			self.mSet[i] = BYTE (0X00) ;
 		}
 		check_mask (self) ;
@@ -2394,7 +2394,7 @@ public:
 		const auto r2x = BitSetHolder::hold (that)->size () ;
 		assert (r1x == r2x) ;
 		BitSetHolder::hold (ret)->initialize (r1x) ;
-		for (auto &&i : iter (0 ,self.mSet.size ())) {
+		for (auto &&i : range (0 ,self.mSet.size ())) {
 			ret.mSet[i] = self.mSet[i] & that.mSet[i] ;
 		}
 		check_mask (ret) ;
@@ -2407,7 +2407,7 @@ public:
 		const auto r2x = BitSetHolder::hold (that)->size () ;
 		assert (r1x == r2x) ;
 		BitSetHolder::hold (ret)->initialize (r1x) ;
-		for (auto &&i : iter (0 ,self.mSet.size ())) {
+		for (auto &&i : range (0 ,self.mSet.size ())) {
 			ret.mSet[i] = self.mSet[i] | that.mSet[i] ;
 		}
 		check_mask (ret) ;
@@ -2420,7 +2420,7 @@ public:
 		const auto r2x = BitSetHolder::hold (that)->size () ;
 		assert (r1x == r2x) ;
 		BitSetHolder::hold (ret)->initialize (r1x) ;
-		for (auto &&i : iter (0 ,self.mSet.size ())) {
+		for (auto &&i : range (0 ,self.mSet.size ())) {
 			ret.mSet[i] = self.mSet[i] ^ that.mSet[i] ;
 		}
 		check_mask (ret) ;
@@ -2433,7 +2433,7 @@ public:
 		const auto r2x = BitSetHolder::hold (that)->size () ;
 		assert (r1x == r2x) ;
 		BitSetHolder::hold (ret)->initialize (r1x) ;
-		for (auto &&i : iter (0 ,self.mSet.size ())) {
+		for (auto &&i : range (0 ,self.mSet.size ())) {
 			ret.mSet[i] = self.mSet[i] & ~that.mSet[i] ;
 		}
 		check_mask (ret) ;
@@ -2444,7 +2444,7 @@ public:
 		BitSetLayout ret ;
 		const auto r1x = size () ;
 		BitSetHolder::hold (ret)->initialize (r1x) ;
-		for (auto &&i : iter (0 ,self.mSet.size ())) {
+		for (auto &&i : range (0 ,self.mSet.size ())) {
 			ret.mSet[i] = ~self.mSet[i] ;
 		}
 		check_mask (ret) ;

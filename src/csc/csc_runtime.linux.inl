@@ -137,7 +137,7 @@ public:
 		rax >> GAP ;
 		rax >> BlankText::from (rbx) ;
 		assume (rbx.length () == 1) ;
-		for (auto &&i : iter (0 ,18)) {
+		for (auto &&i : range (0 ,18)) {
 			noop (i) ;
 			rax >> GAP ;
 			rax >> BlankText::from (rbx) ;
