@@ -641,7 +641,7 @@ public:
 		if (self.mIndex == NONE)
 			return ;
 		self.mSetter (self.mIndex ,ref) ;
-		self.mGetter (self.mIndex ,ref) ;
+		self.mIndex = NONE ;
 	}
 } ;
 
