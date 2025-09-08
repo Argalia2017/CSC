@@ -177,8 +177,8 @@ public:
 		ImageHolder::hold (thiz)->initialize (BufferUnknownBinder<A> () ,move (that)) ;
 	}
 
-	explicit Image (CREF<ImageShape> shape) {
-		ImageHolder::hold (thiz)->initialize (BufferUnknownBinder<A> () ,shape.mCX ,shape.mCY ,SIZE_OF<A>::expr) ;
+	explicit Image (CREF<ImageShape> shape_) {
+		ImageHolder::hold (thiz)->initialize (BufferUnknownBinder<A> () ,shape_.mCX ,shape_.mCY ,SIZE_OF<A>::expr) ;
 	}
 
 	explicit Image (CREF<LENGTH> cx_ ,CREF<LENGTH> cy_) {
@@ -245,8 +245,8 @@ public:
 		return ImageHolder::hold (thiz)->reset () ;
 	}
 
-	void reset (CREF<ImageShape> shape) {
-		return ImageHolder::hold (thiz)->reset (shape.mBX ,shape.mBY ,shape.mCX ,shape.mCY) ;
+	void reset (CREF<ImageShape> shape_) {
+		return ImageHolder::hold (thiz)->reset (shape_.mBX ,shape_.mBY ,shape_.mCX ,shape_.mCY) ;
 	}
 
 	void reset (CREF<LENGTH> bx_ ,CREF<LENGTH> by_ ,CREF<LENGTH> cx_ ,CREF<LENGTH> cy_) {
@@ -293,7 +293,7 @@ public:
 		return RowProxy<CREF<Image>> (thiz ,y) ;
 	}
 
-	PixelIterator range () const {
+	PixelIterator iter () const {
 		return PixelIterator (0 ,cx () ,0 ,cy ()) ;
 	}
 
@@ -386,11 +386,10 @@ struct TensorDataType {
 } ;
 
 struct TensorLayout {
-	RefBuffer<BYTE> mTensor ;
-	LENGTH mOffset ;
+	Ref<RefBuffer<BYTE>> mTensor ;
 	LENGTH mWidth ;
 	Just<TensorDataType> mType ;
-	Buffer5<LENGTH> mShape ;
+	Buffer5<LENGTH> mStride ;
 } ;
 
 struct TensorHolder implement Interface {
@@ -400,26 +399,19 @@ struct TensorHolder implement Interface {
 	virtual void initialize (CREF<LENGTH> size_ ,CREF<Just<TensorDataType>> type_) = 0 ;
 	virtual LENGTH size () const = 0 ;
 	virtual Just<TensorDataType> type () const = 0 ;
-	virtual LENGTH cx () const = 0 ;
-	virtual LENGTH cy () const = 0 ;
-	virtual LENGTH cz () const = 0 ;
-	virtual LENGTH cw () const = 0 ;
+	virtual LENGTH shape (CREF<INDEX> index) const = 0 ;
 	virtual TensorLayout recast (CREF<Just<TensorDataType>> type_) = 0 ;
 	virtual void reset () = 0 ;
-	virtual void reset (CREF<LENGTH> cx_ ,CREF<LENGTH> cy_ ,CREF<LENGTH> cz_ ,CREF<LENGTH> cw_) = 0 ;
-	virtual VREF<Pointer> ref_m () leftvalue = 0 ;
-	virtual CREF<Pointer> ref_m () const leftvalue = 0 ;
-	virtual Ref<RefBuffer<BYTE>> borrow () leftvalue = 0 ;
+	virtual void reset (CREF<WrapperLayout> shape_) = 0 ;
 	virtual Ref<RefBuffer<BYTE>> borrow () const leftvalue = 0 ;
 } ;
 
 class Tensor implement TensorLayout {
 protected:
 	using TensorLayout::mTensor ;
-	using TensorLayout::mOffset ;
 	using TensorLayout::mWidth ;
 	using TensorLayout::mType ;
-	using TensorLayout::mShape ;
+	using TensorLayout::mStride ;
 
 public:
 	implicit Tensor () = default ;
@@ -436,20 +428,8 @@ public:
 		return TensorHolder::hold (thiz)->type () ;
 	}
 
-	LENGTH cx () const {
-		return TensorHolder::hold (thiz)->cx () ;
-	}
-
-	LENGTH cy () const {
-		return TensorHolder::hold (thiz)->cy () ;
-	}
-
-	LENGTH cz () const {
-		return TensorHolder::hold (thiz)->cz () ;
-	}
-
-	LENGTH cw () const {
-		return TensorHolder::hold (thiz)->cw () ;
+	LENGTH shape (CREF<INDEX> index) const {
+		return TensorHolder::hold (thiz)->shape (index) ;
 	}
 
 	Tensor recast (CREF<Just<TensorDataType>> type_) {
@@ -461,20 +441,9 @@ public:
 		return TensorHolder::hold (thiz)->reset () ;
 	}
 
-	void reset (CREF<LENGTH> cx_ ,CREF<LENGTH> cy_ ,CREF<LENGTH> cz_ ,CREF<LENGTH> cw_) {
-		return TensorHolder::hold (thiz)->reset (cx_ ,cy_ ,cz_ ,cw_) ;
-	}
-
-	VREF<ARR<STRA>> ref_m () leftvalue {
-		return TensorHolder::hold (thiz)->ref ;
-	}
-
-	CREF<ARR<STRA>> ref_m () const leftvalue {
-		return TensorHolder::hold (thiz)->ref ;
-	}
-
-	Ref<RefBuffer<BYTE>> borrow () leftvalue {
-		return TensorHolder::hold (thiz)->borrow () ;
+	template <class...ARG1>
+	void reset (CREF<ARG1>...shape_) {
+		return TensorHolder::hold (thiz)->reset (MakeWrapper (LENGTH (shape_)...)) ;
 	}
 
 	Ref<RefBuffer<BYTE>> borrow () const leftvalue {
@@ -491,10 +460,6 @@ public:
 		return sadd (that) ;
 	}
 
-	forceinline void operator+= (CREF<Tensor> that) {
-		thiz = sadd (that) ;
-	}
-
 	Tensor ssub (CREF<Tensor> that) const {
 		Tensor ret ;
 		unimplemented () ;
@@ -503,10 +468,6 @@ public:
 
 	forceinline Tensor operator- (CREF<Tensor> that) const {
 		return ssub (that) ;
-	}
-
-	forceinline void operator-= (CREF<Tensor> that) {
-		thiz = ssub (that) ;
 	}
 
 	Tensor smul (CREF<Tensor> that) const {
@@ -519,10 +480,6 @@ public:
 		return smul (that) ;
 	}
 
-	forceinline void operator*= (CREF<Tensor> that) {
-		thiz = smul (that) ;
-	}
-
 	Tensor sdiv (CREF<Tensor> that) const {
 		Tensor ret ;
 		unimplemented () ;
@@ -533,10 +490,6 @@ public:
 		return sdiv (that) ;
 	}
 
-	forceinline void operator/= (CREF<Tensor> that) {
-		thiz = sdiv (that) ;
-	}
-
 	Tensor smod (CREF<Tensor> that) const {
 		Tensor ret ;
 		unimplemented () ;
@@ -545,10 +498,6 @@ public:
 
 	forceinline Tensor operator% (CREF<Tensor> that) const {
 		return smod (that) ;
-	}
-
-	forceinline void operator%= (CREF<Tensor> that) {
-		thiz = smod (that) ;
 	}
 
 	Tensor sabs () const {
@@ -625,7 +574,7 @@ public:
 struct KMMatchLayout {
 	LENGTH mSize ;
 	FLT32 mThreshold ;
-	Array<FLT32> mLove ;
+	Ref<Image<FLT32>> mLove ;
 	Array<FLT32> mUser ;
 	Array<FLT32> mWork ;
 	BitSet mUserVisit ;
@@ -641,7 +590,7 @@ struct KMMatchHolder implement Interface {
 	virtual void initialize (CREF<LENGTH> size_) = 0 ;
 	virtual void set_threshold (CREF<FLT64> threshold) = 0 ;
 	virtual LENGTH size () const = 0 ;
-	virtual Array<INDEX> sort (RREF<Array<FLT32>> love) = 0 ;
+	virtual Array<INDEX> sort (CREF<Image<FLT32>> love) = 0 ;
 } ;
 
 class KMMatch implement KMMatchLayout {
@@ -671,8 +620,8 @@ public:
 		return KMMatchHolder::hold (thiz)->size () ;
 	}
 
-	Array<INDEX> sort (RREF<Array<FLT32>> love) {
-		return KMMatchHolder::hold (thiz)->sort (move (love)) ;
+	Array<INDEX> sort (CREF<Image<FLT32>> love) {
+		return KMMatchHolder::hold (thiz)->sort (love) ;
 	}
 } ;
 } ;

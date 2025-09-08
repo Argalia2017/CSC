@@ -137,7 +137,7 @@ public:
 		rax >> GAP ;
 		rax >> BlankText::from (rbx) ;
 		assume (rbx.length () == 1) ;
-		for (auto &&i : iter (0 ,18)) {
+		for (auto &&i : range (0 ,18)) {
 			noop (i) ;
 			rax >> GAP ;
 			rax >> BlankText::from (rbx) ;
@@ -264,11 +264,8 @@ public:
 	}
 
 	static VREF<SingletonRoot> root_ptr () {
-		return memorize ([&] () {
-			SingletonRoot ret ;
-			ret.mPin.pin (ret) ;
-			return move (ret) ;
-		}).mPin.ref ;
+		static auto mInstance = SingletonRoot () ;
+		return mInstance ;
 	}
 
 	void sync_local () {
@@ -313,7 +310,6 @@ public:
 		} ,[&] (VREF<csc_handle_t> me) {
 			shm_unlink (DEF<const char *> (me)) ;
 		}) ;
-		root_ptr ().mMutex = NULL ;
 		self.mLocal.mReserve1 = QUAD (self.mUid) ;
 		self.mLocal.mAddress1 = QUAD (address (root_ptr ())) ;
 		self.mLocal.mReserve2 = abi_reserve () ;
@@ -434,7 +430,8 @@ public:
 		assert (layout != NONE) ;
 		assume (self.mRoot.exist ()) ;
 		Scope<Mutex> anonymous (self.mRoot->mMutex) ;
-		self.mRoot->mPin.ref.mClazzSet.add (clazz ,layout) ;
+		const auto r1x = Pin<Set<Clazz>> (self.mRoot->mClazzSet) ;
+		r1x->add (clazz ,layout) ;
 	}
 } ;
 

@@ -997,7 +997,6 @@ struct PointCloudKDTreeHolder implement Interface {
 class PointCloudKDTree implement OfThis<AutoRef<PointCloudKDTreeLayout>> {} ;
 
 struct PointCloudLayout {
-	Pin<PointCloudLayout> mPin ;
 	LENGTH mRank ;
 	Ref<Array<Pointer>> mPointCloud ;
 	Matrix mWorld ;
@@ -1010,6 +1009,7 @@ struct PointCloudHolder implement Interface {
 
 	virtual void initialize (RREF<Ref<Array<Point2F>>> pointcloud) = 0 ;
 	virtual void initialize (RREF<Ref<Array<Point3F>>> pointcloud) = 0 ;
+	virtual void initialize (RREF<Ref<Array<Vector>>> pointcloud) = 0 ;
 	virtual LENGTH size () const = 0 ;
 	virtual void get (CREF<INDEX> index ,VREF<Vector> item) const = 0 ;
 	virtual Vector center () const = 0 ;
@@ -1023,7 +1023,6 @@ struct PointCloudHolder implement Interface {
 
 class PointCloud implement PointCloudLayout {
 protected:
-	using PointCloudLayout::mPin ;
 	using PointCloudLayout::mRank ;
 	using PointCloudLayout::mPointCloud ;
 	using PointCloudLayout::mWorld ;
@@ -1037,6 +1036,10 @@ public:
 	}
 
 	explicit PointCloud (RREF<Ref<Array<Point3F>>> pointcloud) {
+		PointCloudHolder::hold (thiz)->initialize (move (pointcloud)) ;
+	}
+
+	explicit PointCloud (RREF<Ref<Array<Vector>>> pointcloud) {
 		PointCloudHolder::hold (thiz)->initialize (move (pointcloud)) ;
 	}
 

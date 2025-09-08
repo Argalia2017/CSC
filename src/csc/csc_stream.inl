@@ -39,7 +39,7 @@ public:
 
 	BOOL is_blank (CREF<STRU32> str) const override {
 		const auto r1x = self.mBlankSlice ;
-		for (auto &&i : iter (0 ,r1x.size ())) {
+		for (auto &&i : range (0 ,r1x.size ())) {
 			if (r1x[i] == str)
 				return TRUE ;
 		}
@@ -70,7 +70,7 @@ public:
 
 	BOOL is_punct (CREF<STRU32> str) const override {
 		const auto r1x = self.mPunctSlice ;
-		for (auto &&i : iter (0 ,r1x.size ())) {
+		for (auto &&i : range (0 ,r1x.size ())) {
 			if (r1x[i] == str)
 				return TRUE ;
 		}
@@ -158,7 +158,7 @@ public:
 
 	BOOL is_ctrl (CREF<STRU32> str) const override {
 		const auto r1x = self.mEscapeCtrlSlice ;
-		for (auto &&i : iter (0 ,r1x.size ())) {
+		for (auto &&i : range (0 ,r1x.size ())) {
 			if (r1x[i] == str)
 				return TRUE ;
 		}
@@ -168,7 +168,7 @@ public:
 	STRU32 word_from_ctrl (CREF<STRU32> str) const override {
 		const auto r1x = self.mEscapeWordSlice ;
 		const auto r2x = self.mEscapeCtrlSlice ;
-		for (auto &&i : iter (0 ,r2x.size ())) {
+		for (auto &&i : range (0 ,r2x.size ())) {
 			if (r2x[i] == str)
 				return r1x[i] ;
 		}
@@ -179,7 +179,7 @@ public:
 	STRU32 ctrl_from_word (CREF<STRU32> str) const override {
 		const auto r1x = self.mEscapeWordSlice ;
 		const auto r2x = self.mEscapeCtrlSlice ;
-		for (auto &&i : iter (0 ,r1x.size ())) {
+		for (auto &&i : range (0 ,r1x.size ())) {
 			if (r1x[i] == str)
 				return r2x[i] ;
 		}
@@ -311,7 +311,7 @@ public:
 	template <class ARG1>
 	forceinline void read_byte_impl (VREF<ARG1> item) {
 		auto rax = Buffer<BYTE ,SIZE_OF<ARG1>> () ;
-		for (auto &&i : iter (0 ,rax.size ())) {
+		for (auto &&i : range (0 ,rax.size ())) {
 			read (rax[i]) ;
 		}
 		item = bitwise[TYPE<ARG1>::expr] (rax) ;
@@ -339,7 +339,7 @@ public:
 
 	void read (CREF<Slice> item) override {
 		auto rax = STRU32 () ;
-		for (auto &&i : iter (0 ,item.size ())) {
+		for (auto &&i : range (0 ,item.size ())) {
 			assume (inline_between (INDEX (item[i]) ,0 ,128)) ;
 			read (rax) ;
 			assume (rax == item[i]) ;
@@ -370,7 +370,7 @@ public:
 	forceinline void read_string_impl (VREF<String<ARG1>> item) {
 		item.clear () ;
 		auto rax = STRU32 () ;
-		for (auto &&i : iter (0 ,item.size ())) {
+		for (auto &&i : range (0 ,item.size ())) {
 			read (rax) ;
 			item[i] = ARG1 (rax) ;
 		}
@@ -677,18 +677,8 @@ public:
 	template <class ARG1>
 	forceinline void read_byte_impl (VREF<ARG1> item) {
 		auto rax = STRU32 () ;
-		if ifdo (TRUE) {
-			read (rax) ;
-			assume (rax == STRU32 ('0')) ;
-			read (rax) ;
-			if (rax == STRU32 ('x'))
-				discard ;
-			if (rax == STRU32 ('X'))
-				discard ;
-			assume (FALSE) ;
-		}
 		item = ARG1 (0X00) ;
-		for (auto &&i : iter (0 ,SIZE_OF<ARG1>::expr)) {
+		for (auto &&i : range (0 ,SIZE_OF<ARG1>::expr)) {
 			noop (i) ;
 			read (rax) ;
 			const auto r1x = ARG1 (StreamProc::hex_from_str (rax)) ;
@@ -754,7 +744,7 @@ public:
 
 	void read (CREF<Slice> item) override {
 		auto rax = STRU32 () ;
-		for (auto &&i : iter (0 ,item.size ())) {
+		for (auto &&i : range (0 ,item.size ())) {
 			assume (inline_between (INDEX (item[i]) ,0 ,128)) ;
 			read (rax) ;
 			assume (rax == item[i]) ;
@@ -785,7 +775,7 @@ public:
 	forceinline void read_string_impl (VREF<String<ARG1>> item) {
 		item.clear () ;
 		auto rax = STRU32 () ;
-		for (auto &&i : iter (0 ,item.size ())) {
+		for (auto &&i : range (0 ,item.size ())) {
 			read (rax) ;
 			item[i] = ARG1 (rax) ;
 		}
@@ -970,7 +960,7 @@ public:
 			rax = ByteProc::reverse (rax) ;
 		}
 		const auto r1x = bitwise[TYPE<Buffer<BYTE ,SIZE_OF<ARG1>>>::expr] (rax) ;
-		for (auto &&i : iter (0 ,r1x.size ())) {
+		for (auto &&i : range (0 ,r1x.size ())) {
 			write (r1x[i]) ;
 		}
 	}
@@ -989,7 +979,7 @@ public:
 	}
 
 	void write (CREF<Slice> item) override {
-		for (auto &&i : iter (0 ,item.size ())) {
+		for (auto &&i : range (0 ,item.size ())) {
 			assume (inline_between (INDEX (item[i]) ,0 ,128)) ;
 			write (item[i]) ;
 		}
@@ -1018,7 +1008,7 @@ public:
 	template <class ARG1>
 	forceinline void write_string_impl (CREF<String<ARG1>> item) {
 		const auto r1x = item.length () ;
-		for (auto &&i : iter (0 ,r1x)) {
+		for (auto &&i : range (0 ,r1x)) {
 			const auto r2x = STRU32 (item[i]) ;
 			write (r2x) ;
 		}
@@ -1143,7 +1133,7 @@ public:
 			auto rbx = WriteValueBuffer () ;
 			rbx.mWrite = rbx.mBuffer.size () ;
 			write_value (rax ,rbx) ;
-			for (auto &&i : iter (rbx.mWrite ,rbx.mBuffer.size ()))
+			for (auto &&i : range (rbx.mWrite ,rbx.mBuffer.size ()))
 				write (STRU32 (rbx.mBuffer[i])) ;
 		}
 	}
@@ -1161,7 +1151,7 @@ public:
 		}
 		if ifdo (act) {
 			//@info: case 'xxx'
-			for (auto &&i : iter (0 ,r1x)) {
+			for (auto &&i : range (0 ,r1x)) {
 				noop (i) ;
 				wvb.mWrite-- ;
 				wvb.mBuffer[wvb.mWrite] = STRU8 (StreamProc::str_from_hex (fexp10.mMantissa % 10)) ;
@@ -1202,7 +1192,7 @@ public:
 			auto rbx = WriteValueBuffer () ;
 			rbx.mWrite = rbx.mBuffer.size () ;
 			write_float (rax ,rbx) ;
-			for (auto &&i : iter (rbx.mWrite ,rbx.mBuffer.size ()))
+			for (auto &&i : range (rbx.mWrite ,rbx.mBuffer.size ()))
 				write (STRU32 (rbx.mBuffer[i])) ;
 		}
 	}
@@ -1223,7 +1213,7 @@ public:
 				fexp10.mPrecision-- ;
 			}
 			const auto r2x = fexp10.mPrecision - r1x ;
-			for (auto &&i : iter (0 ,r2x - 1)) {
+			for (auto &&i : range (0 ,r2x - 1)) {
 				noop (i) ;
 				fexp10.mMantissa /= 10 ;
 				fexp10.mExponent++ ;
@@ -1263,14 +1253,14 @@ public:
 			wvb.mWrite-- ;
 			wvb.mBuffer[wvb.mWrite] = STRU32 ('E') ;
 			const auto r7x = inline_max (LENGTH (r4x - 1 - r1x) ,0) ;
-			for (auto &&i : iter (0 ,r7x)) {
+			for (auto &&i : range (0 ,r7x)) {
 				noop (i) ;
 				fexp10.mMantissa /= 10 ;
 				fexp10.mExponent++ ;
 				fexp10.mPrecision-- ;
 			}
 			INDEX ix = wvb.mWrite - 1 ;
-			for (auto &&i : iter (r7x ,r4x - 1)) {
+			for (auto &&i : range (r7x ,r4x - 1)) {
 				noop (i) ;
 				wvb.mWrite-- ;
 				wvb.mBuffer[wvb.mWrite] = STRU8 (StreamProc::str_from_hex (fexp10.mMantissa % 10)) ;
@@ -1292,12 +1282,12 @@ public:
 			//@info: case 'xxx000'
 			if (r5x < 0)
 				discard ;
-			for (auto &&i : iter (0 ,r5x)) {
+			for (auto &&i : range (0 ,r5x)) {
 				noop (i) ;
 				wvb.mWrite-- ;
 				wvb.mBuffer[wvb.mWrite] = STRU32 ('0') ;
 			}
-			for (auto &&i : iter (0 ,r4x)) {
+			for (auto &&i : range (0 ,r4x)) {
 				noop (i) ;
 				wvb.mWrite-- ;
 				wvb.mBuffer[wvb.mWrite] = STRU8 (StreamProc::str_from_hex (fexp10.mMantissa % 10)) ;
@@ -1313,14 +1303,14 @@ public:
 			if (r5x >= 0)
 				discard ;
 			const auto r8x = inline_max (LENGTH (-r5x - r1x) ,0) ;
-			for (auto &&i : iter (0 ,r8x)) {
+			for (auto &&i : range (0 ,r8x)) {
 				noop (i) ;
 				fexp10.mMantissa /= 10 ;
 				fexp10.mExponent++ ;
 				fexp10.mPrecision-- ;
 			}
 			INDEX ix = wvb.mWrite - 1 ;
-			for (auto &&i : iter (r8x ,-r5x)) {
+			for (auto &&i : range (r8x ,-r5x)) {
 				noop (i) ;
 				wvb.mWrite-- ;
 				wvb.mBuffer[wvb.mWrite] = STRU8 (StreamProc::str_from_hex (fexp10.mMantissa % 10)) ;
@@ -1332,7 +1322,7 @@ public:
 			wvb.mWrite-- ;
 			wvb.mBuffer[wvb.mWrite] = STRU32 ('.') ;
 			wvb.mWrite += LENGTH (wvb.mBuffer[ix] == STRU32 ('.')) ;
-			for (auto &&i : iter (0 ,r4x + r5x)) {
+			for (auto &&i : range (0 ,r4x + r5x)) {
 				noop (i) ;
 				wvb.mWrite-- ;
 				wvb.mBuffer[wvb.mWrite] = STRU8 (StreamProc::str_from_hex (fexp10.mMantissa % 10)) ;
@@ -1348,14 +1338,14 @@ public:
 			if (r5x >= 0)
 				discard ;
 			const auto r9x = inline_max (LENGTH (-r5x - r1x) ,ZERO) ;
-			for (auto &&i : iter (0 ,r9x)) {
+			for (auto &&i : range (0 ,r9x)) {
 				noop (i) ;
 				fexp10.mMantissa /= 10 ;
 				fexp10.mExponent++ ;
 				fexp10.mPrecision-- ;
 			}
 			INDEX ix = wvb.mWrite - 1 ;
-			for (auto &&i : iter (r9x ,r4x)) {
+			for (auto &&i : range (r9x ,r4x)) {
 				noop (i) ;
 				wvb.mWrite-- ;
 				wvb.mBuffer[wvb.mWrite] = STRU8 (StreamProc::str_from_hex (fexp10.mMantissa % 10)) ;
@@ -1365,7 +1355,7 @@ public:
 				fexp10.mPrecision-- ;
 			}
 			const auto r10x = inline_max (r9x ,r4x) ;
-			for (auto &&i : iter (r10x ,-r5x)) {
+			for (auto &&i : range (r10x ,-r5x)) {
 				noop (i) ;
 				wvb.mWrite-- ;
 				wvb.mBuffer[wvb.mWrite] = STRU32 ('0') ;
@@ -1409,9 +1399,8 @@ public:
 
 	template <class ARG1>
 	forceinline void write_byte_impl (CREF<ARG1> item) {
-		write (slice ("0X")) ;
 		INDEX ix = SIZE_OF<ARG1>::expr * 8 ;
-		for (auto &&i : iter (0 ,SIZE_OF<ARG1>::expr)) {
+		for (auto &&i : range (0 ,SIZE_OF<ARG1>::expr)) {
 			noop (i) ;
 			ix -= 4 ;
 			const auto r1x = INDEX ((item >> ix) & ARG1 (0X0F)) ;
@@ -1459,7 +1448,7 @@ public:
 	}
 
 	void write (CREF<Slice> item) override {
-		for (auto &&i : iter (0 ,item.size ())) {
+		for (auto &&i : range (0 ,item.size ())) {
 			assume (inline_between (INDEX (item[i]) ,0 ,128)) ;
 			write (item[i]) ;
 		}
@@ -1488,7 +1477,7 @@ public:
 	template <class ARG1>
 	forceinline void write_string_impl (CREF<String<ARG1>> item) {
 		const auto r1x = item.length () ;
-		for (auto &&i : iter (0 ,r1x)) {
+		for (auto &&i : range (0 ,r1x)) {
 			const auto r2x = STRU32 (item[i]) ;
 			write (r2x) ;
 		}
@@ -1541,13 +1530,12 @@ exports CFat<TextWriterHolder> TextWriterHolder::hold (CREF<TextWriterLayout> th
 class FormatImplHolder final implement Fat<FormatHolder ,FormatLayout> {
 public:
 	void initialize (CREF<Slice> format) override {
-		self.mPin.pin (self) ;
 		self.mFormat = format ;
 	}
 
 	void friend_write (VREF<FriendWriter> writer) const override {
 		auto rax = FLAG (0) ;
-		for (auto &&i : iter (0 ,self.mFormat.size ())) {
+		for (auto &&i : range (0 ,self.mFormat.size ())) {
 			auto act = TRUE ;
 			if ifdo (act) {
 				if (rax != FLAG (0))
@@ -1580,7 +1568,7 @@ public:
 					discard ;
 				if (self.mFormat[i] != STRU32 ('0'))
 					discard ;
-				for (auto &&j : iter (0 ,self.mWrite)) {
+				for (auto &&j : range (0 ,self.mWrite)) {
 					const auto r3x = keep[TYPE<CFat<FriendFormat>>::expr] (self.mParams[j]) ;
 					r3x->friend_write (writer) ;
 				}
@@ -1612,14 +1600,15 @@ public:
 	}
 
 	void once (CREF<WrapperLayout> params) const override {
+		const auto r1x = Pin<BufferX<FatLayout>> (self.mParams) ;
+		const auto r2x = Pin<LENGTH> (self.mWrite) ;
 		auto &&rax = keep[TYPE<Wrapper<FatLayout>>::expr] (params) ;
 		INDEX ix = 0 ;
-		for (auto &&i : iter (0 ,params.mRank)) {
-			auto rbx = rax[i] ;
-			self.mPin.ref.mParams[ix] = rbx ;
+		for (auto &&i : range (0 ,params.mRank)) {
+			r1x.ref[ix] = rax[i] ;
 			ix++ ;
 		}
-		self.mPin.ref.mWrite = ix ;
+		r2x.ref = ix ;
 	}
 } ;
 
@@ -1743,7 +1732,7 @@ public:
 		reader.reset (r1x) ;
 		item = String<STRU8> (rbx) ;
 		reader.read (rax) ;
-		for (auto &&i : iter (0 ,rbx)) {
+		for (auto &&i : range (0 ,rbx)) {
 			reader.read (rax) ;
 			if ifdo (TRUE) {
 				if (rax != STRU32 ('\\'))
@@ -1819,13 +1808,13 @@ public:
 		assert (inline_between (align ,0 ,rax.mBuffer.size ())) ;
 		rax.mWrite = rax.mBuffer.size () ;
 		auto rbx = MathProc::abs (number) ;
-		for (auto &&i : iter (0 ,align)) {
+		for (auto &&i : range (0 ,align)) {
 			noop (i) ;
 			rax.mWrite-- ;
 			rax.mBuffer[rax.mWrite] = STRU8 (STRU32 ('0') + rbx % 10) ;
 			rbx /= 10 ;
 		}
-		for (auto &&i : iter (rax.mWrite ,rax.mBuffer.size ())) {
+		for (auto &&i : range (rax.mWrite ,rax.mBuffer.size ())) {
 			writer.write (STRU32 (rax.mBuffer[i])) ;
 		}
 	}
@@ -1889,7 +1878,7 @@ public:
 		if ifdo (TRUE) {
 			if (self.mDepth >= self.mTight + self.mLastTight)
 				discard ;
-			for (auto &&i : iter (0 ,self.mDepth)) {
+			for (auto &&i : range (0 ,self.mDepth)) {
 				noop (i) ;
 				writer.write (self.mIndent) ;
 			}

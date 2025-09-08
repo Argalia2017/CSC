@@ -24,7 +24,6 @@ exports CFat<PathHolder> PathHolder::hold (CREF<PathLayout> that) {
 template class External<FileProcHolder ,FileProcLayout> ;
 
 struct FileProcLayout {
-	Pin<FileProcLayout> mPin ;
 	Mutex mMutex ;
 	List<UniqueRef<String<STR>>> mLockDirectory ;
 } ;
@@ -271,6 +270,7 @@ struct ConsoleLayout {
 	String<STR> mLogFile ;
 	String<STR> mOldLogFile ;
 	StreamFile mLogStreamFile ;
+	BOOL mDebugMode ;
 	System mCommand ;
 } ;
 

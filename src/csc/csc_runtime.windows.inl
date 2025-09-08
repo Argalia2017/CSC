@@ -223,11 +223,8 @@ public:
 	}
 
 	static VREF<SingletonRoot> root_ptr () {
-		return memorize ([&] () {
-			SingletonRoot ret ;
-			ret.mPin.pin (ret) ;
-			return move (ret) ;
-		}).mPin.ref ;
+		static auto mInstance = SingletonRoot () ;
+		return mInstance ;
 	}
 
 	void sync_local () {
@@ -388,7 +385,8 @@ public:
 		assert (layout != NONE) ;
 		assume (self.mRoot.exist ()) ;
 		Scope<Mutex> anonymous (self.mRoot->mMutex) ;
-		self.mRoot->mPin.ref.mClazzSet.add (clazz ,layout) ;
+		const auto r1x = Pin<Set<Clazz>> (self.mRoot->mClazzSet) ;
+		r1x->add (clazz ,layout) ;
 	}
 } ;
 

@@ -12,7 +12,6 @@
 
 namespace CSC {
 struct HeapMutexRoot {
-	Pin<HeapMutexRoot> mPin ;
 	Box<std::recursive_mutex> mMutex ;
 } ;
 
@@ -23,11 +22,8 @@ public:
 	}
 
 	static VREF<HeapMutexRoot> root_ptr () {
-		return memorize ([&] () {
-			HeapMutexRoot ret ;
-			ret.mPin.pin (ret) ;
-			return move (ret) ;
-		}).mPin.ref ;
+		static auto mInstance = HeapMutexRoot () ;
+		return mInstance ;
 	}
 
 	void enter () const override {
@@ -63,7 +59,6 @@ exports CFat<HeapMutexHolder> HeapMutexHolder::hold (CREF<HeapMutexLayout> that)
 class OptionalImplHolder final implement Fat<OptionalHolder ,OptionalLayout> {
 public:
 	void initialize (CREF<FLAG> code) override {
-		self.mPin.pin (self) ;
 		self.mCode = code ;
 	}
 
@@ -75,17 +70,19 @@ public:
 		return self.mCode ;
 	}
 
+	static VREF<BoxLayout> ptr (CREF<OptionalLayout> that) {
+		return Pointer::make (address (that.mValue)) ;
+	}
+
 	void get (VREF<BoxLayout> item) const override {
 		assume (exist ()) ;
-		auto &&rax = self.mPin.ref.mValue ;
-		BoxHolder::hold (item)->acquire (rax) ;
-		BoxHolder::hold (rax)->release () ;
+		BoxHolder::hold (item)->acquire (ptr (self)) ;
+		BoxHolder::hold (ptr (self))->release () ;
 	}
 
 	void set (VREF<BoxLayout> item) const override {
 		assume (!exist ()) ;
-		auto &&rax = self.mPin.ref.mValue ;
-		BoxHolder::hold (rax)->acquire (item) ;
+		BoxHolder::hold (ptr (self))->acquire (item) ;
 		BoxHolder::hold (item)->release () ;
 	}
 } ;
@@ -272,7 +269,7 @@ public:
 		const auto r2x = layout - SIZE_OF<SharedRefTree>::expr ;
 		const auto r3x = invoke ([&] () {
 			const auto r4x = r1x->type_align () / ALIGN_OF<SharedRefTree>::expr ;
-			for (auto &&i : iter (0 ,r4x)) {
+			for (auto &&i : range (0 ,r4x)) {
 				const auto r5x = r2x - i * ALIGN_OF<SharedRefTree>::expr ;
 				auto &&rax = keep[TYPE<SharedRefTree>::expr] (Pointer::make (r5x)) ;
 				if (rax.mHeader == SHADERREFIMPLLAYOUT_HEADER)
@@ -644,7 +641,7 @@ public:
 		if (self.mIndex == NONE)
 			return ;
 		self.mSetter (self.mIndex ,ref) ;
-		self.mGetter (self.mIndex ,ref) ;
+		self.mIndex = NONE ;
 	}
 } ;
 
@@ -684,7 +681,7 @@ public:
 			return ;
 		const auto r1x = inline_min (self.mWidth ,size ()) ;
 		const auto r2x = RFat<ReflectDestroy> (unknown ()) ;
-		for (auto &&i : iter (0 ,r1x)) {
+		for (auto &&i : range (0 ,r1x)) {
 			if (ptr (self ,i).mNext != USED)
 				continue ;
 			r2x->destroy (self.mAllocator.at (i) ,1) ;

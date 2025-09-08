@@ -181,49 +181,47 @@ exports CFat<RuntimeProcHolder> RuntimeProcHolder::hold (CREF<RuntimeProcLayout>
 }
 
 struct AtomicLayout {
-	Pin<AtomicLayout> mPin ;
-	std::atomic<VAL> mAtomic ;
+	Pin<std::atomic<VAL>> mAtomic ;
 } ;
 
 class AtomicImplHolder final implement Fat<AtomicHolder ,AtomicLayout> {
 public:
 	void initialize () override {
-		self.mPin.pin (self) ;
-		store (ZERO) ;
+		noop () ;
 	}
 
 	VAL fetch () const override {
-		return self.mAtomic.load (std::memory_order_relaxed) ;
+		return self.mAtomic->load (std::memory_order_relaxed) ;
 	}
 
 	void store (CREF<VAL> item) const override {
-		return self.mPin.ref.mAtomic.store (item ,std::memory_order_relaxed) ;
+		return self.mAtomic->store (item ,std::memory_order_relaxed) ;
 	}
 
 	VAL exchange (CREF<VAL> item) const override {
-		return self.mPin.ref.mAtomic.exchange (item ,std::memory_order_relaxed) ;
+		return self.mAtomic->exchange (item ,std::memory_order_relaxed) ;
 	}
 
 	BOOL change (VREF<VAL> expect ,CREF<VAL> item) const override {
-		return self.mPin.ref.mAtomic.compare_exchange_weak (expect ,item ,std::memory_order_relaxed) ;
+		return self.mAtomic->compare_exchange_weak (expect ,item ,std::memory_order_relaxed) ;
 	}
 
 	void replace (CREF<VAL> expect ,CREF<VAL> item) const override {
 		auto rax = expect ;
-		self.mPin.ref.mAtomic.compare_exchange_strong (rax ,item ,std::memory_order_relaxed) ;
+		self.mAtomic->compare_exchange_strong (rax ,item ,std::memory_order_relaxed) ;
 	}
 
 	void increase () const override {
-		self.mPin.ref.mAtomic.fetch_add (1 ,std::memory_order_relaxed) ;
+		self.mAtomic->fetch_add (1 ,std::memory_order_relaxed) ;
 	}
 
 	void decrease () const override {
-		self.mPin.ref.mAtomic.fetch_sub (1 ,std::memory_order_relaxed) ;
+		self.mAtomic->fetch_sub (1 ,std::memory_order_relaxed) ;
 	}
 } ;
 
 exports Box<AtomicLayout ,AtomicStorage> AtomicHolder::create () {
-	return Box<AtomicLayout>::make () ;
+	return Box<AtomicLayout>::zeroize () ;
 }
 
 exports VFat<AtomicHolder> AtomicHolder::hold (VREF<AtomicLayout> that) {
@@ -651,7 +649,7 @@ public:
 	}
 
 	Array<INDEX> random_shuffle (CREF<LENGTH> length_ ,CREF<LENGTH> size_) override {
-		Array<INDEX> ret = Array<INDEX>::make (iter (0 ,size_)) ;
+		Array<INDEX> ret = Array<INDEX>::make (range (0 ,size_)) ;
 		random_shuffle (length_ ,size_ ,ret) ;
 		return move (ret) ;
 	}
@@ -687,13 +685,13 @@ public:
 				discard ;
 			result.clear () ;
 			const auto r1x = random_shuffle (length_ ,size_) ;
-			for (auto &&i : iter (0 ,length_))
+			for (auto &&i : range (0 ,length_))
 				result.add (r1x[i]) ;
 		}
 		if ifdo (act) {
 			result.fill (BYTE (0XFF)) ;
 			const auto r2x = random_shuffle (size_ - length_ ,size_) ;
-			for (auto &&i : iter (size_ - length_ ,size_))
+			for (auto &&i : range (size_ - length_ ,size_))
 				result.erase (r2x[i]) ;
 		}
 	}
@@ -738,7 +736,6 @@ exports CFat<RandomHolder> RandomHolder::hold (CREF<RandomLayout> that) {
 template class External<SingletonProcHolder ,SingletonProcLayout> ;
 
 struct SingletonRoot {
-	Pin<SingletonRoot> mPin ;
 	Mutex mMutex ;
 	Set<Clazz> mClazzSet ;
 } ;
@@ -786,7 +783,6 @@ exports CFat<SingletonProcHolder> SingletonProcHolder::hold (CREF<SingletonProcL
 }
 
 struct GlobalNode {
-	Pin<GlobalNode> mPin ;
 	FLAG mHolder ;
 	AutoRef<Pointer> mValue ;
 } ;
@@ -817,7 +813,6 @@ public:
 				discard ;
 			ix = self.mThis->mGlobalList.insert () ;
 			self.mThis->mGlobalNameSet.add (name ,ix) ;
-			self.mThis->mGlobalList[ix].mPin.pin (self.mThis->mGlobalList[ix]) ;
 			self.mThis->mGlobalList[ix].mHolder = inline_vptr (holder) ;
 		}
 		self.mIndex = ix ;
@@ -860,9 +855,9 @@ public:
 	void store (RREF<AutoRef<Pointer>> item) const override {
 		Scope<Mutex> anonymous (self.mThis->mMutex) ;
 		INDEX ix = self.mIndex ;
-		auto &&rax = self.mThis->mGlobalList[ix].mPin.ref.mValue ;
-		assume (!rax.exist ()) ;
-		rax = move (item) ;
+		const auto r1x = Pin<AutoRef<Pointer>> (self.mThis->mGlobalList[ix].mValue) ;
+		assume (!r1x->exist ()) ;
+		r1x.ref = move (item) ;
 	}
 } ;
 

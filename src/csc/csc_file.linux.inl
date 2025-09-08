@@ -63,7 +63,7 @@ public:
 		self.mThis->mPathName = move (pathname) ;
 		self.mThis->mSeparator.add (NONE) ;
 		const auto r1x = self.mThis->mPathName.length () ;
-		for (auto &&i : iter (0 ,r1x)) {
+		for (auto &&i : range (0 ,r1x)) {
 			if (!is_separator (self.mThis->mPathName[i]))
 				continue ;
 			self.mThis->mSeparator.add (i) ;
@@ -95,7 +95,7 @@ public:
 	void initialize (CREF<Deque<String<STR>>> pathname) override {
 		auto rax = String<STR>::make () ;
 		INDEX ix = 0 ;
-		for (auto &&i : pathname.range ()) {
+		for (auto &&i : pathname.iter ()) {
 			if ifdo (TRUE) {
 				if (i == 0)
 					discard ;
@@ -165,7 +165,7 @@ public:
 			}
 		}
 		Array<PathLayout> ret = Array<PathLayout> (rbx.length ()) ;
-		for (auto &&i : ret.range ())
+		for (auto &&i : ret.iter ())
 			ret[i] = child (rbx[i]) ;
 		return move (ret) ;
 	}
@@ -200,7 +200,7 @@ public:
 		}
 		assume (rbx.length () == size_) ;
 		Array<PathLayout> ret = Array<PathLayout> (size_) ;
-		for (auto &&i : iter (0 ,size_))
+		for (auto &&i : range (0 ,size_))
 			ret[i] = child (rbx[i]) ;
 		return move (ret) ;
 	}
@@ -341,7 +341,7 @@ public:
 	Deque<String<STR>> decouple () const override {
 		const auto r1x = self.mThis->mSeparator.length () ;
 		Deque<String<STR>> ret = Deque<String<STR>> (r1x) ;
-		for (auto &&i : iter (0 ,r1x - 1)) {
+		for (auto &&i : range (0 ,r1x - 1)) {
 			INDEX ix = self.mThis->mSeparator[i] + 1 ;
 			INDEX iy = self.mThis->mSeparator[i + 1] ;
 			const auto r2x = self.mThis->mPathName.segment (ix ,iy) ;
@@ -402,7 +402,6 @@ private:
 
 public:
 	void initialize () override {
-		self.mPin.pin (self) ;
 		self.mMutex = NULL ;
 	}
 
@@ -418,7 +417,7 @@ public:
 		const auto r3x = LENGTH (r2x) ;
 		RefBuffer<BYTE> ret = RefBuffer<BYTE> (r3x) ;
 		auto rax = r3x ;
-		for (auto &&i : iter (0 ,FILEPROC_RETRY_TIME::expr)) {
+		for (auto &&i : range (0 ,FILEPROC_RETRY_TIME::expr)) {
 			noop (i) ;
 			auto rbx = csc_size_t (rax) ;
 			rbx = std::read (r1x ,(&ret[r3x - rax]) ,rbx) ;
@@ -456,7 +455,7 @@ public:
 		}) ;
 		const auto r4x = item.size () ;
 		auto rax = r4x ;
-		for (auto &&i : iter (0 ,FILEPROC_RETRY_TIME::expr)) {
+		for (auto &&i : range (0 ,FILEPROC_RETRY_TIME::expr)) {
 			noop (i) ;
 			auto rbx = csc_size_t (rax) ;
 			rbx = std::write (r1x ,(&item[r4x - rax]) ,rbx) ;
@@ -527,7 +526,7 @@ public:
 			return ;
 		auto rax = Path (r1x[0]) ;
 		const auto r2x = csc_enum_t (S_IRWXU | S_IRWXG | S_IRWXO) ;
-		for (auto &&i : r1x.range ()) {
+		for (auto &&i : r1x.iter ()) {
 			if ifdo (TRUE) {
 				if (i == 0)
 					discard ;
@@ -622,7 +621,8 @@ public:
 		} ,[&] (VREF<String<STR>> me) {
 			FileProc::erase_file (me) ;
 		}) ;
-		self.mPin.ref.mLockDirectory.add (move (rax)) ;
+		const auto r1x = Pin<List<UniqueRef<String<STR>>>> (self.mLockDirectory) ;
+		r1x->add (move (rax)) ;
 	}
 } ;
 
@@ -1009,7 +1009,7 @@ public:
 		if ifdo (TRUE) {
 			if (self.mCacheTimer < VAL32_MAX)
 				discard ;
-			for (auto &&i : self.mCacheList.range ())
+			for (auto &&i : self.mCacheList.iter ())
 				self.mCacheList[i].mCacheTime = 0 ;
 			self.mCacheList[ret].mCacheTime = 1 ;
 			self.mCacheTimer = 2 ;
@@ -1023,7 +1023,7 @@ public:
 		const auto r1x = invoke ([&] () {
 			INDEX ret = NONE ;
 			auto rax = VAL64 () ;
-			for (auto &&i : self.mCacheList.range ()) {
+			for (auto &&i : self.mCacheList.iter ()) {
 				if (ret != NONE)
 					if (rax >= self.mCacheList[i].mCacheTime)
 						continue ;
@@ -1104,7 +1104,7 @@ private:
 	}
 
 	void read (VREF<RefBuffer<BYTE>> buffer ,CREF<INDEX> offset ,CREF<LENGTH> size_) override {
-		for (auto &&i : iter (0 ,size_)) {
+		for (auto &&i : range (0 ,size_)) {
 			buffer[offset + i] = self.mRingBuffer[self.mRingRead] ;
 			self.mRingRead++ ;
 			if ifdo (TRUE) {
@@ -1135,6 +1135,7 @@ public:
 		self.mOption = BitSet (ConsoleOption::ETC) ;
 		self.mLogBuffer = String<STR> (STREAMFILE_CHUNK_STEP::expr) ;
 		self.mLogWriter = TextWriter (self.mLogBuffer.borrow ()) ;
+		self.mDebugMode = inline_unittest () ;
 		self.mCommand = NULL ;
 	}
 
@@ -1283,11 +1284,13 @@ public:
 	}
 
 	void log_file () {
-		if (self.mLogFile.length () == 0)
-			return ;
-		const auto r1x = FLAG (self.mLogBuffer.ref) ;
-		const auto r2x = (self.mLogWriter.length () - 1) * SIZE_OF<STR>::expr ;
-		self.mLogStreamFile.write (RefBuffer<BYTE>::reference (r1x ,r2x)) ;
+		if ifdo (TRUE) {
+			if (self.mLogFile.length () == 0)
+				discard ;
+			const auto r1x = FLAG (self.mLogBuffer.ref) ;
+			const auto r2x = (self.mLogWriter.length () - 1) * SIZE_OF<STR>::expr ;
+			self.mLogStreamFile.write (RefBuffer<BYTE>::reference (r1x ,r2x)) ;
+		}
 	}
 
 	void show () override {

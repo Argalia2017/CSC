@@ -674,7 +674,7 @@ public:
 	}
 } ;
 
-struct FUNCTION_iter {
+struct FUNCTION_range {
 	forceinline IndexIterator operator() (CREF<INDEX> begin_ ,CREF<INDEX> end_) const noexcept {
 		return IndexIterator (begin_ ,end_) ;
 	}
@@ -684,7 +684,7 @@ struct FUNCTION_iter {
 	}
 } ;
 
-static constexpr auto iter = FUNCTION_iter () ;
+static constexpr auto range = FUNCTION_range () ;
 
 struct FatLayout {
 	FLAG mHolder ;
@@ -870,7 +870,7 @@ public:
 		if (MACRO_IS_TRIVIAL_CONSTRUCTIBLE<A>::expr)
 			return ;
 		auto &&rax = keep[TYPE<ARR<A>>::expr] (a) ;
-		for (auto &&i : iter (0 ,size_)) {
+		for (auto &&i : range (0 ,size_)) {
 			new (csc_device_t (&rax[i])) A () ;
 		}
 	}
@@ -891,7 +891,7 @@ public:
 		if (MACRO_IS_TRIVIAL_DESTRUCTIBLE<A>::expr)
 			return ;
 		auto &&rax = keep[TYPE<ARR<A>>::expr] (a) ;
-		for (auto &&i : iter (0 ,size_)) {
+		for (auto &&i : range (0 ,size_)) {
 			rax[i].~A () ;
 		}
 	}
@@ -1136,29 +1136,58 @@ public:
 } ;
 
 struct PinLayout {
-	FLAG mOffset ;
+	FLAG mLayout ;
 
 public:
 	implicit PinLayout () noexcept {
-		mOffset = ZERO ;
+		mLayout = ZERO ;
+	}
+
+	implicit PinLayout (CREF<PinLayout> that) = delete ;
+
+	forceinline VREF<PinLayout> operator= (CREF<PinLayout> that) = delete ;
+
+	implicit PinLayout (RREF<PinLayout> that) noexcept :PinLayout () {
+		swap (thiz ,that) ;
+	}
+
+	forceinline VREF<PinLayout> operator= (RREF<PinLayout> that) noexcept {
+		return assign (thiz ,that) ;
 	}
 } ;
 
 template <class A>
 class Pin implement PinLayout {
 protected:
-	using PinLayout::mOffset ;
+	using PinLayout::mLayout ;
+	mutable Union<A> mStorage ;
 
 public:
-	implicit Pin () = default ;
+	implicit Pin () = delete ;
 
-	void pin (VREF<A> that) {
-		mOffset = address (that) - address (thiz) ;
+	explicit Pin (CREF<A> that) {
+		mLayout = address (that) ;
+		auto &&rax = keep[TYPE<Union<A>>::expr] (Pointer::make (mLayout)) ;
+		mStorage = rax ;
 	}
 
+	implicit ~Pin () noexcept {
+		if (mLayout == ZERO)
+			return ;
+		auto &&rax = keep[TYPE<Union<A>>::expr] (Pointer::make (mLayout)) ;
+		rax = mStorage ;
+	}
+
+	implicit Pin (CREF<Pin> that) = delete ;
+
+	forceinline VREF<Pin> operator= (CREF<Pin> that) = delete ;
+
+	implicit Pin (RREF<Pin> that) = default ;
+
+	forceinline VREF<Pin> operator= (RREF<Pin> that) = default ;
+
 	VREF<A> ref_m () const leftvalue {
-		const auto r1x = address (thiz) + mOffset ;
-		return Pointer::make (r1x) ;
+		return Pointer::from (mStorage) ;
 	}
 
 	forceinline PTR<VREF<A>> operator-> () const leftvalue {
@@ -1553,7 +1582,6 @@ public:
 } ;
 
 struct ExternalLayout {
-	Pin<ExternalLayout> mPin ;
 	FatLayout mImplHolder ;
 } ;
 
@@ -1582,11 +1610,8 @@ public:
 
 template <class A ,class B>
 inline VREF<ExternalLayout> External<A ,B>::root_ptr () {
-	return memorize ([&] () {
-		ExternalLayout ret ;
-		ret.mPin.pin (ret) ;
-		return move (ret) ;
-	}).mPin.ref ;
+	static auto mInstance = ExternalLayout () ;
+	return mInstance ;
 }
 
 struct ReflectClone implement Interface {

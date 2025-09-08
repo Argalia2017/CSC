@@ -14,8 +14,7 @@ int main () {
 	Singleton<Console>::expr.show () ;
 	Singleton<Console>::expr.debug (slice ("library_file = ") ,RuntimeProc::library_file ()) ;
 	ConfigProc::set_data_dire (slice (".")) ;
-	ConfigProc::set_cxx_signal () ;
+	Scope<ConfigProc> anonymous (ConfigProc::expr) ;
 
-	GlobalProc::shutdown () ;
 	return 0 ;
 }

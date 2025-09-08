@@ -10,7 +10,8 @@ struct ConfigProcHolder implement Interface {
 
 	virtual void initialize () = 0 ;
 	virtual void set_data_dire (CREF<String<STR>> path) = 0 ;
-	virtual void set_cxx_signal () = 0 ;
+	virtual void enter () const = 0 ;
+	virtual void leave () const = 0 ;
 } ;
 
 class ConfigProc implement OfThis<SharedRef<ConfigProcLayout>> {
@@ -23,8 +24,12 @@ public:
 		return ConfigProcHolder::hold (expr)->set_data_dire (dire) ;
 	}
 
-	static void set_cxx_signal () {
-		return ConfigProcHolder::hold (expr)->set_cxx_signal () ;
+	void enter () const {
+		return ConfigProcHolder::hold (expr)->enter () ;
+	}
+
+	void leave () const {
+		return ConfigProcHolder::hold (expr)->leave () ;
 	}
 } ;
 } ;

@@ -173,7 +173,7 @@ public:
 		INDEX ix = 0 ;
 		auto rax = FLAG (0) ;
 		auto rbx = STRU32 () ;
-		for (auto &&i : a.range ()) {
+		for (auto &&i : a.iter ()) {
 			if (rax == FLAG (99))
 				continue ;
 			auto act = TRUE ;
@@ -258,7 +258,7 @@ public:
 		String<STRU8> ret = String<STRU8> (a.length () * 6) ;
 		INDEX ix = 0 ;
 		auto rax = FLAG (0) ;
-		for (auto &&i : a.range ()) {
+		for (auto &&i : a.iter ()) {
 			if (rax == FLAG (99))
 				continue ;
 			auto act = TRUE ;
@@ -354,7 +354,7 @@ public:
 		INDEX ix = 0 ;
 		auto rax = FLAG (0) ;
 		auto rbx = STRU32 () ;
-		for (auto &&i : a.range ()) {
+		for (auto &&i : a.iter ()) {
 			if (rax == FLAG (99))
 				continue ;
 			if ifdo (TRUE) {
@@ -478,7 +478,7 @@ public:
 		String<STRU16> ret = String<STRU16> (a.length () * 2) ;
 		INDEX ix = 0 ;
 		auto rax = FLAG (0) ;
-		for (auto &&i : a.range ()) {
+		for (auto &&i : a.iter ()) {
 			if (rax == FLAG (99))
 				continue ;
 			auto act = TRUE ;
@@ -528,7 +528,7 @@ public:
 		INDEX ix = 0 ;
 		auto rax = FLAG (0) ;
 		auto rbx = STRU32 () ;
-		for (auto &&i : a.range ()) {
+		for (auto &&i : a.iter ()) {
 			if (rax == FLAG (99))
 				continue ;
 			auto act = TRUE ;
@@ -620,7 +620,7 @@ public:
 		INDEX ix = 0 ;
 		auto rax = FLAG (0) ;
 		auto rbx = STRU32 () ;
-		for (auto &&i : a.range ()) {
+		for (auto &&i : a.iter ()) {
 			if (rax == FLAG (99))
 				continue ;
 			auto act = TRUE ;
@@ -923,7 +923,6 @@ public:
 } ;
 
 struct PinnedCounter {
-	Pin<PinnedCounter> mPin ;
 	LENGTH mCounter ;
 } ;
 
@@ -942,13 +941,14 @@ public:
 	static CREF<ScopeCounter> from (RREF<PinnedCounter> that) = delete ;
 
 	void enter () const {
-		mThat.mPin.ref.mCounter++ ;
-		assume (mThat.mCounter < SCOPECOUNTER_MAX_DEPTH::expr) ;
+		const auto r1x = Pin<PinnedCounter> (mThat) ;
+		r1x->mCounter++ ;
+		assume (r1x->mCounter < SCOPECOUNTER_MAX_DEPTH::expr) ;
 	}
 
 	void leave () const {
-		mThat.mPin.ref.mCounter-- ;
-		assume (mThat.mCounter >= ZERO) ;
+		const auto r1x = Pin<PinnedCounter> (mThat) ;
+		assume (r1x->mCounter >= ZERO) ;
 	}
 } ;
 
@@ -1007,7 +1007,6 @@ public:
 		mReader = RegularReader (move (stream) ,5) ;
 		mReader.use_text () ;
 		mPinnedCounter.mCounter = 0 ;
-		mPinnedCounter.mPin.pin (mPinnedCounter) ;
 		mArrayMap = SortedMap<INDEX> (ALLOCATOR_MIN_SIZE::expr) ;
 		mObjectMap = SortedMap<String<STRU8>> (ALLOCATOR_MIN_SIZE::expr) ;
 	}
@@ -1015,8 +1014,8 @@ public:
 	XmlParserTree poll () {
 		XmlParserTree ret ;
 		ret.mList = Array<XmlParserNode> (mList.length ()) ;
-		const auto r1x = Array<INDEX>::make (mList.range ()) ;
-		for (auto &&i : ret.mList.range ()) {
+		const auto r1x = Array<INDEX>::make (mList.iter ()) ;
+		for (auto &&i : ret.mList.iter ()) {
 			ret.mList[i] = move (mList[r1x[i]]) ;
 			const auto r2x = ret.mList[i].mArrayMap.length () ;
 			ret.mList[i].mArrayMap.remap () ;
@@ -1424,7 +1423,7 @@ public:
 				discard ;
 			const auto r1x = self.mThis->mList[self.mIndex].mArrayMap.length () ;
 			ret = Array<XmlParserLayout> (r1x) ;
-			for (auto &&i : iter (0 ,r1x)) {
+			for (auto &&i : range (0 ,r1x)) {
 				ret[i].mThis = self.mThis ;
 				ret[i].mIndex = self.mThis->mList[self.mIndex].mArrayMap[i] ;
 			}
@@ -1439,7 +1438,7 @@ public:
 				discard ;
 			const auto r1x = self.mThis->mList[self.mIndex].mArrayMap.length () ;
 			const auto r2x = inline_min (r1x ,size_) ;
-			for (auto &&i : iter (0 ,r2x)) {
+			for (auto &&i : range (0 ,r2x)) {
 				ret[i].mThis = self.mThis ;
 				ret[i].mIndex = self.mThis->mList[self.mIndex].mArrayMap[i] ;
 			}
@@ -1620,7 +1619,7 @@ public:
 		const auto r1x = list () ;
 		assume (r1x.size () == size_) ;
 		Array<ARG1> ret = Array<ARG1> (r1x.size ()) ;
-		for (auto &&i : ret.range ()) {
+		for (auto &&i : ret.iter ()) {
 			const auto r2x = XmlParserHolder::hold (self)->child (i) ;
 			ret[i] = XmlParserHolder::hold (r2x)->parse (def) ;
 		}
@@ -1688,7 +1687,6 @@ public:
 		mReader = RegularReader (move (stream) ,5) ;
 		mReader.use_text () ;
 		mPinnedCounter.mCounter = 0 ;
-		mPinnedCounter.mPin.pin (mPinnedCounter) ;
 		mArrayMap = SortedMap<INDEX> (ALLOCATOR_MIN_SIZE::expr) ;
 		mObjectMap = SortedMap<String<STRU8>> (ALLOCATOR_MIN_SIZE::expr) ;
 	}
@@ -1696,8 +1694,8 @@ public:
 	JsonParserTree poll () {
 		JsonParserTree ret ;
 		ret.mList = Array<JsonParserNode> (mList.length ()) ;
-		const auto r1x = Array<INDEX>::make (mList.range ()) ;
-		for (auto &&i : ret.mList.range ()) {
+		const auto r1x = Array<INDEX>::make (mList.iter ()) ;
+		for (auto &&i : ret.mList.iter ()) {
 			ret.mList[i] = move (mList[r1x[i]]) ;
 			const auto r2x = ret.mList[i].mArrayMap.length () ;
 			ret.mList[i].mArrayMap.remap () ;
@@ -2083,7 +2081,7 @@ public:
 				discard ;
 			const auto r1x = self.mThis->mList[self.mIndex].mArrayMap.length () ;
 			ret = Array<JsonParserLayout> (r1x) ;
-			for (auto &&i : iter (0 ,r1x)) {
+			for (auto &&i : range (0 ,r1x)) {
 				ret[i].mThis = self.mThis ;
 				ret[i].mIndex = self.mThis->mList[self.mIndex].mArrayMap[i] ;
 			}
@@ -2098,7 +2096,7 @@ public:
 				discard ;
 			const auto r1x = self.mThis->mList[self.mIndex].mArrayMap.length () ;
 			const auto r2x = inline_min (r1x ,size_) ;
-			for (auto &&i : iter (0 ,r2x)) {
+			for (auto &&i : range (0 ,r2x)) {
 				ret[i].mThis = self.mThis ;
 				ret[i].mIndex = self.mThis->mList[self.mIndex].mArrayMap[i] ;
 			}
@@ -2279,7 +2277,7 @@ public:
 		const auto r1x = list () ;
 		assume (r1x.size () == size_) ;
 		Array<ARG1> ret = Array<ARG1> (r1x.size ()) ;
-		for (auto &&i : ret.range ()) {
+		for (auto &&i : ret.iter ()) {
 			const auto r2x = JsonParserHolder::hold (self)->child (i) ;
 			ret[i] = JsonParserHolder::hold (r2x)->parse (def) ;
 		}
@@ -2539,20 +2537,20 @@ public:
 			assume (rax == STRU32 ('\n')) ;
 			mBodyBackup = mTextReader.backup () ;
 		}
-		for (auto &&i : mElementList.range ()) {
+		for (auto &&i : mElementList.iter ()) {
 			auto &&rax = mElementList[i] ;
 			rax.mPropertyList.remap () ;
 			rax.mPropertySet = Set<String<STRU8>> (rax.mPropertyList.length ()) ;
-			for (auto &&j : rax.mPropertyList.range ())
+			for (auto &&j : rax.mPropertyList.iter ())
 				rax.mPropertySet.add (rax.mPropertyList[j].mName ,j) ;
 		}
 		if ifdo (TRUE) {
 			mElementList.remap () ;
 			mElementSet = Set<String<STRU8>> (mElementList.length ()) ;
-			for (auto &&j : mElementList.range ())
+			for (auto &&j : mElementList.iter ())
 				mElementSet.add (mElementList[j].mName ,j) ;
 		}
-		for (auto &&i : mElementList.range ()) {
+		for (auto &&i : mElementList.iter ()) {
 			auto &&rax = mElementList[i] ;
 			const auto r8x = rax.mLineSize * rax.mLineStep ;
 			rax.mPlyBuffer = RefBuffer<BYTE> (r8x) ;
@@ -2588,9 +2586,9 @@ public:
 		mTextReader = TextReader (mStream.share ()) ;
 		mTextReader.reset (mBodyBackup) ;
 		mTextReader >> GAP ;
-		for (auto &&i : iter (0 ,mElementList.length ())) {
-			for (auto &&j : iter (0 ,mElementList[i].mLineSize)) {
-				for (auto &&k : iter (0 ,mElementList[i].mPropertyList.length ())) {
+		for (auto &&i : range (0 ,mElementList.length ())) {
+			for (auto &&j : range (0 ,mElementList[i].mLineSize)) {
+				for (auto &&k : range (0 ,mElementList[i].mPropertyList.length ())) {
 					read_body_text_item (mElementList[i] ,mElementList[i].mPropertyList[k] ,j) ;
 					read_body_text_list (mElementList[i] ,mElementList[i].mPropertyList[k] ,j) ;
 					mElementList[i].mLineLength++ ;
@@ -2723,7 +2721,7 @@ public:
 			if (r1x != PlyParserDataType::Val32)
 				discard ;
 			mTextReader >> GAP ;
-			for (auto &&i : iter (0 ,r2x)) {
+			for (auto &&i : range (0 ,r2x)) {
 				noop (i) ;
 				const auto r6x = mTextReader.poll (TYPE<VAL32>::expr) ;
 				inline_memcpy (Pointer::from (element.mExtBuffer[element.mExtIndex]) ,Pointer::from (r6x) ,SIZE_OF<VAL32>::expr) ;
@@ -2735,7 +2733,7 @@ public:
 			if (r1x != PlyParserDataType::Val64)
 				discard ;
 			mTextReader >> GAP ;
-			for (auto &&i : iter (0 ,r2x)) {
+			for (auto &&i : range (0 ,r2x)) {
 				noop (i) ;
 				const auto r7x = mTextReader.poll (TYPE<VAL64>::expr) ;
 				inline_memcpy (Pointer::from (element.mExtBuffer[element.mExtIndex]) ,Pointer::from (r7x) ,SIZE_OF<VAL64>::expr) ;
@@ -2756,9 +2754,9 @@ public:
 				discard ;
 			mByteReader >> BOM ;
 		}
-		for (auto &&i : iter (0 ,mElementList.length ())) {
-			for (auto &&j : iter (0 ,mElementList[i].mLineSize)) {
-				for (auto &&k : iter (0 ,mElementList[i].mPropertyList.length ())) {
+		for (auto &&i : range (0 ,mElementList.length ())) {
+			for (auto &&j : range (0 ,mElementList[i].mLineSize)) {
+				for (auto &&k : range (0 ,mElementList[i].mPropertyList.length ())) {
 					read_body_byte_item (mElementList[i] ,mElementList[i].mPropertyList[k] ,j) ;
 					read_body_byte_list (mElementList[i] ,mElementList[i].mPropertyList[k] ,j) ;
 					mElementList[i].mLineLength++ ;
@@ -2872,7 +2870,7 @@ public:
 		if ifdo (act) {
 			if (r1x != PlyParserDataType::Val32)
 				discard ;
-			for (auto &&i : iter (0 ,r2x)) {
+			for (auto &&i : range (0 ,r2x)) {
 				noop (i) ;
 				const auto r6x = mByteReader.poll (TYPE<VAL32>::expr) ;
 				inline_memcpy (Pointer::from (element.mExtBuffer[element.mExtIndex]) ,Pointer::from (r6x) ,SIZE_OF<VAL32>::expr) ;
@@ -2882,7 +2880,7 @@ public:
 		if ifdo (act) {
 			if (r1x != PlyParserDataType::Val64)
 				discard ;
-			for (auto &&i : iter (0 ,r2x)) {
+			for (auto &&i : range (0 ,r2x)) {
 				noop (i) ;
 				const auto r7x = mByteReader.poll (TYPE<VAL64>::expr) ;
 				inline_memcpy (Pointer::from (element.mExtBuffer[element.mExtIndex]) ,Pointer::from (r7x) ,SIZE_OF<VAL64>::expr) ;

@@ -299,7 +299,7 @@ public:
 		return ArrayIterator<CREF<Array>> (thiz) ;
 	}
 
-	CREF<ArrayRange<Array>> range () const leftvalue {
+	CREF<ArrayRange<Array>> iter () const leftvalue {
 		return ArrayRange<Array>::from (thiz) ;
 	}
 
@@ -530,7 +530,7 @@ public:
 		return ArrayIterator<CREF<String>> (thiz) ;
 	}
 
-	CREF<ArrayRange<String>> range () const leftvalue {
+	CREF<ArrayRange<String>> iter () const leftvalue {
 		return ArrayRange<String>::from (thiz) ;
 	}
 
@@ -737,7 +737,7 @@ public:
 		return ArrayIterator<CREF<Deque>> (thiz) ;
 	}
 
-	CREF<ArrayRange<Deque>> range () const leftvalue {
+	CREF<ArrayRange<Deque>> iter () const leftvalue {
 		return ArrayRange<Deque>::from (thiz) ;
 	}
 
@@ -965,7 +965,7 @@ public:
 		return ArrayIterator<CREF<Priority>> (thiz) ;
 	}
 
-	CREF<ArrayRange<Priority>> range () const leftvalue {
+	CREF<ArrayRange<Priority>> iter () const leftvalue {
 		return ArrayRange<Priority>::from (thiz) ;
 	}
 
@@ -1140,7 +1140,7 @@ public:
 		return ArrayIterator<CREF<List>> (thiz) ;
 	}
 
-	CREF<ArrayRange<List>> range () const leftvalue {
+	CREF<ArrayRange<List>> iter () const leftvalue {
 		return ArrayRange<List>::from (thiz) ;
 	}
 
@@ -1351,7 +1351,7 @@ public:
 		return ArrayIterator<CREF<ArrayList>> (thiz) ;
 	}
 
-	CREF<ArrayRange<ArrayList>> range () const leftvalue {
+	CREF<ArrayRange<ArrayList>> iter () const leftvalue {
 		return ArrayRange<ArrayList>::from (thiz) ;
 	}
 
@@ -1543,7 +1543,7 @@ public:
 		return ArrayIterator<CREF<SortedMap>> (thiz) ;
 	}
 
-	CREF<ArrayRange<SortedMap>> range () const leftvalue {
+	CREF<ArrayRange<SortedMap>> iter () const leftvalue {
 		return ArrayRange<SortedMap>::from (thiz) ;
 	}
 
@@ -1726,7 +1726,7 @@ public:
 		return ArrayIterator<CREF<Set>> (thiz) ;
 	}
 
-	CREF<ArrayRange<Set>> range () const leftvalue {
+	CREF<ArrayRange<Set>> iter () const leftvalue {
 		return ArrayRange<Set>::from (thiz) ;
 	}
 
@@ -1913,7 +1913,7 @@ public:
 		return ArrayIterator<CREF<HashSet>> (thiz) ;
 	}
 
-	CREF<ArrayRange<HashSet>> range () const leftvalue {
+	CREF<ArrayRange<HashSet>> iter () const leftvalue {
 		return ArrayRange<HashSet>::from (thiz) ;
 	}
 
@@ -2102,7 +2102,7 @@ public:
 		return ArrayIterator<CREF<BitSet>> (thiz) ;
 	}
 
-	CREF<ArrayRange<BitSet>> range () const leftvalue {
+	CREF<ArrayRange<BitSet>> iter () const leftvalue {
 		return ArrayRange<BitSet>::from (thiz) ;
 	}
 

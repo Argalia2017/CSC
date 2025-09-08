@@ -79,7 +79,7 @@ public:
 		self.mThreadFlag = ThreadFlag::Running ;
 		self.mThreadFunc = func ;
 		const auto r1x = FriendThreadBinder<WorkThreadLayout>::hold (self) ;
-		for (auto &&i : self.mThread.range ()) {
+		for (auto &&i : self.mThread.iter ()) {
 			self.mThread[i] = Thread (Box<VFat<FriendThread>>::make (r1x) ,i) ;
 			self.mThread[i].start () ;
 		}
@@ -190,7 +190,7 @@ public:
 
 	void stop () override {
 		crash () ;
-		for (auto &&i : self.mThread.range ())
+		for (auto &&i : self.mThread.iter ())
 			self.mThread[i].stop () ;
 		self.mThread = Array<Thread> () ;
 		self.mThreadFunc = Function<CREF<INDEX>> () ;
@@ -269,13 +269,13 @@ public:
 		self.mBestSolution.mAvgError = infinity ;
 		self.mBestSolution.mStdError = 0 ;
 		self.mBestSolution.mInput = input ;
-		for (auto &&i : self.mThreadSolution.range ())
+		for (auto &&i : self.mThreadSolution.iter ())
 			self.mThreadSolution[i].mIteration = NONE ;
 		self.mConfidence = Array<FLT64> (1000) ;
 		self.mConfidencePow = 0.9545 ;
 		self.mConfidenceFator = MathProc::clamp (factor ,FLT64 (0) ,FLT64 (1)) ;
 		self.mConfidence[0] = 1 ;
-		for (auto &&i : iter (1 ,self.mConfidence.length ())) {
+		for (auto &&i : range (1 ,self.mConfidence.length ())) {
 			self.mConfidence[i] = self.mConfidencePow * self.mConfidence[i - 1] ;
 		}
 	}
@@ -288,7 +288,7 @@ public:
 		self.mSuspendFlag = FALSE ;
 		self.mThreadFunc = func ;
 		const auto r1x = FriendThreadBinder<CalcThreadLayout>::hold (self) ;
-		for (auto &&i : self.mThread.range ()) {
+		for (auto &&i : self.mThread.iter ()) {
 			self.mThread[i] = Thread (Box<VFat<FriendThread>>::make (r1x) ,i) ;
 			self.mThread[i].start () ;
 		}
@@ -457,7 +457,7 @@ public:
 
 	void stop () override {
 		crash () ;
-		for (auto &&i : self.mThread.range ())
+		for (auto &&i : self.mThread.iter ())
 			self.mThread[i].stop () ;
 		self.mThread = Array<Thread> () ;
 		self.mThreadFunc = Function<CREF<CalcSolution> ,VREF<CalcSolution>> () ;
@@ -540,7 +540,7 @@ public:
 				discard ;
 			self.mThread = Array<Thread> (1) ;
 			const auto r1x = FriendThreadBinder<PromiseLayout>::hold (self) ;
-			for (auto &&i : self.mThread.range ()) {
+			for (auto &&i : self.mThread.iter ()) {
 				self.mThread[i] = Thread (Box<VFat<FriendThread>>::make (r1x) ,0) ;
 				self.mThread[i].start () ;
 			}
@@ -666,7 +666,7 @@ public:
 
 	void stop () override {
 		crash () ;
-		for (auto &&i : self.mThread.range ())
+		for (auto &&i : self.mThread.iter ())
 			self.mThread[i].stop () ;
 		self.mThread = Array<Thread> () ;
 		self.mThreadFlag = ThreadFlag::Preparing ;
@@ -686,5 +686,211 @@ exports VFat<PromiseHolder> PromiseHolder::hold (VREF<PromiseLayout> that) {
 
 exports CFat<PromiseHolder> PromiseHolder::hold (CREF<PromiseLayout> that) {
 	return CFat<PromiseHolder> (PromiseImplHolder () ,that) ;
+}
+
+struct EntityLayout {
+	ECSManager mManager ;
+	Clazz mClazz ;
+	INDEX mKeyId ;
+	Set<Clazz> mComponentClazz ;
+} ;
+
+class EntityImplHolder final implement Fat<EntityHolder ,EntityLayout> {
+public:
+	void initialize (CREF<Clazz> clazz_) override {
+		self.mManager = ECSManager::expr ;
+		self.mClazz = clazz_ ;
+		self.mKeyId = NONE ;
+	}
+
+	Clazz clazz () const override {
+		return self.mClazz ;
+	}
+
+	INDEX keyid () const override {
+		return self.mKeyId ;
+	}
+	
+	void add_component (CREF<OfThis<SharedRef<ComponentLayout>>> component) override {
+		auto &&rax = keep[TYPE<Component>::expr] (component) ;
+		INDEX ix = self.mComponentClazz.map (rax.clazz ()) ;
+		if ifdo (TRUE) {
+			if (ix != NONE)
+				discard ;
+			ix = self.mManager.component (rax) ;
+			self.mComponentClazz.add (rax.clazz () ,ix) ;
+		}
+	}
+
+	void register_service (CREF<OfThis<SharedRef<ServiceLayout>>> service) override {
+		assume (self.mKeyId == NONE) ;
+		auto &&rax = keep[TYPE<Service>::expr] (service) ;
+		self.mKeyId = rax.spwan_entity () ;
+	}
+} ;
+
+exports SharedRef<EntityLayout> EntityHolder::create () {
+	return SharedRef<EntityLayout>::make () ;
+}
+
+exports VFat<EntityHolder> EntityHolder::hold (VREF<EntityLayout> that) {
+	return VFat<EntityHolder> (EntityImplHolder () ,that) ;
+}
+
+exports CFat<EntityHolder> EntityHolder::hold (CREF<EntityLayout> that) {
+	return CFat<EntityHolder> (EntityImplHolder () ,that) ;
+}
+
+struct ComponentLayout {
+	ECSManager mManager ;
+	Clazz mClazz ;
+	INDEX mEntity ;
+} ;
+
+class ComponentImplHolder final implement Fat<ComponentHolder ,ComponentLayout> {
+public:
+	void initialize (CREF<Clazz> clazz_) override {
+		self.mManager = ECSManager::expr ;
+		self.mClazz = clazz_ ;
+	}
+
+	Clazz clazz () const override {
+		return self.mClazz ;
+	}
+
+	BOOL contain (CREF<Clazz> clazz_) const override {
+		const auto r1x = self.mManager.entity (self.mEntity) ;
+		INDEX ix = r1x.mThis->mComponentClazz.map (clazz_) ;
+		return ix != NONE ;
+	}
+
+	OfThis<SharedRef<ComponentLayout>> get (CREF<Clazz> clazz_) const override {
+		assume (self.mEntity != NONE) ;
+		const auto r1x = self.mManager.entity (self.mEntity) ;
+		INDEX ix = r1x.mThis->mComponentClazz.map (clazz_) ;
+		assume (ix != NONE) ;
+		return self.mManager.component (ix) ;
+	}
+} ;
+
+exports SharedRef<ComponentLayout> ComponentHolder::create () {
+	return SharedRef<ComponentLayout>::make () ;
+}
+
+exports VFat<ComponentHolder> ComponentHolder::hold (VREF<ComponentLayout> that) {
+	return VFat<ComponentHolder> (ComponentImplHolder () ,that) ;
+}
+
+exports CFat<ComponentHolder> ComponentHolder::hold (CREF<ComponentLayout> that) {
+	return CFat<ComponentHolder> (ComponentImplHolder () ,that) ;
+}
+
+struct ServiceLayout {
+	ECSManager mManager ;
+	Clazz mClazz ;
+	LENGTH mGeneration ;
+	Set<INDEX> mEntityKeyId ;
+} ;
+
+class ServiceImplHolder final implement Fat<ServiceHolder ,ServiceLayout> {
+public:
+	void initialize (CREF<Clazz> clazz_) override {
+		self.mManager = ECSManager::expr ;
+		self.mClazz = clazz_ ;
+		self.mGeneration = ZERO ;
+	}
+
+	Clazz clazz () const override {
+		return self.mClazz ;
+	}
+	
+	INDEX spwan_entity () override {
+		INDEX ret = self.mGeneration++ ;
+		return move (ret) ;
+	}
+} ;
+
+exports SharedRef<ServiceLayout> ServiceHolder::create () {
+	return SharedRef<ServiceLayout>::make () ;
+}
+
+exports VFat<ServiceHolder> ServiceHolder::hold (VREF<ServiceLayout> that) {
+	return VFat<ServiceHolder> (ServiceImplHolder () ,that) ;
+}
+
+exports CFat<ServiceHolder> ServiceHolder::hold (CREF<ServiceLayout> that) {
+	return CFat<ServiceHolder> (ServiceImplHolder () ,that) ;
+}
+
+struct ECSManagerLayout {
+	Mutex mMutex ;
+	List<Entity> mEntityList ;
+	List<Component> mComponentList ;
+	List<Service> mServiceList ;
+} ;
+
+class ECSManagerImplHolder final implement Fat<ECSManagerHolder ,ECSManagerLayout> {
+public:
+	void initialize () override {
+		self.mMutex = SharedMutex () ;
+		self.mEntityList = List<Entity> (1024) ;
+		self.mComponentList = List<Component> (512) ;
+		self.mServiceList = List<Service> (256) ;
+	}
+
+	Entity entity (CREF<INDEX> index) const override {
+		const auto r1x = SharedLock (self.mMutex) ;
+		return self.mEntityList[index] ;
+	}
+	
+	INDEX entity (CREF<Entity> item) override {
+		const auto r1x = SharedLock (self.mMutex) ;
+		Scope<SharedLock> anonymous (r1x) ;
+		INDEX ret = self.mEntityList.insert () ;
+		self.mEntityList[ret] = item ;
+		return move (ret) ;
+	}
+
+	Component component (CREF<INDEX> index) const override {
+		const auto r1x = SharedLock (self.mMutex) ;
+		return self.mComponentList[index] ;
+	}
+
+	INDEX component (CREF<Component> item) override {
+		const auto r1x = SharedLock (self.mMutex) ;
+		Scope<SharedLock> anonymous (r1x) ;
+		INDEX ret = self.mComponentList.insert () ;
+		self.mComponentList[ret] = item ;
+		return move (ret) ;
+	}
+
+	Service service (CREF<INDEX> index) const override {
+		const auto r1x = SharedLock (self.mMutex) ;
+		return self.mServiceList[index] ;
+	}
+
+	INDEX service (CREF<Service> item) override {
+		const auto r1x = SharedLock (self.mMutex) ;
+		Scope<SharedLock> anonymous (r1x) ;
+		INDEX ret = self.mServiceList.insert () ;
+		self.mServiceList[ret] = item ;
+		return move (ret) ;
+	}
+} ;
+
+exports CREF<OfThis<SharedRef<ECSManagerLayout>>> ECSManagerHolder::expr_m () {
+	return memorize ([&] () {
+		OfThis<SharedRef<ECSManagerLayout>> ret ;
+		ret.mThis = SharedRef<ECSManagerLayout>::make () ;
+		return move (ret) ;
+	}) ;
+}
+
+exports VFat<ECSManagerHolder> ECSManagerHolder::hold (VREF<ECSManagerLayout> that) {
+	return VFat<ECSManagerHolder> (ECSManagerImplHolder () ,that) ;
+}
+
+exports CFat<ECSManagerHolder> ECSManagerHolder::hold (CREF<ECSManagerLayout> that) {
+	return CFat<ECSManagerHolder> (ECSManagerImplHolder () ,that) ;
 }
 } ;

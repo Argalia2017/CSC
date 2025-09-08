@@ -162,12 +162,12 @@ public:
 		if ifdo (TRUE) {
 			if (cy () == 0)
 				discard ;
-			for (auto &&i : iter (0 ,cx ())) {
+			for (auto &&i : range (0 ,cx ())) {
 				inline_memcpy (at (i ,0) ,item ,r1x) ;
 			}
 		}
 		const auto r2x = cx () * r1x ;
-		for (auto &&i : iter (1 ,cy ())) {
+		for (auto &&i : range (1 ,cy ())) {
 			inline_memcpy (at (0 ,i) ,at (0 ,0) ,r2x) ;
 		}
 	}
@@ -186,7 +186,7 @@ public:
 		const auto r3x = ImageHolder::hold (item)->step () ;
 		assert (step () == r3x) ;
 		const auto r4x = r1x * r3x ;
-		for (auto &&i : iter (0 ,r2x)) {
+		for (auto &&i : range (0 ,r2x)) {
 			INDEX ix = x + 0 ;
 			INDEX iy = y + i ;
 			inline_memcpy (at (ix ,iy) ,ImageHolder::hold (item)->at (0 ,i) ,r4x) ;
@@ -248,9 +248,12 @@ public:
 	void initialize (CREF<LENGTH> size_ ,CREF<Just<TensorDataType>> type_) override {
 		const auto r1x = size_of_tensor_type (type_) ;
 		const auto r2x = size_ * r1x + 16 ;
-		self.mTensor = RefBuffer<BYTE> (r2x) ;
-		const auto r4x = address (self.mTensor[0]) ;
-		self.mOffset = inline_alignas (r4x ,16) - r4x ;
+		self.mTensor = Ref<RefBuffer<BYTE>>::make (r2x) ;
+		const auto r3x = address (self.mTensor.ref[0]) ;
+		const auto r4x = inline_alignas (r3x ,16) - r3x ;
+		auto &&rax = keep[TYPE<RefBufferLayout>::expr] (self.mTensor.ref) ;
+		rax.mBuffer += r4x ;
+		rax.mSize -= r4x ;
 		self.mWidth = size_ ;
 		self.mType = type_ ;
 		reset () ;
@@ -269,39 +272,25 @@ public:
 	}
 
 	LENGTH size () const override {
-		if (!self.mTensor.exist ())
+		if (self.mTensor == NULL)
 			return 0 ;
 		return self.mWidth ;
 	}
 
 	Just<TensorDataType> type () const override {
-		if (!self.mTensor.exist ())
+		if (self.mTensor == NULL)
 			return TensorDataType::ETC ;
 		return self.mType ;
 	}
 
-	LENGTH cx () const override {
-		if (!self.mTensor.exist ())
+	LENGTH shape (CREF<INDEX> index) const override {
+		assert (index >= 0) ;
+		if (self.mTensor == NULL)
 			return 0 ;
-		return self.mShape[1] / self.mShape[0] ;
-	}
-
-	LENGTH cy () const override {
-		if (!self.mTensor.exist ())
-			return 0 ;
-		return self.mShape[2] / self.mShape[1] ;
-	}
-
-	LENGTH cz () const override {
-		if (!self.mTensor.exist ())
-			return 0 ;
-		return self.mShape[3] / self.mShape[2] ;
-	}
-
-	LENGTH cw () const override {
-		if (!self.mTensor.exist ())
-			return 0 ;
-		return self.mShape[4] / self.mShape[3] ;
+		const auto r1x = self.mStride.size () - 1 ;
+		INDEX ix = inline_min (index ,r1x) ;
+		INDEX iy = inline_min (index + 1 ,r1x) ;
+		return self.mStride[ix] / self.mStride[iy] ;
 	}
 
 	TensorLayout recast (CREF<Just<TensorDataType>> type_) override {
@@ -312,12 +301,13 @@ public:
 		TensorHolder::hold (ret)->initialize (r1x ,type_) ;
 		const auto r2x = choose_tensor_copy (type_ ,type ()) ;
 		const auto r3x = RFat<ReflectTensorCopy> (r2x) ;
-		const auto r4x = address (ret.mTensor[ret.mOffset]) ;
-		const auto r5x = address (self.mTensor[self.mOffset]) ;
-		for (auto &&i : iter (0 ,r1x)) {
-			const auto r6x = r4x + i * ret.mShape[0] ;
-			const auto r7x = r5x + i * self.mShape[0] ;
-			r3x->xcopy (Pointer::make (r6x) ,Pointer::make (r7x)) ;
+		const auto r4x = address (ret.mTensor.ref[0]) ;
+		const auto r5x = address (self.mTensor.ref[0]) ;
+		const auto r6x = self.mStride.size () - 1 ;
+		for (auto &&i : range (0 ,r1x)) {
+			const auto r7x = r4x + i * ret.mStride[r6x] ;
+			const auto r8x = r5x + i * self.mStride[r6x] ;
+			r3x->xcopy (Pointer::make (r7x) ,Pointer::make (r8x)) ;
 		}
 		return move (ret) ;
 	}
@@ -340,43 +330,33 @@ public:
 	}
 
 	void reset () override {
-		for (auto &&i : iter (0 ,self.mShape.size ()))
-			self.mShape[i] = 0 ;
-		if (self.mTensor.size () == 0)
+		for (auto &&i : range (0 ,self.mStride.size ()))
+			self.mStride[i] = 1 ;
+		if (self.mTensor->size () == 0)
 			return ;
-		reset (size () ,1 ,1 ,1) ;
+		reset (MakeWrapper (size ())) ;
 	}
 
-	void reset (CREF<LENGTH> cx_ ,CREF<LENGTH> cy_ ,CREF<LENGTH> cz_ ,CREF<LENGTH> cw_) override {
-		assert (self.mTensor.size () > 0) ;
-		assert (cx_ > 0) ;
-		assert (cy_ > 0) ;
-		assert (cz_ > 0) ;
-		assert (cw_ > 0) ;
-		const auto r1x = cx_ * cy_ * cz_ * cw_ ;
-		noop (r1x) ;
-		assert (r1x == size ()) ;
-		self.mShape[0] = size_of_tensor_type (type ()) ;
-		self.mShape[1] = self.mShape[0] * cx_ ;
-		self.mShape[2] = self.mShape[1] * cy_ ;
-		self.mShape[3] = self.mShape[2] * cz_ ;
-		self.mShape[4] = self.mShape[3] * cw_ ;
-	}
-
-	VREF<Pointer> ref_m () leftvalue override {
-		return RefBufferHolder::hold (self.mTensor)->ref ;
-	}
-
-	CREF<Pointer> ref_m () const leftvalue override {
-		return RefBufferHolder::hold (self.mTensor)->ref ;
-	}
-
-	Ref<RefBuffer<BYTE>> borrow () leftvalue override {
-		return Ref<RefBuffer<BYTE>>::reference (self.mTensor) ;
+	void reset (CREF<WrapperLayout> shape_) override {
+		assert (self.mTensor->size () > 0) ;
+		assert (shape_.mRank > 0) ;
+		auto &&rax = keep[TYPE<Wrapper<LENGTH>>::expr] (shape_) ;
+		const auto r1x = self.mStride.size () - 1 ;
+		assert (shape_.mRank <= r1x) ;
+		const auto r2x = inline_min (shape_.mRank ,r1x) ;
+		self.mStride[r1x] = size_of_tensor_type (type ()) ;
+		for (auto &&i : range (0 ,r1x - r2x)) {
+			self.mStride[r1x - i - 1] = self.mStride[r1x - i] ;
+		}
+		for (auto &&i : range (r1x - r2x ,r1x)) {
+			self.mStride[r1x - i - 1] = self.mStride[r1x - i] * rax[r1x - i - 1] ;
+		}
+		const auto r3x = self.mStride[0] / self.mStride[r1x] ;
+		assume (r3x == size ()) ;
 	}
 
 	Ref<RefBuffer<BYTE>> borrow () const leftvalue override {
-		return Ref<RefBuffer<BYTE>>::reference (self.mTensor) ;
+		return self.mTensor.share () ;
 	}
 } ;
 
@@ -469,7 +449,7 @@ public:
 	Array<INDEX> jump (CREF<INDEX> from_) override {
 		Array<INDEX> ret = Array<INDEX> (self.mTable.size ()) ;
 		ret.fill (NONE) ;
-		for (auto &&i : iter (0 ,self.mTable.size ())) {
+		for (auto &&i : range (0 ,self.mTable.size ())) {
 			INDEX ix = lead (i) ;
 			if (ix == NONE)
 				continue ;
@@ -509,10 +489,10 @@ public:
 		return self.mSize ;
 	}
 
-	Array<INDEX> sort (RREF<Array<FLT32>> love) override {
+	Array<INDEX> sort (CREF<Image<FLT32>> love) override {
 		assert (self.mMatch.size () > 0) ;
 		assert (love.size () == MathProc::square (self.mSize)) ;
-		self.mLove = move (love) ;
+		self.mLove = Ref<Image<FLT32>>::reference (love) ;
 		self.mUser.fill (0) ;
 		self.mWork.fill (0) ;
 		self.mUserVisit.clear () ;
@@ -524,43 +504,44 @@ public:
 	}
 
 	void solve () {
-		for (auto &&i : iter (0 ,self.mSize)) {
+		for (auto &&i : range (0 ,self.mSize)) {
 			self.mUser[i] = -infinity ;
-			for (auto &&j : iter (0 ,self.mSize)) {
-				self.mUser[i] = MathProc::max_of (self.mUser[i] ,self.mLove[i * self.mSize + j]) ;
+			for (auto &&j : range (0 ,self.mSize)) {
+				const auto r1x = self.mLove.ref[i][j] ;
+				self.mUser[i] = MathProc::max_of (self.mUser[i] ,r1x) ;
 			}
 		}
-		for (auto &&i : iter (0 ,self.mSize)) {
+		for (auto &&i : range (0 ,self.mSize)) {
 			self.mLack.fill (infinity) ;
 			while (TRUE) {
 				self.mUserVisit.clear () ;
 				self.mWorkVisit.clear () ;
 				if (dfs (i))
 					break ;
-				const auto r1x = invoke ([&] () {
+				const auto r2x = invoke ([&] () {
 					FLT32 ret = infinity ;
-					for (auto &&j : iter (0 ,self.mSize)) {
+					for (auto &&j : range (0 ,self.mSize)) {
 						if (self.mWorkVisit[j])
 							continue ;
 						ret = MathProc::min_of (ret ,self.mLack[j]) ;
 					}
 					return move (ret) ;
 				}) ;
-				for (auto &&j : iter (0 ,self.mSize)) {
+				for (auto &&j : range (0 ,self.mSize)) {
 					if ifdo (TRUE) {
 						if (!self.mUserVisit[j])
 							discard ;
-						self.mUser[j] -= r1x ;
+						self.mUser[j] -= r2x ;
 					}
 					if ifdo (TRUE) {
 						if (!self.mWorkVisit[j])
 							discard ;
-						self.mWork[j] += r1x ;
+						self.mWork[j] += r2x ;
 					}
 					if ifdo (TRUE) {
 						if (self.mWorkVisit[j])
 							discard ;
-						self.mLack[j] -= r1x ;
+						self.mLack[j] -= r2x ;
 					}
 				}
 			}
@@ -569,27 +550,28 @@ public:
 
 	BOOL dfs (CREF<INDEX> user) {
 		self.mUserVisit[user] = TRUE ;
-		for (auto &&i : iter (0 ,self.mSize)) {
+		for (auto &&i : range (0 ,self.mSize)) {
 			if (self.mWorkVisit[i])
 				continue ;
-			const auto r1x = self.mUser[user] + self.mWork[i] - self.mLove[user * self.mSize + i] ;
+			const auto r1x = self.mLove.ref[user][i] ;
+			const auto r2x = self.mUser[user] + self.mWork[i] - r1x ;
 			if ifdo (TRUE) {
-				if (r1x < self.mThreshold)
+				if (r2x < self.mThreshold)
 					discard ;
-				self.mLack[i] = MathProc::min_of (self.mLack[i] ,r1x) ;
+				self.mLack[i] = MathProc::min_of (self.mLack[i] ,r2x) ;
 			}
-			if (r1x >= self.mThreshold)
+			if (r2x >= self.mThreshold)
 				continue ;
 			self.mWorkVisit[i] = TRUE ;
-			const auto r2x = self.mMatch[i] ;
+			const auto r3x = self.mMatch[i] ;
 			if ifdo (TRUE) {
-				if (r2x != NONE)
+				if (r3x != NONE)
 					discard ;
 				self.mMatch[i] = user ;
 				return TRUE ;
 			}
 			if ifdo (TRUE) {
-				if (!dfs (r2x))
+				if (!dfs (r3x))
 					discard ;
 				self.mMatch[i] = user ;
 				return TRUE ;

@@ -266,4 +266,155 @@ public:
 		return PromiseHolder::hold (thiz)->stop () ;
 	}
 } ;
+
+struct EntityLayout ;
+struct ComponentLayout ;
+struct ServiceLayout ;
+
+struct EntityHolder implement Interface {
+	imports SharedRef<EntityLayout> create () ;
+	imports VFat<EntityHolder> hold (VREF<EntityLayout> that) ;
+	imports CFat<EntityHolder> hold (CREF<EntityLayout> that) ;
+
+	virtual void initialize (CREF<Clazz> clazz_) = 0 ;
+	virtual Clazz clazz () const = 0 ;
+	virtual INDEX keyid () const = 0 ;
+	virtual void add_component (CREF<OfThis<SharedRef<ComponentLayout>>> component) = 0 ;
+	virtual void register_service (CREF<OfThis<SharedRef<ServiceLayout>>> service) = 0 ;
+} ;
+
+class Entity implement OfThis<SharedRef<EntityLayout>> {
+public:
+	implicit Entity () = default ;
+
+	implicit Entity (CREF<Clazz> clazz_) {
+		mThis = EntityHolder::create () ;
+		EntityHolder::hold (thiz)->initialize (clazz_) ;
+	}
+
+	Clazz clazz () const {
+		return EntityHolder::hold (thiz)->clazz () ;
+	}
+
+	INDEX keyid () const {
+		return EntityHolder::hold (thiz)->keyid () ;
+	}
+
+	void add_component (CREF<OfThis<SharedRef<ComponentLayout>>> component) const {
+		return EntityHolder::hold (thiz)->add_component (component) ;
+	}
+	
+	void register_service (CREF<OfThis<SharedRef<ServiceLayout>>> service) const {
+		return EntityHolder::hold (thiz)->register_service (service) ;
+	}
+} ;
+
+struct ComponentHolder implement Interface {
+	imports SharedRef<ComponentLayout> create () ;
+	imports VFat<ComponentHolder> hold (VREF<ComponentLayout> that) ;
+	imports CFat<ComponentHolder> hold (CREF<ComponentLayout> that) ;
+
+	virtual void initialize (CREF<Clazz> clazz_) = 0 ;
+	virtual Clazz clazz () const = 0 ;
+	virtual BOOL contain (CREF<Clazz> clazz_) const = 0 ;
+	virtual OfThis<SharedRef<ComponentLayout>> get (CREF<Clazz> clazz_) const = 0 ;
+} ;
+
+class Component implement OfThis<SharedRef<ComponentLayout>> {
+public:
+	implicit Component () = default ;
+
+	implicit Component (CREF<Clazz> clazz_) {
+		mThis = ComponentHolder::create () ;
+		ComponentHolder::hold (thiz)->initialize (clazz_) ;
+	}
+
+	Clazz clazz () const {
+		return ComponentHolder::hold (thiz)->clazz () ;
+	}
+
+	BOOL contain (CREF<Clazz> clazz_) const {
+		return ComponentHolder::hold (thiz)->contain (clazz_) ;
+	}
+
+	Component get (CREF<Clazz> clazz_) const {
+		OfThis<SharedRef<ComponentLayout>> ret = ComponentHolder::hold (thiz)->get (clazz_) ;
+		return move (keep[TYPE<Component>::expr] (ret)) ;
+	}
+} ;
+
+struct ServiceHolder implement Interface {
+	imports SharedRef<ServiceLayout> create () ;
+	imports VFat<ServiceHolder> hold (VREF<ServiceLayout> that) ;
+	imports CFat<ServiceHolder> hold (CREF<ServiceLayout> that) ;
+
+	virtual void initialize (CREF<Clazz> clazz_) = 0 ;
+	virtual Clazz clazz () const = 0 ;
+	virtual INDEX spwan_entity () = 0 ;
+} ;
+
+class Service implement OfThis<SharedRef<ServiceLayout>> {
+public:
+	implicit Service () = default ;
+
+	implicit Service (CREF<Clazz> clazz_) {
+		mThis = ServiceHolder::create () ;
+		ServiceHolder::hold (thiz)->initialize (clazz_) ;
+	}
+
+	Clazz clazz () const {
+		return ServiceHolder::hold (thiz)->clazz () ;
+	}
+
+	INDEX spwan_entity () const {
+		return ServiceHolder::hold (thiz)->spwan_entity () ;
+	}
+} ;
+
+struct ECSManagerLayout ;
+
+struct ECSManagerHolder implement Interface {
+	imports CREF<OfThis<SharedRef<ECSManagerLayout>>> expr_m () ;
+	imports VFat<ECSManagerHolder> hold (VREF<ECSManagerLayout> that) ;
+	imports CFat<ECSManagerHolder> hold (CREF<ECSManagerLayout> that) ;
+
+	virtual void initialize () = 0 ;
+	virtual Entity entity (CREF<INDEX> index) const = 0 ;
+	virtual INDEX entity (CREF<Entity> item) = 0 ;
+	virtual Component component (CREF<INDEX> index) const = 0 ;
+	virtual INDEX component (CREF<Component> item) = 0 ;
+	virtual Service service (CREF<INDEX> index) const = 0 ;
+	virtual INDEX service (CREF<Service> item) = 0 ;
+} ;
+
+class ECSManager implement OfThis<SharedRef<ECSManagerLayout>> {
+public:
+	imports CREF<ECSManager> expr_m () {
+		return keep[TYPE<ECSManager>::expr] (ECSManagerHolder::expr) ;
+	}
+
+	Entity entity (CREF<INDEX> index) const {
+		return ECSManagerHolder::hold (thiz)->entity (index) ;
+	}
+
+	INDEX entity (CREF<Entity> item) const {
+		return ECSManagerHolder::hold (thiz)->entity (item) ;
+	}
+
+	Component component (CREF<INDEX> index) const {
+		return ECSManagerHolder::hold (thiz)->component (index) ;
+	}
+
+	INDEX component (CREF<Component> item) const {
+		return ECSManagerHolder::hold (thiz)->component (item) ;
+	}
+
+	Service service (CREF<INDEX> index) const {
+		return ECSManagerHolder::hold (thiz)->service (index) ;
+	}
+
+	INDEX service (CREF<Service> item) const {
+		return ECSManagerHolder::hold (thiz)->service (item) ;
+	}
+} ;
 } ;

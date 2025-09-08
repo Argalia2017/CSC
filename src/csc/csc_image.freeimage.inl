@@ -229,7 +229,7 @@ public:
 		const auto r15x = cvt_colorf (image.at (r3x ,r4x)) ;
 		const auto r16x = cvt_colorf (image.at (r3x ,r6x)) ;
 		auto rax = Buffer<FLT32 ,SIZE_OF<ARG1>> () ;
-		for (auto &&i : iter (0 ,rax.size ())) {
+		for (auto &&i : range (0 ,rax.size ())) {
 			rax[i] = 0 ;
 			rax[i] += r13x[i] * r9x ;
 			rax[i] += r14x[i] * r10x ;

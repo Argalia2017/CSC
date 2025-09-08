@@ -22,13 +22,17 @@ public:
 		assume (r1x) ;
 	}
 
-	void set_cxx_signal () override {
+	void enter () const override {
 		std::signal (SIGINT ,cxx_signal_handle) ;
 		std::signal (SIGILL ,cxx_signal_handle) ;
 		std::signal (SIGFPE ,cxx_signal_handle) ;
 		std::signal (SIGSEGV ,cxx_signal_handle) ;
 		std::signal (SIGTERM ,cxx_signal_handle) ;
 		std::signal (SIGABRT ,cxx_signal_handle) ;
+	}
+
+	void leave () const override {
+		GlobalProc::shutdown () ;
 	}
 
 	static void cxx_signal_handle (int code) {
