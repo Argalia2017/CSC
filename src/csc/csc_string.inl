@@ -948,6 +948,7 @@ public:
 
 	void leave () const {
 		const auto r1x = Pin<PinnedCounter> (mThat) ;
+		r1x->mCounter-- ;
 		assume (r1x->mCounter >= ZERO) ;
 	}
 } ;
