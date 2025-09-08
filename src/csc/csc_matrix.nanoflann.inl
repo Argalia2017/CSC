@@ -65,7 +65,7 @@ public:
 public:
 	implicit KDTreeResult () = delete ;
 
-	explicit KDTreeResult (CREF<LENGTH> capacity ,CREF<FLT32> radius_) {
+	explicit KDTreeResult (CR<LENGTH> capacity ,CR<FLT32> radius_) {
 		mRadius = radius_ ;
 		mResult = Priority<IndexPair<FLT32>> (capacity + 1) ;
 		clear () ;
@@ -125,7 +125,7 @@ public:
 
 class PointCloudKDTreeImplHolder final implement Fat<PointCloudKDTreeHolder ,PointCloudKDTreeLayout> {
 public:
-	void initialize (CREF<Array<Pointer>> pointcloud) override {
+	void initialize (CR<Array<Pointer>> pointcloud) override {
 		const auto r1x = address (pointcloud[0]) ;
 		const auto r2x = pointcloud.step () / SIZE_OF<FLT32>::expr ;
 		assume (inline_between (r2x ,1 ,4)) ;
@@ -139,7 +139,7 @@ public:
 		self.mKNNSearch->buildIndex () ;
 	}
 
-	Array<INDEX> search (CREF<Vector> center ,CREF<LENGTH> neighbor) const override {
+	Array<INDEX> search (CR<Vector> center ,CR<LENGTH> neighbor) const override {
 		assert (neighbor > 0) ;
 		const auto r1x = Point3F (center.xyz ()) ;
 		const auto r2x = nanoflann::SearchParameters (0 ,false) ;
@@ -155,7 +155,7 @@ public:
 		return move (ret) ;
 	}
 
-	Array<INDEX> search (CREF<Vector> center ,CREF<LENGTH> neighbor ,CREF<FLT64> radius) const override {
+	Array<INDEX> search (CR<Vector> center ,CR<LENGTH> neighbor ,CR<FLT64> radius) const override {
 		assert (neighbor > 0) ;
 		const auto r1x = Point3F (center.xyz ()) ;
 		const auto r2x = nanoflann::SearchParameters (0 ,false) ;

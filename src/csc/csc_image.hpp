@@ -50,17 +50,17 @@ private:
 	using ITEM = decltype (nullof (A).at (0 ,0)) ;
 
 protected:
-	XREF<A> mThat ;
+	XR<A> mThat ;
 	INDEX mY ;
 
 public:
 	implicit RowProxy () = delete ;
 
-	explicit RowProxy (XREF<A> that ,CREF<INDEX> y) :mThat (that) {
+	explicit RowProxy (XR<A> that ,CR<INDEX> y) :mThat (that) {
 		mY = y ;
 	}
 
-	forceinline XREF<ITEM> operator[] (CREF<INDEX> x) rightvalue {
+	forceinline XR<ITEM> operator[] (CR<INDEX> x) rightvalue {
 		return mThat.at (x ,mY) ;
 	}
 } ;
@@ -90,7 +90,7 @@ public:
 		return mCX * mCY ;
 	}
 
-	BOOL equal (CREF<ImageShape> that) const {
+	BOOL equal (CR<ImageShape> that) const {
 		if (mBX != that.mBX)
 			return FALSE ;
 		if (mBY != that.mBY)
@@ -102,11 +102,11 @@ public:
 		return TRUE ;
 	}
 
-	forceinline BOOL operator== (CREF<ImageShape> that) const {
+	forceinline BOOL operator== (CR<ImageShape> that) const {
 		return equal (that) ;
 	}
 
-	forceinline BOOL operator!= (CREF<ImageShape> that) const {
+	forceinline BOOL operator!= (CR<ImageShape> that) const {
 		return (!equal (that)) ;
 	}
 } ;
@@ -130,12 +130,12 @@ public:
 } ;
 
 struct ImageHolder implement Interface {
-	imports VFat<ImageHolder> hold (VREF<ImageLayout> that) ;
-	imports CFat<ImageHolder> hold (CREF<ImageLayout> that) ;
+	imports VFat<ImageHolder> hold (VR<ImageLayout> that) ;
+	imports CFat<ImageHolder> hold (CR<ImageLayout> that) ;
 
-	virtual void initialize (CREF<Unknown> holder ,RREF<ImageLayout> that) = 0 ;
-	virtual void initialize (CREF<Unknown> holder ,CREF<LENGTH> cx_ ,CREF<LENGTH> cy_ ,CREF<LENGTH> step_) = 0 ;
-	virtual void initialize (CREF<ImageLayout> that) = 0 ;
+	virtual void initialize (CR<Unknown> holder ,RR<ImageLayout> that) = 0 ;
+	virtual void initialize (CR<Unknown> holder ,CR<LENGTH> cx_ ,CR<LENGTH> cy_ ,CR<LENGTH> step_) = 0 ;
+	virtual void initialize (CR<ImageLayout> that) = 0 ;
 	virtual BOOL fixed () const = 0 ;
 	virtual LENGTH size () const = 0 ;
 	virtual LENGTH step () const = 0 ;
@@ -147,13 +147,13 @@ struct ImageHolder implement Interface {
 	virtual LENGTH cy () const = 0 ;
 	virtual ImageShape shape () const = 0 ;
 	virtual void reset () = 0 ;
-	virtual void reset (CREF<LENGTH> bx_ ,CREF<LENGTH> by_ ,CREF<LENGTH> cx_ ,CREF<LENGTH> cy_) = 0 ;
-	virtual VREF<BoxLayout> raw () leftvalue = 0 ;
-	virtual CREF<BoxLayout> raw () const leftvalue = 0 ;
-	virtual VREF<Pointer> at (CREF<INDEX> x ,CREF<INDEX> y) leftvalue = 0 ;
-	virtual CREF<Pointer> at (CREF<INDEX> x ,CREF<INDEX> y) const leftvalue = 0 ;
-	virtual void fill (CREF<Pointer> item) = 0 ;
-	virtual void splice (CREF<INDEX> x ,CREF<INDEX> y ,CREF<ImageLayout> item) = 0 ;
+	virtual void reset (CR<LENGTH> bx_ ,CR<LENGTH> by_ ,CR<LENGTH> cx_ ,CR<LENGTH> cy_) = 0 ;
+	virtual VR<BoxLayout> raw () leftvalue = 0 ;
+	virtual CR<BoxLayout> raw () const leftvalue = 0 ;
+	virtual VR<Pointer> at (CR<INDEX> x ,CR<INDEX> y) leftvalue = 0 ;
+	virtual CR<Pointer> at (CR<INDEX> x ,CR<INDEX> y) const leftvalue = 0 ;
+	virtual void fill (CR<Pointer> item) = 0 ;
+	virtual void splice (CR<INDEX> x ,CR<INDEX> y ,CR<ImageLayout> item) = 0 ;
 } ;
 
 template <class A>
@@ -173,29 +173,29 @@ protected:
 public:
 	implicit Image () = default ;
 
-	implicit Image (RREF<ImageLayout> that) {
+	implicit Image (RR<ImageLayout> that) {
 		ImageHolder::hold (thiz)->initialize (BufferUnknownBinder<A> () ,move (that)) ;
 	}
 
-	explicit Image (CREF<ImageShape> shape_) {
+	explicit Image (CR<ImageShape> shape_) {
 		ImageHolder::hold (thiz)->initialize (BufferUnknownBinder<A> () ,shape_.mCX ,shape_.mCY ,SIZE_OF<A>::expr) ;
 	}
 
-	explicit Image (CREF<LENGTH> cx_ ,CREF<LENGTH> cy_) {
+	explicit Image (CR<LENGTH> cx_ ,CR<LENGTH> cy_) {
 		ImageHolder::hold (thiz)->initialize (BufferUnknownBinder<A> () ,cx_ ,cy_ ,SIZE_OF<A>::expr) ;
 	}
 
-	implicit Image (CREF<Image> that) {
+	implicit Image (CR<Image> that) {
 		ImageHolder::hold (thiz)->initialize (that) ;
 	}
 
-	forceinline VREF<Image> operator= (CREF<Image> that) {
+	forceinline VR<Image> operator= (CR<Image> that) {
 		return assign (thiz ,that) ;
 	}
 
-	implicit Image (RREF<Image> that) = default ;
+	implicit Image (RR<Image> that) = default ;
 
-	forceinline VREF<Image> operator= (RREF<Image> that) = default ;
+	forceinline VR<Image> operator= (RR<Image> that) = default ;
 
 	Image clone () const {
 		return move (thiz) ;
@@ -245,67 +245,67 @@ public:
 		return ImageHolder::hold (thiz)->reset () ;
 	}
 
-	void reset (CREF<ImageShape> shape_) {
+	void reset (CR<ImageShape> shape_) {
 		return ImageHolder::hold (thiz)->reset (shape_.mBX ,shape_.mBY ,shape_.mCX ,shape_.mCY) ;
 	}
 
-	void reset (CREF<LENGTH> bx_ ,CREF<LENGTH> by_ ,CREF<LENGTH> cx_ ,CREF<LENGTH> cy_) {
+	void reset (CR<LENGTH> bx_ ,CR<LENGTH> by_ ,CR<LENGTH> cx_ ,CR<LENGTH> cy_) {
 		return ImageHolder::hold (thiz)->reset (bx_ ,by_ ,cx_ ,cy_) ;
 	}
 
-	VREF<A> at (CREF<INDEX> x ,CREF<INDEX> y) leftvalue {
+	VR<A> at (CR<INDEX> x ,CR<INDEX> y) leftvalue {
 		return ImageHolder::hold (thiz)->at (x ,y) ;
 	}
 
-	VREF<A> at (CREF<Pixel> index) leftvalue {
+	VR<A> at (CR<Pixel> index) leftvalue {
 		return at (index.mX ,index.mY) ;
 	}
 
-	forceinline VREF<A> operator[] (CREF<Pixel> index) leftvalue {
+	forceinline VR<A> operator[] (CR<Pixel> index) leftvalue {
 		return at (index) ;
 	}
 
-	forceinline RowProxy<VREF<Image>> operator[] (CREF<INDEX> y) leftvalue {
-		return RowProxy<VREF<Image>> (thiz ,y) ;
+	forceinline RowProxy<VR<Image>> operator[] (CR<INDEX> y) leftvalue {
+		return RowProxy<VR<Image>> (thiz ,y) ;
 	}
 
-	VREF<BoxLayout> raw () leftvalue {
+	VR<BoxLayout> raw () leftvalue {
 		return ImageHolder::hold (thiz)->raw () ;
 	}
 
-	CREF<BoxLayout> raw () const leftvalue {
+	CR<BoxLayout> raw () const leftvalue {
 		return ImageHolder::hold (thiz)->raw () ;
 	}
 
-	CREF<A> at (CREF<INDEX> x ,CREF<INDEX> y) const leftvalue {
+	CR<A> at (CR<INDEX> x ,CR<INDEX> y) const leftvalue {
 		return ImageHolder::hold (thiz)->at (x ,y) ;
 	}
 
-	CREF<A> at (CREF<Pixel> index) const leftvalue {
+	CR<A> at (CR<Pixel> index) const leftvalue {
 		return at (index.mX ,index.mY) ;
 	}
 
-	forceinline CREF<A> operator[] (CREF<Pixel> index) const leftvalue {
+	forceinline CR<A> operator[] (CR<Pixel> index) const leftvalue {
 		return at (index) ;
 	}
 
-	forceinline RowProxy<CREF<Image>> operator[] (CREF<INDEX> y) const leftvalue {
-		return RowProxy<CREF<Image>> (thiz ,y) ;
+	forceinline RowProxy<CR<Image>> operator[] (CR<INDEX> y) const leftvalue {
+		return RowProxy<CR<Image>> (thiz ,y) ;
 	}
 
 	PixelIterator iter () const {
 		return PixelIterator (0 ,cx () ,0 ,cy ()) ;
 	}
 
-	void fill (CREF<A> item) {
+	void fill (CR<A> item) {
 		return ImageHolder::hold (thiz)->fill (Pointer::from (item)) ;
 	}
 
-	void splice (CREF<INDEX> x ,CREF<INDEX> y ,CREF<Image> item) {
+	void splice (CR<INDEX> x ,CR<INDEX> y ,CR<Image> item) {
 		return ImageHolder::hold (thiz)->splice (x ,y ,item) ;
 	}
 
-	void splice (CREF<Pixel> index ,CREF<Image> item) {
+	void splice (CR<Pixel> index ,CR<Image> item) {
 		return splice (index.mX ,index.mY ,item) ;
 	}
 } ;
@@ -313,64 +313,64 @@ public:
 struct ImageProcLayout ;
 
 struct ImageProcHolder implement Interface {
-	imports CREF<OfThis<UniqueRef<ImageProcLayout>>> expr_m () ;
-	imports VFat<ImageProcHolder> hold (VREF<ImageProcLayout> that) ;
-	imports CFat<ImageProcHolder> hold (CREF<ImageProcLayout> that) ;
+	imports CR<OfThis<UniqueRef<ImageProcLayout>>> expr_m () ;
+	imports VFat<ImageProcHolder> hold (VR<ImageProcLayout> that) ;
+	imports CFat<ImageProcHolder> hold (CR<ImageProcLayout> that) ;
 
 	virtual void initialize () = 0 ;
-	virtual ImageLayout make_image (RREF<BoxLayout> image) const = 0 ;
-	virtual ImageLayout make_image (CREF<ImageShape> shape) const = 0 ;
-	virtual ImageLayout make_image (CREF<ImageShape> shape ,CREF<Clazz> clazz ,CREF<LENGTH> channel) const = 0 ;
-	virtual VREF<Pointer> peek_image (VREF<ImageLayout> image) const = 0 ;
-	virtual CREF<Pointer> peek_image (CREF<ImageLayout> image) const = 0 ;
-	virtual ImageLayout load_image (CREF<String<STR>> file) const = 0 ;
-	virtual void save_image (CREF<String<STR>> file ,CREF<ImageLayout> image) const = 0 ;
-	virtual Color1B sampler (CREF<Image<Color1B>> image ,CREF<FLT64> x ,CREF<FLT64> y) const = 0 ;
-	virtual Color2B sampler (CREF<Image<Color2B>> image ,CREF<FLT64> x ,CREF<FLT64> y) const = 0 ;
-	virtual Color3B sampler (CREF<Image<Color3B>> image ,CREF<FLT64> x ,CREF<FLT64> y) const = 0 ;
-	virtual Color4B sampler (CREF<Image<Color4B>> image ,CREF<FLT64> x ,CREF<FLT64> y) const = 0 ;
-	virtual FLT32 sampler (CREF<Image<FLT32>> image ,CREF<FLT64> x ,CREF<FLT64> y) const = 0 ;
-	virtual FLT64 sampler (CREF<Image<FLT64>> image ,CREF<FLT64> x ,CREF<FLT64> y) const = 0 ;
+	virtual ImageLayout make_image (RR<BoxLayout> image) const = 0 ;
+	virtual ImageLayout make_image (CR<ImageShape> shape) const = 0 ;
+	virtual ImageLayout make_image (CR<ImageShape> shape ,CR<Clazz> clazz ,CR<LENGTH> channel) const = 0 ;
+	virtual VR<Pointer> peek_image (VR<ImageLayout> image) const = 0 ;
+	virtual CR<Pointer> peek_image (CR<ImageLayout> image) const = 0 ;
+	virtual ImageLayout load_image (CR<String<STR>> file) const = 0 ;
+	virtual void save_image (CR<String<STR>> file ,CR<ImageLayout> image) const = 0 ;
+	virtual Color1B sampler (CR<Image<Color1B>> image ,CR<FLT64> x ,CR<FLT64> y) const = 0 ;
+	virtual Color2B sampler (CR<Image<Color2B>> image ,CR<FLT64> x ,CR<FLT64> y) const = 0 ;
+	virtual Color3B sampler (CR<Image<Color3B>> image ,CR<FLT64> x ,CR<FLT64> y) const = 0 ;
+	virtual Color4B sampler (CR<Image<Color4B>> image ,CR<FLT64> x ,CR<FLT64> y) const = 0 ;
+	virtual FLT32 sampler (CR<Image<FLT32>> image ,CR<FLT64> x ,CR<FLT64> y) const = 0 ;
+	virtual FLT64 sampler (CR<Image<FLT64>> image ,CR<FLT64> x ,CR<FLT64> y) const = 0 ;
 } ;
 
 class ImageProc implement OfThis<UniqueRef<ImageProcLayout>> {
 public:
-	static CREF<ImageProc> expr_m () {
+	static CR<ImageProc> expr_m () {
 		return keep[TYPE<ImageProc>::expr] (ImageProcHolder::expr) ;
 	}
 
-	static ImageLayout make_image (RREF<BoxLayout> image) {
+	static ImageLayout make_image (RR<BoxLayout> image) {
 		return ImageProcHolder::hold (expr)->make_image (move (image)) ;
 	}
 
-	static ImageLayout make_image (CREF<ImageShape> shape) {
+	static ImageLayout make_image (CR<ImageShape> shape) {
 		return ImageProcHolder::hold (expr)->make_image (shape) ;
 	}
 
-	static ImageLayout make_image (CREF<ImageShape> shape ,CREF<Clazz> clazz ,CREF<LENGTH> channel) {
+	static ImageLayout make_image (CR<ImageShape> shape ,CR<Clazz> clazz ,CR<LENGTH> channel) {
 		return ImageProcHolder::hold (expr)->make_image (shape ,clazz ,channel) ;
 	}
 
 	template <class A>
-	static VREF<A> peek_image (VREF<ImageLayout> image ,TYPE<A>) {
+	static VR<A> peek_image (VR<ImageLayout> image ,TYPE<A>) {
 		return ImageProcHolder::hold (expr)->peek_image (image) ;
 	}
 
 	template <class A>
-	static CREF<A> peek_image (CREF<ImageLayout> image ,TYPE<A>) {
+	static CR<A> peek_image (CR<ImageLayout> image ,TYPE<A>) {
 		return ImageProcHolder::hold (expr)->peek_image (image) ;
 	}
 
-	static ImageLayout load_image (CREF<String<STR>> file) {
+	static ImageLayout load_image (CR<String<STR>> file) {
 		return ImageProcHolder::hold (expr)->load_image (file) ;
 	}
 
-	static void save_image (CREF<String<STR>> file ,CREF<ImageLayout> image) {
+	static void save_image (CR<String<STR>> file ,CR<ImageLayout> image) {
 		return ImageProcHolder::hold (expr)->save_image (file ,image) ;
 	}
 
 	template <class ARG1>
-	static ARG1 sampler (CREF<Image<ARG1>> image ,CREF<FLT64> x ,CREF<FLT64> y) {
+	static ARG1 sampler (CR<Image<ARG1>> image ,CR<FLT64> x ,CR<FLT64> y) {
 		return ImageProcHolder::hold (expr)->sampler (image ,x ,y) ;
 	}
 } ;
@@ -393,16 +393,16 @@ struct TensorLayout {
 } ;
 
 struct TensorHolder implement Interface {
-	imports VFat<TensorHolder> hold (VREF<TensorLayout> that) ;
-	imports CFat<TensorHolder> hold (CREF<TensorLayout> that) ;
+	imports VFat<TensorHolder> hold (VR<TensorLayout> that) ;
+	imports CFat<TensorHolder> hold (CR<TensorLayout> that) ;
 
-	virtual void initialize (CREF<LENGTH> size_ ,CREF<Just<TensorDataType>> type_) = 0 ;
+	virtual void initialize (CR<LENGTH> size_ ,CR<Just<TensorDataType>> type_) = 0 ;
 	virtual LENGTH size () const = 0 ;
 	virtual Just<TensorDataType> type () const = 0 ;
-	virtual LENGTH shape (CREF<INDEX> index) const = 0 ;
-	virtual TensorLayout recast (CREF<Just<TensorDataType>> type_) = 0 ;
+	virtual LENGTH shape (CR<INDEX> index) const = 0 ;
+	virtual TensorLayout recast (CR<Just<TensorDataType>> type_) = 0 ;
 	virtual void reset () = 0 ;
-	virtual void reset (CREF<WrapperLayout> shape_) = 0 ;
+	virtual void reset (CR<WrapperLayout> shape_) = 0 ;
 	virtual Ref<RefBuffer<BYTE>> borrow () const leftvalue = 0 ;
 } ;
 
@@ -416,7 +416,7 @@ protected:
 public:
 	implicit Tensor () = default ;
 
-	explicit Tensor (CREF<LENGTH> size_ ,CREF<Just<TensorDataType>> type_) {
+	explicit Tensor (CR<LENGTH> size_ ,CR<Just<TensorDataType>> type_) {
 		TensorHolder::hold (thiz)->initialize (size_ ,type_) ;
 	}
 
@@ -428,11 +428,11 @@ public:
 		return TensorHolder::hold (thiz)->type () ;
 	}
 
-	LENGTH shape (CREF<INDEX> index) const {
+	LENGTH shape (CR<INDEX> index) const {
 		return TensorHolder::hold (thiz)->shape (index) ;
 	}
 
-	Tensor recast (CREF<Just<TensorDataType>> type_) {
+	Tensor recast (CR<Just<TensorDataType>> type_) {
 		TensorLayout ret = TensorHolder::hold (thiz)->recast (type_) ;
 		return move (keep[TYPE<Tensor>::expr] (ret)) ;
 	}
@@ -442,7 +442,7 @@ public:
 	}
 
 	template <class...ARG1>
-	void reset (CREF<ARG1>...shape_) {
+	void reset (CR<ARG1>...shape_) {
 		return TensorHolder::hold (thiz)->reset (MakeWrapper (LENGTH (shape_)...)) ;
 	}
 
@@ -450,53 +450,53 @@ public:
 		return TensorHolder::hold (thiz)->borrow () ;
 	}
 
-	Tensor sadd (CREF<Tensor> that) const {
+	Tensor sadd (CR<Tensor> that) const {
 		Tensor ret ;
 		unimplemented () ;
 		return move (ret) ;
 	}
 
-	forceinline Tensor operator+ (CREF<Tensor> that) const {
+	forceinline Tensor operator+ (CR<Tensor> that) const {
 		return sadd (that) ;
 	}
 
-	Tensor ssub (CREF<Tensor> that) const {
+	Tensor ssub (CR<Tensor> that) const {
 		Tensor ret ;
 		unimplemented () ;
 		return move (ret) ;
 	}
 
-	forceinline Tensor operator- (CREF<Tensor> that) const {
+	forceinline Tensor operator- (CR<Tensor> that) const {
 		return ssub (that) ;
 	}
 
-	Tensor smul (CREF<Tensor> that) const {
+	Tensor smul (CR<Tensor> that) const {
 		Tensor ret ;
 		unimplemented () ;
 		return move (ret) ;
 	}
 
-	forceinline Tensor operator* (CREF<Tensor> that) const {
+	forceinline Tensor operator* (CR<Tensor> that) const {
 		return smul (that) ;
 	}
 
-	Tensor sdiv (CREF<Tensor> that) const {
+	Tensor sdiv (CR<Tensor> that) const {
 		Tensor ret ;
 		unimplemented () ;
 		return move (ret) ;
 	}
 
-	forceinline Tensor operator/ (CREF<Tensor> that) const {
+	forceinline Tensor operator/ (CR<Tensor> that) const {
 		return sdiv (that) ;
 	}
 
-	Tensor smod (CREF<Tensor> that) const {
+	Tensor smod (CR<Tensor> that) const {
 		Tensor ret ;
 		unimplemented () ;
 		return move (ret) ;
 	}
 
-	forceinline Tensor operator% (CREF<Tensor> that) const {
+	forceinline Tensor operator% (CR<Tensor> that) const {
 		return smod (that) ;
 	}
 
@@ -522,17 +522,17 @@ struct DisjointLayout {
 } ;
 
 struct DisjointHolder implement Interface {
-	imports VFat<DisjointHolder> hold (VREF<DisjointLayout> that) ;
-	imports CFat<DisjointHolder> hold (CREF<DisjointLayout> that) ;
+	imports VFat<DisjointHolder> hold (VR<DisjointLayout> that) ;
+	imports CFat<DisjointHolder> hold (CR<DisjointLayout> that) ;
 
-	virtual void initialize (CREF<LENGTH> size_) = 0 ;
+	virtual void initialize (CR<LENGTH> size_) = 0 ;
 	virtual LENGTH size () const = 0 ;
-	virtual INDEX lead (CREF<INDEX> from_) = 0 ;
-	virtual void joint (CREF<INDEX> from_ ,CREF<INDEX> to_) = 0 ;
-	virtual BOOL edge (CREF<INDEX> from_ ,CREF<INDEX> to_) = 0 ;
-	virtual LENGTH depth (CREF<INDEX> from_) = 0 ;
-	virtual Deque<INDEX> cluster (CREF<INDEX> from_) = 0 ;
-	virtual Array<INDEX> jump (CREF<INDEX> from_) = 0 ;
+	virtual INDEX lead (CR<INDEX> from_) = 0 ;
+	virtual void joint (CR<INDEX> from_ ,CR<INDEX> to_) = 0 ;
+	virtual BOOL edge (CR<INDEX> from_ ,CR<INDEX> to_) = 0 ;
+	virtual LENGTH depth (CR<INDEX> from_) = 0 ;
+	virtual Deque<INDEX> cluster (CR<INDEX> from_) = 0 ;
+	virtual Array<INDEX> jump (CR<INDEX> from_) = 0 ;
 } ;
 
 class Disjoint implement DisjointLayout {
@@ -542,7 +542,7 @@ protected:
 public:
 	implicit Disjoint () = default ;
 
-	explicit Disjoint (CREF<LENGTH> size_) {
+	explicit Disjoint (CR<LENGTH> size_) {
 		DisjointHolder::hold (thiz)->initialize (size_) ;
 	}
 
@@ -550,23 +550,23 @@ public:
 		return DisjointHolder::hold (thiz)->size () ;
 	}
 
-	void joint (CREF<INDEX> from_ ,CREF<INDEX> to_) {
+	void joint (CR<INDEX> from_ ,CR<INDEX> to_) {
 		return DisjointHolder::hold (thiz)->joint (from_ ,to_) ;
 	}
 
-	BOOL edge (CREF<INDEX> from_ ,CREF<INDEX> to_) {
+	BOOL edge (CR<INDEX> from_ ,CR<INDEX> to_) {
 		return DisjointHolder::hold (thiz)->edge (from_ ,to_) ;
 	}
 
-	LENGTH depth (CREF<INDEX> from_) {
+	LENGTH depth (CR<INDEX> from_) {
 		return DisjointHolder::hold (thiz)->depth (from_) ;
 	}
 
-	Deque<INDEX> cluster (CREF<INDEX> from_) {
+	Deque<INDEX> cluster (CR<INDEX> from_) {
 		return DisjointHolder::hold (thiz)->cluster (from_) ;
 	}
 
-	Array<INDEX> jump (CREF<INDEX> from_) {
+	Array<INDEX> jump (CR<INDEX> from_) {
 		return DisjointHolder::hold (thiz)->jump (from_) ;
 	}
 } ;
@@ -584,13 +584,13 @@ struct KMMatchLayout {
 } ;
 
 struct KMMatchHolder implement Interface {
-	imports VFat<KMMatchHolder> hold (VREF<KMMatchLayout> that) ;
-	imports CFat<KMMatchHolder> hold (CREF<KMMatchLayout> that) ;
+	imports VFat<KMMatchHolder> hold (VR<KMMatchLayout> that) ;
+	imports CFat<KMMatchHolder> hold (CR<KMMatchLayout> that) ;
 
-	virtual void initialize (CREF<LENGTH> size_) = 0 ;
-	virtual void set_threshold (CREF<FLT64> threshold) = 0 ;
+	virtual void initialize (CR<LENGTH> size_) = 0 ;
+	virtual void set_threshold (CR<FLT64> threshold) = 0 ;
 	virtual LENGTH size () const = 0 ;
-	virtual Array<INDEX> sort (CREF<Image<FLT32>> love) = 0 ;
+	virtual Array<INDEX> sort (CR<Image<FLT32>> love) = 0 ;
 } ;
 
 class KMMatch implement KMMatchLayout {
@@ -608,11 +608,11 @@ protected:
 public:
 	implicit KMMatch () = default ;
 
-	explicit KMMatch (CREF<LENGTH> size_) {
+	explicit KMMatch (CR<LENGTH> size_) {
 		KMMatchHolder::hold (thiz)->initialize (size_) ;
 	}
 
-	void set_threshold (CREF<FLT64> threshold) {
+	void set_threshold (CR<FLT64> threshold) {
 		return KMMatchHolder::hold (thiz)->set_threshold (threshold) ;
 	}
 
@@ -620,7 +620,7 @@ public:
 		return KMMatchHolder::hold (thiz)->size () ;
 	}
 
-	Array<INDEX> sort (CREF<Image<FLT32>> love) {
+	Array<INDEX> sort (CR<Image<FLT32>> love) {
 		return KMMatchHolder::hold (thiz)->sort (love) ;
 	}
 } ;

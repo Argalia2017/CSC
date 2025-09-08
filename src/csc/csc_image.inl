@@ -13,7 +13,7 @@
 namespace CSC {
 class ImageImplHolder final implement Fat<ImageHolder ,ImageLayout> {
 public:
-	void initialize (CREF<Unknown> holder ,RREF<ImageLayout> that) override {
+	void initialize (CR<Unknown> holder ,RR<ImageLayout> that) override {
 		const auto r1x = RFat<ReflectSize> (holder) ;
 		const auto r2x = r1x->type_size () ;
 		noop (r2x) ;
@@ -21,7 +21,7 @@ public:
 		self = move (that) ;
 	}
 
-	void initialize (CREF<Unknown> holder ,CREF<LENGTH> cx_ ,CREF<LENGTH> cy_ ,CREF<LENGTH> step_) override {
+	void initialize (CR<Unknown> holder ,CR<LENGTH> cx_ ,CR<LENGTH> cy_ ,CR<LENGTH> step_) override {
 		assert (cx_ > 0) ;
 		assert (cy_ > 0) ;
 		const auto r1x = RFat<ReflectSize> (holder) ;
@@ -37,7 +37,7 @@ public:
 		reset () ;
 	}
 
-	void initialize (CREF<ImageLayout> that) override {
+	void initialize (CR<ImageLayout> that) override {
 		const auto r1x = ImageHolder::hold (that)->shape () ;
 		if (r1x.size () == 0)
 			return ;
@@ -119,7 +119,7 @@ public:
 		reset (0 ,0 ,self.mWidth ,r2x) ;
 	}
 
-	void reset (CREF<LENGTH> bx_ ,CREF<LENGTH> by_ ,CREF<LENGTH> cx_ ,CREF<LENGTH> cy_) override {
+	void reset (CR<LENGTH> bx_ ,CR<LENGTH> by_ ,CR<LENGTH> cx_ ,CR<LENGTH> cy_) override {
 		assert (self.mImage.size () > 0) ;
 		assert (cx_ > 0) ;
 		assert (cy_ > 0) ;
@@ -135,29 +135,29 @@ public:
 		self.mCY = cy_ ;
 	}
 
-	VREF<BoxLayout> raw () leftvalue override {
+	VR<BoxLayout> raw () leftvalue override {
 		return RefBufferHolder::hold (self.mImage)->raw () ;
 	}
 
-	CREF<BoxLayout> raw () const leftvalue override {
+	CR<BoxLayout> raw () const leftvalue override {
 		return RefBufferHolder::hold (self.mImage)->raw () ;
 	}
 
-	VREF<Pointer> at (CREF<INDEX> x ,CREF<INDEX> y) leftvalue override {
+	VR<Pointer> at (CR<INDEX> x ,CR<INDEX> y) leftvalue override {
 		assert (inline_between (x ,0 ,cx ())) ;
 		assert (inline_between (y ,0 ,cy ())) ;
 		INDEX ix = (x + self.mBX) + (y + self.mBY) * self.mStride ;
 		return self.mImage.at (ix) ;
 	}
 
-	CREF<Pointer> at (CREF<INDEX> x ,CREF<INDEX> y) const leftvalue override {
+	CR<Pointer> at (CR<INDEX> x ,CR<INDEX> y) const leftvalue override {
 		assert (inline_between (x ,0 ,cx ())) ;
 		assert (inline_between (y ,0 ,cy ())) ;
 		INDEX ix = (x + self.mBX) + (y + self.mBY) * self.mStride ;
 		return self.mImage.at (ix) ;
 	}
 
-	void fill (CREF<Pointer> item) override {
+	void fill (CR<Pointer> item) override {
 		const auto r1x = step () ;
 		if ifdo (TRUE) {
 			if (cy () == 0)
@@ -172,7 +172,7 @@ public:
 		}
 	}
 
-	void splice (CREF<INDEX> x ,CREF<INDEX> y ,CREF<ImageLayout> item) override {
+	void splice (CR<INDEX> x ,CR<INDEX> y ,CR<ImageLayout> item) override {
 		const auto r1x = ImageHolder::hold (item)->cx () ;
 		const auto r2x = ImageHolder::hold (item)->cy () ;
 		if (r1x == 0)
@@ -194,11 +194,11 @@ public:
 	}
 } ;
 
-exports VFat<ImageHolder> ImageHolder::hold (VREF<ImageLayout> that) {
+exports VFat<ImageHolder> ImageHolder::hold (VR<ImageLayout> that) {
 	return VFat<ImageHolder> (ImageImplHolder () ,that) ;
 }
 
-exports CFat<ImageHolder> ImageHolder::hold (CREF<ImageLayout> that) {
+exports CFat<ImageHolder> ImageHolder::hold (CR<ImageLayout> that) {
 	return CFat<ImageHolder> (ImageImplHolder () ,that) ;
 }
 
@@ -208,7 +208,7 @@ struct ImageProcLayout {
 	UniqueRef<BOOL> mContext ;
 } ;
 
-exports CREF<OfThis<UniqueRef<ImageProcLayout>>> ImageProcHolder::expr_m () {
+exports CR<OfThis<UniqueRef<ImageProcLayout>>> ImageProcHolder::expr_m () {
 	return memorize ([&] () {
 		OfThis<UniqueRef<ImageProcLayout>> ret ;
 		ret.mThis = UniqueRef<ImageProcLayout>::make () ;
@@ -217,16 +217,16 @@ exports CREF<OfThis<UniqueRef<ImageProcLayout>>> ImageProcHolder::expr_m () {
 	}) ;
 }
 
-exports VFat<ImageProcHolder> ImageProcHolder::hold (VREF<ImageProcLayout> that) {
+exports VFat<ImageProcHolder> ImageProcHolder::hold (VR<ImageProcLayout> that) {
 	return VFat<ImageProcHolder> (External<ImageProcHolder ,ImageProcLayout>::expr ,that) ;
 }
 
-exports CFat<ImageProcHolder> ImageProcHolder::hold (CREF<ImageProcLayout> that) {
+exports CFat<ImageProcHolder> ImageProcHolder::hold (CR<ImageProcLayout> that) {
 	return CFat<ImageProcHolder> (External<ImageProcHolder ,ImageProcLayout>::expr ,that) ;
 }
 
 struct ReflectTensorCopy implement Interface {
-	virtual void xcopy (VREF<Pointer> dst ,CREF<Pointer> src) const = 0 ;
+	virtual void xcopy (VR<Pointer> dst ,CR<Pointer> src) const = 0 ;
 
 	forceinline static consteval FLAG expr_m () noexcept {
 		return 501 ;
@@ -236,7 +236,7 @@ struct ReflectTensorCopy implement Interface {
 template <class A ,class B>
 class ReflectTensorCopyBinder final implement Fat<ReflectTensorCopy ,Proxy> {
 public:
-	void xcopy (VREF<Pointer> dst ,CREF<Pointer> src) const override {
+	void xcopy (VR<Pointer> dst ,CR<Pointer> src) const override {
 		auto &&rax = keep[TYPE<A>::expr] (dst) ;
 		auto &&rbx = keep[TYPE<B>::expr] (src) ;
 		rax = A (rbx) ;
@@ -245,7 +245,7 @@ public:
 
 class TensorImplHolder final implement Fat<TensorHolder ,TensorLayout> {
 public:
-	void initialize (CREF<LENGTH> size_ ,CREF<Just<TensorDataType>> type_) override {
+	void initialize (CR<LENGTH> size_ ,CR<Just<TensorDataType>> type_) override {
 		const auto r1x = size_of_tensor_type (type_) ;
 		const auto r2x = size_ * r1x + 16 ;
 		self.mTensor = Ref<RefBuffer<BYTE>>::make (r2x) ;
@@ -259,7 +259,7 @@ public:
 		reset () ;
 	}
 
-	LENGTH size_of_tensor_type (CREF<Just<TensorDataType>> type_) const {
+	LENGTH size_of_tensor_type (CR<Just<TensorDataType>> type_) const {
 		if (type_ == TensorDataType::Flt16)
 			return 2 ;
 		if (type_ == TensorDataType::Flt32)
@@ -283,7 +283,7 @@ public:
 		return self.mType ;
 	}
 
-	LENGTH shape (CREF<INDEX> index) const override {
+	LENGTH shape (CR<INDEX> index) const override {
 		assert (index >= 0) ;
 		if (self.mTensor == NULL)
 			return 0 ;
@@ -293,7 +293,7 @@ public:
 		return self.mStride[ix] / self.mStride[iy] ;
 	}
 
-	TensorLayout recast (CREF<Just<TensorDataType>> type_) override {
+	TensorLayout recast (CR<Just<TensorDataType>> type_) override {
 		if (type () == type_)
 			return move (self) ;
 		TensorLayout ret ;
@@ -312,7 +312,7 @@ public:
 		return move (ret) ;
 	}
 
-	Unknown choose_tensor_copy (CREF<Just<TensorDataType>> dst ,CREF<Just<TensorDataType>> src) const {
+	Unknown choose_tensor_copy (CR<Just<TensorDataType>> dst ,CR<Just<TensorDataType>> src) const {
 		if (dst == TensorDataType::Flt32)
 			if (src == TensorDataType::Flt32)
 				return SimpleUnknownBinder<ReflectTensorCopyBinder<FLT32 ,FLT32>> () ;
@@ -337,7 +337,7 @@ public:
 		reset (MakeWrapper (size ())) ;
 	}
 
-	void reset (CREF<WrapperLayout> shape_) override {
+	void reset (CR<WrapperLayout> shape_) override {
 		assert (self.mTensor->size () > 0) ;
 		assert (shape_.mRank > 0) ;
 		auto &&rax = keep[TYPE<Wrapper<LENGTH>>::expr] (shape_) ;
@@ -360,17 +360,17 @@ public:
 	}
 } ;
 
-exports VFat<TensorHolder> TensorHolder::hold (VREF<TensorLayout> that) {
+exports VFat<TensorHolder> TensorHolder::hold (VR<TensorLayout> that) {
 	return VFat<TensorHolder> (TensorImplHolder () ,that) ;
 }
 
-exports CFat<TensorHolder> TensorHolder::hold (CREF<TensorLayout> that) {
+exports CFat<TensorHolder> TensorHolder::hold (CR<TensorLayout> that) {
 	return CFat<TensorHolder> (TensorImplHolder () ,that) ;
 }
 
 class DisjointImplHolder final implement Fat<DisjointHolder ,DisjointLayout> {
 public:
-	void initialize (CREF<LENGTH> size_) override {
+	void initialize (CR<LENGTH> size_) override {
 		self.mTable = Array<INDEX> (size_) ;
 		self.mTable.fill (NONE) ;
 	}
@@ -379,7 +379,7 @@ public:
 		return self.mTable.size () ;
 	}
 
-	INDEX lead (CREF<INDEX> from_) override {
+	INDEX lead (CR<INDEX> from_) override {
 		INDEX ix = from_ ;
 		while (TRUE) {
 			if (ix == NONE)
@@ -403,26 +403,26 @@ public:
 		return move (ret) ;
 	}
 
-	INDEX parent (CREF<INDEX> curr) const {
+	INDEX parent (CR<INDEX> curr) const {
 		if (curr == self.mTable[curr])
 			return NONE ;
 		return self.mTable[curr] ;
 	}
 
-	void joint (CREF<INDEX> from_ ,CREF<INDEX> to_) override {
+	void joint (CR<INDEX> from_ ,CR<INDEX> to_) override {
 		INDEX ix = lead (from_) ;
 		INDEX iy = lead (to_) ;
 		self.mTable[ix] = ix ;
 		self.mTable[iy] = ix ;
 	}
 
-	BOOL edge (CREF<INDEX> from_ ,CREF<INDEX> to_) override {
+	BOOL edge (CR<INDEX> from_ ,CR<INDEX> to_) override {
 		INDEX ix = lead (from_) ;
 		INDEX iy = lead (to_) ;
 		return ix == iy ;
 	}
 
-	LENGTH depth (CREF<INDEX> from_) override {
+	LENGTH depth (CR<INDEX> from_) override {
 		LENGTH ret = 0 ;
 		INDEX ix = from_ ;
 		while (TRUE) {
@@ -434,7 +434,7 @@ public:
 		return move (ret) ;
 	}
 
-	Deque<INDEX> cluster (CREF<INDEX> from_) override {
+	Deque<INDEX> cluster (CR<INDEX> from_) override {
 		Deque<INDEX> ret ;
 		INDEX ix = from_ ;
 		while (TRUE) {
@@ -446,7 +446,7 @@ public:
 		return move (ret) ;
 	}
 
-	Array<INDEX> jump (CREF<INDEX> from_) override {
+	Array<INDEX> jump (CR<INDEX> from_) override {
 		Array<INDEX> ret = Array<INDEX> (self.mTable.size ()) ;
 		ret.fill (NONE) ;
 		for (auto &&i : range (0 ,self.mTable.size ())) {
@@ -460,17 +460,17 @@ public:
 	}
 } ;
 
-exports VFat<DisjointHolder> DisjointHolder::hold (VREF<DisjointLayout> that) {
+exports VFat<DisjointHolder> DisjointHolder::hold (VR<DisjointLayout> that) {
 	return VFat<DisjointHolder> (DisjointImplHolder () ,that) ;
 }
 
-exports CFat<DisjointHolder> DisjointHolder::hold (CREF<DisjointLayout> that) {
+exports CFat<DisjointHolder> DisjointHolder::hold (CR<DisjointLayout> that) {
 	return CFat<DisjointHolder> (DisjointImplHolder () ,that) ;
 }
 
 class KMMatchImplHolder final implement Fat<KMMatchHolder ,KMMatchLayout> {
 public:
-	void initialize (CREF<LENGTH> size_) override {
+	void initialize (CR<LENGTH> size_) override {
 		self.mSize = size_ ;
 		self.mThreshold = FLT32 (0.1) ;
 		self.mUser = Array<FLT32> (self.mSize) ;
@@ -481,7 +481,7 @@ public:
 		self.mLack = Array<FLT32> (self.mSize) ;
 	}
 
-	void set_threshold (CREF<FLT64> threshold) override {
+	void set_threshold (CR<FLT64> threshold) override {
 		self.mThreshold = FLT32 (threshold) ;
 	}
 
@@ -489,7 +489,7 @@ public:
 		return self.mSize ;
 	}
 
-	Array<INDEX> sort (CREF<Image<FLT32>> love) override {
+	Array<INDEX> sort (CR<Image<FLT32>> love) override {
 		assert (self.mMatch.size () > 0) ;
 		assert (love.size () == MathProc::square (self.mSize)) ;
 		self.mLove = Ref<Image<FLT32>>::reference (love) ;
@@ -548,7 +548,7 @@ public:
 		}
 	}
 
-	BOOL dfs (CREF<INDEX> user) {
+	BOOL dfs (CR<INDEX> user) {
 		self.mUserVisit[user] = TRUE ;
 		for (auto &&i : range (0 ,self.mSize)) {
 			if (self.mWorkVisit[i])
@@ -581,11 +581,11 @@ public:
 	}
 } ;
 
-exports VFat<KMMatchHolder> KMMatchHolder::hold (VREF<KMMatchLayout> that) {
+exports VFat<KMMatchHolder> KMMatchHolder::hold (VR<KMMatchLayout> that) {
 	return VFat<KMMatchHolder> (KMMatchImplHolder () ,that) ;
 }
 
-exports CFat<KMMatchHolder> KMMatchHolder::hold (CREF<KMMatchLayout> that) {
+exports CFat<KMMatchHolder> KMMatchHolder::hold (CR<KMMatchLayout> that) {
 	return CFat<KMMatchHolder> (KMMatchImplHolder () ,that) ;
 }
 } ;

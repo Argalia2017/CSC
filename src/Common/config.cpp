@@ -16,7 +16,7 @@ public:
 		Singleton<Console>::expr.debug (slice ("library_file = ") ,RuntimeProc::library_file ()) ;
 	}
 
-	void set_data_dire (CREF<String<STR>> dire) override {
+	void set_data_dire (CR<String<STR>> dire) override {
 		self.mDataPath = Path (dire) ;
 		const auto r1x = FileProc::lock_dire (self.mDataPath) ;
 		assume (r1x) ;
@@ -60,7 +60,7 @@ public:
 	}
 } ;
 
-exports CREF<OfThis<SharedRef<ConfigProcLayout>>> ConfigProcHolder::expr_m () {
+exports CR<OfThis<SharedRef<ConfigProcLayout>>> ConfigProcHolder::expr_m () {
 	return memorize ([&] () {
 		OfThis<SharedRef<ConfigProcLayout>> ret ;
 		ret.mThis = SharedRef<ConfigProcLayout>::make () ;
@@ -69,11 +69,11 @@ exports CREF<OfThis<SharedRef<ConfigProcLayout>>> ConfigProcHolder::expr_m () {
 	}) ;
 }
 
-exports VFat<ConfigProcHolder> ConfigProcHolder::hold (VREF<ConfigProcLayout> that) {
+exports VFat<ConfigProcHolder> ConfigProcHolder::hold (VR<ConfigProcLayout> that) {
 	return VFat<ConfigProcHolder> (ConfigProcImplHolder () ,that) ;
 }
 
-exports CFat<ConfigProcHolder> ConfigProcHolder::hold (CREF<ConfigProcLayout> that) {
+exports CFat<ConfigProcHolder> ConfigProcHolder::hold (CR<ConfigProcLayout> that) {
 	return CFat<ConfigProcHolder> (ConfigProcImplHolder () ,that) ;
 }
 } ;
