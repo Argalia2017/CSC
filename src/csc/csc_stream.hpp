@@ -119,8 +119,8 @@ struct StreamShape {
 	INDEX mWrite ;
 } ;
 
-static constexpr auto CLS = RANK1 () ;
-static constexpr auto BOM = RANK2 () ;
+static constexpr auto BOM = RANK1 () ;
+static constexpr auto CAT = RANK2 () ;
 static constexpr auto GAP = RANK3 () ;
 static constexpr auto EOS = RANK4 () ;
 
@@ -164,8 +164,8 @@ struct FriendReader implement Interface {
 	virtual void read (VR<String<STRU8>> item) = 0 ;
 	virtual void read (VR<String<STRU16>> item) = 0 ;
 	virtual void read (VR<String<STRU32>> item) = 0 ;
-	virtual void read (CR<typeof (CLS)> item) = 0 ;
 	virtual void read (CR<typeof (BOM)> item) = 0 ;
+	virtual void read (CR<typeof (CAT)> item) = 0 ;
 	virtual void read (CR<typeof (GAP)> item) = 0 ;
 	virtual void read (CR<typeof (EOS)> item) = 0 ;
 
@@ -262,11 +262,11 @@ public:
 		return thiz.self.read (item) ;
 	}
 
-	void read (CR<typeof (CLS)> item) override {
+	void read (CR<typeof (BOM)> item) override {
 		return thiz.self.read (item) ;
 	}
 
-	void read (CR<typeof (BOM)> item) override {
+	void read (CR<typeof (CAT)> item) override {
 		return thiz.self.read (item) ;
 	}
 
@@ -315,8 +315,8 @@ struct ByteReaderHolder implement Interface {
 	virtual void read (VR<String<STRU8>> item) = 0 ;
 	virtual void read (VR<String<STRU16>> item) = 0 ;
 	virtual void read (VR<String<STRU32>> item) = 0 ;
-	virtual void read (CR<typeof (CLS)> item) = 0 ;
 	virtual void read (CR<typeof (BOM)> item) = 0 ;
+	virtual void read (CR<typeof (CAT)> item) = 0 ;
 	virtual void read (CR<typeof (GAP)> item) = 0 ;
 	virtual void read (CR<typeof (EOS)> item) = 0 ;
 } ;
@@ -515,20 +515,20 @@ public:
 		return thiz ;
 	}
 
-	void read (CR<typeof (CLS)> item) {
-		return ByteReaderHolder::hold (thiz)->read (item) ;
-	}
-
-	forceinline VR<ByteReader> operator>> (CR<typeof (CLS)> item) {
-		read (item) ;
-		return thiz ;
-	}
-
 	void read (CR<typeof (BOM)> item) {
 		return ByteReaderHolder::hold (thiz)->read (item) ;
 	}
 
 	forceinline VR<ByteReader> operator>> (CR<typeof (BOM)> item) {
+		read (item) ;
+		return thiz ;
+	}
+
+	void read (CR<typeof (CAT)> item) {
+		return ByteReaderHolder::hold (thiz)->read (item) ;
+	}
+
+	forceinline VR<ByteReader> operator>> (CR<typeof (CAT)> item) {
 		read (item) ;
 		return thiz ;
 	}
@@ -600,8 +600,8 @@ struct TextReaderHolder implement Interface {
 	virtual void read (VR<String<STRU8>> item) = 0 ;
 	virtual void read (VR<String<STRU16>> item) = 0 ;
 	virtual void read (VR<String<STRU32>> item) = 0 ;
-	virtual void read (CR<typeof (CLS)> item) = 0 ;
 	virtual void read (CR<typeof (BOM)> item) = 0 ;
+	virtual void read (CR<typeof (CAT)> item) = 0 ;
 	virtual void read (CR<typeof (GAP)> item) = 0 ;
 	virtual void read (CR<typeof (EOS)> item) = 0 ;
 } ;
@@ -800,20 +800,20 @@ public:
 		return thiz ;
 	}
 
-	void read (CR<typeof (CLS)> item) {
-		return TextReaderHolder::hold (thiz)->read (item) ;
-	}
-
-	forceinline VR<TextReader> operator>> (CR<typeof (CLS)> item) {
-		read (item) ;
-		return thiz ;
-	}
-
 	void read (CR<typeof (BOM)> item) {
 		return TextReaderHolder::hold (thiz)->read (item) ;
 	}
 
 	forceinline VR<TextReader> operator>> (CR<typeof (BOM)> item) {
+		read (item) ;
+		return thiz ;
+	}
+
+	void read (CR<typeof (CAT)> item) {
+		return TextReaderHolder::hold (thiz)->read (item) ;
+	}
+
+	forceinline VR<TextReader> operator>> (CR<typeof (CAT)> item) {
 		read (item) ;
 		return thiz ;
 	}
@@ -887,7 +887,7 @@ struct FriendWriter implement Interface {
 	virtual void write (CR<String<STRU16>> item) = 0 ;
 	virtual void write (CR<String<STRU32>> item) = 0 ;
 	virtual void write (CR<typeof (BOM)> item) = 0 ;
-	virtual void write (CR<typeof (CLS)> item) = 0 ;
+	virtual void write (CR<typeof (CAT)> item) = 0 ;
 	virtual void write (CR<typeof (GAP)> item) = 0 ;
 	virtual void write (CR<typeof (EOS)> item) = 0 ;
 
@@ -988,7 +988,7 @@ public:
 		return thiz.self.write (item) ;
 	}
 
-	void write (CR<typeof (CLS)> item) override {
+	void write (CR<typeof (CAT)> item) override {
 		return thiz.self.write (item) ;
 	}
 
@@ -1038,7 +1038,7 @@ struct ByteWriterHolder implement Interface {
 	virtual void write (CR<String<STRU16>> item) = 0 ;
 	virtual void write (CR<String<STRU32>> item) = 0 ;
 	virtual void write (CR<typeof (BOM)> item) = 0 ;
-	virtual void write (CR<typeof (CLS)> item) = 0 ;
+	virtual void write (CR<typeof (CAT)> item) = 0 ;
 	virtual void write (CR<typeof (GAP)> item) = 0 ;
 	virtual void write (CR<typeof (EOS)> item) = 0 ;
 } ;
@@ -1239,11 +1239,11 @@ public:
 		return thiz ;
 	}
 
-	void write (CR<typeof (CLS)> item) {
+	void write (CR<typeof (CAT)> item) {
 		return ByteWriterHolder::hold (thiz)->write (item) ;
 	}
 
-	forceinline VR<ByteWriter> operator<< (CR<typeof (CLS)> item) {
+	forceinline VR<ByteWriter> operator<< (CR<typeof (CAT)> item) {
 		write (item) ;
 		return thiz ;
 	}
@@ -1315,8 +1315,8 @@ struct TextWriterHolder implement Interface {
 	virtual void write (CR<String<STRU8>> item) = 0 ;
 	virtual void write (CR<String<STRU16>> item) = 0 ;
 	virtual void write (CR<String<STRU32>> item) = 0 ;
-	virtual void write (CR<typeof (CLS)> item) = 0 ;
 	virtual void write (CR<typeof (BOM)> item) = 0 ;
+	virtual void write (CR<typeof (CAT)> item) = 0 ;
 	virtual void write (CR<typeof (GAP)> item) = 0 ;
 	virtual void write (CR<typeof (EOS)> item) = 0 ;
 } ;
@@ -1508,20 +1508,20 @@ public:
 		return thiz ;
 	}
 
-	void write (CR<typeof (CLS)> item) {
-		return TextWriterHolder::hold (thiz)->write (item) ;
-	}
-
-	forceinline VR<TextWriter> operator<< (CR<typeof (CLS)> item) {
-		write (item) ;
-		return thiz ;
-	}
-
 	void write (CR<typeof (BOM)> item) {
 		return TextWriterHolder::hold (thiz)->write (item) ;
 	}
 
 	forceinline VR<TextWriter> operator<< (CR<typeof (BOM)> item) {
+		write (item) ;
+		return thiz ;
+	}
+
+	void write (CR<typeof (CAT)> item) {
+		return TextWriterHolder::hold (thiz)->write (item) ;
+	}
+
+	forceinline VR<TextWriter> operator<< (CR<typeof (CAT)> item) {
 		write (item) ;
 		return thiz ;
 	}

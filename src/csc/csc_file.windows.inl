@@ -1079,7 +1079,7 @@ public:
 	}
 
 	void log (CR<String<STR>> tag ,CR<Format> msg) {
-		self.mLogWriter << CLS ;
+		self.mLogWriter.reset () ;
 		self.mLogWriter << slice ("[") ;
 		const auto r1x = CurrentTime () ;
 		const auto r2x = r1x.calendar () ;
@@ -1100,7 +1100,7 @@ public:
 		Scope<Mutex> anonymous (self.mMutex) ;
 		if (self.mOption[ConsoleOption::NoPrint])
 			return ;
-		self.mLogWriter << CLS ;
+		self.mLogWriter.reset () ;
 		self.mLogWriter << msg ;
 		self.mLogWriter << EOS ;
 		if ifdo (TRUE) {
@@ -1217,7 +1217,7 @@ public:
 		FileProc::move_file (self.mOldLogFile ,self.mLogFile) ;
 		self.mLogStreamFile = StreamFile (self.mLogFile) ;
 		self.mLogStreamFile.open_w (0) ;
-		self.mLogWriter << CLS ;
+		self.mLogWriter.reset () ;
 		self.mLogWriter << BOM ;
 		self.mLogWriter << EOS ;
 		log_file () ;

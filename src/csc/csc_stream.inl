@@ -376,12 +376,12 @@ public:
 		}
 	}
 
-	void read (CR<typeof (CLS)>) override {
-		reset () ;
-	}
-
 	void read (CR<typeof (BOM)>) override {
 		self.mDiffEndian = !self.mDiffEndian ;
+	}
+
+	void read (CR<typeof (CAT)>) override {
+		reset () ;
 	}
 
 	void read (CR<typeof (GAP)>) override {
@@ -781,10 +781,6 @@ public:
 		}
 	}
 
-	void read (CR<typeof (CLS)>) override {
-		reset () ;
-	}
-
 	void read (CR<typeof (BOM)>) override {
 		auto rax = STRU32 () ;
 		const auto r1x = backup () ;
@@ -824,6 +820,10 @@ public:
 		if ifdo (act) {
 			reset (r1x) ;
 		}
+	}
+
+	void read (CR<typeof (CAT)>) override {
+		reset () ;
 	}
 
 	void read (CR<typeof (GAP)>) override {
@@ -1014,12 +1014,12 @@ public:
 		}
 	}
 
-	void write (CR<typeof (CLS)>) override {
-		reset () ;
-	}
-
 	void write (CR<typeof (BOM)>) override {
 		self.mDiffEndian = !self.mDiffEndian ;
+	}
+
+	void write (CR<typeof (CAT)>) override {
+		reset () ;
 	}
 
 	void write (CR<typeof (GAP)>) override {
@@ -1483,10 +1483,6 @@ public:
 		}
 	}
 
-	void write (CR<typeof (CLS)>) override {
-		reset () ;
-	}
-
 	void write (CR<typeof (BOM)>) override {
 		auto act = TRUE ;
 		if ifdo (act) {
@@ -1506,6 +1502,10 @@ public:
 				discard ;
 			write (STRU32 (0X0000FEFF)) ;
 		}
+	}
+
+	void write (CR<typeof (CAT)>) override {
+		reset () ;
 	}
 
 	void write (CR<typeof (GAP)>) override {
