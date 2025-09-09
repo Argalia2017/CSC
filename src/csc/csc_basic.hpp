@@ -991,11 +991,11 @@ public:
 
 struct FarBufferLayout {
 	Ref<Pointer> mThis ;
+	INDEX mIndex ;
 	Function<CR<INDEX> ,VR<Pointer>> mGetter ;
 	Function<CR<INDEX> ,CR<Pointer>> mSetter ;
 	LENGTH mSize ;
 	LENGTH mStep ;
-	INDEX mIndex ;
 } ;
 
 struct FarBufferHolder implement Interface {
@@ -1010,6 +1010,7 @@ struct FarBufferHolder implement Interface {
 	virtual LENGTH size () const = 0 ;
 	virtual LENGTH step () const = 0 ;
 	virtual VR<Pointer> at (CR<INDEX> index) leftvalue = 0 ;
+	virtual CR<Pointer> at (CR<INDEX> index) const leftvalue = 0 ;
 	virtual void refresh () = 0 ;
 } ;
 
@@ -1017,11 +1018,11 @@ template <class A>
 class FarBuffer implement FarBufferLayout {
 protected:
 	using FarBufferLayout::mThis ;
+	using FarBufferLayout::mIndex ;
 	using FarBufferLayout::mGetter ;
 	using FarBufferLayout::mSetter ;
 	using FarBufferLayout::mSize ;
 	using FarBufferLayout::mStep ;
-	using FarBufferLayout::mIndex ;
 
 public:
 	implicit FarBuffer () = default ;
@@ -1059,6 +1060,14 @@ public:
 	}
 
 	forceinline VR<A> operator[] (CR<INDEX> index) leftvalue {
+		return at (index) ;
+	}
+
+	CR<A> at (CR<INDEX> index) const leftvalue {
+		return FarBufferHolder::hold (thiz)->at (index) ;
+	}
+
+	forceinline CR<A> operator[] (CR<INDEX> index) const leftvalue {
 		return at (index) ;
 	}
 
