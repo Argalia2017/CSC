@@ -595,11 +595,11 @@ struct RandomHolder implement Interface {
 	virtual FLAG seed () const = 0 ;
 	virtual VAL32 random_value (CR<VAL32> min_ ,CR<VAL32> max_) = 0 ;
 	virtual VAL64 random_value (CR<VAL64> min_ ,CR<VAL64> max_) = 0 ;
-	virtual FLT64 random_float (CR<FLT64> scale) = 0 ;
 	virtual Array<INDEX> random_shuffle (CR<LENGTH> length_ ,CR<LENGTH> size_) = 0 ;
 	virtual void random_shuffle (CR<LENGTH> length_ ,CR<LENGTH> size_ ,VR<Array<INDEX>> result) = 0 ;
 	virtual BitSet random_pick (CR<LENGTH> length_ ,CR<LENGTH> size_) = 0 ;
 	virtual void random_pick (CR<LENGTH> length_ ,CR<LENGTH> size_ ,VR<BitSet> result) = 0 ;
+	virtual FLT64 random_float (CR<FLT64> scale) = 0 ;
 	virtual BOOL random_draw (CR<FLT64> possibility) = 0 ;
 	virtual FLT64 random_normal () = 0 ;
 } ;
@@ -622,10 +622,6 @@ public:
 		return RandomHolder::hold (thiz)->random_value (min_ ,max_) ;
 	}
 
-	FLT64 random_float (CR<FLT64> scale) const {
-		return RandomHolder::hold (thiz)->random_float (scale) ;
-	}
-
 	Array<INDEX> random_shuffle (CR<LENGTH> length_ ,CR<LENGTH> size_) const {
 		return RandomHolder::hold (thiz)->random_shuffle (length_ ,size_) ;
 	}
@@ -640,6 +636,10 @@ public:
 
 	void random_pick (CR<LENGTH> length_ ,CR<LENGTH> size_ ,VR<BitSet> result) const {
 		return RandomHolder::hold (thiz)->random_pick (length_ ,size_ ,result) ;
+	}
+
+	FLT64 random_float (CR<FLT64> scale) const {
+		return RandomHolder::hold (thiz)->random_float (scale) ;
 	}
 
 	BOOL random_draw (CR<FLT64> possibility) const {

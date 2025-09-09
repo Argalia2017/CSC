@@ -601,6 +601,9 @@ struct RandomLayout {
 } ;
 
 class RandomImplHolder final implement Fat<RandomHolder ,RandomLayout> {
+private:
+	using RANDOM_FLOAT_SCALE = ENUM<10000> ;
+
 public:
 	void initialize () override {
 		const auto r1x = invoke (std::random_device ()) ;
@@ -637,14 +640,6 @@ public:
 		assert (r1x > 0) ;
 		const auto r2x = VAL64 (random_byte ()) & VAL64_MAX ;
 		const auto r3x = r2x % r1x + min_ ;
-		return r3x ;
-	}
-
-	FLT64 random_float (CR<FLT64> scale) override {
-		const auto r1x = VAL64 (scale) ;
-		assert (r1x > 0) ;
-		const auto r2x = FLT64 (random_value (VAL64 (0) ,r1x)) ;
-		const auto r3x = r2x * MathProc::inverse (FLT64 (r1x)) ;
 		return r3x ;
 	}
 
@@ -696,8 +691,16 @@ public:
 		}
 	}
 
+	FLT64 random_float (CR<FLT64> scale) override {
+		const auto r1x = VAL64 (scale) ;
+		assert (r1x > 0) ;
+		const auto r2x = FLT64 (random_value (VAL64 (0) ,r1x)) ;
+		const auto r3x = r2x * MathProc::inverse (FLT64 (r1x)) ;
+		return r3x ;
+	}
+
 	BOOL random_draw (CR<FLT64> possibility) override {
-		if (random_float (10000) < possibility)
+		if (random_float (RANDOM_FLOAT_SCALE::expr) < possibility)
 			return TRUE ;
 		return FALSE ;
 	}
@@ -706,11 +709,11 @@ public:
 		if ifdo (TRUE) {
 			if (self.mNormal.mOdd)
 				discard ;
-			const auto r1x = VAL64 (10000) ;
-			const auto r2x = MathProc::min_of (random_float (r1x) + FLT64_EPS ,FLT64 (1)) ;
-			const auto r3x = random_float (r1x) ;
-			const auto r4x = MathProc::sqrt (FLT64 (-2) * MathProc::log (r2x)) ;
-			const auto r5x = MATH_PI * 2 * r3x ;
+			const auto r1x = random_float (RANDOM_FLOAT_SCALE::expr) ;
+			const auto r2x = random_float (RANDOM_FLOAT_SCALE::expr) ;
+			const auto r3x = MathProc::min_of (r1x + FLT64_EPS ,FLT64 (1)) ;
+			const auto r4x = MathProc::sqrt (FLT64 (-2) * MathProc::log (r3x)) ;
+			const auto r5x = MATH_PI * 2 * r2x ;
 			self.mNormal.mNX = r4x * MathProc::cos (r5x) ;
 			self.mNormal.mNY = r4x * MathProc::sin (r5x) ;
 			self.mNormal.mOdd = TRUE ;
