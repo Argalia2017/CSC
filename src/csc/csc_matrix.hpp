@@ -615,6 +615,7 @@ struct MakeMatrixHolder implement Interface {
 	virtual void make_DiagMatrix (CR<FLT64> x ,CR<FLT64> y ,CR<FLT64> z ,CR<FLT64> w) = 0 ;
 	virtual void make_ShearMatrix (CR<Vector> x ,CR<Vector> y ,CR<Vector> z) = 0 ;
 	virtual void make_RotationMatrix (CR<Vector> normal ,CR<FLT64> angle) = 0 ;
+	virtual void make_RotationMatrix (CR<Vector> from ,CR<Vector> into) = 0 ;
 	virtual void make_TranslationMatrix (CR<FLT64> x ,CR<FLT64> y ,CR<FLT64> z) = 0 ;
 	virtual void make_PerspectiveMatrix (CR<FLT64> fx ,CR<FLT64> fy ,CR<FLT64> wx ,CR<FLT64> wy) = 0 ;
 	virtual void make_ProjectionMatrix (CR<Vector> normal ,CR<Vector> center ,CR<Vector> light) = 0 ;
@@ -646,6 +647,12 @@ inline Matrix ShearMatrix (CR<Vector> x ,CR<Vector> y ,CR<Vector> z) {
 inline Matrix RotationMatrix (CR<Vector> normal ,CR<FLT64> angle) {
 	Matrix ret ;
 	MakeMatrixHolder::hold (ret)->make_RotationMatrix (normal ,angle) ;
+	return move (ret) ;
+}
+
+inline Matrix RotationMatrix (CR<Vector> from ,CR<Vector> into) {
+	Matrix ret ;
+	MakeMatrixHolder::hold (ret)->make_RotationMatrix (from ,into) ;
 	return move (ret) ;
 }
 

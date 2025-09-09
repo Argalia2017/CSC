@@ -490,20 +490,29 @@ public:
 	void make_RotationMatrix (CR<Vector> normal ,CR<FLT64> angle) override {
 		Matrix ret = Matrix::zero () ;
 		const auto r1x = normal.normalize () ;
-		const auto r2x = MathProc::cos (angle) ;
-		const auto r3x = r1x * MathProc::sin (angle) ;
-		const auto r4x = r1x * (1 - r2x) ;
-		ret[0][0] = r1x[0] * r4x[0] + r2x ;
-		ret[1][0] = r1x[1] * r4x[0] + r3x[2] ;
-		ret[2][0] = r1x[2] * r4x[0] - r3x[1] ;
-		ret[0][1] = r1x[0] * r4x[1] - r3x[2] ;
-		ret[1][1] = r1x[1] * r4x[1] + r2x ;
-		ret[2][1] = r1x[2] * r4x[1] + r3x[0] ;
-		ret[0][2] = r1x[0] * r4x[2] + r3x[1] ;
-		ret[1][2] = r1x[1] * r4x[2] - r3x[0] ;
-		ret[2][2] = r1x[2] * r4x[2] + r2x ;
+		const auto r2x = angle * MathProc::step (r1x.magnitude () - 0.5) ;
+		const auto r3x = MathProc::cos (r2x) ;
+		const auto r4x = r1x * MathProc::sin (r2x) ;
+		const auto r5x = r1x * (1 - r3x) ;
+		ret[0][0] = r1x[0] * r5x[0] + r3x ;
+		ret[1][0] = r1x[1] * r5x[0] + r4x[2] ;
+		ret[2][0] = r1x[2] * r5x[0] - r4x[1] ;
+		ret[0][1] = r1x[0] * r5x[1] - r4x[2] ;
+		ret[1][1] = r1x[1] * r5x[1] + r3x ;
+		ret[2][1] = r1x[2] * r5x[1] + r4x[0] ;
+		ret[0][2] = r1x[0] * r5x[2] + r4x[1] ;
+		ret[1][2] = r1x[1] * r5x[2] - r4x[0] ;
+		ret[2][2] = r1x[2] * r5x[2] + r3x ;
 		ret[3][3] = 1 ;
 		self = move (ret) ;
+	}
+
+	void make_RotationMatrix (CR<Vector> from ,CR<Vector> into) override {
+		const auto r1x = from.normalize () ;
+		const auto r2x = into.normalize () ;
+		const auto r3x = (r1x ^ r2x).normalize () ;
+		const auto r4x = MathProc::acos (r1x * r2x) ;
+		make_RotationMatrix (r3x ,r4x) ;
 	}
 
 	void make_TranslationMatrix (CR<FLT64> x ,CR<FLT64> y ,CR<FLT64> z) override {
