@@ -1204,19 +1204,19 @@ public:
 			if (self.mRank != 0)
 				discard ;
 			item = Vector (keep[TYPE<Vector>::expr] (self.mPointCloud.ref[index])) ;
-			item = self.mWorld * item ;
+			item = item * self.mWorld ;
 		}
 		if ifdo (act) {
 			if (self.mRank != 2)
 				discard ;
 			item = Vector (keep[TYPE<Point2F>::expr] (self.mPointCloud.ref[index])) ;
-			item = self.mWorld * item ;
+			item = item * self.mWorld ;
 		}
 		if ifdo (act) {
 			if (self.mRank != 3)
 				discard ;
 			item = Vector (keep[TYPE<Point3F>::expr] (self.mPointCloud.ref[index])) ;
-			item = self.mWorld * item ;
+			item = item * self.mWorld ;
 		}
 		if ifdo (act) {
 			assert (FALSE) ;
@@ -1262,8 +1262,9 @@ public:
 	}
 
 	FLT64 sqrt_fix (CR<FLT64> a) const {
-		const auto r1x = FLT64 (FLT32_EPS) / 2 ;
-		return MathProc::sqrt (MathProc::max_of (a ,r1x)) ;
+		if (a < FLT64_EPS)
+			return 1 ;
+		return MathProc::sqrt (a) ;
 	}
 
 	Matrix box_matrix () const override {

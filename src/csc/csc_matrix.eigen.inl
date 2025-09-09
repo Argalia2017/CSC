@@ -29,9 +29,11 @@ public:
 		const auto r3x = a * Vector::axis_z () ;
 		const auto r4x = a * Vector::axis_w () ;
 		const auto r5x = Matrix (r1x.normalize () ,r2x.normalize () ,r3x.normalize () ,Vector::axis_w ()) ;
+		const auto r6x = MathProc::sign (r5x.determinant ()) ;
+		const auto r7x = DiagMatrix (r6x ,r6x ,r6x ,1) ;
 		ret.mT = TranslationMatrix (r4x) ;
-		ret.mR = Quaternion (r5x).matrix () ;
-		ret.mS = DiagMatrix (r1x.magnitude () ,r2x.magnitude () ,r3x.magnitude ()) ;
+		ret.mR = Quaternion (r5x * r7x).matrix () ;
+		ret.mS = r7x * DiagMatrix (r1x.magnitude () ,r2x.magnitude () ,r3x.magnitude ()) ;
 		return move (ret) ;
 	}
 
@@ -125,7 +127,7 @@ public:
 		Matrix ret ;
 		for (auto &&i : range (0 ,4 ,0 ,4)) {
 			ret[i] = a (i.mY ,i.mX) ;
-			assume (!isnan (ret[i])) ;
+			assume (!MathProc::is_inf (ret[i])) ;
 		}
 		return move (ret) ;
 	}
