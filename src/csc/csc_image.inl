@@ -245,118 +245,216 @@ public:
 
 class TensorImplHolder final implement Fat<TensorHolder ,TensorLayout> {
 public:
-	void initialize (CR<LENGTH> size_ ,CR<Just<TensorDataType>> type_) override {
-		const auto r1x = size_of_tensor_type (type_) ;
-		const auto r2x = size_ * r1x + 16 ;
-		self.mTensor = Ref<RefBuffer<BYTE>>::make (r2x) ;
-		const auto r3x = address (self.mTensor.ref[0]) ;
-		const auto r4x = inline_alignas (r3x ,16) - r3x ;
-		auto &&rax = keep[TYPE<RefBufferLayout>::expr] (self.mTensor.ref) ;
-		rax.mBuffer += r4x ;
-		rax.mSize -= r4x ;
-		self.mWidth = size_ ;
-		self.mType = type_ ;
-		reset () ;
+	void initialize (CR<RefBufferLayout> that) override {
+		auto &&rax = keep[TYPE<RefBuffer<Pointer>>::expr] (that) ;
+		const auto r1x = tensor_type_from_step (rax.step ()) ;
+		initialize (rax.size () ,r1x) ;
+		const auto r2x = choose_tensor_copy (r1x ,type ()) ;
+		const auto r3x = RFat<ReflectTensorCopy> (r2x) ;
+		const auto r4x = self.mStride[self.mRank] ;
+		for (auto &&i : range (0 ,r1x)) {
+			const auto r5x = self.mBuffer + i * r4x ;
+			const auto r6x = address (rax[i]) ;
+			r3x->xcopy (Pointer::make (r5x) ,Pointer::make (r6x)) ;
+		}
 	}
 
-	LENGTH size_of_tensor_type (CR<Just<TensorDataType>> type_) const {
-		if (type_ == TensorDataType::Flt16)
+	void initialize (VR<FarBufferLayout> that) override {
+		auto &&rax = keep[TYPE<FarBuffer<Pointer>>::expr] (that) ;
+		const auto r1x = tensor_type_from_step (rax.step ()) ;
+		initialize (rax.size () ,r1x) ;
+		const auto r2x = choose_tensor_copy (r1x ,type ()) ;
+		const auto r3x = RFat<ReflectTensorCopy> (r2x) ;
+		const auto r4x = self.mStride[self.mRank] ;
+		for (auto &&i : range (0 ,r1x)) {
+			const auto r5x = self.mBuffer + i * r4x ;
+			const auto r6x = address (rax[i]) ;
+			r3x->xcopy (Pointer::make (r5x) ,Pointer::make (r6x)) ;
+		}
+	}
+
+	void initialize (CR<LENGTH> size_ ,CR<Just<TensorType>> type_) override {
+		const auto r1x = step_from_tensor_type (type_) ;
+		const auto r2x = size_ * r1x + 16 ;
+		self.mTensor = Ref<RefBuffer<BYTE>>::make (r2x) ;
+		auto &&rax = keep[TYPE<RefBufferLayout>::expr] (self.mTensor.ref) ;
+		rax.mBuffer = inline_alignas (rax.mBuffer ,16) ;
+		rax.mSize = size_ ;
+		rax.mStep = r1x ;
+		self.mBuffer = rax.mBuffer ;
+		self.mRank = 1 ;
+		self.mStride[0] = size_ * r1x ;
+		for (auto &&i : range (1 ,self.mStride.size ()))
+			self.mStride[i] = r1x ;
+	}
+
+	LENGTH step_from_tensor_type (CR<Just<TensorType>> type_) const {
+		if (type_ == TensorType::Flt16)
 			return 2 ;
-		if (type_ == TensorDataType::Flt32)
+		if (type_ == TensorType::Flt32)
 			return 4 ;
-		if (type_ == TensorDataType::Flt64)
+		if (type_ == TensorType::Flt64)
 			return 8 ;
-		if (type_ == TensorDataType::Flt128)
+		if (type_ == TensorType::Flt128)
 			return 16 ;
+		return 0 ;
+	}
+
+	Just<TensorType> tensor_type_from_step (CR<LENGTH> step_) const {
+		if (step_ == 2)
+			return TensorType::Flt16 ;
+		if (step_ == 4)
+			return TensorType::Flt32 ;
+		if (step_ == 8)
+			return TensorType::Flt64 ;
+		if (step_ == 16)
+			return TensorType::Flt128 ;
 		return 0 ;
 	}
 
 	LENGTH size () const override {
 		if (self.mTensor == NULL)
 			return 0 ;
-		return self.mWidth ;
+		return self.mStride[0] / self.mStride[self.mRank] ;
 	}
 
-	Just<TensorDataType> type () const override {
+	Just<TensorType> type () const override {
 		if (self.mTensor == NULL)
-			return TensorDataType::ETC ;
-		return self.mType ;
+			return TensorType::ETC ;
+		return tensor_type_from_step (self.mStride[self.mRank]) ;
+	}
+
+	LENGTH rank () const override {
+		if (self.mTensor == NULL)
+			return 0 ;
+		return self.mRank ;
 	}
 
 	LENGTH shape (CR<INDEX> index) const override {
 		assert (index >= 0) ;
 		if (self.mTensor == NULL)
 			return 0 ;
-		const auto r1x = self.mStride.size () - 1 ;
+		const auto r1x = self.mRank ;
 		INDEX ix = inline_min (index ,r1x) ;
 		INDEX iy = inline_min (index + 1 ,r1x) ;
 		return self.mStride[ix] / self.mStride[iy] ;
 	}
 
-	TensorLayout recast (CR<Just<TensorDataType>> type_) override {
+	TensorLayout share () const {
+		TensorLayout ret ;
+		ret.mTensor = self.mTensor.share () ;
+		ret.mBuffer = self.mBuffer ;
+		ret.mRank = self.mRank ;
+		ret.mStride = self.mStride ;
+		return move (ret) ;
+	}
+
+	TensorLayout recast (CR<Just<TensorType>> type_) const override {
 		if (type () == type_)
-			return move (self) ;
+			return share () ;
 		TensorLayout ret ;
 		const auto r1x = size () ;
 		TensorHolder::hold (ret)->initialize (r1x ,type_) ;
 		const auto r2x = choose_tensor_copy (type_ ,type ()) ;
 		const auto r3x = RFat<ReflectTensorCopy> (r2x) ;
-		const auto r4x = address (ret.mTensor.ref[0]) ;
-		const auto r5x = address (self.mTensor.ref[0]) ;
-		const auto r6x = self.mStride.size () - 1 ;
+		const auto r4x = self.mStride[self.mRank] ;
 		for (auto &&i : range (0 ,r1x)) {
-			const auto r7x = r4x + i * ret.mStride[r6x] ;
-			const auto r8x = r5x + i * self.mStride[r6x] ;
-			r3x->xcopy (Pointer::make (r7x) ,Pointer::make (r8x)) ;
+			const auto r5x = ret.mBuffer + i * r4x ;
+			const auto r6x = self.mBuffer + i * r4x ;
+			r3x->xcopy (Pointer::make (r5x) ,Pointer::make (r6x)) ;
 		}
+		ret.mRank = self.mRank ;
+		ret.mStride = self.mStride ;
 		return move (ret) ;
 	}
 
-	Unknown choose_tensor_copy (CR<Just<TensorDataType>> dst ,CR<Just<TensorDataType>> src) const {
-		if (dst == TensorDataType::Flt32)
-			if (src == TensorDataType::Flt32)
+	Unknown choose_tensor_copy (CR<Just<TensorType>> dst ,CR<Just<TensorType>> src) const {
+		if (dst == TensorType::Flt32)
+			if (src == TensorType::Flt32)
 				return SimpleUnknownBinder<ReflectTensorCopyBinder<FLT32 ,FLT32>> () ;
-		if (dst == TensorDataType::Flt32)
-			if (src == TensorDataType::Flt64)
+		if (dst == TensorType::Flt32)
+			if (src == TensorType::Flt64)
 				return SimpleUnknownBinder<ReflectTensorCopyBinder<FLT32 ,FLT64>> () ;
-		if (dst == TensorDataType::Flt64)
-			if (src == TensorDataType::Flt32)
+		if (dst == TensorType::Flt64)
+			if (src == TensorType::Flt32)
 				return SimpleUnknownBinder<ReflectTensorCopyBinder<FLT64 ,FLT32>> () ;
-		if (dst == TensorDataType::Flt64)
-			if (src == TensorDataType::Flt64)
+		if (dst == TensorType::Flt64)
+			if (src == TensorType::Flt64)
 				return SimpleUnknownBinder<ReflectTensorCopyBinder<FLT64 ,FLT64>> () ;
 		assume (FALSE) ;
 		return Unknown (ZERO) ;
 	}
 
-	void reset () override {
-		for (auto &&i : range (0 ,self.mStride.size ()))
-			self.mStride[i] = 1 ;
-		if (self.mTensor->size () == 0)
-			return ;
-		reset (MakeWrapper (size ())) ;
+	TensorLayout reshape () const override {
+		if (self.mTensor == NULL)
+			return share () ;
+		return reshape (MakeWrapper (size ())) ;
 	}
 
-	void reset (CR<WrapperLayout> shape_) override {
-		assert (self.mTensor->size () > 0) ;
-		assert (shape_.mRank > 0) ;
+	TensorLayout reshape (CR<WrapperLayout> shape_) const override {
+		assert (self.mTensor != NULL) ;
 		auto &&rax = keep[TYPE<Wrapper<LENGTH>>::expr] (shape_) ;
+		assert (rax.rank () > 0) ;
 		const auto r1x = self.mStride.size () - 1 ;
-		assert (shape_.mRank <= r1x) ;
-		const auto r2x = inline_min (shape_.mRank ,r1x) ;
-		self.mStride[r1x] = size_of_tensor_type (type ()) ;
+		assert (rax.rank () <= r1x) ;
+		TensorLayout ret = share () ;
+		const auto r2x = inline_min (rax.rank () ,r1x) ;
+		ret.mRank = r2x ;
+		ret.mStride[r1x] = self.mStride[self.mRank] ;
 		for (auto &&i : range (0 ,r1x - r2x)) {
-			self.mStride[r1x - i - 1] = self.mStride[r1x - i] ;
+			INDEX ix = r1x - i ;
+			ret.mStride[ix - 1] = ret.mStride[ix] ;
 		}
 		for (auto &&i : range (r1x - r2x ,r1x)) {
-			self.mStride[r1x - i - 1] = self.mStride[r1x - i] * rax[r1x - i - 1] ;
+			INDEX ix = r1x - i ;
+			ret.mStride[ix - 1] = ret.mStride[ix] * rax[ix - 1] ;
 		}
-		const auto r3x = self.mStride[0] / self.mStride[r1x] ;
-		assume (r3x == size ()) ;
+		assume (TensorHolder::hold (ret)->size () == size ()) ;
+		return move (ret) ;
 	}
 
 	Ref<RefBuffer<BYTE>> borrow () const leftvalue override {
 		return self.mTensor.share () ;
+	}
+
+	FltProxy at (CR<INDEX> i1) const override {
+		const auto r1x = i1 * self.mStride[1] ;
+		assert (inline_between (r1x ,0 ,self.mStride[0])) ;
+		const auto r2x = self.mBuffer + r1x ;
+		return FltProxy (r2x ,self.mStride[self.mRank]) ;
+	}
+
+	FltProxy at (CR<INDEX> i1 ,CR<INDEX> i2) const override {
+		const auto r1x = i1 * self.mStride[1] ;
+		assert (inline_between (r1x ,0 ,self.mStride[0])) ;
+		const auto r2x = i2 * self.mStride[2] ;
+		assert (inline_between (r1x ,0 ,self.mStride[1])) ;
+		const auto r3x = self.mBuffer + r1x + r2x ;
+		return FltProxy (r3x ,self.mStride[self.mRank]) ;
+	}
+
+	FltProxy at (CR<INDEX> i1 ,CR<INDEX> i2 ,CR<INDEX> i3) const override {
+		const auto r1x = i1 * self.mStride[1] ;
+		assert (inline_between (r1x ,0 ,self.mStride[0])) ;
+		const auto r2x = i2 * self.mStride[2] ;
+		assert (inline_between (r1x ,0 ,self.mStride[1])) ;
+		const auto r3x = i3 * self.mStride[3] ;
+		assert (inline_between (r1x ,0 ,self.mStride[2])) ;
+		const auto r4x = self.mBuffer + r1x + r2x + r3x ;
+		return FltProxy (r4x ,self.mStride[self.mRank]) ;
+	}
+
+	FltProxy at (CR<INDEX> i1 ,CR<INDEX> i2 ,CR<INDEX> i3 ,CR<INDEX> i4) const override {
+		const auto r1x = i1 * self.mStride[1] ;
+		assert (inline_between (r1x ,0 ,self.mStride[0])) ;
+		const auto r2x = i2 * self.mStride[2] ;
+		assert (inline_between (r1x ,0 ,self.mStride[1])) ;
+		const auto r3x = i3 * self.mStride[3] ;
+		assert (inline_between (r1x ,0 ,self.mStride[2])) ;
+		const auto r4x = i4 * self.mStride[4] ;
+		assert (inline_between (r1x ,0 ,self.mStride[3])) ;
+		const auto r5x = self.mBuffer + r1x + r2x + r3x + r4x ;
+		return FltProxy (r5x ,self.mStride[self.mRank]) ;
 	}
 } ;
 

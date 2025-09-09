@@ -375,7 +375,7 @@ public:
 	}
 } ;
 
-struct TensorDataType {
+struct TensorType {
 	enum {
 		Flt16 ,
 		Flt32 ,
@@ -385,10 +385,42 @@ struct TensorDataType {
 	} ;
 } ;
 
+class FltProxy {
+protected:
+	FLAG mBuffer ;
+	LENGTH mStep ;
+
+public:
+	implicit FltProxy () = delete ;
+
+	explicit FltProxy (CR<FLAG> buffer_ ,CR<LENGTH> step_) {
+		mBuffer = buffer_ ;
+		mStep = step_ ;
+	}
+
+	forceinline operator FLT32 () const {
+		if (mStep == 4)
+			return FLT32 (bitwise[TYPE<FLT32>::expr] (Pointer::make (mBuffer))) ;
+		if (mStep == 8)
+			return FLT32 (bitwise[TYPE<FLT64>::expr] (Pointer::make (mBuffer))) ;
+		assert (FALSE) ;
+		return 0 ;
+	}
+
+	forceinline operator FLT64 () const {
+		if (mStep == 4)
+			return FLT64 (bitwise[TYPE<FLT32>::expr] (Pointer::make (mBuffer))) ;
+		if (mStep == 8)
+			return FLT64 (bitwise[TYPE<FLT64>::expr] (Pointer::make (mBuffer))) ;
+		assert (FALSE) ;
+		return 0 ;
+	}
+} ;
+
 struct TensorLayout {
 	Ref<RefBuffer<BYTE>> mTensor ;
-	LENGTH mWidth ;
-	Just<TensorDataType> mType ;
+	FLAG mBuffer ;
+	LENGTH mRank ;
 	Buffer5<LENGTH> mStride ;
 } ;
 
@@ -396,27 +428,44 @@ struct TensorHolder implement Interface {
 	imports VFat<TensorHolder> hold (VR<TensorLayout> that) ;
 	imports CFat<TensorHolder> hold (CR<TensorLayout> that) ;
 
-	virtual void initialize (CR<LENGTH> size_ ,CR<Just<TensorDataType>> type_) = 0 ;
+	virtual void initialize (CR<RefBufferLayout> that) = 0 ;
+	virtual void initialize (VR<FarBufferLayout> that) = 0 ;
+	virtual void initialize (CR<LENGTH> size_ ,CR<Just<TensorType>> type_) = 0 ;
 	virtual LENGTH size () const = 0 ;
-	virtual Just<TensorDataType> type () const = 0 ;
+	virtual Just<TensorType> type () const = 0 ;
+	virtual LENGTH rank () const = 0 ;
 	virtual LENGTH shape (CR<INDEX> index) const = 0 ;
-	virtual TensorLayout recast (CR<Just<TensorDataType>> type_) = 0 ;
-	virtual void reset () = 0 ;
-	virtual void reset (CR<WrapperLayout> shape_) = 0 ;
+	virtual TensorLayout recast (CR<Just<TensorType>> type_) const = 0 ;
+	virtual TensorLayout reshape () const = 0 ;
+	virtual TensorLayout reshape (CR<WrapperLayout> shape_) const = 0 ;
 	virtual Ref<RefBuffer<BYTE>> borrow () const leftvalue = 0 ;
+	virtual FltProxy at (CR<INDEX> i1) const = 0 ;
+	virtual FltProxy at (CR<INDEX> i1 ,CR<INDEX> i2) const = 0 ;
+	virtual FltProxy at (CR<INDEX> i1 ,CR<INDEX> i2 ,CR<INDEX> i3) const = 0 ;
+	virtual FltProxy at (CR<INDEX> i1 ,CR<INDEX> i2 ,CR<INDEX> i3 ,CR<INDEX> i4) const = 0 ;
 } ;
 
 class Tensor implement TensorLayout {
 protected:
 	using TensorLayout::mTensor ;
-	using TensorLayout::mWidth ;
-	using TensorLayout::mType ;
+	using TensorLayout::mBuffer ;
+	using TensorLayout::mRank ;
 	using TensorLayout::mStride ;
 
 public:
 	implicit Tensor () = default ;
 
-	explicit Tensor (CR<LENGTH> size_ ,CR<Just<TensorDataType>> type_) {
+	template <class ARG1 ,class = REQUIRE<IS_FLOAT<ARG1>>>
+	implicit Tensor (CR<RefBuffer<ARG1>> that) {
+		TensorHolder::hold (thiz)->initialize (that) ;
+	}
+
+	template <class ARG1 ,class = REQUIRE<IS_FLOAT<ARG1>>>
+	implicit Tensor (VR<FarBuffer<ARG1>> that) {
+		TensorHolder::hold (thiz)->initialize (that) ;
+	}
+
+	explicit Tensor (CR<LENGTH> size_ ,CR<Just<TensorType>> type_) {
 		TensorHolder::hold (thiz)->initialize (size_ ,type_) ;
 	}
 
@@ -424,30 +473,52 @@ public:
 		return TensorHolder::hold (thiz)->size () ;
 	}
 
-	Just<TensorDataType> type () const {
+	Just<TensorType> type () const {
 		return TensorHolder::hold (thiz)->type () ;
+	}
+
+	LENGTH rank () const {
+		return TensorHolder::hold (thiz)->rank () ;
 	}
 
 	LENGTH shape (CR<INDEX> index) const {
 		return TensorHolder::hold (thiz)->shape (index) ;
 	}
 
-	Tensor recast (CR<Just<TensorDataType>> type_) {
+	Tensor recast (CR<Just<TensorType>> type_) const {
 		TensorLayout ret = TensorHolder::hold (thiz)->recast (type_) ;
 		return move (keep[TYPE<Tensor>::expr] (ret)) ;
 	}
 
-	void reset () {
-		return TensorHolder::hold (thiz)->reset () ;
+	Tensor reshape () const {
+		TensorLayout ret = TensorHolder::hold (thiz)->reshape () ;
+		return move (keep[TYPE<Tensor>::expr] (ret)) ;
 	}
 
 	template <class...ARG1>
-	void reset (CR<ARG1>...shape_) {
-		return TensorHolder::hold (thiz)->reset (MakeWrapper (LENGTH (shape_)...)) ;
+	Tensor reshape (CR<ARG1>...shape_) const {
+		TensorLayout ret = TensorHolder::hold (thiz)->reshape (MakeWrapper (LENGTH (shape_)...)) ;
+		return move (keep[TYPE<Tensor>::expr] (ret)) ;
 	}
 
 	Ref<RefBuffer<BYTE>> borrow () const leftvalue {
 		return TensorHolder::hold (thiz)->borrow () ;
+	}
+
+	FltProxy at (CR<INDEX> i1) const {
+		return TensorHolder::hold (thiz)->at (i1) ;
+	}
+
+	FltProxy at (CR<INDEX> i1 ,CR<INDEX> i2) const {
+		return TensorHolder::hold (thiz)->at (i1 ,i2) ;
+	}
+
+	FltProxy at (CR<INDEX> i1 ,CR<INDEX> i2 ,CR<INDEX> i3) const {
+		return TensorHolder::hold (thiz)->at (i1 ,i2 ,i3) ;
+	}
+
+	FltProxy at (CR<INDEX> i1 ,CR<INDEX> i2 ,CR<INDEX> i3 ,CR<INDEX> i4) const {
+		return TensorHolder::hold (thiz)->at (i1 ,i2 ,i3 ,i4) ;
 	}
 
 	Tensor sadd (CR<Tensor> that) const {
