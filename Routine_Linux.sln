@@ -5,8 +5,6 @@ VisualStudioVersion = 17.12.35506.116
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Routine", "build_linux\Routine\Routine.vcxproj", "{B40AD1C9-9893-44F2-B146-C68D5D7CB68E}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Common", "build_linux\Common\Common.vcxproj", "{71650993-7654-4DEF-91D3-4EF2047AE835}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|ARM = Debug|ARM
@@ -31,18 +29,6 @@ Global
 		{B40AD1C9-9893-44F2-B146-C68D5D7CB68E}.Release|x64.Build.0 = Release|x64
 		{B40AD1C9-9893-44F2-B146-C68D5D7CB68E}.Release|x64.Deploy.0 = Release|x64
 		{B40AD1C9-9893-44F2-B146-C68D5D7CB68E}.Release|x86.ActiveCfg = Release|x64
-		{71650993-7654-4DEF-91D3-4EF2047AE835}.Debug|ARM.ActiveCfg = Debug|x64
-		{71650993-7654-4DEF-91D3-4EF2047AE835}.Debug|ARM64.ActiveCfg = Debug|x64
-		{71650993-7654-4DEF-91D3-4EF2047AE835}.Debug|x64.ActiveCfg = Debug|x64
-		{71650993-7654-4DEF-91D3-4EF2047AE835}.Debug|x64.Build.0 = Debug|x64
-		{71650993-7654-4DEF-91D3-4EF2047AE835}.Debug|x64.Deploy.0 = Debug|x64
-		{71650993-7654-4DEF-91D3-4EF2047AE835}.Debug|x86.ActiveCfg = Debug|x64
-		{71650993-7654-4DEF-91D3-4EF2047AE835}.Release|ARM.ActiveCfg = Release|x64
-		{71650993-7654-4DEF-91D3-4EF2047AE835}.Release|ARM64.ActiveCfg = Release|x64
-		{71650993-7654-4DEF-91D3-4EF2047AE835}.Release|x64.ActiveCfg = Release|x64
-		{71650993-7654-4DEF-91D3-4EF2047AE835}.Release|x64.Build.0 = Release|x64
-		{71650993-7654-4DEF-91D3-4EF2047AE835}.Release|x64.Deploy.0 = Release|x64
-		{71650993-7654-4DEF-91D3-4EF2047AE835}.Release|x86.ActiveCfg = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
