@@ -346,24 +346,26 @@ public:
 		}
 	}
 
-	void read (VR<String<STRA>> item) override {
-		read_string_impl (item) ;
-	}
-
-	void read (VR<String<STRW>> item) override {
-		read_string_impl (item) ;
-	}
-
-	void read (VR<String<STRU8>> item) override {
-		read_string_impl (item) ;
-	}
-
-	void read (VR<String<STRU16>> item) override {
-		read_string_impl (item) ;
-	}
-
-	void read (VR<String<STRU32>> item) override {
-		read_string_impl (item) ;
+	void read (VR<StringLayout> item) override {
+		auto act = TRUE ;
+		if ifdo (act) {
+			auto &&rax = keep[TYPE<String<STRU8>>::expr] (item) ;
+			if (rax.step () != SIZE_OF<STRU8>::expr)
+				discard ;
+			read_string_impl (rax) ;
+		}
+		if ifdo (act) {
+			auto &&rax = keep[TYPE<String<STRU16>>::expr] (item) ;
+			if (rax.step () != SIZE_OF<STRU16>::expr)
+				discard ;
+			read_string_impl (rax) ;
+		}
+		if ifdo (act) {
+			auto &&rax = keep[TYPE<String<STRU32>>::expr] (item) ;
+			if (rax.step () != SIZE_OF<STRU32>::expr)
+				discard ;
+			read_string_impl (rax) ;
+		}
 	}
 
 	template <class ARG1>
@@ -751,24 +753,26 @@ public:
 		}
 	}
 
-	void read (VR<String<STRA>> item) override {
-		read_string_impl (item) ;
-	}
-
-	void read (VR<String<STRW>> item) override {
-		read_string_impl (item) ;
-	}
-
-	void read (VR<String<STRU8>> item) override {
-		read_string_impl (item) ;
-	}
-
-	void read (VR<String<STRU16>> item) override {
-		read_string_impl (item) ;
-	}
-
-	void read (VR<String<STRU32>> item) override {
-		read_string_impl (item) ;
+	void read (VR<StringLayout> item) override {
+		auto act = TRUE ;
+		if ifdo (act) {
+			auto &&rax = keep[TYPE<String<STRU8>>::expr] (item) ;
+			if (rax.step () != SIZE_OF<STRU8>::expr)
+				discard ;
+			read_string_impl (rax) ;
+		}
+		if ifdo (act) {
+			auto &&rax = keep[TYPE<String<STRU16>>::expr] (item) ;
+			if (rax.step () != SIZE_OF<STRU16>::expr)
+				discard ;
+			read_string_impl (rax) ;
+		}
+		if ifdo (act) {
+			auto &&rax = keep[TYPE<String<STRU32>>::expr] (item) ;
+			if (rax.step () != SIZE_OF<STRU32>::expr)
+				discard ;
+			read_string_impl (rax) ;
+		}
 	}
 
 	template <class ARG1>
@@ -985,24 +989,26 @@ public:
 		}
 	}
 
-	void write (CR<String<STRA>> item) override {
-		write_string_impl (item) ;
-	}
-
-	void write (CR<String<STRW>> item) override {
-		write_string_impl (item) ;
-	}
-
-	void write (CR<String<STRU8>> item) override {
-		write_string_impl (item) ;
-	}
-
-	void write (CR<String<STRU16>> item) override {
-		write_string_impl (item) ;
-	}
-
-	void write (CR<String<STRU32>> item) override {
-		write_string_impl (item) ;
+	void write (CR<StringLayout> item) override {
+		auto act = TRUE ;
+		if ifdo (act) {
+			auto &&rax = keep[TYPE<String<STRU8>>::expr] (item) ;
+			if (rax.step () != SIZE_OF<STRU8>::expr)
+				discard ;
+			write_string_impl (rax) ;
+		}
+		if ifdo (act) {
+			auto &&rax = keep[TYPE<String<STRU16>>::expr] (item) ;
+			if (rax.step () != SIZE_OF<STRU16>::expr)
+				discard ;
+			write_string_impl (rax) ;
+		}
+		if ifdo (act) {
+			auto &&rax = keep[TYPE<String<STRU32>>::expr] (item) ;
+			if (rax.step () != SIZE_OF<STRU32>::expr)
+				discard ;
+			write_string_impl (rax) ;
+		}
 	}
 
 	template <class ARG1>
@@ -1454,24 +1460,26 @@ public:
 		}
 	}
 
-	void write (CR<String<STRA>> item) override {
-		write_string_impl (item) ;
-	}
-
-	void write (CR<String<STRW>> item) override {
-		write_string_impl (item) ;
-	}
-
-	void write (CR<String<STRU8>> item) override {
-		write_string_impl (item) ;
-	}
-
-	void write (CR<String<STRU16>> item) override {
-		write_string_impl (item) ;
-	}
-
-	void write (CR<String<STRU32>> item) override {
-		write_string_impl (item) ;
+	void write (CR<StringLayout> item) override {
+		auto act = TRUE ;
+		if ifdo (act) {
+			auto &&rax = keep[TYPE<String<STRU8>>::expr] (item) ;
+			if (rax.step () != SIZE_OF<STRU8>::expr)
+				discard ;
+			write_string_impl (rax) ;
+		}
+		if ifdo (act) {
+			auto &&rax = keep[TYPE<String<STRU16>>::expr] (item) ;
+			if (rax.step () != SIZE_OF<STRU16>::expr)
+				discard ;
+			write_string_impl (rax) ;
+		}
+		if ifdo (act) {
+			auto &&rax = keep[TYPE<String<STRU32>>::expr] (item) ;
+			if (rax.step () != SIZE_OF<STRU32>::expr)
+				discard ;
+			write_string_impl (rax) ;
+		}
 	}
 
 	template <class ARG1>
