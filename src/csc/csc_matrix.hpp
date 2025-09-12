@@ -1101,4 +1101,50 @@ public:
 		return PointCloudHolder::hold (thiz)->search (center ,neighbor ,radius) ;
 	}
 } ;
+
+struct TPSFitLayout {
+	DuplexMatrix mNSrc ;
+	DuplexMatrix mNDst ;
+	Array<Vector> mPSrc ;
+	Image<FLT64> mQA ;
+	Image<FLT64> mQB ;
+	Image<FLT64> mQC ;
+} ;
+
+struct TPSFitHolder implement Interface {
+	imports VFat<TPSFitHolder> hold (VR<TPSFitLayout> that) ;
+	imports CFat<TPSFitHolder> hold (CR<TPSFitLayout> that) ;
+
+	virtual void compute (CR<Array<Vector>> dst ,CR<Array<Vector>> src) = 0 ;
+	virtual Vector smul (CR<Vector> point) const = 0 ;
+} ;
+
+class TPSFit implement TPSFitLayout {
+protected:
+	using TPSFitLayout::mNSrc ;
+	using TPSFitLayout::mNDst ;
+	using TPSFitLayout::mPSrc ;
+	using TPSFitLayout::mQA ;
+	using TPSFitLayout::mQB ;
+	using TPSFitLayout::mQC ;
+
+public:
+	implicit TPSFit () = default ;
+
+	void compute (CR<Array<Vector>> dst ,CR<Array<Vector>> src) {
+		TPSFitHolder::hold (thiz)->compute (dst ,src) ;
+	}
+
+	Vector smul (CR<Vector> that) const {
+		return TPSFitHolder::hold (thiz)->smul (that) ;
+	}
+
+	forceinline Vector operator() (CR<Vector> that) const {
+		return smul (that) ;
+	}
+
+	forceinline friend Vector operator* (CR<TPSFit> thiz_ ,CR<Vector> that) {
+		return thiz_.smul (that) ;
+	}
+} ;
 } ;

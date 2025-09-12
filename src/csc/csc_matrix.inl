@@ -1352,4 +1352,86 @@ exports VFat<PointCloudHolder> PointCloudHolder::hold (VR<PointCloudLayout> that
 exports CFat<PointCloudHolder> PointCloudHolder::hold (CR<PointCloudLayout> that) {
 	return CFat<PointCloudHolder> (PointCloudImplHolder () ,that) ;
 }
+
+class TPSFitImplHolder final implement Fat<TPSFitHolder ,TPSFitLayout> {
+public:
+	void compute (CR<Array<Vector>> dst ,CR<Array<Vector>> src) {
+		assert (dst.size () == src.size ()) ;
+		const auto r1x = src.size () ;
+		const auto r2x = PointCloud (Ref<Array<Vector>>::reference (src)) ;
+		const auto r3x = PointCloud (Ref<Array<Vector>>::reference (dst)) ;
+		self.mNSrc = r2x.pca_matrix () ;
+		self.mNDst = r3x.pca_matrix () ;
+		const auto r4x = self.mNSrc[1] * r2x ;
+		const auto r5x = self.mNDst[1] * r3x ;
+		self.mQA = Image<FLT64> (r1x + 4 ,r1x + 4) ;
+		self.mQB = Image<FLT64> (3 ,r1x + 4) ;
+		for (auto &&i : range (0 ,r1x ,0 ,r1x)) {
+			if (i.mY > i.mX)
+				continue ;
+			const auto r6x = (r4x[i.mY] - r4x[i.mX]).magnitude () ;
+			const auto r7x = basic_function (r6x) ;
+			self.mQA.at (i.mX ,i.mY) = r7x ;
+			self.mQA.at (i.mY ,i.mX) = r7x ;
+		}
+
+		for (auto &&i : range (0 ,r1x)) {
+			const auto r8x = r4x[i] ;
+			const auto r9x = r5x[i] ;
+			for (auto &&j : range (0 ,4)) {
+				self.mQA.at (r1x + j ,i) = r8x[j] ;
+				self.mQA.at (i ,r1x + j) = r8x[j] ;
+			}
+			for (auto &&j : range (0 ,3)) {
+				self.mQB.at (j ,i) = r9x[j] ;
+			}
+		}
+		for (auto &&i : range (0 ,4)) {
+			for (auto &&j : range (0 ,4)) {
+				self.mQA.at (r1x + j ,r1x + i) = 0 ;
+			}
+			for (auto &&j : range (0 ,3)) {
+				self.mQB.at (j ,r1x + i) = 0 ;
+			}
+		}
+		self.mQC = LinearProc::solve_lsm (self.mQA ,self.mQB) ;
+		self.mPSrc = Array<Vector> (r1x) ;
+		for (auto &&i : self.mPSrc.iter ()) {
+			self.mPSrc[i] = r4x[i] ;
+		}
+	}
+
+	Vector smul (CR<Vector> that) const {
+		assert (self.mQC.size () > 0) ;
+		Vector ret = Vector::axis_w () ;
+		const auto r1x = self.mPSrc.length () ;
+		const auto r2x = self.mNSrc[1] * that ;
+		for (auto &&i : range (0 ,r1x)) {
+			for (auto &&j : range (0 ,3)) {
+				const auto r3x = (r2x - self.mPSrc[i]).magnitude () ;
+				const auto r4x = basic_function (r3x) ;
+				ret[j] += self.mQC.at (j ,i) * r4x ;
+			}
+		}
+		for (auto &&i : range (0 ,4)) {
+			for (auto &&j : range (0 ,3)) {
+				ret[j] += self.mQC.at (j ,r1x + i) * r2x[i] ;
+			}
+		}
+		ret = self.mNDst[0] * ret ;
+		return move (ret) ;
+	}
+
+	FLT64 basic_function (CR<FLT64> r) const {
+		return MathProc::square (r) * MathProc::log (r + FLT64_EPS) ;
+	}
+} ;
+
+exports VFat<TPSFitHolder> TPSFitHolder::hold (VR<TPSFitLayout> that) {
+	return VFat<TPSFitHolder> (TPSFitImplHolder () ,that) ;
+}
+
+exports CFat<TPSFitHolder> TPSFitHolder::hold (CR<TPSFitLayout> that) {
+	return CFat<TPSFitHolder> (TPSFitImplHolder () ,that) ;
+}
 } ;
