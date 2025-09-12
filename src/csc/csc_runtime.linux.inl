@@ -375,16 +375,12 @@ public:
 #elif defined __CSC_VER_RELEASE__
 		ret |= QUAD (0X00000003) ;
 #endif
-#ifndef __CSC_COMPILER_NVCC__
 #ifdef __CSC_COMPILER_MSVC__
 		ret |= QUAD (0X00000010) ;
 #elif defined __CSC_COMPILER_GNUC__
 		ret |= QUAD (0X00000020) ;
 #elif defined __CSC_COMPILER_CLANG__
 		ret |= QUAD (0X00000030) ;
-#endif
-#else
-		ret |= QUAD (0X00000040) ;
 #endif
 #ifdef __CSC_SYSTEM_WINDOWS__
 		ret |= QUAD (0X00000100) ;
@@ -414,7 +410,7 @@ public:
 	}
 
 	QUAD ctx_reserve () const override {
-		return QUAD (0X0FEDCBA987654321) ;
+		return QUAD_ENDIAN ;
 	}
 
 	FLAG load (CR<Clazz> clazz) const override {

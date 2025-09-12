@@ -32,9 +32,9 @@ public:
 	}
 
 	BOOL big_endian () const override {
-		const auto r1x = WORD (0X00FF) ;
+		const auto r1x = WORD_ENDIAN ;
 		const auto r2x = bitwise[TYPE<Buffer<BYTE ,SIZE_OF<WORD>>>::expr] (r1x) ;
-		return r2x[0] == BYTE (0X00) ;
+		return r2x[0] == BYTE_ENDIAN ;
 	}
 
 	BOOL is_blank (CR<STRU32> str) const override {

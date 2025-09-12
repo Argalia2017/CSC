@@ -70,9 +70,9 @@ enum class CHAR :csc_uint32_t ;
 enum class QUAD :csc_uint64_t ;
 
 static constexpr auto BYTE_ENDIAN = BYTE (0X1F) ;
-static constexpr auto WORD_ENDIAN = WORD (0X11FF) ;
-static constexpr auto CHAR_ENDIAN = CHAR (0X1111FFFF) ;
-static constexpr auto QUAD_ENDIAN = QUAD (0X11111111FFFFFFFF) ;
+static constexpr auto WORD_ENDIAN = WORD (0X2F1F) ;
+static constexpr auto CHAR_ENDIAN = CHAR (0X4F3F2F1F) ;
+static constexpr auto QUAD_ENDIAN = QUAD (0X8F7F6F5F4F3F2F1F) ;
 
 forceinline constexpr BYTE operator| (CR<BYTE> a ,CR<BYTE> b) noexcept {
 	return BYTE (csc_uint8_t (a) | csc_uint8_t (b)) ;

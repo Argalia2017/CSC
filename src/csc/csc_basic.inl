@@ -234,11 +234,11 @@ exports CFat<AutoRefHolder> AutoRefHolder::hold (CR<AutoRefLayout> that) {
 }
 
 #ifdef __CSC_CONFIG_VAL32__
-static constexpr auto SHADERREFIMPLLAYOUT_HEADER = FLAG (0X07654321) ;
+static constexpr auto SHADERREFIMPLLAYOUT_HEADER = FLAG (CHAR_ENDIAN) ;
 #endif
 
 #ifdef __CSC_CONFIG_VAL64__
-static constexpr auto SHADERREFIMPLLAYOUT_HEADER = FLAG (0X0FDCEBA907654321) ;
+static constexpr auto SHADERREFIMPLLAYOUT_HEADER = FLAG (QUAD_ENDIAN) ;
 #endif
 
 struct SharedRefTree {
