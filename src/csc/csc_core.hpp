@@ -1061,9 +1061,7 @@ protected:
 public:
 	implicit Box () = default ;
 
-	implicit Box (CR<typeof (NULL)>) {
-		noop () ;
-	}
+	implicit Box (CR<typeof (NULL)>) {}
 
 	template <class ARG1 ,class = REQUIRE<IS_NOT_SAME<ARG1 ,B>>>
 	implicit Box (RR<Box<A ,ARG1>> that) {
@@ -1263,9 +1261,7 @@ protected:
 public:
 	implicit Ref () = default ;
 
-	implicit Ref (CR<typeof (NULL)>) {
-		noop () ;
-	}
+	implicit Ref (CR<typeof (NULL)>) {}
 
 	template <class...ARG1>
 	static Ref make (XR<ARG1>...initval) {

@@ -922,32 +922,33 @@ public:
 	}
 } ;
 
-struct PinnedCounter {
+struct ScopeCounterLayout {
 	LENGTH mCounter ;
+
+public:
+	implicit ScopeCounterLayout () noexcept {
+		mCounter = 0 ;
+	}
 } ;
 
-class ScopeCounter implement Proxy {
+class ScopeCounter implement ScopeCounterLayout {
 private:
 	using SCOPECOUNTER_MAX_DEPTH = ENUM<256> ;
 
 protected:
-	PinnedCounter mThat ;
+	using ScopeCounterLayout::mCounter ;
 
 public:
-	static CR<ScopeCounter> from (CR<PinnedCounter> that) {
-		return Pointer::from (that) ;
-	}
-
-	static CR<ScopeCounter> from (RR<PinnedCounter> that) = delete ;
+	implicit ScopeCounter () = default ;
 
 	void enter () const {
-		const auto r1x = Pin<PinnedCounter> (mThat) ;
+		const auto r1x = Pin<ScopeCounterLayout> (thiz) ;
 		r1x->mCounter++ ;
 		assume (r1x->mCounter < SCOPECOUNTER_MAX_DEPTH::expr) ;
 	}
 
 	void leave () const {
-		const auto r1x = Pin<PinnedCounter> (mThat) ;
+		const auto r1x = Pin<ScopeCounterLayout> (thiz) ;
 		r1x->mCounter-- ;
 		assume (r1x->mCounter >= ZERO) ;
 	}
@@ -981,7 +982,7 @@ struct XmlParserTree {
 
 struct MakeXmlParserLayout {
 	RegularReader mReader ;
-	PinnedCounter mPinnedCounter ;
+	ScopeCounter mScopeCounter ;
 	List<XmlParserNode> mList ;
 	SortedMap<INDEX> mArrayMap ;
 	List<INDEX> mArrayMemberList ;
@@ -994,7 +995,7 @@ struct MakeXmlParserLayout {
 class MakeXmlParser implement MakeXmlParserLayout {
 protected:
 	using MakeXmlParserLayout::mReader ;
-	using MakeXmlParserLayout::mPinnedCounter ;
+	using MakeXmlParserLayout::mScopeCounter ;
 	using MakeXmlParserLayout::mList ;
 	using MakeXmlParserLayout::mArrayMap ;
 	using MakeXmlParserLayout::mObjectMap ;
@@ -1007,7 +1008,6 @@ public:
 	explicit MakeXmlParser (RR<Ref<RefBuffer<BYTE>>> stream) {
 		mReader = RegularReader (move (stream) ,5) ;
 		mReader.use_text () ;
-		mPinnedCounter.mCounter = 0 ;
 		mArrayMap = SortedMap<INDEX> (ALLOCATOR_MIN_SIZE::expr) ;
 		mObjectMap = SortedMap<String<STRU8>> (ALLOCATOR_MIN_SIZE::expr) ;
 	}
@@ -1112,7 +1112,7 @@ public:
 
 	//@info: $5-><$1 $4 />|<$1 $4 > $8 </$1 >
 	void read_shift_e5 (CR<INDEX> curr) {
-		Scope<ScopeCounter> anonymous (ScopeCounter::from (mPinnedCounter)) ;
+		Scope<ScopeCounter> anonymous (mScopeCounter) ;
 		mReader >> slice ("<") ;
 		INDEX ix = mList.insert () ;
 		read_shift_e1 () ;
@@ -1196,7 +1196,7 @@ public:
 
 	//@info: $8->$5 $8|$6 $8|$7 $8
 	void read_shift_e8 (CR<INDEX> curr ,CR<INDEX> first) {
-		Scope<ScopeCounter> anonymous (ScopeCounter::from (mPinnedCounter)) ;
+		Scope<ScopeCounter> anonymous (mScopeCounter) ;
 		INDEX ix = first ;
 		INDEX iy = first ;
 		INDEX kx = mList[curr].mMember ;
@@ -1663,7 +1663,7 @@ struct JsonParserTree {
 
 struct MakeJsonParserLayout {
 	RegularReader mReader ;
-	PinnedCounter mPinnedCounter ;
+	ScopeCounter mScopeCounter ;
 	List<JsonParserNode> mList ;
 	SortedMap<INDEX> mArrayMap ;
 	SortedMap<String<STRU8>> mObjectMap ;
@@ -1674,7 +1674,7 @@ struct MakeJsonParserLayout {
 class MakeJsonParser implement MakeJsonParserLayout {
 protected:
 	using MakeJsonParserLayout::mReader ;
-	using MakeJsonParserLayout::mPinnedCounter ;
+	using MakeJsonParserLayout::mScopeCounter ;
 	using MakeJsonParserLayout::mList ;
 	using MakeJsonParserLayout::mArrayMap ;
 	using MakeJsonParserLayout::mObjectMap ;
@@ -1687,7 +1687,6 @@ public:
 	explicit MakeJsonParser (RR<Ref<RefBuffer<BYTE>>> stream) {
 		mReader = RegularReader (move (stream) ,5) ;
 		mReader.use_text () ;
-		mPinnedCounter.mCounter = 0 ;
 		mArrayMap = SortedMap<INDEX> (ALLOCATOR_MIN_SIZE::expr) ;
 		mObjectMap = SortedMap<String<STRU8>> (ALLOCATOR_MIN_SIZE::expr) ;
 	}
@@ -1779,7 +1778,7 @@ public:
 
 	//@info: $4->$1|$2|$3|$6|$9
 	void read_shift_e4 (CR<INDEX> curr) {
-		Scope<ScopeCounter> anonymous (ScopeCounter::from (mPinnedCounter)) ;
+		Scope<ScopeCounter> anonymous (mScopeCounter) ;
 		INDEX ix = NONE ;
 		auto act = TRUE ;
 		if ifdo (act) {
@@ -1878,7 +1877,7 @@ public:
 
 	//@info: $6->[ ]|[ $5 ]
 	void read_shift_e6 (CR<INDEX> curr) {
-		Scope<ScopeCounter> anonymous (ScopeCounter::from (mPinnedCounter)) ;
+		Scope<ScopeCounter> anonymous (mScopeCounter) ;
 		mReader >> slice ("[") ;
 		INDEX ix = mList.insert () ;
 		mList[ix].mName = move (mLastString) ;
@@ -1936,7 +1935,7 @@ public:
 
 	//@info: $9->{ }|{ $8 }
 	void read_shift_e9 (CR<INDEX> curr) {
-		Scope<ScopeCounter> anonymous (ScopeCounter::from (mPinnedCounter)) ;
+		Scope<ScopeCounter> anonymous (mScopeCounter) ;
 		mReader >> slice ("{") ;
 		INDEX ix = mList.insert () ;
 		mList[ix].mName = move (mLastString) ;
