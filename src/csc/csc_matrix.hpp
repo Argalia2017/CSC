@@ -1021,7 +1021,7 @@ struct PointCloudHolder implement Interface {
 	virtual void get (CR<INDEX> index ,VR<Vector> item) const = 0 ;
 	virtual Vector center () const = 0 ;
 	virtual Matrix pca_matrix () const = 0 ;
-	virtual Matrix box_matrix () const = 0 ;
+	virtual Matrix box_matrix (CR<FLT64> ax ,CR<FLT64> ay ,CR<FLT64> az) const = 0 ;
 	virtual Line3F bound () const = 0 ;
 	virtual PointCloudLayout smul (CR<Matrix> mat) const = 0 ;
 	virtual Array<INDEX> search (CR<Vector> center ,CR<LENGTH> neighbor) const = 0 ;
@@ -1072,8 +1072,8 @@ public:
 		return PointCloudHolder::hold (thiz)->pca_matrix () ;
 	}
 
-	Matrix box_matrix () const {
-		return PointCloudHolder::hold (thiz)->box_matrix () ;
+	Matrix box_matrix (CR<FLT64> ax ,CR<FLT64> ay ,CR<FLT64> az) const {
+		return PointCloudHolder::hold (thiz)->box_matrix (ax ,ay ,az) ;
 	}
 
 	Line3F bound () const {
@@ -1116,7 +1116,7 @@ struct TPSFitHolder implement Interface {
 	imports CFat<TPSFitHolder> hold (CR<TPSFitLayout> that) ;
 
 	virtual void compute (CR<Array<Vector>> dst ,CR<Array<Vector>> src) = 0 ;
-	virtual Vector smul (CR<Vector> point) const = 0 ;
+	virtual Vector smul (CR<Vector> that) const = 0 ;
 } ;
 
 class TPSFit implement TPSFitLayout {

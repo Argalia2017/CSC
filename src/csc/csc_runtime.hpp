@@ -599,7 +599,7 @@ struct RandomHolder implement Interface {
 	virtual void random_shuffle (CR<LENGTH> length_ ,CR<LENGTH> size_ ,VR<Array<INDEX>> result) = 0 ;
 	virtual BitSet random_pick (CR<LENGTH> length_ ,CR<LENGTH> size_) = 0 ;
 	virtual void random_pick (CR<LENGTH> length_ ,CR<LENGTH> size_ ,VR<BitSet> result) = 0 ;
-	virtual FLT64 random_float (CR<FLT64> scale) = 0 ;
+	virtual FLT64 random_float (CR<LENGTH> precision) = 0 ;
 	virtual BOOL random_draw (CR<FLT64> possibility) = 0 ;
 	virtual FLT64 random_normal () = 0 ;
 } ;
@@ -638,8 +638,8 @@ public:
 		return RandomHolder::hold (thiz)->random_pick (length_ ,size_ ,result) ;
 	}
 
-	FLT64 random_float (CR<FLT64> scale) const {
-		return RandomHolder::hold (thiz)->random_float (scale) ;
+	FLT64 random_float (CR<LENGTH> precision) const {
+		return RandomHolder::hold (thiz)->random_float (precision) ;
 	}
 
 	BOOL random_draw (CR<FLT64> possibility) const {

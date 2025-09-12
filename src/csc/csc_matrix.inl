@@ -1276,7 +1276,7 @@ public:
 		return MathProc::sqrt (a) ;
 	}
 
-	Matrix box_matrix () const override {
+	Matrix box_matrix (CR<FLT64> ax ,CR<FLT64> ay ,CR<FLT64> az) const override {
 		const auto r1x = bound () ;
 		const auto r2x = invoke ([&] () {
 			Vector ret = Vector::zero () ;
@@ -1290,9 +1290,13 @@ public:
 			ret = ret.projection () ;
 			return move (ret) ;
 		}) ;
-		const auto r3x = TranslationMatrix (r2x) ;
-		const auto r4x = DiagMatrix (r1x.mMax.mX - r1x.mMin.mX ,r1x.mMax.mY - r1x.mMin.mY ,1) ;
-		return r3x * r4x ;
+		const auto r3x = r2x[0] * MathProc::inverse (ax) ;
+		const auto r4x = r2x[1] * MathProc::inverse (ay) ;
+		const auto r5x = r2x[2] * MathProc::inverse (az) ;
+		const auto r6x = MathProc::max_of (r3x ,r4x ,r5x) ;
+		const auto r7x = TranslationMatrix (r2x) ;
+		const auto r8x = DiagMatrix (ax * r6x ,ay * r6x ,az * r6x) ;
+		return r7x * r8x ;
 	}
 
 	Line3F bound () const override {
