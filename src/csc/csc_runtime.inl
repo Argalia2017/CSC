@@ -349,21 +349,17 @@ public:
 	void initialize (CR<Mutex> mutex) override {
 		self.mMutex = mutex.borrow () ;
 		assert (self.mMutex.exclusive ()) ;
-		assert (ptr (self).mType == MutexType::Shared) ;
+		assert (self.mMutex->mType == MutexType::Shared) ;
 		shared_enter () ;
-		self.mLock = std::unique_lock<SharedAtomicMutex> (SharedAtomicMutex::from (ptr (self).mShared)) ;
-	}
-
-	static VR<MutexLayout> ptr (CR<SharedLockLayout> that) {
-		return Pointer::make (address (that.mMutex.ref)) ;
+		self.mLock = std::unique_lock<SharedAtomicMutex> (SharedAtomicMutex::from (self.mMutex->mShared)) ;
 	}
 
 	void shared_enter () {
 		if ifdo (TRUE) {
-			auto rax = ptr (self).mShared.fetch () ;
+			auto rax = self.mMutex->mShared.fetch () ;
 			while (TRUE) {
 				rax = MathProc::abs (rax) ;
-				const auto r1x = ptr (self).mShared.change (rax ,rax + 1) ;
+				const auto r1x = self.mMutex->mShared.change (rax ,rax + 1) ;
 				if (r1x)
 					break ;
 				RuntimeProc::thread_yield () ;
@@ -373,17 +369,17 @@ public:
 	}
 
 	BOOL busy () const override {
-		return ptr (self).mShared.fetch () != IDEN ;
+		return self.mMutex->mShared.fetch () != IDEN ;
 	}
 
-	void enter () const override {
-		ptr (self).mShared.decrease () ;
-		ptr (self).mBasic->lock () ;
+	void enter () override {
+		self.mMutex->mShared.decrease () ;
+		self.mMutex->mBasic->lock () ;
 		if ifdo (TRUE) {
 			auto rax = ZERO ;
 			while (TRUE) {
 				rax = ZERO ;
-				const auto r1x = ptr (self).mShared.change (rax ,NONE) ;
+				const auto r1x = self.mMutex->mShared.change (rax ,NONE) ;
 				if (r1x)
 					break ;
 				RuntimeProc::thread_yield () ;
@@ -391,10 +387,10 @@ public:
 		}
 	}
 
-	void leave () const override {
+	void leave () override {
 		std::atomic_thread_fence (std::memory_order_release) ;
-		ptr (self).mShared.replace (NONE ,IDEN) ;
-		ptr (self).mBasic->unlock () ;
+		self.mMutex->mShared.replace (NONE ,IDEN) ;
+		self.mMutex->mBasic->unlock () ;
 	}
 } ;
 
@@ -420,31 +416,27 @@ public:
 	void initialize (CR<Mutex> mutex) override {
 		self.mMutex = mutex.borrow () ;
 		assert (self.mMutex.exclusive ()) ;
-		assert (ptr (self).mType == MutexType::Unique) ;
-		self.mLock = std::unique_lock<std::mutex> (ptr (self).mBasic.ref) ;
-	}
-
-	static VR<MutexLayout> ptr (CR<UniqueLockLayout> that) {
-		return Pointer::make (address (that.mMutex.ref)) ;
+		assert (self.mMutex->mType == MutexType::Unique) ;
+		self.mLock = std::unique_lock<std::mutex> (self.mMutex->mBasic.ref) ;
 	}
 
 	void wait () override {
-		ptr (self).mUnique->wait (self.mLock) ;
+		self.mMutex->mUnique->wait (self.mLock) ;
 	}
 
 	void wait (CR<Time> time) override {
 		const auto r1x = time.borrow () ;
-		ptr (self).mUnique->wait_for (self.mLock ,r1x->mTime) ;
+		self.mMutex->mUnique->wait_for (self.mLock ,r1x->mTime) ;
 	}
 
 	void notify () override {
-		ptr (self).mUnique->notify_all () ;
+		self.mMutex->mUnique->notify_all () ;
 	}
 
 	void yield () override {
 		self.mLock = std::unique_lock<std::mutex> () ;
 		std::this_thread::yield () ;
-		self.mLock = std::unique_lock<std::mutex> (ptr (self).mBasic.ref) ;
+		self.mLock = std::unique_lock<std::mutex> (self.mMutex->mBasic.ref) ;
 	}
 } ;
 

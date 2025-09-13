@@ -941,16 +941,14 @@ protected:
 public:
 	implicit ScopeCounter () = default ;
 
-	void enter () const {
-		const auto r1x = Pin<ScopeCounterLayout> (thiz) ;
-		r1x->mCounter++ ;
-		assume (r1x->mCounter < SCOPECOUNTER_MAX_DEPTH::expr) ;
+	void enter () {
+		mCounter++ ;
+		assume (mCounter < SCOPECOUNTER_MAX_DEPTH::expr) ;
 	}
 
-	void leave () const {
-		const auto r1x = Pin<ScopeCounterLayout> (thiz) ;
-		r1x->mCounter-- ;
-		assume (r1x->mCounter >= ZERO) ;
+	void leave () {
+		mCounter-- ;
+		assume (mCounter >= ZERO) ;
 	}
 } ;
 

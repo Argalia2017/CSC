@@ -26,11 +26,11 @@ public:
 		return mInstance ;
 	}
 
-	void enter () const override {
+	void enter () override {
 		return root_ptr ().mMutex->lock () ;
 	}
 
-	void leave () const override {
+	void leave () override {
 		return root_ptr ().mMutex->unlock () ;
 	}
 } ;
@@ -70,19 +70,15 @@ public:
 		return self.mCode ;
 	}
 
-	static VR<BoxLayout> ptr (CR<OptionalLayout> that) {
-		return Pointer::make (address (that.mValue)) ;
-	}
-
 	void get (VR<BoxLayout> item) const override {
 		assume (exist ()) ;
-		BoxHolder::hold (item)->acquire (ptr (self)) ;
-		BoxHolder::hold (ptr (self))->release () ;
+		BoxHolder::hold (item)->acquire (self.mValue) ;
+		BoxHolder::hold (self.mValue)->release () ;
 	}
 
 	void set (VR<BoxLayout> item) const override {
 		assume (!exist ()) ;
-		BoxHolder::hold (ptr (self))->acquire (item) ;
+		BoxHolder::hold (self.mValue)->acquire (item) ;
 		BoxHolder::hold (item)->release () ;
 	}
 } ;
@@ -627,21 +623,17 @@ public:
 
 	VR<Pointer> at (CR<INDEX> index) leftvalue override {
 		assert (inline_between (index ,0 ,size ())) ;
-		ptr (thiz).update_sync (index) ;
+		update_sync (index) ;
 		return self.mThis.ref ;
 	}
 
 	CR<Pointer> at (CR<INDEX> index) const leftvalue override {
 		assert (inline_between (index ,0 ,size ())) ;
-		ptr (thiz).update_sync (index) ;
+		update_sync (index) ;
 		return self.mThis.ref ;
 	}
 
-	static VR<FarBufferImplHolder> ptr (CR<FarBufferImplHolder> that) {
-		return Pointer::make (address (that)) ;
-	}
-
-	void update_sync (CR<INDEX> index) {
+	void update_sync (CR<INDEX> index) const {
 		if (self.mIndex == index)
 			return ;
 		refresh () ;
@@ -649,7 +641,7 @@ public:
 		self.mIndex = index ;
 	}
 
-	void refresh () override {
+	void refresh () const override {
 		if (self.mIndex == NONE)
 			return ;
 		self.mSetter (self.mIndex ,self.mThis.ref) ;

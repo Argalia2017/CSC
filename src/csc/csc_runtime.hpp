@@ -300,11 +300,11 @@ public:
 		return MutexHolder::hold (thiz)->done () ;
 	}
 
-	void enter () const {
+	void enter () {
 		return MutexHolder::hold (thiz)->enter () ;
 	}
 
-	void leave () const {
+	void leave () {
 		return MutexHolder::hold (thiz)->leave () ;
 	}
 } ;
@@ -349,8 +349,8 @@ struct SharedLockHolder implement Interface {
 
 	virtual void initialize (CR<Mutex> mutex) = 0 ;
 	virtual BOOL busy () const = 0 ;
-	virtual void enter () const = 0 ;
-	virtual void leave () const = 0 ;
+	virtual void enter () = 0 ;
+	virtual void leave () = 0 ;
 } ;
 
 class SharedLock implement OfThis<Box<SharedLockLayout ,SharedLockStorage>> {
@@ -366,11 +366,11 @@ public:
 		return SharedLockHolder::hold (thiz)->busy () ;
 	}
 
-	void enter () const {
+	void enter () {
 		return SharedLockHolder::hold (thiz)->enter () ;
 	}
 
-	void leave () const {
+	void leave () {
 		return SharedLockHolder::hold (thiz)->leave () ;
 	}
 } ;

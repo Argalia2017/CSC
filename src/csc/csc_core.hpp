@@ -1839,7 +1839,7 @@ public:
 
 	explicit Scope (CR<A> that) {
 		const auto r1x = address (that) ;
-		auto &&rax = keep[TYPE<CR<A>>::expr] (Pointer::make (r1x)) ;
+		auto &&rax = keep[TYPE<VR<A>>::expr] (Pointer::make (r1x)) ;
 		rax.enter () ;
 		mLayout = r1x ;
 	}
@@ -1849,7 +1849,7 @@ public:
 	implicit ~Scope () noexcept {
 		if (mLayout == ZERO)
 			return ;
-		auto &&rax = keep[TYPE<CR<A>>::expr] (Pointer::make (mLayout)) ;
+		auto &&rax = keep[TYPE<VR<A>>::expr] (Pointer::make (mLayout)) ;
 		rax.leave () ;
 		mLayout = ZERO ;
 	}

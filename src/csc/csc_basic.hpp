@@ -24,8 +24,8 @@ struct HeapMutexHolder implement Interface {
 	imports CFat<HeapMutexHolder> hold (CR<HeapMutexLayout> that) ;
 
 	virtual void initialize () = 0 ;
-	virtual void enter () const = 0 ;
-	virtual void leave () const = 0 ;
+	virtual void enter () = 0 ;
+	virtual void leave () = 0 ;
 } ;
 
 class HeapMutex implement HeapMutexLayout {
@@ -37,18 +37,18 @@ public:
 		return keep[TYPE<HeapMutex>::expr] (HeapMutexHolder::expr) ;
 	}
 
-	void enter () const {
+	void enter () {
 		return HeapMutexHolder::hold (thiz)->enter () ;
 	}
 
-	void leave () const {
+	void leave () {
 		return HeapMutexHolder::hold (thiz)->leave () ;
 	}
 } ;
 
 struct OptionalLayout {
 	FLAG mCode ;
-	BoxLayout mValue ;
+	mutable BoxLayout mValue ;
 
 public:
 	implicit OptionalLayout () noexcept {
@@ -996,8 +996,8 @@ public:
 } ;
 
 struct FarBufferLayout {
-	Ref<Pointer> mThis ;
-	INDEX mIndex ;
+	mutable Ref<Pointer> mThis ;
+	mutable INDEX mIndex ;
 	Function<CR<INDEX> ,VR<Pointer>> mGetter ;
 	Function<CR<INDEX> ,CR<Pointer>> mSetter ;
 	LENGTH mSize ;
@@ -1017,7 +1017,7 @@ struct FarBufferHolder implement Interface {
 	virtual LENGTH step () const = 0 ;
 	virtual VR<Pointer> at (CR<INDEX> index) leftvalue = 0 ;
 	virtual CR<Pointer> at (CR<INDEX> index) const leftvalue = 0 ;
-	virtual void refresh () = 0 ;
+	virtual void refresh () const = 0 ;
 } ;
 
 template <class A>
@@ -1077,7 +1077,7 @@ public:
 		return at (index) ;
 	}
 
-	void refresh () {
+	void refresh () const {
 		return FarBufferHolder::hold (thiz)->refresh () ;
 	}
 } ;
