@@ -166,7 +166,7 @@ struct FriendReader implement Interface {
 	virtual void read (CR<typeof (EOS)> item) = 0 ;
 
 	template <class ARG1 ,class = REQUIRE<HAS_FRIEND_READ<ARG1>>>
-	void read (VR<ARG1> item) {
+	void read (XR<ARG1> item) {
 		item.friend_read (thiz) ;
 	}
 } ;
@@ -492,13 +492,13 @@ public:
 	}
 
 	template <class ARG1 ,class = REQUIRE<HAS_FRIEND_READ<ARG1>>>
-	void read (VR<ARG1> item) {
+	void read (XR<ARG1> item) {
 		const auto r1x = FriendReaderBinder<ByteReader>::hold (thiz) ;
 		item.friend_read (r1x.ref) ;
 	}
 
 	template <class ARG1 ,class = REQUIRE<HAS_FRIEND_READ<ARG1>>>
-	forceinline VR<ByteReader> operator>> (VR<ARG1> item) {
+	forceinline VR<ByteReader> operator>> (XR<ARG1> item) {
 		read (item) ;
 		return thiz ;
 	}
@@ -737,13 +737,13 @@ public:
 	}
 
 	template <class ARG1 ,class = REQUIRE<HAS_FRIEND_READ<ARG1>>>
-	void read (VR<ARG1> item) {
+	void read (XR<ARG1> item) {
 		const auto r1x = FriendReaderBinder<TextReader>::hold (thiz) ;
 		item.friend_read (r1x.ref) ;
 	}
 
 	template <class ARG1 ,class = REQUIRE<HAS_FRIEND_READ<ARG1>>>
-	forceinline VR<TextReader> operator>> (VR<ARG1> item) {
+	forceinline VR<TextReader> operator>> (XR<ARG1> item) {
 		read (item) ;
 		return thiz ;
 	}
@@ -788,7 +788,7 @@ struct FriendWriter implement Interface {
 	virtual void write (CR<typeof (EOS)> item) = 0 ;
 
 	template <class ARG1 ,class = REQUIRE<HAS_FRIEND_WRITE<ARG1>>>
-	void write (CR<ARG1> item) {
+	void write (XR<ARG1> item) {
 		item.friend_write (thiz) ;
 	}
 } ;
@@ -1107,13 +1107,13 @@ public:
 	}
 
 	template <class ARG1 ,class = REQUIRE<HAS_FRIEND_WRITE<ARG1>>>
-	void write (CR<ARG1> item) {
+	void write (XR<ARG1> item) {
 		const auto r1x = FriendWriterBinder<ByteWriter>::hold (thiz) ;
 		item.friend_write (r1x.ref) ;
 	}
 
 	template <class ARG1 ,class = REQUIRE<HAS_FRIEND_WRITE<ARG1>>>
-	forceinline VR<ByteWriter> operator<< (CR<ARG1> item) {
+	forceinline VR<ByteWriter> operator<< (XR<ARG1> item) {
 		write (item) ;
 		return thiz ;
 	}
@@ -1345,13 +1345,13 @@ public:
 	}
 
 	template <class ARG1 ,class = REQUIRE<HAS_FRIEND_WRITE<ARG1>>>
-	void write (CR<ARG1> item) {
+	void write (XR<ARG1> item) {
 		const auto r1x = FriendWriterBinder<TextWriter>::hold (thiz) ;
 		item.friend_write (r1x.ref) ;
 	}
 
 	template <class ARG1 ,class = REQUIRE<HAS_FRIEND_WRITE<ARG1>>>
-	forceinline VR<TextWriter> operator<< (CR<ARG1> item) {
+	forceinline VR<TextWriter> operator<< (XR<ARG1> item) {
 		write (item) ;
 		return thiz ;
 	}
@@ -1572,95 +1572,87 @@ public:
 	}
 } ;
 
-class KeywordText implement Proxy {
+class ReadKeyword {
 protected:
-	String<STRU8> mThat ;
+	VR<String<STRU8>> mThat ;
 
 public:
-	static VR<KeywordText> from (VR<String<STRU8>> that) {
-		return Pointer::from (that) ;
-	}
+	implicit ReadKeyword () = delete ;
 
-	template <class ARG1>
-	void friend_read (VR<ARG1> reader) {
-		const auto r1x = FriendReaderBinder<ARG1>::hold (reader) ;
-		return StreamTextProc::read_keyword (r1x.ref ,mThat) ;
+	explicit ReadKeyword (VR<String<STRU8>> that) :mThat (that) {}
+
+	void friend_read (VR<FriendReader> reader) const {
+		return StreamTextProc::read_keyword (reader ,mThat) ;
 	}
 } ;
 
-class ScalarText implement Proxy {
+class ReadScalar {
 protected:
-	String<STRU8> mThat ;
+	VR<String<STRU8>> mThat ;
 
 public:
-	static VR<ScalarText> from (VR<String<STRU8>> that) {
-		return Pointer::from (that) ;
-	}
+	implicit ReadScalar () = delete ;
 
-	template <class ARG1>
-	void friend_read (VR<ARG1> reader) {
-		const auto r1x = FriendReaderBinder<ARG1>::hold (reader) ;
-		return StreamTextProc::read_scalar (r1x.ref ,mThat) ;
+	explicit ReadScalar (VR<String<STRU8>> that) :mThat (that) {}
+
+	void friend_read (VR<FriendReader> reader) const {
+		return StreamTextProc::read_scalar (reader ,mThat) ;
 	}
 } ;
 
-class EscapeText implement Proxy {
+class ReadEscape {
 protected:
-	String<STRU8> mThat ;
+	VR<String<STRU8>> mThat ;
 
 public:
-	static VR<EscapeText> from (VR<String<STRU8>> that) {
-		return Pointer::from (that) ;
-	}
+	implicit ReadEscape () = delete ;
 
-	static CR<EscapeText> from (CR<String<STRU8>> that) {
-		return Pointer::from (that) ;
-	}
+	explicit ReadEscape (VR<String<STRU8>> that) :mThat (that) {}
 
-	static CR<EscapeText> from (RR<String<STRU8>> that) = delete ;
-
-	template <class ARG1>
-	void friend_read (VR<ARG1> reader) {
-		const auto r1x = FriendReaderBinder<ARG1>::hold (reader) ;
-		return StreamTextProc::read_escape (r1x.ref ,mThat) ;
-	}
-
-	template <class ARG1>
-	void friend_write (VR<ARG1> writer) const {
-		const auto r1x = FriendWriterBinder<ARG1>::hold (writer) ;
-		return StreamTextProc::write_escape (r1x.ref ,mThat) ;
+	void friend_read (VR<FriendReader> reader) const {
+		return StreamTextProc::read_escape (reader ,mThat) ;
 	}
 } ;
 
-class BlankText implement Proxy {
+class WriteEscape {
 protected:
-	String<STRU8> mThat ;
+	CR<String<STRU8>> mThat ;
 
 public:
-	static VR<BlankText> from (VR<String<STRU8>> that) {
-		return Pointer::from (that) ;
-	}
+	implicit WriteEscape () = delete ;
 
-	template <class ARG1>
-	void friend_read (VR<ARG1> reader) {
-		const auto r1x = FriendReaderBinder<ARG1>::hold (reader) ;
-		return StreamTextProc::read_blank (r1x.ref ,mThat) ;
+	explicit WriteEscape (CR<String<STRU8>> that) :mThat (that) {}
+
+	void friend_read (VR<FriendWriter> writer) const {
+		return StreamTextProc::write_escape (writer ,mThat) ;
 	}
 } ;
 
-class EndlineText implement Proxy {
+class ReadBlank {
 protected:
-	String<STRU8> mThat ;
+	VR<String<STRU8>> mThat ;
 
 public:
-	static VR<EndlineText> from (VR<String<STRU8>> that) {
-		return Pointer::from (that) ;
-	}
+	implicit ReadBlank () = delete ;
 
-	template <class ARG1>
-	void friend_read (VR<ARG1> reader) {
-		const auto r1x = FriendReaderBinder<ARG1>::hold (reader) ;
-		return StreamTextProc::read_endline (r1x.ref ,mThat) ;
+	explicit ReadBlank (VR<String<STRU8>> that) :mThat (that) {}
+
+	void friend_read (VR<FriendReader> reader) const {
+		return StreamTextProc::read_blank (reader ,mThat) ;
+	}
+} ;
+
+class ReadEndline {
+protected:
+	VR<String<STRU8>> mThat ;
+
+public:
+	implicit ReadEndline () = delete ;
+
+	explicit ReadEndline (VR<String<STRU8>> that) :mThat (that) {}
+
+	void friend_read (VR<FriendReader> reader) const {
+		return StreamTextProc::read_endline (reader ,mThat) ;
 	}
 } ;
 
@@ -1677,10 +1669,8 @@ public:
 		mAlign = align ;
 	}
 
-	template <class ARG1>
-	void friend_write (VR<ARG1> writer) const {
-		const auto r1x = FriendWriterBinder<ARG1>::hold (writer) ;
-		return StreamTextProc::write_aligned (r1x.ref ,mNumber ,mAlign) ;
+	void friend_write (VR<FriendWriter> writer) const {
+		return StreamTextProc::write_aligned (writer ,mNumber ,mAlign) ;
 	}
 } ;
 

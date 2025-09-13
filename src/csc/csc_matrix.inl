@@ -1378,7 +1378,6 @@ public:
 			self.mQA.at (i.mX ,i.mY) = r7x ;
 			self.mQA.at (i.mY ,i.mX) = r7x ;
 		}
-
 		for (auto &&i : range (0 ,r1x)) {
 			const auto r8x = r4x[i] ;
 			const auto r9x = r5x[i] ;

@@ -1059,12 +1059,12 @@ public:
 
 	//@info: $1->${keyword}
 	void read_shift_e1 () {
-		mReader >> KeywordText::from (mLastString) ;
+		mReader >> ReadKeyword (mLastString) ;
 	}
 
 	//@info: $2->"${escape}"
 	void read_shift_e2 () {
-		mReader >> EscapeText::from (mLastString) ;
+		mReader >> ReadEscape (mLastString) ;
 	}
 
 	//@info: $3->$1 = $2
@@ -1742,7 +1742,7 @@ public:
 
 	//@info: $1->${scalar}
 	void read_shift_e1 () {
-		mReader >> ScalarText::from (mLastString) ;
+		mReader >> ReadScalar (mLastString) ;
 	}
 
 	//@info: $2->true|false|null
@@ -1773,7 +1773,7 @@ public:
 
 	//@info: $3->"${escape}"
 	void read_shift_e3 () {
-		mReader >> EscapeText::from (mLastString) ;
+		mReader >> ReadEscape (mLastString) ;
 	}
 
 	//@info: $4->$1|$2|$3|$6|$9
@@ -2428,14 +2428,14 @@ public:
 		mTextReader >> GAP ;
 		mTextReader >> slice ("format") ;
 		mTextReader >> GAP ;
-		mTextReader >> KeywordText::from (mLastString) ;
+		mTextReader >> ReadKeyword (mLastString) ;
 		mFormat = move (mLastString) ;
-		mTextReader >> EndlineText::from (mLastString) ;
+		mTextReader >> ReadEndline (mLastString) ;
 		mTextReader >> GAP ;
 		INDEX ix = NONE ;
 		INDEX iy = NONE ;
 		while (TRUE) {
-			mTextReader >> KeywordText::from (mLastString) ;
+			mTextReader >> ReadKeyword (mLastString) ;
 			if (mLastString == slice ("end_header"))
 				break ;
 			mTextReader >> GAP ;
@@ -2444,10 +2444,10 @@ public:
 				if (mLastString != slice ("element"))
 					discard ;
 				ix = mElementList.insert () ;
-				mTextReader >> KeywordText::from (mLastString) ;
+				mTextReader >> ReadKeyword (mLastString) ;
 				mElementList[ix].mName = move (mLastString) ;
 				mTextReader >> GAP ;
-				mTextReader >> ScalarText::from (mLastString) ;
+				mTextReader >> ReadScalar (mLastString) ;
 				const auto r1x = StringParse<LENGTH>::make (mLastString) ;
 				assume (r1x >= 0) ;
 				mElementList[ix].mLineSize = r1x ;
@@ -2460,12 +2460,12 @@ public:
 				if (mLastString != slice ("property"))
 					discard ;
 				assume (ix != NONE) ;
-				mTextReader >> KeywordText::from (mLastType) ;
+				mTextReader >> ReadKeyword (mLastType) ;
 				mTextReader >> GAP ;
 				if (mLastType != slice ("list"))
 					discard ;
 				iy = mElementList[ix].mPropertyList.insert () ;
-				mTextReader >> KeywordText::from (mLastString) ;
+				mTextReader >> ReadKeyword (mLastString) ;
 				const auto r2x = mPropertyListType.map (mLastString) ;
 				assume (r2x != NONE) ;
 				mElementList[ix].mPropertyList[iy].mType = r2x ;
@@ -2474,7 +2474,7 @@ public:
 				mElementList[ix].mLineStep += r3x ;
 				mElementList[ix].mPropertyList[iy].mPlyEnd = mElementList[ix].mLineStep ;
 				mTextReader >> GAP ;
-				mTextReader >> KeywordText::from (mLastString) ;
+				mTextReader >> ReadKeyword (mLastString) ;
 				const auto r4x = mPropertyType.map (mLastString) ;
 				if ifdo (TRUE) {
 					if (r4x == PlyParserDataType::Val32)
@@ -2489,7 +2489,7 @@ public:
 				mElementList[ix].mLineStep += SIZE_OF<INDEX>::expr ;
 				mElementList[ix].mPropertyList[iy].mPlyEnd = mElementList[ix].mLineStep ;
 				mTextReader >> GAP ;
-				mTextReader >> KeywordText::from (mLastString) ;
+				mTextReader >> ReadKeyword (mLastString) ;
 				mElementList[ix].mPropertyList[iy].mName = move (mLastString) ;
 				mTextReader >> GAP ;
 			}
@@ -2509,14 +2509,14 @@ public:
 				mElementList[ix].mPropertyList[iy].mListType = PlyParserDataType::Null ;
 				mElementList[ix].mPropertyList[iy].mListSize = mElementList[ix].mLineSize ;
 				mTextReader >> GAP ;
-				mTextReader >> KeywordText::from (mLastString) ;
+				mTextReader >> ReadKeyword (mLastString) ;
 				mElementList[ix].mPropertyList[iy].mName = move (mLastString) ;
 				mTextReader >> GAP ;
 			}
 			if ifdo (act) {
 				if (mLastString != slice ("comment"))
 					discard ;
-				mTextReader >> EndlineText::from (mLastString) ;
+				mTextReader >> ReadEndline (mLastString) ;
 				mTextReader >> GAP ;
 			}
 			if ifdo (act) {

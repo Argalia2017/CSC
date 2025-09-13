@@ -121,7 +121,7 @@ public:
 		auto rax = TextReader (info.borrow ()) ;
 		auto rbx = String<STRU8> () ;
 		rax >> GAP ;
-		rax >> BlankText::from (rbx) ;
+		rax >> ReadBlank (rbx) ;
 		const auto r1x = StringParse<VAL64>::make (rbx) ;
 		assume (r1x == uid) ;
 		rax >> GAP ;
@@ -135,15 +135,15 @@ public:
 			assume (r2x != STRU32 ('(')) ;
 		}
 		rax >> GAP ;
-		rax >> BlankText::from (rbx) ;
+		rax >> ReadBlank (rbx) ;
 		assume (rbx.length () == 1) ;
 		for (auto &&i : range (0 ,18)) {
 			noop (i) ;
 			rax >> GAP ;
-			rax >> BlankText::from (rbx) ;
+			rax >> ReadBlank (rbx) ;
 		}
 		rax >> GAP ;
-		rax >> BlankText::from (rbx) ;
+		rax >> ReadBlank (rbx) ;
 		const auto r3x = StringParse<VAL64>::make (rbx) ;
 		return QUAD (r3x) ;
 	}

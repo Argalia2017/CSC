@@ -89,16 +89,14 @@ public:
 } ;
 
 template <class A>
-class ArrayRange implement Proxy {
+class ArrayRange {
 protected:
-	A mThat ;
+	XR<A> mThat ;
 
 public:
-	static CR<ArrayRange> from (CR<A> that) {
-		return Pointer::from (that) ;
-	}
+	implicit ArrayRange () = delete ;
 
-	static CR<ArrayRange> from (RR<A> that) = delete ;
+	explicit ArrayRange (XR<A> that) :mThat (that) {}
 
 	LENGTH length () const {
 		return mThat.length () ;
@@ -299,8 +297,8 @@ public:
 		return ArrayIterator<CR<Array>> (thiz) ;
 	}
 
-	CR<ArrayRange<Array>> iter () const leftvalue {
-		return ArrayRange<Array>::from (thiz) ;
+	ArrayRange<CR<Array>> iter () const leftvalue {
+		return ArrayRange<CR<Array>> (thiz) ;
 	}
 
 	BOOL equal (CR<Array> that) const {
@@ -530,8 +528,8 @@ public:
 		return ArrayIterator<CR<String>> (thiz) ;
 	}
 
-	CR<ArrayRange<String>> iter () const leftvalue {
-		return ArrayRange<String>::from (thiz) ;
+	ArrayRange<CR<String>> iter () const leftvalue {
+		return ArrayRange<CR<String>> (thiz) ;
 	}
 
 	BOOL equal (CR<Slice> that) const {
@@ -737,8 +735,8 @@ public:
 		return ArrayIterator<CR<Deque>> (thiz) ;
 	}
 
-	CR<ArrayRange<Deque>> iter () const leftvalue {
-		return ArrayRange<Deque>::from (thiz) ;
+	ArrayRange<CR<Deque>> iter () const leftvalue {
+		return ArrayRange<CR<Deque>> (thiz) ;
 	}
 
 	BOOL empty () const {
@@ -965,8 +963,8 @@ public:
 		return ArrayIterator<CR<Priority>> (thiz) ;
 	}
 
-	CR<ArrayRange<Priority>> iter () const leftvalue {
-		return ArrayRange<Priority>::from (thiz) ;
+	ArrayRange<CR<Priority>> iter () const leftvalue {
+		return ArrayRange<CR<Priority>> (thiz) ;
 	}
 
 	BOOL empty () const {
@@ -1140,8 +1138,8 @@ public:
 		return ArrayIterator<CR<List>> (thiz) ;
 	}
 
-	CR<ArrayRange<List>> iter () const leftvalue {
-		return ArrayRange<List>::from (thiz) ;
+	ArrayRange<CR<List>> iter () const leftvalue {
+		return ArrayRange<CR<List>> (thiz) ;
 	}
 
 	BOOL empty () const {
@@ -1351,8 +1349,8 @@ public:
 		return ArrayIterator<CR<ArrayList>> (thiz) ;
 	}
 
-	CR<ArrayRange<ArrayList>> iter () const leftvalue {
-		return ArrayRange<ArrayList>::from (thiz) ;
+	ArrayRange<CR<ArrayList>> iter () const leftvalue {
+		return ArrayRange<CR<ArrayList>> (thiz) ;
 	}
 
 	void add (CR<A> item) {
@@ -1543,8 +1541,8 @@ public:
 		return ArrayIterator<CR<SortedMap>> (thiz) ;
 	}
 
-	CR<ArrayRange<SortedMap>> iter () const leftvalue {
-		return ArrayRange<SortedMap>::from (thiz) ;
+	ArrayRange<CR<SortedMap>> iter () const leftvalue {
+		return ArrayRange<CR<SortedMap>> (thiz) ;
 	}
 
 	void add (CR<A> item) {
@@ -1726,8 +1724,8 @@ public:
 		return ArrayIterator<CR<Set>> (thiz) ;
 	}
 
-	CR<ArrayRange<Set>> iter () const leftvalue {
-		return ArrayRange<Set>::from (thiz) ;
+	ArrayRange<CR<Set>> iter () const leftvalue {
+		return ArrayRange<CR<Set>> (thiz) ;
 	}
 
 	void add (CR<A> item) {
@@ -1913,8 +1911,8 @@ public:
 		return ArrayIterator<CR<HashSet>> (thiz) ;
 	}
 
-	CR<ArrayRange<HashSet>> iter () const leftvalue {
-		return ArrayRange<HashSet>::from (thiz) ;
+	ArrayRange<CR<HashSet>> iter () const leftvalue {
+		return ArrayRange<CR<HashSet>> (thiz) ;
 	}
 
 	void add (CR<A> item) {
@@ -2102,8 +2100,8 @@ public:
 		return ArrayIterator<CR<BitSet>> (thiz) ;
 	}
 
-	CR<ArrayRange<BitSet>> iter () const leftvalue {
-		return ArrayRange<BitSet>::from (thiz) ;
+	ArrayRange<CR<BitSet>> iter () const leftvalue {
+		return ArrayRange<CR<BitSet>> (thiz) ;
 	}
 
 	BOOL equal (CR<BitSet> that) const {
