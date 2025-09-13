@@ -7,7 +7,7 @@
 
 using namespace SOLUTION ;
 
-static const auto anonymous = invoke ([&] () {
+static const auto anonymous = invoke ([] () {
 	Singleton<Console>::expr.open (slice (".")) ;
 	Singleton<Console>::expr.show () ;
 	Singleton<Console>::expr.debug (slice ("library_file = ") ,RuntimeProc::library_file ()) ;
