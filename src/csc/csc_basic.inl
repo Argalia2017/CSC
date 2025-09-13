@@ -305,6 +305,7 @@ public:
 		if (r1x > 0)
 			return ;
 		BoxHolder::hold (raw ())->destroy () ;
+		self.mThis->mHeader = ZERO ;
 	}
 
 	BOOL exist () const override {

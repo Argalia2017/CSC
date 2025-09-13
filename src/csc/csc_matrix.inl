@@ -1290,9 +1290,9 @@ public:
 			ret = ret.projection () ;
 			return move (ret) ;
 		}) ;
-		const auto r3x = r2x[0] * MathProc::inverse (ax) ;
-		const auto r4x = r2x[1] * MathProc::inverse (ay) ;
-		const auto r5x = r2x[2] * MathProc::inverse (az) ;
+		const auto r3x = (r1x.mMax.mX - r1x.mMin.mX) * MathProc::inverse (ax) ;
+		const auto r4x = (r1x.mMax.mY - r1x.mMin.mY) * MathProc::inverse (ay) ;
+		const auto r5x = (r1x.mMax.mZ - r1x.mMin.mZ) * MathProc::inverse (az) ;
 		const auto r6x = MathProc::max_of (r3x ,r4x ,r5x) ;
 		const auto r7x = TranslationMatrix (r2x) ;
 		const auto r8x = DiagMatrix (ax * r6x ,ay * r6x ,az * r6x) ;
@@ -1359,7 +1359,7 @@ exports CFat<PointCloudHolder> PointCloudHolder::hold (CR<PointCloudLayout> that
 
 class TPSFitImplHolder final implement Fat<TPSFitHolder ,TPSFitLayout> {
 public:
-	void compute (CR<Array<Vector>> dst ,CR<Array<Vector>> src) {
+	void compute (CR<Array<Vector>> dst ,CR<Array<Vector>> src) override {
 		assert (dst.size () == src.size ()) ;
 		const auto r1x = src.size () ;
 		const auto r2x = PointCloud (Ref<Array<Vector>>::reference (src)) ;
@@ -1404,7 +1404,7 @@ public:
 		}
 	}
 
-	Vector smul (CR<Vector> that) const {
+	Vector smul (CR<Vector> that) const override {
 		assert (self.mQC.size () > 0) ;
 		Vector ret = Vector::axis_w () ;
 		const auto r1x = self.mPSrc.length () ;
