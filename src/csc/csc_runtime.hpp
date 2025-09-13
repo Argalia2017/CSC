@@ -202,7 +202,7 @@ public:
 } ;
 
 struct AtomicLayout ;
-struct AtomicStorage implement Storage<ENUM_MUL<SIZE_OF<VAL> ,RANK2> ,ENUM<8>> {} ;
+struct AtomicStorage implement Storage<ENUM_MUL<SIZE_OF<VAL> ,RANK1> ,ENUM<8>> {} ;
 
 struct AtomicHolder implement Interface {
 	imports Box<AtomicLayout ,AtomicStorage> create () ;
@@ -210,13 +210,13 @@ struct AtomicHolder implement Interface {
 	imports CFat<AtomicHolder> hold (CR<AtomicLayout> that) ;
 
 	virtual void initialize () = 0 ;
-	virtual VAL fetch () const = 0 ;
-	virtual void store (CR<VAL> item) const = 0 ;
-	virtual VAL exchange (CR<VAL> item) const = 0 ;
-	virtual BOOL change (VR<VAL> expect ,CR<VAL> item) const = 0 ;
-	virtual void replace (CR<VAL> expect ,CR<VAL> item) const = 0 ;
-	virtual void increase () const = 0 ;
-	virtual void decrease () const = 0 ;
+	virtual VAL fetch () = 0 ;
+	virtual void store (CR<VAL> item) = 0 ;
+	virtual VAL exchange (CR<VAL> item) = 0 ;
+	virtual BOOL change (VR<VAL> expect ,CR<VAL> item) = 0 ;
+	virtual void replace (CR<VAL> expect ,CR<VAL> item) = 0 ;
+	virtual void increase () = 0 ;
+	virtual void decrease () = 0 ;
 } ;
 
 class Atomic implement OfThis<Box<AtomicLayout ,AtomicStorage>> {

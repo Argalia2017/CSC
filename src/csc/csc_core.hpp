@@ -1169,6 +1169,8 @@ public:
 		mStorage = rax ;
 	}
 
+	explicit Pin (RR<A> that) = delete ;
+
 	implicit ~Pin () noexcept {
 		if (mLayout == ZERO)
 			return ;

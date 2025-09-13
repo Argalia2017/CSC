@@ -181,7 +181,7 @@ exports CFat<RuntimeProcHolder> RuntimeProcHolder::hold (CR<RuntimeProcLayout> t
 }
 
 struct AtomicLayout {
-	Pin<std::atomic<VAL>> mAtomic ;
+	std::atomic<VAL> mAtomic ;
 } ;
 
 class AtomicImplHolder final implement Fat<AtomicHolder ,AtomicLayout> {
@@ -190,38 +190,38 @@ public:
 		noop () ;
 	}
 
-	VAL fetch () const override {
-		return self.mAtomic->load (std::memory_order_relaxed) ;
+	VAL fetch () override {
+		return self.mAtomic.load (std::memory_order_relaxed) ;
 	}
 
-	void store (CR<VAL> item) const override {
-		return self.mAtomic->store (item ,std::memory_order_relaxed) ;
+	void store (CR<VAL> item) override {
+		return self.mAtomic.store (item ,std::memory_order_relaxed) ;
 	}
 
-	VAL exchange (CR<VAL> item) const override {
-		return self.mAtomic->exchange (item ,std::memory_order_relaxed) ;
+	VAL exchange (CR<VAL> item) override {
+		return self.mAtomic.exchange (item ,std::memory_order_relaxed) ;
 	}
 
-	BOOL change (VR<VAL> expect ,CR<VAL> item) const override {
-		return self.mAtomic->compare_exchange_weak (expect ,item ,std::memory_order_relaxed) ;
+	BOOL change (VR<VAL> expect ,CR<VAL> item) override {
+		return self.mAtomic.compare_exchange_weak (expect ,item ,std::memory_order_relaxed) ;
 	}
 
-	void replace (CR<VAL> expect ,CR<VAL> item) const override {
+	void replace (CR<VAL> expect ,CR<VAL> item) override {
 		auto rax = expect ;
-		self.mAtomic->compare_exchange_strong (rax ,item ,std::memory_order_relaxed) ;
+		self.mAtomic.compare_exchange_strong (rax ,item ,std::memory_order_relaxed) ;
 	}
 
-	void increase () const override {
-		self.mAtomic->fetch_add (1 ,std::memory_order_relaxed) ;
+	void increase () override {
+		self.mAtomic.fetch_add (1 ,std::memory_order_relaxed) ;
 	}
 
-	void decrease () const override {
-		self.mAtomic->fetch_sub (1 ,std::memory_order_relaxed) ;
+	void decrease () override {
+		self.mAtomic.fetch_sub (1 ,std::memory_order_relaxed) ;
 	}
 } ;
 
 exports Box<AtomicLayout ,AtomicStorage> AtomicHolder::create () {
-	return Box<AtomicLayout>::zeroize () ;
+	return Box<AtomicLayout>::make () ;
 }
 
 exports VFat<AtomicHolder> AtomicHolder::hold (VR<AtomicLayout> that) {
