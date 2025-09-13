@@ -84,8 +84,8 @@ struct VectorHolder implement Interface {
 	virtual void visit (VR<FriendVisitor> visitor) const = 0 ;
 	virtual VectorLayout sadd (CR<VectorLayout> that) const = 0 ;
 	virtual VectorLayout ssub (CR<VectorLayout> that) const = 0 ;
-	virtual VectorLayout smul (CR<FLT64> scale) const = 0 ;
-	virtual VectorLayout sdiv (CR<FLT64> scale) const = 0 ;
+	virtual VectorLayout smul (CR<FLT64> that) const = 0 ;
+	virtual VectorLayout sdiv (CR<FLT64> that) const = 0 ;
 	virtual FLT64 dot (CR<VectorLayout> that) const = 0 ;
 	virtual VectorLayout smul (CR<MatrixLayout> that) const = 0 ;
 	virtual VectorLayout cross (CR<VectorLayout> that) const = 0 ;
@@ -236,34 +236,34 @@ public:
 		thiz = ssub (that) ;
 	}
 
-	Vector smul (CR<FLT64> scale) const {
-		VectorLayout ret = VectorHolder::hold (thiz)->smul (scale) ;
+	Vector smul (CR<FLT64> that) const {
+		VectorLayout ret = VectorHolder::hold (thiz)->smul (that) ;
 		return move (keep[TYPE<Vector>::expr] (ret)) ;
 	}
 
-	forceinline Vector operator* (CR<FLT64> scale) const {
-		return smul (scale) ;
+	forceinline Vector operator* (CR<FLT64> that) const {
+		return smul (that) ;
 	}
 
-	forceinline friend Vector operator* (CR<FLT64> scale ,CR<Vector> that) {
-		return that.smul (scale) ;
+	forceinline friend Vector operator* (CR<FLT64> thiz_ ,CR<Vector> that) {
+		return that.smul (thiz_) ;
 	}
 
-	forceinline void operator*= (CR<FLT64> scale) {
-		thiz = smul (scale) ;
+	forceinline void operator*= (CR<FLT64> that) {
+		thiz = smul (that) ;
 	}
 
-	Vector sdiv (CR<FLT64> scale) const {
-		VectorLayout ret = VectorHolder::hold (thiz)->sdiv (scale) ;
+	Vector sdiv (CR<FLT64> that) const {
+		VectorLayout ret = VectorHolder::hold (thiz)->sdiv (that) ;
 		return move (keep[TYPE<Vector>::expr] (ret)) ;
 	}
 
-	forceinline Vector operator/ (CR<FLT64> scale) const {
-		return sdiv (scale) ;
+	forceinline Vector operator/ (CR<FLT64> that) const {
+		return sdiv (that) ;
 	}
 
-	forceinline void operator/= (CR<FLT64> scale) {
-		thiz = sdiv (scale) ;
+	forceinline void operator/= (CR<FLT64> that) {
+		thiz = sdiv (that) ;
 	}
 
 	FLT64 dot (CR<Vector> that) const {
@@ -347,8 +347,8 @@ struct MatrixHolder implement Interface {
 	virtual void visit (VR<FriendVisitor> visitor) const = 0 ;
 	virtual MatrixLayout sadd (CR<MatrixLayout> that) const = 0 ;
 	virtual MatrixLayout ssub (CR<MatrixLayout> that) const = 0 ;
-	virtual MatrixLayout smul (CR<FLT64> scale) const = 0 ;
-	virtual MatrixLayout sdiv (CR<FLT64> scale) const = 0 ;
+	virtual MatrixLayout smul (CR<FLT64> that) const = 0 ;
+	virtual MatrixLayout sdiv (CR<FLT64> that) const = 0 ;
 	virtual VectorLayout smul (CR<VectorLayout> that) const = 0 ;
 	virtual MatrixLayout smul (CR<MatrixLayout> that) const = 0 ;
 	virtual MatrixLayout sabs () const = 0 ;
@@ -496,34 +496,34 @@ public:
 		thiz = ssub (that) ;
 	}
 
-	Matrix smul (CR<FLT64> scale) const {
-		MatrixLayout ret = MatrixHolder::hold (thiz)->smul (scale) ;
+	Matrix smul (CR<FLT64> that) const {
+		MatrixLayout ret = MatrixHolder::hold (thiz)->smul (that) ;
 		return move (keep[TYPE<Matrix>::expr] (ret)) ;
 	}
 
-	forceinline Matrix operator* (CR<FLT64> scale) const {
-		return smul (scale) ;
+	forceinline Matrix operator* (CR<FLT64> that) const {
+		return smul (that) ;
 	}
 
-	forceinline friend Matrix operator* (CR<FLT64> scale ,CR<Matrix> that) {
-		return that.smul (scale) ;
+	forceinline friend Matrix operator* (CR<FLT64> thiz_ ,CR<Matrix> that) {
+		return that.smul (thiz_) ;
 	}
 
-	forceinline void operator*= (CR<FLT64> scale) {
-		thiz = smul (scale) ;
+	forceinline void operator*= (CR<FLT64> that) {
+		thiz = smul (that) ;
 	}
 
-	Matrix sdiv (CR<FLT64> scale) const {
-		MatrixLayout ret = MatrixHolder::hold (thiz)->sdiv (scale) ;
+	Matrix sdiv (CR<FLT64> that) const {
+		MatrixLayout ret = MatrixHolder::hold (thiz)->sdiv (that) ;
 		return move (keep[TYPE<Matrix>::expr] (ret)) ;
 	}
 
-	forceinline Matrix operator/ (CR<FLT64> scale) const {
-		return sdiv (scale) ;
+	forceinline Matrix operator/ (CR<FLT64> that) const {
+		return sdiv (that) ;
 	}
 
-	forceinline void operator/= (CR<FLT64> scale) {
-		thiz = sdiv (scale) ;
+	forceinline void operator/= (CR<FLT64> that) {
+		thiz = sdiv (that) ;
 	}
 
 	Vector smul (CR<Vector> that) const {
@@ -1023,7 +1023,7 @@ struct PointCloudHolder implement Interface {
 	virtual Matrix pca_matrix () const = 0 ;
 	virtual Matrix box_matrix (CR<FLT64> ax ,CR<FLT64> ay ,CR<FLT64> az) const = 0 ;
 	virtual Line3F bound () const = 0 ;
-	virtual PointCloudLayout smul (CR<Matrix> mat) const = 0 ;
+	virtual PointCloudLayout smul (CR<Matrix> that) const = 0 ;
 	virtual Array<INDEX> search (CR<Vector> center ,CR<LENGTH> neighbor) const = 0 ;
 	virtual Array<INDEX> search (CR<Vector> center ,CR<LENGTH> neighbor ,CR<FLT64> radius) const = 0 ;
 } ;
@@ -1080,17 +1080,17 @@ public:
 		return PointCloudHolder::hold (thiz)->bound () ;
 	}
 
-	PointCloud smul (CR<Matrix> mat) const {
-		PointCloudLayout ret = PointCloudHolder::hold (thiz)->smul (mat) ;
+	PointCloud smul (CR<Matrix> that) const {
+		PointCloudLayout ret = PointCloudHolder::hold (thiz)->smul (that) ;
 		return move (keep[TYPE<PointCloud>::expr] (ret)) ;
 	}
 
-	forceinline PointCloud operator* (CR<Matrix> mat) const {
-		return smul (mat) ;
+	forceinline PointCloud operator* (CR<Matrix> that) const {
+		return smul (that) ;
 	}
 
-	forceinline friend PointCloud operator* (CR<Matrix> mat ,CR<PointCloud> that) {
-		return that.smul (mat.transpose ()) ;
+	forceinline friend PointCloud operator* (CR<Matrix> thiz_ ,CR<PointCloud> that) {
+		return that.smul (thiz_.transpose ()) ;
 	}
 
 	Array<INDEX> search (CR<Vector> center ,CR<LENGTH> neighbor) const {

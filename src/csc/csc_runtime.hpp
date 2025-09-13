@@ -444,7 +444,7 @@ public:
 		mThat = FriendExecutingBinder<ARG1>::hold (that) ;
 	}
 
-	void friend_execute (CR<INDEX> slot) {
+	void friend_execute (CR<INDEX> slot) const {
 		auto &&rax = keep[TYPE<VFat<FriendExecuting>>::expr] (mThat) ;
 		rax->friend_execute (slot) ;
 	}

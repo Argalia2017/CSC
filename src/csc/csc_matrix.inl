@@ -98,18 +98,18 @@ public:
 		return move (ret) ;
 	}
 
-	VectorLayout smul (CR<FLT64> scale) const override {
+	VectorLayout smul (CR<FLT64> that) const override {
 		VectorLayout ret ;
 		for (auto &&i : range (0 ,4)) {
-			ret.mVector[i] = self.mVector[i] * scale ;
+			ret.mVector[i] = self.mVector[i] * that ;
 		}
 		return move (ret) ;
 	}
 
-	VectorLayout sdiv (CR<FLT64> scale) const override {
+	VectorLayout sdiv (CR<FLT64> that) const override {
 		VectorLayout ret ;
 		for (auto &&i : range (0 ,4)) {
-			ret.mVector[i] = self.mVector[i] / scale ;
+			ret.mVector[i] = self.mVector[i] / that ;
 		}
 		return move (ret) ;
 	}
@@ -286,18 +286,18 @@ public:
 		return move (ret) ;
 	}
 
-	MatrixLayout smul (CR<FLT64> scale) const override {
+	MatrixLayout smul (CR<FLT64> that) const override {
 		MatrixLayout ret ;
 		for (auto &&i : range (0 ,16)) {
-			ret.mMatrix[i] = self.mMatrix[i] * scale ;
+			ret.mMatrix[i] = self.mMatrix[i] * that ;
 		}
 		return move (ret) ;
 	}
 
-	MatrixLayout sdiv (CR<FLT64> scale) const override {
+	MatrixLayout sdiv (CR<FLT64> that) const override {
 		MatrixLayout ret ;
 		for (auto &&i : range (0 ,16)) {
-			ret.mMatrix[i] = self.mMatrix[i] / scale ;
+			ret.mMatrix[i] = self.mMatrix[i] / that ;
 		}
 		return move (ret) ;
 	}
@@ -1320,11 +1320,11 @@ public:
 		return move (ret) ;
 	}
 
-	PointCloudLayout smul (CR<Matrix> mat) const override {
+	PointCloudLayout smul (CR<Matrix> that) const override {
 		PointCloudLayout ret ;
 		ret.mRank = self.mRank ;
 		ret.mPointCloud = self.mPointCloud.share () ;
-		ret.mWorld = self.mWorld * mat ;
+		ret.mWorld = self.mWorld * that ;
 		return move (ret) ;
 	}
 

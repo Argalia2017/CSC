@@ -1425,7 +1425,7 @@ public:
 		mThat = FriendReadingBinder<ARG1>::hold (that) ;
 	}
 
-	void friend_read (VR<FriendReader> reader) {
+	void friend_read (VR<FriendReader> reader) const {
 		auto &&rax = keep[TYPE<VFat<FriendReading>>::expr] (mThat) ;
 		rax->friend_read (reader) ;
 	}
