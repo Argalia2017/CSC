@@ -1397,15 +1397,49 @@ public:
 	}
 } ;
 
-struct FriendFormat implement Interface {
+struct FriendReading implement Interface {
+	virtual void friend_read (VR<FriendReader> reader) = 0 ;
+} ;
+
+template <class A>
+class FriendReadingBinder final implement Fat<FriendReading ,A> {
+public:
+	static VFat<FriendReading> hold (VR<A> that) {
+		return VFat<FriendReading> (FriendReadingBinder () ,that) ;
+	}
+
+	void friend_read (VR<FriendReader> reader) const override {
+		reader.read (thiz.self) ;
+	}
+} ;
+
+class ReadingFat {
+protected:
+	FatLayout mThat ;
+
+public:
+	implicit ReadingFat () = default ;
+
+	template <class ARG1>
+	explicit ReadingFat (VR<ARG1> that) {
+		mThat = FriendReadingBinder<ARG1>::hold (that) ;
+	}
+
+	void friend_read (VR<FriendReader> reader) {
+		auto &&rax = keep[TYPE<VFat<FriendReading>>::expr] (mThat) ;
+		rax->friend_read (reader) ;
+	}
+} ;
+
+struct FriendWriting implement Interface {
 	virtual void friend_write (VR<FriendWriter> writer) const = 0 ;
 } ;
 
 template <class A>
-class FriendFormatBinder final implement Fat<FriendFormat ,A> {
+class FriendWritingBinder final implement Fat<FriendWriting ,A> {
 public:
-	static CFat<FriendFormat> hold (CR<A> that) {
-		return CFat<FriendFormat> (FriendFormatBinder () ,that) ;
+	static CFat<FriendWriting> hold (CR<A> that) {
+		return CFat<FriendWriting> (FriendWritingBinder () ,that) ;
 	}
 
 	void friend_write (VR<FriendWriter> writer) const override {
@@ -1413,9 +1447,27 @@ public:
 	}
 } ;
 
+class WritingFat {
+protected:
+	FatLayout mThat ;
+
+public:
+	implicit WritingFat () = default ;
+
+	template <class ARG1>
+	explicit WritingFat (CR<ARG1> that) {
+		mThat = FriendWritingBinder<ARG1>::hold (that) ;
+	}
+
+	void friend_write (VR<FriendWriter> writer) const {
+		auto &&rax = keep[TYPE<CFat<FriendWriting>>::expr] (mThat) ;
+		rax->friend_write (writer) ;
+	}
+} ;
+
 struct FormatLayout {
 	Slice mFormat ;
-	BufferX<FatLayout> mParams ;
+	BufferX<WritingFat> mParams ;
 	INDEX mWrite ;
 } ;
 
@@ -1447,7 +1499,7 @@ public:
 
 	template <class...ARG1>
 	void once (CR<ARG1>...params) const {
-		return FormatHolder::hold (thiz)->once (MakeWrapper (FriendFormatBinder<ARG1>::hold (params)...)) ;
+		return FormatHolder::hold (thiz)->once (MakeWrapper (WritingFat (params)...)) ;
 	}
 
 	template <class...ARG1>

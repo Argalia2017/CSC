@@ -416,19 +416,37 @@ public:
 	}
 } ;
 
-struct FriendThread implement Interface {
+struct FriendExecuting implement Interface {
 	virtual void friend_execute (CR<INDEX> slot) = 0 ;
 } ;
 
 template <class A>
-class FriendThreadBinder final implement Fat<FriendThread ,A> {
+class FriendExecutingBinder final implement Fat<FriendExecuting ,A> {
 public:
-	static VFat<FriendThread> hold (VR<A> that) {
-		return VFat<FriendThread> (FriendThreadBinder () ,that) ;
+	static VFat<FriendExecuting> hold (VR<A> that) {
+		return VFat<FriendExecuting> (FriendExecutingBinder () ,that) ;
 	}
 
 	void friend_execute (CR<INDEX> slot) override {
 		thiz.self.friend_execute (slot) ;
+	}
+} ;
+
+class ExecutingFat {
+protected:
+	FatLayout mThat ;
+
+public:
+	implicit ExecutingFat () = default ;
+
+	template <class ARG1>
+	explicit ExecutingFat (VR<ARG1> that) {
+		mThat = FriendExecutingBinder<ARG1>::hold (that) ;
+	}
+
+	void friend_execute (CR<INDEX> slot) {
+		auto &&rax = keep[TYPE<VFat<FriendExecuting>>::expr] (mThat) ;
+		rax->friend_execute (slot) ;
 	}
 } ;
 
@@ -439,7 +457,7 @@ struct ThreadHolder implement Interface {
 	imports VFat<ThreadHolder> hold (VR<ThreadLayout> that) ;
 	imports CFat<ThreadHolder> hold (CR<ThreadLayout> that) ;
 
-	virtual void initialize (RR<Box<VFat<FriendThread>>> executor ,CR<INDEX> slot) = 0 ;
+	virtual void initialize (CR<ExecutingFat> executing ,CR<INDEX> slot) = 0 ;
 	virtual FLAG thread_uid () const = 0 ;
 	virtual void start () = 0 ;
 	virtual void stop () = 0 ;
@@ -449,9 +467,9 @@ class Thread implement OfThis<AutoRef<ThreadLayout>> {
 public:
 	implicit Thread () = default ;
 
-	explicit Thread (RR<Box<VFat<FriendThread>>> executor ,CR<INDEX> slot) {
+	explicit Thread (CR<ExecutingFat> executing ,CR<INDEX> slot) {
 		mThis = ThreadHolder::create () ;
-		ThreadHolder::hold (thiz)->initialize (move (executor) ,slot) ;
+		ThreadHolder::hold (thiz)->initialize (executing ,slot) ;
 	}
 
 	FLAG thread_uid () const {

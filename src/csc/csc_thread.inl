@@ -78,9 +78,8 @@ public:
 		self.mItemLoadLength = 0 ;
 		self.mThreadFlag = ThreadFlag::Running ;
 		self.mThreadFunc = func ;
-		const auto r1x = FriendThreadBinder<WorkThreadLayout>::hold (self) ;
 		for (auto &&i : self.mThread.iter ()) {
-			self.mThread[i] = Thread (Box<VFat<FriendThread>>::make (r1x) ,i) ;
+			self.mThread[i] = Thread (ExecutingFat (self) ,i) ;
 			self.mThread[i].start () ;
 		}
 	}
@@ -287,9 +286,8 @@ public:
 		self.mThreadFlag = ThreadFlag::Running ;
 		self.mSuspendFlag = FALSE ;
 		self.mThreadFunc = func ;
-		const auto r1x = FriendThreadBinder<CalcThreadLayout>::hold (self) ;
 		for (auto &&i : self.mThread.iter ()) {
-			self.mThread[i] = Thread (Box<VFat<FriendThread>>::make (r1x) ,i) ;
+			self.mThread[i] = Thread (ExecutingFat (self) ,i) ;
 			self.mThread[i].start () ;
 		}
 	}
@@ -539,9 +537,8 @@ public:
 			if (self.mThread.size () > 0)
 				discard ;
 			self.mThread = Array<Thread> (1) ;
-			const auto r1x = FriendThreadBinder<PromiseLayout>::hold (self) ;
 			for (auto &&i : self.mThread.iter ()) {
-				self.mThread[i] = Thread (Box<VFat<FriendThread>>::make (r1x) ,0) ;
+				self.mThread[i] = Thread (ExecutingFat (self) ,0) ;
 				self.mThread[i].start () ;
 			}
 		}
