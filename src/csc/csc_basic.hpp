@@ -596,6 +596,7 @@ struct SharedRefHolder implement Interface {
 	virtual LENGTH counter () const = 0 ;
 	virtual VR<Pointer> ref_m () const leftvalue = 0 ;
 	virtual SharedRefLayout recast (CR<Unknown> simple) = 0 ;
+	virtual RefLayout weak () const = 0 ;
 } ;
 
 inline SharedRefLayout::~SharedRefLayout () noexcept {
@@ -675,6 +676,11 @@ public:
 		using R1X = SimpleUnknownBinder<ReflectRecastBinder<ARG1 ,A>> ;
 		SharedRefLayout ret = SharedRefHolder::hold (thiz)->recast (R1X ()) ;
 		return move (keep[TYPE<SharedRef<ARG1>>::expr] (ret)) ;
+	}
+
+	Ref<A> weak () const {
+		RefLayout ret = SharedRefHolder::hold (thiz)->weak () ;
+		return move (keep[TYPE<Ref<A>>::expr] (ret)) ;
 	}
 } ;
 

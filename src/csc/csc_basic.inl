@@ -342,6 +342,12 @@ public:
 		ret.mLayout = r1x->recast (self.mLayout) ;
 		return move (ret) ;
 	}
+
+	RefLayout weak () const override {
+		RefLayout ret = self.mThis.share () ;
+		ret.mLayout = self.mLayout ;
+		return move (ret) ;
+	}
 } ;
 
 exports VFat<SharedRefHolder> SharedRefHolder::hold (VR<SharedRefLayout> that) {
