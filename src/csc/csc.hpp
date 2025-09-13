@@ -606,9 +606,9 @@ using MACRO_IS_EXTEND = ENUM<(__is_base_of (A ,B))> ;
 
 #ifndef __macro_memcpy
 #ifdef __CSC_COMPILER_MSVC__
-#define __macro_memcpy invoke
-#define __macro_memset invoke
-#define __macro_memcmp invoke
+#define __macro_memcpy CSC::CoreProcHolder::expr.inline_memcpy
+#define __macro_memset CSC::CoreProcHolder::expr.inline_memset
+#define __macro_memcmp CSC::CoreProcHolder::expr.inline_memcmp
 #endif
 
 #ifdef __CSC_COMPILER_GNUC__

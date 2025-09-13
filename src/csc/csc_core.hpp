@@ -43,61 +43,62 @@ struct FUNCTION_inline_ifdo {
 
 static constexpr auto inline_ifdo = FUNCTION_inline_ifdo () ;
 
-struct FUNCTION_inline_unittest {
-	imports BOOL invoke () ;
+struct CoreProcHolder implement Interface {
+	imports CR<CoreProcHolder> expr_m () ;
 
+	virtual BOOL inline_unittest () const = 0 ;
+	virtual void inline_abort () const = 0 ;
+	virtual void inline_notice (VR<Pointer> src) const = 0 ;
+	virtual FLAG inline_type_name (CR<Pointer> squalor ,CR<FLAG> func_) const = 0 ;
+	virtual Tuple<FLAG ,FLAG> inline_list_pair (CR<Pointer> squalor ,CR<LENGTH> step_) const = 0 ;
+	virtual void inline_memset (VR<Pointer> dst ,CR<LENGTH> size_) const = 0 ;
+	virtual void inline_memcpy (VR<Pointer> dst ,CR<Pointer> src ,CR<LENGTH> size_) const = 0 ;
+	virtual FLAG inline_memcmp (CR<Pointer> dst ,CR<Pointer> src ,CR<LENGTH> size_) const = 0 ;
+} ;
+
+struct FUNCTION_inline_unittest {
 	forceinline BOOL operator() () const noexcept {
-		return invoke () ;
+		return CoreProcHolder::expr.inline_unittest () ;
 	}
 } ;
 
 static constexpr auto inline_unittest = FUNCTION_inline_unittest () ;
 
 struct FUNCTION_inline_abort {
-	imports void invoke () ;
-
 	forceinline void operator() () const noexcept {
-		return invoke () ;
+		return CoreProcHolder::expr.inline_abort () ;
 	}
 } ;
 
 static constexpr auto inline_abort = FUNCTION_inline_abort () ;
 
 struct FUNCTION_inline_notice {
-	imports void invoke (VR<Pointer> src) ;
-
 	template <class ARG1 ,class ARG2>
 	forceinline void operator() (TYPE<ARG1> ,XR<ARG2> src) const noexcept {
 		static volatile auto mInstance = (&src) ;
-		return invoke (Pointer::make (FLAG (mInstance))) ;
+		return CoreProcHolder::expr.inline_notice (Pointer::make (FLAG (mInstance))) ;
 	}
 } ;
 
 static constexpr auto inline_notice = FUNCTION_inline_notice () ;
 
 struct FUNCTION_inline_type_name {
-	imports FLAG invoke (CR<Pointer> squalor ,CR<FLAG> func_) ;
-
 	forceinline FLAG operator() (CR<Pointer> squalor ,CR<FLAG> func_) const noexcept {
-		return invoke (squalor ,func_) ;
+		return CoreProcHolder::expr.inline_type_name (squalor ,func_) ;
 	}
 } ;
 
 static constexpr auto inline_type_name = FUNCTION_inline_type_name () ;
 
 struct FUNCTION_inline_list_pair {
-	imports Tuple<FLAG ,FLAG> invoke (CR<Pointer> squalor ,CR<LENGTH> step_) ;
-
 	forceinline Tuple<FLAG ,FLAG> operator() (CR<Pointer> squalor ,CR<LENGTH> step_) const noexcept {
-		return invoke (squalor ,step_) ;
+		return CoreProcHolder::expr.inline_list_pair (squalor ,step_) ;
 	}
 } ;
 
 static constexpr auto inline_list_pair = FUNCTION_inline_list_pair () ;
 
 struct FUNCTION_inline_memset {
-	imports void invoke (VR<Pointer> dst ,CR<LENGTH> size_) ;
-
 	forceinline void operator() (VR<Pointer> dst ,CR<LENGTH> size_) const noexcept {
 		return __macro_memset (dst ,size_) ;
 	}
@@ -111,8 +112,6 @@ struct FUNCTION_inline_memset {
 static constexpr auto inline_memset = FUNCTION_inline_memset () ;
 
 struct FUNCTION_inline_memcpy {
-	imports void invoke (VR<Pointer> dst ,CR<Pointer> src ,CR<LENGTH> size_) ;
-
 	forceinline void operator() (VR<Pointer> dst ,CR<Pointer> src ,CR<LENGTH> size_) const noexcept {
 		return __macro_memcpy (dst ,src ,size_) ;
 	}
@@ -126,8 +125,6 @@ struct FUNCTION_inline_memcpy {
 static constexpr auto inline_memcpy = FUNCTION_inline_memcpy () ;
 
 struct FUNCTION_inline_memcmp {
-	imports FLAG invoke (CR<Pointer> dst ,CR<Pointer> src ,CR<LENGTH> size_) ;
-
 	forceinline FLAG operator() (CR<Pointer> dst ,CR<Pointer> src ,CR<LENGTH> size_) const noexcept {
 		return __macro_memcmp (dst ,src ,size_) ;
 	}

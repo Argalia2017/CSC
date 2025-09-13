@@ -40,21 +40,6 @@ struct FUNCTION_has_debugger {
 
 static constexpr auto has_debugger = FUNCTION_has_debugger () ;
 
-exports BOOL FUNCTION_inline_unittest::invoke () {
-	return memorize ([&] () {
-		return has_debugger () ;
-	}) ;
-} ;
-
-exports void FUNCTION_inline_abort::invoke () {
-	std::abort () ;
-} ;
-
-exports void FUNCTION_inline_notice::invoke (VR<Pointer> src) {
-	//@warn: make side effect
-	inline_memcpy (src ,src ,1) ;
-}
-
 #ifdef __CSC_CXX_RTTI__
 struct FUNCTION_stl_type_name {
 	forceinline FLAG operator() (CR<Interface> squalor ,CR<FLAG> func_) const noexcept {
@@ -76,10 +61,6 @@ struct FUNCTION_stl_type_name {
 #endif
 
 static constexpr auto stl_type_name = FUNCTION_stl_type_name () ;
-
-exports FLAG FUNCTION_inline_type_name::invoke (CR<Pointer> squalor ,CR<FLAG> func_) {
-	return stl_type_name (squalor ,func_) ;
-}
 
 #ifdef __CSC_COMPILER_MSVC__
 struct FUNCTION_stl_list_pair {
@@ -116,20 +97,48 @@ struct FUNCTION_stl_list_pair {
 
 static constexpr auto stl_list_pair = FUNCTION_stl_list_pair () ;
 
-exports Tuple<FLAG ,FLAG> FUNCTION_inline_list_pair::invoke (CR<Pointer> squalor ,CR<LENGTH> step_) {
-	return stl_list_pair (squalor ,step_) ;
-}
+class CoreProcImplHolder final implement Fat<CoreProcHolder ,Proxy> {
+public:
+	BOOL inline_unittest () const override {
+		return memorize ([&] () {
+			return has_debugger () ;
+		}) ;
+	}
 
-exports void FUNCTION_inline_memset::invoke (VR<Pointer> dst ,CR<LENGTH> size_) {
-	std::memset ((&dst) ,0 ,size_) ;
-}
+	void inline_abort () const override {
+		std::abort () ;
+	}
 
-exports void FUNCTION_inline_memcpy::invoke (VR<Pointer> dst ,CR<Pointer> src ,CR<LENGTH> size_) {
-	std::memcpy ((&dst) ,(&src) ,size_) ;
-}
+	void inline_notice (VR<Pointer> src) const override {
+		//@warn: make side effect
+		inline_memcpy (src ,src ,1) ;
+	}
 
-exports FLAG FUNCTION_inline_memcmp::invoke (CR<Pointer> dst ,CR<Pointer> src ,CR<LENGTH> size_) {
-	return FLAG (std::memcmp ((&dst) ,(&src) ,size_)) ;
+	FLAG inline_type_name (CR<Pointer> squalor ,CR<FLAG> func_) const override {
+		return stl_type_name (squalor ,func_) ;
+	}
+
+	Tuple<FLAG ,FLAG> inline_list_pair (CR<Pointer> squalor ,CR<LENGTH> step_) const override {
+		return stl_list_pair (squalor ,step_) ;
+	}
+
+	void inline_memset (VR<Pointer> dst ,CR<LENGTH> size_) const override {
+		std::memset ((&dst) ,0 ,size_) ;
+	}
+
+	void inline_memcpy (VR<Pointer> dst ,CR<Pointer> src ,CR<LENGTH> size_) const override {
+		std::memcpy ((&dst) ,(&src) ,size_) ;
+	}
+
+	FLAG inline_memcmp (CR<Pointer> dst ,CR<Pointer> src ,CR<LENGTH> size_) const override {
+		return FLAG (std::memcmp ((&dst) ,(&src) ,size_)) ;
+	}
+} ;
+
+exports CR<CoreProcHolder> CoreProcHolder::expr_m () {
+	return memorize ([&] () {
+		return CoreProcImplHolder () ;
+	}) ;
 }
 
 class BoxImplHolder final implement Fat<BoxHolder ,BoxLayout> {
