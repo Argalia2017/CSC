@@ -17,8 +17,6 @@ static const auto anonymous = invoke ([] () {
 int test () ;
 
 int main () {
-	auto rax = Allocator<int ,AllocatorNode> () ;
-	auto rbx = rax.alloc (Box<int>::make (1)) ;
 
 	return 0 ;
 }

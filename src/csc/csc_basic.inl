@@ -439,10 +439,14 @@ public:
 		if (exist ())
 			return ;
 		self.mHolder = inline_vptr (holder) ;
+		self.mBuffer = ZERO ;
+		self.mSize = 0 ;
+		self.mStep = 0 ;
 	}
 
-	void initialize (CR<LENGTH> size_) override {
+	void initialize (CR<Unknown> holder ,CR<LENGTH> size_) override {
 		assert (!exist ()) ;
+		self.mHolder = inline_vptr (holder) ;
 		if (size_ <= 0)
 			return ;
 		const auto r1x = RFat<ReflectElement> (unknown ())->element () ;
@@ -457,15 +461,17 @@ public:
 		self.mThis->mCapacity = size_ ;
 	}
 
-	void initialize (CR<SliceLayout> buffer) override {
+	void initialize (CR<Unknown> holder ,CR<SliceLayout> buffer) override {
 		assert (!exist ()) ;
+		self.mHolder = inline_vptr (holder) ;
 		self.mBuffer = buffer.mBuffer ;
 		self.mSize = buffer.mSize ;
 		self.mStep = buffer.mStep ;
 	}
 
-	void initialize (CR<SliceLayout> buffer ,RR<BoxLayout> item) override {
+	void initialize (CR<Unknown> holder ,CR<SliceLayout> buffer ,RR<BoxLayout> item) override {
 		assert (!exist ()) ;
+		self.mHolder = inline_vptr (holder) ;
 		const auto r1x = BoxHolder::hold (item)->unknown () ;
 		RefHolder::hold (self.mThis)->initialize (RefUnknownBinder<RefBufferTree> () ,r1x ,1) ;
 		BoxHolder::hold (raw ())->acquire (item) ;
@@ -493,7 +499,7 @@ public:
 	}
 
 	BOOL exist () const override {
-		return self.mThis.exist () ;
+		return self.mHolder != ZERO ;
 	}
 
 	BOOL fixed () const override {
@@ -584,15 +590,9 @@ exports CFat<RefBufferHolder> RefBufferHolder::hold (CR<RefBufferLayout> that) {
 
 class FarBufferImplHolder final implement Fat<FarBufferHolder ,FarBufferLayout> {
 public:
-	void prepare (CR<Unknown> holder) override {
-		if (exist ())
-			return ;
-		self.mIndex = inline_vptr (holder) ;
-	}
-
-	void initialize (CR<LENGTH> size_) override {
+	void initialize (CR<Unknown> holder ,CR<LENGTH> size_) override {
 		assert (!exist ()) ;
-		const auto r1x = RFat<ReflectElement> (unknown ())->element () ;
+		const auto r1x = RFat<ReflectElement> (holder)->element () ;
 		RefHolder::hold (self.mThis)->initialize (r1x ,r1x ,0) ;
 		self.mIndex = NONE ;
 		self.mSize = size_ ;
@@ -677,10 +677,10 @@ public:
 		self.mFree = NONE ;
 	}
 
-	void initialize (CR<LENGTH> size_) override {
+	void initialize (CR<Unknown> holder ,CR<LENGTH> size_) override {
 		assert (!exist ()) ;
-		RefBufferHolder::hold (self.mAllocator)->initialize (size_) ;
-		const auto r1x = RFat<ReflectTuple> (unknown ()) ;
+		RefBufferHolder::hold (self.mAllocator)->initialize (holder ,size_) ;
+		const auto r1x = RFat<ReflectTuple> (holder) ;
 		self.mOffset = r1x->tuple_m2nd () ;
 		self.mWidth = 0 ;
 		self.mLength = 0 ;
