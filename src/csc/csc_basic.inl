@@ -173,7 +173,7 @@ public:
 	}
 
 	BOOL exist () const override {
-		return self.mThis != NULL ;
+		return self.mThis.exist () ;
 	}
 
 	VR<BoxLayout> raw () leftvalue override {
@@ -315,7 +315,7 @@ public:
 	}
 
 	BOOL exist () const override {
-		return self.mThis != NULL ;
+		return self.mThis.exist () ;
 	}
 
 	VR<BoxLayout> raw () leftvalue override {
@@ -395,7 +395,7 @@ public:
 	}
 
 	BOOL exist () const override {
-		return self.mThis != NULL ;
+		return self.mThis.exist () ;
 	}
 
 	VR<BoxLayout> raw () leftvalue override {
@@ -464,9 +464,11 @@ public:
 	void initialize (CR<Unknown> holder ,CR<SliceLayout> buffer) override {
 		assert (!exist ()) ;
 		self.mHolder = inline_vptr (holder) ;
+		self.mThis = Ref<RefBufferTree>::make () ;
 		self.mBuffer = buffer.mBuffer ;
 		self.mSize = buffer.mSize ;
 		self.mStep = buffer.mStep ;
+		self.mThis->mCapacity = USED ;
 	}
 
 	void initialize (CR<Unknown> holder ,CR<SliceLayout> buffer ,RR<BoxLayout> item) override {
@@ -483,27 +485,22 @@ public:
 	}
 
 	void destroy () override {
-		if (self.mHolder == ZERO)
+		if (!exist ())
 			return ;
-		if ifdo (TRUE) {
-			if (self.mThis == NULL)
-				discard ;
-			if (self.mThis->mCapacity <= 0)
-				discard ;
-			const auto r1x = RFat<ReflectElement> (unknown ())->element () ;
-			const auto r2x = RFat<ReflectDestroy> (r1x) ;
-			r2x->destroy (ref ,self.mThis->mCapacity) ;
-			BoxHolder::hold (raw ())->release () ;
-		}
-		self.mHolder = ZERO ;
+		if (self.mThis->mCapacity <= 0)
+			return ;
+		const auto r1x = RFat<ReflectElement> (unknown ())->element () ;
+		const auto r2x = RFat<ReflectDestroy> (r1x) ;
+		r2x->destroy (ref ,self.mThis->mCapacity) ;
+		BoxHolder::hold (raw ())->release () ;
 	}
 
 	BOOL exist () const override {
-		return self.mHolder != ZERO ;
+		return self.mThis.exist () ;
 	}
 
 	BOOL fixed () const override {
-		if (self.mThis == NULL)
+		if (!exist ())
 			return FALSE ;
 		if (self.mThis->mCapacity != USED)
 			return FALSE ;
@@ -511,7 +508,6 @@ public:
 	}
 
 	Unknown unknown () const override {
-		assert (exist ()) ;
 		return Unknown (self.mHolder) ;
 	}
 
