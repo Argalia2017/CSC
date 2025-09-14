@@ -62,7 +62,8 @@ public:
 		const auto r14x = FLAG (FreeImage_GetBits (rax)) ;
 		const auto r15x = r13x * r2x ;
 		const auto r16x = Slice (r14x ,r15x ,r11x) ;
-		RefBufferHolder::hold (ret.mImage)->initialize (r4x ,r16x ,move (image)) ;
+		ImageHolder::hold (ret)->prepare (r4x) ;
+		RefBufferHolder::hold (ret.mImage)->initialize (r16x ,move (image)) ;
 		ret.mWidth = r1x ;
 		ret.mStride = r13x ;
 		ImageHolder::hold (ret)->reset () ;

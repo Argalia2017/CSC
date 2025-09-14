@@ -858,9 +858,9 @@ struct RefBufferHolder implement Interface {
 	imports CFat<RefBufferHolder> hold (CR<RefBufferLayout> that) ;
 
 	virtual void prepare (CR<Unknown> holder) = 0 ;
-	virtual void initialize (CR<Unknown> holder ,CR<LENGTH> size_) = 0 ;
-	virtual void initialize (CR<Unknown> holder ,CR<SliceLayout> buffer) = 0 ;
-	virtual void initialize (CR<Unknown> holder ,CR<SliceLayout> buffer ,RR<BoxLayout> item) = 0 ;
+	virtual void initialize (CR<LENGTH> size_) = 0 ;
+	virtual void initialize (CR<SliceLayout> buffer) = 0 ;
+	virtual void initialize (CR<SliceLayout> buffer ,RR<BoxLayout> item) = 0 ;
 	virtual void destroy () = 0 ;
 	virtual BOOL exist () const = 0 ;
 	virtual BOOL fixed () const = 0 ;
@@ -899,8 +899,12 @@ struct RefBufferPureLayout implement RefBufferLayout {
 public:
 	implicit RefBufferPureLayout () noexcept {
 		noop (PTR<VR<A>> (NULL)) ;
+		RefBufferHolder::hold (thiz)->prepare (BufferUnknownBinder<A> ()) ;
 	}
 } ;
+
+template <>
+struct RefBufferPureLayout<Pointer> implement RefBufferLayout {} ;
 
 template <class A>
 class RefBuffer implement RefBufferPureLayout<A> {
@@ -915,13 +919,13 @@ public:
 	implicit RefBuffer () = default ;
 
 	explicit RefBuffer (CR<LENGTH> size_) {
-		RefBufferHolder::hold (thiz)->initialize (BufferUnknownBinder<A> () ,size_) ;
+		RefBufferHolder::hold (thiz)->initialize (size_) ;
 	}
 
 	static RefBuffer reference (CR<FLAG> buffer ,CR<LENGTH> size_) {
 		RefBuffer ret ;
 		const auto r1x = Slice (buffer ,size_ ,SIZE_OF<A>::expr) ;
-		RefBufferHolder::hold (ret)->initialize (BufferUnknownBinder<A> () ,r1x) ;
+		RefBufferHolder::hold (ret)->initialize (r1x) ;
 		return move (ret) ;
 	}
 
@@ -990,7 +994,6 @@ public:
 	}
 
 	void resize (CR<LENGTH> size_) {
-		RefBufferHolder::hold (thiz)->prepare (BufferUnknownBinder<A> ()) ;
 		return RefBufferHolder::hold (thiz)->resize (size_) ;
 	}
 } ;
@@ -1008,7 +1011,8 @@ struct FarBufferHolder implement Interface {
 	imports VFat<FarBufferHolder> hold (VR<FarBufferLayout> that) ;
 	imports CFat<FarBufferHolder> hold (CR<FarBufferLayout> that) ;
 
-	virtual void initialize (CR<Unknown> holder ,CR<LENGTH> size_) = 0 ;
+	virtual void prepare (CR<Unknown> holder) = 0 ;
+	virtual void initialize (CR<LENGTH> size_) = 0 ;
 	virtual BOOL exist () const = 0 ;
 	virtual Unknown unknown () const = 0 ;
 	virtual void use_getter (CR<Function<CR<INDEX> ,VR<Pointer>>> getter) = 0 ;
@@ -1021,7 +1025,19 @@ struct FarBufferHolder implement Interface {
 } ;
 
 template <class A>
-class FarBuffer implement FarBufferLayout {
+struct FarBufferPureLayout implement FarBufferLayout {
+public:
+	implicit FarBufferPureLayout () noexcept {
+		noop (PTR<VR<A>> (NULL)) ;
+		FarBufferHolder::hold (thiz)->prepare (BufferUnknownBinder<A> ()) ;
+	}
+} ;
+
+template <>
+struct FarBufferPureLayout<Pointer> implement FarBufferLayout {} ;
+
+template <class A>
+class FarBuffer implement FarBufferPureLayout<A> {
 protected:
 	using FarBufferLayout::mThis ;
 	using FarBufferLayout::mIndex ;
@@ -1034,7 +1050,7 @@ public:
 	implicit FarBuffer () = default ;
 
 	explicit FarBuffer (CR<LENGTH> size_) {
-		FarBufferHolder::hold (thiz)->initialize (BufferUnknownBinder<A> () ,size_) ;
+		FarBufferHolder::hold (thiz)->initialize (size_) ;
 	}
 
 	void use_getter (CR<Function<CR<INDEX> ,VR<A>>> getter) {
@@ -1124,7 +1140,7 @@ struct AllocatorHolder implement Interface {
 	imports CFat<AllocatorHolder> hold (CR<AllocatorLayout> that) ;
 
 	virtual void prepare (CR<Unknown> holder) = 0 ;
-	virtual void initialize (CR<Unknown> holder ,CR<LENGTH> size_) = 0 ;
+	virtual void initialize (CR<LENGTH> size_) = 0 ;
 	virtual void destroy () = 0 ;
 	virtual BOOL exist () const = 0 ;
 	virtual Unknown unknown () const = 0 ;
@@ -1171,8 +1187,12 @@ struct AllocatorPureLayout implement AllocatorLayout {
 public:
 	implicit AllocatorPureLayout () noexcept {
 		noop (RefBuffer<UnionPair<A ,B>> ()) ;
+		AllocatorHolder::hold (thiz)->prepare (AllocatorUnknownBinder<A ,B> ()) ;
 	}
 } ;
+
+template <class B>
+struct AllocatorPureLayout<Pointer ,B> implement AllocatorLayout {} ;
 
 using ALLOCATOR_MIN_SIZE = ENUM<256> ;
 
@@ -1192,7 +1212,7 @@ public:
 	implicit Allocator () = default ;
 
 	explicit Allocator (CR<LENGTH> size_) {
-		AllocatorHolder::hold (thiz)->initialize (AllocatorUnknownBinder<A ,B> () ,size_) ;
+		AllocatorHolder::hold (thiz)->initialize (size_) ;
 	}
 
 	BOOL exist () const {
@@ -1268,7 +1288,6 @@ public:
 	}
 
 	void resize (CR<LENGTH> size_) {
-		AllocatorHolder::hold (thiz)->prepare (AllocatorUnknownBinder<A ,B> ()) ;
 		return AllocatorHolder::hold (thiz)->resize (size_) ;
 	}
 } ;
