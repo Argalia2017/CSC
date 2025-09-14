@@ -998,13 +998,13 @@ public:
 	}
 } ;
 
+struct FarBufferTree ;
+
 struct FarBufferLayout {
-	mutable Ref<Pointer> mThis ;
+	mutable Ref<FarBufferTree> mThis ;
 	mutable INDEX mIndex ;
-	Function<CR<INDEX> ,VR<Pointer>> mGetter ;
-	Function<CR<INDEX> ,CR<Pointer>> mSetter ;
-	LENGTH mSize ;
-	LENGTH mStep ;
+	FLAG mHolder ;
+	FLAG mBuffer ;
 } ;
 
 struct FarBufferHolder implement Interface {
@@ -1015,6 +1015,8 @@ struct FarBufferHolder implement Interface {
 	virtual void initialize (CR<LENGTH> size_) = 0 ;
 	virtual BOOL exist () const = 0 ;
 	virtual Unknown unknown () const = 0 ;
+	virtual VR<BoxLayout> raw () leftvalue = 0 ;
+	virtual CR<BoxLayout> raw () const leftvalue = 0 ;
 	virtual void use_getter (CR<Function<CR<INDEX> ,VR<Pointer>>> getter) = 0 ;
 	virtual void use_setter (CR<Function<CR<INDEX> ,CR<Pointer>>> setter) = 0 ;
 	virtual LENGTH size () const = 0 ;
@@ -1041,10 +1043,8 @@ class FarBuffer implement FarBufferPureLayout<A> {
 protected:
 	using FarBufferLayout::mThis ;
 	using FarBufferLayout::mIndex ;
-	using FarBufferLayout::mGetter ;
-	using FarBufferLayout::mSetter ;
-	using FarBufferLayout::mSize ;
-	using FarBufferLayout::mStep ;
+	using FarBufferLayout::mHolder ;
+	using FarBufferLayout::mBuffer ;
 
 public:
 	implicit FarBuffer () = default ;
@@ -1067,6 +1067,14 @@ public:
 
 	Unknown unknown () const {
 		return FarBufferHolder::hold (thiz)->unknown () ;
+	}
+
+	VR<BoxLayout> raw () leftvalue {
+		return FarBufferHolder::hold (thiz)->raw () ;
+	}
+
+	CR<BoxLayout> raw () const leftvalue {
+		return FarBufferHolder::hold (thiz)->raw () ;
 	}
 
 	LENGTH size () const {

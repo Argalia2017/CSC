@@ -14,15 +14,7 @@ namespace CSC {
 class ImageImplHolder final implement Fat<ImageHolder ,ImageLayout> {
 public:
 	void prepare (CR<Unknown> holder) override {
-		if (self.mImage.exist ())
-			return ;
 		RefBufferHolder::hold (self.mImage)->prepare (holder) ;
-		self.mWidth = 0 ;
-		self.mStride = 0 ;
-		self.mBX = 0 ;
-		self.mBY = 0 ;
-		self.mCX = 0 ;
-		self.mCY = 0 ;
 	}
 
 	void initialize (RR<ImageLayout> that) override {

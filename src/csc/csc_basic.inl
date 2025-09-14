@@ -459,7 +459,6 @@ public:
 
 	void initialize (CR<SliceLayout> buffer) override {
 		assert (!exist ()) ;
-		self.mHolder = inline_vptr (holder) ;
 		self.mThis = Ref<RefBufferTree>::make () ;
 		self.mBuffer = buffer.mBuffer ;
 		self.mSize = buffer.mSize ;
@@ -579,30 +578,36 @@ exports CFat<RefBufferHolder> RefBufferHolder::hold (CR<RefBufferLayout> that) {
 	return CFat<RefBufferHolder> (RefBufferImplHolder () ,that) ;
 }
 
+struct FarBufferTree {
+	Function<CR<INDEX> ,VR<Pointer>> mGetter ;
+	Function<CR<INDEX> ,CR<Pointer>> mSetter ;
+	LENGTH mSize ;
+	LENGTH mStep ;
+	BoxLayout mValue ;
+} ;
+
 class FarBufferImplHolder final implement Fat<FarBufferHolder ,FarBufferLayout> {
 public:
 	void prepare (CR<Unknown> holder) override {
-		if (exist ())
-			return ;
-		self.mIndex = inline_vptr (holder) ;
+		self.mHolder = inline_vptr (holder) ;
 	}
 
 	void initialize (CR<LENGTH> size_) override {
 		assert (!exist ()) ;
 		const auto r1x = RFat<ReflectElement> (unknown ())->element () ;
-		RefHolder::hold (self.mThis)->initialize (r1x ,r1x ,0) ;
+		RefHolder::hold (self.mThis)->initialize (RefUnknownBinder<FarBufferTree> () ,r1x ,1) ;
 		self.mIndex = NONE ;
-		self.mSize = size_ ;
+		self.mThis->mSize = size_ ;
 		const auto r2x = RFat<ReflectSize> (r1x) ;
-		self.mStep = r2x->type_size () ;
+		self.mThis->mStep = r2x->type_size () ;
 	}
 
 	void use_getter (CR<Function<CR<INDEX> ,VR<Pointer>>> getter) override {
-		self.mGetter = getter ;
+		self.mThis->mGetter = getter ;
 	}
 
 	void use_setter (CR<Function<CR<INDEX> ,CR<Pointer>>> setter) override {
-		self.mSetter = setter ;
+		self.mThis->mSetter = setter ;
 	}
 
 	BOOL exist () const override {
@@ -610,45 +615,53 @@ public:
 	}
 
 	Unknown unknown () const override {
-		return self.mThis.unknown () ;
+		return Unknown (self.mHolder) ;
+	}
+
+	VR<BoxLayout> raw () leftvalue override {
+		return self.mThis->mValue ;
+	}
+
+	CR<BoxLayout> raw () const leftvalue override {
+		return self.mThis->mValue ;
 	}
 
 	LENGTH size () const override {
 		if (!exist ())
 			return 0 ;
-		return self.mSize ;
+		return self.mThis->mSize ;
 	}
 
 	LENGTH step () const override {
 		if (!exist ())
 			return 0 ;
-		return self.mStep ;
+		return self.mThis->mStep ;
 	}
 
 	VR<Pointer> at (CR<INDEX> index) leftvalue override {
 		assert (inline_between (index ,0 ,size ())) ;
 		update_sync (index) ;
-		return self.mThis.ref ;
+		return Pointer::make (self.mBuffer) ;
 	}
 
 	CR<Pointer> at (CR<INDEX> index) const leftvalue override {
 		assert (inline_between (index ,0 ,size ())) ;
 		update_sync (index) ;
-		return self.mThis.ref ;
+		return Pointer::make (self.mBuffer) ;
 	}
 
 	void update_sync (CR<INDEX> index) const {
 		if (self.mIndex == index)
 			return ;
 		refresh () ;
-		self.mGetter (index ,self.mThis.ref) ;
+		self.mThis->mGetter (index ,Pointer::make (self.mBuffer)) ;
 		self.mIndex = index ;
 	}
 
 	void refresh () const override {
 		if (self.mIndex == NONE)
 			return ;
-		self.mSetter (self.mIndex ,self.mThis.ref) ;
+		self.mThis->mSetter (self.mIndex ,Pointer::make (self.mBuffer)) ;
 		self.mIndex = NONE ;
 	}
 } ;
@@ -664,14 +677,7 @@ exports CFat<FarBufferHolder> FarBufferHolder::hold (CR<FarBufferLayout> that) {
 class AllocatorImplHolder final implement Fat<AllocatorHolder ,AllocatorLayout> {
 public:
 	void prepare (CR<Unknown> holder) override {
-		if (exist ())
-			return ;
 		RefBufferHolder::hold (self.mAllocator)->prepare (holder) ;
-		const auto r1x = RFat<ReflectTuple> (holder) ;
-		self.mOffset = r1x->tuple_m2nd () ;
-		self.mWidth = 0 ;
-		self.mLength = 0 ;
-		self.mFree = NONE ;
 	}
 
 	void initialize (CR<LENGTH> size_) override {

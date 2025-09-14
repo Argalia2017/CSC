@@ -513,11 +513,11 @@ public:
 	}
 
 	void get (CR<INDEX> index ,VR<STRU32> map_) const {
-		return SetHolder::hold (thiz)->get (index ,map_) ;
+		return StringHolder::hold (thiz)->get (index ,map_) ;
 	}
 
 	void set (CR<INDEX> index ,CR<STRU32> map_) {
-		return SetHolder::hold (thiz)->set (index ,map_) ;
+		return StringHolder::hold (thiz)->set (index ,map_) ;
 	}
 
 	INDEX ibegin () const {
@@ -1089,14 +1089,6 @@ template <>
 struct ListPureLayout<Pointer> implement ListLayout {} ;
 
 template <class A>
-struct ListPureLayout implement ListLayout {
-public:
-	implicit ListPureLayout () noexcept {
-		noop (Allocator<A ,ListNode> ()) ;
-	}
-} ;
-
-template <class A>
 class List implement ListPureLayout<A> {
 protected:
 	using ListPureLayout<A>::mList ;
@@ -1305,14 +1297,6 @@ public:
 
 template <>
 struct ArrayListPureLayout<Pointer> implement ArrayListLayout {} ;
-
-template <class A>
-struct ArrayListPureLayout implement ArrayListLayout {
-public:
-	implicit ArrayListPureLayout () noexcept {
-		noop (Allocator<A ,ArrayListNode> ()) ;
-	}
-} ;
 
 template <class A>
 class ArrayList implement ArrayListPureLayout<A> {
@@ -1884,14 +1868,6 @@ public:
 
 template <>
 struct HashSetPureLayout<Pointer> implement HashSetLayout {} ;
-
-template <class A>
-struct HashSetPureLayout implement HashSetLayout {
-public:
-	implicit HashSetPureLayout () noexcept {
-		noop (Allocator<A ,HashSetNode> ()) ;
-	}
-} ;
 
 template <class A>
 class HashSet implement HashSetPureLayout<A> {
