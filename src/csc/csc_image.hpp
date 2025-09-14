@@ -121,14 +121,6 @@ struct ImageLayout {
 	LENGTH mCY ;
 } ;
 
-template <class A>
-struct ImagePureLayout implement ImageLayout {
-public:
-	implicit ImagePureLayout () noexcept {
-		noop (RefBuffer<A> ()) ;
-	}
-} ;
-
 struct ImageHolder implement Interface {
 	imports VFat<ImageHolder> hold (VR<ImageLayout> that) ;
 	imports CFat<ImageHolder> hold (CR<ImageLayout> that) ;
@@ -154,6 +146,14 @@ struct ImageHolder implement Interface {
 	virtual CR<Pointer> at (CR<INDEX> x ,CR<INDEX> y) const leftvalue = 0 ;
 	virtual void fill (CR<Pointer> item) = 0 ;
 	virtual void splice (CR<INDEX> x ,CR<INDEX> y ,CR<ImageLayout> item) = 0 ;
+} ;
+
+template <class A>
+struct ImagePureLayout implement ImageLayout {
+public:
+	implicit ImagePureLayout () noexcept {
+		noop (RefBuffer<A> ()) ;
+	}
 } ;
 
 template <class A>

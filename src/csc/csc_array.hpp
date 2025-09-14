@@ -131,14 +131,6 @@ struct ArrayLayout {
 	RefBuffer<Pointer> mArray ;
 } ;
 
-template <class A>
-struct ArrayPureLayout implement ArrayLayout {
-public:
-	implicit ArrayPureLayout () noexcept {
-		noop (RefBuffer<A> ()) ;
-	}
-} ;
-
 struct ArrayHolder implement Interface {
 	imports VFat<ArrayHolder> hold (VR<ArrayLayout> that) ;
 	imports CFat<ArrayHolder> hold (CR<ArrayLayout> that) ;
@@ -186,6 +178,14 @@ public:
 		if (uuid == ReflectElementBinder<A>::expr)
 			return inline_vptr (ReflectElementBinder<A> ()) ;
 		return ZERO ;
+	}
+} ;
+
+template <class A>
+struct ArrayPureLayout implement ArrayLayout {
+public:
+	implicit ArrayPureLayout () noexcept {
+		noop (RefBuffer<A> ()) ;
 	}
 } ;
 
@@ -357,14 +357,6 @@ struct StringLayout {
 	FLAG mEncode ;
 } ;
 
-template <class A>
-struct StringPureLayout implement StringLayout {
-public:
-	implicit StringPureLayout () noexcept {
-		noop (RefBuffer<A> ()) ;
-	}
-} ;
-
 struct StringHolder implement Interface {
 	imports VFat<StringHolder> hold (VR<StringLayout> that) ;
 	imports CFat<StringHolder> hold (CR<StringLayout> that) ;
@@ -398,6 +390,14 @@ struct StringHolder implement Interface {
 	virtual void splice (CR<INDEX> index ,CR<Slice> item) = 0 ;
 	virtual void splice (CR<INDEX> index ,CR<StringLayout> item) = 0 ;
 	virtual Slice segment (CR<INDEX> begin_ ,CR<INDEX> end_) const = 0 ;
+} ;
+
+template <class A>
+struct StringPureLayout implement StringLayout {
+public:
+	implicit StringPureLayout () noexcept {
+		noop (RefBuffer<A> ()) ;
+	}
 } ;
 
 template <class A>
@@ -611,14 +611,6 @@ struct DequeLayout {
 	INDEX mWrite ;
 } ;
 
-template <class A>
-struct DequePureLayout implement DequeLayout {
-public:
-	implicit DequePureLayout () noexcept {
-		noop (RefBuffer<A> ()) ;
-	}
-} ;
-
 struct DequeHolder implement Interface {
 	imports VFat<DequeHolder> hold (VR<DequeLayout> that) ;
 	imports CFat<DequeHolder> hold (CR<DequeLayout> that) ;
@@ -661,6 +653,14 @@ public:
 		if (uuid == ReflectElementBinder<A>::expr)
 			return inline_vptr (ReflectElementBinder<A> ()) ;
 		return ZERO ;
+	}
+} ;
+
+template <class A>
+struct DequePureLayout implement DequeLayout {
+public:
+	implicit DequePureLayout () noexcept {
+		noop (RefBuffer<A> ()) ;
 	}
 } ;
 
@@ -846,14 +846,6 @@ struct PriorityLayout {
 	INDEX mWrite ;
 } ;
 
-template <class A>
-struct PriorityPureLayout implement PriorityLayout {
-public:
-	implicit PriorityPureLayout () noexcept {
-		noop (RefBuffer<A> ()) ;
-	}
-} ;
-
 struct PriorityHolder implement Interface {
 	imports VFat<PriorityHolder> hold (VR<PriorityLayout> that) ;
 	imports CFat<PriorityHolder> hold (CR<PriorityLayout> that) ;
@@ -897,6 +889,14 @@ public:
 		if (uuid == ReflectElementBinder<A>::expr)
 			return inline_vptr (ReflectElementBinder<A> ()) ;
 		return ZERO ;
+	}
+} ;
+
+template <class A>
+struct PriorityPureLayout implement PriorityLayout {
+public:
+	implicit PriorityPureLayout () noexcept {
+		noop (RefBuffer<A> ()) ;
 	}
 } ;
 
@@ -1010,14 +1010,6 @@ struct ListLayout {
 	INDEX mLast ;
 } ;
 
-template <class A>
-struct ListPureLayout implement ListLayout {
-public:
-	implicit ListPureLayout () noexcept {
-		noop (Allocator<A ,ListNode> ()) ;
-	}
-} ;
-
 struct ListHolder implement Interface {
 	imports VFat<ListHolder> hold (VR<ListLayout> that) ;
 	imports CFat<ListHolder> hold (CR<ListLayout> that) ;
@@ -1064,6 +1056,14 @@ public:
 		if (uuid == ReflectElementBinder<R1X>::expr)
 			return inline_vptr (ReflectElementBinder<R1X> ()) ;
 		return ZERO ;
+	}
+} ;
+
+template <class A>
+struct ListPureLayout implement ListLayout {
+public:
+	implicit ListPureLayout () noexcept {
+		noop (Allocator<A ,ListNode> ()) ;
 	}
 } ;
 
@@ -1226,14 +1226,6 @@ struct ArrayListLayout {
 	BOOL mRemap ;
 } ;
 
-template <class A>
-struct ArrayListPureLayout implement ArrayListLayout {
-public:
-	implicit ArrayListPureLayout () noexcept {
-		noop (Allocator<A ,ArrayListNode> ()) ;
-	}
-} ;
-
 struct ArrayListHolder implement Interface {
 	imports VFat<ArrayListHolder> hold (VR<ArrayListLayout> that) ;
 	imports CFat<ArrayListHolder> hold (CR<ArrayListLayout> that) ;
@@ -1274,6 +1266,14 @@ public:
 		if (uuid == ReflectElementBinder<R1X>::expr)
 			return inline_vptr (ReflectElementBinder<R1X> ()) ;
 		return ZERO ;
+	}
+} ;
+
+template <class A>
+struct ArrayListPureLayout implement ArrayListLayout {
+public:
+	implicit ArrayListPureLayout () noexcept {
+		noop (Allocator<A ,ArrayListNode> ()) ;
 	}
 } ;
 
@@ -1406,14 +1406,6 @@ struct SortedMapLayout {
 	BOOL mRemap ;
 } ;
 
-template <class A>
-struct SortedMapPureLayout implement SortedMapLayout {
-public:
-	implicit SortedMapPureLayout () noexcept {
-		noop (Allocator<A ,SortedMapNode> ()) ;
-	}
-} ;
-
 struct SortedMapHolder implement Interface {
 	imports VFat<SortedMapHolder> hold (VR<SortedMapLayout> that) ;
 	imports CFat<SortedMapHolder> hold (CR<SortedMapLayout> that) ;
@@ -1460,6 +1452,14 @@ public:
 		if (uuid == ReflectElementBinder<R1X>::expr)
 			return inline_vptr (ReflectElementBinder<R1X> ()) ;
 		return ZERO ;
+	}
+} ;
+
+template <class A>
+struct SortedMapPureLayout implement SortedMapLayout {
+public:
+	implicit SortedMapPureLayout () noexcept {
+		noop (Allocator<A ,SortedMapNode> ()) ;
 	}
 } ;
 
@@ -1595,14 +1595,6 @@ struct SetLayout {
 	INDEX mTop ;
 } ;
 
-template <class A>
-struct SetPureLayout implement SetLayout {
-public:
-	implicit SetPureLayout () noexcept {
-		noop (Allocator<A ,SetNode> ()) ;
-	}
-} ;
-
 struct SetHolder implement Interface {
 	imports VFat<SetHolder> hold (VR<SetLayout> that) ;
 	imports CFat<SetHolder> hold (CR<SetLayout> that) ;
@@ -1650,6 +1642,14 @@ public:
 		if (uuid == ReflectElementBinder<R1X>::expr)
 			return inline_vptr (ReflectElementBinder<R1X> ()) ;
 		return ZERO ;
+	}
+} ;
+
+template <class A>
+struct SetPureLayout implement SetLayout {
+public:
+	implicit SetPureLayout () noexcept {
+		noop (Allocator<A ,SetNode> ()) ;
 	}
 } ;
 
@@ -1784,14 +1784,6 @@ struct HashSetLayout {
 	SharedRef<HashcodeVisitor> mVisitor ;
 } ;
 
-template <class A>
-struct HashSetPureLayout implement HashSetLayout {
-public:
-	implicit HashSetPureLayout () noexcept {
-		noop (Allocator<A ,HashSetNode> ()) ;
-	}
-} ;
-
 struct HashSetHolder implement Interface {
 	imports VFat<HashSetHolder> hold (VR<HashSetLayout> that) ;
 	imports CFat<HashSetHolder> hold (CR<HashSetLayout> that) ;
@@ -1837,6 +1829,14 @@ public:
 		if (uuid == ReflectElementBinder<R1X>::expr)
 			return inline_vptr (ReflectElementBinder<R1X> ()) ;
 		return ZERO ;
+	}
+} ;
+
+template <class A>
+struct HashSetPureLayout implement HashSetLayout {
+public:
+	implicit HashSetPureLayout () noexcept {
+		noop (Allocator<A ,HashSetNode> ()) ;
 	}
 } ;
 
