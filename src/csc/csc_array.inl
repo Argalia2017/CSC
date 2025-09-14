@@ -169,8 +169,7 @@ exports CFat<ArrayHolder> ArrayHolder::hold (CR<ArrayLayout> that) {
 class StringImplHolder final implement Fat<StringHolder ,StringLayout> {
 public:
 	void prepare (CR<Unknown> holder) override {
-		const auto r1x = RFat<ReflectSize> (holder) ;
-		self.mEncode = r1x->type_align () ;
+		RefBufferHolder::hold (self.mString)->prepare (holder) ;
 	}
 
 	void initialize (CR<Slice> that ,CR<LENGTH> step_) override {
@@ -1227,8 +1226,6 @@ exports CFat<ArrayListHolder> ArrayListHolder::hold (CR<ArrayListLayout> that) {
 class SortedMapImplHolder final implement Fat<SortedMapHolder ,SortedMapLayout> {
 public:
 	void prepare (CR<Unknown> holder) override {
-		if (self.mThis.exist ())
-			return ;
 		self.mHolder = inline_vptr (holder) ;
 	}
 

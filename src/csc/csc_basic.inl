@@ -379,6 +379,7 @@ public:
 
 	void initialize (CR<UniqueRefLayout> that) override {
 		self.mThis = that.mThis.share () ;
+		self.mLayout = that.mLayout ;
 	}
 
 	void destroy () override {
@@ -436,8 +437,6 @@ struct RefBufferTree {
 class RefBufferImplHolder final implement Fat<RefBufferHolder ,RefBufferLayout> {
 public:
 	void prepare (CR<Unknown> holder) override {
-		if (exist ())
-			return ;
 		self.mHolder = inline_vptr (holder) ;
 	}
 
