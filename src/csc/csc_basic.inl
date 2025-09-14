@@ -262,9 +262,9 @@ public:
 	void initialize (CR<Unknown> holder ,CR<FLAG> layout) override {
 		assert (!exist ()) ;
 		const auto r1x = RFat<ReflectSize> (holder) ;
-		const auto r2x = layout - SIZE_OF<SharedRefTree>::expr ;
+		const auto r2x = inline_alignas (layout ,ALIGN_OF<SharedRefTree>::expr) - SIZE_OF<SharedRefTree>::expr ;
 		const auto r3x = invoke ([&] () {
-			const auto r4x = r1x->type_align () / ALIGN_OF<SharedRefTree>::expr ;
+			const auto r4x = (r1x->type_size () + r1x->type_align ()) / ALIGN_OF<SharedRefTree>::expr ;
 			for (auto &&i : range (0 ,r4x)) {
 				const auto r5x = r2x - i * ALIGN_OF<SharedRefTree>::expr ;
 				auto &&rax = keep[TYPE<SharedRefTree>::expr] (Pointer::make (r5x)) ;
@@ -275,11 +275,17 @@ public:
 		}) ;
 		const auto r6x = r2x - r3x * ALIGN_OF<SharedRefTree>::expr ;
 		auto &&rax = keep[TYPE<SharedRefTree>::expr] (Pointer::make (r6x)) ;
+		if (rax.mHeader != SHADERREFIMPLLAYOUT_HEADER)
+			return ;
 		const auto r7x = address (BoxHolder::hold (rax.mValue)->ref) ;
-		assert (r7x == layout) ;
+		if (layout < r7x)
+			return ;
+		if (layout >= r7x + r1x->type_size ())
+			return ;
 		Scope<HeapMutex> anonymous (rax.mMutex) ;
 		const auto r8x = rax.mCounter ;
-		assert (r8x > 0) ;
+		if (r8x <= 0)
+			return ;
 		RefHolder::hold (self.mThis)->initialize (RefUnknownBinder<SharedRefTree> () ,r6x) ;
 		self.mLayout = layout ;
 		self.mThis->mCounter++ ;
