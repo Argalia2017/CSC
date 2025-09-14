@@ -21,7 +21,7 @@ struct FUNCTION_from_initializer_list {
 			const auto r3x = inline_list_pair (a ,r2x) ;
 			const auto r4x = (r3x.m2nd - r3x.m1st) / r2x ;
 			const auto r5x = Slice (r3x.m1st ,r4x ,r2x) ;
-			RefBufferHolder::hold (ret)->initialize (holder ,r5x) ;
+			RefBufferHolder::hold (ret)->initialize (r5x) ;
 		}) ;
 		return move (ret) ;
 	}
@@ -31,18 +31,23 @@ static constexpr auto from_initializer_list = FUNCTION_from_initializer_list () 
 
 class ArrayImplHolder final implement Fat<ArrayHolder ,ArrayLayout> {
 public:
-	void initialize (CR<Unknown> holder ,CR<LENGTH> size_) override {
-		RefBufferHolder::hold (self.mArray)->initialize (holder ,size_) ;
+	void prepare (CR<Unknown> holder) override {
+		RefBufferHolder::hold (self.mArray)->prepare (holder) ;
 	}
 
-	void initialize (CR<Unknown> holder ,CR<WrapperLayout> params ,VR<BoxLayout> item) override {
-		auto rax = from_initializer_list (params ,holder) ;
-		initialize (holder ,rax.size ()) ;
-		const auto r1x = RFat<ReflectAssign> (holder) ;
-		BoxHolder::hold (item)->initialize (holder) ;
+	void initialize (CR<LENGTH> size_) override {
+		RefBufferHolder::hold (self.mArray)->initialize (size_) ;
+	}
+
+	void initialize (CR<WrapperLayout> params ,VR<BoxLayout> item) override {
+		const auto r1x = self.mArray.unknown () ;
+		auto rax = from_initializer_list (params ,r1x) ;
+		initialize (rax.size ()) ;
+		const auto r2x = RFat<ReflectAssign> (r1x) ;
+		BoxHolder::hold (item)->initialize (r1x) ;
 		for (auto &&i : range (0 ,rax.size ())) {
-			r1x->assign (BoxHolder::hold (item)->ref ,rax[i]) ;
-			r1x->assign (at (i) ,BoxHolder::hold (item)->ref) ;
+			r2x->assign (BoxHolder::hold (item)->ref ,rax[i]) ;
+			r2x->assign (at (i) ,BoxHolder::hold (item)->ref) ;
 		}
 	}
 
@@ -50,7 +55,7 @@ public:
 		const auto r1x = ArrayHolder::hold (that)->length () ;
 		if (r1x == 0)
 			return ;
-		initialize (that.mArray.unknown () ,r1x) ;
+		initialize (r1x) ;
 		splice (0 ,that) ;
 	}
 
@@ -163,6 +168,11 @@ exports CFat<ArrayHolder> ArrayHolder::hold (CR<ArrayLayout> that) {
 
 class StringImplHolder final implement Fat<StringHolder ,StringLayout> {
 public:
+	void prepare (CR<Unknown> holder) override {
+		const auto r1x = RFat<ReflectSize> (holder) ;
+		self.mEncode = r1x->type_align () ;
+	}
+
 	void initialize (CR<Slice> that ,CR<LENGTH> step_) override {
 		const auto r1x = SliceHolder::hold (that)->size () ;
 		initialize (r1x ,step_) ;
@@ -473,18 +483,19 @@ public:
 		clear () ;
 	}
 
-	void initialize (CR<Unknown> holder ,CR<LENGTH> size_) override {
-		RefBufferHolder::hold (self.mDeque)->initialize (holder ,size_) ;
+	void initialize (CR<LENGTH> size_) override {
+		RefBufferHolder::hold (self.mDeque)->initialize (size_) ;
 		clear () ;
 	}
 
-	void initialize (CR<Unknown> holder ,CR<WrapperLayout> params ,VR<BoxLayout> item) override {
-		auto rax = from_initializer_list (params ,holder) ;
-		initialize (holder ,rax.size ()) ;
-		const auto r1x = RFat<ReflectAssign> (holder) ;
+	void initialize (CR<WrapperLayout> params ,VR<BoxLayout> item) override {
+		const auto r1x = self.mDeque.unknown () ;
+		auto rax = from_initializer_list (params ,r1x) ;
+		initialize (rax.size ()) ;
+		const auto r2x = RFat<ReflectAssign> (r1x) ;
 		for (auto &&i : range (0 ,rax.size ())) {
-			BoxHolder::hold (item)->initialize (holder) ;
-			r1x->assign (BoxHolder::hold (item)->ref ,rax[i]) ;
+			BoxHolder::hold (item)->initialize (r1x) ;
+			r2x->assign (BoxHolder::hold (item)->ref ,rax[i]) ;
 			add (move (item)) ;
 			BoxHolder::hold (item)->destroy () ;
 		}
@@ -662,21 +673,22 @@ public:
 		clear () ;
 	}
 
-	void initialize (CR<Unknown> holder ,CR<LENGTH> size_) override {
+	void initialize (CR<LENGTH> size_) override {
 		if (size_ <= 0)
 			return ;
 		const auto r1x = size_ + 1 ;
-		RefBufferHolder::hold (self.mPriority)->initialize (holder ,r1x) ;
+		RefBufferHolder::hold (self.mPriority)->initialize (r1x) ;
 		clear () ;
 	}
 
-	void initialize (CR<Unknown> holder ,CR<WrapperLayout> params ,VR<BoxLayout> item) override {
-		auto rax = from_initializer_list (params ,holder) ;
-		initialize (holder ,rax.size ()) ;
-		const auto r1x = RFat<ReflectAssign> (holder) ;
+	void initialize (CR<WrapperLayout> params ,VR<BoxLayout> item) override {
+		const auto r1x = self.mPriority.unknown () ;
+		auto rax = from_initializer_list (params ,r1x) ;
+		initialize (rax.size ()) ;
+		const auto r2x = RFat<ReflectAssign> (r1x) ;
 		for (auto &&i : range (0 ,rax.size ())) {
-			BoxHolder::hold (item)->initialize (holder) ;
-			r1x->assign (BoxHolder::hold (item)->ref ,rax[i]) ;
+			BoxHolder::hold (item)->initialize (r1x) ;
+			r2x->assign (BoxHolder::hold (item)->ref ,rax[i]) ;
 			add (move (item)) ;
 			BoxHolder::hold (item)->destroy () ;
 		}
@@ -838,18 +850,19 @@ public:
 		clear () ;
 	}
 
-	void initialize (CR<Unknown> holder ,CR<LENGTH> size_) override {
-		AllocatorHolder::hold (self.mList)->initialize (holder ,size_) ;
+	void initialize (CR<LENGTH> size_) override {
+		AllocatorHolder::hold (self.mList)->initialize (size_) ;
 		clear () ;
 	}
 
-	void initialize (CR<Unknown> holder ,CR<WrapperLayout> params ,VR<BoxLayout> item) override {
-		auto rax = from_initializer_list (params ,holder) ;
-		initialize (holder ,rax.size ()) ;
-		const auto r1x = RFat<ReflectAssign> (holder) ;
+	void initialize (CR<WrapperLayout> params ,VR<BoxLayout> item) override {
+		const auto r1x = self.mList.unknown () ;
+		auto rax = from_initializer_list (params ,r1x) ;
+		initialize (rax.size ()) ;
+		const auto r2x = RFat<ReflectAssign> (r1x) ;
 		for (auto &&i : range (0 ,rax.size ())) {
-			BoxHolder::hold (item)->initialize (holder) ;
-			r1x->assign (BoxHolder::hold (item)->ref ,rax[i]) ;
+			BoxHolder::hold (item)->initialize (r1x) ;
+			r2x->assign (BoxHolder::hold (item)->ref ,rax[i]) ;
 			add (move (item)) ;
 			BoxHolder::hold (item)->destroy () ;
 		}
@@ -1031,18 +1044,19 @@ public:
 		clear () ;
 	}
 
-	void initialize (CR<Unknown> holder ,CR<LENGTH> size_) override {
-		AllocatorHolder::hold (self.mList)->initialize (holder ,size_) ;
+	void initialize (CR<LENGTH> size_) override {
+		AllocatorHolder::hold (self.mList)->initialize (size_) ;
 		clear () ;
 	}
 
-	void initialize (CR<Unknown> holder ,CR<WrapperLayout> params ,VR<BoxLayout> item) override {
-		auto rax = from_initializer_list (params ,holder) ;
-		initialize (holder ,rax.size ()) ;
-		const auto r1x = RFat<ReflectAssign> (holder) ;
+	void initialize (CR<WrapperLayout> params ,VR<BoxLayout> item) override {
+		const auto r1x = self.mList.unknown () ;
+		auto rax = from_initializer_list (params ,r1x) ;
+		initialize (rax.size ()) ;
+		const auto r2x = RFat<ReflectAssign> (r1x) ;
 		for (auto &&i : range (0 ,rax.size ())) {
-			BoxHolder::hold (item)->initialize (holder) ;
-			r1x->assign (BoxHolder::hold (item)->ref ,rax[i]) ;
+			BoxHolder::hold (item)->initialize (r1x) ;
+			r2x->assign (BoxHolder::hold (item)->ref ,rax[i]) ;
 			add (move (item)) ;
 			BoxHolder::hold (item)->destroy () ;
 		}
@@ -1215,23 +1229,25 @@ public:
 	void prepare (CR<Unknown> holder) override {
 		if (self.mThis.exist ())
 			return ;
-		assume (FALSE) ;
+		self.mHolder = inline_vptr (holder) ;
 	}
 
-	void initialize (CR<Unknown> holder ,CR<LENGTH> size_) override {
+	void initialize (CR<LENGTH> size_) override {
 		self.mThis = Ref<SortedMapTree>::make () ;
-		AllocatorHolder::hold (self.mThis->mList)->initialize (holder ,size_) ;
+		AllocatorHolder::hold (self.mThis->mList)->prepare (Unknown (self.mHolder)) ;
+		AllocatorHolder::hold (self.mThis->mList)->initialize (size_) ;
 		self.mThis->mCheck = 0 ;
 		clear () ;
 	}
 
-	void initialize (CR<Unknown> holder ,CR<WrapperLayout> params ,VR<BoxLayout> item) override {
-		auto rax = from_initializer_list (params ,holder) ;
-		initialize (holder ,rax.size ()) ;
-		const auto r1x = RFat<ReflectAssign> (holder) ;
+	void initialize (CR<WrapperLayout> params ,VR<BoxLayout> item) override {
+		const auto r1x = Unknown (self.mHolder) ;
+		auto rax = from_initializer_list (params ,r1x) ;
+		initialize (rax.size ()) ;
+		const auto r2x = RFat<ReflectAssign> (r1x) ;
 		for (auto &&i : range (0 ,rax.size ())) {
-			BoxHolder::hold (item)->initialize (holder) ;
-			r1x->assign (BoxHolder::hold (item)->ref ,rax[i]) ;
+			BoxHolder::hold (item)->initialize (r1x) ;
+			r2x->assign (BoxHolder::hold (item)->ref ,rax[i]) ;
 			add (move (item) ,NONE) ;
 			BoxHolder::hold (item)->destroy () ;
 		}
@@ -1418,18 +1434,19 @@ public:
 		clear () ;
 	}
 
-	void initialize (CR<Unknown> holder ,CR<LENGTH> size_) override {
-		AllocatorHolder::hold (self.mSet)->initialize (holder ,size_) ;
+	void initialize (CR<LENGTH> size_) override {
+		AllocatorHolder::hold (self.mSet)->initialize (size_) ;
 		clear () ;
 	}
 
-	void initialize (CR<Unknown> holder ,CR<WrapperLayout> params ,VR<BoxLayout> item) override {
-		auto rax = from_initializer_list (params ,holder) ;
-		initialize (holder ,rax.size ()) ;
-		const auto r1x = RFat<ReflectAssign> (holder) ;
+	void initialize (CR<WrapperLayout> params ,VR<BoxLayout> item) override {
+		const auto r1x = self.mSet.unknown () ;
+		auto rax = from_initializer_list (params ,r1x) ;
+		initialize (rax.size ()) ;
+		const auto r2x = RFat<ReflectAssign> (r1x) ;
 		for (auto &&i : range (0 ,rax.size ())) {
-			BoxHolder::hold (item)->initialize (holder) ;
-			r1x->assign (BoxHolder::hold (item)->ref ,rax[i]) ;
+			BoxHolder::hold (item)->initialize (r1x) ;
+			r2x->assign (BoxHolder::hold (item)->ref ,rax[i]) ;
 			add (move (item) ,NONE) ;
 			BoxHolder::hold (item)->destroy () ;
 		}
@@ -2015,19 +2032,20 @@ public:
 		clear () ;
 	}
 
-	void initialize (CR<Unknown> holder ,CR<LENGTH> size_) override {
-		AllocatorHolder::hold (self.mSet)->initialize (holder ,size_) ;
+	void initialize (CR<LENGTH> size_) override {
+		AllocatorHolder::hold (self.mSet)->initialize (size_) ;
 		self.mVisitor = SharedRef<HashcodeVisitor>::make () ;
 		clear () ;
 	}
 
-	void initialize (CR<Unknown> holder ,CR<WrapperLayout> params ,VR<BoxLayout> item) override {
-		auto rax = from_initializer_list (params ,holder) ;
-		initialize (holder ,rax.size ()) ;
-		const auto r1x = RFat<ReflectAssign> (holder) ;
+	void initialize (CR<WrapperLayout> params ,VR<BoxLayout> item) override {
+		const auto r1x = self.mSet.unknown () ;
+		auto rax = from_initializer_list (params ,r1x) ;
+		initialize (rax.size ()) ;
+		const auto r2x = RFat<ReflectAssign> (r1x) ;
 		for (auto &&i : range (0 ,rax.size ())) {
-			BoxHolder::hold (item)->initialize (holder) ;
-			r1x->assign (BoxHolder::hold (item)->ref ,rax[i]) ;
+			BoxHolder::hold (item)->initialize (r1x) ;
+			r2x->assign (BoxHolder::hold (item)->ref ,rax[i]) ;
 			add (move (item) ,NONE) ;
 			BoxHolder::hold (item)->destroy () ;
 		}

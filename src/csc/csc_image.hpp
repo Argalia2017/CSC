@@ -121,20 +121,13 @@ struct ImageLayout {
 	LENGTH mCY ;
 } ;
 
-template <class A>
-struct ImagePureLayout implement ImageLayout {
-public:
-	implicit ImagePureLayout () noexcept {
-		noop (RefBuffer<A> ()) ;
-	}
-} ;
-
 struct ImageHolder implement Interface {
 	imports VFat<ImageHolder> hold (VR<ImageLayout> that) ;
 	imports CFat<ImageHolder> hold (CR<ImageLayout> that) ;
 
-	virtual void initialize (CR<Unknown> holder ,RR<ImageLayout> that) = 0 ;
-	virtual void initialize (CR<Unknown> holder ,CR<LENGTH> cx_ ,CR<LENGTH> cy_ ,CR<LENGTH> step_) = 0 ;
+	virtual void prepare (CR<Unknown> holder) = 0 ;
+	virtual void initialize (RR<ImageLayout> that) = 0 ;
+	virtual void initialize (CR<LENGTH> cx_ ,CR<LENGTH> cy_ ,CR<LENGTH> step_) = 0 ;
 	virtual void initialize (CR<ImageLayout> that) = 0 ;
 	virtual BOOL fixed () const = 0 ;
 	virtual LENGTH size () const = 0 ;
@@ -157,6 +150,18 @@ struct ImageHolder implement Interface {
 } ;
 
 template <class A>
+struct ImagePureLayout implement ImageLayout {
+public:
+	implicit ImagePureLayout () noexcept {
+		noop (RefBuffer<A> ()) ;
+		ImageHolder::hold (thiz)->prepare (BufferUnknownBinder<A> ()) ;
+	}
+} ;
+
+template <>
+struct ImagePureLayout<Pointer> implement ImageLayout {} ;
+
+template <class A>
 class Image implement ImagePureLayout<A> {
 private:
 	require (IS_TRIVIAL<A>) ;
@@ -174,15 +179,15 @@ public:
 	implicit Image () = default ;
 
 	implicit Image (RR<ImageLayout> that) {
-		ImageHolder::hold (thiz)->initialize (BufferUnknownBinder<A> () ,move (that)) ;
+		ImageHolder::hold (thiz)->initialize (move (that)) ;
 	}
 
 	explicit Image (CR<ImageShape> shape_) {
-		ImageHolder::hold (thiz)->initialize (BufferUnknownBinder<A> () ,shape_.mCX ,shape_.mCY ,SIZE_OF<A>::expr) ;
+		ImageHolder::hold (thiz)->initialize (shape_.mCX ,shape_.mCY ,SIZE_OF<A>::expr) ;
 	}
 
 	explicit Image (CR<LENGTH> cx_ ,CR<LENGTH> cy_) {
-		ImageHolder::hold (thiz)->initialize (BufferUnknownBinder<A> () ,cx_ ,cy_ ,SIZE_OF<A>::expr) ;
+		ImageHolder::hold (thiz)->initialize (cx_ ,cy_ ,SIZE_OF<A>::expr) ;
 	}
 
 	implicit Image (CR<Image> that) {
