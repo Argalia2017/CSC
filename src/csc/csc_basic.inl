@@ -462,14 +462,6 @@ public:
 		self.mThis->mCapacity = size_ ;
 	}
 
-	void initialize (CR<Unknown> holder ,CR<SliceLayout> buffer) override {
-		assert (!exist ()) ;
-		self.mHolder = inline_vptr (holder) ;
-		self.mBuffer = buffer.mBuffer ;
-		self.mSize = buffer.mSize ;
-		self.mStep = buffer.mStep ;
-	}
-
 	void initialize (CR<Unknown> holder ,CR<SliceLayout> buffer ,RR<BoxLayout> item) override {
 		assert (!exist ()) ;
 		self.mHolder = inline_vptr (holder) ;
@@ -495,7 +487,7 @@ public:
 	}
 
 	BOOL exist () const override {
-		return self.mHolder != ZERO ;
+		return self.mThis.exist () ;
 	}
 
 	BOOL fixed () const override {
@@ -593,8 +585,18 @@ struct FarBufferTree {
 
 class FarBufferImplHolder final implement Fat<FarBufferHolder ,FarBufferLayout> {
 public:
+	void prepare (CR<Unknown> holder) override {
+		if (exist ())
+			return ;
+		self.mHolder = inline_vptr (holder) ;
+		self.mIndex = NONE ;
+		self.mHolder = ZERO ;
+		self.mBuffer = ZERO ;
+	}
+
 	void initialize (CR<Unknown> holder ,CR<LENGTH> size_) override {
 		assert (!exist ()) ;
+		self.mHolder = inline_vptr (holder) ;
 		const auto r1x = RFat<ReflectElement> (holder)->element () ;
 		RefHolder::hold (self.mThis)->initialize (r1x ,r1x ,0) ;
 		self.mIndex = NONE ;

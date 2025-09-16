@@ -859,7 +859,6 @@ struct RefBufferHolder implement Interface {
 
 	virtual void prepare (CR<Unknown> holder) = 0 ;
 	virtual void initialize (CR<Unknown> holder ,CR<LENGTH> size_) = 0 ;
-	virtual void initialize (CR<Unknown> holder ,CR<SliceLayout> buffer) = 0 ;
 	virtual void initialize (CR<Unknown> holder ,CR<SliceLayout> buffer ,RR<BoxLayout> item) = 0 ;
 	virtual void destroy () = 0 ;
 	virtual BOOL exist () const = 0 ;
@@ -921,7 +920,7 @@ public:
 	static RefBuffer reference (CR<FLAG> buffer ,CR<LENGTH> size_) {
 		RefBuffer ret ;
 		const auto r1x = Slice (buffer ,size_ ,SIZE_OF<A>::expr) ;
-		RefBufferHolder::hold (ret)->initialize (BufferUnknownBinder<A> () ,r1x) ;
+		RefBufferHolder::hold (ret)->initialize (BufferUnknownBinder<A> () ,r1x ,Box<int>::zeroize ()) ;
 		return move (ret) ;
 	}
 
@@ -1008,6 +1007,7 @@ struct FarBufferHolder implement Interface {
 	imports VFat<FarBufferHolder> hold (VR<FarBufferLayout> that) ;
 	imports CFat<FarBufferHolder> hold (CR<FarBufferLayout> that) ;
 
+	virtual void prepare (CR<Unknown> holder) = 0 ;
 	virtual void initialize (CR<Unknown> holder ,CR<LENGTH> size_) = 0 ;
 	virtual BOOL exist () const = 0 ;
 	virtual Unknown unknown () const = 0 ;
