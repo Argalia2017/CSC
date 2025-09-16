@@ -13,27 +13,23 @@
 namespace CSC {
 class ImageImplHolder final implement Fat<ImageHolder ,ImageLayout> {
 public:
-	void prepare (CR<Unknown> holder) override {
-		RefBufferHolder::hold (self.mImage)->prepare (holder) ;
-	}
-
-	void initialize (RR<ImageLayout> that) override {
-		const auto r1x = RFat<ReflectSize> (self.mImage.unknown ()) ;
+	void initialize (CR<Unknown> holder ,RR<ImageLayout> that) override {
+		const auto r1x = RFat<ReflectSize> (holder) ;
 		const auto r2x = r1x->type_size () ;
 		noop (r2x) ;
 		assume (r2x == that.mImage.step ()) ;
 		self = move (that) ;
 	}
 
-	void initialize (CR<LENGTH> cx_ ,CR<LENGTH> cy_ ,CR<LENGTH> step_) override {
+	void initialize (CR<Unknown> holder ,CR<LENGTH> cx_ ,CR<LENGTH> cy_ ,CR<LENGTH> step_) override {
 		assert (cx_ > 0) ;
 		assert (cy_ > 0) ;
-		const auto r1x = RFat<ReflectSize> (self.mImage.unknown ()) ;
+		const auto r1x = RFat<ReflectSize> (holder) ;
 		const auto r2x = r1x->type_size () ;
 		const auto r3x = cx_ * cy_ * step_ ;
 		const auto r4x = inline_alignas (r3x ,r2x) / r2x ;
 		auto &&rax = keep[TYPE<RefBufferLayout>::expr] (self.mImage) ;
-		RefBufferHolder::hold (rax)->initialize (r4x) ;
+		RefBufferHolder::hold (rax)->initialize (holder ,r4x) ;
 		rax.mSize = cx_ * cy_ ;
 		rax.mStep = step_ ;
 		self.mWidth = cx_ ;
@@ -45,7 +41,7 @@ public:
 		const auto r1x = ImageHolder::hold (that)->shape () ;
 		if (r1x.size () == 0)
 			return ;
-		initialize (r1x.mCX ,r1x.mCY ,r1x.mStep) ;
+		initialize (that.mImage.unknown () ,r1x.mCX ,r1x.mCY ,r1x.mStep) ;
 		splice (0 ,0 ,that) ;
 	}
 
