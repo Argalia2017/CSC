@@ -830,7 +830,6 @@ public:
 	}
 
 	void check_resize () {
-		assert (exist ()) ;
 		if ifdo (TRUE) {
 			if (self.mWidth != 0)
 				if (self.mFree != NONE)
