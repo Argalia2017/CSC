@@ -135,6 +135,7 @@ struct ArrayHolder implement Interface {
 	imports VFat<ArrayHolder> hold (VR<ArrayLayout> that) ;
 	imports CFat<ArrayHolder> hold (CR<ArrayLayout> that) ;
 
+	virtual void prepare (CR<Unknown> holder) = 0 ;
 	virtual void initialize (CR<Unknown> holder ,CR<LENGTH> size_) = 0 ;
 	virtual void initialize (CR<Unknown> holder ,CR<WrapperLayout> params ,VR<BoxLayout> item) = 0 ;
 	virtual void initialize (CR<ArrayLayout> that) = 0 ;
@@ -186,8 +187,12 @@ struct ArrayPureLayout implement ArrayLayout {
 public:
 	implicit ArrayPureLayout () noexcept {
 		noop (RefBuffer<A> ()) ;
+		ArrayHolder::hold (thiz)->prepare (ArrayUnknownBinder<A> ()) ;
 	}
 } ;
+
+template <>
+struct ArrayPureLayout<Pointer> implement ArrayLayout {} ;
 
 template <class A>
 class Array implement ArrayPureLayout<A> {
@@ -361,6 +366,7 @@ struct StringHolder implement Interface {
 	imports VFat<StringHolder> hold (VR<StringLayout> that) ;
 	imports CFat<StringHolder> hold (CR<StringLayout> that) ;
 
+	virtual void prepare (CR<Unknown> holder) = 0 ;
 	virtual void initialize (CR<Slice> that ,CR<LENGTH> step_) = 0 ;
 	virtual void initialize (CR<LENGTH> size_ ,CR<LENGTH> step_) = 0 ;
 	virtual void initialize (CR<StringLayout> that) = 0 ;
@@ -393,12 +399,30 @@ struct StringHolder implement Interface {
 } ;
 
 template <class A>
+class StringUnknownBinder final implement Fat<ReflectUnknown ,Proxy> {
+public:
+	FLAG reflect (CR<FLAG> uuid) const override {
+		if (uuid == ReflectSizeBinder<A>::expr)
+			return inline_vptr (ReflectSizeBinder<A> ()) ;
+		if (uuid == ReflectDestroyBinder<A>::expr)
+			return inline_vptr (ReflectDestroyBinder<A> ()) ;
+		if (uuid == ReflectElementBinder<A>::expr)
+			return inline_vptr (ReflectElementBinder<A> ()) ;
+		return ZERO ;
+	}
+} ;
+
+template <class A>
 struct StringPureLayout implement StringLayout {
 public:
 	implicit StringPureLayout () noexcept {
 		noop (RefBuffer<A> ()) ;
+		StringHolder::hold (thiz)->prepare (StringUnknownBinder<A> ()) ;
 	}
 } ;
+
+template <>
+struct StringPureLayout<Pointer> implement StringLayout {} ;
 
 template <class A>
 class String implement StringPureLayout<A> {
@@ -669,8 +693,12 @@ struct DequePureLayout implement DequeLayout {
 public:
 	implicit DequePureLayout () noexcept {
 		noop (RefBuffer<A> ()) ;
+		DequeHolder::hold (thiz)->prepare (DequeUnknownBinder<A> ()) ;
 	}
 } ;
+
+template <>
+struct DequePureLayout<Pointer> implement DequeLayout {} ;
 
 template <class A>
 class Deque implement DequePureLayout<A> {
@@ -769,7 +797,6 @@ public:
 
 	void add (RR<A> item) {
 		auto rax = Box<A>::make (move (item)) ;
-		DequeHolder::hold (thiz)->prepare (DequeUnknownBinder<A> ()) ;
 		return DequeHolder::hold (thiz)->add (move (rax)) ;
 	}
 
@@ -788,7 +815,6 @@ public:
 
 	void push (RR<A> item) {
 		auto rax = Box<A>::make (move (item)) ;
-		DequeHolder::hold (thiz)->prepare (DequeUnknownBinder<A> ()) ;
 		return DequeHolder::hold (thiz)->push (move (rax)) ;
 	}
 
@@ -905,8 +931,12 @@ struct PriorityPureLayout implement PriorityLayout {
 public:
 	implicit PriorityPureLayout () noexcept {
 		noop (RefBuffer<A> ()) ;
+		PriorityHolder::hold (thiz)->prepare (PriorityUnknownBinder<A> ()) ;
 	}
 } ;
+
+template <>
+struct PriorityPureLayout<Pointer> implement PriorityLayout {} ;
 
 template <class A>
 class Priority implement PriorityPureLayout<A> {
@@ -993,7 +1023,6 @@ public:
 
 	void add (RR<A> item) {
 		auto rax = Box<A>::make (move (item)) ;
-		PriorityHolder::hold (thiz)->prepare (PriorityUnknownBinder<A> ()) ;
 		return PriorityHolder::hold (thiz)->add (move (rax)) ;
 	}
 
@@ -1072,8 +1101,12 @@ struct ListPureLayout implement ListLayout {
 public:
 	implicit ListPureLayout () noexcept {
 		noop (Allocator<A ,ListNode> ()) ;
+		ListHolder::hold (thiz)->prepare (ListUnknownBinder<A> ()) ;
 	}
 } ;
+
+template <>
+struct ListPureLayout<Pointer> implement ListLayout {} ;
 
 template <class A>
 class List implement ListPureLayout<A> {
@@ -1172,7 +1205,6 @@ public:
 
 	void add (RR<A> item) {
 		auto rax = Box<A>::make (move (item)) ;
-		ListHolder::hold (thiz)->prepare (ListUnknownBinder<A> ()) ;
 		return ListHolder::hold (thiz)->add (move (rax)) ;
 	}
 
@@ -1191,7 +1223,6 @@ public:
 
 	void push (RR<A> item) {
 		auto rax = Box<A>::make (move (item)) ;
-		ListHolder::hold (thiz)->prepare (ListUnknownBinder<A> ()) ;
 		return ListHolder::hold (thiz)->push (move (rax)) ;
 	}
 
@@ -1206,13 +1237,11 @@ public:
 
 	INDEX insert () {
 		auto rax = Box<A>::make () ;
-		ListHolder::hold (thiz)->prepare (ListUnknownBinder<A> ()) ;
 		return ListHolder::hold (thiz)->insert (move (rax)) ;
 	}
 
 	INDEX insert (CR<INDEX> index) {
 		auto rax = Box<A>::make () ;
-		ListHolder::hold (thiz)->prepare (ListUnknownBinder<A> ()) ;
 		return ListHolder::hold (thiz)->insert (index ,move (rax)) ;
 	}
 
@@ -1282,8 +1311,12 @@ struct ArrayListPureLayout implement ArrayListLayout {
 public:
 	implicit ArrayListPureLayout () noexcept {
 		noop (Allocator<A ,ArrayListNode> ()) ;
+		ArrayListHolder::hold (thiz)->prepare (ArrayListUnknownBinder<A> ()) ;
 	}
 } ;
+
+template <>
+struct ArrayListPureLayout<Pointer> implement ArrayListLayout {} ;
 
 template <class A>
 class ArrayList implement ArrayListPureLayout<A> {
@@ -1367,19 +1400,16 @@ public:
 
 	void add (RR<A> item) {
 		auto rax = Box<A>::make (move (item)) ;
-		ArrayListHolder::hold (thiz)->prepare (ArrayListUnknownBinder<A> ()) ;
 		return ArrayListHolder::hold (thiz)->add (move (rax)) ;
 	}
 
 	INDEX insert () {
 		auto rax = Box<A>::make () ;
-		ArrayListHolder::hold (thiz)->prepare (ArrayListUnknownBinder<A> ()) ;
 		return ArrayListHolder::hold (thiz)->insert (move (rax)) ;
 	}
 
 	INDEX insert (CR<INDEX> index) {
 		auto rax = Box<A>::make () ;
-		ArrayListHolder::hold (thiz)->prepare (ArrayListUnknownBinder<A> ()) ;
 		return ArrayListHolder::hold (thiz)->insert (index ,move (rax)) ;
 	}
 
@@ -1468,8 +1498,12 @@ struct SortedMapPureLayout implement SortedMapLayout {
 public:
 	implicit SortedMapPureLayout () noexcept {
 		noop (Allocator<A ,SortedMapNode> ()) ;
+		SortedMapHolder::hold (thiz)->prepare (SortedMapUnknownBinder<A> ()) ;
 	}
 } ;
+
+template <>
+struct SortedMapPureLayout<Pointer> implement SortedMapLayout {} ;
 
 template <class A>
 class SortedMap implement SortedMapPureLayout<A> {
@@ -1567,7 +1601,6 @@ public:
 
 	void add (RR<A> item ,CR<INDEX> map_) {
 		auto rax = Box<A>::make (move (item)) ;
-		SortedMapHolder::hold (thiz)->prepare (SortedMapUnknownBinder<A> ()) ;
 		return SortedMapHolder::hold (thiz)->add (move (rax) ,map_) ;
 	}
 
@@ -1658,8 +1691,12 @@ struct SetPureLayout implement SetLayout {
 public:
 	implicit SetPureLayout () noexcept {
 		noop (Allocator<A ,SetNode> ()) ;
+		SetHolder::hold (thiz)->prepare (SetUnknownBinder<A> ()) ;
 	}
 } ;
+
+template <>
+struct SetPureLayout<Pointer> implement SetLayout {} ;
 
 template <class A>
 class Set implement SetPureLayout<A> {
@@ -1750,7 +1787,6 @@ public:
 
 	void add (RR<A> item ,CR<INDEX> map_) {
 		auto rax = Box<A>::make (move (item)) ;
-		SetHolder::hold (thiz)->prepare (SetUnknownBinder<A> ()) ;
 		return SetHolder::hold (thiz)->add (move (rax) ,map_) ;
 	}
 
@@ -1845,8 +1881,12 @@ struct HashSetPureLayout implement HashSetLayout {
 public:
 	implicit HashSetPureLayout () noexcept {
 		noop (Allocator<A ,HashSetNode> ()) ;
+		HashSetHolder::hold (thiz)->prepare (HashSetUnknownBinder<A> ()) ;
 	}
 } ;
+
+template <>
+struct HashSetPureLayout<Pointer> implement HashSetLayout {} ;
 
 template <class A>
 class HashSet implement HashSetPureLayout<A> {
@@ -1937,7 +1977,6 @@ public:
 
 	void add (RR<A> item ,CR<INDEX> map_) {
 		auto rax = Box<A>::make (move (item)) ;
-		HashSetHolder::hold (thiz)->prepare (HashSetUnknownBinder<A> ()) ;
 		return HashSetHolder::hold (thiz)->add (move (rax) ,map_) ;
 	}
 

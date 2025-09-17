@@ -139,13 +139,13 @@ public:
 
 	Unknown choose_fibitmap_unknown (CR<LENGTH> align) const {
 		if (align == SIZE_OF<BYTE>::expr)
-			return BufferUnknownBinder<BYTE> () ;
+			return ArrayUnknownBinder<BYTE> () ;
 		if (align == SIZE_OF<WORD>::expr)
-			return BufferUnknownBinder<WORD> () ;
+			return ArrayUnknownBinder<WORD> () ;
 		if (align == SIZE_OF<CHAR>::expr)
-			return BufferUnknownBinder<CHAR> () ;
+			return ArrayUnknownBinder<CHAR> () ;
 		if (align == SIZE_OF<QUAD>::expr)
-			return BufferUnknownBinder<QUAD> () ;
+			return ArrayUnknownBinder<QUAD> () ;
 		assume (FALSE) ;
 		return Unknown (ZERO) ;
 	}

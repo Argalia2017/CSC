@@ -21,7 +21,7 @@ struct FUNCTION_from_initializer_list {
 			const auto r3x = inline_list_pair (a ,r2x) ;
 			const auto r4x = (r3x.m2nd - r3x.m1st) / r2x ;
 			const auto r5x = Slice (r3x.m1st ,r4x ,r2x) ;
-			RefBufferHolder::hold (ret)->initialize (holder ,r5x) ;
+			RefBufferHolder::hold (ret)->initialize (holder ,r5x ,Box<int>::make ()) ;
 		}) ;
 		return move (ret) ;
 	}
@@ -31,6 +31,10 @@ static constexpr auto from_initializer_list = FUNCTION_from_initializer_list () 
 
 class ArrayImplHolder final implement Fat<ArrayHolder ,ArrayLayout> {
 public:
+	void prepare (CR<Unknown> holder) override {
+		RefBufferHolder::hold (self.mArray)->prepare (holder) ;
+	}
+
 	void initialize (CR<Unknown> holder ,CR<LENGTH> size_) override {
 		RefBufferHolder::hold (self.mArray)->initialize (holder ,size_) ;
 	}
@@ -163,6 +167,10 @@ exports CFat<ArrayHolder> ArrayHolder::hold (CR<ArrayLayout> that) {
 
 class StringImplHolder final implement Fat<StringHolder ,StringLayout> {
 public:
+	void prepare (CR<Unknown> holder) override {
+		RefBufferHolder::hold (self.mString)->prepare (holder) ;
+	}
+
 	void initialize (CR<Slice> that ,CR<LENGTH> step_) override {
 		const auto r1x = SliceHolder::hold (that)->size () ;
 		initialize (r1x ,step_) ;
@@ -467,10 +475,7 @@ exports CFat<StringHolder> StringHolder::hold (CR<StringLayout> that) {
 class DequeImplHolder final implement Fat<DequeHolder ,DequeLayout> {
 public:
 	void prepare (CR<Unknown> holder) override {
-		if (self.mDeque.exist ())
-			return ;
 		RefBufferHolder::hold (self.mDeque)->prepare (holder) ;
-		clear () ;
 	}
 
 	void initialize (CR<Unknown> holder ,CR<LENGTH> size_) override {
@@ -557,6 +562,7 @@ public:
 	}
 
 	void add (RR<BoxLayout> item) override {
+		check_exist () ;
 		check_resize () ;
 		const auto r1x = self.mDeque.size () ;
 		INDEX ix = self.mWrite % r1x ;
@@ -579,6 +585,7 @@ public:
 	}
 
 	void push (RR<BoxLayout> item) override {
+		check_exist () ;
 		check_resize () ;
 		const auto r1x = self.mDeque.size () ;
 		INDEX ix = (self.mRead - 1 + r1x) % r1x ;
@@ -608,20 +615,10 @@ public:
 		check_bound () ;
 	}
 
-	void check_bound () {
-		const auto r1x = self.mDeque.size () ;
-		if ifdo (TRUE) {
-			if (self.mRead >= 0)
-				discard ;
-			self.mRead += r1x ;
-			self.mWrite += r1x ;
-		}
-		if ifdo (TRUE) {
-			if (self.mRead < r1x)
-				discard ;
-			self.mRead -= r1x ;
-			self.mWrite -= r1x ;
-		}
+	void check_exist () {
+		if (self.mDeque.exist ())
+			return ;
+		initialize (self.mDeque.unknown () ,0) ;
 	}
 
 	void check_resize () {
@@ -643,6 +640,22 @@ public:
 			check_bound () ;
 		}
 	}
+
+	void check_bound () {
+		const auto r1x = self.mDeque.size () ;
+		if ifdo (TRUE) {
+			if (self.mRead >= 0)
+				discard ;
+			self.mRead += r1x ;
+			self.mWrite += r1x ;
+		}
+		if ifdo (TRUE) {
+			if (self.mRead < r1x)
+				discard ;
+			self.mRead -= r1x ;
+			self.mWrite -= r1x ;
+		}
+	}
 } ;
 
 exports VFat<DequeHolder> DequeHolder::hold (VR<DequeLayout> that) {
@@ -656,10 +669,7 @@ exports CFat<DequeHolder> DequeHolder::hold (CR<DequeLayout> that) {
 class PriorityImplHolder final implement Fat<PriorityHolder ,PriorityLayout> {
 public:
 	void prepare (CR<Unknown> holder) override {
-		if (self.mPriority.exist ())
-			return ;
 		RefBufferHolder::hold (self.mPriority)->prepare (holder) ;
-		clear () ;
 	}
 
 	void initialize (CR<Unknown> holder ,CR<LENGTH> size_) override {
@@ -737,6 +747,7 @@ public:
 	}
 
 	void add (RR<BoxLayout> item) override {
+		check_exist () ;
 		check_resize () ;
 		INDEX ix = self.mWrite ;
 		const auto r1x = RFat<ReflectAssign> (self.mPriority.unknown ()) ;
@@ -752,14 +763,6 @@ public:
 		r1x->assign (self.mPriority.at (0) ,self.mPriority.at (ix)) ;
 		self.mWrite = ix ;
 		update_insert (0) ;
-	}
-
-	void check_resize () {
-		if (length () < size ())
-			return ;
-		const auto r1x = length () ;
-		const auto r2x = inline_max (r1x * 2 ,ALLOCATOR_MIN_SIZE::expr) ;
-		RefBufferHolder::hold (self.mPriority)->resize (r2x) ;
 	}
 
 	void update_insert (CR<INDEX> curr) {
@@ -819,6 +822,20 @@ public:
 	INDEX right_child (CR<INDEX> curr) const {
 		return curr * 2 + 2 ;
 	}
+
+	void check_exist () {
+		if (self.mPriority.exist ())
+			return ;
+		initialize (self.mPriority.unknown () ,0) ;
+	}
+
+	void check_resize () {
+		if (length () < size ())
+			return ;
+		const auto r1x = length () ;
+		const auto r2x = inline_max (r1x * 2 ,ALLOCATOR_MIN_SIZE::expr) ;
+		RefBufferHolder::hold (self.mPriority)->resize (r2x) ;
+	}
 } ;
 
 exports VFat<PriorityHolder> PriorityHolder::hold (VR<PriorityLayout> that) {
@@ -832,10 +849,7 @@ exports CFat<PriorityHolder> PriorityHolder::hold (CR<PriorityLayout> that) {
 class ListImplHolder final implement Fat<ListHolder ,ListLayout> {
 public:
 	void prepare (CR<Unknown> holder) override {
-		if (self.mList.exist ())
-			return ;
 		AllocatorHolder::hold (self.mList)->prepare (holder) ;
-		clear () ;
 	}
 
 	void initialize (CR<Unknown> holder ,CR<LENGTH> size_) override {
@@ -917,6 +931,7 @@ public:
 	}
 
 	void add (RR<BoxLayout> item) override {
+		check_exist () ;
 		INDEX ix = self.mList.alloc (move (item)) ;
 		self.mList.bt (ix).mLeft = self.mLast ;
 		self.mList.bt (ix).mRight = NONE ;
@@ -934,6 +949,7 @@ public:
 	}
 
 	void push (RR<BoxLayout> item) override {
+		check_exist () ;
 		INDEX ix = self.mList.alloc (move (item)) ;
 		self.mList.bt (ix).mLeft = NONE ;
 		self.mList.bt (ix).mRight = self.mFirst ;
@@ -951,6 +967,7 @@ public:
 	}
 
 	INDEX insert (RR<BoxLayout> item) override {
+		check_exist () ;
 		INDEX ret = self.mList.alloc (move (item)) ;
 		self.mList.bt (ret).mLeft = self.mLast ;
 		self.mList.bt (ret).mRight = NONE ;
@@ -960,6 +977,7 @@ public:
 	}
 
 	INDEX insert (CR<INDEX> index ,RR<BoxLayout> item) override {
+		check_exist () ;
 		assert (self.mList.used (index)) ;
 		INDEX ret = self.mList.alloc (move (item)) ;
 		INDEX ix = self.mList.bt (index).mLeft ;
@@ -1012,6 +1030,12 @@ public:
 			return self.mLast ;
 		return self.mList.bt (index).mLeft ;
 	}
+
+	void check_exist () {
+		if (self.mList.exist ())
+			return ;
+		initialize (self.mList.unknown () ,0) ;
+	}
 } ;
 
 exports VFat<ListHolder> ListHolder::hold (VR<ListLayout> that) {
@@ -1025,10 +1049,7 @@ exports CFat<ListHolder> ListHolder::hold (CR<ListLayout> that) {
 class ArrayListImplHolder final implement Fat<ArrayListHolder ,ArrayListLayout> {
 public:
 	void prepare (CR<Unknown> holder) override {
-		if (self.mList.exist ())
-			return ;
 		AllocatorHolder::hold (self.mList)->prepare (holder) ;
-		clear () ;
 	}
 
 	void initialize (CR<Unknown> holder ,CR<LENGTH> size_) override {
@@ -1099,6 +1120,7 @@ public:
 	}
 
 	void add (RR<BoxLayout> item) override {
+		check_exist () ;
 		INDEX ix = self.mList.alloc (move (item)) ;
 		check_resize () ;
 		INDEX iy = find_free () ;
@@ -1108,6 +1130,7 @@ public:
 	}
 
 	INDEX insert (RR<BoxLayout> item) override {
+		check_exist () ;
 		INDEX ix = self.mList.alloc (move (item)) ;
 		check_resize () ;
 		INDEX ret = find_free () ;
@@ -1118,6 +1141,7 @@ public:
 	}
 
 	INDEX insert (CR<INDEX> index ,RR<BoxLayout> item) override {
+		check_exist () ;
 		assert (inline_between (index ,0 ,self.mRange.size ())) ;
 		assert (!self.mList.used (self.mRange[index])) ;
 		INDEX ix = self.mList.alloc (move (item)) ;
@@ -1189,6 +1213,12 @@ public:
 		return move (ret) ;
 	}
 
+	void check_exist () {
+		if (self.mList.exist ())
+			return ;
+		initialize (self.mList.unknown () ,0) ;
+	}
+
 	void check_resize () {
 		const auto r1x = self.mList.size () ;
 		const auto r2x = self.mRange.size () ;
@@ -1213,9 +1243,7 @@ exports CFat<ArrayListHolder> ArrayListHolder::hold (CR<ArrayListLayout> that) {
 class SortedMapImplHolder final implement Fat<SortedMapHolder ,SortedMapLayout> {
 public:
 	void prepare (CR<Unknown> holder) override {
-		if (self.mThis.exist ())
-			return ;
-		assume (FALSE) ;
+		noop () ;
 	}
 
 	void initialize (CR<Unknown> holder ,CR<LENGTH> size_) override {
@@ -1292,6 +1320,7 @@ public:
 	}
 
 	void add (RR<BoxLayout> item ,CR<INDEX> map_) override {
+		check_exist () ;
 		INDEX ix = self.mThis->mList.alloc (move (item)) ;
 		self.mThis->mCheck++ ;
 		self.mThis->mList.bt (ix).mMap = map_ ;
@@ -1394,6 +1423,12 @@ public:
 		}
 		self.mRemap = TRUE ;
 	}
+
+	void check_exist () {
+		if (self.mThis.exist ())
+			return ;
+		assume (FALSE) ;
+	}
 } ;
 
 exports VFat<SortedMapHolder> SortedMapHolder::hold (VR<SortedMapLayout> that) {
@@ -1412,10 +1447,7 @@ struct SetChild {
 class SetImplHolder final implement Fat<SetHolder ,SetLayout> {
 public:
 	void prepare (CR<Unknown> holder) override {
-		if (self.mSet.exist ())
-			return ;
 		AllocatorHolder::hold (self.mSet)->prepare (holder) ;
-		clear () ;
 	}
 
 	void initialize (CR<Unknown> holder ,CR<LENGTH> size_) override {
@@ -1490,6 +1522,7 @@ public:
 	}
 
 	void add (RR<BoxLayout> item ,CR<INDEX> map_) override {
+		check_exist () ;
 		if ifdo (TRUE) {
 			INDEX ix = find (BoxHolder::hold (item)->ref) ;
 			if (ix != NONE)
@@ -1923,6 +1956,12 @@ public:
 		assert (FALSE) ;
 		return self.mTop ;
 	}
+
+	void check_exist () {
+		if (self.mSet.exist ())
+			return ;
+		initialize (self.mSet.unknown () ,0) ;
+	}
 } ;
 
 exports VFat<SetHolder> SetHolder::hold (VR<SetLayout> that) {
@@ -2008,11 +2047,7 @@ public:
 class HashSetImplHolder final implement Fat<HashSetHolder ,HashSetLayout> {
 public:
 	void prepare (CR<Unknown> holder) override {
-		if (self.mSet.exist ())
-			return ;
 		AllocatorHolder::hold (self.mSet)->prepare (holder) ;
-		self.mVisitor = SharedRef<HashcodeVisitor>::make () ;
-		clear () ;
 	}
 
 	void initialize (CR<Unknown> holder ,CR<LENGTH> size_) override {
@@ -2087,6 +2122,7 @@ public:
 	}
 
 	void add (RR<BoxLayout> item ,CR<INDEX> map_) override {
+		check_exist () ;
 		if ifdo (TRUE) {
 			INDEX ix = find (BoxHolder::hold (item)->ref) ;
 			if (ix != NONE)
@@ -2183,6 +2219,12 @@ public:
 		if (ix == NONE)
 			return ;
 		remove (ix) ;
+	}
+
+	void check_exist () {
+		if (self.mSet.exist ())
+			return ;
+		initialize (self.mSet.unknown () ,0) ;
 	}
 
 	void check_resize (CR<INDEX> curr) {

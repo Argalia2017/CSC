@@ -13,6 +13,10 @@
 namespace CSC {
 class ImageImplHolder final implement Fat<ImageHolder ,ImageLayout> {
 public:
+	void prepare (CR<Unknown> holder) override {
+		RefBufferHolder::hold (self.mImage)->prepare (holder) ;
+	}
+
 	void initialize (CR<Unknown> holder ,RR<ImageLayout> that) override {
 		const auto r1x = RFat<ReflectSize> (holder) ;
 		const auto r2x = r1x->type_size () ;

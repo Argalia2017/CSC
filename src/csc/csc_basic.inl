@@ -255,8 +255,8 @@ public:
 		self.mLayout = address (BoxHolder::hold (raw ())->ref) ;
 		BoxHolder::hold (raw ())->release () ;
 		self.mThis->mCounter = 1 ;
-		const auto r2x = address (self.mThis.ref) + SIZE_OF<SharedRefTree>::expr ;
-		inline_memset (Pointer::make (r2x) ,self.mLayout - r2x) ;
+		const auto r1x = address (self.mThis.ref) + SIZE_OF<SharedRefTree>::expr ;
+		inline_memset (Pointer::make (r1x) ,self.mLayout - r1x) ;
 	}
 
 	void initialize (CR<Unknown> holder ,CR<FLAG> layout) override {
@@ -437,29 +437,33 @@ struct RefBufferTree {
 class RefBufferImplHolder final implement Fat<RefBufferHolder ,RefBufferLayout> {
 public:
 	void prepare (CR<Unknown> holder) override {
-		if (exist ())
-			return ;
 		self.mHolder = inline_vptr (holder) ;
-		self.mBuffer = ZERO ;
-		self.mSize = 0 ;
-		self.mStep = 0 ;
 	}
 
 	void initialize (CR<Unknown> holder ,CR<LENGTH> size_) override {
 		assert (!exist ()) ;
-		self.mHolder = inline_vptr (holder) ;
-		if (size_ <= 0)
-			return ;
-		const auto r1x = RFat<ReflectElement> (unknown ())->element () ;
-		RefHolder::hold (self.mThis)->initialize (RefUnknownBinder<RefBufferTree> () ,r1x ,size_) ;
-		BoxHolder::hold (raw ())->initialize (r1x) ;
-		self.mBuffer = address (BoxHolder::hold (raw ())->ref) ;
-		self.mSize = size_ ;
-		const auto r2x = RFat<ReflectSize> (r1x) ;
-		self.mStep = r2x->type_size () ;
-		const auto r3x = RFat<ReflectCreate> (r1x) ;
-		r3x->create (ref ,size_) ;
-		self.mThis->mCapacity = size_ ;
+		auto act = TRUE ;
+		if ifdo (act) {
+			if (size_ <= 0)
+				discard ;
+			self.mHolder = inline_vptr (holder) ;
+			const auto r1x = RFat<ReflectElement> (unknown ())->element () ;
+			RefHolder::hold (self.mThis)->initialize (RefUnknownBinder<RefBufferTree> () ,r1x ,size_) ;
+			BoxHolder::hold (raw ())->initialize (r1x) ;
+			self.mBuffer = address (BoxHolder::hold (raw ())->ref) ;
+			self.mSize = size_ ;
+			const auto r2x = RFat<ReflectSize> (r1x) ;
+			self.mStep = r2x->type_size () ;
+			const auto r3x = RFat<ReflectCreate> (r1x) ;
+			r3x->create (ref ,size_) ;
+			self.mThis->mCapacity = size_ ;
+		}
+		if ifdo (act) {
+			self.mHolder = inline_vptr (holder) ;
+			self.mBuffer = ZERO ;
+			self.mSize = 0 ;
+			self.mStep = 0 ;
+		}
 	}
 
 	void initialize (CR<Unknown> holder ,CR<SliceLayout> buffer ,RR<BoxLayout> item) override {
@@ -543,6 +547,7 @@ public:
 	}
 
 	void resize (CR<LENGTH> size_) override {
+		check_exist () ;
 		if (size_ == size ())
 			return ;
 		assert (!fixed ()) ;
@@ -559,11 +564,17 @@ public:
 		const auto r4x = r3x->type_size () * r1x ;
 		inline_memcpy (Pointer::make (rax.mBuffer) ,ref ,r4x) ;
 		inline_memset (ref ,r4x) ;
-		const auto r6x = rax.mBuffer + r4x ;
-		const auto r7x = RFat<ReflectCreate> (r2x) ;
-		r7x->create (Pointer::make (r6x) ,size_ - r1x) ;
+		const auto r5x = rax.mBuffer + r4x ;
+		const auto r6x = RFat<ReflectCreate> (r2x) ;
+		r6x->create (Pointer::make (r5x) ,size_ - r1x) ;
 		rax.mThis->mCapacity = size_ ;
 		swap (self ,rax) ;
+	}
+
+	void check_exist () {
+		if (exist ())
+			return ;
+		initialize (unknown () ,0) ;
 	}
 } ;
 
@@ -586,12 +597,7 @@ struct FarBufferTree {
 class FarBufferImplHolder final implement Fat<FarBufferHolder ,FarBufferLayout> {
 public:
 	void prepare (CR<Unknown> holder) override {
-		if (exist ())
-			return ;
 		self.mHolder = inline_vptr (holder) ;
-		self.mIndex = NONE ;
-		self.mHolder = ZERO ;
-		self.mBuffer = ZERO ;
 	}
 
 	void initialize (CR<Unknown> holder ,CR<LENGTH> size_) override {
@@ -813,7 +819,14 @@ public:
 	}
 
 	void resize (CR<LENGTH> size_) override {
+		check_exist () ;
 		RefBufferHolder::hold (self.mAllocator)->resize (size_) ;
+	}
+
+	void check_exist () {
+		if (exist ())
+			return ;
+		initialize (unknown () ,0) ;
 	}
 
 	void check_resize () {

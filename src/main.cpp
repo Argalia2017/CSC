@@ -17,6 +17,9 @@ static const auto anonymous = invoke ([] () {
 int test () ;
 
 int main () {
+	auto rax = Deque<int> (0) ;
+	auto &&rbx = keep[TYPE<DequeLayout>::expr] (rax) ;
+	assume (!rbx.mDeque.exist ()) ;
 
 	return 0 ;
 }

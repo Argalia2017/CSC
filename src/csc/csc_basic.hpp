@@ -897,9 +897,12 @@ template <class A>
 struct RefBufferPureLayout implement RefBufferLayout {
 public:
 	implicit RefBufferPureLayout () noexcept {
-		noop (PTR<VR<A>> (NULL)) ;
+		RefBufferHolder::hold (thiz)->prepare (BufferUnknownBinder<A> ()) ;
 	}
 } ;
+
+template <>
+struct RefBufferPureLayout<Pointer> implement RefBufferLayout {} ;
 
 template <class A>
 class RefBuffer implement RefBufferPureLayout<A> {
@@ -920,7 +923,7 @@ public:
 	static RefBuffer reference (CR<FLAG> buffer ,CR<LENGTH> size_) {
 		RefBuffer ret ;
 		const auto r1x = Slice (buffer ,size_ ,SIZE_OF<A>::expr) ;
-		RefBufferHolder::hold (ret)->initialize (BufferUnknownBinder<A> () ,r1x ,Box<int>::zeroize ()) ;
+		RefBufferHolder::hold (ret)->initialize (BufferUnknownBinder<A> () ,r1x ,Box<int>::make ()) ;
 		return move (ret) ;
 	}
 
@@ -1179,8 +1182,12 @@ struct AllocatorPureLayout implement AllocatorLayout {
 public:
 	implicit AllocatorPureLayout () noexcept {
 		noop (RefBuffer<UnionPair<A ,B>> ()) ;
+		AllocatorHolder::hold (thiz)->prepare (AllocatorUnknownBinder<A ,B> ()) ;
 	}
 } ;
+
+template <class B>
+struct AllocatorPureLayout<Pointer ,B> implement AllocatorLayout {} ;
 
 using ALLOCATOR_MIN_SIZE = ENUM<256> ;
 
