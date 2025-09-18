@@ -157,7 +157,7 @@ struct ArrayHolder implement Interface {
 } ;
 
 template <class A>
-class ArrayUnknownBinder final implement Fat<ReflectUnknown ,Proxy> {
+class ArrayUnknownBinder final implement Fat<FriendUnknown ,Proxy> {
 public:
 	FLAG reflect (CR<FLAG> uuid) const override {
 		if (uuid == ReflectSizeBinder<A>::expr)
@@ -399,7 +399,7 @@ struct StringHolder implement Interface {
 } ;
 
 template <class A>
-class StringUnknownBinder final implement Fat<ReflectUnknown ,Proxy> {
+class StringUnknownBinder final implement Fat<FriendUnknown ,Proxy> {
 public:
 	FLAG reflect (CR<FLAG> uuid) const override {
 		if (uuid == ReflectSizeBinder<A>::expr)
@@ -671,7 +671,7 @@ struct DequeHolder implement Interface {
 } ;
 
 template <class A>
-class DequeUnknownBinder final implement Fat<ReflectUnknown ,Proxy> {
+class DequeUnknownBinder final implement Fat<FriendUnknown ,Proxy> {
 public:
 	FLAG reflect (CR<FLAG> uuid) const override {
 		if (uuid == ReflectSizeBinder<A>::expr)
@@ -903,7 +903,7 @@ struct PriorityHolder implement Interface {
 } ;
 
 template <class A>
-class PriorityUnknownBinder final implement Fat<ReflectUnknown ,Proxy> {
+class PriorityUnknownBinder final implement Fat<FriendUnknown ,Proxy> {
 public:
 	FLAG reflect (CR<FLAG> uuid) const override {
 		if (uuid == ReflectSizeBinder<A>::expr)
@@ -1078,7 +1078,7 @@ struct ListHolder implement Interface {
 } ;
 
 template <class A>
-class ListUnknownBinder final implement Fat<ReflectUnknown ,Proxy> {
+class ListUnknownBinder final implement Fat<FriendUnknown ,Proxy> {
 public:
 	FLAG reflect (CR<FLAG> uuid) const override {
 		using R1X = UnionPair<A ,ListNode> ;
@@ -1288,7 +1288,7 @@ struct ArrayListHolder implement Interface {
 } ;
 
 template <class A>
-class ArrayListUnknownBinder final implement Fat<ReflectUnknown ,Proxy> {
+class ArrayListUnknownBinder final implement Fat<FriendUnknown ,Proxy> {
 public:
 	FLAG reflect (CR<FLAG> uuid) const override {
 		using R1X = UnionPair<A ,ArrayListNode> ;
@@ -1469,7 +1469,7 @@ struct SortedMapHolder implement Interface {
 } ;
 
 template <class A>
-class SortedMapUnknownBinder final implement Fat<ReflectUnknown ,Proxy> {
+class SortedMapUnknownBinder final implement Fat<FriendUnknown ,Proxy> {
 public:
 	FLAG reflect (CR<FLAG> uuid) const override {
 		using R1X = UnionPair<A ,SortedMapNode> ;
@@ -1662,7 +1662,7 @@ struct SetHolder implement Interface {
 } ;
 
 template <class A>
-class SetUnknownBinder final implement Fat<ReflectUnknown ,Proxy> {
+class SetUnknownBinder final implement Fat<FriendUnknown ,Proxy> {
 public:
 	FLAG reflect (CR<FLAG> uuid) const override {
 		using R1X = UnionPair<A ,SetNode> ;
@@ -1854,7 +1854,7 @@ struct HashSetHolder implement Interface {
 } ;
 
 template <class A>
-class HashSetUnknownBinder final implement Fat<ReflectUnknown ,Proxy> {
+class HashSetUnknownBinder final implement Fat<FriendUnknown ,Proxy> {
 public:
 	FLAG reflect (CR<FLAG> uuid) const override {
 		using R1X = UnionPair<A ,HashSetNode> ;

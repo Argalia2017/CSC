@@ -691,7 +691,7 @@ struct Interface {
 	forceinline VR<Interface> operator= (RR<Interface> that) = delete ;
 } ;
 
-struct ReflectUnknown implement Interface {
+struct FriendUnknown implement Interface {
 	virtual FLAG reflect (CR<FLAG> uuid) const = 0 ;
 } ;
 

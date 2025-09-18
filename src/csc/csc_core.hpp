@@ -782,7 +782,7 @@ protected:
 public:
 	implicit RFat () = delete ;
 
-	explicit RFat (CR<ReflectUnknown> unknown) {
+	explicit RFat (CR<FriendUnknown> unknown) {
 		mHolder = unknown.reflect (A::expr) ;
 		assert (mHolder != ZERO) ;
 		mLayout = ZERO ;
@@ -798,7 +798,7 @@ public:
 } ;
 
 template <class A>
-class SimpleUnknownBinder final implement Fat<ReflectUnknown ,Proxy> {
+class SimpleUnknownBinder final implement Fat<FriendUnknown ,Proxy> {
 public:
 	FLAG reflect (CR<FLAG> uuid) const override {
 		if (uuid == A::expr)
@@ -819,11 +819,11 @@ public:
 		mHolder = that ;
 	}
 
-	implicit Unknown (CR<ReflectUnknown> that) {
+	implicit Unknown (CR<FriendUnknown> that) {
 		mHolder = inline_vptr (that) ;
 	}
 
-	forceinline operator CR<ReflectUnknown> () const {
+	forceinline operator CR<FriendUnknown> () const {
 		return Pointer::from (thiz) ;
 	}
 } ;
@@ -1038,7 +1038,7 @@ inline BoxLayout::~BoxLayout () noexcept {
 }
 
 template <class A>
-class BoxUnknownBinder final implement Fat<ReflectUnknown ,Proxy> {
+class BoxUnknownBinder final implement Fat<FriendUnknown ,Proxy> {
 public:
 	FLAG reflect (CR<FLAG> uuid) const override {
 		if (uuid == ReflectSizeBinder<A>::expr)
@@ -1238,7 +1238,7 @@ inline RefLayout::~RefLayout () noexcept {
 }
 
 template <class A>
-class RefUnknownBinder final implement Fat<ReflectUnknown ,Proxy> {
+class RefUnknownBinder final implement Fat<FriendUnknown ,Proxy> {
 public:
 	FLAG reflect (CR<FLAG> uuid) const override {
 		if (uuid == ReflectSizeBinder<A>::expr)
@@ -1730,7 +1730,7 @@ struct ClazzHolder implement Interface {
 } ;
 
 template <class A>
-class ClazzUnknownBinder final implement Fat<ReflectUnknown ,Proxy> {
+class ClazzUnknownBinder final implement Fat<FriendUnknown ,Proxy> {
 public:
 	FLAG reflect (CR<FLAG> uuid) const override {
 		if (uuid == ReflectSizeBinder<A>::expr)

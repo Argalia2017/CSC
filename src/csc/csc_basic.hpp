@@ -326,7 +326,7 @@ struct FunctionHolder implement Interface {
 } ;
 
 template <class A>
-class FunctionUnknownBinder final implement Fat<ReflectUnknown ,Proxy> {
+class FunctionUnknownBinder final implement Fat<FriendUnknown ,Proxy> {
 public:
 	FLAG reflect (CR<FLAG> uuid) const override {
 		if (uuid == ReflectSizeBinder<A>::expr)
@@ -550,8 +550,8 @@ public:
 
 	template <class ARG1>
 	AutoRef<ARG1> recast (TYPE<ARG1>) {
-		using R1X = SimpleUnknownBinder<ReflectRecastBinder<ARG1 ,A>> ;
-		AutoRefLayout ret = AutoRefHolder::hold (thiz)->recast (R1X ()) ;
+		const auto r1x = Unknown (SimpleUnknownBinder<ReflectRecastBinder<ARG1 ,A>>) ;
+		AutoRefLayout ret = AutoRefHolder::hold (thiz)->recast (r1x) ;
 		return move (keep[TYPE<AutoRef<ARG1>>::expr] (ret)) ;
 	}
 } ;
@@ -673,8 +673,8 @@ public:
 
 	template <class ARG1>
 	SharedRef<ARG1> recast (TYPE<ARG1>) {
-		using R1X = SimpleUnknownBinder<ReflectRecastBinder<ARG1 ,A>> ;
-		SharedRefLayout ret = SharedRefHolder::hold (thiz)->recast (R1X ()) ;
+		const auto r1x = Unknown (SimpleUnknownBinder<ReflectRecastBinder<ARG1 ,A>>) ;
+		SharedRefLayout ret = SharedRefHolder::hold (thiz)->recast (r1x) ;
 		return move (keep[TYPE<SharedRef<ARG1>>::expr] (ret)) ;
 	}
 
@@ -799,8 +799,8 @@ public:
 
 	template <class ARG1>
 	UniqueRef<ARG1> recast (TYPE<ARG1>) {
-		using R1X = SimpleUnknownBinder<ReflectRecastBinder<ARG1 ,A>> ;
-		UniqueRefLayout ret = UniqueRefHolder::hold (thiz)->recast (R1X ()) ;
+		const auto r1x = Unknown (SimpleUnknownBinder<ReflectRecastBinder<ARG1 ,A>>) ;
+		UniqueRefLayout ret = UniqueRefHolder::hold (thiz)->recast (r1x) ;
 		return move (keep[TYPE<UniqueRef<ARG1>>::expr] (ret)) ;
 	}
 } ;
@@ -880,7 +880,7 @@ inline RefBufferLayout::~RefBufferLayout () noexcept {
 }
 
 template <class A>
-class BufferUnknownBinder final implement Fat<ReflectUnknown ,Proxy> {
+class BufferUnknownBinder final implement Fat<FriendUnknown ,Proxy> {
 public:
 	FLAG reflect (CR<FLAG> uuid) const override {
 		if (uuid == ReflectSizeBinder<A>::expr)
@@ -1161,7 +1161,7 @@ inline AllocatorLayout::~AllocatorLayout () noexcept {
 }
 
 template <class A ,class B>
-class AllocatorUnknownBinder final implement Fat<ReflectUnknown ,Proxy> {
+class AllocatorUnknownBinder final implement Fat<FriendUnknown ,Proxy> {
 public:
 	FLAG reflect (CR<FLAG> uuid) const override {
 		using R1X = UnionPair<A ,B> ;

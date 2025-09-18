@@ -771,7 +771,7 @@ public:
 } ;
 
 template <class A>
-class GlobalUnknownBinder final implement Fat<ReflectUnknown ,Proxy> {
+class GlobalUnknownBinder final implement Fat<FriendUnknown ,Proxy> {
 public:
 	FLAG reflect (CR<FLAG> uuid) const override {
 		if (uuid == ReflectSizeBinder<A>::expr)
