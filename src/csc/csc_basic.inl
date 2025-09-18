@@ -589,6 +589,7 @@ exports CFat<RefBufferHolder> RefBufferHolder::hold (CR<RefBufferLayout> that) {
 struct FarBufferTree {
 	Function<CR<INDEX> ,VR<Pointer>> mGetter ;
 	Function<CR<INDEX> ,CR<Pointer>> mSetter ;
+	FLAG mBuffer ;
 	LENGTH mSize ;
 	LENGTH mStep ;
 	BoxLayout mValue ;
@@ -604,11 +605,13 @@ public:
 		assert (!exist ()) ;
 		self.mHolder = inline_vptr (holder) ;
 		const auto r1x = RFat<ReflectElement> (holder)->element () ;
-		RefHolder::hold (self.mThis)->initialize (r1x ,r1x ,0) ;
-		self.mIndex = NONE ;
+		RefHolder::hold (self.mThis)->initialize (RefUnknownBinder<FarBufferTree> () ,r1x ,1) ;
+		BoxHolder::hold (raw ())->initialize (r1x) ;
+		self.mThis->mBuffer = address (BoxHolder::hold (raw ())->ref) ;
 		self.mThis->mSize = size_ ;
 		const auto r2x = RFat<ReflectSize> (r1x) ;
 		self.mThis->mStep = r2x->type_size () ;
+		self.mIndex = NONE ;
 	}
 
 	void use_getter (CR<Function<CR<INDEX> ,VR<Pointer>>> getter) override {
@@ -647,30 +650,34 @@ public:
 		return self.mThis->mStep ;
 	}
 
+	VR<Pointer> ref_m () const leftvalue {
+		return Pointer::make (self.mThis->mBuffer) ;
+	}
+
 	VR<Pointer> at (CR<INDEX> index) leftvalue override {
 		assert (inline_between (index ,0 ,size ())) ;
 		update_sync (index) ;
-		return Pointer::make (self.mBuffer) ;
+		return ref ;
 	}
 
 	CR<Pointer> at (CR<INDEX> index) const leftvalue override {
 		assert (inline_between (index ,0 ,size ())) ;
 		update_sync (index) ;
-		return Pointer::make (self.mBuffer) ;
+		return ref ;
 	}
 
 	void update_sync (CR<INDEX> index) const {
 		if (self.mIndex == index)
 			return ;
 		refresh () ;
-		self.mThis->mGetter (index ,Pointer::make (self.mBuffer)) ;
+		self.mThis->mGetter (index ,ref) ;
 		self.mIndex = index ;
 	}
 
 	void refresh () const override {
 		if (self.mIndex == NONE)
 			return ;
-		self.mThis->mSetter (self.mIndex ,Pointer::make (self.mBuffer)) ;
+		self.mThis->mSetter (self.mIndex ,ref) ;
 		self.mIndex = NONE ;
 	}
 } ;

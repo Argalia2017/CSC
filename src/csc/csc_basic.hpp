@@ -550,7 +550,7 @@ public:
 
 	template <class ARG1>
 	AutoRef<ARG1> recast (TYPE<ARG1>) {
-		const auto r1x = Unknown (SimpleUnknownBinder<ReflectRecastBinder<ARG1 ,A>>) ;
+		const auto r1x = Unknown (SimpleUnknownBinder<ReflectRecastBinder<ARG1 ,A>> ()) ;
 		AutoRefLayout ret = AutoRefHolder::hold (thiz)->recast (r1x) ;
 		return move (keep[TYPE<AutoRef<ARG1>>::expr] (ret)) ;
 	}
@@ -673,7 +673,7 @@ public:
 
 	template <class ARG1>
 	SharedRef<ARG1> recast (TYPE<ARG1>) {
-		const auto r1x = Unknown (SimpleUnknownBinder<ReflectRecastBinder<ARG1 ,A>>) ;
+		const auto r1x = Unknown (SimpleUnknownBinder<ReflectRecastBinder<ARG1 ,A>> ()) ;
 		SharedRefLayout ret = SharedRefHolder::hold (thiz)->recast (r1x) ;
 		return move (keep[TYPE<SharedRef<ARG1>>::expr] (ret)) ;
 	}
@@ -799,7 +799,7 @@ public:
 
 	template <class ARG1>
 	UniqueRef<ARG1> recast (TYPE<ARG1>) {
-		const auto r1x = Unknown (SimpleUnknownBinder<ReflectRecastBinder<ARG1 ,A>>) ;
+		const auto r1x = Unknown (SimpleUnknownBinder<ReflectRecastBinder<ARG1 ,A>> ()) ;
 		UniqueRefLayout ret = UniqueRefHolder::hold (thiz)->recast (r1x) ;
 		return move (keep[TYPE<UniqueRef<ARG1>>::expr] (ret)) ;
 	}
@@ -1003,7 +1003,6 @@ struct FarBufferLayout {
 	mutable Ref<FarBufferTree> mThis ;
 	mutable INDEX mIndex ;
 	FLAG mHolder ;
-	FLAG mBuffer ;
 } ;
 
 struct FarBufferHolder implement Interface {
@@ -1031,7 +1030,6 @@ protected:
 	using FarBufferLayout::mThis ;
 	using FarBufferLayout::mIndex ;
 	using FarBufferLayout::mHolder ;
-	using FarBufferLayout::mBuffer ;
 
 public:
 	implicit FarBuffer () = default ;
