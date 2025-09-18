@@ -371,12 +371,12 @@ public:
 	}
 } ;
 
-struct ECSManagerLayout ;
+struct ManagerLayout ;
 
-struct ECSManagerHolder implement Interface {
-	imports CR<OfThis<SharedRef<ECSManagerLayout>>> expr_m () ;
-	imports VFat<ECSManagerHolder> hold (VR<ECSManagerLayout> that) ;
-	imports CFat<ECSManagerHolder> hold (CR<ECSManagerLayout> that) ;
+struct ManagerHolder implement Interface {
+	imports CR<OfThis<SharedRef<ManagerLayout>>> expr_m () ;
+	imports VFat<ManagerHolder> hold (VR<ManagerLayout> that) ;
+	imports CFat<ManagerHolder> hold (CR<ManagerLayout> that) ;
 
 	virtual void initialize () = 0 ;
 	virtual Entity entity (CR<INDEX> index) const = 0 ;
@@ -387,34 +387,34 @@ struct ECSManagerHolder implement Interface {
 	virtual INDEX service (CR<Service> item) = 0 ;
 } ;
 
-class ECSManager implement OfThis<SharedRef<ECSManagerLayout>> {
+class Manager implement OfThis<SharedRef<ManagerLayout>> {
 public:
-	imports CR<ECSManager> expr_m () {
-		return keep[TYPE<ECSManager>::expr] (ECSManagerHolder::expr) ;
+	imports CR<Manager> expr_m () {
+		return keep[TYPE<Manager>::expr] (ManagerHolder::expr) ;
 	}
 
 	Entity entity (CR<INDEX> index) const {
-		return ECSManagerHolder::hold (thiz)->entity (index) ;
+		return ManagerHolder::hold (thiz)->entity (index) ;
 	}
 
 	INDEX entity (CR<Entity> item) const {
-		return ECSManagerHolder::hold (thiz)->entity (item) ;
+		return ManagerHolder::hold (thiz)->entity (item) ;
 	}
 
 	Component component (CR<INDEX> index) const {
-		return ECSManagerHolder::hold (thiz)->component (index) ;
+		return ManagerHolder::hold (thiz)->component (index) ;
 	}
 
 	INDEX component (CR<Component> item) const {
-		return ECSManagerHolder::hold (thiz)->component (item) ;
+		return ManagerHolder::hold (thiz)->component (item) ;
 	}
 
 	Service service (CR<INDEX> index) const {
-		return ECSManagerHolder::hold (thiz)->service (index) ;
+		return ManagerHolder::hold (thiz)->service (index) ;
 	}
 
 	INDEX service (CR<Service> item) const {
-		return ECSManagerHolder::hold (thiz)->service (item) ;
+		return ManagerHolder::hold (thiz)->service (item) ;
 	}
 } ;
 } ;

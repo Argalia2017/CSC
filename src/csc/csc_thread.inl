@@ -686,7 +686,7 @@ exports CFat<PromiseHolder> PromiseHolder::hold (CR<PromiseLayout> that) {
 }
 
 struct EntityLayout {
-	ECSManager mManager ;
+	Manager mManager ;
 	Clazz mClazz ;
 	INDEX mKeyId ;
 	Set<Clazz> mComponentClazz ;
@@ -695,7 +695,7 @@ struct EntityLayout {
 class EntityImplHolder final implement Fat<EntityHolder ,EntityLayout> {
 public:
 	void initialize (CR<Clazz> clazz_) override {
-		self.mManager = ECSManager::expr ;
+		self.mManager = Manager::expr ;
 		self.mClazz = clazz_ ;
 		self.mKeyId = NONE ;
 	}
@@ -739,7 +739,7 @@ exports CFat<EntityHolder> EntityHolder::hold (CR<EntityLayout> that) {
 }
 
 struct ComponentLayout {
-	ECSManager mManager ;
+	Manager mManager ;
 	Clazz mClazz ;
 	INDEX mEntity ;
 } ;
@@ -747,7 +747,7 @@ struct ComponentLayout {
 class ComponentImplHolder final implement Fat<ComponentHolder ,ComponentLayout> {
 public:
 	void initialize (CR<Clazz> clazz_) override {
-		self.mManager = ECSManager::expr ;
+		self.mManager = Manager::expr ;
 		self.mClazz = clazz_ ;
 	}
 
@@ -783,7 +783,7 @@ exports CFat<ComponentHolder> ComponentHolder::hold (CR<ComponentLayout> that) {
 }
 
 struct ServiceLayout {
-	ECSManager mManager ;
+	Manager mManager ;
 	Clazz mClazz ;
 	LENGTH mGeneration ;
 	Set<INDEX> mEntityKeyId ;
@@ -792,7 +792,7 @@ struct ServiceLayout {
 class ServiceImplHolder final implement Fat<ServiceHolder ,ServiceLayout> {
 public:
 	void initialize (CR<Clazz> clazz_) override {
-		self.mManager = ECSManager::expr ;
+		self.mManager = Manager::expr ;
 		self.mClazz = clazz_ ;
 		self.mGeneration = ZERO ;
 	}
@@ -819,14 +819,14 @@ exports CFat<ServiceHolder> ServiceHolder::hold (CR<ServiceLayout> that) {
 	return CFat<ServiceHolder> (ServiceImplHolder () ,that) ;
 }
 
-struct ECSManagerLayout {
+struct ManagerLayout {
 	Mutex mMutex ;
 	List<Entity> mEntityList ;
 	List<Component> mComponentList ;
 	List<Service> mServiceList ;
 } ;
 
-class ECSManagerImplHolder final implement Fat<ECSManagerHolder ,ECSManagerLayout> {
+class ManagerImplHolder final implement Fat<ManagerHolder ,ManagerLayout> {
 public:
 	void initialize () override {
 		self.mMutex = SharedMutex () ;
@@ -875,19 +875,19 @@ public:
 	}
 } ;
 
-exports CR<OfThis<SharedRef<ECSManagerLayout>>> ECSManagerHolder::expr_m () {
+exports CR<OfThis<SharedRef<ManagerLayout>>> ManagerHolder::expr_m () {
 	return memorize ([&] () {
-		OfThis<SharedRef<ECSManagerLayout>> ret ;
-		ret.mThis = SharedRef<ECSManagerLayout>::make () ;
+		OfThis<SharedRef<ManagerLayout>> ret ;
+		ret.mThis = SharedRef<ManagerLayout>::make () ;
 		return move (ret) ;
 	}) ;
 }
 
-exports VFat<ECSManagerHolder> ECSManagerHolder::hold (VR<ECSManagerLayout> that) {
-	return VFat<ECSManagerHolder> (ECSManagerImplHolder () ,that) ;
+exports VFat<ManagerHolder> ManagerHolder::hold (VR<ManagerLayout> that) {
+	return VFat<ManagerHolder> (ManagerImplHolder () ,that) ;
 }
 
-exports CFat<ECSManagerHolder> ECSManagerHolder::hold (CR<ECSManagerLayout> that) {
-	return CFat<ECSManagerHolder> (ECSManagerImplHolder () ,that) ;
+exports CFat<ManagerHolder> ManagerHolder::hold (CR<ManagerLayout> that) {
+	return CFat<ManagerHolder> (ManagerImplHolder () ,that) ;
 }
 } ;
