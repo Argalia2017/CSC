@@ -707,7 +707,7 @@ public:
 	INDEX keyid () const override {
 		return self.mKeyId ;
 	}
-	
+
 	void add_component (CR<OfThis<SharedRef<ComponentLayout>>> component) override {
 		auto &&rax = keep[TYPE<Component>::expr] (component) ;
 		INDEX ix = self.mComponentClazz.map (rax.clazz ()) ;
@@ -800,7 +800,7 @@ public:
 	Clazz clazz () const override {
 		return self.mClazz ;
 	}
-	
+
 	INDEX spwan_entity () override {
 		INDEX ret = self.mGeneration++ ;
 		return move (ret) ;
@@ -839,7 +839,7 @@ public:
 		const auto r1x = SharedLock (self.mMutex) ;
 		return self.mEntityList[index] ;
 	}
-	
+
 	INDEX entity (CR<Entity> item) override {
 		const auto r1x = SharedLock (self.mMutex) ;
 		Scope<SharedLock> anonymous (r1x) ;
@@ -889,5 +889,54 @@ exports VFat<ManagerHolder> ManagerHolder::hold (VR<ManagerLayout> that) {
 
 exports CFat<ManagerHolder> ManagerHolder::hold (CR<ManagerLayout> that) {
 	return CFat<ManagerHolder> (ManagerImplHolder () ,that) ;
+}
+
+struct SyntaxLayout {
+	Set<Clazz> mStack ;
+} ;
+
+class SyntaxImplHolder final implement Fat<SyntaxHolder ,SyntaxLayout> {
+public:
+	void initialize () override {
+		unimplemented () ;
+	}
+
+	CR<Pointer> stack (CR<Clazz> name) const leftvalue override {
+		unimplemented () ;
+		return Pointer::from (name) ;
+	}
+
+	CR<Pointer> maybe (CR<Clazz> name) const leftvalue override {
+		unimplemented () ;
+		return Pointer::from (name) ;
+	}
+
+	void once (CR<Function<>> func) override {
+		unimplemented () ;
+	}
+
+	void then (CR<Function<>> func) override {
+		unimplemented () ;
+	}
+
+	void undo (CR<Clazz> name) override {
+		unimplemented () ;
+	}
+
+	void redo (CR<Clazz> name) override {
+		unimplemented () ;
+	}
+} ;
+
+exports SharedRef<SyntaxLayout> SyntaxHolder::create () {
+	return SharedRef<SyntaxLayout>::make () ;
+}
+
+exports VFat<SyntaxHolder> SyntaxHolder::hold (VR<SyntaxLayout> that) {
+	return VFat<SyntaxHolder> (SyntaxImplHolder () ,that) ;
+}
+
+exports CFat<SyntaxHolder> SyntaxHolder::hold (CR<SyntaxLayout> that) {
+	return CFat<SyntaxHolder> (SyntaxImplHolder () ,that) ;
 }
 } ;

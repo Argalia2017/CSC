@@ -303,7 +303,7 @@ public:
 	void add_component (CR<OfThis<SharedRef<ComponentLayout>>> component) const {
 		return EntityHolder::hold (thiz)->add_component (component) ;
 	}
-	
+
 	void register_service (CR<OfThis<SharedRef<ServiceLayout>>> service) const {
 		return EntityHolder::hold (thiz)->register_service (service) ;
 	}
@@ -415,6 +415,60 @@ public:
 
 	INDEX service (CR<Service> item) const {
 		return ManagerHolder::hold (thiz)->service (item) ;
+	}
+} ;
+
+struct SyntaxLayout ;
+
+struct SyntaxHolder implement Interface {
+	imports SharedRef<SyntaxLayout> create () ;
+	imports VFat<SyntaxHolder> hold (VR<SyntaxLayout> that) ;
+	imports CFat<SyntaxHolder> hold (CR<SyntaxLayout> that) ;
+
+	virtual void initialize () = 0 ;
+	virtual CR<Pointer> stack (CR<Clazz> name) const leftvalue = 0 ;
+	virtual CR<Pointer> maybe (CR<Clazz> name) const leftvalue = 0 ;
+	virtual void once (CR<Function<>> func) = 0 ;
+	virtual void then (CR<Function<>> func) = 0 ;
+	virtual void undo (CR<Clazz> name) = 0 ;
+	virtual void redo (CR<Clazz> name) = 0 ;
+} ;
+
+class Syntax implement OfThis<SharedRef<SyntaxLayout>> {
+public:
+	implicit Syntax () = default ;
+
+	implicit Syntax (CR<typeof (NULL)>) {
+		mThis = SyntaxHolder::create () ;
+		SyntaxHolder::hold (thiz)->initialize () ;
+	}
+
+	template <class ARG1>
+	CR<ARG1> stack (TYPE<ARG1>) const leftvalue {
+		return SyntaxHolder::hold (thiz)->stack (Clazz (TYPE<ARG1>::expr)) ;
+	}
+
+	template <class ARG1>
+	CR<ARG1> maybe (TYPE<ARG1>) const leftvalue {
+		return SyntaxHolder::hold (thiz)->maybe (Clazz (TYPE<ARG1>::expr)) ;
+	}
+
+	void once (CR<Function<>> func) {
+		return SyntaxHolder::hold (thiz)->once (func) ;
+	}
+
+	void then (CR<Function<>> func) {
+		return SyntaxHolder::hold (thiz)->then (func) ;
+	}
+
+	template <class ARG1>
+	void undo (TYPE<ARG1>) {
+		return SyntaxHolder::hold (thiz)->undo (Clazz (TYPE<ARG1>::expr)) ;
+	}
+
+	template <class ARG1>
+	void redo (TYPE<ARG1>) {
+		return SyntaxHolder::hold (thiz)->redo (Clazz (TYPE<ARG1>::expr)) ;
 	}
 } ;
 } ;

@@ -1,4 +1,4 @@
-<h1 align=center font-weight:100>CSC</h1>
+﻿<h1 align=center font-weight:100>CSC</h1>
 
 A lightweight, modern C++ library, providing a consistent interface for **Windows|Linux** and **MSVC|GCC|CLANG|NVCC**. Since this project is built using paradigms focused on memory layout and ownership, it can offer a stable binary interface for projects involving multiple threads and multiple dynamic link libraries.
 
@@ -9,7 +9,7 @@ A lightweight, modern C++ library, providing a consistent interface for **Window
 | **[csc.hpp](src/csc/csc.hpp)** | Language  | Detects compiler environment
 | **[csc_type.hpp](src/csc/csc_type.hpp)** | Utility  | Unified basic types
 | **[csc_core.hpp](src/csc/csc_core.hpp)** | Utility  | Box and Ref types
-| **[csc_basic.hpp](src/csc/csc_core.hpp)** | Memory  | Smart pointers and allocators
+| **[csc_basic.hpp](src/csc/csc_basic.hpp)** | Memory  | Smart pointers and allocators
 | **[csc_math.hpp](src/csc/csc_math.hpp)** | Math  | Wrapper of standard libraries
 | **[csc_array.hpp](src/csc/csc_array.hpp)** | Container  | Various custom containers
 | **[csc_image.hpp](src/csc/csc_image.hpp)** | Container  | Container for image classes
@@ -33,7 +33,7 @@ Pre-configured Visual Studio 2022 projects are also available in the `${root}/bu
 
 ````
 int main () {
-	const auto r1x = Singleton<Console>::instance () ;
+	const auto r1x = Singleton<Console>::expr ;
 	r1x.start () ;
 	r1x.info (Format (slice ("Hello World $1 $2")) (slice ("C++") ,20)) ;
 	r1x.pause () ;
