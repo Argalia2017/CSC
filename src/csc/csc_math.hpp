@@ -59,10 +59,12 @@ struct MathProcHolder implement Interface {
 	virtual FLT64 inverse (CR<FLT64> a) const = 0 ;
 	virtual FLT32 floor (CR<FLT32> a ,CR<FLT32> b) const = 0 ;
 	virtual FLT64 floor (CR<FLT64> a ,CR<FLT64> b) const = 0 ;
-	virtual FLT32 round (CR<FLT32> a ,CR<FLT32> b) const = 0 ;
-	virtual FLT64 round (CR<FLT64> a ,CR<FLT64> b) const = 0 ;
 	virtual FLT32 ceil (CR<FLT32> a ,CR<FLT32> b) const = 0 ;
 	virtual FLT64 ceil (CR<FLT64> a ,CR<FLT64> b) const = 0 ;
+	virtual FLT32 round (CR<FLT32> a) const = 0 ;
+	virtual FLT64 round (CR<FLT64> a) const = 0 ;
+	virtual FLT32 fmod (CR<FLT32> a) const = 0 ;
+	virtual FLT64 fmod (CR<FLT64> a) const = 0 ;
 	virtual VAL32 clamp (CR<VAL32> a ,CR<VAL32> min_ ,CR<VAL32> max_) const = 0 ;
 	virtual VAL64 clamp (CR<VAL64> a ,CR<VAL64> min_ ,CR<VAL64> max_) const = 0 ;
 	virtual FLT32 clamp (CR<FLT32> a ,CR<FLT32> min_ ,CR<FLT32> max_) const = 0 ;
@@ -172,13 +174,18 @@ public:
 	}
 
 	template <class ARG1 ,class = REQUIRE<IS_FLOAT<ARG1>>>
-	static ARG1 round (CR<ARG1> a ,CR<ARG1> b) {
-		return MathProcHolder::hold (expr)->round (a ,b) ;
+	static ARG1 ceil (CR<ARG1> a ,CR<ARG1> b) {
+		return MathProcHolder::hold (expr)->ceil (a ,b) ;
 	}
 
 	template <class ARG1 ,class = REQUIRE<IS_FLOAT<ARG1>>>
-	static ARG1 ceil (CR<ARG1> a ,CR<ARG1> b) {
-		return MathProcHolder::hold (expr)->ceil (a ,b) ;
+	static ARG1 round (CR<ARG1> a) {
+		return MathProcHolder::hold (expr)->round (a) ;
+	}
+
+	template <class ARG1 ,class = REQUIRE<IS_FLOAT<ARG1>>>
+	static ARG1 fmod (CR<ARG1> a) {
+		return MathProcHolder::hold (expr)->fmod (a) ;
 	}
 
 	template <class ARG1 ,class = REQUIRE<IS_SCALAR<ARG1>>>

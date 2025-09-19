@@ -12,38 +12,6 @@
 #include "csc_array.hpp"
 
 namespace CSC {
-struct Color1B {
-	BYTE mB ;
-} ;
-
-struct Color2B {
-	BYTE mB ;
-	BYTE mG ;
-} ;
-
-struct Color3B {
-	BYTE mB ;
-	BYTE mG ;
-	BYTE mR ;
-} ;
-
-struct Color4B {
-	BYTE mB ;
-	BYTE mG ;
-	BYTE mR ;
-	BYTE mA ;
-} ;
-
-static constexpr auto COLOR_BLACK = Color3B ({BYTE (0X00) ,BYTE (0X00) ,BYTE (0X00)}) ;
-static constexpr auto COLOR_WHITE = Color3B ({BYTE (0XFF) ,BYTE (0XFF) ,BYTE (0XFF)}) ;
-static constexpr auto COLOR_GRAY = Color3B ({BYTE (0X80) ,BYTE (0X80) ,BYTE (0X80)}) ;
-static constexpr auto COLOR_RED = Color3B ({BYTE (0X00) ,BYTE (0X00) ,BYTE (0XFF)}) ;
-static constexpr auto COLOR_GREEN = Color3B ({BYTE (0X00) ,BYTE (0XFF) ,BYTE (0X00)}) ;
-static constexpr auto COLOR_BLUE = Color3B ({BYTE (0XFF) ,BYTE (0X00) ,BYTE (0X00)}) ;
-static constexpr auto COLOR_YELLOW = Color3B ({BYTE (0X00) ,BYTE (0XFF) ,BYTE (0XFF)}) ;
-static constexpr auto COLOR_PURPLE = Color3B ({BYTE (0XFF) ,BYTE (0X00) ,BYTE (0XFF)}) ;
-static constexpr auto COLOR_CYAN = Color3B ({BYTE (0XFF) ,BYTE (0XFF) ,BYTE (0X00)}) ;
-
 template <class A>
 class RowProxy {
 private:
@@ -312,6 +280,85 @@ public:
 
 	void splice (CR<Pixel> index ,CR<Image> item) {
 		return splice (index.mX ,index.mY ,item) ;
+	}
+} ;
+
+struct Color1B {
+	BYTE mB ;
+} ;
+
+struct Color2B {
+	BYTE mB ;
+	BYTE mG ;
+} ;
+
+struct Color3B {
+	BYTE mB ;
+	BYTE mG ;
+	BYTE mR ;
+} ;
+
+struct Color4B {
+	BYTE mB ;
+	BYTE mG ;
+	BYTE mR ;
+	BYTE mA ;
+} ;
+
+static constexpr auto COLOR_BLACK = Color3B ({BYTE (0X00) ,BYTE (0X00) ,BYTE (0X00)}) ;
+static constexpr auto COLOR_WHITE = Color3B ({BYTE (0XFF) ,BYTE (0XFF) ,BYTE (0XFF)}) ;
+static constexpr auto COLOR_GRAY = Color3B ({BYTE (0X80) ,BYTE (0X80) ,BYTE (0X80)}) ;
+static constexpr auto COLOR_RED = Color3B ({BYTE (0X00) ,BYTE (0X00) ,BYTE (0XFF)}) ;
+static constexpr auto COLOR_GREEN = Color3B ({BYTE (0X00) ,BYTE (0XFF) ,BYTE (0X00)}) ;
+static constexpr auto COLOR_BLUE = Color3B ({BYTE (0XFF) ,BYTE (0X00) ,BYTE (0X00)}) ;
+static constexpr auto COLOR_YELLOW = Color3B ({BYTE (0X00) ,BYTE (0XFF) ,BYTE (0XFF)}) ;
+static constexpr auto COLOR_PURPLE = Color3B ({BYTE (0XFF) ,BYTE (0X00) ,BYTE (0XFF)}) ;
+static constexpr auto COLOR_CYAN = Color3B ({BYTE (0XFF) ,BYTE (0XFF) ,BYTE (0X00)}) ;
+
+struct ColorProcLayout ;
+
+struct ColorProcHolder implement Interface {
+	imports CR<OfThis<UniqueRef<ColorProcLayout>>> expr_m () ;
+	imports VFat<ColorProcHolder> hold (VR<ColorProcLayout> that) ;
+	imports CFat<ColorProcHolder> hold (CR<ColorProcLayout> that) ;
+
+	virtual void initialize () = 0 ;
+	virtual FLT64 gray_from_bgr (CR<Color3B> a) const = 0 ;
+	virtual Color3B bgr_from_gray (CR<FLT64> a) const = 0 ;
+	virtual Color3B jet_from_norm (CR<FLT64> a) const = 0 ;
+	virtual FLT64 norm_from_jet (CR<Color3B> a) const = 0 ;
+	virtual Color3B hsv_from_bgr (CR<Color3B> a) const = 0 ;
+	virtual Color3B bgr_from_hsv (CR<Color3B> a) const = 0 ;
+} ;
+
+class ColorProc implement OfThis<UniqueRef<ColorProcLayout>> {
+public:
+	static CR<ColorProc> expr_m () {
+		return keep[TYPE<ColorProc>::expr] (ColorProcHolder::expr) ;
+	}
+
+	imports FLT64 gray_from_bgr (CR<Color3B> a) {
+		return ColorProcHolder::hold (expr)->gray_from_bgr (a) ;
+	}
+
+	imports Color3B bgr_from_gray (CR<FLT64> a) {
+		return ColorProcHolder::hold (expr)->bgr_from_gray (a) ;
+	}
+
+	imports Color3B jet_from_norm (CR<FLT64> a) {
+		return ColorProcHolder::hold (expr)->jet_from_norm (a) ;
+	}
+
+	imports FLT64 norm_from_jet (CR<Color3B> a) {
+		return ColorProcHolder::hold (expr)->norm_from_jet (a) ;
+	}
+
+	imports Color3B hsv_from_bgr (CR<Color3B> a) {
+		return ColorProcHolder::hold (expr)->hsv_from_bgr (a) ;
+	}
+
+	imports Color3B bgr_from_hsv (CR<Color3B> a) {
+		return ColorProcHolder::hold (expr)->bgr_from_hsv (a) ;
 	}
 } ;
 

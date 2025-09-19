@@ -185,20 +185,28 @@ public:
 		return std::floor (a * inverse (b)) * b ;
 	}
 
-	FLT32 round (CR<FLT32> a ,CR<FLT32> b) const override {
-		return std::round (a * inverse (b)) * b ;
-	}
-
-	FLT64 round (CR<FLT64> a ,CR<FLT64> b) const override {
-		return std::round (a * inverse (b)) * b ;
-	}
-
 	FLT32 ceil (CR<FLT32> a ,CR<FLT32> b) const override {
 		return std::ceil (a * inverse (b)) * b ;
 	}
 
 	FLT64 ceil (CR<FLT64> a ,CR<FLT64> b) const override {
 		return std::ceil (a * inverse (b)) * b ;
+	}
+
+	FLT32 round (CR<FLT32> a) const override {
+		return std::round (a) ;
+	}
+
+	FLT64 round (CR<FLT64> a) const override {
+		return std::round (a) ;
+	}
+
+	FLT32 fmod (CR<FLT32> a) const override {
+		return std::fmod (a ,FLT32 (1)) ;
+	}
+
+	FLT64 fmod (CR<FLT64> a) const override {
+		return std::fmod (a ,FLT64 (1)) ;
 	}
 
 	VAL32 clamp (CR<VAL32> a ,CR<VAL32> min_ ,CR<VAL32> max_) const override {
@@ -238,7 +246,7 @@ public:
 		const auto r2x = r1x - MathProc::floor (r1x / 2 ,FLT64 (1)) * 2 ;
 		const auto r3x = 1 - MathProc::abs (r2x - 1) ;
 		const auto r4x = FLT64 (max_ - min_) * r3x ;
-		const auto r5x = VAL32 (round (r4x ,FLT64 (1))) ;
+		const auto r5x = VAL32 (round (r4x)) ;
 		return min_ + r5x ;
 	}
 
@@ -247,7 +255,7 @@ public:
 		const auto r2x = r1x - MathProc::floor (r1x / 2 ,FLT64 (1)) * 2 ;
 		const auto r3x = 1 - MathProc::abs (r2x - 1) ;
 		const auto r4x = FLT64 (max_ - min_) * r3x ;
-		const auto r5x = VAL64 (round (r4x ,FLT64 (1))) ;
+		const auto r5x = VAL64 (round (r4x)) ;
 		return min_ + r5x ;
 	}
 
@@ -1443,7 +1451,7 @@ public:
 	FLT64 dx (CR<INDEX> slot) const override {
 		return self.mThis->mDX[slot] ;
 	}
-	
+
 	void once (CR<WrapperLayout> params) const override {
 		//@warn: it breaks Ref::exclusive to copy and write
 		auto rax = self.mThis.share () ;
@@ -1605,7 +1613,7 @@ public:
 		JetHolder::hold (ret)->initialize (self.mThis->mDX.size () ,0) ;
 		ret.mThis->mEval = JetEvalFunction ([] (VR<JetNode> node ,CR<WrapperLayout> params) {
 			const auto r1x = node.mThat->mFX ;
-			const auto r2x = VAL32 (MathProc::round (r1x - 1 ,FLT64 (1))) ;
+			const auto r2x = VAL32 (MathProc::round (r1x - 1)) ;
 			const auto r3x = MathProc::pow (node.mFake->mFX ,r2x) ;
 			node.mFX = r3x * node.mFake->mFX ;
 			node.mEX = round_ex (node.mFake->mEX * r1x) ;
@@ -1825,7 +1833,7 @@ public:
 	}
 
 	static FLT64 round_ex (CR<FLT64> ex) {
-		const auto r1x = MathProc::round (ex ,FLT64 (0.01)) ;
+		const auto r1x = MathProc::floor (ex + FLT64 (0.005) ,FLT64 (0.01)) ;
 		const auto r2x = MathProc::inverse (ex - r1x) ;
 		assume (r2x == 0) ;
 		return r1x ;

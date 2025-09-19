@@ -159,8 +159,8 @@ public:
 
 	template <class ARG1>
 	forceinline ARG1 sampler_f32_impl (CR<Image<ARG1>> image ,CR<FLT32> x ,CR<FLT32> y) const {
-		const auto r1x = INDEX (MathProc::round (x ,FLT32 (1))) ;
-		const auto r2x = INDEX (MathProc::round (y ,FLT32 (1))) ;
+		const auto r1x = INDEX (MathProc::round (x)) ;
+		const auto r2x = INDEX (MathProc::round (y)) ;
 		const auto r3x = MathProc::clamp (r1x ,ZERO ,image.cx () - 1) ;
 		const auto r4x = MathProc::clamp (r2x ,ZERO ,image.cy () - 1) ;
 		const auto r5x = MathProc::max_of (r3x - 1 ,ZERO) ;
@@ -257,8 +257,8 @@ public:
 
 	template <class ARG1>
 	forceinline ARG1 sampler_f64_impl (CR<Image<ARG1>> image ,CR<FLT64> x ,CR<FLT64> y) const {
-		const auto r1x = INDEX (MathProc::round (x ,FLT64 (1))) ;
-		const auto r2x = INDEX (MathProc::round (y ,FLT64 (1))) ;
+		const auto r1x = INDEX (MathProc::round (x)) ;
+		const auto r2x = INDEX (MathProc::round (y)) ;
 		const auto r3x = MathProc::clamp (r1x ,ZERO ,image.cx () - 1) ;
 		const auto r4x = MathProc::clamp (r2x ,ZERO ,image.cy () - 1) ;
 		const auto r5x = MathProc::max_of (r3x - 1 ,ZERO) ;

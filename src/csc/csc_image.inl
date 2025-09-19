@@ -206,6 +206,220 @@ exports CFat<ImageHolder> ImageHolder::hold (CR<ImageLayout> that) {
 	return CFat<ImageHolder> (ImageImplHolder () ,that) ;
 }
 
+struct ColorProcLayout {
+	FLT64 mByteInv ;
+} ;
+
+class ColorProcImplHolder final implement Fat<ColorProcHolder ,ColorProcLayout> {
+public:
+	void initialize () override {
+		self.mByteInv = MathProc::inverse (FLT64 (255)) ;
+	}
+
+	FLT64 gray_from_bgr (CR<Color3B> a) const override {
+		const auto r1x = FLT64 (VAL32 (a.mR)) * self.mByteInv ;
+		const auto r2x = FLT64 (VAL32 (a.mG)) * self.mByteInv ;
+		const auto r3x = FLT64 (VAL32 (a.mB)) * self.mByteInv ;
+		const auto r4x = 0.299 * r1x + 0.587 * r2x + 0.114 * r3x ;
+		return MathProc::clamp (r4x ,0.0 ,1.0) ;
+	}
+
+	Color3B bgr_from_gray (CR<FLT64> a) const override {
+		Color3B ret ;
+		const auto r1x = MathProc::clamp (a ,0.0 ,1.0) * FLT64 (255) ;
+		const auto r2x = VAL32 (MathProc::round (r1x)) ;
+		ret.mB = BYTE (r2x) ;
+		ret.mG = BYTE (r2x) ;
+		ret.mR = BYTE (r2x) ;
+		return move (ret) ;
+	}
+
+	Color3B jet_from_norm (CR<FLT64> a) const override {
+		Color3B ret ;
+		const auto r1x = MathProc::clamp (a ,0.0 ,1.0) * FLT64 (255) ;
+		const auto r2x = VAL32 (MathProc::round (r1x)) ;
+		auto act = TRUE ;
+		if ifdo (act) {
+			const auto r3x = 4 * r2x ;
+			if (r3x >= 256)
+				discard ;
+			ret.mR = BYTE (255) ;
+			ret.mG = BYTE (r3x) ;
+			ret.mB = BYTE (0) ;
+		}
+		if ifdo (act) {
+			const auto r4x = 4 * (r2x - 64) ;
+			if (r4x >= 256)
+				discard ;
+			ret.mR = BYTE (255 - r4x) ;
+			ret.mG = BYTE (255) ;
+			ret.mB = BYTE (r4x) ;
+		}
+		if ifdo (act) {
+			const auto r5x = 4 * (r2x - 128) ;
+			if (r5x >= 256)
+				discard ;
+			ret.mR = BYTE (0) ;
+			ret.mG = BYTE (255 - r5x) ;
+			ret.mB = BYTE (255) ;
+		}
+		if ifdo (act) {
+			const auto r6x = r2x - 192 ;
+			ret.mR = BYTE (0) ;
+			ret.mG = BYTE (0) ;
+			ret.mB = BYTE (255 - r6x) ;
+		}
+		return move (ret) ;
+	}
+
+	FLT64 norm_from_jet (CR<Color3B> a) const override {
+		const auto r1x = FLT64 (VAL32 (a.mR)) * self.mByteInv ;
+		const auto r2x = FLT64 (VAL32 (a.mG)) * self.mByteInv ;
+		const auto r3x = FLT64 (VAL32 (a.mB)) * self.mByteInv ;
+		auto act = TRUE ;
+		if ifdo (act) {
+			if (a.mR < BYTE (255))
+				discard ;
+			return r2x * 0.25 ;
+		}
+		if ifdo (act) {
+			if (a.mG < BYTE (255))
+				discard ;
+			return r3x * 0.25 + 0.25 ;
+		}
+		if ifdo (act) {
+			if (a.mB < BYTE (255))
+				discard ;
+			return -r2x * 0.25 + 0.75 ;
+		}
+		if ifdo (act) {
+			if (a.mB < BYTE (192))
+				discard ;
+			return 1.75 - r3x ;
+		}
+		return 1 ;
+	}
+
+	Color3B hsv_from_bgr (CR<Color3B> a) const override {
+		Color3B ret ;
+		const auto r1x = FLT64 (VAL32 (a.mR)) * self.mByteInv;
+		const auto r2x = FLT64 (VAL32 (a.mG)) * self.mByteInv;
+		const auto r3x = FLT64 (VAL32 (a.mB)) * self.mByteInv;
+		const auto r4x = MathProc::min_of (r1x ,r2x ,r3x);
+		const auto r5x = MathProc::max_of (r1x ,r2x ,r3x);
+		const auto r6x = r5x - r4x;
+		const auto r7x = MathProc::inverse (r6x) ;
+		auto rax = FLT64 (0) ;
+		auto act = TRUE ;
+		if ifdo (act) {
+			if (r6x > 0)
+				discard ;
+			rax = r7x ;
+		}
+		if ifdo (act) {
+			if (r5x != r1x)
+				discard ;
+			rax = (r2x - r3x) * r7x ;
+			rax = MathProc::fmod (rax / 6) * 6 ;
+		}
+		if ifdo (act) {
+			if (r5x != r2x)
+				discard ;
+			rax = (r3x - r1x) * r7x + 2 ;
+		}
+		if ifdo (act) {
+			if (r5x != r3x)
+				discard ;
+			rax = (r1x - r2x) * r7x + 4 ;
+		}
+		rax *= 60 ;
+		rax /= 360 ;
+		rax += MathProc::step (-rax) ;
+		const auto r8x = r6x * MathProc::inverse (r5x) ;
+		ret.mB = BYTE (MathProc::lerp (rax ,VAL32 (0) ,VAL32 (255))) ;
+		ret.mG = BYTE (MathProc::lerp (r8x ,VAL32 (0) ,VAL32 (255))) ;
+		ret.mR = BYTE (MathProc::lerp (r5x ,VAL32 (0) ,VAL32 (255))) ;
+		return move (ret) ;
+	}
+
+	Color3B bgr_from_hsv (CR<Color3B> a) const override {
+		Color3B ret ;
+		const auto r1x = FLT64 (VAL32 (a.mB)) * self.mByteInv * 360;
+		const auto r2x = FLT64 (VAL32 (a.mG)) * self.mByteInv;
+		const auto r3x = FLT64 (VAL32 (a.mR)) * self.mByteInv;
+		const auto r4x = r3x * r2x;
+		const auto r5x = MathProc::fmod (r1x / 120) * 2 ;
+		const auto r6x = r4x * (1 - MathProc::abs (r5x - 1));
+		const auto r7x = r3x - r4x;
+		auto rax = Buffer3<FLT64> () ;
+		auto act = TRUE ;
+		if ifdo (act) {
+			if (r1x >= 60)
+				discard ;
+			rax[0] = r4x ;
+			rax[1] = r6x ;
+			rax[2] = 0 ;
+		}
+		if ifdo (act) {
+			if (r1x >= 120)
+				discard ;
+			rax[0] = r6x ;
+			rax[1] = r4x ;
+			rax[2] = 0 ;
+		}
+		if ifdo (act) {
+			if (r1x >= 180)
+				discard ;
+			rax[0] = 0 ;
+			rax[1] = r4x ;
+			rax[2] = r6x ;
+		}
+		if ifdo (act) {
+			if (r1x >= 240)
+				discard ;
+			rax[0] = 0 ;
+			rax[1] = r6x ;
+			rax[2] = r4x ;
+		}
+		if ifdo (act) {
+			if (r1x >= 300)
+				discard ;
+			rax[0] = r6x ;
+			rax[1] = 0 ;
+			rax[2] = r4x ;
+		}
+		if ifdo (act) {
+			rax[0] = r4x ;
+			rax[1] = 0 ;
+			rax[2] = r6x ;
+		}
+		rax[0] += r7x ;
+		rax[1] += r7x ;
+		rax[2] += r7x ;
+		ret.mB = BYTE (MathProc::lerp (rax[0] ,VAL32 (0) ,VAL32 (255))) ;
+		ret.mG = BYTE (MathProc::lerp (rax[1] ,VAL32 (0) ,VAL32 (255))) ;
+		ret.mR = BYTE (MathProc::lerp (rax[2] ,VAL32 (0) ,VAL32 (255))) ;
+		return move (ret) ;
+	}
+} ;
+
+exports CR<OfThis<UniqueRef<ColorProcLayout>>> ColorProcHolder::expr_m () {
+	return memorize ([&] () {
+		OfThis<UniqueRef<ColorProcLayout>> ret ;
+		ret.mThis = UniqueRef<ColorProcLayout>::make () ;
+		ColorProcHolder::hold (ret)->initialize () ;
+		return move (ret) ;
+	}) ;
+}
+
+exports VFat<ColorProcHolder> ColorProcHolder::hold (VR<ColorProcLayout> that) {
+	return VFat<ColorProcHolder> (ColorProcImplHolder () ,that) ;
+}
+
+exports CFat<ColorProcHolder> ColorProcHolder::hold (CR<ColorProcLayout> that) {
+	return CFat<ColorProcHolder> (ColorProcImplHolder () ,that) ;
+}
+
 template class External<ImageProcHolder ,ImageProcLayout> ;
 
 struct ImageProcLayout {
