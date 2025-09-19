@@ -684,7 +684,7 @@ public:
 		static const VAL64 M_EXP10[] = {1 ,10 ,100 ,1000 ,10000 ,100000 ,1000000 ,10000000 ,100000000} ;
 		const auto r1x = MathProc::clamp (precision ,ZERO ,LENGTH (8)) ;
 		const auto r2x = FLT64 (random_value (VAL64 (0) ,M_EXP10[r1x])) ;
-		const auto r3x = r2x * MathProc::inverse (FLT64 (r1x)) ;
+		const auto r3x = r2x * MathProc::inverse (FLT64 (M_EXP10[r1x])) ;
 		return r3x ;
 	}
 
