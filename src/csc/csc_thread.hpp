@@ -430,8 +430,9 @@ struct SyntaxHolder implement Interface {
 	virtual CR<Pointer> maybe (CR<Clazz> name) const leftvalue = 0 ;
 	virtual void once (CR<Function<>> func) = 0 ;
 	virtual void then (CR<Function<>> func) = 0 ;
-	virtual void undo (CR<Clazz> name) = 0 ;
-	virtual void redo (CR<Clazz> name) = 0 ;
+	virtual void monad (CR<Clazz> name) = 0 ;
+	virtual void until (RR<Ref<BOOL>> flag) = 0 ;
+	virtual void execute () = 0 ;
 } ;
 
 class Syntax implement OfThis<SharedRef<SyntaxLayout>> {
@@ -462,13 +463,16 @@ public:
 	}
 
 	template <class ARG1>
-	void undo (TYPE<ARG1>) {
-		return SyntaxHolder::hold (thiz)->undo (Clazz (TYPE<ARG1>::expr)) ;
+	void monad (TYPE<ARG1>) {
+		return SyntaxHolder::hold (thiz)->monad (Clazz (TYPE<ARG1>::expr)) ;
 	}
 
-	template <class ARG1>
-	void redo (TYPE<ARG1>) {
-		return SyntaxHolder::hold (thiz)->redo (Clazz (TYPE<ARG1>::expr)) ;
+	void until (RR<Ref<BOOL>> flag) {
+		return SyntaxHolder::hold (thiz)->until (move (flag)) ;
+	}
+
+	void execute () {
+		return SyntaxHolder::hold (thiz)->execute () ;
 	}
 } ;
 } ;

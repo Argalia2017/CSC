@@ -892,7 +892,7 @@ exports CFat<ManagerHolder> ManagerHolder::hold (CR<ManagerLayout> that) {
 }
 
 struct SyntaxLayout {
-	Set<Clazz> mStack ;
+	Set<Clazz> mTree ;
 } ;
 
 class SyntaxImplHolder final implement Fat<SyntaxHolder ,SyntaxLayout> {
@@ -919,11 +919,15 @@ public:
 		unimplemented () ;
 	}
 
-	void undo (CR<Clazz> name) override {
+	void monad (CR<Clazz> name) override {
 		unimplemented () ;
 	}
 
-	void redo (CR<Clazz> name) override {
+	void until (RR<Ref<BOOL>> flag) override {
+		unimplemented () ;
+	}
+
+	void execute () override {
 		unimplemented () ;
 	}
 } ;

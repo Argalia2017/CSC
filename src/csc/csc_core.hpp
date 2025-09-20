@@ -910,9 +910,8 @@ public:
 	}
 } ;
 
-struct ReflectMonad implement Interface {
-	virtual void hold (VR<Pointer> a) const = 0 ;
-	virtual void hold (CR<Pointer> a) const = 0 ;
+struct ReflectCompile implement Interface {
+	virtual void compile (VR<Pointer> a ,VR<Pointer> b) const = 0 ;
 
 	forceinline static consteval FLAG expr_m () noexcept {
 		return 104 ;
@@ -920,16 +919,11 @@ struct ReflectMonad implement Interface {
 } ;
 
 template <class A>
-class ReflectMonadBinder final implement Fat<ReflectMonad ,Proxy> {
+class ReflectCompileBinder final implement Fat<ReflectCompile ,Proxy> {
 public:
-	void hold (VR<Pointer> a) const override {
-		using R1X = typeof (nullof (A).self) ;
-		return A::hold (keep[TYPE<R1X>::expr] (a)) ;
-	}
-
-	void hold (CR<Pointer> a) const override {
-		using R1X = typeof (nullof (A).self) ;
-		return A::hold (keep[TYPE<R1X>::expr] (a)) ;
+	void compile (VR<Pointer> a ,VR<Pointer> b) const override {
+		auto &&rax = keep[TYPE<A>::expr] (a) ;
+		return rax.compile (b) ;
 	}
 } ;
 
