@@ -383,7 +383,7 @@ public:
 	}
 
 	void read (CR<typeof (CAT)>) override {
-		reset () ;
+		unimplemented () ;
 	}
 
 	void read (CR<typeof (GAP)>) override {
@@ -827,7 +827,7 @@ public:
 	}
 
 	void read (CR<typeof (CAT)>) override {
-		reset () ;
+		unimplemented () ;
 	}
 
 	void read (CR<typeof (GAP)>) override {
@@ -1025,7 +1025,7 @@ public:
 	}
 
 	void write (CR<typeof (CAT)>) override {
-		reset () ;
+		unimplemented () ;
 	}
 
 	void write (CR<typeof (GAP)>) override {
@@ -1513,7 +1513,7 @@ public:
 	}
 
 	void write (CR<typeof (CAT)>) override {
-		reset () ;
+		unimplemented () ;
 	}
 
 	void write (CR<typeof (GAP)>) override {
