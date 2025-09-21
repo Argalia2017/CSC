@@ -79,7 +79,7 @@ public:
 		self.mThreadFlag = ThreadFlag::Running ;
 		self.mThreadFunc = func ;
 		for (auto &&i : self.mThread.iter ()) {
-			self.mThread[i] = Thread (ExecutingFat (self) ,i) ;
+			self.mThread[i] = Thread (FriendExecutingBinder<WorkThreadLayout>::hold (self) ,i) ;
 			self.mThread[i].start () ;
 		}
 	}
@@ -287,7 +287,7 @@ public:
 		self.mSuspendFlag = FALSE ;
 		self.mThreadFunc = func ;
 		for (auto &&i : self.mThread.iter ()) {
-			self.mThread[i] = Thread (ExecutingFat (self) ,i) ;
+			self.mThread[i] = Thread (FriendExecutingBinder<CalcThreadLayout>::hold (self) ,i) ;
 			self.mThread[i].start () ;
 		}
 	}
@@ -538,7 +538,7 @@ public:
 				discard ;
 			self.mThread = Array<Thread> (1) ;
 			for (auto &&i : self.mThread.iter ()) {
-				self.mThread[i] = Thread (ExecutingFat (self) ,0) ;
+				self.mThread[i] = Thread (FriendExecutingBinder<PromiseLayout>::hold (self) ,0) ;
 				self.mThread[i].start () ;
 			}
 		}

@@ -1566,7 +1566,8 @@ public:
 					const auto r1x = StreamProc::hex_from_str (self.mFormat[i]) - 1 ;
 					if (!inline_between (r1x ,0 ,self.mWrite))
 						discard ;
-					writer.write (self.mParams[r1x]) ;
+					auto &&rbx = keep[TYPE<VFat<FriendWriting>>::expr] (self.mParams[r1x]) ;
+					rbx->friend_write (writer) ;
 				}
 				rax = FLAG (0) ;
 			}
@@ -1576,7 +1577,8 @@ public:
 				if (self.mFormat[i] != STRU32 ('0'))
 					discard ;
 				for (auto &&j : range (0 ,self.mWrite)) {
-					writer.write (self.mParams[j]) ;
+					auto &&rbx = keep[TYPE<VFat<FriendWriting>>::expr] (self.mParams[j]) ;
+					rbx->friend_write (writer) ;
 				}
 				rax = FLAG (3) ;
 			}
@@ -1587,7 +1589,8 @@ public:
 					const auto r2x = StreamProc::hex_from_str (self.mFormat[i]) - 1 ;
 					if (!inline_between (r2x ,0 ,self.mWrite))
 						discard ;
-					writer.write (self.mParams[r2x]) ;
+					auto &&rbx = keep[TYPE<VFat<FriendWriting>>::expr] (self.mParams[r2x]) ;
+					rbx->friend_write (writer) ;
 				}
 				rax = FLAG (3) ;
 			}
@@ -1605,9 +1608,9 @@ public:
 	}
 
 	void once (CR<WrapperLayout> params) const override {
-		const auto r1x = Pin<BufferX<WritingFat>> (self.mParams) ;
+		const auto r1x = Pin<BufferX<FatLayout>> (self.mParams) ;
 		const auto r2x = Pin<LENGTH> (self.mWrite) ;
-		auto &&rax = keep[TYPE<Wrapper<WritingFat>>::expr] (params) ;
+		auto &&rax = keep[TYPE<Wrapper<FatLayout>>::expr] (params) ;
 		INDEX ix = 0 ;
 		for (auto &&i : range (0 ,params.mRank)) {
 			r1x.ref[ix] = rax[i] ;

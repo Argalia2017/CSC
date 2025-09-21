@@ -1413,24 +1413,6 @@ public:
 	}
 } ;
 
-class ReadingFat {
-protected:
-	FatLayout mThat ;
-
-public:
-	implicit ReadingFat () = default ;
-
-	template <class ARG1>
-	explicit ReadingFat (VR<ARG1> that) {
-		mThat = FriendReadingBinder<ARG1>::hold (that) ;
-	}
-
-	void friend_read (VR<FriendReader> reader) const {
-		auto &&rax = keep[TYPE<VFat<FriendReading>>::expr] (mThat) ;
-		rax->friend_read (reader) ;
-	}
-} ;
-
 struct FriendWriting implement Interface {
 	virtual void friend_write (VR<FriendWriter> writer) const = 0 ;
 } ;
@@ -1447,27 +1429,9 @@ public:
 	}
 } ;
 
-class WritingFat {
-protected:
-	FatLayout mThat ;
-
-public:
-	implicit WritingFat () = default ;
-
-	template <class ARG1>
-	explicit WritingFat (CR<ARG1> that) {
-		mThat = FriendWritingBinder<ARG1>::hold (that) ;
-	}
-
-	void friend_write (VR<FriendWriter> writer) const {
-		auto &&rax = keep[TYPE<CFat<FriendWriting>>::expr] (mThat) ;
-		rax->friend_write (writer) ;
-	}
-} ;
-
 struct FormatLayout {
 	Slice mFormat ;
-	BufferX<WritingFat> mParams ;
+	BufferX<FatLayout> mParams ;
 	INDEX mWrite ;
 } ;
 
@@ -1499,7 +1463,7 @@ public:
 
 	template <class...ARG1>
 	void once (CR<ARG1>...params) const {
-		return FormatHolder::hold (thiz)->once (MakeWrapper (WritingFat (params)...)) ;
+		return FormatHolder::hold (thiz)->once (MakeWrapper (FriendWritingBinder<ARG1>::hold (params)...)) ;
 	}
 
 	template <class...ARG1>

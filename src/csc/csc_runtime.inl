@@ -453,7 +453,7 @@ exports CFat<UniqueLockHolder> UniqueLockHolder::hold (CR<UniqueLockLayout> that
 }
 
 struct ThreadLayout {
-	ExecutingFat mExecuting ;
+	Box<VFat<FriendExecuting>> mExecuting ;
 	FLAG mUid ;
 	INDEX mSlot ;
 	Box<std::thread> mThread ;
@@ -468,8 +468,8 @@ public:
 
 class ThreadImplHolder final implement Fat<ThreadHolder ,ThreadLayout> {
 public:
-	void initialize (CR<ExecutingFat> executing ,CR<INDEX> slot) override {
-		self.mExecuting = executing ;
+	void initialize (RR<VFat<FriendExecuting>> executing ,CR<INDEX> slot) override {
+		self.mExecuting = Box<VFat<FriendExecuting>>::make (move (executing)) ;
 		self.mUid = ZERO ;
 		self.mSlot = slot ;
 	}
@@ -482,7 +482,7 @@ public:
 		auto &&rax = self ;
 		self.mThread = Box<std::thread>::make ([&] () {
 			rax.mUid = RuntimeProc::thread_uid () ;
-			rax.mExecuting.friend_execute (rax.mSlot) ;
+			rax.mExecuting.ref->friend_execute (rax.mSlot) ;
 		}) ;
 	}
 
