@@ -128,7 +128,7 @@ public:
 	void initialize (CR<Array<Pointer>> pointcloud) override {
 		const auto r1x = address (pointcloud[0]) ;
 		const auto r2x = pointcloud.step () / SIZE_OF<FLT32>::expr ;
-		assume (inline_between (r2x ,1 ,4)) ;
+		assume (inline_mid (r2x ,1 ,4)) ;
 		const auto r3x = pointcloud.size () * r2x ;
 		self.mDataset = Ref<KDTreeDataset>::make () ;
 		self.mDataset->mPointCloud = RefBuffer<FLT32>::reference (r1x ,r3x) ;

@@ -37,7 +37,7 @@ public:
 		item.mPrecision = 0 ;
 		item.mSign = FALSE ;
 		const auto r1x = FEXP2CACHE_SIZE::expr / 2 + INDEX (index) ;
-		assert (inline_between (r1x ,0 ,FEXP2CACHE_SIZE::expr)) ;
+		assert (inline_mid (r1x ,0 ,FEXP2CACHE_SIZE::expr)) ;
 		item.mMantissa = mantissa (r1x) ;
 		item.mDownflow = 0 ;
 		item.mExponent = exponent (r1x) ;
@@ -72,7 +72,7 @@ public:
 		item.mPrecision = 0 ;
 		item.mSign = FALSE ;
 		const auto r1x = FEXP10CACHE_SIZE::expr / 2 + INDEX (index) ;
-		assert (inline_between (r1x ,0 ,FEXP10CACHE_SIZE::expr)) ;
+		assert (inline_mid (r1x ,0 ,FEXP10CACHE_SIZE::expr)) ;
 		item.mMantissa = mantissa (r1x) ;
 		item.mDownflow = 0 ;
 		item.mExponent = exponent (r1x) ;

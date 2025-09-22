@@ -893,7 +893,7 @@ public:
 
 	void read (CR<INDEX> index ,VR<RefBuffer<BYTE>> item) override {
 		assert (self.mPipe.exist ()) ;
-		assert (inline_between (index ,0 ,LENGTH (self.mHeader->mBlockSize))) ;
+		assert (inline_mid (index ,0 ,LENGTH (self.mHeader->mBlockSize))) ;
 		assert (item.size () == self.mHeader->mBlockStep) ;
 		const auto r1x = index / self.mHeader->mBlockSize ;
 		const auto r2x = index % self.mHeader->mBlockSize * self.mHeader->mBlockStep ;
@@ -905,7 +905,7 @@ public:
 
 	void write (CR<INDEX> index ,CR<RefBuffer<BYTE>> item) override {
 		assert (self.mPipe.exist ()) ;
-		assert (inline_between (index ,0 ,LENGTH (self.mHeader->mBlockSize))) ;
+		assert (inline_mid (index ,0 ,LENGTH (self.mHeader->mBlockSize))) ;
 		assert (item.size () == self.mHeader->mBlockStep) ;
 		const auto r1x = index / self.mHeader->mBlockSize ;
 		const auto r2x = index % self.mHeader->mBlockSize * self.mHeader->mBlockStep ;
