@@ -31,7 +31,7 @@ public:
 		const auto r1x = rax.size () ;
 		const auto r2x = LENGTH (rax.depth ()) ;
 		const auto r3x = align_of_cvmat_depth (r2x) ;
-		const auto r4x = choose_cvmat_unknown (r3x) ;
+		const auto r4x = choose_unknown (r3x) ;
 		const auto r5x = r3x * rax.channels () ;
 		const auto r6x = LENGTH (rax.step[0]) ;
 		assume (r6x % r5x == 0) ;
@@ -96,7 +96,7 @@ public:
 		return 0 ;
 	}
 
-	Unknown choose_cvmat_unknown (CR<LENGTH> align) const {
+	Unknown choose_unknown (CR<LENGTH> align) const {
 		if (align == SIZE_OF<BYTE>::expr)
 			return ArrayUnknownBinder<BYTE> () ;
 		if (align == SIZE_OF<WORD>::expr)

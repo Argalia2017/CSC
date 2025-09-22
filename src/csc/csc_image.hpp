@@ -429,7 +429,6 @@ public:
 
 struct TensorType {
 	enum {
-		Flt16 ,
 		Flt32 ,
 		Flt64 ,
 		Flt128 ,
@@ -471,6 +470,7 @@ public:
 
 struct TensorLayout {
 	Ref<RefBuffer<BYTE>> mTensor ;
+	FLAG mHolder ;
 	FLAG mBuffer ;
 	LENGTH mRank ;
 	Buffer5<LENGTH> mStride ;
@@ -495,11 +495,18 @@ struct TensorHolder implement Interface {
 	virtual FltProxy at (CR<INDEX> i1 ,CR<INDEX> i2) const = 0 ;
 	virtual FltProxy at (CR<INDEX> i1 ,CR<INDEX> i2 ,CR<INDEX> i3) const = 0 ;
 	virtual FltProxy at (CR<INDEX> i1 ,CR<INDEX> i2 ,CR<INDEX> i3 ,CR<INDEX> i4) const = 0 ;
+	virtual TensorLayout sadd (CR<TensorLayout> that) const = 0 ;
+	virtual TensorLayout ssub (CR<TensorLayout> that) const = 0 ;
+	virtual TensorLayout smul (CR<TensorLayout> that) const = 0 ;
+	virtual TensorLayout sdiv (CR<TensorLayout> that) const = 0 ;
+	virtual TensorLayout sabs () const = 0 ;
+	virtual TensorLayout minus () const = 0 ;
 } ;
 
 class Tensor implement TensorLayout {
 protected:
 	using TensorLayout::mTensor ;
+	using TensorLayout::mHolder ;
 	using TensorLayout::mBuffer ;
 	using TensorLayout::mRank ;
 	using TensorLayout::mStride ;
@@ -574,9 +581,8 @@ public:
 	}
 
 	Tensor sadd (CR<Tensor> that) const {
-		Tensor ret ;
-		unimplemented () ;
-		return move (ret) ;
+		TensorLayout ret = TensorHolder::hold (thiz)->sadd (that) ;
+		return move (keep[TYPE<Tensor>::expr] (ret)) ;
 	}
 
 	forceinline Tensor operator+ (CR<Tensor> that) const {
@@ -584,9 +590,8 @@ public:
 	}
 
 	Tensor ssub (CR<Tensor> that) const {
-		Tensor ret ;
-		unimplemented () ;
-		return move (ret) ;
+		TensorLayout ret = TensorHolder::hold (thiz)->ssub (that) ;
+		return move (keep[TYPE<Tensor>::expr] (ret)) ;
 	}
 
 	forceinline Tensor operator- (CR<Tensor> that) const {
@@ -594,9 +599,8 @@ public:
 	}
 
 	Tensor smul (CR<Tensor> that) const {
-		Tensor ret ;
-		unimplemented () ;
-		return move (ret) ;
+		TensorLayout ret = TensorHolder::hold (thiz)->smul (that) ;
+		return move (keep[TYPE<Tensor>::expr] (ret)) ;
 	}
 
 	forceinline Tensor operator* (CR<Tensor> that) const {
@@ -604,35 +608,22 @@ public:
 	}
 
 	Tensor sdiv (CR<Tensor> that) const {
-		Tensor ret ;
-		unimplemented () ;
-		return move (ret) ;
+		TensorLayout ret = TensorHolder::hold (thiz)->sdiv (that) ;
+		return move (keep[TYPE<Tensor>::expr] (ret)) ;
 	}
 
 	forceinline Tensor operator/ (CR<Tensor> that) const {
 		return sdiv (that) ;
 	}
 
-	Tensor smod (CR<Tensor> that) const {
-		Tensor ret ;
-		unimplemented () ;
-		return move (ret) ;
-	}
-
-	forceinline Tensor operator% (CR<Tensor> that) const {
-		return smod (that) ;
-	}
-
 	Tensor sabs () const {
-		Tensor ret ;
-		unimplemented () ;
-		return move (ret) ;
+		TensorLayout ret = TensorHolder::hold (thiz)->sabs () ;
+		return move (keep[TYPE<Tensor>::expr] (ret)) ;
 	}
 
 	Tensor minus () const {
-		Tensor ret ;
-		unimplemented () ;
-		return move (ret) ;
+		TensorLayout ret = TensorHolder::hold (thiz)->minus () ;
+		return move (keep[TYPE<Tensor>::expr] (ret)) ;
 	}
 
 	forceinline Tensor operator- () const {
