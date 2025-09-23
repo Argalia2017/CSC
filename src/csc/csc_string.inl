@@ -416,7 +416,7 @@ public:
 					rax = FLAG (10) ;
 				}
 				if ifdo (act) {
-					if (!inline_mid (rax ,2 ,6))
+					if (!inline_between (rax ,2 ,6))
 						discard ;
 					if (a[i] > STRU8 (0XBF))
 						discard ;
@@ -591,7 +591,7 @@ public:
 				rax = FLAG (0) ;
 			}
 			if ifdo (act) {
-				if (!inline_mid (rax ,2 ,6))
+				if (!inline_between (rax ,2 ,6))
 					discard ;
 				if (a[i] > STRU8 (0XBF))
 					discard ;

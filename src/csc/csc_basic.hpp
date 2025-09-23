@@ -182,7 +182,7 @@ public:
 	forceinline BOOL operator!= (CR<Buffer> that) = delete ;
 
 	VR<A> at (CR<INDEX> index) leftvalue {
-		assert (inline_mid (index ,0 ,size ())) ;
+		assert (inline_between (index ,0 ,size ())) ;
 		return ref[index] ;
 	}
 
@@ -191,7 +191,7 @@ public:
 	}
 
 	CR<A> at (CR<INDEX> index) const leftvalue {
-		assert (inline_mid (index ,0 ,size ())) ;
+		assert (inline_between (index ,0 ,size ())) ;
 		return ref[index] ;
 	}
 
@@ -248,7 +248,7 @@ public:
 	}
 
 	CR<ITEM> at (CR<INDEX> index) const leftvalue {
-		assert (inline_mid (index ,0 ,mRank)) ;
+		assert (inline_between (index ,0 ,mRank)) ;
 		return Pointer::make (mWrapper.ref[index]) ;
 	}
 

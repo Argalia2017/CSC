@@ -1420,7 +1420,7 @@ public:
 	}
 
 	void initialize (CR<LENGTH> size_ ,CR<FLT64> item ,CR<INDEX> slot) override {
-		assert (inline_mid (slot ,0 ,size_)) ;
+		assert (inline_between (slot ,0 ,size_)) ;
 		initialize (size_ ,item) ;
 		self.mThis->mSlot = slot ;
 		self.mThis->mEval = JetEvalFunction ([] (VR<JetNode> node ,CR<WrapperLayout> params) {

@@ -148,15 +148,15 @@ public:
 	}
 
 	VR<Pointer> at (CR<INDEX> x ,CR<INDEX> y) leftvalue override {
-		assert (inline_mid (x ,0 ,cx ())) ;
-		assert (inline_mid (y ,0 ,cy ())) ;
+		assert (inline_between (x ,0 ,cx ())) ;
+		assert (inline_between (y ,0 ,cy ())) ;
 		INDEX ix = (x + self.mBX) + (y + self.mBY) * self.mStride ;
 		return self.mImage.at (ix) ;
 	}
 
 	CR<Pointer> at (CR<INDEX> x ,CR<INDEX> y) const leftvalue override {
-		assert (inline_mid (x ,0 ,cx ())) ;
-		assert (inline_mid (y ,0 ,cy ())) ;
+		assert (inline_between (x ,0 ,cx ())) ;
+		assert (inline_between (y ,0 ,cy ())) ;
 		INDEX ix = (x + self.mBX) + (y + self.mBY) * self.mStride ;
 		return self.mImage.at (ix) ;
 	}
@@ -183,8 +183,8 @@ public:
 			return ;
 		if (r2x == 0)
 			return ;
-		assert (inline_mid (x ,0 ,cx ())) ;
-		assert (inline_mid (y ,0 ,cy ())) ;
+		assert (inline_between (x ,0 ,cx ())) ;
+		assert (inline_between (y ,0 ,cy ())) ;
 		assert (x + r1x <= cx ()) ;
 		assert (y + r2x <= cy ()) ;
 		const auto r3x = ImageHolder::hold (item)->step () ;
@@ -698,40 +698,40 @@ public:
 
 	FltProxy at (CR<INDEX> i1) const override {
 		const auto r1x = i1 * self.mStride[1] ;
-		assert (inline_mid (r1x ,0 ,self.mStride[0])) ;
+		assert (inline_between (r1x ,0 ,self.mStride[0])) ;
 		const auto r2x = self.mBuffer + r1x ;
 		return FltProxy (r2x ,self.mStride[self.mRank]) ;
 	}
 
 	FltProxy at (CR<INDEX> i1 ,CR<INDEX> i2) const override {
 		const auto r1x = i1 * self.mStride[1] ;
-		assert (inline_mid (r1x ,0 ,self.mStride[0])) ;
+		assert (inline_between (r1x ,0 ,self.mStride[0])) ;
 		const auto r2x = i2 * self.mStride[2] ;
-		assert (inline_mid (r1x ,0 ,self.mStride[1])) ;
+		assert (inline_between (r1x ,0 ,self.mStride[1])) ;
 		const auto r3x = self.mBuffer + r1x + r2x ;
 		return FltProxy (r3x ,self.mStride[self.mRank]) ;
 	}
 
 	FltProxy at (CR<INDEX> i1 ,CR<INDEX> i2 ,CR<INDEX> i3) const override {
 		const auto r1x = i1 * self.mStride[1] ;
-		assert (inline_mid (r1x ,0 ,self.mStride[0])) ;
+		assert (inline_between (r1x ,0 ,self.mStride[0])) ;
 		const auto r2x = i2 * self.mStride[2] ;
-		assert (inline_mid (r1x ,0 ,self.mStride[1])) ;
+		assert (inline_between (r1x ,0 ,self.mStride[1])) ;
 		const auto r3x = i3 * self.mStride[3] ;
-		assert (inline_mid (r1x ,0 ,self.mStride[2])) ;
+		assert (inline_between (r1x ,0 ,self.mStride[2])) ;
 		const auto r4x = self.mBuffer + r1x + r2x + r3x ;
 		return FltProxy (r4x ,self.mStride[self.mRank]) ;
 	}
 
 	FltProxy at (CR<INDEX> i1 ,CR<INDEX> i2 ,CR<INDEX> i3 ,CR<INDEX> i4) const override {
 		const auto r1x = i1 * self.mStride[1] ;
-		assert (inline_mid (r1x ,0 ,self.mStride[0])) ;
+		assert (inline_between (r1x ,0 ,self.mStride[0])) ;
 		const auto r2x = i2 * self.mStride[2] ;
-		assert (inline_mid (r1x ,0 ,self.mStride[1])) ;
+		assert (inline_between (r1x ,0 ,self.mStride[1])) ;
 		const auto r3x = i3 * self.mStride[3] ;
-		assert (inline_mid (r1x ,0 ,self.mStride[2])) ;
+		assert (inline_between (r1x ,0 ,self.mStride[2])) ;
 		const auto r4x = i4 * self.mStride[4] ;
-		assert (inline_mid (r1x ,0 ,self.mStride[3])) ;
+		assert (inline_between (r1x ,0 ,self.mStride[3])) ;
 		const auto r5x = self.mBuffer + r1x + r2x + r3x + r4x ;
 		return FltProxy (r5x ,self.mStride[self.mRank]) ;
 	}

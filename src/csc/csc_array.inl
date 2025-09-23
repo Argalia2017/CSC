@@ -147,7 +147,7 @@ public:
 		const auto r1x = ArrayHolder::hold (item)->size () ;
 		if (r1x == 0)
 			return ;
-		assert (inline_mid (index ,0 ,size ())) ;
+		assert (inline_between (index ,0 ,size ())) ;
 		assert (index + r1x <= size ()) ;
 		const auto r2x = RFat<ReflectClone> (self.mArray.unknown ()) ;
 		for (auto &&i : range (0 ,r1x)) {
@@ -422,7 +422,7 @@ public:
 	}
 
 	void trunc (CR<INDEX> index) override {
-		if (!inline_mid (index ,0 ,self.mString.size ()))
+		if (!inline_between (index ,0 ,self.mString.size ()))
 			return ;
 		set (index ,STRU32 (0X00)) ;
 	}
@@ -437,7 +437,7 @@ public:
 		const auto r1x = SliceHolder::hold (item)->size () ;
 		if (r1x == 0)
 			return ;
-		assert (inline_mid (index ,0 ,size ())) ;
+		assert (inline_between (index ,0 ,size ())) ;
 		assert (index + r1x <= size ()) ;
 		for (auto &&i : range (0 ,r1x)) {
 			INDEX ix = index + i ;
@@ -449,7 +449,7 @@ public:
 		const auto r1x = StringHolder::hold (item)->length () ;
 		if (r1x == 0)
 			return ;
-		assert (inline_mid (index ,0 ,size ())) ;
+		assert (inline_between (index ,0 ,size ())) ;
 		const auto r2x = index + r1x ;
 		assert (index + r1x <= size ()) ;
 		const auto r3x = step () ;
@@ -515,14 +515,14 @@ public:
 	}
 
 	VR<Pointer> at (CR<INDEX> index) leftvalue override {
-		assert (inline_mid (index ,0 ,length ())) ;
+		assert (inline_between (index ,0 ,length ())) ;
 		const auto r1x = self.mDeque.size () ;
 		INDEX ix = (index + self.mRead) % r1x ;
 		return self.mDeque.at (ix) ;
 	}
 
 	CR<Pointer> at (CR<INDEX> index) const leftvalue override {
-		assert (inline_mid (index ,0 ,length ())) ;
+		assert (inline_between (index ,0 ,length ())) ;
 		const auto r1x = self.mDeque.size () ;
 		INDEX ix = (index + self.mRead) % r1x ;
 		return self.mDeque.at (ix) ;
@@ -1142,7 +1142,7 @@ public:
 
 	INDEX insert (CR<INDEX> index ,RR<BoxLayout> item) override {
 		check_exist () ;
-		assert (inline_mid (index ,0 ,self.mRange.size ())) ;
+		assert (inline_between (index ,0 ,self.mRange.size ())) ;
 		assert (!self.mList.used (self.mRange[index])) ;
 		INDEX ix = self.mList.alloc (move (item)) ;
 		check_resize () ;
@@ -2403,13 +2403,13 @@ public:
 
 	void add (RR<BoxLayout> item) override {
 		const auto r1x = bitwise[TYPE<INDEX>::expr] (BoxHolder::hold (item)->ref) ;
-		assume (inline_mid (r1x ,0 ,size ())) ;
+		assume (inline_between (r1x ,0 ,size ())) ;
 		set (r1x ,TRUE) ;
 	}
 
 	BOOL contain (CR<Pointer> item) const override {
 		const auto r1x = bitwise[TYPE<INDEX>::expr] (item) ;
-		if (!inline_mid (r1x ,0 ,size ()))
+		if (!inline_between (r1x ,0 ,size ()))
 			return FALSE ;
 		BOOL ret = FALSE ;
 		get (r1x ,ret) ;
@@ -2418,7 +2418,7 @@ public:
 
 	void erase (CR<Pointer> item) override {
 		const auto r1x = bitwise[TYPE<INDEX>::expr] (item) ;
-		if (!inline_mid (r1x ,0 ,size ()))
+		if (!inline_between (r1x ,0 ,size ()))
 			return ;
 		set (r1x ,FALSE) ;
 	}

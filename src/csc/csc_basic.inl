@@ -535,13 +535,13 @@ public:
 	}
 
 	VR<Pointer> at (CR<INDEX> index) leftvalue override {
-		assert (inline_mid (index ,0 ,size ())) ;
+		assert (inline_between (index ,0 ,size ())) ;
 		const auto r1x = self.mBuffer + index * self.mStep ;
 		return Pointer::make (r1x) ;
 	}
 
 	CR<Pointer> at (CR<INDEX> index) const leftvalue override {
-		assert (inline_mid (index ,0 ,size ())) ;
+		assert (inline_between (index ,0 ,size ())) ;
 		const auto r1x = self.mBuffer + index * self.mStep ;
 		return Pointer::make (r1x) ;
 	}
@@ -655,13 +655,13 @@ public:
 	}
 
 	VR<Pointer> at (CR<INDEX> index) leftvalue override {
-		assert (inline_mid (index ,0 ,size ())) ;
+		assert (inline_between (index ,0 ,size ())) ;
 		update_sync (index) ;
 		return ref ;
 	}
 
 	CR<Pointer> at (CR<INDEX> index) const leftvalue override {
-		assert (inline_mid (index ,0 ,size ())) ;
+		assert (inline_between (index ,0 ,size ())) ;
 		update_sync (index) ;
 		return ref ;
 	}
@@ -819,7 +819,7 @@ public:
 	}
 
 	BOOL used (CR<INDEX> index) const override {
-		if (!inline_mid (index ,0 ,self.mWidth))
+		if (!inline_between (index ,0 ,self.mWidth))
 			return FALSE ;
 		const auto r1x = ptr (self ,index).mNext ;
 		return r1x == USED ;

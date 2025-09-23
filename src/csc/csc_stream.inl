@@ -138,9 +138,9 @@ public:
 	}
 
 	STRU32 str_from_hex (CR<INDEX> hex) const override {
-		if (inline_mid (hex ,0 ,10))
+		if (inline_between (hex ,0 ,10))
 			return STRU32 ('0') + STRU32 (hex) ;
-		if (inline_mid (hex ,10 ,16))
+		if (inline_between (hex ,10 ,16))
 			return STRU32 ('A') + STRU32 (hex) - 10 ;
 		assume (FALSE) ;
 		return STRU32 () ;
@@ -340,7 +340,7 @@ public:
 	void read (CR<Slice> item) override {
 		auto rax = STRU32 () ;
 		for (auto &&i : range (0 ,item.size ())) {
-			assume (inline_mid (INDEX (item[i]) ,0 ,128)) ;
+			assume (inline_between (INDEX (item[i]) ,0 ,128)) ;
 			read (rax) ;
 			assume (rax == item[i]) ;
 		}
@@ -747,7 +747,7 @@ public:
 	void read (CR<Slice> item) override {
 		auto rax = STRU32 () ;
 		for (auto &&i : range (0 ,item.size ())) {
-			assume (inline_mid (INDEX (item[i]) ,0 ,128)) ;
+			assume (inline_between (INDEX (item[i]) ,0 ,128)) ;
 			read (rax) ;
 			assume (rax == item[i]) ;
 		}
@@ -984,7 +984,7 @@ public:
 
 	void write (CR<Slice> item) override {
 		for (auto &&i : range (0 ,item.size ())) {
-			assume (inline_mid (INDEX (item[i]) ,0 ,128)) ;
+			assume (inline_between (INDEX (item[i]) ,0 ,128)) ;
 			write (item[i]) ;
 		}
 	}
@@ -1455,7 +1455,7 @@ public:
 
 	void write (CR<Slice> item) override {
 		for (auto &&i : range (0 ,item.size ())) {
-			assume (inline_mid (INDEX (item[i]) ,0 ,128)) ;
+			assume (inline_between (INDEX (item[i]) ,0 ,128)) ;
 			write (item[i]) ;
 		}
 	}
@@ -1564,7 +1564,7 @@ public:
 					discard ;
 				if ifdo (TRUE) {
 					const auto r1x = StreamProc::hex_from_str (self.mFormat[i]) - 1 ;
-					if (!inline_mid (r1x ,0 ,self.mWrite))
+					if (!inline_between (r1x ,0 ,self.mWrite))
 						discard ;
 					auto &&rbx = keep[TYPE<VFat<FriendWriting>>::expr] (self.mParams[r1x]) ;
 					rbx->friend_write (writer) ;
@@ -1587,7 +1587,7 @@ public:
 					discard ;
 				if ifdo (TRUE) {
 					const auto r2x = StreamProc::hex_from_str (self.mFormat[i]) - 1 ;
-					if (!inline_mid (r2x ,0 ,self.mWrite))
+					if (!inline_between (r2x ,0 ,self.mWrite))
 						discard ;
 					auto &&rbx = keep[TYPE<VFat<FriendWriting>>::expr] (self.mParams[r2x]) ;
 					rbx->friend_write (writer) ;
@@ -1813,7 +1813,7 @@ public:
 
 	void write_aligned (VR<FriendWriter> writer ,CR<VAL64> number ,CR<LENGTH> align) const override {
 		auto rax = WriteValueBuffer () ;
-		assert (inline_mid (align ,0 ,rax.mBuffer.size ())) ;
+		assert (inline_between (align ,0 ,rax.mBuffer.size ())) ;
 		rax.mWrite = rax.mBuffer.size () ;
 		auto rbx = MathProc::abs (number) ;
 		for (auto &&i : range (0 ,align)) {
@@ -1953,7 +1953,7 @@ public:
 
 	Slice match (CR<INDEX> index) const override {
 		assert (!self.mMatch.empty ()) ;
-		assert (inline_mid (index ,0 ,self.mMatch.size ())) ;
+		assert (inline_between (index ,0 ,self.mMatch.size ())) ;
 		const auto r1x = FLAG (self.mMatch[index].first) ;
 		const auto r2x = FLAG (self.mMatch[index].second) ;
 		const auto r3x = (r2x - r1x) / SIZE_OF<STR>::expr ;

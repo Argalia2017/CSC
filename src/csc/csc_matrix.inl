@@ -229,14 +229,14 @@ public:
 	}
 
 	VR<FLT64> at (CR<INDEX> x ,CR<INDEX> y) leftvalue override {
-		assert (inline_mid (x ,0 ,4)) ;
-		assert (inline_mid (y ,0 ,4)) ;
+		assert (inline_between (x ,0 ,4)) ;
+		assert (inline_between (y ,0 ,4)) ;
 		return self.mMatrix[mm (x ,y)] ;
 	}
 
 	CR<FLT64> at (CR<INDEX> x ,CR<INDEX> y) const leftvalue override {
-		assert (inline_mid (x ,0 ,4)) ;
-		assert (inline_mid (y ,0 ,4)) ;
+		assert (inline_between (x ,0 ,4)) ;
+		assert (inline_between (y ,0 ,4)) ;
 		return self.mMatrix[mm (x ,y)] ;
 	}
 

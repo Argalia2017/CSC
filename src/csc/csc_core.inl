@@ -513,7 +513,7 @@ public:
 	}
 
 	CR<Pointer> at (CR<INDEX> index) const leftvalue {
-		assert (inline_mid (index ,0 ,size ())) ;
+		assert (inline_between (index ,0 ,size ())) ;
 		const auto r1x = self.mBuffer + index * self.mStep ;
 		return Pointer::make (r1x) ;
 	}

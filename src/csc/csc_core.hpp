@@ -386,7 +386,7 @@ struct FUNCTION_inline_between {
 	}
 } ;
 
-static constexpr auto inline_mid = FUNCTION_inline_between () ;
+static constexpr auto inline_between = FUNCTION_inline_between () ;
 
 struct FUNCTION_inline_alignas {
 	forceinline VAL operator() (CR<VAL> val ,CR<VAL> align) const noexcept {
