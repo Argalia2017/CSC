@@ -832,9 +832,50 @@ public:
 	}
 } ;
 
+template <class A>
+struct IndexPair implement Tuple<A ,INDEX> {
+public:
+	BOOL equal (CR<IndexPair> that) const {
+		return inline_equal (thiz.m1st ,that.m1st) ;
+	}
+
+	forceinline BOOL operator== (CR<IndexPair> that) const {
+		return equal (that) ;
+	}
+
+	forceinline BOOL operator!= (CR<IndexPair> that) const {
+		return (!equal (that)) ;
+	}
+
+	FLAG compr (CR<IndexPair> that) const {
+		return inline_compr (thiz.m1st ,that.m1st) ;
+	}
+
+	forceinline BOOL operator< (CR<IndexPair> that) const {
+		return compr (that) < ZERO ;
+	}
+
+	forceinline BOOL operator<= (CR<IndexPair> that) const {
+		return compr (that) <= ZERO ;
+	}
+
+	forceinline BOOL operator> (CR<IndexPair> that) const {
+		return compr (that) > ZERO ;
+	}
+
+	forceinline BOOL operator>= (CR<IndexPair> that) const {
+		return compr (that) >= ZERO ;
+	}
+
+	void visit (VR<FriendVisitor> visitor) const {
+		visitor.enter () ;
+		inline_visit (visitor ,thiz.m1st) ;
+		visitor.leave () ;
+	}
+} ;
+
 struct PriorityLayout {
 	RefBuffer<Pointer> mPriority ;
-	LENGTH mOffset ;
 	INDEX mRead ;
 	INDEX mWrite ;
 } ;
@@ -857,7 +898,7 @@ struct PriorityHolder implement Interface {
 	virtual BOOL empty () const = 0 ;
 	virtual BOOL full () const = 0 ;
 	virtual INDEX head () const = 0 ;
-	virtual void add (RR<BoxLayout> item ,CR<FLT64> key_) = 0 ;
+	virtual void add (RR<BoxLayout> item) = 0 ;
 	virtual void take () = 0 ;
 } ;
 
@@ -865,7 +906,6 @@ template <class A>
 class PriorityUnknownBinder final implement Fat<FriendUnknown ,Proxy> {
 public:
 	FLAG reflect (CR<FLAG> uuid) const override {
-		using R1X = Tuple<A ,FLT64> ;
 		if (uuid == ReflectSizeBinder<A>::expr)
 			return inline_vptr (ReflectSizeBinder<A> ()) ;
 		if (uuid == ReflectCreateBinder<A>::expr)
@@ -874,10 +914,14 @@ public:
 			return inline_vptr (ReflectDestroyBinder<A> ()) ;
 		if (uuid == ReflectAssignBinder<A>::expr)
 			return inline_vptr (ReflectAssignBinder<A> ()) ;
-		if (uuid == ReflectTupleBinder<R1X>::expr)
-			return inline_vptr (ReflectTupleBinder<R1X> ()) ;
-		if (uuid == ReflectElementBinder<R1X>::expr)
-			return inline_vptr (ReflectElementBinder<R1X> ()) ;
+		if (uuid == ReflectEqualBinder<A>::expr)
+			return inline_vptr (ReflectEqualBinder<A> ()) ;
+		if (uuid == ReflectComprBinder<A>::expr)
+			return inline_vptr (ReflectComprBinder<A> ()) ;
+		if (uuid == ReflectVisitBinder<A>::expr)
+			return inline_vptr (ReflectVisitBinder<A> ()) ;
+		if (uuid == ReflectElementBinder<A>::expr)
+			return inline_vptr (ReflectElementBinder<A> ()) ;
 		return ZERO ;
 	}
 } ;
@@ -898,7 +942,6 @@ template <class A>
 class Priority implement PriorityPureLayout<A> {
 protected:
 	using PriorityPureLayout<A>::mPriority ;
-	using PriorityPureLayout<A>::mOffset ;
 	using PriorityPureLayout<A>::mRead ;
 	using PriorityPureLayout<A>::mWrite ;
 
@@ -974,13 +1017,13 @@ public:
 		return PriorityHolder::hold (thiz)->head () ;
 	}
 
-	void add (CR<A> item ,CR<FLT64> key_) {
-		add (move (item) ,key_) ;
+	void add (CR<A> item) {
+		add (move (item)) ;
 	}
 
-	void add (RR<A> item ,CR<FLT64> key_) {
+	void add (RR<A> item) {
 		auto rax = Box<A>::make (move (item)) ;
-		return PriorityHolder::hold (thiz)->add (move (rax) ,key_) ;
+		return PriorityHolder::hold (thiz)->add (move (rax)) ;
 	}
 
 	void take () {
