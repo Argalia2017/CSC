@@ -677,6 +677,8 @@ public:
 			return ;
 		const auto r1x = size_ + 1 ;
 		RefBufferHolder::hold (self.mPriority)->initialize (holder ,r1x) ;
+		const auto r2x = RFat<ReflectTuple> (holder) ;
+		self.mOffset = r2x->tuple_m2nd () ;
 		clear () ;
 	}
 
@@ -687,7 +689,7 @@ public:
 		for (auto &&i : range (0 ,rax.size ())) {
 			BoxHolder::hold (item)->initialize (holder) ;
 			r1x->assign (BoxHolder::hold (item)->ref ,rax[i]) ;
-			add (move (item)) ;
+			add (move (item) ,FLT64 (i)) ;
 			BoxHolder::hold (item)->destroy () ;
 		}
 	}
@@ -715,6 +717,16 @@ public:
 
 	CR<Pointer> at (CR<INDEX> index) const leftvalue override {
 		return self.mPriority.at (index) ;
+	}
+
+	static VR<FLT64> ptr (VR<PriorityLayout> that ,CR<INDEX> index) {
+		const auto r1x = address (that.mPriority.at (index)) + that.mOffset ;
+		return Pointer::make (r1x) ;
+	}
+
+	static CR<FLT64> ptr (CR<PriorityLayout> that ,CR<INDEX> index) {
+		const auto r1x = address (that.mPriority.at (index)) + that.mOffset ;
+		return Pointer::make (r1x) ;
 	}
 
 	INDEX ibegin () const override {
@@ -746,7 +758,7 @@ public:
 		return 0 ;
 	}
 
-	void add (RR<BoxLayout> item) override {
+	void add (RR<BoxLayout> item ,CR<FLT64> key_) override {
 		check_exist () ;
 		check_resize () ;
 		INDEX ix = self.mWrite ;
