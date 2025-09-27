@@ -240,11 +240,11 @@ public:
 	void initialize (CR<Unknown> holder ,CR<Unknown> extend ,CR<LENGTH> size_) override {
 		assert (!exist ()) ;
 		const auto r1x = RFat<ReflectSize> (holder) ;
-		const auto r2x = RFat<ReflectSize> (extend) ;
-		const auto r3x = inline_max (r1x->type_align () - ALIGN_OF<RefTree>::expr ,0) ;
-		const auto r4x = SIZE_OF<RefTree>::expr + r3x + r1x->type_size () ;
-		const auto r5x = inline_max (r2x->type_align () - r1x->type_align () ,0) ;
-		const auto r6x = r4x + r5x + r2x->type_size () * size_ ;
+		const auto r2x = inline_max (r1x->type_align () - ALIGN_OF<RefTree>::expr ,0) ;
+		const auto r3x = SIZE_OF<RefTree>::expr + r2x + r1x->type_size () ;
+		const auto r4x = RFat<ReflectSize> (extend) ;
+		const auto r5x = inline_max (r4x->type_align () - r1x->type_align () ,0) ;
+		const auto r6x = r3x + r5x + r4x->type_size () * size_ ;
 		const auto r7x = Heap::expr ;
 		self.mHandle = r7x.alloc (r6x) ;
 		assert (self.mHandle >= REFIMPLLAYOUT_MIN_HANDLE) ;
