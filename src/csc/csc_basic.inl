@@ -92,7 +92,6 @@ exports CFat<OptionalHolder> OptionalHolder::hold (CR<OptionalLayout> that) {
 }
 
 struct FunctionTree {
-	FLAG mHolder ;
 	BoxLayout mValue ;
 } ;
 
@@ -100,7 +99,6 @@ class FunctionImplHolder final implement Fat<FunctionHolder ,FunctionLayout> {
 public:
 	void initialize (CR<Unknown> holder) override {
 		RefHolder::hold (self.mThis)->initialize (RefUnknownBinder<FunctionTree> () ,holder ,1) ;
-		self.mThis->mHolder = inline_vptr (holder) ;
 		BoxHolder::hold (raw ())->initialize (holder) ;
 		BoxHolder::hold (raw ())->release () ;
 	}
@@ -120,15 +118,17 @@ public:
 	LENGTH rank () const override {
 		if (self.mThis == NULL)
 			return 0 ;
-		const auto r1x = RFat<ReflectInvoke> (Unknown (self.mThis->mHolder)) ;
-		return r1x->rank () ;
+		const auto r1x = BoxHolder::hold (raw ())->unknown () ;
+		const auto r2x = RFat<ReflectInvoke> (r1x) ;
+		return r2x->rank () ;
 	}
 
 	void invoke (CR<WrapperLayout> params) const override {
 		if (self.mThis == NULL)
 			return ;
-		const auto r1x = RFat<ReflectInvoke> (Unknown (self.mThis->mHolder)) ;
-		return r1x->invoke (BoxHolder::hold (raw ())->ref ,params) ;
+		const auto r1x = BoxHolder::hold (raw ())->unknown () ;
+		const auto r2x = RFat<ReflectInvoke> (r1x) ;
+		return r2x->invoke (BoxHolder::hold (raw ())->ref ,params) ;
 	}
 } ;
 
