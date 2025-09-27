@@ -1001,8 +1001,18 @@ struct FarBufferTree ;
 
 struct FarBufferLayout {
 	mutable Ref<FarBufferTree> mThis ;
-	mutable INDEX mIndex ;
 	FLAG mHolder ;
+	FLAG mBuffer ;
+	LENGTH mSize ;
+	LENGTH mStep ;
+
+public:
+	implicit FarBufferLayout () noexcept {
+		mHolder = ZERO ;
+		mBuffer = ZERO ;
+		mSize = 0 ;
+		mStep = 0 ;
+	}
 } ;
 
 struct FarBufferHolder implement Interface {
@@ -1025,11 +1035,24 @@ struct FarBufferHolder implement Interface {
 } ;
 
 template <class A>
+struct FarBufferPureLayout implement FarBufferLayout {
+public:
+	implicit FarBufferPureLayout () noexcept {
+		FarBufferHolder::hold (thiz)->prepare (BufferUnknownBinder<A> ()) ;
+	}
+} ;
+
+template <>
+struct FarBufferPureLayout<Pointer> implement FarBufferLayout {} ;
+
+template <class A>
 class FarBuffer implement FarBufferLayout {
 protected:
 	using FarBufferLayout::mThis ;
-	using FarBufferLayout::mIndex ;
 	using FarBufferLayout::mHolder ;
+	using FarBufferLayout::mBuffer ;
+	using FarBufferLayout::mSize ;
+	using FarBufferLayout::mStep ;
 
 public:
 	implicit FarBuffer () = default ;
