@@ -109,6 +109,10 @@ public:
 		self.mThis = that.mThis.share () ;
 	}
 
+	Unknown unknown () const {
+		return Unknown (self.mThis->mHolder) ;
+	}
+
 	VR<BoxLayout> raw () leftvalue override {
 		return self.mThis->mValue ;
 	}
@@ -120,14 +124,14 @@ public:
 	LENGTH rank () const override {
 		if (self.mThis == NULL)
 			return 0 ;
-		const auto r1x = RFat<ReflectInvoke> (Unknown (self.mThis->mHolder)) ;
+		const auto r1x = RFat<ReflectInvoke> (unknown ()) ;
 		return r1x->rank () ;
 	}
 
 	void invoke (CR<WrapperLayout> params) const override {
 		if (self.mThis == NULL)
 			return ;
-		const auto r1x = RFat<ReflectInvoke> (Unknown (self.mThis->mHolder)) ;
+		const auto r1x = RFat<ReflectInvoke> (unknown ()) ;
 		return r1x->invoke (BoxHolder::hold (raw ())->ref ,params) ;
 	}
 } ;
@@ -392,7 +396,6 @@ public:
 				discard ;
 			self.mThis->mOwner (BoxHolder::hold (raw ())->ref) ;
 		}
-		self.mThis->mOwner = Function<VR<Pointer>> () ;
 	}
 
 	BOOL exist () const override {
