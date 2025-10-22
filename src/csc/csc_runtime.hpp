@@ -45,11 +45,11 @@ struct TimeHolder implement Interface {
 	virtual LENGTH microseconds () const = 0 ;
 	virtual LENGTH nanoseconds () const = 0 ;
 	virtual TimeCalendar calendar () const = 0 ;
-	virtual OfThis<Box<TimeLayout ,TimeStorage>> sadd (CR<TimeLayout> that) const = 0 ;
-	virtual OfThis<Box<TimeLayout ,TimeStorage>> ssub (CR<TimeLayout> that) const = 0 ;
+	virtual Like<Box<TimeLayout ,TimeStorage>> sadd (CR<TimeLayout> that) const = 0 ;
+	virtual Like<Box<TimeLayout ,TimeStorage>> ssub (CR<TimeLayout> that) const = 0 ;
 } ;
 
-class Time implement OfThis<Box<TimeLayout ,TimeStorage>> {
+class Time implement Like<Box<TimeLayout ,TimeStorage>> {
 public:
 	implicit Time () = default ;
 
@@ -111,7 +111,7 @@ public:
 	}
 
 	Time sadd (CR<Time> that) const {
-		OfThis<Box<TimeLayout ,TimeStorage>> ret = TimeHolder::hold (thiz)->sadd (that) ;
+		Like<Box<TimeLayout ,TimeStorage>> ret = TimeHolder::hold (thiz)->sadd (that) ;
 		return move (keep[TYPE<Time>::expr] (ret)) ;
 	}
 
@@ -124,7 +124,7 @@ public:
 	}
 
 	Time ssub (CR<Time> that) const {
-		OfThis<Box<TimeLayout ,TimeStorage>> ret = TimeHolder::hold (thiz)->ssub (that) ;
+		Like<Box<TimeLayout ,TimeStorage>> ret = TimeHolder::hold (thiz)->ssub (that) ;
 		return move (keep[TYPE<Time>::expr] (ret)) ;
 	}
 
@@ -147,7 +147,7 @@ inline Time CurrentTime () {
 struct RuntimeProcLayout ;
 
 struct RuntimeProcHolder implement Interface {
-	imports CR<OfThis<UniqueRef<RuntimeProcLayout>>> expr_m () ;
+	imports CR<Like<UniqueRef<RuntimeProcLayout>>> expr_m () ;
 	imports VFat<RuntimeProcHolder> hold (VR<RuntimeProcLayout> that) ;
 	imports CFat<RuntimeProcHolder> hold (CR<RuntimeProcLayout> that) ;
 
@@ -162,7 +162,7 @@ struct RuntimeProcHolder implement Interface {
 	virtual String<STR> library_main () const = 0 ;
 } ;
 
-class RuntimeProc implement OfThis<UniqueRef<RuntimeProcLayout>> {
+class RuntimeProc implement Like<UniqueRef<RuntimeProcLayout>> {
 public:
 	static CR<RuntimeProc> expr_m () {
 		return keep[TYPE<RuntimeProc>::expr] (RuntimeProcHolder::expr) ;
@@ -219,7 +219,7 @@ struct AtomicHolder implement Interface {
 	virtual void decrease () = 0 ;
 } ;
 
-class Atomic implement OfThis<Box<AtomicLayout ,AtomicStorage>> {
+class Atomic implement Like<Box<AtomicLayout ,AtomicStorage>> {
 public:
 	implicit Atomic () = default ;
 
@@ -283,7 +283,7 @@ struct MutexHolder implement Interface {
 	virtual void leave () = 0 ;
 } ;
 
-class Mutex implement OfThis<SharedRef<MutexLayout>> {
+class Mutex implement Like<SharedRef<MutexLayout>> {
 public:
 	implicit Mutex () = default ;
 
@@ -353,7 +353,7 @@ struct SharedLockHolder implement Interface {
 	virtual void leave () = 0 ;
 } ;
 
-class SharedLock implement OfThis<Box<SharedLockLayout ,SharedLockStorage>> {
+class SharedLock implement Like<Box<SharedLockLayout ,SharedLockStorage>> {
 public:
 	implicit SharedLock () = default ;
 
@@ -390,7 +390,7 @@ struct UniqueLockHolder implement Interface {
 	virtual void yield () = 0 ;
 } ;
 
-class UniqueLock implement OfThis<Box<UniqueLockLayout ,UniqueLockStorage>> {
+class UniqueLock implement Like<Box<UniqueLockLayout ,UniqueLockStorage>> {
 public:
 	implicit UniqueLock () = default ;
 
@@ -445,7 +445,7 @@ struct ThreadHolder implement Interface {
 	virtual void stop () = 0 ;
 } ;
 
-class Thread implement OfThis<AutoRef<ThreadLayout>> {
+class Thread implement Like<AutoRef<ThreadLayout>> {
 public:
 	implicit Thread () = default ;
 
@@ -483,7 +483,7 @@ struct ProcessHolder implement Interface {
 	virtual RefBuffer<BYTE> snapshot () const = 0 ;
 } ;
 
-class Process implement OfThis<AutoRef<ProcessLayout>> {
+class Process implement Like<AutoRef<ProcessLayout>> {
 public:
 	implicit Process () = default ;
 
@@ -531,7 +531,7 @@ struct LibraryHolder implement Interface {
 	virtual String<STR> error () const = 0 ;
 } ;
 
-class Library implement OfThis<AutoRef<LibraryLayout>> {
+class Library implement Like<AutoRef<LibraryLayout>> {
 public:
 	implicit Library () = default ;
 
@@ -565,7 +565,7 @@ struct SystemHolder implement Interface {
 	virtual void execute (CR<String<STR>> command) const = 0 ;
 } ;
 
-class System implement OfThis<AutoRef<SystemLayout>> {
+class System implement Like<AutoRef<SystemLayout>> {
 public:
 	implicit System () = default ;
 
@@ -604,7 +604,7 @@ struct RandomHolder implement Interface {
 	virtual FLT64 random_normal () = 0 ;
 } ;
 
-class Random implement OfThis<SharedRef<RandomLayout>> {
+class Random implement Like<SharedRef<RandomLayout>> {
 public:
 	implicit Random () = default ;
 
@@ -661,7 +661,7 @@ inline Random CurrentRandom () {
 struct SingletonProcLayout ;
 
 struct SingletonProcHolder implement Interface {
-	imports CR<OfThis<UniqueRef<SingletonProcLayout>>> expr_m () ;
+	imports CR<Like<UniqueRef<SingletonProcLayout>>> expr_m () ;
 	imports VFat<SingletonProcHolder> hold (VR<SingletonProcLayout> that) ;
 	imports CFat<SingletonProcHolder> hold (CR<SingletonProcLayout> that) ;
 
@@ -672,7 +672,7 @@ struct SingletonProcHolder implement Interface {
 	virtual void save (CR<Clazz> clazz ,CR<FLAG> layout) const = 0 ;
 } ;
 
-class SingletonProc implement OfThis<UniqueRef<SingletonProcLayout>> {
+class SingletonProc implement Like<UniqueRef<SingletonProcLayout>> {
 public:
 	static CR<SingletonProc> expr_m () {
 		return keep[TYPE<SingletonProc>::expr] (SingletonProcHolder::expr) ;

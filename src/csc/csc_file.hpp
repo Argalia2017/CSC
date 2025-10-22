@@ -169,7 +169,7 @@ public:
 struct FileProcLayout ;
 
 struct FileProcHolder implement Interface {
-	imports CR<OfThis<UniqueRef<FileProcLayout>>> expr_m () ;
+	imports CR<Like<UniqueRef<FileProcLayout>>> expr_m () ;
 	imports VFat<FileProcHolder> hold (VR<FileProcLayout> that) ;
 	imports CFat<FileProcHolder> hold (CR<FileProcLayout> that) ;
 
@@ -188,7 +188,7 @@ struct FileProcHolder implement Interface {
 	virtual BOOL lock_dire (CR<String<STR>> dire) const = 0 ;
 } ;
 
-class FileProc implement OfThis<UniqueRef<FileProcLayout>> {
+class FileProc implement Like<UniqueRef<FileProcLayout>> {
 public:
 	static CR<FileProc> expr_m () {
 		return keep[TYPE<FileProc>::expr] (FileProcHolder::expr) ;
@@ -264,7 +264,7 @@ struct StreamFileHolder implement Interface {
 
 using STREAMFILE_CHUNK_STEP = ENUM<65536> ;
 
-class StreamFile implement OfThis<AutoRef<StreamFileLayout>> {
+class StreamFile implement Like<AutoRef<StreamFileLayout>> {
 public:
 	implicit StreamFile () = default ;
 
@@ -322,7 +322,7 @@ struct StreamFileByteWriterHolder implement Interface {
 	virtual void flush () = 0 ;
 } ;
 
-class StreamFileByteWriter implement OfThis<AutoRef<StreamFileByteWriterLayout>> {
+class StreamFileByteWriter implement Like<AutoRef<StreamFileByteWriterLayout>> {
 public:
 	implicit StreamFileByteWriter () = default ;
 
@@ -356,7 +356,7 @@ struct StreamFileTextWriterHolder implement Interface {
 	virtual void flush () = 0 ;
 } ;
 
-class StreamFileTextWriter implement OfThis<AutoRef<StreamFileTextWriterLayout>> {
+class StreamFileTextWriter implement Like<AutoRef<StreamFileTextWriterLayout>> {
 public:
 	implicit StreamFileTextWriter () = default ;
 
@@ -397,7 +397,7 @@ struct BufferFileHolder implement Interface {
 	virtual void flush () = 0 ;
 } ;
 
-class BufferFile implement OfThis<AutoRef<BufferFileLayout>> {
+class BufferFile implement Like<AutoRef<BufferFileLayout>> {
 public:
 	implicit BufferFile () = default ;
 
@@ -458,7 +458,7 @@ struct UartFileHolder implement Interface {
 	virtual void read (VR<RefBuffer<BYTE>> buffer ,CR<INDEX> offset ,CR<LENGTH> size_) = 0 ;
 } ;
 
-class UartFile implement OfThis<AutoRef<UartFileLayout>> {
+class UartFile implement Like<AutoRef<UartFileLayout>> {
 public:
 	implicit UartFile () = default ;
 
@@ -505,7 +505,7 @@ struct ConsoleOption {
 struct ConsoleLayout ;
 
 struct ConsoleHolder implement Interface {
-	imports CR<OfThis<SharedRef<ConsoleLayout>>> expr_m () ;
+	imports CR<Like<SharedRef<ConsoleLayout>>> expr_m () ;
 	imports VFat<ConsoleHolder> hold (VR<ConsoleLayout> that) ;
 	imports CFat<ConsoleHolder> hold (CR<ConsoleLayout> that) ;
 
@@ -525,7 +525,7 @@ struct ConsoleHolder implement Interface {
 	virtual void clear () = 0 ;
 } ;
 
-class Console implement OfThis<SharedRef<ConsoleLayout>> {
+class Console implement Like<SharedRef<ConsoleLayout>> {
 public:
 	static CR<Console> expr_m () {
 		return keep[TYPE<Console>::expr] (ConsoleHolder::expr) ;

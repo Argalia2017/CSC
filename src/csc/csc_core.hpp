@@ -1551,13 +1551,13 @@ struct FUNCTION_unimplemented {
 static constexpr auto unimplemented = FUNCTION_unimplemented () ;
 
 template <class A>
-struct OfThis {
+struct Like {
 	A mThis ;
 
 public:
-	implicit OfThis () = default ;
+	implicit Like () = default ;
 
-	implicit OfThis (RR<A> that) :mThis (move (that)) {}
+	implicit Like (RR<A> that) :mThis (move (that)) {}
 
 	using ITEM = typeof (nullof (A).ref) ;
 

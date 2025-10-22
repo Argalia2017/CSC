@@ -403,9 +403,9 @@ public:
 	}
 } ;
 
-exports CR<OfThis<UniqueRef<ColorProcLayout>>> ColorProcHolder::expr_m () {
+exports CR<Like<UniqueRef<ColorProcLayout>>> ColorProcHolder::expr_m () {
 	return memorize ([&] () {
-		OfThis<UniqueRef<ColorProcLayout>> ret ;
+		Like<UniqueRef<ColorProcLayout>> ret ;
 		ret.mThis = UniqueRef<ColorProcLayout>::make () ;
 		ColorProcHolder::hold (ret)->initialize () ;
 		return move (ret) ;
@@ -426,9 +426,9 @@ struct ImageProcLayout {
 	UniqueRef<BOOL> mContext ;
 } ;
 
-exports CR<OfThis<UniqueRef<ImageProcLayout>>> ImageProcHolder::expr_m () {
+exports CR<Like<UniqueRef<ImageProcLayout>>> ImageProcHolder::expr_m () {
 	return memorize ([&] () {
-		OfThis<UniqueRef<ImageProcLayout>> ret ;
+		Like<UniqueRef<ImageProcLayout>> ret ;
 		ret.mThis = UniqueRef<ImageProcLayout>::make () ;
 		ImageProcHolder::hold (ret)->initialize () ;
 		return move (ret) ;

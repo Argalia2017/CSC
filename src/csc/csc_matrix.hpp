@@ -763,7 +763,7 @@ struct SVDResult {
 struct MatrixProcLayout ;
 
 struct MatrixProcHolder implement Interface {
-	imports CR<OfThis<UniqueRef<MatrixProcLayout>>> expr_m () ;
+	imports CR<Like<UniqueRef<MatrixProcLayout>>> expr_m () ;
 	imports VFat<MatrixProcHolder> hold (VR<MatrixProcLayout> that) ;
 	imports CFat<MatrixProcHolder> hold (CR<MatrixProcLayout> that) ;
 
@@ -773,7 +773,7 @@ struct MatrixProcHolder implement Interface {
 	virtual SVDResult solve_svd (CR<Matrix> a) const = 0 ;
 } ;
 
-class MatrixProc implement OfThis<UniqueRef<MatrixProcLayout>> {
+class MatrixProc implement Like<UniqueRef<MatrixProcLayout>> {
 public:
 	static CR<MatrixProc> expr_m () {
 		return keep[TYPE<MatrixProc>::expr] (MatrixProcHolder::expr) ;
@@ -960,7 +960,7 @@ public:
 struct LinearProcLayout ;
 
 struct LinearProcHolder implement Interface {
-	imports CR<OfThis<UniqueRef<LinearProcLayout>>> expr_m () ;
+	imports CR<Like<UniqueRef<LinearProcLayout>>> expr_m () ;
 	imports VFat<LinearProcHolder> hold (VR<LinearProcLayout> that) ;
 	imports CFat<LinearProcHolder> hold (CR<LinearProcLayout> that) ;
 
@@ -970,7 +970,7 @@ struct LinearProcHolder implement Interface {
 	virtual Image<FLT64> solve_inv (CR<Image<FLT64>> a) const = 0 ;
 } ;
 
-class LinearProc implement OfThis<UniqueRef<LinearProcLayout>> {
+class LinearProc implement Like<UniqueRef<LinearProcLayout>> {
 public:
 	static CR<LinearProc> expr_m () {
 		return keep[TYPE<LinearProc>::expr] (LinearProcHolder::expr) ;
@@ -1001,7 +1001,7 @@ struct PointCloudKDTreeHolder implement Interface {
 	virtual Array<INDEX> search (CR<Vector> center ,CR<LENGTH> neighbor ,CR<FLT64> radius) const = 0 ;
 } ;
 
-class PointCloudKDTree implement OfThis<AutoRef<PointCloudKDTreeLayout>> {} ;
+class PointCloudKDTree implement Like<AutoRef<PointCloudKDTreeLayout>> {} ;
 
 struct PointCloudLayout {
 	LENGTH mRank ;

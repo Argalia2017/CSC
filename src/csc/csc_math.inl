@@ -422,9 +422,9 @@ public:
 	}
 } ;
 
-exports CR<OfThis<UniqueRef<MathProcLayout>>> MathProcHolder::expr_m () {
+exports CR<Like<UniqueRef<MathProcLayout>>> MathProcHolder::expr_m () {
 	return memorize ([&] () {
-		OfThis<UniqueRef<MathProcLayout>> ret ;
+		Like<UniqueRef<MathProcLayout>> ret ;
 		ret.mThis = UniqueRef<MathProcLayout>::make () ;
 		MathProcHolder::hold (ret)->initialize () ;
 		return move (ret) ;
@@ -708,9 +708,9 @@ public:
 	}
 } ;
 
-exports CR<OfThis<UniqueRef<FloatProcLayout>>> FloatProcHolder::expr_m () {
+exports CR<Like<UniqueRef<FloatProcLayout>>> FloatProcHolder::expr_m () {
 	return memorize ([&] () {
-		OfThis<UniqueRef<FloatProcLayout>> ret ;
+		Like<UniqueRef<FloatProcLayout>> ret ;
 		ret.mThis = UniqueRef<FloatProcLayout>::make () ;
 		FloatProcHolder::hold (ret)->initialize () ;
 		return move (ret) ;
@@ -729,9 +729,9 @@ template class External<FEXP2CacheHolder ,FEXP2CacheLayout> ;
 
 struct FEXP2CacheLayout {} ;
 
-exports CR<OfThis<UniqueRef<FEXP2CacheLayout>>> FEXP2CacheHolder::expr_m () {
+exports CR<Like<UniqueRef<FEXP2CacheLayout>>> FEXP2CacheHolder::expr_m () {
 	return memorize ([&] () {
-		OfThis<UniqueRef<FEXP2CacheLayout>> ret ;
+		Like<UniqueRef<FEXP2CacheLayout>> ret ;
 		ret.mThis = UniqueRef<FEXP2CacheLayout>::make () ;
 		FEXP2CacheHolder::hold (ret)->initialize () ;
 		return move (ret) ;
@@ -750,9 +750,9 @@ template class External<FEXP10CacheHolder ,FEXP10CacheLayout> ;
 
 struct FEXP10CacheLayout {} ;
 
-exports CR<OfThis<UniqueRef<FEXP10CacheLayout>>> FEXP10CacheHolder::expr_m () {
+exports CR<Like<UniqueRef<FEXP10CacheLayout>>> FEXP10CacheHolder::expr_m () {
 	return memorize ([&] () {
-		OfThis<UniqueRef<FEXP10CacheLayout>> ret ;
+		Like<UniqueRef<FEXP10CacheLayout>> ret ;
 		ret.mThis = UniqueRef<FEXP10CacheLayout>::make () ;
 		FEXP10CacheHolder::hold (ret)->initialize () ;
 		return move (ret) ;
@@ -940,9 +940,9 @@ public:
 	}
 } ;
 
-exports CR<OfThis<UniqueRef<ByteProcLayout>>> ByteProcHolder::expr_m () {
+exports CR<Like<UniqueRef<ByteProcLayout>>> ByteProcHolder::expr_m () {
 	return memorize ([&] () {
-		OfThis<UniqueRef<ByteProcLayout>> ret ;
+		Like<UniqueRef<ByteProcLayout>> ret ;
 		ret.mThis = UniqueRef<ByteProcLayout>::make () ;
 		ByteProcHolder::hold (ret)->initialize () ;
 		return move (ret) ;
@@ -1937,9 +1937,9 @@ public:
 	}
 } ;
 
-exports CR<OfThis<UniqueRef<HashProcLayout>>> HashProcHolder::expr_m () {
+exports CR<Like<UniqueRef<HashProcLayout>>> HashProcHolder::expr_m () {
 	return memorize ([&] () {
-		OfThis<UniqueRef<HashProcLayout>> ret ;
+		Like<UniqueRef<HashProcLayout>> ret ;
 		ret.mThis = UniqueRef<HashProcLayout>::make () ;
 		HashProcHolder::hold (ret)->initialize () ;
 		return move (ret) ;

@@ -680,9 +680,9 @@ template class External<MatrixProcHolder ,MatrixProcLayout> ;
 
 struct MatrixProcLayout {} ;
 
-exports CR<OfThis<UniqueRef<MatrixProcLayout>>> MatrixProcHolder::expr_m () {
+exports CR<Like<UniqueRef<MatrixProcLayout>>> MatrixProcHolder::expr_m () {
 	return memorize ([&] () {
-		OfThis<UniqueRef<MatrixProcLayout>> ret ;
+		Like<UniqueRef<MatrixProcLayout>> ret ;
 		ret.mThis = UniqueRef<MatrixProcLayout>::make () ;
 		MatrixProcHolder::hold (ret)->initialize () ;
 		return move (ret) ;
@@ -1131,9 +1131,9 @@ template class External<LinearProcHolder ,LinearProcLayout> ;
 
 struct LinearProcLayout {} ;
 
-exports CR<OfThis<UniqueRef<LinearProcLayout>>> LinearProcHolder::expr_m () {
+exports CR<Like<UniqueRef<LinearProcLayout>>> LinearProcHolder::expr_m () {
 	return memorize ([&] () {
-		OfThis<UniqueRef<LinearProcLayout>> ret ;
+		Like<UniqueRef<LinearProcLayout>> ret ;
 		ret.mThis = UniqueRef<LinearProcLayout>::make () ;
 		LinearProcHolder::hold (ret)->initialize () ;
 		return move (ret) ;

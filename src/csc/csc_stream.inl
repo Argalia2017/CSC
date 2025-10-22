@@ -188,9 +188,9 @@ public:
 	}
 } ;
 
-exports CR<OfThis<UniqueRef<StreamProcLayout>>> StreamProcHolder::expr_m () {
+exports CR<Like<UniqueRef<StreamProcLayout>>> StreamProcHolder::expr_m () {
 	return memorize ([&] () {
-		OfThis<UniqueRef<StreamProcLayout>> ret ;
+		Like<UniqueRef<StreamProcLayout>> ret ;
 		ret.mThis = UniqueRef<StreamProcLayout>::make () ;
 		StreamProcHolder::hold (ret)->initialize () ;
 		return move (ret) ;
@@ -1828,9 +1828,9 @@ public:
 	}
 } ;
 
-exports CR<OfThis<UniqueRef<StreamTextProcLayout>>> StreamTextProcHolder::expr_m () {
+exports CR<Like<UniqueRef<StreamTextProcLayout>>> StreamTextProcHolder::expr_m () {
 	return memorize ([&] () {
-		OfThis<UniqueRef<StreamTextProcLayout>> ret ;
+		Like<UniqueRef<StreamTextProcLayout>> ret ;
 		ret.mThis = UniqueRef<StreamTextProcLayout>::make () ;
 		StreamTextProcHolder::hold (ret)->initialize () ;
 		return move (ret) ;
