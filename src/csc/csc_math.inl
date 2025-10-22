@@ -1831,6 +1831,7 @@ public:
 		JetLayout ret ;
 		JetHolder::hold (ret)->initialize (self.mThis->mDX.size () ,0) ;
 		ret.mThis->mEval = JetEvalFunction ([] (VR<JetNode> node ,CR<WrapperLayout> params) {
+			assume (node.mFake->mFX > 0) ;
 			node.mFX = MathProc::log (node.mFake->mFX) ;
 			const auto r1x = MathProc::step (MathProc::abs (node.mFake->mEX)) ;
 			node.mEX = round_ex (r1x) ;
@@ -1847,11 +1848,24 @@ public:
 		JetLayout ret ;
 		JetHolder::hold (ret)->initialize (self.mThis->mDX.size () ,0) ;
 		ret.mThis->mEval = JetEvalFunction ([] (VR<JetNode> node ,CR<WrapperLayout> params) {
-			const auto r1x = MathProc::step (node.mFake->mFX) ;
-			node.mFX = r1x * node.mFake->mFX ;
-			node.mEX = r1x * MathProc::step (node.mFake->mEX) ;
-			for (auto &&i : range (0 ,node.mDX.size ()))
-				node.mDX[i] = r1x * node.mFake->mDX[i] ;
+			auto act = TRUE ;
+			if ifdo (act) {
+				if (node.mFake->mEX < 0)
+					discard ;
+				const auto r1x = MathProc::step (node.mFake->mFX) ;
+				node.mFX = r1x * node.mFake->mFX ;
+				node.mEX = r1x * MathProc::step (node.mFake->mEX) ;
+				for (auto &&i : range (0 ,node.mDX.size ()))
+					node.mDX[i] = r1x * node.mFake->mDX[i] ;
+			}
+			if ifdo (act) {
+				if (node.mFake->mEX >= 0)
+					discard ;
+				node.mFX = 0 ;
+				node.mEX = 0 ;
+				for (auto &&i : range (0 ,node.mDX.size ()))
+					node.mDX[i] = 0 ;
+			}
 			check_fx (node) ;
 		}) ;
 		ret.mThis->mFake = self.mThis.share () ;
