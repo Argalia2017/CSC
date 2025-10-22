@@ -803,6 +803,7 @@ struct JetHolder implement Interface {
 	virtual JetLayout satan (CR<JetLayout> that) const = 0 ;
 	virtual JetLayout sexp () const = 0 ;
 	virtual JetLayout slog () const = 0 ;
+	virtual JetLayout relu () const = 0 ;
 } ;
 
 template <class A>
@@ -984,6 +985,11 @@ public:
 
 	Jet slog () const {
 		JetLayout ret = JetHolder::hold (thiz)->slog () ;
+		return move (keep[TYPE<Jet>::expr] (ret)) ;
+	}
+
+	Jet relu () const {
+		JetLayout ret = JetHolder::hold (thiz)->relu () ;
 		return move (keep[TYPE<Jet>::expr] (ret)) ;
 	}
 } ;

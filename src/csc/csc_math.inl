@@ -1825,6 +1825,21 @@ public:
 		return move (ret) ;
 	}
 
+	JetLayout relu () const override {
+		JetLayout ret ;
+		JetHolder::hold (ret)->initialize (self.mThis->mDX.size () ,0) ;
+		ret.mThis->mEval = JetEvalFunction ([] (VR<JetNode> node ,CR<WrapperLayout> params) {
+			const auto r1x = MathProc::step (node.mFake->mFX) ;
+			node.mFX = r1x * node.mFake->mFX ;
+			node.mEX = MathProc::step (node.mFake->mEX) ;
+			for (auto &&i : range (0 ,node.mDX.size ()))
+				node.mDX[i] = r1x * node.mFake->mDX[i] ;
+			check_fx (node) ;
+		}) ;
+		ret.mThis->mFake = self.mThis.share () ;
+		return move (ret) ;
+	}
+
 	static void copy_node (VR<JetNode> dst ,CR<JetNode> src ,CR<FLT64> si) {
 		dst.mFX = si * src.mFX ;
 		dst.mEX = src.mEX ;
