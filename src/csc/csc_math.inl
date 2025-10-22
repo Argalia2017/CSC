@@ -67,8 +67,26 @@ public:
 		return 0 ;
 	}
 
-	FLT64 sign (CR<BOOL> a) const override {
-		if (a)
+	VAL32 sign (CR<VAL32> a) const override {
+		if (a >= 0)
+			return +1 ;
+		return -1 ;
+	}
+
+	VAL64 sign (CR<VAL64> a) const override {
+		if (a >= 0)
+			return +1 ;
+		return -1 ;
+	}
+
+	FLT32 sign (CR<FLT32> a) const override {
+		if (a >= 0)
+			return +1 ;
+		return -1 ;
+	}
+
+	FLT64 sign (CR<FLT64> a) const override {
+		if (a >= 0)
 			return +1 ;
 		return -1 ;
 	}
@@ -1814,7 +1832,7 @@ public:
 		JetHolder::hold (ret)->initialize (self.mThis->mDX.size () ,0) ;
 		ret.mThis->mEval = JetEvalFunction ([] (VR<JetNode> node ,CR<WrapperLayout> params) {
 			node.mFX = MathProc::log (node.mFake->mFX) ;
-			const auto r1x = MathProc::sign (node.mFake->mEX > 0) ;
+			const auto r1x = MathProc::step (MathProc::abs (node.mFake->mEX)) ;
 			node.mEX = round_ex (r1x) ;
 			const auto r2x = 1 / node.mFake->mFX ;
 			for (auto &&i : range (0 ,node.mDX.size ()))
@@ -1831,7 +1849,7 @@ public:
 		ret.mThis->mEval = JetEvalFunction ([] (VR<JetNode> node ,CR<WrapperLayout> params) {
 			const auto r1x = MathProc::step (node.mFake->mFX) ;
 			node.mFX = r1x * node.mFake->mFX ;
-			node.mEX = MathProc::step (node.mFake->mEX) ;
+			node.mEX = r1x * MathProc::step (node.mFake->mEX) ;
 			for (auto &&i : range (0 ,node.mDX.size ()))
 				node.mDX[i] = r1x * node.mFake->mDX[i] ;
 			check_fx (node) ;

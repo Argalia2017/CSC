@@ -423,8 +423,8 @@ public:
 			const auto r4x = self.mMatrix[mm (jx ,ix)] * r1x ;
 			const auto r5x = self.mMatrix[mm (jx ,iy)] * r2x ;
 			const auto r6x = self.mMatrix[mm (jx ,iz)] * r3x ;
-			const auto r7x = MathProc::sign ((i.mY + i.mX) % 2 == 0) ;
-			const auto r8x = (r4x - r5x + r6x) * r7x ;
+			const auto r7x = FLT64 ((i.mY + i.mX) % 2 * 2 - 1) ;
+			const auto r8x = (r4x - r5x + r6x) * MathProc::sign (r7x) ;
 			ret.mMatrix[mm (i.mY ,i.mX)] = r8x ;
 		}
 		return move (ret) ;

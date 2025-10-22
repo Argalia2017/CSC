@@ -34,7 +34,10 @@ struct MathProcHolder implement Interface {
 	virtual VAL64 step (CR<VAL64> a) const = 0 ;
 	virtual FLT32 step (CR<FLT32> a) const = 0 ;
 	virtual FLT64 step (CR<FLT64> a) const = 0 ;
-	virtual FLT64 sign (CR<BOOL> a) const = 0 ;
+	virtual VAL32 sign (CR<VAL32> a) const = 0 ;
+	virtual VAL64 sign (CR<VAL64> a) const = 0 ;
+	virtual FLT32 sign (CR<FLT32> a) const = 0 ;
+	virtual FLT64 sign (CR<FLT64> a) const = 0 ;
 	virtual VAL32 square (CR<VAL32> a) const = 0 ;
 	virtual VAL64 square (CR<VAL64> a) const = 0 ;
 	virtual FLT32 square (CR<FLT32> a) const = 0 ;
@@ -124,7 +127,8 @@ public:
 		return MathProcHolder::hold (expr)->step (a) ;
 	}
 
-	static FLT64 sign (CR<BOOL> a) {
+	template <class ARG1 ,class = REQUIRE<IS_SCALAR<ARG1>>>
+	static ARG1 sign (CR<ARG1> a) {
 		return MathProcHolder::hold (expr)->sign (a) ;
 	}
 
