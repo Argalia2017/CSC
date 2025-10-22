@@ -617,13 +617,13 @@ struct MakeMatrixHolder implement Interface {
 	virtual void make_RotationMatrix (CR<Vector> normal ,CR<FLT64> angle) = 0 ;
 	virtual void make_RotationMatrix (CR<Vector> from ,CR<Vector> into) = 0 ;
 	virtual void make_TranslationMatrix (CR<FLT64> x ,CR<FLT64> y ,CR<FLT64> z) = 0 ;
-	virtual void make_PerspectiveMatrix (CR<FLT64> fx ,CR<FLT64> fy ,CR<FLT64> wx ,CR<FLT64> wy) = 0 ;
+	virtual void make_PerspectiveMatrix (CR<FLT64> fovx ,CR<ImageShape> shape) = 0 ;
+	virtual void make_PerspectiveMatrix (CR<FLT64> fx ,CR<FLT64> fy ,CR<FLT64> cx ,CR<FLT64> cy) = 0 ;
 	virtual void make_ProjectionMatrix (CR<Vector> normal ,CR<Vector> center ,CR<Vector> light) = 0 ;
 	virtual void make_ViewMatrix (CR<Vector> vx ,CR<Vector> vy) = 0 ;
 	virtual void make_ViewMatrix (CR<Vector> vx ,CR<Vector> vy ,CR<Just<ViewMatrixOption>> option) = 0 ;
 	virtual void make_CrossProductMatrix (CR<Vector> xyz) = 0 ;
 	virtual void make_OuterProductMatrix (CR<Vector> x ,CR<Vector> y) = 0 ;
-	virtual void make_AffineMatrix (CR<Array<FLT64>> a) = 0 ;
 } ;
 
 inline Matrix DiagMatrix (CR<FLT64> x ,CR<FLT64> y ,CR<FLT64> z) {
@@ -668,9 +668,15 @@ inline Matrix TranslationMatrix (CR<FLT64> x ,CR<FLT64> y ,CR<FLT64> z) {
 	return move (ret) ;
 }
 
-inline Matrix PerspectiveMatrix (CR<FLT64> fx ,CR<FLT64> fy ,CR<FLT64> wx ,CR<FLT64> wy) {
+inline Matrix PerspectiveMatrix (CR<FLT64> fovx ,CR<ImageShape> shape) {
 	Matrix ret ;
-	MakeMatrixHolder::hold (ret)->make_PerspectiveMatrix (fx ,fy ,wx ,wy) ;
+	MakeMatrixHolder::hold (ret)->make_PerspectiveMatrix (fovx ,shape) ;
+	return move (ret) ;
+}
+
+inline Matrix PerspectiveMatrix (CR<FLT64> fx ,CR<FLT64> fy ,CR<FLT64> cx ,CR<FLT64> cy) {
+	Matrix ret ;
+	MakeMatrixHolder::hold (ret)->make_PerspectiveMatrix (fx ,fy ,cx ,cy) ;
 	return move (ret) ;
 }
 
@@ -731,12 +737,6 @@ inline Matrix OuterProductMatrix (CR<Vector> x ,CR<Vector> y) {
 inline Matrix SymmetryMatrix (CR<Vector> x ,CR<Vector> y) {
 	Matrix ret ;
 	MakeMatrixHolder::hold (ret)->make_OuterProductMatrix (x ,y) ;
-	return move (ret) ;
-}
-
-inline Matrix AffineMatrix (CR<Array<FLT64>> a) {
-	Matrix ret ;
-	MakeMatrixHolder::hold (ret)->make_AffineMatrix (a) ;
 	return move (ret) ;
 }
 

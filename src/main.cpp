@@ -8,6 +8,7 @@
 using namespace SOLUTION ;
 
 int main () {
+	GlobalProc::startup () ;
 
 	return 0 ;
 }
