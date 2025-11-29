@@ -25,13 +25,13 @@ public:
 		noop () ;
 	}
 
-	ImageLayout make_image (RREF<BoxLayout> image) const override {
+	ImageLayout make_image (RR<BoxLayout> image) const override {
 		ImageLayout ret ;
 		auto &&rax = keep[TYPE<Box<cv::Mat>>::expr] (image).ref ;
 		const auto r1x = rax.size () ;
 		const auto r2x = LENGTH (rax.depth ()) ;
 		const auto r3x = align_of_cvmat_depth (r2x) ;
-		const auto r4x = choose_cvmat_unknown (r3x) ;
+		const auto r4x = choose_unknown (r3x) ;
 		const auto r5x = r3x * rax.channels () ;
 		const auto r6x = LENGTH (rax.step[0]) ;
 		assume (r6x % r5x == 0) ;
@@ -48,14 +48,14 @@ public:
 		return move (ret) ;
 	}
 
-	ImageLayout make_image (CREF<ImageShape> shape) const override {
+	ImageLayout make_image (CR<ImageShape> shape) const override {
 		auto rax = Box<cv::Mat>::zeroize () ;
 		const auto r1x = CV_MAKE_TYPE (CV_8U ,VAL32 (shape.mStep)) ;
 		rax.ref = cv::Mat (cv::Size (VAL32 (shape.mCX) ,VAL32 (shape.mCY)) ,r1x) ;
 		return make_image (move (rax)) ;
 	}
 
-	ImageLayout make_image (CREF<ImageShape> shape ,CREF<Clazz> clazz ,CREF<LENGTH> channel) const override {
+	ImageLayout make_image (CR<ImageShape> shape ,CR<Clazz> clazz ,CR<LENGTH> channel) const override {
 		auto rax = Box<cv::Mat>::zeroize () ;
 		const auto r1x = cvmat_depth_of_clazz (clazz) ;
 		const auto r2x = CV_MAKE_TYPE (VAL32 (r1x) ,VAL32 (channel)) ;
@@ -63,7 +63,7 @@ public:
 		return make_image (move (rax)) ;
 	}
 
-	LENGTH cvmat_depth_of_clazz (CREF<Clazz> clazz) const {
+	LENGTH cvmat_depth_of_clazz (CR<Clazz> clazz) const {
 		if (clazz.type_align () == 1)
 			return CV_8U ;
 		if (clazz.type_align () == 2)
@@ -76,7 +76,7 @@ public:
 		return CV_8U ;
 	}
 
-	LENGTH align_of_cvmat_depth (CREF<LENGTH> depth) const {
+	LENGTH align_of_cvmat_depth (CR<LENGTH> depth) const {
 		if (depth == CV_8U)
 			return 1 ;
 		if (depth == CV_8S)
@@ -96,32 +96,32 @@ public:
 		return 0 ;
 	}
 
-	Unknown choose_cvmat_unknown (CREF<LENGTH> align) const {
+	Unknown choose_unknown (CR<LENGTH> align) const {
 		if (align == SIZE_OF<BYTE>::expr)
-			return BufferUnknownBinder<BYTE> () ;
+			return ArrayUnknownBinder<BYTE> () ;
 		if (align == SIZE_OF<WORD>::expr)
-			return BufferUnknownBinder<WORD> () ;
+			return ArrayUnknownBinder<WORD> () ;
 		if (align == SIZE_OF<CHAR>::expr)
-			return BufferUnknownBinder<CHAR> () ;
+			return ArrayUnknownBinder<CHAR> () ;
 		if (align == SIZE_OF<QUAD>::expr)
-			return BufferUnknownBinder<QUAD> () ;
+			return ArrayUnknownBinder<QUAD> () ;
 		assume (FALSE) ;
 		return Unknown (ZERO) ;
 	}
 
-	VREF<Pointer> peek_image (VREF<ImageLayout> image) const override {
+	VR<Pointer> peek_image (VR<ImageLayout> image) const override {
 		assert (ImageHolder::hold (image)->fixed ()) ;
 		auto &&rax = keep[TYPE<Box<cv::Mat>>::expr] (ImageHolder::hold (image)->raw ()) ;
 		return Pointer::from (rax.ref) ;
 	}
 
-	CREF<Pointer> peek_image (CREF<ImageLayout> image) const override {
+	CR<Pointer> peek_image (CR<ImageLayout> image) const override {
 		assert (ImageHolder::hold (image)->fixed ()) ;
 		auto &&rax = keep[TYPE<Box<cv::Mat>>::expr] (ImageHolder::hold (image)->raw ()) ;
 		return Pointer::from (rax.ref) ;
 	}
 
-	ImageLayout load_image (CREF<String<STR>> file) const override {
+	ImageLayout load_image (CR<String<STR>> file) const override {
 		auto rax = Box<cv::Mat>::zeroize () ;
 		const auto r1x = StringProc::stra_from_strs (file) ;
 		rax.ref = cv::imread (r1x.ref ,cv::IMREAD_UNCHANGED) ;
@@ -129,7 +129,7 @@ public:
 		return make_image (move (rax)) ;
 	}
 
-	void save_image (CREF<String<STR>> file ,CREF<ImageLayout> image) const override {
+	void save_image (CR<String<STR>> file ,CR<ImageLayout> image) const override {
 		const auto r1x = StringProc::stra_from_strs (file) ;
 		const auto r2x = ImageHolder::hold (image)->bx () ;
 		const auto r3x = ImageHolder::hold (image)->by () ;
@@ -141,26 +141,26 @@ public:
 		cv::imwrite (r1x.ref ,rbx) ;
 	}
 
-	Color1B sampler (CREF<Image<Color1B>> image ,CREF<FLT64> x ,CREF<FLT64> y) const override {
+	Color1B sampler (CR<Image<Color1B>> image ,CR<FLT64> x ,CR<FLT64> y) const override {
 		return sampler_f32_impl (image ,FLT32 (x) ,FLT32 (y)) ;
 	}
 
-	Color2B sampler (CREF<Image<Color2B>> image ,CREF<FLT64> x ,CREF<FLT64> y) const override {
+	Color2B sampler (CR<Image<Color2B>> image ,CR<FLT64> x ,CR<FLT64> y) const override {
 		return sampler_f32_impl (image ,FLT32 (x) ,FLT32 (y)) ;
 	}
 
-	Color3B sampler (CREF<Image<Color3B>> image ,CREF<FLT64> x ,CREF<FLT64> y) const override {
+	Color3B sampler (CR<Image<Color3B>> image ,CR<FLT64> x ,CR<FLT64> y) const override {
 		return sampler_f32_impl (image ,FLT32 (x) ,FLT32 (y)) ;
 	}
 
-	Color4B sampler (CREF<Image<Color4B>> image ,CREF<FLT64> x ,CREF<FLT64> y) const override {
+	Color4B sampler (CR<Image<Color4B>> image ,CR<FLT64> x ,CR<FLT64> y) const override {
 		return sampler_f32_impl (image ,FLT32 (x) ,FLT32 (y)) ;
 	}
 
 	template <class ARG1>
-	forceinline ARG1 sampler_f32_impl (CREF<Image<ARG1>> image ,CREF<FLT32> x ,CREF<FLT32> y) const {
-		const auto r1x = INDEX (MathProc::round (x ,FLT32 (1))) ;
-		const auto r2x = INDEX (MathProc::round (y ,FLT32 (1))) ;
+	forceinline ARG1 sampler_f32_impl (CR<Image<ARG1>> image ,CR<FLT32> x ,CR<FLT32> y) const {
+		const auto r1x = INDEX (MathProc::round (x)) ;
+		const auto r2x = INDEX (MathProc::round (y)) ;
 		const auto r3x = MathProc::clamp (r1x ,ZERO ,image.cx () - 1) ;
 		const auto r4x = MathProc::clamp (r2x ,ZERO ,image.cy () - 1) ;
 		const auto r5x = MathProc::max_of (r3x - 1 ,ZERO) ;
@@ -187,20 +187,20 @@ public:
 		return cvt_colorb (rax) ;
 	}
 
-	Buffer1<FLT32> cvt_colorf (CREF<Color1B> a) const {
+	Buffer1<FLT32> cvt_colorf (CR<Color1B> a) const {
 		Buffer1<FLT32> ret ;
 		ret[0] = FLT32 (a.mB) ;
 		return move (ret) ;
 	}
 
-	Buffer2<FLT32> cvt_colorf (CREF<Color2B> a) const {
+	Buffer2<FLT32> cvt_colorf (CR<Color2B> a) const {
 		Buffer2<FLT32> ret ;
 		ret[0] = FLT32 (a.mB) ;
 		ret[1] = FLT32 (a.mG) ;
 		return move (ret) ;
 	}
 
-	Buffer3<FLT32> cvt_colorf (CREF<Color3B> a) const {
+	Buffer3<FLT32> cvt_colorf (CR<Color3B> a) const {
 		Buffer3<FLT32> ret ;
 		ret[0] = FLT32 (a.mB) ;
 		ret[1] = FLT32 (a.mG) ;
@@ -208,7 +208,7 @@ public:
 		return move (ret) ;
 	}
 
-	Buffer4<FLT32> cvt_colorf (CREF<Color4B> a) const {
+	Buffer4<FLT32> cvt_colorf (CR<Color4B> a) const {
 		Buffer4<FLT32> ret ;
 		ret[0] = FLT32 (a.mB) ;
 		ret[1] = FLT32 (a.mG) ;
@@ -217,20 +217,20 @@ public:
 		return move (ret) ;
 	}
 
-	Color1B cvt_colorb (CREF<Buffer1<FLT32>> a) const {
+	Color1B cvt_colorb (CR<Buffer1<FLT32>> a) const {
 		Color1B ret ;
 		ret.mB = BYTE (VAL32 (a[0])) ;
 		return move (ret) ;
 	}
 
-	Color2B cvt_colorb (CREF<Buffer2<FLT32>> a) const {
+	Color2B cvt_colorb (CR<Buffer2<FLT32>> a) const {
 		Color2B ret ;
 		ret.mB = BYTE (VAL32 (a[0])) ;
 		ret.mG = BYTE (VAL32 (a[1])) ;
 		return move (ret) ;
 	}
 
-	Color3B cvt_colorb (CREF<Buffer3<FLT32>> a) const {
+	Color3B cvt_colorb (CR<Buffer3<FLT32>> a) const {
 		Color3B ret ;
 		ret.mB = BYTE (VAL32 (a[0])) ;
 		ret.mG = BYTE (VAL32 (a[1])) ;
@@ -238,7 +238,7 @@ public:
 		return move (ret) ;
 	}
 
-	Color4B cvt_colorb (CREF<Buffer4<FLT32>> a) const {
+	Color4B cvt_colorb (CR<Buffer4<FLT32>> a) const {
 		Color4B ret ;
 		ret.mB = BYTE (VAL32 (a[0])) ;
 		ret.mG = BYTE (VAL32 (a[1])) ;
@@ -247,18 +247,18 @@ public:
 		return move (ret) ;
 	}
 
-	FLT32 sampler (CREF<Image<FLT32>> image ,CREF<FLT64> x ,CREF<FLT64> y) const override {
+	FLT32 sampler (CR<Image<FLT32>> image ,CR<FLT64> x ,CR<FLT64> y) const override {
 		return sampler_f64_impl (image ,x ,y) ;
 	}
 
-	FLT64 sampler (CREF<Image<FLT64>> image ,CREF<FLT64> x ,CREF<FLT64> y) const override {
+	FLT64 sampler (CR<Image<FLT64>> image ,CR<FLT64> x ,CR<FLT64> y) const override {
 		return sampler_f64_impl (image ,x ,y) ;
 	}
 
 	template <class ARG1>
-	forceinline ARG1 sampler_f64_impl (CREF<Image<ARG1>> image ,CREF<FLT64> x ,CREF<FLT64> y) const {
-		const auto r1x = INDEX (MathProc::round (x ,FLT64 (1))) ;
-		const auto r2x = INDEX (MathProc::round (y ,FLT64 (1))) ;
+	forceinline ARG1 sampler_f64_impl (CR<Image<ARG1>> image ,CR<FLT64> x ,CR<FLT64> y) const {
+		const auto r1x = INDEX (MathProc::round (x)) ;
+		const auto r2x = INDEX (MathProc::round (y)) ;
 		const auto r3x = MathProc::clamp (r1x ,ZERO ,image.cx () - 1) ;
 		const auto r4x = MathProc::clamp (r2x ,ZERO ,image.cy () - 1) ;
 		const auto r5x = MathProc::max_of (r3x - 1 ,ZERO) ;

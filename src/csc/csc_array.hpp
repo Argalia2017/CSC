@@ -18,7 +18,7 @@ protected:
 public:
 	implicit SizeProxy () = delete ;
 
-	implicit SizeProxy (CREF<LENGTH> size_) {
+	implicit SizeProxy (CR<LENGTH> size_) {
 		mSize = size_ ;
 	}
 
@@ -33,7 +33,7 @@ private:
 	using ITEM = decltype (nullof (A).at (0)) ;
 
 protected:
-	XREF<A> mThat ;
+	XR<A> mThat ;
 	INDEX mBegin ;
 	INDEX mEnd ;
 	INDEX mPeek ;
@@ -41,7 +41,7 @@ protected:
 public:
 	implicit ArrayIterator () = delete ;
 
-	explicit ArrayIterator (XREF<A> that) :mThat (that) {
+	explicit ArrayIterator (XR<A> that) :mThat (that) {
 		mBegin = mThat.ibegin () ;
 		mEnd = mThat.iend () ;
 		mPeek = mBegin ;
@@ -63,19 +63,19 @@ public:
 		return mPeek != mEnd ;
 	}
 
-	forceinline BOOL operator== (CREF<ArrayIterator>) const {
+	forceinline BOOL operator== (CR<ArrayIterator>) const {
 		return (!good ()) ;
 	}
 
-	forceinline BOOL operator!= (CREF<ArrayIterator>) const {
+	forceinline BOOL operator!= (CR<ArrayIterator>) const {
 		return good () ;
 	}
 
-	XREF<ITEM> peek () const leftvalue {
+	XR<ITEM> peek () const leftvalue {
 		return mThat.at (mPeek) ;
 	}
 
-	forceinline XREF<ITEM> operator* () const leftvalue {
+	forceinline XR<ITEM> operator* () const leftvalue {
 		return peek () ;
 	}
 
@@ -89,22 +89,20 @@ public:
 } ;
 
 template <class A>
-class ArrayRange implement Proxy {
+class ArrayRange {
 protected:
-	A mThat ;
+	XR<A> mThat ;
 
 public:
-	static CREF<ArrayRange> from (CREF<A> that) {
-		return Pointer::from (that) ;
-	}
+	implicit ArrayRange () = delete ;
 
-	static CREF<ArrayRange> from (RREF<A> that) = delete ;
+	explicit ArrayRange (XR<A> that) :mThat (that) {}
 
 	LENGTH length () const {
 		return mThat.length () ;
 	}
 
-	CREF<INDEX> at (CREF<INDEX> index) const leftvalue {
+	CR<INDEX> at (CR<INDEX> index) const leftvalue {
 		return index ;
 	}
 
@@ -116,16 +114,16 @@ public:
 		return mThat.iend () ;
 	}
 
-	INDEX inext (CREF<INDEX> index) const {
+	INDEX inext (CR<INDEX> index) const {
 		return mThat.inext (index) ;
 	}
 
-	ArrayIterator<CREF<ArrayRange>> begin () const leftvalue {
-		return ArrayIterator<CREF<ArrayRange>> (thiz) ;
+	ArrayIterator<CR<ArrayRange>> begin () const leftvalue {
+		return ArrayIterator<CR<ArrayRange>> (thiz) ;
 	}
 
-	ArrayIterator<CREF<ArrayRange>> end () const leftvalue {
-		return ArrayIterator<CREF<ArrayRange>> (thiz) ;
+	ArrayIterator<CR<ArrayRange>> end () const leftvalue {
+		return ArrayIterator<CR<ArrayRange>> (thiz) ;
 	}
 } ;
 
@@ -133,42 +131,35 @@ struct ArrayLayout {
 	RefBuffer<Pointer> mArray ;
 } ;
 
-template <class A>
-struct ArrayPureLayout implement ArrayLayout {
-public:
-	implicit ArrayPureLayout () noexcept {
-		noop (RefBuffer<A> ()) ;
-	}
-} ;
-
 struct ArrayHolder implement Interface {
-	imports VFat<ArrayHolder> hold (VREF<ArrayLayout> that) ;
-	imports CFat<ArrayHolder> hold (CREF<ArrayLayout> that) ;
+	imports VFat<ArrayHolder> hold (VR<ArrayLayout> that) ;
+	imports CFat<ArrayHolder> hold (CR<ArrayLayout> that) ;
 
-	virtual void initialize (CREF<Unknown> holder ,CREF<LENGTH> size_) = 0 ;
-	virtual void initialize (CREF<Unknown> holder ,CREF<WrapperLayout> params ,VREF<BoxLayout> item) = 0 ;
-	virtual void initialize (CREF<ArrayLayout> that) = 0 ;
+	virtual void prepare (CR<Unknown> holder) = 0 ;
+	virtual void initialize (CR<Unknown> holder ,CR<LENGTH> size_) = 0 ;
+	virtual void initialize (CR<Unknown> holder ,CR<WrapperLayout> params ,VR<BoxLayout> item) = 0 ;
+	virtual void initialize (CR<ArrayLayout> that) = 0 ;
 	virtual LENGTH size () const = 0 ;
 	virtual LENGTH step () const = 0 ;
 	virtual LENGTH length () const = 0 ;
-	virtual VREF<Pointer> ref_m () leftvalue = 0 ;
-	virtual CREF<Pointer> ref_m () const leftvalue = 0 ;
-	virtual VREF<Pointer> at (CREF<INDEX> index) leftvalue = 0 ;
-	virtual CREF<Pointer> at (CREF<INDEX> index) const leftvalue = 0 ;
+	virtual VR<Pointer> ref_m () leftvalue = 0 ;
+	virtual CR<Pointer> ref_m () const leftvalue = 0 ;
+	virtual VR<Pointer> at (CR<INDEX> index) leftvalue = 0 ;
+	virtual CR<Pointer> at (CR<INDEX> index) const leftvalue = 0 ;
 	virtual INDEX ibegin () const = 0 ;
 	virtual INDEX iend () const = 0 ;
-	virtual INDEX inext (CREF<INDEX> index) const = 0 ;
-	virtual BOOL equal (CREF<ArrayLayout> that) const = 0 ;
-	virtual FLAG compr (CREF<ArrayLayout> that) const = 0 ;
-	virtual void visit (VREF<FriendVisitor> visitor) const = 0 ;
-	virtual void fill (CREF<Pointer> item) = 0 ;
-	virtual void splice (CREF<INDEX> index ,CREF<ArrayLayout> item) = 0 ;
+	virtual INDEX inext (CR<INDEX> index) const = 0 ;
+	virtual BOOL equal (CR<ArrayLayout> that) const = 0 ;
+	virtual FLAG compr (CR<ArrayLayout> that) const = 0 ;
+	virtual void visit (VR<FriendVisitor> visitor) const = 0 ;
+	virtual void fill (CR<Pointer> item) = 0 ;
+	virtual void splice (CR<INDEX> index ,CR<ArrayLayout> item) = 0 ;
 } ;
 
 template <class A>
-class ArrayUnknownBinder final implement Fat<ReflectUnknown ,Proxy> {
+class ArrayUnknownBinder final implement Fat<FriendUnknown ,Proxy> {
 public:
-	FLAG reflect (CREF<FLAG> uuid) const override {
+	FLAG reflect (CR<FLAG> uuid) const override {
 		if (uuid == ReflectSizeBinder<A>::expr)
 			return inline_vptr (ReflectSizeBinder<A> ()) ;
 		if (uuid == ReflectCreateBinder<A>::expr)
@@ -192,6 +183,18 @@ public:
 } ;
 
 template <class A>
+struct ArrayPureLayout implement ArrayLayout {
+public:
+	implicit ArrayPureLayout () noexcept {
+		noop (RefBuffer<A> ()) ;
+		ArrayHolder::hold (thiz)->prepare (ArrayUnknownBinder<A> ()) ;
+	}
+} ;
+
+template <>
+struct ArrayPureLayout<Pointer> implement ArrayLayout {} ;
+
+template <class A>
 class Array implement ArrayPureLayout<A> {
 protected:
 	using ArrayPureLayout<A>::mArray ;
@@ -199,17 +202,17 @@ protected:
 public:
 	implicit Array () = default ;
 
-	explicit Array (CREF<SizeProxy> size_) {
+	explicit Array (CR<SizeProxy> size_) {
 		ArrayHolder::hold (thiz)->initialize (ArrayUnknownBinder<A> () ,size_) ;
 	}
 
-	explicit Array (CREF<csc_initializer_list_t<A>> that) {
+	explicit Array (CR<csc_initializer_list_t<A>> that) {
 		auto rax = Box<A> () ;
 		ArrayHolder::hold (thiz)->initialize (ArrayUnknownBinder<A> () ,MakeWrapper (that) ,rax) ;
 	}
 
 	template <class ARG1>
-	static Array make (CREF<ARG1> iterator) {
+	static Array make (CR<ARG1> iterator) {
 		Array ret = Array (iterator.length ()) ;
 		INDEX ix = 0 ;
 		for (auto &&i : iterator) {
@@ -219,17 +222,17 @@ public:
 		return move (ret) ;
 	}
 
-	implicit Array (CREF<Array> that) {
+	implicit Array (CR<Array> that) {
 		ArrayHolder::hold (thiz)->initialize (that) ;
 	}
 
-	forceinline VREF<Array> operator= (CREF<Array> that) {
+	forceinline VR<Array> operator= (CR<Array> that) {
 		return assign (thiz ,that) ;
 	}
 
-	implicit Array (RREF<Array> that) = default ;
+	implicit Array (RR<Array> that) = default ;
 
-	forceinline VREF<Array> operator= (RREF<Array> that) = default ;
+	forceinline VR<Array> operator= (RR<Array> that) = default ;
 
 	Array clone () const {
 		return move (thiz) ;
@@ -247,35 +250,35 @@ public:
 		return ArrayHolder::hold (thiz)->length () ;
 	}
 
-	VREF<ARR<A>> ref_m () leftvalue {
+	VR<ARR<A>> ref_m () leftvalue {
 		return ArrayHolder::hold (thiz)->ref ;
 	}
 
-	forceinline operator VREF<ARR<A>> () leftvalue {
+	forceinline operator VR<ARR<A>> () leftvalue {
 		return ref ;
 	}
 
-	CREF<ARR<A>> ref_m () const leftvalue {
+	CR<ARR<A>> ref_m () const leftvalue {
 		return ArrayHolder::hold (thiz)->ref ;
 	}
 
-	forceinline operator CREF<ARR<A>> () const leftvalue {
+	forceinline operator CR<ARR<A>> () const leftvalue {
 		return ref ;
 	}
 
-	VREF<A> at (CREF<INDEX> index) leftvalue {
+	VR<A> at (CR<INDEX> index) leftvalue {
 		return ArrayHolder::hold (thiz)->at (index) ;
 	}
 
-	forceinline VREF<A> operator[] (CREF<INDEX> index) leftvalue {
+	forceinline VR<A> operator[] (CR<INDEX> index) leftvalue {
 		return at (index) ;
 	}
 
-	CREF<A> at (CREF<INDEX> index) const leftvalue {
+	CR<A> at (CR<INDEX> index) const leftvalue {
 		return ArrayHolder::hold (thiz)->at (index) ;
 	}
 
-	forceinline CREF<A> operator[] (CREF<INDEX> index) const leftvalue {
+	forceinline CR<A> operator[] (CR<INDEX> index) const leftvalue {
 		return at (index) ;
 	}
 
@@ -287,63 +290,63 @@ public:
 		return ArrayHolder::hold (thiz)->iend () ;
 	}
 
-	INDEX inext (CREF<INDEX> index) const {
+	INDEX inext (CR<INDEX> index) const {
 		return ArrayHolder::hold (thiz)->inext (index) ;
 	}
 
-	ArrayIterator<CREF<Array>> begin () const leftvalue {
-		return ArrayIterator<CREF<Array>> (thiz) ;
+	ArrayIterator<CR<Array>> begin () const leftvalue {
+		return ArrayIterator<CR<Array>> (thiz) ;
 	}
 
-	ArrayIterator<CREF<Array>> end () const leftvalue {
-		return ArrayIterator<CREF<Array>> (thiz) ;
+	ArrayIterator<CR<Array>> end () const leftvalue {
+		return ArrayIterator<CR<Array>> (thiz) ;
 	}
 
-	CREF<ArrayRange<Array>> iter () const leftvalue {
-		return ArrayRange<Array>::from (thiz) ;
+	ArrayRange<CR<Array>> iter () const leftvalue {
+		return ArrayRange<CR<Array>> (thiz) ;
 	}
 
-	BOOL equal (CREF<Array> that) const {
+	BOOL equal (CR<Array> that) const {
 		return ArrayHolder::hold (thiz)->equal (that) ;
 	}
 
-	forceinline BOOL operator== (CREF<Array> that) const {
+	forceinline BOOL operator== (CR<Array> that) const {
 		return equal (that) ;
 	}
 
-	forceinline BOOL operator!= (CREF<Array> that) const {
+	forceinline BOOL operator!= (CR<Array> that) const {
 		return (!equal (that)) ;
 	}
 
-	FLAG compr (CREF<Array> that) const {
+	FLAG compr (CR<Array> that) const {
 		return ArrayHolder::hold (thiz)->compr (that) ;
 	}
 
-	forceinline BOOL operator< (CREF<Array> that) const {
+	forceinline BOOL operator< (CR<Array> that) const {
 		return compr (that) < ZERO ;
 	}
 
-	forceinline BOOL operator<= (CREF<Array> that) const {
+	forceinline BOOL operator<= (CR<Array> that) const {
 		return compr (that) <= ZERO ;
 	}
 
-	forceinline BOOL operator> (CREF<Array> that) const {
+	forceinline BOOL operator> (CR<Array> that) const {
 		return compr (that) > ZERO ;
 	}
 
-	forceinline BOOL operator>= (CREF<Array> that) const {
+	forceinline BOOL operator>= (CR<Array> that) const {
 		return compr (that) >= ZERO ;
 	}
 
-	void visit (VREF<FriendVisitor> visitor) const {
+	void visit (VR<FriendVisitor> visitor) const {
 		return ArrayHolder::hold (thiz)->visit (visitor) ;
 	}
 
-	void fill (CREF<A> item) {
+	void fill (CR<A> item) {
 		return ArrayHolder::hold (thiz)->fill (Pointer::from (item)) ;
 	}
 
-	void splice (CREF<INDEX> index ,CREF<Array> item) {
+	void splice (CR<INDEX> index ,CR<Array> item) {
 		return ArrayHolder::hold (thiz)->splice (index ,item) ;
 	}
 } ;
@@ -359,48 +362,67 @@ struct StringLayout {
 	FLAG mEncode ;
 } ;
 
-template <class A>
-struct StringPureLayout implement StringLayout {
-public:
-	implicit StringPureLayout () noexcept {
-		noop (RefBuffer<A> ()) ;
-	}
-} ;
-
 struct StringHolder implement Interface {
-	imports VFat<StringHolder> hold (VREF<StringLayout> that) ;
-	imports CFat<StringHolder> hold (CREF<StringLayout> that) ;
+	imports VFat<StringHolder> hold (VR<StringLayout> that) ;
+	imports CFat<StringHolder> hold (CR<StringLayout> that) ;
 
-	virtual void initialize (CREF<Slice> that ,CREF<LENGTH> step_) = 0 ;
-	virtual void initialize (CREF<LENGTH> size_ ,CREF<LENGTH> step_) = 0 ;
-	virtual void initialize (CREF<StringLayout> that) = 0 ;
+	virtual void prepare (CR<Unknown> holder) = 0 ;
+	virtual void initialize (CR<Slice> that ,CR<LENGTH> step_) = 0 ;
+	virtual void initialize (CR<LENGTH> size_ ,CR<LENGTH> step_) = 0 ;
+	virtual void initialize (CR<StringLayout> that) = 0 ;
 	virtual void clear () = 0 ;
 	virtual FLAG encode () const = 0 ;
 	virtual LENGTH size () const = 0 ;
 	virtual LENGTH step () const = 0 ;
 	virtual LENGTH length () const = 0 ;
-	virtual VREF<Pointer> ref_m () leftvalue = 0 ;
-	virtual CREF<Pointer> ref_m () const leftvalue = 0 ;
+	virtual VR<Pointer> ref_m () leftvalue = 0 ;
+	virtual CR<Pointer> ref_m () const leftvalue = 0 ;
 	virtual Ref<RefBuffer<BYTE>> borrow () leftvalue = 0 ;
 	virtual Ref<RefBuffer<BYTE>> borrow () const leftvalue = 0 ;
-	virtual void get (CREF<INDEX> index ,VREF<STRU32> item) const = 0 ;
-	virtual void set (CREF<INDEX> index ,CREF<STRU32> item) = 0 ;
-	virtual VREF<Pointer> at (CREF<INDEX> index) leftvalue = 0 ;
-	virtual CREF<Pointer> at (CREF<INDEX> index) const leftvalue = 0 ;
+	virtual void get (CR<INDEX> index ,VR<STRU32> item) const = 0 ;
+	virtual void set (CR<INDEX> index ,CR<STRU32> item) = 0 ;
+	virtual VR<Pointer> at (CR<INDEX> index) leftvalue = 0 ;
+	virtual CR<Pointer> at (CR<INDEX> index) const leftvalue = 0 ;
 	virtual INDEX ibegin () const = 0 ;
 	virtual INDEX iend () const = 0 ;
-	virtual INDEX inext (CREF<INDEX> index) const = 0 ;
-	virtual BOOL equal (CREF<Slice> that) const = 0 ;
-	virtual BOOL equal (CREF<StringLayout> that) const = 0 ;
-	virtual FLAG compr (CREF<Slice> that) const = 0 ;
-	virtual FLAG compr (CREF<StringLayout> that) const = 0 ;
-	virtual void visit (VREF<FriendVisitor> visitor) const = 0 ;
-	virtual void trunc (CREF<INDEX> index) = 0 ;
-	virtual void fill (CREF<STRU32> item) = 0 ;
-	virtual void splice (CREF<INDEX> index ,CREF<Slice> item) = 0 ;
-	virtual void splice (CREF<INDEX> index ,CREF<StringLayout> item) = 0 ;
-	virtual Slice segment (CREF<INDEX> begin_ ,CREF<INDEX> end_) const = 0 ;
+	virtual INDEX inext (CR<INDEX> index) const = 0 ;
+	virtual BOOL equal (CR<Slice> that) const = 0 ;
+	virtual BOOL equal (CR<StringLayout> that) const = 0 ;
+	virtual FLAG compr (CR<Slice> that) const = 0 ;
+	virtual FLAG compr (CR<StringLayout> that) const = 0 ;
+	virtual void visit (VR<FriendVisitor> visitor) const = 0 ;
+	virtual void trunc (CR<INDEX> index) = 0 ;
+	virtual void fill (CR<STRU32> item) = 0 ;
+	virtual void splice (CR<INDEX> index ,CR<Slice> item) = 0 ;
+	virtual void splice (CR<INDEX> index ,CR<StringLayout> item) = 0 ;
+	virtual Slice segment (CR<INDEX> begin_ ,CR<INDEX> end_) const = 0 ;
 } ;
+
+template <class A>
+class StringUnknownBinder final implement Fat<FriendUnknown ,Proxy> {
+public:
+	FLAG reflect (CR<FLAG> uuid) const override {
+		if (uuid == ReflectSizeBinder<A>::expr)
+			return inline_vptr (ReflectSizeBinder<A> ()) ;
+		if (uuid == ReflectDestroyBinder<A>::expr)
+			return inline_vptr (ReflectDestroyBinder<A> ()) ;
+		if (uuid == ReflectElementBinder<A>::expr)
+			return inline_vptr (ReflectElementBinder<A> ()) ;
+		return ZERO ;
+	}
+} ;
+
+template <class A>
+struct StringPureLayout implement StringLayout {
+public:
+	implicit StringPureLayout () noexcept {
+		noop (RefBuffer<A> ()) ;
+		StringHolder::hold (thiz)->prepare (StringUnknownBinder<A> ()) ;
+	}
+} ;
+
+template <>
+struct StringPureLayout<Pointer> implement StringLayout {} ;
 
 template <class A>
 class String implement StringPureLayout<A> {
@@ -414,37 +436,37 @@ protected:
 public:
 	implicit String () = default ;
 
-	implicit String (CREF<Slice> that) {
+	implicit String (CR<Slice> that) {
 		StringHolder::hold (thiz)->initialize (that ,SIZE_OF<A>::expr) ;
 	}
 
-	explicit String (CREF<SizeProxy> size_) {
+	explicit String (CR<SizeProxy> size_) {
 		StringHolder::hold (thiz)->initialize (size_ ,SIZE_OF<A>::expr) ;
 	}
 
 	template <class...ARG1>
-	static String make (CREF<ARG1>...params) {
+	static String make (CR<ARG1>...params) {
 		using R1X = KILL<StringBuild<A> ,TYPE<ARG1...>> ;
 		return R1X::make (params...) ;
 	}
 
-	static CREF<String> zero () {
+	static CR<String> zero () {
 		return memorize ([&] () {
 			return String (slice ("\0")) ;
 		}) ;
 	}
 
-	implicit String (CREF<String> that) {
+	implicit String (CR<String> that) {
 		StringHolder::hold (thiz)->initialize (that) ;
 	}
 
-	forceinline VREF<String> operator= (CREF<String> that) {
+	forceinline VR<String> operator= (CR<String> that) {
 		return assign (thiz ,that) ;
 	}
 
-	implicit String (RREF<String> that) = default ;
+	implicit String (RR<String> that) = default ;
 
-	forceinline VREF<String> operator= (RREF<String> that) = default ;
+	forceinline VR<String> operator= (RR<String> that) = default ;
 
 	String clone () const {
 		return move (thiz) ;
@@ -470,19 +492,19 @@ public:
 		return StringHolder::hold (thiz)->length () ;
 	}
 
-	VREF<ARR<A>> ref_m () leftvalue {
+	VR<ARR<A>> ref_m () leftvalue {
 		return StringHolder::hold (thiz)->ref ;
 	}
 
-	forceinline operator VREF<ARR<A>> () leftvalue {
+	forceinline operator VR<ARR<A>> () leftvalue {
 		return ref ;
 	}
 
-	CREF<ARR<A>> ref_m () const leftvalue {
+	CR<ARR<A>> ref_m () const leftvalue {
 		return StringHolder::hold (thiz)->ref ;
 	}
 
-	forceinline operator CREF<ARR<A>> () const leftvalue {
+	forceinline operator CR<ARR<A>> () const leftvalue {
 		return ref ;
 	}
 
@@ -494,20 +516,28 @@ public:
 		return StringHolder::hold (thiz)->borrow () ;
 	}
 
-	VREF<A> at (CREF<INDEX> index) leftvalue {
+	VR<A> at (CR<INDEX> index) leftvalue {
 		return StringHolder::hold (thiz)->at (index) ;
 	}
 
-	forceinline VREF<A> operator[] (CREF<INDEX> index) leftvalue {
+	forceinline VR<A> operator[] (CR<INDEX> index) leftvalue {
 		return at (index) ;
 	}
 
-	CREF<A> at (CREF<INDEX> index) const leftvalue {
+	CR<A> at (CR<INDEX> index) const leftvalue {
 		return StringHolder::hold (thiz)->at (index) ;
 	}
 
-	forceinline CREF<A> operator[] (CREF<INDEX> index) const leftvalue {
+	forceinline CR<A> operator[] (CR<INDEX> index) const leftvalue {
 		return at (index) ;
+	}
+
+	void get (CR<INDEX> index ,VR<STRU32> map_) const {
+		return StringHolder::hold (thiz)->get (index ,map_) ;
+	}
+
+	void set (CR<INDEX> index ,CR<STRU32> map_) {
+		return StringHolder::hold (thiz)->set (index ,map_) ;
 	}
 
 	INDEX ibegin () const {
@@ -518,83 +548,83 @@ public:
 		return StringHolder::hold (thiz)->iend () ;
 	}
 
-	INDEX inext (CREF<INDEX> index) const {
+	INDEX inext (CR<INDEX> index) const {
 		return StringHolder::hold (thiz)->inext (index) ;
 	}
 
-	ArrayIterator<CREF<String>> begin () const leftvalue {
-		return ArrayIterator<CREF<String>> (thiz) ;
+	ArrayIterator<CR<String>> begin () const leftvalue {
+		return ArrayIterator<CR<String>> (thiz) ;
 	}
 
-	ArrayIterator<CREF<String>> end () const leftvalue {
-		return ArrayIterator<CREF<String>> (thiz) ;
+	ArrayIterator<CR<String>> end () const leftvalue {
+		return ArrayIterator<CR<String>> (thiz) ;
 	}
 
-	CREF<ArrayRange<String>> iter () const leftvalue {
-		return ArrayRange<String>::from (thiz) ;
+	ArrayRange<CR<String>> iter () const leftvalue {
+		return ArrayRange<CR<String>> (thiz) ;
 	}
 
-	BOOL equal (CREF<Slice> that) const {
+	BOOL equal (CR<Slice> that) const {
 		return StringHolder::hold (thiz)->equal (that) ;
 	}
 
-	forceinline BOOL operator== (CREF<Slice> that) const {
+	forceinline BOOL operator== (CR<Slice> that) const {
 		return equal (that) ;
 	}
 
-	forceinline BOOL operator!= (CREF<Slice> that) const {
+	forceinline BOOL operator!= (CR<Slice> that) const {
 		return (!equal (that)) ;
 	}
 
-	BOOL equal (CREF<String> that) const {
+	BOOL equal (CR<String> that) const {
 		return StringHolder::hold (thiz)->equal (that) ;
 	}
 
-	forceinline BOOL operator== (CREF<String> that) const {
+	forceinline BOOL operator== (CR<String> that) const {
 		return equal (that) ;
 	}
 
-	forceinline BOOL operator!= (CREF<String> that) const {
+	forceinline BOOL operator!= (CR<String> that) const {
 		return (!equal (that)) ;
 	}
 
-	FLAG compr (CREF<String> that) const {
+	FLAG compr (CR<String> that) const {
 		return StringHolder::hold (thiz)->compr (that) ;
 	}
 
-	forceinline BOOL operator< (CREF<String> that) const {
+	forceinline BOOL operator< (CR<String> that) const {
 		return compr (that) < ZERO ;
 	}
 
-	forceinline BOOL operator<= (CREF<String> that) const {
+	forceinline BOOL operator<= (CR<String> that) const {
 		return compr (that) <= ZERO ;
 	}
 
-	forceinline BOOL operator> (CREF<String> that) const {
+	forceinline BOOL operator> (CR<String> that) const {
 		return compr (that) > ZERO ;
 	}
 
-	forceinline BOOL operator>= (CREF<String> that) const {
+	forceinline BOOL operator>= (CR<String> that) const {
 		return compr (that) >= ZERO ;
 	}
 
-	void visit (VREF<FriendVisitor> visitor) const {
+	void visit (VR<FriendVisitor> visitor) const {
 		return StringHolder::hold (thiz)->visit (visitor) ;
 	}
 
-	void trunc (CREF<INDEX> index) {
+	void trunc (CR<INDEX> index) {
 		return StringHolder::hold (thiz)->trunc (index) ;
 	}
 
-	void fill (CREF<STRU32> item) {
+	void fill (CR<STRU32> item) {
 		return StringHolder::hold (thiz)->fill (item) ;
 	}
 
-	void splice (CREF<INDEX> index ,CREF<Slice> item) {
+	void splice (CR<INDEX> index ,CR<Slice> item) {
 		return StringHolder::hold (thiz)->splice (index ,item) ;
 	}
 
-	void splice (CREF<INDEX> index ,CREF<String> item) {
+	void splice (CR<INDEX> index ,CR<String> item) {
 		return StringHolder::hold (thiz)->splice (index ,item) ;
 	}
 
@@ -602,7 +632,7 @@ public:
 		return segment (0 ,length ()) ;
 	}
 
-	Slice segment (CREF<INDEX> begin_ ,CREF<INDEX> end_) const {
+	Slice segment (CR<INDEX> begin_ ,CR<INDEX> end_) const {
 		return StringHolder::hold (thiz)->segment (begin_ ,end_) ;
 	}
 } ;
@@ -613,45 +643,37 @@ struct DequeLayout {
 	INDEX mWrite ;
 } ;
 
-template <class A>
-struct DequePureLayout implement DequeLayout {
-public:
-	implicit DequePureLayout () noexcept {
-		noop (RefBuffer<A> ()) ;
-	}
-} ;
-
 struct DequeHolder implement Interface {
-	imports VFat<DequeHolder> hold (VREF<DequeLayout> that) ;
-	imports CFat<DequeHolder> hold (CREF<DequeLayout> that) ;
+	imports VFat<DequeHolder> hold (VR<DequeLayout> that) ;
+	imports CFat<DequeHolder> hold (CR<DequeLayout> that) ;
 
-	virtual void prepare (CREF<Unknown> holder) = 0 ;
-	virtual void initialize (CREF<Unknown> holder ,CREF<LENGTH> size_) = 0 ;
-	virtual void initialize (CREF<Unknown> holder ,CREF<WrapperLayout> params ,VREF<BoxLayout> item) = 0 ;
+	virtual void prepare (CR<Unknown> holder) = 0 ;
+	virtual void initialize (CR<Unknown> holder ,CR<LENGTH> size_) = 0 ;
+	virtual void initialize (CR<Unknown> holder ,CR<WrapperLayout> params ,VR<BoxLayout> item) = 0 ;
 	virtual void clear () = 0 ;
 	virtual LENGTH size () const = 0 ;
 	virtual LENGTH step () const = 0 ;
 	virtual LENGTH length () const = 0 ;
-	virtual VREF<Pointer> at (CREF<INDEX> index) leftvalue = 0 ;
-	virtual CREF<Pointer> at (CREF<INDEX> index) const leftvalue = 0 ;
+	virtual VR<Pointer> at (CR<INDEX> index) leftvalue = 0 ;
+	virtual CR<Pointer> at (CR<INDEX> index) const leftvalue = 0 ;
 	virtual INDEX ibegin () const = 0 ;
 	virtual INDEX iend () const = 0 ;
-	virtual INDEX inext (CREF<INDEX> index) const = 0 ;
+	virtual INDEX inext (CR<INDEX> index) const = 0 ;
 	virtual BOOL empty () const = 0 ;
 	virtual BOOL full () const = 0 ;
 	virtual INDEX head () const = 0 ;
 	virtual INDEX tail () const = 0 ;
-	virtual void add (RREF<BoxLayout> item) = 0 ;
+	virtual void add (RR<BoxLayout> item) = 0 ;
 	virtual void take () = 0 ;
-	virtual void push (RREF<BoxLayout> item) = 0 ;
+	virtual void push (RR<BoxLayout> item) = 0 ;
 	virtual void pop () = 0 ;
-	virtual void ring (CREF<LENGTH> count) = 0 ;
+	virtual void ring (CR<LENGTH> count) = 0 ;
 } ;
 
 template <class A>
-class DequeUnknownBinder final implement Fat<ReflectUnknown ,Proxy> {
+class DequeUnknownBinder final implement Fat<FriendUnknown ,Proxy> {
 public:
-	FLAG reflect (CREF<FLAG> uuid) const override {
+	FLAG reflect (CR<FLAG> uuid) const override {
 		if (uuid == ReflectSizeBinder<A>::expr)
 			return inline_vptr (ReflectSizeBinder<A> ()) ;
 		if (uuid == ReflectCreateBinder<A>::expr)
@@ -667,6 +689,18 @@ public:
 } ;
 
 template <class A>
+struct DequePureLayout implement DequeLayout {
+public:
+	implicit DequePureLayout () noexcept {
+		noop (RefBuffer<A> ()) ;
+		DequeHolder::hold (thiz)->prepare (DequeUnknownBinder<A> ()) ;
+	}
+} ;
+
+template <>
+struct DequePureLayout<Pointer> implement DequeLayout {} ;
+
+template <class A>
 class Deque implement DequePureLayout<A> {
 protected:
 	using DequePureLayout<A>::mDeque ;
@@ -676,11 +710,11 @@ protected:
 public:
 	implicit Deque () = default ;
 
-	explicit Deque (CREF<SizeProxy> size_) {
+	explicit Deque (CR<SizeProxy> size_) {
 		DequeHolder::hold (thiz)->initialize (DequeUnknownBinder<A> () ,size_) ;
 	}
 
-	explicit Deque (CREF<csc_initializer_list_t<A>> that) {
+	explicit Deque (CR<csc_initializer_list_t<A>> that) {
 		auto rax = Box<A> () ;
 		DequeHolder::hold (thiz)->initialize (DequeUnknownBinder<A> () ,MakeWrapper (that) ,rax) ;
 	}
@@ -701,19 +735,19 @@ public:
 		return DequeHolder::hold (thiz)->length () ;
 	}
 
-	VREF<A> at (CREF<INDEX> index) leftvalue {
+	VR<A> at (CR<INDEX> index) leftvalue {
 		return DequeHolder::hold (thiz)->at (index) ;
 	}
 
-	forceinline VREF<A> operator[] (CREF<INDEX> index) leftvalue {
+	forceinline VR<A> operator[] (CR<INDEX> index) leftvalue {
 		return at (index) ;
 	}
 
-	CREF<A> at (CREF<INDEX> index) const leftvalue {
+	CR<A> at (CR<INDEX> index) const leftvalue {
 		return DequeHolder::hold (thiz)->at (index) ;
 	}
 
-	forceinline CREF<A> operator[] (CREF<INDEX> index) const leftvalue {
+	forceinline CR<A> operator[] (CR<INDEX> index) const leftvalue {
 		return at (index) ;
 	}
 
@@ -725,20 +759,20 @@ public:
 		return DequeHolder::hold (thiz)->iend () ;
 	}
 
-	INDEX inext (CREF<INDEX> index) const {
+	INDEX inext (CR<INDEX> index) const {
 		return DequeHolder::hold (thiz)->inext (index) ;
 	}
 
-	ArrayIterator<CREF<Deque>> begin () const leftvalue {
-		return ArrayIterator<CREF<Deque>> (thiz) ;
+	ArrayIterator<CR<Deque>> begin () const leftvalue {
+		return ArrayIterator<CR<Deque>> (thiz) ;
 	}
 
-	ArrayIterator<CREF<Deque>> end () const leftvalue {
-		return ArrayIterator<CREF<Deque>> (thiz) ;
+	ArrayIterator<CR<Deque>> end () const leftvalue {
+		return ArrayIterator<CR<Deque>> (thiz) ;
 	}
 
-	CREF<ArrayRange<Deque>> iter () const leftvalue {
-		return ArrayRange<Deque>::from (thiz) ;
+	ArrayRange<CR<Deque>> iter () const leftvalue {
+		return ArrayRange<CR<Deque>> (thiz) ;
 	}
 
 	BOOL empty () const {
@@ -757,13 +791,12 @@ public:
 		return DequeHolder::hold (thiz)->tail () ;
 	}
 
-	void add (CREF<A> item) {
+	void add (CR<A> item) {
 		add (move (item)) ;
 	}
 
-	void add (RREF<A> item) {
+	void add (RR<A> item) {
 		auto rax = Box<A>::make (move (item)) ;
-		DequeHolder::hold (thiz)->prepare (DequeUnknownBinder<A> ()) ;
 		return DequeHolder::hold (thiz)->add (move (rax)) ;
 	}
 
@@ -771,18 +804,17 @@ public:
 		return DequeHolder::hold (thiz)->take () ;
 	}
 
-	void take (VREF<A> item) {
+	void take (VR<A> item) {
 		item = move (thiz[head ()]) ;
 		take () ;
 	}
 
-	void push (CREF<A> item) {
+	void push (CR<A> item) {
 		move (move (item)) ;
 	}
 
-	void push (RREF<A> item) {
+	void push (RR<A> item) {
 		auto rax = Box<A>::make (move (item)) ;
-		DequeHolder::hold (thiz)->prepare (DequeUnknownBinder<A> ()) ;
 		return DequeHolder::hold (thiz)->push (move (rax)) ;
 	}
 
@@ -790,12 +822,12 @@ public:
 		return DequeHolder::hold (thiz)->pop () ;
 	}
 
-	void pop (VREF<A> item) {
+	void pop (VR<A> item) {
 		item = move (thiz[tail ()]) ;
 		take () ;
 	}
 
-	void ring (CREF<LENGTH> count) {
+	void ring (CR<LENGTH> count) {
 		return DequeHolder::hold (thiz)->ring (count) ;
 	}
 } ;
@@ -803,39 +835,39 @@ public:
 template <class A>
 struct IndexPair implement Tuple<A ,INDEX> {
 public:
-	BOOL equal (CREF<IndexPair> that) const {
+	BOOL equal (CR<IndexPair> that) const {
 		return inline_equal (thiz.m1st ,that.m1st) ;
 	}
 
-	forceinline BOOL operator== (CREF<IndexPair> that) const {
+	forceinline BOOL operator== (CR<IndexPair> that) const {
 		return equal (that) ;
 	}
 
-	forceinline BOOL operator!= (CREF<IndexPair> that) const {
+	forceinline BOOL operator!= (CR<IndexPair> that) const {
 		return (!equal (that)) ;
 	}
 
-	FLAG compr (CREF<IndexPair> that) const {
+	FLAG compr (CR<IndexPair> that) const {
 		return inline_compr (thiz.m1st ,that.m1st) ;
 	}
 
-	forceinline BOOL operator< (CREF<IndexPair> that) const {
+	forceinline BOOL operator< (CR<IndexPair> that) const {
 		return compr (that) < ZERO ;
 	}
 
-	forceinline BOOL operator<= (CREF<IndexPair> that) const {
+	forceinline BOOL operator<= (CR<IndexPair> that) const {
 		return compr (that) <= ZERO ;
 	}
 
-	forceinline BOOL operator> (CREF<IndexPair> that) const {
+	forceinline BOOL operator> (CR<IndexPair> that) const {
 		return compr (that) > ZERO ;
 	}
 
-	forceinline BOOL operator>= (CREF<IndexPair> that) const {
+	forceinline BOOL operator>= (CR<IndexPair> that) const {
 		return compr (that) >= ZERO ;
 	}
 
-	void visit (VREF<FriendVisitor> visitor) const {
+	void visit (VR<FriendVisitor> visitor) const {
 		visitor.enter () ;
 		inline_visit (visitor ,thiz.m1st) ;
 		visitor.leave () ;
@@ -848,40 +880,32 @@ struct PriorityLayout {
 	INDEX mWrite ;
 } ;
 
-template <class A>
-struct PriorityPureLayout implement PriorityLayout {
-public:
-	implicit PriorityPureLayout () noexcept {
-		noop (RefBuffer<A> ()) ;
-	}
-} ;
-
 struct PriorityHolder implement Interface {
-	imports VFat<PriorityHolder> hold (VREF<PriorityLayout> that) ;
-	imports CFat<PriorityHolder> hold (CREF<PriorityLayout> that) ;
+	imports VFat<PriorityHolder> hold (VR<PriorityLayout> that) ;
+	imports CFat<PriorityHolder> hold (CR<PriorityLayout> that) ;
 
-	virtual void prepare (CREF<Unknown> holder) = 0 ;
-	virtual void initialize (CREF<Unknown> holder ,CREF<LENGTH> size_) = 0 ;
-	virtual void initialize (CREF<Unknown> holder ,CREF<WrapperLayout> params ,VREF<BoxLayout> item) = 0 ;
+	virtual void prepare (CR<Unknown> holder) = 0 ;
+	virtual void initialize (CR<Unknown> holder ,CR<LENGTH> size_) = 0 ;
+	virtual void initialize (CR<Unknown> holder ,CR<WrapperLayout> params ,VR<BoxLayout> item) = 0 ;
 	virtual void clear () = 0 ;
 	virtual LENGTH size () const = 0 ;
 	virtual LENGTH step () const = 0 ;
 	virtual LENGTH length () const = 0 ;
-	virtual CREF<Pointer> at (CREF<INDEX> index) const leftvalue = 0 ;
+	virtual CR<Pointer> at (CR<INDEX> index) const leftvalue = 0 ;
 	virtual INDEX ibegin () const = 0 ;
 	virtual INDEX iend () const = 0 ;
-	virtual INDEX inext (CREF<INDEX> index) const = 0 ;
+	virtual INDEX inext (CR<INDEX> index) const = 0 ;
 	virtual BOOL empty () const = 0 ;
 	virtual BOOL full () const = 0 ;
 	virtual INDEX head () const = 0 ;
-	virtual void add (RREF<BoxLayout> item) = 0 ;
+	virtual void add (RR<BoxLayout> item) = 0 ;
 	virtual void take () = 0 ;
 } ;
 
 template <class A>
-class PriorityUnknownBinder final implement Fat<ReflectUnknown ,Proxy> {
+class PriorityUnknownBinder final implement Fat<FriendUnknown ,Proxy> {
 public:
-	FLAG reflect (CREF<FLAG> uuid) const override {
+	FLAG reflect (CR<FLAG> uuid) const override {
 		if (uuid == ReflectSizeBinder<A>::expr)
 			return inline_vptr (ReflectSizeBinder<A> ()) ;
 		if (uuid == ReflectCreateBinder<A>::expr)
@@ -903,6 +927,18 @@ public:
 } ;
 
 template <class A>
+struct PriorityPureLayout implement PriorityLayout {
+public:
+	implicit PriorityPureLayout () noexcept {
+		noop (RefBuffer<A> ()) ;
+		PriorityHolder::hold (thiz)->prepare (PriorityUnknownBinder<A> ()) ;
+	}
+} ;
+
+template <>
+struct PriorityPureLayout<Pointer> implement PriorityLayout {} ;
+
+template <class A>
 class Priority implement PriorityPureLayout<A> {
 protected:
 	using PriorityPureLayout<A>::mPriority ;
@@ -912,11 +948,11 @@ protected:
 public:
 	implicit Priority () = default ;
 
-	explicit Priority (CREF<SizeProxy> size_) {
+	explicit Priority (CR<SizeProxy> size_) {
 		PriorityHolder::hold (thiz)->initialize (PriorityUnknownBinder<A> () ,size_) ;
 	}
 
-	explicit Priority (CREF<csc_initializer_list_t<A>> that) {
+	explicit Priority (CR<csc_initializer_list_t<A>> that) {
 		auto rax = Box<A> () ;
 		PriorityHolder::hold (thiz)->initialize (PriorityUnknownBinder<A> () ,MakeWrapper (that) ,rax) ;
 	}
@@ -937,11 +973,11 @@ public:
 		return PriorityHolder::hold (thiz)->length () ;
 	}
 
-	CREF<A> at (CREF<INDEX> index) const leftvalue {
+	CR<A> at (CR<INDEX> index) const leftvalue {
 		return PriorityHolder::hold (thiz)->at (index) ;
 	}
 
-	forceinline CREF<A> operator[] (CREF<INDEX> index) const leftvalue {
+	forceinline CR<A> operator[] (CR<INDEX> index) const leftvalue {
 		return at (index) ;
 	}
 
@@ -953,20 +989,20 @@ public:
 		return PriorityHolder::hold (thiz)->iend () ;
 	}
 
-	INDEX inext (CREF<INDEX> index) const {
+	INDEX inext (CR<INDEX> index) const {
 		return PriorityHolder::hold (thiz)->inext (index) ;
 	}
 
-	ArrayIterator<CREF<Priority>> beign () const leftvalue {
-		return ArrayIterator<CREF<Priority>> (thiz) ;
+	ArrayIterator<CR<Priority>> beign () const leftvalue {
+		return ArrayIterator<CR<Priority>> (thiz) ;
 	}
 
-	ArrayIterator<CREF<Priority>> end () const leftvalue {
-		return ArrayIterator<CREF<Priority>> (thiz) ;
+	ArrayIterator<CR<Priority>> end () const leftvalue {
+		return ArrayIterator<CR<Priority>> (thiz) ;
 	}
 
-	CREF<ArrayRange<Priority>> iter () const leftvalue {
-		return ArrayRange<Priority>::from (thiz) ;
+	ArrayRange<CR<Priority>> iter () const leftvalue {
+		return ArrayRange<CR<Priority>> (thiz) ;
 	}
 
 	BOOL empty () const {
@@ -981,13 +1017,12 @@ public:
 		return PriorityHolder::hold (thiz)->head () ;
 	}
 
-	void add (CREF<A> item) {
+	void add (CR<A> item) {
 		add (move (item)) ;
 	}
 
-	void add (RREF<A> item) {
+	void add (RR<A> item) {
 		auto rax = Box<A>::make (move (item)) ;
-		PriorityHolder::hold (thiz)->prepare (PriorityUnknownBinder<A> ()) ;
 		return PriorityHolder::hold (thiz)->add (move (rax)) ;
 	}
 
@@ -995,7 +1030,7 @@ public:
 		return PriorityHolder::hold (thiz)->take () ;
 	}
 
-	void take (VREF<A> item) {
+	void take (VR<A> item) {
 		item = move (thiz[head ()]) ;
 		take () ;
 	}
@@ -1012,48 +1047,40 @@ struct ListLayout {
 	INDEX mLast ;
 } ;
 
-template <class A>
-struct ListPureLayout implement ListLayout {
-public:
-	implicit ListPureLayout () noexcept {
-		noop (Allocator<A ,ListNode> ()) ;
-	}
-} ;
-
 struct ListHolder implement Interface {
-	imports VFat<ListHolder> hold (VREF<ListLayout> that) ;
-	imports CFat<ListHolder> hold (CREF<ListLayout> that) ;
+	imports VFat<ListHolder> hold (VR<ListLayout> that) ;
+	imports CFat<ListHolder> hold (CR<ListLayout> that) ;
 
-	virtual void prepare (CREF<Unknown> holder) = 0 ;
-	virtual void initialize (CREF<Unknown> holder ,CREF<LENGTH> size_) = 0 ;
-	virtual void initialize (CREF<Unknown> holder ,CREF<WrapperLayout> params ,VREF<BoxLayout> item) = 0 ;
+	virtual void prepare (CR<Unknown> holder) = 0 ;
+	virtual void initialize (CR<Unknown> holder ,CR<LENGTH> size_) = 0 ;
+	virtual void initialize (CR<Unknown> holder ,CR<WrapperLayout> params ,VR<BoxLayout> item) = 0 ;
 	virtual void clear () = 0 ;
 	virtual LENGTH size () const = 0 ;
 	virtual LENGTH step () const = 0 ;
 	virtual LENGTH length () const = 0 ;
-	virtual VREF<Pointer> at (CREF<INDEX> index) leftvalue = 0 ;
-	virtual CREF<Pointer> at (CREF<INDEX> index) const leftvalue = 0 ;
+	virtual VR<Pointer> at (CR<INDEX> index) leftvalue = 0 ;
+	virtual CR<Pointer> at (CR<INDEX> index) const leftvalue = 0 ;
 	virtual INDEX ibegin () const = 0 ;
 	virtual INDEX iend () const = 0 ;
-	virtual INDEX inext (CREF<INDEX> index) const = 0 ;
+	virtual INDEX inext (CR<INDEX> index) const = 0 ;
 	virtual BOOL empty () const = 0 ;
 	virtual BOOL full () const = 0 ;
 	virtual INDEX head () const = 0 ;
 	virtual INDEX tail () const = 0 ;
-	virtual void add (RREF<BoxLayout> item) = 0 ;
+	virtual void add (RR<BoxLayout> item) = 0 ;
 	virtual void take () = 0 ;
-	virtual void push (RREF<BoxLayout> item) = 0 ;
+	virtual void push (RR<BoxLayout> item) = 0 ;
 	virtual void pop () = 0 ;
-	virtual INDEX insert (RREF<BoxLayout> item) = 0 ;
-	virtual INDEX insert (CREF<INDEX> index ,RREF<BoxLayout> item) = 0 ;
-	virtual void remove (CREF<INDEX> index) = 0 ;
-	virtual void order (CREF<Array<INDEX>> range_) = 0 ;
+	virtual INDEX insert (RR<BoxLayout> item) = 0 ;
+	virtual INDEX insert (CR<INDEX> index ,RR<BoxLayout> item) = 0 ;
+	virtual void remove (CR<INDEX> index) = 0 ;
+	virtual void order (CR<Array<INDEX>> range_) = 0 ;
 } ;
 
 template <class A>
-class ListUnknownBinder final implement Fat<ReflectUnknown ,Proxy> {
+class ListUnknownBinder final implement Fat<FriendUnknown ,Proxy> {
 public:
-	FLAG reflect (CREF<FLAG> uuid) const override {
+	FLAG reflect (CR<FLAG> uuid) const override {
 		using R1X = UnionPair<A ,ListNode> ;
 		if (uuid == ReflectSizeBinder<A>::expr)
 			return inline_vptr (ReflectSizeBinder<A> ()) ;
@@ -1070,6 +1097,18 @@ public:
 } ;
 
 template <class A>
+struct ListPureLayout implement ListLayout {
+public:
+	implicit ListPureLayout () noexcept {
+		noop (Allocator<A ,ListNode> ()) ;
+		ListHolder::hold (thiz)->prepare (ListUnknownBinder<A> ()) ;
+	}
+} ;
+
+template <>
+struct ListPureLayout<Pointer> implement ListLayout {} ;
+
+template <class A>
 class List implement ListPureLayout<A> {
 protected:
 	using ListPureLayout<A>::mList ;
@@ -1079,11 +1118,11 @@ protected:
 public:
 	implicit List () = default ;
 
-	explicit List (CREF<SizeProxy> size_) {
+	explicit List (CR<SizeProxy> size_) {
 		ListHolder::hold (thiz)->initialize (ListUnknownBinder<A> () ,size_) ;
 	}
 
-	explicit List (CREF<csc_initializer_list_t<A>> that) {
+	explicit List (CR<csc_initializer_list_t<A>> that) {
 		auto rax = Box<A> () ;
 		ListHolder::hold (thiz)->initialize (ListUnknownBinder<A> () ,MakeWrapper (that) ,rax) ;
 	}
@@ -1104,19 +1143,19 @@ public:
 		return ListHolder::hold (thiz)->length () ;
 	}
 
-	VREF<A> at (CREF<INDEX> index) leftvalue {
+	VR<A> at (CR<INDEX> index) leftvalue {
 		return ListHolder::hold (thiz)->at (index) ;
 	}
 
-	forceinline VREF<A> operator[] (CREF<INDEX> index) leftvalue {
+	forceinline VR<A> operator[] (CR<INDEX> index) leftvalue {
 		return at (index) ;
 	}
 
-	CREF<A> at (CREF<INDEX> index) const leftvalue {
+	CR<A> at (CR<INDEX> index) const leftvalue {
 		return ListHolder::hold (thiz)->at (index) ;
 	}
 
-	forceinline CREF<A> operator[] (CREF<INDEX> index) const leftvalue {
+	forceinline CR<A> operator[] (CR<INDEX> index) const leftvalue {
 		return at (index) ;
 	}
 
@@ -1128,20 +1167,20 @@ public:
 		return ListHolder::hold (thiz)->iend () ;
 	}
 
-	INDEX inext (CREF<INDEX> index) const {
+	INDEX inext (CR<INDEX> index) const {
 		return ListHolder::hold (thiz)->inext (index) ;
 	}
 
-	ArrayIterator<CREF<List>> begin () const leftvalue {
-		return ArrayIterator<CREF<List>> (thiz) ;
+	ArrayIterator<CR<List>> begin () const leftvalue {
+		return ArrayIterator<CR<List>> (thiz) ;
 	}
 
-	ArrayIterator<CREF<List>> end () const leftvalue {
-		return ArrayIterator<CREF<List>> (thiz) ;
+	ArrayIterator<CR<List>> end () const leftvalue {
+		return ArrayIterator<CR<List>> (thiz) ;
 	}
 
-	CREF<ArrayRange<List>> iter () const leftvalue {
-		return ArrayRange<List>::from (thiz) ;
+	ArrayRange<CR<List>> iter () const leftvalue {
+		return ArrayRange<CR<List>> (thiz) ;
 	}
 
 	BOOL empty () const {
@@ -1160,13 +1199,12 @@ public:
 		return ListHolder::hold (thiz)->tail () ;
 	}
 
-	void add (CREF<A> item) {
+	void add (CR<A> item) {
 		add (move (item)) ;
 	}
 
-	void add (RREF<A> item) {
+	void add (RR<A> item) {
 		auto rax = Box<A>::make (move (item)) ;
-		ListHolder::hold (thiz)->prepare (ListUnknownBinder<A> ()) ;
 		return ListHolder::hold (thiz)->add (move (rax)) ;
 	}
 
@@ -1174,18 +1212,17 @@ public:
 		return ListHolder::hold (thiz)->take () ;
 	}
 
-	void take (VREF<A> item) {
+	void take (VR<A> item) {
 		item = move (thiz[head ()]) ;
 		take () ;
 	}
 
-	void push (CREF<A> item) {
+	void push (CR<A> item) {
 		push (move (item)) ;
 	}
 
-	void push (RREF<A> item) {
+	void push (RR<A> item) {
 		auto rax = Box<A>::make (move (item)) ;
-		ListHolder::hold (thiz)->prepare (ListUnknownBinder<A> ()) ;
 		return ListHolder::hold (thiz)->push (move (rax)) ;
 	}
 
@@ -1193,28 +1230,26 @@ public:
 		return ListHolder::hold (thiz)->pop () ;
 	}
 
-	void pop (VREF<A> item) {
+	void pop (VR<A> item) {
 		item = move (thiz[tail ()]) ;
 		pop () ;
 	}
 
 	INDEX insert () {
 		auto rax = Box<A>::make () ;
-		ListHolder::hold (thiz)->prepare (ListUnknownBinder<A> ()) ;
 		return ListHolder::hold (thiz)->insert (move (rax)) ;
 	}
 
-	INDEX insert (CREF<INDEX> index) {
+	INDEX insert (CR<INDEX> index) {
 		auto rax = Box<A>::make () ;
-		ListHolder::hold (thiz)->prepare (ListUnknownBinder<A> ()) ;
 		return ListHolder::hold (thiz)->insert (index ,move (rax)) ;
 	}
 
-	void remove (CREF<INDEX> index) {
+	void remove (CR<INDEX> index) {
 		return ListHolder::hold (thiz)->remove (index) ;
 	}
 
-	void order (CREF<Array<INDEX>> range_) {
+	void order (CR<Array<INDEX>> range_) {
 		return ListHolder::hold (thiz)->order (range_) ;
 	}
 } ;
@@ -1228,42 +1263,34 @@ struct ArrayListLayout {
 	BOOL mRemap ;
 } ;
 
-template <class A>
-struct ArrayListPureLayout implement ArrayListLayout {
-public:
-	implicit ArrayListPureLayout () noexcept {
-		noop (Allocator<A ,ArrayListNode> ()) ;
-	}
-} ;
-
 struct ArrayListHolder implement Interface {
-	imports VFat<ArrayListHolder> hold (VREF<ArrayListLayout> that) ;
-	imports CFat<ArrayListHolder> hold (CREF<ArrayListLayout> that) ;
+	imports VFat<ArrayListHolder> hold (VR<ArrayListLayout> that) ;
+	imports CFat<ArrayListHolder> hold (CR<ArrayListLayout> that) ;
 
-	virtual void prepare (CREF<Unknown> holder) = 0 ;
-	virtual void initialize (CREF<Unknown> holder ,CREF<LENGTH> size_) = 0 ;
-	virtual void initialize (CREF<Unknown> holder ,CREF<WrapperLayout> params ,VREF<BoxLayout> item) = 0 ;
+	virtual void prepare (CR<Unknown> holder) = 0 ;
+	virtual void initialize (CR<Unknown> holder ,CR<LENGTH> size_) = 0 ;
+	virtual void initialize (CR<Unknown> holder ,CR<WrapperLayout> params ,VR<BoxLayout> item) = 0 ;
 	virtual void clear () = 0 ;
 	virtual LENGTH size () const = 0 ;
 	virtual LENGTH step () const = 0 ;
 	virtual LENGTH length () const = 0 ;
-	virtual VREF<Pointer> at (CREF<INDEX> index) leftvalue = 0 ;
-	virtual CREF<Pointer> at (CREF<INDEX> index) const leftvalue = 0 ;
+	virtual VR<Pointer> at (CR<INDEX> index) leftvalue = 0 ;
+	virtual CR<Pointer> at (CR<INDEX> index) const leftvalue = 0 ;
 	virtual INDEX ibegin () const = 0 ;
 	virtual INDEX iend () const = 0 ;
-	virtual INDEX inext (CREF<INDEX> index) const = 0 ;
-	virtual void add (RREF<BoxLayout> item) = 0 ;
-	virtual INDEX insert (RREF<BoxLayout> item) = 0 ;
-	virtual INDEX insert (CREF<INDEX> index ,RREF<BoxLayout> item) = 0 ;
-	virtual void remove (CREF<INDEX> index) = 0 ;
-	virtual void order (CREF<Array<INDEX>> range_) = 0 ;
+	virtual INDEX inext (CR<INDEX> index) const = 0 ;
+	virtual void add (RR<BoxLayout> item) = 0 ;
+	virtual INDEX insert (RR<BoxLayout> item) = 0 ;
+	virtual INDEX insert (CR<INDEX> index ,RR<BoxLayout> item) = 0 ;
+	virtual void remove (CR<INDEX> index) = 0 ;
+	virtual void order (CR<Array<INDEX>> range_) = 0 ;
 	virtual void remap () = 0 ;
 } ;
 
 template <class A>
-class ArrayListUnknownBinder final implement Fat<ReflectUnknown ,Proxy> {
+class ArrayListUnknownBinder final implement Fat<FriendUnknown ,Proxy> {
 public:
-	FLAG reflect (CREF<FLAG> uuid) const override {
+	FLAG reflect (CR<FLAG> uuid) const override {
 		using R1X = UnionPair<A ,ArrayListNode> ;
 		if (uuid == ReflectSizeBinder<A>::expr)
 			return inline_vptr (ReflectSizeBinder<A> ()) ;
@@ -1280,6 +1307,18 @@ public:
 } ;
 
 template <class A>
+struct ArrayListPureLayout implement ArrayListLayout {
+public:
+	implicit ArrayListPureLayout () noexcept {
+		noop (Allocator<A ,ArrayListNode> ()) ;
+		ArrayListHolder::hold (thiz)->prepare (ArrayListUnknownBinder<A> ()) ;
+	}
+} ;
+
+template <>
+struct ArrayListPureLayout<Pointer> implement ArrayListLayout {} ;
+
+template <class A>
 class ArrayList implement ArrayListPureLayout<A> {
 protected:
 	using ArrayListPureLayout<A>::mList ;
@@ -1290,11 +1329,11 @@ protected:
 public:
 	implicit ArrayList () = default ;
 
-	explicit ArrayList (CREF<SizeProxy> size_) {
+	explicit ArrayList (CR<SizeProxy> size_) {
 		ArrayListHolder::hold (thiz)->initialize (ArrayListUnknownBinder<A> () ,size_) ;
 	}
 
-	explicit ArrayList (CREF<csc_initializer_list_t<A>> that) {
+	explicit ArrayList (CR<csc_initializer_list_t<A>> that) {
 		auto rax = Box<A> () ;
 		ArrayListHolder::hold (thiz)->initialize (ArrayListUnknownBinder<A> () ,MakeWrapper (that) ,rax) ;
 	}
@@ -1315,19 +1354,19 @@ public:
 		return ArrayListHolder::hold (thiz)->length () ;
 	}
 
-	VREF<A> at (CREF<INDEX> index) leftvalue {
+	VR<A> at (CR<INDEX> index) leftvalue {
 		return ArrayListHolder::hold (thiz)->at (index) ;
 	}
 
-	forceinline VREF<A> operator[] (CREF<INDEX> index) leftvalue {
+	forceinline VR<A> operator[] (CR<INDEX> index) leftvalue {
 		return at (index) ;
 	}
 
-	CREF<A> at (CREF<INDEX> index) const leftvalue {
+	CR<A> at (CR<INDEX> index) const leftvalue {
 		return ArrayListHolder::hold (thiz)->at (index) ;
 	}
 
-	forceinline CREF<A> operator[] (CREF<INDEX> index) const leftvalue {
+	forceinline CR<A> operator[] (CR<INDEX> index) const leftvalue {
 		return at (index) ;
 	}
 
@@ -1339,49 +1378,46 @@ public:
 		return ArrayListHolder::hold (thiz)->iend () ;
 	}
 
-	INDEX inext (CREF<INDEX> index) const {
+	INDEX inext (CR<INDEX> index) const {
 		return ArrayListHolder::hold (thiz)->inext (index) ;
 	}
 
-	ArrayIterator<CREF<ArrayList>> begin () const leftvalue {
-		return ArrayIterator<CREF<ArrayList>> (thiz) ;
+	ArrayIterator<CR<ArrayList>> begin () const leftvalue {
+		return ArrayIterator<CR<ArrayList>> (thiz) ;
 	}
 
-	ArrayIterator<CREF<ArrayList>> end () const leftvalue {
-		return ArrayIterator<CREF<ArrayList>> (thiz) ;
+	ArrayIterator<CR<ArrayList>> end () const leftvalue {
+		return ArrayIterator<CR<ArrayList>> (thiz) ;
 	}
 
-	CREF<ArrayRange<ArrayList>> iter () const leftvalue {
-		return ArrayRange<ArrayList>::from (thiz) ;
+	ArrayRange<CR<ArrayList>> iter () const leftvalue {
+		return ArrayRange<CR<ArrayList>> (thiz) ;
 	}
 
-	void add (CREF<A> item) {
+	void add (CR<A> item) {
 		add (move (item)) ;
 	}
 
-	void add (RREF<A> item) {
+	void add (RR<A> item) {
 		auto rax = Box<A>::make (move (item)) ;
-		ArrayListHolder::hold (thiz)->prepare (ArrayListUnknownBinder<A> ()) ;
 		return ArrayListHolder::hold (thiz)->add (move (rax)) ;
 	}
 
 	INDEX insert () {
 		auto rax = Box<A>::make () ;
-		ArrayListHolder::hold (thiz)->prepare (ArrayListUnknownBinder<A> ()) ;
 		return ArrayListHolder::hold (thiz)->insert (move (rax)) ;
 	}
 
-	INDEX insert (CREF<INDEX> index) {
+	INDEX insert (CR<INDEX> index) {
 		auto rax = Box<A>::make () ;
-		ArrayListHolder::hold (thiz)->prepare (ArrayListUnknownBinder<A> ()) ;
 		return ArrayListHolder::hold (thiz)->insert (index ,move (rax)) ;
 	}
 
-	void remove (CREF<INDEX> index) {
+	void remove (CR<INDEX> index) {
 		return ArrayListHolder::hold (thiz)->remove (index) ;
 	}
 
-	void order (CREF<Array<INDEX>> range_) {
+	void order (CR<Array<INDEX>> range_) {
 		return ArrayListHolder::hold (thiz)->order (range_) ;
 	}
 
@@ -1408,42 +1444,34 @@ struct SortedMapLayout {
 	BOOL mRemap ;
 } ;
 
-template <class A>
-struct SortedMapPureLayout implement SortedMapLayout {
-public:
-	implicit SortedMapPureLayout () noexcept {
-		noop (Allocator<A ,SortedMapNode> ()) ;
-	}
-} ;
-
 struct SortedMapHolder implement Interface {
-	imports VFat<SortedMapHolder> hold (VREF<SortedMapLayout> that) ;
-	imports CFat<SortedMapHolder> hold (CREF<SortedMapLayout> that) ;
+	imports VFat<SortedMapHolder> hold (VR<SortedMapLayout> that) ;
+	imports CFat<SortedMapHolder> hold (CR<SortedMapLayout> that) ;
 
-	virtual void prepare (CREF<Unknown> holder) = 0 ;
-	virtual void initialize (CREF<Unknown> holder ,CREF<LENGTH> size_) = 0 ;
-	virtual void initialize (CREF<Unknown> holder ,CREF<WrapperLayout> params ,VREF<BoxLayout> item) = 0 ;
+	virtual void prepare (CR<Unknown> holder) = 0 ;
+	virtual void initialize (CR<Unknown> holder ,CR<LENGTH> size_) = 0 ;
+	virtual void initialize (CR<Unknown> holder ,CR<WrapperLayout> params ,VR<BoxLayout> item) = 0 ;
 	virtual SortedMapLayout share () const = 0 ;
 	virtual void clear () = 0 ;
 	virtual LENGTH size () const = 0 ;
 	virtual LENGTH step () const = 0 ;
 	virtual LENGTH length () const = 0 ;
-	virtual VREF<INDEX> at (CREF<INDEX> index) leftvalue = 0 ;
-	virtual CREF<INDEX> at (CREF<INDEX> index) const leftvalue = 0 ;
+	virtual VR<INDEX> at (CR<INDEX> index) leftvalue = 0 ;
+	virtual CR<INDEX> at (CR<INDEX> index) const leftvalue = 0 ;
 	virtual INDEX ibegin () const = 0 ;
 	virtual INDEX iend () const = 0 ;
-	virtual INDEX inext (CREF<INDEX> index) const = 0 ;
-	virtual void add (RREF<BoxLayout> item ,CREF<INDEX> map_) = 0 ;
-	virtual INDEX find (CREF<Pointer> item) const = 0 ;
-	virtual BOOL contain (CREF<Pointer> item) const = 0 ;
-	virtual INDEX map (CREF<Pointer> item) const = 0 ;
+	virtual INDEX inext (CR<INDEX> index) const = 0 ;
+	virtual void add (RR<BoxLayout> item ,CR<INDEX> map_) = 0 ;
+	virtual INDEX find (CR<Pointer> item) const = 0 ;
+	virtual BOOL contain (CR<Pointer> item) const = 0 ;
+	virtual INDEX map (CR<Pointer> item) const = 0 ;
 	virtual void remap () = 0 ;
 } ;
 
 template <class A>
-class SortedMapUnknownBinder final implement Fat<ReflectUnknown ,Proxy> {
+class SortedMapUnknownBinder final implement Fat<FriendUnknown ,Proxy> {
 public:
-	FLAG reflect (CREF<FLAG> uuid) const override {
+	FLAG reflect (CR<FLAG> uuid) const override {
 		using R1X = UnionPair<A ,SortedMapNode> ;
 		if (uuid == ReflectSizeBinder<A>::expr)
 			return inline_vptr (ReflectSizeBinder<A> ()) ;
@@ -1466,6 +1494,18 @@ public:
 } ;
 
 template <class A>
+struct SortedMapPureLayout implement SortedMapLayout {
+public:
+	implicit SortedMapPureLayout () noexcept {
+		noop (Allocator<A ,SortedMapNode> ()) ;
+		SortedMapHolder::hold (thiz)->prepare (SortedMapUnknownBinder<A> ()) ;
+	}
+} ;
+
+template <>
+struct SortedMapPureLayout<Pointer> implement SortedMapLayout {} ;
+
+template <class A>
 class SortedMap implement SortedMapPureLayout<A> {
 protected:
 	using SortedMapPureLayout<A>::mThis ;
@@ -1477,11 +1517,11 @@ protected:
 public:
 	implicit SortedMap () = default ;
 
-	explicit SortedMap (CREF<SizeProxy> size_) {
+	explicit SortedMap (CR<SizeProxy> size_) {
 		SortedMapHolder::hold (thiz)->initialize (SortedMapUnknownBinder<A> () ,size_) ;
 	}
 
-	explicit SortedMap (CREF<csc_initializer_list_t<A>> that) {
+	explicit SortedMap (CR<csc_initializer_list_t<A>> that) {
 		auto rax = Box<A> () ;
 		SortedMapHolder::hold (thiz)->initialize (SortedMapUnknownBinder<A> () ,MakeWrapper (that) ,rax) ;
 	}
@@ -1507,19 +1547,19 @@ public:
 		return SortedMapHolder::hold (thiz)->length () ;
 	}
 
-	VREF<INDEX> at (CREF<INDEX> index) leftvalue {
+	VR<INDEX> at (CR<INDEX> index) leftvalue {
 		return SortedMapHolder::hold (thiz)->at (index) ;
 	}
 
-	forceinline VREF<INDEX> operator[] (CREF<INDEX> index) leftvalue {
+	forceinline VR<INDEX> operator[] (CR<INDEX> index) leftvalue {
 		return at (index) ;
 	}
 
-	CREF<INDEX> at (CREF<INDEX> index) const leftvalue {
+	CR<INDEX> at (CR<INDEX> index) const leftvalue {
 		return SortedMapHolder::hold (thiz)->at (index) ;
 	}
 
-	forceinline CREF<INDEX> operator[] (CREF<INDEX> index) const leftvalue {
+	forceinline CR<INDEX> operator[] (CR<INDEX> index) const leftvalue {
 		return at (index) ;
 	}
 
@@ -1531,49 +1571,48 @@ public:
 		return SortedMapHolder::hold (thiz)->iend () ;
 	}
 
-	INDEX inext (CREF<INDEX> index) const {
+	INDEX inext (CR<INDEX> index) const {
 		return SortedMapHolder::hold (thiz)->inext (index) ;
 	}
 
-	ArrayIterator<CREF<SortedMap>> begin () const leftvalue {
-		return ArrayIterator<CREF<SortedMap>> (thiz) ;
+	ArrayIterator<CR<SortedMap>> begin () const leftvalue {
+		return ArrayIterator<CR<SortedMap>> (thiz) ;
 	}
 
-	ArrayIterator<CREF<SortedMap>> end () const leftvalue {
-		return ArrayIterator<CREF<SortedMap>> (thiz) ;
+	ArrayIterator<CR<SortedMap>> end () const leftvalue {
+		return ArrayIterator<CR<SortedMap>> (thiz) ;
 	}
 
-	CREF<ArrayRange<SortedMap>> iter () const leftvalue {
-		return ArrayRange<SortedMap>::from (thiz) ;
+	ArrayRange<CR<SortedMap>> iter () const leftvalue {
+		return ArrayRange<CR<SortedMap>> (thiz) ;
 	}
 
-	void add (CREF<A> item) {
+	void add (CR<A> item) {
 		add (move (item) ,NONE) ;
 	}
 
-	void add (RREF<A> item) {
+	void add (RR<A> item) {
 		add (move (item) ,NONE) ;
 	}
 
-	void add (CREF<A> item ,CREF<INDEX> map_) {
+	void add (CR<A> item ,CR<INDEX> map_) {
 		add (move (item) ,map_) ;
 	}
 
-	void add (RREF<A> item ,CREF<INDEX> map_) {
+	void add (RR<A> item ,CR<INDEX> map_) {
 		auto rax = Box<A>::make (move (item)) ;
-		SortedMapHolder::hold (thiz)->prepare (SortedMapUnknownBinder<A> ()) ;
 		return SortedMapHolder::hold (thiz)->add (move (rax) ,map_) ;
 	}
 
-	INDEX find (CREF<A> item) const {
+	INDEX find (CR<A> item) const {
 		return SortedMapHolder::hold (thiz)->find (Pointer::from (item)) ;
 	}
 
-	BOOL contain (CREF<A> item) const {
+	BOOL contain (CR<A> item) const {
 		return SortedMapHolder::hold (thiz)->contain (Pointer::from (item)) ;
 	}
 
-	INDEX map (CREF<A> item) const {
+	INDEX map (CR<A> item) const {
 		return SortedMapHolder::hold (thiz)->map (Pointer::from (item)) ;
 	}
 
@@ -1597,43 +1636,35 @@ struct SetLayout {
 	INDEX mTop ;
 } ;
 
-template <class A>
-struct SetPureLayout implement SetLayout {
-public:
-	implicit SetPureLayout () noexcept {
-		noop (Allocator<A ,SetNode> ()) ;
-	}
-} ;
-
 struct SetHolder implement Interface {
-	imports VFat<SetHolder> hold (VREF<SetLayout> that) ;
-	imports CFat<SetHolder> hold (CREF<SetLayout> that) ;
+	imports VFat<SetHolder> hold (VR<SetLayout> that) ;
+	imports CFat<SetHolder> hold (CR<SetLayout> that) ;
 
-	virtual void prepare (CREF<Unknown> holder) = 0 ;
-	virtual void initialize (CREF<Unknown> holder ,CREF<LENGTH> size_) = 0 ;
-	virtual void initialize (CREF<Unknown> holder ,CREF<WrapperLayout> params ,VREF<BoxLayout> item) = 0 ;
+	virtual void prepare (CR<Unknown> holder) = 0 ;
+	virtual void initialize (CR<Unknown> holder ,CR<LENGTH> size_) = 0 ;
+	virtual void initialize (CR<Unknown> holder ,CR<WrapperLayout> params ,VR<BoxLayout> item) = 0 ;
 	virtual void clear () = 0 ;
 	virtual LENGTH size () const = 0 ;
 	virtual LENGTH step () const = 0 ;
 	virtual LENGTH length () const = 0 ;
-	virtual CREF<Pointer> at (CREF<INDEX> index) const leftvalue = 0 ;
-	virtual void get (CREF<INDEX> index ,VREF<INDEX> map_) const = 0 ;
-	virtual void set (CREF<INDEX> index ,CREF<INDEX> map_) = 0 ;
+	virtual CR<Pointer> at (CR<INDEX> index) const leftvalue = 0 ;
+	virtual void get (CR<INDEX> index ,VR<INDEX> map_) const = 0 ;
+	virtual void set (CR<INDEX> index ,CR<INDEX> map_) = 0 ;
 	virtual INDEX ibegin () const = 0 ;
 	virtual INDEX iend () const = 0 ;
-	virtual INDEX inext (CREF<INDEX> index) const = 0 ;
-	virtual void add (RREF<BoxLayout> item ,CREF<INDEX> map_) = 0 ;
-	virtual INDEX find (CREF<Pointer> item) const = 0 ;
-	virtual BOOL contain (CREF<Pointer> item) const = 0 ;
-	virtual INDEX map (CREF<Pointer> item) const = 0 ;
-	virtual void remove (CREF<INDEX> index) = 0 ;
-	virtual void erase (CREF<Pointer> item) = 0 ;
+	virtual INDEX inext (CR<INDEX> index) const = 0 ;
+	virtual void add (RR<BoxLayout> item ,CR<INDEX> map_) = 0 ;
+	virtual INDEX find (CR<Pointer> item) const = 0 ;
+	virtual BOOL contain (CR<Pointer> item) const = 0 ;
+	virtual INDEX map (CR<Pointer> item) const = 0 ;
+	virtual void remove (CR<INDEX> index) = 0 ;
+	virtual void erase (CR<Pointer> item) = 0 ;
 } ;
 
 template <class A>
-class SetUnknownBinder final implement Fat<ReflectUnknown ,Proxy> {
+class SetUnknownBinder final implement Fat<FriendUnknown ,Proxy> {
 public:
-	FLAG reflect (CREF<FLAG> uuid) const override {
+	FLAG reflect (CR<FLAG> uuid) const override {
 		using R1X = UnionPair<A ,SetNode> ;
 		if (uuid == ReflectSizeBinder<A>::expr)
 			return inline_vptr (ReflectSizeBinder<A> ()) ;
@@ -1656,6 +1687,18 @@ public:
 } ;
 
 template <class A>
+struct SetPureLayout implement SetLayout {
+public:
+	implicit SetPureLayout () noexcept {
+		noop (Allocator<A ,SetNode> ()) ;
+		SetHolder::hold (thiz)->prepare (SetUnknownBinder<A> ()) ;
+	}
+} ;
+
+template <>
+struct SetPureLayout<Pointer> implement SetLayout {} ;
+
+template <class A>
 class Set implement SetPureLayout<A> {
 protected:
 	using SetPureLayout<A>::mSet ;
@@ -1665,11 +1708,11 @@ protected:
 public:
 	implicit Set () = default ;
 
-	explicit Set (CREF<SizeProxy> size_) {
+	explicit Set (CR<SizeProxy> size_) {
 		SetHolder::hold (thiz)->initialize (SetUnknownBinder<A> () ,size_) ;
 	}
 
-	explicit Set (CREF<csc_initializer_list_t<A>> that) {
+	explicit Set (CR<csc_initializer_list_t<A>> that) {
 		auto rax = Box<A> () ;
 		SetHolder::hold (thiz)->initialize (SetUnknownBinder<A> () ,MakeWrapper (that) ,rax) ;
 	}
@@ -1690,19 +1733,19 @@ public:
 		return SetHolder::hold (thiz)->length () ;
 	}
 
-	CREF<A> at (CREF<INDEX> index) const leftvalue {
+	CR<A> at (CR<INDEX> index) const leftvalue {
 		return SetHolder::hold (thiz)->at (index) ;
 	}
 
-	forceinline CREF<A> operator[] (CREF<INDEX> index) const leftvalue {
+	forceinline CR<A> operator[] (CR<INDEX> index) const leftvalue {
 		return at (index) ;
 	}
 
-	void get (CREF<INDEX> index ,VREF<INDEX> map_) const {
+	void get (CR<INDEX> index ,VR<INDEX> map_) const {
 		return SetHolder::hold (thiz)->get (index ,map_) ;
 	}
 
-	void set (CREF<INDEX> index ,CREF<INDEX> map_) {
+	void set (CR<INDEX> index ,CR<INDEX> map_) {
 		return SetHolder::hold (thiz)->set (index ,map_) ;
 	}
 
@@ -1714,57 +1757,56 @@ public:
 		return SetHolder::hold (thiz)->iend () ;
 	}
 
-	INDEX inext (CREF<INDEX> index) const {
+	INDEX inext (CR<INDEX> index) const {
 		return SetHolder::hold (thiz)->inext (index) ;
 	}
 
-	ArrayIterator<CREF<Set>> begin () const leftvalue {
-		return ArrayIterator<CREF<Set>> (thiz) ;
+	ArrayIterator<CR<Set>> begin () const leftvalue {
+		return ArrayIterator<CR<Set>> (thiz) ;
 	}
 
-	ArrayIterator<CREF<Set>> end () const leftvalue {
-		return ArrayIterator<CREF<Set>> (thiz) ;
+	ArrayIterator<CR<Set>> end () const leftvalue {
+		return ArrayIterator<CR<Set>> (thiz) ;
 	}
 
-	CREF<ArrayRange<Set>> iter () const leftvalue {
-		return ArrayRange<Set>::from (thiz) ;
+	ArrayRange<CR<Set>> iter () const leftvalue {
+		return ArrayRange<CR<Set>> (thiz) ;
 	}
 
-	void add (CREF<A> item) {
+	void add (CR<A> item) {
 		add (move (item) ,NONE) ;
 	}
 
-	void add (RREF<A> item) {
+	void add (RR<A> item) {
 		add (move (item) ,NONE) ;
 	}
 
-	void add (CREF<A> item ,CREF<INDEX> map_) {
+	void add (CR<A> item ,CR<INDEX> map_) {
 		add (move (item) ,map_) ;
 	}
 
-	void add (RREF<A> item ,CREF<INDEX> map_) {
+	void add (RR<A> item ,CR<INDEX> map_) {
 		auto rax = Box<A>::make (move (item)) ;
-		SetHolder::hold (thiz)->prepare (SetUnknownBinder<A> ()) ;
 		return SetHolder::hold (thiz)->add (move (rax) ,map_) ;
 	}
 
-	INDEX find (CREF<A> item) const {
+	INDEX find (CR<A> item) const {
 		return SetHolder::hold (thiz)->find (Pointer::from (item)) ;
 	}
 
-	BOOL contain (CREF<A> item) const {
+	BOOL contain (CR<A> item) const {
 		return SetHolder::hold (thiz)->contain (Pointer::from (item)) ;
 	}
 
-	INDEX map (CREF<A> item) const {
+	INDEX map (CR<A> item) const {
 		return SetHolder::hold (thiz)->map (Pointer::from (item)) ;
 	}
 
-	void remove (CREF<INDEX> index) {
+	void remove (CR<INDEX> index) {
 		return SetHolder::hold (thiz)->remove (index) ;
 	}
 
-	void erase (CREF<A> item) {
+	void erase (CR<A> item) {
 		return SetHolder::hold (thiz)->erase (Pointer::from (item)) ;
 	}
 } ;
@@ -1786,43 +1828,35 @@ struct HashSetLayout {
 	SharedRef<HashcodeVisitor> mVisitor ;
 } ;
 
-template <class A>
-struct HashSetPureLayout implement HashSetLayout {
-public:
-	implicit HashSetPureLayout () noexcept {
-		noop (Allocator<A ,HashSetNode> ()) ;
-	}
-} ;
-
 struct HashSetHolder implement Interface {
-	imports VFat<HashSetHolder> hold (VREF<HashSetLayout> that) ;
-	imports CFat<HashSetHolder> hold (CREF<HashSetLayout> that) ;
+	imports VFat<HashSetHolder> hold (VR<HashSetLayout> that) ;
+	imports CFat<HashSetHolder> hold (CR<HashSetLayout> that) ;
 
-	virtual void prepare (CREF<Unknown> holder) = 0 ;
-	virtual void initialize (CREF<Unknown> holder ,CREF<LENGTH> size_) = 0 ;
-	virtual void initialize (CREF<Unknown> holder ,CREF<WrapperLayout> params ,VREF<BoxLayout> item) = 0 ;
+	virtual void prepare (CR<Unknown> holder) = 0 ;
+	virtual void initialize (CR<Unknown> holder ,CR<LENGTH> size_) = 0 ;
+	virtual void initialize (CR<Unknown> holder ,CR<WrapperLayout> params ,VR<BoxLayout> item) = 0 ;
 	virtual void clear () = 0 ;
 	virtual LENGTH size () const = 0 ;
 	virtual LENGTH step () const = 0 ;
 	virtual LENGTH length () const = 0 ;
-	virtual CREF<Pointer> at (CREF<INDEX> index) const leftvalue = 0 ;
-	virtual void get (CREF<INDEX> index ,VREF<INDEX> map_) const = 0 ;
-	virtual void set (CREF<INDEX> index ,CREF<INDEX> map_) = 0 ;
+	virtual CR<Pointer> at (CR<INDEX> index) const leftvalue = 0 ;
+	virtual void get (CR<INDEX> index ,VR<INDEX> map_) const = 0 ;
+	virtual void set (CR<INDEX> index ,CR<INDEX> map_) = 0 ;
 	virtual INDEX ibegin () const = 0 ;
 	virtual INDEX iend () const = 0 ;
-	virtual INDEX inext (CREF<INDEX> index) const = 0 ;
-	virtual void add (RREF<BoxLayout> item ,CREF<INDEX> map_) = 0 ;
-	virtual INDEX find (CREF<Pointer> item) const = 0 ;
-	virtual BOOL contain (CREF<Pointer> item) const = 0 ;
-	virtual INDEX map (CREF<Pointer> item) const = 0 ;
-	virtual void remove (CREF<INDEX> index) = 0 ;
-	virtual void erase (CREF<Pointer> item) = 0 ;
+	virtual INDEX inext (CR<INDEX> index) const = 0 ;
+	virtual void add (RR<BoxLayout> item ,CR<INDEX> map_) = 0 ;
+	virtual INDEX find (CR<Pointer> item) const = 0 ;
+	virtual BOOL contain (CR<Pointer> item) const = 0 ;
+	virtual INDEX map (CR<Pointer> item) const = 0 ;
+	virtual void remove (CR<INDEX> index) = 0 ;
+	virtual void erase (CR<Pointer> item) = 0 ;
 } ;
 
 template <class A>
-class HashSetUnknownBinder final implement Fat<ReflectUnknown ,Proxy> {
+class HashSetUnknownBinder final implement Fat<FriendUnknown ,Proxy> {
 public:
-	FLAG reflect (CREF<FLAG> uuid) const override {
+	FLAG reflect (CR<FLAG> uuid) const override {
 		using R1X = UnionPair<A ,HashSetNode> ;
 		if (uuid == ReflectSizeBinder<A>::expr)
 			return inline_vptr (ReflectSizeBinder<A> ()) ;
@@ -1843,6 +1877,18 @@ public:
 } ;
 
 template <class A>
+struct HashSetPureLayout implement HashSetLayout {
+public:
+	implicit HashSetPureLayout () noexcept {
+		noop (Allocator<A ,HashSetNode> ()) ;
+		HashSetHolder::hold (thiz)->prepare (HashSetUnknownBinder<A> ()) ;
+	}
+} ;
+
+template <>
+struct HashSetPureLayout<Pointer> implement HashSetLayout {} ;
+
+template <class A>
 class HashSet implement HashSetPureLayout<A> {
 protected:
 	using HashSetPureLayout<A>::mSet ;
@@ -1852,11 +1898,11 @@ protected:
 public:
 	implicit HashSet () = default ;
 
-	explicit HashSet (CREF<SizeProxy> size_) {
+	explicit HashSet (CR<SizeProxy> size_) {
 		HashSetHolder::hold (thiz)->initialize (HashSetUnknownBinder<A> () ,size_) ;
 	}
 
-	explicit HashSet (CREF<csc_initializer_list_t<A>> that) {
+	explicit HashSet (CR<csc_initializer_list_t<A>> that) {
 		auto rax = Box<A> () ;
 		HashSetHolder::hold (thiz)->initialize (HashSetUnknownBinder<A> () ,MakeWrapper (that) ,rax) ;
 	}
@@ -1877,19 +1923,19 @@ public:
 		return HashSetHolder::hold (thiz)->length () ;
 	}
 
-	CREF<A> at (CREF<INDEX> index) const leftvalue {
+	CR<A> at (CR<INDEX> index) const leftvalue {
 		return HashSetHolder::hold (thiz)->at (index) ;
 	}
 
-	forceinline CREF<A> operator[] (CREF<INDEX> index) const leftvalue {
+	forceinline CR<A> operator[] (CR<INDEX> index) const leftvalue {
 		return at (index) ;
 	}
 
-	void get (CREF<INDEX> index ,VREF<INDEX> map_) const {
+	void get (CR<INDEX> index ,VR<INDEX> map_) const {
 		return HashSetHolder::hold (thiz)->get (index ,map_) ;
 	}
 
-	void set (CREF<INDEX> index ,CREF<INDEX> map_) {
+	void set (CR<INDEX> index ,CR<INDEX> map_) {
 		return HashSetHolder::hold (thiz)->set (index ,map_) ;
 	}
 
@@ -1901,57 +1947,56 @@ public:
 		return HashSetHolder::hold (thiz)->iend () ;
 	}
 
-	INDEX inext (CREF<INDEX> index) const {
+	INDEX inext (CR<INDEX> index) const {
 		return HashSetHolder::hold (thiz)->inext (index) ;
 	}
 
-	ArrayIterator<CREF<HashSet>> begin () const leftvalue {
-		return ArrayIterator<CREF<HashSet>> (thiz) ;
+	ArrayIterator<CR<HashSet>> begin () const leftvalue {
+		return ArrayIterator<CR<HashSet>> (thiz) ;
 	}
 
-	ArrayIterator<CREF<HashSet>> end () const leftvalue {
-		return ArrayIterator<CREF<HashSet>> (thiz) ;
+	ArrayIterator<CR<HashSet>> end () const leftvalue {
+		return ArrayIterator<CR<HashSet>> (thiz) ;
 	}
 
-	CREF<ArrayRange<HashSet>> iter () const leftvalue {
-		return ArrayRange<HashSet>::from (thiz) ;
+	ArrayRange<CR<HashSet>> iter () const leftvalue {
+		return ArrayRange<CR<HashSet>> (thiz) ;
 	}
 
-	void add (CREF<A> item) {
+	void add (CR<A> item) {
 		add (move (item) ,NONE) ;
 	}
 
-	void add (RREF<A> item) {
+	void add (RR<A> item) {
 		add (move (item) ,NONE) ;
 	}
 
-	void add (CREF<A> item ,CREF<INDEX> map_) {
+	void add (CR<A> item ,CR<INDEX> map_) {
 		add (move (item) ,map_) ;
 	}
 
-	void add (RREF<A> item ,CREF<INDEX> map_) {
+	void add (RR<A> item ,CR<INDEX> map_) {
 		auto rax = Box<A>::make (move (item)) ;
-		HashSetHolder::hold (thiz)->prepare (HashSetUnknownBinder<A> ()) ;
 		return HashSetHolder::hold (thiz)->add (move (rax) ,map_) ;
 	}
 
-	INDEX find (CREF<A> item) const {
+	INDEX find (CR<A> item) const {
 		return HashSetHolder::hold (thiz)->find (Pointer::from (item)) ;
 	}
 
-	BOOL contain (CREF<A> item) const {
+	BOOL contain (CR<A> item) const {
 		return HashSetHolder::hold (thiz)->contain (Pointer::from (item)) ;
 	}
 
-	INDEX map (CREF<A> item) const {
+	INDEX map (CR<A> item) const {
 		return HashSetHolder::hold (thiz)->map (Pointer::from (item)) ;
 	}
 
-	void remove (CREF<INDEX> index) {
+	void remove (CR<INDEX> index) {
 		return HashSetHolder::hold (thiz)->remove (index) ;
 	}
 
-	void erase (CREF<A> item) {
+	void erase (CR<A> item) {
 		return SetHolder::hold (thiz)->erase (Pointer::from (item)) ;
 	}
 } ;
@@ -1959,13 +2004,13 @@ public:
 template <class A>
 class BitProxy {
 protected:
-	XREF<A> mThat ;
+	XR<A> mThat ;
 	INDEX mIndex ;
 
 public:
 	implicit BitProxy () = delete ;
 
-	explicit BitProxy (XREF<A> that ,CREF<INDEX> index) :mThat (that) {
+	explicit BitProxy (XR<A> that ,CR<INDEX> index) :mThat (that) {
 		mIndex = index ;
 	}
 
@@ -1975,7 +2020,7 @@ public:
 		return move (ret) ;
 	}
 
-	forceinline void operator= (CREF<BOOL> that) rightvalue {
+	forceinline void operator= (CR<BOOL> that) rightvalue {
 		mThat.set (mIndex ,that) ;
 	}
 } ;
@@ -1986,31 +2031,31 @@ struct BitSetLayout {
 } ;
 
 struct BitSetHolder implement Interface {
-	imports VFat<BitSetHolder> hold (VREF<BitSetLayout> that) ;
-	imports CFat<BitSetHolder> hold (CREF<BitSetLayout> that) ;
+	imports VFat<BitSetHolder> hold (VR<BitSetLayout> that) ;
+	imports CFat<BitSetHolder> hold (CR<BitSetLayout> that) ;
 
-	virtual void initialize (CREF<LENGTH> size_) = 0 ;
-	virtual void initialize (CREF<LENGTH> size_ ,CREF<WrapperLayout> params ,VREF<BoxLayout> item) = 0 ;
-	virtual void initialize (CREF<BitSetLayout> that) = 0 ;
+	virtual void initialize (CR<LENGTH> size_) = 0 ;
+	virtual void initialize (CR<LENGTH> size_ ,CR<WrapperLayout> params ,VR<BoxLayout> item) = 0 ;
+	virtual void initialize (CR<BitSetLayout> that) = 0 ;
 	virtual void clear () = 0 ;
 	virtual LENGTH size () const = 0 ;
 	virtual LENGTH length () const = 0 ;
-	virtual void get (CREF<INDEX> index ,VREF<BOOL> item) const = 0 ;
-	virtual void set (CREF<INDEX> index ,CREF<BOOL> item) = 0 ;
+	virtual void get (CR<INDEX> index ,VR<BOOL> item) const = 0 ;
+	virtual void set (CR<INDEX> index ,CR<BOOL> item) = 0 ;
 	virtual INDEX ibegin () const = 0 ;
 	virtual INDEX iend () const = 0 ;
-	virtual INDEX inext (CREF<INDEX> index) const = 0 ;
-	virtual BOOL equal (CREF<BitSetLayout> that) const = 0 ;
-	virtual FLAG compr (CREF<BitSetLayout> that) const = 0 ;
-	virtual void visit (VREF<FriendVisitor> visitor) const = 0 ;
-	virtual void add (RREF<BoxLayout> item) = 0 ;
-	virtual BOOL contain (CREF<Pointer> item) const = 0 ;
-	virtual void erase (CREF<Pointer> item) = 0 ;
-	virtual void fill (CREF<BYTE> item) = 0 ;
-	virtual BitSetLayout sand (CREF<BitSetLayout> that) const = 0 ;
-	virtual BitSetLayout sor (CREF<BitSetLayout> that) const = 0 ;
-	virtual BitSetLayout sxor (CREF<BitSetLayout> that) const = 0 ;
-	virtual BitSetLayout ssub (CREF<BitSetLayout> that) const = 0 ;
+	virtual INDEX inext (CR<INDEX> index) const = 0 ;
+	virtual BOOL equal (CR<BitSetLayout> that) const = 0 ;
+	virtual FLAG compr (CR<BitSetLayout> that) const = 0 ;
+	virtual void visit (VR<FriendVisitor> visitor) const = 0 ;
+	virtual void add (RR<BoxLayout> item) = 0 ;
+	virtual BOOL contain (CR<Pointer> item) const = 0 ;
+	virtual void erase (CR<Pointer> item) = 0 ;
+	virtual void fill (CR<BYTE> item) = 0 ;
+	virtual BitSetLayout sand (CR<BitSetLayout> that) const = 0 ;
+	virtual BitSetLayout sor (CR<BitSetLayout> that) const = 0 ;
+	virtual BitSetLayout sxor (CR<BitSetLayout> that) const = 0 ;
+	virtual BitSetLayout ssub (CR<BitSetLayout> that) const = 0 ;
 	virtual BitSetLayout snot () const = 0 ;
 } ;
 
@@ -2025,26 +2070,26 @@ protected:
 public:
 	implicit BitSet () = default ;
 
-	explicit BitSet (CREF<SizeProxy> size_) {
+	explicit BitSet (CR<SizeProxy> size_) {
 		BitSetHolder::hold (thiz)->initialize (size_) ;
 	}
 
-	explicit BitSet (CREF<SizeProxy> size_ ,CREF<csc_initializer_list_t<A>> that) {
+	explicit BitSet (CR<SizeProxy> size_ ,CR<csc_initializer_list_t<A>> that) {
 		auto rax = Box<A> () ;
 		BitSetHolder::hold (thiz)->initialize (size_ ,MakeWrapper (that) ,rax) ;
 	}
 
-	implicit BitSet (CREF<BitSet> that) {
+	implicit BitSet (CR<BitSet> that) {
 		BitSetHolder::hold (thiz)->initialize (that) ;
 	}
 
-	forceinline VREF<BitSet> operator= (CREF<BitSet> that) {
+	forceinline VR<BitSet> operator= (CR<BitSet> that) {
 		return assign (thiz ,that) ;
 	}
 
-	implicit BitSet (RREF<BitSet> that) = default ;
+	implicit BitSet (RR<BitSet> that) = default ;
 
-	forceinline VREF<BitSet> operator= (RREF<BitSet> that) = default ;
+	forceinline VR<BitSet> operator= (RR<BitSet> that) = default ;
 
 	BitSet clone () const {
 		return move (thiz) ;
@@ -2062,23 +2107,23 @@ public:
 		return BitSetHolder::hold (thiz)->length () ;
 	}
 
-	void get (CREF<INDEX> index ,VREF<BOOL> item) const {
+	void get (CR<INDEX> index ,VR<BOOL> item) const {
 		return BitSetHolder::hold (thiz)->get (index ,item) ;
 	}
 
-	void set (CREF<INDEX> index ,CREF<BOOL> item) {
+	void set (CR<INDEX> index ,CR<BOOL> item) {
 		return BitSetHolder::hold (thiz)->set (index ,item) ;
 	}
 
-	forceinline BitProxy<VREF<BitSet>> operator[] (CREF<INDEX> index) leftvalue {
-		return BitProxy<VREF<BitSet>> (thiz ,index) ;
+	forceinline BitProxy<VR<BitSet>> operator[] (CR<INDEX> index) leftvalue {
+		return BitProxy<VR<BitSet>> (thiz ,index) ;
 	}
 
-	forceinline BitProxy<CREF<BitSet>> operator[] (CREF<INDEX> index) const leftvalue {
-		return BitProxy<CREF<BitSet>> (thiz ,index) ;
+	forceinline BitProxy<CR<BitSet>> operator[] (CR<INDEX> index) const leftvalue {
+		return BitProxy<CR<BitSet>> (thiz ,index) ;
 	}
 
-	CREF<INDEX> at (CREF<INDEX> index) const leftvalue {
+	CR<INDEX> at (CR<INDEX> index) const leftvalue {
 		return index ;
 	}
 
@@ -2090,128 +2135,128 @@ public:
 		return BitSetHolder::hold (thiz)->iend () ;
 	}
 
-	INDEX inext (CREF<INDEX> index) const {
+	INDEX inext (CR<INDEX> index) const {
 		return BitSetHolder::hold (thiz)->inext (index) ;
 	}
 
-	ArrayIterator<CREF<BitSet>> begin () const leftvalue {
-		return ArrayIterator<CREF<BitSet>> (thiz) ;
+	ArrayIterator<CR<BitSet>> begin () const leftvalue {
+		return ArrayIterator<CR<BitSet>> (thiz) ;
 	}
 
-	ArrayIterator<CREF<BitSet>> end () const leftvalue {
-		return ArrayIterator<CREF<BitSet>> (thiz) ;
+	ArrayIterator<CR<BitSet>> end () const leftvalue {
+		return ArrayIterator<CR<BitSet>> (thiz) ;
 	}
 
-	CREF<ArrayRange<BitSet>> iter () const leftvalue {
-		return ArrayRange<BitSet>::from (thiz) ;
+	ArrayRange<CR<BitSet>> iter () const leftvalue {
+		return ArrayRange<CR<BitSet>> (thiz) ;
 	}
 
-	BOOL equal (CREF<BitSet> that) const {
+	BOOL equal (CR<BitSet> that) const {
 		return BitSetHolder::hold (thiz)->equal (that) ;
 	}
 
-	forceinline BOOL operator== (CREF<BitSet> that) const {
+	forceinline BOOL operator== (CR<BitSet> that) const {
 		return equal (that) ;
 	}
 
-	forceinline BOOL operator!= (CREF<BitSet> that) const {
+	forceinline BOOL operator!= (CR<BitSet> that) const {
 		return (!equal (that)) ;
 	}
 
-	FLAG compr (CREF<BitSet> that) const {
+	FLAG compr (CR<BitSet> that) const {
 		return BitSetHolder::hold (thiz)->compr (that) ;
 	}
 
-	forceinline BOOL operator< (CREF<BitSet> that) const {
+	forceinline BOOL operator< (CR<BitSet> that) const {
 		return compr (that) < ZERO ;
 	}
 
-	forceinline BOOL operator<= (CREF<BitSet> that) const {
+	forceinline BOOL operator<= (CR<BitSet> that) const {
 		return compr (that) <= ZERO ;
 	}
 
-	forceinline BOOL operator> (CREF<BitSet> that) const {
+	forceinline BOOL operator> (CR<BitSet> that) const {
 		return compr (that) > ZERO ;
 	}
 
-	forceinline BOOL operator>= (CREF<BitSet> that) const {
+	forceinline BOOL operator>= (CR<BitSet> that) const {
 		return compr (that) >= ZERO ;
 	}
 
-	void visit (VREF<FriendVisitor> visitor) const {
+	void visit (VR<FriendVisitor> visitor) const {
 		return BitSetHolder::hold (thiz)->visit (visitor) ;
 	}
 
-	void add (CREF<A> item) {
+	void add (CR<A> item) {
 		add (move (item)) ;
 	}
 
-	void add (RREF<A> item) {
+	void add (RR<A> item) {
 		auto rax = Box<A>::make (move (item)) ;
 		return BitSetHolder::hold (thiz)->add (move (rax)) ;
 	}
 
-	BOOL contain (CREF<A> item) const {
+	BOOL contain (CR<A> item) const {
 		return BitSetHolder::hold (thiz)->contain (Pointer::from (item)) ;
 	}
 
-	void erase (CREF<A> item) {
+	void erase (CR<A> item) {
 		return BitSetHolder::hold (thiz)->erase (Pointer::from (item)) ;
 	}
 
-	void fill (CREF<BYTE> item) {
+	void fill (CR<BYTE> item) {
 		return BitSetHolder::hold (thiz)->fill (item) ;
 	}
 
-	BitSet sand (CREF<BitSet> that) const {
+	BitSet sand (CR<BitSet> that) const {
 		BitSetLayout ret = BitSetHolder::hold (thiz)->sand (that) ;
 		return move (keep[TYPE<BitSet>::expr] (ret)) ;
 	}
 
-	forceinline BitSet operator& (CREF<BitSet> that) const {
+	forceinline BitSet operator& (CR<BitSet> that) const {
 		return sand (that) ;
 	}
 
-	forceinline void operator&= (CREF<BitSet> that) {
+	forceinline void operator&= (CR<BitSet> that) {
 		thiz = sand (that) ;
 	}
 
-	BitSet sor (CREF<BitSet> that) const {
+	BitSet sor (CR<BitSet> that) const {
 		BitSetLayout ret = BitSetHolder::hold (thiz)->sor (that) ;
 		return move (keep[TYPE<BitSet>::expr] (ret)) ;
 	}
 
-	forceinline BitSet operator| (CREF<BitSet> that) const {
+	forceinline BitSet operator| (CR<BitSet> that) const {
 		return sor (that) ;
 	}
 
-	forceinline void operator|= (CREF<BitSet> that) {
+	forceinline void operator|= (CR<BitSet> that) {
 		thiz = sor (that) ;
 	}
 
-	BitSet sxor (CREF<BitSet> that) const {
+	BitSet sxor (CR<BitSet> that) const {
 		BitSetLayout ret = BitSetHolder::hold (thiz)->sxor (that) ;
 		return move (keep[TYPE<BitSet>::expr] (ret)) ;
 	}
 
-	forceinline BitSet operator^ (CREF<BitSet> that) const {
+	forceinline BitSet operator^ (CR<BitSet> that) const {
 		return sxor (that) ;
 	}
 
-	forceinline void operator^= (CREF<BitSet> that) {
+	forceinline void operator^= (CR<BitSet> that) {
 		thiz = sxor (that) ;
 	}
 
-	BitSet ssub (CREF<BitSet> that) const {
+	BitSet ssub (CR<BitSet> that) const {
 		BitSetLayout ret = BitSetHolder::hold (thiz)->ssub (that) ;
 		return move (keep[TYPE<BitSet>::expr] (ret)) ;
 	}
 
-	forceinline BitSet operator- (CREF<BitSet> that) const {
+	forceinline BitSet operator- (CR<BitSet> that) const {
 		return ssub (that) ;
 	}
 
-	forceinline void operator-= (CREF<BitSet> that) {
+	forceinline void operator-= (CR<BitSet> that) {
 		thiz = ssub (that) ;
 	}
 

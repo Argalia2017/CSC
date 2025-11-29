@@ -34,7 +34,7 @@ public:
 		return FLAG (GetCurrentThreadId ()) ;
 	}
 
-	void thread_sleep (CREF<Time> time) const override {
+	void thread_sleep (CR<Time> time) const override {
 		const auto r1x = time.borrow () ;
 		std::this_thread::sleep_for (r1x->mTime) ;
 	}
@@ -80,11 +80,11 @@ private:
 	using PROCESS_SNAPSHOT_STEP = ENUM<128> ;
 
 public:
-	void initialize (CREF<FLAG> uid) override {
+	void initialize (CR<FLAG> uid) override {
 		self.mUid = uid ;
-		const auto r1x = UniqueRef<csc_handle_t> ([&] (VREF<csc_handle_t> me) {
+		const auto r1x = UniqueRef<csc_handle_t> ([&] (VR<csc_handle_t> me) {
 			me = OpenProcess (PROCESS_QUERY_INFORMATION ,FALSE ,csc_enum_t (uid)) ;
-		} ,[&] (VREF<csc_handle_t> me) {
+		} ,[&] (VR<csc_handle_t> me) {
 			if (me == NULL)
 				return ;
 			CloseHandle (me) ;
@@ -93,11 +93,11 @@ public:
 		self.mProcessTime = process_time (r1x ,uid) ;
 	}
 
-	QUAD process_code (CREF<csc_handle_t> handle ,CREF<FLAG> uid) const {
+	QUAD process_code (CR<csc_handle_t> handle ,CR<FLAG> uid) const {
 		return QUAD (GetProcessVersion (csc_enum_t (uid))) ;
 	}
 
-	QUAD process_time (CREF<csc_handle_t> handle ,CREF<FLAG> uid) const {
+	QUAD process_time (CR<csc_handle_t> handle ,CR<FLAG> uid) const {
 		const auto r1x = invoke ([&] () {
 			Buffer4<FILETIME> ret ;
 			inline_memset (ret) ;
@@ -107,7 +107,7 @@ public:
 		return ByteProc::merge (CHAR (r1x[0].dwHighDateTime) ,CHAR (r1x[0].dwLowDateTime)) ;
 	}
 
-	void initialize (CREF<RefBuffer<BYTE>> snapshot_) override {
+	void initialize (CR<RefBuffer<BYTE>> snapshot_) override {
 		self.mUid = 0 ;
 		try {
 			assume (snapshot_.size () == PROCESS_SNAPSHOT_STEP::expr) ;
@@ -122,12 +122,12 @@ public:
 			rax >> self.mProcessTime ;
 			rax >> GAP ;
 			rax >> EOS ;
-		} catch (CREF<Exception> e) {
+		} catch (CR<Exception> e) {
 			noop (e) ;
 		}
 	}
 
-	BOOL equal (CREF<ProcessLayout> that) const override {
+	BOOL equal (CR<ProcessLayout> that) const override {
 		const auto r1x = inline_equal (self.mUid ,that.mUid) ;
 		if (!r1x)
 			return r1x ;
@@ -166,10 +166,10 @@ static const auto mProcessExternal = External<ProcessHolder ,ProcessLayout> (Pro
 
 class LibraryImplHolder final implement Fat<LibraryHolder ,LibraryLayout> {
 public:
-	void initialize (CREF<String<STR>> file) override {
+	void initialize (CR<String<STR>> file) override {
 		self.mFile = move (file) ;
 		assert (self.mFile.length () > 0) ;
-		self.mLibrary = UniqueRef<csc_device_t> ([&] (VREF<csc_device_t> me) {
+		self.mLibrary = UniqueRef<csc_device_t> ([&] (VR<csc_device_t> me) {
 			me = GetModuleHandle (self.mFile) ;
 			if (me != NULL)
 				return ;
@@ -178,7 +178,7 @@ public:
 				return ;
 			self.mLastError = FLAG (GetLastError ()) ;
 			assume (FALSE) ;
-		} ,[&] (VREF<csc_device_t> me) {
+		} ,[&] (VR<csc_device_t> me) {
 			noop () ;
 		}) ;
 	}
@@ -187,7 +187,7 @@ public:
 		return self.mFile ;
 	}
 
-	FLAG load (CREF<String<STR>> name) override {
+	FLAG load (CR<String<STR>> name) override {
 		assert (name.length () > 0) ;
 		const auto r1x = StringProc::stra_from_strs (name) ;
 		FLAG ret = FLAG (GetProcAddress (self.mLibrary ,r1x)) ;
@@ -222,7 +222,7 @@ public:
 		sync_local () ;
 	}
 
-	static VREF<SingletonRoot> root_ptr () {
+	static VR<SingletonRoot> root_ptr () {
 		static auto mInstance = SingletonRoot () ;
 		return mInstance ;
 	}
@@ -232,7 +232,7 @@ public:
 		if ifdo (act) {
 			try {
 				load_local () ;
-			} catch (CREF<Exception> e) {
+			} catch (CR<Exception> e) {
 				noop (e) ;
 				discard ;
 			}
@@ -241,7 +241,7 @@ public:
 			try {
 				init_local () ;
 				save_local () ;
-			} catch (CREF<Exception> e) {
+			} catch (CR<Exception> e) {
 				noop (e) ;
 				discard ;
 			}
@@ -257,13 +257,13 @@ public:
 	void init_local () {
 		if (self.mMapping.exist ())
 			return ;
-		self.mMapping = UniqueRef<csc_handle_t> ([&] (VREF<csc_handle_t> me) {
+		self.mMapping = UniqueRef<csc_handle_t> ([&] (VR<csc_handle_t> me) {
 			const auto r1x = csc_enum_t (SIZE_OF<SingletonLocal>::expr) ;
 			me = CreateFileMapping (INVALID_HANDLE_VALUE ,NULL ,PAGE_READWRITE ,0 ,r1x ,self.mName) ;
 			assume (me != NULL) ;
 			const auto r2x = GetLastError () ;
 			assume (r2x != ERROR_ALREADY_EXISTS) ;
-		} ,[&] (VREF<csc_handle_t> me) {
+		} ,[&] (VR<csc_handle_t> me) {
 			CloseHandle (me) ;
 		}) ;
 		root_ptr ().mMutex = NULL ;
@@ -275,16 +275,16 @@ public:
 	}
 
 	void load_local () {
-		const auto r1x = UniqueRef<csc_handle_t> ([&] (VREF<csc_handle_t> me) {
+		const auto r1x = UniqueRef<csc_handle_t> ([&] (VR<csc_handle_t> me) {
 			me = OpenFileMapping (FILE_MAP_READ ,FALSE ,self.mName) ;
 			assume (me != NULL) ;
-		} ,[&] (VREF<csc_handle_t> me) {
+		} ,[&] (VR<csc_handle_t> me) {
 			CloseHandle (me) ;
 		}) ;
-		const auto r2x = UniqueRef<csc_handle_t> ([&] (VREF<csc_handle_t> me) {
+		const auto r2x = UniqueRef<csc_handle_t> ([&] (VR<csc_handle_t> me) {
 			me = MapViewOfFile (r1x ,FILE_MAP_READ ,0 ,0 ,SIZE_OF<SingletonLocal>::expr) ;
 			assume (me != NULL) ;
-		} ,[&] (VREF<csc_handle_t> me) {
+		} ,[&] (VR<csc_handle_t> me) {
 			UnmapViewOfFile (me) ;
 		}) ;
 		const auto r3x = FLAG (r2x.ref) ;
@@ -299,16 +299,16 @@ public:
 	}
 
 	void save_local () {
-		const auto r1x = UniqueRef<csc_handle_t> ([&] (VREF<csc_handle_t> me) {
+		const auto r1x = UniqueRef<csc_handle_t> ([&] (VR<csc_handle_t> me) {
 			me = OpenFileMapping (FILE_MAP_WRITE ,FALSE ,self.mName) ;
 			assume (me != NULL) ;
-		} ,[&] (VREF<csc_handle_t> me) {
+		} ,[&] (VR<csc_handle_t> me) {
 			CloseHandle (me) ;
 		}) ;
-		const auto r2x = UniqueRef<csc_handle_t> ([&] (VREF<csc_handle_t> me) {
+		const auto r2x = UniqueRef<csc_handle_t> ([&] (VR<csc_handle_t> me) {
 			me = MapViewOfFile (r1x ,FILE_MAP_WRITE ,0 ,0 ,SIZE_OF<SingletonLocal>::expr) ;
 			assume (me != NULL) ;
-		} ,[&] (VREF<csc_handle_t> me) {
+		} ,[&] (VR<csc_handle_t> me) {
 			UnmapViewOfFile (me) ;
 		}) ;
 		const auto r3x = FLAG (r2x.ref) ;
@@ -330,16 +330,12 @@ public:
 #elif defined __CSC_VER_RELEASE__
 		ret |= QUAD (0X00000003) ;
 #endif
-#ifndef __CSC_COMPILER_NVCC__
 #ifdef __CSC_COMPILER_MSVC__
 		ret |= QUAD (0X00000010) ;
 #elif defined __CSC_COMPILER_GNUC__
 		ret |= QUAD (0X00000020) ;
 #elif defined __CSC_COMPILER_CLANG__
 		ret |= QUAD (0X00000030) ;
-#endif
-#else
-		ret |= QUAD (0X00000040) ;
 #endif
 #ifdef __CSC_SYSTEM_WINDOWS__
 		ret |= QUAD (0X00000100) ;
@@ -369,10 +365,10 @@ public:
 	}
 
 	QUAD ctx_reserve () const override {
-		return QUAD (0X0FEDCBA987654321) ;
+		return QUAD_ENDIAN ;
 	}
 
-	FLAG load (CREF<Clazz> clazz) const override {
+	FLAG load (CR<Clazz> clazz) const override {
 		assume (self.mRoot.exist ()) ;
 		Scope<Mutex> anonymous (self.mRoot->mMutex) ;
 		FLAG ret = self.mRoot->mClazzSet.map (clazz) ;
@@ -380,7 +376,7 @@ public:
 		return move (ret) ;
 	}
 
-	void save (CREF<Clazz> clazz ,CREF<FLAG> layout) const override {
+	void save (CR<Clazz> clazz ,CR<FLAG> layout) const override {
 		assert (layout != ZERO) ;
 		assert (layout != NONE) ;
 		assume (self.mRoot.exist ()) ;

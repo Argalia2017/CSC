@@ -19,13 +19,13 @@ public:
 } ;
 
 struct HeapMutexHolder implement Interface {
-	imports CREF<HeapMutexLayout> expr_m () ;
-	imports VFat<HeapMutexHolder> hold (VREF<HeapMutexLayout> that) ;
-	imports CFat<HeapMutexHolder> hold (CREF<HeapMutexLayout> that) ;
+	imports CR<HeapMutexLayout> expr_m () ;
+	imports VFat<HeapMutexHolder> hold (VR<HeapMutexLayout> that) ;
+	imports CFat<HeapMutexHolder> hold (CR<HeapMutexLayout> that) ;
 
 	virtual void initialize () = 0 ;
-	virtual void enter () const = 0 ;
-	virtual void leave () const = 0 ;
+	virtual void enter () = 0 ;
+	virtual void leave () = 0 ;
 } ;
 
 class HeapMutex implement HeapMutexLayout {
@@ -33,22 +33,22 @@ protected:
 	using HeapMutexLayout::mHolder ;
 
 public:
-	static CREF<HeapMutex> expr_m () {
+	static CR<HeapMutex> expr_m () {
 		return keep[TYPE<HeapMutex>::expr] (HeapMutexHolder::expr) ;
 	}
 
-	void enter () const {
+	void enter () {
 		return HeapMutexHolder::hold (thiz)->enter () ;
 	}
 
-	void leave () const {
+	void leave () {
 		return HeapMutexHolder::hold (thiz)->leave () ;
 	}
 } ;
 
 struct OptionalLayout {
 	FLAG mCode ;
-	BoxLayout mValue ;
+	mutable BoxLayout mValue ;
 
 public:
 	implicit OptionalLayout () noexcept {
@@ -57,14 +57,14 @@ public:
 } ;
 
 struct OptionalHolder implement Interface {
-	imports VFat<OptionalHolder> hold (VREF<OptionalLayout> that) ;
-	imports CFat<OptionalHolder> hold (CREF<OptionalLayout> that) ;
+	imports VFat<OptionalHolder> hold (VR<OptionalLayout> that) ;
+	imports CFat<OptionalHolder> hold (CR<OptionalLayout> that) ;
 
-	virtual void initialize (CREF<FLAG> code) = 0 ;
+	virtual void initialize (CR<FLAG> code) = 0 ;
 	virtual BOOL exist () const = 0 ;
 	virtual FLAG code () const = 0 ;
-	virtual void get (VREF<BoxLayout> item) const = 0 ;
-	virtual void set (VREF<BoxLayout> item) const = 0 ;
+	virtual void get (VR<BoxLayout> item) const = 0 ;
+	virtual void set (VR<BoxLayout> item) const = 0 ;
 } ;
 
 template <class A>
@@ -77,13 +77,13 @@ protected:
 public:
 	implicit Optional () = default ;
 
-	implicit Optional (CREF<A> that) :Optional (move (that)) {}
+	implicit Optional (CR<A> that) :Optional (move (that)) {}
 
-	implicit Optional (RREF<A> that) {
+	implicit Optional (RR<A> that) {
 		once (move (that)) ;
 	}
 
-	static Optional error (CREF<FLAG> code) {
+	static Optional error (CR<FLAG> code) {
 		Optional ret ;
 		OptionalHolder::hold (ret)->initialize (code) ;
 		return move (ret) ;
@@ -107,11 +107,11 @@ public:
 		return fetch () ;
 	}
 
-	void once (CREF<A> item) const {
+	void once (CR<A> item) const {
 		once (move (item)) ;
 	}
 
-	void once (RREF<A> item) const {
+	void once (RR<A> item) const {
 		if (exist ())
 			return ;
 		auto rax = Box<A>::make (move (item)) ;
@@ -119,13 +119,13 @@ public:
 	}
 
 	template <class ARG1>
-	forceinline CREF<Optional> operator() (RREF<ARG1> item) const {
+	forceinline CR<Optional> operator() (RR<ARG1> item) const {
 		once (move (item)) ;
 		return thiz ;
 	}
 
 	template <class ARG1>
-	void then (CREF<ARG1> func) const {
+	void then (CR<ARG1> func) const {
 		if (!exist ())
 			return ;
 		auto rax = Box<A> () ;
@@ -149,7 +149,7 @@ public:
 	implicit Buffer () = default ;
 
 	template <class...ARG1 ,class = REQUIRE<ENUM_EQUAL<RANK_OF<TYPE<ARG1...>> ,B>>>
-	implicit Buffer (XREF<ARG1>...initval) {
+	implicit Buffer (XR<ARG1>...initval) {
 		mBuffer = BUFFER {A (initval)...} ;
 	}
 
@@ -161,41 +161,41 @@ public:
 		return SIZE_OF<A>::expr ;
 	}
 
-	VREF<ARR<A>> ref_m () leftvalue {
+	VR<ARR<A>> ref_m () leftvalue {
 		return Pointer::from (mBuffer) ;
 	}
 
-	forceinline operator VREF<ARR<A>> () leftvalue {
+	forceinline operator VR<ARR<A>> () leftvalue {
 		return ref ;
 	}
 
-	CREF<ARR<A>> ref_m () const leftvalue {
+	CR<ARR<A>> ref_m () const leftvalue {
 		return Pointer::from (mBuffer) ;
 	}
 
-	forceinline operator CREF<ARR<A>> () const leftvalue {
+	forceinline operator CR<ARR<A>> () const leftvalue {
 		return ref ;
 	}
 
-	forceinline BOOL operator== (CREF<Buffer> that) = delete ;
+	forceinline BOOL operator== (CR<Buffer> that) = delete ;
 
-	forceinline BOOL operator!= (CREF<Buffer> that) = delete ;
+	forceinline BOOL operator!= (CR<Buffer> that) = delete ;
 
-	VREF<A> at (CREF<INDEX> index) leftvalue {
+	VR<A> at (CR<INDEX> index) leftvalue {
 		assert (inline_between (index ,0 ,size ())) ;
 		return ref[index] ;
 	}
 
-	forceinline VREF<A> operator[] (CREF<INDEX> index) leftvalue {
+	forceinline VR<A> operator[] (CR<INDEX> index) leftvalue {
 		return at (index) ;
 	}
 
-	CREF<A> at (CREF<INDEX> index) const leftvalue {
+	CR<A> at (CR<INDEX> index) const leftvalue {
 		assert (inline_between (index ,0 ,size ())) ;
 		return ref[index] ;
 	}
 
-	forceinline CREF<A> operator[] (CREF<INDEX> index) const leftvalue {
+	forceinline CR<A> operator[] (CR<INDEX> index) const leftvalue {
 		return at (index) ;
 	}
 } ;
@@ -238,7 +238,7 @@ protected:
 public:
 	implicit Wrapper () = delete ;
 
-	explicit Wrapper (CREF<Buffer<FLAG ,RANK>> that) {
+	explicit Wrapper (CR<Buffer<FLAG ,RANK>> that) {
 		mRank = RANK::expr ;
 		mWrapper = that ;
 	}
@@ -247,41 +247,41 @@ public:
 		return mRank ;
 	}
 
-	CREF<ITEM> at (CREF<INDEX> index) const leftvalue {
+	CR<ITEM> at (CR<INDEX> index) const leftvalue {
 		assert (inline_between (index ,0 ,mRank)) ;
 		return Pointer::make (mWrapper.ref[index]) ;
 	}
 
-	forceinline CREF<ITEM> operator[] (CREF<INDEX> index) const leftvalue {
+	forceinline CR<ITEM> operator[] (CR<INDEX> index) const leftvalue {
 		return at (index) ;
 	}
 
 	template <class ARG1>
-	void invoke (CREF<ARG1> func) const {
+	void invoke (CR<ARG1> func) const {
 		return invoke_impl (func ,TYPE_SENQUENCE<RANK>::expr) ;
 	}
 
 	template <class ARG1 ,class...ARG2>
-	forceinline void invoke_impl (CREF<ARG1> func ,TYPE<ARG2...>) const {
+	forceinline void invoke_impl (CR<ARG1> func ,TYPE<ARG2...>) const {
 		//@fatal: GCC is so bad
-		return func (keep[TYPE<XREF<A>>::expr] (Pointer::make (mWrapper.ref[ARG2::expr]))...) ;
+		return func (keep[TYPE<XR<A>>::expr] (Pointer::make (mWrapper.ref[ARG2::expr]))...) ;
 	}
 
 	template <class ARG1>
-	forceinline void operator() (CREF<ARG1> func) const {
+	forceinline void operator() (CR<ARG1> func) const {
 		return invoke (func) ;
 	}
 } ;
 
 template <class...ARG1>
-inline Wrapper<CREF<ARG1>...> MakeWrapper (CREF<ARG1>...params) {
+inline Wrapper<CR<ARG1>...> MakeWrapper (CR<ARG1>...params) {
 	using R1X = RANK_OF<TYPE<ARG1...>> ;
-	return Wrapper<CREF<ARG1>...> (Buffer<FLAG ,R1X> ({address (params)...})) ;
+	return Wrapper<CR<ARG1>...> (Buffer<FLAG ,R1X> ({address (params)...})) ;
 }
 
 struct ReflectInvoke implement Interface {
 	virtual LENGTH rank () const = 0 ;
-	virtual void invoke (CREF<Pointer> func ,CREF<WrapperLayout> params) const = 0 ;
+	virtual void invoke (CR<Pointer> func ,CR<WrapperLayout> params) const = 0 ;
 
 	forceinline static consteval FLAG expr_m () noexcept {
 		return 200 ;
@@ -295,14 +295,14 @@ public:
 		return RANK_OF<FUNCTION_PARAMS<A>>::expr ;
 	}
 
-	void invoke (CREF<Pointer> func ,CREF<WrapperLayout> params) const override {
+	void invoke (CR<Pointer> func ,CR<WrapperLayout> params) const override {
 		assert (params.mRank == rank ()) ;
 		auto &&rax = wrapper_from (FUNCTION_PARAMS<A>::expr ,params) ;
 		return rax (keep[TYPE<A>::expr] (func)) ;
 	}
 
 	template <class...ARG1>
-	static CREF<Wrapper<ARG1...>> wrapper_from (TYPE<ARG1...> ,CREF<WrapperLayout> params) {
+	static CR<Wrapper<ARG1...>> wrapper_from (TYPE<ARG1...> ,CR<WrapperLayout> params) {
 		return Pointer::from (params) ;
 	}
 } ;
@@ -314,21 +314,21 @@ struct FunctionLayout {
 } ;
 
 struct FunctionHolder implement Interface {
-	imports VFat<FunctionHolder> hold (VREF<FunctionLayout> that) ;
-	imports CFat<FunctionHolder> hold (CREF<FunctionLayout> that) ;
+	imports VFat<FunctionHolder> hold (VR<FunctionLayout> that) ;
+	imports CFat<FunctionHolder> hold (CR<FunctionLayout> that) ;
 
-	virtual void initialize (CREF<Unknown> holder) = 0 ;
-	virtual void initialize (CREF<FunctionLayout> that) = 0 ;
-	virtual VREF<BoxLayout> raw () leftvalue = 0 ;
-	virtual CREF<BoxLayout> raw () const leftvalue = 0 ;
+	virtual void initialize (CR<Unknown> holder) = 0 ;
+	virtual void initialize (CR<FunctionLayout> that) = 0 ;
+	virtual VR<BoxLayout> raw () leftvalue = 0 ;
+	virtual CR<BoxLayout> raw () const leftvalue = 0 ;
 	virtual LENGTH rank () const = 0 ;
-	virtual void invoke (CREF<WrapperLayout> params) const = 0 ;
+	virtual void invoke (CR<WrapperLayout> params) const = 0 ;
 } ;
 
 template <class A>
-class FunctionUnknownBinder final implement Fat<ReflectUnknown ,Proxy> {
+class FunctionUnknownBinder final implement Fat<FriendUnknown ,Proxy> {
 public:
-	FLAG reflect (CREF<FLAG> uuid) const override {
+	FLAG reflect (CR<FLAG> uuid) const override {
 		if (uuid == ReflectSizeBinder<A>::expr)
 			return inline_vptr (ReflectSizeBinder<A> ()) ;
 		if (uuid == ReflectDestroyBinder<A>::expr)
@@ -348,7 +348,7 @@ public:
 	implicit Function () = default ;
 
 	template <class ARG1 ,class = REQUIRE<ENUM_NOT<IS_EXTEND<FunctionLayout ,ARG1>>>>
-	implicit Function (RREF<ARG1> that) {
+	implicit Function (RR<ARG1> that) {
 		using R1X = FUNCTION_RETURN<ARG1> ;
 		using R2X = FUNCTION_PARAMS<ARG1> ;
 		require (IS_VOID<R1X>) ;
@@ -357,23 +357,23 @@ public:
 		keep[TYPE<Box<ARG1>>::expr] (raw ()).remake (move (that)) ;
 	}
 
-	implicit Function (CREF<Function> that) {
+	implicit Function (CR<Function> that) {
 		FunctionHolder::hold (thiz)->initialize (that) ;
 	}
 
-	forceinline VREF<Function> operator= (CREF<Function> that) {
+	forceinline VR<Function> operator= (CR<Function> that) {
 		return assign (thiz ,that) ;
 	}
 
-	implicit Function (RREF<Function> that) = default ;
+	implicit Function (RR<Function> that) = default ;
 
-	forceinline VREF<Function> operator= (RREF<Function> that) = default ;
+	forceinline VR<Function> operator= (RR<Function> that) = default ;
 
-	VREF<BoxLayout> raw () leftvalue {
+	VR<BoxLayout> raw () leftvalue {
 		return FunctionHolder::hold (thiz)->raw () ;
 	}
 
-	CREF<BoxLayout> raw () const leftvalue {
+	CR<BoxLayout> raw () const leftvalue {
 		return FunctionHolder::hold (thiz)->raw () ;
 	}
 
@@ -381,17 +381,17 @@ public:
 		return FunctionHolder::hold (thiz)->rank () ;
 	}
 
-	void invoke (XREF<A>...params) const {
+	void invoke (XR<A>...params) const {
 		return FunctionHolder::hold (thiz)->invoke (MakeWrapper (params...)) ;
 	}
 
-	forceinline void operator() (XREF<A>...params) const {
-		return invoke (keep[TYPE<XREF<A>>::expr] (params)...) ;
+	forceinline void operator() (XR<A>...params) const {
+		return invoke (keep[TYPE<XR<A>>::expr] (params)...) ;
 	}
 } ;
 
 struct ReflectRecast implement Interface {
-	virtual FLAG recast (CREF<FLAG> layout) const = 0 ;
+	virtual FLAG recast (CR<FLAG> layout) const = 0 ;
 
 	forceinline static consteval FLAG expr_m () noexcept {
 		return 201 ;
@@ -401,23 +401,23 @@ struct ReflectRecast implement Interface {
 template <class A ,class B>
 class ReflectRecastBinder final implement Fat<ReflectRecast ,Proxy> {
 public:
-	FLAG recast (CREF<FLAG> layout) const override {
+	FLAG recast (CR<FLAG> layout) const override {
 		auto &&rax = keep[TYPE<B>::expr] (Pointer::make (layout)) ;
 		return recast_impl (PHX ,TYPE<A>::expr ,rax) ;
 	}
 
 	template <class ARG1 ,class ARG2 ,class = REQUIRE<IS_EXTEND<ARG1 ,ARG2>>>
-	forceinline FLAG recast_impl (CREF<typeof (PH3)> ,TYPE<ARG1> ,CREF<ARG2> b) const {
+	forceinline FLAG recast_impl (CR<typeof (PH3)> ,TYPE<ARG1> ,CR<ARG2> b) const {
 		return address (keep[TYPE<ARG1>::expr] (b)) ;
 	}
 
 	template <class ARG1 ,class ARG2 ,class = REQUIRE<IS_VIRTUAL<ARG1 ,ARG2>>>
-	forceinline FLAG recast_impl (CREF<typeof (PH2)> ,TYPE<ARG1> ,CREF<ARG2> b) const {
+	forceinline FLAG recast_impl (CR<typeof (PH2)> ,TYPE<ARG1> ,CR<ARG2> b) const {
 		return address (b.ref) ;
 	}
 
 	template <class ARG1 ,class ARG2 ,class = REQUIRE<IS_SAME<ARG1 ,Pointer>>>
-	forceinline FLAG recast_impl (CREF<typeof (PH1)> ,TYPE<ARG1> ,CREF<ARG2> b) const {
+	forceinline FLAG recast_impl (CR<typeof (PH1)> ,TYPE<ARG1> ,CR<ARG2> b) const {
 		return address (b) ;
 	}
 } ;
@@ -435,35 +435,35 @@ public:
 
 	implicit ~AutoRefLayout () noexcept ;
 
-	implicit AutoRefLayout (CREF<AutoRefLayout> that) = delete ;
+	implicit AutoRefLayout (CR<AutoRefLayout> that) = delete ;
 
-	forceinline VREF<AutoRefLayout> operator= (CREF<AutoRefLayout> that) = delete ;
+	forceinline VR<AutoRefLayout> operator= (CR<AutoRefLayout> that) = delete ;
 
-	implicit AutoRefLayout (RREF<AutoRefLayout> that) noexcept :AutoRefLayout () {
+	implicit AutoRefLayout (RR<AutoRefLayout> that) noexcept :AutoRefLayout () {
 		swap (thiz ,that) ;
 	}
 
-	forceinline VREF<AutoRefLayout> operator= (RREF<AutoRefLayout> that) noexcept {
+	forceinline VR<AutoRefLayout> operator= (RR<AutoRefLayout> that) noexcept {
 		return assign (thiz ,that) ;
 	}
 } ;
 
 struct AutoRefHolder implement Interface {
-	imports VFat<AutoRefHolder> hold (VREF<AutoRefLayout> that) ;
-	imports CFat<AutoRefHolder> hold (CREF<AutoRefLayout> that) ;
+	imports VFat<AutoRefHolder> hold (VR<AutoRefLayout> that) ;
+	imports CFat<AutoRefHolder> hold (CR<AutoRefLayout> that) ;
 
-	virtual void initialize (CREF<Unknown> holder) = 0 ;
-	virtual void initialize (CREF<Unknown> holder ,CREF<Clazz> clazz_) = 0 ;
+	virtual void initialize (CR<Unknown> holder) = 0 ;
+	virtual void initialize (CR<Unknown> holder ,CR<Clazz> clazz_) = 0 ;
 	virtual void destroy () = 0 ;
 	virtual BOOL exist () const = 0 ;
-	virtual VREF<BoxLayout> raw () leftvalue = 0 ;
-	virtual CREF<BoxLayout> raw () const leftvalue = 0 ;
+	virtual VR<BoxLayout> raw () leftvalue = 0 ;
+	virtual CR<BoxLayout> raw () const leftvalue = 0 ;
 	virtual Clazz clazz () const = 0 ;
-	virtual VREF<Pointer> ref_m () leftvalue = 0 ;
-	virtual CREF<Pointer> ref_m () const leftvalue = 0 ;
-	virtual VREF<Pointer> rebind (CREF<Clazz> clazz_) leftvalue = 0 ;
-	virtual CREF<Pointer> rebind (CREF<Clazz> clazz_) const leftvalue = 0 ;
-	virtual AutoRefLayout recast (CREF<Unknown> simple) = 0 ;
+	virtual VR<Pointer> ref_m () leftvalue = 0 ;
+	virtual CR<Pointer> ref_m () const leftvalue = 0 ;
+	virtual VR<Pointer> rebind (CR<Clazz> clazz_) leftvalue = 0 ;
+	virtual CR<Pointer> rebind (CR<Clazz> clazz_) const leftvalue = 0 ;
+	virtual AutoRefLayout recast (CR<Unknown> simple) = 0 ;
 } ;
 
 inline AutoRefLayout::~AutoRefLayout () noexcept {
@@ -480,17 +480,17 @@ public:
 	implicit AutoRef () = default ;
 
 	template <class ARG1 ,class = REQUIRE<IS_NOT_SAME<ARG1 ,A>>>
-	implicit AutoRef (RREF<AutoRef<ARG1>> that) :AutoRef (that.recast (TYPE<A>::expr)) {}
+	implicit AutoRef (RR<AutoRef<ARG1>> that) :AutoRef (that.recast (TYPE<A>::expr)) {}
 
-	explicit AutoRef (CREF<Unknown> holder) {
+	explicit AutoRef (CR<Unknown> holder) {
 		AutoRefHolder::hold (thiz)->initialize (holder) ;
 	}
 
 	template <class...ARG1>
-	static AutoRef make (XREF<ARG1>...initval) {
+	static AutoRef make (XR<ARG1>...initval) {
 		AutoRef ret ;
 		AutoRefHolder::hold (ret)->initialize (BoxUnknownBinder<A> () ,Clazz (TYPE<A>::expr)) ;
-		keep[TYPE<Box<A>>::expr] (ret.raw ()).remake (keep[TYPE<XREF<ARG1>>::expr] (initval)...) ;
+		keep[TYPE<Box<A>>::expr] (ret.raw ()).remake (keep[TYPE<XR<ARG1>>::expr] (initval)...) ;
 		return move (ret) ;
 	}
 
@@ -498,11 +498,11 @@ public:
 		return AutoRefHolder::hold (thiz)->exist () ;
 	}
 
-	VREF<BoxLayout> raw () leftvalue {
+	VR<BoxLayout> raw () leftvalue {
 		return AutoRefHolder::hold (thiz)->raw () ;
 	}
 
-	CREF<BoxLayout> raw () const leftvalue {
+	CR<BoxLayout> raw () const leftvalue {
 		return AutoRefHolder::hold (thiz)->raw () ;
 	}
 
@@ -510,48 +510,48 @@ public:
 		return AutoRefHolder::hold (thiz)->clazz () ;
 	}
 
-	VREF<A> ref_m () leftvalue {
+	VR<A> ref_m () leftvalue {
 		return AutoRefHolder::hold (thiz)->ref ;
 	}
 
-	forceinline operator VREF<A> () leftvalue {
+	forceinline operator VR<A> () leftvalue {
 		return ref ;
 	}
 
-	forceinline PTR<VREF<A>> operator-> () leftvalue {
+	forceinline PTR<VR<A>> operator-> () leftvalue {
 		return (&ref) ;
 	}
 
-	CREF<A> ref_m () const leftvalue {
+	CR<A> ref_m () const leftvalue {
 		return AutoRefHolder::hold (thiz)->ref ;
 	}
 
-	forceinline operator CREF<A> () const leftvalue {
+	forceinline operator CR<A> () const leftvalue {
 		return ref ;
 	}
 
-	forceinline PTR<CREF<A>> operator-> () const leftvalue {
+	forceinline PTR<CR<A>> operator-> () const leftvalue {
 		return (&ref) ;
 	}
 
-	forceinline BOOL operator== (CREF<AutoRef> that) = delete ;
+	forceinline BOOL operator== (CR<AutoRef> that) = delete ;
 
-	forceinline BOOL operator!= (CREF<AutoRef> that) = delete ;
+	forceinline BOOL operator!= (CR<AutoRef> that) = delete ;
 
 	template <class ARG1>
-	VREF<AutoRef<ARG1>> rebind (TYPE<ARG1>) leftvalue {
+	VR<AutoRef<ARG1>> rebind (TYPE<ARG1>) leftvalue {
 		return AutoRefHolder::hold (thiz)->rebind (Clazz (TYPE<ARG1>::expr)) ;
 	}
 
 	template <class ARG1>
-	CREF<AutoRef<ARG1>> rebind (TYPE<ARG1>) const leftvalue {
+	CR<AutoRef<ARG1>> rebind (TYPE<ARG1>) const leftvalue {
 		return AutoRefHolder::hold (thiz)->rebind (Clazz (TYPE<ARG1>::expr)) ;
 	}
 
 	template <class ARG1>
 	AutoRef<ARG1> recast (TYPE<ARG1>) {
-		using R1X = SimpleUnknownBinder<ReflectRecastBinder<ARG1 ,A>> ;
-		AutoRefLayout ret = AutoRefHolder::hold (thiz)->recast (R1X ()) ;
+		const auto r1x = Unknown (SimpleUnknownBinder<ReflectRecastBinder<ARG1 ,A>> ()) ;
+		AutoRefLayout ret = AutoRefHolder::hold (thiz)->recast (r1x) ;
 		return move (keep[TYPE<AutoRef<ARG1>>::expr] (ret)) ;
 	}
 } ;
@@ -569,33 +569,34 @@ public:
 
 	implicit ~SharedRefLayout () noexcept ;
 
-	implicit SharedRefLayout (CREF<SharedRefLayout> that) = delete ;
+	implicit SharedRefLayout (CR<SharedRefLayout> that) = delete ;
 
-	forceinline VREF<SharedRefLayout> operator= (CREF<SharedRefLayout> that) = delete ;
+	forceinline VR<SharedRefLayout> operator= (CR<SharedRefLayout> that) = delete ;
 
-	implicit SharedRefLayout (RREF<SharedRefLayout> that) noexcept :SharedRefLayout () {
+	implicit SharedRefLayout (RR<SharedRefLayout> that) noexcept :SharedRefLayout () {
 		swap (thiz ,that) ;
 	}
 
-	forceinline VREF<SharedRefLayout> operator= (RREF<SharedRefLayout> that) noexcept {
+	forceinline VR<SharedRefLayout> operator= (RR<SharedRefLayout> that) noexcept {
 		return assign (thiz ,that) ;
 	}
 } ;
 
 struct SharedRefHolder implement Interface {
-	imports VFat<SharedRefHolder> hold (VREF<SharedRefLayout> that) ;
-	imports CFat<SharedRefHolder> hold (CREF<SharedRefLayout> that) ;
+	imports VFat<SharedRefHolder> hold (VR<SharedRefLayout> that) ;
+	imports CFat<SharedRefHolder> hold (CR<SharedRefLayout> that) ;
 
-	virtual void initialize (CREF<Unknown> holder) = 0 ;
-	virtual void initialize (CREF<Unknown> holder ,CREF<FLAG> layout) = 0 ;
-	virtual void initialize (CREF<SharedRefLayout> that) = 0 ;
+	virtual void initialize (CR<Unknown> holder) = 0 ;
+	virtual void initialize (CR<Unknown> holder ,CR<FLAG> layout) = 0 ;
+	virtual void initialize (CR<SharedRefLayout> that) = 0 ;
 	virtual void destroy () = 0 ;
 	virtual BOOL exist () const = 0 ;
-	virtual VREF<BoxLayout> raw () leftvalue = 0 ;
-	virtual CREF<BoxLayout> raw () const leftvalue = 0 ;
+	virtual VR<BoxLayout> raw () leftvalue = 0 ;
+	virtual CR<BoxLayout> raw () const leftvalue = 0 ;
 	virtual LENGTH counter () const = 0 ;
-	virtual VREF<Pointer> ref_m () const leftvalue = 0 ;
-	virtual SharedRefLayout recast (CREF<Unknown> simple) = 0 ;
+	virtual VR<Pointer> ref_m () const leftvalue = 0 ;
+	virtual SharedRefLayout recast (CR<Unknown> simple) = 0 ;
+	virtual RefLayout weak () const = 0 ;
 } ;
 
 inline SharedRefLayout::~SharedRefLayout () noexcept {
@@ -612,41 +613,41 @@ public:
 	implicit SharedRef () = default ;
 
 	template <class ARG1 ,class = REQUIRE<IS_NOT_SAME<ARG1 ,A>>>
-	implicit SharedRef (RREF<SharedRef<ARG1>> that) :SharedRef (that.recast (TYPE<A>::expr)) {}
+	implicit SharedRef (RR<SharedRef<ARG1>> that) :SharedRef (that.recast (TYPE<A>::expr)) {}
 
-	explicit SharedRef (VREF<A> item) {
+	explicit SharedRef (VR<A> item) {
 		SharedRefHolder::hold (thiz)->initialize (BoxUnknownBinder<A> () ,address (item)) ;
 	}
 
 	template <class...ARG1>
-	static SharedRef make (XREF<ARG1>...initval) {
+	static SharedRef make (XR<ARG1>...initval) {
 		SharedRef ret ;
 		SharedRefHolder::hold (ret)->initialize (BoxUnknownBinder<A> ()) ;
-		keep[TYPE<Box<A>>::expr] (ret.raw ()).remake (keep[TYPE<XREF<ARG1>>::expr] (initval)...) ;
+		keep[TYPE<Box<A>>::expr] (ret.raw ()).remake (keep[TYPE<XR<ARG1>>::expr] (initval)...) ;
 		return move (ret) ;
 	}
 
-	implicit SharedRef (CREF<SharedRef> that) {
+	implicit SharedRef (CR<SharedRef> that) {
 		SharedRefHolder::hold (thiz)->initialize (that) ;
 	}
 
-	forceinline VREF<SharedRef> operator= (CREF<SharedRef> that) {
+	forceinline VR<SharedRef> operator= (CR<SharedRef> that) {
 		return assign (thiz ,that) ;
 	}
 
-	implicit SharedRef (RREF<SharedRef> that) = default ;
+	implicit SharedRef (RR<SharedRef> that) = default ;
 
-	forceinline VREF<SharedRef> operator= (RREF<SharedRef> that) = default ;
+	forceinline VR<SharedRef> operator= (RR<SharedRef> that) = default ;
 
 	BOOL exist () const {
 		return SharedRefHolder::hold (thiz)->exist () ;
 	}
 
-	VREF<BoxLayout> raw () leftvalue {
+	VR<BoxLayout> raw () leftvalue {
 		return SharedRefHolder::hold (thiz)->raw () ;
 	}
 
-	CREF<BoxLayout> raw () const leftvalue {
+	CR<BoxLayout> raw () const leftvalue {
 		return SharedRefHolder::hold (thiz)->raw () ;
 	}
 
@@ -654,27 +655,32 @@ public:
 		return SharedRefHolder::hold (thiz)->counter () ;
 	}
 
-	VREF<A> ref_m () const leftvalue {
+	VR<A> ref_m () const leftvalue {
 		return SharedRefHolder::hold (thiz)->ref ;
 	}
 
-	forceinline operator VREF<A> () const leftvalue {
+	forceinline operator VR<A> () const leftvalue {
 		return ref ;
 	}
 
-	forceinline PTR<VREF<A>> operator-> () const leftvalue {
+	forceinline PTR<VR<A>> operator-> () const leftvalue {
 		return (&ref) ;
 	}
 
-	forceinline BOOL operator== (CREF<SharedRef> that) = delete ;
+	forceinline BOOL operator== (CR<SharedRef> that) = delete ;
 
-	forceinline BOOL operator!= (CREF<SharedRef> that) = delete ;
+	forceinline BOOL operator!= (CR<SharedRef> that) = delete ;
 
 	template <class ARG1>
 	SharedRef<ARG1> recast (TYPE<ARG1>) {
-		using R1X = SimpleUnknownBinder<ReflectRecastBinder<ARG1 ,A>> ;
-		SharedRefLayout ret = SharedRefHolder::hold (thiz)->recast (R1X ()) ;
+		const auto r1x = Unknown (SimpleUnknownBinder<ReflectRecastBinder<ARG1 ,A>> ()) ;
+		SharedRefLayout ret = SharedRefHolder::hold (thiz)->recast (r1x) ;
 		return move (keep[TYPE<SharedRef<ARG1>>::expr] (ret)) ;
+	}
+
+	Ref<A> weak () const {
+		RefLayout ret = SharedRefHolder::hold (thiz)->weak () ;
+		return move (keep[TYPE<Ref<A>>::expr] (ret)) ;
 	}
 } ;
 
@@ -691,31 +697,31 @@ public:
 
 	implicit ~UniqueRefLayout () noexcept ;
 
-	implicit UniqueRefLayout (CREF<UniqueRefLayout> that) = delete ;
+	implicit UniqueRefLayout (CR<UniqueRefLayout> that) = delete ;
 
-	forceinline VREF<UniqueRefLayout> operator= (CREF<UniqueRefLayout> that) = delete ;
+	forceinline VR<UniqueRefLayout> operator= (CR<UniqueRefLayout> that) = delete ;
 
-	implicit UniqueRefLayout (RREF<UniqueRefLayout> that) noexcept :UniqueRefLayout () {
+	implicit UniqueRefLayout (RR<UniqueRefLayout> that) noexcept :UniqueRefLayout () {
 		swap (thiz ,that) ;
 	}
 
-	forceinline VREF<UniqueRefLayout> operator= (RREF<UniqueRefLayout> that) noexcept {
+	forceinline VR<UniqueRefLayout> operator= (RR<UniqueRefLayout> that) noexcept {
 		return assign (thiz ,that) ;
 	}
 } ;
 
 struct UniqueRefHolder implement Interface {
-	imports VFat<UniqueRefHolder> hold (VREF<UniqueRefLayout> that) ;
-	imports CFat<UniqueRefHolder> hold (CREF<UniqueRefLayout> that) ;
+	imports VFat<UniqueRefHolder> hold (VR<UniqueRefLayout> that) ;
+	imports CFat<UniqueRefHolder> hold (CR<UniqueRefLayout> that) ;
 
-	virtual void initialize (CREF<Unknown> holder ,CREF<Function<VREF<Pointer>>> owner) = 0 ;
-	virtual void initialize (CREF<UniqueRefLayout> that) = 0 ;
+	virtual void initialize (CR<Unknown> holder ,CR<Function<VR<Pointer>>> owner) = 0 ;
+	virtual void initialize (CR<UniqueRefLayout> that) = 0 ;
 	virtual void destroy () = 0 ;
 	virtual BOOL exist () const = 0 ;
-	virtual VREF<BoxLayout> raw () leftvalue = 0 ;
-	virtual CREF<BoxLayout> raw () const leftvalue = 0 ;
-	virtual CREF<Pointer> ref_m () const leftvalue = 0 ;
-	virtual UniqueRefLayout recast (CREF<Unknown> simple) = 0 ;
+	virtual VR<BoxLayout> raw () leftvalue = 0 ;
+	virtual CR<BoxLayout> raw () const leftvalue = 0 ;
+	virtual CR<Pointer> ref_m () const leftvalue = 0 ;
+	virtual UniqueRefLayout recast (CR<Unknown> simple) = 0 ;
 } ;
 
 inline UniqueRefLayout::~UniqueRefLayout () noexcept {
@@ -732,69 +738,69 @@ public:
 	implicit UniqueRef () = default ;
 
 	template <class ARG1 ,class = REQUIRE<IS_NOT_SAME<ARG1 ,A>>>
-	implicit UniqueRef (RREF<UniqueRef<ARG1>> that) :UniqueRef (that.recast (TYPE<A>::expr)) {}
+	implicit UniqueRef (RR<UniqueRef<ARG1>> that) :UniqueRef (that.recast (TYPE<A>::expr)) {}
 
 	template <class ARG1 ,class ARG2>
-	explicit UniqueRef (RREF<ARG1> ctor ,RREF<ARG2> dtor) {
-		auto rax = Function<VREF<A>> (move (dtor)) ;
+	explicit UniqueRef (RR<ARG1> ctor ,RR<ARG2> dtor) {
+		auto rax = Function<VR<A>> (move (dtor)) ;
 		UniqueRefHolder::hold (thiz)->initialize (BoxUnknownBinder<A> () ,Pointer::from (rax)) ;
 		keep[TYPE<Box<A>>::expr] (raw ()).remake () ;
 		ctor (BoxHolder::hold (raw ())->ref) ;
 	}
 
 	template <class...ARG1>
-	static UniqueRef make (XREF<ARG1>...initval) {
+	static UniqueRef make (XR<ARG1>...initval) {
 		UniqueRef ret ;
-		auto rax = Function<VREF<A>> () ;
+		auto rax = Function<VR<A>> () ;
 		UniqueRefHolder::hold (ret)->initialize (BoxUnknownBinder<A> () ,Pointer::from (rax)) ;
-		keep[TYPE<Box<A>>::expr] (ret.raw ()).remake (keep[TYPE<XREF<ARG1>>::expr] (initval)...) ;
+		keep[TYPE<Box<A>>::expr] (ret.raw ()).remake (keep[TYPE<XR<ARG1>>::expr] (initval)...) ;
 		return move (ret) ;
 	}
 
-	implicit UniqueRef (CREF<UniqueRef> that) {
+	implicit UniqueRef (CR<UniqueRef> that) {
 		UniqueRefHolder::hold (thiz)->initialize (that) ;
 	}
 
-	forceinline VREF<UniqueRef> operator= (CREF<UniqueRef> that) {
+	forceinline VR<UniqueRef> operator= (CR<UniqueRef> that) {
 		return assign (thiz ,that) ;
 	}
 
-	implicit UniqueRef (RREF<UniqueRef> that) = default ;
+	implicit UniqueRef (RR<UniqueRef> that) = default ;
 
-	forceinline VREF<UniqueRef> operator= (RREF<UniqueRef> that) = default ;
+	forceinline VR<UniqueRef> operator= (RR<UniqueRef> that) = default ;
 
 	BOOL exist () const {
 		return UniqueRefHolder::hold (thiz)->exist () ;
 	}
 
-	VREF<BoxLayout> raw () leftvalue {
+	VR<BoxLayout> raw () leftvalue {
 		return UniqueRefHolder::hold (thiz)->raw () ;
 	}
 
-	CREF<BoxLayout> raw () const leftvalue {
+	CR<BoxLayout> raw () const leftvalue {
 		return UniqueRefHolder::hold (thiz)->raw () ;
 	}
 
-	CREF<A> ref_m () const leftvalue {
+	CR<A> ref_m () const leftvalue {
 		return UniqueRefHolder::hold (thiz)->ref ;
 	}
 
-	forceinline operator CREF<A> () const leftvalue {
+	forceinline operator CR<A> () const leftvalue {
 		return ref ;
 	}
 
-	forceinline PTR<CREF<A>> operator-> () const leftvalue {
+	forceinline PTR<CR<A>> operator-> () const leftvalue {
 		return (&ref) ;
 	}
 
-	forceinline BOOL operator== (CREF<UniqueRef> that) = delete ;
+	forceinline BOOL operator== (CR<UniqueRef> that) = delete ;
 
-	forceinline BOOL operator!= (CREF<UniqueRef> that) = delete ;
+	forceinline BOOL operator!= (CR<UniqueRef> that) = delete ;
 
 	template <class ARG1>
 	UniqueRef<ARG1> recast (TYPE<ARG1>) {
-		using R1X = SimpleUnknownBinder<ReflectRecastBinder<ARG1 ,A>> ;
-		UniqueRefLayout ret = UniqueRefHolder::hold (thiz)->recast (R1X ()) ;
+		const auto r1x = Unknown (SimpleUnknownBinder<ReflectRecastBinder<ARG1 ,A>> ()) ;
+		UniqueRefLayout ret = UniqueRefHolder::hold (thiz)->recast (r1x) ;
 		return move (keep[TYPE<UniqueRef<ARG1>>::expr] (ret)) ;
 	}
 } ;
@@ -834,40 +840,39 @@ public:
 
 	implicit ~RefBufferLayout () noexcept ;
 
-	implicit RefBufferLayout (CREF<RefBufferLayout> that) = delete ;
+	implicit RefBufferLayout (CR<RefBufferLayout> that) = delete ;
 
-	forceinline VREF<RefBufferLayout> operator= (CREF<RefBufferLayout> that) = delete ;
+	forceinline VR<RefBufferLayout> operator= (CR<RefBufferLayout> that) = delete ;
 
-	implicit RefBufferLayout (RREF<RefBufferLayout> that) noexcept :RefBufferLayout () {
+	implicit RefBufferLayout (RR<RefBufferLayout> that) noexcept :RefBufferLayout () {
 		swap (thiz ,that) ;
 	}
 
-	forceinline VREF<RefBufferLayout> operator= (RREF<RefBufferLayout> that) noexcept {
+	forceinline VR<RefBufferLayout> operator= (RR<RefBufferLayout> that) noexcept {
 		return assign (thiz ,that) ;
 	}
 } ;
 
 struct RefBufferHolder implement Interface {
-	imports VFat<RefBufferHolder> hold (VREF<RefBufferLayout> that) ;
-	imports CFat<RefBufferHolder> hold (CREF<RefBufferLayout> that) ;
+	imports VFat<RefBufferHolder> hold (VR<RefBufferLayout> that) ;
+	imports CFat<RefBufferHolder> hold (CR<RefBufferLayout> that) ;
 
-	virtual void prepare (CREF<Unknown> holder) = 0 ;
-	virtual void initialize (CREF<Unknown> holder ,CREF<LENGTH> size_) = 0 ;
-	virtual void initialize (CREF<Unknown> holder ,CREF<SliceLayout> buffer) = 0 ;
-	virtual void initialize (CREF<Unknown> holder ,CREF<SliceLayout> buffer ,RREF<BoxLayout> item) = 0 ;
+	virtual void prepare (CR<Unknown> holder) = 0 ;
+	virtual void initialize (CR<Unknown> holder ,CR<LENGTH> size_) = 0 ;
+	virtual void initialize (CR<Unknown> holder ,CR<SliceLayout> buffer ,RR<BoxLayout> item) = 0 ;
 	virtual void destroy () = 0 ;
 	virtual BOOL exist () const = 0 ;
 	virtual BOOL fixed () const = 0 ;
 	virtual Unknown unknown () const = 0 ;
-	virtual VREF<BoxLayout> raw () leftvalue = 0 ;
-	virtual CREF<BoxLayout> raw () const leftvalue = 0 ;
+	virtual VR<BoxLayout> raw () leftvalue = 0 ;
+	virtual CR<BoxLayout> raw () const leftvalue = 0 ;
 	virtual LENGTH size () const = 0 ;
 	virtual LENGTH step () const = 0 ;
-	virtual VREF<Pointer> ref_m () leftvalue = 0 ;
-	virtual CREF<Pointer> ref_m () const leftvalue = 0 ;
-	virtual VREF<Pointer> at (CREF<INDEX> index) leftvalue = 0 ;
-	virtual CREF<Pointer> at (CREF<INDEX> index) const leftvalue = 0 ;
-	virtual void resize (CREF<LENGTH> size_) = 0 ;
+	virtual VR<Pointer> ref_m () leftvalue = 0 ;
+	virtual CR<Pointer> ref_m () const leftvalue = 0 ;
+	virtual VR<Pointer> at (CR<INDEX> index) leftvalue = 0 ;
+	virtual CR<Pointer> at (CR<INDEX> index) const leftvalue = 0 ;
+	virtual void resize (CR<LENGTH> size_) = 0 ;
 } ;
 
 inline RefBufferLayout::~RefBufferLayout () noexcept {
@@ -875,9 +880,9 @@ inline RefBufferLayout::~RefBufferLayout () noexcept {
 }
 
 template <class A>
-class BufferUnknownBinder final implement Fat<ReflectUnknown ,Proxy> {
+class BufferUnknownBinder final implement Fat<FriendUnknown ,Proxy> {
 public:
-	FLAG reflect (CREF<FLAG> uuid) const override {
+	FLAG reflect (CR<FLAG> uuid) const override {
 		if (uuid == ReflectSizeBinder<A>::expr)
 			return inline_vptr (ReflectSizeBinder<A> ()) ;
 		if (uuid == ReflectDestroyBinder<A>::expr)
@@ -892,9 +897,12 @@ template <class A>
 struct RefBufferPureLayout implement RefBufferLayout {
 public:
 	implicit RefBufferPureLayout () noexcept {
-		noop (PTR<VREF<A>> (NULL)) ;
+		RefBufferHolder::hold (thiz)->prepare (BufferUnknownBinder<A> ()) ;
 	}
 } ;
+
+template <>
+struct RefBufferPureLayout<Pointer> implement RefBufferLayout {} ;
 
 template <class A>
 class RefBuffer implement RefBufferPureLayout<A> {
@@ -908,14 +916,14 @@ protected:
 public:
 	implicit RefBuffer () = default ;
 
-	explicit RefBuffer (CREF<LENGTH> size_) {
+	explicit RefBuffer (CR<LENGTH> size_) {
 		RefBufferHolder::hold (thiz)->initialize (BufferUnknownBinder<A> () ,size_) ;
 	}
 
-	static RefBuffer reference (CREF<FLAG> buffer ,CREF<LENGTH> size_) {
+	static RefBuffer reference (CR<FLAG> buffer ,CR<LENGTH> size_) {
 		RefBuffer ret ;
 		const auto r1x = Slice (buffer ,size_ ,SIZE_OF<A>::expr) ;
-		RefBufferHolder::hold (ret)->initialize (BufferUnknownBinder<A> () ,r1x) ;
+		RefBufferHolder::hold (ret)->initialize (BufferUnknownBinder<A> () ,r1x ,Box<int>::make ()) ;
 		return move (ret) ;
 	}
 
@@ -931,11 +939,11 @@ public:
 		return RefBufferHolder::hold (thiz)->unknown () ;
 	}
 
-	VREF<BoxLayout> raw () leftvalue {
+	VR<BoxLayout> raw () leftvalue {
 		return RefBufferHolder::hold (thiz)->raw () ;
 	}
 
-	CREF<BoxLayout> raw () const leftvalue {
+	CR<BoxLayout> raw () const leftvalue {
 		return RefBufferHolder::hold (thiz)->raw () ;
 	}
 
@@ -947,94 +955,117 @@ public:
 		return RefBufferHolder::hold (thiz)->step () ;
 	}
 
-	VREF<ARR<A>> ref_m () leftvalue {
+	VR<ARR<A>> ref_m () leftvalue {
 		return RefBufferHolder::hold (thiz)->ref ;
 	}
 
-	forceinline operator VREF<ARR<A>> () leftvalue {
+	forceinline operator VR<ARR<A>> () leftvalue {
 		return ref ;
 	}
 
-	CREF<ARR<A>> ref_m () const leftvalue {
+	CR<ARR<A>> ref_m () const leftvalue {
 		return RefBufferHolder::hold (thiz)->ref ;
 	}
 
-	forceinline operator CREF<ARR<A>> () const leftvalue {
+	forceinline operator CR<ARR<A>> () const leftvalue {
 		return ref ;
 	}
 
-	forceinline BOOL operator== (CREF<RefBuffer> that) = delete ;
+	forceinline BOOL operator== (CR<RefBuffer> that) = delete ;
 
-	forceinline BOOL operator!= (CREF<RefBuffer> that) = delete ;
+	forceinline BOOL operator!= (CR<RefBuffer> that) = delete ;
 
-	VREF<A> at (CREF<INDEX> index) leftvalue {
+	VR<A> at (CR<INDEX> index) leftvalue {
 		return RefBufferHolder::hold (thiz)->at (index) ;
 	}
 
-	forceinline VREF<A> operator[] (CREF<INDEX> index) leftvalue {
+	forceinline VR<A> operator[] (CR<INDEX> index) leftvalue {
 		return at (index) ;
 	}
 
-	CREF<A> at (CREF<INDEX> index) const leftvalue {
+	CR<A> at (CR<INDEX> index) const leftvalue {
 		return RefBufferHolder::hold (thiz)->at (index) ;
 	}
 
-	forceinline CREF<A> operator[] (CREF<INDEX> index) const leftvalue {
+	forceinline CR<A> operator[] (CR<INDEX> index) const leftvalue {
 		return at (index) ;
 	}
 
-	void resize (CREF<LENGTH> size_) {
+	void resize (CR<LENGTH> size_) {
 		RefBufferHolder::hold (thiz)->prepare (BufferUnknownBinder<A> ()) ;
 		return RefBufferHolder::hold (thiz)->resize (size_) ;
 	}
 } ;
 
+struct FarBufferTree ;
+
 struct FarBufferLayout {
-	Ref<Pointer> mThis ;
-	Function<CREF<INDEX> ,VREF<Pointer>> mGetter ;
-	Function<CREF<INDEX> ,CREF<Pointer>> mSetter ;
+	mutable Ref<FarBufferTree> mThis ;
+	FLAG mHolder ;
+	FLAG mBuffer ;
 	LENGTH mSize ;
 	LENGTH mStep ;
-	INDEX mIndex ;
+
+public:
+	implicit FarBufferLayout () noexcept {
+		mHolder = ZERO ;
+		mBuffer = ZERO ;
+		mSize = 0 ;
+		mStep = 0 ;
+	}
 } ;
 
 struct FarBufferHolder implement Interface {
-	imports VFat<FarBufferHolder> hold (VREF<FarBufferLayout> that) ;
-	imports CFat<FarBufferHolder> hold (CREF<FarBufferLayout> that) ;
+	imports VFat<FarBufferHolder> hold (VR<FarBufferLayout> that) ;
+	imports CFat<FarBufferHolder> hold (CR<FarBufferLayout> that) ;
 
-	virtual void initialize (CREF<Unknown> holder ,CREF<LENGTH> size_) = 0 ;
+	virtual void prepare (CR<Unknown> holder) = 0 ;
+	virtual void initialize (CR<Unknown> holder ,CR<LENGTH> size_) = 0 ;
 	virtual BOOL exist () const = 0 ;
 	virtual Unknown unknown () const = 0 ;
-	virtual void use_getter (CREF<Function<CREF<INDEX> ,VREF<Pointer>>> getter) = 0 ;
-	virtual void use_setter (CREF<Function<CREF<INDEX> ,CREF<Pointer>>> setter) = 0 ;
+	virtual VR<BoxLayout> raw () leftvalue = 0 ;
+	virtual CR<BoxLayout> raw () const leftvalue = 0 ;
+	virtual void use_getter (CR<Function<CR<INDEX> ,VR<Pointer>>> getter) = 0 ;
+	virtual void use_setter (CR<Function<CR<INDEX> ,CR<Pointer>>> setter) = 0 ;
 	virtual LENGTH size () const = 0 ;
 	virtual LENGTH step () const = 0 ;
-	virtual VREF<Pointer> at (CREF<INDEX> index) leftvalue = 0 ;
-	virtual void refresh () = 0 ;
+	virtual VR<Pointer> at (CR<INDEX> index) leftvalue = 0 ;
+	virtual CR<Pointer> at (CR<INDEX> index) const leftvalue = 0 ;
+	virtual void refresh () const = 0 ;
 } ;
+
+template <class A>
+struct FarBufferPureLayout implement FarBufferLayout {
+public:
+	implicit FarBufferPureLayout () noexcept {
+		FarBufferHolder::hold (thiz)->prepare (BufferUnknownBinder<A> ()) ;
+	}
+} ;
+
+template <>
+struct FarBufferPureLayout<Pointer> implement FarBufferLayout {} ;
 
 template <class A>
 class FarBuffer implement FarBufferLayout {
 protected:
 	using FarBufferLayout::mThis ;
-	using FarBufferLayout::mGetter ;
-	using FarBufferLayout::mSetter ;
+	using FarBufferLayout::mHolder ;
+	using FarBufferLayout::mBuffer ;
 	using FarBufferLayout::mSize ;
 	using FarBufferLayout::mStep ;
-	using FarBufferLayout::mIndex ;
 
 public:
 	implicit FarBuffer () = default ;
 
-	explicit FarBuffer (CREF<LENGTH> size_) {
+	explicit FarBuffer (CR<LENGTH> size_) {
 		FarBufferHolder::hold (thiz)->initialize (BufferUnknownBinder<A> () ,size_) ;
 	}
 
-	void use_getter (CREF<Function<CREF<INDEX> ,VREF<A>>> getter) {
+	void use_getter (CR<Function<CR<INDEX> ,VR<A>>> getter) {
 		return FarBufferHolder::hold (thiz)->use_getter (Pointer::from (getter)) ;
 	}
 
-	void use_setter (CREF<Function<CREF<INDEX> ,CREF<A>>> setter) {
+	void use_setter (CR<Function<CR<INDEX> ,CR<A>>> setter) {
 		return FarBufferHolder::hold (thiz)->use_setter (Pointer::from (setter)) ;
 	}
 
@@ -1046,6 +1077,14 @@ public:
 		return FarBufferHolder::hold (thiz)->unknown () ;
 	}
 
+	VR<BoxLayout> raw () leftvalue {
+		return FarBufferHolder::hold (thiz)->raw () ;
+	}
+
+	CR<BoxLayout> raw () const leftvalue {
+		return FarBufferHolder::hold (thiz)->raw () ;
+	}
+
 	LENGTH size () const {
 		return FarBufferHolder::hold (thiz)->size () ;
 	}
@@ -1054,15 +1093,23 @@ public:
 		return FarBufferHolder::hold (thiz)->step () ;
 	}
 
-	VREF<A> at (CREF<INDEX> index) leftvalue {
+	VR<A> at (CR<INDEX> index) leftvalue {
 		return FarBufferHolder::hold (thiz)->at (index) ;
 	}
 
-	forceinline VREF<A> operator[] (CREF<INDEX> index) leftvalue {
+	forceinline VR<A> operator[] (CR<INDEX> index) leftvalue {
 		return at (index) ;
 	}
 
-	void refresh () {
+	CR<A> at (CR<INDEX> index) const leftvalue {
+		return FarBufferHolder::hold (thiz)->at (index) ;
+	}
+
+	forceinline CR<A> operator[] (CR<INDEX> index) const leftvalue {
+		return at (index) ;
+	}
+
+	void refresh () const {
 		return FarBufferHolder::hold (thiz)->refresh () ;
 	}
 } ;
@@ -1091,43 +1138,43 @@ public:
 
 	implicit ~AllocatorLayout () noexcept ;
 
-	implicit AllocatorLayout (CREF<AllocatorLayout> that) = delete ;
+	implicit AllocatorLayout (CR<AllocatorLayout> that) = delete ;
 
-	forceinline VREF<AllocatorLayout> operator= (CREF<AllocatorLayout> that) = delete ;
+	forceinline VR<AllocatorLayout> operator= (CR<AllocatorLayout> that) = delete ;
 
-	implicit AllocatorLayout (RREF<AllocatorLayout> that) noexcept :AllocatorLayout () {
+	implicit AllocatorLayout (RR<AllocatorLayout> that) noexcept :AllocatorLayout () {
 		swap (thiz ,that) ;
 	}
 
-	forceinline VREF<AllocatorLayout> operator= (RREF<AllocatorLayout> that) noexcept {
+	forceinline VR<AllocatorLayout> operator= (RR<AllocatorLayout> that) noexcept {
 		return assign (thiz ,that) ;
 	}
 } ;
 
 struct AllocatorHolder implement Interface {
-	imports VFat<AllocatorHolder> hold (VREF<AllocatorLayout> that) ;
-	imports CFat<AllocatorHolder> hold (CREF<AllocatorLayout> that) ;
+	imports VFat<AllocatorHolder> hold (VR<AllocatorLayout> that) ;
+	imports CFat<AllocatorHolder> hold (CR<AllocatorLayout> that) ;
 
-	virtual void prepare (CREF<Unknown> holder) = 0 ;
-	virtual void initialize (CREF<Unknown> holder ,CREF<LENGTH> size_) = 0 ;
+	virtual void prepare (CR<Unknown> holder) = 0 ;
+	virtual void initialize (CR<Unknown> holder ,CR<LENGTH> size_) = 0 ;
 	virtual void destroy () = 0 ;
 	virtual BOOL exist () const = 0 ;
 	virtual Unknown unknown () const = 0 ;
-	virtual VREF<BoxLayout> raw () leftvalue = 0 ;
-	virtual CREF<BoxLayout> raw () const leftvalue = 0 ;
+	virtual VR<BoxLayout> raw () leftvalue = 0 ;
+	virtual CR<BoxLayout> raw () const leftvalue = 0 ;
 	virtual void clear () = 0 ;
 	virtual LENGTH size () const = 0 ;
 	virtual LENGTH step () const = 0 ;
 	virtual LENGTH length () const = 0 ;
-	virtual VREF<Pointer> at (CREF<INDEX> index) leftvalue = 0 ;
-	virtual CREF<Pointer> at (CREF<INDEX> index) const leftvalue = 0 ;
-	virtual VREF<Pointer> bt (CREF<INDEX> index) leftvalue = 0 ;
-	virtual CREF<Pointer> bt (CREF<INDEX> index) const leftvalue = 0 ;
+	virtual VR<Pointer> at (CR<INDEX> index) leftvalue = 0 ;
+	virtual CR<Pointer> at (CR<INDEX> index) const leftvalue = 0 ;
+	virtual VR<Pointer> bt (CR<INDEX> index) leftvalue = 0 ;
+	virtual CR<Pointer> bt (CR<INDEX> index) const leftvalue = 0 ;
 	virtual INDEX alloc () = 0 ;
-	virtual INDEX alloc (RREF<BoxLayout> item) = 0 ;
-	virtual void free (CREF<INDEX> index) = 0 ;
-	virtual BOOL used (CREF<INDEX> index) const = 0 ;
-	virtual void resize (CREF<LENGTH> size_) = 0 ;
+	virtual INDEX alloc (RR<BoxLayout> item) = 0 ;
+	virtual void free (CR<INDEX> index) = 0 ;
+	virtual BOOL used (CR<INDEX> index) const = 0 ;
+	virtual void resize (CR<LENGTH> size_) = 0 ;
 } ;
 
 inline AllocatorLayout::~AllocatorLayout () noexcept {
@@ -1135,9 +1182,9 @@ inline AllocatorLayout::~AllocatorLayout () noexcept {
 }
 
 template <class A ,class B>
-class AllocatorUnknownBinder final implement Fat<ReflectUnknown ,Proxy> {
+class AllocatorUnknownBinder final implement Fat<FriendUnknown ,Proxy> {
 public:
-	FLAG reflect (CREF<FLAG> uuid) const override {
+	FLAG reflect (CR<FLAG> uuid) const override {
 		using R1X = UnionPair<A ,B> ;
 		if (uuid == ReflectSizeBinder<A>::expr)
 			return inline_vptr (ReflectSizeBinder<A> ()) ;
@@ -1156,8 +1203,12 @@ struct AllocatorPureLayout implement AllocatorLayout {
 public:
 	implicit AllocatorPureLayout () noexcept {
 		noop (RefBuffer<UnionPair<A ,B>> ()) ;
+		AllocatorHolder::hold (thiz)->prepare (AllocatorUnknownBinder<A ,B> ()) ;
 	}
 } ;
+
+template <class B>
+struct AllocatorPureLayout<Pointer ,B> implement AllocatorLayout {} ;
 
 using ALLOCATOR_MIN_SIZE = ENUM<256> ;
 
@@ -1176,7 +1227,7 @@ protected:
 public:
 	implicit Allocator () = default ;
 
-	explicit Allocator (CREF<LENGTH> size_) {
+	explicit Allocator (CR<LENGTH> size_) {
 		AllocatorHolder::hold (thiz)->initialize (AllocatorUnknownBinder<A ,B> () ,size_) ;
 	}
 
@@ -1188,11 +1239,11 @@ public:
 		return AllocatorHolder::hold (thiz)->unknown () ;
 	}
 
-	VREF<BoxLayout> raw () leftvalue {
+	VR<BoxLayout> raw () leftvalue {
 		return AllocatorHolder::hold (thiz)->raw () ;
 	}
 
-	CREF<BoxLayout> raw () const leftvalue {
+	CR<BoxLayout> raw () const leftvalue {
 		return AllocatorHolder::hold (thiz)->raw () ;
 	}
 
@@ -1212,27 +1263,27 @@ public:
 		return AllocatorHolder::hold (thiz)->length () ;
 	}
 
-	VREF<A> at (CREF<INDEX> index) leftvalue {
+	VR<A> at (CR<INDEX> index) leftvalue {
 		return AllocatorHolder::hold (thiz)->at (index) ;
 	}
 
-	forceinline VREF<A> operator[] (CREF<INDEX> index) leftvalue {
+	forceinline VR<A> operator[] (CR<INDEX> index) leftvalue {
 		return at (index) ;
 	}
 
-	CREF<A> at (CREF<INDEX> index) const leftvalue {
+	CR<A> at (CR<INDEX> index) const leftvalue {
 		return AllocatorHolder::hold (thiz)->at (index) ;
 	}
 
-	forceinline CREF<A> operator[] (CREF<INDEX> index) const leftvalue {
+	forceinline CR<A> operator[] (CR<INDEX> index) const leftvalue {
 		return at (index) ;
 	}
 
-	VREF<B> bt (CREF<INDEX> index) leftvalue {
+	VR<B> bt (CR<INDEX> index) leftvalue {
 		return AllocatorHolder::hold (thiz)->bt (index) ;
 	}
 
-	CREF<B> bt (CREF<INDEX> index) const leftvalue {
+	CR<B> bt (CR<INDEX> index) const leftvalue {
 		return AllocatorHolder::hold (thiz)->bt (index) ;
 	}
 
@@ -1240,19 +1291,19 @@ public:
 		return AllocatorHolder::hold (thiz)->alloc () ;
 	}
 
-	INDEX alloc (RREF<BoxLayout> item) {
+	INDEX alloc (RR<BoxLayout> item) {
 		return AllocatorHolder::hold (thiz)->alloc (move (item)) ;
 	}
 
-	void free (CREF<INDEX> index) {
+	void free (CR<INDEX> index) {
 		return AllocatorHolder::hold (thiz)->free (index) ;
 	}
 
-	BOOL used (CREF<INDEX> index) const {
+	BOOL used (CR<INDEX> index) const {
 		return AllocatorHolder::hold (thiz)->used (index) ;
 	}
 
-	void resize (CREF<LENGTH> size_) {
+	void resize (CR<LENGTH> size_) {
 		AllocatorHolder::hold (thiz)->prepare (AllocatorUnknownBinder<A ,B> ()) ;
 		return AllocatorHolder::hold (thiz)->resize (size_) ;
 	}

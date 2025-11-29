@@ -44,7 +44,7 @@ public:
 		return FLAG (syscall (SYS_gettid)) ;
 	}
 
-	void thread_sleep (CREF<Time> time) const override {
+	void thread_sleep (CR<Time> time) const override {
 		const auto r1x = time.borrow () ;
 		std::this_thread::sleep_for (r1x->mTime) ;
 	}
@@ -87,14 +87,14 @@ private:
 	using PROCESS_SNAPSHOT_STEP = ENUM<128> ;
 
 public:
-	void initialize (CREF<FLAG> uid) override {
+	void initialize (CR<FLAG> uid) override {
 		self.mUid = uid ;
 		const auto r1x = load_proc_file (uid) ;
 		self.mProcessCode = process_code (r1x ,uid) ;
 		self.mProcessTime = process_time (r1x ,uid) ;
 	}
 
-	String<STRU8> load_proc_file (CREF<FLAG> uid) const {
+	String<STRU8> load_proc_file (CR<FLAG> uid) const {
 		String<STRU8> ret = String<STRU8>::make () ;
 		ret.fill (STRU32 (0X00)) ;
 		const auto r1x = String<STR>::make (Format (slice ("/proc/$1/stat")) (uid)) ;
@@ -104,24 +104,24 @@ public:
 			auto rbx = ret.borrow () ;
 			rax.set_short_read (TRUE) ;
 			rax.read (rbx.ref) ;
-		} catch (CREF<Exception> e) {
+		} catch (CR<Exception> e) {
 			noop (e) ;
 			ret.clear () ;
 		}
 		return move (ret) ;
 	}
 
-	QUAD process_code (CREF<String<STRU8>> info ,CREF<FLAG> uid) const {
+	QUAD process_code (CR<String<STRU8>> info ,CR<FLAG> uid) const {
 		return QUAD (getpgid (pid_t (uid))) ;
 	}
 
-	QUAD process_time (CREF<String<STRU8>> info ,CREF<FLAG> uid) const {
+	QUAD process_time (CR<String<STRU8>> info ,CR<FLAG> uid) const {
 		if (info.length () == 0)
 			return QUAD (0X00) ;
 		auto rax = TextReader (info.borrow ()) ;
 		auto rbx = String<STRU8> () ;
 		rax >> GAP ;
-		rax >> BlankText::from (rbx) ;
+		rax >> ReadBlank (rbx) ;
 		const auto r1x = StringParse<VAL64>::make (rbx) ;
 		assume (r1x == uid) ;
 		rax >> GAP ;
@@ -135,20 +135,20 @@ public:
 			assume (r2x != STRU32 ('(')) ;
 		}
 		rax >> GAP ;
-		rax >> BlankText::from (rbx) ;
+		rax >> ReadBlank (rbx) ;
 		assume (rbx.length () == 1) ;
 		for (auto &&i : range (0 ,18)) {
 			noop (i) ;
 			rax >> GAP ;
-			rax >> BlankText::from (rbx) ;
+			rax >> ReadBlank (rbx) ;
 		}
 		rax >> GAP ;
-		rax >> BlankText::from (rbx) ;
+		rax >> ReadBlank (rbx) ;
 		const auto r3x = StringParse<VAL64>::make (rbx) ;
 		return QUAD (r3x) ;
 	}
 
-	void initialize (CREF<RefBuffer<BYTE>> snapshot_) override {
+	void initialize (CR<RefBuffer<BYTE>> snapshot_) override {
 		self.mUid = 0 ;
 		try {
 			assume (snapshot_.size () == PROCESS_SNAPSHOT_STEP::expr) ;
@@ -163,12 +163,12 @@ public:
 			rax >> self.mProcessTime ;
 			rax >> GAP ;
 			rax >> EOS ;
-		} catch (CREF<Exception> e) {
+		} catch (CR<Exception> e) {
 			noop (e) ;
 		}
 	}
 
-	BOOL equal (CREF<ProcessLayout> that) const override {
+	BOOL equal (CR<ProcessLayout> that) const override {
 		const auto r1x = inline_equal (self.mUid ,that.mUid) ;
 		if (!r1x)
 			return r1x ;
@@ -207,10 +207,10 @@ static const auto mProcessExternal = External<ProcessHolder ,ProcessLayout> (Pro
 
 class LibraryImplHolder final implement Fat<LibraryHolder ,LibraryLayout> {
 public:
-	void initialize (CREF<String<STR>> file) override {
+	void initialize (CR<String<STR>> file) override {
 		self.mFile = move (file) ;
 		assert (self.mFile.length () > 0) ;
-		self.mLibrary = UniqueRef<csc_device_t> ([&] (VREF<csc_device_t> me) {
+		self.mLibrary = UniqueRef<csc_device_t> ([&] (VR<csc_device_t> me) {
 			const auto r1x = csc_enum_t (RTLD_NOW | RTLD_LOCAL | RTLD_DEEPBIND | RTLD_NODELETE) ;
 			const auto r2x = csc_enum_t (r1x | RTLD_NOLOAD) ;
 			me = csc_device_t (dlopen (self.mFile ,r2x)) ;
@@ -221,7 +221,7 @@ public:
 				return ;
 			self.mLastError = FLAG (errno) ;
 			assume (FALSE) ;
-		} ,[&] (VREF<csc_device_t> me) {
+		} ,[&] (VR<csc_device_t> me) {
 			noop () ;
 		}) ;
 	}
@@ -230,7 +230,7 @@ public:
 		return self.mFile ;
 	}
 
-	FLAG load (CREF<String<STR>> name) override {
+	FLAG load (CR<String<STR>> name) override {
 		assert (name.length () > 0) ;
 		FLAG ret = FLAG (dlsym (self.mLibrary ,name)) ;
 		if ifdo (TRUE) {
@@ -263,7 +263,7 @@ public:
 		sync_local () ;
 	}
 
-	static VREF<SingletonRoot> root_ptr () {
+	static VR<SingletonRoot> root_ptr () {
 		static auto mInstance = SingletonRoot () ;
 		return mInstance ;
 	}
@@ -273,7 +273,7 @@ public:
 		if ifdo (act) {
 			try {
 				load_local () ;
-			} catch (CREF<Exception> e) {
+			} catch (CR<Exception> e) {
 				noop (e) ;
 				discard ;
 			}
@@ -283,7 +283,7 @@ public:
 				init_local () ;
 				save_local () ;
 				load_local () ;
-			} catch (CREF<Exception> e) {
+			} catch (CR<Exception> e) {
 				noop (e) ;
 				discard ;
 			}
@@ -299,7 +299,7 @@ public:
 	void init_local () {
 		if (self.mMapping.exist ())
 			return ;
-		self.mMapping = UniqueRef<csc_handle_t> ([&] (VREF<csc_handle_t> me) {
+		self.mMapping = UniqueRef<csc_handle_t> ([&] (VR<csc_handle_t> me) {
 			const auto r1x = csc_enum_t (O_CREAT | O_RDWR | O_EXCL) ;
 			const auto r2x = csc_enum_t (S_IRWXU | S_IRWXG | S_IRWXO) ;
 			const auto r3x = shm_open (self.mName ,r1x ,r2x) ;
@@ -307,7 +307,7 @@ public:
 			const auto r4x = ftruncate (r3x ,SIZE_OF<SingletonLocal>::expr) ;
 			assume (r4x == 0) ;
 			me = csc_handle_t (self.mName.ref) ;
-		} ,[&] (VREF<csc_handle_t> me) {
+		} ,[&] (VR<csc_handle_t> me) {
 			shm_unlink (DEF<const char *> (me)) ;
 		}) ;
 		self.mLocal.mReserve1 = QUAD (self.mUid) ;
@@ -318,17 +318,17 @@ public:
 	}
 
 	void load_local () {
-		const auto r1x = UniqueRef<csc_pipe_t> ([&] (VREF<csc_pipe_t> me) {
+		const auto r1x = UniqueRef<csc_pipe_t> ([&] (VR<csc_pipe_t> me) {
 			me = shm_open (self.mName ,O_RDONLY ,0) ;
 			assume (me != NONE) ;
-		} ,[&] (VREF<csc_pipe_t> me) {
+		} ,[&] (VR<csc_pipe_t> me) {
 			noop () ;
 		}) ;
-		const auto r2x = UniqueRef<csc_handle_t> ([&] (VREF<csc_handle_t> me) {
+		const auto r2x = UniqueRef<csc_handle_t> ([&] (VR<csc_handle_t> me) {
 			me = mmap (NULL ,SIZE_OF<SingletonLocal>::expr ,PROT_READ ,MAP_SHARED ,r1x ,0) ;
 			replace (me ,MAP_FAILED ,NULL) ;
 			assume (me != NULL) ;
-		} ,[&] (VREF<csc_handle_t> me) {
+		} ,[&] (VR<csc_handle_t> me) {
 			munmap (me ,SIZE_OF<SingletonLocal>::expr) ;
 		}) ;
 		const auto r3x = FLAG (r2x.ref) ;
@@ -343,17 +343,17 @@ public:
 	}
 
 	void save_local () {
-		const auto r1x = UniqueRef<csc_pipe_t> ([&] (VREF<csc_pipe_t> me) {
+		const auto r1x = UniqueRef<csc_pipe_t> ([&] (VR<csc_pipe_t> me) {
 			me = shm_open (self.mName ,O_RDWR ,0) ;
 			assume (me != NONE) ;
-		} ,[&] (VREF<csc_pipe_t> me) {
+		} ,[&] (VR<csc_pipe_t> me) {
 			noop () ;
 		}) ;
-		const auto r2x = UniqueRef<csc_handle_t> ([&] (VREF<csc_handle_t> me) {
+		const auto r2x = UniqueRef<csc_handle_t> ([&] (VR<csc_handle_t> me) {
 			me = mmap (NULL ,SIZE_OF<SingletonLocal>::expr ,PROT_WRITE ,MAP_SHARED ,r1x ,0) ;
 			replace (me ,MAP_FAILED ,NULL) ;
 			assume (me != NULL) ;
-		} ,[&] (VREF<csc_handle_t> me) {
+		} ,[&] (VR<csc_handle_t> me) {
 			munmap (me ,SIZE_OF<SingletonLocal>::expr) ;
 		}) ;
 		const auto r3x = FLAG (r2x.ref) ;
@@ -375,16 +375,12 @@ public:
 #elif defined __CSC_VER_RELEASE__
 		ret |= QUAD (0X00000003) ;
 #endif
-#ifndef __CSC_COMPILER_NVCC__
 #ifdef __CSC_COMPILER_MSVC__
 		ret |= QUAD (0X00000010) ;
 #elif defined __CSC_COMPILER_GNUC__
 		ret |= QUAD (0X00000020) ;
 #elif defined __CSC_COMPILER_CLANG__
 		ret |= QUAD (0X00000030) ;
-#endif
-#else
-		ret |= QUAD (0X00000040) ;
 #endif
 #ifdef __CSC_SYSTEM_WINDOWS__
 		ret |= QUAD (0X00000100) ;
@@ -414,10 +410,10 @@ public:
 	}
 
 	QUAD ctx_reserve () const override {
-		return QUAD (0X0FEDCBA987654321) ;
+		return QUAD_ENDIAN ;
 	}
 
-	FLAG load (CREF<Clazz> clazz) const override {
+	FLAG load (CR<Clazz> clazz) const override {
 		assume (self.mRoot.exist ()) ;
 		Scope<Mutex> anonymous (self.mRoot->mMutex) ;
 		FLAG ret = self.mRoot->mClazzSet.map (clazz) ;
@@ -425,7 +421,7 @@ public:
 		return move (ret) ;
 	}
 
-	void save (CREF<Clazz> clazz ,CREF<FLAG> layout) const override {
+	void save (CR<Clazz> clazz ,CR<FLAG> layout) const override {
 		assert (layout != ZERO) ;
 		assert (layout != NONE) ;
 		assume (self.mRoot.exist ()) ;

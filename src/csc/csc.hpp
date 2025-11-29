@@ -557,16 +557,16 @@ template <class A>
 using CHECK_CVR = REQUIRE<IS_SAME<A ,REMOVE_CVR<A>>> ;
 
 template <class A ,class = CHECK_CVR<A>>
-using VREF = DEF<A &> ;
+using VR = DEF<A &> ;
 
 template <class A ,class = CHECK_CVR<A>>
-using CREF = DEF<const A &> ;
+using CR = DEF<const A &> ;
 
 template <class A ,class = CHECK_CVR<A>>
-using RREF = DEF<A &&> ;
+using RR = DEF<A &&> ;
 
 template <class A>
-using XREF = DEF<A &&> ;
+using XR = DEF<A &&> ;
 
 template <class A>
 using MACRO_IS_UNDER1 = ENUM<(__is_enum (A))> ;
@@ -584,16 +584,16 @@ template <class A>
 using MACRO_IS_DESTRUCTIBLE = ENUM<(__is_nothrow_destructible (A))> ;
 
 template <class A>
-using MACRO_IS_COPY_CONSTRUCTIBLE = ENUM<(__is_constructible (A ,CREF<A>))> ;
+using MACRO_IS_COPY_CONSTRUCTIBLE = ENUM<(__is_constructible (A ,CR<A>))> ;
 
 template <class A>
-using MACRO_IS_MOVE_CONSTRUCTIBLE = ENUM<(__is_nothrow_constructible (A ,RREF<A>))> ;
+using MACRO_IS_MOVE_CONSTRUCTIBLE = ENUM<(__is_nothrow_constructible (A ,RR<A>))> ;
 
 template <class A>
-using MACRO_IS_COPY_ASSIGNABLE = ENUM<(__is_assignable (VREF<A> ,CREF<A>))> ;
+using MACRO_IS_COPY_ASSIGNABLE = ENUM<(__is_assignable (VR<A> ,CR<A>))> ;
 
 template <class A>
-using MACRO_IS_MOVE_ASSIGNABLE = ENUM<(__is_assignable (VREF<A> ,RREF<A>))> ;
+using MACRO_IS_MOVE_ASSIGNABLE = ENUM<(__is_assignable (VR<A> ,RR<A>))> ;
 
 template <class A>
 using MACRO_IS_TRIVIAL_CONSTRUCTIBLE = ENUM<(__is_trivially_constructible (A))> ;
@@ -606,9 +606,9 @@ using MACRO_IS_EXTEND = ENUM<(__is_base_of (A ,B))> ;
 
 #ifndef __macro_memcpy
 #ifdef __CSC_COMPILER_MSVC__
-#define __macro_memcpy invoke
-#define __macro_memset invoke
-#define __macro_memcmp invoke
+#define __macro_memcpy CSC::CoreProcHolder::expr.inline_memcpy
+#define __macro_memset CSC::CoreProcHolder::expr.inline_memset
+#define __macro_memcmp CSC::CoreProcHolder::expr.inline_memcmp
 #endif
 
 #ifdef __CSC_COMPILER_GNUC__

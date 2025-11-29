@@ -30,13 +30,13 @@ struct TimeStorage implement Storage<ENUM<8> ,ENUM<8>> {} ;
 
 struct TimeHolder implement Interface {
 	imports Box<TimeLayout ,TimeStorage> create () ;
-	imports VFat<TimeHolder> hold (VREF<TimeLayout> that) ;
-	imports CFat<TimeHolder> hold (CREF<TimeLayout> that) ;
+	imports VFat<TimeHolder> hold (VR<TimeLayout> that) ;
+	imports CFat<TimeHolder> hold (CR<TimeLayout> that) ;
 
 	virtual void initialize () = 0 ;
-	virtual void initialize (CREF<LENGTH> milliseconds_) = 0 ;
-	virtual void initialize (CREF<TimeCalendar> calendar_) = 0 ;
-	virtual void initialize (CREF<TimeLayout> that) = 0 ;
+	virtual void initialize (CR<LENGTH> milliseconds_) = 0 ;
+	virtual void initialize (CR<TimeCalendar> calendar_) = 0 ;
+	virtual void initialize (CR<TimeLayout> that) = 0 ;
 	virtual Ref<TimeLayout> borrow () const leftvalue = 0 ;
 	virtual LENGTH megaseconds () const = 0 ;
 	virtual LENGTH kiloseconds () const = 0 ;
@@ -45,38 +45,38 @@ struct TimeHolder implement Interface {
 	virtual LENGTH microseconds () const = 0 ;
 	virtual LENGTH nanoseconds () const = 0 ;
 	virtual TimeCalendar calendar () const = 0 ;
-	virtual OfThis<Box<TimeLayout ,TimeStorage>> sadd (CREF<TimeLayout> that) const = 0 ;
-	virtual OfThis<Box<TimeLayout ,TimeStorage>> ssub (CREF<TimeLayout> that) const = 0 ;
+	virtual OfThis<Box<TimeLayout ,TimeStorage>> sadd (CR<TimeLayout> that) const = 0 ;
+	virtual OfThis<Box<TimeLayout ,TimeStorage>> ssub (CR<TimeLayout> that) const = 0 ;
 } ;
 
 class Time implement OfThis<Box<TimeLayout ,TimeStorage>> {
 public:
 	implicit Time () = default ;
 
-	explicit Time (CREF<LENGTH> milliseconds_) {
+	explicit Time (CR<LENGTH> milliseconds_) {
 		mThis = TimeHolder::create () ;
 		TimeHolder::hold (thiz)->initialize (milliseconds_) ;
 	}
 
-	explicit Time (CREF<TimeCalendar> calendar_) {
+	explicit Time (CR<TimeCalendar> calendar_) {
 		mThis = TimeHolder::create () ;
 		TimeHolder::hold (thiz)->initialize (calendar_) ;
 	}
 
-	implicit Time (CREF<Time> that) {
+	implicit Time (CR<Time> that) {
 		if (!that.mThis.exist ())
 			return ;
 		mThis = TimeHolder::create () ;
 		TimeHolder::hold (thiz)->initialize (that) ;
 	}
 
-	forceinline VREF<Time> operator= (CREF<Time> that) {
+	forceinline VR<Time> operator= (CR<Time> that) {
 		return assign (thiz ,that) ;
 	}
 
-	implicit Time (RREF<Time> that) = default ;
+	implicit Time (RR<Time> that) = default ;
 
-	forceinline VREF<Time> operator= (RREF<Time> that) = default ;
+	forceinline VR<Time> operator= (RR<Time> that) = default ;
 
 	Ref<TimeLayout> borrow () const leftvalue {
 		return TimeHolder::hold (thiz)->borrow () ;
@@ -110,29 +110,29 @@ public:
 		return TimeHolder::hold (thiz)->calendar () ;
 	}
 
-	Time sadd (CREF<Time> that) const {
+	Time sadd (CR<Time> that) const {
 		OfThis<Box<TimeLayout ,TimeStorage>> ret = TimeHolder::hold (thiz)->sadd (that) ;
 		return move (keep[TYPE<Time>::expr] (ret)) ;
 	}
 
-	Time operator+ (CREF<Time> that) const {
+	Time operator+ (CR<Time> that) const {
 		return sadd (that) ;
 	}
 
-	forceinline void operator+= (CREF<Time> that) {
+	forceinline void operator+= (CR<Time> that) {
 		thiz = sadd (that) ;
 	}
 
-	Time ssub (CREF<Time> that) const {
+	Time ssub (CR<Time> that) const {
 		OfThis<Box<TimeLayout ,TimeStorage>> ret = TimeHolder::hold (thiz)->ssub (that) ;
 		return move (keep[TYPE<Time>::expr] (ret)) ;
 	}
 
-	Time operator- (CREF<Time> that) const {
+	Time operator- (CR<Time> that) const {
 		return ssub (that) ;
 	}
 
-	forceinline void operator-= (CREF<Time> that) {
+	forceinline void operator-= (CR<Time> that) {
 		thiz = ssub (that) ;
 	}
 } ;
@@ -147,14 +147,14 @@ inline Time CurrentTime () {
 struct RuntimeProcLayout ;
 
 struct RuntimeProcHolder implement Interface {
-	imports CREF<OfThis<UniqueRef<RuntimeProcLayout>>> expr_m () ;
-	imports VFat<RuntimeProcHolder> hold (VREF<RuntimeProcLayout> that) ;
-	imports CFat<RuntimeProcHolder> hold (CREF<RuntimeProcLayout> that) ;
+	imports CR<OfThis<UniqueRef<RuntimeProcLayout>>> expr_m () ;
+	imports VFat<RuntimeProcHolder> hold (VR<RuntimeProcLayout> that) ;
+	imports CFat<RuntimeProcHolder> hold (CR<RuntimeProcLayout> that) ;
 
 	virtual void initialize () = 0 ;
 	virtual LENGTH thread_concurrency () const = 0 ;
 	virtual FLAG thread_uid () const = 0 ;
-	virtual void thread_sleep (CREF<Time> time) const = 0 ;
+	virtual void thread_sleep (CR<Time> time) const = 0 ;
 	virtual void thread_yield () const = 0 ;
 	virtual FLAG process_uid () const = 0 ;
 	virtual void process_exit () const = 0 ;
@@ -164,7 +164,7 @@ struct RuntimeProcHolder implement Interface {
 
 class RuntimeProc implement OfThis<UniqueRef<RuntimeProcLayout>> {
 public:
-	static CREF<RuntimeProc> expr_m () {
+	static CR<RuntimeProc> expr_m () {
 		return keep[TYPE<RuntimeProc>::expr] (RuntimeProcHolder::expr) ;
 	}
 
@@ -176,7 +176,7 @@ public:
 		return RuntimeProcHolder::hold (expr)->thread_uid () ;
 	}
 
-	static void thread_sleep (CREF<Time> time) {
+	static void thread_sleep (CR<Time> time) {
 		return RuntimeProcHolder::hold (expr)->thread_sleep (time) ;
 	}
 
@@ -202,28 +202,28 @@ public:
 } ;
 
 struct AtomicLayout ;
-struct AtomicStorage implement Storage<ENUM_MUL<SIZE_OF<VAL> ,RANK2> ,ENUM<8>> {} ;
+struct AtomicStorage implement Storage<ENUM_MUL<SIZE_OF<VAL> ,RANK1> ,ENUM<8>> {} ;
 
 struct AtomicHolder implement Interface {
 	imports Box<AtomicLayout ,AtomicStorage> create () ;
-	imports VFat<AtomicHolder> hold (VREF<AtomicLayout> that) ;
-	imports CFat<AtomicHolder> hold (CREF<AtomicLayout> that) ;
+	imports VFat<AtomicHolder> hold (VR<AtomicLayout> that) ;
+	imports CFat<AtomicHolder> hold (CR<AtomicLayout> that) ;
 
 	virtual void initialize () = 0 ;
-	virtual VAL fetch () const = 0 ;
-	virtual void store (CREF<VAL> item) const = 0 ;
-	virtual VAL exchange (CREF<VAL> item) const = 0 ;
-	virtual BOOL change (VREF<VAL> expect ,CREF<VAL> item) const = 0 ;
-	virtual void replace (CREF<VAL> expect ,CREF<VAL> item) const = 0 ;
-	virtual void increase () const = 0 ;
-	virtual void decrease () const = 0 ;
+	virtual VAL fetch () = 0 ;
+	virtual void store (CR<VAL> item) = 0 ;
+	virtual VAL exchange (CR<VAL> item) = 0 ;
+	virtual BOOL change (VR<VAL> expect ,CR<VAL> item) = 0 ;
+	virtual void replace (CR<VAL> expect ,CR<VAL> item) = 0 ;
+	virtual void increase () = 0 ;
+	virtual void decrease () = 0 ;
 } ;
 
 class Atomic implement OfThis<Box<AtomicLayout ,AtomicStorage>> {
 public:
 	implicit Atomic () = default ;
 
-	implicit Atomic (CREF<typeof (NULL)>) {
+	implicit Atomic (CR<typeof (NULL)>) {
 		mThis = AtomicHolder::create () ;
 		AtomicHolder::hold (thiz)->initialize () ;
 	}
@@ -236,19 +236,19 @@ public:
 		return fetch () ;
 	}
 
-	void store (CREF<VAL> item) const {
+	void store (CR<VAL> item) const {
 		return AtomicHolder::hold (thiz)->store (item) ;
 	}
 
-	VAL exchange (CREF<VAL> item) const {
+	VAL exchange (CR<VAL> item) const {
 		return AtomicHolder::hold (thiz)->exchange (item) ;
 	}
 
-	BOOL change (VREF<VAL> expect ,CREF<VAL> item) const {
+	BOOL change (VR<VAL> expect ,CR<VAL> item) const {
 		return AtomicHolder::hold (thiz)->change (expect ,item) ;
 	}
 
-	void replace (CREF<VAL> expect ,CREF<VAL> item) const {
+	void replace (CR<VAL> expect ,CR<VAL> item) const {
 		return AtomicHolder::hold (thiz)->replace (expect ,item) ;
 	}
 
@@ -273,8 +273,8 @@ struct MutexLayout ;
 
 struct MutexHolder implement Interface {
 	imports SharedRef<MutexLayout> create () ;
-	imports VFat<MutexHolder> hold (VREF<MutexLayout> that) ;
-	imports CFat<MutexHolder> hold (CREF<MutexLayout> that) ;
+	imports VFat<MutexHolder> hold (VR<MutexLayout> that) ;
+	imports CFat<MutexHolder> hold (CR<MutexLayout> that) ;
 
 	virtual void initialize () = 0 ;
 	virtual Ref<MutexLayout> borrow () leftvalue = 0 ;
@@ -287,7 +287,7 @@ class Mutex implement OfThis<SharedRef<MutexLayout>> {
 public:
 	implicit Mutex () = default ;
 
-	implicit Mutex (CREF<typeof (NULL)>) {
+	implicit Mutex (CR<typeof (NULL)>) {
 		mThis = MutexHolder::create () ;
 		MutexHolder::hold (thiz)->initialize () ;
 	}
@@ -300,18 +300,18 @@ public:
 		return MutexHolder::hold (thiz)->done () ;
 	}
 
-	void enter () const {
+	void enter () {
 		return MutexHolder::hold (thiz)->enter () ;
 	}
 
-	void leave () const {
+	void leave () {
 		return MutexHolder::hold (thiz)->leave () ;
 	}
 } ;
 
 struct MakeMutexHolder implement Interface {
-	imports VFat<MakeMutexHolder> hold (VREF<MutexLayout> that) ;
-	imports CFat<MakeMutexHolder> hold (CREF<MutexLayout> that) ;
+	imports VFat<MakeMutexHolder> hold (VR<MutexLayout> that) ;
+	imports CFat<MakeMutexHolder> hold (CR<MutexLayout> that) ;
 
 	virtual void make_OnceMutex () = 0 ;
 	virtual void make_SharedMutex () = 0 ;
@@ -344,20 +344,20 @@ struct SharedLockStorage implement Storage<ENUM_MUL<SIZE_OF<VAL> ,RANK4> ,ENUM<8
 
 struct SharedLockHolder implement Interface {
 	imports Box<SharedLockLayout ,SharedLockStorage> create () ;
-	imports VFat<SharedLockHolder> hold (VREF<SharedLockLayout> that) ;
-	imports CFat<SharedLockHolder> hold (CREF<SharedLockLayout> that) ;
+	imports VFat<SharedLockHolder> hold (VR<SharedLockLayout> that) ;
+	imports CFat<SharedLockHolder> hold (CR<SharedLockLayout> that) ;
 
-	virtual void initialize (CREF<Mutex> mutex) = 0 ;
+	virtual void initialize (CR<Mutex> mutex) = 0 ;
 	virtual BOOL busy () const = 0 ;
-	virtual void enter () const = 0 ;
-	virtual void leave () const = 0 ;
+	virtual void enter () = 0 ;
+	virtual void leave () = 0 ;
 } ;
 
 class SharedLock implement OfThis<Box<SharedLockLayout ,SharedLockStorage>> {
 public:
 	implicit SharedLock () = default ;
 
-	explicit SharedLock (CREF<Mutex> mutex) {
+	explicit SharedLock (CR<Mutex> mutex) {
 		mThis = SharedLockHolder::create () ;
 		SharedLockHolder::hold (thiz)->initialize (mutex) ;
 	}
@@ -366,11 +366,11 @@ public:
 		return SharedLockHolder::hold (thiz)->busy () ;
 	}
 
-	void enter () const {
+	void enter () {
 		return SharedLockHolder::hold (thiz)->enter () ;
 	}
 
-	void leave () const {
+	void leave () {
 		return SharedLockHolder::hold (thiz)->leave () ;
 	}
 } ;
@@ -380,12 +380,12 @@ struct UniqueLockStorage implement Storage<ENUM_MUL<SIZE_OF<VAL> ,RANK4> ,ENUM<8
 
 struct UniqueLockHolder implement Interface {
 	imports Box<UniqueLockLayout ,UniqueLockStorage> create () ;
-	imports VFat<UniqueLockHolder> hold (VREF<UniqueLockLayout> that) ;
-	imports CFat<UniqueLockHolder> hold (CREF<UniqueLockLayout> that) ;
+	imports VFat<UniqueLockHolder> hold (VR<UniqueLockLayout> that) ;
+	imports CFat<UniqueLockHolder> hold (CR<UniqueLockLayout> that) ;
 
-	virtual void initialize (CREF<Mutex> mutex) = 0 ;
+	virtual void initialize (CR<Mutex> mutex) = 0 ;
 	virtual void wait () = 0 ;
-	virtual void wait (CREF<Time> time) = 0 ;
+	virtual void wait (CR<Time> time) = 0 ;
 	virtual void notify () = 0 ;
 	virtual void yield () = 0 ;
 } ;
@@ -394,7 +394,7 @@ class UniqueLock implement OfThis<Box<UniqueLockLayout ,UniqueLockStorage>> {
 public:
 	implicit UniqueLock () = default ;
 
-	explicit UniqueLock (CREF<Mutex> mutex) {
+	explicit UniqueLock (CR<Mutex> mutex) {
 		mThis = UniqueLockHolder::create () ;
 		UniqueLockHolder::hold (thiz)->initialize (mutex) ;
 	}
@@ -403,7 +403,7 @@ public:
 		return UniqueLockHolder::hold (thiz)->wait () ;
 	}
 
-	void wait (CREF<Time> time) {
+	void wait (CR<Time> time) {
 		return UniqueLockHolder::hold (thiz)->wait (time) ;
 	}
 
@@ -416,18 +416,18 @@ public:
 	}
 } ;
 
-struct FriendThread implement Interface {
-	virtual void friend_execute (CREF<INDEX> slot) = 0 ;
+struct FriendExecuting implement Interface {
+	virtual void friend_execute (CR<INDEX> slot) = 0 ;
 } ;
 
 template <class A>
-class FriendThreadBinder final implement Fat<FriendThread ,A> {
+class FriendExecutingBinder final implement Fat<FriendExecuting ,A> {
 public:
-	static VFat<FriendThread> hold (VREF<A> that) {
-		return VFat<FriendThread> (FriendThreadBinder () ,that) ;
+	static VFat<FriendExecuting> hold (VR<A> that) {
+		return VFat<FriendExecuting> (FriendExecutingBinder () ,that) ;
 	}
 
-	void friend_execute (CREF<INDEX> slot) override {
+	void friend_execute (CR<INDEX> slot) override {
 		thiz.self.friend_execute (slot) ;
 	}
 } ;
@@ -436,10 +436,10 @@ struct ThreadLayout ;
 
 struct ThreadHolder implement Interface {
 	imports AutoRef<ThreadLayout> create () ;
-	imports VFat<ThreadHolder> hold (VREF<ThreadLayout> that) ;
-	imports CFat<ThreadHolder> hold (CREF<ThreadLayout> that) ;
+	imports VFat<ThreadHolder> hold (VR<ThreadLayout> that) ;
+	imports CFat<ThreadHolder> hold (CR<ThreadLayout> that) ;
 
-	virtual void initialize (RREF<Box<VFat<FriendThread>>> executor ,CREF<INDEX> slot) = 0 ;
+	virtual void initialize (RR<VFat<FriendExecuting>> executing ,CR<INDEX> slot) = 0 ;
 	virtual FLAG thread_uid () const = 0 ;
 	virtual void start () = 0 ;
 	virtual void stop () = 0 ;
@@ -449,9 +449,9 @@ class Thread implement OfThis<AutoRef<ThreadLayout>> {
 public:
 	implicit Thread () = default ;
 
-	explicit Thread (RREF<Box<VFat<FriendThread>>> executor ,CREF<INDEX> slot) {
+	explicit Thread (RR<VFat<FriendExecuting>> executing ,CR<INDEX> slot) {
 		mThis = ThreadHolder::create () ;
-		ThreadHolder::hold (thiz)->initialize (move (executor) ,slot) ;
+		ThreadHolder::hold (thiz)->initialize (move (executing) ,slot) ;
 	}
 
 	FLAG thread_uid () const {
@@ -473,12 +473,12 @@ struct ProcessLayout ;
 
 struct ProcessHolder implement Interface {
 	imports AutoRef<ProcessLayout> create () ;
-	imports VFat<ProcessHolder> hold (VREF<ProcessLayout> that) ;
-	imports CFat<ProcessHolder> hold (CREF<ProcessLayout> that) ;
+	imports VFat<ProcessHolder> hold (VR<ProcessLayout> that) ;
+	imports CFat<ProcessHolder> hold (CR<ProcessLayout> that) ;
 
-	virtual void initialize (CREF<FLAG> uid) = 0 ;
-	virtual void initialize (CREF<RefBuffer<BYTE>> snapshot_) = 0 ;
-	virtual BOOL equal (CREF<ProcessLayout> that) const = 0 ;
+	virtual void initialize (CR<FLAG> uid) = 0 ;
+	virtual void initialize (CR<RefBuffer<BYTE>> snapshot_) = 0 ;
+	virtual BOOL equal (CR<ProcessLayout> that) const = 0 ;
 	virtual FLAG process_uid () const = 0 ;
 	virtual RefBuffer<BYTE> snapshot () const = 0 ;
 } ;
@@ -487,25 +487,25 @@ class Process implement OfThis<AutoRef<ProcessLayout>> {
 public:
 	implicit Process () = default ;
 
-	explicit Process (CREF<FLAG> uid) {
+	explicit Process (CR<FLAG> uid) {
 		mThis = ProcessHolder::create () ;
 		ProcessHolder::hold (thiz)->initialize (uid) ;
 	}
 
-	explicit Process (CREF<RefBuffer<BYTE>> snapshot_) {
+	explicit Process (CR<RefBuffer<BYTE>> snapshot_) {
 		mThis = ProcessHolder::create () ;
 		ProcessHolder::hold (thiz)->initialize (snapshot_) ;
 	}
 
-	BOOL equal (CREF<Process> that) const {
+	BOOL equal (CR<Process> that) const {
 		return ProcessHolder::hold (thiz)->equal (that) ;
 	}
 
-	forceinline BOOL operator== (CREF<Process> that) const {
+	forceinline BOOL operator== (CR<Process> that) const {
 		return equal (that) ;
 	}
 
-	forceinline BOOL operator!= (CREF<Process> that) const {
+	forceinline BOOL operator!= (CR<Process> that) const {
 		return (!equal (that)) ;
 	}
 
@@ -522,12 +522,12 @@ struct LibraryLayout ;
 
 struct LibraryHolder implement Interface {
 	imports AutoRef<LibraryLayout> create () ;
-	imports VFat<LibraryHolder> hold (VREF<LibraryLayout> that) ;
-	imports CFat<LibraryHolder> hold (CREF<LibraryLayout> that) ;
+	imports VFat<LibraryHolder> hold (VR<LibraryLayout> that) ;
+	imports CFat<LibraryHolder> hold (CR<LibraryLayout> that) ;
 
-	virtual void initialize (CREF<String<STR>> file) = 0 ;
+	virtual void initialize (CR<String<STR>> file) = 0 ;
 	virtual String<STR> library_file () const = 0 ;
-	virtual FLAG load (CREF<String<STR>> name) = 0 ;
+	virtual FLAG load (CR<String<STR>> name) = 0 ;
 	virtual String<STR> error () const = 0 ;
 } ;
 
@@ -535,7 +535,7 @@ class Library implement OfThis<AutoRef<LibraryLayout>> {
 public:
 	implicit Library () = default ;
 
-	explicit Library (CREF<String<STR>> file) {
+	explicit Library (CR<String<STR>> file) {
 		mThis = LibraryHolder::create () ;
 		LibraryHolder::hold (thiz)->initialize (file) ;
 	}
@@ -544,7 +544,7 @@ public:
 		return LibraryHolder::hold (thiz)->library_file () ;
 	}
 
-	FLAG load (CREF<String<STR>> name) {
+	FLAG load (CR<String<STR>> name) {
 		return LibraryHolder::hold (thiz)->load (name) ;
 	}
 
@@ -557,28 +557,28 @@ struct SystemLayout ;
 
 struct SystemHolder implement Interface {
 	imports AutoRef<SystemLayout> create () ;
-	imports VFat<SystemHolder> hold (VREF<SystemLayout> that) ;
-	imports CFat<SystemHolder> hold (CREF<SystemLayout> that) ;
+	imports VFat<SystemHolder> hold (VR<SystemLayout> that) ;
+	imports CFat<SystemHolder> hold (CR<SystemLayout> that) ;
 
 	virtual void initialize () = 0 ;
-	virtual void set_locale (CREF<String<STR>> name) = 0 ;
-	virtual void execute (CREF<String<STR>> command) const = 0 ;
+	virtual void set_locale (CR<String<STR>> name) = 0 ;
+	virtual void execute (CR<String<STR>> command) const = 0 ;
 } ;
 
 class System implement OfThis<AutoRef<SystemLayout>> {
 public:
 	implicit System () = default ;
 
-	implicit System (CREF<typeof (NULL)>) {
+	implicit System (CR<typeof (NULL)>) {
 		mThis = SystemHolder::create () ;
 		SystemHolder::hold (thiz)->initialize () ;
 	}
 
-	void set_locale (CREF<String<STR>> name) {
+	void set_locale (CR<String<STR>> name) {
 		return SystemHolder::hold (thiz)->set_locale (name) ;
 	}
 
-	void execute (CREF<String<STR>> command) const {
+	void execute (CR<String<STR>> command) const {
 		return SystemHolder::hold (thiz)->execute (command) ;
 	}
 } ;
@@ -587,20 +587,20 @@ struct RandomLayout ;
 
 struct RandomHolder implement Interface {
 	imports SharedRef<RandomLayout> create () ;
-	imports VFat<RandomHolder> hold (VREF<RandomLayout> that) ;
-	imports CFat<RandomHolder> hold (CREF<RandomLayout> that) ;
+	imports VFat<RandomHolder> hold (VR<RandomLayout> that) ;
+	imports CFat<RandomHolder> hold (CR<RandomLayout> that) ;
 
 	virtual void initialize () = 0 ;
-	virtual void initialize (CREF<FLAG> seed) = 0 ;
+	virtual void initialize (CR<FLAG> seed) = 0 ;
 	virtual FLAG seed () const = 0 ;
-	virtual VAL32 random_value (CREF<VAL32> min_ ,CREF<VAL32> max_) = 0 ;
-	virtual VAL64 random_value (CREF<VAL64> min_ ,CREF<VAL64> max_) = 0 ;
-	virtual FLT64 random_float (CREF<FLT64> scale) = 0 ;
-	virtual Array<INDEX> random_shuffle (CREF<LENGTH> length_ ,CREF<LENGTH> size_) = 0 ;
-	virtual void random_shuffle (CREF<LENGTH> length_ ,CREF<LENGTH> size_ ,VREF<Array<INDEX>> result) = 0 ;
-	virtual BitSet random_pick (CREF<LENGTH> length_ ,CREF<LENGTH> size_) = 0 ;
-	virtual void random_pick (CREF<LENGTH> length_ ,CREF<LENGTH> size_ ,VREF<BitSet> result) = 0 ;
-	virtual BOOL random_draw (CREF<FLT64> possibility) = 0 ;
+	virtual VAL32 random_value (CR<VAL32> min_ ,CR<VAL32> max_) = 0 ;
+	virtual VAL64 random_value (CR<VAL64> min_ ,CR<VAL64> max_) = 0 ;
+	virtual Array<INDEX> random_shuffle (CR<LENGTH> length_ ,CR<LENGTH> size_) = 0 ;
+	virtual void random_shuffle (CR<LENGTH> length_ ,CR<LENGTH> size_ ,VR<Array<INDEX>> result) = 0 ;
+	virtual BitSet random_pick (CR<LENGTH> length_ ,CR<LENGTH> size_) = 0 ;
+	virtual void random_pick (CR<LENGTH> length_ ,CR<LENGTH> size_ ,VR<BitSet> result) = 0 ;
+	virtual FLT64 random_float (CR<LENGTH> precision) = 0 ;
+	virtual BOOL random_draw (CR<FLT64> possibility) = 0 ;
 	virtual FLT64 random_normal () = 0 ;
 } ;
 
@@ -608,7 +608,7 @@ class Random implement OfThis<SharedRef<RandomLayout>> {
 public:
 	implicit Random () = default ;
 
-	explicit Random (CREF<FLAG> seed) {
+	explicit Random (CR<FLAG> seed) {
 		mThis = RandomHolder::create () ;
 		RandomHolder::hold (thiz)->initialize (seed) ;
 	}
@@ -618,31 +618,31 @@ public:
 	}
 
 	template <class ARG1 ,class = REQUIRE<IS_VALUE<ARG1>>>
-	ARG1 random_value (CREF<ARG1> min_ ,CREF<ARG1> max_) const {
+	ARG1 random_value (CR<ARG1> min_ ,CR<ARG1> max_) const {
 		return RandomHolder::hold (thiz)->random_value (min_ ,max_) ;
 	}
 
-	FLT64 random_float (CREF<FLT64> scale) const {
-		return RandomHolder::hold (thiz)->random_float (scale) ;
-	}
-
-	Array<INDEX> random_shuffle (CREF<LENGTH> length_ ,CREF<LENGTH> size_) const {
+	Array<INDEX> random_shuffle (CR<LENGTH> length_ ,CR<LENGTH> size_) const {
 		return RandomHolder::hold (thiz)->random_shuffle (length_ ,size_) ;
 	}
 
-	void random_shuffle (CREF<LENGTH> length_ ,CREF<LENGTH> size_ ,VREF<Array<INDEX>> result) const {
+	void random_shuffle (CR<LENGTH> length_ ,CR<LENGTH> size_ ,VR<Array<INDEX>> result) const {
 		return RandomHolder::hold (thiz)->random_shuffle (length_ ,size_ ,result) ;
 	}
 
-	BitSet random_pick (CREF<LENGTH> length_ ,CREF<LENGTH> size_) const {
+	BitSet random_pick (CR<LENGTH> length_ ,CR<LENGTH> size_) const {
 		return RandomHolder::hold (thiz)->random_pick (length_ ,size_) ;
 	}
 
-	void random_pick (CREF<LENGTH> length_ ,CREF<LENGTH> size_ ,VREF<BitSet> result) const {
+	void random_pick (CR<LENGTH> length_ ,CR<LENGTH> size_ ,VR<BitSet> result) const {
 		return RandomHolder::hold (thiz)->random_pick (length_ ,size_ ,result) ;
 	}
 
-	BOOL random_draw (CREF<FLT64> possibility) const {
+	FLT64 random_float (CR<LENGTH> precision) const {
+		return RandomHolder::hold (thiz)->random_float (precision) ;
+	}
+
+	BOOL random_draw (CR<FLT64> possibility) const {
 		return RandomHolder::hold (thiz)->random_draw (possibility) ;
 	}
 
@@ -661,20 +661,20 @@ inline Random CurrentRandom () {
 struct SingletonProcLayout ;
 
 struct SingletonProcHolder implement Interface {
-	imports CREF<OfThis<UniqueRef<SingletonProcLayout>>> expr_m () ;
-	imports VFat<SingletonProcHolder> hold (VREF<SingletonProcLayout> that) ;
-	imports CFat<SingletonProcHolder> hold (CREF<SingletonProcLayout> that) ;
+	imports CR<OfThis<UniqueRef<SingletonProcLayout>>> expr_m () ;
+	imports VFat<SingletonProcHolder> hold (VR<SingletonProcLayout> that) ;
+	imports CFat<SingletonProcHolder> hold (CR<SingletonProcLayout> that) ;
 
 	virtual void initialize () = 0 ;
 	virtual QUAD abi_reserve () const = 0 ;
 	virtual QUAD ctx_reserve () const = 0 ;
-	virtual FLAG load (CREF<Clazz> clazz) const = 0 ;
-	virtual void save (CREF<Clazz> clazz ,CREF<FLAG> layout) const = 0 ;
+	virtual FLAG load (CR<Clazz> clazz) const = 0 ;
+	virtual void save (CR<Clazz> clazz ,CR<FLAG> layout) const = 0 ;
 } ;
 
 class SingletonProc implement OfThis<UniqueRef<SingletonProcLayout>> {
 public:
-	static CREF<SingletonProc> expr_m () {
+	static CR<SingletonProc> expr_m () {
 		return keep[TYPE<SingletonProc>::expr] (SingletonProcHolder::expr) ;
 	}
 
@@ -686,11 +686,11 @@ public:
 		return SingletonProcHolder::hold (expr)->ctx_reserve () ;
 	}
 
-	static FLAG load (CREF<Clazz> clazz) {
+	static FLAG load (CR<Clazz> clazz) {
 		return SingletonProcHolder::hold (expr)->load (clazz) ;
 	}
 
-	static void save (CREF<Clazz> clazz ,CREF<FLAG> layout) {
+	static void save (CR<Clazz> clazz ,CR<FLAG> layout) {
 		return SingletonProcHolder::hold (expr)->save (clazz ,layout) ;
 	}
 } ;
@@ -698,7 +698,7 @@ public:
 template <class A>
 class Singleton implement Proxy {
 public:
-	static CREF<A> expr_m () {
+	static CR<A> expr_m () {
 		return memorize ([&] () {
 			const auto r1x = Clazz (TYPE<A>::expr) ;
 			auto rax = SingletonProc::load (r1x) ;
@@ -724,22 +724,22 @@ struct GlobalLayout {
 } ;
 
 struct GlobalHolder implement Interface {
-	imports CREF<GlobalLayout> expr_m () ;
-	imports VFat<GlobalHolder> hold (VREF<GlobalLayout> that) ;
-	imports CFat<GlobalHolder> hold (CREF<GlobalLayout> that) ;
+	imports CR<GlobalLayout> expr_m () ;
+	imports VFat<GlobalHolder> hold (VR<GlobalLayout> that) ;
+	imports CFat<GlobalHolder> hold (CR<GlobalLayout> that) ;
 
 	virtual void initialize () = 0 ;
-	virtual void initialize (CREF<Slice> name ,CREF<Unknown> holder) = 0 ;
+	virtual void initialize (CR<Slice> name ,CR<Unknown> holder) = 0 ;
 	virtual void startup () const = 0 ;
 	virtual void shutdown () const = 0 ;
 	virtual BOOL exist () const = 0 ;
 	virtual AutoRef<Pointer> fetch () const = 0 ;
-	virtual void store (RREF<AutoRef<Pointer>> item) const = 0 ;
+	virtual void store (RR<AutoRef<Pointer>> item) const = 0 ;
 } ;
 
 class GlobalProc implement GlobalLayout {
 public:
-	static CREF<GlobalProc> expr_m () {
+	static CR<GlobalProc> expr_m () {
 		return keep[TYPE<GlobalProc>::expr] (GlobalHolder::expr) ;
 	}
 
@@ -753,9 +753,9 @@ public:
 } ;
 
 template <class A>
-class GlobalUnknownBinder final implement Fat<ReflectUnknown ,Proxy> {
+class GlobalUnknownBinder final implement Fat<FriendUnknown ,Proxy> {
 public:
-	FLAG reflect (CREF<FLAG> uuid) const override {
+	FLAG reflect (CR<FLAG> uuid) const override {
 		if (uuid == ReflectSizeBinder<A>::expr)
 			return inline_vptr (ReflectSizeBinder<A> ()) ;
 		if (uuid == ReflectCreateBinder<A>::expr)
@@ -782,7 +782,7 @@ protected:
 public:
 	implicit Global () = default ;
 
-	explicit Global (CREF<Slice> name) {
+	explicit Global (CR<Slice> name) {
 		GlobalHolder::hold (thiz)->initialize (name ,GlobalUnknownBinder<A> ()) ;
 	}
 
@@ -799,11 +799,11 @@ public:
 		return fetch () ;
 	}
 
-	void store (CREF<A> item) const {
+	void store (CR<A> item) const {
 		store (move (item)) ;
 	}
 
-	void store (RREF<A> item) const {
+	void store (RR<A> item) const {
 		auto rax = AutoRef<A>::make (move (item)) ;
 		return GlobalHolder::hold (thiz)->store (move (rax)) ;
 	}

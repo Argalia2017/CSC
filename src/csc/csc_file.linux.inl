@@ -58,7 +58,7 @@ struct PathTree {
 
 class PathImplHolder final implement Fat<PathHolder ,PathLayout> {
 public:
-	void initialize (RREF<String<STR>> pathname) override {
+	void initialize (RR<String<STR>> pathname) override {
 		self.mThis = Ref<PathTree>::make () ;
 		self.mThis->mPathName = move (pathname) ;
 		self.mThis->mSeparator.add (NONE) ;
@@ -92,7 +92,7 @@ public:
 		assume (self.mThis->mSeparator.length () >= 2) ;
 	}
 
-	void initialize (CREF<Deque<String<STR>>> pathname) override {
+	void initialize (CR<Deque<String<STR>>> pathname) override {
 		auto rax = String<STR>::make () ;
 		INDEX ix = 0 ;
 		for (auto &&i : pathname.iter ()) {
@@ -108,11 +108,11 @@ public:
 		initialize (move (rax)) ;
 	}
 
-	void initialize (CREF<PathLayout> that) override {
+	void initialize (CR<PathLayout> that) override {
 		self.mThis = that.mThis.share () ;
 	}
 
-	BOOL is_separator (CREF<STRU32> str) const {
+	BOOL is_separator (CR<STRU32> str) const {
 		if (str == STRU32 ('\\'))
 			return TRUE ;
 		if (str == STRU32 ('/'))
@@ -126,23 +126,23 @@ public:
 		return self.mThis->mPathName ;
 	}
 
-	PathLayout child (CREF<Slice> name) const override {
+	PathLayout child (CR<Slice> name) const override {
 		return Path (String<STR>::make (fetch () ,slice ("/") ,name)) ;
 	}
 
-	PathLayout child (CREF<Format> name) const override {
+	PathLayout child (CR<Format> name) const override {
 		return Path (String<STR>::make (fetch () ,slice ("/") ,name)) ;
 	}
 
-	PathLayout child (CREF<String<STR>> name) const override {
+	PathLayout child (CR<String<STR>> name) const override {
 		return Path (String<STR>::make (fetch () ,slice ("/") ,name)) ;
 	}
 
 	Array<PathLayout> list () const override {
 		auto rax = HDIRENT (NULL) ;
-		const auto r1x = UniqueRef<HDIR> ([&] (VREF<HDIR> me) {
+		const auto r1x = UniqueRef<HDIR> ([&] (VR<HDIR> me) {
 			me = opendir (self.mThis->mPathName) ;
-		} ,[&] (VREF<HDIR> me) {
+		} ,[&] (VR<HDIR> me) {
 			if (me == NULL)
 				return ;
 			closedir (me) ;
@@ -170,11 +170,11 @@ public:
 		return move (ret) ;
 	}
 
-	Array<PathLayout> list (CREF<LENGTH> size_) const override {
+	Array<PathLayout> list (CR<LENGTH> size_) const override {
 		auto rax = HDIRENT (NULL) ;
-		const auto r1x = UniqueRef<HDIR> ([&] (VREF<HDIR> me) {
+		const auto r1x = UniqueRef<HDIR> ([&] (VR<HDIR> me) {
 			me = opendir (self.mThis->mPathName) ;
-		} ,[&] (VREF<HDIR> me) {
+		} ,[&] (VR<HDIR> me) {
 			if (me == NULL)
 				return ;
 			closedir (me) ;
@@ -205,7 +205,7 @@ public:
 		return move (ret) ;
 	}
 
-	BOOL equal (CREF<PathLayout> that) const override {
+	BOOL equal (CR<PathLayout> that) const override {
 		const auto r1x = inline_compr (self.mThis.exist () ,that.mThis.exist ()) ;
 		if (r1x != ZERO)
 			return FALSE ;
@@ -327,7 +327,7 @@ public:
 		return Path (rax) ;
 	}
 
-	BOOL is_root (CREF<Slice> str) const {
+	BOOL is_root (CR<Slice> str) const {
 		if (str.size () == 0)
 			return TRUE ;
 		if (str.size () != 2)
@@ -405,11 +405,11 @@ public:
 		self.mMutex = NULL ;
 	}
 
-	RefBuffer<BYTE> load_file (CREF<String<STR>> file) const override {
-		const auto r1x = UniqueRef<csc_pipe_t> ([&] (VREF<csc_pipe_t> me) {
+	RefBuffer<BYTE> load_file (CR<String<STR>> file) const override {
+		const auto r1x = UniqueRef<csc_pipe_t> ([&] (VR<csc_pipe_t> me) {
 			me = std::open (file ,O_RDONLY) ;
 			assume (me != NONE) ;
-		} ,[&] (VREF<csc_pipe_t> me) {
+		} ,[&] (VR<csc_pipe_t> me) {
 			std::close (me) ;
 		}) ;
 		const auto r2x = file_size (r1x) ;
@@ -430,7 +430,7 @@ public:
 		return move (ret) ;
 	}
 
-	VAL64 file_size (CREF<csc_pipe_t> handle) const {
+	VAL64 file_size (CR<csc_pipe_t> handle) const {
 		const auto r1x = VAL64 (lseek64 (handle ,0 ,SEEK_END)) ;
 		const auto r2x = VAL64 (lseek64 (handle ,0 ,SEEK_SET)) ;
 		//@warn: file in '/proc' is zero size
@@ -443,14 +443,14 @@ public:
 		return r1x ;
 	}
 
-	void save_file (CREF<String<STR>> file ,CREF<RefBuffer<BYTE>> item) const override {
+	void save_file (CR<String<STR>> file ,CR<RefBuffer<BYTE>> item) const override {
 		assert (item.size () < VAL32_MAX) ;
-		const auto r1x = UniqueRef<csc_pipe_t> ([&] (VREF<csc_pipe_t> me) {
+		const auto r1x = UniqueRef<csc_pipe_t> ([&] (VR<csc_pipe_t> me) {
 			const auto r2x = csc_enum_t (O_CREAT | O_WRONLY | O_TRUNC) ;
 			const auto r3x = csc_enum_t (S_IRWXU | S_IRWXG | S_IRWXO) ;
 			me = std::open (file ,r2x ,r3x) ;
 			assume (me != NONE) ;
-		} ,[&] (VREF<csc_pipe_t> me) {
+		} ,[&] (VR<csc_pipe_t> me) {
 			std::close (me) ;
 		}) ;
 		const auto r4x = item.size () ;
@@ -467,7 +467,7 @@ public:
 		assume (rax == 0) ;
 	}
 
-	Ref<RefBuffer<BYTE>> load_asset (CREF<String<STR>> file) const override {
+	Ref<RefBuffer<BYTE>> load_asset (CR<String<STR>> file) const override {
 		const auto r1x = dlopen (NULL ,RTLD_LOCAL) ;
 		assume (r1x != NULL) ;
 		const auto r2x = String<STR>::make (file ,slice ("input_txt_start")) ;
@@ -481,19 +481,19 @@ public:
 		return Ref<RefBuffer<BYTE>>::make (RefBuffer<BYTE>::reference (r4x ,r6x)) ;
 	}
 
-	void copy_file (CREF<String<STR>> dst ,CREF<String<STR>> src) const override {
-		const auto r1x = UniqueRef<csc_pipe_t> ([&] (VREF<csc_pipe_t> me) {
+	void copy_file (CR<String<STR>> dst ,CR<String<STR>> src) const override {
+		const auto r1x = UniqueRef<csc_pipe_t> ([&] (VR<csc_pipe_t> me) {
 			me = std::open (src ,O_RDONLY) ;
 			assume (me != NONE) ;
-		} ,[&] (VREF<csc_pipe_t> me) {
+		} ,[&] (VR<csc_pipe_t> me) {
 			std::close (me) ;
 		}) ;
-		const auto r2x = UniqueRef<csc_pipe_t> ([&] (VREF<csc_pipe_t> me) {
+		const auto r2x = UniqueRef<csc_pipe_t> ([&] (VR<csc_pipe_t> me) {
 			const auto r3x = csc_enum_t (O_CREAT | O_WRONLY | O_TRUNC) ;
 			const auto r4x = csc_enum_t (S_IRWXU | S_IRWXG | S_IRWXO) ;
 			me = std::open (dst ,r3x ,r4x) ;
 			assume (me != NONE) ;
-		} ,[&] (VREF<csc_pipe_t> me) {
+		} ,[&] (VR<csc_pipe_t> me) {
 			std::close (me) ;
 		}) ;
 		const auto r5x = file_size (r1x) ;
@@ -501,26 +501,26 @@ public:
 		sendfile (r1x ,r2x ,NULL ,r5x) ;
 	}
 
-	void move_file (CREF<String<STR>> dst ,CREF<String<STR>> src) const override {
+	void move_file (CR<String<STR>> dst ,CR<String<STR>> src) const override {
 		const auto r1x = rename (src ,dst) ;
 		noop (r1x) ;
 	}
 
-	void link_file (CREF<String<STR>> dst ,CREF<String<STR>> src) const override {
+	void link_file (CR<String<STR>> dst ,CR<String<STR>> src) const override {
 		if (!Path (src).is_file ())
 			return ;
 		const auto r1x = symlink (src ,dst) ;
 		noop (r1x) ;
 	}
 
-	void erase_file (CREF<String<STR>> file) const override {
+	void erase_file (CR<String<STR>> file) const override {
 		if (!Path (file).is_file ())
 			return ;
 		const auto r1x = unlink (file) ;
 		noop (r1x) ;
 	}
 
-	void build_dire (CREF<String<STR>> dire) const override {
+	void build_dire (CR<String<STR>> dire) const override {
 		const auto r1x = Path (dire).decouple () ;
 		if (r1x.length () == 0)
 			return ;
@@ -537,14 +537,14 @@ public:
 		}
 	}
 
-	void link_dire (CREF<String<STR>> dst ,CREF<String<STR>> src) const override {
+	void link_dire (CR<String<STR>> dst ,CR<String<STR>> src) const override {
 		if (!Path (src).is_dire ())
 			return ;
 		const auto r1x = symlink (src ,dst) ;
 		noop (r1x) ;
 	}
 
-	void clear_dire (CREF<String<STR>> dire) const override {
+	void clear_dire (CR<String<STR>> dire) const override {
 		auto rax = Deque<Tuple<Path ,BOOL>> () ;
 		clear_dire_push (rax ,Path (dire)) ;
 		while (TRUE) {
@@ -565,7 +565,7 @@ public:
 		}
 	}
 
-	void clear_dire_push (VREF<Deque<Tuple<Path ,BOOL>>> queue ,CREF<Path> dire) const {
+	void clear_dire_push (VR<Deque<Tuple<Path ,BOOL>>> queue ,CR<Path> dire) const {
 		const auto r1x = dire.list () ;
 		for (auto &&i : r1x) {
 			auto act = TRUE ;
@@ -587,7 +587,7 @@ public:
 		}
 	}
 
-	void erase_dire (CREF<String<STR>> dire) const override {
+	void erase_dire (CR<String<STR>> dire) const override {
 		if (!Path (dire).is_dire ())
 			return ;
 		const auto r1x = unlink (dire) ;
@@ -596,7 +596,7 @@ public:
 		noop (r2x) ;
 	}
 
-	BOOL lock_dire (CREF<String<STR>> dire) const override {
+	BOOL lock_dire (CR<String<STR>> dire) const override {
 		const auto r1x = Path (dire).child (slice (".lockdirectory")) ;
 		const auto r2x = Process (RuntimeProc::process_uid ()) ;
 		if ifdo (TRUE) {
@@ -613,12 +613,12 @@ public:
 		return TRUE ;
 	}
 
-	void lock_dire_push (CREF<Path> file ,CREF<RefBuffer<BYTE>> snapshot_) const {
+	void lock_dire_push (CR<Path> file ,CR<RefBuffer<BYTE>> snapshot_) const {
 		Scope<Mutex> anonymous (self.mMutex) ;
-		auto rax = UniqueRef<String<STR>> ([&] (VREF<String<STR>> me) {
+		auto rax = UniqueRef<String<STR>> ([&] (VR<String<STR>> me) {
 			me = file ;
 			FileProc::save_file (me ,snapshot_) ;
-		} ,[&] (VREF<String<STR>> me) {
+		} ,[&] (VR<String<STR>> me) {
 			FileProc::erase_file (me) ;
 		}) ;
 		const auto r1x = Pin<List<UniqueRef<String<STR>>>> (self.mLockDirectory) ;
@@ -630,7 +630,7 @@ static const auto mFileProcExternal = External<FileProcHolder ,FileProcLayout> (
 
 class StreamFileImplHolder final implement Fat<StreamFileHolder ,StreamFileLayout> {
 public:
-	void initialize (CREF<String<STR>> file) override {
+	void initialize (CR<String<STR>> file) override {
 		self.mFile = move (file) ;
 		self.mFileSize = 0 ;
 		self.mRead = 0 ;
@@ -639,18 +639,18 @@ public:
 		self.mShortSize = 0 ;
 	}
 
-	void set_short_read (CREF<BOOL> flag) override {
+	void set_short_read (CR<BOOL> flag) override {
 		self.mShortRead = flag ;
 	}
 
 	void open_r () override {
 		assert (!self.mReadPipe.exist ()) ;
 		assert (!self.mWritePipe.exist ()) ;
-		self.mReadPipe = UniqueRef<csc_pipe_t> ([&] (VREF<csc_pipe_t> me) {
+		self.mReadPipe = UniqueRef<csc_pipe_t> ([&] (VR<csc_pipe_t> me) {
 			const auto r1x = csc_enum_t (S_IRWXU | S_IRWXG | S_IRWXO) ;
 			me = std::open (self.mFile ,O_RDONLY ,r1x) ;
 			assume (me != NONE) ;
-		} ,[&] (VREF<csc_pipe_t> me) {
+		} ,[&] (VR<csc_pipe_t> me) {
 			std::close (me) ;
 		}) ;
 		self.mFileSize = file_size (self.mReadPipe) ;
@@ -658,15 +658,15 @@ public:
 		self.mWrite = 0 ;
 	}
 
-	void open_w (CREF<LENGTH> size_) override {
+	void open_w (CR<LENGTH> size_) override {
 		assert (!self.mReadPipe.exist ()) ;
 		assert (!self.mWritePipe.exist ()) ;
-		self.mWritePipe = UniqueRef<csc_pipe_t> ([&] (VREF<csc_pipe_t> me) {
+		self.mWritePipe = UniqueRef<csc_pipe_t> ([&] (VR<csc_pipe_t> me) {
 			const auto r1x = csc_enum_t (O_CREAT | O_WRONLY | O_TRUNC) ;
 			const auto r2x = csc_enum_t (S_IRWXU | S_IRWXG | S_IRWXO) ;
 			me = std::open (self.mFile ,r1x ,r2x) ;
 			assume (me != NONE) ;
-		} ,[&] (VREF<csc_pipe_t> me) {
+		} ,[&] (VR<csc_pipe_t> me) {
 			std::close (me) ;
 		}) ;
 		self.mFileSize = size_ ;
@@ -677,20 +677,20 @@ public:
 	void open_a () override {
 		assert (!self.mReadPipe.exist ()) ;
 		assert (!self.mWritePipe.exist ()) ;
-		self.mReadPipe = UniqueRef<csc_pipe_t> ([&] (VREF<csc_pipe_t> me) {
+		self.mReadPipe = UniqueRef<csc_pipe_t> ([&] (VR<csc_pipe_t> me) {
 			const auto r1x = csc_enum_t (O_CREAT | O_RDONLY) ;
 			const auto r2x = csc_enum_t (S_IRWXU | S_IRWXG | S_IRWXO) ;
 			me = std::open (self.mFile ,r1x ,r2x) ;
 			assume (me != NONE) ;
-		} ,[&] (VREF<csc_pipe_t> me) {
+		} ,[&] (VR<csc_pipe_t> me) {
 			std::close (me) ;
 		}) ;
-		self.mWritePipe = UniqueRef<csc_pipe_t> ([&] (VREF<csc_pipe_t> me) {
+		self.mWritePipe = UniqueRef<csc_pipe_t> ([&] (VR<csc_pipe_t> me) {
 			const auto r3x = csc_enum_t (O_CREAT | O_WRONLY) ;
 			const auto r4x = csc_enum_t (S_IRWXU | S_IRWXG | S_IRWXO) ;
 			me = std::open (self.mFile ,r3x ,r4x) ;
 			assume (me != NONE) ;
-		} ,[&] (VREF<csc_pipe_t> me) {
+		} ,[&] (VR<csc_pipe_t> me) {
 			std::close (me) ;
 		}) ;
 		self.mFileSize = file_size (self.mReadPipe) ;
@@ -709,7 +709,7 @@ public:
 		return LENGTH (self.mFileSize) ;
 	}
 
-	VAL64 file_size (CREF<csc_pipe_t> handle) const {
+	VAL64 file_size (CR<csc_pipe_t> handle) const {
 		const auto r1x = VAL64 (lseek64 (handle ,0 ,SEEK_END)) ;
 		const auto r2x = VAL64 (lseek64 (handle ,0 ,SEEK_SET)) ;
 		//@warn: file in '/proc' is zero size
@@ -726,7 +726,7 @@ public:
 		return self.mShortSize ;
 	}
 
-	void read (VREF<RefBuffer<BYTE>> item) override {
+	void read (VR<RefBuffer<BYTE>> item) override {
 		assert (self.mReadPipe.exist ()) ;
 		assert (item.size () < VAL32_MAX) ;
 		const auto r1x = item.size () ;
@@ -744,7 +744,7 @@ public:
 		self.mRead += self.mShortSize ;
 	}
 
-	void write (CREF<RefBuffer<BYTE>> item) override {
+	void write (CR<RefBuffer<BYTE>> item) override {
 		assert (self.mWritePipe.exist ()) ;
 		assert (item.size () < VAL32_MAX) ;
 		const auto r1x = item.size () ;
@@ -778,7 +778,7 @@ private:
 	using BUFFERFILE_HEADER_STEP = ENUM<65536> ;
 
 public:
-	void initialize (CREF<String<STR>> file) override {
+	void initialize (CR<String<STR>> file) override {
 		self.mFile = move (file) ;
 		self.mFileSize = 0 ;
 		self.mFileMapFlag = 0 ;
@@ -786,12 +786,12 @@ public:
 		set_cache_size (1) ;
 	}
 
-	void set_block_step (CREF<LENGTH> step_) override {
+	void set_block_step (CR<LENGTH> step_) override {
 		self.mBlockStep = step_ ;
 		self.mChunkStep = BUFFERFILE_CHUNK_STEP::expr ;
 	}
 
-	void set_cache_size (CREF<LENGTH> size_) override {
+	void set_cache_size (CR<LENGTH> size_) override {
 		assert (size_ > 0) ;
 		self.mCacheSet = Set<VAL64> (size_) ;
 		self.mCacheList = List<BufferFileChunk> (size_) ;
@@ -801,42 +801,42 @@ public:
 	void open_r () override {
 		assert (!self.mPipe.exist ()) ;
 		assert (!self.mMapping.exist ()) ;
-		self.mPipe = UniqueRef<csc_pipe_t> ([&] (VREF<csc_pipe_t> me) {
+		self.mPipe = UniqueRef<csc_pipe_t> ([&] (VR<csc_pipe_t> me) {
 			const auto r1x = csc_enum_t (S_IRWXU | S_IRWXG | S_IRWXO) ;
 			me = std::open (self.mFile ,O_RDONLY ,r1x) ;
 			assume (me != NONE) ;
-		} ,[&] (VREF<csc_pipe_t> me) {
+		} ,[&] (VR<csc_pipe_t> me) {
 			std::close (me) ;
 		}) ;
 		self.mFileSize = file_size (self.mPipe) ;
-		self.mMapping = UniqueRef<csc_handle_t> ([&] (VREF<csc_handle_t> me) {
+		self.mMapping = UniqueRef<csc_handle_t> ([&] (VR<csc_handle_t> me) {
 			me = csc_handle_t (self.mFile.ref) ;
-		} ,[&] (VREF<csc_handle_t> me) {
+		} ,[&] (VR<csc_handle_t> me) {
 			noop () ;
 		}) ;
 		self.mFileMapFlag = csc_enum_t (PROT_READ) ;
 		read_header () ;
 	}
 
-	void open_w (CREF<LENGTH> size_) override {
+	void open_w (CR<LENGTH> size_) override {
 		assert (!self.mPipe.exist ()) ;
 		assert (!self.mMapping.exist ()) ;
-		self.mPipe = UniqueRef<csc_pipe_t> ([&] (VREF<csc_pipe_t> me) {
+		self.mPipe = UniqueRef<csc_pipe_t> ([&] (VR<csc_pipe_t> me) {
 			const auto r1x = csc_enum_t (O_CREAT | O_RDWR | O_TRUNC) ;
 			const auto r2x = csc_enum_t (S_IRWXU | S_IRWXG | S_IRWXO) ;
 			me = std::open (self.mFile ,r1x ,r2x) ;
 			assume (me != NONE) ;
-		} ,[&] (VREF<csc_pipe_t> me) {
+		} ,[&] (VR<csc_pipe_t> me) {
 			std::close (me) ;
 		}) ;
 		const auto r3x = self.mChunkStep / self.mBlockStep ;
 		const auto r4x = (size_ + r3x - 1) / r3x ;
 		self.mFileSize = BUFFERFILE_HEADER_STEP::expr + r4x * self.mChunkStep ;
-		self.mMapping = UniqueRef<csc_handle_t> ([&] (VREF<csc_handle_t> me) {
+		self.mMapping = UniqueRef<csc_handle_t> ([&] (VR<csc_handle_t> me) {
 			const auto r5x = ftruncate64 (self.mPipe ,self.mFileSize) ;
 			assume (r5x == 0) ;
 			me = csc_handle_t (self.mFile.ref) ;
-		} ,[&] (VREF<csc_handle_t> me) {
+		} ,[&] (VR<csc_handle_t> me) {
 			noop () ;
 		}) ;
 		self.mFileMapFlag = csc_enum_t (PROT_READ | PROT_WRITE) ;
@@ -847,20 +847,20 @@ public:
 		assert (!self.mPipe.exist ()) ;
 		assert (!self.mMapping.exist ()) ;
 		assume (self.mHeader != NULL) ;
-		self.mPipe = UniqueRef<csc_pipe_t> ([&] (VREF<csc_pipe_t> me) {
+		self.mPipe = UniqueRef<csc_pipe_t> ([&] (VR<csc_pipe_t> me) {
 			const auto r1x = csc_enum_t (O_CREAT | O_RDWR) ;
 			const auto r2x = csc_enum_t (S_IRWXU | S_IRWXG | S_IRWXO) ;
 			me = std::open (self.mFile ,r1x ,r2x) ;
 			assume (me != NONE) ;
-		} ,[&] (VREF<csc_pipe_t> me) {
+		} ,[&] (VR<csc_pipe_t> me) {
 			std::close (me) ;
 		}) ;
 		self.mFileSize = self.mHeader->mFileSize ;
-		self.mMapping = UniqueRef<csc_handle_t> ([&] (VREF<csc_handle_t> me) {
+		self.mMapping = UniqueRef<csc_handle_t> ([&] (VR<csc_handle_t> me) {
 			const auto r3x = ftruncate64 (self.mPipe ,self.mFileSize) ;
 			assume (r3x == 0) ;
 			me = csc_handle_t (self.mFile.ref) ;
-		} ,[&] (VREF<csc_handle_t> me) {
+		} ,[&] (VR<csc_handle_t> me) {
 			noop () ;
 		}) ;
 		self.mFileMapFlag = csc_enum_t (PROT_READ | PROT_WRITE) ;
@@ -946,7 +946,7 @@ public:
 		return LENGTH (self.mFileSize) ;
 	}
 
-	VAL64 file_size (CREF<csc_pipe_t> handle) const {
+	VAL64 file_size (CR<csc_pipe_t> handle) const {
 		const auto r1x = VAL64 (lseek64 (handle ,0 ,SEEK_END)) ;
 		const auto r2x = VAL64 (lseek64 (handle ,0 ,SEEK_SET)) ;
 		//@warn: file in '/proc' is zero size
@@ -959,7 +959,7 @@ public:
 		return r1x ;
 	}
 
-	void read (CREF<INDEX> index ,VREF<RefBuffer<BYTE>> item) override {
+	void read (CR<INDEX> index ,VR<RefBuffer<BYTE>> item) override {
 		assert (self.mPipe.exist ()) ;
 		assert (inline_between (index ,0 ,LENGTH (self.mHeader->mBlockSize))) ;
 		assert (item.size () == self.mHeader->mBlockStep) ;
@@ -971,7 +971,7 @@ public:
 		inline_memcpy (Pointer::from (item.ref) ,Pointer::make (r4x) ,LENGTH (self.mHeader->mBlockStep)) ;
 	}
 
-	void write (CREF<INDEX> index ,CREF<RefBuffer<BYTE>> item) override {
+	void write (CR<INDEX> index ,CR<RefBuffer<BYTE>> item) override {
 		assert (self.mPipe.exist ()) ;
 		assert (inline_between (index ,0 ,LENGTH (self.mHeader->mBlockSize))) ;
 		assert (item.size () == self.mHeader->mBlockStep) ;
@@ -983,7 +983,7 @@ public:
 		inline_memcpy (Pointer::make (r4x) ,Pointer::from (item.ref) ,LENGTH (self.mHeader->mBlockStep)) ;
 	}
 
-	INDEX mmap_cache (CREF<VAL64> index ,CREF<LENGTH> size_) {
+	INDEX mmap_cache (CR<VAL64> index ,CR<LENGTH> size_) {
 		INDEX ret = self.mCacheSet.map (index) ;
 		if ifdo (TRUE) {
 			if (ret != NONE)
@@ -992,12 +992,12 @@ public:
 			ret = self.mCacheList.insert () ;
 			self.mCacheSet.add (index ,ret) ;
 			self.mCacheList[ret].mIndex = index ;
-			self.mCacheList[ret].mBlock = UniqueRef<Tuple<FLAG ,FLAG>> ([&] (VREF<Tuple<FLAG ,FLAG>> me) {
+			self.mCacheList[ret].mBlock = UniqueRef<Tuple<FLAG ,FLAG>> ([&] (VR<Tuple<FLAG ,FLAG>> me) {
 				const auto r1x = mmap64 (NULL ,size_ ,self.mFileMapFlag ,MAP_SHARED ,self.mPipe ,index) ;
 				assume (r1x != MAP_FAILED) ;
 				me.m1st = FLAG (r1x) ;
 				me.m2nd = me.m1st + size_ ;
-			} ,[&] (VREF<Tuple<FLAG ,FLAG>> me) {
+			} ,[&] (VR<Tuple<FLAG ,FLAG>> me) {
 				const auto r2x = csc_handle_t (me.m1st) ;
 				const auto r3x = me.m2nd - me.m1st ;
 				msync (r2x ,r3x ,MS_SYNC) ;
@@ -1061,15 +1061,15 @@ private:
 		self.mCOMError = 0 ;
 	}
 
-	void set_port_name (CREF<String<STR>> name) override {
+	void set_port_name (CR<String<STR>> name) override {
 		self.mPortName = name ;
 	}
 
-	void set_port_rate (CREF<LENGTH> rate) override {
+	void set_port_rate (CR<LENGTH> rate) override {
 		self.mPortRate = rate ;
 	}
 
-	void set_ring_size (CREF<LENGTH> size_) override {
+	void set_ring_size (CR<LENGTH> size_) override {
 		self.mRingBuffer = RefBuffer<BYTE> (size_) ;
 		self.mRingRead = 0 ;
 	}
@@ -1077,11 +1077,11 @@ private:
 	void open () override {
 		assert (self.mPortName.length () > 0) ;
 		assert (self.mRingBuffer.size () > 0) ;
-		self.mPipe = UniqueRef<csc_pipe_t> ([&] (VREF<csc_pipe_t> me) {
+		self.mPipe = UniqueRef<csc_pipe_t> ([&] (VR<csc_pipe_t> me) {
 			const auto r1x = csc_enum_t (O_RDWR | O_NOCTTY | O_SYNC) ;
 			me = std::open (self.mPortName ,r1x) ;
 			assume (me != NONE) ;
-		} ,[&] (VREF<csc_pipe_t> me) {
+		} ,[&] (VR<csc_pipe_t> me) {
 			std::close (me) ;
 		}) ;
 		const auto r2x = tcgetattr (self.mPipe ,(&self.mCOMParams.ref)) ;
@@ -1103,7 +1103,7 @@ private:
 		assume (r3x != 0) ;
 	}
 
-	void read (VREF<RefBuffer<BYTE>> buffer ,CREF<INDEX> offset ,CREF<LENGTH> size_) override {
+	void read (VR<RefBuffer<BYTE>> buffer ,CR<INDEX> offset ,CR<LENGTH> size_) override {
 		for (auto &&i : range (0 ,size_)) {
 			buffer[offset + i] = self.mRingBuffer[self.mRingRead] ;
 			self.mRingRead++ ;
@@ -1139,7 +1139,7 @@ public:
 		self.mCommand = NULL ;
 	}
 
-	void set_option (CREF<Just<ConsoleOption>> option) override {
+	void set_option (CR<Just<ConsoleOption>> option) override {
 		Scope<Mutex> anonymous (self.mMutex) ;
 		auto act = TRUE ;
 		if ifdo (act) {
@@ -1152,8 +1152,8 @@ public:
 		}
 	}
 
-	void log (CREF<String<STR>> tag ,CREF<Format> msg) {
-		self.mLogWriter << CLS ;
+	void log (CR<String<STR>> tag ,CR<Format> msg) {
+		self.mLogWriter.reset () ;
 		self.mLogWriter << slice ("[") ;
 		const auto r1x = CurrentTime () ;
 		const auto r2x = r1x.calendar () ;
@@ -1170,11 +1170,11 @@ public:
 		self.mLogWriter << EOS ;
 	}
 
-	void print (CREF<Format> msg) override {
+	void print (CR<Format> msg) override {
 		Scope<Mutex> anonymous (self.mMutex) ;
 		if (self.mOption[ConsoleOption::NoPrint])
 			return ;
-		self.mLogWriter << CLS ;
+		self.mLogWriter.reset () ;
 		self.mLogWriter << msg ;
 		self.mLogWriter << EOS ;
 		if ifdo (TRUE) {
@@ -1185,7 +1185,7 @@ public:
 		}
 	}
 
-	void fatal (CREF<Format> msg) override {
+	void fatal (CR<Format> msg) override {
 		Scope<Mutex> anonymous (self.mMutex) ;
 		if (self.mOption[ConsoleOption::NoFatal])
 			return ;
@@ -1199,7 +1199,7 @@ public:
 		}
 	}
 
-	void error (CREF<Format> msg) override {
+	void error (CR<Format> msg) override {
 		Scope<Mutex> anonymous (self.mMutex) ;
 		if (self.mOption[ConsoleOption::NoError])
 			return ;
@@ -1213,7 +1213,7 @@ public:
 		}
 	}
 
-	void warn (CREF<Format> msg) override {
+	void warn (CR<Format> msg) override {
 		Scope<Mutex> anonymous (self.mMutex) ;
 		if (self.mOption[ConsoleOption::NoWarn])
 			return ;
@@ -1227,7 +1227,7 @@ public:
 		}
 	}
 
-	void info (CREF<Format> msg) override {
+	void info (CR<Format> msg) override {
 		Scope<Mutex> anonymous (self.mMutex) ;
 		if (self.mOption[ConsoleOption::NoInfo])
 			return ;
@@ -1241,7 +1241,7 @@ public:
 		}
 	}
 
-	void debug (CREF<Format> msg) override {
+	void debug (CR<Format> msg) override {
 		Scope<Mutex> anonymous (self.mMutex) ;
 		if (self.mOption[ConsoleOption::NoDebug])
 			return ;
@@ -1255,7 +1255,7 @@ public:
 		}
 	}
 
-	void trace (CREF<Format> msg) override {
+	void trace (CR<Format> msg) override {
 		Scope<Mutex> anonymous (self.mMutex) ;
 		if (self.mOption[ConsoleOption::NoTrace])
 			return ;
@@ -1269,7 +1269,7 @@ public:
 		}
 	}
 
-	void open (CREF<String<STR>> dire) override {
+	void open (CR<String<STR>> dire) override {
 		Scope<Mutex> anonymous (self.mMutex) ;
 		self.mLogFile = Path (dire).child (slice ("console.log")) ;
 		self.mOldLogFile = Path (dire).child (slice ("console.old.log")) ;
@@ -1277,7 +1277,7 @@ public:
 		FileProc::move_file (self.mOldLogFile ,self.mLogFile) ;
 		self.mLogStreamFile = StreamFile (self.mLogFile) ;
 		self.mLogStreamFile.open_w (0) ;
-		self.mLogWriter << CLS ;
+		self.mLogWriter.reset () ;
 		self.mLogWriter << BOM ;
 		self.mLogWriter << EOS ;
 		log_file () ;

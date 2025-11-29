@@ -12,16 +12,16 @@
 
 namespace CSC {
 struct FUNCTION_from_initializer_list {
-	forceinline RefBuffer<Pointer> operator() (CREF<WrapperLayout> params ,CREF<Unknown> holder) const {
+	forceinline RefBuffer<Pointer> operator() (CR<WrapperLayout> params ,CR<Unknown> holder) const {
 		RefBuffer<Pointer> ret ;
-		auto &&rax = keep[TYPE<Wrapper<CREF<Pointer>>>::expr] (params) ;
-		rax ([&] (CREF<Pointer> a) {
+		auto &&rax = keep[TYPE<Wrapper<CR<Pointer>>>::expr] (params) ;
+		rax ([&] (CR<Pointer> a) {
 			const auto r1x = RFat<ReflectSize> (holder) ;
 			const auto r2x = r1x->type_size () ;
 			const auto r3x = inline_list_pair (a ,r2x) ;
 			const auto r4x = (r3x.m2nd - r3x.m1st) / r2x ;
 			const auto r5x = Slice (r3x.m1st ,r4x ,r2x) ;
-			RefBufferHolder::hold (ret)->initialize (holder ,r5x) ;
+			RefBufferHolder::hold (ret)->initialize (holder ,r5x ,Box<int>::make ()) ;
 		}) ;
 		return move (ret) ;
 	}
@@ -31,11 +31,15 @@ static constexpr auto from_initializer_list = FUNCTION_from_initializer_list () 
 
 class ArrayImplHolder final implement Fat<ArrayHolder ,ArrayLayout> {
 public:
-	void initialize (CREF<Unknown> holder ,CREF<LENGTH> size_) override {
+	void prepare (CR<Unknown> holder) override {
+		RefBufferHolder::hold (self.mArray)->prepare (holder) ;
+	}
+
+	void initialize (CR<Unknown> holder ,CR<LENGTH> size_) override {
 		RefBufferHolder::hold (self.mArray)->initialize (holder ,size_) ;
 	}
 
-	void initialize (CREF<Unknown> holder ,CREF<WrapperLayout> params ,VREF<BoxLayout> item) override {
+	void initialize (CR<Unknown> holder ,CR<WrapperLayout> params ,VR<BoxLayout> item) override {
 		auto rax = from_initializer_list (params ,holder) ;
 		initialize (holder ,rax.size ()) ;
 		const auto r1x = RFat<ReflectAssign> (holder) ;
@@ -46,7 +50,7 @@ public:
 		}
 	}
 
-	void initialize (CREF<ArrayLayout> that) override {
+	void initialize (CR<ArrayLayout> that) override {
 		const auto r1x = ArrayHolder::hold (that)->length () ;
 		if (r1x == 0)
 			return ;
@@ -66,19 +70,19 @@ public:
 		return self.mArray.size () ;
 	}
 
-	VREF<Pointer> ref_m () leftvalue override {
+	VR<Pointer> ref_m () leftvalue override {
 		return RefBufferHolder::hold (self.mArray)->ref ;
 	}
 
-	CREF<Pointer> ref_m () const leftvalue override {
+	CR<Pointer> ref_m () const leftvalue override {
 		return RefBufferHolder::hold (self.mArray)->ref ;
 	}
 
-	VREF<Pointer> at (CREF<INDEX> index) leftvalue override {
+	VR<Pointer> at (CR<INDEX> index) leftvalue override {
 		return self.mArray.at (index) ;
 	}
 
-	CREF<Pointer> at (CREF<INDEX> index) const leftvalue override {
+	CR<Pointer> at (CR<INDEX> index) const leftvalue override {
 		return self.mArray.at (index) ;
 	}
 
@@ -90,11 +94,11 @@ public:
 		return length () ;
 	}
 
-	INDEX inext (CREF<INDEX> index) const override {
+	INDEX inext (CR<INDEX> index) const override {
 		return index + 1 ;
 	}
 
-	BOOL equal (CREF<ArrayLayout> that) const override {
+	BOOL equal (CR<ArrayLayout> that) const override {
 		const auto r1x = length () ;
 		const auto r2x = ArrayHolder::hold (that)->length () ;
 		if (r1x != r2x)
@@ -108,7 +112,7 @@ public:
 		return TRUE ;
 	}
 
-	FLAG compr (CREF<ArrayLayout> that) const override {
+	FLAG compr (CR<ArrayLayout> that) const override {
 		const auto r1x = length () ;
 		const auto r2x = ArrayHolder::hold (that)->length () ;
 		const auto r3x = inline_min (r1x ,r2x) ;
@@ -121,7 +125,7 @@ public:
 		return inline_compr (r1x ,r2x) ;
 	}
 
-	void visit (VREF<FriendVisitor> visitor) const override {
+	void visit (VR<FriendVisitor> visitor) const override {
 		visitor.enter () ;
 		const auto r1x = size () ;
 		const auto r2x = RFat<ReflectVisit> (self.mArray.unknown ()) ;
@@ -131,7 +135,7 @@ public:
 		visitor.leave () ;
 	}
 
-	void fill (CREF<Pointer> item) override {
+	void fill (CR<Pointer> item) override {
 		const auto r1x = size () ;
 		const auto r2x = RFat<ReflectClone> (self.mArray.unknown ()) ;
 		for (auto &&i : range (0 ,r1x)) {
@@ -139,7 +143,7 @@ public:
 		}
 	}
 
-	void splice (CREF<INDEX> index ,CREF<ArrayLayout> item) override {
+	void splice (CR<INDEX> index ,CR<ArrayLayout> item) override {
 		const auto r1x = ArrayHolder::hold (item)->size () ;
 		if (r1x == 0)
 			return ;
@@ -153,17 +157,21 @@ public:
 	}
 } ;
 
-exports VFat<ArrayHolder> ArrayHolder::hold (VREF<ArrayLayout> that) {
+exports VFat<ArrayHolder> ArrayHolder::hold (VR<ArrayLayout> that) {
 	return VFat<ArrayHolder> (ArrayImplHolder () ,that) ;
 }
 
-exports CFat<ArrayHolder> ArrayHolder::hold (CREF<ArrayLayout> that) {
+exports CFat<ArrayHolder> ArrayHolder::hold (CR<ArrayLayout> that) {
 	return CFat<ArrayHolder> (ArrayImplHolder () ,that) ;
 }
 
 class StringImplHolder final implement Fat<StringHolder ,StringLayout> {
 public:
-	void initialize (CREF<Slice> that ,CREF<LENGTH> step_) override {
+	void prepare (CR<Unknown> holder) override {
+		RefBufferHolder::hold (self.mString)->prepare (holder) ;
+	}
+
+	void initialize (CR<Slice> that ,CR<LENGTH> step_) override {
 		const auto r1x = SliceHolder::hold (that)->size () ;
 		initialize (r1x ,step_) ;
 		for (auto &&i : range (0 ,r1x)) {
@@ -172,7 +180,7 @@ public:
 		trunc (r1x) ;
 	}
 
-	void initialize (CREF<LENGTH> size_ ,CREF<LENGTH> step_) override {
+	void initialize (CR<LENGTH> size_ ,CR<LENGTH> step_) override {
 		if (size_ <= 0)
 			return ;
 		const auto r1x = size_ + 1 ;
@@ -201,7 +209,7 @@ public:
 		clear () ;
 	}
 
-	void initialize (CREF<StringLayout> that) override {
+	void initialize (CR<StringLayout> that) override {
 		const auto r1x = StringHolder::hold (that)->length () ;
 		const auto r2x = StringHolder::hold (that)->step () ;
 		if (r1x == 0)
@@ -241,11 +249,11 @@ public:
 		return size () ;
 	}
 
-	VREF<Pointer> ref_m () leftvalue override {
+	VR<Pointer> ref_m () leftvalue override {
 		return RefBufferHolder::hold (self.mString)->ref ;
 	}
 
-	CREF<Pointer> ref_m () const leftvalue override {
+	CR<Pointer> ref_m () const leftvalue override {
 		return RefBufferHolder::hold (self.mString)->ref ;
 	}
 
@@ -261,7 +269,7 @@ public:
 		return Ref<RefBuffer<BYTE>>::reference (rax) ;
 	}
 
-	void get (CREF<INDEX> index ,VREF<STRU32> item) const override {
+	void get (CR<INDEX> index ,VR<STRU32> item) const override {
 		auto act = TRUE ;
 		if ifdo (act) {
 			if (step () != SIZE_OF<STRU8>::expr)
@@ -286,7 +294,7 @@ public:
 		}
 	}
 
-	void set (CREF<INDEX> index ,CREF<STRU32> item) override {
+	void set (CR<INDEX> index ,CR<STRU32> item) override {
 		auto act = TRUE ;
 		if ifdo (act) {
 			if (step () != SIZE_OF<STRU8>::expr)
@@ -311,11 +319,11 @@ public:
 		}
 	}
 
-	VREF<Pointer> at (CREF<INDEX> index) leftvalue override {
+	VR<Pointer> at (CR<INDEX> index) leftvalue override {
 		return self.mString.at (index) ;
 	}
 
-	CREF<Pointer> at (CREF<INDEX> index) const leftvalue override {
+	CR<Pointer> at (CR<INDEX> index) const leftvalue override {
 		return self.mString.at (index) ;
 	}
 
@@ -327,11 +335,11 @@ public:
 		return length () ;
 	}
 
-	INDEX inext (CREF<INDEX> index) const override {
+	INDEX inext (CR<INDEX> index) const override {
 		return index + 1 ;
 	}
 
-	BOOL equal (CREF<Slice> that) const override {
+	BOOL equal (CR<Slice> that) const override {
 		const auto r1x = length () ;
 		const auto r2x = that.size () ;
 		const auto r3x = inline_min (r1x ,r2x) ;
@@ -347,7 +355,7 @@ public:
 		return inline_equal (r1x ,r2x) ;
 	}
 
-	BOOL equal (CREF<StringLayout> that) const override {
+	BOOL equal (CR<StringLayout> that) const override {
 		const auto r1x = length () ;
 		const auto r2x = StringHolder::hold (that)->length () ;
 		const auto r3x = inline_min (r1x ,r2x) ;
@@ -365,7 +373,7 @@ public:
 		return inline_equal (r1x ,r2x) ;
 	}
 
-	FLAG compr (CREF<Slice> that) const override {
+	FLAG compr (CR<Slice> that) const override {
 		const auto r1x = length () ;
 		const auto r2x = that.size () ;
 		const auto r3x = inline_min (r1x ,r2x) ;
@@ -381,7 +389,7 @@ public:
 		return inline_compr (r1x ,r2x) ;
 	}
 
-	FLAG compr (CREF<StringLayout> that) const override {
+	FLAG compr (CR<StringLayout> that) const override {
 		const auto r1x = length () ;
 		const auto r2x = StringHolder::hold (that)->length () ;
 		const auto r3x = inline_min (r1x ,r2x) ;
@@ -399,7 +407,7 @@ public:
 		return inline_compr (r1x ,r2x) ;
 	}
 
-	void visit (VREF<FriendVisitor> visitor) const override {
+	void visit (VR<FriendVisitor> visitor) const override {
 		visitor.enter () ;
 		const auto r1x = size () ;
 		auto rax = STRU32 () ;
@@ -413,19 +421,19 @@ public:
 		visitor.leave () ;
 	}
 
-	void trunc (CREF<INDEX> index) override {
+	void trunc (CR<INDEX> index) override {
 		if (!inline_between (index ,0 ,self.mString.size ()))
 			return ;
 		set (index ,STRU32 (0X00)) ;
 	}
 
-	void fill (CREF<STRU32> item) override {
+	void fill (CR<STRU32> item) override {
 		for (auto &&i : range (0 ,size ())) {
 			set (i ,item) ;
 		}
 	}
 
-	void splice (CREF<INDEX> index ,CREF<Slice> item) override {
+	void splice (CR<INDEX> index ,CR<Slice> item) override {
 		const auto r1x = SliceHolder::hold (item)->size () ;
 		if (r1x == 0)
 			return ;
@@ -437,7 +445,7 @@ public:
 		}
 	}
 
-	void splice (CREF<INDEX> index ,CREF<StringLayout> item) override {
+	void splice (CR<INDEX> index ,CR<StringLayout> item) override {
 		const auto r1x = StringHolder::hold (item)->length () ;
 		if (r1x == 0)
 			return ;
@@ -449,36 +457,33 @@ public:
 		trunc (r2x) ;
 	}
 
-	Slice segment (CREF<INDEX> begin_ ,CREF<INDEX> end_) const override {
+	Slice segment (CR<INDEX> begin_ ,CR<INDEX> end_) const override {
 		if (begin_ >= end_)
 			return Slice () ;
 		return Slice (address (self.mString[begin_]) ,end_ - begin_ ,step ()) ;
 	}
 } ;
 
-exports VFat<StringHolder> StringHolder::hold (VREF<StringLayout> that) {
+exports VFat<StringHolder> StringHolder::hold (VR<StringLayout> that) {
 	return VFat<StringHolder> (StringImplHolder () ,that) ;
 }
 
-exports CFat<StringHolder> StringHolder::hold (CREF<StringLayout> that) {
+exports CFat<StringHolder> StringHolder::hold (CR<StringLayout> that) {
 	return CFat<StringHolder> (StringImplHolder () ,that) ;
 }
 
 class DequeImplHolder final implement Fat<DequeHolder ,DequeLayout> {
 public:
-	void prepare (CREF<Unknown> holder) override {
-		if (self.mDeque.exist ())
-			return ;
+	void prepare (CR<Unknown> holder) override {
 		RefBufferHolder::hold (self.mDeque)->prepare (holder) ;
-		clear () ;
 	}
 
-	void initialize (CREF<Unknown> holder ,CREF<LENGTH> size_) override {
+	void initialize (CR<Unknown> holder ,CR<LENGTH> size_) override {
 		RefBufferHolder::hold (self.mDeque)->initialize (holder ,size_) ;
 		clear () ;
 	}
 
-	void initialize (CREF<Unknown> holder ,CREF<WrapperLayout> params ,VREF<BoxLayout> item) override {
+	void initialize (CR<Unknown> holder ,CR<WrapperLayout> params ,VR<BoxLayout> item) override {
 		auto rax = from_initializer_list (params ,holder) ;
 		initialize (holder ,rax.size ()) ;
 		const auto r1x = RFat<ReflectAssign> (holder) ;
@@ -509,14 +514,14 @@ public:
 		return self.mWrite - self.mRead ;
 	}
 
-	VREF<Pointer> at (CREF<INDEX> index) leftvalue override {
+	VR<Pointer> at (CR<INDEX> index) leftvalue override {
 		assert (inline_between (index ,0 ,length ())) ;
 		const auto r1x = self.mDeque.size () ;
 		INDEX ix = (index + self.mRead) % r1x ;
 		return self.mDeque.at (ix) ;
 	}
 
-	CREF<Pointer> at (CREF<INDEX> index) const leftvalue override {
+	CR<Pointer> at (CR<INDEX> index) const leftvalue override {
 		assert (inline_between (index ,0 ,length ())) ;
 		const auto r1x = self.mDeque.size () ;
 		INDEX ix = (index + self.mRead) % r1x ;
@@ -531,7 +536,7 @@ public:
 		return length () ;
 	}
 
-	INDEX inext (CREF<INDEX> index) const override {
+	INDEX inext (CR<INDEX> index) const override {
 		return index + 1 ;
 	}
 
@@ -556,7 +561,8 @@ public:
 		return length () - 1 ;
 	}
 
-	void add (RREF<BoxLayout> item) override {
+	void add (RR<BoxLayout> item) override {
+		check_exist () ;
 		check_resize () ;
 		const auto r1x = self.mDeque.size () ;
 		INDEX ix = self.mWrite % r1x ;
@@ -578,7 +584,8 @@ public:
 		check_bound () ;
 	}
 
-	void push (RREF<BoxLayout> item) override {
+	void push (RR<BoxLayout> item) override {
+		check_exist () ;
 		check_resize () ;
 		const auto r1x = self.mDeque.size () ;
 		INDEX ix = (self.mRead - 1 + r1x) % r1x ;
@@ -600,7 +607,7 @@ public:
 		self.mWrite-- ;
 	}
 
-	void ring (CREF<LENGTH> count) override {
+	void ring (CR<LENGTH> count) override {
 		if (size () <= 0)
 			return ;
 		self.mRead += count ;
@@ -608,20 +615,10 @@ public:
 		check_bound () ;
 	}
 
-	void check_bound () {
-		const auto r1x = self.mDeque.size () ;
-		if ifdo (TRUE) {
-			if (self.mRead >= 0)
-				discard ;
-			self.mRead += r1x ;
-			self.mWrite += r1x ;
-		}
-		if ifdo (TRUE) {
-			if (self.mRead < r1x)
-				discard ;
-			self.mRead -= r1x ;
-			self.mWrite -= r1x ;
-		}
+	void check_exist () {
+		if (self.mDeque.exist ())
+			return ;
+		initialize (self.mDeque.unknown () ,0) ;
 	}
 
 	void check_resize () {
@@ -643,26 +640,39 @@ public:
 			check_bound () ;
 		}
 	}
+
+	void check_bound () {
+		const auto r1x = self.mDeque.size () ;
+		if ifdo (TRUE) {
+			if (self.mRead >= 0)
+				discard ;
+			self.mRead += r1x ;
+			self.mWrite += r1x ;
+		}
+		if ifdo (TRUE) {
+			if (self.mRead < r1x)
+				discard ;
+			self.mRead -= r1x ;
+			self.mWrite -= r1x ;
+		}
+	}
 } ;
 
-exports VFat<DequeHolder> DequeHolder::hold (VREF<DequeLayout> that) {
+exports VFat<DequeHolder> DequeHolder::hold (VR<DequeLayout> that) {
 	return VFat<DequeHolder> (DequeImplHolder () ,that) ;
 }
 
-exports CFat<DequeHolder> DequeHolder::hold (CREF<DequeLayout> that) {
+exports CFat<DequeHolder> DequeHolder::hold (CR<DequeLayout> that) {
 	return CFat<DequeHolder> (DequeImplHolder () ,that) ;
 }
 
 class PriorityImplHolder final implement Fat<PriorityHolder ,PriorityLayout> {
 public:
-	void prepare (CREF<Unknown> holder) override {
-		if (self.mPriority.exist ())
-			return ;
+	void prepare (CR<Unknown> holder) override {
 		RefBufferHolder::hold (self.mPriority)->prepare (holder) ;
-		clear () ;
 	}
 
-	void initialize (CREF<Unknown> holder ,CREF<LENGTH> size_) override {
+	void initialize (CR<Unknown> holder ,CR<LENGTH> size_) override {
 		if (size_ <= 0)
 			return ;
 		const auto r1x = size_ + 1 ;
@@ -670,7 +680,7 @@ public:
 		clear () ;
 	}
 
-	void initialize (CREF<Unknown> holder ,CREF<WrapperLayout> params ,VREF<BoxLayout> item) override {
+	void initialize (CR<Unknown> holder ,CR<WrapperLayout> params ,VR<BoxLayout> item) override {
 		auto rax = from_initializer_list (params ,holder) ;
 		initialize (holder ,rax.size ()) ;
 		const auto r1x = RFat<ReflectAssign> (holder) ;
@@ -703,7 +713,7 @@ public:
 		return self.mWrite ;
 	}
 
-	CREF<Pointer> at (CREF<INDEX> index) const leftvalue override {
+	CR<Pointer> at (CR<INDEX> index) const leftvalue override {
 		return self.mPriority.at (index) ;
 	}
 
@@ -715,7 +725,7 @@ public:
 		return length () ;
 	}
 
-	INDEX inext (CREF<INDEX> index) const override {
+	INDEX inext (CR<INDEX> index) const override {
 		return index + 1 ;
 	}
 
@@ -736,7 +746,8 @@ public:
 		return 0 ;
 	}
 
-	void add (RREF<BoxLayout> item) override {
+	void add (RR<BoxLayout> item) override {
+		check_exist () ;
 		check_resize () ;
 		INDEX ix = self.mWrite ;
 		const auto r1x = RFat<ReflectAssign> (self.mPriority.unknown ()) ;
@@ -754,15 +765,7 @@ public:
 		update_insert (0) ;
 	}
 
-	void check_resize () {
-		if (length () < size ())
-			return ;
-		const auto r1x = length () ;
-		const auto r2x = inline_max (r1x * 2 ,ALLOCATOR_MIN_SIZE::expr) ;
-		RefBufferHolder::hold (self.mPriority)->resize (r2x) ;
-	}
-
-	void update_insert (CREF<INDEX> curr) {
+	void update_insert (CR<INDEX> curr) {
 		INDEX ix = curr ;
 		INDEX jy = self.mWrite ;
 		const auto r1x = RFat<ReflectAssign> (self.mPriority.unknown ()) ;
@@ -806,44 +809,55 @@ public:
 		r1x->assign (self.mPriority.at (ix) ,self.mPriority.at (jy)) ;
 	}
 
-	INDEX parent (CREF<INDEX> curr) const {
+	INDEX parent (CR<INDEX> curr) const {
 		if (curr == 0)
 			return NONE ;
 		return (curr - 1) / 2 ;
 	}
 
-	INDEX left_child (CREF<INDEX> curr) const {
+	INDEX left_child (CR<INDEX> curr) const {
 		return curr * 2 + 1 ;
 	}
 
-	INDEX right_child (CREF<INDEX> curr) const {
+	INDEX right_child (CR<INDEX> curr) const {
 		return curr * 2 + 2 ;
+	}
+
+	void check_exist () {
+		if (self.mPriority.exist ())
+			return ;
+		initialize (self.mPriority.unknown () ,0) ;
+	}
+
+	void check_resize () {
+		if (length () < size ())
+			return ;
+		const auto r1x = length () ;
+		const auto r2x = inline_max (r1x * 2 ,ALLOCATOR_MIN_SIZE::expr) ;
+		RefBufferHolder::hold (self.mPriority)->resize (r2x) ;
 	}
 } ;
 
-exports VFat<PriorityHolder> PriorityHolder::hold (VREF<PriorityLayout> that) {
+exports VFat<PriorityHolder> PriorityHolder::hold (VR<PriorityLayout> that) {
 	return VFat<PriorityHolder> (PriorityImplHolder () ,that) ;
 }
 
-exports CFat<PriorityHolder> PriorityHolder::hold (CREF<PriorityLayout> that) {
+exports CFat<PriorityHolder> PriorityHolder::hold (CR<PriorityLayout> that) {
 	return CFat<PriorityHolder> (PriorityImplHolder () ,that) ;
 }
 
 class ListImplHolder final implement Fat<ListHolder ,ListLayout> {
 public:
-	void prepare (CREF<Unknown> holder) override {
-		if (self.mList.exist ())
-			return ;
+	void prepare (CR<Unknown> holder) override {
 		AllocatorHolder::hold (self.mList)->prepare (holder) ;
-		clear () ;
 	}
 
-	void initialize (CREF<Unknown> holder ,CREF<LENGTH> size_) override {
+	void initialize (CR<Unknown> holder ,CR<LENGTH> size_) override {
 		AllocatorHolder::hold (self.mList)->initialize (holder ,size_) ;
 		clear () ;
 	}
 
-	void initialize (CREF<Unknown> holder ,CREF<WrapperLayout> params ,VREF<BoxLayout> item) override {
+	void initialize (CR<Unknown> holder ,CR<WrapperLayout> params ,VR<BoxLayout> item) override {
 		auto rax = from_initializer_list (params ,holder) ;
 		initialize (holder ,rax.size ()) ;
 		const auto r1x = RFat<ReflectAssign> (holder) ;
@@ -873,11 +887,11 @@ public:
 		return self.mList.length () ;
 	}
 
-	VREF<Pointer> at (CREF<INDEX> index) leftvalue override {
+	VR<Pointer> at (CR<INDEX> index) leftvalue override {
 		return self.mList.at (index) ;
 	}
 
-	CREF<Pointer> at (CREF<INDEX> index) const leftvalue override {
+	CR<Pointer> at (CR<INDEX> index) const leftvalue override {
 		return self.mList.at (index) ;
 	}
 
@@ -891,7 +905,7 @@ public:
 		return NONE ;
 	}
 
-	INDEX inext (CREF<INDEX> index) const override {
+	INDEX inext (CR<INDEX> index) const override {
 		return self.mList.bt (index).mRight ;
 	}
 
@@ -916,7 +930,8 @@ public:
 		return self.mLast ;
 	}
 
-	void add (RREF<BoxLayout> item) override {
+	void add (RR<BoxLayout> item) override {
+		check_exist () ;
 		INDEX ix = self.mList.alloc (move (item)) ;
 		self.mList.bt (ix).mLeft = self.mLast ;
 		self.mList.bt (ix).mRight = NONE ;
@@ -933,7 +948,8 @@ public:
 		self.mList.free (ix) ;
 	}
 
-	void push (RREF<BoxLayout> item) override {
+	void push (RR<BoxLayout> item) override {
+		check_exist () ;
 		INDEX ix = self.mList.alloc (move (item)) ;
 		self.mList.bt (ix).mLeft = NONE ;
 		self.mList.bt (ix).mRight = self.mFirst ;
@@ -950,7 +966,8 @@ public:
 		self.mList.free (ix) ;
 	}
 
-	INDEX insert (RREF<BoxLayout> item) override {
+	INDEX insert (RR<BoxLayout> item) override {
+		check_exist () ;
 		INDEX ret = self.mList.alloc (move (item)) ;
 		self.mList.bt (ret).mLeft = self.mLast ;
 		self.mList.bt (ret).mRight = NONE ;
@@ -959,7 +976,8 @@ public:
 		return move (ret) ;
 	}
 
-	INDEX insert (CREF<INDEX> index ,RREF<BoxLayout> item) override {
+	INDEX insert (CR<INDEX> index ,RR<BoxLayout> item) override {
+		check_exist () ;
 		assert (self.mList.used (index)) ;
 		INDEX ret = self.mList.alloc (move (item)) ;
 		INDEX ix = self.mList.bt (index).mLeft ;
@@ -970,7 +988,7 @@ public:
 		return move (ret) ;
 	}
 
-	void remove (CREF<INDEX> index) override {
+	void remove (CR<INDEX> index) override {
 		assert (!empty ()) ;
 		INDEX ix = self.mList.bt (index).mLeft ;
 		INDEX iy = self.mList.bt (index).mRight ;
@@ -979,7 +997,7 @@ public:
 		self.mList.free (index) ;
 	}
 
-	void order (CREF<Array<INDEX>> range_) override {
+	void order (CR<Array<INDEX>> range_) override {
 		assert (length () == range_.length ()) ;
 		if (range_.length () == 0)
 			return ;
@@ -1001,42 +1019,45 @@ public:
 		}
 	}
 
-	VREF<INDEX> curr_next (CREF<INDEX> index) leftvalue {
+	VR<INDEX> curr_next (CR<INDEX> index) leftvalue {
 		if (index == NONE)
 			return self.mFirst ;
 		return self.mList.bt (index).mRight ;
 	}
 
-	VREF<INDEX> curr_prev (CREF<INDEX> index) leftvalue {
+	VR<INDEX> curr_prev (CR<INDEX> index) leftvalue {
 		if (index == NONE)
 			return self.mLast ;
 		return self.mList.bt (index).mLeft ;
 	}
+
+	void check_exist () {
+		if (self.mList.exist ())
+			return ;
+		initialize (self.mList.unknown () ,0) ;
+	}
 } ;
 
-exports VFat<ListHolder> ListHolder::hold (VREF<ListLayout> that) {
+exports VFat<ListHolder> ListHolder::hold (VR<ListLayout> that) {
 	return VFat<ListHolder> (ListImplHolder () ,that) ;
 }
 
-exports CFat<ListHolder> ListHolder::hold (CREF<ListLayout> that) {
+exports CFat<ListHolder> ListHolder::hold (CR<ListLayout> that) {
 	return CFat<ListHolder> (ListImplHolder () ,that) ;
 }
 
 class ArrayListImplHolder final implement Fat<ArrayListHolder ,ArrayListLayout> {
 public:
-	void prepare (CREF<Unknown> holder) override {
-		if (self.mList.exist ())
-			return ;
+	void prepare (CR<Unknown> holder) override {
 		AllocatorHolder::hold (self.mList)->prepare (holder) ;
-		clear () ;
 	}
 
-	void initialize (CREF<Unknown> holder ,CREF<LENGTH> size_) override {
+	void initialize (CR<Unknown> holder ,CR<LENGTH> size_) override {
 		AllocatorHolder::hold (self.mList)->initialize (holder ,size_) ;
 		clear () ;
 	}
 
-	void initialize (CREF<Unknown> holder ,CREF<WrapperLayout> params ,VREF<BoxLayout> item) override {
+	void initialize (CR<Unknown> holder ,CR<WrapperLayout> params ,VR<BoxLayout> item) override {
 		auto rax = from_initializer_list (params ,holder) ;
 		initialize (holder ,rax.size ()) ;
 		const auto r1x = RFat<ReflectAssign> (holder) ;
@@ -1066,11 +1087,11 @@ public:
 		return self.mList.length () ;
 	}
 
-	VREF<Pointer> at (CREF<INDEX> index) leftvalue override {
+	VR<Pointer> at (CR<INDEX> index) leftvalue override {
 		return self.mList.at (self.mRange[index]) ;
 	}
 
-	CREF<Pointer> at (CREF<INDEX> index) const leftvalue override {
+	CR<Pointer> at (CR<INDEX> index) const leftvalue override {
 		return self.mList.at (self.mRange[index]) ;
 	}
 
@@ -1082,11 +1103,11 @@ public:
 		return self.mRange.size () ;
 	}
 
-	INDEX inext (CREF<INDEX> index) const override {
+	INDEX inext (CR<INDEX> index) const override {
 		return find_next (index + 1) ;
 	}
 
-	INDEX find_next (CREF<INDEX> index) const {
+	INDEX find_next (CR<INDEX> index) const {
 		INDEX ret = index ;
 		while (TRUE) {
 			if (ret >= self.mRange.size ())
@@ -1098,7 +1119,8 @@ public:
 		return move (ret) ;
 	}
 
-	void add (RREF<BoxLayout> item) override {
+	void add (RR<BoxLayout> item) override {
+		check_exist () ;
 		INDEX ix = self.mList.alloc (move (item)) ;
 		check_resize () ;
 		INDEX iy = find_free () ;
@@ -1107,7 +1129,8 @@ public:
 		self.mRemap = FALSE ;
 	}
 
-	INDEX insert (RREF<BoxLayout> item) override {
+	INDEX insert (RR<BoxLayout> item) override {
+		check_exist () ;
 		INDEX ix = self.mList.alloc (move (item)) ;
 		check_resize () ;
 		INDEX ret = find_free () ;
@@ -1117,7 +1140,8 @@ public:
 		return move (ret) ;
 	}
 
-	INDEX insert (CREF<INDEX> index ,RREF<BoxLayout> item) override {
+	INDEX insert (CR<INDEX> index ,RR<BoxLayout> item) override {
+		check_exist () ;
 		assert (inline_between (index ,0 ,self.mRange.size ())) ;
 		assert (!self.mList.used (self.mRange[index])) ;
 		INDEX ix = self.mList.alloc (move (item)) ;
@@ -1129,14 +1153,14 @@ public:
 		return move (ret) ;
 	}
 
-	void remove (CREF<INDEX> index) override {
+	void remove (CR<INDEX> index) override {
 		INDEX ix = self.mRange[index] ;
 		self.mRange[index] = NONE ;
 		self.mList.free (ix) ;
 		self.mRemap = FALSE ;
 	}
 
-	void order (CREF<Array<INDEX>> range_) override {
+	void order (CR<Array<INDEX>> range_) override {
 		assert (length () == range_.length ()) ;
 		if (range_.length () == 0)
 			return ;
@@ -1189,6 +1213,12 @@ public:
 		return move (ret) ;
 	}
 
+	void check_exist () {
+		if (self.mList.exist ())
+			return ;
+		initialize (self.mList.unknown () ,0) ;
+	}
+
 	void check_resize () {
 		const auto r1x = self.mList.size () ;
 		const auto r2x = self.mRange.size () ;
@@ -1202,30 +1232,28 @@ public:
 	}
 } ;
 
-exports VFat<ArrayListHolder> ArrayListHolder::hold (VREF<ArrayListLayout> that) {
+exports VFat<ArrayListHolder> ArrayListHolder::hold (VR<ArrayListLayout> that) {
 	return VFat<ArrayListHolder> (ArrayListImplHolder () ,that) ;
 }
 
-exports CFat<ArrayListHolder> ArrayListHolder::hold (CREF<ArrayListLayout> that) {
+exports CFat<ArrayListHolder> ArrayListHolder::hold (CR<ArrayListLayout> that) {
 	return CFat<ArrayListHolder> (ArrayListImplHolder () ,that) ;
 }
 
 class SortedMapImplHolder final implement Fat<SortedMapHolder ,SortedMapLayout> {
 public:
-	void prepare (CREF<Unknown> holder) override {
-		if (self.mThis.exist ())
-			return ;
-		assume (FALSE) ;
+	void prepare (CR<Unknown> holder) override {
+		noop () ;
 	}
 
-	void initialize (CREF<Unknown> holder ,CREF<LENGTH> size_) override {
+	void initialize (CR<Unknown> holder ,CR<LENGTH> size_) override {
 		self.mThis = Ref<SortedMapTree>::make () ;
 		AllocatorHolder::hold (self.mThis->mList)->initialize (holder ,size_) ;
 		self.mThis->mCheck = 0 ;
 		clear () ;
 	}
 
-	void initialize (CREF<Unknown> holder ,CREF<WrapperLayout> params ,VREF<BoxLayout> item) override {
+	void initialize (CR<Unknown> holder ,CR<WrapperLayout> params ,VR<BoxLayout> item) override {
 		auto rax = from_initializer_list (params ,holder) ;
 		initialize (holder ,rax.size ()) ;
 		const auto r1x = RFat<ReflectAssign> (holder) ;
@@ -1269,11 +1297,11 @@ public:
 		return self.mWrite ;
 	}
 
-	VREF<INDEX> at (CREF<INDEX> index) leftvalue override {
+	VR<INDEX> at (CR<INDEX> index) leftvalue override {
 		return self.mThis->mList.bt (self.mRange[index]).mMap ;
 	}
 
-	CREF<INDEX> at (CREF<INDEX> index) const leftvalue override {
+	CR<INDEX> at (CR<INDEX> index) const leftvalue override {
 		return self.mThis->mList.bt (self.mRange[index]).mMap ;
 	}
 
@@ -1287,11 +1315,12 @@ public:
 		return length () ;
 	}
 
-	INDEX inext (CREF<INDEX> index) const override {
+	INDEX inext (CR<INDEX> index) const override {
 		return index + 1 ;
 	}
 
-	void add (RREF<BoxLayout> item ,CREF<INDEX> map_) override {
+	void add (RR<BoxLayout> item ,CR<INDEX> map_) override {
+		check_exist () ;
 		INDEX ix = self.mThis->mList.alloc (move (item)) ;
 		self.mThis->mCheck++ ;
 		self.mThis->mList.bt (ix).mMap = map_ ;
@@ -1301,7 +1330,7 @@ public:
 		self.mRemap = FALSE ;
 	}
 
-	INDEX find (CREF<Pointer> item) const override {
+	INDEX find (CR<Pointer> item) const override {
 		if (!self.mThis.exist ())
 			return NONE ;
 		assert (self.mRemap) ;
@@ -1329,11 +1358,11 @@ public:
 		return NONE ;
 	}
 
-	BOOL contain (CREF<Pointer> item) const override {
+	BOOL contain (CR<Pointer> item) const override {
 		return find (item) != NONE ;
 	}
 
-	INDEX map (CREF<Pointer> item) const override {
+	INDEX map (CR<Pointer> item) const override {
 		INDEX ix = find (item) ;
 		if (ix == NONE)
 			return NONE ;
@@ -1364,7 +1393,7 @@ public:
 			if ifdo (TRUE) {
 				const auto r3x = (&self.mRange[0]) ;
 				const auto r4x = r3x + self.mRange.size () ;
-				std::sort (r3x ,r4x ,[&] (CREF<INDEX> a ,CREF<INDEX> b) {
+				std::sort (r3x ,r4x ,[&] (CR<INDEX> a ,CR<INDEX> b) {
 					return r1x->compr (rax.mList[a] ,rax.mList[b]) < ZERO ;
 				}) ;
 			}
@@ -1394,13 +1423,19 @@ public:
 		}
 		self.mRemap = TRUE ;
 	}
+
+	void check_exist () {
+		if (self.mThis.exist ())
+			return ;
+		assume (FALSE) ;
+	}
 } ;
 
-exports VFat<SortedMapHolder> SortedMapHolder::hold (VREF<SortedMapLayout> that) {
+exports VFat<SortedMapHolder> SortedMapHolder::hold (VR<SortedMapLayout> that) {
 	return VFat<SortedMapHolder> (SortedMapImplHolder () ,that) ;
 }
 
-exports CFat<SortedMapHolder> SortedMapHolder::hold (CREF<SortedMapLayout> that) {
+exports CFat<SortedMapHolder> SortedMapHolder::hold (CR<SortedMapLayout> that) {
 	return CFat<SortedMapHolder> (SortedMapImplHolder () ,that) ;
 }
 
@@ -1411,19 +1446,16 @@ struct SetChild {
 
 class SetImplHolder final implement Fat<SetHolder ,SetLayout> {
 public:
-	void prepare (CREF<Unknown> holder) override {
-		if (self.mSet.exist ())
-			return ;
+	void prepare (CR<Unknown> holder) override {
 		AllocatorHolder::hold (self.mSet)->prepare (holder) ;
-		clear () ;
 	}
 
-	void initialize (CREF<Unknown> holder ,CREF<LENGTH> size_) override {
+	void initialize (CR<Unknown> holder ,CR<LENGTH> size_) override {
 		AllocatorHolder::hold (self.mSet)->initialize (holder ,size_) ;
 		clear () ;
 	}
 
-	void initialize (CREF<Unknown> holder ,CREF<WrapperLayout> params ,VREF<BoxLayout> item) override {
+	void initialize (CR<Unknown> holder ,CR<WrapperLayout> params ,VR<BoxLayout> item) override {
 		auto rax = from_initializer_list (params ,holder) ;
 		initialize (holder ,rax.size ()) ;
 		const auto r1x = RFat<ReflectAssign> (holder) ;
@@ -1453,15 +1485,15 @@ public:
 		return self.mSet.length () ;
 	}
 
-	CREF<Pointer> at (CREF<INDEX> index) const leftvalue override {
+	CR<Pointer> at (CR<INDEX> index) const leftvalue override {
 		return self.mSet.at (index) ;
 	}
 
-	void get (CREF<INDEX> index ,VREF<INDEX> map_) const override {
+	void get (CR<INDEX> index ,VR<INDEX> map_) const override {
 		map_ = self.mSet.bt (index).mMap ;
 	}
 
-	void set (CREF<INDEX> index ,CREF<INDEX> map_) override {
+	void set (CR<INDEX> index ,CR<INDEX> map_) override {
 		self.mSet.bt (index).mMap = map_ ;
 	}
 
@@ -1473,11 +1505,11 @@ public:
 		return self.mSet.size () ;
 	}
 
-	INDEX inext (CREF<INDEX> index) const override {
+	INDEX inext (CR<INDEX> index) const override {
 		return find_next (index + 1) ;
 	}
 
-	INDEX find_next (CREF<INDEX> index) const {
+	INDEX find_next (CR<INDEX> index) const {
 		INDEX ret = index ;
 		while (TRUE) {
 			if (ret >= self.mSet.size ())
@@ -1489,7 +1521,8 @@ public:
 		return move (ret) ;
 	}
 
-	void add (RREF<BoxLayout> item ,CREF<INDEX> map_) override {
+	void add (RR<BoxLayout> item ,CR<INDEX> map_) override {
+		check_exist () ;
 		if ifdo (TRUE) {
 			INDEX ix = find (BoxHolder::hold (item)->ref) ;
 			if (ix != NONE)
@@ -1504,13 +1537,13 @@ public:
 		}
 	}
 
-	BOOL red_node (CREF<INDEX> curr) const {
+	BOOL red_node (CR<INDEX> curr) const {
 		if (curr == NONE)
 			return FALSE ;
 		return self.mSet.bt (curr).mRed ;
 	}
 
-	void update_emplace (CREF<INDEX> curr) {
+	void update_emplace (CR<INDEX> curr) {
 		INDEX ix = self.mRoot ;
 		auto rax = binary_child (NONE ,ZERO) ;
 		const auto r1x = RFat<ReflectCompr> (self.mSet.unknown ()) ;
@@ -1526,7 +1559,7 @@ public:
 		curr_prev (curr ,rax.mBin) = rax.mUp ;
 	}
 
-	void update_insert (CREF<INDEX> curr) {
+	void update_insert (CR<INDEX> curr) {
 		INDEX ix = curr ;
 		INDEX iy = self.mSet.bt (ix).mUp ;
 		while (TRUE) {
@@ -1548,7 +1581,7 @@ public:
 		self.mSet.bt (self.mRoot).mRed = FALSE ;
 	}
 
-	void update_insert_left (CREF<INDEX> curr) {
+	void update_insert_left (CR<INDEX> curr) {
 		INDEX ix = self.mSet.bt (curr).mUp ;
 		INDEX iy = self.mSet.bt (ix).mUp ;
 		auto act = TRUE ;
@@ -1578,7 +1611,7 @@ public:
 		}
 	}
 
-	void update_insert_right (CREF<INDEX> curr) {
+	void update_insert_right (CR<INDEX> curr) {
 		INDEX ix = self.mSet.bt (curr).mUp ;
 		INDEX iy = self.mSet.bt (ix).mUp ;
 		auto act = TRUE ;
@@ -1608,7 +1641,7 @@ public:
 		}
 	}
 
-	INDEX find (CREF<Pointer> item) const override {
+	INDEX find (CR<Pointer> item) const override {
 		if (!self.mSet.exist ())
 			return NONE ;
 		INDEX ret = self.mRoot ;
@@ -1625,18 +1658,18 @@ public:
 		return move (ret) ;
 	}
 
-	BOOL contain (CREF<Pointer> item) const override {
+	BOOL contain (CR<Pointer> item) const override {
 		return find (item) != NONE ;
 	}
 
-	INDEX map (CREF<Pointer> item) const override {
+	INDEX map (CR<Pointer> item) const override {
 		INDEX ix = find (item) ;
 		if (ix == NONE)
 			return NONE ;
 		return self.mSet.bt (ix).mMap ;
 	}
 
-	void remove (CREF<INDEX> index) override {
+	void remove (CR<INDEX> index) override {
 		if ifdo (TRUE) {
 			if (self.mSet.bt (index).mLeft == NONE)
 				discard ;
@@ -1666,7 +1699,7 @@ public:
 		self.mSet.free (index) ;
 	}
 
-	INDEX find_successor (CREF<INDEX> index) const {
+	INDEX find_successor (CR<INDEX> index) const {
 		INDEX ret = self.mSet.bt (index).mRight ;
 		while (TRUE) {
 			if (ret == NONE)
@@ -1679,7 +1712,7 @@ public:
 		return move (ret) ;
 	}
 
-	void eswap (CREF<INDEX> index1 ,CREF<INDEX> index2) {
+	void eswap (CR<INDEX> index1 ,CR<INDEX> index2) {
 		if (index1 == index2)
 			return ;
 		const auto r1x = parent (index1) ;
@@ -1701,7 +1734,7 @@ public:
 		swap (self.mSet.bt (index1).mRight ,self.mSet.bt (index2).mRight) ;
 	}
 
-	void update_remove (CREF<SetChild> curr) {
+	void update_remove (CR<SetChild> curr) {
 		INDEX ix = curr_next (curr) ;
 		INDEX iy = curr.mUp ;
 		while (TRUE) {
@@ -1731,7 +1764,7 @@ public:
 		}
 	}
 
-	void update_remove_left (CREF<INDEX> curr) {
+	void update_remove_left (CR<INDEX> curr) {
 		INDEX ix = self.mSet.bt (curr).mRight ;
 		if ifdo (TRUE) {
 			if (!red_node (ix))
@@ -1776,7 +1809,7 @@ public:
 		}
 	}
 
-	void update_remove_right (CREF<INDEX> curr) {
+	void update_remove_right (CR<INDEX> curr) {
 		INDEX ix = self.mSet.bt (curr).mLeft ;
 		if ifdo (TRUE) {
 			if (!red_node (ix))
@@ -1821,14 +1854,14 @@ public:
 		}
 	}
 
-	void erase (CREF<Pointer> item) override {
+	void erase (CR<Pointer> item) override {
 		INDEX ix = find (item) ;
 		if (ix == NONE)
 			return ;
 		remove (ix) ;
 	}
 
-	void rotate_left (CREF<INDEX> curr) {
+	void rotate_left (CR<INDEX> curr) {
 		INDEX ix = curr ;
 		INDEX iy = self.mSet.bt (ix).mRight ;
 		INDEX iz = self.mSet.bt (iy).mLeft ;
@@ -1843,7 +1876,7 @@ public:
 		curr_prev (ix ,r3x.mBin) = r3x.mUp ;
 	}
 
-	void rotate_right (CREF<INDEX> curr) {
+	void rotate_right (CR<INDEX> curr) {
 		INDEX ix = curr ;
 		INDEX iy = self.mSet.bt (ix).mLeft ;
 		INDEX iz = self.mSet.bt (iy).mRight ;
@@ -1858,35 +1891,35 @@ public:
 		curr_prev (ix ,r3x.mBin) = r3x.mUp ;
 	}
 
-	SetChild parent (CREF<INDEX> index) const {
+	SetChild parent (CR<INDEX> index) const {
 		SetChild ret ;
 		ret.mUp = self.mSet.bt (index).mUp ;
 		ret.mBin = self.mSet.bt (index).mBin ;
 		return move (ret) ;
 	}
 
-	SetChild left_child (CREF<INDEX> index) const {
+	SetChild left_child (CR<INDEX> index) const {
 		SetChild ret ;
 		ret.mUp = index ;
 		ret.mBin = FALSE ;
 		return move (ret) ;
 	}
 
-	SetChild right_child (CREF<INDEX> index) const {
+	SetChild right_child (CR<INDEX> index) const {
 		SetChild ret ;
 		ret.mUp = index ;
 		ret.mBin = TRUE ;
 		return move (ret) ;
 	}
 
-	SetChild binary_child (CREF<INDEX> index ,CREF<FLAG> compr_) const {
+	SetChild binary_child (CR<INDEX> index ,CR<FLAG> compr_) const {
 		SetChild ret ;
 		ret.mUp = index ;
 		ret.mBin = BOOL (compr_ > 0) ;
 		return move (ret) ;
 	}
 
-	VREF<INDEX> curr_next (CREF<SetChild> index) leftvalue {
+	VR<INDEX> curr_next (CR<SetChild> index) leftvalue {
 		if (index.mUp == NONE)
 			return self.mRoot ;
 		if (index.mBin)
@@ -1894,7 +1927,7 @@ public:
 		return self.mSet.bt (index.mUp).mLeft ;
 	}
 
-	CREF<INDEX> curr_next (CREF<SetChild> index) const leftvalue {
+	CR<INDEX> curr_next (CR<SetChild> index) const leftvalue {
 		if (index.mUp == NONE)
 			return self.mRoot ;
 		if (index.mBin)
@@ -1902,7 +1935,7 @@ public:
 		return self.mSet.bt (index.mUp).mLeft ;
 	}
 
-	VREF<INDEX> curr_prev (CREF<INDEX> index ,CREF<BOOL> binary) leftvalue {
+	VR<INDEX> curr_prev (CR<INDEX> index ,CR<BOOL> binary) leftvalue {
 		if ifdo (TRUE) {
 			if (index != NONE)
 				discard ;
@@ -1923,13 +1956,19 @@ public:
 		assert (FALSE) ;
 		return self.mTop ;
 	}
+
+	void check_exist () {
+		if (self.mSet.exist ())
+			return ;
+		initialize (self.mSet.unknown () ,0) ;
+	}
 } ;
 
-exports VFat<SetHolder> SetHolder::hold (VREF<SetLayout> that) {
+exports VFat<SetHolder> SetHolder::hold (VR<SetLayout> that) {
 	return VFat<SetHolder> (SetImplHolder () ,that) ;
 }
 
-exports CFat<SetHolder> SetHolder::hold (CREF<SetLayout> that) {
+exports CFat<SetHolder> SetHolder::hold (CR<SetLayout> that) {
 	return CFat<SetHolder> (SetImplHolder () ,that) ;
 }
 
@@ -1941,7 +1980,7 @@ struct FUNCTION_fnvhash {
 	}
 
 	template <class ARG1>
-	forceinline CHAR operator() (CREF<ARG1> src ,CREF<CHAR> val) const {
+	forceinline CHAR operator() (CR<ARG1> src ,CR<CHAR> val) const {
 		return HashProc::fnvhash32 (Pointer::from (src) ,SIZE_OF<ARG1>::expr ,val) ;
 	}
 } ;
@@ -1955,7 +1994,7 @@ struct FUNCTION_fnvhash {
 	}
 
 	template <class ARG1>
-	forceinline QUAD operator() (CREF<ARG1> src ,CREF<QUAD> val) const {
+	forceinline QUAD operator() (CR<ARG1> src ,CR<QUAD> val) const {
 		return HashProc::fnvhash64 (Pointer::from (src) ,SIZE_OF<ARG1>::expr ,val) ;
 	}
 } ;
@@ -1965,7 +2004,7 @@ static constexpr auto fnvhash = FUNCTION_fnvhash () ;
 
 class FriendHashcodeVisitorBinder final implement Fat<FriendVisitor ,HashcodeVisitor> {
 public:
-	static VFat<FriendVisitor> hold (VREF<HashcodeVisitor> that) {
+	static VFat<FriendVisitor> hold (VR<HashcodeVisitor> that) {
 		return VFat<FriendVisitor> (FriendHashcodeVisitorBinder () ,that) ;
 	}
 
@@ -1988,40 +2027,36 @@ public:
 		return r2x ;
 	}
 
-	void push (CREF<BYTE> a) override {
+	void push (CR<BYTE> a) override {
 		self.mCode = fnvhash (a ,self.mCode) ;
 	}
 
-	void push (CREF<WORD> a) override {
+	void push (CR<WORD> a) override {
 		self.mCode = fnvhash (a ,self.mCode) ;
 	}
 
-	void push (CREF<CHAR> a) override {
+	void push (CR<CHAR> a) override {
 		self.mCode = fnvhash (a ,self.mCode) ;
 	}
 
-	void push (CREF<QUAD> a) override {
+	void push (CR<QUAD> a) override {
 		self.mCode = fnvhash (a ,self.mCode) ;
 	}
 } ;
 
 class HashSetImplHolder final implement Fat<HashSetHolder ,HashSetLayout> {
 public:
-	void prepare (CREF<Unknown> holder) override {
-		if (self.mSet.exist ())
-			return ;
+	void prepare (CR<Unknown> holder) override {
 		AllocatorHolder::hold (self.mSet)->prepare (holder) ;
-		self.mVisitor = SharedRef<HashcodeVisitor>::make () ;
-		clear () ;
 	}
 
-	void initialize (CREF<Unknown> holder ,CREF<LENGTH> size_) override {
+	void initialize (CR<Unknown> holder ,CR<LENGTH> size_) override {
 		AllocatorHolder::hold (self.mSet)->initialize (holder ,size_) ;
 		self.mVisitor = SharedRef<HashcodeVisitor>::make () ;
 		clear () ;
 	}
 
-	void initialize (CREF<Unknown> holder ,CREF<WrapperLayout> params ,VREF<BoxLayout> item) override {
+	void initialize (CR<Unknown> holder ,CR<WrapperLayout> params ,VR<BoxLayout> item) override {
 		auto rax = from_initializer_list (params ,holder) ;
 		initialize (holder ,rax.size ()) ;
 		const auto r1x = RFat<ReflectAssign> (holder) ;
@@ -2050,15 +2085,15 @@ public:
 		return self.mSet.length () ;
 	}
 
-	CREF<Pointer> at (CREF<INDEX> index) const leftvalue override {
+	CR<Pointer> at (CR<INDEX> index) const leftvalue override {
 		return self.mSet.at (index) ;
 	}
 
-	void get (CREF<INDEX> index ,VREF<INDEX> map_) const override {
+	void get (CR<INDEX> index ,VR<INDEX> map_) const override {
 		map_ = self.mSet.bt (index).mMap ;
 	}
 
-	void set (CREF<INDEX> index ,CREF<INDEX> map_) override {
+	void set (CR<INDEX> index ,CR<INDEX> map_) override {
 		self.mSet.bt (index).mMap = map_ ;
 	}
 
@@ -2070,11 +2105,11 @@ public:
 		return self.mSet.size () ;
 	}
 
-	INDEX inext (CREF<INDEX> index) const override {
+	INDEX inext (CR<INDEX> index) const override {
 		return find_next (index + 1) ;
 	}
 
-	INDEX find_next (CREF<INDEX> index) const {
+	INDEX find_next (CR<INDEX> index) const {
 		INDEX ret = index ;
 		while (TRUE) {
 			if (ret >= self.mSet.size ())
@@ -2086,7 +2121,8 @@ public:
 		return move (ret) ;
 	}
 
-	void add (RREF<BoxLayout> item ,CREF<INDEX> map_) override {
+	void add (RR<BoxLayout> item ,CR<INDEX> map_) override {
+		check_exist () ;
 		if ifdo (TRUE) {
 			INDEX ix = find (BoxHolder::hold (item)->ref) ;
 			if (ix != NONE)
@@ -2099,7 +2135,7 @@ public:
 		}
 	}
 
-	FLAG hashcode (CREF<Pointer> item) const {
+	FLAG hashcode (CR<Pointer> item) const {
 		const auto r1x = FriendHashcodeVisitorBinder::hold (self.mVisitor) ;
 		r1x->reset () ;
 		const auto r2x = RFat<ReflectVisit> (self.mSet.unknown ()) ;
@@ -2107,14 +2143,14 @@ public:
 		return r1x->fetch () ;
 	}
 
-	void update_emplace (CREF<INDEX> curr) {
+	void update_emplace (CR<INDEX> curr) {
 		assert (self.mRange.size () > 0) ;
 		INDEX ix = self.mSet.bt (curr).mHash % self.mRange.size () ;
 		self.mSet.bt (curr).mDown = self.mRange[ix] ;
 		self.mRange[ix] = curr ;
 	}
 
-	INDEX find (CREF<Pointer> item) const override {
+	INDEX find (CR<Pointer> item) const override {
 		if (!self.mSet.exist ())
 			return NONE ;
 		if (self.mRange.size () == 0)
@@ -2139,18 +2175,18 @@ public:
 		return move (ret) ;
 	}
 
-	BOOL contain (CREF<Pointer> item) const override {
+	BOOL contain (CR<Pointer> item) const override {
 		return find (item) != NONE ;
 	}
 
-	INDEX map (CREF<Pointer> item) const override {
+	INDEX map (CR<Pointer> item) const override {
 		INDEX ix = find (item) ;
 		if (ix == NONE)
 			return NONE ;
 		return self.mSet.bt (ix).mMap ;
 	}
 
-	void remove (CREF<INDEX> index) override {
+	void remove (CR<INDEX> index) override {
 		INDEX ix = self.mSet.bt (index).mHash % self.mRange.size () ;
 		INDEX iy = find_successor (ix ,index) ;
 		auto act = TRUE ;
@@ -2165,7 +2201,7 @@ public:
 		self.mSet.free (index) ;
 	}
 
-	INDEX find_successor (CREF<INDEX> first ,CREF<INDEX> index) const {
+	INDEX find_successor (CR<INDEX> first ,CR<INDEX> index) const {
 		if (first == index)
 			return NONE ;
 		INDEX ret = first ;
@@ -2178,14 +2214,20 @@ public:
 		return move (ret) ;
 	}
 
-	void erase (CREF<Pointer> item) override {
+	void erase (CR<Pointer> item) override {
 		INDEX ix = find (item) ;
 		if (ix == NONE)
 			return ;
 		remove (ix) ;
 	}
 
-	void check_resize (CREF<INDEX> curr) {
+	void check_exist () {
+		if (self.mSet.exist ())
+			return ;
+		initialize (self.mSet.unknown () ,0) ;
+	}
+
+	void check_resize (CR<INDEX> curr) {
 		const auto r1x = self.mSet.size () ;
 		const auto r2x = self.mRange.size () ;
 		if (r2x == r1x)
@@ -2203,17 +2245,17 @@ public:
 	}
 } ;
 
-exports VFat<HashSetHolder> HashSetHolder::hold (VREF<HashSetLayout> that) {
+exports VFat<HashSetHolder> HashSetHolder::hold (VR<HashSetLayout> that) {
 	return VFat<HashSetHolder> (HashSetImplHolder () ,that) ;
 }
 
-exports CFat<HashSetHolder> HashSetHolder::hold (CREF<HashSetLayout> that) {
+exports CFat<HashSetHolder> HashSetHolder::hold (CR<HashSetLayout> that) {
 	return CFat<HashSetHolder> (HashSetImplHolder () ,that) ;
 }
 
 class BitSetImplHolder final implement Fat<BitSetHolder ,BitSetLayout> {
 public:
-	void initialize (CREF<LENGTH> size_) override {
+	void initialize (CR<LENGTH> size_) override {
 		if (size_ <= 0)
 			return ;
 		const auto r1x = (size_ + 8 - 1) / 8 ;
@@ -2222,7 +2264,7 @@ public:
 		clear () ;
 	}
 
-	void initialize (CREF<LENGTH> size_ ,CREF<WrapperLayout> params ,VREF<BoxLayout> item) override {
+	void initialize (CR<LENGTH> size_ ,CR<WrapperLayout> params ,VR<BoxLayout> item) override {
 		const auto r1x = Unknown (BufferUnknownBinder<INDEX> ()) ;
 		auto rax = from_initializer_list (params ,r1x) ;
 		initialize (size_) ;
@@ -2235,7 +2277,7 @@ public:
 		}
 	}
 
-	void initialize (CREF<BitSetLayout> that) override {
+	void initialize (CR<BitSetLayout> that) override {
 		const auto r1x = BitSetHolder::hold (that)->size () ;
 		if (r1x == 0)
 			return ;
@@ -2261,12 +2303,12 @@ public:
 		return move (ret) ;
 	}
 
-	void get (CREF<INDEX> index ,VREF<BOOL> item) const override {
+	void get (CR<INDEX> index ,VR<BOOL> item) const override {
 		const auto r1x = ByteProc::pow_bit (index % 8) ;
 		item = ByteProc::any_bit (self.mSet[index / 8] ,r1x) ;
 	}
 
-	void set (CREF<INDEX> index ,CREF<BOOL> item) override {
+	void set (CR<INDEX> index ,CR<BOOL> item) override {
 		const auto r1x = ByteProc::pow_bit (index % 8) ;
 		auto act = TRUE ;
 		if ifdo (act) {
@@ -2288,7 +2330,7 @@ public:
 		return size () ;
 	}
 
-	INDEX inext (CREF<INDEX> index) const override {
+	INDEX inext (CR<INDEX> index) const override {
 		INDEX ix = index / 8 ;
 		if ifdo (TRUE) {
 			const auto r1x = index % 8 + 1 ;
@@ -2307,7 +2349,7 @@ public:
 		return inline_min (r6x ,size ()) ;
 	}
 
-	INDEX find_next (CREF<INDEX> index) const {
+	INDEX find_next (CR<INDEX> index) const {
 		INDEX ix = index ;
 		while (TRUE) {
 			if (ix >= self.mSet.size ())
@@ -2323,7 +2365,7 @@ public:
 		return ix * 8 ;
 	}
 
-	BOOL equal (CREF<BitSetLayout> that) const override {
+	BOOL equal (CR<BitSetLayout> that) const override {
 		const auto r1x = self.mSet.size () ;
 		const auto r2x = that.mSet.size () ;
 		if (r1x != r2x)
@@ -2336,7 +2378,7 @@ public:
 		return TRUE ;
 	}
 
-	FLAG compr (CREF<BitSetLayout> that) const override {
+	FLAG compr (CR<BitSetLayout> that) const override {
 		const auto r1x = self.mSet.size () ;
 		const auto r2x = that.mSet.size () ;
 		const auto r3x = inline_compr (r1x ,r2x) ;
@@ -2350,7 +2392,7 @@ public:
 		return ZERO ;
 	}
 
-	void visit (VREF<FriendVisitor> visitor) const override {
+	void visit (VR<FriendVisitor> visitor) const override {
 		visitor.enter () ;
 		const auto r1x = self.mSet.size () ;
 		for (auto &&i : range (0 ,r1x)) {
@@ -2359,13 +2401,13 @@ public:
 		visitor.leave () ;
 	}
 
-	void add (RREF<BoxLayout> item) override {
+	void add (RR<BoxLayout> item) override {
 		const auto r1x = bitwise[TYPE<INDEX>::expr] (BoxHolder::hold (item)->ref) ;
 		assume (inline_between (r1x ,0 ,size ())) ;
 		set (r1x ,TRUE) ;
 	}
 
-	BOOL contain (CREF<Pointer> item) const override {
+	BOOL contain (CR<Pointer> item) const override {
 		const auto r1x = bitwise[TYPE<INDEX>::expr] (item) ;
 		if (!inline_between (r1x ,0 ,size ()))
 			return FALSE ;
@@ -2374,21 +2416,21 @@ public:
 		return move (ret) ;
 	}
 
-	void erase (CREF<Pointer> item) override {
+	void erase (CR<Pointer> item) override {
 		const auto r1x = bitwise[TYPE<INDEX>::expr] (item) ;
 		if (!inline_between (r1x ,0 ,size ()))
 			return ;
 		set (r1x ,FALSE) ;
 	}
 
-	void fill (CREF<BYTE> item) override {
+	void fill (CR<BYTE> item) override {
 		for (auto &&i : range (0 ,self.mSet.size ())) {
 			self.mSet[i] = BYTE (0X00) ;
 		}
 		check_mask (self) ;
 	}
 
-	BitSetLayout sand (CREF<BitSetLayout> that) const override {
+	BitSetLayout sand (CR<BitSetLayout> that) const override {
 		BitSetLayout ret ;
 		const auto r1x = size () ;
 		const auto r2x = BitSetHolder::hold (that)->size () ;
@@ -2401,7 +2443,7 @@ public:
 		return move (ret) ;
 	}
 
-	BitSetLayout sor (CREF<BitSetLayout> that) const override {
+	BitSetLayout sor (CR<BitSetLayout> that) const override {
 		BitSetLayout ret ;
 		const auto r1x = size () ;
 		const auto r2x = BitSetHolder::hold (that)->size () ;
@@ -2414,7 +2456,7 @@ public:
 		return move (ret) ;
 	}
 
-	BitSetLayout sxor (CREF<BitSetLayout> that) const override {
+	BitSetLayout sxor (CR<BitSetLayout> that) const override {
 		BitSetLayout ret ;
 		const auto r1x = size () ;
 		const auto r2x = BitSetHolder::hold (that)->size () ;
@@ -2427,7 +2469,7 @@ public:
 		return move (ret) ;
 	}
 
-	BitSetLayout ssub (CREF<BitSetLayout> that) const override {
+	BitSetLayout ssub (CR<BitSetLayout> that) const override {
 		BitSetLayout ret ;
 		const auto r1x = size () ;
 		const auto r2x = BitSetHolder::hold (that)->size () ;
@@ -2451,7 +2493,7 @@ public:
 		return move (ret) ;
 	}
 
-	static void check_mask (VREF<BitSetLayout> that) {
+	static void check_mask (VR<BitSetLayout> that) {
 		INDEX ix = that.mSet.size () - 1 ;
 		if (ix <= 0)
 			return ;
@@ -2461,11 +2503,11 @@ public:
 	}
 } ;
 
-exports VFat<BitSetHolder> BitSetHolder::hold (VREF<BitSetLayout> that) {
+exports VFat<BitSetHolder> BitSetHolder::hold (VR<BitSetLayout> that) {
 	return VFat<BitSetHolder> (BitSetImplHolder () ,that) ;
 }
 
-exports CFat<BitSetHolder> BitSetHolder::hold (CREF<BitSetLayout> that) {
+exports CFat<BitSetHolder> BitSetHolder::hold (CR<BitSetLayout> that) {
 	return CFat<BitSetHolder> (BitSetImplHolder () ,that) ;
 }
 } ;

@@ -15,33 +15,33 @@ namespace CSC {
 struct StreamProcLayout ;
 
 struct StreamProcHolder implement Interface {
-	imports CREF<OfThis<UniqueRef<StreamProcLayout>>> expr_m () ;
-	imports VFat<StreamProcHolder> hold (VREF<StreamProcLayout> that) ;
-	imports CFat<StreamProcHolder> hold (CREF<StreamProcLayout> that) ;
+	imports CR<OfThis<UniqueRef<StreamProcLayout>>> expr_m () ;
+	imports VFat<StreamProcHolder> hold (VR<StreamProcLayout> that) ;
+	imports CFat<StreamProcHolder> hold (CR<StreamProcLayout> that) ;
 
 	virtual void initialize () = 0 ;
 	virtual BOOL big_endian () const = 0 ;
-	virtual BOOL is_blank (CREF<STRU32> str) const = 0 ;
-	virtual BOOL is_space (CREF<STRU32> str) const = 0 ;
-	virtual BOOL is_endline (CREF<STRU32> str) const = 0 ;
-	virtual BOOL is_punct (CREF<STRU32> str) const = 0 ;
-	virtual BOOL is_hyphen (CREF<STRU32> str) const = 0 ;
-	virtual BOOL is_alpha (CREF<STRU32> str) const = 0 ;
-	virtual STRU32 alpha_lower (CREF<STRU32> str) const = 0 ;
-	virtual STRU32 alpha_upper (CREF<STRU32> str) const = 0 ;
-	virtual BOOL is_digit (CREF<STRU32> str) const = 0 ;
-	virtual BOOL is_hex_digit (CREF<STRU32> str) const = 0 ;
-	virtual INDEX hex_from_str (CREF<STRU32> str) const = 0 ;
-	virtual STRU32 str_from_hex (CREF<INDEX> hex) const = 0 ;
-	virtual BOOL is_word (CREF<STRU32> str) const = 0 ;
-	virtual BOOL is_ctrl (CREF<STRU32> str) const = 0 ;
-	virtual STRU32 word_from_ctrl (CREF<STRU32> str) const = 0 ;
-	virtual STRU32 ctrl_from_word (CREF<STRU32> str) const = 0 ;
+	virtual BOOL is_blank (CR<STRU32> str) const = 0 ;
+	virtual BOOL is_space (CR<STRU32> str) const = 0 ;
+	virtual BOOL is_endline (CR<STRU32> str) const = 0 ;
+	virtual BOOL is_punct (CR<STRU32> str) const = 0 ;
+	virtual BOOL is_hyphen (CR<STRU32> str) const = 0 ;
+	virtual BOOL is_alpha (CR<STRU32> str) const = 0 ;
+	virtual STRU32 alpha_lower (CR<STRU32> str) const = 0 ;
+	virtual STRU32 alpha_upper (CR<STRU32> str) const = 0 ;
+	virtual BOOL is_digit (CR<STRU32> str) const = 0 ;
+	virtual BOOL is_hex_digit (CR<STRU32> str) const = 0 ;
+	virtual INDEX hex_from_str (CR<STRU32> str) const = 0 ;
+	virtual STRU32 str_from_hex (CR<INDEX> hex) const = 0 ;
+	virtual BOOL is_word (CR<STRU32> str) const = 0 ;
+	virtual BOOL is_ctrl (CR<STRU32> str) const = 0 ;
+	virtual STRU32 word_from_ctrl (CR<STRU32> str) const = 0 ;
+	virtual STRU32 ctrl_from_word (CR<STRU32> str) const = 0 ;
 } ;
 
 class StreamProc implement OfThis<UniqueRef<StreamProcLayout>> {
 public:
-	static CREF<StreamProc> expr_m () {
+	static CR<StreamProc> expr_m () {
 		return keep[TYPE<StreamProc>::expr] (StreamProcHolder::expr) ;
 	}
 
@@ -49,67 +49,67 @@ public:
 		return StreamProcHolder::hold (expr)->big_endian () ;
 	}
 
-	static BOOL is_blank (CREF<STRU32> str) {
+	static BOOL is_blank (CR<STRU32> str) {
 		return StreamProcHolder::hold (expr)->is_blank (str) ;
 	}
 
-	static BOOL is_space (CREF<STRU32> str) {
+	static BOOL is_space (CR<STRU32> str) {
 		return StreamProcHolder::hold (expr)->is_space (str) ;
 	}
 
-	static BOOL is_endline (CREF<STRU32> str) {
+	static BOOL is_endline (CR<STRU32> str) {
 		return StreamProcHolder::hold (expr)->is_endline (str) ;
 	}
 
-	static BOOL is_punct (CREF<STRU32> str) {
+	static BOOL is_punct (CR<STRU32> str) {
 		return StreamProcHolder::hold (expr)->is_punct (str) ;
 	}
 
-	static BOOL is_hyphen (CREF<STRU32> str) {
+	static BOOL is_hyphen (CR<STRU32> str) {
 		return StreamProcHolder::hold (expr)->is_hyphen (str) ;
 	}
 
-	static BOOL is_alpha (CREF<STRU32> str) {
+	static BOOL is_alpha (CR<STRU32> str) {
 		return StreamProcHolder::hold (expr)->is_alpha (str) ;
 	}
 
-	static STRU32 alpha_lower (CREF<STRU32> str) {
+	static STRU32 alpha_lower (CR<STRU32> str) {
 		return StreamProcHolder::hold (expr)->alpha_lower (str) ;
 	}
 
-	static STRU32 alpha_upper (CREF<STRU32> str) {
+	static STRU32 alpha_upper (CR<STRU32> str) {
 		return StreamProcHolder::hold (expr)->alpha_upper (str) ;
 	}
 
-	static BOOL is_digit (CREF<STRU32> str) {
+	static BOOL is_digit (CR<STRU32> str) {
 		return StreamProcHolder::hold (expr)->is_digit (str) ;
 	}
 
-	static BOOL is_hex_digit (CREF<STRU32> str) {
+	static BOOL is_hex_digit (CR<STRU32> str) {
 		return StreamProcHolder::hold (expr)->is_hex_digit (str) ;
 	}
 
-	static INDEX hex_from_str (CREF<STRU32> str) {
+	static INDEX hex_from_str (CR<STRU32> str) {
 		return StreamProcHolder::hold (expr)->hex_from_str (str) ;
 	}
 
-	static STRU32 str_from_hex (CREF<INDEX> hex) {
+	static STRU32 str_from_hex (CR<INDEX> hex) {
 		return StreamProcHolder::hold (expr)->str_from_hex (hex) ;
 	}
 
-	static BOOL is_word (CREF<STRU32> str) {
+	static BOOL is_word (CR<STRU32> str) {
 		return StreamProcHolder::hold (expr)->is_word (str) ;
 	}
 
-	static BOOL is_ctrl (CREF<STRU32> str) {
+	static BOOL is_ctrl (CR<STRU32> str) {
 		return StreamProcHolder::hold (expr)->is_ctrl (str) ;
 	}
 
-	static STRU32 word_from_ctrl (CREF<STRU32> str) {
+	static STRU32 word_from_ctrl (CR<STRU32> str) {
 		return StreamProcHolder::hold (expr)->word_from_ctrl (str) ;
 	}
 
-	static STRU32 ctrl_from_word (CREF<STRU32> str) {
+	static STRU32 ctrl_from_word (CR<STRU32> str) {
 		return StreamProcHolder::hold (expr)->ctrl_from_word (str) ;
 	}
 } ;
@@ -119,8 +119,8 @@ struct StreamShape {
 	INDEX mWrite ;
 } ;
 
-static constexpr auto CLS = RANK1 () ;
-static constexpr auto BOM = RANK2 () ;
+static constexpr auto BOM = RANK1 () ;
+static constexpr auto CAT = RANK2 () ;
 static constexpr auto GAP = RANK3 () ;
 static constexpr auto EOS = RANK4 () ;
 
@@ -136,7 +136,7 @@ trait HAS_FRIEND_READ_HELP<A ,OTHERWISE> {
 } ;
 
 template <class A>
-trait HAS_FRIEND_READ_HELP<A ,REQUIRE<KILL<ENUM_TRUE ,typeof (nullof (A).friend_read (nullof (VREF<FriendReader>)))>>> {
+trait HAS_FRIEND_READ_HELP<A ,REQUIRE<KILL<ENUM_TRUE ,typeof (nullof (A).friend_read (nullof (VR<FriendReader>)))>>> {
 	using RET = ENUM_TRUE ;
 } ;
 
@@ -145,32 +145,28 @@ using HAS_FRIEND_READ = typename HAS_FRIEND_READ_HELP<A ,ALWAYS>::RET ;
 
 struct FriendReader implement Interface {
 	virtual void reset () = 0 ;
-	virtual void reset (CREF<StreamShape> shape) = 0 ;
+	virtual void reset (CR<StreamShape> shape) = 0 ;
 	virtual StreamShape backup () const = 0 ;
 	virtual BOOL good () const = 0 ;
-	virtual void read (VREF<BOOL> item) = 0 ;
-	virtual void read (VREF<VAL32> item) = 0 ;
-	virtual void read (VREF<VAL64> item) = 0 ;
-	virtual void read (VREF<FLT32> item) = 0 ;
-	virtual void read (VREF<FLT64> item) = 0 ;
-	virtual void read (VREF<BYTE> item) = 0 ;
-	virtual void read (VREF<WORD> item) = 0 ;
-	virtual void read (VREF<CHAR> item) = 0 ;
-	virtual void read (VREF<QUAD> item) = 0 ;
-	virtual void read (VREF<STRU32> item) = 0 ;
-	virtual void read (CREF<Slice> item) = 0 ;
-	virtual void read (VREF<String<STRA>> item) = 0 ;
-	virtual void read (VREF<String<STRW>> item) = 0 ;
-	virtual void read (VREF<String<STRU8>> item) = 0 ;
-	virtual void read (VREF<String<STRU16>> item) = 0 ;
-	virtual void read (VREF<String<STRU32>> item) = 0 ;
-	virtual void read (CREF<typeof (CLS)> item) = 0 ;
-	virtual void read (CREF<typeof (BOM)> item) = 0 ;
-	virtual void read (CREF<typeof (GAP)> item) = 0 ;
-	virtual void read (CREF<typeof (EOS)> item) = 0 ;
+	virtual void read (VR<BOOL> item) = 0 ;
+	virtual void read (VR<VAL32> item) = 0 ;
+	virtual void read (VR<VAL64> item) = 0 ;
+	virtual void read (VR<FLT32> item) = 0 ;
+	virtual void read (VR<FLT64> item) = 0 ;
+	virtual void read (VR<BYTE> item) = 0 ;
+	virtual void read (VR<WORD> item) = 0 ;
+	virtual void read (VR<CHAR> item) = 0 ;
+	virtual void read (VR<QUAD> item) = 0 ;
+	virtual void read (VR<STRU32> item) = 0 ;
+	virtual void read (CR<Slice> item) = 0 ;
+	virtual void read (VR<StringLayout> item) = 0 ;
+	virtual void read (CR<typeof (BOM)> item) = 0 ;
+	virtual void read (CR<typeof (CAT)> item) = 0 ;
+	virtual void read (CR<typeof (GAP)> item) = 0 ;
+	virtual void read (CR<typeof (EOS)> item) = 0 ;
 
 	template <class ARG1 ,class = REQUIRE<HAS_FRIEND_READ<ARG1>>>
-	void read (VREF<ARG1> item) {
+	void read (XR<ARG1> item) {
 		item.friend_read (thiz) ;
 	}
 } ;
@@ -178,7 +174,7 @@ struct FriendReader implement Interface {
 template <class A>
 class FriendReaderBinder final implement Fat<FriendReader ,A> {
 public:
-	static VFat<FriendReader> hold (VREF<A> that) {
+	static VFat<FriendReader> hold (VR<A> that) {
 		return VFat<FriendReader> (FriendReaderBinder () ,that) ;
 	}
 
@@ -186,7 +182,7 @@ public:
 		return thiz.self.reset () ;
 	}
 
-	void reset (CREF<StreamShape> shape) override {
+	void reset (CR<StreamShape> shape) override {
 		return thiz.self.reset (shape) ;
 	}
 
@@ -198,83 +194,67 @@ public:
 		return thiz.self.good () ;
 	}
 
-	void read (VREF<BOOL> item) override {
+	void read (VR<BOOL> item) override {
 		return thiz.self.read (item) ;
 	}
 
-	void read (VREF<VAL32> item) override {
+	void read (VR<VAL32> item) override {
 		return thiz.self.read (item) ;
 	}
 
-	void read (VREF<VAL64> item) override {
+	void read (VR<VAL64> item) override {
 		return thiz.self.read (item) ;
 	}
 
-	void read (VREF<FLT32> item) override {
+	void read (VR<FLT32> item) override {
 		return thiz.self.read (item) ;
 	}
 
-	void read (VREF<FLT64> item) override {
+	void read (VR<FLT64> item) override {
 		return thiz.self.read (item) ;
 	}
 
-	void read (VREF<BYTE> item) override {
+	void read (VR<BYTE> item) override {
 		return thiz.self.read (item) ;
 	}
 
-	void read (VREF<WORD> item) override {
+	void read (VR<WORD> item) override {
 		return thiz.self.read (item) ;
 	}
 
-	void read (VREF<CHAR> item) override {
+	void read (VR<CHAR> item) override {
 		return thiz.self.read (item) ;
 	}
 
-	void read (VREF<QUAD> item) override {
+	void read (VR<QUAD> item) override {
 		return thiz.self.read (item) ;
 	}
 
-	void read (VREF<STRU32> item) override {
+	void read (VR<STRU32> item) override {
 		return thiz.self.read (item) ;
 	}
 
-	void read (CREF<Slice> item) override {
+	void read (CR<Slice> item) override {
 		return thiz.self.read (item) ;
 	}
 
-	void read (VREF<String<STRA>> item) override {
+	void read (VR<StringLayout> item) override {
 		return thiz.self.read (item) ;
 	}
 
-	void read (VREF<String<STRW>> item) override {
+	void read (CR<typeof (BOM)> item) override {
 		return thiz.self.read (item) ;
 	}
 
-	void read (VREF<String<STRU8>> item) override {
+	void read (CR<typeof (CAT)> item) override {
 		return thiz.self.read (item) ;
 	}
 
-	void read (VREF<String<STRU16>> item) override {
+	void read (CR<typeof (GAP)> item) override {
 		return thiz.self.read (item) ;
 	}
 
-	void read (VREF<String<STRU32>> item) override {
-		return thiz.self.read (item) ;
-	}
-
-	void read (CREF<typeof (CLS)> item) override {
-		return thiz.self.read (item) ;
-	}
-
-	void read (CREF<typeof (BOM)> item) override {
-		return thiz.self.read (item) ;
-	}
-
-	void read (CREF<typeof (GAP)> item) override {
-		return thiz.self.read (item) ;
-	}
-
-	void read (CREF<typeof (EOS)> item) override {
+	void read (CR<typeof (EOS)> item) override {
 		return thiz.self.read (item) ;
 	}
 } ;
@@ -282,43 +262,39 @@ public:
 struct ByteReaderLayout {
 	Ref<RefBuffer<BYTE>> mStream ;
 	BOOL mDiffEndian ;
-	Function<VREF<ByteReaderLayout>> mOverflow ;
+	Function<VR<ByteReaderLayout>> mOverflow ;
 	INDEX mRead ;
 	INDEX mWrite ;
 } ;
 
 struct ByteReaderHolder implement Interface {
-	imports VFat<ByteReaderHolder> hold (VREF<ByteReaderLayout> that) ;
-	imports CFat<ByteReaderHolder> hold (CREF<ByteReaderLayout> that) ;
+	imports VFat<ByteReaderHolder> hold (VR<ByteReaderLayout> that) ;
+	imports CFat<ByteReaderHolder> hold (CR<ByteReaderLayout> that) ;
 
-	virtual void initialize (RREF<Ref<RefBuffer<BYTE>>> stream) = 0 ;
-	virtual void use_overflow (CREF<Function<VREF<ByteReaderLayout>>> overflow) = 0 ;
+	virtual void initialize (RR<Ref<RefBuffer<BYTE>>> stream) = 0 ;
+	virtual void use_overflow (CR<Function<VR<ByteReaderLayout>>> overflow) = 0 ;
 	virtual LENGTH size () const = 0 ;
 	virtual LENGTH length () const = 0 ;
 	virtual void reset () = 0 ;
-	virtual void reset (CREF<StreamShape> shape) = 0 ;
+	virtual void reset (CR<StreamShape> shape) = 0 ;
 	virtual StreamShape backup () const = 0 ;
 	virtual BOOL good () const = 0 ;
-	virtual void read (VREF<BOOL> item) = 0 ;
-	virtual void read (VREF<VAL32> item) = 0 ;
-	virtual void read (VREF<VAL64> item) = 0 ;
-	virtual void read (VREF<FLT32> item) = 0 ;
-	virtual void read (VREF<FLT64> item) = 0 ;
-	virtual void read (VREF<BYTE> item) = 0 ;
-	virtual void read (VREF<WORD> item) = 0 ;
-	virtual void read (VREF<CHAR> item) = 0 ;
-	virtual void read (VREF<QUAD> item) = 0 ;
-	virtual void read (VREF<STRU32> item) = 0 ;
-	virtual void read (CREF<Slice> item) = 0 ;
-	virtual void read (VREF<String<STRA>> item) = 0 ;
-	virtual void read (VREF<String<STRW>> item) = 0 ;
-	virtual void read (VREF<String<STRU8>> item) = 0 ;
-	virtual void read (VREF<String<STRU16>> item) = 0 ;
-	virtual void read (VREF<String<STRU32>> item) = 0 ;
-	virtual void read (CREF<typeof (CLS)> item) = 0 ;
-	virtual void read (CREF<typeof (BOM)> item) = 0 ;
-	virtual void read (CREF<typeof (GAP)> item) = 0 ;
-	virtual void read (CREF<typeof (EOS)> item) = 0 ;
+	virtual void read (VR<BOOL> item) = 0 ;
+	virtual void read (VR<VAL32> item) = 0 ;
+	virtual void read (VR<VAL64> item) = 0 ;
+	virtual void read (VR<FLT32> item) = 0 ;
+	virtual void read (VR<FLT64> item) = 0 ;
+	virtual void read (VR<BYTE> item) = 0 ;
+	virtual void read (VR<WORD> item) = 0 ;
+	virtual void read (VR<CHAR> item) = 0 ;
+	virtual void read (VR<QUAD> item) = 0 ;
+	virtual void read (VR<STRU32> item) = 0 ;
+	virtual void read (CR<Slice> item) = 0 ;
+	virtual void read (VR<StringLayout> item) = 0 ;
+	virtual void read (CR<typeof (BOM)> item) = 0 ;
+	virtual void read (CR<typeof (CAT)> item) = 0 ;
+	virtual void read (CR<typeof (GAP)> item) = 0 ;
+	virtual void read (CR<typeof (EOS)> item) = 0 ;
 } ;
 
 class ByteReader implement ByteReaderLayout {
@@ -332,11 +308,11 @@ protected:
 public:
 	implicit ByteReader () = default ;
 
-	explicit ByteReader (RREF<Ref<RefBuffer<BYTE>>> stream) {
+	explicit ByteReader (RR<Ref<RefBuffer<BYTE>>> stream) {
 		ByteReaderHolder::hold (thiz)->initialize (move (stream)) ;
 	}
 
-	void use_overflow (CREF<Function<VREF<ByteReader>>> overflow) {
+	void use_overflow (CR<Function<VR<ByteReader>>> overflow) {
 		return ByteReaderHolder::hold (thiz)->use_overflow (Pointer::from (overflow)) ;
 	}
 
@@ -352,7 +328,7 @@ public:
 		return ByteReaderHolder::hold (thiz)->reset () ;
 	}
 
-	void reset (CREF<StreamShape> shape) {
+	void reset (CR<StreamShape> shape) {
 		return ByteReaderHolder::hold (thiz)->reset (shape) ;
 	}
 
@@ -371,194 +347,158 @@ public:
 		return move (ret) ;
 	}
 
-	void read (VREF<BOOL> item) {
+	void read (VR<BOOL> item) {
 		return ByteReaderHolder::hold (thiz)->read (item) ;
 	}
 
-	forceinline VREF<ByteReader> operator>> (VREF<BOOL> item) {
+	forceinline VR<ByteReader> operator>> (VR<BOOL> item) {
 		read (item) ;
 		return thiz ;
 	}
 
-	void read (VREF<VAL32> item) {
+	void read (VR<VAL32> item) {
 		return ByteReaderHolder::hold (thiz)->read (item) ;
 	}
 
-	forceinline VREF<ByteReader> operator>> (VREF<VAL32> item) {
+	forceinline VR<ByteReader> operator>> (VR<VAL32> item) {
 		read (item) ;
 		return thiz ;
 	}
 
-	void read (VREF<VAL64> item) {
+	void read (VR<VAL64> item) {
 		return ByteReaderHolder::hold (thiz)->read (item) ;
 	}
 
-	forceinline VREF<ByteReader> operator>> (VREF<VAL64> item) {
+	forceinline VR<ByteReader> operator>> (VR<VAL64> item) {
 		read (item) ;
 		return thiz ;
 	}
 
-	void read (VREF<FLT32> item) {
+	void read (VR<FLT32> item) {
 		return ByteReaderHolder::hold (thiz)->read (item) ;
 	}
 
-	forceinline VREF<ByteReader> operator>> (VREF<FLT32> item) {
+	forceinline VR<ByteReader> operator>> (VR<FLT32> item) {
 		read (item) ;
 		return thiz ;
 	}
 
-	void read (VREF<FLT64> item) {
+	void read (VR<FLT64> item) {
 		return ByteReaderHolder::hold (thiz)->read (item) ;
 	}
 
-	forceinline VREF<ByteReader> operator>> (VREF<FLT64> item) {
+	forceinline VR<ByteReader> operator>> (VR<FLT64> item) {
 		read (item) ;
 		return thiz ;
 	}
 
-	void read (VREF<BYTE> item) {
+	void read (VR<BYTE> item) {
 		return ByteReaderHolder::hold (thiz)->read (item) ;
 	}
 
-	forceinline VREF<ByteReader> operator>> (VREF<BYTE> item) {
+	forceinline VR<ByteReader> operator>> (VR<BYTE> item) {
 		read (item) ;
 		return thiz ;
 	}
 
-	void read (VREF<WORD> item) {
+	void read (VR<WORD> item) {
 		return ByteReaderHolder::hold (thiz)->read (item) ;
 	}
 
-	forceinline VREF<ByteReader> operator>> (VREF<WORD> item) {
+	forceinline VR<ByteReader> operator>> (VR<WORD> item) {
 		read (item) ;
 		return thiz ;
 	}
 
-	void read (VREF<CHAR> item) {
+	void read (VR<CHAR> item) {
 		return ByteReaderHolder::hold (thiz)->read (item) ;
 	}
 
-	forceinline VREF<ByteReader> operator>> (VREF<CHAR> item) {
+	forceinline VR<ByteReader> operator>> (VR<CHAR> item) {
 		read (item) ;
 		return thiz ;
 	}
 
-	void read (VREF<QUAD> item) {
+	void read (VR<QUAD> item) {
 		return ByteReaderHolder::hold (thiz)->read (item) ;
 	}
 
-	forceinline VREF<ByteReader> operator>> (VREF<QUAD> item) {
+	forceinline VR<ByteReader> operator>> (VR<QUAD> item) {
 		read (item) ;
 		return thiz ;
 	}
 
-	void read (VREF<STRU32> item) {
+	void read (VR<STRU32> item) {
 		return ByteReaderHolder::hold (thiz)->read (item) ;
 	}
 
-	forceinline VREF<ByteReader> operator>> (VREF<STRU32> item) {
+	forceinline VR<ByteReader> operator>> (VR<STRU32> item) {
 		read (item) ;
 		return thiz ;
 	}
 
-	void read (CREF<Slice> item) {
+	void read (CR<Slice> item) {
 		return ByteReaderHolder::hold (thiz)->read (item) ;
 	}
 
-	forceinline VREF<ByteReader> operator>> (CREF<Slice> item) {
+	forceinline VR<ByteReader> operator>> (CR<Slice> item) {
 		read (item) ;
 		return thiz ;
 	}
 
-	void read (VREF<String<STRA>> item) {
+	void read (VR<StringLayout> item) {
 		return ByteReaderHolder::hold (thiz)->read (item) ;
 	}
 
-	forceinline VREF<ByteReader> operator>> (VREF<String<STRA>> item) {
+	forceinline VR<ByteReader> operator>> (VR<StringLayout> item) {
 		read (item) ;
 		return thiz ;
 	}
 
-	void read (VREF<String<STRW>> item) {
+	void read (CR<typeof (BOM)> item) {
 		return ByteReaderHolder::hold (thiz)->read (item) ;
 	}
 
-	forceinline VREF<ByteReader> operator>> (VREF<String<STRW>> item) {
+	forceinline VR<ByteReader> operator>> (CR<typeof (BOM)> item) {
 		read (item) ;
 		return thiz ;
 	}
 
-	void read (VREF<String<STRU8>> item) {
+	void read (CR<typeof (CAT)> item) {
 		return ByteReaderHolder::hold (thiz)->read (item) ;
 	}
 
-	forceinline VREF<ByteReader> operator>> (VREF<String<STRU8>> item) {
+	forceinline VR<ByteReader> operator>> (CR<typeof (CAT)> item) {
 		read (item) ;
 		return thiz ;
 	}
 
-	void read (VREF<String<STRU16>> item) {
+	void read (CR<typeof (GAP)> item) {
 		return ByteReaderHolder::hold (thiz)->read (item) ;
 	}
 
-	forceinline VREF<ByteReader> operator>> (VREF<String<STRU16>> item) {
+	forceinline VR<ByteReader> operator>> (CR<typeof (GAP)> item) {
 		read (item) ;
 		return thiz ;
 	}
 
-	void read (VREF<String<STRU32>> item) {
+	void read (CR<typeof (EOS)> item) {
 		return ByteReaderHolder::hold (thiz)->read (item) ;
 	}
 
-	forceinline VREF<ByteReader> operator>> (VREF<String<STRU32>> item) {
-		read (item) ;
-		return thiz ;
-	}
-
-	void read (CREF<typeof (CLS)> item) {
-		return ByteReaderHolder::hold (thiz)->read (item) ;
-	}
-
-	forceinline VREF<ByteReader> operator>> (CREF<typeof (CLS)> item) {
-		read (item) ;
-		return thiz ;
-	}
-
-	void read (CREF<typeof (BOM)> item) {
-		return ByteReaderHolder::hold (thiz)->read (item) ;
-	}
-
-	forceinline VREF<ByteReader> operator>> (CREF<typeof (BOM)> item) {
-		read (item) ;
-		return thiz ;
-	}
-
-	void read (CREF<typeof (GAP)> item) {
-		return ByteReaderHolder::hold (thiz)->read (item) ;
-	}
-
-	forceinline VREF<ByteReader> operator>> (CREF<typeof (GAP)> item) {
-		read (item) ;
-		return thiz ;
-	}
-
-	void read (CREF<typeof (EOS)> item) {
-		return ByteReaderHolder::hold (thiz)->read (item) ;
-	}
-
-	forceinline VREF<ByteReader> operator>> (CREF<typeof (EOS)> item) {
+	forceinline VR<ByteReader> operator>> (CR<typeof (EOS)> item) {
 		read (item) ;
 		return thiz ;
 	}
 
 	template <class ARG1 ,class = REQUIRE<HAS_FRIEND_READ<ARG1>>>
-	void read (VREF<ARG1> item) {
+	void read (XR<ARG1> item) {
 		const auto r1x = FriendReaderBinder<ByteReader>::hold (thiz) ;
 		item.friend_read (r1x.ref) ;
 	}
 
 	template <class ARG1 ,class = REQUIRE<HAS_FRIEND_READ<ARG1>>>
-	forceinline VREF<ByteReader> operator>> (VREF<ARG1> item) {
+	forceinline VR<ByteReader> operator>> (XR<ARG1> item) {
 		read (item) ;
 		return thiz ;
 	}
@@ -567,43 +507,39 @@ public:
 struct TextReaderLayout {
 	Ref<RefBuffer<BYTE>> mStream ;
 	BOOL mDiffEndian ;
-	Function<VREF<TextReaderLayout>> mOverflow ;
+	Function<VR<TextReaderLayout>> mOverflow ;
 	INDEX mRead ;
 	INDEX mWrite ;
 } ;
 
 struct TextReaderHolder implement Interface {
-	imports VFat<TextReaderHolder> hold (VREF<TextReaderLayout> that) ;
-	imports CFat<TextReaderHolder> hold (CREF<TextReaderLayout> that) ;
+	imports VFat<TextReaderHolder> hold (VR<TextReaderLayout> that) ;
+	imports CFat<TextReaderHolder> hold (CR<TextReaderLayout> that) ;
 
-	virtual void initialize (RREF<Ref<RefBuffer<BYTE>>> stream) = 0 ;
-	virtual void use_overflow (CREF<Function<VREF<TextReaderLayout>>> overflow) = 0 ;
+	virtual void initialize (RR<Ref<RefBuffer<BYTE>>> stream) = 0 ;
+	virtual void use_overflow (CR<Function<VR<TextReaderLayout>>> overflow) = 0 ;
 	virtual LENGTH size () const = 0 ;
 	virtual LENGTH length () const = 0 ;
 	virtual void reset () = 0 ;
-	virtual void reset (CREF<StreamShape> shape) = 0 ;
+	virtual void reset (CR<StreamShape> shape) = 0 ;
 	virtual StreamShape backup () const = 0 ;
 	virtual BOOL good () const = 0 ;
-	virtual void read (VREF<BOOL> item) = 0 ;
-	virtual void read (VREF<VAL32> item) = 0 ;
-	virtual void read (VREF<VAL64> item) = 0 ;
-	virtual void read (VREF<FLT32> item) = 0 ;
-	virtual void read (VREF<FLT64> item) = 0 ;
-	virtual void read (VREF<BYTE> item) = 0 ;
-	virtual void read (VREF<WORD> item) = 0 ;
-	virtual void read (VREF<CHAR> item) = 0 ;
-	virtual void read (VREF<QUAD> item) = 0 ;
-	virtual void read (VREF<STRU32> item) = 0 ;
-	virtual void read (CREF<Slice> item) = 0 ;
-	virtual void read (VREF<String<STRA>> item) = 0 ;
-	virtual void read (VREF<String<STRW>> item) = 0 ;
-	virtual void read (VREF<String<STRU8>> item) = 0 ;
-	virtual void read (VREF<String<STRU16>> item) = 0 ;
-	virtual void read (VREF<String<STRU32>> item) = 0 ;
-	virtual void read (CREF<typeof (CLS)> item) = 0 ;
-	virtual void read (CREF<typeof (BOM)> item) = 0 ;
-	virtual void read (CREF<typeof (GAP)> item) = 0 ;
-	virtual void read (CREF<typeof (EOS)> item) = 0 ;
+	virtual void read (VR<BOOL> item) = 0 ;
+	virtual void read (VR<VAL32> item) = 0 ;
+	virtual void read (VR<VAL64> item) = 0 ;
+	virtual void read (VR<FLT32> item) = 0 ;
+	virtual void read (VR<FLT64> item) = 0 ;
+	virtual void read (VR<BYTE> item) = 0 ;
+	virtual void read (VR<WORD> item) = 0 ;
+	virtual void read (VR<CHAR> item) = 0 ;
+	virtual void read (VR<QUAD> item) = 0 ;
+	virtual void read (VR<STRU32> item) = 0 ;
+	virtual void read (CR<Slice> item) = 0 ;
+	virtual void read (VR<StringLayout> item) = 0 ;
+	virtual void read (CR<typeof (BOM)> item) = 0 ;
+	virtual void read (CR<typeof (CAT)> item) = 0 ;
+	virtual void read (CR<typeof (GAP)> item) = 0 ;
+	virtual void read (CR<typeof (EOS)> item) = 0 ;
 } ;
 
 class TextReader implement TextReaderLayout {
@@ -617,11 +553,11 @@ protected:
 public:
 	implicit TextReader () = default ;
 
-	explicit TextReader (RREF<Ref<RefBuffer<BYTE>>> stream) {
+	explicit TextReader (RR<Ref<RefBuffer<BYTE>>> stream) {
 		TextReaderHolder::hold (thiz)->initialize (move (stream)) ;
 	}
 
-	void use_overflow (CREF<Function<VREF<TextReader>>> overflow) {
+	void use_overflow (CR<Function<VR<TextReader>>> overflow) {
 		return TextReaderHolder::hold (thiz)->use_overflow (Pointer::from (overflow)) ;
 	}
 
@@ -637,7 +573,7 @@ public:
 		return TextReaderHolder::hold (thiz)->reset () ;
 	}
 
-	void reset (CREF<StreamShape> shape) {
+	void reset (CR<StreamShape> shape) {
 		return TextReaderHolder::hold (thiz)->reset (shape) ;
 	}
 
@@ -656,194 +592,158 @@ public:
 		return move (ret) ;
 	}
 
-	void read (VREF<BOOL> item) {
+	void read (VR<BOOL> item) {
 		return TextReaderHolder::hold (thiz)->read (item) ;
 	}
 
-	forceinline VREF<TextReader> operator>> (VREF<BOOL> item) {
+	forceinline VR<TextReader> operator>> (VR<BOOL> item) {
 		read (item) ;
 		return thiz ;
 	}
 
-	void read (VREF<VAL32> item) {
+	void read (VR<VAL32> item) {
 		return TextReaderHolder::hold (thiz)->read (item) ;
 	}
 
-	forceinline VREF<TextReader> operator>> (VREF<VAL32> item) {
+	forceinline VR<TextReader> operator>> (VR<VAL32> item) {
 		read (item) ;
 		return thiz ;
 	}
 
-	void read (VREF<VAL64> item) {
+	void read (VR<VAL64> item) {
 		return TextReaderHolder::hold (thiz)->read (item) ;
 	}
 
-	forceinline VREF<TextReader> operator>> (VREF<VAL64> item) {
+	forceinline VR<TextReader> operator>> (VR<VAL64> item) {
 		read (item) ;
 		return thiz ;
 	}
 
-	void read (VREF<FLT32> item) {
+	void read (VR<FLT32> item) {
 		return TextReaderHolder::hold (thiz)->read (item) ;
 	}
 
-	forceinline VREF<TextReader> operator>> (VREF<FLT32> item) {
+	forceinline VR<TextReader> operator>> (VR<FLT32> item) {
 		read (item) ;
 		return thiz ;
 	}
 
-	void read (VREF<FLT64> item) {
+	void read (VR<FLT64> item) {
 		return TextReaderHolder::hold (thiz)->read (item) ;
 	}
 
-	forceinline VREF<TextReader> operator>> (VREF<FLT64> item) {
+	forceinline VR<TextReader> operator>> (VR<FLT64> item) {
 		read (item) ;
 		return thiz ;
 	}
 
-	void read (VREF<BYTE> item) {
+	void read (VR<BYTE> item) {
 		return TextReaderHolder::hold (thiz)->read (item) ;
 	}
 
-	forceinline VREF<TextReader> operator>> (VREF<BYTE> item) {
+	forceinline VR<TextReader> operator>> (VR<BYTE> item) {
 		read (item) ;
 		return thiz ;
 	}
 
-	void read (VREF<WORD> item) {
+	void read (VR<WORD> item) {
 		return TextReaderHolder::hold (thiz)->read (item) ;
 	}
 
-	forceinline VREF<TextReader> operator>> (VREF<WORD> item) {
+	forceinline VR<TextReader> operator>> (VR<WORD> item) {
 		read (item) ;
 		return thiz ;
 	}
 
-	void read (VREF<CHAR> item) {
+	void read (VR<CHAR> item) {
 		return TextReaderHolder::hold (thiz)->read (item) ;
 	}
 
-	forceinline VREF<TextReader> operator>> (VREF<CHAR> item) {
+	forceinline VR<TextReader> operator>> (VR<CHAR> item) {
 		read (item) ;
 		return thiz ;
 	}
 
-	void read (VREF<QUAD> item) {
+	void read (VR<QUAD> item) {
 		return TextReaderHolder::hold (thiz)->read (item) ;
 	}
 
-	forceinline VREF<TextReader> operator>> (VREF<QUAD> item) {
+	forceinline VR<TextReader> operator>> (VR<QUAD> item) {
 		read (item) ;
 		return thiz ;
 	}
 
-	void read (VREF<STRU32> item) {
+	void read (VR<STRU32> item) {
 		return TextReaderHolder::hold (thiz)->read (item) ;
 	}
 
-	forceinline VREF<TextReader> operator>> (VREF<STRU32> item) {
+	forceinline VR<TextReader> operator>> (VR<STRU32> item) {
 		read (item) ;
 		return thiz ;
 	}
 
-	void read (CREF<Slice> item) {
+	void read (CR<Slice> item) {
 		return TextReaderHolder::hold (thiz)->read (item) ;
 	}
 
-	forceinline VREF<TextReader> operator>> (CREF<Slice> item) {
+	forceinline VR<TextReader> operator>> (CR<Slice> item) {
 		read (item) ;
 		return thiz ;
 	}
 
-	void read (VREF<String<STRA>> item) {
+	void read (VR<StringLayout> item) {
 		return TextReaderHolder::hold (thiz)->read (item) ;
 	}
 
-	forceinline VREF<TextReader> operator>> (VREF<String<STRA>> item) {
+	forceinline VR<TextReader> operator>> (VR<StringLayout> item) {
 		read (item) ;
 		return thiz ;
 	}
 
-	void read (VREF<String<STRW>> item) {
+	void read (CR<typeof (BOM)> item) {
 		return TextReaderHolder::hold (thiz)->read (item) ;
 	}
 
-	forceinline VREF<TextReader> operator>> (VREF<String<STRW>> item) {
+	forceinline VR<TextReader> operator>> (CR<typeof (BOM)> item) {
 		read (item) ;
 		return thiz ;
 	}
 
-	void read (VREF<String<STRU8>> item) {
+	void read (CR<typeof (CAT)> item) {
 		return TextReaderHolder::hold (thiz)->read (item) ;
 	}
 
-	forceinline VREF<TextReader> operator>> (VREF<String<STRU8>> item) {
+	forceinline VR<TextReader> operator>> (CR<typeof (CAT)> item) {
 		read (item) ;
 		return thiz ;
 	}
 
-	void read (VREF<String<STRU16>> item) {
+	void read (CR<typeof (GAP)> item) {
 		return TextReaderHolder::hold (thiz)->read (item) ;
 	}
 
-	forceinline VREF<TextReader> operator>> (VREF<String<STRU16>> item) {
+	forceinline VR<TextReader> operator>> (CR<typeof (GAP)> item) {
 		read (item) ;
 		return thiz ;
 	}
 
-	void read (VREF<String<STRU32>> item) {
+	void read (CR<typeof (EOS)> item) {
 		return TextReaderHolder::hold (thiz)->read (item) ;
 	}
 
-	forceinline VREF<TextReader> operator>> (VREF<String<STRU32>> item) {
-		read (item) ;
-		return thiz ;
-	}
-
-	void read (CREF<typeof (CLS)> item) {
-		return TextReaderHolder::hold (thiz)->read (item) ;
-	}
-
-	forceinline VREF<TextReader> operator>> (CREF<typeof (CLS)> item) {
-		read (item) ;
-		return thiz ;
-	}
-
-	void read (CREF<typeof (BOM)> item) {
-		return TextReaderHolder::hold (thiz)->read (item) ;
-	}
-
-	forceinline VREF<TextReader> operator>> (CREF<typeof (BOM)> item) {
-		read (item) ;
-		return thiz ;
-	}
-
-	void read (CREF<typeof (GAP)> item) {
-		return TextReaderHolder::hold (thiz)->read (item) ;
-	}
-
-	forceinline VREF<TextReader> operator>> (CREF<typeof (GAP)> item) {
-		read (item) ;
-		return thiz ;
-	}
-
-	void read (CREF<typeof (EOS)> item) {
-		return TextReaderHolder::hold (thiz)->read (item) ;
-	}
-
-	forceinline VREF<TextReader> operator>> (CREF<typeof (EOS)> item) {
+	forceinline VR<TextReader> operator>> (CR<typeof (EOS)> item) {
 		read (item) ;
 		return thiz ;
 	}
 
 	template <class ARG1 ,class = REQUIRE<HAS_FRIEND_READ<ARG1>>>
-	void read (VREF<ARG1> item) {
+	void read (XR<ARG1> item) {
 		const auto r1x = FriendReaderBinder<TextReader>::hold (thiz) ;
 		item.friend_read (r1x.ref) ;
 	}
 
 	template <class ARG1 ,class = REQUIRE<HAS_FRIEND_READ<ARG1>>>
-	forceinline VREF<TextReader> operator>> (VREF<ARG1> item) {
+	forceinline VR<TextReader> operator>> (XR<ARG1> item) {
 		read (item) ;
 		return thiz ;
 	}
@@ -858,7 +758,7 @@ trait HAS_FRIEND_WRITE_HELP<A ,OTHERWISE> {
 } ;
 
 template <class A>
-trait HAS_FRIEND_WRITE_HELP<A ,REQUIRE<KILL<ENUM_TRUE ,typeof (nullof (A).friend_write (nullof (VREF<FriendWriter>)))>>> {
+trait HAS_FRIEND_WRITE_HELP<A ,REQUIRE<KILL<ENUM_TRUE ,typeof (nullof (A).friend_write (nullof (VR<FriendWriter>)))>>> {
 	using RET = ENUM_TRUE ;
 } ;
 
@@ -867,32 +767,28 @@ using HAS_FRIEND_WRITE = typename HAS_FRIEND_WRITE_HELP<A ,ALWAYS>::RET ;
 
 struct FriendWriter implement Interface {
 	virtual void reset () = 0 ;
-	virtual void reset (CREF<StreamShape> shape) = 0 ;
+	virtual void reset (CR<StreamShape> shape) = 0 ;
 	virtual StreamShape backup () const = 0 ;
 	virtual BOOL good () const = 0 ;
-	virtual void write (CREF<BOOL> item) = 0 ;
-	virtual void write (CREF<VAL32> item) = 0 ;
-	virtual void write (CREF<VAL64> item) = 0 ;
-	virtual void write (CREF<FLT32> item) = 0 ;
-	virtual void write (CREF<FLT64> item) = 0 ;
-	virtual void write (CREF<BYTE> item) = 0 ;
-	virtual void write (CREF<WORD> item) = 0 ;
-	virtual void write (CREF<CHAR> item) = 0 ;
-	virtual void write (CREF<QUAD> item) = 0 ;
-	virtual void write (CREF<STRU32> item) = 0 ;
-	virtual void write (CREF<Slice> item) = 0 ;
-	virtual void write (CREF<String<STRA>> item) = 0 ;
-	virtual void write (CREF<String<STRW>> item) = 0 ;
-	virtual void write (CREF<String<STRU8>> item) = 0 ;
-	virtual void write (CREF<String<STRU16>> item) = 0 ;
-	virtual void write (CREF<String<STRU32>> item) = 0 ;
-	virtual void write (CREF<typeof (BOM)> item) = 0 ;
-	virtual void write (CREF<typeof (CLS)> item) = 0 ;
-	virtual void write (CREF<typeof (GAP)> item) = 0 ;
-	virtual void write (CREF<typeof (EOS)> item) = 0 ;
+	virtual void write (CR<BOOL> item) = 0 ;
+	virtual void write (CR<VAL32> item) = 0 ;
+	virtual void write (CR<VAL64> item) = 0 ;
+	virtual void write (CR<FLT32> item) = 0 ;
+	virtual void write (CR<FLT64> item) = 0 ;
+	virtual void write (CR<BYTE> item) = 0 ;
+	virtual void write (CR<WORD> item) = 0 ;
+	virtual void write (CR<CHAR> item) = 0 ;
+	virtual void write (CR<QUAD> item) = 0 ;
+	virtual void write (CR<STRU32> item) = 0 ;
+	virtual void write (CR<Slice> item) = 0 ;
+	virtual void write (CR<StringLayout> item) = 0 ;
+	virtual void write (CR<typeof (BOM)> item) = 0 ;
+	virtual void write (CR<typeof (CAT)> item) = 0 ;
+	virtual void write (CR<typeof (GAP)> item) = 0 ;
+	virtual void write (CR<typeof (EOS)> item) = 0 ;
 
 	template <class ARG1 ,class = REQUIRE<HAS_FRIEND_WRITE<ARG1>>>
-	void write (CREF<ARG1> item) {
+	void write (XR<ARG1> item) {
 		item.friend_write (thiz) ;
 	}
 } ;
@@ -900,7 +796,7 @@ struct FriendWriter implement Interface {
 template <class A>
 class FriendWriterBinder final implement Fat<FriendWriter ,A> {
 public:
-	static VFat<FriendWriter> hold (VREF<A> that) {
+	static VFat<FriendWriter> hold (VR<A> that) {
 		return VFat<FriendWriter> (FriendWriterBinder () ,that) ;
 	}
 
@@ -908,7 +804,7 @@ public:
 		return thiz.self.reset () ;
 	}
 
-	void reset (CREF<StreamShape> shape) override {
+	void reset (CR<StreamShape> shape) override {
 		return thiz.self.reset (shape) ;
 	}
 
@@ -920,83 +816,67 @@ public:
 		return thiz.self.good () ;
 	}
 
-	void write (CREF<BOOL> item) override {
+	void write (CR<BOOL> item) override {
 		return thiz.self.write (item) ;
 	}
 
-	void write (CREF<VAL32> item) override {
+	void write (CR<VAL32> item) override {
 		return thiz.self.write (item) ;
 	}
 
-	void write (CREF<VAL64> item) override {
+	void write (CR<VAL64> item) override {
 		return thiz.self.write (item) ;
 	}
 
-	void write (CREF<FLT32> item) override {
+	void write (CR<FLT32> item) override {
 		return thiz.self.write (item) ;
 	}
 
-	void write (CREF<FLT64> item) override {
+	void write (CR<FLT64> item) override {
 		return thiz.self.write (item) ;
 	}
 
-	void write (CREF<BYTE> item) override {
+	void write (CR<BYTE> item) override {
 		return thiz.self.write (item) ;
 	}
 
-	void write (CREF<WORD> item) override {
+	void write (CR<WORD> item) override {
 		return thiz.self.write (item) ;
 	}
 
-	void write (CREF<CHAR> item) override {
+	void write (CR<CHAR> item) override {
 		return thiz.self.write (item) ;
 	}
 
-	void write (CREF<QUAD> item) override {
+	void write (CR<QUAD> item) override {
 		return thiz.self.write (item) ;
 	}
 
-	void write (CREF<STRU32> item) override {
+	void write (CR<STRU32> item) override {
 		return thiz.self.write (item) ;
 	}
 
-	void write (CREF<Slice> item) override {
+	void write (CR<Slice> item) override {
 		return thiz.self.write (item) ;
 	}
 
-	void write (CREF<String<STRA>> item) override {
+	void write (CR<StringLayout> item) override {
 		return thiz.self.write (item) ;
 	}
 
-	void write (CREF<String<STRW>> item) override {
+	void write (CR<typeof (BOM)> item) override {
 		return thiz.self.write (item) ;
 	}
 
-	void write (CREF<String<STRU8>> item) override {
+	void write (CR<typeof (CAT)> item) override {
 		return thiz.self.write (item) ;
 	}
 
-	void write (CREF<String<STRU16>> item) override {
+	void write (CR<typeof (GAP)> item) override {
 		return thiz.self.write (item) ;
 	}
 
-	void write (CREF<String<STRU32>> item) override {
-		return thiz.self.write (item) ;
-	}
-
-	void write (CREF<typeof (BOM)> item) override {
-		return thiz.self.write (item) ;
-	}
-
-	void write (CREF<typeof (CLS)> item) override {
-		return thiz.self.write (item) ;
-	}
-
-	void write (CREF<typeof (GAP)> item) override {
-		return thiz.self.write (item) ;
-	}
-
-	void write (CREF<typeof (EOS)> item) override {
+	void write (CR<typeof (EOS)> item) override {
 		return thiz.self.write (item) ;
 	}
 } ;
@@ -1004,43 +884,39 @@ public:
 struct ByteWriterLayout {
 	Ref<RefBuffer<BYTE>> mStream ;
 	BOOL mDiffEndian ;
-	Function<VREF<ByteWriterLayout>> mOverflow ;
+	Function<VR<ByteWriterLayout>> mOverflow ;
 	INDEX mRead ;
 	INDEX mWrite ;
 } ;
 
 struct ByteWriterHolder implement Interface {
-	imports VFat<ByteWriterHolder> hold (VREF<ByteWriterLayout> that) ;
-	imports CFat<ByteWriterHolder> hold (CREF<ByteWriterLayout> that) ;
+	imports VFat<ByteWriterHolder> hold (VR<ByteWriterLayout> that) ;
+	imports CFat<ByteWriterHolder> hold (CR<ByteWriterLayout> that) ;
 
-	virtual void initialize (RREF<Ref<RefBuffer<BYTE>>> stream) = 0 ;
-	virtual void use_overflow (CREF<Function<VREF<ByteWriterLayout>>> overflow) = 0 ;
+	virtual void initialize (RR<Ref<RefBuffer<BYTE>>> stream) = 0 ;
+	virtual void use_overflow (CR<Function<VR<ByteWriterLayout>>> overflow) = 0 ;
 	virtual LENGTH size () const = 0 ;
 	virtual LENGTH length () const = 0 ;
 	virtual void reset () = 0 ;
-	virtual void reset (CREF<StreamShape> shape) = 0 ;
+	virtual void reset (CR<StreamShape> shape) = 0 ;
 	virtual StreamShape backup () const = 0 ;
 	virtual BOOL good () const = 0 ;
-	virtual void write (CREF<BOOL> item) = 0 ;
-	virtual void write (CREF<VAL32> item) = 0 ;
-	virtual void write (CREF<VAL64> item) = 0 ;
-	virtual void write (CREF<FLT32> item) = 0 ;
-	virtual void write (CREF<FLT64> item) = 0 ;
-	virtual void write (CREF<BYTE> item) = 0 ;
-	virtual void write (CREF<WORD> item) = 0 ;
-	virtual void write (CREF<CHAR> item) = 0 ;
-	virtual void write (CREF<QUAD> item) = 0 ;
-	virtual void write (CREF<STRU32> item) = 0 ;
-	virtual void write (CREF<Slice> item) = 0 ;
-	virtual void write (CREF<String<STRA>> item) = 0 ;
-	virtual void write (CREF<String<STRW>> item) = 0 ;
-	virtual void write (CREF<String<STRU8>> item) = 0 ;
-	virtual void write (CREF<String<STRU16>> item) = 0 ;
-	virtual void write (CREF<String<STRU32>> item) = 0 ;
-	virtual void write (CREF<typeof (BOM)> item) = 0 ;
-	virtual void write (CREF<typeof (CLS)> item) = 0 ;
-	virtual void write (CREF<typeof (GAP)> item) = 0 ;
-	virtual void write (CREF<typeof (EOS)> item) = 0 ;
+	virtual void write (CR<BOOL> item) = 0 ;
+	virtual void write (CR<VAL32> item) = 0 ;
+	virtual void write (CR<VAL64> item) = 0 ;
+	virtual void write (CR<FLT32> item) = 0 ;
+	virtual void write (CR<FLT64> item) = 0 ;
+	virtual void write (CR<BYTE> item) = 0 ;
+	virtual void write (CR<WORD> item) = 0 ;
+	virtual void write (CR<CHAR> item) = 0 ;
+	virtual void write (CR<QUAD> item) = 0 ;
+	virtual void write (CR<STRU32> item) = 0 ;
+	virtual void write (CR<Slice> item) = 0 ;
+	virtual void write (CR<StringLayout> item) = 0 ;
+	virtual void write (CR<typeof (BOM)> item) = 0 ;
+	virtual void write (CR<typeof (CAT)> item) = 0 ;
+	virtual void write (CR<typeof (GAP)> item) = 0 ;
+	virtual void write (CR<typeof (EOS)> item) = 0 ;
 } ;
 
 class ByteWriter implement ByteWriterLayout {
@@ -1054,11 +930,11 @@ protected:
 public:
 	implicit ByteWriter () = default ;
 
-	explicit ByteWriter (RREF<Ref<RefBuffer<BYTE>>> stream) {
+	explicit ByteWriter (RR<Ref<RefBuffer<BYTE>>> stream) {
 		ByteWriterHolder::hold (thiz)->initialize (move (stream)) ;
 	}
 
-	void use_overflow (CREF<Function<VREF<ByteWriter>>> overflow) {
+	void use_overflow (CR<Function<VR<ByteWriter>>> overflow) {
 		return ByteWriterHolder::hold (thiz)->use_overflow (Pointer::from (overflow)) ;
 	}
 
@@ -1074,7 +950,7 @@ public:
 		return ByteWriterHolder::hold (thiz)->reset () ;
 	}
 
-	void reset (CREF<StreamShape> shape) {
+	void reset (CR<StreamShape> shape) {
 		return ByteWriterHolder::hold (thiz)->reset (shape) ;
 	}
 
@@ -1086,194 +962,158 @@ public:
 		return ByteWriterHolder::hold (thiz)->good () ;
 	}
 
-	void write (CREF<BOOL> item) {
+	void write (CR<BOOL> item) {
 		return ByteWriterHolder::hold (thiz)->write (item) ;
 	}
 
-	forceinline VREF<ByteWriter> operator<< (CREF<BOOL> item) {
+	forceinline VR<ByteWriter> operator<< (CR<BOOL> item) {
 		write (item) ;
 		return thiz ;
 	}
 
-	void write (CREF<VAL32> item) {
+	void write (CR<VAL32> item) {
 		return ByteWriterHolder::hold (thiz)->write (item) ;
 	}
 
-	forceinline VREF<ByteWriter> operator<< (CREF<VAL32> item) {
+	forceinline VR<ByteWriter> operator<< (CR<VAL32> item) {
 		write (item) ;
 		return thiz ;
 	}
 
-	void write (CREF<VAL64> item) {
+	void write (CR<VAL64> item) {
 		return ByteWriterHolder::hold (thiz)->write (item) ;
 	}
 
-	forceinline VREF<ByteWriter> operator<< (CREF<VAL64> item) {
+	forceinline VR<ByteWriter> operator<< (CR<VAL64> item) {
 		write (item) ;
 		return thiz ;
 	}
 
-	void write (CREF<FLT32> item) {
+	void write (CR<FLT32> item) {
 		return ByteWriterHolder::hold (thiz)->write (item) ;
 	}
 
-	forceinline VREF<ByteWriter> operator<< (CREF<FLT32> item) {
+	forceinline VR<ByteWriter> operator<< (CR<FLT32> item) {
 		write (item) ;
 		return thiz ;
 	}
 
-	void write (CREF<FLT64> item) {
+	void write (CR<FLT64> item) {
 		return ByteWriterHolder::hold (thiz)->write (item) ;
 	}
 
-	forceinline VREF<ByteWriter> operator<< (CREF<FLT64> item) {
+	forceinline VR<ByteWriter> operator<< (CR<FLT64> item) {
 		write (item) ;
 		return thiz ;
 	}
 
-	void write (CREF<BYTE> item) {
+	void write (CR<BYTE> item) {
 		return ByteWriterHolder::hold (thiz)->write (item) ;
 	}
 
-	forceinline VREF<ByteWriter> operator<< (CREF<BYTE> item) {
+	forceinline VR<ByteWriter> operator<< (CR<BYTE> item) {
 		write (item) ;
 		return thiz ;
 	}
 
-	void write (CREF<WORD> item) {
+	void write (CR<WORD> item) {
 		return ByteWriterHolder::hold (thiz)->write (item) ;
 	}
 
-	forceinline VREF<ByteWriter> operator<< (CREF<WORD> item) {
+	forceinline VR<ByteWriter> operator<< (CR<WORD> item) {
 		write (item) ;
 		return thiz ;
 	}
 
-	void write (CREF<CHAR> item) {
+	void write (CR<CHAR> item) {
 		return ByteWriterHolder::hold (thiz)->write (item) ;
 	}
 
-	forceinline VREF<ByteWriter> operator<< (CREF<CHAR> item) {
+	forceinline VR<ByteWriter> operator<< (CR<CHAR> item) {
 		write (item) ;
 		return thiz ;
 	}
 
-	void write (CREF<QUAD> item) {
+	void write (CR<QUAD> item) {
 		return ByteWriterHolder::hold (thiz)->write (item) ;
 	}
 
-	forceinline VREF<ByteWriter> operator<< (CREF<QUAD> item) {
+	forceinline VR<ByteWriter> operator<< (CR<QUAD> item) {
 		write (item) ;
 		return thiz ;
 	}
 
-	void write (CREF<STRU32> item) {
+	void write (CR<STRU32> item) {
 		return ByteWriterHolder::hold (thiz)->write (item) ;
 	}
 
-	forceinline VREF<ByteWriter> operator<< (CREF<STRU32> item) {
+	forceinline VR<ByteWriter> operator<< (CR<STRU32> item) {
 		write (item) ;
 		return thiz ;
 	}
 
-	void write (CREF<Slice> item) {
+	void write (CR<Slice> item) {
 		return ByteWriterHolder::hold (thiz)->write (item) ;
 	}
 
-	forceinline VREF<ByteWriter> operator<< (CREF<Slice> item) {
+	forceinline VR<ByteWriter> operator<< (CR<Slice> item) {
 		write (item) ;
 		return thiz ;
 	}
 
-	void write (CREF<String<STRA>> item) {
+	void write (CR<StringLayout> item) {
 		return ByteWriterHolder::hold (thiz)->write (item) ;
 	}
 
-	forceinline VREF<ByteWriter> operator<< (CREF<String<STRA>> item) {
+	forceinline VR<ByteWriter> operator<< (CR<StringLayout> item) {
 		write (item) ;
 		return thiz ;
 	}
 
-	void write (CREF<String<STRW>> item) {
+	void write (CR<typeof (BOM)> item) {
 		return ByteWriterHolder::hold (thiz)->write (item) ;
 	}
 
-	forceinline VREF<ByteWriter> operator<< (CREF<String<STRW>> item) {
+	forceinline VR<ByteWriter> operator<< (CR<typeof (BOM)> item) {
 		write (item) ;
 		return thiz ;
 	}
 
-	void write (CREF<String<STRU8>> item) {
+	void write (CR<typeof (CAT)> item) {
 		return ByteWriterHolder::hold (thiz)->write (item) ;
 	}
 
-	forceinline VREF<ByteWriter> operator<< (CREF<String<STRU8>> item) {
+	forceinline VR<ByteWriter> operator<< (CR<typeof (CAT)> item) {
 		write (item) ;
 		return thiz ;
 	}
 
-	void write (CREF<String<STRU16>> item) {
+	void write (CR<typeof (GAP)> item) {
 		return ByteWriterHolder::hold (thiz)->write (item) ;
 	}
 
-	forceinline VREF<ByteWriter> operator<< (CREF<String<STRU16>> item) {
+	forceinline VR<ByteWriter> operator<< (CR<typeof (GAP)> item) {
 		write (item) ;
 		return thiz ;
 	}
 
-	void write (CREF<String<STRU32>> item) {
+	void write (CR<typeof (EOS)> item) {
 		return ByteWriterHolder::hold (thiz)->write (item) ;
 	}
 
-	forceinline VREF<ByteWriter> operator<< (CREF<String<STRU32>> item) {
-		write (item) ;
-		return thiz ;
-	}
-
-	void write (CREF<typeof (BOM)> item) {
-		return ByteWriterHolder::hold (thiz)->write (item) ;
-	}
-
-	forceinline VREF<ByteWriter> operator<< (CREF<typeof (BOM)> item) {
-		write (item) ;
-		return thiz ;
-	}
-
-	void write (CREF<typeof (CLS)> item) {
-		return ByteWriterHolder::hold (thiz)->write (item) ;
-	}
-
-	forceinline VREF<ByteWriter> operator<< (CREF<typeof (CLS)> item) {
-		write (item) ;
-		return thiz ;
-	}
-
-	void write (CREF<typeof (GAP)> item) {
-		return ByteWriterHolder::hold (thiz)->write (item) ;
-	}
-
-	forceinline VREF<ByteWriter> operator<< (CREF<typeof (GAP)> item) {
-		write (item) ;
-		return thiz ;
-	}
-
-	void write (CREF<typeof (EOS)> item) {
-		return ByteWriterHolder::hold (thiz)->write (item) ;
-	}
-
-	forceinline VREF<ByteWriter> operator<< (CREF<typeof (EOS)> item) {
+	forceinline VR<ByteWriter> operator<< (CR<typeof (EOS)> item) {
 		write (item) ;
 		return thiz ;
 	}
 
 	template <class ARG1 ,class = REQUIRE<HAS_FRIEND_WRITE<ARG1>>>
-	void write (CREF<ARG1> item) {
+	void write (XR<ARG1> item) {
 		const auto r1x = FriendWriterBinder<ByteWriter>::hold (thiz) ;
 		item.friend_write (r1x.ref) ;
 	}
 
 	template <class ARG1 ,class = REQUIRE<HAS_FRIEND_WRITE<ARG1>>>
-	forceinline VREF<ByteWriter> operator<< (CREF<ARG1> item) {
+	forceinline VR<ByteWriter> operator<< (XR<ARG1> item) {
 		write (item) ;
 		return thiz ;
 	}
@@ -1282,43 +1122,39 @@ public:
 struct TextWriterLayout {
 	Ref<RefBuffer<BYTE>> mStream ;
 	BOOL mDiffEndian ;
-	Function<VREF<TextWriterLayout>> mOverflow ;
+	Function<VR<TextWriterLayout>> mOverflow ;
 	INDEX mRead ;
 	INDEX mWrite ;
 } ;
 
 struct TextWriterHolder implement Interface {
-	imports VFat<TextWriterHolder> hold (VREF<TextWriterLayout> that) ;
-	imports CFat<TextWriterHolder> hold (CREF<TextWriterLayout> that) ;
+	imports VFat<TextWriterHolder> hold (VR<TextWriterLayout> that) ;
+	imports CFat<TextWriterHolder> hold (CR<TextWriterLayout> that) ;
 
-	virtual void initialize (RREF<Ref<RefBuffer<BYTE>>> stream) = 0 ;
-	virtual void use_overflow (CREF<Function<VREF<TextWriterLayout>>> overflow) = 0 ;
+	virtual void initialize (RR<Ref<RefBuffer<BYTE>>> stream) = 0 ;
+	virtual void use_overflow (CR<Function<VR<TextWriterLayout>>> overflow) = 0 ;
 	virtual LENGTH size () const = 0 ;
 	virtual LENGTH length () const = 0 ;
 	virtual void reset () = 0 ;
-	virtual void reset (CREF<StreamShape> shape) = 0 ;
+	virtual void reset (CR<StreamShape> shape) = 0 ;
 	virtual StreamShape backup () const = 0 ;
 	virtual BOOL good () const = 0 ;
-	virtual void write (CREF<BOOL> item) = 0 ;
-	virtual void write (CREF<VAL32> item) = 0 ;
-	virtual void write (CREF<VAL64> item) = 0 ;
-	virtual void write (CREF<FLT32> item) = 0 ;
-	virtual void write (CREF<FLT64> item) = 0 ;
-	virtual void write (CREF<BYTE> item) = 0 ;
-	virtual void write (CREF<WORD> item) = 0 ;
-	virtual void write (CREF<CHAR> item) = 0 ;
-	virtual void write (CREF<QUAD> item) = 0 ;
-	virtual void write (CREF<STRU32> item) = 0 ;
-	virtual void write (CREF<Slice> item) = 0 ;
-	virtual void write (CREF<String<STRA>> item) = 0 ;
-	virtual void write (CREF<String<STRW>> item) = 0 ;
-	virtual void write (CREF<String<STRU8>> item) = 0 ;
-	virtual void write (CREF<String<STRU16>> item) = 0 ;
-	virtual void write (CREF<String<STRU32>> item) = 0 ;
-	virtual void write (CREF<typeof (CLS)> item) = 0 ;
-	virtual void write (CREF<typeof (BOM)> item) = 0 ;
-	virtual void write (CREF<typeof (GAP)> item) = 0 ;
-	virtual void write (CREF<typeof (EOS)> item) = 0 ;
+	virtual void write (CR<BOOL> item) = 0 ;
+	virtual void write (CR<VAL32> item) = 0 ;
+	virtual void write (CR<VAL64> item) = 0 ;
+	virtual void write (CR<FLT32> item) = 0 ;
+	virtual void write (CR<FLT64> item) = 0 ;
+	virtual void write (CR<BYTE> item) = 0 ;
+	virtual void write (CR<WORD> item) = 0 ;
+	virtual void write (CR<CHAR> item) = 0 ;
+	virtual void write (CR<QUAD> item) = 0 ;
+	virtual void write (CR<STRU32> item) = 0 ;
+	virtual void write (CR<Slice> item) = 0 ;
+	virtual void write (CR<StringLayout> item) = 0 ;
+	virtual void write (CR<typeof (BOM)> item) = 0 ;
+	virtual void write (CR<typeof (CAT)> item) = 0 ;
+	virtual void write (CR<typeof (GAP)> item) = 0 ;
+	virtual void write (CR<typeof (EOS)> item) = 0 ;
 } ;
 
 class TextWriter implement TextWriterLayout {
@@ -1332,11 +1168,11 @@ protected:
 public:
 	implicit TextWriter () = default ;
 
-	explicit TextWriter (RREF<Ref<RefBuffer<BYTE>>> stream) {
+	explicit TextWriter (RR<Ref<RefBuffer<BYTE>>> stream) {
 		TextWriterHolder::hold (thiz)->initialize (move (stream)) ;
 	}
 
-	void use_overflow (CREF<Function<VREF<TextWriter>>> overflow) {
+	void use_overflow (CR<Function<VR<TextWriter>>> overflow) {
 		return TextWriterHolder::hold (thiz)->use_overflow (Pointer::from (overflow)) ;
 	}
 
@@ -1352,7 +1188,7 @@ public:
 		return TextWriterHolder::hold (thiz)->reset () ;
 	}
 
-	void reset (CREF<StreamShape> shape) {
+	void reset (CR<StreamShape> shape) {
 		return TextWriterHolder::hold (thiz)->reset (shape) ;
 	}
 
@@ -1364,194 +1200,158 @@ public:
 		return TextWriterHolder::hold (thiz)->good () ;
 	}
 
-	void write (CREF<BOOL> item) {
+	void write (CR<BOOL> item) {
 		return TextWriterHolder::hold (thiz)->write (item) ;
 	}
 
-	forceinline VREF<TextWriter> operator<< (CREF<BOOL> item) {
+	forceinline VR<TextWriter> operator<< (CR<BOOL> item) {
 		write (item) ;
 		return thiz ;
 	}
 
-	void write (CREF<VAL32> item) {
+	void write (CR<VAL32> item) {
 		return TextWriterHolder::hold (thiz)->write (item) ;
 	}
 
-	forceinline VREF<TextWriter> operator<< (CREF<VAL32> item) {
+	forceinline VR<TextWriter> operator<< (CR<VAL32> item) {
 		write (item) ;
 		return thiz ;
 	}
 
-	void write (CREF<VAL64> item) {
+	void write (CR<VAL64> item) {
 		return TextWriterHolder::hold (thiz)->write (item) ;
 	}
 
-	forceinline VREF<TextWriter> operator<< (CREF<VAL64> item) {
+	forceinline VR<TextWriter> operator<< (CR<VAL64> item) {
 		write (item) ;
 		return thiz ;
 	}
 
-	void write (CREF<FLT32> item) {
+	void write (CR<FLT32> item) {
 		return TextWriterHolder::hold (thiz)->write (item) ;
 	}
 
-	forceinline VREF<TextWriter> operator<< (CREF<FLT32> item) {
+	forceinline VR<TextWriter> operator<< (CR<FLT32> item) {
 		write (item) ;
 		return thiz ;
 	}
 
-	void write (CREF<FLT64> item) {
+	void write (CR<FLT64> item) {
 		return TextWriterHolder::hold (thiz)->write (item) ;
 	}
 
-	forceinline VREF<TextWriter> operator<< (CREF<FLT64> item) {
+	forceinline VR<TextWriter> operator<< (CR<FLT64> item) {
 		write (item) ;
 		return thiz ;
 	}
 
-	void write (CREF<BYTE> item) {
+	void write (CR<BYTE> item) {
 		return TextWriterHolder::hold (thiz)->write (item) ;
 	}
 
-	forceinline VREF<TextWriter> operator<< (CREF<BYTE> item) {
+	forceinline VR<TextWriter> operator<< (CR<BYTE> item) {
 		write (item) ;
 		return thiz ;
 	}
 
-	void write (CREF<WORD> item) {
+	void write (CR<WORD> item) {
 		return TextWriterHolder::hold (thiz)->write (item) ;
 	}
 
-	forceinline VREF<TextWriter> operator<< (CREF<WORD> item) {
+	forceinline VR<TextWriter> operator<< (CR<WORD> item) {
 		write (item) ;
 		return thiz ;
 	}
 
-	void write (CREF<CHAR> item) {
+	void write (CR<CHAR> item) {
 		return TextWriterHolder::hold (thiz)->write (item) ;
 	}
 
-	forceinline VREF<TextWriter> operator<< (CREF<CHAR> item) {
+	forceinline VR<TextWriter> operator<< (CR<CHAR> item) {
 		write (item) ;
 		return thiz ;
 	}
 
-	void write (CREF<QUAD> item) {
+	void write (CR<QUAD> item) {
 		return TextWriterHolder::hold (thiz)->write (item) ;
 	}
 
-	forceinline VREF<TextWriter> operator<< (CREF<QUAD> item) {
+	forceinline VR<TextWriter> operator<< (CR<QUAD> item) {
 		write (item) ;
 		return thiz ;
 	}
 
-	void write (CREF<STRU32> item) {
+	void write (CR<STRU32> item) {
 		return TextWriterHolder::hold (thiz)->write (item) ;
 	}
 
-	forceinline VREF<TextWriter> operator<< (CREF<STRU32> item) {
+	forceinline VR<TextWriter> operator<< (CR<STRU32> item) {
 		write (item) ;
 		return thiz ;
 	}
 
-	void write (CREF<Slice> item) {
+	void write (CR<Slice> item) {
 		return TextWriterHolder::hold (thiz)->write (item) ;
 	}
 
-	forceinline VREF<TextWriter> operator<< (CREF<Slice> item) {
+	forceinline VR<TextWriter> operator<< (CR<Slice> item) {
 		write (item) ;
 		return thiz ;
 	}
 
-	void write (CREF<String<STRA>> item) {
+	void write (CR<StringLayout> item) {
 		return TextWriterHolder::hold (thiz)->write (item) ;
 	}
 
-	forceinline VREF<TextWriter> operator<< (CREF<String<STRA>> item) {
+	forceinline VR<TextWriter> operator<< (CR<StringLayout> item) {
 		write (item) ;
 		return thiz ;
 	}
 
-	void write (CREF<String<STRW>> item) {
+	void write (CR<typeof (BOM)> item) {
 		return TextWriterHolder::hold (thiz)->write (item) ;
 	}
 
-	forceinline VREF<TextWriter> operator<< (CREF<String<STRW>> item) {
+	forceinline VR<TextWriter> operator<< (CR<typeof (BOM)> item) {
 		write (item) ;
 		return thiz ;
 	}
 
-	void write (CREF<String<STRU8>> item) {
+	void write (CR<typeof (CAT)> item) {
 		return TextWriterHolder::hold (thiz)->write (item) ;
 	}
 
-	forceinline VREF<TextWriter> operator<< (CREF<String<STRU8>> item) {
+	forceinline VR<TextWriter> operator<< (CR<typeof (CAT)> item) {
 		write (item) ;
 		return thiz ;
 	}
 
-	void write (CREF<String<STRU16>> item) {
+	void write (CR<typeof (GAP)> item) {
 		return TextWriterHolder::hold (thiz)->write (item) ;
 	}
 
-	forceinline VREF<TextWriter> operator<< (CREF<String<STRU16>> item) {
+	forceinline VR<TextWriter> operator<< (CR<typeof (GAP)> item) {
 		write (item) ;
 		return thiz ;
 	}
 
-	void write (CREF<String<STRU32>> item) {
+	void write (CR<typeof (EOS)> item) {
 		return TextWriterHolder::hold (thiz)->write (item) ;
 	}
 
-	forceinline VREF<TextWriter> operator<< (CREF<String<STRU32>> item) {
-		write (item) ;
-		return thiz ;
-	}
-
-	void write (CREF<typeof (CLS)> item) {
-		return TextWriterHolder::hold (thiz)->write (item) ;
-	}
-
-	forceinline VREF<TextWriter> operator<< (CREF<typeof (CLS)> item) {
-		write (item) ;
-		return thiz ;
-	}
-
-	void write (CREF<typeof (BOM)> item) {
-		return TextWriterHolder::hold (thiz)->write (item) ;
-	}
-
-	forceinline VREF<TextWriter> operator<< (CREF<typeof (BOM)> item) {
-		write (item) ;
-		return thiz ;
-	}
-
-	void write (CREF<typeof (GAP)> item) {
-		return TextWriterHolder::hold (thiz)->write (item) ;
-	}
-
-	forceinline VREF<TextWriter> operator<< (CREF<typeof (GAP)> item) {
-		write (item) ;
-		return thiz ;
-	}
-
-	void write (CREF<typeof (EOS)> item) {
-		return TextWriterHolder::hold (thiz)->write (item) ;
-	}
-
-	forceinline VREF<TextWriter> operator<< (CREF<typeof (EOS)> item) {
+	forceinline VR<TextWriter> operator<< (CR<typeof (EOS)> item) {
 		write (item) ;
 		return thiz ;
 	}
 
 	template <class ARG1 ,class = REQUIRE<HAS_FRIEND_WRITE<ARG1>>>
-	void write (CREF<ARG1> item) {
+	void write (XR<ARG1> item) {
 		const auto r1x = FriendWriterBinder<TextWriter>::hold (thiz) ;
 		item.friend_write (r1x.ref) ;
 	}
 
 	template <class ARG1 ,class = REQUIRE<HAS_FRIEND_WRITE<ARG1>>>
-	forceinline VREF<TextWriter> operator<< (CREF<ARG1> item) {
+	forceinline VR<TextWriter> operator<< (XR<ARG1> item) {
 		write (item) ;
 		return thiz ;
 	}
@@ -1560,12 +1360,12 @@ public:
 template <class A>
 class StringParse implement Proxy {
 public:
-	static A make (CREF<Slice> text) {
+	static A make (CR<Slice> text) {
 		return make (String<STR> (text)) ;
 	}
 
 	template <class ARG1>
-	static A make (CREF<String<ARG1>> text) {
+	static A make (CR<String<ARG1>> text) {
 		A ret ;
 		auto rax = TextReader (text.borrow ()) ;
 		rax >> ret ;
@@ -1578,7 +1378,7 @@ template <class A>
 class StringBuild implement Proxy {
 public:
 	template <class...ARG1>
-	static String<A> make (CREF<ARG1>...params) {
+	static String<A> make (CR<ARG1>...params) {
 		String<A> ret = String<A> (SLICE_MAX_SIZE::expr) ;
 		auto rax = TextWriter (ret.borrow ()) ;
 		make_impl (rax ,params...) ;
@@ -1586,29 +1386,45 @@ public:
 		return move (ret) ;
 	}
 
-	forceinline static void make_impl (VREF<TextWriter> writer) {
+	forceinline static void make_impl (VR<TextWriter> writer) {
 		noop () ;
 	}
 
 	template <class ARG1 ,class...ARG2>
-	forceinline static void make_impl (VREF<TextWriter> writer ,CREF<ARG1> params1 ,CREF<ARG2>...params2) {
+	forceinline static void make_impl (VR<TextWriter> writer ,CR<ARG1> params1 ,CR<ARG2>...params2) {
 		writer << params1 ;
 		make_impl (writer ,params2...) ;
 	}
 } ;
 
-struct FriendFormat implement Interface {
-	virtual void friend_write (VREF<FriendWriter> writer) const = 0 ;
+struct FriendReading implement Interface {
+	virtual void friend_read (VR<FriendReader> reader) = 0 ;
 } ;
 
 template <class A>
-class FriendFormatBinder final implement Fat<FriendFormat ,A> {
+class FriendReadingBinder final implement Fat<FriendReading ,A> {
 public:
-	static CFat<FriendFormat> hold (CREF<A> that) {
-		return CFat<FriendFormat> (FriendFormatBinder () ,that) ;
+	static VFat<FriendReading> hold (VR<A> that) {
+		return VFat<FriendReading> (FriendReadingBinder () ,that) ;
 	}
 
-	void friend_write (VREF<FriendWriter> writer) const override {
+	void friend_read (VR<FriendReader> reader) const override {
+		reader.read (thiz.self) ;
+	}
+} ;
+
+struct FriendWriting implement Interface {
+	virtual void friend_write (VR<FriendWriter> writer) const = 0 ;
+} ;
+
+template <class A>
+class FriendWritingBinder final implement Fat<FriendWriting ,A> {
+public:
+	static CFat<FriendWriting> hold (CR<A> that) {
+		return CFat<FriendWriting> (FriendWritingBinder () ,that) ;
+	}
+
+	void friend_write (VR<FriendWriter> writer) const override {
 		writer.write (thiz.self) ;
 	}
 } ;
@@ -1620,12 +1436,12 @@ struct FormatLayout {
 } ;
 
 struct FormatHolder implement Interface {
-	imports VFat<FormatHolder> hold (VREF<FormatLayout> that) ;
-	imports CFat<FormatHolder> hold (CREF<FormatLayout> that) ;
+	imports VFat<FormatHolder> hold (VR<FormatLayout> that) ;
+	imports CFat<FormatHolder> hold (CR<FormatLayout> that) ;
 
-	virtual void initialize (CREF<Slice> format) = 0 ;
-	virtual void friend_write (VREF<FriendWriter> writer) const = 0 ;
-	virtual void once (CREF<WrapperLayout> params) const = 0 ;
+	virtual void initialize (CR<Slice> format) = 0 ;
+	virtual void friend_write (VR<FriendWriter> writer) const = 0 ;
+	virtual void once (CR<WrapperLayout> params) const = 0 ;
 } ;
 
 class Format implement FormatLayout {
@@ -1637,32 +1453,32 @@ protected:
 public:
 	implicit Format () = default ;
 
-	explicit Format (CREF<Slice> format) {
+	explicit Format (CR<Slice> format) {
 		FormatHolder::hold (thiz)->initialize (format) ;
 	}
 
-	void friend_write (VREF<FriendWriter> writer) const {
+	void friend_write (VR<FriendWriter> writer) const {
 		return FormatHolder::hold (thiz)->friend_write (writer) ;
 	}
 
 	template <class...ARG1>
-	void once (CREF<ARG1>...params) const {
-		return FormatHolder::hold (thiz)->once (MakeWrapper (FriendFormatBinder<ARG1>::hold (params)...)) ;
+	void once (CR<ARG1>...params) const {
+		return FormatHolder::hold (thiz)->once (MakeWrapper (FriendWritingBinder<ARG1>::hold (params)...)) ;
 	}
 
 	template <class...ARG1>
-	CREF<Format> operator() (CREF<ARG1>...params) const {
+	CR<Format> operator() (CR<ARG1>...params) const {
 		once (params...) ;
 		return thiz ;
 	}
 } ;
 
-inline CREF<Format> PrintFormat (CREF<Format> params) {
+inline CR<Format> PrintFormat (CR<Format> params) {
 	return params ;
 }
 
 template <class...ARG1>
-inline Format PrintFormat (CREF<ARG1>...params) {
+inline Format PrintFormat (CR<ARG1>...params) {
 	Format ret = Format (slice ("${0}")) ;
 	ret (params...) ;
 	return move (ret) ;
@@ -1671,144 +1487,136 @@ inline Format PrintFormat (CREF<ARG1>...params) {
 struct StreamTextProcLayout ;
 
 struct StreamTextProcHolder implement Interface {
-	imports CREF<OfThis<UniqueRef<StreamTextProcLayout>>> expr_m () ;
-	imports VFat<StreamTextProcHolder> hold (VREF<StreamTextProcLayout> that) ;
-	imports CFat<StreamTextProcHolder> hold (CREF<StreamTextProcLayout> that) ;
+	imports CR<OfThis<UniqueRef<StreamTextProcLayout>>> expr_m () ;
+	imports VFat<StreamTextProcHolder> hold (VR<StreamTextProcLayout> that) ;
+	imports CFat<StreamTextProcHolder> hold (CR<StreamTextProcLayout> that) ;
 
 	virtual void initialize () = 0 ;
-	virtual void read_keyword (VREF<FriendReader> reader ,VREF<String<STRU8>> item) const = 0 ;
-	virtual void read_scalar (VREF<FriendReader> reader ,VREF<String<STRU8>> item) const = 0 ;
-	virtual void read_escape (VREF<FriendReader> reader ,VREF<String<STRU8>> item) const = 0 ;
-	virtual void write_escape (VREF<FriendWriter> writer ,CREF<String<STRU8>> item) const = 0 ;
-	virtual void read_blank (VREF<FriendReader> reader ,VREF<String<STRU8>> item) const = 0 ;
-	virtual void read_endline (VREF<FriendReader> reader ,VREF<String<STRU8>> item) const = 0 ;
-	virtual void write_aligned (VREF<FriendWriter> writer ,CREF<VAL64> number ,CREF<LENGTH> align) const = 0 ;
+	virtual void read_keyword (VR<FriendReader> reader ,VR<String<STRU8>> item) const = 0 ;
+	virtual void read_scalar (VR<FriendReader> reader ,VR<String<STRU8>> item) const = 0 ;
+	virtual void read_escape (VR<FriendReader> reader ,VR<String<STRU8>> item) const = 0 ;
+	virtual void write_escape (VR<FriendWriter> writer ,CR<String<STRU8>> item) const = 0 ;
+	virtual void read_blank (VR<FriendReader> reader ,VR<String<STRU8>> item) const = 0 ;
+	virtual void read_endline (VR<FriendReader> reader ,VR<String<STRU8>> item) const = 0 ;
+	virtual void write_aligned (VR<FriendWriter> writer ,CR<VAL64> number ,CR<LENGTH> align) const = 0 ;
 } ;
 
 class StreamTextProc implement OfThis<UniqueRef<StreamTextProcLayout>> {
 public:
-	static CREF<StreamTextProc> expr_m () {
+	static CR<StreamTextProc> expr_m () {
 		return keep[TYPE<StreamTextProc>::expr] (StreamTextProcHolder::expr) ;
 	}
 
-	static void read_keyword (VREF<FriendReader> reader ,VREF<String<STRU8>> item) {
+	static void read_keyword (VR<FriendReader> reader ,VR<String<STRU8>> item) {
 		return StreamTextProcHolder::hold (expr)->read_keyword (reader ,item) ;
 	}
 
-	static void read_scalar (VREF<FriendReader> reader ,VREF<String<STRU8>> item) {
+	static void read_scalar (VR<FriendReader> reader ,VR<String<STRU8>> item) {
 		return StreamTextProcHolder::hold (expr)->read_scalar (reader ,item) ;
 	}
 
-	static void read_escape (VREF<FriendReader> reader ,VREF<String<STRU8>> item) {
+	static void read_escape (VR<FriendReader> reader ,VR<String<STRU8>> item) {
 		return StreamTextProcHolder::hold (expr)->read_escape (reader ,item) ;
 	}
 
-	static void write_escape (VREF<FriendWriter> writer ,CREF<String<STRU8>> item) {
+	static void write_escape (VR<FriendWriter> writer ,CR<String<STRU8>> item) {
 		return StreamTextProcHolder::hold (expr)->write_escape (writer ,item) ;
 	}
 
-	static void read_blank (VREF<FriendReader> reader ,VREF<String<STRU8>> item) {
+	static void read_blank (VR<FriendReader> reader ,VR<String<STRU8>> item) {
 		return StreamTextProcHolder::hold (expr)->read_blank (reader ,item) ;
 	}
 
-	static void read_endline (VREF<FriendReader> reader ,VREF<String<STRU8>> item) {
+	static void read_endline (VR<FriendReader> reader ,VR<String<STRU8>> item) {
 		return StreamTextProcHolder::hold (expr)->read_endline (reader ,item) ;
 	}
 
-	static void write_aligned (VREF<FriendWriter> writer ,CREF<VAL64> number ,CREF<LENGTH> align) {
+	static void write_aligned (VR<FriendWriter> writer ,CR<VAL64> number ,CR<LENGTH> align) {
 		return StreamTextProcHolder::hold (expr)->write_aligned (writer ,number ,align) ;
 	}
 } ;
 
-class KeywordText implement Proxy {
+class ReadKeyword {
 protected:
-	String<STRU8> mThat ;
+	VR<String<STRU8>> mThat ;
 
 public:
-	static VREF<KeywordText> from (VREF<String<STRU8>> that) {
-		return Pointer::from (that) ;
-	}
+	implicit ReadKeyword () = delete ;
 
-	template <class ARG1>
-	void friend_read (VREF<ARG1> reader) {
-		const auto r1x = FriendReaderBinder<ARG1>::hold (reader) ;
-		return StreamTextProc::read_keyword (r1x.ref ,mThat) ;
+	explicit ReadKeyword (VR<String<STRU8>> that) :mThat (that) {}
+
+	void friend_read (VR<FriendReader> reader) const {
+		return StreamTextProc::read_keyword (reader ,mThat) ;
 	}
 } ;
 
-class ScalarText implement Proxy {
+class ReadScalar {
 protected:
-	String<STRU8> mThat ;
+	VR<String<STRU8>> mThat ;
 
 public:
-	static VREF<ScalarText> from (VREF<String<STRU8>> that) {
-		return Pointer::from (that) ;
-	}
+	implicit ReadScalar () = delete ;
 
-	template <class ARG1>
-	void friend_read (VREF<ARG1> reader) {
-		const auto r1x = FriendReaderBinder<ARG1>::hold (reader) ;
-		return StreamTextProc::read_scalar (r1x.ref ,mThat) ;
+	explicit ReadScalar (VR<String<STRU8>> that) :mThat (that) {}
+
+	void friend_read (VR<FriendReader> reader) const {
+		return StreamTextProc::read_scalar (reader ,mThat) ;
 	}
 } ;
 
-class EscapeText implement Proxy {
+class ReadEscape {
 protected:
-	String<STRU8> mThat ;
+	VR<String<STRU8>> mThat ;
 
 public:
-	static VREF<EscapeText> from (VREF<String<STRU8>> that) {
-		return Pointer::from (that) ;
-	}
+	implicit ReadEscape () = delete ;
 
-	static CREF<EscapeText> from (CREF<String<STRU8>> that) {
-		return Pointer::from (that) ;
-	}
+	explicit ReadEscape (VR<String<STRU8>> that) :mThat (that) {}
 
-	static CREF<EscapeText> from (RREF<String<STRU8>> that) = delete ;
-
-	template <class ARG1>
-	void friend_read (VREF<ARG1> reader) {
-		const auto r1x = FriendReaderBinder<ARG1>::hold (reader) ;
-		return StreamTextProc::read_escape (r1x.ref ,mThat) ;
-	}
-
-	template <class ARG1>
-	void friend_write (VREF<ARG1> writer) const {
-		const auto r1x = FriendWriterBinder<ARG1>::hold (writer) ;
-		return StreamTextProc::write_escape (r1x.ref ,mThat) ;
+	void friend_read (VR<FriendReader> reader) const {
+		return StreamTextProc::read_escape (reader ,mThat) ;
 	}
 } ;
 
-class BlankText implement Proxy {
+class WriteEscape {
 protected:
-	String<STRU8> mThat ;
+	CR<String<STRU8>> mThat ;
 
 public:
-	static VREF<BlankText> from (VREF<String<STRU8>> that) {
-		return Pointer::from (that) ;
-	}
+	implicit WriteEscape () = delete ;
 
-	template <class ARG1>
-	void friend_read (VREF<ARG1> reader) {
-		const auto r1x = FriendReaderBinder<ARG1>::hold (reader) ;
-		return StreamTextProc::read_blank (r1x.ref ,mThat) ;
+	explicit WriteEscape (CR<String<STRU8>> that) :mThat (that) {}
+
+	void friend_read (VR<FriendWriter> writer) const {
+		return StreamTextProc::write_escape (writer ,mThat) ;
 	}
 } ;
 
-class EndlineText implement Proxy {
+class ReadBlank {
 protected:
-	String<STRU8> mThat ;
+	VR<String<STRU8>> mThat ;
 
 public:
-	static VREF<EndlineText> from (VREF<String<STRU8>> that) {
-		return Pointer::from (that) ;
-	}
+	implicit ReadBlank () = delete ;
 
-	template <class ARG1>
-	void friend_read (VREF<ARG1> reader) {
-		const auto r1x = FriendReaderBinder<ARG1>::hold (reader) ;
-		return StreamTextProc::read_endline (r1x.ref ,mThat) ;
+	explicit ReadBlank (VR<String<STRU8>> that) :mThat (that) {}
+
+	void friend_read (VR<FriendReader> reader) const {
+		return StreamTextProc::read_blank (reader ,mThat) ;
+	}
+} ;
+
+class ReadEndline {
+protected:
+	VR<String<STRU8>> mThat ;
+
+public:
+	implicit ReadEndline () = delete ;
+
+	explicit ReadEndline (VR<String<STRU8>> that) :mThat (that) {}
+
+	void friend_read (VR<FriendReader> reader) const {
+		return StreamTextProc::read_endline (reader ,mThat) ;
 	}
 } ;
 
@@ -1820,15 +1628,13 @@ protected:
 public:
 	implicit AlignedText () = delete ;
 
-	explicit AlignedText (CREF<VAL64> number ,CREF<LENGTH> align) {
+	explicit AlignedText (CR<VAL64> number ,CR<LENGTH> align) {
 		mNumber = number ;
 		mAlign = align ;
 	}
 
-	template <class ARG1>
-	void friend_write (VREF<ARG1> writer) const {
-		const auto r1x = FriendWriterBinder<ARG1>::hold (writer) ;
-		return StreamTextProc::write_aligned (r1x.ref ,mNumber ,mAlign) ;
+	void friend_write (VR<FriendWriter> writer) const {
+		return StreamTextProc::write_aligned (writer ,mNumber ,mAlign) ;
 	}
 } ;
 
@@ -1836,11 +1642,11 @@ struct CommaLayout ;
 
 struct CommaHolder implement Interface {
 	imports SharedRef<CommaLayout> create () ;
-	imports VFat<CommaHolder> hold (VREF<CommaLayout> that) ;
-	imports CFat<CommaHolder> hold (CREF<CommaLayout> that) ;
+	imports VFat<CommaHolder> hold (VR<CommaLayout> that) ;
+	imports CFat<CommaHolder> hold (CR<CommaLayout> that) ;
 
-	virtual void initialize (CREF<Slice> indent ,CREF<Slice> comma ,CREF<Slice> endline) = 0 ;
-	virtual void friend_write (VREF<FriendWriter> writer) = 0 ;
+	virtual void initialize (CR<Slice> indent ,CR<Slice> comma ,CR<Slice> endline) = 0 ;
+	virtual void friend_write (VR<FriendWriter> writer) = 0 ;
 	virtual void increase () = 0 ;
 	virtual void decrease () = 0 ;
 	virtual void tight () = 0 ;
@@ -1850,12 +1656,12 @@ class Comma implement OfThis<SharedRef<CommaLayout>> {
 public:
 	implicit Comma () = default ;
 
-	explicit Comma (CREF<Slice> indent ,CREF<Slice> comma ,CREF<Slice> endline) {
+	explicit Comma (CR<Slice> indent ,CR<Slice> comma ,CR<Slice> endline) {
 		mThis = CommaHolder::create () ;
 		CommaHolder::hold (thiz)->initialize (indent ,comma ,endline) ;
 	}
 
-	void friend_write (VREF<FriendWriter> writer) const {
+	void friend_write (VR<FriendWriter> writer) const {
 		return CommaHolder::hold (thiz)->friend_write (writer) ;
 	}
 
@@ -1884,28 +1690,28 @@ struct RegexLayout ;
 
 struct RegexHolder implement Interface {
 	imports AutoRef<RegexLayout> create () ;
-	imports VFat<RegexHolder> hold (VREF<RegexLayout> that) ;
-	imports CFat<RegexHolder> hold (CREF<RegexLayout> that) ;
+	imports VFat<RegexHolder> hold (VR<RegexLayout> that) ;
+	imports CFat<RegexHolder> hold (CR<RegexLayout> that) ;
 
-	virtual void initialize (CREF<String<STR>> format) = 0 ;
-	virtual INDEX search (RREF<Ref<String<STR>>> text ,CREF<INDEX> offset) = 0 ;
-	virtual Slice match (CREF<INDEX> index) const = 0 ;
+	virtual void initialize (CR<String<STR>> format) = 0 ;
+	virtual INDEX search (RR<Ref<String<STR>>> text ,CR<INDEX> offset) = 0 ;
+	virtual Slice match (CR<INDEX> index) const = 0 ;
 } ;
 
 class Regex implement OfThis<AutoRef<RegexLayout>> {
 public:
 	implicit Regex () = default ;
 
-	explicit Regex (CREF<String<STR>> format) {
+	explicit Regex (CR<String<STR>> format) {
 		mThis = RegexHolder::create () ;
 		RegexHolder::hold (thiz)->initialize (format) ;
 	}
 
-	INDEX search (RREF<Ref<String<STR>>> text ,CREF<INDEX> offset) {
+	INDEX search (RR<Ref<String<STR>>> text ,CR<INDEX> offset) {
 		return RegexHolder::hold (thiz)->search (move (text) ,offset) ;
 	}
 
-	Slice match (CREF<INDEX> index) const {
+	Slice match (CR<INDEX> index) const {
 		return RegexHolder::hold (thiz)->match (index) ;
 	}
 } ;

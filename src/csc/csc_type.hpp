@@ -70,151 +70,151 @@ enum class CHAR :csc_uint32_t ;
 enum class QUAD :csc_uint64_t ;
 
 static constexpr auto BYTE_ENDIAN = BYTE (0X1F) ;
-static constexpr auto WORD_ENDIAN = WORD (0X11FF) ;
-static constexpr auto CHAR_ENDIAN = CHAR (0X1111FFFF) ;
-static constexpr auto QUAD_ENDIAN = QUAD (0X11111111FFFFFFFF) ;
+static constexpr auto WORD_ENDIAN = WORD (0X2F1F) ;
+static constexpr auto CHAR_ENDIAN = CHAR (0X4F3F2F1F) ;
+static constexpr auto QUAD_ENDIAN = QUAD (0X8F7F6F5F4F3F2F1F) ;
 
-forceinline constexpr BYTE operator| (CREF<BYTE> a ,CREF<BYTE> b) noexcept {
+forceinline constexpr BYTE operator| (CR<BYTE> a ,CR<BYTE> b) noexcept {
 	return BYTE (csc_uint8_t (a) | csc_uint8_t (b)) ;
 }
 
-forceinline void operator|= (VREF<BYTE> a ,CREF<BYTE> b) noexcept {
+forceinline void operator|= (VR<BYTE> a ,CR<BYTE> b) noexcept {
 	a = a | b ;
 }
 
-forceinline constexpr BYTE operator& (CREF<BYTE> a ,CREF<BYTE> b) noexcept {
+forceinline constexpr BYTE operator& (CR<BYTE> a ,CR<BYTE> b) noexcept {
 	return BYTE (csc_uint8_t (a) & csc_uint8_t (b)) ;
 }
 
-forceinline void operator&= (VREF<BYTE> a ,CREF<BYTE> b) noexcept {
+forceinline void operator&= (VR<BYTE> a ,CR<BYTE> b) noexcept {
 	a = a & b ;
 }
 
-forceinline constexpr BYTE operator^ (CREF<BYTE> a ,CREF<BYTE> b) noexcept {
+forceinline constexpr BYTE operator^ (CR<BYTE> a ,CR<BYTE> b) noexcept {
 	return BYTE (csc_uint8_t (a) ^ csc_uint8_t (b)) ;
 }
 
-forceinline void operator^= (VREF<BYTE> a ,CREF<BYTE> b) noexcept {
+forceinline void operator^= (VR<BYTE> a ,CR<BYTE> b) noexcept {
 	a = a ^ b ;
 }
 
-forceinline constexpr BYTE operator~ (CREF<BYTE> a) noexcept {
+forceinline constexpr BYTE operator~ (CR<BYTE> a) noexcept {
 	return BYTE (~csc_uint8_t (a)) ;
 }
 
-forceinline constexpr BYTE operator<< (CREF<BYTE> a ,CREF<LENGTH> b) noexcept {
+forceinline constexpr BYTE operator<< (CR<BYTE> a ,CR<LENGTH> b) noexcept {
 	return BYTE (csc_uint8_t (a) << b) ;
 }
 
-forceinline constexpr BYTE operator>> (CREF<BYTE> a ,CREF<LENGTH> b) noexcept {
+forceinline constexpr BYTE operator>> (CR<BYTE> a ,CR<LENGTH> b) noexcept {
 	return BYTE (csc_uint8_t (a) >> b) ;
 }
 
-forceinline constexpr WORD operator| (CREF<WORD> a ,CREF<WORD> b) noexcept {
+forceinline constexpr WORD operator| (CR<WORD> a ,CR<WORD> b) noexcept {
 	return WORD (csc_uint16_t (a) | csc_uint16_t (b)) ;
 }
 
-forceinline void operator|= (VREF<WORD> a ,CREF<WORD> b) noexcept {
+forceinline void operator|= (VR<WORD> a ,CR<WORD> b) noexcept {
 	a = a | b ;
 }
 
-forceinline constexpr WORD operator& (CREF<WORD> a ,CREF<WORD> b) noexcept {
+forceinline constexpr WORD operator& (CR<WORD> a ,CR<WORD> b) noexcept {
 	return WORD (csc_uint16_t (a) & csc_uint16_t (b)) ;
 }
 
-forceinline void operator&= (VREF<WORD> a ,CREF<WORD> b) noexcept {
+forceinline void operator&= (VR<WORD> a ,CR<WORD> b) noexcept {
 	a = a & b ;
 }
 
-forceinline constexpr WORD operator^ (CREF<WORD> a ,CREF<WORD> b) noexcept {
+forceinline constexpr WORD operator^ (CR<WORD> a ,CR<WORD> b) noexcept {
 	return WORD (csc_uint16_t (a) ^ csc_uint16_t (b)) ;
 }
 
-forceinline void operator^= (VREF<WORD> a ,CREF<WORD> b) noexcept {
+forceinline void operator^= (VR<WORD> a ,CR<WORD> b) noexcept {
 	a = a ^ b ;
 }
 
-forceinline constexpr WORD operator~ (CREF<WORD> a) noexcept {
+forceinline constexpr WORD operator~ (CR<WORD> a) noexcept {
 	return WORD (~csc_uint16_t (a)) ;
 }
 
-forceinline constexpr WORD operator<< (CREF<WORD> a ,CREF<LENGTH> b) noexcept {
+forceinline constexpr WORD operator<< (CR<WORD> a ,CR<LENGTH> b) noexcept {
 	return WORD (csc_uint16_t (a) << b) ;
 }
 
-forceinline constexpr WORD operator>> (CREF<WORD> a ,CREF<LENGTH> b) noexcept {
+forceinline constexpr WORD operator>> (CR<WORD> a ,CR<LENGTH> b) noexcept {
 	return WORD (csc_uint16_t (a) >> b) ;
 }
 
-forceinline constexpr CHAR operator| (CREF<CHAR> a ,CREF<CHAR> b) noexcept {
+forceinline constexpr CHAR operator| (CR<CHAR> a ,CR<CHAR> b) noexcept {
 	return CHAR (csc_uint32_t (a) | csc_uint32_t (b)) ;
 }
 
-forceinline void operator|= (VREF<CHAR> a ,CREF<CHAR> b) noexcept {
+forceinline void operator|= (VR<CHAR> a ,CR<CHAR> b) noexcept {
 	a = a | b ;
 }
 
-forceinline constexpr CHAR operator& (CREF<CHAR> a ,CREF<CHAR> b) noexcept {
+forceinline constexpr CHAR operator& (CR<CHAR> a ,CR<CHAR> b) noexcept {
 	return CHAR (csc_uint32_t (a) & csc_uint32_t (b)) ;
 }
 
-forceinline void operator&= (VREF<CHAR> a ,CREF<CHAR> b) noexcept {
+forceinline void operator&= (VR<CHAR> a ,CR<CHAR> b) noexcept {
 	a = a & b ;
 }
 
-forceinline constexpr CHAR operator^ (CREF<CHAR> a ,CREF<CHAR> b) noexcept {
+forceinline constexpr CHAR operator^ (CR<CHAR> a ,CR<CHAR> b) noexcept {
 	return CHAR (csc_uint32_t (a) ^ csc_uint32_t (b)) ;
 }
 
-forceinline void operator^= (VREF<CHAR> a ,CREF<CHAR> b) noexcept {
+forceinline void operator^= (VR<CHAR> a ,CR<CHAR> b) noexcept {
 	a = a ^ b ;
 }
 
-forceinline constexpr CHAR operator~ (CREF<CHAR> a) noexcept {
+forceinline constexpr CHAR operator~ (CR<CHAR> a) noexcept {
 	return CHAR (~csc_uint32_t (a)) ;
 }
 
-forceinline constexpr CHAR operator<< (CREF<CHAR> a ,CREF<LENGTH> b) noexcept {
+forceinline constexpr CHAR operator<< (CR<CHAR> a ,CR<LENGTH> b) noexcept {
 	return CHAR (csc_uint32_t (a) << b) ;
 }
 
-forceinline constexpr CHAR operator>> (CREF<CHAR> a ,CREF<LENGTH> b) noexcept {
+forceinline constexpr CHAR operator>> (CR<CHAR> a ,CR<LENGTH> b) noexcept {
 	return CHAR (csc_uint32_t (a) >> b) ;
 }
 
-forceinline constexpr QUAD operator| (CREF<QUAD> a ,CREF<QUAD> b) noexcept {
+forceinline constexpr QUAD operator| (CR<QUAD> a ,CR<QUAD> b) noexcept {
 	return QUAD (csc_uint64_t (a) | csc_uint64_t (b)) ;
 }
 
-forceinline void operator|= (VREF<QUAD> a ,CREF<QUAD> b) noexcept {
+forceinline void operator|= (VR<QUAD> a ,CR<QUAD> b) noexcept {
 	a = a | b ;
 }
 
-forceinline constexpr QUAD operator& (CREF<QUAD> a ,CREF<QUAD> b) noexcept {
+forceinline constexpr QUAD operator& (CR<QUAD> a ,CR<QUAD> b) noexcept {
 	return QUAD (csc_uint64_t (a) & csc_uint64_t (b)) ;
 }
 
-forceinline void operator&= (VREF<QUAD> a ,CREF<QUAD> b) noexcept {
+forceinline void operator&= (VR<QUAD> a ,CR<QUAD> b) noexcept {
 	a = a & b ;
 }
 
-forceinline constexpr QUAD operator^ (CREF<QUAD> a ,CREF<QUAD> b) noexcept {
+forceinline constexpr QUAD operator^ (CR<QUAD> a ,CR<QUAD> b) noexcept {
 	return QUAD (csc_uint64_t (a) ^ csc_uint64_t (b)) ;
 }
 
-forceinline void operator^= (VREF<QUAD> a ,CREF<QUAD> b) noexcept {
+forceinline void operator^= (VR<QUAD> a ,CR<QUAD> b) noexcept {
 	a = a ^ b ;
 }
 
-forceinline constexpr QUAD operator~ (CREF<QUAD> a) noexcept {
+forceinline constexpr QUAD operator~ (CR<QUAD> a) noexcept {
 	return QUAD (~csc_uint64_t (a)) ;
 }
 
-forceinline constexpr QUAD operator<< (CREF<QUAD> a ,CREF<LENGTH> b) noexcept {
+forceinline constexpr QUAD operator<< (CR<QUAD> a ,CR<LENGTH> b) noexcept {
 	return QUAD (csc_uint64_t (a) << b) ;
 }
 
-forceinline constexpr QUAD operator>> (CREF<QUAD> a ,CREF<LENGTH> b) noexcept {
+forceinline constexpr QUAD operator>> (CR<QUAD> a ,CR<LENGTH> b) noexcept {
 	return QUAD (csc_uint64_t (a) >> b) ;
 }
 
@@ -676,23 +676,23 @@ using ENUM_MIN = typename ENUM_MIN_HELP<TYPE<A...> ,ALWAYS>::RET ;
 struct Proxy {
 	implicit Proxy () = delete ;
 	implicit ~Proxy () = delete ;
-	implicit Proxy (CREF<Proxy> that) = delete ;
-	forceinline VREF<Proxy> operator= (CREF<Proxy> that) = delete ;
-	implicit Proxy (RREF<Proxy> that) = delete ;
-	forceinline VREF<Proxy> operator= (RREF<Proxy> that) = delete ;
+	implicit Proxy (CR<Proxy> that) = delete ;
+	forceinline VR<Proxy> operator= (CR<Proxy> that) = delete ;
+	implicit Proxy (RR<Proxy> that) = delete ;
+	forceinline VR<Proxy> operator= (RR<Proxy> that) = delete ;
 } ;
 
 struct Interface {
 	implicit Interface () = default ;
 	virtual ~Interface () = default ;
-	implicit Interface (CREF<Interface> that) = delete ;
-	forceinline VREF<Interface> operator= (CREF<Interface> that) = delete ;
-	implicit Interface (RREF<Interface> that) = delete ;
-	forceinline VREF<Interface> operator= (RREF<Interface> that) = delete ;
+	implicit Interface (CR<Interface> that) = delete ;
+	forceinline VR<Interface> operator= (CR<Interface> that) = delete ;
+	implicit Interface (RR<Interface> that) = delete ;
+	forceinline VR<Interface> operator= (RR<Interface> that) = delete ;
 } ;
 
-struct ReflectUnknown implement Interface {
-	virtual FLAG reflect (CREF<FLAG> uuid) const = 0 ;
+struct FriendUnknown implement Interface {
+	virtual FLAG reflect (CR<FLAG> uuid) const = 0 ;
 } ;
 
 template <class...>
@@ -839,17 +839,17 @@ trait REFLECT_REF_HELP<A ,A> {
 } ;
 
 template <class A>
-trait REFLECT_REF_HELP<A ,VREF<A>> {
+trait REFLECT_REF_HELP<A ,VR<A>> {
 	using RET = VARIABLE ;
 } ;
 
 template <class A>
-trait REFLECT_REF_HELP<A ,CREF<A>> {
+trait REFLECT_REF_HELP<A ,CR<A>> {
 	using RET = CONSTANT ;
 } ;
 
 template <class A>
-trait REFLECT_REF_HELP<A ,RREF<A>> {
+trait REFLECT_REF_HELP<A ,RR<A>> {
 	using RET = REGISTER ;
 } ;
 
@@ -1158,10 +1158,10 @@ struct FriendVisitor implement Interface {
 	virtual void enter () = 0 ;
 	virtual void leave () = 0 ;
 	virtual FLAG fetch () const = 0 ;
-	virtual void push (CREF<BYTE> a) = 0 ;
-	virtual void push (CREF<WORD> a) = 0 ;
-	virtual void push (CREF<CHAR> a) = 0 ;
-	virtual void push (CREF<QUAD> a) = 0 ;
+	virtual void push (CR<BYTE> a) = 0 ;
+	virtual void push (CR<WORD> a) = 0 ;
+	virtual void push (CR<CHAR> a) = 0 ;
+	virtual void push (CR<QUAD> a) = 0 ;
 } ;
 
 template <class...>
@@ -1207,7 +1207,7 @@ trait IS_RELATE_HELP<A ,B ,REQUIRE<KILL<ENUM_TRUE ,typeof (static_cast<A> (nullo
 } ;
 
 template <class A ,class B>
-using IS_RELATE = typename IS_RELATE_HELP<XREF<A> ,XREF<B> ,ALWAYS>::RET ;
+using IS_RELATE = typename IS_RELATE_HELP<XR<A> ,XR<B> ,ALWAYS>::RET ;
 
 template <class...>
 trait IS_VIRTUAL_HELP ;
@@ -1432,39 +1432,39 @@ using HAS_M3RD = typename HAS_M3RD_HELP<A ,ALWAYS>::RET ;
 
 class Pointer implement Proxy {
 public:
-	static VREF<Pointer> make (CREF<FLAG> that) noexcept {
-		return *(reinterpret_cast<PTR<VREF<Pointer>>> (that)) ;
+	static VR<Pointer> make (CR<FLAG> that) noexcept {
+		return *(reinterpret_cast<PTR<VR<Pointer>>> (that)) ;
 	}
 
 	template <class ARG1>
-	static VREF<Pointer> from (VREF<ARG1> that) noexcept {
-		return reinterpret_cast<VREF<Pointer>> (that) ;
+	static VR<Pointer> from (VR<ARG1> that) noexcept {
+		return reinterpret_cast<VR<Pointer>> (that) ;
 	}
 
 	template <class ARG1>
-	static CREF<Pointer> from (CREF<ARG1> that) noexcept {
-		return reinterpret_cast<CREF<Pointer>> (that) ;
+	static CR<Pointer> from (CR<ARG1> that) noexcept {
+		return reinterpret_cast<CR<Pointer>> (that) ;
 	}
 
 	template <class ARG1>
-	static RREF<Pointer> from (RREF<ARG1> that) noexcept = delete ;
+	static RR<Pointer> from (RR<ARG1> that) noexcept = delete ;
 
 	template <class ARG1>
-	forceinline operator VREF<ARG1> () leftvalue noexcept {
-		return reinterpret_cast<VREF<ARG1>> (thiz) ;
+	forceinline operator VR<ARG1> () leftvalue noexcept {
+		return reinterpret_cast<VR<ARG1>> (thiz) ;
 	}
 
 	template <class ARG1>
-	forceinline operator CREF<ARG1> () leftvalue noexcept {
-		return reinterpret_cast<CREF<ARG1>> (thiz) ;
+	forceinline operator CR<ARG1> () leftvalue noexcept {
+		return reinterpret_cast<CR<ARG1>> (thiz) ;
 	}
 
 	template <class ARG1>
 	forceinline operator ARG1 () leftvalue noexcept = delete ;
 
 	template <class ARG1>
-	forceinline operator CREF<ARG1> () const leftvalue noexcept {
-		return reinterpret_cast<CREF<ARG1>> (thiz) ;
+	forceinline operator CR<ARG1> () const leftvalue noexcept {
+		return reinterpret_cast<CR<ARG1>> (thiz) ;
 	}
 
 	template <class ARG1>

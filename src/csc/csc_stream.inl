@@ -32,12 +32,12 @@ public:
 	}
 
 	BOOL big_endian () const override {
-		const auto r1x = WORD (0X00FF) ;
+		const auto r1x = WORD_ENDIAN ;
 		const auto r2x = bitwise[TYPE<Buffer<BYTE ,SIZE_OF<WORD>>>::expr] (r1x) ;
-		return r2x[0] == BYTE (0X00) ;
+		return r2x[0] == BYTE_ENDIAN ;
 	}
 
-	BOOL is_blank (CREF<STRU32> str) const override {
+	BOOL is_blank (CR<STRU32> str) const override {
 		const auto r1x = self.mBlankSlice ;
 		for (auto &&i : range (0 ,r1x.size ())) {
 			if (r1x[i] == str)
@@ -46,7 +46,7 @@ public:
 		return FALSE ;
 	}
 
-	BOOL is_space (CREF<STRU32> str) const override {
+	BOOL is_space (CR<STRU32> str) const override {
 		if (str == STRU32 (' '))
 			return TRUE ;
 		if (str == STRU32 ('\t'))
@@ -56,7 +56,7 @@ public:
 		return FALSE ;
 	}
 
-	BOOL is_endline (CREF<STRU32> str) const override {
+	BOOL is_endline (CR<STRU32> str) const override {
 		if (str == STRU32 ('\r'))
 			return TRUE ;
 		if (str == STRU32 ('\n'))
@@ -68,7 +68,7 @@ public:
 		return FALSE ;
 	}
 
-	BOOL is_punct (CREF<STRU32> str) const override {
+	BOOL is_punct (CR<STRU32> str) const override {
 		const auto r1x = self.mPunctSlice ;
 		for (auto &&i : range (0 ,r1x.size ())) {
 			if (r1x[i] == str)
@@ -77,7 +77,7 @@ public:
 		return FALSE ;
 	}
 
-	BOOL is_hyphen (CREF<STRU32> str) const override {
+	BOOL is_hyphen (CR<STRU32> str) const override {
 		if (str == STRU32 ('-'))
 			return TRUE ;
 		if (str == STRU32 (':'))
@@ -87,7 +87,7 @@ public:
 		return FALSE ;
 	}
 
-	BOOL is_alpha (CREF<STRU32> str) const override {
+	BOOL is_alpha (CR<STRU32> str) const override {
 		if (str >= STRU32 ('a'))
 			if (str <= STRU32 ('z'))
 				return TRUE ;
@@ -97,28 +97,28 @@ public:
 		return FALSE ;
 	}
 
-	STRU32 alpha_lower (CREF<STRU32> str) const override {
+	STRU32 alpha_lower (CR<STRU32> str) const override {
 		if (str >= STRU32 ('A'))
 			if (str <= STRU32 ('Z'))
 				return str - STRU32 ('A') + STRU32 ('a') ;
 		return str ;
 	}
 
-	STRU32 alpha_upper (CREF<STRU32> str) const override {
+	STRU32 alpha_upper (CR<STRU32> str) const override {
 		if (str >= STRU32 ('a'))
 			if (str <= STRU32 ('z'))
 				return str - STRU32 ('a') + STRU32 ('A') ;
 		return str ;
 	}
 
-	BOOL is_digit (CREF<STRU32> str) const override {
+	BOOL is_digit (CR<STRU32> str) const override {
 		if (str >= STRU32 ('0'))
 			if (str <= STRU32 ('9'))
 				return TRUE ;
 		return FALSE ;
 	}
 
-	BOOL is_hex_digit (CREF<STRU32> str) const override {
+	BOOL is_hex_digit (CR<STRU32> str) const override {
 		if (str >= STRU32 ('a'))
 			if (str <= STRU32 ('f'))
 				return TRUE ;
@@ -128,7 +128,7 @@ public:
 		return FALSE ;
 	}
 
-	INDEX hex_from_str (CREF<STRU32> str) const override {
+	INDEX hex_from_str (CR<STRU32> str) const override {
 		if (is_digit (str))
 			return INDEX (str - STRU32 ('0')) ;
 		if (is_hex_digit (str))
@@ -137,7 +137,7 @@ public:
 		return INDEX () ;
 	}
 
-	STRU32 str_from_hex (CREF<INDEX> hex) const override {
+	STRU32 str_from_hex (CR<INDEX> hex) const override {
 		if (inline_between (hex ,0 ,10))
 			return STRU32 ('0') + STRU32 (hex) ;
 		if (inline_between (hex ,10 ,16))
@@ -146,7 +146,7 @@ public:
 		return STRU32 () ;
 	}
 
-	BOOL is_word (CREF<STRU32> str) const override {
+	BOOL is_word (CR<STRU32> str) const override {
 		if (is_alpha (str))
 			return TRUE ;
 		if (is_digit (str))
@@ -156,7 +156,7 @@ public:
 		return FALSE ;
 	}
 
-	BOOL is_ctrl (CREF<STRU32> str) const override {
+	BOOL is_ctrl (CR<STRU32> str) const override {
 		const auto r1x = self.mEscapeCtrlSlice ;
 		for (auto &&i : range (0 ,r1x.size ())) {
 			if (r1x[i] == str)
@@ -165,7 +165,7 @@ public:
 		return FALSE ;
 	}
 
-	STRU32 word_from_ctrl (CREF<STRU32> str) const override {
+	STRU32 word_from_ctrl (CR<STRU32> str) const override {
 		const auto r1x = self.mEscapeWordSlice ;
 		const auto r2x = self.mEscapeCtrlSlice ;
 		for (auto &&i : range (0 ,r2x.size ())) {
@@ -176,7 +176,7 @@ public:
 		return STRU32 ('?') ;
 	}
 
-	STRU32 ctrl_from_word (CREF<STRU32> str) const override {
+	STRU32 ctrl_from_word (CR<STRU32> str) const override {
 		const auto r1x = self.mEscapeWordSlice ;
 		const auto r2x = self.mEscapeCtrlSlice ;
 		for (auto &&i : range (0 ,r1x.size ())) {
@@ -188,7 +188,7 @@ public:
 	}
 } ;
 
-exports CREF<OfThis<UniqueRef<StreamProcLayout>>> StreamProcHolder::expr_m () {
+exports CR<OfThis<UniqueRef<StreamProcLayout>>> StreamProcHolder::expr_m () {
 	return memorize ([&] () {
 		OfThis<UniqueRef<StreamProcLayout>> ret ;
 		ret.mThis = UniqueRef<StreamProcLayout>::make () ;
@@ -197,17 +197,17 @@ exports CREF<OfThis<UniqueRef<StreamProcLayout>>> StreamProcHolder::expr_m () {
 	}) ;
 }
 
-exports VFat<StreamProcHolder> StreamProcHolder::hold (VREF<StreamProcLayout> that) {
+exports VFat<StreamProcHolder> StreamProcHolder::hold (VR<StreamProcLayout> that) {
 	return VFat<StreamProcHolder> (StreamProcImplHolder () ,that) ;
 }
 
-exports CFat<StreamProcHolder> StreamProcHolder::hold (CREF<StreamProcLayout> that) {
+exports CFat<StreamProcHolder> StreamProcHolder::hold (CR<StreamProcLayout> that) {
 	return CFat<StreamProcHolder> (StreamProcImplHolder () ,that) ;
 }
 
 class ByteReaderImplHolder final implement Fat<ByteReaderHolder ,ByteReaderLayout> {
 public:
-	void initialize (RREF<Ref<RefBuffer<BYTE>>> stream) override {
+	void initialize (RR<Ref<RefBuffer<BYTE>>> stream) override {
 		assert (stream != NULL) ;
 		assert (stream->step () == 1) ;
 		self.mStream = move (stream) ;
@@ -215,7 +215,7 @@ public:
 		reset () ;
 	}
 
-	void use_overflow (CREF<Function<VREF<ByteReaderLayout>>> overflow) override {
+	void use_overflow (CR<Function<VR<ByteReaderLayout>>> overflow) override {
 		self.mOverflow = overflow ;
 	}
 
@@ -232,7 +232,7 @@ public:
 		self.mWrite = self.mStream->size () ;
 	}
 
-	void reset (CREF<StreamShape> shape) override {
+	void reset (CR<StreamShape> shape) override {
 		self.mRead = shape.mRead ;
 		self.mWrite = shape.mWrite ;
 	}
@@ -248,37 +248,37 @@ public:
 		return length () < size () ;
 	}
 
-	void read (VREF<BOOL> item) override {
+	void read (VR<BOOL> item) override {
 		auto rax = BYTE_BASE<BOOL> () ;
 		read (rax) ;
 		item = bitwise[TYPE<BOOL>::expr] (rax) ;
 	}
 
-	void read (VREF<VAL32> item) override {
+	void read (VR<VAL32> item) override {
 		auto rax = BYTE_BASE<VAL32> () ;
 		read (rax) ;
 		item = bitwise[TYPE<VAL32>::expr] (rax) ;
 	}
 
-	void read (VREF<VAL64> item) override {
+	void read (VR<VAL64> item) override {
 		auto rax = BYTE_BASE<VAL64> () ;
 		read (rax) ;
 		item = bitwise[TYPE<VAL64>::expr] (rax) ;
 	}
 
-	void read (VREF<FLT32> item) override {
+	void read (VR<FLT32> item) override {
 		auto rax = BYTE_BASE<FLT32> () ;
 		read (rax) ;
 		item = bitwise[TYPE<FLT32>::expr] (rax) ;
 	}
 
-	void read (VREF<FLT64> item) override {
+	void read (VR<FLT64> item) override {
 		auto rax = BYTE_BASE<FLT64> () ;
 		read (rax) ;
 		item = bitwise[TYPE<FLT64>::expr] (rax) ;
 	}
 
-	void read (VREF<BYTE> item) override {
+	void read (VR<BYTE> item) override {
 		if ifdo (TRUE) {
 			if (self.mRead < self.mWrite)
 				discard ;
@@ -296,20 +296,20 @@ public:
 		}
 	}
 
-	void read (VREF<WORD> item) override {
+	void read (VR<WORD> item) override {
 		read_byte_impl (item) ;
 	}
 
-	void read (VREF<CHAR> item) override {
+	void read (VR<CHAR> item) override {
 		read_byte_impl (item) ;
 	}
 
-	void read (VREF<QUAD> item) override {
+	void read (VR<QUAD> item) override {
 		read_byte_impl (item) ;
 	}
 
 	template <class ARG1>
-	forceinline void read_byte_impl (VREF<ARG1> item) {
+	forceinline void read_byte_impl (VR<ARG1> item) {
 		auto rax = Buffer<BYTE ,SIZE_OF<ARG1>> () ;
 		for (auto &&i : range (0 ,rax.size ())) {
 			read (rax[i]) ;
@@ -322,7 +322,7 @@ public:
 		}
 	}
 
-	void read (VREF<STRU32> item) override {
+	void read (VR<STRU32> item) override {
 		item = 0 ;
 		auto rax = BYTE () ;
 		INDEX ix = 0 ;
@@ -337,7 +337,7 @@ public:
 		item |= STRU32 (rax) << ix ;
 	}
 
-	void read (CREF<Slice> item) override {
+	void read (CR<Slice> item) override {
 		auto rax = STRU32 () ;
 		for (auto &&i : range (0 ,item.size ())) {
 			assume (inline_between (INDEX (item[i]) ,0 ,128)) ;
@@ -346,28 +346,30 @@ public:
 		}
 	}
 
-	void read (VREF<String<STRA>> item) override {
-		read_string_impl (item) ;
-	}
-
-	void read (VREF<String<STRW>> item) override {
-		read_string_impl (item) ;
-	}
-
-	void read (VREF<String<STRU8>> item) override {
-		read_string_impl (item) ;
-	}
-
-	void read (VREF<String<STRU16>> item) override {
-		read_string_impl (item) ;
-	}
-
-	void read (VREF<String<STRU32>> item) override {
-		read_string_impl (item) ;
+	void read (VR<StringLayout> item) override {
+		auto act = TRUE ;
+		if ifdo (act) {
+			auto &&rax = keep[TYPE<String<STRU8>>::expr] (item) ;
+			if (rax.step () != SIZE_OF<STRU8>::expr)
+				discard ;
+			read_string_impl (rax) ;
+		}
+		if ifdo (act) {
+			auto &&rax = keep[TYPE<String<STRU16>>::expr] (item) ;
+			if (rax.step () != SIZE_OF<STRU16>::expr)
+				discard ;
+			read_string_impl (rax) ;
+		}
+		if ifdo (act) {
+			auto &&rax = keep[TYPE<String<STRU32>>::expr] (item) ;
+			if (rax.step () != SIZE_OF<STRU32>::expr)
+				discard ;
+			read_string_impl (rax) ;
+		}
 	}
 
 	template <class ARG1>
-	forceinline void read_string_impl (VREF<String<ARG1>> item) {
+	forceinline void read_string_impl (VR<String<ARG1>> item) {
 		item.clear () ;
 		auto rax = STRU32 () ;
 		for (auto &&i : range (0 ,item.size ())) {
@@ -376,15 +378,15 @@ public:
 		}
 	}
 
-	void read (CREF<typeof (CLS)>) override {
-		reset () ;
-	}
-
-	void read (CREF<typeof (BOM)>) override {
+	void read (CR<typeof (BOM)>) override {
 		self.mDiffEndian = !self.mDiffEndian ;
 	}
 
-	void read (CREF<typeof (GAP)>) override {
+	void read (CR<typeof (CAT)>) override {
+		unimplemented () ;
+	}
+
+	void read (CR<typeof (GAP)>) override {
 		auto rax = BYTE () ;
 		read (rax) ;
 		assume (rax == BYTE (0X5D)) ;
@@ -392,7 +394,7 @@ public:
 		assume (rax == BYTE (0X5B)) ;
 	}
 
-	void read (CREF<typeof (EOS)>) override {
+	void read (CR<typeof (EOS)>) override {
 		auto rax = BYTE () ;
 		while (TRUE) {
 			if (self.mRead >= self.mWrite)
@@ -403,17 +405,17 @@ public:
 	}
 } ;
 
-exports VFat<ByteReaderHolder> ByteReaderHolder::hold (VREF<ByteReaderLayout> that) {
+exports VFat<ByteReaderHolder> ByteReaderHolder::hold (VR<ByteReaderLayout> that) {
 	return VFat<ByteReaderHolder> (ByteReaderImplHolder () ,that) ;
 }
 
-exports CFat<ByteReaderHolder> ByteReaderHolder::hold (CREF<ByteReaderLayout> that) {
+exports CFat<ByteReaderHolder> ByteReaderHolder::hold (CR<ByteReaderLayout> that) {
 	return CFat<ByteReaderHolder> (ByteReaderImplHolder () ,that) ;
 }
 
 class TextReaderImplHolder final implement Fat<TextReaderHolder ,TextReaderLayout> {
 public:
-	void initialize (RREF<Ref<RefBuffer<BYTE>>> stream) override {
+	void initialize (RR<Ref<RefBuffer<BYTE>>> stream) override {
 		assert (stream != NULL) ;
 		assert (stream->step () <= 4) ;
 		self.mStream = move (stream) ;
@@ -421,7 +423,7 @@ public:
 		reset () ;
 	}
 
-	void use_overflow (CREF<Function<VREF<TextReaderLayout>>> overflow) override {
+	void use_overflow (CR<Function<VR<TextReaderLayout>>> overflow) override {
 		self.mOverflow = overflow ;
 	}
 
@@ -438,7 +440,7 @@ public:
 		self.mWrite = self.mStream->size () ;
 	}
 
-	void reset (CREF<StreamShape> shape) override {
+	void reset (CR<StreamShape> shape) override {
 		self.mRead = shape.mRead ;
 		self.mWrite = shape.mWrite ;
 	}
@@ -454,7 +456,7 @@ public:
 		return length () < size () ;
 	}
 
-	void read (VREF<BOOL> item) override {
+	void read (VR<BOOL> item) override {
 		auto rax = STRU32 () ;
 		read (rax) ;
 		auto act = TRUE ;
@@ -491,7 +493,7 @@ public:
 		}
 	}
 
-	void read (VREF<VAL32> item) override {
+	void read (VR<VAL32> item) override {
 		auto rax = VAL64 () ;
 		read (rax) ;
 		assume (rax >= VAL32_MIN) ;
@@ -499,7 +501,7 @@ public:
 		item = VAL32 (rax) ;
 	}
 
-	void read (VREF<VAL64> item) override {
+	void read (VR<VAL64> item) override {
 		auto rax = STRU32 () ;
 		read (rax) ;
 		const auto r1x = BOOL (rax == STRU32 ('-')) ;
@@ -531,7 +533,7 @@ public:
 		push (rax) ;
 	}
 
-	void read_value (VREF<Notation> fexp10 ,VREF<STRU32> top) {
+	void read_value (VR<Notation> fexp10 ,VR<STRU32> top) {
 		assert (fexp10.mRadix == 10) ;
 		const auto r1x = FloatProc::value_precision () ;
 		if ifdo (TRUE) {
@@ -564,7 +566,7 @@ public:
 		}
 	}
 
-	void read (VREF<FLT32> item) override {
+	void read (VR<FLT32> item) override {
 		auto rax = FLT64 () ;
 		read (rax) ;
 		assume (rax >= FLT32_MIN) ;
@@ -572,7 +574,7 @@ public:
 		item = FLT32 (rax) ;
 	}
 
-	void read (VREF<FLT64> item) override {
+	void read (VR<FLT64> item) override {
 		auto rax = STRU32 () ;
 		read (rax) ;
 		const auto r1x = BOOL (rax == STRU32 ('-')) ;
@@ -605,7 +607,7 @@ public:
 		push (rax) ;
 	}
 
-	void read_float (VREF<Notation> fexp10 ,VREF<STRU32> top) {
+	void read_float (VR<Notation> fexp10 ,VR<STRU32> top) {
 		assert (fexp10.mRadix == 10) ;
 		const auto r1x = FloatProc::value_precision () ;
 		read_value (fexp10 ,top) ;
@@ -658,24 +660,24 @@ public:
 		}
 	}
 
-	void read (VREF<BYTE> item) override {
+	void read (VR<BYTE> item) override {
 		read_byte_impl (item) ;
 	}
 
-	void read (VREF<WORD> item) override {
+	void read (VR<WORD> item) override {
 		read_byte_impl (item) ;
 	}
 
-	void read (VREF<CHAR> item) override {
+	void read (VR<CHAR> item) override {
 		read_byte_impl (item) ;
 	}
 
-	void read (VREF<QUAD> item) override {
+	void read (VR<QUAD> item) override {
 		read_byte_impl (item) ;
 	}
 
 	template <class ARG1>
-	forceinline void read_byte_impl (VREF<ARG1> item) {
+	forceinline void read_byte_impl (VR<ARG1> item) {
 		auto rax = STRU32 () ;
 		item = ARG1 (0X00) ;
 		for (auto &&i : range (0 ,SIZE_OF<ARG1>::expr)) {
@@ -689,7 +691,7 @@ public:
 		}
 	}
 
-	void read (VREF<STRU32> item) override {
+	void read (VR<STRU32> item) override {
 		if ifdo (TRUE) {
 			if (self.mRead < self.mWrite)
 				discard ;
@@ -728,7 +730,7 @@ public:
 		}
 	}
 
-	void push (CREF<STRU32> item) {
+	void push (CR<STRU32> item) {
 		auto act = TRUE ;
 		if ifdo (act) {
 			if (item != STRU32 (0X00))
@@ -742,7 +744,7 @@ public:
 		}
 	}
 
-	void read (CREF<Slice> item) override {
+	void read (CR<Slice> item) override {
 		auto rax = STRU32 () ;
 		for (auto &&i : range (0 ,item.size ())) {
 			assume (inline_between (INDEX (item[i]) ,0 ,128)) ;
@@ -751,28 +753,30 @@ public:
 		}
 	}
 
-	void read (VREF<String<STRA>> item) override {
-		read_string_impl (item) ;
-	}
-
-	void read (VREF<String<STRW>> item) override {
-		read_string_impl (item) ;
-	}
-
-	void read (VREF<String<STRU8>> item) override {
-		read_string_impl (item) ;
-	}
-
-	void read (VREF<String<STRU16>> item) override {
-		read_string_impl (item) ;
-	}
-
-	void read (VREF<String<STRU32>> item) override {
-		read_string_impl (item) ;
+	void read (VR<StringLayout> item) override {
+		auto act = TRUE ;
+		if ifdo (act) {
+			auto &&rax = keep[TYPE<String<STRU8>>::expr] (item) ;
+			if (rax.step () != SIZE_OF<STRU8>::expr)
+				discard ;
+			read_string_impl (rax) ;
+		}
+		if ifdo (act) {
+			auto &&rax = keep[TYPE<String<STRU16>>::expr] (item) ;
+			if (rax.step () != SIZE_OF<STRU16>::expr)
+				discard ;
+			read_string_impl (rax) ;
+		}
+		if ifdo (act) {
+			auto &&rax = keep[TYPE<String<STRU32>>::expr] (item) ;
+			if (rax.step () != SIZE_OF<STRU32>::expr)
+				discard ;
+			read_string_impl (rax) ;
+		}
 	}
 
 	template <class ARG1>
-	forceinline void read_string_impl (VREF<String<ARG1>> item) {
+	forceinline void read_string_impl (VR<String<ARG1>> item) {
 		item.clear () ;
 		auto rax = STRU32 () ;
 		for (auto &&i : range (0 ,item.size ())) {
@@ -781,11 +785,7 @@ public:
 		}
 	}
 
-	void read (CREF<typeof (CLS)>) override {
-		reset () ;
-	}
-
-	void read (CREF<typeof (BOM)>) override {
+	void read (CR<typeof (BOM)>) override {
 		auto rax = STRU32 () ;
 		const auto r1x = backup () ;
 		auto act = TRUE ;
@@ -826,7 +826,11 @@ public:
 		}
 	}
 
-	void read (CREF<typeof (GAP)>) override {
+	void read (CR<typeof (CAT)>) override {
+		unimplemented () ;
+	}
+
+	void read (CR<typeof (GAP)>) override {
 		auto rax = STRU32 () ;
 		read (rax) ;
 		while (TRUE) {
@@ -839,24 +843,24 @@ public:
 		push (rax) ;
 	}
 
-	void read (CREF<typeof (EOS)>) override {
+	void read (CR<typeof (EOS)>) override {
 		auto rax = STRU32 () ;
 		read (rax) ;
 		assume (rax == STRU32 (0X00)) ;
 	}
 } ;
 
-exports VFat<TextReaderHolder> TextReaderHolder::hold (VREF<TextReaderLayout> that) {
+exports VFat<TextReaderHolder> TextReaderHolder::hold (VR<TextReaderLayout> that) {
 	return VFat<TextReaderHolder> (TextReaderImplHolder () ,that) ;
 }
 
-exports CFat<TextReaderHolder> TextReaderHolder::hold (CREF<TextReaderLayout> that) {
+exports CFat<TextReaderHolder> TextReaderHolder::hold (CR<TextReaderLayout> that) {
 	return CFat<TextReaderHolder> (TextReaderImplHolder () ,that) ;
 }
 
 class ByteWriterImplHolder final implement Fat<ByteWriterHolder ,ByteWriterLayout> {
 public:
-	void initialize (RREF<Ref<RefBuffer<BYTE>>> stream) override {
+	void initialize (RR<Ref<RefBuffer<BYTE>>> stream) override {
 		assert (stream != NULL) ;
 		assert (stream->step () == 1) ;
 		assert (stream.exclusive ()) ;
@@ -865,7 +869,7 @@ public:
 		reset () ;
 	}
 
-	void use_overflow (CREF<Function<VREF<ByteWriterLayout>>> overflow) override {
+	void use_overflow (CR<Function<VR<ByteWriterLayout>>> overflow) override {
 		self.mOverflow = overflow ;
 	}
 
@@ -882,7 +886,7 @@ public:
 		self.mWrite = 0 ;
 	}
 
-	void reset (CREF<StreamShape> shape) override {
+	void reset (CR<StreamShape> shape) override {
 		self.mRead = shape.mRead ;
 		self.mWrite = shape.mWrite ;
 	}
@@ -898,32 +902,32 @@ public:
 		return length () < size () ;
 	}
 
-	void write (CREF<BOOL> item) override {
+	void write (CR<BOOL> item) override {
 		const auto r1x = bitwise[TYPE<BYTE_BASE<BOOL>>::expr] (item) ;
 		write (r1x) ;
 	}
 
-	void write (CREF<VAL32> item) override {
+	void write (CR<VAL32> item) override {
 		const auto r1x = bitwise[TYPE<BYTE_BASE<VAL32>>::expr] (item) ;
 		write (r1x) ;
 	}
 
-	void write (CREF<VAL64> item) override {
+	void write (CR<VAL64> item) override {
 		const auto r1x = bitwise[TYPE<BYTE_BASE<VAL64>>::expr] (item) ;
 		write (r1x) ;
 	}
 
-	void write (CREF<FLT32> item) override {
+	void write (CR<FLT32> item) override {
 		const auto r1x = bitwise[TYPE<BYTE_BASE<FLT32>>::expr] (item) ;
 		write (r1x) ;
 	}
 
-	void write (CREF<FLT64> item) override {
+	void write (CR<FLT64> item) override {
 		const auto r1x = bitwise[TYPE<BYTE_BASE<FLT64>>::expr] (item) ;
 		write (r1x) ;
 	}
 
-	void write (CREF<BYTE> item) override {
+	void write (CR<BYTE> item) override {
 		if ifdo (TRUE) {
 			if (self.mWrite < self.mRead)
 				discard ;
@@ -939,20 +943,20 @@ public:
 		}
 	}
 
-	void write (CREF<WORD> item) override {
+	void write (CR<WORD> item) override {
 		write_byte_impl (item) ;
 	}
 
-	void write (CREF<CHAR> item) override {
+	void write (CR<CHAR> item) override {
 		write_byte_impl (item) ;
 	}
 
-	void write (CREF<QUAD> item) override {
+	void write (CR<QUAD> item) override {
 		write_byte_impl (item) ;
 	}
 
 	template <class ARG1>
-	forceinline void write_byte_impl (CREF<ARG1> item) {
+	forceinline void write_byte_impl (CR<ARG1> item) {
 		auto rax = item ;
 		if ifdo (TRUE) {
 			if (!self.mDiffEndian)
@@ -965,7 +969,7 @@ public:
 		}
 	}
 
-	void write (CREF<STRU32> item) override {
+	void write (CR<STRU32> item) override {
 		auto rax = item ;
 		while (TRUE) {
 			if (rax < STRU32 (0X80))
@@ -978,35 +982,37 @@ public:
 		write (r2x) ;
 	}
 
-	void write (CREF<Slice> item) override {
+	void write (CR<Slice> item) override {
 		for (auto &&i : range (0 ,item.size ())) {
 			assume (inline_between (INDEX (item[i]) ,0 ,128)) ;
 			write (item[i]) ;
 		}
 	}
 
-	void write (CREF<String<STRA>> item) override {
-		write_string_impl (item) ;
-	}
-
-	void write (CREF<String<STRW>> item) override {
-		write_string_impl (item) ;
-	}
-
-	void write (CREF<String<STRU8>> item) override {
-		write_string_impl (item) ;
-	}
-
-	void write (CREF<String<STRU16>> item) override {
-		write_string_impl (item) ;
-	}
-
-	void write (CREF<String<STRU32>> item) override {
-		write_string_impl (item) ;
+	void write (CR<StringLayout> item) override {
+		auto act = TRUE ;
+		if ifdo (act) {
+			auto &&rax = keep[TYPE<String<STRU8>>::expr] (item) ;
+			if (rax.step () != SIZE_OF<STRU8>::expr)
+				discard ;
+			write_string_impl (rax) ;
+		}
+		if ifdo (act) {
+			auto &&rax = keep[TYPE<String<STRU16>>::expr] (item) ;
+			if (rax.step () != SIZE_OF<STRU16>::expr)
+				discard ;
+			write_string_impl (rax) ;
+		}
+		if ifdo (act) {
+			auto &&rax = keep[TYPE<String<STRU32>>::expr] (item) ;
+			if (rax.step () != SIZE_OF<STRU32>::expr)
+				discard ;
+			write_string_impl (rax) ;
+		}
 	}
 
 	template <class ARG1>
-	forceinline void write_string_impl (CREF<String<ARG1>> item) {
+	forceinline void write_string_impl (CR<String<ARG1>> item) {
 		const auto r1x = item.length () ;
 		for (auto &&i : range (0 ,r1x)) {
 			const auto r2x = STRU32 (item[i]) ;
@@ -1014,20 +1020,20 @@ public:
 		}
 	}
 
-	void write (CREF<typeof (CLS)>) override {
-		reset () ;
-	}
-
-	void write (CREF<typeof (BOM)>) override {
+	void write (CR<typeof (BOM)>) override {
 		self.mDiffEndian = !self.mDiffEndian ;
 	}
 
-	void write (CREF<typeof (GAP)>) override {
+	void write (CR<typeof (CAT)>) override {
+		unimplemented () ;
+	}
+
+	void write (CR<typeof (GAP)>) override {
 		write (BYTE (0X5D)) ;
 		write (BYTE (0X5B)) ;
 	}
 
-	void write (CREF<typeof (EOS)>) override {
+	void write (CR<typeof (EOS)>) override {
 		while (TRUE) {
 			if (self.mWrite >= self.mRead)
 				break ;
@@ -1036,11 +1042,11 @@ public:
 	}
 } ;
 
-exports VFat<ByteWriterHolder> ByteWriterHolder::hold (VREF<ByteWriterLayout> that) {
+exports VFat<ByteWriterHolder> ByteWriterHolder::hold (VR<ByteWriterLayout> that) {
 	return VFat<ByteWriterHolder> (ByteWriterImplHolder () ,that) ;
 }
 
-exports CFat<ByteWriterHolder> ByteWriterHolder::hold (CREF<ByteWriterLayout> that) {
+exports CFat<ByteWriterHolder> ByteWriterHolder::hold (CR<ByteWriterLayout> that) {
 	return CFat<ByteWriterHolder> (ByteWriterImplHolder () ,that) ;
 }
 
@@ -1051,7 +1057,7 @@ struct WriteValueBuffer {
 
 class TextWriterImplHolder final implement Fat<TextWriterHolder ,TextWriterLayout> {
 public:
-	void initialize (RREF<Ref<RefBuffer<BYTE>>> stream) override {
+	void initialize (RR<Ref<RefBuffer<BYTE>>> stream) override {
 		assert (stream != NULL) ;
 		assert (stream->step () <= 4) ;
 		assert (stream.exclusive ()) ;
@@ -1060,7 +1066,7 @@ public:
 		reset () ;
 	}
 
-	void use_overflow (CREF<Function<VREF<TextWriterLayout>>> overflow) override {
+	void use_overflow (CR<Function<VR<TextWriterLayout>>> overflow) override {
 		self.mOverflow = overflow ;
 	}
 
@@ -1077,7 +1083,7 @@ public:
 		self.mWrite = 0 ;
 	}
 
-	void reset (CREF<StreamShape> shape) override {
+	void reset (CR<StreamShape> shape) override {
 		self.mRead = shape.mRead ;
 		self.mWrite = shape.mWrite ;
 	}
@@ -1093,7 +1099,7 @@ public:
 		return length () < size () ;
 	}
 
-	void write (CREF<BOOL> item) override {
+	void write (CR<BOOL> item) override {
 		auto act = TRUE ;
 		if ifdo (act) {
 			if (!item)
@@ -1105,7 +1111,7 @@ public:
 		}
 	}
 
-	void write (CREF<VAL32> item) override {
+	void write (CR<VAL32> item) override {
 		if ifdo (TRUE) {
 			if (item >= 0)
 				discard ;
@@ -1115,7 +1121,7 @@ public:
 		write (r1x) ;
 	}
 
-	void write (CREF<VAL64> item) override {
+	void write (CR<VAL64> item) override {
 		if ifdo (TRUE) {
 			if (item >= 0)
 				discard ;
@@ -1138,7 +1144,7 @@ public:
 		}
 	}
 
-	void write_value (VREF<Notation> fexp10 ,VREF<WriteValueBuffer> wvb) {
+	void write_value (VR<Notation> fexp10 ,VR<WriteValueBuffer> wvb) {
 		assert (fexp10.mRadix == 10) ;
 		const auto r1x = fexp10.mPrecision ;
 		auto act = TRUE ;
@@ -1168,12 +1174,12 @@ public:
 		}
 	}
 
-	void write (CREF<FLT32> item) override {
+	void write (CR<FLT32> item) override {
 		const auto r1x = FLT64 (item) ;
 		write (r1x) ;
 	}
 
-	void write (CREF<FLT64> item) override {
+	void write (CR<FLT64> item) override {
 		if ifdo (TRUE) {
 			if (item >= 0)
 				discard ;
@@ -1197,7 +1203,7 @@ public:
 		}
 	}
 
-	void write_float (VREF<Notation> fexp10 ,VREF<WriteValueBuffer> wvb) {
+	void write_float (VR<Notation> fexp10 ,VR<WriteValueBuffer> wvb) {
 		assert (fexp10.mRadix == 10) ;
 		const auto r1x = FloatProc::float_precision () ;
 		if ifdo (TRUE) {
@@ -1369,7 +1375,7 @@ public:
 		}
 	}
 
-	VAL64 log10p (CREF<VAL64> a) const {
+	VAL64 log10p (CR<VAL64> a) const {
 		VAL64 ret = 0 ;
 		auto rax = a ;
 		while (TRUE) {
@@ -1381,24 +1387,24 @@ public:
 		return move (ret) ;
 	}
 
-	void write (CREF<BYTE> item) override {
+	void write (CR<BYTE> item) override {
 		write_byte_impl (item) ;
 	}
 
-	void write (CREF<WORD> item) override {
+	void write (CR<WORD> item) override {
 		write_byte_impl (item) ;
 	}
 
-	void write (CREF<CHAR> item) override {
+	void write (CR<CHAR> item) override {
 		write_byte_impl (item) ;
 	}
 
-	void write (CREF<QUAD> item) override {
+	void write (CR<QUAD> item) override {
 		write_byte_impl (item) ;
 	}
 
 	template <class ARG1>
-	forceinline void write_byte_impl (CREF<ARG1> item) {
+	forceinline void write_byte_impl (CR<ARG1> item) {
 		INDEX ix = SIZE_OF<ARG1>::expr * 8 ;
 		for (auto &&i : range (0 ,SIZE_OF<ARG1>::expr)) {
 			noop (i) ;
@@ -1411,7 +1417,7 @@ public:
 		}
 	}
 
-	void write (CREF<STRU32> item) override {
+	void write (CR<STRU32> item) override {
 		if ifdo (TRUE) {
 			if (self.mWrite < self.mRead)
 				discard ;
@@ -1447,35 +1453,37 @@ public:
 		}
 	}
 
-	void write (CREF<Slice> item) override {
+	void write (CR<Slice> item) override {
 		for (auto &&i : range (0 ,item.size ())) {
 			assume (inline_between (INDEX (item[i]) ,0 ,128)) ;
 			write (item[i]) ;
 		}
 	}
 
-	void write (CREF<String<STRA>> item) override {
-		write_string_impl (item) ;
-	}
-
-	void write (CREF<String<STRW>> item) override {
-		write_string_impl (item) ;
-	}
-
-	void write (CREF<String<STRU8>> item) override {
-		write_string_impl (item) ;
-	}
-
-	void write (CREF<String<STRU16>> item) override {
-		write_string_impl (item) ;
-	}
-
-	void write (CREF<String<STRU32>> item) override {
-		write_string_impl (item) ;
+	void write (CR<StringLayout> item) override {
+		auto act = TRUE ;
+		if ifdo (act) {
+			auto &&rax = keep[TYPE<String<STRU8>>::expr] (item) ;
+			if (rax.step () != SIZE_OF<STRU8>::expr)
+				discard ;
+			write_string_impl (rax) ;
+		}
+		if ifdo (act) {
+			auto &&rax = keep[TYPE<String<STRU16>>::expr] (item) ;
+			if (rax.step () != SIZE_OF<STRU16>::expr)
+				discard ;
+			write_string_impl (rax) ;
+		}
+		if ifdo (act) {
+			auto &&rax = keep[TYPE<String<STRU32>>::expr] (item) ;
+			if (rax.step () != SIZE_OF<STRU32>::expr)
+				discard ;
+			write_string_impl (rax) ;
+		}
 	}
 
 	template <class ARG1>
-	forceinline void write_string_impl (CREF<String<ARG1>> item) {
+	forceinline void write_string_impl (CR<String<ARG1>> item) {
 		const auto r1x = item.length () ;
 		for (auto &&i : range (0 ,r1x)) {
 			const auto r2x = STRU32 (item[i]) ;
@@ -1483,11 +1491,7 @@ public:
 		}
 	}
 
-	void write (CREF<typeof (CLS)>) override {
-		reset () ;
-	}
-
-	void write (CREF<typeof (BOM)>) override {
+	void write (CR<typeof (BOM)>) override {
 		auto act = TRUE ;
 		if ifdo (act) {
 			if (self.mStream->step () != SIZE_OF<STRU8>::expr)
@@ -1508,32 +1512,36 @@ public:
 		}
 	}
 
-	void write (CREF<typeof (GAP)>) override {
+	void write (CR<typeof (CAT)>) override {
+		unimplemented () ;
+	}
+
+	void write (CR<typeof (GAP)>) override {
 		write (STRU32 ('\r')) ;
 		write (STRU32 ('\n')) ;
 	}
 
-	void write (CREF<typeof (EOS)>) override {
+	void write (CR<typeof (EOS)>) override {
 		assume (self.mWrite < self.mRead) ;
 		write (STRU32 (0X00)) ;
 	}
 } ;
 
-exports VFat<TextWriterHolder> TextWriterHolder::hold (VREF<TextWriterLayout> that) {
+exports VFat<TextWriterHolder> TextWriterHolder::hold (VR<TextWriterLayout> that) {
 	return VFat<TextWriterHolder> (TextWriterImplHolder () ,that) ;
 }
 
-exports CFat<TextWriterHolder> TextWriterHolder::hold (CREF<TextWriterLayout> that) {
+exports CFat<TextWriterHolder> TextWriterHolder::hold (CR<TextWriterLayout> that) {
 	return CFat<TextWriterHolder> (TextWriterImplHolder () ,that) ;
 }
 
 class FormatImplHolder final implement Fat<FormatHolder ,FormatLayout> {
 public:
-	void initialize (CREF<Slice> format) override {
+	void initialize (CR<Slice> format) override {
 		self.mFormat = format ;
 	}
 
-	void friend_write (VREF<FriendWriter> writer) const override {
+	void friend_write (VR<FriendWriter> writer) const override {
 		auto rax = FLAG (0) ;
 		for (auto &&i : range (0 ,self.mFormat.size ())) {
 			auto act = TRUE ;
@@ -1558,8 +1566,8 @@ public:
 					const auto r1x = StreamProc::hex_from_str (self.mFormat[i]) - 1 ;
 					if (!inline_between (r1x ,0 ,self.mWrite))
 						discard ;
-					const auto r2x = keep[TYPE<CFat<FriendFormat>>::expr] (self.mParams[r1x]) ;
-					r2x->friend_write (writer) ;
+					auto &&rbx = keep[TYPE<VFat<FriendWriting>>::expr] (self.mParams[r1x]) ;
+					rbx->friend_write (writer) ;
 				}
 				rax = FLAG (0) ;
 			}
@@ -1569,8 +1577,8 @@ public:
 				if (self.mFormat[i] != STRU32 ('0'))
 					discard ;
 				for (auto &&j : range (0 ,self.mWrite)) {
-					const auto r3x = keep[TYPE<CFat<FriendFormat>>::expr] (self.mParams[j]) ;
-					r3x->friend_write (writer) ;
+					auto &&rbx = keep[TYPE<VFat<FriendWriting>>::expr] (self.mParams[j]) ;
+					rbx->friend_write (writer) ;
 				}
 				rax = FLAG (3) ;
 			}
@@ -1578,11 +1586,11 @@ public:
 				if (rax != FLAG (1))
 					discard ;
 				if ifdo (TRUE) {
-					const auto r4x = StreamProc::hex_from_str (self.mFormat[i]) - 1 ;
-					if (!inline_between (r4x ,0 ,self.mWrite))
+					const auto r2x = StreamProc::hex_from_str (self.mFormat[i]) - 1 ;
+					if (!inline_between (r2x ,0 ,self.mWrite))
 						discard ;
-					const auto r5x = keep[TYPE<CFat<FriendFormat>>::expr] (self.mParams[r4x]) ;
-					r5x->friend_write (writer) ;
+					auto &&rbx = keep[TYPE<VFat<FriendWriting>>::expr] (self.mParams[r2x]) ;
+					rbx->friend_write (writer) ;
 				}
 				rax = FLAG (3) ;
 			}
@@ -1599,7 +1607,7 @@ public:
 		}
 	}
 
-	void once (CREF<WrapperLayout> params) const override {
+	void once (CR<WrapperLayout> params) const override {
 		const auto r1x = Pin<BufferX<FatLayout>> (self.mParams) ;
 		const auto r2x = Pin<LENGTH> (self.mWrite) ;
 		auto &&rax = keep[TYPE<Wrapper<FatLayout>>::expr] (params) ;
@@ -1612,11 +1620,11 @@ public:
 	}
 } ;
 
-exports VFat<FormatHolder> FormatHolder::hold (VREF<FormatLayout> that) {
+exports VFat<FormatHolder> FormatHolder::hold (VR<FormatLayout> that) {
 	return VFat<FormatHolder> (FormatImplHolder () ,that) ;
 }
 
-exports CFat<FormatHolder> FormatHolder::hold (CREF<FormatLayout> that) {
+exports CFat<FormatHolder> FormatHolder::hold (CR<FormatLayout> that) {
 	return CFat<FormatHolder> (FormatImplHolder () ,that) ;
 }
 
@@ -1628,7 +1636,7 @@ public:
 		noop () ;
 	}
 
-	void read_keyword (VREF<FriendReader> reader ,VREF<String<STRU8>> item) const override {
+	void read_keyword (VR<FriendReader> reader ,VR<String<STRU8>> item) const override {
 		auto rax = STRU32 () ;
 		auto rbx = ZERO ;
 		const auto r1x = reader.backup () ;
@@ -1651,7 +1659,7 @@ public:
 		reader.read (item) ;
 	}
 
-	void read_scalar (VREF<FriendReader> reader ,VREF<String<STRU8>> item) const override {
+	void read_scalar (VR<FriendReader> reader ,VR<String<STRU8>> item) const override {
 		auto rax = STRU32 () ;
 		auto rbx = ZERO ;
 		const auto r1x = reader.backup () ;
@@ -1706,7 +1714,7 @@ public:
 		reader.read (item) ;
 	}
 
-	void read_escape (VREF<FriendReader> reader ,VREF<String<STRU8>> item) const override {
+	void read_escape (VR<FriendReader> reader ,VR<String<STRU8>> item) const override {
 		auto rax = STRU32 () ;
 		auto rbx = ZERO ;
 		const auto r1x = reader.backup () ;
@@ -1745,7 +1753,7 @@ public:
 		reader.read (rax) ;
 	}
 
-	void write_escape (VREF<FriendWriter> writer ,CREF<String<STRU8>> item) const override {
+	void write_escape (VR<FriendWriter> writer ,CR<String<STRU8>> item) const override {
 		writer.write (STRU32 ('\"')) ;
 		for (auto &&i : item) {
 			auto act = TRUE ;
@@ -1763,7 +1771,7 @@ public:
 		writer.write (STRU32 ('\"')) ;
 	}
 
-	void read_blank (VREF<FriendReader> reader ,VREF<String<STRU8>> item) const override {
+	void read_blank (VR<FriendReader> reader ,VR<String<STRU8>> item) const override {
 		auto rax = STRU32 () ;
 		auto rbx = ZERO ;
 		const auto r1x = reader.backup () ;
@@ -1783,7 +1791,7 @@ public:
 		reader.read (item) ;
 	}
 
-	void read_endline (VREF<FriendReader> reader ,VREF<String<STRU8>> item) const override {
+	void read_endline (VR<FriendReader> reader ,VR<String<STRU8>> item) const override {
 		auto rax = STRU32 () ;
 		auto rbx = ZERO ;
 		const auto r1x = reader.backup () ;
@@ -1803,7 +1811,7 @@ public:
 		reader.read (item) ;
 	}
 
-	void write_aligned (VREF<FriendWriter> writer ,CREF<VAL64> number ,CREF<LENGTH> align) const override {
+	void write_aligned (VR<FriendWriter> writer ,CR<VAL64> number ,CR<LENGTH> align) const override {
 		auto rax = WriteValueBuffer () ;
 		assert (inline_between (align ,0 ,rax.mBuffer.size ())) ;
 		rax.mWrite = rax.mBuffer.size () ;
@@ -1820,7 +1828,7 @@ public:
 	}
 } ;
 
-exports CREF<OfThis<UniqueRef<StreamTextProcLayout>>> StreamTextProcHolder::expr_m () {
+exports CR<OfThis<UniqueRef<StreamTextProcLayout>>> StreamTextProcHolder::expr_m () {
 	return memorize ([&] () {
 		OfThis<UniqueRef<StreamTextProcLayout>> ret ;
 		ret.mThis = UniqueRef<StreamTextProcLayout>::make () ;
@@ -1829,11 +1837,11 @@ exports CREF<OfThis<UniqueRef<StreamTextProcLayout>>> StreamTextProcHolder::expr
 	}) ;
 }
 
-exports VFat<StreamTextProcHolder> StreamTextProcHolder::hold (VREF<StreamTextProcLayout> that) {
+exports VFat<StreamTextProcHolder> StreamTextProcHolder::hold (VR<StreamTextProcLayout> that) {
 	return VFat<StreamTextProcHolder> (StreamTextProcImplHolder () ,that) ;
 }
 
-exports CFat<StreamTextProcHolder> StreamTextProcHolder::hold (CREF<StreamTextProcLayout> that) {
+exports CFat<StreamTextProcHolder> StreamTextProcHolder::hold (CR<StreamTextProcLayout> that) {
 	return CFat<StreamTextProcHolder> (StreamTextProcImplHolder () ,that) ;
 }
 
@@ -1849,7 +1857,7 @@ struct CommaLayout {
 
 class CommaImplHolder final implement Fat<CommaHolder ,CommaLayout> {
 public:
-	void initialize (CREF<Slice> indent ,CREF<Slice> comma ,CREF<Slice> endline) override {
+	void initialize (CR<Slice> indent ,CR<Slice> comma ,CR<Slice> endline) override {
 		self.mIndent = indent ;
 		self.mComma = comma ;
 		self.mEndline = endline ;
@@ -1858,7 +1866,7 @@ public:
 		self.mLastTight = 0 ;
 	}
 
-	void friend_write (VREF<FriendWriter> writer) override {
+	void friend_write (VR<FriendWriter> writer) override {
 		if ifdo (TRUE) {
 			if (self.mDepth >= self.mTight + self.mLastTight)
 				discard ;
@@ -1912,27 +1920,27 @@ exports SharedRef<CommaLayout> CommaHolder::create () {
 	return SharedRef<CommaLayout>::make () ;
 }
 
-exports VFat<CommaHolder> CommaHolder::hold (VREF<CommaLayout> that) {
+exports VFat<CommaHolder> CommaHolder::hold (VR<CommaLayout> that) {
 	return VFat<CommaHolder> (CommaImplHolder () ,that) ;
 }
 
-exports CFat<CommaHolder> CommaHolder::hold (CREF<CommaLayout> that) {
+exports CFat<CommaHolder> CommaHolder::hold (CR<CommaLayout> that) {
 	return CFat<CommaHolder> (CommaImplHolder () ,that) ;
 }
 
 struct RegexLayout {
 	std::basic_regex<STR> mRegex ;
-	std::match_results<PTR<CREF<STR>>> mMatch ;
+	std::match_results<PTR<CR<STR>>> mMatch ;
 	Ref<String<STR>> mText ;
 } ;
 
 class RegexImplHolder final implement Fat<RegexHolder ,RegexLayout> {
 public:
-	void initialize (CREF<String<STR>> format) override {
+	void initialize (CR<String<STR>> format) override {
 		self.mRegex = std::basic_regex<STR> (format) ;
 	}
 
-	INDEX search (RREF<Ref<String<STR>>> text ,CREF<INDEX> offset) override {
+	INDEX search (RR<Ref<String<STR>>> text ,CR<INDEX> offset) override {
 		self.mText = move (text) ;
 		const auto r1x = (&self.mText.ref[offset]) ;
 		const auto r2x = std::regex_search (r1x ,self.mMatch ,self.mRegex) ;
@@ -1943,7 +1951,7 @@ public:
 		return offset + r4x ;
 	}
 
-	Slice match (CREF<INDEX> index) const override {
+	Slice match (CR<INDEX> index) const override {
 		assert (!self.mMatch.empty ()) ;
 		assert (inline_between (index ,0 ,self.mMatch.size ())) ;
 		const auto r1x = FLAG (self.mMatch[index].first) ;
@@ -1957,11 +1965,11 @@ exports AutoRef<RegexLayout> RegexHolder::create () {
 	return AutoRef<RegexLayout>::make () ;
 }
 
-exports VFat<RegexHolder> RegexHolder::hold (VREF<RegexLayout> that) {
+exports VFat<RegexHolder> RegexHolder::hold (VR<RegexLayout> that) {
 	return VFat<RegexHolder> (RegexImplHolder () ,that) ;
 }
 
-exports CFat<RegexHolder> RegexHolder::hold (CREF<RegexLayout> that) {
+exports CFat<RegexHolder> RegexHolder::hold (CR<RegexLayout> that) {
 	return CFat<RegexHolder> (RegexImplHolder () ,that) ;
 }
 } ;

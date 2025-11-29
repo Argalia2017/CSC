@@ -9,54 +9,54 @@
 namespace CSC {
 class VectorImplHolder final implement Fat<VectorHolder ,VectorLayout> {
 public:
-	void initialize (CREF<Buffer<FLT64 ,RANK4>> that) override {
+	void initialize (CR<Buffer<FLT64 ,RANK4>> that) override {
 		self.mVector[0] = that[0] ;
 		self.mVector[1] = that[1] ;
 		self.mVector[2] = that[2] ;
 		self.mVector[3] = that[3] ;
 	}
 
-	void initialize (CREF<FLT64> x ,CREF<FLT64> y ,CREF<FLT64> z ,CREF<FLT64> w) override {
+	void initialize (CR<FLT64> x ,CR<FLT64> y ,CR<FLT64> z ,CR<FLT64> w) override {
 		self.mVector[0] = x ;
 		self.mVector[1] = y ;
 		self.mVector[2] = z ;
 		self.mVector[3] = w ;
 	}
 
-	void initialize (CREF<Pixel> point) override {
+	void initialize (CR<Pixel> point) override {
 		self.mVector[0] = FLT64 (point.mX) + FLT64 (0.5) ;
 		self.mVector[1] = FLT64 (point.mY) + FLT64 (0.5) ;
 		self.mVector[2] = 0 ;
 		self.mVector[3] = 1 ;
 	}
 
-	void initialize (CREF<Point2F> point) override {
+	void initialize (CR<Point2F> point) override {
 		self.mVector[0] = FLT64 (point.mX) ;
 		self.mVector[1] = FLT64 (point.mY) ;
 		self.mVector[2] = 0 ;
 		self.mVector[3] = 1 ;
 	}
 
-	void initialize (CREF<Point3F> point) override {
+	void initialize (CR<Point3F> point) override {
 		self.mVector[0] = FLT64 (point.mX) ;
 		self.mVector[1] = FLT64 (point.mY) ;
 		self.mVector[2] = FLT64 (point.mZ) ;
 		self.mVector[3] = 1 ;
 	}
 
-	VREF<FLT64> at (CREF<INDEX> y) leftvalue override {
+	VR<FLT64> at (CR<INDEX> y) leftvalue override {
 		return self.mVector[y] ;
 	}
 
-	CREF<FLT64> at (CREF<INDEX> y) const leftvalue override {
+	CR<FLT64> at (CR<INDEX> y) const leftvalue override {
 		return self.mVector[y] ;
 	}
 
-	static INDEX mm (CREF<INDEX> x ,CREF<INDEX> y) {
+	static INDEX mm (CR<INDEX> x ,CR<INDEX> y) {
 		return x + y * 4 ;
 	}
 
-	BOOL equal (CREF<VectorLayout> that) const override {
+	BOOL equal (CR<VectorLayout> that) const override {
 		for (auto &&i : range (0 ,4)) {
 			const auto r1x = inline_equal (self.mVector[i] ,that.mVector[i]) ;
 			if (!r1x)
@@ -65,7 +65,7 @@ public:
 		return TRUE ;
 	}
 
-	FLAG compr (CREF<VectorLayout> that) const override {
+	FLAG compr (CR<VectorLayout> that) const override {
 		for (auto &&i : range (0 ,4)) {
 			const auto r1x = inline_compr (self.mVector[i] ,that.mVector[i]) ;
 			if (r1x != ZERO)
@@ -74,7 +74,7 @@ public:
 		return ZERO ;
 	}
 
-	void visit (VREF<FriendVisitor> visitor) const override {
+	void visit (VR<FriendVisitor> visitor) const override {
 		visitor.enter () ;
 		for (auto &&i : range (0 ,4)) {
 			inline_visit (visitor ,self.mVector[i]) ;
@@ -82,7 +82,7 @@ public:
 		visitor.leave () ;
 	}
 
-	VectorLayout sadd (CREF<VectorLayout> that) const override {
+	VectorLayout sadd (CR<VectorLayout> that) const override {
 		VectorLayout ret ;
 		for (auto &&i : range (0 ,4)) {
 			ret.mVector[i] = self.mVector[i] + that.mVector[i] ;
@@ -90,7 +90,7 @@ public:
 		return move (ret) ;
 	}
 
-	VectorLayout ssub (CREF<VectorLayout> that) const override {
+	VectorLayout ssub (CR<VectorLayout> that) const override {
 		VectorLayout ret ;
 		for (auto &&i : range (0 ,4)) {
 			ret.mVector[i] = self.mVector[i] - that.mVector[i] ;
@@ -98,23 +98,23 @@ public:
 		return move (ret) ;
 	}
 
-	VectorLayout smul (CREF<FLT64> scale) const override {
+	VectorLayout smul (CR<FLT64> that) const override {
 		VectorLayout ret ;
 		for (auto &&i : range (0 ,4)) {
-			ret.mVector[i] = self.mVector[i] * scale ;
+			ret.mVector[i] = self.mVector[i] * that ;
 		}
 		return move (ret) ;
 	}
 
-	VectorLayout sdiv (CREF<FLT64> scale) const override {
+	VectorLayout sdiv (CR<FLT64> that) const override {
 		VectorLayout ret ;
 		for (auto &&i : range (0 ,4)) {
-			ret.mVector[i] = self.mVector[i] / scale ;
+			ret.mVector[i] = self.mVector[i] / that ;
 		}
 		return move (ret) ;
 	}
 
-	FLT64 dot (CREF<VectorLayout> that) const override {
+	FLT64 dot (CR<VectorLayout> that) const override {
 		FLT64 ret = 0 ;
 		for (auto &&i : range (0 ,4)) {
 			ret += self.mVector[i] * that.mVector[i] ;
@@ -122,7 +122,7 @@ public:
 		return move (ret) ;
 	}
 
-	VectorLayout smul (CREF<MatrixLayout> that) const override {
+	VectorLayout smul (CR<MatrixLayout> that) const override {
 		VectorLayout ret ;
 		for (auto &&i : range (0 ,4)) {
 			auto rax = FLT64 (0) ;
@@ -135,7 +135,7 @@ public:
 		return move (ret) ;
 	}
 
-	VectorLayout cross (CREF<VectorLayout> that) const override {
+	VectorLayout cross (CR<VectorLayout> that) const override {
 		assert (self.mVector[3] == 0) ;
 		assert (that.mVector[3] == 0) ;
 		VectorLayout ret ;
@@ -202,24 +202,24 @@ public:
 	}
 } ;
 
-exports VFat<VectorHolder> VectorHolder::hold (VREF<VectorLayout> that) {
+exports VFat<VectorHolder> VectorHolder::hold (VR<VectorLayout> that) {
 	return VFat<VectorHolder> (VectorImplHolder () ,that) ;
 }
 
-exports CFat<VectorHolder> VectorHolder::hold (CREF<VectorLayout> that) {
+exports CFat<VectorHolder> VectorHolder::hold (CR<VectorLayout> that) {
 	return CFat<VectorHolder> (VectorImplHolder () ,that) ;
 }
 
 class MatrixImplHolder final implement Fat<MatrixHolder ,MatrixLayout> {
 public:
-	void initialize (CREF<Buffer<FLT64 ,ENUM<16>>> that) override {
+	void initialize (CR<Buffer<FLT64 ,ENUM<16>>> that) override {
 		for (auto &&i : range (0 ,4 ,0 ,4)) {
 			INDEX ix = i.mY * 4 + i.mX ;
 			self.mMatrix[mm (i.mX ,i.mY)] = that[ix] ;
 		}
 	}
 
-	void initialize (CREF<VectorLayout> x ,CREF<VectorLayout> y ,CREF<VectorLayout> z ,CREF<VectorLayout> w) override {
+	void initialize (CR<VectorLayout> x ,CR<VectorLayout> y ,CR<VectorLayout> z ,CR<VectorLayout> w) override {
 		for (auto &&i : range (0 ,4)) {
 			self.mMatrix[mm (0 ,i)] = x.mVector[i] ;
 			self.mMatrix[mm (1 ,i)] = y.mVector[i] ;
@@ -228,23 +228,23 @@ public:
 		}
 	}
 
-	VREF<FLT64> at (CREF<INDEX> x ,CREF<INDEX> y) leftvalue override {
+	VR<FLT64> at (CR<INDEX> x ,CR<INDEX> y) leftvalue override {
 		assert (inline_between (x ,0 ,4)) ;
 		assert (inline_between (y ,0 ,4)) ;
 		return self.mMatrix[mm (x ,y)] ;
 	}
 
-	CREF<FLT64> at (CREF<INDEX> x ,CREF<INDEX> y) const leftvalue override {
+	CR<FLT64> at (CR<INDEX> x ,CR<INDEX> y) const leftvalue override {
 		assert (inline_between (x ,0 ,4)) ;
 		assert (inline_between (y ,0 ,4)) ;
 		return self.mMatrix[mm (x ,y)] ;
 	}
 
-	static INDEX mm (CREF<INDEX> x ,CREF<INDEX> y) {
+	static INDEX mm (CR<INDEX> x ,CR<INDEX> y) {
 		return x + y * 4 ;
 	}
 
-	BOOL equal (CREF<MatrixLayout> that) const override {
+	BOOL equal (CR<MatrixLayout> that) const override {
 		for (auto &&i : range (0 ,16)) {
 			const auto r1x = inline_equal (self.mMatrix[i] ,that.mMatrix[i]) ;
 			if (!r1x)
@@ -253,7 +253,7 @@ public:
 		return TRUE ;
 	}
 
-	FLAG compr (CREF<MatrixLayout> that) const override {
+	FLAG compr (CR<MatrixLayout> that) const override {
 		for (auto &&i : range (0 ,16)) {
 			const auto r1x = inline_compr (self.mMatrix[i] ,that.mMatrix[i]) ;
 			if (r1x != ZERO)
@@ -262,7 +262,7 @@ public:
 		return ZERO ;
 	}
 
-	void visit (VREF<FriendVisitor> visitor) const override {
+	void visit (VR<FriendVisitor> visitor) const override {
 		visitor.enter () ;
 		for (auto &&i : range (0 ,16)) {
 			inline_visit (visitor ,self.mMatrix[i]) ;
@@ -270,7 +270,7 @@ public:
 		visitor.leave () ;
 	}
 
-	MatrixLayout sadd (CREF<MatrixLayout> that) const override {
+	MatrixLayout sadd (CR<MatrixLayout> that) const override {
 		MatrixLayout ret ;
 		for (auto &&i : range (0 ,16)) {
 			ret.mMatrix[i] = self.mMatrix[i] + that.mMatrix[i] ;
@@ -278,7 +278,7 @@ public:
 		return move (ret) ;
 	}
 
-	MatrixLayout ssub (CREF<MatrixLayout> that) const override {
+	MatrixLayout ssub (CR<MatrixLayout> that) const override {
 		MatrixLayout ret ;
 		for (auto &&i : range (0 ,16)) {
 			ret.mMatrix[i] = self.mMatrix[i] - that.mMatrix[i] ;
@@ -286,23 +286,23 @@ public:
 		return move (ret) ;
 	}
 
-	MatrixLayout smul (CREF<FLT64> scale) const override {
+	MatrixLayout smul (CR<FLT64> that) const override {
 		MatrixLayout ret ;
 		for (auto &&i : range (0 ,16)) {
-			ret.mMatrix[i] = self.mMatrix[i] * scale ;
+			ret.mMatrix[i] = self.mMatrix[i] * that ;
 		}
 		return move (ret) ;
 	}
 
-	MatrixLayout sdiv (CREF<FLT64> scale) const override {
+	MatrixLayout sdiv (CR<FLT64> that) const override {
 		MatrixLayout ret ;
 		for (auto &&i : range (0 ,16)) {
-			ret.mMatrix[i] = self.mMatrix[i] / scale ;
+			ret.mMatrix[i] = self.mMatrix[i] / that ;
 		}
 		return move (ret) ;
 	}
 
-	VectorLayout smul (CREF<VectorLayout> that) const override {
+	VectorLayout smul (CR<VectorLayout> that) const override {
 		VectorLayout ret ;
 		for (auto &&i : range (0 ,4)) {
 			auto rax = FLT64 (0) ;
@@ -315,7 +315,7 @@ public:
 		return move (ret) ;
 	}
 
-	MatrixLayout smul (CREF<MatrixLayout> that) const override {
+	MatrixLayout smul (CR<MatrixLayout> that) const override {
 		MatrixLayout ret ;
 		for (auto &&i : range (0 ,4 ,0 ,4)) {
 			auto rax = FLT64 (0) ;
@@ -378,7 +378,7 @@ public:
 		return move (ret) ;
 	}
 
-	INDEX find_abs_max_row (CREF<MatrixLayout> that ,CREF<INDEX> x) const {
+	INDEX find_abs_max_row (CR<MatrixLayout> that ,CR<INDEX> x) const {
 		INDEX ret = NONE ;
 		auto rax = FLT64 () ;
 		for (auto &&i : range (x ,4)) {
@@ -447,17 +447,17 @@ public:
 	}
 } ;
 
-exports VFat<MatrixHolder> MatrixHolder::hold (VREF<MatrixLayout> that) {
+exports VFat<MatrixHolder> MatrixHolder::hold (VR<MatrixLayout> that) {
 	return VFat<MatrixHolder> (MatrixImplHolder () ,that) ;
 }
 
-exports CFat<MatrixHolder> MatrixHolder::hold (CREF<MatrixLayout> that) {
+exports CFat<MatrixHolder> MatrixHolder::hold (CR<MatrixLayout> that) {
 	return CFat<MatrixHolder> (MatrixImplHolder () ,that) ;
 }
 
 class MakeMatrixImplHolder final implement Fat<MakeMatrixHolder ,MatrixLayout> {
 public:
-	void make_DiagMatrix (CREF<FLT64> x ,CREF<FLT64> y ,CREF<FLT64> z ,CREF<FLT64> w) override {
+	void make_DiagMatrix (CR<FLT64> x ,CR<FLT64> y ,CR<FLT64> z ,CR<FLT64> w) override {
 		Matrix ret = Matrix::zero () ;
 		ret[0][0] = x ;
 		ret[1][1] = y ;
@@ -466,7 +466,7 @@ public:
 		self = move (ret) ;
 	}
 
-	void make_ShearMatrix (CREF<Vector> x ,CREF<Vector> y ,CREF<Vector> z) override {
+	void make_ShearMatrix (CR<Vector> x ,CR<Vector> y ,CR<Vector> z) override {
 		Matrix ret = Matrix::zero () ;
 		const auto r1x = x.normalize () ;
 		const auto r2x = y.normalize () ;
@@ -487,26 +487,35 @@ public:
 		self = move (ret) ;
 	}
 
-	void make_RotationMatrix (CREF<Vector> normal ,CREF<FLT64> angle) override {
+	void make_RotationMatrix (CR<Vector> normal ,CR<FLT64> angle) override {
 		Matrix ret = Matrix::zero () ;
 		const auto r1x = normal.normalize () ;
-		const auto r2x = MathProc::cos (angle) ;
-		const auto r3x = r1x * MathProc::sin (angle) ;
-		const auto r4x = r1x * (1 - r2x) ;
-		ret[0][0] = r1x[0] * r4x[0] + r2x ;
-		ret[1][0] = r1x[1] * r4x[0] + r3x[2] ;
-		ret[2][0] = r1x[2] * r4x[0] - r3x[1] ;
-		ret[0][1] = r1x[0] * r4x[1] - r3x[2] ;
-		ret[1][1] = r1x[1] * r4x[1] + r2x ;
-		ret[2][1] = r1x[2] * r4x[1] + r3x[0] ;
-		ret[0][2] = r1x[0] * r4x[2] + r3x[1] ;
-		ret[1][2] = r1x[1] * r4x[2] - r3x[0] ;
-		ret[2][2] = r1x[2] * r4x[2] + r2x ;
+		const auto r2x = angle * MathProc::step (r1x.magnitude () - 0.5) ;
+		const auto r3x = MathProc::cos (r2x) ;
+		const auto r4x = r1x * MathProc::sin (r2x) ;
+		const auto r5x = r1x * (1 - r3x) ;
+		ret[0][0] = r1x[0] * r5x[0] + r3x ;
+		ret[1][0] = r1x[1] * r5x[0] + r4x[2] ;
+		ret[2][0] = r1x[2] * r5x[0] - r4x[1] ;
+		ret[0][1] = r1x[0] * r5x[1] - r4x[2] ;
+		ret[1][1] = r1x[1] * r5x[1] + r3x ;
+		ret[2][1] = r1x[2] * r5x[1] + r4x[0] ;
+		ret[0][2] = r1x[0] * r5x[2] + r4x[1] ;
+		ret[1][2] = r1x[1] * r5x[2] - r4x[0] ;
+		ret[2][2] = r1x[2] * r5x[2] + r3x ;
 		ret[3][3] = 1 ;
 		self = move (ret) ;
 	}
 
-	void make_TranslationMatrix (CREF<FLT64> x ,CREF<FLT64> y ,CREF<FLT64> z) override {
+	void make_RotationMatrix (CR<Vector> from ,CR<Vector> into) override {
+		const auto r1x = from.normalize () ;
+		const auto r2x = into.normalize () ;
+		const auto r3x = (r1x ^ r2x).normalize () ;
+		const auto r4x = MathProc::acos (r1x * r2x) ;
+		make_RotationMatrix (r3x ,r4x) ;
+	}
+
+	void make_TranslationMatrix (CR<FLT64> x ,CR<FLT64> y ,CR<FLT64> z) override {
 		Matrix ret = Matrix::iden () ;
 		ret[0][3] = x ;
 		ret[1][3] = y ;
@@ -514,7 +523,7 @@ public:
 		self = move (ret) ;
 	}
 
-	void make_PerspectiveMatrix (CREF<FLT64> fx ,CREF<FLT64> fy ,CREF<FLT64> wx ,CREF<FLT64> wy) override {
+	void make_PerspectiveMatrix (CR<FLT64> fx ,CR<FLT64> fy ,CR<FLT64> wx ,CR<FLT64> wy) override {
 		assert (fx > 0) ;
 		assert (fy > 0) ;
 		Matrix ret = Matrix::zero () ;
@@ -527,7 +536,7 @@ public:
 		self = move (ret) ;
 	}
 
-	void make_ProjectionMatrix (CREF<Vector> normal ,CREF<Vector> center ,CREF<Vector> light) override {
+	void make_ProjectionMatrix (CR<Vector> normal ,CR<Vector> center ,CR<Vector> light) override {
 		Matrix ret = Matrix::zero () ;
 		const auto r1x = normal.normalize () ;
 		const auto r2x = center * r1x ;
@@ -549,7 +558,7 @@ public:
 		self = move (ret) ;
 	}
 
-	void make_ViewMatrix (CREF<Vector> x ,CREF<Vector> y) override {
+	void make_ViewMatrix (CR<Vector> x ,CR<Vector> y) override {
 		const auto r1x = x.normalize () ;
 		const auto r2x = y.normalize () ;
 		const auto r3x = (r1x ^ r2x).normalize () ;
@@ -558,7 +567,7 @@ public:
 		self = Matrix (r1x ,r4x ,r3x ,r5x) ;
 	}
 
-	void make_ViewMatrix (CREF<Vector> x ,CREF<Vector> y ,CREF<Just<ViewMatrixOption>> option) override {
+	void make_ViewMatrix (CR<Vector> x ,CR<Vector> y ,CR<Just<ViewMatrixOption>> option) override {
 		make_ViewMatrix (x ,y) ;
 		auto act = TRUE ;
 		if ifdo (act) {
@@ -626,7 +635,7 @@ public:
 		}
 	}
 
-	void make_CrossProductMatrix (CREF<Vector> xyz) override {
+	void make_CrossProductMatrix (CR<Vector> xyz) override {
 		Matrix ret = Matrix::zero () ;
 		const auto r1x = xyz.homogenize () ;
 		ret[1][0] = r1x[2] ;
@@ -638,7 +647,7 @@ public:
 		self = move (ret) ;
 	}
 
-	void make_OuterProductMatrix (CREF<Vector> x ,CREF<Vector> y) override {
+	void make_OuterProductMatrix (CR<Vector> x ,CR<Vector> y) override {
 		Matrix ret = Matrix::zero () ;
 		const auto r1x = x ;
 		const auto r2x = y ;
@@ -648,7 +657,7 @@ public:
 		self = move (ret) ;
 	}
 
-	void make_AffineMatrix (CREF<Array<FLT64>> a) override {
+	void make_AffineMatrix (CR<Array<FLT64>> a) override {
 		Matrix ret = Matrix::iden () ;
 		if ifdo (TRUE) {
 			if (a.length () < 3)
@@ -669,11 +678,11 @@ public:
 	}
 } ;
 
-exports VFat<MakeMatrixHolder> MakeMatrixHolder::hold (VREF<MatrixLayout> that) {
+exports VFat<MakeMatrixHolder> MakeMatrixHolder::hold (VR<MatrixLayout> that) {
 	return VFat<MakeMatrixHolder> (MakeMatrixImplHolder () ,that) ;
 }
 
-exports CFat<MakeMatrixHolder> MakeMatrixHolder::hold (CREF<MatrixLayout> that) {
+exports CFat<MakeMatrixHolder> MakeMatrixHolder::hold (CR<MatrixLayout> that) {
 	return CFat<MakeMatrixHolder> (MakeMatrixImplHolder () ,that) ;
 }
 
@@ -681,7 +690,7 @@ template class External<MatrixProcHolder ,MatrixProcLayout> ;
 
 struct MatrixProcLayout {} ;
 
-exports CREF<OfThis<UniqueRef<MatrixProcLayout>>> MatrixProcHolder::expr_m () {
+exports CR<OfThis<UniqueRef<MatrixProcLayout>>> MatrixProcHolder::expr_m () {
 	return memorize ([&] () {
 		OfThis<UniqueRef<MatrixProcLayout>> ret ;
 		ret.mThis = UniqueRef<MatrixProcLayout>::make () ;
@@ -690,17 +699,17 @@ exports CREF<OfThis<UniqueRef<MatrixProcLayout>>> MatrixProcHolder::expr_m () {
 	}) ;
 }
 
-exports VFat<MatrixProcHolder> MatrixProcHolder::hold (VREF<MatrixProcLayout> that) {
+exports VFat<MatrixProcHolder> MatrixProcHolder::hold (VR<MatrixProcLayout> that) {
 	return VFat<MatrixProcHolder> (External<MatrixProcHolder ,MatrixProcLayout>::expr ,that) ;
 }
 
-exports CFat<MatrixProcHolder> MatrixProcHolder::hold (CREF<MatrixProcLayout> that) {
+exports CFat<MatrixProcHolder> MatrixProcHolder::hold (CR<MatrixProcLayout> that) {
 	return CFat<MatrixProcHolder> (External<MatrixProcHolder ,MatrixProcLayout>::expr ,that) ;
 }
 
 class DuplexMatrixImplHolder final implement Fat<DuplexMatrixHolder ,DuplexMatrixLayout> {
 public:
-	void initialize (CREF<Matrix> that) override {
+	void initialize (CR<Matrix> that) override {
 		self.mDuplexMatrix[0] = that ;
 		self.mDuplexMatrix[1] = self.mDuplexMatrix[0].inverse () ;
 		if ifdo (TRUE) {
@@ -724,17 +733,17 @@ public:
 	}
 } ;
 
-exports VFat<DuplexMatrixHolder> DuplexMatrixHolder::hold (VREF<DuplexMatrixLayout> that) {
+exports VFat<DuplexMatrixHolder> DuplexMatrixHolder::hold (VR<DuplexMatrixLayout> that) {
 	return VFat<DuplexMatrixHolder> (DuplexMatrixImplHolder () ,that) ;
 }
 
-exports CFat<DuplexMatrixHolder> DuplexMatrixHolder::hold (CREF<DuplexMatrixLayout> that) {
+exports CFat<DuplexMatrixHolder> DuplexMatrixHolder::hold (CR<DuplexMatrixLayout> that) {
 	return CFat<DuplexMatrixHolder> (DuplexMatrixImplHolder () ,that) ;
 }
 
 class QuaternionImplHolder final implement Fat<QuaternionHolder ,QuaternionLayout> {
 public:
-	void initialize (CREF<FLT64> x ,CREF<FLT64> y ,CREF<FLT64> z ,CREF<FLT64> w) override {
+	void initialize (CR<FLT64> x ,CR<FLT64> y ,CR<FLT64> z ,CR<FLT64> w) override {
 		self.mQuaternion[0] = x ;
 		self.mQuaternion[1] = y ;
 		self.mQuaternion[2] = z ;
@@ -742,7 +751,7 @@ public:
 		normalized () ;
 	}
 
-	void initialize (CREF<Vector> that) override {
+	void initialize (CR<Vector> that) override {
 		const auto r1x = that.magnitude () ;
 		const auto r2x = that.normalize () ;
 		const auto r3x = MathProc::sin (r1x / 2) ;
@@ -754,7 +763,7 @@ public:
 		normalized () ;
 	}
 
-	void initialize (CREF<Matrix> that) override {
+	void initialize (CR<Matrix> that) override {
 		const auto r1x = that.homogenize () ;
 		auto act = TRUE ;
 		if ifdo (act) {
@@ -807,7 +816,7 @@ public:
 		normalized () ;
 	}
 
-	void initialize (CREF<EulerAngle> that) override {
+	void initialize (CR<EulerAngle> that) override {
 		const auto r1x = axis_of_index () ;
 		const auto r2x = RotationMatrix (r1x[0] ,that.mPitch) ;
 		const auto r3x = RotationMatrix (r1x[1] ,that.mYaw) ;
@@ -870,11 +879,11 @@ public:
 		self.mQuaternion[3] *= r6x ;
 	}
 
-	CREF<FLT64> at (CREF<INDEX> y) const leftvalue override {
+	CR<FLT64> at (CR<INDEX> y) const leftvalue override {
 		return self.mQuaternion[y] ;
 	}
 
-	BOOL equal (CREF<QuaternionLayout> that) const override {
+	BOOL equal (CR<QuaternionLayout> that) const override {
 		for (auto &&i : range (0 ,4)) {
 			const auto r1x = inline_equal (self.mQuaternion[i] ,that.mQuaternion[i]) ;
 			if (!r1x)
@@ -883,7 +892,7 @@ public:
 		return TRUE ;
 	}
 
-	FLAG compr (CREF<QuaternionLayout> that) const override {
+	FLAG compr (CR<QuaternionLayout> that) const override {
 		for (auto &&i : range (0 ,4)) {
 			const auto r1x = inline_compr (self.mQuaternion[i] ,that.mQuaternion[i]) ;
 			if (r1x != ZERO)
@@ -892,7 +901,7 @@ public:
 		return ZERO ;
 	}
 
-	void visit (VREF<FriendVisitor> visitor) const override {
+	void visit (VR<FriendVisitor> visitor) const override {
 		visitor.enter () ;
 		for (auto &&i : range (0 ,4)) {
 			inline_visit (visitor ,self.mQuaternion[i]) ;
@@ -900,7 +909,7 @@ public:
 		visitor.leave () ;
 	}
 
-	QuaternionLayout smul (CREF<QuaternionLayout> that) const override {
+	QuaternionLayout smul (CR<QuaternionLayout> that) const override {
 		QuaternionLayout ret ;
 		const auto r1x = axis (self) ;
 		const auto r2x = axis (that) ;
@@ -915,7 +924,7 @@ public:
 		return move (ret) ;
 	}
 
-	static Vector axis (CREF<QuaternionLayout> q) {
+	static Vector axis (CR<QuaternionLayout> q) {
 		return Vector (q.mQuaternion[0] ,q.mQuaternion[1] ,q.mQuaternion[2] ,0) ;
 	}
 
@@ -937,7 +946,7 @@ public:
 		return RotationMatrix (r1x ,r2x) ;
 	}
 
-	EulerAngle euler (CREF<Just<ViewMatrixOption>> type) const override {
+	EulerAngle euler (CR<Just<ViewMatrixOption>> type) const override {
 		EulerAngle ret ;
 		const auto r1x = matrix () ;
 		const auto r2x = DiagMatrix (+1 ,-1 ,-1) ;
@@ -1050,7 +1059,7 @@ public:
 		return move (ret) ;
 	}
 
-	Buffer3<Matrix> euler_decompose (CREF<Matrix> rot ,CREF<INDEX> x ,CREF<INDEX> y ,CREF<INDEX> z) const {
+	Buffer3<Matrix> euler_decompose (CR<Matrix> rot ,CR<INDEX> x ,CR<INDEX> y ,CR<INDEX> z) const {
 		Buffer3<Matrix> ret ;
 		const auto r1x = axis_of_index () ;
 		const auto r2x = rot * r1x[z] ;
@@ -1078,7 +1087,7 @@ public:
 		return move (ret) ;
 	}
 
-	FLT64 rotate_sign (CREF<INDEX> y ,CREF<INDEX> z) const {
+	FLT64 rotate_sign (CR<INDEX> y ,CR<INDEX> z) const {
 		if (y == 0)
 			if (z == 2)
 				return -1 ;
@@ -1091,7 +1100,7 @@ public:
 		return +1 ;
 	}
 
-	Optional<FLT64> rotate_angle (CREF<Vector> dir ,CREF<Vector> rot_axis ,CREF<Vector> normal) const {
+	Optional<FLT64> rotate_angle (CR<Vector> dir ,CR<Vector> rot_axis ,CR<Vector> normal) const {
 		const auto r1x = CrossProductMatrix (rot_axis) ;
 		const auto r2x = r1x * r1x ;
 		const auto r3x = normal * (Matrix::iden () + r2x) * dir ;
@@ -1109,7 +1118,7 @@ public:
 		return ortho_angle (r12x) ;
 	}
 
-	FLT64 ortho_angle (CREF<FLT64> x) const {
+	FLT64 ortho_angle (CR<FLT64> x) const {
 		const auto r1x = MathProc::floor (x ,MATH_PI * 2) ;
 		const auto r2x = x - r1x - MATH_PI ;
 		if (r2x <= -MATH_PI / 2)
@@ -1120,11 +1129,11 @@ public:
 	}
 } ;
 
-exports VFat<QuaternionHolder> QuaternionHolder::hold (VREF<QuaternionLayout> that) {
+exports VFat<QuaternionHolder> QuaternionHolder::hold (VR<QuaternionLayout> that) {
 	return VFat<QuaternionHolder> (QuaternionImplHolder () ,that) ;
 }
 
-exports CFat<QuaternionHolder> QuaternionHolder::hold (CREF<QuaternionLayout> that) {
+exports CFat<QuaternionHolder> QuaternionHolder::hold (CR<QuaternionLayout> that) {
 	return CFat<QuaternionHolder> (QuaternionImplHolder () ,that) ;
 }
 
@@ -1132,7 +1141,7 @@ template class External<LinearProcHolder ,LinearProcLayout> ;
 
 struct LinearProcLayout {} ;
 
-exports CREF<OfThis<UniqueRef<LinearProcLayout>>> LinearProcHolder::expr_m () {
+exports CR<OfThis<UniqueRef<LinearProcLayout>>> LinearProcHolder::expr_m () {
 	return memorize ([&] () {
 		OfThis<UniqueRef<LinearProcLayout>> ret ;
 		ret.mThis = UniqueRef<LinearProcLayout>::make () ;
@@ -1141,11 +1150,11 @@ exports CREF<OfThis<UniqueRef<LinearProcLayout>>> LinearProcHolder::expr_m () {
 	}) ;
 }
 
-exports VFat<LinearProcHolder> LinearProcHolder::hold (VREF<LinearProcLayout> that) {
+exports VFat<LinearProcHolder> LinearProcHolder::hold (VR<LinearProcLayout> that) {
 	return VFat<LinearProcHolder> (External<LinearProcHolder ,LinearProcLayout>::expr ,that) ;
 }
 
-exports CFat<LinearProcHolder> LinearProcHolder::hold (CREF<LinearProcLayout> that) {
+exports CFat<LinearProcHolder> LinearProcHolder::hold (CR<LinearProcLayout> that) {
 	return CFat<LinearProcHolder> (External<LinearProcHolder ,LinearProcLayout>::expr ,that) ;
 }
 
@@ -1163,31 +1172,31 @@ exports AutoRef<PointCloudKDTreeLayout> PointCloudKDTreeHolder::create () {
 	return AutoRef<PointCloudKDTreeLayout>::make () ;
 }
 
-exports VFat<PointCloudKDTreeHolder> PointCloudKDTreeHolder::hold (VREF<PointCloudKDTreeLayout> that) {
+exports VFat<PointCloudKDTreeHolder> PointCloudKDTreeHolder::hold (VR<PointCloudKDTreeLayout> that) {
 	return VFat<PointCloudKDTreeHolder> (External<PointCloudKDTreeHolder ,PointCloudKDTreeLayout>::expr ,that) ;
 }
 
-exports CFat<PointCloudKDTreeHolder> PointCloudKDTreeHolder::hold (CREF<PointCloudKDTreeLayout> that) {
+exports CFat<PointCloudKDTreeHolder> PointCloudKDTreeHolder::hold (CR<PointCloudKDTreeLayout> that) {
 	return CFat<PointCloudKDTreeHolder> (External<PointCloudKDTreeHolder ,PointCloudKDTreeLayout>::expr ,that) ;
 }
 
 class PointCloudImplHolder final implement Fat<PointCloudHolder ,PointCloudLayout> {
 public:
-	void initialize (RREF<Ref<Array<Point2F>>> pointcloud) override {
+	void initialize (RR<Ref<Array<Point2F>>> pointcloud) override {
 		self.mRank = 2 ;
 		auto &&rax = keep[TYPE<Ref<Array<Point2F>>>::expr] (Pointer::from (self.mPointCloud)) ;
 		rax = move (pointcloud) ;
 		self.mWorld = Matrix::iden () ;
 	}
 
-	void initialize (RREF<Ref<Array<Point3F>>> pointcloud) override {
+	void initialize (RR<Ref<Array<Point3F>>> pointcloud) override {
 		self.mRank = 3 ;
 		auto &&rax = keep[TYPE<Ref<Array<Point3F>>>::expr] (Pointer::from (self.mPointCloud)) ;
 		rax = move (pointcloud) ;
 		self.mWorld = Matrix::iden () ;
 	}
 
-	void initialize (RREF<Ref<Array<Vector>>> pointcloud) override {
+	void initialize (RR<Ref<Array<Vector>>> pointcloud) override {
 		self.mRank = 0 ;
 		auto &&rax = keep[TYPE<Ref<Array<Vector>>>::expr] (Pointer::from (self.mPointCloud)) ;
 		rax = move (pointcloud) ;
@@ -1198,25 +1207,25 @@ public:
 		return self.mPointCloud->size () ;
 	}
 
-	void get (CREF<INDEX> index ,VREF<Vector> item) const override {
+	void get (CR<INDEX> index ,VR<Vector> item) const override {
 		auto act = TRUE ;
 		if ifdo (act) {
 			if (self.mRank != 0)
 				discard ;
 			item = Vector (keep[TYPE<Vector>::expr] (self.mPointCloud.ref[index])) ;
-			item = self.mWorld * item ;
+			item = item * self.mWorld ;
 		}
 		if ifdo (act) {
 			if (self.mRank != 2)
 				discard ;
 			item = Vector (keep[TYPE<Point2F>::expr] (self.mPointCloud.ref[index])) ;
-			item = self.mWorld * item ;
+			item = item * self.mWorld ;
 		}
 		if ifdo (act) {
 			if (self.mRank != 3)
 				discard ;
 			item = Vector (keep[TYPE<Point3F>::expr] (self.mPointCloud.ref[index])) ;
-			item = self.mWorld * item ;
+			item = item * self.mWorld ;
 		}
 		if ifdo (act) {
 			assert (FALSE) ;
@@ -1261,12 +1270,13 @@ public:
 		return r7x ;
 	}
 
-	FLT64 sqrt_fix (CREF<FLT64> a) const {
-		const auto r1x = FLT64 (FLT32_EPS) / 2 ;
-		return MathProc::sqrt (MathProc::max_of (a ,r1x)) ;
+	FLT64 sqrt_fix (CR<FLT64> a) const {
+		if (a < FLT64_EPS)
+			return 1 ;
+		return MathProc::sqrt (a) ;
 	}
 
-	Matrix box_matrix () const override {
+	Matrix box_matrix (CR<FLT64> ax ,CR<FLT64> ay ,CR<FLT64> az) const override {
 		const auto r1x = bound () ;
 		const auto r2x = invoke ([&] () {
 			Vector ret = Vector::zero () ;
@@ -1280,9 +1290,13 @@ public:
 			ret = ret.projection () ;
 			return move (ret) ;
 		}) ;
-		const auto r3x = TranslationMatrix (r2x) ;
-		const auto r4x = DiagMatrix (r1x.mMax.mX - r1x.mMin.mX ,r1x.mMax.mY - r1x.mMin.mY ,1) ;
-		return r3x * r4x ;
+		const auto r3x = (r1x.mMax.mX - r1x.mMin.mX) * MathProc::inverse (ax) ;
+		const auto r4x = (r1x.mMax.mY - r1x.mMin.mY) * MathProc::inverse (ay) ;
+		const auto r5x = (r1x.mMax.mZ - r1x.mMin.mZ) * MathProc::inverse (az) ;
+		const auto r6x = MathProc::max_of (r3x ,r4x ,r5x) ;
+		const auto r7x = TranslationMatrix (r2x) ;
+		const auto r8x = DiagMatrix (ax * r6x ,ay * r6x ,az * r6x) ;
+		return r7x * r8x ;
 	}
 
 	Line3F bound () const override {
@@ -1306,15 +1320,15 @@ public:
 		return move (ret) ;
 	}
 
-	PointCloudLayout smul (CREF<Matrix> mat) const override {
+	PointCloudLayout smul (CR<Matrix> that) const override {
 		PointCloudLayout ret ;
 		ret.mRank = self.mRank ;
 		ret.mPointCloud = self.mPointCloud.share () ;
-		ret.mWorld = self.mWorld * mat ;
+		ret.mWorld = self.mWorld * that ;
 		return move (ret) ;
 	}
 
-	Array<INDEX> search (CREF<Vector> center ,CREF<LENGTH> neighbor) const override {
+	Array<INDEX> search (CR<Vector> center ,CR<LENGTH> neighbor) const override {
 		if ifdo (TRUE) {
 			if (self.mKDTree.mThis.exist ())
 				discard ;
@@ -1324,7 +1338,7 @@ public:
 		return PointCloudKDTreeHolder::hold (self.mKDTree)->search (center ,neighbor) ;
 	}
 
-	Array<INDEX> search (CREF<Vector> center ,CREF<LENGTH> neighbor ,CREF<FLT64> radius) const override {
+	Array<INDEX> search (CR<Vector> center ,CR<LENGTH> neighbor ,CR<FLT64> radius) const override {
 		if ifdo (TRUE) {
 			if (self.mKDTree.mThis.exist ())
 				discard ;
@@ -1335,11 +1349,92 @@ public:
 	}
 } ;
 
-exports VFat<PointCloudHolder> PointCloudHolder::hold (VREF<PointCloudLayout> that) {
+exports VFat<PointCloudHolder> PointCloudHolder::hold (VR<PointCloudLayout> that) {
 	return VFat<PointCloudHolder> (PointCloudImplHolder () ,that) ;
 }
 
-exports CFat<PointCloudHolder> PointCloudHolder::hold (CREF<PointCloudLayout> that) {
+exports CFat<PointCloudHolder> PointCloudHolder::hold (CR<PointCloudLayout> that) {
 	return CFat<PointCloudHolder> (PointCloudImplHolder () ,that) ;
+}
+
+class TPSFitImplHolder final implement Fat<TPSFitHolder ,TPSFitLayout> {
+public:
+	void compute (CR<Array<Vector>> dst ,CR<Array<Vector>> src) override {
+		assert (dst.size () == src.size ()) ;
+		const auto r1x = src.size () ;
+		const auto r2x = PointCloud (Ref<Array<Vector>>::reference (src)) ;
+		const auto r3x = PointCloud (Ref<Array<Vector>>::reference (dst)) ;
+		self.mNSrc = r2x.pca_matrix () ;
+		self.mNDst = r3x.pca_matrix () ;
+		const auto r4x = self.mNSrc[1] * r2x ;
+		const auto r5x = self.mNDst[1] * r3x ;
+		self.mQA = Image<FLT64> (r1x + 4 ,r1x + 4) ;
+		self.mQB = Image<FLT64> (3 ,r1x + 4) ;
+		for (auto &&i : range (0 ,r1x ,0 ,r1x)) {
+			if (i.mY > i.mX)
+				continue ;
+			const auto r6x = (r4x[i.mY] - r4x[i.mX]).magnitude () ;
+			const auto r7x = basic_function (r6x) ;
+			self.mQA.at (i.mX ,i.mY) = r7x ;
+			self.mQA.at (i.mY ,i.mX) = r7x ;
+		}
+		for (auto &&i : range (0 ,r1x)) {
+			const auto r8x = r4x[i] ;
+			const auto r9x = r5x[i] ;
+			for (auto &&j : range (0 ,4)) {
+				self.mQA.at (r1x + j ,i) = r8x[j] ;
+				self.mQA.at (i ,r1x + j) = r8x[j] ;
+			}
+			for (auto &&j : range (0 ,3)) {
+				self.mQB.at (j ,i) = r9x[j] ;
+			}
+		}
+		for (auto &&i : range (0 ,4)) {
+			for (auto &&j : range (0 ,4)) {
+				self.mQA.at (r1x + j ,r1x + i) = 0 ;
+			}
+			for (auto &&j : range (0 ,3)) {
+				self.mQB.at (j ,r1x + i) = 0 ;
+			}
+		}
+		self.mQC = LinearProc::solve_lsm (self.mQA ,self.mQB) ;
+		self.mPSrc = Array<Vector> (r1x) ;
+		for (auto &&i : self.mPSrc.iter ()) {
+			self.mPSrc[i] = r4x[i] ;
+		}
+	}
+
+	Vector smul (CR<Vector> that) const override {
+		assert (self.mQC.size () > 0) ;
+		Vector ret = Vector::axis_w () ;
+		const auto r1x = self.mPSrc.length () ;
+		const auto r2x = self.mNSrc[1] * that ;
+		for (auto &&i : range (0 ,r1x)) {
+			for (auto &&j : range (0 ,3)) {
+				const auto r3x = (r2x - self.mPSrc[i]).magnitude () ;
+				const auto r4x = basic_function (r3x) ;
+				ret[j] += self.mQC.at (j ,i) * r4x ;
+			}
+		}
+		for (auto &&i : range (0 ,4)) {
+			for (auto &&j : range (0 ,3)) {
+				ret[j] += self.mQC.at (j ,r1x + i) * r2x[i] ;
+			}
+		}
+		ret = self.mNDst[0] * ret ;
+		return move (ret) ;
+	}
+
+	FLT64 basic_function (CR<FLT64> r) const {
+		return MathProc::square (r) * MathProc::log (r + FLT64_EPS) ;
+	}
+} ;
+
+exports VFat<TPSFitHolder> TPSFitHolder::hold (VR<TPSFitLayout> that) {
+	return VFat<TPSFitHolder> (TPSFitImplHolder () ,that) ;
+}
+
+exports CFat<TPSFitHolder> TPSFitHolder::hold (CR<TPSFitLayout> that) {
+	return CFat<TPSFitHolder> (TPSFitImplHolder () ,that) ;
 }
 } ;

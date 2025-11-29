@@ -22,20 +22,22 @@ public:
 		noop () ;
 	}
 
-	TRSResult solve_trs (CREF<Matrix> a) const override {
+	TRSResult solve_trs (CR<Matrix> a) const override {
 		TRSResult ret ;
 		const auto r1x = a * Vector::axis_x () ;
 		const auto r2x = a * Vector::axis_y () ;
 		const auto r3x = a * Vector::axis_z () ;
 		const auto r4x = a * Vector::axis_w () ;
 		const auto r5x = Matrix (r1x.normalize () ,r2x.normalize () ,r3x.normalize () ,Vector::axis_w ()) ;
+		const auto r6x = MathProc::sign (r5x.determinant ()) ;
+		const auto r7x = DiagMatrix (r6x ,r6x ,r6x ,1) ;
 		ret.mT = TranslationMatrix (r4x) ;
-		ret.mR = Quaternion (r5x).matrix () ;
-		ret.mS = DiagMatrix (r1x.magnitude () ,r2x.magnitude () ,r3x.magnitude ()) ;
+		ret.mR = Quaternion (r5x * r7x).matrix () ;
+		ret.mS = r7x * DiagMatrix (r1x.magnitude () ,r2x.magnitude () ,r3x.magnitude ()) ;
 		return move (ret) ;
 	}
 
-	KRTResult solve_krt (CREF<Matrix> a) const override {
+	KRTResult solve_krt (CR<Matrix> a) const override {
 		KRTResult ret ;
 		ret.mK = a.homogenize () ;
 		ret.mR = Matrix::iden () ;
@@ -103,7 +105,7 @@ public:
 		return move (ret) ;
 	}
 
-	SVDResult solve_svd (CREF<Matrix> a) const override {
+	SVDResult solve_svd (CR<Matrix> a) const override {
 		SVDResult ret ;
 		const auto r1x = cvt_eigen_matrix (a) ;
 		auto rax = Eigen::JacobiSVD<Eigen::Matrix4d> (r1x ,Eigen::ComputeFullU | Eigen::ComputeFullV) ;
@@ -114,18 +116,18 @@ public:
 		return move (ret) ;
 	}
 
-	Eigen::Matrix4d cvt_eigen_matrix (CREF<Matrix> a) const {
+	Eigen::Matrix4d cvt_eigen_matrix (CR<Matrix> a) const {
 		Eigen::Matrix4d ret ;
 		for (auto &&i : range (0 ,4 ,0 ,4))
 			ret (i.mY ,i.mX) = a[i] ;
 		return move (ret) ;
 	}
 
-	Matrix cvt_csc_matrix (CREF<Eigen::Matrix4d> a) const {
+	Matrix cvt_csc_matrix (CR<Eigen::Matrix4d> a) const {
 		Matrix ret ;
 		for (auto &&i : range (0 ,4 ,0 ,4)) {
 			ret[i] = a (i.mY ,i.mX) ;
-			assume (!isnan (ret[i])) ;
+			assume (!MathProc::is_inf (ret[i])) ;
 		}
 		return move (ret) ;
 	}
@@ -139,7 +141,7 @@ public:
 		noop () ;
 	}
 
-	Image<FLT64> solve_lsm (CREF<Image<FLT64>> a) const override {
+	Image<FLT64> solve_lsm (CR<Image<FLT64>> a) const override {
 		Image<FLT64> ret = Image<FLT64> (1 ,a.cx ()) ;
 		const auto r1x = cvt_eigen_matrix (a) ;
 		const auto r2x = Eigen::ComputeFullV ;
@@ -152,7 +154,7 @@ public:
 		return move (ret) ;
 	}
 
-	Image<FLT64> solve_lsm (CREF<Image<FLT64>> a ,CREF<Image<FLT64>> b) const override {
+	Image<FLT64> solve_lsm (CR<Image<FLT64>> a ,CR<Image<FLT64>> b) const override {
 		const auto r1x = cvt_eigen_matrix (a) ;
 		const auto r2x = cvt_eigen_matrix (b) ;
 		const auto r3x = Eigen::MatrixXd (r1x.transpose () * r1x) ;
@@ -163,20 +165,20 @@ public:
 		return cvt_csc_matrix (r6x) ;
 	}
 
-	Image<FLT64> solve_inv (CREF<Image<FLT64>> a) const override {
+	Image<FLT64> solve_inv (CR<Image<FLT64>> a) const override {
 		const auto r1x = cvt_eigen_matrix (a) ;
 		const auto r2x = Eigen::MatrixXd (r1x.completeOrthogonalDecomposition ().pseudoInverse ()) ;
 		return cvt_csc_matrix (r2x) ;
 	}
 
-	Eigen::MatrixXd cvt_eigen_matrix (CREF<Image<FLT64>> a) const {
+	Eigen::MatrixXd cvt_eigen_matrix (CR<Image<FLT64>> a) const {
 		Eigen::MatrixXd ret = Eigen::MatrixXd (a.cy () ,a.cx ()) ;
 		for (auto &&i : a.iter ())
 			ret (i.mY ,i.mX) = a[i] ;
 		return move (ret) ;
 	}
 
-	Image<FLT64> cvt_csc_matrix (CREF<Eigen::MatrixXd> a) const {
+	Image<FLT64> cvt_csc_matrix (CR<Eigen::MatrixXd> a) const {
 		Image<FLT64> ret = Image<FLT64> (a.cols () ,a.rows ()) ;
 		for (auto &&i : ret.iter ())
 			ret[i] = a (i.mY ,i.mX) ;

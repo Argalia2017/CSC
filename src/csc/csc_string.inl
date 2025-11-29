@@ -15,13 +15,13 @@ namespace CSC {
 template <class A>
 struct FUNCTION_string_from_impl {
 	template <class ARG1>
-	forceinline CREF<String<A>> operator() (CREF<String<ARG1>> that) {
+	forceinline CR<String<A>> operator() (CR<String<ARG1>> that) {
 		assert (IS_SAME<A ,ARG1>::expr) ;
 		return keep[TYPE<String<A>>::expr] (Pointer::from (that)) ;
 	}
 
 	template <class ARG1>
-	forceinline RREF<String<A>> operator() (RREF<String<ARG1>> that) {
+	forceinline RR<String<A>> operator() (RR<String<ARG1>> that) {
 		assert (IS_SAME<A ,ARG1>::expr) ;
 		return move (keep[TYPE<String<A>>::expr] (Pointer::from (that))) ;
 	}
@@ -41,16 +41,16 @@ using csc_locale_t = _locale_t ;
 
 struct FUNCTION_string_locale {
 	forceinline UniqueRef<csc_locale_t> operator() () const {
-		return UniqueRef<csc_locale_t> ([&] (VREF<csc_locale_t> me) {
+		return UniqueRef<csc_locale_t> ([&] (VR<csc_locale_t> me) {
 			me = _create_locale (LC_CTYPE ,String<STRA>::zero ()) ;
-		} ,[&] (VREF<csc_locale_t> me) {
+		} ,[&] (VR<csc_locale_t> me) {
 			_free_locale (me) ;
 		}) ;
 	}
 } ;
 
 struct FUNCTION_string_stra_from_strw {
-	forceinline void operator() (VREF<String<STRA>> dst ,CREF<String<STRW>> src ,CREF<csc_locale_t> loc) const {
+	forceinline void operator() (VR<String<STRA>> dst ,CR<String<STRW>> src ,CR<csc_locale_t> loc) const {
 		auto rax = csc_size_t (0) ;
 		const auto r1x = _wcstombs_s_l ((&rax) ,dst ,dst.size () ,src ,_TRUNCATE ,loc) ;
 		assume (r1x == 0) ;
@@ -59,7 +59,7 @@ struct FUNCTION_string_stra_from_strw {
 } ;
 
 struct FUNCTION_string_strw_from_stra {
-	forceinline void operator() (VREF<String<STRW>> dst ,CREF<String<STRA>> src ,CREF<csc_locale_t> loc) const {
+	forceinline void operator() (VR<String<STRW>> dst ,CR<String<STRA>> src ,CR<csc_locale_t> loc) const {
 		auto rax = csc_size_t (0) ;
 		const auto r1x = _mbstowcs_s_l ((&rax) ,dst ,dst.size () ,src ,_TRUNCATE ,loc) ;
 		assume (r1x == 0) ;
@@ -73,16 +73,16 @@ using csc_locale_t = locale_t ;
 
 struct FUNCTION_string_locale {
 	forceinline UniqueRef<csc_locale_t> operator() () const {
-		return UniqueRef<csc_locale_t> ([&] (VREF<csc_locale_t> me) {
+		return UniqueRef<csc_locale_t> ([&] (VR<csc_locale_t> me) {
 			me = newlocale (LC_CTYPE_MASK ,String<STRA>::zero () ,NULL) ;
-		} ,[&] (VREF<csc_locale_t> me) {
+		} ,[&] (VR<csc_locale_t> me) {
 			freelocale (me) ;
 		}) ;
 	}
 } ;
 
 struct FUNCTION_string_stra_from_strw {
-	forceinline void operator() (VREF<String<STRA>> dst ,CREF<String<STRW>> src ,CREF<csc_locale_t> loc) const {
+	forceinline void operator() (VR<String<STRA>> dst ,CR<String<STRW>> src ,CR<csc_locale_t> loc) const {
 		auto rax = mbstate_t () ;
 		inline_memset (rax) ;
 		uselocale (loc) ;
@@ -94,7 +94,7 @@ struct FUNCTION_string_stra_from_strw {
 } ;
 
 struct FUNCTION_string_strw_from_stra {
-	forceinline void operator() (VREF<String<STRW>> dst ,CREF<String<STRA>> src ,CREF<csc_locale_t> loc) const {
+	forceinline void operator() (VR<String<STRW>> dst ,CR<String<STRA>> src ,CR<csc_locale_t> loc) const {
 		auto rax = mbstate_t () ;
 		inline_memset (rax) ;
 		uselocale (loc) ;
@@ -120,13 +120,13 @@ public:
 		self.mStringLocale = string_locale () ;
 	}
 
-	String<STRA> stra_from_strw (CREF<String<STRW>> a) const override {
+	String<STRA> stra_from_strw (CR<String<STRW>> a) const override {
 		String<STRA> ret = String<STRA> (a.length () * 2 + 1) ;
 		string_stra_from_strw (ret ,a ,self.mStringLocale) ;
 		return move (ret) ;
 	}
 
-	String<STRA> stra_from_strs (CREF<String<STR>> a) const override {
+	String<STRA> stra_from_strs (CR<String<STR>> a) const override {
 		if (IS_SAME<STR ,STRA>::expr)
 			return string_from[TYPE<STRA>::expr] (a) ;
 		if (IS_SAME<STR ,STRW>::expr)
@@ -135,13 +135,13 @@ public:
 		return String<STRA> () ;
 	}
 
-	String<STRW> strw_from_stra (CREF<String<STRA>> a) const override {
+	String<STRW> strw_from_stra (CR<String<STRA>> a) const override {
 		String<STRW> ret = String<STRW> (a.length () + 1) ;
 		string_strw_from_stra (ret ,a ,self.mStringLocale) ;
 		return move (ret) ;
 	}
 
-	String<STRW> strw_from_strs (CREF<String<STR>> a) const override {
+	String<STRW> strw_from_strs (CR<String<STR>> a) const override {
 		if (IS_SAME<STR ,STRA>::expr)
 			return strw_from_stra (string_from[TYPE<STRA>::expr] (a)) ;
 		if (IS_SAME<STR ,STRW>::expr)
@@ -150,7 +150,7 @@ public:
 		return String<STRW> () ;
 	}
 
-	String<STR> strs_from_stra (CREF<String<STRA>> a) const override {
+	String<STR> strs_from_stra (CR<String<STRA>> a) const override {
 		if (IS_SAME<STR ,STRA>::expr)
 			return string_from[TYPE<STR>::expr] (a) ;
 		if (IS_SAME<STR ,STRW>::expr)
@@ -159,7 +159,7 @@ public:
 		return String<STR> () ;
 	}
 
-	String<STR> strs_from_strw (CREF<String<STRW>> a) const override {
+	String<STR> strs_from_strw (CR<String<STRW>> a) const override {
 		if (IS_SAME<STR ,STRA>::expr)
 			return string_from[TYPE<STR>::expr] (stra_from_strw (a)) ;
 		if (IS_SAME<STR ,STRW>::expr)
@@ -168,7 +168,7 @@ public:
 		return String<STR> () ;
 	}
 
-	String<STRU8> stru8_from_stru16 (CREF<String<STRU16>> a) const override {
+	String<STRU8> stru8_from_stru16 (CR<String<STRU16>> a) const override {
 		String<STRU8> ret = String<STRU8> (a.length () * 3) ;
 		INDEX ix = 0 ;
 		auto rax = FLAG (0) ;
@@ -248,7 +248,7 @@ public:
 		return move (ret) ;
 	}
 
-	String<STRU8> stru8_from_stru32 (CREF<String<STRU32>> a) const override {
+	String<STRU8> stru8_from_stru32 (CR<String<STRU32>> a) const override {
 		//@info: 1 bytes [0,0X7F] 0xxxxxxx
 		//@info: 2 bytes [0x80,0X7FF] 110xxxxx 10xxxxxx
 		//@info: 3 bytes [0x800,0XFFFF] 1110xxxx 10xxxxxx 10xxxxxx
@@ -349,7 +349,7 @@ public:
 		return move (ret) ;
 	}
 
-	String<STRU16> stru16_from_stru8 (CREF<String<STRU8>> a) const override {
+	String<STRU16> stru16_from_stru8 (CR<String<STRU8>> a) const override {
 		String<STRU16> ret = String<STRU16> (a.length ()) ;
 		INDEX ix = 0 ;
 		auto rax = FLAG (0) ;
@@ -472,7 +472,7 @@ public:
 		return move (ret) ;
 	}
 
-	String<STRU16> stru16_from_stru32 (CREF<String<STRU32>> a) const override {
+	String<STRU16> stru16_from_stru32 (CR<String<STRU32>> a) const override {
 		//@info: utf16 [D800,DBFF] 110110xx xxxxxxxx [DC00,DFFF] 110111xx xxxxxxxx
 		//@info: utf32 [0X10000,0X10FFFF]-[0,0XFFFFF] 0000xxxx xxxxxxxx xxxxxxxx
 		String<STRU16> ret = String<STRU16> (a.length () * 2) ;
@@ -517,7 +517,7 @@ public:
 		return move (ret) ;
 	}
 
-	String<STRU32> stru32_from_stru8 (CREF<String<STRU8>> a) const override {
+	String<STRU32> stru32_from_stru8 (CR<String<STRU8>> a) const override {
 		//@info: 1 bytes [0,0X7F] 0xxxxxxx
 		//@info: 2 bytes [0x80,0X7FF] 110xxxxx 10xxxxxx
 		//@info: 3 bytes [0x800,0XFFFF] 1110xxxx 10xxxxxx 10xxxxxx
@@ -613,7 +613,7 @@ public:
 		return move (ret) ;
 	}
 
-	String<STRU32> stru32_from_stru16 (CREF<String<STRU16>> a) const override {
+	String<STRU32> stru32_from_stru16 (CR<String<STRU16>> a) const override {
 		//@info: utf16 [D800,DBFF] 110110xx xxxxxxxx [DC00,DFFF] 110111xx xxxxxxxx
 		//@info: utf32 [0X10000,0X10FFFF]-[0,0XFFFFF] 0000xxxx xxxxxxxx xxxxxxxx
 		String<STRU32> ret = String<STRU32> (a.length ()) ;
@@ -675,35 +675,35 @@ public:
 		return move (ret) ;
 	}
 
-	String<STRUA> strua_from_stra (RREF<String<STRA>> a) const override {
+	String<STRUA> strua_from_stra (RR<String<STRA>> a) const override {
 		return move (keep[TYPE<String<STRUA>>::expr] (Pointer::from (a))) ;
 	}
 
-	String<STRA> stra_from_strua (RREF<String<STRUA>> a) const override {
+	String<STRA> stra_from_strua (RR<String<STRUA>> a) const override {
 		return move (keep[TYPE<String<STRA>>::expr] (Pointer::from (a))) ;
 	}
 
-	String<STRUW> struw_from_strw (RREF<String<STRW>> a) const override {
+	String<STRUW> struw_from_strw (RR<String<STRW>> a) const override {
 		return move (keep[TYPE<String<STRUW>>::expr] (Pointer::from (a))) ;
 	}
 
-	String<STRW> strw_from_struw (RREF<String<STRUW>> a) const override {
+	String<STRW> strw_from_struw (RR<String<STRUW>> a) const override {
 		return move (keep[TYPE<String<STRW>>::expr] (Pointer::from (a))) ;
 	}
 
-	String<STRA> stra_from_stru (CREF<String<STRU8>> a) const override {
+	String<STRA> stra_from_stru (CR<String<STRU8>> a) const override {
 		return stra_from_strw (strw_from_stru (a)) ;
 	}
 
-	String<STRA> stra_from_stru (CREF<String<STRU16>> a) const override {
+	String<STRA> stra_from_stru (CR<String<STRU16>> a) const override {
 		return stra_from_strw (strw_from_stru (a)) ;
 	}
 
-	String<STRA> stra_from_stru (CREF<String<STRU32>> a) const override {
+	String<STRA> stra_from_stru (CR<String<STRU32>> a) const override {
 		return stra_from_strw (strw_from_stru (a)) ;
 	}
 
-	String<STRW> strw_from_stru (CREF<String<STRU8>> a) const override {
+	String<STRW> strw_from_stru (CR<String<STRU8>> a) const override {
 		if (IS_SAME<STRUW ,STRU8>::expr)
 			return strw_from_struw (string_from[TYPE<STRUW>::expr] (move (a))) ;
 		if (IS_SAME<STRUW ,STRU16>::expr)
@@ -714,7 +714,7 @@ public:
 		return String<STRW> () ;
 	}
 
-	String<STRW> strw_from_stru (CREF<String<STRU16>> a) const override {
+	String<STRW> strw_from_stru (CR<String<STRU16>> a) const override {
 		if (IS_SAME<STRUW ,STRU8>::expr)
 			return strw_from_struw (string_from[TYPE<STRUW>::expr] (stru8_from_stru16 (a))) ;
 		if (IS_SAME<STRUW ,STRU16>::expr)
@@ -725,7 +725,7 @@ public:
 		return String<STRW> () ;
 	}
 
-	String<STRW> strw_from_stru (CREF<String<STRU32>> a) const override {
+	String<STRW> strw_from_stru (CR<String<STRU32>> a) const override {
 		if (IS_SAME<STRUW ,STRU8>::expr)
 			return strw_from_struw (string_from[TYPE<STRUW>::expr] (stru8_from_stru32 (a))) ;
 		if (IS_SAME<STRUW ,STRU16>::expr)
@@ -736,7 +736,7 @@ public:
 		return String<STRW> () ;
 	}
 
-	String<STR> strs_from_stru (CREF<String<STRU8>> a) const override {
+	String<STR> strs_from_stru (CR<String<STRU8>> a) const override {
 		if (IS_SAME<STR ,STRA>::expr)
 			return string_from[TYPE<STR>::expr] (stra_from_stru (a)) ;
 		if (IS_SAME<STR ,STRW>::expr)
@@ -745,7 +745,7 @@ public:
 		return String<STR> () ;
 	}
 
-	String<STR> strs_from_stru (CREF<String<STRU16>> a) const override {
+	String<STR> strs_from_stru (CR<String<STRU16>> a) const override {
 		if (IS_SAME<STR ,STRA>::expr)
 			return string_from[TYPE<STR>::expr] (stra_from_stru (a)) ;
 		if (IS_SAME<STR ,STRW>::expr)
@@ -754,7 +754,7 @@ public:
 		return String<STR> () ;
 	}
 
-	String<STR> strs_from_stru (CREF<String<STRU32>> a) const override {
+	String<STR> strs_from_stru (CR<String<STRU32>> a) const override {
 		if (IS_SAME<STR ,STRA>::expr)
 			return string_from[TYPE<STR>::expr] (stra_from_stru (a)) ;
 		if (IS_SAME<STR ,STRW>::expr)
@@ -763,7 +763,7 @@ public:
 		return String<STR> () ;
 	}
 
-	String<STRU8> stru8_from_struw (CREF<String<STRUW>> a) const override {
+	String<STRU8> stru8_from_struw (CR<String<STRUW>> a) const override {
 		if (IS_SAME<STRUW ,STRU8>::expr)
 			return string_from[TYPE<STRU8>::expr] (a) ;
 		if (IS_SAME<STRUW ,STRU16>::expr)
@@ -774,7 +774,7 @@ public:
 		return String<STRU8> () ;
 	}
 
-	String<STRU16> stru16_from_struw (CREF<String<STRUW>> a) const override {
+	String<STRU16> stru16_from_struw (CR<String<STRUW>> a) const override {
 		if (IS_SAME<STRUW ,STRU8>::expr)
 			return stru16_from_stru8 (string_from[TYPE<STRU8>::expr] (a)) ;
 		if (IS_SAME<STRUW ,STRU16>::expr)
@@ -785,7 +785,7 @@ public:
 		return String<STRU16> () ;
 	}
 
-	String<STRU32> stru32_from_struw (CREF<String<STRUW>> a) const override {
+	String<STRU32> stru32_from_struw (CR<String<STRUW>> a) const override {
 		if (IS_SAME<STRUW ,STRU8>::expr)
 			return stru32_from_stru8 (string_from[TYPE<STRU8>::expr] (a)) ;
 		if (IS_SAME<STRUW ,STRU16>::expr)
@@ -796,32 +796,32 @@ public:
 		return String<STRU32> () ;
 	}
 
-	String<STRU8> stru8_from_strs (CREF<String<STRA>> a) const override {
+	String<STRU8> stru8_from_strs (CR<String<STRA>> a) const override {
 		return stru8_from_struw (struw_from_strw (strw_from_stra (a))) ;
 	}
 
-	String<STRU8> stru8_from_strs (CREF<String<STRW>> a) const override {
+	String<STRU8> stru8_from_strs (CR<String<STRW>> a) const override {
 		return stru8_from_struw (struw_from_strw (move (a))) ;
 	}
 
-	String<STRU16> stru16_from_strs (CREF<String<STRA>> a) const override {
+	String<STRU16> stru16_from_strs (CR<String<STRA>> a) const override {
 		return stru16_from_struw (struw_from_strw (strw_from_stra (a))) ;
 	}
 
-	String<STRU16> stru16_from_strs (CREF<String<STRW>> a) const override {
+	String<STRU16> stru16_from_strs (CR<String<STRW>> a) const override {
 		return stru16_from_struw (struw_from_strw (move (a))) ;
 	}
 
-	String<STRU32> stru32_from_strs (CREF<String<STRA>> a) const override {
+	String<STRU32> stru32_from_strs (CR<String<STRA>> a) const override {
 		return stru32_from_struw (struw_from_strw (strw_from_stra (a))) ;
 	}
 
-	String<STRU32> stru32_from_strs (CREF<String<STRW>> a) const override {
+	String<STRU32> stru32_from_strs (CR<String<STRW>> a) const override {
 		return stru32_from_struw (struw_from_strw (move (a))) ;
 	}
 } ;
 
-exports CREF<OfThis<UniqueRef<StringProcLayout>>> StringProcHolder::expr_m () {
+exports CR<OfThis<UniqueRef<StringProcLayout>>> StringProcHolder::expr_m () {
 	return memorize ([&] () {
 		OfThis<UniqueRef<StringProcLayout>> ret ;
 		ret.mThis = UniqueRef<StringProcLayout>::make () ;
@@ -830,11 +830,11 @@ exports CREF<OfThis<UniqueRef<StringProcLayout>>> StringProcHolder::expr_m () {
 	}) ;
 }
 
-exports VFat<StringProcHolder> StringProcHolder::hold (VREF<StringProcLayout> that) {
+exports VFat<StringProcHolder> StringProcHolder::hold (VR<StringProcLayout> that) {
 	return VFat<StringProcHolder> (StringProcImplHolder () ,that) ;
 }
 
-exports CFat<StringProcHolder> StringProcHolder::hold (CREF<StringProcLayout> that) {
+exports CFat<StringProcHolder> StringProcHolder::hold (CR<StringProcLayout> that) {
 	return CFat<StringProcHolder> (StringProcImplHolder () ,that) ;
 }
 
@@ -857,7 +857,7 @@ protected:
 public:
 	implicit RegularReader () = default ;
 
-	explicit RegularReader (RREF<Ref<RefBuffer<BYTE>>> stream ,CREF<LENGTH> ring_size) {
+	explicit RegularReader (RR<Ref<RefBuffer<BYTE>>> stream ,CR<LENGTH> ring_size) {
 		mStream = move (stream) ;
 		mBackup.mRead = 0 ;
 		mBackup.mWrite = mStream->size () ;
@@ -876,18 +876,18 @@ public:
 		}
 	}
 
-	void get (CREF<INDEX> index ,VREF<STRU32> item) const {
+	void get (CR<INDEX> index ,VR<STRU32> item) const {
 		item = mDeque[index] ;
 	}
 
-	forceinline STRU32 operator[] (CREF<INDEX> index) const {
+	forceinline STRU32 operator[] (CR<INDEX> index) const {
 		STRU32 ret ;
 		get (index ,ret) ;
 		return move (ret) ;
 	}
 
 	template <class ARG1>
-	void read (XREF<ARG1> item) {
+	void read (XR<ARG1> item) {
 		mTextReader->reset (mBackup) ;
 		mTextReader.ref >> item ;
 		mBackup = mTextReader->backup () ;
@@ -901,7 +901,7 @@ public:
 	}
 
 	template <class ARG1>
-	forceinline VREF<RegularReader> operator>> (XREF<ARG1> item) {
+	forceinline VR<RegularReader> operator>> (XR<ARG1> item) {
 		read (item) ;
 		return thiz ;
 	}
@@ -922,33 +922,33 @@ public:
 	}
 } ;
 
-struct PinnedCounter {
+struct ScopeCounterLayout {
 	LENGTH mCounter ;
+
+public:
+	implicit ScopeCounterLayout () noexcept {
+		mCounter = 0 ;
+	}
 } ;
 
-class ScopeCounter implement Proxy {
+class ScopeCounter implement ScopeCounterLayout {
 private:
 	using SCOPECOUNTER_MAX_DEPTH = ENUM<256> ;
 
 protected:
-	PinnedCounter mThat ;
+	using ScopeCounterLayout::mCounter ;
 
 public:
-	static CREF<ScopeCounter> from (CREF<PinnedCounter> that) {
-		return Pointer::from (that) ;
+	implicit ScopeCounter () = default ;
+
+	void enter () {
+		mCounter++ ;
+		assume (mCounter < SCOPECOUNTER_MAX_DEPTH::expr) ;
 	}
 
-	static CREF<ScopeCounter> from (RREF<PinnedCounter> that) = delete ;
-
-	void enter () const {
-		const auto r1x = Pin<PinnedCounter> (mThat) ;
-		r1x->mCounter++ ;
-		assume (r1x->mCounter < SCOPECOUNTER_MAX_DEPTH::expr) ;
-	}
-
-	void leave () const {
-		const auto r1x = Pin<PinnedCounter> (mThat) ;
-		assume (r1x->mCounter >= ZERO) ;
+	void leave () {
+		mCounter-- ;
+		assume (mCounter >= ZERO) ;
 	}
 } ;
 
@@ -980,7 +980,7 @@ struct XmlParserTree {
 
 struct MakeXmlParserLayout {
 	RegularReader mReader ;
-	PinnedCounter mPinnedCounter ;
+	ScopeCounter mScopeCounter ;
 	List<XmlParserNode> mList ;
 	SortedMap<INDEX> mArrayMap ;
 	List<INDEX> mArrayMemberList ;
@@ -993,7 +993,7 @@ struct MakeXmlParserLayout {
 class MakeXmlParser implement MakeXmlParserLayout {
 protected:
 	using MakeXmlParserLayout::mReader ;
-	using MakeXmlParserLayout::mPinnedCounter ;
+	using MakeXmlParserLayout::mScopeCounter ;
 	using MakeXmlParserLayout::mList ;
 	using MakeXmlParserLayout::mArrayMap ;
 	using MakeXmlParserLayout::mObjectMap ;
@@ -1003,10 +1003,9 @@ protected:
 public:
 	implicit MakeXmlParser () = default ;
 
-	explicit MakeXmlParser (RREF<Ref<RefBuffer<BYTE>>> stream) {
+	explicit MakeXmlParser (RR<Ref<RefBuffer<BYTE>>> stream) {
 		mReader = RegularReader (move (stream) ,5) ;
 		mReader.use_text () ;
-		mPinnedCounter.mCounter = 0 ;
 		mArrayMap = SortedMap<INDEX> (ALLOCATOR_MIN_SIZE::expr) ;
 		mObjectMap = SortedMap<String<STRU8>> (ALLOCATOR_MIN_SIZE::expr) ;
 	}
@@ -1058,16 +1057,16 @@ public:
 
 	//@info: $1->${keyword}
 	void read_shift_e1 () {
-		mReader >> KeywordText::from (mLastString) ;
+		mReader >> ReadKeyword (mLastString) ;
 	}
 
 	//@info: $2->"${escape}"
 	void read_shift_e2 () {
-		mReader >> EscapeText::from (mLastString) ;
+		mReader >> ReadEscape (mLastString) ;
 	}
 
 	//@info: $3->$1 = $2
-	void read_shift_e3 (CREF<INDEX> curr) {
+	void read_shift_e3 (CR<INDEX> curr) {
 		INDEX ix = mList.insert () ;
 		read_shift_e1 () ;
 		mList[ix].mName = move (mLastString) ;
@@ -1085,7 +1084,7 @@ public:
 	}
 
 	//@info: $4->${eps}|$3 $4
-	void read_shift_e4 (CREF<INDEX> curr) {
+	void read_shift_e4 (CR<INDEX> curr) {
 		INDEX ix = NONE ;
 		INDEX iy = NONE ;
 		while (TRUE) {
@@ -1110,8 +1109,8 @@ public:
 	}
 
 	//@info: $5-><$1 $4 />|<$1 $4 > $8 </$1 >
-	void read_shift_e5 (CREF<INDEX> curr) {
-		Scope<ScopeCounter> anonymous (ScopeCounter::from (mPinnedCounter)) ;
+	void read_shift_e5 (CR<INDEX> curr) {
+		Scope<ScopeCounter> anonymous (mScopeCounter) ;
 		mReader >> slice ("<") ;
 		INDEX ix = mList.insert () ;
 		read_shift_e1 () ;
@@ -1163,7 +1162,7 @@ public:
 	}
 
 	//@info: $7->${[^<>]+}
-	void read_shift_e7 (CREF<INDEX> curr) {
+	void read_shift_e7 (CR<INDEX> curr) {
 		auto rax = String<STRU8>::make () ;
 		INDEX ix = 0 ;
 		while (TRUE) {
@@ -1194,8 +1193,8 @@ public:
 	}
 
 	//@info: $8->$5 $8|$6 $8|$7 $8
-	void read_shift_e8 (CREF<INDEX> curr ,CREF<INDEX> first) {
-		Scope<ScopeCounter> anonymous (ScopeCounter::from (mPinnedCounter)) ;
+	void read_shift_e8 (CR<INDEX> curr ,CR<INDEX> first) {
+		Scope<ScopeCounter> anonymous (mScopeCounter) ;
 		INDEX ix = first ;
 		INDEX iy = first ;
 		INDEX kx = mList[curr].mMember ;
@@ -1254,7 +1253,7 @@ public:
 		mLastIndex = ix ;
 	}
 
-	VREF<INDEX> brother_prev (VREF<INDEX> prev ,CREF<INDEX> curr) leftvalue {
+	VR<INDEX> brother_prev (VR<INDEX> prev ,CR<INDEX> curr) leftvalue {
 		if (prev == NONE)
 			return prev ;
 		return mList[curr].mBrother ;
@@ -1324,7 +1323,7 @@ public:
 
 class XmlParserImplHolder final implement Fat<XmlParserHolder ,XmlParserLayout> {
 public:
-	void initialize (CREF<RefBuffer<BYTE>> stream) override {
+	void initialize (CR<RefBuffer<BYTE>> stream) override {
 		auto rax = MakeXmlParser (Ref<RefBuffer<BYTE>>::reference (stream)) ;
 		rax.generate () ;
 		self.mThis = UniqueRef<XmlParserTree>::make (rax.poll ()) ;
@@ -1383,7 +1382,7 @@ public:
 		return move (ret) ;
 	}
 
-	XmlParserLayout child (CREF<INDEX> index) const override {
+	XmlParserLayout child (CR<INDEX> index) const override {
 		XmlParserLayout ret ;
 		if ifdo (TRUE) {
 			if (!exist ())
@@ -1394,7 +1393,7 @@ public:
 		return move (ret) ;
 	}
 
-	XmlParserLayout child (CREF<Slice> name) const override {
+	XmlParserLayout child (CR<Slice> name) const override {
 		XmlParserLayout ret ;
 		if ifdo (TRUE) {
 			if (!exist ())
@@ -1405,7 +1404,7 @@ public:
 		return move (ret) ;
 	}
 
-	XmlParserLayout child (CREF<String<STRU8>> name) const override {
+	XmlParserLayout child (CR<String<STRU8>> name) const override {
 		XmlParserLayout ret ;
 		if ifdo (TRUE) {
 			if (!exist ())
@@ -1431,7 +1430,7 @@ public:
 		return move (ret) ;
 	}
 
-	Array<XmlParserLayout> list (CREF<LENGTH> size_) const override {
+	Array<XmlParserLayout> list (CR<LENGTH> size_) const override {
 		Array<XmlParserLayout> ret = Array<XmlParserLayout> (size_) ;
 		if ifdo (TRUE) {
 			if (!exist ())
@@ -1446,7 +1445,7 @@ public:
 		return move (ret) ;
 	}
 
-	BOOL equal (CREF<XmlParserLayout> that) const override {
+	BOOL equal (CR<XmlParserLayout> that) const override {
 		const auto r1x = inline_compr (self.mThis.exist () ,that.mThis.exist ()) ;
 		if (r1x != ZERO)
 			return FALSE ;
@@ -1459,163 +1458,163 @@ public:
 		return FALSE ;
 	}
 
-	CREF<String<STRU8>> name () const leftvalue override {
+	CR<String<STRU8>> name () const leftvalue override {
 		assert (exist ()) ;
 		return self.mThis->mList[self.mIndex].mName ;
 	}
 
-	BOOL parse (CREF<BOOL> def) const override {
+	BOOL parse (CR<BOOL> def) const override {
 		if (!exist ())
 			return def ;
 		try {
 			return StringParse<BOOL>::make (self.mThis->mList[self.mIndex].mValue) ;
-		} catch (CREF<Exception> e) {
+		} catch (CR<Exception> e) {
 			noop (e) ;
 		}
 		return def ;
 	}
 
-	VAL32 parse (CREF<VAL32> def) const override {
+	VAL32 parse (CR<VAL32> def) const override {
 		if (!exist ())
 			return def ;
 		try {
 			return StringParse<VAL32>::make (self.mThis->mList[self.mIndex].mValue) ;
-		} catch (CREF<Exception> e) {
+		} catch (CR<Exception> e) {
 			noop (e) ;
 		}
 		return def ;
 	}
 
-	VAL64 parse (CREF<VAL64> def) const override {
+	VAL64 parse (CR<VAL64> def) const override {
 		if (!exist ())
 			return def ;
 		try {
 			return StringParse<VAL64>::make (self.mThis->mList[self.mIndex].mValue) ;
-		} catch (CREF<Exception> e) {
+		} catch (CR<Exception> e) {
 			noop (e) ;
 		}
 		return def ;
 	}
 
-	FLT32 parse (CREF<FLT32> def) const override {
+	FLT32 parse (CR<FLT32> def) const override {
 		if (!exist ())
 			return def ;
 		try {
 			return StringParse<FLT32>::make (self.mThis->mList[self.mIndex].mValue) ;
-		} catch (CREF<Exception> e) {
+		} catch (CR<Exception> e) {
 			noop (e) ;
 		}
 		return def ;
 	}
 
-	FLT64 parse (CREF<FLT64> def) const override {
+	FLT64 parse (CR<FLT64> def) const override {
 		if (!exist ())
 			return def ;
 		try {
 			return StringParse<FLT64>::make (self.mThis->mList[self.mIndex].mValue) ;
-		} catch (CREF<Exception> e) {
+		} catch (CR<Exception> e) {
 			noop (e) ;
 		}
 		return def ;
 	}
 
-	String<STRA> parse (CREF<String<STRA>> def) const override {
+	String<STRA> parse (CR<String<STRA>> def) const override {
 		if (!exist ())
 			return def ;
 		try {
 			return StringProc::stra_from_stru (self.mThis->mList[self.mIndex].mValue) ;
-		} catch (CREF<Exception> e) {
+		} catch (CR<Exception> e) {
 			noop (e) ;
 		}
 		return def ;
 	}
 
-	String<STRW> parse (CREF<String<STRW>> def) const override {
+	String<STRW> parse (CR<String<STRW>> def) const override {
 		if (!exist ())
 			return def ;
 		try {
 			return StringProc::strw_from_stru (self.mThis->mList[self.mIndex].mValue) ;
-		} catch (CREF<Exception> e) {
+		} catch (CR<Exception> e) {
 			noop (e) ;
 		}
 		return def ;
 	}
 
-	String<STRU8> parse (CREF<String<STRU8>> def) const override {
+	String<STRU8> parse (CR<String<STRU8>> def) const override {
 		if (!exist ())
 			return def ;
 		try {
 			return self.mThis->mList[self.mIndex].mValue ;
-		} catch (CREF<Exception> e) {
+		} catch (CR<Exception> e) {
 			noop (e) ;
 		}
 		return def ;
 	}
 
-	String<STRU16> parse (CREF<String<STRU16>> def) const override {
+	String<STRU16> parse (CR<String<STRU16>> def) const override {
 		if (!exist ())
 			return def ;
 		try {
 			return StringProc::stru16_from_stru8 (self.mThis->mList[self.mIndex].mValue) ;
-		} catch (CREF<Exception> e) {
+		} catch (CR<Exception> e) {
 			noop (e) ;
 		}
 		return def ;
 	}
 
-	String<STRU32> parse (CREF<String<STRU32>> def) const override {
+	String<STRU32> parse (CR<String<STRU32>> def) const override {
 		if (!exist ())
 			return def ;
 		try {
 			return StringProc::stru32_from_stru8 (self.mThis->mList[self.mIndex].mValue) ;
-		} catch (CREF<Exception> e) {
+		} catch (CR<Exception> e) {
 			noop (e) ;
 		}
 		return def ;
 	}
 
-	Array<BOOL> parse (CREF<BOOL> def ,CREF<LENGTH> size_) const override {
+	Array<BOOL> parse (CR<BOOL> def ,CR<LENGTH> size_) const override {
 		return parse_impl (def ,size_) ;
 	}
 
-	Array<VAL32> parse (CREF<VAL32> def ,CREF<LENGTH> size_) const override {
+	Array<VAL32> parse (CR<VAL32> def ,CR<LENGTH> size_) const override {
 		return parse_impl (def ,size_) ;
 	}
 
-	Array<VAL64> parse (CREF<VAL64> def ,CREF<LENGTH> size_) const override {
+	Array<VAL64> parse (CR<VAL64> def ,CR<LENGTH> size_) const override {
 		return parse_impl (def ,size_) ;
 	}
 
-	Array<FLT32> parse (CREF<FLT32> def ,CREF<LENGTH> size_) const override {
+	Array<FLT32> parse (CR<FLT32> def ,CR<LENGTH> size_) const override {
 		return parse_impl (def ,size_) ;
 	}
 
-	Array<FLT64> parse (CREF<FLT64> def ,CREF<LENGTH> size_) const override {
+	Array<FLT64> parse (CR<FLT64> def ,CR<LENGTH> size_) const override {
 		return parse_impl (def ,size_) ;
 	}
 
-	Array<String<STRA>> parse (CREF<String<STRA>> def ,CREF<LENGTH> size_) const override {
+	Array<String<STRA>> parse (CR<String<STRA>> def ,CR<LENGTH> size_) const override {
 		return parse_impl (def ,size_) ;
 	}
 
-	Array<String<STRW>> parse (CREF<String<STRW>> def ,CREF<LENGTH> size_) const override {
+	Array<String<STRW>> parse (CR<String<STRW>> def ,CR<LENGTH> size_) const override {
 		return parse_impl (def ,size_) ;
 	}
 
-	Array<String<STRU8>> parse (CREF<String<STRU8>> def ,CREF<LENGTH> size_) const override {
+	Array<String<STRU8>> parse (CR<String<STRU8>> def ,CR<LENGTH> size_) const override {
 		return parse_impl (def ,size_) ;
 	}
 
-	Array<String<STRU16>> parse (CREF<String<STRU16>> def ,CREF<LENGTH> size_) const override {
+	Array<String<STRU16>> parse (CR<String<STRU16>> def ,CR<LENGTH> size_) const override {
 		return parse_impl (def ,size_) ;
 	}
 
-	Array<String<STRU32>> parse (CREF<String<STRU32>> def ,CREF<LENGTH> size_) const override {
+	Array<String<STRU32>> parse (CR<String<STRU32>> def ,CR<LENGTH> size_) const override {
 		return parse_impl (def ,size_) ;
 	}
 
 	template <class ARG1>
-	forceinline Array<ARG1> parse_impl (CREF<ARG1> def ,CREF<LENGTH> size_) const {
+	forceinline Array<ARG1> parse_impl (CR<ARG1> def ,CR<LENGTH> size_) const {
 		const auto r1x = list () ;
 		assume (r1x.size () == size_) ;
 		Array<ARG1> ret = Array<ARG1> (r1x.size ()) ;
@@ -1627,11 +1626,11 @@ public:
 	}
 } ;
 
-exports VFat<XmlParserHolder> XmlParserHolder::hold (VREF<XmlParserLayout> that) {
+exports VFat<XmlParserHolder> XmlParserHolder::hold (VR<XmlParserLayout> that) {
 	return VFat<XmlParserHolder> (XmlParserImplHolder () ,that) ;
 }
 
-exports CFat<XmlParserHolder> XmlParserHolder::hold (CREF<XmlParserLayout> that) {
+exports CFat<XmlParserHolder> XmlParserHolder::hold (CR<XmlParserLayout> that) {
 	return CFat<XmlParserHolder> (XmlParserImplHolder () ,that) ;
 }
 
@@ -1662,7 +1661,7 @@ struct JsonParserTree {
 
 struct MakeJsonParserLayout {
 	RegularReader mReader ;
-	PinnedCounter mPinnedCounter ;
+	ScopeCounter mScopeCounter ;
 	List<JsonParserNode> mList ;
 	SortedMap<INDEX> mArrayMap ;
 	SortedMap<String<STRU8>> mObjectMap ;
@@ -1673,7 +1672,7 @@ struct MakeJsonParserLayout {
 class MakeJsonParser implement MakeJsonParserLayout {
 protected:
 	using MakeJsonParserLayout::mReader ;
-	using MakeJsonParserLayout::mPinnedCounter ;
+	using MakeJsonParserLayout::mScopeCounter ;
 	using MakeJsonParserLayout::mList ;
 	using MakeJsonParserLayout::mArrayMap ;
 	using MakeJsonParserLayout::mObjectMap ;
@@ -1683,10 +1682,9 @@ protected:
 public:
 	implicit MakeJsonParser () = default ;
 
-	explicit MakeJsonParser (RREF<Ref<RefBuffer<BYTE>>> stream) {
+	explicit MakeJsonParser (RR<Ref<RefBuffer<BYTE>>> stream) {
 		mReader = RegularReader (move (stream) ,5) ;
 		mReader.use_text () ;
-		mPinnedCounter.mCounter = 0 ;
 		mArrayMap = SortedMap<INDEX> (ALLOCATOR_MIN_SIZE::expr) ;
 		mObjectMap = SortedMap<String<STRU8>> (ALLOCATOR_MIN_SIZE::expr) ;
 	}
@@ -1742,7 +1740,7 @@ public:
 
 	//@info: $1->${scalar}
 	void read_shift_e1 () {
-		mReader >> ScalarText::from (mLastString) ;
+		mReader >> ReadScalar (mLastString) ;
 	}
 
 	//@info: $2->true|false|null
@@ -1773,12 +1771,12 @@ public:
 
 	//@info: $3->"${escape}"
 	void read_shift_e3 () {
-		mReader >> EscapeText::from (mLastString) ;
+		mReader >> ReadEscape (mLastString) ;
 	}
 
 	//@info: $4->$1|$2|$3|$6|$9
-	void read_shift_e4 (CREF<INDEX> curr) {
-		Scope<ScopeCounter> anonymous (ScopeCounter::from (mPinnedCounter)) ;
+	void read_shift_e4 (CR<INDEX> curr) {
+		Scope<ScopeCounter> anonymous (mScopeCounter) ;
 		INDEX ix = NONE ;
 		auto act = TRUE ;
 		if ifdo (act) {
@@ -1857,7 +1855,7 @@ public:
 	}
 
 	//@info: $5->$4|$4 , $5
-	void read_shift_e5 (CREF<INDEX> curr) {
+	void read_shift_e5 (CR<INDEX> curr) {
 		INDEX ix = NONE ;
 		INDEX iy = NONE ;
 		while (TRUE) {
@@ -1876,8 +1874,8 @@ public:
 	}
 
 	//@info: $6->[ ]|[ $5 ]
-	void read_shift_e6 (CREF<INDEX> curr) {
-		Scope<ScopeCounter> anonymous (ScopeCounter::from (mPinnedCounter)) ;
+	void read_shift_e6 (CR<INDEX> curr) {
+		Scope<ScopeCounter> anonymous (mScopeCounter) ;
 		mReader >> slice ("[") ;
 		INDEX ix = mList.insert () ;
 		mList[ix].mName = move (mLastString) ;
@@ -1899,7 +1897,7 @@ public:
 	}
 
 	//@info: $7->$3 : $4
-	void read_shift_e7 (CREF<INDEX> curr) {
+	void read_shift_e7 (CR<INDEX> curr) {
 		read_shift_e3 () ;
 		mReader >> GAP ;
 		mReader >> slice (":") ;
@@ -1908,7 +1906,7 @@ public:
 	}
 
 	//@info: $8->$7|$7 , $8
-	void read_shift_e8 (CREF<INDEX> curr) {
+	void read_shift_e8 (CR<INDEX> curr) {
 		INDEX ix = NONE ;
 		INDEX iy = NONE ;
 		while (TRUE) {
@@ -1927,15 +1925,15 @@ public:
 		mLastIndex = ix ;
 	}
 
-	VREF<INDEX> brother_prev (VREF<INDEX> prev ,CREF<INDEX> curr) leftvalue {
+	VR<INDEX> brother_prev (VR<INDEX> prev ,CR<INDEX> curr) leftvalue {
 		if (prev == NONE)
 			return prev ;
 		return mList[curr].mBrother ;
 	}
 
 	//@info: $9->{ }|{ $8 }
-	void read_shift_e9 (CREF<INDEX> curr) {
-		Scope<ScopeCounter> anonymous (ScopeCounter::from (mPinnedCounter)) ;
+	void read_shift_e9 (CR<INDEX> curr) {
+		Scope<ScopeCounter> anonymous (mScopeCounter) ;
 		mReader >> slice ("{") ;
 		INDEX ix = mList.insert () ;
 		mList[ix].mName = move (mLastString) ;
@@ -1982,7 +1980,7 @@ public:
 
 class JsonParserImplHolder final implement Fat<JsonParserHolder ,JsonParserLayout> {
 public:
-	void initialize (CREF<RefBuffer<BYTE>> stream) override {
+	void initialize (CR<RefBuffer<BYTE>> stream) override {
 		auto rax = MakeJsonParser (Ref<RefBuffer<BYTE>>::reference (stream)) ;
 		rax.generate () ;
 		self.mThis = UniqueRef<JsonParserTree>::make (rax.poll ()) ;
@@ -2041,7 +2039,7 @@ public:
 		return move (ret) ;
 	}
 
-	JsonParserLayout child (CREF<INDEX> index) const override {
+	JsonParserLayout child (CR<INDEX> index) const override {
 		JsonParserLayout ret ;
 		if ifdo (TRUE) {
 			if (!exist ())
@@ -2052,7 +2050,7 @@ public:
 		return move (ret) ;
 	}
 
-	JsonParserLayout child (CREF<Slice> name) const override {
+	JsonParserLayout child (CR<Slice> name) const override {
 		JsonParserLayout ret ;
 		if ifdo (TRUE) {
 			if (!exist ())
@@ -2063,7 +2061,7 @@ public:
 		return move (ret) ;
 	}
 
-	JsonParserLayout child (CREF<String<STRU8>> name) const override {
+	JsonParserLayout child (CR<String<STRU8>> name) const override {
 		JsonParserLayout ret ;
 		if ifdo (TRUE) {
 			if (!exist ())
@@ -2089,7 +2087,7 @@ public:
 		return move (ret) ;
 	}
 
-	Array<JsonParserLayout> list (CREF<LENGTH> size_) const override {
+	Array<JsonParserLayout> list (CR<LENGTH> size_) const override {
 		Array<JsonParserLayout> ret = Array<JsonParserLayout> (size_) ;
 		if ifdo (TRUE) {
 			if (!exist ())
@@ -2104,7 +2102,7 @@ public:
 		return move (ret) ;
 	}
 
-	BOOL equal (CREF<JsonParserLayout> that) const override {
+	BOOL equal (CR<JsonParserLayout> that) const override {
 		const auto r1x = inline_compr (self.mThis.exist () ,that.mThis.exist ()) ;
 		if (r1x != ZERO)
 			return FALSE ;
@@ -2117,163 +2115,163 @@ public:
 		return FALSE ;
 	}
 
-	CREF<String<STRU8>> name () const leftvalue override {
+	CR<String<STRU8>> name () const leftvalue override {
 		assert (exist ()) ;
 		return self.mThis->mList[self.mIndex].mName ;
 	}
 
-	BOOL parse (CREF<BOOL> def) const override {
+	BOOL parse (CR<BOOL> def) const override {
 		if (!exist ())
 			return def ;
 		try {
 			return StringParse<BOOL>::make (self.mThis->mList[self.mIndex].mValue) ;
-		} catch (CREF<Exception> e) {
+		} catch (CR<Exception> e) {
 			noop (e) ;
 		}
 		return def ;
 	}
 
-	VAL32 parse (CREF<VAL32> def) const override {
+	VAL32 parse (CR<VAL32> def) const override {
 		if (!exist ())
 			return def ;
 		try {
 			return StringParse<VAL32>::make (self.mThis->mList[self.mIndex].mValue) ;
-		} catch (CREF<Exception> e) {
+		} catch (CR<Exception> e) {
 			noop (e) ;
 		}
 		return def ;
 	}
 
-	VAL64 parse (CREF<VAL64> def) const override {
+	VAL64 parse (CR<VAL64> def) const override {
 		if (!exist ())
 			return def ;
 		try {
 			return StringParse<VAL64>::make (self.mThis->mList[self.mIndex].mValue) ;
-		} catch (CREF<Exception> e) {
+		} catch (CR<Exception> e) {
 			noop (e) ;
 		}
 		return def ;
 	}
 
-	FLT32 parse (CREF<FLT32> def) const override {
+	FLT32 parse (CR<FLT32> def) const override {
 		if (!exist ())
 			return def ;
 		try {
 			return StringParse<FLT32>::make (self.mThis->mList[self.mIndex].mValue) ;
-		} catch (CREF<Exception> e) {
+		} catch (CR<Exception> e) {
 			noop (e) ;
 		}
 		return def ;
 	}
 
-	FLT64 parse (CREF<FLT64> def) const override {
+	FLT64 parse (CR<FLT64> def) const override {
 		if (!exist ())
 			return def ;
 		try {
 			return StringParse<FLT64>::make (self.mThis->mList[self.mIndex].mValue) ;
-		} catch (CREF<Exception> e) {
+		} catch (CR<Exception> e) {
 			noop (e) ;
 		}
 		return def ;
 	}
 
-	String<STRA> parse (CREF<String<STRA>> def) const override {
+	String<STRA> parse (CR<String<STRA>> def) const override {
 		if (!exist ())
 			return def ;
 		try {
 			return StringProc::stra_from_stru (self.mThis->mList[self.mIndex].mValue) ;
-		} catch (CREF<Exception> e) {
+		} catch (CR<Exception> e) {
 			noop (e) ;
 		}
 		return def ;
 	}
 
-	String<STRW> parse (CREF<String<STRW>> def) const override {
+	String<STRW> parse (CR<String<STRW>> def) const override {
 		if (!exist ())
 			return def ;
 		try {
 			return StringProc::strw_from_stru (self.mThis->mList[self.mIndex].mValue) ;
-		} catch (CREF<Exception> e) {
+		} catch (CR<Exception> e) {
 			noop (e) ;
 		}
 		return def ;
 	}
 
-	String<STRU8> parse (CREF<String<STRU8>> def) const override {
+	String<STRU8> parse (CR<String<STRU8>> def) const override {
 		if (!exist ())
 			return def ;
 		try {
 			return self.mThis->mList[self.mIndex].mValue ;
-		} catch (CREF<Exception> e) {
+		} catch (CR<Exception> e) {
 			noop (e) ;
 		}
 		return def ;
 	}
 
-	String<STRU16> parse (CREF<String<STRU16>> def) const override {
+	String<STRU16> parse (CR<String<STRU16>> def) const override {
 		if (!exist ())
 			return def ;
 		try {
 			return StringProc::stru16_from_stru8 (self.mThis->mList[self.mIndex].mValue) ;
-		} catch (CREF<Exception> e) {
+		} catch (CR<Exception> e) {
 			noop (e) ;
 		}
 		return def ;
 	}
 
-	String<STRU32> parse (CREF<String<STRU32>> def) const override {
+	String<STRU32> parse (CR<String<STRU32>> def) const override {
 		if (!exist ())
 			return def ;
 		try {
 			return StringProc::stru32_from_stru8 (self.mThis->mList[self.mIndex].mValue) ;
-		} catch (CREF<Exception> e) {
+		} catch (CR<Exception> e) {
 			noop (e) ;
 		}
 		return def ;
 	}
 
-	Array<BOOL> parse (CREF<BOOL> def ,CREF<LENGTH> size_) const override {
+	Array<BOOL> parse (CR<BOOL> def ,CR<LENGTH> size_) const override {
 		return parse_impl (def ,size_) ;
 	}
 
-	Array<VAL32> parse (CREF<VAL32> def ,CREF<LENGTH> size_) const override {
+	Array<VAL32> parse (CR<VAL32> def ,CR<LENGTH> size_) const override {
 		return parse_impl (def ,size_) ;
 	}
 
-	Array<VAL64> parse (CREF<VAL64> def ,CREF<LENGTH> size_) const override {
+	Array<VAL64> parse (CR<VAL64> def ,CR<LENGTH> size_) const override {
 		return parse_impl (def ,size_) ;
 	}
 
-	Array<FLT32> parse (CREF<FLT32> def ,CREF<LENGTH> size_) const override {
+	Array<FLT32> parse (CR<FLT32> def ,CR<LENGTH> size_) const override {
 		return parse_impl (def ,size_) ;
 	}
 
-	Array<FLT64> parse (CREF<FLT64> def ,CREF<LENGTH> size_) const override {
+	Array<FLT64> parse (CR<FLT64> def ,CR<LENGTH> size_) const override {
 		return parse_impl (def ,size_) ;
 	}
 
-	Array<String<STRA>> parse (CREF<String<STRA>> def ,CREF<LENGTH> size_) const override {
+	Array<String<STRA>> parse (CR<String<STRA>> def ,CR<LENGTH> size_) const override {
 		return parse_impl (def ,size_) ;
 	}
 
-	Array<String<STRW>> parse (CREF<String<STRW>> def ,CREF<LENGTH> size_) const override {
+	Array<String<STRW>> parse (CR<String<STRW>> def ,CR<LENGTH> size_) const override {
 		return parse_impl (def ,size_) ;
 	}
 
-	Array<String<STRU8>> parse (CREF<String<STRU8>> def ,CREF<LENGTH> size_) const override {
+	Array<String<STRU8>> parse (CR<String<STRU8>> def ,CR<LENGTH> size_) const override {
 		return parse_impl (def ,size_) ;
 	}
 
-	Array<String<STRU16>> parse (CREF<String<STRU16>> def ,CREF<LENGTH> size_) const override {
+	Array<String<STRU16>> parse (CR<String<STRU16>> def ,CR<LENGTH> size_) const override {
 		return parse_impl (def ,size_) ;
 	}
 
-	Array<String<STRU32>> parse (CREF<String<STRU32>> def ,CREF<LENGTH> size_) const override {
+	Array<String<STRU32>> parse (CR<String<STRU32>> def ,CR<LENGTH> size_) const override {
 		return parse_impl (def ,size_) ;
 	}
 
 	template <class ARG1>
-	forceinline Array<ARG1> parse_impl (CREF<ARG1> def ,CREF<LENGTH> size_) const {
+	forceinline Array<ARG1> parse_impl (CR<ARG1> def ,CR<LENGTH> size_) const {
 		const auto r1x = list () ;
 		assume (r1x.size () == size_) ;
 		Array<ARG1> ret = Array<ARG1> (r1x.size ()) ;
@@ -2285,11 +2283,11 @@ public:
 	}
 } ;
 
-exports VFat<JsonParserHolder> JsonParserHolder::hold (VREF<JsonParserLayout> that) {
+exports VFat<JsonParserHolder> JsonParserHolder::hold (VR<JsonParserLayout> that) {
 	return VFat<JsonParserHolder> (JsonParserImplHolder () ,that) ;
 }
 
-exports CFat<JsonParserHolder> JsonParserHolder::hold (CREF<JsonParserLayout> that) {
+exports CFat<JsonParserHolder> JsonParserHolder::hold (CR<JsonParserLayout> that) {
 	return CFat<JsonParserHolder> (JsonParserImplHolder () ,that) ;
 }
 
@@ -2372,7 +2370,7 @@ protected:
 public:
 	implicit MakePlyParser () = default ;
 
-	explicit MakePlyParser (RREF<Ref<RefBuffer<BYTE>>> stream) {
+	explicit MakePlyParser (RR<Ref<RefBuffer<BYTE>>> stream) {
 		mStream = move (stream) ;
 		mPropertyType.add (slice ("bool") ,PlyParserDataType::Bool) ;
 		mPropertyType.add (slice ("int") ,PlyParserDataType::Val32) ;
@@ -2428,14 +2426,14 @@ public:
 		mTextReader >> GAP ;
 		mTextReader >> slice ("format") ;
 		mTextReader >> GAP ;
-		mTextReader >> KeywordText::from (mLastString) ;
+		mTextReader >> ReadKeyword (mLastString) ;
 		mFormat = move (mLastString) ;
-		mTextReader >> EndlineText::from (mLastString) ;
+		mTextReader >> ReadEndline (mLastString) ;
 		mTextReader >> GAP ;
 		INDEX ix = NONE ;
 		INDEX iy = NONE ;
 		while (TRUE) {
-			mTextReader >> KeywordText::from (mLastString) ;
+			mTextReader >> ReadKeyword (mLastString) ;
 			if (mLastString == slice ("end_header"))
 				break ;
 			mTextReader >> GAP ;
@@ -2444,10 +2442,10 @@ public:
 				if (mLastString != slice ("element"))
 					discard ;
 				ix = mElementList.insert () ;
-				mTextReader >> KeywordText::from (mLastString) ;
+				mTextReader >> ReadKeyword (mLastString) ;
 				mElementList[ix].mName = move (mLastString) ;
 				mTextReader >> GAP ;
-				mTextReader >> ScalarText::from (mLastString) ;
+				mTextReader >> ReadScalar (mLastString) ;
 				const auto r1x = StringParse<LENGTH>::make (mLastString) ;
 				assume (r1x >= 0) ;
 				mElementList[ix].mLineSize = r1x ;
@@ -2460,12 +2458,12 @@ public:
 				if (mLastString != slice ("property"))
 					discard ;
 				assume (ix != NONE) ;
-				mTextReader >> KeywordText::from (mLastType) ;
+				mTextReader >> ReadKeyword (mLastType) ;
 				mTextReader >> GAP ;
 				if (mLastType != slice ("list"))
 					discard ;
 				iy = mElementList[ix].mPropertyList.insert () ;
-				mTextReader >> KeywordText::from (mLastString) ;
+				mTextReader >> ReadKeyword (mLastString) ;
 				const auto r2x = mPropertyListType.map (mLastString) ;
 				assume (r2x != NONE) ;
 				mElementList[ix].mPropertyList[iy].mType = r2x ;
@@ -2474,7 +2472,7 @@ public:
 				mElementList[ix].mLineStep += r3x ;
 				mElementList[ix].mPropertyList[iy].mPlyEnd = mElementList[ix].mLineStep ;
 				mTextReader >> GAP ;
-				mTextReader >> KeywordText::from (mLastString) ;
+				mTextReader >> ReadKeyword (mLastString) ;
 				const auto r4x = mPropertyType.map (mLastString) ;
 				if ifdo (TRUE) {
 					if (r4x == PlyParserDataType::Val32)
@@ -2489,7 +2487,7 @@ public:
 				mElementList[ix].mLineStep += SIZE_OF<INDEX>::expr ;
 				mElementList[ix].mPropertyList[iy].mPlyEnd = mElementList[ix].mLineStep ;
 				mTextReader >> GAP ;
-				mTextReader >> KeywordText::from (mLastString) ;
+				mTextReader >> ReadKeyword (mLastString) ;
 				mElementList[ix].mPropertyList[iy].mName = move (mLastString) ;
 				mTextReader >> GAP ;
 			}
@@ -2509,14 +2507,14 @@ public:
 				mElementList[ix].mPropertyList[iy].mListType = PlyParserDataType::Null ;
 				mElementList[ix].mPropertyList[iy].mListSize = mElementList[ix].mLineSize ;
 				mTextReader >> GAP ;
-				mTextReader >> KeywordText::from (mLastString) ;
+				mTextReader >> ReadKeyword (mLastString) ;
 				mElementList[ix].mPropertyList[iy].mName = move (mLastString) ;
 				mTextReader >> GAP ;
 			}
 			if ifdo (act) {
 				if (mLastString != slice ("comment"))
 					discard ;
-				mTextReader >> EndlineText::from (mLastString) ;
+				mTextReader >> ReadEndline (mLastString) ;
 				mTextReader >> GAP ;
 			}
 			if ifdo (act) {
@@ -2560,7 +2558,7 @@ public:
 		}
 	}
 
-	LENGTH ply_parser_data_type_size (CREF<Just<PlyParserDataType>> type_) const {
+	LENGTH ply_parser_data_type_size (CR<Just<PlyParserDataType>> type_) const {
 		if (type_ == PlyParserDataType::Bool)
 			return 1 ;
 		if (type_ == PlyParserDataType::Val32)
@@ -2599,7 +2597,7 @@ public:
 		mTextReader >> EOS ;
 	}
 
-	void read_body_text_item (VREF<PlyParserElement> element ,VREF<PlyParserProperty> property ,CREF<INDEX> line) {
+	void read_body_text_item (VR<PlyParserElement> element ,VR<PlyParserProperty> property ,CR<INDEX> line) {
 		const auto r1x = property.mType ;
 		auto act = TRUE ;
 		if ifdo (act) {
@@ -2699,7 +2697,7 @@ public:
 		}
 	}
 
-	void read_body_text_list (VREF<PlyParserElement> element ,VREF<PlyParserProperty> property ,CREF<INDEX> line) {
+	void read_body_text_list (VR<PlyParserElement> element ,VR<PlyParserProperty> property ,CR<INDEX> line) {
 		const auto r1x = property.mListType ;
 		if (r1x == PlyParserDataType::Null)
 			return ;
@@ -2766,7 +2764,7 @@ public:
 		mByteReader >> EOS ;
 	}
 
-	void read_body_byte_item (VREF<PlyParserElement> element ,VREF<PlyParserProperty> property ,CREF<INDEX> line) {
+	void read_body_byte_item (VR<PlyParserElement> element ,VR<PlyParserProperty> property ,CR<INDEX> line) {
 		const auto r1x = property.mType ;
 		auto act = TRUE ;
 		if ifdo (act) {
@@ -2849,7 +2847,7 @@ public:
 		}
 	}
 
-	void read_body_byte_list (VREF<PlyParserElement> element ,VREF<PlyParserProperty> property ,CREF<INDEX> line) {
+	void read_body_byte_list (VR<PlyParserElement> element ,VR<PlyParserProperty> property ,CR<INDEX> line) {
 		const auto r1x = property.mListType ;
 		if (r1x == PlyParserDataType::Null)
 			return ;
@@ -2895,21 +2893,21 @@ public:
 
 class PlyParserImplHolder final implement Fat<PlyParserHolder ,PlyParserLayout> {
 public:
-	void initialize (CREF<RefBuffer<BYTE>> stream) override {
+	void initialize (CR<RefBuffer<BYTE>> stream) override {
 		auto rax = MakePlyParser (Ref<RefBuffer<BYTE>>::reference (stream)) ;
 		rax.generate () ;
 		self.mThis = UniqueRef<PlyParserTree>::make (rax.poll ()) ;
 		self.mGuide.mElement = NONE ;
 	}
 
-	LENGTH element_size (CREF<Slice> element) const override {
+	LENGTH element_size (CR<Slice> element) const override {
 		INDEX ix = self.mThis->mElementSet.map (element) ;
 		if (ix == NONE)
 			return 0 ;
 		return self.mThis->mElementList[ix].mLineSize ;
 	}
 
-	LENGTH property_size (CREF<Slice> element ,CREF<Slice> property) const override {
+	LENGTH property_size (CR<Slice> element ,CR<Slice> property) const override {
 		INDEX ix = self.mThis->mElementSet.map (element) ;
 		if (ix == NONE)
 			return 0 ;
@@ -2919,7 +2917,7 @@ public:
 		return self.mThis->mElementList[ix].mPropertyList[jx].mListSize ;
 	}
 
-	void guide_new (CREF<Slice> element) override {
+	void guide_new (CR<Slice> element) override {
 		INDEX ix = self.mThis->mElementSet.map (element) ;
 		assume (ix != NONE) ;
 		self.mGuide.mElement = ix ;
@@ -2932,7 +2930,7 @@ public:
 		self.mGuide.mPlyListMode = FALSE ;
 	}
 
-	void guide_put (CREF<Slice> property) override {
+	void guide_put (CR<Slice> property) override {
 		INDEX ix = self.mGuide.mElement ;
 		assume (ix != NONE) ;
 		INDEX jx = self.mThis->mElementList[ix].mPropertySet.map (property) ;
@@ -3005,7 +3003,7 @@ public:
 		}
 	}
 
-	void read (VREF<BOOL> item) override {
+	void read (VR<BOOL> item) override {
 		guide_jmp () ;
 		INDEX ix = self.mGuide.mElement ;
 		INDEX jx = self.mGuide.mProperty[self.mGuide.mCol] ;
@@ -3015,7 +3013,7 @@ public:
 		self.mGuide.mPlyIndex += SIZE_OF<BOOL>::expr ;
 	}
 
-	void read (VREF<VAL32> item) override {
+	void read (VR<VAL32> item) override {
 		guide_jmp () ;
 		INDEX ix = self.mGuide.mElement ;
 		INDEX jx = self.mGuide.mProperty[self.mGuide.mCol] ;
@@ -3036,7 +3034,7 @@ public:
 		}
 	}
 
-	void read (VREF<VAL64> item) override {
+	void read (VR<VAL64> item) override {
 		guide_jmp () ;
 		INDEX ix = self.mGuide.mElement ;
 		INDEX jx = self.mGuide.mProperty[self.mGuide.mCol] ;
@@ -3057,7 +3055,7 @@ public:
 		}
 	}
 
-	void read (VREF<FLT32> item) override {
+	void read (VR<FLT32> item) override {
 		guide_jmp () ;
 		INDEX ix = self.mGuide.mElement ;
 		INDEX jx = self.mGuide.mProperty[self.mGuide.mCol] ;
@@ -3067,7 +3065,7 @@ public:
 		self.mGuide.mPlyIndex += SIZE_OF<FLT32>::expr ;
 	}
 
-	void read (VREF<FLT64> item) override {
+	void read (VR<FLT64> item) override {
 		guide_jmp () ;
 		INDEX ix = self.mGuide.mElement ;
 		INDEX jx = self.mGuide.mProperty[self.mGuide.mCol] ;
@@ -3077,7 +3075,7 @@ public:
 		self.mGuide.mPlyIndex += SIZE_OF<FLT64>::expr ;
 	}
 
-	void read (VREF<BYTE> item) override {
+	void read (VR<BYTE> item) override {
 		guide_jmp () ;
 		INDEX ix = self.mGuide.mElement ;
 		INDEX jx = self.mGuide.mProperty[self.mGuide.mCol] ;
@@ -3087,7 +3085,7 @@ public:
 		self.mGuide.mPlyIndex += SIZE_OF<BYTE>::expr ;
 	}
 
-	void read (VREF<WORD> item) override {
+	void read (VR<WORD> item) override {
 		guide_jmp () ;
 		INDEX ix = self.mGuide.mElement ;
 		INDEX jx = self.mGuide.mProperty[self.mGuide.mCol] ;
@@ -3097,7 +3095,7 @@ public:
 		self.mGuide.mPlyIndex += SIZE_OF<WORD>::expr ;
 	}
 
-	void read (VREF<CHAR> item) override {
+	void read (VR<CHAR> item) override {
 		guide_jmp () ;
 		INDEX ix = self.mGuide.mElement ;
 		INDEX jx = self.mGuide.mProperty[self.mGuide.mCol] ;
@@ -3107,7 +3105,7 @@ public:
 		self.mGuide.mPlyIndex += SIZE_OF<CHAR>::expr ;
 	}
 
-	void read (VREF<QUAD> item) override {
+	void read (VR<QUAD> item) override {
 		guide_jmp () ;
 		INDEX ix = self.mGuide.mElement ;
 		INDEX jx = self.mGuide.mProperty[self.mGuide.mCol] ;
@@ -3118,11 +3116,11 @@ public:
 	}
 } ;
 
-exports VFat<PlyParserHolder> PlyParserHolder::hold (VREF<PlyParserLayout> that) {
+exports VFat<PlyParserHolder> PlyParserHolder::hold (VR<PlyParserLayout> that) {
 	return VFat<PlyParserHolder> (PlyParserImplHolder () ,that) ;
 }
 
-exports CFat<PlyParserHolder> PlyParserHolder::hold (CREF<PlyParserLayout> that) {
+exports CFat<PlyParserHolder> PlyParserHolder::hold (CR<PlyParserLayout> that) {
 	return CFat<PlyParserHolder> (PlyParserImplHolder () ,that) ;
 }
 } ;

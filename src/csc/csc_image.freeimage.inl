@@ -22,15 +22,15 @@ namespace CSC {
 class ImageProcImplHolder final implement Fat<ImageProcHolder ,ImageProcLayout> {
 public:
 	void initialize () override {
-		self.mContext = UniqueRef<BOOL> ([&] (VREF<BOOL> me) {
+		self.mContext = UniqueRef<BOOL> ([&] (VR<BOOL> me) {
 			FreeImage_Initialise () ;
 			me = TRUE ;
-		} ,[&] (VREF<BOOL> me) {
+		} ,[&] (VR<BOOL> me) {
 			FreeImage_DeInitialise () ;
 		}) ;
 	}
 
-	ImageLayout make_image (RREF<BoxLayout> image) const override {
+	ImageLayout make_image (RR<BoxLayout> image) const override {
 		ImageLayout ret ;
 		auto &&rax = keep[TYPE<Box<UniqueRef<HFIBITMAP>>>::expr] (image).ref ;
 		const auto r1x = LENGTH (FreeImage_GetWidth (rax)) ;
@@ -44,10 +44,10 @@ public:
 				discard ;
 			const auto r7x = inline_alignas (r1x ,8) ;
 			const auto r8x = r5x * 8 ;
-			auto rbx = UniqueRef<HFIBITMAP> ([&] (VREF<HFIBITMAP> me) {
+			auto rbx = UniqueRef<HFIBITMAP> ([&] (VR<HFIBITMAP> me) {
 				me = FreeImage_Allocate (VAL32 (r7x) ,VAL32 (r2x) ,VAL32 (r8x)) ;
 				assume (me != NULL) ;
-			} ,[&] (VREF<HFIBITMAP> me) {
+			} ,[&] (VR<HFIBITMAP> me) {
 				FreeImage_Unload (me) ;
 			}) ;
 			const auto r9x = FreeImage_GetBits (rbx) ;
@@ -69,32 +69,32 @@ public:
 		return move (ret) ;
 	}
 
-	ImageLayout make_image (CREF<ImageShape> shape) const override {
+	ImageLayout make_image (CR<ImageShape> shape) const override {
 		auto rax = Box<UniqueRef<HFIBITMAP>>::make () ;
 		const auto r1x = shape.mStep * 8 ;
-		rax.ref = UniqueRef<HFIBITMAP> ([&] (VREF<HFIBITMAP> me) {
+		rax.ref = UniqueRef<HFIBITMAP> ([&] (VR<HFIBITMAP> me) {
 			me = FreeImage_Allocate (VAL32 (shape.mCX) ,VAL32 (shape.mCY) ,VAL32 (r1x)) ;
 			assume (me != NULL) ;
-		} ,[&] (VREF<HFIBITMAP> me) {
+		} ,[&] (VR<HFIBITMAP> me) {
 			FreeImage_Unload (me) ;
 		}) ;
 		return make_image (move (rax)) ;
 	}
 
-	ImageLayout make_image (CREF<ImageShape> shape ,CREF<Clazz> clazz ,CREF<LENGTH> channel) const override {
+	ImageLayout make_image (CR<ImageShape> shape ,CR<Clazz> clazz ,CR<LENGTH> channel) const override {
 		auto rax = Box<UniqueRef<HFIBITMAP>>::make () ;
 		const auto r1x = fibitmap_type_of_clazz (clazz) ;
 		const auto r2x = align_of_fibitmap_type (r1x) * channel * 8 ;
-		rax.ref = UniqueRef<HFIBITMAP> ([&] (VREF<HFIBITMAP> me) {
+		rax.ref = UniqueRef<HFIBITMAP> ([&] (VR<HFIBITMAP> me) {
 			me = FreeImage_AllocateT (r1x ,VAL32 (shape.mCX) ,VAL32 (shape.mCY) ,VAL32 (r2x)) ;
 			assume (me != NULL) ;
-		} ,[&] (VREF<HFIBITMAP> me) {
+		} ,[&] (VR<HFIBITMAP> me) {
 			FreeImage_Unload (me) ;
 		}) ;
 		return make_image (move (rax)) ;
 	}
 
-	FREE_IMAGE_TYPE fibitmap_type_of_clazz (CREF<Clazz> clazz) const {
+	FREE_IMAGE_TYPE fibitmap_type_of_clazz (CR<Clazz> clazz) const {
 		if (clazz.type_align () == 1)
 			return FIT_BITMAP ;
 		if (clazz.type_align () == 2)
@@ -107,7 +107,7 @@ public:
 		return FIT_UNKNOWN ;
 	}
 
-	LENGTH align_of_fibitmap_type (CREF<Just<FREE_IMAGE_TYPE>> type_) const {
+	LENGTH align_of_fibitmap_type (CR<Just<FREE_IMAGE_TYPE>> type_) const {
 		if (type_ == FIT_UNKNOWN)
 			return 8 ;
 		if (type_ == FIT_BITMAP)
@@ -137,46 +137,46 @@ public:
 		return 0 ;
 	}
 
-	Unknown choose_fibitmap_unknown (CREF<LENGTH> align) const {
+	Unknown choose_fibitmap_unknown (CR<LENGTH> align) const {
 		if (align == SIZE_OF<BYTE>::expr)
-			return BufferUnknownBinder<BYTE> () ;
+			return ArrayUnknownBinder<BYTE> () ;
 		if (align == SIZE_OF<WORD>::expr)
-			return BufferUnknownBinder<WORD> () ;
+			return ArrayUnknownBinder<WORD> () ;
 		if (align == SIZE_OF<CHAR>::expr)
-			return BufferUnknownBinder<CHAR> () ;
+			return ArrayUnknownBinder<CHAR> () ;
 		if (align == SIZE_OF<QUAD>::expr)
-			return BufferUnknownBinder<QUAD> () ;
+			return ArrayUnknownBinder<QUAD> () ;
 		assume (FALSE) ;
 		return Unknown (ZERO) ;
 	}
 
-	VREF<Pointer> peek_image (VREF<ImageLayout> image) const override {
+	VR<Pointer> peek_image (VR<ImageLayout> image) const override {
 		assert (ImageHolder::hold (image)->fixed ()) ;
 		auto &&rax = keep[TYPE<Box<UniqueRef<HFIBITMAP>>>::expr] (ImageHolder::hold (image)->raw ()) ;
 		return Pointer::from (rax.ref) ;
 	}
 
-	CREF<Pointer> peek_image (CREF<ImageLayout> image) const override {
+	CR<Pointer> peek_image (CR<ImageLayout> image) const override {
 		assert (ImageHolder::hold (image)->fixed ()) ;
 		auto &&rax = keep[TYPE<Box<UniqueRef<HFIBITMAP>>>::expr] (ImageHolder::hold (image)->raw ()) ;
 		return Pointer::from (rax.ref) ;
 	}
 
-	ImageLayout load_image (CREF<String<STR>> file) const override {
+	ImageLayout load_image (CR<String<STR>> file) const override {
 		auto rax = Box<UniqueRef<HFIBITMAP>>::make () ;
 		const auto r1x = StringProc::stra_from_strs (file) ;
 		const auto r2x = FreeImage_GetFIFFromFilename (r1x.ref) ;
 		assume (r2x != FIF_UNKNOWN) ;
-		rax.ref = UniqueRef<HFIBITMAP> ([&] (VREF<HFIBITMAP> me) {
+		rax.ref = UniqueRef<HFIBITMAP> ([&] (VR<HFIBITMAP> me) {
 			me = FreeImage_Load (r2x ,r1x.ref) ;
 			assume (me != NULL) ;
-		} ,[&] (VREF<HFIBITMAP> me) {
+		} ,[&] (VR<HFIBITMAP> me) {
 			FreeImage_Unload (me) ;
 		}) ;
 		return make_image (move (rax)) ;
 	}
 
-	void save_image (CREF<String<STR>> file ,CREF<ImageLayout> image) const override {
+	void save_image (CR<String<STR>> file ,CR<ImageLayout> image) const override {
 		const auto r1x = StringProc::stra_from_strs (file) ;
 		const auto r2x = FreeImage_GetFIFFromFilename (r1x.ref) ;
 		assume (r2x != FIF_UNKNOWN) ;
@@ -185,35 +185,35 @@ public:
 		const auto r5x = r3x + ImageHolder::hold (image)->cx () ;
 		const auto r6x = r4x + ImageHolder::hold (image)->cy () ;
 		auto &&rax = keep[TYPE<Box<UniqueRef<HFIBITMAP>>>::expr] (image.mImage.raw ()).ref ;
-		auto rbx = UniqueRef<HFIBITMAP> ([&] (VREF<HFIBITMAP> me) {
+		auto rbx = UniqueRef<HFIBITMAP> ([&] (VR<HFIBITMAP> me) {
 			me = FreeImage_CreateView (rax ,VAL32 (r3x) ,VAL32 (r4x) ,VAL32 (r5x) ,VAL32 (r6x)) ;
 			assume (me != NULL) ;
-		} ,[&] (VREF<HFIBITMAP> me) {
+		} ,[&] (VR<HFIBITMAP> me) {
 			FreeImage_Unload (me) ;
 		}) ;
 		FreeImage_Save (r2x ,rbx ,r1x.ref) ;
 	}
 
-	Color1B sampler (CREF<Image<Color1B>> image ,CREF<FLT64> x ,CREF<FLT64> y) const override {
+	Color1B sampler (CR<Image<Color1B>> image ,CR<FLT64> x ,CR<FLT64> y) const override {
 		return sampler_f32_impl (image ,FLT32 (x) ,FLT32 (y)) ;
 	}
 
-	Color2B sampler (CREF<Image<Color2B>> image ,CREF<FLT64> x ,CREF<FLT64> y) const override {
+	Color2B sampler (CR<Image<Color2B>> image ,CR<FLT64> x ,CR<FLT64> y) const override {
 		return sampler_f32_impl (image ,FLT32 (x) ,FLT32 (y)) ;
 	}
 
-	Color3B sampler (CREF<Image<Color3B>> image ,CREF<FLT64> x ,CREF<FLT64> y) const override {
+	Color3B sampler (CR<Image<Color3B>> image ,CR<FLT64> x ,CR<FLT64> y) const override {
 		return sampler_f32_impl (image ,FLT32 (x) ,FLT32 (y)) ;
 	}
 
-	Color4B sampler (CREF<Image<Color4B>> image ,CREF<FLT64> x ,CREF<FLT64> y) const override {
+	Color4B sampler (CR<Image<Color4B>> image ,CR<FLT64> x ,CR<FLT64> y) const override {
 		return sampler_f32_impl (image ,FLT32 (x) ,FLT32 (y)) ;
 	}
 
 	template <class ARG1>
-	forceinline ARG1 sampler_f32_impl (CREF<Image<ARG1>> image ,CREF<FLT32> x ,CREF<FLT32> y) const {
-		const auto r1x = INDEX (MathProc::round (x ,FLT32 (1))) ;
-		const auto r2x = INDEX (MathProc::round (y ,FLT32 (1))) ;
+	forceinline ARG1 sampler_f32_impl (CR<Image<ARG1>> image ,CR<FLT32> x ,CR<FLT32> y) const {
+		const auto r1x = INDEX (MathProc::round (x)) ;
+		const auto r2x = INDEX (MathProc::round (y)) ;
 		const auto r3x = MathProc::clamp (r1x ,ZERO ,image.cx () - 1) ;
 		const auto r4x = MathProc::clamp (r2x ,ZERO ,image.cy () - 1) ;
 		const auto r5x = MathProc::max_of (r3x - 1 ,ZERO) ;
@@ -240,20 +240,20 @@ public:
 		return cvt_colorb (rax) ;
 	}
 
-	Buffer1<FLT32> cvt_colorf (CREF<Color1B> a) const {
+	Buffer1<FLT32> cvt_colorf (CR<Color1B> a) const {
 		Buffer1<FLT32> ret ;
 		ret[0] = FLT32 (a.mB) ;
 		return move (ret) ;
 	}
 
-	Buffer2<FLT32> cvt_colorf (CREF<Color2B> a) const {
+	Buffer2<FLT32> cvt_colorf (CR<Color2B> a) const {
 		Buffer2<FLT32> ret ;
 		ret[0] = FLT32 (a.mB) ;
 		ret[1] = FLT32 (a.mG) ;
 		return move (ret) ;
 	}
 
-	Buffer3<FLT32> cvt_colorf (CREF<Color3B> a) const {
+	Buffer3<FLT32> cvt_colorf (CR<Color3B> a) const {
 		Buffer3<FLT32> ret ;
 		ret[0] = FLT32 (a.mB) ;
 		ret[1] = FLT32 (a.mG) ;
@@ -261,7 +261,7 @@ public:
 		return move (ret) ;
 	}
 
-	Buffer4<FLT32> cvt_colorf (CREF<Color4B> a) const {
+	Buffer4<FLT32> cvt_colorf (CR<Color4B> a) const {
 		Buffer4<FLT32> ret ;
 		ret[0] = FLT32 (a.mB) ;
 		ret[1] = FLT32 (a.mG) ;
@@ -270,20 +270,20 @@ public:
 		return move (ret) ;
 	}
 
-	Color1B cvt_colorb (CREF<Buffer1<FLT32>> a) const {
+	Color1B cvt_colorb (CR<Buffer1<FLT32>> a) const {
 		Color1B ret ;
 		ret.mB = BYTE (VAL32 (a[0])) ;
 		return move (ret) ;
 	}
 
-	Color2B cvt_colorb (CREF<Buffer2<FLT32>> a) const {
+	Color2B cvt_colorb (CR<Buffer2<FLT32>> a) const {
 		Color2B ret ;
 		ret.mB = BYTE (VAL32 (a[0])) ;
 		ret.mG = BYTE (VAL32 (a[1])) ;
 		return move (ret) ;
 	}
 
-	Color3B cvt_colorb (CREF<Buffer3<FLT32>> a) const {
+	Color3B cvt_colorb (CR<Buffer3<FLT32>> a) const {
 		Color3B ret ;
 		ret.mB = BYTE (VAL32 (a[0])) ;
 		ret.mG = BYTE (VAL32 (a[1])) ;
@@ -291,7 +291,7 @@ public:
 		return move (ret) ;
 	}
 
-	Color4B cvt_colorb (CREF<Buffer4<FLT32>> a) const {
+	Color4B cvt_colorb (CR<Buffer4<FLT32>> a) const {
 		Color4B ret ;
 		ret.mB = BYTE (VAL32 (a[0])) ;
 		ret.mG = BYTE (VAL32 (a[1])) ;
@@ -300,18 +300,18 @@ public:
 		return move (ret) ;
 	}
 
-	FLT32 sampler (CREF<Image<FLT32>> image ,CREF<FLT64> x ,CREF<FLT64> y) const override {
+	FLT32 sampler (CR<Image<FLT32>> image ,CR<FLT64> x ,CR<FLT64> y) const override {
 		return sampler_f64_impl (image ,x ,y) ;
 	}
 
-	FLT64 sampler (CREF<Image<FLT64>> image ,CREF<FLT64> x ,CREF<FLT64> y) const override {
+	FLT64 sampler (CR<Image<FLT64>> image ,CR<FLT64> x ,CR<FLT64> y) const override {
 		return sampler_f64_impl (image ,x ,y) ;
 	}
 
 	template <class ARG1>
-	forceinline ARG1 sampler_f64_impl (CREF<Image<ARG1>> image ,CREF<FLT64> x ,CREF<FLT64> y) const {
-		const auto r1x = INDEX (MathProc::round (x ,FLT64 (1))) ;
-		const auto r2x = INDEX (MathProc::round (y ,FLT64 (1))) ;
+	forceinline ARG1 sampler_f64_impl (CR<Image<ARG1>> image ,CR<FLT64> x ,CR<FLT64> y) const {
+		const auto r1x = INDEX (MathProc::round (x)) ;
+		const auto r2x = INDEX (MathProc::round (y)) ;
 		const auto r3x = MathProc::clamp (r1x ,ZERO ,image.cx () - 1) ;
 		const auto r4x = MathProc::clamp (r2x ,ZERO ,image.cy () - 1) ;
 		const auto r5x = MathProc::max_of (r3x - 1 ,ZERO) ;
