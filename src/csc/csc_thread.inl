@@ -708,7 +708,7 @@ public:
 		return self.mKeyId ;
 	}
 
-	void add_component (CR<OfThis<SharedRef<ComponentLayout>>> component) override {
+	void add_component (CR<Like<SharedRef<ComponentLayout>>> component) override {
 		auto &&rax = keep[TYPE<Component>::expr] (component) ;
 		INDEX ix = self.mComponentClazz.map (rax.clazz ()) ;
 		if ifdo (TRUE) {
@@ -719,7 +719,7 @@ public:
 		}
 	}
 
-	void register_service (CR<OfThis<SharedRef<ServiceLayout>>> service) override {
+	void register_service (CR<Like<SharedRef<ServiceLayout>>> service) override {
 		assume (self.mKeyId == NONE) ;
 		auto &&rax = keep[TYPE<Service>::expr] (service) ;
 		self.mKeyId = rax.spwan_entity () ;
@@ -761,7 +761,7 @@ public:
 		return ix != NONE ;
 	}
 
-	OfThis<SharedRef<ComponentLayout>> get (CR<Clazz> clazz_) const override {
+	Like<SharedRef<ComponentLayout>> get (CR<Clazz> clazz_) const override {
 		assume (self.mEntity != NONE) ;
 		const auto r1x = self.mManager.entity (self.mEntity) ;
 		INDEX ix = r1x.mThis->mComponentClazz.map (clazz_) ;
@@ -875,9 +875,9 @@ public:
 	}
 } ;
 
-exports CR<OfThis<SharedRef<ManagerLayout>>> ManagerHolder::expr_m () {
+exports CR<Like<SharedRef<ManagerLayout>>> ManagerHolder::expr_m () {
 	return memorize ([&] () {
-		OfThis<SharedRef<ManagerLayout>> ret ;
+		Like<SharedRef<ManagerLayout>> ret ;
 		ret.mThis = SharedRef<ManagerLayout>::make () ;
 		return move (ret) ;
 	}) ;

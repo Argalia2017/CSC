@@ -403,9 +403,9 @@ public:
 	}
 } ;
 
-exports CR<OfThis<UniqueRef<ColorProcLayout>>> ColorProcHolder::expr_m () {
+exports CR<Like<UniqueRef<ColorProcLayout>>> ColorProcHolder::expr_m () {
 	return memorize ([&] () {
-		OfThis<UniqueRef<ColorProcLayout>> ret ;
+		Like<UniqueRef<ColorProcLayout>> ret ;
 		ret.mThis = UniqueRef<ColorProcLayout>::make () ;
 		ColorProcHolder::hold (ret)->initialize () ;
 		return move (ret) ;
@@ -426,9 +426,9 @@ struct ImageProcLayout {
 	UniqueRef<BOOL> mContext ;
 } ;
 
-exports CR<OfThis<UniqueRef<ImageProcLayout>>> ImageProcHolder::expr_m () {
+exports CR<Like<UniqueRef<ImageProcLayout>>> ImageProcHolder::expr_m () {
 	return memorize ([&] () {
-		OfThis<UniqueRef<ImageProcLayout>> ret ;
+		Like<UniqueRef<ImageProcLayout>> ret ;
 		ret.mThis = UniqueRef<ImageProcLayout>::make () ;
 		ImageProcHolder::hold (ret)->initialize () ;
 		return move (ret) ;
@@ -521,7 +521,6 @@ public:
 		auto &&rcx = keep[TYPE<C>::expr] (c) ;
 		rcx = -C (rax) ;
 	}
-
 } ;
 
 class TensorImplHolder final implement Fat<TensorHolder ,TensorLayout> {
@@ -696,23 +695,32 @@ public:
 		return self.mTensor.share () ;
 	}
 
-	FltProxy at (CR<INDEX> i1) const override {
+	FLT64 get_float (CR<FLAG> addr) const {
+		if (self.mStride[self.mRank] == 4)
+			return bitwise[TYPE<FLT32>::expr] (Pointer::make (addr)) ;
+		if (self.mStride[self.mRank] == 8)
+			return bitwise[TYPE<FLT64>::expr] (Pointer::make (addr)) ;
+		assert (FALSE) ;
+		return 0 ;
+	}
+
+	void get (CR<INDEX> i1 ,VR<FLT64> item) const override {
 		const auto r1x = i1 * self.mStride[1] ;
 		assert (inline_between (r1x ,0 ,self.mStride[0])) ;
 		const auto r2x = self.mBuffer + r1x ;
-		return FltProxy (r2x ,self.mStride[self.mRank]) ;
+		item = get_float (r2x) ;
 	}
 
-	FltProxy at (CR<INDEX> i1 ,CR<INDEX> i2) const override {
+	void get (CR<INDEX> i1 ,CR<INDEX> i2 ,VR<FLT64> item) const override {
 		const auto r1x = i1 * self.mStride[1] ;
 		assert (inline_between (r1x ,0 ,self.mStride[0])) ;
 		const auto r2x = i2 * self.mStride[2] ;
 		assert (inline_between (r1x ,0 ,self.mStride[1])) ;
 		const auto r3x = self.mBuffer + r1x + r2x ;
-		return FltProxy (r3x ,self.mStride[self.mRank]) ;
+		item = get_float (r3x) ;
 	}
 
-	FltProxy at (CR<INDEX> i1 ,CR<INDEX> i2 ,CR<INDEX> i3) const override {
+	void get (CR<INDEX> i1 ,CR<INDEX> i2 ,CR<INDEX> i3 ,VR<FLT64> item) const override {
 		const auto r1x = i1 * self.mStride[1] ;
 		assert (inline_between (r1x ,0 ,self.mStride[0])) ;
 		const auto r2x = i2 * self.mStride[2] ;
@@ -720,10 +728,10 @@ public:
 		const auto r3x = i3 * self.mStride[3] ;
 		assert (inline_between (r1x ,0 ,self.mStride[2])) ;
 		const auto r4x = self.mBuffer + r1x + r2x + r3x ;
-		return FltProxy (r4x ,self.mStride[self.mRank]) ;
+		item = get_float (r4x) ;
 	}
 
-	FltProxy at (CR<INDEX> i1 ,CR<INDEX> i2 ,CR<INDEX> i3 ,CR<INDEX> i4) const override {
+	void get (CR<INDEX> i1 ,CR<INDEX> i2 ,CR<INDEX> i3 ,CR<INDEX> i4 ,VR<FLT64> item) const override {
 		const auto r1x = i1 * self.mStride[1] ;
 		assert (inline_between (r1x ,0 ,self.mStride[0])) ;
 		const auto r2x = i2 * self.mStride[2] ;
@@ -733,7 +741,7 @@ public:
 		const auto r4x = i4 * self.mStride[4] ;
 		assert (inline_between (r1x ,0 ,self.mStride[3])) ;
 		const auto r5x = self.mBuffer + r1x + r2x + r3x + r4x ;
-		return FltProxy (r5x ,self.mStride[self.mRank]) ;
+		item = get_float (r5x) ;
 	}
 
 	TensorLayout sadd (CR<TensorLayout> that) const override {

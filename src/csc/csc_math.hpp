@@ -21,7 +21,7 @@ static constexpr auto MATH_LN10 = FLT64 (2.30258509299404568402) ;
 struct MathProcLayout ;
 
 struct MathProcHolder implement Interface {
-	imports CR<OfThis<UniqueRef<MathProcLayout>>> expr_m () ;
+	imports CR<Like<UniqueRef<MathProcLayout>>> expr_m () ;
 	imports VFat<MathProcHolder> hold (VR<MathProcLayout> that) ;
 	imports CFat<MathProcHolder> hold (CR<MathProcLayout> that) ;
 
@@ -34,7 +34,10 @@ struct MathProcHolder implement Interface {
 	virtual VAL64 step (CR<VAL64> a) const = 0 ;
 	virtual FLT32 step (CR<FLT32> a) const = 0 ;
 	virtual FLT64 step (CR<FLT64> a) const = 0 ;
-	virtual FLT64 sign (CR<BOOL> a) const = 0 ;
+	virtual VAL32 sign (CR<VAL32> a) const = 0 ;
+	virtual VAL64 sign (CR<VAL64> a) const = 0 ;
+	virtual FLT32 sign (CR<FLT32> a) const = 0 ;
+	virtual FLT64 sign (CR<FLT64> a) const = 0 ;
 	virtual VAL32 square (CR<VAL32> a) const = 0 ;
 	virtual VAL64 square (CR<VAL64> a) const = 0 ;
 	virtual FLT32 square (CR<FLT32> a) const = 0 ;
@@ -103,7 +106,7 @@ struct MathProcHolder implement Interface {
 	virtual FLT64 min_of (CR<FLT64> a ,CR<WrapperLayout> b) const = 0 ;
 } ;
 
-class MathProc implement OfThis<UniqueRef<MathProcLayout>> {
+class MathProc implement Like<UniqueRef<MathProcLayout>> {
 public:
 	static CR<MathProc> expr_m () {
 		return keep[TYPE<MathProc>::expr] (MathProcHolder::expr) ;
@@ -124,7 +127,8 @@ public:
 		return MathProcHolder::hold (expr)->step (a) ;
 	}
 
-	static FLT64 sign (CR<BOOL> a) {
+	template <class ARG1 ,class = REQUIRE<IS_SCALAR<ARG1>>>
+	static ARG1 sign (CR<ARG1> a) {
 		return MathProcHolder::hold (expr)->sign (a) ;
 	}
 
@@ -316,7 +320,7 @@ struct Notation {
 struct FEXP2CacheLayout ;
 
 struct FEXP2CacheHolder implement Interface {
-	imports CR<OfThis<UniqueRef<FEXP2CacheLayout>>> expr_m () ;
+	imports CR<Like<UniqueRef<FEXP2CacheLayout>>> expr_m () ;
 	imports VFat<FEXP2CacheHolder> hold (VR<FEXP2CacheLayout> that) ;
 	imports CFat<FEXP2CacheHolder> hold (CR<FEXP2CacheLayout> that) ;
 
@@ -324,7 +328,7 @@ struct FEXP2CacheHolder implement Interface {
 	virtual void get (CR<VAL64> index ,VR<Notation> item) const = 0 ;
 } ;
 
-class FEXP2Cache implement OfThis<UniqueRef<FEXP2CacheLayout>> {
+class FEXP2Cache implement Like<UniqueRef<FEXP2CacheLayout>> {
 public:
 	static CR<FEXP2Cache> expr_m () {
 		return keep[TYPE<FEXP2Cache>::expr] (FEXP2CacheHolder::expr) ;
@@ -340,7 +344,7 @@ public:
 struct FEXP10CacheLayout ;
 
 struct FEXP10CacheHolder implement Interface {
-	imports CR<OfThis<UniqueRef<FEXP10CacheLayout>>> expr_m () ;
+	imports CR<Like<UniqueRef<FEXP10CacheLayout>>> expr_m () ;
 	imports VFat<FEXP10CacheHolder> hold (VR<FEXP10CacheLayout> that) ;
 	imports CFat<FEXP10CacheHolder> hold (CR<FEXP10CacheLayout> that) ;
 
@@ -348,7 +352,7 @@ struct FEXP10CacheHolder implement Interface {
 	virtual void get (CR<VAL64> index ,VR<Notation> item) const = 0 ;
 } ;
 
-class FEXP10Cache implement OfThis<UniqueRef<FEXP10CacheLayout>> {
+class FEXP10Cache implement Like<UniqueRef<FEXP10CacheLayout>> {
 public:
 	static CR<FEXP10Cache> expr_m () {
 		return keep[TYPE<FEXP10Cache>::expr] (FEXP10CacheHolder::expr) ;
@@ -364,7 +368,7 @@ public:
 struct FloatProcLayout ;
 
 struct FloatProcHolder implement Interface {
-	imports CR<OfThis<UniqueRef<FloatProcLayout>>> expr_m () ;
+	imports CR<Like<UniqueRef<FloatProcLayout>>> expr_m () ;
 	imports VFat<FloatProcHolder> hold (VR<FloatProcLayout> that) ;
 	imports CFat<FloatProcHolder> hold (CR<FloatProcLayout> that) ;
 
@@ -377,7 +381,7 @@ struct FloatProcHolder implement Interface {
 	virtual Notation fexp10_from_fexp2 (CR<Notation> fexp2) const = 0 ;
 } ;
 
-class FloatProc implement OfThis<UniqueRef<FloatProcLayout>> {
+class FloatProc implement Like<UniqueRef<FloatProcLayout>> {
 public:
 	static CR<FloatProc> expr_m () {
 		return keep[TYPE<FloatProc>::expr] (FloatProcHolder::expr) ;
@@ -411,7 +415,7 @@ public:
 struct ByteProcLayout ;
 
 struct ByteProcHolder implement Interface {
-	imports CR<OfThis<UniqueRef<ByteProcLayout>>> expr_m () ;
+	imports CR<Like<UniqueRef<ByteProcLayout>>> expr_m () ;
 	imports VFat<ByteProcHolder> hold (VR<ByteProcLayout> that) ;
 	imports CFat<ByteProcHolder> hold (CR<ByteProcLayout> that) ;
 
@@ -446,7 +450,7 @@ struct ByteProcHolder implement Interface {
 	virtual LENGTH lowcount (CR<BYTE> a) const = 0 ;
 } ;
 
-class ByteProc implement OfThis<UniqueRef<ByteProcLayout>> {
+class ByteProc implement Like<UniqueRef<ByteProcLayout>> {
 public:
 	static CR<ByteProc> expr_m () {
 		return keep[TYPE<ByteProc>::expr] (ByteProcHolder::expr) ;
@@ -803,6 +807,7 @@ struct JetHolder implement Interface {
 	virtual JetLayout satan (CR<JetLayout> that) const = 0 ;
 	virtual JetLayout sexp () const = 0 ;
 	virtual JetLayout slog () const = 0 ;
+	virtual JetLayout relu () const = 0 ;
 } ;
 
 template <class A>
@@ -986,12 +991,17 @@ public:
 		JetLayout ret = JetHolder::hold (thiz)->slog () ;
 		return move (keep[TYPE<Jet>::expr] (ret)) ;
 	}
+
+	Jet relu () const {
+		JetLayout ret = JetHolder::hold (thiz)->relu () ;
+		return move (keep[TYPE<Jet>::expr] (ret)) ;
+	}
 } ;
 
 struct HashProcLayout ;
 
 struct HashProcHolder implement Interface {
-	imports CR<OfThis<UniqueRef<HashProcLayout>>> expr_m () ;
+	imports CR<Like<UniqueRef<HashProcLayout>>> expr_m () ;
 	imports VFat<HashProcHolder> hold (VR<HashProcLayout> that) ;
 	imports CFat<HashProcHolder> hold (CR<HashProcLayout> that) ;
 
@@ -1006,7 +1016,7 @@ struct HashProcHolder implement Interface {
 	virtual WORD crchash16 (CR<Pointer> src ,CR<LENGTH> size_ ,CR<WORD> val) const = 0 ;
 } ;
 
-class HashProc implement OfThis<UniqueRef<HashProcLayout>> {
+class HashProc implement Like<UniqueRef<HashProcLayout>> {
 public:
 	static CR<HashProc> expr_m () {
 		return keep[TYPE<HashProc>::expr] (HashProcHolder::expr) ;

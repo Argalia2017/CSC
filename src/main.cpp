@@ -7,7 +7,13 @@
 
 using namespace SOLUTION ;
 
+/*
+1. Proxy
+2. 
+*/
+
 int main () {
+	GlobalProc::startup () ;
 
 	return 0 ;
 }

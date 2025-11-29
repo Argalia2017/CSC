@@ -423,8 +423,8 @@ public:
 			const auto r4x = self.mMatrix[mm (jx ,ix)] * r1x ;
 			const auto r5x = self.mMatrix[mm (jx ,iy)] * r2x ;
 			const auto r6x = self.mMatrix[mm (jx ,iz)] * r3x ;
-			const auto r7x = MathProc::sign ((i.mY + i.mX) % 2 == 0) ;
-			const auto r8x = (r4x - r5x + r6x) * r7x ;
+			const auto r7x = FLT64 ((i.mY + i.mX) % 2 * 2 - 1) ;
+			const auto r8x = (r4x - r5x + r6x) * MathProc::sign (r7x) ;
 			ret.mMatrix[mm (i.mY ,i.mX)] = r8x ;
 		}
 		return move (ret) ;
@@ -523,14 +523,24 @@ public:
 		self = move (ret) ;
 	}
 
-	void make_PerspectiveMatrix (CR<FLT64> fx ,CR<FLT64> fy ,CR<FLT64> wx ,CR<FLT64> wy) override {
+	void make_PerspectiveMatrix (CR<FLT64> fovx ,CR<ImageShape> shape) override {
+		assert (fovx > 0) ;
+		const auto r1x = FLT64 (shape.mCX) * FLT64 (0.5) ;
+		const auto r2x = FLT64 (shape.mCY) * FLT64 (0.5) ;
+		const auto r3x = MathProc::tan (fovx * FLT64 (0.5)) ;
+		const auto r4x = MathProc::inverse (r3x) * r1x ;
+		const auto r5x = MathProc::inverse (r3x) * r2x ;
+		make_PerspectiveMatrix (r4x ,r5x ,r1x ,r2x) ;
+	}
+
+	void make_PerspectiveMatrix (CR<FLT64> fx ,CR<FLT64> fy ,CR<FLT64> cx ,CR<FLT64> cy) override {
 		assert (fx > 0) ;
 		assert (fy > 0) ;
 		Matrix ret = Matrix::zero () ;
 		ret[0][0] = fx ;
 		ret[1][1] = fy ;
-		ret[0][2] = wx ;
-		ret[1][2] = wy ;
+		ret[0][2] = cx ;
+		ret[1][2] = cy ;
 		ret[3][2] = 1 ;
 		ret[2][3] = 1 ;
 		self = move (ret) ;
@@ -656,26 +666,6 @@ public:
 		}
 		self = move (ret) ;
 	}
-
-	void make_AffineMatrix (CR<Array<FLT64>> a) override {
-		Matrix ret = Matrix::iden () ;
-		if ifdo (TRUE) {
-			if (a.length () < 3)
-				discard ;
-			ret *= TranslationMatrix (a[0] ,a[1] ,a[2]) ;
-		}
-		if ifdo (TRUE) {
-			if (a.length () < 7)
-				discard ;
-			ret *= Quaternion (a[4] ,a[5] ,a[6] ,a[7]).matrix () ;
-		}
-		if ifdo (TRUE) {
-			if (a.length () < 10)
-				discard ;
-			ret *= DiagMatrix (a[8] ,a[9] ,a[10]) ;
-		}
-		self = move (ret) ;
-	}
 } ;
 
 exports VFat<MakeMatrixHolder> MakeMatrixHolder::hold (VR<MatrixLayout> that) {
@@ -690,9 +680,9 @@ template class External<MatrixProcHolder ,MatrixProcLayout> ;
 
 struct MatrixProcLayout {} ;
 
-exports CR<OfThis<UniqueRef<MatrixProcLayout>>> MatrixProcHolder::expr_m () {
+exports CR<Like<UniqueRef<MatrixProcLayout>>> MatrixProcHolder::expr_m () {
 	return memorize ([&] () {
-		OfThis<UniqueRef<MatrixProcLayout>> ret ;
+		Like<UniqueRef<MatrixProcLayout>> ret ;
 		ret.mThis = UniqueRef<MatrixProcLayout>::make () ;
 		MatrixProcHolder::hold (ret)->initialize () ;
 		return move (ret) ;
@@ -1141,9 +1131,9 @@ template class External<LinearProcHolder ,LinearProcLayout> ;
 
 struct LinearProcLayout {} ;
 
-exports CR<OfThis<UniqueRef<LinearProcLayout>>> LinearProcHolder::expr_m () {
+exports CR<Like<UniqueRef<LinearProcLayout>>> LinearProcHolder::expr_m () {
 	return memorize ([&] () {
-		OfThis<UniqueRef<LinearProcLayout>> ret ;
+		Like<UniqueRef<LinearProcLayout>> ret ;
 		ret.mThis = UniqueRef<LinearProcLayout>::make () ;
 		LinearProcHolder::hold (ret)->initialize () ;
 		return move (ret) ;

@@ -75,7 +75,7 @@ struct WorkThreadHolder implement Interface {
 	virtual void stop () = 0 ;
 } ;
 
-class WorkThread implement OfThis<SharedRef<WorkThreadLayout>> {
+class WorkThread implement Like<SharedRef<WorkThreadLayout>> {
 public:
 	implicit WorkThread () = default ;
 
@@ -141,7 +141,7 @@ struct CalcThreadHolder implement Interface {
 	virtual void stop () = 0 ;
 } ;
 
-class CalcThread implement OfThis<SharedRef<CalcThreadLayout>> {
+class CalcThread implement Like<SharedRef<CalcThreadLayout>> {
 public:
 	implicit CalcThread () = default ;
 
@@ -207,7 +207,7 @@ struct PromiseHolder implement Interface {
 } ;
 
 template <class A>
-class Promise implement OfThis<SharedRef<PromiseLayout>> {
+class Promise implement Like<SharedRef<PromiseLayout>> {
 public:
 	implicit Promise () = default ;
 
@@ -279,11 +279,11 @@ struct EntityHolder implement Interface {
 	virtual void initialize (CR<Clazz> clazz_) = 0 ;
 	virtual Clazz clazz () const = 0 ;
 	virtual INDEX keyid () const = 0 ;
-	virtual void add_component (CR<OfThis<SharedRef<ComponentLayout>>> component) = 0 ;
-	virtual void register_service (CR<OfThis<SharedRef<ServiceLayout>>> service) = 0 ;
+	virtual void add_component (CR<Like<SharedRef<ComponentLayout>>> component) = 0 ;
+	virtual void register_service (CR<Like<SharedRef<ServiceLayout>>> service) = 0 ;
 } ;
 
-class Entity implement OfThis<SharedRef<EntityLayout>> {
+class Entity implement Like<SharedRef<EntityLayout>> {
 public:
 	implicit Entity () = default ;
 
@@ -300,11 +300,11 @@ public:
 		return EntityHolder::hold (thiz)->keyid () ;
 	}
 
-	void add_component (CR<OfThis<SharedRef<ComponentLayout>>> component) const {
+	void add_component (CR<Like<SharedRef<ComponentLayout>>> component) const {
 		return EntityHolder::hold (thiz)->add_component (component) ;
 	}
 
-	void register_service (CR<OfThis<SharedRef<ServiceLayout>>> service) const {
+	void register_service (CR<Like<SharedRef<ServiceLayout>>> service) const {
 		return EntityHolder::hold (thiz)->register_service (service) ;
 	}
 } ;
@@ -317,10 +317,10 @@ struct ComponentHolder implement Interface {
 	virtual void initialize (CR<Clazz> clazz_) = 0 ;
 	virtual Clazz clazz () const = 0 ;
 	virtual BOOL contain (CR<Clazz> clazz_) const = 0 ;
-	virtual OfThis<SharedRef<ComponentLayout>> get (CR<Clazz> clazz_) const = 0 ;
+	virtual Like<SharedRef<ComponentLayout>> get (CR<Clazz> clazz_) const = 0 ;
 } ;
 
-class Component implement OfThis<SharedRef<ComponentLayout>> {
+class Component implement Like<SharedRef<ComponentLayout>> {
 public:
 	implicit Component () = default ;
 
@@ -338,7 +338,7 @@ public:
 	}
 
 	Component get (CR<Clazz> clazz_) const {
-		OfThis<SharedRef<ComponentLayout>> ret = ComponentHolder::hold (thiz)->get (clazz_) ;
+		Like<SharedRef<ComponentLayout>> ret = ComponentHolder::hold (thiz)->get (clazz_) ;
 		return move (keep[TYPE<Component>::expr] (ret)) ;
 	}
 } ;
@@ -353,7 +353,7 @@ struct ServiceHolder implement Interface {
 	virtual INDEX spwan_entity () = 0 ;
 } ;
 
-class Service implement OfThis<SharedRef<ServiceLayout>> {
+class Service implement Like<SharedRef<ServiceLayout>> {
 public:
 	implicit Service () = default ;
 
@@ -374,7 +374,7 @@ public:
 struct ManagerLayout ;
 
 struct ManagerHolder implement Interface {
-	imports CR<OfThis<SharedRef<ManagerLayout>>> expr_m () ;
+	imports CR<Like<SharedRef<ManagerLayout>>> expr_m () ;
 	imports VFat<ManagerHolder> hold (VR<ManagerLayout> that) ;
 	imports CFat<ManagerHolder> hold (CR<ManagerLayout> that) ;
 
@@ -387,7 +387,7 @@ struct ManagerHolder implement Interface {
 	virtual INDEX service (CR<Service> item) = 0 ;
 } ;
 
-class Manager implement OfThis<SharedRef<ManagerLayout>> {
+class Manager implement Like<SharedRef<ManagerLayout>> {
 public:
 	imports CR<Manager> expr_m () {
 		return keep[TYPE<Manager>::expr] (ManagerHolder::expr) ;
@@ -435,7 +435,7 @@ struct SyntaxHolder implement Interface {
 	virtual void execute () = 0 ;
 } ;
 
-class Syntax implement OfThis<SharedRef<SyntaxLayout>> {
+class Syntax implement Like<SharedRef<SyntaxLayout>> {
 public:
 	implicit Syntax () = default ;
 

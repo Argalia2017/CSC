@@ -94,7 +94,7 @@
     </Expand>
   </Type>
 
-  <Type Name="CSC::OfThis&lt;*&gt;">
+  <Type Name="CSC::Like&lt;*&gt;">
     <Expand HideRawView="true">
       <ExpandedItem>mThis</ExpandedItem>
     </Expand>

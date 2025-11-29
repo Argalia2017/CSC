@@ -28,9 +28,9 @@ struct FileProcLayout {
 	List<UniqueRef<String<STR>>> mLockDirectory ;
 } ;
 
-exports CR<OfThis<UniqueRef<FileProcLayout>>> FileProcHolder::expr_m () {
+exports CR<Like<UniqueRef<FileProcLayout>>> FileProcHolder::expr_m () {
 	return memorize ([&] () {
-		OfThis<UniqueRef<FileProcLayout>> ret ;
+		Like<UniqueRef<FileProcLayout>> ret ;
 		ret.mThis = UniqueRef<FileProcLayout>::make () ;
 		FileProcHolder::hold (ret)->initialize () ;
 		return move (ret) ;
@@ -274,9 +274,9 @@ struct ConsoleLayout {
 	System mCommand ;
 } ;
 
-exports CR<OfThis<SharedRef<ConsoleLayout>>> ConsoleHolder::expr_m () {
+exports CR<Like<SharedRef<ConsoleLayout>>> ConsoleHolder::expr_m () {
 	return memorize ([&] () {
-		OfThis<SharedRef<ConsoleLayout>> ret ;
+		Like<SharedRef<ConsoleLayout>> ret ;
 		ret.mThis = SharedRef<ConsoleLayout>::make () ;
 		ConsoleHolder::hold (ret)->initialize () ;
 		return move (ret) ;

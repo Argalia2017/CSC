@@ -67,8 +67,26 @@ public:
 		return 0 ;
 	}
 
-	FLT64 sign (CR<BOOL> a) const override {
-		if (a)
+	VAL32 sign (CR<VAL32> a) const override {
+		if (a >= 0)
+			return +1 ;
+		return -1 ;
+	}
+
+	VAL64 sign (CR<VAL64> a) const override {
+		if (a >= 0)
+			return +1 ;
+		return -1 ;
+	}
+
+	FLT32 sign (CR<FLT32> a) const override {
+		if (a >= 0)
+			return +1 ;
+		return -1 ;
+	}
+
+	FLT64 sign (CR<FLT64> a) const override {
+		if (a >= 0)
 			return +1 ;
 		return -1 ;
 	}
@@ -422,9 +440,9 @@ public:
 	}
 } ;
 
-exports CR<OfThis<UniqueRef<MathProcLayout>>> MathProcHolder::expr_m () {
+exports CR<Like<UniqueRef<MathProcLayout>>> MathProcHolder::expr_m () {
 	return memorize ([&] () {
-		OfThis<UniqueRef<MathProcLayout>> ret ;
+		Like<UniqueRef<MathProcLayout>> ret ;
 		ret.mThis = UniqueRef<MathProcLayout>::make () ;
 		MathProcHolder::hold (ret)->initialize () ;
 		return move (ret) ;
@@ -708,9 +726,9 @@ public:
 	}
 } ;
 
-exports CR<OfThis<UniqueRef<FloatProcLayout>>> FloatProcHolder::expr_m () {
+exports CR<Like<UniqueRef<FloatProcLayout>>> FloatProcHolder::expr_m () {
 	return memorize ([&] () {
-		OfThis<UniqueRef<FloatProcLayout>> ret ;
+		Like<UniqueRef<FloatProcLayout>> ret ;
 		ret.mThis = UniqueRef<FloatProcLayout>::make () ;
 		FloatProcHolder::hold (ret)->initialize () ;
 		return move (ret) ;
@@ -729,9 +747,9 @@ template class External<FEXP2CacheHolder ,FEXP2CacheLayout> ;
 
 struct FEXP2CacheLayout {} ;
 
-exports CR<OfThis<UniqueRef<FEXP2CacheLayout>>> FEXP2CacheHolder::expr_m () {
+exports CR<Like<UniqueRef<FEXP2CacheLayout>>> FEXP2CacheHolder::expr_m () {
 	return memorize ([&] () {
-		OfThis<UniqueRef<FEXP2CacheLayout>> ret ;
+		Like<UniqueRef<FEXP2CacheLayout>> ret ;
 		ret.mThis = UniqueRef<FEXP2CacheLayout>::make () ;
 		FEXP2CacheHolder::hold (ret)->initialize () ;
 		return move (ret) ;
@@ -750,9 +768,9 @@ template class External<FEXP10CacheHolder ,FEXP10CacheLayout> ;
 
 struct FEXP10CacheLayout {} ;
 
-exports CR<OfThis<UniqueRef<FEXP10CacheLayout>>> FEXP10CacheHolder::expr_m () {
+exports CR<Like<UniqueRef<FEXP10CacheLayout>>> FEXP10CacheHolder::expr_m () {
 	return memorize ([&] () {
-		OfThis<UniqueRef<FEXP10CacheLayout>> ret ;
+		Like<UniqueRef<FEXP10CacheLayout>> ret ;
 		ret.mThis = UniqueRef<FEXP10CacheLayout>::make () ;
 		FEXP10CacheHolder::hold (ret)->initialize () ;
 		return move (ret) ;
@@ -940,9 +958,9 @@ public:
 	}
 } ;
 
-exports CR<OfThis<UniqueRef<ByteProcLayout>>> ByteProcHolder::expr_m () {
+exports CR<Like<UniqueRef<ByteProcLayout>>> ByteProcHolder::expr_m () {
 	return memorize ([&] () {
-		OfThis<UniqueRef<ByteProcLayout>> ret ;
+		Like<UniqueRef<ByteProcLayout>> ret ;
 		ret.mThis = UniqueRef<ByteProcLayout>::make () ;
 		ByteProcHolder::hold (ret)->initialize () ;
 		return move (ret) ;
@@ -1813,12 +1831,41 @@ public:
 		JetLayout ret ;
 		JetHolder::hold (ret)->initialize (self.mThis->mDX.size () ,0) ;
 		ret.mThis->mEval = JetEvalFunction ([] (VR<JetNode> node ,CR<WrapperLayout> params) {
+			assume (node.mFake->mFX > 0) ;
 			node.mFX = MathProc::log (node.mFake->mFX) ;
-			const auto r1x = MathProc::sign (node.mFake->mEX > 0) ;
+			const auto r1x = MathProc::step (MathProc::abs (node.mFake->mEX)) ;
 			node.mEX = round_ex (r1x) ;
 			const auto r2x = 1 / node.mFake->mFX ;
 			for (auto &&i : range (0 ,node.mDX.size ()))
 				node.mDX[i] = r2x * node.mFake->mDX[i] ;
+			check_fx (node) ;
+		}) ;
+		ret.mThis->mFake = self.mThis.share () ;
+		return move (ret) ;
+	}
+
+	JetLayout relu () const override {
+		JetLayout ret ;
+		JetHolder::hold (ret)->initialize (self.mThis->mDX.size () ,0) ;
+		ret.mThis->mEval = JetEvalFunction ([] (VR<JetNode> node ,CR<WrapperLayout> params) {
+			auto act = TRUE ;
+			if ifdo (act) {
+				if (node.mFake->mEX < 0)
+					discard ;
+				const auto r1x = MathProc::step (node.mFake->mFX) ;
+				node.mFX = r1x * node.mFake->mFX ;
+				node.mEX = r1x * MathProc::step (node.mFake->mEX) ;
+				for (auto &&i : range (0 ,node.mDX.size ()))
+					node.mDX[i] = r1x * node.mFake->mDX[i] ;
+			}
+			if ifdo (act) {
+				if (node.mFake->mEX >= 0)
+					discard ;
+				node.mFX = 0 ;
+				node.mEX = 0 ;
+				for (auto &&i : range (0 ,node.mDX.size ()))
+					node.mDX[i] = 0 ;
+			}
 			check_fx (node) ;
 		}) ;
 		ret.mThis->mFake = self.mThis.share () ;
@@ -1937,9 +1984,9 @@ public:
 	}
 } ;
 
-exports CR<OfThis<UniqueRef<HashProcLayout>>> HashProcHolder::expr_m () {
+exports CR<Like<UniqueRef<HashProcLayout>>> HashProcHolder::expr_m () {
 	return memorize ([&] () {
-		OfThis<UniqueRef<HashProcLayout>> ret ;
+		Like<UniqueRef<HashProcLayout>> ret ;
 		ret.mThis = UniqueRef<HashProcLayout>::make () ;
 		HashProcHolder::hold (ret)->initialize () ;
 		return move (ret) ;

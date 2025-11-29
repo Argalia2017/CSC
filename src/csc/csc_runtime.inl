@@ -134,14 +134,14 @@ public:
 		return move (ret) ;
 	}
 
-	OfThis<Box<TimeLayout ,TimeStorage>> sadd (CR<TimeLayout> that) const override {
-		OfThis<Box<TimeLayout ,TimeStorage>> ret = TimeHolder::create () ;
+	Like<Box<TimeLayout ,TimeStorage>> sadd (CR<TimeLayout> that) const override {
+		Like<Box<TimeLayout ,TimeStorage>> ret = TimeHolder::create () ;
 		ret.mThis->mTime = self.mTime + that.mTime ;
 		return move (ret) ;
 	}
 
-	OfThis<Box<TimeLayout ,TimeStorage>> ssub (CR<TimeLayout> that) const override {
-		OfThis<Box<TimeLayout ,TimeStorage>> ret = TimeHolder::create () ;
+	Like<Box<TimeLayout ,TimeStorage>> ssub (CR<TimeLayout> that) const override {
+		Like<Box<TimeLayout ,TimeStorage>> ret = TimeHolder::create () ;
 		ret.mThis->mTime = self.mTime - that.mTime ;
 		return move (ret) ;
 	}
@@ -163,9 +163,9 @@ template class External<RuntimeProcHolder ,RuntimeProcLayout> ;
 
 struct RuntimeProcLayout {} ;
 
-exports CR<OfThis<UniqueRef<RuntimeProcLayout>>> RuntimeProcHolder::expr_m () {
+exports CR<Like<UniqueRef<RuntimeProcLayout>>> RuntimeProcHolder::expr_m () {
 	return memorize ([&] () {
-		OfThis<UniqueRef<RuntimeProcLayout>> ret ;
+		Like<UniqueRef<RuntimeProcLayout>> ret ;
 		ret.mThis = UniqueRef<RuntimeProcLayout>::make () ;
 		RuntimeProcHolder::hold (ret)->initialize () ;
 		return move (ret) ;
@@ -757,9 +757,9 @@ public:
 	}
 } ;
 
-exports CR<OfThis<UniqueRef<SingletonProcLayout>>> SingletonProcHolder::expr_m () {
+exports CR<Like<UniqueRef<SingletonProcLayout>>> SingletonProcHolder::expr_m () {
 	return memorize ([&] () {
-		OfThis<UniqueRef<SingletonProcLayout>> ret ;
+		Like<UniqueRef<SingletonProcLayout>> ret ;
 		ret.mThis = UniqueRef<SingletonProcLayout>::make () ;
 		SingletonProcHolder::hold (ret)->initialize () ;
 		return move (ret) ;

@@ -15,7 +15,7 @@ namespace CSC {
 struct StreamProcLayout ;
 
 struct StreamProcHolder implement Interface {
-	imports CR<OfThis<UniqueRef<StreamProcLayout>>> expr_m () ;
+	imports CR<Like<UniqueRef<StreamProcLayout>>> expr_m () ;
 	imports VFat<StreamProcHolder> hold (VR<StreamProcLayout> that) ;
 	imports CFat<StreamProcHolder> hold (CR<StreamProcLayout> that) ;
 
@@ -39,7 +39,7 @@ struct StreamProcHolder implement Interface {
 	virtual STRU32 ctrl_from_word (CR<STRU32> str) const = 0 ;
 } ;
 
-class StreamProc implement OfThis<UniqueRef<StreamProcLayout>> {
+class StreamProc implement Like<UniqueRef<StreamProcLayout>> {
 public:
 	static CR<StreamProc> expr_m () {
 		return keep[TYPE<StreamProc>::expr] (StreamProcHolder::expr) ;
@@ -1487,7 +1487,7 @@ inline Format PrintFormat (CR<ARG1>...params) {
 struct StreamTextProcLayout ;
 
 struct StreamTextProcHolder implement Interface {
-	imports CR<OfThis<UniqueRef<StreamTextProcLayout>>> expr_m () ;
+	imports CR<Like<UniqueRef<StreamTextProcLayout>>> expr_m () ;
 	imports VFat<StreamTextProcHolder> hold (VR<StreamTextProcLayout> that) ;
 	imports CFat<StreamTextProcHolder> hold (CR<StreamTextProcLayout> that) ;
 
@@ -1501,7 +1501,7 @@ struct StreamTextProcHolder implement Interface {
 	virtual void write_aligned (VR<FriendWriter> writer ,CR<VAL64> number ,CR<LENGTH> align) const = 0 ;
 } ;
 
-class StreamTextProc implement OfThis<UniqueRef<StreamTextProcLayout>> {
+class StreamTextProc implement Like<UniqueRef<StreamTextProcLayout>> {
 public:
 	static CR<StreamTextProc> expr_m () {
 		return keep[TYPE<StreamTextProc>::expr] (StreamTextProcHolder::expr) ;
@@ -1652,7 +1652,7 @@ struct CommaHolder implement Interface {
 	virtual void tight () = 0 ;
 } ;
 
-class Comma implement OfThis<SharedRef<CommaLayout>> {
+class Comma implement Like<SharedRef<CommaLayout>> {
 public:
 	implicit Comma () = default ;
 
@@ -1698,7 +1698,7 @@ struct RegexHolder implement Interface {
 	virtual Slice match (CR<INDEX> index) const = 0 ;
 } ;
 
-class Regex implement OfThis<AutoRef<RegexLayout>> {
+class Regex implement Like<AutoRef<RegexLayout>> {
 public:
 	implicit Regex () = default ;
 

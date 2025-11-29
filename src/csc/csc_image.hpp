@@ -318,7 +318,7 @@ static constexpr auto COLOR_CYAN = Color3B ({BYTE (0XFF) ,BYTE (0XFF) ,BYTE (0X0
 struct ColorProcLayout ;
 
 struct ColorProcHolder implement Interface {
-	imports CR<OfThis<UniqueRef<ColorProcLayout>>> expr_m () ;
+	imports CR<Like<UniqueRef<ColorProcLayout>>> expr_m () ;
 	imports VFat<ColorProcHolder> hold (VR<ColorProcLayout> that) ;
 	imports CFat<ColorProcHolder> hold (CR<ColorProcLayout> that) ;
 
@@ -331,7 +331,7 @@ struct ColorProcHolder implement Interface {
 	virtual Color3B bgr_from_hsv (CR<Color3B> a) const = 0 ;
 } ;
 
-class ColorProc implement OfThis<UniqueRef<ColorProcLayout>> {
+class ColorProc implement Like<UniqueRef<ColorProcLayout>> {
 public:
 	static CR<ColorProc> expr_m () {
 		return keep[TYPE<ColorProc>::expr] (ColorProcHolder::expr) ;
@@ -365,7 +365,7 @@ public:
 struct ImageProcLayout ;
 
 struct ImageProcHolder implement Interface {
-	imports CR<OfThis<UniqueRef<ImageProcLayout>>> expr_m () ;
+	imports CR<Like<UniqueRef<ImageProcLayout>>> expr_m () ;
 	imports VFat<ImageProcHolder> hold (VR<ImageProcLayout> that) ;
 	imports CFat<ImageProcHolder> hold (CR<ImageProcLayout> that) ;
 
@@ -385,7 +385,7 @@ struct ImageProcHolder implement Interface {
 	virtual FLT64 sampler (CR<Image<FLT64>> image ,CR<FLT64> x ,CR<FLT64> y) const = 0 ;
 } ;
 
-class ImageProc implement OfThis<UniqueRef<ImageProcLayout>> {
+class ImageProc implement Like<UniqueRef<ImageProcLayout>> {
 public:
 	static CR<ImageProc> expr_m () {
 		return keep[TYPE<ImageProc>::expr] (ImageProcHolder::expr) ;
@@ -436,38 +436,6 @@ struct TensorType {
 	} ;
 } ;
 
-class FltProxy {
-protected:
-	FLAG mBuffer ;
-	LENGTH mStep ;
-
-public:
-	implicit FltProxy () = delete ;
-
-	explicit FltProxy (CR<FLAG> buffer_ ,CR<LENGTH> step_) {
-		mBuffer = buffer_ ;
-		mStep = step_ ;
-	}
-
-	forceinline operator FLT32 () const {
-		if (mStep == 4)
-			return FLT32 (bitwise[TYPE<FLT32>::expr] (Pointer::make (mBuffer))) ;
-		if (mStep == 8)
-			return FLT32 (bitwise[TYPE<FLT64>::expr] (Pointer::make (mBuffer))) ;
-		assert (FALSE) ;
-		return 0 ;
-	}
-
-	forceinline operator FLT64 () const {
-		if (mStep == 4)
-			return FLT64 (bitwise[TYPE<FLT32>::expr] (Pointer::make (mBuffer))) ;
-		if (mStep == 8)
-			return FLT64 (bitwise[TYPE<FLT64>::expr] (Pointer::make (mBuffer))) ;
-		assert (FALSE) ;
-		return 0 ;
-	}
-} ;
-
 struct TensorLayout {
 	Ref<RefBuffer<BYTE>> mTensor ;
 	FLAG mHolder ;
@@ -491,10 +459,10 @@ struct TensorHolder implement Interface {
 	virtual TensorLayout reshape () const = 0 ;
 	virtual TensorLayout reshape (CR<WrapperLayout> shape_) const = 0 ;
 	virtual Ref<RefBuffer<BYTE>> borrow () const leftvalue = 0 ;
-	virtual FltProxy at (CR<INDEX> i1) const = 0 ;
-	virtual FltProxy at (CR<INDEX> i1 ,CR<INDEX> i2) const = 0 ;
-	virtual FltProxy at (CR<INDEX> i1 ,CR<INDEX> i2 ,CR<INDEX> i3) const = 0 ;
-	virtual FltProxy at (CR<INDEX> i1 ,CR<INDEX> i2 ,CR<INDEX> i3 ,CR<INDEX> i4) const = 0 ;
+	virtual void get (CR<INDEX> i1 ,VR<FLT64> item) const = 0 ;
+	virtual void get (CR<INDEX> i1 ,CR<INDEX> i2 ,VR<FLT64> item) const = 0 ;
+	virtual void get (CR<INDEX> i1 ,CR<INDEX> i2 ,CR<INDEX> i3 ,VR<FLT64> item) const = 0 ;
+	virtual void get (CR<INDEX> i1 ,CR<INDEX> i2 ,CR<INDEX> i3 ,CR<INDEX> i4 ,VR<FLT64> item) const = 0 ;
 	virtual TensorLayout sadd (CR<TensorLayout> that) const = 0 ;
 	virtual TensorLayout ssub (CR<TensorLayout> that) const = 0 ;
 	virtual TensorLayout smul (CR<TensorLayout> that) const = 0 ;
@@ -564,20 +532,20 @@ public:
 		return TensorHolder::hold (thiz)->borrow () ;
 	}
 
-	FltProxy at (CR<INDEX> i1) const {
-		return TensorHolder::hold (thiz)->at (i1) ;
+	void get (CR<INDEX> i1 ,VR<FLT64> item) const {
+		return TensorHolder::hold (thiz)->get (i1 ,item) ;
 	}
 
-	FltProxy at (CR<INDEX> i1 ,CR<INDEX> i2) const {
-		return TensorHolder::hold (thiz)->at (i1 ,i2) ;
+	void get (CR<INDEX> i1 ,CR<INDEX> i2 ,VR<FLT64> item) const {
+		return TensorHolder::hold (thiz)->get (i1 ,i2 ,item) ;
 	}
 
-	FltProxy at (CR<INDEX> i1 ,CR<INDEX> i2 ,CR<INDEX> i3) const {
-		return TensorHolder::hold (thiz)->at (i1 ,i2 ,i3) ;
+	void get (CR<INDEX> i1 ,CR<INDEX> i2 ,CR<INDEX> i3 ,VR<FLT64> item) const {
+		return TensorHolder::hold (thiz)->get (i1 ,i2 ,i3 ,item) ;
 	}
 
-	FltProxy at (CR<INDEX> i1 ,CR<INDEX> i2 ,CR<INDEX> i3 ,CR<INDEX> i4) const {
-		return TensorHolder::hold (thiz)->at (i1 ,i2 ,i3 ,i4) ;
+	void get (CR<INDEX> i1 ,CR<INDEX> i2 ,CR<INDEX> i3 ,CR<INDEX> i4 ,VR<FLT64> item) const {
+		return TensorHolder::hold (thiz)->get (i1 ,i2 ,i3 ,i4 ,item) ;
 	}
 
 	Tensor sadd (CR<Tensor> that) const {

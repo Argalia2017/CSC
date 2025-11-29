@@ -617,13 +617,13 @@ struct MakeMatrixHolder implement Interface {
 	virtual void make_RotationMatrix (CR<Vector> normal ,CR<FLT64> angle) = 0 ;
 	virtual void make_RotationMatrix (CR<Vector> from ,CR<Vector> into) = 0 ;
 	virtual void make_TranslationMatrix (CR<FLT64> x ,CR<FLT64> y ,CR<FLT64> z) = 0 ;
-	virtual void make_PerspectiveMatrix (CR<FLT64> fx ,CR<FLT64> fy ,CR<FLT64> wx ,CR<FLT64> wy) = 0 ;
+	virtual void make_PerspectiveMatrix (CR<FLT64> fovx ,CR<ImageShape> shape) = 0 ;
+	virtual void make_PerspectiveMatrix (CR<FLT64> fx ,CR<FLT64> fy ,CR<FLT64> cx ,CR<FLT64> cy) = 0 ;
 	virtual void make_ProjectionMatrix (CR<Vector> normal ,CR<Vector> center ,CR<Vector> light) = 0 ;
 	virtual void make_ViewMatrix (CR<Vector> vx ,CR<Vector> vy) = 0 ;
 	virtual void make_ViewMatrix (CR<Vector> vx ,CR<Vector> vy ,CR<Just<ViewMatrixOption>> option) = 0 ;
 	virtual void make_CrossProductMatrix (CR<Vector> xyz) = 0 ;
 	virtual void make_OuterProductMatrix (CR<Vector> x ,CR<Vector> y) = 0 ;
-	virtual void make_AffineMatrix (CR<Array<FLT64>> a) = 0 ;
 } ;
 
 inline Matrix DiagMatrix (CR<FLT64> x ,CR<FLT64> y ,CR<FLT64> z) {
@@ -668,9 +668,15 @@ inline Matrix TranslationMatrix (CR<FLT64> x ,CR<FLT64> y ,CR<FLT64> z) {
 	return move (ret) ;
 }
 
-inline Matrix PerspectiveMatrix (CR<FLT64> fx ,CR<FLT64> fy ,CR<FLT64> wx ,CR<FLT64> wy) {
+inline Matrix PerspectiveMatrix (CR<FLT64> fovx ,CR<ImageShape> shape) {
 	Matrix ret ;
-	MakeMatrixHolder::hold (ret)->make_PerspectiveMatrix (fx ,fy ,wx ,wy) ;
+	MakeMatrixHolder::hold (ret)->make_PerspectiveMatrix (fovx ,shape) ;
+	return move (ret) ;
+}
+
+inline Matrix PerspectiveMatrix (CR<FLT64> fx ,CR<FLT64> fy ,CR<FLT64> cx ,CR<FLT64> cy) {
+	Matrix ret ;
+	MakeMatrixHolder::hold (ret)->make_PerspectiveMatrix (fx ,fy ,cx ,cy) ;
 	return move (ret) ;
 }
 
@@ -734,12 +740,6 @@ inline Matrix SymmetryMatrix (CR<Vector> x ,CR<Vector> y) {
 	return move (ret) ;
 }
 
-inline Matrix AffineMatrix (CR<Array<FLT64>> a) {
-	Matrix ret ;
-	MakeMatrixHolder::hold (ret)->make_AffineMatrix (a) ;
-	return move (ret) ;
-}
-
 struct TRSResult {
 	Matrix mT ;
 	Matrix mR ;
@@ -763,7 +763,7 @@ struct SVDResult {
 struct MatrixProcLayout ;
 
 struct MatrixProcHolder implement Interface {
-	imports CR<OfThis<UniqueRef<MatrixProcLayout>>> expr_m () ;
+	imports CR<Like<UniqueRef<MatrixProcLayout>>> expr_m () ;
 	imports VFat<MatrixProcHolder> hold (VR<MatrixProcLayout> that) ;
 	imports CFat<MatrixProcHolder> hold (CR<MatrixProcLayout> that) ;
 
@@ -773,7 +773,7 @@ struct MatrixProcHolder implement Interface {
 	virtual SVDResult solve_svd (CR<Matrix> a) const = 0 ;
 } ;
 
-class MatrixProc implement OfThis<UniqueRef<MatrixProcLayout>> {
+class MatrixProc implement Like<UniqueRef<MatrixProcLayout>> {
 public:
 	static CR<MatrixProc> expr_m () {
 		return keep[TYPE<MatrixProc>::expr] (MatrixProcHolder::expr) ;
@@ -960,7 +960,7 @@ public:
 struct LinearProcLayout ;
 
 struct LinearProcHolder implement Interface {
-	imports CR<OfThis<UniqueRef<LinearProcLayout>>> expr_m () ;
+	imports CR<Like<UniqueRef<LinearProcLayout>>> expr_m () ;
 	imports VFat<LinearProcHolder> hold (VR<LinearProcLayout> that) ;
 	imports CFat<LinearProcHolder> hold (CR<LinearProcLayout> that) ;
 
@@ -970,7 +970,7 @@ struct LinearProcHolder implement Interface {
 	virtual Image<FLT64> solve_inv (CR<Image<FLT64>> a) const = 0 ;
 } ;
 
-class LinearProc implement OfThis<UniqueRef<LinearProcLayout>> {
+class LinearProc implement Like<UniqueRef<LinearProcLayout>> {
 public:
 	static CR<LinearProc> expr_m () {
 		return keep[TYPE<LinearProc>::expr] (LinearProcHolder::expr) ;
@@ -1001,7 +1001,7 @@ struct PointCloudKDTreeHolder implement Interface {
 	virtual Array<INDEX> search (CR<Vector> center ,CR<LENGTH> neighbor ,CR<FLT64> radius) const = 0 ;
 } ;
 
-class PointCloudKDTree implement OfThis<AutoRef<PointCloudKDTreeLayout>> {} ;
+class PointCloudKDTree implement Like<AutoRef<PointCloudKDTreeLayout>> {} ;
 
 struct PointCloudLayout {
 	LENGTH mRank ;

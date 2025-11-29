@@ -16,7 +16,7 @@ namespace CSC {
 struct StringProcLayout ;
 
 struct StringProcHolder implement Interface {
-	imports CR<OfThis<UniqueRef<StringProcLayout>>> expr_m () ;
+	imports CR<Like<UniqueRef<StringProcLayout>>> expr_m () ;
 	imports VFat<StringProcHolder> hold (VR<StringProcLayout> that) ;
 	imports CFat<StringProcHolder> hold (CR<StringProcLayout> that) ;
 
@@ -57,7 +57,7 @@ struct StringProcHolder implement Interface {
 	virtual String<STRU32> stru32_from_strs (CR<String<STRW>> a) const = 0 ;
 } ;
 
-class StringProc implement OfThis<UniqueRef<StringProcLayout>> {
+class StringProc implement Like<UniqueRef<StringProcLayout>> {
 public:
 	static CR<StringProc> expr_m () {
 		return keep[TYPE<StringProc>::expr] (StringProcHolder::expr) ;
