@@ -923,7 +923,17 @@ class ReflectCompileBinder final implement Fat<ReflectCompile ,Proxy> {
 public:
 	void compile (VR<Pointer> a ,VR<Pointer> b) const override {
 		auto &&rax = keep[TYPE<A>::expr] (a) ;
-		return rax.compile (b) ;
+		return compile_impl (PHX ,rax ,b) ;
+	}
+
+	template <class ARG1 ,class ARG2 ,class = REQUIRE<HAS_COMPILE<ARG1 ,ARG2>>>
+	void compile_impl (CR<typeof (PH2)> ,VR<ARG1> a ,VR<ARG2> b) const {
+		a.compile (b) ;
+	}
+
+	template <class ARG1 ,class ARG2>
+	void compile_impl (CR<typeof (PH1)> ,VR<ARG1> a ,VR<ARG2> b) const {
+		noop () ;
 	}
 } ;
 

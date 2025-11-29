@@ -1430,6 +1430,22 @@ trait HAS_M3RD_HELP<A ,REQUIRE<KILL<ENUM_TRUE ,typeof (nullof (A).m3rd)>>> {
 template <class A>
 using HAS_M3RD = typename HAS_M3RD_HELP<A ,ALWAYS>::RET ;
 
+template <class...>
+trait HAS_COMPILE_HELP ;
+
+template <class A ,class B ,class OTHERWISE>
+trait HAS_COMPILE_HELP<A ,B ,OTHERWISE> {
+	using RET = ENUM_FALSE ;
+} ;
+
+template <class A ,class B>
+trait HAS_COMPILE_HELP<A ,B ,REQUIRE<KILL<ENUM_TRUE ,typeof (nullof (A).compile (nullof (B)))>>> {
+	using RET = ENUM_TRUE ;
+} ;
+
+template <class A ,class B>
+using HAS_COMPILE = typename HAS_COMPILE_HELP<A ,B ,ALWAYS>::RET ;
+
 class Pointer implement Proxy {
 public:
 	static VR<Pointer> make (CR<FLAG> that) noexcept {

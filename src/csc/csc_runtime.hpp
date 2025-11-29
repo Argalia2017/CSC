@@ -766,6 +766,8 @@ public:
 			return inline_vptr (ReflectGuidBinder<A> ()) ;
 		if (uuid == ReflectNameBinder<A>::expr)
 			return inline_vptr (ReflectNameBinder<A> ()) ;
+		if (uuid == ReflectCompileBinder<A>::expr)
+			return inline_vptr (ReflectCompileBinder<A> ()) ;
 		if (uuid == ReflectCloneBinder<A>::expr)
 			return inline_vptr (ReflectCloneBinder<A> ()) ;
 		return ZERO ;

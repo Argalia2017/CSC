@@ -202,7 +202,7 @@
     <Expand HideRawView="true">
       <IndexListItems>
         <Size>mAllocator.mSize</Size>
-        <ValueNode>((CSC::TupleWrap2&lt;CSC::Union&lt;$T1&gt;,$T2&gt;*)mAllocator.mBuffer)[$i]</ValueNode>
+        <ValueNode>((CSC::UnionPair&lt;$T1,$T2&gt;*)mAllocator.mBuffer)[$i]</ValueNode>
       </IndexListItems>
     </Expand>
   </Type>

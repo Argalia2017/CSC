@@ -13,7 +13,7 @@ using namespace SOLUTION ;
 */
 
 int main () {
-	GlobalProc::startup () ;
+	Singleton<Console>::expr.show () ;
 
 	return 0 ;
 }

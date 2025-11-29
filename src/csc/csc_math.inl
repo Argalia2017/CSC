@@ -1430,6 +1430,7 @@ class JetImplHolder final implement Fat<JetHolder ,JetLayout> {
 public:
 	void initialize (CR<LENGTH> size_ ,CR<FLT64> item) override {
 		assert (size_ > 0) ;
+		self.mThis = Ref<JetNode>::make () ;
 		self.mThis->mFX = item ;
 		self.mThis->mEX = 0 ;
 		self.mThis->mDX = RefBuffer<FLT64> (size_) ;
@@ -1600,6 +1601,7 @@ public:
 		JetLayout ret ;
 		JetHolder::hold (ret)->initialize (self.mThis->mDX.size () ,0) ;
 		ret.mThis->mEval = JetEvalFunction ([] (VR<JetNode> node ,CR<WrapperLayout> params) {
+			assume (node.mFake->mFX >= 0) ;
 			node.mFX = MathProc::sqrt (node.mFake->mFX) ;
 			node.mEX = round_ex (node.mFake->mEX / 2) ;
 			const auto r1x = 1 / (2 * node.mFX) ;
@@ -1831,7 +1833,7 @@ public:
 		JetLayout ret ;
 		JetHolder::hold (ret)->initialize (self.mThis->mDX.size () ,0) ;
 		ret.mThis->mEval = JetEvalFunction ([] (VR<JetNode> node ,CR<WrapperLayout> params) {
-			assume (node.mFake->mFX > 0) ;
+			assume (node.mFake->mFX >= 0) ;
 			node.mFX = MathProc::log (node.mFake->mFX) ;
 			const auto r1x = MathProc::step (MathProc::abs (node.mFake->mEX)) ;
 			node.mEX = round_ex (r1x) ;
