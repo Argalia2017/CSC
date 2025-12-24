@@ -23,19 +23,19 @@ static constexpr auto noop = FUNCTION_noop () ;
 
 struct FUNCTION_address {
 	template <class ARG1>
-	forceinline FLAG operator() (CR<ARG1> a) const noexcept {
-		return FLAG (&Pointer::from (a)) ;
+	forceinline Flag operator() (CR<ARG1> a) const noexcept {
+		return Flag (&Pointer::from (a)) ;
 	}
 } ;
 
 static constexpr auto address = FUNCTION_address () ;
 
 struct FUNCTION_inline_ifdo {
-	forceinline BOOL operator() (CR<BOOL> flag) const noexcept {
+	forceinline Bool operator() (CR<Bool> flag) const noexcept {
 		return FALSE ;
 	}
 
-	forceinline BOOL operator() (VR<BOOL> flag) const noexcept {
+	forceinline Bool operator() (VR<Bool> flag) const noexcept {
 		flag = FALSE ;
 		return FALSE ;
 	}
@@ -46,23 +46,23 @@ static constexpr auto inline_ifdo = FUNCTION_inline_ifdo () ;
 struct CoreProcHolder implement Interface {
 	imports CR<CoreProcHolder> expr_m () ;
 
-	virtual BOOL inline_unittest () const = 0 ;
+	virtual Bool inline_debug () const = 0 ;
 	virtual void inline_abort () const = 0 ;
 	virtual void inline_notice (VR<Pointer> src) const = 0 ;
-	virtual FLAG inline_type_name (CR<Pointer> squalor ,CR<FLAG> func_) const = 0 ;
-	virtual Tuple<FLAG ,FLAG> inline_list_pair (CR<Pointer> squalor ,CR<LENGTH> step_) const = 0 ;
-	virtual void inline_memset (VR<Pointer> dst ,CR<LENGTH> size_) const = 0 ;
-	virtual void inline_memcpy (VR<Pointer> dst ,CR<Pointer> src ,CR<LENGTH> size_) const = 0 ;
-	virtual FLAG inline_memcmp (CR<Pointer> dst ,CR<Pointer> src ,CR<LENGTH> size_) const = 0 ;
+	virtual Flag inline_type_name (CR<Pointer> squalor ,CR<Flag> func_) const = 0 ;
+	virtual Tuple<Flag ,Flag> inline_list_pair (CR<Pointer> squalor ,CR<Length> step_) const = 0 ;
+	virtual void inline_memset (VR<Pointer> dst ,CR<Length> size_) const = 0 ;
+	virtual void inline_memcpy (VR<Pointer> dst ,CR<Pointer> src ,CR<Length> size_) const = 0 ;
+	virtual Flag inline_memcmp (CR<Pointer> dst ,CR<Pointer> src ,CR<Length> size_) const = 0 ;
 } ;
 
 struct FUNCTION_inline_unittest {
-	forceinline BOOL operator() () const noexcept {
-		return CoreProcHolder::expr.inline_unittest () ;
+	forceinline Bool operator() () const noexcept {
+		return CoreProcHolder::expr.inline_debug () ;
 	}
 } ;
 
-static constexpr auto inline_unittest = FUNCTION_inline_unittest () ;
+static constexpr auto inline_debug = FUNCTION_inline_unittest () ;
 
 struct FUNCTION_inline_abort {
 	forceinline void operator() () const noexcept {
@@ -76,14 +76,14 @@ struct FUNCTION_inline_notice {
 	template <class ARG1 ,class ARG2>
 	forceinline void operator() (TYPE<ARG1> ,XR<ARG2> src) const noexcept {
 		static volatile auto mInstance = (&src) ;
-		return CoreProcHolder::expr.inline_notice (Pointer::make (FLAG (mInstance))) ;
+		return CoreProcHolder::expr.inline_notice (Pointer::make (Flag (mInstance))) ;
 	}
 } ;
 
 static constexpr auto inline_notice = FUNCTION_inline_notice () ;
 
 struct FUNCTION_inline_type_name {
-	forceinline FLAG operator() (CR<Pointer> squalor ,CR<FLAG> func_) const noexcept {
+	forceinline Flag operator() (CR<Pointer> squalor ,CR<Flag> func_) const noexcept {
 		return CoreProcHolder::expr.inline_type_name (squalor ,func_) ;
 	}
 } ;
@@ -91,7 +91,7 @@ struct FUNCTION_inline_type_name {
 static constexpr auto inline_type_name = FUNCTION_inline_type_name () ;
 
 struct FUNCTION_inline_list_pair {
-	forceinline Tuple<FLAG ,FLAG> operator() (CR<Pointer> squalor ,CR<LENGTH> step_) const noexcept {
+	forceinline Tuple<Flag ,Flag> operator() (CR<Pointer> squalor ,CR<Length> step_) const noexcept {
 		return CoreProcHolder::expr.inline_list_pair (squalor ,step_) ;
 	}
 } ;
@@ -99,7 +99,7 @@ struct FUNCTION_inline_list_pair {
 static constexpr auto inline_list_pair = FUNCTION_inline_list_pair () ;
 
 struct FUNCTION_inline_memset {
-	forceinline void operator() (VR<Pointer> dst ,CR<LENGTH> size_) const noexcept {
+	forceinline void operator() (VR<Pointer> dst ,CR<Length> size_) const noexcept {
 		return __macro_memset (dst ,size_) ;
 	}
 
@@ -112,7 +112,7 @@ struct FUNCTION_inline_memset {
 static constexpr auto inline_memset = FUNCTION_inline_memset () ;
 
 struct FUNCTION_inline_memcpy {
-	forceinline void operator() (VR<Pointer> dst ,CR<Pointer> src ,CR<LENGTH> size_) const noexcept {
+	forceinline void operator() (VR<Pointer> dst ,CR<Pointer> src ,CR<Length> size_) const noexcept {
 		return __macro_memcpy (dst ,src ,size_) ;
 	}
 
@@ -125,12 +125,12 @@ struct FUNCTION_inline_memcpy {
 static constexpr auto inline_memcpy = FUNCTION_inline_memcpy () ;
 
 struct FUNCTION_inline_memcmp {
-	forceinline FLAG operator() (CR<Pointer> dst ,CR<Pointer> src ,CR<LENGTH> size_) const noexcept {
+	forceinline Flag operator() (CR<Pointer> dst ,CR<Pointer> src ,CR<Length> size_) const noexcept {
 		return __macro_memcmp (dst ,src ,size_) ;
 	}
 
 	template <class ARG1 ,class = REQUIRE<IS_TRIVIAL<ARG1>>>
-	forceinline FLAG operator() (CR<ARG1> dst ,CR<ARG1> src) const noexcept {
+	forceinline Flag operator() (CR<ARG1> dst ,CR<ARG1> src) const noexcept {
 		return thiz (Pointer::from (dst) ,Pointer::from (src) ,SIZE_OF<ARG1>::expr) ;
 	}
 } ;
@@ -349,15 +349,15 @@ struct FUNCTION_memorize {
 static constexpr auto memorize = FUNCTION_memorize () ;
 
 struct FUNCTION_inline_vptr {
-	forceinline FLAG operator() (CR<Interface> binder) const noexcept {
-		return bitwise[TYPE<FLAG>::expr] (binder) ;
+	forceinline Flag operator() (CR<Interface> binder) const noexcept {
+		return bitwise[TYPE<Flag>::expr] (binder) ;
 	}
 } ;
 
 static constexpr auto inline_vptr = FUNCTION_inline_vptr () ;
 
 struct FUNCTION_inline_min {
-	forceinline VAL operator() (CR<VAL> a ,CR<VAL> b) const noexcept {
+	forceinline Val operator() (CR<Val> a ,CR<Val> b) const noexcept {
 		if (a <= b)
 			return a ;
 		return b ;
@@ -367,7 +367,7 @@ struct FUNCTION_inline_min {
 static constexpr auto inline_min = FUNCTION_inline_min () ;
 
 struct FUNCTION_inline_max {
-	forceinline VAL operator() (CR<VAL> a ,CR<VAL> b) const noexcept {
+	forceinline Val operator() (CR<Val> a ,CR<Val> b) const noexcept {
 		if (a >= b)
 			return a ;
 		return b ;
@@ -377,7 +377,7 @@ struct FUNCTION_inline_max {
 static constexpr auto inline_max = FUNCTION_inline_max () ;
 
 struct FUNCTION_inline_between {
-	forceinline BOOL operator() (CR<VAL> val ,CR<VAL> begin_ ,CR<VAL> end_) const noexcept {
+	forceinline Bool operator() (CR<Val> val ,CR<Val> begin_ ,CR<Val> end_) const noexcept {
 		if (val < begin_)
 			return FALSE ;
 		if (val >= end_)
@@ -389,7 +389,7 @@ struct FUNCTION_inline_between {
 static constexpr auto inline_between = FUNCTION_inline_between () ;
 
 struct FUNCTION_inline_alignas {
-	forceinline VAL operator() (CR<VAL> val ,CR<VAL> align) const noexcept {
+	forceinline Val operator() (CR<Val> val ,CR<Val> align) const noexcept {
 		assert (align > 0) ;
 		const auto r1x = val / align * align ;
 		if (r1x == val)
@@ -426,27 +426,27 @@ static constexpr auto inline_clone = FUNCTION_inline_clone () ;
 
 struct FUNCTION_inline_equal {
 	template <class ARG1>
-	forceinline BOOL operator() (CR<ARG1> a ,CR<ARG1> b) const noexcept {
+	forceinline Bool operator() (CR<ARG1> a ,CR<ARG1> b) const noexcept {
 		return equal_impl (PHX ,a ,b) ;
 	}
 
 	template <class ARG1 ,class = REQUIRE<IS_EQUALABLE<ARG1>>>
-	forceinline BOOL equal_impl (CR<typeof (PH4)> ,CR<ARG1> a ,CR<ARG1> b) const {
+	forceinline Bool equal_impl (CR<typeof (PH4)> ,CR<ARG1> a ,CR<ARG1> b) const {
 		return a == b ;
 	}
 
 	template <class ARG1 ,class = REQUIRE<HAS_EQUAL<ARG1>>>
-	forceinline BOOL equal_impl (CR<typeof (PH3)> ,CR<ARG1> a ,CR<ARG1> b) const {
+	forceinline Bool equal_impl (CR<typeof (PH3)> ,CR<ARG1> a ,CR<ARG1> b) const {
 		return a.equal (b) ;
 	}
 
 	template <class ARG1 ,class = REQUIRE<IS_TRIVIAL<ARG1>>>
-	forceinline BOOL equal_impl (CR<typeof (PH2)> ,CR<ARG1> a ,CR<ARG1> b) const {
+	forceinline Bool equal_impl (CR<typeof (PH2)> ,CR<ARG1> a ,CR<ARG1> b) const {
 		return inline_memcmp (a ,b) == ZERO ;
 	}
 
 	template <class ARG1>
-	forceinline BOOL equal_impl (CR<typeof (PH1)> ,CR<ARG1> a ,CR<ARG1> b) const {
+	forceinline Bool equal_impl (CR<typeof (PH1)> ,CR<ARG1> a ,CR<ARG1> b) const {
 		assert (FALSE) ;
 		return FALSE ;
 	}
@@ -456,12 +456,12 @@ static constexpr auto inline_equal = FUNCTION_inline_equal () ;
 
 struct FUNCTION_inline_compr {
 	template <class ARG1>
-	forceinline FLAG operator() (CR<ARG1> a ,CR<ARG1> b) const noexcept {
+	forceinline Flag operator() (CR<ARG1> a ,CR<ARG1> b) const noexcept {
 		return compr_impl (PHX ,a ,b) ;
 	}
 
 	template <class ARG1 ,class = REQUIRE<IS_COMPRABLE<ARG1>>>
-	forceinline FLAG compr_impl (CR<typeof (PH4)> ,CR<ARG1> a ,CR<ARG1> b) const {
+	forceinline Flag compr_impl (CR<typeof (PH4)> ,CR<ARG1> a ,CR<ARG1> b) const {
 		if (a < b)
 			return NONE ;
 		if (a > b)
@@ -470,17 +470,17 @@ struct FUNCTION_inline_compr {
 	}
 
 	template <class ARG1 ,class = REQUIRE<HAS_COMPR<ARG1>>>
-	forceinline FLAG compr_impl (CR<typeof (PH3)> ,CR<ARG1> a ,CR<ARG1> b) const {
+	forceinline Flag compr_impl (CR<typeof (PH3)> ,CR<ARG1> a ,CR<ARG1> b) const {
 		return a.compr (b) ;
 	}
 
 	template <class ARG1 ,class = REQUIRE<IS_TRIVIAL<ARG1>>>
-	forceinline FLAG compr_impl (CR<typeof (PH2)> ,CR<ARG1> a ,CR<ARG1> b) const {
+	forceinline Flag compr_impl (CR<typeof (PH2)> ,CR<ARG1> a ,CR<ARG1> b) const {
 		return inline_memcmp (a ,b) ;
 	}
 
 	template <class ARG1>
-	forceinline FLAG compr_impl (CR<typeof (PH1)> ,CR<ARG1> a ,CR<ARG1> b) const {
+	forceinline Flag compr_impl (CR<typeof (PH1)> ,CR<ARG1> a ,CR<ARG1> b) const {
 		assert (FALSE) ;
 		return ZERO ;
 	}
@@ -514,9 +514,9 @@ struct FUNCTION_inline_visit {
 static constexpr auto inline_visit = FUNCTION_inline_visit () ;
 
 struct IndexIteratorLayout {
-	INDEX mBegin ;
-	INDEX mEnd ;
-	INDEX mPeek ;
+	Index mBegin ;
+	Index mEnd ;
+	Index mPeek ;
 
 public:
 	implicit IndexIteratorLayout () noexcept {
@@ -535,7 +535,7 @@ protected:
 public:
 	implicit IndexIterator () = default ;
 
-	explicit IndexIterator (CR<INDEX> begin_ ,CR<INDEX> end_) {
+	explicit IndexIterator (CR<Index> begin_ ,CR<Index> end_) {
 		mBegin = begin_ ;
 		mEnd = inline_max (begin_ ,end_) ;
 		mPeek = mBegin ;
@@ -544,7 +544,7 @@ public:
 		mPeek = mEnd ;
 	}
 
-	LENGTH length () const {
+	Length length () const {
 		return mEnd - mBegin ;
 	}
 
@@ -556,23 +556,23 @@ public:
 		return thiz ;
 	}
 
-	BOOL good () const {
+	Bool good () const {
 		return mPeek != mEnd ;
 	}
 
-	forceinline BOOL operator== (CR<IndexIterator>) const {
+	forceinline Bool operator== (CR<IndexIterator>) const {
 		return (!good ()) ;
 	}
 
-	forceinline BOOL operator!= (CR<IndexIterator>) const {
+	forceinline Bool operator!= (CR<IndexIterator>) const {
 		return good () ;
 	}
 
-	CR<INDEX> peek () const leftvalue {
+	CR<Index> peek () const leftvalue {
 		return mPeek ;
 	}
 
-	forceinline CR<INDEX> operator* () const leftvalue {
+	forceinline CR<Index> operator* () const leftvalue {
 		return peek () ;
 	}
 
@@ -586,8 +586,8 @@ public:
 } ;
 
 struct Pixel {
-	INDEX mX ;
-	INDEX mY ;
+	Index mX ;
+	Index mY ;
 } ;
 
 struct PixelIteratorLayout {
@@ -615,7 +615,7 @@ protected:
 public:
 	implicit PixelIterator () = default ;
 
-	explicit PixelIterator (CR<INDEX> begin_x ,CR<INDEX> end_x ,CR<INDEX> begin_y ,CR<INDEX> end_y) {
+	explicit PixelIterator (CR<Index> begin_x ,CR<Index> end_x ,CR<Index> begin_y ,CR<Index> end_y) {
 		mBegin.mX = begin_x ;
 		mBegin.mY = begin_y ;
 		mEnd.mX = inline_max (begin_x ,end_x) ;
@@ -626,7 +626,7 @@ public:
 		mPeek = mEnd ;
 	}
 
-	LENGTH length () const {
+	Length length () const {
 		return (mEnd.mX - mBegin.mX) * (mEnd.mY - mBegin.mY) ;
 	}
 
@@ -638,15 +638,15 @@ public:
 		return thiz ;
 	}
 
-	BOOL good () const {
+	Bool good () const {
 		return mPeek.mY != mEnd.mY ;
 	}
 
-	forceinline BOOL operator== (CR<PixelIterator>) const {
+	forceinline Bool operator== (CR<PixelIterator>) const {
 		return (!good ()) ;
 	}
 
-	forceinline BOOL operator!= (CR<PixelIterator>) const {
+	forceinline Bool operator!= (CR<PixelIterator>) const {
 		return good () ;
 	}
 
@@ -672,11 +672,11 @@ public:
 } ;
 
 struct FUNCTION_range {
-	forceinline IndexIterator operator() (CR<INDEX> begin_ ,CR<INDEX> end_) const noexcept {
+	forceinline IndexIterator operator() (CR<Index> begin_ ,CR<Index> end_) const noexcept {
 		return IndexIterator (begin_ ,end_) ;
 	}
 
-	forceinline PixelIterator operator() (CR<INDEX> begin_x ,CR<INDEX> end_x ,CR<INDEX> begin_y ,CR<INDEX> end_y) const noexcept {
+	forceinline PixelIterator operator() (CR<Index> begin_x ,CR<Index> end_x ,CR<Index> begin_y ,CR<Index> end_y) const noexcept {
 		return PixelIterator (begin_x ,end_x ,begin_y ,end_y) ;
 	}
 } ;
@@ -684,8 +684,8 @@ struct FUNCTION_range {
 static constexpr auto range = FUNCTION_range () ;
 
 struct FatLayout {
-	FLAG mHolder ;
-	FLAG mLayout ;
+	Flag mHolder ;
+	Flag mLayout ;
 } ;
 
 template <class A ,class B>
@@ -694,14 +694,16 @@ private:
 	require (IS_INTERFACE<A>) ;
 
 protected:
-	FLAG mLayout ;
+	Flag mLayout ;
 
 public:
-	VR<B> self_m () leftvalue {
+	template <class ARG1 = B>
+	VR<ARG1> self_m () leftvalue {
 		return Pointer::make (mLayout) ;
 	}
 
-	CR<B> self_m () const leftvalue {
+	template <class ARG1 = B>
+	CR<ARG1> self_m () const leftvalue {
 		return Pointer::make (mLayout) ;
 	}
 } ;
@@ -797,24 +799,14 @@ public:
 	}
 } ;
 
-template <class A>
-class SimpleUnknownBinder final implement Fat<FriendUnknown ,Proxy> {
-public:
-	FLAG reflect (CR<FLAG> uuid) const override {
-		if (uuid == A::expr)
-			return inline_vptr (A ()) ;
-		return ZERO ;
-	}
-} ;
-
-class Unknown {
+class Unknown implement Proxy {
 protected:
-	FLAG mHolder ;
+	Flag mHolder ;
 
 public:
 	implicit Unknown () = delete ;
 
-	explicit Unknown (CR<FLAG> that) {
+	explicit Unknown (CR<Flag> that) {
 		assert (that != ZERO) ;
 		mHolder = that ;
 	}
@@ -829,41 +821,41 @@ public:
 } ;
 
 struct ReflectSize implement Interface {
-	virtual LENGTH type_size () const = 0 ;
-	virtual LENGTH type_align () const = 0 ;
+	virtual Length type_size () const = 0 ;
+	virtual Length type_align () const = 0 ;
 
-	forceinline static consteval FLAG expr_m () noexcept {
+	forceinline static consteval Flag expr_m () noexcept {
 		return 100 ;
 	}
 } ;
 
 template <class A>
-class ReflectSizeBinder final implement Fat<ReflectSize ,Proxy> {
+class ReflectSizeBinder final implement Fat<ReflectSize ,void> {
 public:
-	LENGTH type_size () const override {
+	Length type_size () const override {
 		return SIZE_OF<A>::expr ;
 	}
 
-	LENGTH type_align () const override {
+	Length type_align () const override {
 		return ALIGN_OF<A>::expr ;
 	}
 } ;
 
 struct ReflectCreate implement Interface {
-	virtual void create (VR<Pointer> a ,CR<LENGTH> size_) const noexcept = 0 ;
+	virtual void create (VR<Pointer> a ,CR<Length> size_) const noexcept = 0 ;
 
-	forceinline static consteval FLAG expr_m () noexcept {
+	forceinline static consteval Flag expr_m () noexcept {
 		return 101 ;
 	}
 } ;
 
 template <class A>
-class ReflectCreateBinder final implement Fat<ReflectCreate ,Proxy> {
+class ReflectCreateBinder final implement Fat<ReflectCreate ,void> {
 private:
 	require (IS_DEFAULT<A>) ;
 
 public:
-	void create (VR<Pointer> a ,CR<LENGTH> size_) const noexcept override {
+	void create (VR<Pointer> a ,CR<Length> size_) const noexcept override {
 		if (MACRO_IS_TRIVIAL_CONSTRUCTIBLE<A>::expr)
 			return ;
 		auto &&rax = keep[TYPE<ARR<A>>::expr] (a) ;
@@ -874,17 +866,17 @@ public:
 } ;
 
 struct ReflectDestroy implement Interface {
-	virtual void destroy (VR<Pointer> a ,CR<LENGTH> size_) const noexcept = 0 ;
+	virtual void destroy (VR<Pointer> a ,CR<Length> size_) const noexcept = 0 ;
 
-	forceinline static consteval FLAG expr_m () noexcept {
+	forceinline static consteval Flag expr_m () noexcept {
 		return 102 ;
 	}
 } ;
 
 template <class A>
-class ReflectDestroyBinder final implement Fat<ReflectDestroy ,Proxy> {
+class ReflectDestroyBinder final implement Fat<ReflectDestroy ,void> {
 public:
-	void destroy (VR<Pointer> a ,CR<LENGTH> size_) const noexcept override {
+	void destroy (VR<Pointer> a ,CR<Length> size_) const noexcept override {
 		if (MACRO_IS_TRIVIAL_DESTRUCTIBLE<A>::expr)
 			return ;
 		auto &&rax = keep[TYPE<ARR<A>>::expr] (a) ;
@@ -897,13 +889,13 @@ public:
 struct ReflectAssign implement Interface {
 	virtual void assign (VR<Pointer> a ,VR<Pointer> b) const noexcept = 0 ;
 
-	forceinline static consteval FLAG expr_m () noexcept {
+	forceinline static consteval Flag expr_m () noexcept {
 		return 103 ;
 	}
 } ;
 
 template <class A>
-class ReflectAssignBinder final implement Fat<ReflectAssign ,Proxy> {
+class ReflectAssignBinder final implement Fat<ReflectAssign ,void> {
 public:
 	void assign (VR<Pointer> a ,VR<Pointer> b) const noexcept override {
 		CSC::assign (keep[TYPE<A>::expr] (a) ,keep[TYPE<A>::expr] (b)) ;
@@ -913,13 +905,13 @@ public:
 struct ReflectCompile implement Interface {
 	virtual void compile (VR<Pointer> a ,VR<Pointer> b) const = 0 ;
 
-	forceinline static consteval FLAG expr_m () noexcept {
+	forceinline static consteval Flag expr_m () noexcept {
 		return 104 ;
 	}
 } ;
 
 template <class A>
-class ReflectCompileBinder final implement Fat<ReflectCompile ,Proxy> {
+class ReflectCompileBinder final implement Fat<ReflectCompile ,void> {
 public:
 	void compile (VR<Pointer> a ,VR<Pointer> b) const override {
 		auto &&rax = keep[TYPE<A>::expr] (a) ;
@@ -938,69 +930,66 @@ public:
 } ;
 
 struct ReflectTuple implement Interface {
-	virtual LENGTH tuple_m1st () const = 0 ;
-	virtual LENGTH tuple_m2nd () const = 0 ;
-	virtual LENGTH tuple_m3rd () const = 0 ;
+	virtual Length tuple_m1st () const = 0 ;
+	virtual Length tuple_m2nd () const = 0 ;
+	virtual Length tuple_m3rd () const = 0 ;
 
-	forceinline static consteval FLAG expr_m () noexcept {
+	forceinline static consteval Flag expr_m () noexcept {
 		return 105 ;
 	}
 } ;
 
 template <class A>
-class ReflectTupleBinder final implement Fat<ReflectTuple ,Proxy> {
+class ReflectTupleBinder final implement Fat<ReflectTuple ,void> {
 public:
-	LENGTH tuple_m1st () const override {
+	Length tuple_m1st () const override {
 		return tuple_m1st_impl (PHX ,TYPE<A>::expr) ;
 	}
 
 	template <class ARG1 ,class = REQUIRE<HAS_M1ST<ARG1>>>
-	forceinline LENGTH tuple_m1st_impl (CR<typeof (PH2)> ,TYPE<ARG1>) const {
-		auto &&rax = keep[TYPE<A>::expr] (Pointer::make (SIZE_OF<A>::expr)) ;
-		return address (rax.m1st) - address (rax) ;
+	forceinline Length tuple_m1st_impl (CR<typeof (PH2)> ,TYPE<ARG1>) const {
+		return address (nullof (A).m1st) - address (nullof (A)) ;
 	}
 
 	template <class ARG1>
-	forceinline LENGTH tuple_m1st_impl (CR<typeof (PH1)> ,TYPE<ARG1>) const {
+	forceinline Length tuple_m1st_impl (CR<typeof (PH1)> ,TYPE<ARG1>) const {
 		assert (FALSE) ;
 		return 0 ;
 	}
 
-	LENGTH tuple_m2nd () const override {
+	Length tuple_m2nd () const override {
 		return tuple_m2nd_impl (PHX ,TYPE<A>::expr) ;
 	}
 
 	template <class ARG1 ,class = REQUIRE<HAS_M2ND<ARG1>>>
-	forceinline LENGTH tuple_m2nd_impl (CR<typeof (PH2)> ,TYPE<ARG1>) const {
-		auto &&rax = keep[TYPE<A>::expr] (Pointer::make (SIZE_OF<A>::expr)) ;
-		return address (rax.m2nd) - address (rax) ;
+	forceinline Length tuple_m2nd_impl (CR<typeof (PH2)> ,TYPE<ARG1>) const {
+		return address (nullof (A).m2nd) - address (nullof (A)) ;
 	}
 
 	template <class ARG1>
-	forceinline LENGTH tuple_m2nd_impl (CR<typeof (PH1)> ,TYPE<ARG1>) const {
+	forceinline Length tuple_m2nd_impl (CR<typeof (PH1)> ,TYPE<ARG1>) const {
 		assert (FALSE) ;
 		return 0 ;
 	}
 
-	LENGTH tuple_m3rd () const override {
+	Length tuple_m3rd () const override {
 		return tuple_m3rd_impl (PHX ,TYPE<A>::expr) ;
 	}
 
 	template <class ARG1 ,class = REQUIRE<HAS_M3RD<ARG1>>>
-	forceinline LENGTH tuple_m3rd_impl (CR<typeof (PH2)> ,TYPE<ARG1>) const {
-		auto &&rax = keep[TYPE<A>::expr] (Pointer::make (SIZE_OF<A>::expr)) ;
-		return address (rax.m3rd) - address (rax) ;
+	forceinline Length tuple_m3rd_impl (CR<typeof (PH2)> ,TYPE<ARG1>) const {
+		return address (nullof (A).m3rd) - address (nullof (A)) ;
 	}
 
 	template <class ARG1>
-	forceinline LENGTH tuple_m3rd_impl (CR<typeof (PH1)> ,TYPE<ARG1>) const {
+	forceinline Length tuple_m3rd_impl (CR<typeof (PH1)> ,TYPE<ARG1>) const {
 		assert (FALSE) ;
 		return 0 ;
 	}
 } ;
 
 struct BoxLayout {
-	FLAG mHolder ;
+	Flag mHolder ;
 
 public:
 	implicit BoxLayout () noexcept {
@@ -1028,7 +1017,7 @@ struct BoxHolder implement Interface {
 
 	virtual void initialize (CR<Unknown> holder) = 0 ;
 	virtual void destroy () = 0 ;
-	virtual BOOL exist () const = 0 ;
+	virtual Bool exist () const = 0 ;
 	virtual Unknown unknown () const = 0 ;
 	virtual VR<Pointer> ref_m () leftvalue = 0 ;
 	virtual CR<Pointer> ref_m () const leftvalue = 0 ;
@@ -1042,9 +1031,9 @@ inline BoxLayout::~BoxLayout () noexcept {
 }
 
 template <class A>
-class BoxUnknownBinder final implement Fat<FriendUnknown ,Proxy> {
+class BoxUnknownBinder final implement Fat<FriendUnknown ,void> {
 public:
-	FLAG reflect (CR<FLAG> uuid) const override {
+	Flag reflect (CR<Flag> uuid) const override {
 		if (uuid == ReflectSizeBinder<A>::expr)
 			return inline_vptr (ReflectSizeBinder<A> ()) ;
 		if (uuid == ReflectDestroyBinder<A>::expr)
@@ -1085,15 +1074,15 @@ public:
 		return move (ret) ;
 	}
 
-	BOOL exist () const {
+	Bool exist () const {
 		return BoxHolder::hold (thiz)->exist () ;
 	}
 
-	forceinline BOOL operator== (CR<typeof (NULL)>) const {
+	forceinline Bool operator== (CR<typeof (NULL)>) const {
 		return (!exist ()) ;
 	}
 
-	forceinline BOOL operator!= (CR<typeof (NULL)>) const {
+	forceinline Bool operator!= (CR<typeof (NULL)>) const {
 		return exist () ;
 	}
 
@@ -1135,7 +1124,7 @@ public:
 } ;
 
 struct PinLayout {
-	FLAG mLayout ;
+	Flag mLayout ;
 
 public:
 	implicit PinLayout () noexcept {
@@ -1197,8 +1186,8 @@ public:
 } ;
 
 struct RefLayout {
-	FLAG mHandle ;
-	FLAG mLayout ;
+	Flag mHandle ;
+	Flag mLayout ;
 
 public:
 	implicit RefLayout () noexcept {
@@ -1226,15 +1215,15 @@ struct RefHolder implement Interface {
 	imports CFat<RefHolder> hold (CR<RefLayout> that) ;
 
 	virtual void initialize (RR<BoxLayout> item) = 0 ;
-	virtual void initialize (CR<Unknown> holder ,CR<Unknown> extend ,CR<LENGTH> size_) = 0 ;
-	virtual void initialize (CR<Unknown> holder ,CR<FLAG> layout) = 0 ;
+	virtual void initialize (CR<Unknown> holder ,CR<Unknown> extend ,CR<Length> size_) = 0 ;
+	virtual void initialize (CR<Unknown> holder ,CR<Flag> layout) = 0 ;
 	virtual void destroy () = 0 ;
 	virtual RefLayout share () const = 0 ;
-	virtual BOOL exist () const = 0 ;
+	virtual Bool exist () const = 0 ;
 	virtual Unknown unknown () const = 0 ;
 	virtual VR<Pointer> ref_m () leftvalue = 0 ;
 	virtual CR<Pointer> ref_m () const leftvalue = 0 ;
-	virtual BOOL exclusive () const = 0 ;
+	virtual Bool exclusive () const = 0 ;
 } ;
 
 inline RefLayout::~RefLayout () noexcept {
@@ -1242,9 +1231,9 @@ inline RefLayout::~RefLayout () noexcept {
 }
 
 template <class A>
-class RefUnknownBinder final implement Fat<FriendUnknown ,Proxy> {
+class RefUnknownBinder final implement Fat<FriendUnknown ,void> {
 public:
-	FLAG reflect (CR<FLAG> uuid) const override {
+	Flag reflect (CR<Flag> uuid) const override {
 		if (uuid == ReflectSizeBinder<A>::expr)
 			return inline_vptr (ReflectSizeBinder<A> ()) ;
 		if (uuid == ReflectCreateBinder<A>::expr)
@@ -1295,15 +1284,15 @@ public:
 		return move (keep[TYPE<Ref>::expr] (ret)) ;
 	}
 
-	BOOL exist () const {
+	Bool exist () const {
 		return RefHolder::hold (thiz)->exist () ;
 	}
 
-	forceinline BOOL operator== (CR<typeof (NULL)>) const {
+	forceinline Bool operator== (CR<typeof (NULL)>) const {
 		return (!exist ()) ;
 	}
 
-	forceinline BOOL operator!= (CR<typeof (NULL)>) const {
+	forceinline Bool operator!= (CR<typeof (NULL)>) const {
 		return exist () ;
 	}
 
@@ -1327,13 +1316,13 @@ public:
 		return (&ref) ;
 	}
 
-	BOOL exclusive () const {
+	Bool exclusive () const {
 		return RefHolder::hold (thiz)->exclusive () ;
 	}
 } ;
 
 struct HeapLayout {
-	FLAG mHolder ;
+	Flag mHolder ;
 
 public:
 	implicit HeapLayout () noexcept {
@@ -1347,10 +1336,10 @@ struct HeapHolder implement Interface {
 	imports CFat<HeapHolder> hold (CR<HeapLayout> that) ;
 
 	virtual void initialize () = 0 ;
-	virtual INDEX stack () const = 0 ;
-	virtual LENGTH length () const = 0 ;
-	virtual FLAG alloc (CR<LENGTH> size_) const = 0 ;
-	virtual void free (CR<FLAG> layout) const = 0 ;
+	virtual Flag stack (CR<Length> size_) const = 0 ;
+	virtual Length length () const = 0 ;
+	virtual Flag alloc (CR<Length> size_) const = 0 ;
+	virtual void free (CR<Flag> layout) const = 0 ;
 } ;
 
 class Heap implement HeapLayout {
@@ -1362,27 +1351,27 @@ public:
 		return keep[TYPE<Heap>::expr] (HeapHolder::expr) ;
 	}
 
-	INDEX stack () const {
-		return HeapHolder::hold (thiz)->stack () ;
+	Flag stack (CR<Length> size_) const {
+		return HeapHolder::hold (thiz)->stack (size_) ;
 	}
 
-	LENGTH length () const {
+	Length length () const {
 		return HeapHolder::hold (thiz)->length () ;
 	}
 
-	FLAG alloc (CR<LENGTH> size_) const {
+	Flag alloc (CR<Length> size_) const {
 		return HeapHolder::hold (thiz)->alloc (size_) ;
 	}
 
-	void free (CR<FLAG> layout) const {
+	void free (CR<Flag> layout) const {
 		return HeapHolder::hold (thiz)->free (layout) ;
 	}
 } ;
 
 struct SliceLayout {
-	FLAG mBuffer ;
-	LENGTH mSize ;
-	LENGTH mStep ;
+	Flag mBuffer ;
+	Length mSize ;
+	Length mStep ;
 
 public:
 	implicit SliceLayout () noexcept {
@@ -1396,12 +1385,12 @@ struct SliceHolder implement Interface {
 	imports VFat<SliceHolder> hold (VR<SliceLayout> that) ;
 	imports CFat<SliceHolder> hold (CR<SliceLayout> that) ;
 
-	virtual void initialize (CR<FLAG> buffer ,CR<LENGTH> size_ ,CR<LENGTH> step_) = 0 ;
-	virtual LENGTH size () const = 0 ;
-	virtual LENGTH step () const = 0 ;
-	virtual void get (CR<INDEX> index ,VR<STRU32> item) const = 0 ;
-	virtual BOOL equal (CR<SliceLayout> that) const = 0 ;
-	virtual FLAG compr (CR<SliceLayout> that) const = 0 ;
+	virtual void initialize (CR<Flag> buffer ,CR<Length> size_ ,CR<Length> step_) = 0 ;
+	virtual Length size () const = 0 ;
+	virtual Length step () const = 0 ;
+	virtual void get (CR<Index> index ,VR<Stru32> item) const = 0 ;
+	virtual Bool equal (CR<SliceLayout> that) const = 0 ;
+	virtual Flag compr (CR<SliceLayout> that) const = 0 ;
 	virtual void visit (VR<FriendVisitor> visitor) const = 0 ;
 	virtual SliceLayout eos () const = 0 ;
 } ;
@@ -1425,57 +1414,57 @@ public:
 		SliceHolder::hold (thiz)->initialize (r1x ,r2x ,r3x) ;
 	}
 
-	explicit Slice (CR<FLAG> buffer ,CR<LENGTH> size_ ,CR<LENGTH> step_) {
+	explicit Slice (CR<Flag> buffer ,CR<Length> size_ ,CR<Length> step_) {
 		SliceHolder::hold (thiz)->initialize (buffer ,size_ ,step_) ;
 	}
 
-	LENGTH size () const {
+	Length size () const {
 		return SliceHolder::hold (thiz)->size () ;
 	}
 
-	LENGTH step () const {
+	Length step () const {
 		return SliceHolder::hold (thiz)->step () ;
 	}
 
-	void get (CR<INDEX> index ,VR<STRU32> item) const {
+	void get (CR<Index> index ,VR<Stru32> item) const {
 		return SliceHolder::hold (thiz)->get (index ,item) ;
 	}
 
-	forceinline STRU32 operator[] (CR<INDEX> index) const {
-		STRU32 ret ;
+	forceinline Stru32 operator[] (CR<Index> index) const {
+		Stru32 ret ;
 		get (index ,ret) ;
 		return move (ret) ;
 	}
 
-	BOOL equal (CR<Slice> that) const {
+	Bool equal (CR<Slice> that) const {
 		return SliceHolder::hold (thiz)->equal (that) ;
 	}
 
-	forceinline BOOL operator== (CR<Slice> that) const {
+	forceinline Bool operator== (CR<Slice> that) const {
 		return equal (that) ;
 	}
 
-	forceinline BOOL operator!= (CR<Slice> that) const {
+	forceinline Bool operator!= (CR<Slice> that) const {
 		return (!equal (that)) ;
 	}
 
-	FLAG compr (CR<Slice> that) const {
+	Flag compr (CR<Slice> that) const {
 		return SliceHolder::hold (thiz)->compr (that) ;
 	}
 
-	forceinline BOOL operator< (CR<Slice> that) const {
+	forceinline Bool operator< (CR<Slice> that) const {
 		return compr (that) < ZERO ;
 	}
 
-	forceinline BOOL operator<= (CR<Slice> that) const {
+	forceinline Bool operator<= (CR<Slice> that) const {
 		return compr (that) <= ZERO ;
 	}
 
-	forceinline BOOL operator> (CR<Slice> that) const {
+	forceinline Bool operator> (CR<Slice> that) const {
 		return compr (that) > ZERO ;
 	}
 
-	forceinline BOOL operator>= (CR<Slice> that) const {
+	forceinline Bool operator>= (CR<Slice> that) const {
 		return compr (that) >= ZERO ;
 	}
 
@@ -1616,13 +1605,13 @@ inline VR<ExternalLayout> External<A ,B>::root_ptr () {
 struct ReflectClone implement Interface {
 	virtual void clone (VR<Pointer> a ,CR<Pointer> b) const = 0 ;
 
-	forceinline static consteval FLAG expr_m () noexcept {
+	forceinline static consteval Flag expr_m () noexcept {
 		return 110 ;
 	}
 } ;
 
 template <class A>
-class ReflectCloneBinder final implement Fat<ReflectClone ,Proxy> {
+class ReflectCloneBinder final implement Fat<ReflectClone ,void> {
 public:
 	void clone (VR<Pointer> a ,CR<Pointer> b) const override {
 		return inline_clone (keep[TYPE<A>::expr] (a) ,keep[TYPE<A>::expr] (b)) ;
@@ -1630,33 +1619,33 @@ public:
 } ;
 
 struct ReflectEqual implement Interface {
-	virtual BOOL equal (CR<Pointer> a ,CR<Pointer> b) const = 0 ;
+	virtual Bool equal (CR<Pointer> a ,CR<Pointer> b) const = 0 ;
 
-	forceinline static consteval FLAG expr_m () noexcept {
+	forceinline static consteval Flag expr_m () noexcept {
 		return 111 ;
 	}
 } ;
 
 template <class A>
-class ReflectEqualBinder final implement Fat<ReflectEqual ,Proxy> {
+class ReflectEqualBinder final implement Fat<ReflectEqual ,void> {
 public:
-	BOOL equal (CR<Pointer> a ,CR<Pointer> b) const override {
+	Bool equal (CR<Pointer> a ,CR<Pointer> b) const override {
 		return inline_equal (keep[TYPE<A>::expr] (a) ,keep[TYPE<A>::expr] (b)) ;
 	}
 } ;
 
 struct ReflectCompr implement Interface {
-	virtual FLAG compr (CR<Pointer> a ,CR<Pointer> b) const = 0 ;
+	virtual Flag compr (CR<Pointer> a ,CR<Pointer> b) const = 0 ;
 
-	forceinline static consteval FLAG expr_m () noexcept {
+	forceinline static consteval Flag expr_m () noexcept {
 		return 112 ;
 	}
 } ;
 
 template <class A>
-class ReflectComprBinder final implement Fat<ReflectCompr ,Proxy> {
+class ReflectComprBinder final implement Fat<ReflectCompr ,void> {
 public:
-	FLAG compr (CR<Pointer> a ,CR<Pointer> b) const override {
+	Flag compr (CR<Pointer> a ,CR<Pointer> b) const override {
 		return inline_compr (keep[TYPE<A>::expr] (a) ,keep[TYPE<A>::expr] (b)) ;
 	}
 } ;
@@ -1664,13 +1653,13 @@ public:
 struct ReflectVisit implement Interface {
 	virtual void visit (VR<FriendVisitor> visitor ,CR<Pointer> a) const = 0 ;
 
-	forceinline static consteval FLAG expr_m () noexcept {
+	forceinline static consteval Flag expr_m () noexcept {
 		return 113 ;
 	}
 } ;
 
 template <class A>
-class ReflectVisitBinder final implement Fat<ReflectVisit ,Proxy> {
+class ReflectVisitBinder final implement Fat<ReflectVisit ,void> {
 public:
 	void visit (VR<FriendVisitor> visitor ,CR<Pointer> a) const override {
 		return inline_visit (visitor ,keep[TYPE<A>::expr] (a)) ;
@@ -1678,17 +1667,17 @@ public:
 } ;
 
 struct ReflectGuid implement Interface {
-	virtual FLAG type_guid () const = 0 ;
+	virtual Flag type_guid () const = 0 ;
 
-	forceinline static consteval FLAG expr_m () noexcept {
+	forceinline static consteval Flag expr_m () noexcept {
 		return 114 ;
 	}
 } ;
 
 template <class A>
-class ReflectGuidBinder final implement Fat<ReflectGuid ,Proxy> {
+class ReflectGuidBinder final implement Fat<ReflectGuid ,void> {
 public:
-	FLAG type_guid () const override {
+	Flag type_guid () const override {
 		return memorize ([&] () {
 			return inline_vptr (thiz) ;
 		}) ;
@@ -1698,13 +1687,13 @@ public:
 struct ReflectName implement Interface {
 	virtual Slice type_name () const = 0 ;
 
-	forceinline static consteval FLAG expr_m () noexcept {
+	forceinline static consteval Flag expr_m () noexcept {
 		return 115 ;
 	}
 } ;
 
 template <class A>
-class ReflectNameBinder final implement Fat<ReflectName ,Proxy> {
+class ReflectNameBinder final implement Fat<ReflectName ,void> {
 public:
 	Slice type_name () const override {
 		const auto r1x = inline_type_name (Pointer::from (thiz) ,address (__macro_type_rtti)) ;
@@ -1724,19 +1713,19 @@ struct ClazzHolder implement Interface {
 
 	virtual void initialize (CR<Unknown> holder) = 0 ;
 	virtual void initialize (CR<ClazzLayout> that) = 0 ;
-	virtual LENGTH type_size () const = 0 ;
-	virtual LENGTH type_align () const = 0 ;
-	virtual FLAG type_guid () const = 0 ;
+	virtual Length type_size () const = 0 ;
+	virtual Length type_align () const = 0 ;
+	virtual Flag type_guid () const = 0 ;
 	virtual Slice type_name () const = 0 ;
-	virtual BOOL equal (CR<ClazzLayout> that) const = 0 ;
-	virtual FLAG compr (CR<ClazzLayout> that) const = 0 ;
+	virtual Bool equal (CR<ClazzLayout> that) const = 0 ;
+	virtual Flag compr (CR<ClazzLayout> that) const = 0 ;
 	virtual void visit (VR<FriendVisitor> visitor) const = 0 ;
 } ;
 
 template <class A>
-class ClazzUnknownBinder final implement Fat<FriendUnknown ,Proxy> {
+class ClazzUnknownBinder final implement Fat<FriendUnknown ,void> {
 public:
-	FLAG reflect (CR<FLAG> uuid) const override {
+	Flag reflect (CR<Flag> uuid) const override {
 		if (uuid == ReflectSizeBinder<A>::expr)
 			return inline_vptr (ReflectSizeBinder<A> ()) ;
 		if (uuid == ReflectGuidBinder<A>::expr)
@@ -1771,15 +1760,15 @@ public:
 
 	forceinline VR<Clazz> operator= (RR<Clazz> that) = default ;
 
-	LENGTH type_size () const {
+	Length type_size () const {
 		return ClazzHolder::hold (thiz)->type_size () ;
 	}
 
-	LENGTH type_align () const {
+	Length type_align () const {
 		return ClazzHolder::hold (thiz)->type_align () ;
 	}
 
-	FLAG type_guid () const {
+	Flag type_guid () const {
 		return ClazzHolder::hold (thiz)->type_guid () ;
 	}
 
@@ -1787,35 +1776,35 @@ public:
 		return ClazzHolder::hold (thiz)->type_name () ;
 	}
 
-	BOOL equal (CR<Clazz> that) const {
+	Bool equal (CR<Clazz> that) const {
 		return ClazzHolder::hold (thiz)->equal (that) ;
 	}
 
-	forceinline BOOL operator== (CR<Clazz> that) const {
+	forceinline Bool operator== (CR<Clazz> that) const {
 		return equal (that) ;
 	}
 
-	forceinline BOOL operator!= (CR<Clazz> that) const {
+	forceinline Bool operator!= (CR<Clazz> that) const {
 		return (!equal (that)) ;
 	}
 
-	FLAG compr (CR<Clazz> that) const {
+	Flag compr (CR<Clazz> that) const {
 		return ClazzHolder::hold (thiz)->compr (that) ;
 	}
 
-	forceinline BOOL operator< (CR<Clazz> that) const {
+	forceinline Bool operator< (CR<Clazz> that) const {
 		return compr (that) < ZERO ;
 	}
 
-	forceinline BOOL operator<= (CR<Clazz> that) const {
+	forceinline Bool operator<= (CR<Clazz> that) const {
 		return compr (that) <= ZERO ;
 	}
 
-	forceinline BOOL operator> (CR<Clazz> that) const {
+	forceinline Bool operator> (CR<Clazz> that) const {
 		return compr (that) > ZERO ;
 	}
 
-	forceinline BOOL operator>= (CR<Clazz> that) const {
+	forceinline Bool operator>= (CR<Clazz> that) const {
 		return compr (that) >= ZERO ;
 	}
 
@@ -1825,7 +1814,7 @@ public:
 } ;
 
 struct ScopeLayout {
-	FLAG mLayout ;
+	Flag mLayout ;
 
 public:
 	implicit ScopeLayout () noexcept {

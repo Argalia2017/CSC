@@ -49,7 +49,7 @@
 
   <Type Name="CSC::BoxLayout">
     <Expand HideRawView="true">
-      <ExpandedItem Condition="mHolder!=0">(CSC::Interface*)&amp;mHolder</ExpandedItem>
+		<Item Name="[vptr]" Condition="mHolder!=0">(CSC::Interface*)mHolder</Item>
     </Expand>
   </Type>
 
@@ -140,14 +140,14 @@
 
   <Type Name="CSC::RefBufferLayout" Inheritable="false">
     <Expand HideRawView="true">
-      <Item Name="[hint]">(CSC::BYTE*)0</Item>
-      <Item Name="[hint]">(CSC::WORD*)0</Item>
-      <Item Name="[hint]">(CSC::CHAR*)0</Item>
-      <Item Name="[hint]">(CSC::QUAD*)0</Item>
+      <Item Name="[hint]">(CSC::Byte*)0</Item>
+      <Item Name="[hint]">(CSC::Word*)0</Item>
+      <Item Name="[hint]">(CSC::Char*)0</Item>
+      <Item Name="[hint]">(CSC::Quad*)0</Item>
     </Expand>
   </Type>
 
-  <Type Name="CSC::RefBufferPureLayout&lt;*&gt;" Inheritable="false">
+  <Type Name="CSC::RefBufferImplLayout&lt;*&gt;" Inheritable="false">
     <Expand HideRawView="true">
       <Item Name="[hint]" Condition="false">CSC::BYTE_ENDIAN</Item>
       <ArrayItems>
@@ -169,7 +169,7 @@
         <Size>mSize&lt;10?mSize:10</Size>
         <ValuePointer>($T1*)mBuffer</ValuePointer>
       </ArrayItems>
-      <Item Name="[+]">*(CSC::RefBufferPureLayout&lt;$T1&gt;*)this</Item>
+      <Item Name="[+]">*(CSC::RefBufferImplLayout&lt;$T1&gt;*)this</Item>
     </Expand>
   </Type>
 
@@ -198,7 +198,7 @@
     <DisplayString Condition="mNext!=-2">{{???}}</DisplayString>
   </Type>
 
-  <Type Name="CSC::AllocatorPureLayout&lt;*&gt;" Inheritable="false">
+  <Type Name="CSC::AllocatorImplLayout&lt;*&gt;" Inheritable="false">
     <Expand HideRawView="true">
       <IndexListItems>
         <Size>mAllocator.mSize</Size>
@@ -220,7 +220,7 @@
         <Size>mAllocator.mSize&lt;10?mAllocator.mSize:10</Size>
         <ValuePointer>(CSC::UnionPair&lt;$T1,$T2&gt;*)mAllocator.mBuffer</ValuePointer>
       </ArrayItems>
-      <Item Name="[+]">*(CSC::AllocatorPureLayout&lt;$T1,$T2&gt;*)this</Item>
+      <Item Name="[+]">*(CSC::AllocatorImplLayout&lt;$T1,$T2&gt;*)this</Item>
     </Expand>
   </Type>
 
@@ -243,7 +243,7 @@
     <Expand HideRawView="true">
       <Item Name="[fx]">mFX</Item>
       <Item Name="[ex]">mEX</Item>
-      <Item Name="[dx]">*(CSC::RefBufferPureLayout&lt;double&gt;*)&amp;mDX</Item>
+      <Item Name="[dx]">*(CSC::RefBufferImplLayout&lt;double&gt;*)&amp;mDX</Item>
     </Expand>
   </Type>
 
@@ -310,7 +310,7 @@
     </Expand>
   </Type>
 
-  <Type Name="CSC::SortedMapPureLayout&lt;*&gt;" Inheritable="false">
+  <Type Name="CSC::SortedMapImplLayout&lt;*&gt;" Inheritable="false">
     <Expand HideRawView="true">
       <IndexListItems>
         <Size>mWrite</Size>
@@ -330,7 +330,7 @@
         <Size>mWrite&lt;10?mWrite:10</Size>
         <ValueNode>((CSC::UnionPair&lt;$T1,CSC::SortedMapNode&gt;*)(*(CSC::SortedMapTree*)mThis.mLayout).mList.mAllocator.mBuffer)[mRange[$i]].m2nd.mMap</ValueNode>
       </IndexListItems>
-      <Item Name="[+]">*(CSC::SortedMapPureLayout&lt;$T1&gt;*)this</Item>
+      <Item Name="[+]">*(CSC::SortedMapImplLayout&lt;$T1&gt;*)this</Item>
     </Expand>
   </Type>
 

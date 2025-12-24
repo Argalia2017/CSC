@@ -283,7 +283,7 @@ class initializer_list ;
 #endif
 
 #ifdef __CSC_VER_UNITTEST__
-#define __macro_assert(...) do { if (__VA_ARGS__) break ; if (inline_unittest ()) { __macro_break () ; } else { inline_abort () ; } } while (false)
+#define __macro_assert(...) do { if (__VA_ARGS__) break ; if (inline_debug ()) { __macro_break () ; } else { inline_abort () ; } } while (false)
 #endif
 
 #ifdef __CSC_VER_RELEASE__
@@ -342,24 +342,7 @@ class initializer_list ;
 #endif
 
 #ifndef __macro_nullof
-#define __macro_nullof(...) CSC::FUNCTION_nullof::invoke<CSC::DEF<__VA_ARGS__> &> ()
-#endif
-
-#ifndef __macro_for_bind
-#define __macro_for_bind_0(F ,...)
-#define __macro_for_bind_1(F ,a) F (a)
-#define __macro_for_bind_2(F ,a ,...) F (a) ,__macro_ex (__macro_for_bind_1 (F ,__VA_ARGS__))
-#define __macro_for_bind_3(F ,a ,...) F (a) ,__macro_ex (__macro_for_bind_2 (F ,__VA_ARGS__))
-#define __macro_for_bind_4(F ,a ,...) F (a) ,__macro_ex (__macro_for_bind_3 (F ,__VA_ARGS__))
-#define __macro_for_bind_5(F ,a ,...) F (a) ,__macro_ex (__macro_for_bind_4 (F ,__VA_ARGS__))
-#define __macro_for_bind_6(F ,a ,...) F (a) ,__macro_ex (__macro_for_bind_5 (F ,__VA_ARGS__))
-#define __macro_for_bind_7(F ,a ,...) F (a) ,__macro_ex (__macro_for_bind_6 (F ,__VA_ARGS__))
-#define __macro_for_bind_8(F ,a ,...) F (a) ,__macro_ex (__macro_for_bind_7 (F ,__VA_ARGS__))
-#define __macro_for_bind_9(F ,a ,...) F (a) ,__macro_ex (__macro_for_bind_8 (F ,__VA_ARGS__))
-#define __macro_for_bind_X(F ,a ,...) F (a) ,__macro_ex (__macro_for_bind_9 (F ,__VA_ARGS__))
-#define __macro_for_bind_choose(F ,a0 ,a1 ,a2 ,a3 ,a4 ,a5 ,a6 ,a7 ,a8 ,a9 ,ax ,...) ax
-#define __macro_for_bind_impl(F ,...) __macro_ex (__macro_for_bind_choose(F ,__VA_ARGS__ ,__macro_for_bind_X ,__macro_for_bind_9 ,__macro_for_bind_8 ,__macro_for_bind_7 ,__macro_for_bind_6 ,__macro_for_bind_5 ,__macro_for_bind_4 ,__macro_for_bind_3 ,__macro_for_bind_2 ,__macro_for_bind_1 ,__macro_for_bind_0) (F ,__VA_ARGS__))
-#define __macro_for_bind(F ,...) __macro_ex (__macro_for_bind_impl (F ,__VA_ARGS__))
+#define __macro_nullof(...) CSC::FUNCTION_nullof<__VA_ARGS__>::invoke ()
 #endif
 
 struct HINSTANCE__ ;
@@ -414,6 +397,7 @@ using csc_size_t = DEF<unsigned int> ;
 using csc_enum_t = DEF<unsigned long> ;
 using csc_handle_t = DEF<void *> ;
 using csc_device_t = DEF<HINSTANCE__ *> ;
+using csc_string_t = DEF<const char *> ;
 using csc_pipe_t = DEF<void *> ;
 #endif
 
@@ -423,6 +407,7 @@ using csc_size_t = DEF<unsigned long long> ;
 using csc_enum_t = DEF<unsigned long> ;
 using csc_handle_t = DEF<void *> ;
 using csc_device_t = DEF<HINSTANCE__ *> ;
+using csc_string_t = DEF<const char *> ;
 using csc_pipe_t = DEF<void *> ;
 #endif
 #endif
@@ -433,16 +418,12 @@ using csc_size_t = DEF<long unsigned int> ;
 using csc_enum_t = int ;
 using csc_handle_t = DEF<void *> ;
 using csc_device_t = DEF<HINSTANCE__ *> ;
+using csc_string_t = DEF<const char *> ;
 using csc_pipe_t = int ;
 #endif
 
 template <class A>
 using csc_initializer_list_t = std::initializer_list<A> ;
-
-struct FUNCTION_nullof {
-	template <class A>
-	forceinline static consteval A invoke () noexcept ;
-} ;
 
 template <csc_diff_t A>
 struct ENUM {
@@ -459,6 +440,13 @@ template <class...A>
 struct TYPE {
 	forceinline static consteval TYPE expr_m () noexcept {
 		return TYPE () ;
+	}
+} ;
+
+template <class A>
+struct FUNCTION_nullof {
+	forceinline static DEF<A &> invoke () noexcept {
+		return (*DEF<A *> (sizeof (A))) ;
 	}
 } ;
 
@@ -614,13 +602,13 @@ using MACRO_IS_EXTEND = ENUM<(__is_base_of (A ,B))> ;
 #ifdef __CSC_COMPILER_GNUC__
 #define __macro_memcpy(a ,b ,c) (void) __builtin_memcpy ((&a) ,(&b) ,c)
 #define __macro_memset(a ,b) (void) __builtin_memset ((&a) ,0 ,b)
-#define __macro_memcmp(a ,b ,c) CSC::FLAG (__builtin_memcmp ((&a) ,(&b) ,c))
+#define __macro_memcmp(a ,b ,c) CSC::Flag (__builtin_memcmp ((&a) ,(&b) ,c))
 #endif
 
 #ifdef __CSC_COMPILER_CLANG__
 #define __macro_memcpy(a ,b ,c) (void) __builtin_memcpy ((&a) ,(&b) ,c)
 #define __macro_memset(a ,b) (void) __builtin_memset ((&a) ,0 ,b)
-#define __macro_memcmp(a ,b ,c) CSC::FLAG (__builtin_memcmp ((&a) ,(&b) ,c))
+#define __macro_memcmp(a ,b ,c) CSC::Flag (__builtin_memcmp ((&a) ,(&b) ,c))
 #endif
 #endif
 

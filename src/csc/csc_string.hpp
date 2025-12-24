@@ -21,40 +21,40 @@ struct StringProcHolder implement Interface {
 	imports CFat<StringProcHolder> hold (CR<StringProcLayout> that) ;
 
 	virtual void initialize () = 0 ;
-	virtual String<STRA> stra_from_strw (CR<String<STRW>> a) const = 0 ;
-	virtual String<STRA> stra_from_strs (CR<String<STR>> a) const = 0 ;
-	virtual String<STRW> strw_from_stra (CR<String<STRA>> a) const = 0 ;
-	virtual String<STRW> strw_from_strs (CR<String<STR>> a) const = 0 ;
-	virtual String<STR> strs_from_stra (CR<String<STRA>> a) const = 0 ;
-	virtual String<STR> strs_from_strw (CR<String<STRW>> a) const = 0 ;
-	virtual String<STRU8> stru8_from_stru16 (CR<String<STRU16>> a) const = 0 ;
-	virtual String<STRU8> stru8_from_stru32 (CR<String<STRU32>> a) const = 0 ;
-	virtual String<STRU16> stru16_from_stru8 (CR<String<STRU8>> a) const = 0 ;
-	virtual String<STRU16> stru16_from_stru32 (CR<String<STRU32>> a) const = 0 ;
-	virtual String<STRU32> stru32_from_stru8 (CR<String<STRU8>> a) const = 0 ;
-	virtual String<STRU32> stru32_from_stru16 (CR<String<STRU16>> a) const = 0 ;
-	virtual String<STRUA> strua_from_stra (RR<String<STRA>> a) const = 0 ;
-	virtual String<STRA> stra_from_strua (RR<String<STRUA>> a) const = 0 ;
-	virtual String<STRUW> struw_from_strw (RR<String<STRW>> a) const = 0 ;
-	virtual String<STRW> strw_from_struw (RR<String<STRUW>> a) const = 0 ;
-	virtual String<STRA> stra_from_stru (CR<String<STRU8>> a) const = 0 ;
-	virtual String<STRA> stra_from_stru (CR<String<STRU16>> a) const = 0 ;
-	virtual String<STRA> stra_from_stru (CR<String<STRU32>> a) const = 0 ;
-	virtual String<STRW> strw_from_stru (CR<String<STRU8>> a) const = 0 ;
-	virtual String<STRW> strw_from_stru (CR<String<STRU16>> a) const = 0 ;
-	virtual String<STRW> strw_from_stru (CR<String<STRU32>> a) const = 0 ;
-	virtual String<STR> strs_from_stru (CR<String<STRU8>> a) const = 0 ;
-	virtual String<STR> strs_from_stru (CR<String<STRU16>> a) const = 0 ;
-	virtual String<STR> strs_from_stru (CR<String<STRU32>> a) const = 0 ;
-	virtual String<STRU8> stru8_from_struw (CR<String<STRUW>> a) const = 0 ;
-	virtual String<STRU16> stru16_from_struw (CR<String<STRUW>> a) const = 0 ;
-	virtual String<STRU32> stru32_from_struw (CR<String<STRUW>> a) const = 0 ;
-	virtual String<STRU8> stru8_from_strs (CR<String<STRA>> a) const = 0 ;
-	virtual String<STRU8> stru8_from_strs (CR<String<STRW>> a) const = 0 ;
-	virtual String<STRU16> stru16_from_strs (CR<String<STRA>> a) const = 0 ;
-	virtual String<STRU16> stru16_from_strs (CR<String<STRW>> a) const = 0 ;
-	virtual String<STRU32> stru32_from_strs (CR<String<STRA>> a) const = 0 ;
-	virtual String<STRU32> stru32_from_strs (CR<String<STRW>> a) const = 0 ;
+	virtual String<Stra> stra_from_strw (CR<String<Strw>> a) const = 0 ;
+	virtual String<Stra> stra_from_strs (CR<String<Str>> a) const = 0 ;
+	virtual String<Strw> strw_from_stra (CR<String<Stra>> a) const = 0 ;
+	virtual String<Strw> strw_from_strs (CR<String<Str>> a) const = 0 ;
+	virtual String<Str> strs_from_stra (CR<String<Stra>> a) const = 0 ;
+	virtual String<Str> strs_from_strw (CR<String<Strw>> a) const = 0 ;
+	virtual String<Stru8> stru8_from_stru16 (CR<String<Stru16>> a) const = 0 ;
+	virtual String<Stru8> stru8_from_stru32 (CR<String<Stru32>> a) const = 0 ;
+	virtual String<Stru16> stru16_from_stru8 (CR<String<Stru8>> a) const = 0 ;
+	virtual String<Stru16> stru16_from_stru32 (CR<String<Stru32>> a) const = 0 ;
+	virtual String<Stru32> stru32_from_stru8 (CR<String<Stru8>> a) const = 0 ;
+	virtual String<Stru32> stru32_from_stru16 (CR<String<Stru16>> a) const = 0 ;
+	virtual String<STRUA> strua_from_stra (RR<String<Stra>> a) const = 0 ;
+	virtual String<Stra> stra_from_strua (RR<String<STRUA>> a) const = 0 ;
+	virtual String<STRUW> struw_from_strw (RR<String<Strw>> a) const = 0 ;
+	virtual String<Strw> strw_from_struw (RR<String<STRUW>> a) const = 0 ;
+	virtual String<Stra> stra_from_stru (CR<String<Stru8>> a) const = 0 ;
+	virtual String<Stra> stra_from_stru (CR<String<Stru16>> a) const = 0 ;
+	virtual String<Stra> stra_from_stru (CR<String<Stru32>> a) const = 0 ;
+	virtual String<Strw> strw_from_stru (CR<String<Stru8>> a) const = 0 ;
+	virtual String<Strw> strw_from_stru (CR<String<Stru16>> a) const = 0 ;
+	virtual String<Strw> strw_from_stru (CR<String<Stru32>> a) const = 0 ;
+	virtual String<Str> strs_from_stru (CR<String<Stru8>> a) const = 0 ;
+	virtual String<Str> strs_from_stru (CR<String<Stru16>> a) const = 0 ;
+	virtual String<Str> strs_from_stru (CR<String<Stru32>> a) const = 0 ;
+	virtual String<Stru8> stru8_from_struw (CR<String<STRUW>> a) const = 0 ;
+	virtual String<Stru16> stru16_from_struw (CR<String<STRUW>> a) const = 0 ;
+	virtual String<Stru32> stru32_from_struw (CR<String<STRUW>> a) const = 0 ;
+	virtual String<Stru8> stru8_from_strs (CR<String<Stra>> a) const = 0 ;
+	virtual String<Stru8> stru8_from_strs (CR<String<Strw>> a) const = 0 ;
+	virtual String<Stru16> stru16_from_strs (CR<String<Stra>> a) const = 0 ;
+	virtual String<Stru16> stru16_from_strs (CR<String<Strw>> a) const = 0 ;
+	virtual String<Stru32> stru32_from_strs (CR<String<Stra>> a) const = 0 ;
+	virtual String<Stru32> stru32_from_strs (CR<String<Strw>> a) const = 0 ;
 } ;
 
 class StringProc implement Like<UniqueRef<StringProcLayout>> {
@@ -63,139 +63,139 @@ public:
 		return keep[TYPE<StringProc>::expr] (StringProcHolder::expr) ;
 	}
 
-	static String<STRA> stra_from_strw (CR<String<STRW>> a) {
+	static String<Stra> stra_from_strw (CR<String<Strw>> a) {
 		return StringProcHolder::hold (expr)->stra_from_strw (a) ;
 	}
 
-	static String<STRA> stra_from_strs (CR<String<STR>> a) {
+	static String<Stra> stra_from_strs (CR<String<Str>> a) {
 		return StringProcHolder::hold (expr)->stra_from_strs (a) ;
 	}
 
-	static String<STRW> strw_from_stra (CR<String<STRA>> a) {
+	static String<Strw> strw_from_stra (CR<String<Stra>> a) {
 		return StringProcHolder::hold (expr)->strw_from_stra (a) ;
 	}
 
-	static String<STRW> strw_from_strs (CR<String<STR>> a) {
+	static String<Strw> strw_from_strs (CR<String<Str>> a) {
 		return StringProcHolder::hold (expr)->strw_from_strs (a) ;
 	}
 
-	static String<STR> strs_from_stra (CR<String<STRA>> a) {
+	static String<Str> strs_from_stra (CR<String<Stra>> a) {
 		return StringProcHolder::hold (expr)->strs_from_stra (a) ;
 	}
 
-	static String<STR> strs_from_strw (CR<String<STRW>> a) {
+	static String<Str> strs_from_strw (CR<String<Strw>> a) {
 		return StringProcHolder::hold (expr)->strs_from_strw (a) ;
 	}
 
-	static String<STRU8> stru8_from_stru16 (CR<String<STRU16>> a) {
+	static String<Stru8> stru8_from_stru16 (CR<String<Stru16>> a) {
 		return StringProcHolder::hold (expr)->stru8_from_stru16 (a) ;
 	}
 
-	static String<STRU8> stru8_from_stru32 (CR<String<STRU32>> a) {
+	static String<Stru8> stru8_from_stru32 (CR<String<Stru32>> a) {
 		return StringProcHolder::hold (expr)->stru8_from_stru32 (a) ;
 	}
 
-	static String<STRU16> stru16_from_stru8 (CR<String<STRU8>> a) {
+	static String<Stru16> stru16_from_stru8 (CR<String<Stru8>> a) {
 		return StringProcHolder::hold (expr)->stru16_from_stru8 (a) ;
 	}
 
-	static String<STRU16> stru16_from_stru32 (CR<String<STRU32>> a) {
+	static String<Stru16> stru16_from_stru32 (CR<String<Stru32>> a) {
 		return StringProcHolder::hold (expr)->stru16_from_stru32 (a) ;
 	}
 
-	static String<STRU32> stru32_from_stru8 (CR<String<STRU8>> a) {
+	static String<Stru32> stru32_from_stru8 (CR<String<Stru8>> a) {
 		return StringProcHolder::hold (expr)->stru32_from_stru8 (a) ;
 	}
 
-	static String<STRU32> stru32_from_stru16 (CR<String<STRU16>> a) {
+	static String<Stru32> stru32_from_stru16 (CR<String<Stru16>> a) {
 		return StringProcHolder::hold (expr)->stru32_from_stru16 (a) ;
 	}
 
-	static String<STRUA> strua_from_stra (RR<String<STRA>> a) {
+	static String<STRUA> strua_from_stra (RR<String<Stra>> a) {
 		return StringProcHolder::hold (expr)->strua_from_stra (move (a)) ;
 	}
 
-	static String<STRA> stra_from_strua (RR<String<STRUA>> a) {
+	static String<Stra> stra_from_strua (RR<String<STRUA>> a) {
 		return StringProcHolder::hold (expr)->stra_from_strua (move (a)) ;
 	}
 
-	static String<STRUW> struw_from_strw (RR<String<STRW>> a) {
+	static String<STRUW> struw_from_strw (RR<String<Strw>> a) {
 		return StringProcHolder::hold (expr)->struw_from_strw (move (a)) ;
 	}
 
-	static String<STRW> strw_from_struw (RR<String<STRUW>> a) {
+	static String<Strw> strw_from_struw (RR<String<STRUW>> a) {
 		return StringProcHolder::hold (expr)->strw_from_struw (move (a)) ;
 	}
 
-	static String<STRA> stra_from_stru (CR<String<STRU8>> a) {
+	static String<Stra> stra_from_stru (CR<String<Stru8>> a) {
 		return StringProcHolder::hold (expr)->stra_from_stru (a) ;
 	}
 
-	static String<STRA> stra_from_stru (CR<String<STRU16>> a) {
+	static String<Stra> stra_from_stru (CR<String<Stru16>> a) {
 		return StringProcHolder::hold (expr)->stra_from_stru (a) ;
 	}
 
-	static String<STRA> stra_from_stru (CR<String<STRU32>> a) {
+	static String<Stra> stra_from_stru (CR<String<Stru32>> a) {
 		return StringProcHolder::hold (expr)->stra_from_stru (a) ;
 	}
 
-	static String<STRW> strw_from_stru (CR<String<STRU8>> a) {
+	static String<Strw> strw_from_stru (CR<String<Stru8>> a) {
 		return StringProcHolder::hold (expr)->strw_from_stru (a) ;
 	}
 
-	static String<STRW> strw_from_stru (CR<String<STRU16>> a) {
+	static String<Strw> strw_from_stru (CR<String<Stru16>> a) {
 		return StringProcHolder::hold (expr)->strw_from_stru (a) ;
 	}
 
-	static String<STRW> strw_from_stru (CR<String<STRU32>> a) {
+	static String<Strw> strw_from_stru (CR<String<Stru32>> a) {
 		return StringProcHolder::hold (expr)->strw_from_stru (a) ;
 	}
 
-	static String<STR> strs_from_stru (CR<String<STRU8>> a) {
+	static String<Str> strs_from_stru (CR<String<Stru8>> a) {
 		return StringProcHolder::hold (expr)->strs_from_stru (a) ;
 	}
 
-	static String<STR> strs_from_stru (CR<String<STRU16>> a) {
+	static String<Str> strs_from_stru (CR<String<Stru16>> a) {
 		return StringProcHolder::hold (expr)->strs_from_stru (a) ;
 	}
 
-	static String<STR> strs_from_stru (CR<String<STRU32>> a) {
+	static String<Str> strs_from_stru (CR<String<Stru32>> a) {
 		return StringProcHolder::hold (expr)->strs_from_stru (a) ;
 	}
 
-	static String<STRU8> stru8_from_struw (CR<String<STRUW>> a) {
+	static String<Stru8> stru8_from_struw (CR<String<STRUW>> a) {
 		return StringProcHolder::hold (expr)->stru8_from_struw (a) ;
 	}
 
-	static String<STRU16> stru16_from_struw (CR<String<STRUW>> a) {
+	static String<Stru16> stru16_from_struw (CR<String<STRUW>> a) {
 		return StringProcHolder::hold (expr)->stru16_from_struw (a) ;
 	}
 
-	static String<STRU32> stru32_from_struw (CR<String<STRUW>> a) {
+	static String<Stru32> stru32_from_struw (CR<String<STRUW>> a) {
 		return StringProcHolder::hold (expr)->stru32_from_struw (a) ;
 	}
 
-	static String<STRU8> stru8_from_strs (CR<String<STRA>> a) {
+	static String<Stru8> stru8_from_strs (CR<String<Stra>> a) {
 		return StringProcHolder::hold (expr)->stru8_from_strs (a) ;
 	}
 
-	static String<STRU8> stru8_from_strs (CR<String<STRW>> a) {
+	static String<Stru8> stru8_from_strs (CR<String<Strw>> a) {
 		return StringProcHolder::hold (expr)->stru8_from_strs (a) ;
 	}
 
-	static String<STRU16> stru16_from_strs (CR<String<STRA>> a) {
+	static String<Stru16> stru16_from_strs (CR<String<Stra>> a) {
 		return StringProcHolder::hold (expr)->stru16_from_strs (a) ;
 	}
 
-	static String<STRU16> stru16_from_strs (CR<String<STRW>> a) {
+	static String<Stru16> stru16_from_strs (CR<String<Strw>> a) {
 		return StringProcHolder::hold (expr)->stru16_from_strs (a) ;
 	}
 
-	static String<STRU32> stru32_from_strs (CR<String<STRA>> a) {
+	static String<Stru32> stru32_from_strs (CR<String<Stra>> a) {
 		return StringProcHolder::hold (expr)->stru32_from_strs (a) ;
 	}
 
-	static String<STRU32> stru32_from_strs (CR<String<STRW>> a) {
+	static String<Stru32> stru32_from_strs (CR<String<Strw>> a) {
 		return StringProcHolder::hold (expr)->stru32_from_strs (a) ;
 	}
 } ;
@@ -204,46 +204,46 @@ struct XmlParserTree ;
 
 struct XmlParserLayout {
 	UniqueRef<XmlParserTree> mThis ;
-	INDEX mIndex ;
+	Index mIndex ;
 } ;
 
 struct XmlParserHolder implement Interface {
 	imports VFat<XmlParserHolder> hold (VR<XmlParserLayout> that) ;
 	imports CFat<XmlParserHolder> hold (CR<XmlParserLayout> that) ;
 
-	virtual void initialize (CR<RefBuffer<BYTE>> stream) = 0 ;
-	virtual BOOL exist () const = 0 ;
+	virtual void initialize (CR<RefBuffer<Byte>> stream) = 0 ;
+	virtual Bool exist () const = 0 ;
 	virtual XmlParserLayout root () const = 0 ;
 	virtual XmlParserLayout parent () const = 0 ;
 	virtual XmlParserLayout brother () const = 0 ;
 	virtual XmlParserLayout child () const = 0 ;
-	virtual XmlParserLayout child (CR<INDEX> index) const = 0 ;
+	virtual XmlParserLayout child (CR<Index> index) const = 0 ;
 	virtual XmlParserLayout child (CR<Slice> name) const = 0 ;
-	virtual XmlParserLayout child (CR<String<STRU8>> name) const = 0 ;
+	virtual XmlParserLayout child (CR<String<Stru8>> name) const = 0 ;
 	virtual Array<XmlParserLayout> list () const = 0 ;
-	virtual Array<XmlParserLayout> list (CR<LENGTH> size_) const = 0 ;
-	virtual BOOL equal (CR<XmlParserLayout> that) const = 0 ;
-	virtual CR<String<STRU8>> name () const leftvalue = 0 ;
-	virtual BOOL parse (CR<BOOL> def) const = 0 ;
-	virtual VAL32 parse (CR<VAL32> def) const = 0 ;
-	virtual VAL64 parse (CR<VAL64> def) const = 0 ;
-	virtual FLT32 parse (CR<FLT32> def) const = 0 ;
-	virtual FLT64 parse (CR<FLT64> def) const = 0 ;
-	virtual String<STRA> parse (CR<String<STRA>> def) const = 0 ;
-	virtual String<STRW> parse (CR<String<STRW>> def) const = 0 ;
-	virtual String<STRU8> parse (CR<String<STRU8>> def) const = 0 ;
-	virtual String<STRU16> parse (CR<String<STRU16>> def) const = 0 ;
-	virtual String<STRU32> parse (CR<String<STRU32>> def) const = 0 ;
-	virtual Array<BOOL> parse (CR<BOOL> def ,CR<LENGTH> size_) const = 0 ;
-	virtual Array<VAL32> parse (CR<VAL32> def ,CR<LENGTH> size_) const = 0 ;
-	virtual Array<VAL64> parse (CR<VAL64> def ,CR<LENGTH> size_) const = 0 ;
-	virtual Array<FLT32> parse (CR<FLT32> def ,CR<LENGTH> size_) const = 0 ;
-	virtual Array<FLT64> parse (CR<FLT64> def ,CR<LENGTH> size_) const = 0 ;
-	virtual Array<String<STRA>> parse (CR<String<STRA>> def ,CR<LENGTH> size_) const = 0 ;
-	virtual Array<String<STRW>> parse (CR<String<STRW>> def ,CR<LENGTH> size_) const = 0 ;
-	virtual Array<String<STRU8>> parse (CR<String<STRU8>> def ,CR<LENGTH> size_) const = 0 ;
-	virtual Array<String<STRU16>> parse (CR<String<STRU16>> def ,CR<LENGTH> size_) const = 0 ;
-	virtual Array<String<STRU32>> parse (CR<String<STRU32>> def ,CR<LENGTH> size_) const = 0 ;
+	virtual Array<XmlParserLayout> list (CR<Length> size_) const = 0 ;
+	virtual Bool equal (CR<XmlParserLayout> that) const = 0 ;
+	virtual CR<String<Stru8>> name () const leftvalue = 0 ;
+	virtual Bool parse (CR<Bool> def) const = 0 ;
+	virtual Val32 parse (CR<Val32> def) const = 0 ;
+	virtual Val64 parse (CR<Val64> def) const = 0 ;
+	virtual Flt32 parse (CR<Flt32> def) const = 0 ;
+	virtual Flt64 parse (CR<Flt64> def) const = 0 ;
+	virtual String<Stra> parse (CR<String<Stra>> def) const = 0 ;
+	virtual String<Strw> parse (CR<String<Strw>> def) const = 0 ;
+	virtual String<Stru8> parse (CR<String<Stru8>> def) const = 0 ;
+	virtual String<Stru16> parse (CR<String<Stru16>> def) const = 0 ;
+	virtual String<Stru32> parse (CR<String<Stru32>> def) const = 0 ;
+	virtual Array<Bool> parse (CR<Bool> def ,CR<Length> size_) const = 0 ;
+	virtual Array<Val32> parse (CR<Val32> def ,CR<Length> size_) const = 0 ;
+	virtual Array<Val64> parse (CR<Val64> def ,CR<Length> size_) const = 0 ;
+	virtual Array<Flt32> parse (CR<Flt32> def ,CR<Length> size_) const = 0 ;
+	virtual Array<Flt64> parse (CR<Flt64> def ,CR<Length> size_) const = 0 ;
+	virtual Array<String<Stra>> parse (CR<String<Stra>> def ,CR<Length> size_) const = 0 ;
+	virtual Array<String<Strw>> parse (CR<String<Strw>> def ,CR<Length> size_) const = 0 ;
+	virtual Array<String<Stru8>> parse (CR<String<Stru8>> def ,CR<Length> size_) const = 0 ;
+	virtual Array<String<Stru16>> parse (CR<String<Stru16>> def ,CR<Length> size_) const = 0 ;
+	virtual Array<String<Stru32>> parse (CR<String<Stru32>> def ,CR<Length> size_) const = 0 ;
 } ;
 
 class XmlParser implement XmlParserLayout {
@@ -254,11 +254,11 @@ protected:
 public:
 	implicit XmlParser () = default ;
 
-	explicit XmlParser (CR<RefBuffer<BYTE>> stream) {
+	explicit XmlParser (CR<RefBuffer<Byte>> stream) {
 		XmlParserHolder::hold (thiz)->initialize (stream) ;
 	}
 
-	BOOL exist () const {
+	Bool exist () const {
 		return XmlParserHolder::hold (thiz)->exist () ;
 	}
 
@@ -282,7 +282,7 @@ public:
 		return move (keep[TYPE<XmlParser>::expr] (ret)) ;
 	}
 
-	XmlParser child (CR<INDEX> index) const {
+	XmlParser child (CR<Index> index) const {
 		XmlParserLayout ret = XmlParserHolder::hold (thiz)->child (index) ;
 		return move (keep[TYPE<XmlParser>::expr] (ret)) ;
 	}
@@ -292,7 +292,7 @@ public:
 		return move (keep[TYPE<XmlParser>::expr] (ret)) ;
 	}
 
-	XmlParser child (CR<String<STRU8>> name) const {
+	XmlParser child (CR<String<Stru8>> name) const {
 		XmlParserLayout ret = XmlParserHolder::hold (thiz)->child (name) ;
 		return move (keep[TYPE<XmlParser>::expr] (ret)) ;
 	}
@@ -302,104 +302,104 @@ public:
 		return move (keep[TYPE<Array<XmlParser>>::expr] (Pointer::from (ret))) ;
 	}
 
-	Array<XmlParser> list (CR<LENGTH> size_) const {
+	Array<XmlParser> list (CR<Length> size_) const {
 		ArrayLayout ret = XmlParserHolder::hold (thiz)->list (size_) ;
 		return move (keep[TYPE<Array<XmlParser>>::expr] (Pointer::from (ret))) ;
 	}
 
-	BOOL equal (CR<XmlParser> that) const {
+	Bool equal (CR<XmlParser> that) const {
 		return XmlParserHolder::hold (thiz)->equal (that) ;
 	}
 
-	forceinline BOOL operator== (CR<XmlParser> that) const {
+	forceinline Bool operator== (CR<XmlParser> that) const {
 		return equal (that) ;
 	}
 
-	forceinline BOOL operator!= (CR<XmlParser> that) const {
+	forceinline Bool operator!= (CR<XmlParser> that) const {
 		return (!equal (that)) ;
 	}
 
-	CR<String<STRU8>> name () const leftvalue {
+	CR<String<Stru8>> name () const leftvalue {
 		return XmlParserHolder::hold (thiz)->name () ;
 	}
 
-	BOOL parse (CR<BOOL> def) const {
+	Bool parse (CR<Bool> def) const {
 		return XmlParserHolder::hold (thiz)->parse (def) ;
 	}
 
-	VAL32 parse (CR<VAL32> def) const {
+	Val32 parse (CR<Val32> def) const {
 		return XmlParserHolder::hold (thiz)->parse (def) ;
 	}
 
-	VAL64 parse (CR<VAL64> def) const {
+	Val64 parse (CR<Val64> def) const {
 		return XmlParserHolder::hold (thiz)->parse (def) ;
 	}
 
-	FLT32 parse (CR<FLT32> def) const {
+	Flt32 parse (CR<Flt32> def) const {
 		return XmlParserHolder::hold (thiz)->parse (def) ;
 	}
 
-	FLT64 parse (CR<FLT64> def) const {
+	Flt64 parse (CR<Flt64> def) const {
 		return XmlParserHolder::hold (thiz)->parse (def) ;
 	}
 
-	String<STRA> parse (CR<String<STRA>> def) const {
+	String<Stra> parse (CR<String<Stra>> def) const {
 		return XmlParserHolder::hold (thiz)->parse (def) ;
 	}
 
-	String<STRW> parse (CR<String<STRW>> def) const {
+	String<Strw> parse (CR<String<Strw>> def) const {
 		return XmlParserHolder::hold (thiz)->parse (def) ;
 	}
 
-	String<STRU8> parse (CR<String<STRU8>> def) const {
+	String<Stru8> parse (CR<String<Stru8>> def) const {
 		return XmlParserHolder::hold (thiz)->parse (def) ;
 	}
 
-	String<STRU16> parse (CR<String<STRU16>> def) const {
+	String<Stru16> parse (CR<String<Stru16>> def) const {
 		return XmlParserHolder::hold (thiz)->parse (def) ;
 	}
 
-	String<STRU32> parse (CR<String<STRU32>> def) const {
+	String<Stru32> parse (CR<String<Stru32>> def) const {
 		return XmlParserHolder::hold (thiz)->parse (def) ;
 	}
 
-	Array<BOOL> parse (CR<BOOL> def ,CR<LENGTH> size_) const {
+	Array<Bool> parse (CR<Bool> def ,CR<Length> size_) const {
 		return XmlParserHolder::hold (thiz)->parse (def ,size_) ;
 	}
 
-	Array<VAL32> parse (CR<VAL32> def ,CR<LENGTH> size_) const {
+	Array<Val32> parse (CR<Val32> def ,CR<Length> size_) const {
 		return XmlParserHolder::hold (thiz)->parse (def ,size_) ;
 	}
 
-	Array<VAL64> parse (CR<VAL64> def ,CR<LENGTH> size_) const {
+	Array<Val64> parse (CR<Val64> def ,CR<Length> size_) const {
 		return XmlParserHolder::hold (thiz)->parse (def ,size_) ;
 	}
 
-	Array<FLT32> parse (CR<FLT32> def ,CR<LENGTH> size_) const {
+	Array<Flt32> parse (CR<Flt32> def ,CR<Length> size_) const {
 		return XmlParserHolder::hold (thiz)->parse (def ,size_) ;
 	}
 
-	Array<FLT64> parse (CR<FLT64> def ,CR<LENGTH> size_) const {
+	Array<Flt64> parse (CR<Flt64> def ,CR<Length> size_) const {
 		return XmlParserHolder::hold (thiz)->parse (def ,size_) ;
 	}
 
-	Array<String<STRA>> parse (CR<String<STRA>> def ,CR<LENGTH> size_) const {
+	Array<String<Stra>> parse (CR<String<Stra>> def ,CR<Length> size_) const {
 		return XmlParserHolder::hold (thiz)->parse (def ,size_) ;
 	}
 
-	Array<String<STRW>> parse (CR<String<STRW>> def ,CR<LENGTH> size_) const {
+	Array<String<Strw>> parse (CR<String<Strw>> def ,CR<Length> size_) const {
 		return XmlParserHolder::hold (thiz)->parse (def ,size_) ;
 	}
 
-	Array<String<STRU8>> parse (CR<String<STRU8>> def ,CR<LENGTH> size_) const {
+	Array<String<Stru8>> parse (CR<String<Stru8>> def ,CR<Length> size_) const {
 		return XmlParserHolder::hold (thiz)->parse (def ,size_) ;
 	}
 
-	Array<String<STRU16>> parse (CR<String<STRU16>> def ,CR<LENGTH> size_) const {
+	Array<String<Stru16>> parse (CR<String<Stru16>> def ,CR<Length> size_) const {
 		return XmlParserHolder::hold (thiz)->parse (def ,size_) ;
 	}
 
-	Array<String<STRU32>> parse (CR<String<STRU32>> def ,CR<LENGTH> size_) const {
+	Array<String<Stru32>> parse (CR<String<Stru32>> def ,CR<Length> size_) const {
 		return XmlParserHolder::hold (thiz)->parse (def ,size_) ;
 	}
 } ;
@@ -408,46 +408,46 @@ struct JsonParserTree ;
 
 struct JsonParserLayout {
 	UniqueRef<JsonParserTree> mThis ;
-	INDEX mIndex ;
+	Index mIndex ;
 } ;
 
 struct JsonParserHolder implement Interface {
 	imports VFat<JsonParserHolder> hold (VR<JsonParserLayout> that) ;
 	imports CFat<JsonParserHolder> hold (CR<JsonParserLayout> that) ;
 
-	virtual void initialize (CR<RefBuffer<BYTE>> stream) = 0 ;
-	virtual BOOL exist () const = 0 ;
+	virtual void initialize (CR<RefBuffer<Byte>> stream) = 0 ;
+	virtual Bool exist () const = 0 ;
 	virtual JsonParserLayout root () const = 0 ;
 	virtual JsonParserLayout parent () const = 0 ;
 	virtual JsonParserLayout brother () const = 0 ;
 	virtual JsonParserLayout child () const = 0 ;
-	virtual JsonParserLayout child (CR<INDEX> index) const = 0 ;
+	virtual JsonParserLayout child (CR<Index> index) const = 0 ;
 	virtual JsonParserLayout child (CR<Slice> name) const = 0 ;
-	virtual JsonParserLayout child (CR<String<STRU8>> name) const = 0 ;
+	virtual JsonParserLayout child (CR<String<Stru8>> name) const = 0 ;
 	virtual Array<JsonParserLayout> list () const = 0 ;
-	virtual Array<JsonParserLayout> list (CR<LENGTH> size_) const = 0 ;
-	virtual BOOL equal (CR<JsonParserLayout> that) const = 0 ;
-	virtual CR<String<STRU8>> name () const leftvalue = 0 ;
-	virtual BOOL parse (CR<BOOL> def) const = 0 ;
-	virtual VAL32 parse (CR<VAL32> def) const = 0 ;
-	virtual VAL64 parse (CR<VAL64> def) const = 0 ;
-	virtual FLT32 parse (CR<FLT32> def) const = 0 ;
-	virtual FLT64 parse (CR<FLT64> def) const = 0 ;
-	virtual String<STRA> parse (CR<String<STRA>> def) const = 0 ;
-	virtual String<STRW> parse (CR<String<STRW>> def) const = 0 ;
-	virtual String<STRU8> parse (CR<String<STRU8>> def) const = 0 ;
-	virtual String<STRU16> parse (CR<String<STRU16>> def) const = 0 ;
-	virtual String<STRU32> parse (CR<String<STRU32>> def) const = 0 ;
-	virtual Array<BOOL> parse (CR<BOOL> def ,CR<LENGTH> size_) const = 0 ;
-	virtual Array<VAL32> parse (CR<VAL32> def ,CR<LENGTH> size_) const = 0 ;
-	virtual Array<VAL64> parse (CR<VAL64> def ,CR<LENGTH> size_) const = 0 ;
-	virtual Array<FLT32> parse (CR<FLT32> def ,CR<LENGTH> size_) const = 0 ;
-	virtual Array<FLT64> parse (CR<FLT64> def ,CR<LENGTH> size_) const = 0 ;
-	virtual Array<String<STRA>> parse (CR<String<STRA>> def ,CR<LENGTH> size_) const = 0 ;
-	virtual Array<String<STRW>> parse (CR<String<STRW>> def ,CR<LENGTH> size_) const = 0 ;
-	virtual Array<String<STRU8>> parse (CR<String<STRU8>> def ,CR<LENGTH> size_) const = 0 ;
-	virtual Array<String<STRU16>> parse (CR<String<STRU16>> def ,CR<LENGTH> size_) const = 0 ;
-	virtual Array<String<STRU32>> parse (CR<String<STRU32>> def ,CR<LENGTH> size_) const = 0 ;
+	virtual Array<JsonParserLayout> list (CR<Length> size_) const = 0 ;
+	virtual Bool equal (CR<JsonParserLayout> that) const = 0 ;
+	virtual CR<String<Stru8>> name () const leftvalue = 0 ;
+	virtual Bool parse (CR<Bool> def) const = 0 ;
+	virtual Val32 parse (CR<Val32> def) const = 0 ;
+	virtual Val64 parse (CR<Val64> def) const = 0 ;
+	virtual Flt32 parse (CR<Flt32> def) const = 0 ;
+	virtual Flt64 parse (CR<Flt64> def) const = 0 ;
+	virtual String<Stra> parse (CR<String<Stra>> def) const = 0 ;
+	virtual String<Strw> parse (CR<String<Strw>> def) const = 0 ;
+	virtual String<Stru8> parse (CR<String<Stru8>> def) const = 0 ;
+	virtual String<Stru16> parse (CR<String<Stru16>> def) const = 0 ;
+	virtual String<Stru32> parse (CR<String<Stru32>> def) const = 0 ;
+	virtual Array<Bool> parse (CR<Bool> def ,CR<Length> size_) const = 0 ;
+	virtual Array<Val32> parse (CR<Val32> def ,CR<Length> size_) const = 0 ;
+	virtual Array<Val64> parse (CR<Val64> def ,CR<Length> size_) const = 0 ;
+	virtual Array<Flt32> parse (CR<Flt32> def ,CR<Length> size_) const = 0 ;
+	virtual Array<Flt64> parse (CR<Flt64> def ,CR<Length> size_) const = 0 ;
+	virtual Array<String<Stra>> parse (CR<String<Stra>> def ,CR<Length> size_) const = 0 ;
+	virtual Array<String<Strw>> parse (CR<String<Strw>> def ,CR<Length> size_) const = 0 ;
+	virtual Array<String<Stru8>> parse (CR<String<Stru8>> def ,CR<Length> size_) const = 0 ;
+	virtual Array<String<Stru16>> parse (CR<String<Stru16>> def ,CR<Length> size_) const = 0 ;
+	virtual Array<String<Stru32>> parse (CR<String<Stru32>> def ,CR<Length> size_) const = 0 ;
 } ;
 
 class JsonParser implement JsonParserLayout {
@@ -458,11 +458,11 @@ protected:
 public:
 	implicit JsonParser () = default ;
 
-	explicit JsonParser (CR<RefBuffer<BYTE>> stream) {
+	explicit JsonParser (CR<RefBuffer<Byte>> stream) {
 		JsonParserHolder::hold (thiz)->initialize (stream) ;
 	}
 
-	BOOL exist () const {
+	Bool exist () const {
 		return JsonParserHolder::hold (thiz)->exist () ;
 	}
 
@@ -486,7 +486,7 @@ public:
 		return move (keep[TYPE<JsonParser>::expr] (ret)) ;
 	}
 
-	JsonParser child (CR<INDEX> index) const {
+	JsonParser child (CR<Index> index) const {
 		JsonParserLayout ret = JsonParserHolder::hold (thiz)->child (index) ;
 		return move (keep[TYPE<JsonParser>::expr] (ret)) ;
 	}
@@ -496,7 +496,7 @@ public:
 		return move (keep[TYPE<JsonParser>::expr] (ret)) ;
 	}
 
-	JsonParser child (CR<String<STRU8>> name) const {
+	JsonParser child (CR<String<Stru8>> name) const {
 		JsonParserLayout ret = JsonParserHolder::hold (thiz)->child (name) ;
 		return move (keep[TYPE<JsonParser>::expr] (ret)) ;
 	}
@@ -506,104 +506,104 @@ public:
 		return move (keep[TYPE<Array<JsonParser>>::expr] (Pointer::from (ret))) ;
 	}
 
-	Array<JsonParser> list (CR<LENGTH> size_) const {
+	Array<JsonParser> list (CR<Length> size_) const {
 		ArrayLayout ret = JsonParserHolder::hold (thiz)->list (size_) ;
 		return move (keep[TYPE<Array<JsonParser>>::expr] (Pointer::from (ret))) ;
 	}
 
-	BOOL equal (CR<JsonParser> that) const {
+	Bool equal (CR<JsonParser> that) const {
 		return JsonParserHolder::hold (thiz)->equal (that) ;
 	}
 
-	forceinline BOOL operator== (CR<JsonParser> that) const {
+	forceinline Bool operator== (CR<JsonParser> that) const {
 		return equal (that) ;
 	}
 
-	forceinline BOOL operator!= (CR<JsonParser> that) const {
+	forceinline Bool operator!= (CR<JsonParser> that) const {
 		return (!equal (that)) ;
 	}
 
-	CR<String<STRU8>> name () const leftvalue {
+	CR<String<Stru8>> name () const leftvalue {
 		return JsonParserHolder::hold (thiz)->name () ;
 	}
 
-	BOOL parse (CR<BOOL> def) const {
+	Bool parse (CR<Bool> def) const {
 		return JsonParserHolder::hold (thiz)->parse (def) ;
 	}
 
-	VAL32 parse (CR<VAL32> def) const {
+	Val32 parse (CR<Val32> def) const {
 		return JsonParserHolder::hold (thiz)->parse (def) ;
 	}
 
-	VAL64 parse (CR<VAL64> def) const {
+	Val64 parse (CR<Val64> def) const {
 		return JsonParserHolder::hold (thiz)->parse (def) ;
 	}
 
-	FLT32 parse (CR<FLT32> def) const {
+	Flt32 parse (CR<Flt32> def) const {
 		return JsonParserHolder::hold (thiz)->parse (def) ;
 	}
 
-	FLT64 parse (CR<FLT64> def) const {
+	Flt64 parse (CR<Flt64> def) const {
 		return JsonParserHolder::hold (thiz)->parse (def) ;
 	}
 
-	String<STRA> parse (CR<String<STRA>> def) const {
+	String<Stra> parse (CR<String<Stra>> def) const {
 		return JsonParserHolder::hold (thiz)->parse (def) ;
 	}
 
-	String<STRW> parse (CR<String<STRW>> def) const {
+	String<Strw> parse (CR<String<Strw>> def) const {
 		return JsonParserHolder::hold (thiz)->parse (def) ;
 	}
 
-	String<STRU8> parse (CR<String<STRU8>> def) const {
+	String<Stru8> parse (CR<String<Stru8>> def) const {
 		return JsonParserHolder::hold (thiz)->parse (def) ;
 	}
 
-	String<STRU16> parse (CR<String<STRU16>> def) const {
+	String<Stru16> parse (CR<String<Stru16>> def) const {
 		return JsonParserHolder::hold (thiz)->parse (def) ;
 	}
 
-	String<STRU32> parse (CR<String<STRU32>> def) const {
+	String<Stru32> parse (CR<String<Stru32>> def) const {
 		return JsonParserHolder::hold (thiz)->parse (def) ;
 	}
 
-	Array<BOOL> parse (CR<BOOL> def ,CR<LENGTH> size_) const {
+	Array<Bool> parse (CR<Bool> def ,CR<Length> size_) const {
 		return JsonParserHolder::hold (thiz)->parse (def ,size_) ;
 	}
 
-	Array<VAL32> parse (CR<VAL32> def ,CR<LENGTH> size_) const {
+	Array<Val32> parse (CR<Val32> def ,CR<Length> size_) const {
 		return JsonParserHolder::hold (thiz)->parse (def ,size_) ;
 	}
 
-	Array<VAL64> parse (CR<VAL64> def ,CR<LENGTH> size_) const {
+	Array<Val64> parse (CR<Val64> def ,CR<Length> size_) const {
 		return JsonParserHolder::hold (thiz)->parse (def ,size_) ;
 	}
 
-	Array<FLT32> parse (CR<FLT32> def ,CR<LENGTH> size_) const {
+	Array<Flt32> parse (CR<Flt32> def ,CR<Length> size_) const {
 		return JsonParserHolder::hold (thiz)->parse (def ,size_) ;
 	}
 
-	Array<FLT64> parse (CR<FLT64> def ,CR<LENGTH> size_) const {
+	Array<Flt64> parse (CR<Flt64> def ,CR<Length> size_) const {
 		return JsonParserHolder::hold (thiz)->parse (def ,size_) ;
 	}
 
-	Array<String<STRA>> parse (CR<String<STRA>> def ,CR<LENGTH> size_) const {
+	Array<String<Stra>> parse (CR<String<Stra>> def ,CR<Length> size_) const {
 		return JsonParserHolder::hold (thiz)->parse (def ,size_) ;
 	}
 
-	Array<String<STRW>> parse (CR<String<STRW>> def ,CR<LENGTH> size_) const {
+	Array<String<Strw>> parse (CR<String<Strw>> def ,CR<Length> size_) const {
 		return JsonParserHolder::hold (thiz)->parse (def ,size_) ;
 	}
 
-	Array<String<STRU8>> parse (CR<String<STRU8>> def ,CR<LENGTH> size_) const {
+	Array<String<Stru8>> parse (CR<String<Stru8>> def ,CR<Length> size_) const {
 		return JsonParserHolder::hold (thiz)->parse (def ,size_) ;
 	}
 
-	Array<String<STRU16>> parse (CR<String<STRU16>> def ,CR<LENGTH> size_) const {
+	Array<String<Stru16>> parse (CR<String<Stru16>> def ,CR<Length> size_) const {
 		return JsonParserHolder::hold (thiz)->parse (def ,size_) ;
 	}
 
-	Array<String<STRU32>> parse (CR<String<STRU32>> def ,CR<LENGTH> size_) const {
+	Array<String<Stru32>> parse (CR<String<Stru32>> def ,CR<Length> size_) const {
 		return JsonParserHolder::hold (thiz)->parse (def ,size_) ;
 	}
 } ;
@@ -611,14 +611,14 @@ public:
 struct PlyParserTree ;
 
 struct PlyParserGuide {
-	INDEX mElement ;
-	Deque<INDEX> mProperty ;
-	INDEX mCol ;
-	INDEX mRow ;
-	INDEX mPlyBegin ;
-	INDEX mPlyEnd ;
-	INDEX mPlyIndex ;
-	BOOL mPlyListMode ;
+	Index mElement ;
+	Deque<Index> mProperty ;
+	Index mCol ;
+	Index mRow ;
+	Index mPlyBegin ;
+	Index mPlyEnd ;
+	Index mPlyIndex ;
+	Bool mPlyListMode ;
 } ;
 
 struct PlyParserLayout {
@@ -630,20 +630,20 @@ struct PlyParserHolder implement Interface {
 	imports VFat<PlyParserHolder> hold (VR<PlyParserLayout> that) ;
 	imports CFat<PlyParserHolder> hold (CR<PlyParserLayout> that) ;
 
-	virtual void initialize (CR<RefBuffer<BYTE>> stream) = 0 ;
-	virtual LENGTH element_size (CR<Slice> element) const = 0 ;
-	virtual LENGTH property_size (CR<Slice> element ,CR<Slice> property) const = 0 ;
+	virtual void initialize (CR<RefBuffer<Byte>> stream) = 0 ;
+	virtual Length element_size (CR<Slice> element) const = 0 ;
+	virtual Length property_size (CR<Slice> element ,CR<Slice> property) const = 0 ;
 	virtual void guide_new (CR<Slice> element) = 0 ;
 	virtual void guide_put (CR<Slice> property) = 0 ;
-	virtual void read (VR<BOOL> item) = 0 ;
-	virtual void read (VR<VAL32> item) = 0 ;
-	virtual void read (VR<VAL64> item) = 0 ;
-	virtual void read (VR<FLT32> item) = 0 ;
-	virtual void read (VR<FLT64> item) = 0 ;
-	virtual void read (VR<BYTE> item) = 0 ;
-	virtual void read (VR<WORD> item) = 0 ;
-	virtual void read (VR<CHAR> item) = 0 ;
-	virtual void read (VR<QUAD> item) = 0 ;
+	virtual void read (VR<Bool> item) = 0 ;
+	virtual void read (VR<Val32> item) = 0 ;
+	virtual void read (VR<Val64> item) = 0 ;
+	virtual void read (VR<Flt32> item) = 0 ;
+	virtual void read (VR<Flt64> item) = 0 ;
+	virtual void read (VR<Byte> item) = 0 ;
+	virtual void read (VR<Word> item) = 0 ;
+	virtual void read (VR<Char> item) = 0 ;
+	virtual void read (VR<Quad> item) = 0 ;
 } ;
 
 class PlyParser implement PlyParserLayout {
@@ -654,15 +654,15 @@ protected:
 public:
 	implicit PlyParser () = default ;
 
-	explicit PlyParser (CR<RefBuffer<BYTE>> stream) {
+	explicit PlyParser (CR<RefBuffer<Byte>> stream) {
 		PlyParserHolder::hold (thiz)->initialize (stream) ;
 	}
 
-	LENGTH element_size (CR<Slice> element) const {
+	Length element_size (CR<Slice> element) const {
 		return PlyParserHolder::hold (thiz)->element_size (element) ;
 	}
 
-	LENGTH property_size (CR<Slice> element ,CR<Slice> property) const {
+	Length property_size (CR<Slice> element ,CR<Slice> property) const {
 		return PlyParserHolder::hold (thiz)->property_size (element ,property) ;
 	}
 
@@ -681,83 +681,83 @@ public:
 		return move (ret) ;
 	}
 
-	void read (VR<BOOL> item) {
+	void read (VR<Bool> item) {
 		return PlyParserHolder::hold (thiz)->read (item) ;
 	}
 
-	forceinline VR<PlyParser> operator>> (VR<BOOL> item) {
+	forceinline VR<PlyParser> operator>> (VR<Bool> item) {
 		read (item) ;
 		return thiz ;
 	}
 
-	void read (VR<VAL32> item) {
+	void read (VR<Val32> item) {
 		return PlyParserHolder::hold (thiz)->read (item) ;
 	}
 
-	forceinline VR<PlyParser> operator>> (VR<VAL32> item) {
+	forceinline VR<PlyParser> operator>> (VR<Val32> item) {
 		read (item) ;
 		return thiz ;
 	}
 
-	void read (VR<VAL64> item) {
+	void read (VR<Val64> item) {
 		return PlyParserHolder::hold (thiz)->read (item) ;
 	}
 
-	forceinline VR<PlyParser> operator>> (VR<VAL64> item) {
+	forceinline VR<PlyParser> operator>> (VR<Val64> item) {
 		read (item) ;
 		return thiz ;
 	}
 
-	void read (VR<FLT32> item) {
+	void read (VR<Flt32> item) {
 		return PlyParserHolder::hold (thiz)->read (item) ;
 	}
 
-	forceinline VR<PlyParser> operator>> (VR<FLT32> item) {
+	forceinline VR<PlyParser> operator>> (VR<Flt32> item) {
 		read (item) ;
 		return thiz ;
 	}
 
-	void read (VR<FLT64> item) {
+	void read (VR<Flt64> item) {
 		return PlyParserHolder::hold (thiz)->read (item) ;
 	}
 
-	forceinline VR<PlyParser> operator>> (VR<FLT64> item) {
+	forceinline VR<PlyParser> operator>> (VR<Flt64> item) {
 		read (item) ;
 		return thiz ;
 	}
 
-	void read (VR<BYTE> item) {
+	void read (VR<Byte> item) {
 		return PlyParserHolder::hold (thiz)->read (item) ;
 	}
 
-	forceinline VR<PlyParser> operator>> (VR<BYTE> item) {
+	forceinline VR<PlyParser> operator>> (VR<Byte> item) {
 		read (item) ;
 		return thiz ;
 	}
 
-	void read (VR<WORD> item) {
+	void read (VR<Word> item) {
 		return PlyParserHolder::hold (thiz)->read (item) ;
 	}
 
-	forceinline VR<PlyParser> operator>> (VR<WORD> item) {
+	forceinline VR<PlyParser> operator>> (VR<Word> item) {
 		read (item) ;
 		return thiz ;
 	}
 
-	void read (VR<CHAR> item) {
+	void read (VR<Char> item) {
 		return PlyParserHolder::hold (thiz)->read (item) ;
 	}
 
-	forceinline VR<PlyParser> operator>> (VR<CHAR> item) {
+	forceinline VR<PlyParser> operator>> (VR<Char> item) {
 		read (item) ;
 		return thiz ;
 	}
 
-	void read (VR<QUAD> item) {
+	void read (VR<Quad> item) {
 		return PlyParserHolder::hold (thiz)->read (item) ;
 	}
 
-	forceinline VR<PlyParser> operator>> (VR<QUAD> item) {
+	forceinline VR<PlyParser> operator>> (VR<Quad> item) {
 		read (item) ;
 		return thiz ;
 	}

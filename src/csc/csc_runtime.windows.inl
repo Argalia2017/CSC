@@ -26,12 +26,12 @@ public:
 		noop () ;
 	}
 
-	LENGTH thread_concurrency () const override {
+	Length thread_concurrency () const override {
 		return std::thread::hardware_concurrency () ;
 	}
 
-	FLAG thread_uid () const override {
-		return FLAG (GetCurrentThreadId ()) ;
+	Flag thread_uid () const override {
+		return Flag (GetCurrentThreadId ()) ;
 	}
 
 	void thread_sleep (CR<Time> time) const override {
@@ -43,20 +43,19 @@ public:
 		std::this_thread::yield () ;
 	}
 
-	FLAG process_uid () const override {
-		return FLAG (GetCurrentProcessId ()) ;
+	Flag process_uid () const override {
+		return Flag (GetCurrentProcessId ()) ;
 	}
 
 	void process_exit () const override {
 		std::quick_exit (0) ;
 	}
 
-	String<STR> library_file () const override {
-		String<STR> ret = String<STR>::make () ;
+	String<Str> library_file (CR<csc_handle_t> addr) const override {
+		String<Str> ret = String<Str>::make () ;
 		const auto r1x = invoke ([&] () {
 			const auto r2x = csc_enum_t (GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT) ;
-			auto &&rax = keep[TYPE<HeapLayout>::expr] (Heap::expr) ;
-			const auto r3x = LPTSTR (rax.mHolder) ;
+			const auto r3x = LPTSTR (addr) ;
 			csc_device_t ret = NULL ;
 			const auto r4x = GetModuleHandleEx (r2x ,r3x ,(&ret)) ;
 			assume (r4x) ;
@@ -66,8 +65,8 @@ public:
 		return move (ret) ;
 	}
 
-	String<STR> library_main () const override {
-		String<STR> ret = String<STR>::make () ;
+	String<Str> library_main () const override {
+		String<Str> ret = String<Str>::make () ;
 		GetModuleFileName (NULL ,ret ,csc_enum_t (ret.size ())) ;
 		return move (ret) ;
 	}
@@ -80,7 +79,7 @@ private:
 	using PROCESS_SNAPSHOT_STEP = ENUM<128> ;
 
 public:
-	void initialize (CR<FLAG> uid) override {
+	void initialize (CR<Flag> uid) override {
 		self.mUid = uid ;
 		const auto r1x = UniqueRef<csc_handle_t> ([&] (VR<csc_handle_t> me) {
 			me = OpenProcess (PROCESS_QUERY_INFORMATION ,FALSE ,csc_enum_t (uid)) ;
@@ -93,29 +92,29 @@ public:
 		self.mProcessTime = process_time (r1x ,uid) ;
 	}
 
-	QUAD process_code (CR<csc_handle_t> handle ,CR<FLAG> uid) const {
-		return QUAD (GetProcessVersion (csc_enum_t (uid))) ;
+	Quad process_code (CR<csc_handle_t> handle ,CR<Flag> uid) const {
+		return Quad (GetProcessVersion (csc_enum_t (uid))) ;
 	}
 
-	QUAD process_time (CR<csc_handle_t> handle ,CR<FLAG> uid) const {
+	Quad process_time (CR<csc_handle_t> handle ,CR<Flag> uid) const {
 		const auto r1x = invoke ([&] () {
 			Buffer4<FILETIME> ret ;
 			inline_memset (ret) ;
 			GetProcessTimes (handle ,(&ret[0]) ,(&ret[1]) ,(&ret[2]) ,(&ret[3])) ;
 			return move (ret) ;
 		}) ;
-		return ByteProc::merge (CHAR (r1x[0].dwHighDateTime) ,CHAR (r1x[0].dwLowDateTime)) ;
+		return ByteProc::merge (Char (r1x[0].dwHighDateTime) ,Char (r1x[0].dwLowDateTime)) ;
 	}
 
-	void initialize (CR<RefBuffer<BYTE>> snapshot_) override {
+	void initialize (CR<RefBuffer<Byte>> snapshot_) override {
 		self.mUid = 0 ;
 		try {
 			assume (snapshot_.size () == PROCESS_SNAPSHOT_STEP::expr) ;
-			auto rax = ByteReader (Ref<RefBuffer<BYTE>>::reference (snapshot_)) ;
+			auto rax = ByteReader (Ref<RefBuffer<Byte>>::reference (snapshot_)) ;
 			rax >> slice ("CSC_Process") ;
 			rax >> GAP ;
-			const auto r1x = rax.poll (TYPE<VAL64>::expr) ;
-			self.mUid = FLAG (r1x) ;
+			const auto r1x = rax.poll (TYPE<Val64>::expr) ;
+			self.mUid = Flag (r1x) ;
 			rax >> GAP ;
 			rax >> self.mProcessCode ;
 			rax >> GAP ;
@@ -127,7 +126,7 @@ public:
 		}
 	}
 
-	BOOL equal (CR<ProcessLayout> that) const override {
+	Bool equal (CR<ProcessLayout> that) const override {
 		const auto r1x = inline_equal (self.mUid ,that.mUid) ;
 		if (!r1x)
 			return r1x ;
@@ -140,17 +139,17 @@ public:
 		return TRUE ;
 	}
 
-	FLAG process_uid () const override {
+	Flag process_uid () const override {
 		return self.mUid ;
 	}
 
-	RefBuffer<BYTE> snapshot () const override {
-		RefBuffer<BYTE> ret = RefBuffer<BYTE> (PROCESS_SNAPSHOT_STEP::expr) ;
-		auto rax = ByteWriter (Ref<RefBuffer<BYTE>>::reference (ret)) ;
+	RefBuffer<Byte> snapshot () const override {
+		RefBuffer<Byte> ret = RefBuffer<Byte> (PROCESS_SNAPSHOT_STEP::expr) ;
+		auto rax = ByteWriter (Ref<RefBuffer<Byte>>::reference (ret)) ;
 		if ifdo (TRUE) {
 			rax << slice ("CSC_Process") ;
 			rax << GAP ;
-			rax << VAL64 (self.mUid) ;
+			rax << Val64 (self.mUid) ;
 			rax << GAP ;
 			rax << self.mProcessCode ;
 			rax << GAP ;
@@ -166,7 +165,7 @@ static const auto mProcessExternal = External<ProcessHolder ,ProcessLayout> (Pro
 
 class LibraryImplHolder final implement Fat<LibraryHolder ,LibraryLayout> {
 public:
-	void initialize (CR<String<STR>> file) override {
+	void initialize (CR<String<Str>> file) override {
 		self.mFile = move (file) ;
 		assert (self.mFile.length () > 0) ;
 		self.mLibrary = UniqueRef<csc_device_t> ([&] (VR<csc_device_t> me) {
@@ -176,37 +175,37 @@ public:
 			me = LoadLibrary (self.mFile) ;
 			if (me != NULL)
 				return ;
-			self.mLastError = FLAG (GetLastError ()) ;
+			self.mLastError = Flag (GetLastError ()) ;
 			assume (FALSE) ;
 		} ,[&] (VR<csc_device_t> me) {
 			noop () ;
 		}) ;
 	}
 
-	String<STR> library_file () const override {
+	String<Str> library_file () const override {
 		return self.mFile ;
 	}
 
-	FLAG load (CR<String<STR>> name) override {
+	Flag load (CR<String<Str>> name) override {
 		assert (name.length () > 0) ;
 		const auto r1x = StringProc::stra_from_strs (name) ;
-		FLAG ret = FLAG (GetProcAddress (self.mLibrary ,r1x)) ;
+		Flag ret = Flag (GetProcAddress (self.mLibrary ,r1x)) ;
 		if ifdo (TRUE) {
 			if (ret != ZERO)
 				discard ;
-			self.mLastError = FLAG (GetLastError ()) ;
+			self.mLastError = Flag (GetLastError ()) ;
 			assume (FALSE) ;
 		}
 		return move (ret) ;
 	}
 
-	String<STR> error () const override {
-		String<STR> ret = String<STR>::make () ;
+	String<Str> error () const override {
+		String<Str> ret = String<Str>::make () ;
 		const auto r1x = csc_enum_t (self.mLastError) ;
 		const auto r2x = csc_enum_t (MAKELANGID (LANG_NEUTRAL ,SUBLANG_DEFAULT)) ;
 		const auto r3x = csc_enum_t (ret.size ()) ;
 		FormatMessage (FORMAT_MESSAGE_FROM_SYSTEM ,NULL ,r1x ,r2x ,ret ,r3x ,NULL) ;
-		ret = String<STR>::make (Format (slice ("LastError = $1 : $2")) (FLAG (r1x) ,ret)) ;
+		ret = String<Str>::make (Format (slice ("LastError = $1 : $2")) (Flag (r1x) ,ret)) ;
 		return move (ret) ;
 	}
 } ;
@@ -217,7 +216,7 @@ class SingletonProcImplHolder final implement Fat<SingletonProcHolder ,Singleton
 public:
 	void initialize () override {
 		self.mUid = RuntimeProc::process_uid () ;
-		self.mName = String<STR>::make (slice ("CSC_Singleton_") ,self.mUid) ;
+		self.mName = String<Str>::make (slice ("CSC_Singleton_") ,self.mUid) ;
 		inline_memset (self.mLocal) ;
 		sync_local () ;
 	}
@@ -247,7 +246,7 @@ public:
 			}
 		}
 		if ifdo (TRUE) {
-			const auto r1x = FLAG (self.mLocal.mAddress1) ;
+			const auto r1x = Flag (self.mLocal.mAddress1) ;
 			assume (r1x != ZERO) ;
 			auto &&rax = keep[TYPE<SingletonRoot>::expr] (Pointer::make (r1x)) ;
 			self.mRoot = Ref<SingletonRoot>::reference (rax) ;
@@ -267,10 +266,10 @@ public:
 			CloseHandle (me) ;
 		}) ;
 		root_ptr ().mMutex = NULL ;
-		self.mLocal.mReserve1 = QUAD (self.mUid) ;
-		self.mLocal.mAddress1 = QUAD (address (root_ptr ())) ;
+		self.mLocal.mReserve1 = Quad (self.mUid) ;
+		self.mLocal.mAddress1 = Quad (address (root_ptr ())) ;
 		self.mLocal.mReserve2 = abi_reserve () ;
-		self.mLocal.mAddress2 = QUAD (address (root_ptr ())) ;
+		self.mLocal.mAddress2 = Quad (address (root_ptr ())) ;
 		self.mLocal.mReserve3 = ctx_reserve () ;
 	}
 
@@ -287,11 +286,11 @@ public:
 		} ,[&] (VR<csc_handle_t> me) {
 			UnmapViewOfFile (me) ;
 		}) ;
-		const auto r3x = FLAG (r2x.ref) ;
+		const auto r3x = Flag (r2x.ref) ;
 		auto rax = SingletonLocal () ;
 		inline_memcpy (Pointer::from (rax) ,Pointer::make (r3x) ,SIZE_OF<SingletonLocal>::expr) ;
-		assume (rax.mReserve1 == QUAD (self.mUid)) ;
-		assume (rax.mAddress1 != QUAD (0X00)) ;
+		assume (rax.mReserve1 == Quad (self.mUid)) ;
+		assume (rax.mAddress1 != Quad (0X00)) ;
 		assume (rax.mAddress1 == rax.mAddress2) ;
 		assume (rax.mReserve2 == abi_reserve ()) ;
 		assume (rax.mReserve3 == ctx_reserve ()) ;
@@ -311,72 +310,72 @@ public:
 		} ,[&] (VR<csc_handle_t> me) {
 			UnmapViewOfFile (me) ;
 		}) ;
-		const auto r3x = FLAG (r2x.ref) ;
+		const auto r3x = Flag (r2x.ref) ;
 		auto rax = self.mLocal ;
-		assume (rax.mReserve1 == QUAD (self.mUid)) ;
-		assume (rax.mAddress1 != QUAD (0X00)) ;
+		assume (rax.mReserve1 == Quad (self.mUid)) ;
+		assume (rax.mAddress1 != Quad (0X00)) ;
 		assume (rax.mAddress1 == rax.mAddress2) ;
 		assume (rax.mReserve2 == abi_reserve ()) ;
 		assume (rax.mReserve3 == ctx_reserve ()) ;
 		inline_memcpy (Pointer::make (r3x) ,Pointer::from (rax) ,SIZE_OF<SingletonLocal>::expr) ;
 	}
 
-	QUAD abi_reserve () const override {
-		QUAD ret = QUAD (0X00) ;
+	Quad abi_reserve () const override {
+		Quad ret = Quad (0X00) ;
 #ifdef __CSC_VER_DEBUG__
-		ret |= QUAD (0X00000001) ;
+		ret |= Quad (0X00000001) ;
 #elif defined __CSC_VER_UNITTEST__
-		ret |= QUAD (0X00000002) ;
+		ret |= Quad (0X00000002) ;
 #elif defined __CSC_VER_RELEASE__
-		ret |= QUAD (0X00000003) ;
+		ret |= Quad (0X00000003) ;
 #endif
 #ifdef __CSC_COMPILER_MSVC__
-		ret |= QUAD (0X00000010) ;
+		ret |= Quad (0X00000010) ;
 #elif defined __CSC_COMPILER_GNUC__
-		ret |= QUAD (0X00000020) ;
+		ret |= Quad (0X00000020) ;
 #elif defined __CSC_COMPILER_CLANG__
-		ret |= QUAD (0X00000030) ;
+		ret |= Quad (0X00000030) ;
 #endif
 #ifdef __CSC_SYSTEM_WINDOWS__
-		ret |= QUAD (0X00000100) ;
+		ret |= Quad (0X00000100) ;
 #elif defined __CSC_SYSTEM_LINUX__
-		ret |= QUAD (0X00000200) ;
+		ret |= Quad (0X00000200) ;
 #endif
 #ifdef __CSC_PLATFORM_X86__
-		ret |= QUAD (0X00001000) ;
+		ret |= Quad (0X00001000) ;
 #elif defined __CSC_PLATFORM_X64__
-		ret |= QUAD (0X00002000) ;
+		ret |= Quad (0X00002000) ;
 #elif defined __CSC_PLATFORM_ARM__
-		ret |= QUAD (0X00003000) ;
+		ret |= Quad (0X00003000) ;
 #elif defined __CSC_PLATFORM_ARM64__
-		ret |= QUAD (0X00004000) ;
+		ret |= Quad (0X00004000) ;
 #endif
 #ifdef __CSC_CONFIG_VAL32__
-		ret |= QUAD (0X00010000) ;
+		ret |= Quad (0X00010000) ;
 #elif defined __CSC_CONFIG_VAL64__
-		ret |= QUAD (0X00020000) ;
+		ret |= Quad (0X00020000) ;
 #endif
 #ifdef __CSC_CONFIG_STRA__
-		ret |= QUAD (0X00100000) ;
+		ret |= Quad (0X00100000) ;
 #elif defined __CSC_CONFIG_STRW__
-		ret |= QUAD (0X00200000) ;
+		ret |= Quad (0X00200000) ;
 #endif
 		return move (ret) ;
 	}
 
-	QUAD ctx_reserve () const override {
+	Quad ctx_reserve () const override {
 		return QUAD_ENDIAN ;
 	}
 
-	FLAG load (CR<Clazz> clazz) const override {
+	Flag load (CR<Clazz> clazz) const override {
 		assume (self.mRoot.exist ()) ;
 		Scope<Mutex> anonymous (self.mRoot->mMutex) ;
-		FLAG ret = self.mRoot->mClazzSet.map (clazz) ;
+		Flag ret = self.mRoot->mClazzSet.map (clazz) ;
 		replace (ret ,NONE ,ZERO) ;
 		return move (ret) ;
 	}
 
-	void save (CR<Clazz> clazz ,CR<FLAG> layout) const override {
+	void save (CR<Clazz> clazz ,CR<Flag> layout) const override {
 		assert (layout != ZERO) ;
 		assert (layout != NONE) ;
 		assume (self.mRoot.exist ()) ;

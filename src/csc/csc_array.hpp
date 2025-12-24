@@ -11,32 +11,32 @@
 #include "csc_math.hpp"
 
 namespace CSC {
-class SizeProxy {
+class SizeProxy implement Proxy {
 protected:
-	LENGTH mSize ;
+	Length mSize ;
 
 public:
 	implicit SizeProxy () = delete ;
 
-	implicit SizeProxy (CR<LENGTH> size_) {
+	implicit SizeProxy (CR<Length> size_) {
 		mSize = size_ ;
 	}
 
-	forceinline operator LENGTH () const {
+	forceinline operator Length () const {
 		return mSize ;
 	}
 } ;
 
 template <class A>
-class ArrayIterator {
+class ArrayIterator implement Proxy {
 private:
 	using ITEM = decltype (nullof (A).at (0)) ;
 
 protected:
 	XR<A> mThat ;
-	INDEX mBegin ;
-	INDEX mEnd ;
-	INDEX mPeek ;
+	Index mBegin ;
+	Index mEnd ;
+	Index mPeek ;
 
 public:
 	implicit ArrayIterator () = delete ;
@@ -47,7 +47,7 @@ public:
 		mPeek = mBegin ;
 	}
 
-	LENGTH length () const {
+	Length length () const {
 		return mThat.length () ;
 	}
 
@@ -59,15 +59,15 @@ public:
 		return thiz ;
 	}
 
-	BOOL good () const {
+	Bool good () const {
 		return mPeek != mEnd ;
 	}
 
-	forceinline BOOL operator== (CR<ArrayIterator>) const {
+	forceinline Bool operator== (CR<ArrayIterator>) const {
 		return (!good ()) ;
 	}
 
-	forceinline BOOL operator!= (CR<ArrayIterator>) const {
+	forceinline Bool operator!= (CR<ArrayIterator>) const {
 		return good () ;
 	}
 
@@ -89,7 +89,7 @@ public:
 } ;
 
 template <class A>
-class ArrayRange {
+class ArrayRange implement Proxy {
 protected:
 	XR<A> mThat ;
 
@@ -98,23 +98,23 @@ public:
 
 	explicit ArrayRange (XR<A> that) :mThat (that) {}
 
-	LENGTH length () const {
+	Length length () const {
 		return mThat.length () ;
 	}
 
-	CR<INDEX> at (CR<INDEX> index) const leftvalue {
+	CR<Index> at (CR<Index> index) const leftvalue {
 		return index ;
 	}
 
-	INDEX ibegin () const {
+	Index ibegin () const {
 		return mThat.ibegin () ;
 	}
 
-	INDEX iend () const {
+	Index iend () const {
 		return mThat.iend () ;
 	}
 
-	INDEX inext (CR<INDEX> index) const {
+	Index inext (CR<Index> index) const {
 		return mThat.inext (index) ;
 	}
 
@@ -136,30 +136,30 @@ struct ArrayHolder implement Interface {
 	imports CFat<ArrayHolder> hold (CR<ArrayLayout> that) ;
 
 	virtual void prepare (CR<Unknown> holder) = 0 ;
-	virtual void initialize (CR<Unknown> holder ,CR<LENGTH> size_) = 0 ;
-	virtual void initialize (CR<Unknown> holder ,CR<WrapperLayout> params ,VR<BoxLayout> item) = 0 ;
+	virtual void initialize (CR<Unknown> holder ,CR<Length> size_) = 0 ;
+	virtual void initialize (CR<Unknown> holder ,CR<Pointer> params ,VR<BoxLayout> item) = 0 ;
 	virtual void initialize (CR<ArrayLayout> that) = 0 ;
-	virtual LENGTH size () const = 0 ;
-	virtual LENGTH step () const = 0 ;
-	virtual LENGTH length () const = 0 ;
+	virtual Length size () const = 0 ;
+	virtual Length step () const = 0 ;
+	virtual Length length () const = 0 ;
 	virtual VR<Pointer> ref_m () leftvalue = 0 ;
 	virtual CR<Pointer> ref_m () const leftvalue = 0 ;
-	virtual VR<Pointer> at (CR<INDEX> index) leftvalue = 0 ;
-	virtual CR<Pointer> at (CR<INDEX> index) const leftvalue = 0 ;
-	virtual INDEX ibegin () const = 0 ;
-	virtual INDEX iend () const = 0 ;
-	virtual INDEX inext (CR<INDEX> index) const = 0 ;
-	virtual BOOL equal (CR<ArrayLayout> that) const = 0 ;
-	virtual FLAG compr (CR<ArrayLayout> that) const = 0 ;
+	virtual VR<Pointer> at (CR<Index> index) leftvalue = 0 ;
+	virtual CR<Pointer> at (CR<Index> index) const leftvalue = 0 ;
+	virtual Index ibegin () const = 0 ;
+	virtual Index iend () const = 0 ;
+	virtual Index inext (CR<Index> index) const = 0 ;
+	virtual Bool equal (CR<ArrayLayout> that) const = 0 ;
+	virtual Flag compr (CR<ArrayLayout> that) const = 0 ;
 	virtual void visit (VR<FriendVisitor> visitor) const = 0 ;
 	virtual void fill (CR<Pointer> item) = 0 ;
-	virtual void splice (CR<INDEX> index ,CR<ArrayLayout> item) = 0 ;
+	virtual void splice (CR<Index> index ,CR<ArrayLayout> item) = 0 ;
 } ;
 
 template <class A>
-class ArrayUnknownBinder final implement Fat<FriendUnknown ,Proxy> {
+class ArrayUnknownBinder final implement Fat<FriendUnknown ,void> {
 public:
-	FLAG reflect (CR<FLAG> uuid) const override {
+	Flag reflect (CR<Flag> uuid) const override {
 		if (uuid == ReflectSizeBinder<A>::expr)
 			return inline_vptr (ReflectSizeBinder<A> ()) ;
 		if (uuid == ReflectCreateBinder<A>::expr)
@@ -183,21 +183,21 @@ public:
 } ;
 
 template <class A>
-struct ArrayPureLayout implement ArrayLayout {
+struct ArrayImplLayout implement ArrayLayout {
 public:
-	implicit ArrayPureLayout () noexcept {
+	implicit ArrayImplLayout () noexcept {
 		noop (RefBuffer<A> ()) ;
 		ArrayHolder::hold (thiz)->prepare (ArrayUnknownBinder<A> ()) ;
 	}
 } ;
 
 template <>
-struct ArrayPureLayout<Pointer> implement ArrayLayout {} ;
+struct ArrayImplLayout<Pointer> implement ArrayLayout {} ;
 
 template <class A>
-class Array implement ArrayPureLayout<A> {
+class Array implement ArrayImplLayout<A> {
 protected:
-	using ArrayPureLayout<A>::mArray ;
+	using ArrayImplLayout<A>::mArray ;
 
 public:
 	implicit Array () = default ;
@@ -208,13 +208,13 @@ public:
 
 	explicit Array (CR<csc_initializer_list_t<A>> that) {
 		auto rax = Box<A> () ;
-		ArrayHolder::hold (thiz)->initialize (ArrayUnknownBinder<A> () ,MakeWrapper (that) ,rax) ;
+		ArrayHolder::hold (thiz)->initialize (ArrayUnknownBinder<A> () ,Pointer::from (that) ,rax) ;
 	}
 
 	template <class ARG1>
 	static Array make (CR<ARG1> iterator) {
 		Array ret = Array (iterator.length ()) ;
-		INDEX ix = 0 ;
+		Index ix = 0 ;
 		for (auto &&i : iterator) {
 			ret[ix] = A (i) ;
 			ix++ ;
@@ -238,15 +238,15 @@ public:
 		return move (thiz) ;
 	}
 
-	LENGTH size () const {
+	Length size () const {
 		return ArrayHolder::hold (thiz)->size () ;
 	}
 
-	LENGTH step () const {
+	Length step () const {
 		return ArrayHolder::hold (thiz)->step () ;
 	}
 
-	LENGTH length () const {
+	Length length () const {
 		return ArrayHolder::hold (thiz)->length () ;
 	}
 
@@ -266,31 +266,31 @@ public:
 		return ref ;
 	}
 
-	VR<A> at (CR<INDEX> index) leftvalue {
+	VR<A> at (CR<Index> index) leftvalue {
 		return ArrayHolder::hold (thiz)->at (index) ;
 	}
 
-	forceinline VR<A> operator[] (CR<INDEX> index) leftvalue {
+	forceinline VR<A> operator[] (CR<Index> index) leftvalue {
 		return at (index) ;
 	}
 
-	CR<A> at (CR<INDEX> index) const leftvalue {
+	CR<A> at (CR<Index> index) const leftvalue {
 		return ArrayHolder::hold (thiz)->at (index) ;
 	}
 
-	forceinline CR<A> operator[] (CR<INDEX> index) const leftvalue {
+	forceinline CR<A> operator[] (CR<Index> index) const leftvalue {
 		return at (index) ;
 	}
 
-	INDEX ibegin () const {
+	Index ibegin () const {
 		return ArrayHolder::hold (thiz)->ibegin () ;
 	}
 
-	INDEX iend () const {
+	Index iend () const {
 		return ArrayHolder::hold (thiz)->iend () ;
 	}
 
-	INDEX inext (CR<INDEX> index) const {
+	Index inext (CR<Index> index) const {
 		return ArrayHolder::hold (thiz)->inext (index) ;
 	}
 
@@ -306,35 +306,35 @@ public:
 		return ArrayRange<CR<Array>> (thiz) ;
 	}
 
-	BOOL equal (CR<Array> that) const {
+	Bool equal (CR<Array> that) const {
 		return ArrayHolder::hold (thiz)->equal (that) ;
 	}
 
-	forceinline BOOL operator== (CR<Array> that) const {
+	forceinline Bool operator== (CR<Array> that) const {
 		return equal (that) ;
 	}
 
-	forceinline BOOL operator!= (CR<Array> that) const {
+	forceinline Bool operator!= (CR<Array> that) const {
 		return (!equal (that)) ;
 	}
 
-	FLAG compr (CR<Array> that) const {
+	Flag compr (CR<Array> that) const {
 		return ArrayHolder::hold (thiz)->compr (that) ;
 	}
 
-	forceinline BOOL operator< (CR<Array> that) const {
+	forceinline Bool operator< (CR<Array> that) const {
 		return compr (that) < ZERO ;
 	}
 
-	forceinline BOOL operator<= (CR<Array> that) const {
+	forceinline Bool operator<= (CR<Array> that) const {
 		return compr (that) <= ZERO ;
 	}
 
-	forceinline BOOL operator> (CR<Array> that) const {
+	forceinline Bool operator> (CR<Array> that) const {
 		return compr (that) > ZERO ;
 	}
 
-	forceinline BOOL operator>= (CR<Array> that) const {
+	forceinline Bool operator>= (CR<Array> that) const {
 		return compr (that) >= ZERO ;
 	}
 
@@ -346,7 +346,7 @@ public:
 		return ArrayHolder::hold (thiz)->fill (Pointer::from (item)) ;
 	}
 
-	void splice (CR<INDEX> index ,CR<Array> item) {
+	void splice (CR<Index> index ,CR<Array> item) {
 		return ArrayHolder::hold (thiz)->splice (index ,item) ;
 	}
 } ;
@@ -359,7 +359,7 @@ class StringBuild ;
 
 struct StringLayout {
 	RefBuffer<Pointer> mString ;
-	FLAG mEncode ;
+	Flag mEncode ;
 } ;
 
 struct StringHolder implement Interface {
@@ -367,41 +367,44 @@ struct StringHolder implement Interface {
 	imports CFat<StringHolder> hold (CR<StringLayout> that) ;
 
 	virtual void prepare (CR<Unknown> holder) = 0 ;
-	virtual void initialize (CR<Slice> that ,CR<LENGTH> step_) = 0 ;
-	virtual void initialize (CR<LENGTH> size_ ,CR<LENGTH> step_) = 0 ;
+	virtual void initialize (CR<Slice> that ,CR<Length> step_) = 0 ;
+	virtual void initialize (CR<Length> size_ ,CR<Length> step_) = 0 ;
 	virtual void initialize (CR<StringLayout> that) = 0 ;
 	virtual void clear () = 0 ;
-	virtual FLAG encode () const = 0 ;
-	virtual LENGTH size () const = 0 ;
-	virtual LENGTH step () const = 0 ;
-	virtual LENGTH length () const = 0 ;
+	virtual Flag encode () const = 0 ;
+	virtual Length size () const = 0 ;
+	virtual Length step () const = 0 ;
+	virtual Length length () const = 0 ;
 	virtual VR<Pointer> ref_m () leftvalue = 0 ;
 	virtual CR<Pointer> ref_m () const leftvalue = 0 ;
-	virtual Ref<RefBuffer<BYTE>> borrow () leftvalue = 0 ;
-	virtual Ref<RefBuffer<BYTE>> borrow () const leftvalue = 0 ;
-	virtual void get (CR<INDEX> index ,VR<STRU32> item) const = 0 ;
-	virtual void set (CR<INDEX> index ,CR<STRU32> item) = 0 ;
-	virtual VR<Pointer> at (CR<INDEX> index) leftvalue = 0 ;
-	virtual CR<Pointer> at (CR<INDEX> index) const leftvalue = 0 ;
-	virtual INDEX ibegin () const = 0 ;
-	virtual INDEX iend () const = 0 ;
-	virtual INDEX inext (CR<INDEX> index) const = 0 ;
-	virtual BOOL equal (CR<Slice> that) const = 0 ;
-	virtual BOOL equal (CR<StringLayout> that) const = 0 ;
-	virtual FLAG compr (CR<Slice> that) const = 0 ;
-	virtual FLAG compr (CR<StringLayout> that) const = 0 ;
+	virtual Ref<RefBuffer<Byte>> borrow () leftvalue = 0 ;
+	virtual Ref<RefBuffer<Byte>> borrow () const leftvalue = 0 ;
+	virtual void get (CR<Index> index ,VR<Stru32> item) const = 0 ;
+	virtual void set (CR<Index> index ,CR<Stru32> item) = 0 ;
+	virtual VR<Pointer> at (CR<Index> index) leftvalue = 0 ;
+	virtual CR<Pointer> at (CR<Index> index) const leftvalue = 0 ;
+	virtual Index ibegin () const = 0 ;
+	virtual Index iend () const = 0 ;
+	virtual Index inext (CR<Index> index) const = 0 ;
+	virtual Bool equal (CR<Slice> that) const = 0 ;
+	virtual Bool equal (CR<StringLayout> that) const = 0 ;
+	virtual Flag compr (CR<Slice> that) const = 0 ;
+	virtual Flag compr (CR<StringLayout> that) const = 0 ;
 	virtual void visit (VR<FriendVisitor> visitor) const = 0 ;
-	virtual void trunc (CR<INDEX> index) = 0 ;
-	virtual void fill (CR<STRU32> item) = 0 ;
-	virtual void splice (CR<INDEX> index ,CR<Slice> item) = 0 ;
-	virtual void splice (CR<INDEX> index ,CR<StringLayout> item) = 0 ;
-	virtual Slice segment (CR<INDEX> begin_ ,CR<INDEX> end_) const = 0 ;
+	virtual void trunc (CR<Index> index) = 0 ;
+	virtual void fill (CR<Stru32> item) = 0 ;
+	virtual void splice (CR<Index> index ,CR<Slice> item) = 0 ;
+	virtual void splice (CR<Index> index ,CR<StringLayout> item) = 0 ;
+	virtual Slice segment (CR<Index> begin_ ,CR<Index> end_) const = 0 ;
+	virtual Array<Slice> split (CR<Stru32> delim) const = 0 ;
+	virtual void replace (CR<Stru32> from ,CR<Stru32> into) = 0 ;
+	virtual void trim (CR<Slice> list) = 0 ;
 } ;
 
 template <class A>
-class StringUnknownBinder final implement Fat<FriendUnknown ,Proxy> {
+class StringUnknownBinder final implement Fat<FriendUnknown ,void> {
 public:
-	FLAG reflect (CR<FLAG> uuid) const override {
+	Flag reflect (CR<Flag> uuid) const override {
 		if (uuid == ReflectSizeBinder<A>::expr)
 			return inline_vptr (ReflectSizeBinder<A> ()) ;
 		if (uuid == ReflectDestroyBinder<A>::expr)
@@ -413,25 +416,25 @@ public:
 } ;
 
 template <class A>
-struct StringPureLayout implement StringLayout {
+struct StringImplLayout implement StringLayout {
 public:
-	implicit StringPureLayout () noexcept {
+	implicit StringImplLayout () noexcept {
 		noop (RefBuffer<A> ()) ;
 		StringHolder::hold (thiz)->prepare (StringUnknownBinder<A> ()) ;
 	}
 } ;
 
 template <>
-struct StringPureLayout<Pointer> implement StringLayout {} ;
+struct StringImplLayout<Pointer> implement StringLayout {} ;
 
 template <class A>
-class String implement StringPureLayout<A> {
+class String implement StringImplLayout<A> {
 private:
 	require (IS_TRIVIAL<A>) ;
 
 protected:
-	using StringPureLayout<A>::mString ;
-	using StringPureLayout<A>::mEncode ;
+	using StringImplLayout<A>::mString ;
+	using StringImplLayout<A>::mEncode ;
 
 public:
 	implicit String () = default ;
@@ -476,19 +479,19 @@ public:
 		return StringHolder::hold (thiz)->clear () ;
 	}
 
-	FLAG encode () const {
+	Flag encode () const {
 		return StringHolder::hold (thiz)->encode () ;
 	}
 
-	LENGTH size () const {
+	Length size () const {
 		return StringHolder::hold (thiz)->size () ;
 	}
 
-	LENGTH step () const {
+	Length step () const {
 		return StringHolder::hold (thiz)->step () ;
 	}
 
-	LENGTH length () const {
+	Length length () const {
 		return StringHolder::hold (thiz)->length () ;
 	}
 
@@ -508,47 +511,47 @@ public:
 		return ref ;
 	}
 
-	Ref<RefBuffer<BYTE>> borrow () leftvalue {
+	Ref<RefBuffer<Byte>> borrow () leftvalue {
 		return StringHolder::hold (thiz)->borrow () ;
 	}
 
-	Ref<RefBuffer<BYTE>> borrow () const leftvalue {
+	Ref<RefBuffer<Byte>> borrow () const leftvalue {
 		return StringHolder::hold (thiz)->borrow () ;
 	}
 
-	VR<A> at (CR<INDEX> index) leftvalue {
+	VR<A> at (CR<Index> index) leftvalue {
 		return StringHolder::hold (thiz)->at (index) ;
 	}
 
-	forceinline VR<A> operator[] (CR<INDEX> index) leftvalue {
+	forceinline VR<A> operator[] (CR<Index> index) leftvalue {
 		return at (index) ;
 	}
 
-	CR<A> at (CR<INDEX> index) const leftvalue {
+	CR<A> at (CR<Index> index) const leftvalue {
 		return StringHolder::hold (thiz)->at (index) ;
 	}
 
-	forceinline CR<A> operator[] (CR<INDEX> index) const leftvalue {
+	forceinline CR<A> operator[] (CR<Index> index) const leftvalue {
 		return at (index) ;
 	}
 
-	void get (CR<INDEX> index ,VR<STRU32> map_) const {
+	void get (CR<Index> index ,VR<Stru32> map_) const {
 		return StringHolder::hold (thiz)->get (index ,map_) ;
 	}
 
-	void set (CR<INDEX> index ,CR<STRU32> map_) {
+	void set (CR<Index> index ,CR<Stru32> map_) {
 		return StringHolder::hold (thiz)->set (index ,map_) ;
 	}
 
-	INDEX ibegin () const {
+	Index ibegin () const {
 		return StringHolder::hold (thiz)->ibegin () ;
 	}
 
-	INDEX iend () const {
+	Index iend () const {
 		return StringHolder::hold (thiz)->iend () ;
 	}
 
-	INDEX inext (CR<INDEX> index) const {
+	Index inext (CR<Index> index) const {
 		return StringHolder::hold (thiz)->inext (index) ;
 	}
 
@@ -564,47 +567,47 @@ public:
 		return ArrayRange<CR<String>> (thiz) ;
 	}
 
-	BOOL equal (CR<Slice> that) const {
+	Bool equal (CR<Slice> that) const {
 		return StringHolder::hold (thiz)->equal (that) ;
 	}
 
-	forceinline BOOL operator== (CR<Slice> that) const {
+	forceinline Bool operator== (CR<Slice> that) const {
 		return equal (that) ;
 	}
 
-	forceinline BOOL operator!= (CR<Slice> that) const {
+	forceinline Bool operator!= (CR<Slice> that) const {
 		return (!equal (that)) ;
 	}
 
-	BOOL equal (CR<String> that) const {
+	Bool equal (CR<String> that) const {
 		return StringHolder::hold (thiz)->equal (that) ;
 	}
 
-	forceinline BOOL operator== (CR<String> that) const {
+	forceinline Bool operator== (CR<String> that) const {
 		return equal (that) ;
 	}
 
-	forceinline BOOL operator!= (CR<String> that) const {
+	forceinline Bool operator!= (CR<String> that) const {
 		return (!equal (that)) ;
 	}
 
-	FLAG compr (CR<String> that) const {
+	Flag compr (CR<String> that) const {
 		return StringHolder::hold (thiz)->compr (that) ;
 	}
 
-	forceinline BOOL operator< (CR<String> that) const {
+	forceinline Bool operator< (CR<String> that) const {
 		return compr (that) < ZERO ;
 	}
 
-	forceinline BOOL operator<= (CR<String> that) const {
+	forceinline Bool operator<= (CR<String> that) const {
 		return compr (that) <= ZERO ;
 	}
 
-	forceinline BOOL operator> (CR<String> that) const {
+	forceinline Bool operator> (CR<String> that) const {
 		return compr (that) > ZERO ;
 	}
 
-	forceinline BOOL operator>= (CR<String> that) const {
+	forceinline Bool operator>= (CR<String> that) const {
 		return compr (that) >= ZERO ;
 	}
 
@@ -612,19 +615,19 @@ public:
 		return StringHolder::hold (thiz)->visit (visitor) ;
 	}
 
-	void trunc (CR<INDEX> index) {
+	void trunc (CR<Index> index) {
 		return StringHolder::hold (thiz)->trunc (index) ;
 	}
 
-	void fill (CR<STRU32> item) {
+	void fill (CR<Stru32> item) {
 		return StringHolder::hold (thiz)->fill (item) ;
 	}
 
-	void splice (CR<INDEX> index ,CR<Slice> item) {
+	void splice (CR<Index> index ,CR<Slice> item) {
 		return StringHolder::hold (thiz)->splice (index ,item) ;
 	}
 
-	void splice (CR<INDEX> index ,CR<String> item) {
+	void splice (CR<Index> index ,CR<String> item) {
 		return StringHolder::hold (thiz)->splice (index ,item) ;
 	}
 
@@ -632,15 +635,27 @@ public:
 		return segment (0 ,length ()) ;
 	}
 
-	Slice segment (CR<INDEX> begin_ ,CR<INDEX> end_) const {
+	Slice segment (CR<Index> begin_ ,CR<Index> end_) const {
 		return StringHolder::hold (thiz)->segment (begin_ ,end_) ;
+	}
+
+	Array<Slice> split (CR<Stru32> delim) const {
+		return StringHolder::hold (thiz)->split (delim) ;
+	}
+
+	void replace (CR<Stru32> from ,CR<Stru32> into) {
+		return StringHolder::hold (thiz)->replace (from ,into) ;
+	}
+
+	void trim (CR<Slice> list) {
+		return StringHolder::hold (thiz)->trim (list) ;
 	}
 } ;
 
 struct DequeLayout {
 	RefBuffer<Pointer> mDeque ;
-	INDEX mRead ;
-	INDEX mWrite ;
+	Index mRead ;
+	Index mWrite ;
 } ;
 
 struct DequeHolder implement Interface {
@@ -648,32 +663,32 @@ struct DequeHolder implement Interface {
 	imports CFat<DequeHolder> hold (CR<DequeLayout> that) ;
 
 	virtual void prepare (CR<Unknown> holder) = 0 ;
-	virtual void initialize (CR<Unknown> holder ,CR<LENGTH> size_) = 0 ;
-	virtual void initialize (CR<Unknown> holder ,CR<WrapperLayout> params ,VR<BoxLayout> item) = 0 ;
+	virtual void initialize (CR<Unknown> holder ,CR<Length> size_) = 0 ;
+	virtual void initialize (CR<Unknown> holder ,CR<Pointer> params ,VR<BoxLayout> item) = 0 ;
 	virtual void clear () = 0 ;
-	virtual LENGTH size () const = 0 ;
-	virtual LENGTH step () const = 0 ;
-	virtual LENGTH length () const = 0 ;
-	virtual VR<Pointer> at (CR<INDEX> index) leftvalue = 0 ;
-	virtual CR<Pointer> at (CR<INDEX> index) const leftvalue = 0 ;
-	virtual INDEX ibegin () const = 0 ;
-	virtual INDEX iend () const = 0 ;
-	virtual INDEX inext (CR<INDEX> index) const = 0 ;
-	virtual BOOL empty () const = 0 ;
-	virtual BOOL full () const = 0 ;
-	virtual INDEX head () const = 0 ;
-	virtual INDEX tail () const = 0 ;
+	virtual Length size () const = 0 ;
+	virtual Length step () const = 0 ;
+	virtual Length length () const = 0 ;
+	virtual VR<Pointer> at (CR<Index> index) leftvalue = 0 ;
+	virtual CR<Pointer> at (CR<Index> index) const leftvalue = 0 ;
+	virtual Index ibegin () const = 0 ;
+	virtual Index iend () const = 0 ;
+	virtual Index inext (CR<Index> index) const = 0 ;
+	virtual Bool empty () const = 0 ;
+	virtual Bool full () const = 0 ;
+	virtual Index head () const = 0 ;
+	virtual Index tail () const = 0 ;
 	virtual void add (RR<BoxLayout> item) = 0 ;
 	virtual void take () = 0 ;
 	virtual void push (RR<BoxLayout> item) = 0 ;
 	virtual void pop () = 0 ;
-	virtual void ring (CR<LENGTH> count) = 0 ;
+	virtual void ring (CR<Length> count) = 0 ;
 } ;
 
 template <class A>
-class DequeUnknownBinder final implement Fat<FriendUnknown ,Proxy> {
+class DequeUnknownBinder final implement Fat<FriendUnknown ,void> {
 public:
-	FLAG reflect (CR<FLAG> uuid) const override {
+	Flag reflect (CR<Flag> uuid) const override {
 		if (uuid == ReflectSizeBinder<A>::expr)
 			return inline_vptr (ReflectSizeBinder<A> ()) ;
 		if (uuid == ReflectCreateBinder<A>::expr)
@@ -689,23 +704,23 @@ public:
 } ;
 
 template <class A>
-struct DequePureLayout implement DequeLayout {
+struct DequeImplLayout implement DequeLayout {
 public:
-	implicit DequePureLayout () noexcept {
+	implicit DequeImplLayout () noexcept {
 		noop (RefBuffer<A> ()) ;
 		DequeHolder::hold (thiz)->prepare (DequeUnknownBinder<A> ()) ;
 	}
 } ;
 
 template <>
-struct DequePureLayout<Pointer> implement DequeLayout {} ;
+struct DequeImplLayout<Pointer> implement DequeLayout {} ;
 
 template <class A>
-class Deque implement DequePureLayout<A> {
+class Deque implement DequeImplLayout<A> {
 protected:
-	using DequePureLayout<A>::mDeque ;
-	using DequePureLayout<A>::mRead ;
-	using DequePureLayout<A>::mWrite ;
+	using DequeImplLayout<A>::mDeque ;
+	using DequeImplLayout<A>::mRead ;
+	using DequeImplLayout<A>::mWrite ;
 
 public:
 	implicit Deque () = default ;
@@ -716,50 +731,50 @@ public:
 
 	explicit Deque (CR<csc_initializer_list_t<A>> that) {
 		auto rax = Box<A> () ;
-		DequeHolder::hold (thiz)->initialize (DequeUnknownBinder<A> () ,MakeWrapper (that) ,rax) ;
+		DequeHolder::hold (thiz)->initialize (DequeUnknownBinder<A> () ,Pointer::from (that) ,rax) ;
 	}
 
 	void clear () {
 		return DequeHolder::hold (thiz)->clear () ;
 	}
 
-	LENGTH size () const {
+	Length size () const {
 		return DequeHolder::hold (thiz)->size () ;
 	}
 
-	LENGTH step () const {
+	Length step () const {
 		return DequeHolder::hold (thiz)->step () ;
 	}
 
-	LENGTH length () const {
+	Length length () const {
 		return DequeHolder::hold (thiz)->length () ;
 	}
 
-	VR<A> at (CR<INDEX> index) leftvalue {
+	VR<A> at (CR<Index> index) leftvalue {
 		return DequeHolder::hold (thiz)->at (index) ;
 	}
 
-	forceinline VR<A> operator[] (CR<INDEX> index) leftvalue {
+	forceinline VR<A> operator[] (CR<Index> index) leftvalue {
 		return at (index) ;
 	}
 
-	CR<A> at (CR<INDEX> index) const leftvalue {
+	CR<A> at (CR<Index> index) const leftvalue {
 		return DequeHolder::hold (thiz)->at (index) ;
 	}
 
-	forceinline CR<A> operator[] (CR<INDEX> index) const leftvalue {
+	forceinline CR<A> operator[] (CR<Index> index) const leftvalue {
 		return at (index) ;
 	}
 
-	INDEX ibegin () const {
+	Index ibegin () const {
 		return DequeHolder::hold (thiz)->ibegin () ;
 	}
 
-	INDEX iend () const {
+	Index iend () const {
 		return DequeHolder::hold (thiz)->iend () ;
 	}
 
-	INDEX inext (CR<INDEX> index) const {
+	Index inext (CR<Index> index) const {
 		return DequeHolder::hold (thiz)->inext (index) ;
 	}
 
@@ -775,19 +790,19 @@ public:
 		return ArrayRange<CR<Deque>> (thiz) ;
 	}
 
-	BOOL empty () const {
+	Bool empty () const {
 		return DequeHolder::hold (thiz)->empty () ;
 	}
 
-	BOOL full () const {
+	Bool full () const {
 		return DequeHolder::hold (thiz)->full () ;
 	}
 
-	INDEX head () const {
+	Index head () const {
 		return DequeHolder::hold (thiz)->head () ;
 	}
 
-	INDEX tail () const {
+	Index tail () const {
 		return DequeHolder::hold (thiz)->tail () ;
 	}
 
@@ -827,43 +842,43 @@ public:
 		take () ;
 	}
 
-	void ring (CR<LENGTH> count) {
+	void ring (CR<Length> count) {
 		return DequeHolder::hold (thiz)->ring (count) ;
 	}
 } ;
 
 template <class A>
-struct IndexPair implement Tuple<A ,INDEX> {
+struct IndexPair implement Tuple<A ,Index> {
 public:
-	BOOL equal (CR<IndexPair> that) const {
+	Bool equal (CR<IndexPair> that) const {
 		return inline_equal (thiz.m1st ,that.m1st) ;
 	}
 
-	forceinline BOOL operator== (CR<IndexPair> that) const {
+	forceinline Bool operator== (CR<IndexPair> that) const {
 		return equal (that) ;
 	}
 
-	forceinline BOOL operator!= (CR<IndexPair> that) const {
+	forceinline Bool operator!= (CR<IndexPair> that) const {
 		return (!equal (that)) ;
 	}
 
-	FLAG compr (CR<IndexPair> that) const {
+	Flag compr (CR<IndexPair> that) const {
 		return inline_compr (thiz.m1st ,that.m1st) ;
 	}
 
-	forceinline BOOL operator< (CR<IndexPair> that) const {
+	forceinline Bool operator< (CR<IndexPair> that) const {
 		return compr (that) < ZERO ;
 	}
 
-	forceinline BOOL operator<= (CR<IndexPair> that) const {
+	forceinline Bool operator<= (CR<IndexPair> that) const {
 		return compr (that) <= ZERO ;
 	}
 
-	forceinline BOOL operator> (CR<IndexPair> that) const {
+	forceinline Bool operator> (CR<IndexPair> that) const {
 		return compr (that) > ZERO ;
 	}
 
-	forceinline BOOL operator>= (CR<IndexPair> that) const {
+	forceinline Bool operator>= (CR<IndexPair> that) const {
 		return compr (that) >= ZERO ;
 	}
 
@@ -876,8 +891,8 @@ public:
 
 struct PriorityLayout {
 	RefBuffer<Pointer> mPriority ;
-	INDEX mRead ;
-	INDEX mWrite ;
+	Index mRead ;
+	Index mWrite ;
 } ;
 
 struct PriorityHolder implement Interface {
@@ -885,27 +900,27 @@ struct PriorityHolder implement Interface {
 	imports CFat<PriorityHolder> hold (CR<PriorityLayout> that) ;
 
 	virtual void prepare (CR<Unknown> holder) = 0 ;
-	virtual void initialize (CR<Unknown> holder ,CR<LENGTH> size_) = 0 ;
-	virtual void initialize (CR<Unknown> holder ,CR<WrapperLayout> params ,VR<BoxLayout> item) = 0 ;
+	virtual void initialize (CR<Unknown> holder ,CR<Length> size_) = 0 ;
+	virtual void initialize (CR<Unknown> holder ,CR<Pointer> params ,VR<BoxLayout> item) = 0 ;
 	virtual void clear () = 0 ;
-	virtual LENGTH size () const = 0 ;
-	virtual LENGTH step () const = 0 ;
-	virtual LENGTH length () const = 0 ;
-	virtual CR<Pointer> at (CR<INDEX> index) const leftvalue = 0 ;
-	virtual INDEX ibegin () const = 0 ;
-	virtual INDEX iend () const = 0 ;
-	virtual INDEX inext (CR<INDEX> index) const = 0 ;
-	virtual BOOL empty () const = 0 ;
-	virtual BOOL full () const = 0 ;
-	virtual INDEX head () const = 0 ;
+	virtual Length size () const = 0 ;
+	virtual Length step () const = 0 ;
+	virtual Length length () const = 0 ;
+	virtual CR<Pointer> at (CR<Index> index) const leftvalue = 0 ;
+	virtual Index ibegin () const = 0 ;
+	virtual Index iend () const = 0 ;
+	virtual Index inext (CR<Index> index) const = 0 ;
+	virtual Bool empty () const = 0 ;
+	virtual Bool full () const = 0 ;
+	virtual Index head () const = 0 ;
 	virtual void add (RR<BoxLayout> item) = 0 ;
 	virtual void take () = 0 ;
 } ;
 
 template <class A>
-class PriorityUnknownBinder final implement Fat<FriendUnknown ,Proxy> {
+class PriorityUnknownBinder final implement Fat<FriendUnknown ,void> {
 public:
-	FLAG reflect (CR<FLAG> uuid) const override {
+	Flag reflect (CR<Flag> uuid) const override {
 		if (uuid == ReflectSizeBinder<A>::expr)
 			return inline_vptr (ReflectSizeBinder<A> ()) ;
 		if (uuid == ReflectCreateBinder<A>::expr)
@@ -927,23 +942,23 @@ public:
 } ;
 
 template <class A>
-struct PriorityPureLayout implement PriorityLayout {
+struct PriorityImplLayout implement PriorityLayout {
 public:
-	implicit PriorityPureLayout () noexcept {
+	implicit PriorityImplLayout () noexcept {
 		noop (RefBuffer<A> ()) ;
 		PriorityHolder::hold (thiz)->prepare (PriorityUnknownBinder<A> ()) ;
 	}
 } ;
 
 template <>
-struct PriorityPureLayout<Pointer> implement PriorityLayout {} ;
+struct PriorityImplLayout<Pointer> implement PriorityLayout {} ;
 
 template <class A>
-class Priority implement PriorityPureLayout<A> {
+class Priority implement PriorityImplLayout<A> {
 protected:
-	using PriorityPureLayout<A>::mPriority ;
-	using PriorityPureLayout<A>::mRead ;
-	using PriorityPureLayout<A>::mWrite ;
+	using PriorityImplLayout<A>::mPriority ;
+	using PriorityImplLayout<A>::mRead ;
+	using PriorityImplLayout<A>::mWrite ;
 
 public:
 	implicit Priority () = default ;
@@ -954,42 +969,42 @@ public:
 
 	explicit Priority (CR<csc_initializer_list_t<A>> that) {
 		auto rax = Box<A> () ;
-		PriorityHolder::hold (thiz)->initialize (PriorityUnknownBinder<A> () ,MakeWrapper (that) ,rax) ;
+		PriorityHolder::hold (thiz)->initialize (PriorityUnknownBinder<A> () ,Pointer::from (that) ,rax) ;
 	}
 
 	void clear () {
 		return PriorityHolder::hold (thiz)->clear () ;
 	}
 
-	LENGTH size () const {
+	Length size () const {
 		return PriorityHolder::hold (thiz)->size () ;
 	}
 
-	LENGTH step () const {
+	Length step () const {
 		return PriorityHolder::hold (thiz)->step () ;
 	}
 
-	LENGTH length () const {
+	Length length () const {
 		return PriorityHolder::hold (thiz)->length () ;
 	}
 
-	CR<A> at (CR<INDEX> index) const leftvalue {
+	CR<A> at (CR<Index> index) const leftvalue {
 		return PriorityHolder::hold (thiz)->at (index) ;
 	}
 
-	forceinline CR<A> operator[] (CR<INDEX> index) const leftvalue {
+	forceinline CR<A> operator[] (CR<Index> index) const leftvalue {
 		return at (index) ;
 	}
 
-	INDEX ibegin () const {
+	Index ibegin () const {
 		return PriorityHolder::hold (thiz)->ibegin () ;
 	}
 
-	INDEX iend () const {
+	Index iend () const {
 		return PriorityHolder::hold (thiz)->iend () ;
 	}
 
-	INDEX inext (CR<INDEX> index) const {
+	Index inext (CR<Index> index) const {
 		return PriorityHolder::hold (thiz)->inext (index) ;
 	}
 
@@ -1005,15 +1020,15 @@ public:
 		return ArrayRange<CR<Priority>> (thiz) ;
 	}
 
-	BOOL empty () const {
+	Bool empty () const {
 		return PriorityHolder::hold (thiz)->empty () ;
 	}
 
-	BOOL full () const {
+	Bool full () const {
 		return PriorityHolder::hold (thiz)->full () ;
 	}
 
-	INDEX head () const {
+	Index head () const {
 		return PriorityHolder::hold (thiz)->head () ;
 	}
 
@@ -1037,14 +1052,14 @@ public:
 } ;
 
 struct ListNode implement AllocatorNode {
-	INDEX mLeft ;
-	INDEX mRight ;
+	Index mLeft ;
+	Index mRight ;
 } ;
 
 struct ListLayout {
 	Allocator<Pointer ,ListNode> mList ;
-	INDEX mFirst ;
-	INDEX mLast ;
+	Index mFirst ;
+	Index mLast ;
 } ;
 
 struct ListHolder implement Interface {
@@ -1052,35 +1067,35 @@ struct ListHolder implement Interface {
 	imports CFat<ListHolder> hold (CR<ListLayout> that) ;
 
 	virtual void prepare (CR<Unknown> holder) = 0 ;
-	virtual void initialize (CR<Unknown> holder ,CR<LENGTH> size_) = 0 ;
-	virtual void initialize (CR<Unknown> holder ,CR<WrapperLayout> params ,VR<BoxLayout> item) = 0 ;
+	virtual void initialize (CR<Unknown> holder ,CR<Length> size_) = 0 ;
+	virtual void initialize (CR<Unknown> holder ,CR<Pointer> params ,VR<BoxLayout> item) = 0 ;
 	virtual void clear () = 0 ;
-	virtual LENGTH size () const = 0 ;
-	virtual LENGTH step () const = 0 ;
-	virtual LENGTH length () const = 0 ;
-	virtual VR<Pointer> at (CR<INDEX> index) leftvalue = 0 ;
-	virtual CR<Pointer> at (CR<INDEX> index) const leftvalue = 0 ;
-	virtual INDEX ibegin () const = 0 ;
-	virtual INDEX iend () const = 0 ;
-	virtual INDEX inext (CR<INDEX> index) const = 0 ;
-	virtual BOOL empty () const = 0 ;
-	virtual BOOL full () const = 0 ;
-	virtual INDEX head () const = 0 ;
-	virtual INDEX tail () const = 0 ;
+	virtual Length size () const = 0 ;
+	virtual Length step () const = 0 ;
+	virtual Length length () const = 0 ;
+	virtual VR<Pointer> at (CR<Index> index) leftvalue = 0 ;
+	virtual CR<Pointer> at (CR<Index> index) const leftvalue = 0 ;
+	virtual Index ibegin () const = 0 ;
+	virtual Index iend () const = 0 ;
+	virtual Index inext (CR<Index> index) const = 0 ;
+	virtual Bool empty () const = 0 ;
+	virtual Bool full () const = 0 ;
+	virtual Index head () const = 0 ;
+	virtual Index tail () const = 0 ;
 	virtual void add (RR<BoxLayout> item) = 0 ;
 	virtual void take () = 0 ;
 	virtual void push (RR<BoxLayout> item) = 0 ;
 	virtual void pop () = 0 ;
-	virtual INDEX insert (RR<BoxLayout> item) = 0 ;
-	virtual INDEX insert (CR<INDEX> index ,RR<BoxLayout> item) = 0 ;
-	virtual void remove (CR<INDEX> index) = 0 ;
-	virtual void order (CR<Array<INDEX>> range_) = 0 ;
+	virtual Index insert (RR<BoxLayout> item) = 0 ;
+	virtual Index insert (CR<Index> index ,RR<BoxLayout> item) = 0 ;
+	virtual void remove (CR<Index> index) = 0 ;
+	virtual void order (CR<Array<Index>> range_) = 0 ;
 } ;
 
 template <class A>
-class ListUnknownBinder final implement Fat<FriendUnknown ,Proxy> {
+class ListUnknownBinder final implement Fat<FriendUnknown ,void> {
 public:
-	FLAG reflect (CR<FLAG> uuid) const override {
+	Flag reflect (CR<Flag> uuid) const override {
 		using R1X = UnionPair<A ,ListNode> ;
 		if (uuid == ReflectSizeBinder<A>::expr)
 			return inline_vptr (ReflectSizeBinder<A> ()) ;
@@ -1097,23 +1112,23 @@ public:
 } ;
 
 template <class A>
-struct ListPureLayout implement ListLayout {
+struct ListImplLayout implement ListLayout {
 public:
-	implicit ListPureLayout () noexcept {
+	implicit ListImplLayout () noexcept {
 		noop (Allocator<A ,ListNode> ()) ;
 		ListHolder::hold (thiz)->prepare (ListUnknownBinder<A> ()) ;
 	}
 } ;
 
 template <>
-struct ListPureLayout<Pointer> implement ListLayout {} ;
+struct ListImplLayout<Pointer> implement ListLayout {} ;
 
 template <class A>
-class List implement ListPureLayout<A> {
+class List implement ListImplLayout<A> {
 protected:
-	using ListPureLayout<A>::mList ;
-	using ListPureLayout<A>::mFirst ;
-	using ListPureLayout<A>::mLast ;
+	using ListImplLayout<A>::mList ;
+	using ListImplLayout<A>::mFirst ;
+	using ListImplLayout<A>::mLast ;
 
 public:
 	implicit List () = default ;
@@ -1124,50 +1139,50 @@ public:
 
 	explicit List (CR<csc_initializer_list_t<A>> that) {
 		auto rax = Box<A> () ;
-		ListHolder::hold (thiz)->initialize (ListUnknownBinder<A> () ,MakeWrapper (that) ,rax) ;
+		ListHolder::hold (thiz)->initialize (ListUnknownBinder<A> () ,Pointer::from (that) ,rax) ;
 	}
 
 	void clear () {
 		return ListHolder::hold (thiz)->clear () ;
 	}
 
-	LENGTH size () const {
+	Length size () const {
 		return ListHolder::hold (thiz)->size () ;
 	}
 
-	LENGTH step () const {
+	Length step () const {
 		return ListHolder::hold (thiz)->step () ;
 	}
 
-	LENGTH length () const {
+	Length length () const {
 		return ListHolder::hold (thiz)->length () ;
 	}
 
-	VR<A> at (CR<INDEX> index) leftvalue {
+	VR<A> at (CR<Index> index) leftvalue {
 		return ListHolder::hold (thiz)->at (index) ;
 	}
 
-	forceinline VR<A> operator[] (CR<INDEX> index) leftvalue {
+	forceinline VR<A> operator[] (CR<Index> index) leftvalue {
 		return at (index) ;
 	}
 
-	CR<A> at (CR<INDEX> index) const leftvalue {
+	CR<A> at (CR<Index> index) const leftvalue {
 		return ListHolder::hold (thiz)->at (index) ;
 	}
 
-	forceinline CR<A> operator[] (CR<INDEX> index) const leftvalue {
+	forceinline CR<A> operator[] (CR<Index> index) const leftvalue {
 		return at (index) ;
 	}
 
-	INDEX ibegin () const {
+	Index ibegin () const {
 		return ListHolder::hold (thiz)->ibegin () ;
 	}
 
-	INDEX iend () const {
+	Index iend () const {
 		return ListHolder::hold (thiz)->iend () ;
 	}
 
-	INDEX inext (CR<INDEX> index) const {
+	Index inext (CR<Index> index) const {
 		return ListHolder::hold (thiz)->inext (index) ;
 	}
 
@@ -1183,19 +1198,19 @@ public:
 		return ArrayRange<CR<List>> (thiz) ;
 	}
 
-	BOOL empty () const {
+	Bool empty () const {
 		return ListHolder::hold (thiz)->empty () ;
 	}
 
-	BOOL full () const {
+	Bool full () const {
 		return ListHolder::hold (thiz)->full () ;
 	}
 
-	INDEX head () const {
+	Index head () const {
 		return ListHolder::hold (thiz)->head () ;
 	}
 
-	INDEX tail () const {
+	Index tail () const {
 		return ListHolder::hold (thiz)->tail () ;
 	}
 
@@ -1235,21 +1250,21 @@ public:
 		pop () ;
 	}
 
-	INDEX insert () {
+	Index insert () {
 		auto rax = Box<A>::make () ;
 		return ListHolder::hold (thiz)->insert (move (rax)) ;
 	}
 
-	INDEX insert (CR<INDEX> index) {
+	Index insert (CR<Index> index) {
 		auto rax = Box<A>::make () ;
 		return ListHolder::hold (thiz)->insert (index ,move (rax)) ;
 	}
 
-	void remove (CR<INDEX> index) {
+	void remove (CR<Index> index) {
 		return ListHolder::hold (thiz)->remove (index) ;
 	}
 
-	void order (CR<Array<INDEX>> range_) {
+	void order (CR<Array<Index>> range_) {
 		return ListHolder::hold (thiz)->order (range_) ;
 	}
 } ;
@@ -1258,9 +1273,9 @@ struct ArrayListNode implement AllocatorNode {} ;
 
 struct ArrayListLayout {
 	Allocator<Pointer ,ArrayListNode> mList ;
-	RefBuffer<INDEX> mRange ;
-	INDEX mTop ;
-	BOOL mRemap ;
+	RefBuffer<Index> mRange ;
+	Index mTop ;
+	Bool mRemap ;
 } ;
 
 struct ArrayListHolder implement Interface {
@@ -1268,29 +1283,29 @@ struct ArrayListHolder implement Interface {
 	imports CFat<ArrayListHolder> hold (CR<ArrayListLayout> that) ;
 
 	virtual void prepare (CR<Unknown> holder) = 0 ;
-	virtual void initialize (CR<Unknown> holder ,CR<LENGTH> size_) = 0 ;
-	virtual void initialize (CR<Unknown> holder ,CR<WrapperLayout> params ,VR<BoxLayout> item) = 0 ;
+	virtual void initialize (CR<Unknown> holder ,CR<Length> size_) = 0 ;
+	virtual void initialize (CR<Unknown> holder ,CR<Pointer> params ,VR<BoxLayout> item) = 0 ;
 	virtual void clear () = 0 ;
-	virtual LENGTH size () const = 0 ;
-	virtual LENGTH step () const = 0 ;
-	virtual LENGTH length () const = 0 ;
-	virtual VR<Pointer> at (CR<INDEX> index) leftvalue = 0 ;
-	virtual CR<Pointer> at (CR<INDEX> index) const leftvalue = 0 ;
-	virtual INDEX ibegin () const = 0 ;
-	virtual INDEX iend () const = 0 ;
-	virtual INDEX inext (CR<INDEX> index) const = 0 ;
+	virtual Length size () const = 0 ;
+	virtual Length step () const = 0 ;
+	virtual Length length () const = 0 ;
+	virtual VR<Pointer> at (CR<Index> index) leftvalue = 0 ;
+	virtual CR<Pointer> at (CR<Index> index) const leftvalue = 0 ;
+	virtual Index ibegin () const = 0 ;
+	virtual Index iend () const = 0 ;
+	virtual Index inext (CR<Index> index) const = 0 ;
 	virtual void add (RR<BoxLayout> item) = 0 ;
-	virtual INDEX insert (RR<BoxLayout> item) = 0 ;
-	virtual INDEX insert (CR<INDEX> index ,RR<BoxLayout> item) = 0 ;
-	virtual void remove (CR<INDEX> index) = 0 ;
-	virtual void order (CR<Array<INDEX>> range_) = 0 ;
+	virtual Index insert (RR<BoxLayout> item) = 0 ;
+	virtual Index insert (CR<Index> index ,RR<BoxLayout> item) = 0 ;
+	virtual void remove (CR<Index> index) = 0 ;
+	virtual void order (CR<Array<Index>> range_) = 0 ;
 	virtual void remap () = 0 ;
 } ;
 
 template <class A>
-class ArrayListUnknownBinder final implement Fat<FriendUnknown ,Proxy> {
+class ArrayListUnknownBinder final implement Fat<FriendUnknown ,void> {
 public:
-	FLAG reflect (CR<FLAG> uuid) const override {
+	Flag reflect (CR<Flag> uuid) const override {
 		using R1X = UnionPair<A ,ArrayListNode> ;
 		if (uuid == ReflectSizeBinder<A>::expr)
 			return inline_vptr (ReflectSizeBinder<A> ()) ;
@@ -1307,24 +1322,24 @@ public:
 } ;
 
 template <class A>
-struct ArrayListPureLayout implement ArrayListLayout {
+struct ArrayListImplLayout implement ArrayListLayout {
 public:
-	implicit ArrayListPureLayout () noexcept {
+	implicit ArrayListImplLayout () noexcept {
 		noop (Allocator<A ,ArrayListNode> ()) ;
 		ArrayListHolder::hold (thiz)->prepare (ArrayListUnknownBinder<A> ()) ;
 	}
 } ;
 
 template <>
-struct ArrayListPureLayout<Pointer> implement ArrayListLayout {} ;
+struct ArrayListImplLayout<Pointer> implement ArrayListLayout {} ;
 
 template <class A>
-class ArrayList implement ArrayListPureLayout<A> {
+class ArrayList implement ArrayListImplLayout<A> {
 protected:
-	using ArrayListPureLayout<A>::mList ;
-	using ArrayListPureLayout<A>::mRange ;
-	using ArrayListPureLayout<A>::mTop ;
-	using ArrayListPureLayout<A>::mRemap ;
+	using ArrayListImplLayout<A>::mList ;
+	using ArrayListImplLayout<A>::mRange ;
+	using ArrayListImplLayout<A>::mTop ;
+	using ArrayListImplLayout<A>::mRemap ;
 
 public:
 	implicit ArrayList () = default ;
@@ -1335,50 +1350,50 @@ public:
 
 	explicit ArrayList (CR<csc_initializer_list_t<A>> that) {
 		auto rax = Box<A> () ;
-		ArrayListHolder::hold (thiz)->initialize (ArrayListUnknownBinder<A> () ,MakeWrapper (that) ,rax) ;
+		ArrayListHolder::hold (thiz)->initialize (ArrayListUnknownBinder<A> () ,Pointer::from (that) ,rax) ;
 	}
 
 	void clear () {
 		return ArrayListHolder::hold (thiz)->clear () ;
 	}
 
-	LENGTH size () const {
+	Length size () const {
 		return ArrayListHolder::hold (thiz)->size () ;
 	}
 
-	LENGTH step () const {
+	Length step () const {
 		return ArrayListHolder::hold (thiz)->step () ;
 	}
 
-	LENGTH length () const {
+	Length length () const {
 		return ArrayListHolder::hold (thiz)->length () ;
 	}
 
-	VR<A> at (CR<INDEX> index) leftvalue {
+	VR<A> at (CR<Index> index) leftvalue {
 		return ArrayListHolder::hold (thiz)->at (index) ;
 	}
 
-	forceinline VR<A> operator[] (CR<INDEX> index) leftvalue {
+	forceinline VR<A> operator[] (CR<Index> index) leftvalue {
 		return at (index) ;
 	}
 
-	CR<A> at (CR<INDEX> index) const leftvalue {
+	CR<A> at (CR<Index> index) const leftvalue {
 		return ArrayListHolder::hold (thiz)->at (index) ;
 	}
 
-	forceinline CR<A> operator[] (CR<INDEX> index) const leftvalue {
+	forceinline CR<A> operator[] (CR<Index> index) const leftvalue {
 		return at (index) ;
 	}
 
-	INDEX ibegin () const {
+	Index ibegin () const {
 		return ArrayListHolder::hold (thiz)->ibegin () ;
 	}
 
-	INDEX iend () const {
+	Index iend () const {
 		return ArrayListHolder::hold (thiz)->iend () ;
 	}
 
-	INDEX inext (CR<INDEX> index) const {
+	Index inext (CR<Index> index) const {
 		return ArrayListHolder::hold (thiz)->inext (index) ;
 	}
 
@@ -1403,21 +1418,21 @@ public:
 		return ArrayListHolder::hold (thiz)->add (move (rax)) ;
 	}
 
-	INDEX insert () {
+	Index insert () {
 		auto rax = Box<A>::make () ;
 		return ArrayListHolder::hold (thiz)->insert (move (rax)) ;
 	}
 
-	INDEX insert (CR<INDEX> index) {
+	Index insert (CR<Index> index) {
 		auto rax = Box<A>::make () ;
 		return ArrayListHolder::hold (thiz)->insert (index ,move (rax)) ;
 	}
 
-	void remove (CR<INDEX> index) {
+	void remove (CR<Index> index) {
 		return ArrayListHolder::hold (thiz)->remove (index) ;
 	}
 
-	void order (CR<Array<INDEX>> range_) {
+	void order (CR<Array<Index>> range_) {
 		return ArrayListHolder::hold (thiz)->order (range_) ;
 	}
 
@@ -1427,21 +1442,21 @@ public:
 } ;
 
 struct SortedMapNode implement AllocatorNode {
-	INDEX mMap ;
-	INDEX mDown ;
+	Index mMap ;
+	Index mDown ;
 } ;
 
 struct SortedMapTree {
 	Allocator<Pointer ,SortedMapNode> mList ;
-	INDEX mCheck ;
+	Index mCheck ;
 } ;
 
 struct SortedMapLayout {
 	Ref<SortedMapTree> mThis ;
-	INDEX mRoot ;
-	RefBuffer<INDEX> mRange ;
-	INDEX mWrite ;
-	BOOL mRemap ;
+	Index mRoot ;
+	RefBuffer<Index> mRange ;
+	Index mWrite ;
+	Bool mRemap ;
 } ;
 
 struct SortedMapHolder implement Interface {
@@ -1449,29 +1464,29 @@ struct SortedMapHolder implement Interface {
 	imports CFat<SortedMapHolder> hold (CR<SortedMapLayout> that) ;
 
 	virtual void prepare (CR<Unknown> holder) = 0 ;
-	virtual void initialize (CR<Unknown> holder ,CR<LENGTH> size_) = 0 ;
-	virtual void initialize (CR<Unknown> holder ,CR<WrapperLayout> params ,VR<BoxLayout> item) = 0 ;
+	virtual void initialize (CR<Unknown> holder ,CR<Length> size_) = 0 ;
+	virtual void initialize (CR<Unknown> holder ,CR<Pointer> params ,VR<BoxLayout> item) = 0 ;
 	virtual SortedMapLayout share () const = 0 ;
 	virtual void clear () = 0 ;
-	virtual LENGTH size () const = 0 ;
-	virtual LENGTH step () const = 0 ;
-	virtual LENGTH length () const = 0 ;
-	virtual VR<INDEX> at (CR<INDEX> index) leftvalue = 0 ;
-	virtual CR<INDEX> at (CR<INDEX> index) const leftvalue = 0 ;
-	virtual INDEX ibegin () const = 0 ;
-	virtual INDEX iend () const = 0 ;
-	virtual INDEX inext (CR<INDEX> index) const = 0 ;
-	virtual void add (RR<BoxLayout> item ,CR<INDEX> map_) = 0 ;
-	virtual INDEX find (CR<Pointer> item) const = 0 ;
-	virtual BOOL contain (CR<Pointer> item) const = 0 ;
-	virtual INDEX map (CR<Pointer> item) const = 0 ;
+	virtual Length size () const = 0 ;
+	virtual Length step () const = 0 ;
+	virtual Length length () const = 0 ;
+	virtual VR<Index> at (CR<Index> index) leftvalue = 0 ;
+	virtual CR<Index> at (CR<Index> index) const leftvalue = 0 ;
+	virtual Index ibegin () const = 0 ;
+	virtual Index iend () const = 0 ;
+	virtual Index inext (CR<Index> index) const = 0 ;
+	virtual void add (RR<BoxLayout> item ,CR<Index> map_) = 0 ;
+	virtual Index find (CR<Pointer> item) const = 0 ;
+	virtual Bool contain (CR<Pointer> item) const = 0 ;
+	virtual Index map (CR<Pointer> item) const = 0 ;
 	virtual void remap () = 0 ;
 } ;
 
 template <class A>
-class SortedMapUnknownBinder final implement Fat<FriendUnknown ,Proxy> {
+class SortedMapUnknownBinder final implement Fat<FriendUnknown ,void> {
 public:
-	FLAG reflect (CR<FLAG> uuid) const override {
+	Flag reflect (CR<Flag> uuid) const override {
 		using R1X = UnionPair<A ,SortedMapNode> ;
 		if (uuid == ReflectSizeBinder<A>::expr)
 			return inline_vptr (ReflectSizeBinder<A> ()) ;
@@ -1494,25 +1509,25 @@ public:
 } ;
 
 template <class A>
-struct SortedMapPureLayout implement SortedMapLayout {
+struct SortedMapImplLayout implement SortedMapLayout {
 public:
-	implicit SortedMapPureLayout () noexcept {
+	implicit SortedMapImplLayout () noexcept {
 		noop (Allocator<A ,SortedMapNode> ()) ;
 		SortedMapHolder::hold (thiz)->prepare (SortedMapUnknownBinder<A> ()) ;
 	}
 } ;
 
 template <>
-struct SortedMapPureLayout<Pointer> implement SortedMapLayout {} ;
+struct SortedMapImplLayout<Pointer> implement SortedMapLayout {} ;
 
 template <class A>
-class SortedMap implement SortedMapPureLayout<A> {
+class SortedMap implement SortedMapImplLayout<A> {
 protected:
-	using SortedMapPureLayout<A>::mThis ;
-	using SortedMapPureLayout<A>::mRoot ;
-	using SortedMapPureLayout<A>::mRange ;
-	using SortedMapPureLayout<A>::mWrite ;
-	using SortedMapPureLayout<A>::mRemap ;
+	using SortedMapImplLayout<A>::mThis ;
+	using SortedMapImplLayout<A>::mRoot ;
+	using SortedMapImplLayout<A>::mRange ;
+	using SortedMapImplLayout<A>::mWrite ;
+	using SortedMapImplLayout<A>::mRemap ;
 
 public:
 	implicit SortedMap () = default ;
@@ -1523,7 +1538,7 @@ public:
 
 	explicit SortedMap (CR<csc_initializer_list_t<A>> that) {
 		auto rax = Box<A> () ;
-		SortedMapHolder::hold (thiz)->initialize (SortedMapUnknownBinder<A> () ,MakeWrapper (that) ,rax) ;
+		SortedMapHolder::hold (thiz)->initialize (SortedMapUnknownBinder<A> () ,Pointer::from (that) ,rax) ;
 	}
 
 	SortedMap share () const {
@@ -1535,43 +1550,43 @@ public:
 		return SortedMapHolder::hold (thiz)->clear () ;
 	}
 
-	LENGTH size () const {
+	Length size () const {
 		return SortedMapHolder::hold (thiz)->size () ;
 	}
 
-	LENGTH step () const {
+	Length step () const {
 		return SortedMapHolder::hold (thiz)->step () ;
 	}
 
-	LENGTH length () const {
+	Length length () const {
 		return SortedMapHolder::hold (thiz)->length () ;
 	}
 
-	VR<INDEX> at (CR<INDEX> index) leftvalue {
+	VR<Index> at (CR<Index> index) leftvalue {
 		return SortedMapHolder::hold (thiz)->at (index) ;
 	}
 
-	forceinline VR<INDEX> operator[] (CR<INDEX> index) leftvalue {
+	forceinline VR<Index> operator[] (CR<Index> index) leftvalue {
 		return at (index) ;
 	}
 
-	CR<INDEX> at (CR<INDEX> index) const leftvalue {
+	CR<Index> at (CR<Index> index) const leftvalue {
 		return SortedMapHolder::hold (thiz)->at (index) ;
 	}
 
-	forceinline CR<INDEX> operator[] (CR<INDEX> index) const leftvalue {
+	forceinline CR<Index> operator[] (CR<Index> index) const leftvalue {
 		return at (index) ;
 	}
 
-	INDEX ibegin () const {
+	Index ibegin () const {
 		return SortedMapHolder::hold (thiz)->ibegin () ;
 	}
 
-	INDEX iend () const {
+	Index iend () const {
 		return SortedMapHolder::hold (thiz)->iend () ;
 	}
 
-	INDEX inext (CR<INDEX> index) const {
+	Index inext (CR<Index> index) const {
 		return SortedMapHolder::hold (thiz)->inext (index) ;
 	}
 
@@ -1595,24 +1610,24 @@ public:
 		add (move (item) ,NONE) ;
 	}
 
-	void add (CR<A> item ,CR<INDEX> map_) {
+	void add (CR<A> item ,CR<Index> map_) {
 		add (move (item) ,map_) ;
 	}
 
-	void add (RR<A> item ,CR<INDEX> map_) {
+	void add (RR<A> item ,CR<Index> map_) {
 		auto rax = Box<A>::make (move (item)) ;
 		return SortedMapHolder::hold (thiz)->add (move (rax) ,map_) ;
 	}
 
-	INDEX find (CR<A> item) const {
+	Index find (CR<A> item) const {
 		return SortedMapHolder::hold (thiz)->find (Pointer::from (item)) ;
 	}
 
-	BOOL contain (CR<A> item) const {
+	Bool contain (CR<A> item) const {
 		return SortedMapHolder::hold (thiz)->contain (Pointer::from (item)) ;
 	}
 
-	INDEX map (CR<A> item) const {
+	Index map (CR<A> item) const {
 		return SortedMapHolder::hold (thiz)->map (Pointer::from (item)) ;
 	}
 
@@ -1622,18 +1637,18 @@ public:
 } ;
 
 struct SetNode implement AllocatorNode {
-	INDEX mMap ;
-	BOOL mRed ;
-	BOOL mBin ;
-	INDEX mUp ;
-	INDEX mLeft ;
-	INDEX mRight ;
+	Index mMap ;
+	Bool mRed ;
+	Bool mBin ;
+	Index mUp ;
+	Index mLeft ;
+	Index mRight ;
 } ;
 
 struct SetLayout {
 	Allocator<Pointer ,SetNode> mSet ;
-	INDEX mRoot ;
-	INDEX mTop ;
+	Index mRoot ;
+	Index mTop ;
 } ;
 
 struct SetHolder implement Interface {
@@ -1641,30 +1656,30 @@ struct SetHolder implement Interface {
 	imports CFat<SetHolder> hold (CR<SetLayout> that) ;
 
 	virtual void prepare (CR<Unknown> holder) = 0 ;
-	virtual void initialize (CR<Unknown> holder ,CR<LENGTH> size_) = 0 ;
-	virtual void initialize (CR<Unknown> holder ,CR<WrapperLayout> params ,VR<BoxLayout> item) = 0 ;
+	virtual void initialize (CR<Unknown> holder ,CR<Length> size_) = 0 ;
+	virtual void initialize (CR<Unknown> holder ,CR<Pointer> params ,VR<BoxLayout> item) = 0 ;
 	virtual void clear () = 0 ;
-	virtual LENGTH size () const = 0 ;
-	virtual LENGTH step () const = 0 ;
-	virtual LENGTH length () const = 0 ;
-	virtual CR<Pointer> at (CR<INDEX> index) const leftvalue = 0 ;
-	virtual void get (CR<INDEX> index ,VR<INDEX> map_) const = 0 ;
-	virtual void set (CR<INDEX> index ,CR<INDEX> map_) = 0 ;
-	virtual INDEX ibegin () const = 0 ;
-	virtual INDEX iend () const = 0 ;
-	virtual INDEX inext (CR<INDEX> index) const = 0 ;
-	virtual void add (RR<BoxLayout> item ,CR<INDEX> map_) = 0 ;
-	virtual INDEX find (CR<Pointer> item) const = 0 ;
-	virtual BOOL contain (CR<Pointer> item) const = 0 ;
-	virtual INDEX map (CR<Pointer> item) const = 0 ;
-	virtual void remove (CR<INDEX> index) = 0 ;
+	virtual Length size () const = 0 ;
+	virtual Length step () const = 0 ;
+	virtual Length length () const = 0 ;
+	virtual CR<Pointer> at (CR<Index> index) const leftvalue = 0 ;
+	virtual void get (CR<Index> index ,VR<Index> map_) const = 0 ;
+	virtual void set (CR<Index> index ,CR<Index> map_) = 0 ;
+	virtual Index ibegin () const = 0 ;
+	virtual Index iend () const = 0 ;
+	virtual Index inext (CR<Index> index) const = 0 ;
+	virtual void add (RR<BoxLayout> item ,CR<Index> map_) = 0 ;
+	virtual Index find (CR<Pointer> item) const = 0 ;
+	virtual Bool contain (CR<Pointer> item) const = 0 ;
+	virtual Index map (CR<Pointer> item) const = 0 ;
+	virtual void remove (CR<Index> index) = 0 ;
 	virtual void erase (CR<Pointer> item) = 0 ;
 } ;
 
 template <class A>
-class SetUnknownBinder final implement Fat<FriendUnknown ,Proxy> {
+class SetUnknownBinder final implement Fat<FriendUnknown ,void> {
 public:
-	FLAG reflect (CR<FLAG> uuid) const override {
+	Flag reflect (CR<Flag> uuid) const override {
 		using R1X = UnionPair<A ,SetNode> ;
 		if (uuid == ReflectSizeBinder<A>::expr)
 			return inline_vptr (ReflectSizeBinder<A> ()) ;
@@ -1687,23 +1702,23 @@ public:
 } ;
 
 template <class A>
-struct SetPureLayout implement SetLayout {
+struct SetImplLayout implement SetLayout {
 public:
-	implicit SetPureLayout () noexcept {
+	implicit SetImplLayout () noexcept {
 		noop (Allocator<A ,SetNode> ()) ;
 		SetHolder::hold (thiz)->prepare (SetUnknownBinder<A> ()) ;
 	}
 } ;
 
 template <>
-struct SetPureLayout<Pointer> implement SetLayout {} ;
+struct SetImplLayout<Pointer> implement SetLayout {} ;
 
 template <class A>
-class Set implement SetPureLayout<A> {
+class Set implement SetImplLayout<A> {
 protected:
-	using SetPureLayout<A>::mSet ;
-	using SetPureLayout<A>::mRoot ;
-	using SetPureLayout<A>::mTop ;
+	using SetImplLayout<A>::mSet ;
+	using SetImplLayout<A>::mRoot ;
+	using SetImplLayout<A>::mTop ;
 
 public:
 	implicit Set () = default ;
@@ -1714,50 +1729,50 @@ public:
 
 	explicit Set (CR<csc_initializer_list_t<A>> that) {
 		auto rax = Box<A> () ;
-		SetHolder::hold (thiz)->initialize (SetUnknownBinder<A> () ,MakeWrapper (that) ,rax) ;
+		SetHolder::hold (thiz)->initialize (SetUnknownBinder<A> () ,Pointer::from (that) ,rax) ;
 	}
 
 	void clear () {
 		return SetHolder::hold (thiz)->clear () ;
 	}
 
-	LENGTH size () const {
+	Length size () const {
 		return SetHolder::hold (thiz)->size () ;
 	}
 
-	LENGTH step () const {
+	Length step () const {
 		return SetHolder::hold (thiz)->step () ;
 	}
 
-	LENGTH length () const {
+	Length length () const {
 		return SetHolder::hold (thiz)->length () ;
 	}
 
-	CR<A> at (CR<INDEX> index) const leftvalue {
+	CR<A> at (CR<Index> index) const leftvalue {
 		return SetHolder::hold (thiz)->at (index) ;
 	}
 
-	forceinline CR<A> operator[] (CR<INDEX> index) const leftvalue {
+	forceinline CR<A> operator[] (CR<Index> index) const leftvalue {
 		return at (index) ;
 	}
 
-	void get (CR<INDEX> index ,VR<INDEX> map_) const {
+	void get (CR<Index> index ,VR<Index> map_) const {
 		return SetHolder::hold (thiz)->get (index ,map_) ;
 	}
 
-	void set (CR<INDEX> index ,CR<INDEX> map_) {
+	void set (CR<Index> index ,CR<Index> map_) {
 		return SetHolder::hold (thiz)->set (index ,map_) ;
 	}
 
-	INDEX ibegin () const {
+	Index ibegin () const {
 		return SetHolder::hold (thiz)->ibegin () ;
 	}
 
-	INDEX iend () const {
+	Index iend () const {
 		return SetHolder::hold (thiz)->iend () ;
 	}
 
-	INDEX inext (CR<INDEX> index) const {
+	Index inext (CR<Index> index) const {
 		return SetHolder::hold (thiz)->inext (index) ;
 	}
 
@@ -1781,28 +1796,28 @@ public:
 		add (move (item) ,NONE) ;
 	}
 
-	void add (CR<A> item ,CR<INDEX> map_) {
+	void add (CR<A> item ,CR<Index> map_) {
 		add (move (item) ,map_) ;
 	}
 
-	void add (RR<A> item ,CR<INDEX> map_) {
+	void add (RR<A> item ,CR<Index> map_) {
 		auto rax = Box<A>::make (move (item)) ;
 		return SetHolder::hold (thiz)->add (move (rax) ,map_) ;
 	}
 
-	INDEX find (CR<A> item) const {
+	Index find (CR<A> item) const {
 		return SetHolder::hold (thiz)->find (Pointer::from (item)) ;
 	}
 
-	BOOL contain (CR<A> item) const {
+	Bool contain (CR<A> item) const {
 		return SetHolder::hold (thiz)->contain (Pointer::from (item)) ;
 	}
 
-	INDEX map (CR<A> item) const {
+	Index map (CR<A> item) const {
 		return SetHolder::hold (thiz)->map (Pointer::from (item)) ;
 	}
 
-	void remove (CR<INDEX> index) {
+	void remove (CR<Index> index) {
 		return SetHolder::hold (thiz)->remove (index) ;
 	}
 
@@ -1812,19 +1827,19 @@ public:
 } ;
 
 struct HashcodeVisitor {
-	BYTE_BASE<VAL> mCode ;
-	LENGTH mDepth ;
+	BYTE_BASE<Val> mCode ;
+	Length mDepth ;
 } ;
 
 struct HashSetNode implement AllocatorNode {
-	INDEX mMap ;
-	FLAG mHash ;
-	INDEX mDown ;
+	Index mMap ;
+	Flag mHash ;
+	Index mDown ;
 } ;
 
 struct HashSetLayout {
 	Allocator<Pointer ,HashSetNode> mSet ;
-	RefBuffer<INDEX> mRange ;
+	RefBuffer<Index> mRange ;
 	SharedRef<HashcodeVisitor> mVisitor ;
 } ;
 
@@ -1833,30 +1848,30 @@ struct HashSetHolder implement Interface {
 	imports CFat<HashSetHolder> hold (CR<HashSetLayout> that) ;
 
 	virtual void prepare (CR<Unknown> holder) = 0 ;
-	virtual void initialize (CR<Unknown> holder ,CR<LENGTH> size_) = 0 ;
-	virtual void initialize (CR<Unknown> holder ,CR<WrapperLayout> params ,VR<BoxLayout> item) = 0 ;
+	virtual void initialize (CR<Unknown> holder ,CR<Length> size_) = 0 ;
+	virtual void initialize (CR<Unknown> holder ,CR<Pointer> params ,VR<BoxLayout> item) = 0 ;
 	virtual void clear () = 0 ;
-	virtual LENGTH size () const = 0 ;
-	virtual LENGTH step () const = 0 ;
-	virtual LENGTH length () const = 0 ;
-	virtual CR<Pointer> at (CR<INDEX> index) const leftvalue = 0 ;
-	virtual void get (CR<INDEX> index ,VR<INDEX> map_) const = 0 ;
-	virtual void set (CR<INDEX> index ,CR<INDEX> map_) = 0 ;
-	virtual INDEX ibegin () const = 0 ;
-	virtual INDEX iend () const = 0 ;
-	virtual INDEX inext (CR<INDEX> index) const = 0 ;
-	virtual void add (RR<BoxLayout> item ,CR<INDEX> map_) = 0 ;
-	virtual INDEX find (CR<Pointer> item) const = 0 ;
-	virtual BOOL contain (CR<Pointer> item) const = 0 ;
-	virtual INDEX map (CR<Pointer> item) const = 0 ;
-	virtual void remove (CR<INDEX> index) = 0 ;
+	virtual Length size () const = 0 ;
+	virtual Length step () const = 0 ;
+	virtual Length length () const = 0 ;
+	virtual CR<Pointer> at (CR<Index> index) const leftvalue = 0 ;
+	virtual void get (CR<Index> index ,VR<Index> map_) const = 0 ;
+	virtual void set (CR<Index> index ,CR<Index> map_) = 0 ;
+	virtual Index ibegin () const = 0 ;
+	virtual Index iend () const = 0 ;
+	virtual Index inext (CR<Index> index) const = 0 ;
+	virtual void add (RR<BoxLayout> item ,CR<Index> map_) = 0 ;
+	virtual Index find (CR<Pointer> item) const = 0 ;
+	virtual Bool contain (CR<Pointer> item) const = 0 ;
+	virtual Index map (CR<Pointer> item) const = 0 ;
+	virtual void remove (CR<Index> index) = 0 ;
 	virtual void erase (CR<Pointer> item) = 0 ;
 } ;
 
 template <class A>
-class HashSetUnknownBinder final implement Fat<FriendUnknown ,Proxy> {
+class HashSetUnknownBinder final implement Fat<FriendUnknown ,void> {
 public:
-	FLAG reflect (CR<FLAG> uuid) const override {
+	Flag reflect (CR<Flag> uuid) const override {
 		using R1X = UnionPair<A ,HashSetNode> ;
 		if (uuid == ReflectSizeBinder<A>::expr)
 			return inline_vptr (ReflectSizeBinder<A> ()) ;
@@ -1877,23 +1892,23 @@ public:
 } ;
 
 template <class A>
-struct HashSetPureLayout implement HashSetLayout {
+struct HashSetImplLayout implement HashSetLayout {
 public:
-	implicit HashSetPureLayout () noexcept {
+	implicit HashSetImplLayout () noexcept {
 		noop (Allocator<A ,HashSetNode> ()) ;
 		HashSetHolder::hold (thiz)->prepare (HashSetUnknownBinder<A> ()) ;
 	}
 } ;
 
 template <>
-struct HashSetPureLayout<Pointer> implement HashSetLayout {} ;
+struct HashSetImplLayout<Pointer> implement HashSetLayout {} ;
 
 template <class A>
-class HashSet implement HashSetPureLayout<A> {
+class HashSet implement HashSetImplLayout<A> {
 protected:
-	using HashSetPureLayout<A>::mSet ;
-	using HashSetPureLayout<A>::mRange ;
-	using HashSetPureLayout<A>::mVisitor ;
+	using HashSetImplLayout<A>::mSet ;
+	using HashSetImplLayout<A>::mRange ;
+	using HashSetImplLayout<A>::mVisitor ;
 
 public:
 	implicit HashSet () = default ;
@@ -1904,50 +1919,50 @@ public:
 
 	explicit HashSet (CR<csc_initializer_list_t<A>> that) {
 		auto rax = Box<A> () ;
-		HashSetHolder::hold (thiz)->initialize (HashSetUnknownBinder<A> () ,MakeWrapper (that) ,rax) ;
+		HashSetHolder::hold (thiz)->initialize (HashSetUnknownBinder<A> () ,Pointer::from (that) ,rax) ;
 	}
 
 	void clear () {
 		return HashSetHolder::hold (thiz)->clear () ;
 	}
 
-	LENGTH size () const {
+	Length size () const {
 		return HashSetHolder::hold (thiz)->size () ;
 	}
 
-	LENGTH step () const {
+	Length step () const {
 		return HashSetHolder::hold (thiz)->step () ;
 	}
 
-	LENGTH length () const {
+	Length length () const {
 		return HashSetHolder::hold (thiz)->length () ;
 	}
 
-	CR<A> at (CR<INDEX> index) const leftvalue {
+	CR<A> at (CR<Index> index) const leftvalue {
 		return HashSetHolder::hold (thiz)->at (index) ;
 	}
 
-	forceinline CR<A> operator[] (CR<INDEX> index) const leftvalue {
+	forceinline CR<A> operator[] (CR<Index> index) const leftvalue {
 		return at (index) ;
 	}
 
-	void get (CR<INDEX> index ,VR<INDEX> map_) const {
+	void get (CR<Index> index ,VR<Index> map_) const {
 		return HashSetHolder::hold (thiz)->get (index ,map_) ;
 	}
 
-	void set (CR<INDEX> index ,CR<INDEX> map_) {
+	void set (CR<Index> index ,CR<Index> map_) {
 		return HashSetHolder::hold (thiz)->set (index ,map_) ;
 	}
 
-	INDEX ibegin () const {
+	Index ibegin () const {
 		return HashSetHolder::hold (thiz)->ibegin () ;
 	}
 
-	INDEX iend () const {
+	Index iend () const {
 		return HashSetHolder::hold (thiz)->iend () ;
 	}
 
-	INDEX inext (CR<INDEX> index) const {
+	Index inext (CR<Index> index) const {
 		return HashSetHolder::hold (thiz)->inext (index) ;
 	}
 
@@ -1971,28 +1986,28 @@ public:
 		add (move (item) ,NONE) ;
 	}
 
-	void add (CR<A> item ,CR<INDEX> map_) {
+	void add (CR<A> item ,CR<Index> map_) {
 		add (move (item) ,map_) ;
 	}
 
-	void add (RR<A> item ,CR<INDEX> map_) {
+	void add (RR<A> item ,CR<Index> map_) {
 		auto rax = Box<A>::make (move (item)) ;
 		return HashSetHolder::hold (thiz)->add (move (rax) ,map_) ;
 	}
 
-	INDEX find (CR<A> item) const {
+	Index find (CR<A> item) const {
 		return HashSetHolder::hold (thiz)->find (Pointer::from (item)) ;
 	}
 
-	BOOL contain (CR<A> item) const {
+	Bool contain (CR<A> item) const {
 		return HashSetHolder::hold (thiz)->contain (Pointer::from (item)) ;
 	}
 
-	INDEX map (CR<A> item) const {
+	Index map (CR<A> item) const {
 		return HashSetHolder::hold (thiz)->map (Pointer::from (item)) ;
 	}
 
-	void remove (CR<INDEX> index) {
+	void remove (CR<Index> index) {
 		return HashSetHolder::hold (thiz)->remove (index) ;
 	}
 
@@ -2002,56 +2017,56 @@ public:
 } ;
 
 template <class A>
-class BitProxy {
+class BitProxy implement Proxy {
 protected:
 	XR<A> mThat ;
-	INDEX mIndex ;
+	Index mIndex ;
 
 public:
 	implicit BitProxy () = delete ;
 
-	explicit BitProxy (XR<A> that ,CR<INDEX> index) :mThat (that) {
+	explicit BitProxy (XR<A> that ,CR<Index> index) :mThat (that) {
 		mIndex = index ;
 	}
 
-	forceinline operator BOOL () rightvalue {
-		BOOL ret ;
+	forceinline operator Bool () rightvalue {
+		Bool ret ;
 		mThat.get (mIndex ,ret) ;
 		return move (ret) ;
 	}
 
-	forceinline void operator= (CR<BOOL> that) rightvalue {
+	forceinline void operator= (CR<Bool> that) rightvalue {
 		mThat.set (mIndex ,that) ;
 	}
 } ;
 
 struct BitSetLayout {
-	RefBuffer<BYTE> mSet ;
-	LENGTH mWidth ;
+	RefBuffer<Byte> mSet ;
+	Length mWidth ;
 } ;
 
 struct BitSetHolder implement Interface {
 	imports VFat<BitSetHolder> hold (VR<BitSetLayout> that) ;
 	imports CFat<BitSetHolder> hold (CR<BitSetLayout> that) ;
 
-	virtual void initialize (CR<LENGTH> size_) = 0 ;
-	virtual void initialize (CR<LENGTH> size_ ,CR<WrapperLayout> params ,VR<BoxLayout> item) = 0 ;
+	virtual void initialize (CR<Length> size_) = 0 ;
+	virtual void initialize (CR<Length> size_ ,CR<Pointer> params ,VR<BoxLayout> item) = 0 ;
 	virtual void initialize (CR<BitSetLayout> that) = 0 ;
 	virtual void clear () = 0 ;
-	virtual LENGTH size () const = 0 ;
-	virtual LENGTH length () const = 0 ;
-	virtual void get (CR<INDEX> index ,VR<BOOL> item) const = 0 ;
-	virtual void set (CR<INDEX> index ,CR<BOOL> item) = 0 ;
-	virtual INDEX ibegin () const = 0 ;
-	virtual INDEX iend () const = 0 ;
-	virtual INDEX inext (CR<INDEX> index) const = 0 ;
-	virtual BOOL equal (CR<BitSetLayout> that) const = 0 ;
-	virtual FLAG compr (CR<BitSetLayout> that) const = 0 ;
+	virtual Length size () const = 0 ;
+	virtual Length length () const = 0 ;
+	virtual void get (CR<Index> index ,VR<Bool> item) const = 0 ;
+	virtual void set (CR<Index> index ,CR<Bool> item) = 0 ;
+	virtual Index ibegin () const = 0 ;
+	virtual Index iend () const = 0 ;
+	virtual Index inext (CR<Index> index) const = 0 ;
+	virtual Bool equal (CR<BitSetLayout> that) const = 0 ;
+	virtual Flag compr (CR<BitSetLayout> that) const = 0 ;
 	virtual void visit (VR<FriendVisitor> visitor) const = 0 ;
 	virtual void add (RR<BoxLayout> item) = 0 ;
-	virtual BOOL contain (CR<Pointer> item) const = 0 ;
+	virtual Bool contain (CR<Pointer> item) const = 0 ;
 	virtual void erase (CR<Pointer> item) = 0 ;
-	virtual void fill (CR<BYTE> item) = 0 ;
+	virtual void fill (CR<Byte> item) = 0 ;
 	virtual BitSetLayout sand (CR<BitSetLayout> that) const = 0 ;
 	virtual BitSetLayout sor (CR<BitSetLayout> that) const = 0 ;
 	virtual BitSetLayout sxor (CR<BitSetLayout> that) const = 0 ;
@@ -2061,7 +2076,7 @@ struct BitSetHolder implement Interface {
 
 class BitSet implement BitSetLayout {
 private:
-	using A = INDEX ;
+	using A = Index ;
 
 protected:
 	using BitSetLayout::mSet ;
@@ -2076,7 +2091,7 @@ public:
 
 	explicit BitSet (CR<SizeProxy> size_ ,CR<csc_initializer_list_t<A>> that) {
 		auto rax = Box<A> () ;
-		BitSetHolder::hold (thiz)->initialize (size_ ,MakeWrapper (that) ,rax) ;
+		BitSetHolder::hold (thiz)->initialize (size_ ,Pointer::from (that) ,rax) ;
 	}
 
 	implicit BitSet (CR<BitSet> that) {
@@ -2099,43 +2114,43 @@ public:
 		return BitSetHolder::hold (thiz)->clear () ;
 	}
 
-	LENGTH size () const {
+	Length size () const {
 		return BitSetHolder::hold (thiz)->size () ;
 	}
 
-	LENGTH length () const {
+	Length length () const {
 		return BitSetHolder::hold (thiz)->length () ;
 	}
 
-	void get (CR<INDEX> index ,VR<BOOL> item) const {
+	void get (CR<Index> index ,VR<Bool> item) const {
 		return BitSetHolder::hold (thiz)->get (index ,item) ;
 	}
 
-	void set (CR<INDEX> index ,CR<BOOL> item) {
+	void set (CR<Index> index ,CR<Bool> item) {
 		return BitSetHolder::hold (thiz)->set (index ,item) ;
 	}
 
-	forceinline BitProxy<VR<BitSet>> operator[] (CR<INDEX> index) leftvalue {
+	forceinline BitProxy<VR<BitSet>> operator[] (CR<Index> index) leftvalue {
 		return BitProxy<VR<BitSet>> (thiz ,index) ;
 	}
 
-	forceinline BitProxy<CR<BitSet>> operator[] (CR<INDEX> index) const leftvalue {
+	forceinline BitProxy<CR<BitSet>> operator[] (CR<Index> index) const leftvalue {
 		return BitProxy<CR<BitSet>> (thiz ,index) ;
 	}
 
-	CR<INDEX> at (CR<INDEX> index) const leftvalue {
+	CR<Index> at (CR<Index> index) const leftvalue {
 		return index ;
 	}
 
-	INDEX ibegin () const {
+	Index ibegin () const {
 		return BitSetHolder::hold (thiz)->ibegin () ;
 	}
 
-	INDEX iend () const {
+	Index iend () const {
 		return BitSetHolder::hold (thiz)->iend () ;
 	}
 
-	INDEX inext (CR<INDEX> index) const {
+	Index inext (CR<Index> index) const {
 		return BitSetHolder::hold (thiz)->inext (index) ;
 	}
 
@@ -2151,35 +2166,35 @@ public:
 		return ArrayRange<CR<BitSet>> (thiz) ;
 	}
 
-	BOOL equal (CR<BitSet> that) const {
+	Bool equal (CR<BitSet> that) const {
 		return BitSetHolder::hold (thiz)->equal (that) ;
 	}
 
-	forceinline BOOL operator== (CR<BitSet> that) const {
+	forceinline Bool operator== (CR<BitSet> that) const {
 		return equal (that) ;
 	}
 
-	forceinline BOOL operator!= (CR<BitSet> that) const {
+	forceinline Bool operator!= (CR<BitSet> that) const {
 		return (!equal (that)) ;
 	}
 
-	FLAG compr (CR<BitSet> that) const {
+	Flag compr (CR<BitSet> that) const {
 		return BitSetHolder::hold (thiz)->compr (that) ;
 	}
 
-	forceinline BOOL operator< (CR<BitSet> that) const {
+	forceinline Bool operator< (CR<BitSet> that) const {
 		return compr (that) < ZERO ;
 	}
 
-	forceinline BOOL operator<= (CR<BitSet> that) const {
+	forceinline Bool operator<= (CR<BitSet> that) const {
 		return compr (that) <= ZERO ;
 	}
 
-	forceinline BOOL operator> (CR<BitSet> that) const {
+	forceinline Bool operator> (CR<BitSet> that) const {
 		return compr (that) > ZERO ;
 	}
 
-	forceinline BOOL operator>= (CR<BitSet> that) const {
+	forceinline Bool operator>= (CR<BitSet> that) const {
 		return compr (that) >= ZERO ;
 	}
 
@@ -2196,7 +2211,7 @@ public:
 		return BitSetHolder::hold (thiz)->add (move (rax)) ;
 	}
 
-	BOOL contain (CR<A> item) const {
+	Bool contain (CR<A> item) const {
 		return BitSetHolder::hold (thiz)->contain (Pointer::from (item)) ;
 	}
 
@@ -2204,7 +2219,7 @@ public:
 		return BitSetHolder::hold (thiz)->erase (Pointer::from (item)) ;
 	}
 
-	void fill (CR<BYTE> item) {
+	void fill (CR<Byte> item) {
 		return BitSetHolder::hold (thiz)->fill (item) ;
 	}
 

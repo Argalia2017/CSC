@@ -34,7 +34,7 @@ struct FUNCTION_calendar_from_timepoint {
 #ifdef __CSC_SYSTEM_LINUX__
 struct FUNCTION_calendar_from_timepoint {
 	forceinline std::tm operator() (CR<std::time_t> time) const {
-		const auto r1x = FLAG (std::localtime (&time)) ;
+		const auto r1x = Flag (std::localtime (&time)) ;
 		return bitwise[TYPE<std::tm>::expr] (Pointer::make (r1x)) ;
 	}
 } ;
@@ -53,7 +53,7 @@ public:
 		self.mTime = r1x.time_since_epoch () ;
 	}
 
-	void initialize (CR<LENGTH> milliseconds_) override {
+	void initialize (CR<Length> milliseconds_) override {
 		const auto r1x = std::chrono::milliseconds (milliseconds_) ;
 		self.mTime = std::chrono::duration_cast<std::chrono::system_clock::duration> (r1x) ;
 	}
@@ -61,17 +61,17 @@ public:
 	void initialize (CR<TimeCalendar> calendar_) override {
 		auto rax = std::tm () ;
 		const auto r1x = calendar_.mYear - 1900 ;
-		rax.tm_year = VAL32 (r1x * LENGTH (r1x > 0)) ;
+		rax.tm_year = Val32 (r1x * Length (r1x > 0)) ;
 		const auto r2x = calendar_.mMonth ;
-		rax.tm_mon = VAL32 (r2x * LENGTH (r2x > 0)) ;
-		rax.tm_mday = VAL32 (calendar_.mDay) ;
+		rax.tm_mon = Val32 (r2x * Length (r2x > 0)) ;
+		rax.tm_mday = Val32 (calendar_.mDay) ;
 		const auto r3x = calendar_.mWDay - 1 ;
-		rax.tm_wday = VAL32 (r3x * LENGTH (r3x > 0)) ;
+		rax.tm_wday = Val32 (r3x * Length (r3x > 0)) ;
 		const auto r4x = calendar_.mYDay - 1 ;
-		rax.tm_yday = VAL32 (r4x * LENGTH (r4x > 0)) ;
-		rax.tm_hour = VAL32 (calendar_.mHour) ;
-		rax.tm_min = VAL32 (calendar_.mMinute) ;
-		rax.tm_sec = VAL32 (calendar_.mSecond) ;
+		rax.tm_yday = Val32 (r4x * Length (r4x > 0)) ;
+		rax.tm_hour = Val32 (calendar_.mHour) ;
+		rax.tm_min = Val32 (calendar_.mMinute) ;
+		rax.tm_sec = Val32 (calendar_.mSecond) ;
 		rax.tm_isdst = 0 ;
 		const auto r5x = std::mktime (&rax) ;
 		const auto r6x = std::chrono::system_clock::from_time_t (r5x) ;
@@ -86,36 +86,36 @@ public:
 		return Ref<TimeLayout>::reference (self) ;
 	}
 
-	LENGTH megaseconds () const override {
+	Length megaseconds () const override {
 		using R1X = std::chrono::duration<csc_int64_t ,std::ratio<10000000>> ;
 		const auto r1x = std::chrono::duration_cast<R1X> (self.mTime) ;
-		return LENGTH (r1x.count ()) ;
+		return Length (r1x.count ()) ;
 	}
 
-	LENGTH kiloseconds () const override {
+	Length kiloseconds () const override {
 		using R1X = std::chrono::duration<csc_int64_t ,std::ratio<1000>> ;
 		const auto r1x = std::chrono::duration_cast<R1X> (self.mTime) ;
-		return LENGTH (r1x.count ()) ;
+		return Length (r1x.count ()) ;
 	}
 
-	LENGTH seconds () const override {
+	Length seconds () const override {
 		const auto r1x = std::chrono::duration_cast<std::chrono::seconds> (self.mTime) ;
-		return LENGTH (r1x.count ()) ;
+		return Length (r1x.count ()) ;
 	}
 
-	LENGTH milliseconds () const override {
+	Length milliseconds () const override {
 		const auto r1x = std::chrono::duration_cast<std::chrono::milliseconds> (self.mTime) ;
-		return LENGTH (r1x.count ()) ;
+		return Length (r1x.count ()) ;
 	}
 
-	LENGTH microseconds () const override {
+	Length microseconds () const override {
 		const auto r1x = std::chrono::duration_cast<std::chrono::microseconds> (self.mTime) ;
-		return LENGTH (r1x.count ()) ;
+		return Length (r1x.count ()) ;
 	}
 
-	LENGTH nanoseconds () const override {
+	Length nanoseconds () const override {
 		const auto r1x = std::chrono::duration_cast<std::chrono::nanoseconds> (self.mTime) ;
-		return LENGTH (r1x.count ()) ;
+		return Length (r1x.count ()) ;
 	}
 
 	TimeCalendar calendar () const override {
@@ -123,14 +123,14 @@ public:
 		const auto r1x = std::chrono::system_clock::time_point (self.mTime) ;
 		const auto r2x = std::time_t (std::chrono::system_clock::to_time_t (r1x)) ;
 		const auto r3x = calendar_from_timepoint (r2x) ;
-		ret.mYear = LENGTH (r3x.tm_year) + 1900 ;
-		ret.mMonth = LENGTH (r3x.tm_mon) + 1 ;
-		ret.mDay = LENGTH (r3x.tm_mday) ;
-		ret.mWDay = LENGTH (r3x.tm_wday) + 1 ;
-		ret.mYDay = LENGTH (r3x.tm_yday) + 1 ;
-		ret.mHour = LENGTH (r3x.tm_hour) ;
-		ret.mMinute = LENGTH (r3x.tm_min) ;
-		ret.mSecond = LENGTH (r3x.tm_sec) ;
+		ret.mYear = Length (r3x.tm_year) + 1900 ;
+		ret.mMonth = Length (r3x.tm_mon) + 1 ;
+		ret.mDay = Length (r3x.tm_mday) ;
+		ret.mWDay = Length (r3x.tm_wday) + 1 ;
+		ret.mYDay = Length (r3x.tm_yday) + 1 ;
+		ret.mHour = Length (r3x.tm_hour) ;
+		ret.mMinute = Length (r3x.tm_min) ;
+		ret.mSecond = Length (r3x.tm_sec) ;
 		return move (ret) ;
 	}
 
@@ -181,7 +181,7 @@ exports CFat<RuntimeProcHolder> RuntimeProcHolder::hold (CR<RuntimeProcLayout> t
 }
 
 struct AtomicLayout {
-	std::atomic<VAL> mAtomic ;
+	std::atomic<Val> mAtomic ;
 } ;
 
 class AtomicImplHolder final implement Fat<AtomicHolder ,AtomicLayout> {
@@ -190,23 +190,23 @@ public:
 		noop () ;
 	}
 
-	VAL fetch () override {
+	Val fetch () override {
 		return self.mAtomic.load (std::memory_order_relaxed) ;
 	}
 
-	void store (CR<VAL> item) override {
+	void store (CR<Val> item) override {
 		return self.mAtomic.store (item ,std::memory_order_relaxed) ;
 	}
 
-	VAL exchange (CR<VAL> item) override {
+	Val exchange (CR<Val> item) override {
 		return self.mAtomic.exchange (item ,std::memory_order_relaxed) ;
 	}
 
-	BOOL change (VR<VAL> expect ,CR<VAL> item) override {
+	Bool change (VR<Val> expect ,CR<Val> item) override {
 		return self.mAtomic.compare_exchange_weak (expect ,item ,std::memory_order_relaxed) ;
 	}
 
-	void replace (CR<VAL> expect ,CR<VAL> item) override {
+	void replace (CR<Val> expect ,CR<Val> item) override {
 		auto rax = expect ;
 		self.mAtomic.compare_exchange_strong (rax ,item ,std::memory_order_relaxed) ;
 	}
@@ -261,7 +261,7 @@ public:
 		return Ref<MutexLayout>::reference (self) ;
 	}
 
-	BOOL done () override {
+	Bool done () override {
 		if (self.mType == MutexType::OnceDone)
 			return TRUE ;
 		return FALSE ;
@@ -276,7 +276,7 @@ public:
 	void leave () override {
 		if (done ())
 			return ;
-		replace (self.mType ,FLAG (MutexType::Once) ,MutexType::OnceDone) ;
+		replace (self.mType ,Flag (MutexType::Once) ,MutexType::OnceDone) ;
 		self.mBasic->unlock () ;
 	}
 } ;
@@ -321,7 +321,7 @@ exports CFat<MakeMutexHolder> MakeMutexHolder::hold (CR<MutexLayout> that) {
 	return CFat<MakeMutexHolder> (MakeMutexImplHolder () ,that) ;
 }
 
-class SharedAtomicMutex implement Proxy {
+class SharedAtomicMutex {
 protected:
 	Atomic mThat ;
 
@@ -368,7 +368,7 @@ public:
 		std::atomic_thread_fence (std::memory_order_acquire) ;
 	}
 
-	BOOL busy () const override {
+	Bool busy () const override {
 		return self.mMutex->mShared.fetch () != IDEN ;
 	}
 
@@ -454,8 +454,8 @@ exports CFat<UniqueLockHolder> UniqueLockHolder::hold (CR<UniqueLockLayout> that
 
 struct ThreadLayout {
 	Box<VFat<FriendExecuting>> mExecuting ;
-	FLAG mUid ;
-	INDEX mSlot ;
+	Flag mUid ;
+	Index mSlot ;
 	Box<std::thread> mThread ;
 
 public:
@@ -468,13 +468,13 @@ public:
 
 class ThreadImplHolder final implement Fat<ThreadHolder ,ThreadLayout> {
 public:
-	void initialize (RR<VFat<FriendExecuting>> executing ,CR<INDEX> slot) override {
+	void initialize (RR<VFat<FriendExecuting>> executing ,CR<Index> slot) override {
 		self.mExecuting = Box<VFat<FriendExecuting>>::make (move (executing)) ;
 		self.mUid = ZERO ;
 		self.mSlot = slot ;
 	}
 
-	FLAG thread_uid () const override {
+	Flag thread_uid () const override {
 		return self.mUid ;
 	}
 
@@ -509,9 +509,9 @@ exports CFat<ThreadHolder> ThreadHolder::hold (CR<ThreadLayout> that) {
 template class External<ProcessHolder ,ProcessLayout> ;
 
 struct ProcessLayout {
-	FLAG mUid ;
-	QUAD mProcessCode ;
-	QUAD mProcessTime ;
+	Flag mUid ;
+	Quad mProcessCode ;
+	Quad mProcessTime ;
 } ;
 
 exports AutoRef<ProcessLayout> ProcessHolder::create () {
@@ -529,9 +529,9 @@ exports CFat<ProcessHolder> ProcessHolder::hold (CR<ProcessLayout> that) {
 template class External<LibraryHolder ,LibraryLayout> ;
 
 struct LibraryLayout {
-	String<STR> mFile ;
+	String<Str> mFile ;
 	UniqueRef<csc_device_t> mLibrary ;
-	FLAG mLastError ;
+	Flag mLastError ;
 } ;
 
 exports AutoRef<LibraryLayout> LibraryHolder::create () {
@@ -556,14 +556,14 @@ public:
 		noop () ;
 	}
 
-	void set_locale (CR<String<STR>> name) override {
+	void set_locale (CR<String<Str>> name) override {
 		const auto r1x = StringProc::stra_from_strs (name) ;
 		self.mLocale = std::locale (r1x) ;
 	}
 
-	void execute (CR<String<STR>> command) const override {
+	void execute (CR<String<Str>> command) const override {
 		const auto r1x = StringProc::stra_from_strs (command) ;
-		const auto r2x = FLAG (std::system (r1x)) ;
+		const auto r2x = Flag (std::system (r1x)) ;
 		noop (r2x) ;
 	}
 } ;
@@ -581,13 +581,13 @@ exports CFat<SystemHolder> SystemHolder::hold (CR<SystemLayout> that) {
 }
 
 struct RandomNormal {
-	BOOL mOdd ;
-	FLT64 mNX ;
-	FLT64 mNY ;
+	Bool mOdd ;
+	Flt64 mNX ;
+	Flt64 mNY ;
 } ;
 
 struct RandomLayout {
-	FLAG mSeed ;
+	Flag mSeed ;
 	Box<std::mt19937_64> mRandom ;
 	RandomNormal mNormal ;
 } ;
@@ -599,67 +599,67 @@ public:
 		initialize (r1x) ;
 	}
 
-	void initialize (CR<FLAG> seed) override {
+	void initialize (CR<Flag> seed) override {
 		self.mSeed = seed ;
 		self.mRandom.remake () ;
 		self.mRandom.ref = std::mt19937_64 (seed) ;
 		self.mNormal.mOdd = FALSE ;
 	}
 
-	FLAG seed () const override {
+	Flag seed () const override {
 		return self.mSeed ;
 	}
 
-	QUAD random_byte () {
-		return QUAD (self.mRandom.ref ()) ;
+	Quad random_byte () {
+		return Quad (self.mRandom.ref ()) ;
 	}
 
-	VAL32 random_value (CR<VAL32> min_ ,CR<VAL32> max_) override {
+	Val32 random_value (CR<Val32> min_ ,CR<Val32> max_) override {
 		assert (min_ <= max_) ;
-		const auto r1x = VAL32 (max_) - VAL32 (min_) + 1 ;
+		const auto r1x = Val32 (max_) - Val32 (min_) + 1 ;
 		assert (r1x > 0) ;
-		const auto r2x = VAL32 (random_byte ()) & VAL32_MAX ;
+		const auto r2x = Val32 (random_byte ()) & VAL32_MAX ;
 		const auto r3x = r2x % r1x + min_ ;
 		return r3x ;
 	}
 
-	VAL64 random_value (CR<VAL64> min_ ,CR<VAL64> max_) override {
+	Val64 random_value (CR<Val64> min_ ,CR<Val64> max_) override {
 		assert (min_ <= max_) ;
-		const auto r1x = VAL64 (max_) - VAL64 (min_) + 1 ;
+		const auto r1x = Val64 (max_) - Val64 (min_) + 1 ;
 		assert (r1x > 0) ;
-		const auto r2x = VAL64 (random_byte ()) & VAL64_MAX ;
+		const auto r2x = Val64 (random_byte ()) & VAL64_MAX ;
 		const auto r3x = r2x % r1x + min_ ;
 		return r3x ;
 	}
 
-	Array<INDEX> random_shuffle (CR<LENGTH> length_ ,CR<LENGTH> size_) override {
-		Array<INDEX> ret = Array<INDEX>::make (range (0 ,size_)) ;
+	Array<Index> random_shuffle (CR<Length> length_ ,CR<Length> size_) override {
+		Array<Index> ret = Array<Index>::make (range (0 ,size_)) ;
 		random_shuffle (length_ ,size_ ,ret) ;
 		return move (ret) ;
 	}
 
-	void random_shuffle (CR<LENGTH> length_ ,CR<LENGTH> size_ ,VR<Array<INDEX>> result) override {
+	void random_shuffle (CR<Length> length_ ,CR<Length> size_ ,VR<Array<Index>> result) override {
 		assert (length_ >= 0) ;
 		assert (length_ <= size_) ;
 		assert (result.size () == size_) ;
 		const auto r1x = result.size () - 1 ;
-		INDEX ix = 0 ;
+		Index ix = 0 ;
 		while (TRUE) {
 			if (ix >= length_)
 				break ;
-			INDEX iy = random_value (ix ,r1x) ;
+			Index iy = random_value (ix ,r1x) ;
 			swap (result[ix] ,result[iy]) ;
 			ix++ ;
 		}
 	}
 
-	BitSet random_pick (CR<LENGTH> length_ ,CR<LENGTH> size_) override {
+	BitSet random_pick (CR<Length> length_ ,CR<Length> size_) override {
 		BitSet ret = BitSet (size_) ;
 		random_pick (length_ ,size_ ,ret) ;
 		return move (ret) ;
 	}
 
-	void random_pick (CR<LENGTH> length_ ,CR<LENGTH> size_ ,VR<BitSet> result) override {
+	void random_pick (CR<Length> length_ ,CR<Length> size_ ,VR<BitSet> result) override {
 		assert (length_ >= 0) ;
 		assert (length_ <= size_) ;
 		assert (result.size () == size_) ;
@@ -673,35 +673,42 @@ public:
 				result.add (r1x[i]) ;
 		}
 		if ifdo (act) {
-			result.fill (BYTE (0XFF)) ;
+			result.fill (Byte (0XFF)) ;
 			const auto r2x = random_shuffle (size_ - length_ ,size_) ;
 			for (auto &&i : range (size_ - length_ ,size_))
 				result.erase (r2x[i]) ;
 		}
 	}
 
-	FLT64 random_float (CR<LENGTH> precision) override {
-		static const VAL64 M_EXP10[] = {1 ,10 ,100 ,1000 ,10000 ,100000 ,1000000 ,10000000 ,100000000} ;
-		const auto r1x = MathProc::clamp (precision ,ZERO ,LENGTH (8)) ;
-		const auto r2x = FLT64 (random_value (VAL64 (0) ,M_EXP10[r1x])) ;
-		const auto r3x = r2x * MathProc::inverse (FLT64 (M_EXP10[r1x])) ;
+	Flt64 random_float () {
+		static const Val64 M_EXP10[] = {1 ,10 ,100 ,1000 ,10000 ,100000 ,1000000 ,10000000 ,100000000} ;
+		const auto r1x = Length (8) ;
+		const auto r2x = Flt64 (random_value (Val64 (0) ,M_EXP10[r1x])) ;
+		const auto r3x = r2x * MathProc::inverse (Flt64 (M_EXP10[r1x])) ;
 		return r3x ;
 	}
 
-	BOOL random_draw (CR<FLT64> possibility) override {
-		if (random_float (4) < possibility)
+	Bool random_draw (CR<Flt64> possibility) override {
+		if (random_float () < possibility)
 			return TRUE ;
 		return FALSE ;
 	}
 
-	FLT64 random_normal () override {
+	Array<Flt64> random_uniform (CR<Length> count) override {
+		Array<Flt64> ret = Array<Flt64> (count) ;
+		for (auto &&i : range (0 ,count))
+			ret[i] = random_float () ;
+		return move (ret) ;
+	}
+
+	Flt64 random_normal () override {
 		if ifdo (TRUE) {
 			if (self.mNormal.mOdd)
 				discard ;
-			const auto r1x = random_float (4) ;
-			const auto r2x = random_float (4) ;
-			const auto r3x = MathProc::clamp (r1x ,FLT64_EPS ,FLT64 (1)) ;
-			const auto r4x = MathProc::sqrt (FLT64 (-2) * MathProc::log (r3x)) ;
+			const auto r1x = random_float () ;
+			const auto r2x = random_float () ;
+			const auto r3x = MathProc::clamp (r1x ,FLT64_EPS ,Flt64 (1)) ;
+			const auto r4x = MathProc::sqrt (Flt64 (-2) * MathProc::log (r3x)) ;
 			const auto r5x = MATH_PI * 2 * r2x ;
 			self.mNormal.mNX = r4x * MathProc::cos (r5x) ;
 			self.mNormal.mNY = r4x * MathProc::sin (r5x) ;
@@ -733,16 +740,16 @@ struct SingletonRoot {
 } ;
 
 struct SingletonLocal {
-	QUAD mReserve1 ;
-	QUAD mAddress1 ;
-	QUAD mReserve2 ;
-	QUAD mAddress2 ;
-	QUAD mReserve3 ;
+	Quad mReserve1 ;
+	Quad mAddress1 ;
+	Quad mReserve2 ;
+	Quad mAddress2 ;
+	Quad mReserve3 ;
 } ;
 
 struct SingletonProcLayout {
-	FLAG mUid ;
-	String<STR> mName ;
+	Flag mUid ;
+	String<Str> mName ;
 	UniqueRef<csc_handle_t> mMapping ;
 	SingletonLocal mLocal ;
 	Ref<SingletonRoot> mRoot ;
@@ -775,7 +782,7 @@ exports CFat<SingletonProcHolder> SingletonProcHolder::hold (CR<SingletonProcLay
 }
 
 struct GlobalNode {
-	FLAG mHolder ;
+	Flag mHolder ;
 	AutoRef<Pointer> mValue ;
 } ;
 
@@ -783,7 +790,7 @@ struct GlobalTree {
 	Mutex mMutex ;
 	Set<Slice> mGlobalNameSet ;
 	List<GlobalNode> mGlobalList ;
-	BOOL mFinalize ;
+	Bool mFinalize ;
 } ;
 
 class GlobalImplHolder final implement Fat<GlobalHolder ,GlobalLayout> {
@@ -799,7 +806,7 @@ public:
 		self.mThis = Singleton<GlobalProc>::expr.mThis.share () ;
 		assert (!self.mThis->mFinalize) ;
 		Scope<Mutex> anonymous (self.mThis->mMutex) ;
-		INDEX ix = self.mThis->mGlobalNameSet.map (name) ;
+		Index ix = self.mThis->mGlobalNameSet.map (name) ;
 		if ifdo (TRUE) {
 			if (ix != NONE)
 				discard ;
@@ -825,16 +832,16 @@ public:
 		rax->mGlobalList.clear () ;
 	}
 
-	BOOL exist () const override {
+	Bool exist () const override {
 		Scope<Mutex> anonymous (self.mThis->mMutex) ;
-		INDEX ix = self.mIndex ;
+		Index ix = self.mIndex ;
 		auto &&rax = self.mThis->mGlobalList[ix].mValue ;
 		return self.mClazz == rax.clazz () ;
 	}
 
 	AutoRef<Pointer> fetch () const override {
 		Scope<Mutex> anonymous (self.mThis->mMutex) ;
-		INDEX ix = self.mIndex ;
+		Index ix = self.mIndex ;
 		auto &&rax = self.mThis->mGlobalList[ix].mValue ;
 		assume (rax.exist ()) ;
 		const auto r1x = Unknown (self.mThis->mGlobalList[ix].mHolder) ;
@@ -846,7 +853,7 @@ public:
 
 	void store (RR<AutoRef<Pointer>> item) const override {
 		Scope<Mutex> anonymous (self.mThis->mMutex) ;
-		INDEX ix = self.mIndex ;
+		Index ix = self.mIndex ;
 		const auto r1x = Pin<AutoRef<Pointer>> (self.mThis->mGlobalList[ix].mValue) ;
 		assume (!r1x->exist ()) ;
 		r1x.ref = move (item) ;

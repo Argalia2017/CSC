@@ -6,10 +6,6 @@
 
 #include "csc_image.hpp"
 
-#include "csc_end.h"
-#include <complex>
-#include "csc_begin.h"
-
 namespace CSC {
 class ImageImplHolder final implement Fat<ImageHolder ,ImageLayout> {
 public:
@@ -25,7 +21,7 @@ public:
 		self = move (that) ;
 	}
 
-	void initialize (CR<Unknown> holder ,CR<LENGTH> cx_ ,CR<LENGTH> cy_ ,CR<LENGTH> step_) override {
+	void initialize (CR<Unknown> holder ,CR<Length> cx_ ,CR<Length> cy_ ,CR<Length> step_) override {
 		assert (cx_ > 0) ;
 		assert (cy_ > 0) ;
 		const auto r1x = RFat<ReflectSize> (holder) ;
@@ -49,25 +45,25 @@ public:
 		splice (0 ,0 ,that) ;
 	}
 
-	BOOL fixed () const override {
+	Bool fixed () const override {
 		return self.mImage.fixed () ;
 	}
 
-	LENGTH size () const override {
+	Length size () const override {
 		return self.mImage.size () ;
 	}
 
-	LENGTH step () const override {
+	Length step () const override {
 		return self.mImage.step () ;
 	}
 
-	LENGTH stride () const override {
+	Length stride () const override {
 		if (!self.mImage.exist ())
 			return 0 ;
 		return self.mStride ;
 	}
 
-	BOOL continous () const override {
+	Bool continous () const override {
 		if (bx () != 0)
 			return FALSE ;
 		if (by () != 0)
@@ -77,25 +73,25 @@ public:
 		return TRUE ;
 	}
 
-	LENGTH bx () const override {
+	Length bx () const override {
 		if (!self.mImage.exist ())
 			return 0 ;
 		return self.mBX ;
 	}
 
-	LENGTH by () const override {
+	Length by () const override {
 		if (!self.mImage.exist ())
 			return 0 ;
 		return self.mBY ;
 	}
 
-	LENGTH cx () const override {
+	Length cx () const override {
 		if (!self.mImage.exist ())
 			return 0 ;
 		return self.mCX ;
 	}
 
-	LENGTH cy () const override {
+	Length cy () const override {
 		if (!self.mImage.exist ())
 			return 0 ;
 		return self.mCY ;
@@ -123,7 +119,7 @@ public:
 		reset (0 ,0 ,self.mWidth ,r2x) ;
 	}
 
-	void reset (CR<LENGTH> bx_ ,CR<LENGTH> by_ ,CR<LENGTH> cx_ ,CR<LENGTH> cy_) override {
+	void reset (CR<Length> bx_ ,CR<Length> by_ ,CR<Length> cx_ ,CR<Length> cy_) override {
 		assert (self.mImage.size () > 0) ;
 		assert (cx_ > 0) ;
 		assert (cy_ > 0) ;
@@ -147,17 +143,17 @@ public:
 		return RefBufferHolder::hold (self.mImage)->raw () ;
 	}
 
-	VR<Pointer> at (CR<INDEX> x ,CR<INDEX> y) leftvalue override {
+	VR<Pointer> at (CR<Index> x ,CR<Index> y) leftvalue override {
 		assert (inline_between (x ,0 ,cx ())) ;
 		assert (inline_between (y ,0 ,cy ())) ;
-		INDEX ix = (x + self.mBX) + (y + self.mBY) * self.mStride ;
+		Index ix = (x + self.mBX) + (y + self.mBY) * self.mStride ;
 		return self.mImage.at (ix) ;
 	}
 
-	CR<Pointer> at (CR<INDEX> x ,CR<INDEX> y) const leftvalue override {
+	CR<Pointer> at (CR<Index> x ,CR<Index> y) const leftvalue override {
 		assert (inline_between (x ,0 ,cx ())) ;
 		assert (inline_between (y ,0 ,cy ())) ;
-		INDEX ix = (x + self.mBX) + (y + self.mBY) * self.mStride ;
+		Index ix = (x + self.mBX) + (y + self.mBY) * self.mStride ;
 		return self.mImage.at (ix) ;
 	}
 
@@ -176,7 +172,7 @@ public:
 		}
 	}
 
-	void splice (CR<INDEX> x ,CR<INDEX> y ,CR<ImageLayout> item) override {
+	void splice (CR<Index> x ,CR<Index> y ,CR<ImageLayout> item) override {
 		const auto r1x = ImageHolder::hold (item)->cx () ;
 		const auto r2x = ImageHolder::hold (item)->cy () ;
 		if (r1x == 0)
@@ -191,8 +187,8 @@ public:
 		assert (step () == r3x) ;
 		const auto r4x = r1x * r3x ;
 		for (auto &&i : range (0 ,r2x)) {
-			INDEX ix = x + 0 ;
-			INDEX iy = y + i ;
+			Index ix = x + 0 ;
+			Index iy = y + i ;
 			inline_memcpy (at (ix ,iy) ,ImageHolder::hold (item)->at (0 ,i) ,r4x) ;
 		}
 	}
@@ -206,110 +202,131 @@ exports CFat<ImageHolder> ImageHolder::hold (CR<ImageLayout> that) {
 	return CFat<ImageHolder> (ImageImplHolder () ,that) ;
 }
 
-struct ColorProcLayout {
-	FLT64 mByteInv ;
-} ;
+struct ColorProcLayout {} ;
 
 class ColorProcImplHolder final implement Fat<ColorProcHolder ,ColorProcLayout> {
 public:
 	void initialize () override {
-		self.mByteInv = MathProc::inverse (FLT64 (255)) ;
+		noop () ;
 	}
 
-	FLT64 gray_from_bgr (CR<Color3B> a) const override {
-		const auto r1x = FLT64 (VAL32 (a.mR)) * self.mByteInv ;
-		const auto r2x = FLT64 (VAL32 (a.mG)) * self.mByteInv ;
-		const auto r3x = FLT64 (VAL32 (a.mB)) * self.mByteInv ;
+	Flt64 byte_norm (CR<Byte> c) const {
+		return Flt64 (Val32 (c)) * MathProc::inverse (Flt64 (255)) ;
+	}
+
+	Flt64 byte_norm (CR<Word> c) const {
+		return Flt64 (Val32 (c)) * MathProc::inverse (Flt64 (65535)) ;
+	}
+
+	Flt64 gray_from_bgr (CR<Color3B> a) const override {
+		const auto r1x = byte_norm (a.mR) ;
+		const auto r2x = byte_norm (a.mG) ;
+		const auto r3x = byte_norm (a.mB) ;
 		const auto r4x = 0.299 * r1x + 0.587 * r2x + 0.114 * r3x ;
 		return MathProc::clamp (r4x ,0.0 ,1.0) ;
 	}
 
-	Color3B bgr_from_gray (CR<FLT64> a) const override {
+	Color3B bgr_from_gray (CR<Flt64> a) const override {
 		Color3B ret ;
-		const auto r1x = MathProc::clamp (a ,0.0 ,1.0) * FLT64 (255) ;
-		const auto r2x = VAL32 (MathProc::round (r1x)) ;
-		ret.mB = BYTE (r2x) ;
-		ret.mG = BYTE (r2x) ;
-		ret.mR = BYTE (r2x) ;
+		const auto r1x = MathProc::clamp (a ,0.0 ,1.0) * Flt64 (255) ;
+		const auto r2x = Val32 (MathProc::round (r1x)) ;
+		ret.mB = Byte (r2x) ;
+		ret.mG = Byte (r2x) ;
+		ret.mR = Byte (r2x) ;
 		return move (ret) ;
 	}
 
-	Color3B jet_from_norm (CR<FLT64> a) const override {
+	Color3B jet_from_norm (CR<Flt64> a) const override {
 		Color3B ret ;
-		const auto r1x = MathProc::clamp (a ,0.0 ,1.0) * FLT64 (255) ;
-		const auto r2x = VAL32 (MathProc::round (r1x)) ;
+		const auto r1x = MathProc::clamp (a ,0.0 ,1.0) * Flt64 (8 * 128) ;
+		const auto r2x = Val32 (MathProc::round (r1x)) ;
 		auto act = TRUE ;
 		if ifdo (act) {
-			const auto r3x = 4 * r2x ;
-			if (r3x >= 256)
+			if (r2x >= 128)
 				discard ;
-			ret.mR = BYTE (255) ;
-			ret.mG = BYTE (r3x) ;
-			ret.mB = BYTE (0) ;
+			ret.mR = Byte (128 + r2x) ;
+			ret.mG = Byte (0) ;
+			ret.mB = Byte (0) ;
 		}
 		if ifdo (act) {
-			const auto r4x = 4 * (r2x - 64) ;
-			if (r4x >= 256)
+			if (r2x >= 384)
 				discard ;
-			ret.mR = BYTE (255 - r4x) ;
-			ret.mG = BYTE (255) ;
-			ret.mB = BYTE (r4x) ;
+			ret.mR = Byte (255) ;
+			ret.mG = Byte (r2x - 128) ;
+			ret.mB = Byte (0) ;
 		}
 		if ifdo (act) {
-			const auto r5x = 4 * (r2x - 128) ;
-			if (r5x >= 256)
+			if (r2x >= 640)
 				discard ;
-			ret.mR = BYTE (0) ;
-			ret.mG = BYTE (255 - r5x) ;
-			ret.mB = BYTE (255) ;
+			ret.mR = ~Byte (r2x - 384) ;
+			ret.mG = Byte (255) ;
+			ret.mB = Byte (r2x - 384) ;
 		}
 		if ifdo (act) {
-			const auto r6x = r2x - 192 ;
-			ret.mR = BYTE (0) ;
-			ret.mG = BYTE (0) ;
-			ret.mB = BYTE (255 - r6x) ;
+			if (r2x >= 896)
+				discard ;
+			ret.mR = Byte (0) ;
+			ret.mG = ~Byte (r2x - 640) ;
+			ret.mB = Byte (255) ;
+		}
+		if ifdo (act) {
+			ret.mR = Byte (0) ;
+			ret.mG = Byte (0) ;
+			ret.mB = ~Byte (r2x - 896) ;
 		}
 		return move (ret) ;
 	}
 
-	FLT64 norm_from_jet (CR<Color3B> a) const override {
-		const auto r1x = FLT64 (VAL32 (a.mR)) * self.mByteInv ;
-		const auto r2x = FLT64 (VAL32 (a.mG)) * self.mByteInv ;
-		const auto r3x = FLT64 (VAL32 (a.mB)) * self.mByteInv ;
+	Flt64 norm_from_jet (CR<Color3B> a) const override {
+		const auto r1x = Val32 (a.mR) ;
+		const auto r2x = Val32 (a.mG) ;
+		const auto r3x = Val32 (a.mB) ;
+		const auto r4x = MathProc::inverse (Flt64 (8 * 128)) ;
 		auto act = TRUE ;
 		if ifdo (act) {
-			if (a.mR < BYTE (255))
+			if (a.mG != Byte (0))
 				discard ;
-			return r2x * 0.25 ;
+			if (a.mB != Byte (0))
+				discard ;
+			const auto r5x = MathProc::max_of (r1x ,128) ;
+			return (r5x - 128) * r4x ;
 		}
 		if ifdo (act) {
-			if (a.mG < BYTE (255))
+			if (a.mR != Byte (255))
 				discard ;
-			return r3x * 0.25 + 0.25 ;
+			return (r2x + 128) * r4x ;
 		}
 		if ifdo (act) {
-			if (a.mB < BYTE (255))
+			if (a.mG != Byte (255))
 				discard ;
-			return -r2x * 0.25 + 0.75 ;
+			return (r3x + 384) * r4x ;
 		}
 		if ifdo (act) {
-			if (a.mB < BYTE (192))
+			if (a.mB != Byte (255))
 				discard ;
-			return 1.75 - r3x ;
+			return (255 - r2x + 640) * r4x ;
+		}
+		if ifdo (act) {
+			if (a.mR != Byte (0))
+				discard ;
+			if (a.mG != Byte (0))
+				discard ;
+			const auto r6x = MathProc::max_of (r3x ,127) ;
+			return (255 - r6x + 896) * r4x ;
 		}
 		return 1 ;
 	}
 
-	Color3B hsv_from_bgr (CR<Color3B> a) const override {
-		Color3B ret ;
-		const auto r1x = FLT64 (VAL32 (a.mR)) * self.mByteInv;
-		const auto r2x = FLT64 (VAL32 (a.mG)) * self.mByteInv;
-		const auto r3x = FLT64 (VAL32 (a.mB)) * self.mByteInv;
-		const auto r4x = MathProc::min_of (r1x ,r2x ,r3x);
-		const auto r5x = MathProc::max_of (r1x ,r2x ,r3x);
-		const auto r6x = r5x - r4x;
+	Color3W hsv_from_bgr (CR<Color3B> a) const override {
+		Color3W ret ;
+		const auto r1x = byte_norm (a.mR) ;
+		const auto r2x = byte_norm (a.mG) ;
+		const auto r3x = byte_norm (a.mB) ;
+		const auto r4x = MathProc::min_of (r1x ,r2x ,r3x) ;
+		const auto r5x = MathProc::max_of (r1x ,r2x ,r3x) ;
+		const auto r6x = r5x - r4x ;
 		const auto r7x = MathProc::inverse (r6x) ;
-		auto rax = FLT64 (0) ;
+		auto rax = Flt64 (0) ;
 		auto act = TRUE ;
 		if ifdo (act) {
 			if (r6x > 0)
@@ -336,22 +353,22 @@ public:
 		rax /= 360 ;
 		rax += MathProc::step (-rax) ;
 		const auto r8x = r6x * MathProc::inverse (r5x) ;
-		ret.mB = BYTE (MathProc::lerp (rax ,VAL32 (0) ,VAL32 (255))) ;
-		ret.mG = BYTE (MathProc::lerp (r8x ,VAL32 (0) ,VAL32 (255))) ;
-		ret.mR = BYTE (MathProc::lerp (r5x ,VAL32 (0) ,VAL32 (255))) ;
+		ret.mB = Word (MathProc::lerp (rax ,Val32 (0) ,Val32 (65535))) ;
+		ret.mG = Word (MathProc::lerp (r8x ,Val32 (0) ,Val32 (65535))) ;
+		ret.mR = Word (MathProc::lerp (r5x ,Val32 (0) ,Val32 (65535))) ;
 		return move (ret) ;
 	}
 
-	Color3B bgr_from_hsv (CR<Color3B> a) const override {
+	Color3B bgr_from_hsv (CR<Color3W> a) const override {
 		Color3B ret ;
-		const auto r1x = FLT64 (VAL32 (a.mB)) * self.mByteInv * 360;
-		const auto r2x = FLT64 (VAL32 (a.mG)) * self.mByteInv;
-		const auto r3x = FLT64 (VAL32 (a.mR)) * self.mByteInv;
-		const auto r4x = r3x * r2x;
+		const auto r1x = byte_norm (a.mB) * 360 ;
+		const auto r2x = byte_norm (a.mG) ;
+		const auto r3x = byte_norm (a.mR) ;
+		const auto r4x = r3x * r2x ;
 		const auto r5x = MathProc::fmod (r1x / 120) * 2 ;
-		const auto r6x = r4x * (1 - MathProc::abs (r5x - 1));
-		const auto r7x = r3x - r4x;
-		auto rax = Buffer3<FLT64> () ;
+		const auto r6x = r4x * (1 - MathProc::abs (r5x - 1)) ;
+		const auto r7x = r3x - r4x ;
+		auto rax = Buffer3<Flt64> () ;
 		auto act = TRUE ;
 		if ifdo (act) {
 			if (r1x >= 60)
@@ -396,9 +413,9 @@ public:
 		rax[0] += r7x ;
 		rax[1] += r7x ;
 		rax[2] += r7x ;
-		ret.mB = BYTE (MathProc::lerp (rax[0] ,VAL32 (0) ,VAL32 (255))) ;
-		ret.mG = BYTE (MathProc::lerp (rax[1] ,VAL32 (0) ,VAL32 (255))) ;
-		ret.mR = BYTE (MathProc::lerp (rax[2] ,VAL32 (0) ,VAL32 (255))) ;
+		ret.mB = Byte (MathProc::lerp (rax[2] ,Val32 (0) ,Val32 (255))) ;
+		ret.mG = Byte (MathProc::lerp (rax[1] ,Val32 (0) ,Val32 (255))) ;
+		ret.mR = Byte (MathProc::lerp (rax[0] ,Val32 (0) ,Val32 (255))) ;
 		return move (ret) ;
 	}
 } ;
@@ -423,7 +440,7 @@ exports CFat<ColorProcHolder> ColorProcHolder::hold (CR<ColorProcLayout> that) {
 template class External<ImageProcHolder ,ImageProcLayout> ;
 
 struct ImageProcLayout {
-	UniqueRef<BOOL> mContext ;
+	UniqueRef<Bool> mContext ;
 } ;
 
 exports CR<Like<UniqueRef<ImageProcLayout>>> ImageProcHolder::expr_m () {
@@ -453,13 +470,13 @@ struct ReflectTensorPair implement Interface {
 	virtual void sabs (CR<Pointer> a ,VR<Pointer> c) const = 0 ;
 	virtual void minus (CR<Pointer> a ,VR<Pointer> c) const = 0 ;
 
-	forceinline static consteval FLAG expr_m () noexcept {
+	forceinline static consteval Flag expr_m () noexcept {
 		return 501 ;
 	}
 } ;
 
 template <class A ,class B>
-class ReflectTensorPairBinder final implement Fat<ReflectTensorPair ,Proxy> {
+class ReflectTensorPairBinder final implement Fat<ReflectTensorPair ,void> {
 private:
 	using C = CONDITIONAL<ENUM_COMPR_GTEQ<SIZE_OF<A> ,SIZE_OF<B>> ,A ,B> ;
 
@@ -523,40 +540,27 @@ public:
 	}
 } ;
 
+template <class A ,class B>
+class TensorPairUnknownBinder final implement Fat<FriendUnknown ,void> {
+public:
+	Flag reflect (CR<Flag> uuid) const override {
+		if (uuid == ReflectTensorPairBinder<A ,B>::expr)
+			return inline_vptr (ReflectTensorPairBinder<A ,B> ()) ;
+		return ZERO ;
+	}
+} ;
+
 class TensorImplHolder final implement Fat<TensorHolder ,TensorLayout> {
 public:
-	void initialize (CR<RefBufferLayout> that) override {
-		auto &&rax = keep[TYPE<RefBuffer<Pointer>>::expr] (that) ;
-		const auto r1x = tensor_type_from_step (rax.step ()) ;
-		const auto r2x = choose_unknown (r1x ,r1x) ;
-		const auto r3x = RFat<ReflectTensorPair> (r2x) ;
-		initialize (rax.size () ,r1x) ;
-		const auto r4x = self.mStride[self.mRank] ;
-		for (auto &&i : range (0 ,rax.size ())) {
-			const auto r5x = self.mBuffer + i * r4x ;
-			const auto r6x = address (rax[i]) ;
-			r3x->clone (Pointer::make (r5x) ,Pointer::make (r6x)) ;
-		}
+	void initialize (RR<RefBufferLayout> that) override {
+		unimplemented () ;
 	}
 
-	void initialize (VR<FarBufferLayout> that) override {
-		auto &&rax = keep[TYPE<FarBuffer<Pointer>>::expr] (that) ;
-		const auto r1x = tensor_type_from_step (rax.step ()) ;
-		const auto r2x = choose_unknown (r1x ,r1x) ;
-		const auto r3x = RFat<ReflectTensorPair> (r2x) ;
-		initialize (rax.size () ,r1x) ;
-		const auto r4x = self.mStride[self.mRank] ;
-		for (auto &&i : range (0 ,rax.size ())) {
-			const auto r5x = self.mBuffer + i * r4x ;
-			const auto r6x = address (rax[i]) ;
-			r3x->clone (Pointer::make (r5x) ,Pointer::make (r6x)) ;
-		}
-	}
-
-	void initialize (CR<LENGTH> size_ ,CR<Just<TensorType>> type_) override {
+	void initialize (CR<Length> size_ ,CR<Just<TensorType>> type_) override {
 		const auto r1x = step_from_tensor_type (type_) ;
 		const auto r2x = size_ * r1x + 16 ;
-		self.mTensor = Ref<RefBuffer<BYTE>>::make (r2x) ;
+		self.mTensor = Ref<RefBuffer<Byte>>::make (r2x) ;
+		inline_memset (Pointer::from (self.mTensor->ref) ,r2x) ;
 		auto &&rax = keep[TYPE<RefBufferLayout>::expr] (self.mTensor.ref) ;
 		rax.mBuffer = inline_alignas (rax.mBuffer ,16) ;
 		rax.mSize = size_ ;
@@ -564,29 +568,34 @@ public:
 		self.mHolder = TRUE ;
 		self.mBuffer = rax.mBuffer ;
 		self.mRank = 1 ;
-		self.mStride[0] = size_ * r1x ;
+		self.mStride[0] = r1x ;
 		for (auto &&i : range (1 ,self.mStride.size ()))
-			self.mStride[i] = r1x ;
+			self.mStride[i] = size_ * r1x ;
+		for (auto &&i : range (0 ,size_)) {
+			const auto r3x = self.mBuffer + i * r1x ;
+			auto &&rbx = keep[TYPE<Flt64>::expr] (Pointer::make (r3x)) ;
+			rbx = Flt64 (i) ;
+		}
 	}
 
 	Unknown choose_unknown (CR<Just<TensorType>> dst ,CR<Just<TensorType>> src) const {
 		if (dst == TensorType::Flt32)
 			if (src == TensorType::Flt32)
-				return SimpleUnknownBinder<ReflectTensorPairBinder<FLT32 ,FLT32>> () ;
+				return TensorPairUnknownBinder<Flt32 ,Flt32> () ;
 		if (dst == TensorType::Flt32)
 			if (src == TensorType::Flt64)
-				return SimpleUnknownBinder<ReflectTensorPairBinder<FLT32 ,FLT64>> () ;
+				return TensorPairUnknownBinder<Flt32 ,Flt64> () ;
 		if (dst == TensorType::Flt64)
 			if (src == TensorType::Flt32)
-				return SimpleUnknownBinder<ReflectTensorPairBinder<FLT64 ,FLT32>> () ;
+				return TensorPairUnknownBinder<Flt64 ,Flt32> () ;
 		if (dst == TensorType::Flt64)
 			if (src == TensorType::Flt64)
-				return SimpleUnknownBinder<ReflectTensorPairBinder<FLT64 ,FLT64>> () ;
+				return TensorPairUnknownBinder<Flt64 ,Flt64> () ;
 		assume (FALSE) ;
 		return Unknown (ZERO) ;
 	}
 
-	LENGTH step_from_tensor_type (CR<Just<TensorType>> type_) const {
+	Length step_from_tensor_type (CR<Just<TensorType>> type_) const {
 		if (type_ == TensorType::Flt32)
 			return 4 ;
 		if (type_ == TensorType::Flt64)
@@ -596,7 +605,7 @@ public:
 		return 0 ;
 	}
 
-	Just<TensorType> tensor_type_from_step (CR<LENGTH> step_) const {
+	Just<TensorType> tensor_type_from_step (CR<Length> step_) const {
 		if (step_ == 4)
 			return TensorType::Flt32 ;
 		if (step_ == 8)
@@ -606,32 +615,32 @@ public:
 		return 0 ;
 	}
 
-	LENGTH size () const override {
+	Length size () const override {
 		if (self.mTensor == NULL)
 			return 0 ;
-		return self.mStride[0] / self.mStride[self.mRank] ;
+		return self.mStride[self.mRank] / self.mStride[0] ;
 	}
 
 	Just<TensorType> type () const override {
 		if (self.mTensor == NULL)
 			return TensorType::ETC ;
-		return tensor_type_from_step (self.mStride[self.mRank]) ;
+		return tensor_type_from_step (self.mStride[0]) ;
 	}
 
-	LENGTH rank () const override {
+	Length rank () const override {
 		if (self.mTensor == NULL)
 			return 0 ;
 		return self.mRank ;
 	}
 
-	LENGTH shape (CR<INDEX> index) const override {
+	Length shape (CR<Index> index) const override {
 		assert (index >= 0) ;
 		if (self.mTensor == NULL)
 			return 0 ;
 		const auto r1x = self.mRank ;
-		INDEX ix = inline_min (index ,r1x) ;
-		INDEX iy = inline_min (index + 1 ,r1x) ;
-		return self.mStride[ix] / self.mStride[iy] ;
+		Index ix = inline_min (index ,r1x) ;
+		Index iy = inline_min (index + 1 ,r1x) ;
+		return self.mStride[iy] / self.mStride[ix] ;
 	}
 
 	TensorLayout share () const {
@@ -650,8 +659,8 @@ public:
 		TensorHolder::hold (ret)->initialize (size () ,type_) ;
 		const auto r1x = choose_unknown (type_ ,type ()) ;
 		const auto r2x = RFat<ReflectTensorPair> (r1x) ;
-		const auto r3x = self.mStride[self.mRank] ;
-		auto rax = FLT64 (0) ;
+		const auto r3x = self.mStride[0] ;
+		auto rax = Flt64 (0) ;
 		for (auto &&i : range (0 ,size ())) {
 			const auto r4x = ret.mBuffer + i * r3x ;
 			const auto r5x = self.mBuffer + i * r3x ;
@@ -669,133 +678,152 @@ public:
 		return reshape (MakeWrapper (size ())) ;
 	}
 
-	TensorLayout reshape (CR<WrapperLayout> shape_) const override {
+	TensorLayout reshape (CR<Wrapper<Length>> shape_) const override {
 		assert (self.mTensor != NULL) ;
-		auto &&rax = keep[TYPE<Wrapper<LENGTH>>::expr] (shape_) ;
-		assert (rax.rank () > 0) ;
+		assert (shape_.rank () > 0) ;
 		const auto r1x = self.mStride.size () - 1 ;
-		assert (rax.rank () <= r1x) ;
+		assert (shape_.rank () <= r1x) ;
 		TensorLayout ret = share () ;
-		const auto r2x = inline_min (rax.rank () ,r1x) ;
+		const auto r2x = inline_min (shape_.rank () ,r1x) ;
 		ret.mRank = r2x ;
-		ret.mStride[r1x] = self.mStride[self.mRank] ;
-		for (auto &&i : range (0 ,r1x - r2x)) {
-			INDEX ix = r1x - i ;
-			ret.mStride[ix - 1] = ret.mStride[ix] ;
+		for (auto &&i : range (1 ,r2x + 1)) {
+			Index ix = i - 1 ;
+			Index iy = r2x - i ;
+			ret.mStride[i] = ret.mStride[ix] * shape_[iy] ;
 		}
-		for (auto &&i : range (r1x - r2x ,r1x)) {
-			INDEX ix = r1x - i ;
-			ret.mStride[ix - 1] = ret.mStride[ix] * rax[ix - 1] ;
+		for (auto &&i : range (r2x + 1 ,r1x + 1)) {
+			Index ix = i - 1 ;
+			ret.mStride[i] = ret.mStride[ix] ;
 		}
 		assume (TensorHolder::hold (ret)->size () == size ()) ;
 		return move (ret) ;
 	}
 
-	Ref<RefBuffer<BYTE>> borrow () const leftvalue override {
+	Ref<RefBuffer<Byte>> borrow () const leftvalue override {
 		return self.mTensor.share () ;
 	}
 
-	FLT64 get_float (CR<FLAG> addr) const {
-		if (self.mStride[self.mRank] == 4)
-			return bitwise[TYPE<FLT32>::expr] (Pointer::make (addr)) ;
-		if (self.mStride[self.mRank] == 8)
-			return bitwise[TYPE<FLT64>::expr] (Pointer::make (addr)) ;
+	Flt64 get_float (CR<Flag> addr) const {
+		if (self.mStride[0] == 4)
+			return bitwise[TYPE<Flt32>::expr] (Pointer::make (addr)) ;
+		if (self.mStride[0] == 8)
+			return bitwise[TYPE<Flt64>::expr] (Pointer::make (addr)) ;
 		assert (FALSE) ;
 		return 0 ;
 	}
 
-	void get (CR<INDEX> i1 ,VR<FLT64> item) const override {
-		const auto r1x = i1 * self.mStride[1] ;
-		assert (inline_between (r1x ,0 ,self.mStride[0])) ;
+	void get (CR<Index> i0 ,VR<Flt64> item) const override {
+		const auto r1x = i0 * self.mStride[0] ;
+		assert (inline_between (r1x ,0 ,self.mStride[4])) ;
 		const auto r2x = self.mBuffer + r1x ;
 		item = get_float (r2x) ;
 	}
 
-	void get (CR<INDEX> i1 ,CR<INDEX> i2 ,VR<FLT64> item) const override {
-		const auto r1x = i1 * self.mStride[1] ;
-		assert (inline_between (r1x ,0 ,self.mStride[0])) ;
-		const auto r2x = i2 * self.mStride[2] ;
+	void get (CR<Index> i0 ,CR<Index> i1 ,VR<Flt64> item) const override {
+		const auto r1x = i1 * self.mStride[0] ;
 		assert (inline_between (r1x ,0 ,self.mStride[1])) ;
+		const auto r2x = i0 * self.mStride[1] ;
+		assert (inline_between (r1x ,0 ,self.mStride[4])) ;
 		const auto r3x = self.mBuffer + r1x + r2x ;
 		item = get_float (r3x) ;
 	}
 
-	void get (CR<INDEX> i1 ,CR<INDEX> i2 ,CR<INDEX> i3 ,VR<FLT64> item) const override {
-		const auto r1x = i1 * self.mStride[1] ;
-		assert (inline_between (r1x ,0 ,self.mStride[0])) ;
-		const auto r2x = i2 * self.mStride[2] ;
+	void get (CR<Index> i0 ,CR<Index> i1 ,CR<Index> i2 ,VR<Flt64> item) const override {
+		const auto r1x = i2 * self.mStride[0] ;
 		assert (inline_between (r1x ,0 ,self.mStride[1])) ;
-		const auto r3x = i3 * self.mStride[3] ;
+		const auto r2x = i1 * self.mStride[1] ;
 		assert (inline_between (r1x ,0 ,self.mStride[2])) ;
+		const auto r3x = i0 * self.mStride[2] ;
+		assert (inline_between (r1x ,0 ,self.mStride[4])) ;
 		const auto r4x = self.mBuffer + r1x + r2x + r3x ;
 		item = get_float (r4x) ;
 	}
 
-	void get (CR<INDEX> i1 ,CR<INDEX> i2 ,CR<INDEX> i3 ,CR<INDEX> i4 ,VR<FLT64> item) const override {
-		const auto r1x = i1 * self.mStride[1] ;
-		assert (inline_between (r1x ,0 ,self.mStride[0])) ;
-		const auto r2x = i2 * self.mStride[2] ;
+	void get (CR<Index> i0 ,CR<Index> i1 ,CR<Index> i2 ,CR<Index> i3 ,VR<Flt64> item) const override {
+		const auto r1x = i3 * self.mStride[0] ;
 		assert (inline_between (r1x ,0 ,self.mStride[1])) ;
-		const auto r3x = i3 * self.mStride[3] ;
+		const auto r2x = i2 * self.mStride[1] ;
 		assert (inline_between (r1x ,0 ,self.mStride[2])) ;
-		const auto r4x = i4 * self.mStride[4] ;
+		const auto r3x = i1 * self.mStride[2] ;
 		assert (inline_between (r1x ,0 ,self.mStride[3])) ;
+		const auto r4x = i0 * self.mStride[3] ;
+		assert (inline_between (r1x ,0 ,self.mStride[4])) ;
 		const auto r5x = self.mBuffer + r1x + r2x + r3x + r4x ;
 		item = get_float (r5x) ;
 	}
 
 	TensorLayout sadd (CR<TensorLayout> that) const override {
 		TensorLayout ret ;
-		const auto r1x = choose_unknown (type () ,TensorHolder::hold (that)->type ()) ;
-		const auto r2x = RFat<ReflectTensorPair> (r1x) ;
-		TensorHolder::hold (ret)->initialize (size () ,r2x->type ()) ;
+		const auto r1x = size () ;
+		const auto r2x = TensorHolder::hold (that)->size () ;
+		assume (r1x == r2x) ;
+		const auto r3x = choose_unknown (type () ,TensorHolder::hold (that)->type ()) ;
+		const auto r4x = RFat<ReflectTensorPair> (r3x) ;
+		TensorHolder::hold (ret)->initialize (size () ,r4x->type ()) ;
+		const auto r5x = self.mStride[0] ;
+		const auto r6x = that.mStride[0] ;
 		for (auto &&i : range (0 ,size ())) {
-			const auto r3x = self.mBuffer + i * self.mStride[self.mRank] ;
-			const auto r4x = that.mBuffer + i * that.mStride[that.mRank] ;
-			const auto r5x = ret.mBuffer + i * self.mStride[self.mRank] ;
-			r2x->sadd (Pointer::make (r3x) ,Pointer::make (r4x) ,Pointer::make (r5x)) ;
+			const auto r7x = self.mBuffer + i * r5x ;
+			const auto r8x = that.mBuffer + i * r6x ;
+			const auto r9x = ret.mBuffer + i * r5x ;
+			r4x->sadd (Pointer::make (r7x) ,Pointer::make (r8x) ,Pointer::make (r9x)) ;
 		}
 		return move (ret) ;
 	}
 
 	TensorLayout ssub (CR<TensorLayout> that) const override {
 		TensorLayout ret ;
-		const auto r1x = choose_unknown (type () ,TensorHolder::hold (that)->type ()) ;
-		const auto r2x = RFat<ReflectTensorPair> (r1x) ;
-		TensorHolder::hold (ret)->initialize (size () ,r2x->type ()) ;
+		const auto r1x = size () ;
+		const auto r2x = TensorHolder::hold (that)->size () ;
+		assume (r1x == r2x) ;
+		const auto r3x = choose_unknown (type () ,TensorHolder::hold (that)->type ()) ;
+		const auto r4x = RFat<ReflectTensorPair> (r3x) ;
+		TensorHolder::hold (ret)->initialize (size () ,r4x->type ()) ;
+		const auto r5x = self.mStride[0] ;
+		const auto r6x = that.mStride[0] ;
 		for (auto &&i : range (0 ,size ())) {
-			const auto r3x = self.mBuffer + i * self.mStride[self.mRank] ;
-			const auto r4x = that.mBuffer + i * that.mStride[that.mRank] ;
-			const auto r5x = ret.mBuffer + i * self.mStride[self.mRank] ;
-			r2x->ssub (Pointer::make (r3x) ,Pointer::make (r4x) ,Pointer::make (r5x)) ;
+			const auto r7x = self.mBuffer + i * r5x ;
+			const auto r8x = that.mBuffer + i * r6x ;
+			const auto r9x = ret.mBuffer + i * r5x ;
+			r4x->ssub (Pointer::make (r7x) ,Pointer::make (r8x) ,Pointer::make (r9x)) ;
 		}
 		return move (ret) ;
 	}
 
 	TensorLayout smul (CR<TensorLayout> that) const override {
 		TensorLayout ret ;
-		const auto r1x = choose_unknown (type () ,TensorHolder::hold (that)->type ()) ;
-		const auto r2x = RFat<ReflectTensorPair> (r1x) ;
-		TensorHolder::hold (ret)->initialize (size () ,r2x->type ()) ;
+		const auto r1x = size () ;
+		const auto r2x = TensorHolder::hold (that)->size () ;
+		assume (r1x == r2x) ;
+		const auto r3x = choose_unknown (type () ,TensorHolder::hold (that)->type ()) ;
+		const auto r4x = RFat<ReflectTensorPair> (r3x) ;
+		TensorHolder::hold (ret)->initialize (size () ,r4x->type ()) ;
+		const auto r5x = self.mStride[0] ;
+		const auto r6x = that.mStride[0] ;
 		for (auto &&i : range (0 ,size ())) {
-			const auto r3x = self.mBuffer + i * self.mStride[self.mRank] ;
-			const auto r4x = that.mBuffer + i * that.mStride[that.mRank] ;
-			const auto r5x = ret.mBuffer + i * self.mStride[self.mRank] ;
-			r2x->smul (Pointer::make (r3x) ,Pointer::make (r4x) ,Pointer::make (r5x)) ;
+			const auto r7x = self.mBuffer + i * r5x ;
+			const auto r8x = that.mBuffer + i * r6x ;
+			const auto r9x = ret.mBuffer + i * r5x ;
+			r4x->smul (Pointer::make (r7x) ,Pointer::make (r8x) ,Pointer::make (r9x)) ;
 		}
 		return move (ret) ;
 	}
 
 	TensorLayout sdiv (CR<TensorLayout> that) const override {
 		TensorLayout ret ;
-		const auto r1x = choose_unknown (type () ,TensorHolder::hold (that)->type ()) ;
-		const auto r2x = RFat<ReflectTensorPair> (r1x) ;
-		TensorHolder::hold (ret)->initialize (size () ,r2x->type ()) ;
+		const auto r1x = size () ;
+		const auto r2x = TensorHolder::hold (that)->size () ;
+		assume (r1x == r2x) ;
+		const auto r3x = choose_unknown (type () ,TensorHolder::hold (that)->type ()) ;
+		const auto r4x = RFat<ReflectTensorPair> (r3x) ;
+		TensorHolder::hold (ret)->initialize (size () ,r4x->type ()) ;
+		const auto r5x = self.mStride[0] ;
+		const auto r6x = that.mStride[0] ;
 		for (auto &&i : range (0 ,size ())) {
-			const auto r3x = self.mBuffer + i * self.mStride[self.mRank] ;
-			const auto r4x = that.mBuffer + i * that.mStride[that.mRank] ;
-			const auto r5x = ret.mBuffer + i * self.mStride[self.mRank] ;
-			r2x->sdiv (Pointer::make (r3x) ,Pointer::make (r4x) ,Pointer::make (r5x)) ;
+			const auto r7x = self.mBuffer + i * r5x ;
+			const auto r8x = that.mBuffer + i * r6x ;
+			const auto r9x = ret.mBuffer + i * r5x ;
+			r4x->sdiv (Pointer::make (r7x) ,Pointer::make (r8x) ,Pointer::make (r9x)) ;
 		}
 		return move (ret) ;
 	}
@@ -805,10 +833,11 @@ public:
 		const auto r1x = choose_unknown (type () ,type ()) ;
 		const auto r2x = RFat<ReflectTensorPair> (r1x) ;
 		TensorHolder::hold (ret)->initialize (size () ,r2x->type ()) ;
+		const auto r3x = self.mStride[0] ;
 		for (auto &&i : range (0 ,size ())) {
-			const auto r3x = self.mBuffer + i * self.mStride[self.mRank] ;
-			const auto r4x = ret.mBuffer + i * self.mStride[self.mRank] ;
-			r2x->sabs (Pointer::make (r3x) ,Pointer::make (r4x)) ;
+			const auto r4x = self.mBuffer + i * r3x ;
+			const auto r5x = ret.mBuffer + i * r3x ;
+			r2x->sabs (Pointer::make (r4x) ,Pointer::make (r5x)) ;
 		}
 		return move (ret) ;
 	}
@@ -818,10 +847,11 @@ public:
 		const auto r1x = choose_unknown (type () ,type ()) ;
 		const auto r2x = RFat<ReflectTensorPair> (r1x) ;
 		TensorHolder::hold (ret)->initialize (size () ,r2x->type ()) ;
+		const auto r3x = self.mStride[0] ;
 		for (auto &&i : range (0 ,size ())) {
-			const auto r3x = self.mBuffer + i * self.mStride[self.mRank] ;
-			const auto r4x = ret.mBuffer + i * self.mStride[self.mRank] ;
-			r2x->minus (Pointer::make (r3x) ,Pointer::make (r4x)) ;
+			const auto r4x = self.mBuffer + i * r3x ;
+			const auto r5x = ret.mBuffer + i * r3x ;
+			r2x->minus (Pointer::make (r4x) ,Pointer::make (r5x)) ;
 		}
 		return move (ret) ;
 	}
@@ -837,28 +867,28 @@ exports CFat<TensorHolder> TensorHolder::hold (CR<TensorLayout> that) {
 
 class DisjointImplHolder final implement Fat<DisjointHolder ,DisjointLayout> {
 public:
-	void initialize (CR<LENGTH> size_) override {
-		self.mTable = Array<INDEX> (size_) ;
+	void initialize (CR<Length> size_) override {
+		self.mTable = Array<Index> (size_) ;
 		self.mTable.fill (NONE) ;
 	}
 
-	LENGTH size () const override {
+	Length size () const override {
 		return self.mTable.size () ;
 	}
 
-	INDEX lead (CR<INDEX> from_) override {
-		INDEX ix = from_ ;
+	Index lead (CR<Index> from_) override {
+		Index ix = from_ ;
 		while (TRUE) {
 			if (ix == NONE)
 				break ;
 			ix = parent (ix) ;
 		}
-		INDEX ret = ix ;
+		Index ret = ix ;
 		if ifdo (TRUE) {
 			if (ix == NONE)
 				discard ;
 			ix = from_ ;
-			INDEX iy = NONE ;
+			Index iy = NONE ;
 			while (TRUE) {
 				if (ix == NONE)
 					break ;
@@ -870,28 +900,28 @@ public:
 		return move (ret) ;
 	}
 
-	INDEX parent (CR<INDEX> curr) const {
+	Index parent (CR<Index> curr) const {
 		if (curr == self.mTable[curr])
 			return NONE ;
 		return self.mTable[curr] ;
 	}
 
-	void joint (CR<INDEX> from_ ,CR<INDEX> to_) override {
-		INDEX ix = lead (from_) ;
-		INDEX iy = lead (to_) ;
+	void joint (CR<Index> from_ ,CR<Index> to_) override {
+		Index ix = lead (from_) ;
+		Index iy = lead (to_) ;
 		self.mTable[ix] = ix ;
 		self.mTable[iy] = ix ;
 	}
 
-	BOOL edge (CR<INDEX> from_ ,CR<INDEX> to_) override {
-		INDEX ix = lead (from_) ;
-		INDEX iy = lead (to_) ;
+	Bool edge (CR<Index> from_ ,CR<Index> to_) override {
+		Index ix = lead (from_) ;
+		Index iy = lead (to_) ;
 		return ix == iy ;
 	}
 
-	LENGTH depth (CR<INDEX> from_) override {
-		LENGTH ret = 0 ;
-		INDEX ix = from_ ;
+	Length depth (CR<Index> from_) override {
+		Length ret = 0 ;
+		Index ix = from_ ;
 		while (TRUE) {
 			if (ix == NONE)
 				break ;
@@ -901,9 +931,9 @@ public:
 		return move (ret) ;
 	}
 
-	Deque<INDEX> cluster (CR<INDEX> from_) override {
-		Deque<INDEX> ret ;
-		INDEX ix = from_ ;
+	Deque<Index> cluster (CR<Index> from_) override {
+		Deque<Index> ret ;
+		Index ix = from_ ;
 		while (TRUE) {
 			if (ix == NONE)
 				break ;
@@ -913,11 +943,11 @@ public:
 		return move (ret) ;
 	}
 
-	Array<INDEX> jump (CR<INDEX> from_) override {
-		Array<INDEX> ret = Array<INDEX> (self.mTable.size ()) ;
+	Array<Index> jump (CR<Index> from_) override {
+		Array<Index> ret = Array<Index> (self.mTable.size ()) ;
 		ret.fill (NONE) ;
 		for (auto &&i : range (0 ,self.mTable.size ())) {
-			INDEX ix = lead (i) ;
+			Index ix = lead (i) ;
 			if (ix == NONE)
 				continue ;
 			ret[ix] = ret[i] ;
@@ -937,29 +967,29 @@ exports CFat<DisjointHolder> DisjointHolder::hold (CR<DisjointLayout> that) {
 
 class KMMatchImplHolder final implement Fat<KMMatchHolder ,KMMatchLayout> {
 public:
-	void initialize (CR<LENGTH> size_) override {
+	void initialize (CR<Length> size_) override {
 		self.mSize = size_ ;
-		self.mThreshold = FLT32 (0.1) ;
-		self.mUser = Array<FLT32> (self.mSize) ;
-		self.mWork = Array<FLT32> (self.mSize) ;
+		self.mThreshold = Flt32 (0.1) ;
+		self.mUser = Array<Flt32> (self.mSize) ;
+		self.mWork = Array<Flt32> (self.mSize) ;
 		self.mUserVisit = BitSet (self.mSize) ;
 		self.mWorkVisit = BitSet (self.mSize) ;
-		self.mMatch = Array<INDEX> (self.mSize) ;
-		self.mLack = Array<FLT32> (self.mSize) ;
+		self.mMatch = Array<Index> (self.mSize) ;
+		self.mLack = Array<Flt32> (self.mSize) ;
 	}
 
-	void set_threshold (CR<FLT64> threshold) override {
-		self.mThreshold = FLT32 (threshold) ;
+	void set_threshold (CR<Flt64> threshold) override {
+		self.mThreshold = Flt32 (threshold) ;
 	}
 
-	LENGTH size () const override {
+	Length size () const override {
 		return self.mSize ;
 	}
 
-	Array<INDEX> sort (CR<Image<FLT32>> love) override {
+	Array<Index> sort (CR<Image<Flt32>> love) override {
 		assert (self.mMatch.size () > 0) ;
 		assert (love.size () == MathProc::square (self.mSize)) ;
-		self.mLove = Ref<Image<FLT32>>::reference (love) ;
+		self.mLove = Ref<Image<Flt32>>::reference (love) ;
 		self.mUser.fill (0) ;
 		self.mWork.fill (0) ;
 		self.mUserVisit.clear () ;
@@ -986,7 +1016,7 @@ public:
 				if (dfs (i))
 					break ;
 				const auto r2x = invoke ([&] () {
-					FLT32 ret = infinity ;
+					Flt32 ret = infinity ;
 					for (auto &&j : range (0 ,self.mSize)) {
 						if (self.mWorkVisit[j])
 							continue ;
@@ -1015,7 +1045,7 @@ public:
 		}
 	}
 
-	BOOL dfs (CR<INDEX> user) {
+	Bool dfs (CR<Index> user) {
 		self.mUserVisit[user] = TRUE ;
 		for (auto &&i : range (0 ,self.mSize)) {
 			if (self.mWorkVisit[i])

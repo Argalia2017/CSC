@@ -23,10 +23,10 @@ struct WorkThreadLayout {
 	Array<Thread> mThread ;
 	BitSet mThreadJoin ;
 	Array<IndexIterator> mThreadQueue ;
-	Array<LENGTH> mThreadLoadLength ;
-	Function<CR<INDEX>> mThreadFunc ;
+	Array<Length> mThreadLoadLength ;
+	Function<CR<Index>> mThreadFunc ;
 	Deque<IndexIterator> mItemQueue ;
-	LENGTH mItemLoadLength ;
+	Length mItemLoadLength ;
 
 public:
 	implicit WorkThreadLayout () = default ;
@@ -35,7 +35,7 @@ public:
 		WorkThreadHolder::hold (thiz)->stop () ;
 	}
 
-	void friend_execute (CR<INDEX> slot) {
+	void friend_execute (CR<Index> slot) {
 		WorkThreadHolder::hold (thiz)->friend_execute (slot) ;
 	}
 } ;
@@ -53,16 +53,16 @@ public:
 		set_queue_size (r1x) ;
 	}
 
-	void set_thread_size (CR<LENGTH> size_) override {
+	void set_thread_size (CR<Length> size_) override {
 		Scope<Mutex> anonymous (self.mThreadMutex) ;
 		assume (self.mThreadFlag == ThreadFlag::Preparing) ;
 		self.mThread = Array<Thread> (size_) ;
 		self.mThreadJoin = BitSet (size_) ;
 		self.mThreadQueue = Array<IndexIterator> (size_) ;
-		self.mThreadLoadLength = Array<LENGTH> (size_) ;
+		self.mThreadLoadLength = Array<Length> (size_) ;
 	}
 
-	void set_queue_size (CR<LENGTH> size_) override {
+	void set_queue_size (CR<Length> size_) override {
 		assert (size_ > 0) ;
 		Scope<Mutex> anonymous (self.mThreadMutex) ;
 		assume (self.mThreadFlag == ThreadFlag::Preparing) ;
@@ -70,7 +70,7 @@ public:
 		self.mItemQueue = Deque<IndexIterator> (size_) ;
 	}
 
-	void start (CR<Function<CR<INDEX>>> func) override {
+	void start (CR<Function<CR<Index>>> func) override {
 		Scope<Mutex> anonymous (self.mThreadMutex) ;
 		assume (self.mThreadFlag == ThreadFlag::Preparing) ;
 		assume (self.mThread.size () > 0) ;
@@ -84,7 +84,7 @@ public:
 		}
 	}
 
-	void friend_execute (CR<INDEX> slot) override {
+	void friend_execute (CR<Index> slot) override {
 		try {
 			while (TRUE) {
 				poll (slot) ;
@@ -104,7 +104,7 @@ public:
 		rax.notify () ;
 	}
 
-	void poll (CR<INDEX> slot) {
+	void poll (CR<Index> slot) {
 		auto rax = UniqueLock (self.mThreadMutex) ;
 		while (TRUE) {
 			if (self.mThreadFlag != ThreadFlag::Running)
@@ -122,9 +122,9 @@ public:
 		assume (self.mThreadFlag == ThreadFlag::Running) ;
 		self.mThreadJoin.erase (slot) ;
 		self.mItemLoadLength -= self.mThreadLoadLength[slot] ;
-		INDEX ix = self.mItemQueue.head () ;
+		Index ix = self.mItemQueue.head () ;
 		const auto r1x = inline_alignas (self.mItemLoadLength ,self.mThread.size ()) / self.mThread.size () ;
-		const auto r2x = MathProc::max_of (r1x / 2 ,LENGTH (1)) ;
+		const auto r2x = MathProc::max_of (r1x / 2 ,Length (1)) ;
 		const auto r3x = MathProc::min_of (r2x ,self.mItemQueue[ix].length ()) ;
 		self.mThreadLoadLength[slot] = r3x ;
 		auto &&rbx = keep[TYPE<IndexIteratorLayout>::expr] (self.mItemQueue[ix]) ;
@@ -138,7 +138,7 @@ public:
 		rax.notify () ;
 	}
 
-	void post (CR<INDEX> begin_ ,CR<INDEX> end_) override {
+	void post (CR<Index> begin_ ,CR<Index> end_) override {
 		if (begin_ >= end_)
 			return ;
 		auto rax = UniqueLock (self.mThreadMutex) ;
@@ -169,7 +169,7 @@ public:
 		assume (self.mThreadFlag == ThreadFlag::Running) ;
 	}
 
-	BOOL join (CR<Time> interval) override {
+	Bool join (CR<Time> interval) override {
 		auto rax = UniqueLock (self.mThreadMutex) ;
 		auto rbx = TRUE ;
 		while (TRUE) {
@@ -192,11 +192,11 @@ public:
 		for (auto &&i : self.mThread.iter ())
 			self.mThread[i].stop () ;
 		self.mThread = Array<Thread> () ;
-		self.mThreadFunc = Function<CR<INDEX>> () ;
+		self.mThreadFunc = Function<CR<Index>> () ;
 		self.mThreadFlag = ThreadFlag::Preparing ;
 		self.mThreadJoin = BitSet () ;
 		self.mThreadQueue = Array<IndexIterator> () ;
-		self.mThreadLoadLength = Array<LENGTH> () ;
+		self.mThreadLoadLength = Array<Length> () ;
 		self.mItemQueue = Deque<IndexIterator> () ;
 	}
 } ;
@@ -216,17 +216,17 @@ exports CFat<WorkThreadHolder> WorkThreadHolder::hold (CR<WorkThreadLayout> that
 struct CalcThreadLayout {
 	Mutex mThreadMutex ;
 	Just<ThreadFlag> mThreadFlag ;
-	BOOL mSuspendFlag ;
+	Bool mSuspendFlag ;
 	Array<Thread> mThread ;
 	BitSet mThreadJoin ;
 	Function<CR<CalcSolution> ,VR<CalcSolution>> mThreadFunc ;
-	Array<FLT64> mConfidence ;
-	FLT64 mConfidencePow ;
-	FLT64 mConfidenceFator ;
+	Array<Flt64> mConfidence ;
+	Flt64 mConfidencePow ;
+	Flt64 mConfidenceFator ;
 	Array<CalcSolution> mThreadSolution ;
 	Array<CalcSolution> mSearchSolution ;
 	CalcSolution mBestSolution ;
-	BOOL mNewSolution ;
+	Bool mNewSolution ;
 
 public:
 	implicit CalcThreadLayout () = default ;
@@ -235,7 +235,7 @@ public:
 		CalcThreadHolder::hold (thiz)->stop () ;
 	}
 
-	void friend_execute (CR<INDEX> slot) {
+	void friend_execute (CR<Index> slot) {
 		CalcThreadHolder::hold (thiz)->friend_execute (slot) ;
 	}
 } ;
@@ -249,7 +249,7 @@ public:
 		set_thread_size (r1x) ;
 	}
 
-	void set_thread_size (CR<LENGTH> size_) override {
+	void set_thread_size (CR<Length> size_) override {
 		Scope<Mutex> anonymous (self.mThreadMutex) ;
 		assume (self.mThreadFlag == ThreadFlag::Preparing) ;
 		assume (self.mThreadSolution.size () == 0) ;
@@ -260,7 +260,7 @@ public:
 		self.mNewSolution = FALSE ;
 	}
 
-	void set_start_input (CR<BitSet> input ,CR<FLT64> factor) override {
+	void set_start_input (CR<BitSet> input ,CR<Flt64> factor) override {
 		Scope<Mutex> anonymous (self.mThreadMutex) ;
 		assume (self.mThreadFlag == ThreadFlag::Preparing) ;
 		assume (self.mThread.size () > 0) ;
@@ -270,9 +270,9 @@ public:
 		self.mBestSolution.mInput = input ;
 		for (auto &&i : self.mThreadSolution.iter ())
 			self.mThreadSolution[i].mIteration = NONE ;
-		self.mConfidence = Array<FLT64> (1000) ;
+		self.mConfidence = Array<Flt64> (1000) ;
 		self.mConfidencePow = 0.9545 ;
-		self.mConfidenceFator = MathProc::clamp (factor ,FLT64 (0) ,FLT64 (1)) ;
+		self.mConfidenceFator = MathProc::clamp (factor ,Flt64 (0) ,Flt64 (1)) ;
 		self.mConfidence[0] = 1 ;
 		for (auto &&i : range (1 ,self.mConfidence.length ())) {
 			self.mConfidence[i] = self.mConfidencePow * self.mConfidence[i - 1] ;
@@ -292,7 +292,7 @@ public:
 		}
 	}
 
-	void friend_execute (CR<INDEX> slot) override {
+	void friend_execute (CR<Index> slot) override {
 		try {
 			while (TRUE) {
 				search_new (slot) ;
@@ -310,7 +310,7 @@ public:
 		rax.notify () ;
 	}
 
-	void search_new (CR<INDEX> slot) {
+	void search_new (CR<Index> slot) {
 		while (TRUE) {
 			wait_solution (slot) ;
 			while (TRUE) {
@@ -327,7 +327,7 @@ public:
 		}
 	}
 
-	void search_xor (CR<INDEX> slot) {
+	void search_xor (CR<Index> slot) {
 		while (TRUE) {
 			const auto r1x = accept_solution (slot) ;
 			if (r1x)
@@ -341,9 +341,9 @@ public:
 		}
 	}
 
-	BOOL is_better (CR<CalcSolution> a ,CR<CalcSolution> b) const {
-		const auto r1x = INDEX (FLT64 (a.mIteration) * self.mConfidenceFator) ;
-		INDEX ix = MathProc::clamp (r1x ,ZERO ,self.mConfidence.length ()) ;
+	Bool is_better (CR<CalcSolution> a ,CR<CalcSolution> b) const {
+		const auto r1x = Index (Flt64 (a.mIteration) * self.mConfidenceFator) ;
+		Index ix = MathProc::clamp (r1x ,ZERO ,self.mConfidence.length ()) ;
 		const auto r2x = a.mAvgError - a.mStdError * self.mConfidence[ix] ;
 		const auto r3x = b.mAvgError - b.mStdError * self.mConfidence[ix] ;
 		if (r2x < r3x)
@@ -351,7 +351,7 @@ public:
 		return FALSE ;
 	}
 
-	void wait_solution (CR<INDEX> slot) {
+	void wait_solution (CR<Index> slot) {
 		Scope<Mutex> anonymous (self.mThreadMutex) ;
 		if (self.mBestSolution.mIteration != NONE)
 			if (self.mThreadSolution[slot].mIteration == self.mBestSolution.mIteration)
@@ -359,7 +359,7 @@ public:
 		self.mThreadSolution[slot] = self.mBestSolution ;
 	}
 
-	BOOL accept_solution (CR<INDEX> slot) {
+	Bool accept_solution (CR<Index> slot) {
 		auto rax = UniqueLock (self.mThreadMutex) ;
 		auto act = TRUE ;
 		if ifdo (act) {
@@ -391,7 +391,7 @@ public:
 		return bitset1 ^ bitset2 ;
 	}
 
-	void wait_suspend (CR<INDEX> slot) {
+	void wait_suspend (CR<Index> slot) {
 		auto rax = UniqueLock (self.mThreadMutex) ;
 		while (TRUE) {
 			if (self.mThreadFlag != ThreadFlag::Running)
@@ -410,7 +410,7 @@ public:
 		self.mThreadJoin.erase (slot) ;
 	}
 
-	BOOL ready () const override {
+	Bool ready () const override {
 		Scope<Mutex> anonymous (self.mThreadMutex) ;
 		return self.mNewSolution ;
 	}
@@ -487,7 +487,7 @@ struct PromiseLayout {
 	Function<> mRunningFunc ;
 	Box<AutoRef<Pointer>> mItem ;
 	Box<Exception> mException ;
-	BOOL mRetryFlag ;
+	Bool mRetryFlag ;
 
 public:
 	implicit PromiseLayout () = default ;
@@ -496,7 +496,7 @@ public:
 		PromiseHolder::hold (thiz)->stop () ;
 	}
 
-	void friend_execute (CR<INDEX> slot) {
+	void friend_execute (CR<Index> slot) {
 		PromiseHolder::hold (thiz)->friend_execute (slot) ;
 	}
 } ;
@@ -509,7 +509,7 @@ public:
 		set_retry (FALSE) ;
 	}
 
-	void set_retry (CR<BOOL> flag) override {
+	void set_retry (CR<Bool> flag) override {
 		Scope<Mutex> anonymous (self.mThreadMutex) ;
 		assume (self.mThreadFlag == ThreadFlag::Preparing) ;
 		self.mRetryFlag = flag ;
@@ -545,7 +545,7 @@ public:
 		rax.notify () ;
 	}
 
-	void friend_execute (CR<INDEX> slot) override {
+	void friend_execute (CR<Index> slot) override {
 		while (TRUE) {
 			try {
 				self.mRunningFunc = self.mThreadFunc ;
@@ -566,7 +566,7 @@ public:
 		rax.notify () ;
 	}
 
-	BOOL wait_future () {
+	Bool wait_future () {
 		auto rax = UniqueLock (self.mThreadMutex) ;
 		while (TRUE) {
 			if (self.mThreadFlag != ThreadFlag::Finishing)
@@ -611,14 +611,14 @@ public:
 		rax.notify () ;
 	}
 
-	BOOL ready () const override {
+	Bool ready () const override {
 		Scope<Mutex> anonymous (self.mThreadMutex) ;
 		if (self.mThreadFlag == ThreadFlag::Finishing)
 			return TRUE ;
 		return FALSE ;
 	}
 
-	BOOL running () const override {
+	Bool running () const override {
 		Scope<Mutex> anonymous (self.mThreadMutex) ;
 		if (self.mThreadFlag == ThreadFlag::Running)
 			return TRUE ;
@@ -685,212 +685,6 @@ exports CFat<PromiseHolder> PromiseHolder::hold (CR<PromiseLayout> that) {
 	return CFat<PromiseHolder> (PromiseImplHolder () ,that) ;
 }
 
-struct EntityLayout {
-	Manager mManager ;
-	Clazz mClazz ;
-	INDEX mKeyId ;
-	Set<Clazz> mComponentClazz ;
-} ;
-
-class EntityImplHolder final implement Fat<EntityHolder ,EntityLayout> {
-public:
-	void initialize (CR<Clazz> clazz_) override {
-		self.mManager = Manager::expr ;
-		self.mClazz = clazz_ ;
-		self.mKeyId = NONE ;
-	}
-
-	Clazz clazz () const override {
-		return self.mClazz ;
-	}
-
-	INDEX keyid () const override {
-		return self.mKeyId ;
-	}
-
-	void add_component (CR<Like<SharedRef<ComponentLayout>>> component) override {
-		auto &&rax = keep[TYPE<Component>::expr] (component) ;
-		INDEX ix = self.mComponentClazz.map (rax.clazz ()) ;
-		if ifdo (TRUE) {
-			if (ix != NONE)
-				discard ;
-			ix = self.mManager.component (rax) ;
-			self.mComponentClazz.add (rax.clazz () ,ix) ;
-		}
-	}
-
-	void register_service (CR<Like<SharedRef<ServiceLayout>>> service) override {
-		assume (self.mKeyId == NONE) ;
-		auto &&rax = keep[TYPE<Service>::expr] (service) ;
-		self.mKeyId = rax.spwan_entity () ;
-	}
-} ;
-
-exports SharedRef<EntityLayout> EntityHolder::create () {
-	return SharedRef<EntityLayout>::make () ;
-}
-
-exports VFat<EntityHolder> EntityHolder::hold (VR<EntityLayout> that) {
-	return VFat<EntityHolder> (EntityImplHolder () ,that) ;
-}
-
-exports CFat<EntityHolder> EntityHolder::hold (CR<EntityLayout> that) {
-	return CFat<EntityHolder> (EntityImplHolder () ,that) ;
-}
-
-struct ComponentLayout {
-	Manager mManager ;
-	Clazz mClazz ;
-	INDEX mEntity ;
-} ;
-
-class ComponentImplHolder final implement Fat<ComponentHolder ,ComponentLayout> {
-public:
-	void initialize (CR<Clazz> clazz_) override {
-		self.mManager = Manager::expr ;
-		self.mClazz = clazz_ ;
-	}
-
-	Clazz clazz () const override {
-		return self.mClazz ;
-	}
-
-	BOOL contain (CR<Clazz> clazz_) const override {
-		const auto r1x = self.mManager.entity (self.mEntity) ;
-		INDEX ix = r1x.mThis->mComponentClazz.map (clazz_) ;
-		return ix != NONE ;
-	}
-
-	Like<SharedRef<ComponentLayout>> get (CR<Clazz> clazz_) const override {
-		assume (self.mEntity != NONE) ;
-		const auto r1x = self.mManager.entity (self.mEntity) ;
-		INDEX ix = r1x.mThis->mComponentClazz.map (clazz_) ;
-		assume (ix != NONE) ;
-		return self.mManager.component (ix) ;
-	}
-} ;
-
-exports SharedRef<ComponentLayout> ComponentHolder::create () {
-	return SharedRef<ComponentLayout>::make () ;
-}
-
-exports VFat<ComponentHolder> ComponentHolder::hold (VR<ComponentLayout> that) {
-	return VFat<ComponentHolder> (ComponentImplHolder () ,that) ;
-}
-
-exports CFat<ComponentHolder> ComponentHolder::hold (CR<ComponentLayout> that) {
-	return CFat<ComponentHolder> (ComponentImplHolder () ,that) ;
-}
-
-struct ServiceLayout {
-	Manager mManager ;
-	Clazz mClazz ;
-	LENGTH mGeneration ;
-	Set<INDEX> mEntityKeyId ;
-} ;
-
-class ServiceImplHolder final implement Fat<ServiceHolder ,ServiceLayout> {
-public:
-	void initialize (CR<Clazz> clazz_) override {
-		self.mManager = Manager::expr ;
-		self.mClazz = clazz_ ;
-		self.mGeneration = ZERO ;
-	}
-
-	Clazz clazz () const override {
-		return self.mClazz ;
-	}
-
-	INDEX spwan_entity () override {
-		INDEX ret = self.mGeneration++ ;
-		return move (ret) ;
-	}
-} ;
-
-exports SharedRef<ServiceLayout> ServiceHolder::create () {
-	return SharedRef<ServiceLayout>::make () ;
-}
-
-exports VFat<ServiceHolder> ServiceHolder::hold (VR<ServiceLayout> that) {
-	return VFat<ServiceHolder> (ServiceImplHolder () ,that) ;
-}
-
-exports CFat<ServiceHolder> ServiceHolder::hold (CR<ServiceLayout> that) {
-	return CFat<ServiceHolder> (ServiceImplHolder () ,that) ;
-}
-
-struct ManagerLayout {
-	Mutex mMutex ;
-	List<Entity> mEntityList ;
-	List<Component> mComponentList ;
-	List<Service> mServiceList ;
-} ;
-
-class ManagerImplHolder final implement Fat<ManagerHolder ,ManagerLayout> {
-public:
-	void initialize () override {
-		self.mMutex = SharedMutex () ;
-		self.mEntityList = List<Entity> (1024) ;
-		self.mComponentList = List<Component> (512) ;
-		self.mServiceList = List<Service> (256) ;
-	}
-
-	Entity entity (CR<INDEX> index) const override {
-		const auto r1x = SharedLock (self.mMutex) ;
-		return self.mEntityList[index] ;
-	}
-
-	INDEX entity (CR<Entity> item) override {
-		const auto r1x = SharedLock (self.mMutex) ;
-		Scope<SharedLock> anonymous (r1x) ;
-		INDEX ret = self.mEntityList.insert () ;
-		self.mEntityList[ret] = item ;
-		return move (ret) ;
-	}
-
-	Component component (CR<INDEX> index) const override {
-		const auto r1x = SharedLock (self.mMutex) ;
-		return self.mComponentList[index] ;
-	}
-
-	INDEX component (CR<Component> item) override {
-		const auto r1x = SharedLock (self.mMutex) ;
-		Scope<SharedLock> anonymous (r1x) ;
-		INDEX ret = self.mComponentList.insert () ;
-		self.mComponentList[ret] = item ;
-		return move (ret) ;
-	}
-
-	Service service (CR<INDEX> index) const override {
-		const auto r1x = SharedLock (self.mMutex) ;
-		return self.mServiceList[index] ;
-	}
-
-	INDEX service (CR<Service> item) override {
-		const auto r1x = SharedLock (self.mMutex) ;
-		Scope<SharedLock> anonymous (r1x) ;
-		INDEX ret = self.mServiceList.insert () ;
-		self.mServiceList[ret] = item ;
-		return move (ret) ;
-	}
-} ;
-
-exports CR<Like<SharedRef<ManagerLayout>>> ManagerHolder::expr_m () {
-	return memorize ([&] () {
-		Like<SharedRef<ManagerLayout>> ret ;
-		ret.mThis = SharedRef<ManagerLayout>::make () ;
-		return move (ret) ;
-	}) ;
-}
-
-exports VFat<ManagerHolder> ManagerHolder::hold (VR<ManagerLayout> that) {
-	return VFat<ManagerHolder> (ManagerImplHolder () ,that) ;
-}
-
-exports CFat<ManagerHolder> ManagerHolder::hold (CR<ManagerLayout> that) {
-	return CFat<ManagerHolder> (ManagerImplHolder () ,that) ;
-}
-
 struct SyntaxLayout {
 	Set<Clazz> mTree ;
 } ;
@@ -923,7 +717,7 @@ public:
 		unimplemented () ;
 	}
 
-	void until (RR<Ref<BOOL>> flag) override {
+	void until (RR<Ref<Bool>> flag) override {
 		unimplemented () ;
 	}
 

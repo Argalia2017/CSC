@@ -108,10 +108,11 @@ public:
 	SVDResult solve_svd (CR<Matrix> a) const override {
 		SVDResult ret ;
 		const auto r1x = cvt_eigen_matrix (a) ;
-		auto rax = Eigen::JacobiSVD<Eigen::Matrix4d> (r1x ,Eigen::ComputeFullU | Eigen::ComputeFullV) ;
+		const auto r2x = csc_uint32_t (Eigen::ComputeFullU | Eigen::ComputeFullV) ;
+		auto rax = Eigen::JacobiSVD<Eigen::Matrix4d> (r1x ,r2x) ;
 		ret.mU = cvt_csc_matrix (rax.matrixU ()) ;
-		const auto r2x = Eigen::Vector4d (rax.singularValues ()) ;
-		ret.mS = DiagMatrix (r2x[0] ,r2x[1] ,r2x[2] ,r2x[3]) ;
+		const auto r3x = Eigen::Vector4d (rax.singularValues ()) ;
+		ret.mS = DiagMatrix (r3x[0] ,r3x[1] ,r3x[2] ,r3x[3]) ;
 		ret.mV = cvt_csc_matrix (rax.matrixV ()) ;
 		return move (ret) ;
 	}
@@ -141,12 +142,12 @@ public:
 		noop () ;
 	}
 
-	Image<FLT64> solve_lsm (CR<Image<FLT64>> a) const override {
-		Image<FLT64> ret = Image<FLT64> (1 ,a.cx ()) ;
+	Image<Flt64> solve_lsm (CR<Image<Flt64>> a) const override {
+		Image<Flt64> ret = Image<Flt64> (1 ,a.cx ()) ;
 		const auto r1x = cvt_eigen_matrix (a) ;
 		const auto r2x = Eigen::ComputeFullV ;
 		auto rax = Eigen::JacobiSVD<Eigen::MatrixXd> (r1x ,r2x) ;
-		INDEX ix = MathProc::min_of (INDEX (rax.rank ()) ,a.cx () - 1) ;
+		Index ix = MathProc::min_of (Index (rax.rank ()) ,a.cx () - 1) ;
 		assume (ix >= 0) ;
 		const auto r3x = cvt_csc_matrix (rax.matrixV ()) ;
 		for (auto &&i : range (0 ,ret.cy ()))
@@ -154,32 +155,32 @@ public:
 		return move (ret) ;
 	}
 
-	Image<FLT64> solve_lsm (CR<Image<FLT64>> a ,CR<Image<FLT64>> b) const override {
+	Image<Flt64> solve_lsm (CR<Image<Flt64>> a ,CR<Image<Flt64>> b) const override {
 		const auto r1x = cvt_eigen_matrix (a) ;
 		const auto r2x = cvt_eigen_matrix (b) ;
 		const auto r3x = Eigen::MatrixXd (r1x.transpose () * r1x) ;
 		const auto r4x = Eigen::MatrixXd (r1x.transpose () * r2x) ;
-		const auto r5x = Eigen::ComputeThinU | Eigen::ComputeThinV ;
+		const auto r5x = csc_uint32_t (Eigen::ComputeThinU | Eigen::ComputeThinV) ;
 		auto rax = Eigen::JacobiSVD<Eigen::MatrixXd> (r3x ,r5x) ;
 		const auto r6x = rax.solve (r4x) ;
 		return cvt_csc_matrix (r6x) ;
 	}
 
-	Image<FLT64> solve_inv (CR<Image<FLT64>> a) const override {
+	Image<Flt64> solve_inv (CR<Image<Flt64>> a) const override {
 		const auto r1x = cvt_eigen_matrix (a) ;
 		const auto r2x = Eigen::MatrixXd (r1x.completeOrthogonalDecomposition ().pseudoInverse ()) ;
 		return cvt_csc_matrix (r2x) ;
 	}
 
-	Eigen::MatrixXd cvt_eigen_matrix (CR<Image<FLT64>> a) const {
+	Eigen::MatrixXd cvt_eigen_matrix (CR<Image<Flt64>> a) const {
 		Eigen::MatrixXd ret = Eigen::MatrixXd (a.cy () ,a.cx ()) ;
 		for (auto &&i : a.iter ())
 			ret (i.mY ,i.mX) = a[i] ;
 		return move (ret) ;
 	}
 
-	Image<FLT64> cvt_csc_matrix (CR<Eigen::MatrixXd> a) const {
-		Image<FLT64> ret = Image<FLT64> (a.cols () ,a.rows ()) ;
+	Image<Flt64> cvt_csc_matrix (CR<Eigen::MatrixXd> a) const {
+		Image<Flt64> ret = Image<Flt64> (a.cols () ,a.rows ()) ;
 		for (auto &&i : ret.iter ())
 			ret[i] = a (i.mY ,i.mX) ;
 		return move (ret) ;

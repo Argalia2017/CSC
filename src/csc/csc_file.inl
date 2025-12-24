@@ -25,7 +25,7 @@ template class External<FileProcHolder ,FileProcLayout> ;
 
 struct FileProcLayout {
 	Mutex mMutex ;
-	List<UniqueRef<String<STR>>> mLockDirectory ;
+	List<UniqueRef<String<Str>>> mLockDirectory ;
 } ;
 
 exports CR<Like<UniqueRef<FileProcLayout>>> FileProcHolder::expr_m () {
@@ -48,14 +48,14 @@ exports CFat<FileProcHolder> FileProcHolder::hold (CR<FileProcLayout> that) {
 template class External<StreamFileHolder ,StreamFileLayout> ;
 
 struct StreamFileLayout {
-	String<STR> mFile ;
+	String<Str> mFile ;
 	UniqueRef<csc_pipe_t> mReadPipe ;
 	UniqueRef<csc_pipe_t> mWritePipe ;
-	VAL64 mFileSize ;
-	VAL64 mRead ;
-	VAL64 mWrite ;
-	BOOL mShortRead ;
-	LENGTH mShortSize ;
+	Val64 mFileSize ;
+	Val64 mRead ;
+	Val64 mWrite ;
+	Bool mShortRead ;
+	Length mShortSize ;
 } ;
 
 exports AutoRef<StreamFileLayout> StreamFileHolder::create () {
@@ -70,153 +70,105 @@ exports CFat<StreamFileHolder> StreamFileHolder::hold (CR<StreamFileLayout> that
 	return CFat<StreamFileHolder> (External<StreamFileHolder ,StreamFileLayout>::expr ,that) ;
 }
 
-struct StreamFileByteWriterLayout {
+struct StreamFileWriterLayout {
 	StreamFile mStreamFile ;
-	RefBuffer<BYTE> mFileBuffer ;
-	ByteWriter mFileWriter ;
+	RefBuffer<Byte> mFileBuffer ;
+	AutoRef<Writer> mFileWriter ;
 
 public:
-	implicit StreamFileByteWriterLayout () = default ;
+	implicit StreamFileWriterLayout () = default ;
 
-	implicit ~StreamFileByteWriterLayout () noexcept {
-		StreamFileByteWriterHolder::hold (thiz)->flush () ;
+	implicit ~StreamFileWriterLayout () noexcept {
+		StreamFileWriterHolder::hold (thiz)->flush () ;
 	}
 } ;
 
-class StreamFileByteWriterImplHolder final implement Fat<StreamFileByteWriterHolder ,StreamFileByteWriterLayout> {
+class StreamFileWriterImplHolder final implement Fat<StreamFileWriterHolder ,StreamFileWriterLayout> {
 public:
-	void initialize (CR<String<STR>> file) override {
+	void initialize (CR<String<Str>> file ,CR<Just<StreamFileEncode>> encode) override {
 		self.mStreamFile = StreamFile (file) ;
 		self.mStreamFile.open_w (0) ;
-		self.mFileBuffer = RefBuffer<BYTE> (STREAMFILE_CHUNK_STEP::expr) ;
-		set_writer () ;
+		self.mFileBuffer = RefBuffer<Byte> (STREAMFILE_CHUNK_STEP::expr) ;
+		set_writer (encode) ;
 	}
 
-	void set_writer () {
-		self.mFileWriter = ByteWriter (Ref<RefBuffer<BYTE>>::reference (self.mFileBuffer)) ;
+	void set_writer (CR<Just<StreamFileEncode>> encode) {
+		auto act = TRUE ;
+		if ifdo (act) {
+			if (encode != StreamFileEncode::ByteWriter)
+				discard ;
+			self.mFileWriter = AutoRef<ByteWriter>::make (Ref<RefBuffer<Byte>>::reference (self.mFileBuffer)) ;
+		}
+		if ifdo (act) {
+			if (encode != StreamFileEncode::TextWriter)
+				discard ;
+			self.mFileWriter = AutoRef<TextWriter>::make (Ref<RefBuffer<Byte>>::reference (self.mFileBuffer)) ;
+		}
 		auto &&rax = self ;
-		self.mFileWriter.use_overflow ([&] (VR<ByteWriter> writer) {
+		self.mFileWriter->use_overflow ([&] (VR<Writer> writer) {
 			rax.mStreamFile.write (rax.mFileBuffer) ;
-			rax.mFileWriter.reset () ;
+			rax.mFileWriter->reset () ;
 		}) ;
 	}
 
-	VR<ByteWriter> ref_m () leftvalue override {
-		return self.mFileWriter ;
+	VR<Writer> ref_m () leftvalue override {
+		return self.mFileWriter.ref ;
 	}
 
 	void flush () override {
-		const auto r1x = self.mFileWriter.length () ;
+		const auto r1x = self.mFileWriter->length () ;
 		if (r1x == 0)
 			return ;
-		const auto r2x = FLAG (self.mFileBuffer.ref) ;
-		self.mStreamFile.write (RefBuffer<BYTE>::reference (r2x ,r1x)) ;
-		self.mFileWriter.reset () ;
+		const auto r2x = Flag (self.mFileBuffer.ref) ;
+		self.mStreamFile.write (RefBuffer<Byte>::reference (r2x ,r1x)) ;
+		self.mFileWriter->reset () ;
 		self.mStreamFile.flush () ;
 	}
 } ;
 
-exports AutoRef<StreamFileByteWriterLayout> StreamFileByteWriterHolder::create () {
-	return AutoRef<StreamFileByteWriterLayout>::make () ;
+exports AutoRef<StreamFileWriterLayout> StreamFileWriterHolder::create () {
+	return AutoRef<StreamFileWriterLayout>::make () ;
 }
 
-exports VFat<StreamFileByteWriterHolder> StreamFileByteWriterHolder::hold (VR<StreamFileByteWriterLayout> that) {
-	return VFat<StreamFileByteWriterHolder> (StreamFileByteWriterImplHolder () ,that) ;
+exports VFat<StreamFileWriterHolder> StreamFileWriterHolder::hold (VR<StreamFileWriterLayout> that) {
+	return VFat<StreamFileWriterHolder> (StreamFileWriterImplHolder () ,that) ;
 }
 
-exports CFat<StreamFileByteWriterHolder> StreamFileByteWriterHolder::hold (CR<StreamFileByteWriterLayout> that) {
-	return CFat<StreamFileByteWriterHolder> (StreamFileByteWriterImplHolder () ,that) ;
-}
-
-struct StreamFileTextWriterLayout {
-	StreamFile mStreamFile ;
-	RefBuffer<BYTE> mFileBuffer ;
-	TextWriter mFileWriter ;
-
-public:
-	implicit StreamFileTextWriterLayout () = default ;
-
-	implicit ~StreamFileTextWriterLayout () noexcept {
-		StreamFileTextWriterHolder::hold (thiz)->flush () ;
-	}
-} ;
-
-class StreamFileTextWriterImplHolder final implement Fat<StreamFileTextWriterHolder ,StreamFileTextWriterLayout> {
-public:
-	void initialize (CR<String<STR>> file) override {
-		self.mStreamFile = StreamFile (file) ;
-		self.mStreamFile.open_w (0) ;
-		self.mFileBuffer = RefBuffer<BYTE> (STREAMFILE_CHUNK_STEP::expr) ;
-		set_writer () ;
-	}
-
-	void set_writer () {
-		self.mFileWriter = TextWriter (Ref<RefBuffer<BYTE>>::reference (self.mFileBuffer)) ;
-		auto &&rax = self ;
-		self.mFileWriter.use_overflow ([&] (VR<TextWriter> writer) {
-			rax.mStreamFile.write (rax.mFileBuffer) ;
-			rax.mFileWriter.reset () ;
-		}) ;
-	}
-
-	VR<TextWriter> ref_m () leftvalue override {
-		return self.mFileWriter ;
-	}
-
-	void flush () override {
-		const auto r1x = self.mFileWriter.length () ;
-		if (r1x == 0)
-			return ;
-		const auto r2x = FLAG (self.mFileBuffer.ref) ;
-		self.mStreamFile.write (RefBuffer<BYTE>::reference (r2x ,r1x)) ;
-		self.mFileWriter.reset () ;
-		self.mStreamFile.flush () ;
-	}
-} ;
-
-exports AutoRef<StreamFileTextWriterLayout> StreamFileTextWriterHolder::create () {
-	return AutoRef<StreamFileTextWriterLayout>::make () ;
-}
-
-exports VFat<StreamFileTextWriterHolder> StreamFileTextWriterHolder::hold (VR<StreamFileTextWriterLayout> that) {
-	return VFat<StreamFileTextWriterHolder> (StreamFileTextWriterImplHolder () ,that) ;
-}
-
-exports CFat<StreamFileTextWriterHolder> StreamFileTextWriterHolder::hold (CR<StreamFileTextWriterLayout> that) {
-	return CFat<StreamFileTextWriterHolder> (StreamFileTextWriterImplHolder () ,that) ;
+exports CFat<StreamFileWriterHolder> StreamFileWriterHolder::hold (CR<StreamFileWriterLayout> that) {
+	return CFat<StreamFileWriterHolder> (StreamFileWriterImplHolder () ,that) ;
 }
 
 template class External<BufferFileHolder ,BufferFileLayout> ;
 
 struct BufferFileHeader {
-	QUAD mFileEndian ;
-	VAL64 mFileSize ;
-	VAL64 mBlockSize ;
-	VAL64 mBlockStep ;
-	VAL64 mBlockLength ;
-	VAL64 mChunkSize ;
-	VAL64 mChunkStep ;
-	VAL64 mChunkLength ;
+	Quad mFileEndian ;
+	Val64 mFileSize ;
+	Val64 mBlockSize ;
+	Val64 mBlockStep ;
+	Val64 mBlockLength ;
+	Val64 mChunkSize ;
+	Val64 mChunkStep ;
+	Val64 mChunkLength ;
 } ;
 
 struct BufferFileChunk {
-	VAL64 mIndex ;
-	VAL64 mCacheTime ;
-	UniqueRef<Tuple<FLAG ,FLAG>> mBlock ;
+	Val64 mIndex ;
+	Val64 mCacheTime ;
+	UniqueRef<Tuple<Flag ,Flag>> mBlock ;
 } ;
 
 struct BufferFileLayout {
-	String<STR> mFile ;
+	String<Str> mFile ;
 	UniqueRef<csc_pipe_t> mPipe ;
 	UniqueRef<csc_handle_t> mMapping ;
-	VAL64 mFileSize ;
-	VAL64 mBlockStep ;
-	VAL64 mChunkStep ;
+	Val64 mFileSize ;
+	Val64 mBlockStep ;
+	Val64 mChunkStep ;
 	csc_enum_t mFileMapFlag ;
 	Box<BufferFileHeader> mHeader ;
-	Set<VAL64> mCacheSet ;
+	Set<Val64> mCacheSet ;
 	List<BufferFileChunk> mCacheList ;
-	VAL64 mCacheTimer ;
+	Val64 mCacheTimer ;
 } ;
 
 exports AutoRef<BufferFileLayout> BufferFileHolder::create () {
@@ -237,14 +189,14 @@ struct UartFileCOMParams ;
 struct UartFileCOMStatus ;
 
 struct UartFileLayout {
-	String<STR> mPortName ;
-	LENGTH mPortRate ;
+	String<Str> mPortName ;
+	Length mPortRate ;
 	UniqueRef<csc_pipe_t> mPipe ;
 	Ref<UartFileCOMParams> mCOMParams ;
 	Ref<UartFileCOMStatus> mCOMStatus ;
 	csc_enum_t mCOMError ;
-	RefBuffer<BYTE> mRingBuffer ;
-	INDEX mRingRead ;
+	RefBuffer<Byte> mRingBuffer ;
+	Index mRingRead ;
 } ;
 
 exports AutoRef<UartFileLayout> UartFileHolder::create () {
@@ -265,12 +217,12 @@ struct ConsoleLayout {
 	Mutex mMutex ;
 	BitSet mOption ;
 	UniqueRef<csc_handle_t> mConsole ;
-	String<STR> mLogBuffer ;
+	String<Str> mLogBuffer ;
 	TextWriter mLogWriter ;
-	String<STR> mLogFile ;
-	String<STR> mOldLogFile ;
+	String<Str> mLogFile ;
+	String<Str> mOldLogFile ;
 	StreamFile mLogStreamFile ;
-	BOOL mDebugMode ;
+	Bool mDebugMode ;
 	System mCommand ;
 } ;
 

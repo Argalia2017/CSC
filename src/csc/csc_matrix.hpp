@@ -14,14 +14,14 @@
 
 namespace CSC {
 struct Point2F {
-	FLT32 mX ;
-	FLT32 mY ;
+	Flt32 mX ;
+	Flt32 mY ;
 } ;
 
 struct Point3F {
-	FLT32 mX ;
-	FLT32 mY ;
-	FLT32 mZ ;
+	Flt32 mX ;
+	Flt32 mY ;
+	Flt32 mZ ;
 } ;
 
 struct Line2F {
@@ -35,7 +35,7 @@ struct Line3F {
 } ;
 
 template <class A>
-class XYZProxy {
+class XYZProxy implement Proxy {
 protected:
 	XR<A> mThat ;
 
@@ -46,16 +46,16 @@ public:
 
 	forceinline operator Point2F () rightvalue {
 		Point2F ret ;
-		ret.mX = FLT32 (mThat.at (0)) ;
-		ret.mY = FLT32 (mThat.at (1)) ;
+		ret.mX = Flt32 (mThat.at (0)) ;
+		ret.mY = Flt32 (mThat.at (1)) ;
 		return move (ret) ;
 	}
 
 	forceinline operator Point3F () rightvalue {
 		Point3F ret ;
-		ret.mX = FLT32 (mThat.at (0)) ;
-		ret.mY = FLT32 (mThat.at (1)) ;
-		ret.mZ = FLT32 (mThat.at (2)) ;
+		ret.mX = Flt32 (mThat.at (0)) ;
+		ret.mY = Flt32 (mThat.at (1)) ;
+		ret.mZ = Flt32 (mThat.at (2)) ;
 		return move (ret) ;
 	}
 } ;
@@ -65,33 +65,33 @@ struct MatrixLayout ;
 struct QuaternionLayout ;
 
 struct VectorLayout {
-	Buffer<FLT64 ,RANK4> mVector ;
+	Buffer<Flt64 ,RANK4> mVector ;
 } ;
 
 struct VectorHolder implement Interface {
 	imports VFat<VectorHolder> hold (VR<VectorLayout> that) ;
 	imports CFat<VectorHolder> hold (CR<VectorLayout> that) ;
 
-	virtual void initialize (CR<Buffer<FLT64 ,RANK4>> that) = 0 ;
-	virtual void initialize (CR<FLT64> x ,CR<FLT64> y ,CR<FLT64> z ,CR<FLT64> w) = 0 ;
+	virtual void initialize (CR<Buffer<Flt64 ,RANK4>> that) = 0 ;
+	virtual void initialize (CR<Flt64> x ,CR<Flt64> y ,CR<Flt64> z ,CR<Flt64> w) = 0 ;
 	virtual void initialize (CR<Pixel> point) = 0 ;
 	virtual void initialize (CR<Point2F> point) = 0 ;
 	virtual void initialize (CR<Point3F> point) = 0 ;
-	virtual VR<FLT64> at (CR<INDEX> y) leftvalue = 0 ;
-	virtual CR<FLT64> at (CR<INDEX> y) const leftvalue = 0 ;
-	virtual BOOL equal (CR<VectorLayout> that) const = 0 ;
-	virtual FLAG compr (CR<VectorLayout> that) const = 0 ;
+	virtual VR<Flt64> at (CR<Index> y) leftvalue = 0 ;
+	virtual CR<Flt64> at (CR<Index> y) const leftvalue = 0 ;
+	virtual Bool equal (CR<VectorLayout> that) const = 0 ;
+	virtual Flag compr (CR<VectorLayout> that) const = 0 ;
 	virtual void visit (VR<FriendVisitor> visitor) const = 0 ;
 	virtual VectorLayout sadd (CR<VectorLayout> that) const = 0 ;
 	virtual VectorLayout ssub (CR<VectorLayout> that) const = 0 ;
-	virtual VectorLayout smul (CR<FLT64> that) const = 0 ;
-	virtual VectorLayout sdiv (CR<FLT64> that) const = 0 ;
-	virtual FLT64 dot (CR<VectorLayout> that) const = 0 ;
+	virtual VectorLayout smul (CR<Flt64> that) const = 0 ;
+	virtual VectorLayout sdiv (CR<Flt64> that) const = 0 ;
+	virtual Flt64 dot (CR<VectorLayout> that) const = 0 ;
 	virtual VectorLayout smul (CR<MatrixLayout> that) const = 0 ;
 	virtual VectorLayout cross (CR<VectorLayout> that) const = 0 ;
 	virtual VectorLayout sabs () const = 0 ;
 	virtual VectorLayout minus () const = 0 ;
-	virtual FLT64 magnitude () const = 0 ;
+	virtual Flt64 magnitude () const = 0 ;
 	virtual VectorLayout normalize () const = 0 ;
 	virtual VectorLayout projection () const = 0 ;
 	virtual VectorLayout homogenize () const = 0 ;
@@ -104,11 +104,11 @@ protected:
 public:
 	implicit Vector () = default ;
 
-	explicit Vector (CR<Buffer<FLT64 ,RANK4>> that) {
+	explicit Vector (CR<Buffer<Flt64 ,RANK4>> that) {
 		VectorHolder::hold (thiz)->initialize (that) ;
 	}
 
-	explicit Vector (CR<FLT64> x ,CR<FLT64> y ,CR<FLT64> z ,CR<FLT64> w) {
+	explicit Vector (CR<Flt64> x ,CR<Flt64> y ,CR<Flt64> z ,CR<Flt64> w) {
 		VectorHolder::hold (thiz)->initialize (x ,y ,z ,w) ;
 	}
 
@@ -158,51 +158,51 @@ public:
 		return XYZProxy<CR<Vector>> (thiz) ;
 	}
 
-	VR<FLT64> at (CR<INDEX> y) leftvalue {
+	VR<Flt64> at (CR<Index> y) leftvalue {
 		return VectorHolder::hold (thiz)->at (y) ;
 	}
 
-	forceinline VR<FLT64> operator[] (CR<INDEX> y) leftvalue {
+	forceinline VR<Flt64> operator[] (CR<Index> y) leftvalue {
 		return at (y) ;
 	}
 
-	CR<FLT64> at (CR<INDEX> y) const leftvalue {
+	CR<Flt64> at (CR<Index> y) const leftvalue {
 		return VectorHolder::hold (thiz)->at (y) ;
 	}
 
-	forceinline CR<FLT64> operator[] (CR<INDEX> y) const leftvalue {
+	forceinline CR<Flt64> operator[] (CR<Index> y) const leftvalue {
 		return at (y) ;
 	}
 
-	BOOL equal (CR<Vector> that) const {
+	Bool equal (CR<Vector> that) const {
 		return VectorHolder::hold (thiz)->equal (that) ;
 	}
 
-	forceinline BOOL operator== (CR<Vector> that) const {
+	forceinline Bool operator== (CR<Vector> that) const {
 		return equal (that) ;
 	}
 
-	forceinline BOOL operator!= (CR<Vector> that) const {
+	forceinline Bool operator!= (CR<Vector> that) const {
 		return (!equal (that)) ;
 	}
 
-	FLAG compr (CR<Vector> that) const {
+	Flag compr (CR<Vector> that) const {
 		return VectorHolder::hold (thiz)->compr (that) ;
 	}
 
-	forceinline BOOL operator< (CR<Vector> that) const {
+	forceinline Bool operator< (CR<Vector> that) const {
 		return compr (that) < ZERO ;
 	}
 
-	forceinline BOOL operator<= (CR<Vector> that) const {
+	forceinline Bool operator<= (CR<Vector> that) const {
 		return compr (that) <= ZERO ;
 	}
 
-	forceinline BOOL operator> (CR<Vector> that) const {
+	forceinline Bool operator> (CR<Vector> that) const {
 		return compr (that) > ZERO ;
 	}
 
-	forceinline BOOL operator>= (CR<Vector> that) const {
+	forceinline Bool operator>= (CR<Vector> that) const {
 		return compr (that) >= ZERO ;
 	}
 
@@ -236,41 +236,41 @@ public:
 		thiz = ssub (that) ;
 	}
 
-	Vector smul (CR<FLT64> that) const {
+	Vector smul (CR<Flt64> that) const {
 		VectorLayout ret = VectorHolder::hold (thiz)->smul (that) ;
 		return move (keep[TYPE<Vector>::expr] (ret)) ;
 	}
 
-	forceinline Vector operator* (CR<FLT64> that) const {
+	forceinline Vector operator* (CR<Flt64> that) const {
 		return smul (that) ;
 	}
 
-	forceinline friend Vector operator* (CR<FLT64> thiz_ ,CR<Vector> that) {
+	forceinline friend Vector operator* (CR<Flt64> thiz_ ,CR<Vector> that) {
 		return that.smul (thiz_) ;
 	}
 
-	forceinline void operator*= (CR<FLT64> that) {
+	forceinline void operator*= (CR<Flt64> that) {
 		thiz = smul (that) ;
 	}
 
-	Vector sdiv (CR<FLT64> that) const {
+	Vector sdiv (CR<Flt64> that) const {
 		VectorLayout ret = VectorHolder::hold (thiz)->sdiv (that) ;
 		return move (keep[TYPE<Vector>::expr] (ret)) ;
 	}
 
-	forceinline Vector operator/ (CR<FLT64> that) const {
+	forceinline Vector operator/ (CR<Flt64> that) const {
 		return sdiv (that) ;
 	}
 
-	forceinline void operator/= (CR<FLT64> that) {
+	forceinline void operator/= (CR<Flt64> that) {
 		thiz = sdiv (that) ;
 	}
 
-	FLT64 dot (CR<Vector> that) const {
+	Flt64 dot (CR<Vector> that) const {
 		return VectorHolder::hold (thiz)->dot (that) ;
 	}
 
-	forceinline FLT64 operator* (CR<Vector> that) const {
+	forceinline Flt64 operator* (CR<Vector> that) const {
 		return dot (that) ;
 	}
 
@@ -310,7 +310,7 @@ public:
 		return minus () ;
 	}
 
-	FLT64 magnitude () const {
+	Flt64 magnitude () const {
 		return VectorHolder::hold (thiz)->magnitude () ;
 	}
 
@@ -331,24 +331,24 @@ public:
 } ;
 
 struct MatrixLayout {
-	Buffer<FLT64 ,ENUM<16>> mMatrix ;
+	Buffer<Flt64 ,ENUM<16>> mMatrix ;
 } ;
 
 struct MatrixHolder implement Interface {
 	imports VFat<MatrixHolder> hold (VR<MatrixLayout> that) ;
 	imports CFat<MatrixHolder> hold (CR<MatrixLayout> that) ;
 
-	virtual void initialize (CR<Buffer<FLT64 ,ENUM<16>>> that) = 0 ;
+	virtual void initialize (CR<Buffer<Flt64 ,ENUM<16>>> that) = 0 ;
 	virtual void initialize (CR<VectorLayout> x ,CR<VectorLayout> y ,CR<VectorLayout> z ,CR<VectorLayout> w) = 0 ;
-	virtual VR<FLT64> at (CR<INDEX> x ,CR<INDEX> y) leftvalue = 0 ;
-	virtual CR<FLT64> at (CR<INDEX> x ,CR<INDEX> y) const leftvalue = 0 ;
-	virtual BOOL equal (CR<MatrixLayout> that) const = 0 ;
-	virtual FLAG compr (CR<MatrixLayout> that) const = 0 ;
+	virtual VR<Flt64> at (CR<Index> x ,CR<Index> y) leftvalue = 0 ;
+	virtual CR<Flt64> at (CR<Index> x ,CR<Index> y) const leftvalue = 0 ;
+	virtual Bool equal (CR<MatrixLayout> that) const = 0 ;
+	virtual Flag compr (CR<MatrixLayout> that) const = 0 ;
 	virtual void visit (VR<FriendVisitor> visitor) const = 0 ;
 	virtual MatrixLayout sadd (CR<MatrixLayout> that) const = 0 ;
 	virtual MatrixLayout ssub (CR<MatrixLayout> that) const = 0 ;
-	virtual MatrixLayout smul (CR<FLT64> that) const = 0 ;
-	virtual MatrixLayout sdiv (CR<FLT64> that) const = 0 ;
+	virtual MatrixLayout smul (CR<Flt64> that) const = 0 ;
+	virtual MatrixLayout sdiv (CR<Flt64> that) const = 0 ;
 	virtual VectorLayout smul (CR<VectorLayout> that) const = 0 ;
 	virtual MatrixLayout smul (CR<MatrixLayout> that) const = 0 ;
 	virtual MatrixLayout sabs () const = 0 ;
@@ -356,10 +356,10 @@ struct MatrixHolder implement Interface {
 	virtual MatrixLayout transpose () const = 0 ;
 	virtual MatrixLayout triangular () const = 0 ;
 	virtual MatrixLayout homogenize () const = 0 ;
-	virtual FLT64 determinant () const = 0 ;
+	virtual Flt64 determinant () const = 0 ;
 	virtual MatrixLayout adjoint () const = 0 ;
 	virtual MatrixLayout inverse () const = 0 ;
-	virtual FLT64 trace () const = 0 ;
+	virtual Flt64 trace () const = 0 ;
 } ;
 
 class Matrix implement MatrixLayout {
@@ -369,7 +369,7 @@ protected:
 public:
 	implicit Matrix () = default ;
 
-	explicit Matrix (CR<Buffer<FLT64 ,ENUM<16>>> that) {
+	explicit Matrix (CR<Buffer<Flt64 ,ENUM<16>>> that) {
 		MatrixHolder::hold (thiz)->initialize (that) ;
 	}
 
@@ -394,6 +394,30 @@ public:
 		}) ;
 	}
 
+	static CR<Matrix> axis_x () {
+		return memorize ([&] () {
+			const auto r1x = Vector::zero () ;
+			const auto r2x = Vector::axis_x () ;
+			return Matrix (r2x ,r1x ,r1x ,r1x) ;
+		}) ;
+	}
+
+	static CR<Matrix> axis_y () {
+		return memorize ([&] () {
+			const auto r1x = Vector::zero () ;
+			const auto r2x = Vector::axis_y () ;
+			return Matrix (r1x ,r2x ,r1x ,r1x) ;
+		}) ;
+	}
+
+	static CR<Matrix> axis_z () {
+		return memorize ([&] () {
+			const auto r1x = Vector::zero () ;
+			const auto r2x = Vector::axis_z () ;
+			return Matrix (r1x ,r1x ,r2x ,r1x) ;
+		}) ;
+	}
+
 	static CR<Matrix> axis_w () {
 		return memorize ([&] () {
 			const auto r1x = Vector::zero () ;
@@ -402,67 +426,67 @@ public:
 		}) ;
 	}
 
-	VR<FLT64> at (CR<INDEX> x ,CR<INDEX> y) leftvalue {
+	VR<Flt64> at (CR<Index> x ,CR<Index> y) leftvalue {
 		return MatrixHolder::hold (thiz)->at (x ,y) ;
 	}
 
-	VR<FLT64> at (CR<Pixel> index) leftvalue {
+	VR<Flt64> at (CR<Pixel> index) leftvalue {
 		return at (index.mX ,index.mY) ;
 	}
 
-	forceinline VR<FLT64> operator[] (CR<Pixel> index) leftvalue {
+	forceinline VR<Flt64> operator[] (CR<Pixel> index) leftvalue {
 		return at (index) ;
 	}
 
-	forceinline RowProxy<VR<Matrix>> operator[] (CR<INDEX> y) leftvalue {
+	forceinline RowProxy<VR<Matrix>> operator[] (CR<Index> y) leftvalue {
 		return RowProxy<VR<Matrix>> (thiz ,y) ;
 	}
 
-	CR<FLT64> at (CR<INDEX> x ,CR<INDEX> y) const leftvalue {
+	CR<Flt64> at (CR<Index> x ,CR<Index> y) const leftvalue {
 		return MatrixHolder::hold (thiz)->at (x ,y) ;
 	}
 
-	CR<FLT64> at (CR<Pixel> index) const leftvalue {
+	CR<Flt64> at (CR<Pixel> index) const leftvalue {
 		return at (index.mX ,index.mY) ;
 	}
 
-	forceinline CR<FLT64> operator[] (CR<Pixel> index) const leftvalue {
+	forceinline CR<Flt64> operator[] (CR<Pixel> index) const leftvalue {
 		return at (index) ;
 	}
 
-	forceinline RowProxy<CR<Matrix>> operator[] (CR<INDEX> y) const leftvalue {
+	forceinline RowProxy<CR<Matrix>> operator[] (CR<Index> y) const leftvalue {
 		return RowProxy<CR<Matrix>> (thiz ,y) ;
 	}
 
-	BOOL equal (CR<Matrix> that) const {
+	Bool equal (CR<Matrix> that) const {
 		return MatrixHolder::hold (thiz)->equal (that) ;
 	}
 
-	forceinline BOOL operator== (CR<Matrix> that) const {
+	forceinline Bool operator== (CR<Matrix> that) const {
 		return equal (that) ;
 	}
 
-	forceinline BOOL operator!= (CR<Matrix> that) const {
+	forceinline Bool operator!= (CR<Matrix> that) const {
 		return (!equal (that)) ;
 	}
 
-	FLAG compr (CR<Matrix> that) const {
+	Flag compr (CR<Matrix> that) const {
 		return MatrixHolder::hold (thiz)->compr (that) ;
 	}
 
-	forceinline BOOL operator< (CR<Matrix> that) const {
+	forceinline Bool operator< (CR<Matrix> that) const {
 		return compr (that) < ZERO ;
 	}
 
-	forceinline BOOL operator<= (CR<Matrix> that) const {
+	forceinline Bool operator<= (CR<Matrix> that) const {
 		return compr (that) <= ZERO ;
 	}
 
-	forceinline BOOL operator> (CR<Matrix> that) const {
+	forceinline Bool operator> (CR<Matrix> that) const {
 		return compr (that) > ZERO ;
 	}
 
-	forceinline BOOL operator>= (CR<Matrix> that) const {
+	forceinline Bool operator>= (CR<Matrix> that) const {
 		return compr (that) >= ZERO ;
 	}
 
@@ -496,33 +520,33 @@ public:
 		thiz = ssub (that) ;
 	}
 
-	Matrix smul (CR<FLT64> that) const {
+	Matrix smul (CR<Flt64> that) const {
 		MatrixLayout ret = MatrixHolder::hold (thiz)->smul (that) ;
 		return move (keep[TYPE<Matrix>::expr] (ret)) ;
 	}
 
-	forceinline Matrix operator* (CR<FLT64> that) const {
+	forceinline Matrix operator* (CR<Flt64> that) const {
 		return smul (that) ;
 	}
 
-	forceinline friend Matrix operator* (CR<FLT64> thiz_ ,CR<Matrix> that) {
+	forceinline friend Matrix operator* (CR<Flt64> thiz_ ,CR<Matrix> that) {
 		return that.smul (thiz_) ;
 	}
 
-	forceinline void operator*= (CR<FLT64> that) {
+	forceinline void operator*= (CR<Flt64> that) {
 		thiz = smul (that) ;
 	}
 
-	Matrix sdiv (CR<FLT64> that) const {
+	Matrix sdiv (CR<Flt64> that) const {
 		MatrixLayout ret = MatrixHolder::hold (thiz)->sdiv (that) ;
 		return move (keep[TYPE<Matrix>::expr] (ret)) ;
 	}
 
-	forceinline Matrix operator/ (CR<FLT64> that) const {
+	forceinline Matrix operator/ (CR<Flt64> that) const {
 		return sdiv (that) ;
 	}
 
-	forceinline void operator/= (CR<FLT64> that) {
+	forceinline void operator/= (CR<Flt64> that) {
 		thiz = sdiv (that) ;
 	}
 
@@ -577,7 +601,7 @@ public:
 		return move (keep[TYPE<Matrix>::expr] (ret)) ;
 	}
 
-	FLT64 determinant () const {
+	Flt64 determinant () const {
 		return MatrixHolder::hold (thiz)->determinant () ;
 	}
 
@@ -591,7 +615,7 @@ public:
 		return move (keep[TYPE<Matrix>::expr] (ret)) ;
 	}
 
-	FLT64 trace () const {
+	Flt64 trace () const {
 		return MatrixHolder::hold (thiz)->trace () ;
 	}
 } ;
@@ -612,13 +636,14 @@ struct MakeMatrixHolder implement Interface {
 	imports VFat<MakeMatrixHolder> hold (VR<MatrixLayout> that) ;
 	imports CFat<MakeMatrixHolder> hold (CR<MatrixLayout> that) ;
 
-	virtual void make_DiagMatrix (CR<FLT64> x ,CR<FLT64> y ,CR<FLT64> z ,CR<FLT64> w) = 0 ;
+	virtual void make_DiagMatrix (CR<Flt64> x ,CR<Flt64> y ,CR<Flt64> z ,CR<Flt64> w) = 0 ;
 	virtual void make_ShearMatrix (CR<Vector> x ,CR<Vector> y ,CR<Vector> z) = 0 ;
-	virtual void make_RotationMatrix (CR<Vector> normal ,CR<FLT64> angle) = 0 ;
+	virtual void make_RotationMatrix (CR<Vector> normal ,CR<Flt64> angle) = 0 ;
 	virtual void make_RotationMatrix (CR<Vector> from ,CR<Vector> into) = 0 ;
-	virtual void make_TranslationMatrix (CR<FLT64> x ,CR<FLT64> y ,CR<FLT64> z) = 0 ;
-	virtual void make_PerspectiveMatrix (CR<FLT64> fovx ,CR<ImageShape> shape) = 0 ;
-	virtual void make_PerspectiveMatrix (CR<FLT64> fx ,CR<FLT64> fy ,CR<FLT64> cx ,CR<FLT64> cy) = 0 ;
+	virtual void make_UnitaryMatrix (CR<Matrix> trs) = 0 ;
+	virtual void make_TranslationMatrix (CR<Flt64> x ,CR<Flt64> y ,CR<Flt64> z) = 0 ;
+	virtual void make_PerspectiveMatrix (CR<Flt64> fovx ,CR<ImageShape> shape) = 0 ;
+	virtual void make_PerspectiveMatrix (CR<Flt64> fx ,CR<Flt64> fy ,CR<Flt64> cx ,CR<Flt64> cy) = 0 ;
 	virtual void make_ProjectionMatrix (CR<Vector> normal ,CR<Vector> center ,CR<Vector> light) = 0 ;
 	virtual void make_ViewMatrix (CR<Vector> vx ,CR<Vector> vy) = 0 ;
 	virtual void make_ViewMatrix (CR<Vector> vx ,CR<Vector> vy ,CR<Just<ViewMatrixOption>> option) = 0 ;
@@ -626,13 +651,19 @@ struct MakeMatrixHolder implement Interface {
 	virtual void make_OuterProductMatrix (CR<Vector> x ,CR<Vector> y) = 0 ;
 } ;
 
-inline Matrix DiagMatrix (CR<FLT64> x ,CR<FLT64> y ,CR<FLT64> z) {
+inline Matrix DiagMatrix (CR<Vector> xyz) {
+	Matrix ret ;
+	MakeMatrixHolder::hold (ret)->make_DiagMatrix (xyz[0] ,xyz[1] ,xyz[2] ,1) ;
+	return move (ret) ;
+}
+
+inline Matrix DiagMatrix (CR<Flt64> x ,CR<Flt64> y ,CR<Flt64> z) {
 	Matrix ret ;
 	MakeMatrixHolder::hold (ret)->make_DiagMatrix (x ,y ,z ,1) ;
 	return move (ret) ;
 }
 
-inline Matrix DiagMatrix (CR<FLT64> x ,CR<FLT64> y ,CR<FLT64> z ,CR<FLT64> w) {
+inline Matrix DiagMatrix (CR<Flt64> x ,CR<Flt64> y ,CR<Flt64> z ,CR<Flt64> w) {
 	Matrix ret ;
 	MakeMatrixHolder::hold (ret)->make_DiagMatrix (x ,y ,z ,w) ;
 	return move (ret) ;
@@ -644,7 +675,7 @@ inline Matrix ShearMatrix (CR<Vector> x ,CR<Vector> y ,CR<Vector> z) {
 	return move (ret) ;
 }
 
-inline Matrix RotationMatrix (CR<Vector> normal ,CR<FLT64> angle) {
+inline Matrix RotationMatrix (CR<Vector> normal ,CR<Flt64> angle) {
 	Matrix ret ;
 	MakeMatrixHolder::hold (ret)->make_RotationMatrix (normal ,angle) ;
 	return move (ret) ;
@@ -656,25 +687,31 @@ inline Matrix RotationMatrix (CR<Vector> from ,CR<Vector> into) {
 	return move (ret) ;
 }
 
+inline Matrix UnitaryMatrix (CR<Matrix> trs) {
+	Matrix ret ;
+	MakeMatrixHolder::hold (ret)->make_UnitaryMatrix (trs) ;
+	return move (ret) ;
+}
+
 inline Matrix TranslationMatrix (CR<Vector> xyz) {
 	Matrix ret ;
 	MakeMatrixHolder::hold (ret)->make_TranslationMatrix (xyz[0] ,xyz[1] ,xyz[2]) ;
 	return move (ret) ;
 }
 
-inline Matrix TranslationMatrix (CR<FLT64> x ,CR<FLT64> y ,CR<FLT64> z) {
+inline Matrix TranslationMatrix (CR<Flt64> x ,CR<Flt64> y ,CR<Flt64> z) {
 	Matrix ret ;
 	MakeMatrixHolder::hold (ret)->make_TranslationMatrix (x ,y ,z) ;
 	return move (ret) ;
 }
 
-inline Matrix PerspectiveMatrix (CR<FLT64> fovx ,CR<ImageShape> shape) {
+inline Matrix PerspectiveMatrix (CR<Flt64> fovx ,CR<ImageShape> shape) {
 	Matrix ret ;
 	MakeMatrixHolder::hold (ret)->make_PerspectiveMatrix (fovx ,shape) ;
 	return move (ret) ;
 }
 
-inline Matrix PerspectiveMatrix (CR<FLT64> fx ,CR<FLT64> fy ,CR<FLT64> cx ,CR<FLT64> cy) {
+inline Matrix PerspectiveMatrix (CR<Flt64> fx ,CR<Flt64> fy ,CR<Flt64> cx ,CR<Flt64> cy) {
 	Matrix ret ;
 	MakeMatrixHolder::hold (ret)->make_PerspectiveMatrix (fx ,fy ,cx ,cy) ;
 	return move (ret) ;
@@ -815,11 +852,11 @@ public:
 		DuplexMatrixHolder::hold (thiz)->initialize (that) ;
 	}
 
-	CR<Matrix> at (CR<INDEX> index) const leftvalue {
+	CR<Matrix> at (CR<Index> index) const leftvalue {
 		return mDuplexMatrix[index] ;
 	}
 
-	forceinline CR<Matrix> operator[] (CR<INDEX> index) const leftvalue {
+	forceinline CR<Matrix> operator[] (CR<Index> index) const leftvalue {
 		return at (index) ;
 	}
 
@@ -831,26 +868,26 @@ public:
 
 struct EulerAngle {
 	Just<ViewMatrixOption> mType ;
-	FLT64 mPitch ;
-	FLT64 mYaw ;
-	FLT64 mRoll ;
+	Flt64 mPitch ;
+	Flt64 mYaw ;
+	Flt64 mRoll ;
 } ;
 
 struct QuaternionLayout {
-	Buffer<FLT64 ,RANK4> mQuaternion ;
+	Buffer<Flt64 ,RANK4> mQuaternion ;
 } ;
 
 struct QuaternionHolder implement Interface {
 	imports VFat<QuaternionHolder> hold (VR<QuaternionLayout> that) ;
 	imports CFat<QuaternionHolder> hold (CR<QuaternionLayout> that) ;
 
-	virtual void initialize (CR<FLT64> x ,CR<FLT64> y ,CR<FLT64> z ,CR<FLT64> w) = 0 ;
+	virtual void initialize (CR<Flt64> w ,CR<Flt64> x ,CR<Flt64> y ,CR<Flt64> z) = 0 ;
 	virtual void initialize (CR<Vector> that) = 0 ;
 	virtual void initialize (CR<Matrix> that) = 0 ;
 	virtual void initialize (CR<EulerAngle> that) = 0 ;
-	virtual CR<FLT64> at (CR<INDEX> y) const leftvalue = 0 ;
-	virtual BOOL equal (CR<QuaternionLayout> that) const = 0 ;
-	virtual FLAG compr (CR<QuaternionLayout> that) const = 0 ;
+	virtual CR<Flt64> at (CR<Index> y) const leftvalue = 0 ;
+	virtual Bool equal (CR<QuaternionLayout> that) const = 0 ;
+	virtual Flag compr (CR<QuaternionLayout> that) const = 0 ;
 	virtual void visit (VR<FriendVisitor> visitor) const = 0 ;
 	virtual QuaternionLayout smul (CR<QuaternionLayout> that) const = 0 ;
 	virtual Vector vector () const = 0 ;
@@ -865,8 +902,8 @@ protected:
 public:
 	implicit Quaternion () = default ;
 
-	explicit Quaternion (CR<FLT64> x ,CR<FLT64> y ,CR<FLT64> z ,CR<FLT64> w) {
-		QuaternionHolder::hold (thiz)->initialize (x ,y ,z ,w) ;
+	explicit Quaternion (CR<Flt64> w ,CR<Flt64> x ,CR<Flt64> y ,CR<Flt64> z) {
+		QuaternionHolder::hold (thiz)->initialize (w ,x ,y ,z) ;
 	}
 
 	explicit Quaternion (CR<Vector> that) {
@@ -883,47 +920,47 @@ public:
 
 	static CR<Quaternion> iden () {
 		return memorize ([&] () {
-			return Quaternion (0 ,0 ,0 ,1) ;
+			return Quaternion (1 ,0 ,0 ,0) ;
 		}) ;
 	}
 
-	CR<FLT64> at (CR<INDEX> y) const leftvalue {
+	CR<Flt64> at (CR<Index> y) const leftvalue {
 		return QuaternionHolder::hold (thiz)->at (y) ;
 	}
 
-	forceinline CR<FLT64> operator[] (CR<INDEX> y) const leftvalue {
+	forceinline CR<Flt64> operator[] (CR<Index> y) const leftvalue {
 		return at (y) ;
 	}
 
-	BOOL equal (CR<Quaternion> that) const {
+	Bool equal (CR<Quaternion> that) const {
 		return QuaternionHolder::hold (thiz)->equal (that) ;
 	}
 
-	forceinline BOOL operator== (CR<Quaternion> that) const {
+	forceinline Bool operator== (CR<Quaternion> that) const {
 		return equal (that) ;
 	}
 
-	forceinline BOOL operator!= (CR<Quaternion> that) const {
+	forceinline Bool operator!= (CR<Quaternion> that) const {
 		return (!equal (that)) ;
 	}
 
-	FLAG compr (CR<Quaternion> that) const {
+	Flag compr (CR<Quaternion> that) const {
 		return QuaternionHolder::hold (thiz)->compr (that) ;
 	}
 
-	forceinline BOOL operator< (CR<Quaternion> that) const {
+	forceinline Bool operator< (CR<Quaternion> that) const {
 		return compr (that) < ZERO ;
 	}
 
-	forceinline BOOL operator<= (CR<Quaternion> that) const {
+	forceinline Bool operator<= (CR<Quaternion> that) const {
 		return compr (that) <= ZERO ;
 	}
 
-	forceinline BOOL operator> (CR<Quaternion> that) const {
+	forceinline Bool operator> (CR<Quaternion> that) const {
 		return compr (that) > ZERO ;
 	}
 
-	forceinline BOOL operator>= (CR<Quaternion> that) const {
+	forceinline Bool operator>= (CR<Quaternion> that) const {
 		return compr (that) >= ZERO ;
 	}
 
@@ -965,9 +1002,9 @@ struct LinearProcHolder implement Interface {
 	imports CFat<LinearProcHolder> hold (CR<LinearProcLayout> that) ;
 
 	virtual void initialize () = 0 ;
-	virtual Image<FLT64> solve_lsm (CR<Image<FLT64>> a) const = 0 ;
-	virtual Image<FLT64> solve_lsm (CR<Image<FLT64>> a ,CR<Image<FLT64>> b) const = 0 ;
-	virtual Image<FLT64> solve_inv (CR<Image<FLT64>> a) const = 0 ;
+	virtual Image<Flt64> solve_lsm (CR<Image<Flt64>> a) const = 0 ;
+	virtual Image<Flt64> solve_lsm (CR<Image<Flt64>> a ,CR<Image<Flt64>> b) const = 0 ;
+	virtual Image<Flt64> solve_inv (CR<Image<Flt64>> a) const = 0 ;
 } ;
 
 class LinearProc implement Like<UniqueRef<LinearProcLayout>> {
@@ -976,15 +1013,15 @@ public:
 		return keep[TYPE<LinearProc>::expr] (LinearProcHolder::expr) ;
 	}
 
-	static Image<FLT64> solve_lsm (CR<Image<FLT64>> a) {
+	static Image<Flt64> solve_lsm (CR<Image<Flt64>> a) {
 		return LinearProcHolder::hold (expr)->solve_lsm (a) ;
 	}
 
-	static Image<FLT64> solve_lsm (CR<Image<FLT64>> a ,CR<Image<FLT64>> b) {
+	static Image<Flt64> solve_lsm (CR<Image<Flt64>> a ,CR<Image<Flt64>> b) {
 		return LinearProcHolder::hold (expr)->solve_lsm (a ,b) ;
 	}
 
-	static Image<FLT64> solve_inv (CR<Image<FLT64>> a) {
+	static Image<Flt64> solve_inv (CR<Image<Flt64>> a) {
 		return LinearProcHolder::hold (expr)->solve_inv (a) ;
 	}
 } ;
@@ -997,14 +1034,14 @@ struct PointCloudKDTreeHolder implement Interface {
 	imports CFat<PointCloudKDTreeHolder> hold (CR<PointCloudKDTreeLayout> that) ;
 
 	virtual void initialize (CR<Array<Pointer>> pointcloud) = 0 ;
-	virtual Array<INDEX> search (CR<Vector> center ,CR<LENGTH> neighbor) const = 0 ;
-	virtual Array<INDEX> search (CR<Vector> center ,CR<LENGTH> neighbor ,CR<FLT64> radius) const = 0 ;
+	virtual Array<Index> search (CR<Vector> center ,CR<Length> neighbor) const = 0 ;
+	virtual Array<Index> search (CR<Vector> center ,CR<Length> neighbor ,CR<Flt64> radius) const = 0 ;
 } ;
 
 class PointCloudKDTree implement Like<AutoRef<PointCloudKDTreeLayout>> {} ;
 
 struct PointCloudLayout {
-	LENGTH mRank ;
+	Length mRank ;
 	Ref<Array<Pointer>> mPointCloud ;
 	Matrix mWorld ;
 	PointCloudKDTree mKDTree ;
@@ -1017,15 +1054,14 @@ struct PointCloudHolder implement Interface {
 	virtual void initialize (RR<Ref<Array<Point2F>>> pointcloud) = 0 ;
 	virtual void initialize (RR<Ref<Array<Point3F>>> pointcloud) = 0 ;
 	virtual void initialize (RR<Ref<Array<Vector>>> pointcloud) = 0 ;
-	virtual LENGTH size () const = 0 ;
-	virtual void get (CR<INDEX> index ,VR<Vector> item) const = 0 ;
-	virtual Vector center () const = 0 ;
+	virtual Length size () const = 0 ;
+	virtual void get (CR<Index> index ,VR<Vector> item) const = 0 ;
 	virtual Matrix pca_matrix () const = 0 ;
-	virtual Matrix box_matrix (CR<FLT64> ax ,CR<FLT64> ay ,CR<FLT64> az) const = 0 ;
+	virtual Matrix box_matrix (CR<Flt64> ax ,CR<Flt64> ay ,CR<Flt64> az) const = 0 ;
 	virtual Line3F bound () const = 0 ;
 	virtual PointCloudLayout smul (CR<Matrix> that) const = 0 ;
-	virtual Array<INDEX> search (CR<Vector> center ,CR<LENGTH> neighbor) const = 0 ;
-	virtual Array<INDEX> search (CR<Vector> center ,CR<LENGTH> neighbor ,CR<FLT64> radius) const = 0 ;
+	virtual Array<Index> search (CR<Vector> center ,CR<Length> neighbor) const = 0 ;
+	virtual Array<Index> search (CR<Vector> center ,CR<Length> neighbor ,CR<Flt64> radius) const = 0 ;
 } ;
 
 class PointCloud implement PointCloudLayout {
@@ -1050,29 +1086,25 @@ public:
 		PointCloudHolder::hold (thiz)->initialize (move (pointcloud)) ;
 	}
 
-	LENGTH size () const {
+	Length size () const {
 		return PointCloudHolder::hold (thiz)->size () ;
 	}
 
-	void get (CR<INDEX> index ,VR<Vector> item) const {
+	void get (CR<Index> index ,VR<Vector> item) const {
 		return PointCloudHolder::hold (thiz)->get (index ,item) ;
 	}
 
-	forceinline Vector operator[] (CR<INDEX> index) const {
+	forceinline Vector operator[] (CR<Index> index) const {
 		Vector ret ;
 		get (index ,ret) ;
 		return move (ret) ;
-	}
-
-	Vector center () const {
-		return PointCloudHolder::hold (thiz)->center () ;
 	}
 
 	Matrix pca_matrix () const {
 		return PointCloudHolder::hold (thiz)->pca_matrix () ;
 	}
 
-	Matrix box_matrix (CR<FLT64> ax ,CR<FLT64> ay ,CR<FLT64> az) const {
+	Matrix box_matrix (CR<Flt64> ax ,CR<Flt64> ay ,CR<Flt64> az) const {
 		return PointCloudHolder::hold (thiz)->box_matrix (ax ,ay ,az) ;
 	}
 
@@ -1093,11 +1125,11 @@ public:
 		return that.smul (thiz_.transpose ()) ;
 	}
 
-	Array<INDEX> search (CR<Vector> center ,CR<LENGTH> neighbor) const {
+	Array<Index> search (CR<Vector> center ,CR<Length> neighbor) const {
 		return PointCloudHolder::hold (thiz)->search (center ,neighbor) ;
 	}
 
-	Array<INDEX> search (CR<Vector> center ,CR<LENGTH> neighbor ,CR<FLT64> radius) const {
+	Array<Index> search (CR<Vector> center ,CR<Length> neighbor ,CR<Flt64> radius) const {
 		return PointCloudHolder::hold (thiz)->search (center ,neighbor ,radius) ;
 	}
 } ;
@@ -1106,9 +1138,9 @@ struct TPSFitLayout {
 	DuplexMatrix mNSrc ;
 	DuplexMatrix mNDst ;
 	Array<Vector> mPSrc ;
-	Image<FLT64> mQA ;
-	Image<FLT64> mQB ;
-	Image<FLT64> mQC ;
+	Image<Flt64> mQA ;
+	Image<Flt64> mQB ;
+	Image<Flt64> mQC ;
 } ;
 
 struct TPSFitHolder implement Interface {

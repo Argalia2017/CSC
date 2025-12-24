@@ -17,20 +17,10 @@
 namespace CSC {
 struct FriendCoroutine implement Interface {
 	virtual void before () = 0 ;
-	virtual BOOL tick (CR<FLT64> deltatime) = 0 ;
-	virtual BOOL idle () = 0 ;
+	virtual Bool tick (CR<Flt64> deltatime) = 0 ;
+	virtual Bool idle () = 0 ;
 	virtual void after () = 0 ;
-
-	void execute () {
-		thiz.before () ;
-		while (TRUE) {
-			while (thiz.tick (0))
-				noop () ;
-			if (!thiz.idle ())
-				break ;
-		}
-		thiz.after () ;
-	}
+	virtual void execute () = 0 ;
 } ;
 
 template <class A>
@@ -44,16 +34,27 @@ public:
 		return thiz.self.before () ;
 	}
 
-	BOOL tick (CR<FLT64> deltatime) override {
+	Bool tick (CR<Flt64> deltatime) override {
 		return thiz.self.tick (deltatime) ;
 	}
 
-	BOOL idle () override {
+	Bool idle () override {
 		return thiz.self.idle () ;
 	}
 
 	void after () override {
 		return thiz.self.after () ;
+	}
+
+	void execute () override {
+		thiz.before () ;
+		while (TRUE) {
+			while (thiz.tick (0))
+				noop () ;
+			if (!thiz.idle ())
+				break ;
+		}
+		thiz.after () ;
 	}
 } ;
 
@@ -65,13 +66,13 @@ struct WorkThreadHolder implement Interface {
 	imports CFat<WorkThreadHolder> hold (CR<WorkThreadLayout> that) ;
 
 	virtual void initialize () = 0 ;
-	virtual void set_thread_size (CR<LENGTH> size_) = 0 ;
-	virtual void set_queue_size (CR<LENGTH> size_) = 0 ;
-	virtual void start (CR<Function<CR<INDEX>>> func) = 0 ;
-	virtual void friend_execute (CR<INDEX> slot) = 0 ;
-	virtual void post (CR<INDEX> begin_ ,CR<INDEX> end_) = 0 ;
+	virtual void set_thread_size (CR<Length> size_) = 0 ;
+	virtual void set_queue_size (CR<Length> size_) = 0 ;
+	virtual void start (CR<Function<CR<Index>>> func) = 0 ;
+	virtual void friend_execute (CR<Index> slot) = 0 ;
+	virtual void post (CR<Index> begin_ ,CR<Index> end_) = 0 ;
 	virtual void join () = 0 ;
-	virtual BOOL join (CR<Time> interval) = 0 ;
+	virtual Bool join (CR<Time> interval) = 0 ;
 	virtual void stop () = 0 ;
 } ;
 
@@ -84,19 +85,19 @@ public:
 		WorkThreadHolder::hold (thiz)->initialize () ;
 	}
 
-	void set_thread_size (CR<LENGTH> size_) const {
+	void set_thread_size (CR<Length> size_) const {
 		return WorkThreadHolder::hold (thiz)->set_thread_size (size_) ;
 	}
 
-	void set_queue_size (CR<LENGTH> size_) const {
+	void set_queue_size (CR<Length> size_) const {
 		return WorkThreadHolder::hold (thiz)->set_queue_size (size_) ;
 	}
 
-	void start (CR<Function<CR<INDEX>>> func) const {
+	void start (CR<Function<CR<Index>>> func) const {
 		return WorkThreadHolder::hold (thiz)->start (func) ;
 	}
 
-	void post (CR<INDEX> begin_ ,CR<INDEX> end_) const {
+	void post (CR<Index> begin_ ,CR<Index> end_) const {
 		return WorkThreadHolder::hold (thiz)->post (begin_ ,end_) ;
 	}
 
@@ -104,7 +105,7 @@ public:
 		return WorkThreadHolder::hold (thiz)->join () ;
 	}
 
-	BOOL join (CR<Time> interval) const {
+	Bool join (CR<Time> interval) const {
 		return WorkThreadHolder::hold (thiz)->join (interval) ;
 	}
 
@@ -116,9 +117,9 @@ public:
 } ;
 
 struct CalcSolution {
-	INDEX mIteration ;
-	FLT64 mAvgError ;
-	FLT64 mStdError ;
+	Index mIteration ;
+	Flt64 mAvgError ;
+	Flt64 mStdError ;
 	BitSet mInput ;
 } ;
 
@@ -130,11 +131,11 @@ struct CalcThreadHolder implement Interface {
 	imports CFat<CalcThreadHolder> hold (CR<CalcThreadLayout> that) ;
 
 	virtual void initialize () = 0 ;
-	virtual void set_thread_size (CR<LENGTH> size_) = 0 ;
-	virtual void set_start_input (CR<BitSet> input ,CR<FLT64> factor) = 0 ;
+	virtual void set_thread_size (CR<Length> size_) = 0 ;
+	virtual void set_start_input (CR<BitSet> input ,CR<Flt64> factor) = 0 ;
 	virtual void start (CR<Function<CR<CalcSolution> ,VR<CalcSolution>>> func) = 0 ;
-	virtual void friend_execute (CR<INDEX> slot) = 0 ;
-	virtual BOOL ready () const = 0 ;
+	virtual void friend_execute (CR<Index> slot) = 0 ;
+	virtual Bool ready () const = 0 ;
 	virtual CalcSolution poll () = 0 ;
 	virtual void suspend () = 0 ;
 	virtual void resume () = 0 ;
@@ -150,11 +151,11 @@ public:
 		CalcThreadHolder::hold (thiz)->initialize () ;
 	}
 
-	void set_thread_size (CR<LENGTH> size_) const {
+	void set_thread_size (CR<Length> size_) const {
 		return CalcThreadHolder::hold (thiz)->set_thread_size (size_) ;
 	}
 
-	void set_start_input (CR<BitSet> input ,CR<FLT64> factor) const {
+	void set_start_input (CR<BitSet> input ,CR<Flt64> factor) const {
 		return CalcThreadHolder::hold (thiz)->set_start_input (input ,factor) ;
 	}
 
@@ -162,7 +163,7 @@ public:
 		return CalcThreadHolder::hold (thiz)->start (func) ;
 	}
 
-	BOOL ready () const {
+	Bool ready () const {
 		return CalcThreadHolder::hold (thiz)->ready () ;
 	}
 
@@ -193,14 +194,14 @@ struct PromiseHolder implement Interface {
 	imports CFat<PromiseHolder> hold (CR<PromiseLayout> that) ;
 
 	virtual void initialize () = 0 ;
-	virtual void set_retry (CR<BOOL> flag) = 0 ;
+	virtual void set_retry (CR<Bool> flag) = 0 ;
 	virtual void start () = 0 ;
 	virtual void start (CR<Function<>> func) = 0 ;
-	virtual void friend_execute (CR<INDEX> slot) = 0 ;
+	virtual void friend_execute (CR<Index> slot) = 0 ;
 	virtual void post (RR<AutoRef<Pointer>> item) = 0 ;
 	virtual void rethrow (CR<Exception> e) = 0 ;
-	virtual BOOL ready () const = 0 ;
-	virtual BOOL running () const = 0 ;
+	virtual Bool ready () const = 0 ;
+	virtual Bool running () const = 0 ;
 	virtual AutoRef<Pointer> poll () = 0 ;
 	virtual void future () = 0 ;
 	virtual void stop () = 0 ;
@@ -216,7 +217,7 @@ public:
 		PromiseHolder::hold (thiz)->initialize () ;
 	}
 
-	void set_retry (CR<BOOL> flag) const {
+	void set_retry (CR<Bool> flag) const {
 		return PromiseHolder::hold (thiz)->set_retry (flag) ;
 	}
 
@@ -241,11 +242,11 @@ public:
 		return PromiseHolder::hold (thiz)->rethrow (e) ;
 	}
 
-	BOOL ready () const {
+	Bool ready () const {
 		return PromiseHolder::hold (thiz)->ready () ;
 	}
 
-	BOOL running () const {
+	Bool running () const {
 		return PromiseHolder::hold (thiz)->running () ;
 	}
 
@@ -267,157 +268,6 @@ public:
 	}
 } ;
 
-struct EntityLayout ;
-struct ComponentLayout ;
-struct ServiceLayout ;
-
-struct EntityHolder implement Interface {
-	imports SharedRef<EntityLayout> create () ;
-	imports VFat<EntityHolder> hold (VR<EntityLayout> that) ;
-	imports CFat<EntityHolder> hold (CR<EntityLayout> that) ;
-
-	virtual void initialize (CR<Clazz> clazz_) = 0 ;
-	virtual Clazz clazz () const = 0 ;
-	virtual INDEX keyid () const = 0 ;
-	virtual void add_component (CR<Like<SharedRef<ComponentLayout>>> component) = 0 ;
-	virtual void register_service (CR<Like<SharedRef<ServiceLayout>>> service) = 0 ;
-} ;
-
-class Entity implement Like<SharedRef<EntityLayout>> {
-public:
-	implicit Entity () = default ;
-
-	implicit Entity (CR<Clazz> clazz_) {
-		mThis = EntityHolder::create () ;
-		EntityHolder::hold (thiz)->initialize (clazz_) ;
-	}
-
-	Clazz clazz () const {
-		return EntityHolder::hold (thiz)->clazz () ;
-	}
-
-	INDEX keyid () const {
-		return EntityHolder::hold (thiz)->keyid () ;
-	}
-
-	void add_component (CR<Like<SharedRef<ComponentLayout>>> component) const {
-		return EntityHolder::hold (thiz)->add_component (component) ;
-	}
-
-	void register_service (CR<Like<SharedRef<ServiceLayout>>> service) const {
-		return EntityHolder::hold (thiz)->register_service (service) ;
-	}
-} ;
-
-struct ComponentHolder implement Interface {
-	imports SharedRef<ComponentLayout> create () ;
-	imports VFat<ComponentHolder> hold (VR<ComponentLayout> that) ;
-	imports CFat<ComponentHolder> hold (CR<ComponentLayout> that) ;
-
-	virtual void initialize (CR<Clazz> clazz_) = 0 ;
-	virtual Clazz clazz () const = 0 ;
-	virtual BOOL contain (CR<Clazz> clazz_) const = 0 ;
-	virtual Like<SharedRef<ComponentLayout>> get (CR<Clazz> clazz_) const = 0 ;
-} ;
-
-class Component implement Like<SharedRef<ComponentLayout>> {
-public:
-	implicit Component () = default ;
-
-	implicit Component (CR<Clazz> clazz_) {
-		mThis = ComponentHolder::create () ;
-		ComponentHolder::hold (thiz)->initialize (clazz_) ;
-	}
-
-	Clazz clazz () const {
-		return ComponentHolder::hold (thiz)->clazz () ;
-	}
-
-	BOOL contain (CR<Clazz> clazz_) const {
-		return ComponentHolder::hold (thiz)->contain (clazz_) ;
-	}
-
-	Component get (CR<Clazz> clazz_) const {
-		Like<SharedRef<ComponentLayout>> ret = ComponentHolder::hold (thiz)->get (clazz_) ;
-		return move (keep[TYPE<Component>::expr] (ret)) ;
-	}
-} ;
-
-struct ServiceHolder implement Interface {
-	imports SharedRef<ServiceLayout> create () ;
-	imports VFat<ServiceHolder> hold (VR<ServiceLayout> that) ;
-	imports CFat<ServiceHolder> hold (CR<ServiceLayout> that) ;
-
-	virtual void initialize (CR<Clazz> clazz_) = 0 ;
-	virtual Clazz clazz () const = 0 ;
-	virtual INDEX spwan_entity () = 0 ;
-} ;
-
-class Service implement Like<SharedRef<ServiceLayout>> {
-public:
-	implicit Service () = default ;
-
-	implicit Service (CR<Clazz> clazz_) {
-		mThis = ServiceHolder::create () ;
-		ServiceHolder::hold (thiz)->initialize (clazz_) ;
-	}
-
-	Clazz clazz () const {
-		return ServiceHolder::hold (thiz)->clazz () ;
-	}
-
-	INDEX spwan_entity () const {
-		return ServiceHolder::hold (thiz)->spwan_entity () ;
-	}
-} ;
-
-struct ManagerLayout ;
-
-struct ManagerHolder implement Interface {
-	imports CR<Like<SharedRef<ManagerLayout>>> expr_m () ;
-	imports VFat<ManagerHolder> hold (VR<ManagerLayout> that) ;
-	imports CFat<ManagerHolder> hold (CR<ManagerLayout> that) ;
-
-	virtual void initialize () = 0 ;
-	virtual Entity entity (CR<INDEX> index) const = 0 ;
-	virtual INDEX entity (CR<Entity> item) = 0 ;
-	virtual Component component (CR<INDEX> index) const = 0 ;
-	virtual INDEX component (CR<Component> item) = 0 ;
-	virtual Service service (CR<INDEX> index) const = 0 ;
-	virtual INDEX service (CR<Service> item) = 0 ;
-} ;
-
-class Manager implement Like<SharedRef<ManagerLayout>> {
-public:
-	imports CR<Manager> expr_m () {
-		return keep[TYPE<Manager>::expr] (ManagerHolder::expr) ;
-	}
-
-	Entity entity (CR<INDEX> index) const {
-		return ManagerHolder::hold (thiz)->entity (index) ;
-	}
-
-	INDEX entity (CR<Entity> item) const {
-		return ManagerHolder::hold (thiz)->entity (item) ;
-	}
-
-	Component component (CR<INDEX> index) const {
-		return ManagerHolder::hold (thiz)->component (index) ;
-	}
-
-	INDEX component (CR<Component> item) const {
-		return ManagerHolder::hold (thiz)->component (item) ;
-	}
-
-	Service service (CR<INDEX> index) const {
-		return ManagerHolder::hold (thiz)->service (index) ;
-	}
-
-	INDEX service (CR<Service> item) const {
-		return ManagerHolder::hold (thiz)->service (item) ;
-	}
-} ;
-
 struct SyntaxLayout ;
 
 struct SyntaxHolder implement Interface {
@@ -431,7 +281,7 @@ struct SyntaxHolder implement Interface {
 	virtual void once (CR<Function<>> func) = 0 ;
 	virtual void then (CR<Function<>> func) = 0 ;
 	virtual void monad (CR<Clazz> name) = 0 ;
-	virtual void until (RR<Ref<BOOL>> flag) = 0 ;
+	virtual void until (RR<Ref<Bool>> flag) = 0 ;
 	virtual void execute () = 0 ;
 } ;
 
@@ -467,7 +317,7 @@ public:
 		return SyntaxHolder::hold (thiz)->monad (Clazz (TYPE<ARG1>::expr)) ;
 	}
 
-	void until (RR<Ref<BOOL>> flag) {
+	void until (RR<Ref<Bool>> flag) {
 		return SyntaxHolder::hold (thiz)->until (move (flag)) ;
 	}
 

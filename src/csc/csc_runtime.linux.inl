@@ -36,12 +36,12 @@ public:
 		noop () ;
 	}
 
-	LENGTH thread_concurrency () const override {
+	Length thread_concurrency () const override {
 		return std::thread::hardware_concurrency () ;
 	}
 
-	FLAG thread_uid () const override {
-		return FLAG (syscall (SYS_gettid)) ;
+	Flag thread_uid () const override {
+		return Flag (syscall (SYS_gettid)) ;
 	}
 
 	void thread_sleep (CR<Time> time) const override {
@@ -53,28 +53,27 @@ public:
 		std::this_thread::yield () ;
 	}
 
-	FLAG process_uid () const override {
-		return FLAG (syscall (SYS_getpid)) ;
+	Flag process_uid () const override {
+		return Flag (syscall (SYS_getpid)) ;
 	}
 
 	void process_exit () const override {
 		std::quick_exit (0) ;
 	}
 
-	String<STR> library_file () const override {
-		auto &&rax = keep[TYPE<HeapLayout>::expr] (Heap::expr) ;
-		const auto r1x = csc_handle_t (rax.mHolder) ;
-		auto rbx = Dl_info () ;
-		const auto r2x = dladdr (r1x ,(&rbx)) ;
+	String<Str> library_file (CR<csc_handle_t> addr) const override {
+		const auto r1x = addr ;
+		auto rax = Dl_info () ;
+		const auto r2x = dladdr (r1x ,(&rax)) ;
 		assume (r2x != ZERO) ;
-		const auto r3x = Slice (FLAG (rbx.dli_fname) ,SLICE_MAX_SIZE::expr ,1).eos () ;
-		return String<STR> (r3x) ;
+		const auto r3x = Slice (Flag (rax.dli_fname) ,SLICE_MAX_SIZE::expr ,1).eos () ;
+		return String<Str> (r3x) ;
 	}
 
-	String<STR> library_main () const override {
-		String<STR> ret = String<STR>::make () ;
-		const auto r1x = String<STR> (slice ("/proc/self/exe")) ;
-		const auto r2x = INDEX (readlink (r1x ,ret ,csc_size_t (ret.size ()))) ;
+	String<Str> library_main () const override {
+		String<Str> ret = String<Str>::make () ;
+		const auto r1x = String<Str> (slice ("/proc/self/exe")) ;
+		const auto r2x = Index (readlink (r1x ,ret ,csc_size_t (ret.size ()))) ;
 		ret.trunc (r2x) ;
 		return move (ret) ;
 	}
@@ -87,17 +86,17 @@ private:
 	using PROCESS_SNAPSHOT_STEP = ENUM<128> ;
 
 public:
-	void initialize (CR<FLAG> uid) override {
+	void initialize (CR<Flag> uid) override {
 		self.mUid = uid ;
 		const auto r1x = load_proc_file (uid) ;
 		self.mProcessCode = process_code (r1x ,uid) ;
 		self.mProcessTime = process_time (r1x ,uid) ;
 	}
 
-	String<STRU8> load_proc_file (CR<FLAG> uid) const {
-		String<STRU8> ret = String<STRU8>::make () ;
-		ret.fill (STRU32 (0X00)) ;
-		const auto r1x = String<STR>::make (Format (slice ("/proc/$1/stat")) (uid)) ;
+	String<Stru8> load_proc_file (CR<Flag> uid) const {
+		String<Stru8> ret = String<Stru8>::make () ;
+		ret.fill (Stru32 (0X00)) ;
+		const auto r1x = String<Str>::make (Format (slice ("/proc/$1/stat")) (uid)) ;
 		try {
 			auto rax = StreamFile (r1x) ;
 			rax.open_r () ;
@@ -111,28 +110,28 @@ public:
 		return move (ret) ;
 	}
 
-	QUAD process_code (CR<String<STRU8>> info ,CR<FLAG> uid) const {
-		return QUAD (getpgid (pid_t (uid))) ;
+	Quad process_code (CR<String<Stru8>> info ,CR<Flag> uid) const {
+		return Quad (getpgid (pid_t (uid))) ;
 	}
 
-	QUAD process_time (CR<String<STRU8>> info ,CR<FLAG> uid) const {
+	Quad process_time (CR<String<Stru8>> info ,CR<Flag> uid) const {
 		if (info.length () == 0)
-			return QUAD (0X00) ;
+			return Quad (0X00) ;
 		auto rax = TextReader (info.borrow ()) ;
-		auto rbx = String<STRU8> () ;
+		auto rbx = String<Stru8> () ;
 		rax >> GAP ;
 		rax >> ReadBlank (rbx) ;
-		const auto r1x = StringParse<VAL64>::make (rbx) ;
+		const auto r1x = StringParse<Val64>::make (rbx) ;
 		assume (r1x == uid) ;
 		rax >> GAP ;
 		rax >> slice ("(") ;
 		while (TRUE) {
-			const auto r2x = rax.poll (TYPE<STRU32>::expr) ;
-			if (r2x == STRU32 (0X00))
+			const auto r2x = rax.poll (TYPE<Stru32>::expr) ;
+			if (r2x == Stru32 (0X00))
 				break ;
-			if (r2x == STRU32 (')'))
+			if (r2x == Stru32 (')'))
 				break ;
-			assume (r2x != STRU32 ('(')) ;
+			assume (r2x != Stru32 ('(')) ;
 		}
 		rax >> GAP ;
 		rax >> ReadBlank (rbx) ;
@@ -144,19 +143,19 @@ public:
 		}
 		rax >> GAP ;
 		rax >> ReadBlank (rbx) ;
-		const auto r3x = StringParse<VAL64>::make (rbx) ;
-		return QUAD (r3x) ;
+		const auto r3x = StringParse<Val64>::make (rbx) ;
+		return Quad (r3x) ;
 	}
 
-	void initialize (CR<RefBuffer<BYTE>> snapshot_) override {
+	void initialize (CR<RefBuffer<Byte>> snapshot_) override {
 		self.mUid = 0 ;
 		try {
 			assume (snapshot_.size () == PROCESS_SNAPSHOT_STEP::expr) ;
-			auto rax = ByteReader (Ref<RefBuffer<BYTE>>::reference (snapshot_)) ;
+			auto rax = ByteReader (Ref<RefBuffer<Byte>>::reference (snapshot_)) ;
 			rax >> slice ("CSC_Process") ;
 			rax >> GAP ;
-			const auto r1x = rax.poll (TYPE<VAL64>::expr) ;
-			self.mUid = FLAG (r1x) ;
+			const auto r1x = rax.poll (TYPE<Val64>::expr) ;
+			self.mUid = Flag (r1x) ;
 			rax >> GAP ;
 			rax >> self.mProcessCode ;
 			rax >> GAP ;
@@ -168,7 +167,7 @@ public:
 		}
 	}
 
-	BOOL equal (CR<ProcessLayout> that) const override {
+	Bool equal (CR<ProcessLayout> that) const override {
 		const auto r1x = inline_equal (self.mUid ,that.mUid) ;
 		if (!r1x)
 			return r1x ;
@@ -181,17 +180,17 @@ public:
 		return TRUE ;
 	}
 
-	FLAG process_uid () const override {
+	Flag process_uid () const override {
 		return self.mUid ;
 	}
 
-	RefBuffer<BYTE> snapshot () const override {
-		RefBuffer<BYTE> ret = RefBuffer<BYTE> (PROCESS_SNAPSHOT_STEP::expr) ;
-		auto rax = ByteWriter (Ref<RefBuffer<BYTE>>::reference (ret)) ;
+	RefBuffer<Byte> snapshot () const override {
+		RefBuffer<Byte> ret = RefBuffer<Byte> (PROCESS_SNAPSHOT_STEP::expr) ;
+		auto rax = ByteWriter (Ref<RefBuffer<Byte>>::reference (ret)) ;
 		if ifdo (TRUE) {
 			rax << slice ("CSC_Process") ;
 			rax << GAP ;
-			rax << VAL64 (self.mUid) ;
+			rax << Val64 (self.mUid) ;
 			rax << GAP ;
 			rax << self.mProcessCode ;
 			rax << GAP ;
@@ -207,7 +206,7 @@ static const auto mProcessExternal = External<ProcessHolder ,ProcessLayout> (Pro
 
 class LibraryImplHolder final implement Fat<LibraryHolder ,LibraryLayout> {
 public:
-	void initialize (CR<String<STR>> file) override {
+	void initialize (CR<String<Str>> file) override {
 		self.mFile = move (file) ;
 		assert (self.mFile.length () > 0) ;
 		self.mLibrary = UniqueRef<csc_device_t> ([&] (VR<csc_device_t> me) {
@@ -219,35 +218,35 @@ public:
 			me = csc_device_t (dlopen (self.mFile ,r1x)) ;
 			if (me != NULL)
 				return ;
-			self.mLastError = FLAG (errno) ;
+			self.mLastError = Flag (errno) ;
 			assume (FALSE) ;
 		} ,[&] (VR<csc_device_t> me) {
 			noop () ;
 		}) ;
 	}
 
-	String<STR> library_file () const override {
+	String<Str> library_file () const override {
 		return self.mFile ;
 	}
 
-	FLAG load (CR<String<STR>> name) override {
+	Flag load (CR<String<Str>> name) override {
 		assert (name.length () > 0) ;
-		FLAG ret = FLAG (dlsym (self.mLibrary ,name)) ;
+		Flag ret = Flag (dlsym (self.mLibrary ,name)) ;
 		if ifdo (TRUE) {
 			if (ret != ZERO)
 				discard ;
-			self.mLastError = FLAG (errno) ;
+			self.mLastError = Flag (errno) ;
 			assume (FALSE) ;
 		}
 		return move (ret) ;
 	}
 
-	String<STR> error () const override {
-		String<STR> ret = String<STR>::make () ;
-		const auto r1x = FLAG (dlerror ()) ;
+	String<Str> error () const override {
+		String<Str> ret = String<Str>::make () ;
+		const auto r1x = Flag (dlerror ()) ;
 		assume (r1x != ZERO) ;
 		const auto r2x = Slice (r1x ,SLICE_MAX_SIZE::expr ,1).eos () ;
-		ret = String<STR>::make (Format (slice ("LastError = $1 : $2")) (r1x ,r2x)) ;
+		ret = String<Str>::make (Format (slice ("LastError = $1 : $2")) (r1x ,r2x)) ;
 		return move (ret) ;
 	}
 } ;
@@ -258,7 +257,7 @@ class SingletonProcImplHolder final implement Fat<SingletonProcHolder ,Singleton
 public:
 	void initialize () override {
 		self.mUid = RuntimeProc::process_uid () ;
-		self.mName = String<STR>::make (slice ("/CSC_Singleton_") ,self.mUid) ;
+		self.mName = String<Str>::make (slice ("/CSC_Singleton_") ,self.mUid) ;
 		inline_memset (self.mLocal) ;
 		sync_local () ;
 	}
@@ -289,7 +288,7 @@ public:
 			}
 		}
 		if ifdo (TRUE) {
-			const auto r1x = FLAG (self.mLocal.mAddress1) ;
+			const auto r1x = Flag (self.mLocal.mAddress1) ;
 			assume (r1x != ZERO) ;
 			auto &&rax = keep[TYPE<SingletonRoot>::expr] (Pointer::make (r1x)) ;
 			self.mRoot = Ref<SingletonRoot>::reference (rax) ;
@@ -308,12 +307,12 @@ public:
 			assume (r4x == 0) ;
 			me = csc_handle_t (self.mName.ref) ;
 		} ,[&] (VR<csc_handle_t> me) {
-			shm_unlink (DEF<const char *> (me)) ;
+			shm_unlink (csc_string_t (me)) ;
 		}) ;
-		self.mLocal.mReserve1 = QUAD (self.mUid) ;
-		self.mLocal.mAddress1 = QUAD (address (root_ptr ())) ;
+		self.mLocal.mReserve1 = Quad (self.mUid) ;
+		self.mLocal.mAddress1 = Quad (address (root_ptr ())) ;
 		self.mLocal.mReserve2 = abi_reserve () ;
-		self.mLocal.mAddress2 = QUAD (address (root_ptr ())) ;
+		self.mLocal.mAddress2 = Quad (address (root_ptr ())) ;
 		self.mLocal.mReserve3 = ctx_reserve () ;
 	}
 
@@ -331,11 +330,11 @@ public:
 		} ,[&] (VR<csc_handle_t> me) {
 			munmap (me ,SIZE_OF<SingletonLocal>::expr) ;
 		}) ;
-		const auto r3x = FLAG (r2x.ref) ;
+		const auto r3x = Flag (r2x.ref) ;
 		auto rax = SingletonLocal () ;
 		inline_memcpy (Pointer::from (rax) ,Pointer::make (r3x) ,SIZE_OF<SingletonLocal>::expr) ;
-		assume (rax.mReserve1 == QUAD (self.mUid)) ;
-		assume (rax.mAddress1 != QUAD (0X00)) ;
+		assume (rax.mReserve1 == Quad (self.mUid)) ;
+		assume (rax.mAddress1 != Quad (0X00)) ;
 		assume (rax.mAddress1 == rax.mAddress2) ;
 		assume (rax.mReserve2 == abi_reserve ()) ;
 		assume (rax.mReserve3 == ctx_reserve ()) ;
@@ -356,72 +355,72 @@ public:
 		} ,[&] (VR<csc_handle_t> me) {
 			munmap (me ,SIZE_OF<SingletonLocal>::expr) ;
 		}) ;
-		const auto r3x = FLAG (r2x.ref) ;
+		const auto r3x = Flag (r2x.ref) ;
 		auto rax = self.mLocal ;
-		assume (rax.mReserve1 == QUAD (self.mUid)) ;
-		assume (rax.mAddress1 != QUAD (0X00)) ;
+		assume (rax.mReserve1 == Quad (self.mUid)) ;
+		assume (rax.mAddress1 != Quad (0X00)) ;
 		assume (rax.mAddress1 == rax.mAddress2) ;
 		assume (rax.mReserve2 == abi_reserve ()) ;
 		assume (rax.mReserve3 == ctx_reserve ()) ;
 		inline_memcpy (Pointer::make (r3x) ,Pointer::from (rax) ,SIZE_OF<SingletonLocal>::expr) ;
 	}
 
-	QUAD abi_reserve () const override {
-		QUAD ret = QUAD (0X00) ;
+	Quad abi_reserve () const override {
+		Quad ret = Quad (0X00) ;
 #ifdef __CSC_VER_DEBUG__
-		ret |= QUAD (0X00000001) ;
+		ret |= Quad (0X00000001) ;
 #elif defined __CSC_VER_UNITTEST__
-		ret |= QUAD (0X00000002) ;
+		ret |= Quad (0X00000002) ;
 #elif defined __CSC_VER_RELEASE__
-		ret |= QUAD (0X00000003) ;
+		ret |= Quad (0X00000003) ;
 #endif
 #ifdef __CSC_COMPILER_MSVC__
-		ret |= QUAD (0X00000010) ;
+		ret |= Quad (0X00000010) ;
 #elif defined __CSC_COMPILER_GNUC__
-		ret |= QUAD (0X00000020) ;
+		ret |= Quad (0X00000020) ;
 #elif defined __CSC_COMPILER_CLANG__
-		ret |= QUAD (0X00000030) ;
+		ret |= Quad (0X00000030) ;
 #endif
 #ifdef __CSC_SYSTEM_WINDOWS__
-		ret |= QUAD (0X00000100) ;
+		ret |= Quad (0X00000100) ;
 #elif defined __CSC_SYSTEM_LINUX__
-		ret |= QUAD (0X00000200) ;
+		ret |= Quad (0X00000200) ;
 #endif
 #ifdef __CSC_PLATFORM_X86__
-		ret |= QUAD (0X00001000) ;
+		ret |= Quad (0X00001000) ;
 #elif defined __CSC_PLATFORM_X64__
-		ret |= QUAD (0X00002000) ;
+		ret |= Quad (0X00002000) ;
 #elif defined __CSC_PLATFORM_ARM__
-		ret |= QUAD (0X00003000) ;
+		ret |= Quad (0X00003000) ;
 #elif defined __CSC_PLATFORM_ARM64__
-		ret |= QUAD (0X00004000) ;
+		ret |= Quad (0X00004000) ;
 #endif
 #ifdef __CSC_CONFIG_VAL32__
-		ret |= QUAD (0X00010000) ;
+		ret |= Quad (0X00010000) ;
 #elif defined __CSC_CONFIG_VAL64__
-		ret |= QUAD (0X00020000) ;
+		ret |= Quad (0X00020000) ;
 #endif
 #ifdef __CSC_CONFIG_STRA__
-		ret |= QUAD (0X00100000) ;
+		ret |= Quad (0X00100000) ;
 #elif defined __CSC_CONFIG_STRW__
-		ret |= QUAD (0X00200000) ;
+		ret |= Quad (0X00200000) ;
 #endif
 		return move (ret) ;
 	}
 
-	QUAD ctx_reserve () const override {
+	Quad ctx_reserve () const override {
 		return QUAD_ENDIAN ;
 	}
 
-	FLAG load (CR<Clazz> clazz) const override {
+	Flag load (CR<Clazz> clazz) const override {
 		assume (self.mRoot.exist ()) ;
 		Scope<Mutex> anonymous (self.mRoot->mMutex) ;
-		FLAG ret = self.mRoot->mClazzSet.map (clazz) ;
+		Flag ret = self.mRoot->mClazzSet.map (clazz) ;
 		replace (ret ,NONE ,ZERO) ;
 		return move (ret) ;
 	}
 
-	void save (CR<Clazz> clazz ,CR<FLAG> layout) const override {
+	void save (CR<Clazz> clazz ,CR<Flag> layout) const override {
 		assert (layout != ZERO) ;
 		assert (layout != NONE) ;
 		assume (self.mRoot.exist ()) ;

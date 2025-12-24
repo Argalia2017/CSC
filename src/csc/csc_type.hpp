@@ -7,23 +7,27 @@
 #include "csc.hpp"
 
 namespace CSC {
-using BOOL = csc_bool_t ;
+using Bool = csc_bool_t ;
+using BOOL = Bool ;
 
-static constexpr auto TRUE = BOOL (true) ;
-static constexpr auto FALSE = BOOL (false) ;
+static constexpr auto TRUE = Bool (true) ;
+static constexpr auto FALSE = Bool (false) ;
 
-using VAL32 = csc_int32_t ;
-using VAL64 = csc_int64_t ;
+using Val32 = csc_int32_t ;
+using VAL32 = Val32 ;
+using Val64 = csc_int64_t ;
+using VAL64 = Val64 ;
 
-static constexpr auto VAL32_MAX = VAL32 (2147483647) ;
+static constexpr auto VAL32_MAX = Val32 (2147483647) ;
 static constexpr auto VAL32_MIN = -VAL32_MAX ;
 static constexpr auto VAL32_ABS = VAL32_MIN - 1 ;
-static constexpr auto VAL64_MAX = VAL64 (9223372036854775807) ;
+static constexpr auto VAL64_MAX = Val64 (9223372036854775807) ;
 static constexpr auto VAL64_MIN = -VAL64_MAX ;
 static constexpr auto VAL64_ABS = VAL64_MIN - 1 ;
 
 #ifdef __CSC_CONFIG_VAL32__
-using VAL = VAL32 ;
+using Val = Val32 ;
+using VAL = Val ;
 
 static constexpr auto VAL_MAX = VAL32_MAX ;
 static constexpr auto VAL_MIN = VAL32_MIN ;
@@ -31,205 +35,222 @@ static constexpr auto VAL_ABS = VAL32_ABS ;
 #endif
 
 #ifdef __CSC_CONFIG_VAL64__
-using VAL = VAL64 ;
+using Val = Val64 ;
+using VAL = Val ;
 
 static constexpr auto VAL_MAX = VAL64_MAX ;
 static constexpr auto VAL_MIN = VAL64_MIN ;
 static constexpr auto VAL_ABS = VAL64_ABS ;
 #endif
 
-static constexpr auto ZERO = VAL (+0) ;
-static constexpr auto IDEN = VAL (+1) ;
-static constexpr auto NONE = VAL (-1) ;
-static constexpr auto USED = VAL (-2) ;
+static constexpr auto ZERO = Val (+0) ;
+static constexpr auto IDEN = Val (+1) ;
+static constexpr auto NONE = Val (-1) ;
+static constexpr auto USED = Val (-2) ;
 
-using INDEX = VAL ;
-using LENGTH = VAL ;
-using FLAG = VAL ;
+using Index = Val ;
+using INDEX = Index ;
+using Length = Val ;
+using LENGTH = Length ;
+using Flag = Val ;
+using FLAG = Flag ;
 
 template <class A>
-using Just = KILL<VAL ,A> ;
+using Just = KILL<Val ,A> ;
 
-using FLT32 = csc_float32_t ;
-using FLT64 = csc_float64_t ;
+using Flt32 = csc_float32_t ;
+using FLT32 = Flt32 ;
+using Flt64 = csc_float64_t ;
+using FLT64 = Flt64 ;
 
-static constexpr auto FLT32_MAX = FLT32 (3.402823466E+38) ;
+static constexpr auto FLT32_MAX = Flt32 (3.402823466E+38) ;
 static constexpr auto FLT32_MIN = -FLT32_MAX ;
-static constexpr auto FLT32_LOW = FLT32 (1.175494351E-38) ;
-static constexpr auto FLT32_EPS = FLT32 (1.192092896E-07) ;
-static constexpr auto FLT32_INF = FLT32 (infinity) ;
-static constexpr auto FLT64_MAX = FLT64 (1.7976931348623158E+308) ;
+static constexpr auto FLT32_LOW = Flt32 (1.175494351E-38) ;
+static constexpr auto FLT32_EPS = Flt32 (1.192092896E-07) ;
+static constexpr auto FLT32_INF = Flt32 (infinity) ;
+static constexpr auto FLT64_MAX = Flt64 (1.7976931348623158E+308) ;
 static constexpr auto FLT64_MIN = -FLT64_MAX ;
-static constexpr auto FLT64_LOW = FLT64 (2.2250738585072014E-308) ;
-static constexpr auto FLT64_EPS = FLT64 (2.2204460492503131E-016) ;
-static constexpr auto FLT64_INF = FLT64 (infinity) ;
+static constexpr auto FLT64_LOW = Flt64 (2.2250738585072014E-308) ;
+static constexpr auto FLT64_EPS = Flt64 (2.2204460492503131E-016) ;
+static constexpr auto FLT64_INF = Flt64 (infinity) ;
 
-enum class BYTE :csc_uint8_t ;
-enum class WORD :csc_uint16_t ;
-enum class CHAR :csc_uint32_t ;
-enum class QUAD :csc_uint64_t ;
+enum class Byte :csc_uint8_t ;
+using BYTE = Byte ;
+enum class Word :csc_uint16_t ;
+using WORD = Word ;
+enum class Char :csc_uint32_t ;
+using CHAR = Char ;
+enum class Quad :csc_uint64_t ;
+using QUAD = Quad ;
 
-static constexpr auto BYTE_ENDIAN = BYTE (0X1F) ;
-static constexpr auto WORD_ENDIAN = WORD (0X2F1F) ;
-static constexpr auto CHAR_ENDIAN = CHAR (0X4F3F2F1F) ;
-static constexpr auto QUAD_ENDIAN = QUAD (0X8F7F6F5F4F3F2F1F) ;
+static constexpr auto BYTE_ENDIAN = Byte (0X1F) ;
+static constexpr auto WORD_ENDIAN = Word (0X2F1F) ;
+static constexpr auto CHAR_ENDIAN = Char (0X4F3F2F1F) ;
+static constexpr auto QUAD_ENDIAN = Quad (0X8F7F6F5F4F3F2F1F) ;
 
-forceinline constexpr BYTE operator| (CR<BYTE> a ,CR<BYTE> b) noexcept {
-	return BYTE (csc_uint8_t (a) | csc_uint8_t (b)) ;
+forceinline constexpr Byte operator| (CR<Byte> a ,CR<Byte> b) noexcept {
+	return Byte (csc_uint8_t (a) | csc_uint8_t (b)) ;
 }
 
-forceinline void operator|= (VR<BYTE> a ,CR<BYTE> b) noexcept {
+forceinline void operator|= (VR<Byte> a ,CR<Byte> b) noexcept {
 	a = a | b ;
 }
 
-forceinline constexpr BYTE operator& (CR<BYTE> a ,CR<BYTE> b) noexcept {
-	return BYTE (csc_uint8_t (a) & csc_uint8_t (b)) ;
+forceinline constexpr Byte operator& (CR<Byte> a ,CR<Byte> b) noexcept {
+	return Byte (csc_uint8_t (a) & csc_uint8_t (b)) ;
 }
 
-forceinline void operator&= (VR<BYTE> a ,CR<BYTE> b) noexcept {
+forceinline void operator&= (VR<Byte> a ,CR<Byte> b) noexcept {
 	a = a & b ;
 }
 
-forceinline constexpr BYTE operator^ (CR<BYTE> a ,CR<BYTE> b) noexcept {
-	return BYTE (csc_uint8_t (a) ^ csc_uint8_t (b)) ;
+forceinline constexpr Byte operator^ (CR<Byte> a ,CR<Byte> b) noexcept {
+	return Byte (csc_uint8_t (a) ^ csc_uint8_t (b)) ;
 }
 
-forceinline void operator^= (VR<BYTE> a ,CR<BYTE> b) noexcept {
+forceinline void operator^= (VR<Byte> a ,CR<Byte> b) noexcept {
 	a = a ^ b ;
 }
 
-forceinline constexpr BYTE operator~ (CR<BYTE> a) noexcept {
-	return BYTE (~csc_uint8_t (a)) ;
+forceinline constexpr Byte operator~ (CR<Byte> a) noexcept {
+	return Byte (~csc_uint8_t (a)) ;
 }
 
-forceinline constexpr BYTE operator<< (CR<BYTE> a ,CR<LENGTH> b) noexcept {
-	return BYTE (csc_uint8_t (a) << b) ;
+forceinline constexpr Byte operator<< (CR<Byte> a ,CR<Length> b) noexcept {
+	return Byte (csc_uint8_t (a) << b) ;
 }
 
-forceinline constexpr BYTE operator>> (CR<BYTE> a ,CR<LENGTH> b) noexcept {
-	return BYTE (csc_uint8_t (a) >> b) ;
+forceinline constexpr Byte operator>> (CR<Byte> a ,CR<Length> b) noexcept {
+	return Byte (csc_uint8_t (a) >> b) ;
 }
 
-forceinline constexpr WORD operator| (CR<WORD> a ,CR<WORD> b) noexcept {
-	return WORD (csc_uint16_t (a) | csc_uint16_t (b)) ;
+forceinline constexpr Word operator| (CR<Word> a ,CR<Word> b) noexcept {
+	return Word (csc_uint16_t (a) | csc_uint16_t (b)) ;
 }
 
-forceinline void operator|= (VR<WORD> a ,CR<WORD> b) noexcept {
+forceinline void operator|= (VR<Word> a ,CR<Word> b) noexcept {
 	a = a | b ;
 }
 
-forceinline constexpr WORD operator& (CR<WORD> a ,CR<WORD> b) noexcept {
-	return WORD (csc_uint16_t (a) & csc_uint16_t (b)) ;
+forceinline constexpr Word operator& (CR<Word> a ,CR<Word> b) noexcept {
+	return Word (csc_uint16_t (a) & csc_uint16_t (b)) ;
 }
 
-forceinline void operator&= (VR<WORD> a ,CR<WORD> b) noexcept {
+forceinline void operator&= (VR<Word> a ,CR<Word> b) noexcept {
 	a = a & b ;
 }
 
-forceinline constexpr WORD operator^ (CR<WORD> a ,CR<WORD> b) noexcept {
-	return WORD (csc_uint16_t (a) ^ csc_uint16_t (b)) ;
+forceinline constexpr Word operator^ (CR<Word> a ,CR<Word> b) noexcept {
+	return Word (csc_uint16_t (a) ^ csc_uint16_t (b)) ;
 }
 
-forceinline void operator^= (VR<WORD> a ,CR<WORD> b) noexcept {
+forceinline void operator^= (VR<Word> a ,CR<Word> b) noexcept {
 	a = a ^ b ;
 }
 
-forceinline constexpr WORD operator~ (CR<WORD> a) noexcept {
-	return WORD (~csc_uint16_t (a)) ;
+forceinline constexpr Word operator~ (CR<Word> a) noexcept {
+	return Word (~csc_uint16_t (a)) ;
 }
 
-forceinline constexpr WORD operator<< (CR<WORD> a ,CR<LENGTH> b) noexcept {
-	return WORD (csc_uint16_t (a) << b) ;
+forceinline constexpr Word operator<< (CR<Word> a ,CR<Length> b) noexcept {
+	return Word (csc_uint16_t (a) << b) ;
 }
 
-forceinline constexpr WORD operator>> (CR<WORD> a ,CR<LENGTH> b) noexcept {
-	return WORD (csc_uint16_t (a) >> b) ;
+forceinline constexpr Word operator>> (CR<Word> a ,CR<Length> b) noexcept {
+	return Word (csc_uint16_t (a) >> b) ;
 }
 
-forceinline constexpr CHAR operator| (CR<CHAR> a ,CR<CHAR> b) noexcept {
-	return CHAR (csc_uint32_t (a) | csc_uint32_t (b)) ;
+forceinline constexpr Char operator| (CR<Char> a ,CR<Char> b) noexcept {
+	return Char (csc_uint32_t (a) | csc_uint32_t (b)) ;
 }
 
-forceinline void operator|= (VR<CHAR> a ,CR<CHAR> b) noexcept {
+forceinline void operator|= (VR<Char> a ,CR<Char> b) noexcept {
 	a = a | b ;
 }
 
-forceinline constexpr CHAR operator& (CR<CHAR> a ,CR<CHAR> b) noexcept {
-	return CHAR (csc_uint32_t (a) & csc_uint32_t (b)) ;
+forceinline constexpr Char operator& (CR<Char> a ,CR<Char> b) noexcept {
+	return Char (csc_uint32_t (a) & csc_uint32_t (b)) ;
 }
 
-forceinline void operator&= (VR<CHAR> a ,CR<CHAR> b) noexcept {
+forceinline void operator&= (VR<Char> a ,CR<Char> b) noexcept {
 	a = a & b ;
 }
 
-forceinline constexpr CHAR operator^ (CR<CHAR> a ,CR<CHAR> b) noexcept {
-	return CHAR (csc_uint32_t (a) ^ csc_uint32_t (b)) ;
+forceinline constexpr Char operator^ (CR<Char> a ,CR<Char> b) noexcept {
+	return Char (csc_uint32_t (a) ^ csc_uint32_t (b)) ;
 }
 
-forceinline void operator^= (VR<CHAR> a ,CR<CHAR> b) noexcept {
+forceinline void operator^= (VR<Char> a ,CR<Char> b) noexcept {
 	a = a ^ b ;
 }
 
-forceinline constexpr CHAR operator~ (CR<CHAR> a) noexcept {
-	return CHAR (~csc_uint32_t (a)) ;
+forceinline constexpr Char operator~ (CR<Char> a) noexcept {
+	return Char (~csc_uint32_t (a)) ;
 }
 
-forceinline constexpr CHAR operator<< (CR<CHAR> a ,CR<LENGTH> b) noexcept {
-	return CHAR (csc_uint32_t (a) << b) ;
+forceinline constexpr Char operator<< (CR<Char> a ,CR<Length> b) noexcept {
+	return Char (csc_uint32_t (a) << b) ;
 }
 
-forceinline constexpr CHAR operator>> (CR<CHAR> a ,CR<LENGTH> b) noexcept {
-	return CHAR (csc_uint32_t (a) >> b) ;
+forceinline constexpr Char operator>> (CR<Char> a ,CR<Length> b) noexcept {
+	return Char (csc_uint32_t (a) >> b) ;
 }
 
-forceinline constexpr QUAD operator| (CR<QUAD> a ,CR<QUAD> b) noexcept {
-	return QUAD (csc_uint64_t (a) | csc_uint64_t (b)) ;
+forceinline constexpr Quad operator| (CR<Quad> a ,CR<Quad> b) noexcept {
+	return Quad (csc_uint64_t (a) | csc_uint64_t (b)) ;
 }
 
-forceinline void operator|= (VR<QUAD> a ,CR<QUAD> b) noexcept {
+forceinline void operator|= (VR<Quad> a ,CR<Quad> b) noexcept {
 	a = a | b ;
 }
 
-forceinline constexpr QUAD operator& (CR<QUAD> a ,CR<QUAD> b) noexcept {
-	return QUAD (csc_uint64_t (a) & csc_uint64_t (b)) ;
+forceinline constexpr Quad operator& (CR<Quad> a ,CR<Quad> b) noexcept {
+	return Quad (csc_uint64_t (a) & csc_uint64_t (b)) ;
 }
 
-forceinline void operator&= (VR<QUAD> a ,CR<QUAD> b) noexcept {
+forceinline void operator&= (VR<Quad> a ,CR<Quad> b) noexcept {
 	a = a & b ;
 }
 
-forceinline constexpr QUAD operator^ (CR<QUAD> a ,CR<QUAD> b) noexcept {
-	return QUAD (csc_uint64_t (a) ^ csc_uint64_t (b)) ;
+forceinline constexpr Quad operator^ (CR<Quad> a ,CR<Quad> b) noexcept {
+	return Quad (csc_uint64_t (a) ^ csc_uint64_t (b)) ;
 }
 
-forceinline void operator^= (VR<QUAD> a ,CR<QUAD> b) noexcept {
+forceinline void operator^= (VR<Quad> a ,CR<Quad> b) noexcept {
 	a = a ^ b ;
 }
 
-forceinline constexpr QUAD operator~ (CR<QUAD> a) noexcept {
-	return QUAD (~csc_uint64_t (a)) ;
+forceinline constexpr Quad operator~ (CR<Quad> a) noexcept {
+	return Quad (~csc_uint64_t (a)) ;
 }
 
-forceinline constexpr QUAD operator<< (CR<QUAD> a ,CR<LENGTH> b) noexcept {
-	return QUAD (csc_uint64_t (a) << b) ;
+forceinline constexpr Quad operator<< (CR<Quad> a ,CR<Length> b) noexcept {
+	return Quad (csc_uint64_t (a) << b) ;
 }
 
-forceinline constexpr QUAD operator>> (CR<QUAD> a ,CR<LENGTH> b) noexcept {
-	return QUAD (csc_uint64_t (a) >> b) ;
+forceinline constexpr Quad operator>> (CR<Quad> a ,CR<Length> b) noexcept {
+	return Quad (csc_uint64_t (a) >> b) ;
 }
 
-using STRA = csc_char_t ;
-using STRW = csc_wchar_t ;
-using STRU8 = csc_char8_t ;
-using STRU16 = csc_char16_t ;
-using STRU32 = csc_char32_t ;
+using Stra = csc_char_t ;
+using STRA = Stra ;
+using Strw = csc_wchar_t ;
+using STRW = Strw ;
+using Stru8 = csc_char8_t ;
+using STRU8 = Stru8 ;
+using Stru16 = csc_char16_t ;
+using STRU16 = Stru16 ;
+using Stru32 = csc_char32_t ;
+using STRU32 = Stru32 ;
 
 #ifdef __CSC_CONFIG_STRA__
-using STR = STRA ;
+using Str = Stra ;
+using STR = Str ;
 #endif
 
 #ifdef __CSC_CONFIG_STRW__
-using STR = STRW ;
+using Str = Strw ;
+using STR = Str ;
 #endif
 
 static constexpr auto NULL = nullptr ;
@@ -674,12 +695,7 @@ template <class...A>
 using ENUM_MIN = typename ENUM_MIN_HELP<TYPE<A...> ,ALWAYS>::RET ;
 
 struct Proxy {
-	implicit Proxy () = delete ;
-	implicit ~Proxy () = delete ;
-	implicit Proxy (CR<Proxy> that) = delete ;
-	forceinline VR<Proxy> operator= (CR<Proxy> that) = delete ;
-	implicit Proxy (RR<Proxy> that) = delete ;
-	forceinline VR<Proxy> operator= (RR<Proxy> that) = delete ;
+	implicit Proxy () = default ;
 } ;
 
 struct Interface {
@@ -692,7 +708,7 @@ struct Interface {
 } ;
 
 struct FriendUnknown implement Interface {
-	virtual FLAG reflect (CR<FLAG> uuid) const = 0 ;
+	virtual Flag reflect (CR<Flag> uuid) const = 0 ;
 } ;
 
 template <class...>
@@ -730,15 +746,15 @@ static constexpr auto PH9 = PlaceHolder<RANK9> () ;
 static constexpr auto PHX = PlaceHolder<RANKX> () ;
 
 template <class A>
-using IS_BOOL = IS_SAME<A ,BOOL> ;
+using IS_BOOL = IS_SAME<A ,Bool> ;
 
 template <class...>
 trait IS_VALUE_HELP ;
 
 template <class A>
 trait IS_VALUE_HELP<A ,ALWAYS> {
-	using R1X = IS_SAME<A ,VAL32> ;
-	using R2X = IS_SAME<A ,VAL64> ;
+	using R1X = IS_SAME<A ,Val32> ;
+	using R2X = IS_SAME<A ,Val64> ;
 	using RET = ENUM_ANY<R1X ,R2X> ;
 } ;
 
@@ -750,8 +766,8 @@ trait IS_FLOAT_HELP ;
 
 template <class A>
 trait IS_FLOAT_HELP<A ,ALWAYS> {
-	using R1X = IS_SAME<A ,FLT32> ;
-	using R2X = IS_SAME<A ,FLT64> ;
+	using R1X = IS_SAME<A ,Flt32> ;
+	using R2X = IS_SAME<A ,Flt64> ;
 	using RET = ENUM_ANY<R1X ,R2X> ;
 } ;
 
@@ -763,11 +779,11 @@ trait IS_TEXT_HELP ;
 
 template <class A>
 trait IS_TEXT_HELP<A ,ALWAYS> {
-	using R1X = IS_SAME<A ,STRA> ;
-	using R2X = IS_SAME<A ,STRW> ;
-	using R3X = IS_SAME<A ,STRU8> ;
-	using R4X = IS_SAME<A ,STRU16> ;
-	using R5X = IS_SAME<A ,STRU32> ;
+	using R1X = IS_SAME<A ,Stra> ;
+	using R2X = IS_SAME<A ,Strw> ;
+	using R3X = IS_SAME<A ,Stru8> ;
+	using R4X = IS_SAME<A ,Stru16> ;
+	using R5X = IS_SAME<A ,Stru32> ;
 	using RET = ENUM_ANY<R1X ,R2X ,R3X ,R4X ,R5X> ;
 } ;
 
@@ -779,10 +795,10 @@ trait IS_BYTE_HELP ;
 
 template <class A>
 trait IS_BYTE_HELP<A ,ALWAYS> {
-	using R1X = IS_SAME<A ,BYTE> ;
-	using R2X = IS_SAME<A ,WORD> ;
-	using R3X = IS_SAME<A ,CHAR> ;
-	using R4X = IS_SAME<A ,QUAD> ;
+	using R1X = IS_SAME<A ,Byte> ;
+	using R2X = IS_SAME<A ,Word> ;
+	using R3X = IS_SAME<A ,Char> ;
+	using R4X = IS_SAME<A ,Quad> ;
 	using RET = ENUM_ANY<R1X ,R2X ,R3X ,R4X> ;
 } ;
 
@@ -1157,11 +1173,11 @@ struct FriendVisitor implement Interface {
 	virtual void reset () = 0 ;
 	virtual void enter () = 0 ;
 	virtual void leave () = 0 ;
-	virtual FLAG fetch () const = 0 ;
-	virtual void push (CR<BYTE> a) = 0 ;
-	virtual void push (CR<WORD> a) = 0 ;
-	virtual void push (CR<CHAR> a) = 0 ;
-	virtual void push (CR<QUAD> a) = 0 ;
+	virtual Flag fetch () const = 0 ;
+	virtual void push (CR<Byte> a) = 0 ;
+	virtual void push (CR<Word> a) = 0 ;
+	virtual void push (CR<Char> a) = 0 ;
+	virtual void push (CR<Quad> a) = 0 ;
 } ;
 
 template <class...>
@@ -1263,30 +1279,30 @@ trait BYTE_BASE_HELP ;
 
 template <class SIZE ,class ALIGN>
 trait BYTE_BASE_HELP<SIZE ,ALIGN ,REQUIRE<ENUM_ALL<
-	ENUM_EQUAL<SIZE ,SIZE_OF<BYTE>> ,
-	ENUM_EQUAL<ALIGN ,ALIGN_OF<BYTE>>>>> {
-	using RET = BYTE ;
+	ENUM_EQUAL<SIZE ,SIZE_OF<Byte>> ,
+	ENUM_EQUAL<ALIGN ,ALIGN_OF<Byte>>>>> {
+	using RET = Byte ;
 } ;
 
 template <class SIZE ,class ALIGN>
 trait BYTE_BASE_HELP<SIZE ,ALIGN ,REQUIRE<ENUM_ALL<
-	ENUM_EQUAL<SIZE ,SIZE_OF<WORD>> ,
-	ENUM_EQUAL<ALIGN ,ALIGN_OF<WORD>>>>> {
-	using RET = WORD ;
+	ENUM_EQUAL<SIZE ,SIZE_OF<Word>> ,
+	ENUM_EQUAL<ALIGN ,ALIGN_OF<Word>>>>> {
+	using RET = Word ;
 } ;
 
 template <class SIZE ,class ALIGN>
 trait BYTE_BASE_HELP<SIZE ,ALIGN ,REQUIRE<ENUM_ALL<
-	ENUM_EQUAL<SIZE ,SIZE_OF<CHAR>> ,
-	ENUM_EQUAL<ALIGN ,ALIGN_OF<CHAR>>>>> {
-	using RET = CHAR ;
+	ENUM_EQUAL<SIZE ,SIZE_OF<Char>> ,
+	ENUM_EQUAL<ALIGN ,ALIGN_OF<Char>>>>> {
+	using RET = Char ;
 } ;
 
 template <class SIZE ,class ALIGN>
 trait BYTE_BASE_HELP<SIZE ,ALIGN ,REQUIRE<ENUM_ALL<
-	ENUM_EQUAL<SIZE ,SIZE_OF<QUAD>> ,
-	ENUM_EQUAL<ALIGN ,ALIGN_OF<QUAD>>>>> {
-	using RET = QUAD ;
+	ENUM_EQUAL<SIZE ,SIZE_OF<Quad>> ,
+	ENUM_EQUAL<ALIGN ,ALIGN_OF<Quad>>>>> {
+	using RET = Quad ;
 } ;
 
 template <class A>
@@ -1297,34 +1313,34 @@ trait TEXT_BASE_HELP ;
 
 template <class SIZE ,class ALIGN>
 trait TEXT_BASE_HELP<SIZE ,ALIGN ,REQUIRE<ENUM_ALL<
-	ENUM_EQUAL<SIZE ,SIZE_OF<STRU8>> ,
-	ENUM_EQUAL<ALIGN ,ALIGN_OF<STRU8>>>>> {
-	using RET = STRU8 ;
+	ENUM_EQUAL<SIZE ,SIZE_OF<Stru8>> ,
+	ENUM_EQUAL<ALIGN ,ALIGN_OF<Stru8>>>>> {
+	using RET = Stru8 ;
 } ;
 
 template <class SIZE ,class ALIGN>
 trait TEXT_BASE_HELP<SIZE ,ALIGN ,REQUIRE<ENUM_ALL<
-	ENUM_EQUAL<SIZE ,SIZE_OF<STRU16>> ,
-	ENUM_EQUAL<ALIGN ,ALIGN_OF<STRU16>>>>> {
-	using RET = STRU16 ;
+	ENUM_EQUAL<SIZE ,SIZE_OF<Stru16>> ,
+	ENUM_EQUAL<ALIGN ,ALIGN_OF<Stru16>>>>> {
+	using RET = Stru16 ;
 } ;
 
 template <class SIZE ,class ALIGN>
 trait TEXT_BASE_HELP<SIZE ,ALIGN ,REQUIRE<ENUM_ALL<
-	ENUM_EQUAL<SIZE ,SIZE_OF<STRU32>> ,
-	ENUM_EQUAL<ALIGN ,ALIGN_OF<STRU32>>>>> {
-	using RET = STRU32 ;
+	ENUM_EQUAL<SIZE ,SIZE_OF<Stru32>> ,
+	ENUM_EQUAL<ALIGN ,ALIGN_OF<Stru32>>>>> {
+	using RET = Stru32 ;
 } ;
 
 template <class A>
 using TEXT_BASE = typename TEXT_BASE_HELP<SIZE_OF<A> ,ALIGN_OF<A> ,ALWAYS>::RET ;
 
-using STRUA = TEXT_BASE<STRA> ;
-using STRUW = TEXT_BASE<STRW> ;
+using STRUA = TEXT_BASE<Stra> ;
+using STRUW = TEXT_BASE<Strw> ;
 
 template <class SIZE ,class ALIGN = RANK1>
 struct Storage {
-	alignas (ALIGN::expr) ARR<BYTE ,SIZE> mUnused ;
+	alignas (ALIGN::expr) ARR<Byte ,SIZE> mUnused ;
 } ;
 
 template <class A>
@@ -1446,9 +1462,21 @@ trait HAS_COMPILE_HELP<A ,B ,REQUIRE<KILL<ENUM_TRUE ,typeof (nullof (A).compile 
 template <class A ,class B>
 using HAS_COMPILE = typename HAS_COMPILE_HELP<A ,B ,ALWAYS>::RET ;
 
-class Pointer implement Proxy {
+class Pointer {
 public:
-	static VR<Pointer> make (CR<FLAG> that) noexcept {
+	implicit Pointer () = delete ;
+
+	implicit ~Pointer () = delete ;
+
+	implicit Pointer (CR<Pointer> that) = delete ;
+
+	forceinline VR<Pointer> operator= (CR<Pointer> that) = delete ;
+
+	implicit Pointer (RR<Pointer> that) = delete ;
+
+	forceinline VR<Pointer> operator= (RR<Pointer> that) = delete ;
+
+	static VR<Pointer> make (CR<Flag> that) noexcept {
 		return *(reinterpret_cast<PTR<VR<Pointer>>> (that)) ;
 	}
 

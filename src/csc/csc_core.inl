@@ -24,7 +24,7 @@
 namespace CSC {
 #ifdef __CSC_SYSTEM_WINDOWS__
 struct FUNCTION_has_debugger {
-	forceinline BOOL operator() () const noexcept {
+	forceinline Bool operator() () const noexcept {
 		return IsDebuggerPresent () ;
 	}
 } ;
@@ -32,7 +32,7 @@ struct FUNCTION_has_debugger {
 
 #ifdef __CSC_SYSTEM_LINUX__
 struct FUNCTION_has_debugger {
-	forceinline BOOL operator() () const noexcept {
+	forceinline Bool operator() () const noexcept {
 		return FALSE ;
 	}
 } ;
@@ -42,8 +42,8 @@ static constexpr auto has_debugger = FUNCTION_has_debugger () ;
 
 #ifdef __CSC_CXX_RTTI__
 struct FUNCTION_stl_type_name {
-	forceinline FLAG operator() (CR<Interface> squalor ,CR<FLAG> func_) const noexcept {
-		return FLAG (typeid (squalor).name ()) ;
+	forceinline Flag operator() (CR<Interface> squalor ,CR<Flag> func_) const noexcept {
+		return Flag (typeid (squalor).name ()) ;
 	}
 } ;
 #endif
@@ -54,7 +54,7 @@ struct FUNCTION_stl_type_name {
 #endif
 
 struct FUNCTION_stl_type_name {
-	forceinline FLAG operator() (CR<Interface> squalor ,CR<FLAG> func_) const noexcept {
+	forceinline Flag operator() (CR<Interface> squalor ,CR<Flag> func_) const noexcept {
 		return func_ ;
 	}
 } ;
@@ -64,10 +64,10 @@ static constexpr auto stl_type_name = FUNCTION_stl_type_name () ;
 
 #ifdef __CSC_COMPILER_MSVC__
 struct FUNCTION_stl_list_pair {
-	forceinline Tuple<FLAG ,FLAG> operator() (CR<csc_initializer_list_t<Pointer>> squalor ,CR<LENGTH> step_) const noexcept {
-		Tuple<FLAG ,FLAG> ret ;
-		ret.m1st = FLAG (squalor.begin ()) ;
-		ret.m2nd = FLAG (squalor.end ()) ;
+	forceinline Tuple<Flag ,Flag> operator() (CR<csc_initializer_list_t<Pointer>> squalor ,CR<Length> step_) const noexcept {
+		Tuple<Flag ,Flag> ret ;
+		ret.m1st = Flag (squalor.begin ()) ;
+		ret.m2nd = Flag (squalor.end ()) ;
 		return move (ret) ;
 	}
 } ;
@@ -75,10 +75,10 @@ struct FUNCTION_stl_list_pair {
 
 #ifdef __CSC_COMPILER_GNUC__
 struct FUNCTION_stl_list_pair {
-	forceinline Tuple<FLAG ,FLAG> operator() (CR<csc_initializer_list_t<Pointer>> squalor ,CR<LENGTH> step_) const noexcept {
-		Tuple<FLAG ,FLAG> ret ;
-		ret.m1st = FLAG (squalor.begin ()) ;
-		ret.m2nd = FLAG (squalor.begin ()) + LENGTH (squalor.size ()) * step_ ;
+	forceinline Tuple<Flag ,Flag> operator() (CR<csc_initializer_list_t<Pointer>> squalor ,CR<Length> step_) const noexcept {
+		Tuple<Flag ,Flag> ret ;
+		ret.m1st = Flag (squalor.begin ()) ;
+		ret.m2nd = Flag (squalor.begin ()) + Length (squalor.size ()) * step_ ;
 		return move (ret) ;
 	}
 } ;
@@ -86,10 +86,10 @@ struct FUNCTION_stl_list_pair {
 
 #ifdef __CSC_COMPILER_CLANG__
 struct FUNCTION_stl_list_pair {
-	forceinline Tuple<FLAG ,FLAG> operator() (CR<csc_initializer_list_t<Pointer>> squalor ,CR<LENGTH> step_) const noexcept {
-		Tuple<FLAG ,FLAG> ret ;
-		ret.m1st = FLAG (squalor.begin ()) ;
-		ret.m2nd = FLAG (squalor.end ()) ;
+	forceinline Tuple<Flag ,Flag> operator() (CR<csc_initializer_list_t<Pointer>> squalor ,CR<Length> step_) const noexcept {
+		Tuple<Flag ,Flag> ret ;
+		ret.m1st = Flag (squalor.begin ()) ;
+		ret.m2nd = Flag (squalor.end ()) ;
 		return move (ret) ;
 	}
 } ;
@@ -97,9 +97,9 @@ struct FUNCTION_stl_list_pair {
 
 static constexpr auto stl_list_pair = FUNCTION_stl_list_pair () ;
 
-class CoreProcImplHolder final implement Fat<CoreProcHolder ,Proxy> {
+class CoreProcImplHolder final implement Fat<CoreProcHolder ,void> {
 public:
-	BOOL inline_unittest () const override {
+	Bool inline_debug () const override {
 		return memorize ([&] () {
 			return has_debugger () ;
 		}) ;
@@ -114,24 +114,24 @@ public:
 		inline_memcpy (src ,src ,1) ;
 	}
 
-	FLAG inline_type_name (CR<Pointer> squalor ,CR<FLAG> func_) const override {
+	Flag inline_type_name (CR<Pointer> squalor ,CR<Flag> func_) const override {
 		return stl_type_name (squalor ,func_) ;
 	}
 
-	Tuple<FLAG ,FLAG> inline_list_pair (CR<Pointer> squalor ,CR<LENGTH> step_) const override {
+	Tuple<Flag ,Flag> inline_list_pair (CR<Pointer> squalor ,CR<Length> step_) const override {
 		return stl_list_pair (squalor ,step_) ;
 	}
 
-	void inline_memset (VR<Pointer> dst ,CR<LENGTH> size_) const override {
+	void inline_memset (VR<Pointer> dst ,CR<Length> size_) const override {
 		std::memset ((&dst) ,0 ,size_) ;
 	}
 
-	void inline_memcpy (VR<Pointer> dst ,CR<Pointer> src ,CR<LENGTH> size_) const override {
+	void inline_memcpy (VR<Pointer> dst ,CR<Pointer> src ,CR<Length> size_) const override {
 		std::memcpy ((&dst) ,(&src) ,size_) ;
 	}
 
-	FLAG inline_memcmp (CR<Pointer> dst ,CR<Pointer> src ,CR<LENGTH> size_) const override {
-		return FLAG (std::memcmp ((&dst) ,(&src) ,size_)) ;
+	Flag inline_memcmp (CR<Pointer> dst ,CR<Pointer> src ,CR<Length> size_) const override {
+		return Flag (std::memcmp ((&dst) ,(&src) ,size_)) ;
 	}
 } ;
 
@@ -158,7 +158,7 @@ public:
 		self.mHolder = ZERO ;
 	}
 
-	BOOL exist () const override {
+	Bool exist () const override {
 		return self.mHolder != ZERO ;
 	}
 
@@ -211,9 +211,9 @@ exports CFat<BoxHolder> BoxHolder::hold (CR<BoxLayout> that) {
 	return CFat<BoxHolder> (BoxImplHolder () ,that) ;
 }
 
-struct RefTree implement Proxy {
+struct RefTree {
 	Heap mHeap ;
-	std::atomic<VAL> mCounter ;
+	std::atomic<Val> mCounter ;
 	BoxLayout mValue ;
 } ;
 
@@ -237,7 +237,7 @@ public:
 		ptr (self).mCounter = 1 ;
 	}
 
-	void initialize (CR<Unknown> holder ,CR<Unknown> extend ,CR<LENGTH> size_) override {
+	void initialize (CR<Unknown> holder ,CR<Unknown> extend ,CR<Length> size_) override {
 		assert (!exist ()) ;
 		const auto r1x = RFat<ReflectSize> (holder) ;
 		const auto r2x = inline_max (r1x->type_align () - ALIGN_OF<RefTree>::expr ,0) ;
@@ -257,7 +257,7 @@ public:
 		ptr (self).mCounter = 1 ;
 	}
 
-	void initialize (CR<Unknown> holder ,CR<FLAG> layout) override {
+	void initialize (CR<Unknown> holder ,CR<Flag> layout) override {
 		assert (!exist ()) ;
 		const auto r1x = RFat<ReflectSize> (holder) ;
 		const auto r2x = r1x->type_align () ;
@@ -314,7 +314,7 @@ public:
 		return move (ret) ;
 	}
 
-	BOOL exist () const override {
+	Bool exist () const override {
 		return self.mLayout != ZERO ;
 	}
 
@@ -333,7 +333,7 @@ public:
 		return Pointer::make (self.mLayout) ;
 	}
 
-	BOOL exclusive () const override {
+	Bool exclusive () const override {
 		assert (exist ()) ;
 		auto act = TRUE ;
 		if ifdo (act) {
@@ -388,16 +388,16 @@ static constexpr auto dump_memory_leaks = FUNCTION_dump_memory_leaks () ;
 
 #ifdef __CSC_SYSTEM_WINDOWS__
 struct FUNCTION_memsize {
-	forceinline LENGTH operator() (CR<csc_handle_t> a) const {
-		return LENGTH (_msize (a)) ;
+	forceinline Length operator() (CR<csc_handle_t> a) const {
+		return Length (_msize (a)) ;
 	}
 } ;
 #endif
 
 #ifdef __CSC_SYSTEM_LINUX__
 struct FUNCTION_memsize {
-	forceinline LENGTH operator() (CR<csc_handle_t> a) const {
-		return LENGTH (malloc_usable_size (a)) ;
+	forceinline Length operator() (CR<csc_handle_t> a) const {
+		return Length (malloc_usable_size (a)) ;
 	}
 } ;
 #endif
@@ -405,8 +405,8 @@ struct FUNCTION_memsize {
 static constexpr auto memsize = FUNCTION_memsize () ;
 
 struct HeapRoot {
-	Box<std::atomic<VAL>> mStack ;
-	Box<std::atomic<VAL>> mLength ;
+	Box<std::atomic<Val>> mStack ;
+	Box<std::atomic<Val>> mLength ;
 } ;
 
 class HeapImplHolder final implement Fat<HeapHolder ,HeapLayout> {
@@ -422,22 +422,17 @@ public:
 		return mInstance ;
 	}
 
-	INDEX stack () const override {
-		INDEX ret = root_ptr ().mStack.ref++ ;
-		if ifdo (TRUE) {
-			if (ret >= 0)
-				discard ;
-			ret = ret & VAL_MAX ;
-		}
-		return move (ret) ;
+	Flag stack (CR<Length> size_) const override {
+		unimplemented () ;
+		return ZERO ;
 	}
 
-	LENGTH length () const override {
+	Length length () const override {
 		return root_ptr ().mLength.ref ;
 	}
 
-	FLAG alloc (CR<LENGTH> size_) const override {
-		FLAG ret = FLAG (operator new (size_ ,std::nothrow)) ;
+	Flag alloc (CR<Length> size_) const override {
+		Flag ret = Flag (operator new (size_ ,std::nothrow)) ;
 		assume (ret != ZERO) ;
 		const auto r1x = csc_handle_t (ret) ;
 		const auto r2x = memsize (r1x) ;
@@ -445,7 +440,7 @@ public:
 		return move (ret) ;
 	}
 
-	void free (CR<FLAG> layout) const override {
+	void free (CR<Flag> layout) const override {
 		const auto r1x = csc_handle_t (layout) ;
 		const auto r2x = memsize (r1x) ;
 		root_ptr ().mLength.ref -= r2x ;
@@ -476,55 +471,55 @@ exports CFat<HeapHolder> HeapHolder::hold (CR<HeapLayout> that) {
 
 class SliceImplHolder final implement Fat<SliceHolder ,SliceLayout> {
 public:
-	void initialize (CR<FLAG> buffer ,CR<LENGTH> size_ ,CR<LENGTH> step_) override {
+	void initialize (CR<Flag> buffer ,CR<Length> size_ ,CR<Length> step_) override {
 		self.mBuffer = buffer ;
 		self.mSize = size_ ;
 		self.mStep = step_ ;
 	}
 
-	LENGTH size () const override {
+	Length size () const override {
 		return self.mSize ;
 	}
 
-	LENGTH step () const override {
+	Length step () const override {
 		return self.mStep ;
 	}
 
-	void get (CR<INDEX> index ,VR<STRU32> item) const override {
+	void get (CR<Index> index ,VR<Stru32> item) const override {
 		auto act = TRUE ;
 		if ifdo (act) {
-			if (self.mStep != SIZE_OF<STRU8>::expr)
+			if (self.mStep != SIZE_OF<Stru8>::expr)
 				discard ;
-			item = bitwise[TYPE<STRU8>::expr] (at (index)) ;
+			item = bitwise[TYPE<Stru8>::expr] (at (index)) ;
 		}
 		if ifdo (act) {
-			if (self.mStep != SIZE_OF<STRU16>::expr)
+			if (self.mStep != SIZE_OF<Stru16>::expr)
 				discard ;
-			item = bitwise[TYPE<STRU16>::expr] (at (index)) ;
+			item = bitwise[TYPE<Stru16>::expr] (at (index)) ;
 		}
 		if ifdo (act) {
-			if (self.mStep != SIZE_OF<STRU32>::expr)
+			if (self.mStep != SIZE_OF<Stru32>::expr)
 				discard ;
-			item = bitwise[TYPE<STRU32>::expr] (at (index)) ;
+			item = bitwise[TYPE<Stru32>::expr] (at (index)) ;
 		}
 		if ifdo (act) {
 			assert (FALSE) ;
 		}
 	}
 
-	CR<Pointer> at (CR<INDEX> index) const leftvalue {
+	CR<Pointer> at (CR<Index> index) const leftvalue {
 		assert (inline_between (index ,0 ,size ())) ;
 		const auto r1x = self.mBuffer + index * self.mStep ;
 		return Pointer::make (r1x) ;
 	}
 
-	BOOL equal (CR<SliceLayout> that) const override {
+	Bool equal (CR<SliceLayout> that) const override {
 		const auto r1x = size () ;
 		const auto r2x = SliceHolder::hold (that)->size () ;
 		if (r1x != r2x)
 			return FALSE ;
-		auto rax = STRU32 () ;
-		auto rbx = STRU32 () ;
+		auto rax = Stru32 () ;
+		auto rbx = Stru32 () ;
 		for (auto &&i : range (0 ,r1x)) {
 			get (i ,rax) ;
 			SliceHolder::hold (that)->get (i ,rbx) ;
@@ -535,12 +530,12 @@ public:
 		return TRUE ;
 	}
 
-	FLAG compr (CR<SliceLayout> that) const override {
+	Flag compr (CR<SliceLayout> that) const override {
 		const auto r1x = size () ;
 		const auto r2x = SliceHolder::hold (that)->size () ;
 		const auto r3x = inline_min (r1x ,r2x) ;
-		auto rax = STRU32 () ;
-		auto rbx = STRU32 () ;
+		auto rax = Stru32 () ;
+		auto rbx = Stru32 () ;
 		for (auto &&i : range (0 ,r3x)) {
 			get (i ,rax) ;
 			SliceHolder::hold (that)->get (i ,rbx) ;
@@ -554,7 +549,7 @@ public:
 	void visit (VR<FriendVisitor> visitor) const override {
 		visitor.enter () ;
 		const auto r1x = size () ;
-		auto rax = STRU32 () ;
+		auto rax = Stru32 () ;
 		for (auto &&i : range (0 ,r1x)) {
 			get (i ,rax) ;
 			inline_visit (visitor ,rax) ;
@@ -564,13 +559,13 @@ public:
 
 	SliceLayout eos () const override {
 		SliceLayout ret = self ;
-		INDEX ix = 0 ;
-		auto rax = STRU32 () ;
+		Index ix = 0 ;
+		auto rax = Stru32 () ;
 		while (TRUE) {
 			if (ix >= self.mSize)
 				break ;
 			get (ix ,rax) ;
-			if (rax == STRU32 (0X00))
+			if (rax == Stru32 (0X00))
 				break ;
 			ix++ ;
 		}
@@ -631,9 +626,9 @@ exports CFat<ExceptionHolder> ExceptionHolder::hold (CR<ExceptionLayout> that) {
 }
 
 struct ClazzTree {
-	LENGTH mTypeSize ;
-	LENGTH mTypeAlign ;
-	FLAG mTypeGuid ;
+	Length mTypeSize ;
+	Length mTypeAlign ;
+	Flag mTypeGuid ;
 	Slice mTypeName ;
 } ;
 
@@ -654,19 +649,19 @@ public:
 		self.mThis = that.mThis.share () ;
 	}
 
-	LENGTH type_size () const override {
+	Length type_size () const override {
 		if (self.mThis == NULL)
 			return 0 ;
 		return self.mThis->mTypeSize ;
 	}
 
-	LENGTH type_align () const override {
+	Length type_align () const override {
 		if (self.mThis == NULL)
 			return 0 ;
 		return self.mThis->mTypeAlign ;
 	}
 
-	FLAG type_guid () const override {
+	Flag type_guid () const override {
 		if (self.mThis == NULL)
 			return ZERO ;
 		return self.mThis->mTypeGuid ;
@@ -678,7 +673,7 @@ public:
 		return self.mThis->mTypeName ;
 	}
 
-	BOOL equal (CR<ClazzLayout> that) const override {
+	Bool equal (CR<ClazzLayout> that) const override {
 		if (type_size () != ClazzHolder::hold (that)->type_size ())
 			return FALSE ;
 		if (type_align () != ClazzHolder::hold (that)->type_align ())
@@ -689,7 +684,7 @@ public:
 		return inline_equal (type_name () ,ClazzHolder::hold (that)->type_name ()) ;
 	}
 
-	FLAG compr (CR<ClazzLayout> that) const override {
+	Flag compr (CR<ClazzLayout> that) const override {
 		if (type_guid () != 0)
 			if (type_guid () == ClazzHolder::hold (that)->type_guid ())
 				return ZERO ;
